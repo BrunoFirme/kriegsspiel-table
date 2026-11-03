@@ -190,4 +190,19 @@ public sealed class ConverterTests : IDisposable
         Assert.Contains("- BattalionAla1 — ", text);
         Assert.Contains("- Swamp — `http://a/gone.png` — HTTP 404", text);
     }
+
+    [Fact]
+    public void A_big_locked_textured_model_above_the_table_is_terrain_and_a_table_or_a_bare_model_is_furniture()
+    {
+        TtsObj Model(double y, bool locked, string? texture) => new(Obj("Custom_Model", "", 12.25, new JsonObject
+        {
+            ["Locked"] = locked,
+            ["Transform"] = new JsonObject { ["posX"] = 0, ["posY"] = y, ["posZ"] = 0, ["rotX"] = 0, ["rotY"] = 180, ["rotZ"] = 0, ["scaleX"] = 12.25, ["scaleY"] = 25, ["scaleZ"] = 12.25 },
+            ["CustomMesh"] = new JsonObject { ["MeshURL"] = "http://a/ground.obj", ["DiffuseURL"] = texture },
+        }));
+        var map = Model(1.25, true, "http://a/map.png");
+        Assert.Equal((true, false), (map.IsTerrain, map.IsFurniture));
+        foreach (var other in new[] { Model(-9, true, "http://a/table.png"), Model(1.25, false, "http://a/map.png"), Model(1.25, true, null) })
+            Assert.Equal((false, true), (other.IsTerrain, other.IsFurniture));
+    }
 }

@@ -20,7 +20,6 @@ public sealed record ReliefMade(string Name, string Relief, ReliefSource Source,
 public static class ReliefImport
 {
     public static readonly string[] ModelExtensions = { ".glb", ".gltf", ".fbx", ".obj", ".stl", ".ply", ".dae", ".blend" };
-    const int MostPictureSide = 8192;
     const int BlenderSeconds = 180;
     static string WorkDir => Path.Combine(DataPaths.Local, "cache", "relief");
 
@@ -179,82 +178,16 @@ public static class ReliefImport
     public static string? Picture(ReliefSource src, ReliefJob job)
     {
         var path = job.Picture ?? (job.OwnPicture ? src.Picture : null);
-        if (path == null) return null;
-        if (src.Triangles.Count == 0 || src.Fit is PictureFit.None) return path;
-        if (src.Fit == PictureFit.Direct && !src.FlipU && !src.FlipV && !src.Swap) return path;
+        if (path == null || ReliefPicture.AsItIs(src)) return path;
         var img = ImageFiles.Load(path) ?? throw new InvalidDataException("the picture could not be read");
         if (img.IsCompressed()) img.Decompress();
         img.Convert(Image.Format.Rgba8);
-        if (src.Fit == PictureFit.Direct)
-        {
-            if (src.Swap) { img.Rotate90(ClockDirection.Clockwise); img.FlipX(); }
-            if (src.FlipU) img.FlipX();
-            if (src.FlipV) img.FlipY();
-        }
-        else img = Resample(src, img);
+        var (px, w, h) = ReliefPicture.Fitted(src, img.GetData(), img.GetWidth(), img.GetHeight());
+        img = Image.CreateFromData(w, h, false, Image.Format.Rgba8, px);
         Directory.CreateDirectory(WorkDir);
         var o = Path.Combine(WorkDir, $"{Guid.NewGuid():N}.png");
         img.SavePng(o);
         return o;
-    }
-
-    static Image Resample(ReliefSource src, Image tex)
-    {
-        int tw = tex.GetWidth(), th = tex.GetHeight();
-        int w = Math.Min(MostPictureSide, Math.Max(tw, th));
-        int h = Math.Max(1, (int)Math.Round(w * src.Depth / src.Width));
-        if (h > MostPictureSide) { w = Math.Max(1, w * MostPictureSide / h); h = MostPictureSide; }
-        var from = tex.GetData();
-        var to = new byte[w * h * 4];
-        var filled = new bool[w * h];
-        foreach (var t in src.Triangles)
-        {
-            var a = new Vector2(t.A.X * w, t.A.Y * h); var b = new Vector2(t.B.X * w, t.B.Y * h); var c = new Vector2(t.C.X * w, t.C.Y * h);
-            float area = (b.X - a.X) * (c.Y - a.Y) - (c.X - a.X) * (b.Y - a.Y);
-            if (Math.Abs(area) < 1e-9f) continue;
-            int x0 = Math.Max(0, (int)Math.Floor(Math.Min(a.X, Math.Min(b.X, c.X)))), x1 = Math.Min(w - 1, (int)Math.Ceiling(Math.Max(a.X, Math.Max(b.X, c.X))));
-            int y0 = Math.Max(0, (int)Math.Floor(Math.Min(a.Y, Math.Min(b.Y, c.Y)))), y1 = Math.Min(h - 1, (int)Math.Ceiling(Math.Max(a.Y, Math.Max(b.Y, c.Y))));
-            for (int y = y0; y <= y1; y++)
-                for (int x = x0; x <= x1; x++)
-                {
-                    float px = x + 0.5f, py = y + 0.5f;
-                    float w0 = ((b.X - px) * (c.Y - py) - (c.X - px) * (b.Y - py)) / area;
-                    float w1 = ((c.X - px) * (a.Y - py) - (a.X - px) * (c.Y - py)) / area;
-                    float w2 = 1 - w0 - w1;
-                    if (w0 < -1e-4f || w1 < -1e-4f || w2 < -1e-4f) continue;
-                    float u = w0 * t.Ua.X + w1 * t.Ub.X + w2 * t.Uc.X, v = w0 * t.Ua.Y + w1 * t.Ub.Y + w2 * t.Uc.Y;
-                    int sx = Math.Clamp((int)((u - MathF.Floor(u)) * tw), 0, tw - 1), sy = Math.Clamp((int)((v - MathF.Floor(v)) * th), 0, th - 1);
-                    Buffer.BlockCopy(from, (sy * tw + sx) * 4, to, (y * w + x) * 4, 4);
-                    filled[y * w + x] = true;
-                }
-        }
-        Dilate(to, filled, w, h);
-        return Image.CreateFromData(w, h, false, Image.Format.Rgba8, to);
-    }
-
-    const int DilatePasses = 6;
-
-    static void Dilate(byte[] px, bool[] filled, int w, int h)
-    {
-        for (int pass = 0; pass < DilatePasses; pass++)
-        {
-            var next = (bool[])filled.Clone();
-            for (int y = 0; y < h; y++)
-                for (int x = 0; x < w; x++)
-                {
-                    int i = y * w + x;
-                    if (filled[i]) continue;
-                    foreach (var (dx, dy) in new[] { (1, 0), (-1, 0), (0, 1), (0, -1) })
-                    {
-                        int nx = x + dx, ny = y + dy;
-                        if (nx < 0 || ny < 0 || nx >= w || ny >= h || !filled[ny * w + nx]) continue;
-                        Buffer.BlockCopy(px, (ny * w + nx) * 4, px, i * 4, 4);
-                        next[i] = true;
-                        break;
-                    }
-                }
-            Array.Copy(next, filled, filled.Length);
-        }
     }
 
     public static ReliefMade Make(ReliefSource src, ReliefJob job, double zero, string packagesRoot, Action<string>? note, Action<double>? progress)

@@ -24,7 +24,9 @@ public sealed class TtsObj
 
     JsonObject? T => J["Transform"] as JsonObject;
     public double PosX => D(T, "posX"); public double PosY => D(T, "posY"); public double PosZ => D(T, "posZ");
-    public bool IsFurniture => (Name == "Custom_Model" && Math.Abs(ScaleX) >= 6) || (Locked && PosY < -0.5 && Name is "Custom_Model" or "Custom_Tile" or "Custom_Token" or "Custom_Board");
+    const double TableScale = 6, UnderTheTable = -0.5;
+    public bool IsTerrain => Name == "Custom_Model" && Locked && Math.Abs(ScaleX) >= TableScale && PosY >= UnderTheTable && MeshUrl != null && DiffuseUrl != null;
+    public bool IsFurniture => (Name == "Custom_Model" && Math.Abs(ScaleX) >= TableScale && !IsTerrain) || (Locked && PosY < UnderTheTable && Name is "Custom_Model" or "Custom_Tile" or "Custom_Token" or "Custom_Board");
     public double RotX => D(T, "rotX"); public double RotY => D(T, "rotY"); public double RotZ => D(T, "rotZ");
     public double ScaleX => D(T, "scaleX", 1); public double ScaleY => D(T, "scaleY", 1); public double ScaleZ => D(T, "scaleZ", 1);
     public bool Flipped => Near180(RotX) ^ Near180(RotZ);

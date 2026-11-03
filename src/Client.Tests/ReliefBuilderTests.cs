@@ -215,4 +215,35 @@ public class ReliefBuilderTests
         Assert.Equal(block.TopY - 0.03, y, 3);
         Assert.Equal(y, footing.Stored(small, new Vec2(10, 0), 180, y));
     }
+
+    static byte[] Numbered(int w, int h)
+    {
+        var px = new byte[w * h * 4];
+        for (int i = 0; i < w * h; i++) { px[i * 4] = (byte)i; px[i * 4 + 3] = 255; }
+        return px;
+    }
+
+    static int[] Cells(byte[] px) => Enumerable.Range(0, px.Length / 4).Select(i => (int)px[i * 4]).ToArray();
+
+    [Fact]
+    public void A_terrain_whose_picture_runs_upside_down_gets_its_picture_turned_to_lie_as_on_the_model()
+    {
+        var src = ReliefBuilder.FromMesh(Grid(4, (_, _) => 0, flipV: true), "t");
+        Assert.Equal((PictureFit.Direct, false, true, false), (src.Fit, src.FlipU, src.FlipV, src.Swap));
+        Assert.False(ReliefPicture.AsItIs(src));
+        var (px, w, h) = ReliefPicture.Fitted(src, Numbered(2, 3), 2, 3);
+        Assert.Equal((2, 3), (w, h));
+        Assert.Equal(new[] { 4, 5, 2, 3, 0, 1 }, Cells(px));
+    }
+
+    [Fact]
+    public void A_terrain_picture_laid_across_is_transposed_and_then_mirrored_as_its_flips_say()
+    {
+        ReliefSource Src(bool u, bool v) => new() { Name = "t", Cols = 2, Rows = 2, Raw = new float[4], Width = 1, Depth = 1, Fit = PictureFit.Direct, Swap = true, FlipU = u, FlipV = v };
+        var (px, w, h) = ReliefPicture.Fitted(Src(false, false), Numbered(2, 3), 2, 3);
+        Assert.Equal((3, 2), (w, h));
+        Assert.Equal(new[] { 0, 2, 4, 1, 3, 5 }, Cells(px));
+        Assert.Equal(new[] { 4, 2, 0, 5, 3, 1 }, Cells(ReliefPicture.Fitted(Src(true, false), Numbered(2, 3), 2, 3).Rgba));
+        Assert.Equal(new[] { 1, 3, 5, 0, 2, 4 }, Cells(ReliefPicture.Fitted(Src(false, true), Numbered(2, 3), 2, 3).Rgba));
+    }
 }

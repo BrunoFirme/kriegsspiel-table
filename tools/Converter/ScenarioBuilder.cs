@@ -1,4 +1,6 @@
 using KTable.Core;
+using KTable.Client.Relief;
+using KTable.Client.Studio;
 using KTable.Core.Model;
 
 namespace KTable.Converter;
@@ -103,42 +105,95 @@ public sealed class ScenarioBuilder
     {
         var sc = _cfg.Scenario;
         var boards = master.Objects.Where(IsSheet).OrderBy(b => b.PosY).ToList();
-        var boardSet = boards.ToHashSet();
+        var terrain = master.Objects.Where(o => o.IsTerrain).ToList();
+        var boardSet = boards.Concat(terrain).ToHashSet();
         foreach (var b in boards)
         {
             var e = _defs.Entry(b.ImageUrl);
             if (e == null) { _rep.Missing(b.ImageUrl ?? "", _assets.Why(b.ImageUrl ?? "") ?? "unresolved", $"{sc.Id} map sheet"); continue; }
             var size = _defs.BaseSize(b);
-            var sheet = new SheetDef
-            {
-                Id = scenario.Sheets.Count == 0 ? "main" : $"sheet-{scenario.Sheets.Count + 1}",
-                Name = b.Nickname.Length > 0 ? b.Nickname : (scenario.Sheets.Count == 0 ? sc.Name : $"Sheet {scenario.Sheets.Count + 1}"),
-                Image = e.Sha!, Package = pkgRel,
-                Pos = new Vec2(Math.Round(b.PosX, 4), Math.Round(b.PosZ, 4)), RotDeg = Norm(b.RotY),
-                Size = new Size2(Math.Round(size.W * Math.Abs(b.ScaleX), 4), Math.Round(size.H * Math.Abs(b.ScaleX), 4)),
-                Locked = true, Z = scenario.Sheets.Count, Kind = "map", Url = b.ImageUrl,
-            };
+            var sheet = NewSheet(scenario, b, pkgRel, e);
+            sheet.Pos = new Vec2(Math.Round(b.PosX, 4), Math.Round(b.PosZ, 4));
+            sheet.RotDeg = Norm(b.RotY);
+            sheet.Size = new Size2(Math.Round(size.W * Math.Abs(b.ScaleX), 4), Math.Round(size.H * Math.Abs(b.ScaleX), 4));
+            sheet.Url = b.ImageUrl;
+            if (Lay(sheet, e, pkgDir, oldScenario)) scenario.Sheets.Add(sheet);
+        }
+        AddTerrain(scenario, terrain, pkgRel, pkgDir, oldScenario);
+        return boardSet;
+    }
+
+    SheetDef NewSheet(Scenario scenario, TtsObj o, string pkgRel, CacheEntry picture) => new()
+    {
+        Id = scenario.Sheets.Count == 0 ? "main" : $"sheet-{scenario.Sheets.Count + 1}",
+        Name = o.Nickname.Length > 0 ? o.Nickname : (scenario.Sheets.Count == 0 ? _cfg.Scenario.Name : $"Sheet {scenario.Sheets.Count + 1}"),
+        Image = picture.Sha!, Package = pkgRel, Locked = true, Z = scenario.Sheets.Count, Kind = "map",
+    };
+
+    bool Lay(SheetDef sheet, CacheEntry e, string pkgDir, string? oldScenario)
+    {
+        var sc = _cfg.Scenario;
+        try
+        {
+            var src = _assets.FilePath(e)!;
+            Console.WriteLine($"  sheet {sheet.Id}: {e.W}x{e.H} px, {sheet.Size.W}x{sheet.Size.H} units; building tiles...");
+            var tilesDir = Path.Combine(pkgDir, "tiles", e.Sha!);
+            if (oldScenario != null) ReuseTiles(Path.Combine(oldScenario, "scenario", "tiles", e.Sha!), tilesDir);
+            var idx = Tiles.Build(src, tilesDir, _cfg.Tiles);
+            _rep.Counts[$"{sc.Id}: sheet {sheet.Id} tiles"] = $"{idx.Levels.Count} levels, {idx.Levels.Sum(l => l.Cols * l.Rows)} tiles ({idx.Ext})";
+            var assetDst = Path.Combine(pkgDir, "assets", $"{e.Sha}.{e.Ext}");
+            Directory.CreateDirectory(Path.GetDirectoryName(assetDst)!);
+            if (!File.Exists(assetDst)) File.Copy(src, assetDst);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _rep.Note($"{sc.Id}: the map sheet '{sheet.Name}' was left out: its picture could not be read ({ex.Message}). The rest of the table came in; put the map on the table by hand from a copy of the picture that opens.");
+            Console.WriteLine($"  sheet {sheet.Id} '{sheet.Name}' left out: its picture could not be read ({ex.Message})");
+            return false;
+        }
+    }
+
+    void AddTerrain(Scenario scenario, List<TtsObj> terrain, string pkgRel, string pkgDir, string? oldScenario)
+    {
+        var sc = _cfg.Scenario;
+        var read = new List<(TtsObj o, ReliefSource src, CacheEntry picture)>();
+        foreach (var o in terrain)
+        {
+            var where = $"{sc.Id} 3D terrain {o.Guid}";
+            var mesh = _defs.Entry(o.MeshUrl);
+            var tex = _defs.Entry(o.DiffuseUrl);
+            if (mesh is not { Ext: "obj" }) { _rep.Missing(o.MeshUrl!, mesh == null ? _assets.Why(o.MeshUrl!) ?? "unresolved" : $"not an OBJ model ({mesh.Ext})", where); continue; }
+            if (tex == null || !AssetStore.IsPicture(tex.Ext)) { _rep.Missing(o.DiffuseUrl!, tex == null ? _assets.Why(o.DiffuseUrl!) ?? "unresolved" : $"not a picture ({tex.Ext})", where); continue; }
             try
             {
-                var src = _assets.FilePath(e)!;
-                Console.WriteLine($"  sheet {sheet.Id}: {e.W}x{e.H} px, {sheet.Size.W}x{sheet.Size.H} units; building tiles...");
-                var tilesDir = Path.Combine(pkgDir, "tiles", e.Sha!);
-                if (oldScenario != null) ReuseTiles(Path.Combine(oldScenario, "scenario", "tiles", e.Sha!), tilesDir);
-                var idx = Tiles.Build(src, tilesDir, _cfg.Tiles);
-                _rep.Counts[$"{sc.Id}: sheet {sheet.Id} tiles"] = $"{idx.Levels.Count} levels, {idx.Levels.Sum(l => l.Cols * l.Rows)} tiles ({idx.Ext})";
-                var assetDst = Path.Combine(pkgDir, "assets", $"{e.Sha}.{e.Ext}");
-                Directory.CreateDirectory(Path.GetDirectoryName(assetDst)!);
-                if (!File.Exists(assetDst)) File.Copy(src, assetDst);
+                var src = ReliefBuilder.FromMesh(ModelFiles.Obj(_assets.FilePath(mesh)!), o.Nickname);
+                read.Add((o, src, ReliefPicture.AsItIs(src) ? tex : _assets.Fitted(src, tex)));
             }
-            catch (Exception ex)
+            catch (Exception e) when (e is InvalidDataException or IOException)
             {
-                _rep.Note($"{sc.Id}: the map sheet '{sheet.Name}' was left out: its picture could not be read ({ex.Message}). The rest of the table came in; put the map on the table by hand from a copy of the picture that opens.");
-                Console.WriteLine($"  sheet {sheet.Id} '{sheet.Name}' left out: its picture could not be read ({ex.Message})");
-                continue;
+                _rep.Note($"{sc.Id}: the 3D terrain {o.Guid} was left out: {e.Message}.");
             }
-            scenario.Sheets.Add(sheet);
         }
-        return boardSet;
+        if (read.Count == 0) return;
+        double floor = read.Min(r => r.o.PosY + r.src.Low * Math.Abs(r.o.ScaleY));
+        foreach (var (o, src, picture) in read)
+        {
+            double sx = Math.Abs(o.ScaleX), sy = Math.Abs(o.ScaleY), sz = Math.Abs(o.ScaleZ);
+            var (relief, _) = ReliefFiles.Save(pkgDir, src.ToGrid((floor - o.PosY) / sy));
+            var sheet = NewSheet(scenario, o, pkgRel, picture);
+            sheet.Pos = new Vec2(Math.Round(o.PosX, 4), Math.Round(o.PosZ, 4));
+            sheet.RotDeg = Norm(o.RotY);
+            sheet.Size = new Size2(Math.Round(src.Width * sx, 4), Math.Round(src.Depth * sz, 4));
+            sheet.Relief = relief;
+            sheet.Height = Math.Round(sy / sx, 4);
+            sheet.Url = o.DiffuseUrl;
+            if (!Lay(sheet, picture, pkgDir, oldScenario)) continue;
+            scenario.Sheets.Add(sheet);
+            const double CentredWithin = 0.01;
+            if (Math.Abs(src.Left + src.Width / 2) > CentredWithin * src.Width || Math.Abs(src.Top + src.Depth / 2) > CentredWithin * src.Depth)
+                _rep.Note($"{sc.Id}: the 3D terrain {o.Guid} is not centred on its own object in TTS; its map sheet '{sheet.Name}' is laid on the object's centre, so check that it meets its neighbours.");
+        }
     }
 
     void PruneExtras(PackOut extras, List<Layer> layers)

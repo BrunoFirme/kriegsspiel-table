@@ -6,6 +6,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using SkiaSharp;
+using KTable.Client.Relief;
 using KTable.Core;
 
 namespace KTable.Converter;
@@ -275,4 +276,19 @@ public sealed partial class AssetStore
     }
 
     public string? Why(string url) => _index.TryGetValue(Key(url), out var e) ? $"{e.Status}: {e.Error}" : "not fetched";
+
+    public CacheEntry Fitted(ReliefSource src, CacheEntry picture)
+    {
+        using var bmp = SKBitmap.Decode(FilePath(picture)) ?? throw new InvalidDataException("the terrain's picture could not be read");
+        using var rgba = bmp.Copy(SKColorType.Rgba8888) ?? throw new InvalidDataException("the terrain's picture could not be read");
+        var (px, w, h) = ReliefPicture.Fitted(src, rgba.Bytes, rgba.Width, rgba.Height);
+        using var fitted = new SKBitmap(new SKImageInfo(w, h, SKColorType.Rgba8888, SKAlphaType.Unpremul));
+        System.Runtime.InteropServices.Marshal.Copy(px, 0, fitted.GetPixels(), px.Length);
+        using var data = fitted.Encode(SKEncodedImageFormat.Png, 100);
+        var bytes = data.ToArray();
+        var e = Describe(bytes, picture.Url ?? "");
+        var path = Path.Combine(_cfg.Cache, e.Sha + "." + e.Ext);
+        if (!File.Exists(path)) Json.WriteAtomic(path, bytes, Environment.ProcessId.ToString(CultureInfo.InvariantCulture));
+        return e;
+    }
 }

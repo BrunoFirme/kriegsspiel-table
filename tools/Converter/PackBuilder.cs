@@ -95,6 +95,7 @@ public sealed class PackBuilder
         if (_cfg.IgnoreTypes.Contains(o.Name) || o.Name.StartsWith("Die_")) { _rep.Skipped(o.Name, where); return; }
         if (!DefFactory.IsPiece(o)) { _rep.UnknownType(o.Name, where); return; }
         if (o.IsFurniture) { _rep.Skipped("table furniture (custom table / surround / under the table)", where); return; }
+        if (o.IsTerrain) { _rep.Skipped("3D terrain (laid as a map sheet of the scenario)", where); return; }
         var r = _defs.DefFor(o, pack);
         if (r == null) return;
         objects++;
