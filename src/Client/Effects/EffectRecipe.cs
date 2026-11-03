@@ -20,6 +20,7 @@ public sealed class EffectLayer
     public float Lift;
     public float Fall;
     public float Damp;
+    public float Brake;
     public float Drift;
     public float SMin = 1, SMax = 1;
     public (float x, float y)[] Curve = { (0, 1), (1, 1) };
@@ -112,6 +113,27 @@ public static class EffectRecipe
             ex = new Vector3(w / 2, 0, h / 2);
         }
 
+        const float PowderDrift = 0.6f, BlastBrake = 0.12f, VeilAlpha = 0.45f;
+
+        void AddPowder(EffectLayer puff)
+        {
+            layers.Add(puff);
+            layers.Add(new EffectLayer
+            {
+                Sprite = "mist", Amount = Math.Max(2, puff.Amount / 2), Fixed = puff.Fixed, Life = puff.Life, Explosive = puff.Explosive, Offset = puff.Offset,
+                Box = puff.Box * 1.2f, At = puff.At, Dir = puff.Dir, Spread = puff.Spread * 1.5f, VMin = puff.VMin * 0.6f, VMax = puff.VMax * 0.6f,
+                Damp = puff.Damp * 0.6f, Brake = puff.Brake, Lift = puff.Lift, Drift = puff.Drift, Spin = 4,
+                SMin = puff.SMin * 1.8f, SMax = puff.SMax * 2.2f, Curve = new[] { (0f, 0.4f), (0.1f, 0.8f), (1f, 3.6f) },
+                Ramp = puff.Ramp.Select(r => (r.at, r.c with { A = r.c.A * VeilAlpha })).ToArray(),
+            });
+        }
+
+        (float, Rgba)[] PowderRamp(Rgba col, float full, float alpha) => new[]
+        {
+            (0f, Fade(col, 0)), (full, Fade(col, alpha)), (0.55f, Fade(col.Lerp(Rgba.White, 0.1f), 0.68f)),
+            (0.85f, Fade(col.Lerp(Rgba.White, 0.15f), 0.32f)), (1f, Fade(col.Lerp(Rgba.White, 0.2f), 0)),
+        };
+
         int N(float baseCount, bool line = true) => Math.Clamp((int)Math.Round(baseCount * A * (line ? k : 1)), 1, 900);
         Rgba Fade(Rgba col, float a) => col with { A = a * clarity };
 
@@ -189,12 +211,12 @@ public static class EffectRecipe
 
         void Musketry()
         {
-            layers.Add(new EffectLayer
+            AddPowder(new EffectLayer
             {
-                Sprite = "puff", Amount = N(22), Life = 7, Box = new Vector3(ex.X * 0.95f, 0.05f * s, ex.Z * 0.5f), At = new Vector3(0, 0.12f * s, 0),
-                Dir = new Vector3(0, 0.35f, -1).Normalized(), Spread = 28, VMin = 0.25f * s * H, VMax = 0.7f * s * H, Damp = 0.12f * s * H, Lift = 0.03f * s * H, Drift = 0.3f * D,
-                SMin = 0.55f * s * P, SMax = 0.95f * s * P, Curve = new[] { (0f, 0.3f), (0.15f, 0.85f), (1f, 2.1f) },
-                Ramp = new[] { (0f, Fade(c, 0)), (0.05f, Fade(c, 0.85f)), (0.5f, Fade(c.Lerp(Rgba.White, 0.1f), 0.5f)), (1f, Fade(c.Lerp(Rgba.White, 0.2f), 0)) },
+                Sprite = "puff", Amount = N(30), Life = 7, Box = new Vector3(ex.X * 0.95f, 0.05f * s, ex.Z * 0.5f), At = new Vector3(0, 0.12f * s, 0),
+                Dir = new Vector3(0, 0.35f, -1).Normalized(), Spread = 28, VMin = 0.25f * s * H, VMax = 0.7f * s * H, Damp = 0.12f * s * H, Brake = 0.2f, Lift = 0.03f * s * H, Drift = PowderDrift * D,
+                SMin = 0.65f * s * P, SMax = 0.95f * s * P, Curve = new[] { (0f, 0.3f), (0.15f, 0.9f), (1f, 2.8f) },
+                Ramp = PowderRamp(c, 0.05f, 0.85f),
             });
             layers.Add(MuzzleFlash(N(5), 1.1f, false, 0, new Vector3(ex.X * 0.95f, 0.02f, 0.05f), new Vector3(0, 0.12f * s, -ex.Z * 0.8f), 0.07f));
         }
@@ -210,26 +232,26 @@ public static class EffectRecipe
                 float off = rolling ? i / (float)sections * (musket ? 0.5f : 0.6f) : 0;
                 if (musket)
                 {
-                    layers.Add(new EffectLayer
+                    AddPowder(new EffectLayer
                     {
-                        Sprite = "puff", Amount = Math.Max(2, N(16) / sections), Fixed = true, Life = every, Explosive = 0.85f, Offset = off,
+                        Sprite = "puff", Amount = Math.Max(3, N(24) / sections), Fixed = true, Life = every, Explosive = 0.85f, Offset = off,
                         Box = new Vector3(hw * 0.95f, 0.05f * s, ex.Z * 0.4f), At = new Vector3(xc, 0.12f * s, -ex.Z * 0.3f),
-                        Dir = new Vector3(0, 0.35f, -1).Normalized(), Spread = 25, VMin = 1.0f * s * H, VMax = 2.0f * s * H, Damp = 1.6f * s * H, Lift = 0.04f * s * H, Drift = 0.3f * D,
-                        SMin = 0.55f * s * P, SMax = 0.95f * s * P, Curve = new[] { (0f, 0.3f), (0.06f, 0.85f), (1f, 2.2f) },
-                        Ramp = new[] { (0f, Fade(c, 0)), (0.02f, Fade(c, 0.9f)), (0.5f, Fade(c.Lerp(Rgba.White, 0.1f), 0.5f)), (1f, Fade(c.Lerp(Rgba.White, 0.2f), 0)) },
+                        Dir = new Vector3(0, 0.35f, -1).Normalized(), Spread = 25, VMin = 1.0f * s * H, VMax = 2.0f * s * H, Damp = 1.6f * s * H, Brake = BlastBrake, Lift = 0.04f * s * H, Drift = PowderDrift * D,
+                        SMin = 0.65f * s * P, SMax = 0.95f * s * P, Curve = new[] { (0f, 0.3f), (0.06f, 0.9f), (1f, 3f) },
+                        Ramp = PowderRamp(c, 0.02f, 0.9f),
                     });
                     layers.Add(MuzzleFlash(Math.Max(1, (int)Math.Round(hw * 2 / 0.45f)), every, true, off, new Vector3(hw * 0.95f, 0.02f, 0.02f), new Vector3(xc, 0.12f * s, -ex.Z * 0.8f), 0.08f / every));
                 }
                 else
                 {
                     if (e.Smoke)
-                        layers.Add(new EffectLayer
+                        AddPowder(new EffectLayer
                         {
-                            Sprite = "puff", Amount = Math.Max(3, N(14) / sections), Fixed = true, Life = every, Explosive = 0.92f, Offset = off,
+                            Sprite = "puff", Amount = Math.Max(4, N(20) / sections), Fixed = true, Life = every, Explosive = 0.92f, Offset = off,
                             Box = new Vector3(hw, 0.05f * s, 0.1f * s), At = new Vector3(xc, 0.15f * s, -ex.Z * 0.7f),
-                            Dir = new Vector3(0, 0.2f, -1).Normalized(), Spread = 18, VMin = 2.6f * s * H, VMax = 4.2f * s * H, Damp = 3.6f * s * H, Lift = 0.06f * s * H, Drift = 0.3f * D,
-                            SMin = 0.5f * s * P, SMax = 0.9f * s * P, Curve = new[] { (0f, 0.25f), (0.08f, 0.9f), (1f, 2.3f) },
-                            Ramp = new[] { (0f, Fade(c, 0)), (0.02f, Fade(c, 0.95f)), (0.45f, Fade(c, 0.55f)), (1f, Fade(c.Lerp(Rgba.White, 0.2f), 0)) },
+                            Dir = new Vector3(0, 0.2f, -1).Normalized(), Spread = 18, VMin = 2.6f * s * H, VMax = 4.2f * s * H, Damp = 3.6f * s * H, Brake = BlastBrake, Lift = 0.06f * s * H, Drift = PowderDrift * D,
+                            SMin = 0.6f * s * P, SMax = 0.9f * s * P, Curve = new[] { (0f, 0.25f), (0.08f, 0.95f), (1f, 3.2f) },
+                            Ramp = PowderRamp(c, 0.02f, 0.95f),
                         });
                     layers.Add(MuzzleFlash(sections > 1 ? 1 : N(2), every, true, off, new Vector3(hw, 0.02f, 0.02f), new Vector3(xc, 0.15f * s, -ex.Z * 0.85f), 0.12f / every, gun: true));
                 }
@@ -591,13 +613,13 @@ public static class EffectRecipe
                     Ramp = new[] { (0f, new Rgba(1, 1, 0.9f, 1)), (lasts * 0.3f, new Rgba(1, 0.7f, 0.3f, 0.6f)), (lasts * 0.6f, new Rgba(1, 0.5f, 0.2f, 0)), (1f, new Rgba(1, 0.5f, 0.2f, 0)) },
                 });
                 if (e.Smoke)
-                    layers.Add(new EffectLayer
+                    AddPowder(new EffectLayer
                     {
-                        Sprite = "puff", Amount = 18, Fixed = true, Life = every, Explosive = 0.9f, Offset = off,
+                        Sprite = "puff", Amount = 26, Fixed = true, Life = every, Explosive = 0.9f, Offset = off,
                         Box = new Vector3(0.25f * sb, 0.1f * sb, 0.15f * sb), At = muzzle + new Vector3(0, 0.1f * sb, -0.4f * sb),
-                        Dir = new Vector3(0, 0.3f, -1).Normalized(), Spread = 35, VMin = 1.2f * sb * H, VMax = 2.8f * sb * H, Damp = 2.2f * sb * H, Lift = 0.07f * sb * H, Drift = 0.35f * D,
-                        SMin = 0.8f * sb * P, SMax = 1.35f * sb * P, Curve = new[] { (0f, 0.3f), (0.06f, 1f), (1f, 2.6f) },
-                        Ramp = new[] { (0f, Fade(c.Lerp(lit, 0.7f), 0)), (lasts * 0.3f, Fade(c.Lerp(lit, 0.6f), 0.9f)), (lasts * 1.2f, Fade(c.Lerp(lit, 0.15f), 0.9f)), (0.5f, Fade(c.Lerp(Rgba.White, 0.1f), 0.55f)), (1f, Fade(c.Lerp(Rgba.White, 0.2f), 0)) },
+                        Dir = new Vector3(0, 0.3f, -1).Normalized(), Spread = 35, VMin = 1.2f * sb * H, VMax = 2.8f * sb * H, Damp = 2.2f * sb * H, Brake = BlastBrake, Lift = 0.07f * sb * H, Drift = PowderDrift * D,
+                        SMin = 0.9f * sb * P, SMax = 1.35f * sb * P, Curve = new[] { (0f, 0.3f), (0.06f, 1f), (1f, 3.2f) },
+                        Ramp = new[] { (0f, Fade(c.Lerp(lit, 0.7f), 0)), (lasts * 0.3f, Fade(c.Lerp(lit, 0.6f), 0.9f)), (lasts * 1.2f, Fade(c.Lerp(lit, 0.15f), 0.9f)), (0.55f, Fade(c.Lerp(Rgba.White, 0.1f), 0.68f)), (0.85f, Fade(c.Lerp(Rgba.White, 0.15f), 0.32f)), (1f, Fade(c.Lerp(Rgba.White, 0.2f), 0)) },
                     });
                 layers.Add(new EffectLayer
                 {

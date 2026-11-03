@@ -59,7 +59,7 @@ public class EffectRecipeTests
     public void A_rolling_volley_fires_section_after_section_down_the_line()
     {
         var together = Plan(new EffectDef { Kind = "powder", Volley = "together" }, w: 6);
-        Assert.Equal(new[] { 0f, 0f }, together.Layers.Select(l => l.Offset));
+        Assert.Equal(new[] { 0f, 0f, 0f }, together.Layers.Select(l => l.Offset));
         var rolling = Plan(new EffectDef { Kind = "powder", Volley = "rolling" }, w: 6);
         var offsets = rolling.Layers.Where(l => l.Sprite == "puff").Select(l => l.Offset).ToList();
         Assert.Equal(7, offsets.Count);
@@ -170,10 +170,24 @@ public class EffectRecipeTests
     {
         var l = Plan(new EffectDef { Kind = "powder" }, w: 3, h: 1, phase: 0.37f).Layers[0];
         Assert.Equal("puff", l.Sprite);
-        Assert.Equal(66, l.Amount);
+        Assert.Equal(90, l.Amount);
         Assert.Equal(new Vector3(1.425f, 0.0866025403f, 0.25f), l.Box);
         Assert.Equal(1.21243548f, l.VMax);
-        Assert.Equal(new Rgba(0.55f, 0.55f, 0.55f, 0.5f), l.Ramp[2].c);
+        Assert.Equal(new Rgba(0.55f, 0.55f, 0.55f, 0.68f), l.Ramp[2].c);
+    }
+
+    [Theory]
+    [InlineData("powder", "together")]
+    [InlineData("powder", "random")]
+    [InlineData("cannon", "rolling")]
+    [InlineData("broadside", "together")]
+    public void Black_powder_smoke_is_braked_only_at_the_blast_and_then_goes_with_the_wind(string kind, string volley)
+    {
+        var smoke = Plan(new EffectDef { Kind = kind, Volley = volley }).Layers.Where(l => l.Sprite == "puff" && !l.Glow).ToList();
+
+        Assert.NotEmpty(smoke);
+        Assert.All(smoke, l => Assert.InRange(l.Brake, 0.05f, 0.25f));
+        Assert.All(smoke, l => Assert.True(l.Drift >= 0.6f, $"drift {l.Drift}"));
     }
 
     [Theory]

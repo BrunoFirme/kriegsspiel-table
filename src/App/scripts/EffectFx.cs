@@ -19,6 +19,7 @@ public static class EffectFx
         public required GpuParticles3D Node;
         public Vector3 Lift;
         public float Drift;
+        public float Brake, Blast;
         public StandardMaterial3D? Lit;
         public float Start, Peak = -1;
         public double Speed = 1;
@@ -208,8 +209,29 @@ public static class EffectFx
         bool glows = l.Add || l.Glow || l.Sprite is "flame" or "flash" or "muzzle" or "spark";
         if (!glows) mat.AlbedoColor = ShadeNow;
         host.AddChild(em);
-        return new Emitter { Node = em, Lift = pm.Gravity, Drift = l.Drift, Lit = glows ? null : mat };
+        var made = new Emitter { Node = em, Lift = pm.Gravity, Drift = l.Drift, Lit = glows ? null : mat };
+        if (l.Brake > 0)
+        {
+            made.Brake = l.Brake;
+            made.Blast = Mathf.Max(l.VMax * 1.5f, 1f);
+            pm.DampingCurve = StepTex(l.Brake, 1, 0);
+            pm.VelocityLimitCurve = LimitTex(made);
+        }
+        return made;
     }
+
+    const float WindCarrySeconds = 1.5f, StillDrift = 0.15f, BrakeEase = 0.08f;
+
+    static CurveTexture StepTex(float at, float before, float after)
+    {
+        var c = new Curve { MinValue = 0, MaxValue = Mathf.Max(before, after) };
+        foreach (var (x, y) in new[] { (0f, before), (at, before), (Mathf.Min(1, at + BrakeEase), after), (1f, after) })
+            c.AddPoint(new Vector2(x, y), 0, 0, Curve.TangentMode.Linear, Curve.TangentMode.Linear);
+        return new CurveTexture { Curve = c };
+    }
+
+    static CurveTexture LimitTex(Emitter m) =>
+        StepTex(m.Brake, m.Blast, StillDrift + WindNow.Length() * m.Drift * WindCarrySeconds);
 
     public static Vector3 WindNow { get; private set; } = Pull(new Wind());
 
@@ -248,7 +270,10 @@ public static class EffectFx
         if (emitters.Count == 0) return;
         foreach (var m in emitters)
             if (GodotObject.IsInstanceValid(m.Node) && m.Node.ProcessMaterial is ParticleProcessMaterial pm)
+            {
                 pm.Gravity = m.Lift + WindNow * m.Drift;
+                if (m.Brake > 0) pm.VelocityLimitCurve = LimitTex(m);
+            }
     }
 
     static readonly Dictionary<string, ImageTexture> Sprites = new();
