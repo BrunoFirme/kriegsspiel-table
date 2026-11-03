@@ -48,7 +48,6 @@ public partial class Main : Node
 
     async System.Threading.Tasks.Task _ReadyAsync()
     {
-        if (ProjectSettings.GetSetting("ktable/data_dir_name", "").AsString() is { Length: > 0 } dataName) DataPaths.Name = dataName;
         Diagnostics.Install();
         Ui.InstallTheme();
         FileThumbs.Install();

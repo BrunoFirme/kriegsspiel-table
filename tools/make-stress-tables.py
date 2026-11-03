@@ -1,14 +1,14 @@
 import io, json, os, sys
 
-sandbox = os.environ.get("KSTABLE_PACKAGES") or os.path.join(
-    os.environ["LOCALAPPDATA"], "KriegsspielTable Sandbox", "packages")
+packages = os.environ.get("KSTABLE_PACKAGES") or os.path.join(
+    os.environ["LOCALAPPDATA"], "KriegsspielTable", "packages")
 model_src = sys.argv[1]
 pack = "tts.scripted-war-game-kriegsspiel-pieces"
 tints = [None, "#9a3b3b", "#3b5d9a"]
 
 base = json.load(io.open(model_src, encoding="utf-8"))
 model = base["umpireBoard"][0]
-defs = [p["id"] for p in json.load(io.open(os.path.join(sandbox, pack, "pack.json"), encoding="utf-8"))["pieces"]]
+defs = [p["id"] for p in json.load(io.open(os.path.join(packages, pack, "pack.json"), encoding="utf-8"))["pieces"]]
 print(f"{len(defs)} defs in {pack}")
 
 sizes = [int(a) for a in sys.argv[2:]] or [10000, 25000, 50000]
@@ -39,7 +39,7 @@ for n in sizes:
                      else f"Stress test: {n:,} over {len(defs):,} kinds").replace(",", " ")
         d["sheets"] = []
         d["umpireBoard"] = board
-        dirn = os.path.join(sandbox, "scenarios", sid)
+        dirn = os.path.join(packages, "scenarios", sid)
         os.makedirs(dirn, exist_ok=True)
         for junk in ("scenario.start.json",):
             j = os.path.join(dirn, junk)
@@ -50,4 +50,4 @@ for n in sizes:
         mb = os.path.getsize(out) / 1e6
         total += mb
         print(f"{sid}: {n} pieces, {mb:.0f} MB  ({d['name']})")
-print(f"total {total:.0f} MB in {os.path.join(sandbox, 'scenarios')}")
+print(f"total {total:.0f} MB in {os.path.join(packages, 'scenarios')}")

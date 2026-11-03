@@ -44,29 +44,6 @@ and the .NET SDK. The preset is `src\App\export_presets.cfg` ("Windows Desktop")
   looks for the player's own Tabletop Simulator folder.
 - Steam is left out unless `-Steam` is given: the build then has no Steamworks code and no Valve libraries.
 
-## `tools/deploy-sandbox.ps1`: the group's installed copy
-
-```
-powershell -ExecutionPolicy Bypass -File tools\deploy-sandbox.ps1 [-Target <folder>] [-Clean]
-```
-
-The sandbox is a separate, installed copy the group plays. Never edit files in it: change the source and deploy
-again. It keeps its own data (packs, scenarios, saves, caches, settings) under "KriegsspielTable Sandbox"; `-Clean`
-wipes that data so it starts like a fresh install.
-
-- The sandbox runs the project through the Godot editor binary, which always loads the Debug build. Debug is
-  unoptimised by default, so the app is built as Debug with `Optimize=true`, whole (`--no-incremental`: a changed
-  `Optimize` alone does not make an incremental build compile again).
-- The converter's folder is emptied before publishing: a publish adds to what is there, and the folder once kept
-  every native library of every architecture (339 MB for a 16 MB converter).
-- Assets are imported first: a sound or picture added since the last import would be missing from the copy.
-- Godot keeps the compiled game in `.godot\mono\temp\bin`, so the copy never excludes a folder named `bin`.
-- `project.godot` is written without a byte-order mark: Godot reads it strictly.
-- The app keeps checkpoints in the shell's Documents folder, which OneDrive may have moved, so `-Clean` asks the
-  shell where it is rather than trusting `%USERPROFILE%`.
-- Windows caches a shortcut's icon by file path, so the icon is installed under a name carrying its content hash and
-  the shell is told the icons changed.
-
 ## `tools/net-test.ps1` and `tools/NetRelay`: playing over a bad connection on one PC
 
 ```
@@ -84,8 +61,7 @@ seconds, `set all awful` makes everyone's line bad, `help` lists them). Closing 
 - The scenario and only the packs it lists are copied from `-Packages` (the dev build's packages unless given), and
   every window gets its own user folders inside a temporary run folder, removed at the end (kept with `-Keep` or
   when something failed). Nothing is written back to the folder the scenario came from.
-- `-Engine` runs the windows on another Godot binary of the same version, such as the sandbox's
-  (`%LOCALAPPDATA%\Programs\Kriegsspiel Table Sandbox\engine\`).
+- `-Engine` runs the windows on another Godot binary of the same version.
 - The test host is an ordinary host, so it asks the router for its port through UPnP like any other, and gives it
   back when it closes.
 - Traffic on one PC never reaches the router, the firewall or the ISP. Whether people outside can join (port mapping,
@@ -175,9 +151,9 @@ two trees are then compared.
 
 ## `tests/lock/app/make_seed.py`
 
-Builds `tests/lock/app/seed`, the packages root every lock run starts from: a few kinds copied from the sandbox's TTS
-pack (read only), one pack written here (counters, text lines, states, a back, an attachment, a script with a button,
-an input, a menu row, a hotkey, a table-menu row and a dialog), two scenarios, the joining PC's own pack, and the
+Builds `tests/lock/app/seed`, the packages root every lock run starts from: a few kinds copied from the TTS pack in
+`%LOCALAPPDATA%\KriegsspielTable\packages` (read only), one pack written here (counters, text lines, states, a back,
+an attachment, a script with a button, an input, a menu row, a hotkey, a table-menu row and a dialog), two scenarios, the joining PC's own pack, and the
 fixtures the scripts drop or import (a map picture, a unit cube as obj, stl, ply and glb, a studio picture). The
 result is the same bytes every time.
 
@@ -225,6 +201,6 @@ sprite a state, and writes `effects.json` for rebuilding them as particle system
 python tools/make-stress-tables.py <a scenario.json to take a piece from> [sizes...]
 ```
 
-Installs stress-test tables into the sandbox (or `KSTABLE_PACKAGES`): for each size (10,000, 25,000 and 50,000 by
-default) one table of the same scripted block, which the renderer can batch, and one spread over every def of the
+Installs stress-test tables into `%LOCALAPPDATA%\KriegsspielTable\packages` (or `KSTABLE_PACKAGES`): for each size
+(10,000, 25,000 and 50,000 by default) one table of the same scripted block, which the renderer can batch, and one spread over every def of the
 pack with tints and sizes, as a real board looks. They are ordinary scenario folders; delete one to be rid of it.

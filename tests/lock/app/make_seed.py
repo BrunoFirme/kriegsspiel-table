@@ -5,7 +5,7 @@ from PIL import Image, ImageDraw
 HERE = Path(__file__).resolve().parent
 SEED = HERE / "seed"
 FIX = HERE / "fixtures"
-SANDBOX = Path(os.environ["LOCALAPPDATA"]) / "KriegsspielTable Sandbox" / "packages"
+PACKAGES = Path(os.environ["LOCALAPPDATA"]) / "KriegsspielTable" / "packages"
 TTS = "tts.scripted-war-game-kriegsspiel-pieces"
 TTS_DEFS = ["scripted-war.black-infantry-97f7aaf3", "scripted-war.1861-0e136b6a", "scripted-war.1st-division-01985e3b", "scripted-war.blue-model-ee2f255c"]
 
@@ -35,7 +35,7 @@ def asset(pack_dir: Path, assets: dict, w, h, draw):
 
 
 def tts_subset():
-    src = SANDBOX / TTS
+    src = PACKAGES / TTS
     p = json.loads((src / "pack.json").read_text(encoding="utf-8"))
     defs = [d for d in p["pieces"] if d["id"] in TTS_DEFS]
     used = set()

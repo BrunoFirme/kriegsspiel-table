@@ -1,6 +1,5 @@
 using KTable.Converter;
 
-if (Environment.GetEnvironmentVariable("KTABLE_DATA_NAME") is { Length: > 0 } dataName) KTable.Core.DataPaths.Name = dataName;
 if (args.Length > 0 && args[0] == "agent") return await AgentBridge.Run(args.Skip(1).ToList());
 if (Console.IsOutputRedirected) Console.OutputEncoding = new System.Text.UTF8Encoding(false);
 var argList = args.ToList();

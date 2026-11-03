@@ -4,7 +4,7 @@ namespace KTable.Core;
 
 public static class DataPaths
 {
-    public static string Name { get; set; } = "KriegsspielTable";
+    public const string Name = "KriegsspielTable";
     static string? UserOverride => Environment.GetEnvironmentVariable("KTABLE_USER_DIR") is { Length: > 0 } d ? d : null;
     public static string Local => UserOverride is { } o ? Path.Combine(o, "local", Name) : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), Name);
     public static string Documents => Path.Combine(DocumentsFolder, Name);

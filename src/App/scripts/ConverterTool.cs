@@ -73,7 +73,6 @@ public static class ConverterTool
             WorkingDirectory = Path.GetDirectoryName(exe)!,
             StandardOutputEncoding = System.Text.Encoding.UTF8, StandardErrorEncoding = System.Text.Encoding.UTF8,
         };
-        psi.Environment["KTABLE_DATA_NAME"] = DataPaths.Name;
         foreach (var a in args) psi.ArgumentList.Add(a);
         Task.Run(() =>
         {
