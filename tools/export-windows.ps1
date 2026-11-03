@@ -1,6 +1,8 @@
 param(
     [string]$Out = (Join-Path (Split-Path -Parent $PSScriptRoot) "build\win64"),
     [switch]$Zip,
+    [switch]$Installer,
+    [string]$VersionName,
     [switch]$Steam
 )
 $ErrorActionPreference = "Stop"
@@ -50,9 +52,9 @@ function Publish-SelfContainedConverter($dist) {
     [IO.File]::WriteAllText($convCfg, $lookForThePlayersOwnTtsFolder)
 }
 
-function Write-Stamp($dist, $commit) {
+function Write-Stamp($dist, $commit, $name) {
     $dirty = if ((git -C $repo status --porcelain) 2>$null) { "+local changes" } else { "" }
-    $stamp = "release build $commit$dirty - $(Get-Date -Format 'd MMM yyyy HH:mm')"
+    $stamp = "$name, release build $commit$dirty - $(Get-Date -Format 'd MMM yyyy HH:mm')"
     [IO.File]::WriteAllText((Join-Path $dist "BUILD.txt"), $stamp)
     $stamp
 }
@@ -84,6 +86,26 @@ on, and their licenses, are in THIRD-PARTY-NOTICES.md.
 "@)
 }
 
+function Get-Version {
+    $line = Select-String -Path (Join-Path $repo "src\App\project.godot") -Pattern '^config/version="([^"]+)"' | Select-Object -First 1
+    if (-not $line) { throw "config/version missing from project.godot" }
+    $line.Matches[0].Groups[1].Value
+}
+
+function Find-Iscc {
+    $found = @((Join-Path $env:LOCALAPPDATA "Programs\Inno Setup 6\ISCC.exe"), (Join-Path ${env:ProgramFiles(x86)} "Inno Setup 6\ISCC.exe"), (Join-Path $env:ProgramFiles "Inno Setup 6\ISCC.exe")) | Where-Object { Test-Path $_ } | Select-Object -First 1
+    if (-not $found) { throw "Inno Setup 6 not found (winget install JRSoftware.InnoSetup)" }
+    $found
+}
+
+function Write-Installer($dist, $version, $name) {
+    $outName = "KriegsspielTable-$($name -replace '\s+', '-')-setup"
+    & (Find-Iscc) /Q "/DDist=$dist" "/DVersion=$version" "/DVersionName=$name" "/DOutName=$outName" (Join-Path $PSScriptRoot "installer.iss")
+    if ($LASTEXITCODE -ne 0) { throw "installer build failed ($LASTEXITCODE)" }
+    $setup = Join-Path $Out "$outName.exe"
+    Write-Host "Setup  : $setup ($([math]::Round((Get-Item $setup).Length / 1MB)) MB)"
+}
+
 function Write-Zip($dist, $commit) {
     $zipPath = Join-Path $Out "KriegsspielTable-win64-$commit.zip"
     if (Test-Path $zipPath) { Remove-Item $zipPath -Force }
@@ -102,8 +124,11 @@ Export-Game $godot $dist
 Copy-FilesBesideTheExe $dist
 Publish-SelfContainedConverter $dist
 $commit = (git -C $repo rev-parse --short HEAD) 2>$null
-$stamp = Write-Stamp $dist $commit
+$version = Get-Version
+if (-not $VersionName) { $VersionName = $version }
+$stamp = Write-Stamp $dist $commit $VersionName
 Write-Readme $dist $stamp
 if ($Zip) { Write-Zip $dist $commit }
+if ($Installer) { Write-Installer $dist $version $VersionName }
 $size = [math]::Round(((Get-ChildItem $dist -Recurse -File | Measure-Object Length -Sum).Sum / 1MB))
 Write-Host "Export ready ($size MB): $stamp"
