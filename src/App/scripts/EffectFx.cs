@@ -223,10 +223,14 @@ public static class EffectFx
 
     public static Vector3 WindNow { get; private set; } = Pull(new Wind());
 
+    const double TopWind = 5, TopWindFelt = 1.5;
+
     public static Vector3 Pull(Wind w)
     {
         double to = (w.From + 180) * Math.PI / 180;
-        return new Vector3((float)Math.Sin(to), 0, -(float)Math.Cos(to)) * (float)Math.Clamp(w.Strength, 0, 5);
+        double s = Math.Clamp(w.Strength, 0, TopWind);
+        double felt = s * (1 + (TopWindFelt - 1) * s / TopWind);
+        return new Vector3((float)Math.Sin(to), 0, -(float)Math.Cos(to)) * (float)felt;
     }
 
     public static Color ShadeNow { get; private set; } = Colors.White;
