@@ -27,6 +27,7 @@ public partial class PieceNode : Node3D
     Color _layerTint = Colors.White;
     int _shownState = -1;
     string? _shownPicture;
+    string? _shownTint;
     string? _texPackage, _texRel;
     int _texSize;
     bool _texLoaded;
@@ -118,6 +119,7 @@ public partial class PieceNode : Node3D
             Shape = mk.TransparentFraction > CutoutFraction ? "alpha" : "rounded";
         _shownState = Piece.State;
         _shownPicture = Piece.Picture;
+        _shownTint = Piece.TintOverride;
         var tint = Tint();
 
         if (IsEffect) { Shape = Def!.Effect != null ? "box" : "circle"; BuildEffect(); }
@@ -456,7 +458,7 @@ public partial class PieceNode : Node3D
     public void Refresh(PieceInstance p)
     {
         if (IsDie) { RefreshDie(p); return; }
-        bool rebuild = p.State != _shownState || p.Picture != _shownPicture;
+        bool rebuild = p.State != _shownState || p.Picture != _shownPicture || p.TintOverride != _shownTint;
         Piece = p;
         if (rebuild) { Rebuild(); return; }
         SyncWidgets();

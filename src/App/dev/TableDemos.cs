@@ -401,6 +401,13 @@ sealed partial class TableDemos
                 var pcs = Session.View.Layer(KTable.Core.Model.Layers.Umpire).Where(p => p.Def.StartsWith("std.dice.")).ToList();
                 GD.Print($"[dice] rolls={rolls.Count} results={string.Join("|", rolls.Select(r => string.Join(",", r.Results)))} faces={string.Join(",", pcs.Select(p => $"{p.Def[9..]}={p.State + 1}"))}");
             };
+            if (_args["demo-dice"] == "colour")
+                Tree.CreateTimer(5.0).Timeout += () =>
+                {
+                    var pcs = Session.View.Layer(KTable.Core.Model.Layers.Umpire).Where(p => p.Def.StartsWith("std.dice.")).ToList();
+                    Session.Do(new KTable.Core.Protocol.Batch { Items = pcs.Select((p, i) => (KTable.Core.Protocol.Command)new KTable.Core.Protocol.SetTint { Layer = KTable.Core.Model.Layers.Umpire, Id = p.Id, Value = KTable.Core.Model.DieColors.All[1 + i % (KTable.Core.Model.DieColors.All.Length - 1)].Hex }).ToList() });
+                    GD.Print($"[dice] coloured {pcs.Count} dice");
+                };
         }
         if (_args.TryGetValue("demo-throw", out var dth))
         {

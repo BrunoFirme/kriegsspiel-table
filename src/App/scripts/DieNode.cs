@@ -66,6 +66,11 @@ public partial class PieceNode
     void RefreshDie(PieceInstance p)
     {
         Piece = p;
+        if (p.TintOverride != _shownTint)
+        {
+            _shownTint = p.TintOverride;
+            if (_model?.MaterialOverride is StandardMaterial3D m) m.AlbedoColor = Tint();
+        }
         if (Rolling) { PendingState = p.State; Dbg($"rolling: pending face {p.State + 1}"); return; }
         if (Placed)
         {
