@@ -288,6 +288,11 @@ internal sealed class PieceHandles(ScriptHost host)
                 if (def != null && p.State >= 0 && p.State < def.States.Count && def.States[p.State].Size is { } ss) sz = ss;
                 var t = T(); t.Table["w"] = N(sz.W * p.Scale); t.Table["h"] = N(sz.H * p.Scale); return t;
             }
+            case "shape":
+            {
+                var sh = def != null && p.State > 0 && p.State < def.States.Count ? def.States[p.State].Shape : null;
+                return S(sh ?? def?.Shape ?? "box");
+            }
             case "face_down": return B(p.FaceDown);
             case "locked": return B(p.Locked);
             case "tint": return p.TintOverride is { } ti ? S(ti) : def != null ? S(def.Tint) : DynValue.Nil;

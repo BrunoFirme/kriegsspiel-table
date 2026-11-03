@@ -160,6 +160,7 @@ public static partial class ApiDoc
         See("self.set_scale", "self.size");
         F("piece", "size", "Size", "Its size on the map at its state and scale: { w =, h = }.", "getBounds");
         Note("A state with a size of its own gives that size; otherwise the kind's. Both are multiplied by `scale`.");
+        F("piece", "shape", "string", "Its outline at its state: \"box\", \"rounded\", \"circle\", \"hex\", or \"alpha\" for a token cut along its picture.");
         F("piece", "face_down", "boolean", "Turned over.", "is_face_down");
         See("self.flip", "on_flip");
         F("piece", "locked", "boolean", "Pinned to the table: not dragged, turned or resized by hand.", "getLock");

@@ -7,14 +7,13 @@ local function vec(v, k, i, d)
   if x == nil then x = v[i] end
   return num(x, d)
 end
-local function has(list, v) for _, x in ipairs(list or {}) do if x == v then return true end end return false end
 local function unit(obj)
   local s = obj.size
   if not s then return 0.5 end
   local k = obj.scale
   if type(k) ~= "number" or k <= 0 then k = 1 end
   local w, h = s.w / k, s.h / k
-  if has(obj.tags, "token") then return math.max(w, h) / 3 end
+  if obj.shape == "alpha" then return math.max(w, h) / 3 end
   return h / 2
 end
 

@@ -422,6 +422,28 @@ public class TranslatorTests
         Assert.Empty(Errors(t));
     }
 
+    [Theory]
+    [InlineData("alpha", 0.24)]
+    [InlineData("box", 0.36)]
+    public void A_TTS_button_is_placed_by_the_piece_shape_whatever_its_own_tags(string shape, double unit)
+    {
+        using var t = new Table();
+        var def = t.Store.Def("marker")!;
+        def.Shape = shape;
+        def.Size = new Size2(0.72, 0.72);
+        var o = t.Server.State.Find(U, "p-000003")!;
+        o.Tags = new();
+        var r = TtsTranslator.Translate("""
+            function onLoad()
+              self.createButton({ click_function = "none", function_owner = self, label = "Lt. Gen.", position = {0, 0.05, -0.93}, width = 0, height = 0, font_size = 165 })
+            end
+            function none() end
+            """, Ctx());
+        t.Server.Handle(Table.Host, new SetScript { Layer = U, Id = "p-000003", Text = r.Script });
+        Assert.Empty(Errors(t));
+        Assert.Equal(-0.93 * unit, o.Widgets.Single().Z, 4);
+    }
+
     [Fact]
     public void Handlers_get_the_piece_their_widget_is_on()
     {
