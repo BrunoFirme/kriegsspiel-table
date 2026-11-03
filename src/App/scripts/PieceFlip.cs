@@ -30,9 +30,9 @@ public partial class PieceNode
     {
         if (_backMat != null) return _backMat;
         if (CurrentBack() is { } back && _s.Store.PackOfDef(Piece.Def) is { } pack && pack.Assets.TryGetValue(back, out var a))
-            return _backMat = Art.Print(pack.Id, a.File, _texSize > 0 ? _texSize : 512, _layerTint, scissor);
+            return _backMat = Art.Print(pack.Id, a.File, _texSize > 0 ? _texSize : 512, PrintTint(), scissor);
         var (pkg, rel, size) = TexKey();
-        return _backMat = Art.Print(pkg, rel, size, _layerTint, scissor);
+        return _backMat = Art.Print(pkg, rel, size, PrintTint(), scissor);
     }
 
     void SyncSide()

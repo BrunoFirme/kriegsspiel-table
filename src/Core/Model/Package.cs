@@ -149,6 +149,7 @@ public sealed class PieceDef
     public string Shape { get; set; } = "box";
     public double Thickness { get; set; } = 0.2;
     public string Tint { get; set; } = "#FFFFFF";
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool TintsPictures { get; set; }
     public List<string> Tags { get; set; } = new();
     public List<PieceStateDef> States { get; set; } = new();
     public List<CounterDef> Counters { get; set; } = new();

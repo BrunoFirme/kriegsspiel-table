@@ -108,6 +108,7 @@ public sealed partial class AssetStore
         else if (LocalPath(url) is { } lp && File.Exists(lp)) src = lp;
         if (src == null) return null;
         var bytes = File.ReadAllBytes(src);
+        Progress.Bytes(bytes.Length);
         e = Describe(bytes, url);
         e.Src = src;
         Set(key, e);
@@ -157,11 +158,17 @@ public sealed partial class AssetStore
 
     readonly ConcurrentDictionary<string, byte> _tried = new();
 
-    public async Task FetchAll(IEnumerable<string> urls, bool allowNonSteam = true)
+    public Task FetchAll(TtsSave save) => FetchAll(PackBuilder.Urls(save), PackBuilder.Names(save));
+
+    public async Task FetchAll(IEnumerable<string> urls, IReadOnlyDictionary<string, string>? names = null, bool allowNonSteam = true)
     {
         var todo = new List<string>();
-        foreach (var u in urls.Where(u => !string.IsNullOrWhiteSpace(u)).Select(u => u.Trim()).Distinct())
+        var wanted = urls.Where(u => !string.IsNullOrWhiteSpace(u)).Select(u => u.Trim()).Distinct().ToList();
+        int unread = wanted.Count(u => !_index.ContainsKey(Key(u)));
+        if (unread > 0) Progress.Stage("local", wanted.Count);
+        foreach (var u in wanted)
         {
+            if (unread > 0) Progress.Step(names?.GetValueOrDefault(u));
             var e = TryLocal(u);
             if (e != null && !Retryable(e)) continue;
             if (LocalPath(u) != null) { Set(Key(u), new CacheEntry { Status = "dead", Error = "local file path not present on this machine", Url = u }); continue; }
@@ -172,6 +179,7 @@ public sealed partial class AssetStore
             todo.Add(u);
         }
         if (todo.Count == 0) { Save(); return; }
+        Progress.Stage("download", todo.Count);
         Console.WriteLine($"  downloading {todo.Count} assets ({_cfg.MaxParallelDownloads} parallel)...");
         using var http = new HttpClient(new SocketsHttpHandler { AutomaticDecompression = DecompressionMethods.All, PooledConnectionLifetime = TimeSpan.FromMinutes(5) })
         { Timeout = TimeSpan.FromSeconds(90) };
@@ -183,11 +191,12 @@ public sealed partial class AssetStore
             await gate.WaitAsync();
             try
             {
+                Progress.On(names?.GetValueOrDefault(u));
                 var ok = await Download(http, u);
-                if (!ok) Interlocked.Increment(ref failed);
+                if (!ok) { Interlocked.Increment(ref failed); Progress.Failed(); }
                 var n = Interlocked.Increment(ref done);
-                Console.WriteLine($"PROGRESS {n}/{todo.Count}");
-                if (n % 50 == 0) { Console.WriteLine($"  {n}/{todo.Count} ({failed} failed)"); Save(); }
+                Progress.Step();
+                if (n % SaveEvery == 0) Save();
             }
             finally { gate.Release(); }
         });
@@ -196,6 +205,7 @@ public sealed partial class AssetStore
         Save();
     }
 
+    const int SaveEvery = 50;
     static readonly TimeSpan Stall = TimeSpan.FromSeconds(60);
 
     async Task<bool> Download(HttpClient http, string url)
@@ -251,9 +261,35 @@ public sealed partial class AssetStore
         for (int got; (got = await s.ReadAsync(buf, cts.Token)) > 0; )
         {
             ms.Write(buf, 0, got);
+            Progress.Bytes(got);
             cts.CancelAfter(Stall);
         }
         return ms.Length == ms.Capacity ? ms.GetBuffer() : ms.ToArray();
+    }
+
+    public (long Bytes, int ToFetch) Footprint(IEnumerable<string> kept, IEnumerable<string> fetched)
+    {
+        var bytes = Footprint(kept).Bytes;
+        return (bytes, Footprint(fetched).ToFetch);
+    }
+
+    (long Bytes, int ToFetch) Footprint(IEnumerable<string> urls)
+    {
+        long bytes = 0;
+        int toFetch = 0;
+        var keys = new HashSet<string>();
+        var files = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var u in urls.Where(u => !string.IsNullOrWhiteSpace(u)).Select(u => u.Trim()))
+        {
+            var key = Key(u);
+            if (!keys.Add(key)) continue;
+            _index.TryGetValue(key, out var e);
+            var file = e is { Status: "ok" } && FilePath(e) is { } p && File.Exists(p) ? p
+                : _ttsFiles.GetValueOrDefault(key) ?? (LocalPath(u) is { } lp && File.Exists(lp) ? lp : null);
+            if (file != null) { if (files.Add(file)) bytes += BestEffort.Read(() => new FileInfo(file).Length, fallback: 0L); }
+            else if ((e == null || Retryable(e)) && Uri.TryCreate(u, UriKind.Absolute, out var uri) && uri.Scheme is "http" or "https") toFetch++;
+        }
+        return (bytes, toFetch);
     }
 
     public CacheEntry? Get(string? url)
@@ -285,8 +321,12 @@ public sealed partial class AssetStore
         using var fitted = new SKBitmap(new SKImageInfo(w, h, SKColorType.Rgba8888, SKAlphaType.Unpremul));
         System.Runtime.InteropServices.Marshal.Copy(px, 0, fitted.GetPixels(), px.Length);
         using var data = fitted.Encode(SKEncodedImageFormat.Png, 100);
-        var bytes = data.ToArray();
-        var e = Describe(bytes, picture.Url ?? "");
+        return Keep(data.ToArray(), picture.Url ?? "");
+    }
+
+    public CacheEntry Keep(byte[] bytes, string url = "")
+    {
+        var e = Describe(bytes, url);
         var path = Path.Combine(_cfg.Cache, e.Sha + "." + e.Ext);
         if (!File.Exists(path)) Json.WriteAtomic(path, bytes, Environment.ProcessId.ToString(CultureInfo.InvariantCulture));
         return e;

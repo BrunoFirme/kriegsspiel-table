@@ -221,4 +221,6 @@ public sealed class TtsEntry
     public string Path { get; set; } = "";
     public string? Thumb { get; set; }
     public long Size { get; set; }
+    public int Fetch { get; set; }
+    [System.Text.Json.Serialization.JsonIgnore] public bool Measured { get; set; }
 }

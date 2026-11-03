@@ -50,7 +50,7 @@ try
             foreach (var id in ids)
             {
                 Console.WriteLine($"fetch {id}");
-                await assets.FetchAll(PackBuilder.Urls(TtsSave.Load(cfg, id)));
+                await assets.FetchAll(TtsSave.Load(cfg, id));
             }
             break;
         }
@@ -63,6 +63,7 @@ try
             foreach (var s in (Take(rest, "--skip") ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
                 if (!cfg.IgnoreTypes.Contains(s)) cfg.IgnoreTypes.Add(s);
             var file = await Workshop.Resolve(cfg, rest[0]);
+            if (cmd == "import") Progress.Stage("read");
             var save = TtsSave.Load(cfg, file);
             var plan = ImportPlan.Of(save, name, slugArg);
             if (cmd == "plan")
@@ -83,9 +84,11 @@ try
                 built.M.Source.Authors = shared.Authors;
                 if (shared.License.Length > 0) built.M.Source.License = shared.License;
                 built.Save();
+                Progress.Stage("finish");
                 var pr = Path.Combine(cfg.Output, sid, "import-report.md");
                 report.Write(pr, "restore " + sid);
                 Console.WriteLine($"IMPORTED pack={sid} pieces={built.M.Pieces.Count}");
+                Console.WriteLine($"SIZES pack={FolderBytes(built.Dir)}");
                 Console.WriteLine($"REPORT {pr}");
                 break;
             }
@@ -109,10 +112,12 @@ try
                 scenario.Packs.Insert(0, packId);
                 KTable.Core.Json.Save(Path.Combine(cfg.Output, "scenarios", slug, "scenario.json"), scenario);
             }
+            Progress.Stage("finish");
             var importReport = Path.Combine(cfg.Output, "scenarios", slug, "import-report.md");
             report.Write(importReport, "import " + packId);
             Console.WriteLine($"IMPORTED scenario={slug} pack={packId} sheets={scenario.Sheets.Count} pieces={scenario.UmpireBoard.Count}");
             Console.WriteLine($"REPORT {importReport}");
+            Console.WriteLine($"SIZES pack={plan.Packs.Sum(p => FolderBytes(Path.Combine(cfg.Output, p)))} scenario={FolderBytes(Path.Combine(cfg.Output, "scenarios", slug))}");
             break;
         }
         case "export-tts":
@@ -135,6 +140,7 @@ try
         }
                 case "list-tts":
         {
+            var listed = new List<string>();
             foreach (var (dir, kind) in new[] { (cfg.WorkshopDir, "workshop"), (cfg.SavesDir, "save") })
             {
                 if (!Directory.Exists(dir)) continue;
@@ -155,7 +161,14 @@ try
                     catch { title = Path.GetFileNameWithoutExtension(f); }
                     var thumb = Path.ChangeExtension(f, ".png");
                     Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(new { kind, id = Path.GetFileNameWithoutExtension(f), name = title, path = f, thumb = File.Exists(thumb) ? thumb : null, size = new FileInfo(f).Length }));
+                    listed.Add(f);
                 }
+            }
+            foreach (var f in listed)
+            {
+                var measured = KTable.Core.BestEffort.Read<(long Bytes, int ToFetch)?>(() => { var save = TtsSave.Load(cfg, f); return assets.Footprint(PackBuilder.PieceUrls(save), PackBuilder.Urls(save)); }, fallback: null);
+                if (measured is var (bytes, toFetch))
+                    Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(new { kind = "size", path = f, size = bytes, fetch = toFetch }));
             }
             return 0;
         }
@@ -188,7 +201,7 @@ catch
     way.PutBack();
     throw;
 }
-finally { assets.Save(); }
+finally { assets.Save(); Progress.End(); }
 
 if (report.UnknownTypes + unmappedElsewhere > 0)
 {
@@ -205,6 +218,9 @@ static string? Take(List<string> a, string name)
     a.RemoveRange(i, 2);
     return v;
 }
+
+static long FolderBytes(string dir) => KTable.Core.BestEffort.Read(() =>
+    Directory.Exists(dir) ? new DirectoryInfo(dir).EnumerateFiles("*", SearchOption.AllDirectories).Sum(f => f.Length) : 0L, fallback: 0L);
 
 static string FindToolDir()
 {

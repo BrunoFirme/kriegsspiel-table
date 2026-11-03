@@ -102,7 +102,7 @@ public partial class PieceNode : Node3D
     StandardMaterial3D Print(bool scissor)
     {
         var (pkg, rel, size) = TexKey();
-        return Art.Print(pkg, rel, size, _layerTint, scissor);
+        return Art.Print(pkg, rel, size, PrintTint(), scissor);
     }
 
     void Build()
@@ -233,6 +233,7 @@ public partial class PieceNode : Node3D
 
     Color Tint() => Coords.ParseColor(Piece.TintOverride ?? Def?.Tint, Colors.White) * _layerTint;
     Color SideColor() => (Tint() * 0.82f) with { A = 1 };
+    Color PrintTint() => Def is { TintsPictures: true } ? Tint() : _layerTint;
 
     (string? pkg, string? rel, int size) TexKey()
     {

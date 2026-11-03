@@ -5,7 +5,7 @@ namespace KTable.Core.Model;
 
 public sealed class SaveFile
 {
-    public const int CurrentFormat = 15;
+    public const int CurrentFormat = 16;
     public int Format { get; set; } = CurrentFormat;
     public string ScenarioId { get; set; } = "";
     public string Created { get; set; } = "";

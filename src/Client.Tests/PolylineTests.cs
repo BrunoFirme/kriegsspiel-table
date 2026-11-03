@@ -53,4 +53,22 @@ public class PolylineTests
         Assert.Null(Polyline.ShapeHead("arrow", a, a));
         Assert.Null(Polyline.ShapeHead("rect", a, b));
     }
+
+    [Fact]
+    public void A_rectangle_and_an_ellipse_lie_along_the_views_axes_when_the_view_is_turned()
+    {
+        var a = new Vec2(0, 0); var b = new Vec2(4, 2);
+        Assert.Equal(Polyline.ShapePoints("rect", a, b), Polyline.ShapePoints("rect", a, b, new Vec2(3, 0)));
+        var across = new Vec2(1, 1);
+        var u = new Vec2(Math.Sqrt(0.5), Math.Sqrt(0.5)); var v = new Vec2(-u.Z, u.X);
+        static double Dot(Vec2 p, Vec2 q) => p.X * q.X + p.Z * q.Z;
+        var rect = Polyline.ShapePoints("rect", a, b, across);
+        Assert.Equal(new[] { a, b, a }, new[] { rect[0], rect[2], rect[4] });
+        Assert.Equal(0, Dot(rect[1] - a, v), 9);
+        Assert.Equal(0, Dot(rect[3] - a, u), 9);
+        Assert.Equal(0, Dot(rect[1] - rect[2], u), 9);
+        var c = new Vec2(2, 1);
+        double ru = Dot(b - a, u) / 2, rv = Dot(b - a, v) / 2;
+        Assert.All(Polyline.ShapePoints("ellipse", a, b, across), p => Assert.Equal(1, Math.Pow(Dot(p - c, u) / ru, 2) + Math.Pow(Dot(p - c, v) / rv, 2), 6));
+    }
 }

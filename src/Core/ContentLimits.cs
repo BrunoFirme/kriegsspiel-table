@@ -107,9 +107,9 @@ public static class ContentLimits
 
     public static string Describe(long bytes) => bytes switch
     {
-        >= 1L << 30 => $"{bytes / (double)(1L << 30):0.#} GB",
-        >= 1L << 20 => $"{bytes / (double)(1L << 20):0.#} MB",
-        >= 1L << 10 => $"{bytes / (double)(1L << 10):0.#} KB",
-        _ => $"{bytes} bytes",
+        >= 1L << 30 => FormattableString.Invariant($"{bytes / (double)(1L << 30):0.#} GB"),
+        >= 1L << 20 => FormattableString.Invariant($"{bytes / (double)(1L << 20):0.#} MB"),
+        >= 1L << 10 => FormattableString.Invariant($"{bytes / (double)(1L << 10):0.#} KB"),
+        _ => FormattableString.Invariant($"{bytes} bytes"),
     };
 }

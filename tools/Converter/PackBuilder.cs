@@ -16,6 +16,22 @@ public sealed class PackBuilder
     public static IEnumerable<string> Urls(TtsSave save) =>
         save.Objects.SelectMany(o => o.Walk()).SelectMany(o => o.Urls().Concat(ScriptUrls(o.Lua)).Concat(ScriptUrls(o.LuaState))).Concat(ScriptUrls(save.Lua)).Concat(ScriptUrls(save.LuaState));
 
+    public static IEnumerable<string> PieceUrls(TtsSave save) =>
+        save.Objects.SelectMany(o => o.Walk()).Where(o => o.Name != "Custom_Assetbundle" && !o.IsFurniture).SelectMany(o => o.Urls());
+
+    public static IReadOnlyDictionary<string, string> Names(TtsSave save)
+    {
+        var names = new Dictionary<string, string>();
+        foreach (var o in save.Objects.SelectMany(o => o.Walk()))
+        {
+            if (o.Nickname.Length == 0) continue;
+            foreach (var u in o.Urls()) names.TryAdd(u.Trim(), o.Nickname);
+        }
+        return names;
+    }
+
+    int Count(TtsObj o) => _cfg.ContainerTypes.Contains(o.Name) ? 1 + o.Contained.Sum(Count) : 1;
+
     public static IEnumerable<string> ScriptUrls(string lua)
     {
         if (lua.Length == 0) yield break;
@@ -58,7 +74,8 @@ public sealed class PackBuilder
         if (_cfg.ExcludedWorkshopIds.Contains(pc.WorkshopId)) throw new InvalidOperationException($"{pc.WorkshopId} is excluded");
         Console.WriteLine($"Pack {pc.Id} ({pc.WorkshopId})");
         var save = TtsSave.Load(_cfg, pc.WorkshopId);
-        await _assets.FetchAll(Urls(save));
+        await _assets.FetchAll(save);
+        Progress.Stage("pieces", save.Objects.Sum(Count));
         _way.Pack(pc.Id, _rep);
         var pack = new PackOut(_cfg.Output, pc.Id, pc.Name.Length > 0 ? pc.Name : save.SaveName, pc.Short, save.WorkshopId.Length > 0 ? save.WorkshopId : null);
         _defs.Context = pc.Id;
@@ -78,6 +95,7 @@ public sealed class PackBuilder
     void Visit(TtsObj o, PackOut pack, ref int objects, ref int effects)
     {
         var where = $"{pack.M.Id} {o.Name} '{o.Nickname}' {o.Guid}";
+        Progress.Step(o.Nickname.Length > 0 ? o.Nickname : o.Name);
         if (o.Verdict.Hostile) _rep.HostileScript(o.Verdict.Reasons, where, o.Guid);
         if (_cfg.ContainerTypes.Contains(o.Name))
         {

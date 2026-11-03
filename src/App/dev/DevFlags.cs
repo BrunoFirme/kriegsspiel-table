@@ -68,7 +68,22 @@ sealed class DevFlags : IDevAids
 
     public void WatchForShot()
     {
-        if (_args.TryGetValue("shot", out var shot)) _ = Shot(shot, double.Parse(_args.GetValueOrDefault("shot-delay", "6"), Inv), _args.ContainsKey("quit"));
+        if (!_args.TryGetValue("shot", out var shot)) return;
+        if (_args.TryGetValue("shot-every", out var every)) _ = Shots(shot, double.Parse(every, Inv));
+        else _ = Shot(shot, double.Parse(_args.GetValueOrDefault("shot-delay", "6"), Inv), _args.ContainsKey("quit"));
+    }
+
+    async System.Threading.Tasks.Task Shots(string path, double every)
+    {
+        var stem = System.IO.Path.ChangeExtension(path, null);
+        for (int n = 1; ; n++)
+        {
+            await _main.ToSignal(Tree.CreateTimer(every), SceneTreeTimer.SignalName.Timeout);
+            if (!GodotObject.IsInstanceValid(_main) || !_main.IsInsideTree()) return;
+            var file = $"{stem}-{n:000}.png";
+            _main.GetViewport().GetTexture().GetImage().SavePng(file);
+            GD.Print("[shot] " + file);
+        }
     }
 
     async System.Threading.Tasks.Task Shot(string path, double delay, bool quit)

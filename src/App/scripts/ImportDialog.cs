@@ -20,10 +20,12 @@ public partial class ImportDialog : AcceptDialog
     readonly System.Text.StringBuilder _logText = new();
     Button _go = null!, _stop = null!;
     Label _status = null!;
-    ProgressBar _bar = null!;
+    ImportProgress _progress = null!;
     readonly List<TtsEntry> _entries = new();
+    readonly Dictionary<TtsEntry, int> _shown = new();
     bool _running;
-    ConverterRun? _run;
+    ConverterRun? _run, _listing;
+    static ImportWatch? _watch;
 
     public ImportDialog(string packagesRoot, Action<string, string> done)
     {
@@ -85,22 +87,17 @@ public partial class ImportDialog : AcceptDialog
         _go = new Button { Text = "Import", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         _go.Pressed += Go;
         goRow.AddChild(_go);
+        right.AddChild(goRow);
         _stop = new Button
         {
-            Text = "Stop", Visible = false,
+            Text = "Stop", Visible = false, FocusMode = Control.FocusModeEnum.None,
             TooltipText = "Stops the import. Anything it had already moved aside comes back: the pack and scenario you had stay as they were.",
         };
         _stop.Pressed += Stop;
-        goRow.AddChild(_stop);
-        right.AddChild(goRow);
-        var st = new HBoxContainer();
-        st.AddThemeConstantOverride("separation", 8);
-        _status = new Label { Modulate = new Color(1, 1, 1, 0.8f), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, ClipText = true };
-        _bar = new ProgressBar { MinValue = 0, MaxValue = 1, Value = 0, ShowPercentage = false, CustomMinimumSize = new Vector2(150, 8), SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, Visible = false };
-        _bar.AddThemeStyleboxOverride("background", Ui.Box(Ui.Line, 2, 0, 0));
-        _bar.AddThemeStyleboxOverride("fill", Ui.Box(Ui.Accent, 2, 0, 0));
-        st.AddChild(_status); st.AddChild(_bar);
-        right.AddChild(st);
+        _progress = new ImportProgress(_stop);
+        right.AddChild(_progress);
+        _status = new Label { Modulate = new Color(1, 1, 1, 0.8f), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, ClipText = true, Visible = false };
+        right.AddChild(_status);
         _log = new RichTextLabel { SizeFlagsVertical = Control.SizeFlags.ExpandFill, ScrollFollowing = true, SelectionEnabled = true, BbcodeEnabled = true, CustomMinimumSize = new Vector2(0, 160) };
         _find = FindBar.ForLabel(_log, () => _logText.ToString());
         right.AddChild(_find);
@@ -112,21 +109,52 @@ public partial class ImportDialog : AcceptDialog
             _run = earlier;
             _go.Disabled = true;
             _stop.Visible = true;
-            SetStatus("An import started earlier is still running.", null);
+            if (_watch is { Ended: null } watch) _progress.Follow(watch, "Importing");
+            else SetStatus("An import started earlier is still running.");
         }
 
         Log("Looking for TTS modules…");
-        ConverterTool.Run(new[] { "list-tts" }, line =>
+        bool listed = false;
+        _listing = ConverterTool.Run(new[] { "list-tts" }, line =>
         {
             if (!IsInstanceValid(this) || !line.StartsWith("{")) return;
             var e = BestEffort.Read<TtsEntry?>(() => JsonSerializer.Deserialize<TtsEntry>(line, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }), fallback: null);
-            if (e != null) _entries.Add(e);
+            if (e == null) return;
+            if (e.Kind != MeasuredKind) { _entries.Add(e); return; }
+            if (!listed) { listed = true; Fill(); }
+            Measured(e);
         }, code =>
         {
             if (!IsInstanceValid(this)) return;
+            _listing = null;
+            if (code == ConverterTool.StoppedCode) return;
             Log(code == 0 ? $"{_entries.Count} modules and saves found." : "Could not list TTS modules (is TTS installed?). You can still browse to a file or paste a Workshop link.");
-            Fill();
+            if (!listed) Fill();
         });
+    }
+
+    const string MeasuredKind = "size";
+
+    public override void _ExitTree() => _listing?.Cancel();
+
+    void Measured(TtsEntry m)
+    {
+        var e = _entries.FirstOrDefault(x => string.Equals(x.Path, m.Path, StringComparison.OrdinalIgnoreCase));
+        if (e == null) return;
+        e.Size = m.Size;
+        e.Fetch = m.Fetch;
+        e.Measured = true;
+        if (_shown.TryGetValue(e, out var i) && i < _list.ItemCount) Describe(i, e);
+    }
+
+    void Describe(int i, TtsEntry e)
+    {
+        var where = e.Kind == "save" ? "save" : "workshop " + e.Id;
+        var size = e.Measured && e.Size > 0 ? " · " + ContentLimits.Describe(e.Size) : "";
+        var fetch = e.Measured && e.Fetch > 0 ? $" · {e.Fetch} not on this PC" : "";
+        _list.SetItemText(i, $"{e.Name.Trim()}   ·   {where}{size}{fetch}");
+        if (e.Measured)
+            _list.SetItemTooltip(i, "Pictures and models of its pieces and maps that TTS keeps on this PC" + (e.Fetch > 0 ? $"; {e.Fetch} more come from the web during the import" : ""));
     }
 
     static Texture2D? SmallIcon(string file)
@@ -139,12 +167,15 @@ public partial class ImportDialog : AcceptDialog
     void Fill()
     {
         _list.Clear();
+        _shown.Clear();
         var q = _filter.Text.Trim();
         foreach (var e in _entries.Where(e => q.Length == 0 || e.Name.Contains(q, StringComparison.OrdinalIgnoreCase) || e.Id.Contains(q)))
         {
             var icon = e.Thumb is { } thumb ? BestEffort.Read<Texture2D?>(() => SmallIcon(thumb), fallback: null) : null;
-            int i = _list.AddItem($"{e.Name.Trim()}\n{(e.Kind == "save" ? "save" : "workshop " + e.Id)} · {e.Size / 1024 / 1024.0:0.#} MB", icon);
+            int i = _list.AddItem("", icon);
             _list.SetItemMetadata(i, _entries.IndexOf(e));
+            _shown[e] = i;
+            Describe(i, e);
         }
     }
 
@@ -169,11 +200,10 @@ public partial class ImportDialog : AcceptDialog
     public void StartImport() => Go();
     public string? StopOn { get; set; }
 
-    void SetStatus(string text, double? progress)
+    void SetStatus(string text)
     {
         _status.Text = text;
-        _bar.Visible = progress != null;
-        if (progress is { } p) _bar.Value = p;
+        _status.Visible = text.Length > 0;
     }
 
     public override void _Process(double delta)
@@ -182,7 +212,7 @@ public partial class ImportDialog : AcceptDialog
         _run = null;
         _go.Disabled = false;
         _stop.Visible = false; _stop.Disabled = false;
-        SetStatus("The import started earlier has ended.", null);
+        if (!_progress.Visible) SetStatus("The import started earlier has ended.");
     }
 
     void Stop()
@@ -190,7 +220,7 @@ public partial class ImportDialog : AcceptDialog
         if (_run == null) return;
         _run.Cancel();
         _stop.Disabled = true;
-        SetStatus("Stopping, and putting back what the import had moved aside…", null);
+        SetStatus("Stopping, and putting back what the import had moved aside…");
     }
 
     static string Entry(string path)
@@ -208,44 +238,60 @@ public partial class ImportDialog : AcceptDialog
         var source = _source.Text.Trim();
         var name = _name.Text.Trim();
         bool skipText = _skipText.ButtonPressed;
-        SetStatus("Reading the module, to see what it would replace…", null);
+        var watch = _watch = new ImportWatch();
+        _progress.Follow(watch, "Reading the module");
+        SetStatus("");
         var args = new List<string> { "plan", source, "--out", _packagesRoot };
         if (name.Length > 0) args.AddRange(new[] { "--name", name });
         var plan = new ImportPlan();
         var said = new List<string>();
-        ConverterTool.Run(args, line =>
+        _run = ConverterTool.Run(args, line =>
         {
-            if (plan.Read(line)) said.Add(line);
+            if (!watch.Read(line) && plan.Read(line)) said.Add(line);
         }, code =>
         {
-            if (!IsInstanceValid(this)) return;
+            if (!IsInstanceValid(this)) { watch.End(NotImported); return; }
+            _run = null;
+            watch.Between();
             var packs = plan.Packs;
             var scenario = plan.Scenario;
             source = plan.File ?? source;
+            if (code == ConverterTool.StoppedCode)
+            {
+                Log("[color=#ffd75e]Stopped before anything was changed.[/color]");
+                Reset(Stopped);
+                return;
+            }
             if (code != 0 || packs.Count == 0)
             {
                 foreach (var l in said) Log(Fmt.Bb(l));
                 Log($"[color=#f87]The module could not be read, so nothing was imported (exit {code}).[/color]");
-                Reset("Failed, see below.");
+                Reset(Failed);
                 return;
             }
             var worked = WorkedOn(_packagesRoot, packs);
-            if (worked.Count == 0) { Import(source, name, skipText, packs, scenario); return; }
-            AskFirst(worked, () => Import(source, name, skipText, packs, scenario), () =>
+            if (worked.Count == 0) { Import(source, name, skipText, packs, scenario, watch); return; }
+            _stop.Visible = false;
+            _progress.Waiting("Waiting for your answer");
+            AskFirst(worked, () => Import(source, name, skipText, packs, scenario, watch), () =>
             {
                 Log("Not imported: nothing was changed.");
-                Reset("Not imported.");
+                Reset(NotImported);
             });
         });
+        if (_run != null) { _stop.Visible = true; _stop.Disabled = false; }
     }
 
-    void Reset(string status)
+    const string Done = "Done", Stopped = "Stopped", Failed = "Failed", NotImported = "Not imported";
+
+    void Reset(string outcome)
     {
         _running = false;
         _go.Disabled = false;
         _go.Text = "Import";
         _stop.Visible = false; _stop.Disabled = false;
-        SetStatus(status, null);
+        _watch?.End(outcome);
+        SetStatus("");
     }
 
     void AskFirst(List<(string id, string name, PackChange change)> worked, Action go, Action cancel) =>
@@ -279,7 +325,7 @@ public partial class ImportDialog : AcceptDialog
         dlg.Canceled += () => { if (!answered) { answered = true; cancel?.Invoke(); } };
     }
 
-    void Import(string source, string name, bool skipText, List<string> plannedPacks, string? plannedScenario)
+    void Import(string source, string name, bool skipText, List<string> plannedPacks, string? plannedScenario, ImportWatch watch)
     {
         if (!IsInstanceValid(this)) return;
         InUse.Hold hold;
@@ -289,21 +335,23 @@ public partial class ImportDialog : AcceptDialog
             if (plannedScenario != null) folders.Add((InUse.Scenario(_packagesRoot, plannedScenario), $"the scenario {plannedScenario}"));
             hold = InUse.Claim(folders, "being imported from Tabletop Simulator");
         }
-        catch (InUseException e) { Log($"[color=#f87]Not imported: {Fmt.Bb(e.Message)}[/color]"); Reset("Not imported."); return; }
-        SetStatus("Starting the converter…", null);
+        catch (InUseException e) { Log($"[color=#f87]Not imported: {Fmt.Bb(e.Message)}[/color]"); Reset(NotImported); return; }
+        _progress.Waiting("Starting the converter");
         var args = new List<string> { "import", source, "--out", _packagesRoot };
         if (name.Length > 0) args.AddRange(new[] { "--name", name });
         if (skipText) args.AddRange(new[] { "--skip", "3DText" });
         string? scenario = null, pack = null, report = null, hostile = null, leftOut = null;
-        Log($"[b]Importing {Fmt.Bb(source)}[/b] — first imports download missing images from Steam and can take a few minutes.");
+        Log($"[b]Importing {Fmt.Bb(source)}[/b]");
         int movedAside = 0, putBack = 0;
         string Left() => movedAside == 0 ? "" : putBack >= movedAside
             ? " What you had before is back in place."
             : " What you had before is in the trash: restore it from there (Piece studio or Host a game, at the foot of the page).";
         _run = ConverterTool.Run(args, line =>
         {
+            if (IsInstanceValid(this) && StopOn != null && line.Contains(StopOn)) { StopOn = null; Stop(); }
+            if (watch.Read(line)) return;
+            if (line.StartsWith("SIZES ")) { watch.Sizes = Sizes(line[6..]); return; }
             if (!IsInstanceValid(this)) return;
-            if (StopOn != null && line.Contains(StopOn)) { StopOn = null; Stop(); }
             if (line.StartsWith("TRASHED "))
             {
                 movedAside++;
@@ -319,8 +367,9 @@ public partial class ImportDialog : AcceptDialog
                     if (kv[0] == "scenario") scenario = kv[1];
                     if (kv[0] == "pack") pack = kv[1];
                 }
+                return;
             }
-            if (line.StartsWith("REPORT ")) report = line[7..];
+            if (line.StartsWith("REPORT ")) { report = line[7..]; return; }
             if (line.StartsWith("HOSTILE "))
             {
                 hostile = line[8..];
@@ -334,22 +383,12 @@ public partial class ImportDialog : AcceptDialog
                 Log($"[color=#ff5f5f][b]{leftOut}:[/b] {Fmt.Bb(parts.Length > 1 ? parts[1] : "")}. Their pictures or models are gone from the web and TTS has no copy on this computer, so TTS cannot show them either. Everything else came in; the report lists each one with its link.[/color]");
                 return;
             }
-            if (line.StartsWith("PROGRESS "))
-            {
-                var ab = line[9..].Split('/');
-                if (ab.Length == 2 && int.TryParse(ab[0], out var a) && int.TryParse(ab[1], out var b) && b > 0) SetStatus($"Downloading images from Steam: {a} of {b}", a / (double)b);
-                return;
-            }
-            if (line.Contains("downloading") && line.Contains("assets")) SetStatus("Downloading images from Steam…", 0);
-            else if (line.Contains("downloads done")) SetStatus("Building the pack…", null);
-            else if (line.Contains("building tiles")) SetStatus("Slicing the map into tiles…", null);
-            else if (line.StartsWith("Scenario ")) SetStatus("Laying out the scenario…", null);
-            else if (line.StartsWith("Pack ")) SetStatus("Building the pack…", null);
             if (line.StartsWith("Output") || line.StartsWith("Cache")) return;
             Log(Fmt.Bb(line));
         }, code =>
         {
             bool stopped = code == ConverterTool.StoppedCode;
+            watch.End(stopped ? Stopped : pack != null ? Done : Failed);
             if (IsInstanceValid(this))
             {
                 _running = false;
@@ -357,7 +396,7 @@ public partial class ImportDialog : AcceptDialog
                 _go.Disabled = false;
                 _go.Text = "Import";
                 _stop.Visible = false; _stop.Disabled = false;
-                SetStatus(stopped ? "Stopped." : pack != null ? "Done." : "Failed, see below.", null);
+                SetStatus("");
                 if (stopped)
                     Log(movedAside > 0
                         ? "[color=#ffd75e]Stopped. Nothing of this import was kept." + Left() + "[/color]"
@@ -365,8 +404,8 @@ public partial class ImportDialog : AcceptDialog
                 else if (pack != null)
                 {
                     Log(scenario != null
-                        ? $"[color=#8f8]Done.[/color] Scenario '{Fmt.Bb(scenario)}' and pack '{Fmt.Bb(pack)}' are ready." + (report != null ? $" Report: {Fmt.Bb(report)}" : "")
-                        : $"[color=#8f8]Done.[/color] Pack '{Fmt.Bb(pack)}' restored exactly as it was shared.");
+                        ? $"[color=#8f8]Done.[/color] Scenario '{Fmt.Bb(scenario)}' and pack '{Fmt.Bb(pack)}' are ready." + OnDisk(watch) + (report != null ? $" Report: {Fmt.Bb(report)}" : "")
+                        : $"[color=#8f8]Done.[/color] Pack '{Fmt.Bb(pack)}' restored exactly as it was shared." + OnDisk(watch));
                     if (hostile != null) Log("[color=#f87]A hostile script was removed from this module; see the report.[/color]");
                     if (leftOut != null) Log($"[color=#ff5f5f][font_size=20][b]{leftOut}: broken in TTS too[/b][/font_size][/color]");
                 }
@@ -375,6 +414,17 @@ public partial class ImportDialog : AcceptDialog
             if (!stopped && pack != null) _done(scenario ?? "", pack);
         }, writesTo: _packagesRoot, hold: hold);
         if (_run != null) { _stop.Visible = true; _stop.Disabled = false; }
+    }
+
+    static string OnDisk(ImportWatch watch) => watch.Sizes.Length > 0 ? $" {watch.Sizes}." : "";
+
+    static string Sizes(string said)
+    {
+        var parts = new List<string>();
+        foreach (var kv in said.Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(p => p.Split('=', 2)))
+            if (kv.Length == 2 && kv[0].Length > 0 && long.TryParse(kv[1], System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out var bytes) && bytes > 0)
+                parts.Add($"{(parts.Count == 0 ? char.ToUpperInvariant(kv[0][0]) + kv[0][1..] : kv[0])} {ContentLimits.Describe(bytes)}");
+        return parts.Count == 0 ? "" : string.Join(", ", parts) + " on disk";
     }
 
     void Log(string s)

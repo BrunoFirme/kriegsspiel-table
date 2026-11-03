@@ -211,7 +211,8 @@ public sealed partial class DefFactory
             }
         }
 
-        foreach (var c in o.Children)
+        bool baked = BakesChildren(o) && BakeStates(def, states, bs, r, pack);
+        foreach (var c in baked ? Enumerable.Empty<TtsObj>() : o.Children)
         {
             if (!IsPiece(c)) { _rep.Skipped("child " + c.Name, where); continue; }
             var cr = DefFor(c, pack, Math.Abs(c.StateList().states[0].ScaleX) * r);
@@ -219,7 +220,8 @@ public sealed partial class DefFactory
             def.Attachments.Add(new AttachmentDef { Piece = cr.Def.Id, Offset = new Vec2(Math.Round(c.PosX * r, 4), Math.Round(c.PosZ * r * (b.ScaleZ / b.ScaleX), 4)) });
         }
 
-        var key = string.Create(CultureInfo.InvariantCulture, $"{VisualKey(o)}|{def.Size.W:0.###}x{def.Size.H:0.###}{scriptKey}");
+        var bakedKey = baked ? "|" + string.Join(",", def.States.Select(s => s.Image)) : "";
+        var key = string.Create(CultureInfo.InvariantCulture, $"{VisualKey(o)}|{def.Size.W:0.###}x{def.Size.H:0.###}{scriptKey}{bakedKey}");
         int rich = def.States.Count * 100 + def.Counters.Count * 10 + def.TextLines.Count + def.Attachments.Count * 1000 + (def.Script != null ? 5000 : 0);
         if (pack.ByKey.TryGetValue(key, out var existing))
         {
@@ -278,6 +280,7 @@ public sealed partial class DefFactory
             Size = size,
             Thickness = Math.Round(Math.Clamp(BaseThickness(b) * Math.Abs(b.ScaleY) * (b.Name == "Custom_Model" ? r / Math.Max(1e-6, Math.Abs(b.ScaleX)) : 1), 0.02, 3), 3),
             Tint = b.Color ?? "#FFFFFF",
+            TintsPictures = b.Name == "Custom_Token" || b.Name.StartsWith("Block"),
             Shape = PackManifest.ShapeOf(b.Name, b.TileType),
             Tags = b.Tags.Concat(new[] { b.Name switch { "Custom_Tile" => "tile", "Custom_Token" => "token", "Custom_Model" => "model", "Custom_Board" => "board", _ => "block" } }).Distinct().ToList(),
         };

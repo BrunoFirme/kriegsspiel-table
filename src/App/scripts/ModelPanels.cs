@@ -194,7 +194,11 @@ internal sealed class ModelPanels
         th.ValueChanged += v => studio.Apply(x => x.Thickness = v, what: "the thickness");
         g.AddChild(th);
         g.AddChild(new Label { Text = "Tint" });
-        g.AddChild(SizeForm.Tint(def.Tint, "The colour of the piece's sides (its pictures are never tinted)", t => studio.Apply(x => x.Tint = t, what: "the tint")));
+        g.AddChild(SizeForm.Tint(def.Tint, "The colour of the piece's sides", t => studio.Apply(x => x.Tint = t, what: "the tint")));
+        g.AddChild(new Label());
+        var pictures = new CheckBox { Text = "Pictures too", ButtonPressed = def.TintsPictures, TooltipText = "The tint colours the piece's pictures as well, as Tabletop Simulator does: a white picture takes the colour" };
+        pictures.Toggled += on => studio.Apply(x => x.TintsPictures = on, what: "the tint of the pictures");
+        g.AddChild(pictures);
         Ui.AlignForm(g);
         g1.AddChild(g);
         g1.AddChild(metres);

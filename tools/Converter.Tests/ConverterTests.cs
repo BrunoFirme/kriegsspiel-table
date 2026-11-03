@@ -175,7 +175,8 @@ public sealed class ConverterTests : IDisposable
         var pack = new PackOut(cfg.Output, "t", "T", "t", null);
         DefResult? Token(string nick, string url) => defs.DefFor(new TtsObj(Obj("Custom_Token", nick, 1, new JsonObject { ["CustomImage"] = new JsonObject { ["ImageURL"] = url } })), pack);
 
-        Assert.NotNull(Token("Kept", Good));
+        Assert.Equal(("#8040BF", true), Token("Kept", Good)!.Def is var kept ? (kept.Tint, kept.TintsPictures) : default);
+        Assert.False(defs.DefFor(new TtsObj(Obj("Custom_Tile", "Flag", 1, new JsonObject { ["CustomImage"] = new JsonObject { ["ImageURL"] = Good } })), new PackOut(cfg.Output, "u", "U", "u", null))!.Def.TintsPictures);
         Assert.Null(Token("Swamp", Gone));
         Assert.Null(Token("Jetty", SteamGone));
         Assert.Null(Token("Mill", Page));
@@ -204,5 +205,28 @@ public sealed class ConverterTests : IDisposable
         Assert.Equal((true, false), (map.IsTerrain, map.IsFurniture));
         foreach (var other in new[] { Model(-9, true, "http://a/table.png"), Model(1.25, false, "http://a/map.png"), Model(1.25, true, null) })
             Assert.Equal((false, true), (other.IsTerrain, other.IsFurniture));
+    }
+
+    [Fact]
+    public void A_modules_size_counts_its_pieces_pictures_on_this_pc_once_and_how_many_more_the_import_would_fetch()
+    {
+        var cfg = TempConfig();
+        var images = Path.Combine(_root, "tts", "Mods", "Images");
+        Directory.CreateDirectory(images);
+        File.WriteAllBytes(Path.Combine(images, "httpsexamplecomfrontpng.png"), new byte[1000]);
+        File.WriteAllBytes(Path.Combine(images, "httpsexamplecomscriptpng.png"), new byte[5000]);
+        static JsonObject Picture(string front, string? back = null)
+        {
+            var image = new JsonObject { ["ImageURL"] = front };
+            if (back != null) image["ImageSecondaryURL"] = back;
+            return new JsonObject { ["CustomImage"] = image };
+        }
+        var token = Obj("Custom_Token", "Ala", 1, Picture("https://example.com/front.png", "https://example.com/back.png"));
+        var twin = Obj("Custom_Token", "Ala copy", 1, Picture(" https://example.com/front.png"));
+        var lettered = Obj("Custom_Token", "Board", 1, Picture("file:///C:/nowhere/board.png"));
+        lettered["LuaScript"] = "local a, b = \"https://example.com/script.png\", \"https://example.com/gone.png\"";
+        var save = TtsSave.Load(cfg, Module("feud", token, twin, lettered));
+        var assets = new AssetStore(cfg, new Report());
+        Assert.Equal((1000L, 2), assets.Footprint(PackBuilder.PieceUrls(save), PackBuilder.Urls(save)));
     }
 }

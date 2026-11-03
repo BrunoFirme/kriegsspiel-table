@@ -29,7 +29,7 @@ public sealed class ScenarioBuilder
         var sc = _cfg.Scenario;
         Console.WriteLine($"Scenario {sc.Id} (master {masterId})");
         var master = TtsSave.Load(_cfg, masterId);
-        await _assets.FetchAll(PackBuilder.Urls(master));
+        await _assets.FetchAll(master);
 
         var root = _cfg.Output;
         var pkgRel = "scenarios/" + sc.Dir;
@@ -57,11 +57,13 @@ public sealed class ScenarioBuilder
 
         var usedPacks = new HashSet<string>();
         int rekeyed = 0, flipped = 0;
+        Progress.Stage("table", layers.Sum(l => l.Objects.Count));
         foreach (var layer in layers)
         {
             _defs.Context = $"{sc.Id}/{layer.Name}";
             foreach (var o in layer.Objects)
             {
+                Progress.Step(o.Nickname.Length > 0 ? o.Nickname : o.Name);
                 if (o.Flipped) flipped++;
                 var p = Instance(o, common[_defs.VisualKey(o)], extras, packDefs, layer, usedPacks, ref rekeyed, null);
                 if (p == null) continue;
@@ -74,7 +76,7 @@ public sealed class ScenarioBuilder
         scenario.UmpireBoard = layers[0].Pieces;
         scenario.Drawings["umpire"] = new();
 
-        PruneExtras(extras, layers);
+        PruneExtras(extras, layers, scenario);
         usedPacks.Add(extras.M.Id);
 
         scenario.Packs = usedPacks.OrderBy(p => p == extras.M.Id ? 1 : 0).ThenBy(p => p, StringComparer.Ordinal).ToList();
@@ -107,6 +109,7 @@ public sealed class ScenarioBuilder
         var boards = master.Objects.Where(IsSheet).OrderBy(b => b.PosY).ToList();
         var terrain = master.Objects.Where(o => o.IsTerrain).ToList();
         var boardSet = boards.Concat(terrain).ToHashSet();
+        if (boardSet.Count > 0) Progress.Stage("maps", boardSet.Count);
         foreach (var b in boards)
         {
             var e = _defs.Entry(b.ImageUrl);
@@ -133,6 +136,7 @@ public sealed class ScenarioBuilder
     bool Lay(SheetDef sheet, CacheEntry e, string pkgDir, string? oldScenario)
     {
         var sc = _cfg.Scenario;
+        Progress.On($"{sheet.Name} ({e.W} × {e.H})");
         try
         {
             var src = _assets.FilePath(e)!;
@@ -152,6 +156,7 @@ public sealed class ScenarioBuilder
             Console.WriteLine($"  sheet {sheet.Id} '{sheet.Name}' left out: its picture could not be read ({ex.Message})");
             return false;
         }
+        finally { Progress.Step(); }
     }
 
     void AddTerrain(Scenario scenario, List<TtsObj> terrain, string pkgRel, string pkgDir, string? oldScenario)
@@ -160,6 +165,7 @@ public sealed class ScenarioBuilder
         var read = new List<(TtsObj o, ReliefSource src, CacheEntry picture)>();
         foreach (var o in terrain)
         {
+            Progress.On(o.Nickname);
             var where = $"{sc.Id} 3D terrain {o.Guid}";
             var mesh = _defs.Entry(o.MeshUrl);
             var tex = _defs.Entry(o.DiffuseUrl);
@@ -196,19 +202,29 @@ public sealed class ScenarioBuilder
         }
     }
 
-    void PruneExtras(PackOut extras, List<Layer> layers)
+    static void PruneExtras(PackOut extras, List<Layer> layers, Scenario scenario)
     {
-        var referenced = layers.SelectMany(l => l.Pieces).Select(p => p.Def).ToHashSet();
+        var pieces = layers.SelectMany(l => l.Pieces).ToList();
+        var texts = pieces.SelectMany(p => new[] { p.Script, p.ScriptState, p.Memo }).Append(scenario.Script).Append(scenario.ScriptState)
+            .OfType<string>().Where(t => t.Length > 0).ToHashSet();
+        var referenced = pieces.Select(p => p.Def).ToHashSet();
         bool grew = true;
         while (grew)
         {
             grew = false;
             foreach (var d in extras.M.Pieces.Where(d => referenced.Contains(d.Id)).ToList())
+            {
                 foreach (var dep in d.Attachments.Select(a => a.Piece).Concat(d.Counters.Select(c => c.SpawnsMarker)).OfType<string>())
                     grew |= referenced.Add(dep);
+                foreach (var t in new[] { d.Script, d.ScriptState }.OfType<string>().Where(t => t.Length > 0)) grew |= texts.Add(t);
+            }
+            foreach (var d in extras.M.Pieces.Where(d => !referenced.Contains(d.Id) && texts.Any(t => t.Contains(d.Id, StringComparison.Ordinal))).ToList())
+                grew |= referenced.Add(d.Id);
         }
         extras.M.Pieces = extras.M.Pieces.Where(d => referenced.Contains(d.Id)).OrderBy(d => d.Id, StringComparer.Ordinal).ToList();
         var usedAssets = extras.M.Pieces.SelectMany(d => new[] { d.Image, d.Back, d.Mesh, d.Texture, d.AddOnMesh, d.AddOnTexture }.Concat(d.States.SelectMany(s => new[] { s.Image, s.Back, s.Mesh, s.Texture }))).OfType<string>().ToHashSet();
+        usedAssets.UnionWith(pieces.SelectMany(p => p.Decals).Select(d => d.Picture));
+        usedAssets.UnionWith(extras.M.Assets.Keys.Where(k => !usedAssets.Contains(k) && texts.Any(t => t.Contains(k, StringComparison.Ordinal))));
         foreach (var k in extras.M.Assets.Keys.Where(k => !usedAssets.Contains(k)).ToList()) extras.M.Assets.Remove(k);
         extras.Save();
         PackBuilder.Prune(extras);
@@ -344,7 +360,7 @@ public sealed class ScenarioBuilder
         layer.Y[inst] = o.PosY;
 
         double th = o.RotY * Math.PI / 180;
-        foreach (var c in o.Children)
+        foreach (var c in _defs.BakesChildren(o) ? Enumerable.Empty<TtsObj>() : o.Children)
         {
             if (!DefFactory.IsPiece(c)) continue;
             double lx = c.PosX * o.ScaleX, lz = c.PosZ * o.ScaleZ;

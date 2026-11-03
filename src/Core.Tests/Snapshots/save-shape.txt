@@ -1,4 +1,4 @@
-format 15
+format 16
 type AccessChanged object
   access: GameAccess
 type AddBoard object
@@ -553,6 +553,7 @@ type PieceDef object
   texture: string
   thickness: double
   tint: string
+  tintsPictures: bool
 type PieceInstance object
   attached: List<string>
   counters: Dictionary<string,int>

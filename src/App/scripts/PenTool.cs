@@ -23,6 +23,7 @@ sealed class PenTool
 
     List<Vec2>? _stroke;
     Vec2? _shapeA, _shapeB;
+    Vec2 _across = new(1, 0);
     Vec2? _rubbedAt;
 
     public bool Stroking => _stroke != null;
@@ -33,7 +34,14 @@ sealed class PenTool
     ToolOverlay Overlay => _overlay;
 
     public void PressDraw(Vec2 g) => _stroke = new() { g };
-    public void PressShape(Vec2 g) { _shapeA = g; _shapeB = g; }
+    public void PressShape(Vec2 g) { _shapeA = g; _shapeB = g; _across = ScreenAcross(); }
+
+    Vec2 ScreenAcross()
+    {
+        var cam = _c.Rig.Cam;
+        var across = Coords.FromWorld(cam.GlobalPosition + cam.GlobalBasis.X) - Coords.FromWorld(cam.GlobalPosition);
+        return across.Length > 1e-6 ? across : new Vec2(1, 0);
+    }
     public void PressErase(Vec2 g) { _rubbedAt = null; RubAt(g); }
 
     public void MoveDraw(Vec2 g) { if (_stroke != null) _stroke.Add(g); }
@@ -51,7 +59,7 @@ sealed class PenTool
         if (_shapeA is { } sa && _shapeB is { } sb && (sb - sa).Length > 0.05)
         {
             Draw One(List<Vec2> pts) => new() { Layer = Layers.Umpire, Stroke = new Stroke { Points = pts, Color = StrokeHex(), Width = PenWidth(), Board = _drawings.DrawBoard() } };
-            var body = One(Polyline.ShapePoints(ShapeKind, sa, sb));
+            var body = One(Polyline.ShapePoints(ShapeKind, sa, sb, _across));
             var head = Polyline.ShapeHead(ShapeKind, sa, sb);
             _c.S.Do(head == null ? body : new Batch { Items = new List<Command> { body, One(head) } });
         }
@@ -67,7 +75,7 @@ sealed class PenTool
             Ribbon.Draw(mesh, PenMaterial(), _stroke, PenWidth(), _c.SheetsTop + PreviewLift);
         if (_shapeA is { } pa && _shapeB is { } pb && (pb - pa).Length > 0.01)
         {
-            Ribbon.Draw(mesh, PenMaterial(), Polyline.ShapePoints(ShapeKind, pa, pb), PenWidth(), _c.SheetsTop + PreviewLift);
+            Ribbon.Draw(mesh, PenMaterial(), Polyline.ShapePoints(ShapeKind, pa, pb, _across), PenWidth(), _c.SheetsTop + PreviewLift);
             if (Polyline.ShapeHead(ShapeKind, pa, pb) is { } hd) Ribbon.Draw(mesh, PenMaterial(), hd, PenWidth(), _c.SheetsTop + PreviewLift);
         }
         DrawTip();

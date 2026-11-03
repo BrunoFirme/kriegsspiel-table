@@ -45,21 +45,26 @@ public static class Polyline
         return res;
     }
 
-    public static List<Vec2> ShapePoints(string kind, Vec2 a, Vec2 b)
+    public static List<Vec2> ShapePoints(string kind, Vec2 a, Vec2 b, Vec2? across = null)
     {
+        var u = across is { Length: > 1e-9 } x ? new Vec2(x.X / x.Length, x.Z / x.Length) : new Vec2(1, 0);
+        var v = new Vec2(-u.Z, u.X);
+        var d = b - a;
+        double du = d.X * u.X + d.Z * u.Z, dv = d.X * v.X + d.Z * v.Z;
         switch (kind)
         {
             case "rect":
-                return new() { a, new Vec2(b.X, a.Z), b, new Vec2(a.X, b.Z), a };
+                return new() { a, a + new Vec2(u.X * du, u.Z * du), b, a + new Vec2(v.X * dv, v.Z * dv), a };
             case "ellipse":
             {
+                const int Steps = 56;
                 var c = new Vec2((a.X + b.X) / 2, (a.Z + b.Z) / 2);
-                double rx = Math.Abs(b.X - a.X) / 2, rz = Math.Abs(b.Z - a.Z) / 2;
+                double ru = Math.Abs(du) / 2, rv = Math.Abs(dv) / 2;
                 var pts = new List<Vec2>();
-                for (int i = 0; i <= 56; i++)
+                for (int i = 0; i <= Steps; i++)
                 {
-                    double t = i * Math.Tau / 56;
-                    pts.Add(new Vec2(c.X + Math.Cos(t) * rx, c.Z + Math.Sin(t) * rz));
+                    double t = i * Math.Tau / Steps, cu = Math.Cos(t) * ru, sv = Math.Sin(t) * rv;
+                    pts.Add(new Vec2(c.X + u.X * cu + v.X * sv, c.Z + u.Z * cu + v.Z * sv));
                 }
                 return pts;
             }

@@ -34,7 +34,12 @@ public static class Workshop
         if (details["consumer_app_id"]?.GetValue<int>() is int app && app != 286160) throw new InvalidDataException($"workshop item {id} is not a Tabletop Simulator item (app {app})");
         var url = details["file_url"]?.GetValue<string>();
         if (string.IsNullOrEmpty(url)) throw new InvalidDataException($"Steam gives no download link for {id}; subscribe in TTS once, then import from your TTS Mods folder");
-        var bytes = await Http.GetByteArrayAsync(url);
+        var title = details["title"]?.GetValue<string>();
+        var size = long.TryParse(details["file_size"]?.ToString(), out var stated) ? stated : 0;
+        Progress.Stage("module", 1, size);
+        Progress.On(title);
+        var bytes = await Fetch(url);
+        Progress.Step();
         Directory.CreateDirectory(Path.GetDirectoryName(cached)!);
         var text = LooksLikeJson(bytes) ? Encoding.UTF8.GetString(bytes) : Bson.ToJson(bytes).ToJsonString();
         var tmp = cached + "." + Guid.NewGuid().ToString("N")[..8] + ".part";
@@ -44,8 +49,24 @@ public static class Workshop
             File.Move(tmp, cached, true);
         }
         finally { if (File.Exists(tmp)) File.Delete(tmp); }
-        Console.WriteLine($"  {details["title"]?.GetValue<string>()} ({bytes.Length / 1024} KB)");
+        Console.WriteLine($"  {title} ({bytes.Length / 1024} KB)");
         return cached;
+    }
+
+    static async Task<byte[]> Fetch(string url)
+    {
+        using var resp = await Http.GetAsync(url, HttpCompletionOption.ResponseHeadersRead);
+        resp.EnsureSuccessStatusCode();
+        await using var s = await resp.Content.ReadAsStreamAsync();
+        using var ms = new MemoryStream();
+        var buf = new byte[1 << 16];
+        for (int got; (got = await s.ReadAsync(buf)) > 0; )
+        {
+            ms.Write(buf, 0, got);
+            Progress.Bytes(got);
+            if (ms.Length > KTable.Core.ContentLimits.MaxFileBytes) throw new InvalidDataException($"the Workshop item is over {KTable.Core.ContentLimits.Describe(KTable.Core.ContentLimits.MaxFileBytes)}");
+        }
+        return ms.ToArray();
     }
 
     static bool LooksLikeJson(byte[] b)
