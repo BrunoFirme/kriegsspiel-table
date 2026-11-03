@@ -46,6 +46,45 @@ public class ClientSessionTests
     }
 
     [Fact]
+    public void Ctrl_y_takes_back_my_undo_and_ctrl_z_then_undoes_the_change_again()
+    {
+        JoinAs(Role.Umpire);
+        _s.OnCommand(Spawn(1, 2, "a"));
+        _s.UndoLast();
+        _s.OnCommand(Spawn(2, 2, "b", undoOf: 1));
+        Assert.Empty(_s.MyUndoable);
+        Assert.Equal(new long[] { 2 }, _s.MyRedoable);
+
+        _s.RedoLast();
+        Assert.Equal(2, Assert.IsType<Undo>(_sent[^1]).TargetSeq);
+        _s.OnCommand(Spawn(3, 2, "c", undoOf: 2));
+        Assert.Equal(new long[] { 3 }, _s.MyUndoable);
+        Assert.Empty(_s.MyRedoable);
+
+        _s.UndoLast();
+        Assert.Equal(3, Assert.IsType<Undo>(_sent[^1]).TargetSeq);
+        _s.OnCommand(Spawn(4, 2, "d", undoOf: 3));
+        Assert.Equal(new long[] { 4 }, _s.MyRedoable);
+        _s.RedoLast();
+        _s.RedoLast();
+        Assert.Equal(4, _sent.Count);
+    }
+
+    [Fact]
+    public void A_new_change_of_mine_ends_what_can_be_redone_but_another_umpires_does_not()
+    {
+        JoinAs(Role.Umpire);
+        _s.OnCommand(Spawn(1, 2, "a"));
+        _s.UndoLast();
+        _s.OnCommand(Spawn(2, 2, "b", undoOf: 1));
+        _s.OnCommand(Spawn(3, 3, "c"));
+        Assert.Equal(new long[] { 2 }, _s.MyRedoable);
+        _s.OnCommand(Spawn(4, 2, "d"));
+        Assert.Empty(_s.MyRedoable);
+        Assert.Equal(new long[] { 4 }, _s.MyUndoable);
+    }
+
+    [Fact]
     public void An_observer_has_nothing_to_undo()
     {
         JoinAs(Role.Observer);
@@ -104,6 +143,7 @@ public class ClientSessionTests
         _s.RoleChanged += () => roleChanged++;
         _s.OnRoleChanged(new RoleChanged { Role = Role.Observer, View = new GameState() });
         Assert.Empty(_s.MyUndoable);
+        Assert.Empty(_s.MyRedoable);
         Assert.False(_s.Reviewing);
         Assert.Null(_s.Access);
         Assert.Equal(1, roleChanged);

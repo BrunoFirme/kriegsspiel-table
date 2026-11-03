@@ -60,6 +60,8 @@ public class ClientSession
     }
 
     public readonly Stack<long> MyUndoable = new();
+    public readonly Stack<long> MyRedoable = new();
+    readonly HashSet<long> _redoing = new();
 
     public readonly List<TurnRecord> MirrorTurns = new();
     public string Created { get; private set; } = "";
@@ -89,7 +91,7 @@ public class ClientSession
     {
         Me.Role = rc.Role;
         if (!IsUmpire) { Access = null; MirrorTurns.Clear(); }
-        MyUndoable.Clear();
+        ForgetUndo();
         _review = null; ReviewInfo = null;
         SetView(rc.View);
         RoleChanged?.Invoke();
@@ -130,15 +132,15 @@ public class ClientSession
         if (c is RestoreTurn rt)
         {
             if (rt.State != null) MirrorTurns.RemoveAll(r => r.Turn >= rt.State.Clock.Turn);
-            MyUndoable.Clear();
+            ForgetUndo();
         }
         if (c is LoadSave)
         {
             MirrorTurns.Clear();
-            MyUndoable.Clear();
+            ForgetUndo();
         }
         Dirty = true;
-        if (c.Actor == Me.PeerId && c.UndoOf == 0 && c.OnUndoStack()) MyUndoable.Push(c.Seq);
+        if (c.Actor == Me.PeerId && c.OnUndoStack()) Track(c);
         if (c is AddPack ap) PackAdded?.Invoke(ap.Id, ap.Hash);
         Applied?.Invoke(c);
         if (c is RestoreTurn or LoadSave)
@@ -161,6 +163,28 @@ public class ClientSession
     {
         if (!IsUmpire || MyUndoable.Count == 0) return;
         Send(new Undo { TargetSeq = MyUndoable.Pop() });
+    }
+
+    public void RedoLast()
+    {
+        if (!IsUmpire || MyRedoable.Count == 0) return;
+        var seq = MyRedoable.Pop();
+        _redoing.Add(seq);
+        Send(new Undo { TargetSeq = seq });
+    }
+
+    void Track(Command c)
+    {
+        if (c.UndoOf == 0) { MyUndoable.Push(c.Seq); MyRedoable.Clear(); _redoing.Clear(); }
+        else if (_redoing.Remove(c.UndoOf)) MyUndoable.Push(c.Seq);
+        else MyRedoable.Push(c.Seq);
+    }
+
+    void ForgetUndo()
+    {
+        MyUndoable.Clear();
+        MyRedoable.Clear();
+        _redoing.Clear();
     }
 
     public PieceDef? Def(string id) => Store.Def(id);

@@ -1,3 +1,4 @@
+using Godot;
 using System.Linq;
 using System.Threading.Tasks;
 using KTable.Core.Model;
@@ -29,6 +30,30 @@ static class TableTests
         t.S.UndoLast();
         await r.Frame();
         Check.Equal(new Vec2(1, 0), t.Node("p1").Piece.Pos, "taken back");
+        Check.That(t.Errors.Count == 0, "no command refused: " + string.Join("; ", t.Errors));
+    }
+
+    [NodeTest]
+    static async Task Ctrl_y_puts_back_what_ctrl_z_took_back(TestRunner r)
+    {
+        var t = OfflineTable.Make(r, pieces: 2);
+        await r.Frame();
+        void Press(Key key) => t.Table.Keys.OnKey(new InputEventKey { Keycode = key, CtrlPressed = true, Pressed = true });
+        t.S.Do(new MovePiece { Layer = U, Id = "p1", Pos = new Vec2(5, 2) });
+        await r.Frame();
+        Press(Key.Z);
+        await r.Frame();
+        Check.Equal(new Vec2(1, 0), t.Node("p1").Piece.Pos, "taken back");
+        Press(Key.Y);
+        await r.Frame();
+        Check.Equal(new Vec2(5, 2), t.Node("p1").Piece.Pos, "put back");
+        Press(Key.Z);
+        await r.Frame();
+        Check.Equal(new Vec2(1, 0), t.Node("p1").Piece.Pos, "taken back again");
+        Press(Key.Y);
+        Press(Key.Y);
+        await r.Frame();
+        Check.Equal(new Vec2(5, 2), t.Node("p1").Piece.Pos, "a second Ctrl+Y has nothing left");
         Check.That(t.Errors.Count == 0, "no command refused: " + string.Join("; ", t.Errors));
     }
 

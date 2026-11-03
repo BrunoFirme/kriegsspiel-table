@@ -96,6 +96,45 @@ public class GameFlowTests
         Assert.Empty(mine);
     }
 
+    [Fact]
+    public void Taking_back_an_undo_redoes_the_change_and_that_redo_can_be_undone_again()
+    {
+        using var t = new Table();
+        t.Ok(Table.Ump, new Attach { Layer = U, Parent = "p-000002", Child = "p-000003" });
+        t.Ok(Table.Ump, new MovePiece { Layer = U, Id = "p-000002", Pos = new(10, 10), RotDeg = 0 });
+        var moveSeq = t.Server.Log[^1].Seq;
+        var moved = StripSeq(t.StateJson);
+
+        t.Ok(Table.Ump, new Undo { TargetSeq = moveSeq });
+        var undoSeq = t.Server.Log[^1].Seq;
+        var unmoved = StripSeq(t.StateJson);
+        Assert.Equal(new Vec2(0, 0), t.Server.State.Find(U, "p-000002")!.Pos);
+
+        t.Ok(Table.Ump, new Undo { TargetSeq = undoSeq });
+        var redoSeq = t.Server.Log[^1].Seq;
+        Assert.Equal(undoSeq, t.Server.Log[^1].UndoOf);
+        Assert.Equal(moved, StripSeq(t.StateJson));
+        Assert.Equal(new Vec2(11, 10), t.Server.State.Find(U, "p-000003")!.Pos);
+
+        t.Ok(Table.Ump, new Undo { TargetSeq = redoSeq });
+        Assert.Equal(unmoved, StripSeq(t.StateJson));
+        Assert.Equal("nothing to undo", t.Error(Table.Ump, new Undo { TargetSeq = undoSeq }));
+    }
+
+    [Fact]
+    public void A_deleted_piece_brought_back_and_deleted_again_comes_back_the_same()
+    {
+        using var t = new Table();
+        t.Ok(Table.Ump, new SetText { Layer = U, Id = "p-000003", Name = "note", Value = "hello" });
+        var before = Json.Serialize(t.Server.State.Find(U, "p-000003"));
+        t.Ok(Table.Ump, new DeletePiece { Layer = U, Id = "p-000003" });
+        t.Ok(Table.Ump, new Undo { TargetSeq = t.Server.Log[^1].Seq });
+        t.Ok(Table.Ump, new Undo { TargetSeq = t.Server.Log[^1].Seq });
+        Assert.Null(t.Server.State.Find(U, "p-000003"));
+        t.Ok(Table.Ump, new Undo { TargetSeq = t.Server.Log[^1].Seq });
+        Assert.Equal(before, Json.Serialize(t.Server.State.Find(U, "p-000003")));
+    }
+
     static string StripSeq(string stateJson)
     {
         var g = Json.Deserialize<GameState>(stateJson);

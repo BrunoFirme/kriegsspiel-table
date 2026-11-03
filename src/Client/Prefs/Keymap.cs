@@ -9,7 +9,7 @@ public sealed class Keymap
         ("map2d", "Map view / 3D table", "F2"), ("frame", "Frame the map", "Home"),
         ("turnLeft", "Turn left 15° (Shift 1°)", "Q"), ("turnRight", "Turn right 15° (Shift 1°)", "E"),
         ("roll", "Roll dice", "R"), ("larger", "Larger", "Equal"), ("smaller", "Smaller", "Minus"),
-        ("delete", "Delete", "Delete"), ("undo", "Undo (umpire)", "Ctrl+Z"),
+        ("delete", "Delete", "Delete"), ("undo", "Undo (umpire)", "Ctrl+Z"), ("redo", "Redo (umpire)", "Ctrl+Y"),
         ("copy", "Copy", "Ctrl+C"), ("paste", "Paste at the pointer", "Ctrl+V"), ("selectAll", "Select all", "Ctrl+A"),
         ("statePrev", "Previous state", "BracketLeft"), ("stateNext", "Next state", "BracketRight"),
         ("scriptConsole", "Script console (umpire)", "QuoteLeft"), ("scriptWindow", "Scripts window (umpire)", "Ctrl+Shift+L"),

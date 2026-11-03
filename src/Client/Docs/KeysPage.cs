@@ -50,7 +50,7 @@ public static class KeysPage
             (K("captureAgain"), "capture the same region again"),
             (K("sighting"), "POV screenshot from the selected piece; wheel sets its reach"),
             ("Alt+click", "pick out a map sheet"),
-            (K("undo"), "undo"),
+            ($"{K("undo")}  {K("redo")}", "undo, redo (umpire)"),
             (K("mute"), "sound on / off"),
             (K("saves"), "the scenario's saves (host)"),
             ("F1", "help; over a tool, that tool's section"),

@@ -92,7 +92,7 @@ sealed class PovPanel : HudPart
         var traced = new HBoxContainer();
         traced.AddThemeConstantOverride("separation", 4);
         var undoW = Ui.IconBtn("undo", $"Undo the last line traced   ({Cfg.Keys.Label("undo")})", "Takes back the last thing you traced");
-        var redoW = Ui.IconBtn("redo", "Put it back", "Traces the last line you took back again");
+        var redoW = Ui.IconBtn("redo", $"Put it back   ({Cfg.Keys.Label("redo")})", "Traces the last line you took back again");
         undoW.CustomMinimumSize = redoW.CustomMinimumSize = new Vector2(28, 24);
         undoW.Disabled = T.WallsTraced == 0;
         redoW.Disabled = T.WallsTakenBack == 0;

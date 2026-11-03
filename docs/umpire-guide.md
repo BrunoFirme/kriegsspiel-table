@@ -80,7 +80,7 @@ The tool strip runs down the left. Point at any tool and press **F1** for its se
 
 - Drag a piece to carry it; it drops where you let go. Drag the empty table to box-select.
 - **Q / E** turn 15° (Shift 1°). The wheel over a selected piece turns it 10° (Ctrl 2°, Shift ½°).
-- **+ / −** resize, **Ctrl+1–9** form rows, **Ctrl+C / V** copy and paste, **Delete**, **Ctrl+Z** undo.
+- **+ / −** resize, **Ctrl+1–9** form rows, **Ctrl+C / V** copy and paste, **Delete**, **Ctrl+Z / Ctrl+Y** undo and redo.
 - **Right-click** a piece for everything else: looks, counters, markers, lock, POV, Properties.
 
 ### Turn and resize
