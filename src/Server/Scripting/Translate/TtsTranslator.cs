@@ -356,8 +356,7 @@ public static class TtsTranslator
                 case "highlightOff": return Compat($"compat.highlight_off({recv})", node);
                 case "setVectorLines": return Compat($"compat.set_vector_lines({recv}, {A(0)})", node);
                 case "getVectorLines": return Compat($"compat.get_vector_lines({recv})", node);
-                case "setDecals": return Compat($"compat.set_decals({recv}, {A(0)})", node);
-                case "addDecal": return Compat($"compat.add_decal({recv}, {A(0)})", node);
+                case "setDecals" or "addDecal": return Compat($"compat.{(name == "addDecal" ? "add_decal" : "set_decals")}({recv}, {A(0)})", node);
                 case "getDecals": return Compat($"compat.get_decals({recv})", node);
                 case "setSnapPoints": return Compat($"compat.set_snap_points({recv}, {A(0)})", node);
                 case "getSnapPoints": return Compat($"compat.get_snap_points({recv})", node);
