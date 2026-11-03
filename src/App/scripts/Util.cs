@@ -115,9 +115,10 @@ public static class ObjLoader
     {
         var v = new List<Vector3>(); var vt = new List<Vector2>(); var vn = new List<Vector3>();
         var vc = new List<Color>();
-        var st = new SurfaceTool();
-        st.Begin(Mesh.PrimitiveType.Triangles);
-        bool hasN = false;
+        var tinted = new SurfaceTool(); var untinted = new SurfaceTool();
+        tinted.Begin(Mesh.PrimitiveType.Triangles); untinted.Begin(Mesh.PrimitiveType.Triangles);
+        bool hasN = false, hasUntinted = false;
+        string? firstMaterial = null, material = null;
         var inv = CultureInfo.InvariantCulture;
         foreach (var raw in System.IO.File.ReadLines(path))
         {
@@ -132,7 +133,14 @@ public static class ObjLoader
                     break;
                 case "vt": vt.Add(new Vector2(float.Parse(p[1], inv), p.Length > 2 ? float.Parse(p[2], inv) : 0)); break;
                 case "vn": vn.Add(new Vector3(float.Parse(p[1], inv), float.Parse(p[2], inv), float.Parse(p[3], inv))); break;
+                case "usemtl":
+                    material = line[6..].Trim();
+                    firstMaterial ??= material;
+                    break;
                 case "f":
+                    bool first = material == null || material == firstMaterial;
+                    var st = first ? tinted : untinted;
+                    hasUntinted |= !first;
                     var idx = new List<(int v, int t, int n)>();
                     for (int i = 1; i < p.Length; i++)
                     {
@@ -151,7 +159,8 @@ public static class ObjLoader
                     break;
             }
         }
-        if (!hasN) st.GenerateNormals();
-        return st.Commit();
+        if (!hasN) { tinted.GenerateNormals(); if (hasUntinted) untinted.GenerateNormals(); }
+        var mesh = tinted.Commit();
+        return hasUntinted ? untinted.Commit(mesh) : mesh;
     }
 }

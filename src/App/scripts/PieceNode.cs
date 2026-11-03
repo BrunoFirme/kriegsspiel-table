@@ -21,6 +21,7 @@ public partial class PieceNode : Node3D
     Session _s = null!;
     internal TableSounds? Sounds;
     MeshInstance3D? _sel, _model, _body, _addOn;
+    StandardMaterial3D? _modelMat;
     StandardMaterial3D? _sideMat;
     ShaderMaterial? _selMat;
     float _thickness = 0.2f;
@@ -389,16 +390,18 @@ public partial class PieceNode : Node3D
         var pack = _s.Store.PackOfDef(PictureDefId)!;
         if (!pack.Assets.TryGetValue(meshHash, out var ma)) return;
         bool die = Def!.Tags.Contains("die");
-        var mat = die
-            ? new StandardMaterial3D { AlbedoColor = tint, Roughness = 0.32f, Metallic = 0f, MetallicSpecular = 0.6f, CullMode = BaseMaterial3D.CullModeEnum.Back, TextureFilter = BaseMaterial3D.TextureFilterEnum.LinearWithMipmapsAnisotropic }
-            : new StandardMaterial3D { AlbedoColor = tint, CullMode = BaseMaterial3D.CullModeEnum.Disabled, Transparency = BaseMaterial3D.TransparencyEnum.AlphaScissor };
-        _model = new MeshInstance3D { MaterialOverride = mat, RotationDegrees = new Vector3(0, 180, 0) };
+        StandardMaterial3D Body(Color c) => die
+            ? new StandardMaterial3D { AlbedoColor = c, Roughness = 0.32f, Metallic = 0f, MetallicSpecular = 0.6f, CullMode = BaseMaterial3D.CullModeEnum.Back, TextureFilter = BaseMaterial3D.TextureFilterEnum.LinearWithMipmapsAnisotropic }
+            : new StandardMaterial3D { AlbedoColor = c, CullMode = BaseMaterial3D.CullModeEnum.Disabled, Transparency = BaseMaterial3D.TransparencyEnum.AlphaScissor };
+        var mat = _modelMat = Body(tint);
+        var untinted = Body(_layerTint);
+        _model = new MeshInstance3D { RotationDegrees = new Vector3(0, 180, 0) };
         AddChild(_model);
         var texHash = CurState?.Texture ?? Def!.Texture;
         if (texHash != null && pack.Assets.TryGetValue(texHash, out var ta))
         {
-            var tex = _s.Assets.Texture(pack.Id, ta.File, t => { if (IsInstanceValid(this)) mat.AlbedoTexture = t; }, maxSize: die ? 1024 : 2048);
-            if (tex != null) mat.AlbedoTexture = tex;
+            var tex = _s.Assets.Texture(pack.Id, ta.File, t => { if (IsInstanceValid(this)) mat.AlbedoTexture = untinted.AlbedoTexture = t; }, maxSize: die ? 1024 : 2048);
+            if (tex != null) mat.AlbedoTexture = untinted.AlbedoTexture = tex;
         }
         var model = _model;
         _s.Assets.EnsureFile(pack.Id, ma.File, () =>
@@ -407,7 +410,8 @@ public partial class PieceNode : Node3D
             var mesh = ModelCache.Get(_s.Assets.Abs(pack.Id, ma.File));
             if (mesh == null) return;
             model.Mesh = mesh;
-            if (!die && (mesh.SurfaceGetFormat(0) & Mesh.ArrayFormat.FormatColor) != 0) { mat.VertexColorUseAsAlbedo = true; mat.VertexColorIsSrgb = true; }
+            for (int s = 0; s < mesh.GetSurfaceCount(); s++) model.SetSurfaceOverrideMaterial(s, s == 0 ? mat : untinted);
+            if (!die && (mesh.SurfaceGetFormat(0) & Mesh.ArrayFormat.FormatColor) != 0) foreach (var m in new[] { mat, untinted }) { m.VertexColorUseAsAlbedo = true; m.VertexColorIsSrgb = true; }
             var aabb = mesh.GetAabb();
             float sx = aabb.Size.X > 0 ? w / aabb.Size.X : 1, sz = aabb.Size.Z > 0 ? h / aabb.Size.Z : 1;
             float sy = (sx + sz) / 2;
@@ -416,7 +420,7 @@ public partial class PieceNode : Node3D
             if (Piece.Ui.Count > 0) SyncUi(force: true);
             if (IsDie)
             {
-                var verts = mesh.SurfaceGetArrays(0)[(int)Mesh.ArrayType.Vertex].AsVector3Array();
+                var verts = Enumerable.Range(0, mesh.GetSurfaceCount()).SelectMany(s => mesh.SurfaceGetArrays(s)[(int)Mesh.ArrayType.Vertex].AsVector3Array());
                 _hull = verts.Select(vv => vv * model.Scale).ToArray();
                 _meshReady = true;
                 ApplyFace(Piece.State);
@@ -520,7 +524,7 @@ public partial class PieceNode : Node3D
         bool selected = _sel != null, hovered = _hovered;
         _hovered = false;
         foreach (var c in GetChildren()) { RemoveChild(c); c.QueueFree(); }
-        _sel = _model = _body = _far = _addOn = null; _selMat = null; _sideMat = null;
+        _sel = _model = _body = _far = _addOn = null; _selMat = null; _sideMat = null; _modelMat = null;
         _lettering.Forget();
         _edgeSlots.Clear(); _edgeColor = Colors.Transparent;
         _back.Forget(); _backMat = null; _flipGen++; _flipping = false;
