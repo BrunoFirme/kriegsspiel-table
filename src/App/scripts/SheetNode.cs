@@ -91,7 +91,11 @@ public partial class SheetNode : Node3D
         {
             var im = new ImmediateMesh();
             float w = (float)Def.Size.W / 2, h = (float)Def.Size.H / 2;
-            var mat = new StandardMaterial3D { AlbedoColor = Def.Locked ? new Color(1, 0.8f, 0.2f) : new Color(0.2f, 1, 0.4f), ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded, NoDepthTest = true };
+            var mat = new StandardMaterial3D
+            {
+                AlbedoColor = Def.Locked ? new Color(1, 0.8f, 0.2f) : new Color(0.2f, 1, 0.4f), ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded,
+                NoDepthTest = true, Transparency = BaseMaterial3D.TransparencyEnum.Alpha, RenderPriority = OutlinePriority, CullMode = BaseMaterial3D.CullModeEnum.Disabled,
+            };
             float t = Math.Max(0.12f, Math.Min(w, h) * 0.012f);
             var lift = Lift();
             im.SurfaceBegin(Mesh.PrimitiveType.TriangleStrip, mat);
@@ -122,6 +126,7 @@ public partial class SheetNode : Node3D
 
     const int OutlineSteps = 32;
     const float OutlineAbove = 0.05f;
+    const int OutlinePriority = 10;
     public const float ZStep = 0.004f;
 
     Func<float, float, float> Lift() => _relief.Ground.Any ? GroundMesh.Heights(_relief.Ground, Transform) : (_, _) => 0f;
