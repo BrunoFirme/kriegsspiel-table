@@ -1136,7 +1136,7 @@ Draws an input box and returns its index. on_change names a function called as f
 | `rot` | `number` | _Optional._ Turn on the face, in degrees. |
 | `value` | `string` | _Optional._ The text in the box. |
 | `placeholder` | `string` | _Optional._ Shown greyed while the box is empty. |
-| `font` | `number` | _Optional._ Letter size in piece units; a longer label runs past its button, as in TTS. Default 0.05. |
+| `font` | `number` | _Optional._ Letter size in piece units; the box shows as much of the text as fits. Default 0.05. |
 | `color` | `Color` | _Optional._ The box's colour. |
 | `text_color` | `Color` | _Optional._ The text's colour. |
 | `align` | `"left"\|"center"\|"right"` | _Optional._ Default "center". |
