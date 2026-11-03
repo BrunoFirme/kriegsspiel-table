@@ -42,6 +42,7 @@ public sealed class Settings
     public float TopLineWidth { get; set; } = 1f;
     public string PenInk { get; set; } = "#1a1a1a";
     public float PenSize { get; set; } = 3f;
+    public float PenOpacity { get; set; } = 1f;
     public string ShapeKind { get; set; } = "line";
     public float TableShade { get; set; } = 0f;
     public float LeftWidth { get; set; } = 300;

@@ -20,6 +20,7 @@ sealed class DrawPanel : HudPart
     {
         T.PenColor = Coords.ParseColor(Cfg.PenInk, new Color(0.1f, 0.1f, 0.1f));
         T.PenPixels = Mathf.Clamp(Cfg.PenSize, 1f, 12f);
+        T.PenOpacity = Mathf.Clamp(Cfg.PenOpacity, LeastOpacity, 1f);
         T.ShapeKind = Cfg.ShapeKind;
     }
 
@@ -99,7 +100,16 @@ sealed class DrawPanel : HudPart
         pen.ValueChanged += v => { T.PenPixels = (float)v; penL.Text = $"{v:0.#}"; Cfg.PenSize = (float)v; Cfg.Save(); };
         penRow.AddChild(pen); penRow.AddChild(penL);
         _box.AddChild(penRow);
+        var seeRow = new HBoxContainer();
+        seeRow.AddThemeConstantOverride("separation", 4);
+        var see = new HSlider { MinValue = LeastOpacity * 100, MaxValue = 100, Step = 5, Value = Mathf.Round(T.PenOpacity * 100), CustomMinimumSize = new Vector2(62, 0), SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, TooltipText = "How see-through new lines are: 100% hides what is under them" };
+        var seeL = new Label { Text = $"{see.Value:0}%", CustomMinimumSize = new Vector2(26, 0), SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, HorizontalAlignment = HorizontalAlignment.Right };
+        see.ValueChanged += v => { T.PenOpacity = (float)(v / 100); seeL.Text = $"{v:0}%"; Cfg.PenOpacity = T.PenOpacity; Cfg.Save(); };
+        seeRow.AddChild(see); seeRow.AddChild(seeL);
+        _box.AddChild(seeRow);
     }
+
+    const float LeastOpacity = 0.1f;
 
     void AddLayerRow()
     {

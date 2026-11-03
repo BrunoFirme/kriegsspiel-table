@@ -19,6 +19,7 @@ sealed class PenTool
     public string ShapeKind = "line";
     public Color PenColor = new(0.1f, 0.1f, 0.1f);
     public float PenPixels = 3f;
+    public float PenOpacity = 1f;
 
     List<Vec2>? _stroke;
     Vec2? _shapeA, _shapeB;
@@ -41,7 +42,7 @@ sealed class PenTool
     public void ReleaseDraw()
     {
         if (_stroke != null && _stroke.Count >= 2)
-            _c.S.Do(new Draw { Layer = Layers.Umpire, Stroke = new Stroke { Points = Polyline.Simplify(_stroke), Color = "#" + StrokeColor().ToHtml(false), Width = PenWidth(), Board = _drawings.DrawBoard() } });
+            _c.S.Do(new Draw { Layer = Layers.Umpire, Stroke = new Stroke { Points = Polyline.Simplify(_stroke), Color = StrokeHex(), Width = PenWidth(), Board = _drawings.DrawBoard() } });
         _stroke = null;
     }
 
@@ -49,7 +50,7 @@ sealed class PenTool
     {
         if (_shapeA is { } sa && _shapeB is { } sb && (sb - sa).Length > 0.05)
         {
-            Draw One(List<Vec2> pts) => new() { Layer = Layers.Umpire, Stroke = new Stroke { Points = pts, Color = "#" + StrokeColor().ToHtml(false), Width = PenWidth(), Board = _drawings.DrawBoard() } };
+            Draw One(List<Vec2> pts) => new() { Layer = Layers.Umpire, Stroke = new Stroke { Points = pts, Color = StrokeHex(), Width = PenWidth(), Board = _drawings.DrawBoard() } };
             var body = One(Polyline.ShapePoints(ShapeKind, sa, sb));
             var head = Polyline.ShapeHead(ShapeKind, sa, sb);
             _c.S.Do(head == null ? body : new Batch { Items = new List<Command> { body, One(head) } });
@@ -72,7 +73,7 @@ sealed class PenTool
         DrawTip();
     }
 
-    StandardMaterial3D PenMaterial() => new() { AlbedoColor = StrokeColor(), ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded, NoDepthTest = true };
+    StandardMaterial3D PenMaterial() => new() { AlbedoColor = StrokeColor(), ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded, NoDepthTest = true, Transparency = BaseMaterial3D.TransparencyEnum.Alpha };
 
     void DrawTip()
     {
@@ -95,7 +96,9 @@ sealed class PenTool
         Overlay.RibbonPx(Overlay.Mesh, mat, ring, 0.06f, 2f);
     }
 
-    Color StrokeColor() => PenColor;
+    Color StrokeColor() => new(PenColor, PenOpacity);
+
+    string StrokeHex() => "#" + StrokeColor().ToHtml(PenOpacity < 1);
 
     double PenWidth() => Math.Max(0.04, PenPixels / Math.Max(0.01, _c.Rig.PixelsPerUnit()));
 

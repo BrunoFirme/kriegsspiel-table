@@ -400,6 +400,7 @@ public partial class Table : Node3D
     public string ShapeKind { get => Pen.ShapeKind; set => Pen.ShapeKind = value; }
     public Color PenColor { get => Pen.PenColor; set => Pen.PenColor = value; }
     public float PenPixels { get => Pen.PenPixels; set => Pen.PenPixels = value; }
+    public float PenOpacity { get => Pen.PenOpacity; set => Pen.PenOpacity = value; }
     public double RubRadius() => Pen.RubRadius();
     public static List<Vec2> ShapePoints(string kind, Vec2 a, Vec2 b) => Polyline.ShapePoints(kind, a, b);
     public static List<Vec2>? ShapeHead(string kind, Vec2 a, Vec2 b) => Polyline.ShapeHead(kind, a, b);

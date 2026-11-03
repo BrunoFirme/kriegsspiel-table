@@ -146,6 +146,7 @@ sealed class HudDemo : HudPart
         if (what is "pieces" or "map" or "layers" or "board") { Hud.Drawer.ShowPage(what); return true; }
         if (what == "resetpanels") { Hud.PutPanelsBack(); return true; }
         if (what == "pieceindex") { Hud.Drawer.ShowPage("pieces"); Hud.Pieces.ShowIndex(); return true; }
+        if (what == "pen") { T.SetTool(Tool.Draw); return true; }
         if (what == "agentpill" && AgentEndpoint.Current is { } agent)
         {
             agent.Log("made the kind Fusiliers (2nd Brigade)");

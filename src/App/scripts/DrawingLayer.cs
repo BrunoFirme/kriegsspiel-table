@@ -46,7 +46,12 @@ sealed class DrawingLayer
             foreach (var st in strokes)
             {
                 if (st.Points.Count < 2 || !BoardShown(st.Board)) continue;
-                var mat = new StandardMaterial3D { AlbedoColor = Coords.ParseColor(st.Color, Colors.Black), ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded };
+                var color = Coords.ParseColor(st.Color, Colors.Black);
+                var mat = new StandardMaterial3D
+                {
+                    AlbedoColor = color, ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded,
+                    Transparency = color.A < 1 ? BaseMaterial3D.TransparencyEnum.Alpha : BaseMaterial3D.TransparencyEnum.Disabled,
+                };
                 Ribbon.Draw(im, mat, st.Points, st.Width, _c.SheetsTop + StrokeLift, _c.S.Ground);
             }
             var mi = new MeshInstance3D { Mesh = im, CastShadow = GeometryInstance3D.ShadowCastingSetting.Off };
