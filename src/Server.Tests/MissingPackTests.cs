@@ -38,6 +38,22 @@ public class MissingPackTests : IDisposable
     }
 
     [Fact]
+    public void The_retired_red_and_blue_d6_open_as_the_white_d6_in_their_colour()
+    {
+        var g = new GameState { Packs = { "std.dice" } };
+        g.Layers[Layers.Umpire] = new()
+        {
+            new PieceInstance { Id = "a", Def = "std.dice.d6-red" },
+            new PieceInstance { Id = "b", Def = "std.dice.d6-blue", TintOverride = "#00FF00" },
+            new PieceInstance { Id = "c", Def = "std.dice.d6" },
+        };
+        var srv = new GameServer(g, Store());
+
+        Assert.Equal(new[] { ("std.dice.d6", DieColors.Red), ("std.dice.d6", "#00FF00"), ("std.dice.d6", (string?)null) },
+            srv.State.Layer(Layers.Umpire).Select(p => (p.Def, p.TintOverride)));
+    }
+
+    [Fact]
     public void A_piece_whose_pack_cannot_be_told_keeps_every_missing_pack()
     {
         var srv = new GameServer(Game("inf"), Store());

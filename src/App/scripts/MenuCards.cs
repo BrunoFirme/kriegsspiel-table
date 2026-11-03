@@ -133,6 +133,8 @@ sealed class MenuCards : HudPart
         {
             bool allReal = dice.All(n => n.Piece.PhysicalRoll);
             menu.Check("Thrown for real (the face it lands on)", allReal, () => SetOption(dice, PieceOptions.PhysicalRoll, !allReal));
+            var mine = dice.Where(n => S.CanTouch(n.Layer, n.Piece)).ToList();
+            if (mine.Count > 0) menu.Add(DieColorRow(mine, menu.Pop));
         }
         menu.Separator();
         menu.Item("Copy", T.CopySelection, "Ctrl+C");
@@ -163,6 +165,32 @@ sealed class MenuCards : HudPart
                 menu.Item(S.View.MenuItems[i].Label, () => S.Do(new PickGlobalMenuItem { Index = mi + 1, Pos = T.Rig.GroundAt(at) is { } w ? Coords.FromWorld(w) : null }));
             }
         }
+    }
+
+    Control DieColorRow(List<PieceNode> dice, PopupPanel pop)
+    {
+        const int Swatch = 22, Round = 11, CheckColumn = 18;
+        var row = new HBoxContainer();
+        row.AddThemeConstantOverride("separation", 4);
+        row.AddChild(new Control { CustomMinimumSize = new Vector2(CheckColumn, 0) });
+        row.AddChild(new Label { Text = "Colour", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter });
+        foreach (var (name, hex) in DieColors.All)
+        {
+            var color = Coords.ParseColor(hex, Colors.White);
+            var b = new Button { CustomMinimumSize = new Vector2(Swatch, Swatch), TooltipText = name, FocusMode = Control.FocusModeEnum.None };
+            b.AddThemeStyleboxOverride("normal", Ui.Box(color, Round, 0, 0));
+            b.AddThemeStyleboxOverride("hover", Ui.Box(color.Lightened(0.2f), Round, 0, 0));
+            b.AddThemeStyleboxOverride("pressed", Ui.Box(color.Darkened(0.2f), Round, 0, 0));
+            string? tint = hex == DieColors.All[0].Hex ? null : hex;
+            b.Pressed += () =>
+            {
+                pop.Hide();
+                var cmds = dice.Select(n => (Command)new SetTint { Layer = n.Layer, Id = n.Piece.Id, Value = tint }).ToList();
+                S.Do(cmds.Count == 1 ? cmds[0] : new Batch { Items = cmds });
+            };
+            row.AddChild(b);
+        }
+        return row;
     }
 
     Control PieceNotes(PieceNode node, PopupPanel pop)

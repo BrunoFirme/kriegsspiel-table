@@ -87,7 +87,8 @@ upload to the host when you place their pieces. Limits: pictures and models only
 ## Dice
 
 The **Dice** pack comes with the app: d4, d6, d8, d10, d12, d20. Place a die like any piece; drop, flick or shake
-it in your hand to roll, or press **R**. The host decides every result and the Log shows it.
+it in your hand to roll, or press **R**. The host decides every result and the Log shows it. Hovering over a die
+shows its result; right-click it for its **Colour**.
 
 ## Share packs and scenarios
 

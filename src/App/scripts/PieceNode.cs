@@ -498,6 +498,7 @@ public partial class PieceNode : Node3D
     {
         var parts = new List<string>();
         var title = Piece.Label is { Length: > 0 } lb ? lb : Def?.Name ?? Piece.Def;
+        if (IsDie && Def is { States.Count: > 0 } die) title += ": " + die.States[Math.Clamp(Piece.State, 0, die.States.Count - 1)].Name;
         parts.Add(title);
         if (Piece.Text.GetValueOrDefault("Name") is { Length: > 0 } nm && nm != title) parts.Add(nm);
         foreach (var (k, v) in Piece.Text) if (k != "Name" && v.Length > 0) parts.Add($"{k}: {v}");

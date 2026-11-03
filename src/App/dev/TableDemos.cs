@@ -406,7 +406,7 @@ sealed partial class TableDemos
         {
             Net.SharePack("std.dice");
             var at = Coords.FromWorld(table.Rig.Target);
-            var defs = new[] { "std.dice.d6", "std.dice.d6-red", "std.dice.d20" };
+            var defs = new[] { "std.dice.d6", "std.dice.d8", "std.dice.d20" };
             Tree.CreateTimer(0.5).Timeout += () => { for (int i = 0; i < defs.Length; i++) Session.Do(new KTable.Core.Protocol.SpawnPiece { Layer = KTable.Core.Model.Layers.Umpire, Def = defs[i], Pos = at + new KTable.Core.Model.Vec2(-1.5 + i * 1.5, -3), RotDeg = 180 }); };
             List<string> Ids() => Session.View.Layer(KTable.Core.Model.Layers.Umpire).Where(p => p.Def.StartsWith("std.dice.")).Select(p => p.Id).ToList();
             Tree.CreateTimer(5.0).Timeout += () =>

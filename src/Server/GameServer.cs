@@ -51,6 +51,7 @@ public sealed partial class GameServer
 
     void OpenPacks(GameState state)
     {
+        DieColors.Recolor(state);
         if (Store == null) return;
         Store.LoadPacks(state.Packs);
         var unknownFrom = state.Layers.Values.SelectMany(l => l).Where(p => Store.Def(p.Def) == null).Select(p => state.PackNamedBy(p.Def)).ToHashSet();
