@@ -10,6 +10,7 @@ namespace KTable.App;
 
 sealed class PenTool
 {
+    const float PreviewLift = 0.05f;
     readonly TableContext _c;
     readonly ToolOverlay _overlay;
     readonly DrawingLayer _drawings;
@@ -62,11 +63,11 @@ sealed class PenTool
     {
         var mesh = Overlay.Mesh;
         if (_stroke != null && _stroke.Count >= 2)
-            Ribbon.Draw(mesh, PenMaterial(), _stroke, PenWidth(), 0.05f);
+            Ribbon.Draw(mesh, PenMaterial(), _stroke, PenWidth(), _c.SheetsTop + PreviewLift);
         if (_shapeA is { } pa && _shapeB is { } pb && (pb - pa).Length > 0.01)
         {
-            Ribbon.Draw(mesh, PenMaterial(), Polyline.ShapePoints(ShapeKind, pa, pb), PenWidth(), 0.05f);
-            if (Polyline.ShapeHead(ShapeKind, pa, pb) is { } hd) Ribbon.Draw(mesh, PenMaterial(), hd, PenWidth(), 0.05f);
+            Ribbon.Draw(mesh, PenMaterial(), Polyline.ShapePoints(ShapeKind, pa, pb), PenWidth(), _c.SheetsTop + PreviewLift);
+            if (Polyline.ShapeHead(ShapeKind, pa, pb) is { } hd) Ribbon.Draw(mesh, PenMaterial(), hd, PenWidth(), _c.SheetsTop + PreviewLift);
         }
         DrawTip();
     }

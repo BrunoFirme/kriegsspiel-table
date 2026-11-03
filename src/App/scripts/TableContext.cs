@@ -19,6 +19,7 @@ sealed class TableContext
     public TableSounds Sound { get; }
     public Action<PieceNode> Moving { get; set; } = _ => { };
     public CameraRig Rig { get; set; } = null!;
+    public float SheetsTop { get; set; }
     public ScreenLabels Labels { get; set; } = null!;
 
     public Tool Tool { get; set; } = Tool.Select;

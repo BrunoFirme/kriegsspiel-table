@@ -39,6 +39,7 @@ sealed class SheetLayer
     void Reground(Rect2? where)
     {
         int top = _sheets.Count == 0 ? 0 : _sheets.Values.Max(s => s.Def.Z);
+        _c.SheetsTop = Math.Max(0, top) * SheetNode.ZStep;
         foreach (var n in _sheets.Values) { n.TopZ = top; n.Covered = Covered; n.Reground(where); }
         GroundChanged?.Invoke(where);
     }

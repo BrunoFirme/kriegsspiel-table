@@ -8,6 +8,8 @@ namespace KTable.App;
 
 sealed class DrawingLayer
 {
+    public const float StrokeLift = 0.025f;
+
     readonly TableContext _c;
     readonly Dictionary<string, MeshInstance3D> _drawings = new();
     public Node3D Root = null!;
@@ -45,7 +47,7 @@ sealed class DrawingLayer
             {
                 if (st.Points.Count < 2 || !BoardShown(st.Board)) continue;
                 var mat = new StandardMaterial3D { AlbedoColor = Coords.ParseColor(st.Color, Colors.Black), ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded };
-                Ribbon.Draw(im, mat, st.Points, st.Width, 0.025f, _c.S.Ground);
+                Ribbon.Draw(im, mat, st.Points, st.Width, _c.SheetsTop + StrokeLift, _c.S.Ground);
             }
             var mi = new MeshInstance3D { Mesh = im, CastShadow = GeometryInstance3D.ShadowCastingSetting.Off };
             Root.AddChild(mi);
