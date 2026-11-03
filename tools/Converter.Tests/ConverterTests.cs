@@ -229,4 +229,25 @@ public sealed class ConverterTests : IDisposable
         var assets = new AssetStore(cfg, new Report());
         Assert.Equal((1000L, 2), assets.Footprint(PackBuilder.PieceUrls(save), PackBuilder.Urls(save)));
     }
+
+    [Fact]
+    public void Modules_kept_in_the_game_folder_of_another_steam_library_are_found()
+    {
+        var steam = Path.Combine(_root, "Steam");
+        var library = Path.Combine(_root, "E", "SteamLibrary");
+        var gameMods = Path.Combine(library, "steamapps", "common", "Tabletop Simulator", "Tabletop Simulator_Data", "Mods");
+        var homeMods = Path.Combine(_root, "Documents", "Mods");
+        Directory.CreateDirectory(Path.Combine(steam, "steamapps"));
+        Directory.CreateDirectory(Path.Combine(gameMods, "Workshop"));
+        Directory.CreateDirectory(Path.Combine(homeMods, "Workshop"));
+        File.WriteAllText(Path.Combine(gameMods, "Workshop", "704986068.json"), "{}");
+        File.WriteAllText(Path.Combine(gameMods, "Workshop", "816003783.json"), "{}");
+        File.WriteAllText(Path.Combine(steam, "steamapps", "libraryfolders.vdf"),
+            "\"libraryfolders\"\n{\n\t\"0\"\n\t{\n\t\t\"path\"\t\t\"" + steam.Replace("\\", "\\\\") + "\"\n\t}\n\t\"1\"\n\t{\n\t\t\"path\"\t\t\"" + library.Replace("\\", "\\\\") + "\"\n\t}\n}\n");
+        Assert.Equal(new[] { steam, library }, TtsFolders.SteamLibraries(steam));
+        Assert.Contains(gameMods, TtsFolders.ModsFolders(steam));
+        Assert.Equal(gameMods, TtsFolders.MostModules(new[] { homeMods, Path.Combine(_root, "nowhere"), gameMods }));
+        Assert.Null(TtsFolders.MostModules(new[] { Path.Combine(_root, "nowhere") }));
+        Assert.Empty(TtsFolders.SteamLibraries(null));
+    }
 }

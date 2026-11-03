@@ -131,7 +131,7 @@ public partial class Hud : CanvasLayer
         foreach (var one in Flatten(c))
         {
             if (one.Actor == 0) one.Actor = c.Actor;
-            if (one is RollDice rd) Transcript.Rolled(rd);
+            if (one is RollDice rd) { Transcript.Rolled(rd); Dice.Rolled(rd); }
             if (one is AddSheet or RemoveSheet or MoveSheet or LockSheet or RenameSheet or CropSheet or SetSheetRelief or SetSheetPicture) Map.Rebuild();
 
             if (one is SetCalibration) { Strip.SyncCalibrateTip(); Map.Rebuild(); }
@@ -155,6 +155,15 @@ public partial class Hud : CanvasLayer
     {
         if (e is InputEventKey { Pressed: true, Echo: false, Keycode: Key.F1 }) HelpTags.Open(Ctx.Root, KTable.Client.Docs.KeysPage.File + "#at-the-table");
         if (e is InputEventKey { Pressed: true, Echo: false, Keycode: Key.F2 } && Strip.Btn2d != null) Callable.From(SyncViewButton).CallDeferred();
+        if (e is InputEventKey { Pressed: true, Echo: false } k && Cfg.Keys.Is(k, "labelPlates")) { SetLabelPlates(!Cfg.LabelPlates); GetViewport().SetInputAsHandled(); }
+    }
+
+    public void SetLabelPlates(bool on)
+    {
+        Cfg.LabelPlates = on;
+        Cfg.Save();
+        T.ShowLabelPlates(on);
+        Strip.SyncToggles();
     }
 
     void SyncViewButton() => Strip.SyncViewButton();

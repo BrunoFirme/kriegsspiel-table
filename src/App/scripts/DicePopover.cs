@@ -13,6 +13,18 @@ sealed class DicePopover : HudPart
 
     public System.Action? ShowTableDice;
     public System.Func<Rect2?>? Beside;
+    Label? _results;
+    bool _fresh;
+    const int ResultSize = 15;
+
+    public void Rolled(RollDice rd)
+    {
+        if (_results == null || rd.Actor != S.Me.PeerId || rd.PieceIds.Count > 0 || rd.Results.Count == 0) return;
+        var line = $"{rd.Count}d{rd.Sides}   {string.Join(" · ", rd.Results)}" + (rd.Results.Count > 1 ? $"   = {rd.Results.Sum()}" : "");
+        _results.Text = _fresh || _results.Text.Length == 0 ? line : _results.Text + "\n" + line;
+        _fresh = false;
+        _results.Visible = true;
+    }
 
     public void Show(Control anchor)
     {
@@ -44,23 +56,31 @@ sealed class DicePopover : HudPart
         }
         box.AddChild(faces);
         box.AddChild(line);
+        _results = new Label { HorizontalAlignment = HorizontalAlignment.Center, Visible = false };
+        _results.AddThemeFontSizeOverride("font_size", ResultSize);
+        _results.AddThemeColorOverride("font_color", Ui.AccentInk);
         void Roll()
         {
             var items = pool.Where(e => e.Value > 0).OrderBy(e => e.Key)
                 .Select(e => (Command)new RollDice { Count = e.Value, Sides = e.Key }).ToList();
             if (items.Count == 0) items.Add(new RollDice { Count = 1, Sides = 6 });
+            _fresh = true;
             if (items.Count == 1) S.Do(items[0]); else S.Do(new Batch { Items = items });
-            pool.Clear(); line.Text = Spell();
-            Pop!.Hide();
+            if (Cfg.DiceCloseAfterRoll) Pop!.Hide();
         }
         var row = new HBoxContainer();
         row.AddThemeConstantOverride("separation", 4);
-        var clear = Btn("Clear", () => { pool.Clear(); line.Text = Spell(); }, "empty the hand");
+        var clear = Btn("Clear", () => { pool.Clear(); line.Text = Spell(); _results!.Visible = false; }, "empty the hand");
         clear.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
         var roll = Ui.Primary("Roll", Roll, "the server rolls; every umpire sees it in the Log");
         roll.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
         row.AddChild(clear); row.AddChild(roll);
         box.AddChild(row);
+        box.AddChild(_results);
+        var close = new CheckBox { Text = "Close after a roll", ButtonPressed = Cfg.DiceCloseAfterRoll, FocusMode = Control.FocusModeEnum.None };
+        close.AddThemeFontSizeOverride("font_size", 12);
+        close.Toggled += on => { Cfg.DiceCloseAfterRoll = on; Cfg.Save(); };
+        box.AddChild(close);
         var table = Btn("Dice to throw on the table…", () => { Pop!.Hide(); ShowTableDice?.Invoke(); }, "The dice pieces: drag them onto the table, pick them up and throw them");
         Ui.MakeQuiet(table);
         table.AddThemeFontSizeOverride("font_size", 12);

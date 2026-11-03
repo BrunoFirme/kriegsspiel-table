@@ -23,6 +23,7 @@ interface IHudShell
     Task CaptureSighting();
     void ShowSettings();
     void ShowSaveCopy();
+    void SetLabelPlates(bool on);
 }
 
 public partial class Hud : IHudShell

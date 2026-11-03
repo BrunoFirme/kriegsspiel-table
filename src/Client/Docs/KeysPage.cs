@@ -41,6 +41,7 @@ public static class KeysPage
             ("Wheel", "zoom"),
             (K("map2d"), "flat map or 3D table"),
             (K("frame"), "frame the whole map"),
+            (K("labelPlates"), "plates behind labels beside pieces"),
         });
         Table(sb, "Tools", new[]
         {

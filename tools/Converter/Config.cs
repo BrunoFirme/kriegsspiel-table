@@ -62,23 +62,19 @@ public sealed class Config
     public TilesCfg Tiles { get; set; } = new();
 
     public string WorkshopDir => Path.Combine(TtsModsPath, "Workshop");
-    public string SavesDir => Path.Combine(Path.GetDirectoryName(TtsModsPath.TrimEnd('\\', '/')) ?? TtsModsPath, "Saves");
+    public string SavesDir
+    {
+        get
+        {
+            var beside = Path.Combine(Path.GetDirectoryName(TtsModsPath.TrimEnd('\\', '/')) ?? TtsModsPath, "Saves");
+            return Directory.Exists(beside) ? beside : TtsFolders.HomeFolders().Select(h => Path.Combine(h, "Saves")).FirstOrDefault(Directory.Exists) ?? beside;
+        }
+    }
 
     public void ResolveTtsMods()
     {
         if (Directory.Exists(TtsModsPath)) return;
-        var docs = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-        var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-        foreach (var c in new[]
-        {
-            Path.Combine(docs, "My Games", "Tabletop Simulator", "Mods"),
-            Path.Combine(home, "Documents", "My Games", "Tabletop Simulator", "Mods"),
-            Path.Combine(home, "OneDrive", "Documents", "My Games", "Tabletop Simulator", "Mods"),
-            Path.Combine(home, "OneDrive", "Documentos", "My Games", "Tabletop Simulator", "Mods"),
-            Path.Combine(home, "Library", "Tabletop Simulator", "Mods"),
-            Path.Combine(home, ".local", "share", "Tabletop Simulator", "Mods"),
-        })
-            if (Directory.Exists(c)) { TtsModsPath = c; return; }
+        if (TtsFolders.MostModules(TtsFolders.ModsFolders(TtsFolders.SteamRoot())) is { } found) TtsModsPath = found;
     }
     public string Cache => Environment.ExpandEnvironmentVariables(CachePath.Length > 0 ? CachePath : @"%LOCALAPPDATA%\KriegsspielTable\cache\tts");
     public string Output => OutputPath.Length > 0 ? Environment.ExpandEnvironmentVariables(OutputPath) : PackageStore.DefaultRoot;

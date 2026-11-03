@@ -65,13 +65,8 @@ public partial class ImportDialog : AcceptDialog
         var g = new GridContainer { Columns = 2 };
         right.AddChild(g);
         g.AddChild(new Label { Text = "Source" });
-        var srcRow = new HBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-        _source = new LineEdit { PlaceholderText = "file, Workshop id or steamcommunity.com link", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-        srcRow.AddChild(_source);
-        var browse = new Button { Text = "Browse…" };
-        browse.Pressed += Browse;
-        srcRow.AddChild(browse);
-        g.AddChild(srcRow);
+        _source = new LineEdit { PlaceholderText = "Workshop id or steamcommunity.com link", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+        g.AddChild(_source);
         g.AddChild(new Label { Text = "Name" });
         _name = new LineEdit { PlaceholderText = "(from the module)" };
         g.AddChild(_name);
@@ -184,16 +179,6 @@ public partial class ImportDialog : AcceptDialog
         var e = _entries[_list.GetItemMetadata(i).AsInt32()];
         _source.Text = e.Path;
         _name.Text = e.Name.Trim();
-    }
-
-    void Browse()
-    {
-        var fd = new FileDialog { FileMode = FileDialog.FileModeEnum.OpenFile, Access = FileDialog.AccessEnum.Filesystem, Filters = new[] { "*.json ; TTS module or save" }, Size = new Vector2I(820, 520) };
-        Ui.RememberFolder(fd);
-        AddChild(fd);
-        fd.FileSelected += p => { _source.Text = p; if (_name.Text.Length == 0) _name.Text = System.IO.Path.GetFileNameWithoutExtension(p); };
-        fd.PopupCentered();
-        Ui.FreeOnClose(fd);
     }
 
     public void Prefill(string source) { _source.Text = source; _name.Text = System.IO.Path.GetFileNameWithoutExtension(source); }

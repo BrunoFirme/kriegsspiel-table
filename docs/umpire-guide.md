@@ -75,6 +75,7 @@ The tool strip runs down the left. Point at any tool and press **F1** for its se
 | Wheel | zoom (over a selected piece it turns it) |
 | Home | frame the map |
 | F2 | flat map view and back |
+| N | plates behind labels beside pieces |
 
 ### Selecting and moving
 
@@ -184,6 +185,7 @@ and the zones button beside it, which shows or hides the zones on your screen, a
 ### Views
 
 - **2D** (F2) reads the map flat from above.
+- **Aa** (N) puts a plate behind the labels a piece writes beside itself, such as a flag's name printed under it, so they read on a busy map. Text on a piece's own face is left as it is.
 - **Frame** (Home) shows the whole map.
 - The **compass** shows north; click it to turn north-up.
 

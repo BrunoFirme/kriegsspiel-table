@@ -17,6 +17,12 @@ sealed class HudDemo : HudPart
         var centre = Hud.GetViewport().GetVisibleRect().Size / 2;
         if (Pages(what) || CompassDrag(what) || Hearts(what) || Scripts(what) || View(what) || PovPictures(what) || PovTool(what) || PovFormat(what) || DrawingPanels(what) || PanelMoves(what) || Hands(what) || PieceMoves(what) || Lettering(what) || Dialogs(what)) return;
         if (what == "dice") Hud.Dice.Show(Hud.Strip.Panel);
+        else if (what == "dice:roll")
+        {
+            Hud.Dice.Show(Hud.Strip.Panel);
+            var buttons = Hud.Dice.Pop!.FindChildren("*", "Button", true, false).OfType<Button>().ToList();
+            foreach (var text in new[] { "d6", "d6", "d6", "d10", "Roll" }) buttons.FirstOrDefault(b => b.Text == text)?.EmitSignal(BaseButton.SignalName.Pressed);
+        }
         else if (what == "menu" && !T.SelectedNodes.Any() && S.View.Layer(KTable.Core.Model.Layers.Umpire).FirstOrDefault() is { } first)
         {
             T.SetSelection(new List<string> { first.Id });

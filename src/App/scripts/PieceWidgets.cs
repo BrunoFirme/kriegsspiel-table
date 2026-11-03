@@ -124,7 +124,7 @@ sealed class PieceWidgets
         float grow = Mathf.Max(0.01f, _piece.Look.FaceTextScale);
         float em = Mathf.Max(0.002f, (float)w.Font * k * grow);
         if ((input || label) && boxed && !typing) text = Fitting(text, em, bw * 0.94f);
-        Text(text, x, z, boxed ? bw * 0.94f : 0, em, color, w.Align, (float)w.Rot, back, faceY, 0.004f);
+        Text(text, x, z, boxed ? bw * 0.94f : 0, em, color, w.Align, (float)w.Rot, back, faceY, 0.004f, besideFace: !boxed || boxColor.A < SeeThroughBox);
         if (boxed && !w.Locked) _hits.Add(new Hit(new Vector2(x, z), new Vector2(bw, bh) / 2, turn, index));
     }
 
@@ -151,7 +151,11 @@ sealed class PieceWidgets
         return n;
     }
 
-    void Text(string text, float x, float z, float boxW, float em, Color color, string align, float rot, bool back, float faceY, float above)
+    const float SeeThroughBox = 0.35f, LightText = 0.5f, PlatePad = 0.3f, PlateBehind = 0.0005f;
+    const int PlatePriority = 2;
+    static readonly Color DarkPlate = new(0.09f, 0.085f, 0.075f, 0.88f), LightPlate = new(0.96f, 0.94f, 0.89f, 0.9f);
+
+    void Text(string text, float x, float z, float boxW, float em, Color color, string align, float rot, bool back, float faceY, float above, bool besideFace = false)
     {
         var l = new Label3D
         {
@@ -167,12 +171,30 @@ sealed class PieceWidgets
         float turn = Mathf.DegToRad(rot);
         float cx = x + along * Mathf.Cos(turn);
         z += along * Mathf.Sin(turn);
+        if (besideFace && _piece.Look.LabelPlates && text.Trim().Length > 0)
+        {
+            var size = font.GetMultilineStringSize(text, HorizontalAlignment.Center, -1, Fonts.FaceSize) * pixel;
+            float reachX = Mathf.Abs(Mathf.Cos(turn)) * size.X / 2 + Mathf.Abs(Mathf.Sin(turn)) * size.Y / 2;
+            float reachZ = Mathf.Abs(Mathf.Sin(turn)) * size.X / 2 + Mathf.Abs(Mathf.Cos(turn)) * size.Y / 2;
+            var face = _piece.Footprint / 2;
+            if (Mathf.Abs(cx) + reachX > face.X || Mathf.Abs(z) + reachZ > face.Y) Plate(l, size + Vector2.One * em * PlatePad, color);
+        }
         if (back) { l.RotationDegrees = new Vector3(90, 180, rot); l.Position = PieceBack.Under(cx, z, PieceBack.Below + above); }
         else { l.RotationDegrees = new Vector3(-90, -rot, 0); l.Position = new Vector3(cx, faceY + above, z); }
         AddNode(l);
     }
 
     void AddNode(Node3D n) { _piece.AddChild(n); _nodes.Add(n); }
+
+    static void Plate(Label3D l, Vector2 size, Color text)
+    {
+        var mat = new StandardMaterial3D
+        {
+            AlbedoColor = text.Luminance > LightText ? DarkPlate : LightPlate, ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded,
+            Transparency = BaseMaterial3D.TransparencyEnum.Alpha, CullMode = BaseMaterial3D.CullModeEnum.Disabled, RenderPriority = PlatePriority,
+        };
+        l.AddChild(new MeshInstance3D { Mesh = new QuadMesh { Size = size }, MaterialOverride = mat, Position = new Vector3(0, 0, -PlateBehind), CastShadow = GeometryInstance3D.ShadowCastingSetting.Off });
+    }
 
     public void SetEditText(int index, string text) { _editWidget = index; _editText = text; }
 

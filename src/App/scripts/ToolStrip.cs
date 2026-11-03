@@ -38,7 +38,7 @@ sealed class ToolStrip : HudPart
         ("ruler", 2), ("range", 2),
         ("boards", 3), ("paint", 3), ("relief", 3),
         ("sighting", 4), ("capture", 4),
-        ("2d", 5), ("frame", 5), ("compass", 5), ("log", 5),
+        ("2d", 5), ("text", 5), ("frame", 5), ("compass", 5), ("log", 5),
     };
 
     static string HelpAnchor(string key) => key switch
@@ -52,9 +52,10 @@ sealed class ToolStrip : HudPart
     bool OtherUmpires => S.IsUmpire && S.Peers.Any(p => Visibility.IsUmpire(p.Role) && p.PeerId != S.Me.PeerId);
 
     bool StripAllowed(string key) => key is "layers" or "zones" ? OtherUmpires
-        : S.IsUmpire || key is "select" or "ruler" or "range" or "capture" or "dice" or "2d" or "frame" or "compass" or "log";
+        : S.IsUmpire || key is "select" or "ruler" or "range" or "capture" or "dice" or "2d" or "text" or "frame" or "compass" or "log";
 
     bool _othersShown;
+    Button? _text;
 
     public void SyncUmpireButtons()
     {
@@ -102,6 +103,7 @@ sealed class ToolStrip : HudPart
     {
         foreach (var (key, b) in Buttons)
             if (Shell.Panels.TryGetValue(key, out var p)) b.SetPressedNoSignal(p.Visible);
+        _text?.SetPressedNoSignal(Cfg.LabelPlates);
         SyncPenLock();
     }
 
@@ -195,6 +197,15 @@ sealed class ToolStrip : HudPart
                 b.ButtonPressed = T != null && !T.Rig.TopDown;
                 b.Pressed += () => { T!.Rig.ToggleTopDown(); SyncViewButton(); };
                 Btn2d = b;
+                return b;
+            }
+            case "text":
+            {
+                var b = Icon("text:Aa", $"Plates behind labels   ({Cfg.Keys.Label("labelPlates")})", "A backing behind the text a piece writes beside itself, to read it on a busy map");
+                b.ToggleMode = true;
+                b.ButtonPressed = Cfg.LabelPlates;
+                b.Toggled += on => Shell.SetLabelPlates(on);
+                _text = b;
                 return b;
             }
             case "compass":

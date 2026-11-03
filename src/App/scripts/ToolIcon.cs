@@ -48,6 +48,24 @@ public partial class ToolIcon : Control
         DrawPolyline(pts, _c, _w, antialiased: true);
     }
 
+    void Eye()
+    {
+        const float Corner = 2.5f, Lid = 5.2f, Iris = 2.9f, Pupil = 1.3f;
+        const int Steps = 14;
+        foreach (var lid in new[] { -Lid, Lid })
+        {
+            var pts = new Vector2[Steps + 1];
+            for (int i = 0; i <= Steps; i++)
+            {
+                float t = i / (float)Steps;
+                pts[i] = P(Corner + (20 - 2 * Corner) * t, 10 + 2 * lid * t * (1 - t));
+            }
+            DrawPolyline(pts, _c, _w, antialiased: true);
+        }
+        DrawArc(P(10, 10), Iris * _k, 0, Mathf.Tau, 24, _c, _w, antialiased: true);
+        DrawCircle(P(10, 10), Pupil * _k, _c);
+    }
+
     public override void _Draw()
     {
         _k = Mathf.Clamp(Mathf.Min(Size.X, Size.Y) / 30f, 0.6f, 2.5f);
@@ -173,14 +191,11 @@ public partial class ToolIcon : Control
                 DrawRect(new Rect2(P(8.5f, 8.5f), new Vector2(3, 3) * _k), _c);
                 break;
             case "eye":
-                DrawArc(P(10, 10), 6.4f * _k, Mathf.DegToRad(205), Mathf.DegToRad(335), 24, _c, _w, antialiased: true);
-                DrawArc(P(10, 10), 6.4f * _k, Mathf.DegToRad(25), Mathf.DegToRad(155), 24, _c, _w, antialiased: true);
-                DrawCircle(P(10, 10), 2.1f * _k, _c);
+                Eye();
                 break;
             case "eye-off":
-                DrawArc(P(10, 10), 6.4f * _k, Mathf.DegToRad(205), Mathf.DegToRad(335), 24, _c, _w, antialiased: true);
-                DrawArc(P(10, 10), 6.4f * _k, Mathf.DegToRad(25), Mathf.DegToRad(155), 24, _c, _w, antialiased: true);
-                Line(4.5f, 15.5f, 15.5f, 4.5f, 1.8f);
+                Eye();
+                Line(4f, 16f, 16f, 4f, 1.8f);
                 break;
             case "shape-line":
                 Line(3.5f, 16.5f, 16.5f, 3.5f);

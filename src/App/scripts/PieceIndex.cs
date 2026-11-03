@@ -47,9 +47,12 @@ sealed class PieceIndex : HudPart
         _count.AddThemeFontSizeOverride("font_size", 11);
         var show = Btn("Show", () => Locate(_list.GetSelectedItems()), "Selects them on the table and brings the camera to them · double-click a row does the same");
         _delete = Btn("Delete", Delete, "Deletes the selected pieces; Ctrl+Z brings them back");
-        var actions = Ui.Actions(show, _delete);
-        actions.AddChild(new Control { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill });
+        var actions = new HBoxContainer();
+        actions.AddThemeConstantOverride("separation", 10);
+        actions.AddChild(show);
         actions.AddChild(_count);
+        actions.AddChild(new Control { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill });
+        actions.AddChild(_delete);
         Root.AddChild(actions);
         S.Applied += MarkStale;
         S.Reset += MarkStale;

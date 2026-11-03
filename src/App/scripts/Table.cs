@@ -175,6 +175,7 @@ public partial class Table : Node3D
     {
         _c.S = s; _c.Settings = settings;
         s.Art.Look.ShowFaceText = settings.FaceText;
+        s.Art.Look.LabelPlates = settings.LabelPlates;
         s.Art.Look.LetteringReach = settings.LetteringReach;
         s.Art.Look.FaceTextScale = settings.FaceTextScale;
         ShowCursors = settings.ShowCursors;
@@ -318,6 +319,12 @@ public partial class Table : Node3D
     public void SyncLayer(string layer) => Pieces.SyncLayer(layer);
     public void RebuildPiecesOf(string defId) => Pieces.RebuildPiecesOf(defId);
     public void RefreshFaceText() => Pieces.RefreshFaceText();
+
+    public void ShowLabelPlates(bool on)
+    {
+        S.Art.Look.LabelPlates = on;
+        RefreshFaceText();
+    }
     public void RefreshLettering() => Pieces.Lettering.Refresh();
     public int LetteredCount => Pieces.Lettering.Count;
     public long LetteredWeight => Pieces.Lettering.Weight;
