@@ -7,6 +7,7 @@ namespace KTable.App;
 public sealed class NullPlatform : IPlatform
 {
     public bool HasWorkshop => false;
+    public bool UpdatesItself => false;
     public bool Available => false;
     public string? Status => null;
     public string UserName => "";

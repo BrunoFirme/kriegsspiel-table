@@ -58,6 +58,7 @@ public sealed class Settings
     public bool CompassShown { get; set; } = true;
     public float[]? CompassPos { get; set; }
     public string BlenderPath { get; set; } = "";
+    public bool CheckUpdates { get; set; } = true;
     public float ReliefBrush { get; set; } = 6;
     public float ReliefStrength { get; set; } = 0.35f;
     public string ReliefMode { get; set; } = "raise";

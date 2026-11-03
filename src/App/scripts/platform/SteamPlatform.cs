@@ -13,6 +13,7 @@ public sealed class SteamPlatform : IPlatform
     Workshop Ws => _workshop ??= new Workshop(new PackageStore(PackageStore.DefaultRoot), SteamService.Instance!);
 
     public bool HasWorkshop => true;
+    public bool UpdatesItself => true;
     public bool Available => SteamService.Instance is { Running: true };
     public string? Status => SteamService.Instance?.Status;
     public string UserName => SteamService.Instance?.UserName ?? "";

@@ -16,6 +16,7 @@ public interface IPlatform
 #endif
 
     bool HasWorkshop { get; }
+    bool UpdatesItself { get; }
     bool Available { get; }
     string? Status { get; }
     string UserName { get; }

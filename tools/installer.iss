@@ -7,12 +7,15 @@
 #ifndef VersionName
   #define VersionName Version
 #endif
+#ifndef AppGuid
+  #define AppGuid "{{6F2B3E54-8C1D-4A7E-9B0F-2D5C8E3A1F47}"
+#endif
 #ifndef OutName
   #define OutName "KriegsspielTable-setup"
 #endif
 
 [Setup]
-AppId={{6F2B3E54-8C1D-4A7E-9B0F-2D5C8E3A1F47}
+AppId={#AppGuid}
 AppName=Kriegsspiel Table
 AppVersion={#VersionName}
 VersionInfoVersion={#Version}
@@ -55,3 +58,10 @@ Name: "{autodesktop}\Kriegsspiel Table"; Filename: "{app}\KriegsspielTable.exe";
 
 [Run]
 Filename: "{app}\KriegsspielTable.exe"; Description: "Open Kriegsspiel Table"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\KriegsspielTable.exe"; Flags: nowait; Check: RelaunchAsked
+
+[Code]
+function RelaunchAsked: Boolean;
+begin
+  Result := ExpandConstant('{param:relaunch|0}') = '1';
+end;

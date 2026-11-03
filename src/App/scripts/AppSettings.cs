@@ -126,6 +126,14 @@ sealed class SettingsPage
         var sound = new VBoxContainer();
         v.AddChild(sound);
         AppSettings.AddSound(sound, _cfg);
+        if (_t.OffersUpdates)
+        {
+            v.AddChild(new Control { CustomMinimumSize = new Vector2(0, 10) });
+            v.AddChild(Ui.Header("Updates"));
+            var check = new CheckBox { Text = "Check GitHub for a new version at start", ButtonPressed = _cfg.CheckUpdates, FocusMode = Control.FocusModeEnum.None };
+            check.Toggled += on => { _cfg.CheckUpdates = on; _cfg.Save(); };
+            v.AddChild(check);
+        }
         if (AgentEndpoint.Current is not { } agent) return;
         v.AddChild(new Control { CustomMinimumSize = new Vector2(0, 10) });
         v.AddChild(Ui.Header("AI agent"));

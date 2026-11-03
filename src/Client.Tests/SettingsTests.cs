@@ -87,7 +87,7 @@ public class SettingsTests
             + "\"LetteringReach\":250,\"ReduceFarDetail\":false,\"MakerTools\":false,\"AgentOn\":false,\"AgentPort\":7796,\"AgentToken\":\"\",\"FaceTextScale\":1,\"ShowCursors\":true,\"ShowZones\":true,\"UiScale\":1,\"UiScaleFollowsWindows\":null,\"Antialias\":2,\"SoundVolume\":0.6,\"SoundMuted\":false,\"SoundInBackground\":false,"
             + "\"CameraAt\":{},\"PanelPos\":{},\"PanelSize\":{},\"StripSize\":30,\"TopLine\":true,\"TopLineWidth\":1,\"PenInk\":\"#1a1a1a\",\"PenSize\":3,"
             + "\"ShapeKind\":\"line\",\"TableShade\":0,\"LeftWidth\":300,\"RightWidth\":320,\"LogHeight\":200,\"LeftOpen\":true,\"LeftPage\":\"pieces\","
-            + "\"RightOpen\":true,\"LogOpen\":true,\"LogFontSize\":12,\"Favourites\":[],\"FavouritesOnly\":false,\"CompassShown\":true,\"CompassPos\":null,\"BlenderPath\":\"\",\"ReliefBrush\":6,\"ReliefStrength\":0.35,\"ReliefMode\":\"raise\"}",
+            + "\"RightOpen\":true,\"LogOpen\":true,\"LogFontSize\":12,\"Favourites\":[],\"FavouritesOnly\":false,\"CompassShown\":true,\"CompassPos\":null,\"BlenderPath\":\"\",\"CheckUpdates\":true,\"ReliefBrush\":6,\"ReliefStrength\":0.35,\"ReliefMode\":\"raise\"}",
             System.Text.Json.JsonSerializer.Serialize(s));
     }
 
