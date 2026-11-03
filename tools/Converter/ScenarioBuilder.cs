@@ -1,0 +1,333 @@
+using KTable.Core;
+using KTable.Core.Model;
+
+namespace KTable.Converter;
+
+public sealed class ScenarioBuilder
+{
+    readonly Config _cfg;
+    readonly AssetStore _assets;
+    readonly Report _rep;
+    readonly DefFactory _defs;
+    readonly MakeWay _way;
+    int _nextId = 1;
+
+    public ScenarioBuilder(Config cfg, AssetStore assets, Report rep, MakeWay way) { _cfg = cfg; _assets = assets; _rep = rep; _defs = new DefFactory(cfg, assets, rep); _way = way; }
+
+    sealed class Layer
+    {
+        public string Name = "";
+        public List<TtsObj> Objects = new();
+        public List<PieceInstance> Pieces = new();
+        public Dictionary<PieceInstance, double> Y = new();
+    }
+
+    public async Task<Scenario> Build(string masterId)
+    {
+        var sc = _cfg.Scenario;
+        Console.WriteLine($"Scenario {sc.Id} (master {masterId})");
+        var master = TtsSave.Load(_cfg, masterId);
+        await _assets.FetchAll(PackBuilder.Urls(master));
+
+        var root = _cfg.Output;
+        var pkgRel = "scenarios/" + sc.Dir;
+        var pkgDir = Path.Combine(root, "scenarios", sc.Dir);
+        _way.Pack(sc.ExtrasPack, _rep);
+        var oldScenario = _way.Scenario(sc.Dir, _rep);
+        var extras = new PackOut(root, sc.ExtrasPack, sc.Name + " (extras)", sc.ExtrasShort, null);
+        extras.M.Source.License = "assets from the example save; see pack sources";
+
+        var scenario = new Scenario
+        {
+            Id = sc.Id, Name = sc.Name,
+            Clock = new GameClock { Turn = sc.Clock.Turn, GameTime = sc.Clock.GameTime, IncrementMinutes = sc.Clock.IncrementMinutes },
+            Calibration = new Calibration { UnitsPerMeter = sc.UnitsPerMeter },
+        };
+        TranslateGlobal(scenario, master, extras);
+        var boardSet = AddSheets(scenario, master, pkgRel, pkgDir, oldScenario);
+
+        var layers = new List<Layer> { Collect("umpire", master, boardSet) };
+
+        var common = layers.SelectMany(l => l.Objects).GroupBy(_defs.VisualKey)
+            .ToDictionary(g => g.Key, g => g.GroupBy(DefFactory.BaseScale).OrderByDescending(x => x.Count()).ThenBy(x => x.Key).First().Key);
+
+        var packDefs = LoadPackDefs(root);
+
+        var usedPacks = new HashSet<string>();
+        int rekeyed = 0, flipped = 0;
+        foreach (var layer in layers)
+        {
+            _defs.Context = $"{sc.Id}/{layer.Name}";
+            foreach (var o in layer.Objects)
+            {
+                if (o.Flipped) flipped++;
+                var p = Instance(o, common[_defs.VisualKey(o)], extras, packDefs, layer, usedPacks, ref rekeyed, null);
+                if (p == null) continue;
+            }
+        }
+        Index(extras.M.Pieces);
+        foreach (var pd in packDefs.Values.SelectMany(v => v)) _lookup.TryAdd(pd.def.Id, pd.def);
+        foreach (var layer in layers) Stack(layer);
+
+        scenario.UmpireBoard = layers[0].Pieces;
+        scenario.Drawings["umpire"] = new();
+
+        PruneExtras(extras, layers);
+        usedPacks.Add(extras.M.Id);
+
+        scenario.Packs = usedPacks.OrderBy(p => p == extras.M.Id ? 1 : 0).ThenBy(p => p, StringComparer.Ordinal).ToList();
+        Json.Save(Path.Combine(pkgDir, "scenario.json"), scenario);
+        var start = Path.Combine(pkgDir, "scenario.start.json");
+        if (File.Exists(start)) File.Delete(start);
+
+        ReportCounts(scenario, extras, rekeyed, flipped);
+        return scenario;
+    }
+
+    void TranslateGlobal(Scenario scenario, TtsSave master, PackOut extras)
+    {
+        var sc = _cfg.Scenario;
+        if (master.Lua.Trim().Length > 0)
+        {
+            var verdict = KTable.Core.ScriptSafety.Inspect(master.Lua);
+            if (verdict.Hostile) _rep.HostileScript(verdict.Reasons, $"{sc.Id} Global script", "global:" + sc.Id);
+            if (verdict.Script.Trim().Length > 0)
+            {
+                scenario.Script = _defs.Translate(verdict.Script, extras, $"{sc.Id} Global script", isGlobal: true).Script;
+                scenario.ScriptState = _defs.RewriteUrls(master.LuaState, extras, $"{sc.Id} Global script state");
+            }
+        }
+    }
+
+    HashSet<TtsObj> AddSheets(Scenario scenario, TtsSave master, string pkgRel, string pkgDir, string? oldScenario)
+    {
+        var sc = _cfg.Scenario;
+        var boards = master.Objects.Where(IsSheet).OrderBy(b => b.PosY).ToList();
+        var boardSet = boards.ToHashSet();
+        foreach (var b in boards)
+        {
+            var e = _defs.Entry(b.ImageUrl);
+            if (e == null) { _rep.Missing(b.ImageUrl ?? "", _assets.Why(b.ImageUrl ?? "") ?? "unresolved", $"{sc.Id} map sheet"); continue; }
+            var size = _defs.BaseSize(b);
+            var sheet = new SheetDef
+            {
+                Id = scenario.Sheets.Count == 0 ? "main" : $"sheet-{scenario.Sheets.Count + 1}",
+                Name = b.Nickname.Length > 0 ? b.Nickname : (scenario.Sheets.Count == 0 ? sc.Name : $"Sheet {scenario.Sheets.Count + 1}"),
+                Image = e.Sha!, Package = pkgRel,
+                Pos = new Vec2(Math.Round(b.PosX, 4), Math.Round(b.PosZ, 4)), RotDeg = Norm(b.RotY),
+                Size = new Size2(Math.Round(size.W * Math.Abs(b.ScaleX), 4), Math.Round(size.H * Math.Abs(b.ScaleX), 4)),
+                Locked = true, Z = scenario.Sheets.Count, Kind = "map", Url = b.ImageUrl,
+            };
+            try
+            {
+                var src = _assets.FilePath(e)!;
+                Console.WriteLine($"  sheet {sheet.Id}: {e.W}x{e.H} px, {sheet.Size.W}x{sheet.Size.H} units; building tiles...");
+                var tilesDir = Path.Combine(pkgDir, "tiles", e.Sha!);
+                if (oldScenario != null) ReuseTiles(Path.Combine(oldScenario, "scenario", "tiles", e.Sha!), tilesDir);
+                var idx = Tiles.Build(src, tilesDir, _cfg.Tiles);
+                _rep.Counts[$"{sc.Id}: sheet {sheet.Id} tiles"] = $"{idx.Levels.Count} levels, {idx.Levels.Sum(l => l.Cols * l.Rows)} tiles ({idx.Ext})";
+                var assetDst = Path.Combine(pkgDir, "assets", $"{e.Sha}.{e.Ext}");
+                Directory.CreateDirectory(Path.GetDirectoryName(assetDst)!);
+                if (!File.Exists(assetDst)) File.Copy(src, assetDst);
+            }
+            catch (Exception ex)
+            {
+                _rep.Note($"{sc.Id}: the map sheet '{sheet.Name}' was left out: its picture could not be read ({ex.Message}). The rest of the table came in; put the map on the table by hand from a copy of the picture that opens.");
+                Console.WriteLine($"  sheet {sheet.Id} '{sheet.Name}' left out: its picture could not be read ({ex.Message})");
+                continue;
+            }
+            scenario.Sheets.Add(sheet);
+        }
+        return boardSet;
+    }
+
+    void PruneExtras(PackOut extras, List<Layer> layers)
+    {
+        var referenced = layers.SelectMany(l => l.Pieces).Select(p => p.Def).ToHashSet();
+        bool grew = true;
+        while (grew)
+        {
+            grew = false;
+            foreach (var d in extras.M.Pieces.Where(d => referenced.Contains(d.Id)).ToList())
+                foreach (var dep in d.Attachments.Select(a => a.Piece).Concat(d.Counters.Select(c => c.SpawnsMarker)).OfType<string>())
+                    grew |= referenced.Add(dep);
+        }
+        extras.M.Pieces = extras.M.Pieces.Where(d => referenced.Contains(d.Id)).OrderBy(d => d.Id, StringComparer.Ordinal).ToList();
+        var usedAssets = extras.M.Pieces.SelectMany(d => new[] { d.Image, d.Back, d.Mesh, d.Texture, d.AddOnMesh, d.AddOnTexture }.Concat(d.States.SelectMany(s => new[] { s.Image, s.Back, s.Mesh, s.Texture }))).OfType<string>().ToHashSet();
+        foreach (var k in extras.M.Assets.Keys.Where(k => !usedAssets.Contains(k)).ToList()) extras.M.Assets.Remove(k);
+        extras.Save();
+        PackBuilder.Prune(extras);
+    }
+
+    void ReportCounts(Scenario scenario, PackOut extras, int rekeyed, int flipped)
+    {
+        var sc = _cfg.Scenario;
+        _rep.Counts[$"{sc.Id}: umpire pieces"] = scenario.UmpireBoard.Count.ToString();
+        _rep.Counts[$"{sc.Id}: extras defs"] = extras.M.Pieces.Count.ToString();
+        _rep.Counts[$"{sc.Id}: instances using pack defs"] = rekeyed.ToString();
+        _rep.Counts[$"{sc.Id}: packs"] = string.Join(", ", scenario.Packs);
+        if (flipped > 0) _rep.Note($"{sc.Id}: {flipped} pieces lie face down in TTS; converted face up (no flip flag in the instance model).");
+        Console.WriteLine($"  → umpire {scenario.UmpireBoard.Count}; extras {extras.M.Pieces.Count} defs; {rekeyed} instances use pack defs");
+    }
+
+    static void ReuseTiles(string from, string to)
+    {
+        try
+        {
+            if (!File.Exists(Path.Combine(from, "index.json")) || File.Exists(Path.Combine(to, "index.json"))) return;
+            foreach (var f in Directory.EnumerateFiles(from, "*", SearchOption.AllDirectories).OrderBy(f => Path.GetFileName(f) == "index.json" ? 1 : 0))
+            {
+                var dst = Path.Combine(to, Path.GetRelativePath(from, f));
+                Directory.CreateDirectory(Path.GetDirectoryName(dst)!);
+                File.Copy(f, dst, true);
+            }
+        }
+        catch (Exception e) { Console.WriteLine($"    the earlier tiles could not be copied ({e.Message}); slicing the map again"); }
+    }
+
+    bool IsSheet(TtsObj o) =>
+        o.ImageUrl != null && (o.Name == "Custom_Board" || (o.Name is "Custom_Tile" or "Custom_Token" && Math.Abs(o.ScaleX) >= 10)) && !o.IsFurniture;
+
+    Layer Collect(string name, TtsSave save, HashSet<TtsObj> exclude)
+    {
+        var l = new Layer { Name = name };
+        foreach (var o in save.Objects)
+        {
+            var where = $"{save.WorkshopId} {o.Name} '{o.Nickname}' {o.Guid}";
+            if (o.Verdict.Hostile) _rep.HostileScript(o.Verdict.Reasons, where, o.Guid);
+            if (exclude.Contains(o)) continue;
+            if (IsSheet(o)) { if (name != "umpire") _rep.Skipped("map sheet duplicated in a side module", where); continue; }
+            if (_cfg.ContainerTypes.Contains(o.Name)) { _rep.Skipped(o.Name + " (contents not placed in the scenario)", where); continue; }
+            if (_cfg.IgnoreTypes.Contains(o.Name) || o.Name.StartsWith("Die_")) { _rep.Skipped(o.Name, where); continue; }
+            if (o.IsFurniture) { _rep.Skipped("table furniture (custom table / surround / under the table)", where); continue; }
+            if (!DefFactory.IsPiece(o)) { _rep.UnknownType(o.Name, where); continue; }
+            l.Objects.Add(o);
+        }
+        return l;
+    }
+
+    PieceInstance? Instance(TtsObj o, double refScale, PackOut extras, Dictionary<string, List<(PieceDef def, string pack)>> packDefs,
+        Layer layer, HashSet<string> usedPacks, ref int rekeyed, PieceInstance? parent)
+    {
+        var r = _defs.DefFor(o, extras, refScale);
+        if (r == null) return null;
+        var def = r.Def;
+        string packId = extras.M.Id;
+        double scale = r.Scale, baseScale = r.Scale;
+        var (counters, text) = r.Script.Values(o.LuaState);
+        var lua = o.SafeLua;
+        if (def.Script != null) { counters = new(); text = new(); }
+
+        if (MatchKey(def) is { } mk && packDefs.TryGetValue(mk, out var cands))
+        {
+            (PieceDef def, string pack)? best = null; double bestScale = 0;
+            foreach (var c in cands)
+            {
+                if (c.def.States.Count != def.States.Count) continue;
+                if (c.def.ScriptHash != def.ScriptHash) continue;
+                if (!counters.Keys.All(k => c.def.Counters.Any(x => x.Name == k)) || !text.Keys.All(k => c.def.TextLines.Any(x => x.Name == k))) continue;
+                if (def.Counters.Count > c.def.Counters.Count || def.TextLines.Count > c.def.TextLines.Count) continue;
+                if (c.def.Size.W <= 0 || c.def.Size.H <= 0) continue;
+                double kx = def.Size.W / c.def.Size.W, kz = def.Size.H / c.def.Size.H;
+                if (Math.Abs(kx - kz) > 0.01 * kx) continue;
+                bool exact = Math.Abs(kx - 1) < 0.01;
+                if (best == null || exact) { best = c; bestScale = exact ? 1 : kx; if (exact) break; }
+            }
+            if (best is { } b)
+            {
+                def = b.def; packId = b.pack; scale = Math.Round(scale * bestScale, 4); rekeyed++;
+            }
+        }
+        usedPacks.Add(packId);
+        const double TtsScaleRoundingNoise = 0.002;
+        if (Math.Abs(scale - 1) < TtsScaleRoundingNoise) scale = 1;
+        if (def.Script != null) { counters = new(); text = new(); }
+
+        var inst = new PieceInstance
+        {
+            Id = $"p-{_nextId++:D6}", Def = def.Id,
+            Pos = new Vec2(Math.Round(o.PosX, 4), Math.Round(o.PosZ, 4)), RotDeg = Norm(o.RotY),
+            State = Math.Min(r.State, Math.Max(0, def.States.Count - 1)),
+            Counters = counters, Text = text, Label = o.Nickname.Length > 0 ? o.Nickname : null, Scale = scale,
+            Note = o.Description.Trim().Length > 0 ? o.Description.Trim() : null,
+            Guid = o.Guid.Length > 0 ? o.Guid : null,
+            Tags = o.Tags, Memo = _defs.RewriteUrls(o.Memo, extras, $"{layer.Name} {o.Name} '{o.Nickname}' {o.Guid} memo"),
+        };
+        if (lua.Trim().Length > 0)
+        {
+            inst.ScriptState = _defs.RewriteUrls(o.LuaState, extras, $"{layer.Name} {o.Name} '{o.Nickname}' {o.Guid} script state");
+            if (def.ScriptHash != DefFactory.Hash8(lua))
+            {
+                var tr = _defs.Translate(lua, extras, $"{layer.Name} {o.Name} '{o.Nickname}' {o.Guid}");
+                if (tr.Script != def.Script) inst.Script = tr.Script;
+            }
+        }
+        if (o.Color is { } col && !string.Equals(col, def.Tint, StringComparison.OrdinalIgnoreCase)) inst.TintOverride = col;
+        layer.Pieces.Add(inst);
+        layer.Y[inst] = o.PosY;
+
+        double th = o.RotY * Math.PI / 180;
+        foreach (var c in o.Children)
+        {
+            if (!DefFactory.IsPiece(c)) continue;
+            double lx = c.PosX * o.ScaleX, lz = c.PosZ * o.ScaleZ;
+            var ci = Instance(c, Math.Abs(c.StateList().states[0].ScaleX) * refScale, extras, packDefs, layer, usedPacks, ref rekeyed, inst);
+            if (ci == null) continue;
+            ci.Pos = new Vec2(Math.Round(o.PosX + lx * Math.Cos(th) + lz * Math.Sin(th), 4), Math.Round(o.PosZ - lx * Math.Sin(th) + lz * Math.Cos(th), 4));
+            ci.RotDeg = Norm(o.RotY + c.RotY);
+            var sizedAtParentReferenceScale = ci.Scale * refScale;
+            ci.Scale = Math.Round(sizedAtParentReferenceScale * baseScale, 4);
+            layer.Y[ci] = o.PosY + 0.01;
+            inst.Attached.Add(ci.Id);
+        }
+        return inst;
+    }
+
+    static string? MatchKey(PieceDef d) => d.Kind == "model"
+        ? (d.Mesh == null ? null : $"model|{d.Mesh}|{d.Texture}")
+        : (d.Image == null || d.Tags.Contains("block") ? null : $"flat|{d.Image}|{d.Back}");
+
+    Dictionary<string, List<(PieceDef def, string pack)>> LoadPackDefs(string root)
+    {
+        var map = new Dictionary<string, List<(PieceDef, string)>>();
+        var placeholder = new HashSet<string>();
+        foreach (var pc in _cfg.Packs)
+        {
+            var path = Path.Combine(root, pc.Id, "pack.json");
+            if (!File.Exists(path)) continue;
+            var m = Json.Load<PackManifest>(path);
+            foreach (var (sha, a) in m.Assets) if (a.W == 64 && a.H == 64 && a.Kind == "image" && m.Pieces.Count(p => p.Image == sha) > 3) placeholder.Add(sha);
+            foreach (var d in m.Pieces)
+            {
+                if (d.Tags.Contains("effect")) continue;
+                var k = MatchKey(d);
+                if (k == null || (d.Image != null && placeholder.Contains(d.Image))) continue;
+                if (!map.TryGetValue(k, out var list)) map[k] = list = new();
+                list.Add((d, pc.Id));
+            }
+        }
+        return map;
+    }
+
+    void Stack(Layer l)
+    {
+        var order = l.Pieces.OrderBy(p => l.Y[p]).ToList();
+        var placed = new List<(PieceInstance p, double y, double rad)>();
+        foreach (var p in order)
+        {
+            var def = Lookup(p.Def);
+            double rad = def == null ? 0.5 : 0.5 * Math.Min(def.Size.W, def.Size.H) * p.Scale;
+            int s = 0;
+            foreach (var (q, qy, qr) in placed)
+                if (l.Y[p] > qy + 0.02 && (p.Pos - q.Pos).Length < Math.Max(qr, 0.1)) s = Math.Max(s, q.Stack + 1);
+            p.Stack = s;
+            placed.Add((p, l.Y[p], rad));
+        }
+    }
+
+    readonly Dictionary<string, PieceDef> _lookup = new();
+    PieceDef? Lookup(string id) => _lookup.TryGetValue(id, out var d) ? d : null;
+    public void Index(IEnumerable<PieceDef> defs) { foreach (var d in defs) _lookup[d.Id] = d; }
+
+    static double Norm(double deg) { deg %= 360; if (deg < 0) deg += 360; return Math.Round(deg, 3); }
+}

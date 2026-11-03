@@ -1,0 +1,29 @@
+include _host.inc
+rclick world:4,0.2,0
+click "Properties…"
+settle
+checkpoint blue-properties
+click "Label"
+type "Boggs' own\n"
+click "Shown on hover to whoever sees the piece, never printed on it"
+type "Holds the ridge"
+click "Boggs"
+clear
+type "Hatfield\n"
+settle
+checkpoint typed
+click "Reset"
+settle
+close-window
+settle
+checkpoint closed
+rclick world:0,0.15,-4
+click "Properties…"
+settle
+checkpoint colour-party
+click ~"Place Flag"
+settle
+checkpoint flag-placed
+close-window
+settle
+checkpoint after

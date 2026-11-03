@@ -1,0 +1,99 @@
+using System;
+using System.Linq;
+using Godot;
+using KTable.Core.Model;
+
+namespace KTable.App;
+
+sealed class ReliefPanel : HudPart
+{
+    public readonly FloatPanel Panel;
+    readonly VBoxContainer _box;
+
+    public ReliefPanel(HudContext ctx, IHudShell shell) : base(ctx)
+    {
+        Panel = shell.MakePanel("relief", "Relief");
+        _box = Panel.Body;
+    }
+
+    static readonly (string Key, string Text, string Tip)[] Shapes =
+    {
+        ("raise", "Raise", "Drag to build up the ground"),
+        ("lower", "Lower", "Drag to dig the ground down, never below the table"),
+        ("smooth", "Smooth", "Drag to soften slopes and bumps"),
+        ("flatten", "Flatten", "Drag to bring the ground to the height where the stroke began"),
+    };
+
+    public void Rebuild()
+    {
+        if (_box == null || T == null) return;
+        foreach (var c in _box.GetChildren()) { _box.RemoveChild(c); c.QueueFree(); }
+        AddShapes();
+        AddKinds();
+        AddSliders();
+        Panel?.Fit();
+    }
+
+    Button Choice(string text, string mode, string tip)
+    {
+        var b = new Button { Text = text, ToggleMode = true, ButtonPressed = Cfg.ReliefMode == mode, FocusMode = Control.FocusModeEnum.None, TooltipText = tip, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, CustomMinimumSize = new Vector2(0, 26) };
+        b.Pressed += () => { Cfg.ReliefMode = mode; Cfg.Save(); if (T.Tool != Tool.Relief) T.SetTool(Tool.Relief); Rebuild(); };
+        return b;
+    }
+
+    void AddShapes()
+    {
+        var grid = new GridContainer { Columns = 2 };
+        grid.AddThemeConstantOverride("h_separation", 3);
+        grid.AddThemeConstantOverride("v_separation", 3);
+        foreach (var (key, text, tip) in Shapes) grid.AddChild(Choice(text, key, tip));
+        _box.AddChild(grid);
+    }
+
+    void AddKinds()
+    {
+        _box.AddChild(Header("Ground"));
+        var grid = new GridContainer { Columns = 4 };
+        grid.AddThemeConstantOverride("h_separation", 3);
+        grid.AddThemeConstantOverride("v_separation", 3);
+        for (int i = 1; i < GroundKinds.All.Count; i++)
+        {
+            var (name, hex) = GroundKinds.All[i];
+            var mode = "paint:" + name;
+            var col = Color.FromHtml(hex);
+            var b = new Button { ToggleMode = true, ButtonPressed = Cfg.ReliefMode == mode, FocusMode = Control.FocusModeEnum.None, TooltipText = Title(name), CustomMinimumSize = new Vector2(30, 24), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+            var box = new StyleBoxFlat { BgColor = col, BorderColor = Cfg.ReliefMode == mode ? Ui.AccentInk : new Color(0, 0, 0, 0.45f) };
+            box.SetBorderWidthAll(Cfg.ReliefMode == mode ? 2 : 1); box.SetCornerRadiusAll(3);
+            foreach (var st in new[] { "normal", "hover", "pressed", "focus" }) b.AddThemeStyleboxOverride(st, box);
+            b.Pressed += () => { Cfg.ReliefMode = mode; Cfg.Save(); if (T.Tool != Tool.Relief) T.SetTool(Tool.Relief); Rebuild(); };
+            grid.AddChild(b);
+        }
+        var clear = Choice("✕", "paint:none", "Rub out painted ground");
+        clear.CustomMinimumSize = new Vector2(30, 24);
+        grid.AddChild(clear);
+        _box.AddChild(grid);
+        var current = Cfg.ReliefMode.StartsWith("paint:", StringComparison.Ordinal) ? Title(Cfg.ReliefMode[6..]) : Shapes.FirstOrDefault(s => s.Key == Cfg.ReliefMode).Text ?? "Raise";
+        _box.AddChild(Hint(current));
+    }
+
+    static string Title(string name) => name.Length == 0 ? name : char.ToUpperInvariant(name[0]) + name[1..];
+
+    void AddSliders()
+    {
+        HSlider Row(string label, double min, double max, double step, double value, Func<double, string> show, Action<double> set, string tip, bool exp = false)
+        {
+            var row = new HBoxContainer();
+            row.AddThemeConstantOverride("separation", 4);
+            row.AddChild(new Label { Text = label, CustomMinimumSize = new Vector2(54, 0), SizeFlagsVertical = Control.SizeFlags.ShrinkCenter });
+            var s = new HSlider { MinValue = min, MaxValue = max, Step = step, Value = value, ExpEdit = exp, CustomMinimumSize = new Vector2(80, 0), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, TooltipText = tip };
+            var v = new Label { Text = show(value), CustomMinimumSize = new Vector2(42, 0), HorizontalAlignment = HorizontalAlignment.Right, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter };
+            s.ValueChanged += x => { v.Text = show(x); set(x); };
+            s.DragEnded += _ => Cfg.Save();
+            row.AddChild(s); row.AddChild(v);
+            _box.AddChild(row);
+            return s;
+        }
+        Row("Size", 0.2, 400, 0.1, Cfg.ReliefBrush, x => $"{x:0.#} u", x => Cfg.ReliefBrush = (float)x, "The brush's radius in map units · Ctrl + wheel on the table", exp: true);
+        Row("Strength", 0.05, 1, 0.05, Cfg.ReliefStrength, x => $"{x * 100:0}%", x => Cfg.ReliefStrength = (float)x, "How much one pass raises, lowers or smooths");
+    }
+}

@@ -1,0 +1,10 @@
+settle
+click "Lock table"
+click "Host"
+click "Cancel" timeout=60
+settle
+checkpoint cancelled
+click "Lock small"
+click "Host"
+settle 60 3000
+checkpoint other-hosted

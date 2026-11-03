@@ -1,0 +1,27 @@
+include _host.inc
+rdrag @640,360 @540,300
+settle
+checkpoint orbited
+mdrag @640,360 @700,420
+settle
+checkpoint panned
+wheel @640,360 30
+settle
+checkpoint zoomed-out-max
+wheel @640,360 -60
+settle
+checkpoint zoomed-in-max
+key Home
+key F2
+settle
+checkpoint flat
+rdrag @640,360 @700,360
+settle
+checkpoint flat-turned
+click "North · click to turn the view north-up · drag to move it · right-click to put it back"
+settle
+checkpoint north-up
+key F2
+key Home
+settle
+checkpoint back-3d

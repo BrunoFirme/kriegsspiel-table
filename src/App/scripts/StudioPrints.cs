@@ -1,0 +1,152 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using Godot;
+using KTable.Client.Studio;
+using KTable.Core.Model;
+
+namespace KTable.App;
+
+internal sealed class PrintPlacer
+{
+    readonly PieceStudio _s;
+
+    public PrintPlacer(PieceStudio s) => _s = s;
+
+    StudioCanvas Canvas => _s.Canvas;
+
+    static Control Wide(Control c) { c.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill; return c; }
+
+    static FaceBox Copy(FaceBox b) => new() { X = b.X, Y = b.Y, W = b.W, H = b.H };
+
+    static FaceBox Rounded(FaceBox b) => new() { X = Math.Round(b.X, 4), Y = Math.Round(b.Y, 4), W = Math.Round(b.W, 4), H = Math.Round(b.H, 4) };
+
+    public static FaceBox BandOf(PieceDef d, bool boxy) => d.NameBox ?? PiecePrinting.Band(boxy);
+
+    public static string BandLabel(PieceDef d)
+    {
+        var names = d.TextLines.Where(t => t.Place == null).Select(t => t.Name).ToList();
+        return names.Count == 0 ? "Name" : string.Join(" · ", names);
+    }
+
+    public static List<StudioCanvas.PrintBox> Boxes(PieceDef d, string side, bool boxy)
+    {
+        var l = new List<StudioCanvas.PrintBox>();
+        if (side == PrintPlace.Front) l.Add(new("band", BandLabel(d), Copy(BandOf(d, boxy))));
+        else if (d.Script == null)
+        {
+            var card = PiecePrinting.CardCounters(d);
+            var rows = PiecePrinting.CardRows(d, boxy);
+            for (int i = 0; i < card.Count; i++) l.Add(new($"c{card[i]}", d.Counters[card[i]].Name, rows[i]));
+        }
+        for (int i = 0; i < d.Counters.Count; i++)
+            if (d.Counters[i].Place is { } p && p.Side == side) l.Add(new($"c{i}", d.Counters[i].Name, p.Box()));
+        for (int i = 0; i < d.TextLines.Count; i++)
+            if (d.TextLines[i].Place is { } p && p.Side == side) l.Add(new($"t{i}", d.TextLines[i].Name, p.Box()));
+        return l;
+    }
+
+    public static bool IsItem(PieceDef d, string? key) =>
+        key == "band" || key != null && (Index(key, 'c', d.Counters.Count) != null || Index(key, 't', d.TextLines.Count) != null);
+
+    static int? Index(string key, char kind, int count) =>
+        key.Length > 1 && key[0] == kind && int.TryParse(key.AsSpan(1), out var i) && i >= 0 && i < count ? i : null;
+
+    public void Moved(string key, FaceBox box, string side) => Place(key, box, side, rebuild: true);
+
+    void Place(string key, FaceBox box, string side, bool rebuild)
+    {
+        var b = Rounded(box);
+        _s.Apply(x =>
+        {
+            if (key == "band") x.NameBox = b;
+            else if (Index(key, 'c', x.Counters.Count) is int ci) x.Counters[ci].Place = PrintPlace.On(side, b);
+            else if (Index(key, 't', x.TextLines.Count) is int ti) x.TextLines[ti].Place = PrintPlace.On(side, b);
+        }, what: "where it prints");
+        if (rebuild) _s.RebuildToolPanel();
+    }
+
+    void Numbers(VBoxContainer body, PieceDef d, string key)
+    {
+        bool boxy = d.Shape is "box" or "rounded";
+        (FaceBox box, string side)? now = key == "band" ? (BandOf(d, boxy), PrintPlace.Front)
+            : Index(key, 'c', d.Counters.Count) is int ci && d.Counters[ci].Place is { } cp ? (cp.Box(), cp.Side)
+            : Index(key, 't', d.TextLines.Count) is int ti && d.TextLines[ti].Place is { } tp ? (tp.Box(), tp.Side)
+            : null;
+        if (now is not { } n) return;
+        var row = new HBoxContainer();
+        row.AddThemeConstantOverride("separation", 3);
+        var vals = new[] { n.box.X, n.box.Y, n.box.W, n.box.H };
+        var tips = new[] { "left", "top", "width", "height" };
+        var boxes = new SpinBox[vals.Length];
+        for (int i = 0; i < vals.Length; i++)
+        {
+            boxes[i] = new SpinBox { MinValue = 0, MaxValue = 100, Step = 1, Value = Math.Round(vals[i] * 100), Suffix = "%", CustomMinimumSize = new Vector2(62, 0), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, TooltipText = $"{tips[i]} (% of the face)" };
+            row.AddChild(boxes[i]);
+        }
+        foreach (var sb in boxes)
+            sb.ValueChanged += _ => Place(key, new FaceBox { X = boxes[0].Value / 100, Y = boxes[1].Value / 100, W = Math.Max(0.02, boxes[2].Value / 100), H = Math.Max(0.02, boxes[3].Value / 100) }, n.side, rebuild: false);
+        body.AddChild(row);
+    }
+
+    List<(string key, string label)> Items(PieceDef d)
+    {
+        var l = new List<(string, string)> { ("band", "Name band") };
+        for (int i = 0; i < d.Counters.Count; i++) l.Add(($"c{i}", d.Counters[i].Name));
+        for (int i = 0; i < d.TextLines.Count; i++) l.Add(($"t{i}", d.TextLines[i].Name));
+        return l;
+    }
+
+    public void Options(VBoxContainer body)
+    {
+        var d = _s.Sel;
+        if (d == null || d.Kind == "model") return;
+        var items = Items(d);
+        var chosen = items.FindIndex(i => i.key == Canvas.Chosen);
+        var pick = new OptionButton { FitToLongestItem = false, ClipText = true, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, TooltipText = "What the boxes on the face are" };
+        for (int i = 0; i < items.Count; i++) pick.AddItem(items[i].label, i);
+        pick.Selected = Math.Max(0, chosen);
+        pick.ItemSelected += i => { Canvas.Chosen = items[(int)i].key; Canvas.Redraw(); _s.RebuildToolPanel(); };
+        body.AddChild(Wide(pick));
+        var key = chosen >= 0 ? items[chosen].key : "band";
+        Numbers(body, d, key);
+        if (key == "band")
+        {
+            if (d.NameBox != null) body.AddChild(Wide(Ui.Btn("Built-in band", () => { _s.Apply(x => x.NameBox = null, what: "where it prints"); _s.RebuildToolPanel(); })));
+        }
+        else if (Index(key, 'c', d.Counters.Count) is int ci) CounterRows(body, d, ci);
+        else if (Index(key, 't', d.TextLines.Count) is int ti) SideChoice(body, d.TextLines[ti].Place, "With the name", false, ti, p => _s.Apply(x => x.TextLines[ti].Place = p));
+        body.AddChild(new HSeparator());
+        body.AddChild(Wide(Ui.Btn("Swap front and back", _s.SwapSides, "The front's picture and everything printed on it go to the back, and the back's to the front")));
+    }
+
+    void CounterRows(VBoxContainer body, PieceDef d, int ci)
+    {
+        var c = d.Counters[ci];
+        SideChoice(body, c.Place, "On the back's card", true, ci, p => _s.Apply(x => x.Counters[ci].Place = p));
+        var row = new HBoxContainer();
+        var name = new CheckBox { Text = "Name", ButtonPressed = c.ShowName };
+        name.Toggled += on => _s.Apply(x => x.Counters[ci].ShowName = on);
+        var buttons = new CheckBox { Text = "− +", ButtonPressed = c.ShowButtons, TooltipText = "Buttons that take one off and add one" };
+        buttons.Toggled += on => _s.Apply(x => x.Counters[ci].ShowButtons = on);
+        row.AddChild(name);
+        row.AddChild(buttons);
+        body.AddChild(row);
+    }
+
+    void SideChoice(VBoxContainer body, PrintPlace? place, string unplaced, bool unplacedOnBack, int index, Action<PrintPlace?> set)
+    {
+        var ob = new OptionButton { FitToLongestItem = false, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+        ob.AddItem(unplaced, 0);
+        ob.AddItem("Front", 1);
+        ob.AddItem("Back", 2);
+        ob.Selected = place == null ? 0 : place.Side == PrintPlace.Back ? 2 : 1;
+        ob.ItemSelected += i =>
+        {
+            string? side = i == 1 ? PrintPlace.Front : i == 2 ? PrintPlace.Back : null;
+            set(side == null ? null : place == null ? PiecePrinting.Fresh(side, index) : PrintPlace.On(side, place.Box()));
+            _s.ShowSide(side == null ? unplacedOnBack : side == PrintPlace.Back);
+        };
+        body.AddChild(Wide(ob));
+    }
+}

@@ -1,0 +1,187 @@
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using KTable.Core.Model;
+
+namespace KTable.App;
+
+static class ToolTests
+{
+    const string U = Layers.Umpire;
+
+    static Vec2 At(OfflineTable t, string id) => t.S.View.Find(U, id)!.Pos;
+
+    static async Task Carry(TestRunner r, OfflineTable t, Vec2 from, Vec2 to, System.Action? whileHeld = null)
+    {
+        t.Table.Hand.Start(from);
+        t.Table.Hand.Move(to);
+        whileHeld?.Invoke();
+        await r.Seconds(0.25);
+        t.Table.Hand.Drop();
+        await r.Frames(5);
+    }
+
+    [NodeTest]
+    static async Task Pieces_carried_are_set_down_where_the_hand_lets_go_and_one_undo_takes_them_back(TestRunner r)
+    {
+        var t = OfflineTable.Make(r, pieces: 3);
+        await r.Frame();
+        t.Table.Selection.Set(new[] { "p1", "p2" });
+        int undos = t.S.MyUndoable.Count;
+        await Carry(r, t, new Vec2(1, 0), new Vec2(6, 4));
+        Check.Equal(new Vec2(6, 4), At(t, "p1"), "p1 under the hand");
+        Check.Equal(new Vec2(7, 4), At(t, "p2"), "p2 where it was beside it");
+        Check.Equal(new Vec2(3, 0), At(t, "p3"), "p3 not carried");
+        Check.That(!t.Table.Hand.Holding, "the hand is empty");
+        Check.Equal(undos + 1, t.S.MyUndoable.Count, "one thing to undo");
+        t.S.UndoLast();
+        await r.Frame();
+        Check.Equal(new Vec2(1, 0), At(t, "p1"), "p1 back");
+        Check.Equal(new Vec2(2, 0), At(t, "p2"), "p2 back");
+    }
+
+    [NodeTest]
+    static async Task A_piece_turned_in_the_hand_is_set_down_turned(TestRunner r)
+    {
+        var t = OfflineTable.Make(r, pieces: 1);
+        await r.Frame();
+        t.Table.Selection.Set(new[] { "p1" });
+        await Carry(r, t, new Vec2(1, 0), new Vec2(1, 3), () => t.Table.Hand.Rotate(90));
+        var p = t.S.View.Find(U, "p1")!;
+        Check.That(System.Math.Abs(p.RotDeg - 90) < 1e-6 || System.Math.Abs(p.RotDeg - 270) < 1e-6, $"turned a quarter: {p.RotDeg}");
+        Check.Equal(new Vec2(1, 3), p.Pos, "where it was let go");
+    }
+
+    static void ShakeFor(OfflineTable t, double seconds, double hz = 4)
+    {
+        for (double s = 0; s <= seconds; s += 1 / 60.0)
+            t.Table.Hand.ShakeAt(100 + s, new System.Numerics.Vector2(500 + 80 * (float)System.Math.Sin(2 * System.Math.PI * hz * s), 400));
+    }
+
+    static double Spread(OfflineTable t) { var ps = t.S.View.Layer(U).Select(p => p.Pos).ToList(); return ps.Max(p => p.X) - ps.Min(p => p.X); }
+
+    [NodeTest]
+    static async Task A_hand_shaken_quickly_sets_its_pieces_down_in_a_clump_round_the_pointer(TestRunner r)
+    {
+        var t = OfflineTable.Make(r, pieces: 6);
+        await r.Frame();
+        var heard = t.Table.Sound.Kept = new();
+        t.Table.Selection.Set(Enumerable.Range(1, 6).Select(i => "p" + i));
+        await Carry(r, t, new Vec2(1, 0), new Vec2(1, 6), () => ShakeFor(t, 0.6));
+        Check.That(Spread(t) < 3.5, $"a clump, not a line: {Spread(t)} across");
+        Check.That(t.S.View.Layer(U).All(p => p.Y < 0.01), "none on another");
+        Check.Equal(6, t.S.View.Layer(U).Select(p => p.Pos).Distinct().Count(), "each in a place of its own");
+        Check.That(heard.Any(h => h.Sound == Sound.Shuffle), "clattered as shaken");
+        Check.That(heard.Any(h => h.Sound == Sound.WoodHeavy), "knocked together");
+    }
+
+    [NodeTest]
+    static async Task A_slow_to_and_fro_leaves_the_group_as_it_was(TestRunner r)
+    {
+        var t = OfflineTable.Make(r, pieces: 6);
+        await r.Frame();
+        t.Table.Selection.Set(Enumerable.Range(1, 6).Select(i => "p" + i));
+        await Carry(r, t, new Vec2(1, 0), new Vec2(1, 6), () => ShakeFor(t, 3, hz: 1));
+        Check.Equal(5.0, Spread(t), "the line as it was");
+    }
+
+    static void PullFromDrawer(OfflineTable t, bool letGoOnTable)
+    {
+        var size = t.Table.GetViewport().GetVisibleRect().Size;
+        t.Table.Palette.Begin("x", at => at.X < size.X / 10);
+        t.Table.Palette.Tick(true, new Godot.Vector2(size.X / 20, size.Y / 2));
+        Check.Equal(1, t.S.View.Layer(U).Count, "nothing made over the drawer");
+        t.Table.Palette.Tick(true, size / 2);
+        Check.That(t.Table.Hand.Holding, "in the hand as soon as it is out of the drawer");
+        Check.Equal(2, t.S.View.Layer(U).Count, "made as soon as it is out of the drawer");
+        t.Table.Palette.End(drop: letGoOnTable);
+    }
+
+    [NodeTest]
+    static async Task A_piece_pulled_from_the_drawer_is_heard_taken_up_and_set_down_where_let_go(TestRunner r)
+    {
+        var t = OfflineTable.Make(r, pieces: 1);
+        await r.Frame();
+        var heard = t.Table.Sound.Kept = new();
+        PullFromDrawer(t, letGoOnTable: true);
+        await r.Frames(30);
+        Check.Equal(2, t.S.View.Layer(U).Count, "on the table");
+        Check.That(!t.Table.Hand.Holding, "the hand is empty");
+        Check.That(heard.Any(h => h.Sound == Sound.Lift), "heard taken up");
+        Check.That(heard.Any(h => h.Sound == Sound.Wood), "heard set down");
+    }
+
+    [NodeTest]
+    static async Task A_piece_pulled_from_the_drawer_and_let_go_over_it_goes_back_and_undo_brings_it_again(TestRunner r)
+    {
+        var t = OfflineTable.Make(r, pieces: 1);
+        await r.Frame();
+        PullFromDrawer(t, letGoOnTable: false);
+        await r.Frame();
+        Check.Equal(1, t.S.View.Layer(U).Count, "back in the drawer");
+        Check.That(!t.Table.Hand.Holding, "the hand is empty");
+        t.S.UndoLast();
+        await r.Frame();
+        Check.Equal(2, t.S.View.Layer(U).Count, "brought back by undo");
+        Check.That(t.Errors.Count == 0, "no command refused: " + string.Join("; ", t.Errors));
+    }
+
+    [NodeTest]
+    static async Task A_carried_group_put_in_rows_lands_in_that_many_rows(TestRunner r)
+    {
+        var t = OfflineTable.Make(r, pieces: 6);
+        await r.Frame();
+        t.Table.Selection.Set(Enumerable.Range(1, 6).Select(i => "p" + i));
+        await Carry(r, t, new Vec2(1, 0), new Vec2(0, 10), () => t.Table.Hand.FormRows(2));
+        var rows = t.S.View.Layer(U).Select(p => System.Math.Round(p.Pos.Z, 3)).Distinct().Count();
+        Check.Equal(2, rows, "rows");
+    }
+
+    [NodeTest]
+    static async Task A_line_drawn_is_on_the_board_and_the_rubber_through_it_leaves_its_two_ends(TestRunner r)
+    {
+        var t = OfflineTable.Make(r, pieces: 0);
+        await r.Frame();
+        double rub = t.Table.Pen.RubRadius();
+        t.Table.Pen.PressDraw(new Vec2(-10 * rub, 0));
+        for (int x = -9; x <= 10; x++) t.Table.Pen.MoveDraw(new Vec2(x * rub, 0));
+        t.Table.Pen.ReleaseDraw();
+        await r.Frame();
+        var lines = t.S.View.Drawings.GetValueOrDefault(U) ?? new();
+        Check.Equal(1, lines.Count, "one stroke");
+        Check.Equal(21, lines[0].Points.Count, "its points");
+        t.Table.Pen.PressErase(new Vec2(0, 0));
+        await r.Frame();
+        lines = t.S.View.Drawings.GetValueOrDefault(U) ?? new();
+        Check.Equal(2, lines.Count, "the two ends left");
+        Check.That(lines.All(l => l.Points.All(p => System.Math.Abs(p.X) >= rub * 0.999)), "nothing left under the rubber");
+        t.S.UndoLast();
+        await r.Frame();
+        Check.Equal(1, (t.S.View.Drawings.GetValueOrDefault(U) ?? new()).Count, "the rub taken back as one");
+    }
+
+    [NodeTest]
+    static async Task A_rectangle_dragged_out_is_one_closed_line(TestRunner r)
+    {
+        var t = OfflineTable.Make(r, pieces: 0);
+        await r.Frame();
+        t.Table.ShapeKind = "rect";
+        t.Table.Pen.PressShape(new Vec2(0, 0));
+        t.Table.Pen.MoveShape(new Vec2(4, 2));
+        t.Table.Pen.ReleaseShape();
+        await r.Frame();
+        var line = (t.S.View.Drawings.GetValueOrDefault(U) ?? new()).Single();
+        Check.Equal(5, line.Points.Count, "corners and back to the start");
+        Check.Equal(line.Points[0], line.Points[^1], "closed");
+    }
+
+    [NodeTest]
+    static Task The_ruler_s_marks_fall_on_round_numbers(TestRunner r)
+    {
+        Check.Equal(2.0, RulerTool.NiceStep(7), "a line of 7");
+        Check.Equal(20.0, RulerTool.NiceStep(80), "a line of 80");
+        Check.Equal(500.0, RulerTool.NiceStep(1234), "a line of 1234");
+        Check.Equal(1.0, RulerTool.NiceStep(0), "no line");
+        return Task.CompletedTask;
+    }
+}

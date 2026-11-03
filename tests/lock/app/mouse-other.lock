@@ -1,0 +1,23 @@
+include _host.inc
+mclick world:4,0.2,0
+settle
+checkpoint middle-flip
+mdrag @640,400 @540,350
+settle
+checkpoint middle-pan
+rdrag @640,400 @740,380
+settle
+checkpoint orbit
+key Home
+settle
+rclick world:-4,0.2,0.36
+settle
+checkpoint alt-click-button
+click world:-4,0.2,0.36
+settle
+checkpoint click-button
+click world:-4.2,0.2,-0.36
+type "Hold"
+key Enter
+settle
+checkpoint input-typed

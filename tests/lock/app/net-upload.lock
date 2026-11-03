@@ -1,0 +1,20 @@
+@instances host,join
+@timeout 360
+host: include _host.inc
+sync hosted
+join: include _join.inc
+sync knocked
+host: click "Umpire" timeout=900
+host: settle 60 1800
+sync admitted
+join: settle 60 3000
+join: click "Pieces"
+join: click "search name, tag, colour…"
+join: type "Scout"
+join: settle
+join: drag "Scout" world:0,0,6
+join: settle 60 3000
+join: checkpoint join-placed
+sync placed
+host: settle 60 3000
+host: checkpoint host-has-scout

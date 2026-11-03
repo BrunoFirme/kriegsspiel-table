@@ -1,0 +1,390 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using Godot;
+
+namespace KTable.App;
+
+internal sealed class ModelCamera
+{
+    readonly Camera3D _cam;
+    public float Yaw = Mathf.Pi - 0.6f, Pitch = -0.45f, Dist = 6;
+    public Vector3 Target = new(0, 0.5f, 0);
+    public bool Spin;
+
+    const float LeastFar = 500, FarPerDistance = 50;
+
+    public ModelCamera(Camera3D cam) => _cam = cam;
+
+    public void Apply()
+    {
+        Pitch = Mathf.Clamp(Pitch, -1.5f, 1.2f);
+        var dir = new Vector3(Mathf.Sin(Yaw) * Mathf.Cos(Pitch), -Mathf.Sin(Pitch), Mathf.Cos(Yaw) * Mathf.Cos(Pitch));
+        _cam.Position = Target + dir * Dist;
+        _cam.LookAt(Target, Vector3.Up);
+        _cam.Near = Mathf.Max(0.001f, Dist * 0.01f);
+        _cam.Far = Mathf.Max(LeastFar, Dist * FarPerDistance);
+    }
+
+    public void Frame(List<Aabb> aabbs)
+    {
+        if (aabbs.Count == 0) { Target = new Vector3(0, 0.5f, 0); Dist = 6; Apply(); return; }
+        var b = aabbs[0];
+        foreach (var a in aabbs) b = b.Merge(a);
+        Target = b.GetCenter();
+        Dist = Mathf.Max(0.5f, b.Size.Length() * 1.6f);
+        Apply();
+    }
+}
+
+internal sealed class ModelTools
+{
+    readonly ModelStudio _m;
+    bool _orbiting, _panning, _painting, _moving;
+    Vector2 _last, _clickAt;
+    public Vector2 Hover;
+    Vector3 _moveFrom;
+    float[]? _movePos;
+    float _strokeLeft;
+    int _axis = -1, _hoverAxis = -1;
+    float _axisFrom, _axisScale;
+    Vector3 _axisCentre, _axisDir;
+    const float AxisPick = 9, AxisLength = 0.2f, AxisWidth = 3, ArrowHead = 10, AxisHover = 0.35f;
+    static readonly Color[] AxisColours = { new(0.92f, 0.32f, 0.3f), new(0.38f, 0.8f, 0.36f), new(0.36f, 0.56f, 0.96f) };
+
+    public ModelTools(ModelStudio m) => _m = m;
+
+    ModelCamera Camera => _m.Camera;
+
+    public void OnInput(InputEvent e)
+    {
+        var vc = _m.Vc;
+        switch (e)
+        {
+            case InputEventMouseButton { ButtonIndex: MouseButton.WheelUp or MouseButton.WheelDown or MouseButton.WheelLeft or MouseButton.WheelRight, Pressed: true } w:
+                if (_m.Decal.Wheel(w)) { vc.AcceptEvent(); break; }
+                if (w.ButtonIndex is MouseButton.WheelLeft or MouseButton.WheelRight) { vc.AcceptEvent(); break; }
+                if (w.CtrlPressed && _m.Tool is "paint" or "erase") { _m.P.Brush = Mathf.Clamp(_m.P.Brush * (w.ButtonIndex == MouseButton.WheelUp ? 1.15f : 1 / 1.15f), 1, 400); _m.Studio.RebuildModelOptions(); }
+                else { Camera.Dist *= w.ButtonIndex == MouseButton.WheelUp ? 0.88f : 1 / 0.88f; Camera.Apply(); }
+                vc.AcceptEvent();
+                break;
+            case InputEventMouseButton mb:
+                vc.GrabFocus();
+                if (mb.ButtonIndex == MouseButton.Right || (mb.ButtonIndex == MouseButton.Left && _m.Tool == "orbit")) { _orbiting = mb.Pressed; _last = mb.Position; if (mb.Pressed && mb.ButtonIndex == MouseButton.Left) _clickAt = mb.Position; else if (!mb.Pressed && mb.ButtonIndex == MouseButton.Left && (mb.Position - _clickAt).Length() < 4) PickPart(mb.Position); }
+                else if (mb.ButtonIndex == MouseButton.Middle) { _panning = mb.Pressed; _last = mb.Position; }
+                else if (mb.ButtonIndex == MouseButton.Left) LeftButton(mb);
+                vc.AcceptEvent();
+                break;
+            case InputEventMouseMotion mm:
+                Hover = mm.Position;
+                if (_orbiting) { Camera.Yaw -= mm.Relative.X * 0.008f; Camera.Pitch -= mm.Relative.Y * 0.008f; Camera.Apply(); }
+                else if (_panning)
+                {
+                    float k = Camera.Dist * 0.0016f;
+                    Camera.Target += (-_m.Cam.GlobalBasis.X * mm.Relative.X + _m.Cam.GlobalBasis.Y * mm.Relative.Y) * k;
+                    Camera.Apply();
+                }
+                else if (_painting) PaintAlong(_last, mm.Position);
+                else if (_moving && _axis >= 0) AxisMove(mm.Position);
+                else if (_moving) MoveTo(mm.Position, mm.ShiftPressed);
+                else if (_m.Tool == "move") _hoverAxis = AxisAt(mm.Position);
+                _last = mm.Position;
+                vc.AcceptEvent();
+                _m.RedrawOverlay();
+                break;
+        }
+    }
+
+    void LeftButton(InputEventMouseButton mb)
+    {
+        if (!mb.Pressed)
+        {
+            if (_painting) { _painting = false; _m.EndStroke(); }
+            if (_moving) { _moving = false; _axis = -1; _m.Changed(mesh: true); _m.Studio.RebuildModelPanels(); _m.RedrawOverlay(); }
+            return;
+        }
+        var hit = Ray(mb.Position);
+        switch (_m.Tool)
+        {
+            case "paint":
+            case "erase":
+                if (mb.AltPressed && hit != null) { PickAt(hit.Value); return; }
+                _m.BeginStroke();
+                _painting = true;
+                _strokeLeft = 0;
+                if (hit != null) Stamp(hit.Value);
+                break;
+            case "fill":
+                if (hit == null || _m.Views[hit.Value.part].Fixed) return;
+                _m.BeginStroke();
+                FillPart(_m.Views[hit.Value.part]);
+                _m.EndStroke();
+                break;
+            case "pick":
+                if (hit != null) PickAt(hit.Value);
+                break;
+            case "decal":
+                _m.Decal.Press(mb.Position);
+                break;
+            case "move":
+                if (AxisAt(mb.Position) is var axis and >= 0 && Gizmo() is { } g && AxisParam(mb.Position, g.centre, g.axes[axis].Normalized()) is { } from)
+                {
+                    _m.Snapshot();
+                    _axis = axis; _axisFrom = from; _axisCentre = g.centre; _axisDir = g.axes[axis].Normalized();
+                    _axisScale = Mathf.Max(1e-6f, _m.Stand.Basis[axis].Length());
+                    _movePos = _m.SelPart!.Pos.ToArray();
+                    _moving = true;
+                    return;
+                }
+                if (hit == null || !_m.IsPart(hit.Value.part)) return;
+                _m.SelPartId = hit.Value.part;
+                _m.RefreshSelection();
+                _m.Studio.RebuildModelPanels();
+                _m.Snapshot();
+                _moving = true;
+                _moveFrom = hit.Value.world;
+                _movePos = _m.SelPart!.Pos.ToArray();
+                break;
+        }
+    }
+
+    void PickPart(Vector2 at)
+    {
+        if (Ray(at) is { } h) { _m.SelPartId = h.part; _m.RefreshSelection(); _m.Studio.RebuildModelPanels(); }
+    }
+
+    (Vector3 centre, Vector3[] axes)? Gizmo()
+    {
+        if (_m.Tool != "move" || _m.SelPart is not { } p || !_m.Views.TryGetValue(p.Id, out var v)) return null;
+        var centre = (_m.Stand.Transform * (v.Node.Transform * v.Node.GetAabb())).GetCenter();
+        float length = Camera.Dist * AxisLength;
+        var b = _m.Stand.Basis;
+        return (centre, new[] { b.X.Normalized() * length, b.Y.Normalized() * length, b.Z.Normalized() * length });
+    }
+
+    int AxisAt(Vector2 at)
+    {
+        if (Gizmo() is not { } g || _m.Cam.IsPositionBehind(g.centre)) return -1;
+        var c = _m.Cam.UnprojectPosition(g.centre);
+        int best = -1;
+        float bestD = AxisPick;
+        for (int i = 0; i < g.axes.Length; i++)
+        {
+            var tip = _m.Cam.UnprojectPosition(g.centre + g.axes[i]);
+            float d = at.DistanceTo(Geometry2D.GetClosestPointToSegment(at, c, tip));
+            if (d < bestD) { best = i; bestD = d; }
+        }
+        return best;
+    }
+
+    float? AxisParam(Vector2 at, Vector3 centre, Vector3 dir)
+    {
+        var o = _m.Cam.ProjectRayOrigin(at); var d = _m.Cam.ProjectRayNormal(at);
+        float b = dir.Dot(d), denom = 1 - b * b;
+        if (denom < 1e-4f) return null;
+        var w = centre - o;
+        return (b * d.Dot(w) - dir.Dot(w)) / denom;
+    }
+
+    void AxisMove(Vector2 at)
+    {
+        if (_m.SelPart is not { } p || _movePos == null || AxisParam(at, _axisCentre, _axisDir) is not { } t) return;
+        var pos = (float[])_movePos.Clone();
+        pos[_axis] += (t - _axisFrom) / _axisScale;
+        p.Pos = pos;
+        _m.Views[p.Id].Node.Transform = p.Xf();
+    }
+
+    public void DrawGizmo(Control o)
+    {
+        if (Gizmo() is not { } g || _m.Cam.IsPositionBehind(g.centre)) return;
+        var c = _m.Cam.UnprojectPosition(g.centre);
+        int lit = _axis >= 0 ? _axis : _hoverAxis;
+        for (int i = 0; i < g.axes.Length; i++)
+        {
+            var tip = _m.Cam.UnprojectPosition(g.centre + g.axes[i]);
+            if ((tip - c).Length() < 2) continue;
+            var col = i == lit ? AxisColours[i].Lightened(AxisHover) : AxisColours[i];
+            var dir = (tip - c).Normalized();
+            var side = new Vector2(-dir.Y, dir.X) * (ArrowHead / 2);
+            o.DrawLine(c, tip, col, AxisWidth, true);
+            o.DrawColoredPolygon(new[] { tip + dir * ArrowHead, tip + side, tip - side }, col);
+            o.DrawString(ThemeDB.FallbackFont, tip + dir * (ArrowHead + 6) + new Vector2(-4, 5), "XYZ"[i].ToString(), HorizontalAlignment.Left, -1, 13, col);
+        }
+        o.DrawCircle(c, 4, Colors.White);
+    }
+
+    void MoveTo(Vector2 at, bool vertical)
+    {
+        if (_m.SelPart is not { } p || _movePos == null) return;
+        var cam = _m.Cam;
+        var o = cam.ProjectRayOrigin(at); var d = cam.ProjectRayNormal(at);
+        Vector3 now;
+        if (vertical)
+        {
+            var n = (cam.GlobalPosition - _moveFrom) with { Y = 0 };
+            var plane = new Plane(n.Normalized(), _moveFrom);
+            if (plane.IntersectsRay(o, d) is not { } hit) return;
+            now = new Vector3(_moveFrom.X, hit.Y, _moveFrom.Z);
+        }
+        else
+        {
+            var plane = new Plane(Vector3.Up, _moveFrom.Y);
+            if (plane.IntersectsRay(o, d) is not { } hit) return;
+            now = hit;
+        }
+        var delta = (now - _moveFrom) / _m.Doc.Scale;
+        p.Pos = new[] { _movePos[0] + delta.X, _movePos[1] + delta.Y, _movePos[2] + delta.Z };
+        _m.Views[p.Id].Node.Transform = p.Xf();
+    }
+
+    public (string part, int tri, Vector3 local, Vector3 world, float u, float v)? Ray(Vector2 at)
+    {
+        var o = _m.Cam.ProjectRayOrigin(at); var dir = _m.Cam.ProjectRayNormal(at);
+        (string, int, Vector3, Vector3, float, float)? best = null;
+        float bestT = float.MaxValue;
+        foreach (var v in _m.Views.Values)
+        {
+            if (!v.Part.Visible) continue;
+            var xf = (_m.Stand.Transform * v.Part.Xf());
+            var inv = xf.AffineInverse();
+            var lo = inv * o; var ld = (inv.Basis * dir);
+            var V = v.Data.V;
+            for (int t = 0; t < v.Data.Tris; t++)
+            {
+                var a = V[t * 3]; var e1 = V[t * 3 + 1] - a; var e2 = V[t * 3 + 2] - a;
+                var pv = ld.Cross(e2);
+                float det = e1.Dot(pv);
+                if (Mathf.Abs(det) < 1e-12f) continue;
+                float inv_ = 1 / det;
+                var tv = lo - a;
+                float u = tv.Dot(pv) * inv_;
+                if (u < 0 || u > 1) continue;
+                var qv = tv.Cross(e1);
+                float w = ld.Dot(qv) * inv_;
+                if (w < 0 || u + w > 1) continue;
+                float tt = e2.Dot(qv) * inv_;
+                if (tt <= 0) continue;
+                var local = lo + ld * tt;
+                var world = xf * local;
+                float dist = (world - o).Length();
+                if (dist < bestT) { bestT = dist; best = (v.Part.Id, t, local, world, u, w); }
+            }
+        }
+        return best;
+    }
+
+    void PaintAlong(Vector2 from, Vector2 to)
+    {
+        float r = Mathf.Max(1, _m.P.Brush / 2);
+        float step = Mathf.Max(1, r * 0.3f);
+        float len = (to - from).Length();
+        float at = step - _strokeLeft;
+        while (at <= len)
+        {
+            if (Ray(from.Lerp(to, at / Mathf.Max(1e-3f, len))) is { } hit) Stamp(hit);
+            at += step;
+        }
+        _strokeLeft = len - (at - step);
+    }
+
+    public void Stamp((string part, int tri, Vector3 local, Vector3 world, float u, float v) hit)
+    {
+        var vp = _m.Vp.Size;
+        var cam = _m.Cam;
+        float distCam = (cam.GlobalPosition - hit.world).Length();
+        float worldPerPx = 2 * distCam * Mathf.Tan(Mathf.DegToRad(cam.Fov) / 2) / Mathf.Max(1, vp.Y);
+        float R = Mathf.Max(1, _m.P.Brush / 2) * worldPerPx;
+        bool erase = _m.Tool == "erase";
+        var ink = _m.Ink;
+        foreach (var v in _m.Views.Values)
+        {
+            if (!v.Part.Visible || v.Fixed) continue;
+            var xf = _m.Stand.Transform * v.Part.Xf();
+            var inv = xf.AffineInverse();
+            var centre = inv * hit.world;
+            float scale = (xf.Basis.Scale.X + xf.Basis.Scale.Y + xf.Basis.Scale.Z) / 3;
+            float r = R / Mathf.Max(1e-6f, scale);
+            var camLocal = inv * cam.GlobalPosition;
+            if (Dab(v, hit.tri, centre, r, camLocal, erase, ink)) v.Repaint();
+        }
+    }
+
+    static bool Dab(ModelPartView v, int hitTri, Vector3 centre, float r, Vector3 camLocal, bool erase, Color ink)
+    {
+        var V = v.Data.V; var UV = v.Data.UV;
+        bool any = false;
+        for (int t = 0; t < v.Data.Tris; t++)
+        {
+            if ((v.Centre[t] - centre).LengthSquared() > (r + v.Radius[t]) * (r + v.Radius[t])) continue;
+            var a = V[t * 3]; var b = V[t * 3 + 1]; var c = V[t * 3 + 2];
+            var n = (c - a).Cross(b - a);
+            if (n.Dot(camLocal - a) < 0 && t != hitTri) continue;
+            var ta = UV[t * 3] * new Vector2(v.W, v.H); var tb = UV[t * 3 + 1] * new Vector2(v.W, v.H); var tc = UV[t * 3 + 2] * new Vector2(v.W, v.H);
+            ModelImport.Raster(ta, tb, tc, Math.Max(v.W, v.H), Reach(a, b, c, ta, tb, tc, centre, r), (x, y, w0, w1, w2) =>
+            {
+                if (x >= v.W || y >= v.H) return;
+                var p = a * w0 + b * w1 + c * w2;
+                float d = (p - centre).Length() / r;
+                if (d >= 1) return;
+                float f = d < 0.7f ? 1 : 1 - (d - 0.7f) / 0.3f;
+                float alpha = f * ink.A;
+                int o = (y * v.W + x) * 4;
+                if (erase)
+                {
+                    float k = 1 - f;
+                    v.Paint[o] = (byte)(v.Paint[o] * k); v.Paint[o + 1] = (byte)(v.Paint[o + 1] * k); v.Paint[o + 2] = (byte)(v.Paint[o + 2] * k); v.Paint[o + 3] = (byte)(v.Paint[o + 3] * k);
+                }
+                else
+                {
+                    float k = 1 - alpha;
+                    v.Paint[o] = (byte)Math.Min(255, ink.R * 255 * alpha + v.Paint[o] * k);
+                    v.Paint[o + 1] = (byte)Math.Min(255, ink.G * 255 * alpha + v.Paint[o + 1] * k);
+                    v.Paint[o + 2] = (byte)Math.Min(255, ink.B * 255 * alpha + v.Paint[o + 2] * k);
+                    v.Paint[o + 3] = (byte)Math.Min(255, 255 * alpha + v.Paint[o + 3] * k);
+                }
+                any = true;
+            });
+        }
+        return any;
+    }
+
+    static Rect2I? Reach(Vector3 a, Vector3 b, Vector3 c, Vector2 ta, Vector2 tb, Vector2 tc, Vector3 centre, float r)
+    {
+        var e1 = b - a; var e2 = c - a;
+        var n = e1.Cross(e2);
+        float nl = n.Length(), l1 = e1.Length();
+        if (nl < 1e-12f || l1 < 1e-9f) return null;
+        var x = e1 / l1; var y = (n / nl).Cross(x);
+        float e2x = e2.Dot(x), e2y = e2.Dot(y);
+        if (Mathf.Abs(e2y) < 1e-12f) return null;
+        var f1 = tb - ta; var f2 = tc - ta;
+        var cx = f1 / l1; var cy = f1 * (-e2x / (l1 * e2y)) + f2 / e2y;
+        var d = centre - a;
+        var uv = ta + cx * d.Dot(x) + cy * d.Dot(y);
+        float hx = r * Mathf.Sqrt(cx.X * cx.X + cy.X * cy.X) + 2, hy = r * Mathf.Sqrt(cx.Y * cx.Y + cy.Y * cy.Y) + 2;
+        if (!float.IsFinite(hx) || !float.IsFinite(hy) || !float.IsFinite(uv.X) || !float.IsFinite(uv.Y)) return null;
+        return new Rect2I((int)Mathf.Floor(uv.X - hx), (int)Mathf.Floor(uv.Y - hy), (int)Mathf.Ceil(2 * hx) + 1, (int)Mathf.Ceil(2 * hy) + 1);
+    }
+
+    void FillPart(ModelPartView v)
+    {
+        var ink = _m.Ink;
+        byte r = (byte)(ink.R * ink.A * 255), g = (byte)(ink.G * ink.A * 255), b = (byte)(ink.B * ink.A * 255), a = (byte)(ink.A * 255);
+        for (int i = 0; i < v.Paint.Length; i += 4) { v.Paint[i] = r; v.Paint[i + 1] = g; v.Paint[i + 2] = b; v.Paint[i + 3] = a; }
+        v.Repaint();
+    }
+
+    void PickAt((string part, int tri, Vector3 local, Vector3 world, float u, float v) hit)
+    {
+        var view = _m.Views[hit.part];
+        var d = view.Data;
+        var uv = d.UV[hit.tri * 3] * (1 - hit.u - hit.v) + d.UV[hit.tri * 3 + 1] * hit.u + d.UV[hit.tri * 3 + 2] * hit.v;
+        int x = Math.Clamp((int)(uv.X * view.W), 0, view.W - 1), y = Math.Clamp((int)(uv.Y * view.H), 0, view.H - 1);
+        var bc = view.Base.GetPixel(x, y);
+        int o = (y * view.W + x) * 4;
+        float a = view.Paint[o + 3] / 255f;
+        var c = new Color(bc.R * (1 - a) + view.Paint[o] / 255f, bc.G * (1 - a) + view.Paint[o + 1] / 255f, bc.B * (1 - a) + view.Paint[o + 2] / 255f) * Hex.To(view.Part.Tint, Colors.White);
+        _m.Studio.PickInk(c with { A = 1 });
+    }
+}

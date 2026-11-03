@@ -1,0 +1,24 @@
+include _studio.inc
+click "Blue battalion"
+settle 60 2400
+checkpoint inspector
+click "Duplicate this piece, pictures and all"
+settle 60 2400
+checkpoint duplicated
+click ~"Script"
+settle
+checkpoint script-tab
+click @900,400
+type "function on_load() self.button{ label = 'Go', x = 0, z = 0, w = 0.5, h = 0.2, on_click = 'go' } end\nfunction go() print('go') end\n"
+key Ctrl+Enter
+settle 60 1200
+checkpoint script-run
+click "Delete"
+settle
+checkpoint delete-ask
+click "Delete"
+settle 60 2400
+checkpoint deleted
+click "Done"
+settle 60 3000
+checkpoint saved

@@ -1,0 +1,13 @@
+bin/
+obj/
+.godot/
+*.user
+.vs/
+*.import
+/out/
+/packages/
+/cache/
+*.kstable
+/build/
+/tools/Converter/report.md
+/tests/lock/app/seed/

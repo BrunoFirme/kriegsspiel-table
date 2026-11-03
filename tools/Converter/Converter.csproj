@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>KTable.Converter</RootNamespace>
+    <AssemblyName>Converter</AssemblyName>
+    <ServerGarbageCollection>false</ServerGarbageCollection>
+    <ConcurrentGarbageCollection>false</ConcurrentGarbageCollection>
+    <JsonSerializerIsReflectionEnabledByDefault>true</JsonSerializerIsReflectionEnabledByDefault>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>false</SelfContained>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../src/Core/Core.csproj" />
+    <ProjectReference Include="../../src/Server/Server.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="converter.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="SkiaSharp" Version="4.154.0" />
+  </ItemGroup>
+  <Target Name="DropSkiaSymbols" AfterTargets="Build;Publish">
+    <Delete Files="$(OutDir)libSkiaSharp.pdb;$(PublishDir)libSkiaSharp.pdb" ContinueOnError="true" />
+  </Target>
+</Project>

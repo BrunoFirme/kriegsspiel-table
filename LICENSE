@@ -1,0 +1,148 @@
+Required Notice: Copyright 2026 Bruno Firme
+
+# Kriegsspiel Table License
+
+Kriegsspiel Table is licensed under the PolyForm Noncommercial License 1.0.0, set out in full below, together with
+the terms in this section. This section is part of the license, and where it and the PolyForm terms differ, this
+section applies. Section 2 applies over section 1: a use listed in section 2 needs a commercial license even where
+it also fits section 1. Section 3 applies over everything else, sections 1 and 2 included.
+
+These terms cover Kriegsspiel Table: the app, its converter, the packs that come with it, its source code, and any
+changed version of any of them or work based on them ("the software"). The licensor is Bruno Firme.
+
+## 1. Allowed without a commercial license
+
+Whether or not money is involved, and whatever the PolyForm terms below say of commercial purposes, anyone may:
+
+- play, umpire, host and join games with the software, and teach, study and research with it;
+- run events with it, free or paid: club nights, conventions, tournaments and courses, at home, at a club or at a
+  shop, café or other venue, charging entry, fees or membership dues;
+- stream, record and publish games played on it, including for income from adverts, sponsors or supporters;
+- change the software and share it, changed or not, free of charge, with these terms and the Required Notice line
+  above;
+- make packs, pieces, scenarios, maps, rules, pictures and scripts with it, and share them free of charge.
+
+A person working on their own, such as a freelance umpire or a tutor running a paid course, is covered by this
+section, except when working for a company or firm as described in 2(c), or for anyone described in section 3.
+
+## 2. Needs a commercial license
+
+A commercial license from the licensor is needed to:
+
+(a) sell the software or anything that contains it, or charge for access to it, including as an online or hosted
+    service. Hosting a game for others with the app's Host a game button is playing, under section 1, not this;
+(b) sell packs, pieces or scenarios made for the software: anything in its file formats, or made with its piece
+    studio or its converter, alone or with other things;
+(c) use the software in the work of a company or firm run for profit: running wargames, exercises or simulations
+    for clients, training or planning with its own staff, or publishing or shipping it in a product. Covered by
+    section 1 instead are a shop, venue or event organiser running games for players; a school, university or other
+    educational institution teaching with it, whoever runs it; a charity or club, however it is incorporated; and a
+    company's staff playing in their own time;
+(d) use it in any way described in section 3.
+
+To sell means to offer in exchange for money or anything else of value, including behind a paywall, a paid
+subscription or a paid tier. Voluntary tips and donations are not selling, as long as nothing is held back from
+those who do not give.
+
+Work of your own that does not need the software to be used, such as a rulebook, a map drawn in another program, or
+a picture, remains yours to sell anywhere; these terms do not reach it. What 2(b) needs a license for is selling
+packs, pieces and scenarios for the software. These terms give no rights in other people's work brought into the
+software, such as a converted module or someone else's map: that stays under its owners' terms.
+
+## 3. Defence and national security
+
+Use by or for any of the following, in any country, needs a commercial license, whatever section 1 and the PolyForm
+terms below say, including what they say of government institutions, educational institutions and public research
+organisations:
+
+- armed forces, including their reserves, academies, staff colleges and war colleges;
+- ministries, departments and agencies of defence;
+- intelligence and national-security agencies;
+- anyone acting for any of them or paid by any of them for the work, such as contractors, consultancies, think
+  tanks and research groups, including research they commission or pay for.
+
+People who belong to any of these and play, umpire or study in their own time, not as part of their service or
+work, are hobbyists like anyone else and covered by section 1.
+
+Other government use is allowed as the PolyForm terms below say.
+
+## 4. Commercial licenses
+
+To ask for a commercial license, contact Bruno Firme at firma.eht@outlook.com (or on Discord: b.firme). Terms are
+agreed case by case.
+
+---
+
+# PolyForm Noncommercial License 1.0.0
+
+<https://polyformproject.org/licenses/noncommercial/1.0.0>
+
+## Acceptance
+
+In order to get any license under these terms, you must agree to them as both strict obligations and conditions to all your licenses.
+
+## Copyright License
+
+The licensor grants you a copyright license for the software to do everything you might do with the software that would otherwise infringe the licensor's copyright in it for any permitted purpose.  However, you may only distribute the software according to [Distribution License](#distribution-license) and make changes or new works based on the software according to [Changes and New Works License](#changes-and-new-works-license).
+
+## Distribution License
+
+The licensor grants you an additional copyright license to distribute copies of the software.  Your license to distribute covers distributing the software with changes and new works permitted by [Changes and New Works License](#changes-and-new-works-license).
+
+## Notices
+
+You must ensure that anyone who gets a copy of any part of the software from you also gets a copy of these terms or the URL for them above, as well as copies of any plain-text lines beginning with `Required Notice:` that the licensor provided with the software.  For example:
+
+> Required Notice: Copyright Yoyodyne, Inc. (http://example.com)
+
+## Changes and New Works License
+
+The licensor grants you an additional copyright license to make changes and new works based on the software for any permitted purpose.
+
+## Patent License
+
+The licensor grants you a patent license for the software that covers patent claims the licensor can license, or becomes able to license, that you would infringe by using the software.
+
+## Noncommercial Purposes
+
+Any noncommercial purpose is a permitted purpose.
+
+## Personal Uses
+
+Personal use for research, experiment, and testing for the benefit of public knowledge, personal study, private entertainment, hobby projects, amateur pursuits, or religious observance, without any anticipated commercial application, is use for a permitted purpose.
+
+## Noncommercial Organizations
+
+Use by any charitable organization, educational institution, public research organization, public safety or health organization, environmental protection organization, or government institution is use for a permitted purpose regardless of the source of funding or obligations resulting from the funding.
+
+## Fair Use
+
+You may have "fair use" rights for the software under the law. These terms do not limit them.
+
+## No Other Rights
+
+These terms do not allow you to sublicense or transfer any of your licenses to anyone else, or prevent the licensor from granting licenses to anyone else.  These terms do not imply any other licenses.
+
+## Patent Defense
+
+If you make any written claim that the software infringes or contributes to infringement of any patent, your patent license for the software granted under these terms ends immediately. If your company makes such a claim, your patent license ends immediately for work on behalf of your company.
+
+## Violations
+
+The first time you are notified in writing that you have violated any of these terms, or done anything with the software not covered by your licenses, your licenses can nonetheless continue if you come into full compliance with these terms, and take practical steps to correct past violations, within 32 days of receiving notice.  Otherwise, all your licenses end immediately.
+
+## No Liability
+
+***As far as the law allows, the software comes as is, without any warranty or condition, and the licensor will not be liable to you for any damages arising out of these terms or the use or nature of the software, under any kind of legal claim.***
+
+## Definitions
+
+The **licensor** is the individual or entity offering these terms, and the **software** is the software the licensor makes available under these terms.
+
+**You** refers to the individual or entity agreeing to these terms.
+
+**Your company** is any legal entity, sole proprietorship, or other kind of organization that you work for, plus all organizations that have control over, are under the control of, or are under common control with that organization.  **Control** means ownership of substantially all the assets of an entity, or the power to direct its management and policies by vote, contract, or otherwise.  Control can be direct or indirect.
+
+**Your licenses** are all the licenses granted to you for the software under these terms.
+
+**Use** means anything you do with the software requiring one of your licenses.

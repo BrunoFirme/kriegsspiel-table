@@ -1,0 +1,30 @@
+include _host.inc
+drag world:4,0.2,0 world:6,0,2
+settle
+key Q
+settle
+click "Next turn ▸"
+settle
+checkpoint moved-and-turned
+click "Menu"
+click "Leave the table…"
+click "Leave"
+settle 60 3000
+checkpoint title-in-play
+click "Lock table"
+settle
+checkpoint chosen-in-play
+click "Resume"
+settle 60 3000
+checkpoint resumed
+click "Menu"
+click "Leave the table…"
+click "Leave"
+settle 60 3000
+click "Lock table"
+click "Start over"
+settle
+checkpoint start-over-ask
+click "Start over"
+settle 60 3000
+checkpoint started-over

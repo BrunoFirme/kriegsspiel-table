@@ -1,0 +1,28 @@
+@instances host,join
+@timeout 360
+host: include _host.inc
+sync hosted
+join: include _join.inc
+sync knocked
+host: click "Umpire" timeout=900
+host: settle 60 1800
+sync admitted
+join: settle 60 3000
+sync in
+host: drag world:4,0.2,0 world:6,0,1
+host: click "Next turn ▸"
+host: settle 60 1200
+sync turned
+join: settle 60 1200
+join: checkpoint mirrored-turn
+sync seen
+host: quit
+join: expect "Host a game" timeout=2400
+join: settle 60 3000
+join: checkpoint host-gone
+join: click "Lock table"
+join: settle
+join: checkpoint mirror-card
+join: click "Host from the copy"
+join: settle 60 3000
+join: checkpoint hosting-mirror

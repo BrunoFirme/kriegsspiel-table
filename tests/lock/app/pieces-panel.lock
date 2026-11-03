@@ -1,0 +1,34 @@
+include _host.inc
+click "Pieces"
+settle
+checkpoint panel
+click ~"Scripted War Game"
+click ~"Lock pieces"
+settle
+checkpoint pack-picked
+click "search name, tag, colour…"
+type "battalion"
+settle
+checkpoint searched
+drag "Blue battalion" world:0,0,6
+settle
+checkpoint dragged-in
+click "Red battalion"
+click world:-2,0,6
+settle
+checkpoint clicked-in
+click "Blue battalion"
+click world:2,0,7 mod=Shift
+click world:3,0,7
+settle
+checkpoint shift-placing
+key Escape
+rclick "Red battalion"
+click "Favourite"
+settle
+checkpoint hearted
+click "battalion"
+clear
+type "dice"
+settle
+checkpoint search-dice

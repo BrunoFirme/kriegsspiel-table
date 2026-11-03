@@ -1,0 +1,40 @@
+{
+  "format": 1,
+  "id": "lock.joiner",
+  "name": "Joiner's pieces",
+  "source": {
+    "authors": [
+      "Boggs"
+    ],
+    "url": "",
+    "license": "test pieces"
+  },
+  "pieces": [
+    {
+      "id": "lock.joiner.scout",
+      "name": "Scout",
+      "kind": "flat",
+      "image": "657654e7a3efcb68dbe8cf116ba9c7ca73ded984efa8c3cf08b2ca5ae6ff7340",
+      "size": {
+        "w": 0.8,
+        "h": 0.8
+      },
+      "shape": "box",
+      "thickness": 0.1,
+      "tint": "#FFFFFF",
+      "tags": [],
+      "states": [],
+      "counters": [],
+      "textLines": [],
+      "attachments": []
+    }
+  ],
+  "assets": {
+    "657654e7a3efcb68dbe8cf116ba9c7ca73ded984efa8c3cf08b2ca5ae6ff7340": {
+      "file": "assets/657654e7a3efcb68dbe8cf116ba9c7ca73ded984efa8c3cf08b2ca5ae6ff7340.png",
+      "kind": "image",
+      "w": 96,
+      "h": 96
+    }
+  }
+}

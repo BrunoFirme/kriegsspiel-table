@@ -1,0 +1,32 @@
+include _host.inc
+click "Ruler"
+drag world:-4,0,0 world:4,0,3
+settle
+checkpoint ruler
+click "Ranging"
+click world:-4,0.2,0
+settle
+wheel world:-4,0.2,0 2
+settle
+checkpoint ranging
+click "Select"
+click world:4,0.2,0
+click "POV screenshot"
+settle
+checkpoint pov
+drag @500,250 @700,260
+settle
+drag @700,450 @520,470
+settle
+checkpoint traced
+key Ctrl+Z
+settle
+checkpoint undone
+wheel @640,360 2
+settle
+click "Square"
+settle
+checkpoint square
+key Enter
+settle 60 1200
+checkpoint shot-taken

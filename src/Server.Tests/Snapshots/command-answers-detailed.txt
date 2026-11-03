@@ -1,0 +1,1650 @@
+== SpawnPiece
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; Def-x outside=ok; Id-x outside=ok; Label-x outside=ok; Guid-x outside=ok; ScriptState-x outside=ok; Tags-1 outside=ok; Tags-2 outside=ok; Memo-x outside=ok; Pos outside=outside your umpire zone; on another layer, all outside=ok
+  zone, none of mine: all inside=no zone on the umpire board has been assigned to you; Def-x outside=no zone on the umpire board has been assigned to you; Id-x outside=no zone on the umpire board has been assigned to you; Label-x outside=no zone on the umpire board has been assigned to you; Guid-x outside=no zone on the umpire board has been assigned to you; ScriptState-x outside=no zone on the umpire board has been assigned to you; Tags-1 outside=no zone on the umpire board has been assigned to you; Tags-2 outside=no zone on the umpire board has been assigned to you; Memo-x outside=no zone on the umpire board has been assigned to you; Pos outside=no zone on the umpire board has been assigned to you; on another layer, all outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== RestorePiece
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; Piece-x outside=ok; Piece.Pos outside=outside your umpire zone; on another layer, all outside=ok
+  zone, none of mine: all inside=no zone on the umpire board has been assigned to you; Piece-x outside=no zone on the umpire board has been assigned to you; Piece.Pos outside=no zone on the umpire board has been assigned to you; on another layer, all outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     Piece-x
+  undo stack:  yes
+== MovePiece
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; Id-x outside=outside your umpire zone; Pos outside=outside your umpire zone; on another layer, all outside=ok
+  zone, none of mine: all inside=no zone on the umpire board has been assigned to you; Id-x outside=no zone on the umpire board has been assigned to you; Pos outside=no zone on the umpire board has been assigned to you; on another layer, all outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== DeletePiece
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; Id-x outside=outside your umpire zone; on another layer, all outside=ok
+  zone, none of mine: all inside=no zone on the umpire board has been assigned to you; Id-x outside=no zone on the umpire board has been assigned to you; on another layer, all outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     Id-x
+  undo stack:  yes
+== SetState
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; Id-x outside=outside your umpire zone; on another layer, all outside=ok
+  zone, none of mine: all inside=no zone on the umpire board has been assigned to you; Id-x outside=no zone on the umpire board has been assigned to you; on another layer, all outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     Id-x
+  undo stack:  yes
+== SetCounter
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; Id-x outside=outside your umpire zone; Name-x outside=ok; on another layer, all outside=ok
+  zone, none of mine: all inside=no zone on the umpire board has been assigned to you; Id-x outside=no zone on the umpire board has been assigned to you; Name-x outside=no zone on the umpire board has been assigned to you; on another layer, all outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     Id-x
+  undo stack:  yes
+== SetText
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; Id-x outside=outside your umpire zone; Name-x outside=ok; Value-x outside=ok; on another layer, all outside=ok
+  zone, none of mine: all inside=no zone on the umpire board has been assigned to you; Id-x outside=no zone on the umpire board has been assigned to you; Name-x outside=no zone on the umpire board has been assigned to you; Value-x outside=no zone on the umpire board has been assigned to you; on another layer, all outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     Id-x
+  undo stack:  yes
+== SetLabel
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; Id-x outside=outside your umpire zone; Value-x outside=ok; on another layer, all outside=ok
+  zone, none of mine: all inside=no zone on the umpire board has been assigned to you; Id-x outside=no zone on the umpire board has been assigned to you; Value-x outside=no zone on the umpire board has been assigned to you; on another layer, all outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     Id-x
+  undo stack:  yes
+== SetNote
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; Id-x outside=outside your umpire zone; Value-x outside=ok; on another layer, all outside=ok
+  zone, none of mine: all inside=no zone on the umpire board has been assigned to you; Id-x outside=no zone on the umpire board has been assigned to you; Value-x outside=no zone on the umpire board has been assigned to you; on another layer, all outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     Id-x
+  undo stack:  yes
+== RestoreTurn
+  sent by:     Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  in a batch:  Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  zone:        all inside=ok
+  zone, none of mine: all inside=ok
+  observer:    copy {"type":"RestoreTurn","index":0,"seq":0,"actor":0,"at":0,"undoOf":0}
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  no
+== LoadSave
+  sent by:     Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  in a batch:  Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  zone:        all inside=ok; Name-x outside=ok
+  zone, none of mine: all inside=ok; Name-x outside=ok
+  observer:    copy {"type":"LoadSave","name":"Name-x","seq":0,"actor":0,"at":0,"undoOf":0}
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  no
+== SetTint
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; Id-x outside=outside your umpire zone; Value-x outside=ok; on another layer, all outside=ok
+  zone, none of mine: all inside=no zone on the umpire board has been assigned to you; Id-x outside=no zone on the umpire board has been assigned to you; Value-x outside=no zone on the umpire board has been assigned to you; on another layer, all outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== SetLocked
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; Id-x outside=outside your umpire zone; on another layer, all outside=ok
+  zone, none of mine: all inside=no zone on the umpire board has been assigned to you; Id-x outside=no zone on the umpire board has been assigned to you; on another layer, all outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== SetPieceOption
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; Id-x outside=outside your umpire zone; Name-x outside=ok; on another layer, all outside=ok
+  zone, none of mine: all inside=no zone on the umpire board has been assigned to you; Id-x outside=no zone on the umpire board has been assigned to you; Name-x outside=no zone on the umpire board has been assigned to you; on another layer, all outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== SetPointerRule
+  sent by:     Observer=no Umpire=no LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=no LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok
+  zone, none of mine: all inside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== SetBriefing
+  sent by:     Observer=no Umpire=no LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=no LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; Text-x outside=ok
+  zone, none of mine: all inside=ok; Text-x outside=ok
+  observer:    nothing
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== SetScale
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; Id-x outside=outside your umpire zone; on another layer, all outside=ok
+  zone, none of mine: all inside=no zone on the umpire board has been assigned to you; Id-x outside=no zone on the umpire board has been assigned to you; on another layer, all outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== Attach
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; Parent-x outside=outside your umpire zone; Child-x outside=outside your umpire zone; on another layer, all outside=ok
+  zone, none of mine: all inside=no zone on the umpire board has been assigned to you; Parent-x outside=no zone on the umpire board has been assigned to you; Child-x outside=no zone on the umpire board has been assigned to you; on another layer, all outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== Detach
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; Child-x outside=outside your umpire zone; on another layer, all outside=ok
+  zone, none of mine: all inside=no zone on the umpire board has been assigned to you; Child-x outside=no zone on the umpire board has been assigned to you; on another layer, all outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== AddSheet
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok
+  zone, none of mine: all inside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== MoveSheet
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; Id-x outside=ok; Pos outside=ok
+  zone, none of mine: all inside=ok; Id-x outside=ok; Pos outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== LockSheet
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; Id-x outside=ok
+  zone, none of mine: all inside=ok; Id-x outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== RenameSheet
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; Id-x outside=ok; Name-x outside=ok
+  zone, none of mine: all inside=ok; Id-x outside=ok; Name-x outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== RemoveSheet
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; Id-x outside=ok
+  zone, none of mine: all inside=ok; Id-x outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== CropSheet
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; Id-x outside=ok; Pos outside=ok
+  zone, none of mine: all inside=ok; Id-x outside=ok; Pos outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== SetSheetRelief
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; Id-x outside=ok; Relief-x outside=ok
+  zone, none of mine: all inside=ok; Id-x outside=ok; Relief-x outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== SetSheetPicture
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; Id-x outside=ok; Image-x outside=ok; Package-x outside=ok
+  zone, none of mine: all inside=ok; Id-x outside=ok; Image-x outside=ok; Package-x outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== FlipPiece
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; Id-x outside=outside your umpire zone; on another layer, all outside=ok
+  zone, none of mine: all inside=no zone on the umpire board has been assigned to you; Id-x outside=no zone on the umpire board has been assigned to you; on another layer, all outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== SetLighting
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok
+  zone, none of mine: all inside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== SetWind
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok
+  zone, none of mine: all inside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== SetVisionRadius
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok
+  zone, none of mine: all inside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== AddBoard
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; Id-x outside=ok; Name-x outside=ok
+  zone, none of mine: all inside=ok; Id-x outside=ok; Name-x outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== RenameBoard
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; Id-x outside=ok; Name-x outside=ok
+  zone, none of mine: all inside=ok; Id-x outside=ok; Name-x outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== RemoveBoard
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; Id-x outside=ok
+  zone, none of mine: all inside=ok; Id-x outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== Draw
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; on another layer, all outside=ok
+  zone, none of mine: all inside=ok; on another layer, all outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== EraseStroke
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; StrokeId-x outside=ok; on another layer, all outside=ok
+  zone, none of mine: all inside=ok; StrokeId-x outside=ok; on another layer, all outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== RollDice
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; Label-x outside=ok; ActorName-x outside=ok; PieceIds-1 outside=ok; PieceIds-2 outside=ok
+  zone, none of mine: all inside=ok; Label-x outside=ok; ActorName-x outside=ok; PieceIds-1 outside=ok; PieceIds-2 outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  no
+== SetClock
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; GameTime-x outside=ok
+  zone, none of mine: all inside=ok; GameTime-x outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== AdvanceClock
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok
+  zone, none of mine: all inside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== SetCalibration
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; Units-x outside=ok
+  zone, none of mine: all inside=ok; Units-x outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== SetGrid
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok
+  zone, none of mine: all inside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== SetPicture
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; Id-x outside=outside your umpire zone; Picture-x outside=ok; on another layer, all outside=ok
+  zone, none of mine: all inside=no zone on the umpire board has been assigned to you; Id-x outside=no zone on the umpire board has been assigned to you; Picture-x outside=no zone on the umpire board has been assigned to you; on another layer, all outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== PublishSighting
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok
+  zone, none of mine: all inside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== SetZone
+  sent by:     Observer=no Umpire=no LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=no LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok
+  zone, none of mine: all inside=ok
+  observer:    nothing
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== RemoveZone
+  sent by:     Observer=no Umpire=no LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=no LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; Id-x outside=ok
+  zone, none of mine: all inside=ok; Id-x outside=ok
+  observer:    nothing
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== AddPack
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  zone:        all inside=ok; Id-x outside=ok; Hash-x outside=ok
+  zone, none of mine: all inside=ok; Id-x outside=ok; Hash-x outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  no
+== Undo
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  zone:        all inside=ok
+  zone, none of mine: all inside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== Batch
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok
+  zone, none of mine: all inside=ok
+  observer:    nothing
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== SetScript
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; Id-x outside=outside your umpire zone; Text-x outside=ok; on another layer, all outside=ok
+  zone, none of mine: all inside=no zone on the umpire board has been assigned to you; Id-x outside=no zone on the umpire board has been assigned to you; Text-x outside=no zone on the umpire board has been assigned to you; on another layer, all outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     Id-x
+  undo stack:  yes
+== SetGlobalScript
+  sent by:     Observer=no Umpire=no LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=no LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; Text-x outside=ok
+  zone, none of mine: all inside=ok; Text-x outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     (global script)
+  undo stack:  yes
+== SetScriptState
+  sent by:     Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  in a batch:  Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  zone:        all inside=ok; Id-x outside=ok; State-x outside=ok; on another layer, all outside=ok
+  zone, none of mine: all inside=ok; Id-x outside=ok; State-x outside=ok; on another layer, all outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     Id-x
+  undo stack:  yes
+== SetGlobalScriptState
+  sent by:     Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  in a batch:  Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  zone:        all inside=ok; State-x outside=ok
+  zone, none of mine: all inside=ok; State-x outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     (global script)
+  undo stack:  yes
+== SetTags
+  sent by:     Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  in a batch:  Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  zone:        all inside=ok; Id-x outside=ok; Tags-1 outside=ok; Tags-2 outside=ok; on another layer, all outside=ok
+  zone, none of mine: all inside=ok; Id-x outside=ok; Tags-1 outside=ok; Tags-2 outside=ok; on another layer, all outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== SetMemo
+  sent by:     Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  in a batch:  Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  zone:        all inside=ok; Id-x outside=ok; Memo-x outside=ok; on another layer, all outside=ok
+  zone, none of mine: all inside=ok; Id-x outside=ok; Memo-x outside=ok; on another layer, all outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== SetWidgets
+  sent by:     Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  in a batch:  Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  zone:        all inside=ok; Id-x outside=ok; on another layer, all outside=ok
+  zone, none of mine: all inside=ok; Id-x outside=ok; on another layer, all outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     Id-x
+  undo stack:  yes
+== SetMenuItems
+  sent by:     Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  in a batch:  Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  zone:        all inside=ok; Id-x outside=ok; on another layer, all outside=ok
+  zone, none of mine: all inside=ok; Id-x outside=ok; on another layer, all outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== ClickWidget
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; Id-x outside=outside your umpire zone; on another layer, all outside=ok
+  zone, none of mine: all inside=no zone on the umpire board has been assigned to you; Id-x outside=no zone on the umpire board has been assigned to you; on another layer, all outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  no
+== SetHotkeys
+  sent by:     Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  in a batch:  Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  zone:        all inside=ok
+  zone, none of mine: all inside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== SetGlobalMenuItems
+  sent by:     Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  in a batch:  Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  zone:        all inside=ok
+  zone, none of mine: all inside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== Hotkey
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; Piece-x outside=ok; Selected-1 outside=ok; Selected-2 outside=ok; Pos outside=ok
+  zone, none of mine: all inside=ok; Piece-x outside=ok; Selected-1 outside=ok; Selected-2 outside=ok; Pos outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  no
+== PickGlobalMenuItem
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; Pos outside=ok
+  zone, none of mine: all inside=ok; Pos outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  no
+== NumberTyped
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; Id-x outside=outside your umpire zone; on another layer, all outside=ok
+  zone, none of mine: all inside=no zone on the umpire board has been assigned to you; Id-x outside=no zone on the umpire board has been assigned to you; on another layer, all outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  no
+== SelectPiece
+  sent by:     Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  in a batch:  Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  zone:        all inside=ok; Id-x outside=ok; To-x outside=ok
+  zone, none of mine: all inside=ok; Id-x outside=ok; To-x outside=ok
+  observer:    nothing
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  no
+== EditWidget
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; Id-x outside=outside your umpire zone; Value-x outside=ok; on another layer, all outside=ok
+  zone, none of mine: all inside=no zone on the umpire board has been assigned to you; Id-x outside=no zone on the umpire board has been assigned to you; Value-x outside=no zone on the umpire board has been assigned to you; on another layer, all outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     Id-x
+  undo stack:  no
+== PickMenuItem
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; Id-x outside=outside your umpire zone; on another layer, all outside=ok
+  zone, none of mine: all inside=no zone on the umpire board has been assigned to you; Id-x outside=no zone on the umpire board has been assigned to you; on another layer, all outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  no
+== HoldPiece
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; Id-x outside=outside your umpire zone; on another layer, all outside=ok
+  zone, none of mine: all inside=no zone on the umpire board has been assigned to you; Id-x outside=no zone on the umpire board has been assigned to you; on another layer, all outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  no
+== Say
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; Text-x outside=ok; To-x outside=ok; Color-x outside=ok
+  zone, none of mine: all inside=ok; Text-x outside=ok; To-x outside=ok; Color-x outside=ok
+  observer:    nothing
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  no
+== SetDef
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; Id-x outside=outside your umpire zone; Def-x outside=ok; on another layer, all outside=ok
+  zone, none of mine: all inside=no zone on the umpire board has been assigned to you; Id-x outside=no zone on the umpire board has been assigned to you; Def-x outside=no zone on the umpire board has been assigned to you; on another layer, all outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     Id-x
+  undo stack:  yes
+== SetLines
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; Id-x outside=outside your umpire zone; on another layer, all outside=ok
+  zone, none of mine: all inside=no zone on the umpire board has been assigned to you; Id-x outside=no zone on the umpire board has been assigned to you; on another layer, all outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== SetUi
+  sent by:     Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  in a batch:  Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  zone:        all inside=ok; Piece-x outside=ok
+  zone, none of mine: all inside=ok; Piece-x outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== SetUiAttributes
+  sent by:     Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  in a batch:  Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  zone:        all inside=ok; Id-x outside=ok; Piece-x outside=ok
+  zone, none of mine: all inside=ok; Id-x outside=ok; Piece-x outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== UiEvent
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; Id-x outside=ok; Event-x outside=ok; Value-x outside=ok; Piece-x outside=ok
+  zone, none of mine: all inside=ok; Id-x outside=ok; Event-x outside=ok; Value-x outside=ok; Piece-x outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== ShowDialog
+  sent by:     Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  in a batch:  Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  zone:        all inside=ok; To-x outside=ok; Kind-x outside=ok; Title-x outside=ok; Text-x outside=ok; Options-1 outside=ok; Options-2 outside=ok; Token-x outside=ok
+  zone, none of mine: all inside=ok; To-x outside=ok; Kind-x outside=ok; Title-x outside=ok; Text-x outside=ok; Options-1 outside=ok; Options-2 outside=ok; Token-x outside=ok
+  observer:    nothing
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== DialogResult
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; Token-x outside=ok; Value-x outside=ok
+  zone, none of mine: all inside=ok; Token-x outside=ok; Value-x outside=ok
+  observer:    nothing
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== SpawnPiece (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok;  outside=ok; Pos outside=outside your umpire zone; on another layer, all outside=ok
+  zone, none of mine: all inside=no zone on the umpire board has been assigned to you;  outside=no zone on the umpire board has been assigned to you; Pos outside=no zone on the umpire board has been assigned to you; on another layer, all outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== RestorePiece (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok;  outside=ok; Piece.Pos outside=outside your umpire zone; on another layer, all outside=ok
+  zone, none of mine: all inside=no zone on the umpire board has been assigned to you;  outside=no zone on the umpire board has been assigned to you; Piece.Pos outside=no zone on the umpire board has been assigned to you; on another layer, all outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== MovePiece (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok;  outside=outside your umpire zone; Pos outside=outside your umpire zone; on another layer, all outside=ok
+  zone, none of mine: all inside=no zone on the umpire board has been assigned to you;  outside=no zone on the umpire board has been assigned to you; Pos outside=no zone on the umpire board has been assigned to you; on another layer, all outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== DeletePiece (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok;  outside=outside your umpire zone; on another layer, all outside=ok
+  zone, none of mine: all inside=no zone on the umpire board has been assigned to you;  outside=no zone on the umpire board has been assigned to you; on another layer, all outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== SetState (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok;  outside=outside your umpire zone; on another layer, all outside=ok
+  zone, none of mine: all inside=no zone on the umpire board has been assigned to you;  outside=no zone on the umpire board has been assigned to you; on another layer, all outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== SetCounter (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok;  outside=outside your umpire zone; on another layer, all outside=ok
+  zone, none of mine: all inside=no zone on the umpire board has been assigned to you;  outside=no zone on the umpire board has been assigned to you; on another layer, all outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== SetText (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok;  outside=outside your umpire zone; on another layer, all outside=ok
+  zone, none of mine: all inside=no zone on the umpire board has been assigned to you;  outside=no zone on the umpire board has been assigned to you; on another layer, all outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== SetLabel (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok;  outside=outside your umpire zone; on another layer, all outside=ok
+  zone, none of mine: all inside=no zone on the umpire board has been assigned to you;  outside=no zone on the umpire board has been assigned to you; on another layer, all outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== SetNote (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok;  outside=outside your umpire zone; on another layer, all outside=ok
+  zone, none of mine: all inside=no zone on the umpire board has been assigned to you;  outside=no zone on the umpire board has been assigned to you; on another layer, all outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== RestoreTurn (empty)
+  sent by:     Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  in a batch:  Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  zone:        all inside=ok
+  zone, none of mine: all inside=ok
+  observer:    copy {"type":"RestoreTurn","index":0,"seq":0,"actor":0,"at":0,"undoOf":0}
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  no
+== LoadSave (empty)
+  sent by:     Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  in a batch:  Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  zone:        all inside=ok;  outside=ok
+  zone, none of mine: all inside=ok;  outside=ok
+  observer:    copy {"type":"LoadSave","name":"","seq":0,"actor":0,"at":0,"undoOf":0}
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  no
+== SetTint (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok;  outside=outside your umpire zone; on another layer, all outside=ok
+  zone, none of mine: all inside=no zone on the umpire board has been assigned to you;  outside=no zone on the umpire board has been assigned to you; on another layer, all outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== SetLocked (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok;  outside=outside your umpire zone; on another layer, all outside=ok
+  zone, none of mine: all inside=no zone on the umpire board has been assigned to you;  outside=no zone on the umpire board has been assigned to you; on another layer, all outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== SetPieceOption (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok;  outside=outside your umpire zone; on another layer, all outside=ok
+  zone, none of mine: all inside=no zone on the umpire board has been assigned to you;  outside=no zone on the umpire board has been assigned to you; on another layer, all outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== SetPointerRule (empty)
+  sent by:     Observer=no Umpire=no LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=no LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok
+  zone, none of mine: all inside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== SetBriefing (empty)
+  sent by:     Observer=no Umpire=no LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=no LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok
+  zone, none of mine: all inside=ok
+  observer:    nothing
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== SetScale (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok;  outside=outside your umpire zone; on another layer, all outside=ok
+  zone, none of mine: all inside=no zone on the umpire board has been assigned to you;  outside=no zone on the umpire board has been assigned to you; on another layer, all outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== Attach (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok;  outside=outside your umpire zone; on another layer, all outside=ok
+  zone, none of mine: all inside=no zone on the umpire board has been assigned to you;  outside=no zone on the umpire board has been assigned to you; on another layer, all outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== Detach (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok;  outside=outside your umpire zone; on another layer, all outside=ok
+  zone, none of mine: all inside=no zone on the umpire board has been assigned to you;  outside=no zone on the umpire board has been assigned to you; on another layer, all outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== AddSheet (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok
+  zone, none of mine: all inside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== MoveSheet (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok;  outside=ok; Pos outside=ok
+  zone, none of mine: all inside=ok;  outside=ok; Pos outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== LockSheet (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok;  outside=ok
+  zone, none of mine: all inside=ok;  outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== RenameSheet (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok;  outside=ok
+  zone, none of mine: all inside=ok;  outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== RemoveSheet (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok;  outside=ok
+  zone, none of mine: all inside=ok;  outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== CropSheet (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok;  outside=ok; Pos outside=ok
+  zone, none of mine: all inside=ok;  outside=ok; Pos outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== SetSheetRelief (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok;  outside=ok
+  zone, none of mine: all inside=ok;  outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== SetSheetPicture (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok;  outside=ok
+  zone, none of mine: all inside=ok;  outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== FlipPiece (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok;  outside=outside your umpire zone; on another layer, all outside=ok
+  zone, none of mine: all inside=no zone on the umpire board has been assigned to you;  outside=no zone on the umpire board has been assigned to you; on another layer, all outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== SetLighting (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok
+  zone, none of mine: all inside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== SetWind (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok
+  zone, none of mine: all inside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== SetVisionRadius (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok
+  zone, none of mine: all inside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== AddBoard (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok;  outside=ok
+  zone, none of mine: all inside=ok;  outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== RenameBoard (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok;  outside=ok
+  zone, none of mine: all inside=ok;  outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== RemoveBoard (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok;  outside=ok
+  zone, none of mine: all inside=ok;  outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== Draw (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; on another layer, all outside=ok
+  zone, none of mine: all inside=ok; on another layer, all outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== EraseStroke (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok;  outside=ok; on another layer, all outside=ok
+  zone, none of mine: all inside=ok;  outside=ok; on another layer, all outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== RollDice (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok;  outside=ok
+  zone, none of mine: all inside=ok;  outside=ok
+  observer:    nothing
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  no
+== SetClock (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok;  outside=ok
+  zone, none of mine: all inside=ok;  outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== AdvanceClock (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok
+  zone, none of mine: all inside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== SetCalibration (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok
+  zone, none of mine: all inside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== SetGrid (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok
+  zone, none of mine: all inside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== SetPicture (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok;  outside=outside your umpire zone; on another layer, all outside=ok
+  zone, none of mine: all inside=no zone on the umpire board has been assigned to you;  outside=no zone on the umpire board has been assigned to you; on another layer, all outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== PublishSighting (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok
+  zone, none of mine: all inside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== SetZone (empty)
+  sent by:     Observer=no Umpire=no LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=no LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok
+  zone, none of mine: all inside=ok
+  observer:    nothing
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== RemoveZone (empty)
+  sent by:     Observer=no Umpire=no LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=no LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok;  outside=ok
+  zone, none of mine: all inside=ok;  outside=ok
+  observer:    nothing
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== AddPack (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  zone:        all inside=ok;  outside=ok
+  zone, none of mine: all inside=ok;  outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  no
+== Undo (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  zone:        all inside=ok
+  zone, none of mine: all inside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== Batch (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok
+  zone, none of mine: all inside=ok
+  observer:    nothing
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== SetScript (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok;  outside=outside your umpire zone; on another layer, all outside=ok
+  zone, none of mine: all inside=no zone on the umpire board has been assigned to you;  outside=no zone on the umpire board has been assigned to you; on another layer, all outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== SetGlobalScript (empty)
+  sent by:     Observer=no Umpire=no LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=no LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok
+  zone, none of mine: all inside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     (global script)
+  undo stack:  yes
+== SetScriptState (empty)
+  sent by:     Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  in a batch:  Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  zone:        all inside=ok;  outside=ok; on another layer, all outside=ok
+  zone, none of mine: all inside=ok;  outside=ok; on another layer, all outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== SetGlobalScriptState (empty)
+  sent by:     Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  in a batch:  Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  zone:        all inside=ok;  outside=ok
+  zone, none of mine: all inside=ok;  outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     (global script)
+  undo stack:  yes
+== SetTags (empty)
+  sent by:     Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  in a batch:  Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  zone:        all inside=ok;  outside=ok; on another layer, all outside=ok
+  zone, none of mine: all inside=ok;  outside=ok; on another layer, all outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== SetMemo (empty)
+  sent by:     Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  in a batch:  Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  zone:        all inside=ok;  outside=ok; on another layer, all outside=ok
+  zone, none of mine: all inside=ok;  outside=ok; on another layer, all outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== SetWidgets (empty)
+  sent by:     Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  in a batch:  Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  zone:        all inside=ok;  outside=ok; on another layer, all outside=ok
+  zone, none of mine: all inside=ok;  outside=ok; on another layer, all outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== SetMenuItems (empty)
+  sent by:     Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  in a batch:  Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  zone:        all inside=ok;  outside=ok; on another layer, all outside=ok
+  zone, none of mine: all inside=ok;  outside=ok; on another layer, all outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== ClickWidget (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok;  outside=outside your umpire zone; on another layer, all outside=ok
+  zone, none of mine: all inside=no zone on the umpire board has been assigned to you;  outside=no zone on the umpire board has been assigned to you; on another layer, all outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  no
+== SetHotkeys (empty)
+  sent by:     Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  in a batch:  Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  zone:        all inside=ok
+  zone, none of mine: all inside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== SetGlobalMenuItems (empty)
+  sent by:     Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  in a batch:  Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  zone:        all inside=ok
+  zone, none of mine: all inside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== Hotkey (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; Pos outside=ok
+  zone, none of mine: all inside=ok; Pos outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  no
+== PickGlobalMenuItem (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; Pos outside=ok
+  zone, none of mine: all inside=ok; Pos outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  no
+== NumberTyped (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok;  outside=outside your umpire zone; on another layer, all outside=ok
+  zone, none of mine: all inside=no zone on the umpire board has been assigned to you;  outside=no zone on the umpire board has been assigned to you; on another layer, all outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  no
+== SelectPiece (empty)
+  sent by:     Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  in a batch:  Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  zone:        all inside=ok;  outside=ok
+  zone, none of mine: all inside=ok;  outside=ok
+  observer:    nothing
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  no
+== EditWidget (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok;  outside=outside your umpire zone; on another layer, all outside=ok
+  zone, none of mine: all inside=no zone on the umpire board has been assigned to you;  outside=no zone on the umpire board has been assigned to you; on another layer, all outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  no
+== PickMenuItem (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok;  outside=outside your umpire zone; on another layer, all outside=ok
+  zone, none of mine: all inside=no zone on the umpire board has been assigned to you;  outside=no zone on the umpire board has been assigned to you; on another layer, all outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  no
+== HoldPiece (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok;  outside=outside your umpire zone; on another layer, all outside=ok
+  zone, none of mine: all inside=no zone on the umpire board has been assigned to you;  outside=no zone on the umpire board has been assigned to you; on another layer, all outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  no
+== Say (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok;  outside=ok
+  zone, none of mine: all inside=ok;  outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  no
+== SetDef (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok;  outside=outside your umpire zone; on another layer, all outside=ok
+  zone, none of mine: all inside=no zone on the umpire board has been assigned to you;  outside=no zone on the umpire board has been assigned to you; on another layer, all outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== SetLines (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok;  outside=outside your umpire zone; on another layer, all outside=ok
+  zone, none of mine: all inside=no zone on the umpire board has been assigned to you;  outside=no zone on the umpire board has been assigned to you; on another layer, all outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== SetUi (empty)
+  sent by:     Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  in a batch:  Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  zone:        all inside=ok
+  zone, none of mine: all inside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== SetUiAttributes (empty)
+  sent by:     Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  in a batch:  Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  zone:        all inside=ok;  outside=ok
+  zone, none of mine: all inside=ok;  outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== UiEvent (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok;  outside=ok; click outside=ok
+  zone, none of mine: all inside=ok;  outside=ok; click outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== ShowDialog (empty)
+  sent by:     Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  in a batch:  Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  zone:        all inside=ok; memo outside=ok;  outside=ok
+  zone, none of mine: all inside=ok; memo outside=ok;  outside=ok
+  observer:    nothing
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== DialogResult (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok;  outside=ok
+  zone, none of mine: all inside=ok;  outside=ok
+  observer:    nothing
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== Say to everyone
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; hi outside=ok
+  zone, none of mine: all inside=ok; hi outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  no
+== Say to the observer
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; hi outside=ok; p:4 outside=ok
+  zone, none of mine: all inside=ok; hi outside=ok; p:4 outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  no
+== Say to another peer
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; hi outside=ok; p:3 outside=ok
+  zone, none of mine: all inside=ok; hi outside=ok; p:3 outside=ok
+  observer:    nothing
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  no
+== Say to the umpires
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; hi outside=ok; u: outside=ok
+  zone, none of mine: all inside=ok; hi outside=ok; u: outside=ok
+  observer:    nothing
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  no
+== SelectPiece for the observer
+  sent by:     Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  in a batch:  Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  zone:        all inside=ok; p-1 outside=ok; p:4 outside=ok
+  zone, none of mine: all inside=ok; p-1 outside=ok; p:4 outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  no
+== SelectPiece for no one
+  sent by:     Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  in a batch:  Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  zone:        all inside=ok; p-1 outside=ok
+  zone, none of mine: all inside=ok; p-1 outside=ok
+  observer:    nothing
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  no
+== ShowDialog to another peer
+  sent by:     Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  in a batch:  Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  zone:        all inside=ok; p:3 outside=ok; memo outside=ok; t outside=ok;  outside=ok
+  zone, none of mine: all inside=ok; p:3 outside=ok; memo outside=ok; t outside=ok;  outside=ok
+  observer:    nothing
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== RollDice on the board
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok;  outside=ok; p-1 outside=ok; p-2 outside=ok
+  zone, none of mine: all inside=ok;  outside=ok; p-1 outside=ok; p-2 outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  no
+== RollDice on a layer without pieces
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok;  outside=ok
+  zone, none of mine: all inside=ok;  outside=ok
+  observer:    nothing
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  no
+== RollDice with pieces and no layer
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok;  outside=ok; p-1 outside=ok
+  zone, none of mine: all inside=ok;  outside=ok; p-1 outside=ok
+  observer:    nothing
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  no
+== LoadSave with its table
+  sent by:     Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  in a batch:  Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  zone:        all inside=ok; Turn 2 outside=ok
+  zone, none of mine: all inside=ok; Turn 2 outside=ok
+  observer:    copy {"type":"LoadSave","name":"Turn 2","state":{"format":1,"scenarioId":"","name":"t","packs":[],"sheets":[],"grid":{"kind":"none","pitch":10,"subdivisions":1,"color":"#1A1A2080"},"calibration":{"units":"m","perMetre":1,"unitName":"u"},"clock":{"turn":0,"gameTime":"1800-01-01T06:00","incrementMinutes":15},"lighting":{"sunEnergy":0.35,"ambient":0.72,"warmth":0,"shadows":true,"fromClock":false},"wind":{"from":270,"strength":1},"visionRadius":40,"pointersAlwaysShown":false,"layers":{"umpire":[{"id":"p-1","def":"inf","pos":{"x":5,"z":5},"rotDeg":0,"stack":0,"state":0,"counters":{},"text":{},"attached":[],"scale":1,"y":0,"faceDown":false,"scriptState":"","locked":false,"noCollision":false,"physicalRoll":false,"memo":"","widgets":[],"drawnOnState":0,"menuItems":[],"lines":[],"ui":[]}]},"drawings":{},"boards":[],"dice":[],"nextId":1,"lastSeq":0,"zones":[],"scriptState":"","ui":[],"hotkeys":[],"menuItems":[]},"seq":8,"actor":1,"at":99,"undoOf":0}
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  no
+== RestoreTurn with its table
+  sent by:     Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  in a batch:  Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  zone:        all inside=ok
+  zone, none of mine: all inside=ok
+  observer:    copy {"type":"RestoreTurn","index":2,"state":{"format":1,"scenarioId":"","name":"t","packs":[],"sheets":[],"grid":{"kind":"none","pitch":10,"subdivisions":1,"color":"#1A1A2080"},"calibration":{"units":"m","perMetre":1,"unitName":"u"},"clock":{"turn":0,"gameTime":"1800-01-01T06:00","incrementMinutes":15},"lighting":{"sunEnergy":0.35,"ambient":0.72,"warmth":0,"shadows":true,"fromClock":false},"wind":{"from":270,"strength":1},"visionRadius":40,"pointersAlwaysShown":false,"layers":{"umpire":[{"id":"p-1","def":"inf","pos":{"x":5,"z":5},"rotDeg":0,"stack":0,"state":0,"counters":{},"text":{},"attached":[],"scale":1,"y":0,"faceDown":false,"scriptState":"","locked":false,"noCollision":false,"physicalRoll":false,"memo":"","widgets":[],"drawnOnState":0,"menuItems":[],"lines":[],"ui":[]}]},"drawings":{},"boards":[],"dice":[],"nextId":1,"lastSeq":0,"zones":[],"scriptState":"","ui":[],"hotkeys":[],"menuItems":[]},"seq":7,"actor":1,"at":99,"undoOf":0}
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  no
+== Batch of mixed changes
+  sent by:     Observer=no Umpire=no LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=no LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; m-1 outside=outside your umpire zone; x outside=ok; p:3 outside=ok; s-1 outside=outside your umpire zone; r-1 outside=ok; a-1 outside=outside your umpire zone; a-2 outside=outside your umpire zone; far outside=ok; n outside=ok; sc-1 outside=outside your umpire zone; -- outside=ok; d-1 outside=outside your umpire zone;  outside=ok; [0].Pos outside=outside your umpire zone; [4].Piece.Pos outside=outside your umpire zone
+  zone, none of mine: all inside=no zone on the umpire board has been assigned to you; m-1 outside=no zone on the umpire board has been assigned to you; x outside=no zone on the umpire board has been assigned to you; p:3 outside=no zone on the umpire board has been assigned to you; s-1 outside=no zone on the umpire board has been assigned to you; r-1 outside=no zone on the umpire board has been assigned to you; a-1 outside=no zone on the umpire board has been assigned to you; a-2 outside=no zone on the umpire board has been assigned to you; far outside=no zone on the umpire board has been assigned to you; n outside=no zone on the umpire board has been assigned to you; sc-1 outside=no zone on the umpire board has been assigned to you; -- outside=no zone on the umpire board has been assigned to you; d-1 outside=no zone on the umpire board has been assigned to you;  outside=no zone on the umpire board has been assigned to you; [0].Pos outside=no zone on the umpire board has been assigned to you; [4].Piece.Pos outside=no zone on the umpire board has been assigned to you
+  observer:    copy {"type":"Batch","items":[{"type":"MovePiece","id":"m-1","pos":{"x":5,"z":5},"rotDeg":0,"stack":0,"y":0,"layer":"umpire","seq":0,"actor":0,"at":0,"undoOf":0},{"type":"SetState","id":"s-1","state":2,"layer":"umpire","seq":0,"actor":0,"at":0,"undoOf":0},{"type":"RestorePiece","piece":{"id":"r-1","def":"inf","pos":{"x":5,"z":5},"rotDeg":0,"stack":0,"state":0,"counters":{},"text":{},"attached":[],"scale":1,"y":0,"faceDown":false,"scriptState":"","locked":false,"noCollision":false,"physicalRoll":false,"memo":"","widgets":[],"drawnOnState":0,"menuItems":[],"lines":[],"ui":[]},"layer":"umpire","seq":0,"actor":0,"at":0,"undoOf":0},{"type":"Attach","parent":"a-1","child":"a-2","layer":"umpire","seq":0,"actor":0,"at":0,"undoOf":0},{"type":"SetCounter","id":"far","name":"n","value":0,"clear":false,"layer":"players","seq":0,"actor":0,"at":0,"undoOf":0},{"type":"SetScript","id":"sc-1","text":"--","layer":"umpire","seq":0,"actor":0,"at":0,"undoOf":0},{"type":"Batch","items":[{"type":"DeletePiece","id":"d-1","layer":"umpire","seq":0,"actor":0,"at":0,"undoOf":0}],"seq":0,"actor":0,"at":0,"undoOf":0}],"seq":5,"actor":3,"at":11,"undoOf":0}
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     s-1,r-1,far,sc-1,d-1
+  undo stack:  yes
+== Batch holding a sweeping change
+  sent by:     Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  in a batch:  Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  zone:        all inside=ok; Id-x outside=outside your umpire zone; [0].Pos outside=outside your umpire zone
+  zone, none of mine: all inside=no zone on the umpire board has been assigned to you; Id-x outside=no zone on the umpire board has been assigned to you; [0].Pos outside=no zone on the umpire board has been assigned to you
+  observer:    copy {"type":"Batch","items":[{"type":"MovePiece","id":"Id-x","pos":{"x":5,"z":5},"rotDeg":0,"stack":0,"y":0,"layer":"umpire","seq":0,"actor":0,"at":0,"undoOf":0},{"type":"Undo","targetSeq":1,"seq":0,"actor":0,"at":0,"undoOf":0}],"seq":0,"actor":0,"at":0,"undoOf":0}
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== Batch holding a runtime change
+  sent by:     Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  in a batch:  Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  zone:        all inside=ok; Id-x outside=outside your umpire zone; [0].Pos outside=outside your umpire zone
+  zone, none of mine: all inside=no zone on the umpire board has been assigned to you; Id-x outside=no zone on the umpire board has been assigned to you; [0].Pos outside=no zone on the umpire board has been assigned to you
+  observer:    copy {"type":"Batch","items":[{"type":"MovePiece","id":"Id-x","pos":{"x":5,"z":5},"rotDeg":0,"stack":0,"y":0,"layer":"umpire","seq":0,"actor":0,"at":0,"undoOf":0},{"type":"SetWidgets","id":"Id-x","widgets":[],"onState":-1,"layer":"umpire","seq":0,"actor":0,"at":0,"undoOf":0}],"seq":0,"actor":0,"at":0,"undoOf":0}
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     Id-x
+  undo stack:  yes
+== Batch holding a lead's change
+  sent by:     Observer=no Umpire=no LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=no LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; Id-x outside=outside your umpire zone; Text-x outside=ok; [0].Pos outside=outside your umpire zone
+  zone, none of mine: all inside=no zone on the umpire board has been assigned to you; Id-x outside=no zone on the umpire board has been assigned to you; Text-x outside=no zone on the umpire board has been assigned to you; [0].Pos outside=no zone on the umpire board has been assigned to you
+  observer:    copy {"type":"Batch","items":[{"type":"MovePiece","id":"Id-x","pos":{"x":5,"z":5},"rotDeg":0,"stack":0,"y":0,"layer":"umpire","seq":0,"actor":0,"at":0,"undoOf":0},{"type":"SetGlobalScript","text":"Text-x","seq":0,"actor":0,"at":0,"undoOf":0}],"seq":0,"actor":0,"at":0,"undoOf":0}
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     (global script)
+  undo stack:  yes
+== Batch of nothing seen
+  sent by:     Observer=no Umpire=no LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=no LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; Id-x outside=ok;  outside=ok
+  zone, none of mine: all inside=ok; Id-x outside=ok;  outside=ok
+  observer:    nothing
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes

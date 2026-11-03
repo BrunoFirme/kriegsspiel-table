@@ -1,0 +1,47 @@
+{
+  "ttsModsPath": "",
+  "cachePath": "%LOCALAPPDATA%\\KriegsspielTable\\cache\\tts",
+  "outputPath": "",
+  "steamHost": "https://steamusercontent-a.akamaihd.net/",
+  "maxParallelDownloads": 4,
+  "excludedWorkshopIds": [ "3260608109", "3331582996" ],
+  "packs": [
+    { "workshopId": "2725140488", "id": "iks.scripted-war-game-pieces", "short": "scripted", "name": "Scripted War Game (Kriegsspiel) Pieces" },
+    { "workshopId": "3500342905", "id": "iks.1pw-public", "short": "1pw", "name": "1PW-Public (First Punic War)" },
+    { "workshopId": "2553699734", "id": "iks.brigade-red-v-blue", "short": "brigade", "name": "Brigade Kriegsspiel - Red v Blue" },
+    { "workshopId": "3772979339", "id": "iks.lombardy-1509", "short": "lombardy", "name": "Lombardy 1509 - map and generic pieces" },
+    { "workshopId": "3080029880", "id": "iks.on-to-richmond", "short": "richmond", "name": "On to Richmond! (ACW)" },
+    { "workshopId": "2959238906", "id": "iks.james-effects", "short": "effects", "name": "James' Effects" }
+  ],
+  "scenario": {
+    "id": "example.miranda-de-azan-1812",
+    "dir": "miranda-de-azan",
+    "name": "1812 Miranda de Azán",
+    "master": "3456599909",
+    "scratch": { "coalition": "3456602129", "imperial": "3456605842" },
+    "extrasPack": "example.miranda-de-azan-1812.extras",
+    "extrasShort": "miranda",
+    "sides": [
+      { "id": "coalition", "name": "Coalition", "color": "#C0392B" },
+      { "id": "imperial", "name": "Imperial", "color": "#2E86C1" }
+    ],
+    "clock": { "turn": 0, "gameTime": "1812-07-22T06:00", "incrementMinutes": 15 },
+    "unitsPerMeter": 0.0206
+  },
+  "baseSizes": {
+    "customTile": 2.0,
+    "customTileNote": "height at scale 1 for stretched tiles (width = height × image aspect); TTS behaviour",
+    "customToken": 3.0,
+    "customBoard": 16.7,
+    "blockSquare": 1.0
+  },
+  "ignoreTypes": [
+    "HandTrigger", "Custom_Dice", "Chinese_Checkers_Piece", "FogOfWarTrigger", "ScriptingTrigger",
+    "Tablet", "Calculator", "Counter", "Digital_Clock", "Card", "CardCustom", "Deck", "DeckCustom",
+    "Custom_Assetbundle", "Custom_PDF", "Quarter", "Checker_red", "Checker_white", "Checker_black", "Go_Game_Piece_White", "Go_Game_Piece_Black",
+    "BlockTriangle"
+  ],
+  "ignoreBundles": [ "723C50F43FAB3DE3DC12CB8460536E8CB34B60A3", "14ED0DBD593370733A0309B0950004F33EB9FACA" ],
+  "containerTypes": [ "Bag", "Infinite_Bag", "Custom_Model_Bag", "Custom_Model_Infinite_Bag" ],
+  "tiles": { "tileSize": 256, "webpQuality": 85, "pngMaxMegapixels": 4 }
+}

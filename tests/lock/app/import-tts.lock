@@ -1,0 +1,16 @@
+settle
+click "Packs and Pieces"
+wait 30
+click "Import from Tabletop Simulator…"
+settle 60 2400
+checkpoint import-dialog
+close-window
+settle
+click "Host a game"
+wait 30
+include _host.inc
+click "Menu"
+click "Export to Tabletop Simulator"
+settle 60 1800
+checkpoint export-tts-menu
+dismiss

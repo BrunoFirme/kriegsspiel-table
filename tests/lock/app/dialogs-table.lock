@@ -1,0 +1,45 @@
+include _host.inc
+click "Set turn, time and minutes per turn"
+settle
+checkpoint clock-dialog
+clear
+type "1812-07-22T09:30"
+click "Set the clock"
+settle
+checkpoint clock-set
+click "Scenario properties: clock, lighting, scale, wind, distances, script"
+settle
+checkpoint properties
+click "Map"
+click "Metres and kilometres"
+click "Paces"
+settle
+click "None"
+click "Hexes"
+settle
+checkpoint distances-grid
+click "Light"
+click "Ceiling light"
+click "Moonlit night"
+settle
+checkpoint lighting
+click "Pieces cast shadows"
+settle
+click "Done"
+settle
+checkpoint properties-closed
+click "Menu"
+click "Invite…"
+click "none: open door"
+type "ford"
+key Enter
+settle
+checkpoint invite-password
+close-window
+click "Menu"
+click "Save a copy as a new scenario…"
+clear
+type "Lock copy"
+click "Save copy"
+settle 60 2400
+checkpoint copy-saved

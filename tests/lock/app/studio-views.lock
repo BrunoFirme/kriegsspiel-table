@@ -1,0 +1,24 @@
+@quick
+include _studio.inc
+checkpoint opened
+click "Red battalion"
+settle 60 2400
+checkpoint red
+key Alt+1
+settle 60 2400
+checkpoint view-1
+key Alt+2
+settle 60 2400
+checkpoint view-2
+key Alt+3
+settle 60 2400
+checkpoint view-3
+click "Flag"
+settle 60 2400
+checkpoint flag
+click "Colour party"
+settle 60 2400
+checkpoint model
+click "Done"
+settle 60 3000
+checkpoint title-after

@@ -1,0 +1,86 @@
+AddBoard table | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone - | apply ok inverse:RemoveBoard | undo-reloads -
+AddPack table | allowed O:n U:y L:y H:y | in-batch O:n U:n L:n H:n | observer same | zone - | apply ok inverse:none | undo-reloads -
+AddSheet table | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone - | apply ok inverse:RemoveSheet | undo-reloads -
+AdvanceClock table | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone - | apply ok inverse:SetClock | undo-reloads -
+Attach layer | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone Child,Parent | apply refused:no_such_piece | undo-reloads -
+Batch table | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer drop | zone - | apply ok inverse:none | undo-reloads -
+Batch(Batch(MovePiece)) table | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer changed:{"type":"Batch","items":[{"type":"Batch","items":[{"type":"MovePiece","id":"","pos":{"x":0,"z":0},"rotDeg":0,"stack":0,"y":0,"layer":"umpire","seq":0,"actor":0,"at":0,"undoOf":0}],"seq":0,"actor":0,"at":0,"undoOf":0}],"seq":0,"actor":0,"at":0,"undoOf":0} | zone - | apply refused:no_such_piece | undo-reloads -
+Batch(MovePiece) table | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer changed:{"type":"Batch","items":[{"type":"MovePiece","id":"","pos":{"x":0,"z":0},"rotDeg":0,"stack":0,"y":0,"layer":"umpire","seq":0,"actor":0,"at":0,"undoOf":0}],"seq":0,"actor":0,"at":0,"undoOf":0} | zone Id,Pos | apply ok inverse:Batch(MovePiece) | undo-reloads -
+Batch(SetZone) table | allowed O:n U:n L:y H:y | in-batch O:n U:n L:y H:y | observer drop | zone - | apply ok inverse:Batch(RemoveZone) | undo-reloads -
+Batch(SetZone+Say) table | allowed O:n U:n L:y H:y | in-batch O:n U:n L:y H:y | observer changed:{"type":"Batch","items":[{"type":"Say","text":"x","seq":0,"actor":0,"at":0,"undoOf":0}],"seq":0,"actor":0,"at":0,"undoOf":0} | zone - | apply ok inverse:Batch(RemoveZone) | undo-reloads -
+ClickWidget layer | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone Id | apply ok inverse:none | undo-reloads -
+CropSheet table | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone - | apply refused:no_such_sheet | undo-reloads -
+DeletePiece layer | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone Id | apply ok inverse:RestorePiece | undo-reloads Id
+Detach layer | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone Child | apply refused:not_attached | undo-reloads -
+DialogResult table | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer drop | zone - | apply ok inverse:none | undo-reloads -
+Draw layer | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone - | apply ok inverse:EraseStroke | undo-reloads -
+EditWidget layer | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone Id | apply refused:no_such_widget | undo-reloads Id
+EraseStroke layer | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone - | apply refused:no_such_stroke | undo-reloads -
+FlipPiece layer | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone Id | apply ok inverse:FlipPiece | undo-reloads -
+HoldPiece layer | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone Id | apply ok inverse:none | undo-reloads -
+Hotkey table | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone - | apply refused:no_such_hotkey | undo-reloads -
+LoadSave table | allowed O:n U:n L:n H:n | in-batch O:n U:n L:n H:n | observer changed:{"type":"LoadSave","name":"","seq":0,"actor":0,"at":0,"undoOf":0} | zone - | apply refused:nothing_to_load | undo-reloads -
+LockSheet table | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone - | apply refused:no_such_sheet | undo-reloads -
+MovePiece layer | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone Id,Pos | apply ok inverse:MovePiece | undo-reloads -
+MovePiece(other-layer) layer | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone - | apply refused:no_such_piece | undo-reloads -
+MoveSheet table | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone - | apply refused:no_such_sheet | undo-reloads -
+NumberTyped layer | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone Id | apply ok inverse:none | undo-reloads -
+PickGlobalMenuItem table | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone - | apply refused:no_such_menu_row | undo-reloads -
+PickMenuItem layer | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone Id | apply ok inverse:none | undo-reloads -
+PublishSighting table | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone - | apply ok inverse:none | undo-reloads -
+RemoveBoard table | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone - | apply refused:no_such_board | undo-reloads -
+RemoveSheet table | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone - | apply refused:no_such_sheet | undo-reloads -
+RemoveZone table | allowed O:n U:n L:y H:y | in-batch O:n U:n L:y H:y | observer drop | zone - | apply refused:no_such_zone | undo-reloads -
+RenameBoard table | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone - | apply refused:no_such_board | undo-reloads -
+RenameSheet table | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone - | apply refused:no_such_sheet | undo-reloads -
+RestorePiece layer | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone Piece | apply ok inverse:DeletePiece | undo-reloads Piece.Id
+RestoreTurn table | allowed O:n U:n L:n H:n | in-batch O:n U:n L:n H:n | observer changed:{"type":"RestoreTurn","index":0,"seq":0,"actor":0,"at":0,"undoOf":0} | zone - | apply refused:nothing_to_restore | undo-reloads -
+RestoreTurn(with-state) table | allowed O:n U:n L:n H:n | in-batch O:n U:n L:n H:n | observer changed:{"type":"RestoreTurn","index":0,"state":{"format":1,"scenarioId":"","name":"","packs":[],"sheets":[],"grid":{"kind":"none","pitch":10,"subdivisions":1,"color":"#1A1A2080"},"calibration":{"units":"m","perMetre":1,"unitName":"u"},"clock":{"turn":0,"gameTime":"1800-01-01T06:00","incrementMinutes":15},"lighting":{"sunEnergy":0.35,"ambient":0.72,"warmth":0,"shadows":true,"fromClock":false},"wind":{"from":270,"strength":1},"visionRadius":40,"pointersAlwaysShown":false,"layers":{},"drawings":{},"boards":[],"dice":[],"nextId":1,"lastSeq":0,"zones":[],"scriptState":"","ui":[],"hotkeys":[],"menuItems":[]},"seq":0,"actor":0,"at":0,"undoOf":0} | zone - | apply ok inverse:none | undo-reloads -
+RollDice table | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer drop | zone - | apply ok inverse:none | undo-reloads -
+RollDice(on-pieces) table | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone - | apply ok inverse:none | undo-reloads -
+Say table | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone - | apply ok inverse:none | undo-reloads -
+Say(to=me) table | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone - | apply ok inverse:none | undo-reloads -
+Say(to=other) table | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer drop | zone - | apply ok inverse:none | undo-reloads -
+Say(to=umpires) table | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer drop | zone - | apply ok inverse:none | undo-reloads -
+SelectPiece table | allowed O:n U:n L:n H:n | in-batch O:n U:n L:n H:n | observer drop | zone - | apply ok inverse:none | undo-reloads -
+SelectPiece(to=me) table | allowed O:n U:n L:n H:n | in-batch O:n U:n L:n H:n | observer same | zone - | apply ok inverse:none | undo-reloads -
+SetBriefing table | allowed O:n U:n L:y H:y | in-batch O:n U:n L:y H:y | observer drop | zone - | apply ok inverse:SetBriefing | undo-reloads -
+SetCalibration table | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone - | apply ok inverse:SetCalibration | undo-reloads -
+SetClock table | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone - | apply ok inverse:SetClock | undo-reloads -
+SetCounter layer | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone Id | apply ok inverse:SetCounter | undo-reloads Id
+SetDef layer | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone Id | apply ok inverse:SetDef | undo-reloads Id
+SetGlobalMenuItems table | allowed O:n U:n L:n H:n | in-batch O:n U:n L:n H:n | observer same | zone - | apply ok inverse:SetGlobalMenuItems | undo-reloads -
+SetGlobalScript table | allowed O:n U:n L:y H:y | in-batch O:n U:n L:y H:y | observer same | zone - | apply ok inverse:SetGlobalScript | undo-reloads (global script)
+SetGlobalScriptState table | allowed O:n U:n L:n H:n | in-batch O:n U:n L:n H:n | observer same | zone - | apply ok inverse:SetGlobalScriptState | undo-reloads (global script)
+SetGrid table | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone - | apply ok inverse:SetGrid | undo-reloads -
+SetHotkeys table | allowed O:n U:n L:n H:n | in-batch O:n U:n L:n H:n | observer same | zone - | apply ok inverse:SetHotkeys | undo-reloads -
+SetLabel layer | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone Id | apply ok inverse:SetLabel | undo-reloads Id
+SetLighting table | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone - | apply ok inverse:SetLighting | undo-reloads -
+SetLines layer | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone Id | apply ok inverse:SetLines | undo-reloads -
+SetLocked layer | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone Id | apply ok inverse:SetLocked | undo-reloads -
+SetMemo layer | allowed O:n U:n L:n H:n | in-batch O:n U:n L:n H:n | observer same | zone - | apply ok inverse:SetMemo | undo-reloads -
+SetMenuItems layer | allowed O:n U:n L:n H:n | in-batch O:n U:n L:n H:n | observer same | zone - | apply ok inverse:SetMenuItems | undo-reloads -
+SetNote layer | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone Id | apply ok inverse:SetNote | undo-reloads Id
+SetPicture layer | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone Id | apply ok inverse:SetPicture | undo-reloads -
+SetPieceOption layer | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone Id | apply refused:no_such_option:_p-000001 | undo-reloads -
+SetPointerRule table | allowed O:n U:n L:y H:y | in-batch O:n U:n L:y H:y | observer same | zone - | apply ok inverse:SetPointerRule | undo-reloads -
+SetScale layer | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone Id | apply ok inverse:SetScale | undo-reloads -
+SetScript layer | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone Id | apply ok inverse:SetScript | undo-reloads Id
+SetScriptState layer | allowed O:n U:n L:n H:n | in-batch O:n U:n L:n H:n | observer same | zone - | apply ok inverse:SetScriptState | undo-reloads Id
+SetSheetPicture table | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone - | apply refused:no_such_sheet | undo-reloads -
+SetSheetRelief table | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone - | apply refused:no_such_sheet | undo-reloads -
+SetState layer | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone Id | apply ok inverse:SetState | undo-reloads Id
+SetTags layer | allowed O:n U:n L:n H:n | in-batch O:n U:n L:n H:n | observer same | zone - | apply ok inverse:SetTags | undo-reloads -
+SetText layer | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone Id | apply ok inverse:SetText | undo-reloads Id
+SetTint layer | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone Id | apply ok inverse:SetTint | undo-reloads -
+SetUi table | allowed O:n U:n L:n H:n | in-batch O:n U:n L:n H:n | observer same | zone - | apply ok inverse:SetUi | undo-reloads -
+SetUiAttributes table | allowed O:n U:n L:n H:n | in-batch O:n U:n L:n H:n | observer same | zone - | apply refused:no_such_element | undo-reloads -
+SetVisionRadius table | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone - | apply ok inverse:SetVisionRadius | undo-reloads -
+SetWidgets layer | allowed O:n U:n L:n H:n | in-batch O:n U:n L:n H:n | observer same | zone - | apply ok inverse:SetWidgets | undo-reloads Id
+SetWind table | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone - | apply ok inverse:SetWind | undo-reloads -
+SetZone table | allowed O:n U:n L:y H:y | in-batch O:n U:n L:y H:y | observer drop | zone - | apply ok inverse:RemoveZone | undo-reloads -
+ShowDialog table | allowed O:n U:n L:n H:n | in-batch O:n U:n L:n H:n | observer drop | zone - | apply ok inverse:none | undo-reloads -
+ShowDialog(to=other) table | allowed O:n U:n L:n H:n | in-batch O:n U:n L:n H:n | observer drop | zone - | apply ok inverse:none | undo-reloads -
+SpawnPiece layer | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone Pos | apply ok inverse:DeletePiece | undo-reloads -
+UiEvent table | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone - | apply refused:no_such_element | undo-reloads -
+Undo table | allowed O:n U:y L:y H:y | in-batch O:n U:n L:n H:n | observer same | zone - | apply refused:undo_is_resolved_by_the_server | undo-reloads -

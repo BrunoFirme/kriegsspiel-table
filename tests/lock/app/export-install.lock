@@ -1,0 +1,40 @@
+settle
+click "Packs and Pieces"
+wait 30
+rclick "Lock pieces"
+click "Export…"
+settle
+checkpoint export-pack-dialog
+click "Choose file…"
+settle
+checkpoint file-dialog
+clear
+type "lock-pieces.ktpack"
+key Enter
+settle 60 1800
+checkpoint exported-pack
+close-window
+click "Host a game"
+wait 30
+rclick "Lock small"
+click "Export…"
+click "Choose file…"
+settle
+clear
+type "lock-small.ktpack"
+key Enter
+settle 60 1800
+checkpoint exported-scenario
+close-window
+rclick "Lock small"
+click "Delete…"
+click "Delete"
+settle
+drop-file "{fixtures}/lock-small.ktpack"
+settle 60 2400
+checkpoint installed-scenario
+click "Packs and Pieces"
+wait 30
+drop-file "{fixtures}/lock-pieces.ktpack"
+settle 60 2400
+checkpoint installed-pack-again

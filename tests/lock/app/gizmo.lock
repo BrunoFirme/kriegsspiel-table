@@ -1,0 +1,19 @@
+include _host.inc
+click world:-4,0.2,0
+key T
+settle
+checkpoint ring
+note "the knobs are found from the picture of the ring, by its screen offset from the piece"
+drag world:-4,0.2,-1.3 world:-3,0.2,-1.1
+settle
+checkpoint turned
+drag world:-3.1,0.2,0.75 world:-2.6,0.2,1.2
+settle
+checkpoint resized
+drag world:-4,0.2,-1.3 world:-5,0.2,-1 mod=Shift
+settle
+checkpoint snapped
+drag world:-7,0,-3 world:-1,0,4
+settle
+checkpoint boxed-in-gizmo
+key T

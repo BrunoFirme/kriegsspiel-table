@@ -1,0 +1,19 @@
+include _host.inc
+hover world:4,0.2,3
+settle
+checkpoint face-down-hover
+click world:4.5,0.2,3
+settle
+checkpoint back-clicked
+click world:4,0.2,2.7
+settle
+checkpoint name-band
+type "Rear"
+key Backspace
+type "r guard"
+key Enter
+settle
+checkpoint renamed
+hover world:-4,0.2,0.36
+settle
+checkpoint widget-hover

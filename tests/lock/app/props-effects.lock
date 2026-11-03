@@ -1,0 +1,44 @@
+include _host.inc
+click "Pieces"
+click ~"Scripted War Game"
+click ~"Firme's Effects and Props"
+settle
+click "search name, tag, colour…"
+type "Bivouac"
+settle
+drag "Bivouac" world:0,0,7
+settle 30 900
+checkpoint bivouac
+clear
+type "Breastwork"
+drag "Breastwork" world:-5,0,7
+clear
+type "Shell crater"
+drag "Shell crater" world:5,0,7
+settle 30 900
+checkpoint props
+clear
+type "Powder smoke"
+drag "Powder smoke" world:0,0,-8
+settle 30 600
+checkpoint effect-placed
+click "Scenario properties: clock, lighting, scale, wind, distances, script"
+click "Wind"
+click "0 north (the top of the map), 90 east, 180 south, 270 west"
+clear
+type "90\n"
+settle 30 600 noimage=1
+checkpoint wind-east
+click "Done"
+click "Compass"
+click "Compass"
+drag "North · click to turn the view north-up · drag to move it · right-click to put it back" @900,400
+settle
+checkpoint compass-moved
+rclick "North · click to turn the view north-up · drag to move it · right-click to put it back"
+settle
+checkpoint compass-back
+rdrag @640,400 @760,400
+click "North · click to turn the view north-up · drag to move it · right-click to put it back"
+settle
+checkpoint north-up

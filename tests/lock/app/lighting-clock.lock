@@ -1,0 +1,17 @@
+include _host.inc
+click "Scenario properties: clock, lighting, scale, wind, distances, script"
+click "Light"
+click "Follow the game clock"
+settle
+checkpoint following
+click "Done"
+click "Next turn ▸"
+settle
+checkpoint next-turn-light
+click "Set turn, time and minutes per turn"
+click "1812-07-22T06:00"
+clear
+type "1812-07-22T22:30"
+click "Set the clock"
+settle
+checkpoint night

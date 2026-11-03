@@ -1,0 +1,25 @@
+include _host.inc
+drag world:4,0.2,0 world:-4,0.2,0
+settle
+checkpoint stacked
+click world:-4,0.2,3
+click world:0,0.2,4 mod=Shift
+click world:4,0.2,3 mod=Shift
+mousedown world:0,0.2,4
+move world:0,0,5
+move world:1,0,6
+key Ctrl+3
+key Q
+key E mod=Shift
+wheel world:1,0,6 2
+wait 30
+checkpoint carrying
+mouseup world:1,0,6
+settle
+checkpoint dropped
+mousedown world:1,0.2,6
+move world:1,0,7
+move "Select"
+mouseup "Select"
+settle
+checkpoint dropped-on-panel

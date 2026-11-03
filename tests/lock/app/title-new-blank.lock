@@ -1,0 +1,19 @@
+@quick
+settle
+click "your name"
+type "Pogue"
+click "New blank scenario…"
+settle
+checkpoint dialog
+click "e.g. Salamanca 1812"
+type "Feud at the ford"
+settle
+checkpoint filled
+click "Create and host"
+settle 60 3000
+checkpoint table
+click "Menu"
+click "Leave the table…"
+click "Leave"
+settle 60 3000
+checkpoint title-after

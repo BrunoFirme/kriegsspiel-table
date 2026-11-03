@@ -1,0 +1,51 @@
+@quick
+include _host.inc
+rclick world:2,0,6
+settle
+checkpoint table-menu
+click "Ruler"
+settle
+checkpoint ruler-taken
+key Escape
+rclick world:2,0,6
+click "Map view"
+settle
+checkpoint flat
+rclick world:2,0,6
+click "3D table"
+settle
+rclick world:2,0,6
+click "Frame the map"
+settle
+checkpoint framed
+rclick world:2,0,6
+click "Select all"
+settle
+checkpoint all-selected
+rclick world:4,0.2,0
+settle
+checkpoint many-menu
+click "Form 2 rows"
+settle
+checkpoint two-rows
+key Ctrl+A
+rclick world:4,0.2,0
+click "Form 1 row"
+settle
+checkpoint one-row
+key Escape
+click world:-4,0.2,0
+click world:4,0.2,0 mod=Shift
+rclick world:-4,0.2,0
+click ~"Attach the others"
+settle
+checkpoint attached
+rclick world:2,0,6
+click "Capture a region"
+settle
+checkpoint capture-taken
+key Escape
+rclick world:2,0,6
+click "Paste here"
+settle
+checkpoint pasted

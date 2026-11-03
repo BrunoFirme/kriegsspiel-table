@@ -1,0 +1,40 @@
+settle
+click "Packs and Pieces"
+wait 30
+click "Edit pieces"#2
+settle 60 3000
+click "Blue model"
+settle 60 2400
+key Alt+1
+settle 60 2400
+checkpoint model-3d
+rdrag @640,360 @700,360
+settle
+key B
+drag @600,360 @680,380
+settle 60 1200
+checkpoint painted
+key E
+drag @620,360 @660,370
+settle
+key F
+click @640,360
+settle 60 1200
+checkpoint whole-part
+key Ctrl+Z
+key Ctrl+Z
+settle
+checkpoint undone
+key Ctrl+Y
+key Home
+settle
+checkpoint redone-framed
+wheel @640,360 2
+settle
+click "1st Division"
+key Alt+1
+settle 60 2400
+checkpoint flat-in-3d
+click "Done"
+settle 60 3000
+checkpoint saved

@@ -1,0 +1,35 @@
+@instances host,join
+@timeout 300
+host: include _host.inc
+sync hosted
+join: include _join.inc
+join: settle 30 1200 noimage=1
+join: checkpoint knocking
+sync knocked
+host: settle 30 1200 noimage=1
+host: checkpoint knock-card
+host: click "Umpire" timeout=900
+host: settle 60 1800
+sync admitted
+join: settle 60 3000
+join: checkpoint joined
+sync seen
+host: checkpoint host-sees-umpire
+join: drag world:4,0.2,0 world:5,0,2
+join: settle
+sync moved
+host: settle
+host: checkpoint host-sees-move
+host: drag world:-4,0.2,0 world:-5,0,-2
+host: settle
+sync moved-back
+join: settle
+join: checkpoint join-sees-move
+join: click "Menu"
+join: click "Leave the table…"
+join: click "Leave"
+join: settle 60 3000
+join: checkpoint join-left
+sync left
+host: settle
+host: checkpoint host-after-leave

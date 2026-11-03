@@ -1,0 +1,48 @@
+settle
+rclick "Lock small"
+click "Delete…"
+settle
+checkpoint delete-ask
+click "Delete"
+settle
+checkpoint deleted
+click ~"Trash ("
+settle
+checkpoint trash-page
+click "Restore"
+settle
+checkpoint restored
+click "← Host a game"
+settle
+rclick "Lock small"
+click "Delete…"
+click "Delete"
+settle
+click ~"Trash ("
+wait 30
+click "Delete now"
+settle
+checkpoint delete-now-ask
+click "Delete"
+settle
+checkpoint deleted-for-good
+click "← Host a game"
+wait 30
+click "Packs and Pieces"
+wait 30
+rclick "Lock pieces"
+click "Remove from this PC…"
+settle
+checkpoint remove-pack-ask
+click "Remove"
+settle
+checkpoint removed-pack
+click ~"Trash ("
+settle
+checkpoint pack-trash
+click "Empty this trash"
+settle
+checkpoint empty-ask
+click "Empty"
+settle
+checkpoint emptied
