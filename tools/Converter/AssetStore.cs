@@ -262,5 +262,17 @@ public sealed partial class AssetStore
         return e is { Status: "ok" } ? e : null;
     }
 
+    public static bool IsPicture(string? ext) => ext is "png" or "jpg" or "webp" or "gif" or "bmp";
+
+    public string? Gone(string? url, string kind)
+    {
+        if (string.IsNullOrWhiteSpace(url)) return null;
+        var e = TryLocal(url);
+        if (e == null) return null;
+        if (e.Status == "ok") return kind == "image" && !IsPicture(e.Ext) ? $"not a picture ({e.Ext})" : null;
+        if (e.Status == "dead") return e.Error ?? "dead";
+        return e.Error is { } why && (why.StartsWith("HTTP 404") || why.StartsWith("HTTP 410")) ? why : null;
+    }
+
     public string? Why(string url) => _index.TryGetValue(Key(url), out var e) ? $"{e.Status}: {e.Error}" : "not fetched";
 }

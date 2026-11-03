@@ -8,6 +8,8 @@ public sealed class Report
 {
     public sealed record Unresolved(string Url, string Why, string Where);
     readonly ConcurrentDictionary<string, Unresolved> _unresolved = new();
+    public sealed record LeftOutPiece(string Name, string Url, string Why, string Where);
+    readonly ConcurrentDictionary<string, LeftOutPiece> _leftOut = new();
     readonly ConcurrentDictionary<string, (int count, string example)> _dropped = new();
     readonly ConcurrentDictionary<string, (int count, string example)> _skipped = new();
     readonly ConcurrentDictionary<string, (int count, string example)> _unknown = new();
@@ -22,6 +24,15 @@ public sealed class Report
     public int UnknownTypes => _unknown.Count;
 
     public void Missing(string url, string why, string where) => _unresolved.TryAdd(url, new Unresolved(url, why, where));
+    public void LeftOut(string name, string url, string why, string where, string guid) =>
+        _leftOut.TryAdd(guid.Length > 0 ? guid + "|" + name : where, new LeftOutPiece(name, url, why, where));
+    public int PiecesLeftOut => _leftOut.Count;
+
+    static string NameList(IEnumerable<string> names, int most)
+    {
+        var groups = names.GroupBy(n => n).OrderBy(g => g.Key, StringComparer.OrdinalIgnoreCase).Select(g => g.Count() > 1 ? $"{g.Key} ×{g.Count()}" : g.Key).ToList();
+        return groups.Count <= most ? string.Join(", ", groups) : string.Join(", ", groups.Take(most)) + $" and {groups.Count - most} more";
+    }
     public void DroppedScript(string variant, string where) => _dropped.AddOrUpdate(variant, (1, where), (_, v) => (v.count + 1, v.example));
     public void Skipped(string type, string where) => _skipped.AddOrUpdate(type, (1, where), (_, v) => (v.count + 1, v.example));
     public void UnknownType(string type, string where) => _unknown.AddOrUpdate(type, (1, where), (_, v) => (v.count + 1, v.example));
@@ -68,6 +79,15 @@ public sealed class Report
             foreach (var (k, v) in _hostile.OrderByDescending(x => x.Value.count)) sb.AppendLine($"- {v.count}× {k} (e.g. {v.example})");
             sb.AppendLine();
             Console.WriteLine($"HOSTILE {_hostileObjects} objects: {string.Join("; ", _hostile.OrderByDescending(x => x.Value.count).Select(x => x.Key))}");
+        }
+        if (!_leftOut.IsEmpty)
+        {
+            const int NamesOnTheLine = 12;
+            sb.AppendLine($"### PIECES LEFT OUT ({_leftOut.Count})");
+            sb.AppendLine("Their picture or model is gone from the web and is not in TTS's own cache on this computer, so TTS cannot show them either.");
+            foreach (var p in _leftOut.Values.OrderBy(p => p.Name, StringComparer.OrdinalIgnoreCase)) sb.AppendLine($"- {p.Name} — `{p.Url}` — {p.Why} — {p.Where}");
+            sb.AppendLine();
+            Console.WriteLine($"LEFTOUT {_leftOut.Count} {NameList(_leftOut.Values.Select(p => p.Name), NamesOnTheLine)}");
         }
         if (!_notes.IsEmpty) { sb.AppendLine("### Notes"); foreach (var n in _notes) sb.AppendLine("- " + n); sb.AppendLine(); }
         sb.AppendLine($"### Unresolved assets ({_unresolved.Count}) — placeholder image used");

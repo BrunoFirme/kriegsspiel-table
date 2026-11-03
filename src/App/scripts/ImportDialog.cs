@@ -294,7 +294,7 @@ public partial class ImportDialog : AcceptDialog
         var args = new List<string> { "import", source, "--out", _packagesRoot };
         if (name.Length > 0) args.AddRange(new[] { "--name", name });
         if (skipText) args.AddRange(new[] { "--skip", "3DText" });
-        string? scenario = null, pack = null, report = null, hostile = null;
+        string? scenario = null, pack = null, report = null, hostile = null, leftOut = null;
         Log($"[b]Importing {Fmt.Bb(source)}[/b] — first imports download missing images from Steam and can take a few minutes.");
         int movedAside = 0, putBack = 0;
         string Left() => movedAside == 0 ? "" : putBack >= movedAside
@@ -325,6 +325,13 @@ public partial class ImportDialog : AcceptDialog
             {
                 hostile = line[8..];
                 Log($"[color=#f87][b]Hostile script removed[/b] — {Fmt.Bb(hostile)}. The module carried a script that copies itself into objects or reaches the web; it was cut out before anything was read from it, and nothing of it is in the pack. Details in the report.[/color]");
+                return;
+            }
+            if (line.StartsWith("LEFTOUT "))
+            {
+                var parts = line[8..].Split(' ', 2);
+                leftOut = parts[0] == "1" ? "1 piece left out" : $"{parts[0]} pieces left out";
+                Log($"[color=#ff5f5f][b]{leftOut}:[/b] {Fmt.Bb(parts.Length > 1 ? parts[1] : "")}. Their pictures or models are gone from the web and TTS has no copy on this computer, so TTS cannot show them either. Everything else came in; the report lists each one with its link.[/color]");
                 return;
             }
             if (line.StartsWith("PROGRESS "))
@@ -361,6 +368,7 @@ public partial class ImportDialog : AcceptDialog
                         ? $"[color=#8f8]Done.[/color] Scenario '{Fmt.Bb(scenario)}' and pack '{Fmt.Bb(pack)}' are ready." + (report != null ? $" Report: {Fmt.Bb(report)}" : "")
                         : $"[color=#8f8]Done.[/color] Pack '{Fmt.Bb(pack)}' restored exactly as it was shared.");
                     if (hostile != null) Log("[color=#f87]A hostile script was removed from this module; see the report.[/color]");
+                    if (leftOut != null) Log($"[color=#ff5f5f][font_size=20][b]{leftOut}: broken in TTS too[/b][/font_size][/color]");
                 }
                 else Log($"[color=#f87]Import failed (exit {code}).[/color]" + Left());
             }

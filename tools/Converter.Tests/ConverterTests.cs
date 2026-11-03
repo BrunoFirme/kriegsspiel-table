@@ -151,4 +151,43 @@ public sealed class ConverterTests : IDisposable
         Assert.Equal(("http://a/arms.png", "front", -0.25, -0.2, 0.3, 0.2, 0.0), (ds[0].Picture, ds[0].Face, ds[0].X, ds[0].Z, ds[0].W, ds[0].H, ds[0].Rot));
         Assert.Equal(("back", 0.25, 20.0), (ds[1].Face, ds[1].X, ds[1].Rot));
     }
+
+    [Fact]
+    public async Task A_piece_whose_picture_is_gone_for_good_is_left_out_and_reported_and_one_that_only_failed_to_answer_keeps_a_placeholder()
+    {
+        var cfg = TempConfig();
+        const string Good = "http://a/good.png", Gone = "http://a/gone.png", SteamGone = "https://steamusercontent-a.akamaihd.net/ugc/1/ABCDEF/", Page = "http://a/page.jpg", Busy = "http://a/busy.png", Theirs = @"C:\Kaartjesfolder\Punica\BattalionAla1.jpg";
+        var images = Path.Combine(cfg.TtsModsPath, "Images");
+        Directory.CreateDirectory(images);
+        using (var bmp = new SkiaSharp.SKBitmap(4, 4)) using (var png = bmp.Encode(SkiaSharp.SKEncodedImageFormat.Png, 100)) File.WriteAllBytes(Path.Combine(images, AssetStore.Key(Good) + ".png"), png.ToArray());
+        File.WriteAllBytes(Path.Combine(images, AssetStore.Key(Page) + ".jpg"), "<html><body>moved</body></html>"u8.ToArray());
+        Directory.CreateDirectory(cfg.Cache);
+        File.WriteAllText(Path.Combine(cfg.Cache, "index.json"), System.Text.Json.JsonSerializer.Serialize(new Dictionary<string, CacheEntry>
+        {
+            [AssetStore.Key(Gone)] = new() { Status = "dead", Error = "HTTP 404", Url = Gone },
+            [AssetStore.Key(SteamGone)] = new() { Status = "missing", Error = "HTTP 404", Url = SteamGone },
+            [AssetStore.Key(Busy)] = new() { Status = "missing", Error = "HTTP 503", Url = Busy },
+        }, Config.Opts));
+        var rep = new Report();
+        var assets = new AssetStore(cfg, rep);
+        await assets.FetchAll(new[] { Theirs });
+        var defs = new DefFactory(cfg, assets, rep);
+        var pack = new PackOut(cfg.Output, "t", "T", "t", null);
+        DefResult? Token(string nick, string url) => defs.DefFor(new TtsObj(Obj("Custom_Token", nick, 1, new JsonObject { ["CustomImage"] = new JsonObject { ["ImageURL"] = url } })), pack);
+
+        Assert.NotNull(Token("Kept", Good));
+        Assert.Null(Token("Swamp", Gone));
+        Assert.Null(Token("Jetty", SteamGone));
+        Assert.Null(Token("Mill", Page));
+        Assert.NotNull(Token("Waiting", Busy));
+        Assert.Null(Token("", Theirs));
+        Assert.Equal(new[] { "Kept", "Waiting" }, pack.M.Pieces.Select(p => p.Name).OrderBy(n => n));
+        Assert.Equal(4, rep.PiecesLeftOut);
+        var path = Path.Combine(_root, "report.md");
+        rep.Write(path, "import t");
+        var text = File.ReadAllText(path);
+        Assert.Contains("### PIECES LEFT OUT (4)", text);
+        Assert.Contains("- BattalionAla1 — ", text);
+        Assert.Contains("- Swamp — `http://a/gone.png` — HTTP 404", text);
+    }
 }

@@ -265,6 +265,12 @@ public sealed partial class DefFactory
 
     PieceDef? BuildDef(TtsObj b, PackOut pack, double r, string where, ScriptInfo script)
     {
+        var (lookUrl, lookKind) = b.Name == "Custom_Model" ? (b.MeshUrl, "mesh") : b.Name.StartsWith("Block") ? (null, "") : (b.ImageUrl, "image");
+        if (_assets.Gone(lookUrl, lookKind) is { } gone)
+        {
+            _rep.LeftOut(Name(b) is var n && n != "Piece" ? n : FileName(lookUrl!), lookUrl!, gone, where, b.Guid);
+            return null;
+        }
         var size = Mul(BaseSize(b), r);
         var def = new PieceDef
         {
@@ -399,6 +405,13 @@ public sealed partial class DefFactory
         }
         catch (System.Text.Json.JsonException) { }
         return "Piece";
+    }
+
+    static string FileName(string url)
+    {
+        var last = url.Trim().TrimEnd('/', '\\').Split('?')[0];
+        var stem = Path.GetFileNameWithoutExtension(last[(last.LastIndexOfAny(new[] { '/', '\\' }) + 1)..]);
+        return stem.Length > 0 ? stem : "Piece";
     }
 
     [GeneratedRegex(@"[^a-z0-9]+")] private static partial Regex SlugRx();
