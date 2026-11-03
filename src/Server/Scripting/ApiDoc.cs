@@ -368,7 +368,7 @@ public static partial class ApiDoc
         O("h", "number", "Height in piece units. The box is exactly what can be pressed.");
         O("rot", "number", "Turn on the face, in degrees. Default 0.");
         O("label", "string", "The text.");
-        O("font", "number", "Text height in piece units. Default 0.05.");
+        O("font", "number", "Letter size in piece units; a longer label runs past its button, as in TTS. Default 0.05.");
         O("color", "Color", "The box's colour.");
         O("text_color", "Color", "The text's colour.");
         O("tooltip", "string", "Shown when the pointer rests on it.");
@@ -397,7 +397,7 @@ public static partial class ApiDoc
         O("rot", "number", "Turn on the face, in degrees.");
         O("value", "string", "The text in the box.");
         O("placeholder", "string", "Shown greyed while the box is empty.");
-        O("font", "number", "Text height in piece units. Default 0.05.");
+        O("font", "number", "Letter size in piece units; a longer label runs past its button, as in TTS. Default 0.05.");
         O("color", "Color", "The box's colour.");
         O("text_color", "Color", "The text's colour.");
         O("align", "\"left\"|\"center\"|\"right\"", "Default \"center\".");

@@ -122,8 +122,8 @@ sealed class PieceWidgets
         var text = typing ? _editText : input ? (w.Value.Length > 0 ? w.Value : w.Placeholder) : w.Label;
         var color = !typing && input && w.Value.Length == 0 ? textColor with { A = 0.55f } : textColor;
         float grow = Mathf.Max(0.01f, _piece.Look.FaceTextScale);
-        float lineH = Mathf.Max(0.002f, (float)w.Font * k * grow);
-        Text(text, x, z, boxed ? bw * 0.94f * grow : 0, lineH, color, w.Align, (float)w.Rot, back, faceY, 0.004f);
+        float em = Mathf.Max(0.002f, (float)w.Font * k * grow);
+        Text(text, x, z, boxed ? bw * 0.94f : 0, em, color, w.Align, (float)w.Rot, back, faceY, 0.004f);
         if (boxed) _hits.Add(new Hit(new Vector2(x, z), new Vector2(bw, bh) / 2, turn, index));
     }
 
@@ -136,7 +136,7 @@ sealed class PieceWidgets
         return n;
     }
 
-    Vector2 Text(string text, float x, float z, float maxW, float lineH, Color color, string align, float rot, bool back, float faceY, float above)
+    void Text(string text, float x, float z, float boxW, float em, Color color, string align, float rot, bool back, float faceY, float above)
     {
         var l = new Label3D
         {
@@ -145,19 +145,16 @@ sealed class PieceWidgets
         };
         var font = l.Font ?? ThemeDB.FallbackFont;
         var px = font.GetStringSize(text.Length > 0 ? text : " ", HorizontalAlignment.Left, -1, Fonts.FaceSize);
-        float lineHeightPx = Mathf.Max(1, font.GetHeight(Fonts.FaceSize));
-        float pixel = lineH / lineHeightPx;
-        if (maxW > 0 && px.X * pixel > maxW) pixel = maxW / Mathf.Max(1, px.X);
+        float pixel = em / Fonts.FaceSize;
         l.PixelSize = Mathf.Max(0.00002f, pixel);
         float wUnits = px.X * pixel;
-        float along = maxW > 0 && align == "left" ? -maxW / 2 + wUnits / 2 : maxW > 0 && align == "right" ? maxW / 2 - wUnits / 2 : 0;
+        float along = boxW > 0 && align == "left" ? -boxW / 2 + wUnits / 2 : boxW > 0 && align == "right" ? boxW / 2 - wUnits / 2 : 0;
         float turn = Mathf.DegToRad(rot);
         float cx = x + along * Mathf.Cos(turn);
         z += along * Mathf.Sin(turn);
         if (back) { l.RotationDegrees = new Vector3(90, 180, rot); l.Position = PieceBack.Under(cx, z, PieceBack.Below + above); }
         else { l.RotationDegrees = new Vector3(-90, -rot, 0); l.Position = new Vector3(cx, faceY + above, z); }
         AddNode(l);
-        return new Vector2(wUnits, lineH);
     }
 
     void AddNode(Node3D n) { _piece.AddChild(n); _nodes.Add(n); }

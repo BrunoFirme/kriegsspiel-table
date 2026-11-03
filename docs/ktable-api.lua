@@ -46,7 +46,7 @@
 ---@field h? number Height in piece units. The box is exactly what can be pressed.
 ---@field rot? number Turn on the face, in degrees. Default 0.
 ---@field label? string The text.
----@field font? number Text height in piece units. Default 0.05.
+---@field font? number Letter size in piece units; a longer label runs past its button, as in TTS. Default 0.05.
 ---@field color? Color The box's colour.
 ---@field text_color? Color The text's colour.
 ---@field tooltip? string Shown when the pointer rests on it.
@@ -61,7 +61,7 @@
 ---@field rot? number Turn on the face, in degrees.
 ---@field value? string The text in the box.
 ---@field placeholder? string Shown greyed while the box is empty.
----@field font? number Text height in piece units. Default 0.05.
+---@field font? number Letter size in piece units; a longer label runs past its button, as in TTS. Default 0.05.
 ---@field color? Color The box's colour.
 ---@field text_color? Color The text's colour.
 ---@field align? "left"|"center"|"right" Default "center".
