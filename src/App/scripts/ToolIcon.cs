@@ -50,20 +50,21 @@ public partial class ToolIcon : Control
 
     void Eye()
     {
-        const float Corner = 2.5f, Lid = 5.2f, Iris = 2.9f, Pupil = 1.3f;
-        const int Steps = 14;
-        foreach (var lid in new[] { -Lid, Lid })
+        const float Corner = 1.8f, Open = 5.4f, Iris = 2.9f;
+        const int Steps = 20;
+        float half = 10 - Corner, round = (half * half + Open * Open) / (2 * Open);
+        foreach (var side in new[] { -1f, 1f })
         {
             var pts = new Vector2[Steps + 1];
             for (int i = 0; i <= Steps; i++)
             {
-                float t = i / (float)Steps;
-                pts[i] = P(Corner + (20 - 2 * Corner) * t, 10 + 2 * lid * t * (1 - t));
+                float x = -half + 2 * half * i / Steps;
+                float bulge = Mathf.Sqrt(Mathf.Max(0, round * round - x * x)) - (round - Open);
+                pts[i] = P(10 + x, 10 + side * bulge);
             }
             DrawPolyline(pts, _c, _w, antialiased: true);
         }
-        DrawArc(P(10, 10), Iris * _k, 0, Mathf.Tau, 24, _c, _w, antialiased: true);
-        DrawCircle(P(10, 10), Pupil * _k, _c);
+        DrawArc(P(10, 10), Iris * _k, 0, Mathf.Tau, 28, _c, _w, antialiased: true);
     }
 
     public override void _Draw()

@@ -104,7 +104,7 @@ The tool strip runs down the left. Point at any tool and press **F1** for its se
 
 ### Dice
 
-The **Dice** button opens a tray: tap d4 to d20 (twice for two), then **Roll**. Or drag dice from the standard
+The **Dice** button shows or hides the dice panel: tap d4 to d20 (twice for two), then **Roll**. The result shows in the panel, which stays open with the same dice for the next roll. Or drag dice from the standard
 pack and throw them, or shake them in your hand before letting go; **R** rolls in place. The host decides every result, and the Log shows every roll.
 Hovering over a die shows what it rolled. Right-click a die for its **Colour**, so a red and a blue die of the same kind
 are told apart at a glance.

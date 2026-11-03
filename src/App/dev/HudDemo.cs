@@ -16,11 +16,11 @@ sealed class HudDemo : HudPart
     {
         var centre = Hud.GetViewport().GetVisibleRect().Size / 2;
         if (Pages(what) || CompassDrag(what) || Hearts(what) || Scripts(what) || View(what) || PovPictures(what) || PovTool(what) || PovFormat(what) || DrawingPanels(what) || PanelMoves(what) || Hands(what) || PieceMoves(what) || Lettering(what) || Dialogs(what)) return;
-        if (what == "dice") Hud.Dice.Show(Hud.Strip.Panel);
+        if (what == "dice") Hud.OpenPanel("dice");
         else if (what == "dice:roll")
         {
-            Hud.Dice.Show(Hud.Strip.Panel);
-            var buttons = Hud.Dice.Pop!.FindChildren("*", "Button", true, false).OfType<Button>().ToList();
+            Hud.OpenPanel("dice");
+            var buttons = Hud.Dice.Panel.FindChildren("*", "Button", true, false).OfType<Button>().ToList();
             foreach (var text in new[] { "d6", "d6", "d6", "d10", "Roll" }) buttons.FirstOrDefault(b => b.Text == text)?.EmitSignal(BaseButton.SignalName.Pressed);
         }
         else if (what == "menu" && !T.SelectedNodes.Any() && S.View.Layer(KTable.Core.Model.Layers.Umpire).FirstOrDefault() is { } first)
@@ -861,17 +861,17 @@ sealed class HudDemo : HudPart
         if (what.StartsWith("diceroll"))
         {
             var want = what.Contains(':') ? what.Split(':')[1].Split(',') : new[] { "6" };
-            Hud.Dice.Show(Hud.Strip.Panel);
+            Hud.OpenPanel("dice");
             Callable.From((Action)(async () =>
             {
                 await Hud.ToSignal(Hud.GetTree().CreateTimer(0.3), Timer.SignalName.Timeout);
                 var buttons = new List<Button>();
                 void Walk(Node n) { if (n is Button bb) buttons.Add(bb); foreach (var ch in n.GetChildren()) Walk(ch); }
-                Walk(Hud.Dice.Pop!);
+                Walk(Hud.Dice.Panel);
                 foreach (var w in want)
                 {
                     var b = buttons.FirstOrDefault(x => x.Text == "d" + w);
-                    if (b == null) { GD.Print($"[dice] the popover has no d{w}"); return; }
+                    if (b == null) { GD.Print($"[dice] the dice panel has no d{w}"); return; }
                     b.EmitSignal(BaseButton.SignalName.Pressed);
                 }
                 int before = Hud.LogPanel.Text.GetParsedText().Split('\n').Length;

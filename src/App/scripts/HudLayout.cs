@@ -19,8 +19,7 @@ public partial class Hud
         Umpires = new UmpiresPage(Ctx);
         Map = new MapPage(Ctx);
         Drawer = new Drawer(Ctx, this, Umpires, Map);
-        Dice = new DicePopover(Ctx);
-        Strip = new ToolStrip(Ctx, this, Drawer, Dice);
+        Strip = new ToolStrip(Ctx, this, Drawer);
         Menus = new MenuCards(Ctx, Strip, () => Pieces);
         Captures = new Captures(Ctx, () => Rect);
         Transcript = new Transcript(Ctx);
@@ -62,12 +61,11 @@ public partial class Hud
         Drawer.Build(Root);
         Pieces = new PiecesPanel(Ctx, this);
         Drawer.BuildPages();
-        Dice.ShowTableDice = () => { OpenPanel("pieces"); Pieces.SelectPack("std.dice"); };
-        Dice.Beside = () => Drawer.Panel.Visible ? Drawer.Panel.GetGlobalRect() : null;
     }
 
     void BuildToolPanels()
     {
+        Dice = new DicePanel(Ctx, this) { ShowTableDice = () => { OpenPanel("pieces"); Pieces.SelectPack("std.dice"); } };
         Paint = new DrawPanel(Ctx, this);
         if (S.IsUmpire) Relief = new ReliefPanel(Ctx, this);
         Boards = new LayersPanel(Ctx, MakePanel("boards", "Layers"), Paint, Strip);

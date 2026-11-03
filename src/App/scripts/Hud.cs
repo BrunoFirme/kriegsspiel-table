@@ -31,7 +31,7 @@ public partial class Hud : CanvasLayer
     internal ConsolePanel? ScriptConsole;
     internal ScriptFileWatch FileWatch = null!;
     internal MenuCards Menus = null!;
-    internal DicePopover Dice = null!;
+    internal DicePanel Dice = null!;
     internal Captures Captures = null!;
     internal Transcript Transcript = null!;
     internal NorthCompass Compass = null!;

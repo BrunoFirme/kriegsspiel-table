@@ -15,8 +15,7 @@ sealed class ToolStrip : HudPart
 
     readonly IHudShell Shell;
     readonly Drawer _drawer;
-    readonly DicePopover _dice;
-    public ToolStrip(HudContext ctx, IHudShell shell, Drawer drawer, DicePopover dice) : base(ctx) { Shell = shell; _drawer = drawer; _dice = dice; }
+    public ToolStrip(HudContext ctx, IHudShell shell, Drawer drawer) : base(ctx) { Shell = shell; _drawer = drawer; }
 
     public void Build(Control root)
     {
@@ -184,12 +183,7 @@ sealed class ToolStrip : HudPart
             case "paint": return PanelToggle("paint", "draw", "Draw", "The pen, the shapes and the rubber, in a panel you can put where you like");
             case "relief": return PanelToggle("relief", "relief", "Relief", "Raise, lower, smooth and flatten the ground, and paint grass, fields, woods, marsh, water and roads on it");
             case "boards": return PanelToggle("boards", "stack", "Layers", "The sheets of tracing paper the drawings are on: draw on one, hide it for a screenshot");
-            case "dice":
-            {
-                var b = Icon("dice", "Dice", "Pick the dice and roll; the server rolls and every umpire sees it");
-                b.Pressed += () => _dice.Show(b);
-                return b;
-            }
+            case "dice": return PanelToggle("dice", "dice", "Dice", "Pick the dice and roll; the server rolls and every umpire sees it");
             case "2d":
             {
                 var b = Icon("text:3D", $"3D table   ({Cfg.Keys.Label("map2d")})", "On: the table in three dimensions. Off: the map read flat from above.");

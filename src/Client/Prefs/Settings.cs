@@ -14,7 +14,6 @@ public sealed class Settings
     public bool ShareCursor { get; set; } = true;
     public bool FaceText { get; set; } = true;
     public bool LabelPlates { get; set; }
-    public bool DiceCloseAfterRoll { get; set; }
     public float LetteringReach { get; set; } = ReachOff;
     public const float ReachMin = 12f, ReachOff = 250f;
     public bool ReduceFarDetail { get; set; }
