@@ -160,6 +160,7 @@ public partial class Main : Node
     internal void QuitApp()
     {
         Assets.Quiesce();
+        Diagnostics.Closing();
         GetTree().Quit();
     }
 

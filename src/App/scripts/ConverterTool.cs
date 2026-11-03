@@ -26,7 +26,8 @@ public static class ConverterTool
             Path.Combine(exeDir, "converter", "Converter.exe"),
             Path.Combine(exeDir, "converter", "Converter"),
         };
-        for (var d = new DirectoryInfo(ProjectSettings.GlobalizePath("res://")); d != null; d = d.Parent)
+        var projectDir = ProjectSettings.GlobalizePath("res://");
+        for (var d = projectDir.Length > 0 ? new DirectoryInfo(projectDir) : null; d != null; d = d.Parent)
         {
             candidates.Add(Path.Combine(d.FullName, "converter", "Converter.exe"));
             foreach (var cfg in new[] { "Debug", "Release" })

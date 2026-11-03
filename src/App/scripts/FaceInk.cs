@@ -66,7 +66,7 @@ sealed class FaceInk
             Text(back, value, right - vw0 / 2, zc, vw0, rowH * 0.6f, ValueColor, HorizontalAlignment.Center);
             return;
         }
-        float bs = c.ShowName ? Mathf.Clamp(rowH * 0.6f, 0.05f, cw * 0.12f) : Mathf.Min(rowH * 0.6f, cw / 4.1f);
+        float bs = c.ShowName ? Mathf.Min(Mathf.Max(rowH * 0.6f, 0.05f), cw * 0.12f) : Mathf.Min(rowH * 0.6f, cw / 4.1f);
         float gap = bs * 0.3f, vw = bs * 1.5f;
         float xPlus = c.ShowName ? right - bs / 2 : box.GetCenter().X + vw / 2 + gap + bs / 2;
         float xVal = xPlus - bs / 2 - gap - vw / 2, xMinus = xVal - vw / 2 - gap - bs / 2;

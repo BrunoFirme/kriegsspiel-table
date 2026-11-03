@@ -186,6 +186,7 @@ sealed class DevFlags : IDevAids
         if (_args.GetValueOrDefault("page") == "packs") { title.Select(2); title.Packs.Show(); }
         if (_args.GetValueOrDefault("page") == "join") title.Select(1);
         if (_args.GetValueOrDefault("page") == "settings") title.SettingsPage.Show();
+        if (_args.GetValueOrDefault("page") == "report") title.Report.Show();
         if (_args.GetValueOrDefault("page") is "agentpage" or "agent" or "agenttech" or "agentkey")
             OpenAgentPage(_args["page"] switch { "agentpage" => System.Array.Empty<string>(), "agent" => new[] { AgentConnect.Title }, "agenttech" => new[] { "Technical settings…" }, _ => new[] { "Technical settings…", "New key" } });
         if (_args.GetValueOrDefault("page") == "trash") { title.Select(0); title.Trash.Show(packs: false); }

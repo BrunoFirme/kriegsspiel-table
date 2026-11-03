@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Godot;
 using KTable.Core.Model;
@@ -91,6 +92,15 @@ sealed class CameraControl
             c = Coords.ToWorld(new Vec2((minX + maxX) / 2, (minZ + maxZ) / 2));
         }
         Rig.Frame(c, size);
+    }
+
+    public void FramePieces(IReadOnlyCollection<PieceInstance> pieces)
+    {
+        const double Closest = 8;
+        if (pieces.Count == 0) return;
+        double x0 = pieces.Min(p => p.Pos.X), x1 = pieces.Max(p => p.Pos.X);
+        double z0 = pieces.Min(p => p.Pos.Z), z1 = pieces.Max(p => p.Pos.Z);
+        Rig.Frame(Coords.ToWorld(new Vec2((x0 + x1) / 2, (z0 + z1) / 2)), (float)Math.Max(Closest, Math.Max(x1 - x0, z1 - z0)));
     }
 
     public void FitRange()

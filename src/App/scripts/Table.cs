@@ -365,6 +365,15 @@ public partial class Table : Node3D
     public void SelectSheet(string? id) => Sheets.Select(id);
     public string SheetStats() => Sheets.Stats();
     public void FrameAll() => Cam.FrameAll();
+
+    public void Locate(IReadOnlyCollection<PieceInstance> pieces)
+    {
+        SetSelection(pieces.Select(p => p.Id));
+        Cam.FramePieces(pieces);
+    }
+
+    public void DeletePieces(IEnumerable<(string Layer, PieceInstance Piece)> pieces) =>
+        _c.DoAll(pieces.Select(x => (Command)new DeletePiece { Layer = x.Layer, Id = x.Piece.Id }).ToList());
     public string? CropSheetId => Crop.SheetId;
     public FaceBox CropRect => Crop.Rect;
     public void BeginCrop(string sheetId) => Crop.Begin(sheetId);

@@ -21,7 +21,7 @@ sealed class PiecesPanel : HudPart
     public PiecesPanel(HudContext ctx, IHudShell shell) : base(ctx)
     {
         Shell = shell;
-        var packs = new VBoxContainer { Name = "Pieces" };
+        var packs = new VBoxContainer { Name = "Packs" };
         packs.AddThemeConstantOverride("separation", 4);
         PackPick = new OptionButton { ClipText = true, FitToLongestItem = false };
         PackPick.ItemSelected += _ => RebuildList();
@@ -54,8 +54,17 @@ sealed class PiecesPanel : HudPart
         Panel.CustomMinimumSize = shell.PanelSize("pieces", 320, 420);
         Panel.Body.SizeFlagsVertical = Control.SizeFlags.ExpandFill;
         packs.SizeFlagsVertical = Control.SizeFlags.ExpandFill;
-        Panel.Body.AddChild(packs);
+        Index = new PieceIndex(ctx);
+        Tabs = new TabContainer { SizeFlagsVertical = Control.SizeFlags.ExpandFill };
+        Tabs.AddChild(packs);
+        Tabs.AddChild(Index.Root);
+        Panel.Body.AddChild(Tabs);
     }
+
+    public readonly TabContainer Tabs;
+    public readonly PieceIndex Index;
+
+    public void ShowIndex() => Tabs.CurrentTab = Index.Root.GetIndex();
 
     [System.Diagnostics.CodeAnalysis.MemberNotNull(nameof(List))]
     void BuildList()

@@ -325,7 +325,7 @@ sealed class Carry : IHeldPieces
         if (passing.Count > 0) { SettleDrop(passing); held = held.Where(h => !h.Node.Piece.NoCollision).ToList(); }
         if (held.Count == 0) return;
         var flick = ThrowVelocity();
-        if (held.Count > SimulateAtMost || new Vector3(flick.X, 0, flick.Z).Length() < 3f) { SettleDrop(held); return; }
+        if (held.Count > SimulateAtMost || new Vector3(flick.X, 0, flick.Z).Length() < FlingFrom) { SettleDrop(held); return; }
         await Throw(held);
     }
 
@@ -445,21 +445,18 @@ sealed class Carry : IHeldPieces
         }
     }
 
+    const float FlingFrom = 8f;
+
     void AddThrown(DropScene scene, List<Held> held)
     {
         var fling = ThrowVelocity();
-        if (new Vector3(fling.X, 0, fling.Z).Length() < 3f) fling = Vector3.Zero;
         foreach (var h in held)
         {
             var rb = MakeBody(h.Node, scene.Mat, frozen: false);
             scene.World.AddChild(rb);
             rb.GlobalTransform = new Transform3D(new Basis(Vector3.Up, h.Node.Heading), h.Node.SlabCentre);
             rb.BodyEntered += scene.Wake;
-            if (fling != Vector3.Zero)
-            {
-                rb.LinearVelocity = fling;
-                rb.AngularVelocity = Vector3.Up * (fling.Length() * 0.35f) * (Dice.Rng.Next(2) == 0 ? -1 : 1);
-            }
+            rb.LinearVelocity = fling;
             scene.Sim.Add((h.Node, rb, false));
         }
     }

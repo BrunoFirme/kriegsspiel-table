@@ -42,6 +42,9 @@ public sealed class GameState
     public List<HotkeyDef> Hotkeys { get; set; } = new();
     public List<MenuItemDef> MenuItems { get; set; } = new();
 
+    public string? PackNamedBy(string def) =>
+        Packs.Where(p => def.StartsWith(p + ".", StringComparison.Ordinal)).OrderByDescending(p => p.Length).FirstOrDefault();
+
     public UiNode? UiNode(string id)
     {
         foreach (var n in Ui) if (n.Find(id) is { } f) return f;

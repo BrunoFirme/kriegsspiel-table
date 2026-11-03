@@ -40,6 +40,8 @@ sealed class MainMenu : HudPart
         pm.AddItem("Help…", 32);
         pm.AddItem("Copy diagnostics", 33);
         pm.SetItemTooltip(pm.GetItemIndex(33), "Version, PC, graphics card, the latest errors, the last commands and the packs, onto the clipboard to paste where you ask for help. Nothing is sent.");
+        pm.AddItem("Report a problem…", 34);
+        pm.SetItemTooltip(pm.GetItemIndex(34), "Copies the diagnostics and opens the problem form on GitHub in your browser");
         pm.AddSeparator();
         pm.AddItem("Leave the table…", 40);
         pm.IdPressed += id =>
@@ -54,6 +56,7 @@ sealed class MainMenu : HudPart
                 case 31: GuideReader.Show(Ctx.Root, KTable.Client.Docs.KeysPage.File, "at-the-table"); break;
                 case 32: GuideReader.Show(Ctx.Root); break;
                 case 33: Log(Diagnostics.Copy()); break;
+                case 34: Log(Diagnostics.ReportOnGitHub()); break;
                 case 40: LeaveDialog.Open(Ctx); break;
             }
         };

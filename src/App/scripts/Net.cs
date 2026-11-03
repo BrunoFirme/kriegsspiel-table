@@ -154,10 +154,16 @@ public partial class Net : Node
                         _upnp = u; _upnpPort = port;
                         _upnpRenew = new System.Threading.Timer(_ => RenewUpnp(sitting), null, UpnpRenewEvery, UpnpRenewEvery);
                     }
-                if (!Assets.Quitting) CallDeferred(nameof(UpnpDone), r == 0 ? "ok" : "failed", ip ?? "");
+                TellUpnp(r == 0 ? "ok" : "failed", ip ?? "");
             }
-            catch { if (!Assets.Quitting) CallDeferred(nameof(UpnpDone), "failed", ""); }
+            catch { TellUpnp("failed", ""); }
         });
+    }
+
+    void TellUpnp(string result, string ip)
+    {
+        if (Assets.Quitting || !IsInstanceValid(this)) return;
+        BestEffort.Try(() => CallDeferred(nameof(UpnpDone), result, ip));
     }
 
     static void ReleasePortOrLetLeaseRunOut(Upnp u, int port) => BestEffort.Try(() => u.DeletePortMapping(port, "UDP"));

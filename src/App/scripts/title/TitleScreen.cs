@@ -25,6 +25,7 @@ sealed class TitleScreen
     public readonly TrashPage Trash;
     public readonly WorkshopPage Workshop;
     public readonly SettingsPage SettingsPage;
+    public readonly ReportPage Report;
 
     public Control? Root { get; private set; }
     public Label Status { get; private set; } = null!;
@@ -41,6 +42,7 @@ sealed class TitleScreen
         Trash = new TrashPage(this, main);
         Workshop = new WorkshopPage(this, main, platform);
         SettingsPage = new SettingsPage(this, cfg);
+        Report = new ReportPage(this);
     }
 
     public bool HasWorkshop => _platform.HasWorkshop;
@@ -86,6 +88,7 @@ sealed class TitleScreen
 
         _page = new MarginContainer { AnchorLeft = 0, AnchorRight = 1, AnchorBottom = 1, OffsetLeft = 72 + 360 + 56, OffsetTop = 64, OffsetRight = -72, OffsetBottom = -48 };
         root.AddChild(_page);
+        if (Report.TellOfUnexpectedClose()) return;
         Select(0);
         Host.Show(store, scenarios);
     }
@@ -124,7 +127,7 @@ sealed class TitleScreen
         NavItem(left, "Packs and Pieces", Packs.Show);
         if (HasWorkshop) NavItem(left, "Steam Workshop", Workshop.Show);
         NavItem(left, "Settings", SettingsPage.Show);
-        NavItem(left, "Quit", () => { Assets.Quiesce(); _main.GetTree().Quit(); });
+        NavItem(left, "Quit", _main.QuitApp);
     }
 
     void Identity(VBoxContainer left, List<string> rebuilt, List<string> lost)
@@ -163,9 +166,18 @@ sealed class TitleScreen
             Status.Text += (Status.Text.Length > 0 ? "\n" : "") + $"A game in play has no scenario file and no save of it can be read: {string.Join(", ", lost)} (in {Main.Saves.LiveDir}).";
         if (OffersUpdates) UpdateOffer.Put(left, _main, _cfg);
         left.AddChild(new Control { CustomMinimumSize = new Vector2(0, 6) });
-        var contact = new Label { Text = "by Firme  ·  Discord b.firme", Modulate = Muted };
+        var contactRow = new HBoxContainer();
+        contactRow.AddThemeConstantOverride("separation", 0);
+        var contact = new Label { Text = "by Firme  ·  Discord b.firme  ·  ", Modulate = Muted };
         contact.AddThemeFontSizeOverride("font_size", 12);
-        left.AddChild(contact);
+        contactRow.AddChild(contact);
+        var report = new LinkButton { Text = "Report a problem", Underline = LinkButton.UnderlineMode.OnHover, FocusMode = Control.FocusModeEnum.None, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter };
+        report.AddThemeFontSizeOverride("font_size", 12);
+        report.AddThemeColorOverride("font_color", Muted);
+        report.AddThemeColorOverride("font_hover_color", Ink);
+        report.Pressed += Report.Show;
+        contactRow.AddChild(report);
+        left.AddChild(contactRow);
         var ver = new Label { Text = BuildInfo(), Modulate = Ui.Faint };
         ver.AddThemeFontSizeOverride("font_size", 11);
         left.AddChild(ver);

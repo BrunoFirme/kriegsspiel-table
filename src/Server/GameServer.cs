@@ -46,8 +46,16 @@ public sealed partial class GameServer
         _clock = clock ?? (() => new DateTimeOffset(Repeatable.UtcNow).ToUnixTimeMilliseconds());
         Scripts = new Scripting.ScriptHost(this);
         Created = created ?? Repeatable.UtcNow.ToString("o");
-        Store?.LoadPacks(state.Packs);
-        if (Store != null) MissingPacks = state.Packs.Where(p => Store.Pack(p) == null).ToList();
+        OpenPacks(state);
+    }
+
+    void OpenPacks(GameState state)
+    {
+        if (Store == null) return;
+        Store.LoadPacks(state.Packs);
+        var unknownFrom = state.Layers.Values.SelectMany(l => l).Where(p => Store.Def(p.Def) == null).Select(p => state.PackNamedBy(p.Def)).ToHashSet();
+        if (!unknownFrom.Contains(null)) state.Packs.RemoveAll(p => Store.Pack(p) == null && !unknownFrom.Contains(p));
+        MissingPacks = state.Packs.Where(p => Store.Pack(p) == null).ToList();
     }
 
     public IReadOnlyList<string> MissingPacks { get; private set; } = Array.Empty<string>();
@@ -629,6 +637,7 @@ public sealed partial class GameServer
 
     public List<Outgoing> LoadSave(GameState state, IEnumerable<TurnRecord> turns, string name)
     {
+        OpenPacks(state);
         var c = new LoadSave { Name = name, State = state, Actor = 1, At = _clock(), Seq = State.LastSeq + 1 };
         if (StateMachine.Apply(State, c, out _) is { } err) throw new InvalidDataException(err);
         Turns.Clear();
@@ -638,8 +647,6 @@ public sealed partial class GameServer
         Remember(c, null, toSaveLog: false);
         LastInverse = null;
         Dirty = true;
-        Store?.LoadPacks(State.Packs);
-        if (Store != null) MissingPacks = State.Packs.Where(p => Store.Pack(p) == null).ToList();
         var res = new List<Outgoing>();
         foreach (var p in _peers.Values)
             if (Visibility.ForPeer(c, p, State) is { } copy) res.Add(new(p.PeerId, new CommandMessage { Command = copy }));

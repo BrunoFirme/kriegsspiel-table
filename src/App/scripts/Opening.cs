@@ -216,7 +216,7 @@ public partial class Main
         }
         if (server.MissingPacks.Count > 0)
         {
-            var miss = $"This game names {(server.MissingPacks.Count == 1 ? "a pack" : server.MissingPacks.Count + " packs")} not installed here: {string.Join(", ", server.MissingPacks)}. Its pieces are kept but not shown; install it under Packs and Pieces and they come back.";
+            var miss = $"This game names {(server.MissingPacks.Count == 1 ? "a pack" : server.MissingPacks.Count + " packs")} not installed here: {string.Join(", ", server.MissingPacks)}. Its pieces are kept but not shown: install it under Packs and Pieces and they come back, or delete them under Pieces → On the table.";
             GD.Print("[packs] " + miss);
             _recoveryReport = _recoveryReport == null ? miss : _recoveryReport + " " + miss;
         }

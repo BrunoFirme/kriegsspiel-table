@@ -14,7 +14,7 @@ sealed class UpdateOffer
 {
     const string Uninstaller = "unins000.exe";
     const string VersionSetting = "application/config/version";
-    const string ExportedBuild = "template";
+    internal const string ExportedBuild = "template";
     const double BytesPerMb = 1024 * 1024;
     static readonly string Folder = Path.Combine(Path.GetTempPath(), "KriegsspielTable-update");
     static readonly Lazy<bool> CanReplaceItself = new(() => File.Exists(Path.Combine(ExeDir, Uninstaller)) && Writable(ExeDir));
@@ -150,7 +150,6 @@ sealed class UpdateOffer
             return;
         }
         GD.Print("[update] installer started, closing for it");
-        Assets.Quiesce();
-        _main.GetTree().Quit();
+        _main.QuitApp();
     }
 }
