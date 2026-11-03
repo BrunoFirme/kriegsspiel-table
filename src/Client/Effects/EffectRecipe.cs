@@ -35,6 +35,8 @@ public sealed class EffectLayer
     public Vector3[]? Points;
     public bool Fixed;
     public float Start = -1;
+
+    public EffectLayer Copy() => (EffectLayer)MemberwiseClone();
 }
 
 public sealed class EffectLightSpec
@@ -112,7 +114,21 @@ public static class EffectRecipe
             ex = new Vector3(w / 2, 0, h / 2);
         }
 
-        const float BlastBrake = 0.12f;
+        const float BlastBrake = 0.12f, Linger = 2f, BlastPart = 0.15f;
+
+        void AddLingering(EffectLayer smoke)
+        {
+            (float, T)[] Stretched<T>((float at, T v)[] keys) => keys.Select(k => (k.at <= BlastPart ? k.at / Linger : k.at, k.v)).ToArray();
+            EffectLayer Longer(float offset, int amount)
+            {
+                var l = smoke.Copy();
+                l.Amount = amount; l.Offset = offset; l.Life = smoke.Life * Linger; l.Brake = smoke.Brake / Linger;
+                l.Curve = Stretched(smoke.Curve); l.Ramp = Stretched(smoke.Ramp);
+                return l;
+            }
+            if (!smoke.Fixed) { layers.Add(Longer(smoke.Offset, (int)Math.Round(smoke.Amount * Linger))); return; }
+            for (int turn = 0; turn < Linger; turn++) layers.Add(Longer((smoke.Offset + turn) / Linger, smoke.Amount));
+        }
 
         int N(float baseCount, bool line = true) => Math.Clamp((int)Math.Round(baseCount * A * (line ? k : 1)), 1, 900);
         Rgba Fade(Rgba col, float a) => col with { A = a * clarity };
@@ -191,7 +207,7 @@ public static class EffectRecipe
 
         void Musketry()
         {
-            layers.Add(new EffectLayer
+            AddLingering(new EffectLayer
             {
                 Sprite = "puff", Amount = N(22), Life = 7, Box = new Vector3(ex.X * 0.95f, 0.05f * s, ex.Z * 0.5f), At = new Vector3(0, 0.12f * s, 0),
                 Dir = new Vector3(0, 0.35f, -1).Normalized(), Spread = 28, VMin = 0.25f * s * H, VMax = 0.7f * s * H, Damp = 0.12f * s * H, Brake = 0.2f, Lift = 0.03f * s * H, Drift = 0.9f * D,
@@ -212,7 +228,7 @@ public static class EffectRecipe
                 float off = rolling ? i / (float)sections * (musket ? 0.5f : 0.6f) : 0;
                 if (musket)
                 {
-                    layers.Add(new EffectLayer
+                    AddLingering(new EffectLayer
                     {
                         Sprite = "puff", Amount = Math.Max(2, N(16) / sections), Fixed = true, Life = every, Explosive = 0.85f, Offset = off,
                         Box = new Vector3(hw * 0.95f, 0.05f * s, ex.Z * 0.4f), At = new Vector3(xc, 0.12f * s, -ex.Z * 0.3f),
@@ -225,7 +241,7 @@ public static class EffectRecipe
                 else
                 {
                     if (e.Smoke)
-                        layers.Add(new EffectLayer
+                        AddLingering(new EffectLayer
                         {
                             Sprite = "puff", Amount = Math.Max(3, N(14) / sections), Fixed = true, Life = every, Explosive = 0.92f, Offset = off,
                             Box = new Vector3(hw, 0.05f * s, 0.1f * s), At = new Vector3(xc, 0.15f * s, -ex.Z * 0.7f),
@@ -593,7 +609,7 @@ public static class EffectRecipe
                     Ramp = new[] { (0f, new Rgba(1, 1, 0.9f, 1)), (lasts * 0.3f, new Rgba(1, 0.7f, 0.3f, 0.6f)), (lasts * 0.6f, new Rgba(1, 0.5f, 0.2f, 0)), (1f, new Rgba(1, 0.5f, 0.2f, 0)) },
                 });
                 if (e.Smoke)
-                    layers.Add(new EffectLayer
+                    AddLingering(new EffectLayer
                     {
                         Sprite = "puff", Amount = 18, Fixed = true, Life = every, Explosive = 0.9f, Offset = off,
                         Box = new Vector3(0.25f * sb, 0.1f * sb, 0.15f * sb), At = muzzle + new Vector3(0, 0.1f * sb, -0.4f * sb),

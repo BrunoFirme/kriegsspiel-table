@@ -55,13 +55,26 @@ public class EffectRecipeTests
     public void A_rolling_volley_fires_section_after_section_down_the_line()
     {
         var together = Plan(new EffectDef { Kind = "powder", Volley = "together" }, w: 6);
-        Assert.Equal(new[] { 0f, 0f }, together.Layers.Select(l => l.Offset));
+        Assert.Equal(new[] { 0f, 0.5f, 0f }, together.Layers.Select(l => l.Offset));
         var rolling = Plan(new EffectDef { Kind = "powder", Volley = "rolling" }, w: 6);
-        var offsets = rolling.Layers.Where(l => l.Sprite == "puff").Select(l => l.Offset).ToList();
+        var smoke = rolling.Layers.Where(l => l.Sprite == "puff").ToList();
+        var offsets = smoke.Where((_, i) => i % 2 == 0).Select(l => l.Offset).ToList();
         Assert.Equal(7, offsets.Count);
         Assert.Equal(offsets.OrderBy(o => o), offsets);
         Assert.Equal(0f, offsets[0]);
-        Assert.True(offsets[^1] < 0.5f);
+        Assert.True(offsets[^1] < 0.25f);
+        Assert.All(offsets.Zip(smoke.Where((_, i) => i % 2 == 1).Select(l => l.Offset)), p => Assert.Equal(p.First + 0.5f, p.Second, 5));
+    }
+
+    [Fact]
+    public void Volley_smoke_lasts_two_volleys_while_the_guns_keep_their_rhythm_and_blast()
+    {
+        var plan = Plan(new EffectDef { Kind = "cannon", Every = 5 });
+        var smoke = plan.Layers.Where(l => l.Sprite == "puff").ToList();
+        Assert.Equal(2, smoke.Count);
+        Assert.All(smoke, l => Assert.Equal(10f, l.Life));
+        Assert.All(smoke, l => Assert.Equal(0.12f * 5, l.Brake * l.Life, 4));
+        Assert.All(plan.Layers.Where(l => l.Sprite != "puff"), l => Assert.Equal(5f, l.Life));
     }
 
     [Fact]
@@ -166,7 +179,7 @@ public class EffectRecipeTests
     {
         var l = Plan(new EffectDef { Kind = "powder" }, w: 3, h: 1, phase: 0.37f).Layers[0];
         Assert.Equal("puff", l.Sprite);
-        Assert.Equal(66, l.Amount);
+        Assert.Equal(132, l.Amount);
         Assert.Equal(new Vector3(1.425f, 0.0866025403f, 0.25f), l.Box);
         Assert.Equal(1.21243548f, l.VMax);
         Assert.Equal(new Rgba(0.55f, 0.55f, 0.55f, 0.5f), l.Ramp[2].c);

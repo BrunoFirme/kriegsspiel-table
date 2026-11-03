@@ -20,6 +20,7 @@ public static class EffectFx
         public Vector3 Lift;
         public float Drift;
         public float Brake, Blast;
+        public Aabb Seen;
         public StandardMaterial3D? Lit;
         public double Speed = 1;
     }
@@ -194,10 +195,20 @@ public static class EffectFx
         {
             made.Brake = l.Brake;
             made.Blast = Mathf.Max(l.VMax * 1.5f, 1f);
+            made.Seen = em.VisibilityAabb;
             pm.DampingCurve = StepTex(l.Brake, 1, 0);
-            pm.VelocityLimitCurve = LimitTex(made);
+            FollowWind(made, pm);
         }
         return made;
+    }
+
+    static float DriftSpeed(Emitter m) => StillDrift + WindNow.Length() * m.Drift * WindCarrySeconds;
+
+    static void FollowWind(Emitter m, ParticleProcessMaterial pm)
+    {
+        pm.VelocityLimitCurve = StepTex(m.Brake, m.Blast, DriftSpeed(m));
+        float reach = (float)m.Node.Lifetime * DriftSpeed(m);
+        m.Node.VisibilityAabb = m.Seen.Grow(reach);
     }
 
     const float WindCarrySeconds = 1.5f, StillDrift = 0.15f, BrakeEase = 0.08f;
@@ -209,9 +220,6 @@ public static class EffectFx
             c.AddPoint(new Vector2(x, y), 0, 0, Curve.TangentMode.Linear, Curve.TangentMode.Linear);
         return new CurveTexture { Curve = c };
     }
-
-    static CurveTexture LimitTex(Emitter m) =>
-        StepTex(m.Brake, m.Blast, StillDrift + WindNow.Length() * m.Drift * WindCarrySeconds);
 
     public static Vector3 WindNow { get; private set; } = Pull(new Wind());
 
@@ -252,7 +260,7 @@ public static class EffectFx
             if (GodotObject.IsInstanceValid(m.Node) && m.Node.ProcessMaterial is ParticleProcessMaterial pm)
             {
                 pm.Gravity = m.Lift + WindNow * m.Drift;
-                if (m.Brake > 0) pm.VelocityLimitCurve = LimitTex(m);
+                if (m.Brake > 0) FollowWind(m, pm);
             }
     }
 
