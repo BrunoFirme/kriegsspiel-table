@@ -14,6 +14,25 @@ Tabletop Simulator.
 The app is an early beta and is played by one group so far. Windows is the platform it is built and
 tested on.
 
+## Getting it
+
+- **Free, from [Releases](https://github.com/BrunoFirme/kriegsspiel-table/releases), for good.** The installer or
+  the zip: the whole game, updating itself from here. The source stays here too.
+- **On Steam, coming soon: US$10 / €10, at most R$20 in Brazil.** The same game, plus what Steam adds:
+  - **Workshop:** publish packs and scenarios; subscribed ones install themselves.
+  - **Steam Cloud:** hosted games and settings follow you to another PC.
+  - **Joining through Steam:** a `steam:` join code, Join from the friends list or an overlay invite, with no port
+    to open and the host's address hidden.
+  - **Updates through Steam.**
+
+Both play together: players on either one join the same table. Buying it on Steam is how to support the work.
+
+## Found a problem?
+
+[Open an issue](https://github.com/BrunoFirme/kriegsspiel-table/issues/new/choose). At the table, the menu's
+**Copy diagnostics** puts the version, your PC, the latest errors and the last commands on the clipboard: paste
+them into the issue.
+
 ## Building
 
 Needs the .NET 10 SDK and Godot 4.7 with .NET (`winget install GodotEngine.GodotEngine.Mono`).
@@ -24,7 +43,7 @@ Needs the .NET 10 SDK and Godot 4.7 with .NET (`winget install GodotEngine.Godot
 | `dotnet build src/App` | the app (Godot builds and runs it; open `src/App` in the Godot editor to run it there) |
 | `powershell -File tools\check.ps1` | everything a change must pass: both builds, every test, the app's node tests, the size and hygiene rules |
 | `powershell -File tools\export-windows.ps1 -Zip` | a release folder that runs without Godot or .NET installed |
-| `powershell -File tools\export-windows.ps1 -Installer -VersionName "0.2 beta"` | the same folder plus a Windows installer (needs Inno Setup 6: `winget install JRSoftware.InnoSetup`) |
+| `powershell -File tools\export-windows.ps1 -Installer -VersionName "0.3 beta"` | the same folder plus a Windows installer (needs Inno Setup 6: `winget install JRSoftware.InnoSetup`) |
 
 Steam (the Workshop) is left out of every build unless asked for: `-p:KTableSteam=true`, or `-Steam` on the
 export. Without it the app has no Steam code and needs no Steam client.

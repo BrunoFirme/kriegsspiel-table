@@ -45,7 +45,10 @@ public static class Json
         (T)(JsonSerializer.Deserialize(json, typeof(T), Ctx) ?? throw new JsonException("null"));
 
     public static T Deserialize<T>(ReadOnlySpan<byte> utf8) =>
-        (T)(JsonSerializer.Deserialize(utf8, typeof(T), Ctx) ?? throw new JsonException("null"));
+        (T)(JsonSerializer.Deserialize(WithoutBom(utf8), typeof(T), Ctx) ?? throw new JsonException("null"));
+
+    static ReadOnlySpan<byte> WithoutBom(ReadOnlySpan<byte> utf8) =>
+        utf8.StartsWith(Encoding.UTF8.Preamble) ? utf8[Encoding.UTF8.Preamble.Length..] : utf8;
 
     public static T Clone<T>(T value) => Deserialize<T>(SerializeBytes(value));
 
@@ -94,7 +97,7 @@ public static class Json
     public static SaveHeadline? ReadSaveHeadline(string path, int bytes = 1 << 18)
     {
         var head = Head(path, bytes);
-        var r = new Utf8JsonReader(head, isFinalBlock: false, state: default);
+        var r = new Utf8JsonReader(WithoutBom(head), isFinalBlock: false, state: default);
         if (!r.Read() || r.TokenType != JsonTokenType.StartObject) throw new JsonException("a save is an object");
         string scenarioId = "", saved = "";
         while (r.Read() && r.TokenType == JsonTokenType.PropertyName)
@@ -119,7 +122,7 @@ public static class Json
     public static (Scenario head, int pieces) ScenarioCard(string path)
     {
         var bytes = File.ReadAllBytes(path);
-        var r = new Utf8JsonReader(bytes);
+        var r = new Utf8JsonReader(WithoutBom(bytes));
         if (!r.Read() || r.TokenType != JsonTokenType.StartObject) throw new JsonException("a scenario is an object");
         var s = new Scenario();
         int pieces = 0;
@@ -151,7 +154,7 @@ public static class Json
     public static (string? name, string? scenarioId, GameClock? clock, string? mirrorOf) SaveCard(string path)
     {
         var bytes = Unpacked(File.ReadAllBytes(path));
-        var r = new Utf8JsonReader(bytes);
+        var r = new Utf8JsonReader(WithoutBom(bytes));
         if (!r.Read() || r.TokenType != JsonTokenType.StartObject) throw new JsonException("a save is an object");
         string? name = null, scenarioId = null, mirrorOf = null;
         GameClock? clock = null;

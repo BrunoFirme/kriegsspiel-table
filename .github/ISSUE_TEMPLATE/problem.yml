@@ -1,0 +1,25 @@
+name: Something went wrong
+description: A crash, lost work, a join that fails, or anything that does not do what it should.
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostics
+      description: At the table, open the menu and choose Copy diagnostics, then paste here. It holds the version, your PC and graphics card, the latest errors and the last commands. Nothing is sent by the app itself.
+      render: text
+    validations:
+      required: false
+  - type: input
+    id: how
+    attributes:
+      label: Installed from
+      placeholder: GitHub installer, GitHub zip, or Steam
+    validations:
+      required: false

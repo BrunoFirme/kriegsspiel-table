@@ -75,8 +75,10 @@ if Invite says it could not, forward that port by hand. Players: Join a game > a
 password and name.
 
 The guides are in docs\ beside this file: the umpire's guide, the player's, the community guide and
-the scripting reference for pieces that carry their own Lua. Menu > Guides and scripting reference
-opens that folder from inside the game.
+the scripting reference for pieces that carry their own Lua. Menu > Help... reads them inside the game.
+
+Found a problem? Open an issue at https://github.com/BrunoFirme/kriegsspiel-table/issues and paste
+what Menu > Copy diagnostics puts on the clipboard.
 
 Made by Bruno Firme. The license is in LICENSE.txt: free for playing, umpiring, teaching, research
 and events, and for sharing what you make free of charge. Selling the software, selling packs,

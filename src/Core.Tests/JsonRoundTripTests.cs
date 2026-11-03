@@ -27,6 +27,21 @@ public class JsonRoundTripTests
         finally { File.Delete(path); }
     }
 
+    [Fact]
+    public void A_file_saved_with_a_byte_order_mark_reads_as_one_without()
+    {
+        var sc = CoreSamples.Scenario();
+        var path = Path.Combine(Path.GetTempPath(), $"ktable-bom-{Guid.NewGuid():N}.json");
+        try
+        {
+            File.WriteAllText(path, Json.Serialize(sc, indented: true), new System.Text.UTF8Encoding(true));
+            Assert.Equal(0xEF, File.ReadAllBytes(path)[0]);
+            Assert.Equal(Json.Serialize(sc), Json.Serialize(Json.Load<Scenario>(path)));
+            Assert.Equal(sc.Name, Json.ScenarioCard(path).head.Name);
+        }
+        finally { File.Delete(path); }
+    }
+
     static void AssertRoundTrip<T>(T value)
     {
         var json = Json.Serialize(value);
