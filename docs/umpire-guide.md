@@ -153,7 +153,7 @@ Names too small in the picture? Raise **Settings → Capture resolution**, shrin
 
 ### Map sheets
 
-In the **Map** drawer: add sheets, pick one (or Alt+click it), unlock to drag, nudge with the arrow keys, turn
+In the **Map** drawer: add sheets (files or web links), pick one (or Alt+click it), unlock to drag, nudge with the arrow keys, turn
 or resize with **T**. **Crop…** trims borders; the sheet keeps its scale.
 
 ### Relief

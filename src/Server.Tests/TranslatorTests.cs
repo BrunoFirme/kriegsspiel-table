@@ -33,8 +33,8 @@ public class TranslatorTests
         Assert.Contains("function on_load(saved)", s);
         Assert.Contains("function on_save()", s);
         Assert.Contains("json.encode(state)", s);
-        Assert.Contains("compat.create_button(self, markFor(form))", s);
-        Assert.Contains("compat.edit_button(self, {index = 1, label = ammo})", s);
+        Assert.Contains("compat.create_button(self, markFor(form), _G)", s);
+        Assert.Contains("compat.edit_button(self, {index = 1, label = ammo}, _G)", s);
         Assert.Contains("function ammoUp(__who, __alt, __index, __piece)", s);
         Assert.Contains("function rename(__who, __value, __index, __piece)", s);
         Assert.Contains("local obj, color, value = __piece or self, compat.color_of(__who), __value", s);

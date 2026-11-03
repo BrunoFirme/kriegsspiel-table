@@ -74,8 +74,7 @@ public static class StateMachine
             case SetWidgets sw: return ApplySetWidgets(g, sw, ref inverse);
             case SetMenuItems sm: return ApplySetMenuItems(g, sm, ref inverse);
             case EditWidget ew: return ApplyEditWidget(g, ew, ref inverse);
-            case ClickWidget cw:
-                return g.Find(cw.Layer, cw.Id) == null ? "no such piece" : null;
+            case ClickWidget cw: return CheckClick(g, cw);
             case SetHotkeys sh: return ApplySetHotkeys(g, sh, ref inverse);
             case SetGlobalMenuItems sgm: return ApplySetGlobalMenuItems(g, sgm, ref inverse);
             case Hotkey hk:
@@ -717,12 +716,17 @@ public static class StateMachine
         return null;
     }
 
+    static string? CheckClick(GameState g, ClickWidget cw) =>
+        g.Find(cw.Layer, cw.Id) is not { } p ? "no such piece"
+        : cw.Index >= 1 && cw.Index <= p.Widgets.Count && p.Widgets[cw.Index - 1].Locked ? "that widget is locked" : null;
+
     static string? ApplyEditWidget(GameState g, EditWidget ew, ref Command? inverse)
     {
         var p = g.Find(ew.Layer, ew.Id);
         if (p == null) return "no such piece";
         if (ew.Index < 1 || ew.Index > p.Widgets.Count) return "no such widget";
         var w = p.Widgets[ew.Index - 1];
+        if (w.Locked) return "that widget is locked";
         inverse = new EditWidget { Layer = ew.Layer, Id = ew.Id, Index = ew.Index, Value = w.Value };
         w.Value = ew.Value ?? "";
         return null;

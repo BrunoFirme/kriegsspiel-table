@@ -248,7 +248,9 @@ internal sealed class DecalTool
             Ui.RememberFolder(fd);
             FileThumbs.Show(fd);
             _m.AddChild(fd);
-            fd.FileSelected += f => { if (ImageFiles.Load(f) is { } img) Set(img, Path.GetFileNameWithoutExtension(f)); else studio.Say("Could not read " + Path.GetFileName(f)); };
+            void Use(string f) { if (ImageFiles.Load(f) is { } img) Set(img, Path.GetFileNameWithoutExtension(f)); else studio.Say("Could not read " + Path.GetFileName(f)); }
+            fd.FileSelected += Use;
+            PictureLinks.Offer(fd, studio.Store.Root, Use);
             fd.PopupCentered();
             Ui.FreeOnClose(fd);
         }, "PNG, JPEG, WebP, SVG, BMP, TGA, TIFF: a see-through PNG or an SVG makes a clean transfer"));

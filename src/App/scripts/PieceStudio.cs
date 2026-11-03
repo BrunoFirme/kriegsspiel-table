@@ -334,7 +334,11 @@ public partial class PieceStudio : CanvasLayer
     {
         var fd = new FileDialog { FileMode = FileDialog.FileModeEnum.OpenFiles, Access = FileDialog.AccessEnum.Filesystem, Filters = new[] { filter }, Title = title, Size = new Vector2I(900, 600) };
         Ui.RememberFolder(fd);
-        if (filter == ImageFiles.Filter) FileThumbs.Show(fd);
+        if (filter == ImageFiles.Filter)
+        {
+            FileThumbs.Show(fd);
+            PictureLinks.Offer(fd, _store.Root, f => got(new[] { f }));
+        }
         _root.AddChild(fd);
         fd.FilesSelected += f => got(f);
         fd.PopupCentered();

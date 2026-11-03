@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Godot;
 using KTable.Core.Model;
+using KTable.Core.Protocol;
 
 namespace KTable.App;
 
@@ -53,6 +54,7 @@ sealed class PieceDecals
 
     (string pack, string file)? FileOf(string picture)
     {
+        if (UploadAsset.IsWebPicture(UploadAsset.ReliefPackage, picture)) return (UploadAsset.ReliefPackage, picture);
         var store = _piece.Session.Store;
         var own = store.PackOfDef(_piece.Piece.Def);
         var packs = _piece.Session.View.Packs.Select(store.Pack).Where(p => p != null).Cast<PackManifest>();

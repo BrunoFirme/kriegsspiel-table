@@ -109,7 +109,12 @@ public sealed class UploadAsset : FilePiece
 
     public static bool IsRelief(string package, string path) => package == ReliefPackage && Model.ReliefFiles.IsReliefPath(path);
 
-    public static bool PathAllowed(string package, string path) => IsRelief(package, path) ||
+    public const string WebPictures = "pictures";
+
+    public static bool IsWebPicture(string package, string path) =>
+        package == ReliefPackage && System.Text.RegularExpressions.Regex.IsMatch(path, @"^pictures/[0-9a-f]{64}\.(png|jpg|webp|bmp)$");
+
+    public static bool PathAllowed(string package, string path) => IsRelief(package, path) || IsWebPicture(package, path) ||
         Model.PackManifest.IsUserPackId(package) &&
         (path == "pack.json" || System.Text.RegularExpressions.Regex.IsMatch(path, @"^assets/[0-9a-f]{64}\.(png|jpg|jpeg|webp|obj)$"));
 }

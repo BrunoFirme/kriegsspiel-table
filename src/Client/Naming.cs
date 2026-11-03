@@ -29,7 +29,7 @@ public static class Naming
 
     public static string PieceName(string stem)
     {
-        var s = stem.Replace('_', ' ').Replace('-', ' ').Trim();
+        var s = System.Text.RegularExpressions.Regex.Replace(stem, "^[0-9A-Fa-f]{32,}", "").Replace('_', ' ').Replace('-', ' ').Trim();
         while (s.Contains("  ")) s = s.Replace("  ", " ");
         return s.Length == 0 ? "Piece" : char.ToUpperInvariant(s[0]) + s[1..];
     }

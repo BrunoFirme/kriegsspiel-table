@@ -485,7 +485,9 @@ internal sealed class PieceHandles(ScriptHost host)
     }
 
     bool PictureInGame(string picture) =>
-        host.Server.Store is not { } store || host.Server.State.Packs.Any(id => store.Pack(id)?.Assets.ContainsKey(picture) == true);
+        host.Server.Store is not { } store
+        || (UploadAsset.IsWebPicture(UploadAsset.ReliefPackage, picture) ? File.Exists(Path.Combine(store.PackageDir(UploadAsset.ReliefPackage), picture))
+            : host.Server.State.Packs.Any(id => store.Pack(id)?.Assets.ContainsKey(picture) == true));
 
     static DecalDef? ParseDecal(Table t)
     {
@@ -559,6 +561,7 @@ internal sealed class PieceHandles(ScriptHost host)
                 case "tooltip": w.Tooltip = v.CastToString(); break;
                 case "on_click": w.OnClick = v.CastToString(); break;
                 case "on_change": w.OnChange = v.CastToString(); break;
+                case "kind" when v.CastToString() is "button" or "input" or "label": w.Kind = v.String; break;
             }
         }
     }

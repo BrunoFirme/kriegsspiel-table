@@ -319,6 +319,61 @@ public class ScriptingTests
     }
 
     [Fact]
+    public void A_TTS_input_turned_over_on_top_is_locked_text_on_the_front_and_turning_it_back_unlocks_it()
+    {
+        using var t = new Table();
+        var tr = KTable.Server.Scripting.Translate.TtsTranslator.Translate("""
+            function onLoad()
+              self.createInput({ input_function = "typed", function_owner = self, value = "4", position = {0.5, 0.2, 0}, width = 400, height = 200, font_size = 200 })
+              self.createInput({ input_function = "typed", function_owner = self, value = "U", position = {0.5, -0.2, 0}, rotation = {0, 0, 180}, width = 400, height = 200 })
+              self.createButton({ click_function = "lock", function_owner = self, label = "L", position = {0, 0.2, 0}, width = 400, height = 200 })
+              self.createButton({ click_function = "unlock", function_owner = self, label = "O", position = {0, 0.2, 0.5}, width = 400, height = 200 })
+            end
+            function lock() self.editInput({ index = 0, rotation = {0, 0, 180}, scale = {-1, 1, 1} }) end
+            function unlock() self.editInput({ index = 0, rotation = {0, 0, 0}, scale = {1, 1, 1} }) end
+            function typed(obj, color, value) end
+            """);
+        SetScript(t, tr.Script);
+        var p = t.Server.State.Find(U, P)!;
+        Assert.Equal(("back", false), (p.Widgets[1].Face, p.Widgets[1].Locked));
+        var x = p.Widgets[0].X;
+        t.Server.Handle(Table.Host, new ClickWidget { Layer = U, Id = P, Index = 3 });
+        Assert.Equal(("front", true, x), (p.Widgets[0].Face, p.Widgets[0].Locked, p.Widgets[0].X));
+        var refused = t.Server.Handle(Table.Host, new EditWidget { Layer = U, Id = P, Index = 1, Value = "9" });
+        Assert.Contains(refused, o => o.Message is ErrorMessage);
+        Assert.Equal("4", p.Widgets[0].Value);
+        t.Server.Handle(Table.Host, new ClickWidget { Layer = U, Id = P, Index = 4 });
+        t.Server.Handle(Table.Host, new EditWidget { Layer = U, Id = P, Index = 1, Value = "9" });
+        Assert.Equal(("front", false, "9"), (p.Widgets[0].Face, p.Widgets[0].Locked, p.Widgets[0].Value));
+    }
+
+    [Fact]
+    public void TTS_handlers_named_at_run_time_get_TTS_arguments_and_getInputs_holds_what_was_typed()
+    {
+        using var t = new Table();
+        var tr = KTable.Server.Scripting.Translate.TtsTranslator.Translate("""
+            function onLoad()
+              local typed = "typed_1"
+              _G[typed] = function(obj, color, value, selected) obj.setName(value .. "/" .. color .. "/" .. tostring(selected)) end
+              self.createInput({ input_function = typed, function_owner = self, value = "a", position = {0, 0.2, 0}, width = 400, height = 200 })
+              local click = "pressed"
+              self.createButton({ click_function = click, function_owner = self, label = "B", position = {0, 0.2, 0.5}, width = 400, height = 200 })
+              self.createButton({ click_function = "named", function_owner = self, label = "N", position = {0, 0.2, -0.5}, width = 400, height = 200 })
+            end
+            function pressed(obj, color, alt) obj.setName(obj.getInputs()[1].value .. "!" .. color .. tostring(alt)) end
+            function named(obj, color, alt) obj.setName("named " .. color) end
+            """);
+        SetScript(t, tr.Script);
+        var p = t.Server.State.Find(U, P)!;
+        t.Server.Handle(Table.Host, new EditWidget { Layer = U, Id = P, Index = 1, Value = "typed" });
+        Assert.Equal("typed/White/false", p.Label);
+        t.Server.Handle(Table.Host, new ClickWidget { Layer = U, Id = P, Index = 2 });
+        Assert.Equal("typed!Whitefalse", p.Label);
+        t.Server.Handle(Table.Host, new ClickWidget { Layer = U, Id = P, Index = 3 });
+        Assert.Equal("named White", p.Label);
+    }
+
+    [Fact]
     public void A_TTS_script_s_decals_come_across_in_piece_units_and_addDecal_adds_one()
     {
         using var t = new Table();
@@ -337,6 +392,43 @@ public class ScriptingTests
         Assert.Equal(ds[0].W / 0.6 * 0.4, ds[0].H, 6);
         Assert.Equal(-ds[0].X, ds[1].X, 6);
         Assert.Equal(("back", 20.0), (ds[1].Face, ds[1].Rot));
+    }
+
+    [Fact]
+    public void A_TTS_decal_on_the_web_is_fetched_and_a_picture_dialog_answers_with_a_fetched_link()
+    {
+        using var t = new Table();
+        var name = $"pictures/{new string('a', 64)}.png";
+        Directory.CreateDirectory(Path.Combine(t.Store.PackageDir("sheets"), "pictures"));
+        File.WriteAllBytes(Path.Combine(t.Store.PackageDir("sheets"), name), [1]);
+        var asked = new List<string>();
+        t.Server.Scripts.FetchPicture = link => { asked.Add(link); return Task.FromResult<string?>(link.EndsWith("good.png") ? name : null); };
+        var tr = KTable.Server.Scripting.Translate.TtsTranslator.Translate("""
+            function onLoad()
+              self.setDecals({ { name = "Arms", url = "arms", position = {0, 0.2, 0}, rotation = {90, 180, 0}, scale = {1, 1, 1} },
+                               { name = "Web", url = "https://example.com/good.png", position = {0, 0.2, 0}, rotation = {90, 180, 0}, scale = {1, 1, 1} } })
+              self.createButton({ click_function = "ask", function_owner = self, label = "B", position = {0, 0.2, 0}, width = 400, height = 200 })
+            end
+            function ask(obj, color)
+              Player[color].showInputDialog("Set image URL", function(text) self.setDecals({ { name = "New", url = text, position = {0, 0.2, 0}, rotation = {90, 180, 0}, scale = {1, 1, 1} } }) end)
+            end
+            """);
+        SetScript(t, tr.Script);
+        Assert.Equal(["arms"], t.Server.State.Find(U, P)!.Decals.Select(d => d.Picture));
+        t.Server.Scripts.Tick(0.1);
+        Assert.Equal(["arms", name], t.Server.State.Find(U, P)!.Decals.Select(d => d.Picture));
+        var logged = t.Server.Log.Count;
+        t.Server.Handle(Table.Host, new ClickWidget { Layer = U, Id = P, Index = 1 });
+        var dialog = Assert.Single(Flat(t.Server.Log.Skip(logged)).OfType<ShowDialog>());
+        Assert.Equal("picture", dialog.Kind);
+        t.Server.Handle(Table.Host, new DialogResult { Token = dialog.Token, Value = "https://example.com/good.png" });
+        t.Server.Scripts.Tick(0.2);
+        Assert.Equal([name], t.Server.State.Find(U, P)!.Decals.Select(d => d.Picture));
+        t.Server.Handle(Table.Host, new ClickWidget { Layer = U, Id = P, Index = 1 });
+        t.Server.Handle(Table.Host, new DialogResult { Token = Flat(t.Server.Log).OfType<ShowDialog>().Last().Token, Value = "https://example.com/bad.png" });
+        var said = t.Server.Scripts.Tick(0.3);
+        Assert.Equal([name], t.Server.State.Find(U, P)!.Decals.Select(d => d.Picture));
+        Assert.Contains(Flat(said.Select(o => o.Message).OfType<CommandMessage>().Select(m => m.Command)).OfType<Say>(), x => x.Text == "No picture came from that link.");
     }
 
     [Fact]

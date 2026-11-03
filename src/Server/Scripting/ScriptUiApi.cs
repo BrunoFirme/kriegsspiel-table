@@ -7,7 +7,7 @@ namespace KTable.Server.Scripting;
 
 public sealed partial class ScriptHost
 {
-    readonly Dictionary<string, (PieceScript owner, DynValue fn)> _dialogs = new();
+    readonly Dictionary<string, (PieceScript owner, DynValue fn, string kind)> _dialogs = new();
     int _nextDialog = 1;
 
     void InstallUiApi()
@@ -15,25 +15,26 @@ public sealed partial class ScriptHost
         _vm.Globals["ui"] = UiTable(null, null);
 
         var game = _vm.Globals.Get("game");
-        if (game.Type == DataType.Table)
-            game.Table["dialog"] = Fn(a =>
+        if (game.Type != DataType.Table) return;
+        game.Table["fetch_picture"] = Fn(FetchPictureCall);
+        game.Table["dialog"] = Fn(a =>
+        {
+            var owner = _current ?? throw new ScriptRuntimeException("game.dialog: not inside a script call");
+            var who = Arg(a, 0); var spec = Arg(a, 1); var fn = Arg(a, 2);
+            if (fn.Type != DataType.Function) throw new ScriptRuntimeException("game.dialog: the third argument must be a function");
+            var token = $"d-{_nextDialog++:D6}";
+            var d = new ShowDialog { Token = token, To = who.Type == DataType.Table && who.Table.Get("id").Type == DataType.Number ? $"p:{(long)who.Table.Get("id").Number}" : null };
+            if (spec.Type == DataType.Table)
             {
-                var owner = _current ?? throw new ScriptRuntimeException("game.dialog: not inside a script call");
-                var who = Arg(a, 0); var spec = Arg(a, 1); var fn = Arg(a, 2);
-                if (fn.Type != DataType.Function) throw new ScriptRuntimeException("game.dialog: the third argument must be a function");
-                var token = $"d-{_nextDialog++:D6}";
-                var d = new ShowDialog { Token = token, To = who.Type == DataType.Table && who.Table.Get("id").Type == DataType.Number ? $"p:{(long)who.Table.Get("id").Number}" : null };
-                if (spec.Type == DataType.Table)
-                {
-                    d.Kind = spec.Table.Get("kind").CastToString() ?? "memo";
-                    d.Title = spec.Table.Get("title").CastToString() ?? "";
-                    d.Text = spec.Table.Get("text").CastToString() ?? "";
-                    if (spec.Table.Get("options").Type == DataType.Table) foreach (var o in spec.Table.Get("options").Table.Values) d.Options.Add(o.CastToString() ?? "");
-                }
-                _dialogs[token] = (owner, fn);
-                Emit(d);
-                return S(token);
-            });
+                d.Kind = spec.Table.Get("kind").CastToString() ?? "memo";
+                d.Title = spec.Table.Get("title").CastToString() ?? "";
+                d.Text = spec.Table.Get("text").CastToString() ?? "";
+                if (spec.Table.Get("options").Type == DataType.Table) foreach (var o in spec.Table.Get("options").Table.Values) d.Options.Add(o.CastToString() ?? "");
+            }
+            _dialogs[token] = (owner, fn, d.Kind);
+            Emit(d);
+            return S(token);
+        });
     }
 
     readonly Dictionary<string, DynValue> _uiTables = new();
@@ -103,6 +104,7 @@ public sealed partial class ScriptHost
     {
         if (!_dialogs.Remove(r.Token, out var d)) return;
         if (!d.owner.Enabled || !IsCurrent(d.owner)) return;
+        if (d.kind == "picture" && r.Value != null && IsWebLink(r.Value)) { Fetch(d.owner, d.fn, r.Value, who); return; }
         Invoke(d.owner, d.fn, r.Value == null ? DynValue.Nil : DynValue.NewString(r.Value), who);
     }
 

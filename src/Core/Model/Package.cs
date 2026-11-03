@@ -393,6 +393,7 @@ public sealed class Widget
     public string? Tooltip { get; set; }
     public string? OnClick { get; set; }
     public string? OnChange { get; set; }
+    [System.Text.Json.Serialization.JsonIgnore] public bool Locked => Kind == "label";
     public Widget Clone() => (Widget)MemberwiseClone();
 }
 

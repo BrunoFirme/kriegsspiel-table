@@ -36,7 +36,7 @@ sealed partial class StudioTools
             WriteFace);
         yield return new AgentTool("studio_add_picture_source",
             "Copies a picture file into the pack so an image layer can show it; returns the Src name and its size in pixels.",
-            Args.Schema(new Arg("path", "string", "full path of a picture file", true)),
+            Args.Schema(new Arg("path", "string", "full path or web link of a picture file", true)),
             AddSource);
         yield return new AgentTool("studio_view_piece",
             "Shows a kind on the studio's table, as it will look in a game (counters, text and script buttons printed), and returns a picture of the window.",
@@ -122,13 +122,15 @@ sealed partial class StudioTools
         return null;
     }
 
-    Task<ToolResult> AddSource(JsonElement a) => On(s =>
+    Task<ToolResult> AddSource(JsonElement a) => On(async s =>
     {
-        var path = a.Str("path") ?? "";
-        if (!File.Exists(path)) return Task.FromResult(ToolResult.Fail($"No such file: {path}"));
+        var (files, noPicture) = await PictureLinks.Local(new[] { a.Str("path") ?? "" }, s.Store.Root);
+        if (noPicture != null) return ToolResult.Fail(noPicture);
+        var path = files[0];
+        if (!File.Exists(path)) return ToolResult.Fail($"No such file: {path}");
         var src = ArtStore.AddSrcFile(s.Store, s.Pack.Id, path, out var img);
-        if (src == null || img == null) return Task.FromResult(ToolResult.Fail($"{Path.GetFileName(path)} could not be read as a picture."));
-        return Task.FromResult(new ToolResult(JsonSerializer.Serialize(new { Src = src, SrcW = img.GetWidth(), SrcH = img.GetHeight() })));
+        if (src == null || img == null) return ToolResult.Fail($"{Path.GetFileName(path)} could not be read as a picture.");
+        return new ToolResult(JsonSerializer.Serialize(new { Src = src, SrcW = img.GetWidth(), SrcH = img.GetHeight() }));
     });
 
     Task<ToolResult> ViewPiece(JsonElement a) => On(async s =>

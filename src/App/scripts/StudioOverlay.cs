@@ -133,7 +133,7 @@ sealed class StudioOverlay
             var col = new Color(0.55f, 1f, 0.6f, 0.85f);
             if (sz.X > 1 && sz.Y > 1) o.DrawRect(new Rect2(c - sz / 2, sz), col, false, 1);
             else o.DrawCircle(c, 3, col, true, -1, true);
-            var label = w.Kind == "input" ? (w.Value.Length > 0 ? w.Value : w.Placeholder) : w.Label;
+            var label = w.Kind == "input" ? (w.Value.Length > 0 ? w.Value : w.Placeholder) : w.Locked && w.Value.Length > 0 ? w.Value : w.Label;
             if (label.Length > 0) o.DrawString(font, c + new Vector2(-40, -sz.Y / 2 - 3), label.Length > 24 ? label[..24] + "…" : label, HorizontalAlignment.Center, 80, 10, col);
         }
     }

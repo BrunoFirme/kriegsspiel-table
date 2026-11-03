@@ -110,8 +110,11 @@ sealed partial class AgentTableTools
         return new ToolResult("");
     }
 
-    async Task<ToolResult> SetPictureOf(Hud hud, SheetDef sh, string path)
+    async Task<ToolResult> SetPictureOf(Hud hud, SheetDef sh, string given)
     {
+        var (files, noPicture) = await PictureLinks.Local(new[] { given }, hud.S.Store.Root);
+        if (noPicture != null) return ToolResult.Fail(noPicture);
+        var path = files[0];
         if (!File.Exists(path)) return ToolResult.Fail("No such file: " + path);
         string? problem = null; bool done = false;
         hud.Map.Reliefs.SetPicture(sh.Id, path, why => { problem = why; done = true; });

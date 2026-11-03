@@ -44,6 +44,7 @@ public static class TtsTranslator
         var rw = new Rewriter(res, ctx, root);
         var newRoot = rw.Visit(root)!;
         res.Script = newRoot.ToFullString();
+        if (rw.MakesWidgets) res.Script = $"__tts_bound = {{ {string.Join(", ", rw.BoundHandlers.Order(StringComparer.Ordinal).Select(n => $"[\"{n}\"] = true"))} }} " + res.Script;
         return res;
     }
 
@@ -75,6 +76,14 @@ public static class TtsTranslator
         readonly TranslateResult _res;
         readonly TranslateContext _ctx;
         readonly HashSet<string> _clickHandlers = new(), _inputHandlers = new(), _uiHandlers = new();
+        public IEnumerable<string> BoundHandlers => _clickHandlers.Concat(_inputHandlers).Distinct();
+        public bool MakesWidgets { get; private set; }
+
+        string Widgets(string call)
+        {
+            MakesWidgets = true;
+            return call;
+        }
         readonly Dictionary<string, (string type, double scale)> _spawnShapes = new();
 
         public Rewriter(TranslateResult res, TranslateContext ctx, SyntaxNode root)
@@ -326,10 +335,10 @@ public static class TtsTranslator
                 case "getTransformRight": return Compat($"compat.transform_right({recv})", node);
                 case "getTransformUp": return Compat($"compat.transform_up({recv})", node);
                 case "getBounds" or "getBoundsNormalized": return Compat($"compat.get_bounds({recv})", node);
-                case "createButton": return Compat($"compat.create_button({recv}, {A(0)})", node);
-                case "createInput": return Compat($"compat.create_input({recv}, {A(0)})", node);
-                case "editButton": return Compat($"compat.edit_button({recv}, {A(0)})", node);
-                case "editInput": return Compat($"compat.edit_input({recv}, {A(0)})", node);
+                case "createButton": return Compat(Widgets($"compat.create_button({recv}, {A(0)}, _G)"), node);
+                case "createInput": return Compat(Widgets($"compat.create_input({recv}, {A(0)}, _G)"), node);
+                case "editButton": return Compat(Widgets($"compat.edit_button({recv}, {A(0)}, _G)"), node);
+                case "editInput": return Compat(Widgets($"compat.edit_input({recv}, {A(0)}, _G)"), node);
                 case "removeButton": return Compat($"compat.remove_button({recv}, {A(0)})", node);
                 case "removeInput": return Compat($"compat.remove_input({recv}, {A(0)})", node);
                 case "clearButtons": return Compat($"compat.clear_buttons({recv})", node);

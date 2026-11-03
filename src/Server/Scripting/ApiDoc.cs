@@ -346,7 +346,7 @@ public static partial class ApiDoc
     See("self.lines", "self.to_local");
 
     M("piece", "set_decals(decals)", "Puts pictures on the piece's faces that move, turn and flip with it: { { picture =, x =, z =, w =, h =, rot =, face =, name = }, … } in piece units.", "setDecals");
-    P("decals", "Decal[]", "The decals. `picture` is a picture in this game's packs (a TTS module's decal images come along when it is converted); `face` is \"front\" or \"back\"; `w` and `h` default to 0.2, `rot` is degrees. An empty table takes every decal away.");
+    P("decals", "Decal[]", "The decals. `picture` is a picture in this game's packs (a TTS module's decal images come along when it is converted) or one from game.fetch_picture or a picture dialog; `face` is \"front\" or \"back\"; `w` and `h` default to 0.2, `rot` is degrees. An empty table takes every decal away.");
     X("""
         local arms = self.decals[1]
         self.set_decals{ { picture = arms.picture, x = 0.35, z = -0.3, w = 0.2, h = 0.2, name = "Arms" } }
@@ -371,7 +371,7 @@ public static partial class ApiDoc
 
     static ApiSection PieceWidgets() => Section("A piece: widgets and its menu", "Widgets are drawn on a face in piece units: map units measured on the piece's kind before the table scales it, centre (0, 0), x right, z down the picture. A kind 1.2 wide and 0.6 high runs from x = -0.6 to 0.6 and z = -0.3 to 0.3. Colours are \"#RRGGBB[AA]\", a name or { r, g, b, a }.", () =>
     {
-        M("piece", "button{ face, x, z, w, h, rot, label, font, color, text_color, tooltip, on_click }", "Draws a button and returns its index from 1. With no w and h it is a bare label that takes no clicks. on_click names a function called as fn(who, alt, index, piece).", "createButton", "number");
+        M("piece", "button{ face, x, z, w, h, rot, label, font, color, text_color, tooltip, on_click, kind }", "Draws a button and returns its index from 1. With no w and h it is a bare label that takes no clicks. on_click names a function called as fn(who, alt, index, piece).", "createButton", "number");
         O("face", "\"front\"|\"back\"", "The face it is drawn on. Default \"front\".");
         O("x", "number", "Centre, piece units right of the piece's centre. Default 0.");
         O("z", "number", "Centre, piece units down the picture. Default 0.");
@@ -384,6 +384,7 @@ public static partial class ApiDoc
         O("text_color", "Color", "The text's colour.");
         O("tooltip", "string", "Shown when the pointer rests on it.");
         O("on_click", "string", "The handler's name: called as fn(who, alt, index, piece); `alt` is true for a right-click.");
+        O("kind", "\"button\"|\"input\"|\"label\"", "\"label\" shows it but takes no clicks or typing: locked text. A TTS button or input turned face down above the piece comes across this way. `edit` can change it.");
         R("The widget's index, from 1, for `edit` and `remove_widget`.");
         X("""
             function on_load()
@@ -399,7 +400,7 @@ public static partial class ApiDoc
         Note("The handler is looked up in this script first, then in the global script. `\"global:fn\"` names the global script's; `\"<id or GUID>/fn\"` another piece's.");
         See("self.input", "self.edit", "self.clear_widgets");
 
-        M("piece", "input{ face, x, z, w, h, rot, value, placeholder, font, color, text_color, align, lines, tooltip, on_change }", "Draws an input box and returns its index. on_change names a function called as fn(who, value, index, piece) when the umpire has typed.", "createInput", "number");
+        M("piece", "input{ face, x, z, w, h, rot, value, placeholder, font, color, text_color, align, lines, tooltip, on_change, kind }", "Draws an input box and returns its index. on_change names a function called as fn(who, value, index, piece) when the umpire has typed.", "createInput", "number");
         O("face", "\"front\"|\"back\"", "The face it is drawn on. Default \"front\".");
         O("x", "number", "Centre, piece units. Default 0.");
         O("z", "number", "Centre, piece units. Default 0.");
@@ -415,6 +416,7 @@ public static partial class ApiDoc
         O("lines", "number", "Lines of text the box holds. Default 1.");
         O("tooltip", "string", "Shown when the pointer rests on it.");
         O("on_change", "string", "The handler's name: called as fn(who, value, index, piece) when the umpire finishes typing.");
+        O("kind", "\"button\"|\"input\"|\"label\"", "\"label\" shows its value but takes no typing: locked text.");
         R("The widget's index, from 1.");
         X("""
             self.input{ face = "back", z = -0.2, w = 0.8, h = 0.12, value = self.name or "",
@@ -656,9 +658,9 @@ public static partial class ApiDoc
     P("value", "any", "The new value.");
     See("game.get_var");
 
-    M("game", "dialog(who, { kind, title, text, options }, fn)", "Opens a window for one umpire (nil: everyone): kind memo, input, confirm, options or color. fn(answer, who); the answer is nil when cancelled.", "showInputDialog", "string");
+    M("game", "dialog(who, { kind, title, text, options }, fn)", "Opens a window for one umpire (nil: everyone): kind memo, input, confirm, options, color or picture. fn(answer, who); the answer is nil when cancelled.", "showInputDialog", "string");
     P("who", "Who?", "The umpire who gets the window; nil for every umpire.");
-    O("spec.kind", "\"memo\"|\"input\"|\"confirm\"|\"options\"|\"color\"", "A text to read and edit, one line, a yes or no, a pick from `options`, or a TTS colour name. Default \"memo\".");
+    O("spec.kind", "\"memo\"|\"input\"|\"confirm\"|\"options\"|\"color\"|\"picture\"", "A text to read and edit, one line, a yes or no, a pick from `options`, a TTS colour name, or a picture from the umpire's computer or the web, answered as a name for set_decals. Default \"memo\". A TTS input dialog whose title asks for an image or URL opens as \"picture\".");
     O("spec.title", "string", "The window's title.");
     O("spec.text", "string", "The text to edit, or the question.");
     O("spec.options", "string[]", "The choices, for \"options\".");
@@ -673,6 +675,17 @@ public static partial class ApiDoc
         end
         """);
     Note("A function that is not a function in the third place is an error.");
+
+    M("game", "fetch_picture(link, fn)", "Downloads a picture (PNG, JPEG, WebP or BMP, up to 16 MB) from the web on the host, for set_decals. fn(picture) gets its name, or nil when the link gave none.");
+    P("link", "string", "An http or https link.");
+    P("fn", "function", "Called as fn(picture) once the download ends.");
+    X("""
+        game.fetch_picture("https://example.com/arms.png", function(picture)
+          if picture then self.set_decals{ { picture = picture, w = 0.3, h = 0.3 } } end
+        end)
+        """);
+    Note("A TTS script's setDecals fetches its web links this way by itself.");
+    See("self.set_decals", "game.dialog");
     }
 
     static ApiSection Ui() => Section("ui", "Screen panels in TTS's XML dialect. A piece's own panels (`self.ui`) take the same calls. A click, a finished edit or a changed value calls the function the element names, as fn(who, value, id): in the global script, or as \"id/fn\" in that piece's.", () =>

@@ -75,7 +75,9 @@ sealed class ReliefSheets : HudPart
                 Ui.RememberFolder(fd);
                 FileThumbs.Show(fd);
                 HudNode.AddChild(fd);
-                fd.FileSelected += f => { extra.Add(f); Fill(f); last = pick.Selected; };
+                void Use(string f) { extra.Add(f); Fill(f); last = pick.Selected; }
+                fd.FileSelected += Use;
+                PictureLinks.Offer(fd, S.Store.Root, Use);
                 fd.PopupCentered();
                 Ui.FreeOnClose(fd);
             };
@@ -267,7 +269,7 @@ sealed class ReliefSheets : HudPart
         var files = new List<string>();
         try { files.AddRange(ReliefFiles.Files(relief, ReliefFiles.LoadIndex(Path.Combine(dir, ReliefFiles.HeaderRel(relief))))); }
         catch (Exception e) when (e is IOException or InvalidDataException or System.Text.Json.JsonException) { Log($"[color=#ff7060]The relief could not be read back: {Fmt.Bb(e.Message)}[/color]"); return; }
-        N.ShareRelief(files, c);
+        N.ShareThen(files, c);
     }
 
     public void AddRelief(VBoxContainer box, SheetDef sel)
@@ -356,6 +358,7 @@ sealed class ReliefSheets : HudPart
         HudNode.AddChild(fd);
         var id = sel.Id;
         fd.FileSelected += path => SetPicture(id, path);
+        PictureLinks.Offer(fd, S.Store.Root, path => SetPicture(id, path));
         fd.PopupCentered();
         Ui.FreeOnClose(fd);
     }

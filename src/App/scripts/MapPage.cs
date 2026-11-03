@@ -174,6 +174,7 @@ sealed class MapPage : HudPart
         FileThumbs.Show(fd);
         HudNode.AddChild(fd);
         fd.FilesSelected += paths => AddSheets(paths.OrderBy(p => p, StringComparer.OrdinalIgnoreCase).ToList());
+        PictureLinks.Offer(fd, S.Store.Root, path => AddSheets(new List<string> { path }));
         fd.PopupCentered();
         Ui.FreeOnClose(fd);
     }

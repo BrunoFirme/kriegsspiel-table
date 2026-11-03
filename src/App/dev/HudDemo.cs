@@ -952,6 +952,15 @@ sealed class HudDemo : HudPart
         if (what is "saves" or "saves:dialog" or "saves:trash") { SavesDemo(what == "saves:dialog", what == "saves:trash"); return true; }
         if (what == "saves:many") { SavesManyDemo(); return true; }
         if (what.StartsWith("open:")) { Hud.OpenPanel(what["open:".Length..]); return true; }
+        if (what.StartsWith("widget:"))
+        {
+            var handler = what["widget:".Length..];
+            var piece = S.View.Layer(Layers.Umpire).FirstOrDefault(p => p.Widgets.Any(w => w.OnClick?.Contains(handler) == true));
+            GD.Print($"[widget] pressing {handler} on {piece?.Label ?? piece?.Id ?? "nothing"}");
+            if (piece != null) S.Do(new ClickWidget { Layer = Layers.Umpire, Id = piece.Id, Index = piece.Widgets.FindIndex(w => w.OnClick?.Contains(handler) == true) + 1 });
+            Hud.GetTree().CreateTimer(2.0).Timeout += () => GD.Print("[widget] console: " + string.Join(" | ", S.ConsoleLines.TakeLast(6).Select(l => $"{l.Kind} {l.Source}: {l.Text}")));
+            return true;
+        }
         if (what.StartsWith("pictures:"))
         {
             var fd = new FileDialog { FileMode = FileDialog.FileModeEnum.OpenFiles, Access = FileDialog.AccessEnum.Filesystem, Filters = new[] { ImageFiles.Filter }, Size = new Vector2I(900, 600) };

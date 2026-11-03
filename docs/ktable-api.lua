@@ -61,6 +61,7 @@
 ---@field text_color? Color The text's colour.
 ---@field tooltip? string Shown when the pointer rests on it.
 ---@field on_click? string The handler's name: called as fn(who, alt, index, piece); alt is true for a right-click.
+---@field kind? "button"|"input"|"label" "label" shows it but takes no clicks or typing: locked text. A TTS button or input turned face down above the piece comes across this way. edit can change it.
 
 ---@class PieceInputSpec
 ---@field face? "front"|"back" The face it is drawn on. Default "front".
@@ -78,6 +79,7 @@
 ---@field lines? number Lines of text the box holds. Default 1.
 ---@field tooltip? string Shown when the pointer rests on it.
 ---@field on_change? string The handler's name: called as fn(who, value, index, piece) when the umpire finishes typing.
+---@field kind? "button"|"input"|"label" "label" shows its value but takes no typing: locked text.
 
 ---@class PieceCallOptions
 ---@field ..? any Handed to the function as they are.
@@ -111,7 +113,7 @@
 ---@field ..? any Handed to the function as they are.
 
 ---@class GameDialogOptions
----@field kind? "memo"|"input"|"confirm"|"options"|"color" A text to read and edit, one line, a yes or no, a pick from options, or a TTS colour name. Default "memo".
+---@field kind? "memo"|"input"|"confirm"|"options"|"color"|"picture" A text to read and edit, one line, a yes or no, a pick from options, a TTS colour name, or a picture from the umpire's computer or the web, answered as a name for set_decals. Default "memo". A TTS input dialog whose title asks for an image or URL opens as "picture".
 ---@field title? string The window's title.
 ---@field text? string The text to edit, or the question.
 ---@field options? string[] The choices, for "options".
@@ -249,7 +251,7 @@ function Piece.delete() end
 function Piece.set_lines(lines) end
 
 ---Puts pictures on the piece's faces that move, turn and flip with it: { { picture =, x =, z =, w =, h =, rot =, face =, name = }, … } in piece units.
----@param decals Decal[] The decals. picture is a picture in this game's packs (a TTS module's decal images come along when it is converted); face is "front" or "back"; w and h default to 0.2, rot is degrees. An empty table takes every decal away.
+---@param decals Decal[] The decals. picture is a picture in this game's packs (a TTS module's decal images come along when it is converted) or one from game.fetch_picture or a picture dialog; face is "front" or "back"; w and h default to 0.2, rot is degrees. An empty table takes every decal away.
 function Piece.set_decals(decals) end
 
 ---A point in piece units (centre 0, x right, z down the picture) as a map point { x =, z = }.
@@ -421,12 +423,17 @@ function game.get_var(name) end
 ---@param value any The new value.
 function game.set_var(name, value) end
 
----Opens a window for one umpire (nil: everyone): kind memo, input, confirm, options or color. fn(answer, who); the answer is nil when cancelled.
+---Opens a window for one umpire (nil: everyone): kind memo, input, confirm, options, color or picture. fn(answer, who); the answer is nil when cancelled.
 ---@param who Who|nil The umpire who gets the window; nil for every umpire.
 ---@param spec? GameDialogOptions
 ---@param fn function Called as fn(answer, who) once the umpire answers; answer is nil when they cancelled.
 ---@return string # The dialog's token.
 function game.dialog(who, spec, fn) end
+
+---Downloads a picture (PNG, JPEG, WebP or BMP, up to 16 MB) from the web on the host, for set_decals. fn(picture) gets its name, or nil when the link gave none.
+---@param link string An http or https link.
+---@param fn function Called as fn(picture) once the download ends.
+function game.fetch_picture(link, fn) end
 
 ---@class KTUi
 ui = {}

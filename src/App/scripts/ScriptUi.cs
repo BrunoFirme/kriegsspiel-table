@@ -8,11 +8,13 @@ namespace KTable.App;
 public partial class ScriptUi : Control
 {
     Session _s = null!;
+    Net _n = null!;
     readonly Dictionary<string, AcceptDialog> _dialogs = new();
 
-    public void Bind(Session s)
+    public void Bind(Session s, Net n)
     {
         _s = s;
+        _n = n;
         MouseFilter = MouseFilterEnum.Ignore;
         SetAnchorsPreset(LayoutPreset.FullRect);
         Rebuild();
@@ -43,6 +45,7 @@ public partial class ScriptUi : Control
     {
         if (d.To != null && d.To != $"p:{_s.Me.PeerId}") return;
         if (!_s.IsUmpire) return;
+        if (d.Kind == "picture") { AskPicture(d); return; }
         var dlg = new AcceptDialog { Title = d.Title.Length > 0 ? d.Title : "Script", OkButtonText = "OK" };
         var box = new VBoxContainer { CustomMinimumSize = new Vector2(420, 0) };
         box.AddThemeConstantOverride("separation", 6);
@@ -87,5 +90,31 @@ public partial class ScriptUi : Control
         dlg.TreeExiting += () => { if (_dialogs.GetValueOrDefault(d.Token) == dlg) _dialogs.Remove(d.Token); };
         Ui.Open(this, dlg);
         Ui.FreeOnClose(dlg);
+    }
+
+    void AskPicture(ShowDialog d)
+    {
+        var root = _s.Store.Root;
+        var fd = new FileDialog { FileMode = FileDialog.FileModeEnum.OpenFile, Access = FileDialog.AccessEnum.Filesystem, Filters = new[] { ImageFiles.Filter }, Title = d.Title.Length > 0 ? d.Title : "Picture", Size = new Vector2I(900, 600) };
+        Ui.RememberFolder(fd);
+        FileThumbs.Show(fd);
+        bool answered = false;
+        void Answer(string? path)
+        {
+            if (answered) return;
+            answered = true;
+            var name = path == null ? null : PictureLinks.Keep(root, path);
+            if (path != null && name == null) _s.OnError($"{System.IO.Path.GetFileName(path)} could not be used as a picture");
+            var result = new DialogResult { Token = d.Token, Value = name };
+            if (name == null || _n.Server != null) _s.Do(result);
+            else _n.ShareThen(new[] { name }, result);
+        }
+        PictureLinks.Offer(fd, root, Answer);
+        fd.FileSelected += Answer;
+        fd.Canceled += () => Answer(null);
+        fd.CloseRequested += () => Answer(null);
+        AddChild(fd);
+        fd.PopupCentered();
+        Ui.FreeOnClose(fd);
     }
 }

@@ -1,5 +1,6 @@
 using KTable.Core;
 using KTable.Core.Model;
+using KTable.Core.Protocol;
 
 namespace KTable.Client;
 
@@ -18,7 +19,8 @@ public static class PieceFiles
         if (decals.Count == 0) yield break;
         var packs = view.Packs.Select(store.Pack).OfType<PackManifest>().ToList();
         foreach (var picture in decals)
-            if (packs.FirstOrDefault(p => p.Assets.ContainsKey(picture)) is { } pack)
+            if (UploadAsset.IsWebPicture(UploadAsset.ReliefPackage, picture)) yield return (UploadAsset.ReliefPackage, picture);
+            else if (packs.FirstOrDefault(p => p.Assets.ContainsKey(picture)) is { } pack)
                 yield return (pack.Id, pack.Assets[picture].File.Replace('\\', '/'));
     }
 }

@@ -18,6 +18,8 @@ You get:
 | IKS script counters and text | Bags as containers |
 | Tints, names, attached markers | TTS dice (use the app's) |
 | Lua scripts and XML panels, translated | |
+| Decals, and the pictures scripts set from web links | |
+| Locked text and images (Lock text, Lock images) | |
 
 Scripts keep working: see [what imported TTS scripts become](scripting.md#what-imported-tts-scripts-become).
 
@@ -37,7 +39,7 @@ the pack's pieces and the chosen piece down the right. The top line says what th
 ### New pieces
 
 **＋ New piece** (Ctrl+N) makes a block, a tile, a token, pieces from pictures or the clipboard, or a 3D model.
-Pictures and models dropped on the window become pieces too.
+Pictures and models dropped on the window become pieces too. Every picture chooser also takes a web link.
 
 ### The views (Alt+1, 2, 3)
 

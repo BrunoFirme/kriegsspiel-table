@@ -49,7 +49,7 @@ sealed partial class StudioTools
         yield return new AgentTool("studio_model_decal",
             "Presses a picture onto a 3D kind's surface like a transfer, seen from a side: an emblem, a badge, a number. The picture is a file, a pack picture (Src from studio_add_picture_source), or the face of another kind (draw an emblem on a token with studio_write_face first). x and y place its centre as fractions of the view, size is its height as a fraction of the view. Returns a picture.",
             Args.Schema(new Arg("id", "string", "the kind's id", true),
-                new Arg("path", "string", "a picture file"), new Arg("src", "string", "a picture already in the pack"), new Arg("from_kind", "string", "a kind whose front is the picture"),
+                new Arg("path", "string", "a picture file or web link"), new Arg("src", "string", "a picture already in the pack"), new Arg("from_kind", "string", "a kind whose front is the picture"),
                 new Arg("side", "string", string.Join(", ", Sides)), new Arg("yaw", "number", "degrees"), new Arg("pitch", "number", "degrees"),
                 new Arg("x", "number", "0–1 across the view (default 0.5)"), new Arg("y", "number", "0–1 down the view (default 0.5)"), new Arg("size", "number", "0–1 of the view's height (default 0.2)"),
                 new Arg("turn", "number", "degrees"), new Arg("opacity", "number", "0–1"), new Arg("mirror", "boolean", "flipped")),
@@ -243,10 +243,10 @@ sealed partial class StudioTools
         return await Finish(s, m, FormattableString.Invariant($"Painted {n:#,0} texels of {p.Name}."), a);
     });
 
-    Image? DecalPicture(PieceStudio s, JsonElement a, out string name)
+    Image? DecalPicture(PieceStudio s, JsonElement a, string? path, out string name)
     {
         name = "decal";
-        if (a.Str("path") is { Length: > 0 } path) { name = Path.GetFileNameWithoutExtension(path); return File.Exists(path) ? ImageFiles.Load(path) : null; }
+        if (path is { Length: > 0 }) { name = Path.GetFileNameWithoutExtension(path); return File.Exists(path) ? ImageFiles.Load(path) : null; }
         if (a.Str("src") is { Length: > 0 } src) { name = src; return ArtStore.LoadSrc(s.Store, s.Pack.Id, src); }
         if (a.Str("from_kind") is { Length: > 0 } kind && s.Pack.Pieces.FirstOrDefault(p => p.Id == kind) is { } k && PieceFaces.Of(k).FirstOrDefault()?.Sha is { } sha && s.Store.AssetPath(s.Pack, sha) is { } file)
         {
@@ -260,7 +260,14 @@ sealed partial class StudioTools
 
     Task<ToolResult> Decal(JsonElement a) => Change(a, "pressed a decal", async (s, d) =>
     {
-        if (DecalPicture(s, a, out var name) is not { } img || img.IsEmpty()) return ToolResult.Fail("Give a picture: path (a file), src (a pack picture) or from_kind (a kind whose front is the picture).");
+        string? path = null;
+        if (a.Str("path") is { Length: > 0 } given)
+        {
+            var (files, noPicture) = await PictureLinks.Local(new[] { given }, s.Store.Root);
+            if (noPicture != null) return ToolResult.Fail(noPicture);
+            path = files[0];
+        }
+        if (DecalPicture(s, a, path, out var name) is not { } img || img.IsEmpty()) return ToolResult.Fail("Give a picture: path (a file), src (a pack picture) or from_kind (a kind whose front is the picture).");
         if (await OpenModel(s, d) is not { } m) return ToolResult.Fail($"{d.Name} could not be opened in the 3D view.");
         if (m.Views.Values.All(v => v.Fixed)) return ToolResult.Fail($"{d.Name} has nothing a decal can go on (a flat block takes its look from its faces: use studio_write_face).");
         var (yaw, pitch) = Angle(a);

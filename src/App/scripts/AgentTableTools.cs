@@ -28,7 +28,7 @@ sealed partial class AgentTableTools
             "3D terrain (glTF/GLB, FBX, OBJ+MTL, STL, PLY, Collada .dae, Blender .blend when Blender is installed) and heightmaps (16-bit PNG, GeoTIFF elevation, ESRI .asc, SRTM .hgt, .xyz). " +
             "A relief and a picture named alike become one sheet, the picture laid over the hills; a model without a paired picture brings its own texture. pairs sets them by hand. " +
             "Tiles cut from one map keep their places and meet without a step. blank adds plain ground with no file, to build terrain from nothing. Then place, size and lock them with set_map_sheet.",
-            Args.Schema(new Arg("paths", "array", "full paths of picture and relief files, in order left to right"),
+            Args.Schema(new Arg("paths", "array", "full paths of picture and relief files, or web links of pictures, in order left to right"),
                 new Arg("pairs", "array", "[{relief, picture}, …]: a relief file and the picture to lay on it (leave picture out for the model's own texture, or set own_texture false for plain ground)"),
                 new Arg("as_placed", "boolean", "lay relief tiles out as their files place them (true if left out)"),
                 new Arg("one_zero", "boolean", "one lowest point for all the reliefs added together (true if left out)"),
@@ -46,7 +46,7 @@ sealed partial class AgentTableTools
             Args.Schema(new Arg("id", "string", "the sheet's id (list_map_sheets)", true), new Arg("x", "number", "centre, map units"), new Arg("z", "number", "centre, map units"),
                 new Arg("width", "number", "map units"), new Arg("turn", "number", "degrees"), new Arg("layer", "number", "stacking order: higher lies on top"), new Arg("name", "string", "new name"), new Arg("locked", "boolean", "locked"), new Arg("remove", "boolean", "take it off the table"),
                 new Arg("height", "number", $"relief height × (0–{StateMachine.MostHeight})"), new Arg("relief", "string", "full path of a 3D terrain or heightmap file, stretched over this sheet"),
-                new Arg("remove_relief", "boolean", "take the relief off (a sheet keeps a picture or a relief)"), new Arg("picture", "string", "full path of a picture to lay on this sheet")),
+                new Arg("remove_relief", "boolean", "take the relief off (a sheet keeps a picture or a relief)"), new Arg("picture", "string", "full path or web link of a picture to lay on this sheet")),
             SetSheet);
         yield return new AgentTool("list_saves",
             "The saves of the game being played: its turns kept so far and the saves made by hand in its folder (host only).",
@@ -79,8 +79,10 @@ sealed partial class AgentTableTools
     {
         if (Table(out var why) is not var (s, hud)) return why!;
         if (!CanChange(s, out why)) return why!;
-        var paths = a.ValueKind == JsonValueKind.Object && a.TryGetProperty("paths", out var p) && p.ValueKind == JsonValueKind.Array
+        var given = a.ValueKind == JsonValueKind.Object && a.TryGetProperty("paths", out var p) && p.ValueKind == JsonValueKind.Array
             ? p.EnumerateArray().Where(x => x.ValueKind == JsonValueKind.String).Select(x => x.GetString()!).ToList() : new List<string>();
+        var (paths, noPicture) = await PictureLinks.Local(given, s.Store.Root);
+        if (noPicture != null) return ToolResult.Fail(noPicture);
         var pairs = Pairs(a) ?? new List<ReliefJob>();
         var all = paths.Concat(pairs.Select(j => j.Relief)).Concat(pairs.Where(j => j.Picture != null).Select(j => j.Picture!)).ToList();
         var blank = Blank(a);

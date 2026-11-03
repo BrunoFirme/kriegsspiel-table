@@ -89,7 +89,7 @@ public partial class Hud
         Root.AddChild(Compass);
         _scriptUi = new ScriptUi { Name = "ScriptUi" };
         Root.AddChild(_scriptUi);
-        _scriptUi.Bind(S);
+        _scriptUi.Bind(S, N);
     }
 
     void BuildOverlays()

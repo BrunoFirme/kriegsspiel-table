@@ -236,9 +236,10 @@ public sealed partial class ScriptHost
         var resumes = _timers.TakeResumes();
         var updating = _pieces.Values.Where(ps => ps.HasUpdate && ps.Enabled).ToList();
         if (_global is { HasUpdate: true, Enabled: true }) updating.Add(_global);
-        if (due.Count == 0 && resumes.Count == 0 && updating.Count == 0) return new();
+        if (due.Count == 0 && resumes.Count == 0 && updating.Count == 0 && _fetched.IsEmpty) return new();
         return Run(0, false, () =>
         {
+            DeliverPictures();
             foreach (var ps in updating) Guard(ps.Id, () => Call(ps, "on_update"));
             foreach (var t in due)
                 Guard(t.Owner.Id, () =>
@@ -369,6 +370,7 @@ public sealed partial class ScriptHost
         var meta = new Table(_vm);
         meta["__index"] = _vm.Globals;
         env.MetaTable = meta;
+        env["_G"] = env;
         return env;
     }
 
@@ -549,7 +551,7 @@ public sealed partial class ScriptHost
         if (hotkeys && _reaction != null) _reaction.HotkeysDirty = true;
         if (menu && _reaction != null) _reaction.GlobalMenuDirty = true;
         _timers.AdoptResumes(temp, real);
-        foreach (var (token, d) in _dialogs.ToList()) if (d.owner == temp) { if (real != null) _dialogs[token] = (real, d.fn); else _dialogs.Remove(token); }
+        foreach (var (token, d) in _dialogs.ToList()) if (d.owner == temp) { if (real != null) _dialogs[token] = d with { owner = real }; else _dialogs.Remove(token); }
         _drawing.AdoptDrawer(temp, real);
         _saves.Drop(temp);
     }

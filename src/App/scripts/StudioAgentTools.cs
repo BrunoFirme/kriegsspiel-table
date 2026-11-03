@@ -61,7 +61,7 @@ sealed partial class StudioTools
             NewPiece);
         yield return new AgentTool("studio_pieces_from_pictures",
             "One new kind per picture file (PNG, JPEG, WebP, SVG, BMP, TGA, TIFF), cut along its see-through edge when it has one.",
-            Args.Schema(new Arg("paths", "array", "full paths of picture files", true)), FromPictures);
+            Args.Schema(new Arg("paths", "array", "full paths or web links of picture files", true)), FromPictures);
         yield return new AgentTool("studio_import_models",
             "One new 3D kind per model file (glTF, GLB, FBX, OBJ with MTL, STL, PLY, Collada .dae).",
             Args.Schema(new Arg("paths", "array", "full paths of model files", true)), ImportModels);
@@ -283,7 +283,8 @@ sealed partial class StudioTools
     async Task<ToolResult> FromPictures(JsonElement a)
     {
         if (_a.Studio is not { } s || !_a.InStudio) return NotOpen;
-        var paths = Strings(a, "paths") ?? new();
+        var (paths, noPicture) = await PictureLinks.Local(Strings(a, "paths") ?? new(), s.Store.Root);
+        if (noPicture != null) return ToolResult.Fail(noPicture);
         var missing = paths.Where(p => !File.Exists(p)).ToList();
         if (paths.Count == 0 || missing.Count > 0) return ToolResult.Fail(paths.Count == 0 ? "paths is needed." : "No such file: " + string.Join(", ", missing));
         var before = s.Pack.Pieces.ToHashSet();

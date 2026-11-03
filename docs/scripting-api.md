@@ -1012,7 +1012,7 @@ Puts pictures on the piece's faces that move, turn and flip with it: { { picture
 
 | Parameter | Type | Description |
 |---|---|---|
-| `decals` | `Decal[]` | The decals. `picture` is a picture in this game's packs (a TTS module's decal images come along when it is converted); `face` is "front" or "back"; `w` and `h` default to 0.2, `rot` is degrees. An empty table takes every decal away. |
+| `decals` | `Decal[]` | The decals. `picture` is a picture in this game's packs (a TTS module's decal images come along when it is converted) or one from game.fetch_picture or a picture dialog; `face` is "front" or "back"; `w` and `h` default to 0.2, `rot` is degrees. An empty table takes every decal away. |
 
 ```lua
 local arms = self.decals[1]
@@ -1080,7 +1080,7 @@ Widgets are drawn on a face in piece units: map units measured on the piece's ki
 ### `self.button`
 
 ```lua
-self.button{ face, x, z, w, h, rot, label, font, color, text_color, tooltip, on_click }
+self.button{ face, x, z, w, h, rot, label, font, color, text_color, tooltip, on_click, kind }
 ```
 
 Draws a button and returns its index from 1. With no w and h it is a bare label that takes no clicks. on_click names a function called as fn(who, alt, index, piece).
@@ -1099,6 +1099,7 @@ Draws a button and returns its index from 1. With no w and h it is a bare label 
 | `text_color` | `Color` | _Optional._ The text's colour. |
 | `tooltip` | `string` | _Optional._ Shown when the pointer rests on it. |
 | `on_click` | `string` | _Optional._ The handler's name: called as fn(who, alt, index, piece); `alt` is true for a right-click. |
+| `kind` | `"button"\|"input"\|"label"` | _Optional._ "label" shows it but takes no clicks or typing: locked text. A TTS button or input turned face down above the piece comes across this way. `edit` can change it. |
 
 **Returns** `number`: The widget's index, from 1, for `edit` and `remove_widget`.
 
@@ -1121,7 +1122,7 @@ The handler is looked up in this script first, then in the global script. `"glob
 ### `self.input`
 
 ```lua
-self.input{ face, x, z, w, h, rot, value, placeholder, font, color, text_color, align, lines, tooltip, on_change }
+self.input{ face, x, z, w, h, rot, value, placeholder, font, color, text_color, align, lines, tooltip, on_change, kind }
 ```
 
 Draws an input box and returns its index. on_change names a function called as fn(who, value, index, piece) when the umpire has typed.
@@ -1143,6 +1144,7 @@ Draws an input box and returns its index. on_change names a function called as f
 | `lines` | `number` | _Optional._ Lines of text the box holds. Default 1. |
 | `tooltip` | `string` | _Optional._ Shown when the pointer rests on it. |
 | `on_change` | `string` | _Optional._ The handler's name: called as fn(who, value, index, piece) when the umpire finishes typing. |
+| `kind` | `"button"\|"input"\|"label"` | _Optional._ "label" shows its value but takes no typing: locked text. |
 
 **Returns** `number`: The widget's index, from 1.
 
@@ -1466,7 +1468,8 @@ The game around the table.
 | [`game.call`](#gamecall) | Runs a function of the global script and returns what it returns. |
 | [`game.get_var`](#gameget_var) | Reads a global variable of the global script. |
 | [`game.set_var`](#gameset_var) | Writes a global variable of the global script. |
-| [`game.dialog`](#gamedialog) | Opens a window for one umpire (nil: everyone): kind memo, input, confirm, options or color. fn(answer, who); the answer is nil when cancelled. |
+| [`game.dialog`](#gamedialog) | Opens a window for one umpire (nil: everyone): kind memo, input, confirm, options, color or picture. fn(answer, who); the answer is nil when cancelled. |
+| [`game.fetch_picture`](#gamefetch_picture) | Downloads a picture (PNG, JPEG, WebP or BMP, up to 16 MB) from the web on the host, for set_decals. fn(picture) gets its name, or nil when the link gave none. |
 
 ### `game.turn`
 
@@ -1745,12 +1748,12 @@ Writes a global variable of the global script.
 game.dialog(who, { kind, title, text, options }, fn)
 ```
 
-Opens a window for one umpire (nil: everyone): kind memo, input, confirm, options or color. fn(answer, who); the answer is nil when cancelled.
+Opens a window for one umpire (nil: everyone): kind memo, input, confirm, options, color or picture. fn(answer, who); the answer is nil when cancelled.
 
 | Parameter | Type | Description |
 |---|---|---|
 | `who` | `Who?` | The umpire who gets the window; nil for every umpire. |
-| `spec.kind` | `"memo"\|"input"\|"confirm"\|"options"\|"color"` | _Optional._ A text to read and edit, one line, a yes or no, a pick from `options`, or a TTS colour name. Default "memo". |
+| `spec.kind` | `"memo"\|"input"\|"confirm"\|"options"\|"color"\|"picture"` | _Optional._ A text to read and edit, one line, a yes or no, a pick from `options`, a TTS colour name, or a picture from the umpire's computer or the web, answered as a name for set_decals. Default "memo". A TTS input dialog whose title asks for an image or URL opens as "picture". |
 | `spec.title` | `string` | _Optional._ The window's title. |
 | `spec.text` | `string` | _Optional._ The text to edit, or the question. |
 | `spec.options` | `string[]` | _Optional._ The choices, for "options". |
@@ -1770,6 +1773,29 @@ end
 A function that is not a function in the third place is an error.
 
 **Tabletop Simulator** `showInputDialog`
+
+### `game.fetch_picture`
+
+```lua
+game.fetch_picture(link, fn)
+```
+
+Downloads a picture (PNG, JPEG, WebP or BMP, up to 16 MB) from the web on the host, for set_decals. fn(picture) gets its name, or nil when the link gave none.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `link` | `string` | An http or https link. |
+| `fn` | `function` | Called as fn(picture) once the download ends. |
+
+```lua
+game.fetch_picture("https://example.com/arms.png", function(picture)
+  if picture then self.set_decals{ { picture = picture, w = 0.3, h = 0.3 } } end
+end)
+```
+
+A TTS script's setDecals fetches its web links this way by itself.
+
+**See also** [`self.set_decals`](#selfset_decals), [`game.dialog`](#gamedialog)
 
 ## ui
 

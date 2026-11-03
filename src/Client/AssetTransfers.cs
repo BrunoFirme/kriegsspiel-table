@@ -113,7 +113,7 @@ public sealed partial class AssetTransfers
         if (!_uploads.TryGetValue(key, out var fs))
         {
             if (u.Offset != 0) return;
-            if (!UploadAsset.IsRelief(u.Package, u.Path) && Directory.Exists(dir) && Directory.EnumerateFiles(dir, "*", SearchOption.AllDirectories).Sum(f => new FileInfo(f).Length) + u.Total > MaxUserPackBytes)
+            if (u.Package != UploadAsset.ReliefPackage && Directory.Exists(dir) && Directory.EnumerateFiles(dir, "*", SearchOption.AllDirectories).Sum(f => new FileInfo(f).Length) + u.Total > MaxUserPackBytes)
             {
                 Send(from, new ErrorMessage { Text = $"pack {u.Package} is too large for this host" });
                 return;
@@ -132,7 +132,7 @@ public sealed partial class AssetTransfers
             if (u.Path == "pack.json") CheckUploadedPack(peer, u.Package, dir, tmp);
             else if (FileHashes.Sha256(tmp) != Path.GetFileNameWithoutExtension(dst)) throw new InvalidDataException("hash mismatch");
             File.Move(tmp, dst, true);
-            if (UploadAsset.IsRelief(u.Package, u.Path)) FileArrived(u.Package, u.Path);
+            if (u.Package == UploadAsset.ReliefPackage) FileArrived(u.Package, u.Path);
         }
         catch (Exception e) when (e is InvalidDataException or IOException or UnauthorizedAccessException or System.Text.Json.JsonException)
         {

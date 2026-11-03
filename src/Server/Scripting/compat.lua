@@ -63,12 +63,22 @@ function compat.player(color)
     lookAt = function() end, pingTable = function() end,
     showInfoDialog = function(msg) game.say(tostring(msg), { to = who }) end,
     showConfirmDialog = function(msg, fn) return game.dialog(who, { kind = "confirm", title = "", text = tostring(msg or "") }, function(v, w) if v ~= nil and fn then fn(compat.color_of(w)) end end) end,
-    showInputDialog = function(desc, default, fn) return game.dialog(who, { kind = "input", title = tostring(desc or ""), text = tostring(default or "") }, function(v, w) if v ~= nil and fn then fn(v, compat.color_of(w)) end end) end,
-    showMemoDialog = function(desc, default, fn) return game.dialog(who, { kind = "memo", title = tostring(desc or ""), text = tostring(default or "") }, function(v, w) if v ~= nil and fn then fn(v, compat.color_of(w)) end end) end,
+    showInputDialog = function(desc, default, fn) return compat.text_dialog(who, "input", desc, default, fn) end,
+    showMemoDialog = function(desc, default, fn) return compat.text_dialog(who, "memo", desc, default, fn) end,
     showOptionsDialog = function(desc, options, default, fn) return game.dialog(who, { kind = "options", title = tostring(desc or ""), text = tostring(default or ""), options = options or {} }, function(v, w) if v ~= nil and fn then local i = 0; for k, o in ipairs(options or {}) do if o == v then i = k end end; fn(v, i, compat.color_of(w)) end end) end,
     showColorDialog = function(default, fn) return game.dialog(who, { kind = "color", title = "Colour", text = tostring(default or "") }, function(v, w) if v ~= nil and fn then fn(compat.string_color_to_rgb(v), compat.color_of(w)) end end) end,
     clearSelectedObjects = function() end, kick = function() end, mute = function() end, changeColor = function() end,
   }
+end
+
+local PICTURE_WORDS = { "image", "picture", "url", "decal" }
+function compat.text_dialog(who, kind, desc, default, fn)
+  if type(default) == "function" then fn, default = default, nil end
+  local title = tostring(desc or "")
+  if kind == "input" then
+    for _, word in ipairs(PICTURE_WORDS) do if title:lower():find(word, 1, true) then kind = "picture" break end end
+  end
+  return game.dialog(who, { kind = kind, title = title, text = tostring(default or "") }, function(v, w) if v ~= nil and fn then fn(v, compat.color_of(w)) end end)
 end
 
 compat.Player = setmetatable({
@@ -244,10 +254,12 @@ function compat.set_vector_lines(obj, lines)
   obj.set_lines(ours)
 end
 function compat.get_vector_lines(obj) return pbag(obj).lines or {} end
+local web_pictures = {}
+local function is_web(url) return type(url) == "string" and url:find("://", 1, true) ~= nil end
 local function our_decal(obj, d)
   local url = d and d.url
   if type(url) ~= "string" or url == "" then return nil end
-  if url:find("://", 1, true) then compat.todo(obj, "a decal whose picture is only on the web") return nil end
+  if is_web(url) then url = web_pictures[url] if not url then return nil end end
   local u = unit(obj)
   local px, py, pz = vec(d.position, "x", 1, 0), vec(d.position, "y", 2, 0), vec(d.position, "z", 3, 0)
   local back = py < 0
@@ -258,13 +270,30 @@ local function our_decal(obj, d)
     rot = vec(d.rotation, "y", 2, 0) - 180,
   }
 end
-function compat.set_decals(obj, d)
-  pbag(obj).decals = d or {}
+local function apply_decals(obj)
   local ours = {}
-  for _, dc in ipairs(d or {}) do ours[#ours + 1] = our_decal(obj, dc) end
+  for _, dc in ipairs(pbag(obj).decals or {}) do ours[#ours + 1] = our_decal(obj, dc) end
   local ok, err = pcall(obj.set_decals, ours)
   if not ok then print("setDecals: " .. tostring(err)) end
   return ok
+end
+function compat.set_decals(obj, d)
+  local bag = pbag(obj)
+  bag.decals = d or {}
+  bag.decal_round = (bag.decal_round or 0) + 1
+  local round, waiting = bag.decal_round, 0
+  for _, dc in ipairs(bag.decals) do
+    local url = dc and dc.url
+    if is_web(url) and not web_pictures[url] then
+      waiting = waiting + 1
+      game.fetch_picture(url, function(name)
+        web_pictures[url] = name or false
+        waiting = waiting - 1
+        if waiting == 0 and bag.decal_round == round then apply_decals(obj) end
+      end)
+    end
+  end
+  return apply_decals(obj)
 end
 function compat.add_decal(obj, d)
   local all = {}
@@ -331,7 +360,19 @@ local function book(obj)
   return b
 end
 
-local function handler(name, owner, obj)
+local function tts_named(env, name)
+  if type(env) ~= "table" or (type(env.__tts_bound) == "table" and env.__tts_bound[name]) then return name end
+  local tramp = "__tts_" .. name
+  if rawget(env, tramp) == nil then
+    env[tramp] = function(...)
+      local f = env[name]
+      if type(f) == "function" then return compat.tts_handler(f)(...) end
+    end
+  end
+  return tramp
+end
+
+local function handler(name, owner, obj, env)
   if name == nil or name == "" then return nil end
   name = tostring(name)
   if owner == compat.Global then return "global:" .. name end
@@ -339,21 +380,33 @@ local function handler(name, owner, obj)
     local oid = owner.id
     if type(oid) == "string" and oid ~= obj.id then return oid .. "/" .. name end
   end
-  return name
+  return tts_named(env, name)
+end
+
+function compat.tts_handler(fn)
+  return function(a, b, c, d, ...)
+    if type(a) == "table" and type(a.id) == "number" and is_piece(d) then
+      if type(b) == "string" then return fn(d, compat.color_of(a), b, false) end
+      return fn(d, compat.color_of(a), b)
+    end
+    return fn(a, b, c, d, ...)
+  end
 end
 
 local BUTTON_EM, INPUT_SCALE = 0.87, 2.2
 local ALIGN = { [2] = "left", [3] = "center", [4] = "right" }
 
-function compat.widget_spec(obj, t, kind)
+function compat.widget_spec(obj, t, kind, env)
   local u = unit(obj)
   local px, pz = vec(t.position, "x", 1, 0), vec(t.position, "z", 3, 0)
   local rx, ry, rz = vec(t.rotation, "x", 1, 0), vec(t.rotation, "y", 2, 0), vec(t.rotation, "z", 3, 0)
   local k = kind == "input" and INPUT_SCALE or 1
   local sx, sz = math.abs(vec(t.scale, "x", 1, 1)) * k, math.abs(vec(t.scale, "z", 3, 1)) * k
-  local back = math.abs(((rz % 360) + 360) % 360 - 180) < 90 or math.abs(((rx % 360) + 360) % 360 - 180) < 90
+  local turned = math.abs(((rz % 360) + 360) % 360 - 180) < 90 or math.abs(((rx % 360) + 360) % 360 - 180) < 90
+  local on_top = vec(t.position, "y", 2, 0) > 0
+  local back = turned and not on_top
   local s = {
-    face = back and "back" or "front",
+    face = back and "back" or "front", kind = turned and on_top and "label" or kind,
     x = (back and -px or px) * u, z = pz * u, rot = ry,
     w = num(t.width, 0) / 1000 * sx * u, h = num(t.height, 0) / 1000 * sz * u,
     font = num(t.font_size, 100) / 1000 * sx * u * BUTTON_EM,
@@ -362,24 +415,23 @@ function compat.widget_spec(obj, t, kind)
   }
   if kind == "input" then
     s.value = tostring(t.value or ""); s.placeholder = tostring(t.label or "")
-    s.on_change = handler(t.input_function, t.function_owner, obj)
+    s.on_change = handler(t.input_function, t.function_owner, obj, env)
   else
     s.label = tostring(t.label or "")
-    s.on_click = handler(t.click_function, t.function_owner, obj)
+    s.on_click = handler(t.click_function, t.function_owner, obj, env)
   end
   return s
 end
 
-function compat.widget_patch(obj, t, kind)
+function compat.widget_patch(obj, t, kind, full, env)
   local p = {}
   local geo = t.position or t.rotation or t.scale or t.width or t.height or t.font_size
   if geo then
-    local s = compat.widget_spec(obj, t, kind)
-    if t.position then p.x = s.x; p.z = s.z end
-    if t.rotation then p.face = s.face; p.rot = s.rot end
-    if t.width then p.w = s.w end
-    if t.height then p.h = s.h end
-    if t.font_size then p.font = s.font end
+    local s = compat.widget_spec(obj, full or t, kind, env)
+    if t.position or t.rotation then p.x = s.x; p.z = s.z; p.face = s.face; p.kind = s.kind; p.rot = s.rot end
+    if t.width or t.scale then p.w = s.w end
+    if t.height or t.scale then p.h = s.h end
+    if t.font_size or t.scale then p.font = s.font end
   end
   if t.label ~= nil then if kind == "input" then p.placeholder = tostring(t.label) else p.label = tostring(t.label) end end
   if t.value ~= nil then p.value = tostring(t.value) end
@@ -387,8 +439,8 @@ function compat.widget_patch(obj, t, kind)
   if t.font_color ~= nil then p.text_color = compat.color(t.font_color) end
   if t.tooltip ~= nil then p.tooltip = t.tooltip end
   if t.alignment ~= nil then p.align = ALIGN[num(t.alignment, 3)] or "center" end
-  if t.click_function ~= nil then p.on_click = handler(t.click_function, t.function_owner, obj) end
-  if t.input_function ~= nil then p.on_change = handler(t.input_function, t.function_owner, obj) end
+  if t.click_function ~= nil then p.on_click = handler(t.click_function, t.function_owner, obj, env) end
+  if t.input_function ~= nil then p.on_change = handler(t.input_function, t.function_owner, obj, env) end
   return p
 end
 
@@ -398,29 +450,32 @@ local function rebuild(obj, b)
   for _, e in ipairs(b.inputs) do e.index = obj.input(e.spec) end
 end
 
-function compat.create_button(obj, t)
+function compat.create_button(obj, t, env)
   local b = book(obj)
-  local spec = compat.widget_spec(obj, t, "button")
+  local spec = compat.widget_spec(obj, t, "button", env)
   b.buttons[#b.buttons + 1] = { spec = spec, index = obj.button(spec), tts = t }
   return #b.buttons - 1
 end
-function compat.create_input(obj, t)
+function compat.create_input(obj, t, env)
   local b = book(obj)
-  local spec = compat.widget_spec(obj, t, "input")
+  local spec = compat.widget_spec(obj, t, "input", env)
   b.inputs[#b.inputs + 1] = { spec = spec, index = obj.input(spec), tts = t }
   return #b.inputs - 1
 end
-local function edit(obj, list, t, kind)
+local function edit(obj, list, t, kind, env)
   local e = list[num(t.index, 0) + 1]
   if not e then return false end
-  local patch = compat.widget_patch(obj, t, kind)
+  local full = {}
+  for k, v in pairs(e.tts) do full[k] = v end
+  for k, v in pairs(t) do full[k] = v end
+  local patch = compat.widget_patch(obj, t, kind, full, env)
   for k, v in pairs(patch) do e.spec[k] = v end
-  for k, v in pairs(t) do e.tts[k] = v end
+  e.tts = full
   obj.edit(e.index, patch)
   return true
 end
-function compat.edit_button(obj, t) return edit(obj, book(obj).buttons, t, "button") end
-function compat.edit_input(obj, t) return edit(obj, book(obj).inputs, t, "input") end
+function compat.edit_button(obj, t, env) return edit(obj, book(obj).buttons, t, "button", env) end
+function compat.edit_input(obj, t, env) return edit(obj, book(obj).inputs, t, "input", env) end
 function compat.remove_button(obj, i) local b = book(obj); if b.buttons[num(i, 0) + 1] then table.remove(b.buttons, num(i, 0) + 1); rebuild(obj, b) end end
 function compat.remove_input(obj, i) local b = book(obj); if b.inputs[num(i, 0) + 1] then table.remove(b.inputs, num(i, 0) + 1); rebuild(obj, b) end end
 function compat.clear_buttons(obj) local b = book(obj); b.buttons = {}; rebuild(obj, b) end
@@ -433,8 +488,10 @@ end
 function compat.get_buttons(obj) return tts_list(book(obj).buttons) end
 function compat.get_inputs(obj)
   local t = tts_list(book(obj).inputs)
+  local live = obj.widgets()
   for i, e in ipairs(book(obj).inputs) do
-    for _, w in ipairs(obj.widgets()) do if w.kind == "input" and e.index == i then end end
+    local w = live[e.index]
+    if w and w.value ~= nil then t[i].value = w.value; e.tts.value = w.value end
   end
   return t
 end

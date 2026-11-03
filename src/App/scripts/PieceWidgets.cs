@@ -111,7 +111,7 @@ sealed class PieceWidgets
     {
         float k = (float)Math.Max(1e-6, _piece.Piece.Scale);
         float x = (float)w.X * k, z = (float)w.Z * k, bw = (float)w.W * k, bh = (float)w.H * k;
-        bool input = w.Kind == "input";
+        bool input = w.Kind == "input", label = w.Locked;
         bool boxed = bw > 0.0001f && bh > 0.0001f;
         var boxColor = w.Color != null ? Coords.ParseColor(w.Color, WidgetBox) : input ? InputBox : WidgetBox;
         var textColor = w.TextColor != null ? Coords.ParseColor(w.TextColor, WidgetBoxText) : boxed ? WidgetBoxText : WidgetLabelText;
@@ -119,13 +119,13 @@ sealed class PieceWidgets
         MeshInstance3D? box = boxed ? Plane(x, z, bw, bh, turn, WidgetMat(boxColor), back, faceY, 0.002f) : null;
         _boxes[index] = (box, boxColor);
         bool typing = index == _editWidget;
-        var text = typing ? _editText : input ? (w.Value.Length > 0 ? w.Value : w.Placeholder) : w.Label;
+        var text = typing ? _editText : input ? (w.Value.Length > 0 ? w.Value : w.Placeholder) : label && w.Value.Length > 0 ? w.Value : w.Label;
         var color = !typing && input && w.Value.Length == 0 ? textColor with { A = 0.55f } : textColor;
         float grow = Mathf.Max(0.01f, _piece.Look.FaceTextScale);
         float em = Mathf.Max(0.002f, (float)w.Font * k * grow);
-        if (input && boxed && !typing) text = Fitting(text, em, bw * 0.94f);
+        if ((input || label) && boxed && !typing) text = Fitting(text, em, bw * 0.94f);
         Text(text, x, z, boxed ? bw * 0.94f : 0, em, color, w.Align, (float)w.Rot, back, faceY, 0.004f);
-        if (boxed) _hits.Add(new Hit(new Vector2(x, z), new Vector2(bw, bh) / 2, turn, index));
+        if (boxed && !w.Locked) _hits.Add(new Hit(new Vector2(x, z), new Vector2(bw, bh) / 2, turn, index));
     }
 
     static string Fitting(string text, float em, float width)

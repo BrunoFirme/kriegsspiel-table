@@ -97,6 +97,7 @@ public partial class Net : Node
     {
         Server = server;
         server.AppVersion = AppVersion;
+        server.Scripts.FetchPicture = new WebPictures(Session.Store.Root).Fetch;
         if (Session.Store.RepointLostTiles(server.State.Sheets) is var moved and > 0) GD.Print($"[sheets] {moved} map sheet(s) found their tiles in another folder");
         KTable.Core.WireTap.HostState = () => Server?.State;
         Session.SavePath = savePath;
@@ -577,7 +578,7 @@ public partial class Net : Node
 
     readonly Queue<Command> _afterUploads = new();
 
-    public void ShareRelief(IEnumerable<string> files, Command c)
+    public void ShareThen(IEnumerable<string> files, Command c)
     {
         if (Server != null) { Session.Do(c); return; }
         foreach (var rel in files) _transfers.Upload(UploadAsset.ReliefPackage, rel);
