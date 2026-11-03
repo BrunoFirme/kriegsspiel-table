@@ -1,6 +1,6 @@
 local compat = {}
 
-local function num(v, d) if type(v) == "number" then return v end return d end
+local function num(v, d) return tonumber(v) or d end
 local function vec(v, k, i, d)
   if type(v) ~= "table" then return d end
   local x = v[k]

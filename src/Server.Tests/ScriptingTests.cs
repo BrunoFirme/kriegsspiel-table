@@ -355,7 +355,7 @@ public class ScriptingTests
             function onLoad()
               local typed = "typed_1"
               _G[typed] = function(obj, color, value, selected) obj.setName(value .. "/" .. color .. "/" .. tostring(selected)) end
-              self.createInput({ input_function = typed, function_owner = self, value = "a", position = {0, 0.2, 0}, width = 400, height = 200 })
+              self.createInput({ input_function = typed, function_owner = self, value = "a", position = {0, 0.2, 0}, width = "400", height = "200", font_size = "100" })
               local click = "pressed"
               self.createButton({ click_function = click, function_owner = self, label = "B", position = {0, 0.2, 0.5}, width = 400, height = 200 })
               self.createButton({ click_function = "named", function_owner = self, label = "N", position = {0, 0.2, -0.5}, width = 400, height = 200 })
@@ -365,6 +365,8 @@ public class ScriptingTests
             """);
         SetScript(t, tr.Script);
         var p = t.Server.State.Find(U, P)!;
+        Assert.Equal(2.2 * p.Widgets[1].W, p.Widgets[0].W, 6);
+        Assert.Equal(2.2 * p.Widgets[1].H, p.Widgets[0].H, 6);
         t.Server.Handle(Table.Host, new EditWidget { Layer = U, Id = P, Index = 1, Value = "typed" });
         Assert.Equal("typed/White/false", p.Label);
         t.Server.Handle(Table.Host, new ClickWidget { Layer = U, Id = P, Index = 2 });
