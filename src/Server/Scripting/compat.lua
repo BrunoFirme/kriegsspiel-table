@@ -253,7 +253,7 @@ local function our_decal(obj, d)
   local back = py < 0
   return {
     picture = url, name = tostring(d.name or ""), face = back and "back" or "front",
-    x = (back and -px or px) * u, z = pz * u,
+    x = (back and px or -px) * u, z = pz * u,
     w = math.abs(vec(d.scale, "x", 1, 1)) * u, h = math.abs(vec(d.scale, "y", 2, 1)) * u,
     rot = vec(d.rotation, "y", 2, 0) - 180,
   }
@@ -342,19 +342,21 @@ local function handler(name, owner, obj)
   return name
 end
 
+local BUTTON_EM, INPUT_SCALE = 0.87, 2.2
 local ALIGN = { [2] = "left", [3] = "center", [4] = "right" }
 
 function compat.widget_spec(obj, t, kind)
   local u = unit(obj)
   local px, pz = vec(t.position, "x", 1, 0), vec(t.position, "z", 3, 0)
   local rx, ry, rz = vec(t.rotation, "x", 1, 0), vec(t.rotation, "y", 2, 0), vec(t.rotation, "z", 3, 0)
-  local sx, sz = vec(t.scale, "x", 1, 1), vec(t.scale, "z", 3, 1)
+  local k = kind == "input" and INPUT_SCALE or 1
+  local sx, sz = math.abs(vec(t.scale, "x", 1, 1)) * k, math.abs(vec(t.scale, "z", 3, 1)) * k
   local back = math.abs(((rz % 360) + 360) % 360 - 180) < 90 or math.abs(((rx % 360) + 360) % 360 - 180) < 90
   local s = {
     face = back and "back" or "front",
     x = (back and -px or px) * u, z = pz * u, rot = ry,
     w = num(t.width, 0) / 1000 * sx * u, h = num(t.height, 0) / 1000 * sz * u,
-    font = num(t.font_size, 100) / 1000 * sx * u,
+    font = num(t.font_size, 100) / 1000 * sx * u * BUTTON_EM,
     color = compat.color(t.color), text_color = compat.color(t.font_color), tooltip = t.tooltip,
     align = ALIGN[num(t.alignment, 3)] or "center",
   }

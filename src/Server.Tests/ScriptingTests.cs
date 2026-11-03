@@ -298,6 +298,27 @@ public class ScriptingTests
     }
 
     [Fact]
+    public void A_TTS_input_is_drawn_as_a_button_scaled_up_and_its_decals_mirror_its_buttons_in_x()
+    {
+        using var t = new Table();
+        var tr = KTable.Server.Scripting.Translate.TtsTranslator.Translate("""
+            function onLoad()
+              self.createButton({ click_function = "none", function_owner = self, label = "B", position = {0.5, 0.2, 0}, width = 400, height = 200, font_size = 200 })
+              self.createInput({ input_function = "none", function_owner = self, value = "I", position = {0.5, 0.2, 0}, width = 400, height = 200, font_size = 200 })
+              self.setDecals({ { name = "D", url = "arms", position = {0.5, 0.2, 0}, rotation = {90, 180, 0}, scale = {1, 1, 1} } })
+            end
+            """);
+        SetScript(t, tr.Script);
+        var p = t.Server.State.Find(U, P)!;
+        var (b, i) = (p.Widgets[0], p.Widgets[1]);
+        Assert.Equal(2.2 * b.W, i.W, 6);
+        Assert.Equal(2.2 * b.Font, i.Font, 6);
+        Assert.Equal(0.87 * b.W / 2, b.Font, 6);
+        Assert.Equal(b.X, i.X, 6);
+        Assert.Equal(-b.X, Assert.Single(p.Decals).X, 6);
+    }
+
+    [Fact]
     public void A_TTS_script_s_decals_come_across_in_piece_units_and_addDecal_adds_one()
     {
         using var t = new Table();

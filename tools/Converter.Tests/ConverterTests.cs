@@ -148,7 +148,7 @@ public sealed class ConverterTests : IDisposable
         var def = new PieceDef { Size = new Size2(2, 1) };
         var ds = ScenarioBuilder.DecalsOf(o, def, url => url.Contains("gone") ? null : url);
         Assert.Equal(2, ds.Count);
-        Assert.Equal(("http://a/arms.png", "front", 0.25, -0.2, 0.3, 0.2, 0.0), (ds[0].Picture, ds[0].Face, ds[0].X, ds[0].Z, ds[0].W, ds[0].H, ds[0].Rot));
-        Assert.Equal(("back", -0.25, 20.0), (ds[1].Face, ds[1].X, ds[1].Rot));
+        Assert.Equal(("http://a/arms.png", "front", -0.25, -0.2, 0.3, 0.2, 0.0), (ds[0].Picture, ds[0].Face, ds[0].X, ds[0].Z, ds[0].W, ds[0].H, ds[0].Rot));
+        Assert.Equal(("back", 0.25, 20.0), (ds[1].Face, ds[1].X, ds[1].Rot));
     }
 }

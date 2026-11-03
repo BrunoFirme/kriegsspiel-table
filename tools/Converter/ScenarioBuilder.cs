@@ -220,7 +220,7 @@ public sealed class ScenarioBuilder
             list.Add(new DecalDef
             {
                 Picture = pic, Name = d.Name, Face = back ? "back" : "front",
-                X = Math.Round((back ? -d.PosX : d.PosX) * u, (int)Digits), Z = Math.Round(d.PosZ * u, (int)Digits),
+                X = Math.Round((back ? d.PosX : -d.PosX) * u, (int)Digits), Z = Math.Round(d.PosZ * u, (int)Digits),
                 W = Math.Round(w, (int)Digits), H = Math.Round(h, (int)Digits), Rot = Math.Round(d.RotY - TtsDecalTurn, 2),
             });
         }

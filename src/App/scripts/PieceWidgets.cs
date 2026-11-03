@@ -123,8 +123,18 @@ sealed class PieceWidgets
         var color = !typing && input && w.Value.Length == 0 ? textColor with { A = 0.55f } : textColor;
         float grow = Mathf.Max(0.01f, _piece.Look.FaceTextScale);
         float em = Mathf.Max(0.002f, (float)w.Font * k * grow);
+        if (input && boxed && !typing) text = Fitting(text, em, bw * 0.94f);
         Text(text, x, z, boxed ? bw * 0.94f : 0, em, color, w.Align, (float)w.Rot, back, faceY, 0.004f);
         if (boxed) _hits.Add(new Hit(new Vector2(x, z), new Vector2(bw, bh) / 2, turn, index));
+    }
+
+    static string Fitting(string text, float em, float width)
+    {
+        float pixel = em / Fonts.FaceSize;
+        float Wide(string s) => Fonts.Tts.GetStringSize(s, HorizontalAlignment.Left, -1, Fonts.FaceSize).X * pixel;
+        int n = text.Length;
+        while (n > 0 && Wide(text[..n]) > width) n--;
+        return text[..n];
     }
 
     public static Transform3D OnFace(float x, float z, float sw, float sh, float turn, bool back, float faceY, float above)
