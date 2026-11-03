@@ -572,42 +572,6 @@ public partial class ModelStudio : Control
         _studio.RebuildModelStrip();
     }
 
-    internal void ChangeShape(ModelPart p, string name, string kind)
-    {
-        if (!_views.TryGetValue(p.Id, out var old)) return;
-        _baker.KeepPaint(new[] { old });
-        Snapshot();
-        var m = ModelImport.Primitive(kind);
-        var ob = old.Data.Bounds(); var nb = m.Bounds();
-        float k = Mathf.Max(ob.Size.X, Mathf.Max(ob.Size.Y, ob.Size.Z)) / Mathf.Max(1e-4f, Mathf.Max(nb.Size.X, Mathf.Max(nb.Size.Y, nb.Size.Z)));
-        var from = new Vector3(nb.GetCenter().X, nb.Position.Y, nb.GetCenter().Z);
-        var to = new Vector3(ob.GetCenter().X, ob.Position.Y, ob.GetCenter().Z);
-        m.Transform(new Transform3D(Basis.Identity.Scaled(Vector3.One * k), to - from * k));
-        var made = NewPart(m, name, kind, 1024);
-        if (ModelPanels.AddableShapes.Any(s => s.kind == p.Kind && s.name == p.Name)) p.Name = name;
-        p.Kind = kind; p.Mesh = made.Mesh; p.Tex = made.Tex; p.Paint = null; p.Region = null; p.FaceDocs = null; p.Groups = made.Groups;
-        old.Node.QueueFree();
-        _views.Remove(p.Id);
-        MakeView(p);
-        RefreshSelection();
-        Changed(mesh: true);
-        _studio.RebuildModelPanels();
-    }
-
-    public void ReplaceAll(MeshData m, string name)
-    {
-        float width = _views.Count > 0 ? FootprintWide() * _doc.Scale : 2;
-        Snapshot();
-        foreach (var v in _views.Values) v.Node.QueueFree();
-        _views.Clear();
-        _doc.Parts.Clear();
-        AddParts(m, name, "mesh");
-        _doc.Scale = width / FootprintWide();
-        RefreshSelection();
-        Frame();
-        Changed(mesh: true);
-    }
-
     float ModelSpan()
     {
         var aabbs = _views.Values.Where(v => v.Part.Visible).Select(v => v.Node.Transform * v.Node.GetAabb()).ToList();

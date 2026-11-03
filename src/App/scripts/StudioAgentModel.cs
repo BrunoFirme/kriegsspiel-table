@@ -34,8 +34,8 @@ sealed partial class StudioTools
                 new Arg("pos", "array", "[x, y, z]"), new Arg("size", "array", "[x, y, z] scale"), new Arg("rot", "array", "[x, y, z] degrees"), new Arg("tint", "string", "#rrggbb")),
             AddPart);
         yield return new AgentTool("studio_model_set_part",
-            "Moves, sizes, turns, tints, hides or reshapes a part of a kind's model. Returns a picture. " + PartData,
-            Args.Schema(new Arg("id", "string", "the kind's id", true), new Arg("part", "string", "the part's id or name", true), new Arg("name", "string", "rename it"), new Arg("shape", "string", "another shape"),
+            "Moves, sizes, turns, tints or hides a part of a kind's model; a part keeps the shape it was added as. Returns a picture. " + PartData,
+            Args.Schema(new Arg("id", "string", "the kind's id", true), new Arg("part", "string", "the part's id or name", true), new Arg("name", "string", "rename it"),
                 new Arg("pos", "array", "[x, y, z]"), new Arg("size", "array", "[x, y, z] scale"), new Arg("rot", "array", "[x, y, z] degrees"), new Arg("tint", "string", "#rrggbb"), new Arg("visible", "boolean", "shown")),
             SetPart);
         yield return new AgentTool("studio_model_remove_part",
@@ -186,11 +186,7 @@ sealed partial class StudioTools
     {
         if (await OpenModel(s, d) is not { } m) return ToolResult.Fail($"{d.Name} could not be opened in the 3D view.");
         if (PartOf(m, a.Str("part")) is not { } p) return ToolResult.Fail($"{d.Name} has no part {a.Str("part")}: studio_model_parts lists them.");
-        if (a.Str("shape") is { } shape)
-        {
-            if (!PartShapes.Contains(shape)) return ToolResult.Fail("shape is one of " + string.Join(", ", PartShapes));
-            m.ChangeShape(p, ModelPanels.AddableShapes.First(x => x.kind == shape).name, shape);
-        }
+        if (a.Str("shape") is not null) return ToolResult.Fail("A part keeps the shape it was added as: add the other shape (studio_model_add_part) and remove this one (studio_model_remove_part).");
         m.Snapshot();
         if (a.Str("name") is { Length: > 0 } name) p.Name = name;
         Place(p, a);

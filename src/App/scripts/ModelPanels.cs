@@ -202,26 +202,34 @@ internal sealed class ModelPanels
         foreach (var f in PieceFaces.Of(def).Where(x => !PieceFaces.IsShapeFace(x.Key)))
         {
             bool shown = f.State == _m.FlatState;
-            bool on = shown && f.Key == _m.SelPartId;
-            var panel = new PanelContainer { MouseFilter = Control.MouseFilterEnum.Stop, MouseDefaultCursorShape = Control.CursorShape.PointingHand, TooltipText = shown ? "Double-click to paint it laid flat" : "Click to show this look on the block" };
-            panel.AddThemeStyleboxOverride("panel", Ui.Box(on ? new Color(1, 1, 1, 0.13f) : new Color(1, 1, 1, 0.03f), 3, 6, 2));
-            var row = new HBoxContainer();
-            panel.AddChild(row);
-            row.AddChild(new Label { Text = f.Label, ClipText = true, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, MouseFilter = Control.MouseFilterEnum.Ignore, Modulate = shown ? Colors.White : Ui.Muted });
-            if (f.Sha == null) row.AddChild(new Label { Text = f.Back ? "the front's" : "blank", Modulate = Ui.Muted, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, MouseFilter = Control.MouseFilterEnum.Ignore });
             var key = f.Key; int state = f.State;
-            row.AddChild(Ui.Btn("Paint", () => studio.PaintIn2D(key), "Paint this face laid flat in 2D: layers, text, rulers, symmetry"));
-            panel.GuiInput += e =>
-            {
-                if (e is not InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true } mb) return;
-                panel.AcceptEvent();
-                if (mb.DoubleClick) { studio.PaintIn2D(key); return; }
-                _m.SelPartId = key;
-                if (state != _m.FlatState) _m.ShowState(state);
-                else { _m.RefreshSelection(); studio.RebuildModelPanels(); }
-            };
-            faces.AddChild(panel);
+            faces.AddChild(FaceRow(studio, key, f.Label, f.Sha == null ? (f.Back ? "the front's" : "blank") : null, shown, shown && key == _m.SelPartId,
+                shown ? "Double-click to paint it laid flat" : "Click to show this look on the block", () =>
+                {
+                    _m.SelPartId = key;
+                    if (state != _m.FlatState) _m.ShowState(state);
+                    else { _m.RefreshSelection(); studio.RebuildModelPanels(); }
+                }));
         }
+    }
+
+    static PanelContainer FaceRow(PieceStudio studio, string key, string label, string? note, bool shown, bool on, string tip, Action? choose)
+    {
+        var panel = new PanelContainer { MouseFilter = Control.MouseFilterEnum.Stop, MouseDefaultCursorShape = Control.CursorShape.PointingHand, TooltipText = tip };
+        panel.AddThemeStyleboxOverride("panel", Ui.Box(on ? new Color(1, 1, 1, 0.13f) : new Color(1, 1, 1, 0.03f), 3, 6, 2));
+        var row = new HBoxContainer();
+        panel.AddChild(row);
+        row.AddChild(new Label { Text = label, ClipText = true, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, MouseFilter = Control.MouseFilterEnum.Ignore, Modulate = shown ? Colors.White : Ui.Muted });
+        if (note != null) row.AddChild(new Label { Text = note, Modulate = Ui.Muted, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, MouseFilter = Control.MouseFilterEnum.Ignore });
+        row.AddChild(Ui.Btn("Paint", () => studio.PaintIn2D(key), "Paint this face laid flat in 2D: layers, text, rulers, symmetry"));
+        panel.GuiInput += e =>
+        {
+            if (e is not InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true } mb) return;
+            panel.AcceptEvent();
+            if (mb.DoubleClick) studio.PaintIn2D(key);
+            else choose?.Invoke();
+        };
+        return panel;
     }
 
     Control PartRow(PieceStudio studio, ModelPart p)
@@ -254,14 +262,9 @@ internal sealed class ModelPanels
         rename.TextSubmitted += _ => Rename();
         rename.FocusExited += Rename;
         form.AddChild(rename);
-        if (s.Kind is not ("mesh" or "block"))
-        {
-            form.AddChild(new Label { Text = "Shape" });
-            form.AddChild(KindMenu(s));
-        }
         Ui.AlignForm(form);
         g.AddChild(form);
-        ShapeFaces(studio, g, s);
+        ShapeFaces(studio, box, s);
         PartPlace(studio, box, s);
         PartLook(box, s);
     }
@@ -277,24 +280,14 @@ internal sealed class ModelPanels
         _m.SelPartId = c.Id; _m.RefreshSelection(); _m.Changed(mesh: true); studio.RebuildModelPanels();
     }
 
-    MenuButton KindMenu(ModelPart s)
-    {
-        var now = AddableShapes.FirstOrDefault(x => x.kind == s.Kind).name ?? s.Kind;
-        var kind = new MenuButton { Text = now + " ▾", FocusMode = Control.FocusModeEnum.None, Flat = false, Alignment = HorizontalAlignment.Left, TooltipText = "Another kind of shape in its place, at its size. Its paint does not carry over (Ctrl+Z brings it back)." };
-        var shapes = AddableShapes;
-        for (int i = 0; i < shapes.Length; i++) if (shapes[i].kind != "base" || !_m.Flat) kind.GetPopup().AddItem(shapes[i].name, i);
-        var part = s;
-        kind.GetPopup().IdPressed += id => { var (name, k) = shapes[id]; if (k != part.Kind) _m.ChangeShape(part, name, k); };
-        return kind;
-    }
-
     void ShapeFaces(PieceStudio studio, VBoxContainer box, ModelPart p)
     {
         if (!_m.Views.TryGetValue(p.Id, out var v)) return;
         var faces = _m.ShapeFaces.FacesOf(v);
         if (faces.Count == 0) return;
-        box.AddChild(new Label { Text = "Paint a face in 2D", Modulate = Ui.Muted });
-        box.AddChild(Buttons(3, faces.Select((f, i) => { var key = $"p:{p.Id}:{i}"; return Ui.Btn(f.Name, () => studio.PaintIn2D(key), "This face laid flat: layers, text, rulers, symmetry"); }).ToArray()));
+        var g = Inspector.Group(box, "Faces");
+        for (int i = 0; i < faces.Count; i++)
+            g.AddChild(FaceRow(studio, $"p:{p.Id}:{i}", faces[i].Name, null, true, false, "Double-click to paint it laid flat", null));
     }
 
     static readonly string[] Axes = { "X", "Y", "Z" };
@@ -364,7 +357,5 @@ internal sealed class ModelPanels
         }
         Ui.AlignForm(g);
         g0.AddChild(g);
-        var replace = Ui.Btn("Replace the model…", () => studio.PickFiles(ModelImport.Filter, f => { if (f.Length > 0) studio.NewPieces.ReplaceModel(f[0]); }, "Replace the model"), "Another model file in place of all its shapes: glTF, GLB, FBX, OBJ, STL, PLY or Collada");
-        g0.AddChild(replace);
     }
 }

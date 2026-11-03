@@ -354,24 +354,6 @@ internal sealed class NewPieces
 
     void NewModelFromShapes() => _ = _s.NewModelPiece("New model", ModelImport.Primitive("base"), "base", addFigure: true);
 
-    public async void ReplaceModel(string file)
-    {
-        try { await ReplaceModelAsync(file); }
-        catch (Exception e) { GD.PushError(e.ToString()); }
-    }
-
-    async Task ReplaceModelAsync(string file)
-    {
-        var m = ModelImport.Load(file, out var err);
-        if (m == null) { _s.Flash($"Could not read {Path.GetFileName(file)}: {err}"); return; }
-        var d = _s.Sel;
-        if (d == null) return;
-        await _s.SetViewAsync("model");
-        var model = _s.Model;
-        if (_s.Gone || _s.Sel != d || model == null || !model.Holds(d)) { if (!_s.Gone) _s.Flash("The model was not replaced: the 3D view could not open this piece."); return; }
-        model.ReplaceAll(m, Pretty(Path.GetFileNameWithoutExtension(file)));
-    }
-
     public void PickModelPart() => _s.PickFiles(ModelImport.Filter, f => AddModelFiles(f), "Models to build onto the piece");
 
     internal int AddModelFiles(string[] files)

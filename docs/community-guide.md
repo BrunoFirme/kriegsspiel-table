@@ -61,8 +61,9 @@ Pictures and models dropped on the window become pieces too.
   thickness and side tint. A look can have its own size and outline.
 - **Add a shape or a model** builds onto it: a box, a cylinder, a flag… or a model file (glTF, GLB, FBX, OBJ,
   STL, PLY), which sits centred on top. A model file dropped on the 3D view does the same; dropped anywhere
-  else it becomes a piece of its own. A 3D piece's width on the table, its tint and **Replace the model…** are
-  under **On the table**.
+  else it becomes a piece of its own. A layer keeps the shape it was added as: for another, add it and delete
+  the old layer. Every layer, the block and each shape, lists its **Faces** to paint in 2D. A 3D piece's width
+  on the table and its tint are under **On the table**.
 - Tools: look round H, move V (drag the X, Y and Z arrows, or the shape itself), brush B, rubber E, fill G,
   colour I, decal D; **F** turns the piece over. A shape chosen in 3D opens its faces in 2D.
 - Saved as one OBJ and one picture, as TTS uses.
