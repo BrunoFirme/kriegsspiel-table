@@ -36,8 +36,6 @@ public partial class PieceNode
 
     bool _built;
 
-    public void HoldForPicture(bool on) => EffectFx.Hold(this, _emitters, on);
-
     public void ShadeEffect() => EffectFx.Shade(_emitters);
 
     public void SteerEffect()

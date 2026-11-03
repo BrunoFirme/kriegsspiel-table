@@ -35,7 +35,6 @@ public sealed class EffectLayer
     public Vector3[]? Points;
     public bool Fixed;
     public float Start = -1;
-    public float Peak = -1;
 }
 
 public sealed class EffectLightSpec
@@ -782,8 +781,7 @@ public static class EffectRecipe
             foreach (var l in layers)
             {
                 if (!l.Fixed) l.Amount = Math.Clamp(l.Amount, 1, 900);
-                float start = firing && l.Explosive > 0 ? ((phase + l.Offset) % 1) * l.Life : -1;
-                if (start >= 0) { l.Start = start; l.Peak = EffectKinds.PeakShare(e.Kind) * l.Life; }
+                if (firing && l.Explosive > 0) l.Start = ((phase + l.Offset) % 1) * l.Life;
             }
 
             string mode = EffectKinds.Mode(e);

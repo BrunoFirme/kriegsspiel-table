@@ -71,15 +71,9 @@ sealed class Captures : HudPart
         vp.AddChild(cam);
         HudNode.AddChild(vp);
         cam.GlobalTransform = main.GlobalTransform;
-        T.HoldEffectsForPicture(true);
-        Image img;
-        try
-        {
-            await HudNode.ToSignal(RenderingServer.Singleton, RenderingServer.SignalName.FramePostDraw);
-            await HudNode.ToSignal(RenderingServer.Singleton, RenderingServer.SignalName.FramePostDraw);
-            img = vp.GetTexture().GetImage();
-        }
-        finally { T.HoldEffectsForPicture(false); }
+        await HudNode.ToSignal(RenderingServer.Singleton, RenderingServer.SignalName.FramePostDraw);
+        await HudNode.ToSignal(RenderingServer.Singleton, RenderingServer.SignalName.FramePostDraw);
+        var img = vp.GetTexture().GetImage();
         vp.QueueFree();
         T.LodBoost = 1;
         var rr = new Rect2I((int)(r.Position.X * k), (int)(r.Position.Y * k), (int)(r.Size.X * k), (int)(r.Size.Y * k));

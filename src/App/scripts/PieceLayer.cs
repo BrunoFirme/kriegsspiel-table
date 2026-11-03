@@ -144,11 +144,6 @@ sealed class PieceLayer
 
     public void RefreshFaceText() { foreach (var n in _pieces.Values) { n.Refresh(n.Piece); n.SyncWidgets(force: true); } }
 
-    public void HoldEffectsForPicture(bool on)
-    {
-        foreach (var n in _pieces.Values) if (n.CarriesEffect) n.HoldForPicture(on);
-    }
-
     public void ShadeEffects() { foreach (var n in _pieces.Values) if (n.CarriesEffect) n.ShadeEffect(); }
 
     public void SteerEffects() { foreach (var n in _pieces.Values) if (n.CarriesEffect) n.SteerEffect(); }

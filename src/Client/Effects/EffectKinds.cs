@@ -97,8 +97,6 @@ public static class EffectKinds
         return new EffectDef { Kind = kind, Smoke = kind != "fire" || Has("smoke") };
     }
 
-    public static float PeakShare(string kind) => kind switch { "powder" => 0.008f, "cannon" => 0.025f, "burst" or "barrage" => 0.05f, "broadside" => 0.03f, "column" => 0.14f, _ => 0.12f };
-
     public static int Seed(float phase) => (int)(phase * 100000) + 7;
 
     public static Vector3[] Scatter(Random rng, int n, float hx, float hz, float y)

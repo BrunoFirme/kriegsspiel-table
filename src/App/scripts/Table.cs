@@ -319,7 +319,6 @@ public partial class Table : Node3D
     public void RebuildPiecesOf(string defId) => Pieces.RebuildPiecesOf(defId);
     public void RefreshFaceText() => Pieces.RefreshFaceText();
     public void RefreshLettering() => Pieces.Lettering.Refresh();
-    public void HoldEffectsForPicture(bool on) => Pieces.HoldEffectsForPicture(on);
     public int LetteredCount => Pieces.Lettering.Count;
     public long LetteredWeight => Pieces.Lettering.Weight;
     public string GridDebug() => Pieces.Grid.Debug();

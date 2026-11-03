@@ -21,25 +21,7 @@ public static class EffectFx
         public float Drift;
         public float Brake, Blast;
         public StandardMaterial3D? Lit;
-        public float Start, Peak = -1;
         public double Speed = 1;
-    }
-
-    public static void Hold(Node3D host, List<Emitter> emitters, bool on)
-    {
-        foreach (var child in host.GetChildren()) if (child is EffectProjectiles shots) shots.Hold(on);
-        bool any = false;
-        foreach (var m in emitters)
-        {
-            if (m.Peak < 0 || !GodotObject.IsInstanceValid(m.Node)) continue;
-            any = true;
-            m.Node.Preprocess = on ? m.Peak : m.Start;
-            m.Node.SpeedScale = on ? 1e-4 : m.Speed;
-            m.Node.Restart();
-        }
-        if (!any) return;
-        foreach (var child in host.GetChildren())
-            if (child is EffectLight light) { if (on) light.Hold(emitters.First(e => e.Peak >= 0).Peak); else light.Release(); }
     }
 
     public static List<Emitter> Build(Node3D host, EffectDef e, float w, float h, float phase, Texture2D? own)
@@ -57,9 +39,7 @@ public static class EffectFx
         var made = new List<Emitter>();
         foreach (var l in plan.Layers)
         {
-            var m = Emit(host, l, own, plan.Span, plan.Rise, l.Start);
-            if (l.Start >= 0) { m.Start = l.Start; m.Peak = l.Peak; }
-            made.Add(m);
+            made.Add(Emit(host, l, own, plan.Span, plan.Rise, l.Start));
         }
         if (plan.Light is { } light) host.AddChild(Light(light));
         made.AddRange(shots);
@@ -568,21 +548,8 @@ public partial class EffectLight : OmniLight3D
 
     public override void _Ready() { _t = Phase; LightEnergy = Mode == 2 ? 0 : Base; }
 
-    bool _held;
-
-    public void Hold(float since)
-    {
-        _held = true;
-        if (Mode != 2) return;
-        LightEnergy = Base * Mathf.Exp(-since * 9f);
-        Visible = true;
-    }
-
-    public void Release() { _held = false; _t = Phase; }
-
     public override void _Process(double delta)
     {
-        if (_held) return;
         _t += delta * Speed;
         switch (Mode)
         {
@@ -657,11 +624,9 @@ public partial class EffectProjectiles : Node3D
     public bool Flare;
     public float Every = 5, Flight = 1.5f, Arc = 2, Speed = 1, LightBase = 3;
     double _t;
-    bool _held;
 
     public override void _Process(double delta)
     {
-        if (_held) return;
         _t += delta * Speed;
         foreach (var s in Shots) Place(s, (float)((_t + s.Phase * Every) % Every));
     }
@@ -706,15 +671,5 @@ public partial class EffectProjectiles : Node3D
         }
         s.Head.Visible = aloft;
         foreach (var tr in s.Trail) tr.Emitting = aloft;
-    }
-
-    public void Hold(bool on)
-    {
-        _held = on;
-        foreach (var s in Shots)
-        {
-            if (on) Place(s, Flare ? Flight + Every * 0.2f : Flight * 0.6f);
-            foreach (var tr in s.Trail) tr.SpeedScale = on ? 1e-4 : Speed;
-        }
     }
 }

@@ -322,7 +322,6 @@ sealed class Sighting
         }
         try
         {
-            _pieces.HoldEffectsForPicture(true);
             await _c.Scene.ToSignal(RenderingServer.Singleton, RenderingServer.SignalName.FramePostDraw);
             await _c.Scene.ToSignal(RenderingServer.Singleton, RenderingServer.SignalName.FramePostDraw);
             return shot.GetTexture().GetImage();
@@ -330,7 +329,6 @@ sealed class Sighting
         finally
         {
             shot.QueueFree();
-            _pieces.HoldEffectsForPicture(false);
             _pieces.Lettering.Release();
             _sheets.LodBoost = 1;
             _shotPlane.Position = new Vector3(0, 0.021f, 0);

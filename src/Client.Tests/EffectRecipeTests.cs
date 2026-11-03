@@ -42,17 +42,13 @@ public class EffectRecipeTests
     }
 
     [Fact]
-    public void A_firing_layer_starts_part_way_into_its_cycle_and_a_picture_catches_it_at_the_shot()
+    public void A_firing_layer_starts_part_way_into_its_cycle()
     {
         var plan = Plan(new EffectDef { Kind = "cannon" }, phase: 0.25f);
         var fired = plan.Layers.Where(l => l.Explosive > 0).ToList();
         Assert.NotEmpty(fired);
-        Assert.All(fired, l =>
-        {
-            Assert.Equal((0.25f + l.Offset) % 1 * l.Life, l.Start);
-            Assert.Equal(0.025f * l.Life, l.Peak);
-        });
-        Assert.All(Plan(new EffectDef { Kind = "smoke" }).Layers, l => Assert.Equal((-1f, -1f), (l.Start, l.Peak)));
+        Assert.All(fired, l => Assert.Equal((0.25f + l.Offset) % 1 * l.Life, l.Start));
+        Assert.All(Plan(new EffectDef { Kind = "smoke" }).Layers, l => Assert.Equal(-1f, l.Start));
     }
 
     [Fact]
