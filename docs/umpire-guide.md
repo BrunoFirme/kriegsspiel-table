@@ -6,7 +6,7 @@ Hosting puts the table on your PC for your co-umpires and anyone you let in to w
 
 ### Packs
 
-A pack is a set of pieces. **Packs and Pieces** on the title screen installs a `.ktpack`, imports a Tabletop
+A pack is a set of pieces. **Piece studio** on the title screen installs a `.ktpack`, imports a Tabletop
 Simulator module, or makes a new pack. The standard dice are always there.
 
 ### Scenarios
@@ -220,7 +220,7 @@ The ⋯ after the scenario's name opens its properties: briefing, clock, light, 
 | A co-umpire's table looks wrong | They leave and rejoin; the table is sent again. |
 | **NOT SAVED** in the top bar | The Log says why (disk full, folder gone). It clears once saving works. |
 | The card says the save is damaged | Host continues from the newest copy; the damaged file is kept beside it. |
-| You deleted something | **Host a game → Trash** or **Packs and Pieces → Trash**: thirty days to **Restore**. |
+| You deleted something | **Host a game → Trash** or **Piece studio → Trash**: thirty days to **Restore**. |
 | The host's PC is gone | An umpire who was there: **Mirrored games** → **Host from the copy**. |
 | A panel is off screen | **Settings → Reset panel sizes**. |
 | Text and buttons are too small | **Settings → Accessibility → Interface size**; **Match Windows** follows Windows' own display scale. |

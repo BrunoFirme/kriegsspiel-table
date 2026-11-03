@@ -73,7 +73,7 @@ internal sealed class TopLine
         _saved.AddThemeFontSizeOverride("font_size", 11);
         row.AddChild(_saved);
         if (AgentEndpoint.Current is { } agent) row.AddChild(AgentPill.Make(agent, () => { DialogPages.LastPage["app-settings"] = "AI agent"; AppSettings.OpenWindow(_s.Root, _s.Cfg); }));
-        row.AddChild(Ui.Primary("Done", done, "Save everything and go back to Packs and Pieces"));
+        row.AddChild(Ui.Primary("Done", done, "Save everything and go back to the list of packs"));
         return Panel;
     }
 

@@ -204,7 +204,7 @@ sealed class AppTools
             o["briefing"] = s.View.Briefing is { Length: > 0 } b ? $"{b.Length} characters (read_briefing)" : "none yet (set_briefing)";
             o["scriptsFolder"] = ScriptFileWatch.TableFolder(s);
         }
-        else o["open"] = "title screen: host or join a game, or open a pack in the piece studio (Packs and Pieces)";
+        else o["open"] = "title screen: host or join a game, or open a pack in the piece studio";
         o["scriptsRoot"] = ScriptFiles.Root;
         return new ToolResult(o.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
     }

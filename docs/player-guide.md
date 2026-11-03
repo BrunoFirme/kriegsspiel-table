@@ -30,5 +30,5 @@ Anyone can host. The [umpire's guide](umpire-guide.md) covers hosting, the door 
 
 ## Your own pieces
 
-**Packs and Pieces → New pack…** draws blocks or turns pictures into pieces: see
+**Piece studio → New pack…** draws blocks or turns pictures into pieces: see
 [the piece studio](community-guide.md#the-piece-studio).

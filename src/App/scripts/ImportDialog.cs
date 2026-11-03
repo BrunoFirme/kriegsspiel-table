@@ -272,7 +272,7 @@ public partial class ImportDialog : AcceptDialog
         bool one = worked.Count == 1;
         var text = $"{doing} replaces {(one ? "a pack you already have" : "packs you already have")}:\n\n{string.Join("\n", lines)}\n\n"
             + $"The pack{(one ? "" : "s")} you have go{(one ? "es" : "")} to the trash whole, with every piece changed in the piece studio, and stay{(one ? "s" : "")} there {SaveStore.TrashDays} days: "
-            + "restore from Packs and Pieces → Trash, at the foot of the page. The new copy does not have those changes.";
+            + "restore from Piece studio → Trash, at the foot of the page. The new copy does not have those changes.";
         bool answered = false;
         var dlg = Ui.Confirm(parent, one ? "Replace a pack you changed?" : "Replace packs you changed?", okText, () => { if (!answered) { answered = true; go(); } }, text, 460);
         dlg.CancelButtonText = "Cancel";
@@ -299,7 +299,7 @@ public partial class ImportDialog : AcceptDialog
         int movedAside = 0, putBack = 0;
         string Left() => movedAside == 0 ? "" : putBack >= movedAside
             ? " What you had before is back in place."
-            : " What you had before is in the trash: restore it from there (Packs and Pieces or Host a game, at the foot of the page).";
+            : " What you had before is in the trash: restore it from there (Piece studio or Host a game, at the foot of the page).";
         _run = ConverterTool.Run(args, line =>
         {
             if (!IsInstanceValid(this)) return;
@@ -307,7 +307,7 @@ public partial class ImportDialog : AcceptDialog
             if (line.StartsWith("TRASHED "))
             {
                 movedAside++;
-                Log($"[color=#ffd75e]The {Fmt.Bb(Entry(line[8..].Trim()))} you had went to the trash first, whole. If the new one is not what you wanted, restore it from the trash at the foot of Packs and Pieces (a pack) or Host a game (a scenario) within {SaveStore.TrashDays} days.[/color]");
+                Log($"[color=#ffd75e]The {Fmt.Bb(Entry(line[8..].Trim()))} you had went to the trash first, whole. If the new one is not what you wanted, restore it from the trash at the foot of Piece studio (a pack) or Host a game (a scenario) within {SaveStore.TrashDays} days.[/color]");
                 return;
             }
             if (line.StartsWith("PUTBACK ")) { putBack++; Log("[color=#8f8]Put back as it was:[/color] " + Fmt.Bb(line[8..])); return; }

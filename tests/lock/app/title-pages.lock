@@ -22,7 +22,7 @@ dismiss
 click "Join a game"
 settle
 checkpoint join-page
-click "Packs and Pieces"
+click "Piece studio"
 settle
 checkpoint packs-page
 rclick "Lock pieces"

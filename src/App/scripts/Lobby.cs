@@ -156,7 +156,7 @@ public partial class Main
             if (m.InstalledGame != null)
                 msg += $" It brought its saves{(m.InstalledGame.Length > 0 ? $" ({m.InstalledGame})" : "")}: Resume continues its game with the same password and the people already let in. The saves that were here stay.";
             if (m.Trashed.Count > 0)
-                msg += $" What you had under the same name went to the trash first, whole ({string.Join(", ", m.Trashed)}): restore it from the foot of Packs and Pieces or Host a game within {SaveStore.TrashDays} days.";
+                msg += $" What you had under the same name went to the trash first, whole ({string.Join(", ", m.Trashed)}): restore it from the foot of Piece studio or Host a game within {SaveStore.TrashDays} days.";
             foreach (var w in m.Warnings) msg += " " + w;
             if (Title.Root == null) { GD.Print("[install] " + msg); return; }
             RebuildLobby();

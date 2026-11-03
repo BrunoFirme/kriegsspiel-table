@@ -17,7 +17,7 @@ that react.
 
 A block that shows its strength, with a button to take a loss (right-click to restore one).
 
-1. **Packs and Pieces** → your pack → **Edit pieces** → the piece → **Script** tab.
+1. **Piece studio** → your pack → **Edit pieces** → the piece → **Script** tab.
 2. Paste:
 
 ```lua

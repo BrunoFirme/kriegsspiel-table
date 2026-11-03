@@ -54,7 +54,7 @@ sealed class HostPage
         col.AddThemeConstantOverride("separation", 10);
         scroll.AddChild(col);
 
-        if (scenarios.Count == 0) col.AddChild(new Label { Text = "No scenarios. Packs and Pieces installs one.", Modulate = Muted });
+        if (scenarios.Count == 0) col.AddChild(new Label { Text = "No scenarios. Piece studio installs one.", Modulate = Muted });
         foreach (var (folder, items) in _t.Folders.Grouped(scenarios, x => x.id, pack: false))
         {
             if (items.Count == 0 && folder.Length == 0) continue;

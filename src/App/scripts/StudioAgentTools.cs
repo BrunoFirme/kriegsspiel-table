@@ -163,7 +163,7 @@ sealed partial class StudioTools
         return r;
     }
 
-    internal static ToolResult NotOpen => ToolResult.Fail("The piece studio is not open: Packs and Pieces → Edit pieces opens a pack in it.");
+    internal static ToolResult NotOpen => ToolResult.Fail("The piece studio is not open: Piece studio on the title screen → Edit pieces opens a pack in it.");
 
     static PieceDef? Def(PieceStudio s, JsonElement a) => a.Str("id") is { } id ? s.Pack.Pieces.FirstOrDefault(d => d.Id == id) : null;
 

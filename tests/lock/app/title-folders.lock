@@ -33,7 +33,7 @@ checkpoint delete-folder-ask
 click "Delete"
 settle
 checkpoint folder-deleted
-click "Packs and Pieces"
+click "Piece studio"
 wait 30
 rclick "Lock pieces"
 click "Move to"

@@ -1,5 +1,5 @@
 settle
-click "Packs and Pieces"
+click "Piece studio"
 wait 30
 click "New pack…"
 settle

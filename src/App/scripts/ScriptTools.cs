@@ -541,7 +541,7 @@ public partial class ScriptWindow : Window
             var r = _rows.FirstOrDefault(x => x.Key == key);
             var name = _s.Def(key[4..])?.Name ?? key[4..];
             _head.Text = $"{name} — the pack's script, on {r?.Ids.Count ?? 0} piece{(r?.Ids.Count == 1 ? "" : "s")}";
-            _note.Text = $"Every {name} runs this script from its pack. Change it for all of them in Packs and Pieces → Edit pieces → Script; to give one piece its own, right-click it on the table → Scripting….";
+            _note.Text = $"Every {name} runs this script from its pack. Change it for all of them in Piece studio → Edit pieces → Script; to give one piece its own, right-click it on the table → Scripting….";
             _xml.Text = ""; _state.Text = "";
             var errs = (r?.Ids ?? new()).Select(id => infos.GetValueOrDefault(id)).OfType<ScriptInfo>().Where(i => i.LastError != null).ToList();
             if (errs.Count > 0) { _status.Text = $"{errs.Count} of them in error; the first: {errs[0].LastError}"; if (errs[0].ErrorLine > 0) _code.SetLineBackgroundColor(errs[0].ErrorLine - 1, new Color(0.8f, 0.2f, 0.15f, 0.35f)); }

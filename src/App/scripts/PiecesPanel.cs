@@ -122,7 +122,7 @@ sealed class PiecesPanel : HudPart
         _packs = ids.Select(id => S.Store.Pack(id)).Where(p => p != null).Cast<PackManifest>().ToList();
         foreach (var id in ids)
             if (S.Store.Problem(id) is { } why && _damagedSaid.Add(id))
-                Log($"[color=#ff7060]The pack {Fmt.Bb(id)} cannot be read ({Fmt.Bb(why)}); its pieces are not shown.{(S.IsHost ? " Remove it under Packs and Pieces on the title screen, or install it again." : "")}[/color]");
+                Log($"[color=#ff7060]The pack {Fmt.Bb(id)} cannot be read ({Fmt.Bb(why)}); its pieces are not shown.{(S.IsHost ? " Remove it under Piece studio on the title screen, or install it again." : "")}[/color]");
         var prev = PackPick.Selected > 0 ? PackPick.GetItemMetadata(PackPick.Selected).AsString() : null;
         PackPick.Clear();
         PackPick.AddItem($"All packs ({_packs.Sum(p => p.Pieces.Count)})");

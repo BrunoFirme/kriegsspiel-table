@@ -28,7 +28,7 @@ settle
 checkpoint deleted-for-good
 click "← Host a game"
 wait 30
-click "Packs and Pieces"
+click "Piece studio"
 wait 30
 rclick "Lock pieces"
 click "Remove from this PC…"

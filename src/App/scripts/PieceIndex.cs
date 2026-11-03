@@ -98,7 +98,7 @@ sealed class PieceIndex : HudPart
             var parts = new[] { r.Name, r.Name == r.Kind ? "" : r.Kind, r.Pack, string.Join("  ", r.Piece.Counters.Select(c => $"{c.Key} {c.Value}")) };
             int i = _list.AddItem((r.PackMissing ? Missing : "") + string.Join("  ·  ", parts.Where(x => x.Length > 0)));
             _list.SetItemTooltip(i, r.PackMissing
-                ? $"{r.Name}\nIts pack is not installed here ({r.Pack}), so it is not drawn. Install the pack under Packs and Pieces, or delete it here."
+                ? $"{r.Name}\nIts pack is not installed here ({r.Pack}), so it is not drawn. Install the pack under Piece studio, or delete it here."
                 : $"{r.Name}\n{r.Kind} · {r.Pack}\nat {r.Piece.Pos.X:0.#}, {r.Piece.Pos.Z:0.#}");
             if (r.PackMissing) _list.SetItemCustomFgColor(i, TitleStyle.Warning);
         }

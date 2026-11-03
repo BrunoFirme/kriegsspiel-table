@@ -18,7 +18,7 @@ sealed class PacksPage
 
     public void Show()
     {
-        var v = _t.NewPage("Packs and Pieces", "");
+        var v = _t.NewPage("Piece studio", "");
         v.AddChild(Actions());
         v.AddChild(_t.Folders.Strip(() => { _t.Select(2); Show(); }));
 

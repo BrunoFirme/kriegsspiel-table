@@ -2,7 +2,7 @@
 
 ## Import a Tabletop Simulator module
 
-**Packs and Pieces → Import from Tabletop Simulator…**, then pick a module or save from the list, **Browse…** to a
+**Piece studio → Import from Tabletop Simulator…**, then pick a module or save from the list, **Browse…** to a
 `.json`, or paste a Steam Workshop link.
 
 You get:
@@ -28,11 +28,11 @@ keep their Steam links; your own pictures load only on your PC.
 
 ## The piece studio
 
-**Packs and Pieces → New pack…**, or **Edit pieces** on any pack. Tools down the left, the work in the middle,
+**Piece studio → New pack…**, or **Edit pieces** on any pack. Tools down the left, the work in the middle,
 the pack's pieces and the chosen piece down the right. The top line says what the tool in hand does.
 [Keys and mouse](keys.md#piece-studio) lists the studio's keys.
 
-☰ → **Pack details…** sets the pack's name, who made it and a description, shown on Packs and Pieces.
+☰ → **Pack details…** sets the pack's name, who made it and a description, shown in the piece studio's list of packs.
 
 ### New pieces
 
@@ -93,7 +93,7 @@ it in your hand to roll, or press **R**. The host decides every result and the L
 
 A `.ktpack` file carries a pack or a scenario.
 
-- **A pack:** **Export…** beside it in Packs and Pieces.
+- **A pack:** **Export…** beside it in the piece studio.
 - **A scenario:** **Export…** under its card. Carry **only the pieces it uses**, **whole packs**, or **no packs**.
 
 To install, drop the file on the window or use **Install a shared file**. A trimmed pack never replaces a full

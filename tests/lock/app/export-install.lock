@@ -1,5 +1,5 @@
 settle
-click "Packs and Pieces"
+click "Piece studio"
 wait 30
 rclick "Lock pieces"
 click "Export…"
@@ -33,7 +33,7 @@ settle
 drop-file "{fixtures}/lock-small.ktpack"
 settle 60 2400
 checkpoint installed-scenario
-click "Packs and Pieces"
+click "Piece studio"
 wait 30
 drop-file "{fixtures}/lock-pieces.ktpack"
 settle 60 2400

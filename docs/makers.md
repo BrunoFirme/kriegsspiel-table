@@ -17,7 +17,7 @@
 | Script console and Lua prompt | Menu → Scripting → Script console (`) |
 | Ids and GUIDs on hover | Settings → Tools for script makers |
 | A piece's id, kind and script | Right-click → Properties → For scripts |
-| Check a pack's scripts | Packs and Pieces → the pack's ⋯ → Check its scripts… |
+| Check a pack's scripts | Piece studio → the pack's ⋯ → Check its scripts… |
 | Check a scenario's scripts | Its card's ⋯, or Menu → Scripting at the table |
 | VS Code completion | API reference → **API file for VS Code…** |
 

@@ -1,5 +1,5 @@
 settle
-click "Packs and Pieces"
+click "Piece studio"
 wait 30
 click "Import from Tabletop Simulator…"
 settle 60 2400

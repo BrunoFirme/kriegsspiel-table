@@ -75,7 +75,7 @@ public partial class Hud
             if (meta == null) throw new InvalidOperationException(error);
             foreach (var pid in meta.InstalledPacks.Append(meta.Id)) S.Store.Forget(pid);
             if (meta.Trashed.Count > 0)
-                Log($"[color=#ffd75e]What you had under the same name went to the trash first, whole ({Fmt.Bb(string.Join(", ", meta.Trashed))}): restore it from the title screen, at the foot of Packs and Pieces or Host a game, within {KTable.Core.SaveStore.TrashDays} days.[/color]");
+                Log($"[color=#ffd75e]What you had under the same name went to the trash first, whole ({Fmt.Bb(string.Join(", ", meta.Trashed))}): restore it from the title screen, at the foot of Piece studio or Host a game, within {KTable.Core.SaveStore.TrashDays} days.[/color]");
             foreach (var w in meta.Warnings) Log($"[color=#ffd75e]{Fmt.Bb(w)}[/color]");
             if (meta.Kind != "pack") { Log($"Installed the scenario {Fmt.Bb(meta.Name)} and its packs; host it from the title screen."); Pieces.RebuildPacks(); return; }
             var id = meta.Id;

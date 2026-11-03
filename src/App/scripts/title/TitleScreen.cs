@@ -124,7 +124,7 @@ sealed class TitleScreen
         _nav.Clear();
         NavItem(left, "Host a game", () => Host.Show(store, scenarios));
         NavItem(left, "Join a game", Join.Show);
-        NavItem(left, "Packs and Pieces", Packs.Show);
+        NavItem(left, "Piece studio", Packs.Show);
         if (HasWorkshop) NavItem(left, "Steam Workshop", Workshop.Show);
         NavItem(left, "Settings", SettingsPage.Show);
         NavItem(left, "Quit", _main.QuitApp);
