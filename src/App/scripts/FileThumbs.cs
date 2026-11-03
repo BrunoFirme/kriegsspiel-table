@@ -42,7 +42,8 @@ public static class FileThumbs
     {
         try
         {
-            if (!ImageFiles.IsImage(path)) return null;
+            if (PictureFor(path) is not { } picture) return null;
+            path = picture;
             var fi = new FileInfo(path);
             if (!fi.Exists || fi.Length == 0 || fi.Length > LargestFileToRead) return null;
             var key = $"{path}|{fi.Length}|{fi.LastWriteTimeUtc.Ticks}";
@@ -62,6 +63,14 @@ public static class FileThumbs
             GD.PushWarning($"thumbnail: {path}: {e.Message}");
             return null;
         }
+    }
+
+    static string? PictureFor(string path)
+    {
+        if (ImageFiles.IsImage(path)) return path;
+        if (!path.EndsWith(".json", StringComparison.OrdinalIgnoreCase)) return null;
+        var beside = Path.ChangeExtension(path, ".png");
+        return File.Exists(beside) ? beside : null;
     }
 
     static async Task Read(string path, string key, ImageTexture tex)

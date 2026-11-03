@@ -65,8 +65,13 @@ public partial class ImportDialog : AcceptDialog
         var g = new GridContainer { Columns = 2 };
         right.AddChild(g);
         g.AddChild(new Label { Text = "Source" });
-        _source = new LineEdit { PlaceholderText = "Workshop id or steamcommunity.com link", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-        g.AddChild(_source);
+        var srcRow = new HBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+        _source = new LineEdit { PlaceholderText = "file, Workshop id or steamcommunity.com link", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+        srcRow.AddChild(_source);
+        var browse = new Button { Text = "Browse…", TooltipText = "Each module shows its own picture, as in TTS" };
+        browse.Pressed += Browse;
+        srcRow.AddChild(browse);
+        g.AddChild(srcRow);
         g.AddChild(new Label { Text = "Name" });
         _name = new LineEdit { PlaceholderText = "(from the module)" };
         g.AddChild(_name);
@@ -179,6 +184,23 @@ public partial class ImportDialog : AcceptDialog
         var e = _entries[_list.GetItemMetadata(i).AsInt32()];
         _source.Text = e.Path;
         _name.Text = e.Name.Trim();
+    }
+
+    void Browse()
+    {
+        var fd = new FileDialog { FileMode = FileDialog.FileModeEnum.OpenFile, Access = FileDialog.AccessEnum.Filesystem, Filters = new[] { "*.json ; TTS module or save" }, Size = new Vector2I(900, 600) };
+        Ui.RememberFolder(fd);
+        if (_entries.FirstOrDefault(e => e.Kind == "workshop") is { } listed && System.IO.Path.GetDirectoryName(listed.Path) is { } workshop) fd.CurrentDir = workshop;
+        AddChild(fd);
+        FileThumbs.Show(fd);
+        fd.FileSelected += p =>
+        {
+            _source.Text = p;
+            var known = _entries.FirstOrDefault(e => string.Equals(e.Path, p, StringComparison.OrdinalIgnoreCase));
+            _name.Text = known?.Name.Trim() ?? System.IO.Path.GetFileNameWithoutExtension(p);
+        };
+        fd.PopupCentered();
+        Ui.FreeOnClose(fd);
     }
 
     public void Prefill(string source) { _source.Text = source; _name.Text = System.IO.Path.GetFileNameWithoutExtension(source); }

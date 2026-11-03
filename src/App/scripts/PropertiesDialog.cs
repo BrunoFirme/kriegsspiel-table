@@ -22,7 +22,7 @@ sealed class PropertiesDialog : HudPart
         _p = node.Piece;
         _def = node.Def;
         _layer = node.Layer;
-        _dlg = new AcceptDialog { Title = _def?.Name ?? _p.Def, OkButtonText = "Done" };
+        _dlg = new AcceptDialog { Title = _def?.Name ?? _p.Def, OkButtonText = "Done", Exclusive = false };
         _box = new VBoxContainer { CustomMinimumSize = new Vector2(420, 0) };
     }
 
@@ -33,7 +33,7 @@ sealed class PropertiesDialog : HudPart
         var p = _p; var layer = _layer;
         _box.AddThemeConstantOverride("separation", 6);
         _dlg.AddChild(_box);
-        _box.AddChild(Hint($"{(layer == Layers.Umpire ? "umpire board" : layer)} · at {p.Pos.X:0.0}, {p.Pos.Z:0.0} · {p.RotDeg:0}°"));
+        _box.AddChild(Hint($"{(layer == Layers.Umpire ? "umpire board" : layer)} Â· at {p.Pos.X:0.0}, {p.Pos.Z:0.0} Â· {p.RotDeg:0}Â°"));
         AddFields();
         AddSize();
         AddTint();
@@ -85,7 +85,7 @@ sealed class PropertiesDialog : HudPart
         var cur = T.Current(_node);
         double lo = Math.Log(Table.MinScale), hi = Math.Log(Table.MaxScale);
         var scS = new HSlider { MinValue = lo, MaxValue = hi, Step = 0.01, Value = Math.Clamp(Math.Log(cur.scale), lo, hi), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, CustomMinimumSize = new Vector2(80, 0) };
-        var scN = new SpinBox { MinValue = Table.MinScale, MaxValue = Table.MaxScale, Step = 0.01, Value = cur.scale, Prefix = "×", CustomMinimumSize = new Vector2(92, 0) };
+        var scN = new SpinBox { MinValue = Table.MinScale, MaxValue = Table.MaxScale, Step = 0.01, Value = cur.scale, Prefix = "Ã—", CustomMinimumSize = new Vector2(92, 0) };
         bool sync = false;
         scS.ValueChanged += v => { if (sync) return; sync = true; scN.Value = Math.Exp(v); sync = false; T.SetSelectionTransform(null, Math.Exp(v)); };
         scN.ValueChanged += v => { if (sync) return; sync = true; scS.Value = Math.Log(v); sync = false; T.SetSelectionTransform(null, v); };
@@ -116,7 +116,7 @@ sealed class PropertiesDialog : HudPart
     {
         var p = _p; var layer = _layer;
         _box.AddChild(Header("Attached markers"));
-        if (p.Attached.Count == 0) _box.AddChild(Hint("None. To attach: select several pieces, right-click → Attach."));
+        if (p.Attached.Count == 0) _box.AddChild(Hint("None. To attach: select several pieces, right-click â†’ Attach."));
         foreach (var cid in p.Attached)
         {
             var ch = T.Find(layer, cid);
@@ -149,9 +149,9 @@ sealed class PropertiesDialog : HudPart
         _box.AddChild(facts);
         var sr = new HBoxContainer();
         sr.AddThemeConstantOverride("separation", 6);
-        sr.AddChild(Btn("Copy id", () => AppClipboard.SetText(p.Id), "For board.find(\"…\") in a script"));
+        sr.AddChild(Btn("Copy id", () => AppClipboard.SetText(p.Id), "For board.find(\"â€¦\") in a script"));
         if (p.Guid != null && p.Guid != p.Id) { var g = p.Guid; sr.AddChild(Btn("Copy GUID", () => AppClipboard.SetText(g), "The TTS GUID it came with; board.find takes it too")); }
-        sr.AddChild(Btn("Scripting…", () => { dlg.Hide(); Ctx.ShowScriptWindow(p.Id); }, "This piece's script in the scripts window"));
+        sr.AddChild(Btn("Scriptingâ€¦", () => { dlg.Hide(); Ctx.ShowScriptWindow(p.Id); }, "This piece's script in the scripts window"));
         _box.AddChild(sr);
     }
 }

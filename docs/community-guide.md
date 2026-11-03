@@ -2,8 +2,8 @@
 
 ## Import a Tabletop Simulator module
 
-**Piece studio → Import from Tabletop Simulator…**, then pick a module or save from the list, or paste a
-Steam Workshop link. The list holds what TTS has on this PC, wherever TTS keeps its mods (Documents, or the game's own
+**Piece studio → Import from Tabletop Simulator…**, then pick a module or save from the list, **Browse…** to a
+`.json` (each one shows its module's picture), or paste a Steam Workshop link. The list holds what TTS has on this PC, wherever TTS keeps its mods (Documents, or the game's own
 folder in any Steam library).
 
 You get:

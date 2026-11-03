@@ -953,6 +953,24 @@ sealed class HudDemo : HudPart
     bool Dialogs(string what)
     {
         if (what == "props") { if (T.SelectedNodes.FirstOrDefault() is { } pn) PropertiesDialog.Open(Ctx, pn); return true; }
+        if (what == "props:strip")
+        {
+            if (S.View.Layer(KTable.Core.Model.Layers.Umpire).FirstOrDefault() is not { } first) return true;
+            T.SetSelection(new List<string> { first.Id });
+            if (T.SelectedNodes.FirstOrDefault() is { } pn) PropertiesDialog.Open(Ctx, pn);
+            bool before = Cfg.LeftOpen;
+            Hud.GetTree().CreateTimer(1.0).Timeout += () =>
+            {
+                var map = Hud.Strip.Panel.FindChildren("*", "Button", true, false).OfType<Button>().FirstOrDefault(b => b.TooltipText.StartsWith("Map"));
+                if (map == null) { GD.Print("[props] no Map button"); return; }
+                var at = map.GetGlobalRect().GetCenter();
+                Input.ParseInputEvent(new InputEventMouseMotion { Position = at, GlobalPosition = at });
+                Input.ParseInputEvent(new InputEventMouseButton { ButtonIndex = MouseButton.Left, Pressed = true, Position = at, GlobalPosition = at, ButtonMask = MouseButtonMask.Left });
+                Input.ParseInputEvent(new InputEventMouseButton { ButtonIndex = MouseButton.Left, Pressed = false, Position = at, GlobalPosition = at });
+                Hud.GetTree().CreateTimer(0.5).Timeout += () => GD.Print($"[props] properties open, left panel was {(before ? "open" : "shut")}, after clicking Map it is {(Cfg.LeftOpen ? "open" : "shut")}");
+            };
+            return true;
+        }
         if (what == "nameedit") { new TableDemo(T).NameEdit("Hussars"); return true; }
         if (what == "mainmenu") { Hud.FindChildren("*", "MenuButton", true, false).OfType<MenuButton>().FirstOrDefault()?.ShowPopup(); return true; }
         if (what == "clock") { ClockDialog.Open(Ctx); return true; }

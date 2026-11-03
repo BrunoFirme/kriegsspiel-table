@@ -213,6 +213,12 @@ sealed class DevFlags : IDevAids
             title.Select(2); title.Packs.Show();
             var dlg = new ImportDialog(PackageStore.DefaultRoot, (sc, pk) => title.Status.Text = $"Imported {sc} / {pk}");
             Ui.Open(_main, dlg);
+            if (di == "browse")
+            {
+                const double ListLoads = 4;
+                Tree.CreateTimer(ListLoads).Timeout += () => dlg.FindChildren("*", "Button", true, false).OfType<Button>().FirstOrDefault(b => b.Text == "Browse…")?.EmitSignal(BaseButton.SignalName.Pressed);
+                return;
+            }
             dlg.Prefill(di);
             if (_args.TryGetValue("demo-stop-on", out var stopOn)) dlg.StopOn = stopOn;
             Callable.From(dlg.StartImport).CallDeferred();
