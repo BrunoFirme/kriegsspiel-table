@@ -67,9 +67,10 @@ converter are all in this folder. Keep the folder together (data_*, standard, na
 Your packs, scenarios and settings live in %LOCALAPPDATA%\KriegsspielTable, not here, so a new
 version can simply replace this folder.
 
-Playing over the internet: the umpire hosts (Host a game, then Menu > Keys shows the address and
-join keys); the host's router must forward the UDP port shown there, or let the app open it (UPnP).
-Players: Join a game > address, port, key.
+Playing over the internet: the umpire hosts (Host a game, with a password or none), then Menu >
+Invite... shows the password and the addresses to send. The app asks the router to open the UDP port;
+if Invite says it could not, forward that port by hand. Players: Join a game > address, port,
+password and name.
 
 The guides are in docs\ beside this file: the umpire's guide, the player's, the community guide and
 the scripting reference for pieces that carry their own Lua. Menu > Guides and scripting reference
