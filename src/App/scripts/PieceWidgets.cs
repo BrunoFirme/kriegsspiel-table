@@ -127,11 +127,16 @@ sealed class PieceWidgets
         if (boxed) _hits.Add(new Hit(new Vector2(x, z), new Vector2(bw, bh) / 2, turn, index));
     }
 
+    public static Transform3D OnFace(float x, float z, float sw, float sh, float turn, bool back, float faceY, float above)
+    {
+        var spin = back ? new Basis(Vector3.Right, Mathf.Pi) * new Basis(Vector3.Up, turn) : new Basis(Vector3.Up, -turn);
+        return new Transform3D(spin.Scaled(new Vector3(Mathf.Max(1e-5f, sw), 1, Mathf.Max(1e-5f, sh))), back ? PieceBack.Under(x, z, PieceBack.Below + above) : new Vector3(x, faceY + above, z));
+    }
+
     MeshInstance3D Plane(float x, float z, float sw, float sh, float turn, Material m, bool back, float faceY, float above)
     {
         var n = new MeshInstance3D { Mesh = UnitPlane, MaterialOverride = m, CastShadow = GeometryInstance3D.ShadowCastingSetting.Off, VisibilityRangeEnd = _piece.LetteringRange() };
-        var spin = back ? new Basis(Vector3.Right, Mathf.Pi) * new Basis(Vector3.Up, turn) : new Basis(Vector3.Up, -turn);
-        n.Transform = new Transform3D(spin.Scaled(new Vector3(Mathf.Max(1e-5f, sw), 1, Mathf.Max(1e-5f, sh))), back ? PieceBack.Under(x, z, PieceBack.Below + above) : new Vector3(x, faceY + above, z));
+        n.Transform = OnFace(x, z, sw, sh, turn, back, faceY, above);
         AddNode(n);
         return n;
     }

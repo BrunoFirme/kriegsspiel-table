@@ -71,9 +71,18 @@ public sealed class TtsObj
         return (list, list.IndexOf(this));
     }
 
+    public sealed record Decal(string Name, string Url, double PosX, double PosY, double PosZ, double RotY, double ScaleX, double ScaleY);
+
+    public List<Decal> Decals => (J["AttachedDecals"] as JsonArray)?.OfType<JsonObject>()
+        .Select(d => (t: d["Transform"] as JsonObject, c: d["CustomDecal"] as JsonObject))
+        .Where(d => Blank(S(d.c?["ImageURL"])) != null)
+        .Select(d => new Decal(S(d.c!["Name"]) ?? "", Blank(S(d.c!["ImageURL"]))!, D(d.t, "posX"), D(d.t, "posY"), D(d.t, "posZ"), D(d.t, "rotY"), D(d.t, "scaleX", 1), D(d.t, "scaleY", 1)))
+        .ToList() ?? new();
+
     public IEnumerable<string> Urls()
     {
         foreach (var u in new[] { ImageUrl, BackUrl, MeshUrl, DiffuseUrl, BundleUrl }) if (u != null) yield return u;
+        foreach (var d in Decals) yield return d.Url;
     }
 
     public IEnumerable<TtsObj> Walk()

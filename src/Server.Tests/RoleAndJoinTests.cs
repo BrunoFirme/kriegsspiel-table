@@ -79,6 +79,7 @@ public class RoleAndJoinTests
         yield return new Say { Text = "hello" };
         yield return new SetDef { Layer = layer, Id = "p-000004", Def = "marker" };
         yield return new SetLines { Layer = layer, Id = "p-000004", Lines = { new LineDef { Points = { new(0, 0), new(1, 1) } } } };
+        yield return new SetDecals { Layer = layer, Id = "p-000004", Decals = { new DecalDef { Picture = "aa11" } } };
         yield return new SetUi { Tree = { new UiNode { Tag = "Text", Attributes = { ["id"] = "t", ["text"] = "x" } } } };
         yield return new SetUiAttributes { Id = "t", Attributes = { ["text"] = "y" } };
         yield return new UiEvent { Id = "t", Event = "click", Value = "-1" };

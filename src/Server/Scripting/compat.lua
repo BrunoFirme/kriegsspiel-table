@@ -244,7 +244,34 @@ function compat.set_vector_lines(obj, lines)
   obj.set_lines(ours)
 end
 function compat.get_vector_lines(obj) return pbag(obj).lines or {} end
-function compat.set_decals(obj, d) pbag(obj).decals = d; compat.todo(obj, "setDecals") end
+local function our_decal(obj, d)
+  local url = d and d.url
+  if type(url) ~= "string" or url == "" then return nil end
+  if url:find("://", 1, true) then compat.todo(obj, "a decal whose picture is only on the web") return nil end
+  local u = unit(obj)
+  local px, py, pz = vec(d.position, "x", 1, 0), vec(d.position, "y", 2, 0), vec(d.position, "z", 3, 0)
+  local back = py < 0
+  return {
+    picture = url, name = tostring(d.name or ""), face = back and "back" or "front",
+    x = (back and -px or px) * u, z = pz * u,
+    w = math.abs(vec(d.scale, "x", 1, 1)) * u, h = math.abs(vec(d.scale, "y", 2, 1)) * u,
+    rot = vec(d.rotation, "y", 2, 0) - 180,
+  }
+end
+function compat.set_decals(obj, d)
+  pbag(obj).decals = d or {}
+  local ours = {}
+  for _, dc in ipairs(d or {}) do ours[#ours + 1] = our_decal(obj, dc) end
+  local ok, err = pcall(obj.set_decals, ours)
+  if not ok then print("setDecals: " .. tostring(err)) end
+  return ok
+end
+function compat.add_decal(obj, d)
+  local all = {}
+  for i, dc in ipairs(pbag(obj).decals or {}) do all[i] = dc end
+  all[#all + 1] = d
+  return compat.set_decals(obj, all)
+end
 function compat.get_decals(obj) return pbag(obj).decals or {} end
 function compat.set_snap_points(obj, s) pbag(obj).snap = s end
 function compat.get_snap_points(obj) return pbag(obj).snap or {} end

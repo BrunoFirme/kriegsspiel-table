@@ -206,6 +206,27 @@ public sealed class ScenarioBuilder
         return l;
     }
 
+    public static List<DecalDef> DecalsOf(TtsObj o, PieceDef def, Func<string, string?> picture)
+    {
+        const double TtsDecalTurn = 180, Digits = 4;
+        double u = def.Tags.Contains("token") ? Math.Max(def.Size.W, def.Size.H) / 3 : def.Size.H / 2;
+        var list = new List<DecalDef>();
+        foreach (var d in o.Decals.Take(DecalDef.MostOnAPiece))
+        {
+            if (picture(d.Url) is not { } pic) continue;
+            bool back = d.PosY < 0;
+            double w = Math.Abs(d.ScaleX) * u, h = Math.Abs(d.ScaleY) * u;
+            if (w <= 0 || h <= 0) continue;
+            list.Add(new DecalDef
+            {
+                Picture = pic, Name = d.Name, Face = back ? "back" : "front",
+                X = Math.Round((back ? -d.PosX : d.PosX) * u, (int)Digits), Z = Math.Round(d.PosZ * u, (int)Digits),
+                W = Math.Round(w, (int)Digits), H = Math.Round(h, (int)Digits), Rot = Math.Round(d.RotY - TtsDecalTurn, 2),
+            });
+        }
+        return list;
+    }
+
     PieceInstance? Instance(TtsObj o, double refScale, PackOut extras, Dictionary<string, List<(PieceDef def, string pack)>> packDefs,
         Layer layer, HashSet<string> usedPacks, ref int rekeyed, PieceInstance? parent)
     {
@@ -263,6 +284,7 @@ public sealed class ScenarioBuilder
             }
         }
         if (o.Color is { } col && !string.Equals(col, def.Tint, StringComparison.OrdinalIgnoreCase)) inst.TintOverride = col;
+        inst.Decals = DecalsOf(o, def, url => _defs.UiAsset(extras, url, $"{layer.Name} {o.Name} '{o.Nickname}' {o.Guid} decal"));
         layer.Pieces.Add(inst);
         layer.Y[inst] = o.PosY;
 

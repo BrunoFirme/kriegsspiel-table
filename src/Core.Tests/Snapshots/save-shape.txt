@@ -1,4 +1,4 @@
-format 14
+format 15
 type AccessChanged object
   access: GameAccess
 type AddBoard object
@@ -125,6 +125,7 @@ type Command abstract
   derived SetCalibration = SetCalibration
   derived SetClock = SetClock
   derived SetCounter = SetCounter
+  derived SetDecals = SetDecals
   derived SetDef = SetDef
   derived SetGlobalMenuItems = SetGlobalMenuItems
   derived SetGlobalScript = SetGlobalScript
@@ -192,6 +193,15 @@ type CropSheet object
   seq: long
   size: Size2?
   undoOf: long
+type DecalDef object
+  face: string
+  h: double
+  name: string
+  picture: string
+  rot: double
+  w: double
+  x: double
+  z: double
 type DeletePiece object
   actor: long
   at: long
@@ -380,6 +390,7 @@ type List<BoardDef> list of BoardDef
 type List<Command> list of Command
 type List<ConsoleLine> list of ConsoleLine
 type List<CounterDef> list of CounterDef
+type List<DecalDef> list of DecalDef
 type List<DiceRoll> list of DiceRoll
 type List<HotkeyDef> list of HotkeyDef
 type List<LineDef> list of LineDef
@@ -545,6 +556,7 @@ type PieceDef object
 type PieceInstance object
   attached: List<string>
   counters: Dictionary<string,int>
+  decals: List<DecalDef>
   def: string
   drawnOnState: int
   faceDown: bool
@@ -764,6 +776,14 @@ type SetCounter object
   seq: long
   undoOf: long
   value: int
+type SetDecals object
+  actor: long
+  at: long
+  decals: List<DecalDef>
+  id: string
+  layer: string
+  seq: long
+  undoOf: long
 type SetDef object
   actor: long
   at: long

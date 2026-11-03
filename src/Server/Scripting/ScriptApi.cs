@@ -304,6 +304,7 @@ internal sealed class PieceHandles(ScriptHost host)
             case "script": return (p.Script ?? def?.Script) is { } sc ? S(sc) : DynValue.Nil;
             case "ui": return host.UiTableFor(id);
             case "lines": { var t = T(); foreach (var ln in p.Lines) t.Table.Append(LineTable(ln)); return t; }
+            case "decals": { var t = T(); foreach (var d in p.Decals) t.Table.Append(DecalTable(d)); return t; }
             case "to_world": return Fn(a => { var w = ToWorld(p, Arg(a, 0).CastToNumber() ?? 0, Arg(a, 1).CastToNumber() ?? 0); var t = T(); t.Table["x"] = N(w.X); t.Table["z"] = N(w.Z); return t; });
             case "to_local": return Fn(a => { var l = ToLocal(p, Arg(a, 0).CastToNumber() ?? 0, Arg(a, 1).CastToNumber() ?? 0); var t = T(); t.Table["x"] = N(l.X); t.Table["z"] = N(l.Z); return t; });
             default: return null;
@@ -321,6 +322,15 @@ internal sealed class PieceHandles(ScriptHost host)
                 if (Arg(a, 0).Type == DataType.Table)
                     foreach (var v in Arg(a, 0).Table.Values) if (v.Type == DataType.Table && ParseLine(v.Table) is { } ln) lines.Add(ln);
                 host.Emit(new SetLines { Layer = L, Id = id, Lines = lines }); return DynValue.Nil;
+            });
+            case "set_decals": return Fn(a =>
+            {
+                var decals = new List<DecalDef>();
+                if (Arg(a, 0).Type == DataType.Table)
+                    foreach (var v in Arg(a, 0).Table.Values) if (v.Type == DataType.Table && ParseDecal(v.Table) is { } d) decals.Add(d);
+                if (decals.Count > DecalDef.MostOnAPiece) throw new ScriptRuntimeException($"set_decals: a piece carries at most {DecalDef.MostOnAPiece} decals");
+                if (decals.FirstOrDefault(d => !PictureInGame(d.Picture)) is { } unknown) throw new ScriptRuntimeException($"set_decals: no picture '{unknown.Picture}' in this game's packs");
+                host.Emit(new SetDecals { Layer = L, Id = id, Decals = decals }); return DynValue.Nil;
             });
             case "set_picture": return Fn(a =>
             {
@@ -472,6 +482,30 @@ internal sealed class PieceHandles(ScriptHost host)
         ln.Width = t.Get("width").Type == DataType.Number ? t.Get("width").Number : 0.1;
         ln.Loop = t.Get("loop").Type == DataType.Boolean && t.Get("loop").Boolean;
         return ln;
+    }
+
+    bool PictureInGame(string picture) =>
+        host.Server.Store is not { } store || host.Server.State.Packs.Any(id => store.Pack(id)?.Assets.ContainsKey(picture) == true);
+
+    static DecalDef? ParseDecal(Table t)
+    {
+        double Num(string key, double fallback) => t.Get(key).Type == DataType.Number && double.IsFinite(t.Get(key).Number) ? t.Get(key).Number : fallback;
+        if (t.Get("picture").Type != DataType.String || t.Get("picture").String.Length == 0) return null;
+        var d = new DecalDef
+        {
+            Picture = t.Get("picture").String, Name = t.Get("name").Type == DataType.String ? t.Get("name").String : "",
+            Face = t.Get("face").Type == DataType.String && t.Get("face").String == "back" ? "back" : "front",
+            X = Num("x", 0), Z = Num("z", 0), W = Num("w", 0.2), H = Num("h", 0.2), Rot = Num("rot", 0),
+        };
+        return d.W > 0 && d.H > 0 ? d : null;
+    }
+
+    DynValue DecalTable(DecalDef d)
+    {
+        var t = T();
+        t.Table["picture"] = S(d.Picture); t.Table["name"] = S(d.Name); t.Table["face"] = S(d.Face);
+        t.Table["x"] = N(d.X); t.Table["z"] = N(d.Z); t.Table["w"] = N(d.W); t.Table["h"] = N(d.H); t.Table["rot"] = N(d.Rot);
+        return t;
     }
 
     DynValue LineTable(LineDef ln)

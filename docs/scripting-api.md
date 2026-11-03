@@ -217,6 +217,7 @@ Read from `self` or from any piece `board.find` or `board.pieces` hands back. Fi
 | [`self.script`](#selfscript) | The script it runs (its own, or its kind's), or nil. |
 | [`self.ui`](#selfui) | Its own panels, drawn on its face: the same calls as the global ui. |
 | [`self.lines`](#selflines) | The lines set_lines drew round it. |
+| [`self.decals`](#selfdecals) | The pictures set_decals put on its faces. |
 | [`self.exists`](#selfexists) | False once the piece is gone (its other fields are nil then). |
 
 ### `self.id`
@@ -538,6 +539,18 @@ The lines set_lines drew round it.
 
 **Tabletop Simulator** `getVectorLines` · **See also** [`self.set_lines`](#selfset_lines)
 
+### `self.decals`
+
+```lua
+self.decals
+```
+
+The pictures set_decals put on its faces.
+
+**Type** `Decal[]`, read-only.
+
+**Tabletop Simulator** `getDecals` · **See also** [`self.set_decals`](#selfset_decals)
+
 ### `self.exists`
 
 ```lua
@@ -583,6 +596,7 @@ Each call is a change every umpire sees, taken back with Ctrl+Z by the umpire wh
 | [`self.detach`](#selfdetach) | Takes this piece off the one it rides on. |
 | [`self.delete`](#selfdelete) | Takes the piece off the table (on_destroy runs first). |
 | [`self.set_lines`](#selfset_lines) | Draws lines round the piece that move and turn with it: { { points = { {x=, z=}, … }, color =, width =, loop = }, … } in piece units; width in map units. |
+| [`self.set_decals`](#selfset_decals) | Puts pictures on the piece's faces that move, turn and flip with it: { { picture =, x =, z =, w =, h =, rot =, face =, name = }, … } in piece units. |
 | [`self.to_world`](#selfto_world) | A point in piece units (centre 0, x right, z down the picture) as a map point { x =, z = }. |
 | [`self.to_local`](#selfto_local) | A map point as piece units. |
 
@@ -987,6 +1001,27 @@ self.set_lines{ { points = ring, color = "#d8b766", width = 0.4, loop = true } }
 `color` defaults to white and `width` to 0.1 map units; a colour with alpha 0 draws nothing.
 
 **Tabletop Simulator** `setVectorLines` · **See also** [`self.lines`](#selflines), [`self.to_local`](#selfto_local)
+
+### `self.set_decals`
+
+```lua
+self.set_decals(decals)
+```
+
+Puts pictures on the piece's faces that move, turn and flip with it: { { picture =, x =, z =, w =, h =, rot =, face =, name = }, … } in piece units.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `decals` | `Decal[]` | The decals. `picture` is a picture in this game's packs (a TTS module's decal images come along when it is converted); `face` is "front" or "back"; `w` and `h` default to 0.2, `rot` is degrees. An empty table takes every decal away. |
+
+```lua
+local arms = self.decals[1]
+self.set_decals{ { picture = arms.picture, x = 0.35, z = -0.3, w = 0.2, h = 0.2, name = "Arms" } }
+```
+
+At most 64 on a piece. A picture not in this game's packs is an error.
+
+**Tabletop Simulator** `setDecals` · **See also** [`self.decals`](#selfdecals)
 
 ### `self.to_world`
 
@@ -2587,6 +2622,7 @@ The converter rewrites a module's scripts into these calls by rule; this is the 
 | `getBounds` | [`self.size`](#selfsize) |
 | `getButtons` | [`self.widgets`](#selfwidgets) |
 | `getColorTint` | [`self.tint`](#selftint) |
+| `getDecals` | [`self.decals`](#selfdecals) |
 | `getDescription` | [`self.note`](#selfnote) |
 | `getGUID` | [`self.guid`](#selfguid) |
 | `getHoverObject` | [`game.hovered`](#gamehovered) |
@@ -2646,6 +2682,7 @@ The converter rewrites a module's scripts into these calls by rule; this is the 
 | `self` | [`self`](#self) |
 | `setColorTint` | [`self.set_tint`](#selfset_tint) |
 | `setCustomObject` | [`self.set_picture`](#selfset_picture) |
+| `setDecals` | [`self.set_decals`](#selfset_decals) |
 | `setDescription` | [`self.set_note`](#selfset_note) |
 | `setLock` | [`self.set_locked`](#selfset_locked) |
 | `setLuaScript` | [`self.set_script`](#selfset_script) |

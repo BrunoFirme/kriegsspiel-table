@@ -321,6 +321,7 @@ public sealed class PieceInstance
     public int DrawnOnState { get; set; }
     public List<MenuItemDef> MenuItems { get; set; } = new();
     public List<LineDef> Lines { get; set; } = new();
+    public List<DecalDef> Decals { get; set; } = new();
     public List<UiNode> Ui { get; set; } = new();
 
     public PieceInstance Clone() => new()
@@ -330,7 +331,7 @@ public sealed class PieceInstance
         TintOverride = TintOverride, Label = Label, Scale = Scale, Y = Y, FaceDown = FaceDown, Note = Note, Locked = Locked,
         Script = Script, ScriptState = ScriptState, Guid = Guid, Tags = Tags == null ? null : new(Tags), Memo = Memo,
         Widgets = Widgets.Select(w => w.Clone()).ToList(), DrawnOnState = DrawnOnState, MenuItems = MenuItems.Select(m => m.Clone()).ToList(),
-        Lines = Lines.Select(l => l.Clone()).ToList(), Ui = Ui.Select(n => n.Clone()).ToList(),
+        Lines = Lines.Select(l => l.Clone()).ToList(), Decals = Decals.Select(d => d.Clone()).ToList(), Ui = Ui.Select(n => n.Clone()).ToList(),
     };
 }
 
@@ -356,6 +357,20 @@ public sealed class LineDef
     public double Width { get; set; } = 0.1;
     public bool Loop { get; set; }
     public LineDef Clone() => new() { Points = new(Points), Color = Color, Width = Width, Loop = Loop };
+}
+
+public sealed class DecalDef
+{
+    public const int MostOnAPiece = 64;
+    public string Picture { get; set; } = "";
+    public string Name { get; set; } = "";
+    public string Face { get; set; } = "front";
+    public double X { get; set; }
+    public double Z { get; set; }
+    public double W { get; set; } = 0.2;
+    public double H { get; set; } = 0.2;
+    public double Rot { get; set; }
+    public DecalDef Clone() => (DecalDef)MemberwiseClone();
 }
 
 public sealed class Widget

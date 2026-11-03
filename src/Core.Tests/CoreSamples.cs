@@ -137,6 +137,7 @@ public static class CoreSamples
         yield return new Say { Text = "Rally!", To = "p:7", Color = "#FFAA00" };
         yield return new SetDef { Layer = L, Id = "p-000001", Def = "def-b" };
         yield return new SetLines { Layer = L, Id = "p-000001", Lines = { new LineDef { Points = { new(0, 1), new(1, 0), new(0, -1) }, Color = "#FF000080", Width = 0.2, Loop = true } } };
+        yield return new SetDecals { Layer = L, Id = "p-000001", Decals = { new DecalDef { Picture = "aa11", Name = "Arms", Face = "back", X = 0.2, Z = -0.1, W = 0.3, H = 0.25, Rot = 30 } } };
         yield return new SetUi { Tree = { new UiNode { Tag = "Panel", Attributes = { ["id"] = "p1", ["width"] = "200" }, Children = { new UiNode { Tag = "Button", Attributes = { ["id"] = "b1", ["text"] = "Go", ["onClick"] = "go" } } } } } };
         yield return new SetUiAttributes { Layer = L, Piece = "p-000001", Id = "b1", Attributes = { ["text"] = "Stop", ["active"] = "false" } };
         yield return new UiEvent { Id = "b1", Event = "click", Value = "-1" };

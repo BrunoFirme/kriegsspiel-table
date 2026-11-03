@@ -94,6 +94,7 @@ sealed class ViewSync
             case SetWidgets x: id = x.Id; break;
             case SetMenuItems x: id = x.Id; break;
             case SetLines x: id = x.Id; break;
+            case SetDecals x: id = x.Id; break;
             case SetDef x: id = x.Id; break;
             case ClickWidget x: id = x.Id; break;
             case NumberTyped x: id = x.Id; break;

@@ -256,7 +256,7 @@ public sealed partial class DefFactory
         return System.Text.RegularExpressions.Regex.Replace(text, @"https?://[^""\\\s]+", m => UiAsset(pack, m.Value, where) ?? m.Value);
     }
 
-    string? UiAsset(PackOut pack, string url, string where)
+    internal string? UiAsset(PackOut pack, string url, string where)
     {
         var e = _assets.Get(url);
         if (e == null || e.Ext is not ("png" or "jpg" or "webp" or "gif" or "bmp")) return null;

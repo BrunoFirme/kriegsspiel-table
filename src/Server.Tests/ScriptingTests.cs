@@ -286,6 +286,39 @@ public class ScriptingTests
     }
 
     [Fact]
+    public void Decals_go_on_a_face_from_the_game_s_pictures_and_an_unknown_one_is_an_error()
+    {
+        using var t = new Table();
+        SetScript(t, "function on_load(s) self.set_decals{ { picture = 'arms', name = 'Arms', x = 0.3, z = -0.2, w = 0.25, h = 0.2, rot = 15, face = 'back' } } end");
+        var d = Assert.Single(t.Server.State.Find(U, P)!.Decals);
+        Assert.Equal(("arms", "Arms", "back", 0.3, -0.2, 0.25, 0.2, 15.0), (d.Picture, d.Name, d.Face, d.X, d.Z, d.W, d.H, d.Rot));
+        SetScript(t, "function on_load(s) local ok, err = pcall(self.set_decals, { { picture = 'nowhere' } }); self.set_text('name', tostring(err)) end");
+        Assert.Contains("no picture 'nowhere'", t.Server.State.Find(U, P)!.Text["name"]);
+        Assert.Single(t.Server.State.Find(U, P)!.Decals);
+    }
+
+    [Fact]
+    public void A_TTS_script_s_decals_come_across_in_piece_units_and_addDecal_adds_one()
+    {
+        using var t = new Table();
+        var tr = KTable.Server.Scripting.Translate.TtsTranslator.Translate("""
+            function onLoad()
+              self.setDecals({ { name = "Arms", url = "arms", position = {0.5, 0.2, -0.4}, rotation = {90, 180, 0}, scale = {0.6, 0.4, 1} } })
+              self.addDecal({ name = "Under", url = "arms", position = {0.5, -0.2, 0}, rotation = {270, 200, 0}, scale = {1, 1, 1} })
+              self.addDecal({ name = "Web", url = "https://example.com/x.png", position = {0, 0.2, 0}, rotation = {90, 180, 0}, scale = {1, 1, 1} })
+            end
+            """);
+        Assert.Empty(tr.Untranslated);
+        SetScript(t, tr.Script);
+        var ds = t.Server.State.Find(U, P)!.Decals;
+        Assert.Equal(2, ds.Count);
+        Assert.Equal(("front", 0.0), (ds[0].Face, ds[0].Rot));
+        Assert.Equal(ds[0].W / 0.6 * 0.4, ds[0].H, 6);
+        Assert.Equal(-ds[0].X, ds[1].X, 6);
+        Assert.Equal(("back", 20.0), (ds[1].Face, ds[1].Rot));
+    }
+
+    [Fact]
     public void Lines_are_drawn_in_the_pieces_frame_and_translated_from_TTS_units()
     {
         using var t = new Table();

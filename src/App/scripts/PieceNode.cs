@@ -56,6 +56,7 @@ public partial class PieceNode : Node3D
     readonly PieceWidgets _widgets;
     readonly PieceUi _plates;
     readonly PieceLines _lines;
+    readonly PieceDecals _decals;
     readonly PiecePrints _prints;
 
     public PieceNode()
@@ -65,6 +66,7 @@ public partial class PieceNode : Node3D
         _widgets = new PieceWidgets(this);
         _plates = new PieceUi(this);
         _lines = new PieceLines(this);
+        _decals = new PieceDecals(this);
         _prints = new PiecePrints(this);
     }
 
@@ -193,6 +195,7 @@ public partial class PieceNode : Node3D
         SyncUi(force);
         _widgets.Sync(force);
         _prints.Sync();
+        _decals.Sync(force);
     }
 
     public void SyncUi(bool force = false) => _plates.Sync(force);
@@ -517,7 +520,7 @@ public partial class PieceNode : Node3D
         _lettering.Forget();
         _edgeSlots.Clear(); _edgeColor = Colors.Transparent;
         _back.Forget(); _backMat = null; _flipGen++; _flipping = false;
-        _widgets.Forget(); _plates.Forget(); _lines.Forget(); _prints.Forget();
+        _widgets.Forget(); _plates.Forget(); _lines.Forget(); _prints.Forget(); _decals.Forget();
         _hull = null; _meshReady = false; _spinning = false; _animGen++;
         ResetEffect();
         _built = false;

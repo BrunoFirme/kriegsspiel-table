@@ -131,4 +131,24 @@ public sealed class ConverterTests : IDisposable
         Assert.True(File.Exists(Path.Combine(Packages, "test.odd", "pack.json")));
         Assert.Equal(2, code);
     }
+
+    [Fact]
+    public void An_object_s_decals_come_across_on_its_faces_in_piece_units_and_a_missing_picture_is_left_out()
+    {
+        static JsonObject Decal(string url, double x, double y, double z, double ry, double sx, double sy) => new()
+        {
+            ["Transform"] = new JsonObject { ["posX"] = x, ["posY"] = y, ["posZ"] = z, ["rotX"] = 90, ["rotY"] = ry, ["rotZ"] = 0, ["scaleX"] = sx, ["scaleY"] = sy, ["scaleZ"] = 1 },
+            ["CustomDecal"] = new JsonObject { ["Name"] = "Arms", ["ImageURL"] = url, ["Size"] = 1 },
+        };
+        var o = new TtsObj(new JsonObject
+        {
+            ["Name"] = "Custom_Tile",
+            ["AttachedDecals"] = new JsonArray(Decal("http://a/arms.png", 0.5, 0.2, -0.4, 180, 0.6, 0.4), Decal("http://a/under.png", 0.5, -0.2, 0, 200, 1, 1), Decal("http://a/gone.png", 0, 0.2, 0, 180, 1, 1)),
+        });
+        var def = new PieceDef { Size = new Size2(2, 1) };
+        var ds = ScenarioBuilder.DecalsOf(o, def, url => url.Contains("gone") ? null : url);
+        Assert.Equal(2, ds.Count);
+        Assert.Equal(("http://a/arms.png", "front", 0.25, -0.2, 0.3, 0.2, 0.0), (ds[0].Picture, ds[0].Face, ds[0].X, ds[0].Z, ds[0].W, ds[0].H, ds[0].Rot));
+        Assert.Equal(("back", -0.25, 20.0), (ds[1].Face, ds[1].X, ds[1].Rot));
+    }
 }

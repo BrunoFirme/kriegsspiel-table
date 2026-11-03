@@ -23,6 +23,16 @@
 ---@field width? number
 ---@field loop? boolean
 
+---@class Decal
+---@field picture string
+---@field name? string
+---@field face? "front"|"back"
+---@field x? number
+---@field z? number
+---@field w? number
+---@field h? number
+---@field rot? number
+
 ---@class UiNode
 ---@field tag string
 ---@field attributes table<string, string>
@@ -132,6 +142,7 @@
 ---@field script string|nil The script it runs (its own, or its kind's), or nil.
 ---@field ui table Its own panels, drawn on its face: the same calls as the global ui.
 ---@field lines Line[] The lines set_lines drew round it.
+---@field decals Decal[] The pictures set_decals put on its faces.
 ---@field exists boolean False once the piece is gone (its other fields are nil then).
 local Piece = {}
 
@@ -236,6 +247,10 @@ function Piece.delete() end
 ---Draws lines round the piece that move and turn with it: { { points = { {x=, z=}, … }, color =, width =, loop = }, … } in piece units; width in map units.
 ---@param lines Line[] The lines. Each needs two points or more; points are { x =, z = } or { x, z } in piece units. An empty table takes every line away.
 function Piece.set_lines(lines) end
+
+---Puts pictures on the piece's faces that move, turn and flip with it: { { picture =, x =, z =, w =, h =, rot =, face =, name = }, … } in piece units.
+---@param decals Decal[] The decals. picture is a picture in this game's packs (a TTS module's decal images come along when it is converted); face is "front" or "back"; w and h default to 0.2, rot is degrees. An empty table takes every decal away.
+function Piece.set_decals(decals) end
 
 ---A point in piece units (centre 0, x right, z down the picture) as a map point { x =, z = }.
 ---@param x number Piece units to the right of the centre.

@@ -29,6 +29,7 @@ public sealed class Table : IDisposable
                 new PieceDef { Id = "marker", Name = "Marker" },
                 new PieceDef { Id = "die6", Name = "d6", Kind = "model", Tags = { "die" }, States = Enumerable.Range(1, 6).Select(i => new PieceStateDef { Name = i.ToString() }).ToList() },
             },
+            Assets = { ["arms"] = new AssetEntry { File = "assets/arms.png", W = 64, H = 64 } },
         });
         Store = new PackageStore(Root);
         Scenario = MakeScenario();

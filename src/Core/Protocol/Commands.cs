@@ -73,6 +73,7 @@ namespace KTable.Core.Protocol;
 [JsonDerivedType(typeof(Say), "Say")]
 [JsonDerivedType(typeof(SetDef), "SetDef")]
 [JsonDerivedType(typeof(SetLines), "SetLines")]
+[JsonDerivedType(typeof(SetDecals), "SetDecals")]
 [JsonDerivedType(typeof(SetUi), "SetUi")]
 [JsonDerivedType(typeof(SetUiAttributes), "SetUiAttributes")]
 [JsonDerivedType(typeof(UiEvent), "UiEvent")]
@@ -859,6 +860,16 @@ public sealed class SetDef : LayerCommand
     public override IEnumerable<(string Layer, string Id)> ZonePieces() => [(Layer, Id)];
     public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [];
     public override IEnumerable<string> ScriptsToReload() => [Id];
+}
+public sealed class SetDecals : LayerCommand
+{
+    public string Id { get; set; } = ""; public List<DecalDef> Decals { get; set; } = new();
+    public override Sender SentBy() => Sender.Umpire;
+    public override bool OnUndoStack() => true;
+    public override Shown ShownToObservers() => Shown.Table;
+    public override IEnumerable<(string Layer, string Id)> ZonePieces() => [(Layer, Id)];
+    public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [];
+    public override IEnumerable<string> ScriptsToReload() => [];
 }
 public sealed class SetLines : LayerCommand
 {

@@ -98,6 +98,7 @@ public static class StateMachine
             case ShowDialog or DialogResult:
                 return null;
             case SetLines sl2: return ApplySetLines(g, sl2, ref inverse);
+            case SetDecals sd2: return ApplySetDecals(g, sd2, ref inverse);
             case SetDef sd: return ApplySetDef(g, sd, ref inverse);
             default:
                 return "unknown command";
@@ -780,6 +781,24 @@ public static class StateMachine
         inverse = new SetLines { Layer = sl2.Layer, Id = sl2.Id, Lines = p.Lines.Select(l => l.Clone()).ToList(), OnState = Math.Max(0, p.DrawnOnState) };
         p.Lines = sl2.Lines.Select(l => l.Clone()).ToList();
         p.DrawnOnState = sl2.OnState >= 0 ? sl2.OnState : p.State;
+        return null;
+    }
+
+    static string? ApplySetDecals(GameState g, SetDecals sd, ref Command? inverse)
+    {
+        const int LongestText = 256;
+        var p = g.Find(sd.Layer, sd.Id);
+        if (p == null) return "no such piece";
+        if (sd.Decals == null || sd.Decals.Count > DecalDef.MostOnAPiece) return $"a piece carries at most {DecalDef.MostOnAPiece} decals";
+        foreach (var d in sd.Decals)
+        {
+            if (d == null || string.IsNullOrEmpty(d.Picture) || d.Picture.Length > LongestText || (d.Name?.Length ?? 0) > LongestText) return "a decal needs a picture";
+            if (d.Face is not ("front" or "back")) return "a decal's face is front or back";
+            if (!double.IsFinite(d.X) || !double.IsFinite(d.Z) || !double.IsFinite(d.Rot) || !(d.W > 0) || !(d.H > 0) || !double.IsFinite(d.W) || !double.IsFinite(d.H))
+                return "a decal's place and size must be numbers, its size above 0";
+        }
+        inverse = new SetDecals { Layer = sd.Layer, Id = sd.Id, Decals = p.Decals.Select(d => d.Clone()).ToList() };
+        p.Decals = sd.Decals.Select(d => { var c = d.Clone(); c.Name ??= ""; return c; }).ToList();
         return null;
     }
 

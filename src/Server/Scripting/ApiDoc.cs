@@ -191,6 +191,8 @@ public static partial class ApiDoc
         See("ui.set");
         F("piece", "lines", "Line[]", "The lines set_lines drew round it.", "getVectorLines");
         See("self.set_lines");
+        F("piece", "decals", "Decal[]", "The pictures set_decals put on its faces.", "getDecals");
+        See("self.set_decals");
         F("piece", "exists", "boolean", "False once the piece is gone (its other fields are nil then).", "isDestroyed");
         Note("A handle kept in a variable outlives the piece. Check `exists` before using one kept across turns; a `set_` call on a piece that is gone is an error.");
     });
@@ -342,6 +344,15 @@ public static partial class ApiDoc
         """);
     Note("`color` defaults to white and `width` to 0.1 map units; a colour with alpha 0 draws nothing.");
     See("self.lines", "self.to_local");
+
+    M("piece", "set_decals(decals)", "Puts pictures on the piece's faces that move, turn and flip with it: { { picture =, x =, z =, w =, h =, rot =, face =, name = }, … } in piece units.", "setDecals");
+    P("decals", "Decal[]", "The decals. `picture` is a picture in this game's packs (a TTS module's decal images come along when it is converted); `face` is \"front\" or \"back\"; `w` and `h` default to 0.2, `rot` is degrees. An empty table takes every decal away.");
+    X("""
+        local arms = self.decals[1]
+        self.set_decals{ { picture = arms.picture, x = 0.35, z = -0.3, w = 0.2, h = 0.2, name = "Arms" } }
+        """);
+    Note("At most 64 on a piece. A picture not in this game's packs is an error.");
+    See("self.decals");
 
     M("piece", "to_world(x, z)", "A point in piece units (centre 0, x right, z down the picture) as a map point { x =, z = }.", "positionToWorld", "Point");
     P("x", "number", "Piece units to the right of the centre.");
@@ -1163,6 +1174,7 @@ public static partial class ApiDoc
         sb.Append("---@class Point\n---@field x number\n---@field z number\n\n");
         sb.Append("---@class Size\n---@field w number\n---@field h number\n\n");
         sb.Append("---@class Line\n---@field points Point[]\n---@field color? Color\n---@field width? number\n---@field loop? boolean\n\n");
+        sb.Append("---@class Decal\n---@field picture string\n---@field name? string\n---@field face? \"front\"|\"back\"\n---@field x? number\n---@field z? number\n---@field w? number\n---@field h? number\n---@field rot? number\n\n");
         sb.Append("---@class UiNode\n---@field tag string\n---@field attributes table<string, string>\n---@field children UiNode[]\n---@field value? string\n\n");
         sb.Append("---@class Zone\n---@field id string\n---@field name string\n---@field owner string\n---@field contains fun(piece_or_point: Piece|Point): boolean\n\n");
         foreach (var e in All.Where(e => e.Params.Any(p => p.Name.Contains('.')) || (e.TakesSpec && e.Params.Count > 0)))
