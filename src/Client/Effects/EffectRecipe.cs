@@ -35,6 +35,7 @@ public sealed class EffectLayer
     public Vector3[]? Points;
     public bool Fixed;
     public float Start = -1;
+    public int Cycles = 1;
 
     public EffectLayer Copy() => (EffectLayer)MemberwiseClone();
 }
@@ -114,7 +115,8 @@ public static class EffectRecipe
             ex = new Vector3(w / 2, 0, h / 2);
         }
 
-        const float BlastBrake = 0.12f, Linger = 2f, BlastPart = 0.15f;
+        const float BlastBrake = 0.12f, BlastPart = 0.15f;
+        const int Linger = 2;
 
         void AddLingering(EffectLayer smoke)
         {
@@ -122,11 +124,11 @@ public static class EffectRecipe
             EffectLayer Longer(float offset, int amount)
             {
                 var l = smoke.Copy();
-                l.Amount = amount; l.Offset = offset; l.Life = smoke.Life * Linger; l.Brake = smoke.Brake / Linger;
+                l.Amount = amount; l.Offset = offset; l.Life = smoke.Life * Linger; l.Cycles = Linger; l.Brake = smoke.Brake / Linger;
                 l.Curve = Stretched(smoke.Curve); l.Ramp = Stretched(smoke.Ramp);
                 return l;
             }
-            if (!smoke.Fixed) { layers.Add(Longer(smoke.Offset, (int)Math.Round(smoke.Amount * Linger))); return; }
+            if (!smoke.Fixed) { layers.Add(Longer(smoke.Offset, smoke.Amount * Linger)); return; }
             for (int turn = 0; turn < Linger; turn++) layers.Add(Longer((smoke.Offset + turn) / Linger, smoke.Amount));
         }
 
@@ -778,7 +780,7 @@ public static class EffectRecipe
             foreach (var l in layers)
             {
                 if (!l.Fixed) l.Amount = Math.Clamp(l.Amount, 1, 900);
-                if (firing && l.Explosive > 0) l.Start = ((phase + l.Offset) % 1) * l.Life;
+                if (firing && l.Explosive > 0) l.Start = ((phase / l.Cycles + l.Offset) % 1) * l.Life;
             }
 
             string mode = EffectKinds.Mode(e);

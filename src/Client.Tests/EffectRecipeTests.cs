@@ -47,7 +47,7 @@ public class EffectRecipeTests
         var plan = Plan(new EffectDef { Kind = "cannon" }, phase: 0.25f);
         var fired = plan.Layers.Where(l => l.Explosive > 0).ToList();
         Assert.NotEmpty(fired);
-        Assert.All(fired, l => Assert.Equal((0.25f + l.Offset) % 1 * l.Life, l.Start));
+        Assert.All(fired, l => Assert.Equal((0.25f / l.Cycles + l.Offset) % 1 * l.Life, l.Start));
         Assert.All(Plan(new EffectDef { Kind = "smoke" }).Layers, l => Assert.Equal(-1f, l.Start));
     }
 
@@ -64,6 +64,24 @@ public class EffectRecipeTests
         Assert.Equal(0f, offsets[0]);
         Assert.True(offsets[^1] < 0.25f);
         Assert.All(offsets.Zip(smoke.Where((_, i) => i % 2 == 1).Select(l => l.Offset)), p => Assert.Equal(p.First + 0.5f, p.Second, 5));
+    }
+
+    [Theory]
+    [InlineData("cannon", "together", 0.37f)]
+    [InlineData("cannon", "rolling", 0.81f)]
+    [InlineData("powder", "together", 0.12f)]
+    [InlineData("powder", "rolling", 0.64f)]
+    [InlineData("broadside", "together", 0.93f)]
+    [InlineData("broadside", "rolling", 0.5f)]
+    public void Every_layer_of_a_volley_fires_with_a_muzzle_flash(string kind, string volley, float phase)
+    {
+        var e = new EffectDef { Kind = kind, Volley = volley };
+        float every = (float)EffectKinds.Interval(e);
+        float FiresAt(EffectLayer l) => ((l.Life - l.Start) % every + every) % every;
+        var fired = Plan(e, w: 4, phase: phase).Layers.Where(l => l.Start >= 0).ToList();
+        var flashes = fired.Where(l => l.Sprite is "muzzle" or "flash").Select(FiresAt).ToList();
+        Assert.NotEmpty(flashes);
+        Assert.All(fired, l => Assert.Contains(flashes, f => Math.Abs(f - FiresAt(l)) < 1e-3f || Math.Abs(Math.Abs(f - FiresAt(l)) - every) < 1e-3f));
     }
 
     [Fact]
