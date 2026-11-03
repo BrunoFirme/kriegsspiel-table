@@ -7,12 +7,15 @@ sealed class MenuCard
 {
     public readonly PopupPanel Pop = new();
     readonly VBoxContainer _box;
+    readonly ScrollContainer _scroll = new() { HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled };
+    const float ScreenEdge = 8;
 
     public MenuCard(float width = 244)
     {
-        _box = new VBoxContainer { CustomMinimumSize = new Vector2(width, 0) };
+        _box = new VBoxContainer { CustomMinimumSize = new Vector2(width, 0), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         _box.AddThemeConstantOverride("separation", 0);
-        Pop.AddChild(_box);
+        _scroll.AddChild(_box);
+        Pop.AddChild(_scroll);
     }
 
     static StyleBoxFlat RowStyle(Color bg) => Ui.Box(bg, 3, 8, 4);
@@ -87,6 +90,16 @@ sealed class MenuCard
     {
         Pop.PopupHide += () => Pop.QueueFree();
         parent.AddChild(Pop);
-        Pop.Popup(new Rect2I((Vector2I)at.Round(), Vector2I.Zero));
+        var view = parent.GetViewport().GetVisibleRect().Size;
+        var frame = Pop.GetThemeStylebox("panel").GetMinimumSize();
+        var content = _box.GetCombinedMinimumSize();
+        float room = view.Y - frame.Y - 2 * ScreenEdge;
+        float bar = content.Y > room ? _scroll.GetVScrollBar().GetCombinedMinimumSize().X : 0;
+        _scroll.CustomMinimumSize = new Vector2(content.X + bar, Mathf.Min(content.Y, room));
+        var size = _scroll.CustomMinimumSize + frame;
+        var pos = new Vector2(
+            Mathf.Clamp(at.X, ScreenEdge, Mathf.Max(ScreenEdge, view.X - size.X - ScreenEdge)),
+            Mathf.Clamp(at.Y, ScreenEdge, Mathf.Max(ScreenEdge, view.Y - size.Y - ScreenEdge)));
+        Pop.Popup(new Rect2I((Vector2I)pos.Round(), (Vector2I)size.Ceil()));
     }
 }

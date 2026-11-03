@@ -17,6 +17,11 @@ sealed class HudDemo : HudPart
         var centre = Hud.GetViewport().GetVisibleRect().Size / 2;
         if (Pages(what) || CompassDrag(what) || Hearts(what) || Scripts(what) || View(what) || PovPictures(what) || PovTool(what) || PovFormat(what) || DrawingPanels(what) || PanelMoves(what) || Hands(what) || PieceMoves(what) || Lettering(what) || Dialogs(what)) return;
         if (what == "dice") Hud.Dice.Show(Hud.Strip.Panel);
+        else if (what == "menu" && !T.SelectedNodes.Any() && S.View.Layer(KTable.Core.Model.Layers.Umpire).FirstOrDefault() is { } first)
+        {
+            T.SetSelection(new List<string> { first.Id });
+            Hud.Menus.Show(centre, T.SelectedNodes.FirstOrDefault());
+        }
         else Hud.Menus.Show(centre, what == "menu" ? T.SelectedNodes.FirstOrDefault() : null);
     }
 
