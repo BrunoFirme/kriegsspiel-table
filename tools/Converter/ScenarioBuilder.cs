@@ -103,11 +103,29 @@ public sealed class ScenarioBuilder
         }
     }
 
+    public static IEnumerable<TtsObj> WithAttachedTerrain(TtsObj o)
+    {
+        yield return o;
+        double th = o.RotY * Math.PI / 180;
+        foreach (var c in o.Children.Where(c => c.Name == "Custom_Model" && c.MeshUrl != null && c.DiffuseUrl != null))
+        {
+            if (c.J.DeepClone() is not System.Text.Json.Nodes.JsonObject j || j["Transform"] is not System.Text.Json.Nodes.JsonObject t) continue;
+            double lx = c.PosX * o.ScaleX, lz = c.PosZ * o.ScaleZ;
+            t["posX"] = o.PosX + lx * Math.Cos(th) + lz * Math.Sin(th);
+            t["posZ"] = o.PosZ - lx * Math.Sin(th) + lz * Math.Cos(th);
+            t["posY"] = o.PosY + c.PosY * o.ScaleY;
+            t["rotY"] = o.RotY + c.RotY;
+            t["scaleX"] = c.ScaleX * o.ScaleX; t["scaleY"] = c.ScaleY * o.ScaleY; t["scaleZ"] = c.ScaleZ * o.ScaleZ;
+            j.Remove("ChildObjects");
+            yield return new TtsObj(j);
+        }
+    }
+
     HashSet<TtsObj> AddSheets(Scenario scenario, TtsSave master, string pkgRel, string pkgDir, string? oldScenario)
     {
         var sc = _cfg.Scenario;
         var boards = master.Objects.Where(IsSheet).OrderBy(b => b.PosY).ToList();
-        var terrain = master.Objects.Where(o => o.IsTerrain).ToList();
+        var terrain = master.Objects.Where(o => o.IsTerrain).SelectMany(WithAttachedTerrain).ToList();
         var boardSet = boards.Concat(terrain).ToHashSet();
         if (boardSet.Count > 0) Progress.Stage("maps", boardSet.Count);
         foreach (var b in boards)

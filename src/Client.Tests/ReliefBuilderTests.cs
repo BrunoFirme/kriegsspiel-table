@@ -237,6 +237,22 @@ public class ReliefBuilderTests
     }
 
     [Fact]
+    public void A_terrain_block_with_a_floor_under_it_shows_its_ground_from_above_and_not_its_floor()
+    {
+        var m = Grid(4, (_, _) => 0.5f);
+        foreach (var (x, z) in new[] { (0, 0), (4, 0), (0, 4), (4, 0), (4, 4), (0, 4) })
+        {
+            m.Add(new Vector3(x, -1, z), -Vector3.UnitY, new Vector2(x / 32f, z / 32f), Rgba.White);
+            if (m.V.Count % 3 == 0) m.Mat.Add(0);
+        }
+        var src = ReliefBuilder.FromMesh(m, "block");
+        Assert.Equal(0.5, src.Raw.Min(), 3);
+        var (px, w, h) = ReliefPicture.Fitted(src, Numbered(2, 2), 2, 2);
+        Assert.Equal((2, 2), (w, h));
+        Assert.Equal(new[] { 0, 1, 2, 3 }, Cells(px));
+    }
+
+    [Fact]
     public void A_terrain_picture_laid_across_is_transposed_and_then_mirrored_as_its_flips_say()
     {
         ReliefSource Src(bool u, bool v) => new() { Name = "t", Cols = 2, Rows = 2, Raw = new float[4], Width = 1, Depth = 1, Fit = PictureFit.Direct, Swap = true, FlipU = u, FlipV = v };

@@ -35,6 +35,7 @@ public static class ReliefPicture
         if (h > MostSide) { w = Math.Max(1, w * MostSide / h); h = MostSide; }
         var to = new byte[w * h * Channels];
         var filled = new bool[w * h];
+        var highest = new float[w * h];
         foreach (var t in src.Triangles)
         {
             var a = new Vector2(t.A.X * w, t.A.Y * h); var b = new Vector2(t.B.X * w, t.B.Y * h); var c = new Vector2(t.C.X * w, t.C.Y * h);
@@ -50,6 +51,9 @@ public static class ReliefPicture
                     float w1 = ((c.X - px) * (a.Y - py) - (a.X - px) * (c.Y - py)) / area;
                     float w2 = 1 - w0 - w1;
                     if (w0 < -1e-4f || w1 < -1e-4f || w2 < -1e-4f) continue;
+                    float height = w0 * t.Ha + w1 * t.Hb + w2 * t.Hc;
+                    if (filled[y * w + x] && height < highest[y * w + x]) continue;
+                    highest[y * w + x] = height;
                     float u = w0 * t.Ua.X + w1 * t.Ub.X + w2 * t.Uc.X, v = w0 * t.Ua.Y + w1 * t.Ub.Y + w2 * t.Uc.Y;
                     int sx = Math.Clamp((int)((u - MathF.Floor(u)) * tw), 0, tw - 1), sy = Math.Clamp((int)((v - MathF.Floor(v)) * th), 0, th - 1);
                     Buffer.BlockCopy(from, (sy * tw + sx) * Channels, to, (y * w + x) * Channels, Channels);

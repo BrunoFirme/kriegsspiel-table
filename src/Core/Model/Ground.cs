@@ -8,12 +8,42 @@ public sealed class Ground
     const double ProbeStep = 0.255;
 
     readonly List<(SheetDef sheet, ReliefGrid grid, double scale)> _reliefs = new();
+    readonly Dictionary<(long, long), List<int>> _areas = new();
+    readonly double _area = 1;
 
     public Ground(IEnumerable<SheetDef> sheets, Func<SheetDef, ReliefGrid?> grid)
     {
         foreach (var s in sheets.OrderByDescending(s => s.Z))
             if (grid(s) is { } g) _reliefs.Add((s, g, FullWidth(s) * (s.Relief is { Length: > 0 } ? s.Height : 1)));
         Highest = _reliefs.Count == 0 ? 0 : _reliefs.Max(r => r.grid.Highest * r.scale);
+        if (_reliefs.Count == 0) return;
+        _area = Math.Max(1, _reliefs.Average(r => Math.Max(r.sheet.Size.W, r.sheet.Size.H)));
+        for (int i = 0; i < _reliefs.Count; i++)
+        {
+            var corners = new[] { (0.0, 0.0), (1.0, 0.0), (0.0, 1.0), (1.0, 1.0) }.Select(c => Corner(_reliefs[i].sheet, c.Item1, c.Item2)).ToList();
+            var (x0, z0) = AreaOf(new Vec2(corners.Min(c => c.X), corners.Min(c => c.Z)));
+            var (x1, z1) = AreaOf(new Vec2(corners.Max(c => c.X), corners.Max(c => c.Z)));
+            for (long x = x0; x <= x1; x++)
+                for (long z = z0; z <= z1; z++)
+                {
+                    if (!_areas.TryGetValue((x, z), out var list)) _areas[(x, z)] = list = new();
+                    list.Add(i);
+                }
+        }
+    }
+
+    static Vec2 Corner(SheetDef s, double fu, double fv)
+    {
+        var c = s.Crop ?? SheetGeometry.Whole;
+        return FromUv(s, c.X + fu * c.W, c.Y + fv * c.H);
+    }
+
+    (long x, long z) AreaOf(Vec2 p) => ((long)Math.Floor(p.X / _area), (long)Math.Floor(p.Z / _area));
+
+    IEnumerable<(SheetDef sheet, ReliefGrid grid, double scale)> Covering(Vec2 p)
+    {
+        if (!_areas.TryGetValue(AreaOf(p), out var list)) yield break;
+        foreach (var i in list) yield return _reliefs[i];
     }
 
     public bool Any => _reliefs.Count > 0;
@@ -49,21 +79,21 @@ public sealed class Ground
 
     public SheetDef? ReliefAt(Vec2 p)
     {
-        foreach (var r in _reliefs)
+        foreach (var r in Covering(p))
             if (Uv(r.sheet, p) != null) return r.sheet;
         return null;
     }
 
     public double At(Vec2 p)
     {
-        foreach (var r in _reliefs)
+        foreach (var r in Covering(p))
             if (Uv(r.sheet, p) is var (u, v)) return r.grid.HeightAt(u, v) * r.scale;
         return 0;
     }
 
     public byte KindAt(Vec2 p)
     {
-        foreach (var r in _reliefs)
+        foreach (var r in Covering(p))
             if (Uv(r.sheet, p) is var (u, v)) return r.grid.KindAt(u, v);
         return GroundKinds.None;
     }
@@ -131,7 +161,7 @@ public sealed class Ground
 
     public double CellSize(Vec2 p)
     {
-        foreach (var r in _reliefs)
+        foreach (var r in Covering(p))
             if (Uv(r.sheet, p) != null) return FullWidth(r.sheet) / Math.Max(1, r.grid.Cols - 1);
         return double.PositiveInfinity;
     }

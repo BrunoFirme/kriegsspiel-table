@@ -32,9 +32,20 @@ public partial class SheetNode : Node3D
     public int CoarsestLevel => _coarsestLevel;
     int _coarsestLevel = -1;
 
-    public static SheetNode Create(SheetDef def, Assets assets, ReliefCache relief)
+    const int BaseSide = 2048, LeastBaseSide = 256;
+    const long BasePixelsForAllSheets = 4L * BaseSide * BaseSide;
+    int _baseSide = BaseSide;
+
+    public static int BaseSideFor(int sheets)
     {
-        var n = new SheetNode { _assets = assets, _relief = relief };
+        int side = BaseSide;
+        while (side > LeastBaseSide && (long)side * side * Math.Max(1, sheets) > BasePixelsForAllSheets) side /= 2;
+        return side;
+    }
+
+    public static SheetNode Create(SheetDef def, Assets assets, ReliefCache relief, int sheets)
+    {
+        var n = new SheetNode { _assets = assets, _relief = relief, _baseSide = BaseSideFor(sheets) };
         n.UpdateDef(def);
         n._surface = new ReliefSurface();
         n.AddChild(n._surface);
@@ -194,7 +205,7 @@ public partial class SheetNode : Node3D
         catch (Exception e) { GD.PushError($"sheet {Def.Id}: bad tile index: {e.Message}"); return; }
         _baseLevel = _index.Levels.Count - 1;
         for (int i = 0; i < _index.Levels.Count; i++)
-            if (_index.Levels[i].W <= 2048 && _index.Levels[i].H <= 2048) { _baseLevel = i; break; }
+            if (_index.Levels[i].W <= _baseSide && _index.Levels[i].H <= _baseSide) { _baseLevel = i; break; }
         var lv = _index.Levels[_baseLevel];
         for (int y = 0; y < lv.Rows; y++)
             for (int x = 0; x < lv.Cols; x++)

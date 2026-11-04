@@ -59,7 +59,7 @@ sealed class SheetLayer
 
     public void Add(SheetDef sh)
     {
-        var n = SheetNode.Create(sh, _c.S.Assets, _c.S.Relief);
+        var n = SheetNode.Create(sh, _c.S.Assets, _c.S.Relief, _c.S.View.Sheets.Count);
         Root.AddChild(n);
         _sheets[sh.Id] = n;
         n.SetSelected(sh.Id == SelectedId);

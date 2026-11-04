@@ -6,7 +6,7 @@ namespace KTable.Client.Relief;
 
 public enum PictureFit { None, Direct, Resample }
 
-public sealed record TopTriangle(Vector2 A, Vector2 B, Vector2 C, Vector2 Ua, Vector2 Ub, Vector2 Uc);
+public sealed record TopTriangle(Vector2 A, Vector2 B, Vector2 C, Vector2 Ua, Vector2 Ub, Vector2 Uc, float Ha = 0, float Hb = 0, float Hc = 0);
 
 public sealed class ReliefSource
 {
@@ -90,7 +90,7 @@ public static class ReliefBuilder
             var (a, b, c) = (pts[t], pts[t + 1], pts[t + 2]);
             Splat(raw, filled, cols, rows, G(a), G(b), G(c), a.h, b.h, c.h);
             if (m.UV.Count > t + 2)
-                triangles.Add(new TopTriangle(Norm(a), Norm(b), Norm(c), m.UV[t], m.UV[t + 1], m.UV[t + 2]));
+                triangles.Add(new TopTriangle(Norm(a), Norm(b), Norm(c), m.UV[t], m.UV[t + 1], m.UV[t + 2], a.h, b.h, c.h));
         }
         Vector2 Norm((float x, float z, float h) p) => new((float)((p.x - x0) / width), (float)((p.z - z0) / depth));
         FillHoles(raw, filled, cols, rows);

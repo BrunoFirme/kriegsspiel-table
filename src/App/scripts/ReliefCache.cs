@@ -47,6 +47,16 @@ public sealed class ReliefCache
         Invalidate(where);
     }
 
+    const int ArrivalsPerRefresh = 16;
+    int _waitingToShow;
+
+    void GridArrived()
+    {
+        if (_loading.Count > 0 && ++_waitingToShow < ArrivalsPerRefresh) return;
+        _waitingToShow = 0;
+        Invalidate();
+    }
+
     public void Invalidate(Rect2? where = null)
     {
         _ground = null;
@@ -80,6 +90,7 @@ public sealed class ReliefCache
         {
             _loading.Remove(sha);
             _failed.Add(sha);
+            if (_loading.Count == 0 && _waitingToShow > 0) { _waitingToShow = 0; Invalidate(); }
             GD.PrintErr($"[relief] the relief of {sheet.Name} could not be read: {why}");
         }
         Fetch(sheet, ReliefFiles.HeaderRel(sha), () =>
@@ -98,7 +109,7 @@ public sealed class ReliefCache
                     try
                     {
                         var g = ReliefFiles.Load(index, rel => Find(sheet, rel));
-                        Callable.From(() => { _loading.Remove(sha); _grids[sha] = g; Invalidate(); }).CallDeferred();
+                        Callable.From(() => { _loading.Remove(sha); _grids[sha] = g; GridArrived(); }).CallDeferred();
                     }
                     catch (Exception e) when (e is IOException or InvalidDataException or UnauthorizedAccessException)
                     {
