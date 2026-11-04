@@ -169,7 +169,7 @@ sealed partial class ScenarioDialog : HudPart
         var byClock = new CheckBox
         {
             Text = "Follow the game clock", ButtonPressed = l0.FromClock,
-            TooltipText = "The game's hour sets the light: dark before dawn, warm and low at sunrise and sunset, white at midday. The sliders below come back when this is off.",
+            TooltipText = "The game's hour sets the light: dark before dawn, warm and low at sunrise and sunset, white at midday.",
         };
         Lighting ReadLight() => new() { SunEnergy = sun.Value, Ambient = amb.Value, Warmth = warm.Value, Shadows = shadows.ButtonPressed, FromClock = byClock.ButtonPressed, TableShade = S.View.Lighting.TableShade, Backdrop = S.View.Lighting.Backdrop, MapStyle = S.View.Lighting.MapStyle, Contours = S.View.Lighting.Contours };
         void PreviewLight() { if (sync) return; var l = ReadLight(); T.ApplyLighting(l.FromClock ? DayLight.At(S.View.Clock, l) : l); }

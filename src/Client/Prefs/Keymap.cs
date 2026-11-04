@@ -11,7 +11,7 @@ public sealed class Keymap
         ("roll", "Roll dice", "R"), ("larger", "Larger", "Equal"), ("smaller", "Smaller", "Minus"),
         ("delete", "Delete", "Delete"), ("undo", "Undo (umpire)", "Ctrl+Z"), ("redo", "Redo (umpire)", "Ctrl+Y"),
         ("cut", "Cut", "Ctrl+X"), ("copy", "Copy", "Ctrl+C"), ("paste", "Paste at the pointer", "Ctrl+V"), ("selectAll", "Select all", "Ctrl+A"),
-        ("statePrev", "Previous state", "BracketLeft"), ("stateNext", "Next state", "BracketRight"),
+        ("statePrev", "Previous look", "BracketLeft"), ("stateNext", "Next look", "BracketRight"),
         ("scriptConsole", "Script console (umpire)", "QuoteLeft"), ("scriptWindow", "Scripts window (umpire)", "Ctrl+Shift+L"),
         ("mute", "Sound on / off", "Ctrl+M"), ("saves", "Saves (host)", "Ctrl+S"),
         ("form:line", "Formations tool: line", "R"), ("form:column", "Formations tool: column", "T"), ("form:block", "Formations tool: block", "B"),

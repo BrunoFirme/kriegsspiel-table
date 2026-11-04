@@ -181,7 +181,7 @@ sealed class ToolStrip : HudPart
         switch (key)
         {
             case "paint": return PanelToggle("paint", "draw", "Draw", "The pen, the shapes and the rubber");
-            case "formation": return PanelToggle("formation", "formation", $"Formations   ({Cfg.Keys.Label("formations")})", "Form the selected pieces up: line, column, square, wedge and more · drag across the table to set the front");
+            case "formation": return PanelToggle("formation", "formation", $"Formations   ({Cfg.Keys.Label("formations")})", "Form the selected pieces up: line, column, square, wedge and more · right-drag across the table to set the front");
             case "relief": return PanelToggle("relief", "relief", "Relief", "Raise, lower, smooth and flatten the ground, and paint grass, fields, woods, marsh, water and roads on it");
             case "boards": return PanelToggle("boards", "stack", "Layers", "The sheets of tracing paper the drawings are on: draw on one, hide it for a screenshot");
             case "dice": return PanelToggle("dice", "dice", "Dice", "Pick the dice and roll; every umpire sees the result");

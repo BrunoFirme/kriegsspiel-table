@@ -42,7 +42,7 @@ internal sealed class ScriptTab
 
             """),
         ("A number drawn on the face with − and + (a plain counter: Piece → Counters)", """
-            -- Put inside draw(): a number with a button either side (x, z in piece units: see the Paint view's status line).
+            -- Put inside draw(): a number with a button either side (x, z in piece units: see the 2D view's status line).
             self.button{ face = "front", x = 0, z = 0.3, label = tostring(state.strength), font = 0.12, text_color = "white" }
             self.button{ face = "front", x = -0.45, z = 0.3, w = 0.18, h = 0.18, label = "−", font = 0.12, on_click = "less" }
             self.button{ face = "front", x = 0.45, z = 0.3, w = 0.18, h = 0.18, label = "+", font = 0.12, on_click = "more" }
@@ -66,7 +66,7 @@ internal sealed class ScriptTab
         var d = _s.Sel!;
         var link = _s.FileWatch.Of(KindKey(d.Id));
         if (link != null) draft = null;
-        p.AddChild(Ui.Hint("Every piece of this kind runs this Lua when a game is hosted, and on the Table view here. Counters, text lines, names, looks and markers need no script (Piece and Markers tabs); script only buttons of your own, numbers drawn on the face and panels. Imported TTS pieces keep working through theirs. F1 on a word opens the reference."));
+        p.AddChild(Ui.Hint("Every piece of this kind runs this Lua at the table and in Try it. Counters, text lines, names, looks and markers need no script (Piece and Markers tabs): script only buttons of your own, numbers drawn on the face and panels. F1 on a word opens the reference."));
         _script = new CodeEdit
         {
             Text = draft ?? d.Script ?? "", CustomMinimumSize = new Vector2(0, 320), SizeFlagsVertical = Control.SizeFlags.ExpandFill,
@@ -99,7 +99,7 @@ internal sealed class ScriptTab
         _log = new ScriptConsoleView(_s.S, prompt: true, fontSize: 11) { CustomMinimumSize = new Vector2(0, 150), Target = () => _s.Paper.Instance(_s.Sel)?.Id ?? "" };
         p.AddChild(_log);
         foreach (var (after, text, color) in _logLines) _log.AddLocal(text, color, after);
-        p.AddChild(Ui.Hint("Widget positions are piece units (centre 0, x right, z down the picture): in the Paint view the status line reads them under the pointer, and Ctrl+right-click copies them."));
+        p.AddChild(Ui.Hint("Widget positions are piece units (centre 0, x right, z down the picture): in the 2D view the status line reads them under the pointer, and Ctrl+right-click copies them."));
     }
 
     static string KindKey(string defId) => "def:" + defId;

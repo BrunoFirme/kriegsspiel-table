@@ -413,7 +413,7 @@ public partial class ModelStudio : Control
             v.Repaint();
         }
         _dirtyTex = true;
-        _studio.Say("The model's picture had been painted in the Paint view: those strokes are now its paint here.");
+        _studio.Say("The model's picture had been painted in the 2D view: those strokes are now its paint here.");
     }
 
     public async Task<bool> Settle()

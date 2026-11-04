@@ -80,7 +80,7 @@ The tool strip runs down the left. Point at any tool and press **F1** for its se
 
 - Drag a piece to carry it; it drops where you let go. Drag the empty table to box-select.
 - **Q / E** turn 15° (Shift 1°). The wheel over a selected piece turns it 10° (Ctrl 2°, Shift ½°).
-- **+ / −** resize, **Ctrl+1–9** form rows, **Ctrl+C / V** copy and paste, **Delete**, **Ctrl+Z / Ctrl+Y** undo and redo.
+- **+ / −** resize, **Ctrl+1–9** form rows, **Ctrl+X / C / V** cut, copy and paste, **Delete**, **Ctrl+Z / Ctrl+Y** undo and redo.
 - **Right-click** a piece for everything else: looks, counters, markers, lock, POV, Properties.
 
 ### Turn and resize
@@ -169,7 +169,8 @@ Names too small in the picture? Raise **Settings → Captures → Resolution**, 
 ### Map sheets
 
 In the **Map** drawer: add sheets (files or web links), pick one (or Alt+click it), unlock to drag, nudge with the arrow keys, turn
-or resize with **T**. **Crop…** trims borders; the sheet keeps its scale.
+or resize with **T**. **Crop…** trims borders; the sheet keeps its scale. **Left 90°**, **180°** and **Right 90°** turn the
+sheet, every sheet joined to it and the pieces on them as one, about the map's middle.
 
 ### Relief
 
@@ -191,10 +192,10 @@ ground.
   with one click of grass. **Density** below 100% lays the ground in clumps: sparse wood, scattered rock, broken
   marsh; with ✕ it thins a wood. **Shift+click** runs straight on from the last stroke, for roads, rivers and
   ridges. **Alt+click** picks up the ground under the cursor.
-- The scenario's **Surroundings** page sets how painted ground is drawn for everyone: **Ancient**, **18th-century
-  survey** or **Modern topographic**, and turns on **contour lines** over every relief. They follow the ground as it
-  is shaped. Once the map's scale is calibrated they step in round heights of its units, and every fifth line is
-  numbered on the ground.
+- **Light & surroundings → Map** in the scenario's properties sets, for everyone, the style painted ground is drawn
+  in (**Ancient**, **18th-century survey** or **Modern topographic**) and turns on **contour lines** over every
+  relief: redrawn as the ground is shaped, stepping in round heights once the map's scale is calibrated, every fifth
+  line numbered.
 - Pieces lean with the slope under them and follow the ground when it changes.
 
 ### Umpires and zones
@@ -207,7 +208,8 @@ and the zones button beside it, which shows or hides the zones on your screen, a
 ### Views
 
 - **2D** (F2) reads the map flat from above.
-- **Aa** (N) puts a plate behind the labels a piece writes beside itself, such as a flag's name printed under it, so they read on a busy map. Text on a piece's own face is left as it is.
+- **Aa** (N) puts plates behind the labels pieces write beside themselves, so they read on a busy map; text on the
+  piece itself is left alone.
 - **Frame** (Home) shows the whole map.
 - The **compass** shows north; click it to turn north-up.
 
@@ -222,13 +224,15 @@ Who joined, rolls, turns and sheets. The console of scripts is separate (Menu �
 
 ### The scenario
 
-The ⋯ after the scenario's name opens its properties: briefing, clock, light and surroundings, grid, scale, wind, distances, script.
+The ⋯ after the scenario's name opens its properties: **Game** (password, pointers, clock, the global script),
+**Briefing**, **Map** (distances, grid), **Light & surroundings** and **Wind**.
 
 - **Briefing:** the situation you play from. Leads write it here and every umpire reads it here; **Read it…** opens it in a
   window of its own, with find. Observers never see it.
-- **Light & surroundings:** presets and sliders, or **Follow the game clock** for dawn, day and dusk; what everyone
-  sees past the table's edge (rooms, gardens, coasts, fields, open sky by day, at sundown or at night, stars, a solid
-  colour, or your own panorama; a sky sets its light); and the table under the map, which grows to hold what is on it.
+- **Light & surroundings:** presets and sliders, or **Follow the game clock** for dawn, day and dusk; a backdrop past
+  the table's edge (a room, a garden, a coast, open country, a sky by day, at sundown or at night, a solid colour or
+  your own panorama; a sky sets its light); the table under the map, which grows to hold what is on it; and the map
+  style and contour lines of [painted ground](umpire-guide.md#relief).
 - **Grid:** squares or hexes over the table. Nothing snaps to it.
 
 ## Play by post
@@ -251,5 +255,6 @@ The ⋯ after the scenario's name opens its properties: briefing, clock, light a
 | You deleted something | **Host a game → Trash** or **Piece studio → Trash**: thirty days to **Restore**. |
 | The host's PC is gone | An umpire who was there: **Mirrored games** → **Host from the copy**. |
 | A panel is off screen | **Settings → Interface → Put the panels back**. |
+| The table stutters on a big map | **Settings → Graphics**: lower Render scale, Smooth edges and Map pictures. |
 | Text and buttons are too small | **Settings → Interface → Interface size**; **Match Windows** follows Windows' own display scale. |
 | Colours are hard to tell apart | Umpires' colours are chosen for colour-blind eyes. For maps and pieces, Windows has **Settings → Accessibility → Colour filters**. |

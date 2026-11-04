@@ -40,12 +40,30 @@ the pack's pieces and the chosen piece down the right. The top line says what th
 
 ### New pieces
 
-**＋ New piece** (Ctrl+N) makes a block, a tile, a token, pieces from pictures or the clipboard, or a 3D model.
-Pictures and models dropped on the window become pieces too. Every picture chooser also takes a web link.
+**＋ New piece** (Ctrl+N) makes a block, a tile, a token, pieces from pictures or the clipboard, a 3D model, or an
+effect (smoke, volleys, guns, fire, dust, mist; from bows to the World Wars, and at sea). Pictures and models dropped
+on the window become pieces too. Every picture chooser also takes a web link.
 
 ### The views (Alt+1, 2, 3)
 
-**Paint** — the face, built of layers: pictures, paint, text and the unit plate (colours, label, unit symbol).
+**3D** (Alt+1) — the piece as the table shows it.
+
+- **Layers** lists what the piece is made of. The **Block** layer holds the piece's outline (rectangle,
+  round, hex, shield, banner, along the picture and more, or **Frame…** for a border), its width, depth,
+  thickness and side tint. A look can have its own size and outline.
+- **Add a shape or a model** builds onto it: a box, a cylinder, a flag… or a model file (glTF, GLB, FBX, OBJ,
+  STL, PLY), which sits centred on top. A model file dropped on the 3D view does the same; dropped anywhere
+  else it becomes a piece of its own. A layer keeps the shape it was added as: for another, add it and delete
+  the old layer. Every layer, the block and each shape, lists its **Faces** to paint in 2D. A 3D piece's width
+  on the table and its tint are under **On the table**.
+- **Texture…** on an imported model lays on a texture made for it, as its maker drew it; **Picture…** on a shape
+  stretches a picture over one face.
+- Tools: look round H, move V (drag the X, Y and Z arrows, or the shape itself), brush B, rubber E, fill G,
+  colour I, decal D; **F** turns the piece over. A shape chosen in 3D opens its faces in 2D.
+- Saved as one OBJ and one picture, as TTS uses.
+
+**2D** (Alt+2) — a face laid flat, built of layers: pictures, paint, text and the unit plate (colours, label, unit
+symbol).
 
 - Pick the look and the side, **Front** or **Back**, under the picture; **F** turns it over.
 - Each layer moves, turns, resizes, mirrors, crops, fades, hides or locks. The rubber touches only its layer.
@@ -57,21 +75,8 @@ Pictures and models dropped on the window become pieces too. Every picture choos
   keep their − and +. Unplaced, counters print on the back and text lines in the name band.
 - **Swap front and back** trades the two sides, prints and all.
 
-**3D** — the piece as the table shows it.
-
-- **Layers** lists what the piece is made of. The **Block** layer holds the piece's outline (rectangle,
-  round, hex, shield, banner, along the picture and more, or **Frame…** for a border), its width, depth,
-  thickness and side tint. A look can have its own size and outline.
-- **Add a shape or a model** builds onto it: a box, a cylinder, a flag… or a model file (glTF, GLB, FBX, OBJ,
-  STL, PLY), which sits centred on top. A model file dropped on the 3D view does the same; dropped anywhere
-  else it becomes a piece of its own. A layer keeps the shape it was added as: for another, add it and delete
-  the old layer. Every layer, the block and each shape, lists its **Faces** to paint in 2D. A 3D piece's width
-  on the table and its tint are under **On the table**.
-- Tools: look round H, move V (drag the X, Y and Z arrows, or the shape itself), brush B, rubber E, fill G,
-  colour I, decal D; **F** turns the piece over. A shape chosen in 3D opens its faces in 2D.
-- Saved as one OBJ and one picture, as TTS uses.
-
-**Try it** — the pack's pieces on a real table with scripts running.
+**Try it** (Alt+3) — the pack's pieces on a real table with scripts running. An effect has **Try it** and
+**Picture**, the particle it is drawn with.
 
 ### The chosen piece
 
