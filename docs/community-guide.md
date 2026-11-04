@@ -25,8 +25,8 @@ You get:
 
 Scripts keep working: see [what imported TTS scripts become](scripting.md#what-imported-tts-scripts-become).
 
-What an import downloads stays on this PC so the next import is faster. **Settings → Storage** on the title screen
-shows its size and clears it; imported packs keep their own copies.
+What an import downloads stays on this PC, so a module imports again without downloading. **Settings → Storage**
+on the title screen shows its size and clears it; imported packs keep their own copies.
 
 ## Export to Tabletop Simulator
 

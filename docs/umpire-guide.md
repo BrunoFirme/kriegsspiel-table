@@ -250,7 +250,7 @@ The ⋯ after the scenario's name opens its properties: **Game** (password, poin
 | Someone cannot connect | Check password, address and UDP port. "LAN only" in the top line: the router kept the port shut. |
 | A piece is a grey square | Its picture is still coming from the host, or that PC lacks the pack. |
 | A co-umpire's table looks wrong | They leave and rejoin; the table is sent again. |
-| **NOT SAVED** in the top bar | The Log says why (disk full, folder gone). It clears once saving works. |
+| **NOT SAVED** in the top bar | The Log says why (disk full, folder gone). It clears once saving works. Disk full: **Settings → Storage** on the title screen clears what imports and joins downloaded. |
 | The card says the save is damaged | Host continues from the newest copy; the damaged file is kept beside it. |
 | You deleted something | **Host a game → Trash** or **Piece studio → Trash**: thirty days to **Restore**. |
 | The host's PC is gone | An umpire who was there: **Mirrored games** → **Host from the copy**. |
