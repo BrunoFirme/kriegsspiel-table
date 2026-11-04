@@ -31,6 +31,28 @@ public class ClientSessionTests
     }
 
     [Fact]
+    public void The_session_is_caught_up_once_the_host_has_answered_every_change_it_sent()
+    {
+        JoinAs(Role.Umpire);
+        Assert.True(_s.CaughtUp);
+        _s.Do(new SpawnPiece { Id = "a", Def = "d" });
+        _s.Do(new SpawnPiece { Id = "b", Def = "d" });
+        Assert.Equal(2, _s.Unanswered);
+        _s.OnCommand(Spawn(1, 3, "x"));
+        Assert.Equal(2, _s.Unanswered);
+        _s.OnCommand(Spawn(2, 2, "a"));
+        Assert.Equal(1, _s.Unanswered);
+        _s.OnError("refused");
+        Assert.True(_s.CaughtUp);
+        _s.OnError("a script's own error");
+        _s.OnCommand(Spawn(3, 2, "y"));
+        Assert.Equal(0, _s.Unanswered);
+        _s.Do(new SpawnPiece { Id = "c", Def = "d" });
+        _s.SetView(new GameState());
+        Assert.True(_s.CaughtUp);
+    }
+
+    [Fact]
     public void My_own_commands_go_on_the_undo_stack_and_ctrl_z_sends_the_newest_back()
     {
         JoinAs(Role.Umpire);

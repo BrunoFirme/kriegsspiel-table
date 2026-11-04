@@ -182,7 +182,7 @@ public sealed partial class TableTools
                 sent.Add($"{tdef?.Name ?? t.Name}");
             }
         if (sent.Count == 0) return ToolResult.Fail(problems.Count > 0 ? string.Join("; ", problems) : "Nothing to set: give label, note, kind, state, counters or text.");
-        await _delay(0.2);
+        await Landed(s);
         _log($"set {string.Join(", ", sent)} on {NameOf(s, p)}");
         var now = s.View.Find(Layers.Umpire, id);
         var report = now == null ? "" : "\n" + JsonSerializer.Serialize(new { now.Label, now.Note, Kind = now.Def, State = now.State + 1, now.Counters, now.Text }, Json);
@@ -207,7 +207,7 @@ public sealed partial class TableTools
         if (!CanChange(s, out why)) return why!;
         if (s.MyUndoable.Count == 0) return ToolResult.Fail("Nothing from this seat to undo.");
         s.UndoLast();
-        await _delay(0.3);
+        await Landed(s);
         _log("undid the last change");
         return new ToolResult("Undone.");
     }
@@ -329,7 +329,6 @@ public sealed partial class TableTools
             _log($"set {what}");
             s.Request(new GetScripts());
             await Until(() => lists > 0, 3);
-            await _delay(0.3);
             bool failed = s.ConsoleLines.Any(l => l.Seq > seq && l.Kind == "error") || s.Scripts.FirstOrDefault(i => i.Id == id)?.Status == "error";
             return new ToolResult($"Set {what}. {(keep == null ? "Removed." : Status(s, id))}" + Since(s, seq, 60), failed);
         }
@@ -345,10 +344,16 @@ public sealed partial class TableTools
         var id = a.Str("id") ?? "";
         if (id.Length > 0 && Find(s, id) == null) return ToolResult.Fail($"No piece {id} on this table.");
         long seq = LastSeq(s);
-        s.Request(new RunLua { Target = id, Code = code });
-        _log(id.Length == 0 ? "ran Lua in the global script" : $"ran Lua in {id}");
-        await Until(() => s.ConsoleLines.Any(l => l.Seq > seq && l.Kind is "result" or "error"), 5);
-        await _delay(0.2);
+        int lists = 0;
+        void Listed() => lists++;
+        s.ScriptsChanged += Listed;
+        try
+        {
+            s.Request(new RunLua { Target = id, Code = code });
+            _log(id.Length == 0 ? "ran Lua in the global script" : $"ran Lua in {id}");
+            await Until(() => lists > 0, 5);
+        }
+        finally { s.ScriptsChanged -= Listed; }
         var said = Since(s, seq, 100);
         return new ToolResult(said.Length == 0 ? "Ran; nothing printed or returned." : said.TrimStart('\n'));
     }
@@ -389,13 +394,7 @@ public sealed partial class TableTools
         return null;
     }
 
-    async Task<bool> Until(Func<bool> done, double seconds)
-    {
-        for (double t = 0; t < seconds; t += 0.05)
-        {
-            if (done()) return true;
-            await _delay(0.05);
-        }
-        return done();
-    }
+    Task<bool> Until(Func<bool> done, double seconds) => Waits.Until(done, seconds, _delay);
+
+    Task<bool> Landed(ClientSession s) => Waits.Landed(s, _delay);
 }

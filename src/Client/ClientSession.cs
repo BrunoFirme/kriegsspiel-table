@@ -21,6 +21,8 @@ public class ClientSession
     public PackageStore Store { get; }
     public string? SavePath { get; set; }
     public string? ScenarioDir { get; set; }
+    public int Unanswered { get; private set; }
+    public bool CaughtUp => Unanswered == 0;
 
     public event Action? Reset;
     public event Action<Command>? Applied;
@@ -116,6 +118,7 @@ public class ClientSession
     public void SetView(GameState v)
     {
         Live = v;
+        Unanswered = 0;
         Dirty = true;
         Store.LoadPacks(v.Packs);
         if (_review == null) Reset?.Invoke();
@@ -132,6 +135,7 @@ public class ClientSession
 
     public void OnCommand(Command c)
     {
+        if (c.Actor == Me.PeerId) Answered();
         if (Mirroring && SaveFile.EndsTurn(Live, c)) MirrorTurns.Add(SaveFile.RecordOf(Live, Repeatable.UtcNow));
         var err = StateMachine.Apply(Live, c, out _);
         if (c.Seq > Live.LastSeq) Live.LastSeq = c.Seq;
@@ -169,18 +173,34 @@ public class ClientSession
         Waiting = p.Waiting;
         PeersChanged?.Invoke();
     }
-    public void OnError(string e) => Error?.Invoke(e);
+
+    public void OnError(string e)
+    {
+        Answered();
+        Error?.Invoke(e);
+    }
+
+    public void Answered()
+    {
+        if (Unanswered > 0) Unanswered--;
+    }
+
+    void Sent(Command c)
+    {
+        Unanswered++;
+        Send(c);
+    }
 
     public void Do(Command c)
     {
         if (Reviewing) { Error?.Invoke("You are looking at a past turn; press Back to now to change the table."); return; }
-        Send(c);
+        Sent(c);
     }
 
     public void UndoLast()
     {
         if (!IsUmpire || MyUndoable.Count == 0) return;
-        Send(new Undo { TargetSeq = MyUndoable.Pop() });
+        Sent(new Undo { TargetSeq = MyUndoable.Pop() });
     }
 
     public void RedoLast()
@@ -188,7 +208,7 @@ public class ClientSession
         if (!IsUmpire || MyRedoable.Count == 0) return;
         var seq = MyRedoable.Pop();
         _redoing.Add(seq);
-        Send(new Undo { TargetSeq = seq });
+        Sent(new Undo { TargetSeq = seq });
     }
 
     void Track(Command c)

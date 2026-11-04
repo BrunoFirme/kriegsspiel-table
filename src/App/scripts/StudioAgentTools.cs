@@ -574,7 +574,7 @@ sealed partial class StudioTools
         if (keep != null && KTable.Core.ScriptSafety.Inspect(keep) is { Hostile: true } v) return ToolResult.Fail("Refused, not run: " + string.Join("; ", v.Reasons));
         long seq = s.S.ConsoleLines.Count > 0 ? s.S.ConsoleLines[^1].Seq : 0;
         s.Script.SetFromOutside(d.Id, keep);
-        await _a.Delay(0.5);
+        await _a.Landed(s.S);
         var mine = s.S.View.Layer(Layers.Umpire).Where(p => p.Def == d.Id).Select(p => p.Id).ToHashSet();
         var fresh = s.S.ConsoleLines.Where(l => l.Seq > seq && (l.Source.Length == 0 || mine.Contains(l.Source))).TakeLast(60).ToList();
         bool failed = fresh.Any(l => l.Kind == "error");

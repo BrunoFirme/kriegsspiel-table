@@ -139,7 +139,7 @@ sealed partial class StudioTools
         if (!await Select(s, d)) return ToolResult.Fail($"{d.Name} could not be selected (the studio may be asking about unsaved work).");
         if (s.View != "table") { s.SetView("table"); await s.Frames(4); }
         if (s.Paper.Instance(d) is { } p) s.T.Rig.Frame(Coords.ToWorld(p.Pos), (float)Math.Max(3, Math.Max(d.Size.W, d.Size.H) * 2.2));
-        await _a.Delay(0.6);
+        await _a.Drawn(AgentEndpoint.SettleFrames);
         var shot = await _a.Snapshot();
         return shot == null ? ToolResult.Fail("No picture: the window is not drawing (minimised, or a run without a screen).") : new ToolResult($"{d.Name} on the studio's table.", false, new[] { shot });
     });

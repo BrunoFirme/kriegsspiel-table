@@ -84,6 +84,39 @@ public class McpTests
         Assert.Equal(-32601, (int)method["error"]!["code"]!);
     }
 
+    static async Task<JsonNode> Batch(Mcp mcp, string args) => Parse(await mcp.Handle("""{"jsonrpc":"2.0","id":8,"method":"tools/call","params":{"name":"batch","arguments":""" + args + "}}"));
+
+    [Fact]
+    public async Task A_batch_runs_its_steps_in_order_and_answers_with_every_answer_and_picture()
+    {
+        var r = await Batch(Echo(), """{"calls":[{"tool":"echo","arguments":{"text":"one"}},{"tool":"look"},{"tool":"echo","arguments":{"text":"two"}}]}""");
+        var content = r["result"]!["content"]!.AsArray();
+        var text = (string?)content[0]!["text"] ?? "";
+        Assert.False((bool)r["result"]!["isError"]!);
+        Assert.True(text.IndexOf("1. echo: said one", StringComparison.Ordinal) < text.IndexOf("2. look: here", StringComparison.Ordinal));
+        Assert.Contains("3. echo: said two", text);
+        Assert.Equal(2, content.Count);
+        Assert.Equal("image", (string?)content[1]!["type"]);
+    }
+
+    [Fact]
+    public async Task A_batch_stops_at_the_first_failing_step_unless_told_to_keep_going()
+    {
+        var mcp = Echo();
+        const string Steps = """[{"tool":"echo","arguments":{"text":"a"}},{"tool":"boom"},{"tool":"nope"},{"tool":"batch","arguments":{"calls":[]}},{"tool":"echo","arguments":{"text":"z"}}]""";
+        var stopped = await Batch(mcp, """{"calls":""" + Steps + "}");
+        var text = (string?)stopped["result"]!["content"]![0]!["text"] ?? "";
+        Assert.True((bool)stopped["result"]!["isError"]!);
+        Assert.Contains("2. boom (failed): boom failed: broken", text);
+        Assert.Contains("steps 3 to 5 were not run", text);
+        Assert.DoesNotContain("said z", text);
+        var all = (string?)(await Batch(mcp, """{"calls":""" + Steps + ""","keep_going":true}"""))["result"]!["content"]![0]!["text"] ?? "";
+        Assert.Contains("3. nope (failed): No such tool: nope", all);
+        Assert.Contains("4. batch (failed): A batch does not hold another batch.", all);
+        Assert.Contains("5. echo: said z", all);
+        Assert.True((bool)(await Batch(mcp, """{"calls":[]}"""))["result"]!["isError"]!);
+    }
+
     [Fact]
     public async Task Notifications_get_no_answer_and_bad_json_a_parse_error()
     {

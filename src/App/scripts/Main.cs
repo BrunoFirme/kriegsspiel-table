@@ -516,6 +516,7 @@ public partial class Main : Node
                         s.OnJoined(jr);
                         break;
                     case KTable.Core.Protocol.ErrorMessage em:
+                        s.Answered();
                         GD.PushWarning("editor: " + em.Text);
                         break;
                     case KTable.Core.Protocol.ScriptConsole or KTable.Core.Protocol.ScriptList:

@@ -17,7 +17,7 @@ public partial class AgentEndpoint : Node
     const int PortsToTry = 20;
     public const string LiveFile = "agent.json", CacheFile = "agent-tools.json";
 
-    const string Instructions = "Kriegsspiel Table, a tabletop for umpired wargames. You act as the person at this PC, with their seat's rights; your changes are logged as agent. Call status first. " +
+    const string Instructions = "Kriegsspiel Table, a tabletop for umpired wargames. You act as the person at this PC, with their seat's rights; your changes are logged as agent. Call status first. Steps that do not wait on each other's answers go together in one batch call. " +
         "Go where the work is: open_studio (a pack's pieces, or a new pack), host_game (a scenario, or a new blank one), close_studio, leave_game. " +
         "For a unit, make_unit does it in one call (a block with its counters, text lines, looks and script); make_units makes many. " +
         "For anything else in the piece studio: start a kind (studio_make_block, studio_new_piece, studio_pieces_from_pictures, studio_import_models, studio_new_effect); " +
@@ -260,6 +260,35 @@ public partial class AgentEndpoint : Node
     internal bool InStudio => Studio != null && IsInstanceValid(Studio) && !Studio.Gone;
 
     internal async Task Delay(double seconds) => await ToSignal(GetTree().CreateTimer(seconds), Timer.SignalName.Timeout);
+
+    internal Task<bool> Landed(Session s) => Waits.Landed(s, Delay);
+
+    internal async Task FreshTurns(Session s, Hud hud)
+    {
+        bool came = false;
+        void Came() => came = true;
+        s.TurnsChanged += Came;
+        try
+        {
+            hud.N.RequestTurns();
+            await Waits.Until(() => came, Waits.LandingSeconds, Delay);
+        }
+        finally { s.TurnsChanged -= Came; }
+    }
+
+    internal async Task Drawn(int frames)
+    {
+        if (DisplayServer.GetName() == "headless") return;
+        async Task Frame() => await ToSignal(RenderingServer.Singleton, RenderingServer.SignalName.FramePostDraw);
+        for (int i = 0; i < frames; i++)
+        {
+            var drawn = Frame();
+            if (await Task.WhenAny(drawn, Delay(DrawWaitSeconds)) != drawn) return;
+        }
+    }
+
+    const double DrawWaitSeconds = 2;
+    internal const int SettleFrames = 4;
 
     internal async Task<byte[]?> Snapshot(int max = 1280)
     {

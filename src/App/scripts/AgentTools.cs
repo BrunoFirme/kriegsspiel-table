@@ -78,7 +78,7 @@ sealed class AppTools
         if (Aim(a, s, before, out var why) is not { } view) return why!;
         if (view == before) return await Shot();
         rig.Show(view);
-        await _a.Delay(0.6);
+        await _a.Drawn(AgentEndpoint.SettleFrames);
         try { return await Shot(); }
         finally { rig.Show(before); }
     }

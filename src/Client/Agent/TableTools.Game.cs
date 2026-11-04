@@ -195,8 +195,7 @@ public sealed partial class TableTools
 
     async Task<ToolResult> Pressed(ClientSession s, long seq, string what)
     {
-        await Until(() => s.ConsoleLines.Any(l => l.Seq > seq), 1.5);
-        await _delay(0.3);
+        await Landed(s);
         _log(what);
         var fresh = s.ConsoleLines.Where(l => l.Seq > seq).ToList();
         return new ToolResult(char.ToUpperInvariant(what[0]) + what[1..] + "." + Since(s, seq, 60), fresh.Any(l => l.Kind == "error"));
@@ -279,7 +278,7 @@ public sealed partial class TableTools
             done.Add("detached from " + holder.Id);
         }
         if (done.Count == 0) return ToolResult.Fail("Nothing to set.");
-        await _delay(0.2);
+        await Landed(s);
         _log($"{string.Join(", ", done)}: {NameOf(s, p)}");
         var now = Find(s, id);
         return new ToolResult($"{NameOf(s, p)}: {string.Join(", ", done)}." + (now == null ? "" : "\n" + JsonSerializer.Serialize(new { now.Locked, Tint = now.TintOverride, now.Scale, now.FaceDown, now.Attached }, Json)));
@@ -306,7 +305,7 @@ public sealed partial class TableTools
         int minutes = (int)(a.Num("minutes_per_turn") ?? c.IncrementMinutes);
         if (minutes is < 1 or > 100000) return ToolResult.Fail("minutes_per_turn is at least 1.");
         s.Do(new SetClock { Turn = (int)(a.Num("turn") ?? c.Turn), GameTime = t.ToString("yyyy-MM-ddTHH:mm", CultureInfo.InvariantCulture), IncrementMinutes = minutes });
-        await _delay(0.2);
+        await Landed(s);
         _log("set the clock");
         return new ToolResult($"Turn {s.View.Clock.Turn} · {s.View.Clock.GameTime} · {s.View.Clock.IncrementMinutes} minutes a turn.");
     }
@@ -337,7 +336,7 @@ public sealed partial class TableTools
         var text = a.Str("text")?.Trim() ?? "";
         if (text.Length == 0) return ToolResult.Fail("text is needed.");
         s.Do(new Say { Text = text, Color = a.Str("colour") });
-        await _delay(0.1);
+        await Landed(s);
         return new ToolResult("Written in the log.");
     }
 
@@ -353,7 +352,7 @@ public sealed partial class TableTools
         if (a.Str("board")?.Trim() is { Length: > 0 } named)
         {
             BoardDef? Find() => s.View.Boards.FirstOrDefault(b => string.Equals(b.Name, named, StringComparison.OrdinalIgnoreCase));
-            if (Find() == null) { s.Do(new AddBoard { Name = named }); await _delay(0.2); }
+            if (Find() == null) { s.Do(new AddBoard { Name = named }); await Landed(s); }
             if (Find() is not { } found) return ToolResult.Fail($"The drawing layer {named} could not be made.");
             board = found.Id;
         }
@@ -390,7 +389,7 @@ public sealed partial class TableTools
             var gone = s.View.Zones.FirstOrDefault(zn => zn.Name.Equals(a.Str("name")?.Trim() ?? "", StringComparison.OrdinalIgnoreCase));
             if (gone == null) return ToolResult.Fail($"No zone named {a.Str("name")}.");
             s.Do(new RemoveZone { Id = gone.Id });
-            await _delay(0.2);
+            await Landed(s);
             _log($"removed the zone {gone.Name}");
             return new ToolResult($"Zone {gone.Name} removed.");
         }
@@ -402,7 +401,7 @@ public sealed partial class TableTools
         int index = s.View.Zones.FindIndex(zn => zn.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
         var zone = new Zone { Id = index >= 0 ? s.View.Zones[index].Id : "", Name = name, Owner = owner, Color = a.Str("colour") ?? "#E0B040", Polygon = poly };
         s.Do(new SetZone { Zone = zone, Index = index >= 0 ? index : null });
-        await _delay(0.2);
+        await Landed(s);
         _log($"set the zone {name}");
         return new ToolResult($"Zone {name} for {owner}: {poly.Count} corners.");
     }
@@ -423,7 +422,7 @@ public sealed partial class TableTools
         var divisions = (int)Math.Round(a.Num("divisions") ?? was.Subdivisions);
         if (divisions < 1 || divisions > GridDivisionsMost) return ToolResult.Fail($"divisions is 1 to {GridDivisionsMost}.");
         s.Do(new SetGrid { Grid = new GridDef { Kind = kind, Pitch = cell, Subdivisions = divisions, Color = was.Color } });
-        await _delay(0.2);
+        await Landed(s);
         _log(kind == "none" ? "took the grid off" : $"laid a {kind} grid");
         return new ToolResult(kind == "none" ? "No grid." : $"A {kind} grid, {cell:0.##} map units a cell{(kind == "square" && divisions > 1 ? $", divided into {divisions}" : "")}.");
     }
@@ -459,7 +458,7 @@ public sealed partial class TableTools
             done.Add("wind");
         }
         if (done.Count == 0) return ToolResult.Fail("Nothing to set.");
-        await _delay(0.2);
+        await Landed(s);
         _log("set the " + string.Join(" and ", done));
         return new ToolResult($"Set the {string.Join(" and ", done)}: wind {Wind.Words(s.View.Wind.Strength)} from {Wind.Point(s.View.Wind.From)}.");
     }
@@ -497,7 +496,7 @@ public sealed partial class TableTools
         double? perMetre = s.View.Calibration.UnitsPerMeter;
         if (a.Num("metres_per_unit") is { } m) { if (m <= 0) return ToolResult.Fail("metres_per_unit is above 0."); perMetre = 1 / m; }
         s.Do(new SetCalibration { UnitsPerMeter = perMetre, Units = units ?? s.View.Calibration.Units });
-        await _delay(0.2);
+        await Landed(s);
         _log("set the map scale");
         return new ToolResult(FormattableString.Invariant($"One map unit is {(s.View.Calibration.UnitsPerMeter is { } u ? 1 / u : double.NaN):0.###} m; distances read in {s.View.Calibration.Units}."));
     }

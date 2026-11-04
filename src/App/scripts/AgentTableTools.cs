@@ -199,7 +199,7 @@ sealed partial class AgentTableTools
         if (a.Flag("remove") == true)
         {
             s.Do(new RemoveSheet { Id = id });
-            await _a.Delay(0.2);
+            await _a.Landed(s);
             _a.Log($"removed the map sheet {sh.Name}");
             return new ToolResult($"Removed {sh.Name}.");
         }
@@ -236,7 +236,7 @@ sealed partial class AgentTableTools
             s.Do(new MoveSheet { Id = id, Pos = new Vec2(a.Num("x") ?? sh.Pos.X, a.Num("z") ?? sh.Pos.Z), RotDeg = a.Num("turn") ?? sh.RotDeg, Z = a.Num("layer") is { } layer ? (int)layer : sh.Z, Size = size });
         }
         if (a.Flag("locked") == true) s.Do(new LockSheet { Id = id, Locked = true });
-        await _a.Delay(0.3);
+        await _a.Landed(s);
         _a.Log($"set the map sheet {sh.Name}");
         return ListSheets();
     }
@@ -253,8 +253,7 @@ sealed partial class AgentTableTools
     {
         if (Table(out var why) is not var (s, hud)) return why!;
         if (Play(s, hud, out why) is not var (_, _, folder)) return why!;
-        hud.N.RequestTurns();
-        await _a.Delay(0.3);
+        await _a.FreshTurns(s, hud);
         var o = new JsonObject
         {
             ["turns"] = new JsonArray(s.Turns.Select(t => (JsonNode?)new JsonObject { ["turn"] = t.Turn, ["time"] = t.GameTime, ["pieces"] = t.Pieces }).ToArray()),
@@ -289,8 +288,7 @@ sealed partial class AgentTableTools
         LoadFrom from;
         if (a.Flag("start_over") == true || a.Num("turn") is not null)
         {
-            hud.N.RequestTurns();
-            await _a.Delay(0.3);
+            await _a.FreshTurns(s, hud);
             var turn = a.Flag("start_over") == true ? s.Turns.OrderBy(t => t.Index).FirstOrDefault() : s.Turns.FirstOrDefault(t => t.Turn == (int)a.Num("turn")!.Value);
             if (turn == null) return ToolResult.Fail("No such turn kept (list_saves).");
             from = new LoadFrom(SaveNames.Turn(turn.Turn, turn.GameTime), TurnIndex: turn.Index);
