@@ -126,7 +126,7 @@ internal sealed class EffectTab
             sg.AddChild(new Label { Text = "" });
             var lingers = new CheckBox
             {
-                Text = "Smoke drifts as far as real smoke", ButtonPressed = e.Lingers,
+                Text = "Dense smoke, drifting as far as real powder smoke", ButtonPressed = e.Lingers,
                 TooltipText = $"Carried downwind as far as powder smoke goes in the scenario's wind, on the map's scale (or {SmokeDrift.UncalibratedMetresPerUnit:0} m to a unit before the map is calibrated)",
             };
             lingers.Toggled += on => Set(x => x.Lingers = on, rebuild: true);

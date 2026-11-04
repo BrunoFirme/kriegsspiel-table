@@ -331,10 +331,10 @@ public static class EffectRecipe
             if (e.Smoke)
                 layers.Add(new EffectLayer
                 {
-                    Sprite = "puff", Heat = SmokeHeat.Hot, Amount = N(22), Life = 6f * Mathf.Sqrt(H), Box = new Vector3(ex.X * 0.5f, 0.1f * s, ex.Z * 0.5f), At = new Vector3(0, 0.65f * s * H, 0),
+                    Sprite = "puff", Heat = SmokeHeat.Hot, Amount = N(22), Life = 6f * Mathf.Sqrt(H), Box = new Vector3(ex.X * 0.55f, 0.05f * s, ex.Z * 0.55f), At = new Vector3(0, 0.2f * s * Mathf.Sqrt(H), 0),
                     Spread = 14, VMin = 0.45f * s * H, VMax = 0.8f * s * H, Lift = 0.1f * s * H, Drift = 0.35f * D, SMin = 0.85f * s * P, SMax = 1.4f * s * P,
-                    Curve = new[] { (0f, 0.45f), (1f, 2.6f) },
-                    Ramp = new[] { (0f, Fade(c, 0)), (0.15f, Fade(c, 0.65f)), (0.65f, Fade(c.Lerp(Rgba.White, 0.25f), 0.32f)), (1f, Fade(c.Lerp(Rgba.White, 0.4f), 0)) },
+                    Curve = new[] { (0f, 0.3f), (1f, 2.6f) },
+                    Ramp = new[] { (0f, Fade(c, 0)), (0.04f, Fade(c, 0.6f)), (0.15f, Fade(c, 0.65f)), (0.65f, Fade(c.Lerp(Rgba.White, 0.25f), 0.32f)), (1f, Fade(c.Lerp(Rgba.White, 0.4f), 0)) },
                 });
         }
 
@@ -448,10 +448,10 @@ public static class EffectRecipe
             if (e.Smoke)
                 layers.Add(new EffectLayer
                 {
-                    Sprite = "puff", Heat = SmokeHeat.Hot, Points = pts, Amount = Math.Min(2400, fires * 4), Fixed = true, Life = 5f * Mathf.Sqrt(H), At = new Vector3(0, 0.6f * fs, 0),
+                    Sprite = "puff", Heat = SmokeHeat.Hot, Points = pts, Amount = Math.Min(2400, fires * 4), Fixed = true, Life = 5f * Mathf.Sqrt(H), At = new Vector3(0, 0.3f * fs, 0),
                     Spread = 10, VMin = 0.9f * fs * H, VMax = 1.5f * fs * H, Lift = 0.1f * fs, Drift = 0.35f * D, SMin = 1.0f * fs, SMax = 1.7f * fs,
-                    Curve = new[] { (0f, 0.5f), (1f, 3f) },
-                    Ramp = new[] { (0f, Fade(c, 0)), (0.15f, Fade(c, 0.4f)), (0.65f, Fade(c.Lerp(Rgba.White, 0.25f), 0.2f)), (1f, Fade(c.Lerp(Rgba.White, 0.4f), 0)) },
+                    Curve = new[] { (0f, 0.35f), (1f, 3f) },
+                    Ramp = new[] { (0f, Fade(c, 0)), (0.04f, Fade(c, 0.35f)), (0.15f, Fade(c, 0.4f)), (0.65f, Fade(c.Lerp(Rgba.White, 0.25f), 0.2f)), (1f, Fade(c.Lerp(Rgba.White, 0.4f), 0)) },
                 });
             if (e.Light)
                 for (int i = 0; i < Math.Min(4, fires); i++)
@@ -708,7 +708,7 @@ public static class EffectRecipe
             if (e.Smoke)
                 layers.Add(new EffectLayer
                 {
-                    Sprite = "puff", Heat = SmokeHeat.Hot, Amount = N(36), Life = 10f * rh, Box = new Vector3(ex.X * 0.65f, 0.15f * fs, ex.Z * 0.65f), At = new Vector3(0, 0.9f * fs, 0),
+                    Sprite = "puff", Heat = SmokeHeat.Hot, Amount = N(36), Life = 10f * rh, Box = new Vector3(ex.X * 0.7f, 0.08f * fs, ex.Z * 0.7f), At = new Vector3(0, 0.4f * fs, 0),
                     Spread = 10, VMin = 0.55f * fs * H, VMax = 0.95f * fs * H, Lift = 0.12f * fs * H, Drift = 0.45f * D,
                     SMin = 1.1f * fs * P, SMax = 1.8f * fs * P, Curve = new[] { (0f, 0.55f), (0.15f, 1f), (1f, 3.6f) },
                     Ramp = new[] { (0f, Fade(c.Lerp(lit, 0.6f), 0)), (0.03f, Fade(c.Lerp(lit, 0.45f), 0.9f)), (0.12f, Fade(c, 0.97f)), (0.6f, Fade(c.Lerp(aged, 0.05f), 0.8f)), (1f, Fade(c.Lerp(aged, 0.1f), 0)) },

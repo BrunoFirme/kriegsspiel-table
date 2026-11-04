@@ -19,17 +19,17 @@ public static class FirmeEffects
 
     public static readonly (string Name, string What, double W, double H, EffectDef Fx, string Era)[] Presets =
     {
-        ("Musket volley", "A battalion's line firing at will: lay it along the front rank", 6, 0.6, new EffectDef { Kind = "powder" }, N),
-        ("Battalion volley", "The whole line firing on the word of command, every few seconds", 6, 0.6, new EffectDef { Kind = "powder", Volley = "together" }, N),
-        ("Rolling fire", "Fire by platoons, rippling down the line from one flank to the other", 6, 0.6, new EffectDef { Kind = "powder", Volley = "rolling" }, N),
+        ("Musket volley, standard smoke", "A battalion's line firing at will: lay it along the front rank", 6, 0.6, new EffectDef { Kind = "powder" }, N),
+        ("Musket volley, dense smoke", "A line firing at will, its smoke thick and hanging, drifting downwind as far as real powder smoke on the map's scale", 6, 0.6, new EffectDef { Kind = "powder", Lingers = true, Amount = 1.5, Wind = 1.4 }, N),
+        ("Battalion volley, standard smoke", "The whole line firing on the word of command, every few seconds", 6, 0.6, new EffectDef { Kind = "powder", Volley = "together" }, N),
+        ("Battalion volley, dense smoke", "Volleys on the word of command, the smoke banking up and carried off downwind as far as real powder smoke on the map's scale", 6, 0.6, new EffectDef { Kind = "powder", Volley = "together", Lingers = true, Amount = 1.5, Wind = 1.4 }, N),
+        ("Rolling fire, standard smoke", "Fire by platoons, rippling down the line from one flank to the other", 6, 0.6, new EffectDef { Kind = "powder", Volley = "rolling" }, N),
+        ("Rolling fire, dense smoke", "Fire by platoons down the line, every platoon's smoke hanging and drifting as far as real powder smoke on the map's scale", 6, 0.6, new EffectDef { Kind = "powder", Volley = "rolling", Lingers = true, Amount = 1.5, Wind = 1.4 }, N),
         ("Skirmish fire", "Light troops in open order, a puff here and there", 5, 2, new EffectDef { Kind = "powder", Amount = 0.3, Puff = 0.6, Height = 0.8 }, N),
-        ("Battery firing", "A battery of guns firing in turn", 4, 1, new EffectDef { Kind = "cannon", Every = 4, Volley = "rolling" }, N),
+        ("Battery firing, standard smoke", "A battery of guns firing in turn", 4, 1, new EffectDef { Kind = "cannon", Every = 4, Volley = "rolling" }, N),
+        ("Battery firing, dense smoke", "Guns firing in turn, their smoke rolling away downwind as far as real powder smoke on the map's scale", 4, 1, new EffectDef { Kind = "cannon", Every = 4, Volley = "rolling", Lingers = true, Amount = 1.4, Wind = 1.4 }, N),
         ("Battery salvo", "Every gun of the battery at once", 4, 1, new EffectDef { Kind = "cannon", Every = 6 }, N),
         ("Gun firing", "A single piece of artillery", 1, 1, new EffectDef { Kind = "cannon", Every = 6, Amount = 0.8 }, N),
-        ("Lingering musketry", "A line firing at will, its smoke thick and hanging, drifting downwind as far as real powder smoke on the map's scale", 6, 0.6, new EffectDef { Kind = "powder", Lingers = true, Amount = 1.5, Wind = 1.4 }, N),
-        ("Lingering battalion volley", "Volleys on the word of command, the smoke banking up and carried off downwind as far as real powder smoke on the map's scale", 6, 0.6, new EffectDef { Kind = "powder", Volley = "together", Lingers = true, Amount = 1.5, Wind = 1.4 }, N),
-        ("Lingering rolling fire", "Fire by platoons down the line, every platoon's smoke hanging and drifting as far as real powder smoke on the map's scale", 6, 0.6, new EffectDef { Kind = "powder", Volley = "rolling", Lingers = true, Amount = 1.5, Wind = 1.4 }, N),
-        ("Lingering battery fire", "Guns firing in turn, their smoke rolling away downwind as far as real powder smoke on the map's scale", 4, 1, new EffectDef { Kind = "cannon", Every = 4, Volley = "rolling", Lingers = true, Amount = 1.4, Wind = 1.4 }, N),
         ("Congreve rockets", "A rocket troop firing: erratic trails of sparks and smoke, bursts where they land", 2, 14, new EffectDef { Kind = "rocket" }, N),
         ("Powder smoke", "The smoke hanging over a line after the firing", 6, 1.5, new EffectDef { Kind = "smoke", Color = "#DEDBD4", Height = 0.35, Puff = 0.9, Amount = 1.2 }, N),
         ("Battle haze", "Smoke lying over the field after hours of fighting", 10, 6, new EffectDef { Kind = "fog", Color = "#D3CFC6" }, N),
@@ -77,6 +77,10 @@ public static class FirmeEffects
 
     const string N = "napoleonic", M = "modern", A = "ancient", S = "naval";
     static readonly string[] RealismTags = { "extra", "realism", "swense" };
+    const string StandardSmoke = ", standard smoke";
+
+    public static string IdOf(string presetName) =>
+        PackId + "." + PackEdit.Slug(presetName.EndsWith(StandardSmoke, StringComparison.Ordinal) ? presetName[..^StandardSmoke.Length] : presetName);
 
     public static readonly (string Name, Func<PropMade> Make, string Era)[] PropList =
     {
@@ -106,7 +110,7 @@ public static class FirmeEffects
         };
         foreach (var (name, _, w, h, fx, era) in Presets)
         {
-            var d = Def(PackId + "." + PackEdit.Slug(name), name, w, h, fx);
+            var d = Def(IdOf(name), name, w, h, fx);
             d.Tags.Add(era);
             if (fx.Lingers) d.Tags.AddRange(RealismTags);
             pack.Pieces.Add(d);

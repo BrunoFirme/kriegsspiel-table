@@ -331,4 +331,17 @@ public class EffectRecipeTests
         Assert.Equal(2 * SmokeDrift.ScreenWind(new SmokeAir(1, 1 / 30.0)), SmokeDrift.ScreenWind(new SmokeAir(1, 1 / 15.0)), 4);
         Assert.True(SmokeDrift.ScreenWind(new SmokeAir(5, 1 / 30.0)) > 5 * SmokeDrift.ScreenWind(new SmokeAir(1, 1 / 30.0)));
     }
+
+    [Theory]
+    [InlineData("fire")]
+    [InlineData("oil")]
+    public void Fire_smoke_starts_in_the_flames(string kind)
+    {
+        var plan = Plan(new EffectDef { Kind = kind }, 3, 3);
+        var flame = plan.Layers.First(l => l.Sprite == "flame");
+        var smoke = plan.Layers.Single(l => l.Heat == SmokeHeat.Hot);
+        float flameTop = flame.At.Y + flame.VMax * flame.Life + flame.Lift * flame.Life * flame.Life / 2;
+        Assert.True(smoke.At.Y - smoke.Box.Y <= flameTop, $"smoke from {smoke.At.Y - smoke.Box.Y}, flames reach {flameTop}");
+        Assert.True(smoke.Ramp.First(k => k.c.A > 0.3f).at <= 0.05f, "seen as it leaves the flames");
+    }
 }
