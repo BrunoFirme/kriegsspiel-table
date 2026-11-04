@@ -1,4 +1,4 @@
-using System.Security.Cryptography;
+﻿using System.Security.Cryptography;
 
 namespace KTable.Core.Model;
 
@@ -17,16 +17,16 @@ public static class GroundKinds
     public static readonly IReadOnlyList<(string Name, string Color)> All =
     [
         ("none", "#00000000"),
-        ("grass", "#A9BE94"),
-        ("field", "#E3CDB2"),
-        ("wood", "#93AB76"),
-        ("marsh", "#B3C3A7"),
-        ("water", "#9DB9C9"),
-        ("road", "#D8B57A"),
-        ("earth", "#CBAE88"),
-        ("rock", "#B9AE9C"),
-        ("sand", "#E6D3A1"),
-        ("snow", "#F1F0EA"),
+        ("grass", "#C3CB86"),
+        ("field", "#E3D2A6"),
+        ("wood", "#527548"),
+        ("marsh", "#97AF95"),
+        ("water", "#7AA6C2"),
+        ("road", "#DDC49A"),
+        ("earth", "#C49668"),
+        ("rock", "#9C948A"),
+        ("sand", "#E6D299"),
+        ("snow", "#F2F2EE"),
     ];
 
     public static byte? Of(string name)
@@ -39,10 +39,10 @@ public static class GroundKinds
     public static string Name(byte kind) => kind < All.Count ? All[kind].Name : "none";
 
     static readonly string[] Ancient =
-        ["#00000000", "#C9C08A", "#D9B062", "#8C9A5A", "#A9AE80", "#7FA393", "#B5442E", "#B98352", "#A58A63", "#E3C680", "#EFE7D4"];
+        ["#00000000", "#CFC79A", "#DBC386", "#7B9C78", "#9EAA82", "#84A79C", "#E6D5AE", "#B57D48", "#9C8664", "#DFC584", "#ECE6D7"];
 
     static readonly string[] Modern =
-        ["#00000000", "#DDE8C0", "#F1E8B8", "#9AC57A", "#E2ECDF", "#A9D2EC", "#E8643C", "#E4D3B2", "#D2CEC6", "#F1E3B0", "#FAFBFC"];
+        ["#00000000", "#DFE5C0", "#EFE5C8", "#80BF7D", "#E1ECE6", "#96CAE8", "#D9502E", "#E2CDA6", "#C9C3B9", "#EEDCA8", "#FBFBFB"];
 
     public static string Color(byte kind, string? style)
     {
@@ -86,7 +86,7 @@ public sealed class ReliefGrid
 
     public ReliefGrid(int cols, int rows)
     {
-        if (cols < 2 || rows < 2 || cols > MaxSide || rows > MaxSide) throw new InvalidDataException($"a relief grid of {cols} × {rows} is out of range");
+        if (cols < 2 || rows < 2 || cols > MaxSide || rows > MaxSide) throw new InvalidDataException($"a relief grid of {cols} Ã— {rows} is out of range");
         Cols = cols;
         Rows = rows;
         H = new float[cols * rows];

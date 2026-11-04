@@ -73,7 +73,8 @@ public partial class ReliefSurface : Node3D
         UpdateKinds(grid);
         _cellWorld = (float)(Ground.FullWidth(def) / Math.Max(1, grid.Cols - 1));
         var cells = new Vector2(grid.Cols, grid.Rows);
-        _base = picture ?? (def.HasPicture ? null : Material(false, cells));
+        bool drawsGround = picture == null && !def.HasPicture;
+        _base = picture ?? (drawsGround ? Material(false, cells) : null);
         if (grid.Painted || (_contours && def.Relief is { Length: > 0 })) _paint = Material(true, cells);
         for (int bz = 0; bz < nz; bz += BlockCells)
             for (int bx = 0; bx < nx; bx += BlockCells)
@@ -85,8 +86,9 @@ public partial class ReliefSurface : Node3D
                 var uv1 = new Vector2((float)(c.X + c.W * ex / nx), (float)(c.Y + c.H * ez / nz));
                 var box = new Rect2(ax, az, bxw - ax, bzw - az);
                 var corners = new[] { sheetXf * new Vector3(ax, 0, az), sheetXf * new Vector3(bxw, 0, az), sheetXf * new Vector3(bxw, 0, bzw), sheetXf * new Vector3(ax, 0, bzw) };
-                if (_base != null && covered?.Invoke(corners) != true) Add(GroundMesh.Grid(h, ax, az, bxw, bzw, ex - bx, ez - bz, uv0, uv1), _base, box, false, level);
-                if (_paint != null) Add(GroundMesh.Grid(h, ax, az, bxw, bzw, ex - bx, ez - bz, uv0, uv1), _paint, box, true, level + PaintAbove);
+                bool hidden = covered?.Invoke(corners) == true;
+                if (_base != null && !hidden) Add(GroundMesh.Grid(h, ax, az, bxw, bzw, ex - bx, ez - bz, uv0, uv1), _base, box, false, level);
+                if (_paint != null && (hidden || !drawsGround)) Add(GroundMesh.Grid(h, ax, az, bxw, bzw, ex - bx, ez - bz, uv0, uv1), _paint, box, true, level + PaintAbove);
             }
         _skirt = new MeshInstance3D
         {
