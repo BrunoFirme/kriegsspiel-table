@@ -45,6 +45,7 @@ Name: desktopicon; Description: "Put a shortcut on the desktop"
 [InstallDelete]
 Type: filesandordirs; Name: "{app}\data_*"
 Type: filesandordirs; Name: "{app}\standard"
+Type: filesandordirs; Name: "{app}\backdrops"
 Type: filesandordirs; Name: "{app}\docs"
 Type: filesandordirs; Name: "{app}\converter"
 Type: filesandordirs; Name: "{app}\native"

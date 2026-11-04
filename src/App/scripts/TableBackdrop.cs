@@ -11,7 +11,6 @@ sealed class TableBackdrop
 {
     public static readonly Color Plain = new(0.16f, 0.17f, 0.18f);
     const float NeutralAmbient = 0.72f, DimmestSky = 0.2f, BrightestSky = 1.3f;
-    const int HorizonRows = 8;
 
     readonly TableContext _c;
     readonly Godot.Environment _env;
@@ -26,7 +25,7 @@ sealed class TableBackdrop
         ShowColour(Plain);
     }
 
-    public static string BuiltInPath(Backdrop b) => ProjectSettings.GlobalizePath("res://backdrops/" + b.File);
+    public static string BuiltInPath(string file) => ProjectSettings.GlobalizePath("res://backdrops/" + file);
 
     public static Color ColourOf(string backdrop) => Backdrops.IsColour(backdrop) ? Color.FromHtml(backdrop) : Plain;
 
@@ -36,11 +35,15 @@ sealed class TableBackdrop
         if (backdrop == _wanted) return;
         _wanted = backdrop;
         int generation = ++_generation;
-        if (Backdrops.Find(backdrop) is { } built) { Load(generation, BuiltInPath(built), built.SkyOnly, built.Mirrored); return; }
+        if (Backdrops.Find(backdrop) is { } built)
+        {
+            Load(generation, BuiltInPath(built.File), built.Ground is { } ground ? BuiltInPath(ground) : null);
+            return;
+        }
         if (Backdrops.IsPicture(backdrop) && _c.S?.Assets is { } assets)
         {
             assets.EnsureFile(UploadAsset.ReliefPackage, backdrop,
-                () => Load(generation, assets.Abs(UploadAsset.ReliefPackage, backdrop), false, false),
+                () => Load(generation, assets.Abs(UploadAsset.ReliefPackage, backdrop), null),
                 () => { if (generation == _generation) ShowColour(Plain); });
             return;
         }
@@ -52,52 +55,49 @@ sealed class TableBackdrop
         _env.BackgroundMode = Godot.Environment.BGMode.Color;
         _env.BackgroundColor = colour;
         _sky.SetShaderParameter("panorama", default(Variant));
+        _sky.SetShaderParameter("ground", default(Variant));
     }
 
-    sealed record Packed(Image Picture, Color Below);
+    sealed record Packed(Image Sky, Image? Ground);
 
-    void Load(int generation, string path, bool skyOnly, bool mirrored)
+    void Load(int generation, string path, string? groundPath)
     {
         Task.Run(() =>
         {
             Packed? packed = null;
-            try { packed = Pack(path); }
+            try
+            {
+                var sky = Pack(path);
+                var ground = sky != null && groundPath != null ? Pack(groundPath) : null;
+                if (sky != null && (groundPath == null || ground != null)) packed = new Packed(sky, ground);
+                else { sky?.Dispose(); ground?.Dispose(); }
+            }
             catch (Exception e) when (e is IOException or UnauthorizedAccessException or InvalidOperationException) { GD.PrintErr("[backdrop] could not read " + path + ": " + e.Message); }
-            if (Assets.Quitting) { packed?.Picture.Dispose(); return; }
-            Callable.From(() => Arrived(generation, packed, path, skyOnly, mirrored)).CallDeferred();
+            if (Assets.Quitting) { packed?.Sky.Dispose(); packed?.Ground?.Dispose(); return; }
+            Callable.From(() => Arrived(generation, packed, path)).CallDeferred();
         });
     }
 
-    static Packed? Pack(string path)
+    static Image? Pack(string path)
     {
         if (!File.Exists(path)) return null;
         using var img = Image.LoadFromFile(path);
         if (img == null || img.IsEmpty()) return null;
         if (img.IsCompressed()) img.Decompress();
         if (img.GetFormat() != Image.Format.Rgba8) img.Convert(Image.Format.Rgba8);
-        var below = BottomColour(img);
         img.GenerateMipmaps();
-        return BlockCompress.Compress(img, false) is { } dxt ? new Packed(dxt, below) : null;
+        return BlockCompress.Compress(img, false);
     }
 
-    static Color BottomColour(Image img)
+    void Arrived(int generation, Packed? packed, string path)
     {
-        int w = img.GetWidth(), h = img.GetHeight(), step = Math.Max(1, w / 256);
-        float r = 0, g = 0, b = 0; int n = 0;
-        for (int y = Math.Max(0, h - HorizonRows); y < h; y++)
-            for (int x = 0; x < w; x += step) { var c = img.GetPixel(x, y); r += c.R; g += c.G; b += c.B; n++; }
-        return n == 0 ? Plain : new Color(r / n, g / n, b / n);
-    }
-
-    void Arrived(int generation, Packed? packed, string path, bool skyOnly, bool mirrored)
-    {
-        if (generation != _generation) { packed?.Picture.Dispose(); return; }
+        if (generation != _generation) { packed?.Sky.Dispose(); packed?.Ground?.Dispose(); return; }
         if (packed == null) { GD.PrintErr("[backdrop] no picture in " + path); ShowColour(Plain); return; }
-        _sky.SetShaderParameter("panorama", ImageTexture.CreateFromImage(packed.Picture));
-        _sky.SetShaderParameter("sky_only", skyOnly);
-        _sky.SetShaderParameter("mirrored", mirrored);
-        _sky.SetShaderParameter("below", packed.Below);
-        packed.Picture.Dispose();
+        _sky.SetShaderParameter("panorama", ImageTexture.CreateFromImage(packed.Sky));
+        _sky.SetShaderParameter("ground", packed.Ground == null ? default(Variant) : ImageTexture.CreateFromImage(packed.Ground));
+        _sky.SetShaderParameter("halves", packed.Ground != null);
+        packed.Sky.Dispose();
+        packed.Ground?.Dispose();
         _env.BackgroundMode = Godot.Environment.BGMode.Sky;
     }
 }

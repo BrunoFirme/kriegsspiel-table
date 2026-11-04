@@ -3,7 +3,7 @@ using KTable.Core.Protocol;
 
 namespace KTable.Client;
 
-public sealed record Backdrop(string Id, string Name, string File, bool SkyOnly = false, string? Light = null, bool Mirrored = false);
+public sealed record Backdrop(string Id, string Name, string File, string? Ground = null, string? Light = null);
 
 public static class Backdrops
 {
@@ -18,11 +18,11 @@ public static class Backdrops
         new("ballroom", "Ballroom", "ballroom.webp"),
         new("state-ballroom", "State ballroom", "state-ballroom.webp"),
         new("grand-hall", "Grand hall", "grand-hall.webp"),
-        new("open-sky-day", "Open sky by day", "open-sky-day.jpg", true, LightPresets.CoolDaylight, true),
-        new("sundown", "Sundown", "sundown.jpg", true, LightPresets.Sundown, true),
-        new("open-sky-night", "Open sky at night", "open-sky-night.jpg", true, LightPresets.MoonlitNight, true),
-        new("starry-night", "Starry night", "starry-night.jpg", true, LightPresets.MoonlitNight),
-        new("starry-desert", "Starry desert", "starry-desert.webp", false, LightPresets.MoonlitNight),
+        new("open-sky-day", "Open sky by day", "open-sky-day.jpg", "open-sky-day-ground.jpg", LightPresets.CoolDaylight),
+        new("sundown", "Sundown", "sundown.jpg", "sundown-ground.jpg", LightPresets.Sundown),
+        new("open-sky-night", "Open sky at night", "open-sky-night.jpg", "open-sky-night-ground.jpg", LightPresets.MoonlitNight),
+        new("starry-night", "Starry night", "starry-night.jpg", "starry-night-ground.jpg", LightPresets.MoonlitNight),
+        new("starry-desert", "Starry desert", "starry-desert.webp", Light: LightPresets.MoonlitNight),
         new("beach", "By the beach", "beach.webp"),
         new("rolling-farmland", "Rolling farmland", "rolling-farmland.webp"),
         new("open-steppe", "Open steppe", "open-steppe.webp"),
