@@ -381,6 +381,7 @@ public partial class Table : Node3D
     public bool SetStateNumber(int n) => Actions.SetStateNumber(n);
     public void PressWidget(PieceNode hit, int index, Widget w) => Actions.PressWidget(hit, index, w);
     public void CopySelection() => Clip.Copy();
+    public void CutSelection() { Clip.Copy(cut: true); DeleteSelection(); }
     public void Paste(Vec2 at) => Clip.Paste(at);
 
     public const double MinScale = PendingPoses.MinScale, MaxScale = PendingPoses.MaxScale;

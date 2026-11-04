@@ -225,6 +225,7 @@ public partial class PieceStudio
         bool ctrl = k.CtrlPressed || k.MetaPressed;
         switch (k.Keycode)
         {
+            case Key.X when ctrl: LayerPanel.Cut(); break;
             case Key.C when ctrl: LayerPanel.Copy(); break;
             case Key.V when ctrl: LayerPanel.Paste(); break;
             case Key.D when ctrl: LayerPanel.Duplicate(); break;

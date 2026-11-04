@@ -18,7 +18,7 @@ sealed class PieceClipboard
     Vec2 _center;
     readonly HashSet<string> _selectWhenArrived = new();
 
-    public void Copy()
+    public void Copy(bool cut = false)
     {
         var nodes = _selection.Nodes.ToList();
         if (nodes.Count == 0) return;
@@ -33,7 +33,7 @@ sealed class PieceClipboard
         }
         _clip = all;
         _center = new Vec2(nodes.Average(n => n.Piece.Pos.X), nodes.Average(n => n.Piece.Pos.Z));
-        _c.Say($"Copied {nodes.Count} piece{(nodes.Count > 1 ? "s" : "")} — Ctrl+V pastes at the pointer");
+        _c.Say($"{(cut ? "Cut" : "Copied")} {nodes.Count} piece{(nodes.Count > 1 ? "s" : "")} — Ctrl+V pastes at the pointer");
     }
 
     public void Paste(Vec2 at)

@@ -295,6 +295,20 @@ internal sealed class StudioLayersPanel
         _ = CopyLayerPicture(l);
     }
 
+    public async void Cut()
+    {
+        if (Canvas.Sel is not { } l) return;
+        _layerClip = System.Text.Json.JsonSerializer.Serialize(l);
+        _clipMark = null;
+        try { await CopyLayerPicture(l); }
+        catch (Exception e) when (e is InvalidOperationException or ObjectDisposedException) { GD.PrintErr("[studio] cut: the picture did not reach the clipboard: " + e.Message); }
+        if (!Canvas.Doc.Layers.Contains(l)) return;
+        var next = Canvas.Doc.Remove(l);
+        Canvas.R.Sync();
+        Canvas.Select(next);
+        Canvas.Commit("Cut layer");
+    }
+
     async Task CopyLayerPicture(ArtLayer l)
     {
         var img = await Canvas.R.Flatten(cut: false, only: l.Id);

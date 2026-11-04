@@ -137,6 +137,7 @@ sealed class MenuCards : HudPart
             if (mine.Count > 0) menu.Add(DieColorRow(mine, menu.Pop));
         }
         menu.Separator();
+        menu.Item("Cut", T.CutSelection, "Ctrl+X");
         menu.Item("Copy", T.CopySelection, "Ctrl+C");
         menu.Item("Delete", T.DeleteSelection, "Del");
     }
