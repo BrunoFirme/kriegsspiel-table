@@ -84,7 +84,7 @@ public partial class CameraRig : Node3D
     public void Still() { StopGliding(); _zoomTo = null; }
     public bool Gliding => _glide != Vector3.Zero || _spin != Vector2.Zero || _yawTo != null || _zoomTo != null;
 
-    const float ZoomEase = 16f, ZoomSettled = 0.001f;
+    const float ZoomEase = 8.5f, ZoomSettled = 0.001f;
     float? _zoomTo;
     Vector3? _zoomAnchor;
     Vector2 _zoomCursor;

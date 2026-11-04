@@ -89,7 +89,8 @@ sealed class TableInput
     {
         if (!mb.Pressed) return;
         Rig.StopGliding();
-        float f = mb.ButtonIndex == MouseButton.WheelUp ? 0.88f : 1 / 0.88f;
+        const float NotchIn = 0.9f;
+        float f = mb.ButtonIndex == MouseButton.WheelUp ? NotchIn : 1 / NotchIn;
         if (_c.Tool == Tool.Sighting && _sighting.Draft != null)
         {
             _sighting.Wheel(f, mb.Position, mb.AltPressed);
