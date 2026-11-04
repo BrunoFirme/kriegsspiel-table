@@ -12,19 +12,21 @@ public sealed partial class TableTools
 {
     public const int MaxPlaced = 200;
 
+    static readonly string FormationWords = string.Join(", ", Formations.All.Select(k => k.Id));
+
     IEnumerable<AgentTool> GameTools()
     {
         yield return new AgentTool("place_pieces",
-            "Puts many pieces down at once in a formation (" + string.Join(", ", Formations.Names) + ") round a centre, facing a direction. Use kinds for a mix (one kind each, in order) or kind with count. Spacing defaults to the pieces' own size. Undoable piece by piece.",
+            "Puts many pieces down at once in a formation (" + FormationWords + ") round a centre, facing a direction. Use kinds for a mix (one kind each, in order) or kind with count. Spacing defaults to the pieces' own size. Undoable piece by piece.",
             Args.Schema(new Arg("kind", "string", "one kind's id (list_kinds)"), new Arg("count", "number", "how many of it"), new Arg("kinds", "array", "kind ids, one a piece, in order"),
-                new Arg("x", "number", "centre, map units", true), new Arg("z", "number", "centre, map units", true), new Arg("formation", "string", string.Join(", ", Formations.Names)),
+                new Arg("x", "number", "centre, map units", true), new Arg("z", "number", "centre, map units", true), new Arg("formation", "string", FormationWords),
                 new Arg("facing", "number", "the way the pieces face, as their turn in degrees (180 faces the map's top)"), new Arg("spacing", "number", "map units between pieces across"), new Arg("depth", "number", "map units between ranks"),
                 new Arg("ranks", "number", "ranks for line, chequer, crescent and open order; how many abreast for column"),
                 new Arg("labels", "array", "a name for each piece, in order")),
             PlacePieces);
         yield return new AgentTool("form_up",
-            "Forms pieces already on the table up into a formation (" + string.Join(", ", Formations.All.Select(k => k.Id)) + "), each going to the nearest place in it. Round their own centre and facing unless x, z or facing are given. Markers attached to a piece go with it. One undoable change.",
-            Args.Schema(new Arg("ids", "array", "the pieces' ids", true), new Arg("formation", "string", "the formation", true),
+            "Forms pieces already on the table up into a formation (" + FormationWords + "), each going to the nearest place in it. Round their own centre and facing unless x, z or facing are given. Markers attached to a piece go with it. One undoable change.",
+            Args.Schema(new Arg("ids", "array", "the pieces' ids", true), new Arg("formation", "string", FormationWords, true),
                 new Arg("x", "number", "where the formation's centre goes, map units"), new Arg("z", "number", "map units"), new Arg("facing", "number", "the way the pieces face, as their turn in degrees (180 faces the map's top)"),
                 new Arg("gap", "number", "space between pieces as a share of their size: 0 touching, 0.1 close (the default), 1 a piece's width apart"),
                 new Arg("ranks", "number", "ranks for line, chequer, crescent and open order; how many abreast for column")),
@@ -117,7 +119,7 @@ public sealed partial class TableTools
         if (!CanChange(s, out why)) return why!;
         var ids = List(a, "ids").Distinct().ToList();
         if (ids.Count < 2 || ids.Count > MaxPlaced) return ToolResult.Fail($"Give 2 to {MaxPlaced} ids.");
-        if (Formations.Find(a.Str("formation") ?? "") is not { } kind) return ToolResult.Fail("formation is one of " + string.Join(", ", Formations.All.Select(k => k.Id)));
+        if (Formations.Named(a.Str("formation") ?? "") is not var (kind, namedDepth)) return ToolResult.Fail("formation is one of " + FormationWords);
         var layer = s.View.Layer(Layers.Umpire);
         var found = new List<PieceInstance>();
         foreach (var id in ids)
@@ -131,7 +133,7 @@ public sealed partial class TableTools
         var pitch = new Pitch(sizes.Max(z => z.W) * (1 + gap), sizes.Max(z => z.H) * (1 + gap));
         var at = new Vec2(a.Num("x") ?? units.Average(p => p.Pos.X), a.Num("z") ?? units.Average(p => p.Pos.Z));
         double facing = a.Num("facing") ?? Formations.Facing(units.Select(p => p.RotDeg)) ?? units[0].RotDeg;
-        int depth = a.Num("ranks") is { } r ? (int)Math.Clamp(r, 1, Formations.MostRanks) : 0;
+        int depth = a.Num("ranks") is { } r ? (int)Math.Clamp(r, 1, Formations.MostRanks) : namedDepth;
         var places = Formations.Place(Formations.Slots(kind, units.Count, pitch, depth), at, facing);
         var match = Formations.Match(units.Select(p => p.Pos).ToList(), places.Select(q => q.Pos).ToList());
         var to = units.Select((p, i) => (p.Id, places[match[i]].Pos, places[match[i]].Rot)).ToList();
@@ -152,7 +154,7 @@ public sealed partial class TableTools
         foreach (var k in kinds.Distinct())
             if (s.Def(k) is null || s.Store.PackOfDef(k) is not { } pack || !s.View.Packs.Contains(pack.Id)) return ToolResult.Fail($"No kind {k} in this game's packs (list_kinds).");
         var formation = a.Str("formation") ?? "line";
-        if (Formations.Named(formation) is not var (kind, depth)) return ToolResult.Fail("formation is one of " + string.Join(", ", Formations.Names));
+        if (Formations.Named(formation) is not var (kind, depth)) return ToolResult.Fail("formation is one of " + FormationWords);
         if (a.Num("x") is not { } x || a.Num("z") is not { } z) return ToolResult.Fail("x and z are needed.");
         var first = s.Def(kinds[0])!;
         double across = a.Num("spacing") ?? first.Size.W * 1.1, deep = a.Num("depth") ?? first.Size.H * 1.6;
