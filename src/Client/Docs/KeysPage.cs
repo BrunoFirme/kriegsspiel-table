@@ -73,6 +73,12 @@ public static class KeysPage
             ("Delete", "delete what is picked"),
         });
 
+        Studio(sb);
+        return sb.ToString();
+    }
+
+    static void Studio(StringBuilder sb)
+    {
         sb.Append("## Piece studio\n\n");
         Table(sb, "Anywhere", new[]
         {
@@ -106,7 +112,6 @@ public static class KeysPage
             ("Home", "frame the model"),
         });
         Table(sb, "Try it", new[] { ("As at the table", "drag, right-click, middle-click turns over, [ ] change the look") });
-        return sb.ToString();
     }
 
     static void Table(StringBuilder sb, string title, (string keys, string what)[] rows)
