@@ -295,7 +295,7 @@ sealed class ReliefSheets : HudPart
             var slider =
                 new HSlider { MinValue = 0, MaxValue = 5, Step = 0.05, Value = sel.Height, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
                     TooltipText = "0 lies flat; 1 keeps the model's own proportions" };
-            var value = new Label { Text = $"{sel.Height:0.##}", CustomMinimumSize = new Vector2(34, 0), HorizontalAlignment = HorizontalAlignment.Right };
+            var value = Ui.Readout($"{sel.Height:0.##}", 34);
             slider.ValueChanged += v => value.Text = $"{v:0.##}";
             slider.DragEnded += changed => { if (changed) S.Do(new SetSheetRelief { Id = sel.Id, Relief = sel.Relief, Height = slider.Value }); };
             row.AddChild(slider);

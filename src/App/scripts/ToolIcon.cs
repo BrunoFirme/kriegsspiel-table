@@ -98,7 +98,7 @@ public partial class ToolIcon : Control
     void DrawPadlock()
     {
         var lk = Color with { A = 1 };
-        DrawCircle(P(15.4f, 15.2f), 5.2f * _k, new Color(0.11f, 0.11f, 0.12f, 0.92f));
+        DrawCircle(P(15.4f, 15.2f), 5.2f * _k, new Color(Ui.Surface, 0.92f));
         DrawArc(P(15.4f, 14.1f), 2.0f * _k, Mathf.Pi, Mathf.Tau, 14, lk, 1.2f * _k, antialiased: true);
         DrawRect(new Rect2(P(12.8f, 14.1f), new Vector2(5.2f, 4.2f) * _k), lk);
     }

@@ -23,7 +23,7 @@ public static class ScriptEditor
         ScriptAssist.Attach(edit, parent);
         box.AddChild(edit);
         var status = new Label { Text = "", AutowrapMode = TextServer.AutowrapMode.WordSmart };
-        status.AddThemeColorOverride("font_color", new Color(1, 0.55f, 0.45f));
+        status.AddThemeColorOverride("font_color", Ui.Danger);
         box.AddChild(status);
         var row = new HBoxContainer();
         row.AddThemeConstantOverride("separation", 8);

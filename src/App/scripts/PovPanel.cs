@@ -56,7 +56,9 @@ sealed class PovPanel : HudPart
         };
         grid.AddChild(rad);
         grid.AddChild(new Label { Text = "", Visible = scaled });
-        var radRead = new Label { Text = Fmt.Distance(d.Radius, cal), Modulate = new Color(1, 1, 1, 0.6f), Visible = scaled };
+        var radRead = Ui.Readout(Fmt.Distance(d.Radius, cal), 0);
+        radRead.HorizontalAlignment = HorizontalAlignment.Left;
+        radRead.Visible = scaled;
         rad.ValueChanged += v =>
         {
             d.Radius = cal.ToTableUnits(v);

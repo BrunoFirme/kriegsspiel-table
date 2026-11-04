@@ -87,11 +87,8 @@ sealed class DrawPanel : HudPart
         foreach (var (hex, what) in new[] { ("#1a1a1a", "pencil"), ("#c0392b", "red"), ("#2a6ebb", "blue"), ("#2e8b45", "green"), ("#d9a21b", "yellow"), ("#f2f2f2", "chalk") })
         {
             var col = Coords.ParseColor(hex, Colors.Black);
-            var b = new Button { CustomMinimumSize = new Vector2(30, 22), TooltipText = what, FocusMode = Control.FocusModeEnum.None, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-            var box = new StyleBoxFlat { BgColor = col, BorderColor = new Color(0, 0, 0, 0.45f) };
-            box.SetBorderWidthAll(1);
-            box.SetCornerRadiusAll(3);
-            foreach (var st in new[] { "normal", "hover", "pressed", "focus" }) b.AddThemeStyleboxOverride(st, box);
+            var b = Ui.Swatch(col, new Vector2(30, 22), what);
+            b.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
             b.Pressed += () =>
             {
                 T.PenColor = col;
@@ -118,7 +115,7 @@ sealed class DrawPanel : HudPart
         var pen =
             new HSlider { MinValue = 1, MaxValue = 40, Step = 0.5, Value = T.PenPixels, CustomMinimumSize = new Vector2(62, 0), SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
                 TooltipText = "How thick the line is, in screen pixels" };
-        var penL = new Label { Text = $"{T.PenPixels:0.#}", CustomMinimumSize = new Vector2(26, 0), SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, HorizontalAlignment = HorizontalAlignment.Right };
+        var penL = Ui.Readout($"{T.PenPixels:0.#}", 26);
         pen.ValueChanged += v =>
         {
             T.PenPixels = (float)v;
@@ -134,7 +131,7 @@ sealed class DrawPanel : HudPart
         var see =
             new HSlider { MinValue = LeastOpacity * 100, MaxValue = 100, Step = 5, Value = Mathf.Round(T.PenOpacity * 100), CustomMinimumSize = new Vector2(62, 0),
                 SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, TooltipText = "How see-through new lines are: 100% hides what is under them" };
-        var seeL = new Label { Text = $"{see.Value:0}%", CustomMinimumSize = new Vector2(26, 0), SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, HorizontalAlignment = HorizontalAlignment.Right };
+        var seeL = Ui.Readout($"{see.Value:0}%", 26);
         see.ValueChanged += v =>
         {
             T.PenOpacity = (float)(v / 100);
@@ -163,7 +160,7 @@ sealed class DrawPanel : HudPart
         {
             int n = T.DrawingCount();
             if (n == 0) { Log("Nothing drawn on this layer."); return; }
-            var dlg = new ConfirmationDialog { Title = "Clear the layer", DialogText = $"Rub out all {n} drawings on \"{board?.Name}\"? There is no undo.", OkButtonText = "Rub out" };
+            var dlg = new ConfirmationDialog { Title = "Clear layer", DialogText = $"Rub out all {n} drawings on \"{board?.Name}\"? There is no undo.", OkButtonText = "Rub out" };
             HudNode.AddChild(dlg);
             dlg.Confirmed += T.EraseAllDrawings;
             dlg.PopupCentered();

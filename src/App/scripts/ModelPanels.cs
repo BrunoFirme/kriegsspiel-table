@@ -75,7 +75,7 @@ internal sealed class ModelPanels
                 row.AddChild(lab);
                 var s =
                     new HSlider { MinValue = 1, MaxValue = 300, Step = 1, Value = _m.P.Brush, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter };
-                var l = new Label { Text = $"{_m.P.Brush:0} px", CustomMinimumSize = new Vector2(48, 0), HorizontalAlignment = HorizontalAlignment.Right };
+                var l = Ui.Readout($"{_m.P.Brush:0} px", 48);
                 s.ValueChanged += v =>
                 {
                     _m.P.Brush = (float)v;

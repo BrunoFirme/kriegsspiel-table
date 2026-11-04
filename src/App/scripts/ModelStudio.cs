@@ -126,7 +126,7 @@ public partial class ModelStudio : Control
         _vc.AddChild(_vp);
         var env = new Godot.Environment
         {
-            BackgroundMode = Godot.Environment.BGMode.Color, BackgroundColor = new Color(0.14f, 0.145f, 0.155f),
+            BackgroundMode = Godot.Environment.BGMode.Color, BackgroundColor = Ui.Raised,
             AmbientLightSource = Godot.Environment.AmbientSource.Color, AmbientLightColor = new Color(0.85f, 0.85f, 0.88f), AmbientLightEnergy = 0.55f,
             TonemapMode = Godot.Environment.ToneMapper.Filmic,
         };

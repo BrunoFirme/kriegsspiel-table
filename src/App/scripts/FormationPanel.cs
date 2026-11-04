@@ -72,7 +72,7 @@ sealed class FormationPanel : HudPart
         var s =
             new HSlider { MinValue = 0, MaxValue = MostSpacingPercent, Step = SpacingStep, Value = T.Forms.Gap * 100, CustomMinimumSize = new Vector2(90, 0),
                 SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter };
-        var shown = new Label { Text = $"{T.Forms.Gap * 100:0}%", CustomMinimumSize = new Vector2(40, 0), HorizontalAlignment = HorizontalAlignment.Right, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter };
+        var shown = Ui.Readout($"{T.Forms.Gap * 100:0}%", 40);
         s.ValueChanged += v => shown.Text = $"{v:0}%";
         s.DragEnded += changed => { if (changed) T.Forms.SetGap(s.Value / 100); };
         row.AddChild(s);

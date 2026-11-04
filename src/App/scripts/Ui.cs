@@ -425,6 +425,31 @@ public static class Ui
         return h;
     }
 
+    public static Label Readout(string text, int width)
+    {
+        var l = new Label { Text = text, CustomMinimumSize = new Vector2(width, 0), HorizontalAlignment = HorizontalAlignment.Right, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter };
+        l.AddThemeColorOverride("font_color", Muted);
+        return l;
+    }
+
+    public static Button Swatch(Color colour, Vector2 size, string tip, bool chosen = false)
+    {
+        var b = new Button { CustomMinimumSize = size, TooltipText = tip, FocusMode = Control.FocusModeEnum.None };
+        var rest = SwatchBox(colour, chosen ? AccentInk : LineStrong, chosen ? 2 : 1);
+        var hover = SwatchBox(colour, chosen ? AccentInk : White(0.40f), chosen ? 2 : 1);
+        foreach (var st in new[] { "normal", "pressed", "focus", "disabled" }) b.AddThemeStyleboxOverride(st, rest);
+        foreach (var st in new[] { "hover", "hover_pressed" }) b.AddThemeStyleboxOverride(st, hover);
+        return b;
+    }
+
+    static StyleBoxFlat SwatchBox(Color colour, Color edge, int width)
+    {
+        var b = Box(colour, 3, 0, 0);
+        b.BorderColor = edge;
+        b.SetBorderWidthAll(width);
+        return b;
+    }
+
     public static Label Hint(string text)
     {
         var l = new Label { Text = text, AutowrapMode = TextServer.AutowrapMode.WordSmart, Modulate = Muted, CustomMinimumSize = new Vector2(200, 0) };

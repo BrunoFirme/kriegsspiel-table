@@ -197,7 +197,7 @@ sealed class StudioOverlay
     void DrawRulers(Control o, Font font)
     {
         const float T = 18;
-        var bg = new Color(0.09f, 0.095f, 0.105f, 0.94f);
+        var bg = new Color(Ui.Surface, 0.94f);
         o.DrawRect(new Rect2(0, 0, _c.Size.X, T), bg);
         o.DrawRect(new Rect2(0, 0, T, _c.Size.Y), bg);
         float step = 1;

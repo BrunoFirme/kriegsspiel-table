@@ -32,7 +32,7 @@ sealed class InviteDialog : HudPart
         if (N.UpnpStatus == "trying") box.AddChild(Hint("Open this window again in a moment."));
         else if (N.UpnpStatus != "ok")
             box.AddChild(Hint($"Your router did not open the port. On its admin page, forward UDP {port} to this PC, then give people your public address."));
-        box.AddChild(Header("Password"));
+        box.AddChild(Header("Joining"));
         var pwRow = PasswordRow(Ctx, dlg);
         box.AddChild(pwRow);
         var pwField = pwRow.GetChild<LineEdit>(1);
@@ -86,7 +86,7 @@ sealed class InviteDialog : HudPart
         var r = new HBoxContainer();
         r.AddThemeConstantOverride("separation", 10);
         r.AddChild(new Label { Text = "Password", CustomMinimumSize = new Vector2(NameWidth, 0), SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, Modulate = new Color(1, 1, 1, 0.74f) });
-        var field = new LineEdit { Text = S.Access?.Password ?? "", Editable = S.IsLead, PlaceholderText = S.IsLead ? "none: open door" : "", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+        var field = new LineEdit { Text = S.Access?.Password ?? "", Editable = S.IsLead, PlaceholderText = S.IsLead ? "none: the door is open" : "", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         r.AddChild(field);
         r.AddChild(Btn("Copy", () => AppClipboard.SetText(field.Text), "Copy the password"));
         if (S.IsLead)

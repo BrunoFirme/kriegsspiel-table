@@ -203,7 +203,7 @@ internal sealed class StudioLayersPanel
         var s =
             new HSlider { MinValue = 0, MaxValue = 100, Step = 1, Value = Math.Round(l.Opacity * 100), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
                 SizeFlagsVertical = Control.SizeFlags.ShrinkCenter };
-        var v = new Label { Text = $"{l.Opacity * 100:0}%", CustomMinimumSize = new Vector2(36, 0), HorizontalAlignment = HorizontalAlignment.Right };
+        var v = Ui.Readout($"{l.Opacity * 100:0}%", 36);
         s.ValueChanged += x =>
         {
             l.Opacity = (float)x / 100;

@@ -582,11 +582,7 @@ internal sealed class ColourChooser
         row.AddThemeConstantOverride("separation", 4);
         Button Swatch(Color c, bool which, string tip)
         {
-            var b = new Button { CustomMinimumSize = new Vector2(40, 26), FocusMode = Control.FocusModeEnum.None, TooltipText = tip + " — click for every colour" };
-            var box = new StyleBoxFlat { BgColor = c, BorderColor = new Color(1, 1, 1, 0.55f) };
-            box.SetBorderWidthAll(1);
-            box.SetCornerRadiusAll(3);
-            foreach (var st in new[] { "normal", "hover", "pressed", "hover_pressed", "focus" }) b.AddThemeStyleboxOverride(st, box);
+            var b = Ui.Swatch(c, new Vector2(40, 26), tip + " — click for every colour");
             b.Pressed += () => { _editInk2 = which; OpenPicker(b); };
             return b;
         }
@@ -648,11 +644,8 @@ internal sealed class ColourChooser
     Button Chip(string hex, string tip)
     {
         var col = Hex.To(hex, Colors.Black);
-        var b = new Button { CustomMinimumSize = new Vector2(30, 18), TooltipText = tip + "\nClick: the colour · right-click: the fill", FocusMode = Control.FocusModeEnum.None, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-        var box = new StyleBoxFlat { BgColor = col, BorderColor = new Color(0, 0, 0, 0.5f) };
-        box.SetBorderWidthAll(1);
-        box.SetCornerRadiusAll(2);
-        foreach (var st in new[] { "normal", "hover", "pressed", "focus" }) b.AddThemeStyleboxOverride(st, box);
+        var b = Ui.Swatch(col, new Vector2(30, 18), tip + "\nClick: the colour · right-click: the fill");
+        b.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
         b.GuiInput += e =>
         {
             if (e is not InputEventMouseButton { Pressed: true } mb) return;

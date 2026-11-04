@@ -150,9 +150,7 @@ sealed partial class ScenarioDialog : HudPart
         var sl =
             new HSlider { MinValue = min, MaxValue = max, Step = step, Value = v, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
                 CustomMinimumSize = new Vector2(170, 0) };
-        var read =
-            new Label { Text = say(v), CustomMinimumSize = new Vector2(58, 0), HorizontalAlignment = HorizontalAlignment.Right, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
-                Modulate = new Color(1, 1, 1, 0.75f) };
+        var read = Ui.Readout(say(v), 58);
         sl.ValueChanged += x => read.Text = say(x);
         row.AddChild(sl);
         row.AddChild(read);

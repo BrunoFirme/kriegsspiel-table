@@ -59,7 +59,7 @@ public partial class StudioCanvas : Control
         _stack = new StackView { Canvas = this, MouseFilter = MouseFilterEnum.Ignore, Material = new CanvasItemMaterial { BlendMode = CanvasItemMaterial.BlendModeEnum.PremultAlpha } };
         _stack.SetAnchorsPreset(LayoutPreset.FullRect);
         AddChild(_stack);
-        _dim = new Polygon2D { InvertEnabled = true, InvertBorder = 20000, Color = new Color(0.05f, 0.05f, 0.06f, 0.62f), Visible = false };
+        _dim = new Polygon2D { InvertEnabled = true, InvertBorder = 20000, Color = new Color(Ui.Bar, 0.62f), Visible = false };
         AddChild(_dim);
         _over = new OverView { Canvas = this, MouseFilter = MouseFilterEnum.Ignore };
         _over.SetAnchorsPreset(LayoutPreset.FullRect);
@@ -220,7 +220,7 @@ public partial class StudioCanvas : Control
 
     public override void _Draw()
     {
-        DrawRect(new Rect2(Vector2.Zero, Size), new Color(0.13f, 0.135f, 0.145f));
+        DrawRect(new Rect2(Vector2.Zero, Size), Ui.Raised);
         var r = DocRect;
         DrawRect(r.Grow(1), new Color(0, 0, 0, 0.5f), false, 2);
         if (Doc.Bg == null) DrawTextureRect(_checker, r, true);

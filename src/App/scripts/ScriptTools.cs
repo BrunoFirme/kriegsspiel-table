@@ -311,6 +311,7 @@ public partial class ScriptWindow : Window
 {
     readonly Session _s;
     readonly Table? _t;
+    static readonly Color ErrorWash = new(Ui.Danger, 0.3f);
     readonly ItemList _list = new() { CustomMinimumSize = new Vector2(230, 0), SizeFlagsVertical = Control.SizeFlags.ExpandFill };
     readonly LineEdit _find = new() { PlaceholderText = "Find a script", ClearButtonEnabled = true };
     readonly CodeEdit _code = new();
@@ -459,7 +460,7 @@ public partial class ScriptWindow : Window
         row.AddThemeConstantOverride("separation", 8);
         row.AddChild(_show);
         row.AddChild(Ui.Btn("Reference (F1)", () => GuideReader.ShowEntry(this, ScriptAssist.EntryAt(_code, _code.GetCaretLine(), _code.GetCaretColumn())), "Every call, field and event, with the TTS call each stands for"));
-        _status.AddThemeColorOverride("font_color", new Color(1, 0.6f, 0.5f));
+        _status.AddThemeColorOverride("font_color", Ui.Danger);
         _status.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
         row.AddChild(_status);
         row.AddChild(_back);
@@ -502,7 +503,7 @@ public partial class ScriptWindow : Window
             if (q.Length > 0 && !r.Label.Contains(q, StringComparison.OrdinalIgnoreCase) && !r.Key.Contains(q, StringComparison.OrdinalIgnoreCase)) continue;
             var status = Status(r, infos);
             var i = _list.AddItem((_drafts.ContainsKey(r.Key) ? "• " : "") + r.Label);
-            _list.SetItemCustomFgColor(i, status switch { "error" => new Color(1, 0.55f, 0.45f), "stopped" or "not loaded" => new Color(1, 0.8f, 0.4f), _ => Ui.Ink });
+            _list.SetItemCustomFgColor(i, status switch { "error" => Ui.Danger, "stopped" or "not loaded" => new Color(1, 0.8f, 0.4f), _ => Ui.Ink });
             _list.SetItemTooltip(i, status ?? "");
             _visible.Add(r);
             if (r.Key == _key) _list.Select(i);
@@ -599,7 +600,7 @@ public partial class ScriptWindow : Window
             _xml.Text = "";
             _state.Text = "";
             var errs = (r?.Ids ?? new()).Select(id => infos.GetValueOrDefault(id)).OfType<ScriptInfo>().Where(i => i.LastError != null).ToList();
-            if (errs.Count > 0) { _status.Text = $"{errs.Count} of them in error; the first: {errs[0].LastError}"; if (errs[0].ErrorLine > 0) _code.SetLineBackgroundColor(errs[0].ErrorLine - 1, new Color(0.8f, 0.2f, 0.15f, 0.35f)); }
+            if (errs.Count > 0) { _status.Text = $"{errs.Count} of them in error; the first: {errs[0].LastError}"; if (errs[0].ErrorLine > 0) _code.SetLineBackgroundColor(errs[0].ErrorLine - 1, ErrorWash); }
         }
         else if (_s.View.Find(Layers.Umpire, key) is { } p)
         {
@@ -628,7 +629,7 @@ public partial class ScriptWindow : Window
     {
         if (info?.LastError == null) return;
         _status.Text = (info.ErrorLine > 0 ? $"Line {info.ErrorLine}: " : "") + info.LastError;
-        if (info.ErrorLine > 0 && info.ErrorLine <= _code.GetLineCount()) _code.SetLineBackgroundColor(info.ErrorLine - 1, new Color(0.8f, 0.2f, 0.15f, 0.35f));
+        if (info.ErrorLine > 0 && info.ErrorLine <= _code.GetLineCount()) _code.SetLineBackgroundColor(info.ErrorLine - 1, ErrorWash);
     }
 
     static string Pretty(string? json)

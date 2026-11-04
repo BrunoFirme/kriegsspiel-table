@@ -125,10 +125,11 @@ public partial class Main : Node
 
     static Control Loading()
     {
-        var c = new ColorRect { Color = new Color(0.06f, 0.065f, 0.07f), MouseFilter = Control.MouseFilterEnum.Stop };
+        var c = new ColorRect { Color = Ui.Bar, MouseFilter = Control.MouseFilterEnum.Stop };
         c.SetAnchorsPreset(Control.LayoutPreset.FullRect);
-        var title = new Label { Text = "Kriegsspiel Table", HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center, Modulate = new Color(0.92f, 0.9f, 0.84f, 0.8f) };
-        title.AddThemeFontOverride("font", new SystemFont { FontNames = new[] { "Georgia", "Cambria", "Book Antiqua", "Times New Roman", "Noto Serif" } });
+        var title = new Label { Text = "Kriegsspiel Table", HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
+        title.AddThemeColorOverride("font_color", Ui.Muted);
+        title.AddThemeFontOverride("font", Ui.Serif());
         title.AddThemeFontSizeOverride("font_size", 34);
         title.SetAnchorsPreset(Control.LayoutPreset.FullRect);
         c.AddChild(title);

@@ -69,13 +69,8 @@ sealed class ReliefPanel : HudPart
             var name = GroundKinds.All[i].Name;
             var mode = "paint:" + name;
             var col = Color.FromHtml(GroundKinds.Color((byte)i, S.View.Lighting.MapStyle));
-            var b =
-                new Button { ToggleMode = true, ButtonPressed = Cfg.ReliefMode == mode, FocusMode = Control.FocusModeEnum.None, TooltipText = Title(name), CustomMinimumSize = new Vector2(30, 24),
-                    SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-            var box = new StyleBoxFlat { BgColor = col, BorderColor = Cfg.ReliefMode == mode ? Ui.AccentInk : new Color(0, 0, 0, 0.45f) };
-            box.SetBorderWidthAll(Cfg.ReliefMode == mode ? 2 : 1);
-            box.SetCornerRadiusAll(3);
-            foreach (var st in new[] { "normal", "hover", "pressed", "focus" }) b.AddThemeStyleboxOverride(st, box);
+            var b = Ui.Swatch(col, new Vector2(30, 24), Title(name), Cfg.ReliefMode == mode);
+            b.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
             b.Pressed += () =>
             {
                 Cfg.ReliefMode = mode;
@@ -129,7 +124,7 @@ sealed class ReliefPanel : HudPart
             var s =
                 new HSlider { MinValue = min, MaxValue = max, Step = step, Value = value, ExpEdit = exp, CustomMinimumSize = new Vector2(80, 0), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
                     SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, TooltipText = tip };
-            var v = new Label { Text = show(value), CustomMinimumSize = new Vector2(42, 0), HorizontalAlignment = HorizontalAlignment.Right, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter };
+            var v = Ui.Readout(show(value), 42);
             s.ValueChanged += x => { v.Text = show(x); set(x); };
             s.DragEnded += _ => Cfg.Save();
             row.AddChild(s);

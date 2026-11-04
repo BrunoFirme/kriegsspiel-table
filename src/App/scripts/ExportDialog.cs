@@ -74,11 +74,7 @@ public partial class ExportDialog : ConfirmationDialog
             box.AddChild(new Label { Text = $"{sc.Name} uses {sc.Packs.Count} pack{(sc.Packs.Count == 1 ? "" : "s")}. Include them in the file?" });
             mode = PackModePicker(_store, _id, workshop: false);
             box.AddChild(mode);
-            box.AddChild(new Label
-            {
-                Text = "Whoever opens the file gets the scenario and every pack inside it. A trimmed pack never replaces a full one they already have.",
-                AutowrapMode = TextServer.AutowrapMode.WordSmart, Modulate = new Color(1, 1, 1, 0.6f),
-            });
+            box.AddChild(Ui.Hint("Whoever opens the file gets the scenario and every pack inside it. A trimmed pack never replaces a full one they already have."));
             var saves = SaveStore.Default;
             if (saves.HasGame(_id))
             {

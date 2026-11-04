@@ -41,11 +41,7 @@ public partial class ImportDialog : AcceptDialog
         var root = new VBoxContainer();
         root.AddThemeConstantOverride("separation", 6);
         AddChild(root);
-        root.AddChild(new Label
-        {
-            Text = "A TTS module or save becomes a pack (every piece, bags opened up) and a scenario (its table laid out; big locked boards become map sheets). Scripts are translated; the report beside the scenario lists what did not convert.",
-            AutowrapMode = TextServer.AutowrapMode.WordSmart, Modulate = new Color(1, 1, 1, 0.7f),
-        });
+        root.AddChild(Ui.Hint("A TTS module or save becomes a pack (every piece, bags opened up) and a scenario (its table laid out; big locked boards become map sheets). Scripts are translated; the report beside the scenario lists what did not convert."));
 
         var cols = new HBoxContainer { SizeFlagsVertical = Control.SizeFlags.ExpandFill };
         root.AddChild(cols);
