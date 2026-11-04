@@ -1,5 +1,6 @@
 using System;
 using Godot;
+using KTable.Client;
 using KTable.Core.Model;
 using KTable.Core.Protocol;
 
@@ -9,6 +10,7 @@ sealed partial class ScenarioDialog : HudPart
 {
     AcceptDialog _dlg = null!;
     VBoxContainer _box = null!;
+    VBoxContainer _lookBox = null!;
 
     ScenarioDialog(HudContext c) : base(c) { }
 
@@ -21,8 +23,7 @@ sealed partial class ScenarioDialog : HudPart
         _box = pages.Add("Game"); AddHead();
         _box = pages.Add("Briefing"); AddBriefing();
         _box = pages.Add("Map"); AddDistances(); AddGrid();
-        _box = pages.Add("Light"); AddLighting();
-        _box = pages.Add("Surroundings"); AddSurroundings();
+        _box = _lookBox = pages.Add("Light & surroundings"); AddLighting();
         _box = pages.Add("Wind"); AddWind();
         pages.ShowFirst();
         _dlg.AddChild(pages.Root);
@@ -134,20 +135,6 @@ sealed partial class ScenarioDialog : HudPart
         ShowGrid();
     }
 
-    static (string name, Lighting l)[] LightingPresets() => new (string name, Lighting l)[]
-    {
-        ("Ceiling light", new Lighting()),
-        ("Warm lamp", new Lighting { Warmth = 0.6, SunEnergy = 0.4, Ambient = 0.7 }),
-        ("Cool daylight", new Lighting { Warmth = -0.6, SunEnergy = 0.4, Ambient = 0.72 }),
-        ("Overcast", new Lighting { Warmth = -0.2, SunEnergy = 0.15, Ambient = 0.9, Shadows = false }),
-        ("Flat (no shading)", new Lighting { SunEnergy = 0, Ambient = 1.0, Shadows = false }),
-        ("Moonlit night", new Lighting { Warmth = -0.85, SunEnergy = 0.12, Ambient = 0.3 }),
-        ("Dark night", new Lighting { Warmth = -0.5, SunEnergy = 0, Ambient = 0.16, Shadows = false }),
-    };
-
-    static bool SameLight(Lighting a, Lighting b) => Math.Abs(a.Warmth - b.Warmth) < 0.03
-        && Math.Abs(a.SunEnergy - b.SunEnergy) < 0.03 && Math.Abs(a.Ambient - b.Ambient) < 0.03 && a.Shadows == b.Shadows;
-
     static HSlider LightRow(GridContainer lg, string label, double min, double max, double step, double v, Func<double, string> say)
     {
         lg.AddChild(new Label { Text = label });
@@ -161,14 +148,14 @@ sealed partial class ScenarioDialog : HudPart
         return sl;
     }
 
-    void AddLighting()
+    void AddLighting(Lighting? shown = null)
     {
-        var cur = S.View.Lighting;
+        var cur = shown ?? S.View.Lighting;
         var l0 = new Lighting { SunEnergy = cur.SunEnergy, Ambient = cur.Ambient, Warmth = cur.Warmth, Shadows = cur.Shadows, FromClock = cur.FromClock, TableShade = cur.TableShade };
-        var presets = LightingPresets();
+        var presets = LightPresets.All;
         var pick = new OptionButton();
         pick.AddItem("Custom"); foreach (var (name, _) in presets) pick.AddItem(name);
-        for (int i = 0; i < presets.Length; i++) if (SameLight(presets[i].l, l0)) pick.Selected = i + 1;
+        for (int i = 0; i < presets.Count; i++) if (LightPresets.Same(presets[i].Light, l0)) pick.Selected = i + 1;
         var lg = Ui.Form(84);
         static string Percent(double v) => $"{v * 100:0}%";
         static string Warmth(double v) => v < -0.55 ? "cold" : v < -0.15 ? "cool" : v <= 0.15 ? "neutral" : v <= 0.55 ? "warm" : "hot";
@@ -198,7 +185,7 @@ sealed partial class ScenarioDialog : HudPart
         pick.ItemSelected += i =>
         {
             if (i == 0) return;
-            var p = presets[(int)i - 1].l;
+            var p = presets[(int)i - 1].Light;
             sync = true;
             sun.Value = p.SunEnergy; amb.Value = p.Ambient; warm.Value = p.Warmth; shadows.ButtonPressed = p.Shadows;
             sync = false;
@@ -228,6 +215,16 @@ sealed partial class ScenarioDialog : HudPart
         _box.AddChild(manual);
         _box.AddChild(Header("Shadows"));
         _box.AddChild(shadows);
+        AddSurroundings(cur);
+    }
+
+    void RefreshLook(Lighting sent)
+    {
+        foreach (var child in _lookBox.GetChildren()) child.QueueFree();
+        var was = _box;
+        _box = _lookBox;
+        AddLighting(sent);
+        _box = was;
     }
 
 

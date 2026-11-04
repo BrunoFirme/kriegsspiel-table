@@ -433,7 +433,8 @@ public class TableToolsTests
         while (repo != null && !File.Exists(Path.Combine(repo.FullName, "KriegsspielTable.sln"))) repo = repo.Parent;
         Assert.NotNull(repo);
         var dir = Path.Combine(repo!.FullName, "src", "App", "backdrops");
-        Assert.All(Backdrops.All, b => Assert.True(File.Exists(Path.Combine(dir, b.Id + Backdrops.FileExtension)), b.Id));
+        Assert.All(Backdrops.All, b => Assert.True(File.Exists(Path.Combine(dir, b.File)), b.Id));
+        Assert.DoesNotContain(Directory.GetFiles(dir).Select(Path.GetFileName), f => !f!.StartsWith('.') && Backdrops.All.All(b => b.File != f));
     }
 
     [Fact]
@@ -447,6 +448,26 @@ public class TableToolsTests
         Assert.NotEqual(0.1, _s.View.Lighting.SunEnergy);
         await Call("set_light", new { backdrop = "none" });
         Assert.Equal(Backdrops.None, _s.View.Lighting.Backdrop);
+    }
+
+    [Fact]
+    public async Task A_sky_backdrop_brings_its_light_unless_the_light_is_given_too()
+    {
+        Assert.False((await Call("set_light", new { backdrop = "open-sky-night" })).IsError);
+        Assert.True(LightPresets.Same(LightPresets.Named(LightPresets.MoonlitNight)!, _s.View.Lighting));
+        await Call("set_light", new { backdrop = "open-sky-day", sun = 0.9 });
+        Assert.Equal(("open-sky-day", 0.9), (_s.View.Lighting.Backdrop, _s.View.Lighting.SunEnergy));
+        await Call("set_light", new { backdrop = "beach" });
+        Assert.Equal(0.9, _s.View.Lighting.SunEnergy);
+    }
+
+    [Fact]
+    public async Task A_solid_colour_backdrop_is_taken_and_a_malformed_one_refused()
+    {
+        Assert.False((await Call("set_light", new { backdrop = "#2A3040" })).IsError);
+        Assert.Equal("#2a3040", _s.View.Lighting.Backdrop);
+        Assert.True((await Call("set_light", new { backdrop = "#2A30" })).IsError);
+        Assert.True(Backdrops.IsKnown("#2a3040") && !Backdrops.IsKnown("#zzzzzz"));
     }
 
     [Fact]

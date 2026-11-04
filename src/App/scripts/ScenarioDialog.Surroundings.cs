@@ -11,37 +11,57 @@ namespace KTable.App;
 
 sealed partial class ScenarioDialog
 {
-    const string PlainBackdrop = "Plain", OwnBackdrop = "Your own picture";
+    const string SolidBackdrop = "Solid colour", OwnBackdrop = "Your own picture";
 
-    void AddSurroundings()
+    void AddSurroundings(Lighting now)
     {
-        var now = S.View.Lighting;
         int own = Backdrops.All.Count + 1;
         var pick = new OptionButton { CustomMinimumSize = new Vector2(220, 0), Disabled = !S.IsUmpire };
-        pick.AddItem(PlainBackdrop);
+        pick.AddItem(SolidBackdrop);
         foreach (var b in Backdrops.All) pick.AddItem(b.Name);
         pick.AddItem(OwnBackdrop);
-        int Shown(string backdrop) => backdrop.Length == 0 ? 0 : Backdrops.All.ToList().FindIndex(b => b.Id == backdrop) is var i and >= 0 ? i + 1 : own;
+        int Shown(string backdrop) => backdrop.Length == 0 || Backdrops.IsColour(backdrop) ? 0
+            : Backdrops.All.ToList().FindIndex(b => b.Id == backdrop) is var i and >= 0 ? i + 1 : own;
         pick.Selected = Shown(now.Backdrop);
+        var colour = new ColorPickerButton { Color = TableBackdrop.ColourOf(now.Backdrop), EditAlpha = false, CustomMinimumSize = new Vector2(64, 26), Disabled = !S.IsUmpire };
+        colour.SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin;
+        colour.Visible = pick.Selected == 0;
+        string Hex() => "#" + colour.Color.ToHtml(false);
+        colour.ColorChanged += _ => PreviewLook(l => l.Backdrop = Hex());
+        colour.PopupClosed += () => SendLook(l => l.Backdrop = Hex());
         var choose = Btn("Choose a picture…", () => ChooseBackdrop(() => pick.Selected = Shown(S.View.Lighting.Backdrop)),
             "A panorama twice as wide as it is tall wraps all the way round; any picture or web link will do");
         choose.Visible = pick.Selected == own;
         choose.SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin;
         pick.ItemSelected += i =>
         {
+            colour.Visible = i == 0;
             choose.Visible = i == own;
             if (i == own) { ChooseBackdrop(() => pick.Selected = Shown(S.View.Lighting.Backdrop)); return; }
-            SendLook(l => l.Backdrop = i == 0 ? Backdrops.None : Backdrops.All[(int)i - 1].Id);
+            if (i == 0) { SendLook(l => l.Backdrop = Hex()); return; }
+            var chosen = Backdrops.All[(int)i - 1];
+            var look = Changed(l => l.Backdrop = chosen.Id);
+            if (chosen.Light is { } name && LightPresets.Named(name) is { } light)
+            {
+                look = LightPresets.Lit(look, light);
+                S.Do(new SetLighting { Lighting = look });
+                RefreshLook(look);
+                return;
+            }
+            S.Do(new SetLighting { Lighting = look });
         };
         var form = Ui.Form(84);
         form.AddChild(new Label { Text = "Backdrop" });
         form.AddChild(pick);
         form.AddChild(new Control());
-        form.AddChild(choose);
+        var extra = new HBoxContainer();
+        extra.AddChild(colour);
+        extra.AddChild(choose);
+        form.AddChild(extra);
         Ui.AlignForm(form);
         _box.AddChild(Header("Around the table"));
         _box.AddChild(form);
-        _box.AddChild(Hint("Everyone at the table sees it past the table's edge."));
+        _box.AddChild(Hint("Everyone at the table sees it past the table's edge. A sky sets its own light; change it above."));
 
         var tableForm = Ui.Form(84);
         var table = LightRow(tableForm, "Surface", 0, 1, 0.05, now.TableShade, ShadeWord);

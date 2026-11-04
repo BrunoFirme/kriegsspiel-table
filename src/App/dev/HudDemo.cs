@@ -1021,7 +1021,7 @@ sealed class HudDemo : HudPart
                 Hud.GetTree().CreateTimer(0.5).Timeout += () =>
                 {
                     if (Hud.GetTree().Root.FindChildren("*", "AcceptDialog", true, false).OfType<AcceptDialog>().LastOrDefault() is not { } dlg) return;
-                    var tab = dlg.FindChildren("*", "Button", true, false).OfType<Button>().FirstOrDefault(b => b.ToggleMode && string.Equals(b.Text, parts[1], StringComparison.OrdinalIgnoreCase));
+                    var tab = dlg.FindChildren("*", "Button", true, false).OfType<Button>().FirstOrDefault(b => b.ToggleMode && b.Text.StartsWith(parts[1], StringComparison.OrdinalIgnoreCase));
                     tab?.EmitSignal(BaseButton.SignalName.Pressed);
                 };
             return true;

@@ -200,14 +200,15 @@ Who joined, rolls, turns and sheets. The console of scripts is separate (Menu �
 
 ### The scenario
 
-The ⋯ after the scenario's name opens its properties: briefing, clock, light, surroundings, grid, scale, wind, distances, script.
+The ⋯ after the scenario's name opens its properties: briefing, clock, light and surroundings, grid, scale, wind, distances, script.
 
 - **Briefing:** the situation you play from. Leads write it here and every umpire reads it here; **Read it…** opens it in a
   window of its own, with find. Observers never see it.
 - **Light:** presets and sliders, or **Follow the game clock** for dawn, day and dusk.
 - **Grid:** squares or hexes over the table. Nothing snaps to it.
-- **Surroundings:** what everyone sees past the table's edge (a lounge, a billiard hall, open sky, a starry night, a
-  beach, a field, or your own panorama) and the table under the map. The table grows to hold what is on it.
+- **Light & surroundings:** also what everyone sees past the table's edge (a lodge, a pub, a grand hall, open sky by
+  day, at sundown or at night, stars, a beach, farmland, a solid colour, or your own panorama; a sky sets its light) and
+  the table under the map. The table grows to hold what is on it.
 
 ## Play by post
 
