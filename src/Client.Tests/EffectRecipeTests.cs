@@ -89,10 +89,34 @@ public class EffectRecipeTests
     {
         var plan = Plan(new EffectDef { Kind = "cannon", Every = 5 });
         var smoke = plan.Layers.Where(l => l.Sprite == "puff").ToList();
-        Assert.Equal(2, smoke.Count);
+        Assert.Equal(2 * plan.Layers.Count(l => l.Sprite == "muzzle"), smoke.Count);
         Assert.All(smoke, l => Assert.Equal(10f, l.Life));
         Assert.All(smoke, l => Assert.Equal(0.12f * 5, l.Brake * l.Life, 4));
         Assert.All(plan.Layers.Where(l => l.Sprite != "puff"), l => Assert.Equal(5f, l.Life));
+    }
+
+    [Theory]
+    [InlineData("together", false)]
+    [InlineData("rolling", false)]
+    [InlineData("rolling", true)]
+    public void Each_gun_s_smoke_leaves_its_own_muzzle_with_its_flash(string volley, bool lingers)
+    {
+        var air = new SmokeAir(2, 1 / SmokeDrift.UncalibratedMetresPerUnit);
+        var e = new EffectDef { Kind = "cannon", Volley = volley, Every = 4, Lingers = lingers };
+        var plan = EffectRecipe.Plan(e, 4, 1, 0.3f, Grey, false, air);
+        var flashes = plan.Layers.Where(l => l.Sprite == "muzzle").ToList();
+        var smoke = plan.Layers.Where(l => l.Sprite == "puff").ToList();
+        Assert.True(flashes.Count >= 2, $"{flashes.Count} guns");
+        Assert.All(flashes, f => Assert.Equal(1, f.Amount));
+        float FiresAt(EffectLayer l) => ((l.Life - l.Start) % 4 + 4) % 4;
+        foreach (var puff in smoke)
+        {
+            var gun = Assert.Single(flashes, f => Math.Abs(f.At.X - puff.At.X) < 1e-4f);
+            Assert.True(puff.Box.X < 0.5f * Math.Abs(flashes[1].At.X - flashes[0].At.X), "a puff stays at its own gun");
+            float apart = Math.Abs(FiresAt(gun) - FiresAt(puff));
+            Assert.True(apart < 1e-3f || Math.Abs(apart - 4) < 1e-3f, $"flash at {FiresAt(gun)}, smoke at {FiresAt(puff)}");
+            Assert.Equal((1 - 0.92f) * 4, (1 - puff.Explosive) * puff.Life, 3);
+        }
     }
 
     [Fact]

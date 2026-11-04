@@ -152,6 +152,7 @@ public static class EffectRecipe
             {
                 var l = smoke.Copy();
                 l.Amount = amount; l.Offset = offset; l.Life = smoke.Life * turns; l.Cycles = turns; l.Brake = smoke.Brake / turns;
+                if (smoke.Fixed) l.Explosive = 1 - (1 - smoke.Explosive) / turns;
                 l.Curve = Widened(Stretched(smoke.Curve)); l.Ramp = Stretched(smoke.Ramp); l.Reach = plume.Reach; l.Heat = SmokeHeat.Cold;
                 return l;
             }
@@ -246,39 +247,47 @@ public static class EffectRecipe
             layers.Add(MuzzleFlash(N(5), 1.1f, false, 0, new Vector3(ex.X * 0.95f, 0.02f, 0.05f), new Vector3(0, 0.12f * s, -ex.Z * 0.8f), 0.07f));
         }
 
+        const float GunGap = 0.9f;
+        const int FewestGuns = 2, MostGuns = 8;
+
         void Volleys()
         {
             bool musket = e.Kind == "powder", rolling = EffectKinds.Mode(e) == "rolling";
-            int sections = !rolling ? 1 : musket ? Math.Clamp((int)Math.Round(w / 0.9f), 3, 10) : Math.Clamp((int)Math.Round(w / 0.9f), 2, 8);
-            float hw = ex.X * (musket ? 0.95f : 0.85f) / sections;
+            int sections = musket
+                ? rolling ? Math.Clamp((int)Math.Round(w / GunGap), 3, 10) : 1
+                : Math.Clamp((int)Math.Round(w / GunGap), FewestGuns, MostGuns);
+            float front = ex.X * (musket ? 0.95f : 0.85f), hw = front / sections;
             for (int i = 0; i < sections; i++)
             {
-                float xc = -ex.X * (musket ? 0.95f : 0.85f) + hw * (2 * i + 1);
+                float xc = -front + hw * (2 * i + 1);
                 float off = rolling ? i / (float)sections * (musket ? 0.5f : 0.6f) : 0;
                 if (musket)
                 {
+                    var line = new Vector3(xc, 0.12f * s, -ex.Z * 0.8f);
                     AddLingering(sections: sections, smoke: new EffectLayer
                     {
                         Sprite = "puff", Amount = Math.Max(2, N(12) / sections), Fixed = true, Life = every, Explosive = 0.85f, Offset = off,
-                        Box = new Vector3(hw * 0.95f, 0.14f * s, ex.Z * 0.5f), At = new Vector3(xc, 0.2f * s, -ex.Z * 0.3f),
+                        Box = new Vector3(hw * 0.95f, 0.08f * s, 0.08f * s), At = line + new Vector3(0, 0.06f * s, 0),
                         Dir = new Vector3(0, 0.55f, -1).Normalized(), Spread = 30, VMin = 0.9f * s * H, VMax = 1.8f * s * H, Damp = 1.6f * s * H, Brake = BlastBrake, Lift = 0.08f * s * H, Drift = 0.9f * D,
                         SMin = 1.1f * s * P, SMax = 1.7f * s * P, Curve = new[] { (0f, 0.55f), (0.05f, 1f), (1f, 2.2f) },
                         Ramp = new[] { (0f, Fade(c, 0)), (0.02f, Fade(c, 0.95f)), (0.3f, Fade(c, 0.85f)), (0.65f, Fade(c.Lerp(Rgba.White, 0.1f), 0.45f)), (1f, Fade(c.Lerp(Rgba.White, 0.2f), 0)) },
                     });
-                    layers.Add(MuzzleFlash(Math.Max(1, (int)Math.Round(hw * 2 / 0.45f)), every, true, off, new Vector3(hw * 0.95f, 0.02f, 0.02f), new Vector3(xc, 0.12f * s, -ex.Z * 0.8f), 0.08f / every));
+                    layers.Add(MuzzleFlash(Math.Max(1, (int)Math.Round(hw * 2 / 0.45f)), every, true, off, new Vector3(hw * 0.95f, 0.02f, 0.02f), line, 0.08f / every));
                 }
                 else
                 {
+                    var mouth = new Vector3(xc, 0.15f * s, -ex.Z * 0.85f);
+                    float bore = Mathf.Min(hw * 0.3f, 0.1f * s);
                     if (e.Smoke)
                         AddLingering(sections: sections, smoke: new EffectLayer
                         {
                             Sprite = "puff", Amount = Math.Max(3, N(12) / sections), Fixed = true, Life = every, Explosive = 0.92f, Offset = off,
-                            Box = new Vector3(hw, 0.12f * s, 0.12f * s), At = new Vector3(xc, 0.2f * s, -ex.Z * 0.7f),
+                            Box = new Vector3(bore, 0.06f * s, 0.06f * s), At = mouth,
                             Dir = new Vector3(0, 0.35f, -1).Normalized(), Spread = 22, VMin = 2.6f * s * H, VMax = 4.2f * s * H, Damp = 3.6f * s * H, Brake = BlastBrake, Lift = 0.09f * s * H, Drift = 0.9f * D,
                             SMin = 1.0f * s * P, SMax = 1.6f * s * P, Curve = new[] { (0f, 0.5f), (0.06f, 1f), (1f, 2.3f) },
                             Ramp = new[] { (0f, Fade(c, 0)), (0.02f, Fade(c, 0.97f)), (0.3f, Fade(c, 0.85f)), (0.6f, Fade(c, 0.5f)), (1f, Fade(c.Lerp(Rgba.White, 0.2f), 0)) },
                         });
-                    layers.Add(MuzzleFlash(sections > 1 ? 1 : N(2), every, true, off, new Vector3(hw, 0.02f, 0.02f), new Vector3(xc, 0.15f * s, -ex.Z * 0.85f), 0.12f / every, gun: true));
+                    layers.Add(MuzzleFlash(1, every, true, off, new Vector3(bore * 0.2f, 0.01f, 0.01f), mouth, 0.12f / every, gun: true));
                 }
             }
         }
