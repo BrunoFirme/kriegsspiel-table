@@ -230,7 +230,7 @@ sealed class TableInput
                 if (!_forms.Press(g.Value, mb.ShiftPressed || mb.CtrlPressed, _pieces.Pick(g.Value, screen: mb.Position) != null)) _selectTool.Press(mb, g.Value);
                 break;
             case Tool.Sighting: _sighting.Press(g.Value); break;
-            case Tool.Relief: _relief.Press(g.Value); break;
+            case Tool.Relief: _relief.Press(g.Value, mb.ShiftPressed, mb.AltPressed); break;
         }
     }
 

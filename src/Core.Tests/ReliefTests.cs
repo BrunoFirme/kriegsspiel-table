@@ -261,4 +261,63 @@ public class ReliefTests : IDisposable
         Assert.False(UploadAsset.PathAllowed("sheets", "tiles/abc/index.json"));
         Assert.False(UploadAsset.PathAllowed("scenarios/x", ReliefFiles.HeaderRel(sha)));
     }
+    static int Count(ReliefGrid g, byte kind) => g.Kind.Count(k => k == kind);
+
+    [Fact]
+    public void Sparse_paint_covers_about_its_density_in_clumps_and_adds_nothing_on_a_second_pass()
+    {
+        var g = new ReliefGrid(201, 201);
+        byte wood = GroundKinds.Of("wood")!.Value;
+        var brush = new Brush(BrushMode.Paint, 0, 1, wood, Density: 0.4);
+        ReliefBrush.Stroke(g, new List<(double, double)> { (0.5, 0.5) }, 400, brush);
+        double share = Count(g, wood) / (double)g.Kind.Length;
+        Assert.InRange(share, 0.3, 0.5);
+        int alike = 0, pairs = 0;
+        for (int i = 0; i + 1 < g.Kind.Length; i++)
+            if ((i + 1) % g.Cols != 0) { pairs++; if ((g.Kind[i] == wood) == (g.Kind[i + 1] == wood)) alike++; }
+        Assert.True(alike / (double)pairs > 0.7, "neighbours mostly agree, so the wood comes in clumps");
+        var once = (byte[])g.Kind.Clone();
+        ReliefBrush.Stroke(g, new List<(double, double)> { (0.5, 0.5) }, 400, brush);
+        Assert.Equal(once, g.Kind);
+        ReliefBrush.Stroke(g, new List<(double, double)> { (0.5, 0.5) }, 400, brush with { Density = 0.7 });
+        Assert.True(Count(g, wood) > once.Count(k => k == wood));
+        Assert.All(Enumerable.Range(0, once.Length).Where(i => once[i] == wood), i => Assert.Equal(wood, g.Kind[i]));
+    }
+
+    [Fact]
+    public void Fill_paints_the_patch_of_like_ground_up_to_other_types()
+    {
+        var g = new ReliefGrid(40, 40);
+        byte road = GroundKinds.Of("road")!.Value, grass = GroundKinds.Of("grass")!.Value;
+        for (int y = 0; y < g.Rows; y++) g.Kind[y * g.Cols + 20] = road;
+        var box = ReliefBrush.Fill(g, 0.1, 0.5, grass, 1);
+        Assert.Equal(new CellBox(0, 0, 19, 39), box);
+        Assert.Equal(20 * 40, Count(g, grass));
+        Assert.Equal(40, Count(g, road));
+        Assert.True(ReliefBrush.Fill(g, 0.1, 0.5, grass, 1).Empty);
+        ReliefBrush.Fill(g, 0.9, 0.5, grass, 1);
+        Assert.Equal(39 * 40, Count(g, grass));
+    }
+
+    [Fact]
+    public void Fill_on_bare_ground_covers_the_whole_sheet()
+    {
+        var g = new ReliefGrid(30, 20);
+        ReliefBrush.Fill(g, 0.5, 0.5, GroundKinds.Of("field")!.Value, 1);
+        Assert.All(g.Kind, k => Assert.Equal(GroundKinds.Of("field")!.Value, k));
+    }
+
+    [Fact]
+    public void Every_map_style_colours_every_ground_type_and_unknown_styles_read_as_the_survey()
+    {
+        Assert.Equal(MapStyles.Survey, MapStyles.Of(null));
+        Assert.Equal(MapStyles.Survey, MapStyles.Of("baroque"));
+        Assert.Equal(MapStyles.Modern, MapStyles.Of(" Modern "));
+        Assert.Equal(MapStyles.All.Count, MapStyles.ShaderOrder.Distinct().Count());
+        foreach (var (id, _) in MapStyles.All)
+            for (byte k = 1; k < GroundKinds.All.Count; k++)
+                Assert.Matches("^#[0-9A-F]{6}$", GroundKinds.Color(k, id));
+        Assert.Equal(GroundKinds.All[3].Color, GroundKinds.Color(3, MapStyles.Survey));
+        Assert.NotEqual(GroundKinds.Color(6, MapStyles.Ancient), GroundKinds.Color(6, MapStyles.Modern));
+    }
 }

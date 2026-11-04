@@ -74,6 +74,17 @@ sealed partial class ScenarioDialog
         table.DragEnded += _ => { dragging = false; SendLook(l => l.TableShade = table.Value); };
         _box.AddChild(Header("Table"));
         _box.AddChild(tableForm);
+
+        var style = new OptionButton { CustomMinimumSize = new Vector2(220, 0), Disabled = !S.IsUmpire, TooltipText = "How ground painted with the Relief tool is drawn: its colours, outlines and marks" };
+        foreach (var (_, name) in MapStyles.All) style.AddItem(name);
+        style.Selected = MapStyles.All.ToList().FindIndex(m => m.Id == MapStyles.Of(now.MapStyle));
+        style.ItemSelected += i => SendLook(l => l.MapStyle = MapStyles.All[(int)i].Id);
+        var mapForm = Ui.Form(84);
+        mapForm.AddChild(new Label { Text = "Style" });
+        mapForm.AddChild(style);
+        Ui.AlignForm(mapForm);
+        _box.AddChild(Header("Painted ground"));
+        _box.AddChild(mapForm);
     }
 
     static string ShadeWord(double v) => v < 0.1 ? "paper" : v < 0.45 ? "dim paper" : v < 0.6 ? "grey" : v < 0.95 ? "dark" : "black";

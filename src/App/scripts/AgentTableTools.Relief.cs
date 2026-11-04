@@ -23,10 +23,11 @@ sealed partial class AgentTableTools
     {
         yield return new AgentTool("shape_ground",
             "Shapes the relief of the map along a stroke, as the Relief tool does: raise, lower, smooth or flatten the ground, or paint a ground type on it (" + KindNames + "; none rubs paint out). " +
-            "The stroke goes to the top sheet with a relief under its first point, or to the top sheet there, which then gets a flat relief. One call is one step that undo takes back. Pieces standing on the ground follow it.",
+            "The stroke goes to the top sheet with a relief under its first point, or to the top sheet there, which then gets a flat relief. Paint with density below 1 lays the type in clumps (sparse wood, scattered rock; with none it thins paint), and fill paints the whole patch of like ground around the first point, or a bare sheet whole. One call is one step that undo takes back. Pieces standing on the ground follow it.",
             Args.Schema(new Arg("points", "array", "[[x, z], …] in map units: one point is a single dab, more draw a stroke through them", true),
                 new Arg("mode", "string", "raise, lower, smooth, flatten or paint", true), new Arg("radius", "number", "brush radius, map units", true),
                 new Arg("strength", "number", "0–1 (0.35 if left out); for raise and lower, how much one pass adds"), new Arg("kind", "string", "ground type for paint"),
+                new Arg("density", "number", "for paint, 0–1 of the ground that takes it (1 if left out)"), new Arg("fill", "boolean", "for paint: fill the patch around the first point instead of brushing, radius then unused"),
                 new Arg("passes", "number", "go over the stroke this many times (1–20, 1 if left out)"), new Arg("sheet", "string", "a sheet's id to shape instead (list_map_sheets)")),
             ShapeGround);
         yield return new AgentTool("ground_at",
@@ -74,7 +75,10 @@ sealed partial class AgentTableTools
             if (GroundKinds.Of(kind) == null) return ToolResult.Fail("kind is one of " + KindNames + ".");
             mode = "paint:" + kind;
         }
-        if (a.Num("radius") is not { } radius || radius <= 0) return ToolResult.Fail("radius is needed, in map units.");
+        bool fill = mode.StartsWith("paint:", StringComparison.Ordinal) && a.Flag("fill") == true;
+        double radius = a.Num("radius") ?? 0;
+        if (!fill && radius <= 0) return ToolResult.Fail("radius is needed, in map units.");
+        double density = Math.Clamp(a.Num("density") ?? 1, 0, 1);
         double strength = Math.Clamp(a.Num("strength") ?? 0.35, 0, 1);
         int passes = (int)Math.Clamp(a.Num("passes") ?? 1, 1, 20);
         SheetDef? target = a.Str("sheet") is { Length: > 0 } id ? s.View.Sheets.FirstOrDefault(x => x.Id == id) : ReliefTool.Target(s, hud.T.Sheets, pts[0]);
@@ -88,14 +92,15 @@ sealed partial class AgentTableTools
         var uv = pts.Select(p => Ground.Uv(target, p)).Where(x => x != null).Select(x => x!.Value).ToList();
         if (uv.Count == 0) return ToolResult.Fail($"No point lies on {target.Name}.");
         double cell = Ground.FullWidth(target) / Math.Max(1, grid.Cols - 1);
-        var brush = ReliefTool.BrushOf(mode, strength);
+        var brush = ReliefTool.BrushOf(mode, strength, density);
         if (brush.Mode == BrushMode.Flatten) brush = brush with { Level = grid.HeightAt(uv[0].u, uv[0].v) };
-        for (int i = 0; i < passes; i++) ReliefBrush.Stroke(grid, uv, radius / cell, brush);
+        if (fill) ReliefBrush.Fill(grid, uv[0].u, uv[0].v, brush.Kind, brush.Density);
+        else for (int i = 0; i < passes; i++) ReliefBrush.Stroke(grid, uv, radius / cell, brush);
         var before = target.Relief;
         ReliefTool.Commit(s, Json.Clone(target), grid, hud.Map.Reliefs.Share, m => hud.Log(m));
         for (int i = 0; i < ShapeWaitSeconds * 10 && s.View.Sheets.FirstOrDefault(x => x.Id == target.Id)?.Relief == before; i++) await _a.Delay(0.1);
         _a.Log($"shaped the ground of {target.Name}");
-        return new ToolResult($"Shaped {target.Name} ({mode.Replace("paint:", "painted ")}, {uv.Count} point{(uv.Count == 1 ? "" : "s")}). ground_at reads the heights back.");
+        return new ToolResult($"Shaped {target.Name} ({mode.Replace("paint:", fill ? "filled with " : "painted ")}, {uv.Count} point{(uv.Count == 1 ? "" : "s")}). ground_at reads the heights back.");
     }
 
     async Task<ToolResult> AddReliefTo(Session s, Hud hud, SheetDef sh, string path)

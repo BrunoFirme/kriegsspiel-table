@@ -41,6 +41,7 @@ public partial class Table : Node3D
     public event Action? CropChanged { add => Crop.Changed += value; remove => Crop.Changed -= value; }
     public event Action<List<Vec2>>? ZoneDrawn { add => Zones.Drawn += value; remove => Zones.Drawn -= value; }
     public event Action<string, Command>? ReliefShaped { add => Relief.Shaped += value; remove => Relief.Shaped -= value; }
+    public event Action? ReliefPicked { add => Relief.Picked += value; remove => Relief.Picked -= value; }
     public event Action<Vec2>? PointerMoved { add => Pointers.Moved += value; remove => Pointers.Moved -= value; }
     public event Action<IReadOnlyList<KTable.Server.CarriedPiece>, KTable.Client.Hand.HandAt, double>? CarryLayoutShared { add => Motion.LayoutShared += value; remove => Motion.LayoutShared -= value; }
     public event Action<KTable.Client.Hand.HandAt, double>? CarryPlaceShared { add => Motion.PlaceShared += value; remove => Motion.PlaceShared -= value; }
@@ -340,7 +341,7 @@ public partial class Table : Node3D
         Tool.Range => Ranges.Hint(),
         Tool.Sighting => "Drag to trace what blocks the view · wheel sets the reach · Alt+wheel zooms in to trace · Enter captures",
         Tool.Place => "Shift+click places another",
-        Tool.Relief => "Drag over a sheet to shape or paint the ground · Ctrl + wheel sizes the brush",
+        Tool.Relief => "Drag over a sheet to shape or paint the ground · Shift+click goes straight on from the last stroke · Alt+click picks up the ground there · Ctrl+wheel sizes the brush",
         Tool.Formation => Forms.Hint(),
         _ => null,
     };

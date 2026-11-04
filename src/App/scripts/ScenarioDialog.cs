@@ -171,7 +171,7 @@ sealed partial class ScenarioDialog : HudPart
             Text = "Follow the game clock", ButtonPressed = l0.FromClock,
             TooltipText = "The game's hour sets the light: dark before dawn, warm and low at sunrise and sunset, white at midday. The sliders below come back when this is off.",
         };
-        Lighting ReadLight() => new() { SunEnergy = sun.Value, Ambient = amb.Value, Warmth = warm.Value, Shadows = shadows.ButtonPressed, FromClock = byClock.ButtonPressed, TableShade = S.View.Lighting.TableShade, Backdrop = S.View.Lighting.Backdrop };
+        Lighting ReadLight() => new() { SunEnergy = sun.Value, Ambient = amb.Value, Warmth = warm.Value, Shadows = shadows.ButtonPressed, FromClock = byClock.ButtonPressed, TableShade = S.View.Lighting.TableShade, Backdrop = S.View.Lighting.Backdrop, MapStyle = S.View.Lighting.MapStyle };
         void PreviewLight() { if (sync) return; var l = ReadLight(); T.ApplyLighting(l.FromClock ? DayLight.At(S.View.Clock, l) : l); }
         void SendLight() { if (sync) return; S.Do(new SetLighting { Lighting = ReadLight() }); }
         foreach (var sl in new[] { sun, amb, warm })

@@ -76,10 +76,11 @@ public sealed partial class TableTools
                 new Arg("divisions", "number", $"lines inside each square cell, 1 for plain cells (1–{GridDivisionsMost})")),
             SetGridTool);
         yield return new AgentTool("set_light",
-            "Sets the table's light (sun and ambient 0–1, warmth −1 to 1, shadows, or following the game clock's hour), the table under the map (0 squared paper, 0.5 grey, 1 black), the backdrop seen around the table and the wind (from, in degrees; strength 0 calm to 5 a gale), for everyone at the table.",
+            "Sets the table's light (sun and ambient 0–1, warmth −1 to 1, shadows, or following the game clock's hour), the table under the map (0 squared paper, 0.5 grey, 1 black), the backdrop seen around the table, the map style painted ground is drawn in, and the wind (from, in degrees; strength 0 calm to 5 a gale), for everyone at the table.",
             Args.Schema(new Arg("sun", "number", "0–1"), new Arg("ambient", "number", "0–1"), new Arg("warmth", "number", "−1 to 1"), new Arg("shadows", "boolean", "shadows"), new Arg("from_clock", "boolean", "follows the clock's hour"),
                 new Arg("table_shade", "number", "the table under the map: 0 squared paper, 0.5 grey, 1 black"),
                 new Arg("backdrop", "string", "around the table: none, a solid #rrggbb colour, or one of " + string.Join(", ", Backdrops.All.Select(b => b.Id)) + "; a sky brings its own light unless sun, ambient or warmth are given"),
+                new Arg("map_style", "string", "painted ground drawn as an ancient, survey (18th century) or modern map"),
                 new Arg("wind_from", "number", "degrees"), new Arg("wind_strength", "number", "0–5")),
             SetLight);
         yield return new AgentTool("read_briefing",
@@ -411,7 +412,9 @@ public sealed partial class TableTools
         var backdrop = a.Str("backdrop")?.Trim().ToLowerInvariant() is { } asked ? asked == "none" ? Backdrops.None : asked : null;
         if (backdrop != null && backdrop.Length > 0 && Backdrops.Find(backdrop) == null && !Backdrops.IsColour(backdrop))
             return ToolResult.Fail($"No backdrop {backdrop}: none, a #rrggbb colour, or one of {string.Join(", ", Backdrops.All.Select(b => b.Id))}.");
-        if (a.Num("sun") != null || a.Num("ambient") != null || a.Num("warmth") != null || a.Flag("shadows") != null || a.Flag("from_clock") != null || a.Num("table_shade") != null || a.Str("backdrop") != null)
+        var style = a.Str("map_style")?.Trim().ToLowerInvariant() is { } named ? named == "survey" ? MapStyles.Survey : named : null;
+        if (style != null && MapStyles.Of(style) != style) return ToolResult.Fail("map_style is ancient, survey or modern.");
+        if (a.Num("sun") != null || a.Num("ambient") != null || a.Num("warmth") != null || a.Flag("shadows") != null || a.Flag("from_clock") != null || a.Num("table_shade") != null || a.Str("backdrop") != null || style != null)
         {
             var l = s.View.Lighting;
             bool lightGiven = a.Num("sun") != null || a.Num("ambient") != null || a.Num("warmth") != null || a.Flag("shadows") != null;
@@ -420,7 +423,7 @@ public sealed partial class TableTools
             s.Do(new SetLighting { Lighting = new Lighting
             {
                 SunEnergy = Math.Clamp(a.Num("sun") ?? l.SunEnergy, 0, 1), Ambient = Math.Clamp(a.Num("ambient") ?? l.Ambient, 0, 1), Warmth = Math.Clamp(a.Num("warmth") ?? l.Warmth, -1, 1),
-                Shadows = a.Flag("shadows") ?? l.Shadows, FromClock = a.Flag("from_clock") ?? l.FromClock, TableShade = Math.Clamp(a.Num("table_shade") ?? l.TableShade, 0, 1), Backdrop = backdrop ?? l.Backdrop,
+                Shadows = a.Flag("shadows") ?? l.Shadows, FromClock = a.Flag("from_clock") ?? l.FromClock, TableShade = Math.Clamp(a.Num("table_shade") ?? l.TableShade, 0, 1), Backdrop = backdrop ?? l.Backdrop, MapStyle = style ?? l.MapStyle,
             } });
             done.Add("light");
         }

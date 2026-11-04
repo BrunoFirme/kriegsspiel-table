@@ -50,6 +50,7 @@ public static class DayLight
             FromClock = true,
             TableShade = basis.TableShade,
             Backdrop = basis.Backdrop,
+            MapStyle = basis.MapStyle,
         };
     }
 

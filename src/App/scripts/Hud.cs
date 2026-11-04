@@ -118,6 +118,7 @@ public partial class Hud : CanvasLayer
         Hook<Action<string>>(h => T.Hint += h, h => T.Hint -= h, Say);
         Hook<Action>(h => T.Forms.Changed += h, h => T.Forms.Changed -= h, FormPanel.Rebuild);
         Hook<Action<string, Command>>(h => T.ReliefShaped += h, h => T.ReliefShaped -= h, Map.Reliefs.Share);
+        Hook<Action>(h => T.ReliefPicked += h, h => T.ReliefPicked -= h, () => Relief?.Rebuild());
         Hook<Action<Rect2?>>(h => T.ScreenRect += h, h => T.ScreenRect -= h, r => Rect.SetRect(r));
         Hook<Action<double>>(h => T.CalibrationMeasured += h, h => T.CalibrationMeasured -= h, units => CalibrateDialog.Open(Ctx, units));
         Hook<Action>(h => T.SightingChanged += h, h => T.SightingChanged -= h, Pov.Rebuild);
@@ -133,6 +134,7 @@ public partial class Hud : CanvasLayer
         if (Touches(c, x => x is SetUi { Piece: null } or SetUiAttributes { Piece: null } or UiEvent { Piece: null })) _scriptUi?.Rebuild();
         foreach (var sd in Flatten(c).OfType<ShowDialog>()) _scriptUi?.ShowDialog(sd);
         if (Touches(c, x => x is AddSheet or RemoveSheet or MoveSheet or LockSheet or RenameSheet or CropSheet or SetSheetRelief or SetSheetPicture)) Map.Rebuild();
+        if (Touches(c, x => x is SetLighting)) Relief?.Rebuild();
         foreach (var one in Flatten(c))
         {
             if (one.Actor == 0) one.Actor = c.Actor;

@@ -438,6 +438,7 @@ public sealed class Lighting
     public bool FromClock { get; set; }
     public double TableShade { get; set; }
     public string Backdrop { get; set; } = "";
+    public string MapStyle { get; set; } = MapStyles.Survey;
 }
 
 public sealed class Wind

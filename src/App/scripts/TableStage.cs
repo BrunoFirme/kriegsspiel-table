@@ -109,6 +109,7 @@ sealed class TableStage
         float shade = Mathf.Clamp((float)l.TableShade, 0, 1);
         if (_standIn.on && !Mathf.IsEqualApprox(_standIn.shade, shade)) SetStandIn(true, shade);
         _backdrop?.Show(l.Backdrop ?? Backdrops.None, (float)l.Ambient);
+        ReliefSurface.ShowStyle(l.MapStyle);
     }
 
     public static Color LightTint(float warmth)

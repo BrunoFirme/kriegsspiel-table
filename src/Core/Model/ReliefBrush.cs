@@ -9,7 +9,7 @@ public readonly record struct CellBox(int X0, int Y0, int X1, int Y1)
     public static readonly CellBox None = new(0, 0, -1, -1);
 }
 
-public sealed record Brush(BrushMode Mode, double Radius, double Strength, byte Kind = GroundKinds.None, double? Level = null);
+public sealed record Brush(BrushMode Mode, double Radius, double Strength, byte Kind = GroundKinds.None, double? Level = null, double Density = 1);
 
 public static class ReliefBrush
 {
@@ -39,10 +39,40 @@ public static class ReliefBrush
                     case BrushMode.Lower: g.H[i] = Math.Max(0, g.H[i] - rise * fall); break;
                     case BrushMode.Flatten: g.H[i] += (level - g.H[i]) * Math.Min(1, fall * (float)Math.Clamp(b.Strength * 2, 0, 1)); break;
                     case BrushMode.Smooth: g.H[i] += (before!.Mean(x, y) - g.H[i]) * fall * (float)Math.Clamp(b.Strength * 2, 0, 1); break;
-                    case BrushMode.Paint: if (d <= PaintEdge) g.Kind[i] = b.Kind; break;
+                    case BrushMode.Paint: if (d <= PaintEdge && GroundScatter.Takes(x, y, b.Kind, b.Density)) g.Kind[i] = b.Kind; break;
                 }
             }
         return new CellBox(x0, y0, x1, y1);
+    }
+
+    public static CellBox Fill(ReliefGrid g, double u, double v, byte kind, double density)
+    {
+        int sx = (int)Math.Round(Math.Clamp(u, 0, 1) * (g.Cols - 1)), sy = (int)Math.Round(Math.Clamp(v, 0, 1) * (g.Rows - 1));
+        byte from = g.Kind[sy * g.Cols + sx];
+        var seen = new bool[g.Kind.Length];
+        var todo = new Stack<int>();
+        todo.Push(sy * g.Cols + sx);
+        seen[sy * g.Cols + sx] = true;
+        int x0 = sx, x1 = sx, y0 = sy, y1 = sy;
+        bool changed = false;
+        while (todo.Count > 0)
+        {
+            int i = todo.Pop(), x = i % g.Cols, y = i / g.Cols;
+            if (GroundScatter.Takes(x, y, kind, density) && g.Kind[i] != kind) { g.Kind[i] = kind; changed = true; }
+            x0 = Math.Min(x0, x); x1 = Math.Max(x1, x); y0 = Math.Min(y0, y); y1 = Math.Max(y1, y);
+            if (x > 0) Visit(i - 1);
+            if (x < g.Cols - 1) Visit(i + 1);
+            if (y > 0) Visit(i - g.Cols);
+            if (y < g.Rows - 1) Visit(i + g.Cols);
+        }
+        return changed ? new CellBox(x0, y0, x1, y1) : CellBox.None;
+
+        void Visit(int n)
+        {
+            if (seen[n] || g.Kind[n] != from) return;
+            seen[n] = true;
+            todo.Push(n);
+        }
     }
 
     static double Falloff(double d) { double t = 1 - d; return t * t * (3 - 2 * t); }

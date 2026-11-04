@@ -1,4 +1,4 @@
-format 19
+format 20
 type AccessChanged object
   access: GameAccess
 type AddBoard object
@@ -378,6 +378,7 @@ type Lighting object
   ambient: double
   backdrop: string
   fromClock: bool
+  mapStyle: string
   shadows: bool
   sunEnergy: double
   tableShade: double

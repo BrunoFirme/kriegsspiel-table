@@ -23,27 +23,33 @@ sealed class ReliefTool
     Rect2? _dirty;
     ulong _pushed;
     double? _level;
+    (string Sheet, Vec2 At)? _end;
 
     public ReliefTool(TableContext c, ToolOverlay overlay, SheetLayer sheets) { _c = c; _overlay = overlay; _sheets = sheets; }
 
     public event Action<string, Command>? Shaped;
+    public event Action? Picked;
 
     Settings Cfg => _c.Settings;
 
-    public static Brush BrushOf(string mode, double strength) => mode switch
+    public static Brush BrushOf(string mode, double strength, double density = 1) => mode switch
     {
         "lower" => new Brush(BrushMode.Lower, 0, strength),
         "smooth" => new Brush(BrushMode.Smooth, 0, strength),
         "flatten" => new Brush(BrushMode.Flatten, 0, strength),
-        _ when mode.StartsWith("paint:", StringComparison.Ordinal) => new Brush(BrushMode.Paint, 0, strength, GroundKinds.Of(mode[6..]) ?? GroundKinds.None),
+        _ when mode.StartsWith("paint:", StringComparison.Ordinal) => new Brush(BrushMode.Paint, 0, strength, GroundKinds.Of(mode[6..]) ?? GroundKinds.None, Density: density),
         _ => new Brush(BrushMode.Raise, 0, strength),
     };
 
     public static SheetDef? Target(Session s, SheetLayer sheets, Vec2 p) => s.Ground.ReliefAt(p) ?? sheets.TopAt(p)?.Def;
 
-    public void Press(Vec2 g)
+    bool Painting => Cfg.ReliefMode.StartsWith("paint:", StringComparison.Ordinal);
+    bool Filling => Painting && Cfg.ReliefFill;
+
+    public void Press(Vec2 g, bool line, bool pick)
     {
         var s = _c.S;
+        if (pick) { Pick(g); return; }
         if (!s.CanEdit(Layers.Umpire)) { _c.Say("Only umpires shape the ground, and not while a past turn is shown."); return; }
         if (Target(s, _sheets, g) is not { } target) { _c.Say("Brush over a map sheet."); return; }
         ReliefGrid? existing = null;
@@ -52,11 +58,30 @@ sealed class ReliefTool
         var c = target.Crop ?? SheetGeometry.Whole;
         _draft = existing?.Copy() ?? ReliefGrid.Flat(Ground.FullWidth(target), target.Size.H / Math.Max(1e-6, c.H));
         _level = null;
-        _last = null;
+        if (Filling) { Fill(g); return; }
+        _last = line && _end is { } e && e.Sheet == target.Id ? e.At : null;
         Dab(g);
     }
 
-    public void Motion(Vec2 g) { if (_draft != null) Dab(g); }
+    void Pick(Vec2 g)
+    {
+        Cfg.ReliefMode = "paint:" + GroundKinds.Name(_c.S.Ground.KindAt(g));
+        Cfg.Save();
+        Picked?.Invoke();
+    }
+
+    void Fill(Vec2 g)
+    {
+        if (_sheet == null || _draft == null || Ground.Uv(_sheet, g) is not var (u, v)) return;
+        var brush = BrushOf(Cfg.ReliefMode, Cfg.ReliefStrength, Cfg.ReliefDensity);
+        var box = ReliefBrush.Fill(_draft, u, v, brush.Kind, brush.Density);
+        _end = (_sheet.Id, g);
+        if (box.Empty) { _sheet = null; _draft = null; return; }
+        _dirty = WorldBox(_sheet, _draft, box);
+        Push();
+    }
+
+    public void Motion(Vec2 g) { if (_draft != null && !Filling) Dab(g); }
 
     void Dab(Vec2 g)
     {
@@ -66,7 +91,7 @@ sealed class ReliefTool
         if (Ground.Uv(_sheet, g) is not var (u1, v1) || Ground.Uv(_sheet, from) is not var (u0, v0)) return;
         double cell = Ground.FullWidth(_sheet) / Math.Max(1, _draft.Cols - 1);
         double radius = Math.Clamp(Cfg.ReliefBrush, SmallestBrush, LargestBrush) / cell;
-        var brush = BrushOf(Cfg.ReliefMode, Cfg.ReliefStrength);
+        var brush = BrushOf(Cfg.ReliefMode, Cfg.ReliefStrength, Cfg.ReliefDensity);
         if (brush.Mode == BrushMode.Flatten) { _level ??= _draft.HeightAt(u0, v0); brush = brush with { Level = _level }; }
         var box = ReliefBrush.Stroke(_draft, new List<(double, double)> { (u0, v0), (u1, v1) }, radius, brush);
         if (box.Empty) return;
@@ -101,6 +126,7 @@ sealed class ReliefTool
         if (_sheet == null || _draft == null) return;
         Push();
         var sheet = _sheet; var grid = _draft;
+        if (_last is { } end) _end = (sheet.Id, end);
         _sheet = null; _draft = null; _last = null;
         Commit(_c.S, sheet, grid, (sha, c) => Shaped?.Invoke(sha, c), _c.Say);
     }
@@ -138,7 +164,10 @@ sealed class ReliefTool
     {
         if (_c.Tool != Tool.Relief || _c.Rig == null) return;
         var mouse = _c.Scene.GetViewport().GetMousePosition();
-        if (_c.Ground(mouse) is not { } g) return;
+        if (_c.Ground(mouse) is not { } g || Filling) return;
+        var mat = new StandardMaterial3D { AlbedoColor = new Color(1, 0.85f, 0.4f), ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded, NoDepthTest = true };
+        if (_draft == null && _end is { } e && Input.IsKeyPressed(Key.Shift) && ReliefAt(g)?.Id == e.Sheet)
+            _overlay.SegPx(_overlay.Mesh, mat, e.At, g, 0.05f, 2f);
         float r = Math.Clamp(Cfg.ReliefBrush, SmallestBrush, LargestBrush);
         var ring = new List<Vec2>();
         for (int i = 0; i <= RingSteps; i++)
@@ -146,9 +175,10 @@ sealed class ReliefTool
             double a = i * Math.Tau / RingSteps;
             ring.Add(new Vec2(g.X + Math.Cos(a) * r, g.Z + Math.Sin(a) * r));
         }
-        var mat = new StandardMaterial3D { AlbedoColor = new Color(1, 0.85f, 0.4f), ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded, NoDepthTest = true };
         _overlay.RibbonPx(_overlay.Mesh, mat, ring, 0.05f, 2f);
     }
+
+    SheetDef? ReliefAt(Vec2 g) => Target(_c.S, _sheets, g);
 
     public void Resize(bool up)
     {

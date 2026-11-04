@@ -58,9 +58,9 @@ sealed class ReliefPanel : HudPart
         grid.AddThemeConstantOverride("v_separation", 3);
         for (int i = 1; i < GroundKinds.All.Count; i++)
         {
-            var (name, hex) = GroundKinds.All[i];
+            var name = GroundKinds.All[i].Name;
             var mode = "paint:" + name;
-            var col = Color.FromHtml(hex);
+            var col = Color.FromHtml(GroundKinds.Color((byte)i, S.View.Lighting.MapStyle));
             var b = new Button { ToggleMode = true, ButtonPressed = Cfg.ReliefMode == mode, FocusMode = Control.FocusModeEnum.None, TooltipText = Title(name), CustomMinimumSize = new Vector2(30, 24), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
             var box = new StyleBoxFlat { BgColor = col, BorderColor = Cfg.ReliefMode == mode ? Ui.AccentInk : new Color(0, 0, 0, 0.45f) };
             box.SetBorderWidthAll(Cfg.ReliefMode == mode ? 2 : 1); box.SetCornerRadiusAll(3);
@@ -72,8 +72,24 @@ sealed class ReliefPanel : HudPart
         clear.CustomMinimumSize = new Vector2(30, 24);
         grid.AddChild(clear);
         _box.AddChild(grid);
-        var current = Cfg.ReliefMode.StartsWith("paint:", StringComparison.Ordinal) ? Title(Cfg.ReliefMode[6..]) : Shapes.FirstOrDefault(s => s.Key == Cfg.ReliefMode).Text ?? "Raise";
+        if (Painting) AddHowToPaint();
+        var current = Painting ? Title(Cfg.ReliefMode[6..]) : Shapes.FirstOrDefault(s => s.Key == Cfg.ReliefMode).Text ?? "Raise";
         _box.AddChild(Hint(current));
+    }
+
+    bool Painting => Cfg.ReliefMode.StartsWith("paint:", StringComparison.Ordinal);
+
+    void AddHowToPaint()
+    {
+        var row = new HBoxContainer();
+        row.AddThemeConstantOverride("separation", 3);
+        foreach (var (text, fill, tip) in new[] { ("Brush", false, "Drag to paint"), ("Fill", true, "Click to fill the patch of ground clicked, up to other ground types, or a bare sheet whole") })
+        {
+            var b = new Button { Text = text, ToggleMode = true, ButtonPressed = Cfg.ReliefFill == fill, FocusMode = Control.FocusModeEnum.None, TooltipText = tip, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, CustomMinimumSize = new Vector2(0, 26) };
+            b.Pressed += () => { Cfg.ReliefFill = fill; Cfg.Save(); if (T.Tool != Tool.Relief) T.SetTool(Tool.Relief); Rebuild(); };
+            row.AddChild(b);
+        }
+        _box.AddChild(row);
     }
 
     static string Title(string name) => name.Length == 0 ? name : char.ToUpperInvariant(name[0]) + name[1..];
@@ -93,7 +109,11 @@ sealed class ReliefPanel : HudPart
             _box.AddChild(row);
             return s;
         }
-        Row("Size", 0.2, 400, 0.1, Cfg.ReliefBrush, x => $"{x:0.#} u", x => Cfg.ReliefBrush = (float)x, "The brush's radius in map units · Ctrl + wheel on the table", exp: true);
-        Row("Strength", 0.05, 1, 0.05, Cfg.ReliefStrength, x => $"{x * 100:0}%", x => Cfg.ReliefStrength = (float)x, "How much one pass raises, lowers or smooths");
+        if (!(Painting && Cfg.ReliefFill))
+            Row("Size", 0.2, 400, 0.1, Cfg.ReliefBrush, x => $"{x:0.#} u", x => Cfg.ReliefBrush = (float)x, "The brush's radius in map units · Ctrl + wheel on the table", exp: true);
+        if (Painting)
+            Row("Density", 0.05, 1, 0.05, Cfg.ReliefDensity, x => $"{x * 100:0}%", x => Cfg.ReliefDensity = (float)x, "How much of the ground takes it, in clumps: low for sparse wood or scattered rock; with ✕ it thins what is painted. Going over again adds no more");
+        else
+            Row("Strength", 0.05, 1, 0.05, Cfg.ReliefStrength, x => $"{x * 100:0}%", x => Cfg.ReliefStrength = (float)x, "How much one pass raises, lowers or smooths");
     }
 }

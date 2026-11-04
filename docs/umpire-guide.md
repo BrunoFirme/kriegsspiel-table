@@ -185,6 +185,12 @@ ground.
 - The **Relief** tool (the hill on the tool strip) raises, lowers, smooths and flattens, and paints grass, field,
   wood, marsh, water, road, earth, rock, sand or snow; ✕ rubs paint out. On a sheet without relief, the first
   stroke gives it flat ground to shape. **Ctrl+wheel** sizes the brush; each stroke is one undo.
+- Painting: **Fill** colours the whole patch clicked, up to other ground types (a bare sheet whole), so a map starts
+  with one click of grass. **Density** below 100% lays the ground in clumps: sparse wood, scattered rock, broken
+  marsh; with ✕ it thins a wood. **Shift+click** runs straight on from the last stroke, for roads, rivers and
+  ridges. **Alt+click** picks up the ground under the cursor.
+- The scenario's **Surroundings** page sets how painted ground is drawn for everyone: **Ancient**, **18th-century
+  survey** or **Modern topographic**.
 - Pieces lean with the slope under them and follow the ground when it changes.
 
 ### Umpires and zones

@@ -20,12 +20,40 @@ public partial class ReliefSurface : Node3D
     ShaderMaterial? _paint;
     ImageTexture? _kindsTex;
 
-    static Shader GroundShader => _shader ??= new Shader { Code = FileAccess.GetFileAsString("res://shaders/ground.gdshader") };
+    const string StyleParameter = "ground_style";
+
+    static Shader GroundShader
+    {
+        get
+        {
+            if (_shader != null) return _shader;
+            AddStyleParameter();
+            return _shader = new Shader { Code = FileAccess.GetFileAsString("res://shaders/ground.gdshader") };
+        }
+    }
+
+    static void AddStyleParameter()
+    {
+        if (!RenderingServer.GlobalShaderParameterGetList().Contains(StyleParameter))
+            RenderingServer.GlobalShaderParameterAdd(StyleParameter, RenderingServer.GlobalShaderParameterType.Int, 0);
+    }
+
+    public static void ShowStyle(string? style)
+    {
+        AddStyleParameter();
+        RenderingServer.GlobalShaderParameterSet(StyleParameter, MapStyles.Index(style));
+    }
 
     public static Vector4[] Palette()
     {
-        var p = new Vector4[GroundKinds.All.Count];
-        for (int i = 0; i < p.Length; i++) { var c = Color.FromHtml(GroundKinds.All[i].Color); p[i] = new Vector4(c.R, c.G, c.B, c.A); }
+        int kinds = GroundKinds.All.Count;
+        var p = new Vector4[kinds * MapStyles.ShaderOrder.Count];
+        for (int s = 0; s < MapStyles.ShaderOrder.Count; s++)
+            for (int i = 0; i < kinds; i++)
+            {
+                var c = Color.FromHtml(GroundKinds.Color((byte)i, MapStyles.ShaderOrder[s]));
+                p[s * kinds + i] = new Vector4(c.R, c.G, c.B, c.A);
+            }
         return p;
     }
 

@@ -17,16 +17,16 @@ public static class GroundKinds
     public static readonly IReadOnlyList<(string Name, string Color)> All =
     [
         ("none", "#00000000"),
-        ("grass", "#6F8A45"),
-        ("field", "#C9B467"),
-        ("wood", "#3F5A2C"),
-        ("marsh", "#62735C"),
-        ("water", "#4C7396"),
-        ("road", "#A88E68"),
-        ("earth", "#8B6A47"),
-        ("rock", "#8E8B84"),
-        ("sand", "#D3C28F"),
-        ("snow", "#E9EDF0"),
+        ("grass", "#8C9F62"),
+        ("field", "#CDB57A"),
+        ("wood", "#6A8752"),
+        ("marsh", "#7C978A"),
+        ("water", "#5F88A8"),
+        ("road", "#83502F"),
+        ("earth", "#9C7752"),
+        ("rock", "#8F877E"),
+        ("sand", "#D4BB7C"),
+        ("snow", "#E6EAE6"),
     ];
 
     public static byte? Of(string name)
@@ -37,6 +37,41 @@ public static class GroundKinds
     }
 
     public static string Name(byte kind) => kind < All.Count ? All[kind].Name : "none";
+
+    static readonly string[] Ancient =
+        ["#00000000", "#9A9A5A", "#D6A653", "#556B34", "#7D8C64", "#3F7E8C", "#A63D2A", "#A5653A", "#9C8A70", "#D8B878", "#ECE6D6"];
+
+    static readonly string[] Modern =
+        ["#00000000", "#9DB56A", "#DCC562", "#4F8A3C", "#7FB0A3", "#3F8AC8", "#C8401C", "#B08050", "#8E8E8E", "#E0C46A", "#EEF2F6"];
+
+    public static string Color(byte kind, string? style)
+    {
+        if (kind >= All.Count) return All[None].Color;
+        return MapStyles.Of(style) switch
+        {
+            MapStyles.Ancient => Ancient[kind],
+            MapStyles.Modern => Modern[kind],
+            _ => All[kind].Color,
+        };
+    }
+}
+
+public static class MapStyles
+{
+    public const string Survey = "", Ancient = "ancient", Modern = "modern";
+
+    public static readonly IReadOnlyList<(string Id, string Name)> All =
+    [
+        (Ancient, "Ancient"),
+        (Survey, "18th-century survey"),
+        (Modern, "Modern topographic"),
+    ];
+
+    public static readonly IReadOnlyList<string> ShaderOrder = [Survey, Ancient, Modern];
+
+    public static string Of(string? style) => All.Any(s => s.Id == style?.Trim().ToLowerInvariant()) ? style!.Trim().ToLowerInvariant() : Survey;
+
+    public static int Index(string? style) => ShaderOrder.ToList().IndexOf(Of(style));
 }
 
 public sealed class ReliefGrid
