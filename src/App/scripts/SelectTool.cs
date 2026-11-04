@@ -57,6 +57,14 @@ sealed class SelectTool
         BoxSelecting = true;
     }
 
+    public void SelectAlike(PieceNode like, bool add)
+    {
+        var cam = _c.Rig.Cam;
+        var seen = cam.GetViewport().GetVisibleRect();
+        _selection.Set(_pieces.Nodes.Where(n => n.Layer == like.Layer && n.Piece.Def == like.Piece.Def && _c.LayerInteractive(n.Layer)
+            && !cam.IsPositionBehind(n.GlobalPosition) && seen.HasPoint(cam.UnprojectPosition(n.GlobalPosition))).Select(n => n.Piece.Id), add);
+    }
+
     bool PressOnFace(PieceNode hit, InputEventMouseButton mb, Vec2 g)
     {
         var f = hit.FacePoint(mb.Position) ?? g;

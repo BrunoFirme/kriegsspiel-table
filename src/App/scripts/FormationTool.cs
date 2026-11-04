@@ -49,8 +49,8 @@ sealed class FormationTool
     public int Count => Units().Count;
 
     public string Hint() => Count < 2
-        ? "Select the pieces to form up: drag a box round them, Shift adds"
-        : "Pick a formation, or drag across the table where its front should stand · Q/E turn · Ctrl + wheel spacing · Shift + wheel ranks";
+        ? "Select the pieces to form up: click, Shift+click or drag a box · double-click a piece for all of its kind in view"
+        : "Right-drag where the front should stand, or pick a formation · Q/E turn · Ctrl + wheel spacing · Shift + wheel ranks · Alt + right-drag turns the view";
 
     Pitch PitchOf(List<PieceNode> units)
     {
@@ -180,9 +180,9 @@ sealed class FormationTool
     Vec2 _from, _to;
     List<(Vec2 Pos, double Rot, Vector2 Size)>? _ghost;
 
-    public bool Press(Vec2 g, bool adding, bool onPiece)
+    public bool Press(Vec2 g)
     {
-        if (adding || onPiece || Units().Count < 2) return false;
+        if (Units().Count < 2) return false;
         _hand.Land();
         Dragging = true;
         _from = _to = g;

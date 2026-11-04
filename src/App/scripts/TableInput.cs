@@ -56,6 +56,7 @@ sealed class TableInput
     public bool LeftDown { get => _press.LeftDown; set => _press.LeftDown = value; }
     public bool Panning { get; private set; }
     public bool Orbiting { get; private set; }
+    public bool Ordering { get; private set; }
     Vector2 _midPress;
 
     Session S => _c.S;
@@ -158,9 +159,29 @@ sealed class TableInput
 
     void RightButton(InputEventMouseButton mb)
     {
+        if (mb.Pressed && _c.Tool == Tool.Formation && !mb.AltPressed && _c.Ground(mb.Position) is { } front && _forms.Press(front))
+        {
+            Ordering = true;
+            PressPos = mb.Position;
+            return;
+        }
+        if (!mb.Pressed && Ordering)
+        {
+            Ordering = false;
+            bool dragged = (mb.Position - PressPos).Length() >= 5;
+            if (dragged && !_unheard) { _forms.Release(); return; }
+            _forms.Cancel();
+            if (!dragged) RightClick(mb);
+            return;
+        }
         Orbiting = mb.Pressed;
         if (mb.Pressed) { PressPos = mb.Position; Cam.DragBegin(); return; }
         Cam.LetGo(orbit: true);
+        RightClick(mb);
+    }
+
+    void RightClick(InputEventMouseButton mb)
+    {
         if (!_unheard && (mb.Position - PressPos).Length() < 5 && !_hand.Holding && !_gizmo.Dragging)
         {
             var gg = _c.Ground(mb.Position);
@@ -227,7 +248,8 @@ sealed class TableInput
             case Tool.Shape: _pen.PressShape(g.Value); break;
             case Tool.Erase: _pen.PressErase(g.Value); break;
             case Tool.Formation:
-                if (!_forms.Press(g.Value, mb.ShiftPressed || mb.CtrlPressed, _pieces.Pick(g.Value, screen: mb.Position) != null)) _selectTool.Press(mb, g.Value);
+                if (mb.DoubleClick && _pieces.Pick(g.Value, screen: mb.Position) is { } like) _selectTool.SelectAlike(like, add: mb.ShiftPressed || mb.CtrlPressed);
+                else _selectTool.Press(mb, g.Value);
                 break;
             case Tool.Sighting: _sighting.Press(g.Value); break;
             case Tool.Relief: _relief.Press(g.Value, mb.ShiftPressed, mb.AltPressed); break;
@@ -241,7 +263,7 @@ sealed class TableInput
         switch (_c.Tool)
         {
             case Tool.Zone: _zones.Release(); _c.SetTool(Tool.Select); break;
-            case Tool.Select: case Tool.Transform: case Tool.Range: _selectTool.Release(mb, g); break;
+            case Tool.Select: case Tool.Transform: case Tool.Range: case Tool.Formation: _selectTool.Release(mb, g); break;
             case Tool.Crop: _crop.Release(); break;
             case Tool.Calibrate:
                 if (_ruler.Measured is { } length) CalibrationMeasured?.Invoke(length);
@@ -250,9 +272,6 @@ sealed class TableInput
             case Tool.Shape: _pen.ReleaseShape(); break;
             case Tool.Sighting: _sighting.Release(); break;
             case Tool.Relief: _relief.Release(); break;
-            case Tool.Formation:
-                if (_forms.Dragging) _forms.Release(); else _selectTool.Release(mb, g);
-                break;
             case Tool.Capture:
                 var r = new Rect2(PressPos, mb.Position - PressPos).Abs();
                 _c.NotifyScreenRect(null);
@@ -266,6 +285,7 @@ sealed class TableInput
     {
         CatchLostReleases();
         _lastHeard = mm.Position;
+        if (Ordering) { if (_c.Ground(mm.Position) is { } front) _forms.Drag(front); return; }
         if (Orbiting) { Cam.TrackOrbit(mm.Relative); return; }
         if (Panning) { Cam.TrackPan(mm.Position - mm.Relative, mm.Position); return; }
         if (!LeftDown) return;
@@ -276,7 +296,7 @@ sealed class TableInput
             case Tool.Crop:
                 if (g != null) _crop.Drag(g.Value);
                 return;
-            case Tool.Select: case Tool.Transform: _selectTool.Motion(mm, g); break;
+            case Tool.Select: case Tool.Transform: case Tool.Formation: _selectTool.Motion(mm, g); break;
             case Tool.Ruler: case Tool.Calibrate: if (g != null) _ruler.B = g; break;
             case Tool.Zone: if (g != null) _zones.Motion(g.Value); break;
             case Tool.Draw: if (g != null) _pen.MoveDraw(g.Value); break;
@@ -285,10 +305,6 @@ sealed class TableInput
             case Tool.Capture: _c.NotifyScreenRect(new Rect2(PressPos, mm.Position - PressPos).Abs()); break;
             case Tool.Sighting: _sighting.Move(g); break;
             case Tool.Relief: if (g != null) _relief.Motion(g.Value); break;
-            case Tool.Formation:
-                if (!_forms.Dragging) _selectTool.Motion(mm, g);
-                else if (g != null) _forms.Drag(g.Value);
-                break;
         }
     }
 

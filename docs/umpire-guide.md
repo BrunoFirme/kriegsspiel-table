@@ -94,11 +94,13 @@ The tool strip runs down the left. Point at any tool and press **F1** for its se
 **V** vee, **F** diamond, **Z** / **Shift+Z** echelon right / left, **X** chequer, **Shift+X** open order.
 
 - The pieces march the shortest way to their places round where they stand; markers on them ride along. One undo.
-- **Drag across the table** where the front should stand: the drag sets which way it faces, and how far you drag sets
-  how many stand in the front rank.
+- Pick pieces as with Select: click one, **Shift+click** to add or take one out, drag a box on the empty table
+  (**Shift** adds), click the empty table to let them all go. **Double-click** a piece for every piece of its kind in view.
+- **Right-drag** where the front should stand: the drag sets which way it faces, and how far you drag sets how many
+  stand in the front rank. A right-click alone still opens the menu; **Alt+right-drag** turns the view.
 - **Q / E** or the wheel over the pieces wheel the whole formation. **Ctrl+wheel** sets the spacing (0 is shoulder to
   shoulder); **Shift+wheel** the ranks of a line, or how many abreast in a column.
-- Drag one of the pieces to carry the formation as it stands. **Shift+drag** the empty table to add pieces.
+- Drag one of the pieces to carry the formation as it stands.
 
 ### Pieces
 
