@@ -1,4 +1,4 @@
-﻿shader_type spatial;
+shader_type spatial;
 render_mode cull_disabled, specular_disabled;
 
 uniform sampler2D kinds : filter_nearest, repeat_disable;

@@ -1,4 +1,4 @@
-﻿using System.Security.Cryptography;
+using System.Security.Cryptography;
 
 namespace KTable.Core.Model;
 
@@ -86,7 +86,7 @@ public sealed class ReliefGrid
 
     public ReliefGrid(int cols, int rows)
     {
-        if (cols < 2 || rows < 2 || cols > MaxSide || rows > MaxSide) throw new InvalidDataException($"a relief grid of {cols} Ã— {rows} is out of range");
+        if (cols < 2 || rows < 2 || cols > MaxSide || rows > MaxSide) throw new InvalidDataException($"a relief grid of {cols} × {rows} is out of range");
         Cols = cols;
         Rows = rows;
         H = new float[cols * rows];
