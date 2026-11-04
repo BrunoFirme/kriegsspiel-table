@@ -235,7 +235,7 @@ sealed partial class Carry : IHeldPieces
         Formation.FormHeld(_held, rows);
         _floor = -1;
         Move(_cursor);
-        _c.Say($"{rows} row{(rows > 1 ? "s" : "")} â€” release to drop");
+        _c.Say($"{rows} row{(rows > 1 ? "s" : "")} — release to drop");
     }
 
     public float SurfaceY(Vec2 p, string layer, PieceNode? except = null, HashSet<PieceNode>? skip = null) => _footing.SurfaceY(p, layer, except, skip);
