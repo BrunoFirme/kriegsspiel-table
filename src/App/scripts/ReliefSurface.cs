@@ -16,7 +16,8 @@ public partial class ReliefSurface : Node3D
 
     readonly List<(MeshInstance3D node, Rect2 box, bool paint)> _blocks = new();
     MeshInstance3D? _skirt;
-    ShaderMaterial? _base, _paint;
+    Material? _base;
+    ShaderMaterial? _paint;
     ImageTexture? _kindsTex;
 
     static Shader GroundShader => _shader ??= new Shader { Code = FileAccess.GetFileAsString("res://shaders/ground.gdshader") };
@@ -28,7 +29,7 @@ public partial class ReliefSurface : Node3D
         return p;
     }
 
-    public void Build(SheetDef def, ReliefGrid grid, Ground ground, Transform3D sheetXf, float paintLift, Func<Vector3[], bool>? covered = null)
+    public void Build(SheetDef def, ReliefGrid grid, Ground ground, Transform3D sheetXf, float paintLift, Func<Vector3[], bool>? covered, Material? picture)
     {
         Clear();
         var c = def.Crop ?? SheetGeometry.Whole;
@@ -40,7 +41,7 @@ public partial class ReliefSurface : Node3D
         var h = GroundMesh.Heights(ground, sheetXf);
         UpdateKinds(grid);
         var cells = new Vector2(grid.Cols, grid.Rows);
-        if (!def.HasPicture) _base = Material(false, cells);
+        _base = picture ?? (def.HasPicture ? null : Material(false, cells));
         if (grid.Painted) _paint = Material(true, cells);
         for (int bz = 0; bz < nz; bz += BlockCells)
             for (int bx = 0; bx < nx; bx += BlockCells)

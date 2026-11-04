@@ -51,7 +51,6 @@ sealed class Captures : HudPart
         _rect().SetRect(null);
         var vpSize = T.GetViewport().GetVisibleRect().Size;
         Say("Capturing…");
-        T.LodBoost = k;
         for (int i = 0; i < 30; i++)
         {
             await HudNode.ToSignal(HudNode.GetTree(), SceneTree.SignalName.ProcessFrame);
@@ -75,7 +74,6 @@ sealed class Captures : HudPart
         await HudNode.ToSignal(RenderingServer.Singleton, RenderingServer.SignalName.FramePostDraw);
         var img = vp.GetTexture().GetImage();
         vp.QueueFree();
-        T.LodBoost = 1;
         var rr = new Rect2I((int)(r.Position.X * k), (int)(r.Position.Y * k), (int)(r.Size.X * k), (int)(r.Size.Y * k));
         rr = rr.Intersection(new Rect2I(0, 0, img.GetWidth(), img.GetHeight()));
         if (rr.Size.X < 2 || rr.Size.Y < 2) return;

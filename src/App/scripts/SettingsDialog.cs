@@ -167,6 +167,11 @@ sealed class SettingsDialog : HudPart
         var contact = new CheckBox { Text = "Contact shading", ButtonPressed = Cfg.ContactShade, TooltipText = "A soft shade where pieces meet the table, so 3D models sit down on it" };
         contact.Toggled += on => { Cfg.ContactShade = on; Cfg.Save(); T.ApplyGraphics(); };
         _box.AddChild(Option(contact));
+        var picPick = new OptionButton { TooltipText = "Graphics memory the map's pictures may take. When the whole map fits, every sheet is drawn at full sharpness from any distance; when it does not, all sheets step down a size together. Automatic is a quarter of the card's memory.", CustomMinimumSize = new Vector2(160, 0) };
+        foreach (var mb in Settings.MapPictureMemoryChoices) picPick.AddItem(mb == 0 ? $"Automatic ({VideoMemory.SuggestedPictureMegabytes()} MB)" : mb >= 1024 ? $"{mb / 1024} GB" : $"{mb} MB");
+        picPick.Selected = Math.Max(0, Array.IndexOf(Settings.MapPictureMemoryChoices, Cfg.MapPictureMemory));
+        picPick.ItemSelected += i => { Cfg.MapPictureMemory = Settings.MapPictureMemoryChoices[i]; Cfg.Save(); T.ApplyGraphics(); };
+        _box.AddChild(Row("Map pictures", picPick, null, fill: false));
 
         _box.AddChild(Header("Frames"));
         var vsync = new CheckBox { Text = "Keep in step with the screen (VSync)", ButtonPressed = Cfg.VSync, TooltipText = "No tearing. Off draws as fast as the limit below allows." };

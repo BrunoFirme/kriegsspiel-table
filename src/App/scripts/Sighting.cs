@@ -313,8 +313,6 @@ sealed class Sighting
     {
         var shot = MakeShotViewport(d, px);
         PrepareForPicture(d);
-        float want = px / (float)Math.Max(0.01, d.Radius * 2);
-        _sheets.LodBoost = Mathf.Clamp(want / Math.Max(0.01f, _c.Rig.PixelsPerUnit()), 1f, 12f);
         for (int i = 0; i < 30; i++)
         {
             await _c.Scene.ToSignal(_c.Scene.GetTree(), SceneTree.SignalName.ProcessFrame);
@@ -330,7 +328,6 @@ sealed class Sighting
         {
             shot.QueueFree();
             _pieces.Lettering.Release();
-            _sheets.LodBoost = 1;
             _shotPlane.Position = new Vector3(0, 0.021f, 0);
             foreach (var n in _pieces.Nodes) n.HideFromPicture(false);
         }

@@ -54,7 +54,20 @@ public partial class CameraRig : Node3D
     const float AboveGround = 0.6f;
     const int MarchSteps = 160, Halvings = 14;
 
-    void Settle() => Target.Y = (float)Terrain().At(Coords.FromWorld(Target));
+    const float GroundEase = 8f, LiftEase = 5f, Settled = 0.001f;
+    float _groundGoal, _lift, _liftGoal;
+
+    float GroundUnderTarget() => (float)Terrain().At(Coords.FromWorld(Target));
+    void Settle() => _groundGoal = GroundUnderTarget();
+    void SettleNow() { Settle(); Target.Y = _groundGoal; }
+
+    bool Ease(float dt)
+    {
+        bool moving = false;
+        if (Mathf.Abs(Target.Y - _groundGoal) > Settled) { Target.Y = Mathf.Lerp(Target.Y, _groundGoal, 1 - Mathf.Exp(-dt * GroundEase)); moving = true; }
+        if (_lift > _liftGoal + Settled) { _lift = Mathf.Lerp(_lift, _liftGoal, 1 - Mathf.Exp(-dt * LiftEase)); moving = true; }
+        return moving;
+    }
 
     public const float GlideDamping = 10f, SpinDamping = 14f;
     Vector3 _glide;
@@ -88,8 +101,9 @@ public partial class CameraRig : Node3D
 
     public void Tick(double delta)
     {
-        if (!Gliding) return;
         float dt = (float)Math.Min(delta, 0.1);
+        bool eased = Ease(dt);
+        if (!Gliding) { if (eased) Apply(); return; }
         if (_glide != Vector3.Zero)
         {
             Target += _glide * dt; Settle();
@@ -138,7 +152,7 @@ public partial class CameraRig : Node3D
     {
         Still();
         Target = new Vector3(at.X, 0, at.Z);
-        Settle();
+        SettleNow();
         Apply();
     }
 
@@ -150,7 +164,7 @@ public partial class CameraRig : Node3D
     {
         Still();
         Target = new Vector3(v.Target.X, 0, v.Target.Z);
-        Settle();
+        SettleNow();
         Distance = Mathf.Clamp(v.Distance, MinDistance, MaxDistance);
         Yaw = v.Yaw;
         Pitch = Mathf.Clamp(v.Pitch, SteepestPitchRadians, FlattestPitchRadians);
@@ -161,7 +175,7 @@ public partial class CameraRig : Node3D
     {
         Still();
         Target = new Vector3(center.X, 0, center.Z);
-        Settle();
+        SettleNow();
         Distance = Mathf.Clamp(size * 1.1f, MinDistance, MaxDistance);
         Apply();
     }
@@ -174,7 +188,9 @@ public partial class CameraRig : Node3D
         var pos = Target - dir * Distance;
         Cam.Projection = TopDown ? Camera3D.ProjectionType.Orthogonal : Camera3D.ProjectionType.Perspective;
         if (TopDown) Cam.Size = Distance * 0.9f;
-        if (Terrain() is { Any: true } g && !TopDown) pos.Y = Mathf.Max(pos.Y, (float)g.At(Coords.FromWorld(pos)) + AboveGround);
+        _liftGoal = Terrain() is { Any: true } g && !TopDown ? Mathf.Max(0, (float)g.At(Coords.FromWorld(pos)) + AboveGround - pos.Y) : 0;
+        if (_liftGoal > _lift) _lift = _liftGoal;
+        pos.Y += _lift;
         Cam.GlobalPosition = pos;
         var up = TopDown ? new Vector3(Mathf.Sin(Yaw), 0, Mathf.Cos(Yaw)) : Vector3.Up;
         Cam.LookAt(Target, up);

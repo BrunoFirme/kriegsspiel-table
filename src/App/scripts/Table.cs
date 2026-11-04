@@ -227,6 +227,7 @@ public partial class Table : Node3D
         if (_c.Settings is not { } cfg) return;
         Graphics.ApplyEdges(GetViewport(), cfg);
         Stage.ApplyGraphics(cfg);
+        Sheets.PlanLevels();
     }
 
     public void ApplyLettering()
@@ -278,7 +279,7 @@ public partial class Table : Node3D
         Sheets.TickLoadingLabels();
         Cam.TickKeys(delta);
         Stage.FollowView(Rig.Distance);
-        Sheets.UpdateLod();
+        Sheets.Tick();
         Overlay.Redraw();
     }
 
@@ -389,7 +390,6 @@ public partial class Table : Node3D
     public void EndPaletteDrag(bool drop) => Palette.End(drop);
 
     public string? SelectedSheet { get => Sheets.SelectedId; set => Sheets.SelectedId = value; }
-    public float LodBoost { get => Sheets.LodBoost; set => Sheets.LodBoost = value; }
     public void SelectSheet(string? id) => Sheets.Select(id);
     public string SheetStats() => Sheets.Stats();
     public void FrameAll() => Cam.FrameAll();

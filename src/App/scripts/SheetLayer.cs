@@ -14,7 +14,9 @@ sealed class SheetLayer
     readonly Dictionary<string, SheetNode> _sheets = new();
     public Node3D Root = null!;
     public string? SelectedId;
-    public float LodBoost = 1;
+    readonly Queue<string> _toBuild = new();
+    readonly HashSet<string> _queued = new();
+    bool _planDue;
 
     public SheetLayer(TableContext c, CameraControl cam) { _c = c; _cam = cam; }
 
@@ -40,7 +42,11 @@ sealed class SheetLayer
     {
         int top = _sheets.Count == 0 ? 0 : _sheets.Values.Max(s => s.Def.Z);
         _c.SheetsTop = Math.Max(0, top) * SheetNode.ZStep;
-        foreach (var n in _sheets.Values) { n.TopZ = top; n.Covered = Covered; n.Reground(where); }
+        foreach (var (id, n) in _sheets)
+        {
+            n.TopZ = top; n.Covered = Covered;
+            if (n.Touches(where) && _queued.Add(id)) _toBuild.Enqueue(id);
+        }
         GroundChanged?.Invoke(where);
     }
 
@@ -53,13 +59,16 @@ sealed class SheetLayer
     {
         foreach (var n in _sheets.Values) n.QueueFree();
         _sheets.Clear();
+        _toBuild.Clear(); _queued.Clear();
         _c.Labels.RemoveWhere(k => k.StartsWith("sheet:"));
         GroundMoved();
     }
 
     public void Add(SheetDef sh)
     {
-        var n = SheetNode.Create(sh, _c.S.Assets, _c.S.Relief, _c.S.View.Sheets.Count);
+        var n = SheetNode.Create(sh, _c.S.Assets, _c.S.Relief);
+        n.IndexKnown += () => _planDue = true;
+        _planDue = true;
         Root.AddChild(n);
         _sheets[sh.Id] = n;
         n.SetSelected(sh.Id == SelectedId);
@@ -104,7 +113,38 @@ sealed class SheetLayer
 
     public SheetNode? TopAt(Vec2 g) => _sheets.Values.OrderByDescending(s => s.Def.Z).FirstOrDefault(s => s.ContainsWorld(Coords.ToWorld(g)));
 
-    public string Stats() => string.Join(" ", _sheets.Values.Select(s => $"{s.Def.Name}:q{s.QuadCount}/L{s.DetailLevel}-{s.CoarsestLevel}"));
+    public string Stats()
+    {
+        var pics = _sheets.Values.Select(s => s.Picture).Where(p => p != null).Select(p => p!).ToList();
+        var levels = string.Join(" ", pics.GroupBy(p => p.Level).OrderBy(g => g.Key).Select(g => $"L{g.Key}:{g.Count()}"));
+        return $"sheets={_sheets.Count} {levels} mb={pics.Sum(p => p.Bytes) >> 20} compose={SheetPicture.ComposeMs / Math.Max(1, SheetPicture.Composed):0}ms×{SheetPicture.Composed} queued={_toBuild.Count}";
+    }
+
+    public void PlanLevels()
+    {
+        var pics = _sheets.Values.Select(s => s.Picture).Where(p => p != null).Select(p => p!).ToList();
+        if (pics.Count == 0) return;
+        long budget = (long)(_c.Settings is { MapPictureMemory: > 0 } cfg ? cfg.MapPictureMemory : VideoMemory.SuggestedPictureMegabytes()) << 20;
+        int deepest = pics.Max(p => p.Coarsest);
+        int level = 0;
+        while (level < deepest && pics.Sum(p => SheetPicture.BytesAt(p.Index, level, p.HasAlpha)) > budget) level++;
+        foreach (var p in pics) p.Want(level);
+    }
+
+    const double BuildMillisPerFrame = 6;
+
+    public void Tick()
+    {
+        if (_planDue) { _planDue = false; PlanLevels(); }
+        if (_toBuild.Count == 0) return;
+        var clock = System.Diagnostics.Stopwatch.StartNew();
+        do
+        {
+            var id = _toBuild.Dequeue();
+            _queued.Remove(id);
+            if (_sheets.TryGetValue(id, out var n)) n.Reground();
+        } while (_toBuild.Count > 0 && clock.Elapsed.TotalMilliseconds < BuildMillisPerFrame);
+    }
 
     public void TickLoadingLabels()
     {
@@ -115,23 +155,6 @@ sealed class SheetLayer
             _c.Labels.Set("sheet:" + id, sn.Position + Vector3.Up * 0.2f, txt, new Color(0.25f, 0.2f, 0.12f), 15);
         }
     }
-
-    public void UpdateLod()
-    {
-        var cam = _c.Rig.Cam;
-        var view = (cam.GlobalTransform, cam.Fov, cam.Size, LodBoost);
-        ulong frame = Engine.GetProcessFrames();
-        bool all = view != _lodView || frame - _lodFrame >= 15;
-        if (!all && !_sheets.Values.Any(s => s.LodDue)) return;
-        if (all) { _lodView = view; _lodFrame = frame; }
-        var lod = LodView.Of(cam, _c.Rig.GetViewport().GetVisibleRect().Size.Y, LodBoost);
-        int fresh = FreshQuadsPerFrame;
-        foreach (var sn in _sheets.Values) if (all || sn.LodDue) sn.UpdateLod(lod, ref fresh);
-    }
-
-    const int FreshQuadsPerFrame = 8;
-    (Transform3D, float, float, float) _lodView;
-    ulong _lodFrame;
 
     public Vec2 SnapTo(SheetNode moving, Vec2 p, bool free = false)
     {
