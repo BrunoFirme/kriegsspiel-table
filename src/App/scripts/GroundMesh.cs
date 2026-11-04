@@ -13,6 +13,31 @@ static class GroundMesh
     public static Func<float, float, float> Heights(Ground ground, Transform3D local) =>
         (x, z) => (float)ground.At(Coords.FromWorld(local * new Vector3(x, 0, z)));
 
+    const float SeamReach = 0.01f, EdgeTolerance = 1e-4f;
+
+    public static Func<float, float, float> WeldedHeights(Ground ground, Transform3D local, float halfW, float halfH)
+    {
+        double At(float x, float z) => ground.At(Coords.FromWorld(local * new Vector3(x, 0, z)));
+        bool Relief(float x, float z) => ground.ReliefAt(Coords.FromWorld(local * new Vector3(x, 0, z))) != null;
+        return (x, z) =>
+        {
+            int ox = Math.Abs(Math.Abs(x) - halfW) < EdgeTolerance ? Math.Sign(x) : 0, oz = Math.Abs(Math.Abs(z) - halfH) < EdgeTolerance ? Math.Sign(z) : 0;
+            if (ox == 0 && oz == 0) return (float)At(x, z);
+            double sum = 0; int n = 0;
+            foreach (var (sx, sz) in Around(ox, oz))
+            {
+                float px = x + sx * SeamReach, pz = z + sz * SeamReach;
+                bool inside = Math.Abs(px) <= halfW && Math.Abs(pz) <= halfH;
+                if (!inside && !Relief(px, pz)) continue;
+                sum += At(px, pz); n++;
+            }
+            return (float)(n == 0 ? At(x, z) : sum / n);
+        };
+    }
+
+    static (int, int)[] Around(int ox, int oz) =>
+        ox != 0 && oz != 0 ? new[] { (ox, oz), (-ox, oz), (ox, -oz), (-ox, -oz) } : new[] { (ox, oz), (-ox, -oz) };
+
     public static ArrayMesh Grid(Func<float, float, float> h, float x0, float z0, float x1, float z1, int nx, int nz, Vector2 uv0, Vector2 uv1, float lift = 0)
     {
         nx = Math.Max(1, nx); nz = Math.Max(1, nz);

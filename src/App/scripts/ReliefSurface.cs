@@ -38,7 +38,7 @@ public partial class ReliefSurface : Node3D
         int cellsX = Math.Max(1, (int)Math.Ceiling(c.W * (grid.Cols - 1))), cellsZ = Math.Max(1, (int)Math.Ceiling(c.H * (grid.Rows - 1)));
         int step = Math.Max(1, (int)Math.Ceiling(Math.Max(cellsX, cellsZ) / (double)MostVertsAcross));
         int nx = Math.Max(1, cellsX / step), nz = Math.Max(1, cellsZ / step);
-        var h = GroundMesh.Heights(ground, sheetXf);
+        var h = GroundMesh.WeldedHeights(ground, sheetXf, W / 2, H / 2);
         UpdateKinds(grid);
         var cells = new Vector2(grid.Cols, grid.Rows);
         _base = picture ?? (def.HasPicture ? null : Material(false, cells));
