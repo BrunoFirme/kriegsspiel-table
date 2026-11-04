@@ -113,7 +113,7 @@ sealed class ToolStrip : HudPart
         foreach (var c in b.GetChildren()) if (c is ToolIcon ic) ic.Locked = locked;
         b.TooltipText = locked
             ? "Draw\nLayer is hidden · show it to unlock"
-            : "Draw\nThe pen, the shapes and the rubber, in a panel you can put where you like";
+            : "Draw\nThe pen, the shapes and the rubber";
     }
 
     Button? MakeButton(string key) => ToolButton(key) ?? OtherButton(key);
@@ -167,7 +167,7 @@ sealed class ToolStrip : HudPart
             case "range": return ToolB(Tool.Range, "range", "Ranging", "Click a piece to see how far it reaches: the wheel sets the standing reach, and a piece carrying a \"range\" counter uses its own");
             case "sighting":
             {
-                var b = ToolB(Tool.Sighting, "sighting", $"POV screenshot   ({Cfg.Keys.Label("sighting")})", "The picture a piece would send home: the view centres on it, you draw the edge of what it can see, and the shot goes to the clipboard and the capture folder. The wheel sets its reach; Alt + wheel zooms in to trace closely, and back out to the shot");
+                var b = ToolB(Tool.Sighting, "sighting", $"POV screenshot   ({Cfg.Keys.Label("sighting")})", "The picture a piece would send home: trace the edge of what it can see, and the shot goes to the clipboard and the capture folder. The wheel sets its reach; Alt + wheel zooms in to trace");
                 Buttons["sighting"] = b;
                 return b;
             }
@@ -180,10 +180,10 @@ sealed class ToolStrip : HudPart
     {
         switch (key)
         {
-            case "paint": return PanelToggle("paint", "draw", "Draw", "The pen, the shapes and the rubber, in a panel you can put where you like");
+            case "paint": return PanelToggle("paint", "draw", "Draw", "The pen, the shapes and the rubber");
             case "relief": return PanelToggle("relief", "relief", "Relief", "Raise, lower, smooth and flatten the ground, and paint grass, fields, woods, marsh, water and roads on it");
             case "boards": return PanelToggle("boards", "stack", "Layers", "The sheets of tracing paper the drawings are on: draw on one, hide it for a screenshot");
-            case "dice": return PanelToggle("dice", "dice", "Dice", "Pick the dice and roll; the server rolls and every umpire sees it");
+            case "dice": return PanelToggle("dice", "dice", "Dice", "Pick the dice and roll; every umpire sees the result");
             case "2d":
             {
                 var b = Icon("text:3D", $"3D table   ({Cfg.Keys.Label("map2d")})", "On: the table in three dimensions. Off: the map read flat from above.");

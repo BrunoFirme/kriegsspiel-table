@@ -66,7 +66,7 @@ internal sealed class ScriptTab
         var d = _s.Sel!;
         var link = _s.FileWatch.Of(KindKey(d.Id));
         if (link != null) draft = null;
-        p.AddChild(Ui.Hint("Every piece of this kind runs this Lua script when a game is hosted, and here on the Table view. Most pieces need none: a counter, a text line, a name, looks and markers are set in the Piece and Markers tabs, and those are what to reach for first. A script is for what they do not do (buttons of your own, a number drawn on the face, panels), and it is how imported TTS pieces keep working. F1 on a word opens the reference."));
+        p.AddChild(Ui.Hint("Every piece of this kind runs this Lua when a game is hosted, and on the Table view here. Counters, text lines, names, looks and markers need no script (Piece and Markers tabs); script only buttons of your own, numbers drawn on the face and panels. Imported TTS pieces keep working through theirs. F1 on a word opens the reference."));
         _script = new CodeEdit
         {
             Text = draft ?? d.Script ?? "", CustomMinimumSize = new Vector2(0, 320), SizeFlagsVertical = Control.SizeFlags.ExpandFill,

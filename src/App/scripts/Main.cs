@@ -436,7 +436,7 @@ public partial class Main : Node
             if (_recoveryReport != null) hud.Log($"[color=#ffd75e]{Fmt.Bb(_recoveryReport)}[/color]");
         }
         else if (_net.MirrorPath != null)
-            hud.Log($"This PC keeps its own copy of the game as you play ({LogPanel.FolderLink(System.IO.Path.GetDirectoryName(_net.MirrorPath) ?? "", "open the folder")}). If the host's PC fails, Host a game → Mirrored games continues it from here with the same password, and the people already let in come straight back.");
+            hud.Log($"This PC keeps its own copy of the game as you play ({LogPanel.FolderLink(System.IO.Path.GetDirectoryName(_net.MirrorPath) ?? "", "open the folder")}). If the host's PC fails, Host a game → Mirrored games continues it from here.");
     }
 
     public void OpenEditor(string packId)

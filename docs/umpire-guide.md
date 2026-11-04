@@ -75,7 +75,6 @@ The tool strip runs down the left. Point at any tool and press **F1** for its se
 | Wheel | zoom (over a selected piece it turns it) |
 | Home | frame the map |
 | F2 | flat map view and back |
-| N | plates behind labels beside pieces |
 
 ### Selecting and moving
 
@@ -104,10 +103,10 @@ The tool strip runs down the left. Point at any tool and press **F1** for its se
 
 ### Dice
 
-The **Dice** button shows or hides the dice panel: tap d4 to d20 (twice for two), then **Roll**. The result shows in the panel, which stays open with the same dice for the next roll. Or drag dice from the standard
-pack and throw them, or shake them in your hand before letting go; **R** rolls in place. The host decides every result, and the Log shows every roll.
-Hovering over a die shows what it rolled. Right-click a die for its **Colour**, so a red and a blue die of the same kind
-are told apart at a glance.
+The **Dice** button shows or hides the dice panel: tap d4 to d20 (twice for two), then **Roll**. The result stays in the
+panel for the next roll. Or drag dice from the standard pack and throw them, shake them in your hand before letting go,
+or press **R** to roll in place. The host decides every result and the Log shows it. Hover a die for its result;
+right-click it for its **Colour**.
 
 ### Ruler
 
@@ -142,7 +141,7 @@ A turn report as a picture, from one piece's point of view.
 4. **Enter** or **Capture**. The picture goes to the clipboard and the capture folder, stamped with the
    scenario, the clock and the side.
 
-Nothing is sent or kept: paste it into that side's channel.
+Nothing is sent: paste it into that side's channel.
 
 ### Capture
 
@@ -204,12 +203,10 @@ The ⋯ after the scenario's name opens its properties: briefing, clock, light a
 
 - **Briefing:** the situation you play from. Leads write it here and every umpire reads it here; **Read it…** opens it in a
   window of its own, with find. Observers never see it.
-- **Light:** presets and sliders, or **Follow the game clock** for dawn, day and dusk.
+- **Light & surroundings:** presets and sliders, or **Follow the game clock** for dawn, day and dusk; what everyone
+  sees past the table's edge (rooms, gardens, coasts, fields, open sky by day, at sundown or at night, stars, a solid
+  colour, or your own panorama; a sky sets its light); and the table under the map, which grows to hold what is on it.
 - **Grid:** squares or hexes over the table. Nothing snaps to it.
-- **Light & surroundings:** also what everyone sees past the table's edge (a drawing room, a Chinese garden, an
-  island beach, a shipwreck coast, meadow, hills, orchard, steppe, open sky by day, at sundown or at night, stars, a
-  solid colour, or your own panorama; a sky sets its light) and the table under the map. The table grows to hold what
-  is on it.
 
 ## Play by post
 

@@ -145,7 +145,7 @@ sealed class SettingsDialog : HudPart
     void AddGraphics()
     {
         _box.AddChild(Header("Quality"));
-        var aaPick = new OptionButton { TooltipText = "Multisampling on the 3D table. More is smoother and costs more; it takes effect at once.", CustomMinimumSize = new Vector2(160, 0) };
+        var aaPick = new OptionButton { TooltipText = "Multisampling on the 3D table: more is smoother and costs frame rate.", CustomMinimumSize = new Vector2(160, 0) };
         foreach (var n in new[] { "Off", "2 samples", "4 samples", "8 samples" }) aaPick.AddItem(n);
         aaPick.Selected = Math.Clamp(Cfg.Antialias, 0, 3);
         aaPick.ItemSelected += i => { Cfg.Antialias = (int)i; Cfg.Save(); T.ApplyGraphics(); };

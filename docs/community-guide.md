@@ -55,7 +55,6 @@ Pictures and models dropped on the window become pieces too. Every picture choos
 - **Place** (N) gives the name, each counter and each text line a box of its own, on either side; counters
   keep their − and +. Unplaced, counters print on the back and text lines in the name band.
 - **Swap front and back** trades the two sides, prints and all.
-- Saved a second after each stroke; layers reopen as you left them.
 
 **3D** — the piece as the table shows it.
 
@@ -84,14 +83,9 @@ Pictures and models dropped on the window become pieces too. Every picture choos
 Looks that are still copies of look 1 follow it as you paint. Scripts draw the rest: see the
 [scripting guide](scripting.md).
 
-Every change saves at once; **Ctrl+Z** takes back the last one, stroke, shape or setting. In a game, your packs
+Every change saves at once and layers reopen as you left them; **Ctrl+Z** takes back the last one, stroke, shape
+or setting. In a game, your packs
 upload to the host when you place their pieces. Limits: pictures and models only, 25 MB a file, 300 MB a pack.
-
-## Dice
-
-The **Dice** pack comes with the app: d4, d6, d8, d10, d12, d20. Place a die like any piece; drop, flick or shake
-it in your hand to roll, or press **R**. The host decides every result and the Log shows it. Hovering over a die
-shows its result; right-click it for its **Colour**.
 
 ## Share packs and scenarios
 

@@ -42,7 +42,7 @@ sealed class ScenarioWriteBack
         if (_folders.SheetsPending(session.Store, server.State, dir))
         {
             var snapshot = server.State.DeepClone(); var store = session.Store; var name = server.State.Name;
-            _note("Copying the map's tiles into the scenario folder in the background (a big map takes a while); the table stays usable.");
+            _note("Copying the map's tiles into the scenario folder; a big map takes a while.");
             var stop = (_copyStop = new CancellationTokenSource()).Token;
             _copy = Task.Run(() => _folders.SaveTable(store, snapshot, name, dir, stop));
             _copy.ContinueWith(t => { if (!Quitting() && !stop.IsCancellationRequested) PostCopyDone(t.IsFaulted ? t.Exception?.InnerException?.Message ?? "failed" : ""); }, TaskScheduler.Default);

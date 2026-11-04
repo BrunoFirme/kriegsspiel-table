@@ -36,7 +36,7 @@ sealed class InviteDialog : HudPart
         var pwRow = PasswordRow(Ctx, dlg);
         box.AddChild(pwRow);
         var pwField = pwRow.GetChild<LineEdit>(1);
-        box.AddChild(Hint("Whoever knocks waits until you or a lead umpire let them in: a card under the top bar, or the people at the top right. Once let in, their PC comes straight back later."));
+        box.AddChild(Hint("Whoever knocks waits until you or a lead let them in, from the card under the top bar or the people at the top right; once in, their PC comes straight back next time."));
         if (S.IsHost) AddPacks(box, dlg);
         dlg.AddChild(box);
         dlg.Confirmed += () =>

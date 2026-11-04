@@ -62,7 +62,7 @@ sealed class DicePanel : HudPart
         row.AddThemeConstantOverride("separation", 4);
         var clear = Btn("Clear", () => { pool.Clear(); line.Text = Spell(); _results.Visible = false; Panel.Fit(); }, "empty the hand");
         clear.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
-        var roll = Ui.Primary("Roll", Roll, "the server rolls; every umpire sees it in the Log");
+        var roll = Ui.Primary("Roll", Roll, "every umpire sees the roll in the Log");
         roll.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
         row.AddChild(clear); row.AddChild(roll);
         box.AddChild(row);

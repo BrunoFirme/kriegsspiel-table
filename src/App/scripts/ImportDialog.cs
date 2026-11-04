@@ -43,8 +43,7 @@ public partial class ImportDialog : AcceptDialog
         AddChild(root);
         root.AddChild(new Label
         {
-            Text = "Turns any TTS module or save into a pack (all its pieces, bags flattened) and a scenario (its table layout; big locked boards become map sheets). " +
-                   "Pieces, images, models, alternate states and scripts convert: a module's Lua is translated into this app's own scripting, and the report lists any line it could not translate. Unity asset bundles cannot run outside TTS.",
+            Text = "A TTS module or save becomes a pack (every piece, bags opened up) and a scenario (its table laid out; big locked boards become map sheets). Scripts are translated; the report beside the scenario lists what did not convert.",
             AutowrapMode = TextServer.AutowrapMode.WordSmart, Modulate = new Color(1, 1, 1, 0.7f),
         });
 
@@ -79,7 +78,7 @@ public partial class ImportDialog : AcceptDialog
         _skipText = new CheckBox
         {
             Text = "Floating 3D text",
-            TooltipText = "Modules often letter their table with floating text: titles over an area, labels beside a chart. They come in as flat label pieces and a big module can hold dozens. The notecards come in either way.",
+            TooltipText = "Titles and labels a module floats over its table come in as flat label pieces; a big module can hold dozens. Notecards come in either way.",
         };
         g.AddChild(_skipText);
         var goRow = new HBoxContainer();
@@ -91,7 +90,7 @@ public partial class ImportDialog : AcceptDialog
         _stop = new Button
         {
             Text = "Stop", Visible = false, FocusMode = Control.FocusModeEnum.None,
-            TooltipText = "Stops the import. Anything it had already moved aside comes back: the pack and scenario you had stay as they were.",
+            TooltipText = "Stops the import and puts back what it had moved aside.",
         };
         _stop.Pressed += Stop;
         _progress = new ImportProgress(_stop);

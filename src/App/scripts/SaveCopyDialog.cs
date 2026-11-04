@@ -22,7 +22,7 @@ sealed class SaveCopyDialog : HudPart
         box.AddChild(new Label { Text = "Name of the copy" });
         var name = new LineEdit { Text = S.View.Name + " copy" };
         box.AddChild(name);
-        box.AddChild(Hint("This table is already saved into its own scenario as you work. A copy makes a second scenario from the table as it is now: map sheets, every piece, clock and scale."));
+        box.AddChild(Hint("A second scenario from the table as it is now: map sheets, every piece, clock and scale. The table's own scenario saves itself as you work."));
         dlg.AddChild(box);
         dlg.Confirmed += () => Save(name.Text);
         Ui.Open(HudNode, dlg, new Vector2I(500, 230));
@@ -38,7 +38,7 @@ sealed class SaveCopyDialog : HudPart
         catch (Exception e) { Log($"[color=#ff7060]Could not save the scenario: {Fmt.Bb(e.Message)}[/color]"); return; }
         var store = S.Store;
         var what = $"{snapshot.Sheets.Count} map sheet{(snapshot.Sheets.Count == 1 ? "" : "s")}, {snapshot.Layer(Layers.Umpire).Count} pieces";
-        Log($"Saving a copy as the scenario '{Fmt.Bb(title)}' ({Fmt.Bb(what)}) in the background; a big map takes a while. The table stays usable.");
+        Log($"Saving a copy as the scenario '{Fmt.Bb(title)}' ({Fmt.Bb(what)}); a big map takes a while.");
         var shell = Shell;
         _copying = Task.Run(() =>
         {

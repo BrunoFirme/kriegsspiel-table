@@ -230,7 +230,7 @@ sealed class MapPage : HudPart
                     if (paths.Count > 1) AddPictures(paths.Skip(1).ToList());
                     else
                     {
-                        Log("Sheets added, unlocked: drag them into place, set their size in the Map page, then lock them. The scenario keeps the map as you go.");
+                        Log("Sheets added, unlocked: drag them into place, size them in the Map page, then lock them.");
                         Say("Sheet added: drag it into place, then lock it in the Map page.");
                         T.FrameAll();
                     }

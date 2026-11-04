@@ -93,7 +93,7 @@ public partial class Hud : CanvasLayer
         {
             Callable.From(() => Drawer.ShowPage("map")).CallDeferred();
             Say("Empty table: Map → Add map sheets…, or New blank ground… to shape your own, then place pieces.");
-            Log("This scenario has no map yet. Map → Add map sheets… (pictures, 3D terrain, heightmaps; several are laid side by side) or New blank ground…");
+            Log("No map yet: Map → Add map sheets… (pictures, 3D terrain, heightmaps) or New blank ground…");
         }
     }
 
