@@ -53,9 +53,9 @@ static class HudTests
     static async Task An_empty_table_points_the_umpire_at_the_map_page(TestRunner r)
     {
         var h = await Host(r, sheets: 0);
-        Check.That(h.Hud.LogPanel.Text.GetParsedText().Contains("This scenario has no map yet"), "the transcript says so");
+        Check.That(h.Hud.LogPanel.Text.GetParsedText().Contains("No map yet"), "the transcript says so");
         var mapped = await Host(r, sheets: 1);
-        Check.That(!mapped.Hud.LogPanel.Text.GetParsedText().Contains("This scenario has no map yet"), "not said with a map");
+        Check.That(!mapped.Hud.LogPanel.Text.GetParsedText().Contains("No map yet"), "not said with a map");
     }
 
     [NodeTest]
