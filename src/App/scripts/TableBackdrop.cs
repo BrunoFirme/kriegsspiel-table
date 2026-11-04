@@ -35,15 +35,11 @@ sealed class TableBackdrop
         if (backdrop == _wanted) return;
         _wanted = backdrop;
         int generation = ++_generation;
-        if (Backdrops.Find(backdrop) is { } built)
-        {
-            Load(generation, BuiltInPath(built.File), built.Ground is { } ground ? BuiltInPath(ground) : null);
-            return;
-        }
+        if (Backdrops.Find(backdrop) is { } built) { Load(generation, BuiltInPath(built.File)); return; }
         if (Backdrops.IsPicture(backdrop) && _c.S?.Assets is { } assets)
         {
             assets.EnsureFile(UploadAsset.ReliefPackage, backdrop,
-                () => Load(generation, assets.Abs(UploadAsset.ReliefPackage, backdrop), null),
+                () => Load(generation, assets.Abs(UploadAsset.ReliefPackage, backdrop)),
                 () => { if (generation == _generation) ShowColour(Plain); });
             return;
         }
@@ -55,25 +51,16 @@ sealed class TableBackdrop
         _env.BackgroundMode = Godot.Environment.BGMode.Color;
         _env.BackgroundColor = colour;
         _sky.SetShaderParameter("panorama", default(Variant));
-        _sky.SetShaderParameter("ground", default(Variant));
     }
 
-    sealed record Packed(Image Sky, Image? Ground);
-
-    void Load(int generation, string path, string? groundPath)
+    void Load(int generation, string path)
     {
         Task.Run(() =>
         {
-            Packed? packed = null;
-            try
-            {
-                var sky = Pack(path);
-                var ground = sky != null && groundPath != null ? Pack(groundPath) : null;
-                if (sky != null && (groundPath == null || ground != null)) packed = new Packed(sky, ground);
-                else { sky?.Dispose(); ground?.Dispose(); }
-            }
+            Image? packed = null;
+            try { packed = Pack(path); }
             catch (Exception e) when (e is IOException or UnauthorizedAccessException or InvalidOperationException) { GD.PrintErr("[backdrop] could not read " + path + ": " + e.Message); }
-            if (Assets.Quitting) { packed?.Sky.Dispose(); packed?.Ground?.Dispose(); return; }
+            if (Assets.Quitting) { packed?.Dispose(); return; }
             Callable.From(() => Arrived(generation, packed, path)).CallDeferred();
         });
     }
@@ -89,15 +76,12 @@ sealed class TableBackdrop
         return BlockCompress.Compress(img, false);
     }
 
-    void Arrived(int generation, Packed? packed, string path)
+    void Arrived(int generation, Image? packed, string path)
     {
-        if (generation != _generation) { packed?.Sky.Dispose(); packed?.Ground?.Dispose(); return; }
+        if (generation != _generation) { packed?.Dispose(); return; }
         if (packed == null) { GD.PrintErr("[backdrop] no picture in " + path); ShowColour(Plain); return; }
-        _sky.SetShaderParameter("panorama", ImageTexture.CreateFromImage(packed.Sky));
-        _sky.SetShaderParameter("ground", packed.Ground == null ? default(Variant) : ImageTexture.CreateFromImage(packed.Ground));
-        _sky.SetShaderParameter("halves", packed.Ground != null);
-        packed.Sky.Dispose();
-        packed.Ground?.Dispose();
+        _sky.SetShaderParameter("panorama", ImageTexture.CreateFromImage(packed));
+        packed.Dispose();
         _env.BackgroundMode = Godot.Environment.BGMode.Sky;
     }
 }

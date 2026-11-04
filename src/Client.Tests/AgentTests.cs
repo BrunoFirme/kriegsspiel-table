@@ -433,7 +433,7 @@ public class TableToolsTests
         while (repo != null && !File.Exists(Path.Combine(repo.FullName, "KriegsspielTable.sln"))) repo = repo.Parent;
         Assert.NotNull(repo);
         var dir = Path.Combine(repo!.FullName, "src", "App", "backdrops");
-        var shipped = Backdrops.All.SelectMany(b => new[] { b.File, b.Ground }).OfType<string>().ToList();
+        var shipped = Backdrops.All.Select(b => b.File).ToList();
         Assert.All(shipped, f => Assert.True(File.Exists(Path.Combine(dir, f)), f));
         Assert.DoesNotContain(Directory.GetFiles(dir).Select(Path.GetFileName), f => !f!.StartsWith('.') && !shipped.Contains(f));
     }

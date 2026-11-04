@@ -206,10 +206,13 @@ The ⋯ after the scenario's name opens its properties: briefing, clock, light a
   window of its own, with find. Observers never see it.
 - **Light:** presets and sliders, or **Follow the game clock** for dawn, day and dusk.
 - **Grid:** squares or hexes over the table. Nothing snaps to it.
-- **Light & surroundings:** also what everyone sees past the table's edge (a drawing room, a baroque hall, castle
-  vaults, a Chinese garden, the Great Wall, an island beach, a shipwreck coast, meadow, hills, orchard,
-  steppe, open sky by day, at sundown or at night, stars, a solid colour, or your own panorama; a sky sets its light)
-  and the table under the map. The table grows to hold what is on it.
+- **Light & surroundings:** also what everyone sees past the table's edge (a drawing room, a Chinese garden, an
+  island beach, a shipwreck coast, meadow, hills, orchard, steppe, open sky by day, at sundown or at night, stars, a
+  solid colour, or your own panorama; a sky sets its light) and the table under the map. The table grows to hold what
+  is on it.
+
+## Play by post
+
 - Close the game any time; host it again to go on. The password and the people let in stay.
 - **To hand it over:** export the scenario and set **Saves** to **The game in play** (or **Every save**). The
   other umpire resumes where you left off.
