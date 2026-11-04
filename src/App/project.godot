@@ -32,6 +32,13 @@ project/solution_directory="../.."
 anti_aliasing/quality/msaa_3d=2
 textures/default_filters/anisotropic_filtering_level=4
 
+[shader_globals]
+
+ground_style={
+"type": "int",
+"value": 0
+}
+
 [steam]
 
 app_id=0

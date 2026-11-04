@@ -22,27 +22,9 @@ public partial class ReliefSurface : Node3D
 
     const string StyleParameter = "ground_style";
 
-    static Shader GroundShader
-    {
-        get
-        {
-            if (_shader != null) return _shader;
-            AddStyleParameter();
-            return _shader = new Shader { Code = FileAccess.GetFileAsString("res://shaders/ground.gdshader") };
-        }
-    }
+    static Shader GroundShader => _shader ??= new Shader { Code = FileAccess.GetFileAsString("res://shaders/ground.gdshader") };
 
-    static void AddStyleParameter()
-    {
-        if (!RenderingServer.GlobalShaderParameterGetList().Contains(StyleParameter))
-            RenderingServer.GlobalShaderParameterAdd(StyleParameter, RenderingServer.GlobalShaderParameterType.Int, 0);
-    }
-
-    public static void ShowStyle(string? style)
-    {
-        AddStyleParameter();
-        RenderingServer.GlobalShaderParameterSet(StyleParameter, MapStyles.Index(style));
-    }
+    public static void ShowStyle(string? style) => RenderingServer.GlobalShaderParameterSet(StyleParameter, MapStyles.Index(style));
 
     public static Vector4[] Palette()
     {
