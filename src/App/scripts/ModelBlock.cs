@@ -34,6 +34,19 @@ public partial class ModelStudio
 
     void ApplyTurn() => _root.Rotation = new Vector3(0, 0, _turned ? Mathf.Pi : 0);
 
+    bool _reprintAsked;
+
+    internal void Reprint()
+    {
+        if (_reprintAsked) return;
+        _reprintAsked = true;
+        Callable.From(() =>
+        {
+            _reprintAsked = false;
+            if (IsInstanceValid(this)) ShowPrinting();
+        }).CallDeferred();
+    }
+
     void ShowPrinting()
     {
         if (_printing != null && GodotObject.IsInstanceValid(_printing)) _printing.QueueFree();
@@ -59,7 +72,7 @@ public partial class ModelStudio
     }
 
     string FlatSig(PieceDef d) => string.Join("|", PieceFaces.Of(d).Where(f => !PieceFaces.IsShapeFace(f.Key)).Select(f => f.Sha ?? "-"))
-        + $"|{d.Shape}|{d.Size.W}|{d.Size.H}|{d.Thickness}|{d.Tint}|{_flatState}|{d.AddOnMesh}|{d.AddOnTexture}|"
+        + $"|{d.Shape}|{d.Size.W}|{d.Size.H}|{d.Thickness}|{d.Tint}|{d.TintsPictures}|{_flatState}|{d.AddOnMesh}|{d.AddOnTexture}|"
         + string.Join(",", d.States.Select(s => $"{s.Shape}:{s.Size?.W}:{s.Size?.H}"));
 
     public void ShowState(int state)
@@ -108,9 +121,10 @@ public partial class ModelStudio
         var (top, under, side) =
             BlockMesh.Slab(outline, w, h, t, p => new Vector2(p.X / w + 0.5f, p.Y / h + 0.5f), p => new Vector2(0.5f - p.X / w, p.Y / h + 0.5f), (_, _) => new Vector2(0.5f, 0.5f));
 
+        var faceTint = d.TintsPictures ? d.Tint : Colors.White.ToHtml();
         if (front != null)
         {
-            var fv = AddView(new ModelPart { Id = front.Key, Name = front.Label, Kind = "face" }, top, frontImg, cut);
+            var fv = AddView(new ModelPart { Id = front.Key, Name = front.Label, Kind = "face", Tint = faceTint }, top, frontImg, cut);
             fv.Face = front.Key;
             fv.OpenSha = front.Sha;
         }
@@ -119,7 +133,7 @@ public partial class ModelStudio
             var own = back.Sha != null && back.Sha != front?.Sha ? FaceImage(back.Sha) : null;
             var img = own;
             if (img == null) { img = (Image)frontImg.Duplicate(); img.FlipX(); }
-            var bv = AddView(new ModelPart { Id = back.Key, Name = back.Label, Kind = "face" }, under, img, cut);
+            var bv = AddView(new ModelPart { Id = back.Key, Name = back.Label, Kind = "face", Tint = faceTint }, under, img, cut);
             bv.Face = back.Key;
             bv.OpenSha = back.Sha;
             bv.FlipFront = own == null;

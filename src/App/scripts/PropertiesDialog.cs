@@ -124,7 +124,7 @@ sealed class PropertiesDialog : HudPart
         var tintRow = new HBoxContainer();
         tintRow.AddThemeConstantOverride("separation", 6);
         var cp = new ColorPickerButton { Color = Coords.ParseColor(p.TintOverride ?? _def?.Tint, Colors.White), CustomMinimumSize = new Vector2(60, 26), EditAlpha = false };
-        cp.PopupClosed += () => S.Do(new SetTint { Layer = layer, Id = p.Id, Value = "#" + cp.Color.ToHtml(false) });
+        Ui.WhenPicked(cp, c => S.Do(new SetTint { Layer = layer, Id = p.Id, Value = "#" + c.ToHtml(false) }));
         tintRow.AddChild(cp);
         var reset = Btn("Reset", () => S.Do(new SetTint { Layer = layer, Id = p.Id, Value = null }), "Back to the tint the piece was made with");
         Ui.MakeQuiet(reset);

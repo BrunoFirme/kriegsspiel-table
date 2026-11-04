@@ -373,15 +373,15 @@ internal sealed class ToolPanel
         row.AddChild(italic);
         var olc = new ColorPickerButton { Color = Hex.To(l.OutlineColor, Colors.Black), EditAlpha = true, CustomMinimumSize = new Vector2(30, 24), TooltipText = "The outline's colour" };
         var olw = new SpinBox { MinValue = 0, MaxValue = 60, Step = 0.5, Value = l.OutlineW, CustomMinimumSize = new Vector2(60, 0), TooltipText = "Outline width (0: none)" };
-        void SetOutline()
+        void SetOutline(Color colour)
         {
             l.OutlineW = (float)olw.Value;
-            l.OutlineColor = l.OutlineW > 0 ? Hex.Of(olc.Color) : null;
+            l.OutlineColor = l.OutlineW > 0 ? Hex.Of(colour) : null;
             Canvas.Refresh(l);
             Canvas.Commit("Text outline");
         }
-        olc.PopupClosed += SetOutline;
-        olw.ValueChanged += _ => SetOutline();
+        Ui.WhenPicked(olc, SetOutline);
+        olw.ValueChanged += _ => SetOutline(olc.Color);
         row.AddChild(olc);
         row.AddChild(olw);
     }

@@ -367,7 +367,7 @@ internal sealed class StudioLayersPanel
     ColorPickerButton ColourBtn(string hex, Action<string> set)
     {
         var b = new ColorPickerButton { Color = Hex.To(hex, Colors.White), EditAlpha = true, CustomMinimumSize = new Vector2(44, 24) };
-        b.PopupClosed += () => set(Hex.Of(b.Color));
+        Ui.WhenPicked(b, c => set(Hex.Of(c)));
         return b;
     }
 
@@ -384,15 +384,15 @@ internal sealed class StudioLayersPanel
             Canvas.Redraw();
             Canvas.Commit("Background");
         };
-        bg.PopupClosed += () =>
+        Ui.WhenPicked(bg, c =>
         {
             if (Canvas.Doc.Bg != null)
             {
-                Canvas.Doc.Bg = Hex.Of(bg.Color);
+                Canvas.Doc.Bg = Hex.Of(c);
                 Canvas.Redraw();
                 Canvas.Commit("Background");
             }
-        };
+        });
         row.AddChild(see);
         row.AddChild(bg);
         into.AddChild(row);

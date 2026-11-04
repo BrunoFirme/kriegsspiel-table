@@ -28,7 +28,7 @@ sealed partial class ScenarioDialog
         colour.Visible = pick.Selected == 0;
         string Hex() => "#" + colour.Color.ToHtml(false);
         colour.ColorChanged += _ => PreviewLook(l => l.Backdrop = Hex());
-        colour.PopupClosed += () => SendLook(l => l.Backdrop = Hex());
+        Ui.WhenPicked(colour, c => SendLook(l => l.Backdrop = "#" + c.ToHtml(false)));
         var choose = Btn("Choose a picture…", () => ChooseBackdrop(() => pick.Selected = Shown(S.View.Lighting.Backdrop)),
             "A panorama twice as wide as it is tall wraps all the way round; any picture or web link will do");
         choose.Visible = pick.Selected == own;

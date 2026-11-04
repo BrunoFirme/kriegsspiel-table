@@ -432,6 +432,9 @@ public static class Ui
         return l;
     }
 
+    public static void WhenPicked(ColorPickerButton button, Action<Color> picked) =>
+        button.PopupClosed += () => { var colour = button.Color; Callable.From(() => picked(colour)).CallDeferred(); };
+
     public static Button Swatch(Color colour, Vector2 size, string tip, bool chosen = false)
     {
         var b = new Button { CustomMinimumSize = size, TooltipText = tip, FocusMode = Control.FocusModeEnum.None };

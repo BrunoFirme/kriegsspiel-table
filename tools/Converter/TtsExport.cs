@@ -167,7 +167,7 @@ public sealed class TtsExport
             }
             var shape = st?.Shape ?? def.Shape;
             var token = shape == "alpha";
-            double k = token ? Math.Max(size.W, size.H) * p.Scale / _cfg.BaseSizes.CustomToken : size.H * p.Scale / _cfg.BaseSizes.CustomTile;
+            double k = token ? Math.Sqrt(size.W * size.H / _cfg.BaseSizes.CustomTokenArea) * p.Scale : size.H * p.Scale / _cfg.BaseSizes.CustomTile;
             var obj = Base(token ? "Custom_Token" : "Custom_Tile", nick, string.Join("\n", lines), Transform(p.Pos, y, p.RotDeg, k, 1.0, k), p.TintOverride ?? def.Tint, false);
             var img = UrlFor(pack, st?.Image ?? def.Image);
             var back = state > 0 && st != null ? st.Back : def.Back;

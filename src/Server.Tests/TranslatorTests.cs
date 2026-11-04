@@ -424,7 +424,7 @@ public class TranslatorTests
     }
 
     [Theory]
-    [InlineData("alpha", 0.24, 1.5)]
+    [InlineData("alpha", 0.1924284, 1.87)]
     [InlineData("box", 0.36, 0.87)]
     public void A_TTS_button_is_placed_and_lettered_by_the_piece_shape_whatever_its_own_tags(string shape, double unit, double em)
     {

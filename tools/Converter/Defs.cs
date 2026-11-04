@@ -153,7 +153,7 @@ public sealed partial class DefFactory
         return type switch
         {
             "Custom_Tile" => stretched ? new Size2(b.CustomTile * aspect, b.CustomTile * ratio) : new Size2(b.CustomTile, b.CustomTile * ratio),
-            "Custom_Token" => new Size2(b.CustomToken * aw, b.CustomToken * ah * ratio),
+            "Custom_Token" => new Size2(Math.Sqrt(b.CustomTokenArea * aspect), Math.Sqrt(b.CustomTokenArea / aspect) * ratio),
             "Custom_Board" => new Size2(b.CustomBoard * aw, b.CustomBoard * ah * ratio),
             "BlockSquare" => new Size2(b.BlockSquare, b.BlockSquare * ratio),
             "BlockRectangle" => new Size2(b.BlockSquare, 2 * b.BlockSquare * ratio),

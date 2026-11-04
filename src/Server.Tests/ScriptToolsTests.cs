@@ -65,7 +65,7 @@ public class ScriptToolsTests
     {
         using var t = new Table();
         t.Server.Handle(Table.Host, new SetScript { Layer = U, Id = P, Text = "function on_load() end" });
-        var mayBeNil = new HashSet<string> { "self.name", "self.note", "self.tint", "game.calibration" };
+        var mayBeNil = new HashSet<string> { "self.name", "self.note", "self.tint", "self.picture_size", "game.calibration" };
         var names = ApiDoc.All.Where(e => e.Group is "piece" or "board" or "game" or "ui" or "wait" or "json" && !mayBeNil.Contains(e.Qualified)).Select(e => e.Qualified).ToList();
         var missing = Result(t, P, "local out = {} " + string.Join(" ", names.Select(n => $"if {n} == nil then out[#out + 1] = \"{n}\" end")) + " return table.concat(out, \" \") .. \"|\"");
         Assert.Equal("|", missing);

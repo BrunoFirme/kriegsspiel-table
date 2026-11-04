@@ -205,6 +205,7 @@ Read from `self` or from any piece `board.find` or `board.pieces` hands back. Fi
 | [`self.y`](#selfy) | How high it sits above the table (stacked pieces). |
 | [`self.scale`](#selfscale) | Its size multiplier on the table. |
 | [`self.size`](#selfsize) | Its size on the map at its state and scale: { w =, h = }. |
+| [`self.picture_size`](#selfpicture_size) | Its picture's width and height in pixels at its state, or nil without a picture. |
 | [`self.shape`](#selfshape) | Its outline at its state: "box", "rounded", "circle", "hex", or "alpha" for a token cut along its picture. |
 | [`self.face_down`](#selfface_down) | Turned over. |
 | [`self.locked`](#selflocked) | Pinned to the table: not dragged, turned or resized by hand. |
@@ -384,6 +385,16 @@ Its size on the map at its state and scale: { w =, h = }.
 A state with a size of its own gives that size; otherwise the kind's. Both are multiplied by `scale`.
 
 **Tabletop Simulator** `getBounds`
+
+### `self.picture_size`
+
+```lua
+self.picture_size
+```
+
+Its picture's width and height in pixels at its state, or nil without a picture.
+
+**Type** `Size?`, read-only.
 
 ### `self.shape`
 

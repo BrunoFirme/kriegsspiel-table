@@ -135,9 +135,9 @@ sealed class MenuCards : HudPart
         {
             bool allReal = dice.All(n => n.Piece.PhysicalRoll);
             menu.Check("Thrown for real (the face it lands on)", allReal, () => SetOption(dice, PieceOptions.PhysicalRoll, !allReal));
-            var mine = dice.Where(n => S.CanTouch(n.Layer, n.Piece)).ToList();
-            if (mine.Count > 0) menu.Add(DieColorRow(mine, menu.Pop));
         }
+        var tintable = nodes.Where(n => !n.IsEffect && S.CanTouch(n.Layer, n.Piece)).ToList();
+        if (tintable.Count > 0) menu.Add(TintRows(tintable, hit, menu.Pop));
         menu.Separator();
         menu.Item("Cut", T.CutSelection, "Ctrl+X");
         menu.Item("Copy", T.CopySelection, "Ctrl+C");
@@ -170,30 +170,76 @@ sealed class MenuCards : HudPart
         }
     }
 
-    Control DieColorRow(List<PieceNode> dice, PopupPanel pop)
+    const int Swatch = 22, Round = 11, CheckColumn = 18, SwatchGap = 4, RowGap = 2;
+
+    Control TintRows(List<PieceNode> nodes, PieceNode hit, PopupPanel pop)
     {
-        const int Swatch = 22, Round = 11, CheckColumn = 18;
-        var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", 4);
-        row.AddChild(new Control { CustomMinimumSize = new Vector2(CheckColumn, 0) });
-        row.AddChild(new Label { Text = "Colour", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter });
+        void Tint(string? value)
+        {
+            var cmds = nodes.Select(n => (Command)new SetTint { Layer = n.Layer, Id = n.Piece.Id, Value = value }).ToList();
+            S.Do(cmds.Count == 1 ? cmds[0] : new Batch { Items = cmds });
+        }
+        var rows = new VBoxContainer();
+        rows.AddThemeConstantOverride("separation", RowGap);
+        var head = new HBoxContainer();
+        head.AddThemeConstantOverride("separation", SwatchGap);
+        head.AddChild(new Control { CustomMinimumSize = new Vector2(CheckColumn, 0) });
+        head.AddChild(new Label { Text = "Tint", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter });
+        if (nodes.Any(n => n.Piece.TintOverride != null))
+        {
+            var reset = new Button { Text = "Reset", TooltipText = "Back to the tint the piece was made with", FocusMode = Control.FocusModeEnum.None };
+            Ui.MakeQuiet(reset);
+            reset.Pressed += () => { pop.Hide(); Tint(null); };
+            head.AddChild(reset);
+        }
+        rows.AddChild(head);
+        var swatches = new HBoxContainer();
+        swatches.AddThemeConstantOverride("separation", SwatchGap);
+        swatches.AddChild(new Control { CustomMinimumSize = new Vector2(CheckColumn, 0) });
         foreach (var (name, hex) in DieColors.All)
         {
-            var color = Coords.ParseColor(hex, Colors.White);
-            var b = new Button { CustomMinimumSize = new Vector2(Swatch, Swatch), TooltipText = name, FocusMode = Control.FocusModeEnum.None };
-            b.AddThemeStyleboxOverride("normal", Ui.Box(color, Round, 0, 0));
-            b.AddThemeStyleboxOverride("hover", Ui.Box(color.Lightened(0.2f), Round, 0, 0));
-            b.AddThemeStyleboxOverride("pressed", Ui.Box(color.Darkened(0.2f), Round, 0, 0));
-            string? tint = hex == DieColors.All[0].Hex ? null : hex;
-            b.Pressed += () =>
-            {
-                pop.Hide();
-                var cmds = dice.Select(n => (Command)new SetTint { Layer = n.Layer, Id = n.Piece.Id, Value = tint }).ToList();
-                S.Do(cmds.Count == 1 ? cmds[0] : new Batch { Items = cmds });
-            };
-            row.AddChild(b);
+            var b = RoundSwatch(Coords.ParseColor(hex, Colors.White), name);
+            b.Pressed += () => { pop.Hide(); Tint(hex); };
+            swatches.AddChild(b);
         }
-        return row;
+        var more = RoundSwatch(new Color(1, 1, 1, 0.12f), "Any colour");
+        more.Text = "+";
+        more.Pressed += () =>
+        {
+            var at = pop.Position;
+            pop.Hide();
+            PickTint(Coords.ParseColor(hit.Piece.TintOverride ?? hit.Def?.Tint, Colors.White), at, Tint);
+        };
+        swatches.AddChild(more);
+        rows.AddChild(swatches);
+        return rows;
+    }
+
+    static Button RoundSwatch(Color color, string tip)
+    {
+        var b = new Button { CustomMinimumSize = new Vector2(Swatch, Swatch), TooltipText = tip, FocusMode = Control.FocusModeEnum.None };
+        b.AddThemeStyleboxOverride("normal", Ui.Box(color, Round, 0, 0));
+        b.AddThemeStyleboxOverride("hover", Ui.Box(color.Lightened(0.2f), Round, 0, 0));
+        b.AddThemeStyleboxOverride("pressed", Ui.Box(color.Darkened(0.2f), Round, 0, 0));
+        return b;
+    }
+
+    void PickTint(Color start, Vector2I at, Action<string?> tint)
+    {
+        var pop = new PopupPanel();
+        var picker = new ColorPicker
+        {
+            Color = start, EditAlpha = false, PresetsVisible = false, SamplerVisible = false, ColorModesVisible = false,
+            SlidersVisible = true, HexVisible = true, CanAddSwatches = false,
+        };
+        pop.AddChild(picker);
+        pop.PopupHide += () =>
+        {
+            pop.QueueFree();
+            if (picker.Color != start) tint("#" + picker.Color.ToHtml(false));
+        };
+        Ctx.Root.AddChild(pop);
+        pop.Popup(new Rect2I(at, Vector2I.Zero));
     }
 
     Control PieceNotes(PieceNode node, PopupPanel pop)

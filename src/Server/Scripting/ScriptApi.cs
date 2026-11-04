@@ -340,6 +340,7 @@ internal sealed class PieceHandles(ScriptHost host)
                 t.Table["h"] = N(sz.H * p.Scale);
                 return t;
             }
+            case "picture_size": return PictureSize(p, def);
             case "shape":
             {
                 var sh = def != null && p.State > 0 && p.State < def.States.Count ? def.States[p.State].Shape : null;
@@ -371,6 +372,19 @@ internal sealed class PieceHandles(ScriptHost host)
             case "to_local": return Fn(a => XzTable(ToLocal(p, Arg(a, 0).CastToNumber() ?? 0, Arg(a, 1).CastToNumber() ?? 0)));
             default: return null;
         }
+    }
+
+    DynValue PictureSize(PieceInstance p, PieceDef? def)
+    {
+        var store = host.Server.Store;
+        var shown = p.Picture is { } other ? store?.Def(other) : def;
+        if (shown == null || store?.PackOfDef(shown.Id) is not { } pack) return DynValue.Nil;
+        var picture = (p.State > 0 && p.State < shown.States.Count ? shown.States[p.State].Image : null) ?? shown.Image;
+        if (picture == null || !pack.Assets.TryGetValue(picture, out var a) || a.W <= 0 || a.H <= 0) return DynValue.Nil;
+        var t = T();
+        t.Table["w"] = N(a.W);
+        t.Table["h"] = N(a.H);
+        return t;
     }
 
     DynValue ListTable(IEnumerable<DynValue> items)

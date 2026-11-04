@@ -223,7 +223,22 @@ public partial class PieceStudio : CanvasLayer
     {
         if (c is Say say) Script.LogLine(say.Text, say.Color);
         if (_view == "paint" && Paper.Instance(_sel) is { } p) { _canvas.Widgets = p.Widgets.ToList(); _canvas.Redraw(); }
+        if (_view == "model" && _model != null && Paper.Instance(_sel) is { } shown && Reprints(c, shown.Id)) _model.Reprint();
     }
+
+    static bool Reprints(Command c, string id) => c switch
+    {
+        Batch b => b.Items.Any(i => Reprints(i, id)),
+        SetDecals x => x.Id == id,
+        SetWidgets x => x.Id == id,
+        EditWidget x => x.Id == id,
+        SetLines x => x.Id == id,
+        SetText x => x.Id == id,
+        SetCounter x => x.Id == id,
+        SetPicture x => x.Id == id,
+        SetTint x => x.Id == id,
+        _ => false,
+    };
 
     internal async void Select(PieceDef d, bool frame)
     {

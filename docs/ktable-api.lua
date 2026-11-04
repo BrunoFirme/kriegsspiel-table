@@ -132,6 +132,7 @@
 ---@field y number How high it sits above the table (stacked pieces).
 ---@field scale number Its size multiplier on the table.
 ---@field size Size Its size on the map at its state and scale: { w =, h = }.
+---@field picture_size Size|nil Its picture's width and height in pixels at its state, or nil without a picture.
 ---@field shape string Its outline at its state: "box", "rounded", "circle", "hex", or "alpha" for a token cut along its picture.
 ---@field face_down boolean Turned over.
 ---@field locked boolean Pinned to the table: not dragged, turned or resized by hand.

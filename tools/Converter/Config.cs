@@ -33,7 +33,7 @@ public sealed class ScenarioCfg
 public sealed class BaseSizes
 {
     public double CustomTile { get; set; } = 2.0;
-    public double CustomToken { get; set; } = 3.0;
+    public double CustomTokenArea { get; set; } = 14.0;
     public double CustomBoard { get; set; } = 16.7;
     public double BlockSquare { get; set; } = 1.0;
 }

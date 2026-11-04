@@ -81,7 +81,7 @@ The tool strip runs down the left. Point at any tool and press **F1** for its se
 - Drag a piece to carry it; it drops where you let go. Drag the empty table to box-select.
 - **Q / E** turn 15° (Shift 1°). The wheel over a selected piece turns it 10° (Ctrl 2°, Shift ½°).
 - **+ / −** resize, **Ctrl+1–9** form rows, **Ctrl+X / C / V** cut, copy and paste, **Delete**, **Ctrl+Z / Ctrl+Y** undo and redo.
-- **Right-click** a piece for everything else: looks, counters, markers, lock, POV, Properties.
+- **Right-click** a piece for everything else: looks, counters, markers, lock, tint, POV, Properties.
 
 ### Turn and resize
 
@@ -112,6 +112,8 @@ The tool strip runs down the left. Point at any tool and press **F1** for its se
   included, and are in the scenario file: not a hiding place.
 - **Markers:** drop a small piece on a larger one and it rides along. Drop it elsewhere to free it.
 - **Locked:** right-click → **Locked** pins a piece: it can be read and deleted, not moved.
+- **Tint:** right-click → **Tint** colours every selected piece: a swatch, **+** for any colour, **Reset** for the
+  colour it was made with. Where it shows follows TTS: a token's picture, a tile's sides; decals keep their colours.
 - **Effects** (fire, smoke, fog, musketry, arrow volleys) are placed like pieces.
 - **Scripts:** a piece's buttons and boxes work with a click. Right-click → **Scripting…** opens its script;
   see the [scripting guide](scripting.md).
@@ -121,7 +123,7 @@ The tool strip runs down the left. Point at any tool and press **F1** for its se
 The **Dice** button shows or hides the dice panel: tap d4 to d20 (twice for two), then **Roll**. The result stays in the
 panel for the next roll. Or drag dice from the standard pack and throw them, shake them in your hand before letting go,
 or press **R** to roll in place. The host decides every result and the Log shows it. Hover a die for its result;
-right-click it for its **Colour**.
+right-click it for its **Tint**.
 
 ### Ruler
 

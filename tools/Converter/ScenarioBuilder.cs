@@ -377,21 +377,32 @@ public sealed class ScenarioBuilder
         return fx;
     }
 
-    public static List<DecalDef> DecalsOf(TtsObj o, PieceDef def, Func<string, string?> picture)
+    public static (double X, double Z) LocalUnits(TtsObj o, PieceDef def, double tokenArea)
+    {
+        const double TileLocalSpan = 2;
+        double depth = o.ScaleX == 0 ? 1 : Math.Abs(o.ScaleZ / o.ScaleX);
+        if (depth == 0) depth = 1;
+        double x = def.Tags.Contains("token") ? Math.Sqrt(def.Size.W * def.Size.H / (tokenArea * depth)) : def.Size.H / (TileLocalSpan * depth);
+        return (x, x * depth);
+    }
+
+    public static List<DecalDef> DecalsOf(TtsObj o, PieceDef def, double tokenArea, Func<string, string?> picture)
     {
         const double TtsDecalTurn = 180, Digits = 4;
-        double u = def.Tags.Contains("token") ? Math.Max(def.Size.W, def.Size.H) / 3 : def.Size.H / 2;
+        var (ux, uz) = LocalUnits(o, def, tokenArea);
         var list = new List<DecalDef>();
         foreach (var d in o.Decals.Take(DecalDef.MostOnAPiece))
         {
             if (picture(d.Url) is not { } pic) continue;
             bool back = d.PosY < 0;
-            double w = Math.Abs(d.ScaleX) * u, h = Math.Abs(d.ScaleY) * u;
+            double turn = (d.RotY - TtsDecalTurn) * Math.PI / 180, cos = Math.Cos(turn), sin = Math.Sin(turn);
+            double w = Math.Abs(d.ScaleX) * Math.Sqrt(ux * ux * cos * cos + uz * uz * sin * sin);
+            double h = Math.Abs(d.ScaleY) * Math.Sqrt(ux * ux * sin * sin + uz * uz * cos * cos);
             if (w <= 0 || h <= 0) continue;
             list.Add(new DecalDef
             {
                 Picture = pic, Name = d.Name, Face = back ? "back" : "front",
-                X = Math.Round((back ? d.PosX : -d.PosX) * u, (int)Digits), Z = Math.Round(d.PosZ * u, (int)Digits),
+                X = Math.Round((back ? d.PosX : -d.PosX) * ux, (int)Digits), Z = Math.Round(d.PosZ * uz, (int)Digits),
                 W = Math.Round(w, (int)Digits), H = Math.Round(h, (int)Digits), Rot = Math.Round(d.RotY - TtsDecalTurn, 2),
             });
         }
@@ -466,7 +477,7 @@ public sealed class ScenarioBuilder
             }
         }
         if (o.Color is { } col && !string.Equals(col, def.Tint, StringComparison.OrdinalIgnoreCase)) inst.TintOverride = col;
-        inst.Decals = DecalsOf(o, def, url => _defs.UiAsset(extras, url, $"{layer.Name} {o.Name} '{o.Nickname}' {o.Guid} decal"));
+        inst.Decals = DecalsOf(o, def, _cfg.BaseSizes.CustomTokenArea, url => _defs.UiAsset(extras, url, $"{layer.Name} {o.Name} '{o.Nickname}' {o.Guid} decal"));
         layer.Pieces.Add(inst);
         layer.Y[inst] = o.PosY;
 

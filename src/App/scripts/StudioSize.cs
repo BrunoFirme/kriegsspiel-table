@@ -56,7 +56,7 @@ static class SizeForm
     {
         var row = new HBoxContainer();
         var tint = new ColorPickerButton { Color = Coords.ParseColor(hex, Colors.White), CustomMinimumSize = new Vector2(48, 24), EditAlpha = false, TooltipText = tip };
-        tint.PopupClosed += () => set("#" + tint.Color.ToHtml(false));
+        Ui.WhenPicked(tint, c => set("#" + c.ToHtml(false)));
         row.AddChild(tint);
         row.AddChild(Ui.Btn("White", () => { tint.Color = Colors.White; set("#FFFFFF"); }));
         return row;

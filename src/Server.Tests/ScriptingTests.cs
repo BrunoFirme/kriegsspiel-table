@@ -397,6 +397,29 @@ public class ScriptingTests
     }
 
     [Fact]
+    public void A_TTS_script_s_decal_fitted_to_an_unevenly_scaled_token_covers_the_token()
+    {
+        const double TokenArea = 14, ScaleX = 0.56, ScaleZ = 0.3928227, Fit = 0.02;
+        const int PictureW = 678, PictureH = 103;
+        using var t = new Table();
+        var def = t.Store.Def("inf")!;
+        double aspect = PictureW / (double)PictureH;
+        def.Shape = "alpha";
+        def.Image = "line";
+        def.Size = new Size2(Math.Sqrt(TokenArea * aspect) * ScaleX, Math.Sqrt(TokenArea / aspect) * ScaleZ);
+        t.Store.PackOfDef("inf")!.Assets["line"] = new AssetEntry { File = "assets/line.png", W = PictureW, H = PictureH };
+        var tr = KTable.Server.Scripting.Translate.TtsTranslator.Translate("""
+            function onLoad()
+              self.setDecals({ { name = "Outline", url = "arms", position = {0, 0.055, 0}, rotation = {90, 180, 0}, scale = {9.6, 1.45, 1} } })
+            end
+            """);
+        SetScript(t, tr.Script);
+        var d = Assert.Single(t.Server.State.Find(U, P)!.Decals);
+        Assert.InRange(d.W / def.Size.W, 1 - Fit, 1 + Fit);
+        Assert.InRange(d.H / def.Size.H, 1 - Fit, 1 + Fit);
+    }
+
+    [Fact]
     public void A_TTS_decal_on_the_web_is_fetched_and_a_picture_dialog_answers_with_a_fetched_link()
     {
         using var t = new Table();

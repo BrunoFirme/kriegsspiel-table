@@ -146,10 +146,36 @@ public sealed partial class ConverterTests : IDisposable
             ["AttachedDecals"] = new JsonArray(Decal("http://a/arms.png", 0.5, 0.2, -0.4, 180, 0.6, 0.4), Decal("http://a/under.png", 0.5, -0.2, 0, 200, 1, 1), Decal("http://a/gone.png", 0, 0.2, 0, 180, 1, 1)),
         });
         var def = new PieceDef { Size = new Size2(2, 1) };
-        var ds = ScenarioBuilder.DecalsOf(o, def, url => url.Contains("gone") ? null : url);
+        var ds = ScenarioBuilder.DecalsOf(o, def, TokenArea, url => url.Contains("gone") ? null : url);
         Assert.Equal(2, ds.Count);
         Assert.Equal(("http://a/arms.png", "front", -0.25, -0.2, 0.3, 0.2, 0.0), (ds[0].Picture, ds[0].Face, ds[0].X, ds[0].Z, ds[0].W, ds[0].H, ds[0].Rot));
         Assert.Equal(("back", 0.25, 20.0), (ds[1].Face, ds[1].X, ds[1].Rot));
+    }
+
+    const double TokenArea = 14;
+
+    [Theory]
+    [InlineData(678, 266, 0.26, 0.26, 5.97, 2.34)]
+    [InlineData(678, 103, 0.56, 0.3928227, 9.6, 1.45)]
+    [InlineData(3069, 150, 0.3278833, 0.23, 16.92, 0.81)]
+    public void A_decal_fitted_to_a_token_in_tabletop_simulator_covers_the_token_here_too(int pw, int ph, double sx, double sz, double dw, double dh)
+    {
+        double aspect = pw / (double)ph;
+        var def = new PieceDef { Size = new Size2(Math.Sqrt(TokenArea * aspect) * sx, Math.Sqrt(TokenArea / aspect) * sz), Tags = new() { "token" } };
+        var o = new TtsObj(new JsonObject
+        {
+            ["Name"] = "Custom_Token",
+            ["Transform"] = new JsonObject { ["scaleX"] = sx, ["scaleY"] = 1, ["scaleZ"] = sz },
+            ["AttachedDecals"] = new JsonArray(new JsonObject
+            {
+                ["Transform"] = new JsonObject { ["posX"] = 0, ["posY"] = 0.055, ["posZ"] = 0, ["rotX"] = 90, ["rotY"] = 180, ["rotZ"] = 0, ["scaleX"] = dw, ["scaleY"] = dh, ["scaleZ"] = 1 },
+                ["CustomDecal"] = new JsonObject { ["Name"] = "Outline", ["ImageURL"] = "http://a/outline.png", ["Size"] = 1 },
+            }),
+        });
+        var d = Assert.Single(ScenarioBuilder.DecalsOf(o, def, TokenArea, url => url));
+        const double Fit = 0.03;
+        Assert.InRange(d.W / def.Size.W, 1 - Fit, 1 + Fit);
+        Assert.InRange(d.H / def.Size.H, 1 - Fit, 1 + Fit);
     }
 
     [Fact]

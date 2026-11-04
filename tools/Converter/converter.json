@@ -31,7 +31,8 @@
   "baseSizes": {
     "customTile": 2.0,
     "customTileNote": "height at scale 1 for stretched tiles (width = height × image aspect); TTS behaviour",
-    "customToken": 3.0,
+    "customTokenArea": 14.0,
+    "customTokenAreaNote": "width × depth at scale 1 for any picture (width = √(area × image aspect)); TTS behaviour",
     "customBoard": 16.7,
     "blockSquare": 1.0
   },

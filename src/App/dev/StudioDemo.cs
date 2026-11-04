@@ -63,6 +63,18 @@ sealed class StudioDemo
             case "report":
                 Report();
                 break;
+            case "tintpick":
+            {
+                var b = _s.FindChildren("*", nameof(ColorPickerButton), true, false).OfType<ColorPickerButton>().FirstOrDefault(x => x.IsVisibleInTree() && x.TooltipText.StartsWith("The colour of the piece"));
+                if (b == null) { GD.PrintErr("[studio] no tint button in view"); break; }
+                b.GetPopup().Popup();
+                await Frames(2);
+                b.GetPicker().Color = b.Color = Color.FromHtml(arg);
+                b.GetPopup().Hide();
+                await Frames(6);
+                GD.Print($"[studio] tint picked {arg}");
+                break;
+            }
             case "shot":
                 await Frames(3);
                 _s.GetViewport().GetTexture().GetImage().SavePng(arg);
@@ -261,6 +273,7 @@ sealed class StudioDemo
         {
             foreach (var f in PieceFaces.Of(_s.Sel)) GD.Print($"[studio]   face {f.Key}: {(f.Sha == null ? "none" : f.Sha[..10] + (ArtStore.Load(_s.Store, _s.Pack.Id, f.Sha) is { } d ? $" (doc, {d.Layers.Count} layers)" : " (flat)"))}");
             GD.Print($"[studio]   undo {_s.Canvas.CanUndo} redo {_s.Canvas.CanRedo}; dirty {_s.Faces.Dirty}; instances {_s.S.View.Layer(Layers.Umpire).Count}");
+            if (_s.Paper.Instance(_s.Sel) is { } shown) GD.Print($"[studio]   on the paper: tint {shown.TintOverride ?? _s.Sel.Tint}, {shown.Decals.Count} decals, {shown.Widgets.Count} widgets, face down {shown.FaceDown}");
         }
     }
 }

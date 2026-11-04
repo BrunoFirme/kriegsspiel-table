@@ -7,14 +7,18 @@ local function vec(v, k, i, d)
   if x == nil then x = v[i] end
   return num(x, d)
 end
-local function unit(obj)
+local TOKEN_AREA = 14
+local function units(obj)
   local s = obj.size
-  if not s then return 0.5 end
+  if not s then return 0.5, 0.5 end
   local k = obj.scale
   if type(k) ~= "number" or k <= 0 then k = 1 end
   local w, h = s.w / k, s.h / k
-  if obj.shape == "alpha" then return math.max(w, h) / 3 end
-  return h / 2
+  if obj.shape ~= "alpha" then return h / 2, h / 2 end
+  local px = obj.picture_size
+  if not px or px.w <= 0 or px.h <= 0 then local u = math.sqrt(w * h / TOKEN_AREA); return u, u end
+  local aspect = px.w / px.h
+  return w / math.sqrt(TOKEN_AREA * aspect), h / math.sqrt(TOKEN_AREA / aspect)
 end
 
 local TTS_COLORS = { "White", "Red", "Blue", "Green", "Yellow", "Orange", "Purple", "Pink", "Brown", "Teal", "Grey", "Black" }
@@ -154,14 +158,14 @@ function compat.scale_by(obj, k) obj.set_scale((obj.scale or 1) * num(k, 1)) end
 function compat.rotate(obj, v) obj.set_rot((obj.rot or 0) + vec(v, "y", 2, 0)) end
 function compat.translate(obj, v) obj.set_pos(obj.pos.x + vec(v, "x", 1, 0), obj.pos.z + vec(v, "z", 3, 0)) end
 function compat.position_to_world(obj, v)
-  local u = unit(obj)
-  local w = obj.to_world(vec(v, "x", 1, 0) * u, vec(v, "z", 3, 0) * u)
+  local ux, uz = units(obj)
+  local w = obj.to_world(vec(v, "x", 1, 0) * ux, vec(v, "z", 3, 0) * uz)
   return compat.Vector(w.x, vec(v, "y", 2, 0), w.z)
 end
 function compat.position_to_local(obj, v)
-  local u = unit(obj)
+  local ux, uz = units(obj)
   local l = obj.to_local(vec(v, "x", 1, 0), vec(v, "z", 3, 0))
-  return compat.Vector(l.x / u, vec(v, "y", 2, 0), l.z / u)
+  return compat.Vector(l.x / ux, vec(v, "y", 2, 0), l.z / uz)
 end
 function compat.transform_forward(obj) local a = math.rad(obj.rot or 0); return compat.Vector(math.sin(a), 0, math.cos(a)) end
 function compat.transform_right(obj) local a = math.rad(obj.rot or 0); return compat.Vector(math.cos(a), 0, -math.sin(a)) end
@@ -243,11 +247,11 @@ function compat.highlight(obj, color, seconds) end
 function compat.highlight_off(obj) end
 function compat.set_vector_lines(obj, lines)
   pbag(obj).lines = lines
-  local u = unit(obj)
+  local ux, uz = units(obj)
   local ours = {}
   for _, l in ipairs(lines or {}) do
     local pts = {}
-    for _, p in ipairs(l.points or {}) do pts[#pts + 1] = { x = vec(p, "x", 1, 0) * u, z = vec(p, "z", 3, 0) * u } end
+    for _, p in ipairs(l.points or {}) do pts[#pts + 1] = { x = vec(p, "x", 1, 0) * ux, z = vec(p, "z", 3, 0) * uz } end
     if #pts >= 2 then ours[#ours + 1] = { points = pts, color = compat.color(l.color), width = num(l.thickness, 0.1), loop = l.loop == true } end
   end
   obj.set_lines(ours)
@@ -259,14 +263,17 @@ local function our_decal(obj, d)
   local url = d and d.url
   if type(url) ~= "string" or url == "" then return nil end
   if is_web(url) then url = web_pictures[url] if not url then return nil end end
-  local u = unit(obj)
+  local ux, uz = units(obj)
   local px, py, pz = vec(d.position, "x", 1, 0), vec(d.position, "y", 2, 0), vec(d.position, "z", 3, 0)
   local back = py < 0
+  local rot = vec(d.rotation, "y", 2, 0) - 180
+  local c, s = math.cos(math.rad(rot)), math.sin(math.rad(rot))
   return {
     picture = url, name = tostring(d.name or ""), face = back and "back" or "front",
-    x = (back and px or -px) * u, z = pz * u,
-    w = math.abs(vec(d.scale, "x", 1, 1)) * u, h = math.abs(vec(d.scale, "y", 2, 1)) * u,
-    rot = vec(d.rotation, "y", 2, 0) - 180,
+    x = (back and px or -px) * ux, z = pz * uz,
+    w = math.abs(vec(d.scale, "x", 1, 1)) * math.sqrt((ux * c) ^ 2 + (uz * s) ^ 2),
+    h = math.abs(vec(d.scale, "y", 2, 1)) * math.sqrt((ux * s) ^ 2 + (uz * c) ^ 2),
+    rot = rot,
   }
 end
 local function apply_decals(obj)
@@ -392,11 +399,11 @@ function compat.tts_handler(fn)
   end
 end
 
-local BUTTON_EM, TOKEN_BUTTON_EM, INPUT_SCALE = 0.87, 1.5, 2.2
+local BUTTON_EM, TOKEN_BUTTON_EM, INPUT_SCALE = 0.87, 1.87, 2.2
 local ALIGN = { [2] = "left", [3] = "center", [4] = "right" }
 
 function compat.widget_spec(obj, t, kind, env)
-  local u = unit(obj)
+  local ux, uz = units(obj)
   local px, pz = vec(t.position, "x", 1, 0), vec(t.position, "z", 3, 0)
   local rx, ry, rz = vec(t.rotation, "x", 1, 0), vec(t.rotation, "y", 2, 0), vec(t.rotation, "z", 3, 0)
   local k = kind == "input" and INPUT_SCALE or 1
@@ -407,9 +414,9 @@ function compat.widget_spec(obj, t, kind, env)
   local back = turned and not on_top
   local s = {
     face = back and "back" or "front", kind = turned and on_top and "label" or kind,
-    x = (back and -px or px) * u, z = pz * u, rot = ry,
-    w = num(t.width, 0) / 1000 * sx * u, h = num(t.height, 0) / 1000 * sz * u,
-    font = num(t.font_size, 100) / 1000 * sx * u * em,
+    x = (back and -px or px) * ux, z = pz * uz, rot = ry,
+    w = num(t.width, 0) / 1000 * sx * ux, h = num(t.height, 0) / 1000 * sz * uz,
+    font = num(t.font_size, 100) / 1000 * sx * uz * em,
     color = compat.color(t.color), text_color = compat.color(t.font_color), tooltip = t.tooltip,
     align = ALIGN[num(t.alignment, 3)] or "center",
   }

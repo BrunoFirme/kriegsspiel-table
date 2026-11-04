@@ -425,13 +425,13 @@ internal sealed class ModelPanels
         var row = new HBoxContainer();
         row.AddThemeConstantOverride("separation", 6);
         var tint = new ColorPickerButton { Color = Hex.To(s.Tint, Colors.White), CustomMinimumSize = new Vector2(48, 26), EditAlpha = false, TooltipText = "Multiplies the shape's colours" };
-        tint.PopupClosed += () =>
+        Ui.WhenPicked(tint, c =>
         {
             _m.Snapshot();
-            s.Tint = Hex.Of(tint.Color);
+            s.Tint = Hex.Of(c);
             _m.RefreshSelection();
             _m.Changed(mesh: false);
-        };
+        });
         row.AddChild(new Label { Text = "Tint", CustomMinimumSize = new Vector2(44, 0), Modulate = new Color(1, 1, 1, 0.74f), SizeFlagsVertical = Control.SizeFlags.ShrinkCenter });
         row.AddChild(tint);
         var clear = Ui.Btn("Clear its paint", () =>
