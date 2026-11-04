@@ -83,11 +83,11 @@ public static class EffectKinds
 
     public static EffectDef FromName(string name)
     {
-        var kind = KindOf(name) ?? "sparks";
+        var kind = OldWarKindOf(name) ?? KindOf(name) ?? "sparks";
         return new EffectDef { Kind = kind, Smoke = kind != "fire" || name.Contains("smoke", StringComparison.OrdinalIgnoreCase) };
     }
 
-    public static string? KindOf(string name)
+    static string? OldWarKindOf(string name)
     {
         var n = name.ToLowerInvariant();
         bool Has(params string[] words) => words.Any(n.Contains);
@@ -95,7 +95,14 @@ public static class EffectKinds
             Has("fire arrow", "flaming arrow", "burning arrow") ? "firearrows" :
             Has("arrow", "archer", "longbow", "bowmen", "crossbow") ? "arrows" :
             Has("catapult", "trebuchet", "mangonel", "onager", "siege stone") ? "stones" :
-            Has("melee", "mêlée", "hand to hand", "hand-to-hand", "clash") ? "melee" :
+            Has("melee", "mêlée", "hand to hand", "hand-to-hand", "clash") ? "melee" : null;
+    }
+
+    public static string? KindOf(string name)
+    {
+        var n = name.ToLowerInvariant();
+        bool Has(params string[] words) => words.Any(n.Contains);
+        return
             Has("torpedo track", "torpedo wake", "torpedoes running") ? "wake" :
             Has("smoke screen", "smokescreen", "smoke trail") ? "screen" :
             Has("water column", "splashes", "torpedo hit") ? "column" :

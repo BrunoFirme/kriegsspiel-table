@@ -255,8 +255,20 @@ public class EffectRecipeTests
     [InlineData("Main battery salvo", "broadside")]
     [InlineData("Ship on fire", "oil")]
     [InlineData("Burning village", "fire")]
+    [InlineData("Longbow volley", "arrows")]
+    [InlineData("Flaming arrows", "firearrows")]
+    [InlineData("Trebuchet", "stones")]
+    [InlineData("Cavalry melee", "melee")]
     public void An_effect_with_no_settings_is_the_kind_its_name_says(string name, string kind) =>
         Assert.Equal(kind, EffectKinds.FromName(name).Kind);
+
+    [Theory]
+    [InlineData("Burning arrows", "fire")]
+    [InlineData("Archer volley", "powder")]
+    [InlineData("Catapult smoke", "smoke")]
+    [InlineData("Arrow", null)]
+    public void Imported_effects_keep_the_kinds_they_had_before_the_old_wars_came_in(string name, string? kind) =>
+        Assert.Equal(kind, EffectKinds.KindOf(name));
 
     [Fact]
     public void A_fire_named_without_smoke_has_none()
