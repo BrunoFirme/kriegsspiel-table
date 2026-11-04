@@ -23,10 +23,12 @@ sealed class TableKeys
     readonly PieceActions _actions;
     readonly PenTool _pen;
     readonly RulerTool _ruler;
+    readonly FormationTool _forms;
     public TableKeys(TableContext c, TableInput router, CameraControl cam, SheetLayer sheets, PieceLayer pieces, Sighting sighting,
         Selection selection, PendingPoses poses, Carry hand, Dice dice, PieceClipboard clip, Hover hover, PieceActions actions,
-        PenTool pen, RulerTool ruler)
+        PenTool pen, RulerTool ruler, FormationTool forms)
     {
+        _forms = forms;
         _c = c; _router = router; _cam = cam; _sheets = sheets; _pieces = pieces; _sighting = sighting; _selection = selection;
         _poses = poses; _hand = hand; _dice = dice; _clip = clip; _hover = hover; _actions = actions; _pen = pen; _ruler = ruler;
     }
@@ -54,6 +56,7 @@ sealed class TableKeys
         if (k.Keycode is >= Key.Key1 and <= Key.Key9 && k.CtrlPressed) { _hand.FormRows((int)(k.Keycode - Key.Key1) + 1); return; }
         if (!k.CtrlPressed && !k.AltPressed && PieceActions.StateKey(k.Keycode) is int stateNo && _actions.SetStateNumber(stateNo)) return;
         if (k.Keycode is Key.Left or Key.Right or Key.Up or Key.Down && _sheets.SelectedId != null && S.IsUmpire) { _sheets.Nudge(k); return; }
+        if (_c.Tool == Tool.Formation && _forms.Key(k, _c.Settings.Keys)) return;
         Bound(k, _c.Settings.Keys);
     }
 
@@ -75,6 +78,7 @@ sealed class TableKeys
         else if (km.Is(k, "frame")) _cam.FrameAll();
         else if (km.Is(k, "ruler")) _c.SetTool(_c.Tool == Tool.Ruler ? Tool.Select : Tool.Ruler);
         else if (km.Is(k, "gizmo")) _c.SetTool(_c.Tool == Tool.Transform ? Tool.Select : Tool.Transform);
+        else if (km.Is(k, "formations")) _c.SetTool(_c.Tool == Tool.Formation ? Tool.Select : Tool.Formation);
         else if (km.Is(k, "flip")) _actions.Flip(_selection.Nodes.ToList());
         else if (km.Is(k, "turnLeft")) { if (_hand.Holding) _hand.Rotate(k.ShiftPressed ? -1 : -15); else _poses.RotateSmooth(k.ShiftPressed ? -1 : -15); }
         else if (km.Is(k, "turnRight")) { if (_hand.Holding) _hand.Rotate(k.ShiftPressed ? 1 : 15); else _poses.RotateSmooth(k.ShiftPressed ? 1 : 15); }

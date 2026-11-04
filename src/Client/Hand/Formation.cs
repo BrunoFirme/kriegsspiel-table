@@ -4,7 +4,7 @@ namespace KTable.Client.Hand;
 
 public static class Formation
 {
-    static Vec2 Turned(Vec2 o, double rad) => new(o.X * Math.Cos(rad) + o.Z * Math.Sin(rad), -o.X * Math.Sin(rad) + o.Z * Math.Cos(rad));
+    public static Vec2 Turned(Vec2 o, double rad) => new(o.X * Math.Cos(rad) + o.Z * Math.Sin(rad), -o.X * Math.Sin(rad) + o.Z * Math.Cos(rad));
 
     public static void Turn<T>(IEnumerable<HeldPiece<T>> held, double deg) where T : class
     {

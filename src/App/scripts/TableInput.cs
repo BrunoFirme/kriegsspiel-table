@@ -33,12 +33,13 @@ sealed class TableInput
     readonly ZoneLayer _zones;
     readonly SelectTool _selectTool;
     readonly ReliefTool _relief;
+    readonly FormationTool _forms;
 
     public TableInput(TableContext c, PointerPress press, CameraControl cam, PieceLayer pieces, Sighting sighting, Selection selection,
         PendingPoses poses, Gizmo gizmo, Carry hand, PieceActions actions, NameEditor names, PaletteDrag palette, PenTool pen,
-        RulerTool ruler, RangeRings ranges, CropTool crop, ZoneLayer zones, SelectTool selectTool, ReliefTool relief)
+        RulerTool ruler, RangeRings ranges, CropTool crop, ZoneLayer zones, SelectTool selectTool, ReliefTool relief, FormationTool forms)
     {
-        _relief = relief;
+        _relief = relief; _forms = forms;
         _c = c; _press = press; _cam = cam; _pieces = pieces; _sighting = sighting; _selection = selection; _poses = poses;
         _gizmo = gizmo; _hand = hand; _actions = actions; _names = names; _palette = palette; _pen = pen; _ruler = ruler;
         _ranges = ranges; _crop = crop; _zones = zones; _selectTool = selectTool;
@@ -99,6 +100,17 @@ sealed class TableInput
         if (_c.Tool == Tool.Relief && mb.CtrlPressed)
         {
             _relief.Resize(mb.ButtonIndex == MouseButton.WheelUp);
+            return;
+        }
+        if (_c.Tool == Tool.Formation && (mb.CtrlPressed || mb.ShiftPressed))
+        {
+            int notch = mb.ButtonIndex == MouseButton.WheelUp ? 1 : -1;
+            if (mb.CtrlPressed) _forms.Space(notch); else _forms.Deepen(notch);
+            return;
+        }
+        if (_c.Tool == Tool.Formation && WheelOnSelection(mb.Position) && !mb.AltPressed && _forms.Count >= 2)
+        {
+            _forms.Turn(mb.ButtonIndex == MouseButton.WheelUp ? -10 : 10);
             return;
         }
         if (_c.Tool == Tool.Range && WheelOnSelection(mb.Position))
@@ -194,6 +206,7 @@ sealed class TableInput
     void LeftPress(InputEventMouseButton mb, Vec2? g)
     {
         LeftDown = true; PressPos = mb.Position; _selectTool.Reset();
+        _hand.Land();
         if (Input.IsKeyPressed(Key.Space)) { Panning = true; Cam.DragBegin(); return; }
         if (g == null) return;
         switch (_c.Tool)
@@ -213,6 +226,9 @@ sealed class TableInput
             case Tool.Draw: _pen.PressDraw(g.Value); break;
             case Tool.Shape: _pen.PressShape(g.Value); break;
             case Tool.Erase: _pen.PressErase(g.Value); break;
+            case Tool.Formation:
+                if (!_forms.Press(g.Value, mb.ShiftPressed || mb.CtrlPressed, _pieces.Pick(g.Value, screen: mb.Position) != null)) _selectTool.Press(mb, g.Value);
+                break;
             case Tool.Sighting: _sighting.Press(g.Value); break;
             case Tool.Relief: _relief.Press(g.Value); break;
         }
@@ -234,6 +250,9 @@ sealed class TableInput
             case Tool.Shape: _pen.ReleaseShape(); break;
             case Tool.Sighting: _sighting.Release(); break;
             case Tool.Relief: _relief.Release(); break;
+            case Tool.Formation:
+                if (_forms.Dragging) _forms.Release(); else _selectTool.Release(mb, g);
+                break;
             case Tool.Capture:
                 var r = new Rect2(PressPos, mb.Position - PressPos).Abs();
                 _c.NotifyScreenRect(null);
@@ -266,6 +285,10 @@ sealed class TableInput
             case Tool.Capture: _c.NotifyScreenRect(new Rect2(PressPos, mm.Position - PressPos).Abs()); break;
             case Tool.Sighting: _sighting.Move(g); break;
             case Tool.Relief: if (g != null) _relief.Motion(g.Value); break;
+            case Tool.Formation:
+                if (!_forms.Dragging) _selectTool.Motion(mm, g);
+                else if (g != null) _forms.Drag(g.Value);
+                break;
         }
     }
 
@@ -316,6 +339,7 @@ sealed class TableInput
         _selectTool.Forget();
         _down &= ~MouseButtonMask.Left;
         _sighting.DropWall();
+        _forms.Cancel();
         _pen.Drop();
         _zones.Drop();
         _crop.Release();

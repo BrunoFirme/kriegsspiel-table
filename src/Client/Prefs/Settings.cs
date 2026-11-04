@@ -80,6 +80,8 @@ public sealed class Settings
     public float ReliefBrush { get; set; } = 6;
     public float ReliefStrength { get; set; } = 0.35f;
     public string ReliefMode { get; set; } = "raise";
+    public double FormationGap { get; set; } = KTable.Client.Hand.Formations.DefaultGap;
+    public string Formation { get; set; } = "line";
 
     public static Func<string> FileAt { get; set; } = () => throw new InvalidOperationException("the settings file's place was never given");
 

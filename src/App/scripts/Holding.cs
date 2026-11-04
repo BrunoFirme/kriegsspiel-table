@@ -11,7 +11,7 @@ using Held = KTable.Client.Hand.HeldPiece<KTable.App.PieceNode>;
 
 namespace KTable.App;
 
-sealed class Carry : IHeldPieces
+sealed partial class Carry : IHeldPieces
 {
     readonly TableContext _c;
     readonly PointerPress _press;
@@ -41,19 +41,22 @@ sealed class Carry : IHeldPieces
     public int Count => _held.Count;
     public IEnumerable<string> HeldIds => _held.Select(h => h.Id);
     public bool Has(PieceNode n) => _heldNodes.Contains(n);
-    public HandAt At => new((float)_cursor.X, (float)_cursor.Z, Math.Max(0, _floor) + LiftHeight);
+    public HandAt At => new((float)_cursor.X, (float)_cursor.Z, Math.Max(0, _floor) + _lift);
 
     public IReadOnlyList<CarriedPiece> Shared() =>
         _held.Where(h => GodotObject.IsInstanceValid(h.Node)).Select(h => new CarriedPiece(h.Layer, h.Id, (float)h.Offset.X, (float)h.Offset.Z, (float)h.Rot, h.Lift)).ToList();
 
-    public void Start(Vec2 grab)
+    public void Start(Vec2 grab) => Take(grab, _selection.Movable.ToList());
+
+    void Take(Vec2 grab, List<PieceNode> nodes)
     {
+        EndMarch();
         _held.Clear();
         _heldNodes.Clear();
         _trail.Clear();
         StopShake();
         _floor = -1;
-        foreach (var n in _selection.Movable)
+        foreach (var n in nodes)
         {
             var c = Drawn(n);
             n.Held = true;
@@ -120,12 +123,13 @@ sealed class Carry : IHeldPieces
     {
         foreach (var h in _held)
             if (GodotObject.IsInstanceValid(h.Node))
-                h.Node.Preview(_cursor + h.Offset, h.Rot, h.Node.Piece.Scale, Math.Max(0, _floor) + LiftHeight + h.Lift);
+                h.Node.Preview(_cursor + h.Offset, h.Rot, h.Node.Piece.Scale, Math.Max(0, _floor) + _lift + h.Lift);
     }
 
     public void Tick(bool overUi)
     {
         if (_held.Count == 0) return;
+        if (Marching) { MarchOn(); return; }
         var m = Pointer.In(_c.Scene.GetViewport());
         bool down = _fromDrawer != null ? Input.IsMouseButtonPressed(MouseButton.Left) : _press.LeftDown;
         bool over = _fromDrawer != null ? _fromDrawer(m) : overUi;
@@ -144,6 +148,7 @@ sealed class Carry : IHeldPieces
 
     public void PutBack()
     {
+        EndMarch();
         Rehome();
         var nodes = _held.Select(h => h.Node).Where(GodotObject.IsInstanceValid).ToList();
         _c.Sound.Lift(nodes);
@@ -311,6 +316,7 @@ sealed class Carry : IHeldPieces
     async Task DropAsync()
     {
         Rehome();
+        EndMarch();
         if (_held.Any(h => !_c.S.CanTouch(h.Layer, _cursor + h.Offset))) { ReturnHome(); _c.Say("Outside your zone"); return; }
         foreach (var h in _held) h.Node.Held = false;
         var held = _held.Where(h => GodotObject.IsInstanceValid(h.Node)).ToList();

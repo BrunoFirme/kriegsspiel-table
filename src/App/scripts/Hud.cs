@@ -25,6 +25,7 @@ public partial class Hud : CanvasLayer
     internal PiecesPanel Pieces = null!;
     internal DrawPanel Paint = null!;
     internal ReliefPanel? Relief;
+    internal FormationPanel FormPanel = null!;
     internal LayersPanel Boards = null!;
     internal PovPanel Pov = null!;
     internal LogPanel LogPanel = null!;
@@ -110,9 +111,12 @@ public partial class Hud : CanvasLayer
             Relief?.Rebuild();
             if (T.Tool is Tool.Draw or Tool.Shape or Tool.Erase) OpenPanel("paint"); else ClosePanel("paint");
             if (T.Tool == Tool.Relief) OpenPanel("relief"); else ClosePanel("relief");
+            if (T.Tool == Tool.Formation) OpenPanel("formation"); else ClosePanel("formation");
+            FormPanel.Rebuild();
             Strip.SyncToggles();
         });
         Hook<Action<string>>(h => T.Hint += h, h => T.Hint -= h, Say);
+        Hook<Action>(h => T.Forms.Changed += h, h => T.Forms.Changed -= h, FormPanel.Rebuild);
         Hook<Action<string, Command>>(h => T.ReliefShaped += h, h => T.ReliefShaped -= h, Map.Reliefs.Share);
         Hook<Action<Rect2?>>(h => T.ScreenRect += h, h => T.ScreenRect -= h, r => Rect.SetRect(r));
         Hook<Action<double>>(h => T.CalibrationMeasured += h, h => T.CalibrationMeasured -= h, units => CalibrateDialog.Open(Ctx, units));

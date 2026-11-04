@@ -33,7 +33,7 @@ sealed class ToolStrip : HudPart
     {
         ("map", 0), ("calibrate", 0), ("pieces", 0), ("dice", 0),
         ("layers", 6), ("zones", 6),
-        ("select", 1), ("gizmo", 1),
+        ("select", 1), ("gizmo", 1), ("formation", 1),
         ("ruler", 2), ("range", 2),
         ("boards", 3), ("paint", 3), ("relief", 3),
         ("sighting", 4), ("capture", 4),
@@ -43,7 +43,7 @@ sealed class ToolStrip : HudPart
     static string HelpAnchor(string key) => key switch
     {
         "map" => "map-sheets", "calibrate" => "calibrate", "pieces" => "pieces", "dice" => "dice", "layers" => "umpires-and-zones",
-        "select" => "selecting-and-moving", "gizmo" => "turn-and-resize", "ruler" => "ruler", "range" => "ranging",
+        "select" => "selecting-and-moving", "gizmo" => "turn-and-resize", "formation" => "formations", "ruler" => "ruler", "range" => "ranging",
         "boards" => "layers", "paint" => "draw", "relief" => "relief", "sighting" => "pov-screenshot", "capture" => "capture", "log" => "log", "zones" => "umpires-and-zones",
         _ => "views",
     };
@@ -51,7 +51,7 @@ sealed class ToolStrip : HudPart
     bool OtherUmpires => S.IsUmpire && S.Peers.Any(p => Visibility.IsUmpire(p.Role) && p.PeerId != S.Me.PeerId);
 
     bool StripAllowed(string key) => key is "layers" or "zones" ? OtherUmpires
-        : S.IsUmpire || key is "select" or "ruler" or "range" or "capture" or "dice" or "2d" or "text" or "frame" or "compass" or "log";
+        : S.IsUmpire || key is "select" or "formation" or "ruler" or "range" or "capture" or "dice" or "2d" or "text" or "frame" or "compass" or "log";
 
     bool _othersShown;
     Button? _text;
@@ -181,6 +181,7 @@ sealed class ToolStrip : HudPart
         switch (key)
         {
             case "paint": return PanelToggle("paint", "draw", "Draw", "The pen, the shapes and the rubber");
+            case "formation": return PanelToggle("formation", "formation", $"Formations   ({Cfg.Keys.Label("formations")})", "Form the selected pieces up: line, column, square, wedge and more · drag across the table to set the front");
             case "relief": return PanelToggle("relief", "relief", "Relief", "Raise, lower, smooth and flatten the ground, and paint grass, fields, woods, marsh, water and roads on it");
             case "boards": return PanelToggle("boards", "stack", "Layers", "The sheets of tracing paper the drawings are on: draw on one, hide it for a screenshot");
             case "dice": return PanelToggle("dice", "dice", "Dice", "Pick the dice and roll; every umpire sees the result");

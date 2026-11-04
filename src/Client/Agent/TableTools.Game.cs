@@ -4,6 +4,7 @@ using System.Text.Json.Nodes;
 using KTable.Core;
 using KTable.Core.Model;
 using KTable.Core.Protocol;
+using KTable.Client.Hand;
 
 namespace KTable.Client.Agent;
 
@@ -17,9 +18,17 @@ public sealed partial class TableTools
             "Puts many pieces down at once in a formation (" + string.Join(", ", Formations.Names) + ") round a centre, facing a direction. Use kinds for a mix (one kind each, in order) or kind with count. Spacing defaults to the pieces' own size. Undoable piece by piece.",
             Args.Schema(new Arg("kind", "string", "one kind's id (list_kinds)"), new Arg("count", "number", "how many of it"), new Arg("kinds", "array", "kind ids, one a piece, in order"),
                 new Arg("x", "number", "centre, map units", true), new Arg("z", "number", "centre, map units", true), new Arg("formation", "string", string.Join(", ", Formations.Names)),
-                new Arg("facing", "number", "degrees (0 = the map's top)"), new Arg("spacing", "number", "map units between pieces across"), new Arg("depth", "number", "map units between ranks"),
+                new Arg("facing", "number", "the way the pieces face, as their turn in degrees (180 faces the map's top)"), new Arg("spacing", "number", "map units between pieces across"), new Arg("depth", "number", "map units between ranks"),
+                new Arg("ranks", "number", "ranks for line, chequer, crescent and open order; how many abreast for column"),
                 new Arg("labels", "array", "a name for each piece, in order")),
             PlacePieces);
+        yield return new AgentTool("form_up",
+            "Forms pieces already on the table up into a formation (" + string.Join(", ", Formations.All.Select(k => k.Id)) + "), each going to the nearest place in it. Round their own centre and facing unless x, z or facing are given. Markers attached to a piece go with it. One undoable change.",
+            Args.Schema(new Arg("ids", "array", "the pieces' ids", true), new Arg("formation", "string", "the formation", true),
+                new Arg("x", "number", "where the formation's centre goes, map units"), new Arg("z", "number", "map units"), new Arg("facing", "number", "the way the pieces face, as their turn in degrees (180 faces the map's top)"),
+                new Arg("gap", "number", "space between pieces as a share of their size: 0 touching, 0.1 close (the default), 1 a piece's width apart"),
+                new Arg("ranks", "number", "ranks for line, chequer, crescent and open order; how many abreast for column")),
+            FormUp);
         yield return new AgentTool("press_button",
             "Presses a button a piece's script drew on it, as a player clicking it does (so it tests what people see). By its label or its number from list_buttons.",
             Args.Schema(new Arg("id", "string", "the piece's id", true), new Arg("label", "string", "the button's label"), new Arg("number", "number", "its number from list_buttons (from 1)"), new Arg("alt", "boolean", "a right-click")),
@@ -99,6 +108,37 @@ public sealed partial class TableTools
         a.ValueKind == JsonValueKind.Object && a.TryGetProperty(name, out var v) && v.ValueKind == JsonValueKind.Array
             ? v.EnumerateArray().Where(x => x.ValueKind == JsonValueKind.String).Select(x => x.GetString()!).ToList() : new();
 
+    async Task<ToolResult> FormUp(JsonElement a)
+    {
+        if (Open(out var why) is not { } s) return why!;
+        if (!CanChange(s, out why)) return why!;
+        var ids = List(a, "ids").Distinct().ToList();
+        if (ids.Count < 2 || ids.Count > MaxPlaced) return ToolResult.Fail($"Give 2 to {MaxPlaced} ids.");
+        if (Formations.Find(a.Str("formation") ?? "") is not { } kind) return ToolResult.Fail("formation is one of " + string.Join(", ", Formations.All.Select(k => k.Id)));
+        var layer = s.View.Layer(Layers.Umpire);
+        var found = new List<PieceInstance>();
+        foreach (var id in ids)
+        {
+            if (layer.FirstOrDefault(p => p.Id == id) is not { } p) return ToolResult.Fail($"No piece {id} on this table.");
+            found.Add(p);
+        }
+        var units = found.Where(p => !found.Any(o => o != p && o.Attached.Contains(p.Id))).ToList();
+        double gap = Math.Clamp(a.Num("gap") ?? Formations.DefaultGap, 0, Formations.MostGap);
+        var sizes = units.Select(p => s.Def(p.Def) is { } d ? (W: d.Size.W * p.Scale, H: d.Size.H * p.Scale) : (W: 1.0, H: 1.0)).ToList();
+        var pitch = new Pitch(sizes.Max(z => z.W) * (1 + gap), sizes.Max(z => z.H) * (1 + gap));
+        var at = new Vec2(a.Num("x") ?? units.Average(p => p.Pos.X), a.Num("z") ?? units.Average(p => p.Pos.Z));
+        double facing = a.Num("facing") ?? Formations.Facing(units.Select(p => p.RotDeg)) ?? units[0].RotDeg;
+        int depth = a.Num("ranks") is { } r ? (int)Math.Clamp(r, 1, Formations.MostRanks) : 0;
+        var places = Formations.Place(Formations.Slots(kind, units.Count, pitch, depth), at, facing);
+        var match = Formations.Match(units.Select(p => p.Pos).ToList(), places.Select(q => q.Pos).ToList());
+        var to = units.Select((p, i) => (p.Id, places[match[i]].Pos, places[match[i]].Rot)).ToList();
+        s.Do(new Batch { Items = to.Select(t => (Command)new KTable.Core.Protocol.MovePiece { Layer = Layers.Umpire, Id = t.Id, Pos = t.Pos, RotDeg = t.Rot }).ToList() });
+        await Until(() => to.All(t => s.View.Find(Layers.Umpire, t.Id) is { } q && (q.Pos - t.Pos).Length < 1e-6), 4);
+        _log($"formed {units.Count} pieces up in {kind.Name.ToLowerInvariant()}");
+        var rows = new JsonArray(to.Select(t => (JsonNode?)new JsonObject { ["id"] = t.Id, ["x"] = Math.Round(t.Pos.X, 3), ["z"] = Math.Round(t.Pos.Z, 3), ["turn"] = Math.Round(t.Rot, 1) }).ToArray());
+        return new ToolResult(FormattableString.Invariant($"Formed {units.Count} up in {kind.Name.ToLowerInvariant()}, facing {facing:0.#}°.\n") + rows.ToJsonString(Json));
+    }
+
     async Task<ToolResult> PlacePieces(JsonElement a)
     {
         if (Open(out var why) is not { } s) return why!;
@@ -109,16 +149,17 @@ public sealed partial class TableTools
         foreach (var k in kinds.Distinct())
             if (s.Def(k) is null || s.Store.PackOfDef(k) is not { } pack || !s.View.Packs.Contains(pack.Id)) return ToolResult.Fail($"No kind {k} in this game's packs (list_kinds).");
         var formation = a.Str("formation") ?? "line";
-        if (!Formations.Names.Contains(formation)) return ToolResult.Fail("formation is one of " + string.Join(", ", Formations.Names));
+        if (Formations.Named(formation) is not var (kind, depth)) return ToolResult.Fail("formation is one of " + string.Join(", ", Formations.Names));
         if (a.Num("x") is not { } x || a.Num("z") is not { } z) return ToolResult.Fail("x and z are needed.");
         var first = s.Def(kinds[0])!;
         double across = a.Num("spacing") ?? first.Size.W * 1.1, deep = a.Num("depth") ?? first.Size.H * 1.6;
         double facing = a.Num("facing") ?? 0;
-        var at = Formations.Positions(kinds.Count, formation, new Vec2(x, z), facing, across, deep);
+        if (a.Num("ranks") is { } ranks) depth = (int)Math.Clamp(ranks, 1, Formations.MostRanks);
+        var at = Formations.Place(Formations.Slots(kind, kinds.Count, new Pitch(across, deep), depth), new Vec2(x, z), facing);
         var labels = List(a, "labels");
         var before = s.View.Layer(Layers.Umpire).Select(p => p.Id).ToHashSet();
         for (int i = 0; i < kinds.Count; i++)
-            s.Do(new SpawnPiece { Layer = Layers.Umpire, Def = kinds[i], Pos = at[i], RotDeg = facing, Label = i < labels.Count && labels[i].Length > 0 ? labels[i] : null });
+            s.Do(new SpawnPiece { Layer = Layers.Umpire, Def = kinds[i], Pos = at[i].Pos, RotDeg = at[i].Rot, Label = i < labels.Count && labels[i].Length > 0 ? labels[i] : null });
         await Until(() => s.View.Layer(Layers.Umpire).Count(p => !before.Contains(p.Id)) >= kinds.Count, 6);
         var made = s.View.Layer(Layers.Umpire).Where(p => !before.Contains(p.Id)).ToList();
         _log($"placed {made.Count} pieces in {formation}");

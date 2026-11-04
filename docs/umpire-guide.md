@@ -87,6 +87,19 @@ The tool strip runs down the left. Point at any tool and press **F1** for its se
 
 **T** puts a ring round the selection: the round knob turns it, the square knob resizes (1/50 to 50 times).
 
+### Formations
+
+**G** opens the Formations tool. With pieces selected, pick a formation from its panel or press its key: **R** line,
+**T** column, **B** block, **Shift+B** square, **C** ring, **Shift+C** crescent, **Y** wedge, **Shift+Y** arrowhead,
+**V** vee, **F** diamond, **Z** / **Shift+Z** echelon right / left, **X** chequer, **Shift+X** open order.
+
+- The pieces march the shortest way to their places round where they stand; markers on them ride along. One undo.
+- **Drag across the table** where the front should stand: the drag sets which way it faces, and how far you drag sets
+  how many stand in the front rank.
+- **Q / E** or the wheel over the pieces wheel the whole formation. **Ctrl+wheel** sets the spacing (0 is shoulder to
+  shoulder); **Shift+wheel** the ranks of a line, or how many abreast in a column.
+- Drag one of the pieces to carry the formation as it stands. **Shift+drag** the empty table to add pieces.
+
 ### Pieces
 
 - **Placing:** open the **Pieces** drawer and drag a piece onto the table (Shift keeps placing).
@@ -97,7 +110,7 @@ The tool strip runs down the left. Point at any tool and press **F1** for its se
   included, and are in the scenario file: not a hiding place.
 - **Markers:** drop a small piece on a larger one and it rides along. Drop it elsewhere to free it.
 - **Locked:** right-click → **Locked** pins a piece: it can be read and deleted, not moved.
-- **Effects** (fire, smoke, fog) are placed like pieces.
+- **Effects** (fire, smoke, fog, musketry, arrow volleys) are placed like pieces.
 - **Scripts:** a piece's buttons and boxes work with a click. Right-click → **Scripting…** opens its script;
   see the [scripting guide](scripting.md).
 

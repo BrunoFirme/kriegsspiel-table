@@ -105,6 +105,10 @@ public partial class ToolIcon : Control
             case "select":
                 DrawColoredPolygon(new[] { P(5, 2), P(5, 16), P(8.5f, 12.5f), P(11, 18), P(13.2f, 17), P(10.8f, 12), P(15.5f, 12) }, _c);
                 break;
+            case "formation":
+                foreach (var (x, y) in new[] { (10f, 4.6f), (7.4f, 9.6f), (12.6f, 9.6f), (4.8f, 14.6f), (10f, 14.6f), (15.2f, 14.6f) })
+                    DrawRect(new Rect2(P(x - 2.1f, y - 1.4f), new Vector2(4.2f, 2.8f) * _k), _c);
+                break;
             case "ruler":
                 Poly(2.5f, 14, 14, 2.5f, 17.5f, 6, 6, 17.5f);
                 foreach (var (x, y) in new[] { (6.5f, 10f), (9f, 7.5f), (11.5f, 5f) }) DrawLine(P(x, y), P(x + 2.4f, y + 2.4f), _c, 1.3f * _k, antialiased: true);

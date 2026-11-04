@@ -348,6 +348,13 @@ sealed partial class TableDemos
                 };
             };
         }
+        if (_args.TryGetValue("demo-form", out var dform))
+            Tree.CreateTimer(3).Timeout += () =>
+            {
+                hud.T.SetSelection(Session.View.Layer(KTable.Core.Model.Layers.Umpire).Select(p => p.Id));
+                hud.T.SetTool(Tool.Formation);
+                if (KTable.Client.Hand.Formations.Find(dform) is { } kind) hud.T.Forms.Form(kind);
+            };
         if (_args.TryGetValue("demo-relief", out var drel)) DemoRelief(hud, drel);
         if (_args.TryGetValue("demo-blank", out var dbl)) DemoBlank(hud, dbl);
         if (_args.TryGetValue("demo-zone", out var dz))

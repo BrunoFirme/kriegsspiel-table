@@ -8,7 +8,7 @@ using KTable.Core.Protocol;
 
 namespace KTable.App;
 
-public enum Tool { Select, Transform, Place, Ruler, Draw, Erase, Calibrate, Sighting, Capture, Zone, Crop, Range, Shape, Relief }
+public enum Tool { Select, Transform, Place, Ruler, Draw, Erase, Calibrate, Sighting, Capture, Zone, Crop, Range, Shape, Relief, Formation }
 
 public partial class Table : Node3D
 {
@@ -80,6 +80,7 @@ public partial class Table : Node3D
     internal CropTool Crop { get; }
     internal ZoneLayer Zones { get; }
     internal ReliefTool Relief { get; }
+    internal FormationTool Forms { get; }
     internal UmpirePointers Pointers { get; }
     internal SelectTool SelectTool { get; }
     internal TableInput Router { get; }
@@ -118,10 +119,11 @@ public partial class Table : Node3D
         Crop = new CropTool(_c, Overlay, Gizmo);
         Zones = new ZoneLayer(_c, Overlay);
         Relief = new ReliefTool(_c, Overlay, Sheets);
+        Forms = new FormationTool(_c, Overlay, Selection, Hand);
         Pointers = new UmpirePointers(_c, p => Hand.SurfaceY(p, Layers.Umpire), Motion.Carrying, name => UmpireHue.Of(_c.S, name) ?? UmpireHue.Unassigned);
         SelectTool = new SelectTool(_c, press, Sheets, Pieces, Selection, Hand, Names, Actions);
-        Router = new TableInput(_c, press, Cam, Pieces, Sighting, Selection, Poses, Gizmo, Hand, Actions, Names, Palette, Pen, Ruler, Ranges, Crop, Zones, SelectTool, Relief);
-        Keys = new TableKeys(_c, Router, Cam, Sheets, Pieces, Sighting, Selection, Poses, Hand, Dice, Clip, Hover, Actions, Pen, Ruler);
+        Router = new TableInput(_c, press, Cam, Pieces, Sighting, Selection, Poses, Gizmo, Hand, Actions, Names, Palette, Pen, Ruler, Ranges, Crop, Zones, SelectTool, Relief, Forms);
+        Keys = new TableKeys(_c, Router, Cam, Sheets, Pieces, Sighting, Selection, Poses, Hand, Dice, Clip, Hover, Actions, Pen, Ruler, Forms);
 
         Stage.ShadeChanged += Pieces.ShadeEffects;
         Stage.WindChanged += Pieces.SteerEffects;
@@ -134,6 +136,7 @@ public partial class Table : Node3D
         Overlay.Drawing += Ranges.Draw;
         Overlay.Drawing += Ruler.Draw;
         Overlay.Drawing += Pen.DrawInHand;
+        Overlay.Drawing += Forms.Draw;
         Sync.Connect(Poses, Clip, Zones);
         Sync.BoardsChanged += RefreshDrawings;
         Selection.Picked += Sighting.Aim;
@@ -338,6 +341,7 @@ public partial class Table : Node3D
         Tool.Sighting => "Drag to trace what blocks the view · wheel sets the reach · Alt+wheel zooms in to trace · Enter captures",
         Tool.Place => "Shift+click places another",
         Tool.Relief => "Drag over a sheet to shape or paint the ground · Ctrl + wheel sizes the brush",
+        Tool.Formation => Forms.Hint(),
         _ => null,
     };
 

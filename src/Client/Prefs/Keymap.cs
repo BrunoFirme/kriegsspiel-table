@@ -4,7 +4,7 @@ public sealed class Keymap
 {
     public static readonly (string action, string label, string def)[] Actions =
     {
-        ("ruler", "Ruler", "M"), ("gizmo", "Turn / resize tool", "T"), ("flip", "Turn over (show the back)", "F"), ("sighting", "POV screenshot (umpire)", "V"),
+        ("ruler", "Ruler", "M"), ("gizmo", "Turn / resize tool", "T"), ("formations", "Formations tool", "G"), ("flip", "Turn over (show the back)", "F"), ("sighting", "POV screenshot (umpire)", "V"),
         ("capture", "Capture a region", "Ctrl+Shift+C"), ("captureAgain", "Capture the same region again", "Ctrl+Shift+X"),
         ("map2d", "Map view / 3D table", "F2"), ("frame", "Frame the map", "Home"), ("labelPlates", "Plates behind labels beside pieces", "N"),
         ("turnLeft", "Turn left 15° (Shift 1°)", "Q"), ("turnRight", "Turn right 15° (Shift 1°)", "E"),
@@ -14,6 +14,11 @@ public sealed class Keymap
         ("statePrev", "Previous state", "BracketLeft"), ("stateNext", "Next state", "BracketRight"),
         ("scriptConsole", "Script console (umpire)", "QuoteLeft"), ("scriptWindow", "Scripts window (umpire)", "Ctrl+Shift+L"),
         ("mute", "Sound on / off", "Ctrl+M"), ("saves", "Saves (host)", "Ctrl+S"),
+        ("form:line", "Formations tool: line", "R"), ("form:column", "Formations tool: column", "T"), ("form:block", "Formations tool: block", "B"),
+        ("form:square", "Formations tool: square", "Shift+B"), ("form:ring", "Formations tool: ring", "C"), ("form:crescent", "Formations tool: crescent", "Shift+C"),
+        ("form:wedge", "Formations tool: wedge", "Y"), ("form:arrowhead", "Formations tool: arrowhead", "Shift+Y"), ("form:vee", "Formations tool: vee", "V"),
+        ("form:diamond", "Formations tool: diamond", "F"), ("form:echelon-right", "Formations tool: echelon right", "Z"), ("form:echelon-left", "Formations tool: echelon left", "Shift+Z"),
+        ("form:chequer", "Formations tool: chequer", "X"), ("form:open", "Formations tool: open order", "Shift+X"),
     };
 
     public Dictionary<string, string> Keys { get; set; } = new();
