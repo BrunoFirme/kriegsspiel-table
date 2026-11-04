@@ -103,6 +103,9 @@ scripted run never moves the person's cursor or touches their clipboard. The too
 - Every catch is narrow (`catch (IOException)`, or a `when` filter), or it names the exception and does something
   with it: reports it, keeps it, or rethrows. Nothing is swallowed in silence; a step that may fail without
   consequence goes through `BestEffort`, which records what it swallowed.
+- The app's own code keeps its line coverage under the node and screen tests at or above the floor in
+  `tools/covcheck.py`: `check.ps1` runs them under `dotnet-coverage` (`dotnet tool restore` installs it) and fails
+  below it. A change to the app brings tests for what it touches; when coverage rises, the floor rises with it.
 - No comments in any code: C#, Python, PowerShell, MSBuild files, shaders, Lua and the lock scripts. Names and
   structure say what the code does; a reason the code cannot show goes in these docs.
 - Warnings are errors in every project (`Directory.Build.props`); nullable reference types are on everywhere.

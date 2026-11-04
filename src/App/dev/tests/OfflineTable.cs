@@ -17,13 +17,14 @@ sealed class OfflineTable
     public required GameServer Server { get; init; }
     public readonly List<string> Errors = new();
 
-    public static OfflineTable Make(TestRunner r, int pieces)
+    public static OfflineTable Make(TestRunner r, int pieces, string[]? packs = null, System.Action<PackageStore>? prepare = null)
     {
         var root = Path.Combine(Path.GetTempPath(), "ktable-nodetest-" + System.Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(root);
         var store = new PackageStore(root);
+        prepare?.Invoke(store);
         store.RegisterDef(new PackManifest { Id = "test", Name = "Test" }, new PieceDef { Id = "x", Name = "Block" });
-        var g = new GameState { Name = "Node test" };
+        var g = new GameState { Name = "Node test", Packs = packs?.ToList() ?? new() };
         g.Layers[Layers.Umpire] = Enumerable.Range(1, pieces).Select(i => new PieceInstance { Id = "p" + i, Def = "x", Pos = new Vec2(i, 0) }).ToList();
         var s = new Session(new Assets(store));
         var server = new GameServer(g, store);

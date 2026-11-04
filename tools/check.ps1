@@ -19,41 +19,41 @@ function Wait-WithExitCode($process, $ms) {
     $process.ExitCode
 }
 
-function Run-NodeTests {
+$coverageDir = Join-Path ([IO.Path]::GetTempPath()) ("ktable-coverage-" + [Guid]::NewGuid().ToString("N").Substring(0, 8))
+New-Item -ItemType Directory -Force $coverageDir | Out-Null
+
+function Run-AppTests($kind, [string[]]$godotArgs) {
     $godot = Find-GodotConsole
     if (-not $godot) { Write-Host "   Godot .NET not found (winget install GodotEngine.GodotEngine.Mono)"; $global:LASTEXITCODE = 1; return }
     $app = Join-Path $repo "src\App"
-    & $godot.FullName --headless --path $app --import *> $null
-    $run = Join-Path ([IO.Path]::GetTempPath()) ("ktable-nodetests-" + [Guid]::NewGuid().ToString("N").Substring(0, 8))
+    if ($kind -eq "node") { & $godot.FullName --headless --path $app --import *> $null }
+    $run = Join-Path ([IO.Path]::GetTempPath()) ("ktable-$kind-tests-" + [Guid]::NewGuid().ToString("N").Substring(0, 8))
+    $cobertura = Join-Path $coverageDir "$kind.xml"
     try {
         With-UserFoldersIn $run {
             $out = Join-Path $run "out.txt"
             $err = Join-Path $run "err.txt"
-            $p = Start-Process $godot.FullName -ArgumentList "--headless", "--path", "`"$app`"", "res://dev/tests/TestRunner.tscn" -NoNewWindow -PassThru `
+            $collect = @("dotnet-coverage", "collect", "--output", "`"$cobertura`"", "--output-format", "cobertura", "--include-files", "**\KriegsspielTable.dll", "--", "`"$($godot.FullName)`"")
+            $p = Start-Process "dotnet" -ArgumentList ($collect + $godotArgs + @("--path", "`"$app`"", "res://dev/tests/TestRunner.tscn")) -NoNewWindow -PassThru `
                 -RedirectStandardOutput $out -RedirectStandardError $err
             $global:LASTEXITCODE = Wait-WithExitCode $p $nodeTestsMs
-            Get-Content $out, $err -ErrorAction SilentlyContinue | Where-Object { $_ -match "^(FAIL|node tests)" } | ForEach-Object { "   $_" }
+            $lines = Get-Content $out, $err -ErrorAction SilentlyContinue
+            $lines | Where-Object { $_ -match "^(FAIL|$kind tests)" } | ForEach-Object { "   $_" }
+            if (-not ($lines -match "^$kind tests: \d+ passed, 0 failed")) { $global:LASTEXITCODE = 1 }
+            if (-not (Test-Path $cobertura)) { Write-Host "   no coverage was collected (dotnet tool restore?)"; $global:LASTEXITCODE = 1 }
         }
     }
     finally { Remove-Item -Recurse -Force $run -ErrorAction SilentlyContinue }
 }
 
-function Run-ScreenTests {
-    $godot = Find-GodotConsole
-    if (-not $godot) { Write-Host "   Godot .NET not found (winget install GodotEngine.GodotEngine.Mono)"; $global:LASTEXITCODE = 1; return }
-    $app = Join-Path $repo "src\App"
-    $run = Join-Path ([IO.Path]::GetTempPath()) ("ktable-screentests-" + [Guid]::NewGuid().ToString("N").Substring(0, 8))
-    try {
-        With-UserFoldersIn $run {
-            $out = Join-Path $run "out.txt"
-            $err = Join-Path $run "err.txt"
-            $p = Start-Process $godot.FullName -ArgumentList "--path", "`"$app`"", "--resolution", "1280x720", "--position", "40,40", "res://dev/tests/TestRunner.tscn" -NoNewWindow -PassThru `
-                -RedirectStandardOutput $out -RedirectStandardError $err
-            $global:LASTEXITCODE = Wait-WithExitCode $p $nodeTestsMs
-            Get-Content $out, $err -ErrorAction SilentlyContinue | Where-Object { $_ -match "^(FAIL|screen tests)" } | ForEach-Object { "   $_" }
-        }
-    }
-    finally { Remove-Item -Recurse -Force $run -ErrorAction SilentlyContinue }
+function Run-NodeTests { Run-AppTests "node" @("--headless") }
+
+function Run-ScreenTests { Run-AppTests "screen" @("--resolution", "1280x720", "--position", "40,40") }
+
+function Check-CoverageFloor {
+    $files = Get-ChildItem $coverageDir -Filter "*.xml" | ForEach-Object { $_.FullName }
+    if ($files.Count -eq 0) { Write-Host "   no coverage files"; $global:LASTEXITCODE = 1; return }
+    python -I tools/covcheck.py @files
 }
 
 function Report-VulnerablePackages {
@@ -84,15 +84,18 @@ function Run-BehaviourLock($ref) {
     }
 }
 
+Step "tools" { dotnet tool restore --verbosity quiet }
 Step "build solution" { dotnet build KriegsspielTable.sln --nologo -v q }
 Step "build app" { dotnet build src/App --nologo -v q }
 if (-not $Quick) { Step "build app with Steam" { dotnet build src/App --nologo -v q -p:KTableSteam=true } }
 Step "tests" { dotnet test KriegsspielTable.sln --nologo -v q --no-build }
-Step "app node tests (headless)" { Run-NodeTests }
+Step "app node tests (headless, under coverage)" { Run-NodeTests }
 Step "app screen tests (a window opens for a moment)" { Run-ScreenTests }
+Step "app coverage floor" { Check-CoverageFloor }
 Step "size and hygiene rules" { python -I tools/codecheck.py }
 if (-not $Quick) { Report-VulnerablePackages }
 if ($Lock) { Run-BehaviourLock $Lock }
+Remove-Item -Recurse -Force $coverageDir -ErrorAction SilentlyContinue
 
 if ($failed.Count -gt 0) { Write-Host "check: FAILED ($($failed -join ', '))" -ForegroundColor Red; exit 1 }
 Write-Host "check: all passed" -ForegroundColor Green
