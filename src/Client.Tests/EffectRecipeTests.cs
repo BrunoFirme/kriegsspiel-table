@@ -244,6 +244,7 @@ public class EffectRecipeTests
     [Theory]
     [InlineData("Congreve rocket", "rocket")]
     [InlineData("Battery of guns", "cannon")]
+    [InlineData("Musket volley", "powder")]
     [InlineData("Burning farm", "fire")]
     [InlineData("Campfire with smoke", "fire")]
     [InlineData("Morning mist", "fog")]

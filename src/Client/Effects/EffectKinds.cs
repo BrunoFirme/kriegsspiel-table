@@ -5,6 +5,8 @@ namespace KTable.Client.Effects;
 
 public static class EffectKinds
 {
+    public const string StandardPack = "std.effects";
+
     public static readonly (string Id, string Name, string What)[] Kinds =
     {
         ("powder", "Musketry", "Powder smoke along the piece and the flashes of the muskets: at will, by volleys or rolling by platoons"),
@@ -71,9 +73,15 @@ public static class EffectKinds
 
     public static EffectDef FromName(string name)
     {
+        var kind = KindOf(name) ?? "sparks";
+        return new EffectDef { Kind = kind, Smoke = kind != "fire" || name.Contains("smoke", StringComparison.OrdinalIgnoreCase) };
+    }
+
+    public static string? KindOf(string name)
+    {
         var n = name.ToLowerInvariant();
         bool Has(params string[] words) => words.Any(n.Contains);
-        string kind =
+        return
             Has("torpedo track", "torpedo wake", "torpedoes running") ? "wake" :
             Has("smoke screen", "smokescreen", "smoke trail") ? "screen" :
             Has("water column", "splashes", "torpedo hit") ? "column" :
@@ -85,7 +93,8 @@ public static class EffectKinds
             Has("barrage", "bombard") ? "barrage" :
             Has("magic", "rune", "soul", "ghost", "lightning", "energy") ? "sparks" :
             Has("bomb", "explo", "flash", "shell") ? "burst" :
-            Has("cannon", "gun", "shot", "musket") ? "cannon" :
+            Has("musket", "volley", "skirmish") ? "powder" :
+            Has("cannon", "gun", "shot") ? "cannon" :
             Has("bivouac", "campfire", "camp fire", "camp") ? "fire" :
             Has("lamp", "lantern", "torch", "candle", "window") ? "lamps" :
             Has("fire", "flame", "blaze", "burn") ? "fire" :
@@ -94,8 +103,7 @@ public static class EffectKinds
             Has("smoke") ? "smoke" :
             Has("dust") ? "dust" :
             Has("fog", "cloud", "mist", "storm", "gas") ? "fog" :
-            Has("water", "spray", "wave", "splash") ? "spray" : "sparks";
-        return new EffectDef { Kind = kind, Smoke = kind != "fire" || Has("smoke") };
+            Has("water", "spray", "wave", "splash") ? "spray" : null;
     }
 
     public static int Seed(float phase) => (int)(phase * 100000) + 7;

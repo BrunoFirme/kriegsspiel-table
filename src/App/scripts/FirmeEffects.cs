@@ -7,6 +7,7 @@ using System.Text;
 using Godot;
 using KTable.Core;
 using KTable.Core.Model;
+using KTable.Client.Effects;
 using KTable.Client.Scenery;
 using Json = KTable.Core.Json;
 
@@ -14,7 +15,7 @@ namespace KTable.App;
 
 public static class FirmeEffects
 {
-    public const string PackId = "std.effects";
+    public const string PackId = EffectKinds.StandardPack;
     public const string PackName = "Firme's Effects and Props";
 
     public static readonly (string Name, string What, double W, double H, EffectDef Fx, string Era)[] Presets =

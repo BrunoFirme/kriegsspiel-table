@@ -231,6 +231,24 @@ public sealed class ConverterTests : IDisposable
     }
 
     [Fact]
+    public void Tabletop_effect_bundles_become_the_closest_of_firmes_effects_at_the_size_they_showed()
+    {
+        static PieceDef Preset(string id, double w, double h) => new() { Id = "std.effects." + id, Name = id, Size = new Size2(w, h), Effect = new EffectDef { Kind = "smoke" }, Tags = new() { "effect" } };
+        Directory.CreateDirectory(Path.Combine(Packages, "std.effects"));
+        Json.Save(Path.Combine(Packages, "std.effects", "pack.json"), new PackManifest { Id = "std.effects", Name = "Effects", Pieces = new() { Preset("powder-smoke", 6, 1.5), Preset("roundshot-in-water", 0.8, 0.8) } });
+        var effects = BundleEffects.Load(Packages);
+        static TtsObj Bundle(string nick, string url, double scale) => new(Obj("Custom_Assetbundle", nick, scale, new JsonObject { ["CustomAssetbundle"] = new JsonObject { ["AssetbundleURL"] = url } }));
+
+        var smoke = effects.For(Bundle("", "https://steamusercontent-a.akamaihd.net/ugc/795360302134688407/B89A13D24198F5D661BB3327FB2A516BD4B00EE8/", 0.29));
+        Assert.Equal("std.effects.powder-smoke", smoke?.Def.Id);
+        Assert.Equal(6 * 0.29 / 3, smoke!.Value.Scale, 3);
+        Assert.Equal("std.effects.roundshot-in-water", effects.For(Bundle("", "https://dl.dropbox.com/s/x/water%20fall.unity3d?dl=1", 1))?.Def.Id);
+        Assert.Null(effects.For(Bundle("", "https://steamusercontent-a.akamaihd.net/ugc/1/CD4AC621382542AF808FD3A9519EFC894FBE6C9A/", 1)));
+        Assert.Null(effects.For(Bundle("Oza", "https://example.com/house.unity3d", 1)));
+        Assert.False(BundleEffects.Load(Path.Combine(_root, "elsewhere")).Installed);
+    }
+
+    [Fact]
     public void Modules_kept_in_the_game_folder_of_another_steam_library_are_found()
     {
         var steam = Path.Combine(_root, "Steam");

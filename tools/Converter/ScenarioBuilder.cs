@@ -20,6 +20,7 @@ public sealed class ScenarioBuilder
     {
         public string Name = "";
         public List<TtsObj> Objects = new();
+        public List<TtsObj> Effects = new();
         public List<PieceInstance> Pieces = new();
         public Dictionary<PieceInstance, double> Y = new();
     }
@@ -65,13 +66,19 @@ public sealed class ScenarioBuilder
             {
                 Progress.Step(o.Nickname.Length > 0 ? o.Nickname : o.Name);
                 if (o.Flipped) flipped++;
-                var p = Instance(o, common[_defs.VisualKey(o)], extras, packDefs, layer, usedPacks, ref rekeyed, null);
-                if (p == null) continue;
+                Instance(o, common[_defs.VisualKey(o)], extras, packDefs, layer, usedPacks, ref rekeyed, null);
             }
         }
+        var effects = BundleEffects.Load(root);
+        var placedEffects = layers.ToDictionary(l => l, _ => new List<PieceInstance>());
+        foreach (var layer in layers)
+            foreach (var o in layer.Effects)
+                if (Effect(o, effects, extras, packDefs, layer, usedPacks, ref rekeyed) is { } fx) placedEffects[layer].Add(fx);
         Index(extras.M.Pieces);
         foreach (var pd in packDefs.Values.SelectMany(v => v)) _lookup.TryAdd(pd.def.Id, pd.def);
         foreach (var layer in layers) Stack(layer);
+        foreach (var (layer, placed) in placedEffects) layer.Pieces.AddRange(placed);
+        if (placedEffects.Values.Sum(p => p.Count) is var effectCount and > 0) _rep.Counts[$"{sc.Id}: effects placed as Firme's effects"] = effectCount.ToString();
 
         scenario.UmpireBoard = layers[0].Pieces;
         scenario.Drawings["umpire"] = new();
@@ -287,12 +294,35 @@ public sealed class ScenarioBuilder
             if (exclude.Contains(o)) continue;
             if (IsSheet(o)) { if (name != "umpire") _rep.Skipped("map sheet duplicated in a side module", where); continue; }
             if (_cfg.ContainerTypes.Contains(o.Name)) { _rep.Skipped(o.Name + " (contents not placed in the scenario)", where); continue; }
+            if (o.Name == BundleType && !_cfg.IsTableWall(o.BundleUrl)) { l.Effects.Add(o); continue; }
             if (_cfg.IgnoreTypes.Contains(o.Name) || o.Name.StartsWith("Die_")) { _rep.Skipped(o.Name, where); continue; }
             if (o.IsFurniture) { _rep.Skipped("table furniture (custom table / surround / under the table)", where); continue; }
             if (!DefFactory.IsPiece(o)) { _rep.UnknownType(o.Name, where); continue; }
             l.Objects.Add(o);
         }
         return l;
+    }
+
+    const string BundleType = "Custom_Assetbundle";
+
+    PieceInstance? Effect(TtsObj o, BundleEffects effects, PackOut extras, Dictionary<string, List<(PieceDef def, string pack)>> packDefs,
+        Layer layer, HashSet<string> usedPacks, ref int rekeyed)
+    {
+        var where = $"{layer.Name} {o.Name} '{o.Nickname}' {o.Guid}";
+        PieceInstance? fx = null;
+        if (_assets.Gone(o.BundleUrl, "bundle") is { } gone) _rep.LeftOut(o.Nickname.Length > 0 ? o.Nickname : "Effect", o.BundleUrl!, gone, where, o.Guid);
+        else if (effects.For(o) is { } match)
+        {
+            fx = new PieceInstance
+            {
+                Id = $"p-{_nextId++:D6}", Def = match.Def.Id, Pos = new Vec2(Math.Round(o.PosX, 4), Math.Round(o.PosZ, 4)),
+                RotDeg = Norm(o.RotY), Scale = match.Scale, Guid = o.Guid.Length > 0 ? o.Guid : null,
+            };
+            usedPacks.Add(KTable.Client.Effects.EffectKinds.StandardPack);
+        }
+        else _rep.Skipped(effects.Installed ? BundleType + " (a 3D model or an effect with no counterpart among Firme's effects)" : BundleType + " (Firme's effects are not installed)", where);
+        PlaceChildren(o, o.Children, fx, Math.Abs(o.ScaleX), 1, extras, packDefs, layer, usedPacks, ref rekeyed);
+        return fx;
     }
 
     public static List<DecalDef> DecalsOf(TtsObj o, PieceDef def, Func<string, string?> picture)
@@ -330,7 +360,7 @@ public sealed class ScenarioBuilder
 
         if (MatchKey(def) is { } mk && packDefs.TryGetValue(mk, out var cands))
         {
-            (PieceDef def, string pack)? best = null; double bestScale = 0;
+            (PieceDef def, string pack)? best = null; double bestScale = 0, bestMiss = double.MaxValue;
             foreach (var c in cands)
             {
                 if (c.def.States.Count != def.States.Count) continue;
@@ -340,8 +370,9 @@ public sealed class ScenarioBuilder
                 if (c.def.Size.W <= 0 || c.def.Size.H <= 0) continue;
                 double kx = def.Size.W / c.def.Size.W, kz = def.Size.H / c.def.Size.H;
                 if (Math.Abs(kx - kz) > 0.01 * kx) continue;
-                bool exact = Math.Abs(kx - 1) < 0.01;
-                if (best == null || exact) { best = c; bestScale = exact ? 1 : kx; if (exact) break; }
+                double miss = Math.Abs(kx - 1);
+                bool exact = miss < 0.01;
+                if (best == null || exact && miss < bestMiss) { best = c; bestScale = exact ? 1 : kx; bestMiss = exact ? miss : bestMiss; }
             }
             if (best is { } b)
             {
@@ -377,21 +408,27 @@ public sealed class ScenarioBuilder
         layer.Pieces.Add(inst);
         layer.Y[inst] = o.PosY;
 
+        PlaceChildren(o, _defs.BakesChildren(o) ? Enumerable.Empty<TtsObj>() : o.Children, inst, refScale, baseScale, extras, packDefs, layer, usedPacks, ref rekeyed);
+        return inst;
+    }
+
+    void PlaceChildren(TtsObj o, IEnumerable<TtsObj> children, PieceInstance? parent, double refScale, double baseScale, PackOut extras,
+        Dictionary<string, List<(PieceDef def, string pack)>> packDefs, Layer layer, HashSet<string> usedPacks, ref int rekeyed)
+    {
         double th = o.RotY * Math.PI / 180;
-        foreach (var c in _defs.BakesChildren(o) ? Enumerable.Empty<TtsObj>() : o.Children)
+        foreach (var c in children)
         {
             if (!DefFactory.IsPiece(c)) continue;
             double lx = c.PosX * o.ScaleX, lz = c.PosZ * o.ScaleZ;
-            var ci = Instance(c, Math.Abs(c.StateList().states[0].ScaleX) * refScale, extras, packDefs, layer, usedPacks, ref rekeyed, inst);
+            var ci = Instance(c, Math.Abs(c.StateList().states[0].ScaleX) * refScale, extras, packDefs, layer, usedPacks, ref rekeyed, parent);
             if (ci == null) continue;
             ci.Pos = new Vec2(Math.Round(o.PosX + lx * Math.Cos(th) + lz * Math.Sin(th), 4), Math.Round(o.PosZ - lx * Math.Sin(th) + lz * Math.Cos(th), 4));
             ci.RotDeg = Norm(o.RotY + c.RotY);
             var sizedAtParentReferenceScale = ci.Scale * refScale;
             ci.Scale = Math.Round(sizedAtParentReferenceScale * baseScale, 4);
             layer.Y[ci] = o.PosY + 0.01;
-            inst.Attached.Add(ci.Id);
+            parent?.Attached.Add(ci.Id);
         }
-        return inst;
     }
 
     static string? MatchKey(PieceDef d) => d.Kind == "model"

@@ -10,6 +10,7 @@ public sealed class PackBuilder
     readonly Report _rep;
     readonly DefFactory _defs;
     readonly MakeWay _way;
+    BundleEffects? _effects;
 
     public PackBuilder(Config cfg, AssetStore assets, Report rep, MakeWay way) { _cfg = cfg; _assets = assets; _rep = rep; _defs = new DefFactory(cfg, assets, rep); _way = way; }
 
@@ -108,6 +109,8 @@ public sealed class PackBuilder
         {
             if (pack.M.Id.Contains("effects")) { EffectDef(o, pack); effects++; }
             else _rep.Skipped(o.Name, where);
+            foreach (var c in o.Children.Where(DefFactory.IsPiece))
+                if (_defs.DefFor(c, pack, Math.Abs(c.StateList().states[0].ScaleX) * Math.Abs(o.ScaleX)) != null) objects++;
             return;
         }
         if (_cfg.IgnoreTypes.Contains(o.Name) || o.Name.StartsWith("Die_")) { _rep.Skipped(o.Name, where); return; }
@@ -122,7 +125,7 @@ public sealed class PackBuilder
 
     void EffectDef(TtsObj o, PackOut pack)
     {
-        if (o.BundleUrl is { } bu && _cfg.IgnoreBundles.Any(x => bu.Contains(x, StringComparison.OrdinalIgnoreCase))) { _rep.Skipped("Custom_Assetbundle table walls", $"{pack.M.Id} {o.Guid}"); return; }
+        if (_cfg.IsTableWall(o.BundleUrl)) { _rep.Skipped("Custom_Assetbundle table walls", $"{pack.M.Id} {o.Guid}"); return; }
         var e = _defs.Entry(o.BundleUrl);
         var name = o.Nickname.Length > 0 ? o.Nickname : "Effect " + DefFactory.Hash8(o.BundleUrl ?? o.Guid)[..4];
         if (e == null) _rep.Missing(o.BundleUrl ?? "(none)", _assets.Why(o.BundleUrl ?? "") ?? "unresolved", $"{pack.M.Id} effect '{name}'");
@@ -135,6 +138,12 @@ public sealed class PackBuilder
             Name = name, Image = img, Size = new Size2(2 * Math.Abs(o.ScaleX), 2 * Math.Abs(o.ScaleZ)), Thickness = 0.02,
             Tags = new() { "effect", "bundle:" + (e?.Sha ?? "missing") },
         };
+        _effects ??= BundleEffects.Load(_cfg.Output);
+        if (_effects.For(o) is { } fx)
+        {
+            d.Effect = Json.Deserialize<EffectDef>(Json.Serialize(fx.Def.Effect!));
+            d.Size = new Size2(Math.Round(fx.Def.Size.W * fx.Scale, 4), Math.Round(fx.Def.Size.H * fx.Scale, 4));
+        }
         pack.ByKey[key] = d;
         pack.M.Pieces.Add(d);
     }

@@ -61,6 +61,8 @@ public sealed class Config
     public List<string> IgnoreBundles { get; set; } = new();
     public TilesCfg Tiles { get; set; } = new();
 
+    public bool IsTableWall(string? bundleUrl) => bundleUrl is { } u && IgnoreBundles.Any(x => u.Contains(x, StringComparison.OrdinalIgnoreCase));
+
     public string WorkshopDir => Path.Combine(TtsModsPath, "Workshop");
     public string SavesDir
     {

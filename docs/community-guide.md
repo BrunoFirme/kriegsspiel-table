@@ -15,9 +15,10 @@ You get:
 | Converts | Does not |
 |---|---|
 | Tiles, tokens, boards, 3D models | Physics, hands, decks (listed in the report) |
-| States (formation, shattered…) | Unity asset bundles |
+| States (formation, shattered…) | Asset-bundle models (houses, trees, ships) |
 | IKS script counters and text | Bags as containers |
 | Tints, names, attached markers | TTS dice (use the app's) |
+| Asset-bundle effects (smoke, fire, gun fire, mist, rain), as the closest of Firme's Effects | |
 | Lua scripts and XML panels, translated | |
 | Decals, and the pictures scripts set from web links | |
 | Locked text and images (Lock text, Lock images) | |
