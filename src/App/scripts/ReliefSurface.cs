@@ -10,6 +10,7 @@ public partial class ReliefSurface : Node3D
     const int MostVertsAcross = 384;
     const int BlockCells = 48;
     const float PaintAbove = 0.003f;
+    const float SeamProbe = 0.01f;
     static readonly Color Earth = new(0.42f, 0.33f, 0.24f);
     static Shader? _shader;
 
@@ -56,7 +57,7 @@ public partial class ReliefSurface : Node3D
             }
         _skirt = new MeshInstance3D
         {
-            Mesh = GroundMesh.Skirt(h, x0, z0, x1, z1, nx, nz, -sheetXf.Origin.Y),
+            Mesh = GroundMesh.Skirt(h, x0, z0, x1, z1, nx, nz, -sheetXf.Origin.Y, (x, z) => ground.ReliefAt(Coords.FromWorld(sheetXf * new Vector3(x, 0, z))) == null, Math.Min(W, H) * SeamProbe),
             MaterialOverride = new StandardMaterial3D { AlbedoColor = Earth, Roughness = 1, CullMode = BaseMaterial3D.CullModeEnum.Disabled, SpecularMode = BaseMaterial3D.SpecularModeEnum.Disabled },
             CastShadow = GeometryInstance3D.ShadowCastingSetting.Off,
         };

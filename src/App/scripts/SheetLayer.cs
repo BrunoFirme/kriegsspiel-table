@@ -121,11 +121,15 @@ sealed class SheetLayer
         var cam = _c.Rig.Cam;
         var view = (cam.GlobalTransform, cam.Fov, cam.Size, LodBoost);
         ulong frame = Engine.GetProcessFrames();
-        if (view == _lodView && frame - _lodFrame < 15) return;
-        _lodView = view; _lodFrame = frame;
-        foreach (var sn in _sheets.Values) sn.UpdateLod(_c.Rig, LodBoost);
+        bool all = view != _lodView || frame - _lodFrame >= 15;
+        if (!all && !_sheets.Values.Any(s => s.LodDue)) return;
+        if (all) { _lodView = view; _lodFrame = frame; }
+        var lod = LodView.Of(cam, _c.Rig.GetViewport().GetVisibleRect().Size.Y, LodBoost);
+        int fresh = FreshQuadsPerFrame;
+        foreach (var sn in _sheets.Values) if (all || sn.LodDue) sn.UpdateLod(lod, ref fresh);
     }
 
+    const int FreshQuadsPerFrame = 8;
     (Transform3D, float, float, float) _lodView;
     ulong _lodFrame;
 

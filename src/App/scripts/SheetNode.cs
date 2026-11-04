@@ -82,6 +82,7 @@ public partial class SheetNode : Node3D
         foreach (var q in _quads.Values) q.QueueFree();
         _quads.Clear();
         _quadBoxes.Clear();
+        _textured.Clear();
         _detailLevel = -1;
         TilesLoaded = 0; TilesTotal = 0;
         if (_fallback != null) _fallback.Mesh = new PlaneMesh { Size = new Vector2((float)Def.Size.W, (float)Def.Size.H) };
@@ -195,7 +196,7 @@ public partial class SheetNode : Node3D
         int n = double.IsFinite(cell) ? Math.Clamp((int)Math.Ceiling(Math.Max(b.w, b.h) / cell), 1, GroundMesh.MostCellsPerTile) : 1;
         float longest = Math.Max(b.w, b.h);
         int nx = Math.Max(1, (int)Math.Round(n * b.w / longest)), nz = Math.Max(1, (int)Math.Round(n * b.h / longest));
-        q.Mesh = GroundMesh.Grid(GroundMesh.Heights(g, xf), b.cx - b.w / 2, b.cz - b.h / 2, b.cx + b.w / 2, b.cz + b.h / 2, nx, nz, Vector2.Zero, Vector2.One, b.lift);
+        q.Mesh = GroundMesh.Grid(GroundMesh.Heights(g, xf), b.cx - b.w / 2, b.cz - b.h / 2, b.cx + b.w / 2, b.cz + b.h / 2, nx, nz, Vector2.Zero, Vector2.One, b.lift, longest / Math.Max(nx, nz) * SkirtCells);
         q.Position = Vector3.Zero;
     }
 
@@ -224,24 +225,32 @@ public partial class SheetNode : Node3D
         return (float)(_index!.Levels[level].W * c.W / Def.Size.W);
     }
 
-    public void UpdateLod(CameraRig rig, float boost)
+    const float DetailLift = 0.002f;
+    const float SkirtCells = 1.5f;
+    readonly HashSet<(int l, int x, int y)> _textured = new();
+    public bool LodDue { get; private set; }
+
+    static (int l, int x, int y) Parent((int l, int x, int y) t) => (t.l + 1, t.x >> 1, t.y >> 1);
+
+    internal void UpdateLod(LodView view, ref int fresh)
     {
         if (_index == null || _baseLevel < 0) return;
-        var planes = rig.Cam.GetFrustum();
-        var inside = rig.Cam.GlobalPosition - rig.Cam.GlobalTransform.Basis.Z * (rig.Cam.Near + rig.Cam.Far) * 0.5f;
+        LodDue = false;
+        var xf = GlobalTransform;
         var leaves = new HashSet<(int l, int x, int y)>();
+        var refined = new HashSet<(int l, int x, int y)>();
         var open = new PriorityQueue<(int l, int x, int y), float>();
         int count = 0;
 
         void Consider(int l, int x, int y)
         {
             if (!TileBox(l, x, y, out var lo, out var hi)) return;
-            if (!InView(planes, inside, lo, hi)) return;
+            if (!InView(view, xf, lo, hi)) return;
             count++;
             if (l > 0)
             {
-                var mid = ToGlobal(new Vector3((lo.X + hi.X) / 2, 0, (lo.Y + hi.Y) / 2));
-                float need = rig.PixelsPerUnitAt(mid) * boost, have = Density(l);
+                var mid = xf * new Vector3((lo.X + hi.X) / 2, 0, (lo.Y + hi.Y) / 2);
+                float need = view.PixelsPerUnitAt(mid), have = Density(l);
                 if (need > have) { open.Enqueue((l, x, y), -need / have); return; }
             }
             leaves.Add((l, x, y));
@@ -255,6 +264,7 @@ public partial class SheetNode : Node3D
         {
             var t = open.Dequeue();
             count--;
+            refined.Add(t);
             for (int dy = 0; dy < 2; dy++)
                 for (int dx = 0; dx < 2; dx++)
                     Consider(t.l - 1, t.x * 2 + dx, t.y * 2 + dy);
@@ -266,17 +276,30 @@ public partial class SheetNode : Node3D
         foreach (var t in leaves)
         {
             if (t.l >= _baseLevel) continue;
+            if (!_quads.ContainsKey(t))
+            {
+                if (fresh <= 0) { LodDue = true; continue; }
+                fresh--;
+            }
             keep.Add(t);
             finest = Math.Min(finest, t.l);
             coarsest = Math.Max(coarsest, t.l);
-            EnsureQuad(t.l, t.x, t.y, 0.002f);
+            EnsureQuad(t.l, t.x, t.y, DetailLift * (_baseLevel - t.l));
             _assets.Touch(Def.Package, TileRel(t.l, t.x, t.y));
         }
+        var unfinished = new HashSet<(int l, int x, int y)>();
+        foreach (var t in leaves)
+            if (!_textured.Contains(t))
+                for (var a = Parent(t); a.l <= _baseLevel && unfinished.Add(a); a = Parent(a)) { }
+        foreach (var a in unfinished)
+            if (a.l < _baseLevel && _quads.ContainsKey(a)) keep.Add(a);
         _detailLevel = finest < _baseLevel ? finest : -1;
         _coarsestLevel = coarsest;
         var drop = new List<(int, int, int)>();
         foreach (var k in _quads.Keys) if (k.l != _baseLevel && !keep.Contains(k)) drop.Add(k);
-        foreach (var k in drop) { _quads[k].QueueFree(); _quads.Remove(k); _quadBoxes.Remove(k); }
+        foreach (var k in drop) { _quads[k].QueueFree(); _quads.Remove(k); _quadBoxes.Remove(k); _textured.Remove(k); }
+        foreach (var (k, q) in _quads)
+            if (k.l == _baseLevel) q.Visible = !refined.Contains(k) || unfinished.Contains(k);
         for (int y = 0; y < bl.Rows; y++)
             for (int x = 0; x < bl.Cols; x++)
                 _assets.Touch(Def.Package, TileRel(_baseLevel, x, y));
@@ -301,39 +324,14 @@ public partial class SheetNode : Node3D
         return true;
     }
 
-    static bool InViewOf(Godot.Collections.Array<Plane> planes, Vector3 inside, Aabb box)
+    bool InView(LodView view, Transform3D xf, Vector2 lo, Vector2 hi)
     {
-        foreach (var p in planes)
-        {
-            var n = p.Normal;
-            bool outward = p.DistanceTo(inside) < 0;
-            var corner = box.Position + new Vector3(
-                n.X > 0 == outward ? 0 : box.Size.X,
-                n.Y > 0 == outward ? 0 : box.Size.Y,
-                n.Z > 0 == outward ? 0 : box.Size.Z);
-            float d = p.DistanceTo(corner);
-            if (outward ? d > 0 : d < 0) return false;
-        }
-        return true;
-    }
-
-    bool InView(Godot.Collections.Array<Plane> planes, Vector3 inside, Vector2 lo, Vector2 hi)
-    {
-        var box = new Aabb(ToGlobal(new Vector3(lo.X, 0, lo.Y)), Vector3.Zero)
-            .Expand(ToGlobal(new Vector3(hi.X, 0, lo.Y)))
-            .Expand(ToGlobal(new Vector3(hi.X, 0, hi.Y)))
-            .Expand(ToGlobal(new Vector3(lo.X, 0, hi.Y)))
+        var box = new Aabb(xf * new Vector3(lo.X, 0, lo.Y), Vector3.Zero)
+            .Expand(xf * new Vector3(hi.X, 0, lo.Y))
+            .Expand(xf * new Vector3(hi.X, 0, hi.Y))
+            .Expand(xf * new Vector3(lo.X, 0, hi.Y))
             .Grow((hi - lo).Length() * 0.5f + (float)_relief.Ground.Highest);
-        return InViewOf(planes, inside, box);
-    }
-
-    void ClearDetail()
-    {
-        var drop = new List<(int, int, int)>();
-        foreach (var k in _quads.Keys) if (k.l != _baseLevel) drop.Add(k);
-        foreach (var k in drop) { _quads[k].QueueFree(); _quads.Remove(k); _quadBoxes.Remove(k); }
-        _detailLevel = -1;
-        _coarsestLevel = -1;
+        return view.Sees(box);
     }
 
     string TileRel(int l, int x, int y) => Path.Combine(_tilesRel, l.ToString(), $"{x}_{y}.{_index!.Ext}");
@@ -369,12 +367,20 @@ public partial class SheetNode : Node3D
         _quadBoxes[(l, x, y)] = box;
         var tex = _assets.Texture(Def.Package, TileRel(l, x, y), t =>
         {
-            if (!IsInstanceValid(q)) return;
-            mat.AlbedoTexture = t; mat.AlbedoColor = Colors.White;
-            if (l == _baseLevel) TilesLoaded++;
+            if (!_quads.TryGetValue((l, x, y), out var now) || now != q) return;
+            Textured(l, x, y, mat, t);
             if (l == _baseLevel && _fallback != null) { _fallback.QueueFree(); _fallback = null; }
         }, quiet: l != _baseLevel);
-        if (tex != null) { mat.AlbedoTexture = tex; mat.AlbedoColor = Colors.White; if (l == _baseLevel) TilesLoaded++; }
+        if (tex != null) Textured(l, x, y, mat, tex);
+    }
+
+    void Textured(int l, int x, int y, StandardMaterial3D mat, Texture2D tex)
+    {
+        mat.AlbedoTexture = tex;
+        mat.AlbedoColor = Colors.White;
+        _textured.Add((l, x, y));
+        if (l == _baseLevel) TilesLoaded++;
+        else LodDue = true;
     }
 
     public bool ContainsWorld(Vector3 world)
