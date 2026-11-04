@@ -60,7 +60,7 @@ sealed class PendingPoses
         if (_hand.Holding) { _hand.Rotate(deg); return; }
         foreach (var n in _selection.Movable) { var c = Current(n); Set(n, c.pos, c.rot + deg, c.scale); }
         _c.Sound.Turn(_selection.Movable);
-        _c.Say("Wheel turns 2° a notch · Ctrl 10° · Shift ½° · Alt+wheel zooms · drag the ring knobs");
+        _c.Say("The wheel turns 10° a notch · Ctrl 2° · Shift ½° · Alt+wheel zooms · drag the ring knobs");
     }
 
     public void ScaleSmooth(double factor)

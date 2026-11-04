@@ -349,7 +349,7 @@ public partial class Table : Node3D
         Tool.Place => "Shift+click places another",
         Tool.Relief => "Drag over a sheet to shape or paint the ground · Shift+click goes straight on from the last stroke · Alt+click picks up the ground there · Ctrl+wheel sizes the brush",
         Tool.Formation => Forms.Hint(),
-        Tool.Transform => "The round knob turns, the square knob resizes · Shift snaps · the wheel turns 2° a notch, Ctrl 10°, Shift ½°",
+        Tool.Transform => "The round knob turns, the square knob resizes · Shift snaps · the wheel over the piece turns 10° a notch, Ctrl 2°, Shift ½°",
         Tool.Ruler => "Drag to measure · map units until the map is calibrated",
         Tool.Calibrate => "Drag along the map's scale bar, then type what it measures",
         Tool.Draw => "Drag to draw on the layer picked in the panel",
