@@ -94,7 +94,7 @@ static class AppSettings
     {
         var dlg = new AcceptDialog { Title = "Settings", OkButtonText = "Done" };
         var pages = new DialogPages("app-settings", new Vector2(620, 420));
-        AddSize(pages.Add("Accessibility"), cfg);
+        AddSize(pages.Add("Interface"), cfg);
         AddSound(pages.Add("Sound"), cfg);
         if (AgentEndpoint.Current is { } agent) AgentPanel.Simple(pages.Add("AI agent"), agent, cfg);
         pages.ShowFirst();
@@ -117,7 +117,7 @@ sealed class SettingsPage
     {
         var v = _t.NewPage("Settings", "");
         v.AddThemeConstantOverride("separation", 10);
-        v.AddChild(Ui.Header("Accessibility"));
+        v.AddChild(Ui.Header("Interface"));
         var access = new VBoxContainer();
         v.AddChild(access);
         AppSettings.AddSize(access, _cfg);

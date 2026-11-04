@@ -63,7 +63,7 @@ The tool strip runs down the left. Point at any tool and press **F1** for its se
 - The top line says what just happened (a roll, a measurement), then goes quiet.
 - Panels open beside their button. Drag them by the title bar, resize from the corner; they stay put.
 - Other umpires' pointers show as gloved hands in their colour, with their names; a hand closes over what it
-  carries. **Share my pointer** (Settings, or the connection at the top right) shows yours; Scenario properties
+  carries. **Share my pointer** (Settings → Table, or the connection at the top right) shows yours; Scenario properties
   can rule that **Umpires cannot hide their pointer**.
 
 ### Camera
@@ -163,8 +163,8 @@ Nothing is sent: paste it into that side's channel.
 **Ctrl+Shift+C** and drag a region: it goes to the clipboard and the capture folder. **Ctrl+Shift+X** repeats
 it. Captures show the ground only, no tools.
 
-Names too small in the picture? Raise **Settings → Capture resolution**, shrink the POV reach, or turn up
-**Settings → Names on pieces**.
+Names too small in the picture? Raise **Settings → Captures → Resolution**, shrink the POV reach, or turn up
+**Settings → Table → Names on pieces**.
 
 ### Map sheets
 
@@ -250,6 +250,6 @@ The ⋯ after the scenario's name opens its properties: briefing, clock, light a
 | The card says the save is damaged | Host continues from the newest copy; the damaged file is kept beside it. |
 | You deleted something | **Host a game → Trash** or **Piece studio → Trash**: thirty days to **Restore**. |
 | The host's PC is gone | An umpire who was there: **Mirrored games** → **Host from the copy**. |
-| A panel is off screen | **Settings → Reset panel sizes**. |
-| Text and buttons are too small | **Settings → Accessibility → Interface size**; **Match Windows** follows Windows' own display scale. |
+| A panel is off screen | **Settings → Interface → Put the panels back**. |
+| Text and buttons are too small | **Settings → Interface → Interface size**; **Match Windows** follows Windows' own display scale. |
 | Colours are hard to tell apart | Umpires' colours are chosen for colour-blind eyes. For maps and pieces, Windows has **Settings → Accessibility → Colour filters**. |

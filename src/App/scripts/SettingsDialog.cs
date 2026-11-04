@@ -19,15 +19,23 @@ sealed class SettingsDialog : HudPart
     {
         var dlg = new AcceptDialog { Title = "Settings", OkButtonText = "Done" };
         var pages = new DialogPages("settings", new Vector2(660, 440));
-        _box = pages.Add("Accessibility"); AddAccessibility();
-        _box = pages.Add("Interface"); AddInterface();
-        _box = pages.Add("Table"); AddTable();
-        _box = pages.Add("Graphics"); AddGraphics();
-        _box = pages.Add("Sound"); AddSound();
-        if (S.IsUmpire) { _box = pages.Add("Umpires"); AddUmpires(); }
-        _box = pages.Add("Captures"); AddCaptures();
-        _box = pages.Add("Keys"); AddKeys();
-        if (AgentEndpoint.Current is { } agent) { _box = pages.Add("AI agent"); AgentPanel.Simple(_box, agent, Cfg); }
+        _box = pages.Add("Interface");
+        AddInterface();
+        _box = pages.Add("Table");
+        AddTable();
+        _box = pages.Add("Graphics");
+        AddGraphics();
+        _box = pages.Add("Sound");
+        AddSound();
+        _box = pages.Add("Captures");
+        AddCaptures();
+        _box = pages.Add("Keys");
+        AddKeys();
+        if (AgentEndpoint.Current is { } agent)
+        {
+            _box = pages.Add("AI agent");
+            AgentPanel.Simple(_box, agent, Cfg);
+        }
         pages.ShowFirst();
         dlg.AddChild(pages.Root);
         dlg.Confirmed += Cfg.Save;
@@ -71,8 +79,9 @@ sealed class SettingsDialog : HudPart
         return m;
     }
 
-    void AddAccessibility()
+    void AddInterface()
     {
+        _box.AddChild(Header("Size"));
         var size = AppSettings.SizeSlider(Cfg, () => Callable.From(Shell.Relayout).CallDeferred());
         _box.AddChild(Row("Interface size", size.Size, size.Shown));
         _box.AddChild(Option(size.Match));
@@ -87,59 +96,108 @@ sealed class SettingsDialog : HudPart
         bar.ValueChanged += v =>
         {
             barL.Text = $"{v:0} px";
-            Cfg.StripSize = (float)v; Cfg.Save();
-            _strip.Rebuild(); Callable.From(Shell.Relayout).CallDeferred();
+            Cfg.StripSize = (float)v;
+            Cfg.Save();
+            _strip.Rebuild();
+            Callable.From(Shell.Relayout).CallDeferred();
         };
         _box.AddChild(Row("Sidebar buttons", bar, barL));
-    }
 
-    void AddInterface()
-    {
-        _box.AddChild(Header("Top bar"));
-        var topLine = new CheckBox { Text = "Say what just happened", ButtonPressed = Cfg.TopLine, TooltipText = "Off: the bar stays bare and it is written in the log instead" };
-        var topW = new HSlider { MinValue = Settings.TopLineWidthMin, MaxValue = 1, Step = 0.05, Value = Cfg.TopLineWidth, TooltipText = "How much of the room between the turn buttons and the right-hand end that line may take" };
+        _box.AddChild(Header("Layout"));
+        var topLine = new CheckBox { Text = "Top bar says what just happened", ButtonPressed = Cfg.TopLine, TooltipText = "Off: the bar stays bare and it is written in the log instead" };
+        var topW = new HSlider
+        {
+            MinValue = Settings.TopLineWidthMin, MaxValue = 1, Step = 0.05, Value = Cfg.TopLineWidth,
+            TooltipText = "How much of the room between the turn buttons and the right-hand end that line may take",
+        };
         var topWL = new Label { Text = $"{Cfg.TopLineWidth * 100:0}%" };
         var topRow = Row("Line length", topW, topWL);
-        topLine.Toggled += on => { Cfg.TopLine = on; Cfg.Save(); topRow.Visible = on; _top.SyncTopLine(); };
-        topW.ValueChanged += v => { topWL.Text = $"{v * 100:0}%"; Cfg.TopLineWidth = (float)v; _top.SyncTopLine(); };
+        topLine.Toggled += on =>
+        {
+            Cfg.TopLine = on;
+            Cfg.Save();
+            topRow.Visible = on;
+            _top.SyncTopLine();
+        };
+        topW.ValueChanged += v =>
+        {
+            topWL.Text = $"{v * 100:0}%";
+            Cfg.TopLineWidth = (float)v;
+            _top.SyncTopLine();
+        };
         topW.DragEnded += _ => Cfg.Save();
         topRow.Visible = Cfg.TopLine;
         _box.AddChild(Option(topLine));
         _box.AddChild(topRow);
-
-        _box.AddChild(Header("Panels"));
         _box.AddChild(Action(Btn("Put the panels back", Shell.PutPanelsBack, "The drawer's width, and every tool panel back beside its own button")));
-
-    }
-
-    void AddSound()
-    {
-        _box.AddChild(Header("Table"));
-        var vol = new HSlider { MinValue = 0, MaxValue = 1, Step = 0.05, Value = Cfg.SoundVolume };
-        var volL = new Label { Text = $"{Cfg.SoundVolume * 100:0}%" };
-        vol.ValueChanged += v => { volL.Text = $"{v * 100:0}%"; Cfg.SoundVolume = (float)v; Sfx.Current?.Apply(); };
-        vol.DragEnded += _ => Cfg.Save();
-        _box.AddChild(Row("Volume", vol, volL));
-        var mute = new CheckBox { Text = "Silent", ButtonPressed = Cfg.SoundMuted, TooltipText = $"{Cfg.Keys.Of("mute")} at the table" };
-        mute.Toggled += on => { Cfg.SoundMuted = on; Cfg.Save(); Sfx.Current?.Apply(); };
-        _box.AddChild(Option(mute));
-        var behind = new CheckBox { Text = "Heard while the window is behind others", ButtonPressed = Cfg.SoundInBackground };
-        behind.Toggled += on => { Cfg.SoundInBackground = on; Cfg.Save(); Sfx.Current?.Apply(); };
-        _box.AddChild(Option(behind));
     }
 
     void AddTable()
     {
-        _box.AddChild(Header("Pieces"));
+        bool pointers = S.IsUmpire;
+        if (pointers) _box.AddChild(Header("Pieces"));
         var face = new CheckBox { Text = "Names on pieces, counters on their backs", ButtonPressed = Cfg.FaceText, TooltipText = "Off: on hover only" };
-        var nameS = new HSlider { MinValue = Settings.FaceTextScaleMin, MaxValue = Settings.FaceTextScaleMax, Step = 0.05, Value = Cfg.FaceTextScale, TooltipText = "How big the names print on pieces, and the lettering an imported piece draws itself (bigger reads in captures; it may spill past the name band)" };
+        var nameS = new HSlider
+        {
+            MinValue = Settings.FaceTextScaleMin, MaxValue = Settings.FaceTextScaleMax, Step = 0.05, Value = Cfg.FaceTextScale,
+            TooltipText = "How big the names print on pieces, and the lettering an imported piece draws itself (bigger reads in captures; it may spill past the name band)",
+        };
         var nameL = new Label { Text = $"{Cfg.FaceTextScale:0.00}×" };
         var nameRow = Row("Name size", nameS, nameL);
-        nameS.ValueChanged += v => { Cfg.FaceTextScale = (float)v; nameL.Text = $"{v:0.00}×"; T.ApplyLettering(); };
-        face.Toggled += on => { Cfg.FaceText = on; nameRow.Visible = on; T.ApplyLettering(); };
+        nameS.ValueChanged += v =>
+        {
+            Cfg.FaceTextScale = (float)v;
+            nameL.Text = $"{v:0.00}×";
+            T.ApplyLettering();
+        };
+        face.Toggled += on =>
+        {
+            Cfg.FaceText = on;
+            nameRow.Visible = on;
+            T.ApplyLettering();
+        };
         nameRow.Visible = Cfg.FaceText;
         _box.AddChild(Option(face));
         _box.AddChild(nameRow);
+        _box.AddChild(ReachRow());
+        if (!pointers) return;
+
+        _box.AddChild(Header("Pointers"));
+        var forced = S.View.PointersAlwaysShown;
+        var share = new CheckBox { Text = "Share my pointer", ButtonPressed = Cfg.ShareCursor || forced, Disabled = forced, TooltipText = forced ? PeopleList.PointerShownByHost : "" };
+        share.Toggled += on => { Cfg.ShareCursor = on; _top.UpdatePointerInfo(); };
+        var show = new CheckBox { Text = "Show the others' pointers", ButtonPressed = Cfg.ShowCursors };
+        show.Toggled += on => { Cfg.ShowCursors = on; T.ShowCursors = on; };
+        _box.AddChild(Option(share));
+        _box.AddChild(Option(show));
+    }
+
+    HBoxContainer ReachRow()
+    {
+        var reach = new HSlider
+        {
+            MinValue = Settings.ReachMin, MaxValue = Settings.ReachOff, Step = 1, ExpEdit = true, Value = Cfg.LetteringReach,
+            TooltipText = "How far a piece keeps its names, counters and script buttons, in its own sizes. Lower is faster on a huge table. Right end: no limit",
+        };
+        var reachL = new Label();
+        static string ReachWord(double v) => v >= Settings.ReachOff ? "no limit" : $"{v:0}×";
+        reachL.Text = ReachWord(reach.Value);
+        bool dragging = false;
+        void ApplyReach()
+        {
+            if (Math.Abs(S.Art.Look.LetteringReach - (float)reach.Value) < 0.01f) return;
+            Cfg.LetteringReach = (float)reach.Value;
+            Cfg.Save();
+            T.ApplyLettering();
+        }
+        reach.DragStarted += () => dragging = true;
+        reach.DragEnded += _ => { dragging = false; ApplyReach(); };
+        reach.ValueChanged += v =>
+        {
+            reachL.Text = ReachWord(v);
+            if (!dragging) ApplyReach();
+        };
+        return Row("Lettering reach", reach, reachL);
     }
 
     void AddGraphics()
@@ -186,39 +244,40 @@ sealed class SettingsDialog : HudPart
         limitPick.Selected = Math.Max(0, Array.IndexOf(Graphics.FrameLimits, Cfg.FrameLimit));
         limitPick.ItemSelected += i => { Cfg.FrameLimit = Graphics.FrameLimits[i]; Cfg.Save(); Graphics.ApplyDisplay(Cfg); };
         _box.AddChild(Row("Frame limit", limitPick, null, fill: false));
-
-        _box.AddChild(Header("Speed on big tables"));
-        var reach = new HSlider { MinValue = Settings.ReachMin, MaxValue = Settings.ReachOff, Step = 1, ExpEdit = true, Value = Cfg.LetteringReach, TooltipText = "How far a piece keeps its names, counters and script buttons, in its own sizes. Lower is faster on a huge table. Right end: no limit" };
-        var reachL = new Label();
-        static string ReachWord(double v) => v >= Settings.ReachOff ? "no limit" : $"{v:0}×";
-        reachL.Text = ReachWord(reach.Value);
-        bool dragging = false;
-        void ApplyReach()
-        {
-            if (Math.Abs(S.Art.Look.LetteringReach - (float)reach.Value) < 0.01f) return;
-            Cfg.LetteringReach = (float)reach.Value; Cfg.Save();
-            T.ApplyLettering();
-        }
-        reach.DragStarted += () => dragging = true;
-        reach.DragEnded += _ => { dragging = false; ApplyReach(); };
-        reach.ValueChanged += v => { reachL.Text = ReachWord(v); if (!dragging) ApplyReach(); };
-        _box.AddChild(Row("Lettering reach", reach, reachL));
     }
 
-    void AddUmpires()
+    void AddSound()
     {
-        _box.AddChild(Header("Pointers"));
-        var forced = S.View.PointersAlwaysShown;
-        var share = new CheckBox { Text = "Share my pointer", ButtonPressed = Cfg.ShareCursor || forced, Disabled = forced, TooltipText = forced ? PeopleList.PointerShownByHost : "" };
-        share.Toggled += on => { Cfg.ShareCursor = on; _top.UpdatePointerInfo(); };
-        var show = new CheckBox { Text = "Show the others' pointers", ButtonPressed = Cfg.ShowCursors };
-        show.Toggled += on => { Cfg.ShowCursors = on; T.ShowCursors = on; };
-        _box.AddChild(Option(share)); _box.AddChild(Option(show));
+        var vol = new HSlider { MinValue = 0, MaxValue = 1, Step = 0.05, Value = Cfg.SoundVolume };
+        var volL = new Label { Text = $"{Cfg.SoundVolume * 100:0}%" };
+        vol.ValueChanged += v =>
+        {
+            volL.Text = $"{v * 100:0}%";
+            Cfg.SoundVolume = (float)v;
+            Sfx.Current?.Apply();
+        };
+        vol.DragEnded += _ => Cfg.Save();
+        _box.AddChild(Row("Volume", vol, volL));
+        var mute = new CheckBox { Text = "Silent", ButtonPressed = Cfg.SoundMuted, TooltipText = $"{Cfg.Keys.Of("mute")} at the table" };
+        mute.Toggled += on =>
+        {
+            Cfg.SoundMuted = on;
+            Cfg.Save();
+            Sfx.Current?.Apply();
+        };
+        _box.AddChild(Option(mute));
+        var behind = new CheckBox { Text = "Heard while the window is behind others", ButtonPressed = Cfg.SoundInBackground };
+        behind.Toggled += on =>
+        {
+            Cfg.SoundInBackground = on;
+            Cfg.Save();
+            Sfx.Current?.Apply();
+        };
+        _box.AddChild(Option(behind));
     }
 
     void AddCaptures()
     {
-        _box.AddChild(Header("Where they go"));
         var clip = new CheckBox { Text = "Copy to the clipboard", ButtonPressed = Cfg.CaptureToClipboard };
         clip.Toggled += on => Cfg.CaptureToClipboard = on;
         var fold = new CheckBox { Text = "Save to a folder", ButtonPressed = Cfg.CaptureToFolder };
@@ -231,9 +290,14 @@ sealed class SettingsDialog : HudPart
         var pathRow = Row("Folder", pathBox);
         fold.Toggled += on => { Cfg.CaptureToFolder = on; pathRow.Visible = on; };
         pathRow.Visible = Cfg.CaptureToFolder;
-        _box.AddChild(Option(clip)); _box.AddChild(Option(fold)); _box.AddChild(pathRow);
-        _box.AddChild(Header("Picture"));
-        var resPick = new OptionButton { TooltipText = "Captures are rendered apart from the screen, at this many times its resolution: sharper maps and text in Discord", CustomMinimumSize = new Vector2(160, 0) };
+        _box.AddChild(Option(clip));
+        _box.AddChild(Option(fold));
+        _box.AddChild(pathRow);
+        var resPick = new OptionButton
+        {
+            TooltipText = "Captures are rendered apart from the screen, at this many times its resolution: sharper maps and text in Discord",
+            CustomMinimumSize = new Vector2(160, 0),
+        };
         for (int kk = 1; kk <= Settings.CaptureScaleMost; kk++) resPick.AddItem($"{kk}× the screen");
         resPick.Selected = Math.Clamp(Cfg.CaptureScale, 1, Settings.CaptureScaleMost) - 1;
         resPick.ItemSelected += i => Cfg.CaptureScale = (int)i + 1;
