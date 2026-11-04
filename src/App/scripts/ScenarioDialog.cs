@@ -163,7 +163,7 @@ sealed class ScenarioDialog : HudPart
     void AddLighting()
     {
         var cur = S.View.Lighting;
-        var l0 = new Lighting { SunEnergy = cur.SunEnergy, Ambient = cur.Ambient, Warmth = cur.Warmth, Shadows = cur.Shadows, FromClock = cur.FromClock };
+        var l0 = new Lighting { SunEnergy = cur.SunEnergy, Ambient = cur.Ambient, Warmth = cur.Warmth, Shadows = cur.Shadows, FromClock = cur.FromClock, TableShade = cur.TableShade };
         var presets = LightingPresets();
         var pick = new OptionButton();
         pick.AddItem("Custom"); foreach (var (name, _) in presets) pick.AddItem(name);
@@ -176,6 +176,10 @@ sealed class ScenarioDialog : HudPart
         var warm = LightRow(lg, "Colour", -1, 1, 0.05, l0.Warmth, Warmth);
         warm.TooltipText = "Bluer to the left, redder to the right";
         Ui.AlignForm(lg);
+        var tableForm = Ui.Form(84);
+        var table = LightRow(tableForm, "Surface", 0, 1, 0.05, l0.TableShade, ShadeWord);
+        table.TooltipText = "The table around and under the map sheets, for everyone at this table: squared paper … grey … black";
+        Ui.AlignForm(tableForm);
         var shadows = new CheckBox { Text = "Pieces cast shadows", ButtonPressed = l0.Shadows };
         bool sync = false;
         var byClock = new CheckBox
@@ -183,14 +187,15 @@ sealed class ScenarioDialog : HudPart
             Text = "Follow the game clock", ButtonPressed = l0.FromClock,
             TooltipText = "The hour the game stands at gives the light: dark before dawn, warm and low at sunrise and sunset, white at midday. The settings below are kept and come back when this is off.",
         };
-        Lighting ReadLight() => new() { SunEnergy = sun.Value, Ambient = amb.Value, Warmth = warm.Value, Shadows = shadows.ButtonPressed, FromClock = byClock.ButtonPressed };
+        Lighting ReadLight() => new() { SunEnergy = sun.Value, Ambient = amb.Value, Warmth = warm.Value, Shadows = shadows.ButtonPressed, FromClock = byClock.ButtonPressed, TableShade = table.Value };
         void PreviewLight() { if (sync) return; var l = ReadLight(); T.ApplyLighting(l.FromClock ? DayLight.At(S.View.Clock, l) : l); }
         void SendLight() { if (sync) return; S.Do(new SetLighting { Lighting = ReadLight() }); }
-        foreach (var sl in new[] { sun, amb, warm })
+        foreach (var sl in new[] { sun, amb, warm, table })
         {
             bool dragging = false;
+            bool keepsPreset = sl == table;
             sl.DragStarted += () => dragging = true;
-            sl.ValueChanged += _ => { if (!sync) pick.Selected = 0; PreviewLight(); if (!dragging) SendLight(); };
+            sl.ValueChanged += _ => { if (!sync && !keepsPreset) pick.Selected = 0; PreviewLight(); if (!dragging) SendLight(); };
             sl.DragEnded += _ => { dragging = false; SendLight(); };
         }
         shadows.Toggled += _ => { if (!sync) pick.Selected = 0; PreviewLight(); SendLight(); };
@@ -227,7 +232,11 @@ sealed class ScenarioDialog : HudPart
         _box.AddChild(manual);
         _box.AddChild(Header("Shadows"));
         _box.AddChild(shadows);
+        _box.AddChild(Header("Table"));
+        _box.AddChild(tableForm);
     }
+
+    static string ShadeWord(double v) => v < 0.1 ? "paper" : v < 0.45 ? "dim paper" : v < 0.6 ? "grey" : v < 0.95 ? "dark" : "black";
 
     void AddBriefing()
     {

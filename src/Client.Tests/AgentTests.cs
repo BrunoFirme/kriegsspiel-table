@@ -415,6 +415,18 @@ public class TableToolsTests
     }
 
     [Fact]
+    public async Task The_table_under_the_map_is_set_with_the_light_and_leaves_the_light_as_it_was()
+    {
+        await Call("set_light", new { sun = 0.3, warmth = 0.4 });
+        Assert.False((await Call("set_light", new { table_shade = 0.5 })).IsError);
+        Assert.Equal((0.5, 0.3, 0.4), (_s.View.Lighting.TableShade, _s.View.Lighting.SunEnergy, _s.View.Lighting.Warmth));
+        await Call("set_light", new { ambient = 0.2 });
+        Assert.Equal(0.5, _s.View.Lighting.TableShade);
+        await Call("set_light", new { table_shade = 3.0 });
+        Assert.Equal(1.0, _s.View.Lighting.TableShade);
+    }
+
+    [Fact]
     public async Task Drawn_lines_are_listed_near_a_point_and_erased_by_id_or_by_place()
     {
         var arrow = await Call("draw", new { points = new[] { new[] { 0.0, 0.0 }, new[] { 10.0, 0.0 } }, arrow = true });

@@ -181,7 +181,6 @@ public partial class Table : Node3D
         ShowCursors = settings.ShowCursors;
         ShowZones = settings.ShowZones;
         ApplyGraphics();
-        SetStandIn(true, settings.TableShade);
         S.Reset += Rebuild;
         S.Applied += Sync.OnApplied;
         S.Error += _ => Sync.Refused = true;

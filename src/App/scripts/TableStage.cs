@@ -83,6 +83,8 @@ sealed class TableStage
         _sun.Visible = l.SunEnergy > 0.01;
         if (_env?.Environment is { } e) { e.AmbientLightEnergy = (float)Math.Clamp(l.Ambient, 0, 3); e.AmbientLightColor = tint; }
         if (EffectFx.SetShade(l, tint)) ShadeChanged?.Invoke();
+        float shade = Mathf.Clamp((float)l.TableShade, 0, 1);
+        if (_standIn.on && !Mathf.IsEqualApprox(_standIn.shade, shade)) SetStandIn(true, shade);
     }
 
     public static Color LightTint(float warmth)

@@ -204,7 +204,8 @@ The ⋯ after the scenario's name opens its properties: briefing, clock, light, 
 
 - **Briefing:** the situation you play from. Leads write it here and every umpire reads it here; **Read it…** opens it in a
   window of its own, with find. Observers never see it.
-- **Light:** presets and sliders, or **Follow the game clock** for dawn, day and dusk.
+- **Light:** presets and sliders, or **Follow the game clock** for dawn, day and dusk; the table under the map, from
+  squared paper to black, is set here for everyone and kept with the game.
 - **Grid:** squares or hexes over the table. Nothing snaps to it.
 
 ## Play by post

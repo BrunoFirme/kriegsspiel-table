@@ -483,7 +483,6 @@ public partial class Main : Node
             catch (Exception e) { GD.PushError("[scripts] tick failed: " + e); }
         };
         table.AddChild(tick);
-        table.SetStandIn(true, _cfg.TableShade);
         s.Art.Look.ShowFaceBoxes = true;
         var ed = new PieceStudio { Name = "Studio", ScriptsChanged = () => Deliver(server.Scripts.Load()) };
         AddChild(ed);

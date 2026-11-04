@@ -48,6 +48,7 @@ public static class DayLight
             Warmth = w0 + (w1 - w0) * k,
             Shadows = basis.Shadows,
             FromClock = true,
+            TableShade = basis.TableShade,
         };
     }
 

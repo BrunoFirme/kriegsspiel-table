@@ -58,7 +58,6 @@ public sealed class Settings
     public float PenSize { get; set; } = 3f;
     public float PenOpacity { get; set; } = 1f;
     public string ShapeKind { get; set; } = "line";
-    public float TableShade { get; set; } = 0f;
     public float LeftWidth { get; set; } = 300;
     public float RightWidth { get; set; } = 320;
     public float LogHeight { get; set; } = 200;

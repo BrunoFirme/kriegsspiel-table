@@ -130,12 +130,6 @@ sealed class SettingsDialog : HudPart
 
     void AddTable()
     {
-        _box.AddChild(Header("Surface"));
-        var shade = new HSlider { MinValue = 0, MaxValue = 1, Step = 0.05, Value = Cfg.TableShade, TooltipText = "Squared paper … grey … black" };
-        var shadeL = new Label { Text = ShadeWord(Cfg.TableShade) };
-        shade.ValueChanged += v => { Cfg.TableShade = (float)v; shadeL.Text = ShadeWord((float)v); T.SetStandIn(true, (float)v); };
-        _box.AddChild(Row("Table under the map", shade, shadeL));
-
         _box.AddChild(Header("Pieces"));
         var face = new CheckBox { Text = "Names on pieces, counters on their backs", ButtonPressed = Cfg.FaceText, TooltipText = "Off: on hover only" };
         var nameS = new HSlider { MinValue = Settings.FaceTextScaleMin, MaxValue = Settings.FaceTextScaleMax, Step = 0.05, Value = Cfg.FaceTextScale, TooltipText = "How big the names print on pieces, and the lettering an imported piece draws itself (bigger reads in captures; it may spill past the name band)" };
@@ -283,5 +277,4 @@ sealed class SettingsDialog : HudPart
 
     static string ActionOf(Button b) => b.HasMeta("action") ? b.GetMeta("action").AsString() : "";
 
-    static string ShadeWord(float v) => v < 0.1f ? "paper" : v < 0.45f ? "dim paper" : v < 0.6f ? "grey" : v < 0.95f ? "dark" : "black";
 }
