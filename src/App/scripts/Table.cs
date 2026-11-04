@@ -59,6 +59,7 @@ public partial class Table : Node3D
     internal TableStage Stage { get; }
     internal CameraControl Cam { get; }
     internal SheetLayer Sheets { get; }
+    internal ContourLines Contours { get; }
     internal PieceLayer Pieces { get; }
     internal DrawingLayer Drawings { get; }
     internal Sighting Sighting { get; }
@@ -97,6 +98,7 @@ public partial class Table : Node3D
         Stage = new TableStage(_c);
         Cam = new CameraControl(_c);
         Sheets = new SheetLayer(_c, Cam);
+        Contours = new ContourLines(_c, Sheets);
         Pieces = new PieceLayer(_c, picked);
         Drawings = new DrawingLayer(_c);
         Sighting = new Sighting(_c, Sheets, Pieces);
@@ -140,10 +142,12 @@ public partial class Table : Node3D
         Overlay.Drawing += Forms.Draw;
         Sync.Connect(Poses, Clip, Zones);
         Sync.BoardsChanged += RefreshDrawings;
+        Sync.LookChanged += () => Contours.Due(Stage.LightNow());
         Selection.Picked += Sighting.Aim;
         Sheets.GroundChanged += Pieces.Resettle;
         Sheets.GroundChanged += _ => Drawings.Reground();
         Sheets.GroundChanged += _ => Zones.Sync();
+        Sheets.GroundChanged += _ => Contours.Due();
         Poses.Connect(Hand, Gizmo);
         Gizmo.Connect(SelectTool);
         Hand.Connect(Dice);
@@ -165,6 +169,7 @@ public partial class Table : Node3D
         AddChild(Labels);
         SetStandIn(true);
         AddChild(Sheets.Root = new Node3D { Name = "Sheets" });
+        AddChild(Contours.Root);
         AddChild(Pieces.Root = new Node3D { Name = "Pieces" });
         AddChild(Drawings.Root = new Node3D { Name = "Drawings" });
         AddChild(Sighting.Root = new Node3D { Name = "Sightings" });
@@ -195,10 +200,10 @@ public partial class Table : Node3D
     public void Rebuild()
     {
         var drawClock = System.Diagnostics.Stopwatch.StartNew();
-        Stage.ApplyLighting(Stage.LightNow());
+        ApplyLighting(Stage.LightNow());
         Stage.FitTable(TableExtent.Of(S.View));
         Stage.ApplyGrid();
-        Stage.ApplyScale(S.View.Calibration);
+        ApplyScale(S.View.Calibration);
         Stage.ApplyWind(S.View.Wind);
         Sheets.Clear();
         Pieces.Clear();
@@ -296,6 +301,7 @@ public partial class Table : Node3D
         Stage.FollowView(Rig.Distance);
         FitTableNow(delta);
         Sheets.Tick();
+        Contours.Tick(delta);
         Overlay.Redraw();
     }
 
@@ -428,11 +434,11 @@ public partial class Table : Node3D
     public void CancelCrop() => SetTool(Tool.Select);
 
     public Lighting LightNow() => Stage.LightNow();
-    public void ApplyLighting(Lighting l) => Stage.ApplyLighting(l);
+    public void ApplyLighting(Lighting l) { Stage.ApplyLighting(l); Contours.Due(l); }
     public static Color LightTint(float warmth) => TableStage.LightTint(warmth);
     public void ApplyGrid() => Stage.ApplyGrid();
     public void ApplyWind(Wind w) => Stage.ApplyWind(w);
-    public void ApplyScale(Calibration c) => Stage.ApplyScale(c);
+    public void ApplyScale(Calibration c) { Stage.ApplyScale(c); Contours.Due(); }
     public void SetStandIn(bool on, float shade = 0) => Stage.SetStandIn(on, shade);
 
     public string Board { get => Drawings.Board; set => Drawings.Board = value; }

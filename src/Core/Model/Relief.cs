@@ -17,16 +17,16 @@ public static class GroundKinds
     public static readonly IReadOnlyList<(string Name, string Color)> All =
     [
         ("none", "#00000000"),
-        ("grass", "#8C9F62"),
-        ("field", "#CDB57A"),
-        ("wood", "#6A8752"),
-        ("marsh", "#7C978A"),
-        ("water", "#5F88A8"),
-        ("road", "#83502F"),
-        ("earth", "#9C7752"),
-        ("rock", "#8F877E"),
-        ("sand", "#D4BB7C"),
-        ("snow", "#E6EAE6"),
+        ("grass", "#A9BE94"),
+        ("field", "#E3CDB2"),
+        ("wood", "#93AB76"),
+        ("marsh", "#B3C3A7"),
+        ("water", "#9DB9C9"),
+        ("road", "#D8B57A"),
+        ("earth", "#CBAE88"),
+        ("rock", "#B9AE9C"),
+        ("sand", "#E6D3A1"),
+        ("snow", "#F1F0EA"),
     ];
 
     public static byte? Of(string name)
@@ -39,10 +39,10 @@ public static class GroundKinds
     public static string Name(byte kind) => kind < All.Count ? All[kind].Name : "none";
 
     static readonly string[] Ancient =
-        ["#00000000", "#9A9A5A", "#D6A653", "#556B34", "#7D8C64", "#3F7E8C", "#A63D2A", "#A5653A", "#9C8A70", "#D8B878", "#ECE6D6"];
+        ["#00000000", "#C9C08A", "#D9B062", "#8C9A5A", "#A9AE80", "#7FA393", "#B5442E", "#B98352", "#A58A63", "#E3C680", "#EFE7D4"];
 
     static readonly string[] Modern =
-        ["#00000000", "#9DB56A", "#DCC562", "#4F8A3C", "#7FB0A3", "#3F8AC8", "#C8401C", "#B08050", "#8E8E8E", "#E0C46A", "#EEF2F6"];
+        ["#00000000", "#DDE8C0", "#F1E8B8", "#9AC57A", "#E2ECDF", "#A9D2EC", "#E8643C", "#E4D3B2", "#D2CEC6", "#F1E3B0", "#FAFBFC"];
 
     public static string Color(byte kind, string? style)
     {

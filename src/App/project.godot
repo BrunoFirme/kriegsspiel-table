@@ -38,6 +38,10 @@ ground_style={
 "type": "int",
 "value": 0
 }
+contour_interval={
+"type": "float",
+"value": 0.0
+}
 
 [steam]
 

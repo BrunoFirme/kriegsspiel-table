@@ -50,6 +50,8 @@ sealed class SheetLayer
         GroundChanged?.Invoke(where);
     }
 
+    public void RegroundAll() => Reground(null);
+
     bool Covered(SheetNode under, Vector3[] corners) =>
         _sheets.Values.Any(o => o != under && o.Def.HasPicture && o.Def.Z > under.Def.Z && corners.All(o.ContainsWorld));
 

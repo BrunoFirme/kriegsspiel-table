@@ -25,6 +25,7 @@ sealed class ViewSync
     public void Connect(PendingPoses poses, PieceClipboard clip, ZoneLayer zones) { _poses = poses; _clip = clip; _zones = zones; }
 
     public event Action? BoardsChanged;
+    public event Action? LookChanged;
 
     sealed class BatchChanges
     {
@@ -237,6 +238,7 @@ sealed class ViewSync
                 return;
             case SetLighting:
                 _stage.ApplyLighting(_stage.LightNow());
+                LookChanged?.Invoke();
                 return;
             case SetWind:
                 _stage.ApplyWind(s.View.Wind);

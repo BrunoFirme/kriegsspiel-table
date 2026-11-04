@@ -51,6 +51,7 @@ public static class DayLight
             TableShade = basis.TableShade,
             Backdrop = basis.Backdrop,
             MapStyle = basis.MapStyle,
+            Contours = basis.Contours,
         };
     }
 

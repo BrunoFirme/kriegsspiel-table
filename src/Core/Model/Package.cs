@@ -439,6 +439,7 @@ public sealed class Lighting
     public double TableShade { get; set; }
     public string Backdrop { get; set; } = "";
     public string MapStyle { get; set; } = MapStyles.Survey;
+    public bool Contours { get; set; }
 }
 
 public sealed class Wind

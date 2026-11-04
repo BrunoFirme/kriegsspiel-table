@@ -62,8 +62,9 @@ public sealed partial class TableTools
             "Writes a line in the log everyone at the table reads.",
             Args.Schema(new Arg("text", "string", "the line", true), new Arg("colour", "string", "#rrggbb")), SayTool);
         yield return new AgentTool("draw",
-            "Draws a line on the map through points (map units), as the pen does; arrow adds a head at the end. Undoable.",
-            Args.Schema(new Arg("points", "array", "[[x, z], [x, z], …]", true), new Arg("colour", "string", "#rrggbb"), new Arg("width", "number", "map units (default 0.3)"), new Arg("arrow", "boolean", "a head at the end")),
+            "Draws a line on the map through points (map units), as the pen does; arrow adds a head at the end; board puts it on a drawing layer of that name, made if missing. Undoable.",
+            Args.Schema(new Arg("points", "array", "[[x, z], [x, z], …]", true), new Arg("colour", "string", "#rrggbb"), new Arg("width", "number", "map units (default 0.3)"), new Arg("arrow", "boolean", "a head at the end"),
+                new Arg("board", "string", "the drawing layer's name (list_drawings shows them); left out, the default layer")),
             DrawTool);
         yield return new AgentTool("set_zone",
             "Sets an umpire's zone: a named polygon an umpire owns (host and lead umpires), or removes one by name.",
@@ -76,11 +77,12 @@ public sealed partial class TableTools
                 new Arg("divisions", "number", $"lines inside each square cell, 1 for plain cells (1–{GridDivisionsMost})")),
             SetGridTool);
         yield return new AgentTool("set_light",
-            "Sets the table's light (sun and ambient 0–1, warmth −1 to 1, shadows, or following the game clock's hour), the table under the map (0 squared paper, 0.5 grey, 1 black), the backdrop seen around the table, the map style painted ground is drawn in, and the wind (from, in degrees; strength 0 calm to 5 a gale), for everyone at the table.",
+            "Sets the table's light (sun and ambient 0–1, warmth −1 to 1, shadows, or following the game clock's hour), the table under the map (0 squared paper, 0.5 grey, 1 black), the backdrop seen around the table, the map style painted ground is drawn in, contour lines over the relief, and the wind (from, in degrees; strength 0 calm to 5 a gale), for everyone at the table.",
             Args.Schema(new Arg("sun", "number", "0–1"), new Arg("ambient", "number", "0–1"), new Arg("warmth", "number", "−1 to 1"), new Arg("shadows", "boolean", "shadows"), new Arg("from_clock", "boolean", "follows the clock's hour"),
                 new Arg("table_shade", "number", "the table under the map: 0 squared paper, 0.5 grey, 1 black"),
                 new Arg("backdrop", "string", "around the table: none, a solid #rrggbb colour, or one of " + string.Join(", ", Backdrops.All.Select(b => b.Id)) + "; a sky brings its own light unless sun, ambient or warmth are given"),
                 new Arg("map_style", "string", "painted ground drawn as an ancient, survey (18th century) or modern map"),
+                new Arg("contours", "boolean", "contour lines over every relief, spaced to fit its highest ground and redrawn as it changes"),
                 new Arg("wind_from", "number", "degrees"), new Arg("wind_strength", "number", "0–5")),
             SetLight);
         yield return new AgentTool("read_briefing",
@@ -335,9 +337,17 @@ public sealed partial class TableTools
         if (pts is not { Count: >= 2 } || pts.Count > 2000) return ToolResult.Fail("points is [[x, z], …], 2 to 2000 of them.");
         var colour = a.Str("colour") ?? "#C0392B";
         double width = Math.Clamp(a.Num("width") ?? 0.3, 0.02, 20);
+        var board = "";
+        if (a.Str("board")?.Trim() is { Length: > 0 } named)
+        {
+            BoardDef? Find() => s.View.Boards.FirstOrDefault(b => string.Equals(b.Name, named, StringComparison.OrdinalIgnoreCase));
+            if (Find() == null) { s.Do(new AddBoard { Name = named }); await _delay(0.2); }
+            if (Find() is not { } found) return ToolResult.Fail($"The drawing layer {named} could not be made.");
+            board = found.Id;
+        }
         var before = s.View.DrawLayer(Layers.Umpire).Select(x => x.Id).ToHashSet();
         int made = 1;
-        s.Do(new Draw { Layer = Layers.Umpire, Stroke = new Stroke { Points = pts, Width = width, Color = colour } });
+        s.Do(new Draw { Layer = Layers.Umpire, Stroke = new Stroke { Points = pts, Width = width, Color = colour, Board = board } });
         if (a.Flag("arrow") == true)
         {
             var tip = pts[^1]; var from = pts[^2];
@@ -347,7 +357,7 @@ public sealed partial class TableTools
                 dx /= len; dz /= len;
                 double head = Math.Max(width * 4, 0.6);
                 Vec2 Wing(double side) => new(tip.X - dx * head + -dz * head * 0.6 * side, tip.Z - dz * head + dx * head * 0.6 * side);
-                s.Do(new Draw { Layer = Layers.Umpire, Stroke = new Stroke { Points = new List<Vec2> { Wing(1), tip, Wing(-1) }, Width = width, Color = colour } });
+                s.Do(new Draw { Layer = Layers.Umpire, Stroke = new Stroke { Points = new List<Vec2> { Wing(1), tip, Wing(-1) }, Width = width, Color = colour, Board = board } });
                 made++;
             }
         }
@@ -414,7 +424,7 @@ public sealed partial class TableTools
             return ToolResult.Fail($"No backdrop {backdrop}: none, a #rrggbb colour, or one of {string.Join(", ", Backdrops.All.Select(b => b.Id))}.");
         var style = a.Str("map_style")?.Trim().ToLowerInvariant() is { } named ? named == "survey" ? MapStyles.Survey : named : null;
         if (style != null && MapStyles.Of(style) != style) return ToolResult.Fail("map_style is ancient, survey or modern.");
-        if (a.Num("sun") != null || a.Num("ambient") != null || a.Num("warmth") != null || a.Flag("shadows") != null || a.Flag("from_clock") != null || a.Num("table_shade") != null || a.Str("backdrop") != null || style != null)
+        if (a.Num("sun") != null || a.Num("ambient") != null || a.Num("warmth") != null || a.Flag("shadows") != null || a.Flag("from_clock") != null || a.Num("table_shade") != null || a.Str("backdrop") != null || style != null || a.Flag("contours") != null)
         {
             var l = s.View.Lighting;
             bool lightGiven = a.Num("sun") != null || a.Num("ambient") != null || a.Num("warmth") != null || a.Flag("shadows") != null;
@@ -423,7 +433,7 @@ public sealed partial class TableTools
             s.Do(new SetLighting { Lighting = new Lighting
             {
                 SunEnergy = Math.Clamp(a.Num("sun") ?? l.SunEnergy, 0, 1), Ambient = Math.Clamp(a.Num("ambient") ?? l.Ambient, 0, 1), Warmth = Math.Clamp(a.Num("warmth") ?? l.Warmth, -1, 1),
-                Shadows = a.Flag("shadows") ?? l.Shadows, FromClock = a.Flag("from_clock") ?? l.FromClock, TableShade = Math.Clamp(a.Num("table_shade") ?? l.TableShade, 0, 1), Backdrop = backdrop ?? l.Backdrop, MapStyle = style ?? l.MapStyle,
+                Shadows = a.Flag("shadows") ?? l.Shadows, FromClock = a.Flag("from_clock") ?? l.FromClock, TableShade = Math.Clamp(a.Num("table_shade") ?? l.TableShade, 0, 1), Backdrop = backdrop ?? l.Backdrop, MapStyle = style ?? l.MapStyle, Contours = a.Flag("contours") ?? l.Contours,
             } });
             done.Add("light");
         }

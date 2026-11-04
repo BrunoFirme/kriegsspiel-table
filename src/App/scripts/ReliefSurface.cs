@@ -7,6 +7,7 @@ namespace KTable.App;
 
 public partial class ReliefSurface : Node3D
 {
+    public const uint GroundLayer = 1u << 6;
     const int MostVertsAcross = 384;
     const int BlockCells = 48;
     const float PaintAbove = 0.003f;
@@ -19,12 +20,31 @@ public partial class ReliefSurface : Node3D
     Material? _base;
     ShaderMaterial? _paint;
     ImageTexture? _kindsTex;
+    ImageTexture? _edgesTex;
+    byte[]? _edgesOf;
+    float _cellWorld = 1;
+    static bool _contours;
+    static double _contourStep = -1;
 
-    const string StyleParameter = "ground_style";
+    const string StyleParameter = "ground_style", ContourParameter = "contour_interval";
 
     static Shader GroundShader => _shader ??= new Shader { Code = FileAccess.GetFileAsString("res://shaders/ground.gdshader") };
 
     public static void ShowStyle(string? style) => RenderingServer.GlobalShaderParameterSet(StyleParameter, MapStyles.Index(style));
+
+    public static bool ShowContours(bool on)
+    {
+        if (_contours == on) return false;
+        _contours = on;
+        return true;
+    }
+
+    public static void ContourStep(double step)
+    {
+        if (step == _contourStep) return;
+        _contourStep = step;
+        RenderingServer.GlobalShaderParameterSet(ContourParameter, (float)step);
+    }
 
     public static Vector4[] Palette()
     {
@@ -51,9 +71,10 @@ public partial class ReliefSurface : Node3D
         int nx = Math.Max(1, cellsX / step), nz = Math.Max(1, cellsZ / step);
         var h = GroundMesh.WeldedHeights(ground, sheetXf, W / 2, H / 2);
         UpdateKinds(grid);
+        _cellWorld = (float)(Ground.FullWidth(def) / Math.Max(1, grid.Cols - 1));
         var cells = new Vector2(grid.Cols, grid.Rows);
         _base = picture ?? (def.HasPicture ? null : Material(false, cells));
-        if (grid.Painted) _paint = Material(true, cells);
+        if (grid.Painted || (_contours && def.Relief is { Length: > 0 })) _paint = Material(true, cells);
         for (int bz = 0; bz < nz; bz += BlockCells)
             for (int bx = 0; bx < nx; bx += BlockCells)
             {
@@ -78,7 +99,14 @@ public partial class ReliefSurface : Node3D
 
     void Add(ArrayMesh mesh, Material mat, Rect2 box, bool paint, float lift)
     {
-        var node = new MeshInstance3D { Mesh = mesh, MaterialOverride = mat, Position = new Vector3(0, lift, 0), CastShadow = GeometryInstance3D.ShadowCastingSetting.Off };
+        var node = new MeshInstance3D
+        {
+            Mesh = mesh,
+            MaterialOverride = mat,
+            Position = new Vector3(0, lift, 0),
+            CastShadow = GeometryInstance3D.ShadowCastingSetting.Off,
+            Layers = Table.WorldLayer | GroundLayer,
+        };
         AddChild(node);
         _blocks.Add((node, box, paint));
     }
@@ -87,6 +115,8 @@ public partial class ReliefSurface : Node3D
     {
         var m = new ShaderMaterial { Shader = GroundShader };
         m.SetShaderParameter("kinds", _kindsTex!);
+        m.SetShaderParameter("edges", _edgesTex!);
+        m.SetShaderParameter("cell_world", _cellWorld);
         m.SetShaderParameter("palette", Palette());
         m.SetShaderParameter("painted_only", paintedOnly);
         m.SetShaderParameter("cells", cells);
@@ -99,6 +129,11 @@ public partial class ReliefSurface : Node3D
         var img = Image.CreateFromData(grid.Cols, grid.Rows, false, Image.Format.R8, grid.Kind);
         if (_kindsTex != null && _kindsTex.GetWidth() == grid.Cols && _kindsTex.GetHeight() == grid.Rows) _kindsTex.Update(img);
         else _kindsTex = ImageTexture.CreateFromImage(img);
+        if (_edgesTex != null && _edgesOf != null && _edgesOf.AsSpan().SequenceEqual(grid.Kind)) return;
+        _edgesOf = (byte[])grid.Kind.Clone();
+        var edges = Image.CreateFromData(grid.Cols, grid.Rows, false, Image.Format.R8, GroundEdges.Distances(grid));
+        if (_edgesTex != null && _edgesTex.GetWidth() == grid.Cols && _edgesTex.GetHeight() == grid.Rows) _edgesTex.Update(edges);
+        else _edgesTex = ImageTexture.CreateFromImage(edges);
     }
 
     public void Clear()

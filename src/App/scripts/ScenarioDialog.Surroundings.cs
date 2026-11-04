@@ -83,8 +83,26 @@ sealed partial class ScenarioDialog
         mapForm.AddChild(new Label { Text = "Style" });
         mapForm.AddChild(style);
         Ui.AlignForm(mapForm);
-        _box.AddChild(Header("Painted ground"));
+        _box.AddChild(Header("Map"));
         _box.AddChild(mapForm);
+        var contours = new CheckBox
+        {
+            Text = "Contour lines over the relief",
+            ButtonPressed = now.Contours,
+            Disabled = !S.IsUmpire,
+            TooltipText = "Redrawn as the ground is shaped; every fifth line is bolder",
+        };
+        contours.Toggled += on => SendLook(l => l.Contours = on);
+        _box.AddChild(contours);
+        _box.AddChild(Hint(ContourWords()));
+    }
+
+    string ContourWords()
+    {
+        if (S.View.Calibration.UnitsPerMeter is not > 0) return "Calibrate the map's scale to space them in real heights and number the bold ones.";
+        return ContourLines.PlanFor(S.View, S.Ground) is { Numbered: true } plan
+            ? string.Format(System.Globalization.CultureInfo.InvariantCulture, "Every {0:0.##} {1} of height, numbered every {2:0.##}.", plan.Every, plan.Unit, plan.Every * ContourPlan.IndexEvery)
+            : "Spaced in real heights and numbered once the scale is set and there is relief.";
     }
 
     static string ShadeWord(double v) => v < 0.1 ? "paper" : v < 0.45 ? "dim paper" : v < 0.6 ? "grey" : v < 0.95 ? "dark" : "black";

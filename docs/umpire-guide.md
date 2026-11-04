@@ -192,7 +192,9 @@ ground.
   marsh; with ✕ it thins a wood. **Shift+click** runs straight on from the last stroke, for roads, rivers and
   ridges. **Alt+click** picks up the ground under the cursor.
 - The scenario's **Surroundings** page sets how painted ground is drawn for everyone: **Ancient**, **18th-century
-  survey** or **Modern topographic**.
+  survey** or **Modern topographic**, and turns on **contour lines** over every relief. They follow the ground as it
+  is shaped. Once the map's scale is calibrated they step in round heights of its units, and every fifth line is
+  numbered on the ground.
 - Pieces lean with the slope under them and follow the ground when it changes.
 
 ### Umpires and zones

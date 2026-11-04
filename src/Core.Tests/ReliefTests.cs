@@ -320,4 +320,47 @@ public class ReliefTests : IDisposable
         Assert.Equal(GroundKinds.All[3].Color, GroundKinds.Color(3, MapStyles.Survey));
         Assert.NotEqual(GroundKinds.Color(6, MapStyles.Ancient), GroundKinds.Color(6, MapStyles.Modern));
     }
+
+    [Fact]
+    public void Border_distances_grow_away_from_where_ground_types_meet()
+    {
+        var g = new ReliefGrid(20, 4);
+        Assert.All(GroundEdges.Distances(g), d => Assert.Equal(GroundEdges.Far, d));
+        for (int y = 0; y < g.Rows; y++)
+            for (int x = 10; x < g.Cols; x++) g.Kind[y * g.Cols + x] = GroundKinds.Of("water")!.Value;
+        var d = GroundEdges.Distances(g);
+        Assert.Equal(GroundEdges.StepsPerCell / 2, d[1 * g.Cols + 10]);
+        Assert.Equal(GroundEdges.StepsPerCell / 2, d[1 * g.Cols + 9]);
+        Assert.Equal(GroundEdges.StepsPerCell * 5 / 2, d[1 * g.Cols + 12]);
+        Assert.True(d[1 * g.Cols + 19] > d[1 * g.Cols + 15]);
+    }
+
+    [Fact]
+    public void Contours_step_in_round_heights_and_in_real_units_once_the_map_is_calibrated()
+    {
+        Assert.Equal(0, Contours.Interval(0));
+        Assert.Equal(2, Contours.Interval(17));
+        Assert.Equal(50, Contours.Interval(390));
+        var plain = Contours.Plan(19.5, 1, new Calibration())!;
+        Assert.Equal(2, plain.Step);
+        Assert.False(plain.Numbered);
+        var metres = Contours.Plan(19.5, 1, new Calibration { UnitsPerMeter = 0.05 })!;
+        Assert.Equal(50, metres.Every);
+        Assert.Equal(2.5, metres.Step, 9);
+        Assert.Equal("m", metres.Unit);
+        Assert.Equal(5, Contours.Plan(39, 2, new Calibration { UnitsPerMeter = 0.05 })!.Step, 9);
+        Assert.Null(Contours.Plan(19.5, 0, new Calibration()));
+        Assert.Null(Contours.Plan(0, 1, new Calibration()));
+    }
+
+    [Fact]
+    public void Heights_read_in_roman_numerals_for_the_ancient_style_only_when_whole()
+    {
+        Assert.Equal("CCL", Roman.Of(250));
+        Assert.Equal("MCMXCIV", Roman.Of(1994));
+        Assert.Equal("XLIX", Roman.Of(49));
+        Assert.Null(Roman.Of(2.5));
+        Assert.Null(Roman.Of(0));
+        Assert.Null(Roman.Of(4000));
+    }
 }

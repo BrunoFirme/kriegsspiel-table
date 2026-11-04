@@ -27,6 +27,6 @@ public static class LightPresets
     public static Lighting Lit(Lighting now, Lighting preset) => new()
     {
         SunEnergy = preset.SunEnergy, Ambient = preset.Ambient, Warmth = preset.Warmth, Shadows = preset.Shadows,
-        FromClock = false, TableShade = now.TableShade, Backdrop = now.Backdrop, MapStyle = now.MapStyle,
+        FromClock = false, TableShade = now.TableShade, Backdrop = now.Backdrop, MapStyle = now.MapStyle, Contours = now.Contours,
     };
 }

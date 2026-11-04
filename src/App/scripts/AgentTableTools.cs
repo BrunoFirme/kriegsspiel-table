@@ -42,11 +42,12 @@ sealed partial class AgentTableTools
                 new Arg("grid", "number", "map units between grid lines (chosen to suit the size if left out)"), new Arg("pixels", "number", $"the picture's width and height ({MapView.MinPixels}–{MapView.MaxPixels}, {MapView.DefaultPixels} if left out)")),
             ViewMap);
         yield return new AgentTool("set_map_sheet",
-            "Places, sizes (width; the height follows the picture), turns, layers, renames, locks or removes a map sheet; adds, replaces or removes its relief, sets the relief's height × (0 flat, 1 the model's own proportions), and lays a new picture on it.",
+            "Places, sizes (width; the height follows the picture), turns, layers, crops, renames, locks or removes a map sheet; adds, replaces or removes its relief, sets the relief's height × (0 flat, 1 the model's own proportions), and lays a new picture on it.",
             Args.Schema(new Arg("id", "string", "the sheet's id (list_map_sheets)", true), new Arg("x", "number", "centre, map units"), new Arg("z", "number", "centre, map units"),
                 new Arg("width", "number", "map units"), new Arg("turn", "number", "degrees"), new Arg("layer", "number", "stacking order: higher lies on top"), new Arg("name", "string", "new name"), new Arg("locked", "boolean", "locked"), new Arg("remove", "boolean", "take it off the table"),
                 new Arg("height", "number", $"relief height × (0–{StateMachine.MostHeight})"), new Arg("relief", "string", "full path of a 3D terrain or heightmap file, stretched over this sheet"),
-                new Arg("remove_relief", "boolean", "take the relief off (a sheet keeps a picture or a relief)"), new Arg("picture", "string", "full path or web link of a picture to lay on this sheet")),
+                new Arg("remove_relief", "boolean", "take the relief off (a sheet keeps a picture or a relief)"), new Arg("picture", "string", "full path or web link of a picture to lay on this sheet"),
+                new Arg("crop", "array", "[x, y, w, h]: the part of the picture shown, as fractions 0–1 of the whole; [0, 0, 1, 1] shows it whole. The map keeps its scale")),
             SetSheet);
         yield return new AgentTool("list_saves",
             "The saves of the game being played: its turns kept so far and the saves made by hand in its folder (host only).",
@@ -205,6 +206,16 @@ sealed partial class AgentTableTools
             s.Do(new SetSheetRelief { Id = id, Relief = now.Relief, Height = Math.Clamp(hx, 0, StateMachine.MostHeight) });
         }
         if (a.Flag("locked") == false && sh.Locked) s.Do(new LockSheet { Id = id, Locked = false });
+        if (a.ValueKind == JsonValueKind.Object && a.TryGetProperty("crop", out var crop))
+        {
+            if (crop.ValueKind != JsonValueKind.Array || crop.GetArrayLength() != 4 || crop.EnumerateArray().Any(v => v.ValueKind != JsonValueKind.Number))
+                return ToolResult.Fail("crop is [x, y, w, h], fractions 0–1 of the picture.");
+            var c = crop.EnumerateArray().Select(v => v.GetDouble()).ToArray();
+            var box = new FaceBox { X = c[0], Y = c[1], W = c[2], H = c[3] };
+            bool whole = box.X <= 0.0005 && box.Y <= 0.0005 && box.W >= 0.999 && box.H >= 0.999;
+            if (!whole && !SheetGeometry.Valid(box)) return ToolResult.Fail("crop must lie inside the picture: x and y from 0, w and h above 0, x + w and y + h at most 1.");
+            s.Do(new CropSheet { Id = id, Crop = whole ? null : box });
+        }
         if (a.Num("x") != null || a.Num("z") != null || a.Num("turn") != null || a.Num("width") != null || a.Num("layer") != null)
         {
             double aspect = sh.Size.W > 0 ? sh.Size.H / sh.Size.W : 1;
