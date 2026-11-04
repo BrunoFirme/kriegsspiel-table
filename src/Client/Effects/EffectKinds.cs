@@ -32,7 +32,7 @@ public static class EffectKinds
         ("wake", "Torpedo tracks", "Torpedoes running towards the piece's front: foam tracks and the boil at their heads"),
         ("arrows", "Arrows", "A volley of arrows falling on the piece from its back edge: the shadow of the cloud sweeps over the ground, then the arrows come down and stick where they land; in volleys, in turn along the front or at will"),
         ("firearrows", "Fire arrows", "Burning arrows falling in a volley, small fires where they land"),
-        ("melee", "Melee", "The press of a fight: dust churned up and the glint of steel"),
+        ("melee", "Melee", "The press of a fight: dust churned up and clods thrown"),
         ("stones", "Siege stones", "Stones from catapults or trebuchets arcing in over the back edge and crashing down in dust and splinters"),
     };
 

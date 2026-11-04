@@ -951,12 +951,6 @@ public static class EffectRecipe
                 Spread = 50, VMin = 0.4f * s * H, VMax = 0.8f * s * H, Fall = 1.2f * s * H, SMin = 0.12f * s * P, SMax = 0.22f * s * P, Soft = false,
                 Ramp = new[] { (0f, Fade(c.Lerp(Earth, 0.5f), 0)), (0.1f, Fade(c.Lerp(Earth, 0.5f), 0.7f)), (1f, Fade(c, 0)) },
             });
-            layers.Add(new EffectLayer
-            {
-                Sprite = "spark", Add = true, Amount = Math.Clamp((int)Math.Round(5 * A * k), 1, 60), Life = 0.3f, Box = new Vector3(ex.X * 0.75f, 0.1f * s, ex.Z * 0.75f), At = new Vector3(0, 0.18f * s, 0),
-                Spread = 180, VMin = 0, VMax = 0.05f * s, SMin = 0.06f * s * P, SMax = 0.1f * s * P, Spin = 0, Soft = false,
-                Ramp = new[] { (0f, new Rgba(1, 1, 0.95f, 0)), (0.15f, new Rgba(1, 1, 0.95f, 1)), (0.5f, new Rgba(0.85f, 0.9f, 1, 0.55f)), (1f, new Rgba(0.85f, 0.9f, 1, 0)) },
-            });
         }
 
         void Stones()

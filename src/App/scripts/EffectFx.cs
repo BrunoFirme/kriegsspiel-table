@@ -551,7 +551,6 @@ public static class EffectFx
             }
             case "melee":
                 for (int i = 0; i < 5; i++) Stamp(acc, "dust", c, 0.15f + i * 0.17f, 0.66f - (i % 2) * 0.12f, 0.5f, false);
-                foreach (var (x, y) in new[] { (0.3f, 0.45f), (0.55f, 0.35f), (0.72f, 0.52f), (0.45f, 0.6f) }) Stamp(acc, "spark", new Color(1, 1, 0.95f), x, y, 0.16f, true);
                 return true;
             case "stones":
                 for (int i = 0; i < 6; i++) { float u = i / 5f; Stamp(acc, "dust", c with { A = 0.35f + 0.1f * i }, 0.12f + u * 0.5f, 0.55f - 1.6f * u * (1 - u) * 0.5f, 0.08f, false); }

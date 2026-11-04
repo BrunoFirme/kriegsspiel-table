@@ -54,7 +54,7 @@ public static class FirmeEffects
         ("Arrows at will", "Archers shooting as fast as they can draw, arrows falling all the time", 4, 3, new EffectDef { Kind = "arrows", Volley = "random" }, A),
         ("Volleys in turn", "Companies of archers loosing one after another along the front", 6, 3, new EffectDef { Kind = "arrows", Volley = "rolling" }, A),
         ("Fire arrows", "A volley of burning arrows, small fires where they land", 4, 3, new EffectDef { Kind = "firearrows" }, A),
-        ("Melee", "The press of a fight: dust churned up and the glint of steel", 3, 1.5, new EffectDef { Kind = "melee" }, A),
+        ("Melee", "The press of a fight: dust churned up and clods thrown", 3, 1.5, new EffectDef { Kind = "melee" }, A),
         ("Cavalry melee", "Horsemen at close quarters: thicker dust, thrown higher", 4, 2.5, new EffectDef { Kind = "melee", Amount = 1.5, Height = 1.4, Puff = 1.2 }, A),
         ("Trebuchet stones", "Great stones arcing in over the back edge and crashing down", 3, 3, new EffectDef { Kind = "stones" }, A),
         ("Arquebus volley", "Arquebusiers firing by ranks, one after another: Nagashino's teppō, a tercio's shot", 4, 0.6, new EffectDef { Kind = "powder", Volley = "rolling", Amount = 0.8, Puff = 0.8 }, A),
