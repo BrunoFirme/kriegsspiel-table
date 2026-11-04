@@ -6,10 +6,12 @@ namespace KTable.App;
 
 static class AppSettings
 {
+    public const int LabelWidth = 124, RowGap = 8;
+
     public static void AddSound(VBoxContainer box, Settings cfg)
     {
         var vol = new HSlider { MinValue = 0, MaxValue = 1, Step = 0.05, Value = cfg.SoundVolume, CustomMinimumSize = new Vector2(220, 0) };
-        var volL = new Label { Text = $"{cfg.SoundVolume * 100:0}%", CustomMinimumSize = new Vector2(48, 0) };
+        var volL = Ui.Readout($"{cfg.SoundVolume * 100:0}%", 48);
         vol.ValueChanged += v =>
         {
             volL.Text = $"{v * 100:0}%";
@@ -18,8 +20,8 @@ static class AppSettings
         };
         vol.DragEnded += _ => cfg.Save();
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", 8);
-        row.AddChild(new Label { Text = "Volume", CustomMinimumSize = new Vector2(110, 0) });
+        row.AddThemeConstantOverride("separation", RowGap);
+        row.AddChild(new Label { Text = "Volume", CustomMinimumSize = new Vector2(LabelWidth, 0) });
         row.AddChild(vol);
         row.AddChild(volL);
         box.AddChild(row);
@@ -30,7 +32,11 @@ static class AppSettings
             cfg.Save();
             Sfx.Current?.Apply();
         };
-        box.AddChild(mute);
+        var muteAt = new MarginContainer();
+        muteAt.AddThemeConstantOverride("margin_left", LabelWidth + RowGap);
+        mute.SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin;
+        muteAt.AddChild(mute);
+        box.AddChild(muteAt);
     }
 
     public sealed record SizeControls(HSlider Size, Label Shown, CheckBox Match, Label Capped);
@@ -38,7 +44,7 @@ static class AppSettings
     public static SizeControls SizeSlider(Settings cfg, Action? relaid = null)
     {
         var size = new HSlider { MinValue = Settings.UiScaleMin, MaxValue = Settings.UiScaleMax, Step = 0.05, Value = cfg.UiScale };
-        var shown = new Label { Text = Percent(cfg.UiScale) };
+        var shown = Ui.Readout(Percent(cfg.UiScale), 0);
         var match = new CheckBox { Text = "Match Windows", ButtonPressed = cfg.FollowsWindows, TooltipText = "Windows' own display scale, screen by screen" };
         var capped = new Label { Visible = false, AutowrapMode = TextServer.AutowrapMode.WordSmart };
         capped.AddThemeColorOverride("font_color", Ui.Muted);
@@ -88,13 +94,13 @@ static class AppSettings
         c.Size.CustomMinimumSize = new Vector2(220, 0);
         c.Shown.CustomMinimumSize = new Vector2(48, 0);
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", 8);
-        row.AddChild(new Label { Text = "Interface size", CustomMinimumSize = new Vector2(110, 0) });
+        row.AddThemeConstantOverride("separation", RowGap);
+        row.AddChild(new Label { Text = "Interface size", CustomMinimumSize = new Vector2(LabelWidth, 0) });
         row.AddChild(c.Size);
         row.AddChild(c.Shown);
         box.AddChild(row);
         var matchAt = new MarginContainer();
-        matchAt.AddThemeConstantOverride("margin_left", 118);
+        matchAt.AddThemeConstantOverride("margin_left", LabelWidth + RowGap);
         c.Match.SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin;
         matchAt.AddChild(c.Match);
         box.AddChild(matchAt);

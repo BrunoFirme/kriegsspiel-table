@@ -16,6 +16,13 @@ static class TitleStyle
     public static Font Sans() => Ui.Sans();
     public static Font SansMedium() => Ui.SansStrong();
 
+    static void CheckBoxesAsTheAppDraws(Theme t)
+    {
+        var app = Ui.Theme();
+        foreach (var st in new[] { "normal", "hover", "pressed", "hover_pressed", "disabled", "focus" }) t.SetStylebox(st, "CheckBox", app.GetStylebox(st, "CheckBox"));
+        foreach (var c in new[] { "font_color", "font_hover_color", "font_pressed_color", "font_hover_pressed_color", "font_disabled_color" }) t.SetColor(c, "CheckBox", app.GetColor(c, "CheckBox"));
+    }
+
     public static Theme LobbyTheme()
     {
         var t = new Theme { DefaultFont = Sans(), DefaultFontSize = 15 };
@@ -34,6 +41,7 @@ static class TitleStyle
         t.SetColor("font_hover_color", "Button", Colors.White);
         t.SetColor("font_pressed_color", "Button", Colors.White);
         t.SetColor("font_disabled_color", "Button", Ui.Faint);
+        CheckBoxesAsTheAppDraws(t);
         t.SetColor("font_color", "Label", Ink);
         t.SetStylebox("panel", "ScrollContainer", new StyleBoxEmpty());
         return t;
