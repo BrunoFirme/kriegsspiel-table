@@ -133,8 +133,11 @@ sealed class SheetLayer
 
     const double BuildMillisPerFrame = 6;
 
+    bool _packed = true;
+
     public void Tick()
     {
+        if (_packed != SheetPicture.Packs) { _packed = SheetPicture.Packs; _planDue = true; }
         if (_planDue) { _planDue = false; PlanLevels(); }
         if (_toBuild.Count == 0) return;
         var clock = System.Diagnostics.Stopwatch.StartNew();

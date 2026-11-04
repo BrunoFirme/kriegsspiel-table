@@ -14,6 +14,9 @@ sealed class SheetPicture
     static readonly SemaphoreSlim Slots = new(Math.Clamp(System.Environment.ProcessorCount / CoresPerAssembler, LeastAssemblers, MostAssemblers));
     public static double ComposeMs;
     public static int Composed;
+    public static bool Packs { get; private set; } = true;
+    const double PackedBytesPerPixel = 0.5, PackedAlphaBytesPerPixel = 1, LooseBytesPerPixel = 4;
+    double _bytesPerPixel;
 
     readonly Assets _assets;
     readonly string _package, _tilesRel;
@@ -36,13 +39,12 @@ sealed class SheetPicture
 
     public int Coarsest => Index.Levels.Count - 1;
     public bool Done => Level == Target;
-    public long Bytes => Level < 0 ? 0 : BytesAt(Index, Level, HasAlpha);
+    public long Bytes => Level < 0 ? 0 : Size(Index.Levels[Level], _bytesPerPixel);
 
-    public static long BytesAt(TileIndex index, int level, bool alpha)
-    {
-        var lv = index.Levels[Math.Clamp(level, 0, index.Levels.Count - 1)];
-        return (long)((double)lv.W * lv.H * (alpha ? 1 : 0.5) * MipmapsShare);
-    }
+    public static long BytesAt(TileIndex index, int level, bool alpha) =>
+        Size(index.Levels[Math.Clamp(level, 0, index.Levels.Count - 1)], !Packs ? LooseBytesPerPixel : alpha ? PackedAlphaBytesPerPixel : PackedBytesPerPixel);
+
+    static long Size(TileLevel lv, double bytesPerPixel) => (long)((double)lv.W * lv.H * bytesPerPixel * MipmapsShare);
 
     public void Want(int level)
     {
@@ -90,17 +92,20 @@ sealed class SheetPicture
         Task.Run(async () =>
         {
             await Slots.WaitAsync();
-            Image? img = null;
+            Stitched? made = null;
             var clock = System.Diagnostics.Stopwatch.StartNew();
-            try { if (!Assets.Quitting && !_dropped) img = Stitch(lv, ts, paths); }
-            catch (Exception e) when (e is IOException or InvalidOperationException or UnauthorizedAccessException) { img = null; }
+            try { if (!Assets.Quitting && !_dropped) made = Stitch(lv, ts, paths); }
+            catch (Exception e) when (e is IOException or InvalidOperationException or UnauthorizedAccessException) { made = null; }
             finally { Slots.Release(); }
             double ms = clock.Elapsed.TotalMilliseconds;
-            if (!Assets.Quitting) Callable.From(() => Arrived(level, img, ms)).CallDeferred();
+            if (Assets.Quitting) made?.Img.Dispose();
+            else Callable.From(() => Arrived(level, made, ms)).CallDeferred();
         });
     }
 
-    static Image? Stitch(TileLevel lv, int ts, string[] paths)
+    readonly record struct Stitched(Image Img, bool Alpha, bool Packed);
+
+    static Stitched? Stitch(TileLevel lv, int ts, string[] paths)
     {
         var img = Image.CreateEmpty(lv.W, lv.H, false, Image.Format.Rgba8);
         for (int y = 0; y < lv.Rows; y++)
@@ -113,23 +118,28 @@ sealed class SheetPicture
                 img.BlitRect(tile, new Rect2I(0, 0, tile.GetWidth(), tile.GetHeight()), new Vector2I(x * ts, y * ts));
             }
         img.GenerateMipmaps();
-        img.Compress(Image.CompressMode.S3Tc, Image.CompressSource.Generic);
-        return img;
+        bool alpha = img.DetectAlpha() != Image.AlphaMode.None;
+        var packed = BlockCompress.Compress(img, alpha);
+        if (packed == null) return new Stitched(img, alpha, false);
+        img.Dispose();
+        return new Stitched(packed, alpha, true);
     }
 
-    void Arrived(int level, Image? img, double ms)
+    void Arrived(int level, Stitched? made, double ms)
     {
         _building = -1;
-        if (_dropped || img == null)
+        if (_dropped || made is not { } got)
         {
-            img?.Dispose();
+            made?.Img.Dispose();
             if (!_dropped) Target = Math.Max(Level, 0);
             return;
         }
         ComposeMs += ms; Composed++;
-        HasAlpha = img.GetFormat() != Image.Format.Dxt1;
-        Texture = ImageTexture.CreateFromImage(img);
-        img.Dispose();
+        if (!got.Packed) Packs = false;
+        HasAlpha = got.Alpha;
+        _bytesPerPixel = !got.Packed ? LooseBytesPerPixel : got.Alpha ? PackedAlphaBytesPerPixel : PackedBytesPerPixel;
+        Texture = ImageTexture.CreateFromImage(got.Img);
+        got.Img.Dispose();
         Level = level;
         Changed?.Invoke();
         Next();
