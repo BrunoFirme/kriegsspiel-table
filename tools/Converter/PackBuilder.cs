@@ -22,7 +22,8 @@ public sealed class PackBuilder
     }
 
     public static IEnumerable<string> Urls(TtsSave save) =>
-        save.Objects.SelectMany(o => o.Walk()).SelectMany(o => o.Urls().Concat(ScriptUrls(o.Lua)).Concat(ScriptUrls(o.LuaState))).Concat(ScriptUrls(save.Lua)).Concat(ScriptUrls(save.LuaState));
+        save.Objects.SelectMany(o => o.Walk()).SelectMany(o => o.Urls().Concat(ScriptUrls(o.Lua)).Concat(ScriptUrls(o.LuaState))).Concat(ScriptUrls(save.Lua)).Concat(ScriptUrls(save.LuaState))
+            .Concat(save.SkyUrl is { } sky ? new[] { sky } : []);
 
     public static IEnumerable<string> PieceUrls(TtsSave save) =>
         save.Objects.SelectMany(o => o.Walk()).Where(o => o.Name != "Custom_Assetbundle" && !o.IsFurniture).SelectMany(o => o.Urls());
@@ -38,7 +39,7 @@ public sealed class PackBuilder
         return names;
     }
 
-    int Count(TtsObj o) => _cfg.ContainerTypes.Contains(o.Name) ? 1 + o.Contained.Sum(Count) : 1;
+    int Count(TtsObj o) => _cfg.ContainerTypes.Contains(o.Name) || o.IsDeck ? 1 + o.Contained.Sum(Count) : 1;
 
     public static IEnumerable<string> ScriptUrls(string lua)
     {
@@ -105,7 +106,7 @@ public sealed class PackBuilder
         var where = $"{pack.M.Id} {o.Name} '{o.Nickname}' {o.Guid}";
         Progress.Step(o.Nickname.Length > 0 ? o.Nickname : o.Name);
         if (o.Verdict.Hostile) _rep.HostileScript(o.Verdict.Reasons, where, o.Guid);
-        if (_cfg.ContainerTypes.Contains(o.Name))
+        if (_cfg.ContainerTypes.Contains(o.Name) || o.IsDeck)
         {
             foreach (var c in o.Contained) Visit(c, pack, ref objects, ref effects);
             return;
@@ -126,6 +127,7 @@ public sealed class PackBuilder
             return;
         }
         if (_cfg.IgnoreTypes.Contains(o.Name) || o.Name.StartsWith("Die_")) { _rep.Skipped(o.Name, where); return; }
+        if (DefFactory.NotTranslated(o) is { } why) { _rep.Skipped(why, where); return; }
         if (!DefFactory.IsPiece(o)) { _rep.UnknownType(o.Name, where); return; }
         if (o.IsFurniture) { _rep.Skipped("table furniture (custom table / surround / under the table)", where); return; }
         if (o.IsTerrain) { _rep.Skipped("3D terrain (laid as a map sheet of the scenario)", where); return; }

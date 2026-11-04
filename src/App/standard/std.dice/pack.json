@@ -639,6 +639,154 @@
       "counters": [],
       "textLines": [],
       "attachments": []
+    },
+    {
+      "id": "std.dice.hit-die",
+      "name": "hit die",
+      "kind": "model",
+      "mesh": "308542c877a0997143329185516897863c76070f12c93d728a8b60d0c9815e5d",
+      "texture": "89618bdfa25972f3449bbe9fd9064c814045291a83cfc093f5b5eb12ea5748d1",
+      "image": "8fbed2d5e602da157c73030d0334f49ac4ab70ae9241230eb6ee0482fd16d87f",
+      "size": {
+        "w": 0.6,
+        "h": 0.6
+      },
+      "shape": "box",
+      "thickness": 0.6,
+      "tint": "#FFFFFF",
+      "tags": [
+        "die",
+        "dice",
+        "d6",
+        "picture"
+      ],
+      "states": [
+        {
+          "name": "7",
+          "up": [
+            0.0,
+            1.0,
+            0.0
+          ]
+        },
+        {
+          "name": "8",
+          "up": [
+            -1.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "name": "10",
+          "up": [
+            0.0,
+            -1.0,
+            0.0
+          ]
+        },
+        {
+          "name": "6",
+          "up": [
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "name": "9",
+          "up": [
+            1.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "name": "Aborted / missing",
+          "up": [
+            0.0,
+            0.0,
+            -1.0
+          ]
+        }
+      ],
+      "counters": [],
+      "textLines": [],
+      "attachments": []
+    },
+    {
+      "id": "std.dice.direction-die",
+      "name": "direction die",
+      "kind": "model",
+      "mesh": "308542c877a0997143329185516897863c76070f12c93d728a8b60d0c9815e5d",
+      "texture": "80e12804415c0decb3570c5ac805fa2b7d886f4d97ec942ba18572d68f7304a8",
+      "image": "f0902aa63e2c7b9212a9efac204d8b6c6ae602945612f6c64201177a267cbb36",
+      "size": {
+        "w": 0.6,
+        "h": 0.6
+      },
+      "shape": "box",
+      "thickness": 0.6,
+      "tint": "#FFFFFF",
+      "tags": [
+        "die",
+        "dice",
+        "d6",
+        "picture"
+      ],
+      "states": [
+        {
+          "name": "Straight",
+          "up": [
+            0.0,
+            1.0,
+            0.0
+          ]
+        },
+        {
+          "name": "Straight, left or right",
+          "up": [
+            -1.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "name": "Straight",
+          "up": [
+            0.0,
+            -1.0,
+            0.0
+          ]
+        },
+        {
+          "name": "Left",
+          "up": [
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "name": "Left or right",
+          "up": [
+            1.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "name": "Right",
+          "up": [
+            0.0,
+            0.0,
+            -1.0
+          ]
+        }
+      ],
+      "counters": [],
+      "textLines": [],
+      "attachments": []
     }
   ],
   "assets": {
@@ -746,6 +894,36 @@
     },
     "e2b7b063a65e9ef3e3eb72e7db20402879c190bc76357515089b8c560c1261df": {
       "file": "assets/e2b7b063a65e9ef3e3eb72e7db20402879c190bc76357515089b8c560c1261df.png",
+      "kind": "image",
+      "w": 160,
+      "h": 160
+    },
+    "89618bdfa25972f3449bbe9fd9064c814045291a83cfc093f5b5eb12ea5748d1": {
+      "file": "assets/89618bdfa25972f3449bbe9fd9064c814045291a83cfc093f5b5eb12ea5748d1.png",
+      "kind": "image",
+      "w": 1024,
+      "h": 1024
+    },
+    "308542c877a0997143329185516897863c76070f12c93d728a8b60d0c9815e5d": {
+      "file": "assets/308542c877a0997143329185516897863c76070f12c93d728a8b60d0c9815e5d.obj",
+      "kind": "mesh",
+      "w": 0,
+      "h": 0
+    },
+    "8fbed2d5e602da157c73030d0334f49ac4ab70ae9241230eb6ee0482fd16d87f": {
+      "file": "assets/8fbed2d5e602da157c73030d0334f49ac4ab70ae9241230eb6ee0482fd16d87f.png",
+      "kind": "image",
+      "w": 160,
+      "h": 160
+    },
+    "80e12804415c0decb3570c5ac805fa2b7d886f4d97ec942ba18572d68f7304a8": {
+      "file": "assets/80e12804415c0decb3570c5ac805fa2b7d886f4d97ec942ba18572d68f7304a8.png",
+      "kind": "image",
+      "w": 1024,
+      "h": 1024
+    },
+    "f0902aa63e2c7b9212a9efac204d8b6c6ae602945612f6c64201177a267cbb36": {
+      "file": "assets/f0902aa63e2c7b9212a9efac204d8b6c6ae602945612f6c64201177a267cbb36.png",
       "kind": "image",
       "w": 160,
       "h": 160

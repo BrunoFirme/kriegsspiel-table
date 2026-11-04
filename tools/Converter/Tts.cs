@@ -62,6 +62,43 @@ public sealed class TtsObj
         }
     }
 
+    public bool IsCard => Name is "Card" or "CardCustom";
+    public bool IsDeck => Name is "Deck" or "DeckCustom";
+    public bool IsChecker => Name is "Checker_white" or "Checker_red" or "Checker_black";
+    public bool IsPictureDie => Name == "Custom_Dice" && (CI?["CustomDice"] as JsonObject)?["Type"]?.GetValue<int>() == PictureDieType;
+    const int PictureDieType = 1;
+
+    public sealed record CardSheet(string FaceUrl, string? BackUrl, int Across, int Down, bool UniqueBack, int Type);
+
+    public int CardId => J["CardID"]?.GetValue<int>() ?? 0;
+
+    public Dictionary<int, CardSheet> CardSheets
+    {
+        get
+        {
+            var sheets = new Dictionary<int, CardSheet>();
+            if (J["CustomDeck"] is not JsonObject deck) return sheets;
+            foreach (var (k, v) in deck)
+            {
+                if (!int.TryParse(k, out var id) || v is not JsonObject s || Blank(S(s["FaceURL"])) is not { } face) continue;
+                sheets[id] = new CardSheet(face, Blank(S(s["BackURL"])), Math.Max(1, I(s, "NumWidth")), Math.Max(1, I(s, "NumHeight")),
+                    s["UniqueBack"]?.GetValue<bool>() ?? false, I(s, "Type"));
+            }
+            return sheets;
+        }
+    }
+
+    public CardSheet? Sheet => CardSheets.GetValueOrDefault(CardId / CardsPerSheet);
+    public int SheetCell => CardId % CardsPerSheet;
+    const int CardsPerSheet = 100;
+
+    public sealed record Face(string Value, double RotX, double RotY, double RotZ);
+
+    public List<Face> RotationValues => (J["RotationValues"] as JsonArray)?.OfType<JsonObject>()
+        .Select(r => (value: r["Value"], rot: r["Rotation"] as JsonObject))
+        .Select(r => new Face(r.value is JsonValue jv && jv.TryGetValue<string>(out var s) ? s : r.value?.ToJsonString() ?? "", D(r.rot, "x"), D(r.rot, "y"), D(r.rot, "z")))
+        .ToList() ?? new();
+
     public IEnumerable<TtsObj> Contained => Arr("ContainedObjects");
     public IEnumerable<TtsObj> Children => Arr("ChildObjects");
     IEnumerable<TtsObj> Arr(string k) => (J[k] as JsonArray)?.OfType<JsonObject>().Select(o => new TtsObj(o)) ?? [];
@@ -91,6 +128,11 @@ public sealed class TtsObj
     {
         foreach (var u in new[] { ImageUrl, BackUrl, MeshUrl, DiffuseUrl, BundleUrl }) if (u != null) yield return u;
         foreach (var d in Decals) yield return d.Url;
+        foreach (var s in CardSheets.Values)
+        {
+            yield return s.FaceUrl;
+            if (s.BackUrl != null) yield return s.BackUrl;
+        }
     }
 
     public IEnumerable<TtsObj> Walk()
@@ -104,6 +146,7 @@ public sealed class TtsObj
 
     static string? S(JsonNode? n) => n is JsonValue v && v.TryGetValue<string>(out var s) ? s : null;
     static string? Blank(string? s) => string.IsNullOrWhiteSpace(s) ? null : s.Trim();
+    static int I(JsonObject o, string k) => o[k] is JsonValue v && v.TryGetValue<int>(out var i) ? i : (int)Math.Round(D(o, k));
     static double D(JsonObject? o, string k, double def = 0)
     {
         var n = o?[k];
@@ -123,6 +166,7 @@ public sealed class TtsSave
     public List<TtsObj> Objects { get; init; } = new();
     public string Lua { get; init; } = "";
     public string LuaState { get; init; } = "";
+    public string? SkyUrl { get; init; }
 
     public static TtsSave Load(Config cfg, string workshopIdOrPath)
     {
@@ -136,6 +180,7 @@ public sealed class TtsSave
             Objects = (root["ObjectStates"] as JsonArray)?.OfType<JsonObject>().Select(o => new TtsObj(o)).ToList() ?? new(),
             Lua = root["LuaScript"]?.GetValue<string>() ?? "",
             LuaState = root["LuaScriptState"]?.GetValue<string>() ?? "",
+            SkyUrl = root["SkyURL"]?.GetValue<string>() is { } sky && !string.IsNullOrWhiteSpace(sky) ? sky.Trim() : null,
         };
     }
 }

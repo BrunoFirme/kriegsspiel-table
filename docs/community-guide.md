@@ -9,15 +9,19 @@ folder in any Steam library).
 You get:
 
 - a **pack** with every piece (bags opened up);
-- a **scenario** laid out as in the module: boards become map sheets, the rest goes on the umpire board;
+- a **scenario** laid out as in the module: boards become map sheets, the rest goes on the umpire board, and the
+  module's own sky becomes its backdrop;
+- a further scenario for each memory bag, with the layout it places;
 - `import-report.md` beside the scenario: what did not convert.
 
 | Converts | Does not |
 |---|---|
-| Tiles, tokens, boards, 3D models | Physics, hands, decks (listed in the report) |
-| States (formation, shattered…) | Asset-bundle models (houses, trees, ships) |
-| IKS script counters and text | Bags as containers |
-| Tints, names, attached markers | TTS dice (use the app's) |
+| Tiles, tokens, boards, 3D models | Physics, hands (listed in the report) |
+| Cards, and decks as piles | Asset-bundle models (houses, trees, ships) |
+| Checkers, and six-sided picture dice | Bags as containers |
+| States (formation, shattered…) | Plain TTS dice (use the app's) |
+| IKS script counters and text | |
+| Tints, names, attached markers, locks, face down | |
 | Asset-bundle effects (smoke, fire, gun fire, mist, rain), as the closest of Firme's Effects | |
 | Lua scripts and XML panels, translated | |
 | Decals, and the pictures scripts set from web links | |

@@ -12,7 +12,6 @@ from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, "..", "src", "App", "standard", "std.dice")
-ART = os.path.join(HERE, "..", "src", "App", "art")
 PHI = (1 + 5 ** 0.5) / 2
 ATLAS = 1024
 WUP = (0, 1, 0)
@@ -295,6 +294,48 @@ def inradius(poly, gx, gy):
     return best
 
 
+class MeshOut:
+    def __init__(self, width, height):
+        self.width, self.height = width, height
+        self.v, self.vt, self.vn, self.f, self.polys = [], [], [], [], []
+
+    def emit(self, points, uv_px, normals_per_vertex):
+        base = len(self.v)
+        for p, (uu, vv), n in zip(points, uv_px, normals_per_vertex):
+            self.v.append(f"v {p[0]:.6f} {p[1]:.6f} {p[2]:.6f}")
+            self.vt.append(f"vt {uu / self.width:.6f} {1 - vv / self.height:.6f}")
+            self.vn.append(f"vn {n[0]:.6f} {n[1]:.6f} {n[2]:.6f}")
+        self.f.append("f " + " ".join(f"{base + i + 1}/{base + i + 1}/{base + i + 1}" for i in range(len(points))))
+        self.polys.append((list(points), list(uv_px), normals_per_vertex[0]))
+
+    def obj(self, name):
+        return "\n".join(["# Kriegsspiel Table standard die " + name] + self.v + self.vt + self.vn + self.f) + "\n"
+
+
+def bevels(v, faces, normals, plate, emit, bevel_px):
+    edge_faces = {}
+    for fi, f in enumerate(faces):
+        for a, b in zip(f, f[1:] + f[:1]):
+            edge_faces.setdefault(frozenset((a, b)), []).append(fi)
+    for edge, fs in edge_faces.items():
+        if len(fs) != 2: continue
+        f1, f2 = fs
+        a, b = tuple(edge)
+        quad = [plate[(f1, a)], plate[(f1, b)], plate[(f2, b)], plate[(f2, a)]]
+        nb = norm(add(normals[f1], normals[f2]))
+        if dot(cross(sub(quad[1], quad[0]), sub(quad[2], quad[0])), nb) < 0: quad.reverse()
+        emit(quad, [bevel_px] * 4, [nb] * 4)
+    for vi in range(len(v)):
+        around = [(fi, plate[(fi, vi)]) for fi, f in enumerate(faces) if vi in f]
+        if len(around) < 3: continue
+        nv = norm(v[vi])
+        c = centroid([p for _, p in around])
+        u = norm(sub(around[0][1], c)); w = cross(nv, u)
+        around.sort(key=lambda fp: math.atan2(dot(sub(fp[1], c), w), dot(sub(fp[1], c), u)))
+        pts = [p for _, p in around]
+        emit(pts, [bevel_px] * len(pts), [nv] * len(pts))
+
+
 def build(name, solid, sides, colour, ink, chamfer=0.085, up_mode="vertex", vertex_labels=False, pips=False):
     v, faces = solid()
     faces = fix_winding(v, faces)
@@ -319,17 +360,8 @@ def build(name, solid, sides, colour, ink, chamfer=0.085, up_mode="vertex", vert
         c = centroid([v[i] for i in f])
         for i in f: plate[(fi, i)] = add(c, mul(sub(v[i], c), 1 - chamfer))
 
-    lines_v, lines_vt, lines_vn, lines_f = [], [], [], []
-    polys = []
-
-    def emit(points, uv_px, normals_per_vertex):
-        base = len(lines_v)
-        for p, (uu, vv), n in zip(points, uv_px, normals_per_vertex):
-            lines_v.append(f"v {p[0]:.6f} {p[1]:.6f} {p[2]:.6f}")
-            lines_vt.append(f"vt {uu / atlas.width:.6f} {1 - vv / atlas.height:.6f}")
-            lines_vn.append(f"vn {n[0]:.6f} {n[1]:.6f} {n[2]:.6f}")
-        lines_f.append("f " + " ".join(f"{base + i + 1}/{base + i + 1}/{base + i + 1}" for i in range(len(points))))
-        polys.append((list(points), list(uv_px), normals_per_vertex[0]))
+    mesh = MeshOut(atlas.width, atlas.height)
+    emit = mesh.emit
 
     tints = face_tints(name, colour, len(faces))
     states, poses = [], {}
@@ -365,27 +397,7 @@ def build(name, solid, sides, colour, ink, chamfer=0.085, up_mode="vertex", vert
             states.append((numbers[fi], n))
             poses[numbers[fi]] = (n, up3)
 
-    edge_faces = {}
-    for fi, f in enumerate(faces):
-        for a, b in zip(f, f[1:] + f[:1]):
-            edge_faces.setdefault(frozenset((a, b)), []).append(fi)
-    for edge, fs in edge_faces.items():
-        if len(fs) != 2: continue
-        f1, f2 = fs
-        a, b = tuple(edge)
-        quad = [plate[(f1, a)], plate[(f1, b)], plate[(f2, b)], plate[(f2, a)]]
-        nb = norm(add(normals[f1], normals[f2]))
-        if dot(cross(sub(quad[1], quad[0]), sub(quad[2], quad[0])), nb) < 0: quad.reverse()
-        emit(quad, [bevel_px] * 4, [nb] * 4)
-    for vi in range(len(v)):
-        around = [(fi, plate[(fi, vi)]) for fi, f in enumerate(faces) if vi in f]
-        if len(around) < 3: continue
-        nv = norm(v[vi])
-        c = centroid([p for _, p in around])
-        u = norm(sub(around[0][1], c)); w = cross(nv, u)
-        around.sort(key=lambda fp: math.atan2(dot(sub(fp[1], c), w), dot(sub(fp[1], c), u)))
-        pts = [p for _, p in around]
-        emit(pts, [bevel_px] * len(pts), [nv] * len(pts))
+    bevels(v, faces, normals, plate, emit, bevel_px)
 
     if vertex_labels:
         states = [(labels[i], norm(v[i])) for i in range(len(v))]
@@ -394,8 +406,7 @@ def build(name, solid, sides, colour, ink, chamfer=0.085, up_mode="vertex", vert
             nf = next(normals[fi] for fi, f in enumerate(faces) if i in f)
             poses[labels[i]] = (nv, mul(norm(sub(nf, mul(nv, dot(nf, nv)))), -1))
     states.sort(key=lambda s: s[0])
-    obj = "\n".join(["# Kriegsspiel Table standard die " + name] + lines_v + lines_vt + lines_vn + lines_f) + "\n"
-    return obj, atlas, states, polys, poses
+    return mesh.obj(name), atlas, states, mesh.polys, poses
 
 
 KEY, FILL = (-0.42, 0.78, 0.46), (0.62, 0.18, 0.72)
@@ -477,14 +488,117 @@ def picture(polys, atlas, poses, number, px, elev, spin=0.0):
 def sha_bytes(b): return hashlib.sha256(b).hexdigest()
 
 
+PICTURE_LAYOUT = [
+    ((0, 1, 0), (0.022, 0.3035, 0.3593, 0.6407), (-1, 0, 0), (0, 0, 1)),
+    ((-1, 0, 0), (0.3593, 0.6407, 0.3593, 0.6407), (0, -1, 0), (0, 0, 1)),
+    ((0, -1, 0), (0.6955, 0.977, 0.36, 0.6414), (1, 0, 0), (0, 0, 1)),
+    ((0, 0, 1), (0.022, 0.3035, 0.022, 0.3035), (1, 0, 0), (0, 1, 0)),
+    ((1, 0, 0), (0.3593, 0.6407, 0.022, 0.3035), (0, 1, 0), (0, 0, 1)),
+    ((0, 0, -1), (0.6965, 0.978, 0.022, 0.3035), (1, 0, 0), (0, -1, 0)),
+]
+PICTURE_BEVEL_UV = (0.5, 0.83)
+
+
+def quad_curve(a, b, c, steps=24):
+    return [tuple((1 - t) ** 2 * a[i] + 2 * (1 - t) * t * b[i] + t * t * c[i] for i in range(2)) for t in (k / steps for k in range(steps + 1))]
+
+
+def arrows_paint(kinds, ink, base):
+    def paint(layer, c, ss):
+        size = layer.size[0]
+        stroke = int(size * 0.085)
+        mask = Image.new("L", layer.size, 0)
+        md = ImageDraw.Draw(mask)
+        foot, turn = (c, c + 0.36 * size), (c, c - 0.02 * size)
+        for k in kinds:
+            if k == "S": path = [foot, (c, c - 0.22 * size)]
+            else:
+                side = -1 if k == "L" else 1
+                path = quad_curve(foot, turn, (c + side * 0.30 * size, c - 0.16 * size))
+            md.line(path, fill=255, width=stroke, joint="curve")
+            (x0, y0), (x1, y1) = path[-2], path[-1]
+            dx, dy = x1 - x0, y1 - y0
+            ln = math.hypot(dx, dy) or 1
+            dx, dy = dx / ln, dy / ln
+            head, half = 0.17 * size, 0.12 * size
+            tip = (x1 + dx * head, y1 + dy * head)
+            md.polygon([tip, (x1 - dy * half, y1 + dx * half), (x1 + dy * half, y1 - dx * half)], fill=255)
+        groove(layer, mask, base, size * 0.012)
+        layer.paste(ink + (255,), (0, 0), mask)
+    return paint
+
+
+def lost_paint(ink, base):
+    faint = tuple(int(a + (b - a) * 0.55) for a, b in zip(ink, base))
+    def paint(layer, c, ss):
+        size = layer.size[0]
+        back = numeral_paint("10", size / ss * 0.42, faint, base, False)
+        back(layer, c, ss)
+        mask = Image.new("L", layer.size, 0)
+        md = ImageDraw.Draw(mask)
+        for word, dy in (("ABORTED", -0.13), ("MISSING", 0.13)):
+            f = fit_font(word, size * 0.11, size * 0.8)
+            md.text((c, c + dy * size), word, fill=255, font=f, anchor="mm")
+        groove(layer, mask, base, size * 0.01)
+        layer.paste(ink + (255,), (0, 0), mask)
+    return paint
+
+
+def hit_faces(ink, base, cap):
+    return [("7", numeral_paint("7", cap, ink, base, False)), ("8", numeral_paint("8", cap, ink, base, False)),
+            ("10", numeral_paint("10", cap, ink, base, False)), ("6", numeral_paint("6", cap, ink, base, True)),
+            ("9", numeral_paint("9", cap, ink, base, True)), ("Aborted / missing", lost_paint(ink, base))]
+
+
+def direction_faces(ink, base, cap):
+    return [("Straight", arrows_paint("S", ink, base)), ("Straight, left or right", arrows_paint("SLR", ink, base)),
+            ("Straight", arrows_paint("S", ink, base)), ("Left", arrows_paint("L", ink, base)),
+            ("Left or right", arrows_paint("LR", ink, base)), ("Right", arrows_paint("R", ink, base))]
+
+
+PICTURE_DICE = [("hit die", hit_faces), ("direction die", direction_faces)]
+
+
+def build_picture(name, faces_of, colour, ink, chamfer=0.07):
+    v, faces = cube()
+    faces = fix_winding(v, faces)
+    normals = [face_normal(v, f) for f in faces]
+    atlas = Image.new("RGBA", (ATLAS, ATLAS), shade(colour, 0.82) + (255,))
+    d = ImageDraw.Draw(atlas)
+    plate = {}
+    for fi, f in enumerate(faces):
+        c = centroid([v[i] for i in f])
+        for i in f: plate[(fi, i)] = add(c, mul(sub(v[i], c), 1 - chamfer))
+    mesh = MeshOut(atlas.width, atlas.height)
+    cell = (PICTURE_LAYOUT[0][1][1] - PICTURE_LAYOUT[0][1][0]) * ATLAS
+    art = faces_of(ink, colour, cell * 0.42)
+    tints = face_tints(name, colour, len(faces))
+    states, poses = [], {}
+    for k, (normal, (u0, u1, v0, v1), right, up) in enumerate(PICTURE_LAYOUT):
+        fi = max(range(len(faces)), key=lambda i: dot(normals[i], normal))
+        pts = [plate[(fi, i)] for i in faces[fi]]
+        c = centroid(pts)
+        half = max(abs(dot(sub(p, c), right)) for p in pts)
+        uv = [((u0 + (dot(sub(p, c), right) / half + 1) / 2 * (u1 - u0)) * ATLAS,
+               (1 - (v0 + (dot(sub(p, c), up) / half + 1) / 2 * (v1 - v0))) * ATLAS) for p in pts]
+        box = [(u0 * ATLAS, (1 - v1) * ATLAS), (u1 * ATLAS, (1 - v1) * ATLAS), (u1 * ATLAS, (1 - v0) * ATLAS), (u0 * ATLAS, (1 - v0) * ATLAS)]
+        body = tints[k]
+        face_plate(d, box, body)
+        label, paint = art[k]
+        stamp(atlas, (u0 + u1) / 2 * ATLAS, (1 - (v0 + v1) / 2) * ATLAS, cell * 0.92, 0, paint)
+        mesh.emit(pts, uv, [normals[fi]] * len(pts))
+        states.append((label, normals[fi]))
+        poses[k] = (normals[fi], up)
+    bevels(v, faces, normals, plate, mesh.emit, (PICTURE_BEVEL_UV[0] * ATLAS, (1 - PICTURE_BEVEL_UV[1]) * ATLAS))
+    return mesh.obj("picture d6"), atlas, states, mesh.polys, poses
+
+
 def main():
     preview = sys.argv[sys.argv.index("--preview") + 1] if "--preview" in sys.argv else None
     assets_dir = os.path.join(OUT, "assets")
     os.makedirs(assets_dir, exist_ok=True)
-    os.makedirs(ART, exist_ok=True)
     for f in os.listdir(assets_dir): os.remove(os.path.join(assets_dir, f))
-    IVORY, RED, BLUE = (227, 219, 197), (158, 34, 33), (33, 60, 118)
-    DARK, WHITE = (28, 25, 24), (247, 243, 234)
+    IVORY, DARK = (227, 219, 197), (28, 25, 24)
     dice = [
         ("d4", tetra, 4, IVORY, DARK, 0.095, 22, 44, dict(vertex_labels=True)),
         ("d6", cube, 6, IVORY, DARK, 0.07, 34, 24, dict(pips=True, up_mode="edge")),
@@ -492,8 +606,6 @@ def main():
         ("d10", trapezohedron, 10, IVORY, DARK, 0.085, 42, 0, {}),
         ("d12", dodeca, 12, IVORY, DARK, 0.08, 44, 0, {}),
         ("d20", icosa, 20, IVORY, DARK, 0.105, 44, 0, {}),
-        ("d6 red", cube, 6, RED, WHITE, 0.07, 34, 24, dict(pips=True, up_mode="edge")),
-        ("d6 blue", cube, 6, BLUE, WHITE, 0.07, 34, 24, dict(pips=True, up_mode="edge")),
     ]
     pieces, assets = [], {}
 
@@ -522,20 +634,29 @@ def main():
             "states": [{"name": str(k), "up": [round(x, 6) for x in n]} for k, n in states],
             "counters": [], "textLines": [], "attachments": [],
         })
-        if name == "d6":
-            icon = picture(polys, atlas, poses, 5, 40, 44, spin=20)
-            with open(os.path.join(ART, "dice.png"), "wb") as fh: fh.write(png(icon))
-            if preview:
-                icon.save(os.path.join(preview, "dice-icon.png"))
-                icon.resize((320, 320), Image.NEAREST).save(os.path.join(preview, "dice-icon-8x.png"))
-                picture(polys, atlas, poses, 5, 320, 44, spin=20).save(os.path.join(preview, "dice-icon-big.png"))
+    for name, faces in PICTURE_DICE:
+        obj, atlas, states, polys, poses = build_picture(name, faces, IVORY, DARK)
+        atlas_sha = put(png(atlas), "png", "image", atlas.width, atlas.height)
+        mesh_sha = put(obj.encode("utf-8"), "obj", "mesh")
+        shot = picture(polys, atlas, poses, 0, 160, 34, 24)
+        thumb_sha = put(png(shot), "png", "image", 160, 160)
+        if preview:
+            shot.save(os.path.join(preview, f"thumb-{name.replace(' ', '-')}.png"))
+            atlas.save(os.path.join(preview, f"faces-{name.replace(' ', '-')}.png"))
+        pieces.append({
+            "id": f"std.dice.{name.replace(' ', '-')}", "name": name, "kind": "model", "mesh": mesh_sha, "texture": atlas_sha, "image": thumb_sha,
+            "size": {"w": 0.6, "h": 0.6}, "shape": "box", "thickness": 0.6, "tint": "#FFFFFF",
+            "tags": ["die", "dice", "d6", "picture"],
+            "states": [{"name": k, "up": [round(x, 6) for x in n]} for k, n in states],
+            "counters": [], "textLines": [], "attachments": [],
+        })
     pack = {
         "format": 1, "id": "std.dice", "name": "Dice",
         "source": {"authors": ["Kriegsspiel Table"], "url": "", "license": "standard pack, included with the app"},
         "pieces": pieces, "assets": assets, "partial": False,
     }
     with open(os.path.join(OUT, "pack.json"), "w", encoding="utf-8") as fh: json.dump(pack, fh, indent=2)
-    print(f"wrote {len(pieces)} dice, {len(assets)} assets to {OUT}; icon to {os.path.join(ART, 'dice.png')}")
+    print(f"wrote {len(pieces)} dice, {len(assets)} assets to {OUT}")
 
 
 main()

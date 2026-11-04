@@ -19,4 +19,14 @@ public class ImportPlanTests
         Assert.Equal("", plan.File);
         Assert.Null(new ImportPlan().File);
     }
+
+    [Fact]
+    public void Every_planned_scenario_is_kept_and_the_first_is_the_modules_own()
+    {
+        var plan = new ImportPlan();
+        foreach (var line in new[] { "PLAN pack tts.naval", "PLAN scenario naval", "PLAN scenario naval-midway-scenario" }) plan.Read(line);
+        Assert.Equal(new[] { "naval", "naval-midway-scenario" }, plan.Scenarios);
+        Assert.Equal("naval", plan.Scenario);
+        Assert.Null(new ImportPlan().Scenario);
+    }
 }

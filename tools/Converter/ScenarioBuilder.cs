@@ -32,11 +32,12 @@ public sealed class ScenarioBuilder
         public Dictionary<PieceInstance, double> Y = new();
     }
 
-    public async Task<Scenario> Build(string masterId)
+    public Task<Scenario> Build(string masterId) => Build(TtsSave.Load(_cfg, masterId));
+
+    public async Task<Scenario> Build(TtsSave master)
     {
         var sc = _cfg.Scenario;
-        Console.WriteLine($"Scenario {sc.Id} (master {masterId})");
-        var master = TtsSave.Load(_cfg, masterId);
+        Console.WriteLine($"Scenario {sc.Id} (master {sc.Master})");
         await _assets.FetchAll(master);
 
         var root = _cfg.Output;
@@ -54,6 +55,7 @@ public sealed class ScenarioBuilder
             Calibration = new Calibration { UnitsPerMeter = sc.UnitsPerMeter },
         };
         TranslateGlobal(scenario, master, extras);
+        scenario.Lighting.Backdrop = Sky(master);
         var boardSet = AddSheets(scenario, master, pkgRel, pkgDir, oldScenario);
 
         var layers = new List<Layer> { Collect("umpire", master, boardSet) };
@@ -72,8 +74,8 @@ public sealed class ScenarioBuilder
             foreach (var o in layer.Objects)
             {
                 Progress.Step(o.Nickname.Length > 0 ? o.Nickname : o.Name);
-                if (o.Flipped) flipped++;
-                Instance(o, common[_defs.VisualKey(o)], extras, packDefs, layer, usedPacks, ref rekeyed, null);
+                var placed = Instance(o, common[_defs.VisualKey(o)], extras, packDefs, layer, usedPacks, ref rekeyed, null);
+                if (o.Flipped && placed is { FaceDown: false }) flipped++;
             }
         }
         var effects = BundleEffects.Load(root);
@@ -114,6 +116,43 @@ public sealed class ScenarioBuilder
                 scenario.Script = _defs.Translate(verdict.Script, extras, $"{sc.Id} Global script", isGlobal: true).Script;
                 scenario.ScriptState = _defs.RewriteUrls(master.LuaState, extras, $"{sc.Id} Global script state");
             }
+        }
+    }
+
+    string Sky(TtsSave master)
+    {
+        if (master.SkyUrl is not { } url) return KTable.Client.Backdrops.None;
+        var where = $"{_cfg.Scenario.Id} sky";
+        if (_defs.Entry(url) is not { } e || !AssetStore.IsPicture(e.Ext) || _assets.FilePath(e) is not { } file)
+        {
+            _rep.Missing(url, _assets.Gone(url, "image") ?? _assets.Why(url) ?? "unresolved", where);
+            return KTable.Client.Backdrops.None;
+        }
+        string? kept;
+        try { kept = new KTable.Client.WebPictures(_cfg.Output).Keep(File.ReadAllBytes(file)); }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { _rep.Note($"{where}: the module's sky could not be stored ({ex.Message}), so the table has no backdrop."); return KTable.Client.Backdrops.None; }
+        if (kept == null) { _rep.Note($"{where}: the module's sky is larger than a backdrop picture may be, so the table has no backdrop."); return KTable.Client.Backdrops.None; }
+        _rep.Counts[$"{_cfg.Scenario.Id}: backdrop"] = "the module's own sky";
+        return kept;
+    }
+
+    public static IEnumerable<TtsObj> Pile(TtsObj deck)
+    {
+        const double PileStep = 0.05;
+        var cards = deck.Contained.Where(c => c.IsCard).ToList();
+        for (int i = 0; i < cards.Count; i++)
+        {
+            if (cards[i].J.DeepClone() is not System.Text.Json.Nodes.JsonObject j) continue;
+            var own = cards[i].J["Transform"] as System.Text.Json.Nodes.JsonObject;
+            int height = deck.Flipped ? cards.Count - 1 - i : i;
+            j["Transform"] = new System.Text.Json.Nodes.JsonObject
+            {
+                ["posX"] = deck.PosX, ["posY"] = deck.PosY + height * PileStep, ["posZ"] = deck.PosZ,
+                ["rotX"] = deck.RotX, ["rotY"] = deck.RotY, ["rotZ"] = deck.RotZ,
+                ["scaleX"] = own?["scaleX"]?.DeepClone() ?? 1, ["scaleY"] = own?["scaleY"]?.DeepClone() ?? 1, ["scaleZ"] = own?["scaleZ"]?.DeepClone() ?? 1,
+            };
+            j["Locked"] = deck.Locked;
+            yield return new TtsObj(j);
         }
     }
 
@@ -273,7 +312,7 @@ public sealed class ScenarioBuilder
         _rep.Counts[$"{sc.Id}: extras defs"] = extras.M.Pieces.Count.ToString();
         _rep.Counts[$"{sc.Id}: instances using pack defs"] = rekeyed.ToString();
         _rep.Counts[$"{sc.Id}: packs"] = string.Join(", ", scenario.Packs);
-        if (flipped > 0) _rep.Note($"{sc.Id}: {flipped} pieces lie face down in TTS; converted face up (no flip flag in the instance model).");
+        if (flipped > 0) _rep.Note($"{sc.Id}: {flipped} pieces lie face down in TTS but have no back picture, so they are laid face up.");
         Console.WriteLine($"  → umpire {scenario.UmpireBoard.Count}; extras {extras.M.Pieces.Count} defs; {rekeyed} instances use pack defs");
     }
 
@@ -304,6 +343,8 @@ public sealed class ScenarioBuilder
             if (o.Verdict.Hostile) _rep.HostileScript(o.Verdict.Reasons, where, o.Guid);
             if (exclude.Contains(o)) continue;
             if (IsSheet(o)) { if (name != "umpire") _rep.Skipped("map sheet duplicated in a side module", where); continue; }
+            if (o.IsDeck) { l.Objects.AddRange(Pile(o).Where(c => DefFactory.NotTranslated(c) is null)); continue; }
+            if (DefFactory.NotTranslated(o) is { } why) { _rep.Skipped(why, where); continue; }
             if (_cfg.ContainerTypes.Contains(o.Name)) { _rep.Skipped(o.Name + " (contents not placed in the scenario)", where); continue; }
             if (o.Name == BundleType && !_cfg.IsTableWall(o.BundleUrl)) { l.Effects.Add(o); continue; }
             if (_cfg.IgnoreTypes.Contains(o.Name) || o.Name.StartsWith("Die_")) { _rep.Skipped(o.Name, where); continue; }
@@ -413,6 +454,7 @@ public sealed class ScenarioBuilder
             Note = o.Description.Trim().Length > 0 ? o.Description.Trim() : null,
             Guid = o.Guid.Length > 0 ? o.Guid : null,
             Tags = o.Tags, Memo = _defs.RewriteUrls(o.Memo, extras, $"{layer.Name} {o.Name} '{o.Nickname}' {o.Guid} memo"),
+            Locked = parent == null && o.Locked, FaceDown = o.Flipped && def.Kind != "model" && def.Back != null,
         };
         if (lua.Trim().Length > 0)
         {
@@ -479,18 +521,33 @@ public sealed class ScenarioBuilder
 
     void Stack(Layer l)
     {
+        const double Above = 0.02, Digits = 4;
         var order = l.Pieces.OrderBy(p => l.Y[p]).ToList();
-        var placed = new List<(PieceInstance p, double y, double rad)>();
+        var placed = new List<(PieceInstance p, double y, double top)>();
         foreach (var p in order)
         {
-            var def = Lookup(p.Def);
-            double rad = def == null ? 0.5 : 0.5 * Math.Min(def.Size.W, def.Size.H) * p.Scale;
             int s = 0;
-            foreach (var (q, qy, qr) in placed)
-                if (l.Y[p] > qy + 0.02 && (p.Pos - q.Pos).Length < Math.Max(qr, 0.1)) s = Math.Max(s, q.Stack + 1);
+            double rest = 0;
+            foreach (var (q, qy, qtop) in placed)
+            {
+                if (l.Y[p] <= qy + Above || !Holds(q, p.Pos)) continue;
+                s = Math.Max(s, q.Stack + 1);
+                rest = Math.Max(rest, qtop);
+            }
             p.Stack = s;
-            placed.Add((p, l.Y[p], rad));
+            if (rest > 0) p.Y = Math.Round(rest, (int)Digits);
+            placed.Add((p, l.Y[p], rest + (Lookup(p.Def)?.Thickness ?? 0) * p.Scale));
         }
+    }
+
+    bool Holds(PieceInstance q, Vec2 at)
+    {
+        const double Smallest = 0.1;
+        var def = Lookup(q.Def);
+        double halfW = Math.Max(Smallest, (def?.Size.W ?? 1) * q.Scale / 2), halfH = Math.Max(Smallest, (def?.Size.H ?? 1) * q.Scale / 2);
+        double th = q.RotDeg * Math.PI / 180, dx = at.X - q.Pos.X, dz = at.Z - q.Pos.Z;
+        double lx = dx * Math.Cos(th) - dz * Math.Sin(th), lz = dx * Math.Sin(th) + dz * Math.Cos(th);
+        return Math.Abs(lx) <= halfW && Math.Abs(lz) <= halfH;
     }
 
     readonly Dictionary<string, PieceDef> _lookup = new();

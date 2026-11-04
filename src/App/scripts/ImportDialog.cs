@@ -265,7 +265,7 @@ public partial class ImportDialog : AcceptDialog
             _run = null;
             watch.Between();
             var packs = plan.Packs;
-            var scenario = plan.Scenario;
+            var scenarios = plan.Scenarios;
             source = plan.File ?? source;
             if (code == ConverterTool.StoppedCode)
             {
@@ -281,10 +281,10 @@ public partial class ImportDialog : AcceptDialog
                 return;
             }
             var worked = WorkedOn(_packagesRoot, packs);
-            if (worked.Count == 0) { Import(source, name, skipText, packs, scenario, watch); return; }
+            if (worked.Count == 0) { Import(source, name, skipText, packs, scenarios, watch); return; }
             _stop.Visible = false;
             _progress.Waiting("Waiting for your answer");
-            AskFirst(worked, () => Import(source, name, skipText, packs, scenario, watch), () =>
+            AskFirst(worked, () => Import(source, name, skipText, packs, scenarios, watch), () =>
             {
                 Log("Not imported: nothing was changed.");
                 Reset(NotImported);
@@ -338,12 +338,12 @@ public partial class ImportDialog : AcceptDialog
         dlg.Canceled += () => { if (!answered) { answered = true; cancel?.Invoke(); } };
     }
 
-    InUse.Hold? ClaimForImport(List<string> plannedPacks, string? plannedScenario)
+    InUse.Hold? ClaimForImport(List<string> plannedPacks, List<string> plannedScenarios)
     {
         try
         {
             var folders = plannedPacks.Select(p => (InUse.Pack(_packagesRoot, p), $"the pack {p}")).ToList();
-            if (plannedScenario != null) folders.Add((InUse.Scenario(_packagesRoot, plannedScenario), $"the scenario {plannedScenario}"));
+            folders.AddRange(plannedScenarios.Select(s => (InUse.Scenario(_packagesRoot, s), $"the scenario {s}")));
             return InUse.Claim(folders, "being imported from Tabletop Simulator");
         }
         catch (InUseException e)
@@ -354,15 +354,16 @@ public partial class ImportDialog : AcceptDialog
         }
     }
 
-    void Import(string source, string name, bool skipText, List<string> plannedPacks, string? plannedScenario, ImportWatch watch)
+    void Import(string source, string name, bool skipText, List<string> plannedPacks, List<string> plannedScenarios, ImportWatch watch)
     {
         if (!IsInstanceValid(this)) return;
-        if (ClaimForImport(plannedPacks, plannedScenario) is not { } hold) return;
+        if (ClaimForImport(plannedPacks, plannedScenarios) is not { } hold) return;
         _progress.Waiting("Starting the converter");
         var args = new List<string> { "import", source, "--out", _packagesRoot };
         if (name.Length > 0) args.AddRange(new[] { "--name", name });
         if (skipText) args.AddRange(new[] { "--skip", "3DText" });
         string? scenario = null, pack = null, report = null, hostile = null, leftOut = null;
+        var also = new List<string>();
         Log($"[b]Importing {Fmt.Bb(source)}[/b]");
         int movedAside = 0, putBack = 0;
         string Left() => movedAside == 0 ? "" : putBack >= movedAside
@@ -394,6 +395,11 @@ public partial class ImportDialog : AcceptDialog
                     if (kv[0] == "scenario") scenario = kv[1];
                     if (kv[0] == "pack") pack = kv[1];
                 }
+                return;
+            }
+            if (line.StartsWith("ALSO "))
+            {
+                if (line[5..].Split(' ').Select(p => p.Split('=', 2)).FirstOrDefault(kv => kv[0] == "scenario" && kv.Length == 2) is { } kv) also.Add(kv[1]);
                 return;
             }
             if (line.StartsWith("REPORT ")) { report = line[7..]; return; }
@@ -432,7 +438,7 @@ public partial class ImportDialog : AcceptDialog
                 else if (pack != null)
                 {
                     Log(scenario != null
-                        ? $"[color=#8f8]Done.[/color] Scenario '{Fmt.Bb(scenario)}' and pack '{Fmt.Bb(pack)}' are ready." + OnDisk(watch) + (report != null ? $" Report: {Fmt.Bb(report)}" : "")
+                        ? $"[color=#8f8]Done.[/color] {Scenarios(also.Prepend(scenario))} and pack '{Fmt.Bb(pack)}' are ready." + OnDisk(watch) + (report != null ? $" Report: {Fmt.Bb(report)}" : "")
                         : $"[color=#8f8]Done.[/color] Pack '{Fmt.Bb(pack)}' restored exactly as it was shared." + OnDisk(watch));
                     if (hostile != null) Log("[color=#f87]A hostile script was removed from this module; see the report.[/color]");
                     if (leftOut != null) Log($"[color=#ff5f5f][font_size=20][b]{leftOut}: broken in TTS too[/b][/font_size][/color]");
@@ -442,6 +448,12 @@ public partial class ImportDialog : AcceptDialog
             if (!stopped && pack != null) _done(scenario ?? "", pack);
         }, writesTo: _packagesRoot, hold: hold);
         if (_run != null) { _stop.Visible = true; _stop.Disabled = false; }
+    }
+
+    static string Scenarios(IEnumerable<string> ids)
+    {
+        var quoted = ids.Select(id => $"'{Fmt.Bb(id)}'").ToList();
+        return quoted.Count == 1 ? "Scenario " + quoted[0] : "Scenarios " + string.Join(", ", quoted);
     }
 
     static string OnDisk(ImportWatch watch) => watch.Sizes.Length > 0 ? $" {watch.Sizes}." : "";

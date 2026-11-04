@@ -39,7 +39,7 @@ public sealed partial class DefFactory
     public string Context { get; set; } = "";
 
     public static readonly HashSet<string> FlatTypes = new() { "Custom_Tile", "Custom_Token", "Custom_Board", "BlockSquare", "BlockRectangle" };
-    public static bool IsPiece(TtsObj o) => FlatTypes.Contains(o.Name) || o.Name == "Custom_Model" || IsTextObject(o);
+    public static bool IsPiece(TtsObj o) => FlatTypes.Contains(o.Name) || o.Name == "Custom_Model" || IsTextObject(o) || IsTablePiece(o);
 
     public DefFactory(Config cfg, AssetStore assets, Report rep)
     {
@@ -157,6 +157,9 @@ public sealed partial class DefFactory
             "Custom_Board" => new Size2(b.CustomBoard * aw, b.CustomBoard * ah * ratio),
             "BlockSquare" => new Size2(b.BlockSquare, b.BlockSquare * ratio),
             "BlockRectangle" => new Size2(b.BlockSquare, 2 * b.BlockSquare * ratio),
+            "Card" or "CardCustom" => new Size2(CardWidth, CardHeight * ratio),
+            "Checker_white" or "Checker_red" or "Checker_black" => new Size2(CheckerAcross, CheckerAcross * ratio),
+            "Custom_Dice" => new Size2(DieAcross, DieAcross * ratio),
             _ => new Size2(1, ratio),
         };
     }
@@ -166,6 +169,9 @@ public sealed partial class DefFactory
         "Custom_Tile" or "Custom_Token" => o.Thickness,
         "Custom_Model" => (MeshBounds(o.MeshUrl)?.ey ?? 0.2),
         "BlockSquare" or "BlockRectangle" => _cfg.BaseSizes.BlockSquare,
+        "Card" or "CardCustom" => CardThickness,
+        "Checker_white" or "Checker_red" or "Checker_black" => CheckerThickness,
+        "Custom_Dice" => DieAcross,
         _ => 0.2,
     };
 
@@ -175,7 +181,7 @@ public sealed partial class DefFactory
     {
         var (states, _) = o.StateList();
         var b = states[0];
-        return $"{b.Name}|{Entry(b.ImageUrl)?.Sha ?? b.ImageUrl}|{Entry(b.BackUrl)?.Sha ?? b.BackUrl}|{Entry(b.MeshUrl)?.Sha ?? b.MeshUrl}|{Entry(b.DiffuseUrl)?.Sha ?? b.DiffuseUrl}|{(b.Name.StartsWith("Block") ? b.Color : "")}";
+        return $"{b.Name}|{Entry(b.ImageUrl)?.Sha ?? b.ImageUrl}|{Entry(b.BackUrl)?.Sha ?? b.BackUrl}|{Entry(b.MeshUrl)?.Sha ?? b.MeshUrl}|{Entry(b.DiffuseUrl)?.Sha ?? b.DiffuseUrl}|{(b.Name.StartsWith("Block") ? b.Color : "")}{TableVisualKey(b)}";
     }
 
     public static double BaseScale(TtsObj o) => Math.Round(Math.Abs(o.StateList().states[0].ScaleX), 4);
@@ -285,7 +291,7 @@ public sealed partial class DefFactory
 
     PieceDef? BuildDef(TtsObj b, PackOut pack, double r, string where, ScriptInfo script)
     {
-        var (lookUrl, lookKind) = b.Name == "Custom_Model" ? (b.MeshUrl, "mesh") : b.Name.StartsWith("Block") ? (null, "") : (b.ImageUrl, "image");
+        var (lookUrl, lookKind) = b.Name == "Custom_Model" ? (b.MeshUrl, "mesh") : b.Name.StartsWith("Block") || b.IsChecker ? (null, "") : b.IsCard ? (b.Sheet?.FaceUrl, "image") : (b.ImageUrl, "image");
         if (_assets.Gone(lookUrl, lookKind) is { } gone)
         {
             _rep.LeftOut(Name(b) is var n && n != "Piece" ? n : FileName(lookUrl!), lookUrl!, gone, where, b.Guid);
@@ -302,7 +308,11 @@ public sealed partial class DefFactory
             Shape = PackManifest.ShapeOf(b.Name, b.TileType),
             Tags = b.Tags.Concat(new[] { b.Name switch { "Custom_Tile" => "tile", "Custom_Token" => "token", "Custom_Model" => "model", "Custom_Board" => "board", _ => "block" } }).Distinct().ToList(),
         };
-        if (b.Name == "Custom_Model")
+        if (IsTablePiece(b))
+        {
+            FillTablePiece(def, b, pack, where);
+        }
+        else if (b.Name == "Custom_Model")
         {
             def.Kind = "model";
             def.Mesh = Asset(pack, b.MeshUrl, "mesh", where);

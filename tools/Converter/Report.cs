@@ -54,7 +54,7 @@ public sealed class Report
     }
     public int ScriptsTranslated => _scripts;
 
-    public void Write(string path, string section)
+    public void Write(string path, string section, bool announce = true)
     {
         var sb = new StringBuilder();
         sb.AppendLine($"## {section}");
@@ -78,7 +78,7 @@ public sealed class Report
             sb.AppendLine("Cut before anything was read from them; nothing of them is in the pack. A module that carries these spreads them to every object saved from it in TTS.");
             foreach (var (k, v) in _hostile.OrderByDescending(x => x.Value.count)) sb.AppendLine($"- {v.count}× {k} (e.g. {v.example})");
             sb.AppendLine();
-            Console.WriteLine($"HOSTILE {_hostileObjects} objects: {string.Join("; ", _hostile.OrderByDescending(x => x.Value.count).Select(x => x.Key))}");
+            if (announce) Console.WriteLine($"HOSTILE {_hostileObjects} objects: {string.Join("; ", _hostile.OrderByDescending(x => x.Value.count).Select(x => x.Key))}");
         }
         if (!_leftOut.IsEmpty)
         {
@@ -87,12 +87,12 @@ public sealed class Report
             sb.AppendLine("Their picture or model is gone from the web and is not in TTS's own cache on this computer, so TTS cannot show them either.");
             foreach (var p in _leftOut.Values.OrderBy(p => p.Name, StringComparer.OrdinalIgnoreCase)) sb.AppendLine($"- {p.Name} — `{p.Url}` — {p.Why} — {p.Where}");
             sb.AppendLine();
-            Console.WriteLine($"LEFTOUT {_leftOut.Count} {NameList(_leftOut.Values.Select(p => p.Name), NamesOnTheLine)}");
+            if (announce) Console.WriteLine($"LEFTOUT {_leftOut.Count} {NameList(_leftOut.Values.Select(p => p.Name), NamesOnTheLine)}");
         }
         if (!_notes.IsEmpty)
         {
             sb.AppendLine("### Notes");
-            foreach (var n in _notes) sb.AppendLine("- " + n);
+            foreach (var n in _notes.Distinct()) sb.AppendLine("- " + n);
             sb.AppendLine();
         }
         sb.AppendLine($"### Unresolved assets ({_unresolved.Count}) — placeholder image used");

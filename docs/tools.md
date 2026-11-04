@@ -164,8 +164,10 @@ python tools/make-dice.py [--preview DIR]
 ```
 
 Writes the standard dice pack (`src/App/standard/std.dice/`): d4, d6, d8, d10, d12 and d20 as real polyhedra, each a
-model piece whose states are its faces (state k-1 shows face k up), and the tool strip's dice icon
-(`src/App/art/dice.png`), both pictured by rendering the real models. `--preview` writes the thumbnails and the icon
+model piece whose states are its faces (state k-1 shows face k up), pictured by rendering the real models; and the hit
+die and direction die, picture d6s on one shared cube laid out as TTS lays out a custom d6's picture (six faces in a
+3 × 2 grid under a plain top third that colours the bevels). The converter carries that cube and puts a module's own
+picture d6 on it, so the picture reads as it did in TTS. `--preview` writes the thumbnails and the picture dice's faces
 into DIR. Pillow.
 
 - The atlas is exactly the 1,024 px the table loads at most, so it is never resampled on the way in. The chamfers

@@ -5,7 +5,7 @@ using KTable.Core.Model;
 
 namespace KTable.Converter.Tests;
 
-public sealed class ConverterTests : IDisposable
+public sealed partial class ConverterTests : IDisposable
 {
     readonly string _root = Path.Combine(Path.GetTempPath(), "ktable-converter-tests", Guid.NewGuid().ToString("N"));
 
