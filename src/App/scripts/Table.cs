@@ -349,6 +349,15 @@ public partial class Table : Node3D
         Tool.Place => "Shift+click places another",
         Tool.Relief => "Drag over a sheet to shape or paint the ground · Shift+click goes straight on from the last stroke · Alt+click picks up the ground there · Ctrl+wheel sizes the brush",
         Tool.Formation => Forms.Hint(),
+        Tool.Transform => "The round knob turns, the square knob resizes · Shift snaps · the wheel turns 2° a notch, Ctrl 10°, Shift ½°",
+        Tool.Ruler => "Drag to measure · map units until the map is calibrated",
+        Tool.Calibrate => "Drag along the map's scale bar, then type what it measures",
+        Tool.Draw => "Drag to draw on the layer picked in the panel",
+        Tool.Shape => "Drag the shape out, end to end or corner to corner, on the layer picked in the panel",
+        Tool.Erase => "Drag over strokes to rub them out · only the layer picked in the panel",
+        Tool.Capture => $"Drag the region to capture · {_c.Settings.Keys.Label("captureAgain")} captures it again",
+        Tool.Zone => "Drag a rectangle on the board to give it to an umpire",
+        Tool.Crop => "Drag the knobs to trim the sheet · Apply or Cancel in the Map page",
         _ => null,
     };
 
