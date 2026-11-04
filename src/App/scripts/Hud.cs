@@ -128,11 +128,11 @@ public partial class Hud : CanvasLayer
         Top.Update();
         if (Touches(c, x => x is SetUi { Piece: null } or SetUiAttributes { Piece: null } or UiEvent { Piece: null })) _scriptUi?.Rebuild();
         foreach (var sd in Flatten(c).OfType<ShowDialog>()) _scriptUi?.ShowDialog(sd);
+        if (Touches(c, x => x is AddSheet or RemoveSheet or MoveSheet or LockSheet or RenameSheet or CropSheet or SetSheetRelief or SetSheetPicture)) Map.Rebuild();
         foreach (var one in Flatten(c))
         {
             if (one.Actor == 0) one.Actor = c.Actor;
             if (one is RollDice rd) { Transcript.Rolled(rd); Dice.Rolled(rd); }
-            if (one is AddSheet or RemoveSheet or MoveSheet or LockSheet or RenameSheet or CropSheet or SetSheetRelief or SetSheetPicture) Map.Rebuild();
 
             if (one is SetCalibration) { Strip.SyncCalibrateTip(); Map.Rebuild(); }
             if (one is SetZone or RemoveZone) Umpires.Rebuild();

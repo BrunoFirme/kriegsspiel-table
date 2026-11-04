@@ -57,11 +57,21 @@ public sealed class ReliefCache
         Invalidate();
     }
 
+    bool _changeDue;
+    Rect2? _changedWhere;
+
     public void Invalidate(Rect2? where = null)
     {
         _ground = null;
         Version++;
-        Changed?.Invoke(where);
+        if (_changeDue)
+        {
+            _changedWhere = where is { } w && _changedWhere is { } had ? had.Merge(w) : null;
+            return;
+        }
+        _changeDue = true;
+        _changedWhere = where;
+        Callable.From(() => { _changeDue = false; Changed?.Invoke(_changedWhere); }).CallDeferred();
     }
 
     static IEnumerable<string> Packages(SheetDef s) => new[] { s.Package, UploadAsset.ReliefPackage }.Where(p => p.Length > 0).Distinct();

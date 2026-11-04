@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Godot;
+using KTable.Client;
 using KTable.Core.Model;
 using KTable.Core.Protocol;
 
@@ -41,6 +42,7 @@ sealed class MapPage : HudPart
         if (sel == null) { _toldAbout = null; return; }
         TellHandling(sel);
         AddSelectedForm(sel);
+        AddTurn(sel);
         Reliefs.AddRelief(_box, sel);
         _cropShownFor = T.Tool == Tool.Crop ? T.CropSheetId : null;
         _cropSync = null;
@@ -107,6 +109,22 @@ sealed class MapPage : HudPart
         _box.AddChild(grid);
         var ground = S.View.Calibration.UnitsPerMeter is { } upm && upm > 0 ? " · " + S.View.Calibration.DescribeSize(sel.Size.W, sel.Size.H) : "";
         _box.AddChild(Hint($"{sel.Size.W:0.#} × {sel.Size.H:0.#} u{ground}"));
+    }
+
+    void AddTurn(SheetDef sel)
+    {
+        var group = MapTurn.Joined(S.View.Sheets, sel.Id);
+        _box.AddChild(Header(group.Count > 1 ? $"Turn with its {group.Count - 1} joined sheets" : "Turn with its pieces"));
+        var row = new HBoxContainer();
+        row.AddThemeConstantOverride("separation", 6);
+        foreach (var (text, deg) in new[] { ("Left 90°", -90.0), ("180°", 180.0), ("Right 90°", 90.0) })
+        {
+            var b = Btn(text, () => S.Do(MapTurn.Turned(MapTurn.Joined(S.View.Sheets, sel.Id), S.View.Layer(Layers.Umpire), Layers.Umpire, deg)),
+                "Turns this sheet, every sheet joined to it and the pieces standing on them as one, about the middle of the map; Ctrl+Z turns them back");
+            b.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
+            row.AddChild(b);
+        }
+        _box.AddChild(row);
     }
 
     void AddCropForm()

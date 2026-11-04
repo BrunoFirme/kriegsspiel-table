@@ -953,6 +953,21 @@ sealed class HudDemo : HudPart
     bool Dialogs(string what)
     {
         if (what == "props") { if (T.SelectedNodes.FirstOrDefault() is { } pn) PropertiesDialog.Open(Ctx, pn); return true; }
+        if (what.StartsWith("mapturn:"))
+        {
+            var press = what["mapturn:".Length..];
+            if (S.View.Sheets.OrderBy(s => s.Z).FirstOrDefault() is not { } first) return true;
+            T.SelectSheet(first.Id);
+            Hud.Drawer.ShowPage("map");
+            Hud.Map.Rebuild();
+            Hud.GetTree().CreateTimer(1.0).Timeout += () =>
+            {
+                var b = Hud.GetTree().Root.FindChildren("*", "Button", true, false).OfType<Button>().FirstOrDefault(x => x.Text == press && x.IsVisibleInTree());
+                GD.Print(b == null ? $"[mapturn] no {press} button" : $"[mapturn] pressed {press} with {first.Name} selected");
+                b?.EmitSignal(BaseButton.SignalName.Pressed);
+            };
+            return true;
+        }
         if (what == "props:strip")
         {
             if (S.View.Layer(KTable.Core.Model.Layers.Umpire).FirstOrDefault() is not { } first) return true;
