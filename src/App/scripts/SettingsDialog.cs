@@ -82,7 +82,7 @@ sealed class SettingsDialog : HudPart
         cappedAt.Visible = size.Capped.Visible;
         size.Capped.VisibilityChanged += () => cappedAt.Visible = size.Capped.Visible;
         _box.AddChild(cappedAt);
-        var bar = new HSlider { MinValue = 24, MaxValue = 56, Step = 2, Value = Cfg.StripSize };
+        var bar = new HSlider { MinValue = Settings.StripSizeMin, MaxValue = Settings.StripSizeMax, Step = 2, Value = Cfg.StripSize };
         var barL = new Label { Text = $"{Cfg.StripSize:0} px" };
         bar.ValueChanged += v =>
         {
@@ -97,7 +97,7 @@ sealed class SettingsDialog : HudPart
     {
         _box.AddChild(Header("Top bar"));
         var topLine = new CheckBox { Text = "Say what just happened", ButtonPressed = Cfg.TopLine, TooltipText = "Off: the bar stays bare and it is written in the log instead" };
-        var topW = new HSlider { MinValue = 0.25, MaxValue = 1, Step = 0.05, Value = Cfg.TopLineWidth, TooltipText = "How much of the room between the turn buttons and the right-hand end that line may take" };
+        var topW = new HSlider { MinValue = Settings.TopLineWidthMin, MaxValue = 1, Step = 0.05, Value = Cfg.TopLineWidth, TooltipText = "How much of the room between the turn buttons and the right-hand end that line may take" };
         var topWL = new Label { Text = $"{Cfg.TopLineWidth * 100:0}%" };
         var topRow = Row("Line length", topW, topWL);
         topLine.Toggled += on => { Cfg.TopLine = on; Cfg.Save(); topRow.Visible = on; _top.SyncTopLine(); };
@@ -138,11 +138,11 @@ sealed class SettingsDialog : HudPart
 
         _box.AddChild(Header("Pieces"));
         var face = new CheckBox { Text = "Names on pieces, counters on their backs", ButtonPressed = Cfg.FaceText, TooltipText = "Off: on hover only" };
-        var nameS = new HSlider { MinValue = 0.6, MaxValue = 2.5, Step = 0.05, Value = Cfg.FaceTextScale, TooltipText = "How big the names print on pieces, and the lettering an imported piece draws itself (bigger reads in captures; it may spill past the name band)" };
+        var nameS = new HSlider { MinValue = Settings.FaceTextScaleMin, MaxValue = Settings.FaceTextScaleMax, Step = 0.05, Value = Cfg.FaceTextScale, TooltipText = "How big the names print on pieces, and the lettering an imported piece draws itself (bigger reads in captures; it may spill past the name band)" };
         var nameL = new Label { Text = $"{Cfg.FaceTextScale:0.00}×" };
         var nameRow = Row("Name size", nameS, nameL);
-        nameS.ValueChanged += v => { Cfg.FaceTextScale = (float)v; nameL.Text = $"{v:0.00}×"; S.Art.Look.FaceTextScale = (float)v; T.RefreshFaceText(); };
-        face.Toggled += on => { Cfg.FaceText = on; S.Art.Look.ShowFaceText = on; nameRow.Visible = on; T.RefreshLayers(); };
+        nameS.ValueChanged += v => { Cfg.FaceTextScale = (float)v; nameL.Text = $"{v:0.00}×"; T.ApplyLettering(); };
+        face.Toggled += on => { Cfg.FaceText = on; nameRow.Visible = on; T.ApplyLettering(); };
         nameRow.Visible = Cfg.FaceText;
         _box.AddChild(Option(face));
         _box.AddChild(nameRow);
@@ -154,8 +154,29 @@ sealed class SettingsDialog : HudPart
         var aaPick = new OptionButton { TooltipText = "Multisampling on the 3D table. More is smoother and costs more; it takes effect at once.", CustomMinimumSize = new Vector2(160, 0) };
         foreach (var n in new[] { "Off", "2 samples", "4 samples", "8 samples" }) aaPick.AddItem(n);
         aaPick.Selected = Math.Clamp(Cfg.Antialias, 0, 3);
-        aaPick.ItemSelected += i => { Cfg.Antialias = (int)i; Cfg.Save(); Ui.ApplyAntialias(HudNode, Cfg.Antialias); };
+        aaPick.ItemSelected += i => { Cfg.Antialias = (int)i; Cfg.Save(); T.ApplyGraphics(); };
         _box.AddChild(Row("Smooth edges", aaPick, null, fill: false));
+        var fine = new CheckBox { Text = "Smooth fine lines too", ButtonPressed = Cfg.SmoothFineEdges, TooltipText = "Cut-out pictures and thin drawn lines that multisampling misses. Small lettering softens a little." };
+        fine.Toggled += on => { Cfg.SmoothFineEdges = on; Cfg.Save(); T.ApplyGraphics(); };
+        _box.AddChild(Option(fine));
+        var shadowPick = new OptionButton { TooltipText = "For scenarios whose light casts shadows. High is sharper and keeps them when zoomed far out.", CustomMinimumSize = new Vector2(160, 0) };
+        foreach (var n in new[] { "Low", "Medium", "High" }) shadowPick.AddItem(n);
+        shadowPick.Selected = Math.Clamp(Cfg.ShadowDetail, 0, Settings.ShadowDetailMost);
+        shadowPick.ItemSelected += i => { Cfg.ShadowDetail = (int)i; Cfg.Save(); T.ApplyGraphics(); };
+        _box.AddChild(Row("Shadows", shadowPick, null, fill: false));
+        var contact = new CheckBox { Text = "Contact shading", ButtonPressed = Cfg.ContactShade, TooltipText = "A soft shade where pieces meet the table, so 3D models sit down on it" };
+        contact.Toggled += on => { Cfg.ContactShade = on; Cfg.Save(); T.ApplyGraphics(); };
+        _box.AddChild(Option(contact));
+
+        _box.AddChild(Header("Frames"));
+        var vsync = new CheckBox { Text = "Keep in step with the screen (VSync)", ButtonPressed = Cfg.VSync, TooltipText = "No tearing. Off draws as fast as the limit below allows." };
+        vsync.Toggled += on => { Cfg.VSync = on; Cfg.Save(); Graphics.ApplyDisplay(Cfg); };
+        _box.AddChild(Option(vsync));
+        var limitPick = new OptionButton { TooltipText = "A lower limit keeps a laptop cooler and quieter", CustomMinimumSize = new Vector2(160, 0) };
+        foreach (var n in Graphics.FrameLimits) limitPick.AddItem(n == 0 ? "None" : $"{n} a second");
+        limitPick.Selected = Math.Max(0, Array.IndexOf(Graphics.FrameLimits, Cfg.FrameLimit));
+        limitPick.ItemSelected += i => { Cfg.FrameLimit = Graphics.FrameLimits[i]; Cfg.Save(); Graphics.ApplyDisplay(Cfg); };
+        _box.AddChild(Row("Frame limit", limitPick, null, fill: false));
 
         _box.AddChild(Header("Speed on big tables"));
         var reach = new HSlider { MinValue = Settings.ReachMin, MaxValue = Settings.ReachOff, Step = 1, ExpEdit = true, Value = Cfg.LetteringReach, TooltipText = "How far a piece keeps its names, counters and script buttons, in its own sizes. Lower is faster on a huge table. Right end: no limit" };
@@ -167,7 +188,7 @@ sealed class SettingsDialog : HudPart
         {
             if (Math.Abs(S.Art.Look.LetteringReach - (float)reach.Value) < 0.01f) return;
             Cfg.LetteringReach = (float)reach.Value; Cfg.Save();
-            S.Art.Look.LetteringReach = Cfg.LetteringReach; T.RefreshLettering();
+            T.ApplyLettering();
         }
         reach.DragStarted += () => dragging = true;
         reach.DragEnded += _ => { dragging = false; ApplyReach(); };
@@ -204,8 +225,8 @@ sealed class SettingsDialog : HudPart
         _box.AddChild(Option(clip)); _box.AddChild(Option(fold)); _box.AddChild(pathRow);
         _box.AddChild(Header("Picture"));
         var resPick = new OptionButton { TooltipText = "Captures are rendered apart from the screen, at this many times its resolution: sharper maps and text in Discord", CustomMinimumSize = new Vector2(160, 0) };
-        foreach (var kk in new[] { 1, 2, 3, 4 }) resPick.AddItem($"{kk}× the screen");
-        resPick.Selected = Math.Clamp(Cfg.CaptureScale, 1, 4) - 1;
+        for (int kk = 1; kk <= Settings.CaptureScaleMost; kk++) resPick.AddItem($"{kk}× the screen");
+        resPick.Selected = Math.Clamp(Cfg.CaptureScale, 1, Settings.CaptureScaleMost) - 1;
         resPick.ItemSelected += i => Cfg.CaptureScale = (int)i + 1;
         _box.AddChild(Row("Resolution", resPick, null, fill: false));
     }

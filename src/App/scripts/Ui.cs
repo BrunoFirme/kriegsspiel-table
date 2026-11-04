@@ -430,15 +430,6 @@ public static class Ui
         return b;
     }
 
-    public static void ApplyAntialias(Node any, int level) =>
-        any.GetViewport().Msaa3D = level switch
-        {
-            <= 0 => Viewport.Msaa.Disabled,
-            1 => Viewport.Msaa.Msaa2X,
-            2 => Viewport.Msaa.Msaa4X,
-            _ => Viewport.Msaa.Msaa8X,
-        };
-
     public static Button IconBtn(string kind, string tip, string detail = "")
     {
         var b = new Button { CustomMinimumSize = new Vector2(30, 30), FocusMode = Control.FocusModeEnum.None, TooltipText = detail.Length > 0 ? $"{tip}\n{detail}" : tip };

@@ -51,6 +51,9 @@ sealed class CameraControl
         else { if (moving) Rig.Fling(_panVel); _panVel = Vector3.Zero; }
     }
 
+    const float KeySpeed = 0.8f, KeyEase = 9f, KeyStopped = 0.01f;
+    Vector3 _keyVel;
+
     public void TickKeys(double delta)
     {
         var move = Vector3.Zero;
@@ -61,8 +64,10 @@ sealed class CameraControl
             if (Input.IsKeyPressed(Key.A)) move += Vector3.Left;
             if (Input.IsKeyPressed(Key.D) && !Input.IsKeyPressed(Key.Ctrl)) move += Vector3.Right;
         }
-        if (move != Vector3.Zero)
-            Rig.PanWorld(move.Rotated(Vector3.Up, Rig.Yaw + Mathf.Pi) * Rig.Distance * (float)delta * 0.8f);
+        float dt = (float)Math.Min(delta, 0.1);
+        _keyVel = _keyVel.Lerp(move.LimitLength() * KeySpeed, 1 - Mathf.Exp(-dt * KeyEase));
+        if (move == Vector3.Zero && _keyVel.Length() < KeyStopped) { _keyVel = Vector3.Zero; return; }
+        Rig.PanWorld(_keyVel.Rotated(Vector3.Up, Rig.Yaw + Mathf.Pi) * Rig.Distance * dt);
     }
 
     public void FrameAll()
@@ -116,7 +121,10 @@ sealed class CameraControl
     }
 
     public bool Restored;
+    const double RestSeconds = 1.5;
+    const int KeptViews = 40;
     double _idle;
+    float[]? _seen;
 
     public bool Restore()
     {
@@ -133,14 +141,12 @@ sealed class CameraControl
         var settings = _c.Settings;
         if (_c.S == null || settings == null || ScenarioKey() is not { } key) return;
         var now = new[] { Rig.Target.X, Rig.Target.Z, Rig.Distance, Rig.Yaw, Rig.Pitch, Rig.TopDown ? 1f : 0f };
-        bool same = settings.CameraAt.TryGetValue(key, out var was) && was.Length == now.Length
-            && was.Zip(now).All(p => Mathf.Abs(p.First - p.Second) < 0.01f);
-        if (same) { _idle = 0; return; }
+        if (_seen == null || !Same(_seen, now)) { _seen = now; _idle = 0; return; }
         _idle += delta;
-        if (_idle < 1.5) return;
-        _idle = 0;
+        if (_idle < RestSeconds || settings.CameraAt.TryGetValue(key, out var kept) && Same(kept, now)) return;
         settings.CameraAt[key] = now;
-        if (settings.CameraAt.Count > 40) settings.CameraAt.Remove(settings.CameraAt.Keys.First());
+        if (settings.CameraAt.Count > KeptViews) settings.CameraAt.Remove(settings.CameraAt.Keys.First());
         settings.Save();
+        static bool Same(float[] a, float[] b) => a.Length == b.Length && a.Zip(b).All(p => Mathf.Abs(p.First - p.Second) < 0.01f);
     }
 }

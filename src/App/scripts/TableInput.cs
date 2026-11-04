@@ -88,7 +88,7 @@ sealed class TableInput
     void OnWheel(InputEventMouseButton mb)
     {
         if (!mb.Pressed) return;
-        Rig.Still();
+        Rig.StopGliding();
         float f = mb.ButtonIndex == MouseButton.WheelUp ? 0.88f : 1 / 0.88f;
         if (_c.Tool == Tool.Sighting && _sighting.Draft != null)
         {

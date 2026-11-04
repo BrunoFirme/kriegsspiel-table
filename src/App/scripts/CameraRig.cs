@@ -48,7 +48,7 @@ public partial class CameraRig : Node3D
         Apply();
     }
 
-    public void PanWorld(Vector3 d) { Target += d; Settle(); Apply(); }
+    public void PanWorld(Vector3 d) { _zoomAnchor = null; Target += d; Settle(); Apply(); }
 
     public Func<Ground> Terrain = () => Ground.Flat;
     const float AboveGround = 0.6f;
@@ -67,8 +67,16 @@ public partial class CameraRig : Node3D
         if (_glide.Length() > cap) _glide = _glide.Normalized() * cap;
     }
     public void FlingOrbit(Vector2 radiansPerSecond) => _spin = radiansPerSecond.LimitLength(Mathf.Pi);
-    public void Still() { _glide = Vector3.Zero; _spin = Vector2.Zero; _yawTo = null; }
-    public bool Gliding => _glide != Vector3.Zero || _spin != Vector2.Zero || _yawTo != null;
+    public void StopGliding() { _glide = Vector3.Zero; _spin = Vector2.Zero; _yawTo = null; }
+    public void Still() { StopGliding(); _zoomTo = null; }
+    public bool Gliding => _glide != Vector3.Zero || _spin != Vector2.Zero || _yawTo != null || _zoomTo != null;
+
+    const float ZoomEase = 16f, ZoomSettled = 0.001f;
+    float? _zoomTo;
+    Vector3? _zoomAnchor;
+    Vector2 _zoomCursor;
+
+    public float ZoomGoal => _zoomTo ?? Distance;
 
     float? _yawTo;
 
@@ -100,19 +108,30 @@ public partial class CameraRig : Node3D
             _spin *= Mathf.Exp(-dt * SpinDamping);
             if (_spin.Length() < 0.003f) _spin = Vector2.Zero;
         }
+        if (_zoomTo is float goal)
+        {
+            Distance = Mathf.Lerp(Distance, goal, 1 - Mathf.Exp(-dt * ZoomEase));
+            if (Mathf.Abs(goal - Distance) < goal * ZoomSettled) { Distance = goal; _zoomTo = null; }
+            Apply();
+            KeepAnchorUnderCursor();
+        }
         Apply();
     }
 
     public void Zoom(float factor, Vector2? cursor = null)
     {
-        var before = cursor != null ? GroundAt(cursor.Value) : null;
-        Distance = Mathf.Clamp(Distance * factor, MinDistance, MaxDistance);
-        Apply();
-        if (before != null && cursor != null)
-        {
-            var after = PlaneAt(cursor.Value, before.Value.Y);
-            if (after != null) { Target += before.Value - after.Value; Settle(); Apply(); }
-        }
+        float goal = Mathf.Clamp(ZoomGoal * factor, MinDistance, MaxDistance);
+        StopGliding();
+        _zoomAnchor = cursor != null ? GroundAt(cursor.Value) : null;
+        _zoomCursor = cursor ?? Vector2.Zero;
+        _zoomTo = goal;
+    }
+
+    void KeepAnchorUnderCursor()
+    {
+        if (_zoomAnchor is not { } anchor || PlaneAt(_zoomCursor, anchor.Y) is not { } after) return;
+        Target += anchor - after;
+        Settle();
     }
 
     public void Centre(Vector3 at)

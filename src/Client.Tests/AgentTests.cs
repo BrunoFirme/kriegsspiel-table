@@ -396,6 +396,25 @@ public class TableToolsTests
     }
 
     [Fact]
+    public async Task A_grid_is_laid_a_zone_removed_and_a_piece_noted_and_turned_into_another_kind()
+    {
+        Assert.False((await Call("set_grid", new { kind = "square", cell = 25.0, divisions = 5 })).IsError);
+        Assert.Equal(("square", 25.0, 5), (_s.View.Grid!.Kind, _s.View.Grid.Pitch, _s.View.Grid.Subdivisions));
+        Assert.True((await Call("set_grid", new { kind = "octagon" })).IsError);
+        Assert.True((await Call("set_grid", new { kind = "hex", cell = 0.0 })).IsError);
+        Assert.Equal("square", _s.View.Grid!.Kind);
+        await Call("set_zone", new { name = "North", owner = "Ann", polygon = new[] { new[] { 0.0, 0.0 }, new[] { 10.0, 0.0 }, new[] { 10.0, 10.0 } } });
+        Assert.False((await Call("set_zone", new { name = "north", remove = true })).IsError);
+        Assert.Empty(_s.View.Zones);
+        Assert.True((await Call("set_zone", new { name = "North", remove = true })).IsError);
+        var set = await Call("set_piece_values", new { id = "p-1", note = "Two guns short", kind = "user.t.bn" });
+        Assert.False(set.IsError, set.Text);
+        var p = _s.View.Find(Layers.Umpire, "p-1")!;
+        Assert.Equal(("Two guns short", "user.t.bn", 1.0, 2.0), (p.Note, p.Def, p.Pos.X, p.Pos.Z));
+        Assert.True((await Call("set_piece_values", new { id = "p-1", kind = "user.t.nothing" })).IsError);
+    }
+
+    [Fact]
     public async Task Drawn_lines_are_listed_near_a_point_and_erased_by_id_or_by_place()
     {
         var arrow = await Call("draw", new { points = new[] { new[] { 0.0, 0.0 }, new[] { 10.0, 0.0 } }, arrow = true });

@@ -180,7 +180,7 @@ public partial class Table : Node3D
         s.Art.Look.FaceTextScale = settings.FaceTextScale;
         ShowCursors = settings.ShowCursors;
         ShowZones = settings.ShowZones;
-        Ui.ApplyAntialias(this, settings.Antialias);
+        ApplyGraphics();
         SetStandIn(true, settings.TableShade);
         S.Reset += Rebuild;
         S.Applied += Sync.OnApplied;
@@ -222,6 +222,26 @@ public partial class Table : Node3D
 
     public void RefreshDrawings() { Drawings.Sync(); BoardsChanged?.Invoke(); CheckDrawingLock(); }
 
+    public void ApplyGraphics()
+    {
+        if (_c.Settings is not { } cfg) return;
+        Graphics.ApplyEdges(GetViewport(), cfg);
+        Stage.ApplyGraphics(cfg);
+    }
+
+    public void ApplyLettering()
+    {
+        if (_c.Settings is not { } cfg) return;
+        var look = S.Art.Look;
+        bool shown = look.ShowFaceText != cfg.FaceText;
+        bool sized = !Mathf.IsEqualApprox(look.FaceTextScale, cfg.FaceTextScale);
+        bool reached = !Mathf.IsEqualApprox(look.LetteringReach, cfg.LetteringReach);
+        look.ShowFaceText = cfg.FaceText; look.FaceTextScale = cfg.FaceTextScale; look.LetteringReach = cfg.LetteringReach;
+        if (shown) RefreshLayers();
+        if (sized) RefreshFaceText();
+        if (reached) RefreshLettering();
+    }
+
     public void CheckDrawingLock()
     {
         if (DrawingLocked && Tool is Tool.Draw or Tool.Shape or Tool.Erase) SetTool(Tool.Select);
@@ -257,6 +277,7 @@ public partial class Table : Node3D
         Pointers.Tick(delta);
         Sheets.TickLoadingLabels();
         Cam.TickKeys(delta);
+        Stage.FollowView(Rig.Distance);
         Sheets.UpdateLod();
         Overlay.Redraw();
     }

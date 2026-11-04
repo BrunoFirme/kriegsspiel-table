@@ -213,7 +213,7 @@ sealed class Sighting
         {
             rig.Zoom(f, at);
             float shot = Mathf.Clamp(Framing * 1.1f, rig.MinDistance, rig.MaxDistance);
-            CloseUp = rig.Distance < shot - 0.01f;
+            CloseUp = rig.ZoomGoal < shot - 0.01f;
             if (!CloseUp) FrameOnDraft();
             return;
         }

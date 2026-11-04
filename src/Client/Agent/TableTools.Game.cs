@@ -57,9 +57,15 @@ public sealed partial class TableTools
             Args.Schema(new Arg("points", "array", "[[x, z], [x, z], …]", true), new Arg("colour", "string", "#rrggbb"), new Arg("width", "number", "map units (default 0.3)"), new Arg("arrow", "boolean", "a head at the end")),
             DrawTool);
         yield return new AgentTool("set_zone",
-            "Sets an umpire's zone: a named polygon an umpire owns (host and lead umpires).",
-            Args.Schema(new Arg("name", "string", "the zone's name", true), new Arg("owner", "string", "the umpire's name", true), new Arg("polygon", "array", "[[x, z], …] map units", true), new Arg("colour", "string", "#rrggbb")),
+            "Sets an umpire's zone: a named polygon an umpire owns (host and lead umpires), or removes one by name.",
+            Args.Schema(new Arg("name", "string", "the zone's name", true), new Arg("owner", "string", "the umpire's name"), new Arg("polygon", "array", "[[x, z], …] map units"), new Arg("colour", "string", "#rrggbb"),
+                new Arg("remove", "boolean", "remove the zone of this name")),
             SetZoneTool);
+        yield return new AgentTool("set_grid",
+            "Lays a grid over the table, as the scenario's Grid page does (undoable): square or hex cells, a cell's size across in map units (a hex across its flats), and lighter lines inside square cells. Nothing snaps to it.",
+            Args.Schema(new Arg("kind", "string", "none, square or hex", true), new Arg("cell", "number", $"map units across one cell ({GridCellMin}–{GridCellMax}; as it is if left out)"),
+                new Arg("divisions", "number", $"lines inside each square cell, 1 for plain cells (1–{GridDivisionsMost})")),
+            SetGridTool);
         yield return new AgentTool("set_light",
             "Sets the table's light (sun and ambient 0–1, warmth −1 to 1, shadows, or following the game clock's hour) and the wind (from, in degrees; strength 0 calm to 5 a gale).",
             Args.Schema(new Arg("sun", "number", "0–1"), new Arg("ambient", "number", "0–1"), new Arg("warmth", "number", "−1 to 1"), new Arg("shadows", "boolean", "shadows"), new Arg("from_clock", "boolean", "follows the clock's hour"),
@@ -311,6 +317,15 @@ public sealed partial class TableTools
     {
         if (Open(out var why) is not { } s) return why!;
         if (!s.IsLead || s.Reviewing) return ToolResult.Fail("Only the host and the lead umpires set zones.");
+        if (a.Flag("remove") == true)
+        {
+            var gone = s.View.Zones.FirstOrDefault(zn => zn.Name.Equals(a.Str("name")?.Trim() ?? "", StringComparison.OrdinalIgnoreCase));
+            if (gone == null) return ToolResult.Fail($"No zone named {a.Str("name")}.");
+            s.Do(new RemoveZone { Id = gone.Id });
+            await _delay(0.2);
+            _log($"removed the zone {gone.Name}");
+            return new ToolResult($"Zone {gone.Name} removed.");
+        }
         var poly = Points(a, "polygon");
         if (poly is not { Count: >= 3 }) return ToolResult.Fail("polygon is [[x, z], …] with at least three points.");
         var name = a.Str("name")?.Trim() ?? "";
@@ -322,6 +337,27 @@ public sealed partial class TableTools
         await _delay(0.2);
         _log($"set the zone {name}");
         return new ToolResult($"Zone {name} for {owner}: {poly.Count} corners.");
+    }
+
+    const double GridCellMin = 0.1, GridCellMax = 5000;
+    const int GridDivisionsMost = 20;
+    static readonly string[] GridKinds = { "none", "square", "hex" };
+
+    async Task<ToolResult> SetGridTool(JsonElement a)
+    {
+        if (Open(out var why) is not { } s) return why!;
+        if (!CanChange(s, out why)) return why!;
+        var kind = a.Str("kind")?.Trim().ToLowerInvariant() ?? "";
+        if (!GridKinds.Contains(kind)) return ToolResult.Fail("kind is none, square or hex.");
+        var was = s.View.Grid ?? new GridDef();
+        var cell = a.Num("cell") ?? was.Pitch;
+        if (!double.IsFinite(cell) || cell < GridCellMin || cell > GridCellMax) return ToolResult.Fail($"cell is {GridCellMin} to {GridCellMax} map units.");
+        var divisions = (int)Math.Round(a.Num("divisions") ?? was.Subdivisions);
+        if (divisions < 1 || divisions > GridDivisionsMost) return ToolResult.Fail($"divisions is 1 to {GridDivisionsMost}.");
+        s.Do(new SetGrid { Grid = new GridDef { Kind = kind, Pitch = cell, Subdivisions = divisions, Color = was.Color } });
+        await _delay(0.2);
+        _log(kind == "none" ? "took the grid off" : $"laid a {kind} grid");
+        return new ToolResult(kind == "none" ? "No grid." : $"A {kind} grid, {cell:0.##} map units a cell{(kind == "square" && divisions > 1 ? $", divided into {divisions}" : "")}.");
     }
 
     async Task<ToolResult> SetLight(JsonElement a)

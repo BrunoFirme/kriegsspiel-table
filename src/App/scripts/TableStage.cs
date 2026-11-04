@@ -24,7 +24,7 @@ sealed class TableStage
         _sun = new DirectionalLight3D
         {
             RotationDegrees = ceilingLightNearlyStraightDown,
-            ShadowEnabled = true, DirectionalShadowMode = DirectionalLight3D.ShadowMode.Parallel4Splits, DirectionalShadowMaxDistance = 260,
+            ShadowEnabled = true, DirectionalShadowMode = DirectionalLight3D.ShadowMode.Parallel4Splits, DirectionalShadowMaxDistance = ShadowReachNear,
             DirectionalShadowFadeStart = 0.9f, DirectionalShadowBlendSplits = true,
             ShadowBias = 0.02f, ShadowNormalBias = 0.5f, LightAngularDistance = 0f, ShadowBlur = 1.0f,
         };
@@ -52,6 +52,23 @@ sealed class TableStage
         _gridMat = new ShaderMaterial { Shader = new Shader { Code = FileAccess.GetFileAsString("res://shaders/grid.gdshader") } };
         _gridPlane = new MeshInstance3D { Mesh = new PlaneMesh { Size = new Vector2(20000, 20000) }, MaterialOverride = _gridMat, Position = new Vector3(0, 0.03f, 0), Visible = false, CastShadow = GeometryInstance3D.ShadowCastingSetting.Off };
         _c.Scene.AddChild(_gridPlane);
+    }
+
+    const float ShadowReachNear = 260, ShadowReachPerDistance = 3, ShadowReachStep = 0.05f;
+    bool _shadowsReachFar;
+
+    public void ApplyGraphics(Settings cfg)
+    {
+        Graphics.ApplyShadows(cfg);
+        _shadowsReachFar = Graphics.ShadowsReachFar(cfg);
+        if (_env?.Environment is { } e) e.SsaoEnabled = cfg.ContactShade;
+    }
+
+    public void FollowView(float distance)
+    {
+        if (_sun == null) return;
+        float reach = _shadowsReachFar ? Mathf.Max(ShadowReachNear, distance * ShadowReachPerDistance) : ShadowReachNear;
+        if (Mathf.Abs(reach - _sun.DirectionalShadowMaxDistance) > reach * ShadowReachStep) _sun.DirectionalShadowMaxDistance = reach;
     }
 
     public Lighting LightNow() => _c.S.View.Lighting.FromClock ? DayLight.At(_c.S.View.Clock, _c.S.View.Lighting) : _c.S.View.Lighting;

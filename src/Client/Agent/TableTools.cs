@@ -62,8 +62,9 @@ public sealed partial class TableTools
             "Moves or turns a piece on the table. One undoable change.",
             Args.Schema(new Arg("id", "string", "the piece's id", true), new Arg("x", "number", "map units"), new Arg("z", "number", "map units"), new Arg("turn", "number", "degrees")), MovePiece);
         yield return new AgentTool("set_piece_values",
-            "Sets a piece's own name, its look (state number from 1), its counters and its text lines, each as the table's own commands (undoable).",
-            Args.Schema(new Arg("id", "string", "the piece's id", true), new Arg("label", "string", "its own name; empty clears it"), new Arg("state", "number", "look number from 1"),
+            "Sets a piece's own name, its umpires' note, its kind, its look (state number from 1), its counters and its text lines, each as the table's own commands (undoable).",
+            Args.Schema(new Arg("id", "string", "the piece's id", true), new Arg("label", "string", "its own name; empty clears it"), new Arg("note", "string", "the umpires' note on it; empty clears it"),
+                new Arg("kind", "string", "another kind's id (list_kinds) to turn it into, keeping its place"), new Arg("state", "number", "look number from 1"),
                 new Arg("counters", "object", "counter name to a whole number"), new Arg("text", "object", "text line name to its text")), SetValues);
         yield return new AgentTool("delete_piece",
             "Takes a piece off the table. Undoable.",
@@ -143,6 +144,12 @@ public sealed partial class TableTools
         var sent = new List<string>();
         var problems = new List<string>();
         if (a.Str("label") is { } label) { s.Do(new SetLabel { Layer = Layers.Umpire, Id = id, Value = label.Length == 0 ? null : label }); sent.Add("name"); }
+        if (a.Str("note") is { } note) { s.Do(new SetNote { Layer = Layers.Umpire, Id = id, Value = note.Length == 0 ? null : note }); sent.Add("note"); }
+        if (a.Str("kind") is { Length: > 0 } kind && kind != p.Def)
+        {
+            if (s.Def(kind) is not { } other) problems.Add($"no kind {kind} in this game's packs (list_kinds)");
+            else { s.Do(new SetDef { Layer = Layers.Umpire, Id = id, Def = kind }); def = other; sent.Add("kind"); }
+        }
         if (a.Num("state") is { } st)
         {
             int looks = Math.Max(1, def?.States.Count ?? 1);
@@ -166,11 +173,11 @@ public sealed partial class TableTools
                 s.Do(new SetText { Layer = Layers.Umpire, Id = id, Name = tdef?.Name ?? t.Name, Value = t.Value.ValueKind == JsonValueKind.String ? t.Value.GetString() ?? "" : t.Value.GetRawText() });
                 sent.Add($"{tdef?.Name ?? t.Name}");
             }
-        if (sent.Count == 0) return ToolResult.Fail(problems.Count > 0 ? string.Join("; ", problems) : "Nothing to set: give label, state, counters or text.");
+        if (sent.Count == 0) return ToolResult.Fail(problems.Count > 0 ? string.Join("; ", problems) : "Nothing to set: give label, note, kind, state, counters or text.");
         await _delay(0.2);
         _log($"set {string.Join(", ", sent)} on {NameOf(s, p)}");
         var now = s.View.Find(Layers.Umpire, id);
-        var report = now == null ? "" : "\n" + JsonSerializer.Serialize(new { now.Label, State = now.State + 1, now.Counters, now.Text }, Json);
+        var report = now == null ? "" : "\n" + JsonSerializer.Serialize(new { now.Label, now.Note, Kind = now.Def, State = now.State + 1, now.Counters, now.Text }, Json);
         return new ToolResult($"Set {string.Join(", ", sent)}." + (problems.Count > 0 ? " Not set: " + string.Join("; ", problems) + "." : "") + report, problems.Count > 0);
     }
 

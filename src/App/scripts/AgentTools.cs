@@ -35,6 +35,11 @@ sealed class AppTools
             Args.Schema(new Arg("focus", "string", "a piece's id at the table"), new Arg("x", "number", "a map point to look at, with z"), new Arg("z", "number", "a map point to look at, with x"),
                 new Arg("distance", "number", "map units across the view (default: three times the piece's size, or as the view is)"),
                 new Arg("angle", "number", $"degrees above the table, {MinAngle}–90 (default as the view is)"), new Arg("heading", "number", "compass degrees it looks toward: 0 north, 90 east (default as the view is)")), Snapshot);
+        yield return new AgentTool("show_view",
+            "Turns the view of the person at this PC to a piece or a map point, aimed as snapshot aims, and leaves it there. Use it when the person asks to be shown something.",
+            Args.Schema(new Arg("focus", "string", "a piece's id at the table"), new Arg("x", "number", "a map point to look at, with z"), new Arg("z", "number", "a map point to look at, with x"),
+                new Arg("distance", "number", "map units across the view (default: three times the piece's size, or as the view is)"),
+                new Arg("angle", "number", $"degrees above the table, {MinAngle}–90 (default as the view is)"), new Arg("heading", "number", "compass degrees it looks toward: 0 north, 90 east (default as the view is)")), ShowView);
         yield return new AgentTool("list_scenarios",
             "The scenarios on this PC that host_game can open: id and name.",
             Args.Schema(), _ => Task.FromResult(ListScenarios()));
@@ -70,11 +75,32 @@ sealed class AppTools
         if (_a.InStudio || _a.TableHud() is not { } hud || _a.TableSession() is not { } s) return await Shot();
         var rig = hud.T.Rig;
         var before = rig.Now;
+        if (Aim(a, s, before, out var why) is not { } view) return why!;
+        if (view == before) return await Shot();
+        rig.Show(view);
+        await _a.Delay(0.6);
+        try { return await Shot(); }
+        finally { rig.Show(before); }
+    }
+
+    Task<ToolResult> ShowView(JsonElement a)
+    {
+        if (_a.InStudio || _a.TableHud() is not { } hud || _a.TableSession() is not { } s) return Task.FromResult(ToolResult.Fail("No game is open: host_game first."));
+        var rig = hud.T.Rig;
+        if (Aim(a, s, rig.Now, out var why) is not { } view) return Task.FromResult(why!);
+        rig.Show(view);
+        _a.Log("turned the view");
+        return Task.FromResult(new ToolResult("The view of the person at this PC now looks there; snapshot shows it."));
+    }
+
+    static CameraRig.View? Aim(JsonElement a, Session s, CameraRig.View from, out ToolResult? why)
+    {
+        why = null;
         var asked = a.Num("distance");
-        var view = before;
+        var view = from;
         if (a.Str("focus") is { Length: > 0 } id)
         {
-            if (s.View.Find(Layers.Umpire, id) is not { } p) return ToolResult.Fail($"No piece {id} on this table.");
+            if (s.View.Find(Layers.Umpire, id) is not { } p) { why = ToolResult.Fail($"No piece {id} on this table."); return null; }
             float span = asked is > 0 ? (float)asked.Value : (float)Math.Max(4, (s.Def(p.Def) is { } kind ? Math.Max(kind.Size.W, kind.Size.H) : 1) * 3);
             view = view with { Target = Coords.ToWorld(p.Pos), Distance = span * FrameMargin };
         }
@@ -86,11 +112,7 @@ sealed class AppTools
             view = deg >= 89.5 ? view with { TopDown = true } : view with { TopDown = false, Pitch = -(float)(deg * Math.PI / 180) };
         }
         if (a.Num("heading") is { } heading) view = view with { Yaw = (float)(Math.PI - heading * Math.PI / 180) };
-        if (view == before) return await Shot();
-        rig.Show(view);
-        await _a.Delay(0.6);
-        try { return await Shot(); }
-        finally { rig.Show(before); }
+        return view;
     }
 
     async Task<ToolResult> Shot()

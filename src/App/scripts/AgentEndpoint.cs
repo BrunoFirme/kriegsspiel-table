@@ -26,8 +26,8 @@ public partial class AgentEndpoint : Node
         "For a 3D figure: studio_import_models (a model file), then studio_model_view from each side, studio_model_paint (whole, by material or by a box) and studio_model_decal; studio_model_add_part builds from shapes or a model file (file), also onto a block, where it sits centred on top. " +
         "Look at what you made (studio_view_piece, studio_model_view, the pictures the tools return) and correct it until it matches what was asked; studio_undo takes your last step back. " +
         "At the table: view_map shows the map from above with a grid in the coordinates pieces are placed by, so find places on it before placing; add_pack, list_kinds, place_piece or place_pieces (formations), add_map_sheets (pictures, 3D terrain and heightmaps) and set_map_sheet (also a sheet's relief, its height and picture), shape_ground (raise, lower, smooth, flatten, paint ground types) and ground_at, set_map_scale, set_piece_values, set_piece_options, press_button and pick_menu_row (as a player), " +
-        "end_turn, set_clock, roll_dice, say, draw, list_drawings, erase_drawings, set_zone, set_light, set_briefing (the scenario's written situation), save_game, load_save, write_script, run_lua, read_console, snapshot, undo. " +
-        "A pack's name, authors and description: studio_set_pack.";
+        "end_turn, set_clock, roll_dice, say, draw, list_drawings, erase_drawings, set_zone, set_grid, set_light, set_briefing (the scenario's written situation), save_game, load_save, write_script, run_lua, read_console, snapshot, show_view (turns the person's own view), undo. " +
+        "A pack's name, authors and description: studio_set_pack. This PC's settings (graphics, sound, interface size, captures…): read_settings, and set_settings only when the person asks.";
 
     readonly Settings _cfg;
     readonly ConcurrentQueue<(string body, TaskCompletionSource<string?> answer)> _calls = new();
@@ -285,6 +285,7 @@ public partial class AgentEndpoint : Node
         tools.AddRange(new TableTools(() => Session, () => InStudio, Delay, Log).Tools());
         tools.AddRange(new StudioTools(this).Tools());
         tools.AddRange(new AgentTableTools(this).Tools());
+        tools.AddRange(new AgentSettingsTools(this, _cfg).Tools());
         var version = ProjectSettings.GetSetting("application/config/version", "dev").AsString();
         return new Mcp(tools, version, Instructions, AgentRecipes.All);
     }

@@ -65,6 +65,7 @@ public partial class Main : Node
         var args = _args = ParseArgs(OS.GetCmdlineUserArgs());
         bool devRun = DisplayServer.GetName() == "headless" || args.Keys.Any(k => k is "shot" or "shot-loading" or "lock" || k.StartsWith("demo", StringComparison.Ordinal));
         Sfx.Install(this, _cfg, quiet: devRun);
+        if (!devRun) Graphics.ApplyDisplay(_cfg);
         if (args.TryGetValue("packages", out var pk)) System.Environment.SetEnvironmentVariable("KTABLE_PACKAGES", pk);
         _net = new Net { Name = "Net" };
         AddChild(_net);

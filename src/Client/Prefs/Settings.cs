@@ -7,6 +7,7 @@ public sealed class Settings
     public bool CaptureToFolder { get; set; } = true;
     public string CaptureFolder { get; set; } = System.IO.Path.Combine(KTable.Core.DataPaths.Documents, "captures");
     public int CaptureScale { get; set; } = 4;
+    public const int CaptureScaleMost = 4;
     public bool SightingSquare { get; set; }
     public string LastName { get; set; } = "";
     public string LastAddress { get; set; } = "127.0.0.1";
@@ -23,6 +24,7 @@ public sealed class Settings
     public const int AgentPortDefault = 7796;
     public string AgentToken { get; set; } = "";
     public float FaceTextScale { get; set; } = 1f;
+    public const float FaceTextScaleMin = 0.6f, FaceTextScaleMax = 2.5f;
     public bool ShowCursors { get; set; } = true;
     public bool ShowZones { get; set; } = true;
     public float UiScale { get; set; } = 1f;
@@ -32,6 +34,13 @@ public sealed class Settings
     public bool FollowsWindows { get => UiScaleFollowsWindows ?? UiScale == 1f; set => UiScaleFollowsWindows = value; }
     public float UiScaleWith(float windowsScale) => FollowsWindows ? Math.Clamp(windowsScale, UiScaleMin, UiScaleMax) : UiScale;
     public int Antialias { get; set; } = 2;
+    public bool SmoothFineEdges { get; set; }
+    public int ShadowDetail { get; set; } = ShadowDetailDefault;
+    public const int ShadowDetailDefault = 1, ShadowDetailMost = 2;
+    public bool ContactShade { get; set; }
+    public bool VSync { get; set; } = true;
+    public int FrameLimit { get; set; }
+    public const int FrameLimitMost = 1000;
     public float SoundVolume { get; set; } = 0.6f;
     public bool SoundMuted { get; set; }
     public bool SoundInBackground { get; set; }
@@ -39,8 +48,10 @@ public sealed class Settings
     public Dictionary<string, float[]> PanelPos { get; set; } = new();
     public Dictionary<string, float[]> PanelSize { get; set; } = new();
     public float StripSize { get; set; } = 30;
+    public const float StripSizeMin = 24, StripSizeMax = 56;
     public bool TopLine { get; set; } = true;
     public float TopLineWidth { get; set; } = 1f;
+    public const float TopLineWidthMin = 0.25f;
     public string PenInk { get; set; } = "#1a1a1a";
     public float PenSize { get; set; } = 3f;
     public float PenOpacity { get; set; } = 1f;
@@ -99,6 +110,8 @@ public sealed class Settings
         if (ReduceFarDetail) { LetteringReach = 32f; ReduceFarDetail = false; }
         LetteringReach = float.IsFinite(LetteringReach) ? Math.Clamp(LetteringReach, ReachMin, ReachOff) : ReachOff;
         LogFontSize = Math.Clamp(LogFontSize, LogFontMin, LogFontMax);
+        ShadowDetail = Math.Clamp(ShadowDetail, 0, ShadowDetailMost);
+        FrameLimit = Math.Clamp(FrameLimit, 0, FrameLimitMost);
         UiScale = float.IsFinite(UiScale) ? Math.Clamp(UiScale, UiScaleMin, UiScaleMax) : 1f;
         if (AgentPort is < 1024 or > 65535) AgentPort = AgentPortDefault;
     }
