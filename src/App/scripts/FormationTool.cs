@@ -38,7 +38,7 @@ sealed class FormationTool
     const float RideAbove = 0.005f;
     const double SameSpot = 1e-3, SameTurn = 0.5, LeastDrag = 0.4, GapFine = 0.05, GapCoarse = 0.25, GapFineBelow = 0.5;
 
-    sealed record Formed(HashSet<string> Ids, string Kind, double Facing, int? Front, Dictionary<PieceNode, (Vec2 Pos, double Rot)> Spots, Dictionary<PieceNode, int> Order);
+    sealed record Formed(HashSet<string> Ids, string Kind, double Facing, int? Front, double Span, Dictionary<PieceNode, (Vec2 Pos, double Rot)> Spots, Dictionary<PieceNode, int> Order);
     Formed? _formed;
 
     public List<PieceNode> Units()
@@ -98,9 +98,18 @@ sealed class FormationTool
         if (!Enough(units)) { Changed?.Invoke(); return; }
         var mine = Mine(units);
         double facing = mine?.Facing ?? Formations.Facing(units.Select(RotOf)) ?? units[0].Piece.RotDeg;
-        int? front = mine != null && mine.Kind == kind.Id ? mine.Front : null;
-        Lay(units, kind, Centre(units), facing, front, frontAt: false, mine);
+        bool same = mine != null && mine.Kind == kind.Id;
+        int? front = same ? mine!.Front : null;
+        double span = same ? mine!.Span : Spread(units, facing);
+        Lay(units, kind, Centre(units), facing, front, span, frontAt: false, mine);
         _c.Say(Describe(kind, units.Count, front));
+    }
+
+    double Spread(List<PieceNode> units, double facing)
+    {
+        var (right, _) = Formations.Axes(facing);
+        var along = units.Select(n => { var p = Where(n); return p.X * right.X + p.Z * right.Z; }).ToList();
+        return along.Max() - along.Min();
     }
 
     string Describe(FormationKind kind, int n, int? front)
@@ -121,7 +130,8 @@ sealed class FormationTool
         double rad = deg * Math.PI / 180;
         var targets = units.Select(n => (n, centre + Formation.Turned(Where(n) - centre, rad), Angles.Norm360(RotOf(n) + deg))).ToList();
         var facing = mine != null ? Angles.Norm360(mine.Facing + deg) : Formations.Facing(targets.Select(t => t.Item3)) ?? targets[0].Item3;
-        _formed = new Formed(units.Select(n => n.Piece.Id).ToHashSet(), mine?.Kind ?? "", facing, mine?.Front, targets.ToDictionary(t => t.n, t => (t.Item2, t.Item3)), mine?.Order ?? new());
+        var spots = targets.ToDictionary(t => t.n, t => (t.Item2, t.Item3));
+        _formed = new Formed(units.Select(n => n.Piece.Id).ToHashSet(), mine?.Kind ?? "", facing, mine?.Front, mine?.Span ?? 0, spots, mine?.Order ?? new());
         _hand.March(targets);
     }
 
@@ -160,12 +170,13 @@ sealed class FormationTool
     {
         var units = Units();
         if (units.Count < 2 || Mine(units) is not { } mine || Formations.Find(mine.Kind) is not { } kind) return;
-        Lay(units, kind, Centre(units), mine.Facing, keepFront ? mine.Front : null, frontAt: false, mine);
+        Lay(units, kind, Centre(units), mine.Facing, keepFront ? mine.Front : null, mine.Span, frontAt: false, mine);
     }
 
-    List<(PieceNode Node, Vec2 Pos, double Rot)> Plan(List<PieceNode> units, FormationKind kind, Vec2 at, double facing, int? front, bool frontAt, Formed? before, out Dictionary<PieceNode, int> order)
+    List<(PieceNode Node, Vec2 Pos, double Rot)> Plan(List<PieceNode> units, FormationKind kind, Vec2 at, double facing, int? front, double span, bool frontAt,
+        Formed? before, out Dictionary<PieceNode, int> order)
     {
-        var places = Formations.Place(Formations.Slots(kind, units.Count, PitchOf(units), _depth, front), at, facing, frontAt);
+        var places = Formations.Place(Formations.Slots(kind, units.Count, PitchOf(units), _depth, front, span), at, facing, frontAt);
         if (before is { } b && b.Kind == kind.Id && b.Order.Count == units.Count && units.All(b.Order.ContainsKey)) order = b.Order;
         else
         {
@@ -176,10 +187,10 @@ sealed class FormationTool
         return units.Select(n => (n, places[o[n]].Pos, places[o[n]].Rot)).ToList();
     }
 
-    void Lay(List<PieceNode> units, FormationKind kind, Vec2 at, double facing, int? front, bool frontAt, Formed? before)
+    void Lay(List<PieceNode> units, FormationKind kind, Vec2 at, double facing, int? front, double span, bool frontAt, Formed? before)
     {
-        var targets = Plan(units, kind, at, facing, front, frontAt, before, out var order);
-        _formed = new Formed(units.Select(n => n.Piece.Id).ToHashSet(), kind.Id, facing, front, targets.ToDictionary(t => t.Node, t => (t.Pos, t.Rot)), order);
+        var targets = Plan(units, kind, at, facing, front, span, frontAt, before, out var order);
+        _formed = new Formed(units.Select(n => n.Piece.Id).ToHashSet(), kind.Id, facing, front, span, targets.ToDictionary(t => t.Node, t => (t.Pos, t.Rot)), order);
         _hand.March(targets);
         Changed?.Invoke();
     }
@@ -198,13 +209,13 @@ sealed class FormationTool
         return true;
     }
 
-    (FormationKind kind, double facing, int? front)? DragShape(List<PieceNode> units)
+    (FormationKind kind, double facing, int? front, double span)? DragShape(List<PieceNode> units)
     {
         double len = (_to - _from).Length;
         if (units.Count < 2 || len < PitchOf(units).Across * LeastDrag) return null;
         var kind = Kind;
         int? front = kind.TakesFront ? Math.Clamp((int)Math.Round(len / PitchOf(units).Across), 1, units.Count) : null;
-        return (kind, Formations.FacingAlong(_from, _to), front);
+        return (kind, Formations.FacingAlong(_from, _to), front, len);
     }
 
     Vec2 Mid => new((_from.X + _to.X) / 2, (_from.Z + _to.Z) / 2);
@@ -213,8 +224,8 @@ sealed class FormationTool
     {
         _to = g;
         var units = Units();
-        if (DragShape(units) is not var (kind, facing, front)) { _ghost = null; return; }
-        _ghost = Plan(units, kind, Mid, facing, front, frontAt: true, null, out _).Select(t => (t.Pos, t.Rot, t.Node.Footprint)).ToList();
+        if (DragShape(units) is not var (kind, facing, front, span)) { _ghost = null; return; }
+        _ghost = Plan(units, kind, Mid, facing, front, span, frontAt: true, null, out _).Select(t => (t.Pos, t.Rot, t.Node.Footprint)).ToList();
         _c.Say(Describe(kind, units.Count, front));
     }
 
@@ -224,8 +235,8 @@ sealed class FormationTool
         Dragging = false;
         _ghost = null;
         var units = Units();
-        if (DragShape(units) is not var (kind, facing, front)) return;
-        Lay(units, kind, Mid, facing, front, frontAt: true, null);
+        if (DragShape(units) is not var (kind, facing, front, span)) return;
+        Lay(units, kind, Mid, facing, front, span, frontAt: true, null);
     }
 
     public void Cancel()

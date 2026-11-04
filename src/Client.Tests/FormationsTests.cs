@@ -67,6 +67,16 @@ public class FormationsTests
     }
 
     [Fact]
+    public void A_stretch_runs_from_one_end_of_the_line_to_the_other_but_never_closer_than_the_spacing()
+    {
+        var placed = Formations.Place(Formations.Slots(K("stretch"), 5, new Pitch(1, 1), span: 20), new Vec2(10, 0), 0, frontAt: true);
+        Assert.Equal(new[] { 0.0, 5.0, 10.0, 15.0, 20.0 }, placed.Select(p => Math.Round(p.Pos.X, 6)).OrderBy(x => x));
+        Assert.All(placed, p => Assert.Equal(0, p.Pos.Z, 6));
+        var cramped = Formations.Slots(K("stretch"), 5, new Pitch(2, 1), span: 1);
+        Assert.Equal(8, cramped.Max(s => s.X) - cramped.Min(s => s.X), 6);
+    }
+
+    [Fact]
     public void The_old_names_still_form_up()
     {
         Assert.Equal(("line", 2), Formations.Named("two-lines") is var (k, d) ? (k.Id, d) : default);

@@ -15,6 +15,7 @@ public static class Formations
     public static readonly FormationKind[] All =
     {
         new("line", "Line", "Side by side, facing the front, in as many ranks as you set", FormationDepth.Ranks, true),
+        new("stretch", "Stretch in a line", "Strung out evenly along the line you right-drag, the first piece at its start and the last at its end: pickets, outposts, a screen", FormationDepth.None, false),
         new("column", "Column", "One behind another, as many abreast as you set: a column of march or of attack", FormationDepth.Abreast, true),
         new("block", "Block", "A dense mass about as deep as it is wide: phalanx, pike block, tercio, testudo", FormationDepth.None, true),
         new("square", "Square", "A hollow square, every face looking out", FormationDepth.None, false),
@@ -50,7 +51,7 @@ public static class Formations
         _ => 1,
     };
 
-    public static List<Slot> Slots(FormationKind kind, int n, Pitch p, int depth = 0, int? front = null)
+    public static List<Slot> Slots(FormationKind kind, int n, Pitch p, int depth = 0, int? front = null, double span = 0)
     {
         if (n <= 0) return new();
         int d = Math.Clamp(depth > 0 ? depth : DefaultDepth(kind, n), 1, MostRanks);
@@ -59,6 +60,7 @@ public static class Formations
         var s = kind.Id switch
         {
             "line" => Grid(n, Wide(Ceil(n, d)), a, b),
+            "stretch" => Stretch(n, a, span),
             "column" => Grid(n, Wide(d), a, b),
             "block" => Grid(n, Wide(Math.Max(1, (int)Math.Round(Math.Sqrt(n * b / a)))), a, b),
             "square" => Square(n, a, b),
@@ -193,6 +195,12 @@ public static class Formations
             for (int j = 0; j < m; j++) s.Add(new((j - (m - 1) / 2.0) * a, r * b, 0));
         }
         return s;
+    }
+
+    static List<Slot> Stretch(int n, double a, double span)
+    {
+        double step = n > 1 ? Math.Max(a, span / (n - 1)) : 0;
+        return Enumerable.Range(0, n).Select(j => new Slot((j - (n - 1) / 2.0) * step, 0, 0)).ToList();
     }
 
     static List<Slot> Square(int n, double a, double b)

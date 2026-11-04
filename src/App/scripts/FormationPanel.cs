@@ -98,10 +98,12 @@ public partial class FormationGlyph : Control
     const float Margin = 5;
     static readonly Pitch Sample = new(1.2, 0.85);
 
-    static (int n, int depth) Shown(string id) => id switch
+    const double StretchShown = 6;
+
+    static (int n, int depth, double span) Shown(string id) => id switch
     {
-        "line" => (6, 1), "column" => (8, 2), "block" => (9, 0), "square" => (12, 0), "ring" => (10, 0), "wedge" => (10, 0),
-        "arrowhead" or "vee" => (7, 0), "diamond" => (9, 0), "chequer" => (8, 2), "crescent" => (7, 1), "open" => (8, 2), _ => (6, 0),
+        "line" => (6, 1, 0), "stretch" => (4, 0, StretchShown), "column" => (8, 2, 0), "block" => (9, 0, 0), "square" => (12, 0, 0), "ring" => (10, 0, 0),
+        "wedge" => (10, 0, 0), "arrowhead" or "vee" => (7, 0, 0), "diamond" => (9, 0, 0), "chequer" => (8, 2, 0), "crescent" => (7, 1, 0), "open" => (8, 2, 0), _ => (6, 0, 0),
     };
 
     public override void _Ready()
@@ -113,8 +115,8 @@ public partial class FormationGlyph : Control
 
     public override void _Draw()
     {
-        var (n, depth) = Shown(Kind.Id);
-        var slots = Formations.Slots(Kind, n, Sample, depth);
+        var (n, depth, span) = Shown(Kind.Id);
+        var slots = Formations.Slots(Kind, n, Sample, depth, span: span);
         const double w = 1, d = 0.6;
         var quads = slots.Select(q =>
         {

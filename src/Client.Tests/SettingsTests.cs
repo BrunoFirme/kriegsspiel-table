@@ -25,7 +25,7 @@ public class KeymapTests
         Assert.Equal("Ctrl+N", k.Of("script:Advance"));
         k.Reset();
         Assert.Equal("M", k.Of("ruler"));
-        Assert.Equal(42, Keymap.Actions.Length);
+        Assert.Equal(43, Keymap.Actions.Length);
         Assert.Equal("Ctrl+M", k.Of("mute"));
         Assert.Equal(Keymap.Actions.Length, Keymap.Actions.Select(a => a.action).Distinct().Count());
     }

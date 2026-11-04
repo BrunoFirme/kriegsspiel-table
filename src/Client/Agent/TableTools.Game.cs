@@ -14,6 +14,8 @@ public sealed partial class TableTools
 
     static readonly string FormationWords = string.Join(", ", Formations.All.Select(k => k.Id));
 
+    static readonly Arg StretchLength = new("length", "number", "for stretch: map units from the first piece to the last (never closer than the spacing)");
+
     IEnumerable<AgentTool> GameTools()
     {
         yield return new AgentTool("place_pieces",
@@ -21,7 +23,7 @@ public sealed partial class TableTools
             Args.Schema(new Arg("kind", "string", "one kind's id (list_kinds)"), new Arg("count", "number", "how many of it"), new Arg("kinds", "array", "kind ids, one a piece, in order"),
                 new Arg("x", "number", "centre, map units", true), new Arg("z", "number", "centre, map units", true), new Arg("formation", "string", FormationWords),
                 new Arg("facing", "number", "the way the pieces face, as their turn in degrees (180 faces the map's top)"), new Arg("spacing", "number", "map units between pieces across"), new Arg("depth", "number", "map units between ranks"),
-                new Arg("ranks", "number", "ranks for line, chequer, crescent and open order; how many abreast for column"),
+                new Arg("ranks", "number", "ranks for line, chequer, crescent and open order; how many abreast for column"), StretchLength,
                 new Arg("labels", "array", "a name for each piece, in order")),
             PlacePieces);
         yield return new AgentTool("form_up",
@@ -29,7 +31,7 @@ public sealed partial class TableTools
             Args.Schema(new Arg("ids", "array", "the pieces' ids", true), new Arg("formation", "string", FormationWords, true),
                 new Arg("x", "number", "where the formation's centre goes, map units"), new Arg("z", "number", "map units"), new Arg("facing", "number", "the way the pieces face, as their turn in degrees (180 faces the map's top)"),
                 new Arg("gap", "number", "space between pieces as a share of their size: 0 touching, 0.1 close (the default), 1 a piece's width apart"),
-                new Arg("ranks", "number", "ranks for line, chequer, crescent and open order; how many abreast for column")),
+                new Arg("ranks", "number", "ranks for line, chequer, crescent and open order; how many abreast for column"), StretchLength),
             FormUp);
         yield return new AgentTool("press_button",
             "Presses a button a piece's script drew on it, as a player clicking it does (so it tests what people see). By its label or its number from list_buttons.",
@@ -134,7 +136,7 @@ public sealed partial class TableTools
         var at = new Vec2(a.Num("x") ?? units.Average(p => p.Pos.X), a.Num("z") ?? units.Average(p => p.Pos.Z));
         double facing = a.Num("facing") ?? Formations.Facing(units.Select(p => p.RotDeg)) ?? units[0].RotDeg;
         int depth = a.Num("ranks") is { } r ? (int)Math.Clamp(r, 1, Formations.MostRanks) : namedDepth;
-        var places = Formations.Place(Formations.Slots(kind, units.Count, pitch, depth), at, facing);
+        var places = Formations.Place(Formations.Slots(kind, units.Count, pitch, depth, span: a.Num("length") ?? 0), at, facing);
         var match = Formations.Match(units.Select(p => p.Pos).ToList(), places.Select(q => q.Pos).ToList());
         var to = units.Select((p, i) => (p.Id, places[match[i]].Pos, places[match[i]].Rot)).ToList();
         s.Do(new Batch { Items = to.Select(t => (Command)new KTable.Core.Protocol.MovePiece { Layer = Layers.Umpire, Id = t.Id, Pos = t.Pos, RotDeg = t.Rot }).ToList() });
@@ -160,7 +162,7 @@ public sealed partial class TableTools
         double across = a.Num("spacing") ?? first.Size.W * 1.1, deep = a.Num("depth") ?? first.Size.H * 1.6;
         double facing = a.Num("facing") ?? 0;
         if (a.Num("ranks") is { } ranks) depth = (int)Math.Clamp(ranks, 1, Formations.MostRanks);
-        var at = Formations.Place(Formations.Slots(kind, kinds.Count, new Pitch(across, deep), depth), new Vec2(x, z), facing);
+        var at = Formations.Place(Formations.Slots(kind, kinds.Count, new Pitch(across, deep), depth, span: a.Num("length") ?? 0), new Vec2(x, z), facing);
         var labels = List(a, "labels");
         var before = s.View.Layer(Layers.Umpire).Select(p => p.Id).ToHashSet();
         for (int i = 0; i < kinds.Count; i++)
