@@ -55,6 +55,8 @@ sealed partial class TableDemos
         ("village", 2, -22, 16, 90, 0),
         ("macro", -40, 26, 5, 90, 0),
         ("swatch3d", -6, 16, 26, 32, 0),
+        ("bridge", 51, -31.5, 8, 90, 0),
+        ("bridge3d", 51, -31.5, 9, 40, 20),
     ];
 
     const double TourSettleSeconds = 6, ViewSettleSeconds = 1.2;

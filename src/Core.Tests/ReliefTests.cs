@@ -300,6 +300,28 @@ public class ReliefTests : IDisposable
     }
 
     [Fact]
+    public void A_road_across_water_is_a_bridge_until_water_is_painted_back()
+    {
+        var g = new ReliefGrid(40, 40);
+        for (int y = 0; y < g.Rows; y++)
+            for (int x = 18; x <= 22; x++) g.Kind[y * g.Cols + x] = GroundKinds.Water;
+        var road = new Brush(BrushMode.Paint, 0, 1, GroundKinds.Road);
+        ReliefBrush.Stroke(g, new List<(double, double)> { (0.1, 0.5), (0.9, 0.5) }, 2, road);
+        Assert.Equal(GroundKinds.Bridge, g.KindAt(0.5, 0.5));
+        Assert.Equal(GroundKinds.Road, g.KindAt(0.2, 0.5));
+        Assert.Equal(GroundKinds.Water, g.KindAt(0.5, 0.2));
+        ReliefBrush.Stroke(g, new List<(double, double)> { (0.5, 0.5) }, 2, road);
+        Assert.Equal(GroundKinds.Bridge, g.KindAt(0.5, 0.5));
+        ReliefBrush.Dab(g, 0.5, 0.5, 2, new Brush(BrushMode.Paint, 0, 1, GroundKinds.Water));
+        Assert.Equal(GroundKinds.Water, g.KindAt(0.5, 0.5));
+        Assert.False(ReliefBrush.Fill(g, 0.5, 0.2, GroundKinds.Road, 1).Empty);
+        Assert.Equal(5 * 40, Count(g, GroundKinds.Bridge));
+        Assert.Equal(GroundKinds.Road, GroundKinds.BrushOf(GroundKinds.Bridge));
+        Assert.DoesNotContain(GroundKinds.Bridge, GroundKinds.Brushes);
+        Assert.Contains(GroundKinds.Road, GroundKinds.Brushes);
+    }
+
+    [Fact]
     public void Fill_on_bare_ground_covers_the_whole_sheet()
     {
         var g = new ReliefGrid(30, 20);

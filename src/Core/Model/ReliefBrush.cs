@@ -48,7 +48,7 @@ public static class ReliefBrush
                         g.H[i] += (before!.Mean(x, y) - g.H[i]) * fall * (float)Math.Clamp(b.Strength * 2, 0, 1);
                         break;
                     case BrushMode.Paint:
-                        if (d <= PaintEdge && GroundScatter.Takes(x, y, b.Kind, b.Density)) g.Kind[i] = b.Kind;
+                        if (d <= PaintEdge && GroundScatter.Takes(x, y, b.Kind, b.Density)) g.Kind[i] = GroundKinds.Laid(g.Kind[i], b.Kind);
                         break;
                 }
             }
@@ -68,7 +68,7 @@ public static class ReliefBrush
         while (todo.Count > 0)
         {
             int i = todo.Pop(), x = i % g.Cols, y = i / g.Cols;
-            if (GroundScatter.Takes(x, y, kind, density) && g.Kind[i] != kind) { g.Kind[i] = kind; changed = true; }
+            if (GroundScatter.Takes(x, y, kind, density) && GroundKinds.Laid(g.Kind[i], kind) is var laid && g.Kind[i] != laid) { g.Kind[i] = laid; changed = true; }
             x0 = Math.Min(x0, x);
             x1 = Math.Max(x1, x);
             y0 = Math.Min(y0, y);

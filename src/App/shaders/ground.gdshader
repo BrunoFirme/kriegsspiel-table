@@ -3,7 +3,7 @@ render_mode cull_disabled, specular_disabled;
 
 uniform sampler2D kinds : filter_nearest, repeat_disable;
 uniform sampler2D edges : filter_linear, repeat_disable;
-uniform vec4 palette[33];
+uniform vec4 palette[36];
 uniform bool painted_only = false;
 uniform vec2 cells = vec2(64.0, 64.0);
 uniform float cell_world = 0.2;
@@ -11,7 +11,7 @@ uniform float detail = 1.0;
 global uniform int ground_style;
 global uniform float contour_interval;
 
-const int KINDS = 11;
+const int KINDS = 12;
 const int GRASS = 1;
 const int FIELD = 2;
 const int WOOD = 3;
@@ -22,6 +22,9 @@ const int EARTH = 7;
 const int ROCK = 8;
 const int SAND = 9;
 const int SNOW = 10;
+const int BRIDGE = 11;
+const float PARAPET = 0.09;
+const float SEAMLESS = 1.0;
 const int SURVEY = 0;
 const int ANCIENT = 1;
 const int MODERN = 2;
@@ -166,7 +169,7 @@ float distance_at(vec2 uv) {
 	return max(0.0, textureLod(edges, clamp(uv, vec2(0.0), vec2(1.0)), 0.0).r * 255.0 / EDGE_STEPS - 0.5) * cell_world;
 }
 
-int kind_at(vec2 uv, out float border, out float margin) {
+int kind_at(vec2 uv, out float border, out float margin, out int beside) {
 	vec2 q = uv * cells;
 	vec2 g = q - 0.5;
 	g += (vec2(noise(q * 0.25), noise(q * 0.25 + vec2(5.2, 1.3))) - 0.5) * WARP;
@@ -187,8 +190,9 @@ int kind_at(vec2 uv, out float border, out float margin) {
 		if (score[k] > most) { most = score[k]; best = k; }
 	}
 	float next = 0.0;
+	beside = best;
 	for (int k = 0; k < KINDS; k++) {
-		if (k != best) next = max(next, score[k]);
+		if (k != best && score[k] > next) { next = score[k]; beside = k; }
 	}
 	margin = (most - next) / max(most + next, 1e-4);
 	border = distance_at((g + 0.5) / cells);
@@ -444,7 +448,7 @@ vec3 slopes(vec3 c, vec3 n, vec2 p, float h, float fw, int style) {
 	return hachures(c, n, p, h, fw, vec3(0.3, 0.2, 0.12));
 }
 
-vec3 survey(int k, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_uv, float fw, float edge, float border, out float bump) {
+vec3 survey(int k, int beside, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_uv, float fw, float edge, float border, out float bump) {
 	vec3 sepia = vec3(0.3, 0.2, 0.12);
 	vec3 prussian = vec3(0.15, 0.3, 0.45);
 	vec3 c = wash(tint, sheet, SURVEY_PAPER, p, edge, 1.0);
@@ -484,8 +488,12 @@ vec3 survey(int k, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_uv, float fw,
 		return mix(c, rim_ink, ink(edge, 0.028, fw) * rim);
 	} else if (k == ROAD) {
 		c = mix(c, c * 0.9, ink(abs(edge - 0.08), 0.03, fw) * 0.35);
-		rim = 1.0;
 		return mix(c, sepia, ink(edge, 0.014, fw));
+	} else if (k == BRIDGE) {
+		float wall = (beside == WATER ? 1.0 : 0.0) * (1.0 - smoothstep(PARAPET - fw, PARAPET, edge));
+		c = mix(c, mix(c, sepia, 0.5), wall);
+		c = mix(c, sepia, ink(abs(edge - PARAPET), 0.012, fw) * (beside == WATER ? 1.0 : 0.0));
+		return mix(c, sepia, ink(edge, 0.02, fw));
 	} else if (k == EARTH) {
 		c = mix(c, sepia, scatter(p, 0.11, 0.012, 0.9, 0.55, fw) * 0.55);
 		rim = 0.6;
@@ -508,7 +516,7 @@ vec3 survey(int k, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_uv, float fw,
 	return mix(c, rim_ink, ink(edge, 0.012, fw) * rim);
 }
 
-vec3 ancient(int k, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_uv, float fw, float edge, float border) {
+vec3 ancient(int k, int beside, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_uv, float fw, float edge, float border) {
 	vec3 sepia = vec3(0.22, 0.13, 0.06);
 	vec3 c = wash(tint, sheet, ANCIENT_PAPER, p, edge, 0.4);
 	float rim = 0.85;
@@ -544,6 +552,11 @@ vec3 ancient(int k, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_uv, float fw
 	} else if (k == ROAD) {
 		c = mix(c, sepia, ink(abs(edge - 0.05), 0.006, fw) * 0.35);
 		return mix(c, sepia, ink(edge, 0.016, fw));
+	} else if (k == BRIDGE) {
+		float wall = (beside == WATER ? 1.0 : 0.0) * (1.0 - smoothstep(PARAPET - fw, PARAPET, edge));
+		c = mix(c, sepia, hatch(dot(p, vec2(0.7071, 0.7071)), 0.03, 0.006, fw) * wall * 0.7);
+		c = mix(c, sepia, ink(abs(edge - PARAPET), 0.01, fw) * (beside == WATER ? 1.0 : 0.0));
+		return mix(c, sepia, ink(edge, 0.02, fw));
 	} else if (k == EARTH) {
 		c = mix(c, sepia, marks(p, 0.13, 0.025, 0.007, 0.6, 1.2, 0.6, fw) * 0.55);
 	} else if (k == ROCK) {
@@ -560,7 +573,7 @@ vec3 ancient(int k, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_uv, float fw
 	return mix(c, sepia, ink(edge, 0.016, fw) * rim);
 }
 
-vec3 modern(int k, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_uv, float fw, float edge, float border) {
+vec3 modern(int k, int beside, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_uv, float fw, float edge, float border) {
 	vec3 black = vec3(0.09, 0.1, 0.09);
 	vec3 blue = vec3(0.12, 0.45, 0.72);
 	vec3 brown = vec3(0.55, 0.36, 0.2);
@@ -599,6 +612,10 @@ vec3 modern(int k, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_uv, float fw,
 		return mix(c, blue, ink(edge, 0.02, fw));
 	} else if (k == ROAD) {
 		return mix(c, black, ink(edge, 0.02, fw));
+	} else if (k == BRIDGE) {
+		float wall = (beside == WATER ? 1.0 : 0.0) * (1.0 - smoothstep(PARAPET - fw, PARAPET, edge));
+		c = mix(c, MODERN_PAPER, wall);
+		return mix(c, black, max(ink(edge, 0.03, fw), ink(abs(edge - PARAPET), 0.015, fw) * (beside == WATER ? 1.0 : 0.0)));
 	} else if (k == EARTH) {
 		c = mix(c, brown, screen(p, 0.06, 0.012, fw) * 0.75);
 	} else if (k == ROCK) {
@@ -642,10 +659,12 @@ void vertex() {
 void fragment() {
 	float border;
 	float margin;
-	int k = kind_at(UV, border, margin);
+	int beside;
+	int k = kind_at(UV, border, margin, beside);
 	vec2 p = world.xz * detail;
 	float fw = max(max(fwidth(p.x), fwidth(p.y)), 1e-5);
 	float edge = margin / max(fwidth(margin), 1e-5) * fw;
+	if ((k == ROAD && beside == BRIDGE) || (k == BRIDGE && beside == ROAD)) edge = SEAMLESS;
 	float shore = min(edge, border + cell_world * 0.5);
 	mat2 dp = mat2(dFdx(p), dFdy(p));
 	mat2 du = mat2(dFdx(UV), dFdy(UV));
@@ -656,15 +675,16 @@ void fragment() {
 	float bump = 0.0;
 	vec3 sheet = paper(style, p);
 	vec3 c;
-	if (k <= 0 || k > 10) {
+	if (k <= 0 || k >= KINDS) {
 		if (painted_only && lines < 0.02) discard;
 		c = painted_only ? contour_ink(style) : slopes(sheet, n, p, world.y, fw, style);
 	} else {
 		vec3 tint = palette[style * KINDS + k].rgb;
-		if (style == ANCIENT) c = ancient(k, tint, sheet, p, UV, to_uv, fw, edge, shore);
-		else if (style == MODERN) c = modern(k, tint, sheet, p, UV, to_uv, fw, edge, shore);
-		else c = survey(k, tint, sheet, p, UV, to_uv, fw, edge, shore, bump);
-		if (k != WATER && k != ROAD) c = slopes(c, n, p, world.y, fw, style);
+		if (style == ANCIENT) c = ancient(k, beside, tint, sheet, p, UV, to_uv, fw, edge, shore);
+		else if (style == MODERN) c = modern(k, beside, tint, sheet, p, UV, to_uv, fw, edge, shore);
+		else c = survey(k, beside, tint, sheet, p, UV, to_uv, fw, edge, shore, bump);
+		if (k != WATER && k != ROAD && k != BRIDGE) c = slopes(c, n, p, world.y, fw, style);
+		if (k == WATER && beside == BRIDGE) c *= 1.0 - 0.45 * (1.0 - smoothstep(0.0, PARAPET * 1.5, edge));
 	}
 	c = mix(c, contour_ink(style), lines * (k == WATER ? 0.6 : 1.0));
 	ALBEDO = to_linear(c) * SHEET_GAIN;

@@ -17,12 +17,12 @@ sealed partial class AgentTableTools
     const int MostPoints = 2000;
     const double ReliefWaitSeconds = 600, ShapeWaitSeconds = 20;
 
-    static string KindNames => string.Join(", ", GroundKinds.All.Select(k => k.Name));
+    static string KindNames => string.Join(", ", GroundKinds.Brushes.Select(GroundKinds.Name));
 
     IEnumerable<AgentTool> ReliefTools()
     {
         yield return new AgentTool("shape_ground",
-            "Shapes the relief of the map along a stroke, as the Relief tool does: raise, lower, smooth or flatten the ground, or paint a ground type on it (" + KindNames + "; none rubs paint out). " +
+            "Shapes the relief of the map along a stroke, as the Relief tool does: raise, lower, smooth or flatten the ground, or paint a ground type on it (" + KindNames + "; none rubs paint out; road across water lays a bridge). " +
             "The stroke goes to the top sheet with a relief under its first point, or to the top sheet there, which then gets a flat relief. Paint with density below 1 lays the type in clumps (sparse wood, scattered rock; with none it thins paint), and fill paints the whole patch of like ground around the first point, or a bare sheet whole. One call is one step that undo takes back. Pieces standing on the ground follow it.",
             Args.Schema(new Arg("points", "array", "[[x, z], …] in map units: one point is a single dab, more draw a stroke through them", true),
                 new Arg("mode", "string", "raise, lower, smooth, flatten or paint", true), new Arg("radius", "number", "brush radius, map units", true),
@@ -72,7 +72,7 @@ sealed partial class AgentTableTools
         if (mode == "paint")
         {
             var kind = (a.Str("kind") ?? "").Trim().ToLowerInvariant();
-            if (GroundKinds.Of(kind) == null) return ToolResult.Fail("kind is one of " + KindNames + ".");
+            if (GroundKinds.Of(kind) is null or GroundKinds.Bridge) return ToolResult.Fail("kind is one of " + KindNames + " or none.");
             mode = "paint:" + kind;
         }
         bool fill = mode.StartsWith("paint:", StringComparison.Ordinal) && a.Flag("fill") == true;

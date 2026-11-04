@@ -64,12 +64,12 @@ sealed class ReliefPanel : HudPart
         var grid = new GridContainer { Columns = 4 };
         grid.AddThemeConstantOverride("h_separation", 3);
         grid.AddThemeConstantOverride("v_separation", 3);
-        for (int i = 1; i < GroundKinds.All.Count; i++)
+        foreach (var kind in GroundKinds.Brushes)
         {
-            var name = GroundKinds.All[i].Name;
+            var name = GroundKinds.Name(kind);
             var mode = "paint:" + name;
-            var col = Color.FromHtml(GroundKinds.Color((byte)i, S.View.Lighting.MapStyle));
-            var b = Ui.Swatch(col, new Vector2(30, 24), Title(name), Cfg.ReliefMode == mode);
+            var col = Color.FromHtml(GroundKinds.Color(kind, S.View.Lighting.MapStyle));
+            var b = Ui.Swatch(col, new Vector2(30, 24), kind == GroundKinds.Road ? "Road; across water, a bridge" : Title(name), Cfg.ReliefMode == mode);
             b.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
             b.Pressed += () =>
             {

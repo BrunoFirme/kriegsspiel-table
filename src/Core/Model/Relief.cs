@@ -12,7 +12,7 @@ public sealed class ReliefIndex
 
 public static class GroundKinds
 {
-    public const byte None = 0;
+    public const byte None = 0, Water = 5, Road = 6, Bridge = 11;
 
     public static readonly IReadOnlyList<(string Name, string Color)> All =
     [
@@ -27,6 +27,7 @@ public static class GroundKinds
         ("rock", "#9C948A"),
         ("sand", "#E6D299"),
         ("snow", "#F2F2EE"),
+        ("bridge", "#DDC49A"),
     ];
 
     public static byte? Of(string name)
@@ -38,11 +39,17 @@ public static class GroundKinds
 
     public static string Name(byte kind) => kind < All.Count ? All[kind].Name : "none";
 
+    public static IEnumerable<byte> Brushes => Enumerable.Range(1, All.Count - 1).Select(i => (byte)i).Where(k => k != Bridge);
+
+    public static byte Laid(byte under, byte brush) => brush == Road && under is Water or Bridge ? Bridge : brush;
+
+    public static byte BrushOf(byte kind) => kind == Bridge ? Road : kind;
+
     static readonly string[] Ancient =
-        ["#00000000", "#CFC79A", "#DBC386", "#7B9C78", "#9EAA82", "#84A79C", "#E6D5AE", "#B57D48", "#9C8664", "#DFC584", "#ECE6D7"];
+        ["#00000000", "#CFC79A", "#DBC386", "#7B9C78", "#9EAA82", "#84A79C", "#E6D5AE", "#B57D48", "#9C8664", "#DFC584", "#ECE6D7", "#E6D5AE"];
 
     static readonly string[] Modern =
-        ["#00000000", "#DFE5C0", "#EFE5C8", "#80BF7D", "#E1ECE6", "#96CAE8", "#D9502E", "#E2CDA6", "#C9C3B9", "#EEDCA8", "#FBFBFB"];
+        ["#00000000", "#DFE5C0", "#EFE5C8", "#80BF7D", "#E1ECE6", "#96CAE8", "#D9502E", "#E2CDA6", "#C9C3B9", "#EEDCA8", "#FBFBFB", "#D9502E"];
 
     public static string Color(byte kind, string? style)
     {
