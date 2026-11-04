@@ -41,6 +41,10 @@ public sealed class Settings
     public bool VSync { get; set; } = true;
     public int FrameLimit { get; set; }
     public const int FrameLimitMost = 1000;
+    public int FarDetail { get; set; } = FarDetailDefault;
+    public const int FarDetailDefault = 1, FarDetailMost = 2;
+    public float RenderScale { get; set; } = 1f;
+    public const float RenderScaleMin = 1f, RenderScaleMax = 2f;
     public int MapPictureMemory { get; set; }
     public static readonly int[] MapPictureMemoryChoices = { 0, 256, 512, 1024, 2048, 4096, 8192 };
     public float SoundVolume { get; set; } = 0.6f;
@@ -113,6 +117,8 @@ public sealed class Settings
         LogFontSize = Math.Clamp(LogFontSize, LogFontMin, LogFontMax);
         ShadowDetail = Math.Clamp(ShadowDetail, 0, ShadowDetailMost);
         FrameLimit = Math.Clamp(FrameLimit, 0, FrameLimitMost);
+        FarDetail = Math.Clamp(FarDetail, 0, FarDetailMost);
+        RenderScale = float.IsFinite(RenderScale) ? Math.Clamp(RenderScale, RenderScaleMin, RenderScaleMax) : RenderScaleMin;
         if (Array.IndexOf(MapPictureMemoryChoices, MapPictureMemory) < 0) MapPictureMemory = 0;
         UiScale = float.IsFinite(UiScale) ? Math.Clamp(UiScale, UiScaleMin, UiScaleMax) : 1f;
         if (AgentPort is < 1024 or > 65535) AgentPort = AgentPortDefault;

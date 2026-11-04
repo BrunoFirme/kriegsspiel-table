@@ -5,6 +5,8 @@ namespace KTable.App;
 static class Graphics
 {
     public static readonly int[] FrameLimits = { 0, 30, 60, 120, 144, 240 };
+    public static readonly float[] FarDetailBias = { 0f, -0.75f, -1f };
+    public static readonly float[] RenderScales = { 1f, 1.25f, 1.5f, 2f };
 
     public static void ApplyDisplay(Settings cfg)
     {
@@ -22,6 +24,9 @@ static class Graphics
             _ => Viewport.Msaa.Msaa8X,
         };
         view.ScreenSpaceAA = cfg.SmoothFineEdges ? Viewport.ScreenSpaceAAEnum.Smaa : Viewport.ScreenSpaceAAEnum.Disabled;
+        view.TextureMipmapBias = FarDetailBias[Mathf.Clamp(cfg.FarDetail, 0, FarDetailBias.Length - 1)];
+        view.Scaling3DMode = Viewport.Scaling3DModeEnum.Bilinear;
+        view.Scaling3DScale = Mathf.Clamp(cfg.RenderScale, Settings.RenderScaleMin, Settings.RenderScaleMax);
     }
 
     public static void ApplyShadows(Settings cfg)
