@@ -12,6 +12,7 @@ public static class Backdrops
     public static readonly IReadOnlyList<Backdrop> All = new Backdrop[]
     {
         new("drawing-room", "Drawing room", "drawing-room.webp"),
+        new("generals-study", "General's study", "generals-study.webp"),
         new("chinese-garden", "Chinese garden", "chinese-garden.webp"),
         new("island-beach", "Island beach", "island-beach.webp"),
         new("shipwreck-coast", "Shipwreck coast", "shipwreck-coast.webp"),
@@ -22,6 +23,7 @@ public static class Backdrops
         new("open-sky-day", "Open sky by day", "open-sky-day.webp", LightPresets.CoolDaylight),
         new("sundown", "Sundown", "sundown.webp", LightPresets.Sundown),
         new("open-sky-night", "Open sky at night", "open-sky-night.webp", LightPresets.MoonlitNight),
+        new("moonlit-night", "Moonlit night", "moonlit-night.webp", LightPresets.MoonlitNight),
         new("starry-night", "Starry night", "starry-night.webp", LightPresets.MoonlitNight),
         new("starry-desert", "Starry desert", "starry-desert.webp", LightPresets.MoonlitNight),
     };
