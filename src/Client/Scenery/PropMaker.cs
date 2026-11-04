@@ -649,6 +649,62 @@ public sealed class PropMaker
         }
     }
 
+    public PropMade Pavises()
+    {
+        var m = new PropMesh(_noise); var rng = new Random(1346);
+        for (float x = -0.98f; x <= 0.99f; x += 0.28f)
+        {
+            float turn = R(rng, -6, 6);
+            var rot = Yaw(turn) * new Basis(Axis.Right, Mathf.DegToRad(R(rng, 8, 14)));
+            var foot = new Vector3(x + R(rng, -0.02f, 0.02f), 0, R(rng, -0.02f, 0.02f));
+            var centre = foot + rot * new Vector3(0, 0.17f, 0);
+            m.Box(centre, new Vector3(0.22f, 0.34f, 0.025f), rot, M.Painted, M.Plank);
+            m.Box(centre + rot * new Vector3(0, 0, -0.016f), new Vector3(0.05f, 0.3f, 0.01f), rot, M.Plank);
+            m.Cylinder(foot + rot * new Vector3(0, 0.26f, 0.014f), foot + Yaw(turn) * new Vector3(0, 0, 0.16f), 0.009f, M.Bark, 6, M.EndGrain);
+        }
+        return Done(m, new List<Vector2>());
+    }
+
+    public PropMade TateShields()
+    {
+        var m = new PropMesh(_noise); var rng = new Random(1575);
+        for (float x = -0.94f; x <= 0.95f; x += 0.215f)
+        {
+            var rot = Yaw(R(rng, -2, 2)) * new Basis(Axis.Right, Mathf.DegToRad(R(rng, 3, 6)));
+            var foot = new Vector3(x, 0, R(rng, -0.01f, 0.01f));
+            m.Box(foot + rot * new Vector3(0, 0.19f, 0), new Vector3(0.205f, 0.38f, 0.03f), rot, M.Plank, M.EndGrain);
+            m.Box(foot + rot * new Vector3(0, 0.27f, 0.021f), new Vector3(0.2f, 0.025f, 0.012f), rot, M.Walnut);
+            m.Cylinder(foot + rot * new Vector3(0, 0.27f, 0.025f), foot + new Vector3(0, 0, 0.2f), 0.01f, M.Walnut, 6, M.EndGrain);
+        }
+        return Done(m, new List<Vector2>());
+    }
+
+    public PropMade CampCurtain()
+    {
+        var m = new PropMesh(_noise);
+        const float hx = 0.8f, hz = 0.55f, low = 0.06f, high = 0.34f, pole = 0.4f, bay = 0.4f;
+        var centre = new Vector3(0, 0.2f, 0);
+        var sides = new[] { (new Vector3(-hx, 0, -hz), new Vector3(hx, 0, -hz)), (new Vector3(hx, 0, -hz), new Vector3(hx, 0, hz)),
+            (new Vector3(hx, 0, hz), new Vector3(-hx, 0, hz)), (new Vector3(-hx, 0, hz), new Vector3(-hx, 0, -hz)) };
+        for (int side = 0; side < sides.Length; side++)
+        {
+            var (from, to) = sides[side];
+            int bays = Math.Max(1, (int)Math.Ceiling(Vector3.Distance(from, to) / bay));
+            for (int i = 0; i < bays; i++)
+            {
+                var a = from.Lerp(to, i / (float)bays); var b = from.Lerp(to, (i + 1) / (float)bays);
+                m.Cylinder(a, a + Axis.Up * pole, 0.011f, M.Walnut, 6, M.EndGrain);
+                if (side == 2 && i == bays / 2) continue;
+                var mid = (a + b) / 2 + Axis.Up * 0.2f;
+                var outside = mid + (mid - centre) * 2;
+                foreach (var inside in new[] { centre, outside })
+                    m.Sheet(a + Axis.Up * high, b + Axis.Up * high, b + Axis.Up * low, a + Axis.Up * low, M.Canvas, inside, 0.018f, 6, 3);
+                m.Cylinder(a + Axis.Up * (high + 0.008f), b + Axis.Up * (high + 0.008f), 0.004f, M.Bark, 5, M.Bark);
+            }
+        }
+        return Done(m, new List<Vector2>());
+    }
+
     public PropMade Barricade()
     {
         var m = new PropMesh(_noise); var rng = new Random(1830);

@@ -57,11 +57,14 @@ internal sealed class EffectTab
         var vf = Ui.Form(76);
         vf.AddChild(new Label { Text = "Firing" });
         var how = new OptionButton { FitToLongestItem = false };
-        var modes = e.Kind == "powder"
-            ? new[] { ("At will", "random"), ("Volleys", "together"), ("Rolling, by platoons", "rolling") }
-            : e.Kind == "column"
-            ? new[] { ("All at once", "together"), ("One after another", "rolling") }
-            : new[] { ("All guns together", "together"), ("In turn down the line", "rolling") };
+        var modes = e.Kind switch
+        {
+            "powder" => new[] { ("At will", "random"), ("Volleys", "together"), ("Rolling, by platoons", "rolling") },
+            "arrows" => new[] { ("At will", "random"), ("Volleys", "together"), ("In turn along the front", "rolling") },
+            "column" or "stones" => new[] { ("All at once", "together"), ("One after another", "rolling") },
+            "firearrows" => new[] { ("Volleys", "together"), ("In turn along the front", "rolling") },
+            _ => new[] { ("All guns together", "together"), ("In turn down the line", "rolling") },
+        };
         foreach (var (label, id) in modes) { how.AddItem(label); how.SetItemMetadata(how.ItemCount - 1, id); if (id == EffectKinds.Mode(e)) how.Selected = how.ItemCount - 1; }
         how.ItemSelected += i => Set(x => x.Volley = how.GetItemMetadata((int)i).AsString(), rebuild: true);
         vf.AddChild(how);
@@ -82,7 +85,11 @@ internal sealed class EffectTab
             row.AddChild(shown);
             sg.AddChild(row);
         }
-        string many = e.Kind switch { "column" => "How many shells fall", "broadside" => "How many turrets fire", "wake" => "How many torpedoes run", _ => "How many puffs, flames or sparks" };
+        string many = e.Kind switch
+        {
+            "column" => "How many shells fall", "broadside" => "How many turrets fire", "wake" => "How many torpedoes run",
+            "arrows" or "firearrows" => "How many arrows", "stones" => "How many stones", _ => "How many puffs, flames or sparks",
+        };
         Slide("Amount", many, e.Amount, 0.1, 4, (x, v) => x.Amount = v);
         Slide("Height", "How high it rises, or how far it is thrown", e.Height, 0.2, 4, (x, v) => x.Height = v);
         Slide("Puff size", "How big each puff or flame is", e.Puff, 0.25, 4, (x, v) => x.Puff = v);

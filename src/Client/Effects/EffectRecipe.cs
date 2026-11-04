@@ -39,6 +39,7 @@ public sealed class EffectLayer
     public float Reach;
     public SmokeHeat Heat;
     public float Rise;
+    public bool Lying;
 
     public EffectLayer Copy() => (EffectLayer)MemberwiseClone();
 }
@@ -228,6 +229,16 @@ public static class EffectRecipe
                     break;
                 case "wake":
                     Wake();
+                    break;
+                case "arrows":
+                case "firearrows":
+                    Arrows(e.Kind == "firearrows");
+                    break;
+                case "melee":
+                    Melee();
+                    break;
+                case "stones":
+                    Stones();
                     break;
                 default:
                     Smoke();
@@ -764,6 +775,199 @@ public static class EffectRecipe
             }
         }
 
+        const float ArrowPitch = 0.95f, ArrowFall = 0.5f, ArrowStays = 2.4f, FireBurns = 2.2f, LeastLead = 0.8f, MostLead = 1.6f;
+        static readonly Rgba Shadow = new(0.03f, 0.03f, 0.04f, 1);
+        static readonly Rgba Flame = new(1, 0.62f, 0.22f, 1);
+        static readonly Rgba Earth = new(0.52f, 0.45f, 0.35f, 1);
+
+        static float Wrap01(float v) => v - Mathf.Floor(v);
+
+        void Arrows(bool fire)
+        {
+            string mode = EffectKinds.Mode(e);
+            if (mode == "random") { ArrowsAtWill(fire); return; }
+            int sections = mode == "rolling" ? Math.Clamp((int)Math.Round(w / Mathf.Max(1.5f, h)), 2, 6) : 1;
+            float hw = ex.X / sections;
+            for (int i = 0; i < sections; i++)
+                ArrowVolley(new Vector3(-ex.X + hw * (2 * i + 1), 0, 0), new Vector3(hw, 0, ex.Z), sections > 1 ? i / (float)sections * 0.6f : 0, fire);
+        }
+
+        (float top, Vector3 dir, float speed, float ahead) Flight()
+        {
+            float top = Mathf.Max(1.2f, 0.55f * s * H), down = top / ArrowFall, ahead = down / MathF.Tan(ArrowPitch);
+            var v = new Vector3(0, -down, -ahead);
+            return (top, v.Normalized(), v.Length(), ahead);
+        }
+
+        int ArrowCount(Vector3 half) => Math.Clamp((int)Math.Round(60 * A * Mathf.Sqrt(Mathf.Max(1, half.X * half.Z * 4 / 6))), 6, 500);
+
+        EffectLayer FallingArrows(Vector3 at, Vector3 half, bool fire, int amount, float life, (float top, Vector3 dir, float speed, float ahead) f) => new()
+        {
+            Sprite = "streak", Cross = new Vector2(0.024f * s, 0.17f * s), Add = fire, Amount = amount, Life = life,
+            Box = new Vector3(half.X * 0.9f, f.top * 0.04f, half.Z * 0.9f), At = at + new Vector3(0, f.top, f.ahead * ArrowFall),
+            Dir = f.dir, Spread = 2, VMin = f.speed * 0.97f, VMax = f.speed * 1.03f, SMin = P, SMax = P, Spin = 0, Soft = false,
+        };
+
+        EffectLayer StuckArrows(Vector3 at, Vector3 half, bool fire, int amount, float life, Vector3 dir) => new()
+        {
+            Sprite = "streak", Cross = new Vector2(0.022f * s, 0.11f * s), Amount = amount, Life = life,
+            Box = new Vector3(half.X * 0.9f, 0.001f, half.Z * 0.9f), At = at + new Vector3(0, 0.01f, 0),
+            Dir = dir, Spread = 3, VMin = 0.001f, VMax = 0.002f, SMin = P, SMax = P, Spin = 0, Soft = false,
+            Ramp = fire
+                ? new[] { (0f, Fade(Flame, 0.9f)), (0.25f, Fade(new Rgba(0.25f, 0.2f, 0.16f, 1), 0.9f)), (0.85f, Fade(new Rgba(0.2f, 0.17f, 0.14f, 1), 0.9f)), (1f, Fade(c, 0)) }
+                : new[] { (0f, Fade(c, 0.9f)), (0.85f, Fade(c, 0.9f)), (1f, Fade(c, 0)) },
+        };
+
+        EffectLayer ArrowDust(Vector3 at, Vector3 half, int amount, float life) => new()
+        {
+            Sprite = "dust", Amount = amount, Life = life, Box = new Vector3(half.X * 0.9f, 0.01f, half.Z * 0.9f), At = at + new Vector3(0, 0.03f, 0),
+            Spread = 60, VMin = 0.1f * s, VMax = 0.3f * s, Damp = 0.3f * s, SMin = 0.08f * s * P, SMax = 0.16f * s * P, Soft = false,
+            Curve = new[] { (0f, 0.5f), (1f, 1.6f) },
+        };
+
+        void ArrowVolley(Vector3 at, Vector3 half, float off, bool fire)
+        {
+            var f = Flight();
+            float lead = Mathf.Clamp(every * 0.3f, LeastLead, MostLead), life = every, sweep = f.ahead * lead;
+            float arrowsOff = Wrap01(off - (lead - ArrowFall) / life), landOff = Wrap01(off - lead / life);
+            float shadow = Mathf.Max(half.X, half.Z) * 0.7f * P, landed = lead / life;
+            int arrows = ArrowCount(half);
+            layers.Add(new EffectLayer
+            {
+                Sprite = "mist", Lying = true, Amount = 28, Fixed = true, Life = life, Explosive = 1, Offset = off,
+                Box = new Vector3(half.X * 0.6f, 0, half.Z * 0.6f), At = at + new Vector3(0, 0.04f, sweep),
+                Dir = new Vector3(0, 0, -1), Spread = 0, VMin = f.ahead, VMax = f.ahead, SMin = shadow * 0.8f, SMax = shadow * 1.15f, Spin = 4, Soft = false,
+                Ramp = new[] { (0f, Fade(Shadow, 0)), (landed * 0.3f, Fade(Shadow, 0.16f)), (landed + 0.15f / life, Fade(Shadow, 0.16f)), (landed + 0.6f / life, Fade(Shadow, 0)), (1f, Fade(Shadow, 0)) },
+            });
+            var falling = FallingArrows(at, half, fire, arrows, life, f);
+            falling.Fixed = true; falling.Explosive = 0.9f; falling.Offset = arrowsOff;
+            float down = ArrowFall / life;
+            var arrowInk = fire ? Flame : c;
+            falling.Ramp = new[] { (0f, Fade(arrowInk, 0)), (down * 0.05f, Fade(arrowInk, 0.95f)), (down * 0.97f, Fade(arrowInk, 0.95f)), (down, Fade(arrowInk, 0)), (1f, Fade(arrowInk, 0)) };
+            layers.Add(falling);
+            float stays = Mathf.Min(fire ? FireBurns : ArrowStays, life * 0.6f) / life;
+            var stuck = StuckArrows(at, half, fire, Math.Max(3, arrows * 3 / 5), life, f.dir);
+            stuck.Fixed = true; stuck.Explosive = 0.9f; stuck.Offset = landOff;
+            stuck.Ramp = stuck.Ramp.Select(k => (k.at * stays, k.c)).Append((1f, stuck.Ramp[^1].c)).ToArray();
+            layers.Add(stuck);
+            var dust = ArrowDust(at, half, Math.Max(2, arrows / 4), life);
+            dust.Fixed = true; dust.Explosive = 0.9f; dust.Offset = landOff;
+            float puff = 0.9f / life;
+            dust.Ramp = new[] { (0f, Fade(Earth, 0)), (puff * 0.1f, Fade(Earth, 0.5f)), (puff, Fade(Earth, 0)), (1f, Fade(Earth, 0)) };
+            layers.Add(dust);
+            if (fire) BurningSpots(at, half, landOff, stays, life, Math.Max(2, arrows / 5));
+        }
+
+        void BurningSpots(Vector3 at, Vector3 half, float off, float burns, float life, int spots)
+        {
+            float fs = 0.06f * s * P;
+            layers.Add(new EffectLayer
+            {
+                Sprite = "flame", Amount = spots, Fixed = true, Life = life, Explosive = 0.9f, Offset = off,
+                Box = new Vector3(half.X * 0.9f, 0.01f, half.Z * 0.9f), At = at + new Vector3(0, 0.03f, 0),
+                Spread = 10, VMin = 0.05f * fs, VMax = 0.1f * fs, SMin = 1.6f * fs, SMax = 2.4f * fs, Spin = 25, Soft = false,
+                Curve = new[] { (0f, 0.4f), (0.1f * burns, 1f), (burns, 0.3f), (1f, 0.3f) },
+                Ramp = new[] { (0f, new Rgba(1, 0.9f, 0.55f, 0)), (0.05f * burns, new Rgba(1, 0.8f, 0.35f, 0.95f)), (0.6f * burns, new Rgba(1, 0.45f, 0.08f, 0.8f)), (burns, new Rgba(0.4f, 0.08f, 0, 0)), (1f, new Rgba(0.4f, 0.08f, 0, 0)) },
+            });
+            if (!e.Smoke) return;
+            layers.Add(new EffectLayer
+            {
+                Sprite = "puff", Amount = Math.Max(2, spots / 2), Fixed = true, Life = life, Explosive = 0.85f, Offset = off,
+                Box = new Vector3(half.X * 0.8f, 0.02f, half.Z * 0.8f), At = at + new Vector3(0, 0.1f * s, 0),
+                Spread = 15, VMin = 0.15f * s * H, VMax = 0.3f * s * H, Lift = 0.03f * s * H, Drift = 0.4f * D, SMin = 0.25f * s * P, SMax = 0.45f * s * P,
+                Curve = new[] { (0f, 0.4f), (1f, 2f) },
+                Ramp = new[] { (0f, Fade(c, 0)), (0.1f * burns, Fade(c, 0.45f)), (1.4f * burns, Fade(c.Lerp(Rgba.White, 0.2f), 0)), (1f, Fade(c, 0)) },
+            });
+        }
+
+        void ArrowsAtWill(bool fire)
+        {
+            var f = Flight();
+            var half = new Vector3(ex.X, 0, ex.Z);
+            int arrows = Math.Max(3, ArrowCount(half) / 4);
+            var falling = FallingArrows(Vector3.Zero, half, fire, arrows, ArrowFall, f);
+            var ink = fire ? Flame : c;
+            falling.Ramp = new[] { (0f, Fade(ink, 0)), (0.05f, Fade(ink, 0.95f)), (0.97f, Fade(ink, 0.95f)), (1f, Fade(ink, 0)) };
+            layers.Add(falling);
+            layers.Add(StuckArrows(Vector3.Zero, half, fire, Math.Max(3, (int)(arrows * ArrowStays / ArrowFall * 0.5f)), ArrowStays, f.dir));
+            var dust = ArrowDust(Vector3.Zero, half, Math.Max(2, arrows / 2), 0.9f);
+            dust.Ramp = new[] { (0f, Fade(Earth, 0)), (0.1f, Fade(Earth, 0.45f)), (1f, Fade(Earth, 0)) };
+            layers.Add(dust);
+        }
+
+        void Melee()
+        {
+            layers.Add(new EffectLayer
+            {
+                Sprite = "dust", Amount = N(20), Life = 3.5f, Box = new Vector3(ex.X * 0.85f, 0.02f, ex.Z * 0.85f), At = new Vector3(0, 0.08f * s, 0),
+                Spread = 80, VMin = 0.1f * s * H, VMax = 0.3f * s * H, Damp = 0.1f * s, Lift = 0.02f * s * H, Drift = 0.3f * D,
+                SMin = 0.45f * s * P, SMax = 0.85f * s * P, Curve = new[] { (0f, 0.5f), (1f, 1.6f) },
+                Ramp = new[] { (0f, Fade(c, 0)), (0.2f, Fade(c, 0.75f)), (0.7f, Fade(c.Lerp(Rgba.White, 0.1f), 0.45f)), (1f, Fade(c, 0)) },
+            });
+            layers.Add(new EffectLayer
+            {
+                Sprite = "dust", Amount = N(8), Life = 1.4f, Box = new Vector3(ex.X * 0.75f, 0.02f, ex.Z * 0.75f), At = new Vector3(0, 0.04f * s, 0),
+                Spread = 50, VMin = 0.4f * s * H, VMax = 0.8f * s * H, Fall = 1.2f * s * H, SMin = 0.12f * s * P, SMax = 0.22f * s * P, Soft = false,
+                Ramp = new[] { (0f, Fade(c.Lerp(Earth, 0.5f), 0)), (0.1f, Fade(c.Lerp(Earth, 0.5f), 0.7f)), (1f, Fade(c, 0)) },
+            });
+            layers.Add(new EffectLayer
+            {
+                Sprite = "spark", Add = true, Amount = Math.Clamp((int)Math.Round(5 * A * k), 1, 60), Life = 0.3f, Box = new Vector3(ex.X * 0.75f, 0.1f * s, ex.Z * 0.75f), At = new Vector3(0, 0.18f * s, 0),
+                Spread = 180, VMin = 0, VMax = 0.05f * s, SMin = 0.06f * s * P, SMax = 0.1f * s * P, Spin = 0, Soft = false,
+                Ramp = new[] { (0f, new Rgba(1, 1, 0.95f, 0)), (0.15f, new Rgba(1, 1, 0.95f, 1)), (0.5f, new Rgba(0.85f, 0.9f, 1, 0.55f)), (1f, new Rgba(0.85f, 0.9f, 1, 0)) },
+            });
+        }
+
+        void Stones()
+        {
+            var rng = new Random(EffectKinds.Seed(phase));
+            int n = Math.Clamp((int)Math.Round(2 * A), 1, 8);
+            bool rolling = EffectKinds.Mode(e) == "rolling";
+            float sb = Mathf.Clamp(s / 2.2f, 0.4f, 20f);
+            for (int i = 0; i < n; i++)
+            {
+                var at = new Vector3(((float)rng.NextDouble() * 2 - 1) * ex.X * 0.7f, 0, ((float)rng.NextDouble() * 2 - 1) * ex.Z * 0.7f);
+                float off = rolling ? i / (float)n * 0.7f : (float)rng.NextDouble() * 0.08f;
+                Stone(at, sb * (0.85f + 0.3f * (float)rng.NextDouble()), off);
+            }
+        }
+
+        void Stone(Vector3 at, float sb, float off)
+        {
+            float flight = Mathf.Clamp(1.1f * Mathf.Sqrt(H), 0.7f, 2f), reach = 2.4f * s, start = 0.45f * s * H, pull = 4f * s * H;
+            float up = (pull * flight * flight / 2 - start) / flight, ahead = reach / flight;
+            var v = new Vector3(0, up, -ahead);
+            float life = every, landed = flight / life, landOff = Wrap01(off - landed);
+            var rock = new Rgba(0.3f, 0.28f, 0.25f, 1);
+            layers.Add(new EffectLayer
+            {
+                Sprite = "drop", Amount = 1, Fixed = true, Life = life, Explosive = 1, Offset = off, Box = Vector3.One * 0.001f,
+                At = at + new Vector3(0, start, reach), Dir = v.Normalized(), Spread = 0, VMin = v.Length(), VMax = v.Length(), Fall = pull,
+                SMin = 0.45f * sb * P, SMax = 0.45f * sb * P, Spin = 0, Soft = false,
+                Ramp = new[] { (0f, Fade(rock, 0)), (landed * 0.05f, Fade(rock, 1)), (landed * 0.98f, Fade(rock, 1)), (landed, Fade(rock, 0)), (1f, Fade(rock, 0)) },
+            });
+            float burst = 0.6f / life, hangs = Mathf.Min(4.5f, life * 0.7f) / life;
+            layers.Add(new EffectLayer
+            {
+                Sprite = "dust", Amount = 26, Fixed = true, Life = life, Explosive = 1, Offset = landOff, Box = new Vector3(0.12f * sb, 0.02f, 0.12f * sb), At = at + new Vector3(0, 0.05f, 0),
+                Spread = 40, VMin = 1.2f * sb * H, VMax = 2.4f * sb * H, Fall = 4f * sb * H, Damp = 0.8f * sb, SMin = 0.6f * sb * P, SMax = 1.1f * sb * P, Soft = false,
+                Ramp = new[] { (0f, Fade(Earth, 0)), (0.02f * burst, Fade(Earth, 0.95f)), (burst, Fade(Earth, 0)), (1f, Fade(Earth, 0)) },
+            });
+            layers.Add(new EffectLayer
+            {
+                Sprite = "drop", Amount = 10, Fixed = true, Life = life, Explosive = 1, Offset = landOff, Box = new Vector3(0.08f * sb, 0.02f, 0.08f * sb), At = at + new Vector3(0, 0.05f, 0),
+                Spread = 50, VMin = 1.5f * sb, VMax = 3f * sb, Fall = 9f * sb, SMin = 0.05f * sb * P, SMax = 0.09f * sb * P, Spin = 0, Soft = false,
+                Ramp = new[] { (0f, Fade(rock, 0)), (0.02f * burst, Fade(rock, 1)), (burst, Fade(rock, 0)), (1f, Fade(rock, 0)) },
+            });
+            layers.Add(new EffectLayer
+            {
+                Sprite = "puff", Amount = 8, Fixed = true, Life = life, Explosive = 0.9f, Offset = landOff, Box = new Vector3(0.2f * sb, 0.05f * sb, 0.2f * sb), At = at + new Vector3(0, 0.15f * sb, 0),
+                Spread = 50, VMin = 0.2f * sb * H, VMax = 0.5f * sb * H, Damp = 0.2f * sb, Lift = 0.05f * sb * H, Drift = 0.3f * D, SMin = 1.2f * sb * P, SMax = 2f * sb * P,
+                Curve = new[] { (0f, 0.4f), (1f, 2f) },
+                Ramp = new[] { (0f, Fade(c, 0)), (0.05f * hangs, Fade(c, 0.8f)), (0.5f * hangs, Fade(c.Lerp(Rgba.White, 0.15f), 0.4f)), (hangs, Fade(c, 0)), (1f, Fade(c, 0)) },
+            });
+        }
+
         void Smoke()
         {
             layers.Add(new EffectLayer
@@ -852,10 +1056,10 @@ public static class EffectRecipe
                     Position = new Vector3(0, e.Kind == "fire" ? 0.6f * s * H : 0.3f * s, e.Kind is "cannon" or "powder" ? -ex.Z * 0.8f : e.Kind == "broadside" ? -ex.Z * 0.6f : 0),
                     Base = e.Kind switch
                     {
-                        "fire" => 1.5f, "oil" => 1.8f, "burst" => 2.8f, "barrage" => 1.0f, "broadside" => pulse ? 3.2f : 1.6f,
+                        "fire" => 1.5f, "oil" => 1.8f, "burst" => 2.8f, "barrage" => 1.0f, "broadside" => pulse ? 3.2f : 1.6f, "firearrows" => 0.9f,
                         "cannon" => pulse ? 2.2f : 1.2f, "powder" => pulse ? 1.2f : mode == "rolling" ? 0.7f : 0.45f, _ => 0.5f,
                     } * Mathf.Clamp(Mathf.Sqrt(A), 0.5f, 1.6f),
-                    Mode = pulse ? 2 : e.Kind is "fire" or "oil" or "powder" or "cannon" or "barrage" or "broadside" ? 1 : 0,
+                    Mode = pulse ? 2 : e.Kind is "fire" or "oil" or "powder" or "cannon" or "barrage" or "broadside" or "firearrows" ? 1 : 0,
                     Every = every, Phase = phase * every, Speed = (float)Math.Clamp(e.Speed, 0.1, 5),
                 };
             }

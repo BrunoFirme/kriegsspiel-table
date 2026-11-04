@@ -30,18 +30,24 @@ public static class EffectKinds
         ("screen", "Smoke trail", "A dense smoke screen laid by a ship: thick at the front edge, older and higher towards the back, drifting with the wind"),
         ("oil", "Burning oil", "Oil fire: flames low on the water or the deck and a thick black column bending with the wind"),
         ("wake", "Torpedo tracks", "Torpedoes running towards the piece's front: foam tracks and the boil at their heads"),
+        ("arrows", "Arrows", "A volley of arrows falling on the piece from its back edge: the shadow of the cloud sweeps over the ground, then the arrows come down and stick where they land; in volleys, in turn along the front or at will"),
+        ("firearrows", "Fire arrows", "Burning arrows falling in a volley, small fires where they land"),
+        ("melee", "Melee", "The press of a fight: dust churned up and the glint of steel"),
+        ("stones", "Siege stones", "Stones from catapults or trebuchets arcing in over the back edge and crashing down in dust and splinters"),
     };
 
-    public static bool Fires(EffectDef e) => e.Kind is "cannon" or "burst" or "spray" or "barrage" or "rocket" or "flare" or "column" or "broadside" || e.Kind == "powder" && Mode(e) != "random";
-    public static bool Burns(string kind) => kind is "fire" or "cannon" or "burst" or "powder" or "sparks" or "lamps" or "camp" or "barrage" or "flare" or "broadside" or "oil";
-    public static bool Smokes(string kind) => kind is "fire" or "cannon" or "burst" or "camp" or "rocket" or "barrage" or "broadside" or "oil";
-    public static bool Volleys(string kind) => kind is "powder" or "cannon" or "column" or "broadside";
+    public static bool Fires(EffectDef e) => e.Kind is "cannon" or "burst" or "spray" or "barrage" or "rocket" or "flare" or "column" or "broadside" or "firearrows" or "stones"
+        || e.Kind is "powder" or "arrows" && Mode(e) != "random";
+    public static bool Burns(string kind) => kind is "fire" or "cannon" or "burst" or "powder" or "sparks" or "lamps" or "camp" or "barrage" or "flare" or "broadside" or "oil" or "firearrows";
+    public static bool Smokes(string kind) => kind is "fire" or "cannon" or "burst" or "camp" or "rocket" or "barrage" or "broadside" or "oil" or "firearrows";
+    public static bool Volleys(string kind) => kind is "powder" or "cannon" or "column" or "broadside" or "arrows" or "firearrows" or "stones";
     public static bool Lingers(string kind) => kind is "powder" or "cannon";
     public static string Mode(EffectDef e) => e.Volley is "random" or "together" or "rolling" ? e.Volley : e.Kind == "powder" ? "random" : "together";
 
     public static double Interval(EffectDef e) => e.Every > 0.05 ? e.Every : e.Kind switch
     {
-        "cannon" => 5, "burst" => 6, "spray" => 3.5, "powder" => 8, "barrage" => 5, "rocket" => 5, "flare" => 14, "column" => 6, "broadside" => 8, _ => 0,
+        "cannon" => 5, "burst" => 6, "spray" => 3.5, "powder" => 8, "barrage" => 5, "rocket" => 5, "flare" => 14, "column" => 6, "broadside" => 8,
+        "arrows" => 7, "firearrows" => 8, "stones" => 7, _ => 0,
     };
 
     public static string DefaultColor(string kind) => kind switch
@@ -66,6 +72,10 @@ public static class EffectKinds
         "screen" => "#060504",
         "oil" => "#070606",
         "wake" => "#f1f5f6",
+        "arrows" => "#2b241c",
+        "firearrows" => "#4a433c",
+        "melee" => "#7a6748",
+        "stones" => "#857a6b",
         _ => "#8f8b85",
     };
 
@@ -82,6 +92,10 @@ public static class EffectKinds
         var n = name.ToLowerInvariant();
         bool Has(params string[] words) => words.Any(n.Contains);
         return
+            Has("fire arrow", "flaming arrow", "burning arrow") ? "firearrows" :
+            Has("arrow", "archer", "longbow", "bowmen", "crossbow") ? "arrows" :
+            Has("catapult", "trebuchet", "mangonel", "onager", "siege stone") ? "stones" :
+            Has("melee", "mêlée", "hand to hand", "hand-to-hand", "clash") ? "melee" :
             Has("torpedo track", "torpedo wake", "torpedoes running") ? "wake" :
             Has("smoke screen", "smokescreen", "smoke trail") ? "screen" :
             Has("water column", "splashes", "torpedo hit") ? "column" :

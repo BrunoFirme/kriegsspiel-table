@@ -314,6 +314,9 @@ public static class Props
     public static PropMade Palisade() => Maker.Palisade();
     public static PropMade Moat() => Maker.Moat();
     public static PropMade Barricade() => Maker.Barricade();
+    public static PropMade Pavises() => Maker.Pavises();
+    public static PropMade TateShields() => Maker.TateShields();
+    public static PropMade CampCurtain() => Maker.CampCurtain();
 
     public static Image Thumb(PropMesh mesh)
     {

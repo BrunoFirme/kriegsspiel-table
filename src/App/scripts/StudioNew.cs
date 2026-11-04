@@ -198,7 +198,7 @@ internal sealed class NewPieces
         var scroll = new ScrollContainer { CustomMinimumSize = new Vector2(740, 460), HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled };
         var col = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         col.AddThemeConstantOverride("separation", 6);
-        foreach (var (era, title) in new[] { ("napoleonic", "The age of the musket"), ("modern", "The World Wars and after"), ("naval", "At sea") })
+        foreach (var (era, title) in new[] { ("ancient", "Bows, blades and siege engines"), ("napoleonic", "The age of the musket"), ("modern", "The World Wars and after"), ("naval", "At sea") })
         {
             col.AddChild(Ui.Header(title));
             var grid = new GridContainer { Columns = 4 };

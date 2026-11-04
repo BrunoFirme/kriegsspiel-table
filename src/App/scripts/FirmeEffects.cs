@@ -50,6 +50,15 @@ public static class FirmeEffects
         ("Snowfall", "Snow drifting down with the wind", 12, 12, new EffectDef { Kind = "snow" }, N),
         ("Roundshot in water", "A ball striking a river or a pond", 0.8, 0.8, new EffectDef { Kind = "spray", Every = 3.5 }, N),
         ("Embers", "Glowing sparks: a signal fire, a marker", 1, 1, new EffectDef { Kind = "sparks" }, N),
+        ("Arrow volley", "A volley falling where you lay it: the shadow of the arrows sweeps in over the back edge, then they come down and stick", 4, 3, new EffectDef { Kind = "arrows" }, A),
+        ("Arrows at will", "Archers shooting as fast as they can draw, arrows falling all the time", 4, 3, new EffectDef { Kind = "arrows", Volley = "random" }, A),
+        ("Volleys in turn", "Companies of archers loosing one after another along the front", 6, 3, new EffectDef { Kind = "arrows", Volley = "rolling" }, A),
+        ("Fire arrows", "A volley of burning arrows, small fires where they land", 4, 3, new EffectDef { Kind = "firearrows" }, A),
+        ("Melee", "The press of a fight: dust churned up and the glint of steel", 3, 1.5, new EffectDef { Kind = "melee" }, A),
+        ("Cavalry melee", "Horsemen at close quarters: thicker dust, thrown higher", 4, 2.5, new EffectDef { Kind = "melee", Amount = 1.5, Height = 1.4, Puff = 1.2 }, A),
+        ("Trebuchet stones", "Great stones arcing in over the back edge and crashing down", 3, 3, new EffectDef { Kind = "stones" }, A),
+        ("Arquebus volley", "Arquebusiers firing by ranks, one after another: Nagashino's teppō, a tercio's shot", 4, 0.6, new EffectDef { Kind = "powder", Volley = "rolling", Amount = 0.8, Puff = 0.8 }, A),
+        ("Signal beacon", "A beacon fire on a hill or a tower, its smoke standing high", 0.8, 0.8, new EffectDef { Kind = "fire", Amount = 0.7, Height = 2.4 }, A),
         ("Artillery barrage", "Shells landing one after another over the ground", 12, 8, new EffectDef { Kind = "barrage" }, M),
         ("Gas cloud", "A cloud of gas creeping with the wind", 8, 5, new EffectDef { Kind = "fog", Color = "#C9C66A", Amount = 1.3, Wind = 1.2 }, M),
         ("Star shell", "An illuminating flare: it climbs, hangs and sinks, lighting the ground", 6, 6, new EffectDef { Kind = "flare" }, M),
@@ -99,6 +108,9 @@ public static class FirmeEffects
         ("Stakes", Props.Stakes, A),
         ("Palisade", Props.Palisade, A),
         ("Moat", Props.Moat, A),
+        ("Pavises", Props.Pavises, A),
+        ("Tate shields", Props.TateShields, A),
+        ("Camp curtain", Props.CampCurtain, A),
         ("Trench with traverse", () => Props.Trench(new[] { new Vector2(-1.6f, 0.35f), new Vector2(-0.55f, 0.35f), new Vector2(-0.55f, -0.35f), new Vector2(0.55f, -0.35f), new Vector2(0.55f, 0.35f), new Vector2(1.6f, 0.35f) }), M),
     };
 
@@ -175,7 +187,7 @@ public static class FirmeEffects
         string.Join("|", Presets.Select(p => $"{p.Name};{p.W};{p.H};{p.Era};{Json.Serialize(p.Fx)}")) + "|" + string.Join("|", PropList.Select(p => p.Name + p.Era)))))[..16];
     static string? _stamp;
 
-    const int PropsVersion = 6;
+    const int PropsVersion = 7;
     const string WriteTag = "install";
 
     public static void Ensure(PackageStore store)

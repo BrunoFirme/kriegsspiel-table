@@ -174,6 +174,11 @@ public static class EffectFx
             pm.AngleMin = pm.AngleMax = 0;
             pm.AngularVelocityMin = pm.AngularVelocityMax = 0;
         }
+        if (l.Lying)
+        {
+            mat.BillboardMode = BaseMaterial3D.BillboardModeEnum.Disabled;
+            pm.ParticleFlagRotateY = true;
+        }
         if (l.Turb > 0)
         {
             pm.TurbulenceEnabled = true;
@@ -184,7 +189,8 @@ public static class EffectFx
         }
         var em = new GpuParticles3D
         {
-            ProcessMaterial = pm, DrawPass1 = l.Cross != System.Numerics.Vector2.Zero ? CrossMesh(new Vector2(l.Cross.X, l.Cross.Y)) : new QuadMesh { Size = Vector2.One }, MaterialOverride = mat,
+            ProcessMaterial = pm, MaterialOverride = mat,
+            DrawPass1 = l.Cross != System.Numerics.Vector2.Zero ? CrossMesh(new Vector2(l.Cross.X, l.Cross.Y)) : new QuadMesh { Size = Vector2.One, Orientation = l.Lying ? PlaneMesh.OrientationEnum.Y : PlaneMesh.OrientationEnum.Z },
             Amount = l.Amount, Lifetime = l.Life, Explosiveness = l.Explosive, Randomness = l.Explosive > 0 ? 0 : 0.4f,
             Preprocess = preprocess >= 0 ? preprocess : l.Life, Position = G(l.At), LocalCoords = false, FixedFps = 30, Interpolate = true,
             VisibilityAabb = new Aabb(new Vector3(-reachX, -1, -reachX), new Vector3(reachX * 2, reachY + 1, reachX * 2)),
@@ -437,7 +443,7 @@ public static class EffectFx
     {
         var flame = new Color(1, 0.62f, 0.2f, 0.95f);
         var flashC = new Color(1, 0.85f, 0.5f, 1);
-        if (PaintSeaIcon(acc, e, c, flame, flashC)) return;
+        if (PaintSeaIcon(acc, e, c, flame, flashC) || PaintOldWarIcon(acc, e, c, flame)) return;
         switch (e.Kind)
         {
             case "powder":
@@ -515,6 +521,34 @@ public static class EffectFx
             default:
                 for (int i = 0; i < 5; i++) Stamp(acc, "puff", c, 0.5f + Mathf.Sin(i * 1.3f) * 0.08f + i * 0.03f, 0.8f - i * 0.15f, 0.34f + i * 0.08f, false);
                 break;
+        }
+    }
+
+    static bool PaintOldWarIcon(float[] acc, EffectDef e, Color c, Color flame)
+    {
+        switch (e.Kind)
+        {
+            case "arrows":
+            case "firearrows":
+            {
+                bool fire = e.Kind == "firearrows";
+                Stamp(acc, "mist", new Color(0, 0, 0, 0.55f), 0.5f, 0.84f, 0.95f, false);
+                var ink = fire ? flame : c with { A = 0.95f };
+                for (int i = 0; i < 11; i++) Stamp(acc, "streak", ink, 0.12f + (i * 0.37f % 1) * 0.76f, 0.22f + (i * 0.53f % 1) * 0.5f, 0.3f, fire);
+                if (fire) foreach (var x in new[] { 0.3f, 0.62f, 0.8f }) Stamp(acc, "flame", flame, x, 0.82f, 0.18f, true);
+                return true;
+            }
+            case "melee":
+                for (int i = 0; i < 5; i++) Stamp(acc, "dust", c, 0.15f + i * 0.17f, 0.66f - (i % 2) * 0.12f, 0.5f, false);
+                foreach (var (x, y) in new[] { (0.3f, 0.45f), (0.55f, 0.35f), (0.72f, 0.52f), (0.45f, 0.6f) }) Stamp(acc, "spark", new Color(1, 1, 0.95f), x, y, 0.16f, true);
+                return true;
+            case "stones":
+                for (int i = 0; i < 6; i++) { float u = i / 5f; Stamp(acc, "dust", c with { A = 0.35f + 0.1f * i }, 0.12f + u * 0.5f, 0.55f - 1.6f * u * (1 - u) * 0.5f, 0.08f, false); }
+                Stamp(acc, "drop", new Color(0.3f, 0.28f, 0.25f), 0.66f, 0.5f, 0.24f, false);
+                for (int i = 0; i < 5; i++) Stamp(acc, "dust", c, 0.6f + i * 0.07f, 0.8f - (i % 2) * 0.06f, 0.36f, false);
+                return true;
+            default:
+                return false;
         }
     }
 
