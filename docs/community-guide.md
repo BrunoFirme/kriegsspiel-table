@@ -25,6 +25,9 @@ You get:
 
 Scripts keep working: see [what imported TTS scripts become](scripting.md#what-imported-tts-scripts-become).
 
+What an import downloads stays on this PC so the next import is faster. **Settings → Storage** on the title screen
+shows its size and clears it; imported packs keep their own copies.
+
 ## Export to Tabletop Simulator
 
 **Menu → Export to Tabletop Simulator** writes the umpire board as a TTS save in your TTS Saves folder. Pictures

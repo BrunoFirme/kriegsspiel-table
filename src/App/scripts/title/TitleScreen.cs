@@ -43,7 +43,7 @@ sealed class TitleScreen
         Packs = new PacksPage(this, main);
         Trash = new TrashPage(this, main);
         Workshop = new WorkshopPage(this, main, platform);
-        SettingsPage = new SettingsPage(this, cfg);
+        SettingsPage = new SettingsPage(this, main, cfg);
         Report = new ReportPage(this);
     }
 

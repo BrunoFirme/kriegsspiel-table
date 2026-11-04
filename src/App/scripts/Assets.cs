@@ -33,7 +33,7 @@ public sealed class Assets
     public Action<string, string>? RequestRemote { get => Waits.RequestRemote; set => Waits.RequestRemote = value; }
     public Action<string, string>? RequestInBackground { get => Waits.RequestInBackground; set => Waits.RequestInBackground = value; }
 
-    public static string CacheDir => Path.Combine(DataPaths.Local, "cache", "display");
+    public static string CacheDir => Caches.Display;
 
     readonly Dictionary<string, Texture2D> _tex = new();
     readonly ConcurrentDictionary<string, AlphaMask> _masks = new();

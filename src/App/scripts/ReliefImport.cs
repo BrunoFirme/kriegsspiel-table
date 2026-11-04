@@ -21,7 +21,7 @@ public static class ReliefImport
 {
     public static readonly string[] ModelExtensions = { ".glb", ".gltf", ".fbx", ".obj", ".stl", ".ply", ".dae", ".blend" };
     const int BlenderSeconds = 180;
-    static string WorkDir => Path.Combine(DataPaths.Local, "cache", "relief");
+    static string WorkDir => KTable.Client.Caches.Relief;
 
     public static string Filter =>
         string.Join(", ", SheetImporter.Extensions.Concat(ModelExtensions).Concat(HeightFiles.Extensions).Select(e => "*" + e)) + " ; Map pictures, 3D terrain and heightmaps";

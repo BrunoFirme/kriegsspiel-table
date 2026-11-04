@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Threading;
 using System.Threading.Tasks;
 using Godot;
 using KTable.Core;
@@ -16,6 +17,8 @@ public static class ConverterTool
 
     static readonly object Gate = new();
     public static ConverterRun? Writer { get; private set; }
+    static int _running;
+    public static bool Running => Volatile.Read(ref _running) > 0;
 
     public static string? Find()
     {
@@ -75,6 +78,7 @@ public static class ConverterTool
             StandardOutputEncoding = System.Text.Encoding.UTF8, StandardErrorEncoding = System.Text.Encoding.UTF8,
         };
         foreach (var a in args) psi.ArgumentList.Add(a);
+        Interlocked.Increment(ref _running);
         Task.Run(() =>
         {
             int code;
@@ -100,6 +104,7 @@ public static class ConverterTool
             run.Finished = true;
             hold?.Dispose();
             lock (Gate) if (Writer == run) Writer = null;
+            Interlocked.Decrement(ref _running);
             Post(() => onExit(code));
         });
         return run;

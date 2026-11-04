@@ -273,7 +273,7 @@ public partial class Main : Node
         _door = op;
         op.Token.Register(() => Callable.From(() => LeaveTheDoor(op)).CallDeferred());
         if (Title.Root != null) Title.Status.Text = "";
-        var root = packages ?? Path.Combine(DataPaths.Local, "cache", "packages");
+        var root = packages ?? Caches.FromHosts;
         NewSession(root);
         _cfg.LastName = name;
         _cfg.LastAddress = address;

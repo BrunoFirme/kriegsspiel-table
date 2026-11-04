@@ -1,5 +1,6 @@
 using System;
 using Godot;
+using KTable.Client;
 
 namespace KTable.App;
 
@@ -119,9 +120,15 @@ static class AppSettings
 sealed class SettingsPage
 {
     readonly TitleScreen _t;
+    readonly Main _main;
     readonly Settings _cfg;
 
-    public SettingsPage(TitleScreen t, Settings cfg) { _t = t; _cfg = cfg; }
+    public SettingsPage(TitleScreen t, Main main, Settings cfg)
+    {
+        _t = t;
+        _main = main;
+        _cfg = cfg;
+    }
 
     public void Show()
     {
@@ -136,6 +143,10 @@ sealed class SettingsPage
         var sound = new VBoxContainer();
         v.AddChild(sound);
         AppSettings.AddSound(sound, _cfg);
+        v.AddChild(new Control { CustomMinimumSize = new Vector2(0, 10) });
+        v.AddChild(Ui.Header("Storage"));
+        var shelf = new CacheShelf(_t.Root!, said => _t.Status.Text = said, Busy);
+        foreach (var c in Caches.All) v.AddChild(shelf.Row(c));
         if (_t.OffersUpdates)
         {
             v.AddChild(new Control { CustomMinimumSize = new Vector2(0, 10) });
@@ -151,4 +162,11 @@ sealed class SettingsPage
         v.AddChild(box);
         AgentPanel.Simple(box, agent, _cfg);
     }
+
+    string? Busy(CacheKind kind) => kind switch
+    {
+        CacheKind.TtsDownloads when ConverterTool.Running => "An import is running. Clear its downloads once it ends.",
+        _ when _main.OpeningTitle is { } opening => $"{opening} is opening. Clear once it is open or stopped.",
+        _ => null,
+    };
 }
