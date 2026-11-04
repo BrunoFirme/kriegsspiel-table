@@ -31,6 +31,8 @@ public sealed class MeshData
 
     public void Add(Vector3 v, Vector3 n, Vector2 uv, Color c) { V.Add(v); N.Add(n); UV.Add(uv); C.Add(c); }
 
+    public MeshData WithUV(List<Vector2> uv) => new() { V = V, N = N, UV = uv, C = C, Mat = Mat, Tex = Tex, MatColor = MatColor };
+
     public void Transform(Transform3D t)
     {
         var nb = t.Basis.Inverse().Transposed();
@@ -310,8 +312,40 @@ public static class ModelImport
                 filled[y * size + x] = true;
             });
         }
-        Dilate(px, filled, size, 4);
+        Dilate(px, filled, size, SeamPasses);
         return Image.CreateFromData(size, size, false, Image.Format.Rgba8, px);
+    }
+
+    const int SeamPasses = 4;
+    const float MinLayoutSpan = 1e-3f;
+
+    public static bool HasOwnLayout(MeshData m)
+    {
+        if (m.UV.Count == 0) return false;
+        var lo = m.UV[0]; var hi = lo;
+        foreach (var uv in m.UV) { lo = lo.Min(uv); hi = hi.Max(uv); }
+        return hi.X - lo.X > MinLayoutSpan && hi.Y - lo.Y > MinLayoutSpan;
+    }
+
+    public static void Lay(MeshData m, IReadOnlyList<Vector2> drawn, Image tex, byte[] paint, int w, int h)
+    {
+        var data = tex.GetData();
+        int tw = tex.GetWidth(), th = tex.GetHeight();
+        var filled = new bool[w * h];
+        var scale = new Vector2(w, h);
+        var clip = new Rect2I(0, 0, w - 1, h - 1);
+        for (int t = 0; t < m.Tris; t++)
+        {
+            int k = t * 3;
+            Raster(m.UV[k] * scale, m.UV[k + 1] * scale, m.UV[k + 2] * scale, Math.Max(w, h), clip, (x, y, w0, w1, w2) =>
+            {
+                var col = Sample(data, tw, th, drawn[k] * w0 + drawn[k + 1] * w1 + drawn[k + 2] * w2);
+                int o = (y * w + x) * 4;
+                paint[o] = (byte)Math.Clamp(col.R * 255, 0, 255); paint[o + 1] = (byte)Math.Clamp(col.G * 255, 0, 255); paint[o + 2] = (byte)Math.Clamp(col.B * 255, 0, 255); paint[o + 3] = 255;
+                filled[y * w + x] = true;
+            });
+        }
+        if (w == h) Dilate(paint, filled, w, SeamPasses);
     }
 
     public static void Raster(Vector2 a, Vector2 b, Vector2 c, int size, Action<int, int, float, float, float> plot) => Raster(a, b, c, size, null, plot);

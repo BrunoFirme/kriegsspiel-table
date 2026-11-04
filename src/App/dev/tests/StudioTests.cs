@@ -241,4 +241,85 @@ static class StudioTests
         await h.Studio.FlushAllAsync();
         Check.Equal(first.Id, string.Join(",", h.OnDisk().Pieces.Select(p => p.Id)), "the copy taken away, the first left");
     }
+
+    static string HalvesPicture(string folder, string name, int w, int h)
+    {
+        var img = Godot.Image.CreateEmpty(w, h, false, Godot.Image.Format.Rgba8);
+        img.FillRect(new Godot.Rect2I(0, 0, w / 2, h), Godot.Colors.Green);
+        img.FillRect(new Godot.Rect2I(w / 2, 0, w - w / 2, h), Godot.Colors.Yellow);
+        var path = Path.Combine(folder, name);
+        img.SavePng(path);
+        return path;
+    }
+
+    static (int, int, int, int) TexelAt(ModelPartView v, Godot.Vector2 uv)
+    {
+        int o = ((int)(uv.Y * v.H) * v.W + (int)(uv.X * v.W)) * 4;
+        return (v.Paint[o], v.Paint[o + 1], v.Paint[o + 2], v.Paint[o + 3]);
+    }
+
+    static (int, int, int, int) Opaque(Godot.Color c) => (c.R8, c.G8, c.B8, 255);
+
+    [ScreenTest]
+    static async Task A_texture_made_for_an_imported_model_lands_where_its_maker_drew_it_and_undo_takes_it_off(TestRunner r)
+    {
+        var h = await Open(r);
+        var red = Godot.Image.CreateEmpty(4, 4, false, Godot.Image.Format.Rgba8);
+        red.Fill(Godot.Colors.Red);
+        var m = new MeshData { Tex = { red }, MatColor = { Godot.Colors.White } };
+        const int Columns = 4;
+        for (int i = 0; i < Columns; i++)
+        {
+            float x0 = i / (float)Columns, x1 = (i + 1) / (float)Columns;
+            void Corner(float x, float y) => m.Add(new Godot.Vector3(x, y, 0), Godot.Vector3.Back, new Godot.Vector2(x, 1 - y), Godot.Colors.White);
+            Corner(x0, 0); Corner(x1, 0); Corner(x1, 1);
+            Corner(x0, 0); Corner(x1, 1); Corner(x0, 1);
+            m.Mat.Add(0); m.Mat.Add(0);
+        }
+        await h.Studio.NewModelPiece("Banner", m, "mesh");
+        var model = h.Studio.Model!;
+        var part = model.Doc.Parts.Single();
+        Check.That(part.OwnLayout != null, "the model keeps the layout its maker drew");
+        var said = model.ShapeFaces.PutPicture($"p:{part.Id}:0", HalvesPicture(h.Store.Root, "banner.png", 64, 64));
+        Check.That(said.Contains("texture now"), "it says the texture is on: " + said);
+        var v = model.Views[part.Id];
+        int seen = 0;
+        for (int t = 0; t < v.Data.Tris; t++)
+        {
+            var at = (v.Data.V[t * 3] + v.Data.V[t * 3 + 1] + v.Data.V[t * 3 + 2]) / 3;
+            if (System.Math.Abs(at.X - 0.5f) < 0.15f) continue;
+            var uv = (v.Data.UV[t * 3] + v.Data.UV[t * 3 + 1] + v.Data.UV[t * 3 + 2]) / 3;
+            Check.Equal(Opaque(at.X < 0.5f ? Godot.Colors.Green : Godot.Colors.Yellow), TexelAt(v, uv), $"the model at x {at.X:0.00}");
+            seen++;
+        }
+        Check.That(seen >= 4, $"texels on both halves were looked at ({seen})");
+        model.Undo();
+        Check.That(model.Views[part.Id].Paint.All(b => b == 0), "undo takes the texture off");
+    }
+
+    [ScreenTest]
+    static async Task A_picture_put_on_a_flag_s_front_covers_it_reading_left_to_right_from_the_front(TestRunner r)
+    {
+        var h = await Open(r);
+        await h.Studio.NewModelPiece("Colours", ModelImport.Primitive("flag"), "flag");
+        var model = h.Studio.Model!;
+        var part = model.Doc.Parts.Single();
+        var v = model.Views[part.Id];
+        int front = model.ShapeFaces.FacesOf(v).FindIndex(f => f.Name == "Front");
+        Check.That(front >= 0, "the flag has a front");
+        var said = model.ShapeFaces.PutPicture($"p:{part.Id}:{front}", HalvesPicture(h.Store.Root, "colours.png", 60, 40));
+        Check.That(said.Contains("covers the front"), "it says the front is covered: " + said);
+        int seen = 0;
+        for (int t = 0; t < v.Data.Tris; t++)
+        {
+            var a = v.Data.V[t * 3]; var b = v.Data.V[t * 3 + 1]; var c = v.Data.V[t * 3 + 2];
+            if ((c - a).Cross(b - a).Z >= 0) continue;
+            var at = (a + b + c) / 3;
+            var uv = (v.Data.UV[t * 3] + v.Data.UV[t * 3 + 1] + v.Data.UV[t * 3 + 2]) / 3;
+            Check.Equal(Opaque(at.X > 0 ? Godot.Colors.Green : Godot.Colors.Yellow), TexelAt(v, uv), $"the front at x {at.X:0.00}, its left seen from the front being +x");
+            seen++;
+        }
+        Check.Equal(2, seen, "the front's two triangles looked at");
+        Check.That(part.FaceDocs?.ContainsKey(front.ToString()) == true, "the front keeps its layers for painting in 2D");
+    }
 }

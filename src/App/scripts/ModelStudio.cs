@@ -39,6 +39,7 @@ public sealed class ModelPart
     public int[]? Region { get; set; }
     public Dictionary<string, string[]>? FaceDocs { get; set; }
     public string? Groups { get; set; }
+    public string? OwnLayout { get; set; }
 
     public Transform3D Xf()
     {
@@ -313,10 +314,12 @@ public partial class ModelStudio : Control
 
     ModelPart NewPart(MeshData m, string name, string kind, int texSize)
     {
+        var drawn = kind == "mesh" && ModelImport.HasOwnLayout(m) ? m.UV.ToList() : null;
         var img = ModelImport.Unwrap(m, texSize);
         var meshName = SaveSrcText(ModelImport.ToObj(m), ".obj");
         var texName = ArtStore.AddSrc(_store, _pack.Id, img);
-        return new ModelPart { Name = name, Kind = kind, Mesh = meshName, Tex = texName, Groups = ModelGroups.Encode(m.Mat, m.Tris) };
+        var own = drawn == null ? null : SaveSrcText(ModelImport.ToObj(m.WithUV(drawn)), ".obj");
+        return new ModelPart { Name = name, Kind = kind, Mesh = meshName, Tex = texName, Groups = ModelGroups.Encode(m.Mat, m.Tris), OwnLayout = own };
     }
 
     internal string SaveSrcText(string text, string ext)

@@ -177,6 +177,55 @@ internal sealed class ShapeFaceMap
         return new Vector2(f.Rect.Size.X, f.Rect.Size.Y) * k;
     }
 
+    public string PutPicture(string key, string file)
+    {
+        var name = Path.GetFileName(file);
+        if (!FaceOf(key, out var v, out var f, out _)) return "That face is no longer on the model.";
+        if (v.Part.Kind == "mesh") return ImageFiles.Load(file) is { } tex ? LayTexture(v, Rgba(tex), name) : $"Could not read {name}.";
+        if (ArtStore.AddSrcFile(_m.Store, _m.Pack.Id, file, out var img) is not { } src || img == null) return $"Could not read {name}.";
+        var r = f.Rect;
+        var look = Look(v, r);
+        var pic = Rgba(img);
+        pic.Resize(r.Size.X, r.Size.Y, Image.Interpolation.Lanczos);
+        look.BlendRect(pic, new Rect2I(Vector2I.Zero, r.Size), Vector2I.Zero);
+        var doc = FaceDoc(key)!;
+        var layer = new ArtLayer { Name = NewPieces.Pretty(Path.GetFileNameWithoutExtension(file)), Kind = "image", Src = src, SrcW = img.GetWidth(), SrcH = img.GetHeight(), X = doc.W / 2f, Y = doc.H / 2f, Sx = doc.W / (float)img.GetWidth(), Sy = doc.H / (float)img.GetHeight() };
+        doc.Layers.Add(layer);
+        doc.Selected = layer.Id;
+        TakeFace(key, look, doc);
+        return $"{name} covers the {f.Name.ToLowerInvariant()}.";
+    }
+
+    string LayTexture(ModelPartView v, Image tex, string name)
+    {
+        const string NoLayout = "This model kept no texture layout of its own: add its file again to give it one (an STL has none; the decal works there).";
+        if (v.Part.OwnLayout is not { } own) return NoLayout;
+        var path = ArtStore.SrcPath(_m.Store, _m.Pack.Id, own);
+        if (!File.Exists(path)) return NoLayout;
+        MeshData drawn;
+        try { drawn = ModelImport.Obj(path); }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException or InvalidDataException)
+        {
+            GD.PrintErr($"[studio] the texture layout of {v.Part.Name}: {e.Message}");
+            return NoLayout;
+        }
+        if (drawn.Tris != v.Data.Tris) return NoLayout;
+        var before = (byte[])v.Paint.Clone();
+        ModelImport.Lay(v.Data, drawn.UV, tex, v.Paint, v.W, v.H);
+        _m.History.Add(new List<(string part, byte[] before, byte[]? after)> { (v.Part.Id, before, (byte[])v.Paint.Clone()) });
+        v.Repaint();
+        _m.Changed(mesh: false);
+        return $"{name} is the model's texture now; the rubber brings back the old one where it rubs.";
+    }
+
+    static Image Rgba(Image img)
+    {
+        img = (Image)img.Duplicate();
+        if (img.IsCompressed()) img.Decompress();
+        img.Convert(Image.Format.Rgba8);
+        return img;
+    }
+
     public bool TakeFace(string key, Image img, ArtDoc doc)
     {
         if (!FaceOf(key, out var v, out var f, out var i)) return false;

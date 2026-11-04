@@ -208,7 +208,7 @@ internal sealed class ModelPanels
             bool shown = f.State == _m.FlatState;
             var key = f.Key; int state = f.State;
             faces.AddChild(FaceRow(studio, key, f.Label, f.Sha == null ? (f.Back ? "the front's" : "blank") : null, shown, shown && key == _m.SelPartId,
-                shown ? "Double-click to paint it laid flat" : "Click to show this look on the block", () =>
+                shown ? "Double-click to paint it laid flat" : "Click to show this look on the block", null, () =>
                 {
                     _m.SelPartId = key;
                     if (state != _m.FlatState) _m.ShowState(state);
@@ -217,7 +217,7 @@ internal sealed class ModelPanels
         }
     }
 
-    static PanelContainer FaceRow(PieceStudio studio, string key, string label, string? note, bool shown, bool on, string tip, Action? choose)
+    static PanelContainer FaceRow(PieceStudio studio, string key, string label, string? note, bool shown, bool on, string tip, Button? picture, Action? choose)
     {
         var panel = new PanelContainer { MouseFilter = Control.MouseFilterEnum.Stop, MouseDefaultCursorShape = Control.CursorShape.PointingHand, TooltipText = tip };
         panel.AddThemeStyleboxOverride("panel", Ui.Box(on ? new Color(1, 1, 1, 0.13f) : new Color(1, 1, 1, 0.03f), 3, 6, 2));
@@ -225,6 +225,7 @@ internal sealed class ModelPanels
         panel.AddChild(row);
         row.AddChild(new Label { Text = label, ClipText = true, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, MouseFilter = Control.MouseFilterEnum.Ignore, Modulate = shown ? Colors.White : Ui.Muted });
         if (note != null) row.AddChild(new Label { Text = note, Modulate = Ui.Muted, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, MouseFilter = Control.MouseFilterEnum.Ignore });
+        if (picture != null) row.AddChild(picture);
         row.AddChild(Ui.Btn("Paint", () => studio.PaintIn2D(key), "Paint this face laid flat in 2D: layers, text, rulers, symmetry"));
         panel.GuiInput += e =>
         {
@@ -290,8 +291,19 @@ internal sealed class ModelPanels
         var faces = _m.ShapeFaces.FacesOf(v);
         if (faces.Count == 0) return;
         var g = Inspector.Group(box, "Faces");
+        bool texture = p.Kind == "mesh";
         for (int i = 0; i < faces.Count; i++)
-            g.AddChild(FaceRow(studio, $"p:{p.Id}:{i}", faces[i].Name, null, true, false, "Double-click to paint it laid flat", null));
+        {
+            var key = $"p:{p.Id}:{i}";
+            var picture = Ui.Btn(texture ? "Texture…" : "Picture…", () => studio.PickFiles(ImageFiles.Filter, files =>
+            {
+                if (files.Length == 0) return;
+                studio.Say(_m.ShapeFaces.PutPicture(key, files[0]));
+                studio.RebuildModelPanels();
+            }, texture ? "A texture made for this model" : "A picture over the whole face"),
+                texture ? "A texture made for this model, laid on as its maker drew it (PNG, JPEG, WebP, TGA…)" : "A picture stretched over the whole face; Paint places it more finely");
+            g.AddChild(FaceRow(studio, key, faces[i].Name, null, true, false, "Double-click to paint it laid flat", picture, null));
+        }
     }
 
     static readonly string[] Axes = { "X", "Y", "Z" };

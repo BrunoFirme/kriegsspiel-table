@@ -93,6 +93,13 @@ sealed class StudioDemo
             case "mfaces": GD.Print("[studio] shape faces: " + string.Join(" | ", _s.Model?.ShapeFaces.Keys().Select(f => f.label) ?? Enumerable.Empty<string>())); break;
             case "mreport": GD.Print("[studio] model: " + (_s.Model is { } reported ? ModelReport(reported) : null) + $"; piece {_s.Sel?.Name} kind {_s.Sel?.Kind} mesh {_s.Sel?.Mesh?[..8]} tex {_s.Sel?.Texture?[..8]} add-on {_s.Sel?.AddOnMesh?[..8] ?? "none"} outline {_s.Sel?.Shape} size {_s.Sel?.Size.W:0.###}x{_s.Sel?.Size.H:0.###}"); break;
             case "decal": if (ImageFiles.Load(arg) is { } di) _s.Model?.Decal.Set(di, System.IO.Path.GetFileNameWithoutExtension(arg)); break;
+            case "mpicture":
+            {
+                var bits = arg.Split('|');
+                if (_s.Model is { SelPartId: { } part } pm) { GD.Print("[studio] " + pm.ShapeFaces.PutPicture($"p:{part}:{bits[0]}", bits[1])); _s.RebuildModelPanels(); }
+                await Frames(3);
+                break;
+            }
             case "mdecal":
             {
                 var n = Nums(arg);
@@ -136,6 +143,7 @@ sealed class StudioDemo
     {
         switch (verb)
         {
+            case "tab": _s.Inspector.Tabs.CurrentTab = int.Parse(arg, Inv); await Frames(3); break;
             case "scrolltab":
                 if (_s.Inspector.Tabs.GetCurrentTabControl() is ScrollContainer sc) { sc.ScrollVertical = int.Parse(arg, Inv); await Frames(3); }
                 break;
