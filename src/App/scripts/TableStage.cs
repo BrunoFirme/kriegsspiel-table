@@ -1,5 +1,6 @@
 using System;
 using Godot;
+using KTable.Client;
 using KTable.Core.Model;
 
 namespace KTable.App;
@@ -12,6 +13,9 @@ sealed class TableStage
     MeshInstance3D _surface = null!;
     MeshInstance3D _gridPlane = null!;
     ShaderMaterial _gridMat = null!;
+    TableBackdrop? _backdrop;
+    static readonly Color BareTable = new(0.19f, 0.2f, 0.19f);
+    const float SurfaceBelow = -0.04f, GridAbove = 0.03f;
 
     public TableStage(TableContext c) { _c = c; }
 
@@ -33,24 +37,43 @@ sealed class TableStage
         {
             Environment = new Godot.Environment
             {
-                BackgroundMode = Godot.Environment.BGMode.Color, BackgroundColor = new Color(0.16f, 0.17f, 0.18f),
+                BackgroundMode = Godot.Environment.BGMode.Color, BackgroundColor = TableBackdrop.Plain,
                 AmbientLightSource = Godot.Environment.AmbientSource.Color, AmbientLightColor = Colors.White, AmbientLightEnergy = 0.72f,
             },
         };
         _c.Scene.AddChild(env);
+        _backdrop = new TableBackdrop(_c, env.Environment);
         ApplyLighting(new Lighting());
+        var first = TableExtent.Of(new GameState());
         _c.Scene.AddChild(_surface = new MeshInstance3D
         {
-            Name = "TableSurface", Mesh = new PlaneMesh { Size = new Vector2(20000, 20000) }, Position = new Vector3(0, -0.04f, 0),
-            MaterialOverride = new StandardMaterial3D { AlbedoColor = new Color(0.19f, 0.2f, 0.19f), ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded },
+            Name = "TableSurface", Mesh = new PlaneMesh { Size = Side(first) }, Position = Coords.ToWorld(first.Centre, SurfaceBelow),
+            MaterialOverride = new StandardMaterial3D { AlbedoColor = BareTable, ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded, CullMode = BaseMaterial3D.CullModeEnum.Disabled },
             CastShadow = GeometryInstance3D.ShadowCastingSetting.Off,
         });
+        _area = first;
+    }
+
+    TableArea _area;
+
+    static Vector2 Side(TableArea a) => new((float)a.Size.W, (float)a.Size.H);
+
+    public void FitTable(TableArea wanted)
+    {
+        const double Regrow = 0.85;
+        bool outgrown = !_area.Holds(wanted);
+        bool tooBig = wanted.Size.W < _area.Size.W * Regrow || wanted.Size.H < _area.Size.H * Regrow;
+        if (!outgrown && !tooBig) return;
+        _area = wanted;
+        if (_surface.Mesh is PlaneMesh surface) surface.Size = Side(wanted);
+        _surface.Position = Coords.ToWorld(wanted.Centre, SurfaceBelow);
+        if (_gridPlane?.Mesh is PlaneMesh grid) { grid.Size = Side(wanted); _gridPlane.Position = Coords.ToWorld(wanted.Centre, GridAbove); }
     }
 
     public void BuildGrid()
     {
         _gridMat = new ShaderMaterial { Shader = new Shader { Code = FileAccess.GetFileAsString("res://shaders/grid.gdshader") } };
-        _gridPlane = new MeshInstance3D { Mesh = new PlaneMesh { Size = new Vector2(20000, 20000) }, MaterialOverride = _gridMat, Position = new Vector3(0, 0.03f, 0), Visible = false, CastShadow = GeometryInstance3D.ShadowCastingSetting.Off };
+        _gridPlane = new MeshInstance3D { Mesh = new PlaneMesh { Size = Side(_area) }, MaterialOverride = _gridMat, Position = Coords.ToWorld(_area.Centre, GridAbove), Visible = false, CastShadow = GeometryInstance3D.ShadowCastingSetting.Off };
         _c.Scene.AddChild(_gridPlane);
     }
 
@@ -85,6 +108,7 @@ sealed class TableStage
         if (EffectFx.SetShade(l, tint)) ShadeChanged?.Invoke();
         float shade = Mathf.Clamp((float)l.TableShade, 0, 1);
         if (_standIn.on && !Mathf.IsEqualApprox(_standIn.shade, shade)) SetStandIn(true, shade);
+        _backdrop?.Show(l.Backdrop ?? Backdrops.None, (float)l.Ambient);
     }
 
     public static Color LightTint(float warmth)
@@ -134,10 +158,9 @@ sealed class TableStage
             var grey = new Color(l, l, l) * 0.55f;
             return shade <= 0.5f ? c.Lerp(grey, shade * 2) : grey.Lerp(Colors.Black, (shade - 0.5f) * 2);
         }
-        _env!.Environment.BackgroundColor = on ? Shaded(new Color(0.74f, 0.70f, 0.60f)) : new Color(0.16f, 0.17f, 0.18f);
         if (!on)
         {
-            _surface.MaterialOverride = new StandardMaterial3D { AlbedoColor = new Color(0.19f, 0.2f, 0.19f), Roughness = 1f, Metallic = 0f, SpecularMode = BaseMaterial3D.SpecularModeEnum.Disabled };
+            _surface.MaterialOverride = new StandardMaterial3D { AlbedoColor = BareTable, Roughness = 1f, Metallic = 0f, SpecularMode = BaseMaterial3D.SpecularModeEnum.Disabled, CullMode = BaseMaterial3D.CullModeEnum.Disabled };
             return;
         }
         var paper = Shaded(new Color(0.80f, 0.76f, 0.66f));
@@ -167,7 +190,7 @@ sealed class TableStage
         {
             AlbedoTexture = ImageTexture.CreateFromImage(img), Roughness = 1f, Metallic = 0f, SpecularMode = BaseMaterial3D.SpecularModeEnum.Disabled,
             TextureRepeat = true, TextureFilter = BaseMaterial3D.TextureFilterEnum.LinearWithMipmapsAnisotropic,
-            Uv1Scale = new Vector3(20000f / units, 20000f / units, 1),
+            Uv1Triplanar = true, Uv1WorldTriplanar = true, Uv1Scale = Vector3.One / units, CullMode = BaseMaterial3D.CullModeEnum.Disabled,
         };
     }
 }

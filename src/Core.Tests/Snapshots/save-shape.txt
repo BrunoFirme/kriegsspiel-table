@@ -1,4 +1,4 @@
-format 18
+format 19
 type AccessChanged object
   access: GameAccess
 type AddBoard object
@@ -376,6 +376,7 @@ type Knock object
   peerId: long
 type Lighting object
   ambient: double
+  backdrop: string
   fromClock: bool
   shadows: bool
   sunEnergy: double

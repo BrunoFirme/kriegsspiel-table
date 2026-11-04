@@ -427,6 +427,29 @@ public class TableToolsTests
     }
 
     [Fact]
+    public void Every_built_in_backdrop_ships_beside_the_app()
+    {
+        var repo = new DirectoryInfo(AppContext.BaseDirectory);
+        while (repo != null && !File.Exists(Path.Combine(repo.FullName, "KriegsspielTable.sln"))) repo = repo.Parent;
+        Assert.NotNull(repo);
+        var dir = Path.Combine(repo!.FullName, "src", "App", "backdrops");
+        Assert.All(Backdrops.All, b => Assert.True(File.Exists(Path.Combine(dir, b.Id + Backdrops.FileExtension)), b.Id));
+    }
+
+    [Fact]
+    public async Task A_backdrop_is_set_with_the_light_by_name_and_an_unknown_one_changes_nothing()
+    {
+        Assert.False((await Call("set_light", new { backdrop = "beach" })).IsError);
+        Assert.Equal("beach", _s.View.Lighting.Backdrop);
+        var refused = await Call("set_light", new { backdrop = "the moon", sun = 0.1 });
+        Assert.True(refused.IsError);
+        Assert.Equal("beach", _s.View.Lighting.Backdrop);
+        Assert.NotEqual(0.1, _s.View.Lighting.SunEnergy);
+        await Call("set_light", new { backdrop = "none" });
+        Assert.Equal(Backdrops.None, _s.View.Lighting.Backdrop);
+    }
+
+    [Fact]
     public async Task Drawn_lines_are_listed_near_a_point_and_erased_by_id_or_by_place()
     {
         var arrow = await Call("draw", new { points = new[] { new[] { 0.0, 0.0 }, new[] { 10.0, 0.0 } }, arrow = true });

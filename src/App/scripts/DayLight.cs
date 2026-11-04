@@ -49,6 +49,7 @@ public static class DayLight
             Shadows = basis.Shadows,
             FromClock = true,
             TableShade = basis.TableShade,
+            Backdrop = basis.Backdrop,
         };
     }
 

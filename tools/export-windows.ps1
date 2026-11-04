@@ -36,6 +36,7 @@ function Export-Game($godot, $dist) {
 
 function Copy-FilesBesideTheExe($dist) {
     Copy-Tree (Join-Path $repo "src\App\standard") (Join-Path $dist "standard") @("/XF", ".gdignore")
+    Copy-Tree (Join-Path $repo "src\App\backdrops") (Join-Path $dist "backdrops") @("/XF", ".gdignore")
     if ($Steam) { Copy-Tree (Join-Path $repo "src\App\native") (Join-Path $dist "native") }
     Copy-Tree (Join-Path $repo "docs") (Join-Path $dist "docs") ($guidesThatShip + "/LEV:1")
     Copy-Item (Join-Path $repo "src\App\icon.png") $dist -Force
@@ -64,7 +65,7 @@ function Write-Readme($dist, $stamp) {
 Kriegsspiel Table - $stamp
 
 Run KriegsspielTable.exe. Nothing to install: the game, the .NET runtime and the Tabletop Simulator
-converter are all in this folder. Keep the folder together (data_*, standard, native, converter).
+converter are all in this folder. Keep the folder together (data_*, standard, backdrops, native, converter).
 
 Your packs, scenarios and settings live in %LOCALAPPDATA%\KriegsspielTable, not here, so a new
 version can simply replace this folder.

@@ -437,6 +437,7 @@ public sealed class Lighting
     public bool Shadows { get; set; } = true;
     public bool FromClock { get; set; }
     public double TableShade { get; set; }
+    public string Backdrop { get; set; } = "";
 }
 
 public sealed class Wind

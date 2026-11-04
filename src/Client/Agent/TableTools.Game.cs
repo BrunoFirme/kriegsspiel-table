@@ -67,9 +67,10 @@ public sealed partial class TableTools
                 new Arg("divisions", "number", $"lines inside each square cell, 1 for plain cells (1–{GridDivisionsMost})")),
             SetGridTool);
         yield return new AgentTool("set_light",
-            "Sets the table's light (sun and ambient 0–1, warmth −1 to 1, shadows, or following the game clock's hour), the table under the map (0 squared paper, 0.5 grey, 1 black) and the wind (from, in degrees; strength 0 calm to 5 a gale), for everyone at the table.",
+            "Sets the table's light (sun and ambient 0–1, warmth −1 to 1, shadows, or following the game clock's hour), the table under the map (0 squared paper, 0.5 grey, 1 black), the backdrop seen around the table and the wind (from, in degrees; strength 0 calm to 5 a gale), for everyone at the table.",
             Args.Schema(new Arg("sun", "number", "0–1"), new Arg("ambient", "number", "0–1"), new Arg("warmth", "number", "−1 to 1"), new Arg("shadows", "boolean", "shadows"), new Arg("from_clock", "boolean", "follows the clock's hour"),
                 new Arg("table_shade", "number", "the table under the map: 0 squared paper, 0.5 grey, 1 black"),
+                new Arg("backdrop", "string", "around the table: none, or one of " + string.Join(", ", Backdrops.All.Select(b => b.Id))),
                 new Arg("wind_from", "number", "degrees"), new Arg("wind_strength", "number", "0–5")),
             SetLight);
         yield return new AgentTool("read_briefing",
@@ -366,13 +367,16 @@ public sealed partial class TableTools
         if (Open(out var why) is not { } s) return why!;
         if (!CanChange(s, out why)) return why!;
         var done = new List<string>();
-        if (a.Num("sun") != null || a.Num("ambient") != null || a.Num("warmth") != null || a.Flag("shadows") != null || a.Flag("from_clock") != null || a.Num("table_shade") != null)
+        var backdrop = a.Str("backdrop")?.Trim().ToLowerInvariant() is { } asked ? asked == "none" ? Backdrops.None : asked : null;
+        if (backdrop != null && Backdrops.Find(backdrop) == null && backdrop.Length > 0)
+            return ToolResult.Fail($"No backdrop {backdrop}: none, or one of {string.Join(", ", Backdrops.All.Select(b => b.Id))}.");
+        if (a.Num("sun") != null || a.Num("ambient") != null || a.Num("warmth") != null || a.Flag("shadows") != null || a.Flag("from_clock") != null || a.Num("table_shade") != null || a.Str("backdrop") != null)
         {
             var l = s.View.Lighting;
             s.Do(new SetLighting { Lighting = new Lighting
             {
                 SunEnergy = Math.Clamp(a.Num("sun") ?? l.SunEnergy, 0, 1), Ambient = Math.Clamp(a.Num("ambient") ?? l.Ambient, 0, 1), Warmth = Math.Clamp(a.Num("warmth") ?? l.Warmth, -1, 1),
-                Shadows = a.Flag("shadows") ?? l.Shadows, FromClock = a.Flag("from_clock") ?? l.FromClock, TableShade = Math.Clamp(a.Num("table_shade") ?? l.TableShade, 0, 1),
+                Shadows = a.Flag("shadows") ?? l.Shadows, FromClock = a.Flag("from_clock") ?? l.FromClock, TableShade = Math.Clamp(a.Num("table_shade") ?? l.TableShade, 0, 1), Backdrop = backdrop ?? l.Backdrop,
             } });
             done.Add("light");
         }

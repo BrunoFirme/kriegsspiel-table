@@ -15,6 +15,7 @@ public static class PieceFiles
             foreach (var hash in Naming.AssetsOf(def).Distinct())
                 if (pack.Assets.TryGetValue(hash, out var asset)) yield return (pack.Id, asset.File.Replace('\\', '/'));
         }
+        if (Backdrops.IsPicture(view.Lighting.Backdrop)) yield return (UploadAsset.ReliefPackage, view.Lighting.Backdrop);
         var decals = view.Layers.Values.SelectMany(l => l).SelectMany(p => p.Decals).Select(d => d.Picture).Distinct().ToList();
         if (decals.Count == 0) yield break;
         var packs = view.Packs.Select(store.Pack).OfType<PackManifest>().ToList();

@@ -16,6 +16,7 @@ file beside the executable.
 | Steamworks SDK libraries (`src/App/native/`) | the Workshop, in Steam builds only | © Valve Corporation | Steamworks SDK Access Agreement |
 | 1889 USGS topographic map, Fredericksburg sheet | the app icon (`tools/icon-map.jpg`) | U.S. Geological Survey | Public domain |
 | [Kenney](https://kenney.nl) Casino Audio and Impact Sounds | the table's sounds (`src/App/sounds/`, cut and layered from them) | Kenney Vleugels | CC0 1.0 (public domain) |
+| [Poly Haven](https://polyhaven.com) HDRIs, tonemapped: Fireplace, Wooden Lounge, Rogland Clear Night (Greg Zaal); Empty Play Room, Billiard Hall, Kloofendal 48d Partly Cloudy (Pure Sky), Kloppenheim 02 (Pure Sky) (Greg Zaal, Jarod Guest); Pine Attic, Colorful Studio, Ballroom, Meadow 2 (Sergej Majboroda); Spiaggia di Mondello (Andreas Mischok) | the backdrops around the table (`src/App/backdrops/`, re-encoded at 8192×4096) | their photographers | CC0 1.0 (public domain) |
 
 Godot carries third-party components of its own (FreeType, ENet, mbedTLS and others); they are listed in
 Godot's [COPYRIGHT.txt](https://github.com/godotengine/godot/blob/master/COPYRIGHT.txt).

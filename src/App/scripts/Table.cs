@@ -192,6 +192,7 @@ public partial class Table : Node3D
     {
         var drawClock = System.Diagnostics.Stopwatch.StartNew();
         Stage.ApplyLighting(Stage.LightNow());
+        Stage.FitTable(TableExtent.Of(S.View));
         Stage.ApplyGrid();
         Stage.ApplyScale(S.View.Calibration);
         Stage.ApplyWind(S.View.Wind);
@@ -227,6 +228,17 @@ public partial class Table : Node3D
         Graphics.ApplyEdges(GetViewport(), cfg);
         Stage.ApplyGraphics(cfg);
         Sheets.PlanLevels();
+    }
+
+    const double FitEverySeconds = 0.5;
+    double _fitIn;
+
+    void FitTableNow(double delta)
+    {
+        _fitIn -= delta;
+        if (_fitIn > 0) return;
+        _fitIn = FitEverySeconds;
+        Stage.FitTable(TableExtent.Of(S.View));
     }
 
     public void ApplyLettering()
@@ -278,6 +290,7 @@ public partial class Table : Node3D
         Sheets.TickLoadingLabels();
         Cam.TickKeys(delta);
         Stage.FollowView(Rig.Distance);
+        FitTableNow(delta);
         Sheets.Tick();
         Overlay.Redraw();
     }
