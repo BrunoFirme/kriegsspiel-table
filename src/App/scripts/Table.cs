@@ -194,6 +194,7 @@ public partial class Table : Node3D
         var drawClock = System.Diagnostics.Stopwatch.StartNew();
         Stage.ApplyLighting(Stage.LightNow());
         Stage.ApplyGrid();
+        Stage.ApplyScale(S.View.Calibration);
         Stage.ApplyWind(S.View.Wind);
         Sheets.Clear();
         Pieces.Clear();
@@ -392,6 +393,7 @@ public partial class Table : Node3D
     public static Color LightTint(float warmth) => TableStage.LightTint(warmth);
     public void ApplyGrid() => Stage.ApplyGrid();
     public void ApplyWind(Wind w) => Stage.ApplyWind(w);
+    public void ApplyScale(Calibration c) => Stage.ApplyScale(c);
     public void SetStandIn(bool on, float shade = 0) => Stage.SetStandIn(on, shade);
 
     public string Board { get => Drawings.Board; set => Drawings.Board = value; }

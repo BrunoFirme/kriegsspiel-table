@@ -30,16 +30,20 @@ public partial class PieceNode
             _built = own != null;
         }
         float phase = (Piece.Id.Aggregate(17u, (h, c) => h * 31 + c) % 1000) / 1000f;
+        _smokeAirBuilt = EffectFx.SmokeAirNow;
         _emitters.AddRange(EffectFx.Build(this, e, Footprint.X, Footprint.Y, phase, own));
         SteerEffect();
     }
 
     bool _built;
+    SmokeAir _smokeAirBuilt;
 
     public void ShadeEffect() => EffectFx.Shade(_emitters);
 
     public void SteerEffect()
     {
-        if (IsInstanceValid(this)) EffectFx.Steer(this, _emitters);
+        if (!IsInstanceValid(this)) return;
+        if (_smokeAirBuilt != EffectFx.SmokeAirNow && _emitters.Any(m => m.Heat != SmokeHeat.None)) { Callable.From(Rebuild).CallDeferred(); return; }
+        EffectFx.Steer(this, _emitters);
     }
 }

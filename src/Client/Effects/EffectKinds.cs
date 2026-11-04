@@ -34,6 +34,7 @@ public static class EffectKinds
     public static bool Burns(string kind) => kind is "fire" or "cannon" or "burst" or "powder" or "sparks" or "lamps" or "camp" or "barrage" or "flare" or "broadside" or "oil";
     public static bool Smokes(string kind) => kind is "fire" or "cannon" or "burst" or "camp" or "rocket" or "barrage" or "broadside" or "oil";
     public static bool Volleys(string kind) => kind is "powder" or "cannon" or "column" or "broadside";
+    public static bool Lingers(string kind) => kind is "powder" or "cannon";
     public static string Mode(EffectDef e) => e.Volley is "random" or "together" or "rolling" ? e.Volley : e.Kind == "powder" ? "random" : "together";
 
     public static double Interval(EffectDef e) => e.Every > 0.05 ? e.Every : e.Kind switch

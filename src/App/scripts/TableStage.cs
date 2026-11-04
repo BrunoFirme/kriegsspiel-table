@@ -94,6 +94,12 @@ sealed class TableStage
         WindChanged?.Invoke();
     }
 
+    public void ApplyScale(Calibration c)
+    {
+        if (!EffectFx.SetScale(c)) return;
+        WindChanged?.Invoke();
+    }
+
     (bool on, float shade) _standIn;
     bool _paperLined = true;
 

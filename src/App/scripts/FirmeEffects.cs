@@ -26,6 +26,10 @@ public static class FirmeEffects
         ("Battery firing", "A battery of guns firing in turn", 4, 1, new EffectDef { Kind = "cannon", Every = 4, Volley = "rolling" }, N),
         ("Battery salvo", "Every gun of the battery at once", 4, 1, new EffectDef { Kind = "cannon", Every = 6 }, N),
         ("Gun firing", "A single piece of artillery", 1, 1, new EffectDef { Kind = "cannon", Every = 6, Amount = 0.8 }, N),
+        ("Lingering musketry", "A line firing at will, its smoke thick and hanging, drifting downwind as far as real powder smoke on the map's scale", 6, 0.6, new EffectDef { Kind = "powder", Lingers = true, Amount = 1.5, Wind = 1.4 }, N),
+        ("Lingering battalion volley", "Volleys on the word of command, the smoke banking up and carried off downwind as far as real powder smoke on the map's scale", 6, 0.6, new EffectDef { Kind = "powder", Volley = "together", Lingers = true, Amount = 1.5, Wind = 1.4 }, N),
+        ("Lingering rolling fire", "Fire by platoons down the line, every platoon's smoke hanging and drifting as far as real powder smoke on the map's scale", 6, 0.6, new EffectDef { Kind = "powder", Volley = "rolling", Lingers = true, Amount = 1.5, Wind = 1.4 }, N),
+        ("Lingering battery fire", "Guns firing in turn, their smoke rolling away downwind as far as real powder smoke on the map's scale", 4, 1, new EffectDef { Kind = "cannon", Every = 4, Volley = "rolling", Lingers = true, Amount = 1.4, Wind = 1.4 }, N),
         ("Congreve rockets", "A rocket troop firing: erratic trails of sparks and smoke, bursts where they land", 2, 14, new EffectDef { Kind = "rocket" }, N),
         ("Powder smoke", "The smoke hanging over a line after the firing", 6, 1.5, new EffectDef { Kind = "smoke", Color = "#DEDBD4", Height = 0.35, Puff = 0.9, Amount = 1.2 }, N),
         ("Battle haze", "Smoke lying over the field after hours of fighting", 10, 6, new EffectDef { Kind = "fog", Color = "#D3CFC6" }, N),
@@ -72,6 +76,7 @@ public static class FirmeEffects
     };
 
     const string N = "napoleonic", M = "modern", A = "ancient", S = "naval";
+    static readonly string[] RealismTags = { "extra", "realism", "swense" };
 
     public static readonly (string Name, Func<PropMade> Make, string Era)[] PropList =
     {
@@ -103,6 +108,7 @@ public static class FirmeEffects
         {
             var d = Def(PackId + "." + PackEdit.Slug(name), name, w, h, fx);
             d.Tags.Add(era);
+            if (fx.Lingers) d.Tags.AddRange(RealismTags);
             pack.Pieces.Add(d);
         }
         string Add(byte[] bytes, string ext, string kind, int iw = 0, int ih = 0)

@@ -36,6 +36,9 @@ public sealed class EffectLayer
     public bool Fixed;
     public float Start = -1;
     public int Cycles = 1;
+    public float Reach;
+    public SmokeHeat Heat;
+    public float Rise;
 
     public EffectLayer Copy() => (EffectLayer)MemberwiseClone();
 }
@@ -86,9 +89,9 @@ public sealed class EffectPlan
 
 public static class EffectRecipe
 {
-    public static EffectPlan Plan(EffectDef e, float w, float h, float phase, Rgba color, bool ownPicture)
+    public static EffectPlan Plan(EffectDef e, float w, float h, float phase, Rgba color, bool ownPicture, SmokeAir? air = null)
     {
-        var recipe = new Recipe(e, w, h, phase, color);
+        var recipe = new Recipe(e, w, h, phase, color, air);
         recipe.Lay();
         return recipe.Finish(ownPicture);
     }
@@ -97,12 +100,15 @@ public static class EffectRecipe
     {
         readonly EffectDef e;
         readonly float w, h, phase, s, k, A, H, P, D, every, clarity;
+        readonly Plume plume;
+        readonly double wind;
+        readonly SmokeAir air;
         readonly Rgba c;
         readonly Vector3 ex;
         readonly EffectPlan plan = new();
         readonly List<EffectLayer> layers;
 
-        public Recipe(EffectDef e, float w, float h, float phase, Rgba c)
+        public Recipe(EffectDef e, float w, float h, float phase, Rgba c, SmokeAir? air)
         {
             this.e = e; this.phase = phase; this.c = c with { A = 1 }; clarity = Mathf.Clamp(c.A, 0, 1); layers = plan.Layers;
             w = Mathf.Max(w, 0.2f); h = Mathf.Max(h, 0.2f);
@@ -113,23 +119,44 @@ public static class EffectRecipe
             D = (float)Math.Clamp(e.Wind, 0, 5);
             every = (float)Math.Clamp(EffectKinds.Interval(e), 0.5, 120);
             ex = new Vector3(w / 2, 0, h / 2);
+            plume = e.Lingers && air is { } a && EffectKinds.Lingers(e.Kind) ? SmokeDrift.Of(e.Kind, w, e.Amount, a) : default;
+            this.air = air ?? new SmokeAir(SmokeDrift.DefaultWindStrength, 1 / SmokeDrift.UncalibratedMetresPerUnit);
+            wind = SmokeDrift.WindMetresPerSecond(this.air.WindStrength);
         }
 
-        const float BlastBrake = 0.12f, BlastPart = 0.15f;
+        const float BlastBrake = 0.12f, BlastPart = 0.15f, RideAfter = 0.08f;
         const int Linger = 2;
+        const float MostWidening = 8;
 
-        void AddLingering(EffectLayer smoke)
+        int Turns(EffectLayer smoke, int sections)
         {
-            (float, T)[] Stretched<T>((float at, T v)[] keys) => keys.Select(k => (k.at <= BlastPart ? k.at / Linger : k.at, k.v)).ToArray();
+            if (plume.Reach <= 0) return Linger;
+            int most = smoke.Fixed ? SmokeDrift.MostEmitters / Math.Max(1, sections) : SmokeDrift.MostParticles / Math.Max(1, smoke.Amount);
+            float ride = Mathf.Max(SmokeDrift.ScreenWind(air) * D, SmokeDrift.StillDrift);
+            return Math.Clamp((int)Math.Ceiling(plume.Reach / (ride * smoke.Life)), Linger, Math.Max(Linger, most));
+        }
+
+        void AddLingering(EffectLayer smoke, int sections = 1)
+        {
+            int turns = Turns(smoke, sections);
+            (float, T)[] Stretched<T>((float at, T v)[] keys) => keys.Select(k => (k.at <= BlastPart ? k.at / turns : k.at, k.v)).ToArray();
+            (float x, float y)[] Widened((float x, float y)[] keys)
+            {
+                if (plume.Reach <= 0) return keys;
+                var last = keys[^1];
+                float size = Mathf.Max(smoke.SMax * last.y, 0.01f);
+                float widen = Mathf.Clamp((size + plume.Spread) / size, 1, MostWidening);
+                return keys[..^1].Append((last.x, last.y * widen)).ToArray();
+            }
             EffectLayer Longer(float offset, int amount)
             {
                 var l = smoke.Copy();
-                l.Amount = amount; l.Offset = offset; l.Life = smoke.Life * Linger; l.Cycles = Linger; l.Brake = smoke.Brake / Linger;
-                l.Curve = Stretched(smoke.Curve); l.Ramp = Stretched(smoke.Ramp);
+                l.Amount = amount; l.Offset = offset; l.Life = smoke.Life * turns; l.Cycles = turns; l.Brake = smoke.Brake / turns;
+                l.Curve = Widened(Stretched(smoke.Curve)); l.Ramp = Stretched(smoke.Ramp); l.Reach = plume.Reach; l.Heat = SmokeHeat.Cold;
                 return l;
             }
-            if (!smoke.Fixed) { layers.Add(Longer(smoke.Offset, smoke.Amount * Linger)); return; }
-            for (int turn = 0; turn < Linger; turn++) layers.Add(Longer((smoke.Offset + turn) / Linger, smoke.Amount));
+            if (!smoke.Fixed) { layers.Add(Longer(smoke.Offset, smoke.Amount * turns)); return; }
+            for (int turn = 0; turn < turns; turn++) layers.Add(Longer((smoke.Offset + turn) / turns, smoke.Amount));
         }
 
         int N(float baseCount, bool line = true) => Math.Clamp((int)Math.Round(baseCount * A * (line ? k : 1)), 1, 900);
@@ -211,10 +238,10 @@ public static class EffectRecipe
         {
             AddLingering(new EffectLayer
             {
-                Sprite = "puff", Amount = N(22), Life = 7, Box = new Vector3(ex.X * 0.95f, 0.05f * s, ex.Z * 0.5f), At = new Vector3(0, 0.12f * s, 0),
-                Dir = new Vector3(0, 0.35f, -1).Normalized(), Spread = 28, VMin = 0.25f * s * H, VMax = 0.7f * s * H, Damp = 0.12f * s * H, Brake = 0.2f, Lift = 0.03f * s * H, Drift = 0.9f * D,
-                SMin = 0.55f * s * P, SMax = 0.95f * s * P, Curve = new[] { (0f, 0.3f), (0.15f, 0.85f), (1f, 2.1f) },
-                Ramp = new[] { (0f, Fade(c, 0)), (0.05f, Fade(c, 0.85f)), (0.5f, Fade(c.Lerp(Rgba.White, 0.1f), 0.5f)), (1f, Fade(c.Lerp(Rgba.White, 0.2f), 0)) },
+                Sprite = "puff", Amount = N(17), Life = 7, Box = new Vector3(ex.X * 0.95f, 0.14f * s, ex.Z * 0.6f), At = new Vector3(0, 0.2f * s, 0),
+                Dir = new Vector3(0, 0.55f, -1).Normalized(), Spread = 30, VMin = 0.25f * s * H, VMax = 0.7f * s * H, Damp = 0.12f * s * H, Brake = 0.2f, Lift = 0.06f * s * H, Drift = 0.9f * D,
+                SMin = 1.1f * s * P, SMax = 1.7f * s * P, Curve = new[] { (0f, 0.55f), (0.12f, 1f), (1f, 2.1f) },
+                Ramp = new[] { (0f, Fade(c, 0)), (0.05f, Fade(c, 0.9f)), (0.3f, Fade(c, 0.8f)), (0.65f, Fade(c.Lerp(Rgba.White, 0.1f), 0.45f)), (1f, Fade(c.Lerp(Rgba.White, 0.2f), 0)) },
             });
             layers.Add(MuzzleFlash(N(5), 1.1f, false, 0, new Vector3(ex.X * 0.95f, 0.02f, 0.05f), new Vector3(0, 0.12f * s, -ex.Z * 0.8f), 0.07f));
         }
@@ -230,26 +257,26 @@ public static class EffectRecipe
                 float off = rolling ? i / (float)sections * (musket ? 0.5f : 0.6f) : 0;
                 if (musket)
                 {
-                    AddLingering(new EffectLayer
+                    AddLingering(sections: sections, smoke: new EffectLayer
                     {
-                        Sprite = "puff", Amount = Math.Max(2, N(16) / sections), Fixed = true, Life = every, Explosive = 0.85f, Offset = off,
-                        Box = new Vector3(hw * 0.95f, 0.05f * s, ex.Z * 0.4f), At = new Vector3(xc, 0.12f * s, -ex.Z * 0.3f),
-                        Dir = new Vector3(0, 0.35f, -1).Normalized(), Spread = 25, VMin = 1.0f * s * H, VMax = 2.0f * s * H, Damp = 1.6f * s * H, Brake = BlastBrake, Lift = 0.04f * s * H, Drift = 0.9f * D,
-                        SMin = 0.55f * s * P, SMax = 0.95f * s * P, Curve = new[] { (0f, 0.3f), (0.06f, 0.85f), (1f, 2.2f) },
-                        Ramp = new[] { (0f, Fade(c, 0)), (0.02f, Fade(c, 0.9f)), (0.5f, Fade(c.Lerp(Rgba.White, 0.1f), 0.5f)), (1f, Fade(c.Lerp(Rgba.White, 0.2f), 0)) },
+                        Sprite = "puff", Amount = Math.Max(2, N(12) / sections), Fixed = true, Life = every, Explosive = 0.85f, Offset = off,
+                        Box = new Vector3(hw * 0.95f, 0.14f * s, ex.Z * 0.5f), At = new Vector3(xc, 0.2f * s, -ex.Z * 0.3f),
+                        Dir = new Vector3(0, 0.55f, -1).Normalized(), Spread = 30, VMin = 0.9f * s * H, VMax = 1.8f * s * H, Damp = 1.6f * s * H, Brake = BlastBrake, Lift = 0.08f * s * H, Drift = 0.9f * D,
+                        SMin = 1.1f * s * P, SMax = 1.7f * s * P, Curve = new[] { (0f, 0.55f), (0.05f, 1f), (1f, 2.2f) },
+                        Ramp = new[] { (0f, Fade(c, 0)), (0.02f, Fade(c, 0.95f)), (0.3f, Fade(c, 0.85f)), (0.65f, Fade(c.Lerp(Rgba.White, 0.1f), 0.45f)), (1f, Fade(c.Lerp(Rgba.White, 0.2f), 0)) },
                     });
                     layers.Add(MuzzleFlash(Math.Max(1, (int)Math.Round(hw * 2 / 0.45f)), every, true, off, new Vector3(hw * 0.95f, 0.02f, 0.02f), new Vector3(xc, 0.12f * s, -ex.Z * 0.8f), 0.08f / every));
                 }
                 else
                 {
                     if (e.Smoke)
-                        AddLingering(new EffectLayer
+                        AddLingering(sections: sections, smoke: new EffectLayer
                         {
-                            Sprite = "puff", Amount = Math.Max(3, N(14) / sections), Fixed = true, Life = every, Explosive = 0.92f, Offset = off,
-                            Box = new Vector3(hw, 0.05f * s, 0.1f * s), At = new Vector3(xc, 0.15f * s, -ex.Z * 0.7f),
-                            Dir = new Vector3(0, 0.2f, -1).Normalized(), Spread = 18, VMin = 2.6f * s * H, VMax = 4.2f * s * H, Damp = 3.6f * s * H, Brake = BlastBrake, Lift = 0.06f * s * H, Drift = 0.9f * D,
-                            SMin = 0.5f * s * P, SMax = 0.9f * s * P, Curve = new[] { (0f, 0.25f), (0.08f, 0.9f), (1f, 2.3f) },
-                            Ramp = new[] { (0f, Fade(c, 0)), (0.02f, Fade(c, 0.95f)), (0.45f, Fade(c, 0.55f)), (1f, Fade(c.Lerp(Rgba.White, 0.2f), 0)) },
+                            Sprite = "puff", Amount = Math.Max(3, N(12) / sections), Fixed = true, Life = every, Explosive = 0.92f, Offset = off,
+                            Box = new Vector3(hw, 0.12f * s, 0.12f * s), At = new Vector3(xc, 0.2f * s, -ex.Z * 0.7f),
+                            Dir = new Vector3(0, 0.35f, -1).Normalized(), Spread = 22, VMin = 2.6f * s * H, VMax = 4.2f * s * H, Damp = 3.6f * s * H, Brake = BlastBrake, Lift = 0.09f * s * H, Drift = 0.9f * D,
+                            SMin = 1.0f * s * P, SMax = 1.6f * s * P, Curve = new[] { (0f, 0.5f), (0.06f, 1f), (1f, 2.3f) },
+                            Ramp = new[] { (0f, Fade(c, 0)), (0.02f, Fade(c, 0.97f)), (0.3f, Fade(c, 0.85f)), (0.6f, Fade(c, 0.5f)), (1f, Fade(c.Lerp(Rgba.White, 0.2f), 0)) },
                         });
                     layers.Add(MuzzleFlash(sections > 1 ? 1 : N(2), every, true, off, new Vector3(hw, 0.02f, 0.02f), new Vector3(xc, 0.15f * s, -ex.Z * 0.85f), 0.12f / every, gun: true));
                 }
@@ -304,7 +331,7 @@ public static class EffectRecipe
             if (e.Smoke)
                 layers.Add(new EffectLayer
                 {
-                    Sprite = "puff", Amount = N(22), Life = 6f * Mathf.Sqrt(H), Box = new Vector3(ex.X * 0.5f, 0.1f * s, ex.Z * 0.5f), At = new Vector3(0, 0.65f * s * H, 0),
+                    Sprite = "puff", Heat = SmokeHeat.Hot, Amount = N(22), Life = 6f * Mathf.Sqrt(H), Box = new Vector3(ex.X * 0.5f, 0.1f * s, ex.Z * 0.5f), At = new Vector3(0, 0.65f * s * H, 0),
                     Spread = 14, VMin = 0.45f * s * H, VMax = 0.8f * s * H, Lift = 0.1f * s * H, Drift = 0.35f * D, SMin = 0.85f * s * P, SMax = 1.4f * s * P,
                     Curve = new[] { (0f, 0.45f), (1f, 2.6f) },
                     Ramp = new[] { (0f, Fade(c, 0)), (0.15f, Fade(c, 0.65f)), (0.65f, Fade(c.Lerp(Rgba.White, 0.25f), 0.32f)), (1f, Fade(c.Lerp(Rgba.White, 0.4f), 0)) },
@@ -421,7 +448,7 @@ public static class EffectRecipe
             if (e.Smoke)
                 layers.Add(new EffectLayer
                 {
-                    Sprite = "puff", Points = pts, Amount = Math.Min(2400, fires * 4), Fixed = true, Life = 5f * Mathf.Sqrt(H), At = new Vector3(0, 0.6f * fs, 0),
+                    Sprite = "puff", Heat = SmokeHeat.Hot, Points = pts, Amount = Math.Min(2400, fires * 4), Fixed = true, Life = 5f * Mathf.Sqrt(H), At = new Vector3(0, 0.6f * fs, 0),
                     Spread = 10, VMin = 0.9f * fs * H, VMax = 1.5f * fs * H, Lift = 0.1f * fs, Drift = 0.35f * D, SMin = 1.0f * fs, SMax = 1.7f * fs,
                     Curve = new[] { (0f, 0.5f), (1f, 3f) },
                     Ramp = new[] { (0f, Fade(c, 0)), (0.15f, Fade(c, 0.4f)), (0.65f, Fade(c.Lerp(Rgba.White, 0.25f), 0.2f)), (1f, Fade(c.Lerp(Rgba.White, 0.4f), 0)) },
@@ -611,7 +638,7 @@ public static class EffectRecipe
                     Ramp = new[] { (0f, new Rgba(1, 1, 0.9f, 1)), (lasts * 0.3f, new Rgba(1, 0.7f, 0.3f, 0.6f)), (lasts * 0.6f, new Rgba(1, 0.5f, 0.2f, 0)), (1f, new Rgba(1, 0.5f, 0.2f, 0)) },
                 });
                 if (e.Smoke)
-                    AddLingering(new EffectLayer
+                    AddLingering(sections: n, smoke: new EffectLayer
                     {
                         Sprite = "puff", Amount = 18, Fixed = true, Life = every, Explosive = 0.9f, Offset = off,
                         Box = new Vector3(0.25f * sb, 0.1f * sb, 0.15f * sb), At = muzzle + new Vector3(0, 0.1f * sb, -0.4f * sb),
@@ -642,7 +669,7 @@ public static class EffectRecipe
                 var col = c.Lerp(aged, 0.04f * age);
                 layers.Add(new EffectLayer
                 {
-                    Sprite = "puff", Amount = Math.Clamp((int)Math.Round((14 + 30 * seg / bw) * A), 3, 500), Fixed = true, Life = 10f * Mathf.Sqrt(H),
+                    Sprite = "puff", Heat = SmokeHeat.Cold, Amount = Math.Clamp((int)Math.Round((14 + 30 * seg / bw) * A), 3, 500), Fixed = true, Life = 10f * Mathf.Sqrt(H),
                     Box = new Vector3(ex.X * (0.45f + 0.35f * age), 0.05f * bw, seg), At = new Vector3(0, (0.25f + 0.45f * age) * bw * H, -ex.Z + seg * (2 * i + 1)),
                     Spread = 70, VMin = 0.02f * bw * H, VMax = 0.1f * bw * H, Lift = 0.012f * bw * H, Drift = 0.3f * D,
                     SMin = (0.7f + 0.6f * age) * bw * P, SMax = (1.1f + 0.9f * age) * bw * P, Spin = 8,
@@ -653,7 +680,7 @@ public static class EffectRecipe
             if (n > 1)
                 layers.Add(new EffectLayer
                 {
-                    Sprite = "puff", Amount = N(14, false), Life = 3.5f, Box = new Vector3(0.15f * bw, 0.05f * bw, 0.1f * bw), At = new Vector3(0, 0.2f * bw * H, -ex.Z + 0.1f * bw),
+                    Sprite = "puff", Heat = SmokeHeat.Cold, Amount = N(14, false), Life = 3.5f, Box = new Vector3(0.15f * bw, 0.05f * bw, 0.1f * bw), At = new Vector3(0, 0.2f * bw * H, -ex.Z + 0.1f * bw),
                     Dir = new Vector3(0, 0.35f, 1).Normalized(), Spread = 20, VMin = 0.25f * bw, VMax = 0.5f * bw, Damp = 0.1f * bw, Lift = 0.03f * bw * H, Drift = 0.3f * D,
                     SMin = 0.5f * bw * P, SMax = 0.8f * bw * P, Curve = new[] { (0f, 0.4f), (1f, 1.6f) },
                     Ramp = new[] { (0f, Fade(c, 0)), (0.08f, Fade(c, 0.95f)), (0.7f, Fade(c, 0.8f)), (1f, Fade(c, 0)) },
@@ -681,7 +708,7 @@ public static class EffectRecipe
             if (e.Smoke)
                 layers.Add(new EffectLayer
                 {
-                    Sprite = "puff", Amount = N(36), Life = 10f * rh, Box = new Vector3(ex.X * 0.65f, 0.15f * fs, ex.Z * 0.65f), At = new Vector3(0, 0.9f * fs, 0),
+                    Sprite = "puff", Heat = SmokeHeat.Hot, Amount = N(36), Life = 10f * rh, Box = new Vector3(ex.X * 0.65f, 0.15f * fs, ex.Z * 0.65f), At = new Vector3(0, 0.9f * fs, 0),
                     Spread = 10, VMin = 0.55f * fs * H, VMax = 0.95f * fs * H, Lift = 0.12f * fs * H, Drift = 0.45f * D,
                     SMin = 1.1f * fs * P, SMax = 1.8f * fs * P, Curve = new[] { (0f, 0.55f), (0.15f, 1f), (1f, 3.6f) },
                     Ramp = new[] { (0f, Fade(c.Lerp(lit, 0.6f), 0)), (0.03f, Fade(c.Lerp(lit, 0.45f), 0.9f)), (0.12f, Fade(c, 0.97f)), (0.6f, Fade(c.Lerp(aged, 0.05f), 0.8f)), (1f, Fade(c.Lerp(aged, 0.1f), 0)) },
@@ -732,7 +759,7 @@ public static class EffectRecipe
         {
             layers.Add(new EffectLayer
             {
-                Sprite = "puff", Amount = N(16 * Mathf.Sqrt(H)), Life = 5f * Mathf.Sqrt(H), Box = new Vector3(ex.X * 0.6f, 0.05f * s, ex.Z * 0.6f), At = new Vector3(0, 0.1f * s, 0),
+                Sprite = "puff", Heat = SmokeHeat.Hot, Amount = N(16 * Mathf.Sqrt(H)), Life = 5f * Mathf.Sqrt(H), Box = new Vector3(ex.X * 0.6f, 0.05f * s, ex.Z * 0.6f), At = new Vector3(0, 0.1f * s, 0),
                 Spread = 12, VMin = 0.35f * s * H, VMax = 0.6f * s * H, Lift = 0.05f * s * H, Drift = 0.35f * D, SMin = 0.6f * s * P, SMax = 1.0f * s * P,
                 Curve = new[] { (0f, 0.35f), (0.3f, 0.8f), (1f, 1.9f) },
                 Ramp = new[] { (0f, Fade(c, 0)), (0.12f, Fade(c, 0.6f)), (0.6f, Fade(c.Lerp(Rgba.White, 0.15f), 0.35f)), (1f, Fade(c.Lerp(Rgba.White, 0.3f), 0)) },
@@ -757,12 +784,32 @@ public static class EffectRecipe
             if (e.Smoke)
                 layers.Add(new EffectLayer
                 {
-                    Sprite = "puff", Amount = Cnt(12), Fixed = true, Life = cycle, Explosive = 0.85f, Offset = offset, Box = new Vector3(0.3f * sb, 0.1f * sb, 0.3f * sb), At = at + new Vector3(0, 0.3f * sb, 0),
+                    Sprite = "puff", Heat = SmokeHeat.Cold, Amount = Cnt(12), Fixed = true, Life = cycle, Explosive = 0.85f, Offset = offset, Box = new Vector3(0.3f * sb, 0.1f * sb, 0.3f * sb), At = at + new Vector3(0, 0.3f * sb, 0),
                     Spread = 45, VMin = 0.8f * sb * H, VMax = 1.6f * sb * H, Damp = 0.9f * sb * H, Lift = 0.12f * sb * H, Drift = 0.3f * D,
                     SMin = 0.6f * sb * P, SMax = 1.1f * sb * P, Curve = new[] { (0f, 0.3f), (0.12f, 1f), (1f, 2.2f) },
                     Ramp = new[] { (0f, Fade(c, 0)), (0.04f, Fade(c, 0.85f)), (0.55f, Fade(c.Lerp(Rgba.White, 0.2f), 0.4f)), (1f, Fade(c.Lerp(Rgba.White, 0.35f), 0)) },
                 });
         }
+
+        void Weather()
+        {
+            float thin = (float)SmokeDrift.ThinShare(wind), rise = (float)SmokeDrift.RiseShare(wind);
+            foreach (var l in layers.Where(l => l.Heat != SmokeHeat.None))
+            {
+                l.Drift = D;
+                if (l.Brake <= 0) l.Brake = RideAfter;
+                if (l.Heat == SmokeHeat.Hot)
+                {
+                    l.VMin *= rise; l.VMax *= rise; l.Lift *= rise;
+                    l.Rise = (l.VMin + l.VMax) / 2;
+                }
+                else if (l.Reach <= 0) l.Ramp = Thinned(l.Ramp, thin);
+            }
+        }
+
+        static (float at, Rgba c)[] Thinned((float at, Rgba c)[] ramp, float share) => share >= 1
+            ? ramp
+            : ramp.Select(k => (k.at * share, k.c)).Append((1f, ramp[^1].c with { A = 0 })).ToArray();
 
         public EffectPlan Finish(bool ownPicture)
         {
@@ -773,13 +820,15 @@ public static class EffectRecipe
                 first.Ramp = first.Ramp.Select(r => (r.at, Rgba.White with { A = r.c.A })).ToArray();
             }
 
+            Weather();
+
             plan.Span = Mathf.Max(w, h) / 2;
             plan.Rise = s * H;
             plan.TrailSpan = Mathf.Max(w, h);
             bool firing = EffectKinds.Fires(e);
             foreach (var l in layers)
             {
-                if (!l.Fixed) l.Amount = Math.Clamp(l.Amount, 1, 900);
+                if (!l.Fixed) l.Amount = Math.Clamp(l.Amount, 1, l.Reach > 0 ? SmokeDrift.MostParticles : 900);
                 if (firing && l.Explosive > 0) l.Start = ((phase / l.Cycles + l.Offset) % 1) * l.Life;
             }
 

@@ -121,6 +121,17 @@ internal sealed class EffectTab
             smoke.Toggled += on => Set(x => x.Smoke = on, rebuild: true);
             sg.AddChild(smoke);
         }
+        if (EffectKinds.Lingers(e.Kind))
+        {
+            sg.AddChild(new Label { Text = "" });
+            var lingers = new CheckBox
+            {
+                Text = "Smoke drifts as far as real smoke", ButtonPressed = e.Lingers,
+                TooltipText = $"Carried downwind as far as powder smoke goes in the scenario's wind, on the map's scale (or {SmokeDrift.UncalibratedMetresPerUnit:0} m to a unit before the map is calibrated)",
+            };
+            lingers.Toggled += on => Set(x => x.Lingers = on, rebuild: true);
+            sg.AddChild(lingers);
+        }
     }
 
     void ParticleSection(VBoxContainer page, EffectDef e)

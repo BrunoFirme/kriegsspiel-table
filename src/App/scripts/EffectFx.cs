@@ -23,12 +23,15 @@ public static class EffectFx
         public Aabb Seen;
         public StandardMaterial3D? Lit;
         public double Speed = 1;
+        public float Reach;
+        public SmokeHeat Heat;
+        public float Rise;
     }
 
     public static List<Emitter> Build(Node3D host, EffectDef e, float w, float h, float phase, Texture2D? own)
     {
         var c = ColorOf(e);
-        var plan = EffectRecipe.Plan(e, w, h, phase, new Rgba(c.R, c.G, c.B, c.A), own != null);
+        var plan = EffectRecipe.Plan(e, w, h, phase, new Rgba(c.R, c.G, c.B, c.A), own != null, SmokeAirNow);
         foreach (var l in plan.Lights) host.AddChild(Light(l));
         if (plan.Lamps is { } lamps)
         {
@@ -190,7 +193,7 @@ public static class EffectFx
         bool glows = l.Add || l.Glow || l.Sprite is "flame" or "flash" or "muzzle" or "spark";
         if (!glows) mat.AlbedoColor = ShadeNow;
         host.AddChild(em);
-        var made = new Emitter { Node = em, Lift = pm.Gravity, Drift = l.Drift, Lit = glows ? null : mat };
+        var made = new Emitter { Node = em, Lift = pm.Gravity, Drift = l.Drift, Lit = glows ? null : mat, Reach = l.Reach, Heat = l.Heat, Rise = l.Rise };
         if (l.Brake > 0)
         {
             made.Brake = l.Brake;
@@ -202,7 +205,17 @@ public static class EffectFx
         return made;
     }
 
-    static float DriftSpeed(Emitter m) => StillDrift + WindNow.Length() * m.Drift * WindCarrySeconds;
+    static float RideSpeed(Emitter m) => Mathf.Max(StillDrift, Mathf.Max(
+        SmokeDrift.ScreenWind(SmokeAirNow) * m.Drift,
+        m.Reach / Mathf.Max((float)m.Node.Lifetime * (1 - m.Brake), MinDriftSeconds)));
+
+    static float DriftSpeed(Emitter m) => m.Heat == SmokeHeat.None
+        ? StillDrift + WindNow.Length() * m.Drift * WindCarrySeconds
+        : new Vector2(RideSpeed(m), m.Rise).Length();
+
+    static Vector3 Pushed(Emitter m) => m.Heat == SmokeHeat.None
+        ? m.Lift + WindNow * m.Drift
+        : new Vector3(0, m.Heat == SmokeHeat.Hot ? m.Rise / CatchUpSeconds : m.Lift.Y, 0) + WindHeading * RideSpeed(m) / CatchUpSeconds;
 
     static void FollowWind(Emitter m, ParticleProcessMaterial pm)
     {
@@ -211,7 +224,7 @@ public static class EffectFx
         m.Node.VisibilityAabb = m.Seen.Grow(reach);
     }
 
-    const float WindCarrySeconds = 1.5f, StillDrift = 0.15f, BrakeEase = 0.08f;
+    const float WindCarrySeconds = 1.5f, StillDrift = SmokeDrift.StillDrift, BrakeEase = 0.08f, MinDriftSeconds = 0.5f, CatchUpSeconds = 1;
 
     static CurveTexture StepTex(float at, float before, float after)
     {
@@ -223,14 +236,40 @@ public static class EffectFx
 
     public static Vector3 WindNow { get; private set; } = Pull(new Wind());
 
+    public static Vector3 WindHeading { get; private set; } = Heading(new Wind());
+
+    static Wind _wind = new();
+    static Calibration? _scale;
+
+    public static SmokeAir SmokeAirNow { get; private set; } = SmokeAir.Of(new Wind(), null);
+
+    public static bool SetScale(Calibration c)
+    {
+        _scale = c;
+        return SteerAir();
+    }
+
+    static bool SteerAir()
+    {
+        var air = SmokeAir.Of(_wind, _scale);
+        if (air == SmokeAirNow) return false;
+        SmokeAirNow = air;
+        return true;
+    }
+
     const double TopWind = 5, TopWindFelt = 1.5;
 
     public static Vector3 Pull(Wind w)
     {
-        double to = (w.From + 180) * Math.PI / 180;
         double s = Math.Clamp(w.Strength, 0, TopWind);
         double felt = s * (1 + (TopWindFelt - 1) * s / TopWind);
-        return new Vector3((float)Math.Sin(to), 0, -(float)Math.Cos(to)) * (float)felt;
+        return Heading(w) * (float)felt;
+    }
+
+    static Vector3 Heading(Wind w)
+    {
+        double to = (w.From + 180) * Math.PI / 180;
+        return new Vector3((float)Math.Sin(to), 0, -(float)Math.Cos(to));
     }
 
     public static Color ShadeNow { get; private set; } = Colors.White;
@@ -252,9 +291,11 @@ public static class EffectFx
     public static bool SetWind(Wind w)
     {
         var v = Pull(w);
-        if (v.IsEqualApprox(WindNow)) return false;
-        WindNow = v;
-        return true;
+        var heading = Heading(w);
+        _wind = w.Clone();
+        bool changed = SteerAir() | !v.IsEqualApprox(WindNow) | !heading.IsEqualApprox(WindHeading);
+        WindNow = v; WindHeading = heading;
+        return changed;
     }
 
     public static void Steer(Node3D host, List<Emitter> emitters)
@@ -263,7 +304,7 @@ public static class EffectFx
         foreach (var m in emitters)
             if (GodotObject.IsInstanceValid(m.Node) && m.Node.ProcessMaterial is ParticleProcessMaterial pm)
             {
-                pm.Gravity = m.Lift + WindNow * m.Drift;
+                pm.Gravity = Pushed(m);
                 if (m.Brake > 0) FollowWind(m, pm);
             }
     }

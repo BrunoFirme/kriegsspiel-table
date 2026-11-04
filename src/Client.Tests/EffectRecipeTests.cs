@@ -197,10 +197,10 @@ public class EffectRecipeTests
     {
         var l = Plan(new EffectDef { Kind = "powder" }, w: 3, h: 1, phase: 0.37f).Layers[0];
         Assert.Equal("puff", l.Sprite);
-        Assert.Equal(132, l.Amount);
-        Assert.Equal(new Vector3(1.425f, 0.0866025403f, 0.25f), l.Box);
+        Assert.Equal(102, l.Amount);
+        Assert.Equal(new Vector3(1.425f, 0.242487103f, 0.3f), l.Box);
         Assert.Equal(1.21243548f, l.VMax);
-        Assert.Equal(new Rgba(0.55f, 0.55f, 0.55f, 0.5f), l.Ramp[2].c);
+        Assert.Equal(new Rgba(0.55f, 0.55f, 0.55f, 0.45f), l.Ramp[3].c);
     }
 
     [Theory]
@@ -238,5 +238,97 @@ public class EffectRecipeTests
     {
         Assert.False(EffectKinds.FromName("Burning farm").Smoke);
         Assert.True(EffectKinds.FromName("Smoking ruin").Smoke);
+    }
+
+    [Theory]
+    [InlineData("powder", null, true)]
+    [InlineData("powder", "together", true)]
+    [InlineData("powder", "rolling", false)]
+    [InlineData("cannon", "rolling", false)]
+    public void Lingering_smoke_lives_long_enough_to_carry_as_far_as_the_map_s_scale_says(string kind, string? volley, bool oneLine)
+    {
+        var air = new SmokeAir(1, 1 / SmokeDrift.UncalibratedMetresPerUnit);
+        var plume = SmokeDrift.Of(kind, 6, 1, air);
+        Assert.True(plume.Reach > 0);
+        var usual = Plan(new EffectDef { Kind = kind, Volley = volley }, 6, 0.6f).Layers.Where(l => l.Sprite == "puff").ToList();
+        var unticked = EffectRecipe.Plan(new EffectDef { Kind = kind, Volley = volley }, 6, 0.6f, 0.3f, Grey, false, air).Layers.Where(l => l.Sprite == "puff").ToList();
+        var lingering = EffectRecipe.Plan(new EffectDef { Kind = kind, Volley = volley, Lingers = true }, 6, 0.6f, 0.3f, Grey, false, air).Layers.Where(l => l.Sprite == "puff").ToList();
+        Assert.Equal(usual.Select(l => (l.Life, l.Amount, l.Cycles)), unticked.Select(l => (l.Life, l.Amount, l.Cycles)));
+        Assert.All(usual, l => Assert.Equal(0, l.Reach));
+        Assert.All(lingering, l => Assert.Equal(plume.Reach, l.Reach));
+        Assert.True(lingering.Max(l => l.Life) > usual.Max(l => l.Life));
+        Assert.All(lingering, l => Assert.InRange(l.Cycles, 2, SmokeDrift.MostEmitters));
+        Assert.True(lingering.Count(l => l.Fixed) <= SmokeDrift.MostEmitters + 8);
+        if (oneLine) Assert.All(lingering, l => Assert.True(l.Reach / (l.Life * (1 - l.Brake)) <= SmokeDrift.ScreenWind(air) * 1.25f, $"{l.Life} s, {l.Cycles} turns"));
+    }
+
+    [Fact]
+    public void Smoke_is_seen_furthest_in_a_light_breeze_and_cleared_by_a_strong_wind()
+    {
+        double At(double wind) => SmokeDrift.ReachMetres("powder", 170, 1, wind);
+        Assert.True(At(1) > At(2) && At(2) > At(4), $"{At(1):0} m, {At(2):0} m, {At(4):0} m");
+        Assert.Equal(SmokeDrift.WindMetresPerSecond(0) * SmokeDrift.FiringSeconds, At(0), 3);
+        Assert.InRange(SmokeDrift.WindMetresPerSecond(1), 1.5, 3.3);
+        Assert.InRange(SmokeDrift.WindMetresPerSecond(2), 5.5, 8.0);
+        Assert.InRange(SmokeDrift.WindMetresPerSecond(5), 13.9, 20.7);
+    }
+
+    [Fact]
+    public void More_fire_and_a_wider_front_carry_further()
+    {
+        Assert.True(SmokeDrift.ReachMetres("powder", 170, 2, 1) > SmokeDrift.ReachMetres("powder", 170, 1, 1));
+        Assert.True(SmokeDrift.ReachMetres("powder", 340, 1, 1) > SmokeDrift.ReachMetres("powder", 170, 1, 1));
+        Assert.Equal(0, SmokeDrift.ReachMetres("powder", 170, 0, 1));
+    }
+
+    [Fact]
+    public void The_same_ground_reaches_the_same_distance_on_any_map_scale()
+    {
+        var coarse = SmokeDrift.Of("powder", 6, 1, new SmokeAir(1, 1.0 / 30));
+        var fine = SmokeDrift.Of("powder", 12, 1, new SmokeAir(1, 1.0 / 15));
+        Assert.Equal(coarse.Reach * 2, fine.Reach, 3);
+        Assert.Equal(SmokeAir.Of(new Wind(), new Calibration()), SmokeAir.Of(new Wind(), null));
+        Assert.Equal(0.05, SmokeAir.Of(new Wind(), new Calibration { UnitsPerMeter = 0.05 }).UnitsPerMetre);
+    }
+    [Theory]
+    [InlineData("powder")]
+    [InlineData("cannon")]
+    [InlineData("burst")]
+    [InlineData("fire")]
+    [InlineData("oil")]
+    [InlineData("smoke")]
+    [InlineData("broadside")]
+    [InlineData("screen")]
+    public void Every_smoke_is_either_cold_or_hot(string kind)
+    {
+        var smoke = Plan(new EffectDef { Kind = kind }).Layers.Where(l => l.Sprite == "puff" && !l.Glow).ToList();
+        Assert.NotEmpty(smoke);
+        Assert.All(smoke, l => Assert.NotEqual(SmokeHeat.None, l.Heat));
+        Assert.All(smoke, l => Assert.True(l.Brake > 0, "rides the wind once thrown"));
+    }
+
+    [Fact]
+    public void Fire_smoke_rises_in_still_air_and_is_laid_flat_by_a_gale()
+    {
+        float Rise(double wind) => EffectRecipe.Plan(new EffectDef { Kind = "fire" }, 2, 2, 0.3f, Grey, false, new SmokeAir(wind, 1 / 30.0))
+            .Layers.Single(l => l.Heat == SmokeHeat.Hot).Rise;
+        Assert.True(Rise(0) > Rise(1) && Rise(1) > Rise(3) && Rise(3) > Rise(5));
+        Assert.True(Rise(5) < Rise(0) * 0.3f);
+    }
+
+    [Fact]
+    public void A_gale_tears_powder_smoke_away_sooner_than_a_light_breeze()
+    {
+        float Gone(double wind) => EffectRecipe.Plan(new EffectDef { Kind = "powder", Volley = "together" }, 6, 0.6f, 0.3f, Grey, false, new SmokeAir(wind, 1 / 30.0))
+            .Layers.Where(l => l.Heat == SmokeHeat.Cold).Max(l => l.Ramp.Where(k => k.c.A > 0.01f).Max(k => k.at));
+        Assert.True(Gone(5) < Gone(2) && Gone(2) < Gone(1));
+        Assert.Equal(Gone(0), Gone(1));
+    }
+
+    [Fact]
+    public void Smoke_rides_the_wind_faster_on_a_closer_map_scale()
+    {
+        Assert.Equal(2 * SmokeDrift.ScreenWind(new SmokeAir(1, 1 / 30.0)), SmokeDrift.ScreenWind(new SmokeAir(1, 1 / 15.0)), 4);
+        Assert.True(SmokeDrift.ScreenWind(new SmokeAir(5, 1 / 30.0)) > 5 * SmokeDrift.ScreenWind(new SmokeAir(1, 1 / 30.0)));
     }
 }

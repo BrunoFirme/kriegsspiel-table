@@ -134,7 +134,7 @@ public partial class Hud : CanvasLayer
             if (one.Actor == 0) one.Actor = c.Actor;
             if (one is RollDice rd) { Transcript.Rolled(rd); Dice.Rolled(rd); }
 
-            if (one is SetCalibration) { Strip.SyncCalibrateTip(); Map.Rebuild(); }
+            if (one is SetCalibration) { Strip.SyncCalibrateTip(); Map.Rebuild(); T.ApplyScale(S.View.Calibration); }
             if (one is SetZone or RemoveZone) Umpires.Rebuild();
             if (one is Draw or EraseStroke) Boards.Rebuild();
             if (one is AdvanceClock or SetClock or RestoreTurn or LoadSave && S.IsUmpire) N.RequestTurns();

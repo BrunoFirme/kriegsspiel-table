@@ -182,6 +182,7 @@ public sealed class EffectDef
     public string? Color { get; set; }
     public bool Light { get; set; } = true;
     public bool Smoke { get; set; } = true;
+    public bool Lingers { get; set; }
     public bool OwnPicture { get; set; }
     public List<double>? At { get; set; }
 

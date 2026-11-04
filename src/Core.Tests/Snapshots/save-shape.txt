@@ -1,4 +1,4 @@
-format 16
+format 17
 type AccessChanged object
   access: GameAccess
 type AddBoard object
@@ -260,6 +260,7 @@ type EffectDef object
   height: double
   kind: string
   light: bool
+  lingers: bool
   ownPicture: bool
   puff: double
   smoke: bool
