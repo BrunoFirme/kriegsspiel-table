@@ -441,11 +441,11 @@ public class TableToolsTests
     [Fact]
     public async Task A_backdrop_is_set_with_the_light_by_name_and_an_unknown_one_changes_nothing()
     {
-        Assert.False((await Call("set_light", new { backdrop = "beach" })).IsError);
-        Assert.Equal("beach", _s.View.Lighting.Backdrop);
+        Assert.False((await Call("set_light", new { backdrop = "island-beach" })).IsError);
+        Assert.Equal("island-beach", _s.View.Lighting.Backdrop);
         var refused = await Call("set_light", new { backdrop = "the moon", sun = 0.1 });
         Assert.True(refused.IsError);
-        Assert.Equal("beach", _s.View.Lighting.Backdrop);
+        Assert.Equal("island-beach", _s.View.Lighting.Backdrop);
         Assert.NotEqual(0.1, _s.View.Lighting.SunEnergy);
         await Call("set_light", new { backdrop = "none" });
         Assert.Equal(Backdrops.None, _s.View.Lighting.Backdrop);
@@ -458,7 +458,7 @@ public class TableToolsTests
         Assert.True(LightPresets.Same(LightPresets.Named(LightPresets.MoonlitNight)!, _s.View.Lighting));
         await Call("set_light", new { backdrop = "open-sky-day", sun = 0.9 });
         Assert.Equal(("open-sky-day", 0.9), (_s.View.Lighting.Backdrop, _s.View.Lighting.SunEnergy));
-        await Call("set_light", new { backdrop = "beach" });
+        await Call("set_light", new { backdrop = "island-beach" });
         Assert.Equal(0.9, _s.View.Lighting.SunEnergy);
     }
 
