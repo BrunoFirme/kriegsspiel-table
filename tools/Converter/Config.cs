@@ -78,7 +78,8 @@ public sealed class Config
         if (Directory.Exists(TtsModsPath)) return;
         if (TtsFolders.MostModules(TtsFolders.ModsFolders(TtsFolders.SteamRoot())) is { } found) TtsModsPath = found;
     }
-    public string Cache => Environment.ExpandEnvironmentVariables(CachePath.Length > 0 ? CachePath : @"%LOCALAPPDATA%\KriegsspielTable\cache\tts");
+    public string Cache => Environment.ExpandEnvironmentVariables(CachePath.Length > 0 ? CachePath : DefaultCache);
+    static string DefaultCache => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), DataPaths.Name, "cache", "tts");
     public string Output => OutputPath.Length > 0 ? Environment.ExpandEnvironmentVariables(OutputPath) : PackageStore.DefaultRoot;
 
     public static readonly JsonSerializerOptions Opts = new()

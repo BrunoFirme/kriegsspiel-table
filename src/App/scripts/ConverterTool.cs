@@ -24,29 +24,27 @@ public static class ConverterTool
     {
         if (System.Environment.GetEnvironmentVariable("KTABLE_CONVERTER") is { Length: > 0 } env && File.Exists(env)) return env;
         var exeDir = Path.GetDirectoryName(OS.GetExecutablePath()) ?? "";
-        var candidates = new List<string>
-        {
-            Path.Combine(exeDir, "converter", "Converter.exe"),
-            Path.Combine(exeDir, "converter", "Converter"),
-        };
+        var folders = new List<string> { Path.Combine(exeDir, "converter") };
         var projectDir = ProjectSettings.GlobalizePath("res://");
         for (var d = projectDir.Length > 0 ? new DirectoryInfo(projectDir) : null; d != null; d = d.Parent)
         {
-            candidates.Add(Path.Combine(d.FullName, "converter", "Converter.exe"));
+            folders.Add(Path.Combine(d.FullName, "converter"));
             foreach (var cfg in new[] { "Debug", "Release" })
             {
                 var bin = Path.Combine(d.FullName, "tools", "Converter", "bin", cfg);
                 if (!Directory.Exists(bin)) continue;
                 foreach (var tfm in Directory.EnumerateDirectories(bin, "net*").OrderByDescending(x => x, StringComparer.Ordinal))
                 {
-                    candidates.Add(Path.Combine(tfm, "win-x64", "Converter.exe"));
-                    candidates.Add(Path.Combine(tfm, "Converter.exe"));
-                    candidates.Add(Path.Combine(tfm, "Converter"));
+                    folders.Add(Path.Combine(tfm, RuntimeInformation.RuntimeIdentifier));
+                    folders.AddRange(Directory.EnumerateDirectories(tfm).Order(StringComparer.Ordinal));
+                    folders.Add(tfm);
                 }
             }
         }
-        return candidates.FirstOrDefault(File.Exists);
+        return folders.Select(f => Path.Combine(f, ExeName)).FirstOrDefault(File.Exists);
     }
+
+    static string ExeName => OperatingSystem.IsWindows() ? "Converter.exe" : "Converter";
 
     public static ConverterRun? Run(IEnumerable<string> args, Action<string> onLine, Action<int> onExit, string? writesTo = null, IDisposable? hold = null)
     {

@@ -1,6 +1,6 @@
 {
   "ttsModsPath": "",
-  "cachePath": "%LOCALAPPDATA%\\KriegsspielTable\\cache\\tts",
+  "cachePath": "",
   "outputPath": "",
   "steamHost": "https://steamusercontent-a.akamaihd.net/",
   "maxParallelDownloads": 4,
