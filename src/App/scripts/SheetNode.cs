@@ -138,7 +138,7 @@ public partial class SheetNode : Node3D
     public void Reground()
     {
         var grid = _relief.Grid(Def);
-        _surface.Build(Def, grid ?? Bare, _relief.Ground, Transform, (TopZ + 1 - Def.Z) * ZStep, Covered == null ? null : corners => Covered(this, corners), _mat);
+        _surface.Build(Def, grid ?? Bare, _relief.Ground, Transform, Covered == null ? null : corners => Covered(this, corners), _mat);
         RefreshOutline();
     }
 

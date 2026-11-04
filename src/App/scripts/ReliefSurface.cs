@@ -29,9 +29,10 @@ public partial class ReliefSurface : Node3D
         return p;
     }
 
-    public void Build(SheetDef def, ReliefGrid grid, Ground ground, Transform3D sheetXf, float paintLift, Func<Vector3[], bool>? covered, Material? picture)
+    public void Build(SheetDef def, ReliefGrid grid, Ground ground, Transform3D sheetXf, Func<Vector3[], bool>? covered, Material? picture)
     {
         Clear();
+        float level = -sheetXf.Origin.Y;
         var c = def.Crop ?? SheetGeometry.Whole;
         float W = (float)def.Size.W, H = (float)def.Size.H;
         float x0 = -W / 2, x1 = W / 2, z0 = -H / 2, z1 = H / 2;
@@ -53,14 +54,14 @@ public partial class ReliefSurface : Node3D
                 var uv1 = new Vector2((float)(c.X + c.W * ex / nx), (float)(c.Y + c.H * ez / nz));
                 var box = new Rect2(ax, az, bxw - ax, bzw - az);
                 var corners = new[] { sheetXf * new Vector3(ax, 0, az), sheetXf * new Vector3(bxw, 0, az), sheetXf * new Vector3(bxw, 0, bzw), sheetXf * new Vector3(ax, 0, bzw) };
-                if (_base != null && covered?.Invoke(corners) != true) Add(GroundMesh.Grid(h, ax, az, bxw, bzw, ex - bx, ez - bz, uv0, uv1), _base, box, false, 0);
-                if (_paint != null) Add(GroundMesh.Grid(h, ax, az, bxw, bzw, ex - bx, ez - bz, uv0, uv1), _paint, box, true, paintLift + PaintAbove);
+                if (_base != null && covered?.Invoke(corners) != true) Add(GroundMesh.Grid(h, ax, az, bxw, bzw, ex - bx, ez - bz, uv0, uv1), _base, box, false, level);
+                if (_paint != null) Add(GroundMesh.Grid(h, ax, az, bxw, bzw, ex - bx, ez - bz, uv0, uv1), _paint, box, true, level + PaintAbove);
             }
         _skirt = new MeshInstance3D
         {
-            Mesh = GroundMesh.Skirt(h, x0, z0, x1, z1, nx, nz, -sheetXf.Origin.Y, (x, z) => ground.ReliefAt(Coords.FromWorld(sheetXf * new Vector3(x, 0, z))) == null, Math.Min(W, H) * SeamProbe),
+            Mesh = GroundMesh.Skirt(h, x0, z0, x1, z1, nx, nz, 0, (x, z) => ground.ReliefAt(Coords.FromWorld(sheetXf * new Vector3(x, 0, z))) == null, Math.Min(W, H) * SeamProbe),
             MaterialOverride = new StandardMaterial3D { AlbedoColor = Earth, Roughness = 1, CullMode = BaseMaterial3D.CullModeEnum.Disabled, SpecularMode = BaseMaterial3D.SpecularModeEnum.Disabled },
-            CastShadow = GeometryInstance3D.ShadowCastingSetting.Off,
+            CastShadow = GeometryInstance3D.ShadowCastingSetting.Off, Position = new Vector3(0, level, 0),
         };
         AddChild(_skirt);
     }
