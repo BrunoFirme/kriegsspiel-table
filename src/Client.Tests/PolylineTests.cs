@@ -39,7 +39,8 @@ public class PolylineTests
     [Fact]
     public void Shapes_are_polylines_and_an_arrow_has_its_head_apart()
     {
-        var a = new Vec2(0, 0); var b = new Vec2(4, 2);
+        var a = new Vec2(0, 0);
+        var b = new Vec2(4, 2);
         var rect = Polyline.ShapePoints("rect", a, b);
         Assert.Equal(5, rect.Count);
         Assert.Equal(rect[0], rect[^1]);
@@ -57,10 +58,12 @@ public class PolylineTests
     [Fact]
     public void A_rectangle_and_an_ellipse_lie_along_the_views_axes_when_the_view_is_turned()
     {
-        var a = new Vec2(0, 0); var b = new Vec2(4, 2);
+        var a = new Vec2(0, 0);
+        var b = new Vec2(4, 2);
         Assert.Equal(Polyline.ShapePoints("rect", a, b), Polyline.ShapePoints("rect", a, b, new Vec2(3, 0)));
         var across = new Vec2(1, 1);
-        var u = new Vec2(Math.Sqrt(0.5), Math.Sqrt(0.5)); var v = new Vec2(-u.Z, u.X);
+        var u = new Vec2(Math.Sqrt(0.5), Math.Sqrt(0.5));
+        var v = new Vec2(-u.Z, u.X);
         static double Dot(Vec2 p, Vec2 q) => p.X * q.X + p.Z * q.Z;
         var rect = Polyline.ShapePoints("rect", a, b, across);
         Assert.Equal(new[] { a, b, a }, new[] { rect[0], rect[2], rect[4] });

@@ -20,11 +20,17 @@ sealed partial class ScenarioDialog : HudPart
     {
         _dlg = new AcceptDialog { Title = $"Scenario · {S.View.Name}", OkButtonText = "Done" };
         var pages = new DialogPages("scenario", new Vector2(620, 420));
-        _box = pages.Add("Game"); AddHead();
-        _box = pages.Add("Briefing"); AddBriefing();
-        _box = pages.Add("Map"); AddDistances(); AddGrid();
-        _box = _lookBox = pages.Add("Light & surroundings"); AddLighting();
-        _box = pages.Add("Wind"); AddWind();
+        _box = pages.Add("Game");
+        AddHead();
+        _box = pages.Add("Briefing");
+        AddBriefing();
+        _box = pages.Add("Map");
+        AddDistances();
+        AddGrid();
+        _box = _lookBox = pages.Add("Light & surroundings");
+        AddLighting();
+        _box = pages.Add("Wind");
+        AddWind();
         pages.ShowFirst();
         _dlg.AddChild(pages.Root);
         Ui.Open(HudNode, _dlg, new Vector2I(660, 500));
@@ -36,7 +42,8 @@ sealed partial class ScenarioDialog : HudPart
         var r = new HBoxContainer();
         r.AddThemeConstantOverride("separation", 10);
         r.AddChild(new Label { Text = name, CustomMinimumSize = new Vector2(InviteDialog.NameWidth, 0), SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, Modulate = new Color(1, 1, 1, 0.74f) });
-        r.AddChild(new Label { Text = value, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, ClipText = true, TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis });
+        r.AddChild(new Label { Text = value, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, ClipText = true,
+            TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis });
         if (change != null) { change.SizeFlagsVertical = Control.SizeFlags.ShrinkCenter; r.AddChild(change); }
         return r;
     }
@@ -140,10 +147,15 @@ sealed partial class ScenarioDialog : HudPart
         lg.AddChild(new Label { Text = label });
         var row = new HBoxContainer();
         row.AddThemeConstantOverride("separation", 8);
-        var sl = new HSlider { MinValue = min, MaxValue = max, Step = step, Value = v, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, CustomMinimumSize = new Vector2(170, 0) };
-        var read = new Label { Text = say(v), CustomMinimumSize = new Vector2(58, 0), HorizontalAlignment = HorizontalAlignment.Right, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, Modulate = new Color(1, 1, 1, 0.75f) };
+        var sl =
+            new HSlider { MinValue = min, MaxValue = max, Step = step, Value = v, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
+                CustomMinimumSize = new Vector2(170, 0) };
+        var read =
+            new Label { Text = say(v), CustomMinimumSize = new Vector2(58, 0), HorizontalAlignment = HorizontalAlignment.Right, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
+                Modulate = new Color(1, 1, 1, 0.75f) };
         sl.ValueChanged += x => read.Text = say(x);
-        row.AddChild(sl); row.AddChild(read);
+        row.AddChild(sl);
+        row.AddChild(read);
         lg.AddChild(row);
         return sl;
     }
@@ -154,7 +166,8 @@ sealed partial class ScenarioDialog : HudPart
         var l0 = new Lighting { SunEnergy = cur.SunEnergy, Ambient = cur.Ambient, Warmth = cur.Warmth, Shadows = cur.Shadows, FromClock = cur.FromClock, TableShade = cur.TableShade };
         var presets = LightPresets.All;
         var pick = new OptionButton();
-        pick.AddItem("Custom"); foreach (var (name, _) in presets) pick.AddItem(name);
+        pick.AddItem("Custom");
+        foreach (var (name, _) in presets) pick.AddItem(name);
         for (int i = 0; i < presets.Count; i++) if (LightPresets.Same(presets[i].Light, l0)) pick.Selected = i + 1;
         var lg = Ui.Form(84);
         static string Percent(double v) => $"{v * 100:0}%";
@@ -171,25 +184,46 @@ sealed partial class ScenarioDialog : HudPart
             Text = "Follow the game clock", ButtonPressed = l0.FromClock,
             TooltipText = "The game's hour sets the light: dark before dawn, warm and low at sunrise and sunset, white at midday.",
         };
-        Lighting ReadLight() => new() { SunEnergy = sun.Value, Ambient = amb.Value, Warmth = warm.Value, Shadows = shadows.ButtonPressed, FromClock = byClock.ButtonPressed, TableShade = S.View.Lighting.TableShade, Backdrop = S.View.Lighting.Backdrop, MapStyle = S.View.Lighting.MapStyle, Contours = S.View.Lighting.Contours };
-        void PreviewLight() { if (sync) return; var l = ReadLight(); T.ApplyLighting(l.FromClock ? DayLight.At(S.View.Clock, l) : l); }
+        Lighting ReadLight() =>
+            new() { SunEnergy = sun.Value, Ambient = amb.Value, Warmth = warm.Value, Shadows = shadows.ButtonPressed, FromClock = byClock.ButtonPressed, TableShade = S.View.Lighting.TableShade,
+                Backdrop = S.View.Lighting.Backdrop, MapStyle = S.View.Lighting.MapStyle, Contours = S.View.Lighting.Contours };
+        void PreviewLight()
+        {
+            if (sync) return;
+            var l = ReadLight();
+            T.ApplyLighting(l.FromClock ? DayLight.At(S.View.Clock, l) : l);
+        }
         void SendLight() { if (sync) return; S.Do(new SetLighting { Lighting = ReadLight() }); }
         foreach (var sl in new[] { sun, amb, warm })
         {
             bool dragging = false;
             sl.DragStarted += () => dragging = true;
-            sl.ValueChanged += _ => { if (!sync) pick.Selected = 0; PreviewLight(); if (!dragging) SendLight(); };
+            sl.ValueChanged += _ =>
+            {
+                if (!sync) pick.Selected = 0;
+                PreviewLight();
+                if (!dragging) SendLight();
+            };
             sl.DragEnded += _ => { dragging = false; SendLight(); };
         }
-        shadows.Toggled += _ => { if (!sync) pick.Selected = 0; PreviewLight(); SendLight(); };
+        shadows.Toggled += _ =>
+        {
+            if (!sync) pick.Selected = 0;
+            PreviewLight();
+            SendLight();
+        };
         pick.ItemSelected += i =>
         {
             if (i == 0) return;
             var p = presets[(int)i - 1].Light;
             sync = true;
-            sun.Value = p.SunEnergy; amb.Value = p.Ambient; warm.Value = p.Warmth; shadows.ButtonPressed = p.Shadows;
+            sun.Value = p.SunEnergy;
+            amb.Value = p.Ambient;
+            warm.Value = p.Warmth;
+            shadows.ButtonPressed = p.Shadows;
             sync = false;
-            PreviewLight(); SendLight();
+            PreviewLight();
+            SendLight();
         };
         var clockHint = Hint("");
         var manual = new VBoxContainer();
@@ -207,7 +241,12 @@ sealed partial class ScenarioDialog : HudPart
             clockHint.Visible = on;
             clockHint.Text = $"{Fmt.Clock(S.View.Clock)}: {DayLight.Describe(S.View.Clock)}. The light moves on as turns end; the light set by hand comes back when this is off.";
         }
-        byClock.Toggled += _ => { ShowClockState(); PreviewLight(); SendLight(); };
+        byClock.Toggled += _ =>
+        {
+            ShowClockState();
+            PreviewLight();
+            SendLight();
+        };
         ShowClockState();
         _box.AddChild(Header("Source"));
         _box.AddChild(byClock);
@@ -242,7 +281,12 @@ sealed partial class ScenarioDialog : HudPart
         row.AddThemeConstantOverride("separation", 8);
         row.AddChild(new Control { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill });
         Action keep = () => { };
-        row.AddChild(Btn("Read it…", () => { keep(); _dlg.Hide(); BriefingWindow.Open(HudNode, S); }, "The briefing in a window of its own, with find"));
+        row.AddChild(Btn("Read it…", () =>
+        {
+            keep();
+            _dlg.Hide();
+            BriefingWindow.Open(HudNode, S);
+        }, "The briefing in a window of its own, with find"));
         if (S.IsLead)
         {
             void Keep() { var t = text.Text.Trim().Length == 0 ? null : text.Text; if (t != S.View.Briefing) S.Do(new SetBriefing { Text = t }); }
@@ -270,7 +314,9 @@ sealed partial class ScenarioDialog : HudPart
         wf.AddChild(new Label { Text = "Strength" });
         var strRow = new HBoxContainer();
         strRow.AddThemeConstantOverride("separation", 8);
-        var strength = new HSlider { MinValue = 0, MaxValue = 5, Step = 0.25, Value = w0.Strength, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, CustomMinimumSize = new Vector2(120, 0) };
+        var strength =
+            new HSlider { MinValue = 0, MaxValue = 5, Step = 0.25, Value = w0.Strength, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
+                CustomMinimumSize = new Vector2(120, 0) };
         strRow.AddChild(strength);
         wf.AddChild(strRow);
         Ui.AlignForm(wf);
@@ -290,8 +336,21 @@ sealed partial class ScenarioDialog : HudPart
             T.ApplyWind(w);
         }
         void SendWind() { if (windSync) return; S.Do(new SetWind { Wind = ReadWind() }); }
-        rose.Turned += (deg, final) => { windSync = true; fromBox.Value = Math.Round(deg) % 360; windSync = false; ShowWind(); if (final) SendWind(); };
-        fromBox.ValueChanged += v => { if (windSync) return; rose.From = v; ShowWind(); SendWind(); };
+        rose.Turned += (deg, final) =>
+        {
+            windSync = true;
+            fromBox.Value = Math.Round(deg) % 360;
+            windSync = false;
+            ShowWind();
+            if (final) SendWind();
+        };
+        fromBox.ValueChanged += v =>
+        {
+            if (windSync) return;
+            rose.From = v;
+            ShowWind();
+            SendWind();
+        };
         bool windDrag = false;
         strength.DragStarted += () => windDrag = true;
         strength.ValueChanged += _ => { ShowWind(); if (!windDrag) SendWind(); };

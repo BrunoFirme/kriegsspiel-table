@@ -17,11 +17,21 @@ internal static class LuaJson
     {
         switch (v.Type)
         {
-            case DataType.Table: WriteJsonTable(sb, v.Table, depth); break;
-            case DataType.String: sb.Append(System.Text.Json.JsonSerializer.Serialize(v.String)); break;
-            case DataType.Number: sb.Append(v.Number.ToString("R", CultureInfo.InvariantCulture)); break;
-            case DataType.Boolean: sb.Append(v.Boolean ? "true" : "false"); break;
-            default: sb.Append("null"); break;
+            case DataType.Table:
+                WriteJsonTable(sb, v.Table, depth);
+                break;
+            case DataType.String:
+                sb.Append(System.Text.Json.JsonSerializer.Serialize(v.String));
+                break;
+            case DataType.Number:
+                sb.Append(v.Number.ToString("R", CultureInfo.InvariantCulture));
+                break;
+            case DataType.Boolean:
+                sb.Append(v.Boolean ? "true" : "false");
+                break;
+            default:
+                sb.Append("null");
+                break;
         }
     }
 
@@ -61,7 +71,8 @@ internal static class LuaJson
         if (string.IsNullOrWhiteSpace(text)) return DynValue.Nil;
         try
         {
-            using var doc = System.Text.Json.JsonDocument.Parse(text, new System.Text.Json.JsonDocumentOptions { AllowTrailingCommas = true, CommentHandling = System.Text.Json.JsonCommentHandling.Skip });
+            using var doc =
+                System.Text.Json.JsonDocument.Parse(text, new System.Text.Json.JsonDocumentOptions { AllowTrailingCommas = true, CommentHandling = System.Text.Json.JsonCommentHandling.Skip });
             return FromJson(vm, doc.RootElement);
         }
         catch (System.Text.Json.JsonException e) { throw new ScriptRuntimeException("json.decode: " + e.Message); }
@@ -81,7 +92,12 @@ internal static class LuaJson
             {
                 var t = new Table(vm);
                 int i = 1;
-                foreach (var item in e.EnumerateArray()) { var v = FromJson(vm, item); if (!v.IsNil()) t[i] = v; i++; }
+                foreach (var item in e.EnumerateArray())
+                {
+                    var v = FromJson(vm, item);
+                    if (!v.IsNil()) t[i] = v;
+                    i++;
+                }
                 return DynValue.NewTable(t);
             }
             case System.Text.Json.JsonValueKind.String: return DynValue.NewString(e.GetString() ?? "");

@@ -17,8 +17,14 @@ public static class Progress
         lock (Gate)
         {
             Say();
-            _stage = stage; _total = total; _bytesTotal = bytesTotal; _item = ""; _said = "";
-            Interlocked.Exchange(ref _done, 0); Interlocked.Exchange(ref _failed, 0); Interlocked.Exchange(ref _bytes, 0);
+            _stage = stage;
+            _total = total;
+            _bytesTotal = bytesTotal;
+            _item = "";
+            _said = "";
+            Interlocked.Exchange(ref _done, 0);
+            Interlocked.Exchange(ref _failed, 0);
+            Interlocked.Exchange(ref _bytes, 0);
             Console.WriteLine($"STAGE {stage} {total}");
             _ticker ??= new Timer(_ => KTable.Core.BestEffort.Try(Tick), null, Every, Every);
         }

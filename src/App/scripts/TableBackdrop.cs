@@ -20,7 +20,8 @@ sealed class TableBackdrop
 
     public TableBackdrop(TableContext c, Godot.Environment env)
     {
-        _c = c; _env = env;
+        _c = c;
+        _env = env;
         _env.Sky = new Sky { SkyMaterial = _sky };
         ShowColour(Plain);
     }
@@ -79,7 +80,12 @@ sealed class TableBackdrop
     void Arrived(int generation, Image? packed, string path)
     {
         if (generation != _generation) { packed?.Dispose(); return; }
-        if (packed == null) { GD.PrintErr("[backdrop] no picture in " + path); ShowColour(Plain); return; }
+        if (packed == null)
+        {
+            GD.PrintErr("[backdrop] no picture in " + path);
+            ShowColour(Plain);
+            return;
+        }
         _sky.SetShaderParameter("panorama", ImageTexture.CreateFromImage(packed));
         packed.Dispose();
         _env.BackgroundMode = Godot.Environment.BGMode.Sky;

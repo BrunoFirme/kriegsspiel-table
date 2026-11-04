@@ -28,7 +28,13 @@ internal sealed class ModelCamera
 
     public void Frame(List<Aabb> aabbs)
     {
-        if (aabbs.Count == 0) { Target = new Vector3(0, 0.5f, 0); Dist = 6; Apply(); return; }
+        if (aabbs.Count == 0)
+        {
+            Target = new Vector3(0, 0.5f, 0);
+            Dist = 6;
+            Apply();
+            return;
+        }
         var b = aabbs[0];
         foreach (var a in aabbs) b = b.Merge(a);
         Target = b.GetCenter();
@@ -70,14 +76,25 @@ internal sealed class ModelTools
                 break;
             case InputEventMouseButton mb:
                 vc.GrabFocus();
-                if (mb.ButtonIndex == MouseButton.Right || (mb.ButtonIndex == MouseButton.Left && _m.Tool == "orbit")) { _orbiting = mb.Pressed; _last = mb.Position; if (mb.Pressed && mb.ButtonIndex == MouseButton.Left) _clickAt = mb.Position; else if (!mb.Pressed && mb.ButtonIndex == MouseButton.Left && (mb.Position - _clickAt).Length() < 4) PickPart(mb.Position); }
+                if (mb.ButtonIndex == MouseButton.Right || (mb.ButtonIndex == MouseButton.Left && _m.Tool == "orbit"))
+                {
+                    _orbiting = mb.Pressed;
+                    _last = mb.Position;
+                    if (mb.Pressed && mb.ButtonIndex == MouseButton.Left) _clickAt = mb.Position;
+                    else if (!mb.Pressed && mb.ButtonIndex == MouseButton.Left && (mb.Position - _clickAt).Length() < 4) PickPart(mb.Position);
+                }
                 else if (mb.ButtonIndex == MouseButton.Middle) { _panning = mb.Pressed; _last = mb.Position; }
                 else if (mb.ButtonIndex == MouseButton.Left) LeftButton(mb);
                 vc.AcceptEvent();
                 break;
             case InputEventMouseMotion mm:
                 Hover = mm.Position;
-                if (_orbiting) { Camera.Yaw -= mm.Relative.X * 0.008f; Camera.Pitch -= mm.Relative.Y * 0.008f; Camera.Apply(); }
+                if (_orbiting)
+                {
+                    Camera.Yaw -= mm.Relative.X * 0.008f;
+                    Camera.Pitch -= mm.Relative.Y * 0.008f;
+                    Camera.Apply();
+                }
                 else if (_panning)
                 {
                     float k = Camera.Dist * 0.0016f;
@@ -100,7 +117,14 @@ internal sealed class ModelTools
         if (!mb.Pressed)
         {
             if (_painting) { _painting = false; _m.EndStroke(); }
-            if (_moving) { _moving = false; _axis = -1; _m.Changed(mesh: true); _m.Studio.RebuildModelPanels(); _m.RedrawOverlay(); }
+            if (_moving)
+            {
+                _moving = false;
+                _axis = -1;
+                _m.Changed(mesh: true);
+                _m.Studio.RebuildModelPanels();
+                _m.RedrawOverlay();
+            }
             return;
         }
         var hit = Ray(mb.Position);
@@ -130,7 +154,10 @@ internal sealed class ModelTools
                 if (AxisAt(mb.Position) is var axis and >= 0 && Gizmo() is { } g && AxisParam(mb.Position, g.centre, g.axes[axis].Normalized()) is { } from)
                 {
                     _m.Snapshot();
-                    _axis = axis; _axisFrom = from; _axisCentre = g.centre; _axisDir = g.axes[axis].Normalized();
+                    _axis = axis;
+                    _axisFrom = from;
+                    _axisCentre = g.centre;
+                    _axisDir = g.axes[axis].Normalized();
                     _axisScale = Mathf.Max(1e-6f, _m.Stand.Basis[axis].Length());
                     _movePos = _m.SelPart!.Pos.ToArray();
                     _moving = true;
@@ -150,7 +177,12 @@ internal sealed class ModelTools
 
     void PickPart(Vector2 at)
     {
-        if (Ray(at) is { } h) { _m.SelPartId = h.part; _m.RefreshSelection(); _m.Studio.RebuildModelPanels(); }
+        if (Ray(at) is { } h)
+        {
+            _m.SelPartId = h.part;
+            _m.RefreshSelection();
+            _m.Studio.RebuildModelPanels();
+        }
     }
 
     (Vector3 centre, Vector3[] axes)? Gizmo()
@@ -179,7 +211,8 @@ internal sealed class ModelTools
 
     float? AxisParam(Vector2 at, Vector3 centre, Vector3 dir)
     {
-        var o = _m.Cam.ProjectRayOrigin(at); var d = _m.Cam.ProjectRayNormal(at);
+        var o = _m.Cam.ProjectRayOrigin(at);
+        var d = _m.Cam.ProjectRayNormal(at);
         float b = dir.Dot(d), denom = 1 - b * b;
         if (denom < 1e-4f) return null;
         var w = centre - o;
@@ -218,7 +251,8 @@ internal sealed class ModelTools
     {
         if (_m.SelPart is not { } p || _movePos == null) return;
         var cam = _m.Cam;
-        var o = cam.ProjectRayOrigin(at); var d = cam.ProjectRayNormal(at);
+        var o = cam.ProjectRayOrigin(at);
+        var d = cam.ProjectRayNormal(at);
         Vector3 now;
         if (vertical)
         {
@@ -240,7 +274,8 @@ internal sealed class ModelTools
 
     public (string part, int tri, Vector3 local, Vector3 world, float u, float v)? Ray(Vector2 at)
     {
-        var o = _m.Cam.ProjectRayOrigin(at); var dir = _m.Cam.ProjectRayNormal(at);
+        var o = _m.Cam.ProjectRayOrigin(at);
+        var dir = _m.Cam.ProjectRayNormal(at);
         (string, int, Vector3, Vector3, float, float)? best = null;
         float bestT = float.MaxValue;
         foreach (var v in _m.Views.Values)
@@ -248,11 +283,14 @@ internal sealed class ModelTools
             if (!v.Part.Visible) continue;
             var xf = (_m.Stand.Transform * v.Part.Xf());
             var inv = xf.AffineInverse();
-            var lo = inv * o; var ld = (inv.Basis * dir);
+            var lo = inv * o;
+            var ld = (inv.Basis * dir);
             var V = v.Data.V;
             for (int t = 0; t < v.Data.Tris; t++)
             {
-                var a = V[t * 3]; var e1 = V[t * 3 + 1] - a; var e2 = V[t * 3 + 2] - a;
+                var a = V[t * 3];
+                var e1 = V[t * 3 + 1] - a;
+                var e2 = V[t * 3 + 2] - a;
                 var pv = ld.Cross(e2);
                 float det = e1.Dot(pv);
                 if (Mathf.Abs(det) < 1e-12f) continue;
@@ -312,15 +350,20 @@ internal sealed class ModelTools
 
     static bool Dab(ModelPartView v, int hitTri, Vector3 centre, float r, Vector3 camLocal, bool erase, Color ink)
     {
-        var V = v.Data.V; var UV = v.Data.UV;
+        var V = v.Data.V;
+        var UV = v.Data.UV;
         bool any = false;
         for (int t = 0; t < v.Data.Tris; t++)
         {
             if ((v.Centre[t] - centre).LengthSquared() > (r + v.Radius[t]) * (r + v.Radius[t])) continue;
-            var a = V[t * 3]; var b = V[t * 3 + 1]; var c = V[t * 3 + 2];
+            var a = V[t * 3];
+            var b = V[t * 3 + 1];
+            var c = V[t * 3 + 2];
             var n = (c - a).Cross(b - a);
             if (n.Dot(camLocal - a) < 0 && t != hitTri) continue;
-            var ta = UV[t * 3] * new Vector2(v.W, v.H); var tb = UV[t * 3 + 1] * new Vector2(v.W, v.H); var tc = UV[t * 3 + 2] * new Vector2(v.W, v.H);
+            var ta = UV[t * 3] * new Vector2(v.W, v.H);
+            var tb = UV[t * 3 + 1] * new Vector2(v.W, v.H);
+            var tc = UV[t * 3 + 2] * new Vector2(v.W, v.H);
             ModelImport.Raster(ta, tb, tc, Math.Max(v.W, v.H), Reach(a, b, c, ta, tb, tc, centre, r), (x, y, w0, w1, w2) =>
             {
                 if (x >= v.W || y >= v.H) return;
@@ -333,7 +376,10 @@ internal sealed class ModelTools
                 if (erase)
                 {
                     float k = 1 - f;
-                    v.Paint[o] = (byte)(v.Paint[o] * k); v.Paint[o + 1] = (byte)(v.Paint[o + 1] * k); v.Paint[o + 2] = (byte)(v.Paint[o + 2] * k); v.Paint[o + 3] = (byte)(v.Paint[o + 3] * k);
+                    v.Paint[o] = (byte)(v.Paint[o] * k);
+                    v.Paint[o + 1] = (byte)(v.Paint[o + 1] * k);
+                    v.Paint[o + 2] = (byte)(v.Paint[o + 2] * k);
+                    v.Paint[o + 3] = (byte)(v.Paint[o + 3] * k);
                 }
                 else
                 {
@@ -351,15 +397,19 @@ internal sealed class ModelTools
 
     static Rect2I? Reach(Vector3 a, Vector3 b, Vector3 c, Vector2 ta, Vector2 tb, Vector2 tc, Vector3 centre, float r)
     {
-        var e1 = b - a; var e2 = c - a;
+        var e1 = b - a;
+        var e2 = c - a;
         var n = e1.Cross(e2);
         float nl = n.Length(), l1 = e1.Length();
         if (nl < 1e-12f || l1 < 1e-9f) return null;
-        var x = e1 / l1; var y = (n / nl).Cross(x);
+        var x = e1 / l1;
+        var y = (n / nl).Cross(x);
         float e2x = e2.Dot(x), e2y = e2.Dot(y);
         if (Mathf.Abs(e2y) < 1e-12f) return null;
-        var f1 = tb - ta; var f2 = tc - ta;
-        var cx = f1 / l1; var cy = f1 * (-e2x / (l1 * e2y)) + f2 / e2y;
+        var f1 = tb - ta;
+        var f2 = tc - ta;
+        var cx = f1 / l1;
+        var cy = f1 * (-e2x / (l1 * e2y)) + f2 / e2y;
         var d = centre - a;
         var uv = ta + cx * d.Dot(x) + cy * d.Dot(y);
         float hx = r * Mathf.Sqrt(cx.X * cx.X + cy.X * cy.X) + 2, hy = r * Mathf.Sqrt(cx.Y * cx.Y + cy.Y * cy.Y) + 2;
@@ -371,7 +421,13 @@ internal sealed class ModelTools
     {
         var ink = _m.Ink;
         byte r = (byte)(ink.R * ink.A * 255), g = (byte)(ink.G * ink.A * 255), b = (byte)(ink.B * ink.A * 255), a = (byte)(ink.A * 255);
-        for (int i = 0; i < v.Paint.Length; i += 4) { v.Paint[i] = r; v.Paint[i + 1] = g; v.Paint[i + 2] = b; v.Paint[i + 3] = a; }
+        for (int i = 0; i < v.Paint.Length; i += 4)
+        {
+            v.Paint[i] = r;
+            v.Paint[i + 1] = g;
+            v.Paint[i + 2] = b;
+            v.Paint[i + 3] = a;
+        }
         v.Repaint();
     }
 

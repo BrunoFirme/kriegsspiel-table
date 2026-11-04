@@ -18,7 +18,9 @@ internal sealed class PackSaver
 
     public PackSaver(PackageStore store, PackManifest pack, Action<string> failed)
     {
-        _store = store; _pack = pack; _failed = failed;
+        _store = store;
+        _pack = pack;
+        _failed = failed;
     }
 
     public bool Pending => _due.Pending;
@@ -33,7 +35,12 @@ internal sealed class PackSaver
     public bool Flush()
     {
         _due.Clear();
-        try { Json.SaveBig(PackEdit.ManifestPath(_store, _pack.Id), _pack); Problem = null; return true; }
+        try
+        {
+            Json.SaveBig(PackEdit.ManifestPath(_store, _pack.Id), _pack);
+            Problem = null;
+            return true;
+        }
         catch (Exception e)
         {
             Problem = e.Message;

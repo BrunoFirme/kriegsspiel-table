@@ -35,10 +35,16 @@ public static class ScenarioFiles
 
     public const string StartFile = "scenario.start.json";
 
+    public static bool HasId(string path, string id)
+    {
+        try { return Json.Load<Scenario>(path).Id == id; }
+        catch (Exception e) when (SaveStore.IsFileTrouble(e)) { return false; }
+    }
+
     public static Scenario? TryLoad(string path)
     {
         try { return Json.Load<Scenario>(path) is { Name: not null, Packs: not null, Sheets: not null, UmpireBoard: not null } s ? s : null; }
-        catch { return null; }
+        catch (Exception e) when (SaveStore.IsFileTrouble(e)) { return null; }
     }
 
     public static string? StartPath(PackageStore store, string dir)
@@ -136,7 +142,9 @@ public static class ScenarioFiles
         var pkg = "scenarios/" + dir;
         var sc = g.ToScenario(id, name);
         foreach (var sheet in sc.Sheets)
-            if (sheet.Package != pkg && (sheet.HasPicture ? File.Exists(Path.Combine(target, "tiles", sheet.Image, "index.json")) : sheet.Relief is { Length: > 0 } r && File.Exists(Path.Combine(target, ReliefFiles.HeaderRel(r))))) sheet.Package = pkg;
+            if (sheet.Package != pkg && (sheet.HasPicture ? File.Exists(Path.Combine(target, "tiles", sheet.Image, "index.json")) : sheet.Relief is { Length: > 0 } r && File.Exists(Path.Combine(target,
+                ReliefFiles.HeaderRel(r))))) sheet.Package =
+                pkg;
         sc.Packs = sc.Packs.Where(p => p != SheetImporter.Package).ToList();
         return sc;
     }
@@ -151,7 +159,7 @@ public static class ScenarioFiles
         {
             try { return KTable.Server.SaveLoader.Load(f); }
             catch (SaveTooNewException) { return null; }
-            catch { continue; }
+            catch (Exception e) when (SaveStore.IsFileTrouble(e)) { continue; }
         }
         return null;
     }
@@ -168,7 +176,8 @@ public static class ScenarioFiles
 
     public static (List<string> rebuilt, List<string> failed) RebuildMissing(PackageStore store, SaveStore saves)
     {
-        var rebuilt = new List<string>(); var failed = new List<string>();
+        var rebuilt = new List<string>();
+        var failed = new List<string>();
         var dirs = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
         try
         {

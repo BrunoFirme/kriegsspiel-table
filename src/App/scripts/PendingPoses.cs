@@ -21,7 +21,12 @@ sealed class PendingPoses
     readonly TableContext _c;
     readonly PieceLayer _pieces;
     readonly Selection _selection;
-    public PendingPoses(TableContext c, PieceLayer pieces, Selection selection) { _c = c; _pieces = pieces; _selection = selection; }
+    public PendingPoses(TableContext c, PieceLayer pieces, Selection selection)
+    {
+        _c = c;
+        _pieces = pieces;
+        _selection = selection;
+    }
 
     IHeldPieces _hand = null!;
     IKnobDrag _gizmo = null!;

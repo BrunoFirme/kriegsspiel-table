@@ -58,7 +58,9 @@ sealed class StudioAgentUndo
                 var back = Json.Deserialize<PieceDef>(e.Def!);
                 pack.Pieces.Insert(System.Math.Clamp(e.Index, 0, pack.Pieces.Count), back);
                 s.Store.RegisterDef(pack, back);
-                s.SavePack(); s.RebuildList(); s.Paper.LayOutAll();
+                s.SavePack();
+                s.RebuildList();
+                s.Paper.LayOutAll();
                 break;
             }
             case Was.Edited:

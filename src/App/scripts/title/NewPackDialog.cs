@@ -20,7 +20,12 @@ static class NewPackDialog
             var id = PackEdit.CreatePack(new PackageStore(PackageStore.DefaultRoot), name.Text, t.PlayerName.Text.Trim());
             main.OpenEditor(id);
         };
-        name.TextSubmitted += _ => { dlg.Hide(); var id = PackEdit.CreatePack(new PackageStore(PackageStore.DefaultRoot), name.Text, t.PlayerName.Text.Trim()); main.OpenEditor(id); };
+        name.TextSubmitted += _ =>
+        {
+            dlg.Hide();
+            var id = PackEdit.CreatePack(new PackageStore(PackageStore.DefaultRoot), name.Text, t.PlayerName.Text.Trim());
+            main.OpenEditor(id);
+        };
         Ui.Open(main, dlg, new Vector2I(460, 170));
     }
 }

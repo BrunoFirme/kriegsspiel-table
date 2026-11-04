@@ -38,17 +38,27 @@ sealed class FolderView
         pm.AddItem("New folder…", 1);
         pm.AddItem(_view.Length > 0 ? $"Rename '{_view}'…" : "Rename folder… (open one first)", 2);
         pm.AddItem(_view.Length > 0 ? $"Delete folder '{_view}'" : "Delete folder (open one first)", 3);
-        pm.SetItemDisabled(1, _view.Length == 0); pm.SetItemDisabled(2, _view.Length == 0);
+        pm.SetItemDisabled(1, _view.Length == 0);
+        pm.SetItemDisabled(2, _view.Length == 0);
         pm.IdPressed += id =>
         {
             switch (id)
             {
-                case 1: TextPrompt.Open(_parent, "New folder", "Name", "", n => { if (Lib.AddFolder(n)) { _view = Library.CleanName(n); refresh(); } }); break;
-                case 2: TextPrompt.Open(_parent, "Rename folder", "Name", _view, n => { if (Lib.RenameFolder(_view, n)) { _view = Library.CleanName(n); refresh(); } }); break;
+                case 1:
+                    TextPrompt.Open(_parent, "New folder", "Name", "", n => { if (Lib.AddFolder(n)) { _view = Library.CleanName(n); refresh(); } });
+                    break;
+                case 2:
+                    TextPrompt.Open(_parent, "Rename folder", "Name", _view, n => { if (Lib.RenameFolder(_view, n)) { _view = Library.CleanName(n); refresh(); } });
+                    break;
                 case 3:
                 {
                     var f = _view;
-                    Ui.Confirm(_parent, $"Delete folder \"{f}\"", "Delete", () => { Lib.RemoveFolder(f); _view = ""; refresh(); });
+                    Ui.Confirm(_parent, $"Delete folder \"{f}\"", "Delete", () =>
+                    {
+                        Lib.RemoveFolder(f);
+                        _view = "";
+                        refresh();
+                    });
                     break;
                 }
             }

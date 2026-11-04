@@ -21,16 +21,30 @@ public sealed class PropMesh
         var n = (b - a).Cross(c - a);
         if (n.NormSquared() < 1e-14f) return;
         n = n.Normalized();
-        if (outward is { } o && n.Dot(o) < 0) { n = -n; (b, c) = (c, b); (tb, tc) = (tc, tb); }
-        V.Add((a, n, ta)); V.Add((b, n, tb)); V.Add((c, n, tc));
+        if (outward is { } o && n.Dot(o) < 0)
+        {
+            n = -n;
+            (b, c) = (c, b);
+            (tb, tc) = (tc, tb);
+        }
+        V.Add((a, n, ta));
+        V.Add((b, n, tb));
+        V.Add((c, n, tc));
     }
 
     public void TriN(Vector3 a, Vector3 b, Vector3 c, Vector3 na, Vector3 nb, Vector3 nc, Vector2 ta, Vector2 tb, Vector2 tc)
     {
         var n = (b - a).Cross(c - a);
         if (n.NormSquared() < 1e-14f) return;
-        if (n.Dot(na + nb + nc) < 0) { (b, c) = (c, b); (nb, nc) = (nc, nb); (tb, tc) = (tc, tb); }
-        V.Add((a, na, ta)); V.Add((b, nb, tb)); V.Add((c, nc, tc));
+        if (n.Dot(na + nb + nc) < 0)
+        {
+            (b, c) = (c, b);
+            (nb, nc) = (nc, nb);
+            (tb, tc) = (tc, tb);
+        }
+        V.Add((a, na, ta));
+        V.Add((b, nb, tb));
+        V.Add((c, nc, tc));
     }
 
     public void Quad(Vector3 a, Vector3 b, Vector3 c, Vector3 d, M m, Vector3 inside, float u0 = 0, float v0 = 0, float u1 = 1, float v1 = 1)
@@ -44,7 +58,8 @@ public sealed class PropMesh
     {
         Vector3 P(float u, float v)
         {
-            var top = a.Lerp(b, u); var bot = d.Lerp(c, u);
+            var top = a.Lerp(b, u);
+            var bot = d.Lerp(c, u);
             var p = top.Lerp(bot, v);
             p += Axis.Down * sag * Mathf.Sin(Mathf.Pi * u) * (0.35f + 0.65f * Mathf.Sin(Mathf.Pi * Mathf.Min(1, v * 1.2f)));
             if (bump != null) p += bump(u, v);
@@ -54,7 +69,10 @@ public sealed class PropMesh
             for (int j = 0; j < nv; j++)
             {
                 float u0 = i / (float)nu, u1 = (i + 1f) / nu, v0 = j / (float)nv, v1 = (j + 1f) / nv;
-                var p00 = P(u0, v0); var p10 = P(u1, v0); var p11 = P(u1, v1); var p01 = P(u0, v1);
+                var p00 = P(u0, v0);
+                var p10 = P(u1, v0);
+                var p11 = P(u1, v1);
+                var p01 = P(u0, v1);
                 var o = (p00 + p11) / 2 - inside;
                 Tri(p00, p10, p11, Uv(m, u0, v0), Uv(m, u1, v0), Uv(m, u1, v1), o);
                 Tri(p00, p11, p01, Uv(m, u0, v0), Uv(m, u1, v1), Uv(m, u0, v1), o);
@@ -87,7 +105,8 @@ public sealed class PropMesh
         float len = (b - a).Norm();
         for (int i = 0; i < seg; i++)
         {
-            var d0 = Dir(i); var d1 = Dir(i + 1);
+            var d0 = Dir(i);
+            var d1 = Dir(i + 1);
             float u0 = i / (float)seg, u1 = (i + 1f) / seg, vl = Mathf.Min(1, len * 2);
             TriN(a + d0 * r, b + d0 * r2, b + d1 * r2, d0, d0, d1, Uv(m, u0, 0), Uv(m, u0, vl), Uv(m, u1, vl));
             TriN(a + d0 * r, b + d1 * r2, a + d1 * r, d0, d1, d1, Uv(m, u0, 0), Uv(m, u1, vl), Uv(m, u1, 0));
@@ -102,9 +121,13 @@ public sealed class PropMesh
     {
         var noise = Noise(seed, 1.8f);
         float t = (1 + Mathf.Sqrt(5)) / 2;
-        var vs = new List<Vector3> { new(-1, t, 0), new(1, t, 0), new(-1, -t, 0), new(1, -t, 0), new(0, -1, t), new(0, 1, t), new(0, -1, -t), new(0, 1, -t), new(t, 0, -1), new(t, 0, 1), new(-t, 0, -1), new(-t, 0, 1) };
+        var vs =
+            new List<Vector3> { new(-1, t, 0), new(1, t, 0), new(-1, -t, 0), new(1, -t, 0), new(0, -1, t), new(0, 1, t), new(0, -1, -t), new(0, 1, -t), new(t, 0, -1), new(t, 0, 1), new(-t, 0, -1),
+                new(-t, 0, 1) };
         for (int i = 0; i < vs.Count; i++) vs[i] = vs[i].Normalized();
-        var fs = new List<(int, int, int)> { (0, 11, 5), (0, 5, 1), (0, 1, 7), (0, 7, 10), (0, 10, 11), (1, 5, 9), (5, 11, 4), (11, 10, 2), (10, 7, 6), (7, 1, 8), (3, 9, 4), (3, 4, 2), (3, 2, 6), (3, 6, 8), (3, 8, 9), (4, 9, 5), (2, 4, 11), (6, 2, 10), (8, 6, 7), (9, 8, 1) };
+        var fs =
+            new List<(int, int, int)> { (0, 11, 5), (0, 5, 1), (0, 1, 7), (0, 7, 10), (0, 10, 11), (1, 5, 9), (5, 11, 4), (11, 10, 2), (10, 7, 6), (7, 1, 8), (3, 9, 4), (3, 4, 2), (3, 2, 6),
+                (3, 6, 8), (3, 8, 9), (4, 9, 5), (2, 4, 11), (6, 2, 10), (8, 6, 7), (9, 8, 1) };
         var midCache = new Dictionary<(int, int), int>();
         int Mid(int a, int b)
         {
@@ -114,11 +137,19 @@ public sealed class PropMesh
             return midCache[k] = vs.Count - 1;
         }
         var fs2 = new List<(int, int, int)>();
-        foreach (var (a, b, c) in fs) { int ab = Mid(a, b), bc = Mid(b, c), ca = Mid(c, a); fs2.Add((a, ab, ca)); fs2.Add((b, bc, ab)); fs2.Add((c, ca, bc)); fs2.Add((ab, bc, ca)); }
+        foreach (var (a, b, c) in fs)
+        {
+            int ab = Mid(a, b), bc = Mid(b, c), ca = Mid(c, a);
+            fs2.Add((a, ab, ca));
+            fs2.Add((b, bc, ab));
+            fs2.Add((c, ca, bc));
+            fs2.Add((ab, bc, ca));
+        }
         Vector3 Shape(Vector3 d)
         {
             var q = d;
-            if (boxy > 0) q = new Vector3(Mathf.Sign(d.X) * Mathf.Pow(Mathf.Abs(d.X), 1 - boxy), Mathf.Sign(d.Y) * Mathf.Pow(Mathf.Abs(d.Y), 1 - boxy), Mathf.Sign(d.Z) * Mathf.Pow(Mathf.Abs(d.Z), 1 - boxy));
+            if (boxy > 0) q =
+                new Vector3(Mathf.Sign(d.X) * Mathf.Pow(Mathf.Abs(d.X), 1 - boxy), Mathf.Sign(d.Y) * Mathf.Pow(Mathf.Abs(d.Y), 1 - boxy), Mathf.Sign(d.Z) * Mathf.Pow(Mathf.Abs(d.Z), 1 - boxy));
             float k = 1 + rough * noise.GetNoise3D(d.X, d.Y, d.Z);
             var p = at + rot * new Vector3(q.X * size.X, q.Y * size.Y, q.Z * size.Z) / 2 * k;
             if (p.Y < 0) p.Y = 0;
@@ -126,7 +157,14 @@ public sealed class PropMesh
         }
         var pts = vs.Select(Shape).ToArray();
         var nrm = new Vector3[pts.Length];
-        foreach (var (a, b, c) in fs2) { var n = (pts[b] - pts[a]).Cross(pts[c] - pts[a]); if (n.Dot(pts[a] - at) < 0) n = -n; nrm[a] += n; nrm[b] += n; nrm[c] += n; }
+        foreach (var (a, b, c) in fs2)
+        {
+            var n = (pts[b] - pts[a]).Cross(pts[c] - pts[a]);
+            if (n.Dot(pts[a] - at) < 0) n = -n;
+            nrm[a] += n;
+            nrm[b] += n;
+            nrm[c] += n;
+        }
         for (int i = 0; i < nrm.Length; i++) nrm[i] = nrm[i].NormSquared() > 0 ? nrm[i].Normalized() : Axis.Up;
         Vector2 T(Vector3 d) => Uv(m, 0.5f + 0.48f * d.X, 0.5f + 0.48f * (d.Z * 0.7f + d.Y * 0.3f));
         foreach (var (a, b, c) in fs2) TriN(pts[a], pts[b], pts[c], nrm[a], nrm[b], nrm[c], T(vs[a]), T(vs[b]), T(vs[c]));
@@ -149,7 +187,8 @@ public sealed class PropMesh
 
     public Box3 Bounds()
     {
-        var lo = V[0].p; var hi = V[0].p;
+        var lo = V[0].p;
+        var hi = V[0].p;
         foreach (var (p, _, _) in V) { lo = lo.Min(p); hi = hi.Max(p); }
         return new Box3(lo, hi - lo);
     }
@@ -172,7 +211,9 @@ public sealed class PropMesh
         int Gz(float z) => Math.Clamp((int)((z - b.Position.Z) / cell), 0, G - 1);
         for (int i = 0; i < V.Count; i += 3)
         {
-            var p0 = V[i].p; var p1 = V[i + 1].p; var p2 = V[i + 2].p;
+            var p0 = V[i].p;
+            var p1 = V[i + 1].p;
+            var p2 = V[i + 2].p;
             int steps = Math.Clamp((int)(Mathf.Max((p1 - p0).Norm(), (p2 - p0).Norm()) / cell) + 1, 1, 40);
             for (int s = 0; s <= steps; s++)
                 for (int t = 0; t <= steps - s; t++)
@@ -215,7 +256,8 @@ public sealed class PropMesh
         var sb = new StringBuilder("# Firme's Effects and Props: made by the app (Props.cs). v x y z then the baked shade\n");
         for (int i = 0; i < V.Count; i++)
         {
-            var p = V[i].p; var s = Shade.Length == V.Count ? Shade[i] : 1;
+            var p = V[i].p;
+            var s = Shade.Length == V.Count ? Shade[i] : 1;
             string sh = s.ToString("0.###", inv);
             sb.Append("v ").Append(p.X.ToString("0.####", inv)).Append(' ').Append(p.Y.ToString("0.####", inv)).Append(' ').Append(p.Z.ToString("0.####", inv))
                 .Append(' ').Append(sh).Append(' ').Append(sh).Append(' ').Append(sh).Append('\n');

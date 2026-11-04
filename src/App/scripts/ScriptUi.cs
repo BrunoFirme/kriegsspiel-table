@@ -56,13 +56,15 @@ public partial class ScriptUi : Control
             case "memo":
             {
                 var te = new TextEdit { Text = d.Text, CustomMinimumSize = new Vector2(420, 220) };
-                box.AddChild(te); value = () => te.Text;
+                box.AddChild(te);
+                value = () => te.Text;
                 break;
             }
             case "input":
             {
                 var le = new LineEdit { Text = d.Text };
-                box.AddChild(le); value = () => le.Text;
+                box.AddChild(le);
+                value = () => le.Text;
                 le.TextSubmitted += _ => dlg.EmitSignal(AcceptDialog.SignalName.Confirmed);
                 break;
             }
@@ -72,20 +74,38 @@ public partial class ScriptUi : Control
                 var ob = new OptionButton();
                 var opts = d.Kind == "color" ? new List<string> { "White", "Red", "Blue", "Green", "Yellow", "Orange", "Purple", "Pink", "Brown", "Teal", "Grey", "Black" } : d.Options;
                 foreach (var o in opts) ob.AddItem(o);
-                var pre = opts.IndexOf(d.Text); if (pre >= 0) ob.Selected = pre;
-                box.AddChild(ob); value = () => ob.ItemCount > 0 ? ob.GetItemText(ob.Selected) : null;
+                var pre = opts.IndexOf(d.Text);
+                if (pre >= 0) ob.Selected = pre;
+                box.AddChild(ob);
+                value = () => ob.ItemCount > 0 ? ob.GetItemText(ob.Selected) : null;
                 break;
             }
             default:
-                box.AddChild(Ui.Hint(d.Text)); value = () => "True";
+                box.AddChild(Ui.Hint(d.Text));
+                value = () => "True";
                 dlg.OkButtonText = "Yes";
                 break;
         }
         bool answered = false;
         dlg.AddCancelButton("Cancel");
-        dlg.Confirmed += () => { if (answered) return; answered = true; _s.Do(new DialogResult { Token = d.Token, Value = value() }); };
-        dlg.Canceled += () => { if (answered) return; answered = true; _s.Do(new DialogResult { Token = d.Token, Value = null }); };
-        dlg.CloseRequested += () => { if (answered) return; answered = true; _s.Do(new DialogResult { Token = d.Token, Value = null }); };
+        dlg.Confirmed += () =>
+        {
+            if (answered) return;
+            answered = true;
+            _s.Do(new DialogResult { Token = d.Token, Value = value() });
+        };
+        dlg.Canceled += () =>
+        {
+            if (answered) return;
+            answered = true;
+            _s.Do(new DialogResult { Token = d.Token, Value = null });
+        };
+        dlg.CloseRequested += () =>
+        {
+            if (answered) return;
+            answered = true;
+            _s.Do(new DialogResult { Token = d.Token, Value = null });
+        };
         _dialogs[d.Token] = dlg;
         dlg.TreeExiting += () => { if (_dialogs.GetValueOrDefault(d.Token) == dlg) _dialogs.Remove(d.Token); };
         Ui.Open(this, dlg);
@@ -95,7 +115,9 @@ public partial class ScriptUi : Control
     void AskPicture(ShowDialog d)
     {
         var root = _s.Store.Root;
-        var fd = new FileDialog { FileMode = FileDialog.FileModeEnum.OpenFile, Access = FileDialog.AccessEnum.Filesystem, Filters = new[] { ImageFiles.Filter }, Title = d.Title.Length > 0 ? d.Title : "Picture", Size = new Vector2I(900, 600) };
+        var fd =
+            new FileDialog { FileMode = FileDialog.FileModeEnum.OpenFile, Access = FileDialog.AccessEnum.Filesystem, Filters = new[] { ImageFiles.Filter }, Title = d.Title.Length > 0 ? d.Title : "Picture",
+                Size = new Vector2I(900, 600) };
         Ui.RememberFolder(fd);
         FileThumbs.Show(fd);
         bool answered = false;

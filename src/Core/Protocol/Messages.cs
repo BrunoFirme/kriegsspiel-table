@@ -36,9 +36,17 @@ public abstract class Message { }
 public sealed class GetSnapshot : Message { }
 
 public sealed class GetTurns : Message { }
-public sealed class TurnList : Message { public List<TurnInfo> Turns { get; set; } = new(); }
+public sealed class TurnList : Message
+{
+    public List<TurnInfo> Turns { get; set; } = new();
+}
 public sealed class GetTurn : Message { public int Index { get; set; } }
-public sealed class TurnState : Message { public int Index { get; set; } public TurnInfo Info { get; set; } = new(); public GameState State { get; set; } = new(); }
+public sealed class TurnState : Message
+{
+    public int Index { get; set; }
+    public TurnInfo Info { get; set; } = new();
+    public GameState State { get; set; } = new();
+}
 
 public static class ProtocolVersion
 {
@@ -67,20 +75,51 @@ public sealed class JoinResult : Message
     public string? Created { get; set; }
 }
 
-public sealed class Knock : Message { public long PeerId { get; set; } public string Name { get; set; } = ""; }
-public sealed class Admit : Message { public long PeerId { get; set; } public Role Role { get; set; } = Role.Observer; }
+public sealed class Knock : Message
+{
+    public long PeerId { get; set; }
+    public string Name { get; set; } = "";
+}
+public sealed class Admit : Message
+{
+    public long PeerId { get; set; }
+    public Role Role { get; set; } = Role.Observer;
+}
 public sealed class Refuse : Message { public long PeerId { get; set; } }
-public sealed class SetRole : Message { public long PeerId { get; set; } public Role Role { get; set; } }
+public sealed class SetRole : Message
+{
+    public long PeerId { get; set; }
+    public Role Role { get; set; }
+}
 public sealed class Revoke : Message { public long PeerId { get; set; } }
-public sealed class SetPassword : Message { public string Password { get; set; } = ""; }
-public sealed class RoleChanged : Message { public Role Role { get; set; } public GameState View { get; set; } = new(); }
-public sealed class AccessChanged : Message { public GameAccess Access { get; set; } = new(); }
+public sealed class SetPassword : Message
+{
+    public string Password { get; set; } = "";
+}
+public sealed class RoleChanged : Message
+{
+    public Role Role { get; set; }
+    public GameState View { get; set; } = new();
+}
+public sealed class AccessChanged : Message
+{
+    public GameAccess Access { get; set; } = new();
+}
 
-public sealed class CommandMessage : Message { public Command Command { get; set; } = null!; }
+public sealed class CommandMessage : Message
+{
+    public Command Command { get; set; } = null!;
+}
 
-public sealed class Snapshot : Message { public GameState View { get; set; } = new(); }
+public sealed class Snapshot : Message
+{
+    public GameState View { get; set; } = new();
+}
 
-public sealed class ErrorMessage : Message { public string Text { get; set; } = ""; }
+public sealed class ErrorMessage : Message
+{
+    public string Text { get; set; } = "";
+}
 
 public sealed class NeedAsset : Message
 {
@@ -119,7 +158,12 @@ public sealed class UploadAsset : FilePiece
         (path == "pack.json" || System.Text.RegularExpressions.Regex.IsMatch(path, @"^assets/[0-9a-f]{64}\.(png|jpg|jpeg|webp|obj)$"));
 }
 
-public sealed class ChunkAck : Message { public string Package { get; set; } = ""; public string Path { get; set; } = ""; public long Offset { get; set; } }
+public sealed class ChunkAck : Message
+{
+    public string Package { get; set; } = "";
+    public string Path { get; set; } = "";
+    public long Offset { get; set; }
+}
 
 public sealed class PeerList : Message
 {
@@ -152,7 +196,10 @@ public sealed class RunLua : Message
 
 public sealed class GetScripts : Message { }
 
-public sealed class ScriptList : Message { public List<ScriptInfo> Scripts { get; set; } = new(); }
+public sealed class ScriptList : Message
+{
+    public List<ScriptInfo> Scripts { get; set; } = new();
+}
 
 public sealed class ScriptInfo
 {

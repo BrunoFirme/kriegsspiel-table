@@ -65,7 +65,8 @@ public static class ScriptCheck
             foreach (var grp in errors.GroupBy(e => Normalize(e.message)).OrderByDescending(x => x.Count()).Take(12))
                 Console.WriteLine($"   {grp.Count(),4}× {grp.Key}  (e.g. {grp.First().piece}: {grp.First().message})");
             if (unsupported.Count > 0) Console.WriteLine($"   unsupported TTS calls noted: {string.Join(", ", unsupported)}");
-            grandDefs += scripted.Count; grandErrors += failing;
+            grandDefs += scripted.Count;
+            grandErrors += failing;
         }
         Console.WriteLine($"TOTAL: {grandDefs} scripted kinds, {grandErrors} with errors");
         return 0;

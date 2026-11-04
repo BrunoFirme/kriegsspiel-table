@@ -173,7 +173,7 @@ public partial class Main
             server = SaveLoader.Open(saves, what, pieceStore, out recovery);
             token.ThrowIfCancellationRequested();
             var sid = server.State.ScenarioId;
-            scenarioDir = store.ListScenarios().Where(s => { try { return Json.Load<Scenario>(s.path).Id == sid; } catch { return false; } }).Select(s => s.id).FirstOrDefault();
+            scenarioDir = store.ListScenarios().Where(s => ScenarioFiles.HasId(s.path, sid)).Select(s => s.id).FirstOrDefault();
         }
         else if (fromSave) server = SaveLoader.Open(saves, wanted.SavePath, pieceStore, out recovery);
         else
@@ -222,7 +222,8 @@ public partial class Main
         }
     }
 
-    void HostOpened(PackageStore store, SaveStore saves, GameServer server, string name, string savePath, System.Collections.Generic.List<Outgoing> started, (string Dir, string Run)? newRun, Opening op)
+    void HostOpened(PackageStore store, SaveStore saves, GameServer server, string name, string savePath, System.Collections.Generic.List<Outgoing> started, (string Dir, string Run)? newRun,
+        Opening op)
     {
         if (op.Held != null) { _net.HeldFolder = op.Held; op.Held = null; }
         else if (_session.ScenarioDir is { } held)

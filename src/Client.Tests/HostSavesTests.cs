@@ -15,11 +15,19 @@ public class HostSavesTests
     readonly List<string> _posted = new();
     readonly Queue<Action> _mainThread = new();
 
-    void RunPosted() { while (true) { Action a; lock (_mainThread) { if (_mainThread.Count == 0) return; a = _mainThread.Dequeue(); } a(); } }
+    void RunPosted()
+    {
+        while (true)
+        {
+            Action a;
+            lock (_mainThread) { if (_mainThread.Count == 0) return; a = _mainThread.Dequeue(); } a();
+        }
+    }
 
     string? Load(LoadFrom from)
     {
-        string? why = "never answered"; bool answered = false;
+        string? why = "never answered";
+        bool answered = false;
         _saves.Load(from, w => { why = w; answered = true; });
         Assert.True(SpinWait.SpinUntil(() => { RunPosted(); return answered; }, 10000));
         return why;
@@ -37,7 +45,14 @@ public class HostSavesTests
 
     void TickUntil(Func<bool> done)
     {
-        Assert.True(SpinWait.SpinUntil(() => { _now += 1; _saves.Tick(1); _saves.Harvest(); RunPosted(); return done(); }, 10000));
+        Assert.True(SpinWait.SpinUntil(() =>
+        {
+            _now += 1;
+            _saves.Tick(1);
+            _saves.Harvest();
+            RunPosted();
+            return done();
+        }, 10000));
     }
     GameServer? _server;
     double _now;
@@ -188,7 +203,8 @@ public class HostSavesTests
         var root = _store.SavesRoot("feud");
         string? Save(bool replace)
         {
-            string? why = "never answered"; bool answered = false;
+            string? why = "never answered";
+            bool answered = false;
             _saves.SaveAs(root, "Before the attack", replace, (_, w) => { why = w; answered = true; });
             Assert.True(SpinWait.SpinUntil(() => { RunPosted(); return answered; }, 10000));
             return why;
@@ -209,8 +225,14 @@ public class HostSavesTests
         _saves.SaveNow(closing: true);
         var group = _store.MakeFolder("feud", _store.SavesRoot("feud"), "Second group");
         var start = new GameState { ScenarioId = "feud", Name = "Feud" };
-        string? made = null, why = "never answered"; bool answered = false;
-        _saves.MakePlay(new LoadFrom("the scenario's start", Start: () => (start, new List<TurnRecord>()), PlayName: "Group B", PlaceIn: group), (f, w) => { made = f; why = w; answered = true; });
+        string? made = null, why = "never answered";
+        bool answered = false;
+        _saves.MakePlay(new LoadFrom("the scenario's start", Start: () => (start, new List<TurnRecord>()), PlayName: "Group B", PlaceIn: group), (f, w) =>
+        {
+            made = f;
+            why = w;
+            answered = true;
+        });
         Assert.True(SpinWait.SpinUntil(() => { RunPosted(); return answered; }, 10000));
         Assert.Null(why);
         Assert.Equal(Path.Combine(group, "Group B"), made);
@@ -228,7 +250,8 @@ public class HostSavesTests
         using var slow = new ManualResetEventSlim(false);
         int landings = 0;
         _saves.BeforeLanding = _ => { Interlocked.Increment(ref landings); slow.Wait(TimeSpan.FromSeconds(20)); };
-        string? why = "never answered"; bool answered = false;
+        string? why = "never answered";
+        bool answered = false;
         _saves.Load(new LoadFrom("Turn 0", TurnIndex: 0), w => { why = w; answered = true; });
         Assert.True(SpinWait.SpinUntil(() => Volatile.Read(ref landings) == 1, 10000));
         server.Dirty = true;
@@ -325,7 +348,8 @@ public class HostSavesTests
         _saves.BeforeLanding = _ => slow.Wait(TimeSpan.FromSeconds(20));
         Roll(server);
         _saves.SaveNow();
-        Roll(server); Roll(server);
+        Roll(server);
+        Roll(server);
         _saves.Tick(1.1);
         Assert.True(_saves.WaitForLog());
         Assert.Equal(3, LinesOf(SaveLog.PathFor(path)));
@@ -345,10 +369,12 @@ public class HostSavesTests
         var stopped = new List<(string name, string copy, int dice)>();
         _saves.BeforeLanding = _ => stopped.Add(("mid-write", StopTheMachine(path, "mid-write"), server.State.Dice.Count));
         _saves.AfterLanding = _ => stopped.Add(("landed", StopTheMachine(path, "landed"), server.State.Dice.Count));
-        Roll(server); Roll(server);
+        Roll(server);
+        Roll(server);
         _saves.Tick(0.6);
         WaitForSaveOutcome(() => stopped.Count == 2 && File.Exists(path) && _saves.SaveLogState.StartsWith("0 command(s)"));
-        _saves.BeforeLanding = null; _saves.AfterLanding = null;
+        _saves.BeforeLanding = null;
+        _saves.AfterLanding = null;
         stopped.Add(("written", StopTheMachine(path, "written"), server.State.Dice.Count));
         Roll(server);
         _saves.Tick(1.0);

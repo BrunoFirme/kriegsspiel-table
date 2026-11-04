@@ -21,13 +21,21 @@ public sealed class AssetWaits<TTexture>
     public double JobProgress { get; set; } = -1;
     public int BatchDone { get; private set; }
     public int BatchTotal { get; private set; }
-    void Started() { if (!Shows && BatchDone >= BatchTotal) { BatchDone = 0; BatchTotal = 0; } BatchTotal++; }
+    void Started()
+    {
+        if (!Shows && BatchDone >= BatchTotal) { BatchDone = 0; BatchTotal = 0; } BatchTotal++;
+    }
     void Finished() { BatchDone++; }
 
     public void EnsureFile(string package, string rel, string abs, Action onReady, Action? onMissing = null)
     {
         if (File.Exists(abs)) { onReady(); return; }
-        if (RequestRemote == null || _missing.Contains(abs)) { _missing.Add(abs); onMissing?.Invoke(); return; }
+        if (RequestRemote == null || _missing.Contains(abs))
+        {
+            _missing.Add(abs);
+            onMissing?.Invoke();
+            return;
+        }
         if (!_waitingFiles.TryGetValue(abs, out var l))
         {
             Started();
@@ -65,7 +73,8 @@ public sealed class AssetWaits<TTexture>
             if (!quiet && _quiet.Remove(key)) Started();
             return false;
         }
-        if (quiet) _quiet.Add(key); else Started();
+        if (quiet) _quiet.Add(key);
+        else Started();
         _waitingTex[key] = onReady != null ? new() { onReady } : new();
         return true;
     }

@@ -59,7 +59,8 @@ public sealed class XcfFile : IDisposable
 
     XcfFile(Stream stream, bool ownsStream)
     {
-        _stream = stream; _ownsStream = ownsStream;
+        _stream = stream;
+        _ownsStream = ownsStream;
         var rd = _rd = new Reader(stream);
         var magic = rd.Bytes(14);
         if (!magic.AsSpan(0, 9).SequenceEqual("gimp xcf "u8)) throw new InvalidDataException("not a GIMP .xcf file");
@@ -71,9 +72,12 @@ public sealed class XcfFile : IDisposable
         Version = version;
 
         var img = _img = new Doc { Version = version };
-        img.Width = (int)rd.U32(); img.Height = (int)rd.U32(); img.BaseType = (int)rd.U32();
+        img.Width = (int)rd.U32();
+        img.Height = (int)rd.U32();
+        img.BaseType = (int)rd.U32();
         if (img.Width <= 0 || img.Height <= 0 || img.Width > 1 << 20 || img.Height > 1 << 20) throw new InvalidDataException($"unreasonable picture size {img.Width}×{img.Height}");
-        Width = img.Width; Height = img.Height;
+        Width = img.Width;
+        Height = img.Height;
         img.Format = version >= 4 ? PixelFormat.FromPrecision((int)rd.U32(), version) : PixelFormat.U8Gamma;
 
         while (true)
@@ -83,7 +87,9 @@ public sealed class XcfFile : IDisposable
             if (type == 0) break;
             switch (type)
             {
-                case XcfProperty.Compression: img.Compression = len >= 1 ? rd.Bytes(1)[0] : 0; break;
+                case XcfProperty.Compression:
+                    img.Compression = len >= 1 ? rd.Bytes(1)[0] : 0;
+                    break;
                 case 1 when version > 0:
                 {
                     int n = (int)rd.U32();
@@ -158,7 +164,8 @@ public sealed class XcfFile : IDisposable
         public static PixelFormat FromPrecision(int p, int version)
         {
             if (version == 4)
-                return p switch { 0 => U8Gamma, 1 => new(2, Kind.U16, false), 2 => new(4, Kind.U32, true), 3 => new(2, Kind.Half, true), 4 => new(4, Kind.Float, true), _ => throw new InvalidDataException($"unknown precision {p}") };
+                return p switch { 0 => U8Gamma, 1 => new(2, Kind.U16, false), 2 => new(4, Kind.U32, true), 3 => new(2, Kind.Half, true), 4 => new(4, Kind.Float, true),
+                    _ => throw new InvalidDataException($"unknown precision {p}") };
             if (version is 5 or 6)
                 return p switch
                 {
@@ -208,13 +215,29 @@ public sealed class XcfFile : IDisposable
             if (type == 0) break;
             switch (type)
             {
-                case XcfProperty.Opacity: if (!floatOpacity) l.Opacity = Math.Clamp(rd.U32() / 255f, 0, 1); break;
-                case XcfProperty.FloatOpacity: l.Opacity = Math.Clamp(rd.F32(), 0, 1); floatOpacity = true; break;
-                case XcfProperty.Visible: l.Visible = rd.U32() != 0; break;
-                case XcfProperty.Offsets: l.OffX = rd.I32(); l.OffY = rd.I32(); break;
-                case XcfProperty.Mode: l.Mode = (int)rd.U32(); break;
-                case XcfProperty.ApplyMask: l.ApplyMask = rd.U32() != 0; break;
-                case XcfProperty.GroupItem: l.IsGroup = true; break;
+                case XcfProperty.Opacity:
+                    if (!floatOpacity) l.Opacity = Math.Clamp(rd.U32() / 255f, 0, 1);
+                    break;
+                case XcfProperty.FloatOpacity:
+                    l.Opacity = Math.Clamp(rd.F32(), 0, 1);
+                    floatOpacity = true;
+                    break;
+                case XcfProperty.Visible:
+                    l.Visible = rd.U32() != 0;
+                    break;
+                case XcfProperty.Offsets:
+                    l.OffX = rd.I32();
+                    l.OffY = rd.I32();
+                    break;
+                case XcfProperty.Mode:
+                    l.Mode = (int)rd.U32();
+                    break;
+                case XcfProperty.ApplyMask:
+                    l.ApplyMask = rd.U32() != 0;
+                    break;
+                case XcfProperty.GroupItem:
+                    l.IsGroup = true;
+                    break;
                 case XcfProperty.ItemPath:
                 {
                     var path = new int[len / 4];
@@ -222,9 +245,15 @@ public sealed class XcfFile : IDisposable
                     l.Path = path;
                     break;
                 }
-                case XcfProperty.CompositeMode: l.CompositeMode = rd.I32(); break;
-                case XcfProperty.CompositeSpace: l.CompositeSpace = rd.I32(); break;
-                case XcfProperty.BlendSpace: l.BlendSpace = rd.I32(); break;
+                case XcfProperty.CompositeMode:
+                    l.CompositeMode = rd.I32();
+                    break;
+                case XcfProperty.CompositeSpace:
+                    l.CompositeSpace = rd.I32();
+                    break;
+                case XcfProperty.BlendSpace:
+                    l.BlendSpace = rd.I32();
+                    break;
             }
             rd.Seek(next);
         }
@@ -250,7 +279,8 @@ public sealed class XcfFile : IDisposable
         rd.Seek(level0);
         int lw = (int)rd.U32(), lh = (int)rd.U32();
         if (lw != t.W || lh != t.H) throw new InvalidDataException($"{what}: level size {lw}×{lh} differs from the drawable's {t.W}×{t.H}");
-        t.Cols = (t.W + 63) / 64; t.Rows = (t.H + 63) / 64;
+        t.Cols = (t.W + 63) / 64;
+        t.Rows = (t.H + 63) / 64;
         int n = t.Cols * t.Rows;
         var offs = new long[n];
         int got = 0;
@@ -264,7 +294,8 @@ public sealed class XcfFile : IDisposable
     {
         var rd = _rd;
         rd.Seek(ptr);
-        rd.U32(); rd.U32();
+        rd.U32();
+        rd.U32();
         rd.Str();
         while (true)
         {
@@ -439,7 +470,9 @@ public sealed class XcfFile : IDisposable
         {
             for (int i = 0, src = 0, dst = 0; i < n; i++, src += channels, dst += 4)
             {
-                outPix[dst] = raw[src] * (1f / 255); outPix[dst + 1] = raw[src + 1] * (1f / 255); outPix[dst + 2] = raw[src + 2] * (1f / 255);
+                outPix[dst] = raw[src] * (1f / 255);
+                outPix[dst + 1] = raw[src + 1] * (1f / 255);
+                outPix[dst + 2] = raw[src + 2] * (1f / 255);
                 outPix[dst + 3] = channels == 4 ? raw[src + 3] * (1f / 255) : 1f;
             }
             return;
@@ -451,15 +484,27 @@ public sealed class XcfFile : IDisposable
             {
                 int idx = raw[src] * 3;
                 if (cmap == null || idx + 2 >= cmap.Length) { outPix[dst] = outPix[dst + 1] = outPix[dst + 2] = 0; }
-                else { outPix[dst] = cmap[idx] / 255f; outPix[dst + 1] = cmap[idx + 1] / 255f; outPix[dst + 2] = cmap[idx + 2] / 255f; }
+                else
+                {
+                    outPix[dst] = cmap[idx] / 255f;
+                    outPix[dst + 1] = cmap[idx + 1] / 255f;
+                    outPix[dst + 2] = cmap[idx + 2] / 255f;
+                }
                 outPix[dst + 3] = channels == 2 ? raw[src + 1] / 255f : 1f;
                 continue;
             }
             float r = Component(raw, src, fmt), g, b;
             if (l.Gray) { g = b = r; }
             else { g = Component(raw, src + bpc, fmt); b = Component(raw, src + 2 * bpc, fmt); }
-            if (fmt.Linear) { r = LinearToSrgb(r); g = LinearToSrgb(g); b = LinearToSrgb(b); }
-            outPix[dst] = r; outPix[dst + 1] = g; outPix[dst + 2] = b;
+            if (fmt.Linear)
+            {
+                r = LinearToSrgb(r);
+                g = LinearToSrgb(g);
+                b = LinearToSrgb(b);
+            }
+            outPix[dst] = r;
+            outPix[dst + 1] = g;
+            outPix[dst + 2] = b;
             outPix[dst + 3] = l.HasAlpha ? Component(raw, src + (channels - 1) * bpc, fmt) : 1f;
         }
     }
@@ -532,7 +577,12 @@ public sealed class XcfFile : IDisposable
                 if (op <= 127)
                 {
                     int count;
-                    if (op == 127) { if (p + 2 > packedLen) throw new InvalidDataException("RLE tile ends early"); count = (src[p] << 8) | src[p + 1]; p += 2; }
+                    if (op == 127)
+                    {
+                        if (p + 2 > packedLen) throw new InvalidDataException("RLE tile ends early");
+                        count = (src[p] << 8) | src[p + 1];
+                        p += 2;
+                    }
                     else count = op + 1;
                     if (p >= packedLen || n + count > pixels) throw new InvalidDataException("RLE run overruns the tile");
                     byte v = src[p++];
@@ -541,7 +591,12 @@ public sealed class XcfFile : IDisposable
                 else
                 {
                     int count;
-                    if (op == 128) { if (p + 2 > packedLen) throw new InvalidDataException("RLE tile ends early"); count = (src[p] << 8) | src[p + 1]; p += 2; }
+                    if (op == 128)
+                    {
+                        if (p + 2 > packedLen) throw new InvalidDataException("RLE tile ends early");
+                        count = (src[p] << 8) | src[p + 1];
+                        p += 2;
+                    }
                     else count = 256 - op;
                     if (p + count > packedLen || n + count > pixels) throw new InvalidDataException("RLE literal overruns the tile");
                     for (int k = 0; k < count; k++, n++) raw[n * bpp + plane] = src[p++];
@@ -575,7 +630,9 @@ public sealed class XcfFile : IDisposable
             case 19 or 45: return Blend.SoftLight;
             case 20 or 46: return Blend.GrainExtract;
             case 21 or 47: return Blend.GrainMerge;
-            default: known = false; return Blend.Normal;
+            default:
+                known = false;
+                return Blend.Normal;
         }
     }
 
@@ -618,45 +675,97 @@ public sealed class XcfFile : IDisposable
         if (la <= 0) return;
         if (mix.Blend == Blend.Normal && la >= 1 && mix.Composite is Composite.Union or Composite.ClipToLayer)
         {
-            canvas[ci] = ToByte(lr); canvas[ci + 1] = ToByte(lg); canvas[ci + 2] = ToByte(lb); canvas[ci + 3] = 255;
+            canvas[ci] = ToByte(lr);
+            canvas[ci + 1] = ToByte(lg);
+            canvas[ci + 2] = ToByte(lb);
+            canvas[ci + 3] = 255;
             return;
         }
         float ba = canvas[ci + 3] / 255f;
         if (ba <= 0)
         {
             if (mix.Composite is Composite.ClipToBackdrop or Composite.Intersection) return;
-            canvas[ci] = ToByte(lr); canvas[ci + 1] = ToByte(lg); canvas[ci + 2] = ToByte(lb); canvas[ci + 3] = ToByte(la);
+            canvas[ci] = ToByte(lr);
+            canvas[ci + 1] = ToByte(lg);
+            canvas[ci + 2] = ToByte(lb);
+            canvas[ci + 3] = ToByte(la);
             return;
         }
         float br = canvas[ci] / 255f, bg = canvas[ci + 1] / 255f, bb = canvas[ci + 2] / 255f;
-        float sr = lr, sg = lg, sb = lb;
         bool linear = mix.CompositeLinear;
-        if (mix.Blend != Blend.Normal)
+        var (sr, sg, sb) = Source(mix, linear, ba, br, bg, bb, lr, lg, lb);
+        if (linear)
         {
-            float xr = br, xg = bg, xb = bb, yr = lr, yg = lg, yb = lb;
-            if (mix.BlendLinear) { xr = SrgbToLinear(xr); xg = SrgbToLinear(xg); xb = SrgbToLinear(xb); yr = SrgbToLinear(yr); yg = SrgbToLinear(yg); yb = SrgbToLinear(yb); }
-            float zr = BlendChannel(mix.Blend, xr, yr, mix.Legacy), zg = BlendChannel(mix.Blend, xg, yg, mix.Legacy), zb = BlendChannel(mix.Blend, xb, yb, mix.Legacy);
-            if (mix.BlendLinear) { zr = LinearToSrgb(zr); zg = LinearToSrgb(zg); zb = LinearToSrgb(zb); }
-            if (linear) { zr = SrgbToLinear(zr); zg = SrgbToLinear(zg); zb = SrgbToLinear(zb); lr = SrgbToLinear(lr); lg = SrgbToLinear(lg); lb = SrgbToLinear(lb); }
-            sr = ba * zr + (1 - ba) * lr; sg = ba * zg + (1 - ba) * lg; sb = ba * zb + (1 - ba) * lb;
+            br = _toLinear[canvas[ci]];
+            bg = _toLinear[canvas[ci + 1]];
+            bb = _toLinear[canvas[ci + 2]];
         }
-        else if (linear)
-        {
-            sr = SrgbToLinear(sr); sg = SrgbToLinear(sg); sb = SrgbToLinear(sb);
-        }
-        if (linear) { br = _toLinear[canvas[ci]]; bg = _toLinear[canvas[ci + 1]]; bb = _toLinear[canvas[ci + 2]]; }
         float oa, ratio;
         switch (mix.Composite)
         {
-            case Composite.ClipToBackdrop: oa = ba; ratio = la; break;
-            case Composite.ClipToLayer: oa = la; ratio = ba; break;
-            case Composite.Intersection: oa = la * ba; ratio = 1; break;
-            default: oa = la + ba * (1 - la); ratio = la / oa; break;
+            case Composite.ClipToBackdrop:
+                oa = ba;
+                ratio = la;
+                break;
+            case Composite.ClipToLayer:
+                oa = la;
+                ratio = ba;
+                break;
+            case Composite.Intersection:
+                oa = la * ba;
+                ratio = 1;
+                break;
+            default:
+                oa = la + ba * (1 - la);
+                ratio = la / oa;
+                break;
         }
         float orr = ratio * sr + (1 - ratio) * br, og = ratio * sg + (1 - ratio) * bg, ob = ratio * sb + (1 - ratio) * bb;
-        if (linear) { canvas[ci] = LinearToByte(orr); canvas[ci + 1] = LinearToByte(og); canvas[ci + 2] = LinearToByte(ob); }
-        else { canvas[ci] = ToByte(orr); canvas[ci + 1] = ToByte(og); canvas[ci + 2] = ToByte(ob); }
+        if (linear)
+        {
+            canvas[ci] = LinearToByte(orr);
+            canvas[ci + 1] = LinearToByte(og);
+            canvas[ci + 2] = LinearToByte(ob);
+        }
+        else
+        {
+            canvas[ci] = ToByte(orr);
+            canvas[ci + 1] = ToByte(og);
+            canvas[ci + 2] = ToByte(ob);
+        }
         canvas[ci + 3] = ToByte(oa);
+    }
+
+    static (float r, float g, float b) Source(Mix mix, bool linear, float ba, float br, float bg, float bb, float lr, float lg, float lb)
+    {
+        if (mix.Blend == Blend.Normal) return linear ? (SrgbToLinear(lr), SrgbToLinear(lg), SrgbToLinear(lb)) : (lr, lg, lb);
+        float xr = br, xg = bg, xb = bb, yr = lr, yg = lg, yb = lb;
+        if (mix.BlendLinear)
+        {
+            xr = SrgbToLinear(xr);
+            xg = SrgbToLinear(xg);
+            xb = SrgbToLinear(xb);
+            yr = SrgbToLinear(yr);
+            yg = SrgbToLinear(yg);
+            yb = SrgbToLinear(yb);
+        }
+        float zr = BlendChannel(mix.Blend, xr, yr, mix.Legacy), zg = BlendChannel(mix.Blend, xg, yg, mix.Legacy), zb = BlendChannel(mix.Blend, xb, yb, mix.Legacy);
+        if (mix.BlendLinear)
+        {
+            zr = LinearToSrgb(zr);
+            zg = LinearToSrgb(zg);
+            zb = LinearToSrgb(zb);
+        }
+        if (linear)
+        {
+            zr = SrgbToLinear(zr);
+            zg = SrgbToLinear(zg);
+            zb = SrgbToLinear(zb);
+            lr = SrgbToLinear(lr);
+            lg = SrgbToLinear(lg);
+            lb = SrgbToLinear(lb);
+        }
+        return (ba * zr + (1 - ba) * lr, ba * zg + (1 - ba) * lg, ba * zb + (1 - ba) * lb);
     }
 
     static byte ToByte(float v) => (byte)Math.Clamp((int)MathF.Round(v * 255f), 0, 255);
@@ -675,7 +784,12 @@ public sealed class XcfFile : IDisposable
     static byte[] BuildToSrgb()
     {
         var t = new byte[SrgbTable + 1];
-        for (int i = 0; i <= SrgbTable; i++) { double l = (double)i / SrgbTable; double c = l <= 0.0031308 ? 12.92 * l : 1.055 * Math.Pow(l, 1 / 2.4) - 0.055; t[i] = (byte)Math.Clamp((int)Math.Round(c * 255), 0, 255); }
+        for (int i = 0; i <= SrgbTable; i++)
+        {
+            double l = (double)i / SrgbTable;
+            double c = l <= 0.0031308 ? 12.92 * l : 1.055 * Math.Pow(l, 1 / 2.4) - 0.055;
+            t[i] = (byte)Math.Clamp((int)Math.Round(c * 255), 0, 255);
+        }
         return t;
     }
 
@@ -722,7 +836,12 @@ public sealed class XcfFile : IDisposable
             while (len > 0 && bytes[len - 1] == 0) len--;
             return System.Text.Encoding.UTF8.GetString(bytes, 0, len);
         }
-        public byte[] Bytes(int n) { var a = new byte[n]; ReadExactly(a, n); return a; }
+        public byte[] Bytes(int n)
+        {
+            var a = new byte[n];
+            ReadExactly(a, n);
+            return a;
+        }
         public void ReadExactly(byte[] into, int n)
         {
             int got = 0;

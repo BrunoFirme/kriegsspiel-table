@@ -34,7 +34,8 @@ public partial class PieceStudio
             return;
         }
         if (_gone || _sel != d || _view != "model") return;
-        Strip.Rebuild(); RebuildToolPanel();
+        Strip.Rebuild();
+        RebuildToolPanel();
         if (!Typing()) RebuildLayers();
     }
 
@@ -42,7 +43,12 @@ public partial class PieceStudio
 
     public void Say(string text) { if (!_gone) Flash(text); }
     public void SetSaved(string text) { if (!_gone) Top.Saved = text; }
-    public void PickInk(Color c) { _canvas.Ink = c; ToolPanel.Colours.SyncInk(); Flash($"Picked {Hex.Of(c)[..7]}"); }
+    public void PickInk(Color c)
+    {
+        _canvas.Ink = c;
+        ToolPanel.Colours.SyncInk();
+        Flash($"Picked {Hex.Of(c)[..7]}");
+    }
     public void ModelColour() => ToolPanel.Colours.Section(false);
     public void RebuildModelPanels() { if (_view == "model") { RebuildLayers(); RebuildToolPanel(); } }
     public void RebuildModelStrip() { if (_view == "model") Strip.Rebuild(); }
@@ -81,12 +87,15 @@ public partial class PieceStudio
         if (_gone) return;
         _pack.Pieces.Add(def);
         _store.RegisterDef(_pack, def);
-        ++_selGen; ++_faceGen;
+        ++_selGen;
+        ++_faceGen;
         _sel = def;
         _view = "model";
         Top.PressView("model");
-        _canvas.Visible = false; FaceBar.Pill.Visible = false;
-        T.Visible = false; T.SetProcessUnhandledInput(false);
+        _canvas.Visible = false;
+        FaceBar.Pill.Visible = false;
+        T.Visible = false;
+        T.SetProcessUnhandledInput(false);
         _model.AddParts(m, kind == "base" ? "Base" : name, kind);
         if (addFigure) _model.AddParts(ModelImport.Primitive("box"), "Box", "box");
         Paper.Quiet = true;
@@ -94,7 +103,15 @@ public partial class PieceStudio
         finally { Paper.Quiet = false; }
         RebuildList();
         Select(def, frame: true);
-        if (Paper.Instance(def) is { } placed) { Paper.Quiet = true; T.SetSelection(new[] { placed.Id }); Paper.Quiet = false; }
-        Strip.Rebuild(); RebuildToolPanel(); RebuildLayers(); Relayout();
+        if (Paper.Instance(def) is { } placed)
+        {
+            Paper.Quiet = true;
+            T.SetSelection(new[] { placed.Id });
+            Paper.Quiet = false;
+        }
+        Strip.Rebuild();
+        RebuildToolPanel();
+        RebuildLayers();
+        Relayout();
     }
 }

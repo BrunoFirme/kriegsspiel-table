@@ -21,10 +21,14 @@ public sealed class TileSlicer
     public TileSlicer(int w, int h, string tilesDir, int ts = 256)
     {
         if (w <= 0 || h <= 0) throw new ArgumentException("picture has no size");
-        _w = w; _h = h; _ts = ts; _tilesDir = tilesDir;
+        _w = w;
+        _h = h;
+        _ts = ts;
+        _tilesDir = tilesDir;
         _png = (long)w * h <= 4_000_000;
         _index = new TileIndex { TileSize = ts, SourceW = w, SourceH = h, Ext = _png ? "png" : "webp" };
-        _cols = (w + ts - 1) / ts; _rows = (h + ts - 1) / ts;
+        _cols = (w + ts - 1) / ts;
+        _rows = (h + ts - 1) / ts;
         _index.Levels.Add(new TileLevel { Level = 0, W = w, H = h, Cols = _cols, Rows = _rows });
         _dir0 = Path.Combine(tilesDir, "0");
         Directory.CreateDirectory(_dir0);
@@ -38,7 +42,10 @@ public sealed class TileSlicer
         {
             int take = Math.Min(rows, _ts - _bandRows);
             Buffer.BlockCopy(rgba, at, _band, _bandRows * _w * 4, take * _w * 4);
-            _bandRows += take; at += take * _w * 4; rows -= take; _rowsPushed += take;
+            _bandRows += take;
+            at += take * _w * 4;
+            rows -= take;
+            _rowsPushed += take;
             if (_bandRows == _ts) FlushBand();
         }
         Progress?.Invoke(0.75 * _rowsPushed / _h);
@@ -56,7 +63,8 @@ public sealed class TileSlicer
             var img = Image.CreateFromData(tw, _bandRows, false, Image.Format.Rgba8, data);
             Save(img, Path.Combine(_dir0, $"{x}_{ty}.{_index.Ext}"));
         }
-        _bandTop += _bandRows; _bandRows = 0;
+        _bandTop += _bandRows;
+        _bandRows = 0;
     }
 
     public TileIndex Finish()
@@ -65,7 +73,12 @@ public sealed class TileSlicer
         FlushBand();
         int level = 0;
         long coarseTiles = 0, coarseDone = 0;
-        for (int w = _w, h = _h; !(w <= _ts && h <= _ts);) { w = Math.Max(1, w / 2); h = Math.Max(1, h / 2); coarseTiles += (long)((w + _ts - 1) / _ts) * ((h + _ts - 1) / _ts); }
+        for (int w = _w, h = _h; !(w <= _ts && h <= _ts);)
+        {
+            w = Math.Max(1, w / 2);
+            h = Math.Max(1, h / 2);
+            coarseTiles += (long)((w + _ts - 1) / _ts) * ((h + _ts - 1) / _ts);
+        }
         while (!(_index.Levels[level].Cols == 1 && _index.Levels[level].Rows == 1))
         {
             var prev = _index.Levels[level];
@@ -104,6 +117,7 @@ public sealed class TileSlicer
 
     void Save(Image img, string file)
     {
-        if (_png) img.SavePng(file); else img.SaveWebp(file, lossy: false);
+        if (_png) img.SavePng(file);
+        else img.SaveWebp(file, lossy: false);
     }
 }

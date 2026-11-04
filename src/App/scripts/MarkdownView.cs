@@ -239,26 +239,34 @@ public static partial class MarkdownView
             {
                 int end = code.StartsWith("--[[", StringComparison.Ordinal) ? code.IndexOf("]]", i + 4, StringComparison.Ordinal) : -1;
                 end = end >= 0 ? end + 2 : code.IndexOf('\n', i) is var nl && nl >= 0 ? nl : code.Length;
-                Span(com, code[i..end]); i = end; continue;
+                Span(com, code[i..end]);
+                i = end;
+                continue;
             }
             if (c == '"' || c == '\'')
             {
                 int j = i + 1;
                 while (j < code.Length && code[j] != c && code[j] != '\n') j += code[j] == '\\' ? 2 : 1;
                 j = Math.Min(code.Length, j + 1);
-                Span(str, code[i..j]); i = j; continue;
+                Span(str, code[i..j]);
+                i = j;
+                continue;
             }
             if (c == '[' && i + 1 < code.Length && code[i + 1] == '[')
             {
                 int end = code.IndexOf("]]", i + 2, StringComparison.Ordinal);
                 end = end < 0 ? code.Length : end + 2;
-                Span(str, code[i..end]); i = end; continue;
+                Span(str, code[i..end]);
+                i = end;
+                continue;
             }
             if (char.IsDigit(c))
             {
                 int j = i;
                 while (j < code.Length && (char.IsLetterOrDigit(code[j]) || code[j] == '.')) j++;
-                Span(num, code[i..j]); i = j; continue;
+                Span(num, code[i..j]);
+                i = j;
+                continue;
             }
             if (char.IsLetter(c) || c == '_')
             {
@@ -270,7 +278,8 @@ public static partial class MarkdownView
                 else if (!member && Ours.Value.Contains(word)) Span(ours, word);
                 else if (Events.Value.Contains(word)) Span(ev, word);
                 else sb.Append(word);
-                i = j; continue;
+                i = j;
+                continue;
             }
             sb.Append(c == '[' ? "[lb]" : c.ToString());
             i++;

@@ -58,7 +58,8 @@ sealed class PiecePrints
     string Key()
     {
         if (!Shows) return "";
-        var d = _piece.Def!; var p = _piece.Piece;
+        var d = _piece.Def!;
+        var p = _piece.Piece;
         var parts = new List<string>();
         foreach (var c in d.Counters.Where(c => c.Place != null))
             parts.Add($"c{Place(c.Place!)}|{c.Name}|{p.Counters.GetValueOrDefault(c.Name, c.Default)}|{c.Min}|{c.Max}|{c.ShowName}|{c.ShowButtons}");
@@ -78,7 +79,8 @@ sealed class PiecePrints
 
     void Build()
     {
-        var d = _piece.Def!; var p = _piece.Piece;
+        var d = _piece.Def!;
+        var p = _piece.Piece;
         foreach (var c in d.Counters.Where(c => c.Place != null))
         {
             bool back = c.Place!.Side == PrintPlace.Back;

@@ -16,7 +16,9 @@ public class PropTests
         {
             int ix = (int)MathF.Floor(x * freq * 8), iy = (int)MathF.Floor(y * freq * 8), iz = (int)MathF.Floor(z * freq * 8);
             uint h = unchecked((uint)(ix * 73856093) ^ (uint)(iy * 19349663) ^ (uint)(iz * 83492791) ^ (uint)seed * 2654435761u);
-            h ^= h >> 13; h = unchecked(h * 0x5bd1e995u); h ^= h >> 15;
+            h ^= h >> 13;
+            h = unchecked(h * 0x5bd1e995u);
+            h ^= h >> 15;
             return (h & 0xFFFF) / 32767.5f - 1;
         }
     }
@@ -39,7 +41,9 @@ public class PropTests
         "Stakes" => Maker.Stakes(),
         "Palisade" => Maker.Palisade(),
         "Moat" => Maker.Moat(),
-        "Trench with traverse" => Maker.Trench(new[] { new N.Vector2(-1.6f, 0.35f), new N.Vector2(-0.55f, 0.35f), new N.Vector2(-0.55f, -0.35f), new N.Vector2(0.55f, -0.35f), new N.Vector2(0.55f, 0.35f), new N.Vector2(1.6f, 0.35f) }),
+        "Trench with traverse" =>
+            Maker.Trench(new[] { new N.Vector2(-1.6f, 0.35f), new N.Vector2(-0.55f, 0.35f), new N.Vector2(-0.55f, -0.35f), new N.Vector2(0.55f, -0.35f), new N.Vector2(0.55f, 0.35f),
+                new N.Vector2(1.6f, 0.35f) }),
         _ => throw new ArgumentException(name),
     };
 
@@ -108,7 +112,15 @@ public class PropTests
         for (int i = 0; i < m.Mesh.V.Count; i++)
         {
             var (p, n, t) = m.Mesh.V[i];
-            Add(p.X); Add(p.Y); Add(p.Z); Add(n.X); Add(n.Y); Add(n.Z); Add(t.X); Add(t.Y); Add(m.Mesh.Shade[i]);
+            Add(p.X);
+            Add(p.Y);
+            Add(p.Z);
+            Add(n.X);
+            Add(n.Y);
+            Add(n.Z);
+            Add(t.X);
+            Add(t.Y);
+            Add(m.Mesh.Shade[i]);
         }
         foreach (var f in m.Fires) { Add(f.X); Add(f.Y); }
         return h;

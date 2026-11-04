@@ -65,7 +65,10 @@ public partial class TestRunner : Node
 
     public async Task Frame() => await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
 
-    public async Task Frames(int n) { for (int i = 0; i < n; i++) await Frame(); }
+    public async Task Frames(int n)
+    {
+        for (int i = 0; i < n; i++) await Frame();
+    }
 
     public async Task Seconds(double s) => await ToSignal(GetTree().CreateTimer(s), SceneTreeTimer.SignalName.Timeout);
 }

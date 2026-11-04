@@ -65,7 +65,8 @@ public class HandTests
     public void A_piece_that_passes_through_others_holds_nothing_up_and_comes_down_to_the_table()
     {
         var block = new FakePiece("base", 0, 0, 6, 6, thickness: 0.3f);
-        var ghost = new FakePiece("ghost", 0, 0, 6, 6, thickness: 0.3f); ghost.Piece.NoCollision = true;
+        var ghost = new FakePiece("ghost", 0, 0, 6, 6, thickness: 0.3f);
+        ghost.Piece.NoCollision = true;
         var dropped = new FakePiece("dropped", 0, 0, 1, 1);
         Assert.Equal(0, new Footing<FakePiece>(_ => new[] { ghost }, _ => false).SurfaceY(new Vec2(0, 0), Layers.Umpire));
         var footing = new Footing<FakePiece>(_ => new[] { block }, _ => false);
@@ -89,7 +90,8 @@ public class HandTests
         var on = new FakePiece("on", 0.5, 0.5, 1, 1, y: 0.3);
         var floating = new FakePiece("high", -0.5, 0.5, 1, 1, y: 0.6);
         var off = new FakePiece("off", 5, 5, 1, 1, y: 0.3);
-        var pinned = new FakePiece("pinned", 1, -1, 1, 1, y: 0.3); pinned.Piece.Locked = true;
+        var pinned = new FakePiece("pinned", 1, -1, 1, 1, y: 0.3);
+        pinned.Piece.Locked = true;
         var held = new FakePiece("held", -1, -1, 1, 1, y: 0.3);
         var footing = new Footing<FakePiece>(_ => Array.Empty<FakePiece>(), n => n == held);
         var found = footing.RestingOn(under, new[] { under, on, floating, off, pinned, held }, _ => true);
@@ -190,7 +192,8 @@ public class HandTests
     public void A_flick_throws_at_the_speed_it_always_has(double now, string expected)
     {
         var trail = new ThrowTrail();
-        foreach (var (t, at) in new[] { (0.0, new Vec2(0, 0)), (0.3, new Vec2(0.1, 0)), (0.62, new Vec2(0.5, 0.2)), (0.66, new Vec2(0.9, 0.35)), (0.70, new Vec2(1.4, 0.5)), (0.74, new Vec2(2.2, 0.8)) })
+        foreach (var (t, at) in new[] { (0.0, new Vec2(0, 0)), (0.3, new Vec2(0.1, 0)), (0.62, new Vec2(0.5, 0.2)), (0.66, new Vec2(0.9, 0.35)), (0.70, new Vec2(1.4, 0.5)),
+            (0.74, new Vec2(2.2, 0.8)) })
             trail.Add(t, at);
         var v = trail.Velocity(now);
         Assert.Equal(expected, FormattableString.Invariant($"{v.X:R} {v.Y:R} {v.Z:R}"));

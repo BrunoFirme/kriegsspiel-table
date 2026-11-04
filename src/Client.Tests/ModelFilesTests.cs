@@ -47,7 +47,8 @@ public class ModelFilesTests
         var bin = new MemoryStream();
         using (var w = new BinaryWriter(bin, Encoding.ASCII, leaveOpen: true))
         {
-            w.Write(new byte[80]); w.Write(5u);
+            w.Write(new byte[80]);
+            w.Write(5u);
             foreach (var f in new float[] { 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0 }) w.Write(f);
             w.Write((ushort)0);
         }
@@ -105,7 +106,10 @@ public class ModelFilesTests
         ms.Write(head);
         var w = new BinaryWriter(ms);
         foreach (var f in new float[] { 0, 0, 0, 1, 0, 0, 0, 1, 0 }) w.Write(f);
-        w.Write((byte)3); w.Write(0); w.Write(1); w.Write(2);
+        w.Write((byte)3);
+        w.Write(0);
+        w.Write(1);
+        w.Write(2);
         return ms.ToArray();
     }
 

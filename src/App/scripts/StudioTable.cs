@@ -44,11 +44,17 @@ internal sealed class TablePaper
         foreach (var d in defs)
         {
             double w = d.Size.W + 0.6, h = d.Size.H + 0.6;
-            if (x + w > rowW && x > 0) { x = 0; z -= rowH; rowH = 0; }
+            if (x + w > rowW && x > 0)
+            {
+                x = 0;
+                z -= rowH;
+                rowH = 0;
+            }
             var id = S.View.NewId();
             _inst[d.Id] = id;
             cmds.Add(new SpawnPiece { Layer = Layers.Umpire, Def = d.Id, Pos = new Vec2(x + w / 2, z - h / 2), RotDeg = 180, Id = id });
-            x += w; rowH = Math.Max(rowH, h);
+            x += w;
+            rowH = Math.Max(rowH, h);
         }
         S.Do(new Batch { Items = cmds });
     }
@@ -77,24 +83,45 @@ internal sealed class TablePaper
         pm.AddItem("Paint this piece", 8);
         pm.AddItem("Turn over", 9);
         pm.AddSeparator();
-        pm.AddItem("Turn left 15°", 1); pm.AddItem("Turn right 15°", 2); pm.AddItem("Larger", 3); pm.AddItem("Smaller", 4);
+        pm.AddItem("Turn left 15°", 1);
+        pm.AddItem("Turn right 15°", 2);
+        pm.AddItem("Larger", 3);
+        pm.AddItem("Smaller", 4);
         pm.AddSeparator();
-        pm.AddItem("Duplicate the piece", 5); pm.AddItem("Delete the piece", 6);
+        pm.AddItem("Duplicate the piece", 5);
+        pm.AddItem("Delete the piece", 6);
         pm.AddSeparator();
         pm.AddItem("Take off the paper (keeps the piece in the pack)", 7);
         pm.IdPressed += id =>
         {
             switch (id)
             {
-                case 1: T.RotateSmooth(-15); break;
-                case 2: T.RotateSmooth(15); break;
-                case 3: T.ScaleSmooth(1.1); break;
-                case 4: T.ScaleSmooth(1 / 1.1); break;
-                case 5: _s.DuplicateSel(); break;
-                case 6: _s.DeleteSel(); break;
-                case 7: foreach (var n in T.SelectedNodes.ToList()) { if (_inst.FirstOrDefault(kv => kv.Value == n.Piece.Id).Key is { } k) _inst.Remove(k); S.Do(new DeletePiece { Layer = n.Layer, Id = n.Piece.Id }); } break;
-                case 8: _s.SetView("paint"); break;
-                case 9: T.FlipSelection(); break;
+                case 1:
+                    T.RotateSmooth(-15);
+                    break;
+                case 2:
+                    T.RotateSmooth(15);
+                    break;
+                case 3:
+                    T.ScaleSmooth(1.1);
+                    break;
+                case 4:
+                    T.ScaleSmooth(1 / 1.1);
+                    break;
+                case 5:
+                    _s.DuplicateSel();
+                    break;
+                case 6:
+                    _s.DeleteSel();
+                    break;
+                case 7: foreach (var n in T.SelectedNodes.ToList()) { if (_inst.FirstOrDefault(kv => kv.Value == n.Piece.Id).Key is { } k) _inst.Remove(k); S.Do(new DeletePiece { Layer = n.Layer,
+                    Id = n.Piece.Id }); } break;
+                case 8:
+                    _s.SetView("paint");
+                    break;
+                case 9:
+                    T.FlipSelection();
+                    break;
             }
         };
         pm.PopupHide += () => pm.QueueFree();

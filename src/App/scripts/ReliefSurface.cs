@@ -140,7 +140,9 @@ public partial class ReliefSurface : Node3D
     {
         foreach (var (node, _, _) in _blocks) node.QueueFree();
         _blocks.Clear();
-        _skirt?.QueueFree(); _skirt = null;
-        _base = null; _paint = null;
+        _skirt?.QueueFree();
+        _skirt = null;
+        _base = null;
+        _paint = null;
     }
 }

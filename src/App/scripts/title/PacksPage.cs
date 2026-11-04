@@ -75,7 +75,9 @@ sealed class PacksPage
         {
             var dlg = new ImportDialog(PackageStore.DefaultRoot, (sc, pk) =>
             {
-                _main.RebuildLobby(); _t.Select(2); Show();
+                _main.RebuildLobby();
+                _t.Select(2);
+                Show();
                 _t.Status.Text = sc.Length > 0 ? $"Imported '{sc}': its pack is below and the scenario is under Host a game." : $"Installed the pack {pk}.";
             });
             Ui.Open(_main, dlg);
@@ -95,7 +97,8 @@ sealed class PacksPage
             var pm = TitlePicks.FolderMenu(_t.Folders.Lib, folder =>
             {
                 foreach (var k in keys) _t.Folders.Lib.Move(true, k, folder);
-                _t.Select(2); Show();
+                _t.Select(2);
+                Show();
             });
             _main.AddChild(pm);
             pm.Popup(new Rect2I((Vector2I)_main.GetViewport().GetMousePosition().Round(), Vector2I.Zero));
@@ -110,7 +113,8 @@ sealed class PacksPage
                 catch (Exception e) when (e is IOException or UnauthorizedAccessException) { failed.Add($"{k}: {e.Message}"); }
             }
             _main.RebuildLobby();
-            _t.Select(2); Show();
+            _t.Select(2);
+            Show();
             _t.Status.Text = failed.Count == 0 ? $"Removed {keys.Count}. They are in the trash for {SaveStore.TrashDays} days."
                 : $"Removed {keys.Count - failed.Count} of {keys.Count}; not removed: {string.Join("; ", failed)}";
         }, $"They go to the trash for {SaveStore.TrashDays} days; scenarios that use them show them as missing."));
@@ -138,8 +142,10 @@ sealed class PacksPage
         long bytes = Directory.Exists(store.PackageDir(id)) ? Directory.EnumerateFiles(store.PackageDir(id), "*", SearchOption.AllDirectories).Sum(f => new FileInfo(f).Length) : 0;
         var (row, h) = Row(pack.Name);
         var by = pack.Source.Authors.Count > 0 ? " · by " + string.Join(", ", pack.Source.Authors) : "";
-        h.AddChild(new Label { Text = $"{pack.Pieces.Count} pieces{by} · {origin} · {Math.Max(1, bytes >> 20)} MB", Modulate = Muted, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, ClipText = true, MouseFilter = Control.MouseFilterEnum.Pass, TooltipText = pack.Description ?? "" });
-        var pid = id; var pname = pack.Name;
+        h.AddChild(new Label { Text = $"{pack.Pieces.Count} pieces{by} · {origin} · {Math.Max(1, bytes >> 20)} MB", Modulate = Muted, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, ClipText = true, MouseFilter = Control.MouseFilterEnum.Pass,
+            TooltipText = pack.Description ?? "" });
+        var pid = id;
+        var pname = pack.Name;
         var edit = new Button { Text = "Edit pieces", FocusMode = Control.FocusModeEnum.None, TooltipText = "Open the pack on the editor table" };
         edit.Pressed += () => _main.OpenEditor(pid);
         h.AddChild(edit);

@@ -49,7 +49,12 @@ public static class LayerPixels
         int n = 0;
         for (int k = 0; k < gone.Length; k++)
         {
-            if (gone[k]) { d[k * 4 + 3] = 0; n++; continue; }
+            if (gone[k])
+            {
+                d[k * 4 + 3] = 0;
+                n++;
+                continue;
+            }
             int x = k % w, y = k / w;
             if ((x > 0 && gone[k - 1]) || (x < w - 1 && gone[k + 1]) || (y > 0 && gone[k - w]) || (y < h - 1 && gone[k + w])) d[k * 4 + 3] = (byte)(d[k * 4 + 3] / 2);
         }

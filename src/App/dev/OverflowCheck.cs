@@ -11,7 +11,12 @@ static class OverflowCheck
     {
         void Walk(Node n, Rect2? bounds, string path)
         {
-            if (n is Window w && w != root) { if (!w.Visible) return; bounds = new Rect2(Vector2.Zero, w.Size); path += "/" + w.GetType().Name; }
+            if (n is Window w && w != root)
+            {
+                if (!w.Visible) return;
+                bounds = new Rect2(Vector2.Zero, w.Size);
+                path += "/" + w.GetType().Name;
+            }
             if (n is Control c)
             {
                 if (!c.IsVisibleInTree()) return;

@@ -15,7 +15,8 @@ sealed class LayersPanel : HudPart
 
     public LayersPanel(HudContext c, FloatPanel panel, DrawPanel paint, ToolStrip strip) : base(c)
     {
-        _paint = paint; _strip = strip;
+        _paint = paint;
+        _strip = strip;
         Panel = panel;
         _box = Panel.Body;
     }
@@ -45,7 +46,9 @@ sealed class LayersPanel : HudPart
         {
             if (!T.HiddenBoards.Add(id)) T.HiddenBoards.Remove(id);
             T.RefreshDrawings();
-            Rebuild(); _paint.Rebuild(); _strip.SyncPenLock();
+            Rebuild();
+            _paint.Rebuild();
+            _strip.SyncPenLock();
         };
         row.AddChild(eye);
         var pick = new Button
@@ -54,7 +57,14 @@ sealed class LayersPanel : HudPart
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, CustomMinimumSize = new Vector2(104, 22),
             TooltipText = "Draw on this layer · double-click to rename",
         };
-        pick.Pressed += () => { T.Board = id; T.CheckDrawingLock(); Rebuild(); _paint.Rebuild(); _strip.SyncPenLock(); };
+        pick.Pressed += () =>
+        {
+            T.Board = id;
+            T.CheckDrawingLock();
+            Rebuild();
+            _paint.Rebuild();
+            _strip.SyncPenLock();
+        };
         pick.GuiInput += e => { if (e is InputEventMouseButton { ButtonIndex: MouseButton.Left, DoubleClick: true }) AskName(id, b.Name); };
         row.AddChild(pick);
         int on = Count(id);
@@ -101,6 +111,7 @@ sealed class LayersPanel : HudPart
         dlg.Confirmed += () => { if (edit.Text.Trim().Length > 0) S.Do(new RenameBoard { Id = id, Name = edit.Text.Trim() }); };
         Ui.Open(HudNode, dlg);
         Ui.FreeOnClose(dlg);
-        edit.GrabFocus(); edit.SelectAll();
+        edit.GrabFocus();
+        edit.SelectAll();
     }
 }

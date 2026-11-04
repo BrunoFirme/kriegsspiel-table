@@ -87,7 +87,12 @@ static class AgentPanel
             state.Text = a.On ? $"On at {a.Address} · {a.Calls} call{(a.Calls == 1 ? "" : "s")}" : a.Problem ?? "Off.";
             state.Modulate = a.Problem != null && !a.On ? Ui.Danger : a.On ? Ui.Ink : Ui.Muted;
         }
-        on.Toggled += v => { if (v) a.TurnOn(); else a.TurnOff(); Sync(); };
+        on.Toggled += v =>
+        {
+            if (v) a.TurnOn();
+            else a.TurnOff();
+            Sync();
+        };
         a.Changed += Sync;
         box.TreeExiting += () => a.Changed -= Sync;
         Sync();

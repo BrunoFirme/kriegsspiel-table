@@ -109,13 +109,33 @@ public static class Bson
                 0x09 => JsonValue.Create(BitConverter.ToInt64(d, Adv(ref p, 8))),
                 _ => throw new InvalidDataException($"unsupported BSON type 0x{type:X2}"),
             };
-            if (isArray) arr.Add(v); else obj[name] = v;
+            if (isArray) arr.Add(v);
+            else obj[name] = v;
         }
         p = start + len;
         return isArray ? arr : obj;
     }
 
-    static int Adv(ref int p, int n) { int at = p; p += n; return at; }
-    static string CString(byte[] d, ref int p) { int s = p; while (d[p] != 0) p++; var r = Encoding.UTF8.GetString(d, s, p - s); p++; return r; }
-    static string Str(byte[] d, ref int p) { int n = BitConverter.ToInt32(d, p); p += 4; var r = Encoding.UTF8.GetString(d, p, n - 1); p += n; return r; }
+    static int Adv(ref int p, int n)
+    {
+        int at = p;
+        p += n;
+        return at;
+    }
+    static string CString(byte[] d, ref int p)
+    {
+        int s = p;
+        while (d[p] != 0) p++;
+        var r = Encoding.UTF8.GetString(d, s, p - s);
+        p++;
+        return r;
+    }
+    static string Str(byte[] d, ref int p)
+    {
+        int n = BitConverter.ToInt32(d, p);
+        p += 4;
+        var r = Encoding.UTF8.GetString(d, p, n - 1);
+        p += n;
+        return r;
+    }
 }

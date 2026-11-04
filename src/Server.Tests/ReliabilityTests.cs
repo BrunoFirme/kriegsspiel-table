@@ -58,7 +58,8 @@ public sealed class ReliabilityTests
         using var t = new Table();
         var before = t.StateJson;
         Assert.Contains("not a number", t.Error(Table.Ump, new MovePiece { Layer = U, Id = P, Pos = new Vec2(double.NaN, 0) }));
-        Assert.Contains("not a number", t.Error(Table.Ump, new Batch { Items = { new MovePiece { Layer = U, Id = M, Pos = new Vec2(1, 1) }, new SetScale { Layer = U, Id = P, Scale = double.PositiveInfinity } } }));
+        Assert.Contains("not a number",
+            t.Error(Table.Ump, new Batch { Items = { new MovePiece { Layer = U, Id = M, Pos = new Vec2(1, 1) }, new SetScale { Layer = U, Id = P, Scale = double.PositiveInfinity } } }));
         Assert.Equal(before, t.StateJson);
         Assert.NotEmpty(t.Server.SaveBytes());
     }
@@ -90,7 +91,10 @@ public sealed class ReliabilityTests
     {
         var g = GameState.FromScenario(Table.MakeScenario());
         var before = Json.Serialize(g);
-        var err = StateMachine.Apply(g, new Batch { Items = { new MovePiece { Layer = U, Id = P, Pos = new Vec2(5, 5) }, new SetCounter { Layer = U, Id = M, Name = "str", Value = 3 }, new DeletePiece { Layer = U, Id = "p-nothere" } } }, out _);
+        var err =
+            StateMachine.Apply(g,
+                new Batch { Items = { new MovePiece { Layer = U, Id = P, Pos = new Vec2(5, 5) }, new SetCounter { Layer = U, Id = M, Name = "str", Value = 3 }, new DeletePiece { Layer = U, Id = "p-nothere" } } },
+                out _);
         Assert.NotNull(err);
         Assert.Equal(before, Json.Serialize(g));
     }
@@ -184,7 +188,8 @@ public sealed class ReliabilityTests
         var p = g.Find(U, P)!;
         p.Widgets.Add(new Widget { Kind = "label", Label = "1st Bn" });
         p.DrawnOnState = 0;
-        Assert.Null(StateMachine.Apply(g, new Batch { Items = { new SetState { Layer = U, Id = P, State = 2 }, new SetWidgets { Layer = U, Id = P, Widgets = { new Widget { Kind = "label", Label = "broken" } } } } }, out var inverse));
+        Assert.Null(StateMachine.Apply(g, new Batch { Items = { new SetState { Layer = U, Id = P, State = 2 }, new SetWidgets { Layer = U, Id = P, Widgets = { new Widget { Kind = "label", Label = "broken" } } } } },
+            out var inverse));
         Assert.Equal(2, p.DrawnOnState);
         Assert.Null(StateMachine.Apply(g, inverse!, out _));
         Assert.Equal(0, p.State);
@@ -210,7 +215,12 @@ public sealed class ReliabilityTests
                     if (c.Seq > view.LastSeq) view.LastSeq = c.Seq;
                 }
         }
-        List<Outgoing> Do(Command c) { var res = t.Server.Handle(Table.Ump, c); Follow(res); return res; }
+        List<Outgoing> Do(Command c)
+        {
+            var res = t.Server.Handle(Table.Ump, c);
+            Follow(res);
+            return res;
+        }
 
         Do(new SetScript { Layer = U, Id = P, Text = "function on_load() self.button({ label = 'go', x = 0, z = 0, on_click = 'go' }) end\nfunction go() self.set_counter('str', 3) end" });
         Do(new MovePiece { Layer = U, Id = P, Pos = new Vec2(4, 4) });

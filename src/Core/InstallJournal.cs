@@ -34,7 +34,13 @@ public sealed class InstallJournal
 
     public string FilePath { get; }
 
-    InstallJournal(string path, string root, Record r, SaveStore saves) { FilePath = path; _root = root; _r = r; _saves = saves; }
+    InstallJournal(string path, string root, Record r, SaveStore saves)
+    {
+        FilePath = path;
+        _root = root;
+        _r = r;
+        _saves = saves;
+    }
 
     public static InstallJournal Begin(string packagesRoot, SaveStore saves, string what, DateTime nowUtc)
     {
@@ -182,7 +188,7 @@ public sealed class InstallJournal
     static bool TryMove(string from, string to)
     {
         try { File.Move(from, to, overwrite: false); return true; }
-        catch (Exception) { return false; }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException) { return false; }
     }
 
     static void UndoStep(string root, SaveStore saves, Step s, DateTime nowUtc, Undone u, bool careful)
@@ -241,7 +247,7 @@ public sealed class InstallJournal
     static (int pid, long started) Me()
     {
         try { using var p = Process.GetCurrentProcess(); return (p.Id, p.StartTime.ToUniversalTime().Ticks); }
-        catch { return (Environment.ProcessId, 0); }
+        catch (Exception e) when (e is InvalidOperationException or NotSupportedException or System.ComponentModel.Win32Exception) { return (Environment.ProcessId, 0); }
     }
 
     static bool Alive(int pid, long startedTicks)
@@ -254,7 +260,7 @@ public sealed class InstallJournal
             if (startedTicks == 0) return true;
             return Math.Abs(p.StartTime.ToUniversalTime().Ticks - startedTicks) < TimeSpan.TicksPerSecond;
         }
-        catch (Exception) { return false; }
+        catch (Exception e) when (e is ArgumentException or InvalidOperationException or NotSupportedException or System.ComponentModel.Win32Exception) { return false; }
     }
 }
 

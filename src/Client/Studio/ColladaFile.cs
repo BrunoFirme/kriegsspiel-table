@@ -58,9 +58,15 @@ public static class ColladaFile
                 case "matrix" when f.Length == 16:
                     local = Matrix4x4.Transpose(new Matrix4x4(f[0], f[1], f[2], f[3], f[4], f[5], f[6], f[7], f[8], f[9], f[10], f[11], f[12], f[13], f[14], f[15])) * local;
                     break;
-                case "translate" when f.Length == 3: local = Matrix4x4.CreateTranslation(f[0], f[1], f[2]) * local; break;
-                case "scale" when f.Length == 3: local = Matrix4x4.CreateScale(f[0], f[1], f[2]) * local; break;
-                case "rotate" when f.Length == 4: local = Matrix4x4.CreateFromAxisAngle(Vector3.Normalize(new Vector3(f[0], f[1], f[2])), f[3] * MathF.PI / 180) * local; break;
+                case "translate" when f.Length == 3:
+                    local = Matrix4x4.CreateTranslation(f[0], f[1], f[2]) * local;
+                    break;
+                case "scale" when f.Length == 3:
+                    local = Matrix4x4.CreateScale(f[0], f[1], f[2]) * local;
+                    break;
+                case "rotate" when f.Length == 4:
+                    local = Matrix4x4.CreateFromAxisAngle(Vector3.Normalize(new Vector3(f[0], f[1], f[2])), f[3] * MathF.PI / 180) * local;
+                    break;
             }
         }
         var world = local * parent;
@@ -126,7 +132,9 @@ public static class ColladaFile
         var positionOf = vertices?.Elements(ns + "input").FirstOrDefault(i => i.Attribute("semantic")?.Value == "POSITION")?.Attribute("source")?.Value.TrimStart('#');
         foreach (var prim in mesh.Elements().Where(e => e.Name.LocalName is "triangles" or "polylist" or "polygons"))
         {
-            var inputs = prim.Elements(ns + "input").Select(i => (sem: i.Attribute("semantic")?.Value ?? "", src: i.Attribute("source")?.Value.TrimStart('#') ?? "", off: int.TryParse(i.Attribute("offset")?.Value, out var o) ? o : 0, set: i.Attribute("set")?.Value)).ToList();
+            var inputs = prim.Elements(ns + "input")
+                .Select(i => (sem: i.Attribute("semantic")?.Value ?? "", src: i.Attribute("source")?.Value.TrimStart('#') ?? "", off: int.TryParse(i.Attribute("offset")?.Value, out var o) ? o : 0, set: i.Attribute("set")?.Value))
+                .ToList();
             if (inputs.Count == 0) continue;
             int width = inputs.Max(i => i.off) + 1;
             var vin = inputs.FirstOrDefault(i => i.sem == "VERTEX");

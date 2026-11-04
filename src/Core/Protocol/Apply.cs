@@ -140,7 +140,10 @@ public static class StateMachine
         var delta = m.Pos - p.Pos;
         double drot = m.RotDeg - p.RotDeg;
         double dy = Math.Max(0, m.Y) - p.Y;
-        p.Pos = m.Pos; p.RotDeg = Norm(m.RotDeg); p.Stack = m.Stack; p.Y = Math.Max(0, m.Y);
+        p.Pos = m.Pos;
+        p.RotDeg = Norm(m.RotDeg);
+        p.Stack = m.Stack;
+        p.Y = Math.Max(0, m.Y);
         foreach (var cid in p.Attached ?? [])
         {
             var ch = cid == null ? null : g.Find(m.Layer, cid);
@@ -269,8 +272,14 @@ public static class StateMachine
         bool was;
         switch (po.Name)
         {
-            case PieceOptions.NoCollision: was = p.NoCollision; p.NoCollision = po.Value; break;
-            case PieceOptions.PhysicalRoll: was = p.PhysicalRoll; p.PhysicalRoll = po.Value; break;
+            case PieceOptions.NoCollision:
+                was = p.NoCollision;
+                p.NoCollision = po.Value;
+                break;
+            case PieceOptions.PhysicalRoll:
+                was = p.PhysicalRoll;
+                p.PhysicalRoll = po.Value;
+                break;
             default: return "no such option: " + po.Name;
         }
         inverse = new SetPieceOption { Layer = po.Layer, Id = po.Id, Name = po.Name, Value = was };
@@ -349,7 +358,9 @@ public static class StateMachine
         if (s == null) return "no such sheet";
         if (ms.Size is { } sz && (sz.W <= 0 || sz.H <= 0)) return "bad size";
         inverse = new MoveSheet { Id = s.Id, Pos = s.Pos, RotDeg = s.RotDeg, Z = s.Z, Size = s.Size };
-        s.Pos = ms.Pos; s.RotDeg = Norm(ms.RotDeg); s.Z = ms.Z;
+        s.Pos = ms.Pos;
+        s.RotDeg = Norm(ms.RotDeg);
+        s.Z = ms.Z;
         if (ms.Size is { } ns) s.Size = ns;
         return null;
     }
@@ -388,7 +399,8 @@ public static class StateMachine
         {
             var (centre, w, h) = SheetGeometry.Full(s);
             var (pos, size) = SheetGeometry.Cropped(centre, w, h, s.RotDeg, cs.Crop);
-            s.Pos = pos; s.Size = size;
+            s.Pos = pos;
+            s.Size = size;
         }
         s.Crop = cs.Crop;
         return null;
@@ -528,7 +540,9 @@ public static class StateMachine
     static string? ApplySetClock(GameState g, SetClock sc2, ref Command? inverse)
     {
         inverse = new SetClock { Turn = g.Clock.Turn, GameTime = g.Clock.GameTime, IncrementMinutes = g.Clock.IncrementMinutes };
-        g.Clock.Turn = sc2.Turn; g.Clock.GameTime = sc2.GameTime; g.Clock.IncrementMinutes = Math.Max(1, sc2.IncrementMinutes);
+        g.Clock.Turn = sc2.Turn;
+        g.Clock.GameTime = sc2.GameTime;
+        g.Clock.IncrementMinutes = Math.Max(1, sc2.IncrementMinutes);
         return null;
     }
 
@@ -639,7 +653,12 @@ public static class StateMachine
             {
                 var history = g.Dice.ToList();
                 var faces = rd.Layer == null ? new() : rd.PieceIds.Select(id => g.Find(rd.Layer, id)).Where(p => p != null).Select(p => (p!, p!.State)).ToList();
-                return () => { g.Dice.Clear(); g.Dice.AddRange(history); foreach (var (p, s) in faces) p.State = s; };
+                return () =>
+                {
+                    g.Dice.Clear();
+                    g.Dice.AddRange(history);
+                    foreach (var (p, s) in faces) p.State = s;
+                };
             }
             default:
                 return null;
@@ -752,7 +771,8 @@ public static class StateMachine
         if (root == null) return "no such piece";
         inverse = new SetUi { Layer = su.Layer, Piece = su.Piece, Tree = root.Select(n => n.Clone()).ToList() };
         var tree = su.Tree.Select(n => n.Clone()).ToList();
-        if (su.Piece == null) g.Ui = tree; else g.Find(su.Layer ?? Layers.Umpire, su.Piece)!.Ui = tree;
+        if (su.Piece == null) g.Ui = tree;
+        else g.Find(su.Layer ?? Layers.Umpire, su.Piece)!.Ui = tree;
         return null;
     }
 
@@ -802,7 +822,12 @@ public static class StateMachine
                 return "a decal's place and size must be numbers, its size above 0";
         }
         inverse = new SetDecals { Layer = sd.Layer, Id = sd.Id, Decals = p.Decals.Select(d => d.Clone()).ToList() };
-        p.Decals = sd.Decals.Select(d => { var c = d.Clone(); c.Name ??= ""; return c; }).ToList();
+        p.Decals = sd.Decals.Select(d =>
+        {
+            var c = d.Clone();
+            c.Name ??= "";
+            return c;
+        }).ToList();
         return null;
     }
 
@@ -832,7 +857,8 @@ public static class StateMachine
 
     static double Norm(double deg)
     {
-        deg %= 360; if (deg < 0) deg += 360;
+        deg %= 360;
+        if (deg < 0) deg += 360;
         return deg;
     }
 

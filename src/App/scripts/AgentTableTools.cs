@@ -147,18 +147,31 @@ sealed partial class AgentTableTools
     static (Vec2 min, Vec2 max) Extent(Session s)
     {
         double x0 = double.MaxValue, z0 = double.MaxValue, x1 = double.MinValue, z1 = double.MinValue;
-        void Take(double x, double z) { x0 = Math.Min(x0, x); z0 = Math.Min(z0, z); x1 = Math.Max(x1, x); z1 = Math.Max(z1, z); }
+        void Take(double x, double z)
+        {
+            x0 = Math.Min(x0, x);
+            z0 = Math.Min(z0, z);
+            x1 = Math.Max(x1, x);
+            z1 = Math.Max(z1, z);
+        }
         foreach (var sh in s.View.Sheets)
         {
             var r = sh.RotDeg * Math.PI / 180;
             double hx = Math.Abs(Math.Cos(r)) * sh.Size.W / 2 + Math.Abs(Math.Sin(r)) * sh.Size.H / 2;
             double hz = Math.Abs(Math.Sin(r)) * sh.Size.W / 2 + Math.Abs(Math.Cos(r)) * sh.Size.H / 2;
-            Take(sh.Pos.X - hx, sh.Pos.Z - hz); Take(sh.Pos.X + hx, sh.Pos.Z + hz);
+            Take(sh.Pos.X - hx, sh.Pos.Z - hz);
+            Take(sh.Pos.X + hx, sh.Pos.Z + hz);
         }
         if (s.View.Sheets.Count == 0)
             foreach (var p in s.View.Layers.Values.SelectMany(l => l)) Take(p.Pos.X, p.Pos.Z);
         if (x0 > x1) return (new Vec2(-EmptyTableSize / 2, -EmptyTableSize / 2), new Vec2(EmptyTableSize / 2, EmptyTableSize / 2));
-        if (x1 - x0 < MapView.MinSize && z1 - z0 < MapView.MinSize) { x0 -= 10; x1 += 10; z0 -= 10; z1 += 10; }
+        if (x1 - x0 < MapView.MinSize && z1 - z0 < MapView.MinSize)
+        {
+            x0 -= 10;
+            x1 += 10;
+            z0 -= 10;
+            z1 += 10;
+        }
         return (new Vec2(x0, z0), new Vec2(x1, z1));
     }
 

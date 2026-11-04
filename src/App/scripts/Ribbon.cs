@@ -15,7 +15,8 @@ static class Ribbon
         var o = new List<Vec2> { pts[0] };
         for (int i = 1; i < pts.Count; i++)
         {
-            var a = pts[i - 1]; var b = pts[i];
+            var a = pts[i - 1];
+            var b = pts[i];
             double cell = Math.Min(ground.CellSize(a), ground.CellSize(b));
             int n = double.IsFinite(cell) ? Math.Clamp((int)Math.Ceiling((b - a).Length / cell), 1, MostDrapedPoints / pts.Count + 1) : 1;
             for (int k = 1; k <= n; k++) o.Add(new Vec2(a.X + (b.X - a.X) * k / n, a.Z + (b.Z - a.Z) * k / n));
@@ -32,7 +33,12 @@ static class Ribbon
         int m = ps.Count;
         if (m < 2) return;
         Vector3 W(int i) => Coords.ToWorld(ps[i], y + (float)g.At(ps[i]));
-        Vector3 Dir(int i, int j) { var d = W(j) - W(i); d.Y = 0; return d.LengthSquared() > 1e-10 ? d.Normalized() : Vector3.Zero; }
+        Vector3 Dir(int i, int j)
+        {
+            var d = W(j) - W(i);
+            d.Y = 0;
+            return d.LengthSquared() > 1e-10 ? d.Normalized() : Vector3.Zero;
+        }
         float half = (float)(width / 2);
         im.SurfaceBegin(Mesh.PrimitiveType.TriangleStrip, mat);
         for (int k = 0; k <= (closed ? m : m - 1); k++)

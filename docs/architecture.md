@@ -96,7 +96,13 @@ scripted run never moves the person's cursor or touches their clipboard. The too
 
 ## Rules the check enforces
 
-- No class over 1,500 lines (partial classes counted together), no method over 100 lines.
+- No class over 1,500 lines (partial classes counted together), no method over 100 lines, no line over 200 characters.
+- One member declaration per line, one statement per line, and a block written on one line holds at most two
+  statements; a third puts the block on its own lines. `python -I tools/tidy.py` splits and wraps what these
+  rules flag and leaves every other line as it is (`--check` only lists the files it would change).
+- Every catch is narrow (`catch (IOException)`, or a `when` filter), or it names the exception and does something
+  with it: reports it, keeps it, or rethrows. Nothing is swallowed in silence; a step that may fail without
+  consequence goes through `BestEffort`, which records what it swallowed.
 - No comments in any code: C#, Python, PowerShell, MSBuild files, shaders, Lua and the lock scripts. Names and
   structure say what the code does; a reason the code cannot show goes in these docs.
 - Warnings are errors in every project (`Directory.Build.props`); nullable reference types are on everywhere.

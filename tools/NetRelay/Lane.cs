@@ -66,7 +66,11 @@ public sealed class Lane : IDisposable
     public Lane(IPEndPoint listenOn, IPEndPoint host, string spec, Scheduler scheduler, Link hostUp, Action<string> say)
     {
         var profile = Profile.Parse(spec);
-        _host = host; _spec = spec; _scheduler = scheduler; _hostUp = hostUp; _say = say;
+        _host = host;
+        _spec = spec;
+        _scheduler = scheduler;
+        _hostUp = hostUp;
+        _say = say;
         _up = new Link(profile, Direction.Up);
         _down = new Link(profile, Direction.Down);
         _listen = Socket(listenOn.AddressFamily);

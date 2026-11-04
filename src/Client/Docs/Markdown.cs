@@ -140,9 +140,19 @@ public static partial class Markdown
         for (int i = 0; i < inner.Length; i++)
         {
             char c = inner[i];
-            if (c == '\\' && i + 1 < inner.Length && inner[i + 1] == '|') { sb.Append('|'); i++; continue; }
+            if (c == '\\' && i + 1 < inner.Length && inner[i + 1] == '|')
+            {
+                sb.Append('|');
+                i++;
+                continue;
+            }
             if (c == '`') code = !code;
-            if (c == '|' && !code) { cells.Add(sb.ToString().Trim()); sb.Clear(); continue; }
+            if (c == '|' && !code)
+            {
+                cells.Add(sb.ToString().Trim());
+                sb.Clear();
+                continue;
+            }
             sb.Append(c);
         }
         cells.Add(sb.ToString().Trim());

@@ -236,7 +236,12 @@ public partial class AgentEndpoint : Node
         finally
         {
             _busy = false;
-            if (Working != null) { Working = null; LastCallAt = DateTime.UtcNow; Changed?.Invoke(); }
+            if (Working != null)
+            {
+                Working = null;
+                LastCallAt = DateTime.UtcNow;
+                Changed?.Invoke();
+            }
         }
     }
 

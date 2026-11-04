@@ -14,7 +14,14 @@ public sealed class ScenarioBuilder
     readonly MakeWay _way;
     int _nextId = 1;
 
-    public ScenarioBuilder(Config cfg, AssetStore assets, Report rep, MakeWay way) { _cfg = cfg; _assets = assets; _rep = rep; _defs = new DefFactory(cfg, assets, rep); _way = way; }
+    public ScenarioBuilder(Config cfg, AssetStore assets, Report rep, MakeWay way)
+    {
+        _cfg = cfg;
+        _assets = assets;
+        _rep = rep;
+        _defs = new DefFactory(cfg, assets, rep);
+        _way = way;
+    }
 
     sealed class Layer
     {
@@ -122,7 +129,9 @@ public sealed class ScenarioBuilder
             t["posZ"] = o.PosZ - lx * Math.Sin(th) + lz * Math.Cos(th);
             t["posY"] = o.PosY + c.PosY * o.ScaleY;
             t["rotY"] = o.RotY + c.RotY;
-            t["scaleX"] = c.ScaleX * o.ScaleX; t["scaleY"] = c.ScaleY * o.ScaleY; t["scaleZ"] = c.ScaleZ * o.ScaleZ;
+            t["scaleX"] = c.ScaleX * o.ScaleX;
+            t["scaleY"] = c.ScaleY * o.ScaleY;
+            t["scaleZ"] = c.ScaleZ * o.ScaleZ;
             j.Remove("ChildObjects");
             yield return new TtsObj(j);
         }
@@ -247,7 +256,9 @@ public sealed class ScenarioBuilder
                 grew |= referenced.Add(d.Id);
         }
         extras.M.Pieces = extras.M.Pieces.Where(d => referenced.Contains(d.Id)).OrderBy(d => d.Id, StringComparer.Ordinal).ToList();
-        var usedAssets = extras.M.Pieces.SelectMany(d => new[] { d.Image, d.Back, d.Mesh, d.Texture, d.AddOnMesh, d.AddOnTexture }.Concat(d.States.SelectMany(s => new[] { s.Image, s.Back, s.Mesh, s.Texture }))).OfType<string>().ToHashSet();
+        var usedAssets =
+            extras.M.Pieces.SelectMany(d => new[] { d.Image, d.Back, d.Mesh, d.Texture, d.AddOnMesh, d.AddOnTexture }.Concat(d.States.SelectMany(s => new[] { s.Image, s.Back, s.Mesh, s.Texture })))
+            .OfType<string>().ToHashSet();
         usedAssets.UnionWith(pieces.SelectMany(p => p.Decals).Select(d => d.Picture));
         usedAssets.UnionWith(extras.M.Assets.Keys.Where(k => !usedAssets.Contains(k) && texts.Any(t => t.Contains(k, StringComparison.Ordinal))));
         foreach (var k in extras.M.Assets.Keys.Where(k => !usedAssets.Contains(k)).ToList()) extras.M.Assets.Remove(k);
@@ -360,7 +371,8 @@ public sealed class ScenarioBuilder
 
         if (MatchKey(def) is { } mk && packDefs.TryGetValue(mk, out var cands))
         {
-            (PieceDef def, string pack)? best = null; double bestScale = 0, bestMiss = double.MaxValue;
+            (PieceDef def, string pack)? best = null;
+            double bestScale = 0, bestMiss = double.MaxValue;
             foreach (var c in cands)
             {
                 if (c.def.States.Count != def.States.Count) continue;
@@ -372,11 +384,19 @@ public sealed class ScenarioBuilder
                 if (Math.Abs(kx - kz) > 0.01 * kx) continue;
                 double miss = Math.Abs(kx - 1);
                 bool exact = miss < 0.01;
-                if (best == null || exact && miss < bestMiss) { best = c; bestScale = exact ? 1 : kx; bestMiss = exact ? miss : bestMiss; }
+                if (best == null || exact && miss < bestMiss)
+                {
+                    best = c;
+                    bestScale = exact ? 1 : kx;
+                    bestMiss = exact ? miss : bestMiss;
+                }
             }
             if (best is { } b)
             {
-                def = b.def; packId = b.pack; scale = Math.Round(scale * bestScale, 4); rekeyed++;
+                def = b.def;
+                packId = b.pack;
+                scale = Math.Round(scale * bestScale, 4);
+                rekeyed++;
             }
         }
         usedPacks.Add(packId);
@@ -477,5 +497,10 @@ public sealed class ScenarioBuilder
     PieceDef? Lookup(string id) => _lookup.TryGetValue(id, out var d) ? d : null;
     public void Index(IEnumerable<PieceDef> defs) { foreach (var d in defs) _lookup[d.Id] = d; }
 
-    static double Norm(double deg) { deg %= 360; if (deg < 0) deg += 360; return Math.Round(deg, 3); }
+    static double Norm(double deg)
+    {
+        deg %= 360;
+        if (deg < 0) deg += 360;
+        return Math.Round(deg, 3);
+    }
 }

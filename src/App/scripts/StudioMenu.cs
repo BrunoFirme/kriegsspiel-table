@@ -22,7 +22,13 @@ internal sealed class StudioMenu
         pm.AddItem("New piece…", 1);
         pm.SetItemAccelerator(pm.GetItemIndex(1), (Key)KeyModifierMask.MaskCtrl | Key.N);
         pm.AddItem("Pack details…", 15);
-        if (_s.View == "paint" && _s.Faces.CanvasOpen) { pm.AddSeparator("Picture"); pm.AddItem("Picture size…", 3); pm.AddCheckItem("Rulers", 4); pm.SetItemChecked(pm.ItemCount - 1, prefs.Rulers); }
+        if (_s.View == "paint" && _s.Faces.CanvasOpen)
+        {
+            pm.AddSeparator("Picture");
+            pm.AddItem("Picture size…", 3);
+            pm.AddCheckItem("Rulers", 4);
+            pm.SetItemChecked(pm.ItemCount - 1, prefs.Rulers);
+        }
         pm.AddSeparator("Tidy up");
         pm.AddItem("Remove pictures nothing uses any more", 5);
         pm.AddItem("Lay the pieces out again on the table", 6);
@@ -39,19 +45,47 @@ internal sealed class StudioMenu
         {
             switch (id)
             {
-                case 1: _s.NewPieces.Show(); break;
-                case 3: AskDocSize(); break;
-                case 4: prefs.Rulers = !prefs.Rulers; Canvas.Redraw(); prefs.Save(); break;
-                case 5: _ = RemoveUnused(); break;
-                case 6: _s.Paper.LayOutAll(force: true); break;
-                case 7: _s.Paper.AskReference(); break;
-                case 8: ShowKeys(); break;
-                case 9: GuideReader.Show(_s.Root, "community-guide.md", "the-piece-studio"); break;
-                case 10: GuideReader.Show(_s.Root, "makers.md"); break;
-                case 11: GuideReader.Show(_s.Root, "scripting.md"); break;
-                case 12: GuideReader.ShowEntry(_s.Root, null); break;
-                case 13: AppSettings.OpenWindow(_s.Root, _s.Cfg); break;
-                case 15: PackDetails(); break;
+                case 1:
+                    _s.NewPieces.Show();
+                    break;
+                case 3:
+                    AskDocSize();
+                    break;
+                case 4:
+                    prefs.Rulers = !prefs.Rulers;
+                    Canvas.Redraw();
+                    prefs.Save();
+                    break;
+                case 5:
+                    _ = RemoveUnused();
+                    break;
+                case 6:
+                    _s.Paper.LayOutAll(force: true);
+                    break;
+                case 7:
+                    _s.Paper.AskReference();
+                    break;
+                case 8:
+                    ShowKeys();
+                    break;
+                case 9:
+                    GuideReader.Show(_s.Root, "community-guide.md", "the-piece-studio");
+                    break;
+                case 10:
+                    GuideReader.Show(_s.Root, "makers.md");
+                    break;
+                case 11:
+                    GuideReader.Show(_s.Root, "scripting.md");
+                    break;
+                case 12:
+                    GuideReader.ShowEntry(_s.Root, null);
+                    break;
+                case 13:
+                    AppSettings.OpenWindow(_s.Root, _s.Cfg);
+                    break;
+                case 15:
+                    PackDetails();
+                    break;
             }
         };
         pm.PopupHide += () => pm.QueueFree();
@@ -79,8 +113,10 @@ internal sealed class StudioMenu
         dlg.AddChild(box);
         var authors = new LineEdit { Text = string.Join(", ", pack.Source.Authors), PlaceholderText = "your name, and anyone who made it with you", CustomMinimumSize = new Vector2(420, 0) };
         var about = new TextEdit { Text = pack.Description ?? "", WrapMode = TextEdit.LineWrappingMode.Boundary, CustomMinimumSize = new Vector2(420, 140), PlaceholderText = "What the pack holds, its period and scale, how its pieces are meant to be used" };
-        box.AddChild(new Label { Text = "Made by" }); box.AddChild(authors);
-        box.AddChild(new Label { Text = "Description" }); box.AddChild(about);
+        box.AddChild(new Label { Text = "Made by" });
+        box.AddChild(authors);
+        box.AddChild(new Label { Text = "Description" });
+        box.AddChild(about);
         dlg.Confirmed += () =>
         {
             pack.Source.Authors = authors.Text.Split(',').Select(a => a.Trim()).Where(a => a.Length > 0).Distinct().ToList();
@@ -111,10 +147,14 @@ internal sealed class StudioMenu
         var w = new SpinBox { MinValue = 8, MaxValue = 4096, Value = Canvas.Doc.W, Suffix = "px" };
         var h = new SpinBox { MinValue = 8, MaxValue = 4096, Value = Canvas.Doc.H, Suffix = "px" };
         var how = new OptionButton();
-        how.AddItem("Scale everything with it"); how.AddItem("Keep sizes, grow or cut round the middle");
-        g.AddChild(new Label { Text = "Width" }); g.AddChild(w);
-        g.AddChild(new Label { Text = "Height" }); g.AddChild(h);
-        g.AddChild(new Label { Text = "Layers" }); g.AddChild(how);
+        how.AddItem("Scale everything with it");
+        how.AddItem("Keep sizes, grow or cut round the middle");
+        g.AddChild(new Label { Text = "Width" });
+        g.AddChild(w);
+        g.AddChild(new Label { Text = "Height" });
+        g.AddChild(h);
+        g.AddChild(new Label { Text = "Layers" });
+        g.AddChild(how);
         Ui.AlignForm(g);
         var box = new VBoxContainer();
         box.AddChild(g);

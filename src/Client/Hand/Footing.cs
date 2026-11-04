@@ -72,7 +72,8 @@ public sealed class Footing<T> where T : class, ITablePiece
                     var q = at + new Vec2(along.X * i * w * 0.255 + back.X * j * d * 0.255, along.Z * i * w * 0.255 + back.Z * j * d * 0.255);
                     float t = PiecesTop(q, n.Layer, n, moving);
                     float rel = Mathf.Max(0, t - GroundAt(q));
-                    all = Mathf.Max(all, rel); allTop = Mathf.Max(allTop, t);
+                    all = Mathf.Max(all, rel);
+                    allTop = Mathf.Max(allTop, t);
                     if (Math.Abs(i) <= 1 && Math.Abs(j) <= 1) { mid = Mathf.Max(mid, rel); midTop = Mathf.Max(midTop, t); }
                 }
             return (mid, all, midTop, allTop);

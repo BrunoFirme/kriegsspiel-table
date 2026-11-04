@@ -110,17 +110,27 @@ public partial class PointerHand : Node3D
         {
             float v = -Mathf.Pi / 2 + Mathf.Pi * i / Rings, u = -Mathf.Pi + Mathf.Tau * j / Segments;
             float cv = Mathf.Cos(v), sv = Mathf.Sin(v), cu = Mathf.Cos(u), su = Mathf.Sin(u);
-            normal = new Vector3(Power(cv, 2 - squareness) * Power(cu, 2 - squareness) / size.X, Power(sv, 2 - squareness) / size.Y, Power(cv, 2 - squareness) * Power(su, 2 - squareness) / size.Z).Normalized();
+            normal = new Vector3(Power(cv, 2 - squareness) * Power(cu, 2 - squareness) / size.X, Power(sv, 2 - squareness) / size.Y, Power(cv, 2 - squareness) * Power(su, 2 - squareness) / size.Z)
+                .Normalized();
             return new Vector3(Power(cv, squareness) * Power(cu, squareness) * size.X / 2, Power(sv, squareness) * size.Y / 2, Power(cv, squareness) * Power(su, squareness) * size.Z / 2);
         }
         var st = new SurfaceTool();
         st.Begin(Mesh.PrimitiveType.Triangles);
-        void Add(int i, int j) { var p = Point(i, j, out var n); st.SetNormal(n); st.AddVertex(p); }
+        void Add(int i, int j)
+        {
+            var p = Point(i, j, out var n);
+            st.SetNormal(n);
+            st.AddVertex(p);
+        }
         for (var i = 0; i < Rings; i++)
             for (var j = 0; j < Segments; j++)
             {
-                Add(i, j); Add(i + 1, j); Add(i + 1, j + 1);
-                Add(i, j); Add(i + 1, j + 1); Add(i, j + 1);
+                Add(i, j);
+                Add(i + 1, j);
+                Add(i + 1, j + 1);
+                Add(i, j);
+                Add(i + 1, j + 1);
+                Add(i, j + 1);
             }
         return st.Commit();
     }

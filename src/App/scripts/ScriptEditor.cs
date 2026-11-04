@@ -32,7 +32,12 @@ public static class ScriptEditor
         row.AddChild(Ui.Primary("Save and reload", () =>
         {
             var t = edit.Text;
-            if (t.Trim().Length == 0) { save(null); dlg.Hide(); return; }
+            if (t.Trim().Length == 0)
+            {
+                save(null);
+                dlg.Hide();
+                return;
+            }
             var verdict = ScriptSafety.Inspect(t);
             if (verdict.Hostile) { status.Text = "Refused: " + string.Join("; ", verdict.Reasons); return; }
             save(t);

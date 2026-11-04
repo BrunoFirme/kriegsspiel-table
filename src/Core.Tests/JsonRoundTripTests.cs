@@ -127,7 +127,8 @@ public class JsonRoundTripTests
         yield return new object[] { new ErrorMessage { Text = "nope" } };
         yield return new object[] { new NeedAsset { Package = "pack-x", Path = "img/a.png", Offset = 131072 } };
         yield return new object[] { new AssetChunk { Package = "pack-x", Path = "img/a.png", Offset = 65536, Total = 100000 } };
-        yield return new object[] { new PeerList { Peers = new() { new PeerInfo { PeerId = 1, Name = "Host", Role = Role.HostUmpire }, new PeerInfo { PeerId = 2, Name = "O", Role = Role.Observer } }, Waiting = new() { new PeerInfo { PeerId = 3, Name = "W" } } } };
+        yield return new object[] { new PeerList { Peers = new() { new PeerInfo { PeerId = 1, Name = "Host", Role = Role.HostUmpire }, new PeerInfo { PeerId = 2, Name = "O", Role = Role.Observer } },
+            Waiting = new() { new PeerInfo { PeerId = 3, Name = "W" } } } };
         yield return new object[] { new UploadAsset { Package = "user.mine", Path = "pack.json", Offset = 0, Total = 3 } };
         yield return new object[] { new ChunkAck { Package = "user.mine", Path = "pack.json", Offset = 65536 } };
         yield return new object[] { new GetTurns() };
@@ -260,7 +261,8 @@ public class JsonRoundTripTests
     {
         const string old = @"{""format"":1,""scenarioId"":""scn"",""created"":""c"",""saved"":""s"",
             ""keys"":{""umpire"":""AAAAAAAA"",""observer"":""BBBBBBBB"",""sides"":{""red"":""CCCCCCCC""}},
-            ""snapshot"":{""scenarioId"":""scn"",""layers"":{""umpire"":[{""id"":""p-000001"",""def"":""x""}]},""sightings"":[{""id"":""v-000002"",""to"":""side:red"",""pieces"":[{""def"":""x""}],""mask"":[{""center"":{""x"":1,""z"":2},""radius"":0.5}]}],""observersSeeBoard"":false,""nextId"":3,""lastSeq"":2},
+            ""snapshot"":{""scenarioId"":""scn"",""layers"":{""umpire"":[{""id"":""p-000001"",""def"":""x""}]},""sightings"":[{""id"":""v-000002"",""to"":""side:red"",""pieces"":[{""def"":""x""}],""mask"":[{""center"":{""x"":1,""z"":2},""radius"":0.5}]}],""observersSeeBoard"":false,""nextId"":3,
+                ""lastSeq"":2},
             ""commands"":[{""type"":""MovePiece"",""seq"":1,""layer"":""umpire"",""id"":""p-000001"",""pos"":{""x"":1,""z"":1}},{""type"":""PublishSighting"",""seq"":2,""actor"":1,""sighting"":{""id"":""v-000002"",""to"":""side:red"",""note"":""cavalry""}}]}";
         var back = Json.Deserialize<SaveFile>(old);
         Assert.Equal(1, back.Format);

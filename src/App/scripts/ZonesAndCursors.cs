@@ -29,7 +29,9 @@ sealed class ZoneLayer
             if (z.Polygon.Count < 3) continue;
             var col = UmpireHue.Of(_c.S, z.Owner) ?? UmpireHue.Unassigned;
             var mine = string.Equals(z.Owner, _c.S.Me.Name, StringComparison.OrdinalIgnoreCase);
-            var fill = new StandardMaterial3D { AlbedoColor = col with { A = mine ? 0.16f : 0.09f }, ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded, Transparency = BaseMaterial3D.TransparencyEnum.Alpha, CullMode = BaseMaterial3D.CullModeEnum.Disabled, NoDepthTest = false };
+            var fill =
+                new StandardMaterial3D { AlbedoColor = col with { A = mine ? 0.16f : 0.09f }, ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded,
+                    Transparency = BaseMaterial3D.TransparencyEnum.Alpha, CullMode = BaseMaterial3D.CullModeEnum.Disabled, NoDepthTest = false };
             var line = new StandardMaterial3D { AlbedoColor = col, ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded };
             var im = new ImmediateMesh();
             var ground = _c.S.Ground;
@@ -60,7 +62,10 @@ sealed class ZoneLayer
             {
                 double ax = x0 + i * sx, az = z0 + j * sz;
                 if (!Inside(poly, new Vec2(ax + sx / 2, az + sz / 2))) continue;
-                var a = At(ax, az); var b = At(ax + sx, az); var c = At(ax, az + sz); var d = At(ax + sx, az + sz);
+                var a = At(ax, az);
+                var b = At(ax + sx, az);
+                var c = At(ax, az + sz);
+                var d = At(ax + sx, az + sz);
                 foreach (var v in new[] { a, b, c, b, d, c }) im.SurfaceAddVertex(v);
             }
     }
@@ -105,11 +110,24 @@ sealed class UmpirePointers
     readonly Func<Vec2, float> _surface;
     readonly Func<long, bool> _carrying;
     readonly Func<string, Color> _hue;
-    public UmpirePointers(TableContext c, Func<Vec2, float> surface, Func<long, bool> carrying, Func<string, Color> hue) { _c = c; _surface = surface; _carrying = carrying; _hue = hue; }
+    public UmpirePointers(TableContext c, Func<Vec2, float> surface, Func<long, bool> carrying, Func<string, Color> hue)
+    {
+        _c = c;
+        _surface = surface;
+        _carrying = carrying;
+        _hue = hue;
+    }
 
     public event Action<Vec2>? Moved;
 
-    sealed class RemoteCursor { public required PointerHand Hand; public required Color Hue; public string Name = ""; public double Age; public Vec2 Target; }
+    sealed class RemoteCursor
+    {
+        public required PointerHand Hand;
+        public required Color Hue;
+        public string Name = "";
+        public double Age;
+        public Vec2 Target;
+    }
 
     readonly Dictionary<long, RemoteCursor> _cursors = new();
     public bool Show = true;

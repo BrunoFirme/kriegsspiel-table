@@ -64,7 +64,8 @@ sealed class PieceBack
 
     List<FaceInk.Counter> Rows()
     {
-        var def = _piece.Def; var p = _piece.Piece;
+        var def = _piece.Def;
+        var p = _piece.Piece;
         return def != null && def.Counters.Count > 0
             ? def.Counters.Where(c => c.Place == null).Select(c => new FaceInk.Counter(c.Name, p.Counters.GetValueOrDefault(c.Name, c.Default), c.Min, c.Max, c.ShowName, c.ShowButtons)).ToList()
             : p.Counters.Select(kv => new FaceInk.Counter(kv.Key, kv.Value, -999, 999, true, true)).ToList();

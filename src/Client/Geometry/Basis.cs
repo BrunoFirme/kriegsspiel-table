@@ -29,9 +29,11 @@ public readonly struct Basis
         float t = 1f - cos;
         float xyzt = axis.X * axis.Y * t, zyxs = axis.Z * sin;
         float r0y = xyzt - zyxs, r1x = xyzt + zyxs;
-        xyzt = axis.X * axis.Z * t; zyxs = axis.Y * sin;
+        xyzt = axis.X * axis.Z * t;
+        zyxs = axis.Y * sin;
         float r0z = xyzt + zyxs, r2x = xyzt - zyxs;
-        xyzt = axis.Y * axis.Z * t; zyxs = axis.X * sin;
+        xyzt = axis.Y * axis.Z * t;
+        zyxs = axis.X * sin;
         float r1z = xyzt - zyxs, r2y = xyzt + zyxs;
         Row0 = new Vector3(sq.X + cos * (1f - sq.X), r0y, r0z);
         Row1 = new Vector3(r1x, sq.Y + cos * (1f - sq.Y), r1z);
@@ -40,7 +42,8 @@ public readonly struct Basis
 
     public static Basis Arc(Vector3 from, Vector3 to)
     {
-        var a = from.Normalized(); var b = to.Normalized();
+        var a = from.Normalized();
+        var b = to.Normalized();
         float d = a.Dot(b), x, y, z, w;
         if (Mathf.Abs(d) > 0.99999976f)
         {
@@ -49,9 +52,15 @@ public readonly struct Basis
         }
         var c = a.Cross(b);
         float s = Mathf.Sqrt((1f + d) * 2f), rs = 1f / s;
-        x = c.X * rs; y = c.Y * rs; z = c.Z * rs; w = s * 0.5f;
+        x = c.X * rs;
+        y = c.Y * rs;
+        z = c.Z * rs;
+        w = s * 0.5f;
         float inv = 1f / Mathf.Sqrt(x * x + y * y + z * z + w * w);
-        x *= inv; y *= inv; z *= inv; w *= inv;
+        x *= inv;
+        y *= inv;
+        z *= inv;
+        w *= inv;
         float k = 2f / (x * x + y * y + z * z + w * w);
         float xs = x * k, ys = y * k, zs = z * k;
         float wx = w * xs, wy = w * ys, wz = w * zs, xx = x * xs, xy = x * ys, xz = x * zs, yy = y * ys, yz = y * zs, zz = z * zs;

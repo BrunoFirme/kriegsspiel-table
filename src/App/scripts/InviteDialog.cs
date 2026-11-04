@@ -73,14 +73,16 @@ sealed class InviteDialog : HudPart
         var r = new HBoxContainer();
         r.AddThemeConstantOverride("separation", 10);
         r.AddChild(new Label { Text = name, CustomMinimumSize = new Vector2(NameWidth, 0), SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, Modulate = new Color(1, 1, 1, 0.74f) });
-        r.AddChild(new Label { Text = value, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, ClipText = true, TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis });
+        r.AddChild(new Label { Text = value, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, ClipText = true,
+            TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis });
         if (copy != null) r.AddChild(copy);
         return r;
     }
 
     public static Control PasswordRow(HudContext c, Window owner)
     {
-        var S = c.S; var N = c.N;
+        var S = c.S;
+        var N = c.N;
         var r = new HBoxContainer();
         r.AddThemeConstantOverride("separation", 10);
         r.AddChild(new Label { Text = "Password", CustomMinimumSize = new Vector2(NameWidth, 0), SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, Modulate = new Color(1, 1, 1, 0.74f) });
@@ -90,7 +92,12 @@ sealed class InviteDialog : HudPart
         if (S.IsLead)
         {
             var sent = field.Text;
-            void Commit() { if (!GodotObject.IsInstanceValid(field) || field.Text.Trim() == sent) return; sent = field.Text.Trim(); N.Door(new SetPassword { Password = sent }); }
+            void Commit()
+            {
+                if (!GodotObject.IsInstanceValid(field) || field.Text.Trim() == sent) return;
+                sent = field.Text.Trim();
+                N.Door(new SetPassword { Password = sent });
+            }
             field.TextSubmitted += _ => Commit();
             field.FocusExited += Commit;
             owner.VisibilityChanged += () => { if (!owner.Visible) Commit(); };

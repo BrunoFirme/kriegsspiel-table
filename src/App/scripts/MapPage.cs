@@ -30,7 +30,8 @@ sealed class MapPage : HudPart
 
     public void OnCropChanged()
     {
-        if (_cropShownFor != T.CropSheetId) Rebuild(); else _cropSync?.Invoke();
+        if (_cropShownFor != T.CropSheetId) Rebuild();
+        else _cropSync?.Invoke();
     }
 
     public void Rebuild()
@@ -58,7 +59,10 @@ sealed class MapPage : HudPart
             var id = sh.Id;
             var row = new HBoxContainer();
             row.AddThemeConstantOverride("separation", 2);
-            var b = new Button { Text = sh.Name.Length > 0 ? sh.Name : sh.Id, Alignment = HorizontalAlignment.Left, FocusMode = Control.FocusModeEnum.None, ToggleMode = true, ButtonPressed = T.SelectedSheet == id, ClipText = true, TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, TooltipText = $"{sh.Name}\nOn the table, Alt+click picks a sheet out too" };
+            var b =
+                new Button { Text = sh.Name.Length > 0 ? sh.Name : sh.Id, Alignment = HorizontalAlignment.Left, FocusMode = Control.FocusModeEnum.None, ToggleMode = true,
+                    ButtonPressed = T.SelectedSheet == id, ClipText = true, TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+                    TooltipText = $"{sh.Name}\nOn the table, Alt+click picks a sheet out too" };
             b.Pressed += () => { T.SelectSheet(T.SelectedSheet == id ? null : id); Rebuild(); };
             row.AddChild(b);
             var locked = sh.Locked;
@@ -89,8 +93,10 @@ sealed class MapPage : HudPart
         var grid = Ui.Form(64);
         var nameEd = new LineEdit { Text = sel.Name, CustomMinimumSize = new Vector2(60, 0) };
         void CommitName() { var n = nameEd.Text.Trim(); if (n.Length > 0 && n != sel.Name) S.Do(new RenameSheet { Id = sel.Id, Name = n }); }
-        nameEd.TextSubmitted += _ => CommitName(); nameEd.FocusExited += CommitName;
-        grid.AddChild(new Label { Text = "Name" }); grid.AddChild(nameEd);
+        nameEd.TextSubmitted += _ => CommitName();
+        nameEd.FocusExited += CommitName;
+        grid.AddChild(new Label { Text = "Name" });
+        grid.AddChild(nameEd);
         SpinBox Num(string label, double v, double step, string suffix = "")
         {
             grid.AddChild(new Label { Text = label });
@@ -98,7 +104,10 @@ sealed class MapPage : HudPart
             grid.AddChild(sb);
             return sb;
         }
-        var x = Num("X", sel.Pos.X, 0.01); var z = Num("Z", sel.Pos.Z, 0.01); var r = Num("Turn", sel.RotDeg, 0.5, "°"); var zo = Num("Layer", sel.Z, 1);
+        var x = Num("X", sel.Pos.X, 0.01);
+        var z = Num("Z", sel.Pos.Z, 0.01);
+        var r = Num("Turn", sel.RotDeg, 0.5, "°");
+        var zo = Num("Layer", sel.Z, 1);
         var wd = Num("Width", sel.Size.W, 0.1, " u");
         wd.MinValue = 0.5;
         double aspect = sel.Size.H / Math.Max(1e-6, sel.Size.W);
@@ -139,10 +148,13 @@ sealed class MapPage : HudPart
             return sb;
         }
         var cr = T.CropRect;
-        var left = Trim("Left", cr.X * 100); var top = Trim("Top", cr.Y * 100);
-        var right = Trim("Right", (1 - cr.X - cr.W) * 100); var bottom = Trim("Bottom", (1 - cr.Y - cr.H) * 100);
+        var left = Trim("Left", cr.X * 100);
+        var top = Trim("Top", cr.Y * 100);
+        var right = Trim("Right", (1 - cr.X - cr.W) * 100);
+        var bottom = Trim("Bottom", (1 - cr.Y - cr.H) * 100);
         bool sync = false;
-        void PushCrop() { if (sync) return; T.SetCropRect(new FaceBox { X = left.Value / 100, Y = top.Value / 100, W = 1 - left.Value / 100 - right.Value / 100, H = 1 - top.Value / 100 - bottom.Value / 100 }); }
+        void PushCrop() { if (sync) return; T.SetCropRect(new FaceBox { X = left.Value / 100, Y = top.Value / 100, W = 1 - left.Value / 100 - right.Value / 100,
+            H = 1 - top.Value / 100 - bottom.Value / 100 }); }
         foreach (var sb in new[] { left, top, right, bottom }) sb.ValueChanged += _ => PushCrop();
         Ui.AlignForm(cg);
         _box.AddChild(cg);
@@ -156,7 +168,10 @@ sealed class MapPage : HudPart
             if (!GodotObject.IsInstanceValid(left)) return;
             sync = true;
             var c = T.CropRect;
-            left.Value = c.X * 100; top.Value = c.Y * 100; right.Value = (1 - c.X - c.W) * 100; bottom.Value = (1 - c.Y - c.H) * 100;
+            left.Value = c.X * 100;
+            top.Value = c.Y * 100;
+            right.Value = (1 - c.X - c.W) * 100;
+            bottom.Value = (1 - c.Y - c.H) * 100;
             sync = false;
         };
     }
@@ -225,8 +240,14 @@ sealed class MapPage : HudPart
                     double right = S.View.Sheets.Count == 0 ? 0 : S.View.Sheets.Max(s => s.Pos.X + s.Size.W / 2);
                     double sw = w * 0.05, shh = h * 0.05;
                     var first = S.View.Sheets.FirstOrDefault();
-                    if (first != null) { var k = first.Size.H / shh; sw *= k; shh *= k; }
-                    S.Do(new AddSheet { Sheet = new SheetDef { Name = SheetName(path), Image = sha, Package = pkg, Pos = new Vec2(right + sw / 2, first?.Pos.Z ?? 0), Size = new Size2(sw, shh), RotDeg = 180, Locked = false, Z = S.View.Sheets.Count } });
+                    if (first != null)
+                    {
+                        var k = first.Size.H / shh;
+                        sw *= k;
+                        shh *= k;
+                    }
+                    S.Do(new AddSheet { Sheet = new SheetDef { Name = SheetName(path), Image = sha, Package = pkg, Pos = new Vec2(right + sw / 2, first?.Pos.Z ?? 0), Size = new Size2(sw, shh),
+                        RotDeg = 180, Locked = false, Z = S.View.Sheets.Count } });
                     if (paths.Count > 1) AddPictures(paths.Skip(1).ToList());
                     else
                     {
@@ -236,7 +257,10 @@ sealed class MapPage : HudPart
                     }
                 }).CallDeferred();
             }
-            catch (Exception e) { Callable.From(() => { S.Assets.EndJob(job); Log($"[color=#ff7060]Could not add {Fmt.Bb(SheetName(path))}: {Fmt.Bb(e.Message)}[/color]"); }).CallDeferred(); }
+            catch (Exception e)
+            {
+                Callable.From(() => { S.Assets.EndJob(job); Log($"[color=#ff7060]Could not add {Fmt.Bb(SheetName(path))}: {Fmt.Bb(e.Message)}[/color]"); }).CallDeferred();
+            }
         });
     }
 }

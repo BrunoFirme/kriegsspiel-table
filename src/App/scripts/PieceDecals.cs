@@ -24,7 +24,8 @@ sealed class PieceDecals
     {
         var piece = _piece.Piece;
         if (!force && ReferenceEquals(_built, piece.Decals) && _builtFaceDown == piece.FaceDown) return;
-        _built = piece.Decals; _builtFaceDown = piece.FaceDown;
+        _built = piece.Decals;
+        _builtFaceDown = piece.FaceDown;
         foreach (var n in _nodes) if (GodotObject.IsInstanceValid(n)) n.QueueFree();
         _nodes.Clear();
         if (piece.Decals.Count == 0 || _piece.Def?.Kind == "model" || _piece.IsDie || _piece.IsEffect) return;

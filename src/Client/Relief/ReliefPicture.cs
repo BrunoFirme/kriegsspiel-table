@@ -38,7 +38,9 @@ public static class ReliefPicture
         var highest = new float[w * h];
         foreach (var t in src.Triangles)
         {
-            var a = new Vector2(t.A.X * w, t.A.Y * h); var b = new Vector2(t.B.X * w, t.B.Y * h); var c = new Vector2(t.C.X * w, t.C.Y * h);
+            var a = new Vector2(t.A.X * w, t.A.Y * h);
+            var b = new Vector2(t.B.X * w, t.B.Y * h);
+            var c = new Vector2(t.C.X * w, t.C.Y * h);
             float area = (b.X - a.X) * (c.Y - a.Y) - (c.X - a.X) * (b.Y - a.Y);
             if (Math.Abs(area) < 1e-9f) continue;
             int x0 = Math.Max(0, (int)Math.Floor(Math.Min(a.X, Math.Min(b.X, c.X)))), x1 = Math.Min(w - 1, (int)Math.Ceiling(Math.Max(a.X, Math.Max(b.X, c.X))));

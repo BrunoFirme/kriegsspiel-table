@@ -13,7 +13,14 @@ sealed class PieceActions
     readonly PendingPoses _poses;
     readonly Carry _hand;
     readonly Hover _hover;
-    public PieceActions(TableContext c, Selection selection, PendingPoses poses, Carry hand, Hover hover) { _c = c; _selection = selection; _poses = poses; _hand = hand; _hover = hover; }
+    public PieceActions(TableContext c, Selection selection, PendingPoses poses, Carry hand, Hover hover)
+    {
+        _c = c;
+        _selection = selection;
+        _poses = poses;
+        _hand = hand;
+        _hover = hover;
+    }
 
     Session S => _c.S;
 
@@ -67,7 +74,8 @@ sealed class PieceActions
         var editable = targets.Where(t => S.CanTouch(t.Layer, t.Piece)).ToList();
         if (editable.Count == 0) return false;
         var typed = editable.Select(t => (Command)new NumberTyped { Layer = t.Layer, Id = t.Piece.Id, Number = n }).ToList();
-        if (typed.Count == 1) S.Do(typed[0]); else S.Do(new Batch { Items = typed });
+        if (typed.Count == 1) S.Do(typed[0]);
+        else S.Do(new Batch { Items = typed });
         var ab = editable.Where(t => t.Def != null && t.Def.States.Count > 1 && t.Def.States.Count >= n).ToList();
         if (ab.Count > 0) { var nm = ab[0].Def!.States[n - 1].Name; _c.Say($"Look {n}{(nm.Length > 0 ? ": " + nm : "")}{(ab.Count > 1 ? $" on {ab.Count} pieces" : "")}"); }
         return true;
@@ -78,7 +86,8 @@ sealed class PieceActions
         var press = SameButtonAcrossSelection(hit, index, w);
         foreach (var n in press) n.FlashWidget(index);
         var clicks = press.Select(n => (Command)new ClickWidget { Layer = n.Layer, Id = n.Piece.Id, Index = index }).ToList();
-        if (clicks.Count == 1) S.Do(clicks[0]); else S.Do(new Batch { Items = clicks });
+        if (clicks.Count == 1) S.Do(clicks[0]);
+        else S.Do(new Batch { Items = clicks });
     }
 
     List<PieceNode> SameButtonAcrossSelection(PieceNode hit, int index, Widget w)

@@ -34,7 +34,8 @@ public class LibraryTests
     public void A_renamed_folder_keeps_what_was_in_it_and_cannot_take_another_folders_name()
     {
         var lib = new Library();
-        lib.AddFolder("A"); lib.AddFolder("B");
+        lib.AddFolder("A");
+        lib.AddFolder("B");
         lib.Move(false, "feud", "A");
         lib.Move(true, "pack1", "A");
         lib.Move(true, "pack2", "B");
@@ -77,7 +78,9 @@ public class LibraryTests
         var lib = new Library();
         string G(IEnumerable<(string folder, List<string> items)> g) => string.Join(" | ", g.Select(x => x.folder + ":" + string.Join(",", x.items)));
         Assert.Equal(":a,b", G(lib.Grouped(new[] { "a", "b" }, i => i, false, "")));
-        lib.AddFolder("F"); lib.AddFolder("E"); lib.AddFolder("Empty");
+        lib.AddFolder("F");
+        lib.AddFolder("E");
+        lib.AddFolder("Empty");
         Assert.Equal(":a", G(lib.Grouped(new[] { "a" }, i => i, false, "")));
         lib.Move(false, "a", "F");
         lib.Move(false, "c", "E");

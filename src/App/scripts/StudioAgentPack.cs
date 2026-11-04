@@ -44,7 +44,8 @@ sealed partial class StudioTools
         var outline = OutlineNamed(said);
         if (said != null && outline == null) return ToolResult.Fail("outline is one of " + OutlineList + ".");
         if (d.Kind == "model" && (outline != null || a.Num("width") != null || a.Num("height") != null)) return ToolResult.Fail("A model's looks share its size and have no outline.");
-        var w = a.Num("width"); var h = a.Num("height");
+        var w = a.Num("width");
+        var h = a.Num("height");
         bool same = a.Flag("same_size") == true;
         if (i == 0 && (w != null || h != null || outline != null)) return ToolResult.Fail("Look 1 is the kind itself: change its size and outline with studio_set_piece.");
         Edit(s, d, x =>

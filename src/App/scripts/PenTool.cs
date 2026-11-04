@@ -14,7 +14,12 @@ sealed class PenTool
     readonly TableContext _c;
     readonly ToolOverlay _overlay;
     readonly DrawingLayer _drawings;
-    public PenTool(TableContext c, ToolOverlay overlay, DrawingLayer drawings) { _c = c; _overlay = overlay; _drawings = drawings; }
+    public PenTool(TableContext c, ToolOverlay overlay, DrawingLayer drawings)
+    {
+        _c = c;
+        _overlay = overlay;
+        _drawings = drawings;
+    }
 
     public string ShapeKind = "line";
     public Color PenColor = new(0.1f, 0.1f, 0.1f);
@@ -34,7 +39,12 @@ sealed class PenTool
     ToolOverlay Overlay => _overlay;
 
     public void PressDraw(Vec2 g) => _stroke = new() { g };
-    public void PressShape(Vec2 g) { _shapeA = g; _shapeB = g; _across = ScreenAcross(); }
+    public void PressShape(Vec2 g)
+    {
+        _shapeA = g;
+        _shapeB = g;
+        _across = ScreenAcross();
+    }
 
     Vec2 ScreenAcross()
     {
@@ -66,7 +76,12 @@ sealed class PenTool
         _shapeA = _shapeB = null;
     }
 
-    public void Drop() { _stroke = null; _shapeA = _shapeB = null; _rubbedAt = null; }
+    public void Drop()
+    {
+        _stroke = null;
+        _shapeA = _shapeB = null;
+        _rubbedAt = null;
+    }
 
     public void DrawInHand()
     {
@@ -81,7 +96,8 @@ sealed class PenTool
         DrawTip();
     }
 
-    StandardMaterial3D PenMaterial() => new() { AlbedoColor = StrokeColor(), ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded, NoDepthTest = true, Transparency = BaseMaterial3D.TransparencyEnum.Alpha };
+    StandardMaterial3D PenMaterial() =>
+        new() { AlbedoColor = StrokeColor(), ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded, NoDepthTest = true, Transparency = BaseMaterial3D.TransparencyEnum.Alpha };
 
     void DrawTip()
     {

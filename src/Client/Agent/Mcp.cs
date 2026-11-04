@@ -50,7 +50,10 @@ public sealed class Mcp
 
     public Mcp(IReadOnlyList<AgentTool> tools, string version, string instructions, IReadOnlyList<AgentPrompt>? prompts = null)
     {
-        _tools = tools; _version = version; _instructions = instructions; _prompts = prompts ?? Array.Empty<AgentPrompt>();
+        _tools = tools;
+        _version = version;
+        _instructions = instructions;
+        _prompts = prompts ?? Array.Empty<AgentPrompt>();
     }
 
     public IReadOnlyList<AgentTool> Tools => _tools;

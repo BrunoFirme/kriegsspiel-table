@@ -158,15 +158,18 @@ try
                             """);
                         if (m.Success) title = System.Text.RegularExpressions.Regex.Unescape(m.Groups[1].Value);
                     }
-                    catch { title = Path.GetFileNameWithoutExtension(f); }
+                    catch (Exception e) when (e is IOException or UnauthorizedAccessException or ArgumentException) { title = Path.GetFileNameWithoutExtension(f); }
                     var thumb = Path.ChangeExtension(f, ".png");
-                    Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(new { kind, id = Path.GetFileNameWithoutExtension(f), name = title, path = f, thumb = File.Exists(thumb) ? thumb : null, size = new FileInfo(f).Length }));
+                    Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(new { kind, id = Path.GetFileNameWithoutExtension(f), name = title, path = f, thumb = File.Exists(thumb) ? thumb : null,
+                        size = new FileInfo(f).Length }));
                     listed.Add(f);
                 }
             }
             foreach (var f in listed)
             {
-                var measured = KTable.Core.BestEffort.Read<(long Bytes, int ToFetch)?>(() => { var save = TtsSave.Load(cfg, f); return assets.Footprint(PackBuilder.PieceUrls(save), PackBuilder.Urls(save)); }, fallback: null);
+                var measured =
+                    KTable.Core.BestEffort.Read<(long Bytes, int ToFetch)?>(() => { var save = TtsSave.Load(cfg, f); return assets.Footprint(PackBuilder.PieceUrls(save), PackBuilder.Urls(save)); },
+                        fallback: null);
                 if (measured is var (bytes, toFetch))
                     Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(new { kind = "size", path = f, size = bytes, fetch = toFetch }));
             }

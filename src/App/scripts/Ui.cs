@@ -136,7 +136,8 @@ public static class Ui
 
     static void Bars(Theme t)
     {
-        StyleBoxFlat Track(Color c) => new() { BgColor = c, CornerRadiusTopLeft = 2, CornerRadiusTopRight = 2, CornerRadiusBottomLeft = 2, CornerRadiusBottomRight = 2, ContentMarginTop = 2, ContentMarginBottom = 2 };
+        StyleBoxFlat Track(Color c) =>
+            new() { BgColor = c, CornerRadiusTopLeft = 2, CornerRadiusTopRight = 2, CornerRadiusBottomLeft = 2, CornerRadiusBottomRight = 2, ContentMarginTop = 2, ContentMarginBottom = 2 };
         t.SetStylebox("slider", "HSlider", Track(White(0.10f)));
         t.SetStylebox("grabber_area", "HSlider", Track(new Color(Ink, 0.45f)));
         t.SetStylebox("grabber_area_highlight", "HSlider", Track(new Color(Ink, 0.65f)));
@@ -151,7 +152,8 @@ public static class Ui
                 BgColor = White(a), CornerRadiusTopLeft = 3, CornerRadiusTopRight = 3, CornerRadiusBottomLeft = 3, CornerRadiusBottomRight = 3,
                 ContentMarginLeft = v ? 3 : 0, ContentMarginRight = v ? 3 : 0, ContentMarginTop = v ? 0 : 3, ContentMarginBottom = v ? 0 : 3,
             };
-            t.SetStylebox("scroll", bar, new StyleBoxFlat { BgColor = new Color(0, 0, 0, 0), ContentMarginLeft = v ? 3 : 0, ContentMarginRight = v ? 3 : 0, ContentMarginTop = v ? 0 : 3, ContentMarginBottom = v ? 0 : 3 });
+            t.SetStylebox("scroll", bar,
+                new StyleBoxFlat { BgColor = new Color(0, 0, 0, 0), ContentMarginLeft = v ? 3 : 0, ContentMarginRight = v ? 3 : 0, ContentMarginTop = v ? 0 : 3, ContentMarginBottom = v ? 0 : 3 });
             t.SetStylebox("scroll_focus", bar, new StyleBoxEmpty());
             t.SetStylebox("grabber", bar, Grab(0.16f));
             t.SetStylebox("grabber_highlight", bar, Grab(0.26f));
@@ -260,7 +262,8 @@ public static class Ui
         static float Cover(float d) => Mathf.Clamp(0.5f - d, 0f, 1f);
         static float Seg(Vector2 p, Vector2 a, Vector2 b)
         {
-            var ab = b - a; float h = Mathf.Clamp((p - a).Dot(ab) / ab.LengthSquared(), 0f, 1f);
+            var ab = b - a;
+            float h = Mathf.Clamp((p - a).Dot(ab) / ab.LengthSquared(), 0f, 1f);
             return (p - a - ab * h).Length();
         }
         for (int y = 0; y < n; y++)
@@ -360,7 +363,13 @@ public static class Ui
             if (kids[i] is not Control c) continue;
             if (i % g.Columns == 0)
             {
-                if (c is Label l) { l.CustomMinimumSize = new Vector2(w, 0); l.ClipText = true; l.SizeFlagsVertical = Control.SizeFlags.ShrinkCenter; l.Modulate = new Color(1, 1, 1, 0.74f); }
+                if (c is Label l)
+                {
+                    l.CustomMinimumSize = new Vector2(w, 0);
+                    l.ClipText = true;
+                    l.SizeFlagsVertical = Control.SizeFlags.ShrinkCenter;
+                    l.Modulate = new Color(1, 1, 1, 0.74f);
+                }
             }
             else if (c.SizeFlagsHorizontal == Control.SizeFlags.Fill) c.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
         }
@@ -478,7 +487,8 @@ public static class Ui
 
     public static void RememberFolder(FileDialog fd)
     {
-        BestEffort.Try(() => { if (System.IO.File.Exists(LastFolderFile) && System.IO.File.ReadAllText(LastFolderFile).Trim() is { Length: > 0 } d && System.IO.Directory.Exists(d)) fd.CurrentDir = d; });
+        BestEffort.Try(() => { if (System.IO.File.Exists(LastFolderFile) && System.IO.File.ReadAllText(LastFolderFile).Trim() is { Length: > 0 } d
+            && System.IO.Directory.Exists(d)) fd.CurrentDir = d; });
         void Save()
         {
             BestEffort.Try(() => { var d = fd.CurrentDir; if (!string.IsNullOrEmpty(d) && System.IO.Directory.Exists(d)) System.IO.File.WriteAllText(LastFolderFile, d); });
@@ -526,7 +536,8 @@ public static class Ui
     }
 
     public static void SwallowWheel(Control panel) =>
-        panel.GuiInput += e => { if (e is InputEventMouseButton { ButtonIndex: MouseButton.WheelUp or MouseButton.WheelDown or MouseButton.WheelLeft or MouseButton.WheelRight }) panel.AcceptEvent(); };
+        panel.GuiInput += e =>
+            { if (e is InputEventMouseButton { ButtonIndex: MouseButton.WheelUp or MouseButton.WheelDown or MouseButton.WheelLeft or MouseButton.WheelRight }) panel.AcceptEvent(); };
 
     static Texture2D? _loadingIcon;
     public static Texture2D LoadingIcon
@@ -545,7 +556,10 @@ public static class Ui
     public static void Place(Control c, Control.LayoutPreset anchors, float l, float t, float r, float b)
     {
         c.SetAnchorsPreset(anchors);
-        c.OffsetLeft = l; c.OffsetTop = t; c.OffsetRight = r; c.OffsetBottom = b;
+        c.OffsetLeft = l;
+        c.OffsetTop = t;
+        c.OffsetRight = r;
+        c.OffsetBottom = b;
     }
 }
 
@@ -574,7 +588,10 @@ public partial class LoadingStrip : PanelContainer
         _bar.AddThemeStyleboxOverride("fill", Ui.Box(Ui.Accent, 2, 0, 0));
         row.AddChild(_bar);
         SetAnchorsPreset(LayoutPreset.CenterBottom);
-        OffsetTop = -64; OffsetBottom = -36; OffsetLeft = -200; OffsetRight = 200;
+        OffsetTop = -64;
+        OffsetBottom = -36;
+        OffsetLeft = -200;
+        OffsetRight = 200;
     }
 
     public override void _Process(double delta)

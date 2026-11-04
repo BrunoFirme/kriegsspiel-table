@@ -13,7 +13,8 @@ public static class BulkFrame
     {
         var head = Json.SerializeBytes<Message>(piece);
         var frame = new byte[HeadAt + head.Length + piece.Data.Length];
-        frame[0] = MarkK; frame[1] = MarkB;
+        frame[0] = MarkK;
+        frame[1] = MarkB;
         BinaryPrimitives.WriteInt32LittleEndian(frame.AsSpan(2), head.Length);
         head.CopyTo(frame, HeadAt);
         piece.Data.CopyTo(frame, HeadAt + head.Length);

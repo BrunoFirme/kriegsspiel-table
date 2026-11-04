@@ -107,7 +107,8 @@ sealed partial class AgentTableTools
     {
         if (!File.Exists(path)) return ToolResult.Fail("No such file: " + path);
         var before = sh.Relief;
-        string? problem = null; bool done = false;
+        string? problem = null;
+        bool done = false;
         hud.Map.Reliefs.ReliefOnto(path, sh.Id, why => { problem = why; done = true; });
         for (int i = 0; i < ReliefWaitSeconds * 10 && !done; i++) await _a.Delay(0.1);
         if (problem != null) return ToolResult.Fail("The relief was not added: " + problem);
@@ -121,7 +122,8 @@ sealed partial class AgentTableTools
         if (noPicture != null) return ToolResult.Fail(noPicture);
         var path = files[0];
         if (!File.Exists(path)) return ToolResult.Fail("No such file: " + path);
-        string? problem = null; bool done = false;
+        string? problem = null;
+        bool done = false;
         hud.Map.Reliefs.SetPicture(sh.Id, path, why => { problem = why; done = true; });
         for (int i = 0; i < ReliefWaitSeconds * 10 && !done; i++) await _a.Delay(0.1);
         return problem != null ? ToolResult.Fail("The picture was not laid on: " + problem) : new ToolResult("");

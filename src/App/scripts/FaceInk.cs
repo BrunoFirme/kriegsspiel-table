@@ -14,7 +14,9 @@ sealed class FaceInk
     public const float BandLift = 0.0005f, BoxLift = 0.001f, TextLift = 0.002f;
 
     static StandardMaterial3D? _boxMat, _bandMat;
-    static StandardMaterial3D Flat(Color c, int priority) => new() { AlbedoColor = c, ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded, Transparency = BaseMaterial3D.TransparencyEnum.Alpha, CullMode = BaseMaterial3D.CullModeEnum.Disabled, RenderPriority = priority };
+    static StandardMaterial3D Flat(Color c, int priority) =>
+        new() { AlbedoColor = c, ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded, Transparency = BaseMaterial3D.TransparencyEnum.Alpha, CullMode = BaseMaterial3D.CullModeEnum.Disabled,
+            RenderPriority = priority };
     public static StandardMaterial3D BoxMat => _boxMat ??= Flat(new Color(1, 1, 1, 0.2f), 2);
     public static StandardMaterial3D BandMat => _bandMat ??= Flat(new Color(0.08f, 0.08f, 0.09f, 0.95f), 1);
     public static readonly Color TextColor = new(0.97f, 0.96f, 0.92f), ValueColor = new(1, 0.9f, 0.55f), DimColor = new(0.6f, 0.6f, 0.6f);
@@ -30,7 +32,9 @@ sealed class FaceInk
 
     public void Plane(bool back, float x, float z, float sw, float sh, Material m, float lift)
     {
-        var n = new MeshInstance3D { Mesh = PieceWidgets.UnitPlane, RotationDegrees = back ? new Vector3(180, 0, 0) : Vector3.Zero, Scale = new Vector3(Mathf.Max(1e-5f, sw), 1, Mathf.Max(1e-5f, sh)), MaterialOverride = m, CastShadow = GeometryInstance3D.ShadowCastingSetting.Off, VisibilityRangeEnd = _piece.LetteringRange() };
+        var n =
+            new MeshInstance3D { Mesh = PieceWidgets.UnitPlane, RotationDegrees = back ? new Vector3(180, 0, 0) : Vector3.Zero, Scale = new Vector3(Mathf.Max(1e-5f, sw), 1, Mathf.Max(1e-5f, sh)),
+                MaterialOverride = m, CastShadow = GeometryInstance3D.ShadowCastingSetting.Off, VisibilityRangeEnd = _piece.LetteringRange() };
         Put(n, back, x, z, lift);
     }
 
@@ -38,7 +42,8 @@ sealed class FaceInk
     {
         var l = new Label3D
         {
-            Text = text, FontSize = 64, OutlineSize = 6, Modulate = color, OutlineModulate = new Color(0, 0, 0, 0.8f), RotationDegrees = back ? new Vector3(90, 180, 0) : new Vector3(-90, 0, 0), DoubleSided = false, VisibilityRangeEnd = _piece.LetteringRange(),
+            Text = text, FontSize = 64, OutlineSize = 6, Modulate = color, OutlineModulate = new Color(0, 0, 0, 0.8f), RotationDegrees = back ? new Vector3(90, 180, 0)
+                : new Vector3(-90, 0, 0), DoubleSided = false, VisibilityRangeEnd = _piece.LetteringRange(),
             HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center, RenderPriority = 3, Font = Fonts.Tts,
         };
         var font = l.Font ?? ThemeDB.FallbackFont;

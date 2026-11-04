@@ -142,13 +142,21 @@ public class ReliefBuilderTests
         o.Write(new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A });
         void Chunk(string kind, byte[] data)
         {
-            var len = new byte[4]; BinaryPrimitives.WriteInt32BigEndian(len, data.Length);
-            o.Write(len); o.Write(Encoding.ASCII.GetBytes(kind)); o.Write(data); o.Write(new byte[4]);
+            var len = new byte[4];
+            BinaryPrimitives.WriteInt32BigEndian(len, data.Length);
+            o.Write(len);
+            o.Write(Encoding.ASCII.GetBytes(kind));
+            o.Write(data);
+            o.Write(new byte[4]);
         }
         var ihdr = new byte[13];
-        BinaryPrimitives.WriteInt32BigEndian(ihdr, w); BinaryPrimitives.WriteInt32BigEndian(ihdr.AsSpan(4), h);
-        ihdr[8] = 16; ihdr[9] = 0;
-        Chunk("IHDR", ihdr); Chunk("IDAT", z.ToArray()); Chunk("IEND", Array.Empty<byte>());
+        BinaryPrimitives.WriteInt32BigEndian(ihdr, w);
+        BinaryPrimitives.WriteInt32BigEndian(ihdr.AsSpan(4), h);
+        ihdr[8] = 16;
+        ihdr[9] = 0;
+        Chunk("IHDR", ihdr);
+        Chunk("IDAT", z.ToArray());
+        Chunk("IEND", Array.Empty<byte>());
         return o.ToArray();
     }
 
@@ -189,7 +197,12 @@ public class ReliefBuilderTests
     }
 
     static Ground Hill() => new(new[] { new SheetDef { Id = "s", Image = "x", Size = new Size2(100, 100), RotDeg = 180, Relief = new string('a', 64) } },
-        _ => { var g = new ReliefGrid(101, 101); for (int y = 0; y < 101; y++) for (int x = 0; x < 101; x++) g.H[y * 101 + x] = 0.1f * x / 100; return g; });
+        _ =>
+        {
+            var g = new ReliefGrid(101, 101);
+            for (int y = 0; y < 101; y++) for (int x = 0; x < 101; x++) g.H[y * 101 + x] = 0.1f * x / 100;
+            return g;
+        });
 
     [Fact]
     public void A_piece_let_go_of_on_a_hillside_stands_on_it_and_is_kept_as_on_the_ground()

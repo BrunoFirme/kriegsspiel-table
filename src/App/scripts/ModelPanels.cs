@@ -73,10 +73,17 @@ internal sealed class ModelPanels
                 var lab = new Label { Text = "Size", Modulate = Ui.Muted, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter };
                 lab.AddThemeFontSizeOverride("font_size", 12);
                 row.AddChild(lab);
-                var s = new HSlider { MinValue = 1, MaxValue = 300, Step = 1, Value = _m.P.Brush, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter };
+                var s =
+                    new HSlider { MinValue = 1, MaxValue = 300, Step = 1, Value = _m.P.Brush, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter };
                 var l = new Label { Text = $"{_m.P.Brush:0} px", CustomMinimumSize = new Vector2(48, 0), HorizontalAlignment = HorizontalAlignment.Right };
-                s.ValueChanged += v => { _m.P.Brush = (float)v; l.Text = $"{v:0} px"; _m.RedrawOverlay(); };
-                row.AddChild(s); row.AddChild(l);
+                s.ValueChanged += v =>
+                {
+                    _m.P.Brush = (float)v;
+                    l.Text = $"{v:0} px";
+                    _m.RedrawOverlay();
+                };
+                row.AddChild(s);
+                row.AddChild(l);
                 box.AddChild(row);
                 if (_m.Tool == "paint") studio.ModelColour();
                 break;
@@ -100,7 +107,12 @@ internal sealed class ModelPanels
         bool blockChosen = _m.Flat && !_m.IsPart(_m.SelPartId ?? "");
         var list = new VBoxContainer();
         list.AddThemeConstantOverride("separation", 3);
-        if (_m.Flat && def != null) list.AddChild(ShapeRow(blockChosen, null, "Block", studio.Framer.NameOf(def, Math.Max(0, _m.FlatState)).ToLowerInvariant(), () => { _m.SelPartId = PieceFaces.Key(Math.Max(0, _m.FlatState), false); _m.RefreshSelection(); studio.RebuildModelPanels(); }));
+        if (_m.Flat && def != null) list.AddChild(ShapeRow(blockChosen, null, "Block", studio.Framer.NameOf(def, Math.Max(0, _m.FlatState)).ToLowerInvariant(), () =>
+        {
+            _m.SelPartId = PieceFaces.Key(Math.Max(0, _m.FlatState), false);
+            _m.RefreshSelection();
+            studio.RebuildModelPanels();
+        }));
         foreach (var p in _m.Doc.Parts) list.AddChild(PartRow(studio, p));
         box.AddChild(list);
         box.AddChild(AddMenu(studio));
@@ -155,7 +167,12 @@ internal sealed class ModelPanels
         var g = new GridContainer { Columns = columns };
         g.AddThemeConstantOverride("h_separation", 4);
         g.AddThemeConstantOverride("v_separation", 4);
-        foreach (var b in buttons) { b.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill; b.ClipText = true; g.AddChild(b); }
+        foreach (var b in buttons)
+        {
+            b.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
+            b.ClipText = true;
+            g.AddChild(b);
+        }
         return g;
     }
 
@@ -170,7 +187,12 @@ internal sealed class ModelPanels
         if (look > 0)
         {
             var mine = new CheckBox { Text = "Its own size and outline", ButtonPressed = own, TooltipText = "Off: this look has look 1's size and outline" };
-            mine.Toggled += on => studio.Apply(x => { var st = x.States[look]; st.Size = on ? x.Size : null; st.Shape = on ? x.Shape : null; }, what: "a look's own size");
+            mine.Toggled += on => studio.Apply(x =>
+            {
+                var st = x.States[look];
+                st.Size = on ? x.Size : null;
+                st.Shape = on ? x.Shape : null;
+            }, what: "a look's own size");
             g1.AddChild(mine);
         }
         var outline = new MenuButton { Text = "Outline: " + studio.Framer.NameOf(def, target) + " ▾", FocusMode = Control.FocusModeEnum.None, Flat = false, Disabled = !own, TooltipText = "The piece's outline. Its pictures stay on its faces." };
@@ -206,7 +228,8 @@ internal sealed class ModelPanels
         foreach (var f in PieceFaces.Of(def).Where(x => !PieceFaces.IsShapeFace(x.Key)))
         {
             bool shown = f.State == _m.FlatState;
-            var key = f.Key; int state = f.State;
+            var key = f.Key;
+            int state = f.State;
             faces.AddChild(FaceRow(studio, key, f.Label, f.Sha == null ? (f.Back ? "the front's" : "blank") : null, shown, shown && key == _m.SelPartId,
                 shown ? "Double-click to paint it laid flat" : "Click to show this look on the block", null, () =>
                 {
@@ -223,7 +246,8 @@ internal sealed class ModelPanels
         panel.AddThemeStyleboxOverride("panel", Ui.Box(on ? new Color(1, 1, 1, 0.13f) : new Color(1, 1, 1, 0.03f), 3, 6, 2));
         var row = new HBoxContainer();
         panel.AddChild(row);
-        row.AddChild(new Label { Text = label, ClipText = true, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, MouseFilter = Control.MouseFilterEnum.Ignore, Modulate = shown ? Colors.White : Ui.Muted });
+        row.AddChild(new Label { Text = label, ClipText = true, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
+            MouseFilter = Control.MouseFilterEnum.Ignore, Modulate = shown ? Colors.White : Ui.Muted });
         if (note != null) row.AddChild(new Label { Text = note, Modulate = Ui.Muted, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, MouseFilter = Control.MouseFilterEnum.Ignore });
         if (picture != null) row.AddChild(picture);
         row.AddChild(Ui.Btn("Paint", () => studio.PaintIn2D(key), "Paint this face laid flat in 2D: layers, text, rulers, symmetry"));
@@ -243,9 +267,21 @@ internal sealed class ModelPanels
         var eye = new Button { Flat = true, CustomMinimumSize = new Vector2(24, 24), FocusMode = Control.FocusModeEnum.None, TooltipText = p.Visible ? "Shown: click to hide" : "Hidden: click to show" };
         eye.AddChild(new StudioIcon { Kind = p.Visible ? "eye" : "eye-off", Color = p.Visible ? Ui.Ink : Ui.Muted });
         var part = p;
-        eye.Pressed += () => { _m.Snapshot(); part.Visible = !part.Visible; _m.RefreshSelection(); _m.Changed(mesh: true); studio.RebuildModelPanels(); };
+        eye.Pressed += () =>
+        {
+            _m.Snapshot();
+            part.Visible = !part.Visible;
+            _m.RefreshSelection();
+            _m.Changed(mesh: true);
+            studio.RebuildModelPanels();
+        };
         var what = p.Kind == "mesh" ? $"model · {_m.Views.GetValueOrDefault(p.Id)?.Data.Tris ?? 0} tris" : AddableShapes.FirstOrDefault(x => x.kind == p.Kind).name?.ToLowerInvariant() ?? p.Kind;
-        return ShapeRow(on, eye, p.Name, what, () => { _m.SelPartId = part.Id; _m.RefreshSelection(); studio.RebuildModelPanels(); });
+        return ShapeRow(on, eye, p.Name, what, () =>
+        {
+            _m.SelPartId = part.Id;
+            _m.RefreshSelection();
+            studio.RebuildModelPanels();
+        });
     }
 
     void PartDetails(PieceStudio studio, VBoxContainer box, ModelPart s)
@@ -261,7 +297,9 @@ internal sealed class ModelPanels
         {
             var t = rename.Text.Trim();
             if (t.Length == 0 || t == s.Name) return;
-            _m.Snapshot(); s.Name = t; _m.Changed(mesh: false);
+            _m.Snapshot();
+            s.Name = t;
+            _m.Changed(mesh: false);
             Callable.From(studio.RebuildModelPanels).CallDeferred();
         }
         rename.TextSubmitted += _ => Rename();
@@ -278,11 +316,18 @@ internal sealed class ModelPanels
     {
         _m.Snapshot();
         var c = JsonSerializer.Deserialize<ModelPart>(JsonSerializer.Serialize(s, ModelStudio.Opts), ModelStudio.Opts)!;
-        c.Id = ArtDoc.NewId(); c.Name = s.Name + " copy"; c.Pos[0] += 0.3f / Math.Max(1e-4f, _m.Doc.Scale);
+        c.Id = ArtDoc.NewId();
+        c.Name = s.Name + " copy";
+        c.Pos[0] += 0.3f / Math.Max(1e-4f, _m.Doc.Scale);
         var src = _m.Views[s.Id];
-        _m.Doc.Parts.Add(c); _m.MakeView(c);
-        Array.Copy(src.Paint, _m.Views[c.Id].Paint, src.Paint.Length); _m.Views[c.Id].Repaint();
-        _m.SelPartId = c.Id; _m.RefreshSelection(); _m.Changed(mesh: true); studio.RebuildModelPanels();
+        _m.Doc.Parts.Add(c);
+        _m.MakeView(c);
+        Array.Copy(src.Paint, _m.Views[c.Id].Paint, src.Paint.Length);
+        _m.Views[c.Id].Repaint();
+        _m.SelPartId = c.Id;
+        _m.RefreshSelection();
+        _m.Changed(mesh: true);
+        studio.RebuildModelPanels();
     }
 
     void ShapeFaces(PieceStudio studio, VBoxContainer box, ModelPart p)
@@ -320,9 +365,17 @@ internal sealed class ModelPanels
             for (int i = 0; i < 3; i++)
             {
                 int ii = i;
-                var sb = new SpinBox { MinValue = scale ? 0.001 : -10000, MaxValue = 10000, Step = step, Value = Math.Round(arr[i] / step) * step + 0.0, AllowGreater = true, AllowLesser = !scale, Prefix = Axes[i], Suffix = suffix, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, CustomMinimumSize = new Vector2(0, 0), TooltipText = $"{label} along {Axes[i]}" };
+                var sb =
+                    new SpinBox { MinValue = scale ? 0.001 : -10000, MaxValue = 10000, Step = step, Value = Math.Round(arr[i] / step) * step + 0.0, AllowGreater = true, AllowLesser = !scale,
+                        Prefix = Axes[i], Suffix = suffix, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, CustomMinimumSize = new Vector2(0, 0), TooltipText = $"{label} along {Axes[i]}" };
                 sb.GetLineEdit().AddThemeConstantOverride("minimum_character_width", 3);
-                sb.ValueChanged += v => { _m.Snapshot(); arr[ii] = (float)v; _m.RefreshSelection(); _m.Changed(mesh: true); };
+                sb.ValueChanged += v =>
+                {
+                    _m.Snapshot();
+                    arr[ii] = (float)v;
+                    _m.RefreshSelection();
+                    _m.Changed(mesh: true);
+                };
                 grid.AddChild(sb);
             }
         }
@@ -330,13 +383,40 @@ internal sealed class ModelPanels
         Vec("Turn", s.Rot, 1, "°");
         Vec("Scale", s.Scl, 0.01f, "", scale: true);
         g.AddChild(grid);
-        void Moved() { _m.RefreshSelection(); _m.Changed(mesh: true); studio.RebuildModelPanels(); }
+        void Moved()
+        {
+            _m.RefreshSelection();
+            _m.Changed(mesh: true);
+            studio.RebuildModelPanels();
+        }
         float floor = _m.Flat ? (float)Math.Clamp(_m.Def?.Thickness ?? 0, 0.02, 2) : 0;
         g.AddChild(Buttons(2,
-            Ui.Btn(_m.Flat ? "On the block" : "On the ground", () => { _m.Snapshot(); var v = _m.Views[s.Id]; var a = v.Node.Transform * v.Node.GetAabb(); s.Pos[1] += floor - a.Position.Y; Moved(); }, _m.Flat ? "Its lowest point on the block's top" : "Its lowest point on the stand"),
-            Ui.Btn("Mirror", () => { _m.Snapshot(); s.Scl[0] = -s.Scl[0]; Moved(); }, "Mirror it left to right"),
-            Ui.Btn("Turn 90°", () => { _m.Snapshot(); s.Rot[1] = (s.Rot[1] + 90) % 360; Moved(); }, "A quarter turn about the upright"),
-            Ui.Btn("Stand up", () => { _m.Snapshot(); s.Rot[0] = (s.Rot[0] - 90) % 360; Moved(); }, "A quarter turn forwards: for models made lying down (STL is usually Z up)")));
+            Ui.Btn(_m.Flat ? "On the block" : "On the ground", () =>
+            {
+                _m.Snapshot();
+                var v = _m.Views[s.Id];
+                var a = v.Node.Transform * v.Node.GetAabb();
+                s.Pos[1] += floor - a.Position.Y;
+                Moved();
+            }, _m.Flat ? "Its lowest point on the block's top" : "Its lowest point on the stand"),
+            Ui.Btn("Mirror", () =>
+            {
+                _m.Snapshot();
+                s.Scl[0] = -s.Scl[0];
+                Moved();
+            }, "Mirror it left to right"),
+            Ui.Btn("Turn 90°", () =>
+            {
+                _m.Snapshot();
+                s.Rot[1] = (s.Rot[1] + 90) % 360;
+                Moved();
+            }, "A quarter turn about the upright"),
+            Ui.Btn("Stand up", () =>
+            {
+                _m.Snapshot();
+                s.Rot[0] = (s.Rot[0] - 90) % 360;
+                Moved();
+            }, "A quarter turn forwards: for models made lying down (STL is usually Z up)")));
     }
 
     void PartLook(VBoxContainer box, ModelPart s)
@@ -345,10 +425,23 @@ internal sealed class ModelPanels
         var row = new HBoxContainer();
         row.AddThemeConstantOverride("separation", 6);
         var tint = new ColorPickerButton { Color = Hex.To(s.Tint, Colors.White), CustomMinimumSize = new Vector2(48, 26), EditAlpha = false, TooltipText = "Multiplies the shape's colours" };
-        tint.PopupClosed += () => { _m.Snapshot(); s.Tint = Hex.Of(tint.Color); _m.RefreshSelection(); _m.Changed(mesh: false); };
+        tint.PopupClosed += () =>
+        {
+            _m.Snapshot();
+            s.Tint = Hex.Of(tint.Color);
+            _m.RefreshSelection();
+            _m.Changed(mesh: false);
+        };
         row.AddChild(new Label { Text = "Tint", CustomMinimumSize = new Vector2(44, 0), Modulate = new Color(1, 1, 1, 0.74f), SizeFlagsVertical = Control.SizeFlags.ShrinkCenter });
         row.AddChild(tint);
-        var clear = Ui.Btn("Clear its paint", () => { _m.BeginStroke(); var v = _m.Views[s.Id]; Array.Clear(v.Paint); v.Repaint(); _m.EndStroke(); });
+        var clear = Ui.Btn("Clear its paint", () =>
+        {
+            _m.BeginStroke();
+            var v = _m.Views[s.Id];
+            Array.Clear(v.Paint);
+            v.Repaint();
+            _m.EndStroke();
+        });
         clear.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
         row.AddChild(clear);
         g.AddChild(row);
@@ -361,7 +454,9 @@ internal sealed class ModelPanels
         var span = _m.Views.Count == 0 ? 1 : _m.FootprintWide();
         g.AddChild(new Label { Text = "Width" });
         var row = new HBoxContainer();
-        var fp = new SpinBox { MinValue = 0.05, MaxValue = 200, Step = 0.05, Value = Math.Round(span * _m.Doc.Scale, 3), Suffix = "u", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, TooltipText = "How wide the model stands on the table, in table units (a TTS block is 1.4–2)" };
+        var fp =
+            new SpinBox { MinValue = 0.05, MaxValue = 200, Step = 0.05, Value = Math.Round(span * _m.Doc.Scale, 3), Suffix = "u", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+                TooltipText = "How wide the model stands on the table, in table units (a TTS block is 1.4–2)" };
         fp.ValueChanged += v => _m.SetWidth(v);
         row.AddChild(fp);
         row.AddChild(Ui.Btn("Save now", () => _ = _m.Bake(), "It saves itself a moment after each change"));

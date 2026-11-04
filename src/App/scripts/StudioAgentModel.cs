@@ -61,11 +61,22 @@ sealed partial class StudioTools
         float yaw = 0, pitch = -0.35f;
         switch (a.Str("side"))
         {
-            case "back": yaw = Mathf.Pi; break;
-            case "left": yaw = -Mathf.Pi / 2; break;
-            case "right": yaw = Mathf.Pi / 2; break;
-            case "top": pitch = -1.45f; break;
-            case "three-quarter": yaw = Mathf.Pi / 4; pitch = -0.5f; break;
+            case "back":
+                yaw = Mathf.Pi;
+                break;
+            case "left":
+                yaw = -Mathf.Pi / 2;
+                break;
+            case "right":
+                yaw = Mathf.Pi / 2;
+                break;
+            case "top":
+                pitch = -1.45f;
+                break;
+            case "three-quarter":
+                yaw = Mathf.Pi / 4;
+                pitch = -0.5f;
+                break;
         }
         if (a.Num("yaw") is { } y) yaw = Mathf.DegToRad((float)y);
         if (a.Num("pitch") is { } p) pitch = Mathf.DegToRad((float)p);
@@ -89,7 +100,8 @@ sealed partial class StudioTools
     {
         m.Camera.Spin = false;
         m.Frame();
-        m.Camera.Yaw = yaw; m.Camera.Pitch = pitch;
+        m.Camera.Yaw = yaw;
+        m.Camera.Pitch = pitch;
         m.Camera.Apply();
         if (DisplayServer.GetName() == "headless") return null;
         for (int i = 0; i < 3; i++) await m.ToSignal(RenderingServer.Singleton, RenderingServer.SignalName.FramePostDraw);
@@ -171,7 +183,8 @@ sealed partial class StudioTools
         if (file != null && (mesh = ModelImport.Load(file, out var err)) == null) return ToolResult.Fail($"Could not read {Path.GetFileName(file)}: {err}");
         if (await OpenModel(s, d) is not { } m) return ToolResult.Fail($"{d.Name} could not be opened in the 3D view.");
         var name = a.Str("name") is { Length: > 0 } n ? n : file != null ? NewPieces.Pretty(Path.GetFileNameWithoutExtension(file)) : ModelPanels.AddableShapes.First(x => x.kind == shape).name;
-        if (mesh != null) m.AddParts(mesh, name, "mesh"); else m.AddParts(ModelImport.Primitive(shape), name, shape);
+        if (mesh != null) m.AddParts(mesh, name, "mesh");
+        else m.AddParts(ModelImport.Primitive(shape), name, shape);
         if (m.SelPart is { } p)
         {
             m.Snapshot();
@@ -248,7 +261,8 @@ sealed partial class StudioTools
         name = "decal";
         if (path is { Length: > 0 }) { name = Path.GetFileNameWithoutExtension(path); return File.Exists(path) ? ImageFiles.Load(path) : null; }
         if (a.Str("src") is { Length: > 0 } src) { name = src; return ArtStore.LoadSrc(s.Store, s.Pack.Id, src); }
-        if (a.Str("from_kind") is { Length: > 0 } kind && s.Pack.Pieces.FirstOrDefault(p => p.Id == kind) is { } k && PieceFaces.Of(k).FirstOrDefault()?.Sha is { } sha && s.Store.AssetPath(s.Pack, sha) is { } file)
+        if (a.Str("from_kind") is { Length: > 0 } kind && s.Pack.Pieces.FirstOrDefault(p => p.Id == kind) is { } k && PieceFaces.Of(k).FirstOrDefault()?.Sha is { } sha && s.Store.AssetPath(s.Pack,
+            sha) is { } file)
         {
             name = k.Name;
             var img = Image.LoadFromFile(file);
@@ -273,7 +287,8 @@ sealed partial class StudioTools
         var (yaw, pitch) = Angle(a);
         m.Camera.Spin = false;
         m.Frame();
-        m.Camera.Yaw = yaw; m.Camera.Pitch = pitch;
+        m.Camera.Yaw = yaw;
+        m.Camera.Pitch = pitch;
         m.Camera.Apply();
         await s.Frames(2);
         var vp = (Vector2)m.Vp.Size;
@@ -289,7 +304,8 @@ sealed partial class StudioTools
         {
             await s.Frames(10);
             m.Frame();
-            m.Camera.Yaw = yaw; m.Camera.Pitch = pitch;
+            m.Camera.Yaw = yaw;
+            m.Camera.Pitch = pitch;
             m.Camera.Apply();
             await s.Frames(2);
             n = m.Decal.Project(at);

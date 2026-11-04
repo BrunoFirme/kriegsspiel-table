@@ -32,7 +32,8 @@ sealed class HostPage
         {
             var now = Time.GetTicksMsec();
             bool both = mb.DoubleClick && Pressed == card && now - PressedAt < 1000;
-            Pressed = card; PressedAt = now;
+            Pressed = card;
+            PressedAt = now;
             return both;
         }
     }
@@ -101,7 +102,8 @@ sealed class HostPage
             var pm = TitlePicks.FolderMenu(_t.Folders.Lib, folder =>
             {
                 foreach (var k in keys.Where(k => !IsMirror(k))) _t.Folders.Lib.Move(false, k, folder);
-                _t.Select(0); Show(store, scenarios);
+                _t.Select(0);
+                Show(store, scenarios);
             });
             _main.AddChild(pm);
             pm.Popup(new Rect2I((Vector2I)_main.GetViewport().GetMousePosition().Round(), Vector2I.Zero));
@@ -176,11 +178,13 @@ sealed class HostPage
         card.AddThemeStyleboxOverride("panel", CardStyle(false));
         var cv = new VBoxContainer();
         card.AddChild(cv);
-        if (thumb != null) cv.AddChild(new TextureRect { Texture = thumb, CustomMinimumSize = new Vector2(226, 130), ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize, StretchMode = TextureRect.StretchModeEnum.KeepAspectCovered });
+        if (thumb != null) cv.AddChild(new TextureRect { Texture = thumb, CustomMinimumSize = new Vector2(226, 130), ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
+            StretchMode = TextureRect.StretchModeEnum.KeepAspectCovered });
         else if (plate)
         {
             var blank = new Panel { CustomMinimumSize = new Vector2(226, 130), MouseFilter = Control.MouseFilterEnum.Ignore };
-            blank.AddThemeStyleboxOverride("panel", new StyleBoxFlat { BgColor = new Color(1, 1, 1, 0.03f), CornerRadiusTopLeft = 4, CornerRadiusTopRight = 4, CornerRadiusBottomLeft = 4, CornerRadiusBottomRight = 4 });
+            blank.AddThemeStyleboxOverride("panel",
+                new StyleBoxFlat { BgColor = new Color(1, 1, 1, 0.03f), CornerRadiusTopLeft = 4, CornerRadiusTopRight = 4, CornerRadiusBottomLeft = 4, CornerRadiusBottomRight = 4 });
             cv.AddChild(blank);
         }
         var nameRow = new HBoxContainer();
@@ -196,7 +200,9 @@ sealed class HostPage
     {
         void Refresh() { _t.Select(0); Show(store, scenarios); }
         var (card, cv, nameRow) = CardFace(s != null ? ScenarioCards.Thumb(store, s, 512) : null, s?.Name ?? id, plate: true);
-        var target = id; var sname = s?.Name ?? id; var readable = s != null;
+        var target = id;
+        var sname = s?.Name ?? id;
+        var readable = s != null;
         if (!readable) page.Unreadable.Add(id);
         var more = MoreBtn(readable ? "Move to a folder, export, delete (also on right-click)" : "Move to a folder, delete (also on right-click)");
         more.Pressed += () => _t.Items.Open(more.GetGlobalRect().Position + new Vector2(0, 26), store, pack: false, target, sname, Refresh, readable);
@@ -242,7 +248,8 @@ sealed class HostPage
         var save = ScenarioCards.Save(mp);
         var ok = save.Error == null;
         var sc0 = ok ? scenarios.FirstOrDefault(x => x.s?.Id == save.ScenarioId).s : null;
-        var target = mp; var mname = save.Name ?? Path.GetFileNameWithoutExtension(mp);
+        var target = mp;
+        var mname = save.Name ?? Path.GetFileNameWithoutExtension(mp);
         var (card, cv, nameRow) = CardFace(sc0 != null ? ScenarioCards.Thumb(store, sc0, 512) : null, mname, plate: false);
         var more = MoreBtn("Delete this copy (also on right-click)");
         more.Pressed += () => _t.Items.Mirror(more.GetGlobalRect().Position + new Vector2(0, 26), target, mname, Refresh);

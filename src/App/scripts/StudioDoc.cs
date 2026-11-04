@@ -16,10 +16,12 @@ public static class ArtXf
     public static Transform2D Xf(this ArtLayer l) => new Transform2D(Mathf.DegToRad(l.Rot), new Vector2(l.Sx, l.Sy), 0, new Vector2(l.X, l.Y));
     public static void SetXf(this ArtLayer l, Transform2D t)
     {
-        l.X = t.Origin.X; l.Y = t.Origin.Y;
+        l.X = t.Origin.X;
+        l.Y = t.Origin.Y;
         l.Rot = Mathf.RadToDeg(t.Rotation);
         var s = t.Scale;
-        l.Sx = s.X; l.Sy = s.Y;
+        l.Sx = s.X;
+        l.Sy = s.Y;
     }
 
     public static Vector2[] Pts(this PaintOp op)
@@ -38,7 +40,7 @@ public static class Hex
     public static Color To(string? s, Color fallback)
     {
         if (string.IsNullOrEmpty(s)) return fallback;
-        try { return Color.FromHtml(s); } catch { return fallback; }
+        return Color.HtmlIsValid(s) ? Color.FromHtml(s) : fallback;
     }
 }
 
@@ -154,14 +156,14 @@ public static class ArtStore
             var sha = stem.EndsWith(".model") ? stem[..^6] : stem;
             if (!used.Contains(sha) && PackEdit.ToBin(store, pack.Id, bin, f)) { n++; continue; }
             try { Names(File.ReadAllText(f)); }
-            catch { sure = false; }
+            catch (Exception e) when (SaveStore.IsFileTrouble(e)) { sure = false; }
         }
         foreach (var name in keepSrc.Where(x => x.EndsWith(".json")).ToList())
         {
             var path = Path.Combine(SrcDir(store, pack.Id), name);
             if (!File.Exists(path)) continue;
             try { Names(File.ReadAllText(path)); }
-            catch { sure = false; }
+            catch (Exception e) when (SaveStore.IsFileTrouble(e)) { sure = false; }
         }
         foreach (var f in Directory.GetFiles(dir, "*.thumb.png"))
             if (!used.Contains(Path.GetFileName(f)[..^".thumb.png".Length]) && PackEdit.ToBin(store, pack.Id, bin, f)) n++;

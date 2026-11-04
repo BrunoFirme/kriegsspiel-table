@@ -54,13 +54,17 @@ internal sealed class DecalTool
         _decalData = img.GetData();
         _decalTex = ImageTexture.CreateFromImage(img);
         _decalName = name;
-        if (_m.Tool != "decal") _m.SetTool("decal"); else _m.Studio.RebuildModelOptions();
+        if (_m.Tool != "decal") _m.SetTool("decal");
+        else _m.Studio.RebuildModelOptions();
         _m.RedrawOverlay();
     }
 
     public void Clear()
     {
-        _decal = null; _decalData = null; _decalTex = null; _decalName = "";
+        _decal = null;
+        _decalData = null;
+        _decalTex = null;
+        _decalName = "";
         _m.Studio.RebuildModelOptions();
         _m.RedrawOverlay();
     }
@@ -126,7 +130,10 @@ internal sealed class DecalTool
         {
             var xf = _m.Stand.Transform * v.Part.Xf();
             int n = v.Data.V.Count;
-            var s = new Vector2[n]; var z = new float[n]; var ok = new bool[n]; var w = new Vector3[n];
+            var s = new Vector2[n];
+            var z = new float[n];
+            var ok = new bool[n];
+            var w = new Vector3[n];
             for (int i = 0; i < n; i++) { w[i] = xf * v.Data.V[i]; ok[i] = lens.Project(w[i], out s[i], out z[i]); }
             screen[v.Part.Id] = new Seen(s, z, ok, w);
             for (int t = 0; t < v.Data.Tris; t++)
@@ -181,7 +188,9 @@ internal sealed class DecalTool
             float facing = nrm.Dot((camPos - (w[a] + w[b] + w[c]) / 3).Normalized());
             if (facing <= 0.02f) continue;
             float fade = Mathf.SmoothStep(0.02f, 0.35f, facing);
-            var ta = v.Data.UV[a] * new Vector2(v.W, v.H); var tb = v.Data.UV[b] * new Vector2(v.W, v.H); var tc = v.Data.UV[c] * new Vector2(v.W, v.H);
+            var ta = v.Data.UV[a] * new Vector2(v.W, v.H);
+            var tb = v.Data.UV[b] * new Vector2(v.W, v.H);
+            var tc = v.Data.UV[c] * new Vector2(v.W, v.H);
             Vector3 wa = w[a], wb = w[b], wc = w[c];
             ModelImport.Raster(ta, tb, tc, Math.Max(v.W, v.H), (tx, ty, w0, w1, w2) =>
             {
@@ -244,7 +253,9 @@ internal sealed class DecalTool
         var row = new HBoxContainer();
         row.AddChild(Ui.Btn("Picture…", () =>
         {
-            var fd = new FileDialog { FileMode = FileDialog.FileModeEnum.OpenFile, Access = FileDialog.AccessEnum.Filesystem, Filters = new[] { ImageFiles.Filter }, Title = "A picture for the decal", Size = new Vector2I(900, 600) };
+            var fd =
+                new FileDialog { FileMode = FileDialog.FileModeEnum.OpenFile, Access = FileDialog.AccessEnum.Filesystem, Filters = new[] { ImageFiles.Filter }, Title = "A picture for the decal",
+                    Size = new Vector2I(900, 600) };
             Ui.RememberFolder(fd);
             FileThumbs.Show(fd);
             _m.AddChild(fd);
@@ -270,7 +281,9 @@ internal sealed class DecalTool
         if (withPics.Count > 0) box.AddChild(pieces);
         if (_decalTex != null)
         {
-            var thumb = new TextureRect { Texture = _decalTex, CustomMinimumSize = new Vector2(0, 72), ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize, StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered, TooltipText = _decalName };
+            var thumb =
+                new TextureRect { Texture = _decalTex, CustomMinimumSize = new Vector2(0, 72), ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
+                    StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered, TooltipText = _decalName };
             box.AddChild(thumb);
             box.AddChild(Ui.Btn("No picture", Clear, "Let go of this picture: nothing is held over the model"));
         }
@@ -282,8 +295,14 @@ internal sealed class DecalTool
             var h = new HBoxContainer();
             var s = new HSlider { MinValue = min, MaxValue = max, Step = step, Value = value, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter };
             var l = new Label { Text = $"{value:0}{suffix}", CustomMinimumSize = new Vector2(48, 0), HorizontalAlignment = HorizontalAlignment.Right };
-            s.ValueChanged += x => { set(x); l.Text = $"{x:0}{suffix}"; _m.RedrawOverlay(); };
-            h.AddChild(s); h.AddChild(l);
+            s.ValueChanged += x =>
+            {
+                set(x);
+                l.Text = $"{x:0}{suffix}";
+                _m.RedrawOverlay();
+            };
+            h.AddChild(s);
+            h.AddChild(l);
             g.AddChild(h);
             return s;
         }

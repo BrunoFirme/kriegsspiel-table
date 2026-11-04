@@ -39,10 +39,26 @@ sealed class TableInput
         PendingPoses poses, Gizmo gizmo, Carry hand, PieceActions actions, NameEditor names, PaletteDrag palette, PenTool pen,
         RulerTool ruler, RangeRings ranges, CropTool crop, ZoneLayer zones, SelectTool selectTool, ReliefTool relief, FormationTool forms)
     {
-        _relief = relief; _forms = forms;
-        _c = c; _press = press; _cam = cam; _pieces = pieces; _sighting = sighting; _selection = selection; _poses = poses;
-        _gizmo = gizmo; _hand = hand; _actions = actions; _names = names; _palette = palette; _pen = pen; _ruler = ruler;
-        _ranges = ranges; _crop = crop; _zones = zones; _selectTool = selectTool;
+        _relief = relief;
+        _forms = forms;
+        _c = c;
+        _press = press;
+        _cam = cam;
+        _pieces = pieces;
+        _sighting = sighting;
+        _selection = selection;
+        _poses = poses;
+        _gizmo = gizmo;
+        _hand = hand;
+        _actions = actions;
+        _names = names;
+        _palette = palette;
+        _pen = pen;
+        _ruler = ruler;
+        _ranges = ranges;
+        _crop = crop;
+        _zones = zones;
+        _selectTool = selectTool;
     }
 
     public event Action<InputEventKey>? KeyPressed;
@@ -66,15 +82,30 @@ sealed class TableInput
     public void Handle(InputEvent e)
     {
         var names = _names;
-        if (names.Node != null && e is InputEventKey nk && nk.Pressed) { names.Key(nk); _c.Scene.GetViewport().SetInputAsHandled(); return; }
+        if (names.Node != null && e is InputEventKey nk && nk.Pressed)
+        {
+            names.Key(nk);
+            _c.Scene.GetViewport().SetInputAsHandled();
+            return;
+        }
         if (S == null) return;
         switch (e)
         {
-            case InputEventMouseButton mb: OnMouseButton(mb); break;
-            case InputEventMouseMotion mm: OnMouseMotion(mm); break;
-            case InputEventKey k when k.Pressed && !k.Echo: KeyPressed?.Invoke(k); break;
-            case InputEventKey k when k.Pressed && k.Echo && (k.Keycode is Key.Left or Key.Right or Key.Up or Key.Down or Key.Q or Key.E or Key.Equal or Key.Minus): KeyPressed?.Invoke(k); break;
-            case InputEventKey k when !k.Pressed && !k.Echo && !Table.AnyTextFocus(): KeyReleased?.Invoke(k); break;
+            case InputEventMouseButton mb:
+                OnMouseButton(mb);
+                break;
+            case InputEventMouseMotion mm:
+                OnMouseMotion(mm);
+                break;
+            case InputEventKey k when k.Pressed && !k.Echo:
+                KeyPressed?.Invoke(k);
+                break;
+            case InputEventKey k when k.Pressed && k.Echo && (k.Keycode is Key.Left or Key.Right or Key.Up or Key.Down or Key.Q or Key.E or Key.Equal or Key.Minus):
+                KeyPressed?.Invoke(k);
+                break;
+            case InputEventKey k when !k.Pressed && !k.Echo && !Table.AnyTextFocus():
+                KeyReleased?.Invoke(k);
+                break;
         }
     }
 
@@ -106,7 +137,8 @@ sealed class TableInput
         if (_c.Tool == Tool.Formation && (mb.CtrlPressed || mb.ShiftPressed))
         {
             int notch = mb.ButtonIndex == MouseButton.WheelUp ? 1 : -1;
-            if (mb.CtrlPressed) _forms.Space(notch); else _forms.Deepen(notch);
+            if (mb.CtrlPressed) _forms.Space(notch);
+            else _forms.Deepen(notch);
             return;
         }
         if (_c.Tool == Tool.Formation && WheelOnSelection(mb.Position) && !mb.AltPressed && _forms.Count >= 2)
@@ -123,7 +155,8 @@ sealed class TableInput
         {
             bool up = mb.ButtonIndex == MouseButton.WheelUp;
             double step = (up ? -1 : 1) * (mb.ShiftPressed ? 0.5 : mb.CtrlPressed ? 2 : 10);
-            if (_hand.Holding) _hand.Rotate(step); else _poses.RotateSmooth(step);
+            if (_hand.Holding) _hand.Rotate(step);
+            else _poses.RotateSmooth(step);
             return;
         }
         Rig.Zoom(f, mb.Position);
@@ -175,7 +208,12 @@ sealed class TableInput
             return;
         }
         Orbiting = mb.Pressed;
-        if (mb.Pressed) { PressPos = mb.Position; Cam.DragBegin(); return; }
+        if (mb.Pressed)
+        {
+            PressPos = mb.Position;
+            Cam.DragBegin();
+            return;
+        }
         Cam.LetGo(orbit: true);
         RightClick(mb);
     }
@@ -198,7 +236,13 @@ sealed class TableInput
 
     void MiddleButton(InputEventMouseButton mb)
     {
-        if (mb.Pressed) { Panning = true; _midPress = mb.Position; Cam.DragBegin(); return; }
+        if (mb.Pressed)
+        {
+            Panning = true;
+            _midPress = mb.Position;
+            Cam.DragBegin();
+            return;
+        }
         Panning = false;
         Cam.LetGo(orbit: false);
         if (!_unheard && (mb.Position - _midPress).Length() < 5)
@@ -216,25 +260,45 @@ sealed class TableInput
         var gizmo = _gizmo;
         if (mb.Pressed && _c.Tool == Tool.Transform && gizmo.At(mb.Position) is var hnd && hnd != Gizmo.Handle.None)
         {
-            LeftDown = true; PressPos = mb.Position;
+            LeftDown = true;
+            PressPos = mb.Position;
             gizmo.Begin(hnd, mb.Position);
             return;
         }
-        if (!mb.Pressed && gizmo.Dragging) { LeftDown = false; gizmo.End(); return; }
-        if (mb.Pressed) LeftPress(mb, g); else LeftRelease(mb, g);
+        if (!mb.Pressed && gizmo.Dragging)
+        {
+            LeftDown = false;
+            gizmo.End();
+            return;
+        }
+        if (mb.Pressed) LeftPress(mb, g);
+        else LeftRelease(mb, g);
     }
 
     void LeftPress(InputEventMouseButton mb, Vec2? g)
     {
-        LeftDown = true; PressPos = mb.Position; _selectTool.Reset();
+        LeftDown = true;
+        PressPos = mb.Position;
+        _selectTool.Reset();
         _hand.Land();
-        if (Input.IsKeyPressed(Key.Space)) { Panning = true; Cam.DragBegin(); return; }
+        if (Input.IsKeyPressed(Key.Space))
+        {
+            Panning = true;
+            Cam.DragBegin();
+            return;
+        }
         if (g == null) return;
         switch (_c.Tool)
         {
-            case Tool.Select: case Tool.Transform: case Tool.Range: _selectTool.Press(mb, g.Value); break;
-            case Tool.Crop: _crop.Press(mb.Position); break;
-            case Tool.Zone: _zones.Press(g.Value); break;
+            case Tool.Select: case Tool.Transform: case Tool.Range:
+                _selectTool.Press(mb, g.Value);
+                break;
+            case Tool.Crop:
+                _crop.Press(mb.Position);
+                break;
+            case Tool.Zone:
+                _zones.Press(g.Value);
+                break;
             case Tool.Place:
                 if (_c.PlaceDef != null)
                 {
@@ -243,16 +307,28 @@ sealed class TableInput
                 }
                 if (!mb.ShiftPressed) _c.SetTool(Tool.Select);
                 break;
-            case Tool.Ruler: case Tool.Calibrate: _ruler.Press(g); break;
-            case Tool.Draw: _pen.PressDraw(g.Value); break;
-            case Tool.Shape: _pen.PressShape(g.Value); break;
-            case Tool.Erase: _pen.PressErase(g.Value); break;
+            case Tool.Ruler: case Tool.Calibrate:
+                _ruler.Press(g);
+                break;
+            case Tool.Draw:
+                _pen.PressDraw(g.Value);
+                break;
+            case Tool.Shape:
+                _pen.PressShape(g.Value);
+                break;
+            case Tool.Erase:
+                _pen.PressErase(g.Value);
+                break;
             case Tool.Formation:
                 if (mb.DoubleClick && _pieces.Pick(g.Value, screen: mb.Position) is { } like) _selectTool.SelectAlike(like, add: mb.ShiftPressed || mb.CtrlPressed);
                 else _selectTool.Press(mb, g.Value);
                 break;
-            case Tool.Sighting: _sighting.Press(g.Value); break;
-            case Tool.Relief: _relief.Press(g.Value, mb.ShiftPressed, mb.AltPressed); break;
+            case Tool.Sighting:
+                _sighting.Press(g.Value);
+                break;
+            case Tool.Relief:
+                _relief.Press(g.Value, mb.ShiftPressed, mb.AltPressed);
+                break;
         }
     }
 
@@ -262,16 +338,31 @@ sealed class TableInput
         if (Panning && !Input.IsMouseButtonPressed(MouseButton.Middle)) { Panning = false; Cam.LetGo(orbit: false); }
         switch (_c.Tool)
         {
-            case Tool.Zone: _zones.Release(); _c.SetTool(Tool.Select); break;
-            case Tool.Select: case Tool.Transform: case Tool.Range: case Tool.Formation: _selectTool.Release(mb, g); break;
-            case Tool.Crop: _crop.Release(); break;
+            case Tool.Zone:
+                _zones.Release();
+                _c.SetTool(Tool.Select);
+                break;
+            case Tool.Select: case Tool.Transform: case Tool.Range:
+                case Tool.Formation: _selectTool.Release(mb, g);
+                break;
+            case Tool.Crop:
+                _crop.Release();
+                break;
             case Tool.Calibrate:
                 if (_ruler.Measured is { } length) CalibrationMeasured?.Invoke(length);
                 break;
-            case Tool.Draw: _pen.ReleaseDraw(); break;
-            case Tool.Shape: _pen.ReleaseShape(); break;
-            case Tool.Sighting: _sighting.Release(); break;
-            case Tool.Relief: _relief.Release(); break;
+            case Tool.Draw:
+                _pen.ReleaseDraw();
+                break;
+            case Tool.Shape:
+                _pen.ReleaseShape();
+                break;
+            case Tool.Sighting:
+                _sighting.Release();
+                break;
+            case Tool.Relief:
+                _relief.Release();
+                break;
             case Tool.Capture:
                 var r = new Rect2(PressPos, mb.Position - PressPos).Abs();
                 _c.NotifyScreenRect(null);
@@ -296,15 +387,33 @@ sealed class TableInput
             case Tool.Crop:
                 if (g != null) _crop.Drag(g.Value);
                 return;
-            case Tool.Select: case Tool.Transform: case Tool.Formation: _selectTool.Motion(mm, g); break;
-            case Tool.Ruler: case Tool.Calibrate: if (g != null) _ruler.B = g; break;
-            case Tool.Zone: if (g != null) _zones.Motion(g.Value); break;
-            case Tool.Draw: if (g != null) _pen.MoveDraw(g.Value); break;
-            case Tool.Shape: if (g != null) _pen.MoveShape(g.Value); break;
-            case Tool.Erase: if (g != null) _pen.RubAt(g.Value); break;
-            case Tool.Capture: _c.NotifyScreenRect(new Rect2(PressPos, mm.Position - PressPos).Abs()); break;
-            case Tool.Sighting: _sighting.Move(g); break;
-            case Tool.Relief: if (g != null) _relief.Motion(g.Value); break;
+            case Tool.Select: case Tool.Transform: case Tool.Formation:
+                _selectTool.Motion(mm, g);
+                break;
+            case Tool.Ruler: case Tool.Calibrate:
+                if (g != null) _ruler.B = g;
+                break;
+            case Tool.Zone:
+                if (g != null) _zones.Motion(g.Value);
+                break;
+            case Tool.Draw:
+                if (g != null) _pen.MoveDraw(g.Value);
+                break;
+            case Tool.Shape:
+                if (g != null) _pen.MoveShape(g.Value);
+                break;
+            case Tool.Erase:
+                if (g != null) _pen.RubAt(g.Value);
+                break;
+            case Tool.Capture:
+                _c.NotifyScreenRect(new Rect2(PressPos, mm.Position - PressPos).Abs());
+                break;
+            case Tool.Sighting:
+                _sighting.Move(g);
+                break;
+            case Tool.Relief:
+                if (g != null) _relief.Motion(g.Value);
+                break;
         }
     }
 

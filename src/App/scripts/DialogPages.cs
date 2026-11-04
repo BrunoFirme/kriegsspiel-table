@@ -29,7 +29,8 @@ sealed class DialogPages
 
     public VBoxContainer Add(string name)
     {
-        var tab = new Button { Text = name, ToggleMode = true, ButtonGroup = _group, Alignment = HorizontalAlignment.Left, FocusMode = Control.FocusModeEnum.None, CustomMinimumSize = new Vector2(0, 30) };
+        var tab =
+            new Button { Text = name, ToggleMode = true, ButtonGroup = _group, Alignment = HorizontalAlignment.Left, FocusMode = Control.FocusModeEnum.None, CustomMinimumSize = new Vector2(0, 30) };
         NavStyle(tab);
         _nav.AddChild(tab);
         var page = new ScrollContainer { HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled, Visible = false };

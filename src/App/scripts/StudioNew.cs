@@ -44,13 +44,19 @@ internal sealed class NewPieces
                 _ = AddPieceFromDoc(doc, name, shape, 2.0, "brush");
                 break;
             }
-            case 6: _s.PickFiles(ImageFiles.Filter, AddImageFiles, "One piece per picture"); break;
+            case 6:
+                _s.PickFiles(ImageFiles.Filter, AddImageFiles, "One piece per picture");
+                break;
             case 7:
                 if (ImageFiles.FromClipboard() is { } img) _ = AddPieceFromImage(img, "Pasted piece");
                 else _s.Flash("No picture on the clipboard.");
                 break;
-            case 8: _s.PickFiles(ModelImport.Filter, f => ImportModels(f), "One 3D piece per model file"); break;
-            case 9: NewModelFromShapes(); break;
+            case 8:
+                _s.PickFiles(ModelImport.Filter, f => ImportModels(f), "One 3D piece per model file");
+                break;
+            case 9:
+                NewModelFromShapes();
+                break;
         }
     }
 
@@ -58,7 +64,8 @@ internal sealed class NewPieces
     {
         var pics = files.Where(ImageFiles.IsImage).ToArray();
         var models = files.Where(ModelImport.IsModel).ToArray();
-        if (models.Length > 0 && _s.View == "model" && _s.Model is { } m && _s.Sel is { } sel && m.Holds(sel) && !EffectFx.IsEffect(sel) && m.GetGlobalRect().HasPoint(Pointer.Global(m))) AddModelFiles(models);
+        if (models.Length > 0 && _s.View == "model" && _s.Model is { } m && _s.Sel is { } sel && m.Holds(sel) && !EffectFx.IsEffect(sel)
+            && m.GetGlobalRect().HasPoint(Pointer.Global(m))) AddModelFiles(models);
         else if (models.Length > 0) ImportModels(models);
         if (pics.Length == 0) return;
         var canvas = _s.Canvas;
@@ -88,24 +95,34 @@ internal sealed class NewPieces
             last = await MakePiece(doc, Pretty(Path.GetFileNameWithoutExtension(f)), PackEdit.SeeThrough(img) ? "alpha" : "box", 2.0);
         }
         if (last == null) { _s.Flash("No pictures it could read."); return; }
-        _s.RebuildList(); _s.Paper.LayOutAll(); _s.Select(last, frame: true);
+        _s.RebuildList();
+        _s.Paper.LayOutAll();
+        _s.Select(last, frame: true);
     }
 
     async Task AddPieceFromImage(Image img, string name)
     {
         var src = ArtStore.AddSrc(Store, Pack.Id, img);
         var d = await MakePiece(PieceFaces.DocAround(img, src), name, PackEdit.SeeThrough(img) ? "alpha" : "box", 2.0);
-        _s.RebuildList(); _s.Paper.LayOutAll(); _s.Select(d, frame: true);
+        _s.RebuildList();
+        _s.Paper.LayOutAll();
+        _s.Select(d, frame: true);
     }
 
     async Task AddPieceFromDoc(ArtDoc doc, string name, string shape, double longest, string tool)
     {
         var d = await MakePiece(doc, name, shape, longest);
-        _s.RebuildList(); _s.Paper.LayOutAll();
+        _s.RebuildList();
+        _s.Paper.LayOutAll();
         _s.FaceKey = "front";
         _s.Inspector.Fresh();
         _s.Select(d, frame: true);
-        if (tool == "brush") { await _s.SetViewAsync("model"); _s.Model?.SetTool("paint"); return; }
+        if (tool == "brush")
+        {
+            await _s.SetViewAsync("model");
+            _s.Model?.SetTool("paint");
+            return;
+        }
         _s.SetView("paint");
         _s.Canvas.SetTool(tool);
     }
@@ -122,7 +139,8 @@ internal sealed class NewPieces
     public async Task<PieceDef> NewFromDoc(ArtDoc doc, string name, string shape, double longest)
     {
         var d = await MakePiece(doc, name, shape, longest);
-        _s.RebuildList(); _s.Paper.LayOutAll();
+        _s.RebuildList();
+        _s.Paper.LayOutAll();
         _s.FaceKey = "front";
         _s.Inspector.Fresh();
         _s.Select(d, frame: true);
@@ -150,7 +168,8 @@ internal sealed class NewPieces
         Pack.Pieces.Add(def);
         Store.RegisterDef(Pack, def);
         _s.SavePack();
-        _s.RebuildList(); _s.Paper.LayOutAll();
+        _s.RebuildList();
+        _s.Paper.LayOutAll();
         _s.Inspector.Fresh();
         _s.Select(def, frame: true);
         _s.SetView("table");
@@ -224,7 +243,9 @@ internal sealed class NewPieces
         {
             foreach (var c in holder.GetChildren()) c.QueueFree();
             holder.CustomMinimumSize = new Vector2(48, 48);
-            var tr = new TextureRect { Texture = picture, ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize, StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered, MouseFilter = Control.MouseFilterEnum.Ignore };
+            var tr =
+                new TextureRect { Texture = picture, ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize, StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
+                    MouseFilter = Control.MouseFilterEnum.Ignore };
             holder.AddChild(tr);
             tr.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
         }
@@ -233,7 +254,8 @@ internal sealed class NewPieces
 
     static Control Card(string icon, string name, string what, Action press)
     {
-        var card = new PanelContainer { CustomMinimumSize = new Vector2(168, 0), MouseFilter = Control.MouseFilterEnum.Stop, MouseDefaultCursorShape = Control.CursorShape.PointingHand, TooltipText = what };
+        var card =
+            new PanelContainer { CustomMinimumSize = new Vector2(168, 0), MouseFilter = Control.MouseFilterEnum.Stop, MouseDefaultCursorShape = Control.CursorShape.PointingHand, TooltipText = what };
         var normal = Ui.Box(new Color(1, 1, 1, 0.05f), 3, 10, 8);
         var hover = Ui.Box(new Color(1, 1, 1, 0.10f), 3, 10, 8);
         card.AddThemeStyleboxOverride("panel", normal);
@@ -281,7 +303,9 @@ internal sealed class NewPieces
         var g = Ui.Form(70);
         foreach (var f in new[] { "As it is" }.Concat(PieceFramer.Outlines.Where(o => o != PieceFramer.AlongThePicture)))
         {
-            var b = new Button { Text = f, ToggleMode = true, ButtonGroup = group, ButtonPressed = f == frame, FocusMode = Control.FocusModeEnum.None, CustomMinimumSize = new Vector2(70, 0), TooltipText = f == "As it is" ? "The picture's own outline and size" : "Cut to this shape with a border, then slid into place" };
+            var b =
+                new Button { Text = f, ToggleMode = true, ButtonGroup = group, ButtonPressed = f == frame, FocusMode = Control.FocusModeEnum.None, CustomMinimumSize = new Vector2(70, 0),
+                    TooltipText = f == "As it is" ? "The picture's own outline and size" : "Cut to this shape with a border, then slid into place" };
             var ff = f;
             b.Pressed += () => { frame = ff; g.Visible = ff != "As it is"; };
             frames.AddChild(b);
@@ -291,12 +315,16 @@ internal sealed class NewPieces
         g.AddChild(new Label { Text = "Border" });
         var br = new HBoxContainer();
         var col = new ColorPickerButton { Color = new Color(0.12f, 0.12f, 0.12f), EditAlpha = false, CustomMinimumSize = new Vector2(44, 24) };
-        var w = new HSlider { MinValue = 0, MaxValue = 48, Step = 1, Value = 14, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, CustomMinimumSize = new Vector2(140, 0), TooltipText = "0: no border" };
-        br.AddChild(col); br.AddChild(w);
+        var w =
+            new HSlider { MinValue = 0, MaxValue = 48, Step = 1, Value = 14, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
+                CustomMinimumSize = new Vector2(140, 0), TooltipText = "0: no border" };
+        br.AddChild(col);
+        br.AddChild(w);
         g.AddChild(br);
         g.AddChild(new Label { Text = "Detail" });
         var size = new OptionButton();
-        size.AddItem("512 px (a counter)"); size.AddItem("1024 px (close-ups)");
+        size.AddItem("512 px (a counter)");
+        size.AddItem("1024 px (close-ups)");
         g.AddChild(size);
         Ui.AlignForm(g);
         box.AddChild(g);
@@ -323,7 +351,8 @@ internal sealed class NewPieces
             last = await MakePiece(doc, Pretty(Path.GetFileNameWithoutExtension(f)), "alpha", 1.0);
         }
         if (last == null) return;
-        _s.RebuildList(); _s.Paper.LayOutAll();
+        _s.RebuildList();
+        _s.Paper.LayOutAll();
         _s.FaceKey = "front";
         _s.Inspector.Fresh();
         _s.Select(last, frame: true);

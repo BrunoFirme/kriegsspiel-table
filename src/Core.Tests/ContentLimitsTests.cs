@@ -35,7 +35,8 @@ public sealed class ContentLimitsTests
     static byte[] Webp(string chunk, Action<byte[]> fill)
     {
         var b = new byte[40];
-        "RIFF"u8.CopyTo(b); "WEBP"u8.CopyTo(b.AsSpan(8));
+        "RIFF"u8.CopyTo(b);
+        "WEBP"u8.CopyTo(b.AsSpan(8));
         System.Text.Encoding.ASCII.GetBytes(chunk).CopyTo(b, 12);
         fill(b);
         return b;
@@ -46,15 +47,30 @@ public sealed class ContentLimitsTests
     {
         Assert.Equal((640, 480), PictureHeader.Read(Png(640, 480)));
         Assert.Equal((1920, 1080), PictureHeader.Read(Jpeg(1920, 1080)));
-        var gif = new byte[16]; "GIF89a"u8.CopyTo(gif); BinaryPrimitives.WriteUInt16LittleEndian(gif.AsSpan(6), 300); BinaryPrimitives.WriteUInt16LittleEndian(gif.AsSpan(8), 200);
+        var gif = new byte[16];
+        "GIF89a"u8.CopyTo(gif);
+        BinaryPrimitives.WriteUInt16LittleEndian(gif.AsSpan(6), 300);
+        BinaryPrimitives.WriteUInt16LittleEndian(gif.AsSpan(8), 200);
         Assert.Equal((300, 200), PictureHeader.Read(gif));
-        var bmp = new byte[32]; bmp[0] = (byte)'B'; bmp[1] = (byte)'M'; BinaryPrimitives.WriteUInt32LittleEndian(bmp.AsSpan(14), 40);
-        BinaryPrimitives.WriteInt32LittleEndian(bmp.AsSpan(18), 800); BinaryPrimitives.WriteInt32LittleEndian(bmp.AsSpan(22), -600);
+        var bmp = new byte[32];
+        bmp[0] = (byte)'B';
+        bmp[1] = (byte)'M';
+        BinaryPrimitives.WriteUInt32LittleEndian(bmp.AsSpan(14), 40);
+        BinaryPrimitives.WriteInt32LittleEndian(bmp.AsSpan(18), 800);
+        BinaryPrimitives.WriteInt32LittleEndian(bmp.AsSpan(22), -600);
         Assert.Equal((800, 600), PictureHeader.Read(bmp));
         Assert.Equal((500, 400), PictureHeader.Read(Webp("VP8 ", b => { BinaryPrimitives.WriteUInt16LittleEndian(b.AsSpan(26), 500); BinaryPrimitives.WriteUInt16LittleEndian(b.AsSpan(28), 400); })));
         Assert.Equal((1000, 2000), PictureHeader.Read(Webp("VP8L", b => BinaryPrimitives.WriteUInt32LittleEndian(b.AsSpan(21), 999u | 1999u << 14))));
-        Assert.Equal((70000, 3), PictureHeader.Read(Webp("VP8X", b => { b[24] = 0x6F; b[25] = 0x11; b[26] = 0x01; b[27] = 2; })));
-        var tga = new byte[18]; BinaryPrimitives.WriteUInt16LittleEndian(tga.AsSpan(12), 64); BinaryPrimitives.WriteUInt16LittleEndian(tga.AsSpan(14), 32);
+        Assert.Equal((70000, 3), PictureHeader.Read(Webp("VP8X", b =>
+        {
+            b[24] = 0x6F;
+            b[25] = 0x11;
+            b[26] = 0x01;
+            b[27] = 2;
+        })));
+        var tga = new byte[18];
+        BinaryPrimitives.WriteUInt16LittleEndian(tga.AsSpan(12), 64);
+        BinaryPrimitives.WriteUInt16LittleEndian(tga.AsSpan(14), 32);
         Assert.Equal((64, 32), PictureHeader.Read(tga, ".tga"));
         Assert.Null(PictureHeader.Read(tga));
     }

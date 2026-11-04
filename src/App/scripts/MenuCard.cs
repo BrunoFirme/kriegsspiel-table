@@ -29,7 +29,8 @@ sealed class MenuCard
         b.AddThemeStyleboxOverride("hover_pressed", RowStyle(new Color(1, 1, 1, 0.14f)));
         var h = new HBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
         h.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
-        h.OffsetLeft = 8; h.OffsetRight = -8;
+        h.OffsetLeft = 8;
+        h.OffsetRight = -8;
         h.AddThemeConstantOverride("separation", 6);
         if (tick != null)
         {
@@ -49,16 +50,27 @@ sealed class MenuCard
         return b;
     }
 
-    public void Item(string text, Action action, string accel = "") { var b = Row(text, accel, null); b.Pressed += () => { Pop.Hide(); action(); }; }
-    public void Check(string text, bool on, Action action, string accel = "") { var b = Row(text, accel, on); b.Pressed += () => { Pop.Hide(); action(); }; }
+    public void Item(string text, Action action, string accel = "")
+    {
+        var b = Row(text, accel, null);
+        b.Pressed += () => { Pop.Hide(); action(); };
+    }
+    public void Check(string text, bool on, Action action, string accel = "")
+    {
+        var b = Row(text, accel, on);
+        b.Pressed += () => { Pop.Hide(); action(); };
+    }
 
     public void Head(string text)
     {
-        var l = new Label { Text = text, ClipText = true, TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis, CustomMinimumSize = new Vector2(0, 26), VerticalAlignment = VerticalAlignment.Center };
+        var l =
+            new Label { Text = text, ClipText = true, TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis, CustomMinimumSize = new Vector2(0, 26),
+                VerticalAlignment = VerticalAlignment.Center };
         l.AddThemeColorOverride("font_color", Colors.White);
         l.AddThemeFontOverride("font", Ui.SansStrong());
         var m = new MarginContainer();
-        m.AddThemeConstantOverride("margin_left", 8); m.AddThemeConstantOverride("margin_right", 8);
+        m.AddThemeConstantOverride("margin_left", 8);
+        m.AddThemeConstantOverride("margin_right", 8);
         m.AddChild(l);
         _box.AddChild(m);
     }
@@ -73,7 +85,8 @@ sealed class MenuCard
         Ui.HeadStyle(l);
         l.AddThemeFontSizeOverride("font_size", 10);
         var m = new MarginContainer();
-        m.AddThemeConstantOverride("margin_left", 8); m.AddThemeConstantOverride("margin_bottom", 2);
+        m.AddThemeConstantOverride("margin_left", 8);
+        m.AddThemeConstantOverride("margin_bottom", 2);
         m.AddChild(l);
         _box.AddChild(m);
     }
@@ -81,7 +94,10 @@ sealed class MenuCard
     public void Add(Control c)
     {
         var m = new MarginContainer();
-        m.AddThemeConstantOverride("margin_left", 6); m.AddThemeConstantOverride("margin_right", 6); m.AddThemeConstantOverride("margin_top", 4); m.AddThemeConstantOverride("margin_bottom", 4);
+        m.AddThemeConstantOverride("margin_left", 6);
+        m.AddThemeConstantOverride("margin_right", 6);
+        m.AddThemeConstantOverride("margin_top", 4);
+        m.AddThemeConstantOverride("margin_bottom", 4);
         m.AddChild(c);
         _box.AddChild(m);
     }

@@ -44,7 +44,11 @@ public sealed class HostSaves
 
     public HostSaves(Func<ClientSession> session, Func<GameServer?> server, IScenarioFolders folders, SaveStore store, SaveServices app)
     {
-        _session = session; _server = server; _folders = folders; _store = store; _app = app;
+        _session = session;
+        _server = server;
+        _folders = folders;
+        _store = store;
+        _app = app;
         _writer = new SaveWriter(store, folders, _generations);
         _logKeeper = new SaveLogKeeper(_generations, () => Log, n => SaveNote?.Invoke(n), _writer.Enqueue);
         _scripts = new ScriptSaves(server, () => _app.Dispatch, () => Log);
@@ -121,7 +125,12 @@ public sealed class HostSaves
             _app.Post(() =>
             {
                 if (Server != server) { then("the table was left"); return; }
-                if (loaded == null) { server.Dirty = true; then(why ?? "nothing could be read"); return; }
+                if (loaded == null)
+                {
+                    server.Dirty = true;
+                    then(why ?? "nothing could be read");
+                    return;
+                }
                 try { Switch(server, scenarioDir, loaded); then(null); }
                 catch (Exception e) { Log.Error("loading a save failed: " + e); then(e.Message); }
             });
@@ -194,7 +203,12 @@ public sealed class HostSaves
         if (count < _turnsSaved) _turnsSaved = count;
         if (count == _turnsSaved) { _turnEndedAt = -1; return; }
         if (Clock() < _turnSavesRetryAt) return;
-        if (_turnEndedAt < 0) { _turnEndedAt = Clock(); _app.RequestPicture(); return; }
+        if (_turnEndedAt < 0)
+        {
+            _turnEndedAt = Clock();
+            _app.RequestPicture();
+            return;
+        }
         var picture = _app.PictureSince(_turnEndedAt);
         if (picture == null && Clock() - _turnEndedAt < PictureWait) return;
         _turnEndedAt = -1;
@@ -214,7 +228,12 @@ public sealed class HostSaves
         }, (r, why) =>
         {
             why ??= r.why;
-            if (why == null) { if (_turnSavesFailing) SaveNote?.Invoke("The saves of the turns are being written again."); _turnSavesFailing = false; return; }
+            if (why == null)
+            {
+                if (_turnSavesFailing) SaveNote?.Invoke("The saves of the turns are being written again.");
+                _turnSavesFailing = false;
+                return;
+            }
             Log.Error("turn save failed: " + why);
             if (Server == server && SaveStore.SamePath(Session.SavePath, path)) _turnsSaved = Math.Min(_turnsSaved, r.failedAt >= 0 ? r.failedAt : from);
             _turnSavesRetryAt = Clock() + 5;
@@ -232,7 +251,8 @@ public sealed class HostSaves
     public void Stop()
     {
         var copy = _writeBack.Stop();
-        MirrorPath = null; _checkpoints = null;
+        MirrorPath = null;
+        _checkpoints = null;
         if (HeldFolder is { } held)
         {
             HeldFolder = null;
@@ -293,7 +313,8 @@ public sealed class HostSaves
     public void StopMirror()
     {
         SaveMirror(closing: true);
-        MirrorPath = null; _checkpoints = null;
+        MirrorPath = null;
+        _checkpoints = null;
     }
 
     void SaveMirror(bool closing)
@@ -418,7 +439,8 @@ public sealed class HostSaves
         if (problem == null)
         {
             if (_saveWarned) SaveProblem?.Invoke(null);
-            _saveFailingSince = -1; _saveWarned = false;
+            _saveFailingSince = -1;
+            _saveWarned = false;
             return;
         }
         if (_saveFailingSince < 0) _saveFailingSince = t;

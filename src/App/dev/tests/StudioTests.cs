@@ -272,9 +272,14 @@ static class StudioTests
         {
             float x0 = i / (float)Columns, x1 = (i + 1) / (float)Columns;
             void Corner(float x, float y) => m.Add(new Godot.Vector3(x, y, 0), Godot.Vector3.Back, new Godot.Vector2(x, 1 - y), Godot.Colors.White);
-            Corner(x0, 0); Corner(x1, 0); Corner(x1, 1);
-            Corner(x0, 0); Corner(x1, 1); Corner(x0, 1);
-            m.Mat.Add(0); m.Mat.Add(0);
+            Corner(x0, 0);
+            Corner(x1, 0);
+            Corner(x1, 1);
+            Corner(x0, 0);
+            Corner(x1, 1);
+            Corner(x0, 1);
+            m.Mat.Add(0);
+            m.Mat.Add(0);
         }
         await h.Studio.NewModelPiece("Banner", m, "mesh");
         var model = h.Studio.Model!;
@@ -312,7 +317,9 @@ static class StudioTests
         int seen = 0;
         for (int t = 0; t < v.Data.Tris; t++)
         {
-            var a = v.Data.V[t * 3]; var b = v.Data.V[t * 3 + 1]; var c = v.Data.V[t * 3 + 2];
+            var a = v.Data.V[t * 3];
+            var b = v.Data.V[t * 3 + 1];
+            var c = v.Data.V[t * 3 + 2];
             if ((c - a).Cross(b - a).Z >= 0) continue;
             var at = (a + b + c) / 3;
             var uv = (v.Data.UV[t * 3] + v.Data.UV[t * 3 + 1] + v.Data.UV[t * 3 + 2]) / 3;

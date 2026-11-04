@@ -180,7 +180,9 @@ public sealed partial class TableTools
         if (id.Length > 0)
         {
             if (Find(s, id) is not { } p) return Task.FromResult(ToolResult.Fail($"No piece {id} on this table."));
-            o["widgets"] = new JsonArray(p.Widgets.Select((w, i) => (JsonNode?)new JsonObject { ["number"] = i + 1, ["kind"] = w.Kind, ["label"] = w.Label, ["face"] = w.Face, ["value"] = w.Kind == "input" ? w.Value : null, ["presses"] = w.OnClick != null || w.OnChange != null }).ToArray());
+            o["widgets"] =
+                new JsonArray(p.Widgets.Select((w, i) => (JsonNode?)new JsonObject { ["number"] = i + 1, ["kind"] = w.Kind, ["label"] = w.Label, ["face"] = w.Face, ["value"] = w.Kind == "input" ? w.Value : null, ["presses"] = w.OnClick != null
+                    || w.OnChange != null }).ToArray());
             o["menuRows"] = new JsonArray(p.MenuItems.Select(m => (JsonNode?)JsonValue.Create(m.Label)).ToArray());
         }
         else
@@ -207,7 +209,8 @@ public sealed partial class TableTools
         var id = a.Str("id") ?? "";
         if (Find(s, id) is not { } p) return ToolResult.Fail($"No piece {id} on this table.");
         int index = a.Num("number") is { } n ? (int)n - 1 : a.Str("label") is { Length: > 0 } label
-            ? p.Widgets.FindIndex(w => w.OnClick != null && w.Label.Equals(label, StringComparison.OrdinalIgnoreCase)) is var exact and >= 0 ? exact : p.Widgets.FindIndex(w => w.OnClick != null && w.Label.Contains(label, StringComparison.OrdinalIgnoreCase))
+? p.Widgets.FindIndex(w => w.OnClick != null && w.Label.Equals(label, StringComparison.OrdinalIgnoreCase)) is var exact and >= 0 ? exact
+                : p.Widgets.FindIndex(w => w.OnClick != null && w.Label.Contains(label, StringComparison.OrdinalIgnoreCase))
             : -1;
         if (index < 0 || index >= p.Widgets.Count) return ToolResult.Fail($"{NameOf(s, p)} has no such button: list_buttons shows them.");
         long seq = LastSeq(s);
@@ -257,16 +260,23 @@ public sealed partial class TableTools
         var done = new List<string>();
         if (a.Flag("locked") is { } locked) { s.Do(new SetLocked { Layer = Layers.Umpire, Id = id, Value = locked }); done.Add(locked ? "locked" : "unlocked"); }
         if (a.Str("tint") is { } tint) { s.Do(new SetTint { Layer = Layers.Umpire, Id = id, Value = tint.Length == 0 ? null : tint }); done.Add("tinted"); }
-        if (a.Num("scale") is { } scale) { if (scale is <= 0 or > 50) return ToolResult.Fail("scale is above 0 and at most 50."); s.Do(new SetScale { Layer = Layers.Umpire, Id = id, Scale = scale }); done.Add("sized"); }
+        if (a.Num("scale") is { } scale)
+        {
+            if (scale is <= 0 or > 50) return ToolResult.Fail("scale is above 0 and at most 50.");
+            s.Do(new SetScale { Layer = Layers.Umpire, Id = id, Scale = scale });
+            done.Add("sized");
+        }
         if (a.Flag("face_down") is { } down) { s.Do(new FlipPiece { Layer = Layers.Umpire, Id = id, FaceDown = down }); done.Add(down ? "turned face down" : "turned face up"); }
         if (a.Str("attach_to") is { Length: > 0 } parent)
         {
             if (Find(s, parent) == null || parent == id) return ToolResult.Fail($"No other piece {parent} to attach to.");
-            s.Do(new Attach { Layer = Layers.Umpire, Parent = parent, Child = id }); done.Add("attached to " + parent);
+            s.Do(new Attach { Layer = Layers.Umpire, Parent = parent, Child = id });
+            done.Add("attached to " + parent);
         }
         if (a.Flag("detach") == true && s.View.Layer(Layers.Umpire).FirstOrDefault(x => x.Attached.Contains(id)) is { } holder)
         {
-            s.Do(new Detach { Layer = Layers.Umpire, Child = id }); done.Add("detached from " + holder.Id);
+            s.Do(new Detach { Layer = Layers.Umpire, Child = id });
+            done.Add("detached from " + holder.Id);
         }
         if (done.Count == 0) return ToolResult.Fail("Nothing to set.");
         await _delay(0.2);
@@ -352,11 +362,13 @@ public sealed partial class TableTools
         s.Do(new Draw { Layer = Layers.Umpire, Stroke = new Stroke { Points = pts, Width = width, Color = colour, Board = board } });
         if (a.Flag("arrow") == true)
         {
-            var tip = pts[^1]; var from = pts[^2];
+            var tip = pts[^1];
+            var from = pts[^2];
             double dx = tip.X - from.X, dz = tip.Z - from.Z, len = Math.Sqrt(dx * dx + dz * dz);
             if (len > 1e-6)
             {
-                dx /= len; dz /= len;
+                dx /= len;
+                dz /= len;
                 double head = Math.Max(width * 4, 0.6);
                 Vec2 Wing(double side) => new(tip.X - dx * head + -dz * head * 0.6 * side, tip.Z - dz * head + dx * head * 0.6 * side);
                 s.Do(new Draw { Layer = Layers.Umpire, Stroke = new Stroke { Points = new List<Vec2> { Wing(1), tip, Wing(-1) }, Width = width, Color = colour, Board = board } });
@@ -435,7 +447,8 @@ public sealed partial class TableTools
             s.Do(new SetLighting { Lighting = new Lighting
             {
                 SunEnergy = Math.Clamp(a.Num("sun") ?? l.SunEnergy, 0, 1), Ambient = Math.Clamp(a.Num("ambient") ?? l.Ambient, 0, 1), Warmth = Math.Clamp(a.Num("warmth") ?? l.Warmth, -1, 1),
-                Shadows = a.Flag("shadows") ?? l.Shadows, FromClock = a.Flag("from_clock") ?? l.FromClock, TableShade = Math.Clamp(a.Num("table_shade") ?? l.TableShade, 0, 1), Backdrop = backdrop ?? l.Backdrop, MapStyle = style ?? l.MapStyle, Contours = a.Flag("contours") ?? l.Contours,
+                Shadows = a.Flag("shadows") ?? l.Shadows, FromClock = a.Flag("from_clock") ?? l.FromClock, TableShade = Math.Clamp(a.Num("table_shade") ?? l.TableShade, 0, 1), Backdrop = backdrop ?? l.Backdrop, MapStyle = style
+                    ?? l.MapStyle, Contours = a.Flag("contours") ?? l.Contours,
             } });
             done.Add("light");
         }

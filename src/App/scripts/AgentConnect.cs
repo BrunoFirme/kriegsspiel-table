@@ -13,7 +13,9 @@ static class AgentConnect
     {
         var row = new HBoxContainer();
         row.AddThemeConstantOverride("separation", 12);
-        var mark = new Label { Text = n.ToString(), HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center, CustomMinimumSize = new Vector2(Mark, Mark), SizeFlagsVertical = Control.SizeFlags.ShrinkBegin };
+        var mark =
+            new Label { Text = n.ToString(), HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center, CustomMinimumSize = new Vector2(Mark, Mark),
+                SizeFlagsVertical = Control.SizeFlags.ShrinkBegin };
         mark.AddThemeStyleboxOverride("normal", Ui.Box(new Color(1, 1, 1, 0.08f), Mark / 2, 0, 0));
         mark.AddThemeFontOverride("font", Ui.SansStrong());
         mark.AddThemeFontSizeOverride("font_size", 13);

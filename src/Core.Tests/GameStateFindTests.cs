@@ -34,15 +34,31 @@ public class GameStateFindTests
         {
             switch (rng.Next(9))
             {
-                case 0: l.Add(P(next++)); break;
-                case 1: l.Insert(rng.Next(l.Count + 1), P(next++)); break;
-                case 2: if (l.Count > 0) l.RemoveAt(rng.Next(l.Count)); break;
-                case 3: if (l.Count > 0) l[rng.Next(l.Count)] = P(next++); break;
+                case 0:
+                    l.Add(P(next++));
+                    break;
+                case 1:
+                    l.Insert(rng.Next(l.Count + 1), P(next++));
+                    break;
+                case 2:
+                    if (l.Count > 0) l.RemoveAt(rng.Next(l.Count));
+                    break;
+                case 3:
+                    if (l.Count > 0) l[rng.Next(l.Count)] = P(next++);
+                    break;
                 case 4: if (l.Count > 1) { int a = rng.Next(l.Count), b = rng.Next(l.Count); (l[a], l[b]) = (l[b], l[a]); } break;
-                case 5: if (l.Count > 0) l[rng.Next(l.Count)].Id = $"p-{next++:D6}"; break;
-                case 6: l.RemoveAll(p => rng.Next(50) == 0); break;
-                case 7: l.Reverse(); break;
-                case 8: if (l.Count > 0) l.Insert(rng.Next(l.Count), l[rng.Next(l.Count)]); break;
+                case 5:
+                    if (l.Count > 0) l[rng.Next(l.Count)].Id = $"p-{next++:D6}";
+                    break;
+                case 6:
+                    l.RemoveAll(p => rng.Next(50) == 0);
+                    break;
+                case 7:
+                    l.Reverse();
+                    break;
+                case 8:
+                    if (l.Count > 0) l.Insert(rng.Next(l.Count), l[rng.Next(l.Count)]);
+                    break;
             }
             Same(g, Enumerable.Range(0, 5).Select(_ => asked[rng.Next(asked.Count)]));
             if (next > asked.Count - 10) asked.AddRange(Enumerable.Range(asked.Count, 400).Select(i => $"p-{i:D6}"));

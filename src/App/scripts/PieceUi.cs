@@ -27,7 +27,8 @@ sealed class PieceUi
             Callable.From(() => { if (GodotObject.IsInstanceValid(_piece) && _piece.IsInsideTree()) _piece.SyncUi(true); }).CallDeferred();
             return;
         }
-        _built = piece.Ui; _builtFaceDown = piece.FaceDown;
+        _built = piece.Ui;
+        _builtFaceDown = piece.FaceDown;
         Clear();
         if (piece.Ui.Count == 0 || piece.FaceDown || _piece.IsDie || _piece.IsEffect) return;
         foreach (var root in piece.Ui)
@@ -65,12 +66,16 @@ sealed class PieceUi
         var canvas = new Control { Size = new Vector2(w, h), Scale = new Vector2(f, f) };
         vp.AddChild(canvas);
         var s = _piece.Session;
-        var builder = new UiBuilder((_, _, _) => { }, (id, ready) => UiBuilder.AssetTexture(s, id, t => { ready(t); if (GodotObject.IsInstanceValid(vp)) vp.RenderTargetUpdateMode = SubViewport.UpdateMode.Once; }));
+        var builder =
+            new UiBuilder((_, _, _) => { },
+                (id, ready) => UiBuilder.AssetTexture(s, id, t => { ready(t); if (GodotObject.IsInstanceValid(vp)) vp.RenderTargetUpdateMode = SubViewport.UpdateMode.Once; }));
         var c = builder.Build(root, new Vector2(w, h));
         if (c == null) { vp.QueueFree(); return; }
-        c.Position = Vector2.Zero; c.Size = new Vector2(w, h);
+        c.Position = Vector2.Zero;
+        c.Size = new Vector2(w, h);
         canvas.AddChild(c);
-        _piece.AddChild(vp); _nodes.Add(vp);
+        _piece.AddChild(vp);
+        _nodes.Add(vp);
 
         var mat = new StandardMaterial3D
         {
@@ -81,6 +86,7 @@ sealed class PieceUi
         float faceY = (_piece.Def?.Kind == "model" && ModelTop > 0 ? ModelTop : _piece.Thickness) + 0.010f;
         quad.Position = new Vector3(pos.X * thousandth, faceY, -pos.Y * thousandth);
         quad.RotationDegrees = new Vector3(0, -(rot.Z - 180), 0);
-        _piece.AddChild(quad); _nodes.Add(quad);
+        _piece.AddChild(quad);
+        _nodes.Add(quad);
     }
 }

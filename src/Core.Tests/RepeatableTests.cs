@@ -14,7 +14,8 @@ public class RepeatableTests
         Assert.Null(Repeatable.Seed);
         Assert.Same(Random.Shared, Repeatable.Shared);
         Assert.NotEqual(Repeatable.NewGuid(), Repeatable.NewGuid());
-        var a = Repeatable.NewRandom(); var b = Repeatable.NewRandom();
+        var a = Repeatable.NewRandom();
+        var b = Repeatable.NewRandom();
         Assert.NotEqual(Enumerable.Range(0, 8).Select(_ => a.Next()).ToList(), Enumerable.Range(0, 8).Select(_ => b.Next()).ToList());
         var before = DateTime.UtcNow;
         var now = Repeatable.UtcNow;

@@ -61,7 +61,10 @@ public partial class ImportProgress : PanelContainer
     {
         Visible = false;
         var card = Ui.Card();
-        card.ContentMarginLeft = 12; card.ContentMarginRight = 8; card.ContentMarginTop = 8; card.ContentMarginBottom = 10;
+        card.ContentMarginLeft = 12;
+        card.ContentMarginRight = 8;
+        card.ContentMarginTop = 8;
+        card.ContentMarginBottom = 10;
         AddThemeStyleboxOverride("panel", card);
         var col = new VBoxContainer();
         col.AddThemeConstantOverride("separation", 6);

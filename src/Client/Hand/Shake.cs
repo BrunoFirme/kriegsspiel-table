@@ -28,7 +28,8 @@ public sealed class Shake
     {
         if (!_started) { _started = true; Restart(at, now); }
         if (now - _lastTurn > Gap) Restart(at, now);
-        _min = Vector2.Min(_min, at); _max = Vector2.Max(_max, at);
+        _min = Vector2.Min(_min, at);
+        _max = Vector2.Max(_max, at);
         if (_max.X - _min.X > Reach || _max.Y - _min.Y > Reach) Restart(at, now);
         if (Turned(0, at.X) | Turned(1, at.Y)) { _turns++; _lastTurn = now; }
         if (_turns < Turns) return false;
@@ -39,7 +40,8 @@ public sealed class Shake
     void Restart(Vector2 at, double now)
     {
         _dir[0] = _dir[1] = 0;
-        _far[0] = at.X; _far[1] = at.Y;
+        _far[0] = at.X;
+        _far[1] = at.Y;
         _min = _max = at;
         _turns = 0;
         _lastTurn = now;

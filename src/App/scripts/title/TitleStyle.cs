@@ -51,9 +51,15 @@ static class TitleStyle
     public static Button Primary(string text, Action a)
     {
         var b = new Button { Text = text, FocusMode = Control.FocusModeEnum.None, CustomMinimumSize = new Vector2(180, 40), SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin };
-        b.AddThemeStyleboxOverride("normal", new StyleBoxFlat { BgColor = Brass, CornerRadiusBottomLeft = 6, CornerRadiusBottomRight = 6, CornerRadiusTopLeft = 6, CornerRadiusTopRight = 6, ContentMarginLeft = 18, ContentMarginRight = 18 });
-        b.AddThemeStyleboxOverride("hover", new StyleBoxFlat { BgColor = Brass.Lightened(0.12f), CornerRadiusBottomLeft = 6, CornerRadiusBottomRight = 6, CornerRadiusTopLeft = 6, CornerRadiusTopRight = 6, ContentMarginLeft = 18, ContentMarginRight = 18 });
-        b.AddThemeStyleboxOverride("disabled", new StyleBoxFlat { BgColor = new Color(1, 1, 1, 0.05f), CornerRadiusBottomLeft = 6, CornerRadiusBottomRight = 6, CornerRadiusTopLeft = 6, CornerRadiusTopRight = 6, ContentMarginLeft = 18, ContentMarginRight = 18 });
+        b.AddThemeStyleboxOverride("normal",
+            new StyleBoxFlat { BgColor = Brass, CornerRadiusBottomLeft = 6, CornerRadiusBottomRight = 6, CornerRadiusTopLeft = 6, CornerRadiusTopRight = 6, ContentMarginLeft = 18,
+                ContentMarginRight = 18 });
+        b.AddThemeStyleboxOverride("hover",
+            new StyleBoxFlat { BgColor = Brass.Lightened(0.12f), CornerRadiusBottomLeft = 6, CornerRadiusBottomRight = 6, CornerRadiusTopLeft = 6, CornerRadiusTopRight = 6, ContentMarginLeft = 18,
+                ContentMarginRight = 18 });
+        b.AddThemeStyleboxOverride("disabled",
+            new StyleBoxFlat { BgColor = new Color(1, 1, 1, 0.05f), CornerRadiusBottomLeft = 6, CornerRadiusBottomRight = 6, CornerRadiusTopLeft = 6, CornerRadiusTopRight = 6, ContentMarginLeft = 18,
+                ContentMarginRight = 18 });
         b.AddThemeFontOverride("font", SansMedium());
         b.AddThemeColorOverride("font_color", Ui.OnAccent);
         b.AddThemeColorOverride("font_hover_color", Ui.OnAccent);

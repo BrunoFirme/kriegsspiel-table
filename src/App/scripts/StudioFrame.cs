@@ -207,7 +207,8 @@ internal sealed class PieceFramer
         _s.T.RebuildPiecesOf(d.Id);
         _s.RebuildList();
         if (d != _s.Sel) return;
-        _s.RebuildInspector(); _s.RebuildFaceBar();
+        _s.RebuildInspector();
+        _s.RebuildFaceBar();
         if (_s.View == "model" && _s.Model != null) _ = _s.OpenModel(d);
         else if (_s.View == "paint" && _s.Faces.Stale(_s.Sel, _s.FaceKey)) _s.OpenFace(_s.FaceKey);
         else if (_s.View == "paint") { _s.SyncCanvasPiece(); _s.RebuildToolPanel(); }
@@ -230,8 +231,11 @@ internal sealed class PieceFramer
         g.AddChild(new Label { Text = "Border" });
         var br = new HBoxContainer();
         var col = new ColorPickerButton { Color = new Color(0.12f, 0.12f, 0.12f), EditAlpha = false, CustomMinimumSize = new Vector2(44, 24) };
-        var w = new HSlider { MinValue = 0, MaxValue = 48, Step = 1, Value = 10, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, CustomMinimumSize = new Vector2(180, 0), TooltipText = "0: no border" };
-        br.AddChild(col); br.AddChild(w);
+        var w =
+            new HSlider { MinValue = 0, MaxValue = 48, Step = 1, Value = 10, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
+                CustomMinimumSize = new Vector2(180, 0), TooltipText = "0: no border" };
+        br.AddChild(col);
+        br.AddChild(w);
         g.AddChild(br);
         g.AddChild(new Label { Text = "Behind" });
         var fill = new ColorPickerButton { Color = new Color(0.85f, 0.81f, 0.71f), EditAlpha = false, CustomMinimumSize = new Vector2(44, 24), TooltipText = "The colour behind the picture, where it is see-through" };

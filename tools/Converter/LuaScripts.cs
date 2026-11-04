@@ -65,27 +65,13 @@ public sealed partial class ScriptInfo
         foreach (Match m in Assign().Matches(lua)) vars.TryAdd(m.Groups[1].Value, m.Groups[2].Value.Trim('"', '\''));
         var state = ParseState(luaState);
 
-        if (lua.Contains("MarumEditable") && FieldsOf(luaState) is { } fields)
+        if (lua.Contains("MarumEditable") && FieldsOf(luaState) is { } fields) return EditableSheet(si, fields);
+        if (DroppedVariant(lua) is { } dropped)
         {
-            int nCounter = 0, nText = 0;
-            for (int i = 0; i < fields.Count; i++)
-            {
-                var (role, value) = fields[i];
-                if (role.Contains("name", StringComparison.OrdinalIgnoreCase) && !si.TextLines.Any(t => t.Name == "Name"))
-                { si.TextLines.Add(new TextLineDef { Name = "Name", Default = value }); si.FieldMap[i] = ("text", "Name"); }
-                else if (int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var iv))
-                { var n = $"Value {++nCounter}"; si.Counters.Add(new CounterDef { Name = n, Min = Math.Min(0, iv), Max = Math.Max(99, iv), Default = iv }); si.FieldMap[i] = ("counter", n); }
-                else
-                { var n = $"Line {++nText}"; si.TextLines.Add(new TextLineDef { Name = n, Default = value }); si.FieldMap[i] = ("text", n); }
-            }
-            si.Kind = "data"; si.Variant = "editable sheet";
+            si.Kind = "dropped";
+            si.Variant = dropped;
             return si;
         }
-
-        if (lua.Contains("radius_1")) { si.Kind = "dropped"; si.Variant = "range rings (vector-line circles)"; return si; }
-        if (lua.Contains("tableHeightOffset")) { si.Kind = "dropped"; si.Variant = "Flex Table Control"; return si; }
-        if (lua.Contains("bagStatus")) { si.Kind = "dropped"; si.Variant = "fog-of-war memory bag"; return si; }
-        if (lua.Contains("onObjectPickUp") && lua.Length < 600) { si.Kind = "dropped"; si.Variant = "courier pick-up hook"; return si; }
 
         for (int n = 1; n <= 6; n++)
         {
@@ -147,6 +133,44 @@ public sealed partial class ScriptInfo
         if (si.Counters.Count > 0 || si.TextLines.Count > 0) { si.Kind = "data"; si.Variant = string.Join(",", vars.Keys.OrderBy(k => k).Take(8)); }
         else { si.Kind = "dropped"; si.Variant = "unknown: " + string.Join(",", vars.Keys.OrderBy(k => k).Take(10)) + $" ({lua.Length} chars)"; }
         return si;
+    }
+
+    static ScriptInfo EditableSheet(ScriptInfo si, List<(string role, string value)> fields)
+    {
+        int nCounter = 0, nText = 0;
+        for (int i = 0; i < fields.Count; i++)
+        {
+            var (role, value) = fields[i];
+            if (role.Contains("name", StringComparison.OrdinalIgnoreCase) && !si.TextLines.Any(t => t.Name == "Name"))
+            {
+                si.TextLines.Add(new TextLineDef { Name = "Name", Default = value });
+                si.FieldMap[i] = ("text", "Name");
+            }
+            else if (int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var iv))
+            {
+                var n = $"Value {++nCounter}";
+                si.Counters.Add(new CounterDef { Name = n, Min = Math.Min(0, iv), Max = Math.Max(99, iv), Default = iv });
+                si.FieldMap[i] = ("counter", n);
+            }
+            else
+            {
+                var n = $"Line {++nText}";
+                si.TextLines.Add(new TextLineDef { Name = n, Default = value });
+                si.FieldMap[i] = ("text", n);
+            }
+        }
+        si.Kind = "data";
+        si.Variant = "editable sheet";
+        return si;
+    }
+
+    static string? DroppedVariant(string lua)
+    {
+        if (lua.Contains("radius_1")) return "range rings (vector-line circles)";
+        if (lua.Contains("tableHeightOffset")) return "Flex Table Control";
+        if (lua.Contains("bagStatus")) return "fog-of-war memory bag";
+        if (lua.Contains("onObjectPickUp") && lua.Length < 600) return "courier pick-up hook";
+        return null;
     }
 
     public (Dictionary<string, int> counters, Dictionary<string, string> text) Values(string luaState)

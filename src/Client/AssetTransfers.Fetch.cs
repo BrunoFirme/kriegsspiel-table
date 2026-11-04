@@ -44,7 +44,12 @@ public sealed partial class AssetTransfers
             if (urgent && !asked.Urgent) { asked.Urgent = true; Send(1, new NeedAsset { Package = pkg, Path = rel, Urgent = true }); }
             return;
         }
-        if (_waiting.Find(f => f.Abs == abs) is { } waiting) { waiting.Urgent |= urgent; PumpFetches(); return; }
+        if (_waiting.Find(f => f.Abs == abs) is { } waiting)
+        {
+            waiting.Urgent |= urgent;
+            PumpFetches();
+            return;
+        }
         var fetch = new Fetch(pkg, rel, abs, urgent);
         if (Local?.Candidate(pkg, rel) is { } copy) { CopyIn(fetch, copy); return; }
         _waiting.Add(fetch);
@@ -91,7 +96,8 @@ public sealed partial class AssetTransfers
     void Ask(Fetch f)
     {
         f.Tries++;
-        f.Total = -1; f.Received = 0;
+        f.Total = -1;
+        f.Received = 0;
         _asked[f.Abs] = f;
         Send(1, new NeedAsset { Package = f.Package, Path = f.Path, Urgent = f.Urgent });
     }

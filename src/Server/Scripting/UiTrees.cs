@@ -45,7 +45,8 @@ internal static class UiTrees
         var value = t.Get("value");
         if (value.Type is DataType.String or DataType.Number) n.Attributes["text"] = AttrText(value);
         var children = t.Get("children");
-        if (children.Type == DataType.Table) foreach (var c in children.Table.Values) if (c.Type == DataType.Table && c.Table.Get("tag").Type == DataType.String) n.Children.Add(NodeOf(c.Table, depth + 1, b));
+        if (children.Type == DataType.Table) foreach (var c in children.Table.Values) if (c.Type == DataType.Table && c.Table.Get("tag").Type == DataType.String) n.Children.Add(NodeOf(c.Table, depth + 1,
+            b));
         return n;
     }
 

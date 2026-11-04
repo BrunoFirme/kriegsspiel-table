@@ -34,8 +34,13 @@ public sealed class ImportStages
             Close(now);
             Stage = p[0];
             Total = p.Length > 1 && int.TryParse(p[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out var t) ? Math.Max(0, t) : 0;
-            Done = 0; Failed = 0; Bytes = 0; BytesTotal = 0; Item = "";
-            StageStart = now; LastNews = now;
+            Done = 0;
+            Failed = 0;
+            Bytes = 0;
+            BytesTotal = 0;
+            Item = "";
+            StageStart = now;
+            LastNews = now;
             _recent.Clear();
             _recent.Enqueue((now, 0));
             return true;
@@ -48,8 +53,11 @@ public sealed class ImportStages
             !long.TryParse(f[2], NumberStyles.Integer, CultureInfo.InvariantCulture, out var bytes) ||
             !long.TryParse(f[3], NumberStyles.Integer, CultureInfo.InvariantCulture, out var bytesTotal) ||
             !int.TryParse(f[4], NumberStyles.Integer, CultureInfo.InvariantCulture, out var failed)) return true;
-        Done = Math.Max(0, done); Total = Math.Max(0, total); Failed = Math.Max(0, failed);
-        Bytes = Math.Max(0, bytes); BytesTotal = Math.Max(0, bytesTotal);
+        Done = Math.Max(0, done);
+        Total = Math.Max(0, total);
+        Failed = Math.Max(0, failed);
+        Bytes = Math.Max(0, bytes);
+        BytesTotal = Math.Max(0, bytesTotal);
         Item = f.Length > 5 ? f[5].Trim() : "";
         LastNews = now;
         _recent.Enqueue((now, Bytes));

@@ -26,7 +26,10 @@ public static class TiffImages
             for (int x = 0; x < w; x++, src++, dst += 4)
             {
                 int p = raster[src];
-                data[dst] = (byte)Tiff.GetR(p); data[dst + 1] = (byte)Tiff.GetG(p); data[dst + 2] = (byte)Tiff.GetB(p); data[dst + 3] = (byte)Tiff.GetA(p);
+                data[dst] = (byte)Tiff.GetR(p);
+                data[dst + 1] = (byte)Tiff.GetG(p);
+                data[dst + 2] = (byte)Tiff.GetB(p);
+                data[dst + 3] = (byte)Tiff.GetA(p);
             }
         }
         return Image.CreateFromData(w, h, false, Image.Format.Rgba8, data);
@@ -46,7 +49,10 @@ public static class TiffImages
             for (int x = 0, dst = 0; x < w; x++, dst += 4)
             {
                 int p = raster[offset + x];
-                row[dst] = (byte)Tiff.GetR(p); row[dst + 1] = (byte)Tiff.GetG(p); row[dst + 2] = (byte)Tiff.GetB(p); row[dst + 3] = (byte)Tiff.GetA(p);
+                row[dst] = (byte)Tiff.GetR(p);
+                row[dst + 1] = (byte)Tiff.GetG(p);
+                row[dst + 2] = (byte)Tiff.GetB(p);
+                row[dst + 3] = (byte)Tiff.GetA(p);
             }
             slicer.PushRows(row, 1);
         }

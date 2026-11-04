@@ -132,19 +132,33 @@ public static class Json
             r.Read();
             switch (name)
             {
-                case "format": s.Format = r.GetInt32(); break;
-                case "apiVersion": s.ApiVersion = r.GetInt32(); break;
-                case "id": s.Id = r.GetString()!; break;
-                case "name": s.Name = r.GetString()!; break;
-                case "packs": s.Packs = (List<string>)JsonSerializer.Deserialize(ref r, typeof(List<string>), Ctx)!; break;
-                case "sheets": s.Sheets = (List<SheetDef>)JsonSerializer.Deserialize(ref r, typeof(List<SheetDef>), Ctx)!; break;
+                case "format":
+                    s.Format = r.GetInt32();
+                    break;
+                case "apiVersion":
+                    s.ApiVersion = r.GetInt32();
+                    break;
+                case "id":
+                    s.Id = r.GetString()!;
+                    break;
+                case "name":
+                    s.Name = r.GetString()!;
+                    break;
+                case "packs":
+                    s.Packs = (List<string>)JsonSerializer.Deserialize(ref r, typeof(List<string>), Ctx)!;
+                    break;
+                case "sheets":
+                    s.Sheets = (List<SheetDef>)JsonSerializer.Deserialize(ref r, typeof(List<SheetDef>), Ctx)!;
+                    break;
                 case "umpireBoard":
                     if (r.TokenType == JsonTokenType.Null) { pieces = -1; break; }
                     if (r.TokenType != JsonTokenType.StartArray) throw new JsonException("the board is a list");
                     pieces = 0;
                     while (r.Read() && r.TokenType != JsonTokenType.EndArray) { pieces++; r.Skip(); }
                     break;
-                default: r.Skip(); break;
+                default:
+                    r.Skip();
+                    break;
             }
         }
         ContentVersions.Check("scenario", s.Name is { Length: > 0 } ? s.Name : s.Id, s.Format, Scenario.CurrentFormat, s.ApiVersion);
@@ -164,8 +178,12 @@ public static class Json
             r.Read();
             switch (prop)
             {
-                case "scenarioId": scenarioId = r.GetString(); break;
-                case "mirrorOf": mirrorOf = r.GetString(); break;
+                case "scenarioId":
+                    scenarioId = r.GetString();
+                    break;
+                case "mirrorOf":
+                    mirrorOf = r.GetString();
+                    break;
                 case "snapshot":
                     if (r.TokenType != JsonTokenType.StartObject) throw new JsonException("the table in a save is an object");
                     while (r.Read() && r.TokenType != JsonTokenType.EndObject)
@@ -174,13 +192,21 @@ public static class Json
                         r.Read();
                         switch (inner)
                         {
-                            case "name": name = r.GetString(); break;
-                            case "clock": clock = (GameClock?)JsonSerializer.Deserialize(ref r, typeof(GameClock), Ctx); break;
-                            default: r.Skip(); break;
+                            case "name":
+                                name = r.GetString();
+                                break;
+                            case "clock":
+                                clock = (GameClock?)JsonSerializer.Deserialize(ref r, typeof(GameClock), Ctx);
+                                break;
+                            default:
+                                r.Skip();
+                                break;
                         }
                     }
                     break;
-                default: r.Skip(); break;
+                default:
+                    r.Skip();
+                    break;
             }
         }
         if (r.TokenType != JsonTokenType.EndObject) throw new JsonException("the save ends early");
@@ -211,7 +237,7 @@ public static class Json
             int end = head.IndexOf('"', i + 1);
             return end < 0 ? null : head[(i + 1)..end];
         }
-        catch { return null; }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException) { return null; }
     }
 
     public static void WriteAtomic(string path, string text) => WriteAtomic(path, new UTF8Encoding(false).GetBytes(text));

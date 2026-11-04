@@ -29,7 +29,7 @@ public class StateMachineTests
         {
             string? err;
             try { err = StateMachine.Apply(new GameState(), (Command)Activator.CreateInstance(a.DerivedType)!, out _); }
-            catch (Exception) { err = null; }
+            catch (Exception e) { err = e.Message; }
             if (err == "unknown command") missing.Add(a.DerivedType.Name);
         }
         Assert.Empty(missing);
@@ -46,7 +46,8 @@ public class StateMachineTests
             foreach (var p in c.Layers[k])
             {
                 p.Attached.Sort(StringComparer.Ordinal);
-                p.Pos = R(p.Pos); p.RotDeg = R(p.RotDeg);
+                p.Pos = R(p.Pos);
+                p.RotDeg = R(p.RotDeg);
             }
         }
         foreach (var k in c.Drawings.Keys.ToList())
@@ -159,7 +160,11 @@ public class StateMachineTests
         var g = Base();
         var p = g.Find(U, "p-000001")!;
         var child = g.Find(U, "p-000002")!;
-        p.Pos = new(3, -8); p.RotDeg = 47; p.Y = 1.25; p.Stack = 2; p.Scale = 1.4;
+        p.Pos = new(3, -8);
+        p.RotDeg = 47;
+        p.Y = 1.25;
+        p.Stack = 2;
+        p.Scale = 1.4;
         var (pos, rot, y, stack, scale) = (p.Pos, p.RotDeg, p.Y, p.Stack, p.Scale);
         var childPos = child.Pos;
         Assert.Null(StateMachine.Apply(g, new FlipPiece { Layer = U, Id = p.Id, FaceDown = true }, out var inv));

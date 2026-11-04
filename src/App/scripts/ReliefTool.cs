@@ -25,7 +25,12 @@ sealed class ReliefTool
     double? _level;
     (string Sheet, Vec2 At)? _end;
 
-    public ReliefTool(TableContext c, ToolOverlay overlay, SheetLayer sheets) { _c = c; _overlay = overlay; _sheets = sheets; }
+    public ReliefTool(TableContext c, ToolOverlay overlay, SheetLayer sheets)
+    {
+        _c = c;
+        _overlay = overlay;
+        _sheets = sheets;
+    }
 
     public event Action<string, Command>? Shaped;
     public event Action? Picked;
@@ -76,7 +81,12 @@ sealed class ReliefTool
         var brush = BrushOf(Cfg.ReliefMode, Cfg.ReliefStrength, Cfg.ReliefDensity);
         var box = ReliefBrush.Fill(_draft, u, v, brush.Kind, brush.Density);
         _end = (_sheet.Id, g);
-        if (box.Empty) { _sheet = null; _draft = null; return; }
+        if (box.Empty)
+        {
+            _sheet = null;
+            _draft = null;
+            return;
+        }
         _dirty = WorldBox(_sheet, _draft, box);
         Push();
     }
@@ -125,9 +135,12 @@ sealed class ReliefTool
     {
         if (_sheet == null || _draft == null) return;
         Push();
-        var sheet = _sheet; var grid = _draft;
+        var sheet = _sheet;
+        var grid = _draft;
         if (_last is { } end) _end = (sheet.Id, end);
-        _sheet = null; _draft = null; _last = null;
+        _sheet = null;
+        _draft = null;
+        _last = null;
         Commit(_c.S, sheet, grid, (sha, c) => Shaped?.Invoke(sha, c), _c.Say);
     }
 
@@ -149,7 +162,12 @@ sealed class ReliefTool
             catch (Exception e)
             {
                 var why = e.Message;
-                Callable.From(() => { s.Relief.Draft(sheet.Id, null); say("The relief could not be saved: " + why); GD.PrintErr("[relief] saving a shaped relief: " + why); }).CallDeferred();
+                Callable.From(() =>
+                {
+                    s.Relief.Draft(sheet.Id, null);
+                    say("The relief could not be saved: " + why);
+                    GD.PrintErr("[relief] saving a shaped relief: " + why);
+                }).CallDeferred();
             }
         });
     }
@@ -157,7 +175,9 @@ sealed class ReliefTool
     public void Cancel()
     {
         if (_sheet != null) _c.S.Relief.Draft(_sheet.Id, null);
-        _sheet = null; _draft = null; _last = null;
+        _sheet = null;
+        _draft = null;
+        _last = null;
     }
 
     public void Draw()

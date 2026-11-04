@@ -13,14 +13,20 @@ sealed class NameEditor
     PieceNode? _node;
     int _widget;
     string _buf = "", _orig = "";
-    double _caretT; bool _caretOn = true;
+    double _caretT;
+    bool _caretOn = true;
 
     public PieceNode? Node => _node;
 
     public void Begin(PieceNode n)
     {
         End(commit: true);
-        _node = n; _widget = 0; _orig = n.CardTitle; _buf = _orig; _caretT = 0; _caretOn = true;
+        _node = n;
+        _widget = 0;
+        _orig = n.CardTitle;
+        _buf = _orig;
+        _caretT = 0;
+        _caretOn = true;
         n.SetTitleText(_buf + "|");
         _c.Say("Type the name · Enter keeps it · Esc leaves it as it was");
     }
@@ -28,18 +34,30 @@ sealed class NameEditor
     public void BeginWidget(PieceNode node, int index, Widget w)
     {
         End(commit: true);
-        _node = node; _widget = index; _orig = w.Value; _buf = _orig; _caretT = 0; _caretOn = true;
+        _node = node;
+        _widget = index;
+        _orig = w.Value;
+        _buf = _orig;
+        _caretT = 0;
+        _caretOn = true;
         node.SetWidgetText(index, _buf + "|");
         _c.Say($"Type {(w.Placeholder.Length > 0 ? w.Placeholder.ToLowerInvariant() : "the value")} · Enter keeps it · Esc leaves it as it was");
     }
 
-    public void BeginTyped(PieceNode n, string typed) { Begin(n); _buf = typed; n.SetTitleText(_buf + "|"); }
+    public void BeginTyped(PieceNode n, string typed)
+    {
+        Begin(n);
+        _buf = typed;
+        n.SetTitleText(_buf + "|");
+    }
 
     public void End(bool commit)
     {
         if (_node == null) return;
-        var n = _node; _node = null;
-        int wi = _widget; _widget = 0;
+        var n = _node;
+        _node = null;
+        int wi = _widget;
+        _widget = 0;
         _c.Say("");
         if (!GodotObject.IsInstanceValid(n)) return;
         if (wi > 0)
@@ -62,14 +80,21 @@ sealed class NameEditor
     {
         switch (k.Keycode)
         {
-            case Godot.Key.Escape: End(commit: false); return;
-            case Godot.Key.Enter or Godot.Key.KpEnter: End(commit: true); return;
-            case Godot.Key.Backspace: if (_buf.Length > 0) _buf = _buf[..^1]; break;
+            case Godot.Key.Escape:
+                End(commit: false);
+                return;
+            case Godot.Key.Enter or Godot.Key.KpEnter:
+                End(commit: true);
+                return;
+            case Godot.Key.Backspace:
+                if (_buf.Length > 0) _buf = _buf[..^1];
+                break;
             default:
                 if (k.Unicode >= 32 && !k.CtrlPressed && !k.AltPressed) _buf += char.ConvertFromUtf32((int)k.Unicode);
                 break;
         }
-        _caretOn = true; _caretT = 0;
+        _caretOn = true;
+        _caretT = 0;
         if (_widget > 0 && _node != null)
         {
             _c.S.Do(new EditWidget { Layer = _node.Layer, Id = _node.Piece.Id, Index = _widget, Value = _buf });
@@ -81,11 +106,19 @@ sealed class NameEditor
     public void Tick(double delta)
     {
         if (_node == null) return;
-        if (!GodotObject.IsInstanceValid(_node) || (_widget == 0 && !_node.Piece.FaceDown)) { _node = null; _widget = 0; _c.Say(""); return; }
+        if (!GodotObject.IsInstanceValid(_node) || (_widget == 0 && !_node.Piece.FaceDown))
+        {
+            _node = null;
+            _widget = 0;
+            _c.Say("");
+            return;
+        }
         _caretT += delta;
         if (_caretT < 0.5) return;
-        _caretT = 0; _caretOn = !_caretOn;
+        _caretT = 0;
+        _caretOn = !_caretOn;
         var caret = _buf + (_caretOn ? "|" : "");
-        if (_widget > 0) _node.SetWidgetText(_widget, caret); else _node.SetTitleText(caret);
+        if (_widget > 0) _node.SetWidgetText(_widget, caret);
+        else _node.SetTitleText(caret);
     }
 }

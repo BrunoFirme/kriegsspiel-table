@@ -19,7 +19,9 @@ sealed class ReleaseDemo
 
     public ReleaseDemo(Table table, Func<Vector2>? paletteItem, Action? openPieces)
     {
-        T = table; _paletteItem = paletteItem; _openPieces = openPieces;
+        T = table;
+        _paletteItem = paletteItem;
+        _openPieces = openPieces;
     }
 
     Session S => T.S;
@@ -37,7 +39,8 @@ sealed class ReleaseDemo
         var sheetId = S.View.Sheets.FirstOrDefault()?.Id;
         var pieceId = S.View.Layer(Layers.Umpire).FirstOrDefault()?.Id;
         if (sheetId == null || pieceId == null) { GD.Print("[release] this needs a map sheet and a piece on the table (see --new-blank with --demo-sheets)"); return; }
-        _sheetId = sheetId; _pieceId = pieceId;
+        _sheetId = sheetId;
+        _pieceId = pieceId;
         if (S.View.Sheets.First(s => s.Id == sheetId).Locked) S.Do(new LockSheet { Id = sheetId, Locked = false });
         View();
         await Frames(3);
@@ -54,16 +57,22 @@ sealed class ReleaseDemo
         GD.Print("[release] done");
     }
 
-    async Task Frames(int k) { for (int i = 0; i < k; i++) await T.ToSignal(T.GetTree(), SceneTree.SignalName.ProcessFrame); }
+    async Task Frames(int k)
+    {
+        for (int i = 0; i < k; i++) await T.ToSignal(T.GetTree(), SceneTree.SignalName.ProcessFrame);
+    }
     async Task Wait(double s) => await T.ToSignal(T.GetTree().CreateTimer(s), SceneTreeTimer.SignalName.Timeout);
     static MouseButtonMask MaskOf(MouseButton b) => (MouseButtonMask)(1 << ((int)b - 1));
-    static void Btn(MouseButton b, bool down, Vector2 at) => Input.ParseInputEvent(new InputEventMouseButton { ButtonIndex = b, Pressed = down, Position = at, GlobalPosition = at, ButtonMask = down ? MaskOf(b) : 0 });
-    static void Move(Vector2 from, Vector2 to, MouseButtonMask held) { Pointer.Drive(to); Input.ParseInputEvent(new InputEventMouseMotion { Position = to, GlobalPosition = to, Relative = to - from, ButtonMask = held }); }
+    static void Btn(MouseButton b, bool down, Vector2 at) =>
+        Input.ParseInputEvent(new InputEventMouseButton { ButtonIndex = b, Pressed = down, Position = at, GlobalPosition = at, ButtonMask = down ? MaskOf(b) : 0 });
+    static void Move(Vector2 from, Vector2 to,
+        MouseButtonMask held) { Pointer.Drive(to); Input.ParseInputEvent(new InputEventMouseMotion { Position = to, GlobalPosition = to, Relative = to - from, ButtonMask = held }); }
 
     void View(Vector3? at = null, float zoom = 1)
     {
         if (T.Rig.TopDown) T.Rig.ToggleTopDown();
-        T.Rig.Yaw = Mathf.Pi; T.Rig.Pitch = -1.0f;
+        T.Rig.Yaw = Mathf.Pi;
+        T.Rig.Pitch = -1.0f;
         T.FrameAll();
         if (at is { } p) T.Rig.Frame(p, 24);
         else if (zoom != 1) { T.Rig.Distance *= zoom; T.Rig.Apply(); }
@@ -83,8 +92,14 @@ sealed class ReleaseDemo
         _gui = new Vector2(24, _vp.Y * 0.32f);
         foreach (var c in new[] { new Vector2(24, _vp.Y * 0.32f), new Vector2(_vp.X * 0.5f, 14), new Vector2(24, _vp.Y * 0.6f) })
         {
-            Move(c, c, 0); await Frames(3);
-            if (T.GetViewport().GuiGetHoveredControl() is { } hc && hc.MouseFilter != Control.MouseFilterEnum.Ignore) { _gui = c; GD.Print($"[release] let go over a panel: {hc.GetType().Name} '{hc.Name}' at {c.X:0},{c.Y:0}"); break; }
+            Move(c, c, 0);
+            await Frames(3);
+            if (T.GetViewport().GuiGetHoveredControl() is { } hc && hc.MouseFilter != Control.MouseFilterEnum.Ignore)
+            {
+                _gui = c;
+                GD.Print($"[release] let go over a panel: {hc.GetType().Name} '{hc.Name}' at {c.X:0},{c.Y:0}");
+                break;
+            }
         }
     }
 
@@ -105,10 +120,25 @@ sealed class ReleaseDemo
         var vp = _vp;
         var gestures = new List<Gesture>
         {
-            new("knob", "ring knob turning a piece", MouseButton.Left, () => { View(PieceWorld()); T.SetSelection(new[] { _pieceId }); return Pick(Tool.Transform); }, () => Knob(true), new Vector2(90, 50)),
-            new("size", "ring knob resizing a piece", MouseButton.Left, () => { View(PieceWorld()); T.SetSelection(new[] { _pieceId }); return Pick(Tool.Transform); }, () => Knob(false), new Vector2(30, 24)),
+            new("knob", "ring knob turning a piece", MouseButton.Left, () =>
+            {
+                View(PieceWorld());
+                T.SetSelection(new[] { _pieceId });
+                return Pick(Tool.Transform);
+            }, () => Knob(true), new Vector2(90, 50)),
+            new("size", "ring knob resizing a piece", MouseButton.Left, () =>
+            {
+                View(PieceWorld());
+                T.SetSelection(new[] { _pieceId });
+                return Pick(Tool.Transform);
+            }, () => Knob(false), new Vector2(30, 24)),
             new("sheet", "map sheet dragged", MouseButton.Left, () => { T.SelectSheet(_sheetId); return Pick(Tool.Select); }, () => vp * new Vector2(0.62f, 0.40f), new Vector2(70, 40)),
-            new("sheetknob", "ring knob turning a map sheet", MouseButton.Left, () => { View(null, 1.9f); T.SelectSheet(_sheetId); return Pick(Tool.Transform); }, () => Knob(true), new Vector2(90, 30)),
+            new("sheetknob", "ring knob turning a map sheet", MouseButton.Left, () =>
+            {
+                View(null, 1.9f);
+                T.SelectSheet(_sheetId);
+                return Pick(Tool.Transform);
+            }, () => Knob(true), new Vector2(90, 30)),
             new("crop", "crop knob on a map sheet", MouseButton.Left, () => { T.BeginCrop(_sheetId); return T.Tool == Tool.Crop; }, CropKnob, new Vector2(-60, 0)),
             new("carry", "piece carried", MouseButton.Left, () => { View(PieceWorld()); return Pick(Tool.Select); }, PieceAt, new Vector2(80, 40)),
             new("box", "box select", MouseButton.Left, () => Pick(Tool.Select), () => vp * new Vector2(0.40f, 0.30f), new Vector2(140, 90)),
@@ -162,7 +192,9 @@ sealed class ReleaseDemo
 
     async Task Try(Gesture g, string where)
     {
-        T.SetTool(Tool.Select); T.SetSelection(Array.Empty<string>()); T.SelectSheet(null);
+        T.SetTool(Tool.Select);
+        T.SetSelection(Array.Empty<string>());
+        T.SelectSheet(null);
         View();
         await Frames(2);
         if (!g.Setup()) { GD.Print($"[release] {g.Name}: could not be set up"); return; }
@@ -174,10 +206,18 @@ sealed class ReleaseDemo
         S.Applied += Heard;
         try
         {
-            Move(a, a, 0); await Frames(2);
-            Btn(g.Button, true, a); await Frames(2);
+            Move(a, a, 0);
+            await Frames(2);
+            Btn(g.Button, true, a);
+            await Frames(2);
             var p = a;
-            for (int i = 1; i <= 6; i++) { var q = a.Lerp(to, i / 6f); Move(p, q, MaskOf(g.Button)); p = q; await Frames(2); }
+            for (int i = 1; i <= 6; i++)
+            {
+                var q = a.Lerp(to, i / 6f);
+                Move(p, q, MaskOf(g.Button));
+                p = q;
+                await Frames(2);
+            }
             await Wait(0.15);
             var began = Live();
             var (how, thief, at) = await LetGo(where, g.Button, p);
@@ -194,22 +234,30 @@ sealed class ReleaseDemo
         switch (where)
         {
             case "panel":
-                Move(p, _gui, MaskOf(button)); p = _gui; await Wait(0.15);
+                Move(p, _gui, MaskOf(button));
+                p = _gui;
+                await Wait(0.15);
                 Btn(button, false, _gui);
                 how = "let go over a panel";
                 break;
             case "chord":
             {
                 var other = button == MouseButton.Middle ? MouseButton.Right : MouseButton.Middle;
-                Move(p, _gui, MaskOf(button)); p = _gui; await Wait(0.15);
-                Btn(other, true, _gui); await Frames(2);
-                Btn(button, false, _gui); await Frames(2);
+                Move(p, _gui, MaskOf(button));
+                p = _gui;
+                await Wait(0.15);
+                Btn(other, true, _gui);
+                await Frames(2);
+                Btn(button, false, _gui);
+                await Frames(2);
                 Btn(other, false, _gui);
                 how = $"let go over a panel with the {other.ToString().ToLowerInvariant()} button pressed there";
                 break;
             }
             case "outside":
-                Move(p, _outside, MaskOf(button)); p = _outside; await Wait(0.15);
+                Move(p, _outside, MaskOf(button));
+                p = _outside;
+                await Wait(0.15);
                 Btn(button, false, _outside);
                 how = "let go outside the window";
                 break;
@@ -221,7 +269,9 @@ sealed class ReleaseDemo
                 pop.Popup(new Rect2I((int)(_vp.X * 0.6f), (int)(_vp.Y * 0.12f), 320, 120));
                 await Frames(3);
                 var at = new Vector2(pop.Position.X + pop.Size.X / 2f, pop.Position.Y + pop.Size.Y / 2f);
-                Move(p, at, MaskOf(button)); p = at; await Wait(0.15);
+                Move(p, at, MaskOf(button));
+                p = at;
+                await Wait(0.15);
                 Btn(button, false, at);
                 await Frames(3);
                 pop.QueueFree();
@@ -263,13 +313,28 @@ sealed class ReleaseDemo
         var holds = Live();
         var s1 = Probe();
         var during = string.Join(" ", sent);
-        var c0 = _vp * new Vector2(0.42f, 0.62f); var c1 = _vp * new Vector2(0.58f, 0.70f);
-        Move(p, c0, 0); p = c0; await Frames(2);
-        for (int i = 1; i <= 8; i++) { var q = c0.Lerp(c1, i / 8f); Move(p, q, 0); p = q; await Frames(2); }
+        var c0 = _vp * new Vector2(0.42f, 0.62f);
+        var c1 = _vp * new Vector2(0.58f, 0.70f);
+        Move(p, c0, 0);
+        p = c0;
+        await Frames(2);
+        for (int i = 1; i <= 8; i++)
+        {
+            var q = c0.Lerp(c1, i / 8f);
+            Move(p, q, 0);
+            p = q;
+            await Frames(2);
+        }
         await Frames(2);
         var follows = Probe() != s1;
         var still = Live();
-        if (thief != null) { thief.QueueFree(); await Frames(2); T.GetWindow().GrabFocus(); await Wait(0.3); }
+        if (thief != null)
+        {
+            thief.QueueFree();
+            await Frames(2);
+            T.GetWindow().GrabFocus();
+            await Wait(0.3);
+        }
         else if (where is "focus" or "appfocus")
         {
             if (where == "appfocus") T.GetTree().Notification((int)MainLoop.NotificationApplicationFocusIn);

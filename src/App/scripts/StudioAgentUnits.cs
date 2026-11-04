@@ -123,7 +123,12 @@ sealed partial class StudioTools
         foreach (var u in units)
         {
             var (result, made, notes) = await Unit(Element(u));
-            if (made == null) { trouble = true; sb.Append($"{u["name"]}: not made: {result.Text.Split('\n')[0]}\n"); continue; }
+            if (made == null)
+            {
+                trouble = true;
+                sb.Append($"{u["name"]}: not made: {result.Text.Split('\n')[0]}\n");
+                continue;
+            }
             any = true;
             sb.Append($"{made.Name} ({made.Id}){(notes.Count > 0 ? " · not done: " + string.Join("; ", notes) : "")}\n");
             trouble |= notes.Count > 0;

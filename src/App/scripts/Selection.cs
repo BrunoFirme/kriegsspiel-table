@@ -8,7 +8,12 @@ sealed class Selection
 {
     readonly TableContext _c;
     readonly PieceLayer _pieces;
-    public Selection(TableContext c, HashSet<string> ids, PieceLayer pieces) { _c = c; Ids = ids; _pieces = pieces; }
+    public Selection(TableContext c, HashSet<string> ids, PieceLayer pieces)
+    {
+        _c = c;
+        Ids = ids;
+        _pieces = pieces;
+    }
 
     public readonly HashSet<string> Ids;
 
@@ -29,7 +34,12 @@ sealed class Selection
 
     public void Toggle(PieceNode hit)
     {
-        if (Ids.Contains(hit.Piece.Id)) { Ids.Remove(hit.Piece.Id); hit.SetSelected(false); _c.NotifySelectionChanged(); }
+        if (Ids.Contains(hit.Piece.Id))
+        {
+            Ids.Remove(hit.Piece.Id);
+            hit.SetSelected(false);
+            _c.NotifySelectionChanged();
+        }
         else Set(new[] { hit.Piece.Id }, add: true);
     }
 

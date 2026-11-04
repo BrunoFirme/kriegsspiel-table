@@ -18,7 +18,12 @@ public partial class SelectionAura : Node
     ColorRect _rect = null!;
     ShaderMaterial _mat = null!;
 
-    public SelectionAura(Camera3D main, uint mask = MaskLayer, Color? color = null) { _main = main; _mask = mask; if (color is { } c) Color = c; }
+    public SelectionAura(Camera3D main, uint mask = MaskLayer, Color? color = null)
+    {
+        _main = main;
+        _mask = mask;
+        if (color is { } c) Color = c;
+    }
 
     const string Code = """
         shader_type canvas_item;
@@ -76,7 +81,11 @@ public partial class SelectionAura : Node
         _vp.RenderTargetUpdateMode = Active ? SubViewport.UpdateMode.Always : SubViewport.UpdateMode.Disabled;
         if (!Active || _main == null) return;
         _cam.Projection = _main.Projection;
-        _cam.Fov = _main.Fov; _cam.Size = _main.Size; _cam.Near = _main.Near; _cam.Far = _main.Far; _cam.KeepAspect = _main.KeepAspect;
+        _cam.Fov = _main.Fov;
+        _cam.Size = _main.Size;
+        _cam.Near = _main.Near;
+        _cam.Far = _main.Far;
+        _cam.KeepAspect = _main.KeepAspect;
         _cam.GlobalTransform = _main.GlobalTransform;
     }
 }

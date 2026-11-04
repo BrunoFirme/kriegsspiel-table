@@ -100,7 +100,12 @@ public static class Formations
     {
         double x = 0, z = 0;
         int n = 0;
-        foreach (var r in rots) { x += Math.Cos(r * Math.PI / 180); z += Math.Sin(r * Math.PI / 180); n++; }
+        foreach (var r in rots)
+        {
+            x += Math.Cos(r * Math.PI / 180);
+            z += Math.Sin(r * Math.PI / 180);
+            n++;
+        }
         if (n == 0 || Math.Sqrt(x * x + z * z) < 0.3 * n) return null;
         return Angles.Norm360(Math.Atan2(z, x) * 180 / Math.PI);
     }
@@ -121,7 +126,8 @@ public static class Formations
     static int[] InOrder(IReadOnlyList<Vec2> from, IReadOnlyList<Vec2> to, int n)
     {
         static int[] Order(IReadOnlyList<Vec2> pts, int n) => Enumerable.Range(0, n).OrderBy(i => Math.Round(pts[i].Z, 3)).ThenBy(i => pts[i].X).ToArray();
-        var a = Order(from, n); var b = Order(to, n);
+        var a = Order(from, n);
+        var b = Order(to, n);
         var r = new int[n];
         for (int k = 0; k < n; k++) r[a[k]] = b[k];
         return r;
@@ -129,9 +135,12 @@ public static class Formations
 
     static int[] Hungarian(double[,] a, int n)
     {
-        var u = new double[n + 1]; var v = new double[n + 1];
-        var p = new int[n + 1]; var way = new int[n + 1];
-        var minv = new double[n + 1]; var used = new bool[n + 1];
+        var u = new double[n + 1];
+        var v = new double[n + 1];
+        var p = new int[n + 1];
+        var way = new int[n + 1];
+        var minv = new double[n + 1];
+        var used = new bool[n + 1];
         for (int i = 1; i <= n; i++)
         {
             p[0] = i;
@@ -155,7 +164,12 @@ public static class Formations
                     else minv[j] -= delta;
                 j0 = j1;
             } while (p[j0] != 0);
-            do { int j1 = way[j0]; p[j0] = p[j1]; j0 = j1; } while (j0 != 0);
+            do
+            {
+                int j1 = way[j0];
+                p[j0] = p[j1];
+                j0 = j1;
+            } while (j0 != 0);
         }
         var result = new int[n];
         for (int j = 1; j <= n; j++) result[p[j] - 1] = j - 1;

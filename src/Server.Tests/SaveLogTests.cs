@@ -396,7 +396,8 @@ public sealed class SaveLogTests
             foreach (var (what, oldBytes, liveBytes) in steps)
             {
                 File.WriteAllBytes(old, oldBytes);
-                if (liveBytes == null) File.Delete(live); else File.WriteAllBytes(live, liveBytes);
+                if (liveBytes == null) File.Delete(live);
+                else File.WriteAllBytes(live, liveBytes);
                 var back = SaveLoader.Load(path, t.Store);
                 Assert.True(back.Loaded.ReplayedFromLog == 2, what);
                 Assert.True(t.Server.State.Dice.Count == back.State.Dice.Count, what);

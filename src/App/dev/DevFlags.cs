@@ -104,7 +104,12 @@ sealed class DevFlags : IDevAids
 
     public bool TakesOver()
     {
-        if (_args.ContainsKey("bundle-selftest")) { BundleSelfTest.Run(); Tree.Quit(); return true; }
+        if (_args.ContainsKey("bundle-selftest"))
+        {
+            BundleSelfTest.Run();
+            Tree.Quit();
+            return true;
+        }
         if (_args.ContainsKey("workshop-selftest")) { WorkshopSelfTest(); return true; }
         if (_args.ContainsKey("demo-converter"))
         {
@@ -128,7 +133,12 @@ sealed class DevFlags : IDevAids
         }
         if (_args.ContainsKey("demo-leave"))
         {
-            if (_reloads++ == 0) Tree.CreateTimer(3).Timeout += () => { GD.Print("[leave] leaving the table"); _main.Net.SaveNow(closing: true); Tree.ReloadCurrentScene(); };
+            if (_reloads++ == 0) Tree.CreateTimer(3).Timeout += () =>
+            {
+                GD.Print("[leave] leaving the table");
+                _main.Net.SaveNow(closing: true);
+                Tree.ReloadCurrentScene();
+            };
             else Tree.CreateTimer(2.5).Timeout += () => GD.Print($"[leave] after the reload: status='{_main.Net.Status}' hosting={_main.Net.Server != null} table={_main.GetNodeOrNull("Table") != null}");
         }
         if (_args.TryGetValue("start-over", out var over))
@@ -165,7 +175,8 @@ sealed class DevFlags : IDevAids
             var preview = WorkshopContent.Preview(store, kind, id);
             GD.Print($"[workshop] {kind} {id}: staged {files} files, installed as {meta.Kind}:{meta.Id} ('{meta.Name}', packs: {string.Join(",", meta.Packs)}), preview {new System.IO.FileInfo(preview).Length / 1024} KB");
         }
-        var a1 = store.Pack("example.miranda-de-azan-1812.extras")!; var b1 = scratch.Pack("example.miranda-de-azan-1812.extras")!;
+        var a1 = store.Pack("example.miranda-de-azan-1812.extras")!;
+        var b1 = scratch.Pack("example.miranda-de-azan-1812.extras")!;
         GD.Print($"[workshop] pack round trip identical: {Json.Serialize(a1) == Json.Serialize(b1)}");
         foreach (var line in _main.Platform.SelfTest()) GD.Print(line);
         Tree.Quit();
@@ -174,7 +185,8 @@ sealed class DevFlags : IDevAids
     public void SessionMade(Session session)
     {
         if (_args.TryGetValue("admit-all", out var aa))
-            session.Knocked += k => _main.Net.Door(new KTable.Core.Protocol.Admit { PeerId = k.PeerId, Role = aa.ToLowerInvariant() switch { "lead" => Role.LeadUmpire, "umpire" => Role.Umpire, _ => Role.Observer } });
+            session.Knocked += k =>
+                _main.Net.Door(new KTable.Core.Protocol.Admit { PeerId = k.PeerId, Role = aa.ToLowerInvariant() switch { "lead" => Role.LeadUmpire, "umpire" => Role.Umpire, _ => Role.Observer } });
     }
 
     async void OpenAgentPage(string[] buttons)
@@ -206,11 +218,17 @@ sealed class DevFlags : IDevAids
             OpenAgentPage(_args["page"] switch { "agentpage" => System.Array.Empty<string>(), "agent" => new[] { AgentConnect.Title }, "agenttech" => new[] { "Technical settings…" }, _ => new[] { "Technical settings…", "New key" } });
         if (_args.GetValueOrDefault("page") == "trash") { title.Select(0); title.Trash.Show(packs: false); }
         if (_args.GetValueOrDefault("page") == "packtrash") { title.Select(2); title.Trash.Show(packs: true); }
-        if (_args.GetValueOrDefault("page") is { } pg && pg.StartsWith("makers")) { title.Select(2); title.Packs.Show(); GuideReader.Spec(_main, pg.Contains(':') ? pg[(pg.IndexOf(':') + 1)..] : "makers.md"); }
+        if (_args.GetValueOrDefault("page") is { } pg && pg.StartsWith("makers"))
+        {
+            title.Select(2);
+            title.Packs.Show();
+            GuideReader.Spec(_main, pg.Contains(':') ? pg[(pg.IndexOf(':') + 1)..] : "makers.md");
+        }
         if (_args.TryGetValue("demo-picks", out var dp)) _ = PickRows(int.Parse(dp, Inv));
         if (_args.TryGetValue("demo-import", out var di))
         {
-            title.Select(2); title.Packs.Show();
+            title.Select(2);
+            title.Packs.Show();
             var dlg = new ImportDialog(PackageStore.DefaultRoot, (sc, pk) => title.Status.Text = $"Imported {sc} / {pk}");
             Ui.Open(_main, dlg);
             if (di == "browse")

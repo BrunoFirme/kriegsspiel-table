@@ -73,7 +73,9 @@ sealed class TableStage
     public void BuildGrid()
     {
         _gridMat = new ShaderMaterial { Shader = new Shader { Code = FileAccess.GetFileAsString("res://shaders/grid.gdshader") } };
-        _gridPlane = new MeshInstance3D { Mesh = new PlaneMesh { Size = Side(_area) }, MaterialOverride = _gridMat, Position = Coords.ToWorld(_area.Centre, GridAbove), Visible = false, CastShadow = GeometryInstance3D.ShadowCastingSetting.Off };
+        _gridPlane =
+            new MeshInstance3D { Mesh = new PlaneMesh { Size = Side(_area) }, MaterialOverride = _gridMat, Position = Coords.ToWorld(_area.Centre, GridAbove), Visible = false,
+                CastShadow = GeometryInstance3D.ShadowCastingSetting.Off };
         _c.Scene.AddChild(_gridPlane);
     }
 
@@ -161,12 +163,15 @@ sealed class TableStage
         }
         if (!on)
         {
-            _surface.MaterialOverride = new StandardMaterial3D { AlbedoColor = BareTable, Roughness = 1f, Metallic = 0f, SpecularMode = BaseMaterial3D.SpecularModeEnum.Disabled, CullMode = BaseMaterial3D.CullModeEnum.Disabled };
+            _surface.MaterialOverride =
+                new StandardMaterial3D { AlbedoColor = BareTable, Roughness = 1f, Metallic = 0f, SpecularMode = BaseMaterial3D.SpecularModeEnum.Disabled,
+                    CullMode = BaseMaterial3D.CullModeEnum.Disabled };
             return;
         }
         var paper = Shaded(new Color(0.80f, 0.76f, 0.66f));
         float lineK = 1 - Mathf.Clamp((shade - 0.5f) * 2, 0, 1);
-        var faint = paper.Lerp(Shaded(new Color(0.70f, 0.66f, 0.56f)), lineK); var strong = paper.Lerp(Shaded(new Color(0.56f, 0.52f, 0.43f)), lineK);
+        var faint = paper.Lerp(Shaded(new Color(0.70f, 0.66f, 0.56f)), lineK);
+        var strong = paper.Lerp(Shaded(new Color(0.56f, 0.52f, 0.43f)), lineK);
         _surface.MaterialOverride = PaperMaterial(paper, faint, strong, lines);
     }
 
@@ -182,7 +187,8 @@ sealed class TableStage
             bool heavy = i % 10 == 0;
             for (int k = 0; k < px; k++)
             {
-                img.SetPixel(at, k, heavy ? strong : faint); img.SetPixel(k, at, heavy ? strong : faint);
+                img.SetPixel(at, k, heavy ? strong : faint);
+                img.SetPixel(k, at, heavy ? strong : faint);
                 if (heavy) { img.SetPixel(Math.Min(px - 1, at + 1), k, strong); img.SetPixel(k, Math.Min(px - 1, at + 1), strong); }
             }
         }

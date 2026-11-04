@@ -111,7 +111,11 @@ public static class FirmeEffects
         ("Pavises", Props.Pavises, A),
         ("Tate shields", Props.TateShields, A),
         ("Camp curtain", Props.CampCurtain, A),
-        ("Trench with traverse", () => Props.Trench(new[] { new Vector2(-1.6f, 0.35f), new Vector2(-0.55f, 0.35f), new Vector2(-0.55f, -0.35f), new Vector2(0.55f, -0.35f), new Vector2(0.55f, 0.35f), new Vector2(1.6f, 0.35f) }), M),
+        ("Trench with traverse",
+            () =>
+                Props.Trench(new[] { new Vector2(-1.6f, 0.35f), new Vector2(-0.55f, 0.35f), new Vector2(-0.55f, -0.35f), new Vector2(0.55f, -0.35f), new Vector2(0.55f, 0.35f),
+                    new Vector2(1.6f, 0.35f) }),
+            M),
     };
 
     public static PackManifest Pack(Dictionary<string, byte[]> files)

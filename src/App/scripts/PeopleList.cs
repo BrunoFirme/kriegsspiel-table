@@ -39,7 +39,8 @@ sealed class PeopleList : HudPart
         var row = _row = new HBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
         row.AddThemeConstantOverride("separation", 6);
         row.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
-        row.OffsetLeft = PillPadding / 2; row.OffsetRight = -PillPadding / 2;
+        row.OffsetLeft = PillPadding / 2;
+        row.OffsetRight = -PillPadding / 2;
         _dots = new HBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter };
         _dots.AddThemeConstantOverride("separation", 3);
         row.AddChild(_dots);
@@ -164,10 +165,20 @@ sealed class PeopleList : HudPart
         {
             var forced = S.View.PointersAlwaysShown;
             var share = new CheckBox { Text = "Share my pointer", ButtonPressed = PointerShared, Disabled = forced, TooltipText = forced ? PointerShownByHost : "The other umpires see where you point; observers never do" };
-            share.Toggled += on => { Cfg.ShareCursor = on; Cfg.Save(); Sync(); };
+            share.Toggled += on =>
+            {
+                Cfg.ShareCursor = on;
+                Cfg.Save();
+                Sync();
+            };
             _list.AddChild(share);
             var show = new CheckBox { Text = "Show the others' pointers", ButtonPressed = Cfg.ShowCursors };
-            show.Toggled += on => { Cfg.ShowCursors = on; Cfg.Save(); T.ShowCursors = on; };
+            show.Toggled += on =>
+            {
+                Cfg.ShowCursors = on;
+                Cfg.Save();
+                T.ShowCursors = on;
+            };
             _list.AddChild(show);
         }
         _pop!.ResetSize();
@@ -178,7 +189,8 @@ sealed class PeopleList : HudPart
         var row = new HBoxContainer();
         row.AddThemeConstantOverride("separation", 8);
         row.AddChild(Dot(Visibility.IsUmpire(p.Role) ? Hue(p) : null));
-        row.AddChild(new Label { Text = p.PeerId == S.Me.PeerId ? $"{p.Name} (you)" : p.Name, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, ClipText = true, TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis });
+        row.AddChild(new Label { Text = p.PeerId == S.Me.PeerId ? $"{p.Name} (you)" : p.Name, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, ClipText = true,
+            TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis });
         var role = new Label { Text = RoleWord(p.Role), Modulate = Ui.Muted };
         role.AddThemeFontSizeOverride("font_size", 12);
         row.AddChild(role);
@@ -214,10 +226,18 @@ sealed class PeopleList : HudPart
         {
             switch (which)
             {
-                case 1: N.Door(new SetRole { PeerId = id, Role = Role.LeadUmpire }); break;
-                case 2: N.Door(new SetRole { PeerId = id, Role = Role.Umpire }); break;
-                case 3: N.Door(new SetRole { PeerId = id, Role = Role.Observer }); break;
-                case 9: Ui.Confirm(HudNode, $"Put {p.Name} out", "Put out", () => N.Door(new Revoke { PeerId = id }), "They leave the table now and would have to knock again to come back."); break;
+                case 1:
+                    N.Door(new SetRole { PeerId = id, Role = Role.LeadUmpire });
+                    break;
+                case 2:
+                    N.Door(new SetRole { PeerId = id, Role = Role.Umpire });
+                    break;
+                case 3:
+                    N.Door(new SetRole { PeerId = id, Role = Role.Observer });
+                    break;
+                case 9:
+                    Ui.Confirm(HudNode, $"Put {p.Name} out", "Put out", () => N.Door(new Revoke { PeerId = id }), "They leave the table now and would have to knock again to come back.");
+                    break;
             }
         };
         return mb;

@@ -11,7 +11,12 @@ public partial class ToolIcon : Control
     public bool Locked
     {
         get => _locked;
-        set { if (_locked == value) return; _locked = value; QueueRedraw(); }
+        set
+        {
+            if (_locked == value) return;
+            _locked = value;
+            QueueRedraw();
+        }
     }
     bool _locked;
 
@@ -169,11 +174,14 @@ public partial class ToolIcon : Control
         {
             case "2d":
                 Poly(3, 5, 17, 5, 17, 15, 3, 15);
-                Line(3, 10, 17, 10, 1.2f); Line(10, 5, 10, 15, 1.2f);
+                Line(3, 10, 17, 10, 1.2f);
+                Line(10, 5, 10, 15, 1.2f);
                 break;
             case "3d":
                 Poly(3, 12, 10, 15.5f, 17, 12, 10, 8.5f);
-                Line(3, 12, 3, 7); Line(17, 12, 17, 7); Line(10, 15.5f, 10, 10.5f);
+                Line(3, 12, 3, 7);
+                Line(17, 12, 17, 7);
+                Line(10, 15.5f, 10, 10.5f);
                 Poly(3, 7, 10, 10.5f, 17, 7, 10, 3.5f);
                 break;
             case "undo":
@@ -189,7 +197,8 @@ public partial class ToolIcon : Control
             case "frame":
                 foreach (var (sx, sy) in new[] { (1, 1), (-1, 1), (1, -1), (-1, -1) })
                 {
-                    var cx = 10 - sx * 7f; var cy = 10 - sy * 7f;
+                    var cx = 10 - sx * 7f;
+                    var cy = 10 - sy * 7f;
                     DrawLine(P(cx, cy), P(cx + sx * 4, cy), _c, _w, antialiased: true);
                     DrawLine(P(cx, cy), P(cx, cy + sy * 4), _c, _w, antialiased: true);
                 }
@@ -254,7 +263,9 @@ public partial class ToolIcon : Control
                     DrawLine(P(3, y), P(x1, y), _c, 1.5f * _k, antialiased: true);
                 break;
             case "menu":
-                Line(4, 6, 16, 6); Line(4, 10, 16, 10); Line(4, 14, 16, 14);
+                Line(4, 6, 16, 6);
+                Line(4, 10, 16, 10);
+                Line(4, 14, 16, 14);
                 break;
             case "gizmo":
                 DrawArc(P(10, 10.5f), 6.2f * _k, 0, Mathf.Tau, 48, _c, _w, antialiased: true);
@@ -262,7 +273,9 @@ public partial class ToolIcon : Control
                 DrawRect(new Rect2(P(14.4f, 8.7f), new Vector2(3.6f, 3.6f) * _k), _c);
                 break;
             case "more":
-                DrawCircle(P(4.5f, 10), 1.6f * _k, _c); DrawCircle(P(10, 10), 1.6f * _k, _c); DrawCircle(P(15.5f, 10), 1.6f * _k, _c);
+                DrawCircle(P(4.5f, 10), 1.6f * _k, _c);
+                DrawCircle(P(10, 10), 1.6f * _k, _c);
+                DrawCircle(P(15.5f, 10), 1.6f * _k, _c);
                 break;
             case "compass":
             {
@@ -352,8 +365,10 @@ public partial class ToolIcon : Control
             var next = new List<Vector2>(shape.Count * 2);
             for (int i = 0; i < shape.Count; i++)
             {
-                var a = shape[i]; var b = shape[(i + 1) % shape.Count];
-                next.Add(a.Lerp(b, 0.25f)); next.Add(a.Lerp(b, 0.75f));
+                var a = shape[i];
+                var b = shape[(i + 1) % shape.Count];
+                next.Add(a.Lerp(b, 0.25f));
+                next.Add(a.Lerp(b, 0.75f));
             }
             shape = next;
         }

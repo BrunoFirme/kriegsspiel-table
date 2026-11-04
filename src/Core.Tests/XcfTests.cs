@@ -41,7 +41,8 @@ public class XcfTests
 
     static void CheckStandard(XcfImage img)
     {
-        Assert.Equal(70, img.Width); Assert.Equal(70, img.Height);
+        Assert.Equal(70, img.Width);
+        Assert.Equal(70, img.Height);
         Assert.Empty(img.Warnings);
         Assert.Equal(4, img.LayersUsed);
         AssertPx(img, 30, 30, 255, 188, 188, 255);
@@ -99,7 +100,12 @@ public class XcfTests
         var noise = new byte[130 * 70 * 4];
         rnd.NextBytes(noise);
         for (int i = 0; i < noise.Length; i += 4) noise[i + 3] = 255;
-        for (int i = 2000; i < 2600; i += 4) { noise[i] = 9; noise[i + 1] = 9; noise[i + 2] = 9; }
+        for (int i = 2000; i < 2600; i += 4)
+        {
+            noise[i] = 9;
+            noise[i + 1] = 9;
+            noise[i + 2] = 9;
+        }
         XcfImage? first = null;
         for (int compression = 0; compression <= 2; compression++)
         {
@@ -110,7 +116,8 @@ public class XcfTests
             Assert.Equal(130, img.Width);
             for (int y = 0; y < 70; y += 7) for (int x = 0; x < 130; x += 11)
                 AssertPx(img, x, y, noise[(y * 130 + x) * 4], noise[(y * 130 + x) * 4 + 1], noise[(y * 130 + x) * 4 + 2], 255);
-            if (first == null) first = img; else Assert.Equal(first.Rgba, img.Rgba);
+            if (first == null) first = img;
+            else Assert.Equal(first.Rgba, img.Rgba);
         }
     }
 
@@ -319,7 +326,8 @@ public class XcfTests
     {
         var img = Xcf.Load(Fixture(name + ".xcf"));
         var (w, h, ppm) = ReadPpm(Fixture(name + ".ppm"));
-        Assert.Equal(w, img.Width); Assert.Equal(h, img.Height);
+        Assert.Equal(w, img.Width);
+        Assert.Equal(h, img.Height);
         Assert.Equal(layersUsed, img.LayersUsed);
         Assert.Empty(img.Warnings);
         int worst = 0, worstAt = -1, over1 = 0;
@@ -335,10 +343,17 @@ public class XcfTests
         }
         Assert.True(worst <= 2, $"{name}: pixel {worstAt % w},{worstAt / w} differs by {worst}: ours {img.Rgba[worstAt * 4]},{img.Rgba[worstAt * 4 + 1]},{img.Rgba[worstAt * 4 + 2]} vs GIMP {ppm[worstAt * 3]},{ppm[worstAt * 3 + 1]},{ppm[worstAt * 3 + 2]}");
         Assert.True(over1 <= w * h * 3 / 100, $"{name}: {over1} channel values differ from GIMP by 2");
-        if (name == "gray8") { var g = Px(img, 10, 40); Assert.True(g.r == g.g && g.g == g.b, "gray"); return; }
+        if (name == "gray8")
+        {
+            var g = Px(img, 10, 40);
+            Assert.True(g.r == g.g && g.g == g.b, "gray");
+            return;
+        }
         AssertPx(img, 10, 40, 229, 219, 182, 255);
-        var pGreen = Px(img, 125, 40); Assert.True(pGreen.g > 150 && pGreen.r < 60, "masked layer shows on its right half");
-        var pMasked = Px(img, 60, 40); Assert.True(pMasked.r > 150, "masked layer hidden on its left half");
+        var pGreen = Px(img, 125, 40);
+        Assert.True(pGreen.g > 150 && pGreen.r < 60, "masked layer shows on its right half");
+        var pMasked = Px(img, 60, 40);
+        Assert.True(pMasked.r > 150, "masked layer hidden on its left half");
     }
 
     [Fact]
@@ -348,12 +363,14 @@ public class XcfTests
             "screen_legacy", "overlay_legacy", "softlight_legacy", "dodge_legacy", "burn_legacy", "addition_legacy", "hardlight_legacy", "difference_legacy", "divide_legacy" };
         var img = Xcf.Load(Fixture("modes8.xcf"));
         var (w, h, ppm) = ReadPpm(Fixture("modes8.ppm"));
-        Assert.Equal(w, img.Width); Assert.Equal(h, img.Height);
+        Assert.Equal(w, img.Width);
+        Assert.Equal(h, img.Height);
         Assert.Empty(img.Warnings);
         var report = new List<string>();
         for (int m = 0; m < modes.Length; m++)
         {
-            int worst = 0; string where = "";
+            int worst = 0;
+            string where = "";
             int rows = modes[m].StartsWith("grain") ? 20 : h;
             for (int y = 0; y < rows; y++)
                 for (int x = m * 8; x < m * 8 + 8; x++)
@@ -419,14 +436,34 @@ public class XcfTests
         public byte[] Build()
         {
             var ms = new MemoryStream();
-            void U32(uint v) { Span<byte> b = stackalloc byte[4]; BinaryPrimitives.WriteUInt32BigEndian(b, v); ms.Write(b); }
-            void Ptr(long v) { Span<byte> b = stackalloc byte[8]; if (PtrSize == 8) { BinaryPrimitives.WriteInt64BigEndian(b, v); ms.Write(b); } else { BinaryPrimitives.WriteUInt32BigEndian(b, (uint)v); ms.Write(b[..4]); } }
+            void U32(uint v)
+            {
+                Span<byte> b = stackalloc byte[4];
+                BinaryPrimitives.WriteUInt32BigEndian(b, v);
+                ms.Write(b);
+            }
+            void Ptr(long v)
+            {
+                Span<byte> b = stackalloc byte[8];
+                if (PtrSize == 8) { BinaryPrimitives.WriteInt64BigEndian(b, v); ms.Write(b); } else { BinaryPrimitives.WriteUInt32BigEndian(b, (uint)v); ms.Write(b[..4]); }
+            }
             ms.Write(System.Text.Encoding.ASCII.GetBytes(Version == 0 ? "gimp xcf file\0" : $"gimp xcf v{Version:000}\0"));
-            U32((uint)Width); U32((uint)Height); U32((uint)BaseType);
+            U32((uint)Width);
+            U32((uint)Height);
+            U32((uint)BaseType);
             if (Version >= 4) U32((uint)Precision);
-            U32(17); U32(1); ms.WriteByte((byte)Compression);
-            if (Colormap != null) { U32(1); U32((uint)(4 + Colormap.Length)); U32((uint)(Colormap.Length / 3)); ms.Write(Colormap); }
-            U32(0); U32(0);
+            U32(17);
+            U32(1);
+            ms.WriteByte((byte)Compression);
+            if (Colormap != null)
+            {
+                U32(1);
+                U32((uint)(4 + Colormap.Length));
+                U32((uint)(Colormap.Length / 3));
+                ms.Write(Colormap);
+            }
+            U32(0);
+            U32(0);
             long tablePos = ms.Position;
             for (int i = 0; i <= Layers.Count; i++) Ptr(0);
             Ptr(0);
@@ -440,12 +477,30 @@ public class XcfTests
         byte[] LayerBlob(XcfLayer l, long basePos)
         {
             var ms = new MemoryStream();
-            void U32(uint v) { Span<byte> b = stackalloc byte[4]; BinaryPrimitives.WriteUInt32BigEndian(b, v); ms.Write(b); }
-            void Ptr(long v) { Span<byte> b = stackalloc byte[8]; if (PtrSize == 8) { BinaryPrimitives.WriteInt64BigEndian(b, v); ms.Write(b); } else { BinaryPrimitives.WriteUInt32BigEndian(b, (uint)v); ms.Write(b[..4]); } }
-            void Prop(uint type, params uint[] words) { U32(type); U32((uint)(4 * words.Length)); foreach (var w in words) U32(w); }
-            U32((uint)l.W); U32((uint)l.H); U32((uint)l.Type);
+            void U32(uint v)
+            {
+                Span<byte> b = stackalloc byte[4];
+                BinaryPrimitives.WriteUInt32BigEndian(b, v);
+                ms.Write(b);
+            }
+            void Ptr(long v)
+            {
+                Span<byte> b = stackalloc byte[8];
+                if (PtrSize == 8) { BinaryPrimitives.WriteInt64BigEndian(b, v); ms.Write(b); } else { BinaryPrimitives.WriteUInt32BigEndian(b, (uint)v); ms.Write(b[..4]); }
+            }
+            void Prop(uint type, params uint[] words)
+            {
+                U32(type);
+                U32((uint)(4 * words.Length));
+                foreach (var w in words) U32(w);
+            }
+            U32((uint)l.W);
+            U32((uint)l.H);
+            U32((uint)l.Type);
             var name = System.Text.Encoding.UTF8.GetBytes(l.Name);
-            U32((uint)(name.Length + 1)); ms.Write(name); ms.WriteByte(0);
+            U32((uint)(name.Length + 1));
+            ms.Write(name);
+            ms.WriteByte(0);
             Prop(6, (uint)Math.Round(l.Opacity * 255));
             if (!l.IntegerOpacityOnly) Prop(33, BitConverter.SingleToUInt32Bits(l.Opacity));
             Prop(8, l.Visible ? 1u : 0u);
@@ -456,7 +511,8 @@ public class XcfTests
             Prop(37, (uint)l.BlendSpace);
             if (l.IsGroup) Prop(29);
             if (l.Path != null) Prop(30, l.Path.Select(x => (uint)x).ToArray());
-            U32(0); U32(0);
+            U32(0);
+            U32(0);
             int bpc = l.Type >= 4 ? 1 : Bpc;
             long hierPos = basePos + ms.Position + 2 * PtrSize;
             var hier = Hierarchy(hierPos, l.W, l.H, l.Channels, bpc, l.Pixels, l.Channels);
@@ -466,17 +522,28 @@ public class XcfTests
             {
                 maskPos = hierPos + hier.Length;
                 var cm = new MemoryStream();
-                void MU32(uint v) { Span<byte> b = stackalloc byte[4]; BinaryPrimitives.WriteUInt32BigEndian(b, v); cm.Write(b); }
-                MU32((uint)l.W); MU32((uint)l.H);
-                var mn = "mask"u8.ToArray(); MU32((uint)(mn.Length + 1)); cm.Write(mn); cm.WriteByte(0);
-                MU32(0); MU32(0);
+                void MU32(uint v)
+                {
+                    Span<byte> b = stackalloc byte[4];
+                    BinaryPrimitives.WriteUInt32BigEndian(b, v);
+                    cm.Write(b);
+                }
+                MU32((uint)l.W);
+                MU32((uint)l.H);
+                var mn = "mask"u8.ToArray();
+                MU32((uint)(mn.Length + 1));
+                cm.Write(mn);
+                cm.WriteByte(0);
+                MU32(0);
+                MU32(0);
                 long mh = maskPos + cm.Position + PtrSize;
                 Span<byte> pb = stackalloc byte[8];
                 if (PtrSize == 8) { BinaryPrimitives.WriteInt64BigEndian(pb, mh); cm.Write(pb); } else { BinaryPrimitives.WriteUInt32BigEndian(pb, (uint)mh); cm.Write(pb[..4]); }
                 cm.Write(Hierarchy(mh, l.W, l.H, 1, Bpc, l.Mask, 1));
                 mask = cm.ToArray();
             }
-            Ptr(hierPos); Ptr(maskPos);
+            Ptr(hierPos);
+            Ptr(maskPos);
             ms.Write(hier);
             if (mask != null) ms.Write(mask);
             return ms.ToArray();
@@ -485,8 +552,17 @@ public class XcfTests
         byte[] Hierarchy(long basePos, int w, int h, int channels, int bpc, byte[] pixels8, int srcChannels)
         {
             var ms = new MemoryStream();
-            void U32(uint v) { Span<byte> b = stackalloc byte[4]; BinaryPrimitives.WriteUInt32BigEndian(b, v); ms.Write(b); }
-            void Ptr(long v) { Span<byte> b = stackalloc byte[8]; if (PtrSize == 8) { BinaryPrimitives.WriteInt64BigEndian(b, v); ms.Write(b); } else { BinaryPrimitives.WriteUInt32BigEndian(b, (uint)v); ms.Write(b[..4]); } }
+            void U32(uint v)
+            {
+                Span<byte> b = stackalloc byte[4];
+                BinaryPrimitives.WriteUInt32BigEndian(b, v);
+                ms.Write(b);
+            }
+            void Ptr(long v)
+            {
+                Span<byte> b = stackalloc byte[8];
+                if (PtrSize == 8) { BinaryPrimitives.WriteInt64BigEndian(b, v); ms.Write(b); } else { BinaryPrimitives.WriteUInt32BigEndian(b, (uint)v); ms.Write(b[..4]); }
+            }
             int bpp = channels * bpc;
             int cols = (w + 63) / 64, rows = (h + 63) / 64;
             var tiles = new List<byte[]>();
@@ -505,10 +581,14 @@ public class XcfTests
                             }
                     tiles.Add(Compression switch { 0 => raw, 1 => Rle(raw, tw * th, bpp), _ => Zlib(raw) });
                 }
-            U32((uint)w); U32((uint)h); U32((uint)bpp);
+            U32((uint)w);
+            U32((uint)h);
+            U32((uint)bpp);
             long levelPos = basePos + 12 + 2 * PtrSize;
-            Ptr(levelPos); Ptr(0);
-            U32((uint)w); U32((uint)h);
+            Ptr(levelPos);
+            Ptr(0);
+            U32((uint)w);
+            U32((uint)h);
             long tilePos = levelPos + 8 + (tiles.Count + 1) * PtrSize;
             foreach (var t in tiles) { Ptr(tilePos); tilePos += t.Length; }
             Ptr(0);
@@ -520,10 +600,18 @@ public class XcfTests
         {
             switch (Precision / 100)
             {
-                case 1: raw[at] = v; break;
-                case 2: BinaryPrimitives.WriteUInt16BigEndian(raw.AsSpan(at), (ushort)(v * 257)); break;
-                case 5: BinaryPrimitives.WriteInt16BigEndian(raw.AsSpan(at), BitConverter.HalfToInt16Bits((Half)(v / 255f))); break;
-                default: BinaryPrimitives.WriteSingleBigEndian(raw.AsSpan(at), Precision % 100 == 0 ? SrgbToLinear(v / 255f) : v / 255f); break;
+                case 1:
+                    raw[at] = v;
+                    break;
+                case 2:
+                    BinaryPrimitives.WriteUInt16BigEndian(raw.AsSpan(at), (ushort)(v * 257));
+                    break;
+                case 5:
+                    BinaryPrimitives.WriteInt16BigEndian(raw.AsSpan(at), BitConverter.HalfToInt16Bits((Half)(v / 255f)));
+                    break;
+                default:
+                    BinaryPrimitives.WriteSingleBigEndian(raw.AsSpan(at), Precision % 100 == 0 ? SrgbToLinear(v / 255f) : v / 255f);
+                    break;
             }
         }
 
@@ -544,7 +632,12 @@ public class XcfTests
                     if (run >= 3)
                     {
                         if (run <= 127) o.WriteByte((byte)(run - 1));
-                        else { o.WriteByte(127); o.WriteByte((byte)(run >> 8)); o.WriteByte((byte)run); }
+                        else
+                        {
+                            o.WriteByte(127);
+                            o.WriteByte((byte)(run >> 8));
+                            o.WriteByte((byte)run);
+                        }
                         o.WriteByte(plane[n]);
                         n += run;
                         continue;
@@ -559,7 +652,12 @@ public class XcfTests
                     }
                     if (lit == 0) lit = 1;
                     if (lit <= 127) o.WriteByte((byte)(256 - lit));
-                    else { o.WriteByte(128); o.WriteByte((byte)(lit >> 8)); o.WriteByte((byte)lit); }
+                    else
+                    {
+                        o.WriteByte(128);
+                        o.WriteByte((byte)(lit >> 8));
+                        o.WriteByte((byte)lit);
+                    }
                     o.Write(plane, n, lit);
                     n += lit;
                 }

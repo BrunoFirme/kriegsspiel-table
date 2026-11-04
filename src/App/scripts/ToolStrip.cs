@@ -21,7 +21,8 @@ sealed class ToolStrip : HudPart
     {
         Panel = new PanelContainer();
         var stripStyle = Ui.Panel();
-        stripStyle.ContentMarginLeft = stripStyle.ContentMarginRight = 3; stripStyle.ContentMarginTop = stripStyle.ContentMarginBottom = 4;
+        stripStyle.ContentMarginLeft = stripStyle.ContentMarginRight = 3;
+        stripStyle.ContentMarginTop = stripStyle.ContentMarginBottom = 4;
         Panel.AddThemeStyleboxOverride("panel", stripStyle);
         root.AddChild(Panel);
         _strip = new VBoxContainer();
@@ -208,7 +209,12 @@ sealed class ToolStrip : HudPart
                 var b = Icon("compass", "Compass", "Shows where north is; click it to turn the view north-up, drag it to move it, right-click it to put it back");
                 b.ToggleMode = true;
                 b.ButtonPressed = Cfg.CompassShown;
-                b.Toggled += on => { Cfg.CompassShown = on; Cfg.Save(); Shell.Relayout(); };
+                b.Toggled += on =>
+                {
+                    Cfg.CompassShown = on;
+                    Cfg.Save();
+                    Shell.Relayout();
+                };
                 Buttons["compass"] = b;
                 return b;
             }
@@ -217,7 +223,13 @@ sealed class ToolStrip : HudPart
                 var b = Icon("zones", "Umpire zones", "Show or hide the parts of the umpire board given to each umpire");
                 b.ToggleMode = true;
                 b.ButtonPressed = Cfg.ShowZones;
-                b.Toggled += on => { Cfg.ShowZones = on; Cfg.Save(); T.ShowZones = on; T.SyncZones(); };
+                b.Toggled += on =>
+                {
+                    Cfg.ShowZones = on;
+                    Cfg.Save();
+                    T.ShowZones = on;
+                    T.SyncZones();
+                };
                 return b;
             }
             case "frame":

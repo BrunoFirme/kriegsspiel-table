@@ -34,12 +34,15 @@ internal sealed class ShapeFaceMap
 
     bool FaceOf(string key, [MaybeNullWhen(false)] out ModelPartView v, [MaybeNullWhen(false)] out ShapeFace f, out int index)
     {
-        v = null; f = null; index = -1;
+        v = null;
+        f = null;
+        index = -1;
         var bits = key.Split(':');
         if (bits.Length != 3 || bits[0] != "p" || !_m.Views.TryGetValue(bits[1], out var pv) || !int.TryParse(bits[2], out index)) return false;
         var faces = FacesOf(pv);
         if (index < 0 || index >= faces.Count) return false;
-        v = pv; f = faces[index];
+        v = pv;
+        f = faces[index];
         return true;
     }
 
@@ -66,10 +69,16 @@ internal sealed class ShapeFaceMap
             {
                 var uv = d.UV[t * 3 + c] * size;
                 var k = ((long)Math.Round(uv.X * 4), (long)Math.Round(uv.Y * 4));
-                if (corner.TryGetValue(k, out var o)) parent[Find(o)] = Find(t); else corner[k] = t;
+                if (corner.TryGetValue(k, out var o)) parent[Find(o)] = Find(t);
+                else corner[k] = t;
             }
         var groups = new Dictionary<int, List<int>>();
-        for (int t = 0; t < n; t++) { int r = Find(t); if (!groups.TryGetValue(r, out var g)) groups[r] = g = new(); g.Add(t); }
+        for (int t = 0; t < n; t++)
+        {
+            int r = Find(t);
+            if (!groups.TryGetValue(r, out var g)) groups[r] = g = new();
+            g.Add(t);
+        }
         var found = new List<(string name, float area, List<int> tris)>();
         foreach (var g in groups.Values)
         {
@@ -77,7 +86,9 @@ internal sealed class ShapeFaceMap
             var normal = Vector3.Zero;
             foreach (var t in g)
             {
-                var a = d.UV[t * 3] * size; var b = d.UV[t * 3 + 1] * size; var c = d.UV[t * 3 + 2] * size;
+                var a = d.UV[t * 3] * size;
+                var b = d.UV[t * 3 + 1] * size;
+                var c = d.UV[t * 3 + 2] * size;
                 area += Mathf.Abs((b - a).Cross(c - a)) / 2;
                 normal += (d.V[t * 3 + 2] - d.V[t * 3]).Cross(d.V[t * 3 + 1] - d.V[t * 3]);
             }
@@ -90,8 +101,14 @@ internal sealed class ShapeFaceMap
         foreach (var (name, _, tris) in found)
         {
             seen[name] = seen.GetValueOrDefault(name) + 1;
-            var mn = new Vector2(float.MaxValue, float.MaxValue); var mx = -mn;
-            foreach (var t in tris) for (int c = 0; c < 3; c++) { var p = d.UV[t * 3 + c] * size; mn = mn.Min(p); mx = mx.Max(p); }
+            var mn = new Vector2(float.MaxValue, float.MaxValue);
+            var mx = -mn;
+            foreach (var t in tris) for (int c = 0; c < 3; c++)
+            {
+                var p = d.UV[t * 3 + c] * size;
+                mn = mn.Min(p);
+                mx = mx.Max(p);
+            }
             int x0 = Math.Clamp((int)Mathf.Floor(mn.X) - 1, 0, v.W - 1), y0 = Math.Clamp((int)Mathf.Floor(mn.Y) - 1, 0, v.H - 1);
             int x1 = Math.Clamp((int)Mathf.Ceil(mx.X) + 1, x0 + 1, v.W), y1 = Math.Clamp((int)Mathf.Ceil(mx.Y) + 1, y0 + 1, v.H);
             var rect = new Rect2I(x0, y0, x1 - x0, y1 - y0);
@@ -133,7 +150,9 @@ internal sealed class ShapeFaceMap
         foreach (var t in tris)
         {
             world += ((d.V[t * 3 + 1] - d.V[t * 3]).Cross(d.V[t * 3 + 2] - d.V[t * 3])).Length() / 2;
-            var a = d.UV[t * 3] * size; var b = d.UV[t * 3 + 1] * size; var c = d.UV[t * 3 + 2] * size;
+            var a = d.UV[t * 3] * size;
+            var b = d.UV[t * 3 + 1] * size;
+            var c = d.UV[t * 3 + 2] * size;
             tex += Mathf.Abs((b - a).Cross(c - a)) / 2;
         }
         return tex > 0 ? (float)Math.Sqrt(world / tex) : 0.01f;
@@ -189,7 +208,9 @@ internal sealed class ShapeFaceMap
         pic.Resize(r.Size.X, r.Size.Y, Image.Interpolation.Lanczos);
         look.BlendRect(pic, new Rect2I(Vector2I.Zero, r.Size), Vector2I.Zero);
         var doc = FaceDoc(key)!;
-        var layer = new ArtLayer { Name = NewPieces.Pretty(Path.GetFileNameWithoutExtension(file)), Kind = "image", Src = src, SrcW = img.GetWidth(), SrcH = img.GetHeight(), X = doc.W / 2f, Y = doc.H / 2f, Sx = doc.W / (float)img.GetWidth(), Sy = doc.H / (float)img.GetHeight() };
+        var layer =
+            new ArtLayer { Name = NewPieces.Pretty(Path.GetFileNameWithoutExtension(file)), Kind = "image", Src = src, SrcW = img.GetWidth(), SrcH = img.GetHeight(), X = doc.W / 2f, Y = doc.H / 2f,
+                Sx = doc.W / (float)img.GetWidth(), Sy = doc.H / (float)img.GetHeight() };
         doc.Layers.Add(layer);
         doc.Selected = layer.Id;
         TakeFace(key, look, doc);
@@ -242,7 +263,10 @@ internal sealed class ShapeFaceMap
                 if (!f.Mask[y * r.Size.X + x]) continue;
                 int s = (y * r.Size.X + x) * 4, o = ((r.Position.Y + y) * v.W + r.Position.X + x) * 4;
                 int a = src[s + 3];
-                v.Paint[o] = (byte)(src[s] * a / 255); v.Paint[o + 1] = (byte)(src[s + 1] * a / 255); v.Paint[o + 2] = (byte)(src[s + 2] * a / 255); v.Paint[o + 3] = (byte)a;
+                v.Paint[o] = (byte)(src[s] * a / 255);
+                v.Paint[o + 1] = (byte)(src[s + 1] * a / 255);
+                v.Paint[o + 2] = (byte)(src[s + 2] * a / 255);
+                v.Paint[o + 3] = (byte)a;
             }
         if (!before.AsSpan().SequenceEqual(v.Paint))
         {

@@ -63,7 +63,9 @@ internal sealed class TopLine
         _pieceTitle = new Label { SizeFlagsVertical = Control.SizeFlags.ShrinkCenter };
         row.AddChild(_pieceTitle);
         row.AddChild(new VSeparator());
-        _hint = new Label { Modulate = Ui.Muted, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, ClipText = true, CustomMinimumSize = new Vector2(80, 0) };
+        _hint =
+            new Label { Modulate = Ui.Muted, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, ClipText = true,
+                CustomMinimumSize = new Vector2(80, 0) };
         _hint.AddThemeFontSizeOverride("font_size", 12);
         row.AddChild(_hint);
         _views = new HBoxContainer();
@@ -96,7 +98,12 @@ internal sealed class TopLine
 
     public void Tick()
     {
-        if (_flashUntil > 0 && Time.GetTicksMsec() / 1000.0 > _flashUntil) { _flashUntil = 0; _hint.Text = _hintText; _hint.Modulate = Ui.Muted; }
+        if (_flashUntil > 0 && Time.GetTicksMsec() / 1000.0 > _flashUntil)
+        {
+            _flashUntil = 0;
+            _hint.Text = _hintText;
+            _hint.Modulate = Ui.Muted;
+        }
     }
 
     public void Show(string hint, PieceDef? sel)
@@ -151,7 +158,9 @@ internal sealed class StudioToolStrip
     public PanelContainer Build()
     {
         Panel = new PanelContainer();
-        var ss = Ui.Panel(); ss.ContentMarginLeft = ss.ContentMarginRight = 3; ss.ContentMarginTop = ss.ContentMarginBottom = 4;
+        var ss = Ui.Panel();
+        ss.ContentMarginLeft = ss.ContentMarginRight = 3;
+        ss.ContentMarginTop = ss.ContentMarginBottom = 4;
         Panel.AddThemeStyleboxOverride("panel", ss);
         _s.Root.AddChild(Panel);
         _box = new VBoxContainer();
@@ -182,9 +191,15 @@ internal sealed class StudioToolStrip
         if (_s.Sel == null) { Callable.From(_s.Relayout).CallDeferred(); return; }
         switch (_s.View)
         {
-            case "paint": PaintTools(); break;
-            case "model": _s.Model?.Panels.BuildStrip(_box, _toolBtns); break;
-            default: TableTools(); break;
+            case "paint":
+                PaintTools();
+                break;
+            case "model":
+                _s.Model?.Panels.BuildStrip(_box, _toolBtns);
+                break;
+            default:
+                TableTools();
+                break;
         }
         Callable.From(_s.Relayout).CallDeferred();
     }

@@ -18,7 +18,10 @@ public partial class PublishDialog : AcceptDialog
 
     public PublishDialog(IPlatform platform, PackageStore store, string kind, string id)
     {
-        _platform = platform; _store = store; _kind = kind; _id = id;
+        _platform = platform;
+        _store = store;
+        _kind = kind;
+        _id = id;
         Title = "Publish to the Steam Workshop";
         OkButtonText = "Close";
         Size = new Vector2I(760, 560);
@@ -50,7 +53,10 @@ public partial class PublishDialog : AcceptDialog
         var row = new HBoxContainer();
         row.AddChild(new Label { Text = "Visible to" });
         var vis = new OptionButton();
-        vis.AddItem("Everyone"); vis.AddItem("Friends only"); vis.AddItem("Unlisted (link only)"); vis.AddItem("Only me");
+        vis.AddItem("Everyone");
+        vis.AddItem("Friends only");
+        vis.AddItem("Unlisted (link only)");
+        vis.AddItem("Only me");
         row.AddChild(vis);
         form.AddChild(row);
         OptionButton? packMode = null;

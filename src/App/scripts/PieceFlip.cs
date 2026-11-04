@@ -23,7 +23,13 @@ public partial class PieceNode
     public float LiftY => Piece.FaceDown ? _thickness : 0;
     float _poseYaw, _flipA;
     Vector3 Pose(double rotDeg) => PoseFromYaw(Coords.Yaw(rotDeg));
-    public Vector3 PoseFromYaw(float yaw) { _poseYaw = yaw; _tilt = Basis.Identity; if (!_flipping) _flipA = Piece.FaceDown ? Mathf.Pi : 0; return new Vector3(0, _poseYaw, _flipA); }
+    public Vector3 PoseFromYaw(float yaw)
+    {
+        _poseYaw = yaw;
+        _tilt = Basis.Identity;
+        if (!_flipping) _flipA = Piece.FaceDown ? Mathf.Pi : 0;
+        return new Vector3(0, _poseYaw, _flipA);
+    }
     public Vector3 SlabCentre => Position - Vector3.Up * LiftY + Vector3.Up * _thickness / 2;
 
     StandardMaterial3D BackMat(bool scissor)

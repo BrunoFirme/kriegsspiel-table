@@ -105,6 +105,6 @@ static class ScenarioCards
             if (Math.Abs(((sh.RotDeg % 360) + 360) % 360 - 180) < 45) { img.FlipX(); img.FlipY(); }
             return img;
         }
-        catch { return null; }
+        catch (Exception e) { Diagnostics.Write(LogLevel.Warning, $"[cards] no thumbnail for {s.Id}: {e.Message}"); return null; }
     }
 }

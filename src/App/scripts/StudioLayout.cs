@@ -27,7 +27,14 @@ public partial class PieceStudio
         var loading = new LoadingStrip();
         loading.Track(S.Assets);
         _root.AddChild(loading);
-        Callable.From(() => { loading.SetAnchorsPreset(Control.LayoutPreset.CenterTop); loading.OffsetTop = TopH + 10; loading.OffsetBottom = TopH + 38; loading.OffsetLeft = -200; loading.OffsetRight = 200; }).CallDeferred();
+        Callable.From(() =>
+        {
+            loading.SetAnchorsPreset(Control.LayoutPreset.CenterTop);
+            loading.OffsetTop = TopH + 10;
+            loading.OffsetBottom = TopH + 38;
+            loading.OffsetLeft = -200;
+            loading.OffsetRight = 200;
+        }).CallDeferred();
         foreach (var p in new Control[] { Top.Panel, Strip.Panel, _right, FaceBar.Pill, _zoomPill }) Ui.SwallowWheel(p);
         ToolPanel.Build();
         Callable.From(Relayout).CallDeferred();
@@ -41,22 +48,35 @@ public partial class PieceStudio
         _canvas.SaveSrc = img => ArtStore.AddSrc(_store, _pack.Id, img);
         _canvas.FreeArea = FreeArea;
         _canvas.R.LoadSrc = name => ArtStore.LoadSrc(_store, _pack.Id, name);
-        _canvas.Ink = Hex.To(_prefs.Ink, _canvas.Ink); _canvas.Ink2 = Hex.To(_prefs.Ink2, _canvas.Ink2);
+        _canvas.Ink = Hex.To(_prefs.Ink, _canvas.Ink);
+        _canvas.Ink2 = Hex.To(_prefs.Ink2, _canvas.Ink2);
         _canvas.Edited += what =>
         {
             Faces.Edited();
-            Top.Saved = "editing…"; Strip.RefreshUndo();
+            Top.Saved = "editing…";
+            Strip.RefreshUndo();
             if (what is "Undo" or "Redo") RebuildLayers();
             if (what is "Move" or "Resize" or "Turn" or "Nudge" or "Undo" or "Redo" or "Crop" or "Outline" or "Outline point removed" && !Typing()) Callable.From(RebuildToolPanel).CallDeferred();
             if (what is "Undo" or "Redo") RebuildFaceBar();
         };
         _canvas.LayersChanged += RebuildLayers;
         _canvas.Status += s => { if (_view == "paint") _status.Text = s; };
-        _canvas.InkPicked += (c, second) => { if (second) _canvas.Ink2 = c; else _canvas.Ink = c; ToolPanel.Colours.SyncInk(); Flash($"Picked {Hex.Of(c)[..7]}"); };
+        _canvas.InkPicked += (c, second) =>
+        {
+            if (second) _canvas.Ink2 = c;
+            else _canvas.Ink = c;
+            ToolPanel.Colours.SyncInk();
+            Flash($"Picked {Hex.Of(c)[..7]}");
+        };
         _canvas.TextPlaced += l => { RebuildToolPanel(); ToolPanel.FocusTextEdit(); };
         _canvas.PrintMoved += (key, box) => Prints.Moved(key, box, CurFace?.Back == true ? PrintPlace.Back : PrintPlace.Front);
         _canvas.PrintChosen += _ => RebuildToolPanel();
-        _canvas.ToolChanged += () => { Strip.SyncTool(_canvas.Tool); RebuildToolPanel(); RefreshHint(); };
+        _canvas.ToolChanged += () =>
+        {
+            Strip.SyncTool(_canvas.Tool);
+            RebuildToolPanel();
+            RefreshHint();
+        };
         _centre.AddChild(_canvas);
         _centre.AddChild(FaceBar.Build());
         _zoomPill = MakePill();
@@ -198,16 +218,38 @@ public partial class PieceStudio
             var order = ViewKeys();
             int i = k.Keycode == Key.Key1 ? 0 : k.Keycode == Key.Key2 ? 1 : 2;
             if (i < order.Count) SetView(order[i].key);
-            Handled(); return;
+            Handled();
+            return;
         }
         if ((k.CtrlPressed || k.MetaPressed) && k.Keycode is Key.Z or Key.Y)
         {
             bool redo = k.Keycode == Key.Y || k.ShiftPressed;
-            if (_view != "table" || (redo ? CanRedo : CanUndo)) { if (redo) Redo(); else Undo(); Handled(); return; }
+            if (_view != "table" || (redo ? CanRedo : CanUndo))
+            {
+                if (redo) Redo();
+                else Undo();
+                Handled();
+                return;
+            }
         }
-        if (k.CtrlPressed && k.Keycode == Key.S) { _ = SaveNow(); Handled(); return; }
-        if (k.CtrlPressed && k.Keycode == Key.N) { NewPieces.Show(); Handled(); return; }
-        if (k.Keycode == Key.F1 || (k.ShiftPressed && k.Keycode == Key.Slash)) { Menu.ShowKeys(); Handled(); return; }
+        if (k.CtrlPressed && k.Keycode == Key.S)
+        {
+            _ = SaveNow();
+            Handled();
+            return;
+        }
+        if (k.CtrlPressed && k.Keycode == Key.N)
+        {
+            NewPieces.Show();
+            Handled();
+            return;
+        }
+        if (k.Keycode == Key.F1 || (k.ShiftPressed && k.Keycode == Key.Slash))
+        {
+            Menu.ShowKeys();
+            Handled();
+            return;
+        }
         if (_view == "table")
         {
             if (k.Keycode == Key.Home) { Paper.FrameAll(); Handled(); }
@@ -225,22 +267,59 @@ public partial class PieceStudio
         bool ctrl = k.CtrlPressed || k.MetaPressed;
         switch (k.Keycode)
         {
-            case Key.X when ctrl: LayerPanel.Cut(); break;
-            case Key.C when ctrl: LayerPanel.Copy(); break;
-            case Key.V when ctrl: LayerPanel.Paste(); break;
-            case Key.D when ctrl: LayerPanel.Duplicate(); break;
-            case Key.Key0 when ctrl: _canvas.Fit(); break;
-            case Key.Key1 when ctrl: _canvas.ZoomTo(1); break;
-            case Key.Equal or Key.KpAdd when ctrl: _canvas.ZoomTo(_canvas.Zoom * 1.25f); break;
-            case Key.Minus or Key.KpSubtract when ctrl: _canvas.ZoomTo(_canvas.Zoom / 1.25f); break;
-            case Key.Apostrophe when ctrl: _prefs.Grid = !_prefs.Grid; Strip.SyncToggles(); break;
-            case Key.Semicolon when ctrl: _prefs.Snap = !_prefs.Snap; Strip.SyncToggles(); break;
-            case Key.Delete or Key.Backspace when _canvas.Tool == "move" && _canvas.Sel != null: LayerPanel.Delete(); break;
-            case Key.Bracketleft: _canvas.ChangeSize(1 / 1.15f); RebuildToolPanel(); break;
-            case Key.Bracketright: _canvas.ChangeSize(1.15f); RebuildToolPanel(); break;
-            case Key.X when !ctrl: (_canvas.Ink, _canvas.Ink2) = (_canvas.Ink2, _canvas.Ink); ToolPanel.Colours.SyncInk(); break;
-            case Key.Y when !ctrl: Strip.CycleSymmetry(); break;
-            case Key.F when !ctrl && CurFace is { } shown && !PieceFaces.IsShapeFace(shown.Key) && _sel?.Kind != "model": ShowSide(!shown.Back); break;
+            case Key.X when ctrl:
+                LayerPanel.Cut();
+                break;
+            case Key.C when ctrl:
+                LayerPanel.Copy();
+                break;
+            case Key.V when ctrl:
+                LayerPanel.Paste();
+                break;
+            case Key.D when ctrl:
+                LayerPanel.Duplicate();
+                break;
+            case Key.Key0 when ctrl:
+                _canvas.Fit();
+                break;
+            case Key.Key1 when ctrl:
+                _canvas.ZoomTo(1);
+                break;
+            case Key.Equal or Key.KpAdd when ctrl:
+                _canvas.ZoomTo(_canvas.Zoom * 1.25f);
+                break;
+            case Key.Minus or Key.KpSubtract when ctrl:
+                _canvas.ZoomTo(_canvas.Zoom / 1.25f);
+                break;
+            case Key.Apostrophe when ctrl:
+                _prefs.Grid = !_prefs.Grid;
+                Strip.SyncToggles();
+                break;
+            case Key.Semicolon when ctrl:
+                _prefs.Snap = !_prefs.Snap;
+                Strip.SyncToggles();
+                break;
+            case Key.Delete or Key.Backspace when _canvas.Tool == "move" && _canvas.Sel != null:
+                LayerPanel.Delete();
+                break;
+            case Key.Bracketleft:
+                _canvas.ChangeSize(1 / 1.15f);
+                RebuildToolPanel();
+                break;
+            case Key.Bracketright:
+                _canvas.ChangeSize(1.15f);
+                RebuildToolPanel();
+                break;
+            case Key.X when !ctrl:
+                (_canvas.Ink, _canvas.Ink2) = (_canvas.Ink2, _canvas.Ink);
+                ToolPanel.Colours.SyncInk();
+                break;
+            case Key.Y when !ctrl:
+                Strip.CycleSymmetry();
+                break;
+            case Key.F when !ctrl && CurFace is { } shown && !PieceFaces.IsShapeFace(shown.Key) && _sel?.Kind != "model":
+                ShowSide(!shown.Back);
+                break;
             default:
                 var tool = k.Keycode is >= Key.A and <= Key.Z ? FaceDocs.ToolFor((char)k.Keycode) : null;
                 if (tool == null || ctrl) return false;
@@ -331,7 +410,8 @@ public partial class PieceStudio
         _view = v;
         RefreshViews();
         _canvas.Visible = v == "paint" && _sel != null;
-        if (v == "model") EnsureModel(open: false); else if (_model != null) _model.Visible = false;
+        if (v == "model") EnsureModel(open: false);
+        else if (_model != null) _model.Visible = false;
         T.SetProcessUnhandledInput(v == "table");
         bool wasTable = T.Visible;
         T.Visible = v == "table";

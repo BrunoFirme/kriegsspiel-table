@@ -16,7 +16,13 @@ sealed partial class TableDemos
     readonly Hud _hud;
     ulong _openedAt;
 
-    public TableDemos(Main main, Dictionary<string, string> args, Table table, Hud hud) { _main = main; _args = args; _table = table; _hud = hud; }
+    public TableDemos(Main main, Dictionary<string, string> args, Table table, Hud hud)
+    {
+        _main = main;
+        _args = args;
+        _table = table;
+        _hud = hud;
+    }
 
     Session Session => _main.Session;
     Net Net => _main.Net;
@@ -215,12 +221,15 @@ sealed partial class TableDemos
                 else table.FrameAll();
                 async System.Threading.Tasks.Task<(double worst, double avg, int frames)> Watch(double seconds)
                 {
-                    double worst = 0, total = 0; int frames = 0;
+                    double worst = 0, total = 0;
+                    int frames = 0;
                     var until = Time.GetTicksMsec() + (ulong)(seconds * 1000);
                     while (Time.GetTicksMsec() < until)
                     {
                         double dt = await _main.ToSignal(Tree, SceneTree.SignalName.ProcessFrame) is not null ? _main.GetProcessDeltaTime() : 0;
-                        worst = Math.Max(worst, dt); total += dt; frames++;
+                        worst = Math.Max(worst, dt);
+                        total += dt;
+                        frames++;
                     }
                     return (worst, frames > 0 ? total / frames : 0, frames);
                 }
@@ -250,14 +259,17 @@ sealed partial class TableDemos
                 table.SetSelection(new[] { board[who].Id });
                 Input.ParseInputEvent(new InputEventMouseButton { ButtonIndex = MouseButton.Left, Pressed = true, Position = from, GlobalPosition = from });
                 await _main.ToSignal(Tree, SceneTree.SignalName.ProcessFrame);
-                double worstDrag = 0, totalDrag = 0; int dragFrames = 0;
+                double worstDrag = 0, totalDrag = 0;
+                int dragFrames = 0;
                 for (int i = 1; i <= 90; i++)
                 {
                     var at = from.Lerp(to, i / 90f);
                     Input.ParseInputEvent(new InputEventMouseMotion { Position = at, GlobalPosition = at, Relative = (to - from) / 90f });
                     await _main.ToSignal(Tree, SceneTree.SignalName.ProcessFrame);
                     double dt = _main.GetProcessDeltaTime();
-                    worstDrag = Math.Max(worstDrag, dt); totalDrag += dt; dragFrames++;
+                    worstDrag = Math.Max(worstDrag, dt);
+                    totalDrag += dt;
+                    dragFrames++;
                 }
                 Input.ParseInputEvent(new InputEventMouseButton { ButtonIndex = MouseButton.Left, Pressed = false, Position = to, GlobalPosition = to });
                 Say("carrying a piece", (worstDrag, dragFrames > 0 ? totalDrag / dragFrames : 0, dragFrames));
@@ -333,12 +345,14 @@ sealed partial class TableDemos
             {
                 var sh = Session.View.Sheets;
                 GD.Print($"[blank] sheets on table: {sh.Count}: " + string.Join(", ", sh.Select(x => $"{x.Name} {x.Size.W:0.#}x{x.Size.H:0.#} at {x.Pos.X:0.#},{x.Pos.Z:0.#}")));
-                if (sh.Count > 0) Session.Do(new KTable.Core.Protocol.MoveSheet { Id = sh[0].Id, Pos = sh[0].Pos, RotDeg = 0, Z = 0, Size = new KTable.Core.Model.Size2(sh[0].Size.W * 1.5, sh[0].Size.H * 1.5) });
+                if (sh.Count > 0) Session.Do(new KTable.Core.Protocol.MoveSheet { Id = sh[0].Id, Pos = sh[0].Pos, RotDeg = 0, Z = 0,
+                    Size = new KTable.Core.Model.Size2(sh[0].Size.W * 1.5, sh[0].Size.H * 1.5) });
                 foreach (var x in sh) Session.Do(new KTable.Core.Protocol.LockSheet { Id = x.Id, Locked = true });
                 var pid = UserPacks.IdFor("demo pieces");
                 UserPacks.AddImages(Session.Store, pid, "Demo pieces", new[] { dsh.Split(';').FirstOrDefault(p => !KTable.Core.Xcf.IsXcf(p)) ?? dsh.Split(';')[0] }, 2.0, "box", "", "Umpire");
                 Net.SharePack(pid);
-                if (Session.Store.Pack(pid)?.Pieces.Count > 0) Session.Do(new KTable.Core.Protocol.SpawnPiece { Layer = KTable.Core.Model.Layers.Umpire, Def = Session.Store.Pack(pid)!.Pieces[0].Id, Pos = new KTable.Core.Model.Vec2(10, 0), RotDeg = 180 });
+                if (Session.Store.Pack(pid)?.Pieces.Count > 0) Session.Do(new KTable.Core.Protocol.SpawnPiece { Layer = KTable.Core.Model.Layers.Umpire, Def = Session.Store.Pack(pid)!.Pieces[0].Id,
+                    Pos = new KTable.Core.Model.Vec2(10, 0), RotDeg = 180 });
                 Tree.CreateTimer(2).Timeout += () =>
                 {
                     var dir = ScenarioFiles.SaveTable(Session.Store, Session.View, "Blank test", Session.ScenarioDir);
@@ -358,7 +372,8 @@ sealed partial class TableDemos
         if (_args.TryGetValue("demo-relief", out var drel)) DemoRelief(hud, drel);
         if (_args.TryGetValue("demo-blank", out var dbl)) DemoBlank(hud, dbl);
         if (_args.TryGetValue("demo-zone", out var dz))
-            Session.Do(new KTable.Core.Protocol.SetZone { Zone = new KTable.Core.Model.Zone { Name = "Arevalillo", Owner = dz, Color = "#40C0FF", Polygon = { new(230, -300), new(290, -300), new(290, -240), new(230, -240) } } });
+            Session.Do(new KTable.Core.Protocol.SetZone { Zone = new KTable.Core.Model.Zone { Name = "Arevalillo", Owner = dz, Color = "#40C0FF",
+                Polygon = { new(230, -300), new(290, -300), new(290, -240), new(230, -240) } } });
         if (_args.ContainsKey("demo-pointer"))
         {
             double t0 = 0;
@@ -395,7 +410,10 @@ sealed partial class TableDemos
             Net.SharePack("std.dice");
             var defs = Session.Store.Pack("std.dice")?.Pieces.Select(p => p.Id).ToList() ?? new();
             var at = Coords.FromWorld(table.Rig.Target);
-            Tree.CreateTimer(0.5).Timeout += () => { int i = 0; foreach (var d in defs) Session.Do(new KTable.Core.Protocol.SpawnPiece { Layer = KTable.Core.Model.Layers.Umpire, Def = d, Pos = at + new KTable.Core.Model.Vec2(-4 + i++ * 1.1, 0), RotDeg = 180 }); };
+            Tree.CreateTimer(0.5)
+                .Timeout += () =>
+                    { int i = 0; foreach (var d in defs) Session.Do(new KTable.Core.Protocol.SpawnPiece { Layer = KTable.Core.Model.Layers.Umpire, Def = d,
+                        Pos = at + new KTable.Core.Model.Vec2(-4 + i++ * 1.1, 0), RotDeg = 180 }); };
             Tree.CreateTimer(2.5).Timeout += () =>
             {
                 var ids = Session.View.Layer(KTable.Core.Model.Layers.Umpire).Where(p => p.Def.StartsWith("std.dice.")).Select(p => p.Id).ToList();
@@ -412,7 +430,8 @@ sealed partial class TableDemos
                 Tree.CreateTimer(5.0).Timeout += () =>
                 {
                     var pcs = Session.View.Layer(KTable.Core.Model.Layers.Umpire).Where(p => p.Def.StartsWith("std.dice.")).ToList();
-                    Session.Do(new KTable.Core.Protocol.Batch { Items = pcs.Select((p, i) => (KTable.Core.Protocol.Command)new KTable.Core.Protocol.SetTint { Layer = KTable.Core.Model.Layers.Umpire, Id = p.Id, Value = KTable.Core.Model.DieColors.All[1 + i % (KTable.Core.Model.DieColors.All.Length - 1)].Hex }).ToList() });
+                    Session.Do(new KTable.Core.Protocol.Batch { Items = pcs.Select((p, i) => (KTable.Core.Protocol.Command)new KTable.Core.Protocol.SetTint { Layer = KTable.Core.Model.Layers.Umpire,
+                        Id = p.Id, Value = KTable.Core.Model.DieColors.All[1 + i % (KTable.Core.Model.DieColors.All.Length - 1)].Hex }).ToList() });
                     GD.Print($"[dice] coloured {pcs.Count} dice");
                 };
         }
@@ -421,7 +440,11 @@ sealed partial class TableDemos
             Net.SharePack("std.dice");
             var at = Coords.FromWorld(table.Rig.Target);
             var defs = new[] { "std.dice.d6", "std.dice.d8", "std.dice.d20" };
-            Tree.CreateTimer(0.5).Timeout += () => { for (int i = 0; i < defs.Length; i++) Session.Do(new KTable.Core.Protocol.SpawnPiece { Layer = KTable.Core.Model.Layers.Umpire, Def = defs[i], Pos = at + new KTable.Core.Model.Vec2(-1.5 + i * 1.5, -3), RotDeg = 180 }); };
+            Tree.CreateTimer(0.5).Timeout += () =>
+            {
+                for (int i = 0; i < defs.Length; i++) Session.Do(new KTable.Core.Protocol.SpawnPiece { Layer = KTable.Core.Model.Layers.Umpire, Def = defs[i],
+                    Pos = at + new KTable.Core.Model.Vec2(-1.5 + i * 1.5, -3), RotDeg = 180 });
+            };
             List<string> Ids() => Session.View.Layer(KTable.Core.Model.Layers.Umpire).Where(p => p.Def.StartsWith("std.dice.")).Select(p => p.Id).ToList();
             Tree.CreateTimer(5.0).Timeout += () =>
             {
@@ -454,7 +477,8 @@ sealed partial class TableDemos
             {
                 if (defs.Count == 0) { GD.Print("[perf] no tile defs in this game's packs"); return; }
                 for (int i = 0; i < n; i++)
-                    Session.Do(new KTable.Core.Protocol.SpawnPiece { Layer = KTable.Core.Model.Layers.Umpire, Def = defs[i % defs.Count], Pos = at + new KTable.Core.Model.Vec2((i % cols - cols / 2.0) * 1.7, (i / cols - cols / 2.0) * 1.1), RotDeg = 180 });
+                    Session.Do(new KTable.Core.Protocol.SpawnPiece { Layer = KTable.Core.Model.Layers.Umpire, Def = defs[i % defs.Count],
+                        Pos = at + new KTable.Core.Model.Vec2((i % cols - cols / 2.0) * 1.7, (i / cols - cols / 2.0) * 1.1), RotDeg = 180 });
                 table.Rig.Frame(Coords.ToWorld(at), cols * 1.7f * 1.15f);
             };
             var samples = new List<double>();
@@ -475,7 +499,8 @@ sealed partial class TableDemos
             Tree.CreateTimer(0.5).Timeout += () =>
             {
                 for (int i = 0; i < defs.Count; i++)
-                    Session.Do(new KTable.Core.Protocol.SpawnPiece { Layer = KTable.Core.Model.Layers.Umpire, Def = defs[i]!, Pos = at + new KTable.Core.Model.Vec2(-defs.Count * 1.4 + i * 2.8, 0), RotDeg = 180 });
+                    Session.Do(new KTable.Core.Protocol.SpawnPiece { Layer = KTable.Core.Model.Layers.Umpire, Def = defs[i]!, Pos = at + new KTable.Core.Model.Vec2(-defs.Count * 1.4 + i * 2.8, 0),
+                        RotDeg = 180 });
                 table.Rig.Frame(Coords.ToWorld(at), defs.Count * 2.8f);
                 GD.Print($"[fx] spawned {defs.Count} of {wanted.Length}");
             };
@@ -506,7 +531,8 @@ sealed partial class TableDemos
         if (_args.TryGetValue("demo-grid", out var dgr))
         {
             var gv = dgr.Split(',');
-            Session.Do(new KTable.Core.Protocol.SetGrid { Grid = new KTable.Core.Model.GridDef { Kind = gv[0], Pitch = gv.Length > 1 ? double.Parse(gv[1], System.Globalization.CultureInfo.InvariantCulture) : 10 } });
+            Session.Do(new KTable.Core.Protocol.SetGrid { Grid = new KTable.Core.Model.GridDef { Kind = gv[0],
+                Pitch = gv.Length > 1 ? double.Parse(gv[1], System.Globalization.CultureInfo.InvariantCulture) : 10 } });
         }
         if (_args.TryGetValue("demo-light", out var dli))
         {
@@ -515,7 +541,8 @@ sealed partial class TableDemos
         }
         if (_args.ContainsKey("demo-physics"))
         {
-            Net.SharePack(FirmeEffects.PackId); Net.SharePack("user.physblocks");
+            Net.SharePack(FirmeEffects.PackId);
+            Net.SharePack("user.physblocks");
             var at = Coords.FromWorld(table.Rig.Target);
             Tree.CreateTimer(1.0).Timeout += () => new TableDemo(table).Physics(at, FirmeEffects.PackId + ".earthwork-rampart", "user.physblocks.block", "user.physblocks.marker");
         }
@@ -539,9 +566,16 @@ sealed partial class TableDemos
                 foreach (var d in defs)
                 {
                     double w = d.Size.W + 3, h = d.Size.H + 3;
-                    if (x + w > rowW && x > 0) { x = 0; z += rowH; rowH = 0; }
-                    cmds.Add(new KTable.Core.Protocol.SpawnPiece { Layer = KTable.Core.Model.Layers.Umpire, Def = d.Id, Pos = at + new KTable.Core.Model.Vec2(x + w / 2 - rowW / 2, z + h / 2), RotDeg = turn });
-                    x += w; rowH = Math.Max(rowH, h);
+                    if (x + w > rowW && x > 0)
+                    {
+                        x = 0;
+                        z += rowH;
+                        rowH = 0;
+                    }
+                    cmds.Add(new KTable.Core.Protocol.SpawnPiece { Layer = KTable.Core.Model.Layers.Umpire, Def = d.Id, Pos = at + new KTable.Core.Model.Vec2(x + w / 2 - rowW / 2, z + h / 2),
+                        RotDeg = turn });
+                    x += w;
+                    rowH = Math.Max(rowH, h);
                 }
                 if (cmds.Count > 0) Session.Do(new KTable.Core.Protocol.Batch { Items = cmds });
                 GD.Print($"[fx] laid out {defs.Count} of Firme's Effects");
@@ -574,7 +608,9 @@ sealed partial class TableDemos
         {
             var p0 = Session.View.Layer(KTable.Core.Model.Layers.Umpire)[3];
             Tree.CreateTimer(1.5).Timeout += () => Session.Do(new KTable.Core.Protocol.AdvanceClock());
-            Tree.CreateTimer(2.0).Timeout += () => Session.Do(new KTable.Core.Protocol.MovePiece { Layer = KTable.Core.Model.Layers.Umpire, Id = p0.Id, Pos = p0.Pos + new KTable.Core.Model.Vec2(12, 0), RotDeg = p0.RotDeg });
+            Tree.CreateTimer(2.0)
+                .Timeout += () =>
+                    Session.Do(new KTable.Core.Protocol.MovePiece { Layer = KTable.Core.Model.Layers.Umpire, Id = p0.Id, Pos = p0.Pos + new KTable.Core.Model.Vec2(12, 0), RotDeg = p0.RotDeg });
             Tree.CreateTimer(2.5).Timeout += () => Session.Do(new KTable.Core.Protocol.AdvanceClock());
             Tree.CreateTimer(3.5).Timeout += () => { Net.RequestTurn(0); GD.Print($"[history] turns={Session.Turns.Count} live pos={Session.Live.Find(KTable.Core.Model.Layers.Umpire, p0.Id)!.Pos.X:0.#}"); };
             Tree.CreateTimer(4.5).Timeout += () => GD.Print($"[history] reviewing={Session.Reviewing} turn={Session.ReviewInfo?.Turn} shown pos={Session.View.Find(KTable.Core.Model.Layers.Umpire, p0.Id)!.Pos.X:0.#} clock={Session.View.Clock.Turn}");

@@ -17,7 +17,8 @@ public sealed class Debounce
     public bool Tick(double delta)
     {
         if (!Pending) return false;
-        In -= delta; Max -= delta;
+        In -= delta;
+        Max -= delta;
         return In <= 0 || Max <= 0;
     }
 }

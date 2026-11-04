@@ -30,7 +30,8 @@ internal sealed class TableControls
     public bool Clear()
     {
         if (_hotkeys.Count == 0 && _menu.Count == 0) return false;
-        _hotkeys.Clear(); _menu.Clear();
+        _hotkeys.Clear();
+        _menu.Clear();
         return true;
     }
 
@@ -38,9 +39,17 @@ internal sealed class TableControls
     {
         bool hotkeys = false, menu = false;
         for (int i = _hotkeys.Count - 1; i >= 0; i--)
-            if (_hotkeys[i].owner == temp) { if (real != null) _hotkeys[i] = (real, _hotkeys[i].label, _hotkeys[i].fn, _hotkeys[i].onUp); else { _hotkeys.RemoveAt(i); hotkeys = true; } }
+            if (_hotkeys[i].owner == temp)
+            {
+                if (real != null) _hotkeys[i] = (real, _hotkeys[i].label, _hotkeys[i].fn, _hotkeys[i].onUp);
+                else { _hotkeys.RemoveAt(i); hotkeys = true; }
+            }
         for (int i = _menu.Count - 1; i >= 0; i--)
-            if (_menu[i].owner == temp) { if (real != null) _menu[i] = (real, _menu[i].label, _menu[i].fn); else { _menu.RemoveAt(i); menu = true; } }
+            if (_menu[i].owner == temp)
+            {
+                if (real != null) _menu[i] = (real, _menu[i].label, _menu[i].fn);
+                else { _menu.RemoveAt(i); menu = true; }
+            }
         return (hotkeys, menu);
     }
 

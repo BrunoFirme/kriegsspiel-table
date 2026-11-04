@@ -67,7 +67,8 @@ public static class ReliefImport
         using var p = Process.Start(psi) ?? throw new InvalidDataException("Blender did not start");
         p.OutputDataReceived += (_, _) => { };
         p.ErrorDataReceived += (_, _) => { };
-        p.BeginOutputReadLine(); p.BeginErrorReadLine();
+        p.BeginOutputReadLine();
+        p.BeginErrorReadLine();
         if (!p.WaitForExit(BlenderSeconds * 1000)) { BestEffort.Try(() => p.Kill(true)); throw new InvalidDataException($"Blender took more than {BlenderSeconds} s"); }
         if (!File.Exists(glb)) throw new InvalidDataException("Blender wrote no model");
         return glb;
@@ -171,7 +172,8 @@ public static class ReliefImport
         }
         float? noData = null;
         var nd = tiff.GetField((TiffTag)NoDataTag);
-        if (nd != null && nd.Length >= 2 && float.TryParse(nd[1].ToString()?.Trim('\0', ' '), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var v)) noData = v;
+        if (nd != null && nd.Length >= 2 && float.TryParse(nd[1].ToString()?.Trim('\0', ' '), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var v)) noData =
+            v;
         return HeightFiles.FromSamples(name, cols, rows, raw, cellX, cellY, real, noData);
     }
 
@@ -194,7 +196,8 @@ public static class ReliefImport
     {
         var grid = src.ToGrid(zero);
         var (sha, _) = ReliefFiles.Save(Path.Combine(packagesRoot, UploadAsset.ReliefPackage), grid);
-        string? image = null; int pw = 0, ph = 0;
+        string? image = null;
+        int pw = 0, ph = 0;
         string? temp = null;
         try
         {
@@ -202,7 +205,9 @@ public static class ReliefImport
             if (temp != null)
             {
                 var (_, picSha, w, h) = SheetImporter.Import(temp, packagesRoot, note, progress);
-                image = picSha; pw = w; ph = h;
+                image = picSha;
+                pw = w;
+                ph = h;
             }
         }
         finally

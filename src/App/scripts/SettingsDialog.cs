@@ -11,7 +11,12 @@ sealed class SettingsDialog : HudPart
     readonly IHudShell Shell;
     readonly TopBar _top;
     readonly ToolStrip _strip;
-    SettingsDialog(HudContext ctx, IHudShell shell, TopBar top, ToolStrip strip) : base(ctx) { Shell = shell; _top = top; _strip = strip; }
+    SettingsDialog(HudContext ctx, IHudShell shell, TopBar top, ToolStrip strip) : base(ctx)
+    {
+        Shell = shell;
+        _top = top;
+        _strip = strip;
+    }
 
     public static void Open(HudContext ctx, IHudShell shell, TopBar top, ToolStrip strip) => new SettingsDialog(ctx, shell, top, strip).Show();
 
@@ -206,43 +211,88 @@ sealed class SettingsDialog : HudPart
         var aaPick = new OptionButton { TooltipText = "Multisampling on the 3D table: more is smoother and costs frame rate.", CustomMinimumSize = new Vector2(160, 0) };
         foreach (var n in new[] { "Off", "2 samples", "4 samples", "8 samples" }) aaPick.AddItem(n);
         aaPick.Selected = Math.Clamp(Cfg.Antialias, 0, 3);
-        aaPick.ItemSelected += i => { Cfg.Antialias = (int)i; Cfg.Save(); T.ApplyGraphics(); };
+        aaPick.ItemSelected += i =>
+        {
+            Cfg.Antialias = (int)i;
+            Cfg.Save();
+            T.ApplyGraphics();
+        };
         _box.AddChild(Row("Smooth edges", aaPick, null, fill: false));
         var fine = new CheckBox { Text = "Smooth fine lines too", ButtonPressed = Cfg.SmoothFineEdges, TooltipText = "Cut-out pictures and thin drawn lines that multisampling misses. Small lettering and fine map lines soften a little." };
-        fine.Toggled += on => { Cfg.SmoothFineEdges = on; Cfg.Save(); T.ApplyGraphics(); };
+        fine.Toggled += on =>
+        {
+            Cfg.SmoothFineEdges = on;
+            Cfg.Save();
+            T.ApplyGraphics();
+        };
         _box.AddChild(Option(fine));
         var farPick = new OptionButton { TooltipText = "How sharp a map's fine lines stay in the distance. Soft lets them fade to grey; Crisper can sparkle as the view moves.", CustomMinimumSize = new Vector2(160, 0) };
         foreach (var n in new[] { "Soft", "Crisp", "Crisper" }) farPick.AddItem(n);
         farPick.Selected = Math.Clamp(Cfg.FarDetail, 0, Settings.FarDetailMost);
-        farPick.ItemSelected += i => { Cfg.FarDetail = (int)i; Cfg.Save(); T.ApplyGraphics(); };
+        farPick.ItemSelected += i =>
+        {
+            Cfg.FarDetail = (int)i;
+            Cfg.Save();
+            T.ApplyGraphics();
+        };
         _box.AddChild(Row("Far detail", farPick, null, fill: false));
         var scalePick = new OptionButton { TooltipText = "Draws the table at more pixels than the screen has and shrinks it: cleaner fine lines and less shimmer, costing frame rate in proportion.", CustomMinimumSize = new Vector2(160, 0) };
         foreach (var n in Graphics.RenderScales) scalePick.AddItem($"{n * 100:0}%");
         scalePick.Selected = Math.Max(0, Array.FindIndex(Graphics.RenderScales, n => Mathf.IsEqualApprox(n, Cfg.RenderScale)));
-        scalePick.ItemSelected += i => { Cfg.RenderScale = Graphics.RenderScales[i]; Cfg.Save(); T.ApplyGraphics(); };
+        scalePick.ItemSelected += i =>
+        {
+            Cfg.RenderScale = Graphics.RenderScales[i];
+            Cfg.Save();
+            T.ApplyGraphics();
+        };
         _box.AddChild(Row("Render scale", scalePick, null, fill: false));
         var shadowPick = new OptionButton { TooltipText = "For scenarios whose light casts shadows. High is sharper and keeps them when zoomed far out.", CustomMinimumSize = new Vector2(160, 0) };
         foreach (var n in new[] { "Low", "Medium", "High" }) shadowPick.AddItem(n);
         shadowPick.Selected = Math.Clamp(Cfg.ShadowDetail, 0, Settings.ShadowDetailMost);
-        shadowPick.ItemSelected += i => { Cfg.ShadowDetail = (int)i; Cfg.Save(); T.ApplyGraphics(); };
+        shadowPick.ItemSelected += i =>
+        {
+            Cfg.ShadowDetail = (int)i;
+            Cfg.Save();
+            T.ApplyGraphics();
+        };
         _box.AddChild(Row("Shadows", shadowPick, null, fill: false));
         var contact = new CheckBox { Text = "Contact shading", ButtonPressed = Cfg.ContactShade, TooltipText = "A soft shade where pieces meet the table, so 3D models sit down on it" };
-        contact.Toggled += on => { Cfg.ContactShade = on; Cfg.Save(); T.ApplyGraphics(); };
+        contact.Toggled += on =>
+        {
+            Cfg.ContactShade = on;
+            Cfg.Save();
+            T.ApplyGraphics();
+        };
         _box.AddChild(Option(contact));
         var picPick = new OptionButton { TooltipText = "Graphics memory the map's pictures may take. When the whole map fits, every sheet is drawn at full sharpness from any distance; when it does not, all sheets step down a size together. Automatic is a quarter of the card's memory.", CustomMinimumSize = new Vector2(160, 0) };
         foreach (var mb in Settings.MapPictureMemoryChoices) picPick.AddItem(mb == 0 ? $"Automatic ({VideoMemory.SuggestedPictureMegabytes()} MB)" : mb >= 1024 ? $"{mb / 1024} GB" : $"{mb} MB");
         picPick.Selected = Math.Max(0, Array.IndexOf(Settings.MapPictureMemoryChoices, Cfg.MapPictureMemory));
-        picPick.ItemSelected += i => { Cfg.MapPictureMemory = Settings.MapPictureMemoryChoices[i]; Cfg.Save(); T.ApplyGraphics(); };
+        picPick.ItemSelected += i =>
+        {
+            Cfg.MapPictureMemory = Settings.MapPictureMemoryChoices[i];
+            Cfg.Save();
+            T.ApplyGraphics();
+        };
         _box.AddChild(Row("Map pictures", picPick, null, fill: false));
 
         _box.AddChild(Header("Frames"));
         var vsync = new CheckBox { Text = "Keep in step with the screen (VSync)", ButtonPressed = Cfg.VSync, TooltipText = "No tearing. Off draws as fast as the limit below allows." };
-        vsync.Toggled += on => { Cfg.VSync = on; Cfg.Save(); Graphics.ApplyDisplay(Cfg); };
+        vsync.Toggled += on =>
+        {
+            Cfg.VSync = on;
+            Cfg.Save();
+            Graphics.ApplyDisplay(Cfg);
+        };
         _box.AddChild(Option(vsync));
         var limitPick = new OptionButton { TooltipText = "A lower limit keeps a laptop cooler and quieter", CustomMinimumSize = new Vector2(160, 0) };
         foreach (var n in Graphics.FrameLimits) limitPick.AddItem(n == 0 ? "None" : $"{n} a second");
         limitPick.Selected = Math.Max(0, Array.IndexOf(Graphics.FrameLimits, Cfg.FrameLimit));
-        limitPick.ItemSelected += i => { Cfg.FrameLimit = Graphics.FrameLimits[i]; Cfg.Save(); Graphics.ApplyDisplay(Cfg); };
+        limitPick.ItemSelected += i =>
+        {
+            Cfg.FrameLimit = Graphics.FrameLimits[i];
+            Cfg.Save();
+            Graphics.ApplyDisplay(Cfg);
+        };
         _box.AddChild(Row("Frame limit", limitPick, null, fill: false));
     }
 
@@ -308,7 +358,12 @@ sealed class SettingsDialog : HudPart
     {
         var fd = new FileDialog { FileMode = FileDialog.FileModeEnum.OpenDir, Access = FileDialog.AccessEnum.Filesystem, Title = "Capture folder", UseNativeDialog = true };
         if (System.IO.Directory.Exists(path.Text)) fd.CurrentDir = path.Text;
-        fd.DirSelected += d => { path.Text = d; Cfg.CaptureFolder = d; Cfg.Save(); };
+        fd.DirSelected += d =>
+        {
+            path.Text = d;
+            Cfg.CaptureFolder = d;
+            Cfg.Save();
+        };
         HudNode.AddChild(fd);
         Ui.FreeOnClose(fd);
         fd.PopupCentered(new Vector2I(720, 480));
@@ -321,7 +376,12 @@ sealed class SettingsDialog : HudPart
         hint.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
         head.AddChild(hint);
         var kg = Ui.Form(250);
-        var reset = Btn("Reset to defaults", () => { Cfg.Keys.Reset(); Cfg.Save(); foreach (var c in kg.GetChildren()) if (c is Button b && b.HasMeta("action")) b.Text = Cfg.Keys.Label(b.GetMeta("action").AsString()); });
+        var reset = Btn("Reset to defaults", () =>
+        {
+            Cfg.Keys.Reset();
+            Cfg.Save();
+            foreach (var c in kg.GetChildren()) if (c is Button b && b.HasMeta("action")) b.Text = Cfg.Keys.Label(b.GetMeta("action").AsString());
+        });
         reset.SizeFlagsVertical = Control.SizeFlags.ShrinkCenter;
         head.AddChild(reset);
         _box.AddChild(head);
@@ -331,17 +391,34 @@ sealed class SettingsDialog : HudPart
         {
             kg.AddChild(new Label { Text = label });
             var act = action;
-            var kb = new Button { Text = Cfg.Keys.Label(act), TooltipText = $"Key for {label}\nClick, then press the new key", FocusMode = Control.FocusModeEnum.All, CustomMinimumSize = new Vector2(120, 0), SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin };
-            kb.Pressed += () => { if (arming != null && arming != kb) arming.Text = Cfg.Keys.Label(ActionOf(arming)); arming = kb; kb.Text = "press a key…"; kb.GrabFocus(); };
+            var kb =
+                new Button { Text = Cfg.Keys.Label(act), TooltipText = $"Key for {label}\nClick, then press the new key", FocusMode = Control.FocusModeEnum.All, CustomMinimumSize = new Vector2(120, 0),
+                    SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin };
+            kb.Pressed += () =>
+            {
+                if (arming != null && arming != kb) arming.Text = Cfg.Keys.Label(ActionOf(arming));
+                arming = kb;
+                kb.Text = "press a key…";
+                kb.GrabFocus();
+            };
             kb.SetMeta("action", act);
             kb.GuiInput += e =>
             {
                 if (arming != kb || e is not InputEventKey { Pressed: true } key) return;
-                if (key.Keycode is Key.Escape) { kb.Text = Cfg.Keys.Label(act); arming = null; kb.AcceptEvent(); return; }
+                if (key.Keycode is Key.Escape)
+                {
+                    kb.Text = Cfg.Keys.Label(act);
+                    arming = null;
+                    kb.AcceptEvent();
+                    return;
+                }
                 var desc = KeyEvents.Describe(key);
                 if (desc.Length == 0 || key.Keycode is Key.Enter or Key.KpEnter or Key.Space or Key.Tab) { kb.AcceptEvent(); return; }
-                Cfg.Keys.Set(act, desc); Cfg.Save();
-                kb.Text = Cfg.Keys.Label(act); arming = null; kb.AcceptEvent();
+                Cfg.Keys.Set(act, desc);
+                Cfg.Save();
+                kb.Text = Cfg.Keys.Label(act);
+                arming = null;
+                kb.AcceptEvent();
             };
             kg.AddChild(kb);
         }

@@ -57,12 +57,17 @@ internal sealed class PieceDrawing(Func<string, PieceInstance?> find)
 
     public void Forget(string id, bool pieceGone)
     {
-        _widgets.Remove(id); _menus.Remove(id); _fromLoad.Remove(id);
+        _widgets.Remove(id);
+        _menus.Remove(id);
+        _fromLoad.Remove(id);
         if (pieceGone) _drawers.Remove(id);
     }
 
     public void Clear()
     {
-        _widgets.Clear(); _menus.Clear(); _fromLoad.Clear(); _drawers.Clear();
+        _widgets.Clear();
+        _menus.Clear();
+        _fromLoad.Clear();
+        _drawers.Clear();
     }
 }

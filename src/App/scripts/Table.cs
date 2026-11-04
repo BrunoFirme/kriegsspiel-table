@@ -43,7 +43,11 @@ public partial class Table : Node3D
     public event Action<string, Command>? ReliefShaped { add => Relief.Shaped += value; remove => Relief.Shaped -= value; }
     public event Action? ReliefPicked { add => Relief.Picked += value; remove => Relief.Picked -= value; }
     public event Action<Vec2>? PointerMoved { add => Pointers.Moved += value; remove => Pointers.Moved -= value; }
-    public event Action<IReadOnlyList<KTable.Server.CarriedPiece>, KTable.Client.Hand.HandAt, double>? CarryLayoutShared { add => Motion.LayoutShared += value; remove => Motion.LayoutShared -= value; }
+    public event Action<IReadOnlyList<KTable.Server.CarriedPiece>, KTable.Client.Hand.HandAt, double>? CarryLayoutShared
+    {
+        add => Motion.LayoutShared += value;
+        remove => Motion.LayoutShared -= value;
+    }
     public event Action<KTable.Client.Hand.HandAt, double>? CarryPlaceShared { add => Motion.PlaceShared += value; remove => Motion.PlaceShared -= value; }
     public event Action<double, IReadOnlyList<KTable.Client.Hand.MotionSample>>? FlightShared { add => Motion.FlightShared += value; remove => Motion.FlightShared -= value; }
 
@@ -182,7 +186,8 @@ public partial class Table : Node3D
 
     public void Bind(Session s, Settings settings)
     {
-        _c.S = s; _c.Settings = settings;
+        _c.S = s;
+        _c.Settings = settings;
         s.Art.Look.ShowFaceText = settings.FaceText;
         s.Art.Look.LabelPlates = settings.LabelPlates;
         s.Art.Look.LetteringReach = settings.LetteringReach;
@@ -229,7 +234,12 @@ public partial class Table : Node3D
         Sighting.Sync();
     }
 
-    public void RefreshDrawings() { Drawings.Sync(); BoardsChanged?.Invoke(); CheckDrawingLock(); }
+    public void RefreshDrawings()
+    {
+        Drawings.Sync();
+        BoardsChanged?.Invoke();
+        CheckDrawingLock();
+    }
 
     public void ApplyGraphics()
     {
@@ -257,7 +267,9 @@ public partial class Table : Node3D
         bool shown = look.ShowFaceText != cfg.FaceText;
         bool sized = !Mathf.IsEqualApprox(look.FaceTextScale, cfg.FaceTextScale);
         bool reached = !Mathf.IsEqualApprox(look.LetteringReach, cfg.LetteringReach);
-        look.ShowFaceText = cfg.FaceText; look.FaceTextScale = cfg.FaceTextScale; look.LetteringReach = cfg.LetteringReach;
+        look.ShowFaceText = cfg.FaceText;
+        look.FaceTextScale = cfg.FaceTextScale;
+        look.LetteringReach = cfg.LetteringReach;
         if (shown) RefreshLayers();
         if (sized) RefreshFaceText();
         if (reached) RefreshLettering();
@@ -334,7 +346,8 @@ public partial class Table : Node3D
         if (Tool == Tool.Crop && t != Tool.Crop) Crop.End();
         if (Tool == Tool.Relief && t != Tool.Relief) Relief.Cancel();
         var was = Tool;
-        _c.Tool = t; _c.PlaceDef = placeDef;
+        _c.Tool = t;
+        _c.PlaceDef = placeDef;
         if (t != Tool.Ruler && t != Tool.Calibrate) Ruler.Clear();
         if (t != Tool.Range) Ranges.ClearReadings();
         ToolChanged?.Invoke();

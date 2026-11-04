@@ -33,7 +33,9 @@ sealed class TitleScreen
 
     public TitleScreen(Main main, Settings cfg, Library lib, IPlatform platform)
     {
-        _main = main; _cfg = cfg; _platform = platform;
+        _main = main;
+        _cfg = cfg;
+        _platform = platform;
         Folders = new FolderView(main, lib);
         Items = new ItemMenu(this, main, platform);
         Host = new HostPage(this, main);
@@ -74,11 +76,14 @@ sealed class TitleScreen
         if (scenarios.FirstOrDefault(x => x.s?.Sheets.Count > 0) is var first && first.s != null && ScenarioCards.Thumb(store, first.s, 1400) is { } backdrop)
             root.AddChild(Backdrop(backdrop));
         var fade = new TextureRect { AnchorRight = 1, AnchorBottom = 1, StretchMode = TextureRect.StretchModeEnum.Scale, ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize };
-        var grad = new Gradient { Offsets = new[] { 0f, 0.42f, 1f }, Colors = new[] { new Color(0.052f, 0.049f, 0.044f, 0.98f), new Color(0.052f, 0.049f, 0.044f, 0.75f), new Color(0.052f, 0.049f, 0.044f, 0.35f) } };
+        var grad =
+            new Gradient { Offsets = new[] { 0f, 0.42f, 1f },
+                Colors = new[] { new Color(0.052f, 0.049f, 0.044f, 0.98f), new Color(0.052f, 0.049f, 0.044f, 0.75f), new Color(0.052f, 0.049f, 0.044f, 0.35f) } };
         fade.Texture = new GradientTexture2D { Gradient = grad, Width = 256, Height = 4 };
         root.AddChild(fade);
 
-        var leftRoom = new ScrollContainer { OffsetLeft = 72, OffsetTop = 64, OffsetRight = 72 + 360, AnchorBottom = 1, OffsetBottom = -48, HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled };
+        var leftRoom =
+            new ScrollContainer { OffsetLeft = 72, OffsetTop = 64, OffsetRight = 72 + 360, AnchorBottom = 1, OffsetBottom = -48, HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled };
         var left = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ExpandFill };
         left.AddThemeConstantOverride("separation", 4);
         leftRoom.AddChild(left);
@@ -101,13 +106,15 @@ sealed class TitleScreen
         int iw = img.GetWidth(), ih = img.GetHeight();
         for (int y = 0; y < ih; y++) for (int x = 0; x < iw; x++)
         {
-            var c = img.GetPixel(x, y); var l = c.Luminance;
+            var c = img.GetPixel(x, y);
+            var l = c.Luminance;
             float k = l > 0.45f ? (0.45f + (l - 0.45f) * 0.25f) / Mathf.Max(l, 0.001f) : 1f;
             float ex = (x + 0.5f) / iw * 2 - 1, ey = (y + 0.5f) / ih * 2 - 1;
             float edge = 1f - 0.45f * Mathf.Clamp((ex * ex + ey * ey - 0.35f) / 0.9f, 0f, 1f);
             img.SetPixel(x, y, new Color(l, l * 0.97f, l * 0.9f).Lerp(c, 0.25f) * (0.42f * k * edge));
         }
-        return new TextureRect { Texture = ImageTexture.CreateFromImage(img), ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize, StretchMode = TextureRect.StretchModeEnum.KeepAspectCovered, AnchorRight = 1, AnchorBottom = 1 };
+        return new TextureRect { Texture = ImageTexture.CreateFromImage(img), ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize, StretchMode = TextureRect.StretchModeEnum.KeepAspectCovered,
+            AnchorRight = 1, AnchorBottom = 1 };
     }
 
     void Menu(VBoxContainer left, PackageStore store, List<(string id, string path, Scenario? s)> scenarios)
@@ -149,7 +156,8 @@ sealed class TitleScreen
         var portHead = new Label { Text = "PORT FOR HOSTING", Modulate = Muted, MouseFilter = Control.MouseFilterEnum.Pass, TooltipText = "The UDP port people connect to when you host; Invite says which, with your address" };
         portHead.AddThemeFontSizeOverride("font_size", 11);
         left.AddChild(portHead);
-        var port = new LineEdit { Text = _cfg.Port.ToString(System.Globalization.CultureInfo.InvariantCulture), CustomMinimumSize = new Vector2(100, 0), SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin };
+        var port =
+            new LineEdit { Text = _cfg.Port.ToString(System.Globalization.CultureInfo.InvariantCulture), CustomMinimumSize = new Vector2(100, 0), SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin };
         port.TextChanged += t => { if (int.TryParse(t, out var p) && p is > 1023 and < 65536) _cfg.Port = p; };
         left.AddChild(port);
         Status = new Label { AutowrapMode = TextServer.AutowrapMode.WordSmart, Modulate = Ui.AccentInk, CustomMinimumSize = new Vector2(320, 0) };
@@ -185,7 +193,9 @@ sealed class TitleScreen
 
     void NavItem(VBoxContainer col, string text, Action open)
     {
-        var b = new Button { Text = text, Flat = false, Alignment = HorizontalAlignment.Left, FocusMode = Control.FocusModeEnum.None, ToggleMode = true, CustomMinimumSize = new Vector2(264, 42), SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin };
+        var b =
+            new Button { Text = text, Flat = false, Alignment = HorizontalAlignment.Left, FocusMode = Control.FocusModeEnum.None, ToggleMode = true, CustomMinimumSize = new Vector2(264, 42),
+                SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin };
         b.AddThemeFontOverride("font", SansMedium());
         b.AddThemeFontSizeOverride("font_size", 16);
         b.AddThemeColorOverride("font_color", Muted);
@@ -203,7 +213,10 @@ sealed class TitleScreen
         col.AddChild(b);
     }
 
-    public void Select(int i) { for (int k = 0; k < _nav.Count; k++) _nav[k].SetPressedNoSignal(k == i); }
+    public void Select(int i)
+    {
+        for (int k = 0; k < _nav.Count; k++) _nav[k].SetPressedNoSignal(k == i);
+    }
 
     public VBoxContainer NewPage(string heading, string sub)
     {

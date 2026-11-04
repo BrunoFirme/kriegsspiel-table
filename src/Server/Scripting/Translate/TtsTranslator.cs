@@ -88,7 +88,8 @@ public static class TtsTranslator
 
         public Rewriter(TranslateResult res, TranslateContext ctx, SyntaxNode root)
         {
-            _res = res; _ctx = ctx;
+            _res = res;
+            _ctx = ctx;
             foreach (var f in root.DescendantNodes().OfType<IdentifierKeyedTableFieldSyntax>())
             {
                 var key = f.Identifier.Text;
@@ -119,7 +120,8 @@ public static class TtsTranslator
 
         static (string type, double scale) SpawnShape(FunctionCallExpressionSyntax spawn)
         {
-            string type = "Custom_Token"; double scale = 1;
+            string type = "Custom_Token";
+            double scale = 1;
             if (Args(spawn).FirstOrDefault() is TableConstructorExpressionSyntax t)
             {
                 foreach (var f in t.Fields.OfType<IdentifierKeyedTableFieldSyntax>())
@@ -130,7 +132,8 @@ public static class TtsTranslator
                         foreach (var sf in st.Fields)
                         {
                             string? text = sf switch { IdentifierKeyedTableFieldSyntax k when k.Identifier.Text == "x" => k.Value.ToString(), UnkeyedTableFieldSyntax u => u.Value.ToString(), _ => null };
-                            if (text != null && double.TryParse(text.Trim(), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var v)) { scale = v; break; }
+                            if (text != null && double.TryParse(text.Trim(), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture,
+                                out var v)) { scale = v; break; }
                         }
                     }
                 }
@@ -546,11 +549,13 @@ public static class TtsTranslator
 
         static string Prelude(List<string> pars, List<string> values)
         {
-            var names = new List<string>(); var vals = new List<string>();
+            var names = new List<string>();
+            var vals = new List<string>();
             for (int i = 0; i < pars.Count && i < values.Count; i++)
             {
                 if (pars[i] == "..." || pars[i].Length == 0) continue;
-                names.Add(pars[i]); vals.Add(values[i]);
+                names.Add(pars[i]);
+                vals.Add(values[i]);
             }
             return names.Count == 0 ? "" : $"local {string.Join(", ", names)} = {string.Join(", ", vals)}";
         }

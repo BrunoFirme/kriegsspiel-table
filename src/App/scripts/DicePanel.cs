@@ -56,15 +56,23 @@ sealed class DicePanel : HudPart
                 .Select(e => (Command)new RollDice { Count = e.Value, Sides = e.Key }).ToList();
             if (items.Count == 0) items.Add(new RollDice { Count = 1, Sides = 6 });
             _fresh = true;
-            if (items.Count == 1) S.Do(items[0]); else S.Do(new Batch { Items = items });
+            if (items.Count == 1) S.Do(items[0]);
+            else S.Do(new Batch { Items = items });
         }
         var row = new HBoxContainer();
         row.AddThemeConstantOverride("separation", 4);
-        var clear = Btn("Clear", () => { pool.Clear(); line.Text = Spell(); _results.Visible = false; Panel.Fit(); }, "empty the hand");
+        var clear = Btn("Clear", () =>
+        {
+            pool.Clear();
+            line.Text = Spell();
+            _results.Visible = false;
+            Panel.Fit();
+        }, "empty the hand");
         clear.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
         var roll = Ui.Primary("Roll", Roll, "every umpire sees the roll in the Log");
         roll.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
-        row.AddChild(clear); row.AddChild(roll);
+        row.AddChild(clear);
+        row.AddChild(roll);
         box.AddChild(row);
         box.AddChild(_results);
         var table = Btn("Dice to throw on the table…", () => ShowTableDice?.Invoke(), "The dice pieces: drag them onto the table, pick them up and throw them");

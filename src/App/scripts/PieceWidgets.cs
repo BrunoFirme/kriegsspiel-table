@@ -39,7 +39,9 @@ sealed class PieceWidgets
     {
         var key = c.ToHtml();
         if (!WidgetMats.TryGetValue(key, out var m))
-            WidgetMats[key] = m = new StandardMaterial3D { AlbedoColor = c, ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded, Transparency = BaseMaterial3D.TransparencyEnum.Alpha, CullMode = BaseMaterial3D.CullModeEnum.Disabled, RenderPriority = 2 };
+            WidgetMats[key] = m =
+                new StandardMaterial3D { AlbedoColor = c, ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded, Transparency = BaseMaterial3D.TransparencyEnum.Alpha,
+                    CullMode = BaseMaterial3D.CullModeEnum.Disabled, RenderPriority = 2 };
         return m;
     }
 
@@ -48,9 +50,17 @@ sealed class PieceWidgets
     public void Sync(bool force)
     {
         var piece = _piece.Piece;
-        if (!_piece.Lettered) { if (_nodes.Count > 0) Clear(); _built = null; _builtState = -1; return; }
+        if (!_piece.Lettered)
+        {
+            if (_nodes.Count > 0) Clear();
+            _built = null;
+            _builtState = -1;
+            return;
+        }
         if (!force && ReferenceEquals(_built, piece.Widgets) && _builtFaceDown == piece.FaceDown && _builtState == piece.State) return;
-        _built = piece.Widgets; _builtFaceDown = piece.FaceDown; _builtState = piece.State;
+        _built = piece.Widgets;
+        _builtFaceDown = piece.FaceDown;
+        _builtState = piece.State;
         Clear();
         if (_piece.Def?.Kind == "model" || _piece.IsDie || _piece.IsEffect) return;
         if (!_piece.ScriptDrawingShows) return;
@@ -193,7 +203,8 @@ sealed class PieceWidgets
             AlbedoColor = text.Luminance > LightText ? DarkPlate : LightPlate, ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded,
             Transparency = BaseMaterial3D.TransparencyEnum.Alpha, CullMode = BaseMaterial3D.CullModeEnum.Disabled, RenderPriority = PlatePriority,
         };
-        l.AddChild(new MeshInstance3D { Mesh = new QuadMesh { Size = size }, MaterialOverride = mat, Position = new Vector3(0, 0, -PlateBehind), CastShadow = GeometryInstance3D.ShadowCastingSetting.Off });
+        l.AddChild(new MeshInstance3D { Mesh = new QuadMesh { Size = size }, MaterialOverride = mat, Position = new Vector3(0, 0, -PlateBehind),
+            CastShadow = GeometryInstance3D.ShadowCastingSetting.Off });
     }
 
     public void SetEditText(int index, string text) { _editWidget = index; _editText = text; }

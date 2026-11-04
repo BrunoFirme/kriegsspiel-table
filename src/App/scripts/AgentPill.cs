@@ -29,7 +29,8 @@ sealed class AgentPill
         _row = new HBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
         _row.AddThemeConstantOverride("separation", 6);
         _row.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
-        _row.OffsetLeft = PillPadding / 2; _row.OffsetRight = -PillPadding / 2;
+        _row.OffsetLeft = PillPadding / 2;
+        _row.OffsetRight = -PillPadding / 2;
         _dot = new TextureRect
         {
             Texture = Ui.Dot, CustomMinimumSize = new Vector2(DotSize, DotSize), StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,

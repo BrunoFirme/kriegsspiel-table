@@ -36,8 +36,16 @@ sealed class ReliefPanel : HudPart
 
     Button Choice(string text, string mode, string tip)
     {
-        var b = new Button { Text = text, ToggleMode = true, ButtonPressed = Cfg.ReliefMode == mode, FocusMode = Control.FocusModeEnum.None, TooltipText = tip, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, CustomMinimumSize = new Vector2(0, 26) };
-        b.Pressed += () => { Cfg.ReliefMode = mode; Cfg.Save(); if (T.Tool != Tool.Relief) T.SetTool(Tool.Relief); Rebuild(); };
+        var b =
+            new Button { Text = text, ToggleMode = true, ButtonPressed = Cfg.ReliefMode == mode, FocusMode = Control.FocusModeEnum.None, TooltipText = tip,
+                SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, CustomMinimumSize = new Vector2(0, 26) };
+        b.Pressed += () =>
+        {
+            Cfg.ReliefMode = mode;
+            Cfg.Save();
+            if (T.Tool != Tool.Relief) T.SetTool(Tool.Relief);
+            Rebuild();
+        };
         return b;
     }
 
@@ -61,11 +69,20 @@ sealed class ReliefPanel : HudPart
             var name = GroundKinds.All[i].Name;
             var mode = "paint:" + name;
             var col = Color.FromHtml(GroundKinds.Color((byte)i, S.View.Lighting.MapStyle));
-            var b = new Button { ToggleMode = true, ButtonPressed = Cfg.ReliefMode == mode, FocusMode = Control.FocusModeEnum.None, TooltipText = Title(name), CustomMinimumSize = new Vector2(30, 24), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+            var b =
+                new Button { ToggleMode = true, ButtonPressed = Cfg.ReliefMode == mode, FocusMode = Control.FocusModeEnum.None, TooltipText = Title(name), CustomMinimumSize = new Vector2(30, 24),
+                    SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
             var box = new StyleBoxFlat { BgColor = col, BorderColor = Cfg.ReliefMode == mode ? Ui.AccentInk : new Color(0, 0, 0, 0.45f) };
-            box.SetBorderWidthAll(Cfg.ReliefMode == mode ? 2 : 1); box.SetCornerRadiusAll(3);
+            box.SetBorderWidthAll(Cfg.ReliefMode == mode ? 2 : 1);
+            box.SetCornerRadiusAll(3);
             foreach (var st in new[] { "normal", "hover", "pressed", "focus" }) b.AddThemeStyleboxOverride(st, box);
-            b.Pressed += () => { Cfg.ReliefMode = mode; Cfg.Save(); if (T.Tool != Tool.Relief) T.SetTool(Tool.Relief); Rebuild(); };
+            b.Pressed += () =>
+            {
+                Cfg.ReliefMode = mode;
+                Cfg.Save();
+                if (T.Tool != Tool.Relief) T.SetTool(Tool.Relief);
+                Rebuild();
+            };
             grid.AddChild(b);
         }
         var clear = Choice("✕", "paint:none", "Rub out painted ground");
@@ -85,8 +102,16 @@ sealed class ReliefPanel : HudPart
         row.AddThemeConstantOverride("separation", 3);
         foreach (var (text, fill, tip) in new[] { ("Brush", false, "Drag to paint"), ("Fill", true, "Click to fill the patch of ground clicked, up to other ground types, or a bare sheet whole") })
         {
-            var b = new Button { Text = text, ToggleMode = true, ButtonPressed = Cfg.ReliefFill == fill, FocusMode = Control.FocusModeEnum.None, TooltipText = tip, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, CustomMinimumSize = new Vector2(0, 26) };
-            b.Pressed += () => { Cfg.ReliefFill = fill; Cfg.Save(); if (T.Tool != Tool.Relief) T.SetTool(Tool.Relief); Rebuild(); };
+            var b =
+                new Button { Text = text, ToggleMode = true, ButtonPressed = Cfg.ReliefFill == fill, FocusMode = Control.FocusModeEnum.None, TooltipText = tip,
+                    SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, CustomMinimumSize = new Vector2(0, 26) };
+            b.Pressed += () =>
+            {
+                Cfg.ReliefFill = fill;
+                Cfg.Save();
+                if (T.Tool != Tool.Relief) T.SetTool(Tool.Relief);
+                Rebuild();
+            };
             row.AddChild(b);
         }
         _box.AddChild(row);
@@ -101,11 +126,14 @@ sealed class ReliefPanel : HudPart
             var row = new HBoxContainer();
             row.AddThemeConstantOverride("separation", 4);
             row.AddChild(new Label { Text = label, CustomMinimumSize = new Vector2(54, 0), SizeFlagsVertical = Control.SizeFlags.ShrinkCenter });
-            var s = new HSlider { MinValue = min, MaxValue = max, Step = step, Value = value, ExpEdit = exp, CustomMinimumSize = new Vector2(80, 0), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, TooltipText = tip };
+            var s =
+                new HSlider { MinValue = min, MaxValue = max, Step = step, Value = value, ExpEdit = exp, CustomMinimumSize = new Vector2(80, 0), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+                    SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, TooltipText = tip };
             var v = new Label { Text = show(value), CustomMinimumSize = new Vector2(42, 0), HorizontalAlignment = HorizontalAlignment.Right, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter };
             s.ValueChanged += x => { v.Text = show(x); set(x); };
             s.DragEnded += _ => Cfg.Save();
-            row.AddChild(s); row.AddChild(v);
+            row.AddChild(s);
+            row.AddChild(v);
             _box.AddChild(row);
             return s;
         }

@@ -104,7 +104,8 @@ public sealed partial class ScriptHost
     {
         UnloadAll();
         var pieces = _s.State.Layer(Layers.Umpire).ToList();
-        Volatile.Write(ref _loadTotal, pieces.Count); Volatile.Write(ref _loadDone, 0);
+        Volatile.Write(ref _loadTotal, pieces.Count);
+        Volatile.Write(ref _loadDone, 0);
         bool mine = BeginRedraw(pieces, clearUndrawn: false);
         try
         {
@@ -160,7 +161,8 @@ public sealed partial class ScriptHost
 
     void EndRedraw()
     {
-        var rd = _redraw; _redraw = null;
+        var rd = _redraw;
+        _redraw = null;
         if (rd == null || _reaction is not { } r) return;
         bool globalOk = !rd.ForGlobal || (_global != null ? ScriptOk(_global) : _s.State.Script == null);
         foreach (var (id, saved) in rd.Saved)
@@ -276,7 +278,11 @@ public sealed partial class ScriptHost
     void UnloadAll()
     {
         _timers.Clear();
-        _pieces.Clear(); _global = null; _handles.Clear(); _feed.ForgetAll(); _saves.Clear();
+        _pieces.Clear();
+        _global = null;
+        _handles.Clear();
+        _feed.ForgetAll();
+        _saves.Clear();
         _drawing.Clear();
         if (_compatBooks != null) foreach (var k in _compatBooks.Keys.ToList()) _compatBooks.Set(k, DynValue.Nil);
         if (_controls.Clear() && _reaction != null) { _reaction.HotkeysDirty = true; _reaction.GlobalMenuDirty = true; }
@@ -287,12 +293,22 @@ public sealed partial class ScriptHost
         UnloadScript(id);
         _drawing.Forget(id, pieceGone);
         _compatBooks?.Set(id, DynValue.Nil);
-        if (pieceGone) { _handles.Forget(id); _uiTables.Remove(id); _compatProps?.Set(id, DynValue.Nil); }
+        if (pieceGone)
+        {
+            _handles.Forget(id);
+            _uiTables.Remove(id);
+            _compatProps?.Set(id, DynValue.Nil);
+        }
     }
 
     void UnloadScript(string id)
     {
-        if (_pieces.Remove(id, out var ps)) { ForgetOwner(ps); _saves.Asked(ps); _timers.DropResumes(ps); }
+        if (_pieces.Remove(id, out var ps))
+        {
+            ForgetOwner(ps);
+            _saves.Asked(ps);
+            _timers.DropResumes(ps);
+        }
         _timers.RemoveWhere(t => t.Owner.Id == id);
     }
 
@@ -309,7 +325,8 @@ public sealed partial class ScriptHost
     {
         bool redrawn = _redraw?.Saved.ContainsKey(p.Id) == true;
         _feed.Forget(p.Id);
-        if (redrawn) UnloadScript(p.Id); else Unload(p.Id, pieceGone: false);
+        if (redrawn) UnloadScript(p.Id);
+        else Unload(p.Id, pieceGone: false);
         var code = CodeFor(p);
         if (string.IsNullOrWhiteSpace(code)) return;
         var compiled = Compiled.For(code);
@@ -329,7 +346,8 @@ public sealed partial class ScriptHost
 
     void UnderLoadBudget(Action body)
     {
-        var saved = _guards.BudgetMs; _guards.BudgetMs = LoadBudgetMs;
+        var saved = _guards.BudgetMs;
+        _guards.BudgetMs = LoadBudgetMs;
         try { body(); } finally { _guards.BudgetMs = saved; }
     }
 
@@ -393,7 +411,12 @@ public sealed partial class ScriptHost
     internal DynValue? Call(PieceScript ps, string fn, params DynValue[] args)
     {
         if (!ps.Enabled) return null;
-        if (fn.StartsWith("global:")) { if (_global == null) return null; ps = _global; fn = fn[7..]; }
+        if (fn.StartsWith("global:"))
+        {
+            if (_global == null) return null;
+            ps = _global;
+            fn = fn[7..];
+        }
         var f = ps.Env.Get(fn);
         return f.Type == DataType.Function ? Invoke(ps, f, args) : null;
     }
@@ -403,7 +426,8 @@ public sealed partial class ScriptHost
         if (!ps.Enabled || fn.Type != DataType.Function) return null;
         if (_guards.Nesting >= MaxNesting) throw new ScriptRuntimeException($"calls inside calls more than {MaxNesting} deep (a script calling itself through game.call or obj.call?)");
         MarkRan(ps);
-        var saved = _current; _current = ps;
+        var saved = _current;
+        _current = ps;
         try
         {
             var co = _guards.Worker(fn, args);
@@ -415,7 +439,8 @@ public sealed partial class ScriptHost
     DynValue? Resume(PieceScript ps, DynValue co)
     {
         MarkRan(ps);
-        var saved = _current; _current = ps;
+        var saved = _current;
+        _current = ps;
         try { return Drive(ps, co); }
         finally { _current = saved; }
     }
@@ -436,7 +461,8 @@ public sealed partial class ScriptHost
                 var over = g.Elapsed > g.Deadline ? $"more than {g.BudgetMs:0} ms" : g.OverMemory() ? ScriptGuards.MemoryOverrun : null;
                 if (over != null)
                 {
-                    ps.Enabled = false; ps.Faulted = true;
+                    ps.Enabled = false;
+                    ps.Faulted = true;
                     if (ps == _snippetPs) Error(ps.Id, $"stopped: {over}", console: true);
                     else Error(ps.Id, $"stopped: {over} in one call; the script is off until it is reloaded");
                     return null;
@@ -447,11 +473,17 @@ public sealed partial class ScriptHost
             if (co.Coroutine.State == CoroutineState.Suspended)
             {
                 if (g.Finished(r, out var result)) { g.Release(co); return result; }
-                _timers.ResumeNextFrame(ps, co); return null;
+                _timers.ResumeNextFrame(ps, co);
+                return null;
             }
             return r;
         }
-        catch (InterpreterException e) { ps.Faulted = true; Error(ps.Id, e.DecoratedMessage ?? e.Message, console: ps == _snippetPs); return null; }
+        catch (InterpreterException e)
+        {
+            ps.Faulted = true;
+            Error(ps.Id, e.DecoratedMessage ?? e.Message, console: ps == _snippetPs);
+            return null;
+        }
         catch (Exception e)
         {
             ps.Faulted = true;
@@ -460,7 +492,12 @@ public sealed partial class ScriptHost
             else Error(ps.Id, $"stopped: {ScriptGuards.Describe(e)}; the script is off until it is reloaded");
             return null;
         }
-        finally { g.Nesting--; g.Deadline = outer; g.Leave(outerRunning); }
+        finally
+        {
+            g.Nesting--;
+            g.Deadline = outer;
+            g.Leave(outerRunning);
+        }
     }
 
     void Error(string pieceId, string message, bool console = false)
@@ -492,12 +529,20 @@ public sealed partial class ScriptHost
             return info;
         }
         var list = new List<ScriptInfo>();
-        if (_s.State.Script != null || _global != null) { var g = Info("", _global); g.Name = "Global script"; list.Add(g); }
+        if (_s.State.Script != null || _global != null)
+        {
+            var g = Info("", _global);
+            g.Name = "Global script";
+            list.Add(g);
+        }
         foreach (var p in _s.State.Layer(Layers.Umpire))
         {
             if (string.IsNullOrWhiteSpace(CodeFor(p))) continue;
             var i = Info(p.Id, _pieces.GetValueOrDefault(p.Id));
-            i.Name = NameOf(p.Id); i.Guid = p.Guid; i.Def = p.Def; i.Own = p.Script != null;
+            i.Name = NameOf(p.Id);
+            i.Guid = p.Guid;
+            i.Def = p.Def;
+            i.Own = p.Script != null;
             list.Add(i);
         }
         return list;
@@ -509,7 +554,12 @@ public sealed partial class ScriptHost
         if (target.Length > 0)
         {
             var p = Find(target) ?? _s.State.Layer(Layers.Umpire).FirstOrDefault(x => x.Guid == target);
-            if (p == null) { Print(code, "input", target); Print($"no piece {target} on the umpire board", "error", target); return new(); }
+            if (p == null)
+            {
+                Print(code, "input", target);
+                Print($"no piece {target} on the umpire board", "error", target);
+                return new();
+            }
             pieceId = p.Id;
         }
         var src = pieceId ?? "";
@@ -521,7 +571,8 @@ public sealed partial class ScriptHost
         var env = real?.Env ?? NewEnv();
         if (real == null) env["self"] = pieceId != null ? Handle(pieceId) : DynValue.Nil;
         var temp = new PieceScript { Id = src, Env = env, Source = verdict.Script };
-        var outer = _snippetPs; _snippetPs = temp;
+        var outer = _snippetPs;
+        _snippetPs = temp;
         try
         {
             return Run(actor, true, () =>
@@ -611,13 +662,21 @@ public sealed partial class ScriptHost
     internal void Emit(Command c)
     {
         var r = _reaction ?? throw new ScriptRuntimeException("not inside a script call");
-        if (c is DeletePiece d && Find(d.Id) != null && _depth < MaxDepth) { _depth++; try { Before(c); } finally { _depth--; } }
+        if (c is DeletePiece d && Find(d.Id) != null && _depth < MaxDepth)
+        {
+            _depth++;
+            try { Before(c); } finally { _depth--; }
+        }
         var (err, inverse) = _s.ApplyEmitted(c, r.Actor);
         if (err != null) throw new ScriptRuntimeException(err);
         r.Items.Add(c);
         r.Inverses.Add(inverse);
         if (c is SpawnPiece sp && sp.Id != null) r.Spawned.Add(sp.Id);
-        if (_depth < MaxDepth && c is not Say) { _depth++; try { React(c, r.Actor); } finally { _depth--; } }
+        if (_depth < MaxDepth && c is not Say)
+        {
+            _depth++;
+            try { React(c, r.Actor); } finally { _depth--; }
+        }
     }
 
     void FlushStaging()
@@ -629,7 +688,8 @@ public sealed partial class ScriptHost
         foreach (var id in r.MenusDirty.ToList())
             if (_drawing.TryMenus(id, out var ms) && _s.State.Find(Layers.Umpire, id) != null)
                 Guard(id, () => Emit(new SetMenuItems { Layer = Layers.Umpire, Id = id, Items = ms.Select(m => m.Clone()).ToList(), OnState = _drawing.IsFromLoad(id) ? 0 : -1 }));
-        r.WidgetsDirty.Clear(); r.MenusDirty.Clear();
+        r.WidgetsDirty.Clear();
+        r.MenusDirty.Clear();
         _drawing.ClearFromLoad();
         if (r.HotkeysDirty) { r.HotkeysDirty = false; Guard("", () => Emit(new SetHotkeys { Items = _controls.HotkeyDefs() })); }
         if (r.GlobalMenuDirty) { r.GlobalMenuDirty = false; Guard("", () => Emit(new SetGlobalMenuItems { Items = _controls.MenuDefs() })); }
@@ -648,7 +708,9 @@ public sealed partial class ScriptHost
     {
         switch (c)
         {
-            case Batch b: foreach (var i in b.Items) Before(i); break;
+            case Batch b:
+                foreach (var i in b.Items) Before(i);
+                break;
             case DeletePiece d:
                 if (_pieces.TryGetValue(d.Id, out var ps)) Call(ps, "on_destroy");
                 if (_global != null) Call(_global, "on_destroy", Handle(d.Id));
@@ -683,11 +745,22 @@ public sealed partial class ScriptHost
         var who = Who(actor);
         switch (c)
         {
-            case Batch b: foreach (var i in b.Items) React(i, actor); break;
-            case RestoreTurn or LoadSave: LoadAll(); break;
-            case SetGlobalScript: ReloadGlobal(); break;
-            case SetScript ss: if (Find(ss.Id) is { } p1) LoadPiece(p1); else Unload(ss.Id, pieceGone: true); break;
-            case SetDef sd when Find(sd.Id) is { Script: null } pd: LoadPiece(pd); break;
+            case Batch b:
+                foreach (var i in b.Items) React(i, actor);
+                break;
+            case RestoreTurn or LoadSave:
+                LoadAll();
+                break;
+            case SetGlobalScript:
+                ReloadGlobal();
+                break;
+            case SetScript ss:
+                if (Find(ss.Id) is { } p1) LoadPiece(p1);
+                else Unload(ss.Id, pieceGone: true);
+                break;
+            case SetDef sd when Find(sd.Id) is { Script: null } pd:
+                LoadPiece(pd);
+                break;
             case SpawnPiece sp when sp.Id != null:
                 if (Find(sp.Id) is { } p2) { LoadPiece(p2); if (_global != null) Call(_global, "on_spawn", Handle(sp.Id)); }
                 break;
@@ -726,43 +799,52 @@ public sealed partial class ScriptHost
                 {
                     var staged = Staging(ew.Id);
                     if (ew.Index <= staged.Count) staged[ew.Index - 1].Value = ew.Value;
-                    if (pe.Widgets[ew.Index - 1].OnChange is { } fn2 && HandlerOwner(ew.Id, fn2) is ({ } pew, var efn)) Call(pew, efn, who, DynValue.NewString(ew.Value), DynValue.NewNumber(ew.Index), Handle(ew.Id));
+                    if (pe.Widgets[ew.Index - 1].OnChange is { } fn2 && HandlerOwner(ew.Id, fn2) is ({ } pew, var efn)) Call(pew, efn, who, DynValue.NewString(ew.Value), DynValue.NewNumber(ew.Index),
+                        Handle(ew.Id));
                 }
                 break;
-            case UiEvent ue: UiEventReact(ue, who); break;
-            case DialogResult dr: DialogReact(dr, who); break;
+            case UiEvent ue:
+                UiEventReact(ue, who);
+                break;
+            case DialogResult dr:
+                DialogReact(dr, who);
+                break;
             case PickMenuItem pm2:
                 if (Find(pm2.Id) is { } pp && pm2.Index >= 1 && pm2.Index <= pp.MenuItems.Count && pp.MenuItems[pm2.Index - 1].OnSelect is { } fn3 && HandlerOwner(pm2.Id, fn3) is ({ } ppm, var mfn3))
                     Call(ppm, mfn3, who, Handle(pm2.Id));
                 break;
             case NumberTyped nt:
-            {
-                if (Find(nt.Id) is not { } pnt) break;
-                var keep = _global != null && _global.Env.Get("on_number_typed").Type == DataType.Function
-                    && Call(_global, "on_number_typed", Handle(nt.Id), who, DynValue.NewNumber(nt.Number)) is { Type: DataType.Boolean, Boolean: true };
-                if (keep || Find(nt.Id) is not { } still) break;
-                var ndef = _s.Store?.Def(still.Def);
-                if (ndef != null && nt.Number >= 1 && nt.Number <= ndef.States.Count && ndef.States.Count > 1 && still.State != nt.Number - 1)
-                    try { Emit(new SetState { Layer = Layers.Umpire, Id = nt.Id, State = nt.Number - 1 }); } catch (ScriptRuntimeException e) { Error("", e.Message); }
+                ReactToNumber(nt, who);
                 break;
-            }
             case Say sy when actor != 0 && sy.To == null && _global != null:
                 Call(_global, "on_chat", DynValue.NewString(sy.Text), who);
                 break;
             case Hotkey hk:
-            {
-                _controls.Pointed(actor, hk.Selected.ToList(), hk.Piece);
-                if (_controls.Hotkey(hk.Index) is { } hot)
-                {
-                    var (owner, hfn, onUp) = hot;
-                    if (!hk.Up || onUp) Invoke(owner, hfn, who, hk.Piece != null && Find(hk.Piece) != null ? Handle(hk.Piece) : DynValue.Nil, PosTable(hk.Pos), DynValue.NewBoolean(hk.Up));
-                }
+                ReactToHotkey(hk, actor, who);
                 break;
-            }
             case PickGlobalMenuItem pgm:
                 if (_controls.MenuRow(pgm.Index) is { } row) Invoke(row.owner, row.fn, who, PosTable(pgm.Pos));
                 break;
         }
+    }
+
+    void ReactToNumber(NumberTyped nt, DynValue who)
+    {
+        if (Find(nt.Id) == null) return;
+        var keep = _global != null && _global.Env.Get("on_number_typed").Type == DataType.Function
+            && Call(_global, "on_number_typed", Handle(nt.Id), who, DynValue.NewNumber(nt.Number)) is { Type: DataType.Boolean, Boolean: true };
+        if (keep || Find(nt.Id) is not { } still) return;
+        var ndef = _s.Store?.Def(still.Def);
+        if (ndef != null && nt.Number >= 1 && nt.Number <= ndef.States.Count && ndef.States.Count > 1 && still.State != nt.Number - 1)
+            try { Emit(new SetState { Layer = Layers.Umpire, Id = nt.Id, State = nt.Number - 1 }); } catch (ScriptRuntimeException e) { Error("", e.Message); }
+    }
+
+    void ReactToHotkey(Hotkey hk, long actor, DynValue who)
+    {
+        _controls.Pointed(actor, hk.Selected.ToList(), hk.Piece);
+        if (_controls.Hotkey(hk.Index) is not { } hot) return;
+        var (owner, hfn, onUp) = hot;
+        if (!hk.Up || onUp) Invoke(owner, hfn, who, hk.Piece != null && Find(hk.Piece) != null ? Handle(hk.Piece) : DynValue.Nil, PosTable(hk.Pos), DynValue.NewBoolean(hk.Up));
     }
 
     (PieceScript? ps, string fn) HandlerOwner(string id, string fn)

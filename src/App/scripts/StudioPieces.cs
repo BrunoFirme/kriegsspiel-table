@@ -59,7 +59,12 @@ internal sealed class PieceList
     public void Show(PieceDef? d)
     {
         if (d == null) { _list.DeselectAll(); return; }
-        for (int i = 0; i < _list.ItemCount; i++) if (_list.GetItemMetadata(i).AsString() == d.Id) { _list.Select(i); _list.EnsureCurrentIsVisible(); break; }
+        for (int i = 0; i < _list.ItemCount; i++) if (_list.GetItemMetadata(i).AsString() == d.Id)
+        {
+            _list.Select(i);
+            _list.EnsureCurrentIsVisible();
+            break;
+        }
     }
 
     public void Rebuild(PieceDef? sel)
@@ -67,7 +72,9 @@ internal sealed class PieceList
         int gen = ++_listGen;
         _list.Clear();
         var q = _search.Text.Trim();
-        foreach (var d in Pack.Pieces.Where(d => q.Length == 0 || d.Name.Contains(q, StringComparison.OrdinalIgnoreCase) || d.Tags.Any(t => t.Contains(q, StringComparison.OrdinalIgnoreCase))).OrderBy(d => d.Name, StringComparer.OrdinalIgnoreCase))
+        foreach (var d in Pack.Pieces.Where(d => q.Length == 0 || d.Name.Contains(q,
+            StringComparison.OrdinalIgnoreCase) || d.Tags.Any(t => t.Contains(q, StringComparison.OrdinalIgnoreCase))).OrderBy(d => d.Name,
+            StringComparer.OrdinalIgnoreCase))
         {
             int idx = _list.AddItem(d.Name, Ui.LoadingIcon);
             _list.SetItemMetadata(idx, d.Id);
@@ -112,17 +119,28 @@ internal sealed class PieceList
     void ShowMenu(Vector2 at, PieceDef d)
     {
         var pm = new PopupMenu();
-        pm.AddItem("Paint", 1); pm.AddItem("Show on the table", 2);
+        pm.AddItem("Paint", 1);
+        pm.AddItem("Show on the table", 2);
         pm.AddSeparator();
-        pm.AddItem("Duplicate", 3); pm.AddItem("Delete", 4);
+        pm.AddItem("Duplicate", 3);
+        pm.AddItem("Delete", 4);
         pm.IdPressed += id =>
         {
             switch (id)
             {
-                case 1: _s.SetView(d.Kind == "model" ? "model" : "paint"); break;
-                case 2: _s.SetView("table"); if (_s.Paper.Instance(d) is { } p) _s.T.Rig.Frame(Coords.ToWorld(p.Pos), (float)Math.Max(6, Math.Max(d.Size.W, d.Size.H) * 4)); break;
-                case 3: _s.DuplicateSel(d); break;
-                case 4: _s.DeleteSel(d); break;
+                case 1:
+                    _s.SetView(d.Kind == "model" ? "model" : "paint");
+                    break;
+                case 2:
+                    _s.SetView("table");
+                    if (_s.Paper.Instance(d) is { } p) _s.T.Rig.Frame(Coords.ToWorld(p.Pos), (float)Math.Max(6, Math.Max(d.Size.W, d.Size.H) * 4));
+                    break;
+                case 3:
+                    _s.DuplicateSel(d);
+                    break;
+                case 4:
+                    _s.DeleteSel(d);
+                    break;
             }
         };
         pm.PopupHide += () => pm.QueueFree();

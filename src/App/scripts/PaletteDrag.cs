@@ -11,7 +11,13 @@ sealed class PaletteDrag
     readonly PieceLayer _pieces;
     readonly Selection _selection;
     readonly Carry _hand;
-    public PaletteDrag(TableContext c, PieceLayer pieces, Selection selection, Carry hand) { _c = c; _pieces = pieces; _selection = selection; _hand = hand; }
+    public PaletteDrag(TableContext c, PieceLayer pieces, Selection selection, Carry hand)
+    {
+        _c = c;
+        _pieces = pieces;
+        _selection = selection;
+        _hand = hand;
+    }
 
     string? _def;
     Func<Vector2, bool> _overDrawer = _ => false;
@@ -51,7 +57,9 @@ sealed class PaletteDrag
         if (_def == null) return;
         var made = _made;
         bool inHand = _inHand && _hand.Holding;
-        _def = null; _made = null; _inHand = false;
+        _def = null;
+        _made = null;
+        _inHand = false;
         if (made == null) return;
         if (inHand) { if (drop) _hand.Drop(); else _hand.PutBack(); }
         else if (!drop) _c.S.Do(new DeletePiece { Layer = Layers.Umpire, Id = made });

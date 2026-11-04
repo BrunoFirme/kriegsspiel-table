@@ -43,7 +43,8 @@ internal sealed class ModelHistory
 
     public bool EndStroke(IReadOnlyDictionary<string, ModelPartView> views)
     {
-        var changed = _stroke.Where(s => views.TryGetValue(s.part, out var v) && !s.before.AsSpan().SequenceEqual(v.Paint)).Select(s => (s.part, s.before, (byte[]?)(byte[])views[s.part].Paint.Clone())).ToList();
+        var changed = _stroke.Where(s => views.TryGetValue(s.part, out var v) && !s.before.AsSpan().SequenceEqual(v.Paint))
+            .Select(s => (s.part, s.before, (byte[]?)(byte[])views[s.part].Paint.Clone())).ToList();
         _stroke.Clear();
         if (changed.Count == 0) return false;
         Add(changed);
@@ -62,12 +63,20 @@ internal sealed class ModelHistory
 
     void Push(object step)
     {
-        _undo.Add(step); _undoAt.Add(StudioClock.Next());
-        _redo.Clear(); _redoAt.Clear();
+        _undo.Add(step);
+        _undoAt.Add(StudioClock.Next());
+        _redo.Clear();
+        _redoAt.Clear();
         Trim();
     }
 
-    public void Clear() { _undo.Clear(); _redo.Clear(); _undoAt.Clear(); _redoAt.Clear(); }
+    public void Clear()
+    {
+        _undo.Clear();
+        _redo.Clear();
+        _undoAt.Clear();
+        _redoAt.Clear();
+    }
 
     public void ForgetUndo() { _undo.Clear(); _undoAt.Clear(); }
 
@@ -79,7 +88,8 @@ internal sealed class ModelHistory
         var at = undo ? _undoAt : _redoAt;
         if (from.Count == 0) return null;
         var e = from[^1];
-        from.RemoveAt(from.Count - 1); at.RemoveAt(at.Count - 1);
+        from.RemoveAt(from.Count - 1);
+        at.RemoveAt(at.Count - 1);
         return e;
     }
 
@@ -98,6 +108,11 @@ internal sealed class ModelHistory
             _ => 0,
         };
         long total = _undo.Sum(Weight);
-        while (_undo.Count > 1 && (_undo.Count > 40 || total > (320L << 20))) { total -= Weight(_undo[0]); _undo.RemoveAt(0); _undoAt.RemoveAt(0); }
+        while (_undo.Count > 1 && (_undo.Count > 40 || total > (320L << 20)))
+        {
+            total -= Weight(_undo[0]);
+            _undo.RemoveAt(0);
+            _undoAt.RemoveAt(0);
+        }
     }
 }

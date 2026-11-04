@@ -61,7 +61,8 @@ sealed class PovPanel : HudPart
         {
             d.Radius = cal.ToTableUnits(v);
             radRead.Text = Fmt.Distance(d.Radius, cal);
-            d.Recompute(T); T.ShowDraft();
+            d.Recompute(T);
+            T.ShowDraft();
         };
         grid.AddChild(radRead);
     }
@@ -75,15 +76,23 @@ sealed class PovPanel : HudPart
         void SetFormat(bool square)
         {
             d.Square = square;
-            Cfg.SightingSquare = square; Cfg.Save();
-            roundB!.SetPressedNoSignal(!square); squareB!.SetPressedNoSignal(square);
-            d.Recompute(T); T.ShowDraft();
+            Cfg.SightingSquare = square;
+            Cfg.Save();
+            roundB!.SetPressedNoSignal(!square);
+            squareB!.SetPressedNoSignal(square);
+            d.Recompute(T);
+            T.ShowDraft();
         }
-        roundB = new Button { Text = "Round", ToggleMode = true, ButtonPressed = !d.Square, FocusMode = Control.FocusModeEnum.None, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, TooltipText = "A circle around the piece: what it can see, as far as it can see" };
-        squareB = new Button { Text = "Square", ToggleMode = true, ButtonPressed = d.Square, FocusMode = Control.FocusModeEnum.None, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, TooltipText = "A square around the piece, reaching as far at its edge: the shape a screenshot is" };
+        roundB =
+            new Button { Text = "Round", ToggleMode = true, ButtonPressed = !d.Square, FocusMode = Control.FocusModeEnum.None, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+                TooltipText = "A circle around the piece: what it can see, as far as it can see" };
+        squareB =
+            new Button { Text = "Square", ToggleMode = true, ButtonPressed = d.Square, FocusMode = Control.FocusModeEnum.None, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+                TooltipText = "A square around the piece, reaching as far at its edge: the shape a screenshot is" };
         roundB.Pressed += () => SetFormat(false);
         squareB.Pressed += () => SetFormat(true);
-        fmt.AddChild(roundB); fmt.AddChild(squareB);
+        fmt.AddChild(roundB);
+        fmt.AddChild(squareB);
         grid.AddChild(fmt);
     }
 
@@ -100,7 +109,8 @@ sealed class PovPanel : HudPart
         redoW.Pressed += T.RedoWall;
         traced.AddChild(undoW);
         traced.AddChild(redoW);
-        var tracedCount = new Label { Text = T.WallsTraced == 1 ? "1 line in the way" : $"{T.WallsTraced} lines in the way", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, Modulate = Ui.Muted };
+        var tracedCount =
+            new Label { Text = T.WallsTraced == 1 ? "1 line in the way" : $"{T.WallsTraced} lines in the way", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, Modulate = Ui.Muted };
         tracedCount.AddThemeFontSizeOverride("font_size", 12);
         traced.AddChild(tracedCount);
         var clearW = Btn("Clear", T.ClearOutline, "Back to the whole picture; the arrow puts it back");

@@ -23,7 +23,9 @@ public sealed class McpServer : IDisposable
 
     public McpServer(int port, string token, Func<string, Task<string?>> handle)
     {
-        _wantedPort = port; _token = Encoding.UTF8.GetBytes(token); _handle = handle;
+        _wantedPort = port;
+        _token = Encoding.UTF8.GetBytes(token);
+        _handle = handle;
     }
 
     public int Port { get; private set; }

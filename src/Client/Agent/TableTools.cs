@@ -28,7 +28,10 @@ public sealed partial class TableTools
 
     public TableTools(Func<ClientSession?> session, Func<bool> inStudio, Func<double, Task> delay, Action<string> log)
     {
-        _session = session; _inStudio = inStudio; _delay = delay; _log = log;
+        _session = session;
+        _inStudio = inStudio;
+        _delay = delay;
+        _log = log;
     }
 
     public IEnumerable<AgentTool> Tools()
@@ -148,7 +151,12 @@ public sealed partial class TableTools
         if (a.Str("kind") is { Length: > 0 } kind && kind != p.Def)
         {
             if (s.Def(kind) is not { } other) problems.Add($"no kind {kind} in this game's packs (list_kinds)");
-            else { s.Do(new SetDef { Layer = Layers.Umpire, Id = id, Def = kind }); def = other; sent.Add("kind"); }
+            else
+            {
+                s.Do(new SetDef { Layer = Layers.Umpire, Id = id, Def = kind });
+                def = other;
+                sent.Add("kind");
+            }
         }
         if (a.Num("state") is { } st)
         {
@@ -226,7 +234,8 @@ public sealed partial class TableTools
             foreach (var p in pieces)
             {
                 var name = NameOf(s, p);
-                if (filter.Length > 0 && !name.Contains(filter, StringComparison.OrdinalIgnoreCase) && !p.Def.Contains(filter, StringComparison.OrdinalIgnoreCase) && !p.Id.Contains(filter, StringComparison.OrdinalIgnoreCase)) continue;
+                if (filter.Length > 0 && !name.Contains(filter, StringComparison.OrdinalIgnoreCase) && !p.Def.Contains(filter, StringComparison.OrdinalIgnoreCase) && !p.Id.Contains(filter,
+                    StringComparison.OrdinalIgnoreCase)) continue;
                 if (++total > limit) continue;
                 rows.Add(new JsonObject
                 {
@@ -261,7 +270,8 @@ public sealed partial class TableTools
         if (Open(out var why) is not { } s) return Task.FromResult(why!);
         var id = a.Str("id") ?? "";
         if (!s.IsUmpire) return Task.FromResult(ToolResult.Fail("Only umpires read scripts."));
-        string? text; string whose;
+        string? text;
+        string whose;
         if (id.Length == 0) { text = s.View.Script; whose = "the global script"; }
         else if (Find(s, id) is { } p) { text = p.Script ?? s.Def(p.Def)?.Script; whose = p.Script != null ? $"{NameOf(s, p)}'s own script" : $"the script of every {s.Def(p.Def)?.Name ?? p.Def} (its kind's, from its pack)"; }
         else return Task.FromResult(ToolResult.Fail($"No piece {id} on this table."));

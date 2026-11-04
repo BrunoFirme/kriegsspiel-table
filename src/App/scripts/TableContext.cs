@@ -10,7 +10,12 @@ sealed class TableContext
 {
     readonly Action<Tool, string?> _setTool;
 
-    public TableContext(Node3D scene, Action<Tool, string?> setTool) { Scene = scene; _setTool = setTool; Sound = new TableSounds(this); }
+    public TableContext(Node3D scene, Action<Tool, string?> setTool)
+    {
+        Scene = scene;
+        _setTool = setTool;
+        Sound = new TableSounds(this);
+    }
 
     public Node3D Scene { get; }
 
@@ -43,6 +48,7 @@ sealed class TableContext
 
     public void DoAll(List<Command> cmds)
     {
-        if (cmds.Count == 1) S.Do(cmds[0]); else if (cmds.Count > 1) S.Do(new Batch { Items = cmds });
+        if (cmds.Count == 1) S.Do(cmds[0]);
+        else if (cmds.Count > 1) S.Do(new Batch { Items = cmds });
     }
 }

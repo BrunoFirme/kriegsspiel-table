@@ -117,7 +117,7 @@ public partial class ImportDialog : AcceptDialog
         _listing = ConverterTool.Run(new[] { "list-tts" }, line =>
         {
             if (!IsInstanceValid(this) || !line.StartsWith("{")) return;
-            var e = BestEffort.Read<TtsEntry?>(() => JsonSerializer.Deserialize<TtsEntry>(line, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }), fallback: null);
+            var e = TtsEntryOf(line);
             if (e == null) return;
             if (e.Kind != MeasuredKind) { _entries.Add(e); return; }
             if (!listed) { listed = true; Fill(); }
@@ -217,7 +217,8 @@ public partial class ImportDialog : AcceptDialog
         if (_running || _run is not { Finished: true }) return;
         _run = null;
         _go.Disabled = false;
-        _stop.Visible = false; _stop.Disabled = false;
+        _stop.Visible = false;
+        _stop.Disabled = false;
         if (!_progress.Visible) SetStatus("The import started earlier has ended.");
     }
 
@@ -229,10 +230,18 @@ public partial class ImportDialog : AcceptDialog
         SetStatus("Stopping, and putting back what the import had moved aside…");
     }
 
+    static readonly JsonSerializerOptions ListedOptions = new() { PropertyNameCaseInsensitive = true };
+
+    static TtsEntry? TtsEntryOf(string line)
+    {
+        try { return JsonSerializer.Deserialize<TtsEntry>(line, ListedOptions); }
+        catch (JsonException) { return null; }
+    }
+
     static string Entry(string path)
     {
         try { return SaveStore.Default.TrashEntries().FirstOrDefault(e => string.Equals(e.Path, path, StringComparison.OrdinalIgnoreCase))?.Describe() ?? System.IO.Path.GetFileName(path); }
-        catch { return System.IO.Path.GetFileName(path); }
+        catch (Exception e) when (SaveStore.IsFileTrouble(e)) { return System.IO.Path.GetFileName(path); }
     }
 
     void Go()
@@ -295,7 +304,8 @@ public partial class ImportDialog : AcceptDialog
         _running = false;
         _go.Disabled = false;
         _go.Text = "Import";
-        _stop.Visible = false; _stop.Disabled = false;
+        _stop.Visible = false;
+        _stop.Disabled = false;
         _watch?.End(outcome);
         SetStatus("");
     }
@@ -310,7 +320,8 @@ public partial class ImportDialog : AcceptDialog
         {
             var dir = System.IO.Path.Combine(packagesRoot, id);
             PackChange change;
-            try { change = PackChanges.Check(dir).change; } catch { change = PackChange.Unknown; }
+            try { change = PackChanges.Check(dir).change; }
+            catch (Exception e) when (SaveStore.IsFileTrouble(e)) { change = PackChange.Unknown; }
             if (change is PackChange.Changed or PackChange.Unknown) worked.Add((id, WorkshopContent.NameIn(System.IO.Path.Combine(dir, "pack.json"), id), change));
         }
         return worked;
@@ -331,17 +342,26 @@ public partial class ImportDialog : AcceptDialog
         dlg.Canceled += () => { if (!answered) { answered = true; cancel?.Invoke(); } };
     }
 
-    void Import(string source, string name, bool skipText, List<string> plannedPacks, string? plannedScenario, ImportWatch watch)
+    InUse.Hold? ClaimForImport(List<string> plannedPacks, string? plannedScenario)
     {
-        if (!IsInstanceValid(this)) return;
-        InUse.Hold hold;
         try
         {
             var folders = plannedPacks.Select(p => (InUse.Pack(_packagesRoot, p), $"the pack {p}")).ToList();
             if (plannedScenario != null) folders.Add((InUse.Scenario(_packagesRoot, plannedScenario), $"the scenario {plannedScenario}"));
-            hold = InUse.Claim(folders, "being imported from Tabletop Simulator");
+            return InUse.Claim(folders, "being imported from Tabletop Simulator");
         }
-        catch (InUseException e) { Log($"[color=#f87]Not imported: {Fmt.Bb(e.Message)}[/color]"); Reset(NotImported); return; }
+        catch (InUseException e)
+        {
+            Log($"[color=#f87]Not imported: {Fmt.Bb(e.Message)}[/color]");
+            Reset(NotImported);
+            return null;
+        }
+    }
+
+    void Import(string source, string name, bool skipText, List<string> plannedPacks, string? plannedScenario, ImportWatch watch)
+    {
+        if (!IsInstanceValid(this)) return;
+        if (ClaimForImport(plannedPacks, plannedScenario) is not { } hold) return;
         _progress.Waiting("Starting the converter");
         var args = new List<string> { "import", source, "--out", _packagesRoot };
         if (name.Length > 0) args.AddRange(new[] { "--name", name });
@@ -364,7 +384,12 @@ public partial class ImportDialog : AcceptDialog
                 Log($"[color=#ffd75e]The {Fmt.Bb(Entry(line[8..].Trim()))} you had went to the trash first, whole. If the new one is not what you wanted, restore it from the trash at the foot of Piece studio (a pack) or Host a game (a scenario) within {SaveStore.TrashDays} days.[/color]");
                 return;
             }
-            if (line.StartsWith("PUTBACK ")) { putBack++; Log("[color=#8f8]Put back as it was:[/color] " + Fmt.Bb(line[8..])); return; }
+            if (line.StartsWith("PUTBACK "))
+            {
+                putBack++;
+                Log("[color=#8f8]Put back as it was:[/color] " + Fmt.Bb(line[8..]));
+                return;
+            }
             if (line.StartsWith("IMPORTED "))
             {
                 foreach (var part in line[9..].Split(' '))
@@ -401,7 +426,8 @@ public partial class ImportDialog : AcceptDialog
                 _run = null;
                 _go.Disabled = false;
                 _go.Text = "Import";
-                _stop.Visible = false; _stop.Disabled = false;
+                _stop.Visible = false;
+                _stop.Disabled = false;
                 SetStatus("");
                 if (stopped)
                     Log(movedAside > 0

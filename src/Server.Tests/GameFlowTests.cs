@@ -312,7 +312,8 @@ public class GameFlowTests
         Assert.True(jr.Ok, jr.Error);
         Assert.Equal(Role.Umpire, jr.Role);
         Assert.Equal("Umpire Three", loaded.Peer(10)!.Name);
-        Assert.True(((JoinResult)loaded.Join(11, new JoinRequest { Name = "new", Password = Table.Password, Protocol = ProtocolVersion.Current }).Single(o => o.PeerId == 11 && o.Message is JoinResult).Message).Waiting);
+        Assert.True(((JoinResult)loaded.Join(11,
+            new JoinRequest { Name = "new", Password = Table.Password, Protocol = ProtocolVersion.Current }).Single(o => o.PeerId == 11 && o.Message is JoinResult).Message).Waiting);
 
         foreach (var srv in new[] { t.Server, loaded })
         {

@@ -212,7 +212,12 @@ public partial class PieceNode : Node3D
     public void FlashWidget(int index) => _widgets.Flash(index);
 
     public void SetWidgetText(int index, string text) { _widgets.SetEditText(index, text); SyncWidgets(force: true); }
-    public void ClearWidgetText() { if (!_widgets.Editing) return; _widgets.ClearEditText(); SyncWidgets(force: true); }
+    public void ClearWidgetText()
+    {
+        if (!_widgets.Editing) return;
+        _widgets.ClearEditText();
+        SyncWidgets(force: true);
+    }
 
     public (int index, Widget widget)? WidgetAt(Vec2 point) => _flipping ? null : _widgets.At(Coords.ToLocal(point, Piece.Pos, Piece.RotDeg));
 
@@ -358,7 +363,8 @@ public partial class PieceNode : Node3D
         }
         PaintEdges(SideColor());
         bool same = SamePrintUnderside;
-        AddChild(new MeshInstance3D { Mesh = Art.Plane(Footprint, flip: same), RotationDegrees = same ? Vector3.Zero : new Vector3(180, 0, 0), Position = new Vector3(0, 0, 0), MaterialOverride = BackMat(scissor: true), CastShadow = GeometryInstance3D.ShadowCastingSetting.Off });
+        AddChild(new MeshInstance3D { Mesh = Art.Plane(Footprint, flip: same), RotationDegrees = same ? Vector3.Zero : new Vector3(180, 0, 0), Position = new Vector3(0, 0, 0),
+            MaterialOverride = BackMat(scissor: true), CastShadow = GeometryInstance3D.ShadowCastingSetting.Off });
         LoadTexture();
     }
 
@@ -370,7 +376,9 @@ public partial class PieceNode : Node3D
     {
         var (pkg, rel, size) = TexKey();
         if (pkg == null) return;
-        _texPackage = pkg; _texRel = rel; _texSize = size;
+        _texPackage = pkg;
+        _texRel = rel;
+        _texSize = size;
         var tex = _s.Assets.Texture(pkg, rel!, t => { if (IsInstanceValid(this)) ApplyTexture(t); }, maxSize: size);
         if (tex != null) ApplyTexture(tex);
     }
@@ -391,7 +399,8 @@ public partial class PieceNode : Node3D
         if (!pack.Assets.TryGetValue(meshHash, out var ma)) return;
         bool die = Def!.Tags.Contains("die");
         StandardMaterial3D Body(Color c) => die
-            ? new StandardMaterial3D { AlbedoColor = c, Roughness = 0.32f, Metallic = 0f, MetallicSpecular = 0.6f, CullMode = BaseMaterial3D.CullModeEnum.Back, TextureFilter = BaseMaterial3D.TextureFilterEnum.LinearWithMipmapsAnisotropic }
+            ? new StandardMaterial3D { AlbedoColor = c, Roughness = 0.32f, Metallic = 0f, MetallicSpecular = 0.6f, CullMode = BaseMaterial3D.CullModeEnum.Back,
+                TextureFilter = BaseMaterial3D.TextureFilterEnum.LinearWithMipmapsAnisotropic }
             : new StandardMaterial3D { AlbedoColor = c, CullMode = BaseMaterial3D.CullModeEnum.Disabled, Transparency = BaseMaterial3D.TransparencyEnum.AlphaScissor };
         var mat = _modelMat = Body(tint);
         var untinted = Body(_layerTint);
@@ -429,7 +438,8 @@ public partial class PieceNode : Node3D
             {
                 model.Position = new Vector3(0, -aabb.Position.Y * sy, 0);
                 _thickness = aabb.Size.Y * sy;
-                _modelRest = model.Quaternion; _modelRestPos = model.Position;
+                _modelRest = model.Quaternion;
+                _modelRestPos = model.Position;
             }
         });
     }
@@ -524,12 +534,26 @@ public partial class PieceNode : Node3D
         bool selected = _sel != null, hovered = _hovered;
         _hovered = false;
         foreach (var c in GetChildren()) { RemoveChild(c); c.QueueFree(); }
-        _sel = _model = _body = _far = _addOn = null; _selMat = null; _sideMat = null; _modelMat = null;
+        _sel = _model = _body = _far = _addOn = null;
+        _selMat = null;
+        _sideMat = null;
+        _modelMat = null;
         _lettering.Forget();
-        _edgeSlots.Clear(); _edgeColor = Colors.Transparent;
-        _back.Forget(); _backMat = null; _flipGen++; _flipping = false;
-        _widgets.Forget(); _plates.Forget(); _lines.Forget(); _prints.Forget(); _decals.Forget();
-        _hull = null; _meshReady = false; _spinning = false; _animGen++;
+        _edgeSlots.Clear();
+        _edgeColor = Colors.Transparent;
+        _back.Forget();
+        _backMat = null;
+        _flipGen++;
+        _flipping = false;
+        _widgets.Forget();
+        _plates.Forget();
+        _lines.Forget();
+        _prints.Forget();
+        _decals.Forget();
+        _hull = null;
+        _meshReady = false;
+        _spinning = false;
+        _animGen++;
         ResetEffect();
         _built = false;
         Scale = Vector3.One;
@@ -580,10 +604,17 @@ public partial class PieceNode : Node3D
                 mesh = st.Commit();
             }
             bool halo = Shape == "alpha" && Def?.Kind != "model";
-            _sel = new MeshInstance3D { Mesh = mesh, Position = new Vector3(0, halo ? -0.015f : 0, 0), MaterialOverride = _selMat, CastShadow = GeometryInstance3D.ShadowCastingSetting.Off, Visible = Look.FlatSelection || IsEffect, Layers = Table.LiveOnlyLayer };
+            _sel =
+                new MeshInstance3D { Mesh = mesh, Position = new Vector3(0, halo ? -0.015f : 0, 0), MaterialOverride = _selMat, CastShadow = GeometryInstance3D.ShadowCastingSetting.Off,
+                    Visible = Look.FlatSelection || IsEffect, Layers = Table.LiveOnlyLayer };
             AddChild(_sel);
         }
-        else if (!on && _sel != null) { _sel.QueueFree(); _sel = null; _selMat = null; }
+        else if (!on && _sel != null)
+        {
+            _sel.QueueFree();
+            _sel = null;
+            _selMat = null;
+        }
         SetMaskLayer(on);
     }
 

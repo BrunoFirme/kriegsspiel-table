@@ -405,7 +405,8 @@ public class TranslatorTests
             end
             """, Ctx());
         Assert.Contains("compat.wait_stop(id)", r.Script);
-        var ctx = Ctx(); ctx.IsGlobal = true;
+        var ctx = Ctx();
+        ctx.IsGlobal = true;
         var g = TtsTranslator.Translate("""
             function onLoad() Timer.create({ identifier = "tick", function_name = "tock", delay = 1, repetitions = 0 }) end
             function tock() m = (m or 0) + 1 if m == 3 then Timer.destroy("tick") end end
@@ -450,7 +451,8 @@ public class TranslatorTests
     {
         using var t = new Table();
         t.Server.State.Find(U, "p-000003")!.Guid = "b00b00";
-        var ctx = Ctx(); ctx.IsGlobal = true;
+        var ctx = Ctx();
+        ctx.IsGlobal = true;
         var global = TtsTranslator.Translate("""
             function onLoad()
               local o = getObjectFromGUID("p-000003")

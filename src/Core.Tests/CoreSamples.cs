@@ -12,7 +12,9 @@ public static class CoreSamples
         Text = new() { ["name"] = "1st Bn", ["note"] = "tired" },
         TintOverride = "#FF0000", Label = "label-" + id, Scale = 1.25,
         Guid = "a1b2c3", Script = "function on_load(s) end", ScriptState = "{\"n\":1}",
-        Widgets = new() { new Widget { Kind = "input", Face = "back", X = 0.1, Z = -0.2, W = 0.3, H = 0.05, Rot = 180, Label = "L", Value = "v", Placeholder = "p", Font = 0.04, Color = "#112233", TextColor = "#FFFFFF", Align = "left", Lines = 2, Tooltip = "t", OnClick = "c", OnChange = "e" } },
+        Widgets =
+            new() { new Widget { Kind = "input", Face = "back", X = 0.1, Z = -0.2, W = 0.3, H = 0.05, Rot = 180, Label = "L", Value = "v", Placeholder = "p", Font = 0.04, Color = "#112233", TextColor = "#FFFFFF", Align = "left", Lines = 2,
+                Tooltip = "t", OnClick = "c", OnChange = "e" } },
         MenuItems = new() { new MenuItemDef { Label = "Rally", OnSelect = "rally" } },
         Lines = new() { new LineDef { Points = { new(0, 2), new(2, 0) }, Color = "#00FF00", Width = 0.15, Loop = false } },
     };
@@ -156,6 +158,13 @@ public static class CoreSamples
     public static IEnumerable<Command> WithHeader(this IEnumerable<Command> cs)
     {
         long i = 1;
-        foreach (var c in cs) { c.Seq = i; c.Actor = 100 + i; c.At = 1_700_000_000_000 + i; i++; yield return c; }
+        foreach (var c in cs)
+        {
+            c.Seq = i;
+            c.Actor = 100 + i;
+            c.At = 1_700_000_000_000 + i;
+            i++;
+            yield return c;
+        }
     }
 }

@@ -28,14 +28,21 @@ public static class FloodFill
             while (xr < w - 1 && !inside[y * w + xr + 1] && Like((y * w + xr + 1) * 4)) xr++;
             for (int xx = xl; xx <= xr; xx++)
             {
-                inside[y * w + xx] = true; count++;
+                inside[y * w + xx] = true;
+                count++;
                 if (y > 0 && !inside[(y - 1) * w + xx] && Like(((y - 1) * w + xx) * 4)) stack.Push((y - 1) * w + xx);
                 if (y < h - 1 && !inside[(y + 1) * w + xx] && Like(((y + 1) * w + xx) * 4)) stack.Push((y + 1) * w + xx);
             }
-            minX = Math.Min(minX, xl); maxX = Math.Max(maxX, xr); minY = Math.Min(minY, y); maxY = Math.Max(maxY, y);
+            minX = Math.Min(minX, xl);
+            maxX = Math.Max(maxX, xr);
+            minY = Math.Min(minY, y);
+            maxY = Math.Max(maxY, y);
         }
         if (count == 0) return null;
-        minX = Math.Max(0, minX - 1); minY = Math.Max(0, minY - 1); maxX = Math.Min(w - 1, maxX + 1); maxY = Math.Min(h - 1, maxY + 1);
+        minX = Math.Max(0, minX - 1);
+        minY = Math.Max(0, minY - 1);
+        maxX = Math.Min(w - 1, maxX + 1);
+        maxY = Math.Min(h - 1, maxY + 1);
         int mw = maxX - minX + 1, mh = maxY - minY + 1;
         var md = new byte[mw * mh * 4];
         for (int y = minY; y <= maxY; y++)
@@ -46,7 +53,8 @@ public static class FloodFill
                     || (y > 0 && inside[(y - 1) * w + x]) || (y < h - 1 && inside[(y + 1) * w + x]);
                 if (!on) continue;
                 int o = ((y - minY) * mw + (x - minX)) * 4;
-                md[o] = md[o + 1] = md[o + 2] = 255; md[o + 3] = 255;
+                md[o] = md[o + 1] = md[o + 2] = 255;
+                md[o + 3] = 255;
             }
         return (md, mw, mh, minX, minY);
     }

@@ -805,10 +805,12 @@ public class ScriptingTests
             t.Server.Handle(Table.Host, new SpawnPiece { Layer = U, Def = "marker", Pos = new Vec2(i, 3), Id = $"p-{100 + i:D6}" });
             t.Server.Handle(Table.Host, new SetScript { Layer = U, Id = $"p-{100 + i:D6}", Text = big });
         }
-        GC.Collect(); GC.WaitForPendingFinalizers();
+        GC.Collect();
+        GC.WaitForPendingFinalizers();
         var before = GC.GetTotalMemory(true);
         for (int i = 0; i < 10; i++) t.Server.Scripts.Load();
-        GC.Collect(); GC.WaitForPendingFinalizers();
+        GC.Collect();
+        GC.WaitForPendingFinalizers();
         var kept = GC.GetTotalMemory(true) - before;
         Assert.True(kept < 20L * 1024 * 1024, $"{kept / 1024 / 1024} MB kept by 300 loads");
         Assert.Empty(Errors(t));

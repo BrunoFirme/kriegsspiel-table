@@ -32,12 +32,14 @@ public static class ScriptTally
                 if (verdict.Script.Trim().Length == 0) continue;
                 var tr = TtsTranslator.Translate(verdict.Script, global ? gctx : ctx);
                 if (tr.Parsed) parsed++;
-                direct += tr.DirectCalls; compat += tr.CompatCalls;
+                direct += tr.DirectCalls;
+                compat += tr.CompatCalls;
                 foreach (var u in tr.Untranslated)
                 {
                     var what = u.What == "event" ? "event " + u.Text.Split(' ')[0] : u.What;
                     if (!kinds.TryGetValue(what, out var k)) k = (0, new HashSet<string>(), $"{name}, {where}, line {u.Line}: {OneLine(u.Text)}");
-                    k.count++; k.modules.Add(name);
+                    k.count++;
+                    k.modules.Add(name);
                     kinds[what] = k;
                 }
             }

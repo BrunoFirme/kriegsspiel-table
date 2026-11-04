@@ -25,7 +25,8 @@ public static class DocSearch
             if (b.Kind == BlockKind.Heading && b.Level >= 2)
             {
                 Close();
-                anchor = b.Anchor; heading = Markdown.Plain(b.Text);
+                anchor = b.Anchor;
+                heading = Markdown.Plain(b.Text);
                 continue;
             }
             if (b.Kind != BlockKind.Heading) text.Add(b.Plain);

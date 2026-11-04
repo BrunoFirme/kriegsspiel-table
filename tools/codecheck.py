@@ -2,7 +2,7 @@ import ast, io, os, re, sys, tokenize
 from collections import defaultdict
 
 USAGE = "python -I tools/codecheck.py [--report]"
-MAX_CLASS, MAX_METHOD = 1500, 100
+MAX_CLASS, MAX_METHOD, MAX_LINE = 1500, 100, 200
 ROOTS = ["src", "tools", "tests"]
 ROOT_FILES = ["Directory.Build.props", ".editorconfig"]
 SKIPPED_FOLDERS = ("bin", "obj", ".godot")
@@ -16,6 +16,12 @@ METHOD_RX = re.compile(r"^\s*(?:\[[^\]]*\]\s*)*(?:(?:public|internal|private|pro
 RAW_STRING_RX = re.compile(r'\$*("{3,})')
 LUA_LONG_BRACKET_RX = re.compile(r"\[(=*)\[")
 NOT_METHOD_NAMES = ("if", "for", "foreach", "while", "switch", "catch", "using", "lock", "return", "new", "nameof", "typeof", "when")
+MODIFIER = r"(?:public|internal|private|protected|static|readonly|const|event|override|sealed|abstract|virtual|required|volatile|unsafe|extern|partial)\b"
+MEMBER_LINE_RX = re.compile(r"^\s*(?:\[[^\]]*\]\s*)*" + MODIFIER)
+NEXT_MEMBER_RX = re.compile(r"\s+" + MODIFIER)
+CATCH_RX = re.compile(r"\bcatch\b\s*(\([^)]*\))?\s*(when\b[^{]*)?\{")
+BROAD_CATCH_RX = re.compile(r"\(\s*(?:System\.)?Exception\s+(\w+)\s*\)")
+UNNAMED_CATCH_RX = re.compile(r"\(\s*(?:System\.)?Exception\s*\)")
 
 
 def blank(text):
@@ -37,15 +43,38 @@ def end_of_raw_string(code, i):
 
 def end_of_string(code, i):
     j = code.index('"', i) + 1
-    verbatim = "@" in code[i:j]
+    prefix = code[i:j]
+    verbatim, interpolated = "@" in prefix, "$" in prefix
     n = len(code)
+    holes = 0
     while j < n:
+        c = code[j]
+        if holes > 0:
+            if c == "{": holes += 1
+            elif c == "}": holes -= 1
+            elif starts_string(code, j):
+                j = end_of_string(code, j)
+                continue
+            elif c == "'":
+                j = end_of_char(code, j)
+                continue
+            j += 1
+            continue
+        if interpolated and code.startswith("{{", j): j += 2; continue
+        if interpolated and c == "{": holes = 1; j += 1; continue
         if verbatim and code.startswith('""', j): j += 2; continue
-        if not verbatim and code[j] == "\\": j += 2; continue
-        if code[j] == '"': return j + 1
-        if code[j] == "\n" and not verbatim: return j
+        if not verbatim and c == "\\": j += 2; continue
+        if c == '"': return j + 1
+        if c == "\n" and not verbatim: return j
         j += 1
     return n
+
+
+def end_of_char(code, i):
+    j = i + 1
+    while j < len(code) and code[j] != "'":
+        j += 2 if code[j] == "\\" else 1
+    return j + 1
 
 
 def starts_string(code, i):
@@ -68,10 +97,8 @@ def split_code_and_comments(code):
             j = end_of_string(code, i)
             out.append(blank(code[i:j])); i = j
         elif code[i] == "'":
-            j = i + 1
-            while j < n and code[j] != "'":
-                j += 2 if code[j] == "\\" else 1
-            out.append(" " * (j + 1 - i)); i = j + 1
+            j = end_of_char(code, i)
+            out.append(" " * (j - i)); i = j
         else:
             out.append(code[i]); i += 1
     return "".join(out), sorted(comment_lines)
@@ -194,14 +221,97 @@ def scan_comments(path, comments):
     comments.extend(f"{relative(path)}:{ln}" for ln in found)
 
 
-def scan(path, classes, methods, comments):
+def depths(line):
+    parens = braces = 0
+    for i, ch in enumerate(line):
+        if ch == "(": parens += 1
+        elif ch == ")": parens -= 1
+        elif ch == "{": braces += 1
+        elif ch == "}": braces -= 1
+        yield i, ch, parens, braces
+
+
+def members_on(line):
+    if not MEMBER_LINE_RX.match(line):
+        return 1
+    return 1 + sum(1 for i, ch, p, b in depths(line) if ch in ";}" and p == 0 and b == 0 and NEXT_MEMBER_RX.match(line, i + 1))
+
+
+def statements_on(line):
+    return sum(1 for _, ch, p, b in depths(line) if ch == ";" and p == 0 and b == 0)
+
+
+def dense_blocks(line):
+    found, i = [], 0
+    while i < len(line):
+        if line[i] != "{":
+            i += 1
+            continue
+        depth, semis, j = 1, 0, i + 1
+        while j < len(line) and depth > 0:
+            if line[j] == "{": depth += 1
+            elif line[j] == "}": depth -= 1
+            elif line[j] == ";": semis += 1
+            j += 1
+        if depth > 0:
+            break
+        if semis > 2:
+            found.append((i, j, semis))
+        i = j
+    return found
+
+
+def block_after(code, open_i):
+    depth, j = 0, open_i
+    while j < len(code):
+        if code[j] == "{": depth += 1
+        elif code[j] == "}":
+            depth -= 1
+            if depth == 0: return code[open_i + 1:j]
+        j += 1
+    return code[open_i + 1:]
+
+
+def catch_problems(code, raw=None):
+    raw = code if raw is None else raw
+    for m in CATCH_RX.finditer(code):
+        clause, guard = m.group(1), m.group(2)
+        if guard:
+            continue
+        body = block_after(raw, m.end() - 1)
+        if clause is None or UNNAMED_CATCH_RX.fullmatch(clause):
+            if not re.search(r"\bthrow\s*;", body):
+                yield line_of(code, m.start()), "a catch names what it expects, or rethrows"
+        elif (named := BROAD_CATCH_RX.fullmatch(clause)) and not re.search(r"\b" + named.group(1) + r"\b", body):
+            yield line_of(code, m.start()), "a broad catch does something with the exception"
+
+
+def code_length(line, raw_line):
+    return len(raw_line) - sum(1 for a, b in zip(raw_line, line) if b == " " and a != " ")
+
+
+def density_of(rel, ln, line, raw_line):
+    if (length := code_length(line, raw_line)) > MAX_LINE:
+        yield f"{rel}:{ln} ({length} characters of code, at most {MAX_LINE})"
+    if members_on(line) > 1:
+        yield f"{rel}:{ln} (one member declaration per line)"
+    if statements_on(line) > 1:
+        yield f"{rel}:{ln} (one statement per line)"
+    if dense_blocks(line):
+        yield f"{rel}:{ln} (a one-line block holds at most two statements)"
+
+
+def scan(path, classes, methods, comments, density, catches):
     raw = open(path, encoding="utf-8-sig").read()
     code, comment_lines = split_code_and_comments(raw)
     rel = relative(path)
     comments.extend(f"{rel}:{ln}" for ln in comment_lines)
+    catches.extend(f"{rel}:{ln} ({why})" for ln, why in catch_problems(code, raw))
+    raw_lines = raw.split("\n")
     depth, open_blocks = 0, []
     pending = None
     for ln, line in enumerate(code.split("\n"), 1):
+        density.extend(density_of(rel, ln, line, raw_lines[ln - 1].rstrip("\r")))
         m = TYPE_RX.match(line)
         if m:
             pending = ("type", m.group(2), ln)
@@ -236,6 +346,11 @@ def selftest():
     assert cs('var u = "https://x";\n') == []
     assert cs('var s = """\n  // shader\n  """;\n') == []
     assert cs("var c = '/'; var d = '/';\n") == []
+    assert cs('var s = $"{(a ? "x" : "y")}"; // c\n') == [1]
+    assert statements_on('a($"{(q ? "x;" : "y")}"); b();') == 2
+    assert statements_on("a($\"{x:N0} {{y}} {'\"'}\"); b();") == 2
+    assert code_length('        x = "abcdefghij";', '        x = "abcdefghij";') == 25
+    assert code_length('        x =             ;', '        x = "abcdefghij";') == 13
     assert python_comment_lines("x = 1  # why\n") == [1]
     assert python_comment_lines('def f():\n    """what"""\n    return 1\n') == [2]
     assert python_comment_lines('s = "# not one"\n') == []
@@ -250,6 +365,26 @@ def selftest():
     assert xml_comment_lines("<A>\n  <!-- why -->\n</A>\n") == [2]
     assert hash_line_comment_lines("# what\nclick \"#2\"\n") == [1]
     assert ini_comment_lines("root = true\n# why\n; also\n") == [2, 3]
+    assert members_on("    public int A { get; set; } public int B { get; set; }") == 2
+    assert members_on('    public string Id { get; set; } = ""; public int State { get; set; }') == 2
+    assert members_on("    public bool S { get => _s; internal set => _s = value; }") == 1
+    assert members_on("    public override Sender SentBy() => Sender.Umpire;") == 1
+    assert statements_on("        a = 1; b = 2;") == 2
+    assert statements_on("        for (int i = 0; i < n; i++) x();") == 1
+    assert statements_on("        try { a(); b(); } catch (IOException) { c(); }") == 0
+    assert [n for _, _, n in dense_blocks("        if (x) { a(); b(); c(); }")] == [3]
+    assert dense_blocks("        try { a(); return true; } catch (IOException) { return false; }") == []
+    assert dense_blocks("    public int A { get; set; }") == []
+    assert list(catch_problems("try { a(); } catch { return null; }")) != []
+    assert list(catch_problems("try { a(); } catch { Discard(t); throw; }")) == []
+    assert list(catch_problems("try { a(); } catch (Exception) { return false; }")) != []
+    assert list(catch_problems("try { a(); } catch (Exception e) { return false; }")) != []
+    assert list(catch_problems("try { a(); } catch (Exception e) when (e is IOException) { }")) == []
+    assert list(catch_problems("try { a(); } catch (IOException) { }")) == []
+    assert list(catch_problems("try { a(); } catch (Exception e) { Log(e.Message); }")) == []
+    assert list(catch_problems("try { a(); }\ncatch (Exception e)\n{\n    Log(e);\n}")) == []
+    told = 'try { a(); } catch (Exception e) { Say($"no: {e.Message}"); }'
+    assert list(catch_problems(split_code_and_comments(told)[0], told)) == []
 
 
 def walk_files():
@@ -268,11 +403,11 @@ def walk_files():
 
 def main():
     selftest()
-    classes, methods, comments = defaultdict(list), [], []
+    classes, methods, comments, density, catches = defaultdict(list), [], [], [], []
     for path in walk_files():
         name = os.path.basename(path)
         if name.endswith(".cs"):
-            scan(path, classes, methods, comments)
+            scan(path, classes, methods, comments, density, catches)
         elif finder_for(name):
             scan_comments(path, comments)
     totals = sorted(((sum(l for _, l in parts), name, parts) for name, parts in classes.items()), reverse=True)
@@ -282,6 +417,8 @@ def main():
         print("Largest classes:"); [print(f"  {t:5} {n}") for t, n, _ in totals[:15]]
         print("Longest methods:"); [print(f"  {l:5} {w}") for l, w in sorted(methods, reverse=True)[:15]]
         print(f"Comments: {len(comments)}")
+        print(f"Dense lines: {len(density)}")
+        print(f"Catches over the rules: {len(catches)}")
         return 0
     for t, n, parts in big:
         print(f"class over {MAX_CLASS} lines: {n} ({t}) in " + ", ".join(f"{p} {l}" for p, l in parts))
@@ -289,8 +426,12 @@ def main():
         print(f"method over {MAX_METHOD} lines: {w} ({l})")
     for c in comments:
         print(f"comment (the code should say it): {c}")
-    if big or long_methods or comments:
-        print(f"codecheck: {len(big)} class(es), {len(long_methods)} method(s), {len(comments)} comment(s) over the rules")
+    for d in density:
+        print(f"dense line: {d}")
+    for c in catches:
+        print(f"catch: {c}")
+    if big or long_methods or comments or density or catches:
+        print(f"codecheck: {len(big)} class(es), {len(long_methods)} method(s), {len(comments)} comment(s), {len(density)} dense line(s), {len(catches)} catch(es) over the rules")
         return 1
     print("codecheck: clean")
     return 0

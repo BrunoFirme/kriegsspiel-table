@@ -49,14 +49,22 @@ sealed class DrawPanel : HudPart
         tools.AddThemeConstantOverride("v_separation", 3);
         foreach (var (key, icon, tip) in kinds)
         {
-            var b = new Button { ToggleMode = true, ButtonPressed = key == current && !locked, Disabled = locked, FocusMode = Control.FocusModeEnum.None, TooltipText = tip, CustomMinimumSize = new Vector2(30, 30), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+            var b =
+                new Button { ToggleMode = true, ButtonPressed = key == current && !locked, Disabled = locked, FocusMode = Control.FocusModeEnum.None, TooltipText = tip,
+                    CustomMinimumSize = new Vector2(30, 30), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
             b.AddChild(new ToolIcon { Kind = icon });
             string k = key;
             b.Pressed += () =>
             {
                 if (k == "free") T.SetTool(Tool.Draw);
                 else if (k == "erase") T.SetTool(Tool.Erase);
-                else { T.ShapeKind = k; Cfg.ShapeKind = k; Cfg.Save(); T.SetTool(Tool.Shape); }
+                else
+                {
+                    T.ShapeKind = k;
+                    Cfg.ShapeKind = k;
+                    Cfg.Save();
+                    T.SetTool(Tool.Shape);
+                }
                 Rebuild();
             };
             tools.AddChild(b);
@@ -81,13 +89,25 @@ sealed class DrawPanel : HudPart
             var col = Coords.ParseColor(hex, Colors.Black);
             var b = new Button { CustomMinimumSize = new Vector2(30, 22), TooltipText = what, FocusMode = Control.FocusModeEnum.None, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
             var box = new StyleBoxFlat { BgColor = col, BorderColor = new Color(0, 0, 0, 0.45f) };
-            box.SetBorderWidthAll(1); box.SetCornerRadiusAll(3);
+            box.SetBorderWidthAll(1);
+            box.SetCornerRadiusAll(3);
             foreach (var st in new[] { "normal", "hover", "pressed", "focus" }) b.AddThemeStyleboxOverride(st, box);
-            b.Pressed += () => { T.PenColor = col; Cfg.PenInk = hex; Cfg.Save(); ink.Color = col; };
+            b.Pressed += () =>
+            {
+                T.PenColor = col;
+                Cfg.PenInk = hex;
+                Cfg.Save();
+                ink.Color = col;
+            };
             sw.AddChild(b);
         }
         _box.AddChild(sw);
-        ink.ColorChanged += c => { T.PenColor = c; Cfg.PenInk = "#" + c.ToHtml(false); Cfg.Save(); };
+        ink.ColorChanged += c =>
+        {
+            T.PenColor = c;
+            Cfg.PenInk = "#" + c.ToHtml(false);
+            Cfg.Save();
+        };
         _box.AddChild(ink);
     }
 
@@ -95,17 +115,35 @@ sealed class DrawPanel : HudPart
     {
         var penRow = new HBoxContainer();
         penRow.AddThemeConstantOverride("separation", 4);
-        var pen = new HSlider { MinValue = 1, MaxValue = 40, Step = 0.5, Value = T.PenPixels, CustomMinimumSize = new Vector2(62, 0), SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, TooltipText = "How thick the line is, in screen pixels" };
+        var pen =
+            new HSlider { MinValue = 1, MaxValue = 40, Step = 0.5, Value = T.PenPixels, CustomMinimumSize = new Vector2(62, 0), SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
+                TooltipText = "How thick the line is, in screen pixels" };
         var penL = new Label { Text = $"{T.PenPixels:0.#}", CustomMinimumSize = new Vector2(26, 0), SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, HorizontalAlignment = HorizontalAlignment.Right };
-        pen.ValueChanged += v => { T.PenPixels = (float)v; penL.Text = $"{v:0.#}"; Cfg.PenSize = (float)v; Cfg.Save(); };
-        penRow.AddChild(pen); penRow.AddChild(penL);
+        pen.ValueChanged += v =>
+        {
+            T.PenPixels = (float)v;
+            penL.Text = $"{v:0.#}";
+            Cfg.PenSize = (float)v;
+            Cfg.Save();
+        };
+        penRow.AddChild(pen);
+        penRow.AddChild(penL);
         _box.AddChild(penRow);
         var seeRow = new HBoxContainer();
         seeRow.AddThemeConstantOverride("separation", 4);
-        var see = new HSlider { MinValue = LeastOpacity * 100, MaxValue = 100, Step = 5, Value = Mathf.Round(T.PenOpacity * 100), CustomMinimumSize = new Vector2(62, 0), SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, TooltipText = "How see-through new lines are: 100% hides what is under them" };
+        var see =
+            new HSlider { MinValue = LeastOpacity * 100, MaxValue = 100, Step = 5, Value = Mathf.Round(T.PenOpacity * 100), CustomMinimumSize = new Vector2(62, 0),
+                SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, TooltipText = "How see-through new lines are: 100% hides what is under them" };
         var seeL = new Label { Text = $"{see.Value:0}%", CustomMinimumSize = new Vector2(26, 0), SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, HorizontalAlignment = HorizontalAlignment.Right };
-        see.ValueChanged += v => { T.PenOpacity = (float)(v / 100); seeL.Text = $"{v:0}%"; Cfg.PenOpacity = T.PenOpacity; Cfg.Save(); };
-        seeRow.AddChild(see); seeRow.AddChild(seeL);
+        see.ValueChanged += v =>
+        {
+            T.PenOpacity = (float)(v / 100);
+            seeL.Text = $"{v:0}%";
+            Cfg.PenOpacity = T.PenOpacity;
+            Cfg.Save();
+        };
+        seeRow.AddChild(see);
+        seeRow.AddChild(seeL);
         _box.AddChild(seeRow);
     }
 

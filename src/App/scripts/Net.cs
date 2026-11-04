@@ -56,7 +56,12 @@ public partial class Net : Node
 
     public static string AppVersion => ProjectSettings.GetSetting("application/config/version", "").AsString();
 
-    void SetStatus(string s) { Status = s; StatusChanged?.Invoke(s); GD.Print("[net] " + s); }
+    void SetStatus(string s)
+    {
+        Status = s;
+        StatusChanged?.Invoke(s);
+        GD.Print("[net] " + s);
+    }
 
     public Net()
     {
@@ -70,7 +75,8 @@ public partial class Net : Node
         });
         _transfers = new AssetTransfers(() => Session, () => Server)
         {
-            Send = SendRaw, FileArrived = (pkg, rel) => Session.Assets.FileArrived(pkg, rel), FileMissing = (pkg, rel) => Session.Assets.FileMissing(pkg, rel), Clock = () => Time.GetTicksMsec() / 1000.0, Log = log,
+            Send = SendRaw, FileArrived = (pkg, rel) => Session.Assets.FileArrived(pkg, rel), FileMissing = (pkg, rel) => Session.Assets.FileMissing(pkg, rel), Clock = () =>
+                Time.GetTicksMsec() / 1000.0, Log = log,
         };
     }
 
@@ -108,7 +114,12 @@ public partial class Net : Node
         if (Multiplayer is SceneMultiplayer sm) sm.ServerRelay = false;
         Multiplayer.MultiplayerPeer = _peer;
         Multiplayer.PeerConnected += _onPeerIn = id => SetStatus($"peer {id} connected");
-        Multiplayer.PeerDisconnected += _onPeerOut = id => { _transfers.PeerLeft(id); if (Server != null) Dispatch(Server.Leave(id)); SetStatus($"peer {id} left"); };
+        Multiplayer.PeerDisconnected += _onPeerOut = id =>
+        {
+            _transfers.PeerLeft(id);
+            if (Server != null) Dispatch(Server.Leave(id));
+            SetStatus($"peer {id} left");
+        };
         Session.SetName(name);
         if (started != null) Dispatch(started);
         else
@@ -152,12 +163,13 @@ public partial class Net : Node
                     lock (_upnpGate)
                     {
                         if (sitting != _upnpSitting) { ReleasePortOrLetLeaseRunOut(u, port); return; }
-                        _upnp = u; _upnpPort = port;
+                        _upnp = u;
+                        _upnpPort = port;
                         _upnpRenew = new System.Threading.Timer(_ => RenewUpnp(sitting), null, UpnpRenewEvery, UpnpRenewEvery);
                     }
                 TellUpnp(r == 0 ? "ok" : "failed", ip ?? "");
             }
-            catch { TellUpnp("failed", ""); }
+            catch (Exception e) { Diagnostics.Write(LogLevel.Warning, "[net] UPnP gave up: " + e.Message); TellUpnp("failed", ""); }
         });
     }
 
@@ -177,8 +189,14 @@ public partial class Net : Node
 
     void RenewUpnp(int sitting)
     {
-        Upnp? u; int port;
-        lock (_upnpGate) { if (sitting != _upnpSitting || _upnp == null) return; u = _upnp; port = _upnpPort; }
+        Upnp? u;
+        int port;
+        lock (_upnpGate)
+        {
+            if (sitting != _upnpSitting || _upnp == null) return;
+            u = _upnp;
+            port = _upnpPort;
+        }
         BestEffort.Try(() => MapPort(u, port));
         bool ended;
         lock (_upnpGate) ended = sitting != _upnpSitting;
@@ -187,12 +205,16 @@ public partial class Net : Node
 
     void CloseUpnp()
     {
-        Upnp? u; int port;
+        Upnp? u;
+        int port;
         lock (_upnpGate)
         {
             _upnpSitting++;
-            _upnpRenew?.Dispose(); _upnpRenew = null;
-            u = _upnp; port = _upnpPort; _upnp = null;
+            _upnpRenew?.Dispose();
+            _upnpRenew = null;
+            u = _upnp;
+            port = _upnpPort;
+            _upnp = null;
         }
         if (u == null) return;
         var close = System.Threading.Tasks.Task.Run(() => ReleasePortOrLetLeaseRunOut(u, port));
@@ -216,7 +238,11 @@ public partial class Net : Node
     public Error Join(string address, int port, string name, string password)
     {
         Shutdown();
-        _name = name; _password = password; _address = address; _port = port; _dropped = false;
+        _name = name;
+        _password = password;
+        _address = address;
+        _port = port;
+        _dropped = false;
         _token = Joins.Remembered(address, port);
         Session.SetName(name);
         _peer = new ENetMultiplayerPeer();
@@ -278,7 +304,11 @@ public partial class Net : Node
         if (_onConnected != null) Multiplayer.ConnectedToServer -= _onConnected;
         if (_onFailed != null) Multiplayer.ConnectionFailed -= _onFailed;
         if (_onServerGone != null) Multiplayer.ServerDisconnected -= _onServerGone;
-        _onPeerIn = null; _onPeerOut = null; _onConnected = null; _onFailed = null; _onServerGone = null;
+        _onPeerIn = null;
+        _onPeerOut = null;
+        _onConnected = null;
+        _onFailed = null;
+        _onServerGone = null;
         _transfers.Reset();
         _transfers.Local = null;
         _saves.CloseLog();
@@ -367,16 +397,36 @@ public partial class Net : Node
             var from = Multiplayer.GetRemoteSenderId();
             switch (m)
             {
-                case JoinRequest j: Dispatch(Server.Join(from, j, _peer?.GetPeer((int)from)?.GetRemoteAddress())); break;
-                case Admit or Refuse or SetRole or Revoke or SetPassword: Dispatch(Server.Control(from, m)); break;
-                case CommandMessage cm: Dispatch(Server.Handle(from, cm.Command)); break;
-                case NeedAsset na: _transfers.Serve(from, na); break;
-                case UploadAsset ua: _transfers.ReceiveUpload(from, ua); break;
-                case ChunkAck ack: _transfers.OnAck(from, ack); break;
-                case GetTurns: Dispatch(Server.TurnHistory(from)); break;
-                case GetSnapshot: Dispatch(Server.Resync(from)); break;
-                case GetTurn gt: Dispatch(Server.TurnSnapshot(from, gt.Index)); break;
-                case RunLua or GetScripts: Dispatch(Server.Request(from, m)); break;
+                case JoinRequest j:
+                    Dispatch(Server.Join(from, j, _peer?.GetPeer((int)from)?.GetRemoteAddress()));
+                    break;
+                case Admit or Refuse or SetRole or Revoke or SetPassword:
+                    Dispatch(Server.Control(from, m));
+                    break;
+                case CommandMessage cm:
+                    Dispatch(Server.Handle(from, cm.Command));
+                    break;
+                case NeedAsset na:
+                    _transfers.Serve(from, na);
+                    break;
+                case UploadAsset ua:
+                    _transfers.ReceiveUpload(from, ua);
+                    break;
+                case ChunkAck ack:
+                    _transfers.OnAck(from, ack);
+                    break;
+                case GetTurns:
+                    Dispatch(Server.TurnHistory(from));
+                    break;
+                case GetSnapshot:
+                    Dispatch(Server.Resync(from));
+                    break;
+                case GetTurn gt:
+                    Dispatch(Server.TurnSnapshot(from, gt.Index));
+                    break;
+                case RunLua or GetScripts:
+                    Dispatch(Server.Request(from, m));
+                    break;
             }
             return;
         }
@@ -389,7 +439,12 @@ public partial class Net : Node
         switch (m)
         {
             case JoinResult jr:
-                if (jr.Waiting) { SetStatus("Waiting for an umpire to let you in…"); AtTheDoor?.Invoke(); return; }
+                if (jr.Waiting)
+                {
+                    SetStatus("Waiting for an umpire to let you in…");
+                    AtTheDoor?.Invoke();
+                    return;
+                }
                 if (!jr.Ok)
                 {
                     SetStatus("not let in: " + jr.Error);
@@ -403,23 +458,45 @@ public partial class Net : Node
                 if (Server == null && Session.IsUmpire) _saves.StartMirror(jr);
                 Joined?.Invoke();
                 break;
-            case Knock k: Session.OnKnock(k); break;
+            case Knock k:
+                Session.OnKnock(k);
+                break;
             case RoleChanged rc:
                 if (Server == null && MirrorPath != null && !Visibility.IsUmpire(rc.Role)) _saves.StopMirror();
                 Session.OnRoleChanged(rc);
                 SetStatus($"you are now {Fmt.Role(rc.Role)}");
                 if (Server == null && Session.IsUmpire && MirrorPath == null) _saves.StartMirror(new JoinResult { Created = Session.Created });
                 break;
-            case AccessChanged ac: Session.OnAccess(ac.Access); break;
-            case CommandMessage cm: Session.OnCommand(cm.Command); break;
-            case Snapshot s: Session.SetView(s.View); break;
-            case PeerList pl: Session.OnPeers(pl); break;
-            case ErrorMessage e: Session.OnError(e.Text); break;
-            case AssetChunk ac: _transfers.ReceiveChunk(ac); break;
-            case TurnList tl: Session.OnTurns(tl); break;
-            case ChunkAck ack: _transfers.OnAck(1, ack); break;
-            case TurnState ts: Session.Review(ts.State, ts.Info); break;
-            case ScriptConsole or ScriptList: Session.OnScriptMessage(m); break;
+            case AccessChanged ac:
+                Session.OnAccess(ac.Access);
+                break;
+            case CommandMessage cm:
+                Session.OnCommand(cm.Command);
+                break;
+            case Snapshot s:
+                Session.SetView(s.View);
+                break;
+            case PeerList pl:
+                Session.OnPeers(pl);
+                break;
+            case ErrorMessage e:
+                Session.OnError(e.Text);
+                break;
+            case AssetChunk ac:
+                _transfers.ReceiveChunk(ac);
+                break;
+            case TurnList tl:
+                Session.OnTurns(tl);
+                break;
+            case ChunkAck ack:
+                _transfers.OnAck(1, ack);
+                break;
+            case TurnState ts:
+                Session.Review(ts.State, ts.Info);
+                break;
+            case ScriptConsole or ScriptList:
+                Session.OnScriptMessage(m);
+                break;
         }
     }
 

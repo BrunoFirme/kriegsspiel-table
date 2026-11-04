@@ -12,7 +12,14 @@ public sealed class PackBuilder
     readonly MakeWay _way;
     BundleEffects? _effects;
 
-    public PackBuilder(Config cfg, AssetStore assets, Report rep, MakeWay way) { _cfg = cfg; _assets = assets; _rep = rep; _defs = new DefFactory(cfg, assets, rep); _way = way; }
+    public PackBuilder(Config cfg, AssetStore assets, Report rep, MakeWay way)
+    {
+        _cfg = cfg;
+        _assets = assets;
+        _rep = rep;
+        _defs = new DefFactory(cfg, assets, rep);
+        _way = way;
+    }
 
     public static IEnumerable<string> Urls(TtsSave save) =>
         save.Objects.SelectMany(o => o.Walk()).SelectMany(o => o.Urls().Concat(ScriptUrls(o.Lua)).Concat(ScriptUrls(o.LuaState))).Concat(ScriptUrls(save.Lua)).Concat(ScriptUrls(save.LuaState));
@@ -103,7 +110,12 @@ public sealed class PackBuilder
             foreach (var c in o.Contained) Visit(c, pack, ref objects, ref effects);
             return;
         }
-        if (o.GmNotes.StartsWith(KtMarker.Def)) { KtDef(o, pack, where); objects++; return; }
+        if (o.GmNotes.StartsWith(KtMarker.Def))
+        {
+            KtDef(o, pack, where);
+            objects++;
+            return;
+        }
         if (o.Description.StartsWith(KtMarker.Pack)) return;
         if (o.Name == "Custom_Assetbundle")
         {

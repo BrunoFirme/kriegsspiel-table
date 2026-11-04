@@ -35,11 +35,21 @@ public static class ReliefBrush
                 int i = y * g.Cols + x;
                 switch (b.Mode)
                 {
-                    case BrushMode.Raise: g.H[i] += rise * fall; break;
-                    case BrushMode.Lower: g.H[i] = Math.Max(0, g.H[i] - rise * fall); break;
-                    case BrushMode.Flatten: g.H[i] += (level - g.H[i]) * Math.Min(1, fall * (float)Math.Clamp(b.Strength * 2, 0, 1)); break;
-                    case BrushMode.Smooth: g.H[i] += (before!.Mean(x, y) - g.H[i]) * fall * (float)Math.Clamp(b.Strength * 2, 0, 1); break;
-                    case BrushMode.Paint: if (d <= PaintEdge && GroundScatter.Takes(x, y, b.Kind, b.Density)) g.Kind[i] = b.Kind; break;
+                    case BrushMode.Raise:
+                        g.H[i] += rise * fall;
+                        break;
+                    case BrushMode.Lower:
+                        g.H[i] = Math.Max(0, g.H[i] - rise * fall);
+                        break;
+                    case BrushMode.Flatten:
+                        g.H[i] += (level - g.H[i]) * Math.Min(1, fall * (float)Math.Clamp(b.Strength * 2, 0, 1));
+                        break;
+                    case BrushMode.Smooth:
+                        g.H[i] += (before!.Mean(x, y) - g.H[i]) * fall * (float)Math.Clamp(b.Strength * 2, 0, 1);
+                        break;
+                    case BrushMode.Paint:
+                        if (d <= PaintEdge && GroundScatter.Takes(x, y, b.Kind, b.Density)) g.Kind[i] = b.Kind;
+                        break;
                 }
             }
         return new CellBox(x0, y0, x1, y1);
@@ -59,7 +69,10 @@ public static class ReliefBrush
         {
             int i = todo.Pop(), x = i % g.Cols, y = i / g.Cols;
             if (GroundScatter.Takes(x, y, kind, density) && g.Kind[i] != kind) { g.Kind[i] = kind; changed = true; }
-            x0 = Math.Min(x0, x); x1 = Math.Max(x1, x); y0 = Math.Min(y0, y); y1 = Math.Max(y1, y);
+            x0 = Math.Min(x0, x);
+            x1 = Math.Max(x1, x);
+            y0 = Math.Min(y0, y);
+            y1 = Math.Max(y1, y);
             if (x > 0) Visit(i - 1);
             if (x < g.Cols - 1) Visit(i + 1);
             if (y > 0) Visit(i - g.Cols);
@@ -94,13 +107,15 @@ public static class ReliefBrush
 
         public float Mean(int x, int y)
         {
-            float sum = 0; int n = 0;
+            float sum = 0;
+            int n = 0;
             for (int dy = -1; dy <= 1; dy++)
                 for (int dx = -1; dx <= 1; dx++)
                 {
                     int nx = x + dx - _x0, ny = y + dy - _y0;
                     if (nx < 0 || ny < 0 || nx >= _w || ny >= _h) continue;
-                    sum += _v[ny * _w + nx]; n++;
+                    sum += _v[ny * _w + nx];
+                    n++;
                 }
             return sum / n;
         }

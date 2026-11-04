@@ -20,7 +20,8 @@ sealed class PieceLines
     {
         var piece = _piece.Piece;
         if (ReferenceEquals(_built, piece.Lines) && _builtState == piece.State) return;
-        _built = piece.Lines; _builtState = piece.State;
+        _built = piece.Lines;
+        _builtState = piece.State;
         if (_node != null && GodotObject.IsInstanceValid(_node)) _node.QueueFree();
         _node = null;
         if (piece.Lines.Count == 0 || !_piece.ScriptDrawingShows) return;
@@ -42,8 +43,10 @@ sealed class PieceLines
                 var dOut = i < pts.Count - 1 ? (pts[i + 1] - pts[i]).Normalized() : Vector3.Zero;
                 var d = (dIn + dOut).LengthSquared() > 0.000001f ? (dIn + dOut).Normalized() : (dIn.LengthSquared() > 0 ? dIn : dOut);
                 var side = new Vector3(-d.Z, 0, d.X) * hw;
-                mesh.SurfaceSetNormal(Vector3.Up); mesh.SurfaceAddVertex(pts[i] - side);
-                mesh.SurfaceSetNormal(Vector3.Up); mesh.SurfaceAddVertex(pts[i] + side);
+                mesh.SurfaceSetNormal(Vector3.Up);
+                mesh.SurfaceAddVertex(pts[i] - side);
+                mesh.SurfaceSetNormal(Vector3.Up);
+                mesh.SurfaceAddVertex(pts[i] + side);
             }
             mesh.SurfaceEnd();
             any = true;
@@ -52,7 +55,9 @@ sealed class PieceLines
         _node = new MeshInstance3D
         {
             Mesh = mesh, CastShadow = GeometryInstance3D.ShadowCastingSetting.Off,
-            MaterialOverride = new StandardMaterial3D { VertexColorUseAsAlbedo = true, ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded, Transparency = BaseMaterial3D.TransparencyEnum.Alpha, CullMode = BaseMaterial3D.CullModeEnum.Disabled, RenderPriority = 1 },
+            MaterialOverride =
+                new StandardMaterial3D { VertexColorUseAsAlbedo = true, ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded, Transparency = BaseMaterial3D.TransparencyEnum.Alpha,
+                    CullMode = BaseMaterial3D.CullModeEnum.Disabled, RenderPriority = 1 },
         };
         _piece.AddChild(_node);
     }

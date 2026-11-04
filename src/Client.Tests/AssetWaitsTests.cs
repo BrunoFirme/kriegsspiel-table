@@ -156,7 +156,8 @@ public class AssetWaitsTests
         Assert.Equal(1, waits.BatchTotal);
         Assert.False(waits.StartTexture("tile", _ => { }));
         Assert.Equal(2, waits.BatchTotal);
-        waits.TextureDone("tile"); waits.TextureDone("piece");
+        waits.TextureDone("tile");
+        waits.TextureDone("piece");
         Assert.Equal((2, false, false), (waits.BatchDone, waits.Busy, waits.Shows));
     }
 }

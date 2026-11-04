@@ -17,7 +17,17 @@ sealed class SelectTool
     readonly Carry _hand;
     readonly NameEditor _names;
     readonly PieceActions _actions;
-    public SelectTool(TableContext c, PointerPress press, SheetLayer sheets, PieceLayer pieces, Selection selection, Carry hand, NameEditor names, PieceActions actions) { _c = c; _press = press; _sheets = sheets; _pieces = pieces; _selection = selection; _hand = hand; _names = names; _actions = actions; }
+    public SelectTool(TableContext c, PointerPress press, SheetLayer sheets, PieceLayer pieces, Selection selection, Carry hand, NameEditor names, PieceActions actions)
+    {
+        _c = c;
+        _press = press;
+        _sheets = sheets;
+        _pieces = pieces;
+        _selection = selection;
+        _hand = hand;
+        _names = names;
+        _actions = actions;
+    }
 
     public bool Dragging { get; private set; }
     public bool BoxSelecting { get; private set; }
@@ -29,7 +39,12 @@ sealed class SelectTool
 
     Session S => _c.S;
 
-    public void Reset() { Dragging = false; BoxSelecting = false; _onFace = null; }
+    public void Reset()
+    {
+        Dragging = false;
+        BoxSelecting = false;
+        _onFace = null;
+    }
 
     public void Press(InputEventMouseButton mb, Vec2 g)
     {
@@ -69,7 +84,12 @@ sealed class SelectTool
     {
         var f = hit.FacePoint(mb.Position) ?? g;
         var names = _names;
-        if (names.Node != null) { bool again = hit == names.Node && hit.CardTitleAt(f); names.End(commit: true); if (again) return true; }
+        if (names.Node != null)
+        {
+            bool again = hit == names.Node && hit.CardTitleAt(f);
+            names.End(commit: true);
+            if (again) return true;
+        }
         if (FaceItem(hit, f) is not { } what) return false;
         if (what.StartsWith('w') && int.TryParse(what.AsSpan(1), out var wi)) hit.FlashWidget(wi);
         _onFace = (hit, what, g, mb.ShiftPressed || mb.CtrlPressed);
@@ -160,7 +180,8 @@ sealed class SelectTool
             if (r.Size.Length() > 6)
             {
                 var cam = _c.Rig.Cam;
-                var ids = _pieces.Nodes.Where(n => _c.LayerInteractive(n.Layer) && !cam.IsPositionBehind(n.GlobalPosition) && r.HasPoint(cam.UnprojectPosition(n.GlobalPosition))).Select(n => n.Piece.Id);
+                var ids = _pieces.Nodes.Where(n => _c.LayerInteractive(n.Layer) && !cam.IsPositionBehind(n.GlobalPosition) && r.HasPoint(cam.UnprojectPosition(n.GlobalPosition)))
+                    .Select(n => n.Piece.Id);
                 _selection.Set(ids, add: mb.ShiftPressed);
             }
             return;

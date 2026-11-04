@@ -17,7 +17,13 @@ sealed class CameraControl
     Vector2 _orbitVel;
     ulong _lastDragMs;
 
-    public void DragBegin() { Rig.Still(); _panVel = Vector3.Zero; _orbitVel = Vector2.Zero; _lastDragMs = Time.GetTicksMsec(); }
+    public void DragBegin()
+    {
+        Rig.Still();
+        _panVel = Vector3.Zero;
+        _orbitVel = Vector2.Zero;
+        _lastDragMs = Time.GetTicksMsec();
+    }
 
     float DragStep()
     {
@@ -30,10 +36,12 @@ sealed class CameraControl
     public void TrackPan(Vector2 from, Vector2 to)
     {
         float dt = DragStep();
-        var a = Rig.PlaneAt(from, Rig.Target.Y); var b = Rig.PlaneAt(to, Rig.Target.Y);
+        var a = Rig.PlaneAt(from, Rig.Target.Y);
+        var b = Rig.PlaneAt(to, Rig.Target.Y);
         Rig.PanScreen(from, to);
         if (a == null || b == null) return;
-        var v = (a.Value - b.Value) / dt; v.Y = 0;
+        var v = (a.Value - b.Value) / dt;
+        v.Y = 0;
         _panVel = _panVel.Lerp(v, 0.5f);
     }
 
@@ -91,8 +99,10 @@ sealed class CameraControl
         }
         if (view.Sheets.Count > 1)
         {
-            var minX = view.Sheets.Min(s => s.Pos.X - s.Size.W / 2); var maxX = view.Sheets.Max(s => s.Pos.X + s.Size.W / 2);
-            var minZ = view.Sheets.Min(s => s.Pos.Z - s.Size.H / 2); var maxZ = view.Sheets.Max(s => s.Pos.Z + s.Size.H / 2);
+            var minX = view.Sheets.Min(s => s.Pos.X - s.Size.W / 2);
+            var maxX = view.Sheets.Max(s => s.Pos.X + s.Size.W / 2);
+            var minZ = view.Sheets.Min(s => s.Pos.Z - s.Size.H / 2);
+            var maxZ = view.Sheets.Max(s => s.Pos.Z + s.Size.H / 2);
             size = (float)Math.Max(maxX - minX, maxZ - minZ);
             c = Coords.ToWorld(new Vec2((minX + maxX) / 2, (minZ + maxZ) / 2));
         }
@@ -141,7 +151,12 @@ sealed class CameraControl
         var settings = _c.Settings;
         if (_c.S == null || settings == null || ScenarioKey() is not { } key) return;
         var now = new[] { Rig.Target.X, Rig.Target.Z, Rig.Distance, Rig.Yaw, Rig.Pitch, Rig.TopDown ? 1f : 0f };
-        if (_seen == null || !Same(_seen, now)) { _seen = now; _idle = 0; return; }
+        if (_seen == null || !Same(_seen, now))
+        {
+            _seen = now;
+            _idle = 0;
+            return;
+        }
         _idle += delta;
         if (_idle < RestSeconds || settings.CameraAt.TryGetValue(key, out var kept) && Same(kept, now)) return;
         settings.CameraAt[key] = now;

@@ -225,7 +225,12 @@ public sealed partial class SaveStore
             else { File.Move(path, step); File.Move(step, wanted); }
             return wanted;
         }
-        if (folder) { var to = FreeFolder(parent, clean); Directory.Move(path, to); return to; }
+        if (folder)
+        {
+            var to = FreeFolder(parent, clean);
+            Directory.Move(path, to);
+            return to;
+        }
         var file = FreeSaveFile(parent, clean);
         File.Move(path, file);
         return file;
@@ -387,7 +392,8 @@ public sealed partial class SaveStore
                 else if (name.EndsWith(Ext, StringComparison.OrdinalIgnoreCase)) MoveFile(item, FreeSaveFile(root, Path.GetFileNameWithoutExtension(name)));
             }
         }
-        foreach (var (_, to) in map) if (File.Exists(LivePath(scenarioDir, to)) && RunFolderOf(scenarioDir, to) == null) MakeRun(scenarioDir, to, NextRunName(scenarioDir), null, nowUtc, backfill: true);
+        foreach (var (_, to) in map) if (File.Exists(LivePath(scenarioDir, to)) && RunFolderOf(scenarioDir, to) == null) MakeRun(scenarioDir, to, NextRunName(scenarioDir), null, nowUtc,
+            backfill: true);
         if (incomingCurrent != null && (takeCurrent || CurrentRun(scenarioDir) == null)) SetCurrent(scenarioDir, incomingCurrent);
     }
 

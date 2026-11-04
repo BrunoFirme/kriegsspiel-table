@@ -57,6 +57,6 @@ public static class PackChanges
             }
             return false;
         }
-        catch { return false; }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException) { return false; }
     }
 }

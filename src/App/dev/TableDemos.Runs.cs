@@ -67,7 +67,12 @@ sealed partial class TableDemos
         var p = t.SelectedNodes.FirstOrDefault()?.Piece;
         if (p == null) { GD.Print("[transform] nothing selected"); return; }
         GD.Print($"[transform] before rot={p.RotDeg:0.#} scale={p.Scale:0.##}");
-        for (int i = 0; i < 6; i++) { t.RotateSmooth(5); t.ScaleSmooth(1.07); await _main.ToSignal(Tree.CreateTimer(0.05), SceneTreeTimer.SignalName.Timeout); }
+        for (int i = 0; i < 6; i++)
+        {
+            t.RotateSmooth(5);
+            t.ScaleSmooth(1.07);
+            await _main.ToSignal(Tree.CreateTimer(0.05), SceneTreeTimer.SignalName.Timeout);
+        }
         await _main.ToSignal(Tree.CreateTimer(1.0), SceneTreeTimer.SignalName.Timeout);
         var after = Net.Server!.State.Find(KTable.Core.Model.Layers.Umpire, p.Id)!;
         GD.Print($"[transform] server after rot={after.RotDeg:0.#} scale={after.Scale:0.##} log={Net.Server.Log.Count}");
@@ -111,7 +116,10 @@ sealed partial class TableDemos
         Input.ParseInputEvent(new InputEventKey { Keycode = k, PhysicalKeycode = k, Pressed = true });
         Input.ParseInputEvent(new InputEventKey { Keycode = k, PhysicalKeycode = k, Pressed = false });
     }
-    async System.Threading.Tasks.Task Frames(int n) { for (int i = 0; i < n; i++) await _main.ToSignal(Tree, SceneTree.SignalName.ProcessFrame); }
+    async System.Threading.Tasks.Task Frames(int n)
+    {
+        for (int i = 0; i < n; i++) await _main.ToSignal(Tree, SceneTree.SignalName.ProcessFrame);
+    }
 
     async System.Threading.Tasks.Task DemoMapPerf(Table table, string spec)
     {
@@ -120,19 +128,27 @@ sealed partial class TableDemos
         double secs = double.Parse(parts[0], inv), speed = parts.Length > 1 ? double.Parse(parts[1], inv) : 0;
         await Wait(2.0);
         Session.Assets.Uploaded = 0;
-        double t = 0, tick = 0; int frames = 0; double worst = 0;
+        double t = 0, tick = 0;
+        int frames = 0;
+        double worst = 0;
         var sw = System.Diagnostics.Stopwatch.StartNew();
         while (t < secs)
         {
             double before = sw.Elapsed.TotalSeconds;
             await _main.ToSignal(Tree, SceneTree.SignalName.ProcessFrame);
             double dt = sw.Elapsed.TotalSeconds - before;
-            t += dt; tick += dt; frames++; worst = Math.Max(worst, dt);
+            t += dt;
+            tick += dt;
+            frames++;
+            worst = Math.Max(worst, dt);
             if (speed > 0) table.Rig.PanWorld(new Vector3((float)(speed * dt), 0, 0));
             if (tick >= 1.0)
             {
                 GD.Print($"[mapperf] t={t:0}s fps={frames / tick:0} worst={worst * 1000:0}ms dist={table.Rig.Distance:0} {table.SheetStats()} tex={Session.Assets.TexCount} waiting={Session.Assets.WaitingCount} uploaded={Session.Assets.Uploaded}");
-                tick = 0; frames = 0; worst = 0; Session.Assets.Uploaded = 0;
+                tick = 0;
+                frames = 0;
+                worst = 0;
+                Session.Assets.Uploaded = 0;
             }
         }
         GD.Print("[mapperf] done");
@@ -141,14 +157,18 @@ sealed partial class TableDemos
 
     async System.Threading.Tasks.Task DemoPointers(Table table, Hud hud)
     {
-        table.S.OnAccess(new GameAccess { Approved = { new Approved { Name = "Pogue", Role = Role.Umpire }, new Approved { Name = "Boggs", Role = Role.Umpire }, new Approved { Name = "Lead umpire", Role = Role.LeadUmpire } } });
+        table.S.OnAccess(new GameAccess { Approved = { new Approved { Name = "Pogue", Role = Role.Umpire }, new Approved { Name = "Boggs", Role = Role.Umpire },
+            new Approved { Name = "Lead umpire", Role = Role.LeadUmpire } } });
         var people = new KTable.Core.Protocol.PeerList
         {
-            Peers = [table.S.Me, new() { PeerId = 2, Name = "Pogue", Role = Role.Umpire }, new() { PeerId = 3, Name = "Boggs", Role = Role.Umpire }, new() { PeerId = 4, Name = "Lead umpire", Role = Role.LeadUmpire }, new() { PeerId = 5, Name = "Watcher", Role = Role.Observer }],
+            Peers =
+                [table.S.Me, new() { PeerId = 2, Name = "Pogue", Role = Role.Umpire }, new() { PeerId = 3, Name = "Boggs", Role = Role.Umpire }, new() { PeerId = 4, Name = "Lead umpire",
+                    Role = Role.LeadUmpire }, new() { PeerId = 5, Name = "Watcher", Role = Role.Observer }],
             Waiting = [new() { PeerId = 6, Name = "Newcomer" }],
         };
         table.S.Do(new KTable.Core.Protocol.SetZone { Zone = new Zone { Name = "West", Owner = "Pogue", Polygon = { new(-8, -3), new(-1, -3), new(-1, 6), new(-8, 6) } } });
-        var carried = table.S.View.Layer(Layers.Umpire).Where(p => table.Pieces.NodeOf(Layers.Umpire, p.Id) is { Footprint.X: > 1 }).OrderBy(p => (p.Pos - new Vec2(2, -2)).Length).FirstOrDefault()?.Id;
+        var carried = table.S.View.Layer(Layers.Umpire).Where(p => table.Pieces.NodeOf(Layers.Umpire, p.Id) is { Footprint.X: > 1 }).OrderBy(p => (p.Pos - new Vec2(2, -2)).Length)
+            .FirstOrDefault()?.Id;
         for (var frame = 0; frame < 900; frame++)
         {
             var t = frame / 60.0;
@@ -172,7 +192,13 @@ sealed partial class TableDemos
         var t0 = table.Rig.Target;
         Mouse(MouseButton.Middle, true, c);
         var p = c;
-        for (int i = 0; i < 8; i++) { var q = p + new Vector2(28, 0); Move(p, q, MouseButtonMask.Middle); p = q; await Frames(1); }
+        for (int i = 0; i < 8; i++)
+        {
+            var q = p + new Vector2(28, 0);
+            Move(p, q, MouseButtonMask.Middle);
+            p = q;
+            await Frames(1);
+        }
         Mouse(MouseButton.Middle, false, p);
         await Frames(1);
         var t1 = table.Rig.Target;
@@ -181,7 +207,13 @@ sealed partial class TableDemos
         GD.Print($"[camera] pan: dragged {(t1 - t0).Length():0.0} u, glided on {(t2 - t1).Length():0.0} u more after release (gliding now: {table.Rig.Gliding})");
         var y0 = table.Rig.Yaw;
         Mouse(MouseButton.Right, true, p);
-        for (int i = 0; i < 8; i++) { var q = p + new Vector2(20, 0); Move(p, q, MouseButtonMask.Right); p = q; await Frames(1); }
+        for (int i = 0; i < 8; i++)
+        {
+            var q = p + new Vector2(20, 0);
+            Move(p, q, MouseButtonMask.Right);
+            p = q;
+            await Frames(1);
+        }
         Mouse(MouseButton.Right, false, p);
         await Frames(1);
         var y1 = table.Rig.Yaw;
@@ -190,7 +222,13 @@ sealed partial class TableDemos
         GD.Print($"[camera] orbit: dragged {Mathf.RadToDeg(y1 - y0):0.0}°, glided on {Mathf.RadToDeg(y2 - y1):0.0}° more after release");
         var t3 = table.Rig.Target;
         Mouse(MouseButton.Middle, true, p);
-        for (int i = 0; i < 4; i++) { var q = p + new Vector2(28, 0); Move(p, q, MouseButtonMask.Middle); p = q; await Frames(1); }
+        for (int i = 0; i < 4; i++)
+        {
+            var q = p + new Vector2(28, 0);
+            Move(p, q, MouseButtonMask.Middle);
+            p = q;
+            await Frames(1);
+        }
         await Wait(0.3);
         Mouse(MouseButton.Middle, false, p);
         await Frames(1);
@@ -236,13 +274,15 @@ sealed partial class TableDemos
         GD.Print($"[statekey] piece {piece.Id} '{def?.Name}' has {def?.States.Count} states; state now {piece.State}");
         table.SetSelection(Array.Empty<string>());
         var at = table.Rig.Cam.UnprojectPosition(node.GlobalPosition);
-        Pointer.Drive(at); Move(at, at, 0);
+        Pointer.Drive(at);
+        Move(at, at, 0);
         await Wait(0.3);
         KeyTap(key);
         await Wait(0.3);
         GD.Print($"[statekey] hovered + key {a[1]}: state {piece.State}");
         var away = new Vector2(_main.GetViewport().GetVisibleRect().Size.X - 40, _main.GetViewport().GetVisibleRect().Size.Y - 40);
-        Pointer.Drive(away); Move(at, away, 0);
+        Pointer.Drive(away);
+        Move(at, away, 0);
         table.SetSelection(new[] { piece.Id });
         await Wait(0.3);
         KeyTap(Key.Key1);
@@ -263,7 +303,8 @@ sealed partial class TableDemos
         GD.Print($"[hotkey] piece {piece.Id} '{def?.Name}' tags [{string.Join(",", piece.Tags ?? new())}] memo {piece.Memo}; {def?.States.Count} states, state {piece.State}; hotkeys: {string.Join(" | ", Session.View.Hotkeys.Select(h => h.Label + "=" + table.Settings.Keys.Label("script:" + h.Label)))}; table menu: {string.Join(" | ", Session.View.MenuItems.Select(m => m.Label))}");
         table.SetSelection(Array.Empty<string>());
         var at = table.Rig.Cam.UnprojectPosition(node.GlobalPosition);
-        Pointer.Drive(at); Move(at, at, 0);
+        Pointer.Drive(at);
+        Move(at, at, 0);
         await Wait(0.5);
         static IEnumerable<KTable.Core.Model.UiNode> All(KTable.Core.Model.UiNode n) { yield return n; foreach (var c in n.Children) foreach (var x in All(c)) yield return x; }
         foreach (var k in a.Skip(1))
@@ -284,11 +325,18 @@ sealed partial class TableDemos
         int before = Session.View.Layer(KTable.Core.Model.Layers.Umpire).Count;
         var from = hud.Pieces.ItemCentre(0);
         var to = _main.GetViewport().GetVisibleRect().Size / 2;
-        Pointer.Drive(from); Move(from, from, 0);
+        Pointer.Drive(from);
+        Move(from, from, 0);
         await Frames(2);
         Mouse(MouseButton.Left, true, from);
         var p = from;
-        for (int i = 1; i <= 10; i++) { var q = from.Lerp(to, i / 10f); Move(p, q, MouseButtonMask.Left); p = q; await Frames(2); }
+        for (int i = 1; i <= 10; i++)
+        {
+            var q = from.Lerp(to, i / 10f);
+            Move(p, q, MouseButtonMask.Left);
+            p = q;
+            await Frames(2);
+        }
         Pointer.Drive(to);
         await Frames(2);
         GD.Print($"[palette] dragging={table.PaletteDragging} tool={table.Tool}");

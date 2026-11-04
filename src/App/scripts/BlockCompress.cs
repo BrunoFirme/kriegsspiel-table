@@ -50,7 +50,8 @@ static class BlockCompress
                     }
                 }
                 if (alpha) { AlphaBlock(block, dst.Slice(o, AlphaBlockBytes)); o += AlphaBlockBytes; }
-                ColourBlock(block, dst.Slice(o, ColourBlockBytes)); o += ColourBlockBytes;
+                ColourBlock(block, dst.Slice(o, ColourBlockBytes));
+                o += ColourBlockBytes;
             }
     }
 
@@ -60,9 +61,12 @@ static class BlockCompress
         for (int i = 0; i < Pixels; i++)
         {
             int r = block[i * Channels], g = block[i * Channels + 1], b = block[i * Channels + 2];
-            minR = Math.Min(minR, r); maxR = Math.Max(maxR, r);
-            minG = Math.Min(minG, g); maxG = Math.Max(maxG, g);
-            minB = Math.Min(minB, b); maxB = Math.Max(maxB, b);
+            minR = Math.Min(minR, r);
+            maxR = Math.Max(maxR, r);
+            minG = Math.Min(minG, g);
+            maxG = Math.Max(maxG, g);
+            minB = Math.Min(minB, b);
+            maxB = Math.Max(maxB, b);
         }
         int dr = maxR - minR, dg = maxG - minG, db = maxB - minB;
         int lo = int.MaxValue, hi = int.MinValue, loAt = 0, hiAt = 0;
@@ -74,10 +78,14 @@ static class BlockCompress
         }
         ushort c0 = To565(block.Slice(hiAt * Channels)), c1 = To565(block.Slice(loAt * Channels));
         if (c0 < c1) (c0, c1) = (c1, c0);
-        dst[0] = (byte)c0; dst[1] = (byte)(c0 >> 8); dst[2] = (byte)c1; dst[3] = (byte)(c1 >> 8);
+        dst[0] = (byte)c0;
+        dst[1] = (byte)(c0 >> 8);
+        dst[2] = (byte)c1;
+        dst[3] = (byte)(c1 >> 8);
         if (c0 == c1) { dst[4] = dst[5] = dst[6] = dst[7] = 0; return; }
         Span<int> far = stackalloc int[3], near = stackalloc int[3];
-        From565(c0, far); From565(c1, near);
+        From565(c0, far);
+        From565(c1, near);
         int ar = far[0] - near[0], ag = far[1] - near[1], ab = far[2] - near[2];
         int span = ar * ar + ag * ag + ab * ab;
         for (int y = 0; y < Side; y++)
@@ -97,8 +105,14 @@ static class BlockCompress
     static void AlphaBlock(ReadOnlySpan<byte> block, Span<byte> dst)
     {
         int a0 = 0, a1 = 255;
-        for (int i = 0; i < Pixels; i++) { int a = block[i * Channels + 3]; a0 = Math.Max(a0, a); a1 = Math.Min(a1, a); }
-        dst[0] = (byte)a0; dst[1] = (byte)a1;
+        for (int i = 0; i < Pixels; i++)
+        {
+            int a = block[i * Channels + 3];
+            a0 = Math.Max(a0, a);
+            a1 = Math.Min(a1, a);
+        }
+        dst[0] = (byte)a0;
+        dst[1] = (byte)a1;
         if (a0 == a1) { dst.Slice(2, 6).Clear(); return; }
         int range = a0 - a1;
         ulong bits = 0;
@@ -116,6 +130,8 @@ static class BlockCompress
     static void From565(ushort c, Span<int> rgb)
     {
         int r = c >> 11, g = (c >> 5) & 63, b = c & 31;
-        rgb[0] = (r << 3) | (r >> 2); rgb[1] = (g << 2) | (g >> 4); rgb[2] = (b << 3) | (b >> 2);
+        rgb[0] = (r << 3) | (r >> 2);
+        rgb[1] = (g << 2) | (g >> 4);
+        rgb[2] = (b << 3) | (b >> 2);
     }
 }

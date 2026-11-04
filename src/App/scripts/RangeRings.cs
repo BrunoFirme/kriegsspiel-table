@@ -10,7 +10,12 @@ sealed class RangeRings
     readonly TableContext _c;
     readonly ToolOverlay _overlay;
     readonly Selection _selection;
-    public RangeRings(TableContext c, ToolOverlay overlay, Selection selection) { _c = c; _overlay = overlay; _selection = selection; }
+    public RangeRings(TableContext c, ToolOverlay overlay, Selection selection)
+    {
+        _c = c;
+        _overlay = overlay;
+        _selection = selection;
+    }
 
     double? _standingReach;
 
@@ -27,7 +32,8 @@ sealed class RangeRings
         foreach (var (k, v) in n.Piece.Counters)
             if (string.Equals(k, "range", StringComparison.OrdinalIgnoreCase)) return v;
         foreach (var (k, v) in n.Piece.Text)
-            if (string.Equals(k, "range", StringComparison.OrdinalIgnoreCase) && double.TryParse(v, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var t)) return t;
+            if (string.Equals(k, "range", StringComparison.OrdinalIgnoreCase) && double.TryParse(v, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture,
+                out var t)) return t;
         return RangeMetres;
     }
 
@@ -63,8 +69,12 @@ sealed class RangeRings
         ClearReadings();
         if (_c.Tool != Tool.Range) return;
         var mat = new StandardMaterial3D { AlbedoColor = new Color(1f, 0.55f, 0.15f), ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded, NoDepthTest = true };
-        var faint = new StandardMaterial3D { AlbedoColor = new Color(1f, 0.55f, 0.15f, 0.55f), ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded, NoDepthTest = true, Transparency = BaseMaterial3D.TransparencyEnum.Alpha };
-        var wash = new StandardMaterial3D { AlbedoColor = new Color(1f, 0.55f, 0.15f, 0.08f), ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded, NoDepthTest = true, Transparency = BaseMaterial3D.TransparencyEnum.Alpha };
+        var faint =
+            new StandardMaterial3D { AlbedoColor = new Color(1f, 0.55f, 0.15f, 0.55f), ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded, NoDepthTest = true,
+                Transparency = BaseMaterial3D.TransparencyEnum.Alpha };
+        var wash =
+            new StandardMaterial3D { AlbedoColor = new Color(1f, 0.55f, 0.15f, 0.08f), ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded, NoDepthTest = true,
+                Transparency = BaseMaterial3D.TransparencyEnum.Alpha };
         int which = 0;
         foreach (var n in _selection.Nodes)
         {

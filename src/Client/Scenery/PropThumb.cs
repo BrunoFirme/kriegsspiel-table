@@ -18,13 +18,16 @@ public static class PropThumb
         float minX = pts.Min(p => p.X), maxX = pts.Max(p => p.X), minY = pts.Min(p => p.Y), maxY = pts.Max(p => p.Y);
         float scale = (S * 0.92f) / Mathf.Max(maxX - minX, maxY - minY);
         float ox = S / 2f - (minX + maxX) / 2 * scale, oy = S / 2f + (minY + maxY) / 2 * scale;
-        var depth = new float[S * S]; Array.Fill(depth, float.MinValue);
+        var depth = new float[S * S];
+        Array.Fill(depth, float.MinValue);
         var col = new Rgb[S * S];
         var light = new Vector3(-0.3f, 1, 0.4f).Normalized();
         for (int i = 0; i < pts.Length; i += 3)
         {
             Vector2 Sc(Vector3 p) => new(ox + p.X * scale, oy - p.Y * scale);
-            var a = Sc(pts[i]); var b = Sc(pts[i + 1]); var c = Sc(pts[i + 2]);
+            var a = Sc(pts[i]);
+            var b = Sc(pts[i + 1]);
+            var c = Sc(pts[i + 2]);
             float area = (b.X - a.X) * (c.Y - a.Y) - (b.Y - a.Y) * (c.X - a.X);
             if (Mathf.Abs(area) < 1e-6f) continue;
             int x0 = Math.Max(0, (int)Mathf.Floor(Mathf.Min(a.X, Mathf.Min(b.X, c.X)))), x1 = Math.Min(S - 1, (int)Mathf.Ceil(Mathf.Max(a.X, Mathf.Max(b.X, c.X))));
@@ -58,11 +61,17 @@ public static class PropThumb
                     {
                         int q = (y * 2 + dy) * S + x * 2 + dx;
                         if (depth[q] == float.MinValue) continue;
-                        r += col[q].R; g += col[q].G; bb += col[q].B; al += 1;
+                        r += col[q].R;
+                        g += col[q].G;
+                        bb += col[q].B;
+                        al += 1;
                     }
                 int o = (y * Out + x) * 4;
                 if (al == 0) continue;
-                bytes[o] = (byte)Mathf.Clamp(r / al * 255, 0, 255); bytes[o + 1] = (byte)Mathf.Clamp(g / al * 255, 0, 255); bytes[o + 2] = (byte)Mathf.Clamp(bb / al * 255, 0, 255); bytes[o + 3] = (byte)(al / 4 * 255);
+                bytes[o] = (byte)Mathf.Clamp(r / al * 255, 0, 255);
+                bytes[o + 1] = (byte)Mathf.Clamp(g / al * 255, 0, 255);
+                bytes[o + 2] = (byte)Mathf.Clamp(bb / al * 255, 0, 255);
+                bytes[o + 3] = (byte)(al / 4 * 255);
             }
         return bytes;
     }

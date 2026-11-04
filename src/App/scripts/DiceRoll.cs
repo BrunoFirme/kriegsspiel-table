@@ -11,7 +11,12 @@ sealed class Dice
     readonly TableContext _c;
     readonly PieceLayer _pieces;
     readonly Selection _selection;
-    public Dice(TableContext c, PieceLayer pieces, Selection selection) { _c = c; _pieces = pieces; _selection = selection; }
+    public Dice(TableContext c, PieceLayer pieces, Selection selection)
+    {
+        _c = c;
+        _pieces = pieces;
+        _selection = selection;
+    }
 
     Hover _hover = null!;
     public void Connect(Hover hover) => _hover = hover;
@@ -45,7 +50,8 @@ sealed class Dice
         foreach (var g in dice.Where(n => !n.Piece.PhysicalRoll).GroupBy(n => n.Layer))
         {
             var list = g.ToList();
-            _c.S.Do(new RollDice { Layer = g.Key, PieceIds = list.Select(n => n.Piece.Id).ToList(), Count = list.Count, Sides = list[0].Def!.States.Count, Label = list.Count == 1 ? list[0].Def!.Name : $"{list.Count} dice" });
+            _c.S.Do(new RollDice { Layer = g.Key, PieceIds = list.Select(n => n.Piece.Id).ToList(), Count = list.Count, Sides = list[0].Def!.States.Count,
+                Label = list.Count == 1 ? list[0].Def!.Name : $"{list.Count} dice" });
         }
 
         var world = new Node3D { Name = "DicePhysics" };
@@ -60,7 +66,12 @@ sealed class Dice
             {
                 await _c.Scene.ToSignal(_c.Scene.GetTree(), SceneTree.SignalName.PhysicsFrame);
                 if (!GodotObject.IsInstanceValid(world)) return;
-                bodies.RemoveAll(x => { if (Ours(x.n)) return false; x.b.QueueFree(); return true; });
+                bodies.RemoveAll(x =>
+                {
+                    if (Ours(x.n)) return false;
+                    x.b.QueueFree();
+                    return true;
+                });
                 if (bodies.Count == 0) break;
                 bool allCalm = frame > 10;
                 float dt = (float)_c.Scene.GetPhysicsProcessDeltaTime();
@@ -101,7 +112,9 @@ sealed class Dice
         var flat = new Vector3(throwVel.X, 0, throwVel.Z);
         foreach (var n in dice)
         {
-            var rb = new RigidBody3D { Mass = 1, GravityScale = 5, LinearDamp = 1.2f, AngularDamp = 2.2f, PhysicsMaterialOverride = mat, ContinuousCd = true, CanSleep = true, ContactMonitor = true, MaxContactsReported = 4 };
+            var rb =
+                new RigidBody3D { Mass = 1, GravityScale = 5, LinearDamp = 1.2f, AngularDamp = 2.2f, PhysicsMaterialOverride = mat, ContinuousCd = true, CanSleep = true, ContactMonitor = true,
+                    MaxContactsReported = 4 };
             Shape3D shape = n.DiceHull is { Length: >= 4 } hull
                 ? new ConvexPolygonShape3D { Points = hull }
                 : new BoxShape3D { Size = new Vector3(n.Footprint.X, n.Thickness, n.Footprint.Y) };

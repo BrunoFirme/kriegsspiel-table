@@ -166,9 +166,16 @@ public partial class ScriptConsoleView : VBoxContainer
         _errors.Toggled += _ => Rebuild();
         bar.AddChild(_errors);
         bar.AddChild(Ui.Btn("Copy", () => AppClipboard.SetText(string.Join("\n", Shown().Select(Plain))), "Copy the lines shown"));
-        bar.AddChild(Ui.Btn("Clear", () => { _clearedTo = _s.ConsoleLines.Count > 0 ? _s.ConsoleLines[^1].Seq : 0; _extra.Clear(); Rebuild(); }, "Clears this view (the scripts keep running; nothing is deleted)"));
+        bar.AddChild(Ui.Btn("Clear", () =>
+        {
+            _clearedTo = _s.ConsoleLines.Count > 0 ? _s.ConsoleLines[^1].Seq : 0;
+            _extra.Clear();
+            Rebuild();
+        }, "Clears this view (the scripts keep running; nothing is deleted)"));
         AddChild(bar);
-        _text = new RichTextLabel { BbcodeEnabled = true, ScrollFollowing = true, SelectionEnabled = true, SizeFlagsVertical = SizeFlags.ExpandFill, CustomMinimumSize = new Vector2(0, 90), MetaUnderlined = false };
+        _text =
+            new RichTextLabel { BbcodeEnabled = true, ScrollFollowing = true, SelectionEnabled = true, SizeFlagsVertical = SizeFlags.ExpandFill, CustomMinimumSize = new Vector2(0, 90),
+                MetaUnderlined = false };
         _text.AddThemeFontSizeOverride("normal_font_size", fontSize);
         _text.AddThemeFontSizeOverride("mono_font_size", fontSize);
         _text.MetaClicked += meta =>
@@ -191,9 +198,22 @@ public partial class ScriptConsoleView : VBoxContainer
             {
                 if (e is not InputEventKey { Pressed: true } k || _history.Count == 0) return;
                 if (k.Keycode == Key.Up) { _hist = _hist < 0 ? _history.Count - 1 : Math.Max(0, _hist - 1); }
-                else if (k.Keycode == Key.Down) { if (_hist < 0) return; _hist++; if (_hist >= _history.Count) { _hist = -1; _prompt.Text = ""; _prompt.AcceptEvent(); return; } }
+                else if (k.Keycode == Key.Down)
+                {
+                    if (_hist < 0) return;
+                    _hist++;
+                    if (_hist >= _history.Count)
+                    {
+                        _hist = -1;
+                        _prompt.Text = "";
+                        _prompt.AcceptEvent();
+                        return;
+                    }
+                }
                 else return;
-                _prompt.Text = _history[_hist]; _prompt.CaretColumn = _prompt.Text.Length; _prompt.AcceptEvent();
+                _prompt.Text = _history[_hist];
+                _prompt.CaretColumn = _prompt.Text.Length;
+                _prompt.AcceptEvent();
             };
             row.AddChild(_prompt);
             if (!_s.IsLead) { _prompt.Editable = false; _prompt.PlaceholderText = "Only the host and the lead umpires run code here"; }
@@ -255,7 +275,8 @@ public partial class ScriptConsoleView : VBoxContainer
         if (Only != null && l.Source != Only) return false;
         if (_errors.ButtonPressed && l.Kind != "error") return false;
         var f = _filter.Text.Trim();
-        return f.Length == 0 || l.Text.Contains(f, StringComparison.OrdinalIgnoreCase) || (l.Name ?? "").Contains(f, StringComparison.OrdinalIgnoreCase) || l.Source.Contains(f, StringComparison.OrdinalIgnoreCase);
+        return f.Length == 0 || l.Text.Contains(f, StringComparison.OrdinalIgnoreCase) || (l.Name ?? "").Contains(f, StringComparison.OrdinalIgnoreCase)
+            || l.Source.Contains(f, StringComparison.OrdinalIgnoreCase);
     }
 
     void Rebuild()
@@ -315,7 +336,12 @@ public partial class ScriptWindow : Window
 
     public static void Open(Node parent, Session s, Table? t, ScriptFileWatch files, string? select)
     {
-        if (_open != null && IsInstanceValid(_open)) { _open.Select(select); _open.GrabFocus(); return; }
+        if (_open != null && IsInstanceValid(_open))
+        {
+            _open.Select(select);
+            _open.GrabFocus();
+            return;
+        }
         var w = new ScriptWindow(s, t, files);
         _open = w;
         parent.AddChild(w);
@@ -326,9 +352,13 @@ public partial class ScriptWindow : Window
 
     ScriptWindow(Session s, Table? t, ScriptFileWatch files)
     {
-        _s = s; _t = t; _files = files;
+        _s = s;
+        _t = t;
+        _files = files;
         Title = "Scripting";
-        Transient = true; Exclusive = false; WrapControls = false;
+        Transient = true;
+        Exclusive = false;
+        WrapControls = false;
         MinSize = new Vector2I(760, 460);
         var bg = new PanelContainer();
         bg.AddThemeStyleboxOverride("panel", Ui.WindowFill(Ui.Surface, 8, 6));
@@ -367,39 +397,20 @@ public partial class ScriptWindow : Window
         top.AddChild(_linkRow);
         var tabs = new TabContainer { SizeFlagsVertical = Control.SizeFlags.ExpandFill };
         top.AddChild(tabs);
-        _code.Name = "Lua";
-        _code.GuttersDrawLineNumbers = true; _code.AutoBraceCompletionEnabled = true; _code.IndentSize = 2; _code.IndentUseSpaces = true;
-        _code.WrapMode = TextEdit.LineWrappingMode.None; _code.SizeFlagsVertical = Control.SizeFlags.ExpandFill;
-        _code.AddThemeFontSizeOverride("font_size", 13);
-        ScriptAssist.Attach(_code, this);
-        _code.TextChanged += OnEdited;
-        _code.GuiInput += e =>
-        {
-            if (e is InputEventKey { Pressed: true, Keycode: Key.S, CtrlPressed: true } || e is InputEventKey { Pressed: true, Keycode: Key.Enter or Key.KpEnter, CtrlPressed: true })
-            { Save(); _code.AcceptEvent(); }
-        };
+        SetUpEditor();
         tabs.AddChild(_code);
         _xml.Name = "Panels";
-        _xml.GuttersDrawLineNumbers = true; _xml.AddThemeFontSizeOverride("font_size", 12);
+        _xml.GuttersDrawLineNumbers = true;
+        _xml.AddThemeFontSizeOverride("font_size", 12);
         tabs.AddChild(_xml);
         _state.Name = "Saved state";
         _state.AddThemeFontSizeOverride("font_size", 12);
         tabs.AddChild(_state);
-        var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", 8);
         _show = Ui.Btn("Show on the table", ShowOnTable, "Select the piece and bring the view to it");
-        row.AddChild(_show);
-        row.AddChild(Ui.Btn("Reference (F1)", () => GuideReader.ShowEntry(this, ScriptAssist.EntryAt(_code, _code.GetCaretLine(), _code.GetCaretColumn())), "Every call, field and event, with the TTS call each stands for"));
-        _status.AddThemeColorOverride("font_color", new Color(1, 0.6f, 0.5f));
-        _status.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
-        row.AddChild(_status);
         _back = Ui.Btn("Back to the pack's script", BackToPack, "This piece runs its kind's script again; its own copy goes");
-        row.AddChild(_back);
         _asFile = Ui.Btn("Edit as a file", EditAsFile, "Writes the script to a .lua file for your own editor or AI agent; each save there runs here, and errors go to console.log beside it");
-        row.AddChild(_asFile);
         _save = Ui.Primary("Save and reload", Save, "Keeps the script and runs it again from on_load   (Ctrl+S)");
-        row.AddChild(_save);
-        top.AddChild(row);
+        top.AddChild(ButtonRow());
 
         _console = new ScriptConsoleView(s, prompt: true) { Target = () => ConsoleTarget() };
         _console.SourceClicked += (id, line) => { Select(id); if (line > 0) GoTo(line); };
@@ -411,8 +422,50 @@ public partial class ScriptWindow : Window
         s.Reset += OnReset;
         files.LinksChanged += Refresh;
         files.Noted += OnNoted;
-        TreeExiting += () => { s.ScriptsChanged -= OnScripts; s.Applied -= OnApplied; s.Reset -= OnReset; files.LinksChanged -= Refresh; files.Noted -= OnNoted; if (_open == this) _open = null; };
+        TreeExiting += () =>
+        {
+            s.ScriptsChanged -= OnScripts;
+            s.Applied -= OnApplied;
+            s.Reset -= OnReset;
+            files.LinksChanged -= Refresh;
+            files.Noted -= OnNoted;
+            if (_open == this) _open = null;
+        };
         BuildRows();
+    }
+
+    void SetUpEditor()
+    {
+        _code.Name = "Lua";
+        _code.GuttersDrawLineNumbers = true;
+        _code.AutoBraceCompletionEnabled = true;
+        _code.IndentSize = 2;
+        _code.IndentUseSpaces = true;
+        _code.WrapMode = TextEdit.LineWrappingMode.None;
+        _code.SizeFlagsVertical = Control.SizeFlags.ExpandFill;
+        _code.AddThemeFontSizeOverride("font_size", 13);
+        ScriptAssist.Attach(_code, this);
+        _code.TextChanged += OnEdited;
+        _code.GuiInput += e =>
+        {
+            if (e is InputEventKey { Pressed: true, Keycode: Key.S, CtrlPressed: true } || e is InputEventKey { Pressed: true, Keycode: Key.Enter or Key.KpEnter, CtrlPressed: true })
+            { Save(); _code.AcceptEvent(); }
+        };
+    }
+
+    HBoxContainer ButtonRow()
+    {
+        var row = new HBoxContainer();
+        row.AddThemeConstantOverride("separation", 8);
+        row.AddChild(_show);
+        row.AddChild(Ui.Btn("Reference (F1)", () => GuideReader.ShowEntry(this, ScriptAssist.EntryAt(_code, _code.GetCaretLine(), _code.GetCaretColumn())), "Every call, field and event, with the TTS call each stands for"));
+        _status.AddThemeColorOverride("font_color", new Color(1, 0.6f, 0.5f));
+        _status.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
+        row.AddChild(_status);
+        row.AddChild(_back);
+        row.AddChild(_asFile);
+        row.AddChild(_save);
+        return row;
     }
 
     readonly List<Row> _visible = new();
@@ -495,7 +548,8 @@ public partial class ScriptWindow : Window
     void Keep()
     {
         if (_key == null || !Editable(_key)) return;
-        if (_code.Text != (Saved(_key) ?? "")) _drafts[_key] = _code.Text; else _drafts.Remove(_key);
+        if (_code.Text != (Saved(_key) ?? "")) _drafts[_key] = _code.Text;
+        else _drafts.Remove(_key);
     }
 
     void OnEdited()
@@ -542,7 +596,8 @@ public partial class ScriptWindow : Window
             var name = _s.Def(key[4..])?.Name ?? key[4..];
             _head.Text = $"{name} — the pack's script, on {r?.Ids.Count ?? 0} piece{(r?.Ids.Count == 1 ? "" : "s")}";
             _note.Text = $"Every {name} runs this script from its pack. Change it for all of them in Piece studio → Edit pieces → Script; to give one piece its own, right-click it on the table → Scripting….";
-            _xml.Text = ""; _state.Text = "";
+            _xml.Text = "";
+            _state.Text = "";
             var errs = (r?.Ids ?? new()).Select(id => infos.GetValueOrDefault(id)).OfType<ScriptInfo>().Where(i => i.LastError != null).ToList();
             if (errs.Count > 0) { _status.Text = $"{errs.Count} of them in error; the first: {errs[0].LastError}"; if (errs[0].ErrorLine > 0) _code.SetLineBackgroundColor(errs[0].ErrorLine - 1, new Color(0.8f, 0.2f, 0.15f, 0.35f)); }
         }
@@ -556,7 +611,12 @@ public partial class ScriptWindow : Window
             _state.Text = Pretty(p.ScriptState);
             Mark(info);
         }
-        else { _head.Text = "That piece is no longer on the table."; _note.Text = ""; _code.Editable = false; }
+        else
+        {
+            _head.Text = "That piece is no longer on the table.";
+            _note.Text = "";
+            _code.Editable = false;
+        }
         _back.Visible = key.Length > 0 && !key.StartsWith("def:") && _s.View.Find(Layers.Umpire, key) is { Script: not null } own && _s.Def(own.Def)?.Script != null && _s.IsUmpire;
         _show.Visible = key.Length > 0 && _t != null;
         _save.Disabled = !Editable(key) || link != null;
@@ -574,7 +634,8 @@ public partial class ScriptWindow : Window
     static string Pretty(string? json)
     {
         if (string.IsNullOrEmpty(json)) return "";
-        try { using var doc = System.Text.Json.JsonDocument.Parse(json); return System.Text.Json.JsonSerializer.Serialize(doc.RootElement, new System.Text.Json.JsonSerializerOptions { WriteIndented = true }); }
+        try { using var doc = System.Text.Json.JsonDocument.Parse(json); return System.Text.Json.JsonSerializer.Serialize(doc.RootElement,
+            new System.Text.Json.JsonSerializerOptions { WriteIndented = true }); }
         catch (System.Text.Json.JsonException) { return json; }
     }
 
@@ -630,17 +691,30 @@ public partial class ScriptWindow : Window
 
     void OnApplied(Command c)
     {
-        if (c is not (KTable.Core.Protocol.SetScript or SetGlobalScript or SpawnPiece or DeletePiece or RestorePiece or SetScriptState or SetGlobalScriptState or SetUi or SetUiAttributes or SetLabel or Batch)) return;
-        if (c is Batch b && !b.Items.Any(i => i is KTable.Core.Protocol.SetScript or SetGlobalScript or SpawnPiece or DeletePiece or RestorePiece)) { if (b.Items.Any(i => i is SetScriptState or SetGlobalScriptState or SetUi or SetUiAttributes)) Refresh(); return; }
+        if (c is not (KTable.Core.Protocol.SetScript or SetGlobalScript or SpawnPiece or DeletePiece or RestorePiece or SetScriptState or SetGlobalScriptState or SetUi or SetUiAttributes or SetLabel
+            or Batch)) return;
+        if (c is Batch b
+            && !b.Items.Any(i => i is KTable.Core.Protocol.SetScript or SetGlobalScript or SpawnPiece or DeletePiece
+                or RestorePiece)) { if (b.Items.Any(i => i is SetScriptState or SetGlobalScriptState or SetUi or SetUiAttributes)) Refresh(); return; }
         if (c is SetScriptState or SetGlobalScriptState or SetUi or SetUiAttributes or SetLabel) { Refresh(); return; }
         Keep();
         BuildRows();
-        if (_key != null && !_drafts.ContainsKey(_key) && _code.Text != (Saved(_key) ?? "")) { _loading = true; _code.Text = Saved(_key) ?? ""; _loading = false; }
+        if (_key != null && !_drafts.ContainsKey(_key) && _code.Text != (Saved(_key) ?? ""))
+        {
+            _loading = true;
+            _code.Text = Saved(_key) ?? "";
+            _loading = false;
+        }
         Refresh();
         _s.Request(new GetScripts());
     }
 
-    void OnReset() { Keep(); BuildRows(); Refresh(); }
+    void OnReset()
+    {
+        Keep();
+        BuildRows();
+        Refresh();
+    }
 
     void AskClose()
     {
@@ -689,7 +763,8 @@ public static class ScriptCheckWindow
             if (!GodotObject.IsInstanceValid(text)) return;
             var bb = line.Replace("[", "[lb]") + "\n";
             log.Append(bb);
-            if (find.Terms.Count > 0) find.Refresh(); else text.AppendText(bb);
+            if (find.Terms.Count > 0) find.Refresh();
+            else text.AppendText(bb);
         }, code =>
         {
             if (!GodotObject.IsInstanceValid(state)) return;

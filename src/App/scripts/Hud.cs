@@ -54,7 +54,10 @@ public partial class Hud : CanvasLayer
 
     public void Bind(Session s, Table t, Net n, Settings cfg)
     {
-        S = s; T = t; N = n; Cfg = cfg;
+        S = s;
+        T = t;
+        N = n;
+        Cfg = cfg;
         Ctx = new HudContext(s, t, n, cfg, this, Log, Say, ShowScriptWindow);
         FileWatch = new ScriptFileWatch(s, ScriptFileWatch.TableFolder(s), s.View.Name);
         AddChild(FileWatch);
@@ -65,13 +68,38 @@ public partial class Hud : CanvasLayer
         n.PictureSince = picture.Since;
         _unhook.Add(() => { n.RequestPicture = null; n.PictureSince = null; });
         Build();
-        Hook<Action>(h => S.Reset += h, h => S.Reset -= h, () => { Pieces.RebuildPacks(); Umpires.Rebuild(); Map.Rebuild(); Pov.Rebuild(); Boards.Rebuild(); Paint.Rebuild(); Top.Update(); Strip.SyncCalibrateTip(); _scriptUi?.Rebuild(); });
+        Hook<Action>(h => S.Reset += h, h => S.Reset -= h, () =>
+        {
+            Pieces.RebuildPacks();
+            Umpires.Rebuild();
+            Map.Rebuild();
+            Pov.Rebuild();
+            Boards.Rebuild();
+            Paint.Rebuild();
+            Top.Update();
+            Strip.SyncCalibrateTip();
+            _scriptUi?.Rebuild();
+        });
         Hook<Action<Command>>(h => S.Applied += h, h => S.Applied -= h, Applied);
         Hook<Action<string>>(h => S.Error += h, h => S.Error -= h, e => Log($"[color=#ff7060]{Fmt.Bb(e)}[/color]"));
         Transcript.RememberPeers();
-        Hook<Action>(h => S.PeersChanged += h, h => S.PeersChanged -= h, () => { Umpires.Rebuild(); Top.UpdatePointerInfo(); Transcript.LogPeers(); Top.UpdateKnocks(); T.SyncZones(); Strip.SyncUmpireButtons(); });
+        Hook<Action>(h => S.PeersChanged += h, h => S.PeersChanged -= h, () =>
+        {
+            Umpires.Rebuild();
+            Top.UpdatePointerInfo();
+            Transcript.LogPeers();
+            Top.UpdateKnocks();
+            T.SyncZones();
+            Strip.SyncUmpireButtons();
+        });
         Hook<Action<Knock>>(h => S.Knocked += h, h => S.Knocked -= h, k => Log($"[color={Transcript.NameColor}]{Fmt.Bb(k.Name)}[/color] is at the door{(S.IsLead ? " · let them in above, or from the people at the top right" : "")}"));
-        Hook<Action>(h => S.AccessChanged += h, h => S.AccessChanged -= h, () => { Top.UpdateDoor(); Umpires.Rebuild(); T.SyncZones(); Top.UpdatePointerInfo(); });
+        Hook<Action>(h => S.AccessChanged += h, h => S.AccessChanged -= h, () =>
+        {
+            Top.UpdateDoor();
+            Umpires.Rebuild();
+            T.SyncZones();
+            Top.UpdatePointerInfo();
+        });
         Hook<Action>(h => S.TurnsChanged += h, h => S.TurnsChanged -= h, Umpires.Rebuild);
         if (S.IsUmpire) N.RequestTurns();
         Hook<Action<string>>(h => N.StatusChanged += h, h => N.StatusChanged -= h, st => Top.SetStatus(st));
@@ -88,7 +116,12 @@ public partial class Hud : CanvasLayer
         HookTable();
         Top.SetStatus(N.Status);
         Log($"[b]{Fmt.Bb(S.View.Name)}[/b] · {Fmt.Clock(S.View.Clock)} · you are {Fmt.Role(S.Me.Role)}");
-        Pieces.RebuildPacks(); Umpires.Rebuild(); Map.Rebuild(); Pov.Rebuild(); Top.Update(); Top.UpdateKnocks();
+        Pieces.RebuildPacks();
+        Umpires.Rebuild();
+        Map.Rebuild();
+        Pov.Rebuild();
+        Top.Update();
+        Top.UpdateKnocks();
         T.SetTool(Tool.Select);
         if (S.IsUmpire && S.View.Sheets.Count == 0)
         {
@@ -109,9 +142,12 @@ public partial class Hud : CanvasLayer
             Pov.Rebuild();
             Paint.Rebuild();
             Relief?.Rebuild();
-            if (T.Tool is Tool.Draw or Tool.Shape or Tool.Erase) OpenPanel("paint"); else ClosePanel("paint");
-            if (T.Tool == Tool.Relief) OpenPanel("relief"); else ClosePanel("relief");
-            if (T.Tool == Tool.Formation) OpenPanel("formation"); else ClosePanel("formation");
+            if (T.Tool is Tool.Draw or Tool.Shape or Tool.Erase) OpenPanel("paint");
+            else ClosePanel("paint");
+            if (T.Tool == Tool.Relief) OpenPanel("relief");
+            else ClosePanel("relief");
+            if (T.Tool == Tool.Formation) OpenPanel("formation");
+            else ClosePanel("formation");
             FormPanel.Rebuild();
             Strip.SyncToggles();
         });
@@ -140,7 +176,12 @@ public partial class Hud : CanvasLayer
             if (one.Actor == 0) one.Actor = c.Actor;
             if (one is RollDice rd) { Transcript.Rolled(rd); Dice.Rolled(rd); }
 
-            if (one is SetCalibration) { Strip.SyncCalibrateTip(); Map.Rebuild(); T.ApplyScale(S.View.Calibration); }
+            if (one is SetCalibration)
+            {
+                Strip.SyncCalibrateTip();
+                Map.Rebuild();
+                T.ApplyScale(S.View.Calibration);
+            }
             if (one is SetZone or RemoveZone) Umpires.Rebuild();
             if (one is Draw or EraseStroke) Boards.Rebuild();
             if (one is AdvanceClock or SetClock or RestoreTurn or LoadSave && S.IsUmpire) N.RequestTurns();

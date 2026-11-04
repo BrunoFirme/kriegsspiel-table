@@ -10,8 +10,14 @@ sealed class HudContext
 
     public HudContext(Session s, Table t, Net n, Settings cfg, CanvasLayer node, Action<string> log, Action<string> say, Action<string?> showScriptWindow)
     {
-        S = s; T = t; N = n; Cfg = cfg; Node = node;
-        _log = log; _say = say; _showScriptWindow = showScriptWindow;
+        S = s;
+        T = t;
+        N = n;
+        Cfg = cfg;
+        Node = node;
+        _log = log;
+        _say = say;
+        _showScriptWindow = showScriptWindow;
     }
 
     public Session S { get; }

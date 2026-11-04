@@ -12,7 +12,12 @@ sealed class WorkshopPage
     readonly Main _main;
     readonly IPlatform _platform;
 
-    public WorkshopPage(TitleScreen t, Main main, IPlatform platform) { _t = t; _main = main; _platform = platform; }
+    public WorkshopPage(TitleScreen t, Main main, IPlatform platform)
+    {
+        _t = t;
+        _main = main;
+        _platform = platform;
+    }
 
     public void Show()
     {
@@ -38,8 +43,11 @@ sealed class WorkshopPage
         var bar = new HBoxContainer();
         var search = new LineEdit { PlaceholderText = "search the Workshop", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         var kind = new OptionButton();
-        kind.AddItem("Everything"); kind.AddItem("Packs"); kind.AddItem("Scenarios");
-        bar.AddChild(search); bar.AddChild(kind);
+        kind.AddItem("Everything");
+        kind.AddItem("Packs");
+        kind.AddItem("Scenarios");
+        bar.AddChild(search);
+        bar.AddChild(kind);
         col.AddChild(bar);
         var results = new HFlowContainer();
         results.AddThemeConstantOverride("h_separation", 12);
@@ -127,8 +135,21 @@ sealed class WorkshopPage
         sub.Pressed += () =>
         {
             sub.Disabled = true;
-            if (e.Subscribed) _platform.Unsubscribe(e.Id, ok => { sub.Disabled = false; if (ok) { e.Subscribed = false; sub.Text = "Subscribe"; } });
-            else _platform.Subscribe(e.Id, ok => { sub.Disabled = false; if (ok) { e.Subscribed = true; sub.Text = "Unsubscribe"; _t.Status.Text = $"Subscribed to {e.Title}; it installs when Steam finishes downloading."; } });
+            if (e.Subscribed) _platform.Unsubscribe(e.Id, ok =>
+            {
+                sub.Disabled = false;
+                if (ok) { e.Subscribed = false; sub.Text = "Subscribe"; }
+            });
+            else _platform.Subscribe(e.Id, ok =>
+            {
+                sub.Disabled = false;
+                if (ok)
+                {
+                    e.Subscribed = true;
+                    sub.Text = "Unsubscribe";
+                    _t.Status.Text = $"Subscribed to {e.Title}; it installs when Steam finishes downloading.";
+                }
+            });
         };
         row.AddChild(sub);
         var open = new Button { Text = "Page", FocusMode = Control.FocusModeEnum.None };

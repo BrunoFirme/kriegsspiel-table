@@ -23,7 +23,12 @@ internal sealed class StudioLayersPanel
     {
         if (_body == null || !GodotObject.IsInstanceValid(_body) || !_body.IsInsideTree()) return;
         PieceStudio.Clear(_body);
-        if (_s.View == "model" && _s.Model != null) { _s.Model.Panels.BuildParts(_s, _body); _s.ToolPanel.Refit(); return; }
+        if (_s.View == "model" && _s.Model != null)
+        {
+            _s.Model.Panels.BuildParts(_s, _body);
+            _s.ToolPanel.Refit();
+            return;
+        }
         if (_s.View != "paint" || !_s.Faces.CanvasOpen) return;
         var doc = Canvas.Doc;
         var list = new VBoxContainer();
@@ -36,23 +41,36 @@ internal sealed class StudioLayersPanel
         add.AddThemeConstantOverride("separation", 3);
         Button Ico(HBoxContainer row, string icon, string tip, Action a, bool enabled = true)
         {
-            var b = new Button { CustomMinimumSize = new Vector2(30, 28), TooltipText = tip, FocusMode = Control.FocusModeEnum.None, Disabled = !enabled, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+            var b =
+                new Button { CustomMinimumSize = new Vector2(30, 28), TooltipText = tip, FocusMode = Control.FocusModeEnum.None, Disabled = !enabled,
+                    SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
             b.AddChild(new StudioIcon { Kind = icon });
             b.Pressed += a;
             row.AddChild(b);
             return b;
         }
-        Ico(add, "paint-layer", "A new paint layer", () => { Canvas.AddLayer(new ArtLayer { Name = Canvas.NextName("Paint"), Kind = "paint" }); Canvas.Commit("New layer"); if (Canvas.Tool is "move" or "crop") Canvas.SetTool("brush"); });
+        Ico(add, "paint-layer", "A new paint layer", () =>
+        {
+            Canvas.AddLayer(new ArtLayer { Name = Canvas.NextName("Paint"), Kind = "paint" });
+            Canvas.Commit("New layer");
+            if (Canvas.Tool is "move" or "crop") Canvas.SetTool("brush");
+        });
         Ico(add, "image", "Pictures from files (PNG, JPEG, WebP, SVG, BMP, TGA, TIFF) — or paste one with Ctrl+V, or drop files on the face", () => _s.PickFiles(ImageFiles.Filter, files => { foreach (var f in files) AddFromFile(f); Canvas.Commit("Pictures"); }, "Pictures as layers"));
         Ico(add, "text-layer", "A line of text", () =>
         {
-            var l = new ArtLayer { Kind = "text", Name = Canvas.NextName("Text"), Text = "Text", X = doc.W / 2f, Y = doc.H / 2f, Font = _s.Prefs.TextFont, Bold = _s.Prefs.TextBold, Size = _s.Prefs.TextSize, Color = Hex.Of(Canvas.Ink) };
-            Canvas.AddLayer(l); Canvas.Commit("Text"); Canvas.SetTool("text"); _s.ToolPanel.FocusTextEdit();
+            var l =
+                new ArtLayer { Kind = "text", Name = Canvas.NextName("Text"), Text = "Text", X = doc.W / 2f, Y = doc.H / 2f, Font = _s.Prefs.TextFont, Bold = _s.Prefs.TextBold, Size = _s.Prefs.TextSize,
+                    Color = Hex.Of(Canvas.Ink) };
+            Canvas.AddLayer(l);
+            Canvas.Commit("Text");
+            Canvas.SetTool("text");
+            _s.ToolPanel.FocusTextEdit();
         });
         Ico(add, "block-layer", "A unit plate: its shape, colours, label and unit symbol", () =>
         {
             var l = new ArtLayer { Kind = "block", Name = Canvas.NextName("Plate"), Block = new BlockSpec { BW = doc.W, BH = doc.H, Label = _s.Sel?.Name ?? "", Symbol = "infantry" } };
-            Canvas.AddLayer(l, 0); Canvas.Commit("Unit plate");
+            Canvas.AddLayer(l, 0);
+            Canvas.Commit("Unit plate");
         });
         _body.AddChild(add);
         var sel = Canvas.Sel;
@@ -81,19 +99,34 @@ internal sealed class StudioLayersPanel
         panel.AddChild(row);
         var eye = new Button { Flat = true, CustomMinimumSize = new Vector2(24, 24), FocusMode = Control.FocusModeEnum.None, TooltipText = l.Visible ? "Shown: click to hide" : "Hidden: click to show" };
         eye.AddChild(new StudioIcon { Kind = l.Visible ? "eye" : "eye-off", Color = l.Visible ? Ui.Ink : Ui.Muted });
-        eye.Pressed += () => { l.Visible = !l.Visible; Canvas.Redraw(); Canvas.Commit(l.Visible ? "Show layer" : "Hide layer"); Rebuild(); };
+        eye.Pressed += () =>
+        {
+            l.Visible = !l.Visible;
+            Canvas.Redraw();
+            Canvas.Commit(l.Visible ? "Show layer" : "Hide layer");
+            Rebuild();
+        };
         row.AddChild(eye);
         var lk = new Button { Flat = true, CustomMinimumSize = new Vector2(22, 24), FocusMode = Control.FocusModeEnum.None, TooltipText = l.Locked ? "Locked: nothing can change it. Click to unlock" : "Click to lock it against changes" };
         lk.AddChild(new StudioIcon { Kind = l.Locked ? "lock" : "unlock", Color = l.Locked ? Ui.Ink : Ui.Faint });
-        lk.Pressed += () => { l.Locked = !l.Locked; Canvas.Commit(l.Locked ? "Lock layer" : "Unlock layer"); Rebuild(); };
+        lk.Pressed += () =>
+        {
+            l.Locked = !l.Locked;
+            Canvas.Commit(l.Locked ? "Lock layer" : "Unlock layer");
+            Rebuild();
+        };
         row.AddChild(lk);
         var thumbBg = new PanelContainer { CustomMinimumSize = new Vector2(44, 28) };
         thumbBg.AddThemeStyleboxOverride("panel", Ui.Box(new Color(0.3f, 0.3f, 0.32f), 1, 0, 0));
-        var thumb = new TextureRect { Texture = Canvas.R.LayerTexture(l.Id), ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize, StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered, MouseFilter = Control.MouseFilterEnum.Ignore, Material = new CanvasItemMaterial { BlendMode = CanvasItemMaterial.BlendModeEnum.PremultAlpha } };
+        var thumb =
+            new TextureRect { Texture = Canvas.R.LayerTexture(l.Id), ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize, StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
+                MouseFilter = Control.MouseFilterEnum.Ignore, Material = new CanvasItemMaterial { BlendMode = CanvasItemMaterial.BlendModeEnum.PremultAlpha } };
         thumbBg.AddChild(thumb);
         thumbBg.MouseFilter = Control.MouseFilterEnum.Ignore;
         row.AddChild(thumbBg);
-        var name = new Label { Text = l.Name, ClipText = true, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, CustomMinimumSize = new Vector2(60, 0), SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, MouseFilter = Control.MouseFilterEnum.Ignore };
+        var name =
+            new Label { Text = l.Name, ClipText = true, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, CustomMinimumSize = new Vector2(60, 0), SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
+                MouseFilter = Control.MouseFilterEnum.Ignore };
         if (!l.Visible) name.Modulate = Ui.Muted;
         row.AddChild(name);
         if (l.Opacity < 0.999f) row.AddChild(new Label { Text = $"{l.Opacity * 100:0}%", Modulate = Ui.Muted, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, MouseFilter = Control.MouseFilterEnum.Ignore });
@@ -112,12 +145,21 @@ internal sealed class StudioLayersPanel
         var dlg = new ConfirmationDialog { Title = "Rename layer", OkButtonText = "Rename" };
         var edit = new LineEdit { Text = l.Name, CustomMinimumSize = new Vector2(240, 0) };
         dlg.AddChild(edit);
-        void Done() { if (edit.Text.Trim().Length > 0) { l.Name = edit.Text.Trim(); Canvas.Commit("Rename layer"); Rebuild(); } }
+        void Done()
+        {
+            if (edit.Text.Trim().Length > 0)
+            {
+                l.Name = edit.Text.Trim();
+                Canvas.Commit("Rename layer");
+                Rebuild();
+            }
+        }
         dlg.Confirmed += Done;
         edit.TextSubmitted += _ => { Done(); dlg.Hide(); };
         Ui.Open(_s.Root, dlg);
         Ui.FreeOnClose(dlg);
-        edit.GrabFocus(); edit.SelectAll();
+        edit.GrabFocus();
+        edit.SelectAll();
     }
 
     void MoveLayer(int dir)
@@ -139,7 +181,8 @@ internal sealed class StudioLayersPanel
         var a = await Canvas.R.Flatten(cut: false, only: below.Id);
         var b = await Canvas.R.Flatten(cut: false, only: top.Id);
         int w = a.GetWidth(), h = a.GetHeight();
-        var da = a.GetData(); var db = b.GetData();
+        var da = a.GetData();
+        var db = b.GetData();
         float oa = below.Visible ? below.Opacity : 0, ob = top.Visible ? top.Opacity : 0;
         var o = LayerPixels.Over(da, oa, db, ob);
         var img = Image.CreateFromData(w, h, false, Image.Format.Rgba8, o);
@@ -157,24 +200,54 @@ internal sealed class StudioLayersPanel
         var into = Inspector.Group(_body, l.Name);
         var op = new HBoxContainer();
         op.AddChild(new Label { Text = "Opacity", CustomMinimumSize = new Vector2(56, 0), SizeFlagsVertical = Control.SizeFlags.ShrinkCenter });
-        var s = new HSlider { MinValue = 0, MaxValue = 100, Step = 1, Value = Math.Round(l.Opacity * 100), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter };
+        var s =
+            new HSlider { MinValue = 0, MaxValue = 100, Step = 1, Value = Math.Round(l.Opacity * 100), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+                SizeFlagsVertical = Control.SizeFlags.ShrinkCenter };
         var v = new Label { Text = $"{l.Opacity * 100:0}%", CustomMinimumSize = new Vector2(36, 0), HorizontalAlignment = HorizontalAlignment.Right };
-        s.ValueChanged += x => { l.Opacity = (float)x / 100; v.Text = $"{x:0}%"; Canvas.Redraw(); _s.Faces.CommitSoon("Opacity"); };
+        s.ValueChanged += x =>
+        {
+            l.Opacity = (float)x / 100;
+            v.Text = $"{x:0}%";
+            Canvas.Redraw();
+            _s.Faces.CommitSoon("Opacity");
+        };
         s.DragEnded += _ => Canvas.Commit("Opacity");
-        op.AddChild(s); op.AddChild(v);
+        op.AddChild(s);
+        op.AddChild(v);
         into.AddChild(op);
         switch (l.Kind)
         {
             case "image":
             {
                 var row = new HBoxContainer();
-                row.AddChild(Ui.Btn("Mirror ⟷", () => { l.Sx = -l.Sx; Canvas.R.Moved(l); Canvas.Commit("Mirror"); }));
-                row.AddChild(Ui.Btn("Mirror ↕", () => { l.Sy = -l.Sy; Canvas.R.Moved(l); Canvas.Commit("Mirror"); }));
-                row.AddChild(Ui.Btn("1 : 1", () => { l.Sx = Mathf.Sign(l.Sx); l.Sy = Mathf.Sign(l.Sy); Canvas.R.Moved(l); Canvas.Commit("Real size"); }, "One picture pixel to one face pixel"));
+                row.AddChild(Ui.Btn("Mirror ⟷", () =>
+                {
+                    l.Sx = -l.Sx;
+                    Canvas.R.Moved(l);
+                    Canvas.Commit("Mirror");
+                }));
+                row.AddChild(Ui.Btn("Mirror ↕", () =>
+                {
+                    l.Sy = -l.Sy;
+                    Canvas.R.Moved(l);
+                    Canvas.Commit("Mirror");
+                }));
+                row.AddChild(Ui.Btn("1 : 1", () =>
+                {
+                    l.Sx = Mathf.Sign(l.Sx);
+                    l.Sy = Mathf.Sign(l.Sy);
+                    Canvas.R.Moved(l);
+                    Canvas.Commit("Real size");
+                }, "One picture pixel to one face pixel"));
                 into.AddChild(row);
                 var row2 = new HBoxContainer();
                 row2.AddChild(Ui.Btn("Remove the background", () => KeyOut(l), "Clears the colour around the edges of the picture (a scan's paper, a photo's backdrop). Tolerance is the Fill tool's."));
-                row2.AddChild(Ui.Btn("Uncrop", () => { l.Crop = null; Canvas.Refresh(l); Canvas.Commit("Uncrop"); }));
+                row2.AddChild(Ui.Btn("Uncrop", () =>
+                {
+                    l.Crop = null;
+                    Canvas.Refresh(l);
+                    Canvas.Commit("Uncrop");
+                }));
                 into.AddChild(row2);
                 into.AddChild(Ui.Hint($"{l.SrcW} × {l.SrcH} px picture" + (l.Crop is { } c ? $", cropped to {c[2]:0} × {c[3]:0}" : "") + ". Crop it with the Crop tool (C); paint on it, or rub parts of it out, with the layer selected."));
                 break;
@@ -187,7 +260,13 @@ internal sealed class StudioLayersPanel
                 break;
             default:
                 into.AddChild(Ui.Hint($"{l.Ops.Count} stroke{(l.Ops.Count == 1 ? "" : "s")} and shape{(l.Ops.Count == 1 ? "" : "s")}."));
-                if (l.Ops.Count > 0) into.AddChild(Ui.Btn("Clear this layer", () => { l.Ops.Clear(); Canvas.Refresh(l); Canvas.Commit("Clear layer"); Rebuild(); }));
+                if (l.Ops.Count > 0) into.AddChild(Ui.Btn("Clear this layer", () =>
+                {
+                    l.Ops.Clear();
+                    Canvas.Refresh(l);
+                    Canvas.Commit("Clear layer");
+                    Rebuild();
+                }));
                 break;
         }
     }
@@ -198,7 +277,12 @@ internal sealed class StudioLayersPanel
         var g = Ui.Form(76);
         g.AddChild(new Label { Text = "Plate" });
         var shape = new OptionButton { FitToLongestItem = false, TooltipText = "The plate's own shape on the face; the piece's outline is set on its Block layer in 3D" };
-        foreach (var (n, id) in new[] { ("Rectangle", "box"), ("Rounded", "rounded"), ("Round", "circle"), ("Hex", "hex") }) { shape.AddItem(n); shape.SetItemMetadata(shape.ItemCount - 1, id); if (id == b.Shape) shape.Selected = shape.ItemCount - 1; }
+        foreach (var (n, id) in new[] { ("Rectangle", "box"), ("Rounded", "rounded"), ("Round", "circle"), ("Hex", "hex") })
+        {
+            shape.AddItem(n);
+            shape.SetItemMetadata(shape.ItemCount - 1, id);
+            if (id == b.Shape) shape.Selected = shape.ItemCount - 1;
+        }
         shape.ItemSelected += i => { b.Shape = shape.GetItemMetadata((int)i).AsString(); Changed("Plate shape"); };
         g.AddChild(shape);
         g.AddChild(new Label { Text = "Fill" });
@@ -212,14 +296,24 @@ internal sealed class StudioLayersPanel
         g.AddChild(br);
         g.AddChild(new Label { Text = "Label" });
         var lab = new LineEdit { Text = b.Label, PlaceholderText = "e.g. 2/IR 14" };
-        lab.TextChanged += t => { b.Label = t; Canvas.Refresh(l); _s.Faces.CommitSoon("Label"); };
+        lab.TextChanged += t =>
+        {
+            b.Label = t;
+            Canvas.Refresh(l);
+            _s.Faces.CommitSoon("Label");
+        };
         lab.FocusExited += () => Canvas.Commit("Label");
         lab.TextSubmitted += _ => Canvas.Commit("Label");
         g.AddChild(lab);
         g.AddChild(new Label { Text = "Lettering" });
         var lf = new HBoxContainer();
         var font = new OptionButton { FitToLongestItem = false, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-        foreach (var (n, id) in new[] { ("Bold", "bold"), ("Serif", "serif"), ("Plain", "sans") }) { font.AddItem(n); font.SetItemMetadata(font.ItemCount - 1, id); if (id == b.Font) font.Selected = font.ItemCount - 1; }
+        foreach (var (n, id) in new[] { ("Bold", "bold"), ("Serif", "serif"), ("Plain", "sans") })
+        {
+            font.AddItem(n);
+            font.SetItemMetadata(font.ItemCount - 1, id);
+            if (id == b.Font) font.Selected = font.ItemCount - 1;
+        }
         font.ItemSelected += i => { b.Font = font.GetItemMetadata((int)i).AsString(); Changed("Lettering"); };
         lf.AddChild(font);
         lf.AddChild(ColourBtn(b.LabelColor, c => { b.LabelColor = c; Changed("Label colour"); }));
@@ -227,25 +321,47 @@ internal sealed class StudioLayersPanel
         g.AddChild(new Label { Text = "Symbol" });
         var sym = new OptionButton { FitToLongestItem = false };
         foreach (var (n, id) in new[] { ("None", "none"), ("Infantry", "infantry"), ("Cavalry", "cavalry"), ("Artillery", "artillery"), ("Horse artillery", "horse-artillery"), ("Engineers", "engineers"), ("Headquarters", "hq"), ("Text…", "text") })
-        { sym.AddItem(n); sym.SetItemMetadata(sym.ItemCount - 1, id); if (id == b.Symbol) sym.Selected = sym.ItemCount - 1; }
+        {
+            sym.AddItem(n);
+            sym.SetItemMetadata(sym.ItemCount - 1, id);
+            if (id == b.Symbol) sym.Selected = sym.ItemCount - 1;
+        }
         sym.ItemSelected += i => { b.Symbol = sym.GetItemMetadata((int)i).AsString(); Changed("Symbol"); };
         g.AddChild(sym);
         g.AddChild(new Label { Text = "Symbol text" });
         var st = new HBoxContainer();
         var symText = new LineEdit { Text = b.SymbolText, PlaceholderText = "for Text…", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-        symText.TextChanged += t => { b.SymbolText = t; if (b.Symbol != "text") { b.Symbol = "text"; sym.Selected = sym.ItemCount - 1; } Canvas.Refresh(l); _s.Faces.CommitSoon("Symbol text"); };
+        symText.TextChanged += t =>
+        {
+            b.SymbolText = t;
+            if (b.Symbol != "text") { b.Symbol = "text"; sym.Selected = sym.ItemCount - 1; } Canvas.Refresh(l);
+            _s.Faces.CommitSoon("Symbol text");
+        };
         symText.FocusExited += () => Canvas.Commit("Symbol text");
         st.AddChild(symText);
         st.AddChild(ColourBtn(b.SymbolColor, c => { b.SymbolColor = c; Changed("Symbol colour"); }));
         g.AddChild(st);
         g.AddChild(new Label { Text = "Symbol size" });
         var ss = new HSlider { MinValue = 0.3, MaxValue = 1.8, Step = 0.02, Value = b.SymbolScale };
-        ss.ValueChanged += x => { b.SymbolScale = (float)x; Canvas.Refresh(l); _s.Faces.CommitSoon("Symbol size"); };
+        ss.ValueChanged += x =>
+        {
+            b.SymbolScale = (float)x;
+            Canvas.Refresh(l);
+            _s.Faces.CommitSoon("Symbol size");
+        };
         ss.DragEnded += _ => Canvas.Commit("Symbol size");
         g.AddChild(ss);
         Ui.AlignForm(g);
         into.AddChild(g);
-        into.AddChild(Ui.Btn("Stretch it over the face", () => { b.BW = Canvas.Doc.W; b.BH = Canvas.Doc.H; l.X = l.Y = 0; l.Rot = 0; l.Sx = l.Sy = 1; Changed("Plate fits the face"); }));
+        into.AddChild(Ui.Btn("Stretch it over the face", () =>
+        {
+            b.BW = Canvas.Doc.W;
+            b.BH = Canvas.Doc.H;
+            l.X = l.Y = 0;
+            l.Rot = 0;
+            l.Sx = l.Sy = 1;
+            Changed("Plate fits the face");
+        }));
     }
 
     ColorPickerButton ColourBtn(string hex, Action<string> set)
@@ -261,9 +377,24 @@ internal sealed class StudioLayersPanel
         var row = new HBoxContainer();
         var see = new CheckBox { Text = "See-through background", ButtonPressed = Canvas.Doc.Bg == null, TooltipText = "Off: the whole picture is filled with a colour first" };
         var bg = new ColorPickerButton { Color = Hex.To(Canvas.Doc.Bg, new Color(0.85f, 0.81f, 0.71f)), EditAlpha = false, CustomMinimumSize = new Vector2(44, 24), Disabled = Canvas.Doc.Bg == null };
-        see.Toggled += on => { Canvas.Doc.Bg = on ? null : Hex.Of(bg.Color); bg.Disabled = on; Canvas.Redraw(); Canvas.Commit("Background"); };
-        bg.PopupClosed += () => { if (Canvas.Doc.Bg != null) { Canvas.Doc.Bg = Hex.Of(bg.Color); Canvas.Redraw(); Canvas.Commit("Background"); } };
-        row.AddChild(see); row.AddChild(bg);
+        see.Toggled += on =>
+        {
+            Canvas.Doc.Bg = on ? null : Hex.Of(bg.Color);
+            bg.Disabled = on;
+            Canvas.Redraw();
+            Canvas.Commit("Background");
+        };
+        bg.PopupClosed += () =>
+        {
+            if (Canvas.Doc.Bg != null)
+            {
+                Canvas.Doc.Bg = Hex.Of(bg.Color);
+                Canvas.Redraw();
+                Canvas.Commit("Background");
+            }
+        };
+        row.AddChild(see);
+        row.AddChild(bg);
         into.AddChild(row);
     }
 
@@ -371,7 +502,9 @@ internal sealed class StudioLayersPanel
         Canvas.R.Remember(src, img);
         float k = Mathf.Min(1, Mathf.Min(Canvas.Doc.W * 0.96f / img.GetWidth(), Canvas.Doc.H * 0.96f / img.GetHeight()));
         var c = at ?? new Vector2(Canvas.Doc.W, Canvas.Doc.H) / 2;
-        var l = new ArtLayer { Name = Canvas.NextName(NewPieces.Pretty(Path.GetFileNameWithoutExtension(path))), Kind = "image", Src = src, SrcW = img.GetWidth(), SrcH = img.GetHeight(), X = c.X, Y = c.Y, Sx = k, Sy = k };
+        var l =
+            new ArtLayer { Name = Canvas.NextName(NewPieces.Pretty(Path.GetFileNameWithoutExtension(path))), Kind = "image", Src = src, SrcW = img.GetWidth(), SrcH = img.GetHeight(), X = c.X, Y = c.Y,
+                Sx = k, Sy = k };
         Canvas.AddLayer(l);
         Canvas.SetTool("move");
     }

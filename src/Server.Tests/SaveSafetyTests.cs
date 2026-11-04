@@ -141,7 +141,12 @@ public sealed class SaveSafetyTests
         var old = t.Server.ToSave();
         old.Format = 3;
         old.Commands = t.Server.Log.ToList();
-        foreach (var r in old.Turns) { r.State = r.Unpack(); r.Packed = null; r.Pieces = 0; }
+        foreach (var r in old.Turns)
+        {
+            r.State = r.Unpack();
+            r.Packed = null;
+            r.Pieces = 0;
+        }
         var p = Path.Combine(TempRoot(), "old.kstable");
         Json.Save(p, old);
 

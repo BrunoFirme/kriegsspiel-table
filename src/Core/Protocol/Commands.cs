@@ -185,7 +185,8 @@ public sealed class DeletePiece : LayerCommand
 }
 public sealed class SetState : LayerCommand
 {
-    public string Id { get; set; } = ""; public int State { get; set; }
+    public string Id { get; set; } = "";
+    public int State { get; set; }
     public override Sender SentBy() => Sender.Umpire;
     public override bool OnUndoStack() => true;
     public override Shown ShownToObservers() => Shown.Table;
@@ -195,7 +196,9 @@ public sealed class SetState : LayerCommand
 }
 public sealed class SetCounter : LayerCommand
 {
-    public string Id { get; set; } = ""; public string Name { get; set; } = ""; public int Value { get; set; }
+    public string Id { get; set; } = "";
+    public string Name { get; set; } = "";
+    public int Value { get; set; }
     public bool Clear { get; set; }
     public override Sender SentBy() => Sender.Umpire;
     public override bool OnUndoStack() => true;
@@ -206,7 +209,9 @@ public sealed class SetCounter : LayerCommand
 }
 public sealed class SetText : LayerCommand
 {
-    public string Id { get; set; } = ""; public string Name { get; set; } = ""; public string Value { get; set; } = "";
+    public string Id { get; set; } = "";
+    public string Name { get; set; } = "";
+    public string Value { get; set; } = "";
     public bool Clear { get; set; }
     public override Sender SentBy() => Sender.Umpire;
     public override bool OnUndoStack() => true;
@@ -217,7 +222,8 @@ public sealed class SetText : LayerCommand
 }
 public sealed class SetLabel : LayerCommand
 {
-    public string Id { get; set; } = ""; public string? Value { get; set; }
+    public string Id { get; set; } = "";
+    public string? Value { get; set; }
     public override Sender SentBy() => Sender.Umpire;
     public override bool OnUndoStack() => true;
     public override Shown ShownToObservers() => Shown.Table;
@@ -227,7 +233,8 @@ public sealed class SetLabel : LayerCommand
 }
 public sealed class SetNote : LayerCommand
 {
-    public string Id { get; set; } = ""; public string? Value { get; set; }
+    public string Id { get; set; } = "";
+    public string? Value { get; set; }
     public override Sender SentBy() => Sender.Umpire;
     public override bool OnUndoStack() => true;
     public override Shown ShownToObservers() => Shown.Table;
@@ -237,7 +244,8 @@ public sealed class SetNote : LayerCommand
 }
 public sealed class SetTint : LayerCommand
 {
-    public string Id { get; set; } = ""; public string? Value { get; set; }
+    public string Id { get; set; } = "";
+    public string? Value { get; set; }
     public override Sender SentBy() => Sender.Umpire;
     public override bool OnUndoStack() => true;
     public override Shown ShownToObservers() => Shown.Table;
@@ -247,7 +255,9 @@ public sealed class SetTint : LayerCommand
 }
 public sealed class SetPieceOption : LayerCommand
 {
-    public string Id { get; set; } = ""; public string Name { get; set; } = ""; public bool Value { get; set; }
+    public string Id { get; set; } = "";
+    public string Name { get; set; } = "";
+    public bool Value { get; set; }
     public override Sender SentBy() => Sender.Umpire;
     public override bool OnUndoStack() => true;
     public override Shown ShownToObservers() => Shown.Table;
@@ -264,7 +274,8 @@ public static class PieceOptions
 
 public sealed class SetLocked : LayerCommand
 {
-    public string Id { get; set; } = ""; public bool Value { get; set; }
+    public string Id { get; set; } = "";
+    public bool Value { get; set; }
     public override Sender SentBy() => Sender.Umpire;
     public override bool OnUndoStack() => true;
     public override Shown ShownToObservers() => Shown.Table;
@@ -298,7 +309,8 @@ public sealed class LoadSave : Command
 
 public sealed class SetScale : LayerCommand
 {
-    public string Id { get; set; } = ""; public double Scale { get; set; } = 1;
+    public string Id { get; set; } = "";
+    public double Scale { get; set; } = 1;
     public override Sender SentBy() => Sender.Umpire;
     public override bool OnUndoStack() => true;
     public override Shown ShownToObservers() => Shown.Table;
@@ -308,7 +320,8 @@ public sealed class SetScale : LayerCommand
 }
 public sealed class FlipPiece : LayerCommand
 {
-    public string Id { get; set; } = ""; public bool FaceDown { get; set; }
+    public string Id { get; set; } = "";
+    public bool FaceDown { get; set; }
     public override Sender SentBy() => Sender.Umpire;
     public override bool OnUndoStack() => true;
     public override Shown ShownToObservers() => Shown.Table;
@@ -318,7 +331,8 @@ public sealed class FlipPiece : LayerCommand
 }
 public sealed class Attach : LayerCommand
 {
-    public string Parent { get; set; } = ""; public string Child { get; set; } = "";
+    public string Parent { get; set; } = "";
+    public string Child { get; set; } = "";
     public override Sender SentBy() => Sender.Umpire;
     public override bool OnUndoStack() => true;
     public override Shown ShownToObservers() => Shown.Table;
@@ -364,7 +378,8 @@ public sealed class MoveSheet : Command
 }
 public sealed class LockSheet : Command
 {
-    public string Id { get; set; } = ""; public bool Locked { get; set; }
+    public string Id { get; set; } = "";
+    public bool Locked { get; set; }
     public override Sender SentBy() => Sender.Umpire;
     public override bool OnUndoStack() => true;
     public override Shown ShownToObservers() => Shown.Table;
@@ -374,7 +389,8 @@ public sealed class LockSheet : Command
 }
 public sealed class RenameSheet : Command
 {
-    public string Id { get; set; } = ""; public string Name { get; set; } = "";
+    public string Id { get; set; } = "";
+    public string Name { get; set; } = "";
     public override Sender SentBy() => Sender.Umpire;
     public override bool OnUndoStack() => true;
     public override Shown ShownToObservers() => Shown.Table;
@@ -456,7 +472,8 @@ public sealed class EraseStroke : LayerCommand
 }
 public sealed class AddBoard : Command
 {
-    public string Id { get; set; } = ""; public string Name { get; set; } = "";
+    public string Id { get; set; } = "";
+    public string Name { get; set; } = "";
     public int? Index { get; set; }
     public override Sender SentBy() => Sender.Umpire;
     public override bool OnUndoStack() => true;
@@ -467,7 +484,8 @@ public sealed class AddBoard : Command
 }
 public sealed class RenameBoard : Command
 {
-    public string Id { get; set; } = ""; public string Name { get; set; } = "";
+    public string Id { get; set; } = "";
+    public string Name { get; set; } = "";
     public override Sender SentBy() => Sender.Umpire;
     public override bool OnUndoStack() => true;
     public override Shown ShownToObservers() => Shown.Table;
@@ -506,7 +524,9 @@ public sealed class RollDice : Command
 
 public sealed class SetClock : Command
 {
-    public int Turn { get; set; } public string GameTime { get; set; } = ""; public int IncrementMinutes { get; set; }
+    public int Turn { get; set; }
+    public string GameTime { get; set; } = "";
+    public int IncrementMinutes { get; set; }
     public override Sender SentBy() => Sender.Umpire;
     public override bool OnUndoStack() => true;
     public override Shown ShownToObservers() => Shown.Table;
@@ -575,7 +595,8 @@ public sealed class SetBriefing : Command
 }
 public sealed class SetPicture : LayerCommand
 {
-    public string Id { get; set; } = ""; public string? Picture { get; set; }
+    public string Id { get; set; } = "";
+    public string? Picture { get; set; }
     public override Sender SentBy() => Sender.Umpire;
     public override bool OnUndoStack() => true;
     public override Shown ShownToObservers() => Shown.Table;
@@ -596,7 +617,8 @@ public sealed class SetGrid : Command
 }
 public sealed class SetCalibration : Command
 {
-    public double? UnitsPerMeter { get; set; } public string? Units { get; set; }
+    public double? UnitsPerMeter { get; set; }
+    public string? Units { get; set; }
     public override Sender SentBy() => Sender.Umpire;
     public override bool OnUndoStack() => true;
     public override Shown ShownToObservers() => Shown.Table;
@@ -638,7 +660,8 @@ public sealed class RemoveZone : Command
 }
 public sealed class AddPack : Command
 {
-    public string Id { get; set; } = ""; public string Hash { get; set; } = "";
+    public string Id { get; set; } = "";
+    public string Hash { get; set; } = "";
     public override Sender SentBy() => Sender.UmpireAlone;
     public override bool OnUndoStack() => false;
     public override Shown ShownToObservers() => Shown.Table;
@@ -671,7 +694,8 @@ public sealed class Batch : Command
 
 public sealed class SetScript : LayerCommand
 {
-    public string Id { get; set; } = ""; public string? Text { get; set; }
+    public string Id { get; set; } = "";
+    public string? Text { get; set; }
     public override Sender SentBy() => Sender.Umpire;
     public override bool OnUndoStack() => true;
     public override Shown ShownToObservers() => Shown.Table;
@@ -691,7 +715,8 @@ public sealed class SetGlobalScript : Command
 }
 public sealed class SetScriptState : LayerCommand
 {
-    public string Id { get; set; } = ""; public string State { get; set; } = "";
+    public string Id { get; set; } = "";
+    public string State { get; set; } = "";
     public override Sender SentBy() => Sender.Runtime;
     public override bool OnUndoStack() => true;
     public override Shown ShownToObservers() => Shown.Table;
@@ -711,7 +736,8 @@ public sealed class SetGlobalScriptState : Command
 }
 public sealed class SetTags : LayerCommand
 {
-    public string Id { get; set; } = ""; public List<string>? Tags { get; set; }
+    public string Id { get; set; } = "";
+    public List<string>? Tags { get; set; }
     public override Sender SentBy() => Sender.Runtime;
     public override bool OnUndoStack() => true;
     public override Shown ShownToObservers() => Shown.Table;
@@ -721,7 +747,8 @@ public sealed class SetTags : LayerCommand
 }
 public sealed class SetMemo : LayerCommand
 {
-    public string Id { get; set; } = ""; public string Memo { get; set; } = "";
+    public string Id { get; set; } = "";
+    public string Memo { get; set; } = "";
     public override Sender SentBy() => Sender.Runtime;
     public override bool OnUndoStack() => true;
     public override Shown ShownToObservers() => Shown.Table;
@@ -743,7 +770,9 @@ public sealed class SetWidgets : LayerCommand
 }
 public sealed class SetMenuItems : LayerCommand
 {
-    public string Id { get; set; } = ""; public List<MenuItemDef> Items { get; set; } = new(); public int OnState { get; set; } = -1;
+    public string Id { get; set; } = "";
+    public List<MenuItemDef> Items { get; set; } = new();
+    public int OnState { get; set; } = -1;
     public override Sender SentBy() => Sender.Runtime;
     public override bool OnUndoStack() => true;
     public override Shown ShownToObservers() => Shown.Table;
@@ -753,7 +782,9 @@ public sealed class SetMenuItems : LayerCommand
 }
 public sealed class ClickWidget : LayerCommand
 {
-    public string Id { get; set; } = ""; public int Index { get; set; } public bool Alt { get; set; }
+    public string Id { get; set; } = "";
+    public int Index { get; set; }
+    public bool Alt { get; set; }
     public override Sender SentBy() => Sender.Umpire;
     public override bool OnUndoStack() => false;
     public override Shown ShownToObservers() => Shown.Table;
@@ -783,7 +814,12 @@ public sealed class SetGlobalMenuItems : Command
 }
 public sealed class Hotkey : Command
 {
-    public int Index { get; set; } public bool Up { get; set; } public string? Layer { get; set; } public string? Piece { get; set; } public Vec2? Pos { get; set; } public List<string> Selected { get; set; } = new();
+    public int Index { get; set; }
+    public bool Up { get; set; }
+    public string? Layer { get; set; }
+    public string? Piece { get; set; }
+    public Vec2? Pos { get; set; }
+    public List<string> Selected { get; set; } = new();
     public override Sender SentBy() => Sender.Umpire;
     public override bool OnUndoStack() => false;
     public override Shown ShownToObservers() => Shown.Table;
@@ -793,7 +829,8 @@ public sealed class Hotkey : Command
 }
 public sealed class PickGlobalMenuItem : Command
 {
-    public int Index { get; set; } public Vec2? Pos { get; set; }
+    public int Index { get; set; }
+    public Vec2? Pos { get; set; }
     public override Sender SentBy() => Sender.Umpire;
     public override bool OnUndoStack() => false;
     public override Shown ShownToObservers() => Shown.Table;
@@ -803,7 +840,8 @@ public sealed class PickGlobalMenuItem : Command
 }
 public sealed class NumberTyped : LayerCommand
 {
-    public string Id { get; set; } = ""; public int Number { get; set; }
+    public string Id { get; set; } = "";
+    public int Number { get; set; }
     public override Sender SentBy() => Sender.Umpire;
     public override bool OnUndoStack() => false;
     public override Shown ShownToObservers() => Shown.Table;
@@ -813,7 +851,10 @@ public sealed class NumberTyped : LayerCommand
 }
 public sealed class SelectPiece : Command
 {
-    public string Layer { get; set; } = ""; public string Id { get; set; } = ""; public string To { get; set; } = ""; public bool Selected { get; set; } = true;
+    public string Layer { get; set; } = "";
+    public string Id { get; set; } = "";
+    public string To { get; set; } = "";
+    public bool Selected { get; set; } = true;
     public override Sender SentBy() => Sender.Runtime;
     public override bool OnUndoStack() => false;
     public override Shown ShownToObservers() => Shown.Addressee;
@@ -823,7 +864,9 @@ public sealed class SelectPiece : Command
 }
 public sealed class EditWidget : LayerCommand
 {
-    public string Id { get; set; } = ""; public int Index { get; set; } public string Value { get; set; } = "";
+    public string Id { get; set; } = "";
+    public int Index { get; set; }
+    public string Value { get; set; } = "";
     public override Sender SentBy() => Sender.Umpire;
     public override bool OnUndoStack() => false;
     public override Shown ShownToObservers() => Shown.Table;
@@ -833,7 +876,8 @@ public sealed class EditWidget : LayerCommand
 }
 public sealed class PickMenuItem : LayerCommand
 {
-    public string Id { get; set; } = ""; public int Index { get; set; }
+    public string Id { get; set; } = "";
+    public int Index { get; set; }
     public override Sender SentBy() => Sender.Umpire;
     public override bool OnUndoStack() => false;
     public override Shown ShownToObservers() => Shown.Table;
@@ -843,7 +887,8 @@ public sealed class PickMenuItem : LayerCommand
 }
 public sealed class HoldPiece : LayerCommand
 {
-    public string Id { get; set; } = ""; public bool Held { get; set; }
+    public string Id { get; set; } = "";
+    public bool Held { get; set; }
     public override Sender SentBy() => Sender.Umpire;
     public override bool OnUndoStack() => false;
     public override Shown ShownToObservers() => Shown.Table;
@@ -853,7 +898,8 @@ public sealed class HoldPiece : LayerCommand
 }
 public sealed class SetDef : LayerCommand
 {
-    public string Id { get; set; } = ""; public string Def { get; set; } = "";
+    public string Id { get; set; } = "";
+    public string Def { get; set; } = "";
     public override Sender SentBy() => Sender.Umpire;
     public override bool OnUndoStack() => true;
     public override Shown ShownToObservers() => Shown.Table;
@@ -863,7 +909,8 @@ public sealed class SetDef : LayerCommand
 }
 public sealed class SetDecals : LayerCommand
 {
-    public string Id { get; set; } = ""; public List<DecalDef> Decals { get; set; } = new();
+    public string Id { get; set; } = "";
+    public List<DecalDef> Decals { get; set; } = new();
     public override Sender SentBy() => Sender.Umpire;
     public override bool OnUndoStack() => true;
     public override Shown ShownToObservers() => Shown.Table;
@@ -873,7 +920,9 @@ public sealed class SetDecals : LayerCommand
 }
 public sealed class SetLines : LayerCommand
 {
-    public string Id { get; set; } = ""; public List<LineDef> Lines { get; set; } = new(); public int OnState { get; set; } = -1;
+    public string Id { get; set; } = "";
+    public List<LineDef> Lines { get; set; } = new();
+    public int OnState { get; set; } = -1;
     public override Sender SentBy() => Sender.Umpire;
     public override bool OnUndoStack() => true;
     public override Shown ShownToObservers() => Shown.Table;
@@ -883,7 +932,9 @@ public sealed class SetLines : LayerCommand
 }
 public sealed class SetUi : Command
 {
-    public List<UiNode> Tree { get; set; } = new(); public string? Layer { get; set; } public string? Piece { get; set; }
+    public List<UiNode> Tree { get; set; } = new();
+    public string? Layer { get; set; }
+    public string? Piece { get; set; }
     public override Sender SentBy() => Sender.Runtime;
     public override bool OnUndoStack() => true;
     public override Shown ShownToObservers() => Shown.Table;
@@ -893,7 +944,10 @@ public sealed class SetUi : Command
 }
 public sealed class SetUiAttributes : Command
 {
-    public string Id { get; set; } = ""; public Dictionary<string, string> Attributes { get; set; } = new(); public string? Layer { get; set; } public string? Piece { get; set; }
+    public string Id { get; set; } = "";
+    public Dictionary<string, string> Attributes { get; set; } = new();
+    public string? Layer { get; set; }
+    public string? Piece { get; set; }
     public override Sender SentBy() => Sender.Runtime;
     public override bool OnUndoStack() => true;
     public override Shown ShownToObservers() => Shown.Table;
@@ -903,7 +957,11 @@ public sealed class SetUiAttributes : Command
 }
 public sealed class UiEvent : Command
 {
-    public string Id { get; set; } = ""; public string Event { get; set; } = "click"; public string Value { get; set; } = ""; public string? Layer { get; set; } public string? Piece { get; set; }
+    public string Id { get; set; } = "";
+    public string Event { get; set; } = "click";
+    public string Value { get; set; } = "";
+    public string? Layer { get; set; }
+    public string? Piece { get; set; }
     public override Sender SentBy() => Sender.Umpire;
     public override bool OnUndoStack() => true;
     public override Shown ShownToObservers() => Shown.Table;
@@ -913,7 +971,12 @@ public sealed class UiEvent : Command
 }
 public sealed class ShowDialog : Command
 {
-    public string? To { get; set; } public string Kind { get; set; } = "memo"; public string Title { get; set; } = ""; public string Text { get; set; } = ""; public List<string> Options { get; set; } = new(); public string Token { get; set; } = "";
+    public string? To { get; set; }
+    public string Kind { get; set; } = "memo";
+    public string Title { get; set; } = "";
+    public string Text { get; set; } = "";
+    public List<string> Options { get; set; } = new();
+    public string Token { get; set; } = "";
     public override Sender SentBy() => Sender.Runtime;
     public override bool OnUndoStack() => true;
     public override Shown ShownToObservers() => Shown.UmpiresOnly;
@@ -923,7 +986,8 @@ public sealed class ShowDialog : Command
 }
 public sealed class DialogResult : Command
 {
-    public string Token { get; set; } = ""; public string? Value { get; set; }
+    public string Token { get; set; } = "";
+    public string? Value { get; set; }
     public override Sender SentBy() => Sender.Umpire;
     public override bool OnUndoStack() => true;
     public override Shown ShownToObservers() => Shown.UmpiresOnly;
@@ -933,7 +997,9 @@ public sealed class DialogResult : Command
 }
 public sealed class Say : Command
 {
-    public string Text { get; set; } = ""; public string? To { get; set; } public string? Color { get; set; }
+    public string Text { get; set; } = "";
+    public string? To { get; set; }
+    public string? Color { get; set; }
     public override Sender SentBy() => Sender.Umpire;
     public override bool OnUndoStack() => false;
     public override Shown ShownToObservers() => Shown.Addressee;

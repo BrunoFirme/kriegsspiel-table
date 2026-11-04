@@ -55,7 +55,8 @@ public static class GuideReader
         readonly HFlowContainer _links = new();
         readonly Label _linksHead = new() { Text = Ui.Spaced("This page as a file") };
         readonly FindBar _find = new();
-        readonly ScrollContainer _scroll = new() { HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled, SizeFlagsVertical = Control.SizeFlags.ExpandFill, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+        readonly ScrollContainer _scroll =
+            new() { HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled, SizeFlagsVertical = Control.SizeFlags.ExpandFill, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         readonly MarginContainer _pad = new() { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         readonly VBoxContainer _column = new() { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         readonly Label _status = new() { Modulate = Ui.Muted, Visible = false, AutowrapMode = TextServer.AutowrapMode.WordSmart };
@@ -81,7 +82,8 @@ public static class GuideReader
             bg.AddChild(split);
 
             var side = new PanelContainer { CustomMinimumSize = new Vector2(264, 0) };
-            side.AddThemeStyleboxOverride("panel", new StyleBoxFlat { BgColor = Ui.Bar, CornerRadiusBottomLeft = 5, ContentMarginLeft = 12, ContentMarginRight = 10, ContentMarginTop = 12, ContentMarginBottom = 10 });
+            side.AddThemeStyleboxOverride("panel",
+                new StyleBoxFlat { BgColor = Ui.Bar, CornerRadiusBottomLeft = 5, ContentMarginLeft = 12, ContentMarginRight = 10, ContentMarginTop = 12, ContentMarginBottom = 10 });
             split.AddChild(side);
             var sideBox = new VBoxContainer();
             sideBox.AddThemeConstantOverride("separation", 8);
@@ -143,7 +145,12 @@ public static class GuideReader
             _search.TextChanged += q => Search(q);
             _search.GuiInput += e =>
             {
-                if (e is InputEventKey { Pressed: true, Keycode: Key.Escape }) { _search.Text = ""; Search(""); _search.AcceptEvent(); }
+                if (e is InputEventKey { Pressed: true, Keycode: Key.Escape })
+                {
+                    _search.Text = "";
+                    Search("");
+                    _search.AcceptEvent();
+                }
                 else if (e is InputEventKey { Pressed: true, Keycode: Key.Enter or Key.KpEnter } && _firstHit != null) { OpenHit(_firstHit); _search.AcceptEvent(); }
             };
             _toc.ItemSelected += () =>
@@ -164,7 +171,12 @@ public static class GuideReader
         {
             if (_find.Handles(e)) { Window.SetInputAsHandled(); return; }
             if (e is not InputEventKey { Pressed: true, Echo: false } k) return;
-            if (k.Keycode == Key.K && k.CtrlPressed) { _search.GrabFocus(); _search.SelectAll(); Window.SetInputAsHandled(); }
+            if (k.Keycode == Key.K && k.CtrlPressed)
+            {
+                _search.GrabFocus();
+                _search.SelectAll();
+                Window.SetInputAsHandled();
+            }
             else if (k.Keycode == Key.Left && k.AltPressed) { Back(); Window.SetInputAsHandled(); }
             else if (k.Keycode == Key.Right && k.AltPressed) { Forward(); Window.SetInputAsHandled(); }
             else if (k.Keycode == Key.Escape && _find.Terms.Count == 0 && !_searching) { Window.QueueFree(); Window.SetInputAsHandled(); }
@@ -217,7 +229,8 @@ public static class GuideReader
             else if (_find.Terms.Count > 0) Mark(false);
             Later(() =>
             {
-                if (anchor != null) ScrollTo(anchor); else _scroll.ScrollVertical = 0;
+                if (anchor != null) ScrollTo(anchor);
+                else _scroll.ScrollVertical = 0;
                 if (_find.Terms.Count > 0) FirstInView();
             });
             UpdateHistory();
@@ -230,7 +243,12 @@ public static class GuideReader
             foreach (var c in _column.GetChildren()) { _column.RemoveChild(c); c.QueueFree(); }
             _hits.Clear();
             var blocks = GuideLibrary.Blocks(file);
-            if (blocks == null) { Say($"{file} could not be read."); _blocks = new(); return; }
+            if (blocks == null)
+            {
+                Say($"{file} could not be read.");
+                _blocks = new();
+                return;
+            }
             _blocks = MarkdownView.Build(blocks, _column, Link);
             _column.AddChild(new Control { CustomMinimumSize = new Vector2(0, 80) });
             foreach (var (f, b) in _navButtons) b.SetPressedNoSignal(f == file);
@@ -352,11 +370,19 @@ public static class GuideReader
                 if (anchor == null) { _toc.DeselectAll(); return; }
                 for (var it = _toc.GetRoot()?.GetFirstChild(); it != null; it = it.GetNext())
                 {
-                    if (it.GetMetadata(0).AsString() == anchor) { if (!it.IsSelected(0)) { it.Select(0); _toc.ScrollToItem(it); } return; }
+                    if (it.GetMetadata(0).AsString() == anchor)
+                    {
+                        if (!it.IsSelected(0)) { it.Select(0); _toc.ScrollToItem(it); } return;
+                    }
                     for (var ch = it.GetFirstChild(); ch != null; ch = ch.GetNext())
                         if (ch.GetMetadata(0).AsString() == anchor)
                         {
-                            if (!ch.IsSelected(0)) { if (it.Collapsed) it.Collapsed = false; ch.Select(0); _toc.ScrollToItem(ch); }
+                            if (!ch.IsSelected(0))
+                            {
+                                if (it.Collapsed) it.Collapsed = false;
+                                ch.Select(0);
+                                _toc.ScrollToItem(ch);
+                            }
                             return;
                         }
                 }
@@ -420,7 +446,8 @@ public static class GuideReader
                 if (!_searching) return;
                 _searching = false;
                 _firstHit = null;
-                var keep = _file; _file = "";
+                var keep = _file;
+                _file = "";
                 Load(keep);
                 return;
             }
@@ -501,7 +528,8 @@ public static class GuideReader
             var (f, s) = _history[^1];
             _history.RemoveAt(_history.Count - 1);
             _ahead.Add((_file, (int)_scroll.ScrollVertical));
-            if (f != _file) Load(f, s); else _scroll.ScrollVertical = s;
+            if (f != _file) Load(f, s);
+            else _scroll.ScrollVertical = s;
             UpdateHistory();
         }
 
@@ -511,7 +539,8 @@ public static class GuideReader
             var (f, s) = _ahead[^1];
             _ahead.RemoveAt(_ahead.Count - 1);
             _history.Add((_file, (int)_scroll.ScrollVertical));
-            if (f != _file) Load(f, s); else _scroll.ScrollVertical = s;
+            if (f != _file) Load(f, s);
+            else _scroll.ScrollVertical = s;
             UpdateHistory();
         }
 

@@ -33,13 +33,16 @@ sealed partial class StudioTools
     static readonly string[] Symbols = { "none", "infantry", "cavalry", "artillery", "horse-artillery", "engineers", "hq", "text" };
     static readonly string[] Shapes = { "token", "square", "round", "hex" };
 
-    static readonly JsonSerializerOptions Opts = new() { WriteIndented = true, DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull, Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping };
+    static readonly JsonSerializerOptions Opts =
+        new() { WriteIndented = true, DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
+            Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping };
 
     public IEnumerable<AgentTool> Tools()
     {
         yield return new AgentTool("studio_list_pieces",
             "The kinds of piece in the pack open in the piece studio: id, name, kind, size, counters, text lines, looks, markers, and whether each has a script.",
-            Args.Schema(), _ => On(s => Task.FromResult(new ToolResult(Json(new JsonArray(s.Pack.Pieces.OrderBy(d => d.Name, StringComparer.OrdinalIgnoreCase).Select(d => (JsonNode?)Summary(s, d)).ToArray()))))));
+            Args.Schema(), _ =>
+                On(s => Task.FromResult(new ToolResult(Json(new JsonArray(s.Pack.Pieces.OrderBy(d => d.Name, StringComparer.OrdinalIgnoreCase).Select(d => (JsonNode?)Summary(s, d)).ToArray()))))));
         yield return new AgentTool("studio_read_piece",
             "One kind of piece in full as the pack keeps it (its script included), with a picture of its front.",
             Args.Schema(new Arg("id", "string", "the kind's id", true)),
@@ -317,18 +320,23 @@ sealed partial class StudioTools
         if (_a.Studio is not { } s || !_a.InStudio) return NotOpen;
         var name = a.Str("name")?.Trim();
         if (string.IsNullOrEmpty(name)) return ToolResult.Fail("name is needed.");
-        EffectDef fx; double w, h;
+        EffectDef fx;
+        double w, h;
         if (a.Str("preset") is { } presetName)
         {
             var p = FirmeEffects.Presets.FirstOrDefault(x => x.Name.Equals(presetName, StringComparison.OrdinalIgnoreCase));
             if (p.Fx == null) return ToolResult.Fail($"No preset {presetName}.");
-            fx = p.Fx.Clone(); w = a.Num("width") ?? p.W; h = a.Num("height") ?? p.H;
+            fx = p.Fx.Clone();
+            w = a.Num("width") ?? p.W;
+            h = a.Num("height") ?? p.H;
         }
         else
         {
             var kind = a.Str("kind") ?? "";
             if (!EffectKinds.Kinds.Any(k => k.Id == kind)) return ToolResult.Fail("preset or kind is needed; kinds: " + string.Join(", ", EffectKinds.Kinds.Select(k => k.Id)));
-            fx = new EffectDef { Kind = kind }; w = a.Num("width") ?? 2; h = a.Num("height") ?? 2;
+            fx = new EffectDef { Kind = kind };
+            w = a.Num("width") ?? 2;
+            h = a.Num("height") ?? 2;
         }
         var before = s.Pack.Pieces.ToHashSet();
         s.NewPieces.NewEffect(name, Math.Clamp(w, MinSpan, MaxSpan), Math.Clamp(h, MinSpan, MaxSpan), fx);
@@ -350,7 +358,10 @@ sealed partial class StudioTools
     Task<ToolResult> SetPiece(JsonElement a) => Change(a, "changed", async (s, d) =>
     {
         var name = a.Str("name")?.Trim();
-        var w = a.Num("width"); var h = a.Num("height"); var th = a.Num("thickness"); var tint = a.Str("tint");
+        var w = a.Num("width");
+        var h = a.Num("height");
+        var th = a.Num("thickness");
+        var tint = a.Str("tint");
         if (tint != null && !IsColour(tint)) return ToolResult.Fail("tint is #rrggbb.");
         var outline = OutlineNamed(a.Str("outline"));
         if (a.Str("outline") != null && outline == null) return ToolResult.Fail("outline is one of " + OutlineList + ".");
@@ -390,7 +401,8 @@ sealed partial class StudioTools
             await s.Framer.Unframe(d);
             return new ToolResult($"{d.Name} has no frame.", false, Pictures(FacePng(s, PieceFaces.Of(d).FirstOrDefault()?.Sha)));
         }
-        var border = a.Str("border"); var behind = a.Str("behind");
+        var border = a.Str("border");
+        var behind = a.Str("behind");
         if (border != null && !IsColour(border) || behind != null && !IsColour(behind)) return ToolResult.Fail("border and behind are #rrggbb.");
         float width = (float)Math.Clamp(a.Num("border_width") ?? 10, 0, 48);
         await s.Framer.Frame(d, Hex.To(Colour(border, "#1f1f1fff"), Colors.Black), width, Hex.To(Colour(behind, "#d9cfb5ff"), Colors.White));
@@ -434,12 +446,15 @@ sealed partial class StudioTools
             var it = c ?? new CounterDef { Name = name };
             if (c == null) x.Counters.Add(it);
             if (!string.IsNullOrEmpty(newName)) it.Name = newName;
-            it.Min = min; it.Max = max; it.Default = start;
+            it.Min = min;
+            it.Max = max;
+            it.Default = start;
 
             it.Place = place;
             if (a.Flag("show_name") is { } sn) it.ShowName = sn;
             if (a.Flag("show_buttons") is { } sb) it.ShowButtons = sb;
-            if (marker is { Length: > 0 } && !x.Attachments.Any(m => m.Piece == marker)) x.Attachments.Add(new AttachmentDef { Piece = marker, Offset = new Vec2(x.Size.W * PackManifest.MarkerBeside, 0) });
+            if (marker is { Length: > 0 } && !x.Attachments.Any(m => m.Piece == marker)) x.Attachments.Add(new AttachmentDef { Piece = marker,
+                Offset = new Vec2(x.Size.W * PackManifest.MarkerBeside, 0) });
         });
         return Task.FromResult(new ToolResult(JsonSerializer.Serialize(d.Counters, Opts)));
     });
@@ -612,12 +627,22 @@ sealed partial class StudioTools
         bool failed = false;
         foreach (var raw in all)
         {
-            if (!_a.InStudio) { report.Add("the studio closed; stopped"); failed = true; break; }
+            if (!_a.InStudio)
+            {
+                report.Add("the studio closed; stopped");
+                failed = true;
+                break;
+            }
             var (verb, arg) = StudioSteps.Split(raw);
             try
             {
                 if (await _steps.Run(verb, arg)) report.Add("ok " + raw);
-                else { report.Add($"unknown step '{verb}'; stopped"); failed = true; break; }
+                else
+                {
+                    report.Add($"unknown step '{verb}'; stopped");
+                    failed = true;
+                    break;
+                }
             }
             catch (Exception e) when (e is FormatException or IndexOutOfRangeException or ArgumentException)
             {

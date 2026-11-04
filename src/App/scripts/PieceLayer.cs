@@ -15,7 +15,12 @@ sealed class PieceLayer
     public PieceGrid Grid { get; } = new();
     public Lettering Lettering { get; }
 
-    public PieceLayer(TableContext c, IReadOnlySet<string> picked) { _c = c; _picked = picked; Lettering = new Lettering(c, Grid); }
+    public PieceLayer(TableContext c, IReadOnlySet<string> picked)
+    {
+        _c = c;
+        _picked = picked;
+        Lettering = new Lettering(c, Grid);
+    }
 
     public event Action? Resynced;
 
@@ -73,9 +78,15 @@ sealed class PieceLayer
         {
             if (n.Ghost != ghost || Math.Abs(n.BuiltScale - p.Scale) > 1e-6)
             {
-                n.QueueFree(); _pieces.Remove((layer, p.Id));
+                n.QueueFree();
+                _pieces.Remove((layer, p.Id));
             }
-            else { n.Refresh(p); Grid.Index(n); return; }
+            else
+            {
+                n.Refresh(p);
+                Grid.Index(n);
+                return;
+            }
         }
         var node = PieceNode.Create(s, layer, p, ghost, Colors.White, lettered: false);
         node.Seating = Seat;
@@ -99,7 +110,8 @@ sealed class PieceLayer
         {
             var old = _pieces[key];
             var p = _c.S.View.Find(key.layer, key.id);
-            old.QueueFree(); _pieces.Remove(key);
+            old.QueueFree();
+            _pieces.Remove(key);
             if (p == null) continue;
             var node = PieceNode.Create(_c.S, key.layer, p, old.Ghost, Colors.White, lettered: old.Lettered);
             node.Seating = Seat;
@@ -137,7 +149,8 @@ sealed class PieceLayer
         {
             if (o == n || o.Layer != n.Layer || o.IsDie || o.IsEffect || o.Piece.NoCollision || o.Placed) continue;
             if (o.SurfaceAt(world) is not { } t || t > want + SupportAbove || t < want - reach || t <= top) continue;
-            top = t; under = o;
+            top = t;
+            under = o;
         }
         return under is { Tilted: true } ? (top, under.Up) : null;
     }
@@ -193,7 +206,8 @@ sealed class PieceLayer
         {
             if (Mathf.Abs(d[a]) < 1e-9f) { if (o[a] < lo[a] || o[a] > hi[a]) return null; continue; }
             float t1 = (lo[a] - o[a]) / d[a], t2 = (hi[a] - o[a]) / d[a];
-            near = Mathf.Max(near, Mathf.Min(t1, t2)); far = Mathf.Min(far, Mathf.Max(t1, t2));
+            near = Mathf.Max(near, Mathf.Min(t1, t2));
+            far = Mathf.Min(far, Mathf.Max(t1, t2));
         }
         if (near > far || far < 0) return null;
         float at = Mathf.Max(near, 0);

@@ -20,7 +20,12 @@ sealed class ScenarioWriteBack
 
     public ScenarioWriteBack(Func<ClientSession> session, Func<GameServer?> server, IScenarioFolders folders, SaveStore store, Func<ClientLog> log, Action<string> note)
     {
-        _session = session; _server = server; _folders = folders; _store = store; _log = log; _note = note;
+        _session = session;
+        _server = server;
+        _folders = folders;
+        _store = store;
+        _log = log;
+        _note = note;
     }
 
     public Func<bool> Quitting { get; set; } = () => false;
@@ -32,7 +37,8 @@ sealed class ScenarioWriteBack
 
     public string? Prepare(bool closing, out (string File, Scenario Scenario)? folder, out SetupToKeep? setup)
     {
-        folder = null; setup = null;
+        folder = null;
+        setup = null;
         var server = _server()!;
         var session = _session();
         bool due = closing || _since.ElapsedMilliseconds > 20000 || _since.ElapsedMilliseconds == 0;
@@ -41,7 +47,9 @@ sealed class ScenarioWriteBack
         if (_copy is { IsCompleted: false }) return null;
         if (_folders.SheetsPending(session.Store, server.State, dir))
         {
-            var snapshot = server.State.DeepClone(); var store = session.Store; var name = server.State.Name;
+            var snapshot = server.State.DeepClone();
+            var store = session.Store;
+            var name = server.State.Name;
             _note("Copying the map's tiles into the scenario folder; a big map takes a while.");
             var stop = (_copyStop = new CancellationTokenSource()).Token;
             _copy = Task.Run(() => _folders.SaveTable(store, snapshot, name, dir, stop));
@@ -70,7 +78,12 @@ sealed class ScenarioWriteBack
     public void CopyDone(string error, Action saveNow)
     {
         _copy = null;
-        if (error.Length > 0) { _log().Error("scenario write-back failed: " + error); _note("The map's tiles could not be copied into the scenario folder: " + error); return; }
+        if (error.Length > 0)
+        {
+            _log().Error("scenario write-back failed: " + error);
+            _note("The map's tiles could not be copied into the scenario folder: " + error);
+            return;
+        }
         _note("The map's tiles are in the scenario folder now.");
         if (_server() == null || _session().ScenarioDir == null) return;
         _since.Reset();

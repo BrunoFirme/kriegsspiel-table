@@ -125,7 +125,8 @@ sealed partial class ScenarioDialog
     void ChooseBackdrop(Action undone)
     {
         var root = S.Store.Root;
-        var fd = new FileDialog { FileMode = FileDialog.FileModeEnum.OpenFile, Access = FileDialog.AccessEnum.Filesystem, Filters = new[] { ImageFiles.Filter }, Title = "Backdrop", Size = new Vector2I(900, 600) };
+        var fd =
+            new FileDialog { FileMode = FileDialog.FileModeEnum.OpenFile, Access = FileDialog.AccessEnum.Filesystem, Filters = new[] { ImageFiles.Filter }, Title = "Backdrop", Size = new Vector2I(900, 600) };
         Ui.RememberFolder(fd);
         FileThumbs.Show(fd);
         bool answered = false;
@@ -160,7 +161,8 @@ sealed partial class ScenarioDialog
             return;
         }
         var c = new SetLighting { Lighting = Changed(l => l.Backdrop = name) };
-        if (N.Server != null) S.Do(c); else N.ShareThen(new[] { name }, c);
+        if (N.Server != null) S.Do(c);
+        else N.ShareThen(new[] { name }, c);
     }
 
     static string? KeepBackdrop(string root, string path)

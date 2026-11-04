@@ -29,7 +29,11 @@ public sealed class AgentBridgeTests : IDisposable
         lock (_posts) _posts.Add((r.Headers.Authorization?.ToString() ?? "", body));
         if (!body.Contains("\"id\"")) return new HttpResponseMessage(HttpStatusCode.Accepted);
         return new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("""{"jsonrpc":"2.0","id":1,"result":{"from":"game"}}""") };
-    }), l => { _launched.Add(l); if (startsGame) { Live(); _gameUp = true; } return true; }, TimeSpan.FromSeconds(3));
+    }), l =>
+    {
+        _launched.Add(l);
+        if (startsGame) { Live(); _gameUp = true; } return true;
+    }, TimeSpan.FromSeconds(3));
 
     void Live() => File.WriteAllText(Path.Combine(_dir, AgentBridge.LiveFile), """{"url":"http://127.0.0.1:7796/mcp","token":"abc"}""");
 

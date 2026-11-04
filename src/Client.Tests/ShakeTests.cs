@@ -70,7 +70,8 @@ public class ShakeTests
     static IEnumerable<Vec2> Edge(HeldPiece<FakePiece> h)
     {
         double rad = h.Rot * Math.PI / 180, w = h.Node.Footprint.X / 2, d = h.Node.Footprint.Y / 2;
-        var along = new Vec2(-Math.Cos(rad), Math.Sin(rad)); var back = new Vec2(-Math.Sin(rad), -Math.Cos(rad));
+        var along = new Vec2(-Math.Cos(rad), Math.Sin(rad));
+        var back = new Vec2(-Math.Sin(rad), -Math.Cos(rad));
         for (int k = 0; k <= 8; k++)
         {
             double f = -1 + 2 * k / 8.0;

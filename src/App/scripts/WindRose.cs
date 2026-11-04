@@ -5,8 +5,16 @@ namespace KTable.App;
 
 public partial class WindRose : Control
 {
-    public double From { get => _from; set { _from = ((value % 360) + 360) % 360; QueueRedraw(); } }
-    public double Strength { get => _strength; set { _strength = value; QueueRedraw(); } }
+    public double From
+    {
+        get => _from;
+        set { _from = ((value % 360) + 360) % 360; QueueRedraw(); }
+    }
+    public double Strength
+    {
+        get => _strength;
+        set { _strength = value; QueueRedraw(); }
+    }
     double _from = 270, _strength = 1;
 
     public event Action<double, bool>? Turned;

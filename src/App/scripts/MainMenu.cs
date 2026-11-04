@@ -48,16 +48,36 @@ sealed class MainMenu : HudPart
         {
             switch (id)
             {
-                case 2: Shell.ShowSaveCopy(); break;
-                case 3: SavesWindow.Open(Ctx); break;
-                case 10: InviteDialog.Open(Ctx); break;
-                case 20: ScenarioDialog.Open(Ctx); break;
-                case 30: Shell.ShowSettings(); break;
-                case 31: GuideReader.Show(Ctx.Root, KTable.Client.Docs.KeysPage.File, "at-the-table"); break;
-                case 32: GuideReader.Show(Ctx.Root); break;
-                case 33: Log(Diagnostics.Copy()); break;
-                case 34: Log(Diagnostics.ReportOnGitHub()); break;
-                case 40: LeaveDialog.Open(Ctx); break;
+                case 2:
+                    Shell.ShowSaveCopy();
+                    break;
+                case 3:
+                    SavesWindow.Open(Ctx);
+                    break;
+                case 10:
+                    InviteDialog.Open(Ctx);
+                    break;
+                case 20:
+                    ScenarioDialog.Open(Ctx);
+                    break;
+                case 30:
+                    Shell.ShowSettings();
+                    break;
+                case 31:
+                    GuideReader.Show(Ctx.Root, KTable.Client.Docs.KeysPage.File, "at-the-table");
+                    break;
+                case 32:
+                    GuideReader.Show(Ctx.Root);
+                    break;
+                case 33:
+                    Log(Diagnostics.Copy());
+                    break;
+                case 34:
+                    Log(Diagnostics.ReportOnGitHub());
+                    break;
+                case 40:
+                    LeaveDialog.Open(Ctx);
+                    break;
             }
         };
         return menu;
@@ -81,11 +101,22 @@ sealed class MainMenu : HudPart
         {
             switch (id)
             {
-                case 1: Ctx.ShowScriptWindow(null); break;
-                case 2: Shell.TogglePanel("console"); break;
-                case 3: GuideReader.ShowEntry(Ctx.Root, null); break;
-                case 4: CheckScenarioScripts(Ctx); break;
-                case 5: Cfg.MakerTools = !Cfg.MakerTools; Cfg.Save(); break;
+                case 1:
+                    Ctx.ShowScriptWindow(null);
+                    break;
+                case 2:
+                    Shell.TogglePanel("console");
+                    break;
+                case 3:
+                    GuideReader.ShowEntry(Ctx.Root, null);
+                    break;
+                case 4:
+                    CheckScenarioScripts(Ctx);
+                    break;
+                case 5:
+                    Cfg.MakerTools = !Cfg.MakerTools;
+                    Cfg.Save();
+                    break;
             }
         };
         return scripting;
@@ -109,7 +140,12 @@ sealed class LeaveDialog : HudPart
 
     void Show()
     {
-        void Go() { Cfg.Save(); N.Shutdown(); HudNode.GetTree().ReloadCurrentScene(); }
+        void Go()
+        {
+            Cfg.Save();
+            N.Shutdown();
+            HudNode.GetTree().ReloadCurrentScene();
+        }
         Ui.Confirm(HudNode, "Leave the table", "Leave", () =>
         {
             N.SaveNow(closing: true);

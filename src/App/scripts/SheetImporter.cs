@@ -68,7 +68,8 @@ public static class SheetImporter
                 {
                     var tile = img.GetRegion(new Rect2I(x * ts, y * ts, Math.Min(ts, w - x * ts), Math.Min(ts, h - y * ts)));
                     var file = Path.Combine(dir, $"{x}_{y}.{index.Ext}");
-                    if (small) tile.SavePng(file); else tile.SaveWebp(file, lossy: false);
+                    if (small) tile.SavePng(file);
+                    else tile.SaveWebp(file, lossy: false);
                 }
             if (cols == 1 && rows == 1) break;
             img.Resize(Math.Max(1, w / 2), Math.Max(1, h / 2), Image.Interpolation.Cubic);

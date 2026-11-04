@@ -44,7 +44,8 @@ sealed class SheetLayer
         _c.SheetsTop = Math.Max(0, top) * SheetNode.ZStep;
         foreach (var (id, n) in _sheets)
         {
-            n.TopZ = top; n.Covered = Covered;
+            n.TopZ = top;
+            n.Covered = Covered;
             if (n.Touches(where) && _queued.Add(id)) _toBuild.Enqueue(id);
         }
         GroundChanged?.Invoke(where);
@@ -61,7 +62,8 @@ sealed class SheetLayer
     {
         foreach (var n in _sheets.Values) n.QueueFree();
         _sheets.Clear();
-        _toBuild.Clear(); _queued.Clear();
+        _toBuild.Clear();
+        _queued.Clear();
         _c.Labels.RemoveWhere(k => k.StartsWith("sheet:"));
         GroundMoved();
     }
@@ -168,7 +170,8 @@ sealed class SheetLayer
         double w = moving.Def.Size.W / 2, h = moving.Def.Size.H / 2;
         if (Math.Abs(Math.Round(moving.Def.RotDeg / 90) * 90 - moving.Def.RotDeg) > 0.5) return p;
         if (((int)Math.Round(moving.Def.RotDeg / 90)) % 2 != 0) (w, h) = (h, w);
-        double bestX = th, bestZ = th; double sx = 0, sz = 0;
+        double bestX = th, bestZ = th;
+        double sx = 0, sz = 0;
         foreach (var o in _sheets.Values)
         {
             if (o == moving) continue;

@@ -16,13 +16,23 @@ sealed class ViewSync
     readonly DrawingLayer _drawings;
     public ViewSync(TableContext c, HashSet<string> picked, TableStage stage, SheetLayer sheets, PieceLayer pieces, DrawingLayer drawings)
     {
-        _c = c; _picked = picked; _stage = stage; _sheets = sheets; _pieces = pieces; _drawings = drawings;
+        _c = c;
+        _picked = picked;
+        _stage = stage;
+        _sheets = sheets;
+        _pieces = pieces;
+        _drawings = drawings;
     }
 
     PendingPoses _poses = null!;
     PieceClipboard _clip = null!;
     ZoneLayer _zones = null!;
-    public void Connect(PendingPoses poses, PieceClipboard clip, ZoneLayer zones) { _poses = poses; _clip = clip; _zones = zones; }
+    public void Connect(PendingPoses poses, PieceClipboard clip, ZoneLayer zones)
+    {
+        _poses = poses;
+        _clip = clip;
+        _zones = zones;
+    }
 
     public event Action? BoardsChanged;
     public event Action? LookChanged;
@@ -68,41 +78,8 @@ sealed class ViewSync
 
     HashSet<string>? TouchedIds(LayerCommand c)
     {
-        string? id;
-        switch (c)
-        {
-            case Attach a: return new HashSet<string> { a.Parent, a.Child };
-            case Detach dt: id = dt.Child; break;
-            case MovePiece m: id = m.Id; break;
-            case DeletePiece d: id = d.Id; break;
-            case SpawnPiece sp: id = sp.Id; break;
-            case RestorePiece rp: id = rp.Piece.Id; break;
-            case SetState x: id = x.Id; break;
-            case SetCounter x: id = x.Id; break;
-            case SetText x: id = x.Id; break;
-            case SetLabel x: id = x.Id; break;
-            case SetNote x: id = x.Id; break;
-            case SetTint x: id = x.Id; break;
-            case SetLocked x: id = x.Id; break;
-            case SetPieceOption x: id = x.Id; break;
-            case KTable.Core.Protocol.SetScale x: id = x.Id; break;
-            case FlipPiece x: id = x.Id; break;
-            case SetPicture x: id = x.Id; break;
-            case SetScript x: id = x.Id; break;
-            case SetScriptState x: id = x.Id; break;
-            case SetTags x: id = x.Id; break;
-            case SetMemo x: id = x.Id; break;
-            case SetWidgets x: id = x.Id; break;
-            case SetMenuItems x: id = x.Id; break;
-            case SetLines x: id = x.Id; break;
-            case SetDecals x: id = x.Id; break;
-            case SetDef x: id = x.Id; break;
-            case ClickWidget x: id = x.Id; break;
-            case NumberTyped x: id = x.Id; break;
-            case PickMenuItem x: id = x.Id; break;
-            case HoldPiece x: id = x.Id; break;
-            default: return null;
-        }
+        if (c is Attach a) return new HashSet<string> { a.Parent, a.Child };
+        var id = PieceIdOf(c);
         if (string.IsNullOrEmpty(id)) return null;
         var ids = new HashSet<string> { id };
         if (c is MovePiece)
@@ -114,6 +91,40 @@ sealed class ViewSync
         }
         return ids;
     }
+
+    static string? PieceIdOf(LayerCommand c) => c switch
+    {
+        Detach dt => dt.Child,
+        MovePiece m => m.Id,
+        DeletePiece d => d.Id,
+        SpawnPiece sp => sp.Id,
+        RestorePiece rp => rp.Piece.Id,
+        SetState x => x.Id,
+        SetCounter x => x.Id,
+        SetText x => x.Id,
+        SetLabel x => x.Id,
+        SetNote x => x.Id,
+        SetTint x => x.Id,
+        SetLocked x => x.Id,
+        SetPieceOption x => x.Id,
+        KTable.Core.Protocol.SetScale x => x.Id,
+        FlipPiece x => x.Id,
+        SetPicture x => x.Id,
+        SetScript x => x.Id,
+        SetScriptState x => x.Id,
+        SetTags x => x.Id,
+        SetMemo x => x.Id,
+        SetWidgets x => x.Id,
+        SetMenuItems x => x.Id,
+        SetLines x => x.Id,
+        SetDecals x => x.Id,
+        SetDef x => x.Id,
+        ClickWidget x => x.Id,
+        NumberTyped x => x.Id,
+        PickMenuItem x => x.Id,
+        HoldPiece x => x.Id,
+        _ => null,
+    };
 
     void SyncAfter(string layer, HashSet<string>? ids)
     {
@@ -162,7 +173,8 @@ sealed class ViewSync
                 foreach (var i in b.Items) OnApplied(i);
                 return true;
             case LayerCommand when c is Draw or EraseStroke:
-                if (_batch != null) _batch.Drawings = true; else _drawings.Sync();
+                if (_batch != null) _batch.Drawings = true;
+                else _drawings.Sync();
                 return true;
             case EditWidget ew:
                 if (pieces.TryGet(ew.Layer, ew.Id, out var wn)) wn.SyncWidgets(force: true);
@@ -182,7 +194,8 @@ sealed class ViewSync
             case LayerCommand lc:
                 if (lc is MovePiece mp) NoteMove(mp);
                 SyncAfter(lc.Layer, TouchedIds(lc));
-                if (_batch != null) _batch.Arrived = true; else _clip.SelectArrived();
+                if (_batch != null) _batch.Arrived = true;
+                else _clip.SelectArrived();
                 if (c is DeletePiece dp) { _picked.Remove(dp.Id); SelectionAfter(); }
                 else if (lc is not MovePiece and not KTable.Core.Protocol.SetScale) SelectionAfter();
                 return true;

@@ -89,7 +89,12 @@ public sealed class Report
             sb.AppendLine();
             Console.WriteLine($"LEFTOUT {_leftOut.Count} {NameList(_leftOut.Values.Select(p => p.Name), NamesOnTheLine)}");
         }
-        if (!_notes.IsEmpty) { sb.AppendLine("### Notes"); foreach (var n in _notes) sb.AppendLine("- " + n); sb.AppendLine(); }
+        if (!_notes.IsEmpty)
+        {
+            sb.AppendLine("### Notes");
+            foreach (var n in _notes) sb.AppendLine("- " + n);
+            sb.AppendLine();
+        }
         sb.AppendLine($"### Unresolved assets ({_unresolved.Count}) — placeholder image used");
         foreach (var u in _unresolved.Values.OrderBy(u => u.Why).ThenBy(u => u.Url)) sb.AppendLine($"- `{u.Url}` — {u.Why} — {u.Where}");
         sb.AppendLine();

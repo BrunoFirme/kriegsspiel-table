@@ -31,7 +31,8 @@ public static class GroundScatter
     {
         int x0 = (int)Math.Floor(x), y0 = (int)Math.Floor(y);
         double fx = x - x0, fy = y - y0;
-        fx = fx * fx * (3 - 2 * fx); fy = fy * fy * (3 - 2 * fy);
+        fx = fx * fx * (3 - 2 * fx);
+        fy = fy * fy * (3 - 2 * fy);
         double top = Lerp(Hash(x0, y0, seed), Hash(x0 + 1, y0, seed), fx);
         double bottom = Lerp(Hash(x0, y0 + 1, seed), Hash(x0 + 1, y0 + 1, seed), fx);
         return Lerp(top, bottom, fy);
@@ -44,7 +45,11 @@ public static class GroundScatter
         unchecked
         {
             uint h = (uint)x * 0x8DA6B343u ^ (uint)y * 0xD8163841u ^ (uint)seed * 0xCB1AB31Fu;
-            h ^= h >> 16; h *= 0x7FEB352Du; h ^= h >> 15; h *= 0x846CA68Bu; h ^= h >> 16;
+            h ^= h >> 16;
+            h *= 0x7FEB352Du;
+            h ^= h >> 15;
+            h *= 0x846CA68Bu;
+            h ^= h >> 16;
             return h / 4294967296.0;
         }
     }

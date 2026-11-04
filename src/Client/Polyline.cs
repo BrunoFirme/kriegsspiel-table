@@ -24,7 +24,8 @@ public static class Polyline
         {
             var (a, b) = work.Pop();
             if (b <= a + 1) continue;
-            double worst = 0; int at = -1;
+            double worst = 0;
+            int at = -1;
             for (int i = a + 1; i < b; i++)
             {
                 double d = ToSegment(pts[i], pts[a], pts[b]);
@@ -32,7 +33,8 @@ public static class Polyline
             }
             if (worst <= tol || at < 0) continue;
             keep[at] = true;
-            work.Push((a, at)); work.Push((at, b));
+            work.Push((a, at));
+            work.Push((at, b));
         }
         return pts.Where((_, i) => keep[i]).ToList();
     }

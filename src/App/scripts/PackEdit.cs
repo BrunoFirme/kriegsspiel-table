@@ -172,7 +172,12 @@ public static class PackEdit
             if (string.IsNullOrEmpty(text)) return;
             foreach (System.Text.RegularExpressions.Match m in HashText.Matches(text)) found.Add(m.Value.ToLowerInvariant());
         }
-        foreach (var d in pack.Pieces) { Scan(d.Script); Scan(d.ScriptState); foreach (var s in d.States) Scan(s.Script); }
+        foreach (var d in pack.Pieces)
+        {
+            Scan(d.Script);
+            Scan(d.ScriptState);
+            foreach (var s in d.States) Scan(s.Script);
+        }
         var files = new List<string>();
         foreach (var (_, path) in store.ListScenarios())
         {
@@ -200,7 +205,8 @@ public static class PackEdit
             foreach (var d in Directory.GetDirectories(root))
             {
                 var name = Path.GetFileName(d);
-                if (name.Length >= 15 && DateTime.TryParseExact(name[..15], "yyyyMMdd-HHmmss", System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.AssumeUniversal | System.Globalization.DateTimeStyles.AdjustToUniversal, out var at)
+                if (name.Length >= 15 && DateTime.TryParseExact(name[..15], "yyyyMMdd-HHmmss", System.Globalization.CultureInfo.InvariantCulture,
+                    System.Globalization.DateTimeStyles.AssumeUniversal | System.Globalization.DateTimeStyles.AdjustToUniversal, out var at)
                     && DateTime.UtcNow - at > TimeSpan.FromDays(SaveStore.TrashDays))
                     Directory.Delete(d, true);
             }
@@ -254,6 +260,6 @@ public static class PackEdit
             else return null;
             return err == Error.Ok && !img.IsEmpty() ? img : null;
         }
-        catch { return null; }
+        catch (Exception e) when (SaveStore.IsFileTrouble(e)) { return null; }
     }
 }

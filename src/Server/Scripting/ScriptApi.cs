@@ -20,7 +20,12 @@ public sealed partial class ScriptHost
             Print(text, text.StartsWith("TTS call not supported here: ") ? "todo" : "print");
             return DynValue.Nil;
         });
-        g["log"] = Fn(a => { var label = Arg(a, 1).CastToString(); Print((label is { Length: > 0 } ? label + ": " : "") + Inspect(Arg(a, 0))); return DynValue.Nil; });
+        g["log"] = Fn(a =>
+        {
+            var label = Arg(a, 1).CastToString();
+            Print((label is { Length: > 0 } ? label + ": " : "") + Inspect(Arg(a, 0)));
+            return DynValue.Nil;
+        });
 
         var json = T();
         json.Table["encode"] = Fn(a => S(LuaJson.Encode(Arg(a, 0))));
@@ -30,8 +35,15 @@ public sealed partial class ScriptHost
         var wait = T();
         wait.Table["seconds"] = Fn(a => AddTimer(new ScriptTimer { Due = _timers.Now + Arg(a, 0).CastToNumber() ?? 0, Fn = Arg(a, 1) }));
         wait.Table["frames"] = Fn(a => AddTimer(new ScriptTimer { DueFrame = _timers.Frame + (long)(Arg(a, 0).CastToNumber() ?? 1), Fn = Arg(a, 1) }));
-        wait.Table["condition"] = Fn(a => AddTimer(new ScriptTimer { Predicate = Arg(a, 0), Fn = Arg(a, 1), Timeout = Arg(a, 2).Type == DataType.Number ? _timers.Now + Arg(a, 2).Number : double.NaN, OnTimeout = Arg(a, 3) }));
-        wait.Table["stop"] = Fn(a => { var h = (int)(Arg(a, 0).CastToNumber() ?? 0); _timers.RemoveWhere(t => t.Handle == h); return DynValue.Nil; });
+        wait.Table["condition"] =
+            Fn(a => AddTimer(new ScriptTimer { Predicate = Arg(a, 0), Fn = Arg(a, 1), Timeout = Arg(a, 2).Type == DataType.Number ? _timers.Now + Arg(a, 2).Number : double.NaN,
+                OnTimeout = Arg(a, 3) }));
+        wait.Table["stop"] = Fn(a =>
+        {
+            var h = (int)(Arg(a, 0).CastToNumber() ?? 0);
+            _timers.RemoveWhere(t => t.Handle == h);
+            return DynValue.Nil;
+        });
         g["wait"] = wait;
 
         var board = T();
@@ -42,6 +54,11 @@ public sealed partial class ScriptHost
         board.Table["zones"] = Fn(_ => Zones());
         g["board"] = board;
 
+        InstallGame(g);
+    }
+
+    void InstallGame(Table g)
+    {
         var game = T();
         var gmeta = new Table(_vm);
         gmeta["__index"] = DynValue.NewCallback((_, a) => GameField(Arg(a, 1).CastToString() ?? ""));
@@ -55,7 +72,12 @@ public sealed partial class ScriptHost
             if (_reaction != null) _reaction.HotkeysDirty = true;
             return N(n);
         });
-        game.Table["hotkeys_clear"] = Fn(_ => { var owner = _current ?? _global; if (_controls.ClearHotkeys(owner) && _reaction != null) _reaction.HotkeysDirty = true; return DynValue.Nil; });
+        game.Table["hotkeys_clear"] = Fn(_ =>
+        {
+            var owner = _current ?? _global;
+            if (_controls.ClearHotkeys(owner) && _reaction != null) _reaction.HotkeysDirty = true;
+            return DynValue.Nil;
+        });
         game.Table["menu_add"] = Fn(a =>
         {
             var owner = _current ?? _global ?? throw new ScriptRuntimeException("game.menu_add: not inside a script");
@@ -64,16 +86,28 @@ public sealed partial class ScriptHost
             if (_reaction != null) _reaction.GlobalMenuDirty = true;
             return N(n);
         });
-        game.Table["menu_clear"] = Fn(_ => { var owner = _current ?? _global; if (_controls.ClearMenu(owner) && _reaction != null) _reaction.GlobalMenuDirty = true; return DynValue.Nil; });
+        game.Table["menu_clear"] = Fn(_ =>
+        {
+            var owner = _current ?? _global;
+            if (_controls.ClearMenu(owner) && _reaction != null) _reaction.GlobalMenuDirty = true;
+            return DynValue.Nil;
+        });
         game.Table["select"] = Fn(a =>
         {
-            var peer = PeerOf(Arg(a, 0)); var id = IdOf(Arg(a, 1)); bool on = Arg(a, 2).Type != DataType.Boolean || Arg(a, 2).Boolean;
+            var peer = PeerOf(Arg(a, 0));
+            var id = IdOf(Arg(a, 1));
+            bool on = Arg(a, 2).Type != DataType.Boolean || Arg(a, 2).Boolean;
             if (peer < 0 || Find(id) == null) return DynValue.Nil;
             Emit(new SelectPiece { Layer = Layers.Umpire, Id = id, To = $"p:{peer}", Selected = on });
             _controls.Select(peer, id, on);
             return DynValue.Nil;
         });
-        game.Table["selected"] = Fn(a => { var t = T(); foreach (var id in _controls.SelectedBy(PeerOf(Arg(a, 0)))) if (Find(id) != null) t.Table.Append(Handle(id)); return t; });
+        game.Table["selected"] = Fn(a =>
+        {
+            var t = T();
+            foreach (var id in _controls.SelectedBy(PeerOf(Arg(a, 0)))) if (Find(id) != null) t.Table.Append(Handle(id));
+            return t;
+        });
         game.Table["hovered"] = Fn(a => _controls.HoveredBy(PeerOf(Arg(a, 0))) is { } hovered && Find(hovered) != null ? Handle(hovered) : DynValue.Nil);
         game.Table["call"] = Fn(a =>
         {
@@ -85,13 +119,22 @@ public sealed partial class ScriptHost
         });
         game.Table["get_var"] = Fn(a => _global?.Env.Get(Arg(a, 0).CastToString() ?? "") ?? DynValue.Nil);
         game.Table["set_var"] = Fn(a => { _global?.Env.Set(Arg(a, 0).CastToString() ?? "", Arg(a, 1)); return DynValue.Nil; });
-        game.Table["umpires"] = Fn(_ => { var t = T(); foreach (var p in _s.Peers.Where(p => Visibility.IsUmpire(p.Role))) t.Table.Append(WhoTable(p)); return t; });
-        game.Table["say"] = Fn(a => { Emit(new Say { Text = Arg(a, 0).CastToString() ?? "", To = SayTarget(Arg(a, 1)), Color = Arg(a, 1).Type == DataType.Table ? ColorOf(Arg(a, 1).Table.Get("color")) : null }); return DynValue.Nil; });
+        game.Table["umpires"] = Fn(_ =>
+        {
+            var t = T();
+            foreach (var p in _s.Peers.Where(p => Visibility.IsUmpire(p.Role))) t.Table.Append(WhoTable(p));
+            return t;
+        });
+        game.Table["say"] =
+            Fn(a => { Emit(new Say { Text = Arg(a, 0).CastToString() ?? "", To = SayTarget(Arg(a, 1)),
+                Color = Arg(a, 1).Type == DataType.Table ? ColorOf(Arg(a, 1).Table.Get("color")) : null }); return DynValue.Nil; });
         game.Table["roll"] = Fn(a =>
         {
             var rd = new RollDice { Sides = (int)(Arg(a, 0).CastToNumber() ?? 6), Count = (int)(Arg(a, 1).CastToNumber() ?? 1), Label = Arg(a, 2).CastToString() ?? "" };
             Emit(rd);
-            var t = T(); foreach (var r in rd.Results) t.Table.Append(N(r)); return t;
+            var t = T();
+            foreach (var r in rd.Results) t.Table.Append(N(r));
+            return t;
         });
         g["game"] = game;
     }
@@ -146,7 +189,9 @@ public sealed partial class ScriptHost
         string? def = null, tag = null, name = null;
         if (filter.Type == DataType.Table)
         {
-            def = filter.Table.Get("def").CastToString(); tag = filter.Table.Get("tag").CastToString(); name = filter.Table.Get("name").CastToString();
+            def = filter.Table.Get("def").CastToString();
+            tag = filter.Table.Get("tag").CastToString();
+            name = filter.Table.Get("name").CastToString();
         }
         var t = T();
         foreach (var p in _s.State.Layer(Layers.Umpire))
@@ -195,13 +240,15 @@ public sealed partial class ScriptHost
         if (v.Type != DataType.Table) return null;
         var id = v.Table.Get("id");
         if (id.Type == DataType.String) return Find(id.String)?.Pos;
-        var x = v.Table.Get("x"); var z = v.Table.Get("z");
+        var x = v.Table.Get("x");
+        var z = v.Table.Get("z");
         return x.Type == DataType.Number && z.Type == DataType.Number ? new Vec2(x.Number, z.Number) : null;
     }
 
     DynValue Distance(DynValue a, DynValue b)
     {
-        var pa = PosOf(a); var pb = PosOf(b);
+        var pa = PosOf(a);
+        var pb = PosOf(b);
         if (pa == null || pb == null) return DynValue.Nil;
         var d = (pa.Value - pb.Value).Length;
         return N(_s.State.Calibration.UnitsPerMeter is { } u and > 0 ? d / u : d);
@@ -213,7 +260,9 @@ public sealed partial class ScriptHost
         foreach (var z in _s.State.Zones)
         {
             var e = T();
-            e.Table["id"] = S(z.Id); e.Table["name"] = S(z.Name); e.Table["owner"] = S(z.Owner);
+            e.Table["id"] = S(z.Id);
+            e.Table["name"] = S(z.Name);
+            e.Table["owner"] = S(z.Owner);
             var zone = z;
             e.Table["contains"] = Fn(a => { var p = PosOf(Arg(a, 0)); return B(p != null && zone.Contains(p.Value)); });
             t.Table.Append(e);
@@ -277,8 +326,8 @@ internal sealed class PieceHandles(ScriptHost host)
             case "name": return p.Label == null ? DynValue.Nil : S(p.Label);
             case "note": return p.Note == null ? DynValue.Nil : S(p.Note);
             case "state": return N(p.State + 1);
-            case "states": { var t = T(); foreach (var st in def?.States ?? new()) t.Table.Append(S(st.Name)); return t; }
-            case "pos": { var t = T(); t.Table["x"] = N(p.Pos.X); t.Table["z"] = N(p.Pos.Z); return t; }
+            case "states": return ListTable((def?.States ?? new()).Select(st => S(st.Name)));
+            case "pos": return XzTable(p.Pos.X, p.Pos.Z);
             case "rot": return N(p.RotDeg);
             case "y": return N(p.Y);
             case "scale": return N(p.Scale);
@@ -286,7 +335,10 @@ internal sealed class PieceHandles(ScriptHost host)
             {
                 var sz = def?.Size ?? new Size2(1, 1);
                 if (def != null && p.State >= 0 && p.State < def.States.Count && def.States[p.State].Size is { } ss) sz = ss;
-                var t = T(); t.Table["w"] = N(sz.W * p.Scale); t.Table["h"] = N(sz.H * p.Scale); return t;
+                var t = T();
+                t.Table["w"] = N(sz.W * p.Scale);
+                t.Table["h"] = N(sz.H * p.Scale);
+                return t;
             }
             case "shape":
             {
@@ -303,17 +355,39 @@ internal sealed class PieceHandles(ScriptHost host)
                 foreach (var (k, v) in p.Counters) t.Table[k] = N(v);
                 return t;
             }
-            case "text": { var t = T(); foreach (var (k, v) in p.Text) t.Table[k] = S(v); return t; }
-            case "attached": { var t = T(); foreach (var a in p.Attached) t.Table.Append(Handle(a)); return t; }
-            case "tags": { var t = T(); foreach (var tg in host.TagsOf(p)) t.Table.Append(S(tg)); return t; }
+            case "text":
+            {
+                var t = T();
+                foreach (var (k, v) in p.Text) t.Table[k] = S(v);
+                return t;
+            }
+            case "attached": return ListTable(p.Attached.Select(a => Handle(a)));
+            case "tags": return ListTable(host.TagsOf(p).Select(tg => S(tg)));
             case "script": return (p.Script ?? def?.Script) is { } sc ? S(sc) : DynValue.Nil;
             case "ui": return host.UiTableFor(id);
-            case "lines": { var t = T(); foreach (var ln in p.Lines) t.Table.Append(LineTable(ln)); return t; }
-            case "decals": { var t = T(); foreach (var d in p.Decals) t.Table.Append(DecalTable(d)); return t; }
-            case "to_world": return Fn(a => { var w = ToWorld(p, Arg(a, 0).CastToNumber() ?? 0, Arg(a, 1).CastToNumber() ?? 0); var t = T(); t.Table["x"] = N(w.X); t.Table["z"] = N(w.Z); return t; });
-            case "to_local": return Fn(a => { var l = ToLocal(p, Arg(a, 0).CastToNumber() ?? 0, Arg(a, 1).CastToNumber() ?? 0); var t = T(); t.Table["x"] = N(l.X); t.Table["z"] = N(l.Z); return t; });
+            case "lines": return ListTable(p.Lines.Select(ln => LineTable(ln)));
+            case "decals": return ListTable(p.Decals.Select(d => DecalTable(d)));
+            case "to_world": return Fn(a => XzTable(ToWorld(p, Arg(a, 0).CastToNumber() ?? 0, Arg(a, 1).CastToNumber() ?? 0)));
+            case "to_local": return Fn(a => XzTable(ToLocal(p, Arg(a, 0).CastToNumber() ?? 0, Arg(a, 1).CastToNumber() ?? 0)));
             default: return null;
         }
+    }
+
+    DynValue ListTable(IEnumerable<DynValue> items)
+    {
+        var t = T();
+        foreach (var item in items) t.Table.Append(item);
+        return t;
+    }
+
+    DynValue XzTable(Vec2 at) => XzTable(at.X, at.Z);
+
+    DynValue XzTable(double x, double z)
+    {
+        var t = T();
+        t.Table["x"] = N(x);
+        t.Table["z"] = N(z);
+        return t;
     }
 
     DynValue? Setter(string id, PieceInstance p, PieceDef? def, string key)
@@ -326,7 +400,8 @@ internal sealed class PieceHandles(ScriptHost host)
                 var lines = new List<LineDef>();
                 if (Arg(a, 0).Type == DataType.Table)
                     foreach (var v in Arg(a, 0).Table.Values) if (v.Type == DataType.Table && ParseLine(v.Table) is { } ln) lines.Add(ln);
-                host.Emit(new SetLines { Layer = L, Id = id, Lines = lines }); return DynValue.Nil;
+                host.Emit(new SetLines { Layer = L, Id = id, Lines = lines });
+                return DynValue.Nil;
             });
             case "set_decals": return Fn(a =>
             {
@@ -335,20 +410,23 @@ internal sealed class PieceHandles(ScriptHost host)
                     foreach (var v in Arg(a, 0).Table.Values) if (v.Type == DataType.Table && ParseDecal(v.Table) is { } d) decals.Add(d);
                 if (decals.Count > DecalDef.MostOnAPiece) throw new ScriptRuntimeException($"set_decals: a piece carries at most {DecalDef.MostOnAPiece} decals");
                 if (decals.FirstOrDefault(d => !PictureInGame(d.Picture)) is { } unknown) throw new ScriptRuntimeException($"set_decals: no picture '{unknown.Picture}' in this game's packs");
-                host.Emit(new SetDecals { Layer = L, Id = id, Decals = decals }); return DynValue.Nil;
+                host.Emit(new SetDecals { Layer = L, Id = id, Decals = decals });
+                return DynValue.Nil;
             });
             case "set_picture": return Fn(a =>
             {
                 var d = Arg(a, 0).IsNil() ? null : Arg(a, 0).CastToString();
                 if (!string.IsNullOrEmpty(d) && host.Server.Store != null && host.Server.Store.Def(d) == null) throw new ScriptRuntimeException($"set_picture: no piece definition '{d}' in this game's packs");
-                host.Emit(new SetPicture { Layer = L, Id = id, Picture = d }); return DynValue.Nil;
+                host.Emit(new SetPicture { Layer = L, Id = id, Picture = d });
+                return DynValue.Nil;
             });
 
             case "set_def": return Fn(a =>
             {
                 var d = Arg(a, 0).CastToString() ?? "";
                 if (host.Server.Store != null && host.Server.Store.Def(d) == null) throw new ScriptRuntimeException($"set_def: no piece definition '{d}' in this game's packs");
-                host.Emit(new SetDef { Layer = L, Id = id, Def = d }); return DynValue.Nil;
+                host.Emit(new SetDef { Layer = L, Id = id, Def = d });
+                return DynValue.Nil;
             });
 
             case "set_name": return Fn(a => { host.Emit(new SetLabel { Layer = L, Id = id, Value = Arg(a, 0).IsNil() ? null : Arg(a, 0).CastToString() }); return DynValue.Nil; });
@@ -356,7 +434,8 @@ internal sealed class PieceHandles(ScriptHost host)
             case "set_tags": return Fn(a => { host.Emit(new SetTags { Layer = L, Id = id, Tags = Arg(a, 0).IsNil() ? null : Strings(Arg(a, 0)) }); return DynValue.Nil; });
             case "add_tag": return Fn(a =>
             {
-                var t = host.TagsOf(p).ToList(); var tag = Arg(a, 0).CastToString() ?? "";
+                var t = host.TagsOf(p).ToList();
+                var tag = Arg(a, 0).CastToString() ?? "";
                 if (tag.Length > 0 && !t.Contains(tag)) { t.Add(tag); host.Emit(new SetTags { Layer = L, Id = id, Tags = t }); }
                 return DynValue.Nil;
             });
@@ -373,16 +452,23 @@ internal sealed class PieceHandles(ScriptHost host)
                 var v = Arg(a, 0);
                 int n = v.Type == DataType.String ? (def?.States.FindIndex(st => string.Equals(st.Name, v.String, StringComparison.OrdinalIgnoreCase)) ?? -1) : (int)(v.CastToNumber() ?? 1) - 1;
                 if (n < 0) throw new ScriptRuntimeException($"set_state: no state '{v.CastToString()}'");
-                host.Emit(new SetState { Layer = L, Id = id, State = n }); return DynValue.Nil;
+                host.Emit(new SetState { Layer = L, Id = id, State = n });
+                return DynValue.Nil;
             });
             case "set_pos": return Fn(a => { host.Emit(new MovePiece { Layer = L, Id = id, Pos = Place(a, "set_pos", p.Pos).at, RotDeg = p.RotDeg, Stack = p.Stack, Y = p.Y }); return DynValue.Nil; });
             case "set_rot": return Fn(a => { host.Emit(new MovePiece { Layer = L, Id = id, Pos = p.Pos, RotDeg = Arg(a, 0).CastToNumber() ?? p.RotDeg, Stack = p.Stack, Y = p.Y }); return DynValue.Nil; });
-            case "move": return Fn(a => { var (at, next) = Place(a, "move", p.Pos); host.Emit(new MovePiece { Layer = L, Id = id, Pos = at, RotDeg = Number(Arg(a, next), "move", p.RotDeg), Stack = p.Stack, Y = p.Y }); return DynValue.Nil; });
+            case "move": return Fn(a =>
+            {
+                var (at, next) = Place(a, "move", p.Pos);
+                host.Emit(new MovePiece { Layer = L, Id = id, Pos = at, RotDeg = Number(Arg(a, next), "move", p.RotDeg), Stack = p.Stack, Y = p.Y });
+                return DynValue.Nil;
+            });
             case "set_scale": return Fn(a => { host.Emit(new SetScale { Layer = L, Id = id, Scale = Arg(a, 0).CastToNumber() ?? 1 }); return DynValue.Nil; });
             case "flip": return Fn(a => { host.Emit(new FlipPiece { Layer = L, Id = id, FaceDown = Arg(a, 0).IsNil() ? !p.FaceDown : Arg(a, 0).CastToBool() }); return DynValue.Nil; });
             case "set_tint": return Fn(a => { host.Emit(new SetTint { Layer = L, Id = id, Value = Arg(a, 0).IsNil() ? null : ColorOf(Arg(a, 0)) }); return DynValue.Nil; });
             case "set_locked": return Fn(a => { host.Emit(new SetLocked { Layer = L, Id = id, Value = Arg(a, 0).IsNil() || Arg(a, 0).CastToBool() }); return DynValue.Nil; });
-            case "set_counter": return Fn(a => { host.Emit(new SetCounter { Layer = L, Id = id, Name = Arg(a, 0).CastToString() ?? "", Value = (int)Math.Round(Arg(a, 1).CastToNumber() ?? 0) }); return DynValue.Nil; });
+            case "set_counter" : return Fn(a => { host.Emit(new SetCounter { Layer = L, Id = id, Name = Arg(a, 0).CastToString()
+                ?? "", Value = (int)Math.Round(Arg(a, 1).CastToNumber() ?? 0) }); return DynValue.Nil; });
             case "set_text": return Fn(a => { host.Emit(new SetText { Layer = L, Id = id, Name = Arg(a, 0).CastToString() ?? "", Value = Arg(a, 1).CastToString() ?? "" }); return DynValue.Nil; });
             case "attach": return Fn(a => { host.Emit(new Attach { Layer = L, Parent = id, Child = IdOf(Arg(a, 0)) }); return DynValue.Nil; });
             case "detach": return Fn(_ => { host.Emit(new Detach { Layer = L, Child = id }); return DynValue.Nil; });
@@ -399,21 +485,44 @@ internal sealed class PieceHandles(ScriptHost host)
             case "input": return Fn(a => AddWidget(id, "input", Arg(a, 0)));
             case "edit": return Fn(a =>
             {
-                var ws = host.Staging(id); int i = (int)(Arg(a, 0).CastToNumber() ?? 0);
+                var ws = host.Staging(id);
+                int i = (int)(Arg(a, 0).CastToNumber() ?? 0);
                 if (i < 1 || i > ws.Count) throw new ScriptRuntimeException($"edit: no widget {i}");
                 if (Arg(a, 1).Type == DataType.Table) Fill(ws[i - 1], Arg(a, 1).Table);
-                host.Drawn(id, menu: false); return DynValue.Nil;
+                host.Drawn(id, menu: false);
+                return DynValue.Nil;
             });
             case "remove_widget": return Fn(a =>
             {
-                var ws = host.Staging(id); int i = (int)(Arg(a, 0).CastToNumber() ?? 0);
+                var ws = host.Staging(id);
+                int i = (int)(Arg(a, 0).CastToNumber() ?? 0);
                 if (i >= 1 && i <= ws.Count) { ws.RemoveAt(i - 1); host.Drawn(id, menu: false); }
                 return DynValue.Nil;
             });
-            case "clear_widgets": return Fn(_ => { host.Staging(id).Clear(); host.Drawn(id, menu: false); return DynValue.Nil; });
-            case "widgets": return Fn(_ => { var t = T(); foreach (var w in host.Staging(id)) t.Table.Append(WidgetTable(w)); return t; });
-            case "menu_add": return Fn(a => { host.MenuStaging(id).Add(new MenuItemDef { Label = Arg(a, 0).CastToString() ?? "", OnSelect = Arg(a, 1).CastToString() }); host.Drawn(id, menu: true); return DynValue.Nil; });
-            case "menu_clear": return Fn(_ => { host.MenuStaging(id).Clear(); host.Drawn(id, menu: true); return DynValue.Nil; });
+            case "clear_widgets": return Fn(_ =>
+            {
+                host.Staging(id).Clear();
+                host.Drawn(id, menu: false);
+                return DynValue.Nil;
+            });
+            case "widgets": return Fn(_ =>
+            {
+                var t = T();
+                foreach (var w in host.Staging(id)) t.Table.Append(WidgetTable(w));
+                return t;
+            });
+            case "menu_add": return Fn(a =>
+            {
+                host.MenuStaging(id).Add(new MenuItemDef { Label = Arg(a, 0).CastToString() ?? "", OnSelect = Arg(a, 1).CastToString() });
+                host.Drawn(id, menu: true);
+                return DynValue.Nil;
+            });
+            case "menu_clear": return Fn(_ =>
+            {
+                host.MenuStaging(id).Clear();
+                host.Drawn(id, menu: true);
+                return DynValue.Nil;
+            });
             default: return null;
         }
     }
@@ -429,7 +538,8 @@ internal sealed class PieceHandles(ScriptHost host)
                 if (!host.MaySetScript(id)) throw new ScriptRuntimeException("set_script: only from a click or menu handler, or on a piece this call spawned");
                 var text = Arg(a, 0).IsNil() ? null : Arg(a, 0).CastToString();
                 if (text != null && ScriptSafety.Inspect(text) is { Hostile: true } v) throw new ScriptRuntimeException("set_script refused: " + string.Join("; ", v.Reasons));
-                host.Emit(new SetScript { Layer = L, Id = id, Text = text }); return DynValue.Nil;
+                host.Emit(new SetScript { Layer = L, Id = id, Text = text });
+                return DynValue.Nil;
             });
             case "call": return Fn(a =>
             {
@@ -477,7 +587,8 @@ internal sealed class PieceHandles(ScriptHost host)
         foreach (var pv in pts.Table.Values)
         {
             if (pv.Type != DataType.Table) continue;
-            var x = pv.Table.Get("x"); var z = pv.Table.Get("z");
+            var x = pv.Table.Get("x");
+            var z = pv.Table.Get("z");
             if (x.Type != DataType.Number) x = pv.Table.Get(1);
             if (z.Type != DataType.Number) z = pv.Table.Get(2);
             if (x.Type == DataType.Number && z.Type == DataType.Number) ln.Points.Add(new Vec2(x.Number, z.Number));
@@ -510,8 +621,14 @@ internal sealed class PieceHandles(ScriptHost host)
     DynValue DecalTable(DecalDef d)
     {
         var t = T();
-        t.Table["picture"] = S(d.Picture); t.Table["name"] = S(d.Name); t.Table["face"] = S(d.Face);
-        t.Table["x"] = N(d.X); t.Table["z"] = N(d.Z); t.Table["w"] = N(d.W); t.Table["h"] = N(d.H); t.Table["rot"] = N(d.Rot);
+        t.Table["picture"] = S(d.Picture);
+        t.Table["name"] = S(d.Name);
+        t.Table["face"] = S(d.Face);
+        t.Table["x"] = N(d.X);
+        t.Table["z"] = N(d.Z);
+        t.Table["w"] = N(d.W);
+        t.Table["h"] = N(d.H);
+        t.Table["rot"] = N(d.Rot);
         return t;
     }
 
@@ -519,8 +636,17 @@ internal sealed class PieceHandles(ScriptHost host)
     {
         var t = T();
         var pts = T();
-        foreach (var p in ln.Points) { var pt = T(); pt.Table["x"] = N(p.X); pt.Table["z"] = N(p.Z); pts.Table.Append(pt); }
-        t.Table["points"] = pts; t.Table["color"] = S(ln.Color); t.Table["width"] = N(ln.Width); t.Table["loop"] = B(ln.Loop);
+        foreach (var p in ln.Points)
+        {
+            var pt = T();
+            pt.Table["x"] = N(p.X);
+            pt.Table["z"] = N(p.Z);
+            pts.Table.Append(pt);
+        }
+        t.Table["points"] = pts;
+        t.Table["color"] = S(ln.Color);
+        t.Table["width"] = N(ln.Width);
+        t.Table["loop"] = B(ln.Loop);
         return t;
     }
 
@@ -549,24 +675,60 @@ internal sealed class PieceHandles(ScriptHost host)
             var v = pair.Value;
             switch (pair.Key.String)
             {
-                case "face": w.Face = v.CastToString() == "back" ? "back" : "front"; break;
-                case "x": w.X = Finite(v, "x", 0); break;
-                case "z": w.Z = Finite(v, "z", 0); break;
-                case "w": w.W = Finite(v, "w", 0); break;
-                case "h": w.H = Finite(v, "h", 0); break;
-                case "rot": w.Rot = Finite(v, "rot", 0); break;
-                case "label": w.Label = v.CastToString() ?? ""; break;
-                case "value": w.Value = v.CastToString() ?? ""; break;
-                case "placeholder": w.Placeholder = v.CastToString() ?? ""; break;
-                case "font": w.Font = Finite(v, "font", w.Font); break;
-                case "color": w.Color = ColorOf(v); break;
-                case "text_color": w.TextColor = ColorOf(v); break;
-                case "align": w.Align = v.CastToString() is "left" or "right" ? v.CastToString()! : "center"; break;
-                case "lines": w.Lines = Math.Max(1, (int)(v.CastToNumber() ?? 1)); break;
-                case "tooltip": w.Tooltip = v.CastToString(); break;
-                case "on_click": w.OnClick = v.CastToString(); break;
-                case "on_change": w.OnChange = v.CastToString(); break;
-                case "kind" when v.CastToString() is "button" or "input" or "label": w.Kind = v.String; break;
+                case "face":
+                    w.Face = v.CastToString() == "back" ? "back" : "front";
+                    break;
+                case "x":
+                    w.X = Finite(v, "x", 0);
+                    break;
+                case "z":
+                    w.Z = Finite(v, "z", 0);
+                    break;
+                case "w":
+                    w.W = Finite(v, "w", 0);
+                    break;
+                case "h":
+                    w.H = Finite(v, "h", 0);
+                    break;
+                case "rot":
+                    w.Rot = Finite(v, "rot", 0);
+                    break;
+                case "label":
+                    w.Label = v.CastToString() ?? "";
+                    break;
+                case "value":
+                    w.Value = v.CastToString() ?? "";
+                    break;
+                case "placeholder":
+                    w.Placeholder = v.CastToString() ?? "";
+                    break;
+                case "font":
+                    w.Font = Finite(v, "font", w.Font);
+                    break;
+                case "color":
+                    w.Color = ColorOf(v);
+                    break;
+                case "text_color":
+                    w.TextColor = ColorOf(v);
+                    break;
+                case "align":
+                    w.Align = v.CastToString() is "left" or "right" ? v.CastToString()! : "center";
+                    break;
+                case "lines":
+                    w.Lines = Math.Max(1, (int)(v.CastToNumber() ?? 1));
+                    break;
+                case "tooltip":
+                    w.Tooltip = v.CastToString();
+                    break;
+                case "on_click":
+                    w.OnClick = v.CastToString();
+                    break;
+                case "on_change":
+                    w.OnChange = v.CastToString();
+                    break;
+                case "kind" when v.CastToString() is "button" or "input" or "label":
+                    w.Kind = v.String;
+                    break;
             }
         }
     }
@@ -574,11 +736,21 @@ internal sealed class PieceHandles(ScriptHost host)
     DynValue WidgetTable(Widget w)
     {
         var t = T();
-        t.Table["kind"] = S(w.Kind); t.Table["face"] = S(w.Face); t.Table["x"] = N(w.X); t.Table["z"] = N(w.Z); t.Table["w"] = N(w.W); t.Table["h"] = N(w.H); t.Table["rot"] = N(w.Rot);
-        t.Table["label"] = S(w.Label); t.Table["value"] = S(w.Value); t.Table["placeholder"] = S(w.Placeholder); t.Table["font"] = N(w.Font);
+        t.Table["kind"] = S(w.Kind);
+        t.Table["face"] = S(w.Face);
+        t.Table["x"] = N(w.X);
+        t.Table["z"] = N(w.Z);
+        t.Table["w"] = N(w.W);
+        t.Table["h"] = N(w.H);
+        t.Table["rot"] = N(w.Rot);
+        t.Table["label"] = S(w.Label);
+        t.Table["value"] = S(w.Value);
+        t.Table["placeholder"] = S(w.Placeholder);
+        t.Table["font"] = N(w.Font);
         if (w.Color != null) t.Table["color"] = S(w.Color);
         if (w.TextColor != null) t.Table["text_color"] = S(w.TextColor);
-        t.Table["align"] = S(w.Align); t.Table["lines"] = N(w.Lines);
+        t.Table["align"] = S(w.Align);
+        t.Table["lines"] = N(w.Lines);
         if (w.Tooltip != null) t.Table["tooltip"] = S(w.Tooltip);
         if (w.OnClick != null) t.Table["on_click"] = S(w.OnClick);
         if (w.OnChange != null) t.Table["on_change"] = S(w.OnChange);

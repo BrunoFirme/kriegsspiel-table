@@ -28,7 +28,10 @@ public static class UvPaint
                     if (done[k]) continue;
                     done[k] = true;
                     int o = k * 4;
-                    paint[o] = r; paint[o + 1] = g; paint[o + 2] = b; paint[o + 3] = a;
+                    paint[o] = r;
+                    paint[o + 1] = g;
+                    paint[o + 2] = b;
+                    paint[o + 3] = a;
                     painted++;
                 }
         }
@@ -44,5 +47,6 @@ public static class UvPaint
     }
 
     public static (byte r, byte g, byte b, byte a) Premultiplied(float r, float g, float b, float a) =>
-        ((byte)Math.Round(Math.Clamp(r * a, 0, 1) * 255), (byte)Math.Round(Math.Clamp(g * a, 0, 1) * 255), (byte)Math.Round(Math.Clamp(b * a, 0, 1) * 255), (byte)Math.Round(Math.Clamp(a, 0, 1) * 255));
+        ((byte)Math.Round(Math.Clamp(r * a, 0, 1) * 255), (byte)Math.Round(Math.Clamp(g * a, 0, 1) * 255), (byte)Math.Round(Math.Clamp(b * a, 0, 1) * 255),
+            (byte)Math.Round(Math.Clamp(a, 0, 1) * 255));
 }

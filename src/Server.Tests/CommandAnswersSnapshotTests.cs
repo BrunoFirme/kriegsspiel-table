@@ -201,7 +201,8 @@ public class CommandAnswersSnapshotTests
                 else if (p.PropertyType == typeof(PieceInstance)) p.SetValue(x, new PieceInstance { Id = prefix + p.Name + ".Id" });
             }
         }
-        if (c is Batch b) for (int i = 0; i < b.Items.Count; i++) Mark(b.Items[i], $"[{i}]."); else Mark(c, "");
+        if (c is Batch b) for (int i = 0; i < b.Items.Count; i++) Mark(b.Items[i], $"[{i}].");
+        else Mark(c, "");
         var ids = c.ScriptsToReload().ToList();
         return ids.Count == 0 ? "-" : string.Join(",", ids);
     }

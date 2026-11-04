@@ -9,7 +9,12 @@ public sealed class HeightGrid
     readonly float[] _h = new float[N * N];
     readonly Vector3 _position, _size;
 
-    HeightGrid(Vector3 position, Vector3 size) { _position = position; _size = size; Array.Fill(_h, float.NaN); }
+    HeightGrid(Vector3 position, Vector3 size)
+    {
+        _position = position;
+        _size = size;
+        Array.Fill(_h, float.NaN);
+    }
 
     public static HeightGrid? Of(Vector3 position, Vector3 size, IEnumerable<(Vector3 A, Vector3 B, Vector3 C)> triangles)
     {

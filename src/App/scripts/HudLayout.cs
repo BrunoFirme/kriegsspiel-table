@@ -84,7 +84,12 @@ public partial class Hud
         Compass.Pressed += () => T?.Rig.FaceNorth();
         Compass.Snap = at => SnapAt(Compass, Compass.Size, at);
         Compass.Dropped += at => { Cfg.CompassPos = new[] { at.X, at.Y }; Cfg.Save(); };
-        Compass.ResetAsked += () => { Cfg.CompassPos = null; Cfg.Save(); Relayout(); };
+        Compass.ResetAsked += () =>
+        {
+            Cfg.CompassPos = null;
+            Cfg.Save();
+            Relayout();
+        };
         Root.AddChild(Compass);
         _scriptUi = new ScriptUi { Name = "ScriptUi" };
         Root.AddChild(_scriptUi);

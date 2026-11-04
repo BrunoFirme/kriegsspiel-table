@@ -159,7 +159,8 @@ public sealed class ConverterTests : IDisposable
         const string Good = "http://a/good.png", Gone = "http://a/gone.png", SteamGone = "https://steamusercontent-a.akamaihd.net/ugc/1/ABCDEF/", Page = "http://a/page.jpg", Busy = "http://a/busy.png", Theirs = @"C:\Kaartjesfolder\Punica\BattalionAla1.jpg";
         var images = Path.Combine(cfg.TtsModsPath, "Images");
         Directory.CreateDirectory(images);
-        using (var bmp = new SkiaSharp.SKBitmap(4, 4)) using (var png = bmp.Encode(SkiaSharp.SKEncodedImageFormat.Png, 100)) File.WriteAllBytes(Path.Combine(images, AssetStore.Key(Good) + ".png"), png.ToArray());
+        using (var bmp = new SkiaSharp.SKBitmap(4, 4)) using (var png = bmp.Encode(SkiaSharp.SKEncodedImageFormat.Png, 100)) File.WriteAllBytes(Path.Combine(images, AssetStore.Key(Good) + ".png"),
+            png.ToArray());
         File.WriteAllBytes(Path.Combine(images, AssetStore.Key(Page) + ".jpg"), "<html><body>moved</body></html>"u8.ToArray());
         Directory.CreateDirectory(cfg.Cache);
         File.WriteAllText(Path.Combine(cfg.Cache, "index.json"), System.Text.Json.JsonSerializer.Serialize(new Dictionary<string, CacheEntry>

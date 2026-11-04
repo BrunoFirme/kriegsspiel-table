@@ -133,7 +133,12 @@ internal sealed class PieceTab
     readonly Inspector _i;
     readonly PieceDef _d;
 
-    public PieceTab(PieceStudio s, Inspector i) { _s = s; _i = i; _d = s.Sel!; }
+    public PieceTab(PieceStudio s, Inspector i)
+    {
+        _s = s;
+        _i = i;
+        _d = s.Sel!;
+    }
 
     void Apply(Action<PieceDef> change, string what, bool list = false, bool inspector = false) => _s.Apply(change, list, inspector, what);
 
@@ -171,12 +176,15 @@ internal sealed class PieceTab
         g.AddChild(new Label { Text = "Name" });
         var name = new LineEdit { Text = d.Name };
         void CommitName() { if (name.Text.Trim().Length > 0 && name.Text.Trim() != d.Name) Apply(x => x.Name = name.Text.Trim(), "the name", list: true); }
-        name.TextSubmitted += _ => CommitName(); name.FocusExited += CommitName;
+        name.TextSubmitted += _ => CommitName();
+        name.FocusExited += CommitName;
         g.AddChild(name);
         g.AddChild(new Label { Text = "Tags" });
         var tags = new LineEdit { Text = string.Join(", ", d.Tags), PlaceholderText = "infantry, french" };
-        void CommitTags() { var t = tags.Text.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Distinct().ToList(); if (!t.SequenceEqual(d.Tags)) Apply(x => x.Tags = t, "the tags", list: true); }
-        tags.TextSubmitted += _ => CommitTags(); tags.FocusExited += CommitTags;
+        void CommitTags() { var t = tags.Text.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Distinct().ToList(); if (!t.SequenceEqual(d.Tags)) Apply(x => x.Tags = t,
+            "the tags", list: true); }
+        tags.TextSubmitted += _ => CommitTags();
+        tags.FocusExited += CommitTags;
         g.AddChild(tags);
         Ui.AlignForm(g);
     }
@@ -188,12 +196,14 @@ internal sealed class PieceTab
         p.AddChild(Ui.Hint("Switched at the table with [ ] or the number keys. Look 1 is how the piece starts; a copy of it changes with it."));
         for (int i = 0; i < d.States.Count; i++)
         {
-            var st = d.States[i]; var si = i;
+            var st = d.States[i];
+            var si = i;
             var sr = new HBoxContainer();
             sr.AddChild(new Label { Text = $"{i + 1}", Modulate = Ui.Muted, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter });
             var sn = new LineEdit { Text = st.Name, PlaceholderText = $"look {i + 1}", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
             void CommitSt() { if (sn.Text != st.Name) { Apply(x => x.States[si].Name = sn.Text, "a look's name"); _s.RebuildFaceBar(); } }
-            sn.TextSubmitted += _ => CommitSt(); sn.FocusExited += CommitSt;
+            sn.TextSubmitted += _ => CommitSt();
+            sn.FocusExited += CommitSt;
             sr.AddChild(sn);
             if (PieceFaces.Follows(d, i)) sr.AddChild(new Label { Text = "as look 1", Modulate = Ui.Muted, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, TooltipText = "Still a copy of look 1: painting look 1 changes it too" });
             sr.AddChild(Ui.Btn("✕", () => _s.RemoveState(si), "Take this look away   (Ctrl+Z brings it back)"));
@@ -212,14 +222,22 @@ internal sealed class PieceTab
         if (d.Counters.Count > 0) foreach (var hdr in new[] { "Name", "Min", "Max", "Start", "" }) cg.AddChild(new Label { Text = hdr, Modulate = Ui.Muted });
         for (int i = 0; i < d.Counters.Count; i++)
         {
-            var c = d.Counters[i]; var ci = i;
+            var c = d.Counters[i];
+            var ci = i;
             var cn = new LineEdit { Text = c.Name, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, CustomMinimumSize = new Vector2(70, 0) };
             void CommitC() { if (cn.Text.Trim().Length > 0 && cn.Text.Trim() != c.Name) Apply(x => x.Counters[ci].Name = cn.Text.Trim(), "a counter's name"); }
-            cn.TextSubmitted += _ => CommitC(); cn.FocusExited += CommitC;
+            cn.TextSubmitted += _ => CommitC();
+            cn.FocusExited += CommitC;
             cg.AddChild(cn);
-            var mn = new SpinBox { MinValue = -999, MaxValue = 999, Value = c.Min, CustomMinimumSize = new Vector2(58, 0) }; mn.ValueChanged += v => Apply(x => x.Counters[ci].Min = (int)v, "a counter's range"); cg.AddChild(mn);
-            var mx = new SpinBox { MinValue = -999, MaxValue = 999, Value = c.Max, CustomMinimumSize = new Vector2(58, 0) }; mx.ValueChanged += v => Apply(x => x.Counters[ci].Max = (int)v, "a counter's range"); cg.AddChild(mx);
-            var df = new SpinBox { MinValue = -999, MaxValue = 999, Value = c.Default, CustomMinimumSize = new Vector2(58, 0) }; df.ValueChanged += v => Apply(x => x.Counters[ci].Default = (int)v, "a counter's start"); cg.AddChild(df);
+            var mn = new SpinBox { MinValue = -999, MaxValue = 999, Value = c.Min, CustomMinimumSize = new Vector2(58, 0) };
+            mn.ValueChanged += v => Apply(x => x.Counters[ci].Min = (int)v, "a counter's range");
+            cg.AddChild(mn);
+            var mx = new SpinBox { MinValue = -999, MaxValue = 999, Value = c.Max, CustomMinimumSize = new Vector2(58, 0) };
+            mx.ValueChanged += v => Apply(x => x.Counters[ci].Max = (int)v, "a counter's range");
+            cg.AddChild(mx);
+            var df = new SpinBox { MinValue = -999, MaxValue = 999, Value = c.Default, CustomMinimumSize = new Vector2(58, 0) };
+            df.ValueChanged += v => Apply(x => x.Counters[ci].Default = (int)v, "a counter's start");
+            cg.AddChild(df);
             foreach (var sb in new[] { mn, mx, df }) sb.GetLineEdit().AddThemeConstantOverride("minimum_character_width", 2);
             cg.AddChild(Ui.Btn("✕", () => Apply(x => x.Counters.RemoveAt(ci), "a counter taken away", inspector: true), "Take this counter away   (Ctrl+Z brings it back)"));
         }
@@ -236,14 +254,17 @@ internal sealed class PieceTab
         tg.AddThemeConstantOverride("h_separation", 3);
         for (int i = 0; i < d.TextLines.Count; i++)
         {
-            var tl = d.TextLines[i]; var ti = i;
+            var tl = d.TextLines[i];
+            var ti = i;
             var tn = new LineEdit { Text = tl.Name, PlaceholderText = "name", CustomMinimumSize = new Vector2(96, 0) };
             void CommitTn() { if (tn.Text.Trim().Length > 0 && tn.Text.Trim() != tl.Name) Apply(x => x.TextLines[ti].Name = tn.Text.Trim(), "a text line's name"); }
-            tn.TextSubmitted += _ => CommitTn(); tn.FocusExited += CommitTn;
+            tn.TextSubmitted += _ => CommitTn();
+            tn.FocusExited += CommitTn;
             tg.AddChild(tn);
             var td = new LineEdit { Text = tl.Default, PlaceholderText = "start value", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
             void CommitTd() { if (td.Text != tl.Default) Apply(x => x.TextLines[ti].Default = td.Text, "a text line's start"); }
-            td.TextSubmitted += _ => CommitTd(); td.FocusExited += CommitTd;
+            td.TextSubmitted += _ => CommitTd();
+            td.FocusExited += CommitTd;
             tg.AddChild(td);
             tg.AddChild(Ui.Btn("✕", () => Apply(x => x.TextLines.RemoveAt(ti), "a text line taken away", inspector: true), "Take this text line away   (Ctrl+Z brings it back)"));
         }

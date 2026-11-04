@@ -71,11 +71,18 @@ sealed class ReliefSheets : HudPart
             {
                 if (pick.GetItemId((int)idx) != ChooseFile) { last = (int)idx; return; }
                 pick.Select(last);
-                var fd = new FileDialog { FileMode = FileDialog.FileModeEnum.OpenFile, Access = FileDialog.AccessEnum.Filesystem, Filters = new[] { SheetImporter.Filter }, Title = "Picture for " + Path.GetFileName(job.Relief), Size = new Vector2I(900, 600) };
+                var fd =
+                    new FileDialog { FileMode = FileDialog.FileModeEnum.OpenFile, Access = FileDialog.AccessEnum.Filesystem, Filters = new[] { SheetImporter.Filter },
+                        Title = "Picture for " + Path.GetFileName(job.Relief), Size = new Vector2I(900, 600) };
                 Ui.RememberFolder(fd);
                 FileThumbs.Show(fd);
                 HudNode.AddChild(fd);
-                void Use(string f) { extra.Add(f); Fill(f); last = pick.Selected; }
+                void Use(string f)
+                {
+                    extra.Add(f);
+                    Fill(f);
+                    last = pick.Selected;
+                }
                 fd.FileSelected += Use;
                 PictureLinks.Offer(fd, S.Store.Root, Use);
                 fd.PopupCentered();
@@ -159,7 +166,12 @@ sealed class ReliefSheets : HudPart
                     note => Callable.From(() => Log($"[color=#e0b060]{Fmt.Bb(src.Name)}: {Fmt.Bb(note)}[/color]")).CallDeferred(),
                     p => S.Assets.JobProgress = p));
             }
-            catch (Exception e) { var r = jobs[i].Relief; var why = e.Message; Callable.From(() => Log($"[color=#ff7060]Could not add {Fmt.Bb(MapPage.SheetName(r))}: {Fmt.Bb(why)}[/color]")).CallDeferred(); }
+            catch (Exception e)
+            {
+                var r = jobs[i].Relief;
+                var why = e.Message;
+                Callable.From(() => Log($"[color=#ff7060]Could not add {Fmt.Bb(MapPage.SheetName(r))}: {Fmt.Bb(why)}[/color]")).CallDeferred();
+            }
         }
         Callable.From(() =>
         {
@@ -280,11 +292,14 @@ sealed class ReliefSheets : HudPart
             var row = new HBoxContainer();
             row.AddThemeConstantOverride("separation", 4);
             row.AddChild(new Label { Text = "Height ×", SizeFlagsVertical = Control.SizeFlags.ShrinkCenter });
-            var slider = new HSlider { MinValue = 0, MaxValue = 5, Step = 0.05, Value = sel.Height, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, TooltipText = "0 lies flat; 1 keeps the model's own proportions" };
+            var slider =
+                new HSlider { MinValue = 0, MaxValue = 5, Step = 0.05, Value = sel.Height, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
+                    TooltipText = "0 lies flat; 1 keeps the model's own proportions" };
             var value = new Label { Text = $"{sel.Height:0.##}", CustomMinimumSize = new Vector2(34, 0), HorizontalAlignment = HorizontalAlignment.Right };
             slider.ValueChanged += v => value.Text = $"{v:0.##}";
             slider.DragEnded += changed => { if (changed) S.Do(new SetSheetRelief { Id = sel.Id, Relief = sel.Relief, Height = slider.Value }); };
-            row.AddChild(slider); row.AddChild(value);
+            row.AddChild(slider);
+            row.AddChild(value);
             box.AddChild(row);
             if (S.Relief.Grid(sel) == null) box.AddChild(Hint("Loading"));
         }
@@ -299,7 +314,8 @@ sealed class ReliefSheets : HudPart
     void PickRelief(SheetDef sel)
     {
         var filter = string.Join(", ", ReliefImport.ModelExtensions.Concat(HeightFiles.Extensions).Concat(new[] { ".tif", ".tiff", ".png" }).Select(e => "*" + e)) + " ; 3D terrain and heightmaps";
-        var fd = new FileDialog { FileMode = FileDialog.FileModeEnum.OpenFile, Access = FileDialog.AccessEnum.Filesystem, Filters = new[] { filter }, Title = "Relief for " + sel.Name, Size = new Vector2I(900, 600) };
+        var fd =
+            new FileDialog { FileMode = FileDialog.FileModeEnum.OpenFile, Access = FileDialog.AccessEnum.Filesystem, Filters = new[] { filter }, Title = "Relief for " + sel.Name, Size = new Vector2I(900, 600) };
         Ui.RememberFolder(fd);
         HudNode.AddChild(fd);
         var id = sel.Id;
@@ -329,7 +345,16 @@ sealed class ReliefSheets : HudPart
                         done?.Invoke(null);
                     }).CallDeferred();
                 }
-                catch (Exception e) { var why = e.Message; Callable.From(() => { S.Assets.EndJob(job); Log($"[color=#ff7060]Could not add the relief: {Fmt.Bb(why)}[/color]"); done?.Invoke(why); }).CallDeferred(); }
+                catch (Exception e)
+                {
+                    var why = e.Message;
+                    Callable.From(() =>
+                    {
+                        S.Assets.EndJob(job);
+                        Log($"[color=#ff7060]Could not add the relief: {Fmt.Bb(why)}[/color]");
+                        done?.Invoke(why);
+                    }).CallDeferred();
+                }
             });
         }
         Task.Run(() =>
@@ -341,18 +366,34 @@ sealed class ReliefSheets : HudPart
                     Callable.From(() =>
                     {
                         try { Finish(ReliefImport.FromEngine(p, MapPage.SheetName(path))); }
-                        catch (Exception e) { S.Assets.EndJob(job); Log($"[color=#ff7060]Could not add the relief: {Fmt.Bb(e.Message)}[/color]"); done?.Invoke(e.Message); }
+                        catch (Exception e)
+                        {
+                            S.Assets.EndJob(job);
+                            Log($"[color=#ff7060]Could not add the relief: {Fmt.Bb(e.Message)}[/color]");
+                            done?.Invoke(e.Message);
+                        }
                         finally { ReliefImport.Forget(p); }
                     }).CallDeferred();
                 else Finish(ReliefImport.Read(p));
             }
-            catch (Exception e) { var why = e.Message; Callable.From(() => { S.Assets.EndJob(job); Log($"[color=#ff7060]Could not add the relief: {Fmt.Bb(why)}[/color]"); done?.Invoke(why); }).CallDeferred(); }
+            catch (Exception e)
+            {
+                var why = e.Message;
+                Callable.From(() =>
+                {
+                    S.Assets.EndJob(job);
+                    Log($"[color=#ff7060]Could not add the relief: {Fmt.Bb(why)}[/color]");
+                    done?.Invoke(why);
+                }).CallDeferred();
+            }
         });
     }
 
     void PickPicture(SheetDef sel)
     {
-        var fd = new FileDialog { FileMode = FileDialog.FileModeEnum.OpenFile, Access = FileDialog.AccessEnum.Filesystem, Filters = new[] { SheetImporter.Filter }, Title = "Picture for " + sel.Name, Size = new Vector2I(900, 600) };
+        var fd =
+            new FileDialog { FileMode = FileDialog.FileModeEnum.OpenFile, Access = FileDialog.AccessEnum.Filesystem, Filters = new[] { SheetImporter.Filter }, Title = "Picture for " + sel.Name,
+                Size = new Vector2I(900, 600) };
         Ui.RememberFolder(fd);
         FileThumbs.Show(fd);
         HudNode.AddChild(fd);
@@ -382,7 +423,16 @@ sealed class ReliefSheets : HudPart
                     done?.Invoke(null);
                 }).CallDeferred();
             }
-            catch (Exception e) { var why = e.Message; Callable.From(() => { S.Assets.EndJob(job); Log($"[color=#ff7060]Could not add {Fmt.Bb(MapPage.SheetName(path))}: {Fmt.Bb(why)}[/color]"); done?.Invoke(why); }).CallDeferred(); }
+            catch (Exception e)
+            {
+                var why = e.Message;
+                Callable.From(() =>
+                {
+                    S.Assets.EndJob(job);
+                    Log($"[color=#ff7060]Could not add {Fmt.Bb(MapPage.SheetName(path))}: {Fmt.Bb(why)}[/color]");
+                    done?.Invoke(why);
+                }).CallDeferred();
+            }
         });
     }
 }

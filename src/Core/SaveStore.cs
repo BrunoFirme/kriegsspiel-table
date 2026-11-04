@@ -27,6 +27,8 @@ public sealed partial class SaveStore
 
     public static bool IsUnreachable(Exception e) => !IsDamage(e) && e is IOException or UnauthorizedAccessException;
 
+    public static bool IsFileTrouble(Exception e) => IsDamage(e) || IsUnreachable(e);
+
     public static bool IsHeld(Exception e) =>
         e is UnauthorizedAccessException || e is IOException && (e.HResult & 0xFFFF) is 0x20 or 0x21;
     static readonly Regex CheckpointName = new($@"^(?<kind>{string.Join("|", CheckpointKind.Named)})-(?<turn>\d{{4}})_(?<stamp>\d{{8}}-\d{{6}})(?:-(?<n>\d+))?\.kstable$", RegexOptions.IgnoreCase);
@@ -37,7 +39,12 @@ public sealed partial class SaveStore
     public string HistoryDir { get; }
     public string TrashDir { get; }
 
-    public SaveStore(string liveDir, string historyDir, string trashDir) { LiveDir = liveDir; HistoryDir = historyDir; TrashDir = trashDir; }
+    public SaveStore(string liveDir, string historyDir, string trashDir)
+    {
+        LiveDir = liveDir;
+        HistoryDir = historyDir;
+        TrashDir = trashDir;
+    }
 
     public static SaveStore Default =>
         Environment.GetEnvironmentVariable("KTABLE_PACKAGES") is { Length: > 0 } env
@@ -489,7 +496,10 @@ public sealed class Checkpointer
 
     public Checkpointer(SaveStore store, string savePath, int turnsNow, DateTime nowUtc)
     {
-        _store = store; _savePath = savePath; _turnsSeen = turnsNow; _lastTimed = nowUtc;
+        _store = store;
+        _savePath = savePath;
+        _turnsSeen = turnsNow;
+        _lastTimed = nowUtc;
         _copiesTurns = store.RunOf(savePath) == null;
     }
 
@@ -499,7 +509,12 @@ public sealed class Checkpointer
         {
             _changedSince = true;
             if (turns < _turnsSeen) _turnsSeen = turns;
-            if (turns > _turnsSeen && _copiesTurns) { var cp = Take(CheckpointKind.Turn, endedTurn, nowUtc); _turnsSeen = turns; return cp; }
+            if (turns > _turnsSeen && _copiesTurns)
+            {
+                var cp = Take(CheckpointKind.Turn, endedTurn, nowUtc);
+                _turnsSeen = turns;
+                return cp;
+            }
             _turnsSeen = turns;
             if (nowUtc - _lastTimed >= SaveStore.TimedEvery) return Take(CheckpointKind.Time, currentTurn, nowUtc);
             return null;
@@ -520,7 +535,8 @@ public sealed class Checkpointer
     {
         if (!File.Exists(_savePath)) return null;
         var path = _store.Checkpoint(_savePath, kind, turn, nowUtc);
-        _lastTimed = nowUtc; _changedSince = false;
+        _lastTimed = nowUtc;
+        _changedSince = false;
         return new Checkpoint(path, kind, turn, nowUtc);
     }
 }

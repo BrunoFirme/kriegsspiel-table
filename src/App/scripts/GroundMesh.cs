@@ -23,13 +23,15 @@ static class GroundMesh
         {
             int ox = Math.Abs(Math.Abs(x) - halfW) < EdgeTolerance ? Math.Sign(x) : 0, oz = Math.Abs(Math.Abs(z) - halfH) < EdgeTolerance ? Math.Sign(z) : 0;
             if (ox == 0 && oz == 0) return (float)At(x, z);
-            double sum = 0; int n = 0;
+            double sum = 0;
+            int n = 0;
             foreach (var (sx, sz) in Around(ox, oz))
             {
                 float px = x + sx * SeamReach, pz = z + sz * SeamReach;
                 bool inside = Math.Abs(px) <= halfW && Math.Abs(pz) <= halfH;
                 if (!inside && !Relief(px, pz)) continue;
-                sum += At(px, pz); n++;
+                sum += At(px, pz);
+                n++;
             }
             return (float)(n == 0 ? At(x, z) : sum / n);
         };
@@ -40,7 +42,8 @@ static class GroundMesh
 
     public static ArrayMesh Grid(Func<float, float, float> h, float x0, float z0, float x1, float z1, int nx, int nz, Vector2 uv0, Vector2 uv1, float lift = 0)
     {
-        nx = Math.Max(1, nx); nz = Math.Max(1, nz);
+        nx = Math.Max(1, nx);
+        nz = Math.Max(1, nz);
         int vx = nx + 1, vz = nz + 1;
         var verts = new Vector3[vx * vz];
         var normals = new Vector3[vx * vz];
@@ -67,8 +70,12 @@ static class GroundMesh
             for (int i = 0; i < nx; i++)
             {
                 int a = j * vx + i, b = a + 1, c = a + vx, d = c + 1;
-                idx[t++] = a; idx[t++] = b; idx[t++] = c;
-                idx[t++] = b; idx[t++] = d; idx[t++] = c;
+                idx[t++] = a;
+                idx[t++] = b;
+                idx[t++] = c;
+                idx[t++] = b;
+                idx[t++] = d;
+                idx[t++] = c;
             }
         var arrays = new Godot.Collections.Array();
         arrays.Resize((int)Mesh.ArrayType.Max);
@@ -89,9 +96,12 @@ static class GroundMesh
         {
             for (int i = 0; i < n; i++)
             {
-                var p = a.Lerp(b, i / (float)n); var q = a.Lerp(b, (i + 1) / (float)n);
-                var pt = new Vector3(p.X, h(p.X, p.Y), p.Y); var qt = new Vector3(q.X, h(q.X, q.Y), q.Y);
-                var pb = new Vector3(p.X, floor, p.Y); var qb = new Vector3(q.X, floor, q.Y);
+                var p = a.Lerp(b, i / (float)n);
+                var q = a.Lerp(b, (i + 1) / (float)n);
+                var pt = new Vector3(p.X, h(p.X, p.Y), p.Y);
+                var qt = new Vector3(q.X, h(q.X, q.Y), q.Y);
+                var pb = new Vector3(p.X, floor, p.Y);
+                var qb = new Vector3(q.X, floor, q.Y);
                 if (pt.Y <= floor + 1e-4f && qt.Y <= floor + 1e-4f) continue;
                 var mid = (p + q) / 2 + new Vector2(outward.X, outward.Z) * probe;
                 if (open != null && !open(mid.X, mid.Y)) continue;

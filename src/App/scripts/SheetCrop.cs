@@ -12,7 +12,12 @@ sealed class CropTool
     readonly TableContext _c;
     readonly ToolOverlay _overlay;
     readonly Gizmo _gizmo;
-    public CropTool(TableContext c, ToolOverlay overlay, Gizmo gizmo) { _c = c; _overlay = overlay; _gizmo = gizmo; }
+    public CropTool(TableContext c, ToolOverlay overlay, Gizmo gizmo)
+    {
+        _c = c;
+        _overlay = overlay;
+        _gizmo = gizmo;
+    }
 
     public event Action? Changed;
 
@@ -56,7 +61,8 @@ sealed class CropTool
     public void End()
     {
         if (SheetId == null) return;
-        SheetId = null; _edge = -1;
+        SheetId = null;
+        _edge = -1;
         Changed?.Invoke();
     }
 
@@ -87,7 +93,9 @@ sealed class CropTool
         var mesh = _overlay.Mesh;
         var r = Rect;
         double x1 = r.X + r.W, y1 = r.Y + r.H;
-        var veil = new StandardMaterial3D { AlbedoColor = new Color(0, 0, 0, 0.5f), ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded, Transparency = BaseMaterial3D.TransparencyEnum.Alpha, CullMode = BaseMaterial3D.CullModeEnum.Disabled, NoDepthTest = true };
+        var veil =
+            new StandardMaterial3D { AlbedoColor = new Color(0, 0, 0, 0.5f), ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded, Transparency = BaseMaterial3D.TransparencyEnum.Alpha,
+                CullMode = BaseMaterial3D.CullModeEnum.Disabled, NoDepthTest = true };
         void Quad(double u0, double v0, double u1, double v1)
         {
             if (u1 - u0 <= 1e-6 || v1 - v0 <= 1e-6) return;
@@ -96,8 +104,13 @@ sealed class CropTool
             foreach (var p in new[] { a, b, c, a, c, d }) mesh.SurfaceAddVertex(p);
             mesh.SurfaceEnd();
         }
-        Quad(0, 0, 1, r.Y); Quad(0, y1, 1, 1); Quad(0, r.Y, r.X, y1); Quad(x1, r.Y, 1, y1);
-        var mat = new StandardMaterial3D { AlbedoColor = new Color(1, 0.93f, 0.22f), ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded, NoDepthTest = true, CullMode = BaseMaterial3D.CullModeEnum.Disabled };
+        Quad(0, 0, 1, r.Y);
+        Quad(0, y1, 1, 1);
+        Quad(0, r.Y, r.X, y1);
+        Quad(x1, r.Y, 1, y1);
+        var mat =
+            new StandardMaterial3D { AlbedoColor = new Color(1, 0.93f, 0.22f), ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded, NoDepthTest = true,
+                CullMode = BaseMaterial3D.CullModeEnum.Disabled };
         _overlay.RibbonPx(mesh, mat,
             new[] { (r.X, r.Y), (x1, r.Y), (x1, y1), (r.X, y1), (r.X, r.Y) }.Select(c => Coords.FromWorld(World(c.Item1, c.Item2))).ToList(), 0.08f);
         float k = _gizmo.KnobSize();
@@ -133,10 +146,24 @@ sealed class CropTool
         const double min = 0.02;
         switch (_edge)
         {
-            case 0: { double x = Math.Clamp(u, 0, x1 - min); SetRect(new FaceBox { X = x, Y = r.Y, W = x1 - x, H = r.H }); break; }
-            case 1: { double y = Math.Clamp(v, 0, y1 - min); SetRect(new FaceBox { X = r.X, Y = y, W = r.W, H = y1 - y }); break; }
-            case 2: SetRect(new FaceBox { X = r.X, Y = r.Y, W = Math.Clamp(u, r.X + min, 1) - r.X, H = r.H }); break;
-            case 3: SetRect(new FaceBox { X = r.X, Y = r.Y, W = r.W, H = Math.Clamp(v, r.Y + min, 1) - r.Y }); break;
+            case 0:
+            {
+                double x = Math.Clamp(u, 0, x1 - min);
+                SetRect(new FaceBox { X = x, Y = r.Y, W = x1 - x, H = r.H });
+                break;
+            }
+            case 1:
+            {
+                double y = Math.Clamp(v, 0, y1 - min);
+                SetRect(new FaceBox { X = r.X, Y = y, W = r.W, H = y1 - y });
+                break;
+            }
+            case 2:
+                SetRect(new FaceBox { X = r.X, Y = r.Y, W = Math.Clamp(u, r.X + min, 1) - r.X, H = r.H });
+                break;
+            case 3:
+                SetRect(new FaceBox { X = r.X, Y = r.Y, W = r.W, H = Math.Clamp(v, r.Y + min, 1) - r.Y });
+                break;
         }
     }
 

@@ -41,7 +41,9 @@ sealed class Lettering
         if (!_held)
         {
             foreach (var n in _lettered) if (GodotObject.IsInstanceValid(n)) n.SetLettered(false);
-            _lettered.Clear(); _queue.Clear(); _next = 0;
+            _lettered.Clear();
+            _queue.Clear();
+            _next = 0;
         }
         _grid.RefileReach();
     }
@@ -58,13 +60,17 @@ sealed class Lettering
         float orthographicZoom = cam.Size * 1000f;
         float lens = cam.Fov + orthographicZoom;
         if (_sweptAt == _grid.Filings && eye.DistanceSquaredTo(_sweptFrom) < 0.04f && look.Dot(_sweptLook) > 0.9995f && lens == _sweptLens) return;
-        _sweptFrom = eye; _sweptLook = look; _sweptLens = lens; _sweptAt = _grid.Filings;
+        _sweptFrom = eye;
+        _sweptLook = look;
+        _sweptLens = lens;
+        _sweptAt = _grid.Filings;
         Sweep(cam, eye);
         TrimToBudget(eye);
         foreach (var n in _lettered)
             if (GodotObject.IsInstanceValid(n) && !n.IsQueuedForDeletion() && !_sweep.Contains(n)) n.SetLettered(false);
         _lettered.Clear();
-        _queue.Clear(); _next = 0;
+        _queue.Clear();
+        _next = 0;
         foreach (var n in _sweep)
             if (n.Lettered) _lettered.Add(n);
             else _queue.Add(n);
@@ -105,7 +111,12 @@ sealed class Lettering
         int c = _sweep.Count;
         if (_trimNodes.Length < c) { _trimNodes = new PieceNode[c]; _trimKeys = new float[c]; }
         int i = 0;
-        foreach (var n in _sweep) { _trimNodes[i] = n; _trimKeys[i] = eye.DistanceSquaredTo(n.Position); i++; }
+        foreach (var n in _sweep)
+        {
+            _trimNodes[i] = n;
+            _trimKeys[i] = eye.DistanceSquaredTo(n.Position);
+            i++;
+        }
         Array.Sort(_trimKeys, _trimNodes, 0, c);
         long kept = 0;
         int k = 0;
@@ -138,5 +149,13 @@ sealed class Lettering
     }
 
     public int Count => _lettered.Count;
-    public long Weight { get { long s = 0; foreach (var n in _lettered) if (GodotObject.IsInstanceValid(n)) s += n.LetteringWeight; return s; } }
+    public long Weight
+    {
+        get
+        {
+            long s = 0;
+            foreach (var n in _lettered) if (GodotObject.IsInstanceValid(n)) s += n.LetteringWeight;
+            return s;
+        }
+    }
 }

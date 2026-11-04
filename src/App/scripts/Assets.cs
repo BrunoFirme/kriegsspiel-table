@@ -92,7 +92,7 @@ public sealed class Assets
             Image? img = null;
             await Decoders.WaitAsync();
             try { if (!Quitting) img = LoadScaled(abs, key, maxSize, mipmaps); }
-            catch { img = null; }
+            catch (Exception e) { img = null; Diagnostics.Write(LogLevel.Warning, $"[assets] {abs} could not be decoded: {e.Message}"); }
             finally { Decoders.Release(); }
             if (!Quitting) _ready.Enqueue((key, img));
         }), () => _ready.Enqueue((key, null)));

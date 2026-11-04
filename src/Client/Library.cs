@@ -48,7 +48,8 @@ public sealed class Library
     public void Move(bool pack, string id, string folder)
     {
         var map = pack ? Packs : Scenarios;
-        if (folder.Length == 0) map.Remove(id); else map[id] = folder;
+        if (folder.Length == 0) map.Remove(id);
+        else map[id] = folder;
         Save();
     }
 

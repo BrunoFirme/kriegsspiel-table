@@ -46,7 +46,9 @@ internal sealed class EffectTab
         kind.ItemSelected += i => Set(x =>
         {
             x.Kind = kind.GetItemMetadata((int)i).AsString();
-            x.Every = 0; x.Color = null; x.Volley = null;
+            x.Every = 0;
+            x.Color = null;
+            x.Volley = null;
             var tags = d.Tags.Where(t => t == "effect" || !EffectKinds.Kinds.Any(k => k.Id == t)).Append(x.Kind).Distinct().ToList();
             d.Tags = tags;
         }, rebuild: true);
@@ -65,7 +67,12 @@ internal sealed class EffectTab
             "firearrows" => new[] { ("Volleys", "together"), ("In turn along the front", "rolling") },
             _ => new[] { ("All guns together", "together"), ("In turn down the line", "rolling") },
         };
-        foreach (var (label, id) in modes) { how.AddItem(label); how.SetItemMetadata(how.ItemCount - 1, id); if (id == EffectKinds.Mode(e)) how.Selected = how.ItemCount - 1; }
+        foreach (var (label, id) in modes)
+        {
+            how.AddItem(label);
+            how.SetItemMetadata(how.ItemCount - 1, id);
+            if (id == EffectKinds.Mode(e)) how.Selected = how.ItemCount - 1;
+        }
         how.ItemSelected += i => Set(x => x.Volley = how.GetItemMetadata((int)i).AsString(), rebuild: true);
         vf.AddChild(how);
         Ui.AlignForm(vf);
@@ -78,7 +85,9 @@ internal sealed class EffectTab
         {
             sg.AddChild(new Label { Text = label, TooltipText = tip, MouseFilter = Control.MouseFilterEnum.Pass });
             var row = new HBoxContainer();
-            var s = new HSlider { MinValue = min, MaxValue = max, Step = 0.05, Value = value, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, TooltipText = tip };
+            var s =
+                new HSlider { MinValue = min, MaxValue = max, Step = 0.05, Value = value, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
+                    TooltipText = tip };
             var shown = new Label { Text = $"{value:0.##}", CustomMinimumSize = new Vector2(34, 0), Modulate = Ui.Muted };
             s.ValueChanged += v => { shown.Text = $"{v:0.##}"; Set(x => put(x, v)); };
             row.AddChild(s);
@@ -191,7 +200,12 @@ internal sealed class EffectTab
         if (PackEdit.AddImageFile(_s.Store, _s.Pack, path) is not { } added) { _s.Flash("Could not read " + System.IO.Path.GetFileName(path)); return; }
         _s.MadeHere.Add(added.sha);
         var old = sel.Image;
-        _s.Apply(x => { x.Image = added.sha; x.Effect ??= EffectKinds.FromName(x.Name); x.Effect.OwnPicture = true; }, list: true, inspector: true);
+        _s.Apply(x =>
+        {
+            x.Image = added.sha;
+            x.Effect ??= EffectKinds.FromName(x.Name);
+            x.Effect.OwnPicture = true;
+        }, list: true, inspector: true);
         _s.Superseded(old, added.sha);
     }
 }

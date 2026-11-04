@@ -81,7 +81,8 @@ public partial class LockHarness : Node
         long self = BestEffort.Read(() => GetTree()?.GetMultiplayer() is { } mp && mp.HasMultiplayerPeer() ? mp.GetUniqueId() : 0L, fallback: 0L);
         lock (_gate)
         {
-            Known(peer); if (self != 0) Known(self);
+            Known(peer);
+            if (self != 0) Known(self);
             _wire.Add($"{{\"dir\":\"{what}\",\"peer\":{peer},\"msg\":{body}}}");
             _taps++;
         }
@@ -158,8 +159,16 @@ public partial class LockHarness : Node
                 if (c == '"') q = false;
                 continue;
             }
-            if (c == '"') { q = true; sb.Append(c); continue; }
-            if (char.IsWhiteSpace(c)) { if (sb.Length > 0) { list.Add(sb.ToString()); sb.Clear(); } continue; }
+            if (c == '"')
+            {
+                q = true;
+                sb.Append(c);
+                continue;
+            }
+            if (char.IsWhiteSpace(c))
+            {
+                if (sb.Length > 0) { list.Add(sb.ToString()); sb.Clear(); } continue;
+            }
             if (c == '#' && sb.Length == 0) break;
             sb.Append(c);
         }
@@ -178,7 +187,12 @@ public partial class LockHarness : Node
         var script = _args["lock"];
         List<Step> steps;
         try { steps = Parse(script); }
-        catch (Exception e) { Say("cannot read the script: " + e.Message); await Quit(); return; }
+        catch (Exception e)
+        {
+            Say("cannot read the script: " + e.Message);
+            await Quit();
+            return;
+        }
         await Frames(2);
         var screen = DisplayServer.GetPrimaryScreen();
         var usable = DisplayServer.ScreenGetUsableRect(screen);
@@ -200,7 +214,13 @@ public partial class LockHarness : Node
                     await Quit();
                     return;
                 }
-                if (s.Verb == "quit") { await Settle(30, 1800, true, s.Line); Flush("_before_quit"); await Quit(); return; }
+                if (s.Verb == "quit")
+                {
+                    await Settle(30, 1800, true, s.Line);
+                    Flush("_before_quit");
+                    await Quit();
+                    return;
+                }
                 await Do(s);
                 if (_args.ContainsKey("lock-trace"))
                 {
@@ -232,14 +252,25 @@ public partial class LockHarness : Node
         var mods = s.Opts.GetValueOrDefault("mod", "");
         switch (s.Verb)
         {
-            case "wait": await Frames(int.Parse(A(0), CultureInfo.InvariantCulture)); return;
-            case "note": Say(string.Join(" ", a.Select(Unquote))); return;
+            case "wait":
+                await Frames(int.Parse(A(0), CultureInfo.InvariantCulture));
+                return;
+            case "note":
+                Say(string.Join(" ", a.Select(Unquote)));
+                return;
             case "settle":
                 await Settle(a.Count > 0 ? int.Parse(a[0], CultureInfo.InvariantCulture) : 30, a.Count > 1 ? int.Parse(a[1], CultureInfo.InvariantCulture) : 1800, !s.Opts.ContainsKey("noimage"), s.Line);
                 return;
-            case "checkpoint": await Checkpoint(A(0)); return;
-            case "sync": await Sync(A(0), s.Line); return;
-            case "close": GetTree().Root.PropagateNotification((int)NotificationWMCloseRequest); Say($"line {s.Line}: close asked"); return;
+            case "checkpoint":
+                await Checkpoint(A(0));
+                return;
+            case "sync":
+                await Sync(A(0), s.Line);
+                return;
+            case "close":
+                GetTree().Root.PropagateNotification((int)NotificationWMCloseRequest);
+                Say($"line {s.Line}: close asked");
+                return;
             case "close-window":
             {
                 var title = a.Count > 0 ? Unquote(a[0]) : null;
@@ -261,7 +292,9 @@ public partial class LockHarness : Node
             case "menu":
                 if (!await Menu(Unquote(A(0)), timeout)) Say($"line {s.Line}: menu {A(0)}: NOT FOUND");
                 return;
-            case "key": await Key(A(0)); return;
+            case "key":
+                await Key(A(0));
+                return;
             case "dismiss":
                 foreach (var pm in OpenPopups().Reverse()) pm.Hide();
                 await Frames(3);
@@ -275,9 +308,15 @@ public partial class LockHarness : Node
                 for (int i = 0; i < n; i++) await Key("Backspace");
                 return;
             }
-            case "keydown": await KeyEdge(A(0), true); return;
-            case "keyup": await KeyEdge(A(0), false); return;
-            case "type": await Type(Expand(Unquote(A(0)), slashes: false)); return;
+            case "keydown":
+                await KeyEdge(A(0), true);
+                return;
+            case "keyup":
+                await KeyEdge(A(0), false);
+                return;
+            case "type":
+                await Type(Expand(Unquote(A(0)), slashes: false));
+                return;
             case "drop-file":
             {
                 var files = a.Select(x => Expand(Unquote(x))).ToArray();
@@ -295,7 +334,8 @@ public partial class LockHarness : Node
         string A(int i) => i < a.Count ? a[i] : throw new ArgumentException("missing argument " + (i + 1));
         if (s.Verb is "drag" or "rdrag" or "mdrag")
         {
-            var from = await Point(A(0), timeout, s); var to = await Point(A(1), timeout, s);
+            var from = await Point(A(0), timeout, s);
+            var to = await Point(A(1), timeout, s);
             if (from == null || to == null) return;
             var b = s.Verb == "rdrag" ? MouseButton.Right : s.Verb == "mdrag" ? MouseButton.Middle : MouseButton.Left;
             int n = int.Parse(s.Opts.GetValueOrDefault("steps", "10"), CultureInfo.InvariantCulture);
@@ -328,20 +368,36 @@ public partial class LockHarness : Node
         if (pt == null) return;
         switch (s.Verb)
         {
-            case "click": await WithMods(mods, () => Click(MouseButton.Left, pt.Value, false)); break;
-            case "rclick": await WithMods(mods, () => Click(MouseButton.Right, pt.Value, false)); break;
-            case "mclick": await WithMods(mods, () => Click(MouseButton.Middle, pt.Value, false)); break;
-            case "dclick": await WithMods(mods, async () => { await Click(MouseButton.Left, pt.Value, false); await Click(MouseButton.Left, pt.Value, true); }); break;
-            case "hover": case "move": await Move(pt.Value); await Frames(1); break;
+            case "click":
+                await WithMods(mods, () => Click(MouseButton.Left, pt.Value, false));
+                break;
+            case "rclick":
+                await WithMods(mods, () => Click(MouseButton.Right, pt.Value, false));
+                break;
+            case "mclick":
+                await WithMods(mods, () => Click(MouseButton.Middle, pt.Value, false));
+                break;
+            case "dclick":
+                await WithMods(mods, async () => { await Click(MouseButton.Left, pt.Value, false); await Click(MouseButton.Left, pt.Value, true); });
+                break;
+            case "hover": case "move":
+                await Move(pt.Value);
+                await Frames(1);
+                break;
             case "probe":
             {
-                await Move(pt.Value); await Frames(1);
+                await Move(pt.Value);
+                await Frames(1);
                 var hc = GetViewport().GuiGetHoveredControl();
                 Say($"line {s.Line}: probe {A(0)} at {pt.Value.Round()}: {(hc == null ? "no control" : hc.GetClass() + " " + (TextOf(hc) ?? "") + " tip=" + hc.TooltipText.Split('\n')[0] + " filter=" + hc.MouseFilter + " path=" + hc.GetPath())}; menus lit: {string.Join(",", OpenPopups().Select(m => m.GetFocusedItem() + (m.IsEmbedded() ? " embedded" : " native") + " at " + m.Position + " size " + m.Size))}; root embeds {GetTree().Root.GuiEmbedSubwindows}, window at {DisplayServer.WindowGetPosition()}; pointer {Pointer.In(GetViewport())}");
                 break;
             }
-            case "mousedown": await WithMods(mods, async () => { await Move(pt.Value); await Button(Btn(s), true, pt.Value, false); }); break;
-            case "mouseup": await WithMods(mods, async () => { await Move(pt.Value); await Button(Btn(s), false, pt.Value, false); }); break;
+            case "mousedown":
+                await WithMods(mods, async () => { await Move(pt.Value); await Button(Btn(s), true, pt.Value, false); });
+                break;
+            case "mouseup":
+                await WithMods(mods, async () => { await Move(pt.Value); await Button(Btn(s), false, pt.Value, false); });
+                break;
             case "wheel":
             {
                 int n = int.Parse(a.Count > 1 ? a[1] : "1", CultureInfo.InvariantCulture);
@@ -358,7 +414,9 @@ public partial class LockHarness : Node
                 });
                 break;
             }
-            default: Say($"line {s.Line}: unknown step '{s.Verb}'"); break;
+            default:
+                Say($"line {s.Line}: unknown step '{s.Verb}'");
+                break;
         }
     }
 
@@ -374,8 +432,10 @@ public partial class LockHarness : Node
     {
         if (e is InputEventWithModifiers m)
         {
-            m.ShiftPressed = _keysDown.Contains(Godot.Key.Shift); m.CtrlPressed = _keysDown.Contains(Godot.Key.Ctrl);
-            m.AltPressed = _keysDown.Contains(Godot.Key.Alt); m.MetaPressed = _keysDown.Contains(Godot.Key.Meta);
+            m.ShiftPressed = _keysDown.Contains(Godot.Key.Shift);
+            m.CtrlPressed = _keysDown.Contains(Godot.Key.Ctrl);
+            m.AltPressed = _keysDown.Contains(Godot.Key.Alt);
+            m.MetaPressed = _keysDown.Contains(Godot.Key.Meta);
         }
         if (e is InputEventKey) _ourKeys.Add(e.GetInstanceId());
         else e.Device = OurDevice;
@@ -438,7 +498,8 @@ public partial class LockHarness : Node
 
     async Task Button(MouseButton b, bool down, Vector2 at, bool doubleClick)
     {
-        if (down) _held |= MaskOf(b); else _held &= ~MaskOf(b);
+        if (down) _held |= MaskOf(b);
+        else _held &= ~MaskOf(b);
         Parse(new InputEventMouseButton { ButtonIndex = b, Pressed = down, Position = at, GlobalPosition = at, ButtonMask = _held, DoubleClick = doubleClick && down });
         await Frames(1);
     }
@@ -471,7 +532,8 @@ public partial class LockHarness : Node
 
     async Task KeyEdge(Key k, bool down)
     {
-        if (down) _keysDown.Add(k); else _keysDown.Remove(k);
+        if (down) _keysDown.Add(k);
+        else _keysDown.Remove(k);
         Parse(new InputEventKey { Keycode = k, PhysicalKeycode = k, KeyLabel = k, Pressed = down });
         await Frames(1);
     }
@@ -563,7 +625,8 @@ public partial class LockHarness : Node
             var xy = sel[1..].Split(',');
             float X(string v) => v.EndsWith('%') ? float.Parse(v[..^1], inv) / 100f : float.Parse(v, inv);
             var size = GetViewport().GetVisibleRect().Size;
-            var x = X(xy[0]); var y = X(xy[1]);
+            var x = X(xy[0]);
+            var y = X(xy[1]);
             return new Vector2(xy[0].EndsWith('%') ? x * size.X : x, xy[1].EndsWith('%') ? y * size.Y : y);
         }
         if (sel.StartsWith("world:"))
@@ -585,12 +648,19 @@ public partial class LockHarness : Node
         if (hits.Count == 0 && !contains && !prefix) hits = Matches(text, true);
         if (hits.Count == 0) return null;
         Rect2 r;
-        if (nth >= 1) { if (nth > hits.Count) return null; var hh = hits.OrderBy(h => h.rect.Position.Y).ThenBy(h => h.rect.Position.X).ElementAt(nth - 1); r = hh.rect; _lastHit = hh.c; }
+        if (nth >= 1)
+        {
+            if (nth > hits.Count) return null;
+            var hh = hits.OrderBy(h => h.rect.Position.Y).ThenBy(h => h.rect.Position.X).ElementAt(nth - 1);
+            r = hh.rect;
+            _lastHit = hh.c;
+        }
         else
         {
             var level = hits.Max(h => h.depth / 1_000_000);
             var hh = hits.Where(h => h.depth / 1_000_000 == level).OrderBy(h => h.rect.Position.Y).ThenBy(h => h.rect.Position.X).First();
-            r = hh.rect; _lastHit = hh.c;
+            r = hh.rect;
+            _lastHit = hh.c;
         }
         return r.GetCenter() + off;
     }
@@ -598,7 +668,8 @@ public partial class LockHarness : Node
     List<(Rect2 rect, long depth, Control c)> Matches(string text, bool contains, bool prefix = false)
     {
         var hits = new List<(Rect2, long, Control)>();
-        bool Is(string? s) => !string.IsNullOrEmpty(s) && (contains ? s.Contains(text, StringComparison.Ordinal) : prefix ? s.TrimStart().StartsWith(text, StringComparison.Ordinal) : s.Trim() == text);
+        bool Is(string? s) => !string.IsNullOrEmpty(s)
+            && (contains ? s.Contains(text, StringComparison.Ordinal) : prefix ? s.TrimStart().StartsWith(text, StringComparison.Ordinal) : s.Trim() == text);
         long order = 0;
         foreach (var (c, depth) in Visible())
         {
@@ -610,7 +681,8 @@ public partial class LockHarness : Node
             switch (c)
             {
                 case TabBar tb:
-                    for (int i = 0; i < tb.TabCount; i++) if (Is(tb.GetTabTitle(i)) || Is(tb.GetTabTooltip(i))) hits.Add((new Rect2(at.Position + tb.GetTabRect(i).Position, tb.GetTabRect(i).Size), d, c));
+                    for (int i = 0; i < tb.TabCount; i++) if (Is(tb.GetTabTitle(i)) || Is(tb.GetTabTooltip(i))) hits.Add((new Rect2(at.Position + tb.GetTabRect(i).Position, tb.GetTabRect(i).Size), d,
+                        c));
                     break;
                 case ItemList il:
                     for (int i = 0; i < il.ItemCount; i++)
@@ -755,13 +827,20 @@ public partial class LockHarness : Node
 
     async Task Settle(int quiet, int cap, bool image, int line)
     {
-        ulong last = 0; int still = 0; var since = Time.GetTicksMsec();
+        ulong last = 0;
+        int still = 0;
+        var since = Time.GetTicksMsec();
         for (int f = 0; f < cap; f += 2)
         {
             await Frames(2);
             var sig = Signature(image, f % 10 == 0);
             if (sig == last) still += 2;
-            else { still = 0; last = sig; since = Time.GetTicksMsec(); }
+            else
+            {
+                still = 0;
+                last = sig;
+                since = Time.GetTicksMsec();
+            }
             if (still >= quiet && Time.GetTicksMsec() - since >= 1200) return;
         }
         GD.Print($"[lock] line {line}: settle: still changing after {cap} frames");
@@ -798,7 +877,7 @@ public partial class LockHarness : Node
                 foreach (var f in new DirectoryInfo(dir).EnumerateFiles("*", SearchOption.AllDirectories))
                     sum = unchecked(sum * 31 + f.Length * 7 + f.LastWriteTimeUtc.Ticks);
             }
-            catch { sum++; }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException) { sum++; }
         }
         return (ulong)sum;
     }
@@ -839,7 +918,8 @@ public partial class LockHarness : Node
         {
             File.WriteAllText(Path.Combine(dir, "wire-tail.jsonl"), string.Concat(_wire.Select(w => Clean(Peers(w)) + "\n")));
             File.WriteAllText(Path.Combine(dir, "steps.txt"), string.Concat(_log.Select(l => l + "\n")));
-            _wire.Clear(); _log.Clear();
+            _wire.Clear();
+            _log.Clear();
         }
     }
 
@@ -859,7 +939,8 @@ public partial class LockHarness : Node
         {
             File.WriteAllText(Path.Combine(dir, "wire.jsonl"), string.Concat(_wire.Select(w => Clean(Peers(w)) + "\n")));
             File.WriteAllText(Path.Combine(dir, "steps.txt"), string.Concat(_log.Select(l => l + "\n")));
-            _wire.Clear(); _log.Clear();
+            _wire.Clear();
+            _log.Clear();
         }
         GD.Print("[lock] checkpoint " + name);
     }
@@ -879,7 +960,7 @@ public partial class LockHarness : Node
             var text = PastedId.Replace(WallTime.Replace(Encoding.UTF8.GetString(plain.ToArray()), "<time>"), "x-c<id>");
             return "\"packed\":\"<" + Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(text)))[..20].ToLowerInvariant() + ">\"";
         }
-        catch { return m.Value; }
+        catch (Exception e) when (e is FormatException or InvalidDataException) { return m.Value; }
     }
 
     static readonly Regex Token = new("\"(token|tokenHash)\":\"[^\"]*\"", RegexOptions.Compiled | RegexOptions.IgnoreCase);
@@ -924,14 +1005,19 @@ public partial class LockHarness : Node
                     if (le.PlaceholderText.Length > 0) sb.Append(" ph=").Append(Q(le.PlaceholderText));
                     if (!le.Editable) sb.Append(" readonly");
                     break;
-                case TextEdit te: if (!te.Editable) sb.Append(" readonly"); break;
+                case TextEdit te:
+                    if (!te.Editable) sb.Append(" readonly");
+                    break;
                 case BaseButton b:
                     if (b.Disabled) sb.Append(" disabled");
                     if (b.ToggleMode || b is CheckBox or CheckButton) sb.Append(b.ButtonPressed ? " on" : " off");
                     if (b is OptionButton ob) sb.Append(" sel=").Append(ob.Selected);
                     if (b is Button bb && bb.Icon != null) sb.Append(" icon");
                     break;
-                case Godot.Range rg: sb.Append(" value=").Append(rg.Value.ToString("0.####", CultureInfo.InvariantCulture)); if (rg is ScrollBar) sb.Append(" max=").Append(rg.MaxValue.ToString("0.#", CultureInfo.InvariantCulture)); break;
+                case Godot.Range rg:
+                    sb.Append(" value=").Append(rg.Value.ToString("0.####", CultureInfo.InvariantCulture));
+                    if (rg is ScrollBar) sb.Append(" max=").Append(rg.MaxValue.ToString("0.#", CultureInfo.InvariantCulture));
+                    break;
                 case ItemList il:
                     sb.Append(" items=[");
                     for (int i = 0; i < il.ItemCount; i++) sb.Append(i > 0 ? "," : "").Append(Q(il.GetItemText(i))).Append(il.IsSelected(i) ? "*" : "");
@@ -945,10 +1031,18 @@ public partial class LockHarness : Node
                 case Tree t when t.GetRoot() is { } root:
                     sb.Append(" rows=[");
                     bool first = true;
-                    foreach (var it in TreeItems(root)) { if (!first) sb.Append(','); first = false; sb.Append(Q(it.GetText(0))); if (it.IsSelected(0)) sb.Append('*'); }
+                    foreach (var it in TreeItems(root))
+                    {
+                        if (!first) sb.Append(',');
+                        first = false;
+                        sb.Append(Q(it.GetText(0)));
+                        if (it.IsSelected(0)) sb.Append('*');
+                    }
                     sb.Append(']');
                     break;
-                case TextureRect tex: sb.Append(" texture=").Append((int)tex.Texture.GetSize().X).Append('x').Append((int)tex.Texture.GetSize().Y); break;
+                case TextureRect tex:
+                    sb.Append(" texture=").Append((int)tex.Texture.GetSize().X).Append('x').Append((int)tex.Texture.GetSize().Y);
+                    break;
             }
             if (c.HasFocus()) sb.Append(" focus");
             sb.Append($" @{Mathf.RoundToInt(r.Position.X)},{Mathf.RoundToInt(r.Position.Y)},{Mathf.RoundToInt(r.Size.X)}x{Mathf.RoundToInt(r.Size.Y)}");
@@ -979,7 +1073,8 @@ public partial class LockHarness : Node
             foreach (var ch in n.GetChildren(true)) Windows(ch);
         }
         Windows(GetTree().Root);
-        string body; lock (_gate) body = Peers(string.Concat(lines.OrderBy(l => l.y).ThenBy(l => l.x).ThenBy(l => l.s, StringComparer.Ordinal).Select(l => l.s + "\n")));
+        string body;
+        lock (_gate) body = Peers(string.Concat(lines.OrderBy(l => l.y).ThenBy(l => l.x).ThenBy(l => l.s, StringComparer.Ordinal).Select(l => l.s + "\n")));
         return Clean(body);
     }
 

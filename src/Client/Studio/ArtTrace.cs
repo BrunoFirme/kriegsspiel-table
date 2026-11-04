@@ -32,7 +32,13 @@ public static class ArtTrace
                     for (i = 0; i < 8; i++)
                     {
                         int nd = (start + i) % 8, nx = cx + dx[nd], ny = cy + dy[nd];
-                        if (solid[ny * gw + nx]) { cx = nx; cy = ny; dir = nd; break; }
+                        if (solid[ny * gw + nx])
+                        {
+                            cx = nx;
+                            cy = ny;
+                            dir = nd;
+                            break;
+                        }
                     }
                     if (i == 8) break;
                 } while ((cx != x || cy != y) && --guard > 0);

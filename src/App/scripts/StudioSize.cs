@@ -25,19 +25,28 @@ static class SizeForm
         Metres();
         bool sync = false;
         double? Aspect() => size.H > 1e-9 ? size.W / size.H : null;
-        void Set(Size2 s) { size = s; set(s); Metres(); }
+        void Set(Size2 s)
+        {
+            size = s;
+            set(s);
+            Metres();
+        }
         wBox.ValueChanged += v =>
         {
             if (sync) return;
             double h = keep.ButtonPressed && Aspect() is { } a ? Math.Round(v / a, 4) : size.H;
-            sync = true; hBox.Value = h; sync = false;
+            sync = true;
+            hBox.Value = h;
+            sync = false;
             Set(new Size2(v, h));
         };
         hBox.ValueChanged += v =>
         {
             if (sync) return;
             double w = keep.ButtonPressed && Aspect() is { } a ? Math.Round(v * a, 4) : size.W;
-            sync = true; wBox.Value = w; sync = false;
+            sync = true;
+            wBox.Value = w;
+            sync = false;
             Set(new Size2(w, v));
         };
         return metres;

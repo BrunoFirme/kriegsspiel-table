@@ -52,7 +52,9 @@ public sealed class Ground
 
     bool Lookup(Vec2 p, out ReliefGrid grid, out double scale, out double u, out double v)
     {
-        grid = null!; scale = 0; u = v = 0;
+        grid = null!;
+        scale = 0;
+        u = v = 0;
         if (!_areas.TryGetValue(AreaOf(p), out var list)) return false;
         foreach (var i in list)
         {
@@ -167,7 +169,17 @@ public sealed class Ground
     static (double a, double b, double c) Plane(List<(double x, double z, double h)> pts)
     {
         double sxx = 0, sxz = 0, szz = 0, sx = 0, sz = 0, sh = 0, sxh = 0, szh = 0;
-        foreach (var (x, z, h) in pts) { sxx += x * x; sxz += x * z; szz += z * z; sx += x; sz += z; sh += h; sxh += x * h; szh += z * h; }
+        foreach (var (x, z, h) in pts)
+        {
+            sxx += x * x;
+            sxz += x * z;
+            szz += z * z;
+            sx += x;
+            sz += z;
+            sh += h;
+            sxh += x * h;
+            szh += z * h;
+        }
         double n = pts.Count;
         double det = sxx * (szz * n - sz * sz) - sxz * (sxz * n - sz * sx) + sx * (sxz * sz - szz * sx);
         if (Math.Abs(det) < 1e-12) return (0, 0, pts.Max(p => p.h));

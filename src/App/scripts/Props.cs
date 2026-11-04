@@ -29,12 +29,16 @@ public static class Props
         readonly FastNoiseLite big = new FastNoiseLite { NoiseType = FastNoiseLite.NoiseTypeEnum.Perlin, Seed = 1812, Frequency = 0.03f, FractalOctaves = 4 };
         readonly FastNoiseLite mid = new FastNoiseLite { NoiseType = FastNoiseLite.NoiseTypeEnum.Perlin, Seed = 1813, Frequency = 0.12f, FractalOctaves = 3 };
         readonly FastNoiseLite fine = new FastNoiseLite { NoiseType = FastNoiseLite.NoiseTypeEnum.Value, Seed = 1815, Frequency = 0.9f };
-        readonly FastNoiseLite cells = new FastNoiseLite { NoiseType = FastNoiseLite.NoiseTypeEnum.Cellular, Seed = 1809, Frequency = 0.07f, CellularReturnType = FastNoiseLite.CellularReturnTypeEnum.Distance2Sub };
+        readonly FastNoiseLite cells =
+            new FastNoiseLite { NoiseType = FastNoiseLite.NoiseTypeEnum.Cellular, Seed = 1809, Frequency = 0.07f, CellularReturnType = FastNoiseLite.CellularReturnTypeEnum.Distance2Sub };
 
         void Put(int x, int y, Color c)
         {
             int i = (y * AtlasW + x) * 4;
-            px[i] = (byte)Mathf.Clamp(c.R * 255, 0, 255); px[i + 1] = (byte)Mathf.Clamp(c.G * 255, 0, 255); px[i + 2] = (byte)Mathf.Clamp(c.B * 255, 0, 255); px[i + 3] = (byte)Mathf.Clamp(c.A * 255, 0, 255);
+            px[i] = (byte)Mathf.Clamp(c.R * 255, 0, 255);
+            px[i + 1] = (byte)Mathf.Clamp(c.G * 255, 0, 255);
+            px[i + 2] = (byte)Mathf.Clamp(c.B * 255, 0, 255);
+            px[i + 3] = (byte)Mathf.Clamp(c.A * 255, 0, 255);
         }
         float B(float x, float y) => big.GetNoise2D(x, y) * 0.5f + 0.5f;
         float Md(float x, float y) => mid.GetNoise2D(x, y) * 0.5f + 0.5f;

@@ -27,7 +27,12 @@ public partial class SteamService : Node
         if (AppId == 0) { Status = "Steam features are off (no Steam app id configured)."; return; }
         try
         {
-            if (!OS.IsDebugBuild() && SteamAPI.RestartAppIfNecessary(App)) { Diagnostics.Closing(); GetTree().Quit(); return; }
+            if (!OS.IsDebugBuild() && SteamAPI.RestartAppIfNecessary(App))
+            {
+                Diagnostics.Closing();
+                GetTree().Quit();
+                return;
+            }
             if (!SteamAPI.IsSteamRunning()) { Status = "Steam is not running. Start Steam to use the Workshop."; return; }
             System.Environment.SetEnvironmentVariable("SteamAppId", AppId.ToString());
             System.Environment.SetEnvironmentVariable("SteamGameId", AppId.ToString());

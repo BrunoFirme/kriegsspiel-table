@@ -26,13 +26,15 @@ internal sealed class ScriptTimers
 
     public List<ScriptTimer> Advance(double nowSeconds)
     {
-        Now = nowSeconds; Frame++;
+        Now = nowSeconds;
+        Frame++;
         return _timers.Where(t => (!double.IsNaN(t.Due) && t.Due <= Now) || (t.DueFrame >= 0 && t.DueFrame <= Frame) || t.Predicate.Type == DataType.Function).ToList();
     }
 
     public List<(PieceScript owner, DynValue co)> TakeResumes()
     {
-        var resumes = _resumes.ToList(); _resumes.Clear();
+        var resumes = _resumes.ToList();
+        _resumes.Clear();
         return resumes;
     }
 
@@ -40,7 +42,8 @@ internal sealed class ScriptTimers
 
     public int Add(ScriptTimer t, PieceScript owner)
     {
-        t.Owner = owner; t.Handle = _nextTimer++;
+        t.Owner = owner;
+        t.Handle = _nextTimer++;
         if (t.Fn.Type != DataType.Function) throw new ScriptRuntimeException("wait: the second argument must be a function");
         _timers.Add(t);
         return t.Handle;
@@ -48,14 +51,20 @@ internal sealed class ScriptTimers
 
     public void Remove(ScriptTimer t) { t.Gone = true; _timers.Remove(t); }
 
-    public void RemoveWhere(Predicate<ScriptTimer> which) => _timers.RemoveAll(t => { if (!which(t)) return false; t.Gone = true; return true; });
+    public void RemoveWhere(Predicate<ScriptTimer> which) => _timers.RemoveAll(t =>
+    {
+        if (!which(t)) return false;
+        t.Gone = true;
+        return true;
+    });
 
     public void DropResumes(PieceScript ps) => _resumes.RemoveAll(r => r.owner == ps);
 
     public void Clear()
     {
         foreach (var t in _timers) t.Gone = true;
-        _timers.Clear(); _resumes.Clear();
+        _timers.Clear();
+        _resumes.Clear();
     }
 
     public Dictionary<PieceScript, int> CountByOwner() => _timers.GroupBy(t => t.Owner).ToDictionary(g => g.Key, g => g.Count());

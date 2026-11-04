@@ -42,7 +42,12 @@ internal sealed class ToolPanel
             else if (_s.View == "paint") Canvas.SetTool("pan");
             Canvas.Refit();
         };
-        _panel.Moved = (k, at) => { Prefs.Panels[k] = new[] { at.X, at.Y }; Prefs.Save(); Canvas.Refit(); };
+        _panel.Moved = (k, at) =>
+        {
+            Prefs.Panels[k] = new[] { at.X, at.Y };
+            Prefs.Save();
+            Canvas.Refit();
+        };
         Ui.SwallowWheel(_panel);
         _s.Root.AddChild(_panel);
         _panel.Visible = false;
@@ -95,15 +100,33 @@ internal sealed class ToolPanel
             case "erase":
                 SizeRow(Prefs.Eraser, 0.5f, 600, v => Prefs.Eraser = v);
                 break;
-            case "shape": ShapeOptions(); break;
-            case "text": TextOptions(); break;
-            case "fill": FillOptions(); break;
-            case "pick": Colours.Section(false); break;
-            case "move": TransformRows(); break;
-            case "crop": CropOptions(); break;
-            case "outline": OutlineOptions(); break;
-            case "measure": MeasureOptions(); break;
-            case "place": PlaceOptions(); break;
+            case "shape":
+                ShapeOptions();
+                break;
+            case "text":
+                TextOptions();
+                break;
+            case "fill":
+                FillOptions();
+                break;
+            case "pick":
+                Colours.Section(false);
+                break;
+            case "move":
+                TransformRows();
+                break;
+            case "crop":
+                CropOptions();
+                break;
+            case "outline":
+                OutlineOptions();
+                break;
+            case "measure":
+                MeasureOptions();
+                break;
+            case "place":
+                PlaceOptions();
+                break;
         }
         Place();
         Refit();
@@ -123,12 +146,31 @@ internal sealed class ToolPanel
     {
         var row = new HBoxContainer();
         row.AddChild(Small(label));
-        var s = new HSlider { MinValue = Math.Sqrt(min), MaxValue = Math.Sqrt(max), Step = 0.01, Value = Math.Sqrt(value), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter };
+        var s =
+            new HSlider { MinValue = Math.Sqrt(min), MaxValue = Math.Sqrt(max), Step = 0.01, Value = Math.Sqrt(value), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+                SizeFlagsVertical = Control.SizeFlags.ShrinkCenter };
         var num = new SpinBox { MinValue = min, MaxValue = max, Step = 0.5, Value = value, CustomMinimumSize = new Vector2(66, 0), TooltipText = "pixels" };
         bool sync = false;
-        s.ValueChanged += v => { if (sync) return; sync = true; num.Value = Math.Round(v * v, 1); sync = false; set((float)(v * v)); Canvas.Redraw(); };
-        num.ValueChanged += v => { if (sync) return; sync = true; s.Value = Math.Sqrt(v); sync = false; set((float)v); Canvas.Redraw(); };
-        row.AddChild(s); row.AddChild(num);
+        s.ValueChanged += v =>
+        {
+            if (sync) return;
+            sync = true;
+            num.Value = Math.Round(v * v, 1);
+            sync = false;
+            set((float)(v * v));
+            Canvas.Redraw();
+        };
+        num.ValueChanged += v =>
+        {
+            if (sync) return;
+            sync = true;
+            s.Value = Math.Sqrt(v);
+            sync = false;
+            set((float)v);
+            Canvas.Redraw();
+        };
+        row.AddChild(s);
+        row.AddChild(num);
         _body.AddChild(row);
     }
 
@@ -146,7 +188,9 @@ internal sealed class ToolPanel
             row.AddChild(sides);
             if (Prefs.ShapeKind == "star")
             {
-                var inner = new HSlider { MinValue = 0.1, MaxValue = 0.9, Step = 0.01, Value = Prefs.StarInner, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, TooltipText = "How deep the points are" };
+                var inner =
+                    new HSlider { MinValue = 0.1, MaxValue = 0.9, Step = 0.01, Value = Prefs.StarInner, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+                        SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, TooltipText = "How deep the points are" };
                 inner.ValueChanged += v => Prefs.StarInner = (float)v;
                 row.AddChild(inner);
             }
@@ -167,7 +211,9 @@ internal sealed class ToolPanel
         grid.AddThemeConstantOverride("v_separation", 3);
         foreach (var (key, icon, tip) in kinds)
         {
-            var b = new Button { ToggleMode = true, ButtonPressed = Prefs.ShapeKind == key, FocusMode = Control.FocusModeEnum.None, TooltipText = tip, CustomMinimumSize = new Vector2(30, 30), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+            var b =
+                new Button { ToggleMode = true, ButtonPressed = Prefs.ShapeKind == key, FocusMode = Control.FocusModeEnum.None, TooltipText = tip, CustomMinimumSize = new Vector2(30, 30),
+                    SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
             b.AddChild(icon switch
             {
                 "rounded" => new ShapeGlyph { Kind = "round" },
@@ -176,7 +222,12 @@ internal sealed class ToolPanel
                 _ => new StudioIcon { Kind = icon },
             });
             var k = key;
-            b.Pressed += () => { Prefs.ShapeKind = k; Canvas.SetTool("shape"); Rebuild(); };
+            b.Pressed += () =>
+            {
+                Prefs.ShapeKind = k;
+                Canvas.SetTool("shape");
+                Rebuild();
+            };
             grid.AddChild(b);
         }
         _body.AddChild(grid);
@@ -189,7 +240,9 @@ internal sealed class ToolPanel
         row.AddThemeConstantOverride("separation", 2);
         foreach (var (key, text, tip) in new[] { ("line", "Line", "Only the line round it"), ("fill", "Filled", "Filled with the colour, no line"), ("both", "Both", "A line round a fill of the second colour") })
         {
-            var b = new Button { Text = text, ToggleMode = true, ButtonPressed = Prefs.ShapeFill == key, FocusMode = Control.FocusModeEnum.None, TooltipText = tip, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+            var b =
+                new Button { Text = text, ToggleMode = true, ButtonPressed = Prefs.ShapeFill == key, FocusMode = Control.FocusModeEnum.None, TooltipText = tip,
+                    SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
             var k = key;
             b.Pressed += () => { Prefs.ShapeFill = k; Rebuild(); };
             row.AddChild(b);
@@ -201,7 +254,9 @@ internal sealed class ToolPanel
     {
         var row = new HBoxContainer();
         row.AddChild(Small("Reach"));
-        var tol = new HSlider { MinValue = 0, MaxValue = 0.6, Step = 0.01, Value = Prefs.FillTolerance, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, TooltipText = "How different a colour may be and still be flooded" };
+        var tol =
+            new HSlider { MinValue = 0, MaxValue = 0.6, Step = 0.01, Value = Prefs.FillTolerance, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+                SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, TooltipText = "How different a colour may be and still be flooded" };
         tol.ValueChanged += v => Prefs.FillTolerance = (float)v;
         row.AddChild(tol);
         _body.AddChild(row);
@@ -215,7 +270,12 @@ internal sealed class ToolPanel
     {
         if (Canvas.Sel is { Kind: "image" } il)
         {
-            _body.AddChild(Wide(Ui.Btn("Show the whole picture", () => { il.Crop = null; Canvas.Refresh(il); Canvas.Commit("Uncrop"); })));
+            _body.AddChild(Wide(Ui.Btn("Show the whole picture", () =>
+            {
+                il.Crop = null;
+                Canvas.Refresh(il);
+                Canvas.Commit("Uncrop");
+            })));
             _body.AddChild(Wide(Ui.Btn("Trim its empty edges", () => TrimLayer(il), "Crop to where the picture has something on it")));
         }
         else _body.AddChild(Small("Select a picture layer to crop it."));
@@ -252,17 +312,49 @@ internal sealed class ToolPanel
         if (l != null)
         {
             _textEdit = new TextEdit { Text = l.Text ?? "", CustomMinimumSize = new Vector2(0, 52), WrapMode = TextEdit.LineWrappingMode.Boundary, PlaceholderText = "the words" };
-            _textEdit.TextChanged += () => { l.Text = _textEdit.Text; Canvas.Refresh(l); _s.Faces.CommitSoon("Text"); };
+            _textEdit.TextChanged += () =>
+            {
+                l.Text = _textEdit.Text;
+                Canvas.Refresh(l);
+                _s.Faces.CommitSoon("Text");
+            };
             _textEdit.FocusExited += () => Canvas.Commit("Text");
             _body.AddChild(_textEdit);
         }
-        _body.AddChild(FontChoice(l?.Font ?? Prefs.TextFont, f => { Prefs.TextFont = f; if (l != null) { l.Font = f; Canvas.Refresh(l); Canvas.Commit("Font"); } }));
+        _body.AddChild(FontChoice(l?.Font ?? Prefs.TextFont, f =>
+        {
+            Prefs.TextFont = f;
+            if (l != null)
+            {
+                l.Font = f;
+                Canvas.Refresh(l);
+                Canvas.Commit("Font");
+            }
+        }));
         var row = new HBoxContainer();
         var sz = new SpinBox { MinValue = 4, MaxValue = 600, Value = l?.Size ?? Prefs.TextSize, CustomMinimumSize = new Vector2(76, 0), TooltipText = "Size in pixels" };
-        sz.ValueChanged += v => { Prefs.TextSize = (float)v; if (l != null) { l.Size = (float)v; Canvas.Refresh(l); Canvas.Commit("Text size"); } };
+        sz.ValueChanged += v =>
+        {
+            Prefs.TextSize = (float)v;
+            if (l != null)
+            {
+                l.Size = (float)v;
+                Canvas.Refresh(l);
+                Canvas.Commit("Text size");
+            }
+        };
         row.AddChild(sz);
         var bold = new Button { Text = "B", ToggleMode = true, ButtonPressed = l?.Bold ?? Prefs.TextBold, FocusMode = Control.FocusModeEnum.None, TooltipText = "Bold", CustomMinimumSize = new Vector2(28, 0) };
-        bold.Toggled += on => { Prefs.TextBold = on; if (l != null) { l.Bold = on; Canvas.Refresh(l); Canvas.Commit("Bold"); } };
+        bold.Toggled += on =>
+        {
+            Prefs.TextBold = on;
+            if (l != null)
+            {
+                l.Bold = on;
+                Canvas.Refresh(l);
+                Canvas.Commit("Bold");
+            }
+        };
         row.AddChild(bold);
         if (l != null) TextLook(row, l);
         _body.AddChild(row);
@@ -272,14 +364,26 @@ internal sealed class ToolPanel
     void TextLook(HBoxContainer row, ArtLayer l)
     {
         var italic = new Button { Text = "I", ToggleMode = true, ButtonPressed = l.Italic, FocusMode = Control.FocusModeEnum.None, TooltipText = "Italic", CustomMinimumSize = new Vector2(28, 0) };
-        italic.Toggled += on => { l.Italic = on; Canvas.Refresh(l); Canvas.Commit("Italic"); };
+        italic.Toggled += on =>
+        {
+            l.Italic = on;
+            Canvas.Refresh(l);
+            Canvas.Commit("Italic");
+        };
         row.AddChild(italic);
         var olc = new ColorPickerButton { Color = Hex.To(l.OutlineColor, Colors.Black), EditAlpha = true, CustomMinimumSize = new Vector2(30, 24), TooltipText = "The outline's colour" };
         var olw = new SpinBox { MinValue = 0, MaxValue = 60, Step = 0.5, Value = l.OutlineW, CustomMinimumSize = new Vector2(60, 0), TooltipText = "Outline width (0: none)" };
-        void SetOutline() { l.OutlineW = (float)olw.Value; l.OutlineColor = l.OutlineW > 0 ? Hex.Of(olc.Color) : null; Canvas.Refresh(l); Canvas.Commit("Text outline"); }
+        void SetOutline()
+        {
+            l.OutlineW = (float)olw.Value;
+            l.OutlineColor = l.OutlineW > 0 ? Hex.Of(olc.Color) : null;
+            Canvas.Refresh(l);
+            Canvas.Commit("Text outline");
+        }
         olc.PopupClosed += SetOutline;
         olw.ValueChanged += _ => SetOutline();
-        row.AddChild(olc); row.AddChild(olw);
+        row.AddChild(olc);
+        row.AddChild(olw);
     }
 
     static string[]? _systemFonts;
@@ -308,8 +412,16 @@ internal sealed class ToolPanel
         void Num(string label, double v, double min, double max, double step, string tip, Action<double> set)
         {
             g.AddChild(Small(label));
-            var s = new SpinBox { MinValue = min, MaxValue = max, Step = step, Value = Math.Round(v / step) * step + 0.0, AllowGreater = true, AllowLesser = true, CustomMinimumSize = new Vector2(70, 0), TooltipText = tip, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-            s.ValueChanged += x => { set(x); Canvas.R.Moved(l); Canvas.Redraw(); Canvas.Commit("Place"); };
+            var s =
+                new SpinBox { MinValue = min, MaxValue = max, Step = step, Value = Math.Round(v / step) * step + 0.0, AllowGreater = true, AllowLesser = true, CustomMinimumSize = new Vector2(70, 0),
+                    TooltipText = tip, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+            s.ValueChanged += x =>
+            {
+                set(x);
+                Canvas.R.Moved(l);
+                Canvas.Redraw();
+                Canvas.Commit("Place");
+            };
             g.AddChild(s);
         }
         Num("x", l.X, -4096, 8192, 1, "Across, in pixels", v => l.X = (float)v);
@@ -320,8 +432,19 @@ internal sealed class ToolPanel
         _body.AddChild(g);
         var row = new HBoxContainer();
         row.AddThemeConstantOverride("separation", 2);
-        void Ico(string icon, string tip, Action a) { var b = new Button { CustomMinimumSize = new Vector2(30, 26), TooltipText = tip, FocusMode = Control.FocusModeEnum.None, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill }; b.AddChild(new StudioIcon { Kind = icon }); b.Pressed += a; row.AddChild(b); }
-        void Txt(string text, string tip, Action a) { var b = Ui.Btn(text, a, tip); b.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill; row.AddChild(b); }
+        void Ico(string icon, string tip, Action a)
+        {
+            var b = new Button { CustomMinimumSize = new Vector2(30, 26), TooltipText = tip, FocusMode = Control.FocusModeEnum.None, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+            b.AddChild(new StudioIcon { Kind = icon });
+            b.Pressed += a;
+            row.AddChild(b);
+        }
+        void Txt(string text, string tip, Action a)
+        {
+            var b = Ui.Btn(text, a, tip);
+            b.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
+            row.AddChild(b);
+        }
         Ico("flip-h", "Mirror left to right", () => { l.Sx = -l.Sx; Changed(); });
         Ico("flip-v", "Mirror top to bottom", () => { l.Sy = -l.Sy; Changed(); });
         Txt("−90°", "A quarter turn left", () => { l.Rot -= 90; Changed(); });
@@ -342,12 +465,19 @@ internal sealed class ToolPanel
         }
         _body.AddChild(row2);
 
-        void Changed() { Canvas.R.Moved(l); Canvas.Redraw(); Canvas.Commit("Place"); Rebuild(); }
+        void Changed()
+        {
+            Canvas.R.Moved(l);
+            Canvas.Redraw();
+            Canvas.Commit("Place");
+            Rebuild();
+        }
     }
 
     Rect2 DocBounds(ArtLayer l)
     {
-        var b = StudioCanvas.LocalBounds(l); var xf = l.Xf();
+        var b = StudioCanvas.LocalBounds(l);
+        var xf = l.Xf();
         var r = new Rect2(xf * b.Position, Vector2.Zero);
         foreach (var p in new[] { new Vector2(b.End.X, b.Position.Y), b.End, new Vector2(b.Position.X, b.End.Y) }) r = r.Expand(xf * p);
         return r;
@@ -359,7 +489,10 @@ internal sealed class ToolPanel
         var d = new Vector2(Canvas.Doc.W, Canvas.Doc.H) / 2 - c;
         if (x) l.X += d.X;
         if (y) l.Y += d.Y;
-        Canvas.R.Moved(l); Canvas.Redraw(); Canvas.Commit("Centre"); Rebuild();
+        Canvas.R.Moved(l);
+        Canvas.Redraw();
+        Canvas.Commit("Centre");
+        Rebuild();
     }
 
     void FitLayer(ArtLayer l, bool cover)
@@ -368,10 +501,16 @@ internal sealed class ToolPanel
         if (b.Size.X < 0.01f || b.Size.Y < 0.01f) return;
         float kx = Canvas.Doc.W / b.Size.X, ky = Canvas.Doc.H / b.Size.Y;
         float k = cover ? Mathf.Max(kx, ky) : Mathf.Min(kx, ky);
-        l.Rot = 0; l.Sx = k * Mathf.Sign(l.Sx == 0 ? 1 : l.Sx); l.Sy = k * Mathf.Sign(l.Sy == 0 ? 1 : l.Sy);
+        l.Rot = 0;
+        l.Sx = k * Mathf.Sign(l.Sx == 0 ? 1 : l.Sx);
+        l.Sy = k * Mathf.Sign(l.Sy == 0 ? 1 : l.Sy);
         var c = l.Xf() * b.GetCenter();
-        l.X += Canvas.Doc.W / 2f - c.X; l.Y += Canvas.Doc.H / 2f - c.Y;
-        Canvas.R.Moved(l); Canvas.Redraw(); Canvas.Commit(cover ? "Fill the face" : "Fit"); Rebuild();
+        l.X += Canvas.Doc.W / 2f - c.X;
+        l.Y += Canvas.Doc.H / 2f - c.Y;
+        Canvas.R.Moved(l);
+        Canvas.Redraw();
+        Canvas.Commit(cover ? "Fill the face" : "Fit");
+        Rebuild();
     }
 
     void TrimLayer(ArtLayer l)
@@ -380,7 +519,8 @@ internal sealed class ToolPanel
         var used = img.GetUsedRect();
         if (used.Size.X <= 0 || used.Size.Y <= 0) return;
         l.Crop = new float[] { used.Position.X, used.Position.Y, used.Size.X, used.Size.Y };
-        Canvas.Refresh(l); Canvas.Commit("Trim");
+        Canvas.Refresh(l);
+        Canvas.Commit("Trim");
     }
 
     void OutlineOptions()
@@ -444,7 +584,8 @@ internal sealed class ColourChooser
         {
             var b = new Button { CustomMinimumSize = new Vector2(40, 26), FocusMode = Control.FocusModeEnum.None, TooltipText = tip + " — click for every colour" };
             var box = new StyleBoxFlat { BgColor = c, BorderColor = new Color(1, 1, 1, 0.55f) };
-            box.SetBorderWidthAll(1); box.SetCornerRadiusAll(3);
+            box.SetBorderWidthAll(1);
+            box.SetCornerRadiusAll(3);
             foreach (var st in new[] { "normal", "hover", "pressed", "hover_pressed", "focus" }) b.AddThemeStyleboxOverride(st, box);
             b.Pressed += () => { _editInk2 = which; OpenPicker(b); };
             return b;
@@ -485,13 +626,20 @@ internal sealed class ColourChooser
         };
         picker.ColorChanged += c =>
         {
-            if (_editInk2) Canvas.Ink2 = c; else Canvas.Ink = c;
-            Prefs.Ink = Hex.Of(Canvas.Ink); Prefs.Ink2 = Hex.Of(Canvas.Ink2);
+            if (_editInk2) Canvas.Ink2 = c;
+            else Canvas.Ink = c;
+            Prefs.Ink = Hex.Of(Canvas.Ink);
+            Prefs.Ink2 = Hex.Of(Canvas.Ink2);
             _s.Model?.InkChanged(Canvas.Ink);
             ApplyInkToText(c);
         };
         pop.AddChild(picker);
-        pop.PopupHide += () => { pop.QueueFree(); Prefs.Used(_editInk2 ? Canvas.Ink2 : Canvas.Ink); _panel.Rebuild(); };
+        pop.PopupHide += () =>
+        {
+            pop.QueueFree();
+            Prefs.Used(_editInk2 ? Canvas.Ink2 : Canvas.Ink);
+            _panel.Rebuild();
+        };
         _s.Root.AddChild(pop);
         var r = from.GetGlobalRect();
         pop.Popup(new Rect2I((Vector2I)(r.Position + new Vector2(r.Size.X + 8, -10)).Round(), Vector2I.Zero));
@@ -502,7 +650,8 @@ internal sealed class ColourChooser
         var col = Hex.To(hex, Colors.Black);
         var b = new Button { CustomMinimumSize = new Vector2(30, 18), TooltipText = tip + "\nClick: the colour · right-click: the fill", FocusMode = Control.FocusModeEnum.None, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         var box = new StyleBoxFlat { BgColor = col, BorderColor = new Color(0, 0, 0, 0.5f) };
-        box.SetBorderWidthAll(1); box.SetCornerRadiusAll(2);
+        box.SetBorderWidthAll(1);
+        box.SetCornerRadiusAll(2);
         foreach (var st in new[] { "normal", "hover", "pressed", "focus" }) b.AddThemeStyleboxOverride(st, box);
         b.GuiInput += e =>
         {
@@ -519,7 +668,8 @@ internal sealed class ColourChooser
 
     public void SyncInk()
     {
-        Prefs.Ink = Hex.Of(Canvas.Ink); Prefs.Ink2 = Hex.Of(Canvas.Ink2);
+        Prefs.Ink = Hex.Of(Canvas.Ink);
+        Prefs.Ink2 = Hex.Of(Canvas.Ink2);
         _s.Model?.InkChanged(Canvas.Ink);
         _panel.Rebuild();
     }

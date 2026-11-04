@@ -43,7 +43,8 @@ public sealed class ReliefCache
 
     public void Draft(string sheetId, ReliefGrid? g, Rect2? where = null)
     {
-        if (g == null) _drafts.Remove(sheetId); else _drafts[sheetId] = g;
+        if (g == null) _drafts.Remove(sheetId);
+        else _drafts[sheetId] = g;
         Invalidate(where);
     }
 
@@ -88,7 +89,8 @@ public sealed class ReliefCache
             if (i >= packages.Count) { missing(); return; }
             _assets.EnsureFile(packages[i], rel, ready, () => Try(i + 1));
         }
-        if (Find(s, rel) != null) ready(); else Try(0);
+        if (Find(s, rel) != null) ready();
+        else Try(0);
     }
 
     void Request(SheetDef s, string sha)
@@ -119,7 +121,12 @@ public sealed class ReliefCache
                     try
                     {
                         var g = ReliefFiles.Load(index, rel => Find(sheet, rel));
-                        Callable.From(() => { _loading.Remove(sha); _grids[sha] = g; GridArrived(); }).CallDeferred();
+                        Callable.From(() =>
+                        {
+                            _loading.Remove(sha);
+                            _grids[sha] = g;
+                            GridArrived();
+                        }).CallDeferred();
                     }
                     catch (Exception e) when (e is IOException or InvalidDataException or UnauthorizedAccessException)
                     {
@@ -127,7 +134,12 @@ public sealed class ReliefCache
                     }
                 });
             }
-            if (waiting == 0) { waiting = 1; Arrived(); return; }
+            if (waiting == 0)
+            {
+                waiting = 1;
+                Arrived();
+                return;
+            }
             foreach (var rel in chunks) Fetch(sheet, rel, Arrived, () => { if (!lost) { lost = true; Fail("a chunk is missing at the host"); } });
         }, () => Fail("the host does not have it"));
     }

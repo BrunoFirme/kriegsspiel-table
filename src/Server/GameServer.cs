@@ -78,7 +78,8 @@ public sealed partial class GameServer
         {
             foreach (var (oldId, hash) in _tokens.Where(t => t.Value == known.TokenHash).ToList())
             {
-                _peers.Remove(oldId); _tokens.Remove(oldId);
+                _peers.Remove(oldId);
+                _tokens.Remove(oldId);
                 out_.Add(new(oldId, new JoinResult { Ok = false, Error = "you connected from elsewhere" }));
             }
             if (Full(known.Role) is { } full) { out_.Add(new(peerId, new JoinResult { Ok = false, Error = full })); return out_; }
@@ -151,11 +152,26 @@ public sealed partial class GameServer
             case Admit a:
             {
                 if (!_waiting.Remove(a.PeerId, out var w)) { res.Add(new(byId, new ErrorMessage { Text = "nobody is waiting under that id" })); return res; }
-                if (!Enum.IsDefined(a.Role)) { _waiting[a.PeerId] = w; res.Add(new(byId, new ErrorMessage { Text = "no such role" })); return res; }
+                if (!Enum.IsDefined(a.Role))
+                {
+                    _waiting[a.PeerId] = w;
+                    res.Add(new(byId, new ErrorMessage { Text = "no such role" }));
+                    return res;
+                }
                 var role = a.Role;
                 if (role == Role.HostUmpire) role = Role.LeadUmpire;
-                if (role == Role.LeadUmpire && !host) { _waiting[a.PeerId] = w; res.Add(new(byId, new ErrorMessage { Text = "only the host makes lead umpires" })); return res; }
-                if (Full(role) is { } full) { _waiting[a.PeerId] = w; res.Add(new(byId, new ErrorMessage { Text = full })); return res; }
+                if (role == Role.LeadUmpire && !host)
+                {
+                    _waiting[a.PeerId] = w;
+                    res.Add(new(byId, new ErrorMessage { Text = "only the host makes lead umpires" }));
+                    return res;
+                }
+                if (Full(role) is { } full)
+                {
+                    _waiting[a.PeerId] = w;
+                    res.Add(new(byId, new ErrorMessage { Text = full }));
+                    return res;
+                }
                 var token = GameAccess.NewToken();
                 var entry = new Approved { TokenHash = GameAccess.Hash(token), Name = UniqueName(w.Name, null), Role = role };
                 Access.Approved.Add(entry);
@@ -386,7 +402,8 @@ public sealed partial class GameServer
         if (c is RestoreTurn restored)
         {
             Turns.RemoveRange(restored.Index, Turns.Count - restored.Index);
-            _inverses.Clear(); _undone.Clear();
+            _inverses.Clear();
+            _undone.Clear();
         }
         if (undoTarget is long ut)
         {
@@ -515,7 +532,12 @@ public sealed partial class GameServer
             ending = SaveFile.EndsTurn(State, c) ? SaveFile.RecordOf(State, Repeatable.UtcNow) : null;
             err = StateMachine.Apply(State, c, out inverse);
         }
-        catch (Exception e) { err = $"{c?.GetType().Name ?? "a command"} could not be applied: {e.Message}"; ending = null; inverse = null; }
+        catch (Exception e)
+        {
+            err = $"{c?.GetType().Name ?? "a command"} could not be applied: {e.Message}";
+            ending = null;
+            inverse = null;
+        }
         if (err != null) { GiveBackIds(nextId, seqBefore); return (err, null); }
         if (ending != null) Turns.Add(ending);
         LastInverse = inverse;
@@ -643,7 +665,8 @@ public sealed partial class GameServer
         if (StateMachine.Apply(State, c, out _) is { } err) throw new InvalidDataException(err);
         Turns.Clear();
         Turns.AddRange(turns);
-        _inverses.Clear(); _undone.Clear();
+        _inverses.Clear();
+        _undone.Clear();
         State.LastSeq = c.Seq;
         Remember(c, null, toSaveLog: false);
         LastInverse = null;

@@ -107,27 +107,69 @@ sealed class Transcript : HudPart
     {
         switch (c)
         {
-            case AdvanceClock: Log($"[b]Turn {S.View.Clock.Turn}[/b] · {Fmt.Clock(S.View.Clock)[(Fmt.Clock(S.View.Clock).IndexOf('·') + 1)..].Trim()}  ({Who(c)} ended the turn)"); break;
-            case SetClock: Log($"{Who(c)} set the clock: {Fmt.Clock(S.View.Clock)}"); break;
-            case RestoreTurn: Log($"[b]{Who(c)} put the table back to the end of turn {S.View.Clock.Turn}[/b] · {Fmt.Clock(S.View.Clock)}{(S.IsUmpire ? " · the turns after it left the history" : "")}"); break;
-            case LoadSave ls: Log($"[b]{Who(c)} loaded {Fmt.Bb(ls.Name)}[/b] · {Fmt.Clock(S.View.Clock)}"); break;
-            case AddSheet a: Log($"{Who(c)} added the map sheet [b]{Fmt.Bb(a.Sheet.Name)}[/b]"); break;
-            case RemoveSheet: Log($"{Who(c)} removed a map sheet"); break;
-            case CropSheet cr: Log($"{Who(c)} {(cr.Crop == null ? "uncropped" : "cropped")} a map sheet"); break;
-            case SetSheetRelief sr: Log($"{Who(c)} {(sr.Relief == null ? "took the relief off" : "shaped the relief of")} [b]{Fmt.Bb(SheetName(sr.Id))}[/b]"); break;
-            case SetSheetPicture sp: Log($"{Who(c)} laid a new picture on [b]{Fmt.Bb(SheetName(sp.Id))}[/b]"); break;
-            case SetLighting: Log($"{Who(c)} changed the lighting"); break;
-            case SetWind sw: Log($"{Who(c)} set the wind: {Wind.Words(sw.Wind.Strength)}{(sw.Wind.Strength >= 0.25 ? $" from the {Wind.Point(sw.Wind.From)}" : "")}"); break;
-            case SetBriefing: Log($"{Who(c)} changed the briefing (Scenario properties → Briefing)"); break;
-            case SetPointerRule pr: Log($"{Who(c)} {(pr.AlwaysShown ? "showed every umpire's pointer for good" : "let umpires hide their pointers")}"); break;
-            case SetVisionRadius sv: Log($"{Who(c)} set the vision radius: {Fmt.Distance(sv.Radius, S.View.Calibration)}"); break;
-            case SetZone z: Log($"{Who(c)} set the zone [b]{Fmt.Bb(z.Zone.Name)}[/b] for {Fmt.Bb(z.Zone.Owner)}"); break;
-            case RemoveZone: Log($"{Who(c)} removed a zone"); break;
-            case AddPack ap: Log($"Pack [b]{Fmt.Bb(S.Store.Pack(ap.Id)?.Name ?? ap.Id)}[/b] is now in the game"); break;
-            case SetCalibration sc when c.Actor != S.Me.PeerId: Log($"{Who(c)} set the map scale"); break;
-            case SpawnPiece sp when c.Actor != S.Me.PeerId: Log($"{Who(c)} placed [b]{Fmt.Bb(S.Def(sp.Def)?.Name ?? sp.Def)}[/b]"); break;
-            case DeletePiece when c.Actor != S.Me.PeerId: Log($"{Who(c)} removed a piece"); break;
-            case Say s: Log($"{(s.Actor == 0 ? "" : Who(s) + ": ")}[color={Fmt.BbColor(s.Color, "#e8e4dc")}]{Fmt.Bb(s.Text)}[/color]"); break;
+            case AdvanceClock:
+                Log($"[b]Turn {S.View.Clock.Turn}[/b] · {Fmt.Clock(S.View.Clock)[(Fmt.Clock(S.View.Clock).IndexOf('·') + 1)..].Trim()}  ({Who(c)} ended the turn)");
+                break;
+            case SetClock:
+                Log($"{Who(c)} set the clock: {Fmt.Clock(S.View.Clock)}");
+                break;
+            case RestoreTurn:
+                Log($"[b]{Who(c)} put the table back to the end of turn {S.View.Clock.Turn}[/b] · {Fmt.Clock(S.View.Clock)}{(S.IsUmpire ? " · the turns after it left the history" : "")}");
+                break;
+            case LoadSave ls:
+                Log($"[b]{Who(c)} loaded {Fmt.Bb(ls.Name)}[/b] · {Fmt.Clock(S.View.Clock)}");
+                break;
+            case AddSheet a:
+                Log($"{Who(c)} added the map sheet [b]{Fmt.Bb(a.Sheet.Name)}[/b]");
+                break;
+            case RemoveSheet:
+                Log($"{Who(c)} removed a map sheet");
+                break;
+            case CropSheet cr:
+                Log($"{Who(c)} {(cr.Crop == null ? "uncropped" : "cropped")} a map sheet");
+                break;
+            case SetSheetRelief sr:
+                Log($"{Who(c)} {(sr.Relief == null ? "took the relief off" : "shaped the relief of")} [b]{Fmt.Bb(SheetName(sr.Id))}[/b]");
+                break;
+            case SetSheetPicture sp:
+                Log($"{Who(c)} laid a new picture on [b]{Fmt.Bb(SheetName(sp.Id))}[/b]");
+                break;
+            case SetLighting:
+                Log($"{Who(c)} changed the lighting");
+                break;
+            case SetWind sw:
+                Log($"{Who(c)} set the wind: {Wind.Words(sw.Wind.Strength)}{(sw.Wind.Strength >= 0.25 ? $" from the {Wind.Point(sw.Wind.From)}" : "")}");
+                break;
+            case SetBriefing:
+                Log($"{Who(c)} changed the briefing (Scenario properties → Briefing)");
+                break;
+            case SetPointerRule pr:
+                Log($"{Who(c)} {(pr.AlwaysShown ? "showed every umpire's pointer for good" : "let umpires hide their pointers")}");
+                break;
+            case SetVisionRadius sv:
+                Log($"{Who(c)} set the vision radius: {Fmt.Distance(sv.Radius, S.View.Calibration)}");
+                break;
+            case SetZone z:
+                Log($"{Who(c)} set the zone [b]{Fmt.Bb(z.Zone.Name)}[/b] for {Fmt.Bb(z.Zone.Owner)}");
+                break;
+            case RemoveZone:
+                Log($"{Who(c)} removed a zone");
+                break;
+            case AddPack ap:
+                Log($"Pack [b]{Fmt.Bb(S.Store.Pack(ap.Id)?.Name ?? ap.Id)}[/b] is now in the game");
+                break;
+            case SetCalibration sc when c.Actor != S.Me.PeerId:
+                Log($"{Who(c)} set the map scale");
+                break;
+            case SpawnPiece sp when c.Actor != S.Me.PeerId:
+                Log($"{Who(c)} placed [b]{Fmt.Bb(S.Def(sp.Def)?.Name ?? sp.Def)}[/b]");
+                break;
+            case DeletePiece when c.Actor != S.Me.PeerId:
+                Log($"{Who(c)} removed a piece");
+                break;
+            case Say s:
+                Log($"{(s.Actor == 0 ? "" : Who(s) + ": ")}[color={Fmt.BbColor(s.Color, "#e8e4dc")}]{Fmt.Bb(s.Text)}[/color]");
+                break;
         }
     }
 

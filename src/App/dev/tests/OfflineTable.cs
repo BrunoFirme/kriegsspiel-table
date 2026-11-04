@@ -33,9 +33,15 @@ sealed class OfflineTable
             foreach (var o in outs)
                 switch (o.Message)
                 {
-                    case CommandMessage cm: s.OnCommand(cm.Command); break;
-                    case JoinResult jr: s.OnJoined(jr); break;
-                    case ErrorMessage em: t.Errors.Add(em.Text); break;
+                    case CommandMessage cm:
+                        s.OnCommand(cm.Command);
+                        break;
+                    case JoinResult jr:
+                        s.OnJoined(jr);
+                        break;
+                    case ErrorMessage em:
+                        t.Errors.Add(em.Text);
+                        break;
                 }
         }
         s.Send = c => Deliver(server.Handle(1, c));

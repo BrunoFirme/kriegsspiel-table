@@ -200,7 +200,9 @@ public class TableToolsTests
         File.WriteAllText(Path.Combine(root, "user.t", "pack.json"), Json.Serialize(new PackManifest
         {
             Id = "user.t", Name = "T",
-            Pieces = { new PieceDef { Id = "user.t.bn", Name = "Battalion", Size = new Size2(2, 1), Counters = { new CounterDef { Name = "Strength", Max = 12, Default = 10 } }, TextLines = { new TextLineDef { Name = "Commander" } }, States = { new PieceStateDef { Name = "Formed" }, new PieceStateDef { Name = "Disordered" } } } },
+            Pieces =
+                { new PieceDef { Id = "user.t.bn", Name = "Battalion", Size = new Size2(2, 1), Counters = { new CounterDef { Name = "Strength", Max = 12, Default = 10 } }, TextLines = { new TextLineDef { Name = "Commander" } },
+                    States = { new PieceStateDef { Name = "Formed" }, new PieceStateDef { Name = "Disordered" } } } },
         }));
         var store = new PackageStore(root);
         var g = new GameState { Name = "Test", Packs = { "user.t" } };
@@ -222,9 +224,15 @@ public class TableToolsTests
         foreach (var o in outs)
             switch (o.Message)
             {
-                case CommandMessage cm: _s.OnCommand(cm.Command); break;
-                case JoinResult jr: _s.OnJoined(jr); break;
-                case ScriptConsole or ScriptList: _s.OnScriptMessage(o.Message); break;
+                case CommandMessage cm:
+                    _s.OnCommand(cm.Command);
+                    break;
+                case JoinResult jr:
+                    _s.OnJoined(jr);
+                    break;
+                case ScriptConsole or ScriptList:
+                    _s.OnScriptMessage(o.Message);
+                    break;
             }
         if (_server.ConsoleOut() is { Count: > 0 } said) Deliver(said);
     }

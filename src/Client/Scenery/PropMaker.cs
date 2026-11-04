@@ -62,7 +62,9 @@ public sealed class PropMaker
         m.Tri(back[0], back[3], back[4], Uv(M.CanvasDark, 0, 1), Uv(M.CanvasDark, 1, 0.6f), Uv(M.CanvasDark, 1, 1), (back[1] - inside) with { Y = 0 });
         m.Tri(back[1], back[2], back[3], Uv(M.CanvasDark, 0, 0.6f), Uv(M.CanvasDark, 0.5f, 0), Uv(M.CanvasDark, 1, 0.6f), (back[1] - inside) with { Y = 0 });
         var fr = new[] { P(hl, 0, -hw), P(hl, wall, -hw), P(hl, ridge, 0), P(hl, wall, hw), P(hl, 0, hw) };
-        var doorL = P(hl, 0, -0.06f); var doorR = P(hl, 0, 0.06f); var top = P(hl, ridge * 0.92f, 0);
+        var doorL = P(hl, 0, -0.06f);
+        var doorR = P(hl, 0, 0.06f);
+        var top = P(hl, ridge * 0.92f, 0);
         var outF = P(hl + 1, 0.2f, 0) - P(hl, 0.2f, 0);
         m.Tri(fr[0], fr[1], doorL, Uv(M.Canvas, 0, 1), Uv(M.Canvas, 0, 0.6f), Uv(M.Canvas, 0.4f, 1), outF);
         m.Tri(fr[1], top, doorL, Uv(M.Canvas, 0, 0.6f), Uv(M.Canvas, 0.5f, 0.05f), Uv(M.Canvas, 0.4f, 1), outF);
@@ -100,7 +102,8 @@ public sealed class PropMaker
         foreach (var s in new[] { -1f, 1f })
         {
             Vector3 Bump(float u, float v) => r * new Vector3(0, 0.012f * noise.GetNoise2D(u * 3, v * 2), s * 0.02f * (noise.GetNoise2D(u * 5 + 9, v * 3) * 0.5f + 0.5f));
-            m.Sheet(P(-hl - 0.03f, ridge + 0.03f, 0), P(hl + 0.03f, ridge + 0.03f, 0), P(hl + 0.04f, -0.0f, s * (hw + 0.04f)), P(-hl - 0.04f, -0.0f, s * (hw + 0.04f)), M.Straw, inside, 0.02f, 8, 5, 1.6f, Bump);
+            m.Sheet(P(-hl - 0.03f, ridge + 0.03f, 0), P(hl + 0.03f, ridge + 0.03f, 0), P(hl + 0.04f, -0.0f, s * (hw + 0.04f)), P(-hl - 0.04f, -0.0f, s * (hw + 0.04f)), M.Straw, inside, 0.02f, 8, 5,
+                1.6f, Bump);
             m.Sheet(P(-hl, ridge, 0), P(hl, ridge, 0), P(hl, 0.02f, s * hw), P(-hl, 0.02f, s * hw), M.Straw, P(0, ridge + 0.5f, -s * 2f), 0.02f, 4, 3, 1.6f);
         }
         m.Tri(P(-hl, 0, -hw), P(-hl, 0, hw), P(-hl, ridge, 0), Uv(M.Bark, 0, 1), Uv(M.Bark, 1, 1), Uv(M.Bark, 0.5f, 0), Vector3.Zero - (r * Axis.Right));
@@ -181,7 +184,9 @@ public sealed class PropMaker
 
     public PropMade Bivouac()
     {
-        var m = new PropMesh(_noise); var rng = new Random(1805); var fires = new List<Vector2>();
+        var m = new PropMesh(_noise);
+        var rng = new Random(1805);
+        var fires = new List<Vector2>();
         m.GroundPatch(2.35f, 1.6f, 48);
         foreach (var (x, z) in new[] { (-1.2f, 0.3f), (0.08f, 0.5f), (1.3f, 0.22f) }) { FirePit(m, new Vector3(x, 0, z), rng); fires.Add(new Vector2(x, z)); }
         Tripod(m, new Vector3(0.08f, 0, 0.5f), 20);
@@ -202,7 +207,8 @@ public sealed class PropMaker
 
     public PropMade PicketPost()
     {
-        var m = new PropMesh(_noise); var rng = new Random(1806);
+        var m = new PropMesh(_noise);
+        var rng = new Random(1806);
         m.GroundPatch(0.82f, 0.72f, 30);
         FirePit(m, new Vector3(0.15f, 0, 0.22f), rng);
         Tripod(m, new Vector3(0.15f, 0, 0.22f), 40);
@@ -215,7 +221,8 @@ public sealed class PropMaker
 
     public PropMade CampFire()
     {
-        var m = new PropMesh(_noise); var rng = new Random(1807);
+        var m = new PropMesh(_noise);
+        var rng = new Random(1807);
         m.GroundPatch(0.5f, 0.46f, 24);
         FirePit(m, Vector3.Zero, rng);
         Log(m, new Vector3(0, 0, 0.33f), 4, 0.32f);
@@ -233,7 +240,8 @@ public sealed class PropMaker
         for (int i = 0; i < 3; i++)
         {
             var dir = tilt * axes[i];
-            var a1 = tilt * axes[(i + 1) % 3]; var a2 = tilt * axes[(i + 2) % 3];
+            var a1 = tilt * axes[(i + 1) % 3];
+            var a2 = tilt * axes[(i + 2) % 3];
             var basis = new Basis(dir, a1, a2);
             m.Box(c + basis * new Vector3(0, leg / 2, th / 2), new Vector3(half * 2, leg, th), basis, M.Steel);
             m.Box(c + basis * new Vector3(0, th / 2, leg / 2), new Vector3(half * 2, th, leg), basis, M.Steel);
@@ -267,13 +275,19 @@ public sealed class PropMaker
             {
                 var n = (grid[ri, si + 1] - grid[ri, si]).Cross(grid[ri + 1, si] - grid[ri, si]);
                 if (n.Y < 0) n = -n;
-                nrm[ri, si] += n; nrm[ri + 1, si] += n; nrm[ri, si + 1] += n; nrm[ri + 1, si + 1] += n;
+                nrm[ri, si] += n;
+                nrm[ri + 1, si] += n;
+                nrm[ri, si + 1] += n;
+                nrm[ri + 1, si + 1] += n;
             }
         for (int ri = 0; ri <= rings; ri++) for (int si = 0; si <= segs; si++) nrm[ri, si] = (nrm[ri, si] + nrm[ri, (si + segs) % segs] * 0 + Axis.Up * 1e-4f).Normalized();
         for (int ri = 0; ri < rings; ri++)
             for (int si = 0; si < segs; si++)
             {
-                var a = grid[ri, si]; var b = grid[ri + 1, si]; var c = grid[ri + 1, si + 1]; var d = grid[ri, si + 1];
+                var a = grid[ri, si];
+                var b = grid[ri + 1, si];
+                var c = grid[ri + 1, si + 1];
+                var d = grid[ri, si + 1];
                 m.TriN(a, b, c, nrm[ri, si], nrm[ri + 1, si], nrm[ri + 1, si + 1], T(a), T(b), T(c));
                 m.TriN(a, c, d, nrm[ri, si], nrm[ri + 1, si + 1], nrm[ri, si + 1], T(a), T(c), T(d));
             }
@@ -291,7 +305,8 @@ public sealed class PropMaker
 
     public PropMade Trench(Vector2[] path)
     {
-        var m = new PropMesh(_noise); var rng = new Random(1916);
+        var m = new PropMesh(_noise);
+        var rng = new Random(1916);
         var lo = path.Aggregate(new Vector2(float.MaxValue, float.MaxValue), (a, q) => new Vector2(Mathf.Min(a.X, q.X), Mathf.Min(a.Y, q.Y)));
         var hi = path.Aggregate(new Vector2(float.MinValue, float.MinValue), (a, q) => new Vector2(Mathf.Max(a.X, q.X), Mathf.Max(a.Y, q.Y)));
         var centre = (lo + hi) / 2;
@@ -316,10 +331,13 @@ public sealed class PropMaker
 
         (float d, bool front) Near(Vector2 q)
         {
-            float best = float.MaxValue; Vector2 at = q;
+            float best = float.MaxValue;
+            Vector2 at = q;
             for (int k = 0; k + 1 < path.Length; k++)
             {
-                var a = path[k]; var b = path[k + 1]; var ab = b - a;
+                var a = path[k];
+                var b = path[k + 1];
+                var ab = b - a;
                 float t = Mathf.Clamp((q - a).Dot(ab) / ab.NormSquared(), 0, 1);
                 var c = a + ab * t;
                 float dd = (q - c).Norm();
@@ -353,7 +371,10 @@ public sealed class PropMaker
                 }
             Vector3 Normal(int x, int z)
             {
-                var l = pts[Math.Max(0, x - 1), z]; var r = pts[Math.Min(nx, x + 1), z]; var dn = pts[x, Math.Max(0, z - 1)]; var up = pts[x, Math.Min(nz, z + 1)];
+                var l = pts[Math.Max(0, x - 1), z];
+                var r = pts[Math.Min(nx, x + 1), z];
+                var dn = pts[x, Math.Max(0, z - 1)];
+                var up = pts[x, Math.Min(nz, z + 1)];
                 var n = (up - dn).Cross(r - l);
                 return (n.Y < 0 ? -n : n).Normalized();
             }
@@ -391,8 +412,10 @@ public sealed class PropMaker
         {
             for (int k = 0; k + 1 < path.Length; k++)
             {
-                var a = new Vector3(path[k].X, 0, path[k].Y); var b = new Vector3(path[k + 1].X, 0, path[k + 1].Y);
-                var along = (b - a).Normalized(); var side = new Vector3(-along.Z, 0, along.X);
+                var a = new Vector3(path[k].X, 0, path[k].Y);
+                var b = new Vector3(path[k + 1].X, 0, path[k + 1].Y);
+                var along = (b - a).Normalized();
+                var side = new Vector3(-along.Z, 0, along.X);
                 if (side.Z < 0) side = -side;
                 float len = (b - a).Norm();
                 var basis = new Basis(along, Axis.Up, along.Cross(Axis.Up).Normalized());
@@ -437,7 +460,10 @@ public sealed class PropMaker
             }
         Vector3 Nrm(int x, int z)
         {
-            var l = pts[Math.Max(0, x - 1), z]; var r = pts[Math.Min(nx, x + 1), z]; var dn = pts[x, Math.Max(0, z - 1)]; var up = pts[x, Math.Min(nz, z + 1)];
+            var l = pts[Math.Max(0, x - 1), z];
+            var r = pts[Math.Min(nx, x + 1), z];
+            var dn = pts[x, Math.Max(0, z - 1)];
+            var up = pts[x, Math.Min(nz, z + 1)];
             var n = (up - dn).Cross(r - l);
             return (n.Y < 0 ? -n : n).Normalized();
         }
@@ -455,7 +481,8 @@ public sealed class PropMaker
                 else
                 {
                     if (Up((x, z), (x + 1, z), (x, z + 1))) m.TriN(pts[x, z], pts[x + 1, z], pts[x, z + 1], Nrm(x, z), Nrm(x + 1, z), Nrm(x, z + 1), T(x, z), T(x + 1, z), T(x, z + 1));
-                    if (Up((x + 1, z), (x + 1, z + 1), (x, z + 1))) m.TriN(pts[x + 1, z], pts[x + 1, z + 1], pts[x, z + 1], Nrm(x + 1, z), Nrm(x + 1, z + 1), Nrm(x, z + 1), T(x + 1, z), T(x + 1, z + 1), T(x, z + 1));
+                    if (Up((x + 1, z), (x + 1, z + 1), (x, z + 1))) m.TriN(pts[x + 1, z], pts[x + 1, z + 1], pts[x, z + 1], Nrm(x + 1, z), Nrm(x + 1, z + 1), Nrm(x, z + 1), T(x + 1, z),
+                        T(x + 1, z + 1), T(x, z + 1));
                 }
             }
     }
@@ -477,7 +504,8 @@ public sealed class PropMaker
 
     public PropMade Breastwork()
     {
-        var m = new PropMesh(_noise); var rng = new Random(1809);
+        var m = new PropMesh(_noise);
+        var rng = new Random(1809);
         const float hl = 1.5f;
         Terrain(m, hl + 0.2f, 0.6f, 0.03f, q =>
         {
@@ -514,7 +542,8 @@ public sealed class PropMaker
         const float hl = 2f;
         Terrain(m, hl + 0.15f, 1.05f, 0.035f, q =>
         {
-            float z = q.Y, t = EndTaper(q.X, hl, 0.45f), h; M mat;
+            float z = q.Y, t = EndTaper(q.X, hl, 0.45f), h;
+            M mat;
             const float GlacisOuterEdge = 1.0f, GlacisCrest = 0.72f, DitchOuterEdge = 0.62f, DitchInnerEdge = 0.4f, ParapetOuterFoot = 0.18f,
                 ParapetCrest = -0.02f, FireStepEdge = -0.1f, FireStepBack = -0.3f, BackSlopeFoot = -0.95f;
             const float GlacisHeight = 0.07f, ParapetHeight = 0.36f, ParapetInnerHeight = 0.34f, FireStepHeight = 0.22f, DitchFloorHeight = 0.004f;
@@ -557,7 +586,8 @@ public sealed class PropMaker
 
     public PropMade Stakes()
     {
-        var m = new PropMesh(_noise); var rng = new Random(1415);
+        var m = new PropMesh(_noise);
+        var rng = new Random(1415);
         for (int row = 0; row < 3; row++)
             for (float x = -1.1f + (row % 2) * 0.09f; x <= 1.1f; x += 0.18f)
             {
@@ -572,7 +602,8 @@ public sealed class PropMaker
 
     public PropMade Palisade()
     {
-        var m = new PropMesh(_noise); var rng = new Random(-50);
+        var m = new PropMesh(_noise);
+        var rng = new Random(-50);
         const float hl = 1.2f;
         Terrain(m, hl + 0.1f, 0.22f, 0.025f, q =>
         {
@@ -600,7 +631,8 @@ public sealed class PropMaker
         float D(Vector2 q) { float x = Mathf.Max(0, Mathf.Abs(q.X) - hl); return Mathf.Sqrt(x * x + q.Y * q.Y); }
         Terrain(m, hl + 0.8f, 0.85f, 0.03f, q =>
         {
-            float d = D(q), h; M mat;
+            float d = D(q), h;
+            M mat;
             if (d < half) { h = 0.008f; mat = M.Mud; }
             else if (d < half + 0.08f) { h = 0.008f + 0.1f * Sm(half, half + 0.08f, d); mat = M.EarthDark; }
             else if (d < half + 0.2f) { h = 0.108f; mat = M.Turf; }
@@ -617,7 +649,8 @@ public sealed class PropMaker
         Vector2 WT(Vector3 p) => Uv(M.Water, 0.5f + p.X / (W * 2), 0.5f + p.Z / (W * 2) * 0.4f);
         for (int i = 0; i < ring.Count; i++)
         {
-            var a = ring[i]; var b = ring[(i + 1) % ring.Count];
+            var a = ring[i];
+            var b = ring[(i + 1) % ring.Count];
             m.Tri(centre, a, b, WT(centre), WT(a), WT(b), Axis.Up);
         }
         return Done(m, new List<Vector2>());
@@ -640,7 +673,8 @@ public sealed class PropMaker
         for (int i = 0; i < 18; i++)
         {
             float a0 = i * Mathf.Tau / 18, a1 = (i + 1) * Mathf.Tau / 18;
-            var d0 = side * Mathf.Cos(a0) + up * Mathf.Sin(a0); var d1 = side * Mathf.Cos(a1) + up * Mathf.Sin(a1);
+            var d0 = side * Mathf.Cos(a0) + up * Mathf.Sin(a0);
+            var d1 = side * Mathf.Cos(a1) + up * Mathf.Sin(a1);
             foreach (var s in new[] { -1f, 1f })
             {
                 var o = at + axis * 0.012f * s;
@@ -651,7 +685,8 @@ public sealed class PropMaker
 
     public PropMade Pavises()
     {
-        var m = new PropMesh(_noise); var rng = new Random(1346);
+        var m = new PropMesh(_noise);
+        var rng = new Random(1346);
         for (float x = -0.98f; x <= 0.99f; x += 0.28f)
         {
             float turn = R(rng, -6, 6);
@@ -667,7 +702,8 @@ public sealed class PropMaker
 
     public PropMade TateShields()
     {
-        var m = new PropMesh(_noise); var rng = new Random(1575);
+        var m = new PropMesh(_noise);
+        var rng = new Random(1575);
         for (float x = -0.94f; x <= 0.95f; x += 0.215f)
         {
             var rot = Yaw(R(rng, -2, 2)) * new Basis(Axis.Right, Mathf.DegToRad(R(rng, 3, 6)));
@@ -692,7 +728,8 @@ public sealed class PropMaker
             int bays = Math.Max(1, (int)Math.Ceiling(Vector3.Distance(from, to) / bay));
             for (int i = 0; i < bays; i++)
             {
-                var a = from.Lerp(to, i / (float)bays); var b = from.Lerp(to, (i + 1) / (float)bays);
+                var a = from.Lerp(to, i / (float)bays);
+                var b = from.Lerp(to, (i + 1) / (float)bays);
                 m.Cylinder(a, a + Axis.Up * pole, 0.011f, M.Walnut, 6, M.EndGrain);
                 if (side == 2 && i == bays / 2) continue;
                 var mid = (a + b) / 2 + Axis.Up * 0.2f;
@@ -707,7 +744,8 @@ public sealed class PropMaker
 
     public PropMade Barricade()
     {
-        var m = new PropMesh(_noise); var rng = new Random(1830);
+        var m = new PropMesh(_noise);
+        var rng = new Random(1830);
         var cartAt = new Vector3(-0.35f, 0, 0);
         void CartPanel(Vector3 offset, Vector3 size) => m.Box(cartAt + offset, size, Basis.Identity, M.Painted);
         void CartShaft(Vector3 from, Vector3 to) => m.Cylinder(cartAt + from, cartAt + to, 0.018f, M.Walnut, 6, M.EndGrain);
@@ -724,7 +762,8 @@ public sealed class PropMaker
         Barrel(m, new Vector3(0.15f, 0, -0.04f));
         Barrel(m, new Vector3(0.28f, 0, 0.02f));
         {
-            var a = new Vector3(0.46f, 0.055f, 0.02f); var b = a + new Vector3(0.16f, 0, 0.05f);
+            var a = new Vector3(0.46f, 0.055f, 0.02f);
+            var b = a + new Vector3(0.16f, 0, 0.05f);
             m.Cylinder(a, a.Lerp(b, 0.5f), 0.05f, M.Plank, 14, M.EndGrain, 0.058f, capB: false);
             m.Cylinder(a.Lerp(b, 0.5f), b, 0.058f, M.Plank, 14, M.EndGrain, 0.05f, capA: false);
         }

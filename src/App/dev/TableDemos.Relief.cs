@@ -88,7 +88,8 @@ sealed partial class TableDemos
         var start = n.Piece.Pos;
         hud.T.SetSelection(new[] { n.Piece.Id });
         hud.T.Hand.Start(start);
-        for (int i = 1; i <= CarryFrames; i++) { hud.T.Hand.Move(start + new Vec2((hill.X - start.X) * i / CarryFrames, (hill.Z - start.Z) * i / CarryFrames)); await _main.ToSignal(Tree, SceneTree.SignalName.ProcessFrame); }
+        for (int i = 1; i <= CarryFrames; i++) { hud.T.Hand.Move(start + new Vec2((hill.X - start.X) * i / CarryFrames, (hill.Z - start.Z) * i / CarryFrames)); await _main.ToSignal(Tree,
+            SceneTree.SignalName.ProcessFrame); }
         for (int i = 0; i < HoldFrames; i++) { hud.T.Hand.Move(hill); await _main.ToSignal(Tree, SceneTree.SignalName.ProcessFrame); }
         hud.T.Hand.Drop();
         double worst = double.MaxValue;
@@ -132,7 +133,8 @@ sealed partial class TableDemos
             if (Session.Store.Pack(pid)?.Pieces.Count > 0)
                 foreach (var at in spots) Session.Do(new SpawnPiece { Layer = Layers.Umpire, Def = Session.Store.Pack(pid)!.Pieces[0].Id, Pos = at, RotDeg = 200 });
         }
-        Session.Do(new Draw { Layer = Layers.Umpire, Stroke = new Stroke { Color = "#C0392B", Width = 1.2, Points = { first.Pos - new Vec2(first.Size.W * 0.45, 0), first.Pos + new Vec2(first.Size.W * 0.9, first.Size.H * 0.05) } } });
+        Session.Do(new Draw { Layer = Layers.Umpire,
+            Stroke = new Stroke { Color = "#C0392B", Width = 1.2, Points = { first.Pos - new Vec2(first.Size.W * 0.45, 0), first.Pos + new Vec2(first.Size.W * 0.9, first.Size.H * 0.05) } } });
         foreach (var s in sheets) Session.Do(new LockSheet { Id = s.Id, Locked = true });
         Tree.CreateTimer(ReliefSettleSeconds).Timeout += () =>
         {

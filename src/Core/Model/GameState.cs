@@ -129,11 +129,29 @@ public sealed class GameState
     {
         var s = Json.Clone(src);
         var packs = Packs.Union(s.Packs ?? []).ToList();
-        Format = s.Format; ScenarioId = s.ScenarioId; Name = s.Name;
+        Format = s.Format;
+        ScenarioId = s.ScenarioId;
+        Name = s.Name;
         Packs = packs;
-        Sheets = s.Sheets; Grid = s.Grid; Calibration = s.Calibration; Clock = s.Clock; Lighting = s.Lighting; Wind = s.Wind ?? new Wind();
-        VisionRadius = s.VisionRadius; PointersAlwaysShown = s.PointersAlwaysShown; Briefing = s.Briefing; Layers = s.Layers; Drawings = s.Drawings; Dice = s.Dice; Zones = s.Zones; Boards = s.Boards;
-        Script = s.Script; ScriptState = s.ScriptState; Ui = s.Ui; Hotkeys = s.Hotkeys; MenuItems = s.MenuItems;
+        Sheets = s.Sheets;
+        Grid = s.Grid;
+        Calibration = s.Calibration;
+        Clock = s.Clock;
+        Lighting = s.Lighting;
+        Wind = s.Wind ?? new Wind();
+        VisionRadius = s.VisionRadius;
+        PointersAlwaysShown = s.PointersAlwaysShown;
+        Briefing = s.Briefing;
+        Layers = s.Layers;
+        Drawings = s.Drawings;
+        Dice = s.Dice;
+        Zones = s.Zones;
+        Boards = s.Boards;
+        Script = s.Script;
+        ScriptState = s.ScriptState;
+        Ui = s.Ui;
+        Hotkeys = s.Hotkeys;
+        MenuItems = s.MenuItems;
         NextId = Math.Max(NextId, s.NextId);
         EnsureNextId();
     }
@@ -174,7 +192,8 @@ public sealed class GameState
         public Index(List<PieceInstance> list) { List = list; Refile(); }
         public void Refile()
         {
-            At.Clear(); Misses = 0;
+            At.Clear();
+            Misses = 0;
             for (int i = 0; i < List.Count; i++) At.TryAdd(List[i].Id, i);
         }
     }

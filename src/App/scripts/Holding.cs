@@ -23,7 +23,11 @@ sealed partial class Carry : IHeldPieces
 
     public Carry(TableContext c, PointerPress press, PieceLayer pieces, Selection selection, PendingPoses poses)
     {
-        _c = c; _press = press; _pieces = pieces; _selection = selection; _poses = poses;
+        _c = c;
+        _press = press;
+        _pieces = pieces;
+        _selection = selection;
+        _poses = poses;
         _footing = new Footing<PieceNode>(p => _pieces.Grid.Near(p), n => _heldNodes.Contains(n), () => _c.S.Ground);
         _sticking = new Sticking<PieceNode>(p => _pieces.Grid.Near(p), _pieces.NodeOf, l => _c.S.View.Layer(l), _footing);
     }
@@ -184,7 +188,13 @@ sealed partial class Carry : IHeldPieces
             var now = _pieces.NodeOf(h.Layer, h.Id);
             if (now == h.Node) continue;
             changed = true;
-            if (now != null) { h.Node = now; now.Held = true; now.TakenInHand(); continue; }
+            if (now != null)
+            {
+                h.Node = now;
+                now.Held = true;
+                now.TakenInHand();
+                continue;
+            }
             _held.Remove(h);
             foreach (var x in _held) if (x.Parent == h) x.Parent = null;
         }
@@ -275,7 +285,13 @@ sealed partial class Carry : IHeldPieces
         n.BeginSettle();
         _c.Moving(n);
         var tw = n.CreateTween();
-        tw.TweenMethod(Callable.From<float>(k => { if (n.Held) return; n.Position = from.Lerp(to, k * k); n.Quaternion = turnFrom.Slerp(turnTo, k * k); _c.Moving(n); }), 0f, 1f, t);
+        tw.TweenMethod(Callable.From<float>(k =>
+        {
+            if (n.Held) return;
+            n.Position = from.Lerp(to, k * k);
+            n.Quaternion = turnFrom.Slerp(turnTo, k * k);
+            _c.Moving(n);
+        }), 0f, 1f, t);
         tw.Finished += () => { n.EndSettle(); if (!n.Placed) n.Refresh(n.Piece); };
         return t;
     }
@@ -317,7 +333,12 @@ sealed partial class Carry : IHeldPieces
     {
         Rehome();
         EndMarch();
-        if (_held.Any(h => !_c.S.CanTouch(h.Layer, _cursor + h.Offset))) { ReturnHome(); _c.Say("Outside your zone"); return; }
+        if (_held.Any(h => !_c.S.CanTouch(h.Layer, _cursor + h.Offset)))
+        {
+            ReturnHome();
+            _c.Say("Outside your zone");
+            return;
+        }
         foreach (var h in _held) h.Node.Held = false;
         var held = _held.Where(h => GodotObject.IsInstanceValid(h.Node)).ToList();
         _held.Clear();
@@ -401,8 +422,12 @@ sealed partial class Carry : IHeldPieces
                 var b = new Vector3(x0 + (i + 1) * step, H(i + 1, j), z0 + j * step);
                 var c = new Vector3(x0 + i * step, H(i, j + 1), z0 + (j + 1) * step);
                 var d = new Vector3(x0 + (i + 1) * step, H(i + 1, j + 1), z0 + (j + 1) * step);
-                faces[k++] = a; faces[k++] = b; faces[k++] = c;
-                faces[k++] = b; faces[k++] = d; faces[k++] = c;
+                faces[k++] = a;
+                faces[k++] = b;
+                faces[k++] = c;
+                faces[k++] = b;
+                faces[k++] = d;
+                faces[k++] = c;
             }
         var body = new StaticBody3D();
         body.AddChild(new CollisionShape3D { Shape = new ConcavePolygonShape3D { Data = faces, BackfaceCollision = true } });
@@ -512,7 +537,8 @@ sealed partial class Carry : IHeldPieces
         }
         var cmds = Landing<PieceNode>.ParentsFirst(moved, _c.S.View.Layer(layer));
         int pushed = moved.Count(x => !heldSet.Contains(x.n));
-        var sticky = _sticking.Stickiness(held.Select(h => h.Node).Where(n => GodotObject.IsInstanceValid(n) && !n.Held).ToList(), moved, scene.Sim.Where(x => !x.b.Freeze).Select(x => x.n).ToHashSet());
+        var sticky =
+            _sticking.Stickiness(held.Select(h => h.Node).Where(n => GodotObject.IsInstanceValid(n) && !n.Held).ToList(), moved, scene.Sim.Where(x => !x.b.Freeze).Select(x => x.n).ToHashSet());
         cmds.AddRange(sticky.cmds);
         if (sticky.stuck > 0) _c.Say(sticky.stuck == 1 ? $"Stuck to {sticky.to}" : $"{sticky.stuck} pieces stuck to {sticky.to}");
         else if (sticky.freed > 0) _c.Say("Dropped; no longer stuck");
@@ -559,7 +585,12 @@ sealed partial class Carry : IHeldPieces
     void FinishClump()
     {
         if (_clumping == null) return;
-        foreach (var (h, c) in _clumping) { h.Offset = c.to; h.Rot = c.toRot; h.Lift = c.toLift; }
+        foreach (var (h, c) in _clumping)
+        {
+            h.Offset = c.to;
+            h.Rot = c.toRot;
+            h.Lift = c.toLift;
+        }
         _clumping = null;
         foreach (var (n, q) in _tumbling ?? []) if (GodotObject.IsInstanceValid(n)) n.TurnInHandTo(q.to);
         _tumbling = null;

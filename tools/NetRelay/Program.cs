@@ -45,11 +45,21 @@ try
         string Value() => i + 1 < args.Length ? args[++i] : throw new FormatException($"{option} needs a value");
         switch (option)
         {
-            case "--lane": lanes.Add(LaneSetting.Parse(Value())); break;
-            case "--to": host = Address(Value()); break;
-            case "--host-up": hostUpKbps = Kbps(Value()); break;
-            case "--open": open = true; break;
-            case "--check": check = true; break;
+            case "--lane":
+                lanes.Add(LaneSetting.Parse(Value()));
+                break;
+            case "--to":
+                host = Address(Value());
+                break;
+            case "--host-up":
+                hostUpKbps = Kbps(Value());
+                break;
+            case "--open":
+                open = true;
+                break;
+            case "--check":
+                check = true;
+                break;
             default: throw new FormatException($"{option} is not an option: NetRelay --help lists them");
         }
     }

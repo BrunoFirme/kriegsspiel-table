@@ -52,9 +52,15 @@ public class CommandAnswersTests
         foreach (var p in c.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(p => p.DeclaringType != typeof(Command) && p.Name != nameof(LayerCommand.Layer)))
             switch (p.GetValue(c))
             {
-                case string s: ids.Add(s); break;
-                case List<string> l: ids.AddRange(l); break;
-                case PieceInstance pi: ids.Add(pi.Id); break;
+                case string s:
+                    ids.Add(s);
+                    break;
+                case List<string> l:
+                    ids.AddRange(l);
+                    break;
+                case PieceInstance pi:
+                    ids.Add(pi.Id);
+                    break;
                 case Batch: break;
             }
         if (c is Batch b) foreach (var i in b.Items) ids.AddRange(Names(i));

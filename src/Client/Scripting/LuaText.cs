@@ -24,7 +24,12 @@ public static class LuaText
         for (int i = 0; i < text.Length; i++)
         {
             var c = text[i];
-            if (quote != '\0') { if (c == '\\') i++; else if (c == quote) quote = '\0'; continue; }
+            if (quote != '\0')
+            {
+                if (c == '\\') i++;
+                else if (c == quote) quote = '\0';
+                continue;
+            }
             if (c is '"' or '\'') quote = c;
             else if (c == '-' && i + 1 < text.Length && text[i + 1] == '-') return false;
         }

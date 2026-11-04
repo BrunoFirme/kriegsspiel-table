@@ -80,28 +80,36 @@ public static partial class ScriptSafety
                 int j = i + 1;
                 while (j < n && s[j] != c && s[j] != '\n') { if (s[j] == '\\') j++; j++; }
                 j = Math.Min(j + 1, n);
-                sb.Append(s, i, j - i); i = j; continue;
+                sb.Append(s, i, j - i);
+                i = j;
+                continue;
             }
             if (c == '[' && LongBracket(s, i, out int level, out int open))
             {
                 int j = CloseOf(s, i + open, level);
-                sb.Append(s, i, j - i); i = j; continue;
+                sb.Append(s, i, j - i);
+                i = j;
+                continue;
             }
             if (c == '-' && i + 1 < n && s[i + 1] == '-')
             {
                 int j;
                 if (i + 2 < n && s[i + 2] == '[' && LongBracket(s, i + 2, out int lvl, out int op)) j = CloseOf(s, i + 2 + op, lvl);
                 else { j = i; while (j < n && s[j] != '\n' && s[j] != '\r') j++; }
-                sb.Append(' '); i = j; continue;
+                sb.Append(' ');
+                i = j;
+                continue;
             }
-            sb.Append(c); i++;
+            sb.Append(c);
+            i++;
         }
         return sb.ToString();
     }
 
     static bool LongBracket(string s, int i, out int level, out int open)
     {
-        level = 0; open = 0;
+        level = 0;
+        open = 0;
         int j = i + 1;
         while (j < s.Length && s[j] == '=') { level++; j++; }
         if (j < s.Length && s[j] == '[') { open = j - i + 1; return true; }

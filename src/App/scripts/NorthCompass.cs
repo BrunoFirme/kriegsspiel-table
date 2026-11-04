@@ -64,7 +64,12 @@ public partial class NorthCompass : Control
             case InputEventMouseMotion mm when _pressed:
                 AcceptEvent();
                 if (!_dragging && (mm.GlobalPosition - _grab).Length() < DragFrom) break;
-                if (!_dragging) { _dragging = true; SetAnchorsPreset(LayoutPreset.TopLeft, true); MouseDefaultCursorShape = CursorShape.Move; }
+                if (!_dragging)
+                {
+                    _dragging = true;
+                    SetAnchorsPreset(LayoutPreset.TopLeft, true);
+                    MouseDefaultCursorShape = CursorShape.Move;
+                }
                 var loose = _start + (mm.GlobalPosition - _grab);
                 Position = Snap?.Invoke(loose) ?? loose;
                 break;

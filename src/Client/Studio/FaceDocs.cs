@@ -8,7 +8,8 @@ public static class FaceDocs
         if (frontW > 0 && frontH > 0)
         {
             float k = Math.Min(1f, 2048f / Math.Max(frontW, frontH));
-            w = Math.Max(8, (int)(frontW * k)); h = Math.Max(8, (int)(frontH * k));
+            w = Math.Max(8, (int)(frontW * k));
+            h = Math.Max(8, (int)(frontH * k));
         }
         var doc = new ArtDoc { W = w, H = h };
         doc.Layers.Add(new ArtLayer { Name = "Paint", Kind = "paint" });

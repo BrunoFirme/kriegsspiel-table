@@ -23,6 +23,11 @@ public static class Problems
 
     public static List<string> Take()
     {
-        lock (_waiting) { var l = new List<string>(_waiting); _waiting.Clear(); return l; }
+        lock (_waiting)
+        {
+            var l = new List<string>(_waiting);
+            _waiting.Clear();
+            return l;
+        }
     }
 }

@@ -42,14 +42,16 @@ internal sealed class MarkerPlacer
         else if (d.Attachments.Count > 0) p.AddChild(Ui.Btn("Place them by hand on the table…", Begin, "Puts the piece's markers on the paper beside it: drag them where they belong"));
         for (int i = 0; i < d.Attachments.Count; i++)
         {
-            var at = d.Attachments[i]; var ai = i;
+            var at = d.Attachments[i];
+            var ai = i;
             var ar = new HBoxContainer();
             ar.AddChild(new Label { Text = _s.Store.Def(at.Piece)?.Name ?? at.Piece, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, ClipText = true, CustomMinimumSize = new Vector2(70, 0) });
             var ox = new SpinBox { MinValue = -50, MaxValue = 50, Step = 0.01, Value = Math.Round(at.Offset.X, 3), Prefix = "x", CustomMinimumSize = new Vector2(84, 0), TooltipText = "To the piece's right (units)" };
             var oz = new SpinBox { MinValue = -50, MaxValue = 50, Step = 0.01, Value = Math.Round(at.Offset.Z, 3), Prefix = "z", CustomMinimumSize = new Vector2(84, 0), TooltipText = "Ahead of the piece (units)" };
             ox.ValueChanged += v => { _s.Apply(x => x.Attachments[ai].Offset = new Vec2(v, x.Attachments[ai].Offset.Z)); Place(ai); };
             oz.ValueChanged += v => { _s.Apply(x => x.Attachments[ai].Offset = new Vec2(x.Attachments[ai].Offset.X, v)); Place(ai); };
-            ar.AddChild(ox); ar.AddChild(oz);
+            ar.AddChild(ox);
+            ar.AddChild(oz);
             ar.AddChild(Ui.Btn("✕", () => { if (Active) End(); _s.Apply(x => x.Attachments.RemoveAt(ai), inspector: true); }, "remove"));
             p.AddChild(ar);
         }

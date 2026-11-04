@@ -82,7 +82,8 @@ public class FuzzTests
                 case "attach":
                 {
                     if (Pieces.Count < 2) return null;
-                    var a = Pick(Pieces).Id; var b = Pick(Pieces).Id;
+                    var a = Pick(Pieces).Id;
+                    var b = Pick(Pieces).Id;
                     return a == b ? null : new Attach { Layer = U, Parent = a, Child = b };
                 }
                 case "detach":
@@ -91,7 +92,8 @@ public class FuzzTests
                     return attached.Count == 0 ? null : new Detach { Layer = U, Child = Pick(attached) };
                 }
                 case "addsheet": return new AddSheet { Sheet = new SheetDef { Name = Text(), Image = "sha", Package = "testpack", Pos = P(), Size = new(D(5, 50), D(5, 50)), Locked = Coin() } };
-                case "movesheet": return sheets.Count == 0 ? null : new MoveSheet { Id = Pick(sheets).Id, Pos = P(), RotDeg = D(0, 359), Z = Rng.Next(-2, 3), Size = Coin() ? null : new Size2(D(5, 50), D(5, 50)) };
+                case "movesheet" : return sheets.Count == 0 ? null
+                    : new MoveSheet { Id = Pick(sheets).Id, Pos = P(), RotDeg = D(0, 359), Z = Rng.Next(-2, 3), Size = Coin() ? null : new Size2(D(5, 50), D(5, 50)) };
                 case "locksheet": return sheets.Count == 0 ? null : new LockSheet { Id = Pick(sheets).Id, Locked = Coin() };
                 case "renamesheet": return sheets.Count == 0 ? null : new RenameSheet { Id = Pick(sheets).Id, Name = Text() };
                 case "removesheet": return sheets.Count == 0 ? null : new RemoveSheet { Id = Pick(sheets).Id };
@@ -108,7 +110,9 @@ public class FuzzTests
                     return new SetZone { Zone = new Zone { Name = Text(), Owner = Pick(new[] { "Umpire Three", "Umpire Two", "Nobody" }), Polygon = { c, new(c.X + w, c.Z), new(c.X + w, c.Z + w), new(c.X, c.Z + w) } } };
                 }
                 case "removezone": return _s.State.Zones.Count == 0 ? null : new RemoveZone { Id = Pick(_s.State.Zones).Id };
-                case "draw": return new Draw { Layer = U, Stroke = new Stroke { Points = Enumerable.Range(0, Rng.Next(2, 6)).Select(_ => P()).ToList(), Width = D(0.1, 1), Color = $"#{Rng.Next(0x1000000):X6}", Board = boards.Count > 0 && Coin() ? Pick(boards).Id : "" } };
+                case "draw" : return new Draw { Layer = U,
+                    Stroke =
+                        new Stroke { Points = Enumerable.Range(0, Rng.Next(2, 6)).Select(_ => P()).ToList(), Width = D(0.1, 1), Color = $"#{Rng.Next(0x1000000):X6}", Board = boards.Count > 0 && Coin() ? Pick(boards).Id : "" } };
                 case "erase": return strokes.Count == 0 ? null : new EraseStroke { Layer = U, StrokeId = Pick(strokes).Id };
                 case "addboard": return new AddBoard { Name = Coin() ? Text() : "" };
                 case "renameboard": return boards.Count == 0 ? null : new RenameBoard { Id = Pick(boards).Id, Name = Text() };
@@ -142,7 +146,12 @@ public class FuzzTests
     internal static string Canon(GameState g, bool counters = false)
     {
         var n = JsonNode.Parse(Json.Serialize(g))!.AsObject();
-        if (!counters) { n.Remove("lastSeq"); n.Remove("nextId"); n.Remove("dice"); }
+        if (!counters)
+        {
+            n.Remove("lastSeq");
+            n.Remove("nextId");
+            n.Remove("dice");
+        }
         foreach (var layer in n["layers"]!.AsObject().Select(kv => kv.Value!.AsArray()))
         {
             foreach (var p in layer) Sort(p!["attached"]!.AsArray(), x => x!.GetValue<string>());
@@ -352,10 +361,14 @@ public class FuzzTests
         t.Ok(Table.Lead, new SetZone { Zone = new Zone { Name = "A", Owner = "Umpire Three", Polygon = { new(0, 0), new(1, 0), new(1, 1) } } });
         t.Ok(Table.Lead, new SetZone { Zone = new Zone { Name = "B", Owner = "Umpire Three", Polygon = { new(0, 0), new(1, 0), new(1, 1) } } });
         var before = Json.Serialize(s.State.Layer(U)) + Json.Serialize(s.State.Sheets) + Json.Serialize(s.State.DrawLayer(U)) + Json.Serialize(s.State.Zones);
-        t.Ok(Table.Host, new DeletePiece { Layer = U, Id = "p-000002" }); UndoLast(t);
-        t.Ok(Table.Host, new RemoveSheet { Id = "s-000001" }); UndoLast(t);
-        t.Ok(Table.Host, new EraseStroke { Layer = U, StrokeId = "d-000005" }); UndoLast(t);
-        t.Ok(Table.Lead, new RemoveZone { Id = s.State.Zones[0].Id }); t.Ok(Table.Lead, new Undo { TargetSeq = s.State.LastSeq });
+        t.Ok(Table.Host, new DeletePiece { Layer = U, Id = "p-000002" });
+        UndoLast(t);
+        t.Ok(Table.Host, new RemoveSheet { Id = "s-000001" });
+        UndoLast(t);
+        t.Ok(Table.Host, new EraseStroke { Layer = U, StrokeId = "d-000005" });
+        UndoLast(t);
+        t.Ok(Table.Lead, new RemoveZone { Id = s.State.Zones[0].Id });
+        t.Ok(Table.Lead, new Undo { TargetSeq = s.State.LastSeq });
         Assert.Equal(before, Json.Serialize(s.State.Layer(U)) + Json.Serialize(s.State.Sheets) + Json.Serialize(s.State.DrawLayer(U)) + Json.Serialize(s.State.Zones));
     }
 

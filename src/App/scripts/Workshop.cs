@@ -262,7 +262,7 @@ public static class WorkshopContent
     internal static string NameIn(string manifest, string fallback)
     {
         try { return File.Exists(manifest) && Json.PeekString(manifest, "name") is { Length: > 0 } n ? System.Text.RegularExpressions.Regex.Unescape(n) : fallback; }
-        catch { return fallback; }
+        catch (ArgumentException) { return fallback; }
     }
 
     internal const string StagingDir = InstallJournal.Folder;

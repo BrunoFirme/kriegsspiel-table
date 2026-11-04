@@ -20,7 +20,13 @@ public sealed class ScriptLink
 {
     internal ScriptLink(string key, string path, Func<string?> current, Func<bool> alive, string known)
     {
-        Key = key; Path = path; Current = current; Alive = alive; Known = known; Seen = known; Handled = known;
+        Key = key;
+        Path = path;
+        Current = current;
+        Alive = alive;
+        Known = known;
+        Seen = known;
+        Handled = known;
     }
 
     public string Key { get; }
@@ -60,7 +66,9 @@ public sealed class ScriptFiles
 
     public ScriptFiles(string folder, string title, string? stubs)
     {
-        Folder = folder; _title = title; _stubs = stubs;
+        Folder = folder;
+        _title = title;
+        _stubs = stubs;
     }
 
     public string Folder { get; }
@@ -283,7 +291,12 @@ public sealed class ScriptFiles
             if (fs.Length > MaxBytes) return new FileRead(true, false, "", $"the file is over {MaxBytes / (1024 * 1024)} MB");
             var bytes = new byte[fs.Length];
             int got = 0;
-            while (got < bytes.Length) { int n = fs.Read(bytes, got, bytes.Length - got); if (n == 0) break; got += n; }
+            while (got < bytes.Length)
+            {
+                int n = fs.Read(bytes, got, bytes.Length - got);
+                if (n == 0) break;
+                got += n;
+            }
             if (Array.IndexOf(bytes, (byte)0, 0, got) >= 0) return new FileRead(true, false, "", "the file holds NUL bytes: not a text file");
             return new FileRead(true, false, Norm(new UTF8Encoding(false, false).GetString(bytes, 0, got)), null);
         }

@@ -48,7 +48,12 @@ sealed class PieceGrid
         for (int i = l.Count - 1; i >= 0; i--)
         {
             var n = l[i];
-            if (!GodotObject.IsInstanceValid(n) || n.IsQueuedForDeletion()) { l.RemoveAt(i); n.Cell = null; continue; }
+            if (!GodotObject.IsInstanceValid(n) || n.IsQueuedForDeletion())
+            {
+                l.RemoveAt(i);
+                n.Cell = null;
+                continue;
+            }
             yield return n;
         }
     }
@@ -100,7 +105,8 @@ sealed class PieceGrid
 
     public void RefileReach()
     {
-        _cellReach.Clear(); LetterReach = 0;
+        _cellReach.Clear();
+        LetterReach = 0;
         foreach (var (cell, l) in _grid)
             foreach (var n in Filed(l))
             {
@@ -112,7 +118,9 @@ sealed class PieceGrid
 
     public void Clear()
     {
-        _grid.Clear(); _cellReach.Clear(); _loose.Clear();
+        _grid.Clear();
+        _cellReach.Clear();
+        _loose.Clear();
         LetterReach = 0;
         Filings++;
     }

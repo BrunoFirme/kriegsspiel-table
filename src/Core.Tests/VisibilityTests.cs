@@ -25,7 +25,8 @@ public class VisibilityTests
         var w = new World();
         var g = w.State;
         g.Sheets.Add(new SheetDef { Id = Tok(r, "SHEET"), Image = Tok(r, "IMG") });
-        w.Required.Add(g.Sheets[0].Id); w.Required.Add(g.Sheets[0].Image);
+        w.Required.Add(g.Sheets[0].Id);
+        w.Required.Add(g.Sheets[0].Image);
         g.VisionRadius = r.Next(10, 90);
 
         var ump = g.Layer(Layers.Umpire);
@@ -36,14 +37,18 @@ public class VisibilityTests
         for (int i = 0, n = r.Next(0, 4); i < n; i++)
         {
             var z = new Zone { Id = Tok(r, "ZONEID"), Name = Tok(r, "ZONENAME"), Owner = Tok(r, "ZONEOWNER"), Color = Tok(r, "ZONECOLOR"), Polygon = { new(0, 0), new(1, 0), new(1, 1) } };
-            w.Forbidden.Add(z.Id); w.Forbidden.Add(z.Name); w.Forbidden.Add(z.Owner); w.Forbidden.Add(z.Color);
+            w.Forbidden.Add(z.Id);
+            w.Forbidden.Add(z.Name);
+            w.Forbidden.Add(z.Owner);
+            w.Forbidden.Add(z.Color);
             g.Zones.Add(z);
         }
 
         for (int i = 0, n = r.Next(0, 6); i < n; i++)
         {
             var d = new DiceRoll { Seq = i, Actor = Tok(r, "DICEACTOR"), Sides = 6, Results = new() { r.Next(1, 7) }, Label = Tok(r, "DICE") };
-            w.Forbidden.Add(d.Label); w.Forbidden.Add(d.Actor);
+            w.Forbidden.Add(d.Label);
+            w.Forbidden.Add(d.Actor);
             g.Dice.Add(d);
         }
         return w;
@@ -61,7 +66,8 @@ public class VisibilityTests
         };
         for (int i = 0, n = r.Next(0, 4); i < n; i++) p.Counters[Tok(r, tag + "CNT")] = r.Next(-5, 20);
         for (int i = 0, n = r.Next(0, 4); i < n; i++) p.Text[Tok(r, tag + "TXK")] = Tok(r, tag + "TXV");
-        set.Add(p.Id); set.Add(p.Def);
+        set.Add(p.Id);
+        set.Add(p.Def);
         if (p.Label != null) set.Add(p.Label);
         if (p.TintOverride != null) set.Add(p.TintOverride);
         if (p.Note != null) set.Add(p.Note);
@@ -73,7 +79,8 @@ public class VisibilityTests
     static Stroke RandomStroke(Random r, string tag, HashSet<string> set)
     {
         var s = new Stroke { Id = Tok(r, tag + "STROKE"), Color = Tok(r, tag + "COLOR"), Points = new() { new(r.NextDouble(), r.NextDouble()) } };
-        set.Add(s.Id); set.Add(s.Color);
+        set.Add(s.Id);
+        set.Add(s.Color);
         return s;
     }
 
@@ -177,7 +184,8 @@ public class VisibilityTests
     public void ForPeer_table_wide_commands_zones_and_dice()
     {
         var g = CoreSamples.State();
-        foreach (var c in new Command[] { new AddSheet(), new MoveSheet(), new LockSheet(), new RemoveSheet(), new CropSheet(), new SetClock(), new AdvanceClock(), new SetCalibration(), new SetLighting(), new SetWind(), new SetVisionRadius { Radius = 30 }, new AddPack { Id = "x" }, new PublishSighting() })
+        foreach (var c in new Command[] { new AddSheet(), new MoveSheet(), new LockSheet(), new RemoveSheet(), new CropSheet(), new SetClock(), new AdvanceClock(), new SetCalibration(),
+            new SetLighting(), new SetWind(), new SetVisionRadius { Radius = 30 }, new AddPack { Id = "x" }, new PublishSighting() })
             Assert.Same(c, Visibility.ForPeer(c, Obs, g));
         Assert.Null(Visibility.ForPeer(new SetZone { Zone = new Zone { Id = "z-1" } }, Obs, g));
         Assert.Null(Visibility.ForPeer(new RemoveZone { Id = "z-1" }, Obs, g));

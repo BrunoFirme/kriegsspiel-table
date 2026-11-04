@@ -16,7 +16,10 @@ sealed class FormationTool
 
     public FormationTool(TableContext c, ToolOverlay overlay, Selection selection, Carry hand)
     {
-        _c = c; _overlay = overlay; _selection = selection; _hand = hand;
+        _c = c;
+        _overlay = overlay;
+        _selection = selection;
+        _hand = hand;
         _c.SelectionChanged += () => { if (_c.Tool == Tool.Formation) { _c.Say(Hint()); Changed?.Invoke(); } };
     }
 
@@ -85,7 +88,12 @@ sealed class FormationTool
 
     public void Form(FormationKind kind)
     {
-        if (Cfg.Formation != kind.Id) { Cfg.Formation = kind.Id; Cfg.Save(); _depth = 0; }
+        if (Cfg.Formation != kind.Id)
+        {
+            Cfg.Formation = kind.Id;
+            Cfg.Save();
+            _depth = 0;
+        }
         var units = Units();
         if (!Enough(units)) { Changed?.Invoke(); return; }
         var mine = Mine(units);

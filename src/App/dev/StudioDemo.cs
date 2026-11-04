@@ -49,19 +49,40 @@ sealed class StudioDemo
     {
         switch (verb)
         {
-            case "newmenu": _s.NewPieces.Show(); await Frames(3); break;
-            case "fxmenu": _s.NewPieces.ShowEffectPresets(); await Frames(3); break;
-            case "wait": await Wait(double.Parse(arg, Inv)); break;
-            case "report": Report(); break;
+            case "newmenu":
+                _s.NewPieces.Show();
+                await Frames(3);
+                break;
+            case "fxmenu":
+                _s.NewPieces.ShowEffectPresets();
+                await Frames(3);
+                break;
+            case "wait":
+                await Wait(double.Parse(arg, Inv));
+                break;
+            case "report":
+                Report();
+                break;
             case "shot":
                 await Frames(3);
                 _s.GetViewport().GetTexture().GetImage().SavePng(arg);
                 GD.Print($"[studio] shot {arg}");
                 break;
-            case "closepanel": _s.ToolPanel.Panel.Closed?.Invoke(); await Frames(2); break;
-            case "swap": _s.SwapSides(); await Wait(1.0); break;
-            case "panel": GD.Print($"[studio] tool panel {(_s.ToolPanel.Panel.Visible ? "open" : "shut")}; tool {(_s.View == "model" ? _s.Model?.Tool : _s.Canvas.Tool)}"); break;
-            case "pictures": _s.NewPieces.AddImageFiles(arg.Split('|')); await Wait(2.0); break;
+            case "closepanel":
+                _s.ToolPanel.Panel.Closed?.Invoke();
+                await Frames(2);
+                break;
+            case "swap":
+                _s.SwapSides();
+                await Wait(1.0);
+                break;
+            case "panel":
+                GD.Print($"[studio] tool panel {(_s.ToolPanel.Panel.Visible ? "open" : "shut")}; tool {(_s.View == "model" ? _s.Model?.Tool : _s.Canvas.Tool)}");
+                break;
+            case "pictures":
+                _s.NewPieces.AddImageFiles(arg.Split('|'));
+                await Wait(2.0);
+                break;
             case "frame":
                 if (_s.Sel != null)
                 {
@@ -77,8 +98,14 @@ sealed class StudioDemo
                 await Wait(0.8);
                 break;
             }
-            case "quit": _s.GetTree().Quit(); break;
-            case "image": _s.LayerPanel.AddFromFile(arg); _s.Canvas.Commit("Picture"); await Frames(3); break;
+            case "quit":
+                _s.GetTree().Quit();
+                break;
+            case "image":
+                _s.LayerPanel.AddFromFile(arg);
+                _s.Canvas.Commit("Picture");
+                await Frames(3);
+                break;
             default: return false;
         }
         return true;
@@ -88,11 +115,26 @@ sealed class StudioDemo
     {
         switch (verb)
         {
-            case "model": _s.NewPieces.ImportModels(arg.Split('|')); await Wait(2.5); break;
-            case "mstamp": { var n = Nums(arg); for (int k = 0; k + 1 < n.Length; k += 2) GD.Print($"[studio] stamp at {n[k]},{n[k + 1]}: {(Stamp(new Vector2(n[k], n[k + 1])) ? "hit" : "missed")}"); await Frames(2); break; }
-            case "mfaces": GD.Print("[studio] shape faces: " + string.Join(" | ", _s.Model?.ShapeFaces.Keys().Select(f => f.label) ?? Enumerable.Empty<string>())); break;
-            case "mreport": GD.Print("[studio] model: " + (_s.Model is { } reported ? ModelReport(reported) : null) + $"; piece {_s.Sel?.Name} kind {_s.Sel?.Kind} mesh {_s.Sel?.Mesh?[..8]} tex {_s.Sel?.Texture?[..8]} add-on {_s.Sel?.AddOnMesh?[..8] ?? "none"} outline {_s.Sel?.Shape} size {_s.Sel?.Size.W:0.###}x{_s.Sel?.Size.H:0.###}"); break;
-            case "decal": if (ImageFiles.Load(arg) is { } di) _s.Model?.Decal.Set(di, System.IO.Path.GetFileNameWithoutExtension(arg)); break;
+            case "model":
+                _s.NewPieces.ImportModels(arg.Split('|'));
+                await Wait(2.5);
+                break;
+            case "mstamp":
+            {
+                var n = Nums(arg);
+                for (int k = 0; k + 1 < n.Length; k += 2) GD.Print($"[studio] stamp at {n[k]},{n[k + 1]}: {(Stamp(new Vector2(n[k], n[k + 1])) ? "hit" : "missed")}");
+                await Frames(2);
+                break;
+            }
+            case "mfaces":
+                GD.Print("[studio] shape faces: " + string.Join(" | ", _s.Model?.ShapeFaces.Keys().Select(f => f.label) ?? Enumerable.Empty<string>()));
+                break;
+            case "mreport":
+                GD.Print("[studio] model: " + (_s.Model is { } reported ? ModelReport(reported) : null) + $"; piece {_s.Sel?.Name} kind {_s.Sel?.Kind} mesh {_s.Sel?.Mesh?[..8]} tex {_s.Sel?.Texture?[..8]} add-on {_s.Sel?.AddOnMesh?[..8] ?? "none"} outline {_s.Sel?.Shape} size {_s.Sel?.Size.W:0.###}x{_s.Sel?.Size.H:0.###}");
+                break;
+            case "decal":
+                if (ImageFiles.Load(arg) is { } di) _s.Model?.Decal.Set(di, System.IO.Path.GetFileNameWithoutExtension(arg));
+                break;
             case "mpicture":
             {
                 var bits = arg.Split('|');
@@ -121,7 +163,9 @@ sealed class StudioDemo
         if (_s.Model is not { } m) return false;
         var at = viewFraction * (Vector2)m.Vp.Size;
         if (m.Tools.Ray(at) is not { } hit) return false;
-        m.BeginStroke(); m.Tools.Stamp(hit); m.EndStroke();
+        m.BeginStroke();
+        m.Tools.Stamp(hit);
+        m.EndStroke();
         return true;
     }
 
@@ -143,19 +187,29 @@ sealed class StudioDemo
     {
         switch (verb)
         {
-            case "tab": _s.Inspector.Tabs.CurrentTab = int.Parse(arg, Inv); await Frames(3); break;
+            case "tab":
+                _s.Inspector.Tabs.CurrentTab = int.Parse(arg, Inv);
+                await Frames(3);
+                break;
             case "scrolltab":
                 if (_s.Inspector.Tabs.GetCurrentTabControl() is ScrollContainer sc) { sc.ScrollVertical = int.Parse(arg, Inv); await Frames(3); }
                 break;
-            case "script": await SaveScript(arg); break;
+            case "script":
+                await SaveScript(arg);
+                break;
             case "marker":
             {
                 var m = _s.Pack.Pieces.FirstOrDefault(x => x.Name.Contains(arg, StringComparison.OrdinalIgnoreCase) && x != _s.Sel);
                 if (m != null) _s.Apply(x => x.Attachments.Add(new AttachmentDef { Piece = m.Id, Offset = new Vec2(x.Size.W * 0.8, 0) }), inspector: true);
                 break;
             }
-            case "markers": if (arg == "end") { _s.Markers.End(); _s.RebuildInspector(); } else _s.Markers.Begin(); await Wait(0.8); break;
-            case "dragmarker": await DragMarker(arg); break;
+            case "markers":
+                if (arg == "end") { _s.Markers.End(); _s.RebuildInspector(); } else _s.Markers.Begin();
+                await Wait(0.8);
+                break;
+            case "dragmarker":
+                await DragMarker(arg);
+                break;
             default: return false;
         }
         return true;
@@ -184,7 +238,12 @@ sealed class StudioDemo
         var b = _s.T.Rig.Cam.UnprojectPosition(node.GlobalPosition + Coords.ToWorld(new Vec2(n[1], n[2])) - Coords.ToWorld(new Vec2(0, 0)));
         Input.ParseInputEvent(new InputEventMouseButton { ButtonIndex = MouseButton.Left, Pressed = true, Position = a, GlobalPosition = a });
         await Frames(1);
-        for (int i = 1; i <= 6; i++) { var at2 = a.Lerp(b, i / 6f); Input.ParseInputEvent(new InputEventMouseMotion { Position = at2, GlobalPosition = at2, Relative = (b - a) / 6 }); await Frames(1); }
+        for (int i = 1; i <= 6; i++)
+        {
+            var at2 = a.Lerp(b, i / 6f);
+            Input.ParseInputEvent(new InputEventMouseMotion { Position = at2, GlobalPosition = at2, Relative = (b - a) / 6 });
+            await Frames(1);
+        }
         Input.ParseInputEvent(new InputEventMouseButton { ButtonIndex = MouseButton.Left, Pressed = false, Position = b, GlobalPosition = b });
         await Wait(1.2);
         var basePiece = _s.Paper.Instance(_s.Sel)!;

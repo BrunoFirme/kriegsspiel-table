@@ -33,7 +33,8 @@ public sealed partial class DefFactory
         int w, h;
         if (card)
         {
-            w = (int)(NotecardW * PixelsPerUnit); h = (int)(NotecardH * PixelsPerUnit);
+            w = (int)(NotecardW * PixelsPerUnit);
+            h = (int)(NotecardH * PixelsPerUnit);
             baseSize = new Size2(NotecardW, NotecardH);
             if (!File.Exists(path)) BakeCard(path, w, h, title, body);
         }
@@ -43,7 +44,8 @@ public sealed partial class DefFactory
             using var font = Font((float)fontSize, bold: true);
             float lineH = (float)(fontSize * 1.1);
             float wide = Math.Max(1, lines.Max(l => font.MeasureText(l.Length > 0 ? l : " ")));
-            w = (int)Math.Ceiling(wide) + 8; h = (int)Math.Ceiling(lineH * lines.Length) + 4;
+            w = (int)Math.Ceiling(wide) + 8;
+            h = (int)Math.Ceiling(lineH * lines.Length) + 4;
             baseSize = new Size2(Math.Round(w * TextUnitsPerFontSize, 4), Math.Round(h * TextUnitsPerFontSize, 4));
             if (!File.Exists(path)) BakeText(path, w, h, lines, font, colour, lineH);
         }
@@ -146,7 +148,12 @@ public sealed partial class DefFactory
         foreach (var word in text.Split(' ', StringSplitOptions.RemoveEmptyEntries))
         {
             var trial = line.Length == 0 ? word : line + " " + word;
-            if (line.Length > 0 && font.MeasureText(trial) > width) { yield return line.ToString(); line.Clear(); line.Append(word); }
+            if (line.Length > 0 && font.MeasureText(trial) > width)
+            {
+                yield return line.ToString();
+                line.Clear();
+                line.Append(word);
+            }
             else { line.Clear(); line.Append(trial); }
         }
         if (line.Length > 0) yield return line.ToString();

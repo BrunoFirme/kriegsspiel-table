@@ -41,7 +41,12 @@ public sealed partial class DefFactory
     public static readonly HashSet<string> FlatTypes = new() { "Custom_Tile", "Custom_Token", "Custom_Board", "BlockSquare", "BlockRectangle" };
     public static bool IsPiece(TtsObj o) => FlatTypes.Contains(o.Name) || o.Name == "Custom_Model" || IsTextObject(o);
 
-    public DefFactory(Config cfg, AssetStore assets, Report rep) { _cfg = cfg; _assets = assets; _rep = rep; }
+    public DefFactory(Config cfg, AssetStore assets, Report rep)
+    {
+        _cfg = cfg;
+        _assets = assets;
+        _rep = rep;
+    }
 
     public string? Asset(PackOut pack, string? url, string kind, string where)
     {
@@ -110,7 +115,12 @@ public sealed partial class DefFactory
             if (!double.TryParse(p[1], NumberStyles.Float, CultureInfo.InvariantCulture, out var x) ||
                 !double.TryParse(p[2], NumberStyles.Float, CultureInfo.InvariantCulture, out var y) ||
                 !double.TryParse(p[3], NumberStyles.Float, CultureInfo.InvariantCulture, out var z)) continue;
-            minX = Math.Min(minX, x); maxX = Math.Max(maxX, x); minY = Math.Min(minY, y); maxY = Math.Max(maxY, y); minZ = Math.Min(minZ, z); maxZ = Math.Max(maxZ, z);
+            minX = Math.Min(minX, x);
+            maxX = Math.Max(maxX, x);
+            minY = Math.Min(minY, y);
+            maxY = Math.Max(maxY, y);
+            minZ = Math.Min(minZ, z);
+            maxZ = Math.Max(maxZ, z);
         }
         b = maxX < minX ? (1, 1, 1) : (maxX - minX, maxY - minY, maxZ - minZ);
         _meshBounds[e.Sha!] = b;
@@ -124,7 +134,8 @@ public sealed partial class DefFactory
         if (o.ImageUrl != null && Entry(o.ImageUrl) is { W: > 0, H: > 0 } e)
         {
             double m = Math.Max(e.W, e.H);
-            aw = e.W / m; ah = e.H / m;
+            aw = e.W / m;
+            ah = e.H / m;
             aspect = e.W / (double)e.H;
         }
         double ratio = o.ScaleX == 0 ? 1 : o.ScaleZ / o.ScaleX;
@@ -190,7 +201,8 @@ public sealed partial class DefFactory
             def.Script = Translate(lua, pack, where).Script;
             def.ScriptHash = Hash8(lua);
             def.ScriptState = o.LuaState.Trim().Length > 0 ? RewriteUrls(o.LuaState, pack, where) : null;
-            def.Counters.Clear(); def.TextLines.Clear();
+            def.Counters.Clear();
+            def.TextLines.Clear();
             scriptKey = "|" + def.ScriptHash;
         }
 
@@ -227,7 +239,13 @@ public sealed partial class DefFactory
         {
             if (rich > pack.Richness.GetValueOrDefault(existing.Id))
             {
-                existing.States = def.States; existing.Counters = def.Counters; existing.TextLines = def.TextLines; existing.Attachments = def.Attachments; existing.Script = def.Script; existing.ScriptHash = def.ScriptHash; existing.ScriptState = def.ScriptState;
+                existing.States = def.States;
+                existing.Counters = def.Counters;
+                existing.TextLines = def.TextLines;
+                existing.Attachments = def.Attachments;
+                existing.Script = def.Script;
+                existing.ScriptHash = def.ScriptHash;
+                existing.ScriptState = def.ScriptState;
                 if (existing.Name == "Piece" && def.Name != "Piece") existing.Name = def.Name;
                 pack.Richness[existing.Id] = rich;
             }
@@ -338,7 +356,12 @@ public sealed partial class DefFactory
         var path = Path.Combine(_cfg.Cache, "white.png");
         if (_whiteSha == null)
         {
-            if (!File.Exists(path)) { using var img = new SKBitmap(16, 16); img.Erase(SKColors.White); SavePng(img, path); }
+            if (!File.Exists(path))
+            {
+                using var img = new SKBitmap(16, 16);
+                img.Erase(SKColors.White);
+                SavePng(img, path);
+            }
             _whiteSha = Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(path))).ToLowerInvariant();
         }
         Put(pack, _whiteSha, "png", path, "image", 16, 16);

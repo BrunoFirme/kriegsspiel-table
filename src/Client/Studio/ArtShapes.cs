@@ -21,7 +21,8 @@ public static class ArtShapes
 
     public static List<Vector2> Ellipse(Vector2 a, Vector2 b, int n = 96)
     {
-        var c = (a + b) / 2; var r = (b - a).Abs() / 2;
+        var c = (a + b) / 2;
+        var r = (b - a).Abs() / 2;
         var pts = new List<Vector2>(n);
         for (int i = 0; i < n; i++) { var t = Mathf.Tau * i / n; pts.Add(c + new Vector2(Mathf.Cos(t) * r.X, Mathf.Sin(t) * r.Y)); }
         return pts;
@@ -54,14 +55,16 @@ public static class ArtShapes
         var d = b - a;
         float len = d.Norm();
         if (len < 1e-3f) return new();
-        var u = d / len; var n = new Vector2(-u.Y, u.X);
+        var u = d / len;
+        var n = new Vector2(-u.Y, u.X);
         float hl = Mathf.Min(len * 0.45f, Mathf.Max(width * 4.5f, 12)), hw = hl * 0.55f;
         return new() { b, b - u * hl + n * hw, b - u * hl - n * hw };
     }
 
     public static Vector2 ArrowShaftEnd(Vector2 a, Vector2 b, float width)
     {
-        var d = b - a; float len = d.Norm();
+        var d = b - a;
+        float len = d.Norm();
         if (len < 1e-3f) return b;
         float hl = Mathf.Min(len * 0.45f, Mathf.Max(width * 4.5f, 12));
         return b - d / len * hl * 0.8f;
@@ -75,9 +78,17 @@ public static class ArtShapes
         var my = About(new Affine2(new Vector2(1, 0), new Vector2(0, -1), Vector2.Zero));
         switch (mode)
         {
-            case "x": list.Add(mx); break;
-            case "y": list.Add(my); break;
-            case "xy": list.Add(mx); list.Add(my); list.Add(mx * my); break;
+            case "x":
+                list.Add(mx);
+                break;
+            case "y":
+                list.Add(my);
+                break;
+            case "xy":
+                list.Add(mx);
+                list.Add(my);
+                list.Add(mx * my);
+                break;
             case "radial":
                 for (int i = 1; i < Math.Clamp(radial, 2, 24); i++) list.Add(About(Affine2.Turn(Mathf.Tau * i / Math.Clamp(radial, 2, 24), Vector2.Zero)));
                 break;
@@ -98,7 +109,8 @@ public static class ArtShapes
                 xs.Clear();
                 for (int i = 0; i < poly.Count; i++)
                 {
-                    var a = poly[i]; var b = poly[(i + 1) % poly.Count];
+                    var a = poly[i];
+                    var b = poly[(i + 1) % poly.Count];
                     if ((a.Y <= sy && b.Y > sy) || (b.Y <= sy && a.Y > sy))
                         xs.Add(a.X + (sy - a.Y) / (b.Y - a.Y) * (b.X - a.X));
                 }

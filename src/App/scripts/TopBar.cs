@@ -42,7 +42,9 @@ sealed class TopBar : HudPart
         Role = new Label { SizeFlagsVertical = Control.SizeFlags.ShrinkCenter };
         Role.AddThemeFontSizeOverride("font_size", 12);
         row.AddChild(Role);
-        Title = new Label { Modulate = Ui.Muted, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, ClipText = true, TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis, CustomMinimumSize = new Vector2(236, 0), SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin, MouseFilter = Control.MouseFilterEnum.Ignore };
+        Title =
+            new Label { Modulate = Ui.Muted, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, ClipText = true, TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis,
+                CustomMinimumSize = new Vector2(236, 0), SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin, MouseFilter = Control.MouseFilterEnum.Ignore };
         if (S.IsUmpire) row.AddChild(BuildScenarioButton());
         else row.AddChild(Title);
         row.AddChild(new VSeparator());
@@ -52,13 +54,18 @@ sealed class TopBar : HudPart
         Knocks = new VBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
         Knocks.AddThemeConstantOverride("separation", 6);
         Knocks.SetAnchorsPreset(Control.LayoutPreset.TopWide);
-        Knocks.OffsetLeft = 360; Knocks.OffsetRight = -12; Knocks.OffsetTop = 40; Knocks.OffsetBottom = 40;
+        Knocks.OffsetLeft = 360;
+        Knocks.OffsetRight = -12;
+        Knocks.OffsetTop = 40;
+        Knocks.OffsetBottom = 40;
         root.AddChild(Knocks);
     }
 
     Button BuildScenarioButton()
     {
-        ScenarioBtn = new Button { FocusMode = Control.FocusModeEnum.None, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, MouseDefaultCursorShape = Control.CursorShape.PointingHand, TooltipText = "Scenario properties: clock, lighting, scale, wind, distances, script" };
+        ScenarioBtn =
+            new Button { FocusMode = Control.FocusModeEnum.None, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, MouseDefaultCursorShape = Control.CursorShape.PointingHand,
+                TooltipText = "Scenario properties: clock, lighting, scale, wind, distances, script" };
         ScenarioBtn.AddThemeStyleboxOverride("normal", Ui.Pill(0.07f));
         ScenarioBtn.AddThemeStyleboxOverride("hover", Ui.Pill(0.14f));
         ScenarioBtn.AddThemeStyleboxOverride("pressed", Ui.Pill(0.2f));
@@ -66,7 +73,8 @@ sealed class TopBar : HudPart
         var inner = new HBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
         inner.AddThemeConstantOverride("separation", 6);
         inner.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
-        inner.OffsetLeft = 8; inner.OffsetRight = -10;
+        inner.OffsetLeft = 8;
+        inner.OffsetRight = -10;
         var mark = new Control { CustomMinimumSize = new Vector2(18, 18), SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, MouseFilter = Control.MouseFilterEnum.Ignore };
         mark.AddChild(new ToolIcon { Kind = "sliders", Color = Ui.Muted });
         inner.AddChild(mark);
@@ -88,7 +96,9 @@ sealed class TopBar : HudPart
         NextRev = Btn("Turn ▸", () => { if (S.ReviewInfo is { IsTurn: true } ri) { if (ri.Index + 1 < S.Turns.Count) N.RequestTurn(ri.Index + 1); else S.Review(null, null); } }, "The next turn (after the last one: back to now)");
         BackNow = Btn("Back to now", () => S.Review(null, null), "Return to the live table");
         PrevTurn.Visible = NextRev.Visible = BackNow.Visible = false;
-        row.AddChild(PrevTurn); row.AddChild(NextRev); row.AddChild(BackNow);
+        row.AddChild(PrevTurn);
+        row.AddChild(NextRev);
+        row.AddChild(BackNow);
         if (S.IsUmpire)
         {
             var history = new Button { Text = "History", Flat = true, FocusMode = Control.FocusModeEnum.None, TooltipText = "The turns so far: look at how any of them ended" };
@@ -127,7 +137,8 @@ sealed class TopBar : HudPart
             else if (id >= 100)
             {
                 int idx = (int)id - 100;
-                if (S.Reviewing && S.ReviewInfo?.Index == idx) S.Review(null, null); else N.RequestTurn(idx);
+                if (S.Reviewing && S.ReviewInfo?.Index == idx) S.Review(null, null);
+                else N.RequestTurn(idx);
             }
         };
         HudNode.AddChild(pm);
@@ -188,7 +199,8 @@ sealed class TopBar : HudPart
     {
         if (Knocks == null) return;
         foreach (var c in Knocks.GetChildren()) c.QueueFree();
-        Knocks.OffsetTop = Panel.Size.Y + 8; Knocks.OffsetBottom = Knocks.OffsetTop;
+        Knocks.OffsetTop = Panel.Size.Y + 8;
+        Knocks.OffsetBottom = Knocks.OffsetTop;
         if (!S.IsLead) return;
         foreach (var w in S.Waiting)
         {

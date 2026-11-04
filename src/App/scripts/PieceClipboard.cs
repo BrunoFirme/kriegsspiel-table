@@ -12,7 +12,13 @@ sealed class PieceClipboard
     readonly PieceLayer _pieces;
     readonly Selection _selection;
     readonly Carry _hand;
-    public PieceClipboard(TableContext c, PieceLayer pieces, Selection selection, Carry hand) { _c = c; _pieces = pieces; _selection = selection; _hand = hand; }
+    public PieceClipboard(TableContext c, PieceLayer pieces, Selection selection, Carry hand)
+    {
+        _c = c;
+        _pieces = pieces;
+        _selection = selection;
+        _hand = hand;
+    }
 
     List<PieceInstance> _clip = new();
     Vec2 _center;

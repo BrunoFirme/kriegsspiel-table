@@ -172,14 +172,16 @@ sealed class StudioOverlay
 
     void DrawMeasure(Control o, Font font, Vector2 a, Vector2 b, bool faint = false)
     {
-        var sa = _c.ToScreen(a); var sb = _c.ToScreen(b);
+        var sa = _c.ToScreen(a);
+        var sb = _c.ToScreen(b);
         var col = faint ? new Color(1, 1, 1, 0.75f) : new Color(1f, 0.6f, 0.2f, 0.95f);
         if (!faint)
         {
             o.DrawLine(sa, sb, new Color(0, 0, 0, 0.6f), 3, true);
             o.DrawLine(sa, sb, col, 1.5f, true);
             var n = (sb - sa).Normalized().Orthogonal() * 6;
-            o.DrawLine(sa - n, sa + n, col, 1.5f, true); o.DrawLine(sb - n, sb + n, col, 1.5f, true);
+            o.DrawLine(sa - n, sa + n, col, 1.5f, true);
+            o.DrawLine(sb - n, sb + n, col, 1.5f, true);
         }
         float px = (b - a).Length();
         if (px < 0.5f) return;

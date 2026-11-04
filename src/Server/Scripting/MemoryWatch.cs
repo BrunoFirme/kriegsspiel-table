@@ -27,12 +27,17 @@ static class MemoryWatch
             try
             {
                 lock (Watched)
-                    Watched.RemoveAll(w => { if (!w.TryGetTarget(out var g)) return true; live.Add(g); return false; });
+                    Watched.RemoveAll(w =>
+                    {
+                        if (!w.TryGetTarget(out var g)) return true;
+                        live.Add(g);
+                        return false;
+                    });
                 if (live.Count == 0) continue;
                 long heap = GC.GetTotalMemory(false);
                 foreach (var g in live) g.Hurry(heap);
             }
-            catch (Exception) { continue; }
+            catch (Exception e) { KTable.Core.BestEffort.Note(e); continue; }
             finally { live.Clear(); }
         }
     }

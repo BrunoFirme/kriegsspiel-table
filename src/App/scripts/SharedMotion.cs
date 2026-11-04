@@ -25,7 +25,9 @@ sealed class SharedMotion
 
     public SharedMotion(TableContext c, PieceLayer pieces, Carry hand)
     {
-        _c = c; _pieces = pieces; _hand = hand;
+        _c = c;
+        _pieces = pieces;
+        _hand = hand;
     }
 
     public event Action<IReadOnlyList<CarriedPiece>, HandAt, double>? LayoutShared { add => _carry.SendLayout += value; remove => _carry.SendLayout -= value; }

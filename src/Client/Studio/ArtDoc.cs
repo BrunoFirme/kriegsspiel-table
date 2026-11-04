@@ -54,13 +54,15 @@ public sealed class ArtDoc
     {
         l.Id = NewId();
         l.Name = NextName(l.Name);
-        l.X += offset; l.Y += offset;
+        l.X += offset;
+        l.Y += offset;
         return l;
     }
 
     public void ReplacePair(int i, ArtLayer merged)
     {
-        Layers.RemoveAt(i); Layers.RemoveAt(i - 1);
+        Layers.RemoveAt(i);
+        Layers.RemoveAt(i - 1);
         Layers.Insert(i - 1, merged);
     }
 }
@@ -142,5 +144,9 @@ public static class ArtJson
     static readonly JsonSerializerOptions Opts = new() { WriteIndented = false, DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull };
 
     public static string Serialize(ArtDoc d) => JsonSerializer.Serialize(d, Opts);
-    public static ArtDoc? Deserialize(string s) { try { return JsonSerializer.Deserialize<ArtDoc>(s, Opts); } catch { return null; } }
+    public static ArtDoc? Deserialize(string s)
+    {
+        try { return JsonSerializer.Deserialize<ArtDoc>(s, Opts); }
+        catch (JsonException) { return null; }
+    }
 }

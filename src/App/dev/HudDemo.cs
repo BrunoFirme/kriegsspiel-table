@@ -15,7 +15,8 @@ sealed class HudDemo : HudPart
     public void Run(string what)
     {
         var centre = Hud.GetViewport().GetVisibleRect().Size / 2;
-        if (Pages(what) || CompassDrag(what) || Hearts(what) || Scripts(what) || View(what) || PovPictures(what) || PovTool(what) || PovFormat(what) || DrawingPanels(what) || PanelMoves(what) || Hands(what) || PieceMoves(what) || Lettering(what) || Dialogs(what)) return;
+        if (Pages(what) || CompassDrag(what) || Hearts(what) || Scripts(what) || View(what) || PovPictures(what) || PovTool(what) || PovFormat(what) || DrawingPanels(what) || PanelMoves(what)
+            || Hands(what) || PieceMoves(what) || Lettering(what) || Dialogs(what)) return;
         if (what == "dice") Hud.OpenPanel("dice");
         else if (what == "dice:roll")
         {
@@ -67,7 +68,12 @@ sealed class HudDemo : HudPart
         Button ButtonOf(Node under, string text) => under.FindChildren("*", "Button", true, false).OfType<Button>().First(b => b.Text == text);
         await Click(ButtonOf(w, "New folder"));
         await Wait(1);
-        foreach (var ch in "Group B") { Input.ParseInputEvent(new InputEventKey { Pressed = true, Unicode = ch }); Input.ParseInputEvent(new InputEventKey { Pressed = false, Unicode = ch }); await Wait(0.05); }
+        foreach (var ch in "Group B")
+        {
+            Input.ParseInputEvent(new InputEventKey { Pressed = true, Unicode = ch });
+            Input.ParseInputEvent(new InputEventKey { Pressed = false, Unicode = ch });
+            await Wait(0.05);
+        }
         Input.ParseInputEvent(new InputEventKey { Pressed = true, Keycode = Key.Enter, PhysicalKeycode = Key.Enter });
         Input.ParseInputEvent(new InputEventKey { Pressed = false, Keycode = Key.Enter, PhysicalKeycode = Key.Enter });
         await Wait(1.5);
@@ -81,7 +87,8 @@ sealed class HudDemo : HudPart
             await Click(dlg.GetOkButton());
         }
         await Wait(2);
-        GD.Print("[saves] plays: " + string.Join(", ", store.Runs(dir).Select(r => System.IO.Path.GetRelativePath(root, r.Folder) + (System.IO.File.Exists(store.LivePath(dir, r.Id)) ? " (latest)" : ""))) + "; showing " + System.IO.Path.GetFileName(w.ShownFolder));
+        GD.Print("[saves] plays: " + string.Join(", ",
+            store.Runs(dir).Select(r => System.IO.Path.GetRelativePath(root, r.Folder) + (System.IO.File.Exists(store.LivePath(dir, r.Id)) ? " (latest)" : ""))) + "; showing " + System.IO.Path.GetFileName(w.ShownFolder));
         if (saved == null || !System.IO.File.Exists(saved)) return;
         store.TrashSaves(dir, saved, System.DateTime.UtcNow);
         w.QueueFree();
@@ -156,7 +163,12 @@ sealed class HudDemo : HudPart
     {
         if (what is "pieces" or "map" or "layers" or "board") { Hud.Drawer.ShowPage(what); return true; }
         if (what == "resetpanels") { Hud.PutPanelsBack(); return true; }
-        if (what == "pieceindex") { Hud.Drawer.ShowPage("pieces"); Hud.Pieces.ShowIndex(); return true; }
+        if (what == "pieceindex")
+        {
+            Hud.Drawer.ShowPage("pieces");
+            Hud.Pieces.ShowIndex();
+            return true;
+        }
         if (what == "pen") { T.SetTool(Tool.Draw); return true; }
         if (what == "agentpill" && AgentEndpoint.Current is { } agent)
         {
@@ -185,17 +197,34 @@ sealed class HudDemo : HudPart
                 + string.Join(", ", Hud.Drawer.Pages.Where(p => p.Value.page != null).Select(p => $"{p.Key} {p.Value.page!.GetCombinedMinimumSize().X:0}")));
             return true;
         }
-        if (what == "sheet") { Hud.Drawer.ShowPage("map"); if (S.View.Sheets.Count > 0) { T.SelectSheet(S.View.Sheets[0].Id); Hud.Map.Rebuild(); } return true; }
+        if (what == "sheet")
+        {
+            Hud.Drawer.ShowPage("map");
+            if (S.View.Sheets.Count > 0) { T.SelectSheet(S.View.Sheets[0].Id); Hud.Map.Rebuild(); } return true;
+        }
         if (what == "sheetresize")
         {
             Hud.Drawer.ShowPage("map");
-            if (S.View.Sheets.Count > 0) { var sh = S.View.Sheets[0]; S.Do(new MoveSheet { Id = sh.Id, Pos = sh.Pos, RotDeg = sh.RotDeg, Z = sh.Z, Size = new Size2(sh.Size.W * 1.5, sh.Size.H * 1.5) }); T.SelectSheet(sh.Id); Hud.Map.Rebuild(); }
+            if (S.View.Sheets.Count > 0)
+            {
+                var sh = S.View.Sheets[0];
+                S.Do(new MoveSheet { Id = sh.Id, Pos = sh.Pos, RotDeg = sh.RotDeg, Z = sh.Z, Size = new Size2(sh.Size.W * 1.5, sh.Size.H * 1.5) });
+                T.SelectSheet(sh.Id);
+                Hud.Map.Rebuild();
+            }
             return true;
         }
         if (what == "sheetring")
         {
             Hud.Drawer.ShowPage("map");
-            if (S.View.Sheets.Count > 0) { var id = S.View.Sheets[0].Id; S.Do(new LockSheet { Id = id, Locked = false }); T.SelectSheet(id); Hud.Map.Rebuild(); T.SetTool(Tool.Transform); }
+            if (S.View.Sheets.Count > 0)
+            {
+                var id = S.View.Sheets[0].Id;
+                S.Do(new LockSheet { Id = id, Locked = false });
+                T.SelectSheet(id);
+                Hud.Map.Rebuild();
+                T.SetTool(Tool.Transform);
+            }
             return true;
         }
         if (what is "crop" or "cropapply")
@@ -203,7 +232,10 @@ sealed class HudDemo : HudPart
             Hud.Drawer.ShowPage("map");
             if (S.View.Sheets.Count > 0)
             {
-                var id = S.View.Sheets[0].Id; T.SelectSheet(id); T.BeginCrop(id); T.SetCropRect(new FaceBox { X = 0.08, Y = 0.1, W = 0.78, H = 0.72 });
+                var id = S.View.Sheets[0].Id;
+                T.SelectSheet(id);
+                T.BeginCrop(id);
+                T.SetCropRect(new FaceBox { X = 0.08, Y = 0.1, W = 0.78, H = 0.72 });
                 if (what == "cropapply") T.ApplyCrop();
             }
             return true;
@@ -413,10 +445,13 @@ sealed class HudDemo : HudPart
                 }
                 await Hud.ToSignal(Hud.GetTree().CreateTimer(0.3), Timer.SignalName.Timeout);
                 Say("with the ranging tool out and a piece picked");
-                await Press(); Say("after one press");
-                await Press(); Say("after a second press");
+                await Press();
+                Say("after one press");
+                await Press();
+                Say("after a second press");
                 await Hud.ToSignal(Hud.GetTree().CreateTimer(1.5), Timer.SignalName.Timeout);
-                await Press(); Say("after a third press");
+                await Press();
+                Say("after a third press");
             })).CallDeferred();
             return true;
         }
@@ -490,7 +525,8 @@ sealed class HudDemo : HudPart
                 }
                 Input.ParseInputEvent(new InputEventMouseButton { ButtonIndex = MouseButton.Left, Pressed = false, Position = b, GlobalPosition = b });
                 await Hud.ToSignal(Hud.GetTree().CreateTimer(0.6), Timer.SignalName.Timeout);
-                double worst = 0; int pts = 0;
+                double worst = 0;
+                int pts = 0;
                 foreach (var w in d.Walls)
                     foreach (var q in w)
                     {
@@ -604,7 +640,8 @@ sealed class HudDemo : HudPart
                 foreach (var square in new[] { false, true })
                 {
                     d.Square = square;
-                    d.Recompute(T); T.ShowDraft();
+                    d.Recompute(T);
+                    T.ShowDraft();
                     await Hud.ToSignal(Hud.GetTree(), SceneTree.SignalName.ProcessFrame);
                     var sh = d.Shape();
                     var corner = new KTable.Core.Model.Vec2(d.Center.X + d.Radius * 0.98, d.Center.Z + d.Radius * 0.98);
@@ -642,7 +679,8 @@ sealed class HudDemo : HudPart
             Hud.OpenPanel("boards");
             Callable.From((Action)(async () =>
             {
-                var a = Hud.Panels["paint"]; var b = Hud.Panels["boards"];
+                var a = Hud.Panels["paint"];
+                var b = Hud.Panels["boards"];
                 await Hud.ToSignal(Hud.GetTree(), SceneTree.SignalName.ProcessFrame);
                 float sidebar = Hud.Gap + Cfg.StripSize + 10 + Hud.Gap;
                 float top = (Hud.Top.Panel?.Size.Y ?? 28) + Hud.Gap;
@@ -680,7 +718,8 @@ sealed class HudDemo : HudPart
                 Say("pen in hand, the layer shown");
                 T.HiddenBoards.Add(T.DrawBoard());
                 T.RefreshDrawings();
-                Hud.Paint.Rebuild(); Hud.Strip.SyncPenLock();
+                Hud.Paint.Rebuild();
+                Hud.Strip.SyncPenLock();
                 await Hud.ToSignal(Hud.GetTree(), SceneTree.SignalName.ProcessFrame);
                 Say("the layer hidden");
                 T.SetTool(Tool.Draw);
@@ -689,7 +728,8 @@ sealed class HudDemo : HudPart
                 if (what.EndsWith(":stay")) return;
                 T.HiddenBoards.Clear();
                 T.RefreshDrawings();
-                Hud.Paint.Rebuild(); Hud.Strip.SyncPenLock();
+                Hud.Paint.Rebuild();
+                Hud.Strip.SyncPenLock();
                 T.SetTool(Tool.Draw);
                 await Hud.ToSignal(Hud.GetTree(), SceneTree.SignalName.ProcessFrame);
                 Say("the layer shown again");
@@ -800,19 +840,28 @@ sealed class HudDemo : HudPart
                         }
                     return null;
                 }
-                async System.Threading.Tasks.Task Frames(int k) { for (int i = 0; i < k; i++) await Hud.ToSignal(Hud.GetTree(), SceneTree.SignalName.ProcessFrame); }
+                async System.Threading.Tasks.Task Frames(int k)
+                {
+                    for (int i = 0; i < k; i++) await Hud.ToSignal(Hud.GetTree(), SceneTree.SignalName.ProcessFrame);
+                }
                 void Button(Vector2 at, bool down) => Input.ParseInputEvent(new InputEventMouseButton { ButtonIndex = MouseButton.Left, Pressed = down, Position = at, GlobalPosition = at });
                 void Motion(Vector2 at) { Pointer.Drive(at); Input.ParseInputEvent(new InputEventMouseMotion { Position = at, GlobalPosition = at, ButtonMask = MouseButtonMask.Left }); }
                 if (Find() is not { } at) { GD.Print($"[facebutton] widget {want} not found on {id}"); return; }
                 int before = Count();
-                Motion(at); await Frames(2); Button(at, true);
+                Motion(at);
+                await Frames(2);
+                Button(at, true);
                 for (int i = 1; i <= 20; i++) { Motion(at + new Vector2(8 * i, 4 * i)); await Frames(1); }
                 Button(at + new Vector2(160, 80), false);
                 await Hud.ToSignal(Hud.GetTree().CreateTimer(1.0), Timer.SignalName.Timeout);
                 GD.Print($"[facebutton] dragged from widget {want}: pieces {before} -> {Count()}");
                 if (Find() is not { } at2) { GD.Print($"[facebutton] widget {want} not found after the drag"); return; }
                 before = Count();
-                Motion(at2); await Frames(2); Button(at2, true); await Frames(2); Button(at2, false);
+                Motion(at2);
+                await Frames(2);
+                Button(at2, true);
+                await Frames(2);
+                Button(at2, false);
                 await Hud.ToSignal(Hud.GetTree().CreateTimer(1.0), Timer.SignalName.Timeout);
                 GD.Print($"[facebutton] clicked widget {want}: pieces {before} -> {Count()}");
             })).CallDeferred();
@@ -1016,7 +1065,8 @@ sealed class HudDemo : HudPart
         }
         if (what.Split(':') is [var dialog and ("settings" or "scenario"), ..] parts)
         {
-            if (dialog == "settings") ((IHudShell)Hud).ShowSettings(); else ScenarioDialog.Open(Ctx);
+            if (dialog == "settings") ((IHudShell)Hud).ShowSettings();
+            else ScenarioDialog.Open(Ctx);
             if (parts.Length > 1)
                 Hud.GetTree().CreateTimer(0.5).Timeout += () =>
                 {

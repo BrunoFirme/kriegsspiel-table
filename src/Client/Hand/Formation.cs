@@ -21,7 +21,12 @@ public static class Formation
         var units = held.Where(h => h.Parent == null).ToList();
         var before = units.ToDictionary(h => h, h => (h.Offset, h.Rot, h.Lift));
         var slots = Rows(units.Select(h => (h.Node, h.Offset)).ToList(), units[0].Rot, rows, new Vec2(0, 0));
-        for (int i = 0; i < units.Count; i++) { units[i].Offset = slots[i]; units[i].Rot = units[0].Rot; units[i].Lift = 0; }
+        for (int i = 0; i < units.Count; i++)
+        {
+            units[i].Offset = slots[i];
+            units[i].Rot = units[0].Rot;
+            units[i].Lift = 0;
+        }
         Follow(held, before);
     }
 
@@ -102,7 +107,9 @@ public static class Formation
         foreach (var h in held.Where(h => h.Parent != null && before.ContainsKey(h.Parent)))
         {
             var (po, pr, pl) = before[h.Parent!];
-            var rel = h.Offset - po; var d = h.Parent!.Rot - pr; var rad = d * Math.PI / 180;
+            var rel = h.Offset - po;
+            var d = h.Parent!.Rot - pr;
+            var rad = d * Math.PI / 180;
             h.Offset = h.Parent.Offset + Turned(rel, rad);
             h.Rot += d;
             h.Lift += h.Parent.Lift - pl;

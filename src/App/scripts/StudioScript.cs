@@ -89,9 +89,17 @@ internal sealed class ScriptTab
             p.AddChild(tools);
             row.AddChild(Ui.Btn("Edit as a file", () => EditAsFile(d, status), "Writes the script to a .lua file for your own editor or AI agent; each save there runs here, and errors go to console.log beside it"));
             row.AddChild(new Control { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill });
-            if (d.Script != null) row.AddChild(Ui.Btn("Remove", () => Ui.Confirm(_s.Root, "Remove the script", "Remove", () => { _script.Text = ""; _scriptBase = ""; _s.Apply(x => x.Script = null, inspector: true); _s.ScriptsChanged?.Invoke(); })));
+            if (d.Script != null) row.AddChild(Ui.Btn("Remove", () => Ui.Confirm(_s.Root, "Remove the script", "Remove", () =>
+            {
+                _script.Text = "";
+                _scriptBase = "";
+                _s.Apply(x => x.Script = null, inspector: true);
+                _s.ScriptsChanged?.Invoke();
+            })));
             row.AddChild(Ui.Primary("Save and run", () => SaveAndRun(d, status), "Keeps the script in the pack and runs it again from on_load on the Table view   (Ctrl+Enter)"));
-            _script.GuiInput += e => { if (e is InputEventKey { Pressed: true, Keycode: Key.Enter or Key.KpEnter, CtrlPressed: true }) { ((Button)row.GetChild(row.GetChildCount() - 1)).EmitSignal(BaseButton.SignalName.Pressed); _script.AcceptEvent(); } };
+            _script.GuiInput += e =>
+                { if (e is InputEventKey { Pressed: true, Keycode: Key.Enter or Key.KpEnter,
+                    CtrlPressed: true }) { ((Button)row.GetChild(row.GetChildCount() - 1)).EmitSignal(BaseButton.SignalName.Pressed); _script.AcceptEvent(); } };
             p.AddChild(row);
         }
         p.AddChild(status);
@@ -108,7 +116,8 @@ internal sealed class ScriptTab
     {
         var line = new HBoxContainer();
         line.AddThemeConstantOverride("separation", 6);
-        line.AddChild(new Label { Text = "Edited as a file: " + link.File, TooltipText = link.Path, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, ClipText = true, TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis });
+        line.AddChild(new Label { Text = "Edited as a file: " + link.File, TooltipText = link.Path, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, ClipText = true,
+            TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis });
         line.AddChild(Ui.Btn("Open folder", _s.FileWatch.OpenFolder, "The folder with the script, ktable-api.lua and console.log"));
         line.AddChild(Ui.Btn("Copy path", () => AppClipboard.SetText(link.Path), link.Path));
         line.AddChild(Ui.Btn("Stop", () => _s.FileWatch.Unlink(link.Key), "Edit it here again; the file is kept"));
@@ -131,7 +140,12 @@ internal sealed class ScriptTab
         var def = _s.Pack.Pieces.FirstOrDefault(x => x.Id == defId);
         if (def == null) return;
         if (def == _s.Sel) _s.Apply(x => x.Script = text);
-        else { def.Script = text; _s.SavePack(); _s.T.RebuildPiecesOf(def.Id); }
+        else
+        {
+            def.Script = text;
+            _s.SavePack();
+            _s.T.RebuildPiecesOf(def.Id);
+        }
         _s.ScriptsChanged?.Invoke();
         LogLine("— script saved and started again —", "#9aa0a6");
         if (_scriptFor == defId && _script != null && GodotObject.IsInstanceValid(_script)) { _script.Text = text ?? ""; _scriptBase = _script.Text; }
@@ -144,8 +158,12 @@ internal sealed class ScriptTab
         for (int i = 0; i < Snippets.Length; i++) ins.GetPopup().AddItem(Snippets[i].Name, i);
         ins.GetPopup().IdPressed += id => { _script!.InsertTextAtCaret(Snippets[id].Code.Replace("\r", "")); _script.GrabFocus(); };
         tools.AddChild(ins);
-        tools.AddChild(Ui.Btn("Wide…", () => ScriptEditor.Open(_s.Root, $"Script — {d.Name}", "The pack's script for every piece of this kind. Save writes it back to the Script tab and runs it.", _script!.Text,
-            text => { if (_script != null && GodotObject.IsInstanceValid(_script)) { _script.Text = text ?? ""; ((Button)row.GetChild(row.GetChildCount() - 1)).EmitSignal(BaseButton.SignalName.Pressed); } }), "The script in a window of its own"));
+        tools.AddChild(Ui.Btn("Wide…", () => ScriptEditor.Open(_s.Root, $"Script — {d.Name}", "The pack's script for every piece of this kind. Save writes it back to the Script tab and runs it.", _script!.Text, text =>
+        {
+            if (_script == null || !GodotObject.IsInstanceValid(_script)) return;
+            _script.Text = text ?? "";
+            ((Button)row.GetChild(row.GetChildCount() - 1)).EmitSignal(BaseButton.SignalName.Pressed);
+        }), "The script in a window of its own"));
         tools.AddChild(Ui.Btn("Guide", () => GuideReader.Show(_s.Root, "scripting.md"), "How scripts work, with whole examples"));
         tools.AddChild(Ui.Btn("Reference", () => GuideReader.ShowEntry(_s.Root, null), "Every call, field and event, with the TTS call each stands for (F1 on a word)"));
     }
@@ -153,7 +171,14 @@ internal sealed class ScriptTab
     void SaveAndRun(PieceDef d, Label status)
     {
         var t = _script!.Text;
-        if (t.Trim().Length == 0) { _scriptBase = t; _s.Apply(x => x.Script = null); _s.ScriptsChanged?.Invoke(); status.Text = ""; return; }
+        if (t.Trim().Length == 0)
+        {
+            _scriptBase = t;
+            _s.Apply(x => x.Script = null);
+            _s.ScriptsChanged?.Invoke();
+            status.Text = "";
+            return;
+        }
         var verdict = ScriptSafety.Inspect(t);
         if (verdict.Hostile) { status.Text = "Refused: " + string.Join("; ", verdict.Reasons); return; }
         status.Text = "";

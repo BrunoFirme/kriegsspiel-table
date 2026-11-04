@@ -94,7 +94,8 @@ static class InPlace
         scrim.Answered += yes =>
         {
             if (owner is AcceptDialog back && GodotObject.IsInstanceValid(back)) back.DialogCloseOnEscape = closeOnEscape;
-            if (yes == true) onOk(); else if (yes == false) q.Cancel();
+            if (yes == true) onOk();
+            else if (yes == false) q.Cancel();
             q.Close();
         };
         q.OnCancelText = t => cancel.Text = t;

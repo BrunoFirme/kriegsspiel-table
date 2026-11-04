@@ -17,7 +17,13 @@ public sealed class ModelMesh
     public readonly List<int> Mat = new();
     public readonly List<ModelMaterial> Materials = new();
 
-    public void Add(Vector3 v, Vector3 n, Vector2 uv, Rgba c) { V.Add(v); N.Add(n); UV.Add(uv); C.Add(c); }
+    public void Add(Vector3 v, Vector3 n, Vector2 uv, Rgba c)
+    {
+        V.Add(v);
+        N.Add(n);
+        UV.Add(uv);
+        C.Add(c);
+    }
 }
 
 public static class ModelFiles
@@ -49,7 +55,10 @@ public static class ModelFiles
 
     static ModelMesh ReadObj(string path)
     {
-        var v = new List<Vector3>(); var vt = new List<Vector2>(); var vn = new List<Vector3>(); var vc = new List<Rgba>();
+        var v = new List<Vector3>();
+        var vt = new List<Vector2>();
+        var vn = new List<Vector3>();
+        var vc = new List<Rgba>();
         var m = new ModelMesh();
         var mats = new Dictionary<string, int>();
         var lib = new Dictionary<string, (Rgba kd, string? map)>();
@@ -81,15 +90,21 @@ public static class ModelFiles
                     v.Add(new Vector3(F(p[1]), F(p[2]), F(p[3])));
                     vc.Add(p.Length >= 7 ? new Rgba(F(p[4]), F(p[5]), F(p[6])) : Rgba.White);
                     break;
-                case "vt": vt.Add(new Vector2(F(p[1]), p.Length > 2 ? F(p[2]) : 0)); break;
-                case "vn": vn.Add(new Vector3(F(p[1]), F(p[2]), F(p[3]))); break;
+                case "vt":
+                    vt.Add(new Vector2(F(p[1]), p.Length > 2 ? F(p[2]) : 0));
+                    break;
+                case "vn":
+                    vn.Add(new Vector3(F(p[1]), F(p[2]), F(p[3])));
+                    break;
                 case "mtllib":
                 {
                     var mp = Path.Combine(Path.GetDirectoryName(path) ?? "", line[7..].Trim());
                     if (File.Exists(mp)) ReadMtl(mp, lib);
                     break;
                 }
-                case "usemtl": cur = Material(line[6..].Trim()); break;
+                case "usemtl":
+                    cur = Material(line[6..].Trim());
+                    break;
                 case "f":
                 {
                     if (cur < 0) cur = Material("");
@@ -125,9 +140,16 @@ public static class ModelFiles
             var p = line.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
             switch (p[0])
             {
-                case "newmtl": name = line[6..].Trim(); lib[name] = (Rgba.White, null); break;
-                case "Kd" when name != null && p.Length >= 4: lib[name] = (new Rgba(F(p[1]), F(p[2]), F(p[3])), lib[name].map); break;
-                case "map_Kd" when name != null: lib[name] = (lib[name].kd, p[^1]); break;
+                case "newmtl":
+                    name = line[6..].Trim();
+                    lib[name] = (Rgba.White, null);
+                    break;
+                case "Kd" when name != null && p.Length >= 4:
+                    lib[name] = (new Rgba(F(p[1]), F(p[2]), F(p[3])), lib[name].map);
+                    break;
+                case "map_Kd" when name != null:
+                    lib[name] = (lib[name].kd, p[^1]);
+                    break;
             }
         }
     }
@@ -137,7 +159,8 @@ public static class ModelFiles
     static ModelMesh ReadStl(byte[] bytes)
     {
         var m = new ModelMesh { Materials = { new ModelMaterial(Plain, null) } };
-        bool ascii = bytes.Length > 6 && Encoding.ASCII.GetString(bytes, 0, 6).StartsWith("solid", StringComparison.Ordinal) && Encoding.ASCII.GetString(bytes, 0, Math.Min(bytes.Length, 512)).Contains("facet", StringComparison.Ordinal);
+        bool ascii = bytes.Length > 6 && Encoding.ASCII.GetString(bytes, 0, 6).StartsWith("solid", StringComparison.Ordinal)
+            && Encoding.ASCII.GetString(bytes, 0, Math.Min(bytes.Length, 512)).Contains("facet", StringComparison.Ordinal);
         static Vector3 Up(Vector3 z) => new(z.X, z.Z, -z.Y);
         if (ascii)
         {
@@ -170,7 +193,9 @@ public static class ModelFiles
     static void AddTri(ModelMesh m, Vector3 a, Vector3 b, Vector3 c)
     {
         var n = (c - a).Cross(b - a).Normalized();
-        m.Add(a, n, Vector2.Zero, Rgba.White); m.Add(b, n, Vector2.Zero, Rgba.White); m.Add(c, n, Vector2.Zero, Rgba.White);
+        m.Add(a, n, Vector2.Zero, Rgba.White);
+        m.Add(b, n, Vector2.Zero, Rgba.White);
+        m.Add(c, n, Vector2.Zero, Rgba.White);
         m.Mat.Add(0);
     }
 
@@ -202,28 +227,12 @@ public static class ModelFiles
             if (count < 0 || count > room || count > 0 && props.Count == 0)
                 throw new InvalidDataException($"the PLY file says it holds {count} {name}(s), more than it can");
         bool bin = format.StartsWith("binary", StringComparison.Ordinal);
-        var pos = new List<Vector3>(); var nor = new List<Vector3>(); var col = new List<Rgba>(); var uv = new List<Vector2>();
+        var pos = new List<Vector3>();
+        var nor = new List<Vector3>();
+        var col = new List<Rgba>();
+        var uv = new List<Vector2>();
         var faces = new List<int[]>();
-        int at = dataStart;
-        string[]? tokens = bin ? null : Encoding.ASCII.GetString(bytes, dataStart, bytes.Length - dataStart).Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
-        int tk = 0;
-        double Read(string type)
-        {
-            if (!bin) return double.Parse(tokens![tk++], Inv);
-            double r;
-            switch (type)
-            {
-                case "char": case "int8": r = (sbyte)bytes[at]; at += 1; break;
-                case "uchar": case "uint8": r = bytes[at]; at += 1; break;
-                case "short": case "int16": r = BitConverter.ToInt16(bytes, at); at += 2; break;
-                case "ushort": case "uint16": r = BitConverter.ToUInt16(bytes, at); at += 2; break;
-                case "int": case "int32": r = BitConverter.ToInt32(bytes, at); at += 4; break;
-                case "uint": case "uint32": r = BitConverter.ToUInt32(bytes, at); at += 4; break;
-                case "float": case "float32": r = BitConverter.ToSingle(bytes, at); at += 4; break;
-                default: r = BitConverter.ToDouble(bytes, at); at += 8; break;
-            }
-            return r;
-        }
+        var values = new PlyValues(bytes, dataStart, bin);
         foreach (var (name, count, props) in elements)
             for (int i = 0; i < count; i++)
             {
@@ -233,13 +242,13 @@ public static class ModelFiles
                 {
                     if (countType != null)
                     {
-                        int n = (int)Read(countType);
+                        int n = (int)values.Read(countType);
                         if (n < 0 || n > room) throw new InvalidDataException($"the PLY file says a list holds {n} items, more than it can");
                         var l = new int[n];
-                        for (int k = 0; k < n; k++) l[k] = (int)Read(type);
+                        for (int k = 0; k < n; k++) l[k] = (int)values.Read(type);
                         if (pname is "vertex_indices" or "vertex_index") list = l;
                     }
-                    else vals[pname] = Read(type);
+                    else vals[pname] = values.Read(type);
                 }
                 if (name == "vertex")
                 {
@@ -260,6 +269,62 @@ public static class ModelFiles
                 m.Mat.Add(0);
             }
         return m;
+    }
+
+    sealed class PlyValues
+    {
+        readonly byte[] _bytes;
+        readonly string[]? _tokens;
+        int _at, _tk;
+
+        public PlyValues(byte[] bytes, int dataStart, bool bin)
+        {
+            _bytes = bytes;
+            _at = dataStart;
+            _tokens = bin ? null : Encoding.ASCII.GetString(bytes, dataStart, bytes.Length - dataStart).Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
+        }
+
+        public double Read(string type)
+        {
+            if (_tokens != null) return double.Parse(_tokens[_tk++], Inv);
+            double r;
+            switch (type)
+            {
+                case "char": case "int8":
+                    r = (sbyte)_bytes[_at];
+                    _at += 1;
+                    break;
+                case "uchar": case "uint8":
+                    r = _bytes[_at];
+                    _at += 1;
+                    break;
+                case "short": case "int16":
+                    r = BitConverter.ToInt16(_bytes, _at);
+                    _at += 2;
+                    break;
+                case "ushort": case "uint16":
+                    r = BitConverter.ToUInt16(_bytes, _at);
+                    _at += 2;
+                    break;
+                case "int": case "int32":
+                    r = BitConverter.ToInt32(_bytes, _at);
+                    _at += 4;
+                    break;
+                case "uint": case "uint32":
+                    r = BitConverter.ToUInt32(_bytes, _at);
+                    _at += 4;
+                    break;
+                case "float": case "float32":
+                    r = BitConverter.ToSingle(_bytes, _at);
+                    _at += 4;
+                    break;
+                default:
+                    r = BitConverter.ToDouble(_bytes, _at);
+                    _at += 8;
+                    break;
+            }
+            return r;
+        }
     }
 
     static int IndexOf(byte[] b, string s)

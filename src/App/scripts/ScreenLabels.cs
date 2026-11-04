@@ -6,7 +6,13 @@ namespace KTable.App;
 
 public partial class ScreenLabels : CanvasLayer
 {
-    sealed class Entry { public Vector3 World; public Vector2 Offset; public required Label Label; public bool Centered; }
+    sealed class Entry
+    {
+        public Vector3 World;
+        public Vector2 Offset;
+        public required Label Label;
+        public bool Centered;
+    }
 
     readonly Dictionary<string, Entry> _entries = new();
     readonly Func<Camera3D?> _cam;
@@ -31,7 +37,9 @@ public partial class ScreenLabels : CanvasLayer
             _root.AddChild(l);
             _entries[key] = e = new Entry { Label = l };
         }
-        e.World = world; e.Offset = offset; e.Centered = centered;
+        e.World = world;
+        e.Offset = offset;
+        e.Centered = centered;
         if (e.Label.Text != text) { e.Label.Text = text; e.Label.ResetSize(); }
         e.Label.AddThemeFontSizeOverride("font_size", fontSize);
         e.Label.AddThemeColorOverride("font_color", color);

@@ -41,7 +41,9 @@ sealed class FormationPanel : HudPart
                 TooltipText = $"{kind.Name}   ({key})\n{kind.What}", CustomMinimumSize = new Vector2(46, 42), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
             };
             b.AddChild(new FormationGlyph { Kind = kind });
-            var tag = new Label { Text = key, Modulate = Ui.Muted, MouseFilter = Control.MouseFilterEnum.Ignore, HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Bottom };
+            var tag =
+                new Label { Text = key, Modulate = Ui.Muted, MouseFilter = Control.MouseFilterEnum.Ignore, HorizontalAlignment = HorizontalAlignment.Right,
+                    VerticalAlignment = VerticalAlignment.Bottom };
             tag.AddThemeFontSizeOverride("font_size", 10);
             b.AddChild(tag);
             tag.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
@@ -67,7 +69,9 @@ sealed class FormationPanel : HudPart
     void AddSpacing()
     {
         var row = Row("Spacing", "The room between pieces, as a share of a piece · Ctrl + wheel on the table");
-        var s = new HSlider { MinValue = 0, MaxValue = MostSpacingPercent, Step = SpacingStep, Value = T.Forms.Gap * 100, CustomMinimumSize = new Vector2(90, 0), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter };
+        var s =
+            new HSlider { MinValue = 0, MaxValue = MostSpacingPercent, Step = SpacingStep, Value = T.Forms.Gap * 100, CustomMinimumSize = new Vector2(90, 0),
+                SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter };
         var shown = new Label { Text = $"{T.Forms.Gap * 100:0}%", CustomMinimumSize = new Vector2(40, 0), HorizontalAlignment = HorizontalAlignment.Right, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter };
         s.ValueChanged += v => shown.Text = $"{v:0}%";
         s.DragEnded += changed => { if (changed) T.Forms.SetGap(s.Value / 100); };

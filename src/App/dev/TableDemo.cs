@@ -18,7 +18,10 @@ sealed class TableDemo
 
     SignalAwaiter After(double seconds) => T.ToSignal(T.GetTree().CreateTimer(seconds), SceneTreeTimer.SignalName.Timeout);
     SignalAwaiter NextFrame() => T.ToSignal(T.GetTree(), SceneTree.SignalName.ProcessFrame);
-    async Task Frames(int k) { for (int i = 0; i < k; i++) await NextFrame(); }
+    async Task Frames(int k)
+    {
+        for (int i = 0; i < k; i++) await NextFrame();
+    }
 
     static async void Report(Task run)
     {
@@ -44,7 +47,12 @@ sealed class TableDemo
 
     public void NameEdit(string typed) { if (T.SelectedNodes.FirstOrDefault() is { } n) T.Names.BeginTyped(n, typed); }
 
-    public void Ruler(Vec2 a, Vec2 b) { T.SetTool(Tool.Ruler); T.Ruler.A = a; T.Ruler.B = b; }
+    public void Ruler(Vec2 a, Vec2 b)
+    {
+        T.SetTool(Tool.Ruler);
+        T.Ruler.A = a;
+        T.Ruler.B = b;
+    }
 
     public void Shapes() => Report(ShapesAsync());
 
@@ -180,7 +188,8 @@ sealed class TableDemo
         await After(3.0);
         var board = S.View.Layer(Layers.Umpire);
         if (board.Count < 2) { GD.Print("[attach] this needs two pieces on the table"); return; }
-        var parent = board[0]; var child = board[1];
+        var parent = board[0];
+        var child = board[1];
         string Where() => $"{parent.Id} at {S.View.Find(Layers.Umpire, parent.Id)!.Pos.X:0.0},{S.View.Find(Layers.Umpire, parent.Id)!.Pos.Z:0.0} · {child.Id} at {S.View.Find(Layers.Umpire, child.Id)!.Pos.X:0.0},{S.View.Find(Layers.Umpire, child.Id)!.Pos.Z:0.0}";
         GD.Print($"[attach] before: {Where()}");
         S.Do(new KTable.Core.Protocol.Attach { Layer = Layers.Umpire, Parent = parent.Id, Child = child.Id });
@@ -279,13 +288,18 @@ sealed class TableDemo
         }
         async Task Drag(Vector2 a, Vector2 b)
         {
-            Btn(a, true); await Frames(2);
-            Move(a, (a + b) / 2); await Frames(2);
-            Move((a + b) / 2, b); await Frames(2);
-            Btn(b, false); await Frames(3);
+            Btn(a, true);
+            await Frames(2);
+            Move(a, (a + b) / 2);
+            await Frames(2);
+            Move((a + b) / 2, b);
+            await Frames(2);
+            Btn(b, false);
+            await Frames(3);
         }
         if (T.Rig.TopDown) T.Rig.ToggleTopDown();
-        T.Rig.Yaw = Mathf.Pi; T.Rig.Pitch = -1.0f;
+        T.Rig.Yaw = Mathf.Pi;
+        T.Rig.Pitch = -1.0f;
         T.FrameAll();
         await Frames(1);
         var nodes = board.Select(id => T.NodeOf(Layers.Umpire, id)!).ToList();
@@ -363,8 +377,14 @@ sealed class TableDemo
         Say("the marker put on block 1");
         await Carry(ew, at + new Vec2(0, -2.5));
         Say("the earthwork lifted and carried");
-        var many = new List<Command>(); var manyIds = new List<string>();
-        for (int i = 0; i < 400; i++) { var id = Id(); manyIds.Add(id); many.Add(new SpawnPiece { Layer = Layers.Umpire, Def = block, Pos = at + new Vec2(-16 + (i % 20) * 1.7, 8 + (i / 20) * 0.9), RotDeg = 180, Id = id }); }
+        var many = new List<Command>();
+        var manyIds = new List<string>();
+        for (int i = 0; i < 400; i++)
+        {
+            var id = Id();
+            manyIds.Add(id);
+            many.Add(new SpawnPiece { Layer = Layers.Umpire, Def = block, Pos = at + new Vec2(-16 + (i % 20) * 1.7, 8 + (i / 20) * 0.9), RotDeg = 180, Id = id });
+        }
         S.Do(new Batch { Items = many });
         await After(2.0);
         T.SetSelection(manyIds);
@@ -407,7 +427,8 @@ sealed class TableDemo
         GD.Print($"[stack] before: {before.Count} pieces - " + string.Join(" | ", before));
         var board = S.View.Layer(Layers.Umpire).ToList();
         if (board.Count < 2) { GD.Print("[stack] need two pieces"); return; }
-        var a = board[0]; var b = board[1];
+        var a = board[0];
+        var b = board[1];
         T.SetSelection(new[] { a.Id });
         T.Hand.Start(a.Pos);
         for (int i = 1; i <= 18; i++)

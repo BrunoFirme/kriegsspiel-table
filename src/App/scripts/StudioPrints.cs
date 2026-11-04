@@ -81,11 +81,15 @@ internal sealed class PrintPlacer
         var boxes = new SpinBox[vals.Length];
         for (int i = 0; i < vals.Length; i++)
         {
-            boxes[i] = new SpinBox { MinValue = 0, MaxValue = 100, Step = 1, Value = Math.Round(vals[i] * 100), Suffix = "%", CustomMinimumSize = new Vector2(62, 0), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, TooltipText = $"{tips[i]} (% of the face)" };
+            boxes[i] =
+                new SpinBox { MinValue = 0, MaxValue = 100, Step = 1, Value = Math.Round(vals[i] * 100), Suffix = "%", CustomMinimumSize = new Vector2(62, 0),
+                    SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, TooltipText = $"{tips[i]} (% of the face)" };
             row.AddChild(boxes[i]);
         }
         foreach (var sb in boxes)
-            sb.ValueChanged += _ => Place(key, new FaceBox { X = boxes[0].Value / 100, Y = boxes[1].Value / 100, W = Math.Max(0.02, boxes[2].Value / 100), H = Math.Max(0.02, boxes[3].Value / 100) }, n.side, rebuild: false);
+            sb.ValueChanged += _ =>
+                Place(key, new FaceBox { X = boxes[0].Value / 100, Y = boxes[1].Value / 100, W = Math.Max(0.02, boxes[2].Value / 100), H = Math.Max(0.02, boxes[3].Value / 100) }, n.side,
+                    rebuild: false);
         body.AddChild(row);
     }
 
@@ -106,7 +110,12 @@ internal sealed class PrintPlacer
         var pick = new OptionButton { FitToLongestItem = false, ClipText = true, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, TooltipText = "What the boxes on the face are" };
         for (int i = 0; i < items.Count; i++) pick.AddItem(items[i].label, i);
         pick.Selected = Math.Max(0, chosen);
-        pick.ItemSelected += i => { Canvas.Chosen = items[(int)i].key; Canvas.Redraw(); _s.RebuildToolPanel(); };
+        pick.ItemSelected += i =>
+        {
+            Canvas.Chosen = items[(int)i].key;
+            Canvas.Redraw();
+            _s.RebuildToolPanel();
+        };
         body.AddChild(Wide(pick));
         var key = chosen >= 0 ? items[chosen].key : "band";
         Numbers(body, d, key);

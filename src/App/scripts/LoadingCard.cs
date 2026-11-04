@@ -21,14 +21,19 @@ public partial class LoadingCard : PanelContainer
         CustomMinimumSize = new Vector2(260, 0);
         SizeFlagsHorizontal = SizeFlags.ShrinkBegin;
         var card = Ui.Card();
-        card.ContentMarginLeft = 14; card.ContentMarginRight = 8; card.ContentMarginTop = 10; card.ContentMarginBottom = 12;
+        card.ContentMarginLeft = 14;
+        card.ContentMarginRight = 8;
+        card.ContentMarginTop = 10;
+        card.ContentMarginBottom = 12;
         AddThemeStyleboxOverride("panel", card);
         var col = new VBoxContainer();
         col.AddThemeConstantOverride("separation", 8);
         AddChild(col);
 
         var head = new HBoxContainer();
-        var name = new Label { Text = title, ClipText = true, TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis, SizeFlagsHorizontal = SizeFlags.ExpandFill, TooltipText = title, MouseFilter = MouseFilterEnum.Pass };
+        var name =
+            new Label { Text = title, ClipText = true, TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis, SizeFlagsHorizontal = SizeFlags.ExpandFill, TooltipText = title,
+                MouseFilter = MouseFilterEnum.Pass };
         name.AddThemeFontOverride("font", titleFont);
         name.AddThemeFontSizeOverride("font_size", 16);
         head.AddChild(name);
@@ -75,7 +80,12 @@ public partial class LoadingCard : PanelContainer
         _bar.MaxValue = p.Total;
         _bar.Value = p.Done;
         _stage.Text = $"{p.Stage} · {N(p.Done)} / {N(p.Total)}";
-        if (_countStage != p.Stage) { _countStage = p.Stage; _countStart = t; _countFrom = p.Done; }
+        if (_countStage != p.Stage)
+        {
+            _countStage = p.Stage;
+            _countStart = t;
+            _countFrom = p.Done;
+        }
         double rate = (p.Done - _countFrom) / Math.Max(0.001, t - _countStart);
         _time.Text = t - _countStart > 2 && rate > 0 && p.Done < p.Total ? Clock((p.Total - p.Done) / rate) + " left" : Clock(t);
     }

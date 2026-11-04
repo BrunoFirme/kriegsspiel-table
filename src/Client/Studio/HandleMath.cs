@@ -23,7 +23,8 @@ public static class HandleMath
 
     public static (float sx, float sy) Scale(int handle, Vector2 anchor, Vector2 grip, Vector2 now, bool free)
     {
-        var span = grip - anchor; var to = now - anchor;
+        var span = grip - anchor;
+        var to = now - anchor;
         float sx = 1, sy = 1;
         if (handle < 4)
         {
@@ -50,7 +51,13 @@ public static class HandleMath
     public static (double x, double y, double w, double h) Box(int handle, double x, double y, double w, double h, double dx, double dy)
     {
         double x0 = x, y0 = y, x1 = x + w, y1 = y + h;
-        if (handle == 9) { x0 += dx; x1 += dx; y0 += dy; y1 += dy; }
+        if (handle == 9)
+        {
+            x0 += dx;
+            x1 += dx;
+            y0 += dy;
+            y1 += dy;
+        }
         else
         {
             if (MovesLeft(handle)) x0 += dx;
@@ -71,7 +78,8 @@ public static class HandleMath
     public static int NearestEdge(IReadOnlyList<Vector2> pts, Vector2 p, float within)
     {
         if (pts.Count < 2) return -1;
-        int best = -1; float bd = within;
+        int best = -1;
+        float bd = within;
         int edges = pts.Count == 2 ? 1 : pts.Count;
         for (int i = 0; i < edges; i++)
         {

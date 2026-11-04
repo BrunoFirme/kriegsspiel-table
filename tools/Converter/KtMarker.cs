@@ -27,6 +27,6 @@ public static class KtMarker
         var card = save.Objects.FirstOrDefault(o => o.Description.StartsWith(Pack));
         if (card == null) return null;
         try { return System.Text.Json.JsonSerializer.Deserialize<Info>(card.Description[Pack.Length..], Config.Opts); }
-        catch { return null; }
+        catch (System.Text.Json.JsonException) { return null; }
     }
 }

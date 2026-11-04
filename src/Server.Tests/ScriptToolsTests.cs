@@ -201,7 +201,8 @@ public class ScriptToolsTests
         t.Server.Handle(Table.Host, new SetScript { Layer = U, Id = P, Text = "fired = false" });
         Run(t, P, "wait.frames(1, function() fired = true end)");
         Assert.Equal(1, Assert.Single(t.Server.Scripts.Describe(), i => i.Id == P).Timers);
-        t.Server.Scripts.Tick(1); t.Server.Scripts.Tick(2);
+        t.Server.Scripts.Tick(1);
+        t.Server.Scripts.Tick(2);
         Assert.Equal("true", Result(t, P, "fired"));
     }
 }

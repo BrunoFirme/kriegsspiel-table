@@ -9,7 +9,12 @@ static class AppSettings
     {
         var vol = new HSlider { MinValue = 0, MaxValue = 1, Step = 0.05, Value = cfg.SoundVolume, CustomMinimumSize = new Vector2(220, 0) };
         var volL = new Label { Text = $"{cfg.SoundVolume * 100:0}%", CustomMinimumSize = new Vector2(48, 0) };
-        vol.ValueChanged += v => { volL.Text = $"{v * 100:0}%"; cfg.SoundVolume = (float)v; Sfx.Current?.Apply(); };
+        vol.ValueChanged += v =>
+        {
+            volL.Text = $"{v * 100:0}%";
+            cfg.SoundVolume = (float)v;
+            Sfx.Current?.Apply();
+        };
         vol.DragEnded += _ => cfg.Save();
         var row = new HBoxContainer();
         row.AddThemeConstantOverride("separation", 8);
@@ -18,7 +23,12 @@ static class AppSettings
         row.AddChild(volL);
         box.AddChild(row);
         var mute = new CheckBox { Text = "Silent", ButtonPressed = cfg.SoundMuted, FocusMode = Control.FocusModeEnum.None };
-        mute.Toggled += on => { cfg.SoundMuted = on; cfg.Save(); Sfx.Current?.Apply(); };
+        mute.Toggled += on =>
+        {
+            cfg.SoundMuted = on;
+            cfg.Save();
+            Sfx.Current?.Apply();
+        };
         box.AddChild(mute);
     }
 

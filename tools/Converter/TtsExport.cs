@@ -57,9 +57,15 @@ public sealed class TtsExport
         foreach (var def in pack.Pieces.OrderBy(d => d.Name, StringComparer.OrdinalIgnoreCase))
         {
             double w = Math.Max(0.5, def.Size.W), h = Math.Max(0.5, def.Size.H);
-            if (x + w > rowWidth) { x = 0; z -= rowH + 0.8; rowH = 0; }
+            if (x + w > rowWidth)
+            {
+                x = 0;
+                z -= rowH + 0.8;
+                rowH = 0;
+            }
             var p = new PieceInstance { Id = "export", Def = def.Id, Pos = new Vec2(x + w / 2 - rowWidth / 2, z - h / 2), RotDeg = 180, Scale = 1 };
-            x += w + 0.6; rowH = Math.Max(rowH, h);
+            x += w + 0.6;
+            rowH = Math.Max(rowH, h);
             if (Piece(p) is not { } o) continue;
             o["GMNotes"] = KtMarker.Def + Json.Serialize(def);
             o["Description"] = string.Join(" · ", def.Tags.Where(t => t != "mine"));
@@ -83,7 +89,8 @@ public sealed class TtsExport
     string Guid6()
     {
         string g;
-        do g = _rng.Next(0x100000, 0xFFFFFF).ToString("x6"); while (!_guids.Add(g));
+        do g = _rng.Next(0x100000, 0xFFFFFF).ToString("x6");
+        while (!_guids.Add(g));
         return g;
     }
 
@@ -117,7 +124,9 @@ public sealed class TtsExport
         double r = 1, g = 1, b = 1;
         if (hex is { Length: 7 } && hex[0] == '#')
         {
-            r = Convert.ToInt32(hex[1..3], 16) / 255.0; g = Convert.ToInt32(hex[3..5], 16) / 255.0; b = Convert.ToInt32(hex[5..7], 16) / 255.0;
+            r = Convert.ToInt32(hex[1..3], 16) / 255.0;
+            g = Convert.ToInt32(hex[3..5], 16) / 255.0;
+            b = Convert.ToInt32(hex[5..7], 16) / 255.0;
         }
         return new JsonObject { ["r"] = r, ["g"] = g, ["b"] = b };
     }

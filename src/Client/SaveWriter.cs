@@ -42,7 +42,9 @@ sealed class SaveWriter
 
     public SaveWriter(SaveStore store, IScenarioFolders folders, SaveLogGenerations generations)
     {
-        _store = store; _folders = folders; _generations = generations;
+        _store = store;
+        _folders = folders;
+        _generations = generations;
     }
 
     internal Action<long>? BeforeLanding { get; set; }

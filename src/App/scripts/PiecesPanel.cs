@@ -34,7 +34,12 @@ sealed class PiecesPanel : HudPart
         var hearts = Hearts = Ui.IconBtn("heart", "Favourites only", "Right-click a piece here, or on the table, to make it a favourite: favourites come first");
         hearts.ToggleMode = true;
         hearts.ButtonPressed = Cfg.FavouritesOnly;
-        hearts.Toggled += on => { Cfg.FavouritesOnly = on; Cfg.Save(); RebuildList(); };
+        hearts.Toggled += on =>
+        {
+            Cfg.FavouritesOnly = on;
+            Cfg.Save();
+            RebuildList();
+        };
         searchRow.AddChild(hearts);
         packs.AddChild(searchRow);
         BuildList();
@@ -77,21 +82,30 @@ sealed class PiecesPanel : HudPart
         };
         List.AddThemeFontSizeOverride("font_size", 11);
         List.ItemSelected += i => { if (List.GetItemMetadata((int)i).AsString() is { Length: > 0 } id) { Shell.EnsureInGame(id); T.SetTool(Tool.Place, id); } };
-        Vector2 palPress = Vector2.Zero; int palItem = -1; bool palDragging = false;
+        Vector2 palPress = Vector2.Zero;
+        int palItem = -1;
+        bool palDragging = false;
         List.GuiInput += e =>
         {
             switch (e)
             {
                 case InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true } mb:
-                    palPress = mb.Position; palItem = List.GetItemAtPosition(mb.Position, true); palDragging = false;
+                    palPress = mb.Position;
+                    palItem = List.GetItemAtPosition(mb.Position, true);
+                    palDragging = false;
                     break;
                 case InputEventMouseMotion mm when palItem >= 0 && !palDragging && (mm.ButtonMask & MouseButtonMask.Left) != 0:
                     if ((mm.Position - palPress).Length() > 10 && List.GetItemMetadata(palItem).AsString() is { Length: > 0 } id)
-                    { palDragging = true; Shell.EnsureInGame(id); T.BeginPaletteDrag(id, at => Panel.GetGlobalRect().HasPoint(at)); }
+                    {
+                        palDragging = true;
+                        Shell.EnsureInGame(id);
+                        T.BeginPaletteDrag(id, at => Panel.GetGlobalRect().HasPoint(at));
+                    }
                     break;
                 case InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: false } mb:
                     if (palDragging) T.EndPaletteDrag(drop: !Panel.GetGlobalRect().HasPoint(mb.GlobalPosition));
-                    palItem = -1; palDragging = false;
+                    palItem = -1;
+                    palDragging = false;
                     break;
                 case InputEventMouseButton { ButtonIndex: MouseButton.Right, Pressed: true } rb:
                     HeartMenu(rb);
@@ -140,7 +154,12 @@ sealed class PiecesPanel : HudPart
     public void SelectPack(string packId)
     {
         for (int i = 0; i < PackPick.ItemCount; i++)
-            if (PackPick.GetItemMetadata(i).AsString() == packId) { PackPick.Selected = i; RebuildList(); return; }
+            if (PackPick.GetItemMetadata(i).AsString() == packId)
+            {
+                PackPick.Selected = i;
+                RebuildList();
+                return;
+            }
     }
 
     public bool IsFavourite(string defId) => Cfg.Favourites.Contains(defId);
@@ -162,7 +181,8 @@ sealed class PiecesPanel : HudPart
         var hearted = Cfg.Favourites.ToHashSet();
         var defs = source.SelectMany(p => p.Pieces.Select(d => (d, p)))
             .Where(x => !Cfg.FavouritesOnly || hearted.Contains(x.d.Id))
-            .Where(x => q.Length == 0 || x.d.Name.Contains(q, StringComparison.OrdinalIgnoreCase) || x.d.Tags.Any(t => t.Contains(q, StringComparison.OrdinalIgnoreCase)) || x.p.Name.Contains(q, StringComparison.OrdinalIgnoreCase))
+            .Where(x => q.Length == 0 || x.d.Name.Contains(q, StringComparison.OrdinalIgnoreCase) || x.d.Tags.Any(t => t.Contains(q, StringComparison.OrdinalIgnoreCase)) || x.p.Name.Contains(q,
+                StringComparison.OrdinalIgnoreCase))
             .OrderBy(x => hearted.Contains(x.d.Id) ? 0 : 1).ThenBy(x => x.d.Name, StringComparer.OrdinalIgnoreCase).ThenBy(x => x.d.Size.W * x.d.Size.H)
             .Take(1200).ToList();
         var dupNames = defs.GroupBy(x => x.d.Name).Where(g => g.Count() > 1).Select(g => g.Key).ToHashSet();

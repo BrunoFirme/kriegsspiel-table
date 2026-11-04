@@ -67,7 +67,10 @@ public static class ImageClipboard
             int src = (h - 1 - y) * w * 4, dst = 40 + y * w * 4;
             for (int x = 0; x < w; x++, src += 4, dst += 4)
             {
-                dib[dst] = rgba[src + 2]; dib[dst + 1] = rgba[src + 1]; dib[dst + 2] = rgba[src]; dib[dst + 3] = rgba[src + 3];
+                dib[dst] = rgba[src + 2];
+                dib[dst + 1] = rgba[src + 1];
+                dib[dst + 2] = rgba[src];
+                dib[dst + 3] = rgba[src + 3];
             }
         }
 

@@ -38,10 +38,19 @@ sealed class TrashPage
         var now = DateTime.UtcNow;
         var entries = TrashShelves.Entries(Saves, packs);
         var back = new Button { Text = packs ? "← Piece studio" : "← Host a game", Flat = true, FocusMode = Control.FocusModeEnum.None, SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin };
-        back.Pressed += () => { _main.RebuildLobby(); if (packs) { _t.Select(2); _t.Packs.Show(); } };
+        back.Pressed += () =>
+        {
+            _main.RebuildLobby();
+            if (packs) { _t.Select(2); _t.Packs.Show(); }
+        };
         v.AddChild(back);
         if (entries.Count == 0) { v.AddChild(new Label { Text = "The trash is empty.", Modulate = Muted }); return; }
-        void Refresh() { _main.RebuildLobby(); _t.Select(packs ? 2 : 0); Show(packs); }
+        void Refresh()
+        {
+            _main.RebuildLobby();
+            _t.Select(packs ? 2 : 0);
+            Show(packs);
+        }
         var picks = new TitlePicks();
         picks.Act(n => $"Restore {n}", keys => RestoreMany(entries.Where(e => keys.Contains(e.Path)).ToList(), store, Refresh), primary: true);
         picks.Act(n => $"Delete {n} for good", keys => PurgeMany(entries.Where(e => keys.Contains(e.Path)).ToList(), Refresh));

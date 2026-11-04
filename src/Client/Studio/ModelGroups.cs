@@ -15,7 +15,8 @@ public static class ModelGroups
         {
             if (mats[t] == run) { count++; continue; }
             Append(sb, run, count);
-            run = mats[t]; count = 1;
+            run = mats[t];
+            count = 1;
         }
         Append(sb, run, count);
         return sb.ToString();
@@ -33,7 +34,8 @@ public static class ModelGroups
         foreach (var piece in groups.Split(',', StringSplitOptions.RemoveEmptyEntries))
         {
             var bits = piece.Split('*');
-            if (bits.Length != 2 || !int.TryParse(bits[0], NumberStyles.None, CultureInfo.InvariantCulture, out var mat) || !int.TryParse(bits[1], NumberStyles.None, CultureInfo.InvariantCulture, out var count)) return null;
+            if (bits.Length != 2 || !int.TryParse(bits[0], NumberStyles.None, CultureInfo.InvariantCulture, out var mat) || !int.TryParse(bits[1], NumberStyles.None, CultureInfo.InvariantCulture,
+                out var count)) return null;
             if (count < 1 || mats.Count + count > tris) return null;
             mats.AddRange(Enumerable.Repeat(mat, count));
         }

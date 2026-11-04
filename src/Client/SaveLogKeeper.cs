@@ -20,7 +20,10 @@ sealed class SaveLogKeeper
 
     public SaveLogKeeper(SaveLogGenerations generations, Func<ClientLog> log, Action<string> note, Action<Action>? disk = null)
     {
-        _generations = generations; _log = log; _note = note; _disk = disk;
+        _generations = generations;
+        _log = log;
+        _note = note;
+        _disk = disk;
     }
 
     public bool Working => _saveLog is { Working: true };
@@ -71,7 +74,12 @@ sealed class SaveLogKeeper
 
     public void Close(GameServer? server)
     {
-        if (_saveLog != null) { _saveLog.Dispose(); _saveLog = null; _path = null; }
+        if (_saveLog != null)
+        {
+            _saveLog.Dispose();
+            _saveLog = null;
+            _path = null;
+        }
         if (server != null) server.Applied = null;
     }
 }

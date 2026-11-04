@@ -16,7 +16,9 @@ public partial class ExportDialog : ConfirmationDialog
 
     public ExportDialog(PackageStore store, string kind, string id)
     {
-        _store = store; _kind = kind; _id = id;
+        _store = store;
+        _kind = kind;
+        _id = id;
         Title = kind == "pack" ? "Export pack" : "Export scenario";
         OkButtonText = "Choose file…";
     }
@@ -51,7 +53,8 @@ public partial class ExportDialog : ConfirmationDialog
         catch (Exception e) when (SaveStore.IsDamage(e) || e is IOException or UnauthorizedAccessException) { inPlay += " and its saves"; }
         opt.AddItem(inPlay, (int)SavesMode.InPlay);
         int files = 0;
-        try { files = Directory.Exists(saves.SavesRoot(scenarioDir)) ? Directory.EnumerateFiles(saves.SavesRoot(scenarioDir), "*" + SaveStore.Ext, SearchOption.AllDirectories).Count(f => !SaveStore.IsHidden(saves.SavesRoot(scenarioDir), Path.GetDirectoryName(f)!)) : 0; }
+        try { files = Directory.Exists(saves.SavesRoot(scenarioDir)) ? Directory.EnumerateFiles(saves.SavesRoot(scenarioDir), "*" + SaveStore.Ext,
+            SearchOption.AllDirectories).Count(f => !SaveStore.IsHidden(saves.SavesRoot(scenarioDir), Path.GetDirectoryName(f)!)) : 0; }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException) { files = 0; }
         opt.AddItem($"Every save ({files} file{(files == 1 ? "" : "s")}, every folder)", (int)SavesMode.All);
         opt.TooltipText = "Whoever installs the file gets these saves beside their own; the game in play becomes the one Resume opens.";

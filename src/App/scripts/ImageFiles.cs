@@ -24,12 +24,24 @@ public static class ImageFiles
             Error err;
             switch (ext)
             {
-                case "png": err = img.LoadPngFromBuffer(bytes); break;
-                case "jpg": case "jpeg": err = img.LoadJpgFromBuffer(bytes); break;
-                case "webp": err = img.LoadWebpFromBuffer(bytes); break;
-                case "bmp": err = img.LoadBmpFromBuffer(bytes); break;
-                case "tga": err = img.LoadTgaFromBuffer(bytes); break;
-                case "ktx": err = img.LoadKtxFromBuffer(bytes); break;
+                case "png":
+                    err = img.LoadPngFromBuffer(bytes);
+                    break;
+                case "jpg": case "jpeg":
+                    err = img.LoadJpgFromBuffer(bytes);
+                    break;
+                case "webp":
+                    err = img.LoadWebpFromBuffer(bytes);
+                    break;
+                case "bmp":
+                    err = img.LoadBmpFromBuffer(bytes);
+                    break;
+                case "tga":
+                    err = img.LoadTgaFromBuffer(bytes);
+                    break;
+                case "ktx":
+                    err = img.LoadKtxFromBuffer(bytes);
+                    break;
                 case "svg":
                     err = img.LoadSvgFromBuffer(bytes, 1);
                     if (err == Error.Ok && !img.IsEmpty())

@@ -47,7 +47,14 @@ public class ClientSession
         switch (m)
         {
             case ScriptConsole sc:
-                if (sc.Backlog) { ConsoleLines.Clear(); ConsoleLines.AddRange(sc.Lines); _consoleSeq = sc.Lines.Count > 0 ? sc.Lines[^1].Seq : _consoleSeq; ConsoleChanged?.Invoke(null); break; }
+                if (sc.Backlog)
+                {
+                    ConsoleLines.Clear();
+                    ConsoleLines.AddRange(sc.Lines);
+                    _consoleSeq = sc.Lines.Count > 0 ? sc.Lines[^1].Seq : _consoleSeq;
+                    ConsoleChanged?.Invoke(null);
+                    break;
+                }
                 var fresh = sc.Lines.Where(l => l.Seq > _consoleSeq).ToList();
                 if (fresh.Count == 0) break;
                 _consoleSeq = fresh[^1].Seq;
@@ -55,7 +62,10 @@ public class ClientSession
                 if (ConsoleLines.Count > ConsoleKeep) ConsoleLines.RemoveRange(0, ConsoleLines.Count - ConsoleKeep);
                 ConsoleChanged?.Invoke(fresh);
                 break;
-            case ScriptList sl: Scripts = sl.Scripts; ScriptsChanged?.Invoke(); break;
+            case ScriptList sl:
+                Scripts = sl.Scripts;
+                ScriptsChanged?.Invoke();
+                break;
         }
     }
 
@@ -92,7 +102,8 @@ public class ClientSession
         Me.Role = rc.Role;
         if (!IsUmpire) { Access = null; MirrorTurns.Clear(); }
         ForgetUndo();
-        _review = null; ReviewInfo = null;
+        _review = null;
+        ReviewInfo = null;
         SetView(rc.View);
         RoleChanged?.Invoke();
     }
@@ -112,7 +123,8 @@ public class ClientSession
 
     public void Review(GameState? past, TurnInfo? info)
     {
-        _review = past; ReviewInfo = info;
+        _review = past;
+        ReviewInfo = info;
         Reset?.Invoke();
     }
 
@@ -145,12 +157,18 @@ public class ClientSession
         Applied?.Invoke(c);
         if (c is RestoreTurn or LoadSave)
         {
-            _review = null; ReviewInfo = null;
+            _review = null;
+            ReviewInfo = null;
             Reset?.Invoke();
         }
     }
 
-    public void OnPeers(PeerList p) { Peers = p.Peers; Waiting = p.Waiting; PeersChanged?.Invoke(); }
+    public void OnPeers(PeerList p)
+    {
+        Peers = p.Peers;
+        Waiting = p.Waiting;
+        PeersChanged?.Invoke();
+    }
     public void OnError(string e) => Error?.Invoke(e);
 
     public void Do(Command c)
@@ -175,7 +193,12 @@ public class ClientSession
 
     void Track(Command c)
     {
-        if (c.UndoOf == 0) { MyUndoable.Push(c.Seq); MyRedoable.Clear(); _redoing.Clear(); }
+        if (c.UndoOf == 0)
+        {
+            MyUndoable.Push(c.Seq);
+            MyRedoable.Clear();
+            _redoing.Clear();
+        }
         else if (_redoing.Remove(c.UndoOf)) MyUndoable.Push(c.Seq);
         else MyRedoable.Push(c.Seq);
     }

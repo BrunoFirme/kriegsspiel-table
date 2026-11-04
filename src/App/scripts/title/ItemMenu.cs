@@ -13,7 +13,12 @@ sealed class ItemMenu
     readonly Main _main;
     readonly IPlatform _platform;
 
-    public ItemMenu(TitleScreen t, Main main, IPlatform platform) { _t = t; _main = main; _platform = platform; }
+    public ItemMenu(TitleScreen t, Main main, IPlatform platform)
+    {
+        _t = t;
+        _main = main;
+        _platform = platform;
+    }
 
     Library Lib => _t.Folders.Lib;
 
@@ -22,7 +27,8 @@ sealed class ItemMenu
         var pm = new PopupMenu();
         var move = new PopupMenu { Name = "move" };
         var current = Lib.FolderOf(pack, id);
-        move.AddCheckItem("Unfiled", 1000); move.SetItemChecked(0, current.Length == 0);
+        move.AddCheckItem("Unfiled", 1000);
+        move.SetItemChecked(0, current.Length == 0);
         for (int i = 0; i < Lib.Folders.Count; i++) { move.AddCheckItem(Lib.Folders[i], 1001 + i); move.SetItemChecked(i + 1, Lib.Folders[i] == current); }
         move.AddSeparator();
         move.AddItem("New folder…", 1999);
@@ -58,9 +64,15 @@ sealed class ItemMenu
                     Ui.Open(_main, dlg);
                     break;
                 }
-                case 3: AskDelete(store, pack, id, name); break;
-                case 4: CheckScripts(store, pack, id, name); break;
-                case 5: _main.HostAndOpenSaves(id); break;
+                case 3:
+                    AskDelete(store, pack, id, name);
+                    break;
+                case 4:
+                    CheckScripts(store, pack, id, name);
+                    break;
+                case 5:
+                    _main.HostAndOpenSaves(id);
+                    break;
             }
         };
         pm.PopupHide += () => pm.QueueFree();

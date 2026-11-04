@@ -19,8 +19,10 @@ public static class TableExtent
         void Take(Vec2 p, double reach)
         {
             if (!double.IsFinite(p.X) || !double.IsFinite(p.Z)) return;
-            x0 = Math.Min(x0, p.X - reach); x1 = Math.Max(x1, p.X + reach);
-            z0 = Math.Min(z0, p.Z - reach); z1 = Math.Max(z1, p.Z + reach);
+            x0 = Math.Min(x0, p.X - reach);
+            x1 = Math.Max(x1, p.X + reach);
+            z0 = Math.Min(z0, p.Z - reach);
+            z1 = Math.Max(z1, p.Z + reach);
         }
         foreach (var s in g.Sheets) Take(s.Pos, Math.Sqrt(s.Size.W * s.Size.W + s.Size.H * s.Size.H) / 2);
         foreach (var layer in g.Layers.Values) foreach (var p in layer) Take(p.Pos, PieceReach);

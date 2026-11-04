@@ -55,7 +55,8 @@ sealed class MenuCards : HudPart
         if (S.IsUmpire) menu.Item("Scripting…", () => Ctx.ShowScriptWindow(one.Piece.Id), Cfg.Keys.Label("scriptWindow"));
         if (Cfg.MakerTools)
         {
-            var pid = one.Piece.Id; var pguid = one.Piece.Guid;
+            var pid = one.Piece.Id;
+            var pguid = one.Piece.Guid;
             menu.Item("Copy id", () => { AppClipboard.SetText(pid); Say($"Copied {pid}"); }, pid);
             if (pguid != null && pguid != pid) menu.Item("Copy GUID", () => { AppClipboard.SetText(pguid); Say($"Copied {pguid}"); }, pguid);
         }
@@ -87,7 +88,8 @@ sealed class MenuCards : HudPart
             menu.Separator("Counters");
             foreach (var cd in def.Counters)
             {
-                var c = cd; var val = one.Piece.Counters.GetValueOrDefault(c.Name, c.Default);
+                var c = cd;
+                var val = one.Piece.Counters.GetValueOrDefault(c.Name, c.Default);
                 if (val < c.Max) menu.Item($"{c.Name} {val} → {val + 1}", () => S.Do(new SetCounter { Layer = one.Layer, Id = one.Piece.Id, Name = c.Name, Value = val + 1 }));
                 if (val > c.Min) menu.Item($"{c.Name} {val} → {val - 1}", () => S.Do(new SetCounter { Layer = one.Layer, Id = one.Piece.Id, Name = c.Name, Value = val - 1 }));
             }
@@ -196,7 +198,8 @@ sealed class MenuCards : HudPart
 
     Control PieceNotes(PieceNode node, PopupPanel pop)
     {
-        var p = node.Piece; var layer = node.Layer;
+        var p = node.Piece;
+        var layer = node.Layer;
         var v = new VBoxContainer();
         v.AddThemeConstantOverride("separation", 4);
         var label = new LineEdit { Text = p.Label ?? "", PlaceholderText = "Label (shown on hover)", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
@@ -206,7 +209,8 @@ sealed class MenuCards : HudPart
             WrapMode = TextEdit.LineWrappingMode.Boundary, ScrollFitContentHeight = false, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
         };
         note.AddThemeFontSizeOverride("font_size", 12);
-        var sentLabel = p.Label ?? ""; var sentNote = p.Note ?? "";
+        var sentLabel = p.Label ?? "";
+        var sentNote = p.Note ?? "";
         void Commit()
         {
             if (!GodotObject.IsInstanceValid(label) || !GodotObject.IsInstanceValid(note)) return;

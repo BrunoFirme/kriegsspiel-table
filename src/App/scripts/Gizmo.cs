@@ -16,7 +16,11 @@ sealed class Gizmo : IKnobDrag
     readonly PendingPoses _poses;
     public Gizmo(TableContext c, SheetLayer sheets, ToolOverlay overlay, Selection selection, PendingPoses poses)
     {
-        _c = c; _sheets = sheets; _overlay = overlay; _selection = selection; _poses = poses;
+        _c = c;
+        _sheets = sheets;
+        _overlay = overlay;
+        _selection = selection;
+        _poses = poses;
     }
 
     SelectTool _selectTool = null!;
@@ -43,7 +47,9 @@ sealed class Gizmo : IKnobDrag
         if (_c.Tool != Tool.Transform || (nodes.Count == 0 && sheet == null) || _selectTool.BoxSelecting) return;
         Measure(nodes, sheet);
         var mesh = _overlay.Mesh;
-        var mat = new StandardMaterial3D { AlbedoColor = new Color(1, 0.93f, 0.22f, 1), ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded, NoDepthTest = true, CullMode = BaseMaterial3D.CullModeEnum.Disabled };
+        var mat =
+            new StandardMaterial3D { AlbedoColor = new Color(1, 0.93f, 0.22f, 1), ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded, NoDepthTest = true,
+                CullMode = BaseMaterial3D.CullModeEnum.Disabled };
         var up = Vector3.Up * 0.4f;
         float k = KnobSize();
         float bw = k * 0.22f;
@@ -56,11 +62,13 @@ sealed class Gizmo : IKnobDrag
             mesh.SurfaceAddVertex(_center + d * (_radius + bw) + up);
         }
         mesh.SurfaceEnd();
-        var rk = RotateKnobWorld() + up; var sk = ScaleKnobWorld() + up;
+        var rk = RotateKnobWorld() + up;
+        var sk = ScaleKnobWorld() + up;
         mesh.SurfaceBegin(Mesh.PrimitiveType.Triangles, mat);
         for (int i = 0; i < 20; i++)
         {
-            var a0 = Mathf.Tau * i / 20; var a1 = Mathf.Tau * (i + 1) / 20;
+            var a0 = Mathf.Tau * i / 20;
+            var a1 = Mathf.Tau * (i + 1) / 20;
             mesh.SurfaceAddVertex(rk);
             mesh.SurfaceAddVertex(rk + new Vector3(Mathf.Cos(a0), 0, Mathf.Sin(a0)) * k);
             mesh.SurfaceAddVertex(rk + new Vector3(Mathf.Cos(a1), 0, Mathf.Sin(a1)) * k);
@@ -74,7 +82,8 @@ sealed class Gizmo : IKnobDrag
 
     public void Measure(List<PieceNode> nodes, SheetNode? sheet)
     {
-        if (sheet != null) MeasureSheet(sheet); else MeasurePieces(nodes);
+        if (sheet != null) MeasureSheet(sheet);
+        else MeasurePieces(nodes);
     }
 
     void MeasurePieces(List<PieceNode> nodes)
@@ -114,7 +123,12 @@ sealed class Gizmo : IKnobDrag
     {
         Held = h;
         _sheet = _selection.Nodes.Any() ? null : Sheet;
-        if (_sheet != null) { _sheetOrigin = (_sheet.Def.RotDeg, _sheet.Def.Size); _sheetPreviewRot = _sheetOrigin.rot; _sheetPreviewK = 1; }
+        if (_sheet != null)
+        {
+            _sheetOrigin = (_sheet.Def.RotDeg, _sheet.Def.Size);
+            _sheetPreviewRot = _sheetOrigin.rot;
+            _sheetPreviewK = 1;
+        }
         _origin.Clear();
         foreach (var n in _selection.Nodes) if (!n.Piece.Locked) _origin[n.Piece.Id] = _poses.Current(n);
         var g = Rig.GroundAt(screen) ?? _center;
@@ -184,10 +198,12 @@ sealed class Gizmo : IKnobDrag
         Held = Handle.None;
         if (_sheet != null)
         {
-            var s = _sheet; _sheet = null;
+            var s = _sheet;
+            _sheet = null;
             s.Scale = Vector3.One;
             bool resized = Math.Abs(_sheetPreviewK - 1) > 1e-6;
-            _c.S.Do(new MoveSheet { Id = s.Def.Id, Pos = s.Def.Pos, RotDeg = Table.Norm360(_sheetPreviewRot), Z = s.Def.Z, Size = resized ? new Size2(_sheetOrigin.size.W * _sheetPreviewK, _sheetOrigin.size.H * _sheetPreviewK) : null });
+            _c.S.Do(new MoveSheet { Id = s.Def.Id, Pos = s.Def.Pos, RotDeg = Table.Norm360(_sheetPreviewRot), Z = s.Def.Z,
+                Size = resized ? new Size2(_sheetOrigin.size.W * _sheetPreviewK, _sheetOrigin.size.H * _sheetPreviewK) : null });
             _c.NotifySelectionChanged();
             return;
         }

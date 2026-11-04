@@ -20,7 +20,9 @@ public sealed partial class ScriptHost
         game.Table["dialog"] = Fn(a =>
         {
             var owner = _current ?? throw new ScriptRuntimeException("game.dialog: not inside a script call");
-            var who = Arg(a, 0); var spec = Arg(a, 1); var fn = Arg(a, 2);
+            var who = Arg(a, 0);
+            var spec = Arg(a, 1);
+            var fn = Arg(a, 2);
             if (fn.Type != DataType.Function) throw new ScriptRuntimeException("game.dialog: the third argument must be a function");
             var token = $"d-{_nextDialog++:D6}";
             var d = new ShowDialog { Token = token, To = who.Type == DataType.Table && who.Table.Get("id").Type == DataType.Number ? $"p:{(long)who.Table.Get("id").Number}" : null };
@@ -50,9 +52,19 @@ public sealed partial class ScriptHost
         var ui = T();
         List<UiNode> Root() => _s.State.UiRoot(layer, piece) ?? throw new ScriptRuntimeException($"ui: piece {piece} is gone");
         UiNode? Node(string id) => _s.State.UiNode(layer, piece, id);
-        ui.Table["set"] = Fn(a => { Root(); Emit(new SetUi { Layer = layer, Piece = piece, Tree = UiTrees.TreeOf(Arg(a, 0)) }); return DynValue.Nil; });
+        ui.Table["set"] = Fn(a =>
+        {
+            Root();
+            Emit(new SetUi { Layer = layer, Piece = piece, Tree = UiTrees.TreeOf(Arg(a, 0)) });
+            return DynValue.Nil;
+        });
         ui.Table["xml"] = Fn(_ => S(ToXml(Root())));
-        ui.Table["tree"] = Fn(_ => { var t = T(); foreach (var n in Root()) t.Table.Append(UiTrees.NodeTable(_vm, n)); return t; });
+        ui.Table["tree"] = Fn(_ =>
+        {
+            var t = T();
+            foreach (var n in Root()) t.Table.Append(UiTrees.NodeTable(_vm, n));
+            return t;
+        });
         ui.Table["set_attribute"] = Fn(a => B(SetAttrs(layer, piece, Arg(a, 0).CastToString() ?? "", new() { [Arg(a, 1).CastToString() ?? ""] = UiTrees.AttrText(Arg(a, 2)) })));
         ui.Table["set_attributes"] = Fn(a =>
         {
@@ -94,7 +106,8 @@ public sealed partial class ScriptHost
     {
         var slash = handler.IndexOf('/');
         if (slash < 0) return (_global, handler);
-        var target = handler[..slash]; var fn = handler[(slash + 1)..];
+        var target = handler[..slash];
+        var fn = handler[(slash + 1)..];
         var p = _s.State.Layer(Layers.Umpire).FirstOrDefault(x => x.Id == target || x.Guid == target);
         if (p == null || !_pieces.TryGetValue(p.Id, out var ps)) return (null, fn);
         return (ps, fn);

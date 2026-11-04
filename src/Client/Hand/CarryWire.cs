@@ -39,8 +39,13 @@ public static class CarryWire
         {
             var (at, turn) = samples[i].Pose;
             var o = i * FloatsPerSample;
-            poses[o] = at.X; poses[o + 1] = at.Y; poses[o + 2] = at.Z;
-            poses[o + 3] = turn.X; poses[o + 4] = turn.Y; poses[o + 5] = turn.Z; poses[o + 6] = turn.W;
+            poses[o] = at.X;
+            poses[o + 1] = at.Y;
+            poses[o + 2] = at.Z;
+            poses[o + 3] = turn.X;
+            poses[o + 4] = turn.Y;
+            poses[o + 5] = turn.Z;
+            poses[o + 6] = turn.W;
         }
         return (samples.Select(m => m.Piece.Layer).ToArray(), samples.Select(m => m.Piece.Id).ToArray(), poses);
     }

@@ -44,7 +44,12 @@ internal static class PieceFaces
         {
             l.Add(new Face("tex", "Texture", d.States.Count > 0 ? d.States[0].Texture ?? d.Texture : d.Texture, (x, s) =>
             {
-                if (x.States.Count > 0) { Follow(x, x.States[0].Texture, s, st => st.Texture, (st, v) => st.Texture = v); if (x.Texture == x.States[0].Texture || x.Texture == null) x.Texture = s; x.States[0].Texture = s; }
+                if (x.States.Count > 0)
+                {
+                    Follow(x, x.States[0].Texture, s, st => st.Texture, (st, v) => st.Texture = v);
+                    if (x.Texture == x.States[0].Texture || x.Texture == null) x.Texture = s;
+                    x.States[0].Texture = s;
+                }
                 else x.Texture = s;
             }, d.States.Count > 0 ? 0 : -1, false));
             for (int i = 1; i < d.States.Count; i++)
@@ -67,8 +72,18 @@ internal static class PieceFaces
             AddShapeFaces(d, l);
             return l;
         }
-        l.Add(new Face("front", Name(0), d.States[0].Image ?? d.Image, (x, s) => { Follow(x, x.States[0].Image, s, st => st.Image, (st, v) => st.Image = v); if (x.Image == x.States[0].Image || x.Image == null) x.Image = s; x.States[0].Image = s; }, 0, false));
-        l.Add(new Face("back", Name(0) + " · back", d.States[0].Back ?? d.Back, (x, s) => { Follow(x, x.States[0].Back, s, st => st.Back, (st, v) => st.Back = v); if (x.Back == x.States[0].Back || x.Back == null) x.Back = s; x.States[0].Back = s; }, 0, true));
+        l.Add(new Face("front", Name(0), d.States[0].Image ?? d.Image, (x, s) =>
+        {
+            Follow(x, x.States[0].Image, s, st => st.Image, (st, v) => st.Image = v);
+            if (x.Image == x.States[0].Image || x.Image == null) x.Image = s;
+            x.States[0].Image = s;
+        }, 0, false));
+        l.Add(new Face("back", Name(0) + " · back", d.States[0].Back ?? d.Back, (x, s) =>
+        {
+            Follow(x, x.States[0].Back, s, st => st.Back, (st, v) => st.Back = v);
+            if (x.Back == x.States[0].Back || x.Back == null) x.Back = s;
+            x.States[0].Back = s;
+        }, 0, true));
         for (int i = 1; i < d.States.Count; i++)
         {
             int si = i;
@@ -125,21 +140,31 @@ internal sealed class FaceSaver
 
     public void Opened(PieceDef def, string key, string? sha)
     {
-        OpenDef = def; OpenKey = key; OpenSha = sha;
+        OpenDef = def;
+        OpenKey = key;
+        OpenSha = sha;
         CanvasOpen = true;
-        Dirty = false; _save.Clear();
-        _commitWhat = null; _commitIn = -1;
+        Dirty = false;
+        _save.Clear();
+        _commitWhat = null;
+        _commitIn = -1;
     }
 
     public void Closed()
     {
-        OpenDef = null; CanvasOpen = false; Dirty = false; _save.Clear(); _commitWhat = null;
+        OpenDef = null;
+        CanvasOpen = false;
+        Dirty = false;
+        _save.Clear();
+        _commitWhat = null;
     }
 
     public void Drop()
     {
-        Dirty = false; _save.Clear();
-        _commitWhat = null; _commitIn = -1;
+        Dirty = false;
+        _save.Clear();
+        _commitWhat = null;
+        _commitIn = -1;
     }
 
     public void CommitSoon(string what) { _commitWhat = what; _commitIn = 0.8; }
@@ -147,7 +172,8 @@ internal sealed class FaceSaver
     public void FlushCommit()
     {
         if (_commitWhat is not { } what) return;
-        _commitWhat = null; _commitIn = -1;
+        _commitWhat = null;
+        _commitIn = -1;
         if (CanvasOpen) Canvas.Commit(what);
     }
 
@@ -192,7 +218,8 @@ internal sealed class FaceSaver
         var key = OpenKey;
         var f = PieceFaces.Of(def).FirstOrDefault(x => x.Key == key);
         if (f == null) { Dirty = false; return true; }
-        Dirty = false; _save.Clear();
+        Dirty = false;
+        _save.Clear();
         var doc = ArtStore.Deserialize(ArtStore.Serialize(Canvas.Doc))!;
         ArtRenderer? r = null;
         try
@@ -253,7 +280,9 @@ internal sealed class FaceSaver
             }
             doc = ArtStore.Deserialize(ArtStore.Serialize(doc))!;
             int w = paint.GetWidth(), h = paint.GetHeight();
-            var layer = new ArtLayer { Id = layerId, Name = "Painted in 3D", Kind = "image", Src = ArtStore.AddSrc(_s.Store, _s.Pack.Id, paint), SrcW = w, SrcH = h, X = doc.W / 2f, Y = doc.H / 2f, Sx = doc.W / (float)w, Sy = doc.H / (float)h };
+            var layer =
+                new ArtLayer { Id = layerId, Name = "Painted in 3D", Kind = "image", Src = ArtStore.AddSrc(_s.Store, _s.Pack.Id, paint), SrcW = w, SrcH = h, X = doc.W / 2f, Y = doc.H / 2f, Sx = doc.W / (float)w,
+                    Sy = doc.H / (float)h };
             doc.Layers.Add(layer);
             doc.Selected = layer.Id;
             var r = Canvas.R.Twin(doc);
@@ -374,7 +403,9 @@ internal sealed class FaceBar
         foreach (var (isBack, text) in new[] { (false, "Front"), (true, "Back") })
         {
             var f = PieceFaces.Of(d).FirstOrDefault(x => x.Key == PieceFaces.Key(state, isBack));
-            var b = new Button { Text = text + (f?.Sha == null ? " ∅" : ""), ToggleMode = true, ButtonPressed = back == isBack, FocusMode = Control.FocusModeEnum.None, CustomMinimumSize = new Vector2(64, 0), TooltipText = (f?.Sha == null ? "Nothing painted on this side yet" : $"Paint the {text.ToLowerInvariant()}") + "   (F turns it over)" };
+            var b =
+                new Button { Text = text + (f?.Sha == null ? " ∅" : ""), ToggleMode = true, ButtonPressed = back == isBack, FocusMode = Control.FocusModeEnum.None, CustomMinimumSize = new Vector2(64, 0),
+                    TooltipText = (f?.Sha == null ? "Nothing painted on this side yet" : $"Paint the {text.ToLowerInvariant()}") + "   (F turns it over)" };
             var ib = isBack;
             b.Pressed += () => { if (back != ib) _ = _s.SwitchFace(PieceFaces.Key(state, ib)); else b.SetPressedNoSignal(true); };
             sides.AddChild(b);

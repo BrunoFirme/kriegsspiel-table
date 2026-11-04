@@ -30,7 +30,8 @@ sealed class PropertiesDialog : HudPart
 
     void Show()
     {
-        var p = _p; var layer = _layer;
+        var p = _p;
+        var layer = _layer;
         _box.AddThemeConstantOverride("separation", 6);
         _dlg.AddChild(_box);
         _box.AddChild(Hint($"{(layer == Layers.Umpire ? "umpire board" : layer)} Â· at {p.Pos.X:0.0}, {p.Pos.Z:0.0} Â· {p.RotDeg:0}Â°"));
@@ -45,7 +46,10 @@ sealed class PropertiesDialog : HudPart
 
     void AddFields()
     {
-        var p = _p; var def = _def; var layer = _layer; var dlg = _dlg;
+        var p = _p;
+        var def = _def;
+        var layer = _layer;
+        var dlg = _dlg;
         _box.AddChild(Header("Text"));
         var grid = Ui.Form(88);
         _box.AddChild(grid);
@@ -84,19 +88,38 @@ sealed class PropertiesDialog : HudPart
         var tg = Ui.Form(88, 3);
         var cur = T.Current(_node);
         double lo = Math.Log(Table.MinScale), hi = Math.Log(Table.MaxScale);
-        var scS = new HSlider { MinValue = lo, MaxValue = hi, Step = 0.01, Value = Math.Clamp(Math.Log(cur.scale), lo, hi), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, CustomMinimumSize = new Vector2(80, 0) };
+        var scS =
+            new HSlider { MinValue = lo, MaxValue = hi, Step = 0.01, Value = Math.Clamp(Math.Log(cur.scale), lo, hi), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+                SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, CustomMinimumSize = new Vector2(80, 0) };
         var scN = new SpinBox { MinValue = Table.MinScale, MaxValue = Table.MaxScale, Step = 0.01, Value = cur.scale, Prefix = "Ã—", CustomMinimumSize = new Vector2(92, 0) };
         bool sync = false;
-        scS.ValueChanged += v => { if (sync) return; sync = true; scN.Value = Math.Exp(v); sync = false; T.SetSelectionTransform(null, Math.Exp(v)); };
-        scN.ValueChanged += v => { if (sync) return; sync = true; scS.Value = Math.Log(v); sync = false; T.SetSelectionTransform(null, v); };
-        tg.AddChild(new Label { Text = "Size" }); tg.AddChild(scS); tg.AddChild(scN);
+        scS.ValueChanged += v =>
+        {
+            if (sync) return;
+            sync = true;
+            scN.Value = Math.Exp(v);
+            sync = false;
+            T.SetSelectionTransform(null, Math.Exp(v));
+        };
+        scN.ValueChanged += v =>
+        {
+            if (sync) return;
+            sync = true;
+            scS.Value = Math.Log(v);
+            sync = false;
+            T.SetSelectionTransform(null, v);
+        };
+        tg.AddChild(new Label { Text = "Size" });
+        tg.AddChild(scS);
+        tg.AddChild(scN);
         Ui.AlignForm(tg);
         _box.AddChild(tg);
     }
 
     void AddTint()
     {
-        var p = _p; var layer = _layer;
+        var p = _p;
+        var layer = _layer;
         var tg = Ui.Form(88);
         var tintRow = new HBoxContainer();
         tintRow.AddThemeConstantOverride("separation", 6);
@@ -114,7 +137,8 @@ sealed class PropertiesDialog : HudPart
 
     void AddAttachments()
     {
-        var p = _p; var layer = _layer;
+        var p = _p;
+        var layer = _layer;
         _box.AddChild(Header("Attached markers"));
         if (p.Attached.Count == 0) _box.AddChild(Hint("None. To attach: select several pieces, right-click â†’ Attach."));
         foreach (var cid in p.Attached)
@@ -130,14 +154,17 @@ sealed class PropertiesDialog : HudPart
 
     void AddForScripts()
     {
-        var p = _p; var def = _def; var dlg = _dlg;
+        var p = _p;
+        var def = _def;
+        var dlg = _dlg;
         _box.AddChild(Header("Scripting"));
         var code = p.Script != null ? "its own" : def?.Script != null ? "its pack's" : "none";
         var facts = Ui.Form(88);
         void Fact(string name, string value)
         {
             facts.AddChild(new Label { Text = name });
-            facts.AddChild(new Label { Text = value, ClipText = true, TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, TooltipText = value, MouseFilter = Control.MouseFilterEnum.Pass });
+            facts.AddChild(new Label { Text = value, ClipText = true, TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+                TooltipText = value, MouseFilter = Control.MouseFilterEnum.Pass });
         }
         Fact("Id", p.Id);
         if (p.Guid != null && p.Guid != p.Id) Fact("TTS GUID", p.Guid);

@@ -9,7 +9,12 @@ sealed class JoinPage
     readonly Main _main;
     readonly Settings _cfg;
 
-    public JoinPage(TitleScreen t, Main main, Settings cfg) { _t = t; _main = main; _cfg = cfg; }
+    public JoinPage(TitleScreen t, Main main, Settings cfg)
+    {
+        _t = t;
+        _main = main;
+        _cfg = cfg;
+    }
 
     string GuestName => _t.PlayerName.Text.Trim().Length > 0 ? _t.PlayerName.Text.Trim() : "Guest";
 

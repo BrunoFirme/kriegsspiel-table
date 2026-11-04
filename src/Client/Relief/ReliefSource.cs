@@ -66,7 +66,8 @@ public static class ReliefBuilder
     public static ReliefSource FromMesh(ModelMesh m, string name)
     {
         if (m.V.Count < 3) throw new InvalidDataException("the model has no triangles");
-        var lo = new Vector3(float.MaxValue); var hi = new Vector3(float.MinValue);
+        var lo = new Vector3(float.MaxValue);
+        var hi = new Vector3(float.MinValue);
         foreach (var v in m.V) { lo = Vector3.Min(lo, v); hi = Vector3.Max(hi, v); }
         var size = hi - lo;
         Func<Vector3, (float x, float z, float h)> top = size.Y <= size.Z && size.Y <= size.X
@@ -141,13 +142,15 @@ public static class ReliefBuilder
                 {
                     int i = y * cols + x;
                     if (filled[i]) continue;
-                    float sum = 0; int n = 0;
+                    float sum = 0;
+                    int n = 0;
                     for (int dy = -1; dy <= 1; dy++)
                         for (int dx = -1; dx <= 1; dx++)
                         {
                             int nx = x + dx, ny = y + dy;
                             if (nx < 0 || ny < 0 || nx >= cols || ny >= rows || !filled[ny * cols + nx]) continue;
-                            sum += raw[ny * cols + nx]; n++;
+                            sum += raw[ny * cols + nx];
+                            n++;
                         }
                     if (n > 0) { raw[i] = sum / n; next[i] = true; }
                 }
@@ -175,7 +178,14 @@ public static class ReliefBuilder
         foreach (var q in ps)
         {
             double x = q.p.X, y = q.p.Y, v = value(q);
-            sxx += x * x; sxy += x * y; sx += x; syy += y * y; sy += y; sxv += x * v; syv += y * v; sv += v;
+            sxx += x * x;
+            sxy += x * y;
+            sx += x;
+            syy += y * y;
+            sy += y;
+            sxv += x * v;
+            syv += y * v;
+            sv += v;
         }
         var m = new double[,] { { sxx, sxy, sx }, { sxy, syy, sy }, { sx, sy, n } };
         var r = new[] { sxv, syv, sv };

@@ -23,7 +23,8 @@ public static class Naming
     {
         var stem = $"{pack.Id}.{PieceSlug(name)}";
         string id;
-        do id = $"{stem}-{Repeatable.NewGuid().ToString("N")[..8]}"; while (pack.Pieces.Any(p => p.Id == id));
+        do id = $"{stem}-{Repeatable.NewGuid().ToString("N")[..8]}";
+        while (pack.Pieces.Any(p => p.Id == id));
         return id;
     }
 

@@ -13,7 +13,12 @@ sealed class Drawer : HudPart
     readonly IHudShell Shell;
     readonly UmpiresPage _umpires;
     readonly MapPage _map;
-    public Drawer(HudContext ctx, IHudShell shell, UmpiresPage umpires, MapPage map) : base(ctx) { Shell = shell; _umpires = umpires; _map = map; }
+    public Drawer(HudContext ctx, IHudShell shell, UmpiresPage umpires, MapPage map) : base(ctx)
+    {
+        Shell = shell;
+        _umpires = umpires;
+        _map = map;
+    }
 
     public void Build(Control root)
     {

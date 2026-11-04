@@ -153,7 +153,7 @@ public static class ConverterTool
             CloseHandle(job);
             return IntPtr.Zero;
         }
-        catch (Exception) { return IntPtr.Zero; }
+        catch (Exception e) { Diagnostics.Write(LogLevel.Warning, "[converter] no job object to tie the converter to: " + e.Message); return IntPtr.Zero; }
     }
 
     const uint KillOnJobClose = 0x2000;

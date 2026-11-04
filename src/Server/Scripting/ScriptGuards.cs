@@ -37,8 +37,10 @@ internal sealed class ScriptGuards
         var take = DynValue.NewCallback((_, _) =>
         {
             var call = new DynValue[_nextArgs.Length + 1];
-            call[0] = _nextFn; _nextArgs.CopyTo(call, 1);
-            _nextFn = DynValue.Nil; _nextArgs = Array.Empty<DynValue>();
+            call[0] = _nextFn;
+            _nextArgs.CopyTo(call, 1);
+            _nextFn = DynValue.Nil;
+            _nextArgs = Array.Empty<DynValue>();
             return DynValue.NewTuple(call);
         });
         var worker = _vm.LoadString("local yield, done, take = coroutine.yield, ... local function run(fn, ...) return fn(...) end return function() while true do yield(done, run(take())) end end", null, "worker");
@@ -106,7 +108,8 @@ internal sealed class ScriptGuards
     public DynValue Worker(DynValue fn, DynValue[] args)
     {
         var co = _idle.Count > 0 ? _idle.Pop() : NewWorker();
-        _nextFn = fn; _nextArgs = args;
+        _nextFn = fn;
+        _nextArgs = args;
         return co;
     }
 

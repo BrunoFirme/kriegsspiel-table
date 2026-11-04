@@ -40,7 +40,12 @@ public partial class ModelStudio
         _printing = null;
         if (!_flat || _def == null || _studio.S == null) return;
         var p = _studio.Paper.Instance(_def)?.Clone() ?? new PieceInstance { Def = _def.Id };
-        p.Id = "studio-printing"; p.Pos = new Vec2(0, 0); p.RotDeg = 180; p.Stack = 0; p.Y = 0; p.Scale = 1;
+        p.Id = "studio-printing";
+        p.Pos = new Vec2(0, 0);
+        p.RotDeg = 180;
+        p.Stack = 0;
+        p.Y = 0;
+        p.Scale = 1;
         p.FaceDown = _turned;
         if (_flatState >= 0) p.State = _flatState;
         PieceNode node;
@@ -100,12 +105,14 @@ public partial class ModelStudio
         frontImg ??= BlockMesh.Blank(w, h);
 
         var outline = BlockMesh.Ccw(PieceNode.Outline(cut ? "box" : shape, w, h));
-        var (top, under, side) = BlockMesh.Slab(outline, w, h, t, p => new Vector2(p.X / w + 0.5f, p.Y / h + 0.5f), p => new Vector2(0.5f - p.X / w, p.Y / h + 0.5f), (_, _) => new Vector2(0.5f, 0.5f));
+        var (top, under, side) =
+            BlockMesh.Slab(outline, w, h, t, p => new Vector2(p.X / w + 0.5f, p.Y / h + 0.5f), p => new Vector2(0.5f - p.X / w, p.Y / h + 0.5f), (_, _) => new Vector2(0.5f, 0.5f));
 
         if (front != null)
         {
             var fv = AddView(new ModelPart { Id = front.Key, Name = front.Label, Kind = "face" }, top, frontImg, cut);
-            fv.Face = front.Key; fv.OpenSha = front.Sha;
+            fv.Face = front.Key;
+            fv.OpenSha = front.Sha;
         }
         if (back != null)
         {
@@ -113,7 +120,9 @@ public partial class ModelStudio
             var img = own;
             if (img == null) { img = (Image)frontImg.Duplicate(); img.FlipX(); }
             var bv = AddView(new ModelPart { Id = back.Key, Name = back.Label, Kind = "face" }, under, img, cut);
-            bv.Face = back.Key; bv.OpenSha = back.Sha; bv.FlipFront = own == null;
+            bv.Face = back.Key;
+            bv.OpenSha = back.Sha;
+            bv.FlipFront = own == null;
         }
         var edges = cut ? BlockMesh.CutWalls(frontImg, w, h, t, new Vector2(0.5f, 0.5f)) : side;
         if (edges != null)
@@ -133,8 +142,14 @@ public partial class ModelStudio
         if (unread.Count > 0) _studio.Say($"Could not read {string.Join(", ", unread)} on this piece: left out of the view, kept in its document.");
         if (!same || !_views.ContainsKey(_selPart ?? "")) _selPart = front?.Key;
         _openedSig = FlatSig(d);
-        _openedTex = d.Texture; _openedMesh = d.Mesh;
-        if (!same) { _turned = false; ApplyTurn(); Frame(); }
+        _openedTex = d.Texture;
+        _openedMesh = d.Mesh;
+        if (!same)
+        {
+            _turned = false;
+            ApplyTurn();
+            Frame();
+        }
         ShowPrinting();
         RefreshSelection();
     }
@@ -166,7 +181,8 @@ public partial class ModelStudio
             bool any = false;
             if (addOnsChanged)
             {
-                _studio.SetSaved("saving…"); any = true;
+                _studio.SetSaved("saving…");
+                any = true;
                 await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
                 BakeAddOns(def, doc, addOns);
             }
@@ -217,10 +233,13 @@ public partial class ModelStudio
             var (atlas, size, mesh) = ModelBake.Pack(parts, views);
             var texSha = PackEdit.AddImage(_store, _pack, atlas);
             var meshSha = _baker.AddMesh(ModelImport.ToObj(mesh));
-            doc.Baked = texSha; doc.BakedSize = size;
+            doc.Baked = texSha;
+            doc.BakedSize = size;
             KTable.Core.Json.WriteAtomic(DocPath(_store, _pack.Id, meshSha), JsonSerializer.Serialize(doc, Opts));
-            def.AddOnMesh = meshSha; def.AddOnTexture = texSha;
-            _studio.MadeHere.Add(meshSha); _studio.MadeHere.Add(texSha);
+            def.AddOnMesh = meshSha;
+            def.AddOnTexture = texSha;
+            _studio.MadeHere.Add(meshSha);
+            _studio.MadeHere.Add(texSha);
         }
         if (def == _def) _openedSig = FlatSig(def);
         _studio.Superseded(oldMesh, def.AddOnMesh);
@@ -234,12 +253,18 @@ internal static class BlockMesh
     public static List<Vector2> Ccw(List<Vector2> outline)
     {
         float area = 0;
-        for (int i = 0; i < outline.Count; i++) { var a = outline[i]; var b = outline[(i + 1) % outline.Count]; area += a.X * b.Y - b.X * a.Y; }
+        for (int i = 0; i < outline.Count; i++)
+        {
+            var a = outline[i];
+            var b = outline[(i + 1) % outline.Count];
+            area += a.X * b.Y - b.X * a.Y;
+        }
         if (area < 0) outline.Reverse();
         return outline;
     }
 
-    public static (MeshData top, MeshData under, MeshData side) Slab(List<Vector2> outline, float w, float h, float t, Func<Vector2, Vector2> top, Func<Vector2, Vector2> under, Func<float, float, Vector2> side)
+    public static (MeshData top, MeshData under, MeshData side) Slab(List<Vector2> outline, float w, float h, float t, Func<Vector2, Vector2> top, Func<Vector2, Vector2> under,
+        Func<float, float, Vector2> side)
     {
         var mt = new MeshData { Tex = { null }, MatColor = { Colors.White } };
         var mu = new MeshData { Tex = { null }, MatColor = { Colors.White } };
@@ -248,19 +273,25 @@ internal static class BlockMesh
         {
             foreach (var p in new[] { outline[0], outline[i], outline[i + 1] }) mt.Add(new Vector3(p.X, t, p.Y), Vector3.Up, top(p), Colors.White);
             foreach (var p in new[] { outline[0], outline[i + 1], outline[i] }) mu.Add(new Vector3(p.X, 0, p.Y), Vector3.Down, under(p), Colors.White);
-            mt.Mat.Add(0); mu.Mat.Add(0);
+            mt.Mat.Add(0);
+            mu.Mat.Add(0);
         }
         float round = 0;
         for (int i = 0; i < outline.Count; i++) round += outline[i].DistanceTo(outline[(i + 1) % outline.Count]);
         float at = 0;
         for (int i = 0; i < outline.Count; i++)
         {
-            var a = outline[i]; var b = outline[(i + 1) % outline.Count];
+            var a = outline[i];
+            var b = outline[(i + 1) % outline.Count];
             float s0 = at / round, s1 = (at += a.DistanceTo(b)) / round;
-            var a0 = new Vector3(a.X, 0, a.Y); var b0 = new Vector3(b.X, 0, b.Y); var a1 = a0 with { Y = t }; var b1 = b0 with { Y = t };
+            var a0 = new Vector3(a.X, 0, a.Y);
+            var b0 = new Vector3(b.X, 0, b.Y);
+            var a1 = a0 with { Y = t };
+            var b1 = b0 with { Y = t };
             var n = new Vector3(b.Y - a.Y, 0, a.X - b.X).Normalized();
             foreach (var (v, uv) in new[] { (a0, side(s0, 1)), (b0, side(s1, 1)), (b1, side(s1, 0)), (a0, side(s0, 1)), (b1, side(s1, 0)), (a1, side(s0, 0)) }) ms.Add(v, n, uv, Colors.White);
-            ms.Mat.Add(0); ms.Mat.Add(0);
+            ms.Mat.Add(0);
+            ms.Mat.Add(0);
         }
         return (mt, mu, ms);
     }
@@ -319,7 +350,8 @@ internal static class BlockMesh
         int W = fw * 2 + 4, H = fh + 4 + eh;
         var tex = Image.CreateEmpty(W, H, false, Image.Format.Rgba8);
         tex.Fill((Coords.ParseColor(d.Tint, Colors.White) * 0.82f) with { A = 1 });
-        frontImg.Convert(Image.Format.Rgba8); backImg.Convert(Image.Format.Rgba8);
+        frontImg.Convert(Image.Format.Rgba8);
+        backImg.Convert(Image.Format.Rgba8);
         tex.BlitRect(frontImg, new Rect2I(0, 0, fw, fh), Vector2I.Zero);
         tex.BlitRect(backImg, new Rect2I(0, 0, fw, fh), new Vector2I(fw + 4, 0));
         var outline = Ccw(PieceNode.Outline(cut ? "box" : outlineShape, w, h));
@@ -329,7 +361,14 @@ internal static class BlockMesh
             (round, down) => new Vector2((1 + round * (W - 2)) / W, (fh + 4 + down * (eh - 1)) / H));
         if (cut) side = CutWalls(frontImg, w, h, t, new Vector2(0.5f, (fh + 4 + eh / 2f) / H)) ?? new MeshData();
         var block = new MeshData { Tex = { null }, MatColor = { Colors.White } };
-        foreach (var m in new[] { top, under, side }) { block.V.AddRange(m.V); block.N.AddRange(m.N); block.UV.AddRange(m.UV); block.C.AddRange(m.C); block.Mat.AddRange(m.Mat); }
+        foreach (var m in new[] { top, under, side })
+        {
+            block.V.AddRange(m.V);
+            block.N.AddRange(m.N);
+            block.UV.AddRange(m.UV);
+            block.C.AddRange(m.C);
+            block.Mat.AddRange(m.Mat);
+        }
         return (block, tex);
     }
 }

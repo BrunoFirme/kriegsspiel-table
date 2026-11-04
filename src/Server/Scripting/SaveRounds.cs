@@ -39,7 +39,8 @@ internal sealed class SaveRounds(ScriptHost host)
             });
         var board = new Dictionary<string, PieceInstance>();
         foreach (var p in host.Server.State.Layer(Layers.Umpire)) board.TryAdd(p.Id, p);
-        AskedLast = 0; WithUpdate = host.PieceScripts.Values.Count(x => x.HasUpdate);
+        AskedLast = 0;
+        WithUpdate = host.PieceScripts.Values.Count(x => x.HasUpdate);
         var round = System.Diagnostics.Stopwatch.StartNew();
         foreach (var ps in _ran.ToList())
         {

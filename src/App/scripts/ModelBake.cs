@@ -43,9 +43,15 @@ internal sealed class ModelBake
             var pos = new Vector2I((int)at[i].X, (int)at[i].Y);
             atlas.BlitRect(look, new Rect2I(0, 0, rw, rh), pos);
             parts[i].Region = new[] { pos.X, pos.Y, rw, rh };
-            var pm = new MeshData { V = v.Data.V.ToList(), N = v.Data.N.ToList(), UV = v.Data.UV.Select(uv => (new Vector2(pos.X, pos.Y) + uv * new Vector2(rw, rh)) / S).ToList(), C = v.Data.C.ToList(), Mat = Enumerable.Repeat(0, v.Data.Tris).ToList(), Tex = { null }, MatColor = { Colors.White } };
+            var pm =
+                new MeshData { V = v.Data.V.ToList(), N = v.Data.N.ToList(), UV = v.Data.UV.Select(uv => (new Vector2(pos.X, pos.Y) + uv * new Vector2(rw, rh)) / S).ToList(), C = v.Data.C.ToList(),
+                    Mat = Enumerable.Repeat(0, v.Data.Tris).ToList(), Tex = { null }, MatColor = { Colors.White } };
             pm.Transform(parts[i].Xf());
-            mesh.V.AddRange(pm.V); mesh.N.AddRange(pm.N); mesh.UV.AddRange(pm.UV); mesh.C.AddRange(pm.C); mesh.Mat.AddRange(pm.Mat);
+            mesh.V.AddRange(pm.V);
+            mesh.N.AddRange(pm.N);
+            mesh.UV.AddRange(pm.UV);
+            mesh.C.AddRange(pm.C);
+            mesh.Mat.AddRange(pm.Mat);
         }
         return (atlas, S, mesh);
     }
@@ -79,7 +85,9 @@ internal sealed class ModelBake
         {
             int a = d[i + 3];
             if (a == 0) continue;
-            d[i] = (byte)Math.Min(255, d[i] * 255 / a); d[i + 1] = (byte)Math.Min(255, d[i + 1] * 255 / a); d[i + 2] = (byte)Math.Min(255, d[i + 2] * 255 / a);
+            d[i] = (byte)Math.Min(255, d[i] * 255 / a);
+            d[i + 1] = (byte)Math.Min(255, d[i + 1] * 255 / a);
+            d[i + 2] = (byte)Math.Min(255, d[i + 2] * 255 / a);
         }
         return Image.CreateFromData(w, h, false, Image.Format.Rgba8, d);
     }

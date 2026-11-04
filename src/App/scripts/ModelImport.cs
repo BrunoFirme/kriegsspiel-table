@@ -29,7 +29,13 @@ public sealed class MeshData
         return b;
     }
 
-    public void Add(Vector3 v, Vector3 n, Vector2 uv, Color c) { V.Add(v); N.Add(n); UV.Add(uv); C.Add(c); }
+    public void Add(Vector3 v, Vector3 n, Vector2 uv, Color c)
+    {
+        V.Add(v);
+        N.Add(n);
+        UV.Add(uv);
+        C.Add(c);
+    }
 
     public MeshData WithUV(List<Vector2> uv) => new() { V = V, N = N, UV = uv, C = C, Mat = Mat, Tex = Tex, MatColor = MatColor };
 
@@ -38,14 +44,24 @@ public sealed class MeshData
         var nb = t.Basis.Inverse().Transposed();
         for (int i = 0; i < V.Count; i++) { V[i] = t * V[i]; N[i] = (nb * N[i]).Normalized(); }
         if (t.Basis.Determinant() < 0)
-            for (int i = 0; i + 2 < V.Count; i += 3) { (V[i + 1], V[i + 2]) = (V[i + 2], V[i + 1]); (N[i + 1], N[i + 2]) = (N[i + 2], N[i + 1]); (UV[i + 1], UV[i + 2]) = (UV[i + 2], UV[i + 1]); (C[i + 1], C[i + 2]) = (C[i + 2], C[i + 1]); }
+            for (int i = 0; i + 2 < V.Count; i += 3)
+            {
+                (V[i + 1], V[i + 2]) = (V[i + 2], V[i + 1]);
+                (N[i + 1], N[i + 2]) = (N[i + 2], N[i + 1]);
+                (UV[i + 1], UV[i + 2]) = (UV[i + 2], UV[i + 1]);
+                (C[i + 1], C[i + 2]) = (C[i + 2], C[i + 1]);
+            }
     }
 
     public void Append(MeshData o)
     {
         int mo = Tex.Count;
-        Tex.AddRange(o.Tex); MatColor.AddRange(o.MatColor);
-        V.AddRange(o.V); N.AddRange(o.N); UV.AddRange(o.UV); C.AddRange(o.C);
+        Tex.AddRange(o.Tex);
+        MatColor.AddRange(o.MatColor);
+        V.AddRange(o.V);
+        N.AddRange(o.N);
+        UV.AddRange(o.UV);
+        C.AddRange(o.C);
         Mat.AddRange(o.Mat.Select(m => m + mo));
     }
 
@@ -115,8 +131,18 @@ public static class ModelImport
             var t = n is Node3D n3 ? parent * n3.Transform : parent;
             Mesh? mesh = null;
             Func<int, Material?> mat = _ => null;
-            if (n is MeshInstance3D mi && mi.Mesh != null) { mesh = mi.Mesh; var mi2 = mi; mat = s => mi2.GetActiveMaterial(s); }
-            else if (n is ImporterMeshInstance3D imi && imi.Mesh != null) { var am = imi.Mesh.GetMesh(); mesh = am; mat = s => am.SurfaceGetMaterial(s); }
+            if (n is MeshInstance3D mi && mi.Mesh != null)
+            {
+                mesh = mi.Mesh;
+                var mi2 = mi;
+                mat = s => mi2.GetActiveMaterial(s);
+            }
+            else if (n is ImporterMeshInstance3D imi && imi.Mesh != null)
+            {
+                var am = imi.Mesh.GetMesh();
+                mesh = am;
+                mat = s => am.SurfaceGetMaterial(s);
+            }
             if (mesh != null && (n is not Node3D v3 || v3.Visible))
                 for (int s = 0; s < mesh.GetSurfaceCount(); s++) AddSurface(m, mesh.SurfaceGetArrays(s), mat(s) ?? mesh.SurfaceGetMaterial(s), t);
             foreach (var c in n.GetChildren()) Walk(c, t);
@@ -135,13 +161,15 @@ public static class ModelImport
         var cols = arrays[(int)Mesh.ArrayType.Color].VariantType == Variant.Type.Nil ? Array.Empty<Color>() : arrays[(int)Mesh.ArrayType.Color].AsColorArray();
         var idx = arrays[(int)Mesh.ArrayType.Index].VariantType == Variant.Type.Nil ? Enumerable.Range(0, verts.Length).ToArray() : arrays[(int)Mesh.ArrayType.Index].AsInt32Array();
         int matIndex = m.Tex.Count;
-        Image? tex = null; var col = Colors.White;
+        Image? tex = null;
+        var col = Colors.White;
         if (mat is BaseMaterial3D bm)
         {
             col = bm.AlbedoColor;
             tex = ImageOf(bm.AlbedoTexture);
         }
-        m.Tex.Add(tex); m.MatColor.Add(col);
+        m.Tex.Add(tex);
+        m.MatColor.Add(col);
         var nb = t.Basis.Inverse().Transposed();
         bool flip = t.Basis.Determinant() < 0;
         for (int i = 0; i + 2 < idx.Length; i += 3)
@@ -246,7 +274,12 @@ public static class ModelImport
                 else edges[key] = t;
             }
         var islands = new Dictionary<int, List<int>>();
-        for (int t = 0; t < tris; t++) { int r = Find(t); if (!islands.TryGetValue(r, out var l)) islands[r] = l = new(); l.Add(t); }
+        for (int t = 0; t < tris; t++)
+        {
+            int r = Find(t);
+            if (!islands.TryGetValue(r, out var l)) islands[r] = l = new();
+            l.Add(t);
+        }
         var proj = new Vector2[m.V.Count];
         Vector2 Flat(Vector3 v, int ax) => ax switch
         {
@@ -255,15 +288,24 @@ public static class ModelImport
             4 => new Vector2(v.X, -v.Y), _ => new Vector2(-v.X, -v.Y),
         };
         var list = islands.Values.ToList();
-        var lo = new Vector2[list.Count]; var span = new Vector2[list.Count];
+        var lo = new Vector2[list.Count];
+        var span = new Vector2[list.Count];
         double area = 0;
         for (int i = 0; i < list.Count; i++)
         {
             int ax = axis[list[i][0]];
-            var mn = new Vector2(float.MaxValue, float.MaxValue); var mx = -mn;
+            var mn = new Vector2(float.MaxValue, float.MaxValue);
+            var mx = -mn;
             foreach (var t in list[i])
-                for (int c = 0; c < 3; c++) { var p = Flat(m.V[t * 3 + c], ax); proj[t * 3 + c] = p; mn = mn.Min(p); mx = mx.Max(p); }
-            lo[i] = mn; span[i] = (mx - mn).Max(new Vector2(1e-5f, 1e-5f));
+                for (int c = 0; c < 3; c++)
+                {
+                    var p = Flat(m.V[t * 3 + c], ax);
+                    proj[t * 3 + c] = p;
+                    mn = mn.Min(p);
+                    mx = mx.Max(p);
+                }
+            lo[i] = mn;
+            span[i] = (mx - mn).Max(new Vector2(1e-5f, 1e-5f));
             area += span[i].X * span[i].Y;
         }
         const int Pad = 4;
@@ -298,7 +340,9 @@ public static class ModelImport
             var img = mat < m.Tex.Count ? m.Tex[mat] : null;
             var data = mat < texData.Length ? texData[mat] : null;
             var mc = mat < m.MatColor.Count ? m.MatColor[mat] : Colors.White;
-            var a = m.UV[t * 3] * size; var b = m.UV[t * 3 + 1] * size; var c = m.UV[t * 3 + 2] * size;
+            var a = m.UV[t * 3] * size;
+            var b = m.UV[t * 3 + 1] * size;
+            var c = m.UV[t * 3 + 2] * size;
             Raster(a, b, c, size, (x, y, w0, w1, w2) =>
             {
                 var col = mc * (m.C[t * 3] * w0 + m.C[t * 3 + 1] * w1 + m.C[t * 3 + 2] * w2);
@@ -308,7 +352,10 @@ public static class ModelImport
                     col *= Sample(data, img.GetWidth(), img.GetHeight(), uv);
                 }
                 int o = (y * size + x) * 4;
-                px[o] = (byte)Math.Clamp(col.R * 255, 0, 255); px[o + 1] = (byte)Math.Clamp(col.G * 255, 0, 255); px[o + 2] = (byte)Math.Clamp(col.B * 255, 0, 255); px[o + 3] = 255;
+                px[o] = (byte)Math.Clamp(col.R * 255, 0, 255);
+                px[o + 1] = (byte)Math.Clamp(col.G * 255, 0, 255);
+                px[o + 2] = (byte)Math.Clamp(col.B * 255, 0, 255);
+                px[o + 3] = 255;
                 filled[y * size + x] = true;
             });
         }
@@ -322,7 +369,8 @@ public static class ModelImport
     public static bool HasOwnLayout(MeshData m)
     {
         if (m.UV.Count == 0) return false;
-        var lo = m.UV[0]; var hi = lo;
+        var lo = m.UV[0];
+        var hi = lo;
         foreach (var uv in m.UV) { lo = lo.Min(uv); hi = hi.Max(uv); }
         return hi.X - lo.X > MinLayoutSpan && hi.Y - lo.Y > MinLayoutSpan;
     }
@@ -341,7 +389,10 @@ public static class ModelImport
             {
                 var col = Sample(data, tw, th, drawn[k] * w0 + drawn[k + 1] * w1 + drawn[k + 2] * w2);
                 int o = (y * w + x) * 4;
-                paint[o] = (byte)Math.Clamp(col.R * 255, 0, 255); paint[o + 1] = (byte)Math.Clamp(col.G * 255, 0, 255); paint[o + 2] = (byte)Math.Clamp(col.B * 255, 0, 255); paint[o + 3] = 255;
+                paint[o] = (byte)Math.Clamp(col.R * 255, 0, 255);
+                paint[o + 1] = (byte)Math.Clamp(col.G * 255, 0, 255);
+                paint[o + 2] = (byte)Math.Clamp(col.B * 255, 0, 255);
+                paint[o + 3] = 255;
                 filled[y * w + x] = true;
             });
         }
@@ -354,7 +405,13 @@ public static class ModelImport
     {
         int x0 = Math.Max(0, (int)Mathf.Floor(Mathf.Min(a.X, Mathf.Min(b.X, c.X)) - 1)), x1 = Math.Min(size - 1, (int)Mathf.Ceil(Mathf.Max(a.X, Mathf.Max(b.X, c.X)) + 1));
         int y0 = Math.Max(0, (int)Mathf.Floor(Mathf.Min(a.Y, Mathf.Min(b.Y, c.Y)) - 1)), y1 = Math.Min(size - 1, (int)Mathf.Ceil(Mathf.Max(a.Y, Mathf.Max(b.Y, c.Y)) + 1));
-        if (clip is { } k) { x0 = Math.Max(x0, k.Position.X); y0 = Math.Max(y0, k.Position.Y); x1 = Math.Min(x1, k.End.X); y1 = Math.Min(y1, k.End.Y); }
+        if (clip is { } k)
+        {
+            x0 = Math.Max(x0, k.Position.X);
+            y0 = Math.Max(y0, k.Position.Y);
+            x1 = Math.Min(x1, k.End.X);
+            y1 = Math.Min(y1, k.End.Y);
+        }
         float den = (b.Y - c.Y) * (a.X - c.X) + (c.X - b.X) * (a.Y - c.Y);
         if (Mathf.Abs(den) < 1e-9f) return;
         float la = (b - c).Length(), lb = (c - a).Length(), lc = (a - b).Length();
@@ -378,7 +435,13 @@ public static class ModelImport
         float fx = u * w - 0.5f, fy = v * h - 0.5f;
         int x0 = (int)Mathf.Floor(fx), y0 = (int)Mathf.Floor(fy);
         float tx = fx - x0, ty = fy - y0;
-        Color P(int x, int y) { x = ((x % w) + w) % w; y = ((y % h) + h) % h; int o = (y * w + x) * 4; return new Color(d[o] / 255f, d[o + 1] / 255f, d[o + 2] / 255f, d[o + 3] / 255f); }
+        Color P(int x, int y)
+        {
+            x = ((x % w) + w) % w;
+            y = ((y % h) + h) % h;
+            int o = (y * w + x) * 4;
+            return new Color(d[o] / 255f, d[o + 1] / 255f, d[o + 2] / 255f, d[o + 3] / 255f);
+        }
         return P(x0, y0).Lerp(P(x0 + 1, y0), tx).Lerp(P(x0, y0 + 1).Lerp(P(x0 + 1, y0 + 1), tx), ty);
     }
 
@@ -398,11 +461,17 @@ public static class ModelImport
                             int nx = x + dx, ny = y + dy;
                             if (nx < 0 || ny < 0 || nx >= size || ny >= size || !filled[ny * size + nx]) continue;
                             int o = (ny * size + nx) * 4;
-                            r += px[o]; g += px[o + 1]; b += px[o + 2]; n++;
+                            r += px[o];
+                            g += px[o + 1];
+                            b += px[o + 2];
+                            n++;
                         }
                     if (n == 0) continue;
                     int q = (y * size + x) * 4;
-                    px[q] = (byte)(r / n); px[q + 1] = (byte)(g / n); px[q + 2] = (byte)(b / n); px[q + 3] = 255;
+                    px[q] = (byte)(r / n);
+                    px[q + 1] = (byte)(g / n);
+                    px[q + 2] = (byte)(b / n);
+                    px[q + 3] = 255;
                     next[y * size + x] = true;
                 }
             Array.Copy(next, filled, filled.Length);
@@ -413,8 +482,13 @@ public static class ModelImport
     {
         var sb = new StringBuilder();
         sb.Append("# Kriegsspiel Table piece studio\n");
-        var vi = new Dictionary<Vector3, int>(); var ti = new Dictionary<Vector2, int>(); var ni = new Dictionary<Vector3, int>();
-        var vs = new StringBuilder(); var ts = new StringBuilder(); var ns = new StringBuilder(); var fs = new StringBuilder();
+        var vi = new Dictionary<Vector3, int>();
+        var ti = new Dictionary<Vector2, int>();
+        var ni = new Dictionary<Vector3, int>();
+        var vs = new StringBuilder();
+        var ts = new StringBuilder();
+        var ns = new StringBuilder();
+        var fs = new StringBuilder();
         int Idx<T>(Dictionary<T, int> d, T key, StringBuilder into, string line) where T : notnull
         {
             if (d.TryGetValue(key, out var i)) return i;
@@ -428,7 +502,9 @@ public static class ModelImport
             for (int c = 0; c < 3; c++)
             {
                 int k = t * 3 + c;
-                var v = m.V[k]; var uv = m.UV[k]; var n = m.N[k];
+                var v = m.V[k];
+                var uv = m.UV[k];
+                var n = m.N[k];
                 ix[c, 0] = Idx(vi, v, vs, string.Format(Inv, "v {0:0.######} {1:0.######} {2:0.######}\n", v.X, v.Y, v.Z));
                 ix[c, 1] = Idx(ti, uv, ts, string.Format(Inv, "vt {0:0.######} {1:0.######}\n", uv.X, 1 - uv.Y));
                 ix[c, 2] = Idx(ni, n, ns, string.Format(Inv, "vn {0:0.####} {1:0.####} {2:0.####}\n", n.X, n.Y, n.Z));

@@ -29,8 +29,21 @@ sealed class TableKeys
         PenTool pen, RulerTool ruler, FormationTool forms)
     {
         _forms = forms;
-        _c = c; _router = router; _cam = cam; _sheets = sheets; _pieces = pieces; _sighting = sighting; _selection = selection;
-        _poses = poses; _hand = hand; _dice = dice; _clip = clip; _hover = hover; _actions = actions; _pen = pen; _ruler = ruler;
+        _c = c;
+        _router = router;
+        _cam = cam;
+        _sheets = sheets;
+        _pieces = pieces;
+        _sighting = sighting;
+        _selection = selection;
+        _poses = poses;
+        _hand = hand;
+        _dice = dice;
+        _clip = clip;
+        _hover = hover;
+        _actions = actions;
+        _pen = pen;
+        _ruler = ruler;
     }
 
     public event Action? MenuRequested;
@@ -66,7 +79,9 @@ sealed class TableKeys
             || _ruler.A != null || _pen.Stroking || _pen.Shaping || _hand.Holding;
         _router.EndGesture();
         if (_c.Tool == Tool.Sighting) _sighting.Cancel();
-        _c.SetTool(Tool.Select); _ruler.Clear(); _c.NotifyScreenRect(null);
+        _c.SetTool(Tool.Select);
+        _ruler.Clear();
+        _c.NotifyScreenRect(null);
         _selection.Set(Array.Empty<string>());
         _sheets.Select(null);
         if (!busy) MenuRequested?.Invoke();

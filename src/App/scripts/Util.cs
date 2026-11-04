@@ -31,14 +31,16 @@ public static class Coords
     {
         var w = ToWorld(point) - ToWorld(origin);
         var a = -Yaw(rotDeg);
-        var c = Mathf.Cos(a); var s = Mathf.Sin(a);
+        var c = Mathf.Cos(a);
+        var s = Mathf.Sin(a);
         return new Vector2(w.X * c + w.Z * s, -w.X * s + w.Z * c);
     }
 
     public static Vec2 FromLocal(Vector2 local, Vec2 origin, double rotDeg)
     {
         var a = -Yaw(rotDeg);
-        var c = Mathf.Cos(a); var s = Mathf.Sin(a);
+        var c = Mathf.Cos(a);
+        var s = Mathf.Sin(a);
         var w = new Vector3(local.X * c - local.Y * s, 0, local.X * s + local.Y * c);
         return FromWorld(ToWorld(origin) + w);
     }
@@ -46,7 +48,7 @@ public static class Coords
     public static Color ParseColor(string? hex, Color fallback)
     {
         if (string.IsNullOrEmpty(hex)) return fallback;
-        try { return Color.FromHtml(hex); } catch { return fallback; }
+        return Color.HtmlIsValid(hex) ? Color.FromHtml(hex) : fallback;
     }
 }
 
@@ -113,10 +115,14 @@ public static class ObjLoader
 
     static ArrayMesh Read(string path)
     {
-        var v = new List<Vector3>(); var vt = new List<Vector2>(); var vn = new List<Vector3>();
+        var v = new List<Vector3>();
+        var vt = new List<Vector2>();
+        var vn = new List<Vector3>();
         var vc = new List<Color>();
-        var tinted = new SurfaceTool(); var untinted = new SurfaceTool();
-        tinted.Begin(Mesh.PrimitiveType.Triangles); untinted.Begin(Mesh.PrimitiveType.Triangles);
+        var tinted = new SurfaceTool();
+        var untinted = new SurfaceTool();
+        tinted.Begin(Mesh.PrimitiveType.Triangles);
+        untinted.Begin(Mesh.PrimitiveType.Triangles);
         bool hasN = false, hasUntinted = false;
         string? firstMaterial = null, material = null;
         var inv = CultureInfo.InvariantCulture;
@@ -131,8 +137,12 @@ public static class ObjLoader
                     v.Add(new Vector3(float.Parse(p[1], inv), float.Parse(p[2], inv), float.Parse(p[3], inv)));
                     if (p.Length >= 7) vc.Add(new Color(float.Parse(p[4], inv), float.Parse(p[5], inv), float.Parse(p[6], inv)));
                     break;
-                case "vt": vt.Add(new Vector2(float.Parse(p[1], inv), p.Length > 2 ? float.Parse(p[2], inv) : 0)); break;
-                case "vn": vn.Add(new Vector3(float.Parse(p[1], inv), float.Parse(p[2], inv), float.Parse(p[3], inv))); break;
+                case "vt":
+                    vt.Add(new Vector2(float.Parse(p[1], inv), p.Length > 2 ? float.Parse(p[2], inv) : 0));
+                    break;
+                case "vn":
+                    vn.Add(new Vector3(float.Parse(p[1], inv), float.Parse(p[2], inv), float.Parse(p[3], inv)));
+                    break;
                 case "usemtl":
                     material = line[6..].Trim();
                     firstMaterial ??= material;

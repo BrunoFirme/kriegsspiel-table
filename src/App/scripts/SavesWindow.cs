@@ -72,7 +72,9 @@ sealed partial class SavesWindow : Window
         _scenarioDir = scenarioDir;
         _folder = Root;
         Title = "Saves";
-        Transient = true; Exclusive = false; WrapControls = false;
+        Transient = true;
+        Exclusive = false;
+        WrapControls = false;
         MinSize = new Vector2I(760, 460);
         CloseRequested += QueueFree;
         WindowInput += OnKey;
@@ -400,7 +402,12 @@ sealed partial class SavesWindow : Window
     {
         var when = TitleStyle.Ago(File.GetLastWriteTime(e.Path));
         bool keepsMeta = e.Trashed != null;
-        if (head == null) { if (!keepsMeta) meta.Text = when; picture.Texture = MapThumb(); return; }
+        if (head == null)
+        {
+            if (!keepsMeta) meta.Text = when;
+            picture.Texture = MapThumb();
+            return;
+        }
         var p = head.Preview;
         var time = SaveNames.ShortTime(p.GameTime);
         if (!keepsMeta) meta.Text = $"Turn {p.Turn}{(time.Length > 0 ? " · " + time : "")} · {when}";
@@ -463,7 +470,12 @@ sealed partial class SavesWindow : Window
         if (e is not InputEventKey { Pressed: true, Echo: false } k) return;
         if (k.Keycode == Key.F1) { GuideReader.Show(this, "umpire-guide.md", "saves"); return; }
         if (GuiGetFocusOwner() is LineEdit or TextEdit || _tree.GetEdited() != null) return;
-        if (k.Keycode == Key.A && (k.CtrlPressed || k.MetaPressed)) { _pick.All(); Paint(); SetInputAsHandled(); }
+        if (k.Keycode == Key.A && (k.CtrlPressed || k.MetaPressed))
+        {
+            _pick.All();
+            Paint();
+            SetInputAsHandled();
+        }
         else if (k.Keycode == Key.Delete && _pick.Count > 0)
         {
             if (_inTrash) Purge(PickedTrash());
@@ -581,7 +593,8 @@ sealed partial class SavesWindow : Window
         var packs = _c.S.Store;
         Task.Run(() =>
         {
-            GameState? state = null; string? why = null;
+            GameState? state = null;
+            string? why = null;
             try { state = KTable.Server.SaveLoader.Load(e.Path, packs).State; }
             catch (Exception ex) { why = ex.Message; }
             Callable.From(() =>
@@ -681,7 +694,8 @@ sealed partial class SavesWindow : Window
         RenameByPrompt(e);
     }
 
-    void RenameByPrompt(Entry e) => Prompt("Rename " + e.Name, "Rename", e.Name, name => OnDisk("Renaming…", () => _store.Rename(_scenarioDir, e.Path, name), p => { Show(e.Folder && SaveStore.SamePath(e.Path, _folder) ? p : _folder); }));
+    void RenameByPrompt(Entry e) =>
+        Prompt("Rename " + e.Name, "Rename", e.Name, name => OnDisk("Renaming…", () => _store.Rename(_scenarioDir, e.Path, name), p => { Show(e.Folder && SaveStore.SamePath(e.Path, _folder) ? p : _folder); }));
 
     void Move(IReadOnlyList<string> paths, string into)
     {
@@ -727,8 +741,10 @@ sealed partial class SavesWindow : Window
     {
         var pm = new PopupMenu();
         bool inPlay = e.Run != null && e.Run == InPlay?.Run;
-        pm.AddItem("Load", 1); pm.SetItemDisabled(0, inPlay);
-        pm.AddItem("Look", 2); pm.SetItemDisabled(1, inPlay);
+        pm.AddItem("Load", 1);
+        pm.SetItemDisabled(0, inPlay);
+        pm.AddItem("Look", 2);
+        pm.SetItemDisabled(1, inPlay);
         if (e.Run == null)
         {
             pm.AddSeparator();
@@ -741,10 +757,18 @@ sealed partial class SavesWindow : Window
         {
             switch (id)
             {
-                case 1: Load(e); break;
-                case 2: Look(e); break;
-                case 3: Rename(e); break;
-                case 5: Delete(e); break;
+                case 1:
+                    Load(e);
+                    break;
+                case 2:
+                    Look(e);
+                    break;
+                case 3:
+                    Rename(e);
+                    break;
+                case 5:
+                    Delete(e);
+                    break;
             }
         };
         Pop(pm, at);
@@ -763,9 +787,15 @@ sealed partial class SavesWindow : Window
         {
             switch (id)
             {
-                case 1: Show(e.Path); break;
-                case 3: Rename(e); break;
-                case 5: Delete(e); break;
+                case 1:
+                    Show(e.Path);
+                    break;
+                case 3:
+                    Rename(e);
+                    break;
+                case 5:
+                    Delete(e);
+                    break;
             }
         };
         Pop(pm, at);

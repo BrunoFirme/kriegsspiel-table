@@ -42,7 +42,12 @@ public static class SaveLoader
         var inSave = (save.Commands ?? new()).Where(c => c.Seq > state.LastSeq).OrderBy(c => c.Seq).ToList();
         for (int i = 0; i < inSave.Count; i++)
         {
-            if (ApplyReplayed(state, Json.Clone(inSave[i])) is { } err) { failed = inSave.Count - i; failure = err; break; }
+            if (ApplyReplayed(state, Json.Clone(inSave[i])) is { } err)
+            {
+                failed = inSave.Count - i;
+                failure = err;
+                break;
+            }
             state.LastSeq = inSave[i].Seq;
         }
         bool saveHoldsUnreplayed = failed > 0;
@@ -57,7 +62,12 @@ public static class SaveLoader
         {
             var c = following[i];
             var ending = SaveFile.EndsTurn(state, c) ? SaveFile.RecordOf(state, Repeatable.UtcNow) : null;
-            if (ApplyReplayed(state, c) is { } err) { failed = following.Count - i; failure = err; break; }
+            if (ApplyReplayed(state, c) is { } err)
+            {
+                failed = following.Count - i;
+                failure = err;
+                break;
+            }
             if (ending != null) turns.Add(ending);
             if (c is RestoreTurn rt && rt.Index >= 0 && rt.Index < turns.Count) turns.RemoveRange(rt.Index, turns.Count - rt.Index);
             state.LastSeq = c.Seq;
@@ -118,7 +128,13 @@ public static class SaveLoader
         {
             if (!File.Exists(savePath)) break;
             if (attempt > 0) Thread.Sleep(250 * attempt);
-            try { var srv = Load(savePath, store); KeepWhatWasNotReplayed(srv, savePath); recovery = null; return srv; }
+            try
+            {
+                var srv = Load(savePath, store);
+                KeepWhatWasNotReplayed(srv, savePath);
+                recovery = null;
+                return srv;
+            }
             catch (SaveTooNewException) { throw; }
             catch (SaveHeldException) { throw; }
             catch (Exception e) when (SaveStore.IsDamage(e) || SaveStore.IsUnreachable(e)) { liveError = e; }

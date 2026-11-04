@@ -117,7 +117,8 @@ sealed class TableSounds
 
     static Vector3 Middle(IEnumerable<PieceNode> nodes)
     {
-        var sum = Vector3.Zero; int k = 0;
+        var sum = Vector3.Zero;
+        int k = 0;
         foreach (var n in nodes) { sum += n.GlobalPosition; k++; }
         return k == 0 ? Vector3.Zero : sum / k;
     }

@@ -33,7 +33,10 @@ sealed class SheetPicture
 
     public SheetPicture(Assets assets, string package, string tilesRel, TileIndex index)
     {
-        _assets = assets; _package = package; _tilesRel = tilesRel; Index = index;
+        _assets = assets;
+        _package = package;
+        _tilesRel = tilesRel;
+        Index = index;
         Target = Coarsest;
     }
 
@@ -68,12 +71,19 @@ sealed class SheetPicture
         _building = level;
         var lv = Index.Levels[level];
         int waiting = lv.Cols * lv.Rows, missing = 0;
-        TilesTotal = waiting; TilesLoaded = 0;
+        TilesTotal = waiting;
+        TilesLoaded = 0;
         void One(bool there)
         {
-            if (there) TilesLoaded++; else missing++;
+            if (there) TilesLoaded++;
+            else missing++;
             if (--waiting > 0) return;
-            if (missing > 0) { _building = -1; Target = Math.Max(Level, 0); return; }
+            if (missing > 0)
+            {
+                _building = -1;
+                Target = Math.Max(Level, 0);
+                return;
+            }
             Compose(level);
         }
         for (int y = 0; y < lv.Rows; y++)
@@ -134,7 +144,8 @@ sealed class SheetPicture
             if (!_dropped) Target = Math.Max(Level, 0);
             return;
         }
-        ComposeMs += ms; Composed++;
+        ComposeMs += ms;
+        Composed++;
         if (!got.Packed) Packs = false;
         HasAlpha = got.Alpha;
         _bytesPerPixel = !got.Packed ? LooseBytesPerPixel : got.Alpha ? PackedAlphaBytesPerPixel : PackedBytesPerPixel;

@@ -39,18 +39,25 @@ public static class ArtGeom
         var keep = new bool[pts.Count];
         void Rec(int a, int b)
         {
-            float best = 0; int at = -1;
+            float best = 0;
+            int at = -1;
             for (int i = a + 1; i < b; i++)
             {
                 var c = Geometry2D.GetClosestPointToSegment(pts[i], pts[a], pts[b]);
                 float dd = c.DistanceTo(pts[i]);
                 if (dd > best) { best = dd; at = i; }
             }
-            if (at >= 0 && best > eps) { keep[at] = true; Rec(a, at); Rec(at, b); }
+            if (at >= 0 && best > eps)
+            {
+                keep[at] = true;
+                Rec(a, at);
+                Rec(at, b);
+            }
         }
         int half = pts.Count / 2;
         keep[0] = keep[half] = true;
-        Rec(0, half); Rec(half, pts.Count - 1);
+        Rec(0, half);
+        Rec(half, pts.Count - 1);
         keep[pts.Count - 1] = true;
         var res = new List<Vector2>();
         for (int i = 0; i < pts.Count; i++) if (keep[i]) res.Add(pts[i]);
@@ -135,7 +142,12 @@ public static class ArtDraw
 
     public static void DrawOp(CanvasItem ci, PaintOp op, Func<string, Texture2D?> tex, float alphaScale = 1)
     {
-        Color Col(string? hex) { var c = Hex.To(hex, Colors.Black); if (alphaScale != 1) c.A = Mathf.Clamp(c.A / alphaScale, 0, 1); return op.E ? Colors.White : c; }
+        Color Col(string? hex)
+        {
+            var c = Hex.To(hex, Colors.Black);
+            if (alphaScale != 1) c.A = Mathf.Clamp(c.A / alphaScale, 0, 1);
+            return op.E ? Colors.White : c;
+        }
         switch (op.K)
         {
             case "fill":
@@ -251,13 +263,28 @@ public static class ArtDraw
         }
         switch (p.Symbol)
         {
-            case "infantry": Diag(true); break;
-            case "cavalry": Diag(false); break;
-            case "artillery": ci.DrawCircle(r.GetCenter(), sh * 0.2f, sc, true, -1, true); break;
-            case "horse-artillery": Diag(false); ci.DrawCircle(r.GetCenter(), sh * 0.2f, sc, true, -1, true); break;
-            case "engineers": SymbolText(ci, r, "E", sc); break;
-            case "hq": SymbolText(ci, r, "HQ", sc); break;
-            case "text": SymbolText(ci, r, p.SymbolText, sc); break;
+            case "infantry":
+                Diag(true);
+                break;
+            case "cavalry":
+                Diag(false);
+                break;
+            case "artillery":
+                ci.DrawCircle(r.GetCenter(), sh * 0.2f, sc, true, -1, true);
+                break;
+            case "horse-artillery":
+                Diag(false);
+                ci.DrawCircle(r.GetCenter(), sh * 0.2f, sc, true, -1, true);
+                break;
+            case "engineers":
+                SymbolText(ci, r, "E", sc);
+                break;
+            case "hq":
+                SymbolText(ci, r, "HQ", sc);
+                break;
+            case "text":
+                SymbolText(ci, r, p.SymbolText, sc);
+                break;
         }
     }
 
@@ -342,13 +369,19 @@ public partial class ArtRenderer : Node
         if (_img.TryGetValue(name, out var i)) return i;
         if (_unreadable.Contains(name)) return null;
         i = LoadSrc(name);
-        if (i != null) _img[name] = i; else _unreadable.Add(name);
+        if (i != null) _img[name] = i;
+        else _unreadable.Add(name);
         return i;
     }
 
     HashSet<string> _unreadable = new();
 
-    public void Remember(string name, Image img) { _img[name] = img; _tex.Remove(name); _unreadable.Remove(name); }
+    public void Remember(string name, Image img)
+    {
+        _img[name] = img;
+        _tex.Remove(name);
+        _unreadable.Remove(name);
+    }
 
     public Texture2D? LayerTexture(string id) => _vps.TryGetValue(id, out var v) ? v.Vp.GetTexture() : null;
 
@@ -399,9 +432,15 @@ public partial class ArtRenderer : Node
         {
             switch (l.Kind)
             {
-                case "image": if (l.Src != null && Tex(l.Src) is { } t) ArtDraw.DrawImage(ci, l, t); break;
-                case "text": ArtDraw.DrawText(ci, l); break;
-                case "block": if (l.Block != null) ArtDraw.DrawBlock(ci, l.Block); break;
+                case "image":
+                    if (l.Src != null && Tex(l.Src) is { } t) ArtDraw.DrawImage(ci, l, t);
+                    break;
+                case "text":
+                    ArtDraw.DrawText(ci, l);
+                    break;
+                case "block":
+                    if (l.Block != null) ArtDraw.DrawBlock(ci, l.Block);
+                    break;
             }
         };
         v.Xf.AddChild(content);
@@ -439,7 +478,8 @@ public partial class ArtRenderer : Node
         v.Live = new ArtItem { Paint = ci => { if (LiveLayer == l.Id && LiveOp is { } lo && !lo.E && OpAlpha(lo) >= 0.999f) foreach (var x in LiveCopies) ArtDraw.DrawOp(ci, x, Tex); } };
         v.Xf.AddChild(v.Live);
         v.LiveGroup = new CanvasGroup { FitMargin = 4, ClearMargin = 4 };
-        v.LiveInGroup = new ArtItem { Paint = ci => { if (LiveLayer == l.Id && LiveOp is { } lo && !lo.E && OpAlpha(lo) < 0.999f) foreach (var x in LiveCopies) ArtDraw.DrawOp(ci, x, Tex, OpAlpha(lo)); } };
+        v.LiveInGroup =
+            new ArtItem { Paint = ci => { if (LiveLayer == l.Id && LiveOp is { } lo && !lo.E && OpAlpha(lo) < 0.999f) foreach (var x in LiveCopies) ArtDraw.DrawOp(ci, x, Tex, OpAlpha(lo)); } };
         v.LiveGroup.AddChild(v.LiveInGroup);
         v.Xf.AddChild(v.LiveGroup);
         var liveErase = new ArtItem { Material = EraseMaterial, Paint = ci => { if (LiveLayer == l.Id && LiveOp is { E: true }) foreach (var x in LiveCopies) ArtDraw.DrawOp(ci, x, Tex); } };
@@ -448,7 +488,8 @@ public partial class ArtRenderer : Node
         v.Vp.RenderTargetUpdateMode = SubViewport.UpdateMode.Once;
     }
 
-    static float OpAlpha(PaintOp op) => op.E ? 1 : Math.Max(op.W > 0 && op.K != "fill" ? Hex.To(op.C, Colors.Black).A : 0, op.Fc != null ? Hex.To(op.Fc, Colors.Black).A : op.K == "fill" ? Hex.To(op.C, Colors.Black).A : 0);
+    static float OpAlpha(PaintOp op) => op.E ? 1
+        : Math.Max(op.W > 0 && op.K != "fill" ? Hex.To(op.C, Colors.Black).A : 0, op.Fc != null ? Hex.To(op.Fc, Colors.Black).A : op.K == "fill" ? Hex.To(op.C, Colors.Black).A : 0);
 
     public void Moved(ArtLayer l)
     {

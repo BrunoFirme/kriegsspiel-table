@@ -82,7 +82,8 @@ public static class HeightFiles
         {
             var p = line.Split(new[] { ' ', '\t', ',', ';' }, StringSplitOptions.RemoveEmptyEntries);
             if (p.Length < 3) continue;
-            if (!double.TryParse(p[0], NumberStyles.Float, Inv, out var x) || !double.TryParse(p[1], NumberStyles.Float, Inv, out var y) || !double.TryParse(p[2], NumberStyles.Float, Inv, out var z)) continue;
+            if (!double.TryParse(p[0], NumberStyles.Float, Inv, out var x) || !double.TryParse(p[1], NumberStyles.Float, Inv, out var y) || !double.TryParse(p[2], NumberStyles.Float, Inv,
+                out var z)) continue;
             pts.Add((x, y, z));
         }
         if (pts.Count < 4) throw new InvalidDataException("fewer than four points");
@@ -93,7 +94,8 @@ public static class HeightFiles
         bool regular = (long)xs * ys == pts.Count;
         int cols = regular ? xs : (int)Math.Clamp(Math.Sqrt(pts.Count * (x1 - x0) / (y1 - y0)), 2, KTable.Core.Model.ReliefGrid.MaxSide);
         int rows = regular ? ys : (int)Math.Clamp(pts.Count / (double)cols, 2, KTable.Core.Model.ReliefGrid.MaxSide);
-        cols = Math.Min(cols, KTable.Core.Model.ReliefGrid.MaxSide); rows = Math.Min(rows, KTable.Core.Model.ReliefGrid.MaxSide);
+        cols = Math.Min(cols, KTable.Core.Model.ReliefGrid.MaxSide);
+        rows = Math.Min(rows, KTable.Core.Model.ReliefGrid.MaxSide);
         var raw = new float[cols * rows];
         Array.Fill(raw, float.NaN);
         foreach (var (x, y, z) in pts)
@@ -134,7 +136,14 @@ public static class HeightFiles
             var kind = System.Text.Encoding.ASCII.GetString(bytes, at + 4, 4);
             if (len < 0 || at + 12 + len > bytes.Length) throw new InvalidDataException("the PNG is cut short");
             var data = bytes.AsSpan(at + 8, len);
-            if (kind == "IHDR") { w = BinaryPrimitives.ReadInt32BigEndian(data); h = BinaryPrimitives.ReadInt32BigEndian(data[4..]); depth = data[8]; type = data[9]; interlace = data[12]; }
+            if (kind == "IHDR")
+            {
+                w = BinaryPrimitives.ReadInt32BigEndian(data);
+                h = BinaryPrimitives.ReadInt32BigEndian(data[4..]);
+                depth = data[8];
+                type = data[9];
+                interlace = data[12];
+            }
             else if (kind == "IDAT") idat.Write(data);
             else if (kind == "IEND") break;
             at += 12 + len;
@@ -148,9 +157,15 @@ public static class HeightFiles
         using var z = new ZLibStream(idat, CompressionMode.Decompress);
         var rows = new byte[(stride + 1) * h];
         int read = 0;
-        while (read < rows.Length) { int n = z.Read(rows, read, rows.Length - read); if (n == 0) break; read += n; }
+        while (read < rows.Length)
+        {
+            int n = z.Read(rows, read, rows.Length - read);
+            if (n == 0) break;
+            read += n;
+        }
         if (read < rows.Length) throw new InvalidDataException("the PNG's pixels are cut short");
-        var prev = new byte[stride]; var cur = new byte[stride];
+        var prev = new byte[stride];
+        var cur = new byte[stride];
         var raw = new float[w * h];
         float most = depth == 16 ? ushort.MaxValue : byte.MaxValue;
         for (int y = 0; y < h; y++)

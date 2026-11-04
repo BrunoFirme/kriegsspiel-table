@@ -113,7 +113,8 @@ public sealed partial class AssetTransfers
         if (!_uploads.TryGetValue(key, out var fs))
         {
             if (u.Offset != 0) return;
-            if (u.Package != UploadAsset.ReliefPackage && Directory.Exists(dir) && Directory.EnumerateFiles(dir, "*", SearchOption.AllDirectories).Sum(f => new FileInfo(f).Length) + u.Total > MaxUserPackBytes)
+            if (u.Package != UploadAsset.ReliefPackage && Directory.Exists(dir) && Directory.EnumerateFiles(dir, "*",
+                SearchOption.AllDirectories).Sum(f => new FileInfo(f).Length) + u.Total > MaxUserPackBytes)
             {
                 Send(from, new ErrorMessage { Text = $"pack {u.Package} is too large for this host" });
                 return;

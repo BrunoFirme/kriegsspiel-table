@@ -20,7 +20,11 @@ public partial class Main
         Dev.TitleShown(Title);
         if (_platform.Available)
         {
-            if (!_wsHooked) { _wsHooked = true; _platform.Changed += m => { if (Title.Status != null && IsInstanceValid(Title.Status)) Title.Status.Text = m; }; }
+            if (!_wsHooked)
+            {
+                _wsHooked = true;
+                _platform.Changed += m => { if (Title.Status != null && IsInstanceValid(Title.Status)) Title.Status.Text = m; };
+            }
             if (_platform.SyncInstalled() > 0) { Callable.From(RebuildLobby).CallDeferred(); }
         }
     }

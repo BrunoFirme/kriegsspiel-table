@@ -28,7 +28,9 @@ public sealed class ScriptFeed
     public List<ConsoleLine> TakeUnsent()
     {
         if (_unsent.Count == 0) return new();
-        var l = _unsent.ToList(); _unsent.Clear(); return l;
+        var l = _unsent.ToList();
+        _unsent.Clear();
+        return l;
     }
 
     public int ErrorRaised(string source, string message)

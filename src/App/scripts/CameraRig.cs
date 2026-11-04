@@ -33,7 +33,12 @@ public partial class CameraRig : Node3D
 
     public void Orbit(Vector2 rel)
     {
-        if (TopDown) { Yaw -= rel.X * 0.005f; Apply(); return; }
+        if (TopDown)
+        {
+            Yaw -= rel.X * 0.005f;
+            Apply();
+            return;
+        }
         Yaw -= rel.X * 0.005f;
         Pitch = Mathf.Clamp(Pitch - rel.Y * 0.005f, SteepestPitchRadians, FlattestPitchRadians);
         Apply();
@@ -41,14 +46,21 @@ public partial class CameraRig : Node3D
 
     public void PanScreen(Vector2 from, Vector2 to)
     {
-        var a = PlaneAt(from, Target.Y); var b = PlaneAt(to, Target.Y);
+        var a = PlaneAt(from, Target.Y);
+        var b = PlaneAt(to, Target.Y);
         if (a == null || b == null) return;
         Target += a.Value - b.Value;
         Settle();
         Apply();
     }
 
-    public void PanWorld(Vector3 d) { _zoomAnchor = null; Target += d; Settle(); Apply(); }
+    public void PanWorld(Vector3 d)
+    {
+        _zoomAnchor = null;
+        Target += d;
+        Settle();
+        Apply();
+    }
 
     public Func<Ground> Terrain = () => Ground.Flat;
     const float AboveGround = 0.6f;
@@ -75,12 +87,18 @@ public partial class CameraRig : Node3D
 
     public void Fling(Vector3 unitsPerSecond)
     {
-        _glide = unitsPerSecond; _glide.Y = 0;
+        _glide = unitsPerSecond;
+        _glide.Y = 0;
         float cap = Distance * 2;
         if (_glide.Length() > cap) _glide = _glide.Normalized() * cap;
     }
     public void FlingOrbit(Vector2 radiansPerSecond) => _spin = radiansPerSecond.LimitLength(Mathf.Pi);
-    public void StopGliding() { _glide = Vector3.Zero; _spin = Vector2.Zero; _yawTo = null; }
+    public void StopGliding()
+    {
+        _glide = Vector3.Zero;
+        _spin = Vector2.Zero;
+        _yawTo = null;
+    }
     public void Still() { StopGliding(); _zoomTo = null; }
     public bool Gliding => _glide != Vector3.Zero || _spin != Vector2.Zero || _yawTo != null || _zoomTo != null;
 
@@ -106,7 +124,8 @@ public partial class CameraRig : Node3D
         if (!Gliding) { if (eased) Apply(); return; }
         if (_glide != Vector3.Zero)
         {
-            Target += _glide * dt; Settle();
+            Target += _glide * dt;
+            Settle();
             _glide *= Mathf.Exp(-dt * GlideDamping);
             if (_glide.Length() < 0.004f * Distance) _glide = Vector3.Zero;
         }
@@ -168,7 +187,8 @@ public partial class CameraRig : Node3D
         Distance = Mathf.Clamp(v.Distance, MinDistance, MaxDistance);
         Yaw = v.Yaw;
         Pitch = Mathf.Clamp(v.Pitch, SteepestPitchRadians, FlattestPitchRadians);
-        if (v.TopDown != TopDown) ToggleTopDown(); else Apply();
+        if (v.TopDown != TopDown) ToggleTopDown();
+        else Apply();
     }
 
     public void Frame(Vector3 center, float size)
@@ -213,7 +233,12 @@ public partial class CameraRig : Node3D
             float t = t0 + step * i;
             if (Above(t) > 0) { prev = t; continue; }
             float lo = prev, hi = t;
-            for (int k = 0; k < Halvings; k++) { float mid = (lo + hi) / 2; if (Above(mid) > 0) lo = mid; else hi = mid; }
+            for (int k = 0; k < Halvings; k++)
+            {
+                float mid = (lo + hi) / 2;
+                if (Above(mid) > 0) lo = mid;
+                else hi = mid;
+            }
             return o + n * hi;
         }
         return PlaneAt(screen, 0);
@@ -242,7 +267,8 @@ public partial class CameraRig : Node3D
     {
         var vp = GetViewport().GetVisibleRect().Size;
         var c = vp / 2;
-        var a = PlaneAt(c, Target.Y); var b = PlaneAt(c + new Vector2(0, 50), Target.Y);
+        var a = PlaneAt(c, Target.Y);
+        var b = PlaneAt(c + new Vector2(0, 50), Target.Y);
         if (a == null || b == null) return 1;
         return 50f / Mathf.Max(0.0001f, (a.Value - b.Value).Length());
     }

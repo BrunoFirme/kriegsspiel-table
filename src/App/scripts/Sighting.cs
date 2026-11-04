@@ -13,7 +13,12 @@ sealed class Sighting
     readonly TableContext _c;
     readonly SheetLayer _sheets;
     readonly PieceLayer _pieces;
-    public Sighting(TableContext c, SheetLayer sheets, PieceLayer pieces) { _c = c; _sheets = sheets; _pieces = pieces; }
+    public Sighting(TableContext c, SheetLayer sheets, PieceLayer pieces)
+    {
+        _c = c;
+        _sheets = sheets;
+        _pieces = pieces;
+    }
 
     Selection _selection = null!;
     ToolOverlay _overlay = null!;
@@ -35,10 +40,14 @@ sealed class Sighting
     public void BuildPlanes()
     {
         _sightMat = new ShaderMaterial { Shader = new Shader { Code = FileAccess.GetFileAsString("res://shaders/sighting.gdshader") } };
-        _sightPlane = new MeshInstance3D { Mesh = new PlaneMesh { Size = new Vector2(20000, 20000) }, MaterialOverride = _sightMat, Position = new Vector3(0, 0.02f, 0), Visible = false, CastShadow = GeometryInstance3D.ShadowCastingSetting.Off, Layers = Table.LiveOnlyLayer };
+        _sightPlane =
+            new MeshInstance3D { Mesh = new PlaneMesh { Size = new Vector2(20000, 20000) }, MaterialOverride = _sightMat, Position = new Vector3(0, 0.02f, 0), Visible = false,
+                CastShadow = GeometryInstance3D.ShadowCastingSetting.Off, Layers = Table.LiveOnlyLayer };
         Root.AddChild(_sightPlane);
         _shotMat = new ShaderMaterial { Shader = new Shader { Code = FileAccess.GetFileAsString("res://shaders/sighting_cut.gdshader") } };
-        _shotPlane = new MeshInstance3D { Mesh = new PlaneMesh { Size = new Vector2(20000, 20000) }, MaterialOverride = _shotMat, Position = new Vector3(0, 0.021f, 0), Visible = false, CastShadow = GeometryInstance3D.ShadowCastingSetting.Off, Layers = Table.PictureOnlyLayer };
+        _shotPlane =
+            new MeshInstance3D { Mesh = new PlaneMesh { Size = new Vector2(20000, 20000) }, MaterialOverride = _shotMat, Position = new Vector3(0, 0.021f, 0), Visible = false,
+                CastShadow = GeometryInstance3D.ShadowCastingSetting.Off, Layers = Table.PictureOnlyLayer };
         Root.AddChild(_shotPlane);
     }
 
@@ -73,7 +82,8 @@ sealed class Sighting
         _shotPlane.Visible = true;
         var c = Coords.ToWorld(shape.Center);
         var poly = shape.Polygon.Take(SightingDraft.MaxPoints).Select(p => { var w = Coords.ToWorld(p); return new Vector2(w.X, w.Z); }).ToArray();
-        var polyArr = new Vector2[512]; Array.Copy(poly, polyArr, poly.Length);
+        var polyArr = new Vector2[512];
+        Array.Copy(poly, polyArr, poly.Length);
         SetOutline(shape.Kind == "polygon" ? shape.Polygon : null);
         foreach (var (mat, col, rim) in new[] { (_sightMat, shade, SightEdge()), (_shotMat, new Color(0.02f, 0.02f, 0.03f, 1f), 0f) })
         {
@@ -120,12 +130,18 @@ sealed class Sighting
         SetShape(Draft.Shape(), new Color(0.05f, 0.05f, 0.15f, 0.35f));
     }
 
-    void Redraw() { Draft!.Recompute(UmpirePiecesIn); ShowDraft(); NotifyChanged(); }
+    void Redraw()
+    {
+        Draft!.Recompute(UmpirePiecesIn);
+        ShowDraft();
+        NotifyChanged();
+    }
 
     public void Press(Vec2 g)
     {
         if (Draft == null) return;
-        _wall = new() { Draft.Clip(g) }; _drawing = true;
+        _wall = new() { Draft.Clip(g) };
+        _drawing = true;
     }
 
     public void Move(Vec2? g)
@@ -148,7 +164,12 @@ sealed class Sighting
 
     public void DropWall()
     {
-        if (_drawing || _wall != null) { _drawing = false; _wall = null; RefreshLines(); }
+        if (_drawing || _wall != null)
+        {
+            _drawing = false;
+            _wall = null;
+            RefreshLines();
+        }
     }
 
     public void Aim()
@@ -219,7 +240,10 @@ sealed class Sighting
         }
         CloseUp = false;
         Draft!.Radius = Math.Clamp(Draft.Radius * (f < 1 ? 1 / 1.1 : 1.1), 1, 100_000);
-        Draft.Recompute(UmpirePiecesIn); ShowDraft(); FrameOnDraft(); NotifyChanged();
+        Draft.Recompute(UmpirePiecesIn);
+        ShowDraft();
+        FrameOnDraft();
+        NotifyChanged();
     }
 
     void KeepRadius()
@@ -230,7 +254,9 @@ sealed class Sighting
     public void Cancel()
     {
         KeepRadius();
-        Draft = null; _drawing = false; _wallRedo.Clear();
+        Draft = null;
+        _drawing = false;
+        _wallRedo.Clear();
         _pieces.ShowRings();
         Sync();
         NotifyChanged();
@@ -243,7 +269,8 @@ sealed class Sighting
         KeepRadius();
         _c.Say($"POV screenshot taken: {Draft.Included.Count} pieces in the picture — Ctrl+V into Discord.");
         _pieces.ShowRings();
-        Draft = null; _wallRedo.Clear();
+        Draft = null;
+        _wallRedo.Clear();
         Sync();
         NotifyChanged();
         _c.SetTool(Tool.Select);
@@ -254,7 +281,10 @@ sealed class Sighting
         if (Draft == null) return;
         _wallRedo.Clear();
         for (int i = Draft.Walls.Count - 1; i >= 0; i--) _wallRedo.Add(Draft.Walls[i]);
-        Draft.Walls.Clear(); Draft.Polygon.Clear(); _wall = null; _drawing = false;
+        Draft.Walls.Clear();
+        Draft.Polygon.Clear();
+        _wall = null;
+        _drawing = false;
         Redraw();
     }
 

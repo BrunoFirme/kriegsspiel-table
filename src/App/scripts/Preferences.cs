@@ -60,19 +60,39 @@ static class Preferences
         {
             switch (e)
             {
-                case PrefEffect.Scale: Ui.ApplyScale(root, cfg); break;
-                case PrefEffect.Sound: Sfx.Current?.Apply(); break;
-                case PrefEffect.Display: Graphics.ApplyDisplay(cfg); break;
+                case PrefEffect.Scale:
+                    Ui.ApplyScale(root, cfg);
+                    break;
+                case PrefEffect.Sound:
+                    Sfx.Current?.Apply();
+                    break;
+                case PrefEffect.Display:
+                    Graphics.ApplyDisplay(cfg);
+                    break;
             }
             if (hud == null || !GodotObject.IsInstanceValid(hud)) continue;
             switch (e)
             {
-                case PrefEffect.Scale: Callable.From(((IHudShell)hud).Relayout).CallDeferred(); break;
-                case PrefEffect.Strip: hud.Strip.Rebuild(); Callable.From(((IHudShell)hud).Relayout).CallDeferred(); break;
-                case PrefEffect.TopLine: hud.Top.SyncTopLine(); break;
-                case PrefEffect.Graphics: hud.T.ApplyGraphics(); break;
-                case PrefEffect.Lettering: hud.T.ApplyLettering(); break;
-                case PrefEffect.Pointers: hud.T.ShowCursors = cfg.ShowCursors; hud.Top.UpdatePointerInfo(); break;
+                case PrefEffect.Scale:
+                    Callable.From(((IHudShell)hud).Relayout).CallDeferred();
+                    break;
+                case PrefEffect.Strip:
+                    hud.Strip.Rebuild();
+                    Callable.From(((IHudShell)hud).Relayout).CallDeferred();
+                    break;
+                case PrefEffect.TopLine:
+                    hud.Top.SyncTopLine();
+                    break;
+                case PrefEffect.Graphics:
+                    hud.T.ApplyGraphics();
+                    break;
+                case PrefEffect.Lettering:
+                    hud.T.ApplyLettering();
+                    break;
+                case PrefEffect.Pointers:
+                    hud.T.ShowCursors = cfg.ShowCursors;
+                    hud.Top.UpdatePointerInfo();
+                    break;
             }
         }
     }

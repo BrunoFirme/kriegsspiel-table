@@ -72,7 +72,9 @@ public class MalformedInputTests
         ["text with a null name"] = t => t.Server.Handle(Table.Host, new SetText { Layer = U, Id = "p-000002", Name = null! }),
         ["text with a null value"] = t => t.Server.Handle(Table.Host, new SetText { Layer = U, Id = "p-000002", Name = "name", Value = null! }),
         ["counter with a null name"] = t => t.Server.Handle(Table.Host, new SetCounter { Layer = U, Id = "p-000002", Name = null!, Value = 3 }),
-        ["counter at int extremes"] = t => { t.Server.Handle(Table.Host, new SetCounter { Layer = U, Id = "p-000002", Name = "str", Value = int.MinValue }); t.Server.Handle(Table.Host, new SetCounter { Layer = U, Id = "p-000003", Name = "x", Value = int.MaxValue }); },
+        ["counter at int extremes"] = t =>
+            { t.Server.Handle(Table.Host, new SetCounter { Layer = U, Id = "p-000002", Name = "str", Value = int.MinValue }); t.Server.Handle(Table.Host,
+                new SetCounter { Layer = U, Id = "p-000003", Name = "x", Value = int.MaxValue }); },
         ["state at int extremes"] = t => { t.Server.Handle(Table.Host, new SetState { Layer = U, Id = "p-000002", State = int.MinValue }); t.Server.Handle(Table.Host, new SetState { Layer = U, Id = "p-000003", State = int.MaxValue }); },
         ["attach a piece to itself and to nothing"] = t => { t.Server.Handle(Table.Host, new Attach { Layer = U, Parent = "p-000002", Child = "p-000002" }); t.Server.Handle(Table.Host, new Attach { Layer = U, Parent = "p-404", Child = "p-000002" }); },
         ["attach in a ring then move"] = t =>
@@ -93,7 +95,12 @@ public class MalformedInputTests
         ["draw a stroke with no points"] = t => t.Server.Handle(Table.Host, new Draw { Layer = U, Stroke = new Stroke { Points = null! } }),
         ["draw through NaN"] = t => t.Server.Handle(Table.Host, new Draw { Layer = U, Stroke = new Stroke { Points = { new(0, 0), new(double.NaN, 1) } } }),
         ["erase a null stroke id"] = t => t.Server.Handle(Table.Host, new EraseStroke { Layer = U, StrokeId = null! }),
-        ["rename and remove a null board"] = t => { t.Server.Handle(Table.Host, new RenameBoard { Id = null!, Name = null! }); t.Server.Handle(Table.Host, new RemoveBoard { Id = null! }); t.Server.Handle(Table.Host, new AddBoard { Name = null! }); },
+        ["rename and remove a null board"] = t =>
+        {
+            t.Server.Handle(Table.Host, new RenameBoard { Id = null!, Name = null! });
+            t.Server.Handle(Table.Host, new RemoveBoard { Id = null! });
+            t.Server.Handle(Table.Host, new AddBoard { Name = null! });
+        },
         ["a null zone"] = t => t.Server.Handle(Table.Lead, new SetZone { Zone = null! }),
         ["a zone with no outline, then an umpire moves"] = t =>
         {
@@ -107,23 +114,42 @@ public class MalformedInputTests
             t.Server.Handle(Table.Ump3, new MovePiece { Layer = U, Id = "p-000002", Pos = new(1, 1) });
         },
         ["remove a null zone"] = t => t.Server.Handle(Table.Lead, new RemoveZone { Id = null! }),
-        ["dice at int extremes"] = t => { t.Server.Handle(Table.Host, new RollDice { Sides = int.MaxValue, Count = int.MaxValue }); t.Server.Handle(Table.Host, new RollDice { Sides = int.MinValue, Count = int.MinValue }); },
+        ["dice at int extremes"] = t =>
+            { t.Server.Handle(Table.Host, new RollDice { Sides = int.MaxValue, Count = int.MaxValue }); t.Server.Handle(Table.Host, new RollDice { Sides = int.MinValue, Count = int.MinValue }); },
         ["dice on a null list of pieces"] = t => t.Server.Handle(Table.Host, new RollDice { Layer = U, PieceIds = null! }),
         ["dice on pieces that are not there"] = t => t.Server.Handle(Table.Host, new RollDice { Layer = U, PieceIds = { "p-404", null!, "p-000002" } }),
         ["clock with a null time, then advanced"] = t => { t.Server.Handle(Table.Host, new SetClock { GameTime = null! }); t.Server.Handle(Table.Host, new AdvanceClock()); },
         ["clock at the end of time, then advanced"] = t => { t.Server.Handle(Table.Host, new SetClock { GameTime = "9999-12-31T23:00", IncrementMinutes = 120 }); t.Server.Handle(Table.Host, new AdvanceClock()); },
         ["clock with a huge step, then advanced"] = t => { t.Server.Handle(Table.Host, new SetClock { IncrementMinutes = int.MaxValue }); t.Server.Handle(Table.Host, new AdvanceClock()); },
         ["clock at a negative turn"] = t => t.Server.Handle(Table.Host, new SetClock { Turn = int.MinValue }),
-        ["null lighting, wind and grid"] = t => { t.Server.Handle(Table.Host, new SetLighting { Lighting = null! }); t.Server.Handle(Table.Host, new SetWind { Wind = null! }); t.Server.Handle(Table.Host, new SetGrid { Grid = null! }); },
-        ["NaN wind, calibration and vision"] = t => { t.Server.Handle(Table.Host, new SetWind { Wind = new Wind { From = double.NaN } }); t.Server.Handle(Table.Host, new SetCalibration { UnitsPerMeter = double.NaN }); t.Server.Handle(Table.Host, new SetVisionRadius { Radius = double.NaN }); },
+        ["null lighting, wind and grid"] = t =>
+        {
+            t.Server.Handle(Table.Host, new SetLighting { Lighting = null! });
+            t.Server.Handle(Table.Host, new SetWind { Wind = null! });
+            t.Server.Handle(Table.Host, new SetGrid { Grid = null! });
+        },
+        ["NaN wind, calibration and vision"] = t =>
+        {
+            t.Server.Handle(Table.Host, new SetWind { Wind = new Wind { From = double.NaN } });
+            t.Server.Handle(Table.Host, new SetCalibration { UnitsPerMeter = double.NaN });
+            t.Server.Handle(Table.Host, new SetVisionRadius { Radius = double.NaN });
+        },
         ["a pack with a null id"] = t => t.Server.Handle(Table.Host, new AddPack { Id = null!, Hash = null! }),
         ["a pack that is not there"] = t => t.Server.Handle(Table.Host, new AddPack { Id = "nowhere", Hash = "x" }),
         ["undo of nothing"] = t => { t.Server.Handle(Table.Host, new Undo { TargetSeq = -1 }); t.Server.Handle(Table.Host, new Undo { TargetSeq = long.MaxValue }); },
-        ["undo twice"] = t => { t.Server.Handle(Table.Host, new SetState { Layer = U, Id = "p-000002", State = 2 }); var s = t.Server.State.LastSeq; t.Server.Handle(Table.Host, new Undo { TargetSeq = s }); t.Server.Handle(Table.Host, new Undo { TargetSeq = s }); },
+        ["undo twice"] = t =>
+        {
+            t.Server.Handle(Table.Host, new SetState { Layer = U, Id = "p-000002", State = 2 });
+            var s = t.Server.State.LastSeq;
+            t.Server.Handle(Table.Host, new Undo { TargetSeq = s });
+            t.Server.Handle(Table.Host, new Undo { TargetSeq = s });
+        },
         ["restore a turn that is not there"] = t => { t.Server.Handle(Table.Host, new RestoreTurn { Index = -1 }); t.Server.Handle(Table.Host, new RestoreTurn { Index = 999 }); },
         ["restore a turn with a state of its own"] = t => { t.Server.Handle(Table.Host, new AdvanceClock()); t.Server.Handle(Table.Host, new RestoreTurn { Index = 0, State = null }); },
         ["restore a null piece"] = t => t.Server.Handle(Table.Host, new RestorePiece { Layer = U, Piece = null! }),
-        ["restore a piece full of nulls"] = t => t.Server.Handle(Table.Host, new RestorePiece { Layer = U, Piece = new PieceInstance { Id = "p-000050", Counters = null!, Text = null!, Attached = null!, Widgets = null!, MenuItems = null!, Lines = null!, Ui = null! } }),
+        ["restore a piece full of nulls"] = t =>
+            t.Server.Handle(Table.Host,
+                new RestorePiece { Layer = U, Piece = new PieceInstance { Id = "p-000050", Counters = null!, Text = null!, Attached = null!, Widgets = null!, MenuItems = null!, Lines = null!, Ui = null! } }),
         ["a piece becomes a null kind"] = t => t.Server.Handle(Table.Host, new SetDef { Layer = U, Id = "p-000002", Def = null! }),
         ["a piece script of a megabyte"] = t => t.Server.Handle(Table.Host, new SetScript { Layer = U, Id = "p-000002", Text = "-- " + new string('x', 1_000_000) }),
         ["a global script that does not compile"] = t => t.Server.Handle(Table.Host, new SetGlobalScript { Text = "function (((( end" }),
@@ -163,8 +189,13 @@ public class MalformedInputTests
             t.Server.Control(Table.Host, new Admit { PeerId = 43, Role = Role.Umpire });
         },
         ["the host's id knocks again"] = t => t.Server.Join(Table.Host, new JoinRequest { Name = "Impostor" }),
-        ["peers 0 and negative knock"] = t => { t.Server.Join(0, new JoinRequest { Name = "zero", Password = Table.Password, Protocol = ProtocolVersion.Current }); t.Server.Join(-5, new JoinRequest { Name = "minus", Password = Table.Password, Protocol = ProtocolVersion.Current }); },
-        ["three hundred knocks"] = t => { for (int i = 0; i < 300; i++) t.Server.Join(1000 + i, new JoinRequest { Name = "k", Password = Table.Password, Protocol = ProtocolVersion.Current }); },
+        ["peers 0 and negative knock"] = t =>
+            { t.Server.Join(0, new JoinRequest { Name = "zero", Password = Table.Password, Protocol = ProtocolVersion.Current }); t.Server.Join(-5,
+                new JoinRequest { Name = "minus", Password = Table.Password, Protocol = ProtocolVersion.Current }); },
+        ["three hundred knocks"] = t =>
+        {
+            for (int i = 0; i < 300; i++) t.Server.Join(1000 + i, new JoinRequest { Name = "k", Password = Table.Password, Protocol = ProtocolVersion.Current });
+        },
         ["a null door message"] = t => t.Server.Control(Table.Host, null!),
         ["door messages from nobody"] = t => { t.Server.Control(777, new Admit { PeerId = 1 }); t.Server.Control(Table.Obs, new SetPassword { Password = "x" }); },
         ["admit, role and revoke with odd ids and roles"] = t =>
@@ -189,7 +220,15 @@ public class MalformedInputTests
             t.Server.Request(Table.Host, new RunLua { Target = "", Code = "while true do end" });
         },
         ["every message as a request"] = t => { foreach (var m in AllMessages()) t.Server.Request(Table.Host, m); },
-        ["turn history out of range"] = t => { t.Server.TurnSnapshot(Table.Host, -1); t.Server.TurnSnapshot(Table.Host, int.MaxValue); t.Server.TurnHistory(Table.Obs); t.Server.TurnHistory(777); t.Server.Resync(777); t.Server.Leave(777); },
+        ["turn history out of range"] = t =>
+        {
+            t.Server.TurnSnapshot(Table.Host, -1);
+            t.Server.TurnSnapshot(Table.Host, int.MaxValue);
+            t.Server.TurnHistory(Table.Obs);
+            t.Server.TurnHistory(777);
+            t.Server.Resync(777);
+            t.Server.Leave(777);
+        },
     };
 
     static IEnumerable<Message> AllMessages() =>
@@ -330,7 +369,12 @@ public class MalformedInputTests
 
     static IEnumerable<(string variant, Command c)> Variants(Type type, bool nulls)
     {
-        Command Make(Action<object> fill) { var c = (Command)Activator.CreateInstance(type)!; fill(c); return c; }
+        Command Make(Action<object> fill)
+        {
+            var c = (Command)Activator.CreateInstance(type)!;
+            fill(c);
+            return c;
+        }
         if (nulls)
         {
             yield return ("references null", Make(o => Fill(o, nulls: true)));

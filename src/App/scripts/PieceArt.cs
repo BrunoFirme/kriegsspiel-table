@@ -72,7 +72,8 @@ public sealed class PieceArt
             while (next.TryGetValue(at, out var outs) && outs.Count > 0)
             {
                 loop.Add(new Vector2(at.Item1, at.Item2));
-                var to = outs[^1]; outs.RemoveAt(outs.Count - 1);
+                var to = outs[^1];
+                outs.RemoveAt(outs.Count - 1);
                 if (outs.Count == 0) next.Remove(at);
                 at = to;
                 if (at == start) break;
@@ -104,8 +105,12 @@ public sealed class PieceArt
             Vector3 P(Vector2 g, float y) => new((g.X / N - 0.5f) * w, y, (g.Y / N - 0.5f) * h);
             for (int i = 0; i < thin.Count; i++)
             {
-                var a = thin[i]; var b = thin[(i + 1) % thin.Count];
-                var a0 = P(a, 0); var b0 = P(b, 0); var a1 = P(a, t); var b1 = P(b, t);
+                var a = thin[i];
+                var b = thin[(i + 1) % thin.Count];
+                var a0 = P(a, 0);
+                var b0 = P(b, 0);
+                var a1 = P(a, t);
+                var b1 = P(b, t);
                 foreach (var v in new[] { a0, b0, b1, a0, b1, a1 }) st.AddVertex(v);
                 quads++;
             }
@@ -153,7 +158,11 @@ public sealed class PieceArt
 
     public void Clear()
     {
-        _slabs.Clear(); _planes.Clear(); _walls.Clear(); _prints.Clear(); _edges.Clear();
+        _slabs.Clear();
+        _planes.Clear();
+        _walls.Clear();
+        _prints.Clear();
+        _edges.Clear();
     }
 
     static ArrayMesh BuildSlab(List<Vector2> outline, float w, float h, float t, bool sameUnderside)
@@ -173,8 +182,12 @@ public sealed class PieceArt
         side.Begin(Mesh.PrimitiveType.Triangles);
         for (int i = 0; i < outline.Count; i++)
         {
-            var a = outline[i]; var b = outline[(i + 1) % outline.Count];
-            var a0 = new Vector3(a.X, 0, a.Y); var b0 = new Vector3(b.X, 0, b.Y); var a1 = a0 with { Y = t }; var b1 = b0 with { Y = t };
+            var a = outline[i];
+            var b = outline[(i + 1) % outline.Count];
+            var a0 = new Vector3(a.X, 0, a.Y);
+            var b0 = new Vector3(b.X, 0, b.Y);
+            var a1 = a0 with { Y = t };
+            var b1 = b0 with { Y = t };
             foreach (var v in new[] { a0, b0, b1, a0, b1, a1 }) side.AddVertex(v);
         }
         side.GenerateNormals();

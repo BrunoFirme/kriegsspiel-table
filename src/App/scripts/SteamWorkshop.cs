@@ -32,7 +32,8 @@ public sealed class Workshop
 
     public Workshop(PackageStore store, SteamService steam)
     {
-        _store = store; _steam = steam;
+        _store = store;
+        _steam = steam;
         if (steam.Running) _installed = Callback<ItemInstalled_t>.Create(r => { if (r.m_unAppID == steam.App) SyncInstalled(); });
     }
 

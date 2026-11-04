@@ -52,7 +52,8 @@ public static class Repeatable
             var v = eq < 0 ? "" : part[(eq + 1)..].Trim();
             if (key.Equals("seed", StringComparison.OrdinalIgnoreCase) && int.TryParse(v, NumberStyles.Integer, CultureInfo.InvariantCulture, out var n)) seed = n;
             else if (key.Equals("clock", StringComparison.OrdinalIgnoreCase)
-                     && DateTime.TryParse(v, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out var t)) start = DateTime.SpecifyKind(t, DateTimeKind.Utc);
+                     && DateTime.TryParse(v, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal,
+                         out var t)) start = DateTime.SpecifyKind(t, DateTimeKind.Utc);
             else
             {
                 BestEffort.Try(() => Console.Error.WriteLine($"{Variable}: cannot read '{part}' (expected seed=<integer>,clock=<ISO 8601 instant>); runs are not repeatable."));

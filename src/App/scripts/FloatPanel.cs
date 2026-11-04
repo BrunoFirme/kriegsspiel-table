@@ -50,10 +50,22 @@ public partial class FloatPanel : PanelContainer
 
     public void Fit()
     {
-        if (CustomMinimumSize != Vector2.Zero) { Callable.From(() => { if (IsInstanceValid(this)) { Trim(); Clamp(); } }).CallDeferred(); return; }
+        if (CustomMinimumSize != Vector2.Zero)
+        {
+            Callable.From(() => { if (IsInstanceValid(this)) { Trim(); Clamp(); } }).CallDeferred();
+            return;
+        }
         CustomMinimumSize = Vector2.Zero;
         ResetSize();
-        Callable.From(() => { if (IsInstanceValid(this)) { ResetSize(); Trim(); Clamp(); } }).CallDeferred();
+        Callable.From(() =>
+        {
+            if (IsInstanceValid(this))
+            {
+                ResetSize();
+                Trim();
+                Clamp();
+            }
+        }).CallDeferred();
     }
 
     void Trim()

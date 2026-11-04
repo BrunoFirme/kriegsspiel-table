@@ -14,7 +14,8 @@ public sealed class SightingShape
         bool inside = false;
         for (int i = 0, j = Polygon.Count - 1; i < Polygon.Count; j = i++)
         {
-            var a = Polygon[i]; var b = Polygon[j];
+            var a = Polygon[i];
+            var b = Polygon[j];
             if ((a.Z > p.Z) != (b.Z > p.Z) && p.X < (b.X - a.X) * (p.Z - a.Z) / (b.Z - a.Z) + a.X)
                 inside = !inside;
         }

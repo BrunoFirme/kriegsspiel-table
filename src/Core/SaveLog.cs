@@ -105,7 +105,12 @@ public sealed class SaveLog : IDisposable
             if (_failed) return;
             try
             {
-                if (_out != null) { _out.Write(lines); _out.Flush(true); _out.Dispose(); }
+                if (_out != null)
+                {
+                    _out.Write(lines);
+                    _out.Flush(true);
+                    _out.Dispose();
+                }
                 _out = null;
                 var live = PathFor(_save);
                 var old = OldPathFor(_save);
@@ -218,7 +223,7 @@ public sealed class SaveLog : IDisposable
                 {
                     Command? c = null;
                     try { c = Json.Deserialize<Command>(bytes.AsSpan(from, len)); }
-                    catch { c = null; }
+                    catch (Exception e) when (SaveStore.IsDamage(e) || e is NotSupportedException) { c = null; }
                     bad = c == null;
                     if (c != null)
                     {
@@ -298,7 +303,7 @@ public sealed class SaveLog : IDisposable
             int nl = Array.IndexOf(buf, (byte)'\n', 0, n);
             return nl < 0 ? null : Encoding.UTF8.GetString(buf, 0, nl);
         }
-        catch { return null; }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException) { return null; }
     }
 
     public void Dispose()

@@ -40,7 +40,12 @@ sealed class PieceHistory
     public long UndoStamp => CanUndo ? _undo[^1].At : 0;
     public long RedoStamp => CanRedo ? _redo[^1].At : 0;
 
-    public void Clear() { _undo.Clear(); _redo.Clear(); _open = null; }
+    public void Clear()
+    {
+        _undo.Clear();
+        _redo.Clear();
+        _open = null;
+    }
 
     public void Before(PackManifest pack, PieceDef d, string what)
     {
@@ -118,7 +123,8 @@ public partial class PieceStudio
         if (here > piece)
         {
             if (_view == "paint") { if (undo) _canvas.Undo(); else _canvas.Redo(); }
-            else if (undo) _model!.Undo(); else _model!.Redo();
+            else if (undo) _model!.Undo();
+            else _model!.Redo();
             Strip.RefreshUndo();
             return;
         }

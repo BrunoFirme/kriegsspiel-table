@@ -34,7 +34,8 @@ public sealed partial class AssetStore
 
     public AssetStore(Config cfg, Report report)
     {
-        _cfg = cfg; Report = report;
+        _cfg = cfg;
+        Report = report;
         Directory.CreateDirectory(cfg.Cache);
         _indexPath = Path.Combine(cfg.Cache, "index.json");
         if (File.Exists(_indexPath))
@@ -129,7 +130,8 @@ public sealed partial class AssetStore
         if (e.Ext is "png" or "jpg" or "gif" or "bmp" or "webp" or "tga")
         {
             var info = BestEffort.Read(() => SKBitmap.DecodeBounds(bytes), fallback: default);
-            e.W = info.Width; e.H = info.Height;
+            e.W = info.Width;
+            e.H = info.Height;
         }
         return e;
     }
@@ -224,11 +226,21 @@ public sealed partial class AssetStore
                 using var cts = new CancellationTokenSource();
                 using var resp = await http.GetAsync(FetchUrl(url), HttpCompletionOption.ResponseHeadersRead, cts.Token);
                 if ((int)resp.StatusCode == 429 || (int)resp.StatusCode >= 500) { err = $"HTTP {(int)resp.StatusCode}"; continue; }
-                if (!resp.IsSuccessStatusCode) { err = $"HTTP {(int)resp.StatusCode}"; definite = (int)resp.StatusCode is 404 or 410; break; }
+                if (!resp.IsSuccessStatusCode)
+                {
+                    err = $"HTTP {(int)resp.StatusCode}";
+                    definite = (int)resp.StatusCode is 404 or 410;
+                    break;
+                }
                 var bytes = await ReadBody(resp, cts);
                 if (bytes.Length == 0) { err = "empty body"; continue; }
                 var e = Describe(bytes, url);
-                if (e.Ext == "html") { err = "got an HTML page, not an asset"; definite = true; break; }
+                if (e.Ext == "html")
+                {
+                    err = "got an HTML page, not an asset";
+                    definite = true;
+                    break;
+                }
                 var path = Path.Combine(_cfg.Cache, e.Sha + "." + e.Ext);
                 if (!File.Exists(path))
                 {

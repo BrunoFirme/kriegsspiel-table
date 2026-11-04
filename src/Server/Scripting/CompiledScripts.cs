@@ -13,7 +13,8 @@ internal sealed class CompiledScripts(Script vm)
     {
         if (_compiled.TryGetValue(code, out var c)) return c;
         var verdict = ScriptSafety.Inspect(code);
-        DynValue? chunk = null; string? failure = null;
+        DynValue? chunk = null;
+        string? failure = null;
         if (!verdict.Hostile)
         {
             var src = verdict.Script.StartsWith('#') ? "--" + verdict.Script : verdict.Script;

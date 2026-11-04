@@ -74,9 +74,24 @@ public partial class Main : Node
             TableSession = () => _hud != null && IsInstanceValid(_hud) && _hud.IsInsideTree() ? _session : null,
             TableHud = () => _hud != null && IsInstanceValid(_hud) && _hud.IsInsideTree() ? _hud : null,
             AtTitle = AgentAtTitle,
-            OpenStudio = id => { if (!AgentAtTitle()) return "Close what is open first (close_studio or leave_game)."; OpenEditor(id); return null; },
-            Host = (dir, resume) => { if (!AgentAtTitle()) return "Close what is open first (close_studio or leave_game)."; DoHost(dir, resume); return null; },
-            CloseStudio = () => { if (_agent.Studio is not { } st || !IsInstanceValid(st) || st.Gone) return "The piece studio is not open."; st.AskLeave(); return null; },
+            OpenStudio = id =>
+            {
+                if (!AgentAtTitle()) return "Close what is open first (close_studio or leave_game).";
+                OpenEditor(id);
+                return null;
+            },
+            Host = (dir, resume) =>
+            {
+                if (!AgentAtTitle()) return "Close what is open first (close_studio or leave_game).";
+                DoHost(dir, resume);
+                return null;
+            },
+            CloseStudio = () =>
+            {
+                if (_agent.Studio is not { } st || !IsInstanceValid(st) || st.Gone) return "The piece studio is not open.";
+                st.AskLeave();
+                return null;
+            },
             LeaveGame = AgentLeavesGame,
         };
         AddChild(_agent);
@@ -99,7 +114,12 @@ public partial class Main : Node
         if (_hud == null || !IsInstanceValid(_hud) || !_hud.IsInsideTree()) return "No game is open.";
         _net.SaveNow(closing: true);
         if (_net.LastSaveProblem is { } problem) return "The game could not be saved, so it was not left: " + problem;
-        GetTree().CreateTimer(0.5).Timeout += () => { _cfg.Save(); _net.Shutdown(); GetTree().ReloadCurrentScene(); };
+        GetTree().CreateTimer(0.5).Timeout += () =>
+        {
+            _cfg.Save();
+            _net.Shutdown();
+            GetTree().ReloadCurrentScene();
+        };
         return null;
     }
 
@@ -254,7 +274,8 @@ public partial class Main : Node
         if (Title.Root != null) Title.Status.Text = "";
         var root = packages ?? Path.Combine(DataPaths.Local, "cache", "packages");
         NewSession(root);
-        _cfg.LastName = name; _cfg.LastAddress = address;
+        _cfg.LastName = name;
+        _cfg.LastAddress = address;
         if (_net.Join(address, port, name, password) == Error.Ok) return;
         _door = null;
         EndOpening(op);
@@ -298,7 +319,12 @@ public partial class Main : Node
             pending.Clear();
         }
         var door = _door;
-        if (pending.Count == 0) { InFromTheDoor(door); BuildTable(); return; }
+        if (pending.Count == 0)
+        {
+            InFromTheDoor(door);
+            BuildTable();
+            return;
+        }
         int left = pending.Count;
         bool built = false;
         void Ready()
@@ -309,7 +335,12 @@ public partial class Main : Node
             _session.SetView(_session.View);
             BuildTable();
         }
-        void Arrived() { left--; if (door != null) door.Done = door.Total - left; if (left == 0) Ready(); }
+        void Arrived()
+        {
+            left--;
+            if (door != null) door.Done = door.Total - left;
+            if (left == 0) Ready();
+        }
         if (door != null)
         {
             door.Title = _session.View.Name is { Length: > 0 } scenario ? scenario : door.Title;
@@ -341,7 +372,11 @@ public partial class Main : Node
         var hud = NewHud(table);
         SayWhereTheGameIsKept(hud);
         Dev.TableBuilt(table, hud);
-        if (_openSavesOnArrival) { _openSavesOnArrival = false; Callable.From(() => { if (IsInstanceValid(hud)) SavesWindow.Open(hud.Ctx); }).CallDeferred(); }
+        if (_openSavesOnArrival)
+        {
+            _openSavesOnArrival = false;
+            Callable.From(() => { if (IsInstanceValid(hud)) SavesWindow.Open(hud.Ctx); }).CallDeferred();
+        }
     }
 
     Table NewTable()
@@ -372,7 +407,13 @@ public partial class Main : Node
             var pj = Path.Combine(store.PackageDir(id), "pack.json");
             if (!_session.IsHost && UserPacks.Hash(store, id) != hash) BestEffort.DeleteFile(pj);
             store.Forget(id);
-            _session.Assets.EnsureFile(id, "pack.json", () => { store.Forget(id); store.Pack(id); table.Rebuild(); _hud?.RefreshPacks(); });
+            _session.Assets.EnsureFile(id, "pack.json", () =>
+            {
+                store.Forget(id);
+                store.Pack(id);
+                table.Rebuild();
+                _hud?.RefreshPacks();
+            });
         };
     }
 
@@ -452,7 +493,12 @@ public partial class Main : Node
         }
         Title.Close();
         var pack = store.Pack(packId);
-        if (pack == null) { InUse.Close(held); Fail($"No pack '{packId}'"); return; }
+        if (pack == null)
+        {
+            InUse.Close(held);
+            Fail($"No pack '{packId}'");
+            return;
+        }
         var s = new Session(new Assets(store));
         var g = new GameState { Name = pack.Name, Packs = store.ListPackIds().ToList() };
         g.Layers[KTable.Core.Model.Layers.Umpire] = new();
@@ -462,10 +508,18 @@ public partial class Main : Node
             foreach (var o in outs)
                 switch (o.Message)
                 {
-                    case KTable.Core.Protocol.CommandMessage cm: s.OnCommand(cm.Command); break;
-                    case KTable.Core.Protocol.JoinResult jr: s.OnJoined(jr); break;
-                    case KTable.Core.Protocol.ErrorMessage em: GD.PushWarning("editor: " + em.Text); break;
-                    case KTable.Core.Protocol.ScriptConsole or KTable.Core.Protocol.ScriptList: s.OnScriptMessage(o.Message); break;
+                    case KTable.Core.Protocol.CommandMessage cm:
+                        s.OnCommand(cm.Command);
+                        break;
+                    case KTable.Core.Protocol.JoinResult jr:
+                        s.OnJoined(jr);
+                        break;
+                    case KTable.Core.Protocol.ErrorMessage em:
+                        GD.PushWarning("editor: " + em.Text);
+                        break;
+                    case KTable.Core.Protocol.ScriptConsole or KTable.Core.Protocol.ScriptList:
+                        s.OnScriptMessage(o.Message);
+                        break;
                 }
             if (server.ConsoleOut() is { Count: > 0 } said) Deliver(said);
         }
@@ -491,9 +545,12 @@ public partial class Main : Node
         {
             if (_agent.Studio == ed) _agent.Studio = null;
             InUse.Close(held);
-            table.QueueFree(); ed.QueueFree();
+            table.QueueFree();
+            ed.QueueFree();
             GetWindow().Title = "Kriegsspiel Table";
-            BuildLobby(); Title.Select(2); Title.Packs.Show();
+            BuildLobby();
+            Title.Select(2);
+            Title.Packs.Show();
         });
         GetWindow().Title = $"Kriegsspiel Table — piece studio — {pack.Name}";
         Dev.StudioOpened(ed);

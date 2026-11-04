@@ -108,7 +108,10 @@ public partial class ModelStudio : Control
 
     public void Setup(PieceStudio studio, PackageStore store, PackManifest pack, StudioPrefs prefs)
     {
-        _studio = studio; _store = store; _pack = pack; P = prefs;
+        _studio = studio;
+        _store = store;
+        _pack = pack;
+        P = prefs;
         _baker = new ModelBake(store, pack);
         _tools = new ModelTools(this);
         Decal = new DecalTool(this);
@@ -182,8 +185,10 @@ public partial class ModelStudio : Control
             float x = i * step;
             for (int k = 0; k < 2; k++)
             {
-                im.SurfaceSetColor(c); im.SurfaceAddVertex(k == 0 ? new Vector3(x, 0, -half) : new Vector3(-half, 0, x));
-                im.SurfaceSetColor(c); im.SurfaceAddVertex(k == 0 ? new Vector3(x, 0, half) : new Vector3(half, 0, x));
+                im.SurfaceSetColor(c);
+                im.SurfaceAddVertex(k == 0 ? new Vector3(x, 0, -half) : new Vector3(-half, 0, x));
+                im.SurfaceSetColor(c);
+                im.SurfaceAddVertex(k == 0 ? new Vector3(x, 0, half) : new Vector3(half, 0, x));
             }
         }
         im.SurfaceEnd();
@@ -226,7 +231,8 @@ public partial class ModelStudio : Control
         if (meshSha == null) return null;
         var p = DocPath(store, packId, meshSha);
         if (!File.Exists(p)) return null;
-        try { return JsonSerializer.Deserialize<ModelDoc>(File.ReadAllText(p), Opts); } catch { return null; }
+        try { return JsonSerializer.Deserialize<ModelDoc>(File.ReadAllText(p), Opts); }
+        catch (Exception e) when (SaveStore.IsFileTrouble(e)) { return null; }
     }
 
     public bool Holds(PieceDef d) => _def == d;
@@ -251,14 +257,20 @@ public partial class ModelStudio : Control
         foreach (var v in _views.Values) v.Node.QueueFree();
         _views.Clear();
         _selPart = null;
-        _openedTex = d.Texture; _openedMesh = d.Mesh;
+        _openedTex = d.Texture;
+        _openedMesh = d.Mesh;
         _dirtyMesh = _dirtyTex = false;
         var doc = LoadDoc(_store, _pack.Id, d.Mesh);
         if (doc == null)
         {
             try { doc = FromExisting(d); }
             catch (Exception e) { GD.PrintErr($"[studio] the model of {d.Name}: {e.Message}"); }
-            if (doc == null) { _studio.Say("This piece's model could not be read."); _doc = new ModelDoc(); return true; }
+            if (doc == null)
+            {
+                _studio.Say("This piece's model could not be read.");
+                _doc = new ModelDoc();
+                return true;
+            }
         }
         _doc = doc;
         var unread = new List<string>();
@@ -284,13 +296,16 @@ public partial class ModelStudio : Control
         _views.Clear();
         _flat = false;
         _def = d;
-        _turned = false; ApplyTurn(); ShowPrinting();
+        _turned = false;
+        ApplyTurn();
+        ShowPrinting();
         _doc = new ModelDoc();
         _history.Clear();
         _selPart = null;
         _bake.Clear();
         _dirtyMesh = _dirtyTex = false;
-        _openedTex = d.Texture; _openedMesh = d.Mesh;
+        _openedTex = d.Texture;
+        _openedMesh = d.Mesh;
         return true;
     }
 
@@ -301,7 +316,10 @@ public partial class ModelStudio : Control
         if (!File.Exists(path)) return null;
         var m = ModelImport.Obj(path);
         if (m.Tris == 0) return null;
-        if (d.Texture != null && PackEdit.LoadAsset(_store, _pack, d.Texture) is { } tex) { for (int i = 0; i < m.Tex.Count; i++) m.Tex[i] ??= tex; }
+        if (d.Texture != null && PackEdit.LoadAsset(_store, _pack, d.Texture) is { } tex)
+        {
+            for (int i = 0; i < m.Tex.Count; i++) m.Tex[i] ??= tex;
+        }
         var doc = new ModelDoc();
         var b = m.Bounds();
         doc.Scale = (float)(d.Size.W / Math.Max(1e-4, b.Size.X));
@@ -372,7 +390,10 @@ public partial class ModelStudio : Control
             for (int i = 0; i < d.Length; i += 4)
             {
                 int a = d[i + 3];
-                v.Paint[i] = (byte)(d[i] * a / 255); v.Paint[i + 1] = (byte)(d[i + 1] * a / 255); v.Paint[i + 2] = (byte)(d[i + 2] * a / 255); v.Paint[i + 3] = (byte)a;
+                v.Paint[i] = (byte)(d[i] * a / 255);
+                v.Paint[i + 1] = (byte)(d[i + 1] * a / 255);
+                v.Paint[i + 2] = (byte)(d[i + 2] * a / 255);
+                v.Paint[i + 3] = (byte)a;
             }
         }
         v.PaintImg = Image.CreateFromData(w, h, false, Image.Format.Rgba8, v.Paint);
@@ -387,7 +408,8 @@ public partial class ModelStudio : Control
         v.Node = new MeshInstance3D { Mesh = data.ToMesh(), MaterialOverride = v.Mat, Transform = part.Xf(), Visible = part.Visible };
         _root.AddChild(v.Node);
         int n = data.Tris;
-        v.Centre = new Vector3[n]; v.Radius = new float[n];
+        v.Centre = new Vector3[n];
+        v.Radius = new float[n];
         for (int t = 0; t < n; t++)
         {
             var c = (data.V[t * 3] + data.V[t * 3 + 1] + data.V[t * 3 + 2]) / 3;
@@ -409,7 +431,13 @@ public partial class ModelStudio : Control
             var cut = img.GetRegion(new Rect2I(r[0], r[1], r[2], r[3]));
             cut.Resize(v.W, v.H, Image.Interpolation.Bilinear);
             var d = cut.GetData();
-            for (int i = 0; i < d.Length; i += 4) { v.Paint[i] = d[i]; v.Paint[i + 1] = d[i + 1]; v.Paint[i + 2] = d[i + 2]; v.Paint[i + 3] = 255; }
+            for (int i = 0; i < d.Length; i += 4)
+            {
+                v.Paint[i] = d[i];
+                v.Paint[i + 1] = d[i + 1];
+                v.Paint[i + 2] = d[i + 2];
+                v.Paint[i + 3] = 255;
+            }
             v.Repaint();
         }
         _dirtyTex = true;
@@ -476,7 +504,8 @@ public partial class ModelStudio : Control
             string meshSha = def.Mesh ?? "";
             if (meshChanged || def.Mesh == null || LoadDoc(_store, _pack.Id, def.Mesh) == null)
                 meshSha = _baker.AddMesh(ModelImport.ToObj(mesh));
-            doc.Baked = texSha; doc.BakedSize = size;
+            doc.Baked = texSha;
+            doc.BakedSize = size;
             _baker.KeepPaint(views.Values);
             KTable.Core.Json.WriteAtomic(DocPath(_store, _pack.Id, meshSha), JsonSerializer.Serialize(doc, Opts));
             Baked(def, doc, b, texSha, meshSha);
@@ -513,14 +542,16 @@ public partial class ModelStudio : Control
             if (st.Mesh != null && st.Mesh == oldMesh) st.Mesh = meshSha;
         }
         if (def == _def) { _openedTex = texSha; _openedMesh = meshSha; }
-        _studio.MadeHere.Add(texSha); _studio.MadeHere.Add(meshSha);
+        _studio.MadeHere.Add(texSha);
+        _studio.MadeHere.Add(meshSha);
         _studio.Superseded(oldTex, texSha);
         _studio.Superseded(oldMesh, meshSha);
     }
 
     internal void Changed(bool mesh)
     {
-        if (mesh) _dirtyMesh = true; else _dirtyTex = true;
+        if (mesh) _dirtyMesh = true;
+        else _dirtyTex = true;
         _bake.Arm(BakeDelay, BakeMaxDelay);
         _studio.SetSaved("editing…");
     }
@@ -528,7 +559,12 @@ public partial class ModelStudio : Control
     public override void _Process(double delta)
     {
         foreach (var v in _views.Values)
-            if (v.PaintDirty && v.Node.HasMeta("upload")) { v.PaintImg.SetData(v.W, v.H, false, Image.Format.Rgba8, v.Paint); v.PaintTex.Update(v.PaintImg); v.Node.RemoveMeta("upload"); }
+            if (v.PaintDirty && v.Node.HasMeta("upload"))
+            {
+                v.PaintImg.SetData(v.W, v.H, false, Image.Format.Rgba8, v.Paint);
+                v.PaintTex.Update(v.PaintImg);
+                v.Node.RemoveMeta("upload");
+            }
         if (_bake.Tick(delta))
         {
             if (Input.IsMouseButtonPressed(MouseButton.Left)) _bake.In = 0.3;
@@ -605,7 +641,13 @@ public partial class ModelStudio : Control
     internal void RefreshSelection()
     {
         bool several = _flat ? _doc.Parts.Count > 0 : _doc.Parts.Count > 1;
-        foreach (var v in _views.Values) { v.Mat.SetShaderParameter("selected", several && v.Part.Id == _selPart && IsPart(v.Part.Id) ? 1f : 0f); v.Node.Visible = v.Part.Visible; v.Node.Transform = v.Part.Xf(); v.Mat.SetShaderParameter("tint", Hex.To(v.Part.Tint, Colors.White)); }
+        foreach (var v in _views.Values)
+        {
+            v.Mat.SetShaderParameter("selected", several && v.Part.Id == _selPart && IsPart(v.Part.Id) ? 1f : 0f);
+            v.Node.Visible = v.Part.Visible;
+            v.Node.Transform = v.Part.Xf();
+            v.Mat.SetShaderParameter("tint", Hex.To(v.Part.Tint, Colors.White));
+        }
         _root.Scale = Vector3.One * _doc.Scale;
         FitGrid();
     }
@@ -658,7 +700,8 @@ public partial class ModelStudio : Control
             foreach (var p in _doc.Parts)
             {
                 MakeView(p);
-                if (paints.TryGetValue(p.Id, out var old) && old.Part.Mesh == p.Mesh && old.Paint.Length == _views[p.Id].Paint.Length) { Array.Copy(old.Paint, _views[p.Id].Paint, old.Paint.Length); _views[p.Id].Repaint(); }
+                if (paints.TryGetValue(p.Id, out var old) && old.Part.Mesh == p.Mesh && old.Paint.Length == _views[p.Id].Paint.Length) { Array.Copy(old.Paint, _views[p.Id].Paint,
+                    old.Paint.Length); _views[p.Id].Repaint(); }
             }
             if (!_views.ContainsKey(_selPart ?? "")) _selPart = _doc.Parts.FirstOrDefault()?.Id ?? _views.Values.FirstOrDefault(x => x.Face != null)?.Part.Id;
             RefreshSelection();
@@ -675,13 +718,28 @@ public partial class ModelStudio : Control
         bool ctrl = k.CtrlPressed || k.MetaPressed;
         switch (k.Keycode)
         {
-            case Godot.Key.Home: Frame(); return true;
-            case Godot.Key.F when !ctrl && !k.Echo: TurnOver(); return true;
-            case Godot.Key.Bracketleft: P.Brush = Mathf.Max(1, P.Brush / 1.15f); _studio.RebuildModelOptions(); RedrawOverlay(); return true;
-            case Godot.Key.Bracketright: P.Brush = Mathf.Min(400, P.Brush * 1.15f); _studio.RebuildModelOptions(); RedrawOverlay(); return true;
-            case Godot.Key.Delete when SelPart != null && (_flat || _doc.Parts.Count > 1): RemovePart(SelPart); return true;
+            case Godot.Key.Home:
+                Frame();
+                return true;
+            case Godot.Key.F when !ctrl && !k.Echo:
+                TurnOver();
+                return true;
+            case Godot.Key.Bracketleft:
+                P.Brush = Mathf.Max(1, P.Brush / 1.15f);
+                _studio.RebuildModelOptions();
+                RedrawOverlay();
+                return true;
+            case Godot.Key.Bracketright:
+                P.Brush = Mathf.Min(400, P.Brush * 1.15f);
+                _studio.RebuildModelOptions();
+                RedrawOverlay();
+                return true;
+            case Godot.Key.Delete when SelPart != null && (_flat || _doc.Parts.Count > 1):
+                RemovePart(SelPart);
+                return true;
             case Godot.Key.V when ctrl && Tool == "decal":
-                if (ImageFiles.FromClipboard() is { } clip) Decal.Set(clip, "pasted"); else _studio.Say("No picture on the clipboard.");
+                if (ImageFiles.FromClipboard() is { } clip) Decal.Set(clip, "pasted");
+                else _studio.Say("No picture on the clipboard.");
                 return true;
         }
         if (ctrl || k.Echo) return false;

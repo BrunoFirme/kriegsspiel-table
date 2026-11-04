@@ -42,8 +42,15 @@ public static class Diagnostics
         if (OS.HasFeature(UpdateOffer.ExportedBuild)) WatchForUnexpectedClose();
         AppDomain.CurrentDomain.UnhandledException += (_, e) => Record("unhandled", e.ExceptionObject?.ToString() ?? "an unknown failure");
         TaskScheduler.UnobservedTaskException += (_, e) => { Record("task", e.Exception.ToString()); e.SetObserved(); };
+        BestEffort.Noted = e => Write(LogLevel.Warning, $"[best effort] {e.GetType().Name}: {e.Message}{FirstFrame(e)}");
         try { OS.AddLogger(_logger = new DiagnosticsLogger()); }
         catch (Exception e) { Record("diagnostics", "Godot's errors cannot be listened to: " + e.Message); }
+    }
+
+    static string FirstFrame(Exception e)
+    {
+        var frame = e.StackTrace?.Split('\n').Select(l => l.Trim()).FirstOrDefault(l => l.Contains("KTable."));
+        return frame == null ? "" : " " + frame;
     }
 
     static void WatchForUnexpectedClose()

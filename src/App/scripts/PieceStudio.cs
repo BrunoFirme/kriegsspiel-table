@@ -90,7 +90,10 @@ public partial class PieceStudio : CanvasLayer
     internal bool Gone => _gone;
     internal string FaceKey { get => _faceKey; set => _faceKey = value; }
 
-    internal async Task Frames(int n) { for (int i = 0; i < n; i++) await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame); }
+    internal async Task Frames(int n)
+    {
+        for (int i = 0; i < n; i++) await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+    }
 
     public void Superseded(string? old, string? now)
     {
@@ -170,7 +173,11 @@ public partial class PieceStudio : CanvasLayer
 
     public void Bind(Session s, Table t, PackageStore store, string packId, Settings cfg, Action done)
     {
-        S = s; T = t; _store = store; _cfg = cfg; _done = done;
+        S = s;
+        T = t;
+        _store = store;
+        _cfg = cfg;
+        _done = done;
         Layer = 2;
         _pack = store.Pack(packId) ?? throw new InvalidOperationException("pack not found: " + packId);
         _packSaver = new PackSaver(store, _pack, msg => { if (!_gone) { Flash("Could not save pack.json: " + msg); Top.Saved = "NOT SAVED"; } });
@@ -178,7 +185,12 @@ public partial class PieceStudio : CanvasLayer
         FileWatch = new ScriptFileWatch(s, ScriptFileWatch.PackFolder(_pack.Id), $"{_pack.Name} ({_pack.Id})");
         AddChild(FileWatch);
         FileWatch.LinksChanged += () => { if (!_gone) RebuildInspector(); };
-        FileWatch.Noted += (text, bad) => { if (_gone) return; Script.LogLine(text, bad ? "#ff8a70" : "#9aa0a6"); if (bad) Flash(text); };
+        FileWatch.Noted += (text, bad) =>
+        {
+            if (_gone) return;
+            Script.LogLine(text, bad ? "#ff8a70" : "#9aa0a6");
+            if (bad) Flash(text);
+        };
         Build();
         foreach (var p in Problems.Take()) Flash(p, 10);
         Action<string> told = p => Callable.From(() => { if (!_gone && IsInstanceValid(this)) Flash(p, 10); }).CallDeferred();
@@ -191,7 +203,9 @@ public partial class PieceStudio : CanvasLayer
         {
             _tip.Visible = text != null && _view == "table";
             if (text == null) return;
-            _tipText.Text = text; _tip.ResetSize(); _tip.Position = at + new Vector2(18, 18);
+            _tipText.Text = text;
+            _tip.ResetSize();
+            _tip.Position = at + new Vector2(18, 18);
         };
         T.ContextMenu += (at, hit) => { if (hit != null && _view == "table") Paper.ShowMenu(at); };
         S.Applied += OnApplied;
@@ -219,7 +233,12 @@ public partial class PieceStudio : CanvasLayer
 
     async Task SelectAsync(PieceDef d, bool frame)
     {
-        if (_sel == d) { ++_selGen; RebuildInspector(); return; }
+        if (_sel == d)
+        {
+            ++_selGen;
+            RebuildInspector();
+            return;
+        }
         int gen = ++_selGen;
         ++_faceGen;
         var problem = await SettleWork();
@@ -303,7 +322,10 @@ public partial class PieceStudio : CanvasLayer
         if (await SettleWork() is { } problem) { Flash("Not duplicated: " + problem.Replace("\n", "; ")); return; }
         if (_gone || !_pack.Pieces.Contains(src)) return;
         var copy = PackEdit.Duplicate(_store, _pack, src);
-        SavePack(); RebuildList(); Paper.LayOutAll(); Select(copy, frame: true);
+        SavePack();
+        RebuildList();
+        Paper.LayOutAll();
+        Select(copy, frame: true);
     }
 
     internal void DeleteSel(PieceDef? which = null)
@@ -322,9 +344,11 @@ public partial class PieceStudio : CanvasLayer
         PackEdit.Remove(_store, _pack, d);
         _model?.DiscardUnsaved(d);
         if (Faces.OpenDef == d) Faces.Closed();
-        SavePack(); RebuildList();
+        SavePack();
+        RebuildList();
         if (d != _sel) { PieceList.Show(_sel); return; }
-        ++_selGen; ++_faceGen;
+        ++_selGen;
+        ++_faceGen;
         _sel = null;
         var next = _pack.Pieces.OrderBy(x => x.Name, StringComparer.OrdinalIgnoreCase).FirstOrDefault();
         if (next != null) Select(next, frame: false); else { RebuildInspector(); SetView("table"); }
@@ -376,7 +400,9 @@ public partial class PieceStudio : CanvasLayer
             if (x.States.Count == 1)
             {
                 var only = x.States[0];
-                x.Image = only.Image ?? x.Image; x.Back = only.Back; x.Texture = only.Texture ?? x.Texture;
+                x.Image = only.Image ?? x.Image;
+                x.Back = only.Back;
+                x.Texture = only.Texture ?? x.Texture;
                 if (only.Shape != null) x.Shape = only.Shape;
                 if (only.Size is { } own) x.Size = own;
                 x.States.Clear();
@@ -390,7 +416,12 @@ public partial class PieceStudio : CanvasLayer
     internal void ShowSide(bool back)
     {
         if (_sel == null) return;
-        if (_view != "paint" || CurFace is not { } f || f.Back == back) { SyncCanvasPiece(); RebuildToolPanel(); return; }
+        if (_view != "paint" || CurFace is not { } f || f.Back == back)
+        {
+            SyncCanvasPiece();
+            RebuildToolPanel();
+            return;
+        }
         _ = SwitchFace(PieceFaces.Key(f.State > 0 ? f.State : 0, back));
     }
 
@@ -489,7 +520,12 @@ public partial class PieceStudio : CanvasLayer
         if (_sel == null || CurFace is null) return;
         if (!await Faces.Settle()) { Flash($"The face could not be saved ({Faces.Problem}): nothing copied."); return; }
         if (_gone || _sel == null || CurFace is not { } f || !Faces.CanvasOpen || Faces.OpenDef != _sel || Faces.OpenKey != f.Key) return;
-        if (f.Sha != null) { Flash("This side has paint on it now, so it was not replaced by the front."); RebuildFaceBar(); return; }
+        if (f.Sha != null)
+        {
+            Flash("This side has paint on it now, so it was not replaced by the front.");
+            RebuildFaceBar();
+            return;
+        }
         var front = PieceFaces.Of(_sel)[0];
         var doc = ArtStore.Load(_store, _pack.Id, front.Sha);
         if (doc == null)

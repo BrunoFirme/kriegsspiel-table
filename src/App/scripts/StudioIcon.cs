@@ -42,9 +42,12 @@ public partial class StudioIcon : ToolIcon
         switch (Kind)
         {
             case "move":
-                L(10, 2.5f, 10, 17.5f); L(2.5f, 10, 17.5f, 10);
-                Fill(10, 1.5f, 7.6f, 4.6f, 12.4f, 4.6f); Fill(10, 18.5f, 7.6f, 15.4f, 12.4f, 15.4f);
-                Fill(1.5f, 10, 4.6f, 7.6f, 4.6f, 12.4f); Fill(18.5f, 10, 15.4f, 7.6f, 15.4f, 12.4f);
+                L(10, 2.5f, 10, 17.5f);
+                L(2.5f, 10, 17.5f, 10);
+                Fill(10, 1.5f, 7.6f, 4.6f, 12.4f, 4.6f);
+                Fill(10, 18.5f, 7.6f, 15.4f, 12.4f, 15.4f);
+                Fill(1.5f, 10, 4.6f, 7.6f, 4.6f, 12.4f);
+                Fill(18.5f, 10, 15.4f, 7.6f, 15.4f, 12.4f);
                 break;
             case "brush":
                 L(17.5f, 2.5f, 10.5f, 9.5f, 2.2f);
@@ -53,8 +56,11 @@ public partial class StudioIcon : ToolIcon
                 DrawArc(P(8.5f, 19.5f), 5f * k, Mathf.DegToRad(200), Mathf.DegToRad(280), 10, c, 1.2f * k, true);
                 break;
             case "text-tool":
-                L(4, 4, 16, 4, 2); L(10, 4, 10, 17, 2); L(7.5f, 17, 12.5f, 17, 1.6f);
-                L(4, 4, 4, 6.5f, 1.6f); L(16, 4, 16, 6.5f, 1.6f);
+                L(4, 4, 16, 4, 2);
+                L(10, 4, 10, 17, 2);
+                L(7.5f, 17, 12.5f, 17, 1.6f);
+                L(4, 4, 4, 6.5f, 1.6f);
+                L(16, 4, 16, 6.5f, 1.6f);
                 break;
             case "fill":
                 Poly(true, 4.5f, 8.5f, 10.5f, 2.5f, 16, 8, 10, 14);
@@ -70,11 +76,17 @@ public partial class StudioIcon : ToolIcon
                 DrawCircle(P(3.4f, 16.6f), 1.2f * k, c, true, -1, true);
                 break;
             case "crop":
-                Poly(false, 6, 2.5f, 6, 14, 17.5f, 14); Poly(false, 2.5f, 6, 14, 6, 14, 17.5f);
+                Poly(false, 6, 2.5f, 6, 14, 17.5f, 14);
+                Poly(false, 2.5f, 6, 14, 6, 14, 17.5f);
                 break;
             case "outline":
                 var pts = new[] { (4f, 4f), (16f, 4f), (16f, 11f), (10f, 17f), (4f, 11f) };
-                for (int i = 0; i < pts.Length; i++) { var a = pts[i]; var b = pts[(i + 1) % pts.Length]; L(a.Item1, a.Item2, b.Item1, b.Item2, 1.3f); }
+                for (int i = 0; i < pts.Length; i++)
+                {
+                    var a = pts[i];
+                    var b = pts[(i + 1) % pts.Length];
+                    L(a.Item1, a.Item2, b.Item1, b.Item2, 1.3f);
+                }
                 foreach (var (x, y) in pts) DrawRect(new Rect2(P(x - 1.5f, y - 1.5f), new Vector2(3, 3) * k), c);
                 break;
             case "place":
@@ -82,7 +94,8 @@ public partial class StudioIcon : ToolIcon
                 DrawDashedLine(P(17.5f, 5), P(17.5f, 15), c, 1.2f * k, 2.2f * k, true, true);
                 DrawDashedLine(P(17.5f, 15), P(2.5f, 15), c, 1.2f * k, 2.2f * k, true, true);
                 DrawDashedLine(P(2.5f, 15), P(2.5f, 5), c, 1.2f * k, 2.2f * k, true, true);
-                L(5.5f, 8.6f, 14.5f, 8.6f, 1.8f); L(7, 11.6f, 13, 11.6f, 1.2f);
+                L(5.5f, 8.6f, 14.5f, 8.6f, 1.8f);
+                L(7, 11.6f, 13, 11.6f, 1.2f);
                 break;
             case "hand":
                 DrawRect(new Rect2(P(5.5f, 9.5f), new Vector2(9.5f, 7.5f) * k), c);
@@ -91,11 +104,15 @@ public partial class StudioIcon : ToolIcon
                 break;
             case "grid":
                 Poly(true, 3, 3, 17, 3, 17, 17, 3, 17);
-                L(7.7f, 3, 7.7f, 17, 1.1f); L(12.3f, 3, 12.3f, 17, 1.1f); L(3, 7.7f, 17, 7.7f, 1.1f); L(3, 12.3f, 17, 12.3f, 1.1f);
+                L(7.7f, 3, 7.7f, 17, 1.1f);
+                L(12.3f, 3, 12.3f, 17, 1.1f);
+                L(3, 7.7f, 17, 7.7f, 1.1f);
+                L(3, 12.3f, 17, 12.3f, 1.1f);
                 break;
             case "snap":
                 DrawArc(P(10, 9), 5.5f * k, 0, Mathf.Pi, 20, c, 3.2f * k, true);
-                L(4.5f, 9, 4.5f, 4, 3.2f); L(15.5f, 9, 15.5f, 4, 3.2f);
+                L(4.5f, 9, 4.5f, 4, 3.2f);
+                L(15.5f, 9, 15.5f, 4, 3.2f);
                 DrawRect(new Rect2(P(3, 2.3f), new Vector2(3, 1.8f) * k), new Color(0, 0, 0, 0.55f));
                 DrawRect(new Rect2(P(14, 2.3f), new Vector2(3, 1.8f) * k), new Color(0, 0, 0, 0.55f));
                 break;
@@ -131,11 +148,13 @@ public partial class StudioIcon : ToolIcon
                 L(15, 12, 17, 5, 1.8f);
                 break;
             case "text-layer":
-                L(5, 5, 15, 5, 1.8f); L(10, 5, 10, 16, 1.8f);
+                L(5, 5, 15, 5, 1.8f);
+                L(10, 5, 10, 16, 1.8f);
                 break;
             case "block-layer":
                 Poly(true, 2.5f, 6, 17.5f, 6, 17.5f, 14, 2.5f, 14);
-                L(2.5f, 6, 17.5f, 14, 1.2f); L(17.5f, 6, 2.5f, 14, 1.2f);
+                L(2.5f, 6, 17.5f, 14, 1.2f);
+                L(17.5f, 6, 2.5f, 14, 1.2f);
                 break;
             case "lock":
             case "unlock":
@@ -150,7 +169,8 @@ public partial class StudioIcon : ToolIcon
                 break;
             case "part":
                 DrawEllipseArc(P(10, 5), 6 * k, 2.2f * k, 0, Mathf.Tau, 24, c, 1.4f * k, true);
-                L(4, 5, 4, 15, 1.4f); L(16, 5, 16, 15, 1.4f);
+                L(4, 5, 4, 15, 1.4f);
+                L(16, 5, 16, 15, 1.4f);
                 DrawEllipseArc(P(10, 15), 6 * k, 2.2f * k, 0, Mathf.Pi, 14, c, 1.4f * k, true);
                 break;
             case "flip-h":
@@ -163,13 +183,26 @@ public partial class StudioIcon : ToolIcon
                 Fill(5, 8.5f, 15, 8.5f, 10, 2.5f);
                 Poly(true, 5, 11.5f, 15, 11.5f, 10, 17.5f);
                 break;
-            case "up": Fill(10, 4, 16, 12, 4, 12); L(10, 11, 10, 17, 2); break;
-            case "down": Fill(10, 16, 16, 8, 4, 8); L(10, 9, 10, 3, 2); break;
-            case "plus": L(10, 3.5f, 10, 16.5f, 2); L(3.5f, 10, 16.5f, 10, 2); break;
+            case "up":
+                Fill(10, 4, 16, 12, 4, 12);
+                L(10, 11, 10, 17, 2);
+                break;
+            case "down":
+                Fill(10, 16, 16, 8, 4, 8);
+                L(10, 9, 10, 3, 2);
+                break;
+            case "plus":
+                L(10, 3.5f, 10, 16.5f, 2);
+                L(3.5f, 10, 16.5f, 10, 2);
+                break;
             case "trash":
-                L(4, 5.5f, 16, 5.5f, 1.6f); L(8, 5.5f, 8.5f, 3.2f, 1.4f); L(12, 5.5f, 11.5f, 3.2f, 1.4f); L(8.5f, 3.2f, 11.5f, 3.2f, 1.4f);
+                L(4, 5.5f, 16, 5.5f, 1.6f);
+                L(8, 5.5f, 8.5f, 3.2f, 1.4f);
+                L(12, 5.5f, 11.5f, 3.2f, 1.4f);
+                L(8.5f, 3.2f, 11.5f, 3.2f, 1.4f);
                 Poly(false, 5.5f, 5.5f, 6.6f, 17, 13.4f, 17, 14.5f, 5.5f);
-                L(8.6f, 8.5f, 8.8f, 14.5f, 1.1f); L(11.4f, 8.5f, 11.2f, 14.5f, 1.1f);
+                L(8.6f, 8.5f, 8.8f, 14.5f, 1.1f);
+                L(11.4f, 8.5f, 11.2f, 14.5f, 1.1f);
                 break;
             case "dup":
                 Poly(true, 3, 7, 13, 7, 13, 17, 3, 17);
@@ -177,7 +210,9 @@ public partial class StudioIcon : ToolIcon
                 break;
             case "merge":
                 Fill(10, 17, 15, 11, 5, 11);
-                L(5, 4, 10, 9, 1.6f); L(15, 4, 10, 9, 1.6f); L(10, 9, 10, 12, 1.6f);
+                L(5, 4, 10, 9, 1.6f);
+                L(15, 4, 10, 9, 1.6f);
+                L(10, 9, 10, 12, 1.6f);
                 break;
             case "wand":
                 L(3, 17, 13, 7, 2.2f);

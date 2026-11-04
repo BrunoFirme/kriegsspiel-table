@@ -95,7 +95,11 @@ public partial class FindBar : HBoxContainer
         _field.GuiInput += e =>
         {
             if (e is not InputEventKey { Pressed: true } k) return;
-            if (k.Keycode is Key.Enter or Key.KpEnter) { if (_debounce.TimeLeft > 0) { _debounce.Stop(); Apply(); } Step(k.ShiftPressed ? -1 : 1); _field.AcceptEvent(); }
+            if (k.Keycode is Key.Enter or Key.KpEnter)
+            {
+                if (_debounce.TimeLeft > 0) { _debounce.Stop(); Apply(); } Step(k.ShiftPressed ? -1 : 1);
+                _field.AcceptEvent();
+            }
             else if (k.Keycode == Key.Escape) { Close(); _field.AcceptEvent(); }
         };
     }
@@ -147,7 +151,12 @@ public partial class FindBar : HBoxContainer
     {
         if (e is not InputEventKey { Pressed: true, Echo: false } k) return false;
         if (k.Keycode == Key.F && k.CtrlPressed) { Open(); return true; }
-        if (k.Keycode == Key.F3) { if (Terms.Count == 0) Open(); else Step(k.ShiftPressed ? -1 : 1); return true; }
+        if (k.Keycode == Key.F3)
+        {
+            if (Terms.Count == 0) Open();
+            else Step(k.ShiftPressed ? -1 : 1);
+            return true;
+        }
         return false;
     }
 

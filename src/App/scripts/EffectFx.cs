@@ -98,7 +98,8 @@ public static class EffectFx
             foreach (var b in s.Burst)
             {
                 var m = Emit(node, b, null, span, rise, 0);
-                m.Node.OneShot = true; m.Node.Emitting = false;
+                m.Node.OneShot = true;
+                m.Node.Emitting = false;
                 shot.Burst.Add(m.Node);
                 made.Add(m);
             }
@@ -124,8 +125,10 @@ public static class EffectFx
         float hw = size.X / 2, hl = size.Y / 2;
         foreach (var side in new[] { Vector3.Right, Vector3.Back })
         {
-            var a = -side * hw; var b = side * hw;
-            var q = new[] { (a + Vector3.Down * hl, new Vector2(0, 1)), (b + Vector3.Down * hl, new Vector2(1, 1)), (b + Vector3.Up * hl, new Vector2(1, 0)), (a + Vector3.Up * hl, new Vector2(0, 0)) };
+            var a = -side * hw;
+            var b = side * hw;
+            var q =
+                new[] { (a + Vector3.Down * hl, new Vector2(0, 1)), (b + Vector3.Down * hl, new Vector2(1, 1)), (b + Vector3.Up * hl, new Vector2(1, 0)), (a + Vector3.Up * hl, new Vector2(0, 0)) };
             foreach (var k in new[] { 0, 1, 2, 0, 2, 3 }) { st.SetUV(q[k].Item2); st.AddVertex(q[k].Item1); }
         }
         return CrossMeshes[size] = st.Commit();
@@ -190,7 +193,8 @@ public static class EffectFx
         var em = new GpuParticles3D
         {
             ProcessMaterial = pm, MaterialOverride = mat,
-            DrawPass1 = l.Cross != System.Numerics.Vector2.Zero ? CrossMesh(new Vector2(l.Cross.X, l.Cross.Y)) : new QuadMesh { Size = Vector2.One, Orientation = l.Lying ? PlaneMesh.OrientationEnum.Y : PlaneMesh.OrientationEnum.Z },
+            DrawPass1 = l.Cross != System.Numerics.Vector2.Zero ? CrossMesh(new Vector2(l.Cross.X, l.Cross.Y))
+                : new QuadMesh { Size = Vector2.One, Orientation = l.Lying ? PlaneMesh.OrientationEnum.Y : PlaneMesh.OrientationEnum.Z },
             Amount = l.Amount, Lifetime = l.Life, Explosiveness = l.Explosive, Randomness = l.Explosive > 0 ? 0 : 0.4f,
             Preprocess = preprocess >= 0 ? preprocess : l.Life, Position = G(l.At), LocalCoords = false, FixedFps = 30, Interpolate = true,
             VisibilityAabb = new Aabb(new Vector3(-reachX, -1, -reachX), new Vector3(reachX * 2, reachY + 1, reachX * 2)),
@@ -300,7 +304,8 @@ public static class EffectFx
         var heading = Heading(w);
         _wind = w.Clone();
         bool changed = SteerAir() | !v.IsEqualApprox(WindNow) | !heading.IsEqualApprox(WindHeading);
-        WindNow = v; WindHeading = heading;
+        WindNow = v;
+        WindHeading = heading;
         return changed;
     }
 
@@ -411,7 +416,10 @@ public static class EffectFx
                 }
                 int i = (y * S + x) * 4;
                 byte l8 = (byte)Mathf.Clamp(lum * 255, 0, 255);
-                px[i] = l8; px[i + 1] = l8; px[i + 2] = l8; px[i + 3] = (byte)Mathf.Clamp(a * 255, 0, 255);
+                px[i] = l8;
+                px[i + 1] = l8;
+                px[i + 2] = l8;
+                px[i + 3] = (byte)Mathf.Clamp(a * 255, 0, 255);
             }
         var img = Image.CreateFromData(S, S, false, Image.Format.Rgba8, px);
         return SpriteImages[name] = img;
@@ -471,7 +479,9 @@ public static class EffectFx
                 for (int i = 0; i < 5; i++) Stamp(acc, "dust", c, 0.15f + i * 0.17f, 0.64f - (i % 2) * 0.1f, 0.5f, false);
                 break;
             case "fog":
-                Stamp(acc, "mist", c, 0.3f, 0.6f, 0.8f, false); Stamp(acc, "mist", c, 0.7f, 0.56f, 0.8f, false); Stamp(acc, "mist", c, 0.5f, 0.66f, 0.7f, false);
+                Stamp(acc, "mist", c, 0.3f, 0.6f, 0.8f, false);
+                Stamp(acc, "mist", c, 0.7f, 0.56f, 0.8f, false);
+                Stamp(acc, "mist", c, 0.5f, 0.66f, 0.7f, false);
                 break;
             case "spray":
                 for (int i = 0; i < 14; i++) Stamp(acc, "drop", c, 0.5f + Mathf.Sin(i * 2.3f) * 0.12f * (i / 14f + 0.3f), 0.85f - i * 0.05f, 0.14f, false);
@@ -499,7 +509,8 @@ public static class EffectFx
                 }
                 break;
             case "rocket":
-                for (int i = 0; i < 12; i++) { float u = i / 11f; Stamp(acc, i % 2 == 0 ? "spark" : "puff", i % 2 == 0 ? new Color(1, 0.75f, 0.35f) : c with { A = 0.5f }, 0.1f + u * 0.72f, 0.8f - 2.2f * u * (1 - u) * 0.6f - u * 0.15f, i % 2 == 0 ? 0.1f : 0.16f, i % 2 == 0); }
+                for (int i = 0; i < 12; i++) { float u = i / 11f; Stamp(acc, i % 2 == 0 ? "spark" : "puff", i % 2 == 0 ? new Color(1, 0.75f, 0.35f) : c with { A = 0.5f }, 0.1f + u * 0.72f,
+                    0.8f - 2.2f * u * (1 - u) * 0.6f - u * 0.15f, i % 2 == 0 ? 0.1f : 0.16f, i % 2 == 0); }
                 Stamp(acc, "flash", flashC, 0.86f, 0.62f, 0.3f, true);
                 break;
             case "flare":
@@ -605,12 +616,21 @@ public static class EffectFx
                 if (a <= 0.002f) continue;
                 int i = (Y * IconPx + X) * 4;
                 float r = p.R * tint.R, g = p.G * tint.G, b = p.B * tint.B;
-                if (add) { acc[i] = Mathf.Min(1, acc[i] + r * a); acc[i + 1] = Mathf.Min(1, acc[i + 1] + g * a); acc[i + 2] = Mathf.Min(1, acc[i + 2] + b * a); acc[i + 3] = Mathf.Min(1, acc[i + 3] + a); }
+                if (add)
+                {
+                    acc[i] = Mathf.Min(1, acc[i] + r * a);
+                    acc[i + 1] = Mathf.Min(1, acc[i + 1] + g * a);
+                    acc[i + 2] = Mathf.Min(1, acc[i + 2] + b * a);
+                    acc[i + 3] = Mathf.Min(1, acc[i + 3] + a);
+                }
                 else
                 {
                     float da = acc[i + 3], oa = a + da * (1 - a);
                     if (oa <= 0) continue;
-                    acc[i] = (r * a + acc[i] * da * (1 - a)) / oa; acc[i + 1] = (g * a + acc[i + 1] * da * (1 - a)) / oa; acc[i + 2] = (b * a + acc[i + 2] * da * (1 - a)) / oa; acc[i + 3] = oa;
+                    acc[i] = (r * a + acc[i] * da * (1 - a)) / oa;
+                    acc[i + 1] = (g * a + acc[i + 1] * da * (1 - a)) / oa;
+                    acc[i + 2] = (b * a + acc[i + 2] * da * (1 - a)) / oa;
+                    acc[i + 3] = oa;
                 }
             }
     }

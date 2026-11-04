@@ -15,7 +15,12 @@ static class CanvasTests
         c._GuiInput(new InputEventMouseButton { ButtonIndex = MouseButton.Left, Pressed = false, Position = b });
     }
 
-    static Image Picture() { var img = Image.CreateEmpty(40, 20, false, Image.Format.Rgba8); img.Fill(Colors.Red); return img; }
+    static Image Picture()
+    {
+        var img = Image.CreateEmpty(40, 20, false, Image.Format.Rgba8);
+        img.Fill(Colors.Red);
+        return img;
+    }
 
     [NodeTest]
     static async Task A_picture_s_handles_crop_it_and_scale_it_as_dragged(TestRunner r)

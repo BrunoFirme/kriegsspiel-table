@@ -13,7 +13,9 @@ sealed class ScriptSaves
 
     public ScriptSaves(Func<GameServer?> server, Func<Action<List<Outgoing>>> dispatch, Func<ClientLog> log)
     {
-        _server = server; _dispatch = dispatch; _log = log;
+        _server = server;
+        _dispatch = dispatch;
+        _log = log;
     }
 
     public void Round()

@@ -13,8 +13,15 @@ public partial class PieceNode
     bool _meshReady;
     public bool Rolling { get; private set; }
     public int? PendingState { get; private set; }
-    Vec2 _lastPos; double _lastRot, _lastY;
-    bool _spinning, _landing; double _spinT; int _spinTouches; Vector3 _spinAxis; float _spinSpeed; Basis _spinFrom; Vector3 _spinCenter;
+    Vec2 _lastPos;
+    double _lastRot, _lastY;
+    bool _spinning, _landing;
+    double _spinT;
+    int _spinTouches;
+    Vector3 _spinAxis;
+    float _spinSpeed;
+    Basis _spinFrom;
+    Vector3 _spinCenter;
     int _animGen;
     static readonly Random Rng = new();
     public static bool DebugDice;
@@ -47,7 +54,12 @@ public partial class PieceNode
     (float lo, float hi) ExtentY(Basis b)
     {
         float lo = float.MaxValue, hi = float.MinValue;
-        foreach (var p in _hull!) { var y = (b * p).Y; lo = Mathf.Min(lo, y); hi = Mathf.Max(hi, y); }
+        foreach (var p in _hull!)
+        {
+            var y = (b * p).Y;
+            lo = Mathf.Min(lo, y);
+            hi = Mathf.Max(hi, y);
+        }
         return (lo, hi);
     }
 
@@ -59,7 +71,9 @@ public partial class PieceNode
         Dbg($"face {state + 1} applied");
         _model.Quaternion = q;
         _model.Position = new Vector3(0, -lo, 0);
-        _modelRest = q; _modelRestPos = _model.Position; _thickness = hi - lo;
+        _modelRest = q;
+        _modelRestPos = _model.Position;
+        _thickness = hi - lo;
         _shownState = state;
     }
 
@@ -71,10 +85,17 @@ public partial class PieceNode
             _shownTint = p.TintOverride;
             if (_modelMat != null) _modelMat.AlbedoColor = Tint();
         }
-        if (Rolling) { PendingState = p.State; Dbg($"rolling: pending face {p.State + 1}"); return; }
+        if (Rolling)
+        {
+            PendingState = p.State;
+            Dbg($"rolling: pending face {p.State + 1}");
+            return;
+        }
         if (Placed)
         {
-            _lastPos = p.Pos; _lastRot = p.RotDeg; _lastY = p.Y;
+            _lastPos = p.Pos;
+            _lastRot = p.RotDeg;
+            _lastY = p.Y;
             if (_meshReady && p.State != _shownState) ApplyFace(p.State);
             return;
         }
@@ -83,7 +104,9 @@ public partial class PieceNode
         Dbg($"refresh: state {p.State + 1} shown {_shownState + 1} meshReady {_meshReady} moved {moved} spinning {_spinning} landing {_landing}");
         if (_spinning || _landing) { if (moved) LandSpin(); return; }
         if (faceChanged) { BeginSpin(); return; }
-        _lastPos = p.Pos; _lastRot = p.RotDeg; _lastY = p.Y;
+        _lastPos = p.Pos;
+        _lastRot = p.RotDeg;
+        _lastY = p.Y;
         Scale = Vector3.One;
         Position = Coords.ToWorld(p.Pos, BaseY(p));
         Rotation = new Vector3(0, Coords.Yaw(p.RotDeg), 0);
@@ -94,8 +117,13 @@ public partial class PieceNode
 
     public void BeginRoll()
     {
-        _animGen++; _spinning = false; _landing = false; SetProcess(false);
-        Rolling = true; PendingState = null; RollGen++;
+        _animGen++;
+        _spinning = false;
+        _landing = false;
+        SetProcess(false);
+        Rolling = true;
+        PendingState = null;
+        RollGen++;
     }
 
     public bool InRoll(int gen) => Rolling && RollGen == gen;
@@ -112,14 +140,22 @@ public partial class PieceNode
             return;
         }
         if (!_spinning && !_landing) return;
-        _animGen++; _spinning = false; _landing = false; SetProcess(false);
+        _animGen++;
+        _spinning = false;
+        _landing = false;
+        SetProcess(false);
         TakeFace(Piece.State);
     }
 
     public void TakeFace(int state)
     {
-        _animGen++; _spinning = false; _landing = false; SetProcess(false);
-        _lastPos = Piece.Pos; _lastRot = Piece.RotDeg; _lastY = Piece.Y;
+        _animGen++;
+        _spinning = false;
+        _landing = false;
+        SetProcess(false);
+        _lastPos = Piece.Pos;
+        _lastRot = Piece.RotDeg;
+        _lastY = Piece.Y;
         if (_meshReady) ApplyFace(state);
     }
 
@@ -167,9 +203,12 @@ public partial class PieceNode
     {
         if (_model == null || !_meshReady) return;
         _animGen++;
-        _spinning = true; _spinT = 0; _spinTouches = 0;
+        _spinning = true;
+        _spinT = 0;
+        _spinTouches = 0;
         Sounds?.Tumble(this, 0.8f);
-        _spinFrom = ModelWorldBasis; _spinCenter = ModelWorldCenter;
+        _spinFrom = ModelWorldBasis;
+        _spinCenter = ModelWorldCenter;
         Dbg("spin begins");
         var a = Mathf.Tau * (float)Rng.NextDouble();
         _spinAxis = new Vector3(Mathf.Cos(a), 0.2f, Mathf.Sin(a)).Normalized();
@@ -190,9 +229,13 @@ public partial class PieceNode
 
     void LandSpin()
     {
-        _spinning = false; _landing = true; SetProcess(false);
+        _spinning = false;
+        _landing = true;
+        SetProcess(false);
         var p = Piece;
-        _lastPos = p.Pos; _lastRot = p.RotDeg; _lastY = p.Y;
+        _lastPos = p.Pos;
+        _lastRot = p.RotDeg;
+        _lastY = p.Y;
         Dbg($"landing at {p.Pos.X:0.0},{p.Pos.Z:0.0} face {p.State + 1}");
         _ = GlideTo(p.State, p.Pos, p.RotDeg, p.Y, ModelWorldBasis, ModelWorldCenter);
     }
@@ -211,7 +254,8 @@ public partial class PieceNode
 
     async Task Animate(Basis fromB, Vector3 fromC, Basis toB, Vector3 toC, double seconds, float hop, int gen)
     {
-        var qf = fromB.GetRotationQuaternion(); var qt = toB.GetRotationQuaternion();
+        var qf = fromB.GetRotationQuaternion();
+        var qt = toB.GetRotationQuaternion();
         double t = 0;
         while (t < seconds)
         {
@@ -227,7 +271,9 @@ public partial class PieceNode
     void FinishAt(int state, Vec2 pos, double rotDeg, double y)
     {
         _landing = false;
-        _lastPos = pos; _lastRot = rotDeg; _lastY = y;
+        _lastPos = pos;
+        _lastRot = rotDeg;
+        _lastY = y;
         Scale = Vector3.One;
         Position = Coords.ToWorld(pos, 0.03f + (float)y);
         Rotation = new Vector3(0, Coords.Yaw(rotDeg), 0);

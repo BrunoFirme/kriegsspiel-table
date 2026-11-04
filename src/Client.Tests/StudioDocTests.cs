@@ -118,7 +118,10 @@ public class StudioDocTests
         var d = new byte[w * h * 4];
         for (int k = 0; k < w * h; k++) { d[k * 4] = d[k * 4 + 1] = d[k * 4 + 2] = 240; d[k * 4 + 3] = 255; }
         void Set(int x, int y, byte v) { int k = (y * w + x) * 4; d[k] = d[k + 1] = d[k + 2] = v; }
-        Set(1, 1, 20); Set(2, 1, 20); Set(1, 2, 20); Set(2, 2, 20);
+        Set(1, 1, 20);
+        Set(2, 1, 20);
+        Set(1, 2, 20);
+        Set(2, 2, 20);
         Set(3, 1, 225);
         Set(0, 2, 30);
         int n = LayerPixels.KeyOut(d, w, h, 0.01f);
@@ -146,7 +149,12 @@ public class StudioDocTests
         s.Arm(0.5, 3);
         double t = 0;
         bool due = false;
-        while (!due) { s.Arm(0.5, 3); due = s.Tick(0.25); t += 0.25; }
+        while (!due)
+        {
+            s.Arm(0.5, 3);
+            due = s.Tick(0.25);
+            t += 0.25;
+        }
         Assert.Equal(3, t);
         s.Clear();
         s.In = 3;

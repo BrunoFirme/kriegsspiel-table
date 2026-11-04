@@ -25,12 +25,16 @@ public sealed class UiBuilder
 
     public static void Place(Control c, UiNode n, Vector2 parentSize, Control? parent)
     {
-        var w = Num(n, "width", 0); var h = Num(n, "height", 0);
+        var w = Num(n, "width", 0);
+        var h = Num(n, "height", 0);
         if (w <= 0 && h <= 0 && parent != null && n.Tag is "VerticalLayout" or "HorizontalLayout" or "TableLayout" or "GridLayout")
         {
             c.SetAnchorsPreset(Control.LayoutPreset.FullRect);
             var pad = Pad(n);
-            c.OffsetLeft = pad.X; c.OffsetTop = pad.Y; c.OffsetRight = -pad.Z; c.OffsetBottom = -pad.W;
+            c.OffsetLeft = pad.X;
+            c.OffsetTop = pad.Y;
+            c.OffsetRight = -pad.Z;
+            c.OffsetBottom = -pad.W;
             return;
         }
         if (w <= 0) w = n.Tag == "Panel" ? Mathf.Min(parentSize.X, 400) : Mathf.Max(c.GetCombinedMinimumSize().X, 40);
@@ -46,9 +50,14 @@ public sealed class UiBuilder
             c.Position = new Vector2(anchor.X + off.X - w * ax, anchor.Y - off.Y - h * ay);
             return;
         }
-        c.AnchorLeft = ax; c.AnchorRight = ax; c.AnchorTop = ay; c.AnchorBottom = ay;
-        c.OffsetLeft = off.X - w * ax; c.OffsetRight = c.OffsetLeft + w;
-        c.OffsetTop = -off.Y - h * ay; c.OffsetBottom = c.OffsetTop + h;
+        c.AnchorLeft = ax;
+        c.AnchorRight = ax;
+        c.AnchorTop = ay;
+        c.AnchorBottom = ay;
+        c.OffsetLeft = off.X - w * ax;
+        c.OffsetRight = c.OffsetLeft + w;
+        c.OffsetTop = -off.Y - h * ay;
+        c.OffsetBottom = c.OffsetTop + h;
     }
 
     const int MaxDepth = 48;
@@ -64,7 +73,12 @@ public sealed class UiBuilder
 
     Control BuildNode(UiNode n, Vector2 avail)
     {
-        if (Attr(n, "active", "true").Equals("false", StringComparison.OrdinalIgnoreCase)) { var hidden = new Control { Visible = false }; Register(n, hidden); return hidden; }
+        if (Attr(n, "active", "true").Equals("false", StringComparison.OrdinalIgnoreCase))
+        {
+            var hidden = new Control { Visible = false };
+            Register(n, hidden);
+            return hidden;
+        }
         Control c = n.Tag switch
         {
             "Panel" => BuildPanel(n, avail),
@@ -93,7 +107,8 @@ public sealed class UiBuilder
 
     static void SizeHints(Control c, UiNode n)
     {
-        var pw = Num(n, "preferredWidth", Num(n, "minWidth", 0)); var ph = Num(n, "preferredHeight", Num(n, "minHeight", 0));
+        var pw = Num(n, "preferredWidth", Num(n, "minWidth", 0));
+        var ph = Num(n, "preferredHeight", Num(n, "minHeight", 0));
         if (pw > 0 || ph > 0) c.CustomMinimumSize = new Vector2(Mathf.Max(c.CustomMinimumSize.X, pw), Mathf.Max(c.CustomMinimumSize.Y, ph));
         c.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
         if (Attr(n, "flexibleHeight", "") == "1" || n.Tag is "Panel" or "VerticalLayout" or "TableLayout") c.SizeFlagsVertical = Control.SizeFlags.ExpandFill;
@@ -120,28 +135,40 @@ public sealed class UiBuilder
         box.AddThemeConstantOverride("separation", (int)Num(n, "spacing", 0));
         Control host = box;
         var bg = Col(n, "color", new Color(0, 0, 0, 0));
-        if (bg.A > 0.001f) { var pc = new PanelContainer(); pc.AddThemeStyleboxOverride("panel", Ui.Box(bg, 0, 0, 0)); pc.AddChild(box); host = pc; }
+        if (bg.A > 0.001f)
+        {
+            var pc = new PanelContainer();
+            pc.AddThemeStyleboxOverride("panel", Ui.Box(bg, 0, 0, 0));
+            pc.AddChild(box);
+            host = pc;
+        }
         var pad = Pad(n);
         if (pad != Vector4.Zero)
         {
             var m = new MarginContainer();
-            m.AddThemeConstantOverride("margin_left", (int)pad.X); m.AddThemeConstantOverride("margin_top", (int)pad.Y);
-            m.AddThemeConstantOverride("margin_right", (int)pad.Z); m.AddThemeConstantOverride("margin_bottom", (int)pad.W);
-            m.AddChild(host); host = m;
+            m.AddThemeConstantOverride("margin_left", (int)pad.X);
+            m.AddThemeConstantOverride("margin_top", (int)pad.Y);
+            m.AddThemeConstantOverride("margin_right", (int)pad.Z);
+            m.AddThemeConstantOverride("margin_bottom", (int)pad.W);
+            m.AddChild(host);
+            host = m;
         }
         var align = Attr(n, "childAlignment", "UpperLeft");
-        box.Alignment = align.Contains("Center") && !align.Contains("Upper") && !align.Contains("Lower") ? BoxContainer.AlignmentMode.Center : align.StartsWith("Lower") ? BoxContainer.AlignmentMode.End : BoxContainer.AlignmentMode.Begin;
+        box.Alignment = align.Contains("Center") && !align.Contains("Upper")
+            && !align.Contains("Lower") ? BoxContainer.AlignmentMode.Center : align.StartsWith("Lower") ? BoxContainer.AlignmentMode.End : BoxContainer.AlignmentMode.Begin;
         foreach (var ch in n.Children) { var c = Build(ch, avail); if (c != null) box.AddChild(c); }
         return host;
     }
 
     Control FillGrid(UiNode n, Vector2 avail)
     {
-        var cell = Vec(n, "cellSize"); var spacing = Num(n, "spacing", 0);
+        var cell = Vec(n, "cellSize");
+        var spacing = Num(n, "spacing", 0);
         int cols = (int)Num(n, "constraintCount", 0);
         if (cols <= 0) cols = cell.X > 0 && avail.X > 0 ? Math.Max(1, (int)Math.Floor((avail.X + spacing) / (cell.X + spacing))) : 2;
         var g = new GridContainer { Columns = cols };
-        g.AddThemeConstantOverride("h_separation", (int)spacing); g.AddThemeConstantOverride("v_separation", (int)spacing);
+        g.AddThemeConstantOverride("h_separation", (int)spacing);
+        g.AddThemeConstantOverride("v_separation", (int)spacing);
         foreach (var ch in n.Children)
         {
             var c = Build(ch, cell.X > 0 ? cell : avail);
@@ -150,7 +177,12 @@ public sealed class UiBuilder
             g.AddChild(c);
         }
         var align = Attr(n, "childAlignment", "UpperLeft");
-        if (align.Contains("Center") || align.Contains("Middle")) { var cc = new CenterContainer(); cc.AddChild(g); return cc; }
+        if (align.Contains("Center") || align.Contains("Middle"))
+        {
+            var cc = new CenterContainer();
+            cc.AddChild(g);
+            return cc;
+        }
         return g;
     }
 
@@ -181,7 +213,8 @@ public sealed class UiBuilder
 
     Control BuildImage(UiNode n, Vector2 avail)
     {
-        var w = Num(n, "width", 0); var h = Num(n, "height", 0);
+        var w = Num(n, "width", 0);
+        var h = Num(n, "height", 0);
         var id = Attr(n, "image", "");
         var tint = Col(n, "color", Colors.White);
         Control host;
@@ -290,31 +323,38 @@ public sealed class UiBuilder
 
     Control BuildSlider(UiNode n)
     {
-        var s = new HSlider { MinValue = Num(n, "minValue", 0), MaxValue = Num(n, "maxValue", 1), Value = Num(n, "value", 0), Step = Attr(n, "wholeNumbers", "false").Equals("true", StringComparison.OrdinalIgnoreCase) ? 1 : 0.01, CustomMinimumSize = new Vector2(100, 16) };
+        var s =
+            new HSlider { MinValue = Num(n, "minValue", 0), MaxValue = Num(n, "maxValue", 1), Value = Num(n, "value", 0), Step = Attr(n, "wholeNumbers", "false").Equals("true", StringComparison.OrdinalIgnoreCase) ? 1 : 0.01,
+                CustomMinimumSize = new Vector2(100, 16) };
         if (n.Id is { } id) s.DragEnded += changed => { if (changed) _send(id, "change", s.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)); };
         return s;
     }
 
     public static string Attr(UiNode n, string key, string fallback) => n.Attributes.TryGetValue(key, out var v) ? v : fallback;
-    public static float Num(UiNode n, string key, float fallback) => n.Attributes.TryGetValue(key, out var v) && float.TryParse(v, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var f) && float.IsFinite(f) ? f : fallback;
-    public static Color Col(UiNode n, string key, Color fallback) => n.Attributes.TryGetValue(key, out var v) && v.Length > 0 ? Coords.ParseColor(v.StartsWith('#') ? v : NamedColor(v), fallback) : fallback;
+    public static float Num(UiNode n, string key, float fallback) => n.Attributes.TryGetValue(key, out var v)
+        && float.TryParse(v, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var f) && float.IsFinite(f) ? f : fallback;
+    public static Color Col(UiNode n, string key, Color fallback) => n.Attributes.TryGetValue(key, out var v)
+        && v.Length > 0 ? Coords.ParseColor(v.StartsWith('#') ? v : NamedColor(v), fallback) : fallback;
     static string NamedColor(string name) => name.ToLowerInvariant() switch { "white" => "#FFFFFF", "black" => "#000000", "red" => "#DA1917", "green" => "#30B32B", "blue" => "#1F87FF", "yellow" => "#E7E52C", "orange" => "#F3701F", "grey" or "gray" => "#7F7F7F", "clear" => "#00000000", _ => name };
     public static Vector2 Vec(UiNode n, string key)
     {
         var parts = Attr(n, key, "").Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        float P(int i) => i < parts.Length && float.TryParse(parts[i], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var f) && float.IsFinite(f) ? f : 0;
+        float P(int i) => i < parts.Length && float.TryParse(parts[i], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var f)
+            && float.IsFinite(f) ? f : 0;
         return new Vector2(P(0), P(1));
     }
     public static Vector3 Vec3(UiNode n, string key, float fallback)
     {
         var parts = Attr(n, key, "").Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        float P(int i) => i < parts.Length && float.TryParse(parts[i], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var f) && float.IsFinite(f) ? f : fallback;
+        float P(int i) => i < parts.Length && float.TryParse(parts[i], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var f)
+            && float.IsFinite(f) ? f : fallback;
         return new Vector3(P(0), P(1), P(2));
     }
     public static Vector4 Pad(UiNode n)
     {
         var parts = Attr(n, "padding", "").Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        float P(int i) => i < parts.Length && float.TryParse(parts[i], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var f) && float.IsFinite(f) ? f : 0;
+        float P(int i) => i < parts.Length && float.TryParse(parts[i], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var f)
+            && float.IsFinite(f) ? f : 0;
         if (parts.Length == 0) return Vector4.Zero;
         if (parts.Length == 1) return new Vector4(P(0), P(0), P(0), P(0));
         return new Vector4(P(0), P(2), P(1), P(3));
