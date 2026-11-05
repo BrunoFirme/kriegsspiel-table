@@ -301,6 +301,22 @@ public sealed partial class ConverterTests : IDisposable
     }
 
     [Fact]
+    public void TTSs_own_props_are_left_out_with_the_reason_rather_than_counted_as_unmapped()
+    {
+        static TtsObj Prop(string type) => new(Obj(type, "", 1, new JsonObject()));
+
+        var why = DefFactory.NotTranslated(Prop("Tileset_Tree"));
+        Assert.NotNull(why);
+        Assert.StartsWith("Tileset_Tree (one of TTS's own props", why);
+        Assert.NotNull(DefFactory.NotTranslated(Prop("Tileset_Wall")));
+        Assert.Null(DefFactory.NotTranslated(Prop("Custom_Model")));
+
+        var report = new Report();
+        report.Skipped(why!, "somewhere");
+        Assert.Equal(0, report.UnknownTypes);
+    }
+
+    [Fact]
     public void Modules_kept_in_the_game_folder_of_another_steam_library_are_found()
     {
         var steam = Path.Combine(_root, "Steam");

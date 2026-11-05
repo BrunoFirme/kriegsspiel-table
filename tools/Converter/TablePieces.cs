@@ -21,9 +21,13 @@ public sealed partial class DefFactory
 
     public static bool IsTablePiece(TtsObj o) => (o.IsCard && o.Sheet != null) || o.IsChecker || o.IsPictureDie;
 
+    public const string TtsOwnProps = "Tileset_";
+
     public static string? NotTranslated(TtsObj o) =>
         o.IsCard && o.Sheet == null ? o.Name + " (TTS's own playing cards, which have no picture in the module)"
         : o.Name == "Custom_Dice" && !o.IsPictureDie ? o.Name + " (a picture die with other than six sides)"
+        : o.Name.StartsWith(TtsOwnProps, StringComparison.Ordinal)
+            ? o.Name + " (one of TTS's own props: its model ships with the game and is not ours to copy, so paint the ground there or put a piece of your own on it)"
         : null;
 
     static string? TableVisualKey(TtsObj b) =>
