@@ -3,10 +3,10 @@ float road_width(int style, float class) {
 	return class < 0.33 ? W2 * 3.0 : metres(class < 0.66 ? ROAD_W_M : CHAUSSEE_W_M) * 0.5;
 }
 
-float road_mid(vec2 uv, mat2 to_uv) {
-	vec2 du = to_uv * vec2(cell_world * 0.5, 0.0);
-	vec2 dv = to_uv * vec2(0.0, cell_world * 0.5);
-	return 0.25 * (mid_at(uv + du + dv) + mid_at(uv + du - dv) + mid_at(uv - du + dv) + mid_at(uv - du - dv));
+float road_mid(vec2 uv) {
+	vec2 n = street_normal(1, uv);
+	vec2 t = vec2(-n.y, n.x) * 0.5 / cells;
+	return 0.2 * (mid_at(uv - t * 2.0) + mid_at(uv - t) + mid_at(uv) + mid_at(uv + t) + mid_at(uv + t * 2.0));
 }
 
 vec3 road_over(int style, vec3 c, vec3 sheet, vec2 p, vec2 uv, mat2 to_uv, float class, float mid, float fw, bool over_water) {

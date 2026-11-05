@@ -68,7 +68,6 @@ const vec2 PLATE_GREEN = vec2(1.5, -1.0);
 const vec2 PLATE_BLUE = vec2(-1.0, 1.5);
 const vec2 PLATE_RED = vec2(2.0, 1.0);
 const vec2 PLATE_BROWN = vec2(1.0, 1.0);
-const float PARAPET = 0.09;
 const float SEAMLESS = 1.0;
 const int SURVEY = 0;
 const int ANCIENT = 1;
@@ -296,7 +295,7 @@ void fragment() {
 	vec2 p = world.xz * detail;
 	float fw = max(max(fwidth(p.x), fwidth(p.y)), 1e-5);
 	float edge = margin / max(fwidth(margin), 1e-5) * fw;
-	if ((k == ROAD && beside == BRIDGE) || (k == BRIDGE && beside == ROAD)) edge = SEAMLESS;
+	if (beside == ROAD || beside == BRIDGE) edge = SEAMLESS;
 	float shore = min(edge, border + cell_world * 0.5);
 	mat2 dp = mat2(dFdx(p), dFdy(p));
 	mat2 du = mat2(dFdx(UV), dFdy(UV));
@@ -333,7 +332,7 @@ void fragment() {
 	float road_class = levels.x;
 	bool over_water = false;
 	if (k == ROAD || k == BRIDGE) {
-		mid = road_mid(UV, to_uv);
+		mid = road_mid(UV);
 		road_w = road_width(style, levels.x);
 		vec2 o = beyond_band(UV, p);
 		int beyond = kind_of(floor(clamp(UV + to_uv * (o - p), vec2(0.0), vec2(1.0)) * cells));
@@ -377,7 +376,6 @@ void fragment() {
 			if (halo > 0.001) c = mix(c, plain(style, tint, sheet, p, edge), halo * HALO);
 			c = mix(c, c * (1.0 - MARK_SHADE), dark * cover * smoothstep(0.04, 0.35, steep_n));
 			if (bare) c = slopes(c, n, p, world.y, fw, style, (1.0 - cover) * (1.0 - rockness));
-			if (k == WATER && beside == BRIDGE) c *= 1.0 - 0.45 * (1.0 - smoothstep(0.0, PARAPET * 1.5, edge));
 			float keep = k == WOOD ? cover : 0.0;
 			if (bare) c = mix(c, rock, rockness * (1.0 - keep));
 		}

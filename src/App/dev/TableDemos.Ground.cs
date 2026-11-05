@@ -62,6 +62,8 @@ sealed partial class TableDemos
         ("flow", 36, -4, 14, 90, 0),
         ("flow3d", 36, -4, 12, 40, 20),
         ("culvert", 37.8, -9.6, 6, 90, 0),
+        ("lanebridge", 37.8, -5.5, 5, 90, 0),
+        ("roadgrass", 37.8, -14, 5, 90, 0),
         ("names", 8, -22, 50, 90, 0),
         ("names3d", 8, -22, 40, 40, 10),
         ("hilltop", -32, -14, 9, 90, 0),
