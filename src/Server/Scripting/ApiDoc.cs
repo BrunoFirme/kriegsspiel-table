@@ -193,8 +193,8 @@ public static partial class ApiDoc
         See("ui.set");
         F("piece", "lines", "Line[]", "The lines set_lines drew round it.", "getVectorLines");
         See("self.set_lines");
-        F("piece", "decals", "Decal[]", "The pictures set_decals put on its faces.", "getDecals");
-        See("self.set_decals");
+        F("piece", "decals", "Decal[]", "The pictures on its faces: the ones its look carries, or those set_decals put there.", "getDecals");
+        See("self.set_decals", "self.state");
         F("piece", "exists", "boolean", "False once the piece is gone (its other fields are nil then).", "isDestroyed");
         Note("A handle kept in a variable outlives the piece. Check `exists` before using one kept across turns; a `set_` call on a piece that is gone is an error.");
     });
@@ -353,8 +353,8 @@ public static partial class ApiDoc
         local arms = self.decals[1]
         self.set_decals{ { picture = arms.picture, x = 0.35, z = -0.3, w = 0.2, h = 0.2, name = "Arms" } }
         """);
-    Note("At most 64 on a piece. A picture not in this game's packs is an error.");
-    See("self.decals");
+    Note("At most 64 on a piece. A picture not in this game's packs is an error. A kind whose looks carry decals of their own shows those, whatever set_decals puts on the piece.");
+    See("self.decals", "self.state");
 
     M("piece", "to_world(x, z)", "A point in piece units (centre 0, x right, z down the picture) as a map point { x =, z = }.", "positionToWorld", "Point");
     P("x", "number", "Piece units to the right of the centre.");

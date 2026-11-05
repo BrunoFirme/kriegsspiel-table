@@ -346,7 +346,8 @@ gives each direct match.
 - **Through `compat`:** TTS buttons, positions, player colours, `spawnObject`, `getData`/`spawnObjectData` and
   `Wait.time` work through a compatibility library over this API. Buttons are converted to piece units (one TTS
   unit is half the piece's height).
-- **Pictures:** decals on web links are downloaded by the host. An input dialog asking for an image or URL
+- **Pictures:** a TTS object's decals belong to the state they are on, so each look of an imported piece carries
+  its own and they change with it. Decals on web links are downloaded by the host. An input dialog asking for an image or URL
   offers a picture from this computer or a web link. A button or input turned face down above the piece shows
   but takes no clicks, as TTS's locked text does.
 - **Noted:** calls with no meaning here (`addForce`, decks, bags) become `compat.todo(...)`, which prints once.

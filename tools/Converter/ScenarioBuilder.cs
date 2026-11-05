@@ -384,19 +384,25 @@ public sealed class ScenarioBuilder
         return fx;
     }
 
-    public static (double X, double Z) LocalUnits(TtsObj o, PieceDef def, double tokenArea)
+    public static (double X, double Z) LocalUnits(TtsObj o, PieceDef def, double tokenArea) =>
+        LocalUnits(o, def.Size, def.Tags.Contains("token"), tokenArea);
+
+    public static (double X, double Z) LocalUnits(TtsObj o, Size2 size, bool token, double tokenArea)
     {
         const double TileLocalSpan = 2;
         double depth = o.ScaleX == 0 ? 1 : Math.Abs(o.ScaleZ / o.ScaleX);
         if (depth == 0) depth = 1;
-        double x = def.Tags.Contains("token") ? Math.Sqrt(def.Size.W * def.Size.H / (tokenArea * depth)) : def.Size.H / (TileLocalSpan * depth);
+        double x = token ? Math.Sqrt(size.W * size.H / (tokenArea * depth)) : size.H / (TileLocalSpan * depth);
         return (x, x * depth);
     }
 
-    public static List<DecalDef> DecalsOf(TtsObj o, PieceDef def, double tokenArea, Func<string, string?> picture)
+    public static List<DecalDef> DecalsOf(TtsObj o, PieceDef def, double tokenArea, Func<string, string?> picture) =>
+        DecalsOf(o, def.Size, def.Tags.Contains("token"), tokenArea, picture);
+
+    public static List<DecalDef> DecalsOf(TtsObj o, Size2 size, bool token, double tokenArea, Func<string, string?> picture)
     {
         const double TtsDecalTurn = 180, Digits = 4;
-        var (ux, uz) = LocalUnits(o, def, tokenArea);
+        var (ux, uz) = LocalUnits(o, size, token, tokenArea);
         var list = new List<DecalDef>();
         foreach (var d in o.Decals.Take(DecalDef.MostOnAPiece))
         {
@@ -485,7 +491,8 @@ public sealed class ScenarioBuilder
             }
         }
         if (o.Color is { } col && !string.Equals(col, def.Tint, StringComparison.OrdinalIgnoreCase)) inst.TintOverride = col;
-        inst.Decals = DecalsOf(o, def, _cfg.BaseSizes.CustomTokenArea, url => _defs.UiAsset(extras, url, $"{layer.Name} {o.Name} '{o.Nickname}' {o.Guid} decal"));
+        if (!def.States.Any(s => s.Decals is { Count: > 0 }))
+            inst.Decals = DecalsOf(o, def, _cfg.BaseSizes.CustomTokenArea, url => _defs.UiAsset(extras, url, $"{layer.Name} {o.Name} '{o.Nickname}' {o.Guid} decal"));
         layer.Pieces.Add(inst);
         layer.Y[inst] = o.PosY;
         layer.Bottom[inst] = _defs.Bottom(o);

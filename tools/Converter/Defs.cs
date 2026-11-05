@@ -259,6 +259,13 @@ public sealed partial class DefFactory
         }
 
         bool baked = BakesChildren(o) && BakeStates(def, states, bs, r, pack);
+        for (int i = 0; i < def.States.Count && i < states.Count; i++)
+        {
+            var sd = def.States[i];
+            var decals = ScenarioBuilder.DecalsOf(states[i], sd.Size ?? def.Size, def.Tags.Contains("token"),
+                _cfg.BaseSizes.CustomTokenArea, url => UiAsset(pack, url, $"{where} state \"{sd.Name}\" decal"));
+            if (decals.Count > 0) sd.Decals = decals;
+        }
         foreach (var c in baked ? Enumerable.Empty<TtsObj>() : o.Children)
         {
             if (!IsPiece(c)) { _rep.Skipped("child " + c.Name, where); continue; }
@@ -268,8 +275,11 @@ public sealed partial class DefFactory
         }
 
         var bakedKey = baked ? "|" + string.Join(",", def.States.Select(s => s.Image)) : "";
+        var decalKey = def.States.Any(s => s.Decals is { Count: > 0 })
+            ? "|d" + Hash8(string.Join(";", def.States.Select(s => string.Join(",", (s.Decals ?? new()).Select(d => d.Picture)))))
+            : "";
         var gluedKey = heightScale == 1 || b.Name == "Custom_Model" ? "" :string.Create(CultureInfo.InvariantCulture, $"|t{def.Thickness:0.###}");
-        var key = string.Create(CultureInfo.InvariantCulture, $"{VisualKey(o)}|{def.Size.W:0.###}x{def.Size.H:0.###}{scriptKey}{bakedKey}{gluedKey}");
+        var key = string.Create(CultureInfo.InvariantCulture, $"{VisualKey(o)}|{def.Size.W:0.###}x{def.Size.H:0.###}{scriptKey}{bakedKey}{decalKey}{gluedKey}");
         int rich = def.States.Count * 100 + def.Counters.Count * 10 + def.TextLines.Count + def.Attachments.Count * 1000 + (def.Script != null ? 5000 : 0);
         if (pack.ByKey.TryGetValue(key, out var existing))
         {

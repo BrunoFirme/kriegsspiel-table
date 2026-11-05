@@ -179,6 +179,50 @@ public sealed partial class ConverterTests : IDisposable
     }
 
     [Fact]
+    public void Every_look_of_a_piece_with_states_takes_the_decals_of_its_own_state_and_the_piece_itself_takes_none()
+    {
+        var cfg = TempConfig();
+        var images = Path.Combine(cfg.TtsModsPath, "Images");
+        Directory.CreateDirectory(images);
+        string Picture(string url, int w, int h)
+        {
+            using var bmp = new SkiaSharp.SKBitmap(w, h);
+            using var png = bmp.Encode(SkiaSharp.SKEncodedImageFormat.Png, 100);
+            File.WriteAllBytes(Path.Combine(images, AssetStore.Key(url) + ".png"), png.ToArray());
+            return url;
+        }
+        static JsonObject Decal(string url) => new()
+        {
+            ["Transform"] = new JsonObject { ["posX"] = 0, ["posY"] = 0.055, ["posZ"] = 0, ["rotX"] = 90, ["rotY"] = 180, ["rotZ"] = 0, ["scaleX"] = 2, ["scaleY"] = 1, ["scaleZ"] = 1 },
+            ["CustomDecal"] = new JsonObject { ["Name"] = "Formation", ["ImageURL"] = url, ["Size"] = 1 },
+        };
+        var column = Obj("Custom_Token", "Column", 0.5, new JsonObject
+        {
+            ["CustomImage"] = new JsonObject { ["ImageURL"] = Picture("http://a/column.png", 16, 64) },
+            ["AttachedDecals"] = new JsonArray(Decal(Picture("http://a/column-mark.png", 16, 64))),
+        });
+        var o = new TtsObj(Obj("Custom_Token", "Line", 1, new JsonObject
+        {
+            ["CustomImage"] = new JsonObject { ["ImageURL"] = Picture("http://a/line.png", 64, 16) },
+            ["AttachedDecals"] = new JsonArray(Decal(Picture("http://a/line-mark.png", 64, 16))),
+            ["States"] = new JsonObject { ["2"] = column },
+        }));
+        var rep = new Report();
+        var defs = new DefFactory(cfg, new AssetStore(cfg, rep), rep);
+        var pack = new PackOut(cfg.Output, "t", "T", "t", null);
+        var def = defs.DefFor(o, pack)!.Def;
+
+        Assert.Equal(2, def.States.Count);
+        var line = Assert.Single(def.States[0].Decals!);
+        var inColumn = Assert.Single(def.States[1].Decals!);
+        Assert.NotEqual(line.Picture, inColumn.Picture);
+        Assert.Equal(2 * inColumn.W, line.W, 3);
+        Assert.Equal(2 * inColumn.H, line.H, 3);
+        Assert.True(pack.M.Assets.ContainsKey(line.Picture) && pack.M.Assets.ContainsKey(inColumn.Picture));
+        Assert.Same(def.States[1].Decals, DecalDef.ShownOn(new PieceInstance { Def = def.Id, State = 1 }, def));
+    }
+
+    [Fact]
     public async Task A_piece_whose_picture_is_gone_for_good_is_left_out_and_reported_and_one_that_only_failed_to_answer_keeps_a_placeholder()
     {
         var cfg = TempConfig();

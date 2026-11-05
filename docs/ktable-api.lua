@@ -146,7 +146,7 @@
 ---@field script string|nil The script it runs (its own, or its kind's), or nil.
 ---@field ui table Its own panels, drawn on its face: the same calls as the global ui.
 ---@field lines Line[] The lines set_lines drew round it.
----@field decals Decal[] The pictures set_decals put on its faces.
+---@field decals Decal[] The pictures on its faces: the ones its look carries, or those set_decals put there.
 ---@field exists boolean False once the piece is gone (its other fields are nil then).
 local Piece = {}
 

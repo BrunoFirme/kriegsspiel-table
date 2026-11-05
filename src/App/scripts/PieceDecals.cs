@@ -23,17 +23,18 @@ sealed class PieceDecals
     public void Sync(bool force)
     {
         var piece = _piece.Piece;
-        if (!force && ReferenceEquals(_built, piece.Decals) && _builtFaceDown == piece.FaceDown) return;
-        _built = piece.Decals;
+        var shown = DecalDef.ShownOn(piece, _piece.Def);
+        if (!force && ReferenceEquals(_built, shown) && _builtFaceDown == piece.FaceDown) return;
+        _built = shown;
         _builtFaceDown = piece.FaceDown;
         foreach (var n in _nodes) if (GodotObject.IsInstanceValid(n)) n.QueueFree();
         _nodes.Clear();
-        if (piece.Decals.Count == 0 || _piece.Def?.Kind == "model" || _piece.IsDie || _piece.IsEffect) return;
+        if (shown.Count == 0 || _piece.Def?.Kind == "model" || _piece.IsDie || _piece.IsEffect) return;
         bool back = piece.FaceDown;
         var face = back ? "back" : "front";
         float k = (float)System.Math.Max(1e-6, piece.Scale);
         float faceY = _piece.Thickness + FaceGap;
-        foreach (var d in piece.Decals.Where(d => d.Face == face))
+        foreach (var d in shown.Where(d => d.Face == face))
         {
             if (FileOf(d.Picture) is not var (pack, file)) continue;
             var mat = new StandardMaterial3D

@@ -367,7 +367,7 @@ internal sealed class PieceHandles(ScriptHost host)
             case "script": return (p.Script ?? def?.Script) is { } sc ? S(sc) : DynValue.Nil;
             case "ui": return host.UiTableFor(id);
             case "lines": return ListTable(p.Lines.Select(ln => LineTable(ln)));
-            case "decals": return ListTable(p.Decals.Select(d => DecalTable(d)));
+            case "decals": return ListTable(DecalDef.ShownOn(p, def).Select(d => DecalTable(d)));
             case "to_world": return Fn(a => XzTable(ToWorld(p, Arg(a, 0).CastToNumber() ?? 0, Arg(a, 1).CastToNumber() ?? 0)));
             case "to_local": return Fn(a => XzTable(ToLocal(p, Arg(a, 0).CastToNumber() ?? 0, Arg(a, 1).CastToNumber() ?? 0)));
             default: return null;

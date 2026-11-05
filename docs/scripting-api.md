@@ -219,7 +219,7 @@ Read from `self` or from any piece `board.find` or `board.pieces` hands back. Fi
 | [`self.script`](#selfscript) | The script it runs (its own, or its kind's), or nil. |
 | [`self.ui`](#selfui) | Its own panels, drawn on its face: the same calls as the global ui. |
 | [`self.lines`](#selflines) | The lines set_lines drew round it. |
-| [`self.decals`](#selfdecals) | The pictures set_decals put on its faces. |
+| [`self.decals`](#selfdecals) | The pictures on its faces: the ones its look carries, or those set_decals put there. |
 | [`self.exists`](#selfexists) | False once the piece is gone (its other fields are nil then). |
 
 ### `self.id`
@@ -567,11 +567,11 @@ The lines set_lines drew round it.
 self.decals
 ```
 
-The pictures set_decals put on its faces.
+The pictures on its faces: the ones its look carries, or those set_decals put there.
 
 **Type** `Decal[]`, read-only.
 
-**Tabletop Simulator** `getDecals` · **See also** [`self.set_decals`](#selfset_decals)
+**Tabletop Simulator** `getDecals` · **See also** [`self.set_decals`](#selfset_decals), [`self.state`](#selfstate)
 
 ### `self.exists`
 
@@ -1041,9 +1041,9 @@ local arms = self.decals[1]
 self.set_decals{ { picture = arms.picture, x = 0.35, z = -0.3, w = 0.2, h = 0.2, name = "Arms" } }
 ```
 
-At most 64 on a piece. A picture not in this game's packs is an error.
+At most 64 on a piece. A picture not in this game's packs is an error. A kind whose looks carry decals of their own shows those, whatever set_decals puts on the piece.
 
-**Tabletop Simulator** `setDecals` · **See also** [`self.decals`](#selfdecals)
+**Tabletop Simulator** `setDecals` · **See also** [`self.decals`](#selfdecals), [`self.state`](#selfstate)
 
 ### `self.to_world`
 

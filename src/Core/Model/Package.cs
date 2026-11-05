@@ -84,6 +84,7 @@ public sealed class PieceStateDef
     public Size2? Size { get; set; }
     public double[]? Up { get; set; }
     public string? Script { get; set; }
+    public List<DecalDef>? Decals { get; set; }
 }
 
 public sealed class CounterDef
@@ -363,6 +364,13 @@ public sealed class LineDef
 
 public sealed class DecalDef
 {
+    static readonly List<DecalDef> None = new();
+
+    public static List<DecalDef> ShownOn(PieceInstance p, PieceDef? def) =>
+        def != null && def.States.Any(s => s.Decals is { Count: > 0 })
+            ? (p.State >= 0 && p.State < def.States.Count ? def.States[p.State].Decals : null) ?? None
+            : p.Decals;
+
     public const int MostOnAPiece = 64;
     public string Picture { get; set; } = "";
     public string Name { get; set; } = "";
