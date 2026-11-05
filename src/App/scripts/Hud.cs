@@ -87,6 +87,7 @@ public partial class Hud : CanvasLayer
         {
             Umpires.Rebuild();
             Top.UpdatePointerInfo();
+            Top.SyncRole();
             Transcript.LogPeers();
             Top.UpdateKnocks();
             T.SyncZones();
@@ -115,7 +116,7 @@ public partial class Hud : CanvasLayer
         Hook<Action<string>>(h => Problems.Told += h, h => Problems.Told -= h, p => Callable.From(() => { if (IsInstanceValid(this)) Log($"[color=#ffd75e]{Fmt.Bb(p)}[/color]"); }).CallDeferred());
         HookTable();
         Top.SetStatus(N.Status);
-        Log($"[b]{Fmt.Bb(S.View.Name)}[/b] · {Fmt.Clock(S.View.Clock)} · you are {Fmt.Role(S.Me.Role)}");
+        Log($"[b]{Fmt.Bb(S.View.Name)}[/b] · {Fmt.Clock(S.View.Clock)}" + (S.IsHost ? "" : $" · you are {Fmt.Role(S.Me.Role)}"));
         Pieces.RebuildPacks();
         Umpires.Rebuild();
         Map.Rebuild();

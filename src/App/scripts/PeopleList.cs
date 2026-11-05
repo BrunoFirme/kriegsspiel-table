@@ -31,6 +31,7 @@ sealed class PeopleList : HudPart
     bool Others => S.IsUmpire && (S.Peers.Count > 1 || (S.IsLead && S.Waiting.Count > 0));
     bool OtherUmpires => S.Peers.Any(p => Visibility.IsUmpire(p.Role) && p.PeerId != S.Me.PeerId);
     bool Opens => S.IsUmpire && !S.Reviewing;
+    const string AloneWord = "Invite";
     bool PointerShared => Cfg.ShareCursor || S.View.PointersAlwaysShown;
 
     public Button Pill()
@@ -96,7 +97,7 @@ sealed class PeopleList : HudPart
         foreach (var st in new[] { "normal", "pressed", "hover", "disabled" }) _pill.AddThemeStyleboxOverride(st, Ui.Pill());
         if (opens) _pill.AddThemeStyleboxOverride("hover", Ui.Pill(0.12f));
         _chevron.Visible = opens;
-        _status.Text = _netStatus;
+        _status.Text = others || !S.IsHost ? _netStatus : AloneWord;
         _status.Visible = _netStatus.Length > 0;
         foreach (var c in _dots.GetChildren()) { _dots.RemoveChild(c); c.QueueFree(); }
         _dots.Visible = others;

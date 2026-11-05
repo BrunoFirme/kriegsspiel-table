@@ -483,8 +483,8 @@ public partial class Main : Node
         {
             var runFolder = _session.ScenarioDir != null && SaveStore.Default.RunOf(_session.SavePath!) is var (runDir, run) ? SaveStore.Default.RunFolderOf(runDir, run) : null;
             hud.Log(runFolder != null
-                ? $"Hosting · saved as you play, every ended turn kept in {LogPanel.FolderLink(runFolder, System.IO.Path.GetFileName(runFolder))} · Saves… {_cfg.Keys.Label("saves")}"
-                : $"Hosting · saved as you play ({LogPanel.FolderLink(System.IO.Path.GetDirectoryName(_session.SavePath) ?? "", "open the folder")})");
+                ? $"Saved as you play, every ended turn kept in {LogPanel.FolderLink(runFolder, System.IO.Path.GetFileName(runFolder))} · Saves… {_cfg.Keys.Label("saves")}"
+                : $"Saved as you play ({LogPanel.FolderLink(System.IO.Path.GetDirectoryName(_session.SavePath) ?? "", "open the folder")})");
             if (_recoveryReport != null) hud.Log($"[color=#ffd75e]{Fmt.Bb(_recoveryReport)}[/color]");
         }
         else if (_net.MirrorPath != null)

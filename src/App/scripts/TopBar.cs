@@ -187,7 +187,12 @@ sealed class TopBar : HudPart
         }
         UpdatePointerInfo();
         UpdateDoor();
-        Role.Text = $"{Fmt.RoleCaps(S.Me.Role)}  {S.Me.Name}";
+        SyncRole();
+    }
+
+    public void SyncRole()
+    {
+        Role.Text = S.Peers.Count > 1 ? $"{Fmt.RoleCaps(S.Me.Role)}  {S.Me.Name}" : S.Me.Name;
         Role.AddThemeColorOverride("font_color", S.IsUmpire ? Ui.Muted : new Color(0.7f, 0.8f, 0.95f));
     }
 

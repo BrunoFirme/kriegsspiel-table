@@ -300,7 +300,7 @@ The ⋯ after the scenario's name opens its properties: **Game** (password, poin
 
 | Problem | Do |
 |---|---|
-| Someone cannot connect | Check password, address and UDP port. "LAN only" in the top line: the router kept the port shut. |
+| Someone cannot connect | Check password, address and UDP port (the port: title screen **Settings → Inviting**). "LAN only" in the top line or in **Invite**: the router kept the port shut. |
 | A piece is a grey square | Its picture is still coming from the host, or that PC lacks the pack. |
 | A co-umpire's table looks wrong | They leave and rejoin; the table is sent again. |
 | **NOT SAVED** in the top bar | The Log says why (disk full, folder gone). It clears once saving works. Disk full: **Settings → Storage** on the title screen clears what imports and joins downloaded. |

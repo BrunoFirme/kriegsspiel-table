@@ -46,7 +46,8 @@ static class HudTests
         Check.That(h.Hud.Top.Title.Text.Contains("Hud test"), "title: " + h.Hud.Top.Title.Text);
         Check.That(h.Hud.Top.NextTurnBtn.Visible, "an umpire can end the turn");
         Check.That(!h.Hud.Top.SaveWarn.Visible, "nothing unsaved");
-        Check.That(h.Hud.LogPanel.Text.GetParsedText().Contains("you are the host umpire"), "the transcript says who you are");
+        Check.That(!h.Hud.LogPanel.Text.GetParsedText().Contains("you are the host"), "alone at your own table, nothing calls you its host");
+        Check.Equal(h.S.Me.Name, h.Hud.Top.Role.Text, "the top bar names you without a role while nobody else is there");
     }
 
     [NodeTest]

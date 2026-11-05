@@ -8,6 +8,28 @@ static class AppSettings
 {
     public const int LabelWidth = 124, RowGap = 8;
 
+    const int LeastPort = 1024, MostPort = 65535, PortFieldWidth = 100;
+
+    public static void AddPort(VBoxContainer box, Settings cfg)
+    {
+        var row = new HBoxContainer();
+        row.AddThemeConstantOverride("separation", RowGap);
+        row.AddChild(new Label { Text = "Port", CustomMinimumSize = new Vector2(LabelWidth, 0) });
+        var port = new LineEdit
+        {
+            Text = cfg.Port.ToString(System.Globalization.CultureInfo.InvariantCulture), CustomMinimumSize = new Vector2(PortFieldWidth, 0),
+            TooltipText = "The UDP port people connect to when you invite them; Invite shows it with your address",
+        };
+        port.TextChanged += t =>
+        {
+            if (!int.TryParse(t, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var p) || p < LeastPort || p > MostPort) return;
+            cfg.Port = p;
+            cfg.Save();
+        };
+        row.AddChild(port);
+        box.AddChild(row);
+    }
+
     public static void AddSound(VBoxContainer box, Settings cfg)
     {
         var vol = new HSlider { MinValue = 0, MaxValue = 1, Step = 0.05, Value = cfg.SoundVolume, CustomMinimumSize = new Vector2(220, 0) };
@@ -148,6 +170,11 @@ sealed class SettingsPage
         var sound = new VBoxContainer();
         v.AddChild(sound);
         AppSettings.AddSound(sound, _cfg);
+        v.AddChild(new Control { CustomMinimumSize = new Vector2(0, 10) });
+        v.AddChild(Ui.Header("Inviting"));
+        var inviting = new VBoxContainer();
+        v.AddChild(inviting);
+        AppSettings.AddPort(inviting, _cfg);
         v.AddChild(new Control { CustomMinimumSize = new Vector2(0, 10) });
         v.AddChild(Ui.Header("Storage"));
         var shelf = new CacheShelf(_t.Root!, said => _t.Status.Text = said, Busy);

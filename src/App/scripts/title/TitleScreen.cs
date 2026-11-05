@@ -51,7 +51,7 @@ sealed class TitleScreen
 
     public bool OffersUpdates => UpdateOffer.Applies(_platform);
 
-    public string HostName => PlayerName.Text.Trim().Length > 0 ? PlayerName.Text.Trim() : "Umpire";
+    public string HostName => PlayerName.Text.Trim().Length > 0 ? PlayerName.Text.Trim() : System.Environment.UserName;
 
     public void Close()
     {
@@ -152,14 +152,6 @@ sealed class TitleScreen
         PlayerName = new LineEdit { Text = _cfg.LastName, PlaceholderText = "your name", CustomMinimumSize = new Vector2(260, 0), SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin };
         PlayerName.TextChanged += t => _cfg.LastName = t;
         left.AddChild(PlayerName);
-        left.AddChild(new Control { CustomMinimumSize = new Vector2(0, 4) });
-        var portHead = new Label { Text = "PORT FOR HOSTING", Modulate = Muted, MouseFilter = Control.MouseFilterEnum.Pass, TooltipText = "The UDP port people connect to when you host; Invite says which, with your address" };
-        portHead.AddThemeFontSizeOverride("font_size", 11);
-        left.AddChild(portHead);
-        var port =
-            new LineEdit { Text = _cfg.Port.ToString(System.Globalization.CultureInfo.InvariantCulture), CustomMinimumSize = new Vector2(100, 0), SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin };
-        port.TextChanged += t => { if (int.TryParse(t, out var p) && p is > 1023 and < 65536) _cfg.Port = p; };
-        left.AddChild(port);
         Status = new Label { AutowrapMode = TextServer.AutowrapMode.WordSmart, Modulate = Ui.AccentInk, CustomMinimumSize = new Vector2(320, 0) };
         left.AddChild(Status);
         if (Main.TakePendingNotice() is { } notice) Status.Text = notice;
