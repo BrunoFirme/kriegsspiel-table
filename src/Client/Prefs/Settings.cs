@@ -81,7 +81,8 @@ public sealed class Settings
     public float ReliefStrength { get; set; } = 0.35f;
     public string ReliefMode { get; set; } = "raise";
     public float ReliefDensity { get; set; } = 1;
-    public bool ReliefFill { get; set; }
+    public string ReliefPaint { get; set; } = "brush";
+    public static readonly string[] ReliefPaintings = { "brush", "fill", "rect", "ellipse", "polygon" };
     public double FormationGap { get; set; } = KTable.Client.Hand.Formations.DefaultGap;
     public string Formation { get; set; } = "line";
 
@@ -124,6 +125,7 @@ public sealed class Settings
         FarDetail = Math.Clamp(FarDetail, 0, FarDetailMost);
         RenderScale = float.IsFinite(RenderScale) ? Math.Clamp(RenderScale, RenderScaleMin, RenderScaleMax) : RenderScaleMin;
         ReliefDensity = float.IsFinite(ReliefDensity) ? Math.Clamp(ReliefDensity, 0.05f, 1f) : 1f;
+        if (Array.IndexOf(ReliefPaintings, ReliefPaint) < 0) ReliefPaint = "brush";
         if (Array.IndexOf(MapPictureMemoryChoices, MapPictureMemory) < 0) MapPictureMemory = 0;
         UiScale = float.IsFinite(UiScale) ? Math.Clamp(UiScale, UiScaleMin, UiScaleMax) : 1f;
         if (AgentPort is < 1024 or > 65535) AgentPort = AgentPortDefault;

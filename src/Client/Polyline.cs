@@ -47,9 +47,22 @@ public static class Polyline
         return res;
     }
 
+    static Vec2 Unit(Vec2? across) => across is { Length: > 1e-9 } x ? new Vec2(x.X / x.Length, x.Z / x.Length) : new Vec2(1, 0);
+
+    public static Vec2 Squared(Vec2 a, Vec2 b, Vec2? across = null)
+    {
+        var u = Unit(across);
+        var v = new Vec2(-u.Z, u.X);
+        var d = b - a;
+        double du = d.X * u.X + d.Z * u.Z, dv = d.X * v.X + d.Z * v.Z, side = Math.Max(Math.Abs(du), Math.Abs(dv));
+        du = Math.CopySign(side, du);
+        dv = Math.CopySign(side, dv);
+        return new Vec2(a.X + u.X * du + v.X * dv, a.Z + u.Z * du + v.Z * dv);
+    }
+
     public static List<Vec2> ShapePoints(string kind, Vec2 a, Vec2 b, Vec2? across = null)
     {
-        var u = across is { Length: > 1e-9 } x ? new Vec2(x.X / x.Length, x.Z / x.Length) : new Vec2(1, 0);
+        var u = Unit(across);
         var v = new Vec2(-u.Z, u.X);
         var d = b - a;
         double du = d.X * u.X + d.Z * u.Z, dv = d.X * v.X + d.Z * v.Z;

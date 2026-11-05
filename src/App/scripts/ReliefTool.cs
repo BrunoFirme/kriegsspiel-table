@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Godot;
+using KTable.Client;
 using KTable.Core.Model;
 using KTable.Core.Protocol;
 using Json = KTable.Core.Json;
@@ -13,6 +15,8 @@ sealed class ReliefTool
     const ulong DraftEveryMs = 70;
     const int RingSteps = 48;
     const float SmallestBrush = 0.2f, LargestBrush = 400f;
+    const float CloseSnapPx = 10f, ShapeLeastPx = 4f;
+    const string NotYours = "Only umpires shape the ground, and not while a past turn is shown.";
 
     readonly TableContext _c;
     readonly ToolOverlay _overlay;
@@ -24,6 +28,10 @@ sealed class ReliefTool
     ulong _pushed;
     double? _level;
     (string Sheet, Vec2 At)? _end;
+    List<Vec2>? _corners;
+    Vec2? _cursor;
+    Vec2 _across = new(1, 0);
+    string? _shapeSheet;
 
     public ReliefTool(TableContext c, ToolOverlay overlay, SheetLayer sheets)
     {
@@ -49,23 +57,41 @@ sealed class ReliefTool
     public static SheetDef? Target(Session s, SheetLayer sheets, Vec2 p) => s.Ground.ReliefAt(p) ?? sheets.TopAt(p)?.Def;
 
     bool Painting => Cfg.ReliefMode.StartsWith("paint:", StringComparison.Ordinal);
-    bool Filling => Painting && Cfg.ReliefFill;
+    string Paint => Painting ? Cfg.ReliefPaint : "brush";
+    bool Filling => Paint == "fill";
+    bool Shaping => Paint is "rect" or "ellipse" or "polygon";
 
-    public void Press(Vec2 g, bool line, bool pick)
+    public void Press(Vec2 g, bool line, bool pick, bool twice = false)
     {
         var s = _c.S;
         if (pick) { Pick(g); return; }
-        if (!s.CanEdit(Layers.Umpire)) { _c.Say("Only umpires shape the ground, and not while a past turn is shown."); return; }
+        if (!Shaping) DropShape();
+        else if (_corners != null) { Corner(g, twice); return; }
+        if (!s.CanEdit(Layers.Umpire)) { _c.Say(NotYours); return; }
         if (Target(s, _sheets, g) is not { } target) { _c.Say("Brush over a map sheet."); return; }
+        if (Shaping)
+        {
+            _shapeSheet = target.Id;
+            _corners = new() { g };
+            _cursor = g;
+            _across = PenTool.ScreenAcross(_c.Rig.Cam);
+            return;
+        }
+        if (!Open(target)) return;
+        if (Filling) { Fill(g); return; }
+        _last = line && _end is { } e && e.Sheet == target.Id ? e.At : null;
+        Dab(g);
+    }
+
+    bool Open(SheetDef target)
+    {
         ReliefGrid? existing = null;
-        if (target.Relief is { Length: > 0 } && (existing = s.Relief.Grid(target)) == null) { _c.Say("The relief is still loading."); return; }
+        if (target.Relief is { Length: > 0 } && (existing = _c.S.Relief.Grid(target)) == null) { _c.Say("The relief is still loading."); return false; }
         _sheet = Json.Clone(target);
         var c = target.Crop ?? SheetGeometry.Whole;
         _draft = existing?.Copy() ?? ReliefGrid.Flat(Ground.FullWidth(target), target.Size.H / Math.Max(1e-6, c.H));
         _level = null;
-        if (Filling) { Fill(g); return; }
-        _last = line && _end is { } e && e.Sheet == target.Id ? e.At : null;
-        Dab(g);
+        return true;
     }
 
     void Pick(Vec2 g)
@@ -81,6 +107,37 @@ sealed class ReliefTool
         var brush = BrushOf(Cfg.ReliefMode, Cfg.ReliefStrength, Cfg.ReliefDensity);
         var box = ReliefBrush.Fill(_draft, u, v, brush.Kind, brush.Density);
         _end = (_sheet.Id, g);
+        Lay(box);
+    }
+
+    void Corner(Vec2 g, bool twice)
+    {
+        if (_corners!.Count >= 3 && (twice || (g - _corners[0]).Length <= _overlay.Px(CloseSnapPx))) Close(_corners);
+        else if (!twice) _corners.Add(g);
+    }
+
+    List<Vec2>? Outline(Vec2 at)
+    {
+        if (_corners == null) return null;
+        if (Paint == "polygon") return new List<Vec2>(_corners) { at, _corners[0] };
+        var a = _corners[0];
+        var b = Input.IsKeyPressed(Key.Shift) ? Polyline.Squared(a, at, _across) : at;
+        return Polyline.ShapePoints(Paint, a, b, _across);
+    }
+
+    void Close(List<Vec2> outline)
+    {
+        var id = _shapeSheet;
+        DropShape();
+        if (!_c.S.CanEdit(Layers.Umpire)) { _c.Say(NotYours); return; }
+        if (_c.S.View.Sheets.FirstOrDefault(x => x.Id == id) is not { } target || !Open(target)) return;
+        var brush = BrushOf(Cfg.ReliefMode, Cfg.ReliefStrength, Cfg.ReliefDensity);
+        Lay(ReliefBrush.Shape(_draft!, outline.Select(p => Ground.UvOf(_sheet!, p)).ToList(), brush.Kind, brush.Density));
+    }
+
+    void Lay(CellBox box)
+    {
+        if (_sheet == null || _draft == null) return;
         if (box.Empty)
         {
             _sheet = null;
@@ -91,7 +148,20 @@ sealed class ReliefTool
         Push();
     }
 
-    public void Motion(Vec2 g) { if (_draft != null && !Filling) Dab(g); }
+    public bool DropShape()
+    {
+        bool open = _corners != null;
+        _corners = null;
+        _cursor = null;
+        _shapeSheet = null;
+        return open;
+    }
+
+    public void Motion(Vec2 g)
+    {
+        if (_corners != null) _cursor = g;
+        else if (_draft != null && !Filling) Dab(g);
+    }
 
     void Dab(Vec2 g)
     {
@@ -133,6 +203,12 @@ sealed class ReliefTool
 
     public void Release()
     {
+        if (_corners != null && Paint != "polygon")
+        {
+            var at = _cursor ?? _corners[0];
+            if ((at - _corners[0]).Length >= _overlay.Px(ShapeLeastPx) && Outline(at) is { } outline) Close(outline);
+            else DropShape();
+        }
         if (_sheet == null || _draft == null) return;
         Push();
         var sheet = _sheet;
@@ -178,24 +254,37 @@ sealed class ReliefTool
         _sheet = null;
         _draft = null;
         _last = null;
+        DropShape();
     }
 
     public void Draw()
     {
         if (_c.Tool != Tool.Relief || _c.Rig == null) return;
         var mouse = _c.Scene.GetViewport().GetMousePosition();
-        if (_c.Ground(mouse) is not { } g || Filling) return;
+        var g = _c.Ground(mouse);
         var mat = new StandardMaterial3D { AlbedoColor = new Color(1, 0.85f, 0.4f), ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded, NoDepthTest = true };
-        if (_draft == null && _end is { } e && Input.IsKeyPressed(Key.Shift) && ReliefAt(g)?.Id == e.Sheet)
-            _overlay.SegPx(_overlay.Mesh, mat, e.At, g, 0.05f, 2f);
-        float r = Math.Clamp(Cfg.ReliefBrush, SmallestBrush, LargestBrush);
+        if (Shaping)
+        {
+            if (_corners == null || Outline(g ?? _cursor ?? _corners[^1]) is not { } outline) return;
+            _overlay.RibbonPx(_overlay.Mesh, mat, outline, 0.05f, 2f);
+            if (Paint == "polygon") _overlay.RibbonPx(_overlay.Mesh, mat, Ring(_corners[0], _overlay.Px(CloseSnapPx)), 0.05f, 2f);
+            return;
+        }
+        if (g is not { } at || Filling) return;
+        if (_draft == null && _end is { } e && Input.IsKeyPressed(Key.Shift) && ReliefAt(at)?.Id == e.Sheet)
+            _overlay.SegPx(_overlay.Mesh, mat, e.At, at, 0.05f, 2f);
+        _overlay.RibbonPx(_overlay.Mesh, mat, Ring(at, Math.Clamp(Cfg.ReliefBrush, SmallestBrush, LargestBrush)), 0.05f, 2f);
+    }
+
+    static List<Vec2> Ring(Vec2 c, double r)
+    {
         var ring = new List<Vec2>();
         for (int i = 0; i <= RingSteps; i++)
         {
             double a = i * Math.Tau / RingSteps;
-            ring.Add(new Vec2(g.X + Math.Cos(a) * r, g.Z + Math.Sin(a) * r));
+            ring.Add(new Vec2(c.X + Math.Cos(a) * r, c.Z + Math.Sin(a) * r));
         }
-        _overlay.RibbonPx(_overlay.Mesh, mat, ring, 0.05f, 2f);
+        return ring;
     }
 
     SheetDef? ReliefAt(Vec2 g) => Target(_c.S, _sheets, g);

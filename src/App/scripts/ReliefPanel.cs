@@ -91,18 +91,28 @@ sealed class ReliefPanel : HudPart
 
     bool Painting => Cfg.ReliefMode.StartsWith("paint:", StringComparison.Ordinal);
 
+    static readonly (string Key, string Text, string Icon, string Tip)[] Paintings =
+    {
+        ("brush", "Brush", "", "Drag to paint"),
+        ("fill", "Fill", "", "Click to fill the patch of ground clicked, up to other ground types, or a bare sheet whole"),
+        ("rect", "", "shape-rect", "Rectangle: drag across it · Shift for a square"),
+        ("ellipse", "", "shape-ellipse", "Ellipse: drag across it · Shift for a circle"),
+        ("polygon", "", "shape-polygon", "Polygon: click its corners, then the first again or double-click · Esc drops it"),
+    };
+
     void AddHowToPaint()
     {
         var row = new HBoxContainer();
         row.AddThemeConstantOverride("separation", 3);
-        foreach (var (text, fill, tip) in new[] { ("Brush", false, "Drag to paint"), ("Fill", true, "Click to fill the patch of ground clicked, up to other ground types, or a bare sheet whole") })
+        foreach (var (key, text, icon, tip) in Paintings)
         {
             var b =
-                new Button { Text = text, ToggleMode = true, ButtonPressed = Cfg.ReliefFill == fill, FocusMode = Control.FocusModeEnum.None, TooltipText = tip,
-                    SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, CustomMinimumSize = new Vector2(0, 26) };
+                new Button { Text = text, ToggleMode = true, ButtonPressed = Cfg.ReliefPaint == key, FocusMode = Control.FocusModeEnum.None, TooltipText = tip,
+                    SizeFlagsHorizontal = text.Length > 0 ? Control.SizeFlags.ExpandFill : Control.SizeFlags.Fill, CustomMinimumSize = new Vector2(text.Length > 0 ? 0 : 28, 26) };
+            if (icon.Length > 0) b.AddChild(new ToolIcon { Kind = icon });
             b.Pressed += () =>
             {
-                Cfg.ReliefFill = fill;
+                Cfg.ReliefPaint = key;
                 Cfg.Save();
                 if (T.Tool != Tool.Relief) T.SetTool(Tool.Relief);
                 Rebuild();
@@ -132,7 +142,7 @@ sealed class ReliefPanel : HudPart
             _box.AddChild(row);
             return s;
         }
-        if (!(Painting && Cfg.ReliefFill))
+        if (!Painting || Cfg.ReliefPaint == "brush")
             Row("Size", 0.2, 400, 0.1, Cfg.ReliefBrush, x => $"{x:0.#} u", x => Cfg.ReliefBrush = (float)x, "The brush's radius in map units · Ctrl + wheel on the table", exp: true);
         if (Painting)
             Row("Density", 0.05, 1, 0.05, Cfg.ReliefDensity, x => $"{x * 100:0}%", x => Cfg.ReliefDensity = (float)x, "How much of the ground takes it, in clumps: low for sparse wood or scattered rock; with ✕ it thins what is painted. Going over again adds no more");

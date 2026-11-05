@@ -193,7 +193,10 @@ ground.
   sheet without relief, the first stroke gives it flat ground to shape. **Ctrl+wheel** sizes the brush; each stroke
   is one undo.
 - Painting: **Fill** colours the whole patch clicked, up to other ground types (a bare sheet whole), so a map starts
-  with one click of grass. **Density** below 100% lays the ground in clumps: sparse wood, scattered rock, broken
+  with one click of grass. The **rectangle** and **ellipse** beside it paint a field, a wood or a pond in one drag
+  (**Shift** for a square or a circle, lined up with the view); the **polygon** paints the shape of its corners,
+  clicked in turn and closed on the first or with a double-click (**Esc** drops it). Each shape is one undo.
+  **Density** below 100% lays the ground in clumps: sparse wood, scattered rock, broken
   marsh; with ✕ it thins a wood. **Shift+click** runs straight on from the last stroke, for roads, rivers and
   ridges. **Alt+click** picks up the ground under the cursor.
 - **Light & surroundings → Map** in the scenario's properties sets, for everyone, the style painted ground is drawn

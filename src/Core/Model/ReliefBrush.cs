@@ -15,6 +15,7 @@ public static class ReliefBrush
 {
     public const double RisePerRadius = 0.15;
     const double PaintEdge = 0.85;
+    const double EdgeNudge = 1e-6;
 
     public static CellBox Dab(ReliefGrid g, double u, double v, double radiusCells, Brush b)
     {
@@ -68,7 +69,7 @@ public static class ReliefBrush
         while (todo.Count > 0)
         {
             int i = todo.Pop(), x = i % g.Cols, y = i / g.Cols;
-            if (GroundScatter.Takes(x, y, kind, density) && GroundKinds.Laid(g.Kind[i], kind) is var laid && g.Kind[i] != laid) { g.Kind[i] = laid; changed = true; }
+            if (Lay(g, x, y, kind, density)) changed = true;
             x0 = Math.Min(x0, x);
             x1 = Math.Max(x1, x);
             y0 = Math.Min(y0, y);
@@ -86,6 +87,37 @@ public static class ReliefBrush
             seen[n] = true;
             todo.Push(n);
         }
+    }
+
+    public static CellBox Shape(ReliefGrid g, IReadOnlyList<(double u, double v)> outline, byte kind, double density)
+    {
+        if (outline.Count < 3) return CellBox.None;
+        var pts = outline.Select(p => (x: p.u * (g.Cols - 1), y: p.v * (g.Rows - 1))).ToArray();
+        double top = pts.Min(p => p.y), bottom = pts.Max(p => p.y);
+        if (bottom - top <= 2 * EdgeNudge) return CellBox.None;
+        var box = CellBox.None;
+        var cross = new List<double>();
+        for (int y = Math.Max(0, (int)Math.Ceiling(top - EdgeNudge)); y <= Math.Min(g.Rows - 1, (int)Math.Floor(bottom + EdgeNudge)); y++)
+        {
+            double sy = Math.Clamp(y, top + EdgeNudge, bottom - EdgeNudge);
+            cross.Clear();
+            for (int i = 0, j = pts.Length - 1; i < pts.Length; j = i++)
+                if (pts[j].y > sy != pts[i].y > sy) cross.Add(pts[j].x + (sy - pts[j].y) / (pts[i].y - pts[j].y) * (pts[i].x - pts[j].x));
+            cross.Sort();
+            for (int k = 0; k + 1 < cross.Count; k += 2)
+                for (int x = Math.Max(0, (int)Math.Ceiling(cross[k] - EdgeNudge)); x <= Math.Min(g.Cols - 1, (int)Math.Floor(cross[k + 1] + EdgeNudge)); x++)
+                    if (Lay(g, x, y, kind, density)) box = box.Union(new CellBox(x, y, x, y));
+        }
+        return box;
+    }
+
+    static bool Lay(ReliefGrid g, int x, int y, byte kind, double density)
+    {
+        int i = y * g.Cols + x;
+        byte laid = GroundKinds.Laid(g.Kind[i], kind);
+        if (laid == g.Kind[i] || !GroundScatter.Takes(x, y, kind, density)) return false;
+        g.Kind[i] = laid;
+        return true;
     }
 
     static double Falloff(double d) { double t = 1 - d; return t * t * (3 - 2 * t); }

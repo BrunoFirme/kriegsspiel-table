@@ -75,6 +75,7 @@ sealed class TableKeys
 
     void Escape()
     {
+        if (_router.DropReliefShape()) return;
         bool busy = _c.Tool != Tool.Select || _sighting.Draft != null || _selection.Ids.Count > 0 || _sheets.SelectedId != null
             || _ruler.A != null || _pen.Stroking || _pen.Shaping || _hand.Holding;
         _router.EndGesture();

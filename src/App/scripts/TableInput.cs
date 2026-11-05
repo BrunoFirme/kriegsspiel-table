@@ -327,7 +327,7 @@ sealed class TableInput
                 _sighting.Press(g.Value);
                 break;
             case Tool.Relief:
-                _relief.Press(g.Value, mb.ShiftPressed, mb.AltPressed);
+                _relief.Press(g.Value, mb.ShiftPressed, mb.AltPressed, mb.DoubleClick);
                 break;
         }
     }
@@ -454,6 +454,8 @@ sealed class TableInput
         EndGesture();
         _palette.End(drop: true);
     }
+
+    public bool DropReliefShape() => _c.Tool == Tool.Relief && _relief.DropShape();
 
     public void EndGesture()
     {

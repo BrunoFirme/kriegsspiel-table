@@ -217,6 +217,9 @@ public partial class ToolIcon : Control
             case "shape-rect":
                 Poly(3.5f, 5.5f, 16.5f, 5.5f, 16.5f, 14.5f, 3.5f, 14.5f);
                 break;
+            case "shape-polygon":
+                Poly(4f, 7.5f, 11f, 3.5f, 16.5f, 8.5f, 14f, 16f, 5.5f, 15f);
+                break;
             case "shape-ellipse":
                 DrawArc(P(10, 10), 7f * _k, 0, Mathf.Tau, 36, _c, _w, antialiased: true);
                 break;

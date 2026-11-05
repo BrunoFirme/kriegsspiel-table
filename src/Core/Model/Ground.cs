@@ -82,6 +82,12 @@ public sealed class Ground
     {
         var (lx, lz) = Local(s, p);
         if (Math.Abs(lx) > s.Size.W / 2 || Math.Abs(lz) > s.Size.H / 2) return null;
+        return UvOf(s, p);
+    }
+
+    public static (double u, double v) UvOf(SheetDef s, Vec2 p)
+    {
+        var (lx, lz) = Local(s, p);
         var c = s.Crop ?? SheetGeometry.Whole;
         return (c.X + (lx / s.Size.W + 0.5) * c.W, c.Y + (lz / s.Size.H + 0.5) * c.H);
     }

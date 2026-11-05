@@ -329,6 +329,76 @@ public class ReliefTests : IDisposable
         Assert.All(g.Kind, k => Assert.Equal(GroundKinds.Of("field")!.Value, k));
     }
 
+    static List<(double, double)> Cells(ReliefGrid g, params (double x, double y)[] corners) =>
+        corners.Select(c => (c.x / (g.Cols - 1), c.y / (g.Rows - 1))).ToList();
+
+    [Fact]
+    public void A_shape_paints_every_cell_inside_it_and_on_its_edges_and_nothing_else()
+    {
+        var g = new ReliefGrid(40, 40);
+        byte field = GroundKinds.Of("field")!.Value;
+        var box = ReliefBrush.Shape(g, Cells(g, (2, 3), (5, 3), (5, 6), (2, 6)), field, 1);
+        Assert.Equal(new CellBox(2, 3, 5, 6), box);
+        Assert.Equal(16, Count(g, field));
+        Assert.True(ReliefBrush.Shape(g, Cells(g, (2, 3), (5, 3), (5, 6), (2, 6)), field, 1).Empty);
+        Assert.True(ReliefBrush.Shape(g, Cells(g, (2, 3), (5, 3)), field, 1).Empty);
+        Assert.True(ReliefBrush.Shape(g, Cells(g, (8, 3), (12, 3), (10, 3)), field, 1).Empty);
+        ReliefBrush.Shape(g, Cells(g, (-10, -10), (50, -10), (50, 50), (-10, 50)), field, 1);
+        Assert.All(g.Kind, k => Assert.Equal(field, k));
+    }
+
+    [Fact]
+    public void A_turned_shape_paints_its_own_outline_and_a_notched_polygon_leaves_its_notch()
+    {
+        var g = new ReliefGrid(41, 41);
+        byte wood = GroundKinds.Of("wood")!.Value;
+        ReliefBrush.Shape(g, Cells(g, (20, 4), (36, 20), (20, 36), (4, 20)), wood, 1);
+        Assert.Equal(wood, g.Kind[20 * 41 + 20]);
+        Assert.Equal(wood, g.Kind[20 * 41 + 5]);
+        Assert.Equal(GroundKinds.None, g.Kind[5 * 41 + 5]);
+        Assert.Equal(GroundKinds.None, g.Kind[35 * 41 + 35]);
+        Assert.InRange(Count(g, wood), 16 * 16 * 2 * 0.95, 16 * 16 * 2 * 1.1);
+        var h = new ReliefGrid(41, 41);
+        ReliefBrush.Shape(h, Cells(h, (0, 0), (40, 0), (40, 40), (20, 10), (0, 40)), wood, 1);
+        Assert.Equal(wood, h.Kind[5 * 41 + 20]);
+        Assert.Equal(GroundKinds.None, h.Kind[30 * 41 + 20]);
+        Assert.Equal(wood, h.Kind[30 * 41 + 2]);
+    }
+
+    [Fact]
+    public void A_shape_drawn_on_a_turned_sheet_lands_where_it_was_drawn()
+    {
+        var s = Sheet("s1", 10, -5, 40, 40, rot: 63);
+        var g = new ReliefGrid(41, 41);
+        byte field = GroundKinds.Of("field")!.Value;
+        var world = new[] { (0.25, 0.25), (0.75, 0.25), (0.75, 0.75), (0.25, 0.75) }.Select(c => Ground.FromUv(s, c.Item1, c.Item2)).ToList();
+        ReliefBrush.Shape(g, world.Select(p => Ground.UvOf(s, p)).ToList(), field, 1);
+        Assert.Equal(21 * 21, Count(g, field));
+        Assert.Equal(field, g.KindAt(0.5, 0.5));
+        Assert.Equal(GroundKinds.None, g.KindAt(0.2, 0.5));
+        var beyond = Ground.UvOf(s, Ground.FromUv(s, 1.5, -0.5));
+        Assert.Equal(1.5, beyond.u, 9);
+        Assert.Equal(-0.5, beyond.v, 9);
+        Assert.Null(Ground.Uv(s, Ground.FromUv(s, 1.5, -0.5)));
+    }
+
+    [Fact]
+    public void A_shape_keeps_the_paint_rules_bridge_density_and_rubbing_out()
+    {
+        var g = new ReliefGrid(40, 40);
+        for (int y = 0; y < g.Rows; y++)
+            for (int x = 18; x <= 22; x++) g.Kind[y * g.Cols + x] = GroundKinds.Water;
+        ReliefBrush.Shape(g, Cells(g, (5, 10), (35, 10), (35, 12), (5, 12)), GroundKinds.Road, 1);
+        Assert.Equal(5 * 3, Count(g, GroundKinds.Bridge));
+        Assert.Equal(26 * 3, Count(g, GroundKinds.Road));
+        ReliefBrush.Shape(g, Cells(g, (0, 0), (39, 0), (39, 39), (0, 39)), GroundKinds.None, 1);
+        Assert.All(g.Kind, k => Assert.Equal(GroundKinds.None, k));
+        var big = new ReliefGrid(201, 201);
+        byte rock = GroundKinds.Of("rock")!.Value;
+        ReliefBrush.Shape(big, Cells(big, (0, 0), (200, 0), (200, 200), (0, 200)), rock, 0.3);
+        Assert.InRange(Count(big, rock) / (double)big.Kind.Length, 0.2, 0.4);
+    }
+
     [Fact]
     public void Every_map_style_colours_every_ground_type_and_unknown_styles_read_as_the_survey()
     {

@@ -184,4 +184,59 @@ static class ToolTests
         Check.Equal(1.0, RulerTool.NiceStep(0), "no line");
         return Task.CompletedTask;
     }
+
+    const int ShapeWaitFrames = 300;
+
+    [NodeTest]
+    static async Task A_rectangle_and_a_polygon_painted_on_the_ground_fill_their_outlines_and_each_is_one_change(TestRunner r)
+    {
+        var t = OfflineTable.Make(r, pieces: 0);
+        await r.Frame();
+        var flat = ReliefGrid.Flat(40, 40);
+        var (sha, _) = ReliefImport.Save(flat, t.S.Store.Root);
+        t.S.Relief.Remember(sha, flat);
+        t.S.Do(new KTable.Core.Protocol.AddSheet
+        {
+            Sheet = new SheetDef { Id = "g", Name = "Ground", Image = "", Package = KTable.Core.Protocol.UploadAsset.ReliefPackage, Size = new Size2(40, 40), RotDeg = 180, Relief = sha, Height = 1 },
+        });
+        int shared = 0;
+        t.Table.ReliefShaped += (_, c) => { shared++; t.S.Do(c); };
+        await r.Frame();
+        t.Table.SetTool(Tool.Relief);
+        var cfg = t.Table.Settings;
+        var relief = t.Table.Relief;
+        cfg.ReliefMode = "paint:field";
+        cfg.ReliefPaint = "rect";
+        relief.Press(new Vec2(-10, -10), false, false);
+        relief.Motion(new Vec2(10, 0));
+        relief.Release();
+        for (int i = 0; i < ShapeWaitFrames && shared < 1; i++) await r.Frame();
+        Check.Equal(1, shared, "the rectangle shared as one change");
+        Check.Equal(GroundKinds.Of("field")!.Value, t.S.Ground.KindAt(new Vec2(0, -5)), "field inside the rectangle");
+        Check.Equal(GroundKinds.None, t.S.Ground.KindAt(new Vec2(0, 12)), "nothing beyond it");
+
+        cfg.ReliefMode = "paint:water";
+        cfg.ReliefPaint = "polygon";
+        foreach (var corner in new[] { new Vec2(-15, 5), new Vec2(15, 5), new Vec2(0, 15) })
+        {
+            relief.Press(corner, false, false);
+            relief.Release();
+        }
+        await r.Frames(3);
+        Check.Equal(1, shared, "nothing shared while the polygon is open");
+        relief.Press(new Vec2(-15, 5), false, false);
+        relief.Release();
+        for (int i = 0; i < ShapeWaitFrames && shared < 2; i++) await r.Frame();
+        Check.Equal(2, shared, "the polygon shared as one change once closed");
+        Check.Equal(GroundKinds.Water, t.S.Ground.KindAt(new Vec2(0, 8)), "water inside the polygon");
+        Check.Equal(GroundKinds.None, t.S.Ground.KindAt(new Vec2(-14, 14)), "nothing outside it");
+
+        relief.Press(new Vec2(-5, -15), false, false);
+        Check.That(t.Table.Router.DropReliefShape(), "Esc drops an open polygon");
+        Check.That(!relief.DropShape(), "and nothing is left open");
+        t.S.UndoLast();
+        await r.Frames(3);
+        Check.Equal(GroundKinds.None, t.S.Ground.KindAt(new Vec2(0, 8)), "undo takes the polygon back");
+        Check.Equal(GroundKinds.Of("field")!.Value, t.S.Ground.KindAt(new Vec2(0, -5)), "and leaves the rectangle");
+    }
 }

@@ -74,4 +74,20 @@ public class PolylineTests
         double ru = Dot(b - a, u) / 2, rv = Dot(b - a, v) / 2;
         Assert.All(Polyline.ShapePoints("ellipse", a, b, across), p => Assert.Equal(1, Math.Pow(Dot(p - c, u) / ru, 2) + Math.Pow(Dot(p - c, v) / rv, 2), 6));
     }
+
+    [Fact]
+    public void Squaring_takes_the_longer_side_toward_the_cursor_along_the_views_axes()
+    {
+        var a = new Vec2(1, 1);
+        Assert.Equal(new Vec2(5, -3), Polyline.Squared(a, new Vec2(5, 0)));
+        Assert.Equal(new Vec2(-2, 4), Polyline.Squared(a, new Vec2(0, 4)));
+        var across = new Vec2(1, 1);
+        var u = new Vec2(Math.Sqrt(0.5), Math.Sqrt(0.5));
+        var v = new Vec2(-u.Z, u.X);
+        static double Dot(Vec2 p, Vec2 q) => p.X * q.X + p.Z * q.Z;
+        var sq = Polyline.Squared(a, new Vec2(4, 2), across);
+        Assert.Equal(Math.Abs(Dot(sq - a, u)), Math.Abs(Dot(sq - a, v)), 9);
+        Assert.Equal(Dot(new Vec2(3, 1), u), Dot(sq - a, u), 9);
+        Assert.Equal(a, Polyline.Squared(a, a));
+    }
 }

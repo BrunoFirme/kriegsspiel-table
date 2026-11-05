@@ -43,12 +43,11 @@ sealed class PenTool
     {
         _shapeA = g;
         _shapeB = g;
-        _across = ScreenAcross();
+        _across = ScreenAcross(_c.Rig.Cam);
     }
 
-    Vec2 ScreenAcross()
+    public static Vec2 ScreenAcross(Camera3D cam)
     {
-        var cam = _c.Rig.Cam;
         var across = Coords.FromWorld(cam.GlobalPosition + cam.GlobalBasis.X) - Coords.FromWorld(cam.GlobalPosition);
         return across.Length > 1e-6 ? across : new Vec2(1, 0);
     }
