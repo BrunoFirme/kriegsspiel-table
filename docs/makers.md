@@ -62,8 +62,8 @@ errors go to `console.log` as `file.lua:line`. **Stop** brings the script back i
 3. Ask for what you need. It opens the studio or the game when it has to.
 
 In the piece studio it helps with shapes, faces, decals, looks, counters, text lines and effects; at the table, with
-map sheets, relief and painted ground, scale, a grid, light and surroundings, placing pieces and forming them up, notes
-on them and the briefing. Asked, it turns your view to a spot or changes this PC's settings. It should not umpire. It
+map sheets, relief and painted ground, scale, a grid, light and surroundings, placing pieces and forming them up, copying
+pieces from one scenario into another, notes on them and the briefing. Asked, it turns your view to a spot or changes this PC's settings. It should not umpire. It
 acts with your seat's rights, every change can be undone, and the Log names its changes "agent". Stop it from the
 **Agent** sign in the top bar or **Switch it off** in Settings; **Technical settings…** holds the details for setting
 it up by hand.

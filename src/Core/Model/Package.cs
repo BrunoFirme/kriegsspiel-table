@@ -36,6 +36,9 @@ public sealed class PackManifest : IJsonOnDeserialized, IJsonOnSerializing
         id.StartsWith(UserPrefix) && id.Length > UserPrefix.Length && id.Length <= 60 &&
         id[UserPrefix.Length..].All(c => c is >= 'a' and <= 'z' or >= '0' and <= '9' or '-');
 
+    public static string? NamedBy(IEnumerable<string> packs, string def) =>
+        packs.Where(p => def.StartsWith(p + ".", StringComparison.Ordinal)).OrderByDescending(p => p.Length).FirstOrDefault();
+
     public const int CurrentFormat = 1;
     public int Format { get; set; } = CurrentFormat;
     public int ApiVersion { get; set; } = ScriptApi.Version;

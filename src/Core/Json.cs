@@ -21,6 +21,7 @@ namespace KTable.Core;
 [JsonSerializable(typeof(List<string>))]
 [JsonSerializable(typeof(Stroke))]
 [JsonSerializable(typeof(PieceInstance))]
+[JsonSerializable(typeof(Clipping))]
 [JsonSerializable(typeof(SaveFile))]
 [JsonSerializable(typeof(TileIndex))]
 [JsonSerializable(typeof(ReliefIndex))]

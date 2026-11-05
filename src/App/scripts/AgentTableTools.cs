@@ -50,6 +50,13 @@ sealed partial class AgentTableTools
                 new Arg("remove_relief", "boolean", "take the relief off (a sheet keeps a picture or a relief)"), new Arg("picture", "string", "full path or web link of a picture to lay on this sheet"),
                 new Arg("crop", "array", "[x, y, w, h]: the part of the picture shown, as fractions 0–1 of the whole; [0, 0, 1, 1] shows it whole. The map keeps its scale")),
             SetSheet);
+        yield return new AgentTool("copy_pieces",
+            "Copies pieces onto the clipboard as they stand, with their counters, text lines, look, own name, note, tags, scale, script and whatever is attached to them. " +
+            "The clipboard outlives the game, so paste_pieces lays them out in another scenario after leave_game and host_game, and a pack the other game has not got comes into it with them.",
+            Args.Schema(new Arg("ids", "array", "the pieces' ids (list_pieces)", true)), CopyPieces);
+        yield return new AgentTool("paste_pieces",
+            "Lays what is on the clipboard on the table around x, z, each piece where it stood in relation to the others and as high above the ground as it was. One undoable change.",
+            Args.Schema(new Arg("x", "number", "map units", true), new Arg("z", "number", "map units", true)), PastePieces);
         yield return new AgentTool("list_saves",
             "The saves of the game being played: its turns kept so far and the saves made by hand in its folder (host only).",
             Args.Schema(), ListSaves);
@@ -75,6 +82,51 @@ sealed partial class AgentTableTools
         why = null;
         if (!s.CanEdit(Layers.Umpire)) { why = ToolResult.Fail("Only umpires change the table, and not while a past turn is shown."); return false; }
         return true;
+    }
+
+    const int PasteWaits = 240;
+    const double PasteWait = 0.05;
+
+    static List<string> Ids(JsonElement a) =>
+        a.ValueKind == JsonValueKind.Object && a.TryGetProperty("ids", out var v) && v.ValueKind == JsonValueKind.Array
+            ? v.EnumerateArray().Where(x => x.ValueKind == JsonValueKind.String).Select(x => x.GetString()!).Distinct().ToList()
+            : new List<string>();
+
+    Task<ToolResult> CopyPieces(JsonElement a)
+    {
+        if (Table(out var why) is not var (s, hud)) return Task.FromResult(why!);
+        var ids = Ids(a);
+        if (ids.Count == 0) return Task.FromResult(ToolResult.Fail("ids is needed."));
+        var nodes = ids.Select(id => hud.T.Pieces.NodeOf(Layers.Umpire, id)).OfType<PieceNode>().ToList();
+        var lost = ids.Where(id => hud.T.Pieces.NodeOf(Layers.Umpire, id) == null).ToList();
+        if (nodes.Count == 0) return Task.FromResult(ToolResult.Fail("No such piece on the table: " + string.Join(", ", lost)));
+        hud.T.Clip.Copy(nodes, cut: false);
+        int held = Clippings.Held?.Pieces.Count ?? nodes.Count;
+        _a.Log($"copied {held} piece{(held > 1 ? "s" : "")} to the clipboard");
+        var missed = lost.Count > 0 ? $" No such piece: {string.Join(", ", lost)}." : "";
+        return Task.FromResult(new ToolResult($"{held} piece{(held > 1 ? "s" : "")} on the clipboard, from {s.View.Name}.{missed} paste_pieces puts them down, in this game or in the next one opened."));
+    }
+
+    async Task<ToolResult> PastePieces(JsonElement a)
+    {
+        if (Table(out var why) is not var (s, hud)) return why!;
+        if (!CanChange(s, out why)) return why!;
+        if (Clippings.Held is not { Pieces.Count: > 0 } held) return ToolResult.Fail("The clipboard is empty: copy_pieces first.");
+        if (a.Num("x") is not { } x || a.Num("z") is not { } z) return ToolResult.Fail("x and z are needed.");
+        var before = s.View.Layer(Layers.Umpire).Select(p => p.Id).ToHashSet();
+        hud.T.Clip.Paste(new Vec2(x, z));
+        var made = new List<PieceInstance>();
+        for (int i = 0; i < PasteWaits && made.Count == 0; i++)
+        {
+            await _a.Delay(PasteWait);
+            made = s.View.Layer(Layers.Umpire).Where(p => !before.Contains(p.Id)).ToList();
+        }
+        int leftOut = held.Pieces.Count - made.Count;
+        if (made.Count == 0)
+            return ToolResult.Fail("Nothing was pasted: the packs these pieces come from are not in this game and did not come in. list_packs shows what is on this PC, add_pack brings one in.");
+        _a.Log($"pasted {made.Count} piece{(made.Count > 1 ? "s" : "")} from {held.From}");
+        var rest = leftOut > 0 ? $" {leftOut} left out: their pack is not in this game." : "";
+        return new ToolResult($"{made.Count} piece{(made.Count > 1 ? "s" : "")} pasted at {x:0.##}, {z:0.##}: {string.Join(", ", made.Select(p => p.Id))}.{rest}");
     }
 
     async Task<ToolResult> AddSheets(JsonElement a)

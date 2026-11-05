@@ -152,7 +152,9 @@ sealed class MenuCards : HudPart
 
     void TableMenu(MenuCard menu, Vector2 at)
     {
-        menu.Item("Paste here", () => { if (T.Rig.GroundAt(at) is { } w) T.Paste(Coords.FromWorld(w)); }, "Ctrl+V");
+        int clipped = T.Clipped;
+        if (clipped > 0)
+            menu.Item($"Paste {clipped} piece{(clipped > 1 ? "s" : "")} here", () => { if (T.Rig.GroundAt(at) is { } w) T.Paste(Coords.FromWorld(w)); }, "Ctrl+V");
         menu.Item("Select all", () => T.SelectAllEditable(), "Ctrl+A");
         menu.Separator();
         menu.Item("Ruler", () => T.SetTool(Tool.Ruler), "M");

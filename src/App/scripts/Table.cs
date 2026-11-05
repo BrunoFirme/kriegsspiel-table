@@ -295,6 +295,7 @@ public partial class Table : Node3D
         Rig.Tick(delta);
         if (Sync.Refused) Sync.ResyncRefused();
         Poses.Tick(delta);
+        Clip.Tick(delta);
         Names.Tick(delta);
         Palette.Tick(Input.IsMouseButtonPressed(MouseButton.Left), Pointer.In(GetViewport()));
         Sighting.TickShade();
@@ -435,6 +436,7 @@ public partial class Table : Node3D
     public void CopySelection() => Clip.Copy();
     public void CutSelection() { Clip.Copy(cut: true); DeleteSelection(); }
     public void Paste(Vec2 at) => Clip.Paste(at);
+    public int Clipped => Clip.Count;
 
     public const double MinScale = PendingPoses.MinScale, MaxScale = PendingPoses.MaxScale;
     public (Vec2 pos, double rot, double scale) Current(PieceNode n) => Poses.Current(n);

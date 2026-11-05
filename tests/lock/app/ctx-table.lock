@@ -45,7 +45,10 @@ click "Capture a region"
 settle
 checkpoint capture-taken
 key Escape
+key Ctrl+A
+key Ctrl+C
+settle
 rclick world:2,0,6
-click "Paste here"
+click ^"Paste"
 settle
 checkpoint pasted

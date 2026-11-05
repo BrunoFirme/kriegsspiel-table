@@ -66,6 +66,34 @@ static class WorkflowTests
     }
 
     [NodeTest]
+    static async Task An_agent_carries_pieces_on_the_clipboard_from_one_game_into_the_next(TestRunner r)
+    {
+        var rig = await HudTests.Host(r, pieces: 2, packs: new[] { "test" });
+        var agent = new AgentEndpoint(new Settings()) { TableSession = () => rig.S, TableHud = () => rig.Hud };
+        r.AddChild(agent);
+        async Task<string> Ok(string tool, string args)
+        {
+            var (error, text) = Answer(await agent.Handle(Call(tool, args)));
+            Check.That(!error, $"{tool} answered: {text}");
+            await r.Frames(2);
+            return text;
+        }
+        rig.S.Do(new KTable.Core.Protocol.SetLabel { Layer = Layers.Umpire, Id = "p1", Value = "Grenadiers" });
+        await r.Frames(2);
+        Check.That((await Ok("copy_pieces", """{"ids":["p1","p2"]}""")).Contains("2 pieces on the clipboard"), "both copied");
+        rig = await HudTests.Host(r, pieces: 0, packs: new[] { "test" });
+        await r.Frames(2);
+        Check.Equal(0, rig.S.View.Layer(Layers.Umpire).Count, "the next game starts empty");
+        Check.That((await Ok("status", "{}")).Contains("2 pieces copied"), "the clipboard outlived the first game");
+        var said = await Ok("paste_pieces", """{"x":8,"z":-3}""");
+        Check.That(said.Contains("2 pieces pasted"), "pasted: " + said);
+        var now = rig.S.View.Layer(Layers.Umpire);
+        Check.Equal(2, now.Count, "pieces in the next game");
+        Check.Equal("Grenadiers", now.Single(p => p.Label == "Grenadiers").Label, "a piece keeps its own name across the games");
+        Check.Equal(new Vec2(7.5, -3), now.OrderBy(p => p.Pos.X).First().Pos, "laid out round the place asked for, as they stood");
+    }
+
+    [NodeTest]
     static async Task The_studio_paints_shapes_layers_and_a_model_through_its_steps(TestRunner r)
     {
         var h = await StudioTests.Open(r);

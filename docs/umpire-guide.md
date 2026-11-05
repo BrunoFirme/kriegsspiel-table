@@ -82,6 +82,9 @@ The tool strip runs down the left. Point at any tool and press **F1** for its se
 - Drag a piece to carry it; it drops where you let go. Drag the empty table to box-select.
 - **Q / E** turn 15° (Shift 1°). The wheel over a selected piece turns it 10° (Ctrl 2°, Shift ½°).
 - **+ / −** resize, **Ctrl+1–9** form rows, **Ctrl+X / C / V** cut, copy and paste, **Delete**, **Ctrl+Z / Ctrl+Y** undo and redo.
+- What you copy waits on the clipboard until you copy again, so **Ctrl+V** pastes it into another scenario, or after the app
+  is closed and opened. Pieces keep their counters, text, notes and scripts, and the packs they need come into that game
+  with them; pieces whose pack is not on the PC are left out and the hint says which.
 - **Right-click** a piece for everything else: looks, counters, markers, lock, tint, POV, Properties.
 
 ### Turn and resize

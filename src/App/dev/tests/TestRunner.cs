@@ -30,6 +30,7 @@ public partial class TestRunner : Node
     public override async void _Ready()
     {
         Main.OneTextFormat();
+        KTable.Client.Clippings.FileAt = () => System.IO.Path.Combine(System.IO.Path.GetTempPath(), "ktable-testrun-clipboard.json");
         int passed = 0, failed = 0;
         bool screen = DisplayServer.GetName() != "headless";
         var kind = screen ? "screen tests" : "node tests";

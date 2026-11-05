@@ -395,6 +395,7 @@ public partial class Main : Node
         var table = new Table { Name = "Table" };
         AddChild(table);
         table.Bind(_session, _cfg);
+        table.Clip.BringPack = _net.SharePack;
         table.PointerMoved += p => _net.SendPointer(p);
         table.CarryLayoutShared += _net.ShareCarryLayout;
         table.CarryPlaceShared += _net.ShareCarryPlace;

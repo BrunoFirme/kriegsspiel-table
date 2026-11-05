@@ -104,6 +104,29 @@ static class TableTests
     }
 
     [NodeTest]
+    static async Task A_copy_waits_for_another_scenario_and_brings_the_pack_it_needs_with_it(TestRunner r)
+    {
+        var from = OfflineTable.Make(r, pieces: 0, packs: new[] { "std.dice" }, prepare: StandardPacks.Ensure);
+        await r.Frame();
+        from.S.Do(new SpawnPiece { Layer = U, Def = "std.dice.d6", Id = "d1", Pos = new Vec2(0, 0) });
+        await r.Frames(3);
+        from.Table.Selection.Set(new[] { "d1" });
+        from.Table.Clip.Copy();
+        var into = OfflineTable.Make(r, pieces: 1, prepare: StandardPacks.Ensure);
+        into.Table.Clip.BringPack = id => into.S.Do(new AddPack { Id = id });
+        await r.Frame();
+        Check.That(!into.S.View.Packs.Contains("std.dice"), "the other scenario has no dice pack of its own");
+        Check.Equal(1, into.Table.Clip.Count, "pieces on the clipboard");
+        into.Table.Clip.Paste(new Vec2(4, 4));
+        await r.Frames(3);
+        Check.That(into.S.View.Packs.Contains("std.dice"), "the pack came in with the paste");
+        var pasted = into.S.View.Layers[U].Where(p => p.Def == "std.dice.d6").ToList();
+        Check.Equal(1, pasted.Count, "dice pasted");
+        Check.Equal(new Vec2(4, 4), pasted[0].Pos, "where the paste asked for");
+        Check.That(into.Errors.Count == 0, "no command refused: " + string.Join("; ", into.Errors));
+    }
+
+    [NodeTest]
     static async Task A_press_counts_on_a_piece_where_its_shape_is_as_it_lies_or_as_it_would_lie(TestRunner r)
     {
         var t = OfflineTable.Make(r, pieces: 1);

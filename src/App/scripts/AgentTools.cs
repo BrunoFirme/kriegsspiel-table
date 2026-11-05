@@ -227,6 +227,8 @@ sealed class AppTools
             o["scriptsFolder"] = ScriptFileWatch.TableFolder(s);
         }
         else o["open"] = "title screen: host or join a game, or open a pack in the piece studio";
+        if (KTable.Client.Clippings.Held is { Pieces.Count: > 0 } clip)
+            o["clipboard"] = $"{clip.Pieces.Count} piece{(clip.Pieces.Count > 1 ? "s" : "")} copied{(clip.From is { Length: > 0 } was ? " from " + was : "")} (paste_pieces)";
         o["scriptsRoot"] = ScriptFiles.Root;
         return new ToolResult(o.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
     }
