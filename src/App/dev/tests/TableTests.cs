@@ -215,7 +215,8 @@ static class TableTests
         var t = OfflineTable.Make(r, pieces: 3);
         await r.Frame();
         t.Table.Selection.Set(new[] { "p2" });
-        Check.That(t.Table.Sighting.Begin(10), "the tool begins on the picked piece");
+        t.Table.SetTool(Tool.Sighting);
+        Check.That(t.Table.Draft != null, "the tool begins on the picked piece");
         var rig = t.Table.Rig;
         Check.That(rig.TopDown && rig.Eye == null, "2D first: the map from above");
         t.Table.Sighting.SetFirstPerson(true);
@@ -287,5 +288,40 @@ static class TableTests
         Check.That(!MutedFaces.Wordy(bare), "nothing left to hide");
         Check.That(doc.Layers.Count == 3 && doc.Layers[2].Block!.Label == "1st Foot", "the original is untouched");
         Check.That(!MutedFaces.Wordy(new ArtDoc { Layers = { new ArtLayer { Kind = "text", Text = "hidden", Visible = false } } }), "hidden text is not a word to strip");
+    }
+
+    [NodeTest]
+    static async Task Another_tool_frees_the_camera_from_the_eye_and_the_pov_tool_takes_it_back(TestRunner r)
+    {
+        var t = OfflineTable.Make(r, pieces: 2);
+        await r.Frame();
+        t.Table.Selection.Set(new[] { "p1" });
+        t.Table.SetTool(Tool.Sighting);
+        t.Table.Sighting.SetFirstPerson(true);
+        await r.Frame();
+        var rig = t.Table.Rig;
+        Check.That(rig.Eye != null, "looking from the piece");
+        t.Table.SetTool(Tool.Ruler);
+        await r.Frame();
+        Check.That(rig.Eye == null && t.Table.Draft is { FirstPerson: true }, "the ruler frees the camera and keeps the draft");
+        float before = rig.ZoomGoal;
+        var at = rig.Target;
+        rig.Zoom(0.5f);
+        rig.PanWorld(new Vector3(3, 0, 0));
+        Check.That(rig.ZoomGoal < before && rig.Target.X > at.X + 2.9f, "the wheel zooms and the keys pan again");
+        await r.Frame();
+        Check.That(rig.Eye == null, "and nothing drags the view back while the ruler is out");
+        t.Table.SetTool(Tool.Sighting);
+        await r.Frame();
+        Check.That(rig.Eye != null && t.Table.Draft is { FirstPerson: true }, "back in the POV tool the eye is on the piece again");
+        t.Table.Sighting.SetFirstPerson(false);
+        await r.Frame();
+        Check.That(rig.TopDown && rig.Eye == null, "2D frames from above");
+        t.Table.SetTool(Tool.Ruler);
+        rig.PanWorld(new Vector3(5, 0, 5));
+        var moved = rig.Target;
+        await r.Frame();
+        Check.That(rig.Target.X == moved.X && rig.Target.Z == moved.Z, "in 2D too, another tool leaves the view where it is put");
+        t.Table.Sighting.Cancel();
     }
 }

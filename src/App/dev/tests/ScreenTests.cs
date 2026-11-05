@@ -145,7 +145,8 @@ static class ScreenTests
     {
         var h = await HudTests.Host(r);
         h.Table.Selection.Set(new[] { "p1" });
-        Check.That(h.Table.Sighting.Begin(10), "the tool begins");
+        h.Table.SetTool(Tool.Sighting);
+        Check.That(h.Table.Draft != null, "the tool begins");
         h.Table.Sighting.SetFirstPerson(true);
         h.Table.Sighting.SetHideText(true);
         await r.Frames(2);

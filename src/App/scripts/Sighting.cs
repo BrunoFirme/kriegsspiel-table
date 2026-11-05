@@ -249,12 +249,11 @@ sealed class Sighting
 
     public void TickFraming()
     {
-        if (Draft != null && _c.S.View.Find(Layers.Umpire, Draft.ObserverId) is { } watcher)
-        {
-            Draft.Center = watcher.Pos;
-            if (!CloseUp) FrameOnDraft();
-        }
+        var watcher = Draft != null ? _c.S.View.Find(Layers.Umpire, Draft.ObserverId) : null;
+        if (watcher != null) Draft!.Center = watcher.Pos;
         else CloseUp = false;
+        if (watcher != null && _c.Tool == Tool.Sighting) { if (!CloseUp) FrameOnDraft(); }
+        else _c.Rig.LeaveEye();
     }
 
     public void SetFirstPerson(bool on)
