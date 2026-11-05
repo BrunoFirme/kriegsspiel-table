@@ -20,7 +20,7 @@ sealed partial class TableDemos
         GD.Print($"[relief] importing {jobs.Count}: " + string.Join(", ", jobs.Select(j => $"{Path.GetFileName(j.Relief)} + {(j.Picture != null ? Path.GetFileName(j.Picture) : j.OwnPicture ? "own texture" : "none")}")));
         var used = jobs.Where(j => j.Picture != null).Select(j => j.Picture!).ToHashSet();
         var rest = files.Except(reliefs).Where(f => !used.Contains(f)).ToList();
-        hud.Map.Reliefs.Import(jobs, true, true, () =>
+        hud.Map.Reliefs.Import(jobs, true, true, true, () =>
         {
             if (rest.Count > 0) hud.Map.AddPictures(rest);
             Tree.CreateTimer(ReliefSettleSeconds * (rest.Count > 0 ? 2 : 1)).Timeout += () => { Drape(); Shape(hud, files); };

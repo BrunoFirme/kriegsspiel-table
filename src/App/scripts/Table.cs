@@ -472,7 +472,12 @@ public partial class Table : Node3D
     public static Color LightTint(float warmth) => TableStage.LightTint(warmth);
     public void ApplyGrid() => Stage.ApplyGrid();
     public void ApplyWind(Wind w) => Stage.ApplyWind(w);
-    public void ApplyScale(Calibration c) { Stage.ApplyScale(c); Contours.Due(); }
+    public void ApplyScale(Calibration c)
+    {
+        Stage.ApplyScale(c);
+        ReliefSurface.ShowScale(c);
+        Contours.Due();
+    }
     public void SetStandIn(bool on, float shade = 0) => Stage.SetStandIn(on, shade);
 
     public string Board { get => Drawings.Board; set => Drawings.Board = value; }

@@ -210,6 +210,13 @@ static class ToolTests
         relief.Press(new Vec2(-10, -10), false, false);
         relief.Motion(new Vec2(10, 0));
         relief.Release();
+        await r.Frames(3);
+        Check.Equal(0, shared, "no stroke lands before the map has a scale");
+        t.S.Do(new KTable.Core.Protocol.SetCalibration { UnitsPerMeter = 0.02 });
+        await r.Frame();
+        relief.Press(new Vec2(-10, -10), false, false);
+        relief.Motion(new Vec2(10, 0));
+        relief.Release();
         for (int i = 0; i < ShapeWaitFrames && shared < 1; i++) await r.Frame();
         Check.Equal(1, shared, "the rectangle shared as one change");
         Check.Equal(GroundKinds.Of("field")!.Value, t.S.Ground.KindAt(new Vec2(0, -5)), "field inside the rectangle");

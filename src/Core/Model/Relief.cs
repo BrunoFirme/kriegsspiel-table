@@ -47,6 +47,31 @@ public static class GroundKinds
 
     public static byte BrushOf(byte kind) => kind == Bridge ? Road : kind;
 
+    public const string NeedsScale = "Set the map's scale first";
+    public const int LevelSteps = 15;
+
+    static readonly GroundParameter Plots = new("Plots", "Big open fields in strips, or small plots bounded by hedges, fences and walls", 50);
+    static readonly GroundParameter Buildings = new("Buildings", "None, lone farms, or hamlets", 25);
+    static readonly GroundParameter Trees = new("Trees", "Open wood or closed forest", 75);
+
+    public static IReadOnlyList<GroundParameter> Parameters(byte kind) => Name(kind) switch
+    {
+        "field" or "grass" => [Plots, Buildings],
+        "wood" => [Trees],
+        _ => [],
+    };
+
+    public static GroundParameter? Parameter(byte kind, string name) =>
+        Parameters(kind).FirstOrDefault(p => string.Equals(p.Name, name?.Trim(), StringComparison.OrdinalIgnoreCase));
+
+    public static byte Levels(int first, int second) => (byte)(Nibble(first) | Nibble(second) << 4);
+
+    public static (int First, int Second) LevelsOf(byte detail) => (Percent(detail & LevelSteps), Percent(detail >> 4));
+
+    static int Nibble(int percent) => (int)Math.Round(Math.Clamp(percent, 0, 100) / 100.0 * LevelSteps);
+
+    static int Percent(int nibble) => (int)Math.Round(nibble * 100.0 / LevelSteps);
+
     static readonly string[] Ancient =
         ["#00000000", "#CFC79A", "#DBC386", "#7B9C78", "#9EAA82", "#84A79C", "#E6D5AE", "#B57D48", "#9C8664", "#DFC584", "#ECE6D7", "#E6D5AE"];
 
@@ -64,6 +89,8 @@ public static class GroundKinds
         };
     }
 }
+
+public sealed record GroundParameter(string Name, string Tip, int Default);
 
 public static class MapStyles
 {
@@ -138,10 +165,14 @@ public sealed class ReliefGrid
         return top + (bottom - top) * fy;
     }
 
-    public byte KindAt(double u, double v)
+    public byte KindAt(double u, double v) => Kind[CellAt(u, v)];
+
+    public byte DetailAt(double u, double v) => Detail[CellAt(u, v)];
+
+    int CellAt(double u, double v)
     {
         int x = (int)Math.Round(Math.Clamp(u, 0, 1) * (Cols - 1)), y = (int)Math.Round(Math.Clamp(v, 0, 1) * (Rows - 1));
-        return Kind[y * Cols + x];
+        return y * Cols + x;
     }
 
     public float Highest => H.Length == 0 ? 0 : H.Max();

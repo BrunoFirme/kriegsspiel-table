@@ -126,6 +126,22 @@ public sealed class Ground
         return GroundKinds.None;
     }
 
+    public byte DetailAt(Vec2 p)
+    {
+        foreach (var r in Covering(p))
+            if (Uv(r.sheet, p) is var (u, v)) return r.grid.DetailAt(u, v);
+        return 0;
+    }
+
+    const double SlopeStep = 0.5;
+
+    public double SlopeAt(Vec2 p)
+    {
+        double dx = At(new Vec2(p.X + SlopeStep, p.Z)) - At(new Vec2(p.X - SlopeStep, p.Z));
+        double dz = At(new Vec2(p.X, p.Z + SlopeStep)) - At(new Vec2(p.X, p.Z - SlopeStep));
+        return Math.Sqrt(dx * dx + dz * dz) / (2 * SlopeStep);
+    }
+
     public double Under(Vec2 pos, double rotDeg, double width, double depth)
     {
         if (!Any) return 0;

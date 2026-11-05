@@ -19,22 +19,44 @@ sealed partial class AgentTableTools
     const double ReliefWaitSeconds = 600, ShapeWaitSeconds = 20;
 
     static string KindNames => string.Join(", ", GroundKinds.Brushes.Select(GroundKinds.Name));
+    static readonly string[] ParameterNames = ["plots", "buildings", "trees"];
+    const string NeedsScaleWords = "Set the map's scale first (set_map_scale).";
 
     IEnumerable<AgentTool> ReliefTools()
     {
         yield return new AgentTool("shape_ground",
             "Shapes the relief of the map along a stroke, as the Relief tool does: raise, lower, smooth or flatten the ground, or paint a ground type on it (" + KindNames + "; none rubs paint out; road across water lays a bridge). " +
-            "The stroke goes to the top sheet with a relief under its first point, or to the top sheet there, which then gets a flat relief. Paint with density below 1 lays the type in clumps (sparse wood, scattered rock; with none it thins paint), fill paints the whole patch of like ground around the first point, or a bare sheet whole, and shape paints a rectangle, ellipse or polygon whole (a square field, a round pond). One call is one step that undo takes back. Pieces standing on the ground follow it.",
+            "The stroke goes to the top sheet with a relief under its first point, or to the top sheet there, which then gets a flat relief. Paint with density below 1 lays the type in clumps (sparse wood, scattered rock; with none it thins paint), fill paints the whole patch of like ground around the first point, or a bare sheet whole, and shape paints a rectangle, ellipse or polygon whole (a square field, a round pond). " +
+            "Each stroke of paint draws its own details, afresh every time it is painted: field and grass take plots (big open strips, or small plots bounded by hedges, fences and walls) and buildings (none, lone farms, or hamlets), wood takes trees (open wood, or closed forest). The map needs a scale (set_map_scale) before its ground is shaped. One call is one step that undo takes back. Pieces standing on the ground follow it.",
             Args.Schema(new Arg("points", "array", "[[x, z], …] in map units: one point is a single dab, more draw a stroke through them", true),
                 new Arg("mode", "string", "raise, lower, smooth, flatten or paint", true), new Arg("radius", "number", "brush radius, map units", true),
                 new Arg("strength", "number", "0–1 (0.35 if left out); for raise and lower, how much one pass adds"), new Arg("kind", "string", "ground type for paint"),
-                new Arg("density", "number", "for paint, 0–1 of the ground that takes it (1 if left out)"), new Arg("fill", "boolean", "for paint: fill the patch around the first point instead of brushing, radius then unused"),
+                new Arg("density", "number", "for paint, 0–1 of the ground that takes it (1 if left out)"),
+                new Arg("plots", "number", "field or grass: 0–1, open strips to small bounded plots (0.5 if left out)"), new Arg("buildings", "number", "field or grass: 0–1, none to hamlets (0.25 if left out)"),
+                new Arg("trees", "number", "wood: 0–1, open wood to closed forest (0.75 if left out)"),
+                new Arg("fill", "boolean", "for paint: fill the patch around the first point instead of brushing, radius then unused"),
                 new Arg("shape", "string", "for paint, instead of brushing (radius then unused): rect or ellipse between two opposite corners, lined up with the map; polygon through its corners, three or more"),
                 new Arg("passes", "number", "go over the stroke this many times (1–20, 1 if left out)"), new Arg("sheet", "string", "a sheet's id to shape instead (list_map_sheets)")),
             ShapeGround);
         yield return new AgentTool("ground_at",
-            "The ground at points: its height above the table in map units, the ground type painted there, and the sheet whose relief it is.",
+            "The ground at points: its height above the table in map units, the ground type painted there with its plots, buildings or trees where it has them, whether the slope there draws as rock, and the sheet whose relief it is.",
             Args.Schema(new Arg("points", "array", "[[x, z], …] in map units", true)), x => Task.FromResult(GroundAt(x)));
+    }
+
+    static ToolResult? Levels(JsonElement a, byte kind, out byte detail)
+    {
+        detail = 0;
+        var own = GroundKinds.Parameters(kind);
+        int[] percent = own.Select(p => p.Default).ToArray();
+        foreach (var name in ParameterNames)
+        {
+            if (a.Num(name) is not { } value) continue;
+            int at = own.ToList().FindIndex(p => string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase));
+            if (at < 0) return ToolResult.Fail(own.Count == 0 ? $"{GroundKinds.Name(kind)} takes no {name}." : $"{GroundKinds.Name(kind)} takes {string.Join(" and ", own.Select(p => p.Name.ToLowerInvariant()))}, not {name}.");
+            percent[at] = (int)Math.Round(Math.Clamp(value, 0, 1) * 100);
+        }
+        detail = GroundKinds.Levels(percent.Length > 0 ? percent[0] : 0, percent.Length > 1 ? percent[1] : 0);
+        return null;
     }
 
     static List<Vec2>? Points(JsonElement a)
@@ -57,26 +79,41 @@ sealed partial class AgentTableTools
         if (Table(out var why) is not var (s, _)) return why!;
         if (Points(a) is not { Count: > 0 } pts) return ToolResult.Fail("points is needed: [[x, z], …].");
         var g = s.Ground;
-        var rows = new JsonArray(pts.Select(p => (JsonNode?)new JsonObject
-        {
-            ["x"] = p.X, ["z"] = p.Z, ["height"] = Math.Round(g.At(p), 3), ["ground"] = GroundKinds.Name(g.KindAt(p)), ["sheet"] = g.ReliefAt(p)?.Id,
-        }).ToArray());
+        var rows = new JsonArray(pts.Select(p => (JsonNode?)GroundRow(g, p)).ToArray());
         return new ToolResult(rows.ToJsonString(Opts));
+    }
+
+    const double RockSlope = 0.577;
+
+    static JsonObject GroundRow(Ground g, Vec2 p)
+    {
+        byte kind = g.KindAt(p);
+        var row = new JsonObject { ["x"] = p.X, ["z"] = p.Z, ["height"] = Math.Round(g.At(p), 3), ["ground"] = GroundKinds.Name(kind), ["sheet"] = g.ReliefAt(p)?.Id };
+        var levels = GroundKinds.LevelsOf(g.DetailAt(p));
+        var parameters = GroundKinds.Parameters(kind);
+        if (parameters.Count > 0) row[parameters[0].Name.ToLowerInvariant()] = Math.Round(levels.First / 100.0, 2);
+        if (parameters.Count > 1) row[parameters[1].Name.ToLowerInvariant()] = Math.Round(levels.Second / 100.0, 2);
+        if (g.ReliefAt(p) != null) row["rock"] = kind == GroundKinds.Of("rock") || g.SlopeAt(p) >= RockSlope;
+        return row;
     }
 
     async Task<ToolResult> ShapeGround(JsonElement a)
     {
         if (Table(out var why) is not var (s, hud)) return why!;
         if (!CanChange(s, out why)) return why!;
+        if (!ReliefTool.Scaled(s)) return ToolResult.Fail(NeedsScaleWords);
         if (Points(a) is not { Count: > 0 } pts) return ToolResult.Fail("points is needed: [[x, z], …], at most " + MostPoints + ".");
         var mode = (a.Str("mode") ?? "").Trim().ToLowerInvariant();
         if (mode is not ("raise" or "lower" or "smooth" or "flatten" or "paint")) return ToolResult.Fail("mode is raise, lower, smooth, flatten or paint.");
+        byte detail = 0;
         if (mode == "paint")
         {
             var kind = (a.Str("kind") ?? "").Trim().ToLowerInvariant();
             if (GroundKinds.Of(kind) is null or GroundKinds.Bridge) return ToolResult.Fail("kind is one of " + KindNames + " or none.");
+            if (Levels(a, GroundKinds.Of(kind)!.Value, out detail) is { } refused) return refused;
             mode = "paint:" + kind;
         }
+        else if (ParameterNames.Any(n => a.Num(n) != null)) return ToolResult.Fail("plots, buildings and trees are for paint.");
         bool fill = mode.StartsWith("paint:", StringComparison.Ordinal) && a.Flag("fill") == true;
         var shape = (a.Str("shape") ?? "").Trim().ToLowerInvariant();
         if (shape.Length > 0 && !mode.StartsWith("paint:", StringComparison.Ordinal)) return ToolResult.Fail("shape is for paint.");
@@ -99,7 +136,7 @@ sealed partial class AgentTableTools
         var uv = pts.Select(p => Ground.Uv(target, p)).Where(x => x != null).Select(x => x!.Value).ToList();
         if (uv.Count == 0 && shape.Length == 0) return ToolResult.Fail($"No point lies on {target.Name}.");
         double cell = Ground.FullWidth(target) / Math.Max(1, grid.Cols - 1);
-        var brush = ReliefTool.BrushOf(mode, strength, density, ReliefTool.RollSalt());
+        var brush = ReliefTool.BrushOf(mode, strength, density, ReliefTool.RollSalt(), detail);
         if (brush.Mode == BrushMode.Flatten) brush = brush with { Level = grid.HeightAt(uv[0].u, uv[0].v) };
         if (shape.Length > 0)
         {

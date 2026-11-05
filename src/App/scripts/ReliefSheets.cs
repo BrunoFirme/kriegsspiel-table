@@ -105,20 +105,22 @@ sealed class ReliefSheets : HudPart
         box.AddChild(grid);
         var placed = new CheckBox { Text = "Lay them out as the files place them", ButtonPressed = true, TooltipText = "Tiles cut from one map keep their places; otherwise they go side by side" };
         var zero = new CheckBox { Text = "One zero for all", ButtonPressed = true, TooltipText = "Their lowest point together is the table, so neighbouring tiles meet without a step" };
+        var scale = new CheckBox { Text = "Set the map's scale from the file", ButtonPressed = true, TooltipText = "A GeoTIFF, .asc or .hgt knows its metres; the Relief tool needs the map's scale" };
         if (jobs.Count > 1) { box.AddChild(placed); box.AddChild(zero); }
+        if (!ReliefTool.Scaled(S)) box.AddChild(scale);
         dlg.AddChild(box);
         dlg.Confirmed += () =>
         {
             var chosen = choices.Select(c => c()).ToList();
             var used = chosen.Where(j => j.Picture != null).Select(j => j.Picture!).ToHashSet(StringComparer.OrdinalIgnoreCase);
             var rest = pictures.Where(p => !used.Contains(p)).ToList();
-            Import(chosen, placed.ButtonPressed, zero.ButtonPressed, () => { if (rest.Count > 0) addPictures(rest); });
+            Import(chosen, placed.ButtonPressed, zero.ButtonPressed, scale.ButtonPressed && !ReliefTool.Scaled(S), () => { if (rest.Count > 0) addPictures(rest); });
         };
         Ui.Open(HudNode, dlg, new Vector2I(560, Math.Min(640, 150 + jobs.Count * 34)));
         Ui.FreeOnClose(dlg);
     }
 
-    public void Import(List<ReliefJob> jobs, bool placed, bool sharedZero, Action? done = null)
+    public void Import(List<ReliefJob> jobs, bool placed, bool sharedZero, bool setScale, Action? done = null)
     {
         if (jobs.Count == 0) { done?.Invoke(); return; }
         var job = $"Building relief {MapPage.SheetName(jobs[0].Relief)}{(jobs.Count > 1 ? $" and {jobs.Count - 1} more" : "")}…";
@@ -148,12 +150,12 @@ sealed class ReliefSheets : HudPart
                     catch (Exception e) { Problem(jobs[i].Relief, e.Message); }
                     finally { ReliefImport.Forget(path); }
                 }
-                Task.Run(() => Build(jobs, sources, sharedZero, root, job, placed, done));
+                Task.Run(() => Build(jobs, sources, sharedZero, root, job, placed, setScale, done));
             }).CallDeferred();
         });
     }
 
-    void Build(List<ReliefJob> jobs, ReliefSource?[] sources, bool sharedZero, string root, string job, bool placed, Action? done)
+    void Build(List<ReliefJob> jobs, ReliefSource?[] sources, bool sharedZero, string root, string job, bool placed, bool setScale, Action? done)
     {
         var made = new List<ReliefMade>();
         double zero = ReliefSource.SharedZero(sources.Where(s => s != null)!);
@@ -176,12 +178,14 @@ sealed class ReliefSheets : HudPart
         Callable.From(() =>
         {
             S.Assets.EndJob(job);
-            Place(made, placed);
+            Place(made, placed, setScale);
             done?.Invoke();
         }).CallDeferred();
     }
 
-    void Place(List<ReliefMade> made, bool placed)
+    const double MetresPerKilometre = 1000;
+
+    void Place(List<ReliefMade> made, bool placed, bool setScale)
     {
         if (made.Count == 0) return;
         var first = made[0];
@@ -190,6 +194,11 @@ sealed class ReliefSheets : HudPart
         double h0 = w0 * first.Source.Depth / first.Source.Width;
         if (existing != null && h0 > 0) w0 *= existing.Size.H / h0;
         double k = w0 / first.Source.Width;
+        if (setScale && first.Source.RealUnits && !ReliefTool.Scaled(S) && first.Source.Width > 0)
+        {
+            S.Do(new SetCalibration { UnitsPerMeter = k, Units = S.View.Calibration.Units });
+            Log($"Map scale set from {Fmt.Bb(first.Name)}: {first.Source.Width / MetresPerKilometre:0.##} km across.");
+        }
         bool byFiles = placed && made.Count > 1 && made.All(m => m.Source.RealUnits)
             && made.Select(m => (Math.Round(m.Source.Left, 3), Math.Round(m.Source.Top, 3))).Distinct().Count() == made.Count;
         double right = S.View.Sheets.Count == 0 ? 0 : S.View.Sheets.Max(s => s.Pos.X + s.Size.W / 2);
@@ -236,12 +245,36 @@ sealed class ReliefSheets : HudPart
         }
         var w = Num("Width", w0);
         var d = Num("Depth", d0);
+        SpinBox? metres = null;
+        Label? across = null;
+        if (!ReliefTool.Scaled(S))
+        {
+            grid.AddChild(new Label { Text = "Metres to the unit" });
+            metres = new SpinBox { MinValue = LeastMetresPerUnit, MaxValue = MostMetresPerUnit, Step = 1, Value = UsualMetresPerUnit, Suffix = "m", CustomMinimumSize = new Vector2(110, 0) };
+            grid.AddChild(metres);
+            across = Hint("");
+        }
         Ui.AlignForm(grid);
         dlg.AddChild(grid);
-        dlg.Confirmed += () => AddBlank(w.Value, d.Value);
-        Ui.Open(HudNode, dlg, new Vector2I(300, 150));
+        if (metres != null && across != null)
+        {
+            void Read() => across.Text = $"{w.Value * metres.Value / MetresPerKilometre:0.#} × {d.Value * metres.Value / MetresPerKilometre:0.#} km";
+            Read();
+            w.ValueChanged += _ => Read();
+            d.ValueChanged += _ => Read();
+            metres.ValueChanged += _ => Read();
+            dlg.AddChild(across);
+        }
+        dlg.Confirmed += () =>
+        {
+            if (metres != null && !ReliefTool.Scaled(S)) S.Do(new SetCalibration { UnitsPerMeter = 1 / metres.Value, Units = S.View.Calibration.Units });
+            AddBlank(w.Value, d.Value);
+        };
+        Ui.Open(HudNode, dlg, new Vector2I(300, metres == null ? 150 : 210));
         Ui.FreeOnClose(dlg);
     }
+
+    const double LeastMetresPerUnit = 1, MostMetresPerUnit = 10000, UsualMetresPerUnit = 50;
 
     public void AddBlank(double width, double depth, Action<string?>? done = null)
     {

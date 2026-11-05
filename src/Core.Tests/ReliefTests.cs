@@ -493,6 +493,24 @@ public class ReliefTests : IDisposable
     }
 
     [Fact]
+    public void Each_kind_names_its_own_parameters_and_their_levels_fit_a_byte()
+    {
+        byte field = GroundKinds.Of("field")!.Value, wood = GroundKinds.Of("wood")!.Value;
+        Assert.Equal(new[] { "Plots", "Buildings" }, GroundKinds.Parameters(field).Select(p => p.Name));
+        Assert.Equal(new[] { "Trees" }, GroundKinds.Parameters(wood).Select(p => p.Name));
+        Assert.Empty(GroundKinds.Parameters(GroundKinds.Water));
+        Assert.NotNull(GroundKinds.Parameter(field, "plots"));
+        Assert.Null(GroundKinds.Parameter(wood, "plots"));
+        Assert.Null(GroundKinds.Parameter(GroundKinds.Road, "trees"));
+        Assert.Equal((100, 0), GroundKinds.LevelsOf(GroundKinds.Levels(100, 0)));
+        Assert.Equal((0, 100), GroundKinds.LevelsOf(GroundKinds.Levels(0, 100)));
+        var (first, second) = GroundKinds.LevelsOf(GroundKinds.Levels(40, 15));
+        Assert.InRange(first, 37, 43);
+        Assert.InRange(second, 12, 18);
+        Assert.Equal(0, GroundKinds.Levels(-5, 0));
+    }
+
+    [Fact]
     public void Blurred_heights_keep_flat_ground_soften_a_step_and_hold_the_mean()
     {
         var flat = new ReliefGrid(30, 20);

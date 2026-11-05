@@ -28,10 +28,20 @@ sealed class ReliefPanel : HudPart
     {
         if (_box == null || T == null) return;
         foreach (var c in _box.GetChildren()) { _box.RemoveChild(c); c.QueueFree(); }
-        AddShapes();
-        AddKinds();
-        AddSliders();
+        if (ReliefTool.Scaled(S))
+        {
+            AddShapes();
+            AddKinds();
+            AddSliders();
+        }
+        else AddScaleAsk();
         Panel?.Fit();
+    }
+
+    void AddScaleAsk()
+    {
+        _box.AddChild(Hint(GroundKinds.NeedsScale));
+        _box.AddChild(Btn("Scale…", () => T.SetTool(Tool.Calibrate), "Drag along the map's scale bar"));
     }
 
     Button Choice(string text, string mode, string tip)
@@ -148,5 +158,12 @@ sealed class ReliefPanel : HudPart
             Row("Density", 0.05, 1, 0.05, Cfg.ReliefDensity, x => $"{x * 100:0}%", x => Cfg.ReliefDensity = (float)x, "How much of the ground takes it, in clumps: low for sparse wood or scattered rock; with ✕ it thins what is painted. Going over again adds no more");
         else
             Row("Strength", 0.05, 1, 0.05, Cfg.ReliefStrength, x => $"{x * 100:0}%", x => Cfg.ReliefStrength = (float)x, "How much one pass raises, lowers or smooths");
+        if (!Painting || GroundKinds.Of(Cfg.ReliefMode[6..]) is not { } kind) return;
+        var parameters = GroundKinds.Parameters(kind);
+        for (int i = 0; i < parameters.Count; i++)
+        {
+            int which = i;
+            Row(parameters[i].Name, 0, 100, 5, Cfg.ReliefDetail(kind, which), x => $"{x:0}%", x => Cfg.SetReliefDetail(kind, which, (int)x), parameters[i].Tip);
+        }
     }
 }

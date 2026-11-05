@@ -1,3 +1,5 @@
+using KTable.Core.Model;
+
 namespace KTable.Client.Prefs;
 
 public sealed class Settings
@@ -85,7 +87,24 @@ public sealed class Settings
     public string ReliefMode { get; set; } = "raise";
     public float ReliefDensity { get; set; } = 1;
     public string ReliefPaint { get; set; } = "brush";
+    public Dictionary<string, int[]> ReliefDetails { get; set; } = new();
     public static readonly string[] ReliefPaintings = { "brush", "fill", "rect", "ellipse", "polygon" };
+
+    public int ReliefDetail(byte kind, int which)
+    {
+        var parameters = GroundKinds.Parameters(kind);
+        if (which >= parameters.Count) return 0;
+        return ReliefDetails.TryGetValue(GroundKinds.Name(kind), out var levels) && which < levels.Length ? Math.Clamp(levels[which], 0, 100) : parameters[which].Default;
+    }
+
+    public void SetReliefDetail(byte kind, int which, int percent)
+    {
+        var levels = ReliefDetails.TryGetValue(GroundKinds.Name(kind), out var had) && had.Length == 2 ? had : new[] { ReliefDetail(kind, 0), ReliefDetail(kind, 1) };
+        levels[which] = Math.Clamp(percent, 0, 100);
+        ReliefDetails[GroundKinds.Name(kind)] = levels;
+    }
+
+    public byte ReliefLevels(byte kind) => GroundKinds.Levels(ReliefDetail(kind, 0), ReliefDetail(kind, 1));
     public double FormationGap { get; set; } = KTable.Client.Hand.Formations.DefaultGap;
     public string Formation { get; set; } = "line";
 

@@ -31,7 +31,9 @@ public partial class ReliefSurface : Node3D
     static bool _contours;
     static double _contourStep = -1;
 
-    const string StyleParameter = "ground_style", ContourParameter = "contour_interval";
+    const string StyleParameter = "ground_style", ContourParameter = "contour_interval", ScaleParameter = "units_per_metre";
+
+    public static void ShowScale(Calibration c) => RenderingServer.GlobalShaderParameterSet(ScaleParameter, (float)(c.UnitsPerMeter is { } upm && upm > 0 ? upm : 0));
 
     static Shader GroundShader => _shader ??= new Shader { Code = FileAccess.GetFileAsString("res://shaders/ground.gdshader") };
 

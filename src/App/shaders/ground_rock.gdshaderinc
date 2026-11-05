@@ -52,7 +52,7 @@ float rock_fill(vec2 p, float h, vec2 down, float steep, float dark, float sheer
 	return hachure_field(p, h, down, band_h, spacing, width, keep, fw);
 }
 
-vec3 survey_rock(vec3 c, vec2 p, vec2 uv, mat2 to_uv, float h, vec2 down, float steep, float dark, float crest, float gully, float sheer, float foot, float fw) {
+vec3 survey_rock(vec3 c, vec2 p, float own, float h, vec2 down, float steep, float dark, float crest, float gully, float sheer, float foot, float fw) {
 	vec3 sepia = vec3(0.3, 0.2, 0.12);
 	c = mix(c, c * vec3(0.9, 0.88, 0.84), 0.35 * (1.0 - foot));
 	float fill = rock_fill(p, h, down, steep, dark, sheer, 0.28, 0.16, 0.012, 0.03, fw);
@@ -61,7 +61,7 @@ vec3 survey_rock(vec3 c, vec2 p, vec2 uv, mat2 to_uv, float h, vec2 down, float 
 	c = mix(c, sepia, fill * mix(0.55, 1.0, dark) * (1.0 - foot));
 	c = mix(c, sepia, shape * 0.9 * (1.0 - foot));
 	c = mix(c, sepia, crest * mix(0.45, 0.9, dark) * (1.0 - foot));
-	if (foot > 0.01) c = mix(c, sepia, scatter(p + 3.1, uv, to_uv, 0.09, 0.009, 0.9, 0.5, fw) * 0.6 * foot);
+	if (foot > 0.01) c = mix(c, sepia, scatter(p + 3.1, own, 0.09, 0.009, 0.9, 0.5, fw) * 0.6 * foot);
 	return c;
 }
 
@@ -85,7 +85,7 @@ vec3 modern_rock(vec3 c, vec2 p, float h, vec2 down, float steep, float dark, fl
 vec3 rock_face(int style, vec3 c, vec2 p, vec2 uv, mat2 to_uv, float h, vec2 down, float steep, float dark, float crest, float gully, float sheer, float foot, float own, float fw) {
 	if (style == MODERN) return modern_rock(c, p, h, down, steep, dark, crest, sheer, foot, own, fw);
 	if (style == ANCIENT) return ancient_rock(c, p, h, down, steep, dark, crest, sheer, fw);
-	return survey_rock(c, p, uv, to_uv, h, down, steep, dark, crest, gully, sheer, foot, fw);
+	return survey_rock(c, p, own, h, down, steep, dark, crest, gully, sheer, foot, fw);
 }
 
 vec3 hachures(vec3 c, vec3 n, vec2 p, float h, float fw, vec3 tone, float mask) {

@@ -57,7 +57,9 @@ sealed class ReliefTool
 
     public static byte RollSalt() => (byte)Random.Shared.Next(1, byte.MaxValue + 1);
 
-    Brush Current => BrushOf(Cfg.ReliefMode, Cfg.ReliefStrength, Cfg.ReliefDensity, _salt);
+    Brush Current => BrushOf(Cfg.ReliefMode, Cfg.ReliefStrength, Cfg.ReliefDensity, _salt, Cfg.ReliefLevels(GroundKinds.Of(Cfg.ReliefMode[(Cfg.ReliefMode.IndexOf(':') + 1)..]) ?? GroundKinds.None));
+
+    public static bool Scaled(Session s) => s.View.Calibration.UnitsPerMeter is > 0;
 
     public static SheetDef? Target(Session s, SheetLayer sheets, Vec2 p) => s.Ground.ReliefAt(p) ?? sheets.TopAt(p)?.Def;
 
@@ -73,6 +75,7 @@ sealed class ReliefTool
         if (!Shaping) DropShape();
         else if (_corners != null) { Corner(g, twice); return; }
         if (!s.CanEdit(Layers.Umpire)) { _c.Say(NotYours); return; }
+        if (!Scaled(s)) { _c.Say(GroundKinds.NeedsScale + "."); return; }
         if (Target(s, _sheets, g) is not { } target) { _c.Say("Brush over a map sheet."); return; }
         if (Shaping)
         {

@@ -11,6 +11,7 @@ uniform float cell_world = 0.2;
 uniform float detail = 1.0;
 global uniform int ground_style;
 global uniform float contour_interval;
+global uniform float units_per_metre;
 
 const int KINDS = 12;
 const int GRASS = 1;
@@ -31,7 +32,6 @@ const int ANCIENT = 1;
 const int MODERN = 2;
 const float WARP = 0.42;
 const float EDGE_STEPS = 16.0;
-const float BLOCK = 7.0;
 const float ANCHOR = 3.0;
 const vec2 NORTH = vec2(0.0, -1.0);
 const vec2 SUN = vec2(-0.7071, -0.7071);
@@ -74,10 +74,29 @@ const float CREST_FULL = 0.5;
 const float LEDGE_TREES = 0.2;
 const float FOOT_BAND = 0.2;
 const float MARK_SHADE = 0.35;
+const int LEVEL_STEPS = 15;
+const float PLOT_OPEN_M = 350.0;
+const float PLOT_SMALL_M = 80.0;
+const float STAND_M = 250.0;
+const float PADDOCK_M = 300.0;
+const float MARSH_LOT_M = 200.0;
+const float EARTH_LOT_M = 300.0;
+const float WATER_LOT_M = 120.0;
+const float ISLET_SHORE_M = 50.0;
+const float TREES_OPEN_M = 25.0;
+const float TREES_CLOSED_M = 10.0;
+const float OPEN_WOOD_KEEP = 0.45;
+const float RIDE = 0.5;
+const int HEDGE = 1;
+const int FENCE = 2;
+const int WALL = 3;
+const int DITCH = 4;
+const int TRACK = 5;
 
 varying vec3 world;
 
 #include "res://shaders/ground_marks.gdshaderinc"
+#include "res://shaders/ground_lots.gdshaderinc"
 #include "res://shaders/ground_rock.gdshaderinc"
 #include "res://shaders/ground_survey.gdshaderinc"
 #include "res://shaders/ground_ancient.gdshaderinc"
@@ -140,16 +159,18 @@ void fragment() {
 	mat2 to_uv = du * from_screen;
 	int style = clamp(ground_style, SURVEY, MODERN);
 	float h = smooth_height(UV);
-	float own = salt_at(p, p, UV, to_uv);
+	vec3 own_texel = texel_of(floor(clamp(UV, vec2(0.0), vec2(1.0)) * cells));
+	float own = own_texel.g;
+	vec2 levels = vec2(mod(own_texel.b, 16.0), floor(own_texel.b / 16.0)) / float(LEVEL_STEPS);
 	float h_ne = smooth_height(UV + to_uv * vec2(GRAD_STEP, GRAD_STEP));
 	float h_se = smooth_height(UV + to_uv * vec2(GRAD_STEP, -GRAD_STEP));
 	vec2 grad = vec2(h_ne + h_se - 2.0 * h, h_ne - h_se) / (2.0 * GRAD_STEP);
 	float steep = length(grad);
 	vec2 down = steep > 1e-4 ? -grad / steep : vec2(0.0);
-	float curve = (smooth_height(UV + to_uv * down * CURVE_STEP) + smooth_height(UV - to_uv * down * CURVE_STEP) - 2.0 * h) / (CURVE_STEP * CURVE_STEP);
+	float rockness = k == ROCK ? 1.0 : smoothstep(ROCK_FROM, ROCK_FULL, steep);
+	float curve = rockness > 0.0 ? (smooth_height(UV + to_uv * down * CURVE_STEP) + smooth_height(UV - to_uv * down * CURVE_STEP) - 2.0 * h) / (CURVE_STEP * CURVE_STEP) : 0.0;
 	float convex = smoothstep(CREST_FROM, CREST_FULL, -curve);
 	float gully = smoothstep(CREST_FROM, CREST_FULL, curve);
-	float rockness = k == ROCK ? 1.0 : smoothstep(ROCK_FROM, ROCK_FULL, steep);
 	float crest = 4.0 * rockness * (1.0 - rockness) * convex;
 	float sheer = smoothstep(ROCK_FULL * 1.4, SHEER, steep);
 	float foot = smoothstep(ROCK_FROM - FOOT_BAND, ROCK_FROM, steep) * (1.0 - rockness) * (k == ROCK ? 0.0 : 1.0);
@@ -173,10 +194,10 @@ void fragment() {
 		bool bare = k != WATER && k != ROAD && k != BRIDGE;
 		if (bare && rockness >= 1.0 - 1e-3 && k != WOOD) c = rock;
 		else {
-			if (style == ANCIENT) c = ancient(k, beside, tint, sheet, p, UV, to_uv, own, down, follow, rockness, fw, edge, shore, cover);
-			else if (style == MODERN) c = modern(k, beside, tint, sheet, p, UV, to_uv, own, down, follow, rockness, fw, edge, shore, cover);
-			else c = survey(k, beside, tint, sheet, p, UV, to_uv, own, down, follow, rockness, fw, edge, shore, bump, cover);
-			c = mix(c, plain(style, tint, sheet, p, edge), halo * HALO);
+			if (style == ANCIENT) c = ancient(k, beside, tint, sheet, p, UV, to_uv, own, levels, down, follow, rockness, fw, edge, shore, cover);
+			else if (style == MODERN) c = modern(k, beside, tint, sheet, p, UV, to_uv, own, levels, down, follow, rockness, fw, edge, shore, cover);
+			else c = survey(k, beside, tint, sheet, p, UV, to_uv, own, levels, down, follow, rockness, fw, edge, shore, bump, cover);
+			if (halo > 0.001) c = mix(c, plain(style, tint, sheet, p, edge), halo * HALO);
 			c = mix(c, c * (1.0 - MARK_SHADE), dark * cover * smoothstep(0.04, 0.35, steep_n));
 			if (bare) c = slopes(c, n, p, world.y, fw, style, (1.0 - cover) * (1.0 - rockness));
 			if (k == WATER && beside == BRIDGE) c *= 1.0 - 0.45 * (1.0 - smoothstep(0.0, PARAPET * 1.5, edge));

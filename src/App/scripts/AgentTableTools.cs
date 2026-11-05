@@ -32,7 +32,8 @@ sealed partial class AgentTableTools
                 new Arg("pairs", "array", "[{relief, picture}, …]: a relief file and the picture to lay on it (leave picture out for the model's own texture, or set own_texture false for plain ground)"),
                 new Arg("as_placed", "boolean", "lay relief tiles out as their files place them (true if left out)"),
                 new Arg("one_zero", "boolean", "one lowest point for all the reliefs added together (true if left out)"),
-                new Arg("blank", "array", "[width, depth] in map units: also add a blank ground sheet (plain, flat) to shape and paint with shape_ground")), AddSheets);
+                new Arg("blank", "array", "[width, depth] in map units: also add a blank ground sheet (plain, flat) to shape and paint with shape_ground"),
+                new Arg("scale", "number", "metres to the map unit, when the map has no scale yet (50 is usual); blank ground needs one, and a relief file that knows its metres sets it by itself")), AddSheets);
         yield return new AgentTool("list_map_sheets",
             "The map sheets on the table: id, name, centre, size, turn, locked, layer, whether it has a picture and a relief, the relief's height ×, and its highest point in map units.",
             Args.Schema(), _ => Task.FromResult(ListSheets()));
@@ -97,8 +98,11 @@ sealed partial class AgentTableTools
         var rest = pictures.Where(x => !used.Contains(x)).ToList();
         int expected = jobs.Count + rest.Count + (blank != null ? 1 : 0);
         int before = s.View.Sheets.Count;
+        double? metresPerUnit = a.Num("scale");
+        if (blank != null && !ReliefTool.Scaled(s) && metresPerUnit is not > 0) return ToolResult.Fail("Blank ground on a map without a scale needs scale, metres to the unit (50 is usual).");
+        if (metresPerUnit is > 0 && !ReliefTool.Scaled(s)) s.Do(new SetCalibration { UnitsPerMeter = 1 / metresPerUnit.Value, Units = s.View.Calibration.Units });
         if (blank is var (bw, bd)) hud.Map.Reliefs.AddBlank(bw, bd);
-        if (jobs.Count > 0) hud.Map.Reliefs.Import(jobs, a.Flag("as_placed") != false, a.Flag("one_zero") != false, () => { if (rest.Count > 0) hud.Map.AddPictures(rest); });
+        if (jobs.Count > 0) hud.Map.Reliefs.Import(jobs, a.Flag("as_placed") != false, a.Flag("one_zero") != false, !ReliefTool.Scaled(s), () => { if (rest.Count > 0) hud.Map.AddPictures(rest); });
         else if (rest.Count > 0) hud.Map.AddPictures(rest);
         for (int i = 0; i < 6000 && s.View.Sheets.Count < before + expected; i++) await _a.Delay(0.1);
         int added = s.View.Sheets.Count - before;
@@ -186,6 +190,7 @@ sealed partial class AgentTableTools
             ["relief_height"] = x.Relief is { Length: > 0 } ? Math.Round(x.Height, 3) : null,
             ["highest"] = s.Relief.Grid(x) is { } g ? Math.Round(g.Highest * Ground.FullWidth(x) * x.Height, 3) : null,
             ["painted"] = s.Relief.Grid(x)?.Painted == true,
+            ["metres_per_unit"] = s.View.Calibration.UnitsPerMeter is { } upm && upm > 0 ? Math.Round(1 / upm, 3) : null,
         }).ToArray());
         return new ToolResult(rows.Count == 0 ? "No map sheets yet: add_map_sheets." : rows.ToJsonString(Opts));
     }

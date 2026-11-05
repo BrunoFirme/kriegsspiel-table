@@ -22,9 +22,12 @@ sealed partial class TableDemos
         return look;
     }
 
+    const double DemoMetresPerUnit = 50;
+
     void DemoGround(Hud hud, string how)
     {
         var look = GroundLook(how);
+        Session.Do(new SetCalibration { UnitsPerMeter = 1 / DemoMetresPerUnit });
         hud.Map.Reliefs.AddBlank(GroundWidth, GroundDepth, why =>
         {
             if (why != null) { GD.Print("[ground] blank failed: " + why); return; }
@@ -60,6 +63,10 @@ sealed partial class TableDemos
         ("cliffwood3d", -39, -19, 10, 35, 10),
         ("terrace", 4, -5, 14, 90, 0),
         ("terrace3d", 4, -5, 14, 35, 0),
+        ("farm", -39, 24, 9, 90, 0),
+        ("stands", -28, 24, 9, 90, 0),
+        ("plots", -40, -36, 26, 90, 0),
+        ("trees", 6, -36, 10, 90, 0),
         ("village", 2, -22, 16, 90, 0),
         ("macro", -40, 26, 5, 90, 0),
         ("swatch3d", -6, 16, 26, 32, 0),
@@ -119,7 +126,10 @@ sealed partial class TableDemos
     {
         static byte K(string name) => GroundKinds.Of(name)!.Value;
         byte salt = saltFrom;
-        void Paint(string kind, double r, double density, params (double, double)[] pts) => ReliefBrush.Stroke(g, pts, r, new Brush(BrushMode.Paint, 0, 1, K(kind), Density: density, Salt: ++salt));
+        void Paint(string kind, double r, double density, params (double, double)[] pts) =>
+            ReliefBrush.Stroke(g, pts, r, new Brush(BrushMode.Paint, 0, 1, K(kind), Density: density, Salt: ++salt, Detail: GroundKinds.Levels(50, 25)));
+        void PaintAt(string kind, int first, int second, double u0, double v0, double u1, double v1) =>
+            ReliefBrush.Shape(g, [(u0, v0), (u1, v0), (u1, v1), (u0, v1)], new Brush(BrushMode.Paint, 0, 1, K(kind), Salt: ++salt, Detail: GroundKinds.Levels(first, second)));
         void Raise(double r, double strength, params (double, double)[] pts) => ReliefBrush.Stroke(g, pts, r, new Brush(BrushMode.Raise, 0, strength));
         void Lower(double r, double strength, params (double, double)[] pts) => ReliefBrush.Stroke(g, pts, r, new Brush(BrushMode.Lower, 0, strength));
 
@@ -160,5 +170,9 @@ sealed partial class TableDemos
         Paint("wood", 5, 1, (0.135, 0.73), (0.21, 0.73), (0.21, 0.76), (0.135, 0.76));
         for (int i = 0; i < 3; i++) Raise(26, 1, (0.53, 0.57));
         Paint("field", 8, 1, (0.5, 0.54), (0.56, 0.56), (0.5, 0.59));
+        (int plots, int buildings)[] strips = [(50, 0), (50, 15), (50, 100), (0, 25), (80, 25)];
+        for (int i = 0; i < strips.Length; i++) PaintAt("field", strips[i].plots, strips[i].buildings, 0.02 + i * 0.062, 0.92, 0.078 + i * 0.062, 0.985);
+        PaintAt("wood", 20, 0, 0.49, 0.92, 0.545, 0.985);
+        PaintAt("wood", 80, 0, 0.555, 0.92, 0.61, 0.985);
     }
 }

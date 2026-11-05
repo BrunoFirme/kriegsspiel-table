@@ -42,6 +42,10 @@ contour_interval={
 "type": "float",
 "value": 0.0
 }
+units_per_metre={
+"type": "float",
+"value": 0.0
+}
 
 [steam]
 
