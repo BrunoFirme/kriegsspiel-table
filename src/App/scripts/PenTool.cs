@@ -140,8 +140,9 @@ sealed class PenTool
             if (!_c.S.CanEdit(layer) || !_c.LayerShown(layer)) continue;
             foreach (var st in strokes.ToList())
             {
-                if (!drawings.OnDrawBoard(st.Board) || !Polyline.Rubs(st.Points, p, r)) continue;
+                if (!drawings.OnDrawBoard(st.Board) || !Polyline.Near(st.Points, p, r)) continue;
                 cmds.Add(new EraseStroke { Layer = layer, StrokeId = st.Id });
+                if (st.Text != null) continue;
                 foreach (var piece in Polyline.Cut(st.Points, p, r))
                     cmds.Add(new Draw { Layer = layer, Stroke = new Stroke { Points = piece, Color = st.Color, Width = st.Width, Board = st.Board } });
             }
@@ -149,7 +150,7 @@ sealed class PenTool
         if (cmds.Count == 0)
         {
             var other = view.Drawings.Values.SelectMany(l => l)
-                .FirstOrDefault(st => st.Board.Length > 0 && st.Board != drawings.DrawBoard() && drawings.BoardShown(st.Board) && Polyline.Rubs(st.Points, p, r));
+                .FirstOrDefault(st => st.Board.Length > 0 && st.Board != drawings.DrawBoard() && drawings.BoardShown(st.Board) && Polyline.Near(st.Points, p, r));
             if (other != null)
                 _c.Say($"That drawing is on {view.Boards.FirstOrDefault(b => b.Id == other.Board)?.Name ?? "another layer"} · pick that layer to rub it out.");
             return;

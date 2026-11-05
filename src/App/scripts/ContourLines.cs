@@ -14,9 +14,8 @@ sealed class ContourLines
     const int MostLabels = 120;
     const double LabelEveryCells = 26, LabelApartCells = 7;
     const float TextPerExtent = 1 / 160f, ReachPerText = 4f;
-    const int FontPixels = 96, Margin = 12, HaloPixels = 10;
+    const int FontPixels = 96;
     static readonly Color[] Ink = { new(0.42f, 0.27f, 0.17f), new(0.36f, 0.22f, 0.12f), new(0.6f, 0.33f, 0.13f) };
-    static readonly Color[] Paper = { new(0.87f, 0.82f, 0.7f, 0.55f), new(0.83f, 0.72f, 0.5f, 0.55f), new(0.95f, 0.945f, 0.9f, 0.7f) };
     static readonly string[] Serifs = { "Georgia", "Times New Roman", "Liberation Serif", "DejaVu Serif" };
     static readonly string[] Sans = { "Arial", "Liberation Sans", "Noto Sans", "DejaVu Sans" };
     static readonly Font[] Faces =
@@ -29,7 +28,7 @@ sealed class ContourLines
     readonly TableContext _c;
     readonly SheetLayer _sheets;
     readonly List<Decal> _labels = new();
-    readonly Dictionary<(string, int), Lettered> _lettering = new();
+    readonly MapLettering _letters;
     Lighting? _look;
     bool _due;
     double _wait;
@@ -37,18 +36,12 @@ sealed class ContourLines
 
     public readonly Node3D Root = new() { Name = "Contours" };
 
-    sealed class Lettered
+    public ContourLines(TableContext c, SheetLayer sheets, MapLettering letters)
     {
-        public SubViewport? View;
-        public ImageTexture? Texture;
-        public Vector2 Size;
-        public int FramesLeft = FramesToRender;
-        public readonly List<Decal> Waiting = new();
+        _c = c;
+        _sheets = sheets;
+        _letters = letters;
     }
-
-    const int FramesToRender = 2;
-
-    public ContourLines(TableContext c, SheetLayer sheets) { _c = c; _sheets = sheets; }
 
     public void Due(Lighting? look = null)
     {
@@ -58,7 +51,7 @@ sealed class ContourLines
 
     public void Tick(double delta)
     {
-        Develop();
+        _letters.Develop();
         if ((_look ?? _c.S.View.Lighting).Contours && _c.S.Ground.Highest != _plannedFor) _due = true;
         if (!_due) return;
         _wait -= delta;
@@ -153,60 +146,10 @@ sealed class ContourLines
 
     static bool Near(Vec2 a, Vec2 b, double within) => (a.X - b.X) * (a.X - b.X) + (a.Z - b.Z) * (a.Z - b.Z) < within * within;
 
-    void Develop()
-    {
-        foreach (var l in _lettering.Values)
-        {
-            if (l.View == null || --l.FramesLeft > 0) continue;
-            l.Texture = ImageTexture.CreateFromImage(l.View.GetTexture().GetImage());
-            l.View.QueueFree();
-            l.View = null;
-            foreach (var d in l.Waiting) if (GodotObject.IsInstanceValid(d)) d.TextureAlbedo = l.Texture;
-            l.Waiting.Clear();
-        }
-    }
-
-    Lettered Lettering(string words, int style)
-    {
-        if (_lettering.TryGetValue((words, style), out var made)) return made;
-        var font = Faces[style];
-        var size = font.GetStringSize(words, HorizontalAlignment.Left, -1, FontPixels) + new Vector2(Margin * 2, Margin * 2);
-        var view = new SubViewport
-        {
-            Size = new Vector2I((int)Math.Ceiling(size.X), (int)Math.Ceiling(size.Y)),
-            TransparentBg = true,
-            RenderTargetUpdateMode = SubViewport.UpdateMode.Once,
-            Disable3D = true,
-        };
-        var label = new Label { Text = words, Position = new Vector2(Margin, Margin) };
-        label.AddThemeFontOverride("font", font);
-        label.AddThemeFontSizeOverride("font_size", FontPixels);
-        label.AddThemeColorOverride("font_color", Ink[style]);
-        label.AddThemeColorOverride("font_outline_color", Paper[style]);
-        label.AddThemeConstantOverride("outline_size", HaloPixels);
-        view.AddChild(label);
-        Root.AddChild(view);
-        return _lettering[(words, style)] = new Lettered { View = view, Size = size };
-    }
-
     void Paint(Vec2 p, double upX, double upZ, string words, float text, double groundY, double slope, int style)
     {
-        var lettered = Lettering(words, style);
-        var size = lettered.Size;
+        var lettered = _letters.Bake($"contour/{style}:{words}", words, new MapLettering.Hand($"contour/{style}", Faces[style], FontPixels, Ink[style], MapLettering.Paper[style]));
         var up = (Coords.ToWorld(new Vec2(p.X + upX, p.Z + upZ)) - Coords.ToWorld(p)).Normalized();
-        var right = new Vector3(-up.Z, 0, up.X);
-        float width = text * size.X / size.Y;
-        float reach = text * ReachPerText * (1 + (float)slope);
-        var decal = new Decal
-        {
-            Size = new Vector3(width, reach, text),
-            CullMask = ReliefSurface.GroundLayer,
-            NormalFade = 0,
-            Transform = new Transform3D(new Basis(right, Vector3.Up, -up), Coords.ToWorld(p, (float)groundY)),
-        };
-        Root.AddChild(decal);
-        if (lettered.Texture != null) decal.TextureAlbedo = lettered.Texture;
-        else lettered.Waiting.Add(decal);
-        _labels.Add(decal);
+        _labels.Add(_letters.Place(lettered, Coords.ToWorld(p, (float)groundY), up, text, (float)slope));
     }
 }

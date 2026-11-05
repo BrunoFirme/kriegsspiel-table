@@ -13,7 +13,7 @@ public sealed partial class TableTools
     IEnumerable<AgentTool> DrawingTools()
     {
         yield return new AgentTool("list_drawings",
-            "The lines drawn on the map, by the pen or by draw: id, layer, colour, width, where each starts and ends. With near, only those passing within radius of that point.",
+            "The lines and names drawn on the map, by the pen or by draw: id, layer, colour, width, text for a name, where each starts and ends. With near, only those passing within radius of that point.",
             Args.Schema(new Arg("near", "array", "[x, z] map units"), new Arg("radius", "number", $"map units (default {ListRadius})")), ListDrawings);
         yield return new AgentTool("erase_drawings",
             "Erases drawn lines, as the pen's eraser does: by id (list_drawings, or what draw answered), or every line passing within radius of near. Each is undoable.",
@@ -44,7 +44,7 @@ public sealed partial class TableTools
                 rows.Add(new JsonObject
                 {
                     ["id"] = st.Id, ["layer"] = layer, ["colour"] = st.Color, ["width"] = Math.Round(st.Width, 3), ["points"] = st.Points.Count,
-                    ["from"] = At(st.Points[0]), ["to"] = At(st.Points[^1]), ["board"] = st.Board.Length > 0 ? st.Board : null,
+                    ["from"] = At(st.Points[0]), ["to"] = At(st.Points[^1]), ["board"] = st.Board.Length > 0 ? st.Board : null, ["text"] = st.Text,
                 });
             }
         if (total == 0) return Task.FromResult(new ToolResult(near == null ? "Nothing is drawn on the map." : "No drawn line passes there."));

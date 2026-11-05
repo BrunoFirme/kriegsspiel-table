@@ -420,6 +420,7 @@ public sealed class Stroke
     public double Width { get; set; } = 0.3;
     public string Color { get; set; } = "#000000";
     public string Board { get; set; } = "";
+    public string? Text { get; set; }
 }
 
 public sealed class BoardDef

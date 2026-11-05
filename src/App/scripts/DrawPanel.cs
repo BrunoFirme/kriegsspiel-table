@@ -41,9 +41,10 @@ sealed class DrawPanel : HudPart
         {
             ("free", "draw", "Freehand"), ("line", "shape-line", "Line"), ("rect", "shape-rect", "Rectangle"),
             ("ellipse", "shape-ellipse", "Ellipse"), ("arrow", "shape-arrow", "Arrow"), ("erase", "erase", "Erase a drawing"),
+            ("name", "", "Name: click, or drag a path, and type · Enter lays it, Esc drops it · double-click a name to retype it, drag to move it"),
         };
         bool locked = T.DrawingLocked;
-        string current = T.Tool == Tool.Draw ? "free" : T.Tool == Tool.Erase ? "erase" : T.ShapeKind;
+        string current = T.Tool == Tool.Draw ? "free" : T.Tool == Tool.Erase ? "erase" : T.Tool == Tool.Letter ? "name" : T.ShapeKind;
         var tools = new GridContainer { Columns = 3 };
         tools.AddThemeConstantOverride("h_separation", 3);
         tools.AddThemeConstantOverride("v_separation", 3);
@@ -52,12 +53,14 @@ sealed class DrawPanel : HudPart
             var b =
                 new Button { ToggleMode = true, ButtonPressed = key == current && !locked, Disabled = locked, FocusMode = Control.FocusModeEnum.None, TooltipText = tip,
                     CustomMinimumSize = new Vector2(30, 30), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-            b.AddChild(new ToolIcon { Kind = icon });
+            if (icon.Length > 0) b.AddChild(new ToolIcon { Kind = icon });
+            else b.Text = "Aa";
             string k = key;
             b.Pressed += () =>
             {
                 if (k == "free") T.SetTool(Tool.Draw);
                 else if (k == "erase") T.SetTool(Tool.Erase);
+                else if (k == "name") T.SetTool(Tool.Letter);
                 else
                 {
                     T.ShapeKind = k;

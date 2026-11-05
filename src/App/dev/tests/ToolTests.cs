@@ -176,6 +176,25 @@ static class ToolTests
     }
 
     [NodeTest]
+    static async Task A_name_laid_on_the_map_is_a_stroke_with_text_that_the_rubber_takes_whole(TestRunner r)
+    {
+        var t = OfflineTable.Make(r, pieces: 0);
+        await r.Frame();
+        t.Table.Letters.Lay(new Vec2(3, 2), "Boggs Mill");
+        await r.Frame();
+        var name = (t.S.View.Drawings.GetValueOrDefault(U) ?? new()).Single();
+        Check.Equal("Boggs Mill", name.Text, "the name is the stroke's text");
+        Check.Equal(0.0, name.Width, "no width, so an older client draws nothing");
+        Check.Equal(1, name.Points.Count, "placed at its point on bare paper");
+        t.Table.Pen.PressErase(new Vec2(3, 2));
+        await r.Frame();
+        Check.Equal(0, (t.S.View.Drawings.GetValueOrDefault(U) ?? new()).Count, "the rubber takes a name whole");
+        t.S.UndoLast();
+        await r.Frame();
+        Check.Equal(1, (t.S.View.Drawings.GetValueOrDefault(U) ?? new()).Count, "and undo brings it back");
+    }
+
+    [NodeTest]
     static Task The_ruler_s_marks_fall_on_round_numbers(TestRunner r)
     {
         Check.Equal(2.0, RulerTool.NiceStep(7), "a line of 7");

@@ -142,7 +142,7 @@ public partial class Hud : CanvasLayer
             Pov.Rebuild();
             Paint.Rebuild();
             Relief?.Rebuild();
-            if (T.Tool is Tool.Draw or Tool.Shape or Tool.Erase) OpenPanel("paint");
+            if (T.Tool is Tool.Draw or Tool.Shape or Tool.Erase or Tool.Letter) OpenPanel("paint");
             else ClosePanel("paint");
             if (T.Tool == Tool.Relief) OpenPanel("relief");
             else ClosePanel("relief");

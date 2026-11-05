@@ -167,7 +167,7 @@ public partial class Hud
     internal void OpenPanel(string key)
     {
         if (!Panels.TryGetValue(key, out var p)) return;
-        if (key == "paint" && T != null && T.Tool is not (Tool.Draw or Tool.Shape or Tool.Erase)) T.SetTool(Tool.Draw);
+        if (key == "paint" && T != null && T.Tool is not (Tool.Draw or Tool.Shape or Tool.Erase or Tool.Letter)) T.SetTool(Tool.Draw);
         if (key == "relief" && T != null && T.Tool != Tool.Relief) T.SetTool(Tool.Relief);
         if (key == "formation" && T != null && T.Tool != Tool.Formation) T.SetTool(Tool.Formation);
         p.Visible = true;
@@ -201,7 +201,7 @@ public partial class Hud
     {
         if (!Panels.TryGetValue(key, out var p)) return;
         p.Visible = false;
-        if (key == "paint" && T != null && T.Tool is Tool.Draw or Tool.Shape or Tool.Erase) T.SetTool(Tool.Select);
+        if (key == "paint" && T != null && T.Tool is Tool.Draw or Tool.Shape or Tool.Erase or Tool.Letter) T.SetTool(Tool.Select);
         if (key == "relief" && T != null && T.Tool == Tool.Relief) T.SetTool(Tool.Select);
         if (key == "formation" && T != null && T.Tool == Tool.Formation) T.SetTool(Tool.Select);
         if (key == "pieces" && T != null && T.Tool == Tool.Place) T.SetTool(Tool.Select);

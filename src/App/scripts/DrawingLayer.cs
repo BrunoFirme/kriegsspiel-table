@@ -14,7 +14,13 @@ sealed class DrawingLayer
     readonly Dictionary<string, MeshInstance3D> _drawings = new();
     public Node3D Root = null!;
 
-    public DrawingLayer(TableContext c) { _c = c; }
+    readonly MapLettering _lettering;
+
+    public DrawingLayer(TableContext c, MapLettering lettering)
+    {
+        _c = c;
+        _lettering = lettering;
+    }
 
     public string Board = "";
     public readonly HashSet<string> HiddenBoards = new();
@@ -45,7 +51,7 @@ sealed class DrawingLayer
             var im = new ImmediateMesh();
             foreach (var st in strokes)
             {
-                if (st.Points.Count < 2 || !BoardShown(st.Board)) continue;
+                if (st.Text != null || st.Points.Count < 2 || !BoardShown(st.Board)) continue;
                 var color = Coords.ParseColor(st.Color, Colors.Black);
                 var mat = new StandardMaterial3D
                 {
@@ -58,6 +64,7 @@ sealed class DrawingLayer
             Root.AddChild(mi);
             _drawings[layer] = mi;
         }
+        _lettering.Sync(BoardShown);
     }
 
     public void Reground() => Sync();

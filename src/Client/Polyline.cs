@@ -110,6 +110,8 @@ public static class Polyline
         };
     }
 
+    public static bool Near(List<Vec2> pts, Vec2 c, double r) => pts.Count == 1 ? (pts[0] - c).Length <= r : Rubs(pts, c, r);
+
     public static bool Rubs(List<Vec2> pts, Vec2 c, double r)
     {
         for (int i = 0; i < pts.Count; i++)

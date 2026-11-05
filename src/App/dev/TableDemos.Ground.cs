@@ -59,6 +59,8 @@ sealed partial class TableDemos
         ("hill", -30, -16, 22, 30, 20),
         ("hillnear", -30, -16, 9, 35, 20),
         ("route", -8, -6, 46, 90, 0),
+        ("names", 8, -22, 50, 90, 0),
+        ("names3d", 8, -22, 40, 40, 10),
         ("hilltop", -32, -14, 9, 90, 0),
         ("cliff", -50, -19, 10, 90, 0),
         ("cliff3d", -50, -19, 10, 35, 10),
@@ -93,6 +95,8 @@ sealed partial class TableDemos
     async System.Threading.Tasks.Task GroundTour(Hud hud, string dir)
     {
         await _main.ToSignal(Tree.CreateTimer(TourSettleSeconds), SceneTreeTimer.SignalName.Timeout);
+        NameGround();
+        await _main.ToSignal(Tree.CreateTimer(ViewSettleSeconds), SceneTreeTimer.SignalName.Timeout);
         hud.Visible = false;
         RenderingServer.ViewportSetMeasureRenderTime(_main.GetViewport().GetViewportRid(), true);
         var views = _args.TryGetValue("ground-views", out var only) ? GroundViews.Where(g => only.Split(',').Contains(g.Name)).ToList() : GroundViews.ToList();
@@ -109,6 +113,23 @@ sealed partial class TableDemos
             foreach (var v in GroundViews.Where(g => ReseedViews.Contains(g.Name))) await Shoot(again, v);
         }
         _main.QuitApp();
+    }
+
+    static readonly (string Text, double U, double V)[] DemoNames =
+    [
+        ("Pogue", 0.515, 0.77), ("Boggs Mill", 0.66, 0.815), ("Carrick", 0.39, 0.86),
+        ("Black Wood", 0.1, 0.53), ("Long Marsh", 0.62, 0.62), ("The Knoll", 0.24, 0.6), ("Far Field", 0.53, 0.56),
+        ("Mill Water", 0.9, 0.86), ("Carrick Burn", 0.55, 0.3),
+    ];
+
+    void NameGround()
+    {
+        var sheet = Session.View.Sheets.Last();
+        foreach (var (text, u, v) in DemoNames)
+        {
+            var at = Ground.FromUv(sheet, u, v);
+            Session.Do(new Draw { Layer = Layers.Umpire, Stroke = LetterTool.Named(Session.Ground.NameAt(at, text).Baseline, text, "") });
+        }
     }
 
     async System.Threading.Tasks.Task Shoot(string dir, (string Name, double X, double Z, float Size, float PitchDeg, float YawDeg) v)

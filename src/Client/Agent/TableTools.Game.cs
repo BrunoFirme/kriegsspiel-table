@@ -69,8 +69,8 @@ public sealed partial class TableTools
             "Writes a line in the log everyone at the table reads.",
             Args.Schema(new Arg("text", "string", "the line", true), new Arg("colour", "string", "#rrggbb")), SayTool);
         yield return new AgentTool("draw",
-            "Draws a line on the map through points (map units), as the pen does; arrow adds a head at the end; board puts it on a drawing layer of that name, made if missing. Undoable.",
-            Args.Schema(new Arg("points", "array", "[[x, z], [x, z], …]", true), new Arg("colour", "string", "#rrggbb"), new Arg("width", "number", "map units (default 0.3)"), new Arg("arrow", "boolean", "a head at the end"),
+            "Draws a line on the map through points (map units), as the pen does, or with text writes a name on the map in the map style's hand: one point places it by what lies under it (beside a town, along a river, spread across a patch of ground, plain on bare paper), more points are its baseline; arrow adds a head at a line's end; board puts it on a drawing layer of that name, made if missing. Undoable.",
+            Args.Schema(new Arg("points", "array", "[[x, z], [x, z], …]", true), new Arg("colour", "string", "#rrggbb"), new Arg("width", "number", "map units (default 0.3)"), new Arg("text", "string", "a name to write instead of a line"), new Arg("arrow", "boolean", "a head at the end"),
                 new Arg("board", "string", "the drawing layer's name (list_drawings shows them); left out, the default layer")),
             DrawTool);
         yield return new AgentTool("set_zone",
@@ -368,7 +368,8 @@ public sealed partial class TableTools
         if (Open(out var why) is not { } s) return why!;
         if (!CanChange(s, out why)) return why!;
         var pts = Points(a, "points");
-        if (pts is not { Count: >= 2 } || pts.Count > 2000) return ToolResult.Fail("points is [[x, z], …], 2 to 2000 of them.");
+        var text = a.Str("text")?.Trim() ?? "";
+        if (pts is not { Count: >= 1 } || pts.Count > 2000 || text.Length == 0 && pts.Count < 2) return ToolResult.Fail("points is [[x, z], …], 2 to 2000 of them, or one or more with text.");
         var colour = a.Str("colour") ?? "#C0392B";
         double width = Math.Clamp(a.Num("width") ?? 0.3, 0.02, 20);
         var board = "";
@@ -381,8 +382,10 @@ public sealed partial class TableTools
         }
         var before = s.View.DrawLayer(Layers.Umpire).Select(x => x.Id).ToHashSet();
         int made = 1;
-        s.Do(new Draw { Layer = Layers.Umpire, Stroke = new Stroke { Points = pts, Width = width, Color = colour, Board = board } });
-        if (a.Flag("arrow") == true)
+        var placed = pts.Count == 1 ? _placeName?.Invoke(pts[0], text) ?? pts : pts;
+        var stroke = text.Length > 0 ? new Stroke { Points = placed, Text = text, Width = 0, Color = "", Board = board } : new Stroke { Points = pts, Width = width, Color = colour, Board = board };
+        s.Do(new Draw { Layer = Layers.Umpire, Stroke = stroke });
+        if (text.Length == 0 && a.Flag("arrow") == true)
         {
             var tip = pts[^1];
             var from = pts[^2];
@@ -400,7 +403,8 @@ public sealed partial class TableTools
         await Until(() => s.View.DrawLayer(Layers.Umpire).Count(x => !before.Contains(x.Id)) >= made, 3);
         var ids = s.View.DrawLayer(Layers.Umpire).Where(x => !before.Contains(x.Id)).Select(x => x.Id).ToList();
         _log("drew on the map");
-        return new ToolResult($"Drew a line of {pts.Count} points{(made > 1 ? " with an arrowhead" : "")} ({string.Join(", ", ids)}; erase_drawings takes them).");
+        var did = text.Length > 0 ? $"Wrote {text}" : $"Drew a line of {pts.Count} points{(made > 1 ? " with an arrowhead" : "")}";
+        return new ToolResult($"{did} ({string.Join(", ", ids)}; erase_drawings takes them).");
     }
 
     async Task<ToolResult> SetZoneTool(JsonElement a)

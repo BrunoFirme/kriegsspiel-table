@@ -27,6 +27,7 @@ sealed class TableInput
     readonly NameEditor _names;
     readonly PaletteDrag _palette;
     readonly PenTool _pen;
+    readonly LetterTool _letters;
     readonly RulerTool _ruler;
     readonly RangeRings _ranges;
     readonly CropTool _crop;
@@ -36,7 +37,7 @@ sealed class TableInput
     readonly FormationTool _forms;
 
     public TableInput(TableContext c, PointerPress press, CameraControl cam, PieceLayer pieces, Sighting sighting, Selection selection,
-        PendingPoses poses, Gizmo gizmo, Carry hand, PieceActions actions, NameEditor names, PaletteDrag palette, PenTool pen,
+        PendingPoses poses, Gizmo gizmo, Carry hand, PieceActions actions, NameEditor names, PaletteDrag palette, PenTool pen, LetterTool letters,
         RulerTool ruler, RangeRings ranges, CropTool crop, ZoneLayer zones, SelectTool selectTool, ReliefTool relief, FormationTool forms)
     {
         _relief = relief;
@@ -54,6 +55,7 @@ sealed class TableInput
         _names = names;
         _palette = palette;
         _pen = pen;
+        _letters = letters;
         _ruler = ruler;
         _ranges = ranges;
         _crop = crop;
@@ -325,6 +327,9 @@ sealed class TableInput
             case Tool.Erase:
                 _pen.PressErase(g.Value);
                 break;
+            case Tool.Letter:
+                _letters.Press(g.Value, mb.DoubleClick);
+                break;
             case Tool.Formation:
                 if (mb.DoubleClick && _pieces.Pick(g.Value, screen: mb.Position) is { } like) _selectTool.SelectAlike(like, add: mb.ShiftPressed || mb.CtrlPressed);
                 else _selectTool.Press(mb, g.Value);
@@ -363,6 +368,9 @@ sealed class TableInput
                 break;
             case Tool.Shape:
                 _pen.ReleaseShape();
+                break;
+            case Tool.Letter:
+                _letters.Release();
                 break;
             case Tool.Sighting:
                 _sighting.Release();
@@ -417,6 +425,9 @@ sealed class TableInput
             case Tool.Erase:
                 if (g != null) _pen.RubAt(g.Value);
                 break;
+            case Tool.Letter:
+                if (g != null) _letters.Motion(g.Value);
+                break;
             case Tool.Capture:
                 _c.NotifyScreenRect(new Rect2(PressPos, mm.Position - PressPos).Abs());
                 break;
@@ -469,6 +480,8 @@ sealed class TableInput
 
     public bool DropReliefShape() => _c.Tool == Tool.Relief && _relief.DropShape();
 
+    public bool DropLetter() => _c.Tool == Tool.Letter && _letters.Drop();
+
     public void EndGesture()
     {
         if (_hand.Holding) _hand.Drop();
@@ -481,6 +494,7 @@ sealed class TableInput
         _forms.Cancel();
         _pen.Drop();
         _zones.Drop();
+        if (!_letters.Open) _letters.Drop();
         _crop.Release();
         _c.NotifyScreenRect(null);
     }

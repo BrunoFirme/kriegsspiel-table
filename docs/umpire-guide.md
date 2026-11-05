@@ -150,8 +150,14 @@ Drag along the map's scale bar and type what it measures. Distances then read in
 
 ### Draw
 
-Freehand, shapes (line, rectangle, ellipse, arrow) and a rubber that takes away only what it passes over. The
-panel holds the ink, the pen's width (in screen pixels) and the layer.
+Freehand, shapes (line, rectangle, ellipse, arrow), a name and a rubber that takes away only what it passes
+over. The panel holds the ink, the pen's width (in screen pixels) and the layer.
+
+**Name** writes on the map in the map style's hand: click, or drag a path, type the name and press **Enter**
+(**Esc** drops it). Where the click lands decides the hand: beside a town a place name, on a river a name along
+its course, on a patch of ground spaced capitals across it, on bare paper a plain name. Double-click a name to
+retype it, drag it to move it; the rubber takes a name whole. A name is a drawing: it sits on the layer picked
+and undoes like a stroke.
 
 ### Layers
 
@@ -225,6 +231,11 @@ ground.
   with one click of grass; on its own kind it lays the patch afresh. The **rectangle** and **ellipse** beside it paint a field, a wood or a pond in one drag
   (**Shift** for a square or a circle, lined up with the view); the **polygon** paints the shape of its corners,
   clicked in turn and closed on the first or with a double-click (**Esc** drops it). Each shape is one undo.
+  **Route** lays ground that finds its own way: click the waypoints, then the last again or double-click, and
+  between them the ground takes the easiest path over the relief at the brush's width, as a road would: cheap
+  along roads and into towns, dear through wood, marsh and rock, over narrow water as a bridge and round wide
+  water. With the water swatch the first click is a spring: a river runs down by the steepest descent, widening
+  as it goes, until it meets water, the sheet's edge, or a hollow, where it ends in a pond. One route, one undo.
   **Density** below 100% lays the ground in clumps: sparse wood, scattered rock, broken
   marsh; with ✕ it thins a wood. **Shift+click** runs straight on from the last stroke, for roads, rivers and
   ridges. **Alt+click** picks up the ground under the cursor.
@@ -232,6 +243,9 @@ ground.
   in (**Ancient**, **18th-century survey** or **Modern topographic**) and turns on **contour lines** over every
   relief: redrawn as the ground is shaped, stepping in round heights once the map's scale is calibrated, every fifth
   line numbered. **Snow line** whitens every ground above a height in metres, once the map's scale is set.
+  **Streams** draws brooks where the relief gathers water, heavier the more it gathers, over every ground but
+  painted water, which swallows them; it needs the map's scale, and floors flatter than a fifth of a percent
+  stay dry.
 - Pieces lean with the slope under them and follow the ground when it changes.
 
 ### Umpires and zones

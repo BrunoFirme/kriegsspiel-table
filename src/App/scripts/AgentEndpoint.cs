@@ -6,6 +6,7 @@ using System.Linq;
 using System.Net.Sockets;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
+using KTable.Core.Model;
 using Godot;
 using KTable.Client.Agent;
 using KTable.Core;
@@ -317,7 +318,7 @@ public partial class AgentEndpoint : Node
     {
         var tools = new List<AgentTool>();
         tools.AddRange(new AppTools(this).Tools());
-        tools.AddRange(new TableTools(() => Session, () => InStudio, Delay, Log).Tools());
+        tools.AddRange(new TableTools(() => Session, () => InStudio, Delay, Log, (p, text) => Session is { } s ? s.Ground.NameAt(p, text).Baseline : new List<Vec2> { p }).Tools());
         tools.AddRange(new StudioTools(this).Tools());
         tools.AddRange(new AgentTableTools(this).Tools());
         tools.AddRange(new AgentSettingsTools(this, _cfg).Tools());

@@ -26,8 +26,11 @@ public sealed partial class TableTools
     readonly Func<double, Task> _delay;
     readonly Action<string> _log;
 
-    public TableTools(Func<ClientSession?> session, Func<bool> inStudio, Func<double, Task> delay, Action<string> log)
+    readonly Func<Vec2, string, List<Vec2>>? _placeName;
+
+    public TableTools(Func<ClientSession?> session, Func<bool> inStudio, Func<double, Task> delay, Action<string> log, Func<Vec2, string, List<Vec2>>? placeName = null)
     {
+        _placeName = placeName;
         _session = session;
         _inStudio = inStudio;
         _delay = delay;

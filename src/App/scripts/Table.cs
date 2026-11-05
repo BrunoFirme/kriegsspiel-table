@@ -8,7 +8,7 @@ using KTable.Core.Protocol;
 
 namespace KTable.App;
 
-public enum Tool { Select, Transform, Place, Ruler, Draw, Erase, Calibrate, Sighting, Capture, Zone, Crop, Range, Shape, Relief, Formation }
+public enum Tool { Select, Transform, Place, Ruler, Draw, Erase, Calibrate, Sighting, Capture, Zone, Crop, Range, Shape, Relief, Formation, Letter }
 
 public partial class Table : Node3D
 {
@@ -65,6 +65,7 @@ public partial class Table : Node3D
     internal CameraControl Cam { get; }
     internal SheetLayer Sheets { get; }
     internal ContourLines Contours { get; }
+    internal MapLettering MapLettering { get; }
     internal PieceLayer Pieces { get; }
     internal DrawingLayer Drawings { get; }
     internal Sighting Sighting { get; }
@@ -82,6 +83,7 @@ public partial class Table : Node3D
     internal NameEditor Names { get; }
     internal PaletteDrag Palette { get; }
     internal PenTool Pen { get; }
+    internal LetterTool Letters { get; }
     internal RulerTool Ruler { get; }
     internal RangeRings Ranges { get; }
     internal CropTool Crop { get; }
@@ -103,9 +105,10 @@ public partial class Table : Node3D
         Stage = new TableStage(_c);
         Cam = new CameraControl(_c);
         Sheets = new SheetLayer(_c, Cam);
-        Contours = new ContourLines(_c, Sheets);
+        MapLettering = new MapLettering(_c);
+        Contours = new ContourLines(_c, Sheets, MapLettering);
         Pieces = new PieceLayer(_c, picked);
-        Drawings = new DrawingLayer(_c);
+        Drawings = new DrawingLayer(_c, MapLettering);
         Sighting = new Sighting(_c, Sheets, Pieces);
         Overlay = new ToolOverlay(_c);
         Sync = new ViewSync(_c, picked, Stage, Sheets, Pieces, Drawings);
@@ -122,6 +125,7 @@ public partial class Table : Node3D
         Names = new NameEditor(_c);
         Palette = new PaletteDrag(_c, Pieces, Selection, Hand);
         Pen = new PenTool(_c, Overlay, Drawings);
+        Letters = new LetterTool(_c, Overlay, Drawings);
         Ruler = new RulerTool(_c, Overlay);
         Ranges = new RangeRings(_c, Overlay, Selection);
         Crop = new CropTool(_c, Overlay, Gizmo);
@@ -130,7 +134,7 @@ public partial class Table : Node3D
         Forms = new FormationTool(_c, Overlay, Selection, Hand);
         Pointers = new UmpirePointers(_c, p => Hand.SurfaceY(p, Layers.Umpire), Motion.Carrying, name => UmpireHue.Of(_c.S, name) ?? UmpireHue.Unassigned);
         SelectTool = new SelectTool(_c, press, Sheets, Pieces, Selection, Hand, Names, Actions);
-        Router = new TableInput(_c, press, Cam, Pieces, Sighting, Selection, Poses, Gizmo, Hand, Actions, Names, Palette, Pen, Ruler, Ranges, Crop, Zones, SelectTool, Relief, Forms);
+        Router = new TableInput(_c, press, Cam, Pieces, Sighting, Selection, Poses, Gizmo, Hand, Actions, Names, Palette, Pen, Letters, Ruler, Ranges, Crop, Zones, SelectTool, Relief, Forms);
         Keys = new TableKeys(_c, Router, Cam, Sheets, Pieces, Sighting, Selection, Poses, Hand, Dice, Clip, Hover, Actions, Pen, Ruler, Forms);
 
         Stage.ShadeChanged += Pieces.ShadeEffects;
@@ -144,6 +148,7 @@ public partial class Table : Node3D
         Overlay.Drawing += Ranges.Draw;
         Overlay.Drawing += Ruler.Draw;
         Overlay.Drawing += Pen.DrawInHand;
+        Overlay.Drawing += Letters.Draw;
         Overlay.Drawing += Forms.Draw;
         Sync.Connect(Poses, Clip, Zones);
         Sync.BoardsChanged += RefreshDrawings;
@@ -175,6 +180,7 @@ public partial class Table : Node3D
         SetStandIn(true);
         AddChild(Sheets.Root = new Node3D { Name = "Sheets" });
         AddChild(Contours.Root);
+        AddChild(MapLettering.Root);
         AddChild(Pieces.Root = new Node3D { Name = "Pieces" });
         AddChild(Drawings.Root = new Node3D { Name = "Drawings" });
         AddChild(Sighting.Root = new Node3D { Name = "Sightings" });
@@ -278,7 +284,7 @@ public partial class Table : Node3D
 
     public void CheckDrawingLock()
     {
-        if (DrawingLocked && Tool is Tool.Draw or Tool.Shape or Tool.Erase) SetTool(Tool.Select);
+        if (DrawingLocked && Tool is Tool.Draw or Tool.Shape or Tool.Erase or Tool.Letter) SetTool(Tool.Select);
     }
 
     public override void _Process(double delta)
@@ -337,7 +343,7 @@ public partial class Table : Node3D
 
     public void SetTool(Tool t, string? placeDef = null)
     {
-        if (t is Tool.Draw or Tool.Shape or Tool.Erase && DrawingLocked)
+        if (t is Tool.Draw or Tool.Shape or Tool.Erase or Tool.Letter && DrawingLocked)
         {
             Say("Layer is hidden · show it to unlock");
             return;
@@ -369,6 +375,7 @@ public partial class Table : Node3D
         Tool.Draw => "Drag to draw on the layer picked in the panel",
         Tool.Shape => "Drag the shape out, end to end or corner to corner, on the layer picked in the panel",
         Tool.Erase => "Drag over strokes to rub them out · only the layer picked in the panel",
+        Tool.Letter => "Click, or drag a path, and type the name · Enter lays it, Esc drops it · double-click a name to retype it, drag to move it",
         Tool.Capture => $"Drag the region to capture · {_c.Settings.Keys.Label("captureAgain")} captures it again",
         Tool.Zone => "Drag a rectangle on the board to give it to an umpire",
         Tool.Crop => "Drag the knobs to trim the sheet · Apply or Cancel in the Map page",
