@@ -276,6 +276,31 @@ public sealed partial class ConverterTests : IDisposable
     }
 
     [Fact]
+    public void Figures_baked_out_of_asset_bundles_are_found_by_the_address_the_module_names()
+    {
+        const string Grenadier = "4D2C12454E8AF58A2D88385723381CBA57487548";
+        Directory.CreateDirectory(Path.Combine(Packages, "tts.figures"));
+        Json.Save(Path.Combine(Packages, "tts.figures", "pack.json"), new PackManifest
+        {
+            Id = "tts.figures", Name = "Figures",
+            Pieces = new()
+            {
+                new PieceDef { Id = "tts.figures.grenadier", Name = "Grenadier", Kind = "model", Mesh = "m1", Texture = "t1", Tags = new() { "model", "bundle:" + Grenadier } },
+                new PieceDef { Id = "tts.figures.smoke", Name = "Smoke", Kind = "flat", Tags = new() { "effect", "bundle:B89A13D24198F5D661BB3327FB2A516BD4B00EE8" } },
+            },
+        });
+        var models = BundleModels.Load(Packages);
+
+        Assert.True(models.Any);
+        Assert.Equal("tts.figures.grenadier", models.For($"https://steamusercontent-a.akamaihd.net/ugc/1743448938349876877/{Grenadier}/")?.Def.Id);
+        Assert.Equal("tts.figures", models.For($"https://example.com/{Grenadier}/")?.Pack);
+        Assert.Null(models.For("https://steamusercontent-a.akamaihd.net/ugc/1/CD4AC621382542AF808FD3A9519EFC894FBE6C9A/"));
+        Assert.Null(models.For("https://steamusercontent-a.akamaihd.net/ugc/1/B89A13D24198F5D661BB3327FB2A516BD4B00EE8/"));
+        Assert.Null(models.For(null));
+        Assert.False(BundleModels.Load(Path.Combine(_root, "elsewhere")).Any);
+    }
+
+    [Fact]
     public void Modules_kept_in_the_game_folder_of_another_steam_library_are_found()
     {
         var steam = Path.Combine(_root, "Steam");

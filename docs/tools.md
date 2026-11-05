@@ -197,6 +197,22 @@ Run after `Converter pack iks.james-effects`. Takes the sprite textures out of t
 (parsed with UnityPy, never executed) into `sprite` assets, makes each effect's largest texture its image and every
 sprite a state, and writes `effects.json` for rebuilding them as particle systems.
 
+## `tools/bundle_models.py`
+
+```
+python -I tools/bundle_models.py --module <a TTS module.json> [--pack <id>] [--name <title>]
+                                [--packages <root>] [--cache <tts cache>] [--atlas-max 2048]
+```
+
+Reads the Unity asset bundles a module hangs on its pieces — the figures, vehicles, buildings and tree stands that
+`Custom_Assetbundle` objects stand for — and writes them as a pack of 3D pieces. For each bundle it walks the prefab,
+keeps the parts the prefab actually shows, poses the skinned meshes through their bones and bind poses, and writes one
+OBJ; all the bundles share one texture atlas. Every piece carries a `bundle:<address>` tag, which is how the converter
+finds it: install the pack in the same packages root and import the module again, and those objects come in as the
+models instead of being left out. Bundles that hold an effect rather than a model are named and passed over, for
+`BundleEffects` to match against Firme's effects. Run it after an import, so the bundles are in the TTS cache. UnityPy
+(which parses the bundles, never runs them), numpy and Pillow.
+
 ## `tools/make-stress-tables.py`
 
 ```

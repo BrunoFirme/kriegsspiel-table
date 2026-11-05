@@ -11,6 +11,7 @@ public sealed class PackBuilder
     readonly DefFactory _defs;
     readonly MakeWay _way;
     BundleEffects? _effects;
+    int _bundled;
 
     public PackBuilder(Config cfg, AssetStore assets, Report rep, MakeWay way)
     {
@@ -98,6 +99,7 @@ public sealed class PackBuilder
         _rep.Counts[$"{pc.Id}: piece defs"] = pack.M.Pieces.Count.ToString();
         _rep.Counts[$"{pc.Id}: assets"] = pack.M.Assets.Count.ToString();
         if (effects > 0) _rep.Counts[$"{pc.Id}: effects (asset bundles)"] = effects.ToString();
+        if (_bundled > 0) _rep.Counts[$"{pc.Id}: figures and props read from asset bundles"] = _bundled.ToString();
         Console.WriteLine($"  → {pack.M.Pieces.Count} defs, {pack.M.Assets.Count} assets");
         return pack;
     }
@@ -122,8 +124,9 @@ public sealed class PackBuilder
         if (o.Name == "Custom_Assetbundle")
         {
             if (pack.M.Id.Contains("effects")) { EffectDef(o, pack); effects++; }
+            else if (_defs.ModelOfBundle(o) != null) _bundled++;
             else _rep.Skipped(o.Name, where);
-            foreach (var c in o.Children.Where(DefFactory.IsPiece))
+            foreach (var c in o.Children.Where(_defs.Shows))
                 if (_defs.DefFor(c, pack, Math.Abs(c.StateList().states[0].ScaleX) * Math.Abs(o.ScaleX)) != null) objects++;
             return;
         }

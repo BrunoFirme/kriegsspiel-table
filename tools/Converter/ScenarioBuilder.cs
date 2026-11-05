@@ -78,7 +78,7 @@ public sealed class ScenarioBuilder
             foreach (var o in layer.Objects)
             {
                 Progress.Step(o.Nickname.Length > 0 ? o.Nickname : o.Name);
-                var placed = Instance(o, common[_defs.VisualKey(o)], extras, packDefs, layer, usedPacks, ref rekeyed, null);
+                var placed = Instance(o, common[_defs.VisualKey(o)], extras, packDefs, layer, usedPacks, ref rekeyed, null, absolute: Math.Abs(o.ScaleX));
                 if (o.Flipped && placed is { FaceDown: false }) flipped++;
             }
         }
@@ -353,10 +353,10 @@ public sealed class ScenarioBuilder
             if (o.IsDeck) { l.Objects.AddRange(Pile(o).Where(c => DefFactory.NotTranslated(c) is null)); continue; }
             if (DefFactory.NotTranslated(o) is { } why) { _rep.Skipped(why, where); continue; }
             if (_cfg.ContainerTypes.Contains(o.Name)) { _rep.Skipped(o.Name + " (contents not placed in the scenario)", where); continue; }
-            if (o.Name == BundleType && !_cfg.IsTableWall(o.BundleUrl)) { l.Effects.Add(o); continue; }
-            if (_cfg.IgnoreTypes.Contains(o.Name) || o.Name.StartsWith("Die_")) { _rep.Skipped(o.Name, where); continue; }
+            if (o.Name == BundleType && !_cfg.IsTableWall(o.BundleUrl) && _defs.ModelOfBundle(o) == null) { l.Effects.Add(o); continue; }
+            if ((_cfg.IgnoreTypes.Contains(o.Name) && !_defs.Shows(o)) || o.Name.StartsWith("Die_")) { _rep.Skipped(o.Name, where); continue; }
             if (o.IsFurniture) { _rep.Skipped("table furniture (custom table / surround / under the table)", where); continue; }
-            if (!DefFactory.IsPiece(o)) { _rep.UnknownType(o.Name, where); continue; }
+            if (!_defs.Shows(o)) { _rep.UnknownType(o.Name, where); continue; }
             l.Objects.Add(o);
         }
         return l;
@@ -380,7 +380,7 @@ public sealed class ScenarioBuilder
             usedPacks.Add(KTable.Client.Effects.EffectKinds.StandardPack);
         }
         else _rep.Skipped(effects.Installed ? BundleType + " (a 3D model or an effect with no counterpart among Firme's effects)" : BundleType + " (Firme's effects are not installed)", where);
-        PlaceChildren(o, o.Children, fx, Math.Abs(o.ScaleX), 1, extras, packDefs, layer, usedPacks, ref rekeyed);
+        PlaceChildren(o, o.Children, fx, Math.Abs(o.ScaleX), 1, Math.Abs(o.ScaleX), extras, packDefs, layer, usedPacks, ref rekeyed);
         return fx;
     }
 
@@ -417,18 +417,19 @@ public sealed class ScenarioBuilder
     }
 
     PieceInstance? Instance(TtsObj o, double refScale, PackOut extras, Dictionary<string, List<(PieceDef def, string pack)>> packDefs,
-        Layer layer, HashSet<string> usedPacks, ref int rekeyed, PieceInstance? parent, double heightScale = 1)
+        Layer layer, HashSet<string> usedPacks, ref int rekeyed, PieceInstance? parent, double heightScale = 1, double absolute = 1)
     {
         var r = _defs.DefFor(o, extras, refScale, heightScale);
         if (r == null) return null;
         var def = r.Def;
-        string packId = extras.M.Id;
+        string packId = r.FromPack ?? extras.M.Id;
         double scale = r.Scale, baseScale = r.Scale;
+        if (r.FromPack != null) scale = baseScale = Math.Round(absolute, 4);
         var (counters, text) = r.Script.Values(o.LuaState);
         var lua = o.SafeLua;
         if (def.Script != null) { counters = new(); text = new(); }
 
-        if (MatchKey(def) is { } mk && packDefs.TryGetValue(mk, out var cands))
+        if (r.FromPack == null && MatchKey(def) is { } mk && packDefs.TryGetValue(mk, out var cands))
         {
             (PieceDef def, string pack)? best = null;
             double bestScale = 0, bestMiss = double.MaxValue;
@@ -489,28 +490,32 @@ public sealed class ScenarioBuilder
         layer.Y[inst] = o.PosY;
         layer.Bottom[inst] = _defs.Bottom(o);
 
-        PlaceChildren(o, _defs.BakesChildren(o) ? Enumerable.Empty<TtsObj>() : o.Children, inst, refScale, baseScale, extras, packDefs, layer, usedPacks, ref rekeyed);
+        PlaceChildren(o, _defs.BakesChildren(o) ? Enumerable.Empty<TtsObj>() : o.Children, inst, refScale, baseScale, absolute, extras, packDefs, layer, usedPacks, ref rekeyed);
         return inst;
     }
 
-    void PlaceChildren(TtsObj o, IEnumerable<TtsObj> children, PieceInstance? parent, double refScale, double baseScale, PackOut extras,
+    void PlaceChildren(TtsObj o, IEnumerable<TtsObj> children, PieceInstance? parent, double refScale, double baseScale, double absolute, PackOut extras,
         Dictionary<string, List<(PieceDef def, string pack)>> packDefs, Layer layer, HashSet<string> usedPacks, ref int rekeyed)
     {
         double th = o.RotY * Math.PI / 180;
         double parentHeight = parent != null && layer.HeightScale.TryGetValue(parent, out var hs) ? hs : Math.Abs(o.ScaleY);
         var (root, parentBottom) = parent != null && layer.Glued.TryGetValue(parent, out var glued) ? glued : (parent, 0.0);
-        double parentFloor = -_defs.BaseThickness(o) / 2;
+        double parentFloor = _defs.LocalFloor(o);
         foreach (var c in children)
         {
-            if (!DefFactory.IsPiece(c)) continue;
+            if (!_defs.Shows(c)) continue;
             double lx = c.PosX * o.ScaleX, lz = c.PosZ * o.ScaleZ;
-            var ci = Instance(c, Math.Abs(c.StateList().states[0].ScaleX) * refScale, extras, packDefs, layer, usedPacks, ref rekeyed, parent, parentHeight);
+            double childAbsolute = Math.Abs(c.StateList().states[0].ScaleX) * absolute;
+            var ci = Instance(c, Math.Abs(c.StateList().states[0].ScaleX) * refScale, extras, packDefs, layer, usedPacks, ref rekeyed, parent, parentHeight, childAbsolute);
             if (ci == null) continue;
             ci.Pos = new Vec2(Math.Round(o.PosX + lx * Math.Cos(th) + lz * Math.Sin(th), 4), Math.Round(o.PosZ - lx * Math.Sin(th) + lz * Math.Cos(th), 4));
             ci.RotDeg = Norm(o.RotY + ci.RotDeg);
-            var sizedAtParentReferenceScale = ci.Scale * refScale;
-            ci.Scale = Math.Round(sizedAtParentReferenceScale * baseScale, 4);
-            double floor = c.PosY - _defs.BaseThickness(c) * Math.Abs(c.ScaleY) / 2;
+            if (_defs.ModelOfBundle(c) == null)
+            {
+                var sizedAtParentReferenceScale = ci.Scale * refScale;
+                ci.Scale = Math.Round(sizedAtParentReferenceScale * baseScale, 4);
+            }
+            double floor = _defs.Bottom(c);
             layer.HeightScale[ci] = Math.Abs(c.ScaleY) * parentHeight;
             if (root != null) layer.Glued[ci] = (root, parentBottom + (floor - parentFloor) * parentHeight);
             else layer.Y[ci] = o.PosY;

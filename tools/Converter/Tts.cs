@@ -26,8 +26,11 @@ public sealed class TtsObj
     public double PosX => D(T, "posX");
     public double PosY => D(T, "posY");
     public double PosZ => D(T, "posZ");
-    const double TableScale = 6, UnderTheTable = -0.5;
-    public bool IsTerrain => Name == "Custom_Model" && Locked && Math.Abs(ScaleX) >= TableScale && PosY >= UnderTheTable && MeshUrl != null && DiffuseUrl != null;
+    const double TableScale = 6, UnderTheTable = -0.5, TerrainSpan = 40;
+    public static Func<string, (double ex, double ey, double ez)?>? MeshSize { get; set; }
+    double Span => MeshUrl is { } u && MeshSize?.Invoke(u) is { } b ? Math.Max(Math.Abs(ScaleX) * b.ex, Math.Abs(ScaleZ) * b.ez) : 0;
+    public bool IsTerrain => Name == "Custom_Model" && Locked && PosY >= UnderTheTable && MeshUrl != null && DiffuseUrl != null
+                             && (Math.Abs(ScaleX) >= TableScale || Span >= TerrainSpan);
     public bool IsFurniture => (Name == "Custom_Model" && Math.Abs(ScaleX) >= TableScale && !IsTerrain) || (Locked && PosY < UnderTheTable && Name is "Custom_Model" or "Custom_Tile" or "Custom_Token" or "Custom_Board");
     public double RotX => D(T, "rotX");
     public double RotY => D(T, "rotY");

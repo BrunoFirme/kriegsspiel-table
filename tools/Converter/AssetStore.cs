@@ -89,8 +89,14 @@ public sealed partial class AssetStore
     string FetchUrl(string url)
     {
         var m = UgcRx().Match(url);
-        return m.Success && IsSteam(url) ? $"{_cfg.SteamHost.TrimEnd('/')}/ugc/{m.Groups[1].Value}/{m.Groups[2].Value}/" : url.Trim();
+        if (m.Success && IsSteam(url)) return $"{_cfg.SteamHost.TrimEnd('/')}/ugc/{m.Groups[1].Value}/{m.Groups[2].Value}/";
+        var u = url.Trim();
+        return NeedsScheme(u) ? "http://" + u : u;
     }
+
+    static bool NeedsScheme(string u) =>
+        !u.Contains("://", StringComparison.Ordinal) && LocalPath(u) == null
+        && u.Split('/', 2)[0] is { Length: > 3 } host && host.Contains('.') && !host.Contains(' ') && !host.Contains('@');
 
     public string? FilePath(CacheEntry e) => e.Sha == null ? null : e.Src ?? Path.Combine(_cfg.Cache, e.Sha + "." + e.Ext);
 
@@ -174,7 +180,7 @@ public sealed partial class AssetStore
             var e = TryLocal(u);
             if (e != null && !Retryable(e)) continue;
             if (LocalPath(u) != null) { Set(Key(u), new CacheEntry { Status = "dead", Error = "local file path not present on this machine", Url = u }); continue; }
-            if (!Uri.TryCreate(u, UriKind.Absolute, out var uri) || uri.Scheme is not ("http" or "https"))
+            if (!Uri.TryCreate(FetchUrl(u), UriKind.Absolute, out var uri) || uri.Scheme is not ("http" or "https"))
             { Set(Key(u), new CacheEntry { Status = "dead", Error = "not a web address (no http/https)", Url = u }); continue; }
             if (!IsSteam(u) && !allowNonSteam) continue;
             if (!_tried.TryAdd(Key(u), 0)) continue;

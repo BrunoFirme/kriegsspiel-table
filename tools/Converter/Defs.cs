@@ -27,7 +27,10 @@ public sealed class PackOut
     public void Save() => Json.Save(Path.Combine(Dir, "pack.json"), M);
 }
 
-public sealed record DefResult(PieceDef Def, PackOut Pack, double Scale, int State, TtsObj Base, ScriptInfo Script);
+public sealed record DefResult(PieceDef Def, PackOut Pack, double Scale, int State, TtsObj Base, ScriptInfo Script)
+{
+    public string? FromPack { get; init; }
+}
 
 public sealed partial class DefFactory
 {
@@ -46,6 +49,7 @@ public sealed partial class DefFactory
         _cfg = cfg;
         _assets = assets;
         _rep = rep;
+        TtsObj.MeshSize = MeshBounds;
     }
 
     public string? Asset(PackOut pack, string? url, string kind, string where)
@@ -130,11 +134,12 @@ public sealed partial class DefFactory
 
     readonly Dictionary<string, double> _meshFloor = new();
 
-    public double Bottom(TtsObj o)
-    {
-        if (o.Name == "Custom_Model" && MeshBounds(o.MeshUrl) != null && Entry(o.MeshUrl) is { Sha: { } sha }) return o.PosY + _meshFloor[sha] * Math.Abs(o.ScaleY);
-        return o.PosY - BaseThickness(o) * Math.Abs(o.ScaleY) / 2;
-    }
+    public double LocalFloor(TtsObj o) =>
+        o.Name == "Custom_Model" && MeshBounds(o.MeshUrl) != null && Entry(o.MeshUrl) is { Sha: { } sha }
+            ? _meshFloor[sha]
+            : -BaseThickness(o) / 2;
+
+    public double Bottom(TtsObj o) => o.PosY + LocalFloor(o) * Math.Abs(o.ScaleY);
 
     public Size2 BaseSize(TtsObj o)
     {
@@ -200,15 +205,25 @@ public sealed partial class DefFactory
 
     public static double BaseScale(TtsObj o) => Math.Round(Math.Abs(o.StateList().states[0].ScaleX), 4);
 
+    public BundleModels Models => _models ??= BundleModels.Load(_cfg.Output);
+    BundleModels? _models;
+
+    public (PieceDef Def, string Pack)? ModelOfBundle(TtsObj o) =>
+        o.Name == "Custom_Assetbundle" && !_cfg.IsTableWall(o.BundleUrl) ? Models.For(o.BundleUrl) : null;
+
+    public bool Shows(TtsObj o) => IsPiece(o) || ModelOfBundle(o) != null;
+
     public DefResult? DefFor(TtsObj o, PackOut pack, double? refScale = null, double heightScale = 1)
     {
-        if (!IsPiece(o)) return null;
+        if (!Shows(o)) return null;
         if (IsTextObject(o)) return TextDef(o, pack, refScale);
         var (states, self) = o.StateList();
         var b = states[0];
         double bs = Math.Abs(b.ScaleX) < 1e-6 ? 1 : Math.Abs(b.ScaleX);
         double r = refScale ?? bs;
         double instScale = Math.Round(bs / r, 4);
+        if (ModelOfBundle(o) is { } model)
+            return new DefResult(model.Def, pack, instScale, 0, b, ScriptInfo.Parse("", "")) { FromPack = model.Pack };
         var where = $"{Context} {o.Name} '{o.Nickname}' {o.Guid}";
 
         var script = ScriptInfo.Parse(b.SafeLua.Length > 0 ? b.SafeLua : o.SafeLua, o.LuaState);
