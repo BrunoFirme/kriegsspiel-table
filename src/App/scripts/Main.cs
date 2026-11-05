@@ -46,7 +46,7 @@ public partial class Main : Node
         catch (Exception e) { GD.PushError(e.ToString()); }
     }
 
-    static void OneTextFormat()
+    internal static void OneTextFormat()
     {
         var neutral = System.Globalization.CultureInfo.InvariantCulture;
         System.Globalization.CultureInfo.DefaultThreadCurrentCulture = neutral;

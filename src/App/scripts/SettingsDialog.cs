@@ -97,10 +97,9 @@ sealed class SettingsDialog : HudPart
         size.Capped.VisibilityChanged += () => cappedAt.Visible = size.Capped.Visible;
         _box.AddChild(cappedAt);
         var bar = new HSlider { MinValue = Settings.StripSizeMin, MaxValue = Settings.StripSizeMax, Step = 2, Value = Cfg.StripSize };
-        var barL = new Label { Text = $"{Cfg.StripSize:0} px" };
+        var barL = Ui.ValueBox(bar, v => $"{v:0} px");
         bar.ValueChanged += v =>
         {
-            barL.Text = $"{v:0} px";
             Cfg.StripSize = (float)v;
             Cfg.Save();
             _strip.Rebuild();
@@ -115,7 +114,7 @@ sealed class SettingsDialog : HudPart
             MinValue = Settings.TopLineWidthMin, MaxValue = 1, Step = 0.05, Value = Cfg.TopLineWidth,
             TooltipText = "How much of the room between the turn buttons and the right-hand end that line may take",
         };
-        var topWL = new Label { Text = $"{Cfg.TopLineWidth * 100:0}%" };
+        var topWL = Ui.ValueBox(topW, v => $"{v * 100:0}%");
         var topRow = Row("Line length", topW, topWL);
         topLine.Toggled += on =>
         {
@@ -126,7 +125,6 @@ sealed class SettingsDialog : HudPart
         };
         topW.ValueChanged += v =>
         {
-            topWL.Text = $"{v * 100:0}%";
             Cfg.TopLineWidth = (float)v;
             _top.SyncTopLine();
         };
@@ -147,12 +145,11 @@ sealed class SettingsDialog : HudPart
             MinValue = Settings.FaceTextScaleMin, MaxValue = Settings.FaceTextScaleMax, Step = 0.05, Value = Cfg.FaceTextScale,
             TooltipText = "How big the names print on pieces, and the lettering an imported piece draws itself (bigger reads in captures; it may spill past the name band)",
         };
-        var nameL = new Label { Text = $"{Cfg.FaceTextScale:0.00}×" };
+        var nameL = Ui.ValueBox(nameS, v => $"{v:0.00}×");
         var nameRow = Row("Name size", nameS, nameL);
         nameS.ValueChanged += v =>
         {
             Cfg.FaceTextScale = (float)v;
-            nameL.Text = $"{v:0.00}×";
             T.ApplyLettering();
         };
         face.Toggled += on =>
@@ -184,9 +181,8 @@ sealed class SettingsDialog : HudPart
             MinValue = Settings.ReachMin, MaxValue = Settings.ReachOff, Step = 1, ExpEdit = true, Value = Cfg.LetteringReach,
             TooltipText = "How far a piece keeps its names, counters and script buttons, in its own sizes. Lower is faster on a huge table. Right end: no limit",
         };
-        var reachL = new Label();
+        var reachL = Ui.ValueBox(reach, ReachWord);
         static string ReachWord(double v) => v >= Settings.ReachOff ? "no limit" : $"{v:0}×";
-        reachL.Text = ReachWord(reach.Value);
         bool dragging = false;
         void ApplyReach()
         {
@@ -199,7 +195,6 @@ sealed class SettingsDialog : HudPart
         reach.DragEnded += _ => { dragging = false; ApplyReach(); };
         reach.ValueChanged += v =>
         {
-            reachL.Text = ReachWord(v);
             if (!dragging) ApplyReach();
         };
         return Row("Lettering reach", reach, reachL);
@@ -299,10 +294,9 @@ sealed class SettingsDialog : HudPart
     void AddSound()
     {
         var vol = new HSlider { MinValue = 0, MaxValue = 1, Step = 0.05, Value = Cfg.SoundVolume };
-        var volL = new Label { Text = $"{Cfg.SoundVolume * 100:0}%" };
+        var volL = Ui.ValueBox(vol, v => $"{v * 100:0}%");
         vol.ValueChanged += v =>
         {
-            volL.Text = $"{v * 100:0}%";
             Cfg.SoundVolume = (float)v;
             Sfx.Current?.Apply();
         };

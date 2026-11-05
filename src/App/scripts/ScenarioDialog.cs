@@ -150,8 +150,7 @@ sealed partial class ScenarioDialog : HudPart
         var sl =
             new HSlider { MinValue = min, MaxValue = max, Step = step, Value = v, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
                 CustomMinimumSize = new Vector2(170, 0) };
-        var read = Ui.Readout(say(v), 58);
-        sl.ValueChanged += x => read.Text = say(x);
+        var read = Ui.ValueBox(sl, say, 58);
         row.AddChild(sl);
         row.AddChild(read);
         lg.AddChild(row);
@@ -316,6 +315,7 @@ sealed partial class ScenarioDialog : HudPart
             new HSlider { MinValue = 0, MaxValue = 5, Step = 0.25, Value = w0.Strength, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
                 CustomMinimumSize = new Vector2(120, 0) };
         strRow.AddChild(strength);
+        strRow.AddChild(Ui.ValueBox(strength, v => $"{v:0.##}", 40));
         wf.AddChild(strRow);
         Ui.AlignForm(wf);
         wcol.AddChild(wf);

@@ -435,6 +435,80 @@ public static class Ui
     public static void WhenPicked(ColorPickerButton button, Action<Color> picked) =>
         button.PopupClosed += () => { var colour = button.Color; Callable.From(() => picked(colour)).CallDeferred(); };
 
+    const int MostValueSamples = 5000;
+    static readonly System.Text.RegularExpressions.Regex Number = new(@"-?\d[\d,]*(\.\d+)?|-?\.\d+");
+
+    public static LineEdit ValueBox(HSlider s, Func<double, string> show, int width = 0)
+    {
+        var box = new LineEdit
+        {
+            Text = show(s.Value), Alignment = HorizontalAlignment.Right, CustomMinimumSize = new Vector2(width, 0), SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
+            SelectAllOnFocus = true, ContextMenuEnabled = false, CaretBlink = true,
+        };
+        box.Editable = NumberIn(show(s.MinValue)) != null || NumberIn(show(s.MaxValue)) != null;
+        box.TooltipText = box.Editable ? "Click to type a value" : "";
+        var quiet = Box(new Color(0, 0, 0, 0), 3, 4, 1);
+        var hover = Box(White(Rest), 3, 4, 1);
+        box.AddThemeStyleboxOverride("normal", quiet);
+        box.AddThemeStyleboxOverride("read_only", quiet);
+        box.AddThemeStyleboxOverride("focus", Typing(Box(Field, 3, 4, 1)));
+        box.AddThemeColorOverride("font_color", Muted);
+        box.AddThemeColorOverride("font_uneditable_color", Muted);
+        box.MouseEntered += () => { if (box.Editable) box.AddThemeStyleboxOverride("normal", hover); };
+        box.MouseExited += () => box.AddThemeStyleboxOverride("normal", quiet);
+        box.FocusEntered += () => box.AddThemeColorOverride("font_color", Ink);
+        void Commit()
+        {
+            box.AddThemeColorOverride("font_color", Muted);
+            if (NumberIn(box.Text) is { } want && NearestShowing(s, show, want) is { } v && !Mathf.IsEqualApprox(v, s.Value))
+            {
+                s.Value = v;
+                s.EmitSignal(Slider.SignalName.DragEnded, true);
+            }
+            box.Text = show(s.Value);
+        }
+        box.TextSubmitted += _ => box.ReleaseFocus();
+        box.FocusExited += Commit;
+        box.GuiInput += e =>
+        {
+            if (e is not InputEventKey { Pressed: true, Keycode: Key.Escape }) return;
+            box.Text = show(s.Value);
+            box.ReleaseFocus();
+            box.AcceptEvent();
+        };
+        s.ValueChanged += v => { if (!box.HasFocus()) box.Text = show(v); };
+        return box;
+    }
+
+    static double? NumberIn(string text)
+    {
+        var m = Number.Match(text);
+        return m.Success && double.TryParse(m.Value, System.Globalization.NumberStyles.Float | System.Globalization.NumberStyles.AllowThousands,
+            System.Globalization.CultureInfo.InvariantCulture, out var n) ? n : null;
+    }
+
+    static double? NearestShowing(Godot.Range s, Func<double, string> show, double want)
+    {
+        double lo = s.MinValue, hi = s.MaxValue;
+        int n = s.Step > 0 ? (int)Math.Min(Math.Ceiling((hi - lo) / s.Step), MostValueSamples) : MostValueSamples;
+        if (n <= 0) return null;
+        double gap = double.MaxValue;
+        int first = -1, last = -1;
+        for (int i = 0; i <= n; i++)
+        {
+            if (NumberIn(show(At(i))) is not { } got) continue;
+            double d = Math.Abs(got - want);
+            if (d < gap - 1e-9)
+            {
+                gap = d;
+                first = last = i;
+            }
+            else if (Math.Abs(d - gap) <= 1e-9 && last == i - 1) last = i;
+        }
+        return first < 0 ? null : At((first + last) / 2);
+        double At(int i) => Math.Min(hi, lo + (hi - lo) * i / n);
+    }
+
     public static Button Swatch(Color colour, Vector2 size, string tip, bool chosen = false)
     {
         var b = new Button { CustomMinimumSize = size, TooltipText = tip, FocusMode = Control.FocusModeEnum.None };

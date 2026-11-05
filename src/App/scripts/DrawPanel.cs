@@ -115,11 +115,10 @@ sealed class DrawPanel : HudPart
         var pen =
             new HSlider { MinValue = 1, MaxValue = 40, Step = 0.5, Value = T.PenPixels, CustomMinimumSize = new Vector2(62, 0), SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
                 TooltipText = "How thick the line is, in screen pixels" };
-        var penL = Ui.Readout($"{T.PenPixels:0.#}", 26);
+        var penL = Ui.ValueBox(pen, v => $"{v:0.#}", 26);
         pen.ValueChanged += v =>
         {
             T.PenPixels = (float)v;
-            penL.Text = $"{v:0.#}";
             Cfg.PenSize = (float)v;
             Cfg.Save();
         };
@@ -131,11 +130,10 @@ sealed class DrawPanel : HudPart
         var see =
             new HSlider { MinValue = LeastOpacity * 100, MaxValue = 100, Step = 5, Value = Mathf.Round(T.PenOpacity * 100), CustomMinimumSize = new Vector2(62, 0),
                 SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, TooltipText = "How see-through new lines are: 100% hides what is under them" };
-        var seeL = Ui.Readout($"{see.Value:0}%", 26);
+        var seeL = Ui.ValueBox(see, v => $"{v:0}%", 26);
         see.ValueChanged += v =>
         {
             T.PenOpacity = (float)(v / 100);
-            seeL.Text = $"{v:0}%";
             Cfg.PenOpacity = T.PenOpacity;
             Cfg.Save();
         };

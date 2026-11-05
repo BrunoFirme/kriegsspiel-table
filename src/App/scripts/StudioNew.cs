@@ -320,6 +320,7 @@ internal sealed class NewPieces
                 CustomMinimumSize = new Vector2(140, 0), TooltipText = "0: no border" };
         br.AddChild(col);
         br.AddChild(w);
+        br.AddChild(Ui.ValueBox(w, v => $"{v:0} px", 44));
         g.AddChild(br);
         g.AddChild(new Label { Text = "Detail" });
         var size = new OptionButton();

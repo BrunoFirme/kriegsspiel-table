@@ -11,10 +11,9 @@ static class AppSettings
     public static void AddSound(VBoxContainer box, Settings cfg)
     {
         var vol = new HSlider { MinValue = 0, MaxValue = 1, Step = 0.05, Value = cfg.SoundVolume, CustomMinimumSize = new Vector2(220, 0) };
-        var volL = Ui.Readout($"{cfg.SoundVolume * 100:0}%", 48);
+        var volL = Ui.ValueBox(vol, v => $"{v * 100:0}%", 48);
         vol.ValueChanged += v =>
         {
-            volL.Text = $"{v * 100:0}%";
             cfg.SoundVolume = (float)v;
             Sfx.Current?.Apply();
         };
@@ -39,12 +38,12 @@ static class AppSettings
         box.AddChild(muteAt);
     }
 
-    public sealed record SizeControls(HSlider Size, Label Shown, CheckBox Match, Label Capped);
+    public sealed record SizeControls(HSlider Size, LineEdit Shown, CheckBox Match, Label Capped);
 
     public static SizeControls SizeSlider(Settings cfg, Action? relaid = null)
     {
         var size = new HSlider { MinValue = Settings.UiScaleMin, MaxValue = Settings.UiScaleMax, Step = 0.05, Value = cfg.UiScale };
-        var shown = Ui.Readout(Percent(cfg.UiScale), 0);
+        var shown = Ui.ValueBox(size, v => Percent((float)v), 0);
         var match = new CheckBox { Text = "Match Windows", ButtonPressed = cfg.FollowsWindows, TooltipText = "Windows' own display scale, screen by screen" };
         var capped = new Label { Visible = false, AutowrapMode = TextServer.AutowrapMode.WordSmart };
         capped.AddThemeColorOverride("font_color", Ui.Muted);
@@ -75,7 +74,7 @@ static class AppSettings
             match.SetPressedNoSignal(false);
             Use();
         }
-        size.ValueChanged += v => { shown.Text = Percent((float)v); if (!Input.IsMouseButtonPressed(MouseButton.Left)) Chosen(); };
+        size.ValueChanged += _ => { if (!Input.IsMouseButtonPressed(MouseButton.Left)) Chosen(); };
         size.DragEnded += _ => Chosen();
         match.Toggled += on =>
         {

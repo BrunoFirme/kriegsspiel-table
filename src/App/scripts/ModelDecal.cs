@@ -294,11 +294,10 @@ internal sealed class DecalTool
             g.AddChild(new Label { Text = label });
             var h = new HBoxContainer();
             var s = new HSlider { MinValue = min, MaxValue = max, Step = step, Value = value, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter };
-            var l = Ui.Readout($"{value:0}{suffix}", 48);
+            var l = Ui.ValueBox(s, x => $"{x:0}{suffix}", 48);
             s.ValueChanged += x =>
             {
                 set(x);
-                l.Text = $"{x:0}{suffix}";
                 _m.RedrawOverlay();
             };
             h.AddChild(s);

@@ -88,8 +88,8 @@ internal sealed class EffectTab
             var s =
                 new HSlider { MinValue = min, MaxValue = max, Step = 0.05, Value = value, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
                     TooltipText = tip };
-            var shown = new Label { Text = $"{value:0.##}", CustomMinimumSize = new Vector2(34, 0), Modulate = Ui.Muted };
-            s.ValueChanged += v => { shown.Text = $"{v:0.##}"; Set(x => put(x, v)); };
+            var shown = Ui.ValueBox(s, v => $"{v:0.##}", 34);
+            s.ValueChanged += v => Set(x => put(x, v));
             row.AddChild(s);
             row.AddChild(shown);
             sg.AddChild(row);

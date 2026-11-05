@@ -236,6 +236,7 @@ internal sealed class PieceFramer
                 CustomMinimumSize = new Vector2(180, 0), TooltipText = "0: no border" };
         br.AddChild(col);
         br.AddChild(w);
+        br.AddChild(Ui.ValueBox(w, v => $"{v:0} px", 44));
         g.AddChild(br);
         g.AddChild(new Label { Text = "Behind" });
         var fill = new ColorPickerButton { Color = new Color(0.85f, 0.81f, 0.71f), EditAlpha = false, CustomMinimumSize = new Vector2(44, 24), TooltipText = "The colour behind the picture, where it is see-through" };

@@ -193,6 +193,7 @@ internal sealed class ToolPanel
                         SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, TooltipText = "How deep the points are" };
                 inner.ValueChanged += v => Prefs.StarInner = (float)v;
                 row.AddChild(inner);
+                row.AddChild(Ui.ValueBox(inner, v => $"{v * 100:0}%", 36));
             }
             _body.AddChild(row);
         }
@@ -259,6 +260,7 @@ internal sealed class ToolPanel
                 SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, TooltipText = "How different a colour may be and still be flooded" };
         tol.ValueChanged += v => Prefs.FillTolerance = (float)v;
         row.AddChild(tol);
+        row.AddChild(Ui.ValueBox(tol, v => $"{v * 100:0}%", 36));
         _body.AddChild(row);
         var all = new CheckBox { Text = "Look at every layer", ButtonPressed = Prefs.FillAllLayers, TooltipText = "Off: only the selected layer decides where the fill stops" };
         all.Toggled += on => Prefs.FillAllLayers = on;

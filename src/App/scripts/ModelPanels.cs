@@ -75,11 +75,10 @@ internal sealed class ModelPanels
                 row.AddChild(lab);
                 var s =
                     new HSlider { MinValue = 1, MaxValue = 300, Step = 1, Value = _m.P.Brush, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter };
-                var l = Ui.Readout($"{_m.P.Brush:0} px", 48);
+                var l = Ui.ValueBox(s, v => $"{v:0} px", 48);
                 s.ValueChanged += v =>
                 {
                     _m.P.Brush = (float)v;
-                    l.Text = $"{v:0} px";
                     _m.RedrawOverlay();
                 };
                 row.AddChild(s);

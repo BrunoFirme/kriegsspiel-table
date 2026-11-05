@@ -203,11 +203,10 @@ internal sealed class StudioLayersPanel
         var s =
             new HSlider { MinValue = 0, MaxValue = 100, Step = 1, Value = Math.Round(l.Opacity * 100), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
                 SizeFlagsVertical = Control.SizeFlags.ShrinkCenter };
-        var v = Ui.Readout($"{l.Opacity * 100:0}%", 36);
+        var v = Ui.ValueBox(s, x => $"{x:0}%", 36);
         s.ValueChanged += x =>
         {
             l.Opacity = (float)x / 100;
-            v.Text = $"{x:0}%";
             Canvas.Redraw();
             _s.Faces.CommitSoon("Opacity");
         };
@@ -350,7 +349,12 @@ internal sealed class StudioLayersPanel
             _s.Faces.CommitSoon("Symbol size");
         };
         ss.DragEnded += _ => Canvas.Commit("Symbol size");
-        g.AddChild(ss);
+        var ssRow = new HBoxContainer();
+        ss.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
+        ss.SizeFlagsVertical = Control.SizeFlags.ShrinkCenter;
+        ssRow.AddChild(ss);
+        ssRow.AddChild(Ui.ValueBox(ss, x => $"{x * 100:0}%", 40));
+        g.AddChild(ssRow);
         Ui.AlignForm(g);
         into.AddChild(g);
         into.AddChild(Ui.Btn("Stretch it over the face", () =>

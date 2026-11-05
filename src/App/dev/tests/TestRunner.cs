@@ -29,6 +29,7 @@ public partial class TestRunner : Node
 {
     public override async void _Ready()
     {
+        Main.OneTextFormat();
         int passed = 0, failed = 0;
         bool screen = DisplayServer.GetName() != "headless";
         var kind = screen ? "screen tests" : "node tests";

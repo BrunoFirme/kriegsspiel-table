@@ -145,8 +145,8 @@ sealed class PovPanel : HudPart
                 CustomMinimumSize = new Vector2(80, 0), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
                 TooltipText = "How high the eye stands over the ground: down to look from behind a crest, up to see over it" };
         string Height(double v) => cal.UnitsPerMeter is > 0 ? $"{cal.FromTableUnits(v):#,0} {cal.UnitName}" : $"{v:0.00} u";
-        var shown = Ui.Readout(Height(d.EyeHeight), 52);
-        slider.ValueChanged += v => { shown.Text = Height(v); T.SetSightingEye(v); };
+        var shown = Ui.ValueBox(slider, Height, 52);
+        slider.ValueChanged += v => T.SetSightingEye(v);
         row.AddChild(slider);
         row.AddChild(shown);
         grid.AddChild(row);

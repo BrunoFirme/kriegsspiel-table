@@ -144,8 +144,8 @@ sealed class ReliefPanel : HudPart
             var s =
                 new HSlider { MinValue = min, MaxValue = max, Step = step, Value = value, ExpEdit = exp, CustomMinimumSize = new Vector2(80, 0), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
                     SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, TooltipText = tip };
-            var v = Ui.Readout(show(value), 42);
-            s.ValueChanged += x => { v.Text = show(x); set(x); };
+            var v = Ui.ValueBox(s, show, 42);
+            s.ValueChanged += x => set(x);
             s.DragEnded += _ => Cfg.Save();
             row.AddChild(s);
             row.AddChild(v);
