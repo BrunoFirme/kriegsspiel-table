@@ -110,8 +110,6 @@ const float WASH_SHIFT = 0.04;
 const float CHAIN_LINES = 6.7;
 const float LAID_LINES = 0.27;
 const float SCREEN_PITCH = 0.095;
-const float CENTURIA = 3.55;
-const float CENTURY = 14.2;
 const float HAND_WOBBLE = 0.06;
 const float HAND_GRAIN = 3.0;
 const float BLEED = 0.12;
@@ -201,6 +199,14 @@ const float NEAR_TOWN_M = 60.0;
 const float NEAR_TOWN_FAR_M = 140.0;
 const float NEAR_TOWN_PLOTS = 0.8;
 const float NEAR_TOWN_THINS = 0.4;
+const int FARM_VARIANTS = 7;
+const float FARM_CLUSTER_M = 900.0;
+const float LOT_CURL_CYCLES = 0.07;
+const float LOT_CURL_M = 45.0;
+const float CROWN_CROWDING = 0.85;
+const float CROWN_GROWTH = 1.2;
+const float CROWN_OVERHANG = 0.04;
+const float CROWN_SHADE_SHIFT = 0.22;
 
 varying vec3 world;
 

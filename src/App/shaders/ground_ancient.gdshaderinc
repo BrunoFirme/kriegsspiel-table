@@ -1,7 +1,7 @@
 vec3 ancient_wood(vec3 c, vec3 tint, vec2 p, vec2 uv, mat2 to_uv, float fw, float ledges, float spacing, float trees, out float cover) {
-	float S = spacing;
+	float S = spacing * CROWN_CROWDING;
 	float keep = mix(OPEN_WOOD_KEEP, 1.0, trees);
-	vec3 crown_c = tint * vec3(0.92, 0.97, 0.9);
+	vec3 crown_c = tint * vec3(0.78, 0.86, 0.72);
 	cover = 0.0;
 	if (far_blend(fw, S) >= 1.0) return mix(c, tint * 0.9, 0.7);
 	vec3 col = c;
@@ -9,7 +9,7 @@ vec3 ancient_wood(vec3 c, vec3 tint, vec2 p, vec2 uv, mat2 to_uv, float fw, floa
 		for (int i = -1; i <= 1; i++) {
 			vec2 id;
 			float salt;
-			vec2 o = grid_point_at(p + NORTH * S * 0.5, uv, to_uv, S, 0.15, i, j, id, salt) - NORTH * S * 0.5;
+			vec2 o = grid_point_at(p + NORTH * S * 0.5, uv, to_uv, S, 0.22, i, j, id, salt) - NORTH * S * 0.5;
 			float room = room_at(o, p, uv, to_uv, WOOD, salt);
 			if (room < 0.05 || hash(id + 4.2) > 0.92) continue;
 			if (ledges > 0.5 && hash(id + 9.9) > LEDGE_TREES) continue;
@@ -36,38 +36,43 @@ vec3 ancient_wood(vec3 c, vec3 tint, vec2 p, vec2 uv, mat2 to_uv, float fw, floa
 			float stem = ink(segment(p, o, cc), W1 * 0.8 * scale, fw);
 			col = mix(col, ANCIENT_INK, stem * 0.9);
 			col = mix(col, crown_c, body);
+			float lit = 1.0 - smoothstep(rc * 0.85, rc * 1.0, length(q + vec2(rc * CROWN_SHADE_SHIFT)));
+			col = mix(col, crown_c * 0.72, body * (1.0 - lit));
 			cover = max(cover, body);
-			col = mix(col, ANCIENT_INK, ink(abs(d - rc), W1 * 0.7, fw));
+			col = mix(col, ANCIENT_INK, ink(abs(d - rc), W1 * 0.9, fw));
 		}
 	}
 	return mix(col, mix(c, tint * 0.9, 0.7), far_blend(fw, S));
 }
 
-float centuriation(vec2 p, float salt, float fw) {
-	float turn = hash(vec2(salt, 3.0)) * 1.5708;
-	vec2 q = mat2(vec2(cos(turn), sin(turn)), vec2(-sin(turn), cos(turn))) * p;
-	float fine = max(hatch(q.x, CENTURIA, W1 * 0.5, fw), hatch(q.y, CENTURIA, W1 * 0.5, fw));
-	float axes = max(hatch(q.x, CENTURY, W2 * 0.7, fw), hatch(q.y, CENTURY, W2 * 0.7, fw));
-	return max(fine * 0.6, axes);
+vec3 ancient_farm(vec3 c, vec2 p, vec2 site, vec2 seed, float turn, float fw, inout float cover) {
+	float house = metres(14.0) * farm_scale(seed);
+	float m;
+	if (farm_variant(seed) >= 4) {
+		float outer = block(p, site, vec2(house, house * 0.7), turn, fw);
+		float court = block(p, site, vec2(house * 0.5, house * 0.3), turn, fw);
+		m = outer - court;
+	} else m = block(p, site, vec2(house * 0.4, house * 0.3), turn, fw);
+	c = mix(c, ANCIENT_INK, m * 0.9);
+	cover = max(cover, m);
+	return c;
 }
 
 vec3 ancient_field(vec3 c, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_uv, float own, vec2 levels, vec2 along, float follow, float fw, float edge, out float cover) {
+	p = curled(p);
 	Lot l = lot_at(p, uv, to_uv, metres(mix(PLOT_OPEN_M, PLOT_SMALL_M, levels.x)), 0.56, FIELD, own, levels);
 	cover = 0.0;
 	vec2 site_uv = uv + to_uv * (l.site - p);
 	if (wet_field_at(site_uv, follow) > 0.5) return wet_field(ANCIENT, c, sheet, p, uv, to_uv, own, levels, fw);
-	c = mix(c, ANCIENT_INK, centuriation(p, own, fw) * 0.75);
 	float use = hash(l.id + 9.4);
 	if (use < 0.2) { float o = orchard(p, l, 0.18, fw); c = mix(c, ANCIENT_INK, o * 0.85); cover = o; }
 	else if (use < 0.35) c = mix(c, ANCIENT_INK, vine_rows(p, l, along, fw) * 0.6);
-	if (l.room > metres(30.0) && hash(l.id + 8.2) < l.levels.y) {
+	vec2 pair = l.id + l.other;
+	c = mix(c, ANCIENT_INK, ink(l.edge, W1, fw) * step(hash(pair + 4.4), 0.1) * 0.7);
+	if (l.room > metres(30.0) && hash(l.id + 8.2) < farms_here(l)) {
 		float turn = hash(l.id + 11.3) * 3.1416;
-		float house = metres(14.0);
-		float outer = block(p, l.site, vec2(house, house * 0.7), turn, fw);
-		float court = block(p, l.site, vec2(house * 0.5, house * 0.3), turn, fw);
-		float villa = outer - court;
-		c = mix(c, ANCIENT_INK, villa * 0.9);
-		cover = max(cover, villa);
+		c = ancient_farm(c, p, l.site, l.id, turn, fw, cover);
+		if (hamlet_here(l) > 0.5) c = ancient_farm(c, p, second_site(l), l.id + 21.0, turn + 0.4, fw, cover);
 	}
 	return c;
 }

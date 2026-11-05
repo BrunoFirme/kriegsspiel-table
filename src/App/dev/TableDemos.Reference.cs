@@ -1,0 +1,171 @@
+using System.Collections.Generic;
+using System.Linq;
+using Godot;
+using KTable.Core.Model;
+using KTable.Core.Protocol;
+using Json = KTable.Core.Json;
+
+namespace KTable.App;
+
+sealed partial class TableDemos
+{
+    const int ReferenceColumns = 3, ReferenceRows = 2;
+    const string ReferenceName = "Terrain reference";
+    static readonly string[] ReferenceSheetNames = ["North-west", "North", "North-east", "South-west", "South", "South-east"];
+
+    static readonly (string Name, double U, double V, float Size, float PitchDeg, float YawDeg)[] ReferenceViews =
+    [
+        ("nw", 0.5, 0.5, 85, 90, 0), ("n", 1.5, 0.5, 85, 90, 0), ("ne", 2.5, 0.5, 85, 90, 0),
+        ("sw", 0.5, 1.5, 85, 90, 0), ("s", 1.5, 1.5, 85, 90, 0), ("se", 2.5, 1.5, 85, 90, 0),
+        ("mountain", 0.3, 0.42, 28, 90, 0), ("pass", 0.25, 0.55, 14, 90, 0), ("lake", 0.45, 0.47, 14, 90, 0),
+        ("town", 1.1, 0.84, 14, 90, 0), ("city", 1.5, 1.18, 30, 90, 0), ("suburb", 1.63, 1.1, 10, 90, 0),
+        ("village", 1.3, 0.58, 12, 90, 0), ("hamlet", 0.8, 1.2, 8, 90, 0), ("farms", 1.9, 0.95, 12, 90, 0),
+        ("plots", 2.25, 1.14, 12, 90, 0), ("forest", 1.2, 0.42, 22, 90, 0), ("copse", 1.7, 0.8, 8, 90, 0),
+        ("southwood", 0.9, 1.7, 16, 90, 0), ("river", 0.95, 0.94, 14, 90, 0), ("delta", 2.6, 1.4, 16, 90, 0),
+        ("coast", 2.4, 1.55, 16, 90, 0), ("port", 2.72, 1.32, 12, 90, 0), ("headland", 2.95, 0.88, 12, 90, 0),
+        ("lowlake", 1.3, 1.6, 16, 90, 0), ("terraces", 0.65, 1.3, 14, 90, 0),
+        ("valley-3d", 1.1, 0.9, 70, 35, 15), ("coast-3d", 2.6, 1.4, 60, 35, 0), ("mountain-3d", 0.35, 0.5, 50, 35, 20),
+    ];
+
+    static Vec2 SheetCentre(int i) => new(-GroundWidth + i % ReferenceColumns * GroundWidth, GroundDepth / 2 - i / ReferenceColumns * GroundDepth);
+
+    static Vec2 ReferenceWorld(double u, double v) => new(-GroundWidth * ReferenceColumns / 2 + u * GroundWidth, GroundDepth * ReferenceRows / 2 - v * GroundDepth);
+
+    async System.Threading.Tasks.Task DemoReference(Hud hud, string how)
+    {
+        var look = GroundLook(how);
+        Session.Do(new SetCalibration { UnitsPerMeter = 1 / DemoMetresPerUnit });
+        var only = how.Split(',').FirstOrDefault(part => part.StartsWith("only="))?["only=".Length..].Split('+');
+        var ids = new Dictionary<int, string>();
+        for (int i = 0; i < ReferenceSheetNames.Length; i++)
+        {
+            if (only != null && !only.Contains(ReferenceSheetNames[i])) continue;
+            var added = new System.Threading.Tasks.TaskCompletionSource<string?>();
+            hud.Map.Reliefs.AddBlank(GroundWidth, GroundDepth, why => added.TrySetResult(why));
+            if (await added.Task is { } why) { GD.Print("[reference] blank failed: " + why); return; }
+            await _main.ToSignal(Tree.CreateTimer(ReliefSettleSeconds), SceneTreeTimer.SignalName.Timeout);
+            var sheet = Session.View.Sheets.Last();
+            var grid = Session.Relief.Grid(sheet)?.Copy();
+            if (grid == null) { GD.Print("[reference] no relief on sheet " + i); return; }
+            var painter = new GroundPainter(grid, GroundWidth / System.Math.Max(1, grid.Cols - 1) * DemoMetresPerUnit, DemoMetresPerUnit, 0, i % ReferenceColumns, i / ReferenceColumns);
+            PaintLandscape(painter);
+            var named = Json.Clone(sheet);
+            named.Name = ReferenceSheetNames[i];
+            ReliefTool.Commit(Session, named, grid, hud.Map.Reliefs.Share, m => GD.Print("[reference] " + m));
+            ids[i] = sheet.Id;
+            GD.Print($"[reference] painted {ReferenceSheetNames[i]} on {sheet.Id}");
+        }
+        await _main.ToSignal(Tree.CreateTimer(ReliefSettleSeconds), SceneTreeTimer.SignalName.Timeout);
+        foreach (var (i, id) in ids)
+        {
+            var sheet = Session.View.Sheets.First(s => s.Id == id);
+            Session.Do(new MoveSheet { Id = sheet.Id, Pos = SheetCentre(i), RotDeg = sheet.RotDeg, Z = i, Size = sheet.Size });
+        }
+        await _main.ToSignal(Tree.CreateTimer(ReliefSettleSeconds), SceneTreeTimer.SignalName.Timeout);
+        var dir = ScenarioFiles.SaveTable(Session.Store, Session.View, ReferenceName, null);
+        GD.Print($"[reference] saved '{ReferenceName}' as {look.MapStyle} in {dir}");
+        if (_args.TryGetValue("ground-shots", out var shots)) await ReferenceTour(hud, shots, ids.Keys);
+    }
+
+    async System.Threading.Tasks.Task ReferenceTour(Hud hud, string dir, IEnumerable<int> sheets)
+    {
+        await _main.ToSignal(Tree.CreateTimer(TourSettleSeconds), SceneTreeTimer.SignalName.Timeout);
+        hud.Visible = false;
+        RenderingServer.ViewportSetMeasureRenderTime(_main.GetViewport().GetViewportRid(), true);
+        var only = _args.TryGetValue("ground-views", out var names) ? names.Split(',') : null;
+        foreach (var v in ReferenceViews.Where(v => sheets.Contains((int)v.U + (int)v.V * ReferenceColumns) && (only == null || only.Contains(v.Name))))
+        {
+            var at = ReferenceWorld(v.U, v.V);
+            await Shoot(dir, (v.Name, at.X, at.Z, v.Size, v.PitchDeg, v.YawDeg));
+        }
+        _main.QuitApp();
+    }
+
+    static readonly (double, double)[] MainRiver =
+    [
+        (0.48, 0.52), (0.55, 0.72), (0.62, 0.78), (0.72, 0.84), (0.82, 0.88), (0.95, 0.94), (1.08, 0.9), (1.2, 0.96), (1.33, 1.02), (1.45, 0.98),
+        (1.58, 1.04), (1.7, 1.0), (1.85, 1.06), (2.0, 1.12), (2.15, 1.18), (2.3, 1.28), (2.45, 1.36), (2.58, 1.42), (2.68, 1.46),
+    ];
+
+    static readonly (double, double)[] Coast =
+    [
+        (2.12, 2.0), (2.18, 1.78), (2.3, 1.64), (2.5, 1.54), (2.66, 1.5), (2.8, 1.36), (2.9, 1.18), (2.96, 1.0), (3.0, 0.92),
+    ];
+
+    static readonly (string Kind, int First, int Second, double U, double V, double Ru, double Rv, int Corners, double Seed)[] Patches =
+    [
+        ("field", 60, 80, 1.5, 1.18, 0.24, 0.3, 14, 1), ("field", 10, 10, 1.0, 0.72, 0.18, 0.14, 12, 2), ("field", 25, 25, 1.9, 0.92, 0.2, 0.13, 12, 3),
+        ("field", 40, 25, 2.3, 0.9, 0.15, 0.17, 10, 4), ("field", 50, 25, 0.6, 0.86, 0.09, 0.1, 10, 5), ("field", 70, 50, 1.3, 0.58, 0.1, 0.1, 10, 6),
+        ("field", 35, 25, 1.92, 0.72, 0.09, 0.09, 10, 7), ("field", 100, 50, 2.25, 1.14, 0.09, 0.09, 10, 8), ("field", 60, 30, 1.72, 1.6, 0.1, 0.1, 10, 9),
+        ("field", 45, 25, 0.92, 1.52, 0.09, 0.1, 10, 10), ("field", 80, 60, 2.4, 0.42, 0.1, 0.11, 10, 11), ("field", 100, 60, 2.72, 1.32, 0.1, 0.08, 10, 12),
+        ("field", 70, 25, 0.65, 1.3, 0.08, 0.1, 10, 13), ("field", 30, 10, 0.3, 0.95, 0.06, 0.06, 9, 14), ("field", 90, 40, 1.1, 0.84, 0.1, 0.1, 10, 15),
+        ("wood", 85, 0, 1.2, 0.42, 0.55, 0.11, 18, 16), ("wood", 70, 0, 2.0, 0.44, 0.3, 0.09, 14, 17), ("wood", 75, 0, 0.3, 0.65, 0.12, 0.1, 12, 18),
+        ("wood", 90, 0, 1.22, 1.69, 0.09, 0.06, 10, 19), ("wood", 55, 0, 2.55, 0.65, 0.12, 0.14, 12, 20), ("wood", 40, 0, 0.12, 1.45, 0.1, 0.12, 12, 21),
+        ("town", 100, 100, 1.5, 1.18, 0.1, 0.14, 12, 30), ("town", 65, 30, 1.1, 0.84, 0.05, 0.065, 10, 31), ("town", 70, 50, 2.72, 1.32, 0.045, 0.05, 10, 32),
+        ("town", 40, 20, 0.6, 0.86, 0.03, 0.04, 9, 33), ("town", 40, 20, 1.3, 0.58, 0.03, 0.04, 9, 34), ("town", 40, 20, 1.92, 0.72, 0.03, 0.045, 9, 35),
+        ("town", 45, 20, 2.25, 1.14, 0.03, 0.04, 9, 36), ("town", 40, 20, 1.72, 1.6, 0.03, 0.04, 9, 37), ("town", 35, 20, 0.92, 1.52, 0.028, 0.04, 9, 38),
+        ("town", 40, 20, 2.4, 0.42, 0.03, 0.04, 9, 39), ("town", 30, 10, 0.3, 0.95, 0.022, 0.03, 8, 40),
+        ("town", 20, 0, 0.8, 1.2, 0.015, 0.02, 8, 41), ("town", 20, 0, 1.6, 0.4, 0.015, 0.02, 8, 42), ("town", 20, 0, 2.05, 1.45, 0.015, 0.02, 8, 43),
+        ("town", 20, 0, 0.55, 1.75, 0.015, 0.02, 8, 44), ("town", 20, 0, 2.6, 0.8, 0.015, 0.02, 8, 45), ("town", 20, 0, 1.2, 1.35, 0.015, 0.02, 8, 46),
+    ];
+
+    static readonly (int Trees, double R, double U, double V)[] Copses =
+    [
+        (30, 8, 1.7, 0.8), (100, 12, 1.65, 1.35), (50, 16, 0.85, 1.05), (70, 10, 2.1, 0.95), (100, 8, 1.4, 0.75), (40, 14, 2.5, 1.0),
+        (60, 9, 0.95, 1.3), (80, 12, 1.95, 1.3), (25, 10, 1.15, 0.65), (25, 8, 2.35, 1.3), (90, 14, 0.5, 1.2), (50, 7, 2.85, 0.6),
+    ];
+
+    static void PaintLandscape(GroundPainter p)
+    {
+        p.Raise(640, 0.16, (-0.6, 1.0));
+        for (int i = 0; i < 3; i++) p.Raise(60, 1, (0.28, 0.42));
+        for (int i = 0; i < 2; i++) p.Raise(45, 1, (0.5, 0.28));
+        p.Raise(30, 0.6, (0.28, 0.42), (0.5, 0.28));
+        p.Raise(40, 0.25, (0.1, 0.75), (0.25, 0.9), (0.45, 1.05));
+        p.Raise(70, 0.15, (0.7, 0.45), (1.2, 0.4), (1.7, 0.5), (2.2, 0.42));
+        p.Raise(70, 0.12, (0.4, 1.6), (0.9, 1.68), (1.4, 1.62), (1.8, 1.7));
+        for (int i = 0; i < 3; i++) p.Raise(22, 1, (0.72, 1.42));
+        for (int i = 0; i < 2; i++) p.Raise(30, 1, (1.05, 1.5));
+        for (int i = 0; i < 2; i++) p.Raise(35, 0.6, (2.95, 0.85));
+        p.Valley(60, 0.1, MainRiver);
+        p.Hollow(30, (0.44, 0.46), (0.47, 0.49));
+        p.Hollow(28, (1.28, 1.6), (1.33, 1.62));
+        for (int i = 0; i < 2; i++) p.Raise(5, 0.8, Coast.Select(c => (c.Item1 - 0.03, c.Item2 - 0.035)).ToArray());
+        p.Grass();
+        foreach (var (kind, first, second, u, v, ru, rv, corners, seed) in Patches)
+            p.PaintShape(kind, first, second, [.. GroundPainter.Blob(u, v, ru, rv, corners, 0.22, seed)]);
+        p.PaintLevels("wood", 60, 0, 16, (0.4, 1.62), (0.9, 1.7), (1.4, 1.64), (1.8, 1.72));
+        foreach (var (trees, r, u, v) in Copses) p.PaintLevels("wood", trees, 0, r, (u, v), (u + 0.01, v + 0.005));
+        p.Paint("rock", 16, 1, (0.24, 0.38), (0.32, 0.45));
+        p.Paint("snow", 9, 1, (0.28, 0.42));
+        p.Paint("rock", 10, 1, (2.93, 0.86), (2.98, 0.9));
+        p.Paint("earth", 8, 1, (0.75, 1.1));
+        p.Paint("earth", 7, 1, (1.7, 1.3));
+        p.PaintShape("water", 0, 0, [.. Coast, (3.0, 2.0)]);
+        p.Paint("sand", 7, 1, Coast.Select(c => (c.Item1 - 0.025, c.Item2 - 0.03)).ToArray());
+        p.Paint("marsh", 12, 1, (2.5, 1.3), (2.58, 1.36), (2.66, 1.4));
+        p.Paint("marsh", 10, 1, (2.25, 1.5), (2.35, 1.46));
+        p.Paint("marsh", 8, 1, (1.38, 1.04), (1.42, 1.07));
+        p.Paint("water", 24, 1, (0.44, 0.46), (0.47, 0.49));
+        p.Paint("water", 26, 1, (1.28, 1.6), (1.33, 1.62));
+        p.Paint("water", 2, 1, MainRiver[..5]);
+        p.Paint("water", 3, 1, MainRiver[4..12]);
+        p.Paint("water", 4, 1, MainRiver[11..]);
+        p.Paint("water", 2, 1, (0.75, 1.55), (0.85, 1.4), (0.95, 1.25), (1.03, 1.1), (1.08, 0.92));
+        p.Paint("water", 1.5, 1, (1.25, 0.5), (1.3, 0.65), (1.33, 0.8), (1.33, 1.0));
+        p.PaintRoad(100, 4, (0.0, 0.92), (0.3, 0.95), (0.6, 0.88), (0.85, 0.9), (1.1, 0.86), (1.3, 0.92), (1.5, 1.1), (1.75, 1.08), (2.0, 1.1), (2.25, 1.16), (2.5, 1.26), (2.72, 1.3));
+        p.PaintRoad(100, 4, (1.48, 0.0), (1.5, 0.3), (1.52, 0.6), (1.5, 0.9), (1.5, 1.1), (1.55, 1.4), (1.6, 1.7), (1.62, 2.0));
+        p.PaintRoad(50, 3, (0.3, 0.95), (0.6, 0.86), (0.55, 0.6), (0.48, 0.52));
+        p.PaintRoad(50, 3, (1.1, 0.86), (1.3, 0.58), (1.6, 0.4), (1.92, 0.72), (2.25, 1.14));
+        p.PaintRoad(50, 3, (1.5, 1.1), (1.72, 1.6), (2.05, 1.45), (2.3, 1.55));
+        p.PaintRoad(50, 3, (0.92, 1.52), (1.2, 1.35), (1.5, 1.1));
+        p.PaintRoad(50, 3, (2.4, 0.42), (2.6, 0.8), (2.72, 1.3));
+        p.PaintRoad(50, 3, (0.05, 0.3), (0.2, 0.5), (0.3, 0.6), (0.3, 0.95));
+        p.PaintRoad(0, 2, (0.55, 1.75), (0.92, 1.52));
+        p.PaintRoad(0, 2, (0.8, 1.2), (1.1, 0.86));
+        p.PaintRoad(0, 2, (1.72, 1.6), (1.62, 2.0));
+        p.PaintRoad(0, 2, (2.05, 1.45), (2.3, 1.6));
+        p.PaintRoad(0, 2, (0.6, 0.86), (0.72, 0.6));
+        p.PaintRoad(0, 2, (0.65, 1.3), (0.72, 1.42), (0.92, 1.52));
+    }
+}

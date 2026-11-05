@@ -373,6 +373,7 @@ sealed partial class TableDemos
         if (_args.TryGetValue("demo-relief", out var drel)) DemoRelief(hud, drel);
         if (_args.TryGetValue("demo-blank", out var dbl)) DemoBlank(hud, dbl);
         if (_args.TryGetValue("demo-ground", out var dgr)) DemoGround(hud, dgr);
+        if (_args.TryGetValue("demo-reference", out var dref)) _ = DemoReference(hud, dref);
         if (_args.TryGetValue("ground-look", out var glk)) { GroundLook(glk); hud.Visible = false; }
         if (_args.TryGetValue("demo-zone", out var dz))
             Session.Do(new KTable.Core.Protocol.SetZone { Zone = new KTable.Core.Model.Zone { Name = "Arevalillo", Owner = dz, Color = "#40C0FF",

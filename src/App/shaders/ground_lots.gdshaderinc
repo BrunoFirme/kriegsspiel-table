@@ -10,6 +10,7 @@ vec2 levels_at(vec2 o, vec2 p, vec2 uv, mat2 to_uv) {
 
 struct Lot {
 	vec2 id;
+	vec2 other;
 	vec2 site;
 	float edge;
 	vec2 across;
@@ -25,13 +26,16 @@ Lot lot_at(vec2 p, vec2 uv, mat2 to_uv, float size, float jitter, int k, float s
 	float f1 = 8.0;
 	vec2 near = vec2(0.0);
 	vec2 sites[9];
+	vec2 ids[9];
 	l.id = vec2(0.0);
+	l.other = vec2(0.0);
 	for (int j = -1; j <= 1; j++) {
 		for (int i = -1; i <= 1; i++) {
 			vec2 g = vec2(float(i), float(j));
 			vec2 cell = seeded(n + g, salt);
 			vec2 o = g + 0.5 + (hash2(cell) - 0.5) * jitter;
 			sites[(j + 1) * 3 + i + 1] = o;
+			ids[(j + 1) * 3 + i + 1] = cell;
 			float d = length(o - f);
 			if (d < f1) { f1 = d; l.id = cell; near = o; }
 		}
@@ -42,7 +46,7 @@ Lot lot_at(vec2 p, vec2 uv, mat2 to_uv, float size, float jitter, int k, float s
 		vec2 o = sites[s];
 		if (dot(o - near, o - near) < 1e-6) continue;
 		float d = abs(dot(f - (near + o) * 0.5, normalize(o - near)));
-		if (d < best) { best = d; toward = normalize(o - near); }
+		if (d < best) { best = d; toward = normalize(o - near); l.other = ids[s]; }
 	}
 	l.site = (n + near) * size;
 	l.edge = best * size;
@@ -50,6 +54,11 @@ Lot lot_at(vec2 p, vec2 uv, mat2 to_uv, float size, float jitter, int k, float s
 	l.room = room_at(l.site, p, uv, to_uv, k, l.salt);
 	l.levels = levels;
 	return l;
+}
+
+vec2 lot_axis(Lot l) {
+	float a = hash(l.id + 0.7) * 3.1416;
+	return vec2(cos(a), sin(a));
 }
 
 float block(vec2 p, vec2 c, vec2 half_size, float turn, float fw) {
@@ -128,16 +137,100 @@ vec2 road_along_at(vec2 site_uv) {
 	return vec2(-n.y, n.x);
 }
 
-float farmstead(vec2 p, Lot l, float turn, float fw, out float yard, out float wooden) {
-	float house = metres(12.0);
-	vec2 c = l.site;
-	mat2 r = mat2(vec2(cos(turn), sin(turn)), vec2(-sin(turn), cos(turn)));
-	float a = block(p, c + r * vec2(0.0, house * 0.9), vec2(house * 0.75, house * 0.3), turn, fw);
-	float b = block(p, c + r * vec2(house * 0.9, -house * 0.4), vec2(house * 0.28, house * 0.75), turn, fw);
-	float d = block(p, c + r * vec2(-house * 0.9, -house * 0.5), vec2(house * 0.28, house * 0.6), turn, fw) * step(0.35, hash(l.id + 2.6));
-	yard = block(p, c, vec2(house * 1.8, house * 1.6), turn, fw);
-	wooden = max(b, d);
-	return max(a, max(b, d));
+int farm_variant(vec2 seed) {
+	return int(hash(seed + 2.6) * float(FARM_VARIANTS));
+}
+
+mat2 turned(float turn) {
+	return mat2(vec2(cos(turn), sin(turn)), vec2(-sin(turn), cos(turn)));
+}
+
+float farm_blocks(vec2 p, vec2 site, vec2 seed, float turn, float scale, float fw, out float yard, out float court) {
+	float h = metres(HOUSE_M) * scale;
+	mat2 r = turned(turn);
+	float n1 = mix(0.8, 1.4, hash(seed + 7.1));
+	float n2 = mix(0.6, 1.2, hash(seed + 8.3));
+	int v = farm_variant(seed);
+	float m = 0.0;
+	yard = 0.0;
+	court = 0.0;
+	if (v == 0) {
+		m = block(p, site, vec2(h * 1.5 * n1, h * 0.36), turn, fw);
+	} else if (v == 1) {
+		m = block(p, site + r * vec2(0.0, h * 0.75), vec2(h * 1.1 * n1, h * 0.3), turn, fw);
+		m = max(m, block(p, site - r * vec2(h * 0.2, h * 0.7), vec2(h * 0.9 * n2, h * 0.32), turn, fw));
+	} else if (v == 2) {
+		m = block(p, site + r * vec2(0.1 * h, h * 0.9), vec2(h * 1.1 * n1, h * 0.32), turn, fw);
+		m = max(m, block(p, site + r * vec2(h * 0.95, -h * 0.15), vec2(h * 0.3, h * 0.8 * n2), turn, fw));
+	} else if (v == 3) {
+		m = block(p, site + r * vec2(0.0, h * 0.95), vec2(h * 1.0 * n1, h * 0.3), turn, fw);
+		m = max(m, block(p, site + r * vec2(h * 0.9, -h * 0.1), vec2(h * 0.28, h * 0.8), turn, fw));
+		m = max(m, block(p, site + r * vec2(-h * 0.9, -h * 0.2), vec2(h * 0.28, h * 0.7 * n2), turn, fw));
+		yard = block(p, site, vec2(h * 1.2, h * 1.25), turn, fw) * (1.0 - m);
+	} else if (v == 4) {
+		float outer = block(p, site, vec2(h * 1.35 * n1, h * 1.1), turn, fw);
+		court = block(p, site, vec2(h * 1.35 * n1 - h * 0.55, h * 0.55), turn, fw);
+		m = outer * (1.0 - court);
+	} else if (v == 5) {
+		for (int i = 0; i < 4; i++) {
+			vec2 o = (hash2(seed + float(i) * 3.3) - 0.5) * h * 3.2;
+			float a = turn + (hash(seed + float(i) * 1.7) - 0.5) * 1.2;
+			m = max(m, block(p, site + o, vec2(h * mix(0.4, 0.7, hash(seed + float(i) * 2.9)), h * 0.28), a, fw));
+		}
+	} else {
+		m = block(p, site + r * vec2(0.0, h * 0.8), vec2(h * 1.0 * n1, h * 0.3), turn, fw);
+		m = max(m, block(p, site + r * vec2(h * 0.9, -h * 0.4), vec2(h * 0.28, h * 0.7), turn, fw));
+		m = max(m, 1.0 - smoothstep(h * 0.28 - fw, h * 0.28 + fw, length(p - (site + r * vec2(-h * 0.85, -h * 0.5)))));
+	}
+	return m;
+}
+
+float farm_garden(vec2 p, vec2 site, vec2 seed, float turn, float scale, float fw) {
+	if (hash(seed + 4.8) > 0.45) return 0.0;
+	float h = metres(HOUSE_M) * scale;
+	mat2 r = turned(turn);
+	float side = floor(hash(seed + 5.9) * 4.0);
+	vec2 at = side < 1.0 ? vec2(h * 2.3, h * 0.3) : side < 2.0 ? vec2(-h * 2.3, -h * 0.2) : side < 3.0 ? vec2(h * 0.4, -h * 2.2) : vec2(-h * 0.3, h * 2.2);
+	vec2 half_size = vec2(h * mix(0.6, 1.1, hash(seed + 6.2)), h * mix(0.5, 0.9, hash(seed + 6.7)));
+	return block(p, site + r * at, half_size, turn, fw);
+}
+
+float farm_trees(vec2 p, vec2 site, vec2 seed, float turn, float scale, float fw) {
+	if (hash(seed + 9.1) > 0.3) return 0.0;
+	float h = metres(HOUSE_M) * scale;
+	mat2 r = turned(turn);
+	float m = 0.0;
+	float n = 3.0 + floor(hash(seed + 9.5) * 3.0);
+	for (int i = 0; i < 5; i++) {
+		if (float(i) >= n) break;
+		vec2 at = r * vec2((float(i) - (n - 1.0) * 0.5) * h * 0.55, -h * 1.9);
+		m = max(m, ink(length(p - site - at), metres(2.2), fw));
+	}
+	return m;
+}
+
+float farm_scale(vec2 seed) {
+	return mix(0.75, 1.35, hash(seed + 5.1));
+}
+
+float clumps_at(Lot l) {
+	return noise(l.site / metres(FARM_CLUSTER_M) + 3.3);
+}
+
+float farms_here(Lot l) {
+	return l.levels.y * mix(0.15, 1.8, smoothstep(0.3, 0.75, clumps_at(l)));
+}
+
+float hamlet_here(Lot l) {
+	return step(0.68, clumps_at(l)) * step(0.5, hash(l.id + 12.4)) * step(metres(60.0), l.room);
+}
+
+vec2 second_site(Lot l) {
+	return l.site + (hash2(l.id + 13.7) - 0.5) * metres(70.0);
+}
+
+vec2 curled(vec2 p) {
+	return p + (vec2(noise(p * LOT_CURL_CYCLES + 3.0), noise(p * LOT_CURL_CYCLES + 8.0)) - 0.5) * metres(LOT_CURL_M);
 }
 
 float haystacks(vec2 p, Lot l, float fw) {
@@ -160,14 +253,15 @@ float windmill(vec2 p, Lot l, float fw) {
 
 float orchard(vec2 p, Lot l, float dot, float fw) {
 	float gap = metres(ORCHARD_M);
-	mat2 r = mat2(l.across, vec2(-l.across.y, l.across.x));
+	vec2 axis = lot_axis(l);
+	mat2 r = mat2(axis, vec2(-axis.y, axis.x));
 	vec2 q = r * (p - l.site);
 	vec2 c = (floor(q / gap) + 0.5) * gap;
 	return ink(length(q - c), gap * dot, fw);
 }
 
 float vine_rows(vec2 p, Lot l, vec2 down, float fw) {
-	vec2 run = length(down) > 0.5 ? down : l.across;
+	vec2 run = length(down) > 0.5 ? down : lot_axis(l);
 	vec2 side = vec2(-run.y, run.x);
 	float rows = metres(VINE_ROW_M);
 	float stakes = metres(VINE_STAKE_M);
@@ -180,7 +274,7 @@ float vine_rows(vec2 p, Lot l, vec2 down, float fw) {
 
 float strips(vec2 p, Lot l, vec2 along, float follow, float fw, out float furrow) {
 	float width = metres(mix(28.0, 58.0, hash(l.id + 4.4)));
-	vec2 dir = l.across;
+	vec2 dir = lot_axis(l);
 	dir = normalize(mix(dir, along * (dot(dir, along) < 0.0 ? -1.0 : 1.0), follow * step(0.5, length(along))));
 	float s = dot(p - l.site, dir) / width + hash(l.id) * 10.0;
 	float strip = floor(s);

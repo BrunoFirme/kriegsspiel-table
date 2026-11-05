@@ -160,71 +160,57 @@ sealed partial class TableDemos
 
     static void PaintGround(ReliefGrid g, byte saltFrom = 0)
     {
-        static byte K(string name) => GroundKinds.Of(name)!.Value;
-        byte salt = saltFrom;
-        void Paint(string kind, double r, double density, params (double, double)[] pts) =>
-            ReliefBrush.Stroke(g, pts, r, new Brush(BrushMode.Paint, 0, 1, K(kind), Density: density, Salt: ++salt, Detail: GroundKinds.Levels(50, 25)));
-        void PaintAt(string kind, int first, int second, double u0, double v0, double u1, double v1) =>
-            ReliefBrush.Shape(g, [(u0, v0), (u1, v0), (u1, v1), (u0, v1)], new Brush(BrushMode.Paint, 0, 1, K(kind), Salt: ++salt, Detail: GroundKinds.Levels(first, second)));
-        void PaintRoad(int road, double r, params (double, double)[] pts) =>
-            ReliefBrush.Stroke(g, pts, r, new Brush(BrushMode.Paint, 0, 1, K("road"), Density: 1, Salt: ++salt, Detail: GroundKinds.Levels(road, 0)));
-        void Raise(double r, double strength, params (double, double)[] pts) => ReliefBrush.Stroke(g, pts, r, new Brush(BrushMode.Raise, 0, strength));
-        void Lower(double r, double strength, params (double, double)[] pts) => ReliefBrush.Stroke(g, pts, r, new Brush(BrushMode.Lower, 0, strength));
-        void Hollow(double r, params (double, double)[] pts) => ReliefBrush.Stroke(g, pts, r, new Brush(BrushMode.Flatten, 0, 1, Level: 0));
+        var gp = new GroundPainter(g, GroundWidth / System.Math.Max(1, g.Cols - 1) * DemoMetresPerUnit, DemoMetresPerUnit, saltFrom);
 
-        Raise(14, 1.6, (0.04, 0.33), (0.96, 0.33));
-        for (int i = 0; i < 3; i++) Raise(30, 1, (0.86, 0.72));
-        for (int i = 0; i < 3; i++) Raise(22, 1, (0.9, 0.5));
-        Raise(90, 0.4, (0.9, 0.6));
-        Hollow(26, (0.69, 0.6), (0.77, 0.63));
-        foreach (var (r, depth) in new[] { (48, 0.012), (36, 0.015), (24, 0.02), (16, 0.03), (10, 0.05), (6, 0.08), (3, 0.15), (1, 0.3) }) Lower(r, depth, (0.885, 0.6), (0.8, 0.63));
-        Lower(10, 0.6, (0.74, 0.8), (0.8, 0.62), (0.86, 0.45));
+        gp.Raise(14, 1.6, (0.04, 0.33), (0.96, 0.33));
+        for (int i = 0; i < 3; i++) gp.Raise(30, 1, (0.86, 0.72));
+        for (int i = 0; i < 3; i++) gp.Raise(22, 1, (0.9, 0.5));
+        gp.Raise(90, 0.4, (0.9, 0.6));
+        gp.Hollow(26, (0.69, 0.6), (0.77, 0.63));
+        foreach (var (r, depth) in new[] { (48, 0.012), (36, 0.015), (24, 0.02), (16, 0.03), (10, 0.05), (6, 0.08), (3, 0.15), (1, 0.3) }) gp.Lower(r, depth, (0.885, 0.6), (0.8, 0.63));
+        gp.Lower(10, 0.6, (0.74, 0.8), (0.8, 0.62), (0.86, 0.45));
         for (int i = 0; i < SwatchKinds.Length; i++)
         {
             double u0 = 0.035 + i * 0.094, u1 = u0 + 0.078;
-            for (double v = 0.07; v <= 0.32; v += 0.025) Paint(SwatchKinds[i], 7, 1, (u0 + 0.012, v), (u1 - 0.012, v + 0.004));
-            Paint(SwatchKinds[i], 6, 0.35, (u0, 0.37), (u1, 0.38));
+            for (double v = 0.07; v <= 0.32; v += 0.025) gp.Paint(SwatchKinds[i], 7, 1, (u0 + 0.012, v), (u1 - 0.012, v + 0.004));
+            gp.Paint(SwatchKinds[i], 6, 0.35, (u0, 0.37), (u1, 0.38));
         }
 
-        for (int i = 0; i < 4; i++) Raise(40, 1, (0.24, 0.68));
-        Raise(26, 0.5, (0.13, 0.62), (0.3, 0.7));
-        for (double v = 0.47; v <= 0.97; v += 0.03) Paint("grass", 9, 1, (0.02, v), (0.98, v));
-        for (double v = 0.47; v <= 0.6; v += 0.025) Paint("wood", 9, 1, (0.03, v), (0.17 + 0.03 * System.Math.Sin(v * 40), v));
-        Paint("wood", 7, 0.3, (0.18, 0.5), (0.24, 0.55));
-        Paint("wood", 6, 1, (0.29, 0.6), (0.33, 0.72), (0.31, 0.8));
-        Paint("rock", 8, 1, (0.22, 0.66), (0.26, 0.69));
-        Paint("snow", 5, 1, (0.24, 0.68));
-        Paint("water", 20, 1, (0.7, 0.6), (0.76, 0.63));
-        Paint("water", 3, 1, (0.76, 0.66), (0.82, 0.78), (0.9, 0.86), (0.98, 0.97));
-        Paint("marsh", 10, 1, (0.62, 0.55), (0.62, 0.68), (0.66, 0.73));
-        Paint("sand", 6, 1, (0.68, 0.7), (0.74, 0.71));
-        PaintRoad(0, 2, (0.5, 0.78), (0.45, 0.62), (0.4, 0.48));
-        PaintRoad(50, 3, (0.62, 0.84), (0.66, 0.7), (0.7, 0.6));
-        PaintRoad(100, 4, (0.02, 0.88), (0.2, 0.86), (0.4, 0.8), (0.55, 0.78), (0.62, 0.84), (0.8, 0.88), (0.98, 0.9));
-        Paint("earth", 4, 1, (0.47, 0.76), (0.53, 0.76));
-        Paint("earth", 3, 1, (0.5, 0.82), (0.56, 0.83));
-        for (int i = 0; i < 4; i++) Paint("field", 6, 1, (0.36 + i * 0.03, 0.88), (0.37 + i * 0.03, 0.96));
-        for (int i = 0; i < 3; i++) Paint("field", 6, 1, (0.6 + i * 0.035, 0.92), (0.63 + i * 0.035, 0.95));
-        Paint("field", 7, 1, (0.4, 0.66), (0.47, 0.7));
-        Paint("wood", 1.5, 1, (0.35, 0.86), (0.48, 0.86));
-        for (int i = 0; i < 10; i++) Raise(4, 1, (0.05, 0.745), (0.21, 0.745));
-        for (int i = 0; i < 4; i++) Raise(9, 1, (0.05, 0.725), (0.21, 0.725));
-        Paint("wood", 5, 1, (0.135, 0.73), (0.21, 0.73), (0.21, 0.76), (0.135, 0.76));
-        for (int i = 0; i < 3; i++) Raise(26, 1, (0.53, 0.57));
-        Paint("field", 8, 1, (0.5, 0.54), (0.56, 0.56), (0.5, 0.59));
+        for (int i = 0; i < 4; i++) gp.Raise(40, 1, (0.24, 0.68));
+        gp.Raise(26, 0.5, (0.13, 0.62), (0.3, 0.7));
+        for (double v = 0.47; v <= 0.97; v += 0.03) gp.Paint("grass", 9, 1, (0.02, v), (0.98, v));
+        for (double v = 0.47; v <= 0.6; v += 0.025) gp.Paint("wood", 9, 1, (0.03, v), (0.17 + 0.03 * System.Math.Sin(v * 40), v));
+        gp.Paint("wood", 7, 0.3, (0.18, 0.5), (0.24, 0.55));
+        gp.Paint("wood", 6, 1, (0.29, 0.6), (0.33, 0.72), (0.31, 0.8));
+        gp.Paint("rock", 8, 1, (0.22, 0.66), (0.26, 0.69));
+        gp.Paint("snow", 5, 1, (0.24, 0.68));
+        gp.Paint("water", 20, 1, (0.7, 0.6), (0.76, 0.63));
+        gp.Paint("water", 3, 1, (0.76, 0.66), (0.82, 0.78), (0.9, 0.86), (0.98, 0.97));
+        gp.Paint("marsh", 10, 1, (0.62, 0.55), (0.62, 0.68), (0.66, 0.73));
+        gp.Paint("sand", 6, 1, (0.68, 0.7), (0.74, 0.71));
+        gp.PaintRoad(0, 2, (0.5, 0.78), (0.45, 0.62), (0.4, 0.48));
+        gp.PaintRoad(50, 3, (0.62, 0.84), (0.66, 0.7), (0.7, 0.6));
+        gp.PaintRoad(100, 4, (0.02, 0.88), (0.2, 0.86), (0.4, 0.8), (0.55, 0.78), (0.62, 0.84), (0.8, 0.88), (0.98, 0.9));
+        gp.Paint("earth", 4, 1, (0.47, 0.76), (0.53, 0.76));
+        gp.Paint("earth", 3, 1, (0.5, 0.82), (0.56, 0.83));
+        for (int i = 0; i < 4; i++) gp.Paint("field", 6, 1, (0.36 + i * 0.03, 0.88), (0.37 + i * 0.03, 0.96));
+        for (int i = 0; i < 3; i++) gp.Paint("field", 6, 1, (0.6 + i * 0.035, 0.92), (0.63 + i * 0.035, 0.95));
+        gp.Paint("field", 7, 1, (0.4, 0.66), (0.47, 0.7));
+        gp.Paint("wood", 1.5, 1, (0.35, 0.86), (0.48, 0.86));
+        for (int i = 0; i < 10; i++) gp.Raise(4, 1, (0.05, 0.745), (0.21, 0.745));
+        for (int i = 0; i < 4; i++) gp.Raise(9, 1, (0.05, 0.725), (0.21, 0.725));
+        gp.Paint("wood", 5, 1, (0.135, 0.73), (0.21, 0.73), (0.21, 0.76), (0.135, 0.76));
+        for (int i = 0; i < 3; i++) gp.Raise(26, 1, (0.53, 0.57));
+        gp.Paint("field", 8, 1, (0.5, 0.54), (0.56, 0.56), (0.5, 0.59));
         (int plots, int buildings)[] strips = [(50, 0), (50, 15), (50, 100), (0, 25), (80, 25)];
-        for (int i = 0; i < strips.Length; i++) PaintAt("field", strips[i].plots, strips[i].buildings, 0.02 + i * 0.062, 0.92, 0.078 + i * 0.062, 0.985);
-        PaintAt("wood", 20, 0, 0.49, 0.92, 0.545, 0.985);
-        PaintAt("wood", 80, 0, 0.555, 0.92, 0.61, 0.985);
-        void PaintShape(string kind, int first, int second, params (double, double)[] pts) =>
-            ReliefBrush.Shape(g, pts, new Brush(BrushMode.Paint, 0, 1, K(kind), Salt: ++salt, Detail: GroundKinds.Levels(first, second)));
-        PaintShape("town", 20, 0, (0.49, 0.745), (0.515, 0.735), (0.54, 0.75), (0.545, 0.775), (0.53, 0.795), (0.5, 0.8), (0.485, 0.78));
-        PaintShape("town", 65, 30, (0.61, 0.8), (0.655, 0.79), (0.695, 0.81), (0.705, 0.85), (0.69, 0.9), (0.65, 0.915), (0.61, 0.9), (0.595, 0.85));
-        PaintShape("town", 100, 100, (0.34, 0.815), (0.39, 0.8), (0.44, 0.81), (0.455, 0.85), (0.445, 0.9), (0.4, 0.925), (0.345, 0.91), (0.325, 0.86));
-        double cellMetres = GroundWidth / System.Math.Max(1, g.Cols - 1) * DemoMetresPerUnit;
-        var country = new Brush(BrushMode.Paint, 0, 1, K("road"), Density: 1, Salt: ++salt, Detail: GroundKinds.Levels(50, 0));
-        GroundRoute.Lay(g, country, [(0.515, 0.755), (0.53, 0.5), (0.3, 0.45)], 3, cellMetres, DemoMetresPerUnit);
-        GroundRoute.Lay(g, new Brush(BrushMode.Paint, 0, 1, K("water"), Salt: ++salt), [(0.885, 0.485)], 1.5, cellMetres, DemoMetresPerUnit);
-        PaintRoad(50, 3, (0.815, 0.44), (0.815, 0.76));
+        for (int i = 0; i < strips.Length; i++) gp.PaintAt("field", strips[i].plots, strips[i].buildings, 0.02 + i * 0.062, 0.92, 0.078 + i * 0.062, 0.985);
+        gp.PaintAt("wood", 20, 0, 0.49, 0.92, 0.545, 0.985);
+        gp.PaintAt("wood", 80, 0, 0.555, 0.92, 0.61, 0.985);
+        gp.PaintShape("town", 20, 0, (0.49, 0.745), (0.515, 0.735), (0.54, 0.75), (0.545, 0.775), (0.53, 0.795), (0.5, 0.8), (0.485, 0.78));
+        gp.PaintShape("town", 65, 30, (0.61, 0.8), (0.655, 0.79), (0.695, 0.81), (0.705, 0.85), (0.69, 0.9), (0.65, 0.915), (0.61, 0.9), (0.595, 0.85));
+        gp.PaintShape("town", 100, 100, (0.34, 0.815), (0.39, 0.8), (0.44, 0.81), (0.455, 0.85), (0.445, 0.9), (0.4, 0.925), (0.345, 0.91), (0.325, 0.86));
+        gp.Route(50, 3, (0.515, 0.755), (0.53, 0.5), (0.3, 0.45));
+        gp.River(1.5, 0.885, 0.485);
+        gp.PaintRoad(50, 3, (0.815, 0.44), (0.815, 0.76));
     }
 }
