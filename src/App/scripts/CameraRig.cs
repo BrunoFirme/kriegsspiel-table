@@ -37,12 +37,15 @@ public partial class CameraRig : Node3D
         Apply();
     }
 
-    public void LookFrom(Vector3 eye, float lens)
+    public void LookFrom(Vector3 eye, float lens, float? yaw = null)
     {
         bool entering = Eye == null;
         if (entering)
         {
             _before = Now;
+            _yawTo = _pitchTo = null;
+            _spin = Vector2.Zero;
+            if (yaw is { } y) Yaw = y;
             Pitch = EyeTiltRadians;
             Cam.KeepAspect = Camera3D.KeepAspectEnum.Width;
         }

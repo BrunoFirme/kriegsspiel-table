@@ -255,8 +255,12 @@ sealed class Sighting
     {
         var node = _pieces.NodeOf(Layers.Umpire, d.ObserverId);
         float up = (float)d.EyeHeight;
-        return node == null ? Coords.ToWorld(d.Center, up) : node.GlobalPosition + Vector3.Up * up;
+        if (node == null) return Coords.ToWorld(d.Center, up);
+        var frontEdge = new Vector3(0, 0, -node.Footprint.Y / 2).Rotated(Vector3.Up, Coords.Yaw(node.Piece.RotDeg));
+        return node.GlobalPosition + frontEdge + Vector3.Up * up;
     }
+
+    float? FrontYaw(SightingDraft d) => _pieces.NodeOf(Layers.Umpire, d.ObserverId) is { } node ? Coords.Yaw(node.Piece.RotDeg) + Mathf.Pi : null;
 
     static float Lens(SightingDraft d) => d.Wide ? CameraRig.WideLens : CameraRig.NormalLens;
 
@@ -264,7 +268,7 @@ sealed class Sighting
     {
         if (Draft is not { } d) return;
         var rig = _c.Rig;
-        if (d.FirstPerson) { rig.LookFrom(EyeOf(d), Lens(d)); return; }
+        if (d.FirstPerson) { rig.LookFrom(EyeOf(d), Lens(d), FrontYaw(d)); return; }
         if (rig.Eye != null) rig.LeaveEye();
         float want = Framing;
         var at = Coords.ToWorld(d.Center);

@@ -231,16 +231,24 @@ static class TableTests
     {
         var t = OfflineTable.Make(r, pieces: 3);
         await r.Frame();
+        var node = t.Node("p2");
+        t.S.Do(new MovePiece { Layer = U, Id = "p2", Pos = node.Piece.Pos, RotDeg = 90 });
+        await r.Frame();
         t.Table.Selection.Set(new[] { "p2" });
         t.Table.SetTool(Tool.Sighting);
         Check.That(t.Table.Draft != null, "the tool begins on the picked piece");
         var rig = t.Table.Rig;
         Check.That(rig.TopDown && rig.Eye == null, "2D first: the map from above");
+        rig.Yaw = 0;
         t.Table.Sighting.SetFirstPerson(true);
         await r.Frame();
-        var node = t.Node("p2");
-        Check.That(rig.Eye is { } eye && Mathf.Abs(eye.X - node.GlobalPosition.X) < 0.01f && Mathf.Abs(eye.Z - node.GlobalPosition.Z) < 0.01f && eye.Y > node.GlobalPosition.Y + node.Thickness,
-            "the eye stands over the piece, above its top");
+        var front = new Vec2(-1, 0);
+        var edge = node.Piece.Pos + new Vec2(front.X * node.Footprint.Y / 2, front.Z * node.Footprint.Y / 2);
+        var eyeOnMap = Coords.FromWorld(rig.Eye ?? Vector3.Zero);
+        Check.That(rig.Eye is { } eye && Mathf.Abs(eyeOnMap.X - edge.X) < 0.01 && Mathf.Abs(eyeOnMap.Z - edge.Z) < 0.01 && eye.Y > node.GlobalPosition.Y + node.Thickness,
+            "the eye stands on the piece's front edge, above its top");
+        var look = Coords.FromWorld(-rig.Cam.GlobalBasis.Z);
+        Check.That(look.X * front.X + look.Z * front.Z > 0.95, "it looks out of the piece's front");
         Check.That(!rig.TopDown && rig.Cam.Projection == Camera3D.ProjectionType.Perspective && Mathf.IsEqualApprox(rig.Cam.Fov, CameraRig.NormalLens), "a perspective view through the normal lens");
         Check.That(rig.Cam.GlobalPosition.IsEqualApprox(rig.Eye!.Value), "the camera is at the eye");
         t.Table.Sighting.SetWide(true);

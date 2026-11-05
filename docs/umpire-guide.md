@@ -166,7 +166,7 @@ A turn report as a picture, from one piece's point of view.
 4. **Enter** or **Capture**. The picture goes to the clipboard and the capture folder, stamped with the
    scenario, the clock and the side.
 
-**First person** in the panel looks out from the piece's own eyes: drag to look around, or press **N E S W**
+**First person** in the panel looks out from the piece's front edge, the way it faces: drag to look around, or press **N E S W**
 to hold a direction (dragging lets go). **Wide** takes 90° across, so the four directions make the whole
 circle. **Eye** slides the viewpoint between the ground at the piece's feet and well over its head: drop it
 to look out from behind a crest. There is nothing to trace from the eye, and the wheel still sets the reach.
