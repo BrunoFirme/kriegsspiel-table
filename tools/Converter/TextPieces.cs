@@ -105,13 +105,15 @@ public sealed partial class DefFactory
 
     static void BakeText(string path, int w, int h, string[] lines, SKFont font, SKColor colour, float lineH)
     {
-        using var bmp = new SKBitmap(w, h, SKColorType.Rgba8888, SKAlphaType.Unpremul);
-        using var canvas = new SKCanvas(bmp);
-        using var paint = new SKPaint { Color = colour, IsAntialias = true };
-        canvas.Clear(SKColors.Transparent);
-        TurnToReadUprightAtTtsRotationZero(canvas, w, h);
-        float y = -font.Metrics.Ascent + 2;
-        foreach (var line in lines) { canvas.DrawText(line, 4, y, SKTextAlign.Left, font, paint); y += lineH; }
+        using var bmp = new SKBitmap(w, h, SKColorType.Rgba8888, SKAlphaType.Premul);
+        using (var canvas = new SKCanvas(bmp))
+        {
+            using var paint = new SKPaint { Color = colour, IsAntialias = true };
+            canvas.Clear(SKColors.Transparent);
+            TurnToReadUprightAtTtsRotationZero(canvas, w, h);
+            float y = -font.Metrics.Ascent + 2;
+            foreach (var line in lines) { canvas.DrawText(line, 4, y, SKTextAlign.Left, font, paint); y += lineH; }
+        }
         Directory.CreateDirectory(Path.GetDirectoryName(path)!);
         SavePng(bmp, path);
     }

@@ -65,7 +65,7 @@ try
             var file = await Workshop.Resolve(cfg, rest[0]);
             if (cmd == "import") Progress.Stage("read");
             var save = TtsSave.Load(cfg, file);
-            var plan = ImportPlan.Of(save, name, slugArg);
+            var plan = ImportPlan.Of(save, name, slugArg, id => PackOwner(cfg.Output, id));
             if (cmd == "plan")
             {
                 foreach (var p in plan.Packs) Console.WriteLine($"PLAN pack {p}");
@@ -97,6 +97,12 @@ try
             var packId = plan.Packs[0];
             var shortName = slug.Length > 12 ? slug[..12].Trim('-') : slug;
             Console.WriteLine($"Importing '{name}' from {file}");
+            if (plan.Taken is { } held)
+            {
+                var said = $"The pack {held} here came from another module, so this one is {packId} and its scenario {slug}";
+                Console.WriteLine("  " + said);
+                report.Note(said);
+            }
             var pc = new PackCfg { WorkshopId = file, Id = packId, Short = shortName, Name = name };
             await new PackBuilder(cfg, assets, report, way).Build(pc);
             cfg.Packs.Insert(0, pc);
@@ -244,6 +250,22 @@ static string? Take(List<string> a, string name)
 
 static long FolderBytes(string dir) => KTable.Core.BestEffort.Read(() =>
     Directory.Exists(dir) ? new DirectoryInfo(dir).EnumerateFiles("*", SearchOption.AllDirectories).Sum(f => f.Length) : 0L, fallback: 0L);
+
+static string? PackOwner(string root, string packId)
+{
+    var path = Path.Combine(root, packId, "pack.json");
+    if (!File.Exists(path)) return null;
+    try
+    {
+        using var doc = System.Text.Json.JsonDocument.Parse(File.ReadAllText(path));
+        return doc.RootElement.TryGetProperty("source", out var source) && source.TryGetProperty("workshopId", out var id)
+            ? id.GetString() ?? "" : "";
+    }
+    catch (Exception e) when (e is IOException or UnauthorizedAccessException or System.Text.Json.JsonException)
+    {
+        return "";
+    }
+}
 
 static string FindToolDir()
 {

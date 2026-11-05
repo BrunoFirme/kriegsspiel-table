@@ -134,6 +134,40 @@ public sealed partial class ConverterTests : IDisposable
     }
 
     [Fact]
+    public void The_same_text_bakes_to_the_same_picture_every_time()
+    {
+        const int Bakes = 8;
+        var baked = new HashSet<string>();
+        for (int i = 0; i < Bakes; i++)
+        {
+            var cfg = TempConfig();
+            var rep = new Report();
+            var defs = new DefFactory(cfg, new AssetStore(cfg, rep), rep);
+            var pack = new PackOut(cfg.Output, "t" + i, "T", "t", null);
+            var text = Obj("3DText", "", 1, new JsonObject { ["Text"] = new JsonObject { ["Text"] = "Hold the ford until dusk", ["fontSize"] = 64.0 } });
+            baked.Add(defs.DefFor(new TtsObj(text), pack)!.Def.Image!);
+            BestEffort.DeleteFolder(Path.Combine(cfg.Cache, "text"));
+        }
+        Assert.Single(baked);
+    }
+
+    [Fact]
+    public void A_module_saved_under_a_name_another_module_already_took_keeps_a_pack_and_a_scenario_of_its_own()
+    {
+        var here = new Dictionary<string, string> { ["tts.flex-table"] = "3432894392" };
+        string? Owner(string id) => here.GetValueOrDefault(id);
+        var again = ImportPlan.Of(new TtsSave { SaveName = "Flex Table", WorkshopId = "3432894392" }, null, null, Owner);
+        Assert.Equal(("tts.flex-table", "flex-table", null), (again.Packs[0], again.Scenario, again.Taken));
+        var other = ImportPlan.Of(new TtsSave { SaveName = "Flex Table", WorkshopId = "3479792399" }, null, null, Owner);
+        Assert.Equal(("tts.flex-table-3479792399", "flex-table-3479792399", "tts.flex-table"), (other.Packs[0], other.Scenario, other.Taken));
+        Assert.Equal("tts.flex-table-3479792399.extras", other.Packs[1]);
+        var nameless = ImportPlan.Of(new TtsSave { SaveName = "Flex Table" }, null, null, Owner);
+        Assert.Equal("tts.flex-table-2", nameless.Packs[0]);
+        var named = ImportPlan.Of(new TtsSave { SaveName = "Flex Table", WorkshopId = "3479792399" }, null, "flex-table", Owner);
+        Assert.Equal("tts.flex-table", named.Packs[0]);
+    }
+
+    [Fact]
     public void A_piece_the_module_scales_by_something_that_is_not_a_number_still_comes_over_and_can_be_written()
     {
         var o = new TtsObj(new JsonObject
