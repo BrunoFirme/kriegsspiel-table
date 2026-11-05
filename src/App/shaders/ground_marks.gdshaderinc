@@ -52,20 +52,41 @@ float segment(vec2 p, vec2 a, vec2 b) {
 	return length(pa - ba * h);
 }
 
-vec2 grid_point(vec2 p, float spacing, float jitter, int i, int j, out vec2 id) {
+vec3 texel_of(vec2 cell) {
+	ivec2 c = clamp(ivec2(cell), ivec2(0), ivec2(cells) - 1);
+	return round(texelFetch(kinds, c, 0).rgb * 255.0);
+}
+
+int kind_of(vec2 cell) {
+	return int(texel_of(cell).r);
+}
+
+vec2 seeded(vec2 id, float salt) {
+	return id + vec2(salt * 13.71, salt * 7.33);
+}
+
+float salt_at(vec2 o, vec2 p, vec2 uv, mat2 to_uv) {
+	vec2 u = clamp(uv + to_uv * (o - p), vec2(0.0), vec2(1.0));
+	return texel_of(floor(u * cells)).g;
+}
+
+vec2 grid_point(vec2 p, vec2 uv, mat2 to_uv, float spacing, float jitter, int i, int j, out vec2 id, out float salt) {
 	float row = floor(p.y / spacing) + float(j);
 	float shift = mod(row, 2.0) * 0.5;
 	float col = floor(p.x / spacing - shift) + float(i);
-	id = vec2(col, row);
-	return (vec2(col + shift, row) + 0.5 + (hash2(id) - 0.5) * jitter) * spacing;
+	vec2 centre = (vec2(col + shift, row) + 0.5) * spacing;
+	salt = salt_at(centre, p, uv, to_uv);
+	id = seeded(vec2(col, row), salt);
+	return centre + (hash2(id) - 0.5) * jitter * spacing;
 }
 
-float scatter(vec2 p, float spacing, float r, float jitter, float keep, float fw) {
+float scatter(vec2 p, vec2 uv, mat2 to_uv, float spacing, float r, float jitter, float keep, float fw) {
 	float m = 0.0;
 	for (int j = 0; j <= 1; j++) {
 		for (int i = 0; i <= 1; i++) {
 			vec2 id;
-			vec2 o = grid_point(p - spacing * 0.5, spacing, jitter, i, j, id) + spacing * 0.5;
+			float salt;
+			vec2 o = grid_point(p - spacing * 0.5, uv, to_uv, spacing, jitter, i, j, id, salt) + spacing * 0.5;
 			float size = r * (0.6 + 0.8 * hash(id + 3.7));
 			m = max(m, ink(length(p - o), size, fw) * step(1.0 - keep, hash(id + 2.9)));
 		}
@@ -74,12 +95,13 @@ float scatter(vec2 p, float spacing, float r, float jitter, float keep, float fw
 	return mix(m, clamp(mean, 0.0, 1.0), far_blend(fw, spacing));
 }
 
-float marks(vec2 p, float spacing, float len, float width, float angle, float wobble, float keep, float fw) {
+float marks(vec2 p, vec2 uv, mat2 to_uv, float spacing, float len, float width, float angle, float wobble, float keep, float fw) {
 	float m = 0.0;
 	for (int j = 0; j <= 1; j++) {
 		for (int i = 0; i <= 1; i++) {
 			vec2 id;
-			vec2 o = grid_point(p - spacing * 0.5, spacing, 0.8, i, j, id) + spacing * 0.5;
+			float salt;
+			vec2 o = grid_point(p - spacing * 0.5, uv, to_uv, spacing, 0.8, i, j, id, salt) + spacing * 0.5;
 			float a = angle + (hash(id + 3.3) - 0.5) * wobble;
 			vec2 dir = vec2(cos(a), sin(a));
 			float l = len * (0.6 + 0.8 * hash(id + 8.1));
@@ -90,12 +112,13 @@ float marks(vec2 p, float spacing, float len, float width, float angle, float wo
 	return mix(m, clamp(mean, 0.0, 1.0), far_blend(fw, spacing));
 }
 
-float tufts(vec2 p, float spacing, float len, float width, float keep, float fw) {
+float tufts(vec2 p, vec2 uv, mat2 to_uv, float spacing, float len, float width, float keep, float fw) {
 	float m = 0.0;
 	for (int j = 0; j <= 1; j++) {
 		for (int i = 0; i <= 1; i++) {
 			vec2 id;
-			vec2 o = grid_point(p - spacing * 0.5, spacing, 0.85, i, j, id) + spacing * 0.5;
+			float salt;
+			vec2 o = grid_point(p - spacing * 0.5, uv, to_uv, spacing, 0.85, i, j, id, salt) + spacing * 0.5;
 			if (hash(id + 5.1) > keep) continue;
 			for (int k = -1; k <= 1; k++) {
 				float a = float(k) * 0.42;
@@ -109,16 +132,11 @@ float tufts(vec2 p, float spacing, float len, float width, float keep, float fw)
 	return mix(m, clamp(mean, 0.0, 1.0), far_blend(fw, spacing));
 }
 
-float screen(vec2 p, float spacing, float r, float fw) {
-	vec2 q = vec2(p.x + p.y, p.x - p.y) * 0.7071 / spacing;
+float screen(vec2 p, float salt, float spacing, float r, float fw) {
+	vec2 q = vec2(p.x + p.y, p.x - p.y) * 0.7071 / spacing + vec2(salt * 0.37, salt * 0.61);
 	float d = length(fract(q) - 0.5) * spacing;
 	float exact = ink(d, r, fw);
 	return mix(exact, clamp(3.1416 * r * r / (spacing * spacing), 0.0, 1.0), far_blend(fw, spacing));
-}
-
-int kind_of(vec2 cell) {
-	ivec2 c = clamp(ivec2(cell), ivec2(0), ivec2(cells) - 1);
-	return int(round(texelFetch(kinds, c, 0).r * 255.0));
 }
 
 float distance_at(vec2 uv) {
@@ -155,37 +173,40 @@ int kind_at(vec2 uv, out float border, out float margin, out int beside) {
 	return best;
 }
 
-float room_at(vec2 o, vec2 p, vec2 uv, mat2 to_uv, int k) {
+float room_at(vec2 o, vec2 p, vec2 uv, mat2 to_uv, int k, out float salt) {
 	vec2 u = uv + to_uv * (o - p);
+	salt = 0.0;
 	if (u.x < 0.0 || u.y < 0.0 || u.x > 1.0 || u.y > 1.0) return -1.0;
-	if (kind_of(floor(u * cells)) != k) return -1.0;
+	vec3 texel = texel_of(floor(u * cells));
+	if (int(texel.r) != k) return -1.0;
+	salt = texel.g;
 	return (distance_at(u) + cell_world * 0.5) * detail;
 }
 
-vec3 parcels(vec2 p, out float strip_edge, out float block_edge, out float angle) {
+vec3 parcels(vec2 p, vec2 uv, mat2 to_uv, out float strip_edge, out float block_edge, out float angle) {
 	vec2 n = floor(p / BLOCK);
 	vec2 f = p / BLOCK - n;
 	float f1 = 8.0;
 	float f2 = 8.0;
 	vec2 id = vec2(0.0);
 	vec2 near = vec2(0.0);
+	vec2 sites[9];
 	for (int j = -1; j <= 1; j++) {
 		for (int i = -1; i <= 1; i++) {
 			vec2 g = vec2(float(i), float(j));
-			vec2 o = g + 0.22 + hash2(n + g) * 0.56;
+			vec2 cell = seeded(n + g, salt_at((n + g + 0.5) * BLOCK, p, uv, to_uv));
+			vec2 o = g + 0.22 + hash2(cell) * 0.56;
+			sites[(j + 1) * 3 + i + 1] = o;
 			float d = length(o - f);
-			if (d < f1) { f2 = f1; f1 = d; id = n + g; near = o; }
+			if (d < f1) { f2 = f1; f1 = d; id = cell; near = o; }
 			else if (d < f2) f2 = d;
 		}
 	}
 	float best = 8.0;
-	for (int j = -1; j <= 1; j++) {
-		for (int i = -1; i <= 1; i++) {
-			vec2 g = vec2(float(i), float(j));
-			vec2 o = g + 0.22 + hash2(n + g) * 0.56;
-			if (dot(o - near, o - near) < 1e-6) continue;
-			best = min(best, dot(f - (near + o) * 0.5, normalize(o - near)));
-		}
+	for (int s = 0; s < 9; s++) {
+		vec2 o = sites[s];
+		if (dot(o - near, o - near) < 1e-6) continue;
+		best = min(best, dot(f - (near + o) * 0.5, normalize(o - near)));
 	}
 	block_edge = abs(best) * BLOCK;
 	angle = (floor(hash(id + 1.9) * 4.0) * 0.25 + (hash(id + 6.3) - 0.5) * 0.12) * 3.1416;

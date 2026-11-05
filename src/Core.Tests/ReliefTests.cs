@@ -446,6 +446,53 @@ public class ReliefTests : IDisposable
     }
 
     [Fact]
+    public void A_stroke_lays_its_salt_and_levels_with_the_kind_and_a_repaint_changes_the_salt_alone()
+    {
+        var g = new ReliefGrid(40, 40);
+        byte grass = GroundKinds.Of("grass")!.Value;
+        ReliefBrush.Dab(g, 0.5, 0.5, 6, new Brush(BrushMode.Paint, 0, 1, grass, Salt: 17, Detail: 0x52));
+        int mid = 20 * 40 + 20;
+        Assert.Equal(grass, g.Kind[mid]);
+        Assert.Equal(17, g.Salt[mid]);
+        Assert.Equal(0x52, g.Detail[mid]);
+        Assert.Equal(0, g.Salt[0]);
+        var box = ReliefBrush.Fill(g, 0.5, 0.5, new Brush(BrushMode.Paint, 0, 1, grass, Salt: 99, Detail: 0x00));
+        Assert.False(box.Empty);
+        Assert.Equal(grass, g.Kind[mid]);
+        Assert.Equal(99, g.Salt[mid]);
+        Assert.Equal(0, g.Detail[mid]);
+        ReliefBrush.Dab(g, 0.5, 0.5, 2, new Brush(BrushMode.Paint, 0, 1, GroundKinds.None, Salt: 5, Detail: 0x11));
+        Assert.Equal(GroundKinds.None, g.Kind[mid]);
+        Assert.Equal(0, g.Salt[mid]);
+        Assert.Equal(0, g.Detail[mid]);
+    }
+
+    [Fact]
+    public void Salt_and_levels_round_trip_in_chunks_and_a_header_without_them_loads_with_zeros_and_its_old_sha()
+    {
+        var g = Slope(130, 70, 0.1f);
+        var plain = ReliefFiles.Save(_dir, g);
+        g.Kind[7] = GroundKinds.Of("wood")!.Value;
+        g.Salt[7] = 200;
+        g.Detail[7] = 0x3C;
+        var (sha, written) = ReliefFiles.Save(_dir, g);
+        Assert.NotEqual(plain.sha, sha);
+        var index = ReliefFiles.LoadIndex(Path.Combine(_dir, ReliefFiles.HeaderRel(sha)));
+        Assert.NotNull(index.Seeds);
+        Assert.NotNull(index.Details);
+        var back = ReliefFiles.Load(index, rel => Path.Combine(_dir, rel));
+        Assert.Equal(g.Salt, back.Salt);
+        Assert.Equal(g.Detail, back.Detail);
+        Assert.All(ReliefFiles.Files(sha, index), rel => Assert.True(File.Exists(Path.Combine(_dir, rel)), rel));
+        var old = ReliefFiles.LoadIndex(Path.Combine(_dir, ReliefFiles.HeaderRel(plain.sha)));
+        Assert.Null(old.Seeds);
+        Assert.DoesNotContain("seeds", File.ReadAllText(Path.Combine(_dir, ReliefFiles.HeaderRel(plain.sha))));
+        var unseeded = ReliefFiles.Load(old, rel => Path.Combine(_dir, rel));
+        Assert.All(unseeded.Salt, s => Assert.Equal(0, s));
+        Assert.Equal(plain.sha, ReliefFiles.Save(_dir, unseeded).sha);
+    }
+
+    [Fact]
     public void Blurred_heights_keep_flat_ground_soften_a_step_and_hold_the_mean()
     {
         var flat = new ReliefGrid(30, 20);

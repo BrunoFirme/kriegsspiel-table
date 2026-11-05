@@ -125,6 +125,7 @@ void fragment() {
 	mat2 to_uv = du * from_screen;
 	int style = clamp(ground_style, SURVEY, MODERN);
 	float h = smooth_height(UV);
+	float own = salt_at(p, p, UV, to_uv);
 	float steep = length(vec2(dFdx(h), dFdy(h)) * from_screen);
 	float halo;
 	float lines = contour(h, p, style, steep, halo);
@@ -137,9 +138,9 @@ void fragment() {
 		c = painted_only ? contour_ink(style, k, sheet) : slopes(sheet, n, p, world.y, fw, style);
 	} else {
 		vec3 tint = palette[style * KINDS + k].rgb;
-		if (style == ANCIENT) c = ancient(k, beside, tint, sheet, p, UV, to_uv, fw, edge, shore);
-		else if (style == MODERN) c = modern(k, beside, tint, sheet, p, UV, to_uv, fw, edge, shore);
-		else c = survey(k, beside, tint, sheet, p, UV, to_uv, fw, edge, shore, bump);
+		if (style == ANCIENT) c = ancient(k, beside, tint, sheet, p, UV, to_uv, own, fw, edge, shore);
+		else if (style == MODERN) c = modern(k, beside, tint, sheet, p, UV, to_uv, own, fw, edge, shore);
+		else c = survey(k, beside, tint, sheet, p, UV, to_uv, own, fw, edge, shore, bump);
 		c = mix(c, plain(style, tint, sheet, p, edge), halo * HALO);
 		if (k != WATER && k != ROAD && k != BRIDGE) c = slopes(c, n, p, world.y, fw, style);
 		if (k == WATER && beside == BRIDGE) c *= 1.0 - 0.45 * (1.0 - smoothstep(0.0, PARAPET * 1.5, edge));

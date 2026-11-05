@@ -32,6 +32,7 @@ sealed class ReliefTool
     Vec2? _cursor;
     Vec2 _across = new(1, 0);
     string? _shapeSheet;
+    byte _salt;
 
     public ReliefTool(TableContext c, ToolOverlay overlay, SheetLayer sheets)
     {
@@ -45,14 +46,18 @@ sealed class ReliefTool
 
     Settings Cfg => _c.Settings;
 
-    public static Brush BrushOf(string mode, double strength, double density = 1) => mode switch
+    public static Brush BrushOf(string mode, double strength, double density = 1, byte salt = 0, byte detail = 0) => mode switch
     {
         "lower" => new Brush(BrushMode.Lower, 0, strength),
         "smooth" => new Brush(BrushMode.Smooth, 0, strength),
         "flatten" => new Brush(BrushMode.Flatten, 0, strength),
-        _ when mode.StartsWith("paint:", StringComparison.Ordinal) => new Brush(BrushMode.Paint, 0, strength, GroundKinds.Of(mode[6..]) ?? GroundKinds.None, Density: density),
+        _ when mode.StartsWith("paint:", StringComparison.Ordinal) => new Brush(BrushMode.Paint, 0, strength, GroundKinds.Of(mode[6..]) ?? GroundKinds.None, Density: density, Salt: salt, Detail: detail),
         _ => new Brush(BrushMode.Raise, 0, strength),
     };
+
+    public static byte RollSalt() => (byte)Random.Shared.Next(1, byte.MaxValue + 1);
+
+    Brush Current => BrushOf(Cfg.ReliefMode, Cfg.ReliefStrength, Cfg.ReliefDensity, _salt);
 
     public static SheetDef? Target(Session s, SheetLayer sheets, Vec2 p) => s.Ground.ReliefAt(p) ?? sheets.TopAt(p)?.Def;
 
@@ -78,6 +83,7 @@ sealed class ReliefTool
             return;
         }
         if (!Open(target)) return;
+        _salt = RollSalt();
         if (Filling) { Fill(g); return; }
         _last = line && _end is { } e && e.Sheet == target.Id ? e.At : null;
         Dab(g);
@@ -104,8 +110,7 @@ sealed class ReliefTool
     void Fill(Vec2 g)
     {
         if (_sheet == null || _draft == null || Ground.Uv(_sheet, g) is not var (u, v)) return;
-        var brush = BrushOf(Cfg.ReliefMode, Cfg.ReliefStrength, Cfg.ReliefDensity);
-        var box = ReliefBrush.Fill(_draft, u, v, brush.Kind, brush.Density);
+        var box = ReliefBrush.Fill(_draft, u, v, Current);
         _end = (_sheet.Id, g);
         Lay(box);
     }
@@ -131,8 +136,8 @@ sealed class ReliefTool
         DropShape();
         if (!_c.S.CanEdit(Layers.Umpire)) { _c.Say(NotYours); return; }
         if (_c.S.View.Sheets.FirstOrDefault(x => x.Id == id) is not { } target || !Open(target)) return;
-        var brush = BrushOf(Cfg.ReliefMode, Cfg.ReliefStrength, Cfg.ReliefDensity);
-        Lay(ReliefBrush.Shape(_draft!, outline.Select(p => Ground.UvOf(_sheet!, p)).ToList(), brush.Kind, brush.Density));
+        _salt = RollSalt();
+        Lay(ReliefBrush.Shape(_draft!, outline.Select(p => Ground.UvOf(_sheet!, p)).ToList(), Current));
     }
 
     void Lay(CellBox box)
@@ -171,7 +176,7 @@ sealed class ReliefTool
         if (Ground.Uv(_sheet, g) is not var (u1, v1) || Ground.Uv(_sheet, from) is not var (u0, v0)) return;
         double cell = Ground.FullWidth(_sheet) / Math.Max(1, _draft.Cols - 1);
         double radius = Math.Clamp(Cfg.ReliefBrush, SmallestBrush, LargestBrush) / cell;
-        var brush = BrushOf(Cfg.ReliefMode, Cfg.ReliefStrength, Cfg.ReliefDensity);
+        var brush = Current;
         if (brush.Mode == BrushMode.Flatten) { _level ??= _draft.HeightAt(u0, v0); brush = brush with { Level = _level }; }
         var box = ReliefBrush.Stroke(_draft, new List<(double, double)> { (u0, v0), (u1, v1) }, radius, brush);
         if (box.Empty) return;

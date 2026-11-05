@@ -64,38 +64,56 @@ sealed partial class TableDemos
     const double TourSettleSeconds = 6, ViewSettleSeconds = 1.2;
     const int TimedFrames = 30;
 
+    static readonly string[] ReseedViews = ["swatches", "near-a", "near-b", "village"];
+    const byte ReseedSalts = 100;
+
     async System.Threading.Tasks.Task GroundTour(Hud hud, string dir)
     {
         await _main.ToSignal(Tree.CreateTimer(TourSettleSeconds), SceneTreeTimer.SignalName.Timeout);
         hud.Visible = false;
         RenderingServer.ViewportSetMeasureRenderTime(_main.GetViewport().GetViewportRid(), true);
-        var rig = _table.Rig;
-        foreach (var v in _args.TryGetValue("ground-views", out var only) ? GroundViews.Where(g => only.Split(',').Contains(g.Name)) : GroundViews)
+        var views = _args.TryGetValue("ground-views", out var only) ? GroundViews.Where(g => only.Split(',').Contains(g.Name)).ToList() : GroundViews.ToList();
+        foreach (var v in views) await Shoot(dir, v);
+        if (_args["demo-ground"].Split(',').Contains("reseed"))
         {
-            bool flat = v.PitchDeg >= 89;
-            if (flat != rig.TopDown) rig.ToggleTopDown();
-            rig.Pitch = -Mathf.DegToRad(System.Math.Min(v.PitchDeg, 85));
-            rig.Yaw = Mathf.Pi - Mathf.DegToRad(v.YawDeg);
-            rig.Frame(Coords.ToWorld(new Vec2(v.X, v.Z)), v.Size);
-            await _main.ToSignal(Tree.CreateTimer(ViewSettleSeconds), SceneTreeTimer.SignalName.Timeout);
-            var path = System.IO.Path.Combine(dir, v.Name + ".png");
-            var viewport = _main.GetViewport();
-            viewport.GetTexture().GetImage().SavePng(path);
-            double gpuMs = 0;
-            for (int i = 0; i < TimedFrames; i++)
-            {
-                await _main.ToSignal(Tree, SceneTree.SignalName.ProcessFrame);
-                gpuMs += RenderingServer.ViewportGetMeasuredRenderTimeGpu(viewport.GetViewportRid());
-            }
-            GD.Print($"[ground] shot {path}: gpu {gpuMs / TimedFrames:0.00} ms a frame");
+            var sheet = Session.View.Sheets.Last();
+            var grid = Session.Relief.Grid(sheet)!.Copy();
+            PaintGround(grid, ReseedSalts);
+            ReliefTool.Commit(Session, Json.Clone(sheet), grid, hud.Map.Reliefs.Share, m => GD.Print("[ground] " + m));
+            await _main.ToSignal(Tree.CreateTimer(TourSettleSeconds), SceneTreeTimer.SignalName.Timeout);
+            var again = System.IO.Path.Combine(dir, "reseed");
+            System.IO.Directory.CreateDirectory(again);
+            foreach (var v in GroundViews.Where(g => ReseedViews.Contains(g.Name))) await Shoot(again, v);
         }
         _main.QuitApp();
     }
 
-    static void PaintGround(ReliefGrid g)
+    async System.Threading.Tasks.Task Shoot(string dir, (string Name, double X, double Z, float Size, float PitchDeg, float YawDeg) v)
+    {
+        var rig = _table.Rig;
+        bool flat = v.PitchDeg >= 89;
+        if (flat != rig.TopDown) rig.ToggleTopDown();
+        rig.Pitch = -Mathf.DegToRad(System.Math.Min(v.PitchDeg, 85));
+        rig.Yaw = Mathf.Pi - Mathf.DegToRad(v.YawDeg);
+        rig.Frame(Coords.ToWorld(new Vec2(v.X, v.Z)), v.Size);
+        await _main.ToSignal(Tree.CreateTimer(ViewSettleSeconds), SceneTreeTimer.SignalName.Timeout);
+        var path = System.IO.Path.Combine(dir, v.Name + ".png");
+        var viewport = _main.GetViewport();
+        viewport.GetTexture().GetImage().SavePng(path);
+        double gpuMs = 0;
+        for (int i = 0; i < TimedFrames; i++)
+        {
+            await _main.ToSignal(Tree, SceneTree.SignalName.ProcessFrame);
+            gpuMs += RenderingServer.ViewportGetMeasuredRenderTimeGpu(viewport.GetViewportRid());
+        }
+        GD.Print($"[ground] shot {path}: gpu {gpuMs / TimedFrames:0.00} ms a frame");
+    }
+
+    static void PaintGround(ReliefGrid g, byte saltFrom = 0)
     {
         static byte K(string name) => GroundKinds.Of(name)!.Value;
-        void Paint(string kind, double r, double density, params (double, double)[] pts) => ReliefBrush.Stroke(g, pts, r, new Brush(BrushMode.Paint, 0, 1, K(kind), Density: density));
+        byte salt = saltFrom;
+        void Paint(string kind, double r, double density, params (double, double)[] pts) => ReliefBrush.Stroke(g, pts, r, new Brush(BrushMode.Paint, 0, 1, K(kind), Density: density, Salt: ++salt));
         void Raise(double r, double strength, params (double, double)[] pts) => ReliefBrush.Stroke(g, pts, r, new Brush(BrushMode.Raise, 0, strength));
         void Lower(double r, double strength, params (double, double)[] pts) => ReliefBrush.Stroke(g, pts, r, new Brush(BrushMode.Lower, 0, strength));
 

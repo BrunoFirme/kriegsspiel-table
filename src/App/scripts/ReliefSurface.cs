@@ -135,7 +135,14 @@ public partial class ReliefSurface : Node3D
 
     void UpdateKinds(ReliefGrid grid)
     {
-        var img = Image.CreateFromData(grid.Cols, grid.Rows, false, Image.Format.R8, grid.Kind);
+        var texels = new byte[grid.Kind.Length * 3];
+        for (int i = 0; i < grid.Kind.Length; i++)
+        {
+            texels[3 * i] = grid.Kind[i];
+            texels[3 * i + 1] = grid.Salt[i];
+            texels[3 * i + 2] = grid.Detail[i];
+        }
+        var img = Image.CreateFromData(grid.Cols, grid.Rows, false, Image.Format.Rgb8, texels);
         if (_kindsTex != null && _kindsTex.GetWidth() == grid.Cols && _kindsTex.GetHeight() == grid.Rows) _kindsTex.Update(img);
         else _kindsTex = ImageTexture.CreateFromImage(img);
         if (_edgesTex != null && _edgesOf != null && _edgesOf.AsSpan().SequenceEqual(grid.Kind)) return;

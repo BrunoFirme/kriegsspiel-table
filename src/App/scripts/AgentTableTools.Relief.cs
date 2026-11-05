@@ -99,14 +99,14 @@ sealed partial class AgentTableTools
         var uv = pts.Select(p => Ground.Uv(target, p)).Where(x => x != null).Select(x => x!.Value).ToList();
         if (uv.Count == 0 && shape.Length == 0) return ToolResult.Fail($"No point lies on {target.Name}.");
         double cell = Ground.FullWidth(target) / Math.Max(1, grid.Cols - 1);
-        var brush = ReliefTool.BrushOf(mode, strength, density);
+        var brush = ReliefTool.BrushOf(mode, strength, density, ReliefTool.RollSalt());
         if (brush.Mode == BrushMode.Flatten) brush = brush with { Level = grid.HeightAt(uv[0].u, uv[0].v) };
         if (shape.Length > 0)
         {
             var outline = shape == "polygon" ? pts : Polyline.ShapePoints(shape, pts[0], pts[1]);
-            if (ReliefBrush.Shape(grid, outline.Select(p => Ground.UvOf(target, p)).ToList(), brush.Kind, brush.Density).Empty) return ToolResult.Fail($"The {shape} changed nothing on {target.Name}: it lies off the sheet, is too thin, or the ground there is already {mode[6..]}.");
+            if (ReliefBrush.Shape(grid, outline.Select(p => Ground.UvOf(target, p)).ToList(), brush).Empty) return ToolResult.Fail($"The {shape} changed nothing on {target.Name}: it lies off the sheet or is too thin.");
         }
-        else if (fill) ReliefBrush.Fill(grid, uv[0].u, uv[0].v, brush.Kind, brush.Density);
+        else if (fill) ReliefBrush.Fill(grid, uv[0].u, uv[0].v, brush);
         else for (int i = 0; i < passes; i++) ReliefBrush.Stroke(grid, uv, radius / cell, brush);
         var before = target.Relief;
         ReliefTool.Commit(s, Json.Clone(target), grid, hud.Map.Reliefs.Share, m => hud.Log(m));

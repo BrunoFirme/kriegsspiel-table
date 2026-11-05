@@ -9,7 +9,7 @@ public readonly record struct CellBox(int X0, int Y0, int X1, int Y1)
     public static readonly CellBox None = new(0, 0, -1, -1);
 }
 
-public sealed record Brush(BrushMode Mode, double Radius, double Strength, byte Kind = GroundKinds.None, double? Level = null, double Density = 1);
+public sealed record Brush(BrushMode Mode, double Radius, double Strength, byte Kind = GroundKinds.None, double? Level = null, double Density = 1, byte Salt = 0, byte Detail = 0);
 
 public static class ReliefBrush
 {
@@ -49,14 +49,24 @@ public static class ReliefBrush
                         g.H[i] += (before!.Mean(x, y) - g.H[i]) * fall * (float)Math.Clamp(b.Strength * 2, 0, 1);
                         break;
                     case BrushMode.Paint:
-                        if (d <= PaintEdge && GroundScatter.Takes(x, y, b.Kind, b.Density)) g.Kind[i] = GroundKinds.Laid(g.Kind[i], b.Kind);
+                        if (d <= PaintEdge && GroundScatter.Takes(x, y, b.Kind, b.Density)) Mark(g, i, b);
                         break;
                 }
             }
         return new CellBox(x0, y0, x1, y1);
     }
 
-    public static CellBox Fill(ReliefGrid g, double u, double v, byte kind, double density)
+    static void Mark(ReliefGrid g, int i, Brush b)
+    {
+        g.Kind[i] = GroundKinds.Laid(g.Kind[i], b.Kind);
+        bool bare = g.Kind[i] == GroundKinds.None;
+        g.Salt[i] = bare ? (byte)0 : b.Salt;
+        g.Detail[i] = bare ? (byte)0 : b.Detail;
+    }
+
+    public static CellBox Fill(ReliefGrid g, double u, double v, byte kind, double density) => Fill(g, u, v, new Brush(BrushMode.Paint, 0, 1, kind, Density: density));
+
+    public static CellBox Fill(ReliefGrid g, double u, double v, Brush b)
     {
         int sx = (int)Math.Round(Math.Clamp(u, 0, 1) * (g.Cols - 1)), sy = (int)Math.Round(Math.Clamp(v, 0, 1) * (g.Rows - 1));
         byte from = g.Kind[sy * g.Cols + sx];
@@ -69,7 +79,7 @@ public static class ReliefBrush
         while (todo.Count > 0)
         {
             int i = todo.Pop(), x = i % g.Cols, y = i / g.Cols;
-            if (Lay(g, x, y, kind, density)) changed = true;
+            if (Lay(g, x, y, b)) changed = true;
             x0 = Math.Min(x0, x);
             x1 = Math.Max(x1, x);
             y0 = Math.Min(y0, y);
@@ -89,7 +99,10 @@ public static class ReliefBrush
         }
     }
 
-    public static CellBox Shape(ReliefGrid g, IReadOnlyList<(double u, double v)> outline, byte kind, double density)
+    public static CellBox Shape(ReliefGrid g, IReadOnlyList<(double u, double v)> outline, byte kind, double density) =>
+        Shape(g, outline, new Brush(BrushMode.Paint, 0, 1, kind, Density: density));
+
+    public static CellBox Shape(ReliefGrid g, IReadOnlyList<(double u, double v)> outline, Brush b)
     {
         if (outline.Count < 3) return CellBox.None;
         var pts = outline.Select(p => (x: p.u * (g.Cols - 1), y: p.v * (g.Rows - 1))).ToArray();
@@ -106,18 +119,18 @@ public static class ReliefBrush
             cross.Sort();
             for (int k = 0; k + 1 < cross.Count; k += 2)
                 for (int x = Math.Max(0, (int)Math.Ceiling(cross[k] - EdgeNudge)); x <= Math.Min(g.Cols - 1, (int)Math.Floor(cross[k + 1] + EdgeNudge)); x++)
-                    if (Lay(g, x, y, kind, density)) box = box.Union(new CellBox(x, y, x, y));
+                    if (Lay(g, x, y, b)) box = box.Union(new CellBox(x, y, x, y));
         }
         return box;
     }
 
-    static bool Lay(ReliefGrid g, int x, int y, byte kind, double density)
+    static bool Lay(ReliefGrid g, int x, int y, Brush b)
     {
         int i = y * g.Cols + x;
-        byte laid = GroundKinds.Laid(g.Kind[i], kind);
-        if (laid == g.Kind[i] || !GroundScatter.Takes(x, y, kind, density)) return false;
-        g.Kind[i] = laid;
-        return true;
+        if (!GroundScatter.Takes(x, y, b.Kind, b.Density)) return false;
+        byte kind = g.Kind[i], salt = g.Salt[i], detail = g.Detail[i];
+        Mark(g, i, b);
+        return g.Kind[i] != kind || g.Salt[i] != salt || g.Detail[i] != detail;
     }
 
     static double Falloff(double d) { double t = 1 - d; return t * t * (3 - 2 * t); }

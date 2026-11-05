@@ -8,6 +8,8 @@ public sealed class ReliefIndex
     public int Rows { get; set; }
     public List<string> Heights { get; set; } = new();
     public List<string> Ground { get; set; } = new();
+    public List<string>? Seeds { get; set; }
+    public List<string>? Details { get; set; }
 }
 
 public static class GroundKinds
@@ -90,6 +92,8 @@ public sealed class ReliefGrid
     public readonly int Cols, Rows;
     public readonly float[] H;
     public readonly byte[] Kind;
+    public readonly byte[] Salt;
+    public readonly byte[] Detail;
 
     public ReliefGrid(int cols, int rows)
     {
@@ -98,6 +102,8 @@ public sealed class ReliefGrid
         Rows = rows;
         H = new float[cols * rows];
         Kind = new byte[cols * rows];
+        Salt = new byte[cols * rows];
+        Detail = new byte[cols * rows];
     }
 
     public static ReliefGrid Flat(double width, double height)
@@ -113,6 +119,8 @@ public sealed class ReliefGrid
         var c = new ReliefGrid(Cols, Rows);
         Array.Copy(H, c.H, H.Length);
         Array.Copy(Kind, c.Kind, Kind.Length);
+        Array.Copy(Salt, c.Salt, Salt.Length);
+        Array.Copy(Detail, c.Detail, Detail.Length);
         return c;
     }
 
@@ -152,7 +160,9 @@ public static class ReliefFiles
         System.Text.RegularExpressions.Regex.IsMatch(path, @"^relief/[0-9a-f]{64}\.(json|bin)$");
 
     public static IEnumerable<string> Files(string sha, ReliefIndex index) =>
-        new[] { HeaderRel(sha) }.Concat(index.Heights.Concat(index.Ground).Where(c => c.Length > 0).Distinct().Select(ChunkRel));
+        new[] { HeaderRel(sha) }.Concat(Chunks(index).Where(c => c.Length > 0).Distinct().Select(ChunkRel));
+
+    static IEnumerable<string> Chunks(ReliefIndex index) => index.Heights.Concat(index.Ground).Concat(index.Seeds ?? new()).Concat(index.Details ?? new());
 
     public static string Sha(byte[] bytes) => Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant();
 
@@ -160,12 +170,18 @@ public static class ReliefFiles
     {
         var written = new List<string>();
         var index = new ReliefIndex { Cols = g.Cols, Rows = g.Rows };
+        var seeds = new List<string>();
+        var details = new List<string>();
         for (int cy = 0; cy < g.ChunksDown; cy++)
             for (int cx = 0; cx < g.ChunksAcross; cx++)
             {
                 index.Heights.Add(Put(packageDir, HeightChunk(g, cx, cy), written));
-                index.Ground.Add(Put(packageDir, KindChunk(g, cx, cy), written));
+                index.Ground.Add(Put(packageDir, ByteChunk(g, g.Kind, cx, cy), written));
+                seeds.Add(Put(packageDir, ByteChunk(g, g.Salt, cx, cy), written));
+                details.Add(Put(packageDir, ByteChunk(g, g.Detail, cx, cy), written));
             }
+        if (seeds.Any(c => c.Length > 0)) index.Seeds = seeds;
+        if (details.Any(c => c.Length > 0)) index.Details = details;
         var header = Json.SerializeBytes(index);
         var sha = Sha(header);
         var path = Path.Combine(packageDir, Folder, sha + HeaderExt);
@@ -199,7 +215,7 @@ public static class ReliefFiles
         return any ? bytes : null;
     }
 
-    static byte[]? KindChunk(ReliefGrid g, int cx, int cy)
+    static byte[]? ByteChunk(ReliefGrid g, byte[] layer, int cx, int cy)
     {
         var bytes = new byte[ReliefGrid.Chunk * ReliefGrid.Chunk];
         bool any = false;
@@ -208,7 +224,7 @@ public static class ReliefFiles
             {
                 int gx = cx * ReliefGrid.Chunk + x, gy = cy * ReliefGrid.Chunk + y;
                 if (gx >= g.Cols || gy >= g.Rows) continue;
-                byte k = g.Kind[gy * g.Cols + gx];
+                byte k = layer[gy * g.Cols + gx];
                 if (k != 0) any = true;
                 bytes[y * ReliefGrid.Chunk + x] = k;
             }
@@ -219,8 +235,9 @@ public static class ReliefFiles
     {
         var index = Json.Load<ReliefIndex>(headerPath);
         int chunks = ((index.Cols + ReliefGrid.Chunk - 1) / ReliefGrid.Chunk) * ((index.Rows + ReliefGrid.Chunk - 1) / ReliefGrid.Chunk);
-        if (index.Heights.Count != chunks || index.Ground.Count != chunks) throw new InvalidDataException("the relief's chunk list does not match its size");
-        if (index.Heights.Concat(index.Ground).Any(c => c.Length > 0 && !System.Text.RegularExpressions.Regex.IsMatch(c, "^[0-9a-f]{64}$"))) throw new InvalidDataException("the relief names a chunk wrongly");
+        if (index.Heights.Count != chunks || index.Ground.Count != chunks || (index.Seeds?.Count ?? chunks) != chunks || (index.Details?.Count ?? chunks) != chunks)
+            throw new InvalidDataException("the relief's chunk list does not match its size");
+        if (Chunks(index).Any(c => c.Length > 0 && !System.Text.RegularExpressions.Regex.IsMatch(c, "^[0-9a-f]{64}$"))) throw new InvalidDataException("the relief names a chunk wrongly");
         return index;
     }
 
@@ -232,7 +249,9 @@ public static class ReliefFiles
             for (int cx = 0; cx < g.ChunksAcross; cx++, i++)
             {
                 if (index.Heights[i].Length > 0) ReadHeights(g, cx, cy, Chunk(index.Heights[i], chunkPath, ReliefGrid.Chunk * ReliefGrid.Chunk * sizeof(float)));
-                if (index.Ground[i].Length > 0) ReadKinds(g, cx, cy, Chunk(index.Ground[i], chunkPath, ReliefGrid.Chunk * ReliefGrid.Chunk));
+                if (index.Ground[i].Length > 0) ReadBytes(g, g.Kind, cx, cy, Chunk(index.Ground[i], chunkPath, ReliefGrid.Chunk * ReliefGrid.Chunk), (byte)(GroundKinds.All.Count - 1));
+                if (index.Seeds is { } seeds && seeds[i].Length > 0) ReadBytes(g, g.Salt, cx, cy, Chunk(seeds[i], chunkPath, ReliefGrid.Chunk * ReliefGrid.Chunk), byte.MaxValue);
+                if (index.Details is { } details && details[i].Length > 0) ReadBytes(g, g.Detail, cx, cy, Chunk(details[i], chunkPath, ReliefGrid.Chunk * ReliefGrid.Chunk), byte.MaxValue);
             }
         return g;
     }
@@ -257,7 +276,7 @@ public static class ReliefFiles
             }
     }
 
-    static void ReadKinds(ReliefGrid g, int cx, int cy, byte[] b)
+    static void ReadBytes(ReliefGrid g, byte[] layer, int cx, int cy, byte[] b, byte most)
     {
         for (int y = 0; y < ReliefGrid.Chunk; y++)
             for (int x = 0; x < ReliefGrid.Chunk; x++)
@@ -265,7 +284,7 @@ public static class ReliefFiles
                 int gx = cx * ReliefGrid.Chunk + x, gy = cy * ReliefGrid.Chunk + y;
                 if (gx >= g.Cols || gy >= g.Rows) continue;
                 byte k = b[y * ReliefGrid.Chunk + x];
-                g.Kind[gy * g.Cols + gx] = k < GroundKinds.All.Count ? k : GroundKinds.None;
+                layer[gy * g.Cols + gx] = k <= most ? k : (byte)0;
             }
     }
 }
