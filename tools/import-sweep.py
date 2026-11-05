@@ -1,0 +1,392 @@
+import argparse
+import json
+import os
+import re
+import shutil
+import subprocess
+import sys
+import time
+from collections import defaultdict
+
+USAGE = ("python -I tools/import-sweep.py [--base <rev>] [--base-exe <Converter.exe>] [--modules <id|name>,...] "
+         "[--out <dir>] [--keep] [--diff-only]")
+HERE = os.path.dirname(os.path.abspath(__file__))
+ROOT = os.path.dirname(HERE)
+ROSTER = os.path.join(HERE, "import-sweep.json")
+ERRORS_RX = re.compile(r"(\d+) errors")
+STAMP_RX = re.compile(r"\d{6,}")
+EXAMPLES = 4
+TOLD_SIZES = ("IMPORTED", "ALSO")
+SAME_PIECE = ("name", "kind", "image", "back", "mesh", "texture", "shape")
+
+
+def shell(args, cwd=None, show=False):
+    done = subprocess.run(args, cwd=cwd or ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace")
+    if done.returncode and show:
+        sys.stderr.write(" ".join(str(a) for a in args) + "\n" + (done.stdout or "")[-3000:] + (done.stderr or "")[-3000:] + "\n")
+    return done
+
+
+def roster(picked):
+    modules = json.load(open(ROSTER, encoding="utf-8-sig"))["modules"]
+    if not picked:
+        return modules
+    wanted = [w.strip().lower() for w in picked.split(",") if w.strip()]
+    chosen = [m for m in modules if m["id"] in wanted or any(w in m["name"].lower() for w in wanted)]
+    unknown = [w for w in wanted if not any(w == m["id"] or w in m["name"].lower() for m in chosen)]
+    if unknown:
+        sys.exit("not in the roster: " + ", ".join(unknown) + "\n" + USAGE)
+    return chosen
+
+
+def source_at(rev, out):
+    source = os.path.join(out, "base-src")
+    if os.path.isdir(os.path.join(source, "tools", "Converter")):
+        return source
+    if shell(["git", "worktree", "add", "--detach", source, rev], show=True).returncode:
+        sys.exit(f"no worktree could be made at {rev}")
+    return source
+
+
+def converter(source, binaries):
+    project = os.path.join(source, "tools", "Converter", "Converter.csproj")
+    exe = os.path.join(binaries, "Converter.exe" if os.name == "nt" else "Converter")
+    shell(["dotnet", "build", project, "-c", "Release", "-o", binaries, "--nologo", "-v", "q"], cwd=source, show=True)
+    if not os.path.exists(exe):
+        sys.exit(f"the converter did not build from {source}")
+    return exe
+
+
+def real_cache():
+    local = os.environ.get("LOCALAPPDATA", "")
+    return os.path.join(local, "KriegsspielTable", "cache", "tts")
+
+
+def own_cache(real, mine):
+    if not os.path.isdir(real):
+        os.makedirs(mine, exist_ok=True)
+        return 0
+    linked = 0
+    for folder, _, names in os.walk(real):
+        here = os.path.join(mine, os.path.relpath(folder, real))
+        os.makedirs(here, exist_ok=True)
+        for name in names:
+            theirs, ours = os.path.join(folder, name), os.path.join(here, name)
+            if os.path.exists(ours):
+                continue
+            if name.lower().endswith(".json"):
+                shutil.copy2(theirs, ours)
+            else:
+                try:
+                    os.link(theirs, ours)
+                except OSError:
+                    shutil.copy2(theirs, ours)
+            linked += 1
+    return linked
+
+
+def config_at(source, cache, output, path):
+    settings = json.load(open(os.path.join(source, "tools", "Converter", "converter.json"), encoding="utf-8-sig"))
+    settings["cachePath"], settings["outputPath"] = cache, output
+    with open(path, "w", encoding="utf-8", newline="\n") as f:
+        json.dump(settings, f, indent=2)
+    return path
+
+
+def side(name, source, out, exe):
+    cache, output, binaries = (os.path.join(out, f"{name}-{what}") for what in ("cache", "out", "bin"))
+    os.makedirs(output, exist_ok=True)
+    linked = own_cache(real_cache(), cache)
+    built = exe or converter(source, binaries)
+    return {"name": name, "exe": built, "config": config_at(source, cache, output, os.path.join(out, f"{name}.json")),
+            "output": output, "linked": linked}
+
+
+def told(text, heads):
+    return [line.strip() for line in (text or "").splitlines() if line.startswith(heads)]
+
+
+def bring_in(place, module):
+    began = time.time()
+    done = shell([place["exe"], "--config", place["config"], "import", module["id"]])
+    scenarios = []
+    for line in told(done.stdout, TOLD_SIZES):
+        found = re.search(r"scenario=(\S+)", line)
+        if found:
+            scenarios.append(found.group(1))
+    return {"code": done.returncode, "seconds": round(time.time() - began, 1), "said": told(done.stdout, TOLD_SIZES),
+            "scenarios": scenarios, "tail": ((done.stdout or "")[-1500:] + (done.stderr or "")[-1500:]).strip()}
+
+
+def scripts_clean(place, slug):
+    scenario = os.path.join(place["output"], "scenarios", slug, "scenario.json")
+    if not os.path.exists(scenario):
+        return None
+    done = shell([place["exe"], "--config", place["config"], "check-scripts", place["output"], scenario])
+    counted = [int(ERRORS_RX.search(line).group(1)) for line in (done.stdout or "").splitlines() if ERRORS_RX.search(line)]
+    return max(counted) if counted else None
+
+
+def sweep(modules, sides):
+    runs = {}
+    for module in modules:
+        runs[module["id"]] = row = {"name": module["name"]}
+        for place in sides:
+            print(f"  {place['name']:4} {module['name']}", flush=True)
+            row[place["name"]] = brought = bring_in(place, module)
+            brought["errors"] = {slug: scripts_clean(place, slug) for slug in brought["scenarios"]}
+    return runs
+
+
+def read_json(path):
+    try:
+        return json.load(open(path, encoding="utf-8-sig"))
+    except (OSError, ValueError):
+        return None
+
+
+def keyed(pieces):
+    out, seen = {}, defaultdict(int)
+    for piece in pieces:
+        name = piece.get("guid") or piece.get("id") or "?"
+        seen[name] += 1
+        out[name if seen[name] == 1 else f"{name}#{seen[name]}"] = piece
+    return out
+
+
+def files_under(folder):
+    found = set()
+    for place, _, names in os.walk(folder):
+        for name in names:
+            if name in ("scenario.json", "pack.json", "import-report.md"):
+                continue
+            found.add(os.path.relpath(os.path.join(place, name), folder).replace("\\", "/"))
+    return found
+
+
+def stem(path):
+    return os.path.splitext(os.path.basename(path))[0]
+
+
+def read_side(output):
+    packs, scenarios = {}, {}
+    if not os.path.isdir(output):
+        return {"packs": packs, "scenarios": scenarios}
+    for name in sorted(os.listdir(output)):
+        folder = os.path.join(output, name)
+        if name == "scenarios" or not os.path.isdir(folder):
+            continue
+        manifest = read_json(os.path.join(folder, "pack.json"))
+        if manifest is None:
+            continue
+        defs = {d.get("id", str(i)): d for i, d in enumerate(manifest.pop("pieces", []) or [])}
+        assets = manifest.pop("assets", {}) or {}
+        packs[name] = {"head": manifest, "defs": defs, "assets": assets, "files": files_under(folder)}
+    inside = os.path.join(output, "scenarios")
+    for name in sorted(os.listdir(inside) if os.path.isdir(inside) else []):
+        folder = os.path.join(inside, name)
+        table = read_json(os.path.join(folder, "scenario.json"))
+        if table is None:
+            continue
+        pieces = keyed(table.pop("umpireBoard", []) or [])
+        report = os.path.join(folder, "import-report.md")
+        scenarios[name] = {"head": table, "pieces": pieces, "files": files_under(folder),
+                           "report": open(report, encoding="utf-8-sig").read().splitlines() if os.path.exists(report) else []}
+    return {"packs": packs, "scenarios": scenarios}
+
+
+def fields_apart(mine, theirs):
+    return sorted(k for k in set(mine) | set(theirs) if mine.get(k) != theirs.get(k))
+
+
+def few(names):
+    names = sorted(names)
+    shown = ", ".join(names[:EXAMPLES])
+    return shown + (f", and {len(names) - EXAMPLES} more" if len(names) > EXAMPLES else "")
+
+
+def sets_apart(what, mine, theirs, lines):
+    gone, new = mine - theirs, theirs - mine
+    if gone and new and len(gone) == len(new):
+        lines.append(f"  {what} replaced: {len(gone)} (base {few(gone)}; new {few(new)})")
+        return True
+    if gone:
+        lines.append(f"  {what} only in base: {len(gone)} ({few(gone)})")
+    if new:
+        lines.append(f"  {what} only in new: {len(new)} ({few(new)})")
+    return bool(gone or new)
+
+
+def same_piece(piece):
+    return json.dumps([piece.get(k) for k in SAME_PIECE], ensure_ascii=False, sort_keys=True)
+
+
+def rekeyed(what, mine, theirs, lines):
+    gone, new = set(mine) - set(theirs), set(theirs) - set(mine)
+    if not gone or not new:
+        return sets_apart(what, set(mine), set(theirs), lines)
+    was = defaultdict(list)
+    for name in gone:
+        was[same_piece(mine[name])].append(name)
+    moved, left = [], set()
+    for name in new:
+        twin = was.get(same_piece(theirs[name]))
+        if twin:
+            moved.append((twin.pop(), name))
+            if not twin:
+                was.pop(same_piece(theirs[name]))
+        else:
+            left.add(name)
+    if moved:
+        lines.append(f"  {what} re-keyed: {len(moved)} same name, kind and pictures, new id "
+                     f"({few(f'{a} -> {b}' for a, b in moved[:EXAMPLES])})")
+        grouped = defaultdict(list)
+        for was_named, now_named in moved:
+            grouped[tuple(f for f in fields_apart(mine[was_named], theirs[now_named]) if f != "id")].append((was_named, now_named))
+        for changed, pairs in sorted(grouped.items(), key=lambda g: -len(g[1])):
+            if not changed:
+                continue
+            was_named, now_named = pairs[0]
+            lines.append(f"      of those, {len(pairs)} also changed {', '.join(changed)}, "
+                         f"e.g. {now_named} {changed[0]}: {short(mine[was_named].get(changed[0]))} -> {short(theirs[now_named].get(changed[0]))}")
+    still = {name for names in was.values() for name in names}
+    sets_apart(what, still, left, lines)
+    return True
+
+
+def items_apart(what, mine, theirs, lines, by_shape=False):
+    apart = rekeyed(what, mine, theirs, lines) if by_shape else sets_apart(what, set(mine), set(theirs), lines)
+    grouped = defaultdict(list)
+    for name in sorted(set(mine) & set(theirs)):
+        changed = fields_apart(mine[name], theirs[name])
+        if changed:
+            grouped[tuple(changed)].append(name)
+    for changed, names in sorted(grouped.items(), key=lambda g: -len(g[1])):
+        apart = True
+        lines.append(f"  {what} changed: {len(names)} on {', '.join(changed)} ({few(names)})")
+        first = names[0]
+        for field in changed[:3]:
+            lines.append(f"      {first} {field}: {short(mine[first].get(field))} -> {short(theirs[first].get(field))}")
+    return apart
+
+
+def short(value):
+    text = json.dumps(value, ensure_ascii=False) if not isinstance(value, str) else value
+    return text if len(text) <= 90 else text[:87] + "..."
+
+
+def report_apart(said, now, lines):
+    mine, theirs = [STAMP_RX.sub("...", l) for l in said], [STAMP_RX.sub("...", l) for l in now]
+    gone = [l for l in mine if l not in theirs and l.startswith("- ")]
+    new = [l for l in theirs if l not in mine and l.startswith("- ")]
+    if gone or new:
+        lines.append(f"  import report: {len(gone)} line(s) gone, {len(new)} new")
+        for line in (gone[:2] + new[:2]):
+            lines.append(f"      {short(line)}")
+    return bool(gone or new)
+
+
+def compare(base, new):
+    one, two = read_side(base), read_side(new)
+    lines, apart = [], False
+    for kind in ("packs", "scenarios"):
+        for name in sorted(set(one[kind]) | set(two[kind])):
+            mine, theirs = one[kind].get(name), two[kind].get(name)
+            said = []
+            if mine is None or theirs is None:
+                said.append(f"  only in {'new' if mine is None else 'base'}")
+            else:
+                for field in fields_apart(mine["head"], theirs["head"]):
+                    said.append(f"  {field}: {short(mine['head'].get(field))} -> {short(theirs['head'].get(field))}")
+                if kind == "packs":
+                    items_apart("defs", mine["defs"], theirs["defs"], said, by_shape=True)
+                    items_apart("assets", mine["assets"], theirs["assets"], said)
+                    named = set(mine["assets"]) | set(theirs["assets"])
+                    mine, theirs = dict(mine), dict(theirs)
+                    mine["files"] = {f for f in mine["files"] if stem(f) not in named}
+                    theirs["files"] = {f for f in theirs["files"] if stem(f) not in named}
+                else:
+                    items_apart("pieces", mine["pieces"], theirs["pieces"], said)
+                    report_apart(mine["report"], theirs["report"], said)
+                sets_apart("files", mine["files"], theirs["files"], said)
+            if said:
+                apart = True
+                lines.append(f"{kind[:-1]} {name}:")
+                lines += said
+    found = sum(len(one[kind]) + len(two[kind]) for kind in ("packs", "scenarios"))
+    return lines, apart, found
+
+
+def summary(runs):
+    lines, trouble = [], False
+    for module, row in runs.items():
+        base, new = row.get("base", {}), row.get("new", {})
+        lines.append(f"{row['name']} ({module})")
+        for which, place in (("base", base), ("new", new)):
+            errors = ", ".join(f"{slug} {count} script errors" for slug, count in (place.get("errors") or {}).items() if count)
+            lines.append(f"  {which}: exit {place.get('code')} in {place.get('seconds')} s; " +
+                         "; ".join(place.get("said") or ["nothing imported"]) + (f"; {errors}" if errors else ""))
+            if place.get("code") or not place.get("said") or errors:
+                trouble = True
+                if place.get("tail"):
+                    lines.append(f"      {short(place['tail'].splitlines()[-1] if place['tail'].splitlines() else '')}")
+    return lines, trouble
+
+
+def clear(out, sides, keep):
+    if keep:
+        return
+    shell(["git", "worktree", "remove", "--force", os.path.join(out, "base-src")])
+    for place in sides:
+        for what in ("cache", "out", "bin"):
+            shutil.rmtree(os.path.join(out, f"{place['name']}-{what}"), ignore_errors=True)
+
+
+def main():
+    ap = argparse.ArgumentParser(usage=USAGE, description="Import the roster of TTS modules at two builds of the converter and diff what they wrote.")
+    ap.add_argument("--base", default="HEAD")
+    ap.add_argument("--base-exe", default="")
+    ap.add_argument("--new-exe", default="")
+    ap.add_argument("--modules", default="")
+    ap.add_argument("--out", default=os.path.join(os.environ.get("TEMP", "/tmp"), "ktable-sweep"))
+    ap.add_argument("--keep", action="store_true")
+    ap.add_argument("--diff-only", action="store_true")
+    a = ap.parse_args()
+    modules = roster(a.modules)
+    out = os.path.abspath(a.out)
+    os.makedirs(out, exist_ok=True)
+    kept = os.path.join(out, "runs.json")
+    sides = []
+    runs = {}
+    if a.diff_only:
+        runs = read_json(kept) or {}
+    else:
+        dirty = [l for l in shell(["git", "status", "--porcelain"]).stdout.splitlines() if l.strip()]
+        if dirty:
+            print(f"the working tree has {len(dirty)} changed file(s): the new side is built from them", flush=True)
+        print(f"base {a.base}; {len(modules)} module(s); {out}", flush=True)
+        sides = [side("base", source_at(a.base, out) if not a.base_exe else ROOT, out, a.base_exe),
+                 side("new", ROOT, out, a.new_exe)]
+        print(f"caches linked: base {sides[0]['linked']}, new {sides[1]['linked']} file(s)", flush=True)
+        runs = sweep(modules, sides)
+        with open(kept, "w", encoding="utf-8", newline="\n") as f:
+            json.dump(runs, f, indent=2)
+    told_lines, trouble = summary(runs)
+    apart_lines, apart, found = compare(os.path.join(out, "base-out"), os.path.join(out, "new-out"))
+    if not found:
+        trouble = True
+        apart_lines = [f"neither side wrote a pack or a scenario under {out}: nothing was compared"]
+    verdict = "differences found" if apart else ("nothing compared" if not found else "no difference")
+    text = "\n".join(["# Import sweep", "", f"base {a.base}", f"modules {len(modules)}", f"verdict: {verdict}", "",
+                      "## Imports", ""] + told_lines + ["", "## Differences", ""] + (apart_lines or ["none"]))
+    with open(os.path.join(out, "sweep-report.md"), "w", encoding="utf-8", newline="\n") as f:
+        f.write(text + "\n")
+    print("\n".join(told_lines + [""] + (apart_lines or ["no difference in packs, scenarios, reports or files"])))
+    print(f"\nreport: {os.path.join(out, 'sweep-report.md')}")
+    if not a.diff_only:
+        clear(out, sides, a.keep or apart or trouble)
+    return 2 if trouble else (1 if apart else 0)
+
+
+if __name__ == "__main__":
+    sys.exit(main())
