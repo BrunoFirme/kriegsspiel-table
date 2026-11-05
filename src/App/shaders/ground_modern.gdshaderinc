@@ -139,7 +139,7 @@ vec3 modern(int k, int beside, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_u
 		float blue = plate_fill(edge, PLATE_BLUE, fw);
 		c = mix(sheet, MODERN_BLUE, dot_screen(p, 0.7854, SCREEN_PITCH, 0.25, fw) * blue);
 		Lot l = lot_at(p, uv, to_uv, metres(WATER_LOT_M), 0.5, WATER, own, levels);
-		if (l.room > metres(ISLET_SHORE_M) && hash(l.id + 6.1) < 0.08) {
+		if (l.room > metres(ISLET_SHORE_M) && hash(l.id + 6.1) < ISLET_SHARE) {
 			float body;
 			float o = islet(p, l, fw, body);
 			c = mix(c, sheet, body);

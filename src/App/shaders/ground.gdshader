@@ -162,6 +162,7 @@ const float MARSH_LOT_M = 200.0;
 const float EARTH_LOT_M = 300.0;
 const float WATER_LOT_M = 120.0;
 const float ISLET_SHORE_M = 50.0;
+const float ISLET_SHARE = 0.02;
 const float TREES_OPEN_M = 80.0;
 const float TREES_CLOSED_M = 50.0;
 const float OPEN_WOOD_KEEP = 0.45;

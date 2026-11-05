@@ -25,6 +25,16 @@ sealed partial class TableDemos
         ("coast", 2.4, 1.55, 16, 90, 0), ("port", 2.72, 1.32, 12, 90, 0), ("headland", 2.95, 0.88, 12, 90, 0),
         ("lowlake", 1.3, 1.6, 16, 90, 0), ("terraces", 0.65, 1.3, 14, 90, 0),
         ("valley-3d", 1.1, 0.9, 70, 35, 15), ("coast-3d", 2.6, 1.4, 60, 35, 0), ("mountain-3d", 0.35, 0.5, 50, 35, 20),
+        ("torrent", 0.38, 0.49, 10, 90, 0), ("culvert", 2.31, 1.17, 5, 90, 0), ("brook", 2.31, 1.18, 10, 90, 0), ("fort", 2.35, 0.78, 8, 90, 0),
+        ("walledtown", 1.1, 0.84, 10, 90, 0), ("paddocks", 1.75, 1.42, 12, 90, 0), ("names", 1.3, 0.75, 40, 90, 0),
+    ];
+
+    static readonly (string Text, double U, double V)[] ReferenceNames =
+    [
+        ("Mount Scarr", 0.3, 0.36), ("Scarr Water", 0.45, 0.47), ("Ashford", 1.1, 0.8), ("Kingsbridge", 1.5, 1.12), ("Port Haven", 2.72, 1.28),
+        ("Felling", 0.6, 0.83), ("Northolt", 1.3, 0.55), ("Eastby", 1.92, 0.69), ("Marlow", 2.25, 1.11), ("Southwick", 1.72, 1.57),
+        ("Hollin", 0.92, 1.49), ("Weir", 2.4, 0.39), ("River Ley", 1.12, 0.9), ("River Ley", 2.2, 1.2), ("The Great Wood", 1.2, 0.42),
+        ("Long Marsh", 2.56, 1.34), ("The Downs", 0.9, 1.75), ("Blackheath", 2.55, 0.65), ("Hollin Brook", 0.95, 1.25), ("The Fort", 2.35, 0.75),
     ];
 
     static Vec2 SheetCentre(int i) => new(-GroundWidth + i % ReferenceColumns * GroundWidth, GroundDepth / 2 - i / ReferenceColumns * GroundDepth);
@@ -73,6 +83,12 @@ sealed partial class TableDemos
         {
             var sheet = Session.View.Sheets.First(s => s.Id == id);
             Session.Do(new MoveSheet { Id = sheet.Id, Pos = SheetCentre(i), RotDeg = sheet.RotDeg, Z = i, Size = sheet.Size });
+        }
+        await _main.ToSignal(Tree.CreateTimer(ReliefSettleSeconds), SceneTreeTimer.SignalName.Timeout);
+        foreach (var (text, u, v) in ReferenceNames)
+        {
+            if (!ids.ContainsKey((int)u + (int)v * ReferenceColumns)) continue;
+            Session.Do(new Draw { Layer = Layers.Umpire, Stroke = LetterTool.Named(Session.Ground.NameAt(ReferenceWorld(u, v), text).Baseline, text, "") });
         }
         await _main.ToSignal(Tree.CreateTimer(ReliefSettleSeconds), SceneTreeTimer.SignalName.Timeout);
         var dir = ScenarioFiles.SaveTable(Session.Store, Session.View, ReferenceName, ReferenceDir());

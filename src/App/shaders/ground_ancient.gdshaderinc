@@ -112,7 +112,7 @@ vec3 ancient(int k, int beside, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_
 		rim = 0.0;
 	} else if (k == WATER) {
 		Lot l = lot_at(p, uv, to_uv, metres(WATER_LOT_M), 0.5, WATER, own, levels);
-		if (l.room > metres(ISLET_SHORE_M) && hash(l.id + 6.1) < 0.08) {
+		if (l.room > metres(ISLET_SHORE_M) && hash(l.id + 6.1) < ISLET_SHARE) {
 			float body;
 			float o = islet(p, l, fw, body);
 			c = mix(c, palette[ANCIENT * KINDS + GRASS].rgb * (sheet / ANCIENT_PAPER), body);

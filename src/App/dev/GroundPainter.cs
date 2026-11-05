@@ -53,7 +53,7 @@ sealed class GroundPainter
 
     public void Lower(double r, double strength, params (double, double)[] pts) => ReliefBrush.Stroke(_g, Local(pts), r, new Brush(BrushMode.Lower, 0, strength));
 
-    public void Hollow(double r, params (double, double)[] pts) => ReliefBrush.Stroke(_g, Local(pts), r, new Brush(BrushMode.Flatten, 0, 1, Level: 0));
+    public void Hollow(double r, params (double, double)[] pts) => ReliefBrush.Stroke(_g, Local(pts), r, new Brush(BrushMode.Flatten, 0, 1));
 
     public void Valley(double r, double depth, params (double, double)[] pts)
     {
@@ -61,11 +61,23 @@ sealed class GroundPainter
             Lower(r * reach, depth * share, pts);
     }
 
-    public void Route(int road, double r, params (double, double)[] pts) =>
-        GroundRoute.Lay(_g, Painting("road", road, 0), Local(pts), r, _cellMetres, _metresPerUnit);
+    static bool Inside((double, double)[] pts)
+    {
+        foreach (var (u, v) in pts) if (u < 0 || u > 1 || v < 0 || v > 1) return false;
+        return true;
+    }
 
-    public void River(double r, double u, double v) =>
-        GroundRoute.Lay(_g, Painting("water", 0, 0), Local([(u, v)]), r, _cellMetres, _metresPerUnit);
+    public void Route(int road, double r, params (double, double)[] pts)
+    {
+        var local = Local(pts);
+        if (Inside(local)) GroundRoute.Lay(_g, Painting("road", road, 0), local, r, _cellMetres, _metresPerUnit);
+    }
+
+    public void River(double r, double u, double v)
+    {
+        var local = Local([(u, v)]);
+        if (Inside(local)) GroundRoute.Lay(_g, Painting("water", 0, 0), local, r, _cellMetres, _metresPerUnit);
+    }
 
     public void Grass(double rows = 0.03)
     {
