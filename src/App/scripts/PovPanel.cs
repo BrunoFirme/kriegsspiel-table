@@ -1,3 +1,4 @@
+using System;
 using Godot;
 
 using KTable.Client;
@@ -29,8 +30,15 @@ sealed class PovPanel : HudPart
         var d = T.Draft!;
         var grid = Ui.Form(76);
         _box.AddChild(grid);
+        AddView(grid, d);
         AddRadius(grid, d);
-        AddFormat(grid, d);
+        if (d.FirstPerson)
+        {
+            AddFacing(grid, d);
+            AddLens(grid, d);
+        }
+        else AddFormat(grid, d);
+        AddText(grid, d);
         grid.AddChild(new Label { Text = "Note" });
         var note = new LineEdit { Text = d.Note, PlaceholderText = "printed on the stamp, e.g. dust to the south-east" };
         note.TextChanged += v => d.Note = v;
@@ -43,6 +51,18 @@ sealed class PovPanel : HudPart
             Btn("Cancel", T.CancelSighting)));
         Panel.Fit();
     }
+
+    void Keep(Action remember, Action apply)
+    {
+        remember();
+        Cfg.Save();
+        apply();
+    }
+
+    void AddView(GridContainer grid, SightingDraft d) =>
+        AddChoice(grid, "View", d.FirstPerson, on => Keep(() => Cfg.SightingFirstPerson = on, () => T.SetSightingFirstPerson(on)),
+            ("2D", "The map from straight above, framed on the reach: trace what blocks the view here"),
+            ("First person", "From the piece's own eyes: drag to look around, hold a direction, capture what it sees"));
 
     void AddRadius(GridContainer grid, SightingDraft d)
     {
@@ -69,33 +89,67 @@ sealed class PovPanel : HudPart
         grid.AddChild(radRead);
     }
 
-    void AddFormat(GridContainer grid, SightingDraft d)
+    void AddFormat(GridContainer grid, SightingDraft d) =>
+        AddChoice(grid, "Format", d.Square, square => Keep(() => Cfg.SightingSquare = square, () => SetSquare(d, square)),
+            ("Round", "A circle around the piece: what it can see, as far as it can see"),
+            ("Square", "A square around the piece, reaching as far at its edge: the shape a screenshot is"));
+
+    void SetSquare(SightingDraft d, bool square)
     {
-        grid.AddChild(new Label { Text = "Format" });
-        var fmt = new HBoxContainer();
-        fmt.AddThemeConstantOverride("separation", 2);
-        Button? roundB = null, squareB = null;
-        void SetFormat(bool square)
+        d.Square = square;
+        d.Recompute(T);
+        T.ShowDraft();
+    }
+
+    void AddFacing(GridContainer grid, SightingDraft d)
+    {
+        grid.AddChild(new Label { Text = "Facing" });
+        var row = new HBoxContainer();
+        row.AddThemeConstantOverride("separation", 2);
+        foreach (var cardinal in Sighting.CardinalNames)
         {
-            d.Square = square;
-            Cfg.SightingSquare = square;
-            Cfg.Save();
-            roundB!.SetPressedNoSignal(!square);
-            squareB!.SetPressedNoSignal(square);
-            d.Recompute(T);
-            T.ShowDraft();
+            var name = cardinal;
+            row.AddChild(Choice(name, $"Look {Compass(name)} and hold it · dragging lets go", d.Facing == name, () => T.FaceSighting(name)));
         }
-        roundB =
-            new Button { Text = "Round", ToggleMode = true, ButtonPressed = !d.Square, FocusMode = Control.FocusModeEnum.None, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-                TooltipText = "A circle around the piece: what it can see, as far as it can see" };
-        squareB =
-            new Button { Text = "Square", ToggleMode = true, ButtonPressed = d.Square, FocusMode = Control.FocusModeEnum.None, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-                TooltipText = "A square around the piece, reaching as far at its edge: the shape a screenshot is" };
-        roundB.Pressed += () => SetFormat(false);
-        squareB.Pressed += () => SetFormat(true);
-        fmt.AddChild(roundB);
-        fmt.AddChild(squareB);
-        grid.AddChild(fmt);
+        grid.AddChild(row);
+    }
+
+    static string Compass(string cardinal) => cardinal switch { "N" => "north", "E" => "east", "S" => "south", _ => "west" };
+
+    void AddLens(GridContainer grid, SightingDraft d) =>
+        AddChoice(grid, "Lens", d.Wide, on => Keep(() => Cfg.SightingWide = on, () => T.SetSightingWide(on)),
+            ("Normal", $"{CameraRig.NormalLens:0}° across: a steady look ahead"),
+            ("Wide", $"{CameraRig.WideLens:0}° across: the four directions make the whole circle"));
+
+    void AddText(GridContainer grid, SightingDraft d) =>
+        AddChoice(grid, "Text", d.HideText, on => Keep(() => Cfg.SightingHideText = on, () => T.SetSightingHideText(on)),
+            ("Shown", "Names, counters, notes and faces as the table shows them"),
+            ("Hidden", "No names, counters, notes or studio lettering in the picture; words in imported pictures stay"));
+
+    static void AddChoice(GridContainer grid, string label, bool second, Action<bool> pick, (string text, string tip) first, (string text, string tip) other)
+    {
+        grid.AddChild(new Label { Text = label });
+        var row = new HBoxContainer();
+        row.AddThemeConstantOverride("separation", 2);
+        Button? a = null, b = null;
+        void Pick(bool wantOther)
+        {
+            a!.SetPressedNoSignal(!wantOther);
+            b!.SetPressedNoSignal(wantOther);
+            pick(wantOther);
+        }
+        a = Choice(first.text, first.tip, !second, () => Pick(false));
+        b = Choice(other.text, other.tip, second, () => Pick(true));
+        row.AddChild(a);
+        row.AddChild(b);
+        grid.AddChild(row);
+    }
+
+    static Button Choice(string text, string tip, bool on, Action press)
+    {
+        var b = new Button { Text = text, ToggleMode = true, ButtonPressed = on, FocusMode = Control.FocusModeEnum.None, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, TooltipText = tip };
+        b.Pressed += press;
+        return b;
     }
 
     void AddTraced()

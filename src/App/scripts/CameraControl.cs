@@ -149,7 +149,7 @@ sealed class CameraControl
     public void TickMemory(double delta)
     {
         var settings = _c.Settings;
-        if (_c.S == null || settings == null || ScenarioKey() is not { } key) return;
+        if (_c.S == null || settings == null || Rig.Eye != null || ScenarioKey() is not { } key) return;
         var now = new[] { Rig.Target.X, Rig.Target.Z, Rig.Distance, Rig.Yaw, Rig.Pitch, Rig.TopDown ? 1f : 0f };
         if (_seen == null || !Same(_seen, now))
         {

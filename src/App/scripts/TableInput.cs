@@ -287,6 +287,12 @@ sealed class TableInput
             Cam.DragBegin();
             return;
         }
+        if (_c.Tool == Tool.Sighting && _sighting.Looking)
+        {
+            Orbiting = true;
+            Cam.DragBegin();
+            return;
+        }
         if (g == null) return;
         switch (_c.Tool)
         {
@@ -336,6 +342,7 @@ sealed class TableInput
     {
         LeftDown = false;
         if (Panning && !Input.IsMouseButtonPressed(MouseButton.Middle)) { Panning = false; Cam.LetGo(orbit: false); }
+        if (Orbiting && !Input.IsMouseButtonPressed(MouseButton.Right)) { Orbiting = false; Cam.LetGo(orbit: true); }
         switch (_c.Tool)
         {
             case Tool.Zone:
@@ -377,7 +384,12 @@ sealed class TableInput
         CatchLostReleases();
         _lastHeard = mm.Position;
         if (Ordering) { if (_c.Ground(mm.Position) is { } front) _forms.Drag(front); return; }
-        if (Orbiting) { Cam.TrackOrbit(mm.Relative); return; }
+        if (Orbiting)
+        {
+            Cam.TrackOrbit(mm.Relative);
+            _sighting.Unlock();
+            return;
+        }
         if (Panning) { Cam.TrackPan(mm.Position - mm.Relative, mm.Position); return; }
         if (!LeftDown) return;
         if (_gizmo.Dragging) { _gizmo.Drag(mm.Position, mm.ShiftPressed); return; }

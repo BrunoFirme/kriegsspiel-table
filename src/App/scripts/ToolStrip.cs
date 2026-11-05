@@ -168,7 +168,7 @@ sealed class ToolStrip : HudPart
             case "range": return ToolB(Tool.Range, "range", "Ranging", "Click a piece to see how far it reaches: the wheel sets the standing reach, and a piece carrying a \"range\" counter uses its own");
             case "sighting":
             {
-                var b = ToolB(Tool.Sighting, "sighting", $"POV screenshot   ({Cfg.Keys.Label("sighting")})", "The picture a piece would send home: trace the edge of what it can see, and the shot goes to the clipboard and the capture folder. The wheel sets its reach; Alt + wheel zooms in to trace");
+                var b = ToolB(Tool.Sighting, "sighting", $"POV screenshot   ({Cfg.Keys.Label("sighting")})", "The picture a piece would send home: from above, trace the edge of what it can see, or look out from its own eyes. The shot goes to the clipboard and the capture folder. The wheel sets its reach; Alt + wheel zooms in to trace");
                 Buttons["sighting"] = b;
                 return b;
             }

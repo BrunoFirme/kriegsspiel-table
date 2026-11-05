@@ -15,8 +15,8 @@ sealed class HudDemo : HudPart
     public void Run(string what)
     {
         var centre = Hud.GetViewport().GetVisibleRect().Size / 2;
-        if (Pages(what) || CompassDrag(what) || Hearts(what) || Scripts(what) || View(what) || PovPictures(what) || PovTool(what) || PovFormat(what) || DrawingPanels(what) || PanelMoves(what)
-            || Hands(what) || PieceMoves(what) || Lettering(what) || Dialogs(what)) return;
+        if (Pages(what) || CompassDrag(what) || Hearts(what) || Scripts(what) || View(what) || PovPictures(what) || PovTool(what) || PovFormat(what) || PovEye(what)
+            || DrawingPanels(what) || PanelMoves(what) || Hands(what) || PieceMoves(what) || Lettering(what) || Dialogs(what)) return;
         if (what == "dice") Hud.OpenPanel("dice");
         else if (what == "dice:roll")
         {
@@ -470,6 +470,7 @@ sealed class HudDemo : HudPart
             {
                 await Hud.ToSignal(Hud.GetTree().CreateTimer(0.8), Timer.SignalName.Timeout);
                 if (T.Draft is not { } d) { GD.Print("[povshot] no draft"); return; }
+                if (what.Contains("notext")) T.SetSightingHideText(true);
                 var vp = Hud.GetViewport().GetVisibleRect().Size;
                 bool down = what.Contains("v");
                 var a = down ? new Vector2(vp.X * 0.58f, vp.Y * 0.18f) : new Vector2(vp.X * 0.25f, vp.Y * 0.42f);
@@ -621,6 +622,36 @@ sealed class HudDemo : HudPart
             return true;
         }
         return false;
+    }
+
+    bool PovEye(string what)
+    {
+        if (!what.StartsWith("poveye")) return false;
+        var parts = what.Split(':');
+        int pn = parts.Length > 1 && int.TryParse(parts[1], out var n) ? n : 0;
+        var board = S.View.Layer(KTable.Core.Model.Layers.Umpire);
+        if (board.Count <= pn) { GD.Print("[poveye] no such piece"); return true; }
+        T.SetSelection(new[] { board[pn].Id });
+        T.SetTool(Tool.Sighting);
+        Callable.From((Action)(async () =>
+        {
+            await Hud.ToSignal(Hud.GetTree().CreateTimer(0.4), Timer.SignalName.Timeout);
+            if (T.Draft is not { } d) { GD.Print("[poveye] no draft"); return; }
+            T.SetSightingFirstPerson(true);
+            if (what.Contains("wide")) T.SetSightingWide(true);
+            if (what.Contains("notext")) T.SetSightingHideText(true);
+            if (parts.Skip(2).FirstOrDefault(p => p is "N" or "E" or "S" or "W") is { } facing) T.FaceSighting(facing);
+            await Hud.ToSignal(Hud.GetTree().CreateTimer(0.8), Timer.SignalName.Timeout);
+            var eye = T.Rig.Cam.GlobalPosition;
+            var at = Coords.ToWorld(board[pn].Pos);
+            GD.Print($"[poveye] the piece is at {at.X:0.00},{at.Z:0.00}; the eye is at {eye.X:0.00},{eye.Y:0.00},{eye.Z:0.00}, yaw {Mathf.RadToDeg(T.Rig.Yaw):0}°, pitch {Mathf.RadToDeg(T.Rig.Pitch):0}°, lens {T.Rig.Cam.Fov:0}° kept by {T.Rig.Cam.KeepAspect}");
+            GD.Print($"[poveye] facing {d.Facing ?? "free"}; the view is {(T.Rig.TopDown ? "flat" : "three-dimensional")}; text {(d.HideText ? "hidden" : "shown")}; {d.Included.Count} pieces in the picture; the panel is {Hud.Panels["sighting"].Size.X:0}×{Hud.Panels["sighting"].Size.Y:0}");
+            var img = await T.RenderSighting(d, 620);
+            if (img == null) { GD.Print("[poveye] no picture"); return; }
+            var path = ProjectSettings.GlobalizePath("user://poveye.png");
+            GD.Print($"[poveye] {img.GetWidth()}×{img.GetHeight()} written to {path}: {img.SavePng(path)}");
+        })).CallDeferred();
+        return true;
     }
 
     bool PovFormat(string what)

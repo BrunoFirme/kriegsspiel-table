@@ -170,7 +170,7 @@ sealed class PieceWidgets
         var l = new Label3D
         {
             Text = text, FontSize = Fonts.FaceSize, OutlineSize = 0, Modulate = color, DoubleSided = false, VisibilityRangeEnd = _piece.LetteringRange(),
-            HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center, RenderPriority = 3, Font = Fonts.Tts,
+            HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center, RenderPriority = 3, Font = Fonts.Tts, Layers = Table.TextLayer,
         };
         var font = l.Font ?? ThemeDB.FallbackFont;
         var px = font.GetStringSize(text.Length > 0 ? text : " ", HorizontalAlignment.Left, -1, Fonts.FaceSize);

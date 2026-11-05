@@ -139,4 +139,54 @@ static class ScreenTests
         var undone = Read(await agent.Handle(Call("studio_undo", "{}")));
         Check.That(!undone.error, "the decal undoes: " + undone.text);
     }
+
+    [ScreenTest]
+    static async Task A_first_person_pov_picture_is_wide_and_the_view_stays_at_the_eye(TestRunner r)
+    {
+        var h = await HudTests.Host(r);
+        h.Table.Selection.Set(new[] { "p1" });
+        Check.That(h.Table.Sighting.Begin(10), "the tool begins");
+        h.Table.Sighting.SetFirstPerson(true);
+        h.Table.Sighting.SetHideText(true);
+        await r.Frames(2);
+        var eye = h.Table.Rig.Cam.GlobalTransform;
+        var img = await h.Table.RenderSighting(h.Table.Draft!, 180);
+        Check.That(img != null && img.GetWidth() == 320 && img.GetHeight() == 180, $"a 16:9 picture: {img?.GetWidth()}×{img?.GetHeight()}");
+        Check.That(h.Table.Rig.Cam.GlobalTransform.IsEqualApprox(eye), "the person's own view stays at the eye");
+        Check.That(h.Table.Pieces.Nodes.All(n => n.FindChildren("*", nameof(VisualInstance3D), true, false).OfType<VisualInstance3D>().All(v => (v.Layers & Table.OutOfPictureLayer) == 0)), "every piece is back in view");
+        h.Table.Sighting.Cancel();
+        Check.That(h.Table.Rig.Eye == null, "the eye is left");
+    }
+
+    static int Pale(Image img, int x0, int y0, int size)
+    {
+        int n = 0;
+        for (int x = x0; x < x0 + size; x++)
+            for (int y = y0; y < y0 + size; y++)
+                if (Light(img.GetPixel(x, y)) > 0.85f) n++;
+        return n;
+    }
+
+    [ScreenTest]
+    static async Task A_face_drawn_without_its_text_keeps_the_paint_and_drops_the_words(TestRunner r)
+    {
+        var (h, agent) = await Open(r);
+        var d = h.Studio.Pack.Pieces[0];
+        const string Doc = """{"W":64,"H":64,"Bg":"#ffffffff","Layers":[{"Name":"Paint","Kind":"paint","Ops":[{"K":"shape","P":[0,0,64,0,64,64,0,64],"W":0,"Fc":"#c0392bff","C":"#c0392bff"}]},{"Name":"Label","Kind":"text","X":32,"Y":32,"Text":"7","Size":40,"Color":"#ffffffff"}]}""";
+        var (text, error, _) = Read(await agent.Handle(Call("studio_write_face", $$"""{"id":"{{d.Id}}","face":"front","doc":{{Doc}}}""")));
+        Check.That(!error, "the face is drawn: " + text);
+        var sha = PieceFaces.Of(d)[0].Sha!;
+        var saved = Image.LoadFromFile(h.Store.AssetPath(h.Studio.Pack, sha)!);
+        if (saved.IsCompressed()) saved.Decompress();
+        Check.That(Pale(saved, 22, 22, 20) > 10, "the saved face has the white 7 in its middle");
+        var faces = new MutedFaces(new Assets(h.Store), r);
+        bool ready = false;
+        var rel = h.Studio.Pack.Assets[sha].File;
+        Check.That(faces.Texture(h.PackId, rel, () => ready = true) == null && faces.Pending, "the text-free face is being drawn");
+        for (int i = 0; i < 120 && !ready; i++) await r.Frame();
+        var muted = faces.Texture(h.PackId, rel, () => { });
+        Check.That(ready && muted != null && !faces.Pending, "it comes back");
+        var img = muted!.GetImage();
+        Check.That(img.GetWidth() == 64 && Pale(img, 22, 22, 20) == 0 && Near(img.GetPixel(32, 32), Color.FromHtml("#c0392b")), "where the 7 was there is only the paint");
+    }
 }

@@ -164,4 +164,35 @@ static class HudTests
         var dlg = h.Hud.FindChildren("*", nameof(AcceptDialog), true, false).OfType<AcceptDialog>().SingleOrDefault(d => d.Title == "Settings");
         Check.That(dlg != null && dlg.Visible, "the settings dialog is up");
     }
+
+    [NodeTest]
+    static async Task The_pov_panel_switches_view_lens_text_and_facing(TestRunner r)
+    {
+        var h = await Host(r);
+        h.Table.Selection.Set(new[] { "p1" });
+        h.Table.SetTool(Tool.Sighting);
+        await r.Frames(2);
+        Check.That(h.Table.Draft != null && h.Hud.Pov.Panel.Visible, "the tool is out with its panel");
+        Button Named(string text) => h.Hud.Pov.Panel.FindChildren("*", nameof(Button), true, false).OfType<Button>().First(b => b.Text == text);
+        Named("First person").EmitSignal(Button.SignalName.Pressed);
+        await r.Frame();
+        Check.That(h.Table.Draft!.FirstPerson && h.Table.Rig.Eye != null, "first person: the eye is on the piece");
+        Named("Wide").EmitSignal(Button.SignalName.Pressed);
+        await r.Frame();
+        Check.That(h.Table.Draft!.Wide && Mathf.IsEqualApprox(h.Table.Rig.Cam.Fov, CameraRig.WideLens), "the wide lens");
+        Named("E").EmitSignal(Button.SignalName.Pressed);
+        await r.Frame();
+        Check.Equal("E", h.Table.Draft!.Facing, "east held");
+        Check.That(Named("E").ButtonPressed && !Named("N").ButtonPressed, "the held direction is the lit one");
+        Named("Hidden").EmitSignal(Button.SignalName.Pressed);
+        await r.Frame();
+        Check.That(h.Table.Draft!.HideText && (h.Table.Rig.Cam.CullMask & Table.TextLayer) == 0, "text hidden");
+        Named("2D").EmitSignal(Button.SignalName.Pressed);
+        await r.Frame();
+        Check.That(!h.Table.Draft!.FirstPerson && h.Table.Rig.Eye == null && h.Table.Rig.TopDown, "back to the map from above");
+        Check.That(h.Hud.Pov.Panel.FindChildren("*", nameof(Button), true, false).OfType<Button>().Any(b => b.Text == "Round"), "the format row is back");
+        h.Table.CancelSighting();
+        await r.Frame();
+        Check.That(h.Table.Draft == null && (h.Table.Rig.Cam.CullMask & Table.TextLayer) != 0, "the tool is down and text is back");
+    }
 }

@@ -68,8 +68,21 @@ sealed class Sighting
         ClearExtras();
         _sightPlane.Visible = _shotPlane.Visible = false;
         _outlineMesh.ClearSurfaces();
+        SyncText();
         if (Draft != null) ShowDraft();
     }
+
+    void SyncText()
+    {
+        var cam = _c.Rig.Cam;
+        bool hide = Draft is { HideText: true };
+        cam.CullMask = hide ? cam.CullMask & ~Table.TextLayer : cam.CullMask | Table.TextLayer;
+        _c.S.Art.MuteText(hide, _c.Scene);
+    }
+
+    public string Hint() => Draft is { FirstPerson: true }
+        ? "Drag to look around · N E S W in the panel hold a direction · wheel sets the reach · Enter captures"
+        : "Drag to trace what blocks the view · wheel sets the reach · Alt+wheel zooms in to trace · Enter captures";
 
     void ClearExtras()
     {
@@ -127,6 +140,7 @@ sealed class Sighting
     {
         if (Draft == null) return;
         ClearExtras();
+        SyncText();
         SetShape(Draft.Shape(), new Color(0.05f, 0.05f, 0.15f, 0.35f));
     }
 
@@ -191,7 +205,7 @@ sealed class Sighting
         Draft = new SightingDraft
         {
             ObserverId = obs.Piece.Id, Center = obs.Piece.Pos, Radius = radius ?? (_c.S.View.VisionRadius > 0 ? _c.S.View.VisionRadius : 40),
-            Square = _c.Settings.SightingSquare,
+            Square = _c.Settings.SightingSquare, FirstPerson = _c.Settings.SightingFirstPerson, Wide = _c.Settings.SightingWide, HideText = _c.Settings.SightingHideText,
         };
         Draft.Recompute(UmpirePiecesIn);
         ShowDraft();
@@ -202,12 +216,28 @@ sealed class Sighting
 
     public bool CloseUp { get; private set; }
 
+    public bool Looking => Draft is { FirstPerson: true };
+
     float Framing => Draft is { } d ? (float)(d.Radius * (d.Square ? 2 * 1.42 : 2) * 1.12) : 0;
+
+    const float EyeOverTopShare = 0.25f, EyeOverTopLeast = 0.2f, EyeOverTopMost = 3f;
+
+    Vector3 EyeOf(SightingDraft d)
+    {
+        var node = _pieces.NodeOf(Layers.Umpire, d.ObserverId);
+        if (node == null) return Coords.ToWorld(d.Center, EyeOverTopLeast);
+        float over = Mathf.Clamp(Mathf.Max(node.Footprint.X, node.Footprint.Y) * EyeOverTopShare, EyeOverTopLeast, EyeOverTopMost);
+        return node.GlobalPosition + Vector3.Up * (node.Thickness + over);
+    }
+
+    static float Lens(SightingDraft d) => d.Wide ? CameraRig.WideLens : CameraRig.NormalLens;
 
     public void FrameOnDraft()
     {
         if (Draft is not { } d) return;
         var rig = _c.Rig;
+        if (d.FirstPerson) { rig.LookFrom(EyeOf(d), Lens(d)); return; }
+        if (rig.Eye != null) rig.LeaveEye();
         float want = Framing;
         var at = Coords.ToWorld(d.Center);
         bool off = (rig.Target - at with { Y = 0 }).Length() > 0.001f;
@@ -227,9 +257,57 @@ sealed class Sighting
         else CloseUp = false;
     }
 
+    public void SetFirstPerson(bool on)
+    {
+        if (Draft is not { } d || d.FirstPerson == on) return;
+        d.FirstPerson = on;
+        d.Facing = null;
+        CloseUp = false;
+        FrameOnDraft();
+        _c.Say(Hint());
+        NotifyChanged();
+    }
+
+    public void SetWide(bool on)
+    {
+        if (Draft is not { } d || d.Wide == on) return;
+        d.Wide = on;
+        FrameOnDraft();
+        NotifyChanged();
+    }
+
+    public void SetHideText(bool on)
+    {
+        if (Draft is not { } d || d.HideText == on) return;
+        d.HideText = on;
+        SyncText();
+        NotifyChanged();
+    }
+
+    static readonly (string cardinal, float yaw)[] Cardinals = { ("N", Mathf.Pi), ("E", Mathf.Pi / 2), ("S", 0), ("W", -Mathf.Pi / 2) };
+
+    public static IEnumerable<string> CardinalNames => Cardinals.Select(c => c.cardinal);
+
+    public void Face(string cardinal)
+    {
+        int i = Array.FindIndex(Cardinals, c => c.cardinal == cardinal);
+        if (Draft is not { FirstPerson: true } d || i < 0) return;
+        d.Facing = cardinal;
+        _c.Rig.Face(Cardinals[i].yaw, CameraRig.EyeTiltRadians);
+        NotifyChanged();
+    }
+
+    public void Unlock()
+    {
+        if (Draft is not { Facing: not null } d) return;
+        d.Facing = null;
+        NotifyChanged();
+    }
+
     public void Wheel(float f, Vector2 at, bool alt)
     {
         var rig = _c.Rig;
+        if (alt && Looking) return;
         if (alt)
         {
             rig.Zoom(f, at);
@@ -258,6 +336,7 @@ sealed class Sighting
         _drawing = false;
         _wallRedo.Clear();
         _pieces.ShowRings();
+        _c.Rig.LeaveEye();
         Sync();
         NotifyChanged();
         if (_c.Tool == Tool.Sighting) _c.SetTool(Tool.Select);
@@ -271,6 +350,7 @@ sealed class Sighting
         _pieces.ShowRings();
         Draft = null;
         _wallRedo.Clear();
+        _c.Rig.LeaveEye();
         Sync();
         NotifyChanged();
         _c.SetTool(Tool.Select);
@@ -343,10 +423,11 @@ sealed class Sighting
     {
         var shot = MakeShotViewport(d, px);
         PrepareForPicture(d);
-        for (int i = 0; i < 30; i++)
+        for (int i = 0; i < PictureWaitFrames; i++)
         {
             await _c.Scene.ToSignal(_c.Scene.GetTree(), SceneTree.SignalName.ProcessFrame);
-            if (i >= 2 && !_c.S.Assets.Busy) break;
+            bool settling = i < AssetWaitFrames && _c.S.Assets.Busy;
+            if (i >= 2 && !settling && !_c.S.Art.FacesPending) break;
         }
         try
         {
@@ -363,21 +444,26 @@ sealed class Sighting
         }
     }
 
+    const int EyePictureWidth = 16, EyePictureHeight = 9;
+    const float PictureVeilHeight = 60;
+    const int AssetWaitFrames = 30, PictureWaitFrames = 600;
+
     SubViewport MakeShotViewport(SightingDraft d, int px)
     {
         var centre = Coords.ToWorld(d.Center);
         var shot = new SubViewport
         {
-            Size = new Vector2I(px, px), World3D = _c.Scene.GetViewport().FindWorld3D(),
+            Size = d.FirstPerson ? new Vector2I(px * EyePictureWidth / EyePictureHeight, px) : new Vector2I(px, px), World3D = _c.Scene.GetViewport().FindWorld3D(),
             RenderTargetUpdateMode = SubViewport.UpdateMode.Always, Msaa3D = Viewport.Msaa.Msaa4X, TransparentBg = false,
         };
-        var cam = new Camera3D
-        {
-            Projection = Camera3D.ProjectionType.Orthogonal, Size = (float)(d.Radius * 2),
-            Near = 0.05f, Far = 4000, CullMask = Table.WorldLayer | Table.PictureOnlyLayer,
-        };
+        uint mask = Table.WorldLayer | Table.PictureOnlyLayer | (d.HideText ? 0 : Table.TextLayer);
+        var live = _c.Rig.Cam;
+        var cam = d.FirstPerson
+            ? new Camera3D { Projection = Camera3D.ProjectionType.Perspective, Fov = Lens(d), KeepAspect = Camera3D.KeepAspectEnum.Width, Near = live.Near, Far = live.Far, CullMask = mask }
+            : new Camera3D { Projection = Camera3D.ProjectionType.Orthogonal, Size = (float)(d.Radius * 2), Near = 0.05f, Far = 4000, CullMask = mask };
         shot.AddChild(cam);
         _c.Scene.AddChild(shot);
+        if (d.FirstPerson) { cam.GlobalTransform = live.GlobalTransform; return shot; }
         cam.GlobalPosition = centre + Vector3.Up * 120;
         cam.LookAt(centre, Vector3.Forward);
         return shot;
@@ -388,7 +474,7 @@ sealed class Sighting
         _pieces.Lettering.Hold(d.Included.Select(id => _pieces.NodeOf(Layers.Umpire, id)).Where(n => n != null)!);
         foreach (var n in _pieces.Nodes)
             n.HideFromPicture(n.Layer != Layers.Umpire || !d.Included.Contains(n.Piece.Id));
-        _shotPlane.Position = new Vector3(0, 60, 0);
+        if (!d.FirstPerson) _shotPlane.Position = new Vector3(0, PictureVeilHeight, 0);
     }
 }
 

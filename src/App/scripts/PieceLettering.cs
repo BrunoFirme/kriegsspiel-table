@@ -21,7 +21,7 @@ sealed class PieceLettering
         {
             FontSize = Fonts.FaceSize, OutlineSize = Fonts.FaceSize * 6 / 64, Modulate = new Color(0.97f, 0.96f, 0.92f), OutlineModulate = new Color(0, 0, 0, 0.8f),
             RotationDegrees = new Vector3(-90, 0, 0), DoubleSided = true, VisibilityRangeEnd = _piece.LetteringRange(), Font = Fonts.Tts,
-            HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center,
+            HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center, Layers = Table.TextLayer,
         };
         _piece.AddChild(_label);
     }

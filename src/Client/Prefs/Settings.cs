@@ -9,6 +9,9 @@ public sealed class Settings
     public int CaptureScale { get; set; } = 4;
     public const int CaptureScaleMost = 4;
     public bool SightingSquare { get; set; }
+    public bool SightingFirstPerson { get; set; }
+    public bool SightingWide { get; set; }
+    public bool SightingHideText { get; set; }
     public string LastName { get; set; } = "";
     public string LastAddress { get; set; } = "127.0.0.1";
     public int Port { get; set; } = 7777;

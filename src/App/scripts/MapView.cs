@@ -42,7 +42,7 @@ static class MapView
         var cam = new Camera3D
         {
             Projection = Camera3D.ProjectionType.Orthogonal, Size = (float)size, Near = 1, Far = CameraHeight * 2,
-            KeepAspect = Camera3D.KeepAspectEnum.Height, CullMask = Table.WorldLayer,
+            KeepAspect = Camera3D.KeepAspectEnum.Height, CullMask = Table.WorldLayer | Table.TextLayer,
         };
         vp.AddChild(cam);
         var grid = new Control { Size = new Vector2(pixels, pixels), MouseFilter = Control.MouseFilterEnum.Ignore };

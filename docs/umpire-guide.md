@@ -166,6 +166,13 @@ A turn report as a picture, from one piece's point of view.
 4. **Enter** or **Capture**. The picture goes to the clipboard and the capture folder, stamped with the
    scenario, the clock and the side.
 
+**First person** in the panel looks out from the piece's own eyes: drag to look around, or press **N E S W**
+to hold a direction (dragging lets go). **Wide** takes 90° across, so the four directions make the whole
+circle. Lines traced in 2D still cut off what lies behind them. Each Capture is one picture.
+
+**Text → Hidden** leaves names, counters, notes and the studio's own lettering out of the picture, and off the
+table while the tool is out. Words baked into imported pictures stay.
+
 Nothing is sent: paste it into that side's channel.
 
 ### Capture

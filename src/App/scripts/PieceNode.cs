@@ -639,8 +639,10 @@ public partial class PieceNode : Node3D
     {
         foreach (var child in FindChildren("*", "VisualInstance3D", recursive: true, owned: false))
             if (child is VisualInstance3D vi && vi != _sel)
-                vi.Layers = on ? (vi.Layers & ~Table.WorldLayer) | Table.OutOfPictureLayer
-                               : (vi.Layers | Table.WorldLayer) & ~Table.OutOfPictureLayer;
+            {
+                uint shown = vi is Label3D ? Table.TextLayer : Table.WorldLayer;
+                vi.Layers = on ? (vi.Layers & ~shown) | Table.OutOfPictureLayer : (vi.Layers | shown) & ~Table.OutOfPictureLayer;
+            }
     }
 
     public bool Masked => FindChildren("*", "VisualInstance3D", recursive: true, owned: false)

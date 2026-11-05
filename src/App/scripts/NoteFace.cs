@@ -104,7 +104,7 @@ sealed class NoteFace
         {
             Text = text, FontSize = Fonts.FaceSize, OutlineSize = 0, Modulate = ink, DoubleSided = false, Font = Fonts.Hand, PixelSize = Mathf.Max(0.00002f, pixel),
             HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center, RenderPriority = 3,
-            RotationDegrees = new Vector3(-90, 0, 0), VisibilityRangeEnd = _piece.LetteringRange(),
+            RotationDegrees = new Vector3(-90, 0, 0), VisibilityRangeEnd = _piece.LetteringRange(), Layers = Table.TextLayer,
             Position = new Vector3(centred ? x : x + wide / 2, faceY + InkLift, z),
         };
         _piece.AddChild(l);

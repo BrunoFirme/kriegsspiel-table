@@ -8,6 +8,10 @@ public sealed class SightingDraft
     public Vec2 Center;
     public double Radius = 40;
     public bool Square;
+    public bool FirstPerson;
+    public bool Wide;
+    public bool HideText;
+    public string? Facing;
     public List<List<Vec2>> Walls = new();
     public List<Vec2> Polygon = new();
     public HashSet<string> Included = new();

@@ -57,6 +57,7 @@ public partial class Table : Node3D
     public const uint LiveOnlyLayer = 1u << 2;
     public const uint PictureOnlyLayer = 1u << 3;
     public const uint OutOfPictureLayer = 1u << 4;
+    public const uint TextLayer = 1u << 7;
 
     public const float ToolPx = 3f;
 
@@ -358,7 +359,7 @@ public partial class Table : Node3D
     string? ToolLine(Tool t) => t switch
     {
         Tool.Range => Ranges.Hint(),
-        Tool.Sighting => "Drag to trace what blocks the view · wheel sets the reach · Alt+wheel zooms in to trace · Enter captures",
+        Tool.Sighting => Sighting.Hint(),
         Tool.Place => "Shift+click places another",
         Tool.Relief => "Drag over a sheet to shape or paint the ground · Shift+click goes straight on from the last stroke · Alt+click picks up the ground there · Ctrl+wheel sizes the brush",
         Tool.Formation => Forms.Hint(),
@@ -493,6 +494,10 @@ public partial class Table : Node3D
     public void CancelSighting() => Sighting.Cancel();
     public void EndDraft() => Sighting.End();
     public void RefreshSightingPanel() => Sighting.NotifyChanged();
+    public void SetSightingFirstPerson(bool on) => Sighting.SetFirstPerson(on);
+    public void SetSightingWide(bool on) => Sighting.SetWide(on);
+    public void SetSightingHideText(bool on) => Sighting.SetHideText(on);
+    public void FaceSighting(string cardinal) => Sighting.Face(cardinal);
     public void ClearOutline() => Sighting.ClearOutline();
     public int WallsTraced => Sighting.WallsTraced;
     public int WallsTakenBack => Sighting.WallsTakenBack;

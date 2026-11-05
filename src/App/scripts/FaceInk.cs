@@ -44,7 +44,7 @@ sealed class FaceInk
         {
             Text = text, FontSize = 64, OutlineSize = 6, Modulate = color, OutlineModulate = new Color(0, 0, 0, 0.8f), RotationDegrees = back ? new Vector3(90, 180, 0)
                 : new Vector3(-90, 0, 0), DoubleSided = false, VisibilityRangeEnd = _piece.LetteringRange(),
-            HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center, RenderPriority = 3, Font = Fonts.Tts,
+            HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center, RenderPriority = 3, Font = Fonts.Tts, Layers = Table.TextLayer,
         };
         var font = l.Font ?? ThemeDB.FallbackFont;
         var px = font.GetStringSize(text, HorizontalAlignment.Left, -1, 64);

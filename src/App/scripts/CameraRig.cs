@@ -15,9 +15,15 @@ public partial class CameraRig : Node3D
     public bool TopDown { get; private set; }
     public float MinDistance = 1.5f, MaxDistance = 2500;
 
+    public const float TableFov = 50, NormalLens = 60, WideLens = 90;
+    public const float EyeTiltRadians = -0.12f;
+    const float EyeLowestRadians = -1.3f, EyeHighestRadians = 1.3f;
+    public Vector3? Eye { get; private set; }
+    View? _before;
+
     public override void _Ready()
     {
-        Cam = new Camera3D { Near = 0.05f, Far = 10000, Fov = 50, CullMask = 0xFFFFF & ~Table.PictureOnlyLayer };
+        Cam = new Camera3D { Near = 0.05f, Far = 10000, Fov = TableFov, CullMask = 0xFFFFF & ~Table.PictureOnlyLayer };
         AddChild(Cam);
         Apply();
     }
@@ -31,21 +37,45 @@ public partial class CameraRig : Node3D
         Apply();
     }
 
+    public void LookFrom(Vector3 eye, float lens)
+    {
+        bool entering = Eye == null;
+        if (entering)
+        {
+            _before = Now;
+            Pitch = EyeTiltRadians;
+            Cam.KeepAspect = Camera3D.KeepAspectEnum.Width;
+        }
+        Eye = eye;
+        if (Cam.Fov != lens) Cam.Fov = lens;
+        if (entering && TopDown) ToggleTopDown();
+        else Apply();
+    }
+
+    public void LeaveEye()
+    {
+        if (Eye == null) return;
+        Eye = null;
+        _pitchTo = null;
+        Cam.Fov = TableFov;
+        Cam.KeepAspect = Camera3D.KeepAspectEnum.Height;
+        if (_before is { } v) Show(v);
+        else Apply();
+        _before = null;
+    }
+
+    float ClampPitch(float p) => Eye != null ? Mathf.Clamp(p, EyeLowestRadians, EyeHighestRadians) : Mathf.Clamp(p, SteepestPitchRadians, FlattestPitchRadians);
+
     public void Orbit(Vector2 rel)
     {
-        if (TopDown)
-        {
-            Yaw -= rel.X * 0.005f;
-            Apply();
-            return;
-        }
         Yaw -= rel.X * 0.005f;
-        Pitch = Mathf.Clamp(Pitch - rel.Y * 0.005f, SteepestPitchRadians, FlattestPitchRadians);
+        if (!TopDown || Eye != null) Pitch = ClampPitch(Pitch - rel.Y * 0.005f);
         Apply();
     }
 
     public void PanScreen(Vector2 from, Vector2 to)
     {
+        if (Eye != null) return;
         var a = PlaneAt(from, Target.Y);
         var b = PlaneAt(to, Target.Y);
         if (a == null || b == null) return;
@@ -56,6 +86,7 @@ public partial class CameraRig : Node3D
 
     public void PanWorld(Vector3 d)
     {
+        if (Eye != null) return;
         _zoomAnchor = null;
         Target += d;
         Settle();
@@ -87,6 +118,7 @@ public partial class CameraRig : Node3D
 
     public void Fling(Vector3 unitsPerSecond)
     {
+        if (Eye != null) return;
         _glide = unitsPerSecond;
         _glide.Y = 0;
         float cap = Distance * 2;
@@ -98,9 +130,10 @@ public partial class CameraRig : Node3D
         _glide = Vector3.Zero;
         _spin = Vector2.Zero;
         _yawTo = null;
+        _pitchTo = null;
     }
     public void Still() { StopGliding(); _zoomTo = null; }
-    public bool Gliding => _glide != Vector3.Zero || _spin != Vector2.Zero || _yawTo != null || _zoomTo != null;
+    public bool Gliding => _glide != Vector3.Zero || _spin != Vector2.Zero || _yawTo != null || _pitchTo != null || _zoomTo != null;
 
     const float ZoomEase = 8.5f, ZoomSettled = 0.001f;
     float? _zoomTo;
@@ -109,12 +142,23 @@ public partial class CameraRig : Node3D
 
     public float ZoomGoal => _zoomTo ?? Distance;
 
-    float? _yawTo;
+    const float TurnEase = 12f, TurnSettled = 0.002f;
+    float? _yawTo, _pitchTo;
 
-    public void FaceNorth()
+    public float YawGoal => _yawTo ?? Yaw;
+
+    public void FaceNorth() => Turn(Mathf.Pi);
+
+    public void Turn(float yaw)
     {
         _spin = Vector2.Zero;
-        _yawTo = Yaw + Mathf.Wrap(Mathf.Pi - Yaw, -Mathf.Pi, Mathf.Pi);
+        _yawTo = Yaw + Mathf.Wrap(yaw - Yaw, -Mathf.Pi, Mathf.Pi);
+    }
+
+    public void Face(float yaw, float pitch)
+    {
+        Turn(yaw);
+        _pitchTo = ClampPitch(pitch);
     }
 
     public void Tick(double delta)
@@ -131,13 +175,18 @@ public partial class CameraRig : Node3D
         }
         if (_yawTo is float to)
         {
-            Yaw = Mathf.Lerp(Yaw, to, 1 - Mathf.Exp(-dt * 12));
-            if (Mathf.Abs(to - Yaw) < 0.002f) { Yaw = to; _yawTo = null; }
+            Yaw = Mathf.Lerp(Yaw, to, 1 - Mathf.Exp(-dt * TurnEase));
+            if (Mathf.Abs(to - Yaw) < TurnSettled) { Yaw = to; _yawTo = null; }
+        }
+        if (_pitchTo is float tilt)
+        {
+            Pitch = Mathf.Lerp(Pitch, tilt, 1 - Mathf.Exp(-dt * TurnEase));
+            if (Mathf.Abs(tilt - Pitch) < TurnSettled) { Pitch = tilt; _pitchTo = null; }
         }
         if (_spin != Vector2.Zero)
         {
             Yaw -= _spin.X * dt;
-            if (!TopDown) Pitch = Mathf.Clamp(Pitch - _spin.Y * dt, SteepestPitchRadians, FlattestPitchRadians);
+            if (!TopDown || Eye != null) Pitch = ClampPitch(Pitch - _spin.Y * dt);
             _spin *= Mathf.Exp(-dt * SpinDamping);
             if (_spin.Length() < 0.003f) _spin = Vector2.Zero;
         }
@@ -153,6 +202,7 @@ public partial class CameraRig : Node3D
 
     public void Zoom(float factor, Vector2? cursor = null)
     {
+        if (Eye != null) return;
         float goal = Mathf.Clamp(ZoomGoal * factor, MinDistance, MaxDistance);
         StopGliding();
         _zoomAnchor = cursor != null ? GroundAt(cursor.Value) : null;
@@ -203,6 +253,15 @@ public partial class CameraRig : Node3D
     public void Apply()
     {
         if (Cam == null) return;
+        if (Eye is { } eye)
+        {
+            var look = new Vector3(Mathf.Sin(Yaw) * Mathf.Cos(Pitch), Mathf.Sin(Pitch), Mathf.Cos(Yaw) * Mathf.Cos(Pitch));
+            Cam.Projection = Camera3D.ProjectionType.Perspective;
+            _lift = _liftGoal = 0;
+            Cam.GlobalPosition = eye;
+            Cam.LookAt(eye + look, Vector3.Up);
+            return;
+        }
         float pitch = TopDown ? -Mathf.Pi / 2 + 0.0001f : Pitch;
         var dir = new Vector3(Mathf.Sin(Yaw) * Mathf.Cos(pitch), Mathf.Sin(pitch), Mathf.Cos(Yaw) * Mathf.Cos(pitch));
         var pos = Target - dir * Distance;
@@ -256,17 +315,21 @@ public partial class CameraRig : Node3D
 
     public float PixelsPerUnitAt(Vector3 world)
     {
-        float h = GetViewport().GetVisibleRect().Size.Y;
-        if (Cam.Projection == Camera3D.ProjectionType.Orthogonal) return h / Mathf.Max(0.0001f, Cam.Size);
+        var vp = GetViewport().GetVisibleRect().Size;
+        float across = Cam.KeepAspect == Camera3D.KeepAspectEnum.Width ? vp.X : vp.Y;
+        if (Cam.Projection == Camera3D.ProjectionType.Orthogonal) return across / Mathf.Max(0.0001f, Cam.Size);
         var forward = -Cam.GlobalTransform.Basis.Z;
         float d = Mathf.Max(Cam.Near, (world - Cam.GlobalPosition).Dot(forward));
-        return h / (2f * d * Mathf.Tan(Mathf.DegToRad(Cam.Fov) / 2f));
+        return across / (2f * d * Mathf.Tan(Mathf.DegToRad(Cam.Fov) / 2f));
     }
+
+    const float EyeGlanceUnits = 20f;
 
     public float PixelsPerUnit()
     {
         var vp = GetViewport().GetVisibleRect().Size;
         var c = vp / 2;
+        if (Eye is { } eye) return PixelsPerUnitAt(GroundAt(c) ?? eye - Cam.GlobalTransform.Basis.Z * EyeGlanceUnits);
         var a = PlaneAt(c, Target.Y);
         var b = PlaneAt(c + new Vector2(0, 50), Target.Y);
         if (a == null || b == null) return 1;

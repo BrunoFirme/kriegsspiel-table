@@ -139,11 +139,35 @@ public sealed class PieceArt
         _prints[key] = m;
         if (pkg != null && rel != null)
         {
-            var tex = _assets.Texture(pkg, rel, t => { m.AlbedoTexture = t; m.AlbedoColor = tint; }, maxSize: size);
-            if (tex != null) m.AlbedoTexture = tex;
-            else m.AlbedoColor = Placeholder * tint;
+            _assets.Texture(pkg, rel, _ => Dress(key, m), maxSize: size);
+            Dress(key, m);
         }
         return m;
+    }
+
+    MutedFaces? _muted;
+
+    public bool TextMuted { get; private set; }
+
+    public bool FacesPending => _muted is { Pending: true };
+
+    public void MuteText(bool on, Node host)
+    {
+        _muted ??= new MutedFaces(_assets, host);
+        _muted.Host = host;
+        if (TextMuted == on) return;
+        TextMuted = on;
+        foreach (var (key, m) in _prints) Dress(key, m);
+    }
+
+    void Dress((string pkg, string rel, int size, Color tint, bool scissor) key, StandardMaterial3D m)
+    {
+        if (key.pkg.Length == 0 || key.rel.Length == 0) return;
+        var muted = TextMuted ? _muted!.Texture(key.pkg, key.rel, () => Dress(key, m)) : null;
+        var tex = muted ?? _assets.Texture(key.pkg, key.rel, null, maxSize: key.size);
+        if (tex == null) { m.AlbedoColor = Placeholder * key.tint; return; }
+        m.AlbedoTexture = tex;
+        m.AlbedoColor = key.tint;
     }
 
     public StandardMaterial3D Edge(Color c)
