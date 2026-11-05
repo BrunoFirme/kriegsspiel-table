@@ -13,7 +13,8 @@ You get:
   module's own sky becomes its backdrop;
 - a further scenario for each memory bag, with the layout it places;
 - `import-report.md` beside the scenario: what did not convert. Pieces whose picture TTS cannot show either (the
-  link is gone, or a web page answers instead of the picture) are left out and named there.
+  link is gone, or its server keeps answering with a web page instead of the picture) are left out and named there.
+  A server that fails only once gets a stand-in picture, and the next import tries again.
 
 | Converts | Does not |
 |---|---|

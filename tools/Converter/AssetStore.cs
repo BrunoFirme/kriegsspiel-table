@@ -207,7 +207,7 @@ public sealed partial class AssetStore
         Save();
     }
 
-    public const string WebPage = "a web page came back instead of the picture, which TTS cannot show either";
+    public const string WebPage = "a web page came back instead of the picture, on this import as on an earlier one, which TTS cannot show either";
     const int SaveEvery = 50;
     static readonly TimeSpan Stall = TimeSpan.FromSeconds(60);
 
@@ -219,6 +219,7 @@ public sealed partial class AssetStore
         int attempts = steam ? SteamAttempts : OtherHostAttempts;
         string? err = null;
         bool definite = false;
+        bool serverFailedBefore = _index.TryGetValue(key, out var before) && before.Status != "ok" && before.Error is { } was && was.StartsWith("HTTP 5");
         for (int i = 0; i < attempts; i++)
         {
             if (i > 0) await Task.Delay(TimeSpan.FromSeconds(Math.Pow(2, i)));
@@ -229,7 +230,7 @@ public sealed partial class AssetStore
                 if ((int)resp.StatusCode == 429 || (int)resp.StatusCode >= 500)
                 {
                     err = $"HTTP {(int)resp.StatusCode}";
-                    if (Sniff(await ReadBody(resp, cts)) == "html") err += ": " + WebPage;
+                    if ((int)resp.StatusCode >= 500 && serverFailedBefore && Sniff(await ReadBody(resp, cts)) == "html") err += ": " + WebPage;
                     continue;
                 }
                 if (!resp.IsSuccessStatusCode)

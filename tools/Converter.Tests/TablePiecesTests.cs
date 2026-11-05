@@ -218,6 +218,50 @@ public sealed partial class ConverterTests
         Assert.Equal("x[2] and [note]", DefFactory.Plain("x[sup][2][/sup] and [note]"));
     }
 
+    static async Task ServePages(System.Net.Sockets.TcpListener server, CancellationToken stop)
+    {
+        while (!stop.IsCancellationRequested)
+        {
+            using var client = await server.AcceptTcpClientAsync(stop);
+            using var stream = client.GetStream();
+            var buffer = new byte[4096];
+            int read = await stream.ReadAsync(buffer, stop);
+            var request = System.Text.Encoding.ASCII.GetString(buffer, 0, read);
+            var status = request.Contains("/busy") ? "429 Too Many Requests" : "503 Service Unavailable";
+            const string Page = "<!DOCTYPE html><html><body>Just a moment...</body></html>";
+            var answer = $"HTTP/1.1 {status}\r\nContent-Type: text/html\r\nContent-Length: {Page.Length}\r\nConnection: close\r\n\r\n{Page}";
+            await stream.WriteAsync(System.Text.Encoding.ASCII.GetBytes(answer), stop);
+        }
+    }
+
+    [Fact]
+    public async Task A_web_page_instead_of_a_picture_counts_as_broken_only_when_the_server_failed_the_same_way_on_an_earlier_import()
+    {
+        var cfg = TempConfig();
+        var server = new System.Net.Sockets.TcpListener(System.Net.IPAddress.Loopback, 0);
+        server.Start();
+        using var stop = new CancellationTokenSource();
+        var serving = ServePages(server, stop.Token);
+        int port = ((System.Net.IPEndPoint)server.LocalEndpoint).Port;
+        string wall = $"http://127.0.0.1:{port}/card.png", busy = $"http://127.0.0.1:{port}/busy.png";
+        try
+        {
+            var first = new AssetStore(cfg, new Report());
+            await first.FetchAll(new[] { wall, busy });
+            Assert.Equal((null, null), (first.Gone(wall, "image"), first.Gone(busy, "image")));
+            var second = new AssetStore(cfg, new Report());
+            await second.FetchAll(new[] { wall, busy });
+            Assert.EndsWith(AssetStore.WebPage, second.Gone(wall, "image"));
+            Assert.Null(second.Gone(busy, "image"));
+        }
+        finally
+        {
+            stop.Cancel();
+            server.Stop();
+            await Task.WhenAny(serving, Task.Delay(1000));
+        }
+    }
+
     [Fact]
     public void A_checker_is_a_round_counter_in_its_tts_colour()
     {
