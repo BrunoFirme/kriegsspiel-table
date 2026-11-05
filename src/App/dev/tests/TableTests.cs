@@ -210,6 +210,23 @@ static class TableTests
     }
 
     [NodeTest]
+    static async Task The_reach_is_outlined_round_or_square_before_a_line_is_traced(TestRunner r)
+    {
+        var t = OfflineTable.Make(r, pieces: 2);
+        await r.Frame();
+        t.Table.Selection.Set(new[] { "p1" });
+        t.Table.SetTool(Tool.Sighting);
+        Check.That(t.Table.Draft is { Square: false, Walls.Count: 0 }, "a round reach with nothing traced yet");
+        Check.That(t.Table.Sighting.OutlineParts > 0, "the round reach is drawn as a line");
+        t.Table.Draft!.Square = true;
+        t.Table.Draft.Recompute(t.Table);
+        t.Table.ShowDraft();
+        await r.Frame();
+        Check.That(t.Table.Sighting.OutlineParts > 0, "so is the square one");
+        t.Table.Sighting.Cancel();
+    }
+
+    [NodeTest]
     static async Task First_person_puts_the_eye_on_the_piece_and_a_direction_held_turns_it(TestRunner r)
     {
         var t = OfflineTable.Make(r, pieces: 3);
@@ -233,6 +250,12 @@ static class TableTests
         Check.That(Mathf.IsEqualApprox(Mathf.Wrap(rig.YawGoal, -Mathf.Pi, Mathf.Pi), Mathf.Pi / 2), "the view turns to look along +X");
         t.Table.Sighting.Face("N");
         Check.That(Mathf.IsEqualApprox(Mathf.Abs(Mathf.Wrap(rig.YawGoal, -Mathf.Pi, Mathf.Pi)), Mathf.Pi), "north looks along -Z");
+        t.Table.Sighting.SetEyeHeight(0);
+        await r.Frame();
+        Check.That(rig.Eye is { } onTheGround && Mathf.Abs(onTheGround.Y - node.GlobalPosition.Y) < 0.01f, "the eye slider takes the view down to the ground");
+        t.Table.Sighting.SetEyeHeight(t.Table.SightingEyeHighest * 2);
+        await r.Frame();
+        Check.That(rig.Eye is { } high && Mathf.Abs(high.Y - node.GlobalPosition.Y - (float)t.Table.SightingEyeHighest) < 0.01f, "it goes no higher than its own ceiling");
         rig.Orbit(new Vector2(40, 0));
         t.Table.Sighting.Unlock();
         Check.That(t.Table.Draft!.Facing == null, "dragging lets the direction go");

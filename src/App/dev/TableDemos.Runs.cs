@@ -91,7 +91,6 @@ sealed partial class TableDemos
         t.Draft.Radius = double.Parse(_args.GetValueOrDefault("demo-radius", "18"), System.Globalization.CultureInfo.InvariantCulture);
         var o = obs.Pos;
         t.Draft.Walls.Add(new() { o + new KTable.Core.Model.Vec2(-14, 4), o + new KTable.Core.Model.Vec2(14, 4) });
-        t.Draft.Note = "demo sighting";
         t.Draft.Recompute(t);
         t.ShowDraft();
         t.RefreshSightingPanel();

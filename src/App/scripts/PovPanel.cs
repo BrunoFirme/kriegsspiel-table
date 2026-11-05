@@ -14,7 +14,7 @@ sealed class PovPanel : HudPart
     public PovPanel(HudContext ctx, IHudShell shell) : base(ctx)
     {
         Shell = shell;
-        Panel = shell.MakePanel("sighting", "POV screenshot");
+        Panel = shell.MakePanel("sighting", "POV tool");
         _box = Panel.Body;
     }
 
@@ -31,20 +31,20 @@ sealed class PovPanel : HudPart
         var grid = Ui.Form(76);
         _box.AddChild(grid);
         AddView(grid, d);
-        AddRadius(grid, d);
         if (d.FirstPerson)
         {
             AddFacing(grid, d);
             AddLens(grid, d);
+            AddEye(grid, d);
         }
-        else AddFormat(grid, d);
+        else
+        {
+            AddRadius(grid, d);
+            AddFormat(grid, d);
+        }
         AddText(grid, d);
-        grid.AddChild(new Label { Text = "Note" });
-        var note = new LineEdit { Text = d.Note, PlaceholderText = "printed on the stamp, e.g. dust to the south-east" };
-        note.TextChanged += v => d.Note = v;
-        grid.AddChild(note);
         Ui.AlignForm(grid);
-        AddTraced();
+        if (!d.FirstPerson) AddTraced();
         _box.AddChild(Hint($"{d.Included.Count} pieces in the picture"));
         _box.AddChild(Ui.Actions(
             Ui.Primary("Capture", () => _ = Shell.CaptureSighting(), "The picture goes to the clipboard and the capture folder"),
@@ -87,6 +87,26 @@ sealed class PovPanel : HudPart
             T.ShowDraft();
         };
         grid.AddChild(radRead);
+    }
+
+    const double EyeStep = 0.05;
+
+    void AddEye(GridContainer grid, SightingDraft d)
+    {
+        var cal = S.View.Calibration;
+        grid.AddChild(new Label { Text = "Eye" });
+        var row = new HBoxContainer();
+        row.AddThemeConstantOverride("separation", 4);
+        var slider =
+            new HSlider { MinValue = 0, MaxValue = T.SightingEyeHighest, Step = EyeStep, Value = Math.Min(d.EyeHeight, T.SightingEyeHighest),
+                CustomMinimumSize = new Vector2(80, 0), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
+                TooltipText = "How high the eye stands over the ground: down to look from behind a crest, up to see over it" };
+        string Height(double v) => cal.UnitsPerMeter is > 0 ? $"{cal.FromTableUnits(v):#,0} {cal.UnitName}" : $"{v:0.00} u";
+        var shown = Ui.Readout(Height(d.EyeHeight), 52);
+        slider.ValueChanged += v => { shown.Text = Height(v); T.SetSightingEye(v); };
+        row.AddChild(slider);
+        row.AddChild(shown);
+        grid.AddChild(row);
     }
 
     void AddFormat(GridContainer grid, SightingDraft d) =>

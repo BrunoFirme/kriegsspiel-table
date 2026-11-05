@@ -8,8 +8,6 @@ uniform int poly_n = 0;
 uniform vec4 dabs[96];
 uniform int dab_n = 0;
 uniform vec4 shade : source_color = vec4(0.0, 0.0, 0.0, 0.6);
-uniform vec4 edge : source_color = vec4(1.0, 0.85, 0.25, 1.0);
-uniform float edge_w = 0.25;
 
 varying vec3 wpos;
 
@@ -46,8 +44,4 @@ bool in_sight(vec2 p) {
 		if (distance(p, dab_centre) < dab_radius) inside = false;
 	}
 	return inside;
-}
-
-float rim_distance(vec2 p) {
-	return radius > 0.0 ? abs(distance(p, center) - radius) : 1e9;
 }

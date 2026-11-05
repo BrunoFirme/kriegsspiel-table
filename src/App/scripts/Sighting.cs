@@ -58,15 +58,16 @@ sealed class Sighting
         Root.AddChild(_outline);
     }
 
-    public void TickRim()
+    public void TickShade()
     {
-        if (_sightPlane.Visible) _sightMat.SetShaderParameter("edge_w", SightEdge());
+        _sightPlane.Visible = Draft is { FirstPerson: false } && _c.Rig.TopDown;
+        _shotPlane.Visible = Draft != null;
     }
 
     public void Sync()
     {
         ClearExtras();
-        _sightPlane.Visible = _shotPlane.Visible = false;
+        TickShade();
         _outlineMesh.ClearSurfaces();
         SyncText();
         if (Draft != null) ShowDraft();
@@ -91,14 +92,13 @@ sealed class Sighting
 
     void SetShape(SightingShape shape, Color shade)
     {
-        _sightPlane.Visible = true;
-        _shotPlane.Visible = true;
+        TickShade();
         var c = Coords.ToWorld(shape.Center);
         var poly = shape.Polygon.Take(SightingDraft.MaxPoints).Select(p => { var w = Coords.ToWorld(p); return new Vector2(w.X, w.Z); }).ToArray();
         var polyArr = new Vector2[512];
         Array.Copy(poly, polyArr, poly.Length);
-        SetOutline(shape.Kind == "polygon" ? shape.Polygon : null);
-        foreach (var (mat, col, rim) in new[] { (_sightMat, shade, SightEdge()), (_shotMat, new Color(0.02f, 0.02f, 0.03f, 1f), 0f) })
+        SetOutline(Reach(shape));
+        foreach (var (mat, col) in new[] { (_sightMat, shade), (_shotMat, new Color(0.02f, 0.02f, 0.03f, 1f)) })
         {
             mat.SetShaderParameter("kind", shape.Kind == "circle" ? 0 : 1);
             mat.SetShaderParameter("center", new Vector2(c.X, c.Z));
@@ -108,8 +108,21 @@ sealed class Sighting
             mat.SetShaderParameter("dabs", new Vector4[96]);
             mat.SetShaderParameter("dab_n", 0);
             mat.SetShaderParameter("shade", col);
-            mat.SetShaderParameter("edge_w", rim);
         }
+    }
+
+    const int RingPoints = 180;
+
+    static List<Vec2> Reach(SightingShape shape)
+    {
+        if (shape.Kind == "polygon") return shape.Polygon;
+        var ring = new List<Vec2>(RingPoints);
+        for (int i = 0; i < RingPoints; i++)
+        {
+            double a = i * Math.Tau / RingPoints;
+            ring.Add(new Vec2(shape.Center.X + Math.Cos(a) * shape.Radius, shape.Center.Z + Math.Sin(a) * shape.Radius));
+        }
+        return ring;
     }
 
     void SetOutline(List<Vec2>? pts)
@@ -130,11 +143,8 @@ sealed class Sighting
     void RefreshLines()
     {
         if (Draft == null) return;
-        var shape = Draft.Shape();
-        SetOutline(shape.Kind == "polygon" ? shape.Polygon : null);
+        SetOutline(Reach(Draft.Shape()));
     }
-
-    float SightEdge() => Mathf.Max(0.08f, 2.0f / Mathf.Max(0.01f, _c.Rig.PixelsPerUnit()));
 
     public void ShowDraft()
     {
@@ -206,6 +216,7 @@ sealed class Sighting
         {
             ObserverId = obs.Piece.Id, Center = obs.Piece.Pos, Radius = radius ?? (_c.S.View.VisionRadius > 0 ? _c.S.View.VisionRadius : 40),
             Square = _c.Settings.SightingSquare, FirstPerson = _c.Settings.SightingFirstPerson, Wide = _c.Settings.SightingWide, HideText = _c.Settings.SightingHideText,
+            EyeHeight = EyeOnTopOf(obs.Piece.Id),
         };
         Draft.Recompute(UmpirePiecesIn);
         ShowDraft();
@@ -221,13 +232,30 @@ sealed class Sighting
     float Framing => Draft is { } d ? (float)(d.Radius * (d.Square ? 2 * 1.42 : 2) * 1.12) : 0;
 
     const float EyeOverTopShare = 0.25f, EyeOverTopLeast = 0.2f, EyeOverTopMost = 3f;
+    const double EyeHighestShare = 3;
+
+    double EyeOnTopOf(string observerId)
+    {
+        var node = _pieces.NodeOf(Layers.Umpire, observerId);
+        if (node == null) return EyeOverTopLeast;
+        float over = Mathf.Clamp(Mathf.Max(node.Footprint.X, node.Footprint.Y) * EyeOverTopShare, EyeOverTopLeast, EyeOverTopMost);
+        return node.Thickness + over;
+    }
+
+    public double EyeHighest => Draft is { } d ? EyeOnTopOf(d.ObserverId) * EyeHighestShare : 0;
+
+    public void SetEyeHeight(double height)
+    {
+        if (Draft is not { } d) return;
+        d.EyeHeight = Math.Clamp(height, 0, EyeHighest);
+        FrameOnDraft();
+    }
 
     Vector3 EyeOf(SightingDraft d)
     {
         var node = _pieces.NodeOf(Layers.Umpire, d.ObserverId);
-        if (node == null) return Coords.ToWorld(d.Center, EyeOverTopLeast);
-        float over = Mathf.Clamp(Mathf.Max(node.Footprint.X, node.Footprint.Y) * EyeOverTopShare, EyeOverTopLeast, EyeOverTopMost);
-        return node.GlobalPosition + Vector3.Up * (node.Thickness + over);
+        float up = (float)d.EyeHeight;
+        return node == null ? Coords.ToWorld(d.Center, up) : node.GlobalPosition + Vector3.Up * up;
     }
 
     static float Lens(SightingDraft d) => d.Wide ? CameraRig.WideLens : CameraRig.NormalLens;
@@ -366,6 +394,9 @@ sealed class Sighting
         _drawing = false;
         Redraw();
     }
+
+    public int OutlineParts => _outlineMesh.GetSurfaceCount();
+    public bool ShadeShown => _sightPlane.Visible;
 
     readonly List<List<Vec2>> _wallRedo = new();
     public int WallsTraced => Draft?.Walls.Count ?? 0;

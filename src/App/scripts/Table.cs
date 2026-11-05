@@ -291,7 +291,7 @@ public partial class Table : Node3D
         Poses.Tick(delta);
         Names.Tick(delta);
         Palette.Tick(Input.IsMouseButtonPressed(MouseButton.Left), Pointer.In(GetViewport()));
-        Sighting.TickRim();
+        Sighting.TickShade();
         Cam.TickMemory(delta);
         _aura.Active = Selected.Count > 0;
         _hoverAura.Active = Hover.Node is { } hv && GodotObject.IsInstanceValid(hv) && !hv.Ringed;
@@ -496,6 +496,8 @@ public partial class Table : Node3D
     public void RefreshSightingPanel() => Sighting.NotifyChanged();
     public void SetSightingFirstPerson(bool on) => Sighting.SetFirstPerson(on);
     public void SetSightingWide(bool on) => Sighting.SetWide(on);
+    public void SetSightingEye(double height) => Sighting.SetEyeHeight(height);
+    public double SightingEyeHighest => Sighting.EyeHighest;
     public void SetSightingHideText(bool on) => Sighting.SetHideText(on);
     public void FaceSighting(string cardinal) => Sighting.Face(cardinal);
     public void ClearOutline() => Sighting.ClearOutline();

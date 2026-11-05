@@ -10,12 +10,12 @@ public sealed class SightingDraft
     public bool Square;
     public bool FirstPerson;
     public bool Wide;
+    public double EyeHeight;
     public bool HideText;
     public string? Facing;
     public List<List<Vec2>> Walls = new();
     public List<Vec2> Polygon = new();
     public HashSet<string> Included = new();
-    public string Note = "";
 
     public Vec2 Clip(Vec2 p)
     {

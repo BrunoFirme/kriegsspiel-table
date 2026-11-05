@@ -577,6 +577,23 @@ sealed class HudDemo : HudPart
             })).CallDeferred();
             return true;
         }
+        if (what.StartsWith("povring"))
+        {
+            int rn = what.Contains(':') ? int.Parse(what.Split(':')[1]) : 0;
+            var ring = S.View.Layer(KTable.Core.Model.Layers.Umpire);
+            if (ring.Count <= rn) { GD.Print("[povring] no such piece"); return true; }
+            T.SetSelection(new[] { ring[rn].Id });
+            T.SetTool(Tool.Sighting);
+            Callable.From((Action)(async () =>
+            {
+                await Hud.ToSignal(Hud.GetTree().CreateTimer(1.0), Timer.SignalName.Timeout);
+                if (T.Draft is not { } d) { GD.Print("[povring] no draft"); return; }
+                var spot = ring[rn].Pos;
+                GD.Print($"[povring] a {(d.Square ? "square" : "round")} reach of {d.Radius:0.#} u on {spot.X:0.#},{spot.Z:0.#}; the ground there stands {S.Ground.At(spot):0.##} u up of {S.Ground.Highest:0.##}");
+                GD.Print($"[povring] the reach is drawn in {T.Sighting.OutlineParts} part(s), the shade {(T.Sighting.ShadeShown ? "shows" : "is off")}; {d.Included.Count} pieces in the picture");
+            })).CallDeferred();
+            return true;
+        }
         if (what.StartsWith("povwall"))
         {
             int pn = what.Contains(':') ? int.Parse(what.Split(':')[1]) : 0;
