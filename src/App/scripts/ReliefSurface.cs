@@ -27,13 +27,27 @@ public partial class ReliefSurface : Node3D
     float[]? _heightsOf;
     float _heightsScale;
     int _heightsBlur;
+    bool _heightsStreams;
+    byte[]? _heightsKinds;
     float _cellWorld = 1;
-    static bool _contours;
+    static bool _contours, _streams;
+    static double _unitsPerMetre;
     static double _contourStep = -1;
 
     const string StyleParameter = "ground_style", ContourParameter = "contour_interval", ScaleParameter = "units_per_metre", SnowParameter = "snow_line";
 
-    public static void ShowScale(Calibration c) => RenderingServer.GlobalShaderParameterSet(ScaleParameter, (float)(c.UnitsPerMeter is { } upm && upm > 0 ? upm : 0));
+    public static void ShowScale(Calibration c)
+    {
+        _unitsPerMetre = c.UnitsPerMeter is { } upm && upm > 0 ? upm : 0;
+        RenderingServer.GlobalShaderParameterSet(ScaleParameter, (float)_unitsPerMetre);
+    }
+
+    public static bool ShowStreams(bool on)
+    {
+        if (_streams == on) return false;
+        _streams = on;
+        return true;
+    }
 
     static Shader GroundShader => _shader ??= new Shader { Code = FileAccess.GetFileAsString("res://shaders/ground.gdshader") };
 
@@ -160,18 +174,32 @@ public partial class ReliefSurface : Node3D
 
     void UpdateHeights(ReliefGrid grid, float scale, int blur)
     {
-        if (_heightsTex != null && _heightsOf != null && _heightsScale == scale && _heightsBlur == blur && _heightsOf.AsSpan().SequenceEqual(grid.H)) return;
+        bool streams = _streams && _unitsPerMetre > 0;
+        bool sameKinds = !streams || (_heightsKinds != null && _heightsKinds.AsSpan().SequenceEqual(grid.Kind));
+        if (_heightsTex != null && _heightsOf != null && _heightsScale == scale && _heightsBlur == blur && _heightsStreams == streams && sameKinds && _heightsOf.AsSpan().SequenceEqual(grid.H)) return;
+        _heightsKinds = streams ? (byte[])grid.Kind.Clone() : null;
         _heightsOf = (float[])grid.H.Clone();
         _heightsScale = scale;
         _heightsBlur = blur;
+        _heightsStreams = streams;
         var soft = GroundHeights.Blurred(grid, blur);
-        var pairs = new float[grid.H.Length * 2];
+        var texels = new float[grid.H.Length * 4];
         for (int i = 0; i < grid.H.Length; i++)
         {
-            pairs[2 * i] = grid.H[i] * scale;
-            pairs[2 * i + 1] = soft[i] * scale;
+            texels[4 * i] = grid.H[i] * scale;
+            texels[4 * i + 1] = soft[i] * scale;
+            texels[4 * i + 2] = GroundStreams.NoFlow;
         }
-        var img = Image.CreateFromData(grid.Cols, grid.Rows, false, Image.Format.Rgf, System.Runtime.InteropServices.MemoryMarshal.AsBytes(pairs.AsSpan()).ToArray());
+        if (streams)
+        {
+            var (order, direction, node) = GroundStreams.Flow(grid.Cols, grid.Rows, soft, grid.Kind, _cellWorld / _unitsPerMetre, scale / _unitsPerMetre);
+            for (int i = 0; i < grid.H.Length; i++)
+            {
+                texels[4 * i + 2] = GroundStreams.Packed(direction[i], node[i]);
+                texels[4 * i + 3] = order[i];
+            }
+        }
+        var img = Image.CreateFromData(grid.Cols, grid.Rows, false, Image.Format.Rgbaf, System.Runtime.InteropServices.MemoryMarshal.AsBytes(texels.AsSpan()).ToArray());
         if (_heightsTex != null && _heightsTex.GetWidth() == grid.Cols && _heightsTex.GetHeight() == grid.Rows) _heightsTex.Update(img);
         else _heightsTex = ImageTexture.CreateFromImage(img);
     }

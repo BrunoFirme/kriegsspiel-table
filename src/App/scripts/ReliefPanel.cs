@@ -108,6 +108,7 @@ sealed class ReliefPanel : HudPart
         ("rect", "", "shape-rect", "Rectangle: drag across it · Shift for a square"),
         ("ellipse", "", "shape-ellipse", "Ellipse: drag across it · Shift for a circle"),
         ("polygon", "", "shape-polygon", "Polygon: click its corners, then the first again or double-click · Esc drops it"),
+        ("route", "Route", "", "Route: click the waypoints, then the last again or double-click · the ground finds its way between them over the relief, as a road does; water runs down from the first as a river · Esc drops it"),
     };
 
     void AddHowToPaint()
@@ -152,7 +153,7 @@ sealed class ReliefPanel : HudPart
             _box.AddChild(row);
             return s;
         }
-        if (!Painting || Cfg.ReliefPaint == "brush")
+        if (!Painting || Cfg.ReliefPaint is "brush" or "route")
             Row("Size", 0.2, 400, 0.1, Cfg.ReliefBrush, x => $"{x:0.#} u", x => Cfg.ReliefBrush = (float)x, "The brush's radius in map units · Ctrl + wheel on the table", exp: true);
         if (Painting)
             Row("Density", 0.05, 1, 0.05, Cfg.ReliefDensity, x => $"{x * 100:0}%", x => Cfg.ReliefDensity = (float)x, "How much of the ground takes it, in clumps: low for sparse wood or scattered rock; with ✕ it thins what is painted. Going over again adds no more");

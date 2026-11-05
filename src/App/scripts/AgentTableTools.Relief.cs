@@ -26,7 +26,7 @@ sealed partial class AgentTableTools
     {
         yield return new AgentTool("shape_ground",
             "Shapes the relief of the map along a stroke, as the Relief tool does: raise, lower, smooth or flatten the ground, or paint a ground type on it (" + KindNames + "; none rubs paint out; road across water lays a bridge). " +
-            "The stroke goes to the top sheet with a relief under its first point, or to the top sheet there, which then gets a flat relief. Paint with density below 1 lays the type in clumps (sparse wood, scattered rock; with none it thins paint), fill paints the whole patch of like ground around the first point, or a bare sheet whole, and shape paints a rectangle, ellipse or polygon whole (a square field, a round pond). " +
+            "The stroke goes to the top sheet with a relief under its first point, or to the top sheet there, which then gets a flat relief. Paint with density below 1 lays the type in clumps (sparse wood, scattered rock; with none it thins paint), fill paints the whole patch of like ground around the first point, or a bare sheet whole, shape paints a rectangle, ellipse or polygon whole (a square field, a round pond), and route lays the points as waypoints: the ground finds its way between them over the relief as a road does (along roads, round rock and marsh, over narrow water as a bridge), and water runs down from the first point as a river, widening, ending in water or a pond. " +
             "Each stroke of paint draws its own details, afresh every time it is painted: field and grass take plots (big open strips, or small plots bounded by hedges, fences and walls) and buildings (none, lone farms, or hamlets), wood takes trees (open wood, or closed forest), town takes houses (scattered houses with gardens, or packed streets) and walls (none, a wall with towers, or a bastioned fort), road takes road (a track, a country road, or a chaussée; a bridge keeps its road's); town is the one brush for village, town and city, its size says which, and a road painted through it is its street. The map needs a scale (set_map_scale) before its ground is shaped. One call is one step that undo takes back. Pieces standing on the ground follow it.",
             Args.Schema(new Arg("points", "array", "[[x, z], …] in map units: one point is a single dab, more draw a stroke through them", true),
                 new Arg("mode", "string", "raise, lower, smooth, flatten or paint", true), new Arg("radius", "number", "brush radius, map units", true),
@@ -38,6 +38,7 @@ sealed partial class AgentTableTools
                 new Arg("road", "number", "road: 0–1, a track, a country road, a chaussée (0.5 if left out)"),
                 new Arg("fill", "boolean", "for paint: fill the patch around the first point instead of brushing, radius then unused"),
                 new Arg("shape", "string", "for paint, instead of brushing (radius then unused): rect or ellipse between two opposite corners, lined up with the map; polygon through its corners, three or more"),
+                new Arg("route", "boolean", "for paint: the points are waypoints and the ground finds its way between them over the relief at the radius; water runs down from the first point as a river"),
                 new Arg("passes", "number", "go over the stroke this many times (1–20, 1 if left out)"), new Arg("sheet", "string", "a sheet's id to shape instead (list_map_sheets)")),
             ShapeGround);
         yield return new AgentTool("ground_at",
@@ -122,6 +123,9 @@ sealed partial class AgentTableTools
         if (shape.Length > 0 && shape is not ("rect" or "ellipse" or "polygon")) return ToolResult.Fail("shape is rect, ellipse or polygon.");
         if (shape is "rect" or "ellipse" && pts.Count != 2) return ToolResult.Fail($"A {shape} takes two points, opposite corners.");
         if (shape == "polygon" && pts.Count < 3) return ToolResult.Fail("A polygon takes three or more points, its corners.");
+        bool route = a.Flag("route") == true;
+        if (route && !mode.StartsWith("paint:", StringComparison.Ordinal)) return ToolResult.Fail("route is for paint.");
+        if (route && (fill || shape.Length > 0)) return ToolResult.Fail("route goes without fill or shape.");
         double radius = a.Num("radius") ?? 0;
         if (!fill && shape.Length == 0 && radius <= 0) return ToolResult.Fail("radius is needed, in map units.");
         double density = Math.Clamp(a.Num("density") ?? 1, 0, 1);
@@ -145,13 +149,18 @@ sealed partial class AgentTableTools
             var outline = shape == "polygon" ? pts : Polyline.ShapePoints(shape, pts[0], pts[1]);
             if (ReliefBrush.Shape(grid, outline.Select(p => Ground.UvOf(target, p)).ToList(), brush).Empty) return ToolResult.Fail($"The {shape} changed nothing on {target.Name}: it lies off the sheet or is too thin.");
         }
+        else if (route)
+        {
+            double metre = s.View.Calibration.UnitsPerMeter!.Value;
+            if (GroundRoute.Lay(grid, brush, uv, radius / cell, cell / metre, ReliefTool.HeightUnit(target) / metre).Empty) return ToolResult.Fail($"The route changed nothing on {target.Name}.");
+        }
         else if (fill) ReliefBrush.Fill(grid, uv[0].u, uv[0].v, brush);
         else for (int i = 0; i < passes; i++) ReliefBrush.Stroke(grid, uv, radius / cell, brush);
         var before = target.Relief;
         ReliefTool.Commit(s, Json.Clone(target), grid, hud.Map.Reliefs.Share, m => hud.Log(m));
         for (int i = 0; i < ShapeWaitSeconds * 10 && s.View.Sheets.FirstOrDefault(x => x.Id == target.Id)?.Relief == before; i++) await _a.Delay(0.1);
         _a.Log($"shaped the ground of {target.Name}");
-        var did = shape.Length > 0 ? $"a {shape} of {mode[6..]}" : mode.Replace("paint:", fill ? "filled with " : "painted ");
+        var did = shape.Length > 0 ? $"a {shape} of {mode[6..]}" : route ? $"a route of {mode[6..]}" : mode.Replace("paint:", fill ? "filled with " : "painted ");
         return new ToolResult($"Shaped {target.Name} ({did}, {pts.Count} point{(pts.Count == 1 ? "" : "s")}). ground_at reads the heights back.");
     }
 

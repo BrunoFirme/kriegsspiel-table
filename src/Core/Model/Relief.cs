@@ -77,6 +77,12 @@ public static class GroundKinds
 
     public static byte Levels(int first, int second) => (byte)(Nibble(first) | Nibble(second) << 4);
 
+    public static byte DefaultLevels(byte kind)
+    {
+        var p = Parameters(kind);
+        return Levels(p.Count > 0 ? p[0].Default : 0, p.Count > 1 ? p[1].Default : 0);
+    }
+
     public static (int First, int Second) LevelsOf(byte detail) => (Percent(detail & LevelSteps), Percent(detail >> 4));
 
     static int Nibble(int percent) => (int)Math.Round(Math.Clamp(percent, 0, 100) / 100.0 * LevelSteps);
@@ -295,6 +301,8 @@ public static class ReliefFiles
                 if (index.Seeds is { } seeds && seeds[i].Length > 0) ReadBytes(g, g.Salt, cx, cy, Chunk(seeds[i], chunkPath, ReliefGrid.Chunk * ReliefGrid.Chunk), byte.MaxValue);
                 if (index.Details is { } details && details[i].Length > 0) ReadBytes(g, g.Detail, cx, cy, Chunk(details[i], chunkPath, ReliefGrid.Chunk * ReliefGrid.Chunk), byte.MaxValue);
             }
+        if (index.Details == null)
+            for (int c = 0; c < g.Detail.Length; c++) g.Detail[c] = GroundKinds.DefaultLevels(g.Kind[c]);
         return g;
     }
 

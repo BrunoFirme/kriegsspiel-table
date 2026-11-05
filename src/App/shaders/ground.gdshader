@@ -30,6 +30,7 @@ const int TOWN = 12;
 const float FIELD_STEPS = 4.0;
 const float TOWN_STEPS = 8.0;
 const float ROAD_STEPS = 4.0;
+const int NO_FLOW = 8;
 const float TRACK_W_M = 5.0;
 const float LANE_W_M = 16.0;
 const float ROAD_W_M = 22.0;
@@ -197,6 +198,7 @@ varying vec3 world;
 #include "res://shaders/ground_lots.gdshaderinc"
 #include "res://shaders/ground_town.gdshaderinc"
 #include "res://shaders/ground_roads.gdshaderinc"
+#include "res://shaders/ground_streams.gdshaderinc"
 #include "res://shaders/ground_rock.gdshaderinc"
 #include "res://shaders/ground_survey.gdshaderinc"
 #include "res://shaders/ground_ancient.gdshaderinc"
@@ -289,6 +291,7 @@ void fragment() {
 	mat2 du = mat2(dFdx(UV), dFdy(UV));
 	mat2 from_screen = abs(determinant(dp)) > 1e-14 ? inverse(dp) : mat2(0.0);
 	mat2 to_uv = du * from_screen;
+	mat2 from_uv = abs(determinant(to_uv)) > 1e-14 ? inverse(to_uv) : mat2(0.0);
 	int style = clamp(ground_style, SURVEY, MODERN);
 	float h = smooth_height(UV);
 	vec3 own_texel = texel_of(floor(clamp(UV, vec2(0.0), vec2(1.0)) * cells));
@@ -352,6 +355,11 @@ void fragment() {
 			if (style == ANCIENT) c = ancient(k, beside, tint, sheet, p, UV, to_uv, own, levels, near_town, mid, road_w, down, follow, rockness, fw, edge, shore, cover);
 			else if (style == MODERN) c = modern(k, beside, tint, sheet, p, UV, to_uv, own, levels, near_town, mid, road_w, down, follow, rockness, fw, edge, shore, cover);
 			else c = survey(k, beside, tint, sheet, p, UV, to_uv, own, levels, near_town, mid, road_w, down, follow, rockness, fw, edge, shore, bump, cover);
+			if (k != WATER) {
+				float order_here;
+				float brook = streams(style, p, UV, from_uv, fw, order_here);
+				if (brook > 0.001) c = mix(c, style == MODERN ? MODERN_BLUE : style == ANCIENT ? ANCIENT_INK : SURVEY_BLUE, brook);
+			}
 			if (road_w >= 0.0) c = road_over(style, c, sheet, p, UV, to_uv, road_class, mid, fw, over_water);
 			if (halo > 0.001) c = mix(c, plain(style, tint, sheet, p, edge), halo * HALO);
 			c = mix(c, c * (1.0 - MARK_SHADE), dark * cover * smoothstep(0.04, 0.35, steep_n));

@@ -468,7 +468,7 @@ public class ReliefTests : IDisposable
     }
 
     [Fact]
-    public void Salt_and_levels_round_trip_in_chunks_and_a_header_without_them_loads_with_zeros_and_its_old_sha()
+    public void Salt_and_levels_round_trip_in_chunks_and_a_header_without_them_loads_each_kind_at_its_default_levels()
     {
         var g = Slope(130, 70, 0.1f);
         var plain = ReliefFiles.Save(_dir, g);
@@ -489,7 +489,9 @@ public class ReliefTests : IDisposable
         Assert.DoesNotContain("seeds", File.ReadAllText(Path.Combine(_dir, ReliefFiles.HeaderRel(plain.sha))));
         var unseeded = ReliefFiles.Load(old, rel => Path.Combine(_dir, rel));
         Assert.All(unseeded.Salt, s => Assert.Equal(0, s));
-        Assert.Equal(plain.sha, ReliefFiles.Save(_dir, unseeded).sha);
+        Assert.All(Enumerable.Range(0, unseeded.Detail.Length), i => Assert.Equal(GroundKinds.DefaultLevels(unseeded.Kind[i]), unseeded.Detail[i]));
+        Assert.Equal(GroundKinds.Levels(50, 0), GroundKinds.DefaultLevels(GroundKinds.Road));
+        Assert.Equal(0, GroundKinds.DefaultLevels(GroundKinds.Water));
     }
 
     [Fact]
@@ -539,6 +541,89 @@ public class ReliefTests : IDisposable
         Assert.Equal(edges[10 * 64 + 21], edges[30 * 64 + 21]);
         Assert.True(At(30, 10) > At(24, 10) && At(24, 10) > 0, "the ground's distance to the road grows away from it");
         Assert.True(At(63, 63) > At(30, 10), "the far corner is farther still");
+    }
+
+    [Fact]
+    public void A_road_goes_round_rock_and_crosses_a_river_where_it_is_narrow_and_a_river_runs_down_to_water()
+    {
+        const int n = 40;
+        var g = new ReliefGrid(n, n);
+        var h = g.H;
+        for (int y = 0; y < n; y++)
+            for (int x = 0; x < n; x++)
+            {
+                int i = y * n + x;
+                g.Kind[i] = GroundKinds.Of("grass")!.Value;
+                if (x >= 18 && x <= 22 && y >= 5 && y <= 27) g.Kind[i] = GroundKinds.Of("rock")!.Value;
+                if (x < 20 ? y >= 30 && y <= 32 : y >= 28 && y <= 34) g.Kind[i] = GroundKinds.Water;
+                h[i] = 0.5f * (n - 1 - y) / (n - 1);
+            }
+        (int x, int y) CellOf((double u, double v) p) => ((int)Math.Round(p.u * (n - 1)), (int)Math.Round(p.v * (n - 1)));
+        static HashSet<(int x, int y)> Trodden(List<(int x, int y)> corners)
+        {
+            var cells = new HashSet<(int x, int y)>();
+            for (int i = 1; i < corners.Count; i++)
+            {
+                int steps = Math.Max(1, (int)Math.Ceiling(Math.Sqrt(Math.Pow(corners[i].x - corners[i - 1].x, 2) + Math.Pow(corners[i].y - corners[i - 1].y, 2)) * 2));
+                for (int s = 0; s <= steps; s++)
+                {
+                    double f = (double)s / steps;
+                    cells.Add(((int)Math.Round(corners[i - 1].x + (corners[i].x - corners[i - 1].x) * f), (int)Math.Round(corners[i - 1].y + (corners[i].y - corners[i - 1].y) * f)));
+                }
+            }
+            return cells;
+        }
+        var road = Trodden(GroundRoute.Road(g, h, 1, [(0.25, 0.5), (0.75, 0.5)]).Select(CellOf).ToList());
+        Assert.True(road.Count > 21, "the road goes round");
+        Assert.DoesNotContain(road, c => g.Kind[c.y * n + c.x] != GroundKinds.Of("grass"));
+        var crossing = Trodden(GroundRoute.Road(g, h, 1, [(0.6, 0.65), (0.6, 0.95)]).Select(CellOf).ToList());
+        var wet = crossing.Where(c => g.Kind[c.y * n + c.x] == GroundKinds.Water).ToList();
+        Assert.InRange(wet.Count, 1, 6);
+        Assert.True(wet.All(c => c.x < 20), "crossed where the river is narrow, not at " + string.Join(" ", wet.Select(c => $"{c.x},{c.y}")) + " along " + string.Join(" ", GroundRoute.Road(g, h, 1, [(0.6, 0.65), (0.6, 0.95)]).Select(CellOf).Select(c => $"{c.x},{c.y}")));
+        var river = GroundRoute.River(g, h, (0.3, 0.1), out var pond, 0.01);
+        var mouth = CellOf(river[^1]);
+        Assert.Equal(GroundKinds.Water, g.Kind[mouth.y * n + mouth.x]);
+        Assert.Empty(pond);
+        Assert.True(GroundRoute.RiverRadius(2, 5000) > GroundRoute.RiverRadius(2, 0), "a river widens as it runs");
+        for (int y = 10; y <= 14; y++)
+            for (int x = 30; x <= 34; x++) h[y * n + x] -= 0.1f;
+        GroundRoute.River(g, h, (0.8, 0.15), out pond, 0.01);
+        Assert.Contains(12 * n + 32, pond);
+        Assert.DoesNotContain(8 * n + 32, pond);
+        var laid = GroundRoute.Lay(g, new Brush(BrushMode.Paint, 0, 1, GroundKinds.Water), [(0.8, 0.15)], 1, 50, 100);
+        Assert.False(laid.Empty);
+        Assert.Equal(GroundKinds.Water, g.Kind[12 * n + 32]);
+        Assert.Equal(GroundKinds.Water, g.Kind[6 * n + 31]);
+        var road2 = GroundRoute.Lay(g, new Brush(BrushMode.Paint, 0, 1, GroundKinds.Road, Detail: GroundKinds.Levels(50, 0)), [(0.1, 0.1), (0.4, 0.1)], 1, 50, 100);
+        Assert.False(road2.Empty);
+        Assert.Equal(GroundKinds.Road, g.Kind[4 * n + 10]);
+    }
+
+    [Fact]
+    public void Streams_gather_down_a_valley_and_a_pit_drains_out()
+    {
+        const int n = 64;
+        var h = new float[n * n];
+        for (int y = 0; y < n; y++)
+            for (int x = 0; x < n; x++) h[y * n + x] = 0.3f * x / 63 + 0.2f * Math.Abs(y - 32) / 32f;
+        for (int y = 2; y < 6; y++)
+            for (int x = 50; x < 54; x++) h[y * n + x] = 0.01f;
+        var kinds = new byte[n * n];
+        Array.Fill(kinds, GroundKinds.Of("grass")!.Value);
+        for (int y = 0; y < n; y++)
+            for (int x = 0; x < 3; x++) kinds[y * n + x] = GroundKinds.Water;
+        var (order, direction, node) = GroundStreams.Flow(n, n, h, kinds, 50, 1000);
+        Assert.Equal(0, order[32 * n + 1]);
+        Assert.Equal(GroundStreams.NoFlow, direction[32 * n + 1]);
+        Assert.Equal(4, direction[32 * n + 3]);
+        Assert.All(node, p => Assert.True(Math.Abs(p.x) <= 0.45f && Math.Abs(p.y) <= 0.45f, "a stream node stays in its cell"));
+        Assert.Equal(4, (int)GroundStreams.Packed(4, (0, 0)) & 15);
+        Assert.True(order[32 * n + 5] >= 2, "the valley floor near the mouth carries a brook or more");
+        Assert.Equal(0, order[32 * n + 61]);
+        Assert.Equal(0, order[5 * n + 30]);
+        Assert.Equal(4, direction[32 * n + 20]);
+        Assert.True(direction[3 * n + 51] != GroundStreams.NoFlow, "the pit is filled and drains");
+        Assert.All(Enumerable.Range(0, n * n).Where(i => order[i] > 0 && i % n > 2 && i % n < n - 1 && i / n > 0 && i / n < n - 1), i => Assert.NotEqual(GroundStreams.NoFlow, direction[i]));
     }
 
     [Fact]

@@ -89,7 +89,7 @@ public sealed class Settings
     public float ReliefDensity { get; set; } = 1;
     public string ReliefPaint { get; set; } = "brush";
     public Dictionary<string, int[]> ReliefDetails { get; set; } = new();
-    public static readonly string[] ReliefPaintings = { "brush", "fill", "rect", "ellipse", "polygon" };
+    public static readonly string[] ReliefPaintings = { "brush", "fill", "rect", "ellipse", "polygon", "route" };
 
     public int ReliefDetail(byte kind, int which)
     {

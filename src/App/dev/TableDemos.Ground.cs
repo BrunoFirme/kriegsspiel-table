@@ -19,6 +19,7 @@ sealed partial class TableDemos
         look.MapStyle = parts[0] == "survey" ? MapStyles.Survey : parts[0];
         look.Contours = parts.Contains("contours");
         look.SnowLine = parts.Contains("snow") ? DemoSnowLineMetres : 0;
+        look.Streams = parts.Contains("streams");
         Session.Do(new SetLighting { Lighting = look });
         return look;
     }
@@ -57,6 +58,7 @@ sealed partial class TableDemos
         ("lake", 22, -12, 20, 34, 0),
         ("hill", -30, -16, 22, 30, 20),
         ("hillnear", -30, -16, 9, 35, 20),
+        ("route", -8, -6, 46, 90, 0),
         ("hilltop", -32, -14, 9, 90, 0),
         ("cliff", -50, -19, 10, 90, 0),
         ("cliff3d", -50, -19, 10, 35, 10),
@@ -190,5 +192,9 @@ sealed partial class TableDemos
         PaintShape("town", 20, 0, (0.49, 0.745), (0.515, 0.735), (0.54, 0.75), (0.545, 0.775), (0.53, 0.795), (0.5, 0.8), (0.485, 0.78));
         PaintShape("town", 65, 30, (0.61, 0.8), (0.655, 0.79), (0.695, 0.81), (0.705, 0.85), (0.69, 0.9), (0.65, 0.915), (0.61, 0.9), (0.595, 0.85));
         PaintShape("town", 100, 100, (0.34, 0.815), (0.39, 0.8), (0.44, 0.81), (0.455, 0.85), (0.445, 0.9), (0.4, 0.925), (0.345, 0.91), (0.325, 0.86));
+        double cellMetres = GroundWidth / System.Math.Max(1, g.Cols - 1) * DemoMetresPerUnit;
+        var country = new Brush(BrushMode.Paint, 0, 1, K("road"), Density: 1, Salt: ++salt, Detail: GroundKinds.Levels(50, 0));
+        GroundRoute.Lay(g, country, [(0.515, 0.755), (0.53, 0.5), (0.3, 0.45)], 3, cellMetres, DemoMetresPerUnit);
+        GroundRoute.Lay(g, new Brush(BrushMode.Paint, 0, 1, K("water"), Salt: ++salt), [(0.85, 0.47)], 1.5, cellMetres, DemoMetresPerUnit);
     }
 }

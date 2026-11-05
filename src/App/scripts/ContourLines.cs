@@ -85,7 +85,8 @@ sealed class ContourLines
     {
         var s = _c.S;
         var look = _look ?? s.View.Lighting;
-        if (ReliefSurface.ShowContours(look.Contours)) _sheets.RegroundAll();
+        bool contoursChanged = ReliefSurface.ShowContours(look.Contours);
+        if (ReliefSurface.ShowStreams(look.Streams) || contoursChanged) _sheets.RegroundAll();
         _plannedFor = s.Ground.Highest;
         var plan = look.Contours ? PlanFor(s.View, s.Ground) : null;
         ReliefSurface.ContourStep(plan?.Step ?? 0);
