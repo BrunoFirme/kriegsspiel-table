@@ -1,4 +1,4 @@
-using KTable.Core;
+﻿using KTable.Core;
 using KTable.Core.Model;
 using KTable.Core.Protocol;
 
@@ -1121,5 +1121,50 @@ public class ScriptingTests
         Assert.Equal(before, t.Server.State.Find(U, P)!.Pos);
         Assert.Contains(t.Server.Scripts.Console, l => l.Contains("set_pos: a place is"));
         Assert.Contains(t.Server.Scripts.Console, l => l.Contains("move: string is not a number"));
+    }
+
+    [Fact]
+    public void A_sheet_s_editor_changes_the_symbol_on_the_look_it_is_in_and_the_copy_it_restores_at_load_leaves_the_looks_their_own()
+    {
+        using var t = new Table();
+        var pack = t.Store.PackOfDef("inf")!;
+        pack.Assets["flag"] = new AssetEntry { File = "assets/arms.png", W = 64, H = 64 };
+        pack.Assets["drawn"] = new AssetEntry { File = "assets/arms.png", W = 64, H = 64 };
+        var def = t.Store.Def("inf")!;
+        def.States =
+        [
+            new PieceStateDef { Name = "Line", Decals = [new DecalDef { Picture = "arms", W = 1, H = 0.25 }] },
+            new PieceStateDef { Name = "Column", Decals = [new DecalDef { Picture = "flag", W = 0.25, H = 1 }] },
+        ];
+
+        SetScript(t, """
+            function restore() self.set_decals{ { picture = "drawn", w = 0.5, h = 0.5 } } end
+            function on_load(s)
+              restore()
+              self.menu_add("Redraw", "restore")
+              coroutine.yield(0)
+              restore()
+            end
+            """);
+
+        var p = t.Server.State.Find(U, P)!;
+        Assert.Empty(p.Decals);
+        t.Server.Scripts.Tick(0.1);
+        Assert.Empty(t.Server.State.Find(U, P)!.Decals);
+        Assert.Equal("arms", Assert.Single(DecalDef.ShownOn(p, def)).Picture);
+
+        t.Server.Handle(Table.Host, new SetState { Layer = U, Id = P, State = 1 });
+        Assert.Equal("flag", Assert.Single(DecalDef.ShownOn(t.Server.State.Find(U, P)!, def)).Picture);
+
+        t.Server.Handle(Table.Host, new PickMenuItem { Layer = U, Id = P, Index = 1 });
+        p = t.Server.State.Find(U, P)!;
+        Assert.Equal(1, p.DecalsOnState);
+        Assert.Equal("drawn", Assert.Single(DecalDef.ShownOn(p, def)).Picture);
+
+        t.Server.Handle(Table.Host, new SetState { Layer = U, Id = P, State = 0 });
+        Assert.Equal("arms", Assert.Single(DecalDef.ShownOn(t.Server.State.Find(U, P)!, def)).Picture);
+
+        t.Server.Handle(Table.Host, new SetState { Layer = U, Id = P, State = 1 });
+        Assert.Equal("drawn", Assert.Single(DecalDef.ShownOn(t.Server.State.Find(U, P)!, def)).Picture);
     }
 }

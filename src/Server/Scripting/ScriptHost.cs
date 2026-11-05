@@ -263,7 +263,8 @@ public sealed partial class ScriptHost
                     _timers.Remove(t);
                     Invoke(t.Owner, t.Fn);
                 });
-            foreach (var (owner, co) in resumes) Guard(owner.Id, () => { if (owner.Enabled && IsCurrent(owner)) Resume(owner, co); });
+            foreach (var (owner, co, loading) in resumes)
+                Guard(owner.Id, () => { if (owner.Enabled && IsCurrent(owner)) WhileLoading(loading, () => Resume(owner, co)); });
         });
     }
 
@@ -344,11 +345,20 @@ public sealed partial class ScriptHost
         });
     }
 
+    public bool Loading { get; private set; }
+
+    void WhileLoading(bool loading, Action body)
+    {
+        var was = Loading;
+        Loading = loading;
+        try { body(); } finally { Loading = was; }
+    }
+
     void UnderLoadBudget(Action body)
     {
         var saved = _guards.BudgetMs;
         _guards.BudgetMs = LoadBudgetMs;
-        try { body(); } finally { _guards.BudgetMs = saved; }
+        try { WhileLoading(true, body); } finally { _guards.BudgetMs = saved; }
     }
 
     void LoadGlobal(string code)
@@ -473,7 +483,7 @@ public sealed partial class ScriptHost
             if (co.Coroutine.State == CoroutineState.Suspended)
             {
                 if (g.Finished(r, out var result)) { g.Release(co); return result; }
-                _timers.ResumeNextFrame(ps, co);
+                _timers.ResumeNextFrame(ps, co, Loading);
                 return null;
             }
             return r;

@@ -353,7 +353,7 @@ public static partial class ApiDoc
         local arms = self.decals[1]
         self.set_decals{ { picture = arms.picture, x = 0.35, z = -0.3, w = 0.2, h = 0.2, name = "Arms" } }
         """);
-    Note("At most 64 on a piece. A picture not in this game's packs is an error. A kind whose looks carry decals of their own shows those, whatever set_decals puts on the piece.");
+    Note("At most 64 on a piece. A picture not in this game's packs is an error. On a kind whose looks carry decals of their own, what this puts on a piece belongs to the look it was in and the other looks keep theirs, and the copy a script sets while it loads is left out, the look already carrying it.");
     See("self.decals", "self.state");
 
     M("piece", "to_world(x, z)", "A point in piece units (centre 0, x right, z down the picture) as a map point { x =, z = }.", "positionToWorld", "Point");

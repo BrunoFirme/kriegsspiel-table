@@ -347,7 +347,9 @@ gives each direct match.
   `Wait.time` work through a compatibility library over this API. Buttons are converted to piece units (one TTS
   unit is half the piece's height).
 - **Pictures:** a TTS object's decals belong to the state they are on, so each look of an imported piece carries
-  its own and they change with it. Decals on web links are downloaded by the host. An input dialog asking for an image or URL
+  its own and they change with it. `setDecals` on such a piece changes the look it is in, as it does in TTS, and the
+  other looks keep theirs; a sheet's editor redraws a symbol it is given. What a script sets while it loads is the copy
+  it saved, so the look keeps its own. Decals on web links are downloaded by the host. An input dialog asking for an image or URL
   offers a picture from this computer or a web link. A button or input turned face down above the piece shows
   but takes no clicks, as TTS's locked text does.
 - **Noted:** calls with no meaning here (`addForce`, decks, bags) become `compat.todo(...)`, which prints once.

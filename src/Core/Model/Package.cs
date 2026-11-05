@@ -325,6 +325,7 @@ public sealed class PieceInstance
     public List<MenuItemDef> MenuItems { get; set; } = new();
     public List<LineDef> Lines { get; set; } = new();
     public List<DecalDef> Decals { get; set; } = new();
+    public int? DecalsOnState { get; set; }
     public List<UiNode> Ui { get; set; } = new();
 
     public PieceInstance Clone() => new()
@@ -334,7 +335,8 @@ public sealed class PieceInstance
         TintOverride = TintOverride, Label = Label, Scale = Scale, Y = Y, FaceDown = FaceDown, Note = Note, Locked = Locked,
         Script = Script, ScriptState = ScriptState, Guid = Guid, Tags = Tags == null ? null : new(Tags), Memo = Memo,
         Widgets = Widgets.Select(w => w.Clone()).ToList(), DrawnOnState = DrawnOnState, MenuItems = MenuItems.Select(m => m.Clone()).ToList(),
-        Lines = Lines.Select(l => l.Clone()).ToList(), Decals = Decals.Select(d => d.Clone()).ToList(), Ui = Ui.Select(n => n.Clone()).ToList(),
+        Lines = Lines.Select(l => l.Clone()).ToList(), Decals = Decals.Select(d => d.Clone()).ToList(), DecalsOnState = DecalsOnState,
+        Ui = Ui.Select(n => n.Clone()).ToList(),
     };
 }
 
@@ -366,10 +368,13 @@ public sealed class DecalDef
 {
     static readonly List<DecalDef> None = new();
 
-    public static List<DecalDef> ShownOn(PieceInstance p, PieceDef? def) =>
-        def != null && def.States.Any(s => s.Decals is { Count: > 0 })
-            ? (p.State >= 0 && p.State < def.States.Count ? def.States[p.State].Decals : null) ?? None
-            : p.Decals;
+    public static List<DecalDef> ShownOn(PieceInstance p, PieceDef? def)
+    {
+        if (p.DecalsOnState == p.State) return p.Decals;
+        var looks = def?.States;
+        if (looks == null || !looks.Any(s => s.Decals is { Count: > 0 })) return p.Decals;
+        return (p.State >= 0 && p.State < looks.Count ? looks[p.State].Decals : null) ?? None;
+    }
 
     public const int MostOnAPiece = 64;
     public string Picture { get; set; } = "";

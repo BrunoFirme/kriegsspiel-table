@@ -911,6 +911,7 @@ public sealed class SetDecals : LayerCommand
 {
     public string Id { get; set; } = "";
     public List<DecalDef> Decals { get; set; } = new();
+    public int OnState { get; set; } = -1;
     public override Sender SentBy() => Sender.Umpire;
     public override bool OnUndoStack() => true;
     public override Shown ShownToObservers() => Shown.Table;

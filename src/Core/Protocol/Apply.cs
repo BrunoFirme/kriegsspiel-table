@@ -821,13 +821,14 @@ public static class StateMachine
             if (!double.IsFinite(d.X) || !double.IsFinite(d.Z) || !double.IsFinite(d.Rot) || !(d.W > 0) || !(d.H > 0) || !double.IsFinite(d.W) || !double.IsFinite(d.H))
                 return "a decal's place and size must be numbers, its size above 0";
         }
-        inverse = new SetDecals { Layer = sd.Layer, Id = sd.Id, Decals = p.Decals.Select(d => d.Clone()).ToList() };
+        inverse = new SetDecals { Layer = sd.Layer, Id = sd.Id, Decals = p.Decals.Select(d => d.Clone()).ToList(), OnState = p.DecalsOnState ?? -1 };
         p.Decals = sd.Decals.Select(d =>
         {
             var c = d.Clone();
             c.Name ??= "";
             return c;
         }).ToList();
+        p.DecalsOnState = sd.OnState >= 0 ? sd.OnState : null;
         return null;
     }
 

@@ -424,7 +424,9 @@ internal sealed class PieceHandles(ScriptHost host)
                     foreach (var v in Arg(a, 0).Table.Values) if (v.Type == DataType.Table && ParseDecal(v.Table) is { } d) decals.Add(d);
                 if (decals.Count > DecalDef.MostOnAPiece) throw new ScriptRuntimeException($"set_decals: a piece carries at most {DecalDef.MostOnAPiece} decals");
                 if (decals.FirstOrDefault(d => !PictureInGame(d.Picture)) is { } unknown) throw new ScriptRuntimeException($"set_decals: no picture '{unknown.Picture}' in this game's packs");
-                host.Emit(new SetDecals { Layer = L, Id = id, Decals = decals });
+                bool looksCarryDecals = def != null && def.States.Any(s => s.Decals is { Count: > 0 });
+                if (looksCarryDecals && host.Loading) return DynValue.Nil;
+                host.Emit(new SetDecals { Layer = L, Id = id, Decals = decals, OnState = looksCarryDecals ? p.State : -1 });
                 return DynValue.Nil;
             });
             case "set_picture": return Fn(a =>
