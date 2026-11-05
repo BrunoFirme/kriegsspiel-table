@@ -229,6 +229,7 @@ public sealed partial class DefFactory
         var script = ScriptInfo.Parse(b.SafeLua.Length > 0 ? b.SafeLua : o.SafeLua, o.LuaState);
         var def = BuildDef(b, pack, r, where, script, heightScale);
         if (def == null) return null;
+        if (o.TransformNotANumber) _rep.Note($"{where}: the module gives this piece a position, turn or scale that is not a number; the usual value is taken instead");
         var lua = b.SafeLua.Length > 0 ? b.SafeLua : o.SafeLua;
         string scriptKey = "";
         if (lua.Trim().Length > 0)
@@ -253,6 +254,7 @@ public sealed partial class DefFactory
                 if (s.Name == "Custom_Model") { sd.Mesh = ModelMesh(pack, s, where); sd.Texture = Asset(pack, s.DiffuseUrl, "image", where); }
                 else { sd.Image = Asset(pack, s.ImageUrl, "image", where); sd.Back = Asset(pack, s.BackUrl, "image", where); }
                 if (s.Lua.Trim().Length > 0 && !ReferenceEquals(s, states[0])) { sd.Script = s.Lua; _rep.Note($"{where}: the state \"{sd.Name}\" carries a script of its own (kept, not run)"); }
+                if (s.TransformNotANumber) _rep.Note($"{where}: the module scales the state \"{sd.Name}\" by something that is not a number; it takes the piece's own size");
                 if (Math.Abs(sz.W - def.Size.W) > 0.01 * def.Size.W || Math.Abs(sz.H - def.Size.H) > 0.01 * def.Size.H) sd.Size = sz;
                 def.States.Add(sd);
             }

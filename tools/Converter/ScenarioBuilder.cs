@@ -412,7 +412,7 @@ public sealed class ScenarioBuilder
             double turn = (d.RotY - TtsDecalTurn) * Math.PI / 180, cos = Math.Cos(turn), sin = Math.Sin(turn);
             double w = Math.Abs(d.ScaleX) * Math.Sqrt(ux * ux * cos * cos + uz * uz * sin * sin);
             double h = Math.Abs(d.ScaleY) * Math.Sqrt(ux * ux * sin * sin + uz * uz * cos * cos);
-            if (w <= 0 || h <= 0) continue;
+            if (!double.IsFinite(w) || !double.IsFinite(h) || w <= 0 || h <= 0) continue;
             list.Add(new DecalDef
             {
                 Picture = pic, Name = d.Name, Face = back ? "back" : "front",

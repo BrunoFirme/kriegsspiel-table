@@ -38,6 +38,7 @@ public sealed class TtsObj
     public double ScaleX => D(T, "scaleX", 1);
     public double ScaleY => D(T, "scaleY", 1);
     public double ScaleZ => D(T, "scaleZ", 1);
+    public bool TransformNotANumber => T is { } t && t.Any(f => NotANumber(f.Value));
     public bool Flipped => Near180(RotX) ^ Near180(RotZ);
     static bool Near180(double a) { a = ((a % 360) + 360) % 360; return Math.Abs(a - 180) < 30; }
 
@@ -156,11 +157,15 @@ public sealed class TtsObj
         var n = o?[k];
         if (n is JsonValue v)
         {
-            if (v.TryGetValue<double>(out var d)) return d;
-            if (v.TryGetValue<string>(out var s) && double.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out d)) return d;
+            if (v.TryGetValue<double>(out var d) && double.IsFinite(d)) return d;
+            if (v.TryGetValue<string>(out var s) && double.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out d) && double.IsFinite(d)) return d;
         }
         return def;
     }
+
+    static bool NotANumber(JsonNode? n) =>
+        n is JsonValue v && v.TryGetValue<string>(out var s)
+        && double.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out var d) && !double.IsFinite(d);
 }
 
 public sealed class TtsSave

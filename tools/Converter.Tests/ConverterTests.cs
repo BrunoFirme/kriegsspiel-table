@@ -134,6 +134,28 @@ public sealed partial class ConverterTests : IDisposable
     }
 
     [Fact]
+    public void A_piece_the_module_scales_by_something_that_is_not_a_number_still_comes_over_and_can_be_written()
+    {
+        var o = new TtsObj(new JsonObject
+        {
+            ["Name"] = "Custom_Token",
+            ["Transform"] = new JsonObject { ["posX"] = 1.0, ["posY"] = 0.5, ["posZ"] = 2.0, ["rotY"] = 180, ["scaleX"] = "NaN", ["scaleY"] = 1, ["scaleZ"] = "Infinity" },
+            ["AttachedDecals"] = new JsonArray(new JsonObject
+            {
+                ["Transform"] = new JsonObject { ["posX"] = 0, ["posY"] = 0.055, ["posZ"] = 0, ["rotX"] = 90, ["rotY"] = 180, ["rotZ"] = 0, ["scaleX"] = 0.6, ["scaleY"] = 0.4, ["scaleZ"] = 1 },
+                ["CustomDecal"] = new JsonObject { ["Name"] = "Outline", ["ImageURL"] = "http://a/outline.png", ["Size"] = 1 },
+            }),
+        });
+        Assert.True(o.TransformNotANumber);
+        Assert.Equal((1.0, 1.0), (o.ScaleX, o.ScaleZ));
+        var def = new PieceDef { Id = "user.x.token", Size = new Size2(2, 1), Tags = new() { "token" } };
+        var decal = Assert.Single(ScenarioBuilder.DecalsOf(o, def, TokenArea, url => url));
+        Assert.True(double.IsFinite(decal.W) && double.IsFinite(decal.H) && double.IsFinite(decal.X) && double.IsFinite(decal.Z));
+        def.States.Add(new PieceStateDef { Name = "One", Decals = new() { decal } });
+        Assert.Contains("outline.png", Json.Serialize(new PackManifest { Id = "user.x", Pieces = new() { def } }));
+    }
+
+    [Fact]
     public void An_object_s_decals_come_across_on_its_faces_in_piece_units_and_a_missing_picture_is_left_out()
     {
         static JsonObject Decal(string url, double x, double y, double z, double ry, double sx, double sy) => new()
