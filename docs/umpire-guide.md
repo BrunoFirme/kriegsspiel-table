@@ -112,6 +112,9 @@ The tool strip runs down the left. Point at any tool and press **F1** for its se
 - **Placing:** open the **Pieces** drawer and drag a piece onto the table (Shift keeps placing).
 - **Turning over:** middle-click or **F**. Counters show where the maker put them (else on the back), with − / + to click.
 - **Renaming:** click the name on the back and type; Enter keeps it.
+- **Notes:** the **Note** in Firme's Effects and Props is an index card. Click its title or its lines and type:
+  Enter starts a new line, Ctrl+Enter keeps it, Esc leaves it as it was; Ctrl+click picks it out instead. Imported
+  TTS notecards, Notes and Notebook pages come in as these cards.
 - **Looks:** point at a piece and press **1–9** (0 is the tenth), or **[ ]** to step.
 - **Label and description:** at the foot of the right-click menu. Both show on hover to everyone, observers
   included, and are in the scenario file: not a hiding place.
@@ -242,7 +245,8 @@ The ⋯ after the scenario's name opens its properties: **Game** (password, poin
   window of its own, with find. Observers never see it.
 - **Light & surroundings:** presets and sliders, or **Follow the game clock** for dawn, day and dusk; a backdrop past
   the table's edge (a room, a garden, a coast, open country, a sky by day, at sundown or at night, a solid colour or
-  your own panorama; a sky sets its light); the table under the map, which grows to hold what is on it; and the map
+  your own panorama; a sky sets its light); the table under the map, which grows to hold what is on it, from paper to
+  black or see-through, which leaves the sheets and pieces over the backdrop alone; and the map
   style and contour lines of [painted ground](umpire-guide.md#relief).
 - **Grid:** squares or hexes over the table. Nothing snaps to it.
 

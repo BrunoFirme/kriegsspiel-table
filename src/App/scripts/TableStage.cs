@@ -108,7 +108,7 @@ sealed class TableStage
         _sun.Visible = l.SunEnergy > 0.01;
         if (_env?.Environment is { } e) { e.AmbientLightEnergy = (float)Math.Clamp(l.Ambient, 0, 3); e.AmbientLightColor = tint; }
         if (EffectFx.SetShade(l, tint)) ShadeChanged?.Invoke();
-        float shade = Mathf.Clamp((float)l.TableShade, 0, 1);
+        float shade = Mathf.Clamp((float)l.TableShade, 0, (float)Lighting.SeeThrough);
         if (_standIn.on && !Mathf.IsEqualApprox(_standIn.shade, shade)) SetStandIn(true, shade);
         _backdrop?.Show(l.Backdrop ?? Backdrops.None, (float)l.Ambient);
         ReliefSurface.ShowStyle(l.MapStyle);
@@ -151,10 +151,12 @@ sealed class TableStage
 
     public void SetStandIn(bool on, float shade = 0)
     {
-        shade = Mathf.Clamp(shade, 0, 1);
-        _standIn = (on, shade);
+        _standIn = (on, Mathf.Clamp(shade, 0, (float)Lighting.SeeThrough));
         bool lines = (_c.S?.View?.Grid?.Kind ?? "none") == "none";
         _paperLined = lines;
+        _surface.Visible = !(on && Lighting.IsSeeThrough(shade));
+        if (!_surface.Visible) return;
+        shade = Mathf.Clamp(shade, 0, (float)Lighting.Black);
         Color Shaded(Color c)
         {
             float l = c.Luminance;

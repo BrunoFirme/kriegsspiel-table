@@ -41,6 +41,7 @@ public sealed class ScenarioBuilder
         var sc = _cfg.Scenario;
         Console.WriteLine($"Scenario {sc.Id} (master {sc.Master})");
         await _assets.FetchAll(master);
+        _defs.Table = master.Table;
 
         var root = _cfg.Output;
         var pkgRel = "scenarios/" + sc.Dir;
@@ -81,6 +82,8 @@ public sealed class ScenarioBuilder
             }
         }
         var effects = BundleEffects.Load(root);
+        if (master.Objects.SelectMany(o => o.Walk()).Any(o => o.Name == BundleType && !_cfg.IsTableWall(o.BundleUrl) && effects.For(o) != null))
+            usedPacks.Add(KTable.Client.Effects.EffectKinds.StandardPack);
         var placedEffects = layers.ToDictionary(l => l, _ => new List<PieceInstance>());
         foreach (var layer in layers)
             foreach (var o in layer.Effects)
@@ -89,6 +92,7 @@ public sealed class ScenarioBuilder
         foreach (var pd in packDefs.Values.SelectMany(v => v)) _lookup.TryAdd(pd.def.Id, pd.def);
         foreach (var layer in layers) Stack(layer);
         foreach (var (layer, placed) in placedEffects) layer.Pieces.AddRange(placed);
+        LayNotes(master, scenario, extras, layers[0], usedPacks);
         if (placedEffects.Values.Sum(p => p.Count) is var effectCount and > 0) _rep.Counts[$"{sc.Id}: effects placed as Firme's effects"] = effectCount.ToString();
 
         scenario.UmpireBoard = layers[0].Pieces;
@@ -461,7 +465,7 @@ public sealed class ScenarioBuilder
         var inst = new PieceInstance
         {
             Id = $"p-{_nextId++:D6}", Def = def.Id,
-            Pos = new Vec2(Math.Round(o.PosX, 4), Math.Round(o.PosZ, 4)), RotDeg = Norm(o.RotY),
+            Pos = new Vec2(Math.Round(o.PosX, 4), Math.Round(o.PosZ, 4)), RotDeg = Facing(def, o.RotY),
             State = Math.Min(r.State, Math.Max(0, def.States.Count - 1)),
             Counters = counters, Text = text, Label = o.Nickname.Length > 0 ? o.Nickname : null, Scale = scale,
             Note = o.Description.Trim().Length > 0 ? o.Description.Trim() : null,
@@ -501,7 +505,7 @@ public sealed class ScenarioBuilder
             var ci = Instance(c, Math.Abs(c.StateList().states[0].ScaleX) * refScale, extras, packDefs, layer, usedPacks, ref rekeyed, parent, parentHeight);
             if (ci == null) continue;
             ci.Pos = new Vec2(Math.Round(o.PosX + lx * Math.Cos(th) + lz * Math.Sin(th), 4), Math.Round(o.PosZ - lx * Math.Sin(th) + lz * Math.Cos(th), 4));
-            ci.RotDeg = Norm(o.RotY + c.RotY);
+            ci.RotDeg = Norm(o.RotY + ci.RotDeg);
             var sizedAtParentReferenceScale = ci.Scale * refScale;
             ci.Scale = Math.Round(sizedAtParentReferenceScale * baseScale, 4);
             double floor = c.PosY - _defs.BaseThickness(c) * Math.Abs(c.ScaleY) / 2;
@@ -514,7 +518,50 @@ public sealed class ScenarioBuilder
 
     static string? MatchKey(PieceDef d) => d.Kind == "model"
         ? (d.Mesh == null ? null : $"model|{d.Mesh}|{d.Texture}")
+        : NoteCard.Is(d) ? $"note|{string.Join("|", d.TextLines.Select(t => t.Default))}"
         : (d.Image == null || d.Tags.Contains("block") ? null : $"flat|{d.Image}|{d.Back}");
+
+    const double NoteTurn = 180;
+
+    static double Facing(PieceDef? def, double ttsRot) => Norm(NoteCard.Is(def) ? ttsRot + NoteTurn : ttsRot);
+
+    void LayNotes(TtsSave master, Scenario scenario, PackOut extras, Layer layer, HashSet<string> usedPacks)
+    {
+        var notes = new List<(string title, string body)>();
+        if (master.Notes.Trim().Length > 0) notes.Add(("Notes", master.Notes));
+        notes.AddRange(master.Notebook);
+        if (notes.Count == 0) return;
+        const double Gap = 1, ShareOfMap = 0.12, Largest = 10, CharsPerLine = 42;
+        var corners = scenario.Sheets.SelectMany(Corners).ToList();
+        double right = corners.Count > 0 ? corners.Max(c => c.X) : 0, near = corners.Count > 0 ? corners.Min(c => c.Z) : 0;
+        double mapWide = corners.Count > 0 ? right - corners.Min(c => c.X) : 0;
+        double z = near;
+        foreach (var (title, body) in notes)
+        {
+            int lines = body.Replace("\r", "").Trim('\n').Split('\n').Sum(l => 1 + l.Length / (int)CharsPerLine);
+            double scale = Math.Round(Math.Clamp(Math.Max((double)lines / NoteCard.Lines, mapWide * ShareOfMap / NoteCard.Width), 1, Largest), 2);
+            var def = _defs.NoteDef(extras, title, body, scale);
+            var inst = new PieceInstance
+            {
+                Id = $"p-{_nextId++:D6}", Def = def.Id, RotDeg = NoteTurn,
+                Pos = new Vec2(Math.Round(right + Gap + def.Size.W / 2, 4), Math.Round(z + def.Size.H / 2, 4)),
+            };
+            z += def.Size.H + Gap;
+            layer.Pieces.Add(inst);
+        }
+        usedPacks.Add(extras.M.Id);
+        _rep.Counts[$"{_cfg.Scenario.Id}: notes laid beside the map"] = notes.Count.ToString();
+    }
+
+    static IEnumerable<Vec2> Corners(SheetDef s)
+    {
+        double th = s.RotDeg * Math.PI / 180, c = Math.Cos(th), n = Math.Sin(th);
+        foreach (var (x, z) in new[] { (-1, -1), (1, -1), (1, 1), (-1, 1) })
+        {
+            double lx = x * s.Size.W / 2, lz = z * s.Size.H / 2;
+            yield return new Vec2(s.Pos.X + lx * c + lz * n, s.Pos.Z - lx * n + lz * c);
+        }
+    }
 
     Dictionary<string, List<(PieceDef def, string pack)>> LoadPackDefs(string root)
     {

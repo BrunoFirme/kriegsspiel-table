@@ -144,8 +144,13 @@ public sealed partial class DefFactory
             var mb = MeshBounds(o.MeshUrl) ?? (1, 1, 1);
             return new Size2(mb.ex, mb.ez * ratio);
         }
+        if (o.Name == "Custom_Board") return Mul(new Size2(b.CustomBoard * (o.WidthScale > 0 ? o.WidthScale : aspect), b.CustomBoard * ratio), BoardGrowth);
         return TypeSize(o.Name, aw, ah, aspect, ratio, stretched: o.TileType is 0 or 3 && o.TileStretch);
     }
+
+    public string Table { get; set; } = "";
+
+    double BoardGrowth => Table switch { "Table_Custom" => 1.6, "Table_RPG" => 1.4, "Table_Circular" => 1.2, _ => 1 };
 
     Size2 TypeSize(string type, double aw, double ah, double aspect, double ratio, bool stretched)
     {

@@ -64,8 +64,8 @@ sealed partial class ScenarioDialog
         _box.AddChild(Hint("Everyone at the table sees it past the table's edge. A sky sets its own light; change it above."));
 
         var tableForm = Ui.Form(84);
-        var table = LightRow(tableForm, "Surface", 0, 1, 0.05, now.TableShade, ShadeWord);
-        table.TooltipText = "The table around and under the map sheets: squared paper … grey … black";
+        var table = LightRow(tableForm, "Surface", 0, Lighting.SeeThrough, 0.05, now.TableShade, ShadeWord);
+        table.TooltipText = "The table around and under the map sheets: squared paper … grey … black … see-through, with no table under the sheets";
         table.Editable = S.IsUmpire;
         Ui.AlignForm(tableForm);
         bool dragging = false;
@@ -105,7 +105,7 @@ sealed partial class ScenarioDialog
             : "Spaced in real heights and numbered once the scale is set and there is relief.";
     }
 
-    static string ShadeWord(double v) => v < 0.1 ? "paper" : v < 0.45 ? "dim paper" : v < 0.6 ? "grey" : v < 0.95 ? "dark" : "black";
+    static string ShadeWord(double v) => Lighting.IsSeeThrough(v) ? "see-through" : v < 0.1 ? "paper" : v < 0.45 ? "dim paper" : v < 0.6 ? "grey" : v < 0.95 ? "dark" : "black";
 
     Lighting Changed(Action<Lighting> change)
     {

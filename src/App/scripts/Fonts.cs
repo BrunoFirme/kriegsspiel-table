@@ -8,6 +8,10 @@ public static class Fonts
 
     public static Font Tts => _tts ??= Make();
 
+    static Font? _hand;
+
+    public static Font Hand => _hand ??= new SystemFont { FontNames = new[] { "Segoe Print", "Comic Neue", "Arial", "Liberation Sans" }, Fallbacks = new Godot.Collections.Array<Font> { Tts } };
+
     public const int FaceSize = 192;
 
     static Font Make()

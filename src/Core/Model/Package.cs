@@ -438,6 +438,9 @@ public sealed class Lighting
     public bool FromClock { get; set; }
     public double TableShade { get; set; }
     public string Backdrop { get; set; } = "";
+
+    public const double Black = 1, SeeThrough = 1.05;
+    public static bool IsSeeThrough(double tableShade) => tableShade > Black;
     public string MapStyle { get; set; } = MapStyles.Survey;
     public bool Contours { get; set; }
 }

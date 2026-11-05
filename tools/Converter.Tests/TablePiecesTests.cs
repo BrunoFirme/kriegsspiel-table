@@ -108,6 +108,117 @@ public sealed partial class ConverterTests
     }
 
     [Fact]
+    public void A_card_whose_server_answers_with_a_web_page_is_left_out_and_one_that_only_failed_to_answer_keeps_a_placeholder()
+    {
+        var cfg = TempConfig();
+        const string Wall = "http://a/wall.jpg", Busy = "http://a/busy.jpg", Back = "http://a/back.jpg";
+        Directory.CreateDirectory(cfg.Cache);
+        File.WriteAllText(Path.Combine(cfg.Cache, "index.json"), System.Text.Json.JsonSerializer.Serialize(new Dictionary<string, CacheEntry>
+        {
+            [AssetStore.Key(Wall)] = new() { Status = "missing", Error = "HTTP 503: " + AssetStore.WebPage, Url = Wall },
+            [AssetStore.Key(Busy)] = new() { Status = "missing", Error = "HTTP 503", Url = Busy },
+        }, Config.Opts));
+        var rep = new Report();
+        var defs = new DefFactory(cfg, new AssetStore(cfg, rep), rep);
+        var pack = new PackOut(cfg.Output, "t", "T", "t", null);
+
+        Assert.Null(defs.DefFor(new TtsObj(Card("BB Bismarck", 1, 0, Wall, Back, 1, 1)), pack));
+        Assert.NotNull(defs.DefFor(new TtsObj(Card("CA Exeter", 2, 0, Busy, Back, 1, 1)), pack));
+        Assert.Equal(1, rep.PiecesLeftOut);
+        var path = Path.Combine(_root, "report.md");
+        rep.Write(path, "import t");
+        Assert.Contains("- BB Bismarck — `http://a/wall.jpg` — HTTP 503: " + AssetStore.WebPage, File.ReadAllText(path));
+    }
+
+    [Fact]
+    public void Effects_kept_only_in_bags_still_bring_firmes_effects_to_the_scenario()
+    {
+        TempConfig();
+        Json.Save(Path.Combine(Packages, KTable.Client.Effects.EffectKinds.StandardPack, "pack.json"), new PackManifest
+        {
+            Id = KTable.Client.Effects.EffectKinds.StandardPack, Name = "Firme's Effects",
+            Pieces = { new PieceDef { Id = KTable.Client.Effects.EffectKinds.StandardPack + ".powder-smoke", Name = "Powder smoke", Size = new Size2(2, 2), Effect = new EffectDef { Kind = "smoke" }, Tags = new() { "effect" } } },
+        });
+        var smoke = Obj("Custom_Assetbundle", "Smoke", 1, new JsonObject { ["CustomAssetbundle"] = new JsonObject { ["AssetbundleURL"] = "https://example.org/ugc/1/B89A13D24198F5D661BB3327FB2A516BD4B00EE8/" } });
+        var bag = Obj("Infinite_Bag", "Smoke", 1, new JsonObject { ["ContainedObjects"] = new JsonArray(smoke) });
+        var module = Module("bagged", Obj("BlockSquare", "Ship", 1), bag);
+        var main = typeof(Config).Assembly.EntryPoint!;
+
+        var code = (int)main.Invoke(null, new object[] { new[] { "import", module, "--config", Path.Combine(_root, "converter.json"), "--out", Packages } })!;
+
+        Assert.Equal(0, code);
+        var table = Json.Load<Scenario>(Path.Combine(Packages, "scenarios", "bagged", "scenario.json"));
+        Assert.Contains(KTable.Client.Effects.EffectKinds.StandardPack, table.Packs);
+        Assert.DoesNotContain(table.UmpireBoard, p => p.Label == "Smoke");
+    }
+
+    [Fact]
+    public void Notecards_the_notes_panel_and_notebook_tabs_become_note_pieces_carrying_their_text()
+    {
+        var cfg0 = TempConfig();
+        LocalPicture(cfg0, "http://a/map.png", 20, 10, (_, _) => SKColors.Navy);
+        var board = Obj("Custom_Board", "Sea", 1, new JsonObject { ["CustomImage"] = new JsonObject { ["ImageURL"] = "http://a/map.png" } });
+        board["Transform"] = new JsonObject { ["posX"] = 0.0, ["posY"] = 1.0, ["posZ"] = 0.0, ["rotX"] = 0.0, ["rotY"] = 0.0, ["rotZ"] = 0.0, ["scaleX"] = 1.0, ["scaleY"] = 1.0, ["scaleZ"] = 1.0 };
+        var card = Obj("Notecard", "Orders", 1);
+        card["Description"] = "Hold the ford\nuntil dusk";
+        card["Transform"]!["rotY"] = 10.0;
+        var module = Module("notes", board, card);
+        var json = JsonNode.Parse(File.ReadAllText(module))!.AsObject();
+        json["Note"] = "\n\n1  Turn\nInitiative\nNaval Movement";
+        json["TabStates"] = new JsonObject
+        {
+            ["0"] = new JsonObject { ["title"] = "Rules", ["body"] = "Spotting at 12 inches", ["id"] = 0 },
+            ["1"] = new JsonObject { ["title"] = "Red", ["body"] = "", ["id"] = 1 },
+        };
+        File.WriteAllText(module, json.ToJsonString());
+        var main = typeof(Config).Assembly.EntryPoint!;
+
+        var code = (int)main.Invoke(null, new object[] { new[] { "import", module, "--config", Path.Combine(_root, "converter.json"), "--out", Packages } })!;
+
+        Assert.Equal(0, code);
+        var table = Json.Load<Scenario>(Path.Combine(Packages, "scenarios", "notes", "scenario.json"));
+        var defs = table.Packs.Select(p => Path.Combine(Packages, p, "pack.json")).Where(File.Exists).SelectMany(p => Json.Load<PackManifest>(p).Pieces).ToDictionary(d => d.Id);
+        var notes = table.UmpireBoard.Where(p => NoteCard.Is(defs[p.Def])).Select(p => (p, d: defs[p.Def])).ToList();
+        string Line(PieceDef d, string name) => d.TextLines.Single(t => t.Name == name).Default;
+        var orders = notes.Single(n => Line(n.d, NoteCard.TitleLine) == "Orders");
+        Assert.Equal("Hold the ford\nuntil dusk", Line(orders.d, NoteCard.BodyLine));
+        Assert.Equal(190.0, orders.p.RotDeg);
+        var panel = notes.Single(n => Line(n.d, NoteCard.TitleLine) == "Notes");
+        Assert.Equal("1  Turn\nInitiative\nNaval Movement", Line(panel.d, NoteCard.BodyLine));
+        double mapRight = board["Transform"]!["scaleX"]!.GetValue<double>() * 16.7 / 2;
+        Assert.True(panel.p.Pos.X > mapRight, $"the notes lie right of the map: {panel.p.Pos.X}");
+        Assert.Equal(180.0, panel.p.RotDeg);
+        Assert.Single(notes, n => Line(n.d, NoteCard.TitleLine) == "Rules");
+        Assert.DoesNotContain(notes, n => Line(n.d, NoteCard.TitleLine) == "Red");
+    }
+
+    [Fact]
+    public void A_board_is_as_tall_as_its_base_and_as_wide_as_its_width_setting_says_grown_as_its_table_grows_it()
+    {
+        var cfg = TempConfig();
+        LocalPicture(cfg, "http://a/sea.png", 28, 20, (_, _) => SKColors.Navy);
+        var rep = new Report();
+        var defs = new DefFactory(cfg, new AssetStore(cfg, rep), rep);
+        TtsObj Board(double widthScale) => new(Obj("Custom_Board", "Sea", 1, new JsonObject { ["CustomImage"] = new JsonObject { ["ImageURL"] = "http://a/sea.png", ["WidthScale"] = widthScale } }));
+        double b = cfg.BaseSizes.CustomBoard;
+
+        Assert.Equal((Math.Round(b * 1.4, 4), b), (defs.BaseSize(Board(1.4)).W, defs.BaseSize(Board(1.4)).H));
+        Assert.Equal((Math.Round(b * 1.4, 4), b), (defs.BaseSize(Board(0)).W, defs.BaseSize(Board(0)).H));
+        foreach (var (table, growth) in new[] { ("Table_Custom", 1.6), ("Table_RPG", 1.4), ("Table_Circular", 1.2), ("Table_None", 1.0) })
+        {
+            defs.Table = table;
+            Assert.Equal(Math.Round(b * growth, 4), defs.BaseSize(Board(1.4)).H);
+        }
+    }
+
+    [Fact]
+    public void A_note_keeps_its_words_and_drops_tts_s_formatting_codes()
+    {
+        Assert.Equal("Flex Table\nClick the red button", DefFactory.Plain("[b]Flex Table[/b]\nClick the [FF0000]red[-] button"));
+        Assert.Equal("x[2] and [note]", DefFactory.Plain("x[sup][2][/sup] and [note]"));
+    }
+
+    [Fact]
     public void A_checker_is_a_round_counter_in_its_tts_colour()
     {
         var cfg = TempConfig();

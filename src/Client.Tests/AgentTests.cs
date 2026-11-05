@@ -483,7 +483,9 @@ public class TableToolsTests
         await Call("set_light", new { ambient = 0.2 });
         Assert.Equal(0.5, _s.View.Lighting.TableShade);
         await Call("set_light", new { table_shade = 3.0 });
-        Assert.Equal(1.0, _s.View.Lighting.TableShade);
+        Assert.Equal(KTable.Core.Model.Lighting.SeeThrough, _s.View.Lighting.TableShade);
+        Assert.True(KTable.Core.Model.Lighting.IsSeeThrough(_s.View.Lighting.TableShade));
+        Assert.False(KTable.Core.Model.Lighting.IsSeeThrough(KTable.Core.Model.Lighting.Black));
     }
 
     [Fact]

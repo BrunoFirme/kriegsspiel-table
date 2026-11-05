@@ -43,6 +43,7 @@ public sealed class TtsObj
     public string? BackUrl => Blank(S(CI?["ImageSecondaryURL"]));
     public int TileType => (CI?["CustomTile"] as JsonObject)?["Type"]?.GetValue<int>() ?? 0;
     public bool TileStretch => (CI?["CustomTile"] as JsonObject)?["Stretch"]?.GetValue<bool>() ?? true;
+    public double WidthScale => CI?["WidthScale"] is JsonValue v && v.TryGetValue<double>(out var d) ? d : 0;
     public double Thickness =>
         (CI?["CustomTile"] as JsonObject)?["Thickness"]?.GetValue<double>()
         ?? (CI?["CustomToken"] as JsonObject)?["Thickness"]?.GetValue<double>() ?? 0.2;
@@ -167,6 +168,9 @@ public sealed class TtsSave
     public string Lua { get; init; } = "";
     public string LuaState { get; init; } = "";
     public string? SkyUrl { get; init; }
+    public string Table { get; init; } = "";
+    public string Notes { get; init; } = "";
+    public List<(string Title, string Body)> Notebook { get; init; } = new();
 
     public static TtsSave Load(Config cfg, string workshopIdOrPath)
     {
@@ -181,6 +185,11 @@ public sealed class TtsSave
             Lua = root["LuaScript"]?.GetValue<string>() ?? "",
             LuaState = root["LuaScriptState"]?.GetValue<string>() ?? "",
             SkyUrl = root["SkyURL"]?.GetValue<string>() is { } sky && !string.IsNullOrWhiteSpace(sky) ? sky.Trim() : null,
+            Table = root["Table"]?.GetValue<string>() ?? "",
+            Notes = root["Note"] is JsonValue note && note.TryGetValue<string>(out var n) ? n : "",
+            Notebook = (root["TabStates"] as JsonObject)?.Select(t => t.Value).OfType<JsonObject>()
+                .Select(t => (Title: t["title"] is JsonValue tv && tv.TryGetValue<string>(out var ts) ? ts : "", Body: t["body"] is JsonValue bv && bv.TryGetValue<string>(out var bs) ? bs : ""))
+                .Where(t => t.Body.Trim().Length > 0).ToList() ?? new(),
         };
     }
 }

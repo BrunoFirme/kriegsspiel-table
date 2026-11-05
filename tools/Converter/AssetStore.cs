@@ -207,6 +207,7 @@ public sealed partial class AssetStore
         Save();
     }
 
+    public const string WebPage = "a web page came back instead of the picture, which TTS cannot show either";
     const int SaveEvery = 50;
     static readonly TimeSpan Stall = TimeSpan.FromSeconds(60);
 
@@ -225,7 +226,12 @@ public sealed partial class AssetStore
             {
                 using var cts = new CancellationTokenSource();
                 using var resp = await http.GetAsync(FetchUrl(url), HttpCompletionOption.ResponseHeadersRead, cts.Token);
-                if ((int)resp.StatusCode == 429 || (int)resp.StatusCode >= 500) { err = $"HTTP {(int)resp.StatusCode}"; continue; }
+                if ((int)resp.StatusCode == 429 || (int)resp.StatusCode >= 500)
+                {
+                    err = $"HTTP {(int)resp.StatusCode}";
+                    if (Sniff(await ReadBody(resp, cts)) == "html") err += ": " + WebPage;
+                    continue;
+                }
                 if (!resp.IsSuccessStatusCode)
                 {
                     err = $"HTTP {(int)resp.StatusCode}";
@@ -320,7 +326,7 @@ public sealed partial class AssetStore
         if (e == null) return null;
         if (e.Status == "ok") return kind == "image" && !IsPicture(e.Ext) ? $"not a picture ({e.Ext})" : null;
         if (e.Status == "dead") return e.Error ?? "dead";
-        return e.Error is { } why && (why.StartsWith("HTTP 404") || why.StartsWith("HTTP 410")) ? why : null;
+        return e.Error is { } why && (why.StartsWith("HTTP 404") || why.StartsWith("HTTP 410") || why.EndsWith(WebPage)) ? why : null;
     }
 
     public string? Why(string url) => _index.TryGetValue(Key(url), out var e) ? $"{e.Status}: {e.Error}" : "not fetched";

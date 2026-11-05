@@ -12,7 +12,8 @@ You get:
 - a **scenario** laid out as in the module: boards become map sheets, the rest goes on the umpire board, and the
   module's own sky becomes its backdrop;
 - a further scenario for each memory bag, with the layout it places;
-- `import-report.md` beside the scenario: what did not convert.
+- `import-report.md` beside the scenario: what did not convert. Pieces whose picture TTS cannot show either (the
+  link is gone, or a web page answers instead of the picture) are left out and named there.
 
 | Converts | Does not |
 |---|---|
@@ -21,6 +22,7 @@ You get:
 | Checkers, and six-sided picture dice | Bags as containers |
 | States (formation, shattered…) | Plain TTS dice (use the app's) |
 | IKS script counters and text | |
+| Notecards, Notes and Notebook pages, as note cards you can type into | |
 | Tints, names, attached markers, locks, face down | |
 | Asset-bundle effects (smoke, fire, gun fire, mist, rain), as the closest of Firme's Effects | |
 | Lua scripts and XML panels, translated | |

@@ -86,7 +86,7 @@ sealed class SelectTool
         var names = _names;
         if (names.Node != null)
         {
-            bool again = hit == names.Node && hit.CardTitleAt(f);
+            bool again = hit == names.Node && (hit.CardTitleAt(f) || (names.NotePart is { } part && hit.NotePartAt(f) == part));
             names.End(commit: true);
             if (again) return true;
         }
@@ -100,6 +100,7 @@ sealed class SelectTool
     {
         if (S.CanTouch(hit.Layer, hit.Piece) && hit.WidgetAt(f) is { } wh) return "w" + wh.index;
         if (hit.CardTitleAt(f)) return "title";
+        if (S.CanTouch(hit.Layer, hit.Piece) && hit.NotePartAt(f) is { } part) return part ? "note body" : "note title";
         if (hit.CardButtonAt(f) is { } cb) return $"c:{cb.name}:{cb.value}";
         return null;
     }
@@ -116,6 +117,7 @@ sealed class SelectTool
             return;
         }
         if (hit.CardTitleAt(f)) { _names.Begin(hit); return; }
+        if (S.CanTouch(hit.Layer, hit.Piece) && hit.NotePartAt(f) is { } part) { _names.BeginNote(hit, part); return; }
         if (hit.CardButtonAt(f) is { } cb) S.Do(new SetCounter { Layer = hit.Layer, Id = hit.Piece.Id, Name = cb.name, Value = cb.value });
     }
 
@@ -168,7 +170,9 @@ sealed class SelectTool
         if (_onFace is { } of)
         {
             _onFace = null;
-            if (!Dragging && g != null) ClickOnFace(of.node, of.what, mb.Position, g.Value);
+            if (Dragging || g == null || !GodotObject.IsInstanceValid(of.node)) return;
+            if (of.toggle && of.what.StartsWith("note")) PressPiece(true, of.g, of.node);
+            else ClickOnFace(of.node, of.what, mb.Position, g.Value);
             return;
         }
         if (BoxSelecting)

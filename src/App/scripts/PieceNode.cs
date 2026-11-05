@@ -60,6 +60,7 @@ public partial class PieceNode : Node3D
     readonly PieceLines _lines;
     readonly PieceDecals _decals;
     readonly PiecePrints _prints;
+    readonly NoteFace _note;
 
     public PieceNode()
     {
@@ -70,6 +71,7 @@ public partial class PieceNode : Node3D
         _lines = new PieceLines(this);
         _decals = new PieceDecals(this);
         _prints = new PiecePrints(this);
+        _note = new NoteFace(this);
     }
 
     internal Session Session => _s;
@@ -148,6 +150,7 @@ public partial class PieceNode : Node3D
         _lettering.ForPicture(on);
         _widgets.ForPicture(on);
         _prints.ForPicture(on);
+        _note.ForPicture(on);
     }
 
     public void SetLettered(bool on)
@@ -199,6 +202,7 @@ public partial class PieceNode : Node3D
         _widgets.Sync(force);
         _prints.Sync();
         _decals.Sync(force);
+        _note.Sync(force);
     }
 
     public void SyncUi(bool force = false) => _plates.Sync(force);
@@ -220,6 +224,14 @@ public partial class PieceNode : Node3D
     }
 
     public (int index, Widget widget)? WidgetAt(Vec2 point) => _flipping ? null : _widgets.At(Coords.ToLocal(point, Piece.Pos, Piece.RotDeg));
+
+    public bool? NotePartAt(Vec2 point) => _flipping ? null : _note.PartAt(Coords.ToLocal(point, Piece.Pos, Piece.RotDeg));
+
+    public string NoteLine(bool body) => _note.Line(body);
+
+    public void SetNoteText(bool body, string text) => _note.SetEditing(body, text);
+
+    public void ClearNoteText() => _note.StopEditing();
 
     public Vec2? FacePoint(Vector2 screen)
     {
@@ -494,7 +506,7 @@ public partial class PieceNode : Node3D
         Line("Name", p.Text.GetValueOrDefault("Name") ?? Def?.TextLines.FirstOrDefault(t => t.Name == "Name")?.Default ?? "");
         if (Def != null) foreach (var t in Def.TextLines) if (t.Name != "Name") Line(t.Name, TextOf(p, t));
         foreach (var (k, v) in p.Text) if (k != "Name") Line(k, v);
-        if (!Look.ShowFaceText) lines.Clear();
+        if (!Look.ShowFaceText || NoteCard.Is(Def)) lines.Clear();
         _lettering.Layout(lines);
         SyncSide();
     }
@@ -546,6 +558,7 @@ public partial class PieceNode : Node3D
         _flipGen++;
         _flipping = false;
         _widgets.Forget();
+        _note.Forget();
         _plates.Forget();
         _lines.Forget();
         _prints.Forget();

@@ -176,6 +176,14 @@ public static class FirmeEffects
                 Size = new Size2(m.W, m.H), Shape = "box", Thickness = MarkerThickness, Tags = new() { "marker", S },
             });
         }
+        var (rgba, cw, ch) = NoteCard.Paint();
+        var card = Image.CreateFromData(cw, ch, false, Image.Format.Rgba8, rgba);
+        pack.Pieces.Add(new PieceDef
+        {
+            Id = PackId + "." + PackEdit.Slug(NoteCard.DefaultName), Name = NoteCard.DefaultName, Kind = "flat", Image = Add(card.SavePngToBuffer(), "png", "image", cw, ch),
+            Size = new Size2(NoteCard.Width, NoteCard.Height), Shape = "rounded", Thickness = NoteCard.Thickness, Tags = new() { NoteCard.Tag, "prop" },
+            TextLines = NoteCard.TextLines(),
+        });
         return pack;
     }
 
@@ -191,7 +199,7 @@ public static class FirmeEffects
         string.Join("|", Presets.Select(p => $"{p.Name};{p.W};{p.H};{p.Era};{Json.Serialize(p.Fx)}")) + "|" + string.Join("|", PropList.Select(p => p.Name + p.Era)))))[..16];
     static string? _stamp;
 
-    const int PropsVersion = 7;
+    const int PropsVersion = 8;
     const string WriteTag = "install";
 
     public static void Ensure(PackageStore store)

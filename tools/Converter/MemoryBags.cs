@@ -43,7 +43,11 @@ public static class MemoryBags
             objects.Add(spots.TryGetValue(o.Guid, out var at) ? Moved(o, at) : o);
         }
         objects.AddRange(bag.Contained.Where(c => spots.ContainsKey(c.Guid)).Select(c => Moved(c, spots[c.Guid])));
-        return new TtsSave { WorkshopId = save.WorkshopId, SaveName = save.SaveName, Objects = objects, Lua = save.Lua, LuaState = save.LuaState, SkyUrl = save.SkyUrl };
+        return new TtsSave
+        {
+            WorkshopId = save.WorkshopId, SaveName = save.SaveName, Objects = objects, Lua = save.Lua, LuaState = save.LuaState,
+            SkyUrl = save.SkyUrl, Table = save.Table, Notes = save.Notes, Notebook = save.Notebook,
+        };
     }
 
     static TtsObj Moved(TtsObj o, Spot at)
