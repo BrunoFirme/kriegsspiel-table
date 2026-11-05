@@ -22,9 +22,9 @@ click "Leave the table…"
 click "Leave"
 settle 60 3000
 click "Lock table"
-click "Start over"
+click "New play"
 settle
 checkpoint start-over-ask
-click "Start over"
+click "Start it"
 settle 60 3000
 checkpoint started-over

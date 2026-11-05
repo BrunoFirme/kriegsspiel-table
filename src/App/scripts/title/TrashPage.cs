@@ -37,7 +37,7 @@ sealed class TrashPage
         var store = new PackageStore(PackageStore.DefaultRoot);
         var now = DateTime.UtcNow;
         var entries = TrashShelves.Entries(Saves, packs);
-        var back = new Button { Text = packs ? "← Piece studio" : "← Host a game", Flat = true, FocusMode = Control.FocusModeEnum.None, SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin };
+        var back = new Button { Text = packs ? "← Piece studio" : "← Scenarios", Flat = true, FocusMode = Control.FocusModeEnum.None, SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin };
         back.Pressed += () =>
         {
             _main.RebuildLobby();

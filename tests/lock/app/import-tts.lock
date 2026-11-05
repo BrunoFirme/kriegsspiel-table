@@ -6,7 +6,7 @@ settle 60 2400
 checkpoint import-dialog
 close-window
 settle
-click "Host a game"
+click "Scenarios"
 wait 30
 include _host.inc
 click "Menu"

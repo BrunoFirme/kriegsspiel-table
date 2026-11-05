@@ -70,7 +70,7 @@ converter are all in this folder. Keep the folder together (data_*, standard, ba
 Your packs, scenarios and settings live in %LOCALAPPDATA%\KriegsspielTable, not here, so a new
 version can simply replace this folder.
 
-Playing over the internet: the umpire hosts (Host a game, with a password or none), then Menu >
+Playing over the internet: the umpire hosts (Scenarios, Open, with a password or none), then Menu >
 Invite... shows the password and the addresses to send. The app asks the router to open the UDP port;
 if Invite says it could not, forward that port by hand. Players: Join a game > address, port,
 password and name.

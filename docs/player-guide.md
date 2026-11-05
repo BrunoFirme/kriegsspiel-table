@@ -7,8 +7,9 @@ run one yourself.
 
 Unpack the folder anywhere and run `KriegsspielTable.exe`.
 
-- **Host a game** → a scenario: that table is yours alone. Place your blocks as the reports come in and move them
-  as your orders go out. Leave the password empty and share no address to keep it private.
+- **Scenarios** → **New blank scenario…** (or any scenario you have) → **Open**: that table is yours alone. Lay your
+  map on it, place your blocks as the reports come in and move them as your orders go out. Nobody joins it unless you
+  invite them.
 - Any installed scenario or pack opens the same way, to study the ground and the pieces.
 - The **ruler** (M), **ranging** and **drawing** work here as at any table; see the
   [umpire's guide](umpire-guide.md#at-the-table).

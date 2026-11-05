@@ -78,7 +78,7 @@ sealed class PacksPage
                 _main.RebuildLobby();
                 _t.Select(2);
                 Show();
-                _t.Status.Text = sc.Length > 0 ? $"Imported '{sc}': its pack is below and the scenario is under Host a game." : $"Installed the pack {pk}.";
+                _t.Status.Text = sc.Length > 0 ? $"Imported '{sc}': its pack is below and the scenario is under Scenarios." : $"Installed the pack {pk}.";
             });
             Ui.Open(_main, dlg);
         };

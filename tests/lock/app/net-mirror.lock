@@ -17,7 +17,7 @@ join: settle 60 1200
 join: checkpoint mirrored-turn
 sync seen
 host: quit
-join: expect "Host a game" timeout=2400
+join: expect "Scenarios" timeout=2400
 join: settle 60 3000
 join: checkpoint host-gone
 join: click "Lock table"

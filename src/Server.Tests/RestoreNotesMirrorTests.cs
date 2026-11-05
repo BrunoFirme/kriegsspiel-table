@@ -215,7 +215,7 @@ public sealed class RestoreNotesMirrorTests
         File.Delete(saves.LiveDir);
 
         var msg = saves.Restore(entries[0], packages, T0.AddHours(1));
-        Assert.Contains("back under Host", msg);
+        Assert.Contains("back under Scenarios", msg);
         Assert.True(File.Exists(Path.Combine(packages, "scenarios", "scn", "scenario.json")));
         Assert.Equal(0, Json.Load<SaveFile>(live).Snapshot.Clock.Turn);
         var game = saves.TrashEntries().Single(e => e.Kind == "game");

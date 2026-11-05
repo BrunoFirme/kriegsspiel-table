@@ -11,10 +11,10 @@ Simulator module, or makes a new pack. The standard dice are always there.
 
 ### Scenarios
 
-A scenario is a map plus the pieces on it. **Host a game → New blank scenario…** (the first card), then add map
+A scenario is a map plus the pieces on it. **Scenarios → New blank scenario…** (the first card), then add map
 sheets in the **Map** drawer (PNG, JPG, TIFF, or a GIMP `.xcf`). Importing a TTS module also makes one. Right-click a
-card to file, export or delete it. Hosting opens the table on your PC only: nobody joins until you invite them, so
-preparing a scenario is hosting it alone.
+card to file, export or delete it. **Open** puts the table on your PC only: nobody joins until you invite them, so
+preparing a scenario and hosting it are the same step.
 
 ### Saves
 
@@ -28,7 +28,7 @@ saves as folders and tiles, in `Documents\KriegsspielTable\saves\<scenario>\`.
   **Look** shows a save without loading it.
 - **Pick several** with Ctrl+click, Shift+click or Ctrl+A; Delete removes them. Title-screen lists work the same.
 - **Trash**, at the foot of the folders, keeps deleted saves thirty days.
-- **Co-umpires** keep the same saves. If your PC fails, they host from **Host a game → Mirrored games**.
+- **Co-umpires** keep the same saves. If your PC fails, they host from **Scenarios → Mirrored games**.
 
 ## Hosting and the door
 
@@ -305,7 +305,7 @@ The ⋯ after the scenario's name opens its properties: **Game** (password, poin
 | A co-umpire's table looks wrong | They leave and rejoin; the table is sent again. |
 | **NOT SAVED** in the top bar | The Log says why (disk full, folder gone). It clears once saving works. Disk full: **Settings → Storage** on the title screen clears what imports and joins downloaded. |
 | The card says the save is damaged | Host continues from the newest copy; the damaged file is kept beside it. |
-| You deleted something | **Host a game → Trash** or **Piece studio → Trash**: thirty days to **Restore**. |
+| You deleted something | **Scenarios → Trash** or **Piece studio → Trash**: thirty days to **Restore**. |
 | The host's PC is gone | An umpire who was there: **Mirrored games** → **Host from the copy**. |
 | A panel is off screen | **Settings → Interface → Put the panels back**. |
 | The table stutters on a big map | **Settings → Graphics**: lower Render scale, Smooth edges and Map pictures. |

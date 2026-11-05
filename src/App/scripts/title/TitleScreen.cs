@@ -129,7 +129,7 @@ sealed class TitleScreen
         left.AddChild(new Control { CustomMinimumSize = new Vector2(0, 36) });
 
         _nav.Clear();
-        NavItem(left, "Host a game", () => Host.Show(store, scenarios));
+        NavItem(left, "Scenarios", () => Host.Show(store, scenarios));
         NavItem(left, "Join a game", Join.Show);
         NavItem(left, "Piece studio", Packs.Show);
         if (HasWorkshop) NavItem(left, "Steam Workshop", Workshop.Show);
@@ -169,7 +169,7 @@ sealed class TitleScreen
         Problems.Told += told;
         status.TreeExiting += () => Problems.Told -= told;
         if (rebuilt.Count > 0)
-            Status.Text += (Status.Text.Length > 0 ? "\n" : "") + $"{string.Join(", ", rebuilt)}: the game in play had lost its scenario file, so it was written again from the game's table. Host a game lists it.";
+            Status.Text += (Status.Text.Length > 0 ? "\n" : "") + $"{string.Join(", ", rebuilt)}: the game in play had lost its scenario file, so it was written again from the game's table. Scenarios lists it.";
         if (lost.Count > 0)
             Status.Text += (Status.Text.Length > 0 ? "\n" : "") + $"A game in play has no scenario file and no save of it can be read: {string.Join(", ", lost)} (in {Main.Saves.LiveDir}).";
         if (OffersUpdates) UpdateOffer.Put(left, _main, _cfg);

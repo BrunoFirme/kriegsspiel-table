@@ -262,7 +262,7 @@ public sealed partial class SaveStore
                     throw;
                 }
                 Directory.Delete(e.Path, true);
-                return $"The scenario {e.Id} is back under Host a game." + note;
+                return $"The scenario {e.Id} is back under Scenarios." + note;
             }
             case TrashKind.Pack:
             {
@@ -289,7 +289,7 @@ public sealed partial class SaveStore
                 if (File.Exists(f)) File.Move(f, path, true);
                 MoveInto(Path.Combine(e.Path, "checkpoints"), CheckpointDir(path));
                 Directory.Delete(e.Path, true);
-                return $"The mirror of {e.Id} is back under Host a game." + note;
+                return $"The mirror of {e.Id} is back under Scenarios." + note;
             }
             case TrashKind.PackFiles: return RestorePackFiles(e, packagesRoot);
             default: throw new IOException("this entry is not one the app put there");

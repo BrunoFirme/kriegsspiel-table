@@ -282,7 +282,7 @@ public sealed class Undone
         var said = $"{what} was cut off half way and has been undone";
         if (Back.Count > 0) said += ": what you had is back as it was";
         if (Trashed.Count > 0) said += Back.Count > 0 ? ", and what it had begun is in the trash" : ": what it had begun is in the trash";
-        if (Problems.Count > 0) said += $"{(Back.Count + Trashed.Count > 0 ? "; but " : ": ")}{string.Join("; ", Problems)} (restore from the trash at the foot of Piece studio or Host a game)";
+        if (Problems.Count > 0) said += $"{(Back.Count + Trashed.Count > 0 ? "; but " : ": ")}{string.Join("; ", Problems)} (restore from the trash at the foot of Piece studio or Scenarios)";
         return said + ".";
     }
 

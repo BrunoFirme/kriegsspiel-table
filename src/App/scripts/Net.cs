@@ -276,7 +276,7 @@ public partial class Net : Node
             SetStatus("disconnected from host");
             if (Session.Me.PeerId == 0) { TurnedAway?.Invoke("The host closed the connection."); return; }
             var why = "the connection to the host was lost (the host closed the table, or the network dropped). Join again once the host is back."
-                    + (MirrorPath != null ? " This PC's copy of the game is kept: Host a game, then Mirrored games, continues it if the host cannot come back." : "");
+                    + (MirrorPath != null ? " This PC's copy of the game is kept: Scenarios, then Mirrored games, continues it if the host cannot come back." : "");
             Callable.From(() => Drop(why)).CallDeferred();
         };
         Session.Assets.RequestRemote = _transfers.QueueFetch;

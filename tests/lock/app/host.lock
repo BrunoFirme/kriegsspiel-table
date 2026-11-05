@@ -3,6 +3,6 @@ settle
 click "Lock table"
 click "your name"
 type "Umpire"
-click "Host"
+click "Open"
 settle 60 3000
 checkpoint table

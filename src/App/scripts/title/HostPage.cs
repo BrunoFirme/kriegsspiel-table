@@ -40,7 +40,7 @@ sealed class HostPage
 
     public void Show(PackageStore store, List<(string id, string path, Scenario? s)> scenarios)
     {
-        var v = _t.NewPage("Host a game", "");
+        var v = _t.NewPage("Scenarios", "");
         v.AddChild(_t.Folders.Strip(() => { _t.Select(0); Show(store, scenarios); }));
         var page = new Cards();
         PickActions(page, store, scenarios);
@@ -56,7 +56,7 @@ sealed class HostPage
         foreach (var (folder, items) in _t.Folders.Grouped(scenarios, x => x.id, pack: false))
         {
             if (items.Count == 0 && folder.Length == 0) continue;
-            col.AddChild(Section(folder.Length > 0 ? folder : _t.Folders.Lib.Folders.Count > 0 ? "Unfiled" : "Scenarios"));
+            if (folder.Length > 0 || _t.Folders.Lib.Folders.Count > 0) col.AddChild(Section(folder.Length > 0 ? folder : "Unfiled"));
             if (items.Count == 0 && newShown) col.AddChild(new Label { Text = "Empty", Modulate = Muted });
             var grid = Grid();
             col.AddChild(grid);
@@ -75,7 +75,6 @@ sealed class HostPage
 
         if (!newShown)
         {
-            col.AddChild(Section("Scenarios"));
             var grid = Grid();
             col.AddChild(grid);
             grid.AddChild(NewScenarioCard());
@@ -162,7 +161,7 @@ sealed class HostPage
 
     const int NewCardPlusSize = 44;
     const float NewCardHover = 0.09f;
-    const string OpensForYou = "Opens the table on this PC; nobody joins until you invite them";
+    const string OpensForYou = "Opens the table on this PC: yours alone, to plot or prepare, until you invite someone";
 
     static HFlowContainer Grid()
     {
@@ -182,7 +181,7 @@ sealed class HostPage
         }
         if (card == null || !page.Actions.TryGetValue(card, out var act)) return;
         act.host.Disabled = page.Unreadable.Contains(target) && !page.InPlay.ContainsKey(target);
-        act.host.Text = target.EndsWith(SaveStore.Ext) ? "Host from the copy" : page.InPlay.ContainsKey(target) ? "Resume" : "Host";
+        act.host.Text = target.EndsWith(SaveStore.Ext) ? "Host from the copy" : page.InPlay.ContainsKey(target) ? "Resume" : "Open";
         act.over.Visible = page.InPlay.ContainsKey(target) && !target.EndsWith(SaveStore.Ext) && !page.Unreadable.Contains(target);
     }
 
@@ -190,7 +189,7 @@ sealed class HostPage
     {
         var row = new HBoxContainer { Visible = false };
         row.AddThemeConstantOverride("separation", 8);
-        var host = Primary("Host", () => _main.DoHost(target, page.InPlay.ContainsKey(target)));
+        var host = Primary("Open", () => _main.DoHost(target, page.InPlay.ContainsKey(target)));
         host.TooltipText = OpensForYou;
         host.CustomMinimumSize = new Vector2(110, 34);
         host.AddThemeFontSizeOverride("font_size", 14);

@@ -14,7 +14,7 @@ key Enter
 settle 60 1800
 checkpoint exported-pack
 close-window
-click "Host a game"
+click "Scenarios"
 wait 30
 rclick "Lock small"
 click "Export…"

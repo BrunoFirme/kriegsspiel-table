@@ -28,7 +28,7 @@ static class AgentRecipes
             new[] { new Arg("piece", "string", "which kind of piece", true), new Arg("draw", "string", "what to draw or write, and where", true) },
             a => $"Using the kriegsspiel-table tools, draw this on the kind \"{Get(a, "piece")}\": {Get(a, "draw")}\n" +
                  "Read the face with studio_read_face, add or change layers, write it with studio_write_face, look at the picture and adjust until it matches."),
-        new AgentPrompt("set-up-a-game", "Host a game and lay out the pieces.",
+        new AgentPrompt("set-up-a-game", "Open a scenario and lay out the pieces.",
             new[] { new Arg("game", "string", "the game: its name, sides, which units go where", true) },
             a => $"Using the kriegsspiel-table tools, set up this game: {Get(a, "game")}\n" +
                  "Host it (host_game: an existing scenario, or a new blank one named after it). Bring in the packs it needs (add_pack), find where each goes on the map with view_map, place the pieces (place_piece) " +
