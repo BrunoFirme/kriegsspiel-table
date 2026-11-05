@@ -28,6 +28,33 @@ const int BRIDGE = 11;
 const int TOWN = 12;
 const float FIELD_STEPS = 4.0;
 const float TOWN_STEPS = 8.0;
+const float ROAD_STEPS = 4.0;
+const float TRACK_W_M = 5.0;
+const float LANE_W_M = 16.0;
+const float ROAD_W_M = 22.0;
+const float CHAUSSEE_W_M = 25.0;
+const float ANCIENT_ROAD_W = 0.06;
+const float ANCIENT_LANE_W = 0.1;
+const float ANCIENT_HIGHWAY_W = 0.16;
+const float VERGE_WASH = 0.3;
+const float RING_R = 0.22;
+const float GLYPH = 0.45;
+const float MEADOW_ROW = 1.25;
+const float MEADOW_LEN = 0.25;
+const float SHADOW_M = 1.5;
+const float VILLAGE_RING = 0.6;
+const float WET_LOT_M = 50.0;
+const float WET_NEAR_M = 60.0;
+const float FRONTS_M = 300.0;
+const float VINE_ROW_M = 12.0;
+const float VINE_STAKE_M = 8.0;
+const float ORCHARD_M = 15.0;
+const float FURROW_M = 8.0;
+const vec3 GARTENGRUEN = vec3(0.62, 0.72, 0.42);
+const vec2 PLATE_GREEN = vec2(1.5, -1.0);
+const vec2 PLATE_BLUE = vec2(-1.0, 1.5);
+const vec2 PLATE_RED = vec2(2.0, 1.0);
+const vec2 PLATE_BROWN = vec2(1.0, 1.0);
 const float PARAPET = 0.09;
 const float SEAMLESS = 1.0;
 const int SURVEY = 0;
@@ -45,6 +72,9 @@ const vec3 MODERN_PAPER = vec3(0.953, 0.937, 0.878);
 const float W1 = 0.012;
 const float W2 = 0.025;
 const float W3 = 0.05;
+const float M1 = 0.03;
+const float M2 = 0.06;
+const float M3 = 0.09;
 const vec3 SURVEY_INK = vec3(0.165, 0.145, 0.11);
 const vec3 SURVEY_HACHURE = vec3(0.541, 0.494, 0.384);
 const vec3 CARMINE = vec3(0.718, 0.192, 0.314);
@@ -68,7 +98,12 @@ const float WASH_SHIFT = 0.04;
 const float CHAIN_LINES = 6.7;
 const float LAID_LINES = 0.27;
 const float SCREEN_PITCH = 0.095;
-const float CENTURIA = 1.0;
+const float CENTURIA = 3.55;
+const float CENTURY = 14.2;
+const float HAND_WOBBLE = 0.06;
+const float HAND_GRAIN = 3.0;
+const float BLEED = 0.12;
+const float BLEED_REACH = 2.2;
 const float SHEET_GAIN = 0.93;
 const int INDEX_EVERY = 5;
 const float LINE_PX = 0.72;
@@ -113,8 +148,8 @@ const float MARSH_LOT_M = 200.0;
 const float EARTH_LOT_M = 300.0;
 const float WATER_LOT_M = 120.0;
 const float ISLET_SHORE_M = 50.0;
-const float TREES_OPEN_M = 25.0;
-const float TREES_CLOSED_M = 10.0;
+const float TREES_OPEN_M = 80.0;
+const float TREES_CLOSED_M = 50.0;
 const float OPEN_WOOD_KEEP = 0.45;
 const float RIDE = 0.5;
 const int HEDGE = 1;
@@ -132,7 +167,7 @@ const float HOUSE_DEPTH_M = 10.0;
 const float HOUSE_SETBACK_M = 1.5;
 const float SCATTERED_HOUSES = 0.3;
 const float GARDEN_RING_M = 30.0;
-const float GARDEN_HATCH_M = 3.0;
+const float GARDEN_HATCH_M = 10.0;
 const float SQUARE_M = 40.0;
 const float CHURCH_M = 25.0;
 const float WALL_IN_M = 6.0;
@@ -156,16 +191,11 @@ varying vec3 world;
 #include "res://shaders/ground_marks.gdshaderinc"
 #include "res://shaders/ground_lots.gdshaderinc"
 #include "res://shaders/ground_town.gdshaderinc"
+#include "res://shaders/ground_roads.gdshaderinc"
 #include "res://shaders/ground_rock.gdshaderinc"
 #include "res://shaders/ground_survey.gdshaderinc"
 #include "res://shaders/ground_ancient.gdshaderinc"
 #include "res://shaders/ground_modern.gdshaderinc"
-
-vec3 plain(int style, vec3 tint, vec3 sheet, vec2 p, float edge) {
-	if (style == MODERN) return tint * (sheet / MODERN_PAPER);
-	if (style == ANCIENT) return tint * (sheet / ANCIENT_PAPER);
-	return wash(tint, sheet, SURVEY_PAPER, p, edge, 1.0);
-}
 
 float smooth_height(vec2 uv) {
 	return textureLod(heights, (clamp(uv, vec2(0.0), vec2(1.0)) * (cells - 1.0) + 0.5) / cells, 0.0).g;
@@ -240,6 +270,27 @@ void fragment() {
 	float halo;
 	float lines = contour(h, p, style, steep, rockness, halo);
 	float near_town = 1.0 - smoothstep(metres(NEAR_TOWN_M), metres(NEAR_TOWN_FAR_M), town_at(UV));
+	float mid = 0.0;
+	float road_w = -1.0;
+	float road_class = levels.x;
+	bool over_water = false;
+	if (k == ROAD || k == BRIDGE) {
+		mid = road_mid(UV, to_uv);
+		road_w = road_width(style, levels.x);
+		vec2 o = beyond_band(UV, p);
+		int beyond = kind_of(floor(clamp(UV + to_uv * (o - p), vec2(0.0), vec2(1.0)) * cells));
+		if (beyond <= 0 || beyond == ROAD || beyond == BRIDGE) beyond = beside;
+		over_water = beyond == WATER;
+		if (beyond > 0 && beyond < KINDS && beyond != ROAD && beyond != BRIDGE) {
+			k = beyond;
+			beside = ROAD;
+			own = salt_at(o, p, UV, to_uv);
+			levels = levels_at(o, p, UV, to_uv);
+			edge = SEAMLESS;
+			shore = SEAMLESS;
+			border = cell_world * 2.0;
+		}
+	}
 	float bump = 0.0;
 	float cover = 0.0;
 	vec3 sheet = paper(style, p, fw);
@@ -254,9 +305,10 @@ void fragment() {
 		bool bare = k != WATER && k != ROAD && k != BRIDGE;
 		if (bare && rockness >= 1.0 - 1e-3 && k != WOOD) c = rock;
 		else {
-			if (style == ANCIENT) c = ancient(k, beside, tint, sheet, p, UV, to_uv, own, levels, near_town, down, follow, rockness, fw, edge, shore, cover);
-			else if (style == MODERN) c = modern(k, beside, tint, sheet, p, UV, to_uv, own, levels, near_town, down, follow, rockness, fw, edge, shore, cover);
-			else c = survey(k, beside, tint, sheet, p, UV, to_uv, own, levels, near_town, down, follow, rockness, fw, edge, shore, bump, cover);
+			if (style == ANCIENT) c = ancient(k, beside, tint, sheet, p, UV, to_uv, own, levels, near_town, mid, road_w, down, follow, rockness, fw, edge, shore, cover);
+			else if (style == MODERN) c = modern(k, beside, tint, sheet, p, UV, to_uv, own, levels, near_town, mid, road_w, down, follow, rockness, fw, edge, shore, cover);
+			else c = survey(k, beside, tint, sheet, p, UV, to_uv, own, levels, near_town, mid, road_w, down, follow, rockness, fw, edge, shore, bump, cover);
+			if (road_w >= 0.0) c = road_over(style, c, sheet, p, UV, to_uv, road_class, mid, fw, over_water);
 			if (halo > 0.001) c = mix(c, plain(style, tint, sheet, p, edge), halo * HALO);
 			c = mix(c, c * (1.0 - MARK_SHADE), dark * cover * smoothstep(0.04, 0.35, steep_n));
 			if (bare) c = slopes(c, n, p, world.y, fw, style, (1.0 - cover) * (1.0 - rockness));

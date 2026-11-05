@@ -58,8 +58,11 @@ public static class ReliefBrush
 
     static void Mark(ReliefGrid g, int i, Brush b)
     {
-        g.Kind[i] = GroundKinds.Laid(g.Kind[i], b.Kind);
-        bool bare = g.Kind[i] == GroundKinds.None;
+        byte laid = GroundKinds.Laid(g.Kind[i], b.Kind);
+        bool took = laid == b.Kind || laid == GroundKinds.Bridge;
+        g.Kind[i] = laid;
+        if (!took) return;
+        bool bare = laid == GroundKinds.None;
         g.Salt[i] = bare ? (byte)0 : b.Salt;
         g.Detail[i] = bare ? (byte)0 : b.Detail;
     }

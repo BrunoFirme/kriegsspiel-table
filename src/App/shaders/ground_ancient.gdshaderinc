@@ -47,13 +47,15 @@ float centuriation(vec2 p, float salt, float fw) {
 	float turn = hash(vec2(salt, 3.0)) * 1.5708;
 	vec2 q = mat2(vec2(cos(turn), sin(turn)), vec2(-sin(turn), cos(turn))) * p;
 	float fine = max(hatch(q.x, CENTURIA, W1 * 0.5, fw), hatch(q.y, CENTURIA, W1 * 0.5, fw));
-	float axes = max(hatch(q.x, CENTURIA * 10.0, W2 * 0.6, fw), hatch(q.y, CENTURIA * 10.0, W2 * 0.6, fw));
+	float axes = max(hatch(q.x, CENTURY, W2 * 0.7, fw), hatch(q.y, CENTURY, W2 * 0.7, fw));
 	return max(fine * 0.6, axes);
 }
 
 vec3 ancient_field(vec3 c, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_uv, float own, vec2 levels, vec2 along, float follow, float fw, float edge, out float cover) {
 	Lot l = lot_at(p, uv, to_uv, metres(mix(PLOT_OPEN_M, PLOT_SMALL_M, levels.x)), 0.56, FIELD, own, levels);
 	cover = 0.0;
+	vec2 site_uv = uv + to_uv * (l.site - p);
+	if (wet_field_at(site_uv, follow) > 0.5) return wet_field(ANCIENT, c, sheet, p, uv, to_uv, own, levels, fw);
 	c = mix(c, ANCIENT_INK, centuriation(p, own, fw) * 0.75);
 	float use = hash(l.id + 9.4);
 	if (use < 0.2) { float o = orchard(p, l, 0.18, fw); c = mix(c, ANCIENT_INK, o * 0.85); cover = o; }
@@ -70,14 +72,14 @@ vec3 ancient_field(vec3 c, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_uv, f
 	return c;
 }
 
-vec3 ancient(int k, int beside, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_uv, float own, vec2 levels, float near_town, vec2 along, float follow, float ledges, float fw, float edge, float border, out float cover) {
+vec3 ancient(int k, int beside, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_uv, float own, vec2 levels, float near_town, float mid, float road_w, vec2 along, float follow, float ledges, float fw, float edge, float border, out float cover) {
 	vec3 c = tint * (sheet / ANCIENT_PAPER);
 	cover = 0.0;
 	float rim = 1.0;
 	float weight = W2;
 	if (units_per_metre <= 0.0) return mix(c, ANCIENT_INK, ink(edge, W2, fw) * 0.6);
 	if (k == TOWN) {
-		return town_draw(ANCIENT, c, sheet, p, uv, to_uv, own, levels, fw, cover);
+		return town_draw(ANCIENT, c, sheet, p, uv, to_uv, own, levels, road_w, fw, cover);
 	} else if (k == GRASS) {
 		Lot l = lot_at(p, uv, to_uv, metres(PADDOCK_M), 0.5, GRASS, own, levels);
 		if (l.room > metres(20.0) && hash(l.id + 5.5) < 0.08) {
@@ -94,7 +96,7 @@ vec3 ancient(int k, int beside, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_
 		Lot s = lot_at(p, uv, to_uv, metres(STAND_M), 0.5, WOOD, own, levels);
 		float open = clearing_at(p, own);
 		c = mix(c, palette[ANCIENT * KINDS + GRASS].rgb * (sheet / ANCIENT_PAPER), open);
-		c = ancient_wood(c, tint, p, uv, to_uv, fw, ledges, metres(mix(TREES_OPEN_M, TREES_CLOSED_M, levels.x)) * 1.4, levels.x * (1.0 - near_town * NEAR_TOWN_THINS), cover);
+		c = ancient_wood(c, tint, p, uv, to_uv, fw, ledges, metres(mix(TREES_OPEN_M, TREES_CLOSED_M, levels.x)) * 1.2, levels.x * (1.0 - near_town * NEAR_TOWN_THINS), cover);
 		if (s.room >= 0.0) {
 			float ride = (1.0 - smoothstep(metres(2.0), metres(2.0) + fw, s.edge)) * step(0.7, hash(s.id + 2.2)) * (1.0 - ledges);
 			c = mix(c, sheet, ride * RIDE);
@@ -111,13 +113,8 @@ vec3 ancient(int k, int beside, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_
 			c = mix(c, palette[ANCIENT * KINDS + GRASS].rgb * (sheet / ANCIENT_PAPER), body);
 			c = mix(c, ANCIENT_INK, o * 0.9);
 		}
-	} else if (k == ROAD) {
-		return mix(c, RED_OCHRE * 0.75, ink(edge, levels.x < 0.33 ? W1 : levels.x < 0.66 ? W2 : W3, fw));
-	} else if (k == BRIDGE) {
-		float wall = (beside == WATER ? 1.0 : 0.0) * (1.0 - smoothstep(PARAPET - fw, PARAPET, edge));
-		c = mix(c, ANCIENT_INK, hatch(dot(p, vec2(0.7071, 0.7071)), 0.03, W1 * 0.5, fw) * wall * 0.7);
-		c = mix(c, ANCIENT_INK, ink(abs(edge - PARAPET), W1, fw) * (beside == WATER ? 1.0 : 0.0));
-		return mix(c, ANCIENT_INK, ink(edge, W2, fw));
+	} else if (k == ROAD || k == BRIDGE) {
+		return sheet;
 	} else if (k == EARTH) {
 		Lot l = lot_at(p, uv, to_uv, metres(EARTH_LOT_M), 0.5, EARTH, own, levels);
 		c = mix(c, ANCIENT_INK, scatter(p, own, 0.09, W1 * 0.5, 0.9, 0.35, fw) * 0.6);

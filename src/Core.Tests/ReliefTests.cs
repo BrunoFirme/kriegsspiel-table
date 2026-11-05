@@ -500,6 +500,13 @@ public class ReliefTests : IDisposable
         Assert.Equal(GroundKinds.Water, GroundKinds.Laid(GroundKinds.Water, GroundKinds.Town));
         Assert.Equal(GroundKinds.Town, GroundKinds.Laid(GroundKinds.Of("grass")!.Value, GroundKinds.Town));
         Assert.Equal(GroundKinds.Road, GroundKinds.Laid(GroundKinds.Town, GroundKinds.Road));
+        var r = new ReliefGrid(8, 8);
+        ReliefBrush.Shape(r, [(0, 0.4), (1, 0.4), (1, 0.6), (0, 0.6)], new Brush(BrushMode.Paint, 0, 1, GroundKinds.Road, Salt: 3, Detail: GroundKinds.Levels(100, 0)));
+        ReliefBrush.Shape(r, [(0, 0), (1, 0), (1, 1), (0, 1)], new Brush(BrushMode.Paint, 0, 1, GroundKinds.Town, Salt: 5, Detail: GroundKinds.Levels(20, 0)));
+        Assert.Equal(GroundKinds.Road, r.Kind[3 * 8 + 3]);
+        Assert.Equal(GroundKinds.Levels(100, 0), r.Detail[3 * 8 + 3]);
+        Assert.Equal(3, r.Salt[3 * 8 + 3]);
+        Assert.Equal(GroundKinds.Town, r.Kind[1 * 8 + 3]);
         Assert.Contains(GroundKinds.Town, GroundKinds.Brushes);
         Assert.Equal(new[] { "Houses", "Walls" }, GroundKinds.Parameters(GroundKinds.Town).Select(p => p.Name));
         var g = new ReliefGrid(64, 64);
@@ -515,6 +522,23 @@ public class ReliefTests : IDisposable
         Assert.Equal(GroundEdges.Distances(g)[25 * 64 + 25], At(25, 25, 0));
         Assert.True(At(25, 25, 3) > At(21, 25, 3) && At(24, 25, 3) > At(21, 25, 3), "the town's depth grows inward and a road through it is no edge");
         Assert.Equal(GroundEdges.TownStepsPerCell / 2, At(10, 10, 3));
+    }
+
+    [Fact]
+    public void A_road_band_knows_its_width_and_the_ground_its_distance_to_the_road_and_a_bridge_is_no_edge_of_it()
+    {
+        var g = new ReliefGrid(64, 64);
+        for (int y = 0; y < 64; y++)
+            for (int x = 20; x < 23; x++) g.Kind[y * 64 + x] = y is 30 or 31 ? GroundKinds.Bridge : GroundKinds.Road;
+        var roads = GroundEdges.Roads(g);
+        var edges = GroundEdges.Distances(g);
+        int At(int x, int y) => roads[y * 64 + x];
+        Assert.Equal(At(21, 10), At(21, 30));
+        Assert.Equal(At(21, 10), At(20, 10));
+        Assert.Equal(1.0, At(21, 10) / (double)GroundEdges.StepsPerCell - 0.5, 3);
+        Assert.Equal(edges[10 * 64 + 21], edges[30 * 64 + 21]);
+        Assert.True(At(30, 10) > At(24, 10) && At(24, 10) > 0, "the ground's distance to the road grows away from it");
+        Assert.True(At(63, 63) > At(30, 10), "the far corner is farther still");
     }
 
     [Fact]

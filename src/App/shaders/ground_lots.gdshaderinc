@@ -97,8 +97,38 @@ float dotted_line(vec2 p, vec2 uv, mat2 to_uv, float at, float spacing, float wi
 	return m;
 }
 
-float farmstead(vec2 p, Lot l, float fw, out float yard, out float wooden) {
-	float turn = hash(l.id + 11.3) * 3.1416;
+float mid_at(vec2 uv) {
+	vec2 u = clamp(uv, vec2(0.0), vec2(1.0));
+	return band_half_at(u) - distance_at(u);
+}
+
+float dotted_road(vec2 p, vec2 uv, mat2 to_uv, float at, float spacing, float width, float fw) {
+	float m = 0.0;
+	for (int j = 0; j <= 1; j++) {
+		for (int i = 0; i <= 1; i++) {
+			vec2 id;
+			vec2 o = grid_point(p - spacing * 0.5, 0.0, spacing, 0.0, i, j, id) + spacing * 0.5;
+			float there = abs(mid_at(uv + to_uv * (o - p)));
+			m = max(m, ink(length(p - o), width, fw) * step(abs(there - at), spacing * 0.5));
+		}
+	}
+	return m;
+}
+
+float levees(Lot w, float w1, float fw) {
+	return max(ink(abs(w.edge - w1), w1 * 0.45, fw), ink(abs(w.edge - w1 * 3.0), w1 * 0.45, fw));
+}
+
+float fronts_road(vec2 site_uv, float follow) {
+	return (1.0 - follow) * (1.0 - smoothstep(metres(FRONTS_M) * 0.8, metres(FRONTS_M), road_away_at(site_uv)));
+}
+
+vec2 road_along_at(vec2 site_uv) {
+	vec2 n = road_normal_at(site_uv);
+	return vec2(-n.y, n.x);
+}
+
+float farmstead(vec2 p, Lot l, float turn, float fw, out float yard, out float wooden) {
 	float house = metres(12.0);
 	vec2 c = l.site;
 	mat2 r = mat2(vec2(cos(turn), sin(turn)), vec2(-sin(turn), cos(turn)));
@@ -129,7 +159,7 @@ float windmill(vec2 p, Lot l, float fw) {
 }
 
 float orchard(vec2 p, Lot l, float dot, float fw) {
-	float gap = metres(10.0);
+	float gap = metres(ORCHARD_M);
 	mat2 r = mat2(l.across, vec2(-l.across.y, l.across.x));
 	vec2 q = r * (p - l.site);
 	vec2 c = (floor(q / gap) + 0.5) * gap;
@@ -139,8 +169,8 @@ float orchard(vec2 p, Lot l, float dot, float fw) {
 float vine_rows(vec2 p, Lot l, vec2 down, float fw) {
 	vec2 run = length(down) > 0.5 ? down : l.across;
 	vec2 side = vec2(-run.y, run.x);
-	float rows = metres(3.0);
-	float stakes = metres(2.0);
+	float rows = metres(VINE_ROW_M);
+	float stakes = metres(VINE_STAKE_M);
 	float s = dot(p - l.site, side);
 	float t = dot(p - l.site, run);
 	float line = ink(abs(fract(s / rows) - 0.5) * rows, rows * 0.06, fw);
@@ -155,7 +185,7 @@ float strips(vec2 p, Lot l, vec2 along, float follow, float fw, out float furrow
 	float s = dot(p - l.site, dir) / width + hash(l.id) * 10.0;
 	float strip = floor(s);
 	float edge = min(fract(s), 1.0 - fract(s)) * width;
-	furrow = hatch(dot(p - l.site, vec2(-dir.y, dir.x)), metres(3.5), metres(0.3), fw) * step(0.6, hash(l.id + strip * 0.71 + 8.5));
+	furrow = hatch(dot(p - l.site, vec2(-dir.y, dir.x)), metres(FURROW_M), metres(0.3), fw) * step(0.6, hash(l.id + strip * 0.71 + 8.5));
 	return ink(edge, metres(0.25), fw);
 }
 

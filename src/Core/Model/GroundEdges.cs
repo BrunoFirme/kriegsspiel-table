@@ -5,11 +5,60 @@ public static class GroundEdges
     public const int StepsPerCell = 16;
     public const int FieldStepsPerCell = 4;
     public const int TownStepsPerCell = 8;
+    public const int RoadStepsPerCell = 4;
+    const int ClimbSteps = 24;
+    const int ClimbGain = 10;
     public const byte Far = 255;
     public const int Channels = 4;
     const float Diagonal = 1.41421356f;
 
     public static byte[] Distances(ReliefGrid g) => Chamfer(g, Edges(g), StepsPerCell);
+
+    public static byte[] Roads(ReliefGrid g)
+    {
+        var road = Cells(g, k => k == GroundKinds.Road || k == GroundKinds.Bridge);
+        var away = Chamfer(g, road, RoadStepsPerCell);
+        var wide = Widest(g, Distances(g), road);
+        var o = new byte[g.Kind.Length];
+        for (int i = 0; i < o.Length; i++) o[i] = road[i] ? wide[i] : away[i];
+        return o;
+    }
+
+    static byte[] Widest(ReliefGrid g, byte[] inner, bool[] road)
+    {
+        int w = g.Cols, h = g.Rows;
+        var o = new byte[inner.Length];
+        for (int y = 0; y < h; y++)
+            for (int x = 0; x < w; x++)
+            {
+                int i = y * w + x;
+                if (!road[i]) continue;
+                int cx = x, cy = y;
+                byte v = inner[i];
+                for (int step = 0; step < ClimbSteps; step++)
+                {
+                    int bx = -1, by = -1;
+                    byte bv = v;
+                    for (int dy = -1; dy <= 1; dy++)
+                        for (int dx = -1; dx <= 1; dx++)
+                        {
+                            int nx = cx + dx, ny = cy + dy;
+                            if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+                            int j = ny * w + nx;
+                            if (!road[j] || inner[j] <= bv) continue;
+                            bv = inner[j];
+                            bx = nx;
+                            by = ny;
+                        }
+                    if (bx < 0 || bv - v < ClimbGain) break;
+                    cx = bx;
+                    cy = by;
+                    v = bv;
+                }
+                o[i] = v;
+            }
+        return o;
+    }
 
     public static byte[] Fields(ReliefGrid g)
     {
@@ -37,8 +86,9 @@ public static class GroundEdges
             for (int x = 0; x < w; x++)
             {
                 int i = y * w + x;
-                byte k = g.Kind[i];
-                e[i] = (x > 0 && g.Kind[i - 1] != k) || (x < w - 1 && g.Kind[i + 1] != k) || (y > 0 && g.Kind[i - w] != k) || (y < h - 1 && g.Kind[i + w] != k);
+                byte k = GroundKinds.BrushOf(g.Kind[i]);
+                bool Differs(int j) => GroundKinds.BrushOf(g.Kind[j]) != k;
+                e[i] = (x > 0 && Differs(i - 1)) || (x < w - 1 && Differs(i + 1)) || (y > 0 && Differs(i - w)) || (y < h - 1 && Differs(i + w));
             }
         return e;
     }

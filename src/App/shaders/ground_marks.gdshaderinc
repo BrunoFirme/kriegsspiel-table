@@ -61,6 +61,54 @@ int kind_of(vec2 cell) {
 	return int(texel_of(cell).r);
 }
 
+float road_of(vec2 cell) {
+	ivec2 c = clamp(ivec2(cell), ivec2(0), ivec2(cells) - 1);
+	return round(texelFetch(kinds, c, 0).a * 255.0);
+}
+
+float road_away_of(vec2 cell) {
+	int k = kind_of(cell);
+	return k == ROAD || k == BRIDGE ? 0.0 : max(0.0, road_of(cell) / ROAD_STEPS - 0.5) * cell_world;
+}
+
+float road_away_at(vec2 uv) {
+	vec2 q = clamp(uv, vec2(0.0), vec2(1.0)) * cells - 0.5;
+	vec2 c = floor(q);
+	vec2 f = q - c;
+	float a = mix(road_away_of(c), road_away_of(c + vec2(1.0, 0.0)), f.x);
+	float b = mix(road_away_of(c + vec2(0.0, 1.0)), road_away_of(c + vec2(1.0, 1.0)), f.x);
+	return mix(a, b, f.y);
+}
+
+vec2 road_normal_at(vec2 uv) {
+	vec2 c = floor(clamp(uv, vec2(0.0), vec2(1.0)) * cells);
+	vec2 g = vec2(road_away_of(c + vec2(1.0, 0.0)) - road_away_of(c - vec2(1.0, 0.0)), road_away_of(c + vec2(0.0, 1.0)) - road_away_of(c - vec2(0.0, 1.0)));
+	return length(g) > 1e-5 ? normalize(g) : vec2(1.0, 0.0);
+}
+
+float band_half_of(vec2 cell, out float weight) {
+	int k = kind_of(cell);
+	weight = k == ROAD || k == BRIDGE ? 1.0 : 0.0;
+	return weight * max(0.0, road_of(cell) / EDGE_STEPS - 0.5) * cell_world;
+}
+
+float band_half_at(vec2 uv) {
+	vec2 q = clamp(uv, vec2(0.0), vec2(1.0)) * cells - 0.5;
+	vec2 c = floor(q);
+	vec2 f = q - c;
+	float w00, w10, w01, w11;
+	float v00 = band_half_of(c, w00);
+	float v10 = band_half_of(c + vec2(1.0, 0.0), w10);
+	float v01 = band_half_of(c + vec2(0.0, 1.0), w01);
+	float v11 = band_half_of(c + vec2(1.0, 1.0), w11);
+	float k00 = (1.0 - f.x) * (1.0 - f.y) * w00;
+	float k10 = f.x * (1.0 - f.y) * w10;
+	float k01 = (1.0 - f.x) * f.y * w01;
+	float k11 = f.x * f.y * w11;
+	float sum = k00 + k10 + k01 + k11;
+	return sum > 1e-5 ? (v00 * k00 + v10 * k10 + v01 * k01 + v11 * k11) / sum : 0.0;
+}
+
 vec2 seeded(vec2 id, float salt) {
 	return id + vec2(salt * 13.71, salt * 7.33);
 }
@@ -239,4 +287,66 @@ vec3 wash(vec3 tint, vec3 sheet, vec3 ref, vec2 p, float edge, float strength) {
 	vec3 c = tint * (sheet / ref);
 	c *= 1.0 + (bloom * 0.1 + grain * 0.035) * strength;
 	return c * (1.0 - pool * 0.2 * strength);
+}
+
+vec3 plain(int style, vec3 tint, vec3 sheet, vec2 p, float edge) {
+	if (style == MODERN) return tint * (sheet / MODERN_PAPER);
+	if (style == ANCIENT) return tint * (sheet / ANCIENT_PAPER);
+	return wash(tint, sheet, SURVEY_PAPER, p, edge, 1.0);
+}
+
+float hand_ink(float d, float width, vec2 p, float fw) {
+	float w = width * (1.0 + HAND_WOBBLE * (noise(p * HAND_GRAIN) - 0.5) * 2.0);
+	return max(ink(d, w, fw), (1.0 - smoothstep(w, w * BLEED_REACH, abs(d))) * BLEED);
+}
+
+float plate_edge(float edge, vec2 off) {
+	return edge - dot(off, vec2(dFdx(edge), dFdy(edge)));
+}
+
+float plate_fill(float edge, vec2 off, float fw) {
+	return smoothstep(-fw * 0.5, fw * 0.5, plate_edge(edge, off));
+}
+
+float plate_spill(float edge, vec2 off, float fw) {
+	return 1.0 - smoothstep(-fw * 0.5, fw * 0.5, plate_edge(edge, off));
+}
+
+float meadow_pairs(vec2 p, float salt, float spacing, float len, float width, float keep, float fw) {
+	float m = 0.0;
+	for (int j = 0; j <= 1; j++) {
+		for (int i = 0; i <= 1; i++) {
+			vec2 id;
+			vec2 o = grid_point(p - spacing * 0.5, salt, spacing, 0.3, i, j, id) + spacing * 0.5;
+			if (hash(id + 7.7) > keep) continue;
+			float l = len * (0.8 + 0.4 * hash(id + 8.1));
+			for (int s = -1; s <= 1; s += 2) {
+				for (int t = -1; t <= 1; t += 2) {
+					vec2 b = o + vec2(float(t) * (l + width * 3.0), float(s) * width * 1.8);
+					m = max(m, ink(segment(p, b - vec2(l * 0.8, 0.0), b + vec2(l * 0.8, 0.0)), width, fw));
+				}
+			}
+		}
+	}
+	float mean = keep * 4.0 * 1.6 * len * 2.0 * width / (spacing * spacing);
+	return mix(m, clamp(mean, 0.0, 1.0), far_blend(fw, spacing));
+}
+
+float pasture(vec2 p, float salt, float spacing, float width, float keep, float fw) {
+	float m = 0.0;
+	for (int j = 0; j <= 1; j++) {
+		for (int i = 0; i <= 1; i++) {
+			vec2 id;
+			vec2 o = grid_point(p - spacing * 0.5, salt, spacing, 0.3, i, j, id) + spacing * 0.5;
+			if (hash(id + 5.1) > keep) continue;
+			for (int k = -3; k <= 3; k++) {
+				float h = (0.15 - 0.022 * abs(float(k))) * spacing * 0.5;
+				vec2 b = o + vec2(float(k) * width * 2.8, 0.0);
+				m = max(m, ink(segment(p, b, b + NORTH * h), width, fw));
+			}
+			m = max(m, ink(segment(p, o - vec2(width * 9.5, -width * 1.2), o + vec2(width * 9.5, width * 1.2)), width * 0.6, fw) * 0.6);
+		}
+	}
+	float mean = keep * 7.0 * 0.1 * spacing * 2.0 * width / (spacing * spacing);
+	return mix(m, clamp(mean, 0.0, 1.0), far_blend(fw, spacing));
 }
