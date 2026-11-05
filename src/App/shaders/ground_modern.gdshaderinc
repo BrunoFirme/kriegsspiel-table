@@ -1,4 +1,4 @@
-vec3 modern_wood(vec3 c, vec2 p, vec2 uv, mat2 to_uv, float fw) {
+vec3 modern_wood(vec3 c, vec2 p, vec2 uv, mat2 to_uv, float fw, float ledges, out float cover) {
 	const float S = 0.62;
 	vec3 black = vec3(0.09, 0.1, 0.09);
 	float m = 0.0;
@@ -10,6 +10,7 @@ vec3 modern_wood(vec3 c, vec2 p, vec2 uv, mat2 to_uv, float fw) {
 				vec2 o = grid_point(p, uv, to_uv, S, 0.7, i, j, id, salt);
 				float room = room_at(o, p, uv, to_uv, WOOD, salt);
 				if (hash(id + 5.0) > 0.82) continue;
+				if (ledges > 0.5 && hash(id + 9.9) > LEDGE_TREES) continue;
 				if (room < 0.1) continue;
 				if (hash(id + 9.3) < 0.28) {
 					vec2 top = o + NORTH * 0.085;
@@ -24,16 +25,18 @@ vec3 modern_wood(vec3 c, vec2 p, vec2 uv, mat2 to_uv, float fw) {
 			}
 		}
 	}
+	cover = m;
 	m = mix(m, 0.06, far_blend(fw, S));
 	return mix(c, black, m * 0.92);
 }
 
-vec3 modern(int k, int beside, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_uv, float own, float fw, float edge, float border) {
+vec3 modern(int k, int beside, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_uv, float own, vec2 along, float follow, float ledges, float fw, float edge, float border, out float cover) {
 	vec3 black = vec3(0.09, 0.1, 0.09);
 	vec3 blue = vec3(0.12, 0.45, 0.72);
 	vec3 brown = vec3(0.55, 0.36, 0.2);
 	float mottle = (noise(p * 3.0) - 0.5) * 0.03;
 	vec3 c = tint * (sheet / MODERN_PAPER) * (1.0 + mottle);
+	cover = 0.0;
 	if (k == GRASS) {
 		float pair = 0.0;
 		for (int j = 0; j <= 1; j++) {
@@ -52,12 +55,12 @@ vec3 modern(int k, int beside, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_u
 		c = mix(c, black * 1.4, pair * 0.85);
 	} else if (k == FIELD) {
 		float strip_edge, block_edge, angle;
-		vec3 v = parcels(p, uv, to_uv, strip_edge, block_edge, angle);
+		vec3 v = parcels(p, uv, to_uv, along, follow, strip_edge, block_edge, angle);
 		c *= 1.0 - step(0.72, v.x) * 0.035;
 		c = mix(c, black, ink(strip_edge, 0.0045, fw) * step(0.4, v.y) * 0.75);
 		c = mix(c, black, ink(block_edge, 0.009, fw) * 0.9);
 	} else if (k == WOOD) {
-		c = modern_wood(c, p, uv, to_uv, fw);
+		c = modern_wood(c, p, uv, to_uv, fw, ledges, cover);
 		float dots = screen(p + 0.02, own, 0.085, 0.017, fw);
 		c = mix(c, black, dots * (1.0 - smoothstep(0.015, 0.04, edge)) * 0.95);
 	} else if (k == MARSH) {

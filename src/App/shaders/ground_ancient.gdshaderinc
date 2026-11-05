@@ -1,7 +1,8 @@
-vec3 ancient_wood(vec3 c, vec3 tint, vec2 p, vec2 uv, mat2 to_uv, float fw) {
+vec3 ancient_wood(vec3 c, vec3 tint, vec2 p, vec2 uv, mat2 to_uv, float fw, float ledges, out float cover) {
 	const float S = 0.6;
 	vec3 sepia = vec3(0.2, 0.12, 0.05);
 	vec3 crown_c = tint * vec3(0.9, 0.95, 0.88);
+	cover = 0.0;
 	if (far_blend(fw, S) >= 1.0) return mix(c, tint * 0.9, 0.7);
 	vec3 col = c;
 	for (int j = -1; j <= 1; j++) {
@@ -11,6 +12,7 @@ vec3 ancient_wood(vec3 c, vec3 tint, vec2 p, vec2 uv, mat2 to_uv, float fw) {
 			vec2 o = grid_point(p + NORTH * S * 0.5, uv, to_uv, S, 0.55, i, j, id, salt) - NORTH * S * 0.5;
 			float room = room_at(o, p, uv, to_uv, WOOD, salt);
 			if (room < 0.05 || hash(id + 4.2) > 0.9) continue;
+			if (ledges > 0.5 && hash(id + 9.9) > LEDGE_TREES) continue;
 			float scale = clamp(room / 0.22, 0.45, 1.0) * (0.85 + 0.3 * hash(id + 3.1));
 			float rc = 0.16 * scale;
 			float trunk = 0.11 * scale;
@@ -28,6 +30,7 @@ vec3 ancient_wood(vec3 c, vec3 tint, vec2 p, vec2 uv, mat2 to_uv, float fw) {
 			float shade = smoothstep(-0.35, 0.55, dot(q / rc, vec2(0.8, 0.6)));
 			float lines = hatch(p.x + p.y, 0.032, 0.0065 * shade, fw);
 			col = mix(col, crown_c, body);
+			cover = max(cover, body);
 			col = mix(col, sepia, lines * body * 0.85);
 			col = mix(col, sepia, ink(abs(d - rr), 0.008, fw));
 		}
@@ -35,22 +38,23 @@ vec3 ancient_wood(vec3 c, vec3 tint, vec2 p, vec2 uv, mat2 to_uv, float fw) {
 	return mix(col, mix(c, tint * 0.9, 0.7), far_blend(fw, S));
 }
 
-vec3 ancient(int k, int beside, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_uv, float own, float fw, float edge, float border) {
+vec3 ancient(int k, int beside, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_uv, float own, vec2 along, float follow, float ledges, float fw, float edge, float border, out float cover) {
 	vec3 sepia = vec3(0.22, 0.13, 0.06);
 	vec3 c = wash(tint, sheet, ANCIENT_PAPER, p, edge, 0.4);
+	cover = 0.0;
 	float rim = 0.85;
 	if (k == GRASS) {
 		c = mix(c, sepia, tufts(p, uv, to_uv, 0.6, 0.06, 0.008, 0.45, fw) * 0.6);
 		rim = 0.0;
 	} else if (k == FIELD) {
 		float strip_edge, block_edge, angle;
-		vec3 v = parcels(p, uv, to_uv, strip_edge, block_edge, angle);
+		vec3 v = parcels(p, uv, to_uv, along, follow, strip_edge, block_edge, angle);
 		c *= 0.95 + 0.08 * v.x;
 		float ruled = hatch(dot(p, vec2(-sin(angle), cos(angle))), 0.055, 0.004, fw) * step(0.4, v.y);
 		c = mix(c, sepia, ruled * 0.35);
 		c = mix(c, sepia, scatter(p, uv, to_uv, 0.06, 0.012, 0.2, 1.0, fw) * (1.0 - smoothstep(0.0, 0.03, block_edge)) * 0.85);
 	} else if (k == WOOD) {
-		c = ancient_wood(c, tint, p, uv, to_uv, fw);
+		c = ancient_wood(c, tint, p, uv, to_uv, fw, ledges, cover);
 		rim = 0.0;
 	} else if (k == MARSH) {
 		c = mix(c, sepia, marks(p, uv, to_uv, 0.16, 0.08, 0.007, 0.0, 0.1, 0.8, fw) * 0.6);
@@ -82,6 +86,7 @@ vec3 ancient(int k, int beside, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_
 		float crag = marks(p, uv, to_uv, 0.12, 0.05, 0.011, 2.1, 0.5, 0.9, fw);
 		float cross = marks(p + 1.7, uv, to_uv, 0.12, 0.04, 0.008, 0.6, 0.5, 0.6, fw);
 		c = mix(c, sepia, max(crag, cross * smoothstep(0.5, 0.7, fbm(p * 1.1))) * 0.85);
+		cover = crag;
 	} else if (k == SAND) {
 		c = mix(c, sepia, scatter(p, uv, to_uv, 0.045, 0.0075, 0.95, 0.7, fw) * 0.75);
 		rim = 0.5;

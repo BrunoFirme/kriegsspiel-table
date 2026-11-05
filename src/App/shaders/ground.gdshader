@@ -59,6 +59,21 @@ const float INK_ON_DARK = 0.4;
 const vec3 LUMA = vec3(0.3, 0.59, 0.11);
 const vec3 SURVEY_BLUE = vec3(0.15, 0.3, 0.45);
 const vec3 MODERN_BLUE = vec3(0.1, 0.4, 0.7);
+const float GENTLE = 0.268;
+const float ROCK_FROM = 0.577;
+const float ROCK_FULL = 0.839;
+const float SHEER = 1.732;
+const float SHEER_THINS = 0.7;
+const float ROCK_STROKE = 1.0;
+const float ROCK_BAND_LEAST = 0.15;
+const float CURVE_STEP = 0.6;
+const float GRAD_STEP = 0.35;
+const float SLOPE_ROCK_WASH = 0.55;
+const float CREST_FROM = 0.05;
+const float CREST_FULL = 0.5;
+const float LEDGE_TREES = 0.2;
+const float FOOT_BAND = 0.2;
+const float MARK_SHADE = 0.35;
 
 varying vec3 world;
 
@@ -85,7 +100,7 @@ vec3 contour_ink(int style, int k, vec3 ground) {
 	return brown * mix(INK_ON_DARK, 1.0, smoothstep(0.2, 0.7, dot(ground, LUMA)));
 }
 
-float contour(float h, vec2 p, int style, float steep, out float halo) {
+float contour(float h, vec2 p, int style, float steep, float rock, out float halo) {
 	halo = 0.0;
 	float fh = max(fwidth(h), 1e-6);
 	if (contour_interval <= 0.0 || h < contour_interval * 0.5) return 0.0;
@@ -100,7 +115,7 @@ float contour(float h, vec2 p, int style, float steep, out float halo) {
 	float apart = contour_interval / fh;
 	float crowded = 1.0 - smoothstep(CROWD_PX, CROWD_PX * 3.0, index ? apart * float(INDEX_EVERY) : apart);
 	float level_ground = smoothstep(FLAT_SPAN, FLAT_SPAN * 2.0, contour_interval / max(steep, 1e-5));
-	strength *= index ? 1.0 - crowded * (1.0 - INDEX_KEEP) : (1.0 - crowded) * (1.0 - level_ground);
+	strength *= index ? 1.0 - crowded * (1.0 - INDEX_KEEP) : (1.0 - crowded) * (1.0 - level_ground) * (1.0 - rock);
 	halo = (1.0 - smoothstep(px + HALO_PX - 0.5, px + HALO_PX + 0.5, d)) * strength;
 	return (1.0 - smoothstep(px - 0.5, px + 0.5, d)) * strength;
 }
@@ -126,24 +141,48 @@ void fragment() {
 	int style = clamp(ground_style, SURVEY, MODERN);
 	float h = smooth_height(UV);
 	float own = salt_at(p, p, UV, to_uv);
-	float steep = length(vec2(dFdx(h), dFdy(h)) * from_screen);
-	float halo;
-	float lines = contour(h, p, style, steep, halo);
+	float h_ne = smooth_height(UV + to_uv * vec2(GRAD_STEP, GRAD_STEP));
+	float h_se = smooth_height(UV + to_uv * vec2(GRAD_STEP, -GRAD_STEP));
+	vec2 grad = vec2(h_ne + h_se - 2.0 * h, h_ne - h_se) / (2.0 * GRAD_STEP);
+	float steep = length(grad);
+	vec2 down = steep > 1e-4 ? -grad / steep : vec2(0.0);
+	float curve = (smooth_height(UV + to_uv * down * CURVE_STEP) + smooth_height(UV - to_uv * down * CURVE_STEP) - 2.0 * h) / (CURVE_STEP * CURVE_STEP);
+	float convex = smoothstep(CREST_FROM, CREST_FULL, -curve);
+	float gully = smoothstep(CREST_FROM, CREST_FULL, curve);
+	float rockness = k == ROCK ? 1.0 : smoothstep(ROCK_FROM, ROCK_FULL, steep);
+	float crest = 4.0 * rockness * (1.0 - rockness) * convex;
+	float sheer = smoothstep(ROCK_FULL * 1.4, SHEER, steep);
+	float foot = smoothstep(ROCK_FROM - FOOT_BAND, ROCK_FROM, steep) * (1.0 - rockness) * (k == ROCK ? 0.0 : 1.0);
+	float follow = smoothstep(GENTLE, GENTLE * 1.5, steep);
 	vec3 n = normalize((INV_VIEW_MATRIX * vec4(NORMAL, 0.0)).xyz);
+	float steep_n;
+	float dark = shaded(n, steep_n);
+	float halo;
+	float lines = contour(h, p, style, steep, rockness, halo);
 	float bump = 0.0;
+	float cover = 0.0;
 	vec3 sheet = paper(style, p);
+	vec3 rock = sheet;
+	if (rockness + foot > 0.001) rock = rock_face(style, mix(sheet, plain(style, palette[style * KINDS + ROCK].rgb, sheet, p, SEAMLESS), k == ROCK ? 1.0 : SLOPE_ROCK_WASH), p, UV, to_uv, h, down, steep, dark, crest, gully, sheer, foot, own, fw);
 	vec3 c;
 	if (k <= 0 || k >= KINDS) {
 		if (painted_only && lines < 0.02) discard;
-		c = painted_only ? contour_ink(style, k, sheet) : slopes(sheet, n, p, world.y, fw, style);
+		c = painted_only ? contour_ink(style, k, sheet) : mix(slopes(sheet, n, p, world.y, fw, style, 1.0 - rockness), rock, rockness);
 	} else {
 		vec3 tint = palette[style * KINDS + k].rgb;
-		if (style == ANCIENT) c = ancient(k, beside, tint, sheet, p, UV, to_uv, own, fw, edge, shore);
-		else if (style == MODERN) c = modern(k, beside, tint, sheet, p, UV, to_uv, own, fw, edge, shore);
-		else c = survey(k, beside, tint, sheet, p, UV, to_uv, own, fw, edge, shore, bump);
-		c = mix(c, plain(style, tint, sheet, p, edge), halo * HALO);
-		if (k != WATER && k != ROAD && k != BRIDGE) c = slopes(c, n, p, world.y, fw, style);
-		if (k == WATER && beside == BRIDGE) c *= 1.0 - 0.45 * (1.0 - smoothstep(0.0, PARAPET * 1.5, edge));
+		bool bare = k != WATER && k != ROAD && k != BRIDGE;
+		if (bare && rockness >= 1.0 - 1e-3 && k != WOOD) c = rock;
+		else {
+			if (style == ANCIENT) c = ancient(k, beside, tint, sheet, p, UV, to_uv, own, down, follow, rockness, fw, edge, shore, cover);
+			else if (style == MODERN) c = modern(k, beside, tint, sheet, p, UV, to_uv, own, down, follow, rockness, fw, edge, shore, cover);
+			else c = survey(k, beside, tint, sheet, p, UV, to_uv, own, down, follow, rockness, fw, edge, shore, bump, cover);
+			c = mix(c, plain(style, tint, sheet, p, edge), halo * HALO);
+			c = mix(c, c * (1.0 - MARK_SHADE), dark * cover * smoothstep(0.04, 0.35, steep_n));
+			if (bare) c = slopes(c, n, p, world.y, fw, style, (1.0 - cover) * (1.0 - rockness));
+			if (k == WATER && beside == BRIDGE) c *= 1.0 - 0.45 * (1.0 - smoothstep(0.0, PARAPET * 1.5, edge));
+			float keep = k == WOOD ? cover : 0.0;
+			if (bare) c = mix(c, rock, rockness * (1.0 - keep));
+		}
 	}
 	c = mix(c, contour_ink(style, k, c), lines);
 	ALBEDO = to_linear(c) * SHEET_GAIN;

@@ -183,7 +183,7 @@ float room_at(vec2 o, vec2 p, vec2 uv, mat2 to_uv, int k, out float salt) {
 	return (distance_at(u) + cell_world * 0.5) * detail;
 }
 
-vec3 parcels(vec2 p, vec2 uv, mat2 to_uv, out float strip_edge, out float block_edge, out float angle) {
+vec3 parcels(vec2 p, vec2 uv, mat2 to_uv, vec2 along, float follow, out float strip_edge, out float block_edge, out float angle) {
 	vec2 n = floor(p / BLOCK);
 	vec2 f = p / BLOCK - n;
 	float f1 = 8.0;
@@ -211,6 +211,8 @@ vec3 parcels(vec2 p, vec2 uv, mat2 to_uv, out float strip_edge, out float block_
 	block_edge = abs(best) * BLOCK;
 	angle = (floor(hash(id + 1.9) * 4.0) * 0.25 + (hash(id + 6.3) - 0.5) * 0.12) * 3.1416;
 	vec2 dir = vec2(cos(angle), sin(angle));
+	dir = normalize(mix(dir, along * (dot(dir, along) < 0.0 ? -1.0 : 1.0), follow * step(0.5, length(along))));
+	angle = atan(dir.y, dir.x);
 	float width = 0.55 + 0.6 * hash(id + 4.4);
 	float s = dot(p, dir) / width + hash(id) * 10.0;
 	float strip = floor(s);
