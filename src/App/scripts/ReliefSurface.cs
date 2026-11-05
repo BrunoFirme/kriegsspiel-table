@@ -35,6 +35,7 @@ public partial class ReliefSurface : Node3D
     int _heightsBlur;
     bool _heightsStreams;
     byte[]? _flowKinds;
+    GroundFlow? _flow;
     bool _flowBusy;
     (int Cols, int Rows, float[] Soft, byte[] Kinds, double CellMetres, double MetresPerUnit)? _flowNext;
     float _cellWorld = 1;
@@ -236,10 +237,11 @@ public partial class ReliefSurface : Node3D
 
     void UpdateHeights(ReliefGrid grid, float scale, int blur)
     {
-        bool streams = _streams && _unitsPerMetre > 0;
+        bool calibrated = _unitsPerMetre > 0;
+        bool streams = _streams && calibrated;
         bool sized = _heightsTex != null && _heightTexels != null && _heightsTex.GetWidth() == grid.Cols && _heightsTex.GetHeight() == grid.Rows;
         bool heightsChanged = !sized || _heightsOf == null || _heightsScale != scale || _heightsBlur != blur || !_heightsOf.AsSpan().SequenceEqual(grid.H);
-        bool kindsChanged = streams && (_flowKinds == null || !_flowKinds.AsSpan().SequenceEqual(grid.Kind));
+        bool kindsChanged = calibrated && (_flowKinds == null || !_flowKinds.AsSpan().SequenceEqual(grid.Kind));
         bool streamsChanged = _heightsStreams != streams;
         if (!heightsChanged && !kindsChanged && !streamsChanged) return;
         _heightsStreams = streams;
@@ -261,11 +263,18 @@ public partial class ReliefSurface : Node3D
             }
             _heightTexels = texels;
         }
-        if (!streams)
+        if (!calibrated)
         {
             _flowKinds = null;
-            if (streamsChanged) ClearFlow();
-            if (heightsChanged || streamsChanged) UploadHeights(grid.Cols, grid.Rows);
+            _flow = null;
+            ClearFlow();
+            UploadHeights(grid.Cols, grid.Rows);
+            return;
+        }
+        if (!heightsChanged && !kindsChanged)
+        {
+            if (_flow != null && _flow.Order.Length * 4 == _heightTexels!.Length) WriteFlow(_flow);
+            UploadHeights(grid.Cols, grid.Rows);
             return;
         }
         _flowKinds = (byte[])grid.Kind.Clone();
@@ -283,18 +292,18 @@ public partial class ReliefSurface : Node3D
         {
             try
             {
-                var (order, direction, node) = GroundStreams.Flow(cols, rows, soft, kinds, cellMetres, metresPerUnit);
-                Callable.From(() => FlowDerived(cols, rows, order, direction, node)).CallDeferred();
+                var flow = GroundStreams.Flow(cols, rows, soft, kinds, cellMetres, metresPerUnit);
+                Callable.From(() => FlowDerived(cols, rows, flow)).CallDeferred();
             }
             catch (Exception e)
             {
                 GD.PrintErr("[relief] deriving the streams: " + e.Message);
-                Callable.From(() => FlowDerived(cols, rows, null, null, null)).CallDeferred();
+                Callable.From(() => FlowDerived(cols, rows, null)).CallDeferred();
             }
         });
     }
 
-    void FlowDerived(int cols, int rows, byte[]? order, byte[]? direction, (float x, float y)[]? node)
+    void FlowDerived(int cols, int rows, GroundFlow? flow)
     {
         _flowBusy = false;
         if (_flowNext is { } next)
@@ -302,19 +311,20 @@ public partial class ReliefSurface : Node3D
             _flowNext = null;
             DeriveFlow(next.Cols, next.Rows, next.Soft, next.Kinds, next.CellMetres, next.MetresPerUnit);
         }
-        if (order == null || direction == null || node == null || !GodotObject.IsInstanceValid(this) || !_heightsStreams) return;
-        if (_heightTexels == null || _heightTexels.Length != order.Length * 4 || _heightsTex == null || _heightsTex.GetWidth() != cols || _heightsTex.GetHeight() != rows) return;
-        WriteFlow(order, direction, node);
+        if (flow == null || !GodotObject.IsInstanceValid(this)) return;
+        if (_heightTexels == null || _heightTexels.Length != flow.Order.Length * 4 || _heightsTex == null || _heightsTex.GetWidth() != cols || _heightsTex.GetHeight() != rows) return;
+        _flow = flow;
+        WriteFlow(flow);
         UploadHeights(cols, rows);
     }
 
-    void WriteFlow(byte[] order, byte[] direction, (float x, float y)[] node)
+    void WriteFlow(GroundFlow flow)
     {
         var texels = _heightTexels!;
-        for (int i = 0; i < order.Length; i++)
+        for (int i = 0; i < flow.Order.Length; i++)
         {
-            texels[4 * i + 2] = GroundStreams.Packed(direction[i], node[i]);
-            texels[4 * i + 3] = order[i];
+            texels[4 * i + 2] = GroundStreams.Packed(flow, i);
+            texels[4 * i + 3] = _heightsStreams ? flow.Order[i] : 0;
         }
     }
 

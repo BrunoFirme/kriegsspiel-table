@@ -59,6 +59,9 @@ sealed partial class TableDemos
         ("hill", -30, -16, 22, 30, 20),
         ("hillnear", -30, -16, 9, 35, 20),
         ("route", -8, -6, 46, 90, 0),
+        ("flow", 36, -4, 14, 90, 0),
+        ("flow3d", 36, -4, 12, 40, 20),
+        ("culvert", 37.8, -9.6, 6, 90, 0),
         ("names", 8, -22, 50, 90, 0),
         ("names3d", 8, -22, 40, 40, 10),
         ("hilltop", -32, -14, 9, 90, 0),
@@ -165,11 +168,14 @@ sealed partial class TableDemos
             ReliefBrush.Stroke(g, pts, r, new Brush(BrushMode.Paint, 0, 1, K("road"), Density: 1, Salt: ++salt, Detail: GroundKinds.Levels(road, 0)));
         void Raise(double r, double strength, params (double, double)[] pts) => ReliefBrush.Stroke(g, pts, r, new Brush(BrushMode.Raise, 0, strength));
         void Lower(double r, double strength, params (double, double)[] pts) => ReliefBrush.Stroke(g, pts, r, new Brush(BrushMode.Lower, 0, strength));
+        void Hollow(double r, params (double, double)[] pts) => ReliefBrush.Stroke(g, pts, r, new Brush(BrushMode.Flatten, 0, 1, Level: 0));
 
         Raise(14, 1.6, (0.04, 0.33), (0.96, 0.33));
         for (int i = 0; i < 3; i++) Raise(30, 1, (0.86, 0.72));
         for (int i = 0; i < 3; i++) Raise(22, 1, (0.9, 0.5));
-        Raise(12, 0.8, (0.86, 0.72), (0.9, 0.5));
+        Raise(90, 0.4, (0.9, 0.6));
+        Hollow(26, (0.69, 0.6), (0.77, 0.63));
+        foreach (var (r, depth) in new[] { (48, 0.012), (36, 0.015), (24, 0.02), (16, 0.03), (10, 0.05), (6, 0.08), (3, 0.15), (1, 0.3) }) Lower(r, depth, (0.885, 0.6), (0.8, 0.63));
         Lower(10, 0.6, (0.74, 0.8), (0.8, 0.62), (0.86, 0.45));
         for (int i = 0; i < SwatchKinds.Length; i++)
         {
@@ -216,6 +222,7 @@ sealed partial class TableDemos
         double cellMetres = GroundWidth / System.Math.Max(1, g.Cols - 1) * DemoMetresPerUnit;
         var country = new Brush(BrushMode.Paint, 0, 1, K("road"), Density: 1, Salt: ++salt, Detail: GroundKinds.Levels(50, 0));
         GroundRoute.Lay(g, country, [(0.515, 0.755), (0.53, 0.5), (0.3, 0.45)], 3, cellMetres, DemoMetresPerUnit);
-        GroundRoute.Lay(g, new Brush(BrushMode.Paint, 0, 1, K("water"), Salt: ++salt), [(0.85, 0.47)], 1.5, cellMetres, DemoMetresPerUnit);
+        GroundRoute.Lay(g, new Brush(BrushMode.Paint, 0, 1, K("water"), Salt: ++salt), [(0.885, 0.485)], 1.5, cellMetres, DemoMetresPerUnit);
+        PaintRoad(50, 3, (0.815, 0.44), (0.815, 0.76));
     }
 }

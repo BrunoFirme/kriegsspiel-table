@@ -635,8 +635,18 @@ public class ReliefTests : IDisposable
         Array.Fill(kinds, GroundKinds.Of("grass")!.Value);
         for (int y = 0; y < n; y++)
             for (int x = 0; x < 3; x++) kinds[y * n + x] = GroundKinds.Water;
-        var (order, direction, node) = GroundStreams.Flow(n, n, h, kinds, 50, 1000);
+        for (int y = 0; y < n; y++)
+            for (int x = 20; x < 23; x++) kinds[y * n + x] = GroundKinds.Road;
+        for (int y = 31; y < 34; y++)
+            for (int x = 40; x < 52; x++) kinds[y * n + x] = GroundKinds.Road;
+        var flow = GroundStreams.Flow(n, n, h, kinds, 50, 1000);
+        var (order, direction, node) = (flow.Order, flow.Direction, flow.Node);
         Assert.Equal(0, order[32 * n + 1]);
+        Assert.Equal(GroundStreams.Still, flow.Current[32 * n + 1]);
+        Assert.True(flow.Culvert[32 * n + 21], "the valley's brook crossing the road is a culvert");
+        Assert.All(Enumerable.Range(40, 12), x => Assert.False(flow.Culvert[32 * n + x], "a brook running along a road is no culvert"));
+        Assert.All(Enumerable.Range(0, n * n).Where(i => kinds[i] != GroundKinds.Road), i => Assert.False(flow.Culvert[i]));
+        Assert.Equal(1, (int)GroundStreams.Packed(4, (0, 0), true) >> 15 & 1);
         Assert.Equal(GroundStreams.NoFlow, direction[32 * n + 1]);
         Assert.Equal(4, direction[32 * n + 3]);
         Assert.All(node, p => Assert.True(Math.Abs(p.x) <= 0.45f && Math.Abs(p.y) <= 0.45f, "a stream node stays in its cell"));
@@ -647,6 +657,37 @@ public class ReliefTests : IDisposable
         Assert.Equal(4, direction[32 * n + 20]);
         Assert.True(direction[3 * n + 51] != GroundStreams.NoFlow, "the pit is filled and drains");
         Assert.All(Enumerable.Range(0, n * n).Where(i => order[i] > 0 && i % n > 2 && i % n < n - 1 && i / n > 0 && i / n < n - 1), i => Assert.NotEqual(GroundStreams.NoFlow, direction[i]));
+    }
+
+    [Fact]
+    public void Painted_water_runs_downhill_where_it_is_narrow_and_marks_its_rapids_and_falls()
+    {
+        const int n = 64;
+        var h = new float[n * n];
+        var drops = new float[n];
+        for (int x = 1; x < n; x++) drops[x] = drops[x - 1] + (x >= 40 && x < 50 ? 0.0003f : 0.0001f) + (x == 52 ? 0.006f : 0);
+        for (int y = 0; y < n; y++)
+            for (int x = 0; x < n; x++) h[y * n + x] = 1 - drops[x];
+        var kinds = new byte[n * n];
+        Array.Fill(kinds, GroundKinds.Of("grass")!.Value);
+        for (int y = 30; y < 33; y++)
+            for (int x = 0; x < n; x++) kinds[y * n + x] = GroundKinds.Water;
+        for (int y = 5; y < 20; y++)
+            for (int x = 5; x < 25; x++) kinds[y * n + x] = GroundKinds.Water;
+        var flow = GroundStreams.Flow(n, n, h, kinds, 10, 1000);
+        Assert.Equal(GroundStreams.Flows, flow.Current[31 * n + 20]);
+        Assert.Equal(0, flow.Heading[31 * n + 20]);
+        Assert.Equal(GroundStreams.Rapids, flow.Current[31 * n + 45]);
+        Assert.Equal(GroundStreams.Fall, flow.Current[31 * n + 51]);
+        Assert.Equal(GroundStreams.Still, flow.Current[12 * n + 15]);
+        Assert.Equal(GroundStreams.Still, flow.Current[40 * n + 15]);
+        Assert.Equal(GroundStreams.NoFlow, flow.Direction[31 * n + 20]);
+        Assert.Equal(0, flow.Order[31 * n + 20]);
+        int code = (int)GroundStreams.Packed(flow, 31 * n + 45);
+        Assert.Equal(GroundStreams.NoFlow, code & 15);
+        Assert.Equal(GroundStreams.Rapids, code >> 9 & 3);
+        Assert.NotEqual(0, code >> 14 & 1);
+        Assert.Equal((int)GroundStreams.Packed(flow.Direction[40 * n + 15], flow.Node[40 * n + 15]), (int)GroundStreams.Packed(flow, 40 * n + 15));
     }
 
     [Fact]

@@ -31,6 +31,17 @@ const float FIELD_STEPS = 4.0;
 const float TOWN_STEPS = 8.0;
 const float ROAD_STEPS = 4.0;
 const int NO_FLOW = 8;
+const int HEADINGS = 32;
+const int CURRENT_BIT = 16384;
+const int CULVERT_BIT = 32768;
+const float FLOW_SPACING = 0.14;
+const float FLOW_LEN = 0.2;
+const float ARROW_SPACING = 1.1;
+const float ARROW_LEN = 0.3;
+const float RAPIDS_PITCH = 0.12;
+const float FALL_STEP = 0.05;
+const float CULVERT_REACH = 0.07;
+const float CULVERT_GAP = 0.04;
 const float TRACK_W_M = 5.0;
 const float LANE_W_M = 16.0;
 const float ROAD_W_M = 22.0;
@@ -355,12 +366,14 @@ void fragment() {
 			if (style == ANCIENT) c = ancient(k, beside, tint, sheet, p, UV, to_uv, own, levels, near_town, mid, road_w, down, follow, rockness, fw, edge, shore, cover);
 			else if (style == MODERN) c = modern(k, beside, tint, sheet, p, UV, to_uv, own, levels, near_town, mid, road_w, down, follow, rockness, fw, edge, shore, cover);
 			else c = survey(k, beside, tint, sheet, p, UV, to_uv, own, levels, near_town, mid, road_w, down, follow, rockness, fw, edge, shore, bump, cover);
+			float culvert = 0.0;
 			if (k != WATER) {
 				float order_here;
-				float brook = streams(style, p, UV, from_uv, fw, order_here);
+				float brook = streams(style, p, UV, from_uv, fw, mid, road_w, order_here, culvert);
 				if (brook > 0.001) c = mix(c, style == MODERN ? MODERN_BLUE : style == ANCIENT ? ANCIENT_INK : SURVEY_BLUE, brook);
-			}
+			} else c = current(style, c, p, UV, to_uv, from_uv, border, fw);
 			if (road_w >= 0.0) c = road_over(style, c, sheet, p, UV, to_uv, road_class, mid, fw, over_water);
+			if (culvert > 0.001) c = mix(c, style == MODERN ? MODERN_BLACK : style == ANCIENT ? ANCIENT_INK : SURVEY_INK, culvert);
 			if (halo > 0.001) c = mix(c, plain(style, tint, sheet, p, edge), halo * HALO);
 			c = mix(c, c * (1.0 - MARK_SHADE), dark * cover * smoothstep(0.04, 0.35, steep_n));
 			if (bare) c = slopes(c, n, p, world.y, fw, style, (1.0 - cover) * (1.0 - rockness));

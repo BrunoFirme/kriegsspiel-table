@@ -1,15 +1,21 @@
 namespace KTable.Core.Model;
 
+public sealed record GroundFlow(byte[] Order, byte[] Direction, (float x, float y)[] Node, byte[] Heading, byte[] Current, bool[] Culvert);
+
 public static class GroundStreams
 {
     public const byte NoFlow = 8;
+    public const byte Still = 0, Flows = 1, Rapids = 2, Fall = 3;
+    public const int Headings = 32;
     public const double StreamKm2 = 0.15, BrookKm2 = 1, RiverKm2 = 10;
-    const double FloorSlope = 0.002;
+    const double FloorSlope = 0.002, RapidsSlope = 0.02, RiverHalfWidthMetres = 50, FallMetres = 5;
+    const double CrossingCosine = 0.866, RoadAxisClarity = 0.2;
+    const int MaxReach = 8, RoadReach = 4, CrossingRun = 3;
     const float Lift = 1e-6f, NodeReach = 0.45f, NodePull = 0.25f;
-    const int NodeSteps = 31, NodeShift = 4, NodeBits = 5;
+    const int NodeSteps = 31, NodeShift = 4, NodeBits = 5, CurrentBit = 1 << 14, CulvertBit = 1 << 15;
     static readonly (int dx, int dy)[] Eight = [(1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1), (0, -1), (1, -1)];
 
-    public static (byte[] Order, byte[] Direction, (float x, float y)[] Node) Flow(int cols, int rows, float[] heights, byte[]? kinds, double cellMetres, double metresPerHeightUnit)
+    public static GroundFlow Flow(int cols, int rows, float[] heights, byte[]? kinds, double cellMetres, double metresPerHeightUnit)
     {
         int n = cols * rows;
         bool Sink(int i) => kinds != null && kinds[i] == GroundKinds.Water;
@@ -55,18 +61,129 @@ public static class GroundStreams
             if (o is 1 or 2 && drop[i] * metresPerHeightUnit / cellMetres < FloorSlope) o = 0;
             order[i] = o;
         }
-        return (order, direction, Nodes(cols, direction, order, area));
+        var (heading, current) = Currents(cols, rows, heights, kinds, cellMetres, metresPerHeightUnit);
+        return new GroundFlow(order, direction, Nodes(cols, direction, order, area), heading, current, Culverts(cols, rows, kinds, order, direction));
     }
 
-    public static float Packed(byte direction, (float x, float y) node)
+    public static float Packed(byte direction, (float x, float y) node, bool culvert = false)
     {
         int qx = Quantised(node.x), qy = Quantised(node.y);
-        return direction | qx << NodeShift | qy << (NodeShift + NodeBits);
+        return direction | qx << NodeShift | qy << (NodeShift + NodeBits) | (culvert ? CulvertBit : 0);
     }
+
+    public static float PackedCurrent(byte heading, byte current) => NoFlow | heading << NodeShift | current << (NodeShift + NodeBits) | CurrentBit;
+
+    public static float Packed(GroundFlow f, int i) => f.Current[i] > Still ? PackedCurrent(f.Heading[i], f.Current[i]) : Packed(f.Direction[i], f.Node[i], f.Culvert[i]);
 
     static int Quantised(float offset) => (int)Math.Round((Math.Clamp(offset, -NodeReach, NodeReach) / NodeReach * 0.5 + 0.5) * NodeSteps);
 
     static int Downstream(int i, byte d, int cols) => i + Eight[d].dy * cols + Eight[d].dx;
+
+    static (byte[] Heading, byte[] Current) Currents(int cols, int rows, float[] heights, byte[]? kinds, double cellMetres, double metresPerHeightUnit)
+    {
+        int n = cols * rows;
+        var heading = new byte[n];
+        var current = new byte[n];
+        if (kinds == null || cellMetres <= 0) return (heading, current);
+        int reach = Math.Clamp((int)Math.Ceiling(RiverHalfWidthMetres / cellMetres), 1, MaxReach);
+        bool Water(int x, int y) => x >= 0 && y >= 0 && x < cols && y < rows && kinds[y * cols + x] == GroundKinds.Water;
+        for (int y = 0; y < rows; y++)
+            for (int x = 0; x < cols; x++)
+            {
+                if (!Water(x, y)) continue;
+                var (ax, ay) = Axis(x, y, reach, Water);
+                if (!ShoreWithin(x, y, -ay, ax, reach, Water) || !ShoreWithin(x, y, ay, -ax, reach, Water)) continue;
+                var (hBack, back) = Along(x, y, -ax, -ay, reach, heights, cols, Water);
+                var (hOn, on) = Along(x, y, ax, ay, reach, heights, cols, Water);
+                if (back + on == 0) continue;
+                double slope = (hBack - hOn) * metresPerHeightUnit / ((back + on) * cellMetres);
+                if (slope < 0) { (ax, ay, slope) = (-ax, -ay, -slope); }
+                if (slope < FloorSlope) continue;
+                int i = y * cols + x;
+                heading[i] = (byte)(((int)Math.Round(Math.Atan2(ay, ax) / (2 * Math.PI) * Headings) % Headings + Headings) % Headings);
+                int nx = x + (int)Math.Round(ax), ny = y + (int)Math.Round(ay);
+                bool fall = Water(nx, ny) && (heights[i] - heights[ny * cols + nx]) * metresPerHeightUnit > FallMetres;
+                current[i] = fall ? Fall : slope > RapidsSlope ? Rapids : Flows;
+            }
+        return (heading, current);
+    }
+
+    static (double x, double y) Axis(int x, int y, int reach, Func<int, int, bool> within)
+    {
+        var (sxx, sxy, syy) = Tensor(x, y, reach, within);
+        double angle = 0.5 * Math.Atan2(2 * sxy, sxx - syy);
+        return (Math.Cos(angle), Math.Sin(angle));
+    }
+
+    static double Clarity(int x, int y, int reach, Func<int, int, bool> within)
+    {
+        var (sxx, sxy, syy) = Tensor(x, y, reach, within);
+        double sum = sxx + syy;
+        return sum > 0 ? Math.Sqrt((sxx - syy) * (sxx - syy) + 4 * sxy * sxy) / sum : 0;
+    }
+
+    static (double xx, double xy, double yy) Tensor(int x, int y, int reach, Func<int, int, bool> within)
+    {
+        double sxx = 0, sxy = 0, syy = 0;
+        for (int dy = -reach; dy <= reach; dy++)
+            for (int dx = -reach; dx <= reach; dx++)
+            {
+                if (!within(x + dx, y + dy)) continue;
+                sxx += dx * dx;
+                sxy += dx * dy;
+                syy += dy * dy;
+            }
+        return (sxx, sxy, syy);
+    }
+
+    static bool ShoreWithin(int x, int y, double nx, double ny, int reach, Func<int, int, bool> water)
+    {
+        for (int t = 1; t <= reach; t++)
+            if (!water(x + (int)Math.Round(nx * t), y + (int)Math.Round(ny * t))) return true;
+        return false;
+    }
+
+    static (double Height, int Steps) Along(int x, int y, double ax, double ay, int reach, float[] heights, int cols, Func<int, int, bool> water)
+    {
+        double h = heights[y * cols + x];
+        int steps = 0;
+        for (int t = 1; t <= reach; t++)
+        {
+            int cx = x + (int)Math.Round(ax * t), cy = y + (int)Math.Round(ay * t);
+            if (!water(cx, cy)) break;
+            h = heights[cy * cols + cx];
+            steps = t;
+        }
+        return (h, steps);
+    }
+
+    static bool[] Culverts(int cols, int rows, byte[]? kinds, byte[] order, byte[] direction)
+    {
+        var culvert = new bool[order.Length];
+        if (kinds == null) return culvert;
+        bool Road(int x, int y) => x >= 0 && y >= 0 && x < cols && y < rows && kinds[y * cols + x] is GroundKinds.Road or GroundKinds.Bridge;
+        for (int y = 0; y < rows; y++)
+            for (int x = 0; x < cols; x++)
+            {
+                int i = y * cols + x;
+                if (order[i] == 0 || direction[i] == NoFlow || !Road(x, y)) continue;
+                if (Clarity(x, y, RoadReach, Road) < RoadAxisClarity) { culvert[i] = true; continue; }
+                var (rx, ry) = Axis(x, y, RoadReach, Road);
+                double sx = 0, sy = 0;
+                int j = i;
+                for (int step = 0; step < CrossingRun && direction[j] != NoFlow; step++)
+                {
+                    var (dx, dy) = Eight[direction[j]];
+                    double len = dx != 0 && dy != 0 ? 1.41421356 : 1;
+                    sx += dx / len;
+                    sy += dy / len;
+                    j = Downstream(j, direction[j], cols);
+                }
+                double run = Math.Sqrt(sx * sx + sy * sy);
+                culvert[i] = run > 0 && Math.Abs(sx * rx + sy * ry) / run < CrossingCosine;
+            }
+        return culvert;
+    }
 
     static (float x, float y)[] Nodes(int cols, byte[] direction, byte[] order, int[] area)
     {
