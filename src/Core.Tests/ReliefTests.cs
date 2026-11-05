@@ -739,4 +739,56 @@ public class ReliefTests : IDisposable
         Assert.Null(Roman.Of(0));
         Assert.Null(Roman.Of(4000));
     }
+
+    static ReliefGrid Country()
+    {
+        var g = new ReliefGrid(160, 120);
+        byte water = GroundKinds.Of("water")!.Value, field = GroundKinds.Of("field")!.Value;
+        for (int y = 0; y < g.Rows; y++)
+            for (int x = 0; x < g.Cols; x++)
+            {
+                int i = y * g.Cols + x;
+                g.H[i] = (float)(Math.Sin(x * 0.11) * 3 + Math.Cos(y * 0.07) * 2 + (x * y) % 7 * 0.1);
+                g.Kind[i] = y == 60 || x == 80 ? GroundKinds.Road : x > 100 && y < 30 ? GroundKinds.Town : x < 20 && y > 90 ? water : field;
+                g.Salt[i] = (byte)(i % 251);
+                g.Detail[i] = (byte)(i % 17);
+            }
+        return g;
+    }
+
+    [Fact]
+    public void Edges_derived_in_a_window_match_the_whole_grid_around_the_box()
+    {
+        var g = Country();
+        var (roads, fields) = GroundEdges.Derive(g.Cols, g.Rows, g.Kind);
+        var box = new CellBox(70, 50, 95, 70);
+        var changed = (byte[])g.Kind.Clone();
+        for (int y = box.Y0; y <= box.Y1; y++)
+            for (int x = box.X0; x <= box.X1; x++) changed[y * g.Cols + x] = GroundKinds.Town;
+        var (wholeRoads, wholeFields) = GroundEdges.Derive(g.Cols, g.Rows, changed);
+        var windowRoads = (byte[])roads.Clone();
+        var windowFields = (byte[])fields.Clone();
+        GroundEdges.Derive(g.Cols, g.Rows, changed, box, windowRoads, windowFields);
+        var touched = box.Grow(GroundEdges.Reach).Clip(g.Cols, g.Rows);
+        for (int y = touched.Y0; y <= touched.Y1; y++)
+            for (int x = touched.X0; x <= touched.X1; x++)
+            {
+                int i = y * g.Cols + x;
+                Assert.Equal(wholeRoads[i], windowRoads[i]);
+                for (int ch = 0; ch < GroundEdges.Channels; ch++) Assert.Equal(wholeFields[i * GroundEdges.Channels + ch], windowFields[i * GroundEdges.Channels + ch]);
+            }
+    }
+
+    [Fact]
+    public void Heights_blurred_in_a_window_match_the_whole_grid_around_the_box()
+    {
+        var g = Country();
+        var soft = GroundHeights.Blurred(g, 5);
+        var box = new CellBox(30, 40, 60, 55);
+        for (int y = box.Y0; y <= box.Y1; y++)
+            for (int x = box.X0; x <= box.X1; x++) g.H[y * g.Cols + x] += 4;
+        var whole = GroundHeights.Blurred(g, 5);
+        GroundHeights.Blurred(g.H, g.Cols, g.Rows, 5, box, soft);
+        for (int i = 0; i < soft.Length; i++) Assert.Equal(whole[i], soft[i], 4);
+    }
 }

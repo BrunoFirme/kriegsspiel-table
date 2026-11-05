@@ -155,8 +155,8 @@ public partial class Table : Node3D
         Sync.LookChanged += () => Contours.Due(Stage.LightNow());
         Selection.Picked += Sighting.Aim;
         Sheets.GroundChanged += Pieces.Resettle;
-        Sheets.GroundChanged += _ => Drawings.Reground();
-        Sheets.GroundChanged += _ => Zones.Sync();
+        Sheets.GroundChanged += Drawings.Reground;
+        Sheets.GroundChanged += Zones.Resync;
         Sheets.GroundChanged += _ => Contours.Due();
         Poses.Connect(Hand, Gizmo);
         Gizmo.Connect(SelectTool);

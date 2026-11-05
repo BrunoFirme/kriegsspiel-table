@@ -15,7 +15,7 @@ sealed class SheetLayer
     public Node3D Root = null!;
     public string? SelectedId;
     readonly Queue<string> _toBuild = new();
-    readonly HashSet<string> _queued = new();
+    readonly Dictionary<string, Rect2?> _queued = new();
     bool _planDue;
 
     public SheetLayer(TableContext c, CameraControl cam) { _c = c; _cam = cam; }
@@ -46,9 +46,16 @@ sealed class SheetLayer
         {
             n.TopZ = top;
             n.Covered = Covered;
-            if (n.Touches(where) && _queued.Add(id)) _toBuild.Enqueue(id);
+            if (n.Touches(where)) Queue(id, where);
         }
         GroundChanged?.Invoke(where);
+    }
+
+    void Queue(string id, Rect2? where)
+    {
+        if (_queued.TryGetValue(id, out var had)) { _queued[id] = had is { } a && where is { } b ? a.Merge(b) : null; return; }
+        _queued[id] = where;
+        _toBuild.Enqueue(id);
     }
 
     public void RegroundAll() => Reground(null);
@@ -148,8 +155,9 @@ sealed class SheetLayer
         do
         {
             var id = _toBuild.Dequeue();
+            var where = _queued.GetValueOrDefault(id);
             _queued.Remove(id);
-            if (_sheets.TryGetValue(id, out var n)) n.Reground();
+            if (_sheets.TryGetValue(id, out var n)) n.Reground(where);
         } while (_toBuild.Count > 0 && clock.Elapsed.TotalMilliseconds < BuildMillisPerFrame);
     }
 

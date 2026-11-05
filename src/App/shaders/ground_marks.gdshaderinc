@@ -239,10 +239,14 @@ float room_at(vec2 o, vec2 p, vec2 uv, mat2 to_uv, int k, out float salt) {
 vec3 paper(int style, vec2 p, float fw) {
 	float tooth = (noise(p * 9.0) - 0.5) * 0.5;
 	if (style == ANCIENT) {
-		float warp = noise(vec2(p.x * 1.6, p.y * 0.12)) - 0.5;
-		float weft = noise(vec2(p.x * 0.12, p.y * 1.6)) - 0.5;
-		float fibre = (noise(p * vec2(1.5, 40.0)) - 0.5 + noise(p * vec2(40.0, 1.5) + 5.0) - 0.5) * (1.0 - far_blend(fw, 0.05));
-		return ANCIENT_PAPER * (1.0 + warp * 0.06 + weft * 0.05 + fibre * 0.05);
+		float near = 1.0 - far_blend(fw, 0.05);
+		float sx = p.x / PAPYRUS_STRIP + (noise(p * 0.3) - 0.5) * 0.5;
+		float sy = p.y / PAPYRUS_STRIP + (noise(p * 0.3 + 7.0) - 0.5) * 0.5;
+		float strip = hash(vec2(floor(sx), 3.0)) - 0.5;
+		float cross = hash(vec2(floor(sy), 5.0)) - 0.5;
+		float seam = max(1.0 - smoothstep(0.0, 0.03, abs(fract(sx) - 0.5) * PAPYRUS_STRIP), 1.0 - smoothstep(0.0, 0.03, abs(fract(sy) - 0.5) * PAPYRUS_STRIP)) * (1.0 - far_blend(fw, PAPYRUS_STRIP));
+		float fibre = (noise(p * vec2(2.0, 70.0)) - 0.5 + noise(p * vec2(70.0, 2.0) + 5.0) - 0.5) * near;
+		return ANCIENT_PAPER * (1.0 + strip * 0.05 + cross * 0.03 + fibre * 0.07 - seam * 0.04);
 	}
 	if (style == MODERN) return MODERN_PAPER * (1.0 + tooth * 0.008);
 	float wove = (noise(p * 14.0) - 0.5) * 0.5 * (1.0 - far_blend(fw, 0.07));

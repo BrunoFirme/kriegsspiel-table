@@ -1,10 +1,12 @@
 vec3 survey_wood(vec3 c, vec3 tint, vec2 p, vec2 uv, mat2 to_uv, float fw, float ledges, float spacing, float trees, out float cover) {
-	float S = spacing * CROWN_CROWDING;
+	float closed = smoothstep(CLOSED_FROM, CLOSED_FULL, trees);
+	float S = spacing * mix(0.95, CROWN_CROWDING, closed);
 	float keep = mix(OPEN_WOOD_KEEP, 1.0, trees);
 	cover = 0.0;
-	if (far_blend(fw, S) >= 1.0) return mix(c, tint * 0.8, 0.5 * trees);
+	if (far_blend(fw, S) >= 1.0) return mix(c, tint * 0.78, mix(0.4, 0.75, trees));
 	vec3 col = c;
 	col = mix(col, SURVEY_INK, scatter(p + 7.3, 0.0, S * 0.45, W1 * 0.45, 0.9, 0.35, fw) * 0.5);
+	float thick = noise(p / metres(THICKET_M) + 2.2);
 	for (int j = -1; j <= 1; j++) {
 		for (int i = -1; i <= 1; i++) {
 			vec2 id;
@@ -13,25 +15,27 @@ vec3 survey_wood(vec3 c, vec3 tint, vec2 p, vec2 uv, mat2 to_uv, float fw, float
 			float room = room_at(o, p, uv, to_uv, WOOD, salt);
 			if (room < -CROWN_OVERHANG) continue;
 			if (ledges > 0.5 && hash(id + 9.9) > LEDGE_TREES) continue;
-			if (hash(id + 1.3) < clearing_at(o, salt) || hash(id + 2.4) > keep) continue;
+			if (hash(id + 1.3) < clearing_at(o, salt) * (1.0 - closed) || hash(id + 2.4) > keep) continue;
 			float small = coppice_at(o, salt);
-			float r = min(RING_R * CROWN_GROWTH * mix(0.8, 1.2, hash(id + 3.1)) * mix(1.0, 0.55, small) * mix(0.8, 1.0, trees), max(room, 0.0) * 0.95 + CROWN_OVERHANG + 0.03);
+			float r = min(RING_R * CROWN_GROWTH * mix(0.7, 1.3, hash(id + 3.1)) * mix(0.85, 1.15, thick) * mix(1.0, 0.55, small) * mix(0.8, 1.0, trees), max(room, 0.0) * 0.95 + CROWN_OVERHANG + 0.03);
 			vec2 q = p - o;
 			float d = length(q);
 			if (d > r * 1.7) continue;
 			if (hash(id + 6.1) < conifer_share(o, salt) && small < 0.5) {
-				float m = spruce(p, o, r * 1.15, W1 * 0.9, fw);
+				float mass = 1.0 - smoothstep(r * 0.55 - fw, r * 0.55 + fw, length(q - NORTH * r * 0.4));
+				col = mix(col, tint * 0.62, mass * 0.7);
+				float m = spruce(p, o, r * mix(0.9, 1.35, hash(id + 5.2)), W1 * 1.1, fw);
 				col = mix(col, SURVEY_INK, m * 0.95);
-				cover = max(cover, m);
+				cover = max(cover, max(m, mass));
 				continue;
 			}
 			float a = atan(q.y, q.x);
 			float h = hash(id + 7.7) * TAU;
-			float rr = r * (1.0 + 0.1 * sin(a * 5.0 + h) + 0.06 * sin(a * 9.0 + h * 2.3));
+			float rr = r * (1.0 + 0.12 * sin(a * 5.0 + h) + 0.07 * sin(a * 9.0 + h * 2.3) + 0.04 * sin(a * 13.0 + h * 1.7));
 			float body = 1.0 - smoothstep(rr - fw * 0.75, rr + fw * 0.25, d);
 			float cast = 1.0 - smoothstep(rr * 0.9, rr * 1.1, length(q - vec2(rr * CROWN_SHADE_SHIFT)));
 			col = mix(col, SURVEY_INK, cast * (1.0 - body) * 0.35);
-			col = mix(col, tint * 0.72, body * 0.85);
+			col = mix(col, tint * mix(0.8, 0.64, hash(id + 4.4)), body * 0.9);
 			float shade = smoothstep(-0.2, 0.7, dot(q / max(d, 1e-5), vec2(0.7071, 0.7071)));
 			col = mix(col, SURVEY_INK, ink(abs(d - rr), W1 * mix(0.45, 1.1, shade), fw) * 0.9);
 			cover = max(cover, body);
@@ -64,11 +68,23 @@ vec3 survey_farm(vec3 c, vec3 sheet, vec2 p, vec2 site, vec2 seed, float turn, f
 	c = mix(c, wash(GARTENGRUEN, sheet, SURVEY_PAPER, p, edge, 0.4), garden * 0.8);
 	c = mix(c, SURVEY_INK, hatch(p.x + p.y, metres(GARDEN_HATCH_M), W1 * 0.5, fw) * garden * 0.3);
 	c = mix(c, wash(palette[EARTH].rgb, sheet, SURVEY_PAPER, p, edge, 0.6), max(yard, court) * 0.6);
-	c = survey_blocks(c, farm, shadow, CARMINE);
+	c = survey_blocks(c, farm, shadow, BRICK);
 	c = mix(c, SURVEY_INK, hatch(p.x - p.y, metres(2.5), W1 * 0.45, fw) * farm * step(0.7, hash(seed + 3.4)) * 0.6);
 	c = mix(c, SURVEY_INK, farm_trees(p, site, seed, turn, scale, fw) * 0.9);
 	cover = max(cover, max(farm, max(yard, court) * 0.5));
 	return c;
+}
+
+vec3 survey_lanes(vec3 c, vec3 sheet, vec2 p, float settle, float fw) {
+	float along;
+	float w = metres(LANE_HALF_M);
+	float d = lane_iso(p, LANE_CYCLE_M, 3.7, along);
+	float on = lane_cut(p, 11.0, mix(0.45, 0.75, settle));
+	c = mix(c, wash(palette[ROAD].rgb, sheet, SURVEY_PAPER, p, w - d, 0.5), (1.0 - smoothstep(w - fw, w + fw, d)) * on);
+	c = mix(c, SURVEY_INK, hand_ink(abs(d - w + W1), W1, p, fw) * on * 0.9);
+	float d2 = lane_iso(p, LANE_SECOND_M, 8.1, along);
+	float on2 = lane_cut(p, 17.0, mix(0.2, 0.55, settle));
+	return mix(c, WEGEBRAUN, dashed(along, d2, metres(10.0), 0.55, W2 * 0.8, fw) * on2 * 0.85);
 }
 
 vec3 survey_field(vec3 c, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_uv, float own, vec2 levels, vec2 along, float follow, float fw, float edge, out float cover) {
@@ -83,24 +99,26 @@ vec3 survey_field(vec3 c, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_uv, fl
 	float furrow;
 	float strip_edge = strips(p, l, mix(along, road_along, fronts), max(follow, fronts), fw, furrow);
 	float use = hash(l.id + 9.4);
-	if (use < 0.55) {
-		c = mix(c, SURVEY_INK, furrow * 0.22);
-		c = mix(c, SURVEY_INK, strip_edge * 0.5);
+	float small = step(l.room, metres(ORCHARD_LOT_M));
+	if (use < 0.55 || small < 0.5) {
+		c = mix(c, SURVEY_INK, furrow * 0.18);
+		c = mix(c, SURVEY_INK, strip_edge * 0.4);
 	} else if (use < 0.7) {
 		float o = orchard(p, l, 0.16, fw);
 		c = mix(c, SURVEY_INK, hatch(p.x + p.y, metres(GARDEN_HATCH_M), W1 * 0.5, fw) * (1.0 - o) * 0.25);
 		c = mix(c, palette[WOOD].rgb * 0.85, o * 0.9);
 		cover = o;
 	} else if (use < 0.8) {
-		c = wash(GAMBOGE, sheet, SURVEY_PAPER, p, l.edge, 0.6);
+		c = wash(GAMBOGE, sheet, SURVEY_PAPER, p, l.edge, 0.45);
 		c = mix(c, SURVEY_INK, vine_rows(p, l, along, fw) * 0.55);
 	} else if (use < 0.9) c = mix(c, SURVEY_INK, scatter(p, own, metres(12.0), metres(0.5), 0.9, 0.3, fw) * 0.4);
 	float bounded = smoothstep(0.15, 0.6, l.levels.x);
 	vec2 pair = l.id + l.other;
 	float marked = step(hash(pair + 4.4), mix(0.12, 0.85, bounded));
-	int line = HEDGE + int(hash(pair + 1.1) * 5.0);
+	int line = HEDGE + int(hash(pair + 1.1) * 4.0);
 	float stands = line == WALL ? 1.0 : 0.0;
 	c = mix(c, mix(SURVEY_INK, CINNABAR, stands * 0.6), edge_line(SURVEY, line, l, p, fw, W1, W2, W3) * marked * mix(0.35, 1.0, hash(pair + 2.2)));
+	c = survey_lanes(c, sheet, p, smoothstep(0.1, 0.8, l.levels.y), fw);
 	float near_road = 1.0 - smoothstep(metres(60.0), metres(160.0), road_away_at(site_uv));
 	if (l.room > metres(30.0) && hash(l.id + 8.2) < farms_here(l) * (1.0 + near_road)) {
 		float turn = mix(hash(l.id + 11.3) * 3.1416, atan(road_along.y, road_along.x), step(0.5, near_road));
@@ -145,6 +163,7 @@ vec3 survey(int k, int beside, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_u
 		if (rough > 0.5) c = mix(c, SURVEY_INK, pasture(p, own, MEADOW_ROW, W1 * 0.5, 0.75, fw) * 0.6);
 		else c = mix(c, SURVEY_INK, meadow_pairs(p, own, MEADOW_ROW, MEADOW_LEN, W1 * 0.55, 0.75, fw) * 0.7);
 		c = mix(c, SURVEY_BLUE, marks(p + 0.3, own, 0.55, 0.16, W1 * 0.55, 0.0, 0.15, 0.7, fw) * 0.7 * wet);
+		c = survey_lanes(c, sheet, p, smoothstep(0.1, 0.8, levels.y) * 0.6, fw);
 		if (l.room >= 0.0) {
 			float fenced = smoothstep(0.2, 0.6, max(l.levels.x, near_town)) * step(mix(0.65, 0.3, near_town), hash(l.id + 7.2));
 			c = mix(c, SURVEY_INK, edge_line(SURVEY, HEDGE + int(hash(l.id + 3.3) * 2.0), l, p, fw, W1, W2, W3) * fenced * 0.8);
@@ -165,9 +184,9 @@ vec3 survey(int k, int beside, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_u
 		c = survey_field(c, tint, sheet, p, uv, to_uv, own, vec2(max(levels.x, near_town * NEAR_TOWN_PLOTS), levels.y), along, follow, fw, edge, cover);
 	} else if (k == WOOD) {
 		Lot s = lot_at(p, uv, to_uv, metres(STAND_M), 0.5, WOOD, own, levels);
-		float open = clearing_at(p, own);
+		float open = clearing_at(p, own) * (1.0 - smoothstep(CLOSED_FROM, CLOSED_FULL, levels.x));
 		float conifer = conifer_share(p, own);
-		vec3 ground = mix(tint, CONIFER_WASH, smoothstep(0.4, 0.9, conifer)) * mix(1.0, 0.86, levels.x);
+		vec3 ground = mix(tint, CONIFER_WASH, smoothstep(0.4, 0.9, conifer)) * mix(1.0, 0.8, levels.x) * (1.0 + (fbm(p * 0.5) - 0.5) * 0.14);
 		c = wash(mix(ground, palette[GRASS].rgb, open), sheet, SURVEY_PAPER, p, wash_edge, pooling);
 		c = survey_wood(c, tint, p, uv, to_uv, fw, ledges, metres(mix(TREES_OPEN_M, TREES_CLOSED_M, levels.x)), levels.x * (1.0 - near_town * NEAR_TOWN_THINS), cover);
 		if (s.room >= 0.0) {

@@ -17,19 +17,26 @@ public partial class ReliefSurface : Node3D
     static readonly Color Earth = new(0.42f, 0.33f, 0.24f);
     static Shader? _shader;
 
-    readonly List<(MeshInstance3D node, Rect2 box, bool paint)> _blocks = new();
+    readonly record struct Block(MeshInstance3D Node, Rect2 Box, bool Paint, int Nx, int Nz, Vector2 Uv0, Vector2 Uv1);
+    readonly record struct BuiltFor(string Id, double W, double H, double CropX, double CropY, double CropW, double CropH, int Cols, int Rows, int Nx, int Nz, float Scale, int Blur);
+    readonly List<Block> _blocks = new();
     MeshInstance3D? _skirt;
     Material? _base;
     ShaderMaterial? _paint;
+    BuiltFor? _builtFor;
     ImageTexture? _kindsTex;
     ImageTexture? _edgesTex;
+    byte[]? _kindTexels;
+    byte[]? _fields;
     byte[]? _edgesOf;
     byte[]? _roads;
     bool _edgesBusy;
+    int _edgesVersion;
     (int Cols, int Rows, byte[] Kinds)? _edgesNext;
     ReliefGrid? _grid;
     ImageTexture? _heightsTex;
     float[]? _heightsOf;
+    float[]? _soft;
     float[]? _heightTexels;
     float _heightsScale;
     int _heightsBlur;
@@ -37,6 +44,7 @@ public partial class ReliefSurface : Node3D
     byte[]? _flowKinds;
     GroundFlow? _flow;
     bool _flowBusy;
+    bool _flowAgain;
     (int Cols, int Rows, float[] Soft, byte[] Kinds, double CellMetres, double MetresPerUnit)? _flowNext;
     float _cellWorld = 1;
     static bool _contours, _streams;
@@ -103,8 +111,11 @@ public partial class ReliefSurface : Node3D
         int nx = Math.Max(1, cellsX / step), nz = Math.Max(1, cellsZ / step);
         var h = GroundMesh.WeldedHeights(ground, sheetXf, W / 2, H / 2);
         _cellWorld = (float)(Ground.FullWidth(def) / Math.Max(1, grid.Cols - 1));
+        float scale = (float)(Ground.FullWidth(def) * (def.Relief is { Length: > 0 } ? def.Height : 1));
+        int blur = Math.Max(step, (int)Math.Round(ContourBlurUnits / _cellWorld));
         UpdateKinds(grid);
-        UpdateHeights(grid, (float)(Ground.FullWidth(def) * (def.Relief is { Length: > 0 } ? def.Height : 1)), Math.Max(step, (int)Math.Round(ContourBlurUnits / _cellWorld)));
+        UpdateHeights(grid, scale, blur);
+        _builtFor = new BuiltFor(def.Id, def.Size.W, def.Size.H, c.X, c.Y, c.W, c.H, grid.Cols, grid.Rows, nx, nz, scale, blur);
         var cells = new Vector2(grid.Cols, grid.Rows);
         bool drawsGround = picture == null && !def.HasPicture;
         _base = picture ?? (drawsGround ? Material(false, cells) : null);
@@ -120,30 +131,146 @@ public partial class ReliefSurface : Node3D
                 var box = new Rect2(ax, az, bxw - ax, bzw - az);
                 var corners = new[] { sheetXf * new Vector3(ax, 0, az), sheetXf * new Vector3(bxw, 0, az), sheetXf * new Vector3(bxw, 0, bzw), sheetXf * new Vector3(ax, 0, bzw) };
                 bool hidden = covered?.Invoke(corners) == true;
-                if (_base != null && !hidden) Add(GroundMesh.Grid(h, ax, az, bxw, bzw, ex - bx, ez - bz, uv0, uv1), _base, box, false, level);
-                if (_paint != null && (hidden || !drawsGround)) Add(GroundMesh.Grid(h, ax, az, bxw, bzw, ex - bx, ez - bz, uv0, uv1), _paint, box, true, level + PaintAbove);
+                if (_base != null && !hidden) Add(new Block(Node(_base, level), box, false, ex - bx, ez - bz, uv0, uv1), h);
+                if (_paint != null && (hidden || !drawsGround)) Add(new Block(Node(_paint, level + PaintAbove), box, true, ex - bx, ez - bz, uv0, uv1), h);
             }
         _skirt = new MeshInstance3D
         {
-            Mesh = GroundMesh.Skirt(h, x0, z0, x1, z1, nx, nz, 0, (x, z) => ground.ReliefAt(Coords.FromWorld(sheetXf * new Vector3(x, 0, z))) == null, Math.Min(W, H) * SeamProbe),
+            Mesh = SkirtMesh(h, ground, sheetXf, W, H, nx, nz),
             MaterialOverride = new StandardMaterial3D { AlbedoColor = Earth, Roughness = 1, CullMode = BaseMaterial3D.CullModeEnum.Disabled, SpecularMode = BaseMaterial3D.SpecularModeEnum.Disabled },
             CastShadow = GeometryInstance3D.ShadowCastingSetting.Off, Position = new Vector3(0, level, 0),
         };
         AddChild(_skirt);
     }
 
-    void Add(ArrayMesh mesh, Material mat, Rect2 box, bool paint, float lift)
+    static ArrayMesh SkirtMesh(Func<float, float, float> h, Ground ground, Transform3D sheetXf, float W, float H, int nx, int nz) =>
+        GroundMesh.Skirt(h, -W / 2, -H / 2, W / 2, H / 2, nx, nz, 0, (x, z) => ground.ReliefAt(Coords.FromWorld(sheetXf * new Vector3(x, 0, z))) == null, Math.Min(W, H) * SeamProbe);
+
+    static MeshInstance3D Node(Material mat, float lift) => new()
     {
-        var node = new MeshInstance3D
+        MaterialOverride = mat,
+        Position = new Vector3(0, lift, 0),
+        CastShadow = GeometryInstance3D.ShadowCastingSetting.Off,
+        Layers = Table.WorldLayer | GroundLayer,
+    };
+
+    void Add(Block b, Func<float, float, float> h)
+    {
+        Shape(b, h);
+        AddChild(b.Node);
+        _blocks.Add(b);
+    }
+
+    static void Shape(Block b, Func<float, float, float> h) =>
+        b.Node.Mesh = GroundMesh.Grid(h, b.Box.Position.X, b.Box.Position.Y, b.Box.End.X, b.Box.End.Y, b.Nx, b.Nz, b.Uv0, b.Uv1);
+
+    public bool Patch(SheetDef def, ReliefGrid grid, Ground ground, Transform3D sheetXf, Rect2 where)
+    {
+        if (_builtFor is not { } built || !Patchable) return false;
+        var crop = def.Crop ?? SheetGeometry.Whole;
+        bool sameSheet = built.Id == def.Id && built.W == def.Size.W && built.H == def.Size.H && built.Cols == grid.Cols && built.Rows == grid.Rows;
+        bool sameCrop = built.CropX == crop.X && built.CropY == crop.Y && built.CropW == crop.W && built.CropH == crop.H;
+        if (!sameSheet || !sameCrop) return false;
+        if (_paint == null && grid.Painted) return false;
+        var box = CellBoxOf(def, grid, sheetXf, where);
+        if (box.Empty) return true;
+        bool kindsChanged = false, heightsChanged = false;
+        for (int y = box.Y0; y <= box.Y1; y++)
+            for (int x = box.X0; x <= box.X1; x++)
+            {
+                int i = y * grid.Cols + x;
+                kindsChanged |= _edgesOf![i] != grid.Kind[i] || _kindTexels![4 * i + 1] != grid.Salt[i] || _kindTexels[4 * i + 2] != grid.Detail[i];
+                heightsChanged |= _heightsOf![i] != grid.H[i];
+            }
+        if (!kindsChanged && !heightsChanged) return true;
+        _grid = grid;
+        if (kindsChanged) PatchKinds(grid, box);
+        if (heightsChanged) PatchHeights(def, grid, ground, sheetXf, box, built);
+        if (_unitsPerMetre > 0) FlowAgain(grid);
+        return true;
+    }
+
+    bool Patchable => _grid != null && _kindTexels != null && _edgesOf != null && _roads != null && _fields != null && _heightsOf != null && _soft != null && _heightTexels != null;
+
+    CellBox CellBoxOf(SheetDef def, ReliefGrid grid, Transform3D sheetXf, Rect2 where)
+    {
+        var inv = sheetXf.AffineInverse();
+        var c = def.Crop ?? SheetGeometry.Whole;
+        float W = (float)def.Size.W, H = (float)def.Size.H;
+        var box = CellBox.None;
+        foreach (var corner in new[] { where.Position, where.Position + new Vector2(where.Size.X, 0), where.End, where.Position + new Vector2(0, where.Size.Y) })
         {
-            Mesh = mesh,
-            MaterialOverride = mat,
-            Position = new Vector3(0, lift, 0),
-            CastShadow = GeometryInstance3D.ShadowCastingSetting.Off,
-            Layers = Table.WorldLayer | GroundLayer,
-        };
-        AddChild(node);
-        _blocks.Add((node, box, paint));
+            var l = inv * new Vector3(corner.X, 0, corner.Y);
+            double u = c.X + c.W * (l.X / W + 0.5), v = c.Y + c.H * (l.Z / H + 0.5);
+            int cx = (int)Math.Floor(u * (grid.Cols - 1)), cy = (int)Math.Floor(v * (grid.Rows - 1));
+            box = box.Union(new CellBox(cx, cy, cx + 1, cy + 1));
+        }
+        return box.Grow(1).Clip(grid.Cols, grid.Rows);
+    }
+
+    Rect2 LocalRect(BuiltFor built, CellBox box)
+    {
+        float X(int cx) => (float)(((cx / (double)Math.Max(1, built.Cols - 1) - built.CropX) / built.CropW - 0.5) * built.W);
+        float Z(int cy) => (float)(((cy / (double)Math.Max(1, built.Rows - 1) - built.CropY) / built.CropH - 0.5) * built.H);
+        return new Rect2(X(box.X0), Z(box.Y0), X(box.X1) - X(box.X0), Z(box.Y1) - Z(box.Y0)).Grow(_cellWorld * 2);
+    }
+
+    void PatchKinds(ReliefGrid grid, CellBox box)
+    {
+        for (int y = box.Y0; y <= box.Y1; y++)
+            for (int x = box.X0; x <= box.X1; x++)
+            {
+                int i = y * grid.Cols + x;
+                _edgesOf![i] = grid.Kind[i];
+                _kindTexels![4 * i] = grid.Kind[i];
+                _kindTexels[4 * i + 1] = grid.Salt[i];
+                _kindTexels[4 * i + 2] = grid.Detail[i];
+            }
+        _edgesVersion++;
+        GroundEdges.Derive(grid.Cols, grid.Rows, _edgesOf!, box, _roads!, _fields!);
+        var reach = box.Grow(GroundEdges.Reach).Clip(grid.Cols, grid.Rows);
+        for (int y = reach.Y0; y <= reach.Y1; y++)
+            for (int x = reach.X0; x <= reach.X1; x++)
+            {
+                int i = y * grid.Cols + x;
+                _kindTexels![4 * i + 3] = _roads![i];
+            }
+        Upload(ref _kindsTex, grid.Cols, grid.Rows, _kindTexels!);
+        Upload(ref _edgesTex, grid.Cols, grid.Rows, _fields!);
+    }
+
+    void PatchHeights(SheetDef def, ReliefGrid grid, Ground ground, Transform3D sheetXf, CellBox box, BuiltFor built)
+    {
+        for (int y = box.Y0; y <= box.Y1; y++)
+            for (int x = box.X0; x <= box.X1; x++)
+            {
+                int i = y * grid.Cols + x;
+                _heightsOf![i] = grid.H[i];
+                _heightTexels![4 * i] = grid.H[i] * built.Scale;
+            }
+        GroundHeights.Blurred(grid.H, grid.Cols, grid.Rows, built.Blur, box, _soft!);
+        var softened = box.Grow(built.Blur).Clip(grid.Cols, grid.Rows);
+        for (int y = softened.Y0; y <= softened.Y1; y++)
+            for (int x = softened.X0; x <= softened.X1; x++)
+            {
+                int i = y * grid.Cols + x;
+                _heightTexels![4 * i + 1] = _soft![i] * built.Scale;
+            }
+        UploadHeights(grid.Cols, grid.Rows);
+        float W = (float)def.Size.W, H = (float)def.Size.H;
+        var h = GroundMesh.WeldedHeights(ground, sheetXf, W / 2, H / 2);
+        var local = LocalRect(built, box);
+        foreach (var b in _blocks)
+            if (b.Box.Intersects(local)) Shape(b, h);
+        bool atEdge = local.Position.X <= -W / 2 || local.Position.Y <= -H / 2 || local.End.X >= W / 2 || local.End.Y >= H / 2;
+        if (_skirt != null && atEdge) _skirt.Mesh = SkirtMesh(h, ground, sheetXf, W, H, built.Nx, built.Nz);
+    }
+
+    void FlowAgain(ReliefGrid grid)
+    {
+        if (_flowBusy) { _flowAgain = true; return; }
+        _flowKinds = (byte[])grid.Kind.Clone();
+        DeriveFlow(grid.Cols, grid.Rows, (float[])_soft!.Clone(), _flowKinds, _cellWorld / _unitsPerMetre, _heightsScale / _unitsPerMetre);
     }
 
     ShaderMaterial Material(bool paintedOnly, Vector2 cells)
@@ -176,29 +303,31 @@ public partial class ReliefSurface : Node3D
             return;
         }
         UploadKinds(grid);
-        if (_edgesBusy) { _edgesNext = (grid.Cols, grid.Rows, _edgesOf); return; }
-        DeriveEdges(grid.Cols, grid.Rows, _edgesOf);
+        _edgesVersion++;
+        if (_edgesBusy) { _edgesNext = (grid.Cols, grid.Rows, (byte[])grid.Kind.Clone()); return; }
+        DeriveEdges(grid.Cols, grid.Rows, (byte[])grid.Kind.Clone());
     }
 
     void DeriveEdges(int cols, int rows, byte[] kinds)
     {
         _edgesBusy = true;
+        int version = _edgesVersion;
         Task.Run(() =>
         {
             try
             {
                 var derived = GroundEdges.Derive(cols, rows, kinds);
-                Callable.From(() => EdgesDerived(cols, rows, derived.Roads, derived.Fields)).CallDeferred();
+                Callable.From(() => EdgesDerived(cols, rows, version, derived.Roads, derived.Fields)).CallDeferred();
             }
             catch (Exception e)
             {
                 GD.PrintErr("[relief] deriving the ground's edges: " + e.Message);
-                Callable.From(() => EdgesDerived(cols, rows, null, null)).CallDeferred();
+                Callable.From(() => EdgesDerived(cols, rows, version, null, null)).CallDeferred();
             }
         });
     }
 
-    void EdgesDerived(int cols, int rows, byte[]? roads, byte[]? fields)
+    void EdgesDerived(int cols, int rows, int version, byte[]? roads, byte[]? fields)
     {
         _edgesBusy = false;
         if (_edgesNext is { } next)
@@ -206,7 +335,7 @@ public partial class ReliefSurface : Node3D
             _edgesNext = null;
             DeriveEdges(next.Cols, next.Rows, next.Kinds);
         }
-        if (roads == null || fields == null || !GodotObject.IsInstanceValid(this) || _grid == null || _grid.Cols != cols || _grid.Rows != rows) return;
+        if (roads == null || fields == null || version != _edgesVersion || !GodotObject.IsInstanceValid(this) || _grid == null || _grid.Cols != cols || _grid.Rows != rows) return;
         _roads = roads;
         UploadKinds(_grid);
         UploadEdges(cols, rows, fields);
@@ -215,7 +344,8 @@ public partial class ReliefSurface : Node3D
     void UploadKinds(ReliefGrid grid)
     {
         var roads = _roads is { } r && r.Length == grid.Kind.Length ? r : null;
-        var texels = new byte[grid.Kind.Length * 4];
+        if (_kindTexels == null || _kindTexels.Length != grid.Kind.Length * 4) _kindTexels = new byte[grid.Kind.Length * 4];
+        var texels = _kindTexels;
         for (int i = 0; i < grid.Kind.Length; i++)
         {
             texels[4 * i] = grid.Kind[i];
@@ -223,16 +353,20 @@ public partial class ReliefSurface : Node3D
             texels[4 * i + 2] = grid.Detail[i];
             texels[4 * i + 3] = roads?[i] ?? GroundEdges.Far;
         }
-        var img = Image.CreateFromData(grid.Cols, grid.Rows, false, Image.Format.Rgba8, texels);
-        if (_kindsTex != null && _kindsTex.GetWidth() == grid.Cols && _kindsTex.GetHeight() == grid.Rows) _kindsTex.Update(img);
-        else _kindsTex = ImageTexture.CreateFromImage(img);
+        Upload(ref _kindsTex, grid.Cols, grid.Rows, texels);
     }
 
     void UploadEdges(int cols, int rows, byte[] fields)
     {
-        var img = Image.CreateFromData(cols, rows, false, Image.Format.Rgba8, fields);
-        if (_edgesTex != null && _edgesTex.GetWidth() == cols && _edgesTex.GetHeight() == rows) _edgesTex.Update(img);
-        else _edgesTex = ImageTexture.CreateFromImage(img);
+        _fields = fields;
+        Upload(ref _edgesTex, cols, rows, fields);
+    }
+
+    static void Upload(ref ImageTexture? tex, int cols, int rows, byte[] texels)
+    {
+        var img = Image.CreateFromData(cols, rows, false, Image.Format.Rgba8, texels);
+        if (tex != null && tex.GetWidth() == cols && tex.GetHeight() == rows) tex.Update(img);
+        else tex = ImageTexture.CreateFromImage(img);
     }
 
     void UpdateHeights(ReliefGrid grid, float scale, int blur)
@@ -252,6 +386,7 @@ public partial class ReliefSurface : Node3D
             _heightsScale = scale;
             _heightsBlur = blur;
             soft = GroundHeights.Blurred(grid, blur);
+            _soft = soft;
             var texels = new float[grid.H.Length * 4];
             var old = sized ? _heightTexels : null;
             for (int i = 0; i < grid.H.Length; i++)
@@ -278,11 +413,12 @@ public partial class ReliefSurface : Node3D
             return;
         }
         _flowKinds = (byte[])grid.Kind.Clone();
-        soft ??= GroundHeights.Blurred(grid, blur);
+        soft ??= _soft is { } kept && kept.Length == grid.H.Length ? kept : GroundHeights.Blurred(grid, blur);
+        _soft = soft;
         double cellMetres = _cellWorld / _unitsPerMetre, metresPerUnit = scale / _unitsPerMetre;
         if (heightsChanged) UploadHeights(grid.Cols, grid.Rows);
-        if (_flowBusy) { _flowNext = (grid.Cols, grid.Rows, soft, _flowKinds, cellMetres, metresPerUnit); return; }
-        DeriveFlow(grid.Cols, grid.Rows, soft, _flowKinds, cellMetres, metresPerUnit);
+        if (_flowBusy) { _flowNext = (grid.Cols, grid.Rows, (float[])soft.Clone(), _flowKinds, cellMetres, metresPerUnit); return; }
+        DeriveFlow(grid.Cols, grid.Rows, (float[])soft.Clone(), _flowKinds, cellMetres, metresPerUnit);
     }
 
     void DeriveFlow(int cols, int rows, float[] soft, byte[] kinds, double cellMetres, double metresPerUnit)
@@ -306,12 +442,19 @@ public partial class ReliefSurface : Node3D
     void FlowDerived(int cols, int rows, GroundFlow? flow)
     {
         _flowBusy = false;
+        if (!GodotObject.IsInstanceValid(this)) return;
         if (_flowNext is { } next)
         {
             _flowNext = null;
+            _flowAgain = false;
             DeriveFlow(next.Cols, next.Rows, next.Soft, next.Kinds, next.CellMetres, next.MetresPerUnit);
         }
-        if (flow == null || !GodotObject.IsInstanceValid(this)) return;
+        else if (_flowAgain && _grid != null && _unitsPerMetre > 0)
+        {
+            _flowAgain = false;
+            FlowAgain(_grid);
+        }
+        if (flow == null) return;
         if (_heightTexels == null || _heightTexels.Length != flow.Order.Length * 4 || _heightsTex == null || _heightsTex.GetWidth() != cols || _heightsTex.GetHeight() != rows) return;
         _flow = flow;
         WriteFlow(flow);
@@ -347,11 +490,12 @@ public partial class ReliefSurface : Node3D
 
     public void Clear()
     {
-        foreach (var (node, _, _) in _blocks) node.QueueFree();
+        foreach (var b in _blocks) b.Node.QueueFree();
         _blocks.Clear();
         _skirt?.QueueFree();
         _skirt = null;
         _base = null;
         _paint = null;
+        _builtFor = null;
     }
 }

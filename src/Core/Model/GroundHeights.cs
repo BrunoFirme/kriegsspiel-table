@@ -9,6 +9,18 @@ public static class GroundHeights
         return Pass(along, g.Cols, g.Rows, radius, false);
     }
 
+    public static void Blurred(float[] h, int cols, int rows, int radius, CellBox box, float[] into)
+    {
+        var window = box.Grow(radius * 2).Clip(cols, rows);
+        var inner = box.Grow(radius).Clip(cols, rows);
+        if (window.Empty || inner.Empty) return;
+        int w = window.Width, n = window.Height;
+        var sub = new float[w * n];
+        for (int y = 0; y < n; y++) Array.Copy(h, (window.Y0 + y) * cols + window.X0, sub, y * w, w);
+        var soft = radius <= 0 ? sub : Pass(Pass(sub, w, n, radius, true), w, n, radius, false);
+        for (int y = inner.Y0; y <= inner.Y1; y++) Array.Copy(soft, (y - window.Y0) * w + inner.X0 - window.X0, into, y * cols + inner.X0, inner.Width);
+    }
+
     static float[] Pass(float[] src, int cols, int rows, int r, bool alongRows)
     {
         var o = new float[src.Length];

@@ -135,9 +135,14 @@ public partial class SheetNode : Node3D
         return r;
     }
 
-    public void Reground()
+    public int Built { get; private set; }
+    public int Patched { get; private set; }
+
+    public void Reground(Rect2? where = null)
     {
         var grid = _relief.Grid(Def);
+        if (where is { } box && grid != null && _surface.Patch(Def, grid, _relief.Ground, Transform, box)) { Patched++; return; }
+        Built++;
         _surface.Build(Def, grid ?? Bare, _relief.Ground, Transform, Covered == null ? null : corners => Covered(this, corners), _mat);
         RefreshOutline();
     }

@@ -18,6 +18,19 @@ sealed class ZoneLayer
     Vec2? _a, _b;
     public bool Show = true;
 
+    public void Resync(Rect2? where)
+    {
+        if (where is { } box && !_c.S.View.Zones.Any(z => z.Polygon.Count >= 3 && Bounds(z.Polygon).Intersects(box))) return;
+        Sync();
+    }
+
+    static Rect2 Bounds(List<Vec2> polygon)
+    {
+        var r = new Rect2(new Vector2((float)polygon[0].X, (float)-polygon[0].Z), Vector2.Zero);
+        foreach (var p in polygon) r = r.Expand(new Vector2((float)p.X, (float)-p.Z));
+        return r;
+    }
+
     public void Sync()
     {
         if (_root == null) { _root = new Node3D { Name = "Zones" }; _c.Scene.AddChild(_root); }

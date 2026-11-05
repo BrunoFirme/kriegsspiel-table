@@ -1,7 +1,8 @@
 vec3 ancient_wood(vec3 c, vec3 tint, vec2 p, vec2 uv, mat2 to_uv, float fw, float ledges, float spacing, float trees, out float cover) {
-	float S = spacing * CROWN_CROWDING;
+	float closed = smoothstep(CLOSED_FROM, CLOSED_FULL, trees);
+	float S = spacing * mix(0.95, CROWN_CROWDING, closed);
 	float keep = mix(OPEN_WOOD_KEEP, 1.0, trees);
-	vec3 crown_c = tint * vec3(0.78, 0.86, 0.72);
+	vec3 crown_c = tint * vec3(0.78, 0.86, 0.72) * mix(1.0, 0.88, closed);
 	cover = 0.0;
 	if (far_blend(fw, S) >= 1.0) return mix(c, tint * 0.9, 0.7);
 	vec3 col = c;
@@ -9,12 +10,12 @@ vec3 ancient_wood(vec3 c, vec3 tint, vec2 p, vec2 uv, mat2 to_uv, float fw, floa
 		for (int i = -1; i <= 1; i++) {
 			vec2 id;
 			float salt;
-			vec2 o = grid_point_at(p + NORTH * S * 0.5, uv, to_uv, S, 0.22, i, j, id, salt) - NORTH * S * 0.5;
+			vec2 o = grid_point_at(p + NORTH * S * 0.5, uv, to_uv, S, 0.45, i, j, id, salt) - NORTH * S * 0.5;
 			float room = room_at(o, p, uv, to_uv, WOOD, salt);
-			if (room < 0.05 || hash(id + 4.2) > 0.92) continue;
+			if (room < -0.02 || hash(id + 4.2) > 0.96) continue;
 			if (ledges > 0.5 && hash(id + 9.9) > LEDGE_TREES) continue;
-			if (hash(id + 1.3) < clearing_at(o, salt) || hash(id + 2.4) > keep) continue;
-			float scale = clamp(room / 0.22, 0.45, 1.0) * (0.9 + 0.2 * hash(id + 3.1)) * S / 0.6 * mix(1.0, 0.6, coppice_at(o, salt));
+			if (hash(id + 1.3) < clearing_at(o, salt) * (1.0 - closed) || hash(id + 2.4) > keep) continue;
+			float scale = clamp((room + 0.05) / 0.22, 0.45, 1.0) * (0.8 + 0.4 * hash(id + 3.1)) * S / 0.6 * mix(1.0, 0.6, coppice_at(o, salt));
 			float rc = 0.16 * scale;
 			float trunk = 0.11 * scale;
 			if (hash(id + 6.1) < conifer_share(o, salt)) {
@@ -58,6 +59,13 @@ vec3 ancient_farm(vec3 c, vec2 p, vec2 site, vec2 seed, float turn, float fw, in
 	return c;
 }
 
+vec3 ancient_lanes(vec3 c, vec2 p, float settle, float fw) {
+	float along;
+	float d = lane_iso(p, LANE_CYCLE_M, 3.7, along);
+	float on = lane_cut(p, 11.0, mix(0.3, 0.55, settle));
+	return mix(c, RED_OCHRE, ink(d, W1, fw) * on * 0.85);
+}
+
 vec3 ancient_field(vec3 c, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_uv, float own, vec2 levels, vec2 along, float follow, float fw, float edge, out float cover) {
 	p = curled(p);
 	Lot l = lot_at(p, uv, to_uv, metres(mix(PLOT_OPEN_M, PLOT_SMALL_M, levels.x)), 0.56, FIELD, own, levels);
@@ -65,10 +73,12 @@ vec3 ancient_field(vec3 c, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_uv, f
 	vec2 site_uv = uv + to_uv * (l.site - p);
 	if (wet_field_at(site_uv, follow) > 0.5) return wet_field(ANCIENT, c, sheet, p, uv, to_uv, own, levels, fw);
 	float use = hash(l.id + 9.4);
-	if (use < 0.2) { float o = orchard(p, l, 0.18, fw); c = mix(c, ANCIENT_INK, o * 0.85); cover = o; }
+	float small = step(l.room, metres(ORCHARD_LOT_M));
+	if (use < 0.2 && small > 0.5) { float o = orchard(p, l, 0.18, fw); c = mix(c, ANCIENT_INK, o * 0.85); cover = o; }
 	else if (use < 0.35) c = mix(c, ANCIENT_INK, vine_rows(p, l, along, fw) * 0.6);
 	vec2 pair = l.id + l.other;
 	c = mix(c, ANCIENT_INK, ink(l.edge, W1, fw) * step(hash(pair + 4.4), 0.1) * 0.7);
+	c = ancient_lanes(c, p, smoothstep(0.1, 0.8, l.levels.y), fw);
 	if (l.room > metres(30.0) && hash(l.id + 8.2) < farms_here(l)) {
 		float turn = hash(l.id + 11.3) * 3.1416;
 		c = ancient_farm(c, p, l.site, l.id, turn, fw, cover);
@@ -93,13 +103,14 @@ vec3 ancient(int k, int beside, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_
 			c = mix(c, palette[ANCIENT * KINDS + WATER].rgb * (sheet / ANCIENT_PAPER), body);
 			c = mix(c, ANCIENT_INK, o * 0.9);
 		}
+		c = ancient_lanes(c, p, smoothstep(0.1, 0.8, levels.y) * 0.5, fw);
 		rim = 0.0;
 	} else if (k == FIELD) {
 		c = ancient_field(c, tint, sheet, p, uv, to_uv, own, vec2(max(levels.x, near_town * NEAR_TOWN_PLOTS), levels.y), along, follow, fw, edge, cover);
 		weight = W1;
 	} else if (k == WOOD) {
 		Lot s = lot_at(p, uv, to_uv, metres(STAND_M), 0.5, WOOD, own, levels);
-		float open = clearing_at(p, own);
+		float open = clearing_at(p, own) * (1.0 - smoothstep(CLOSED_FROM, CLOSED_FULL, levels.x));
 		c = mix(c, palette[ANCIENT * KINDS + GRASS].rgb * (sheet / ANCIENT_PAPER), open);
 		c = ancient_wood(c, tint, p, uv, to_uv, fw, ledges, metres(mix(TREES_OPEN_M, TREES_CLOSED_M, levels.x)) * 1.2, levels.x * (1.0 - near_town * NEAR_TOWN_THINS), cover);
 		if (s.room >= 0.0) {

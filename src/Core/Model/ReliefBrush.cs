@@ -6,6 +6,10 @@ public readonly record struct CellBox(int X0, int Y0, int X1, int Y1)
 {
     public bool Empty => X1 < X0 || Y1 < Y0;
     public CellBox Union(CellBox o) => Empty ? o : o.Empty ? this : new(Math.Min(X0, o.X0), Math.Min(Y0, o.Y0), Math.Max(X1, o.X1), Math.Max(Y1, o.Y1));
+    public CellBox Grow(int by) => new(X0 - by, Y0 - by, X1 + by, Y1 + by);
+    public CellBox Clip(int cols, int rows) => new(Math.Max(0, X0), Math.Max(0, Y0), Math.Min(cols - 1, X1), Math.Min(rows - 1, Y1));
+    public int Width => X1 - X0 + 1;
+    public int Height => Y1 - Y0 + 1;
     public static readonly CellBox None = new(0, 0, -1, -1);
 }
 

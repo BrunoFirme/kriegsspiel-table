@@ -35,7 +35,7 @@ vec3 road_over(int style, vec3 c, vec3 sheet, vec2 p, vec2 uv, mat2 to_uv, float
 		c = mix(c, wash(palette[ROAD].rgb, sheet, SURVEY_PAPER, p, w - d, 0.5), line);
 		c = mix(c, SURVEY_INK, hand_ink(abs(d - w + W1), W1, p, fw));
 	} else {
-		c = mix(c, wash(mix(CARMINE, sheet, 0.45), sheet, SURVEY_PAPER, p, w - d, 0.3), line);
+		c = mix(c, wash(mix(WEGEBRAUN, sheet, 0.55), sheet, SURVEY_PAPER, p, w - d, 0.4), line);
 		c = mix(c, SURVEY_INK, hand_ink(abs(d - w + W3), W3, p, fw));
 		c = mix(c, SURVEY_INK, dotted_road(p, uv, to_uv, w + W3 * 3.0, 0.42, W3 * 0.8, fw));
 	}

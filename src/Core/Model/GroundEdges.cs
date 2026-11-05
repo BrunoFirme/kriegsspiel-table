@@ -16,6 +16,25 @@ public static class GroundEdges
 
     public static byte[] Roads(ReliefGrid g) => Derive(g.Cols, g.Rows, g.Kind).Roads;
 
+    public const int Reach = 64;
+
+    public static void Derive(int cols, int rows, byte[] kinds, CellBox box, byte[] roads, byte[] fields)
+    {
+        var window = box.Grow(Reach * 2).Clip(cols, rows);
+        var inner = box.Grow(Reach).Clip(cols, rows);
+        if (window.Empty || inner.Empty) return;
+        int w = window.Width, h = window.Height;
+        var sub = new byte[w * h];
+        for (int y = 0; y < h; y++) Array.Copy(kinds, (window.Y0 + y) * cols + window.X0, sub, y * w, w);
+        var (r, f) = Derive(w, h, sub);
+        for (int y = inner.Y0; y <= inner.Y1; y++)
+        {
+            int at = y * cols + inner.X0, win = (y - window.Y0) * w + inner.X0 - window.X0;
+            Array.Copy(r, win, roads, at, inner.Width);
+            Array.Copy(f, win * Channels, fields, at * Channels, inner.Width * Channels);
+        }
+    }
+
     public static byte[] Fields(ReliefGrid g) => Derive(g.Cols, g.Rows, g.Kind).Fields;
 
     public static (byte[] Roads, byte[] Fields) Derive(int cols, int rows, byte[] kinds)

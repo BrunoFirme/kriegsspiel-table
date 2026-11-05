@@ -285,4 +285,62 @@ static class ToolTests
         await r.Frames(3);
         Check.Equal(GroundKinds.None, t.S.Ground.KindAt(new Vec2(15, -15)), "undo takes the route back");
     }
+
+    [NodeTest]
+    static async Task A_brush_stroke_patches_the_sheet_under_it_and_only_the_commit_rebuilds_it(TestRunner r)
+    {
+        var t = OfflineTable.Make(r, pieces: 0);
+        await r.Frame();
+        var flat = ReliefGrid.Flat(40, 40);
+        var (sha, _) = ReliefImport.Save(flat, t.S.Store.Root);
+        t.S.Relief.Remember(sha, flat);
+        t.S.Do(new KTable.Core.Protocol.AddSheet
+        {
+            Sheet = new SheetDef { Id = "g", Name = "Ground", Image = "", Package = KTable.Core.Protocol.UploadAsset.ReliefPackage, Size = new Size2(40, 40), RotDeg = 180, Relief = sha, Height = 1 },
+        });
+        t.S.Do(new KTable.Core.Protocol.SetCalibration { UnitsPerMeter = 0.02 });
+        t.Table.ReliefShaped += (_, c) => t.S.Do(c);
+        await r.Frames(12);
+        Check.That(t.Table.Sheets.TryGet("g", out var node), "the ground sheet has a node");
+        Check.That(node.Built >= 1, "the sheet was built once its relief arrived");
+        t.Table.SetTool(Tool.Relief);
+        var cfg = t.Table.Settings;
+        var relief = t.Table.Relief;
+        cfg.ReliefMode = "paint:wood";
+        cfg.ReliefPaint = "brush";
+        int built = node.Built;
+        relief.Press(new Vec2(-8, 0), false, false);
+        for (int i = 1; i <= 6; i++)
+        {
+            relief.Motion(new Vec2(-8 + i * 2, 0));
+            await r.Frames(12);
+        }
+        Check.That(node.Patched >= 1, "the stroke patched the sheet while the brush moved");
+        Check.That(node.Built <= built + 1, "and rebuilt it at most once, for the first paint on bare ground");
+        byte wood = GroundKinds.Of("wood")!.Value;
+        Check.Equal(wood, t.S.Ground.KindAt(new Vec2(0, 0)), "the draft already shows wood under the brush");
+        relief.Release();
+        for (int i = 0; i < ShapeWaitFrames && t.S.View.Sheets[0].Relief == sha; i++) await r.Frame();
+        Check.That(t.S.View.Sheets[0].Relief != sha, "the stroke committed a new relief");
+        await r.Frames(6);
+        Check.That(t.Table.Sheets.TryGet("g", out node), "the committed relief recuts the sheet into a new node");
+        Check.That(node.Built >= 1, "built whole from the committed relief");
+        int rebuilt = node.Built, patched = node.Patched;
+        cfg.ReliefMode = "raise";
+        relief.Press(new Vec2(0, 6), false, false);
+        for (int i = 1; i <= 4; i++)
+        {
+            relief.Motion(new Vec2(i * 2, 6));
+            await r.Frames(12);
+        }
+        Check.That(node.Patched > patched, "raising patched the heights under the brush");
+        Check.Equal(rebuilt, node.Built, "without rebuilding the sheet");
+        Check.That(t.S.Ground.At(new Vec2(4, 6)) > 0, "the draft is already higher under the brush");
+        var committed = t.S.View.Sheets[0].Relief;
+        relief.Release();
+        for (int i = 0; i < ShapeWaitFrames && t.S.View.Sheets[0].Relief == committed; i++) await r.Frame();
+        Check.That(t.S.View.Sheets[0].Relief != committed, "the raise committed a new relief");
+        await r.Frames(6);
+        Check.That(t.Table.Sheets.TryGet("g", out node) && node.Built >= 1 && node.Patched == 0, "the commit rebuilds the sheet whole in a fresh node");
+    }
 }

@@ -57,7 +57,7 @@ Lot lot_at(vec2 p, vec2 uv, mat2 to_uv, float size, float jitter, int k, float s
 }
 
 vec2 lot_axis(Lot l) {
-	float a = hash(l.id + 0.7) * 3.1416;
+	float a = (hash(floor(l.site / metres(STRIP_REGION_M)) + 0.7) + (hash(l.id + 0.7) - 0.5) * 0.25) * 3.1416;
 	return vec2(cos(a), sin(a));
 }
 
@@ -229,6 +229,27 @@ vec2 second_site(Lot l) {
 	return l.site + (hash2(l.id + 13.7) - 0.5) * metres(70.0);
 }
 
+float lane_field(vec2 q, float seed, vec2 drift) {
+	return noise(q + seed) + LANE_DRIFT * dot(q, drift);
+}
+
+float lane_iso(vec2 p, float cycle_m, float seed, out float along) {
+	vec2 q = p / metres(cycle_m);
+	vec2 drift = vec2(cos(seed), sin(seed));
+	float e = 0.02;
+	float v = lane_field(q, seed, drift);
+	vec2 g = vec2(lane_field(q + vec2(e, 0.0), seed, drift) - v, lane_field(q + vec2(0.0, e), seed, drift) - v) / e;
+	float gl = max(length(g), 0.05);
+	along = dot(p, vec2(-g.y, g.x) / gl);
+	float f = fract(v / LANE_SPACING);
+	return min(f, 1.0 - f) * LANE_SPACING / gl * metres(cycle_m);
+}
+
+float lane_cut(vec2 p, float seed, float keep) {
+	return step(1.0 - keep, noise(p / metres(LANE_CUT_M) + seed));
+}
+
+
 vec2 curled(vec2 p) {
 	return p + (vec2(noise(p * LOT_CURL_CYCLES + 3.0), noise(p * LOT_CURL_CYCLES + 8.0)) - 0.5) * metres(LOT_CURL_M);
 }
@@ -275,7 +296,7 @@ float vine_rows(vec2 p, Lot l, vec2 down, float fw) {
 float strips(vec2 p, Lot l, vec2 along, float follow, float fw, out float furrow) {
 	float width = metres(mix(28.0, 58.0, hash(l.id + 4.4)));
 	vec2 dir = lot_axis(l);
-	dir = normalize(mix(dir, along * (dot(dir, along) < 0.0 ? -1.0 : 1.0), follow * step(0.5, length(along))));
+	dir = normalize(mix(dir, along * (dot(dir, along) < 0.0 ? -1.0 : 1.0), step(0.8, follow) * step(0.5, length(along))));
 	float s = dot(p - l.site, dir) / width + hash(l.id) * 10.0;
 	float strip = floor(s);
 	float edge = min(fract(s), 1.0 - fract(s)) * width;

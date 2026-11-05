@@ -109,7 +109,7 @@ float houses_along(int mode, float w, vec2 p, vec2 uv, mat2 to_uv, float salt, f
 
 vec3 houses_drawn(int style, vec3 c, float house, float shadow, float far) {
 	vec3 ink_c = style == MODERN ? MODERN_BLACK : style == ANCIENT ? ANCIENT_INK : SURVEY_INK;
-	vec3 house_c = style == MODERN ? MODERN_BLACK : style == ANCIENT ? RED_OCHRE : CARMINE;
+	vec3 house_c = style == MODERN ? MODERN_BLACK : style == ANCIENT ? RED_OCHRE : BRICK;
 	if (style == SURVEY) c = mix(c, ink_c, shadow * (1.0 - house) * 0.85 * (1.0 - far));
 	return mix(c, house_c, house);
 }
