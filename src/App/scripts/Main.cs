@@ -46,8 +46,18 @@ public partial class Main : Node
         catch (Exception e) { GD.PushError(e.ToString()); }
     }
 
+    static void OneTextFormat()
+    {
+        var neutral = System.Globalization.CultureInfo.InvariantCulture;
+        System.Globalization.CultureInfo.DefaultThreadCurrentCulture = neutral;
+        System.Globalization.CultureInfo.DefaultThreadCurrentUICulture = neutral;
+        System.Globalization.CultureInfo.CurrentCulture = neutral;
+        System.Globalization.CultureInfo.CurrentUICulture = neutral;
+    }
+
     async System.Threading.Tasks.Task _ReadyAsync()
     {
+        OneTextFormat();
         Diagnostics.Install();
         Ui.InstallTheme();
         FileThumbs.Install();

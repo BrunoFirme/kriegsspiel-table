@@ -170,7 +170,7 @@ sealed class MenuCards : HudPart
         }
     }
 
-    const int Swatch = 22, Round = 11, CheckColumn = 18, SwatchGap = 4, RowGap = 2;
+    const int Swatch = 22, CheckColumn = 18, SwatchGap = 4, RowGap = 2;
 
     Control TintRows(List<PieceNode> nodes, PieceNode hit, PopupPanel pop)
     {
@@ -196,32 +196,24 @@ sealed class MenuCards : HudPart
         var swatches = new HBoxContainer();
         swatches.AddThemeConstantOverride("separation", SwatchGap);
         swatches.AddChild(new Control { CustomMinimumSize = new Vector2(CheckColumn, 0) });
+        var now = Coords.ParseColor(hit.Piece.TintOverride ?? hit.Def?.Tint, Colors.White);
         foreach (var (name, hex) in DieColors.All)
         {
-            var b = RoundSwatch(Coords.ParseColor(hex, Colors.White), name);
+            var colour = Coords.ParseColor(hex, Colors.White);
+            var b = Ui.Swatch(colour, new Vector2(Swatch, Swatch), name, colour.IsEqualApprox(now));
             b.Pressed += () => { pop.Hide(); Tint(hex); };
             swatches.AddChild(b);
         }
-        var more = RoundSwatch(new Color(1, 1, 1, 0.12f), "Any colour");
-        more.Text = "+";
+        var more = new Button { Text = "+", CustomMinimumSize = new Vector2(Swatch, Swatch), TooltipText = "Any colour", FocusMode = Control.FocusModeEnum.None };
         more.Pressed += () =>
         {
             var at = pop.Position;
             pop.Hide();
-            PickTint(Coords.ParseColor(hit.Piece.TintOverride ?? hit.Def?.Tint, Colors.White), at, Tint);
+            PickTint(now, at, Tint);
         };
         swatches.AddChild(more);
         rows.AddChild(swatches);
         return rows;
-    }
-
-    static Button RoundSwatch(Color color, string tip)
-    {
-        var b = new Button { CustomMinimumSize = new Vector2(Swatch, Swatch), TooltipText = tip, FocusMode = Control.FocusModeEnum.None };
-        b.AddThemeStyleboxOverride("normal", Ui.Box(color, Round, 0, 0));
-        b.AddThemeStyleboxOverride("hover", Ui.Box(color.Lightened(0.2f), Round, 0, 0));
-        b.AddThemeStyleboxOverride("pressed", Ui.Box(color.Darkened(0.2f), Round, 0, 0));
-        return b;
     }
 
     void PickTint(Color start, Vector2I at, Action<string?> tint)

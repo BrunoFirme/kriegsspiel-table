@@ -153,6 +153,7 @@ public partial class Hud
             Cfg.Save();
         };
         p.Snap = SnapPanel;
+        p.Grabbed = Raise;
         p.Ceiling = (Top?.Panel?.Size.Y ?? 28) + Gap;
         p.Closed = () => ClosePanel(key);
         Root.AddChild(p);
@@ -170,6 +171,7 @@ public partial class Hud
         if (key == "relief" && T != null && T.Tool != Tool.Relief) T.SetTool(Tool.Relief);
         if (key == "formation" && T != null && T.Tool != Tool.Formation) T.SetTool(Tool.Formation);
         p.Visible = true;
+        Raise(p);
         p.Fit();
         if (Cfg.PanelPos.TryGetValue(key, out var at) && at.Length == 2) p.Position = new Vector2(at[0], at[1]);
         else
@@ -180,6 +182,13 @@ public partial class Hud
         }
         Callable.From(() => { if (IsInstanceValid(p)) p.Clamp(); }).CallDeferred();
         SyncStripToggles();
+    }
+
+    void Raise(FloatPanel p)
+    {
+        if (p.GetParent() is not { } parent) return;
+        int top = Panels.Values.Where(o => o.GetParent() == parent).Max(o => o.GetIndex());
+        if (p.GetIndex() < top) parent.MoveChild(p, top);
     }
 
     float DefaultPanelTop(string key)

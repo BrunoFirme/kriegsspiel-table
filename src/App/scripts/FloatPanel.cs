@@ -11,6 +11,7 @@ public partial class FloatPanel : PanelContainer
     public VBoxContainer Body;
     public bool Resizable;
     public Func<FloatPanel, Vector2, Vector2>? Snap;
+    public Action<FloatPanel>? Grabbed;
 
     Label _title;
     HBoxContainer _bar;
@@ -109,7 +110,11 @@ public partial class FloatPanel : PanelContainer
         {
             case InputEventMouseButton { ButtonIndex: MouseButton.Left } mb:
                 _dragging = mb.Pressed;
-                if (mb.Pressed) _loose = Position;
+                if (mb.Pressed)
+                {
+                    _loose = Position;
+                    Grabbed?.Invoke(this);
+                }
                 AcceptEvent();
                 break;
             case InputEventMouseMotion mm when _dragging:
