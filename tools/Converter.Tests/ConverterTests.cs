@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text.Json.Nodes;
+using KTable.Converter.Bundles;
 using KTable.Core;
 using KTable.Core.Model;
 
@@ -342,6 +343,64 @@ public sealed partial class ConverterTests : IDisposable
         Assert.Null(models.For("https://steamusercontent-a.akamaihd.net/ugc/1/B89A13D24198F5D661BB3327FB2A516BD4B00EE8/"));
         Assert.Null(models.For(null));
         Assert.False(BundleModels.Load(Path.Combine(_root, "elsewhere")).Any);
+    }
+
+    [Fact]
+    public void Textures_of_many_bundles_are_halved_until_they_all_fit_one_atlas()
+    {
+        static Picture Square(int side, byte tint)
+        {
+            var rgba = new byte[side * side * 4];
+            Array.Fill(rgba, tint);
+            return new Picture(side, side, rgba);
+        }
+
+        var two = ModelAtlas.Pack(new[] { ("a", Square(2048, 1)), ("b", Square(2048, 2)) }, most: 2048);
+
+        Assert.True(two.Width <= 2048);
+        Assert.Equal(1024, two.Places["a"].Width);
+        Assert.Equal(1024, two.Places["b"].Width);
+
+        var one = ModelAtlas.Pack(new[] { ("a", Square(256, 1)) }, most: 2048);
+        Assert.Equal(256, one.Places["a"].Width);
+    }
+
+    [Fact]
+    public void A_models_face_is_turned_the_right_way_out_and_its_uvs_land_on_its_own_tile()
+    {
+        var part = new ModelPart(
+            new double[] { 1, 2, 3, 4, 5, 6, 7, 8, 9 },
+            new double[] { 0.25, 0.5, 0.5, 0.25, 0.75, 0.75 },
+            new[] { 0, 1, 2 }, "tex");
+        var model = new BundleModel("SHA", "Gunner", new List<ModelPart> { part },
+            new double[] { 0, 0, 0 }, new double[] { 1, 1, 1 }, 1, new List<(string, Picture)>(), 0);
+        var places = new Dictionary<string, AtlasPlace> { ["tex"] = new AtlasPlace(100, 200, 400, 800) };
+
+        var lines = ModelAtlas.Obj(model, places, 2048, 1280).Split('\n', StringSplitOptions.RemoveEmptyEntries);
+
+        Assert.Equal("o Gunner", lines[0]);
+        Assert.Equal(-1, Number(lines[1], 1));
+        Assert.Equal(-4, Number(lines[2], 1));
+        Assert.Equal((0.25 * 400 + 100) / 2048, Number(lines[4], 1), 5);
+        Assert.Equal((0.5 * 800 + 200) / 1280, Number(lines[4], 2), 5);
+        Assert.Equal("f 3/3 2/2 1/1", lines[7]);
+    }
+
+    static double Number(string line, int at) =>
+        double.Parse(line.Split(' ')[at].Split('/')[0], CultureInfo.InvariantCulture);
+
+    [Fact]
+    public void A_vertex_bound_to_a_bone_is_carried_by_the_bone_rather_than_left_in_its_bind_pose()
+    {
+        var upright = Mat4.Trs((0, 0, 0, 1), (0, 0, 0), (1, 1, 1));
+        Assert.Equal((2, 3, 4), upright.Apply(2, 3, 4));
+
+        var moved = Mat4.Trs((0, 0, 0, 1), (10, 0, 0), (2, 2, 2));
+        Assert.Equal((14, 6, 8), moved.Apply(2, 3, 4));
+
+        var half = Mat4.Trs((0, 0, 0, 1), (0, 0, 0), (0.5, 0.5, 0.5));
+        Assert.Equal((12, 3, 4), moved.Times(half).Apply(2, 3, 4));
+        Assert.Equal((10d, 0d, 0d), moved.Translation);
     }
 
     [Fact]

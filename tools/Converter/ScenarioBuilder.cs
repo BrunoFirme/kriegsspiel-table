@@ -42,6 +42,7 @@ public sealed class ScenarioBuilder
         var sc = _cfg.Scenario;
         Console.WriteLine($"Scenario {sc.Id} (master {sc.Master})");
         await _assets.FetchAll(master);
+        new BundleBake(_cfg, _assets, _rep).Run(master);
         _defs.Table = master.Table;
 
         var root = _cfg.Output;

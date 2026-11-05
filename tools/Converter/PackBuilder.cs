@@ -85,6 +85,7 @@ public sealed class PackBuilder
         Console.WriteLine($"Pack {pc.Id} ({pc.WorkshopId})");
         var save = TtsSave.Load(_cfg, pc.WorkshopId);
         await _assets.FetchAll(save);
+        new BundleBake(_cfg, _assets, _rep).Run(save);
         _defs.Table = save.Table;
         Progress.Stage("pieces", save.Objects.Sum(Count));
         _way.Pack(pc.Id, _rep);

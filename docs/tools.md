@@ -204,14 +204,19 @@ python -I tools/bundle_models.py --module <a TTS module.json> [--pack <id>] [--n
                                 [--packages <root>] [--cache <tts cache>] [--atlas-max 2048]
 ```
 
-Reads the Unity asset bundles a module hangs on its pieces — the figures, vehicles, buildings and tree stands that
-`Custom_Assetbundle` objects stand for — and writes them as a pack of 3D pieces. For each bundle it walks the prefab,
-keeps the parts the prefab actually shows, poses the skinned meshes through their bones and bind poses, and writes one
-OBJ; all the bundles share one texture atlas. Every piece carries a `bundle:<address>` tag, which is how the converter
-finds it: install the pack in the same packages root and import the module again, and those objects come in as the
-models instead of being left out. Bundles that hold an effect rather than a model are named and passed over, for
-`BundleEffects` to match against Firme's effects. Run it after an import, so the bundles are in the TTS cache. UnityPy
-(which parses the bundles, never runs them), numpy and Pillow.
+The reference reading of a module's Unity asset bundles, kept to check the converter's own against. **An import does
+this by itself** — `BundleBake` reads the bundles the module hangs on its pieces and writes the same pack, so nothing
+here has to be run to get the figures, and the shipped converter needs no Python. This script stays because it reads
+the bundles a second way: give both the same bundles and the models must come out the same, which is how a change to
+the reader is checked.
+
+Both walk each prefab, keep the parts it actually shows, pose the skinned meshes through their bones and bind poses,
+and write one OBJ per bundle, with all of them sharing one texture atlas. Every piece carries a `bundle:<address>`
+tag, which is how the converter matches a module's object to its model. Bundles that hold an effect rather than a
+model are passed over, for `BundleEffects` to match against Firme's effects. Run it after an import, so the bundles
+are in the TTS cache. UnityPy (which parses the bundles, never runs them), numpy and Pillow.
+
+It does not know which bundles a table's own walls use, so it bakes those too; the converter leaves them out.
 
 ## `tools/make-stress-tables.py`
 
