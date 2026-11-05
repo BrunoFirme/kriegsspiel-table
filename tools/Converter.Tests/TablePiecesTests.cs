@@ -441,4 +441,41 @@ public sealed partial class ConverterTests
         Assert.Equal(new[] { "naval", "naval-midway-scenario" }, plan.Scenarios);
         Assert.Equal("Naval — Midway scenario", plan.Layouts.Single().Name);
     }
+
+    [Fact]
+    public async Task A_model_tts_stretches_taller_or_flatter_than_wide_keeps_the_height_tts_draws()
+    {
+        var cfg = TempConfig();
+        const string Box = "http://a/tray.obj";
+        var models = Path.Combine(cfg.TtsModsPath, "Models");
+        Directory.CreateDirectory(models);
+        var corners = from x in new[] { -18, 18 } from y in new[] { -0.1, 0.1 } from z in new[] { -4.5, 4.5 } select FormattableString.Invariant($"v {x} {y} {z}");
+        File.WriteAllLines(Path.Combine(models, AssetStore.Key(Box) + ".obj"), corners.Append("vn 0 1 0").Append("f 1 2 3"));
+        var rep = new Report();
+        var assets = new AssetStore(cfg, rep);
+        await assets.FetchAll(new[] { Box });
+        var defs = new DefFactory(cfg, assets, rep);
+        var pack = new PackOut(cfg.Output, "t", "T", "t", null);
+        PieceDef Tray(double sx, double sy, double sz) => defs.DefFor(new TtsObj(Obj("Custom_Model", $"Tray {sx}", sx, new JsonObject
+        {
+            ["Transform"] = new JsonObject { ["posX"] = 0.0, ["posY"] = 1.0, ["posZ"] = 0.0, ["rotX"] = 0.0, ["rotY"] = 0.0, ["rotZ"] = 0.0, ["scaleX"] = sx, ["scaleY"] = sy, ["scaleZ"] = sz },
+            ["CustomMesh"] = new JsonObject { ["MeshURL"] = Box },
+        })), pack)!.Def;
+        double DrawnHeight(PieceDef d)
+        {
+            var lines = File.ReadLines(Path.Combine(pack.Dir, pack.M.Assets[d.Mesh!].File)).Where(l => l.StartsWith("v "));
+            var v = lines.Select(l => l.Split(' ')[1..].Select(t => double.Parse(t, System.Globalization.CultureInfo.InvariantCulture)).ToArray()).ToList();
+            double Span(int i) => v.Max(p => p[i]) - v.Min(p => p[i]);
+            double across = (d.Size.W / Span(0) + d.Size.H / Span(2)) / 2;
+            return Span(1) * across;
+        }
+
+        var stretched = Tray(3.15, 3.15, 3.5626);
+        var even = Tray(2, 2, 2);
+        Assert.Equal(0.63, stretched.Thickness, 3);
+        Assert.Equal(0.63, DrawnHeight(stretched), 3);
+        Assert.Equal(0.4, DrawnHeight(even), 3);
+        Assert.Equal(defs.Entry(Box)!.Sha, even.Mesh);
+        Assert.Contains("vn 0 1 0", File.ReadAllText(Path.Combine(pack.Dir, pack.M.Assets[stretched.Mesh!].File)));
+    }
 }

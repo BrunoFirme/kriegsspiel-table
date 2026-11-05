@@ -235,7 +235,7 @@ public sealed partial class DefFactory
                 var sd = new PieceStateDef { Name = s.Nickname.Length > 0 ? s.Nickname : $"State {def.States.Count + 1}" };
                 var stShape = PackManifest.ShapeOf(s.Name, s.TileType);
                 if (stShape != def.Shape) sd.Shape = stShape;
-                if (s.Name == "Custom_Model") { sd.Mesh = Asset(pack, s.MeshUrl, "mesh", where); sd.Texture = Asset(pack, s.DiffuseUrl, "image", where); }
+                if (s.Name == "Custom_Model") { sd.Mesh = ModelMesh(pack, s, where); sd.Texture = Asset(pack, s.DiffuseUrl, "image", where); }
                 else { sd.Image = Asset(pack, s.ImageUrl, "image", where); sd.Back = Asset(pack, s.BackUrl, "image", where); }
                 if (s.Lua.Trim().Length > 0 && !ReferenceEquals(s, states[0])) { sd.Script = s.Lua; _rep.Note($"{where}: the state \"{sd.Name}\" carries a script of its own (kept, not run)"); }
                 if (Math.Abs(sz.W - def.Size.W) > 0.01 * def.Size.W || Math.Abs(sz.H - def.Size.H) > 0.01 * def.Size.H) sd.Size = sz;
@@ -330,7 +330,7 @@ public sealed partial class DefFactory
         else if (b.Name == "Custom_Model")
         {
             def.Kind = "model";
-            def.Mesh = Asset(pack, b.MeshUrl, "mesh", where);
+            def.Mesh = ModelMesh(pack, b, where);
             def.Texture = Asset(pack, b.DiffuseUrl, "image", where);
             if (def.Mesh == null) { def.Kind = "flat"; def.Image = def.Texture ?? Placeholder(pack); }
         }
