@@ -12,6 +12,7 @@ public partial class ReliefSurface : Node3D
     const int BlockCells = 48;
     const float PaintAbove = 0.003f;
     const float SeamProbe = 0.01f;
+    const float ContourBlurUnits = 0.8f;
     static readonly Color Earth = new(0.42f, 0.33f, 0.24f);
     static Shader? _shader;
 
@@ -22,6 +23,10 @@ public partial class ReliefSurface : Node3D
     ImageTexture? _kindsTex;
     ImageTexture? _edgesTex;
     byte[]? _edgesOf;
+    ImageTexture? _heightsTex;
+    float[]? _heightsOf;
+    float _heightsScale;
+    int _heightsBlur;
     float _cellWorld = 1;
     static bool _contours;
     static double _contourStep = -1;
@@ -70,8 +75,9 @@ public partial class ReliefSurface : Node3D
         int step = Math.Max(1, (int)Math.Ceiling(Math.Max(cellsX, cellsZ) / (double)MostVertsAcross));
         int nx = Math.Max(1, cellsX / step), nz = Math.Max(1, cellsZ / step);
         var h = GroundMesh.WeldedHeights(ground, sheetXf, W / 2, H / 2);
-        UpdateKinds(grid);
         _cellWorld = (float)(Ground.FullWidth(def) / Math.Max(1, grid.Cols - 1));
+        UpdateKinds(grid);
+        UpdateHeights(grid, (float)(Ground.FullWidth(def) * (def.Relief is { Length: > 0 } ? def.Height : 1)), Math.Max(step, (int)Math.Round(ContourBlurUnits / _cellWorld)));
         var cells = new Vector2(grid.Cols, grid.Rows);
         bool drawsGround = picture == null && !def.HasPicture;
         _base = picture ?? (drawsGround ? Material(false, cells) : null);
@@ -118,6 +124,7 @@ public partial class ReliefSurface : Node3D
         var m = new ShaderMaterial { Shader = GroundShader };
         m.SetShaderParameter("kinds", _kindsTex!);
         m.SetShaderParameter("edges", _edgesTex!);
+        m.SetShaderParameter("heights", _heightsTex!);
         m.SetShaderParameter("cell_world", _cellWorld);
         m.SetShaderParameter("palette", Palette());
         m.SetShaderParameter("painted_only", paintedOnly);
@@ -136,6 +143,24 @@ public partial class ReliefSurface : Node3D
         var edges = Image.CreateFromData(grid.Cols, grid.Rows, false, Image.Format.R8, GroundEdges.Distances(grid));
         if (_edgesTex != null && _edgesTex.GetWidth() == grid.Cols && _edgesTex.GetHeight() == grid.Rows) _edgesTex.Update(edges);
         else _edgesTex = ImageTexture.CreateFromImage(edges);
+    }
+
+    void UpdateHeights(ReliefGrid grid, float scale, int blur)
+    {
+        if (_heightsTex != null && _heightsOf != null && _heightsScale == scale && _heightsBlur == blur && _heightsOf.AsSpan().SequenceEqual(grid.H)) return;
+        _heightsOf = (float[])grid.H.Clone();
+        _heightsScale = scale;
+        _heightsBlur = blur;
+        var soft = GroundHeights.Blurred(grid, blur);
+        var pairs = new float[grid.H.Length * 2];
+        for (int i = 0; i < grid.H.Length; i++)
+        {
+            pairs[2 * i] = grid.H[i] * scale;
+            pairs[2 * i + 1] = soft[i] * scale;
+        }
+        var img = Image.CreateFromData(grid.Cols, grid.Rows, false, Image.Format.Rgf, System.Runtime.InteropServices.MemoryMarshal.AsBytes(pairs.AsSpan()).ToArray());
+        if (_heightsTex != null && _heightsTex.GetWidth() == grid.Cols && _heightsTex.GetHeight() == grid.Rows) _heightsTex.Update(img);
+        else _heightsTex = ImageTexture.CreateFromImage(img);
     }
 
     public void Clear()

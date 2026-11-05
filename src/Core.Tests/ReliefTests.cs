@@ -446,6 +446,25 @@ public class ReliefTests : IDisposable
     }
 
     [Fact]
+    public void Blurred_heights_keep_flat_ground_soften_a_step_and_hold_the_mean()
+    {
+        var flat = new ReliefGrid(30, 20);
+        Array.Fill(flat.H, 2.5f);
+        Assert.All(GroundHeights.Blurred(flat, 3), h => Assert.Equal(2.5f, h, 5));
+        var step = new ReliefGrid(40, 10);
+        for (int y = 0; y < 10; y++)
+            for (int x = 20; x < 40; x++) step.H[y * 40 + x] = 1;
+        Assert.Equal(step.H, GroundHeights.Blurred(step, 0));
+        var soft = GroundHeights.Blurred(step, 2);
+        for (int x = 1; x < 40; x++) Assert.True(soft[5 * 40 + x] >= soft[5 * 40 + x - 1], "rises across the step");
+        Assert.Equal(0, soft[5 * 40 + 10], 5);
+        Assert.Equal(1, soft[5 * 40 + 30], 5);
+        Assert.InRange(soft[5 * 40 + 19], 0.3f, 0.5f);
+        Assert.InRange(soft[5 * 40 + 20], 0.5f, 0.7f);
+        Assert.Equal(step.H.Sum(), soft.Sum(), 3);
+    }
+
+    [Fact]
     public void Heights_read_in_roman_numerals_for_the_ancient_style_only_when_whole()
     {
         Assert.Equal("CCL", Roman.Of(250));
