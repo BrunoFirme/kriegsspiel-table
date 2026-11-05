@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using System.Text;
 using AssetsTools.NET;
 using AssetsTools.NET.Extra;
+using KTable.Core;
 
 namespace KTable.Converter.Bundles;
 
@@ -18,7 +19,10 @@ public sealed class BundleScene
     const int UvParts = 2;
     const int Corners = 4;
 
-    public static (BundleModel? Model, int Lost) Read(string path, string sha)
+    public static bool OnlyThisBundle(Exception e) =>
+        e is not (OutOfMemoryException or StackOverflowException or OperationCanceledException);
+
+    public static (BundleModel? Model, int Lost, string? Failed) Read(string path, string sha)
     {
         var manager = new AssetsManager();
         try
@@ -32,11 +36,15 @@ public sealed class BundleScene
                 var file = manager.LoadAssetsFileFromBundle(bundle, index, false);
                 var found = Scene(manager, bundle, file, sha);
                 lost += found.Lost;
-                if (found.Model != null) return (found.Model, lost);
+                if (found.Model != null) return (found.Model, lost, null);
             }
-            return (null, lost);
+            return (null, lost, null);
         }
-        finally { manager.UnloadAll(true); }
+        catch (Exception e) when (OnlyThisBundle(e))
+        {
+            return (null, 0, $"{e.GetType().Name}: {e.Message}");
+        }
+        finally { BestEffort.Try(() => manager.UnloadAll(true)); }
     }
 
     static int Major(string version) =>
@@ -150,7 +158,7 @@ public sealed class BundleScene
                     parts.Add(new ModelPart(verts, mesh.Uvs, mesh.SubMeshes[sub], Texture(manager, file, bundle, material, textures)));
                 }
             }
-            catch (Exception e) when (e is NotSupportedException or InvalidDataException or IOException or IndexOutOfRangeException or ArgumentException or NullReferenceException or OverflowException)
+            catch (Exception e) when (OnlyThisBundle(e))
             { lost++; }
         }
 

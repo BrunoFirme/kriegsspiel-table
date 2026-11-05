@@ -12,6 +12,8 @@ file beside the executable.
 | [Loretta](https://github.com/LorettaDevs/Loretta) | reads Tabletop Simulator Lua to translate it | © 2021 GGG KILLER | MIT |
 | [LibTiff.Net](https://github.com/BitMiracle/libtiff.net) | reads TIFF map sheets | © 2008-2024 Bit Miracle | BSD 3-Clause |
 | [SkiaSharp](https://github.com/mono/SkiaSharp) | the converter's picture work | © Microsoft Corporation | MIT |
+| [AssetsTools.NET](https://github.com/nesrak1/AssetsTools.NET) | reads the Unity asset bundles a Tabletop Simulator module hangs its models on | © 2020 nesrak1 | MIT |
+| [AssetRipper.TextureDecoder](https://github.com/AssetRipper/TextureDecoder) | decodes the textures inside those bundles | © 2022-2026 ds5678 | MIT |
 | [Steamworks.NET](https://github.com/rlabrecque/Steamworks.NET) | the Workshop, in Steam builds only | © Riley Labrecque | MIT |
 | Steamworks SDK libraries (`src/App/native/`) | the Workshop, in Steam builds only | © Valve Corporation | Steamworks SDK Access Agreement |
 | 1889 USGS topographic map, Fredericksburg sheet | the app icon (`tools/icon-map.jpg`) | U.S. Geological Survey | Public domain |
@@ -25,8 +27,8 @@ Godot's [COPYRIGHT.txt](https://github.com/godotengine/godot/blob/master/COPYRIG
 
 ## MIT License
 
-Applies to Godot Engine, the .NET runtime, Loretta, SkiaSharp and Steamworks.NET, each under its own copyright
-line above.
+Applies to Godot Engine, the .NET runtime, Loretta, SkiaSharp, AssetsTools.NET, AssetRipper.TextureDecoder and
+Steamworks.NET, each under its own copyright line above.
 
 ```
 Permission is hereby granted, free of charge, to any person obtaining a copy

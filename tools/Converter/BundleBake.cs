@@ -34,6 +34,7 @@ public sealed partial class BundleBake
         foreach (var o in save.Objects.SelectMany(o => o.Walk()))
         {
             if (o.Name != BundleType || o.BundleUrl is not { } url || _cfg.IsTableWall(url)) continue;
+            if (BundleEffects.IsEffect(o)) continue;
             if (Sha().Match(url) is not { Success: true } sha) continue;
             var found = sha.Value.ToUpperInvariant();
             if (!wanted.Any(w => w.Sha == found)) wanted.Add((found, url));
@@ -126,12 +127,10 @@ public sealed partial class BundleBake
                 _rep.Note($"The asset bundle {sha[..12]} is not on this PC, so the model in it is not here.");
                 continue;
             }
-            BundleModel? model;
-            int lost;
-            try { (model, lost) = BundleScene.Read(file, sha); }
-            catch (Exception e) when (e is NotSupportedException or InvalidDataException or IOException or EndOfStreamException or ArgumentException or OverflowException)
+            var (model, lost, failed) = BundleScene.Read(file, sha);
+            if (failed != null)
             {
-                _rep.Note($"The asset bundle {sha[..12]} could not be read ({e.Message}).");
+                _rep.Note($"The asset bundle {sha[..12]} could not be read, so the model in it is not here ({failed}).");
                 continue;
             }
             if (model == null)

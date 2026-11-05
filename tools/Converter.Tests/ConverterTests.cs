@@ -346,6 +346,62 @@ public sealed partial class ConverterTests : IDisposable
     }
 
     [Fact]
+    public void An_asset_bundle_Firmes_effects_can_play_stays_an_effect_and_is_not_baked_as_a_model()
+    {
+        static TtsObj Bundle(string sha, string nick) => new(Obj("Custom_Assetbundle", nick, 1, new JsonObject
+        {
+            ["CustomAssetbundle"] = new JsonObject { ["AssetbundleURL"] = $"https://steamusercontent-a.akamaihd.net/ugc/17434489383496858867/{sha}/" },
+        }));
+
+        const string ShellBurst = "3259CD2646D7C3C9EC7F1103F80567181AAB20E5";
+        const string GunFiring = "1743CD5CF4C5925B97A1B71868D931C12C240DEE";
+        const string CasualtyCav = "1245959CB3265E2A4F0F0A9A0E6B7D1C0A2B3C4D";
+
+        Assert.True(BundleEffects.IsEffect(Bundle(ShellBurst, "")));
+        Assert.True(BundleEffects.IsEffect(Bundle(GunFiring, "")));
+        Assert.False(BundleEffects.IsEffect(Bundle(CasualtyCav, "")));
+        Assert.True(BundleEffects.IsEffect(Bundle(CasualtyCav, "Powder Smoke")));
+    }
+
+    [Fact]
+    public void A_bundle_that_cannot_be_read_is_reported_rather_than_ending_the_import()
+    {
+        const string Sha = "0123456789ABCDEF0123456789ABCDEF01234567";
+        var torn = Path.Combine(_root, "torn.unity3d");
+        Directory.CreateDirectory(_root);
+        var head = System.Text.Encoding.ASCII.GetBytes("UnityFS\0");
+        var rest = new byte[512];
+        new Random(1).NextBytes(rest);
+        File.WriteAllBytes(torn, head.Concat(rest).ToArray());
+
+        var (model, lost, failed) = BundleScene.Read(torn, Sha);
+
+        Assert.Null(model);
+        Assert.Equal(0, lost);
+        Assert.NotNull(failed);
+
+        var empty = Path.Combine(_root, "empty.unity3d");
+        File.WriteAllBytes(empty, Array.Empty<byte>());
+        Assert.NotNull(BundleScene.Read(empty, Sha).Failed);
+
+        var text = Path.Combine(_root, "notabundle.unity3d");
+        File.WriteAllText(text, "this is not a bundle at all");
+        Assert.NotNull(BundleScene.Read(text, Sha).Failed);
+
+        Assert.True(BundleScene.OnlyThisBundle(new KeyNotFoundException()));
+        Assert.True(BundleScene.OnlyThisBundle(new InvalidCastException()));
+        Assert.True(BundleScene.OnlyThisBundle(new IndexOutOfRangeException()));
+        Assert.True(BundleScene.OnlyThisBundle(new EndOfStreamException()));
+        Assert.True(BundleScene.OnlyThisBundle(new BundleOfItsOwnException()));
+        Assert.False(BundleScene.OnlyThisBundle(new OutOfMemoryException()));
+        Assert.False(BundleScene.OnlyThisBundle(new OperationCanceledException()));
+    }
+
+    sealed class BundleOfItsOwnException : Exception
+    {
+    }
+
+    [Fact]
     public void Textures_of_many_bundles_are_halved_until_they_all_fit_one_atlas()
     {
         static Picture Square(int side, byte tint)

@@ -77,6 +77,8 @@ public sealed class BundleEffects
 
     public bool Installed => _presets.Count > 0;
 
+    public static bool IsEffect(TtsObj o) => Match(o) != null;
+
     public (PieceDef Def, double Scale)? For(TtsObj o)
     {
         if (Match(o) is not { } match) return null;
