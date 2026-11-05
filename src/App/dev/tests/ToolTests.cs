@@ -267,6 +267,8 @@ static class ToolTests
 
         cfg.ReliefMode = "paint:road";
         cfg.ReliefPaint = "route";
+        t.Table.Rig.Frame(Coords.ToWorld(new Vec2(0, 0)), 40);
+        await r.Frame();
         relief.Press(new Vec2(-15, -15), false, false);
         relief.Release();
         relief.Press(new Vec2(15, -15), false, false);

@@ -271,13 +271,6 @@ public partial class ReliefSurface : Node3D
         _flowKinds = (byte[])grid.Kind.Clone();
         soft ??= GroundHeights.Blurred(grid, blur);
         double cellMetres = _cellWorld / _unitsPerMetre, metresPerUnit = scale / _unitsPerMetre;
-        if (!sized)
-        {
-            var (order, direction, node) = GroundStreams.Flow(grid.Cols, grid.Rows, soft, _flowKinds, cellMetres, metresPerUnit);
-            WriteFlow(order, direction, node);
-            UploadHeights(grid.Cols, grid.Rows);
-            return;
-        }
         if (heightsChanged) UploadHeights(grid.Cols, grid.Rows);
         if (_flowBusy) { _flowNext = (grid.Cols, grid.Rows, soft, _flowKinds, cellMetres, metresPerUnit); return; }
         DeriveFlow(grid.Cols, grid.Rows, soft, _flowKinds, cellMetres, metresPerUnit);
