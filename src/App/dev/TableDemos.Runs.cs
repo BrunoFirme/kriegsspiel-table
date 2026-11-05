@@ -49,6 +49,7 @@ sealed partial class TableDemos
         }
         if (_args.TryGetValue("pitch", out var pitchDeg))
         {
+            if (table.Rig.TopDown) table.Rig.ToggleTopDown();
             table.Rig.Pitch = Mathf.Clamp(-Mathf.DegToRad(float.Parse(pitchDeg, inv)), -1.55f, -0.12f);
             table.Rig.Apply();
         }

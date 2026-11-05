@@ -28,7 +28,19 @@ public partial class CameraRig : Node3D
         Apply();
     }
 
+    public bool Flat { get; private set; }
+
     public event Action? ViewChanged;
+    public event Action? FlatChanged;
+
+    void Project(Camera3D.ProjectionType kind)
+    {
+        Cam.Projection = kind;
+        bool flat = kind == Camera3D.ProjectionType.Orthogonal;
+        if (flat == Flat) return;
+        Flat = flat;
+        FlatChanged?.Invoke();
+    }
 
     public void ToggleTopDown()
     {
@@ -259,7 +271,7 @@ public partial class CameraRig : Node3D
         if (Eye is { } eye)
         {
             var look = new Vector3(Mathf.Sin(Yaw) * Mathf.Cos(Pitch), Mathf.Sin(Pitch), Mathf.Cos(Yaw) * Mathf.Cos(Pitch));
-            Cam.Projection = Camera3D.ProjectionType.Perspective;
+            Project(Camera3D.ProjectionType.Perspective);
             _lift = _liftGoal = 0;
             Cam.GlobalPosition = eye;
             Cam.LookAt(eye + look, Vector3.Up);
@@ -268,7 +280,7 @@ public partial class CameraRig : Node3D
         float pitch = TopDown ? -Mathf.Pi / 2 + 0.0001f : Pitch;
         var dir = new Vector3(Mathf.Sin(Yaw) * Mathf.Cos(pitch), Mathf.Sin(pitch), Mathf.Cos(Yaw) * Mathf.Cos(pitch));
         var pos = Target - dir * Distance;
-        Cam.Projection = TopDown ? Camera3D.ProjectionType.Orthogonal : Camera3D.ProjectionType.Perspective;
+        Project(TopDown ? Camera3D.ProjectionType.Orthogonal : Camera3D.ProjectionType.Perspective);
         if (TopDown) Cam.Size = Distance * 0.9f;
         _liftGoal = Terrain() is { Any: true } g && !TopDown ? Mathf.Max(0, (float)g.At(Coords.FromWorld(pos)) + AboveGround - pos.Y) : 0;
         if (_liftGoal > _lift) _lift = _liftGoal;

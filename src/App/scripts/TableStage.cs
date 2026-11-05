@@ -22,6 +22,8 @@ sealed class TableStage
     public event Action? ShadeChanged;
     public event Action? WindChanged;
 
+    public void ShowFlat(bool flat) => _backdrop?.ShowFlat(flat);
+
     public void BuildLightAndSurface()
     {
         var ceilingLightNearlyStraightDown = new Vector3(-88, 35, 0);

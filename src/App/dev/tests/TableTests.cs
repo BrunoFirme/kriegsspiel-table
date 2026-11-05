@@ -378,4 +378,32 @@ static class TableTests
         Check.That(rig.Target.X == moved.X && rig.Target.Z == moved.Z, "in 2D too, another tool leaves the view where it is put");
         t.Table.Sighting.Cancel();
     }
+
+    [NodeTest]
+    static async Task The_flat_view_says_so_because_a_panorama_cannot_be_drawn_without_perspective(TestRunner r)
+    {
+        var t = OfflineTable.Make(r, pieces: 3);
+        await r.Frame();
+        var rig = t.Table.Rig;
+        Check.Equal(rig.Cam.Projection == Camera3D.ProjectionType.Orthogonal, rig.Flat, "the flag and the camera agree from the start");
+        if (!rig.TopDown) rig.ToggleTopDown();
+        await r.Frame();
+        Check.That(rig.Flat && rig.Cam.Projection == Camera3D.ProjectionType.Orthogonal, "the map from above is drawn flat");
+        rig.ToggleTopDown();
+        await r.Frame();
+        Check.That(!rig.Flat && rig.Cam.Projection == Camera3D.ProjectionType.Perspective, "the 3D table is not");
+        int said = 0;
+        rig.FlatChanged += () => said++;
+        rig.ToggleTopDown();
+        rig.ToggleTopDown();
+        Check.Equal(2, said, "each change of projection is told once");
+        t.Table.Selection.Set(new[] { "p1" });
+        t.Table.SetTool(Tool.Sighting);
+        t.Table.Sighting.SetFirstPerson(true);
+        await r.Frame();
+        Check.That(!rig.Flat && rig.Cam.Projection == Camera3D.ProjectionType.Perspective, "first person looks out through a lens, however the view stood before");
+        t.Table.Sighting.Cancel();
+        await r.Frame();
+        Check.Equal(rig.Cam.Projection == Camera3D.ProjectionType.Orthogonal, rig.Flat, "putting the tool down leaves the two in step");
+    }
 }

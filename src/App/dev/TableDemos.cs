@@ -15,6 +15,7 @@ sealed partial class TableDemos
     readonly Table _table;
     readonly Hud _hud;
     ulong _openedAt;
+    const double BackdropSettleSeconds = 3;
 
     public TableDemos(Main main, Dictionary<string, string> args, Table table, Hud hud)
     {
@@ -375,6 +376,18 @@ sealed partial class TableDemos
         if (_args.TryGetValue("demo-ground", out var dgr)) DemoGround(hud, dgr);
         if (_args.TryGetValue("demo-reference", out var dref)) _ = DemoReference(hud, dref);
         if (_args.TryGetValue("ground-look", out var glk)) { GroundLook(glk); hud.Visible = false; }
+        if (_args.TryGetValue("demo-backdrop", out var dbd))
+        {
+            var parts = dbd.Split(':');
+            var lit = KTable.Core.Json.Clone(Session.View.Lighting ?? new KTable.Core.Model.Lighting());
+            lit.Backdrop = parts[0];
+            Session.Do(new KTable.Core.Protocol.SetLighting { Lighting = lit });
+            Tree.CreateTimer(BackdropSettleSeconds).Timeout += () =>
+            {
+                if (parts.Length > 1 && parts[1] == "flatten" && !table.Rig.TopDown) table.Rig.ToggleTopDown();
+                GD.Print($"[backdrop] {parts[0]}: the view is {(table.Rig.TopDown ? "flat" : "three-dimensional")} and the camera is {table.Rig.Cam.Projection}");
+            };
+        }
         if (_args.TryGetValue("demo-zone", out var dz))
             Session.Do(new KTable.Core.Protocol.SetZone { Zone = new KTable.Core.Model.Zone { Name = "Arevalillo", Owner = dz, Color = "#40C0FF",
                 Polygon = { new(230, -300), new(290, -300), new(290, -240), new(230, -240) } } });

@@ -175,6 +175,8 @@ public partial class Table : Node3D
         _hoverAura = new SelectionAura(Rig.Cam, SelectionAura.HoverLayer, new Color(1f, 1f, 1f, 0.95f));
         AddChild(_hoverAura);
         Stage.BuildLightAndSurface();
+        Rig.FlatChanged += () => Stage.ShowFlat(Rig.Flat);
+        Stage.ShowFlat(Rig.Flat);
         _c.Labels = new ScreenLabels(() => Rig?.Cam);
         AddChild(Labels);
         SetStandIn(true);
