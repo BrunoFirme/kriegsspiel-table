@@ -53,6 +53,25 @@ static class SliderValueTests
     }
 
     [NodeTest]
+    static async Task A_comma_typed_as_the_decimal_mark_reads_as_one(TestRunner r)
+    {
+        var (s, box, holder) = await Pair(r, 0.05, 1, 0.05, 0.35, v => $"{v * 100:0}%");
+        await Type(r, box, "0,5");
+        Check.That(Mathf.IsEqualApprox(s.Value, 0.05), $"0,5 on a percent readout is half a percent, the nearest being the left end, got {s.Value}");
+        var (s2, box2, holder2) = await Pair(r, 0, 5, 0.05, 1, v => $"{v:0.##}");
+        await Type(r, box2, "1,25");
+        Check.That(Mathf.IsEqualApprox(s2.Value, 1.25), $"1,25 is one and a quarter, not 125, got {s2.Value}");
+        var (s3, box3, holder3) = await Pair(r, 0, 3000, 1, 10, v => $"{v:#,0} m");
+        await Type(r, box3, "1.6");
+        Check.That(Mathf.IsEqualApprox(s3.Value, 2), $"a readout written with thousands still reads its own numbers, got {s3.Value}");
+        await Type(r, box3, "1200");
+        Check.That(Mathf.IsEqualApprox(s3.Value, 1200), $"1200 on a readout that shows 1,200 m lands on 1200, got {s3.Value}");
+        holder.QueueFree();
+        holder2.QueueFree();
+        holder3.QueueFree();
+    }
+
+    [NodeTest]
     static async Task Escape_puts_the_value_back_and_dragging_keeps_the_box_current(TestRunner r)
     {
         var (s, box, holder) = await Pair(r, 1, 40, 0.5, 4, v => $"{v:0.#}");

@@ -460,7 +460,7 @@ public static class Ui
         void Commit()
         {
             box.AddThemeColorOverride("font_color", Muted);
-            if (NumberIn(box.Text) is { } want && NearestShowing(s, show, want) is { } v && !Mathf.IsEqualApprox(v, s.Value))
+            if (TypedNumber(box.Text) is { } want && NearestShowing(s, show, want) is { } v && !Mathf.IsEqualApprox(v, s.Value))
             {
                 s.Value = v;
                 s.EmitSignal(Slider.SignalName.DragEnded, true);
@@ -479,6 +479,8 @@ public static class Ui
         s.ValueChanged += v => { if (!box.HasFocus()) box.Text = show(v); };
         return box;
     }
+
+    static double? TypedNumber(string text) => NumberIn(text.Contains('.') ? text : text.Replace(',', '.'));
 
     static double? NumberIn(string text)
     {
