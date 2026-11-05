@@ -186,7 +186,7 @@ public sealed partial class DefFactory
 
     public static double BaseScale(TtsObj o) => Math.Round(Math.Abs(o.StateList().states[0].ScaleX), 4);
 
-    public DefResult? DefFor(TtsObj o, PackOut pack, double? refScale = null)
+    public DefResult? DefFor(TtsObj o, PackOut pack, double? refScale = null, double heightScale = 1)
     {
         if (!IsPiece(o)) return null;
         if (IsTextObject(o)) return TextDef(o, pack, refScale);
@@ -198,7 +198,7 @@ public sealed partial class DefFactory
         var where = $"{Context} {o.Name} '{o.Nickname}' {o.Guid}";
 
         var script = ScriptInfo.Parse(b.SafeLua.Length > 0 ? b.SafeLua : o.SafeLua, o.LuaState);
-        var def = BuildDef(b, pack, r, where, script);
+        var def = BuildDef(b, pack, r, where, script, heightScale);
         if (def == null) return null;
         var lua = b.SafeLua.Length > 0 ? b.SafeLua : o.SafeLua;
         string scriptKey = "";
@@ -233,13 +233,14 @@ public sealed partial class DefFactory
         foreach (var c in baked ? Enumerable.Empty<TtsObj>() : o.Children)
         {
             if (!IsPiece(c)) { _rep.Skipped("child " + c.Name, where); continue; }
-            var cr = DefFor(c, pack, Math.Abs(c.StateList().states[0].ScaleX) * r);
+            var cr = DefFor(c, pack, Math.Abs(c.StateList().states[0].ScaleX) * r, heightScale * Math.Abs(b.ScaleY));
             if (cr == null) continue;
             def.Attachments.Add(new AttachmentDef { Piece = cr.Def.Id, Offset = new Vec2(Math.Round(c.PosX * r, 4), Math.Round(c.PosZ * r * (b.ScaleZ / b.ScaleX), 4)) });
         }
 
         var bakedKey = baked ? "|" + string.Join(",", def.States.Select(s => s.Image)) : "";
-        var key = string.Create(CultureInfo.InvariantCulture, $"{VisualKey(o)}|{def.Size.W:0.###}x{def.Size.H:0.###}{scriptKey}{bakedKey}");
+        var gluedKey = heightScale == 1 || b.Name == "Custom_Model" ? "" :string.Create(CultureInfo.InvariantCulture, $"|t{def.Thickness:0.###}");
+        var key = string.Create(CultureInfo.InvariantCulture, $"{VisualKey(o)}|{def.Size.W:0.###}x{def.Size.H:0.###}{scriptKey}{bakedKey}{gluedKey}");
         int rich = def.States.Count * 100 + def.Counters.Count * 10 + def.TextLines.Count + def.Attachments.Count * 1000 + (def.Script != null ? 5000 : 0);
         if (pack.ByKey.TryGetValue(key, out var existing))
         {
@@ -289,7 +290,7 @@ public sealed partial class DefFactory
         return Asset(pack, url, "image", where);
     }
 
-    PieceDef? BuildDef(TtsObj b, PackOut pack, double r, string where, ScriptInfo script)
+    PieceDef? BuildDef(TtsObj b, PackOut pack, double r, string where, ScriptInfo script, double heightScale)
     {
         var (lookUrl, lookKind) = b.Name == "Custom_Model" ? (b.MeshUrl, "mesh") : b.Name.StartsWith("Block") || b.IsChecker ? (null, "") : b.IsCard ? (b.Sheet?.FaceUrl, "image") : (b.ImageUrl, "image");
         if (_assets.Gone(lookUrl, lookKind) is { } gone)
@@ -302,7 +303,7 @@ public sealed partial class DefFactory
         {
             Name = Name(b),
             Size = size,
-            Thickness = Math.Round(Math.Clamp(BaseThickness(b) * Math.Abs(b.ScaleY) * (b.Name == "Custom_Model" ? r / Math.Max(1e-6, Math.Abs(b.ScaleX)) : 1), 0.02, 3), 3),
+            Thickness = Math.Round(Math.Clamp(BaseThickness(b) * Math.Abs(b.ScaleY) * (b.Name == "Custom_Model" ? r / Math.Max(1e-6, Math.Abs(b.ScaleX)) : heightScale), 0.02, 3), 3),
             Tint = b.Color ?? "#FFFFFF",
             TintsPictures = b.Name == "Custom_Token" || b.Name.StartsWith("Block"),
             Shape = PackManifest.ShapeOf(b.Name, b.TileType),

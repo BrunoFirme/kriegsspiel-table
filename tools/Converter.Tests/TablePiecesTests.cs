@@ -129,6 +129,62 @@ public sealed partial class ConverterTests
     }
 
     [Fact]
+    public void A_token_glued_over_a_backing_token_lies_on_it_instead_of_in_the_same_place()
+    {
+        const double Thickness = 0.1, BackingBelow = -0.1, PieceScale = 0.25;
+        var cfg = TempConfig();
+        const string Face = "http://a/line.png", White = "http://a/white.png";
+        LocalPicture(cfg, Face, 16, 4, (_, _) => SKColors.White);
+        LocalPicture(cfg, White, 16, 4, (_, _) => SKColors.White);
+        static JsonObject Token(string url) => new() { ["ImageURL"] = url, ["CustomToken"] = new JsonObject { ["Thickness"] = Thickness } };
+        var backing = Obj("Custom_Token", "Backing", 1, new JsonObject { ["CustomImage"] = Token(White) });
+        backing["Transform"]!["posY"] = BackingBelow;
+        var line = Obj("Custom_Token", "Line", PieceScale, new JsonObject { ["CustomImage"] = Token(Face), ["ChildObjects"] = new JsonArray(backing) });
+        var module = Module("glued", line);
+        var main = typeof(Config).Assembly.EntryPoint!;
+
+        var code = (int)main.Invoke(null, new object[] { new[] { "import", module, "--config", Path.Combine(_root, "converter.json"), "--out", Packages } })!;
+
+        Assert.Equal(0, code);
+        var table = Json.Load<Scenario>(Path.Combine(Packages, "scenarios", "glued", "scenario.json"));
+        var top = table.UmpireBoard.Single(p => p.Label == "Line");
+        var under = table.UmpireBoard.Single(p => p.Label == "Backing");
+        Assert.Equal((0, 1), (under.Stack, top.Stack));
+        Assert.Equal(0.0, under.Y);
+        Assert.Equal(Thickness, top.Y, 4);
+    }
+
+    [Fact]
+    public void Blocks_glued_to_a_flattened_block_keep_tts_heights_a_cap_on_its_top_and_a_post_standing_beside_it()
+    {
+        const double Wide = 0.053, Flat = 0.063, PostTall = 2.2, Thin = 0.05, CapAt = 1.0, PostAt = 0.6;
+        TempConfig();
+        static JsonObject Block(string nick, double sx, double sy, double sz, double x, double y)
+        {
+            var b = Obj("BlockRectangle", nick, 1);
+            var t = b["Transform"]!;
+            (t["scaleX"], t["scaleY"], t["scaleZ"], t["posX"], t["posY"], t["rotY"]) = (sx, sy, sz, x, y, 0.0);
+            return b;
+        }
+        var works = Block("Breastworks", Wide, Flat, Wide, 0, 1.2);
+        works["ChildObjects"] = new JsonArray(Block("Cap", 1, 1, 1, 0.045, CapAt), Block("Post", 1, PostTall, Thin, -0.925, PostAt));
+        var module = Module("works", works);
+        var main = typeof(Config).Assembly.EntryPoint!;
+
+        var code = (int)main.Invoke(null, new object[] { new[] { "import", module, "--config", Path.Combine(_root, "converter.json"), "--out", Packages } })!;
+
+        Assert.Equal(0, code);
+        var table = Json.Load<Scenario>(Path.Combine(Packages, "scenarios", "works", "scenario.json"));
+        var pack = Json.Load<PackManifest>(Path.Combine(Packages, table.Packs.First(p => p.EndsWith(".extras")), "pack.json"));
+        PieceInstance Named(string label) => table.UmpireBoard.Single(p => p.Label == label);
+        double Thick(PieceInstance p) => pack.Pieces.Single(d => d.Id == p.Def).Thickness;
+        Assert.Equal((0.0, 0.0), (Named("Breastworks").Y, Named("Post").Y));
+        Assert.Equal(Flat, Named("Cap").Y, 3);
+        Assert.Equal(PostTall * Flat, Thick(Named("Post")), 3);
+        Assert.Equal((0, 0, 1), (Named("Breastworks").Stack, Named("Post").Stack, Named("Cap").Stack));
+    }
+
+    [Fact]
     public void Importing_brings_the_cards_onto_what_they_lie_on_the_sky_as_backdrop_and_each_memory_bag_as_its_own_scenario()
     {
         var cfg0 = TempConfig();

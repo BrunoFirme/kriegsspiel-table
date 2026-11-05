@@ -30,6 +30,8 @@ public sealed class ScenarioBuilder
         public List<TtsObj> Effects = new();
         public List<PieceInstance> Pieces = new();
         public Dictionary<PieceInstance, double> Y = new();
+        public Dictionary<PieceInstance, (PieceInstance Root, double Bottom)> Glued = new();
+        public Dictionary<PieceInstance, double> HeightScale = new();
     }
 
     public Task<Scenario> Build(string masterId) => Build(TtsSave.Load(_cfg, masterId));
@@ -410,9 +412,9 @@ public sealed class ScenarioBuilder
     }
 
     PieceInstance? Instance(TtsObj o, double refScale, PackOut extras, Dictionary<string, List<(PieceDef def, string pack)>> packDefs,
-        Layer layer, HashSet<string> usedPacks, ref int rekeyed, PieceInstance? parent)
+        Layer layer, HashSet<string> usedPacks, ref int rekeyed, PieceInstance? parent, double heightScale = 1)
     {
-        var r = _defs.DefFor(o, extras, refScale);
+        var r = _defs.DefFor(o, extras, refScale, heightScale);
         if (r == null) return null;
         var def = r.Def;
         string packId = extras.M.Id;
@@ -489,17 +491,23 @@ public sealed class ScenarioBuilder
         Dictionary<string, List<(PieceDef def, string pack)>> packDefs, Layer layer, HashSet<string> usedPacks, ref int rekeyed)
     {
         double th = o.RotY * Math.PI / 180;
+        double parentHeight = parent != null && layer.HeightScale.TryGetValue(parent, out var hs) ? hs : Math.Abs(o.ScaleY);
+        var (root, parentBottom) = parent != null && layer.Glued.TryGetValue(parent, out var glued) ? glued : (parent, 0.0);
+        double parentFloor = -_defs.BaseThickness(o) / 2;
         foreach (var c in children)
         {
             if (!DefFactory.IsPiece(c)) continue;
             double lx = c.PosX * o.ScaleX, lz = c.PosZ * o.ScaleZ;
-            var ci = Instance(c, Math.Abs(c.StateList().states[0].ScaleX) * refScale, extras, packDefs, layer, usedPacks, ref rekeyed, parent);
+            var ci = Instance(c, Math.Abs(c.StateList().states[0].ScaleX) * refScale, extras, packDefs, layer, usedPacks, ref rekeyed, parent, parentHeight);
             if (ci == null) continue;
             ci.Pos = new Vec2(Math.Round(o.PosX + lx * Math.Cos(th) + lz * Math.Sin(th), 4), Math.Round(o.PosZ - lx * Math.Sin(th) + lz * Math.Cos(th), 4));
             ci.RotDeg = Norm(o.RotY + c.RotY);
             var sizedAtParentReferenceScale = ci.Scale * refScale;
             ci.Scale = Math.Round(sizedAtParentReferenceScale * baseScale, 4);
-            layer.Y[ci] = o.PosY + 0.01;
+            double floor = c.PosY - _defs.BaseThickness(c) * Math.Abs(c.ScaleY) / 2;
+            layer.HeightScale[ci] = Math.Abs(c.ScaleY) * parentHeight;
+            if (root != null) layer.Glued[ci] = (root, parentBottom + (floor - parentFloor) * parentHeight);
+            else layer.Y[ci] = o.PosY;
             parent?.Attached.Add(ci.Id);
         }
     }
@@ -533,7 +541,7 @@ public sealed class ScenarioBuilder
     void Stack(Layer l)
     {
         const double Above = 0.02, Digits = 4;
-        var order = l.Pieces.OrderBy(p => l.Y[p]).ToList();
+        var order = l.Pieces.Where(p => !l.Glued.ContainsKey(p)).OrderBy(p => l.Y[p]).ToList();
         var placed = new List<(PieceInstance p, double y, double top)>();
         foreach (var p in order)
         {
@@ -548,6 +556,25 @@ public sealed class ScenarioBuilder
             p.Stack = s;
             if (rest > 0) p.Y = Math.Round(rest, (int)Digits);
             placed.Add((p, l.Y[p], rest + (Lookup(p.Def)?.Thickness ?? 0) * p.Scale));
+        }
+        SeatGlued(l);
+    }
+
+    static void SeatGlued(Layer l)
+    {
+        const double Above = 0.02, Digits = 4;
+        foreach (var family in l.Glued.GroupBy(g => g.Value.Root))
+        {
+            var root = family.Key;
+            double lowest = Math.Min(0, family.Min(g => g.Value.Bottom)), floor = root.Y;
+            int under = root.Stack;
+            root.Y = Math.Round(floor - lowest, (int)Digits);
+            if (-lowest > Above) root.Stack = under + 1;
+            foreach (var (p, (_, bottom)) in family)
+            {
+                p.Y = Math.Round(floor + bottom - lowest, (int)Digits);
+                p.Stack = under + (bottom - lowest > Above ? 1 : 0);
+            }
         }
     }
 
