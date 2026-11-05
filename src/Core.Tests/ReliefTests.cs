@@ -523,6 +523,8 @@ public class ReliefTests : IDisposable
         byte field = GroundKinds.Of("field")!.Value, wood = GroundKinds.Of("wood")!.Value;
         Assert.Equal(new[] { "Plots", "Buildings" }, GroundKinds.Parameters(field).Select(p => p.Name));
         Assert.Equal(new[] { "Trees" }, GroundKinds.Parameters(wood).Select(p => p.Name));
+        Assert.Equal(new[] { "Road" }, GroundKinds.Parameters(GroundKinds.Road).Select(p => p.Name));
+        Assert.Equal(new[] { "Road" }, GroundKinds.Parameters(GroundKinds.Bridge).Select(p => p.Name));
         Assert.Empty(GroundKinds.Parameters(GroundKinds.Water));
         Assert.NotNull(GroundKinds.Parameter(field, "plots"));
         Assert.Null(GroundKinds.Parameter(wood, "plots"));

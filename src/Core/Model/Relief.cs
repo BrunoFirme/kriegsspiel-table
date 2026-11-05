@@ -19,17 +19,17 @@ public static class GroundKinds
     public static readonly IReadOnlyList<(string Name, string Color)> All =
     [
         ("none", "#00000000"),
-        ("grass", "#C3CB86"),
-        ("field", "#E3D2A6"),
-        ("wood", "#527548"),
-        ("marsh", "#97AF95"),
-        ("water", "#7AA6C2"),
-        ("road", "#DDC49A"),
-        ("earth", "#C49668"),
-        ("rock", "#9C948A"),
-        ("sand", "#E6D299"),
-        ("snow", "#F2F2EE"),
-        ("bridge", "#DDC49A"),
+        ("grass", "#CFD38E"),
+        ("field", "#EAE2CC"),
+        ("wood", "#9CA67A"),
+        ("marsh", "#B9C79A"),
+        ("water", "#9FB8C8"),
+        ("road", "#D9B99A"),
+        ("earth", "#E2B98A"),
+        ("rock", "#D9A89A"),
+        ("sand", "#ECD5B0"),
+        ("snow", "#F4F2EC"),
+        ("bridge", "#D9B99A"),
         ("town", "#E3CCC8"),
     ];
 
@@ -61,12 +61,14 @@ public static class GroundKinds
     static readonly GroundParameter Trees = new("Trees", "Open wood or closed forest", 75);
     static readonly GroundParameter Houses = new("Houses", "Scattered houses with gardens, or packed streets", 50);
     static readonly GroundParameter Walls = new("Walls", "None, a wall with towers, or a bastioned fort", 0);
+    static readonly GroundParameter RoadClass = new("Road", "A track, a country road, or a chaussée; a bridge keeps its road's", 50);
 
     public static IReadOnlyList<GroundParameter> Parameters(byte kind) => Name(kind) switch
     {
         "field" or "grass" => [Plots, Buildings],
         "wood" => [Trees],
         "town" => [Houses, Walls],
+        "road" or "bridge" => [RoadClass],
         _ => [],
     };
 
@@ -82,10 +84,10 @@ public static class GroundKinds
     static int Percent(int nibble) => (int)Math.Round(nibble * 100.0 / LevelSteps);
 
     static readonly string[] Ancient =
-        ["#00000000", "#CFC79A", "#DBC386", "#7B9C78", "#9EAA82", "#84A79C", "#E6D5AE", "#B57D48", "#9C8664", "#DFC584", "#ECE6D7", "#E6D5AE", "#B5563A"];
+        ["#00000000", "#D8C195", "#E3CE8C", "#8E9A6A", "#C9CCA4", "#A9C9C2", "#B5603F", "#C9A77A", "#D98A7A", "#E0CFA3", "#F2EDE0", "#B5603F", "#B5563A"];
 
     static readonly string[] Modern =
-        ["#00000000", "#DFE5C0", "#EFE5C8", "#80BF7D", "#E1ECE6", "#96CAE8", "#D9502E", "#E2CDA6", "#C9C3B9", "#EEDCA8", "#FBFBFB", "#D9502E", "#D9D8D0"];
+        ["#00000000", "#F3EFE0", "#F3EFE0", "#CDE1CF", "#E6EBE4", "#D6E0EA", "#F3EFE0", "#EFE4D2", "#E9E6DC", "#F0E6D2", "#FFFFFF", "#F3EFE0", "#D9D8D0"];
 
     public static string Color(byte kind, string? style)
     {

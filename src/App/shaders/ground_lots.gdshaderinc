@@ -72,11 +72,29 @@ float edge_line(int style, int kind, Lot l, vec2 p, float fw, float w1, float w2
 	if (kind == FENCE) {
 		float ticks = metres(6.0);
 		float tick = ink(length(vec2(max(0.0, l.edge - w1 * 0.5), (fract(along / ticks) - 0.5) * ticks)), w1, fw) * step(l.edge, metres(2.0));
-		return style == ANCIENT ? ink(l.edge, w1, fw) : max(ink(l.edge, w1, fw), tick * 0.9);
+		float post = ink(max(abs(l.edge), abs((fract(along / ticks) - 0.5) * ticks)), w1 * 1.6, fw);
+		if (style == ANCIENT) return ink(l.edge, w1, fw);
+		return style == SURVEY ? max(ink(l.edge, w2 * 0.7, fw), post) : max(ink(l.edge, w1, fw), tick * 0.9);
 	}
-	if (kind == WALL) return style == SURVEY ? ink(l.edge, w3, fw) : max(ink(abs(l.edge - w1), w1 * 0.6, fw), ink(abs(l.edge + w1), w1 * 0.6, fw));
+	if (kind == WALL) {
+		float sides = max(ink(abs(l.edge - w1), w1 * 0.6, fw), ink(abs(l.edge + w1), w1 * 0.6, fw));
+		return style == SURVEY ? max(sides, ink(l.edge, w1, fw) * step(0.5, fract(along / metres(8.0)))) : sides;
+	}
 	if (kind == DITCH) return dashed(along, l.edge, metres(8.0), 0.6, w1, fw);
 	return max(dashed(along, abs(l.edge - w2), metres(10.0), 0.55, w1, fw), dashed(along, abs(l.edge + w2), metres(10.0), 0.55, w1, fw));
+}
+
+float dotted_line(vec2 p, vec2 uv, mat2 to_uv, float at, float spacing, float width, float fw) {
+	float m = 0.0;
+	for (int j = 0; j <= 1; j++) {
+		for (int i = 0; i <= 1; i++) {
+			vec2 id;
+			vec2 o = grid_point(p - spacing * 0.5, 0.0, spacing, 0.0, i, j, id) + spacing * 0.5;
+			float there = distance_at(clamp(uv + to_uv * (o - p), vec2(0.0), vec2(1.0)));
+			m = max(m, ink(length(p - o), width, fw) * step(abs(there - at), spacing * 0.5));
+		}
+	}
+	return m;
 }
 
 float farmstead(vec2 p, Lot l, float fw, out float yard, out float wooden) {

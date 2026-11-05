@@ -39,9 +39,36 @@ const float ANCHOR = 3.0;
 const vec2 NORTH = vec2(0.0, -1.0);
 const vec2 SUN = vec2(-0.7071, -0.7071);
 const vec3 LIGHT_FROM = vec3(-0.55, 0.62, -0.55);
-const vec3 SURVEY_PAPER = vec3(0.925, 0.895, 0.81);
-const vec3 ANCIENT_PAPER = vec3(0.85, 0.77, 0.6);
-const vec3 MODERN_PAPER = vec3(0.945, 0.93, 0.875);
+const vec3 SURVEY_PAPER = vec3(0.929, 0.902, 0.827);
+const vec3 ANCIENT_PAPER = vec3(0.847, 0.757, 0.584);
+const vec3 MODERN_PAPER = vec3(0.953, 0.937, 0.878);
+const float W1 = 0.012;
+const float W2 = 0.025;
+const float W3 = 0.05;
+const vec3 SURVEY_INK = vec3(0.165, 0.145, 0.11);
+const vec3 SURVEY_HACHURE = vec3(0.541, 0.494, 0.384);
+const vec3 CARMINE = vec3(0.718, 0.192, 0.314);
+const vec3 CINNABAR = vec3(0.784, 0.208, 0.118);
+const vec3 WEGEBRAUN = vec3(0.545, 0.42, 0.29);
+const vec3 GAMBOGE = vec3(0.851, 0.722, 0.29);
+const vec3 POND = vec3(0.49, 0.612, 0.706);
+const vec3 CONIFER_WASH = vec3(0.541, 0.604, 0.455);
+const vec3 MODERN_BLACK = vec3(0.165, 0.157, 0.149);
+const vec3 MODERN_BROWN = vec3(0.71, 0.443, 0.29);
+const vec3 MODERN_GREEN = vec3(0.243, 0.541, 0.29);
+const vec3 MODERN_RED = vec3(0.784, 0.204, 0.102);
+const vec3 MODERN_SHADE = vec3(0.812, 0.765, 0.71);
+const vec3 ANCIENT_INK = vec3(0.118, 0.106, 0.094);
+const vec3 ANCIENT_UMBER = vec3(0.353, 0.243, 0.169);
+const vec3 ANCIENT_RIDGE = vec3(0.533, 0.333, 0.2);
+const vec3 RED_OCHRE = vec3(0.604, 0.29, 0.173);
+const float HAND_CYCLES = 1.5;
+const float HAND_SHIFT = 0.06;
+const float WASH_SHIFT = 0.04;
+const float CHAIN_LINES = 6.7;
+const float LAID_LINES = 0.27;
+const float SCREEN_PITCH = 0.095;
+const float CENTURIA = 1.0;
 const float SHEET_GAIN = 0.93;
 const int INDEX_EVERY = 5;
 const float LINE_PX = 0.72;
@@ -60,8 +87,8 @@ const float BREAK_FROM = 0.26;
 const float BREAK_TO = 0.34;
 const float INK_ON_DARK = 0.4;
 const vec3 LUMA = vec3(0.3, 0.59, 0.11);
-const vec3 SURVEY_BLUE = vec3(0.15, 0.3, 0.45);
-const vec3 MODERN_BLUE = vec3(0.1, 0.4, 0.7);
+const vec3 SURVEY_BLUE = vec3(0.2, 0.325, 0.443);
+const vec3 MODERN_BLUE = vec3(0.255, 0.329, 0.49);
 const float GENTLE = 0.268;
 const float ROCK_FROM = 0.577;
 const float ROCK_FULL = 0.839;
@@ -71,7 +98,7 @@ const float ROCK_STROKE = 1.0;
 const float ROCK_BAND_LEAST = 0.15;
 const float CURVE_STEP = 0.6;
 const float GRAD_STEP = 0.35;
-const float SLOPE_ROCK_WASH = 0.55;
+const float SLOPE_ROCK_WASH = 0.4;
 const float CREST_FROM = 0.05;
 const float CREST_FULL = 0.5;
 const float LEDGE_TREES = 0.2;
@@ -136,7 +163,7 @@ varying vec3 world;
 
 vec3 plain(int style, vec3 tint, vec3 sheet, vec2 p, float edge) {
 	if (style == MODERN) return tint * (sheet / MODERN_PAPER);
-	if (style == ANCIENT) return wash(tint, sheet, ANCIENT_PAPER, p, edge, 0.4);
+	if (style == ANCIENT) return tint * (sheet / ANCIENT_PAPER);
 	return wash(tint, sheet, SURVEY_PAPER, p, edge, 1.0);
 }
 
@@ -145,10 +172,10 @@ float smooth_height(vec2 uv) {
 }
 
 vec3 contour_ink(int style, int k, vec3 ground) {
-	if (style == ANCIENT) return vec3(0.38, 0.23, 0.12);
+	if (style == ANCIENT) return ANCIENT_UMBER;
 	if (k == WATER || k == SNOW) return style == MODERN ? MODERN_BLUE : SURVEY_BLUE;
-	vec3 brown = style == MODERN ? vec3(0.66, 0.38, 0.16) : vec3(0.46, 0.29, 0.18);
-	return brown * mix(INK_ON_DARK, 1.0, smoothstep(0.2, 0.7, dot(ground, LUMA)));
+	vec3 tone = style == MODERN ? MODERN_BROWN : SURVEY_INK;
+	return tone * mix(INK_ON_DARK, 1.0, smoothstep(0.2, 0.7, dot(ground, LUMA)));
 }
 
 float contour(float h, vec2 p, int style, float steep, float rock, out float halo) {
@@ -215,7 +242,7 @@ void fragment() {
 	float near_town = 1.0 - smoothstep(metres(NEAR_TOWN_M), metres(NEAR_TOWN_FAR_M), town_at(UV));
 	float bump = 0.0;
 	float cover = 0.0;
-	vec3 sheet = paper(style, p);
+	vec3 sheet = paper(style, p, fw);
 	vec3 rock = sheet;
 	if (rockness + foot > 0.001) rock = rock_face(style, mix(sheet, plain(style, palette[style * KINDS + ROCK].rgb, sheet, p, SEAMLESS), k == ROCK ? 1.0 : SLOPE_ROCK_WASH), p, UV, to_uv, h, down, steep, dark, crest, gully, sheer, foot, own, fw);
 	vec3 c;

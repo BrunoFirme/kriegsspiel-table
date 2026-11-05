@@ -188,17 +188,48 @@ float room_at(vec2 o, vec2 p, vec2 uv, mat2 to_uv, int k, out float salt) {
 	return (distance_at(u) + cell_world * 0.5) * detail;
 }
 
-vec3 paper(int style, vec2 p) {
-	float fibre = (noise(p * vec2(13.0, 2.6)) - 0.5) * 0.5;
+vec3 paper(int style, vec2 p, float fw) {
 	float tooth = (noise(p * 9.0) - 0.5) * 0.5;
 	if (style == ANCIENT) {
-		float stain = fbm(p * 0.025) - 0.5;
-		float fox = smoothstep(0.8, 0.9, noise(p * 5.0 + 21.0)) * smoothstep(0.55, 0.7, noise(p * 0.4 + 3.0));
-		return ANCIENT_PAPER * (1.0 + stain * 0.12 + fibre * 0.05 + tooth * 0.04) * (1.0 - fox * 0.05);
+		float warp = noise(vec2(p.x * 1.6, p.y * 0.12)) - 0.5;
+		float weft = noise(vec2(p.x * 0.12, p.y * 1.6)) - 0.5;
+		float fibre = (noise(p * vec2(1.5, 40.0)) - 0.5 + noise(p * vec2(40.0, 1.5) + 5.0) - 0.5) * (1.0 - far_blend(fw, 0.05));
+		return ANCIENT_PAPER * (1.0 + warp * 0.06 + weft * 0.05 + fibre * 0.05);
 	}
-	if (style == MODERN) return MODERN_PAPER * (1.0 + tooth * 0.014 + (fbm(p * 0.06) - 0.5) * 0.025);
-	float fox = smoothstep(0.7, 0.84, fbm(p * 0.07 + 11.0));
-	return SURVEY_PAPER * (1.0 + (fbm(p * 0.05) - 0.5) * 0.07 + fibre * 0.03 + tooth * 0.025) * (1.0 - fox * 0.05);
+	if (style == MODERN) return MODERN_PAPER * (1.0 + tooth * 0.008);
+	float wove = (noise(p * 14.0) - 0.5) * 0.5 * (1.0 - far_blend(fw, 0.07));
+	float laid = (1.0 - smoothstep(0.015, 0.035, abs(fract(p.y / LAID_LINES) - 0.5) * LAID_LINES)) * (1.0 - far_blend(fw, LAID_LINES));
+	float chain = (1.0 - smoothstep(0.012, 0.03, abs(fract(p.x / CHAIN_LINES) - 0.5) * CHAIN_LINES)) * (1.0 - far_blend(fw, 0.1));
+	float fox = smoothstep(0.86, 0.9, noise(p * 6.0 + 21.0)) * smoothstep(0.6, 0.75, noise(p * 0.3 + 3.0));
+	vec3 c = SURVEY_PAPER * (1.0 + (fbm(p * 0.05) - 0.5) * 0.05 + wove * 0.03 + tooth * 0.02 - laid * 0.012 - chain * 0.025);
+	return c * (1.0 - fox * vec3(0.06, 0.1, 0.16));
+}
+
+float double_strokes(vec2 p, float salt, float spacing, float len, float width, float gap, float keep, float fw) {
+	float m = 0.0;
+	for (int j = 0; j <= 1; j++) {
+		for (int i = 0; i <= 1; i++) {
+			vec2 id;
+			vec2 o = grid_point(p - spacing * 0.5, salt, spacing, 0.5, i, j, id) + spacing * 0.5;
+			if (hash(id + 7.7) > keep) continue;
+			float l = len * (0.7 + 0.6 * hash(id + 8.1));
+			for (int s = -1; s <= 1; s += 2) {
+				vec2 b = o + vec2(0.0, float(s) * gap * 0.5);
+				m = max(m, ink(segment(p, b - vec2(l, 0.0), b + vec2(l, 0.0)), width, fw));
+			}
+		}
+	}
+	float mean = keep * 8.0 * len * width / (spacing * spacing);
+	return mix(m, clamp(mean, 0.0, 1.0), far_blend(fw, spacing));
+}
+
+float dot_screen(vec2 p, float angle, float pitch, float share, float fw) {
+	mat2 r = mat2(vec2(cos(angle), sin(angle)), vec2(-sin(angle), cos(angle)));
+	vec2 f = fract(r * p / pitch) - 0.5;
+	float radius = sqrt(share / 3.1416);
+	float soft = fw / pitch * 0.5;
+	float d = 1.0 - smoothstep(radius - soft, radius + soft, length(f));
+	return mix(d, share, far_blend(fw, pitch));
 }
 
 vec3 wash(vec3 tint, vec3 sheet, vec3 ref, vec2 p, float edge, float strength) {

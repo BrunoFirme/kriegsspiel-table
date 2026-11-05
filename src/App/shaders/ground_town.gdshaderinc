@@ -95,8 +95,9 @@ float works(int style, vec2 p, vec2 uv, mat2 to_uv, float depth, float walls, fl
 }
 
 vec3 town_draw(int style, vec3 c, vec3 sheet, vec2 p, vec2 uv, mat2 to_uv, float own, vec2 levels, float fw, out float cover) {
-	vec3 ink_c = style == MODERN ? vec3(0.09, 0.1, 0.09) : style == ANCIENT ? vec3(0.22, 0.13, 0.06) : vec3(0.3, 0.2, 0.12);
-	vec3 house_c = style == MODERN ? vec3(0.09, 0.1, 0.09) : style == ANCIENT ? vec3(0.6, 0.27, 0.18) : vec3(0.64, 0.2, 0.22);
+	vec3 ink_c = style == MODERN ? MODERN_BLACK : style == ANCIENT ? ANCIENT_INK : SURVEY_INK;
+	vec3 house_c = style == MODERN ? MODERN_BLACK : style == ANCIENT ? RED_OCHRE : CARMINE;
+	vec3 church_c = style == SURVEY ? CINNABAR : ink_c;
 	float houses = levels.x;
 	float walls = levels.y;
 	float jitter = style == ANCIENT ? 0.0 : 0.5;
@@ -124,7 +125,7 @@ vec3 town_draw(int style, vec3 c, vec3 sheet, vec2 p, vec2 uv, mat2 to_uv, float
 	float far = far_blend(fw, slot);
 	house = mix(house, slot_mean * (1.0 - ring) * inside, far);
 	if (style == SURVEY) {
-		float shadow = frontage(p - vec2(metres(1.2), -metres(1.2)), b, houses, lane_half, fw, slot_mean) * keep;
+		float shadow = frontage(p - vec2(metres(1.5), metres(1.5)), b, houses, lane_half, fw, slot_mean) * keep;
 		c = mix(c, ink_c, shadow * (1.0 - house) * 0.8 * (1.0 - far));
 	}
 	c = mix(c, house_c, house);
@@ -133,7 +134,7 @@ vec3 town_draw(int style, vec3 c, vec3 sheet, vec2 p, vec2 uv, mat2 to_uv, float
 	float kerbs = max(ink(abs(q.edge - street_half), metres(0.6), fw) * (1.0 - lane), ink(abs(b.edge - lane_half), metres(0.4), fw) * 0.7);
 	c = mix(c, ink_c, kerbs * inside * (1.0 - ring * 0.5));
 	float ch = church(style, p, b.site, fw) * square;
-	c = mix(c, ink_c, ch);
+	c = mix(c, church_c, ch);
 	c = mix(c, ink_c, work);
 	cover = max(cover, max(ch, work));
 	return c;

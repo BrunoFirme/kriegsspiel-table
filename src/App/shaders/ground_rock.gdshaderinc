@@ -53,7 +53,7 @@ float rock_fill(vec2 p, float h, vec2 down, float steep, float dark, float sheer
 }
 
 vec3 survey_rock(vec3 c, vec2 p, float own, float h, vec2 down, float steep, float dark, float crest, float gully, float sheer, float foot, float fw) {
-	vec3 sepia = vec3(0.3, 0.2, 0.12);
+	vec3 sepia = SURVEY_INK;
 	c = mix(c, c * vec3(0.9, 0.88, 0.84), 0.35 * (1.0 - foot));
 	float fill = rock_fill(p, h, down, steep, dark, sheer, 0.28, 0.16, 0.012, 0.03, fw);
 	fill *= 1.0 - crest * (1.0 - dark);
@@ -66,7 +66,7 @@ vec3 survey_rock(vec3 c, vec2 p, float own, float h, vec2 down, float steep, flo
 }
 
 vec3 ancient_rock(vec3 c, vec2 p, float h, vec2 down, float steep, float dark, float crest, float sheer, float fw) {
-	vec3 umber = vec3(0.3, 0.17, 0.08);
+	vec3 umber = ANCIENT_RIDGE;
 	float strokes = rock_fill(p, h, down, steep, dark, sheer, 0.2, 0.2, 0.012, 0.016, fw);
 	c = mix(c, umber, strokes * 0.75);
 	c = mix(c, umber, crest * mix(0.2, 0.9, dark));
@@ -74,7 +74,7 @@ vec3 ancient_rock(vec3 c, vec2 p, float h, vec2 down, float steep, float dark, f
 }
 
 vec3 modern_rock(vec3 c, vec2 p, float h, vec2 down, float steep, float dark, float crest, float sheer, float foot, float own, float fw) {
-	vec3 black = vec3(0.09, 0.1, 0.09);
+	vec3 black = MODERN_BLACK;
 	float ticks = rock_fill(p, h, down, steep, dark, sheer, 0.12, 0.12, 0.011, 0.013, fw);
 	c = mix(c, black, ticks * 0.85 * (1.0 - foot));
 	c = mix(c, black, crest * 0.9 * (1.0 - foot));
@@ -116,14 +116,11 @@ vec3 engraved_relief(vec3 c, vec3 n, vec2 p, float fw, vec3 tone, float mask) {
 vec3 hillshade(vec3 c, vec3 n) {
 	float steep;
 	float dark = shaded(n, steep);
-	vec3 light = normalize(LIGHT_FROM);
-	float lit = clamp((dot(n, light) / light.y - 1.0) * 1.2, 0.0, 1.0);
-	c = mix(c, c * vec3(0.5, 0.52, 0.6), dark * 0.75);
-	return mix(c, c * vec3(1.06, 1.04, 0.98), lit * 0.3);
+	return mix(c, c * (MODERN_SHADE / MODERN_PAPER), dark);
 }
 
 vec3 slopes(vec3 c, vec3 n, vec2 p, float h, float fw, int style, float mask) {
 	if (style == MODERN) return hillshade(c, n);
-	if (style == ANCIENT) return engraved_relief(c, n, p, fw, vec3(0.25, 0.15, 0.08), mask);
-	return hachures(c, n, p, h, fw, vec3(0.3, 0.2, 0.12), mask);
+	if (style == ANCIENT) return c;
+	return hachures(c, n, p, h, fw, SURVEY_HACHURE, mask);
 }

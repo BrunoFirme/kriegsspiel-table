@@ -134,6 +134,8 @@ sealed partial class TableDemos
             ReliefBrush.Stroke(g, pts, r, new Brush(BrushMode.Paint, 0, 1, K(kind), Density: density, Salt: ++salt, Detail: GroundKinds.Levels(50, 25)));
         void PaintAt(string kind, int first, int second, double u0, double v0, double u1, double v1) =>
             ReliefBrush.Shape(g, [(u0, v0), (u1, v0), (u1, v1), (u0, v1)], new Brush(BrushMode.Paint, 0, 1, K(kind), Salt: ++salt, Detail: GroundKinds.Levels(first, second)));
+        void PaintRoad(int road, double r, params (double, double)[] pts) =>
+            ReliefBrush.Stroke(g, pts, r, new Brush(BrushMode.Paint, 0, 1, K("road"), Density: 1, Salt: ++salt, Detail: GroundKinds.Levels(road, 0)));
         void Raise(double r, double strength, params (double, double)[] pts) => ReliefBrush.Stroke(g, pts, r, new Brush(BrushMode.Raise, 0, strength));
         void Lower(double r, double strength, params (double, double)[] pts) => ReliefBrush.Stroke(g, pts, r, new Brush(BrushMode.Lower, 0, strength));
 
@@ -161,8 +163,9 @@ sealed partial class TableDemos
         Paint("water", 3, 1, (0.76, 0.66), (0.82, 0.78), (0.9, 0.86), (0.98, 0.97));
         Paint("marsh", 10, 1, (0.62, 0.55), (0.62, 0.68), (0.66, 0.73));
         Paint("sand", 6, 1, (0.68, 0.7), (0.74, 0.71));
-        Paint("road", 2.5, 1, (0.02, 0.88), (0.2, 0.86), (0.4, 0.8), (0.55, 0.78), (0.62, 0.84), (0.8, 0.88), (0.98, 0.9));
-        Paint("road", 1.8, 1, (0.5, 0.78), (0.45, 0.62), (0.4, 0.48));
+        PaintRoad(100, 2.5, (0.02, 0.88), (0.2, 0.86), (0.4, 0.8), (0.55, 0.78), (0.62, 0.84), (0.8, 0.88), (0.98, 0.9));
+        PaintRoad(0, 1.4, (0.5, 0.78), (0.45, 0.62), (0.4, 0.48));
+        PaintRoad(50, 1.8, (0.62, 0.84), (0.66, 0.7), (0.7, 0.6));
         Paint("earth", 4, 1, (0.47, 0.76), (0.53, 0.76));
         Paint("earth", 3, 1, (0.5, 0.82), (0.56, 0.83));
         for (int i = 0; i < 4; i++) Paint("field", 6, 1, (0.36 + i * 0.03, 0.88), (0.37 + i * 0.03, 0.96));
