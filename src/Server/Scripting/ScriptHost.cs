@@ -11,6 +11,7 @@ public sealed partial class ScriptHost
     public const double CallBudgetMs = 100;
     public const double LoadBudgetMs = 10_000;
     public const long YieldEvery = 100_000;
+    const int LoadFrames = 600;
     const int MaxDepth = 8;
     public const int MaxNesting = 50;
     public const int MaxCoroutinesPerCall = 64;
@@ -263,8 +264,8 @@ public sealed partial class ScriptHost
                     _timers.Remove(t);
                     Invoke(t.Owner, t.Fn);
                 });
-            foreach (var (owner, co, loading) in resumes)
-                Guard(owner.Id, () => { if (owner.Enabled && IsCurrent(owner)) WhileLoading(loading, () => Resume(owner, co)); });
+            foreach (var (owner, co, loadFrames) in resumes)
+                Guard(owner.Id, () => { if (owner.Enabled && IsCurrent(owner)) WhileLoading(loadFrames, () => Resume(owner, co)); });
         });
     }
 
@@ -345,20 +346,22 @@ public sealed partial class ScriptHost
         });
     }
 
-    public bool Loading { get; private set; }
+    int _loadFrames;
 
-    void WhileLoading(bool loading, Action body)
+    public bool Loading => _loadFrames > 0;
+
+    void WhileLoading(int frames, Action body)
     {
-        var was = Loading;
-        Loading = loading;
-        try { body(); } finally { Loading = was; }
+        var was = _loadFrames;
+        _loadFrames = frames;
+        try { body(); } finally { _loadFrames = was; }
     }
 
     void UnderLoadBudget(Action body)
     {
         var saved = _guards.BudgetMs;
         _guards.BudgetMs = LoadBudgetMs;
-        try { WhileLoading(true, body); } finally { _guards.BudgetMs = saved; }
+        try { WhileLoading(LoadFrames, body); } finally { _guards.BudgetMs = saved; }
     }
 
     void LoadGlobal(string code)
@@ -483,7 +486,7 @@ public sealed partial class ScriptHost
             if (co.Coroutine.State == CoroutineState.Suspended)
             {
                 if (g.Finished(r, out var result)) { g.Release(co); return result; }
-                _timers.ResumeNextFrame(ps, co, Loading);
+                _timers.ResumeNextFrame(ps, co, _loadFrames - 1);
                 return null;
             }
             return r;

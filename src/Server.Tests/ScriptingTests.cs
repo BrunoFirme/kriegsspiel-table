@@ -1,4 +1,4 @@
-﻿using KTable.Core;
+using KTable.Core;
 using KTable.Core.Model;
 using KTable.Core.Protocol;
 
@@ -1166,5 +1166,32 @@ public class ScriptingTests
 
         t.Server.Handle(Table.Host, new SetState { Layer = U, Id = P, State = 1 });
         Assert.Equal("drawn", Assert.Single(DecalDef.ShownOn(t.Server.State.Find(U, P)!, def)).Picture);
+    }
+    [Fact]
+    public void A_coroutine_still_yielding_long_after_its_load_stops_counting_as_loading_and_its_symbols_take()
+    {
+        using var t = new Table();
+        t.Store.PackOfDef("inf")!.Assets["drawn"] = new AssetEntry { File = "assets/arms.png", W = 64, H = 64 };
+        var def = t.Store.Def("inf")!;
+        def.States = [new PieceStateDef { Name = "Line", Decals = [new DecalDef { Picture = "arms", W = 1, H = 0.25 }] }];
+
+        SetScript(t, """
+            function on_load(s)
+              while true do
+                coroutine.yield(0)
+                self.set_decals{ { picture = "drawn", w = 0.5, h = 0.5 } }
+              end
+            end
+            """);
+
+        Assert.Empty(t.Server.State.Find(U, P)!.Decals);
+        for (int i = 0; i < 40; i++) t.Server.Scripts.Tick(i * 0.01);
+        Assert.Empty(t.Server.State.Find(U, P)!.Decals);
+
+        for (int i = 0; i < 700; i++) t.Server.Scripts.Tick(1 + i * 0.01);
+        var p = t.Server.State.Find(U, P)!;
+        Assert.Equal("drawn", Assert.Single(p.Decals).Picture);
+        Assert.Equal(0, p.DecalsOnState);
+        Assert.Equal("drawn", Assert.Single(DecalDef.ShownOn(p, def)).Picture);
     }
 }

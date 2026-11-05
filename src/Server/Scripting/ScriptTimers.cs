@@ -1,4 +1,4 @@
-﻿using MoonSharp.Interpreter;
+using MoonSharp.Interpreter;
 
 namespace KTable.Server.Scripting;
 
@@ -18,7 +18,7 @@ internal sealed class ScriptTimer
 internal sealed class ScriptTimers
 {
     readonly List<ScriptTimer> _timers = new();
-    readonly List<(PieceScript owner, DynValue co, bool loading)> _resumes = new();
+    readonly List<(PieceScript owner, DynValue co, int loadFrames)> _resumes = new();
     int _nextTimer = 1;
 
     public double Now { get; private set; }
@@ -31,14 +31,14 @@ internal sealed class ScriptTimers
         return _timers.Where(t => (!double.IsNaN(t.Due) && t.Due <= Now) || (t.DueFrame >= 0 && t.DueFrame <= Frame) || t.Predicate.Type == DataType.Function).ToList();
     }
 
-    public List<(PieceScript owner, DynValue co, bool loading)> TakeResumes()
+    public List<(PieceScript owner, DynValue co, int loadFrames)> TakeResumes()
     {
         var resumes = _resumes.ToList();
         _resumes.Clear();
         return resumes;
     }
 
-    public void ResumeNextFrame(PieceScript owner, DynValue co, bool loading) => _resumes.Add((owner, co, loading));
+    public void ResumeNextFrame(PieceScript owner, DynValue co, int loadFrames) => _resumes.Add((owner, co, loadFrames));
 
     public int Add(ScriptTimer t, PieceScript owner)
     {
@@ -77,6 +77,6 @@ internal sealed class ScriptTimers
     public void AdoptResumes(PieceScript temp, PieceScript? real)
     {
         for (int i = _resumes.Count - 1; i >= 0; i--)
-            if (_resumes[i].owner == temp) { if (real != null) _resumes[i] = (real, _resumes[i].co, _resumes[i].loading); else _resumes.RemoveAt(i); }
+            if (_resumes[i].owner == temp) { if (real != null) _resumes[i] = (real, _resumes[i].co, _resumes[i].loadFrames); else _resumes.RemoveAt(i); }
     }
 }
