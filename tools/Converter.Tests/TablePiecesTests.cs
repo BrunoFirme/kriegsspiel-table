@@ -227,7 +227,7 @@ public sealed partial class ConverterTests
             var buffer = new byte[4096];
             int read = await stream.ReadAsync(buffer, stop);
             var request = System.Text.Encoding.ASCII.GetString(buffer, 0, read);
-            var status = request.Contains("/busy") ? "429 Too Many Requests" : "503 Service Unavailable";
+            var status = request.Contains("/busy") ? "429 Too Many Requests" : request.Contains("/forbidden") ? "403 Forbidden" : "503 Service Unavailable";
             const string Page = "<!DOCTYPE html><html><body>Just a moment...</body></html>";
             var answer = $"HTTP/1.1 {status}\r\nContent-Type: text/html\r\nContent-Length: {Page.Length}\r\nConnection: close\r\n\r\n{Page}";
             await stream.WriteAsync(System.Text.Encoding.ASCII.GetBytes(answer), stop);
@@ -243,15 +243,16 @@ public sealed partial class ConverterTests
         using var stop = new CancellationTokenSource();
         var serving = ServePages(server, stop.Token);
         int port = ((System.Net.IPEndPoint)server.LocalEndpoint).Port;
-        string wall = $"http://127.0.0.1:{port}/card.png", busy = $"http://127.0.0.1:{port}/busy.png";
+        string wall = $"http://127.0.0.1:{port}/card.png", busy = $"http://127.0.0.1:{port}/busy.png", forbidden = $"http://127.0.0.1:{port}/forbidden.png";
         try
         {
             var first = new AssetStore(cfg, new Report());
-            await first.FetchAll(new[] { wall, busy });
-            Assert.Equal((null, null), (first.Gone(wall, "image"), first.Gone(busy, "image")));
+            await first.FetchAll(new[] { wall, busy, forbidden });
+            Assert.Equal((null, null, null), (first.Gone(wall, "image"), first.Gone(busy, "image"), first.Gone(forbidden, "image")));
             var second = new AssetStore(cfg, new Report());
-            await second.FetchAll(new[] { wall, busy });
+            await second.FetchAll(new[] { wall, busy, forbidden });
             Assert.EndsWith(AssetStore.WebPage, second.Gone(wall, "image"));
+            Assert.EndsWith(AssetStore.WebPage, second.Gone(forbidden, "image"));
             Assert.Null(second.Gone(busy, "image"));
         }
         finally
@@ -260,6 +261,31 @@ public sealed partial class ConverterTests
             server.Stop();
             await Task.WhenAny(serving, Task.Delay(1000));
         }
+    }
+
+    [Fact]
+    public void A_piece_beside_a_tray_at_the_tray_s_level_lies_at_that_level_and_one_on_the_table_stays_down()
+    {
+        var cfg0 = TempConfig();
+        LocalPicture(cfg0, "http://a/tray.png", 8, 8, (_, _) => SKColors.SaddleBrown);
+        LocalPicture(cfg0, "http://a/face.png", 8, 12, (_, _) => SKColors.White);
+        var tray = Obj("Custom_Tile", "Tray", 5, new JsonObject { ["CustomImage"] = new JsonObject { ["ImageURL"] = "http://a/tray.png" } });
+        JsonObject At(string name, double x, double y)
+        {
+            var c = Card(name, 1, 0, "http://a/face.png", "http://a/face.png", 1, 1);
+            c["Transform"]!["posX"] = x;
+            c["Transform"]!["posY"] = y;
+            return c;
+        }
+        var module = Module("levels", tray, At("On", 2.0, 1.3), At("Beside", 12.0, 1.3), At("Down", 30.0, 1.0));
+        var main = typeof(Config).Assembly.EntryPoint!;
+
+        var code = (int)main.Invoke(null, new object[] { new[] { "import", module, "--config", Path.Combine(_root, "converter.json"), "--out", Packages } })!;
+
+        Assert.Equal(0, code);
+        var table = Json.Load<Scenario>(Path.Combine(Packages, "scenarios", "levels", "scenario.json"));
+        double Y(string label) => table.UmpireBoard.Single(p => p.Label == label).Y;
+        Assert.Equal((0.2, 0.2, 0.0), (Y("On"), Y("Beside"), Y("Down")));
     }
 
     [Fact]

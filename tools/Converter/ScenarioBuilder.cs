@@ -30,6 +30,7 @@ public sealed class ScenarioBuilder
         public List<TtsObj> Effects = new();
         public List<PieceInstance> Pieces = new();
         public Dictionary<PieceInstance, double> Y = new();
+        public Dictionary<PieceInstance, double> Bottom = new();
         public Dictionary<PieceInstance, (PieceInstance Root, double Bottom)> Glued = new();
         public Dictionary<PieceInstance, double> HeightScale = new();
     }
@@ -486,6 +487,7 @@ public sealed class ScenarioBuilder
         inst.Decals = DecalsOf(o, def, _cfg.BaseSizes.CustomTokenArea, url => _defs.UiAsset(extras, url, $"{layer.Name} {o.Name} '{o.Nickname}' {o.Guid} decal"));
         layer.Pieces.Add(inst);
         layer.Y[inst] = o.PosY;
+        layer.Bottom[inst] = _defs.Bottom(o);
 
         PlaceChildren(o, _defs.BakesChildren(o) ? Enumerable.Empty<TtsObj>() : o.Children, inst, refScale, baseScale, extras, packDefs, layer, usedPacks, ref rekeyed);
         return inst;
@@ -587,9 +589,17 @@ public sealed class ScenarioBuilder
 
     void Stack(Layer l)
     {
+        var levels = Seat(l, new List<(double bottom, double y)>());
+        Seat(l, levels);
+        SeatGlued(l);
+    }
+
+    List<(double bottom, double y)> Seat(Layer l, List<(double bottom, double y)> levels)
+    {
         const double Above = 0.02, Digits = 4;
         var order = l.Pieces.Where(p => !l.Glued.ContainsKey(p)).OrderBy(p => l.Y[p]).ToList();
         var placed = new List<(PieceInstance p, double y, double top)>();
+        var held = new List<(double bottom, double y)>();
         foreach (var p in order)
         {
             int s = 0;
@@ -600,11 +610,21 @@ public sealed class ScenarioBuilder
                 s = Math.Max(s, q.Stack + 1);
                 rest = Math.Max(rest, qtop);
             }
+            bool bottomKnown = l.Bottom.TryGetValue(p, out var bottom);
+            if (s > 0 && rest > 0 && bottomKnown) held.Add((bottom, rest));
+            if (s == 0 && bottomKnown && LevelOf(bottom, levels) is { } level) rest = level;
             p.Stack = s;
-            if (rest > 0) p.Y = Math.Round(rest, (int)Digits);
+            p.Y = rest > 0 ? Math.Round(rest, (int)Digits) : 0;
             placed.Add((p, l.Y[p], rest + (Lookup(p.Def)?.Thickness ?? 0) * p.Scale));
         }
-        SeatGlued(l);
+        return held;
+    }
+
+    static double? LevelOf(double bottom, List<(double bottom, double y)> levels)
+    {
+        const double SameLevel = 0.02;
+        var near = levels.Where(lv => Math.Abs(lv.bottom - bottom) < SameLevel).ToList();
+        return near.Count == 0 ? null : near.GroupBy(lv => lv.y).OrderByDescending(g => g.Count()).First().Key;
     }
 
     static void SeatGlued(Layer l)

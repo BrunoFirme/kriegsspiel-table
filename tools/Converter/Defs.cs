@@ -124,7 +124,16 @@ public sealed partial class DefFactory
         }
         b = maxX < minX ? (1, 1, 1) : (maxX - minX, maxY - minY, maxZ - minZ);
         _meshBounds[e.Sha!] = b;
+        _meshFloor[e.Sha!] = maxY < minY ? 0 : minY;
         return b;
+    }
+
+    readonly Dictionary<string, double> _meshFloor = new();
+
+    public double Bottom(TtsObj o)
+    {
+        if (o.Name == "Custom_Model" && MeshBounds(o.MeshUrl) != null && Entry(o.MeshUrl) is { Sha: { } sha }) return o.PosY + _meshFloor[sha] * Math.Abs(o.ScaleY);
+        return o.PosY - BaseThickness(o) * Math.Abs(o.ScaleY) / 2;
     }
 
     public Size2 BaseSize(TtsObj o)

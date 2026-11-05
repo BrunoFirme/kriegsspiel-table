@@ -219,7 +219,8 @@ public sealed partial class AssetStore
         int attempts = steam ? SteamAttempts : OtherHostAttempts;
         string? err = null;
         bool definite = false;
-        bool serverFailedBefore = _index.TryGetValue(key, out var before) && before.Status != "ok" && before.Error is { } was && was.StartsWith("HTTP 5");
+        const int TooManyRequests = 429;
+        bool serverFailedBefore = _index.TryGetValue(key, out var before) && before.Status != "ok" && before.Error is { } was && was.StartsWith("HTTP ") && !was.StartsWith($"HTTP {TooManyRequests}");
         for (int i = 0; i < attempts; i++)
         {
             if (i > 0) await Task.Delay(TimeSpan.FromSeconds(Math.Pow(2, i)));
@@ -227,16 +228,18 @@ public sealed partial class AssetStore
             {
                 using var cts = new CancellationTokenSource();
                 using var resp = await http.GetAsync(FetchUrl(url), HttpCompletionOption.ResponseHeadersRead, cts.Token);
-                if ((int)resp.StatusCode == 429 || (int)resp.StatusCode >= 500)
+                int code = (int)resp.StatusCode;
+                if (code == TooManyRequests || code >= 500)
                 {
-                    err = $"HTTP {(int)resp.StatusCode}";
-                    if ((int)resp.StatusCode >= 500 && serverFailedBefore && Sniff(await ReadBody(resp, cts)) == "html") err += ": " + WebPage;
+                    err = $"HTTP {code}";
+                    if (code >= 500 && serverFailedBefore && Sniff(await ReadBody(resp, cts)) == "html") err += ": " + WebPage;
                     continue;
                 }
                 if (!resp.IsSuccessStatusCode)
                 {
-                    err = $"HTTP {(int)resp.StatusCode}";
-                    definite = (int)resp.StatusCode is 404 or 410;
+                    err = $"HTTP {code}";
+                    definite = code is 404 or 410;
+                    if (!definite && serverFailedBefore && Sniff(await ReadBody(resp, cts)) == "html") err += ": " + WebPage;
                     break;
                 }
                 var bytes = await ReadBody(resp, cts);
