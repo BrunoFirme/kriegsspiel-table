@@ -70,6 +70,26 @@ static class HudTests
     }
 
     [NodeTest]
+    static async Task The_host_s_table_fetches_the_server_s_again_when_it_cannot_take_a_change(TestRunner r)
+    {
+        var h = await Host(r);
+        h.S.Live.Layers[Layers.Umpire].RemoveAll(p => p.Id == "p2");
+        bool thrown = false;
+        h.S.Applied += _ =>
+        {
+            if (thrown) return;
+            thrown = true;
+            throw new System.InvalidOperationException("the table broke");
+        };
+        h.S.Do(new MovePiece { Layer = Layers.Umpire, Id = "p1", Pos = new Vec2(5, 5) });
+        await r.Frames(2);
+        Check.That(thrown, "the table failed to take the move");
+        var pieces = h.S.View.Layers[Layers.Umpire];
+        Check.That(pieces.Any(p => p.Id == "p2"), "the server's table came back");
+        Check.That(pieces.Any(p => p.Id == "p1" && p.Pos.X == 5), "with the move in it");
+    }
+
+    [NodeTest]
     static async Task A_refused_change_is_written_in_the_transcript(TestRunner r)
     {
         var h = await Host(r);

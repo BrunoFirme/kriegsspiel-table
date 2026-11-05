@@ -359,8 +359,7 @@ public partial class Net : Node
         {
             if (o.PeerId != 1) { SendRaw(o.PeerId, o.Message); continue; }
             KTable.Core.WireTap.Note("local", 1, o.Message);
-            try { Deliver(o.Message); }
-            catch (Exception e) { GD.PushError($"the host's table could not take {o.Message.GetType().Name}: {e}"); }
+            DeliverOrResync(o.Message);
         }
         if (Server != null)
         {
@@ -430,7 +429,17 @@ public partial class Net : Node
             }
             return;
         }
-        Deliver(m);
+        DeliverOrResync(m);
+    }
+
+    void DeliverOrResync(Message m)
+    {
+        try { Deliver(m); }
+        catch (Exception e)
+        {
+            GD.PushError($"this table could not take {m.GetType().Name}: {e}");
+            AskForTheTable();
+        }
     }
 
     void Deliver(Message m)
