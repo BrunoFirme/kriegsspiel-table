@@ -14,7 +14,7 @@ public sealed class ReliefIndex
 
 public static class GroundKinds
 {
-    public const byte None = 0, Water = 5, Road = 6, Bridge = 11;
+    public const byte None = 0, Water = 5, Road = 6, Bridge = 11, Town = 12;
 
     public static readonly IReadOnlyList<(string Name, string Color)> All =
     [
@@ -30,6 +30,7 @@ public static class GroundKinds
         ("sand", "#E6D299"),
         ("snow", "#F2F2EE"),
         ("bridge", "#DDC49A"),
+        ("town", "#E3CCC8"),
     ];
 
     public static byte? Of(string name)
@@ -43,7 +44,12 @@ public static class GroundKinds
 
     public static IEnumerable<byte> Brushes => Enumerable.Range(1, All.Count - 1).Select(i => (byte)i).Where(k => k != Bridge);
 
-    public static byte Laid(byte under, byte brush) => brush == Road && under is Water or Bridge ? Bridge : brush;
+    public static byte Laid(byte under, byte brush) => brush switch
+    {
+        Road when under is Water or Bridge => Bridge,
+        Town when under is Road or Bridge or Water => under,
+        _ => brush,
+    };
 
     public static byte BrushOf(byte kind) => kind == Bridge ? Road : kind;
 
@@ -53,11 +59,14 @@ public static class GroundKinds
     static readonly GroundParameter Plots = new("Plots", "Big open fields in strips, or small plots bounded by hedges, fences and walls", 50);
     static readonly GroundParameter Buildings = new("Buildings", "None, lone farms, or hamlets", 25);
     static readonly GroundParameter Trees = new("Trees", "Open wood or closed forest", 75);
+    static readonly GroundParameter Houses = new("Houses", "Scattered houses with gardens, or packed streets", 50);
+    static readonly GroundParameter Walls = new("Walls", "None, a wall with towers, or a bastioned fort", 0);
 
     public static IReadOnlyList<GroundParameter> Parameters(byte kind) => Name(kind) switch
     {
         "field" or "grass" => [Plots, Buildings],
         "wood" => [Trees],
+        "town" => [Houses, Walls],
         _ => [],
     };
 
@@ -73,10 +82,10 @@ public static class GroundKinds
     static int Percent(int nibble) => (int)Math.Round(nibble * 100.0 / LevelSteps);
 
     static readonly string[] Ancient =
-        ["#00000000", "#CFC79A", "#DBC386", "#7B9C78", "#9EAA82", "#84A79C", "#E6D5AE", "#B57D48", "#9C8664", "#DFC584", "#ECE6D7", "#E6D5AE"];
+        ["#00000000", "#CFC79A", "#DBC386", "#7B9C78", "#9EAA82", "#84A79C", "#E6D5AE", "#B57D48", "#9C8664", "#DFC584", "#ECE6D7", "#E6D5AE", "#B5563A"];
 
     static readonly string[] Modern =
-        ["#00000000", "#DFE5C0", "#EFE5C8", "#80BF7D", "#E1ECE6", "#96CAE8", "#D9502E", "#E2CDA6", "#C9C3B9", "#EEDCA8", "#FBFBFB", "#D9502E"];
+        ["#00000000", "#DFE5C0", "#EFE5C8", "#80BF7D", "#E1ECE6", "#96CAE8", "#D9502E", "#E2CDA6", "#C9C3B9", "#EEDCA8", "#FBFBFB", "#D9502E", "#D9D8D0"];
 
     public static string Color(byte kind, string? style)
     {

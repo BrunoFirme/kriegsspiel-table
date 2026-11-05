@@ -19,7 +19,7 @@ sealed partial class AgentTableTools
     const double ReliefWaitSeconds = 600, ShapeWaitSeconds = 20;
 
     static string KindNames => string.Join(", ", GroundKinds.Brushes.Select(GroundKinds.Name));
-    static readonly string[] ParameterNames = ["plots", "buildings", "trees"];
+    static readonly string[] ParameterNames = ["plots", "buildings", "trees", "houses", "walls"];
     const string NeedsScaleWords = "Set the map's scale first (set_map_scale).";
 
     IEnumerable<AgentTool> ReliefTools()
@@ -27,19 +27,20 @@ sealed partial class AgentTableTools
         yield return new AgentTool("shape_ground",
             "Shapes the relief of the map along a stroke, as the Relief tool does: raise, lower, smooth or flatten the ground, or paint a ground type on it (" + KindNames + "; none rubs paint out; road across water lays a bridge). " +
             "The stroke goes to the top sheet with a relief under its first point, or to the top sheet there, which then gets a flat relief. Paint with density below 1 lays the type in clumps (sparse wood, scattered rock; with none it thins paint), fill paints the whole patch of like ground around the first point, or a bare sheet whole, and shape paints a rectangle, ellipse or polygon whole (a square field, a round pond). " +
-            "Each stroke of paint draws its own details, afresh every time it is painted: field and grass take plots (big open strips, or small plots bounded by hedges, fences and walls) and buildings (none, lone farms, or hamlets), wood takes trees (open wood, or closed forest). The map needs a scale (set_map_scale) before its ground is shaped. One call is one step that undo takes back. Pieces standing on the ground follow it.",
+            "Each stroke of paint draws its own details, afresh every time it is painted: field and grass take plots (big open strips, or small plots bounded by hedges, fences and walls) and buildings (none, lone farms, or hamlets), wood takes trees (open wood, or closed forest), town takes houses (scattered houses with gardens, or packed streets) and walls (none, a wall with towers, or a bastioned fort); town is the one brush for village, town and city, its size says which, and a road painted through it is its street. The map needs a scale (set_map_scale) before its ground is shaped. One call is one step that undo takes back. Pieces standing on the ground follow it.",
             Args.Schema(new Arg("points", "array", "[[x, z], …] in map units: one point is a single dab, more draw a stroke through them", true),
                 new Arg("mode", "string", "raise, lower, smooth, flatten or paint", true), new Arg("radius", "number", "brush radius, map units", true),
                 new Arg("strength", "number", "0–1 (0.35 if left out); for raise and lower, how much one pass adds"), new Arg("kind", "string", "ground type for paint"),
                 new Arg("density", "number", "for paint, 0–1 of the ground that takes it (1 if left out)"),
                 new Arg("plots", "number", "field or grass: 0–1, open strips to small bounded plots (0.5 if left out)"), new Arg("buildings", "number", "field or grass: 0–1, none to hamlets (0.25 if left out)"),
                 new Arg("trees", "number", "wood: 0–1, open wood to closed forest (0.75 if left out)"),
+                new Arg("houses", "number", "town: 0–1, scattered houses to packed streets (0.5 if left out)"), new Arg("walls", "number", "town: 0–1, none, a wall with towers, a bastioned fort (0 if left out)"),
                 new Arg("fill", "boolean", "for paint: fill the patch around the first point instead of brushing, radius then unused"),
                 new Arg("shape", "string", "for paint, instead of brushing (radius then unused): rect or ellipse between two opposite corners, lined up with the map; polygon through its corners, three or more"),
                 new Arg("passes", "number", "go over the stroke this many times (1–20, 1 if left out)"), new Arg("sheet", "string", "a sheet's id to shape instead (list_map_sheets)")),
             ShapeGround);
         yield return new AgentTool("ground_at",
-            "The ground at points: its height above the table in map units, the ground type painted there with its plots, buildings or trees where it has them, whether the slope there draws as rock, and the sheet whose relief it is.",
+            "The ground at points: its height above the table in map units, the ground type painted there with its plots, buildings, trees, houses or walls where it has them, whether the slope there draws as rock, and the sheet whose relief it is.",
             Args.Schema(new Arg("points", "array", "[[x, z], …] in map units", true)), x => Task.FromResult(GroundAt(x)));
     }
 
@@ -113,7 +114,7 @@ sealed partial class AgentTableTools
             if (Levels(a, GroundKinds.Of(kind)!.Value, out detail) is { } refused) return refused;
             mode = "paint:" + kind;
         }
-        else if (ParameterNames.Any(n => a.Num(n) != null)) return ToolResult.Fail("plots, buildings and trees are for paint.");
+        else if (ParameterNames.Any(n => a.Num(n) != null)) return ToolResult.Fail("plots, buildings, trees, houses and walls are for paint.");
         bool fill = mode.StartsWith("paint:", StringComparison.Ordinal) && a.Flag("fill") == true;
         var shape = (a.Str("shape") ?? "").Trim().ToLowerInvariant();
         if (shape.Length > 0 && !mode.StartsWith("paint:", StringComparison.Ordinal)) return ToolResult.Fail("shape is for paint.");

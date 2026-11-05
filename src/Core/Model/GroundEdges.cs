@@ -3,24 +3,61 @@ namespace KTable.Core.Model;
 public static class GroundEdges
 {
     public const int StepsPerCell = 16;
+    public const int FieldStepsPerCell = 4;
+    public const int TownStepsPerCell = 8;
     public const byte Far = 255;
+    public const int Channels = 4;
     const float Diagonal = 1.41421356f;
 
-    public static byte[] Distances(ReliefGrid g)
+    public static byte[] Distances(ReliefGrid g) => Chamfer(g, Edges(g), StepsPerCell);
+
+    public static byte[] Fields(ReliefGrid g)
     {
-        var o = new byte[g.Kind.Length];
-        if (!g.Painted) { Array.Fill(o, Far); return o; }
+        var o = new byte[g.Kind.Length * Channels];
+        var edges = Distances(g);
+        var town = Chamfer(g, Cells(g, k => k == GroundKinds.Town), FieldStepsPerCell);
+        var wet = Chamfer(g, Cells(g, k => k == GroundKinds.Water || k == GroundKinds.Of("marsh")), FieldStepsPerCell);
+        var depth = Chamfer(g, Cells(g, k => k != GroundKinds.Town && k != GroundKinds.Road && k != GroundKinds.Bridge), TownStepsPerCell);
+        for (int i = 0; i < g.Kind.Length; i++)
+        {
+            o[i * Channels] = edges[i];
+            o[i * Channels + 1] = town[i];
+            o[i * Channels + 2] = wet[i];
+            o[i * Channels + 3] = depth[i];
+        }
+        return o;
+    }
+
+    static bool[] Edges(ReliefGrid g)
+    {
+        var e = new bool[g.Kind.Length];
+        if (!g.Painted) return e;
         int w = g.Cols, h = g.Rows;
-        var d = new float[w * h];
-        float far = Far / (float)StepsPerCell;
         for (int y = 0; y < h; y++)
             for (int x = 0; x < w; x++)
             {
                 int i = y * w + x;
                 byte k = g.Kind[i];
-                bool edge = (x > 0 && g.Kind[i - 1] != k) || (x < w - 1 && g.Kind[i + 1] != k) || (y > 0 && g.Kind[i - w] != k) || (y < h - 1 && g.Kind[i + w] != k);
-                d[i] = edge ? 0.5f : far;
+                e[i] = (x > 0 && g.Kind[i - 1] != k) || (x < w - 1 && g.Kind[i + 1] != k) || (y > 0 && g.Kind[i - w] != k) || (y < h - 1 && g.Kind[i + w] != k);
             }
+        return e;
+    }
+
+    static bool[] Cells(ReliefGrid g, Func<byte, bool> of)
+    {
+        var e = new bool[g.Kind.Length];
+        for (int i = 0; i < e.Length; i++) e[i] = of(g.Kind[i]);
+        return e;
+    }
+
+    static byte[] Chamfer(ReliefGrid g, bool[] seeds, int stepsPerCell)
+    {
+        var o = new byte[g.Kind.Length];
+        if (!seeds.Any(s => s)) { Array.Fill(o, Far); return o; }
+        int w = g.Cols, h = g.Rows;
+        var d = new float[w * h];
+        float far = Far / (float)stepsPerCell;
+        for (int i = 0; i < d.Length; i++) d[i] = seeds[i] ? 0.5f : far;
         for (int y = 0; y < h; y++)
             for (int x = 0; x < w; x++)
             {
@@ -48,7 +85,7 @@ public static class GroundEdges
                     if (x > 0) v = Math.Min(v, d[i + w - 1] + Diagonal);
                 }
                 d[i] = v;
-                o[i] = (byte)Math.Min(Far, (int)Math.Round(v * StepsPerCell));
+                o[i] = (byte)Math.Min(Far, (int)Math.Round(v * stepsPerCell));
             }
         return o;
     }

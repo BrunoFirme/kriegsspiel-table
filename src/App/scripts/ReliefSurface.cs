@@ -149,7 +149,7 @@ public partial class ReliefSurface : Node3D
         else _kindsTex = ImageTexture.CreateFromImage(img);
         if (_edgesTex != null && _edgesOf != null && _edgesOf.AsSpan().SequenceEqual(grid.Kind)) return;
         _edgesOf = (byte[])grid.Kind.Clone();
-        var edges = Image.CreateFromData(grid.Cols, grid.Rows, false, Image.Format.R8, GroundEdges.Distances(grid));
+        var edges = Image.CreateFromData(grid.Cols, grid.Rows, false, Image.Format.Rgba8, GroundEdges.Fields(grid));
         if (_edgesTex != null && _edgesTex.GetWidth() == grid.Cols && _edgesTex.GetHeight() == grid.Rows) _edgesTex.Update(edges);
         else _edgesTex = ImageTexture.CreateFromImage(edges);
     }

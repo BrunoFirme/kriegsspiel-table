@@ -89,7 +89,7 @@ vec3 survey_field(vec3 c, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_uv, fl
 	return c;
 }
 
-vec3 survey(int k, int beside, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_uv, float own, vec2 levels, vec2 along, float follow, float ledges, float fw, float edge, float border, out float bump, out float cover) {
+vec3 survey(int k, int beside, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_uv, float own, vec2 levels, float near_town, vec2 along, float follow, float ledges, float fw, float edge, float border, out float bump, out float cover) {
 	vec3 sepia = vec3(0.3, 0.2, 0.12);
 	vec3 prussian = vec3(0.15, 0.3, 0.45);
 	vec3 c = wash(tint, sheet, SURVEY_PAPER, p, edge, 1.0);
@@ -98,7 +98,9 @@ vec3 survey(int k, int beside, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_u
 	float rim = 0.0;
 	vec3 rim_ink = sepia;
 	if (units_per_metre <= 0.0) return mix(c, sepia, ink(edge, 0.012, fw) * 0.6);
-	if (k == GRASS) {
+	if (k == TOWN) {
+		return town_draw(SURVEY, c, sheet, p, uv, to_uv, own, levels, fw, cover);
+	} else if (k == GRASS) {
 		Lot l = lot_at(p, uv, to_uv, metres(PADDOCK_M), 0.5, GRASS, own, levels);
 		float rough = step(0.6, hash(l.id + 1.1));
 		c = mix(c, tint * vec3(0.5, 0.66, 0.42), marks(p, own, 0.22, 0.05, 0.011, 0.0, 0.35, mix(0.75, 1.0, rough), fw) * 0.8);
@@ -120,13 +122,13 @@ vec3 survey(int k, int beside, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_u
 			}
 		}
 	} else if (k == FIELD) {
-		c = survey_field(c, tint, sheet, p, uv, to_uv, own, levels, along, follow, fw, edge, cover);
+		c = survey_field(c, tint, sheet, p, uv, to_uv, own, vec2(max(levels.x, near_town * NEAR_TOWN_PLOTS), levels.y), along, follow, fw, edge, cover);
 		rim = 0.8;
 	} else if (k == WOOD) {
 		Lot s = lot_at(p, uv, to_uv, metres(STAND_M), 0.5, WOOD, own, levels);
 		float open = clearing_at(p, own);
 		c = wash(mix(tint * vec3(1.3, 1.25, 1.05), palette[GRASS].rgb, open), sheet, SURVEY_PAPER, p, edge, 1.0);
-		c = survey_wood(c, tint, p, uv, to_uv, fw, ledges, metres(mix(TREES_OPEN_M, TREES_CLOSED_M, levels.x)), levels.x, bump, cover);
+		c = survey_wood(c, tint, p, uv, to_uv, fw, ledges, metres(mix(TREES_OPEN_M, TREES_CLOSED_M, levels.x)), levels.x * (1.0 - near_town * NEAR_TOWN_THINS), bump, cover);
 		if (s.room >= 0.0) {
 			float ride = (1.0 - smoothstep(metres(2.0), metres(2.0) + fw, s.edge)) * step(0.7, hash(s.id + 2.2)) * (1.0 - ledges);
 			c = mix(c, sheet, ride * RIDE);

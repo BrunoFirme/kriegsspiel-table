@@ -493,6 +493,31 @@ public class ReliefTests : IDisposable
     }
 
     [Fact]
+    public void A_town_keeps_the_roads_under_it_and_lays_nothing_on_water_and_its_distance_field_grows_away_from_it()
+    {
+        Assert.Equal(GroundKinds.Road, GroundKinds.Laid(GroundKinds.Road, GroundKinds.Town));
+        Assert.Equal(GroundKinds.Bridge, GroundKinds.Laid(GroundKinds.Bridge, GroundKinds.Town));
+        Assert.Equal(GroundKinds.Water, GroundKinds.Laid(GroundKinds.Water, GroundKinds.Town));
+        Assert.Equal(GroundKinds.Town, GroundKinds.Laid(GroundKinds.Of("grass")!.Value, GroundKinds.Town));
+        Assert.Equal(GroundKinds.Road, GroundKinds.Laid(GroundKinds.Town, GroundKinds.Road));
+        Assert.Contains(GroundKinds.Town, GroundKinds.Brushes);
+        Assert.Equal(new[] { "Houses", "Walls" }, GroundKinds.Parameters(GroundKinds.Town).Select(p => p.Name));
+        var g = new ReliefGrid(64, 64);
+        for (int y = 20; y < 30; y++)
+            for (int x = 20; x < 30; x++) g.Kind[y * 64 + x] = x == 24 ? GroundKinds.Road : GroundKinds.Town;
+        g.Kind[5 * 64 + 5] = GroundKinds.Water;
+        var fields = GroundEdges.Fields(g);
+        int At(int x, int y, int channel) => fields[(y * 64 + x) * GroundEdges.Channels + channel];
+        Assert.Equal(0, At(25, 25, 1) / GroundEdges.FieldStepsPerCell);
+        Assert.True(At(35, 25, 1) > At(31, 25, 1), "the town field grows away from the town");
+        Assert.True(At(63, 63, 1) > At(35, 25, 1) && At(63, 63, 1) < GroundEdges.Far, "the far corner is far but not off the field");
+        Assert.True(At(10, 5, 2) > At(6, 5, 2) && At(6, 5, 2) > 0, "the water field grows away from the water");
+        Assert.Equal(GroundEdges.Distances(g)[25 * 64 + 25], At(25, 25, 0));
+        Assert.True(At(25, 25, 3) > At(21, 25, 3) && At(24, 25, 3) > At(21, 25, 3), "the town's depth grows inward and a road through it is no edge");
+        Assert.Equal(GroundEdges.TownStepsPerCell / 2, At(10, 10, 3));
+    }
+
+    [Fact]
     public void Each_kind_names_its_own_parameters_and_their_levels_fit_a_byte()
     {
         byte field = GroundKinds.Of("field")!.Value, wood = GroundKinds.Of("wood")!.Value;

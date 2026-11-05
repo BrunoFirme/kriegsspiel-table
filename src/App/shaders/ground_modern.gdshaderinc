@@ -61,7 +61,7 @@ vec3 modern_field(vec3 c, vec2 p, vec2 uv, mat2 to_uv, float own, vec2 levels, v
 	return c;
 }
 
-vec3 modern(int k, int beside, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_uv, float own, vec2 levels, vec2 along, float follow, float ledges, float fw, float edge, float border, out float cover) {
+vec3 modern(int k, int beside, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_uv, float own, vec2 levels, float near_town, vec2 along, float follow, float ledges, float fw, float edge, float border, out float cover) {
 	vec3 black = vec3(0.09, 0.1, 0.09);
 	vec3 blue = vec3(0.12, 0.45, 0.72);
 	vec3 brown = vec3(0.55, 0.36, 0.2);
@@ -69,7 +69,9 @@ vec3 modern(int k, int beside, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_u
 	vec3 c = tint * (sheet / MODERN_PAPER) * (1.0 + mottle);
 	cover = 0.0;
 	if (units_per_metre <= 0.0) return mix(c, black, ink(edge, 0.012, fw) * 0.6);
-	if (k == GRASS) {
+	if (k == TOWN) {
+		return town_draw(MODERN, c, sheet, p, uv, to_uv, own, levels, fw, cover);
+	} else if (k == GRASS) {
 		Lot l = lot_at(p, uv, to_uv, metres(PADDOCK_M), 0.5, GRASS, own, levels);
 		float rough = step(0.6, hash(l.id + 1.1));
 		float pair = 0.0;
@@ -103,12 +105,12 @@ vec3 modern(int k, int beside, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_u
 			}
 		}
 	} else if (k == FIELD) {
-		c = modern_field(c, p, uv, to_uv, own, levels, along, follow, fw, cover);
+		c = modern_field(c, p, uv, to_uv, own, vec2(max(levels.x, near_town * NEAR_TOWN_PLOTS), levels.y), along, follow, fw, cover);
 	} else if (k == WOOD) {
 		Lot s = lot_at(p, uv, to_uv, metres(STAND_M), 0.5, WOOD, own, levels);
 		float open = clearing_at(p, own);
 		c = mix(c, palette[MODERN * KINDS + GRASS].rgb * (sheet / MODERN_PAPER), open);
-		c = modern_wood(c, p, uv, to_uv, fw, ledges, metres(mix(TREES_OPEN_M, TREES_CLOSED_M, levels.x)) * 1.3, levels.x, cover);
+		c = modern_wood(c, p, uv, to_uv, fw, ledges, metres(mix(TREES_OPEN_M, TREES_CLOSED_M, levels.x)) * 1.3, levels.x * (1.0 - near_town * NEAR_TOWN_THINS), cover);
 		float dots = screen(p + 0.02, own, 0.085, 0.017, fw);
 		c = mix(c, black, dots * (1.0 - smoothstep(0.015, 0.04, edge)) * 0.95);
 		if (s.room >= 0.0) {

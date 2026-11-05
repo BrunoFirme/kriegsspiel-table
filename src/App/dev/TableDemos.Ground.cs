@@ -68,6 +68,10 @@ sealed partial class TableDemos
         ("plots", -40, -36, 26, 90, 0),
         ("trees", 6, -36, 10, 90, 0),
         ("village", 2, -22, 16, 90, 0),
+        ("town", 18, -28, 16, 90, 0),
+        ("town3d", 18, -28, 16, 40, 15),
+        ("citywall", -13, -29, 18, 90, 0),
+        ("citynear", -19.5, -29, 6, 90, 0),
         ("macro", -40, 26, 5, 90, 0),
         ("swatch3d", -6, 16, 26, 32, 0),
         ("bridge", 51, -31.5, 8, 90, 0),
@@ -174,5 +178,8 @@ sealed partial class TableDemos
         for (int i = 0; i < strips.Length; i++) PaintAt("field", strips[i].plots, strips[i].buildings, 0.02 + i * 0.062, 0.92, 0.078 + i * 0.062, 0.985);
         PaintAt("wood", 20, 0, 0.49, 0.92, 0.545, 0.985);
         PaintAt("wood", 80, 0, 0.555, 0.92, 0.61, 0.985);
+        PaintAt("town", 20, 0, 0.49, 0.735, 0.54, 0.79);
+        PaintAt("town", 65, 30, 0.6, 0.79, 0.7, 0.91);
+        PaintAt("town", 100, 100, 0.33, 0.8, 0.45, 0.92);
     }
 }

@@ -4,7 +4,7 @@ render_mode cull_disabled, specular_disabled;
 uniform sampler2D kinds : filter_nearest, repeat_disable;
 uniform sampler2D edges : filter_linear, repeat_disable;
 uniform sampler2D heights : filter_linear, repeat_disable;
-uniform vec4 palette[36];
+uniform vec4 palette[39];
 uniform bool painted_only = false;
 uniform vec2 cells = vec2(64.0, 64.0);
 uniform float cell_world = 0.2;
@@ -13,7 +13,7 @@ global uniform int ground_style;
 global uniform float contour_interval;
 global uniform float units_per_metre;
 
-const int KINDS = 12;
+const int KINDS = 13;
 const int GRASS = 1;
 const int FIELD = 2;
 const int WOOD = 3;
@@ -25,6 +25,9 @@ const int ROCK = 8;
 const int SAND = 9;
 const int SNOW = 10;
 const int BRIDGE = 11;
+const int TOWN = 12;
+const float FIELD_STEPS = 4.0;
+const float TOWN_STEPS = 8.0;
 const float PARAPET = 0.09;
 const float SEAMLESS = 1.0;
 const int SURVEY = 0;
@@ -92,11 +95,40 @@ const int FENCE = 2;
 const int WALL = 3;
 const int DITCH = 4;
 const int TRACK = 5;
+const float TOWN_QUARTER_M = 150.0;
+const float TOWN_BLOCK_M = 45.0;
+const float STREET_M = 8.0;
+const float LANE_M = 4.0;
+const float HOUSE_M = 12.0;
+const float HOUSE_GAP_M = 3.0;
+const float HOUSE_DEPTH_M = 10.0;
+const float HOUSE_SETBACK_M = 1.5;
+const float SCATTERED_HOUSES = 0.3;
+const float GARDEN_RING_M = 30.0;
+const float GARDEN_HATCH_M = 3.0;
+const float SQUARE_M = 40.0;
+const float CHURCH_M = 25.0;
+const float WALL_IN_M = 6.0;
+const float FORT_IN_M = 45.0;
+const float WALL_TOWERS_M = 60.0;
+const float BASTIONS_M = 200.0;
+const float BASTION_SHARE = 0.35;
+const float TOWER_M = 4.0;
+const float WALL_CELLS = 1.2;
+const float OUTSIDE_WALLS = 0.7;
+const float BASTION_OUT_M = 30.0;
+const float DITCH_OUT_M = 8.0;
+const float GLACIS_LINES_M = 3.0;
+const float NEAR_TOWN_M = 60.0;
+const float NEAR_TOWN_FAR_M = 140.0;
+const float NEAR_TOWN_PLOTS = 0.8;
+const float NEAR_TOWN_THINS = 0.4;
 
 varying vec3 world;
 
 #include "res://shaders/ground_marks.gdshaderinc"
 #include "res://shaders/ground_lots.gdshaderinc"
+#include "res://shaders/ground_town.gdshaderinc"
 #include "res://shaders/ground_rock.gdshaderinc"
 #include "res://shaders/ground_survey.gdshaderinc"
 #include "res://shaders/ground_ancient.gdshaderinc"
@@ -180,6 +212,7 @@ void fragment() {
 	float dark = shaded(n, steep_n);
 	float halo;
 	float lines = contour(h, p, style, steep, rockness, halo);
+	float near_town = 1.0 - smoothstep(metres(NEAR_TOWN_M), metres(NEAR_TOWN_FAR_M), town_at(UV));
 	float bump = 0.0;
 	float cover = 0.0;
 	vec3 sheet = paper(style, p);
@@ -194,9 +227,9 @@ void fragment() {
 		bool bare = k != WATER && k != ROAD && k != BRIDGE;
 		if (bare && rockness >= 1.0 - 1e-3 && k != WOOD) c = rock;
 		else {
-			if (style == ANCIENT) c = ancient(k, beside, tint, sheet, p, UV, to_uv, own, levels, down, follow, rockness, fw, edge, shore, cover);
-			else if (style == MODERN) c = modern(k, beside, tint, sheet, p, UV, to_uv, own, levels, down, follow, rockness, fw, edge, shore, cover);
-			else c = survey(k, beside, tint, sheet, p, UV, to_uv, own, levels, down, follow, rockness, fw, edge, shore, bump, cover);
+			if (style == ANCIENT) c = ancient(k, beside, tint, sheet, p, UV, to_uv, own, levels, near_town, down, follow, rockness, fw, edge, shore, cover);
+			else if (style == MODERN) c = modern(k, beside, tint, sheet, p, UV, to_uv, own, levels, near_town, down, follow, rockness, fw, edge, shore, cover);
+			else c = survey(k, beside, tint, sheet, p, UV, to_uv, own, levels, near_town, down, follow, rockness, fw, edge, shore, bump, cover);
 			if (halo > 0.001) c = mix(c, plain(style, tint, sheet, p, edge), halo * HALO);
 			c = mix(c, c * (1.0 - MARK_SHADE), dark * cover * smoothstep(0.04, 0.35, steep_n));
 			if (bare) c = slopes(c, n, p, world.y, fw, style, (1.0 - cover) * (1.0 - rockness));

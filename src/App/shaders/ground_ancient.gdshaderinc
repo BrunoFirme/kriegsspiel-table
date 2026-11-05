@@ -76,13 +76,15 @@ vec3 ancient_field(vec3 c, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_uv, f
 	return c;
 }
 
-vec3 ancient(int k, int beside, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_uv, float own, vec2 levels, vec2 along, float follow, float ledges, float fw, float edge, float border, out float cover) {
+vec3 ancient(int k, int beside, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_uv, float own, vec2 levels, float near_town, vec2 along, float follow, float ledges, float fw, float edge, float border, out float cover) {
 	vec3 sepia = vec3(0.22, 0.13, 0.06);
 	vec3 c = wash(tint, sheet, ANCIENT_PAPER, p, edge, 0.4);
 	cover = 0.0;
 	float rim = 0.85;
 	if (units_per_metre <= 0.0) return mix(c, sepia, ink(edge, 0.016, fw) * 0.6);
-	if (k == GRASS) {
+	if (k == TOWN) {
+		return town_draw(ANCIENT, c, sheet, p, uv, to_uv, own, levels, fw, cover);
+	} else if (k == GRASS) {
 		Lot l = lot_at(p, uv, to_uv, metres(PADDOCK_M), 0.5, GRASS, own, levels);
 		c = mix(c, sepia, tufts(p, own, 0.6, 0.06, 0.008, 0.45, fw) * 0.6);
 		if (l.room > metres(20.0) && hash(l.id + 5.5) < 0.08) {
@@ -93,12 +95,12 @@ vec3 ancient(int k, int beside, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_
 		}
 		rim = 0.0;
 	} else if (k == FIELD) {
-		c = ancient_field(c, tint, sheet, p, uv, to_uv, own, levels, along, follow, fw, edge, cover);
+		c = ancient_field(c, tint, sheet, p, uv, to_uv, own, vec2(max(levels.x, near_town * NEAR_TOWN_PLOTS), levels.y), along, follow, fw, edge, cover);
 	} else if (k == WOOD) {
 		Lot s = lot_at(p, uv, to_uv, metres(STAND_M), 0.5, WOOD, own, levels);
 		float open = clearing_at(p, own);
 		c = mix(c, wash(palette[ANCIENT * KINDS + GRASS].rgb, sheet, ANCIENT_PAPER, p, edge, 0.4), open);
-		c = ancient_wood(c, tint, p, uv, to_uv, fw, ledges, metres(mix(TREES_OPEN_M, TREES_CLOSED_M, levels.x)) * 1.4, levels.x, cover);
+		c = ancient_wood(c, tint, p, uv, to_uv, fw, ledges, metres(mix(TREES_OPEN_M, TREES_CLOSED_M, levels.x)) * 1.4, levels.x * (1.0 - near_town * NEAR_TOWN_THINS), cover);
 		if (s.room >= 0.0) {
 			float ride = (1.0 - smoothstep(metres(2.0), metres(2.0) + fw, s.edge)) * step(0.7, hash(s.id + 2.2)) * (1.0 - ledges);
 			c = mix(c, sheet, ride * RIDE);
