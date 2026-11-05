@@ -88,13 +88,25 @@ public partial class Net : Node
         Session.Desynced += AskForTheTable;
     }
 
+    const int MostFetchesWithoutProgress = 2;
+    const string StuckHosting = "This table could not follow the game even after rebuilding it twice: save, then load that save.";
+    const string StuckJoined = "This table could not follow the host's even after fetching it twice: leave and join again.";
     double _askedForTable = -10;
+    int _fetchesWithoutProgress;
+    bool _toldStuck;
 
     void AskForTheTable()
     {
         var now = Time.GetTicksMsec() / 1000.0;
         if (now - _askedForTable < 3) return;
         _askedForTable = now;
+        if (_fetchesWithoutProgress >= MostFetchesWithoutProgress)
+        {
+            if (!_toldStuck) Problems.Tell(Server != null ? StuckHosting : StuckJoined);
+            _toldStuck = true;
+            return;
+        }
+        _fetchesWithoutProgress++;
         if (Server != null) Callable.From(() => { if (Server != null) Dispatch(Server.Resync(1)); }).CallDeferred();
         else if (Multiplayer.MultiplayerPeer is ENetMultiplayerPeer) SendRaw(1, new GetSnapshot());
     }
@@ -434,12 +446,17 @@ public partial class Net : Node
 
     void DeliverOrResync(Message m)
     {
+        var fetches = _fetchesWithoutProgress;
         try { Deliver(m); }
         catch (Exception e)
         {
             GD.PushError($"this table could not take {m.GetType().Name}: {e}");
             AskForTheTable();
+            return;
         }
+        if (m is not CommandMessage || _fetchesWithoutProgress != fetches) return;
+        _fetchesWithoutProgress = 0;
+        _toldStuck = false;
     }
 
     void Deliver(Message m)

@@ -90,6 +90,33 @@ static class HudTests
     }
 
     [NodeTest]
+    static async Task A_table_that_never_takes_the_server_s_stops_fetching_it_after_two_tries_and_says_so(TestRunner r)
+    {
+        var h = await Host(r);
+        int rebuilds = 0;
+        var told = new System.Collections.Generic.List<string>();
+        void Heard(string t) => told.Add(t);
+        h.S.Applied += _ => throw new System.InvalidOperationException("the table broke");
+        h.S.Reset += () =>
+        {
+            rebuilds++;
+            throw new System.InvalidOperationException("the table broke");
+        };
+        KTable.Client.Problems.Told += Heard;
+        try
+        {
+            for (int i = 0; i < 4; i++)
+            {
+                h.S.Do(new MovePiece { Layer = Layers.Umpire, Id = "p1", Pos = new Vec2(i, 5) });
+                await r.Seconds(3.1);
+            }
+        }
+        finally { KTable.Client.Problems.Told -= Heard; }
+        Check.Equal(2, rebuilds, "rebuilds before giving up");
+        Check.Equal(1, told.Count(t => t.Contains("could not follow")), "told once: " + string.Join(" | ", told));
+    }
+
+    [NodeTest]
     static async Task A_refused_change_is_written_in_the_transcript(TestRunner r)
     {
         var h = await Host(r);
