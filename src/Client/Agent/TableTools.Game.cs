@@ -84,12 +84,14 @@ public sealed partial class TableTools
                 new Arg("divisions", "number", $"lines inside each square cell, 1 for plain cells (1–{GridDivisionsMost})")),
             SetGridTool);
         yield return new AgentTool("set_light",
-            "Sets the table's light (sun and ambient 0–1, warmth −1 to 1, shadows, or following the game clock's hour), the table under the map (0 squared paper, 0.5 grey, 1 black, 1.05 see-through: no table drawn), the backdrop seen around the table, the map style painted ground is drawn in, contour lines over the relief, and the wind (from, in degrees; strength 0 calm to 5 a gale), for everyone at the table.",
+            "Sets the table's light (sun and ambient 0–1, warmth −1 to 1, shadows, or following the game clock's hour), the table under the map (0 squared paper, 0.5 grey, 1 black, 1.05 see-through: no table drawn), the backdrop seen around the table, the map style painted ground is drawn in, contour lines over the relief, a snow line (metres; above it every ground takes snow), streams from the relief, and the wind (from, in degrees; strength 0 calm to 5 a gale), for everyone at the table.",
             Args.Schema(new Arg("sun", "number", "0–1"), new Arg("ambient", "number", "0–1"), new Arg("warmth", "number", "−1 to 1"), new Arg("shadows", "boolean", "shadows"), new Arg("from_clock", "boolean", "follows the clock's hour"),
                 new Arg("table_shade", "number", "the table under the map: 0 squared paper, 0.5 grey, 1 black, 1.05 see-through (no table drawn)"),
                 new Arg("backdrop", "string", "around the table: none, a solid #rrggbb colour, or one of " + string.Join(", ", Backdrops.All.Select(b => b.Id)) + "; a sky brings its own light unless sun, ambient or warmth are given"),
                 new Arg("map_style", "string", "painted ground drawn as an ancient, survey (18th century) or modern map"),
                 new Arg("contours", "boolean", "contour lines over every relief, spaced to fit its highest ground and redrawn as it changes"),
+                new Arg("snow_line", "number", "metres above which every ground takes snow, 0 for none; needs the map's scale"),
+                new Arg("streams", "boolean", "brooks and rivers where the relief gathers water; needs the map's scale"),
                 new Arg("wind_from", "number", "degrees"), new Arg("wind_strength", "number", "0–5")),
             SetLight);
         yield return new AgentTool("read_briefing",
@@ -458,10 +460,14 @@ public sealed partial class TableTools
             return ToolResult.Fail($"No backdrop {backdrop}: none, a #rrggbb colour, or one of {string.Join(", ", Backdrops.All.Select(b => b.Id))}.");
         var style = a.Str("map_style")?.Trim().ToLowerInvariant() is { } named ? named == "survey" ? MapStyles.Survey : named : null;
         if (style != null && MapStyles.Of(style) != style) return ToolResult.Fail("map_style is ancient, survey or modern.");
-        if (a.Num("sun") != null || a.Num("ambient") != null || a.Num("warmth") != null || a.Flag("shadows") != null || a.Flag("from_clock") != null || a.Num("table_shade") != null || a.Str("backdrop") != null || style != null || a.Flag("contours") != null)
+        var snow = a.Num("snow_line");
+        var streams = a.Flag("streams");
+        if ((snow != null || streams == true) && s.View.Calibration.UnitsPerMeter is not > 0) return ToolResult.Fail(GroundKinds.NeedsScale + " (set_map_scale).");
+        bool lightGiven = a.Num("sun") != null || a.Num("ambient") != null || a.Num("warmth") != null || a.Flag("shadows") != null;
+        bool lookGiven = a.Flag("from_clock") != null || a.Num("table_shade") != null || a.Str("backdrop") != null || style != null || a.Flag("contours") != null || snow != null || streams != null;
+        if (lightGiven || lookGiven)
         {
             var l = s.View.Lighting;
-            bool lightGiven = a.Num("sun") != null || a.Num("ambient") != null || a.Num("warmth") != null || a.Flag("shadows") != null;
             if (!lightGiven && backdrop != null && Backdrops.Find(backdrop)?.Light is { } suggested && LightPresets.Named(suggested) is { } preset)
                 l = LightPresets.Lit(l, preset);
             s.Do(new SetLighting { Lighting = new Lighting
@@ -469,7 +475,7 @@ public sealed partial class TableTools
                 SunEnergy = Math.Clamp(a.Num("sun") ?? l.SunEnergy, 0, 1), Ambient = Math.Clamp(a.Num("ambient") ?? l.Ambient, 0, 1), Warmth = Math.Clamp(a.Num("warmth") ?? l.Warmth, -1, 1),
                 Shadows = a.Flag("shadows") ?? l.Shadows, FromClock = a.Flag("from_clock") ?? l.FromClock,
                 TableShade = Math.Clamp(a.Num("table_shade") ?? l.TableShade, 0, Lighting.SeeThrough), Backdrop = backdrop ?? l.Backdrop, MapStyle = style ?? l.MapStyle,
-                Contours = a.Flag("contours") ?? l.Contours,
+                Contours = a.Flag("contours") ?? l.Contours, SnowLine = Math.Max(0, snow ?? l.SnowLine), Streams = streams ?? l.Streams,
             } });
             done.Add("light");
         }

@@ -18,11 +18,12 @@ sealed partial class TableDemos
         var look = Json.Clone(Session.View.Lighting);
         look.MapStyle = parts[0] == "survey" ? MapStyles.Survey : parts[0];
         look.Contours = parts.Contains("contours");
+        look.SnowLine = parts.Contains("snow") ? DemoSnowLineMetres : 0;
         Session.Do(new SetLighting { Lighting = look });
         return look;
     }
 
-    const double DemoMetresPerUnit = 50;
+    const double DemoMetresPerUnit = 50, DemoSnowLineMetres = 45;
 
     void DemoGround(Hud hud, string how)
     {

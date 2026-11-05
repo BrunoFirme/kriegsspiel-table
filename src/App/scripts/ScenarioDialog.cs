@@ -183,7 +183,7 @@ sealed partial class ScenarioDialog : HudPart
         };
         Lighting ReadLight() =>
             new() { SunEnergy = sun.Value, Ambient = amb.Value, Warmth = warm.Value, Shadows = shadows.ButtonPressed, FromClock = byClock.ButtonPressed, TableShade = S.View.Lighting.TableShade,
-                Backdrop = S.View.Lighting.Backdrop, MapStyle = S.View.Lighting.MapStyle, Contours = S.View.Lighting.Contours };
+                Backdrop = S.View.Lighting.Backdrop, MapStyle = S.View.Lighting.MapStyle, Contours = S.View.Lighting.Contours, SnowLine = S.View.Lighting.SnowLine, Streams = S.View.Lighting.Streams };
         void PreviewLight()
         {
             if (sync) return;

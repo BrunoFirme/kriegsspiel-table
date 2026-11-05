@@ -12,6 +12,7 @@ uniform float detail = 1.0;
 global uniform int ground_style;
 global uniform float contour_interval;
 global uniform float units_per_metre;
+global uniform float snow_line;
 
 const int KINDS = 13;
 const int GRASS = 1;
@@ -104,6 +105,10 @@ const float HAND_WOBBLE = 0.06;
 const float HAND_GRAIN = 3.0;
 const float BLEED = 0.12;
 const float BLEED_REACH = 2.2;
+const float SNOW_BAND = 0.1;
+const float NEATLINE = 0.15;
+const float NEATLINE_GAP = 0.06;
+const float MEANDER = 0.16;
 const float SHEET_GAIN = 0.93;
 const int INDEX_EVERY = 5;
 const float LINE_PX = 0.72;
@@ -197,6 +202,41 @@ varying vec3 world;
 #include "res://shaders/ground_ancient.gdshaderinc"
 #include "res://shaders/ground_modern.gdshaderinc"
 
+vec3 snow_cap(int style, vec3 sheet, vec2 p, float fw, int k) {
+	vec3 white = plain(style, palette[style * KINDS + SNOW].rgb, sheet, p, SEAMLESS);
+	vec3 blue = style == MODERN ? MODERN_BLUE : style == ANCIENT ? ANCIENT_INK : SURVEY_BLUE;
+	float form = style == ANCIENT ? 0.0 : marks(p, 0.0, 0.45, 0.14, W1 * 0.5, 0.15, 0.2, 0.45, fw) * 0.35;
+	float ice = k == WATER ? max(hatch(p.x + p.y, 0.08, W1 * 0.3, fw), hatch(p.x - p.y, 0.08, W1 * 0.3, fw)) * 0.35 : 0.0;
+	return mix(white, blue, max(form, ice));
+}
+
+vec3 neatline(int style, vec3 c, vec2 uv, float fw) {
+	vec2 size = (cells - 1.0) * cell_world;
+	vec2 inset = min(uv, 1.0 - uv) * size;
+	float m = min(inset.x, inset.y);
+	if (m > NEATLINE * 2.0) return c;
+	float along = inset.x < inset.y ? uv.y * size.y : uv.x * size.x;
+	if (style == MODERN) {
+		float line = ink(abs(m - NEATLINE), M1 * 0.6, fw);
+		float km = metres(1000.0);
+		float tick = units_per_metre > 0.0 ? ink(abs(fract(along / km) - 0.5) * km, M1 * 0.5, fw) * step(NEATLINE - 0.06, m) * step(m, NEATLINE) : 0.0;
+		return mix(c, MODERN_BLACK, max(line, tick));
+	}
+	if (style == ANCIENT) {
+		float s = along / MEANDER;
+		float outer = NEATLINE + MEANDER * 0.35;
+		float inner = NEATLINE - MEANDER * 0.35;
+		float level = mix(inner, outer, step(0.5, fract(s)));
+		float rail = ink(abs(m - level), W1, fw);
+		float band = step(inner - W1, m) * step(m, outer + W1);
+		float joins = max(ink(abs(fract(s) - 0.5) * MEANDER, W1, fw), ink(min(fract(s), 1.0 - fract(s)) * MEANDER, W1, fw)) * band;
+		float frame = ink(abs(m - outer - MEANDER * 0.25), W1, fw);
+		return mix(c, ANCIENT_INK, max(max(rail, frame), joins));
+	}
+	float twin = max(hand_ink(abs(m - NEATLINE), W1, uv * size, fw), hand_ink(abs(m - NEATLINE - NEATLINE_GAP), W1, uv * size, fw));
+	return mix(c, SURVEY_INK, twin);
+}
+
 float smooth_height(vec2 uv) {
 	return textureLod(heights, (clamp(uv, vec2(0.0), vec2(1.0)) * (cells - 1.0) + 0.5) / cells, 0.0).g;
 }
@@ -218,6 +258,7 @@ float contour(float h, vec2 p, int style, float steep, float rock, out float hal
 	bool index = abs(mod(round(level), float(INDEX_EVERY))) < 0.5;
 	float px = index ? INDEX_PX : LINE_PX;
 	float strength = index ? INDEX_INK : LINE_INK;
+	if (style == SURVEY) px *= 1.0 + HAND_WOBBLE * (noise(p * HAND_GRAIN) - 0.5) * 2.0;
 	if (style == SURVEY && !index) strength *= smoothstep(BREAK_FROM, BREAK_TO, noise(p * 2.6));
 	if (style == ANCIENT) px *= 1.0 + ANCIENT_WIDTH_PLAY * noise(p * 1.3 + 7.0);
 	float apart = contour_interval / fh;
@@ -225,7 +266,9 @@ float contour(float h, vec2 p, int style, float steep, float rock, out float hal
 	float level_ground = smoothstep(FLAT_SPAN, FLAT_SPAN * 2.0, contour_interval / max(steep, 1e-5));
 	strength *= index ? 1.0 - crowded * (1.0 - INDEX_KEEP) : (1.0 - crowded) * (1.0 - level_ground) * (1.0 - rock);
 	halo = (1.0 - smoothstep(px + HALO_PX - 0.5, px + HALO_PX + 0.5, d)) * strength;
-	return (1.0 - smoothstep(px - 0.5, px + 0.5, d)) * strength;
+	float line = (1.0 - smoothstep(px - 0.5, px + 0.5, d)) * strength;
+	if (style == SURVEY) line = max(line, (1.0 - smoothstep(px, px * BLEED_REACH, d)) * BLEED * strength);
+	return line;
 }
 
 void vertex() {
@@ -268,7 +311,8 @@ void fragment() {
 	float steep_n;
 	float dark = shaded(n, steep_n);
 	float halo;
-	float lines = contour(h, p, style, steep, rockness, halo);
+	float h_lines = style == MODERN ? smooth_height(UV + to_uv * (PLATE_BROWN * fw)) : h;
+	float lines = contour(h_lines, p, style, steep, rockness, halo);
 	float near_town = 1.0 - smoothstep(metres(NEAR_TOWN_M), metres(NEAR_TOWN_FAR_M), town_at(UV));
 	float mid = 0.0;
 	float road_w = -1.0;
@@ -317,7 +361,13 @@ void fragment() {
 			if (bare) c = mix(c, rock, rockness * (1.0 - keep));
 		}
 	}
+	if (snow_line > 0.0) {
+		float band = snow_line * SNOW_BAND;
+		float snow = smoothstep(snow_line - band, snow_line + band, h + (noise(p * 0.7) - 0.5) * band * 2.0);
+		if (snow > 0.001) c = mix(c, snow_cap(style, sheet, p, fw, k), snow * (1.0 - 0.5 * cover) * (1.0 - 0.6 * rockness));
+	}
 	c = mix(c, contour_ink(style, k, c), lines);
+	if (!painted_only) c = neatline(style, c, UV, fw);
 	ALBEDO = to_linear(c) * SHEET_GAIN;
 	if (bump > 0.0) {
 		vec3 dx = dFdx(VERTEX);

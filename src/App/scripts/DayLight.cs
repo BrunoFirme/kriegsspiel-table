@@ -52,6 +52,8 @@ public static class DayLight
             Backdrop = basis.Backdrop,
             MapStyle = basis.MapStyle,
             Contours = basis.Contours,
+            SnowLine = basis.SnowLine,
+            Streams = basis.Streams,
         };
     }
 

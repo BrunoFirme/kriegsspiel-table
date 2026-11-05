@@ -46,6 +46,10 @@ units_per_metre={
 "type": "float",
 "value": 0.0
 }
+snow_line={
+"type": "float",
+"value": 0.0
+}
 
 [steam]
 

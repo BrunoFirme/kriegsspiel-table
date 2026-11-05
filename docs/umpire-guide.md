@@ -222,7 +222,7 @@ ground.
   a wall with towers, a bastioned fort); the rows show under Density for the ground in hand. Town is the one brush
   for village, town and city: its size says which.
 - Painting: **Fill** colours the whole patch clicked, up to other ground types (a bare sheet whole), so a map starts
-  with one click of grass. The **rectangle** and **ellipse** beside it paint a field, a wood or a pond in one drag
+  with one click of grass; on its own kind it lays the patch afresh. The **rectangle** and **ellipse** beside it paint a field, a wood or a pond in one drag
   (**Shift** for a square or a circle, lined up with the view); the **polygon** paints the shape of its corners,
   clicked in turn and closed on the first or with a double-click (**Esc** drops it). Each shape is one undo.
   **Density** below 100% lays the ground in clumps: sparse wood, scattered rock, broken
@@ -231,7 +231,7 @@ ground.
 - **Light & surroundings → Map** in the scenario's properties sets, for everyone, the style painted ground is drawn
   in (**Ancient**, **18th-century survey** or **Modern topographic**) and turns on **contour lines** over every
   relief: redrawn as the ground is shaped, stepping in round heights once the map's scale is calibrated, every fifth
-  line numbered.
+  line numbered. **Snow line** whitens every ground above a height in metres, once the map's scale is set.
 - Pieces lean with the slope under them and follow the ground when it changes.
 
 ### Umpires and zones

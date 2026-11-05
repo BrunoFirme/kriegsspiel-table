@@ -104,7 +104,7 @@ sealed class ReliefPanel : HudPart
     static readonly (string Key, string Text, string Icon, string Tip)[] Paintings =
     {
         ("brush", "Brush", "", "Drag to paint"),
-        ("fill", "Fill", "", "Click to fill the patch of ground clicked, up to other ground types, or a bare sheet whole"),
+        ("fill", "Fill", "", "Click to fill the patch of ground clicked, up to other ground types, or a bare sheet whole; on its own kind, lays it afresh"),
         ("rect", "", "shape-rect", "Rectangle: drag across it · Shift for a square"),
         ("ellipse", "", "shape-ellipse", "Ellipse: drag across it · Shift for a circle"),
         ("polygon", "", "shape-polygon", "Polygon: click its corners, then the first again or double-click · Esc drops it"),

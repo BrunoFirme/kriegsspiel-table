@@ -82,6 +82,14 @@ sealed partial class ScenarioDialog
         var mapForm = Ui.Form(84);
         mapForm.AddChild(new Label { Text = "Style" });
         mapForm.AddChild(style);
+        bool scaled = S.View.Calibration.UnitsPerMeter is > 0;
+        var snow = LightRow(mapForm, "Snow line", 0, SnowLineMost, SnowLineStep, now.SnowLine, v => v <= 0 ? "none" : string.Format(System.Globalization.CultureInfo.InvariantCulture, "{0:0} m", v));
+        snow.TooltipText = scaled ? "Above this height every ground takes snow: bare trees, ice on water" : GroundKinds.NeedsScale;
+        snow.Editable = S.IsUmpire && scaled;
+        bool snowing = false;
+        snow.DragStarted += () => snowing = true;
+        snow.ValueChanged += v => { PreviewLook(l => l.SnowLine = v); if (!snowing) SendLook(l => l.SnowLine = v); };
+        snow.DragEnded += _ => { snowing = false; SendLook(l => l.SnowLine = snow.Value); };
         Ui.AlignForm(mapForm);
         _box.AddChild(Header("Map"));
         _box.AddChild(mapForm);
@@ -94,8 +102,19 @@ sealed partial class ScenarioDialog
         };
         contours.Toggled += on => SendLook(l => l.Contours = on);
         _box.AddChild(contours);
+        var streams = new CheckBox
+        {
+            Text = "Streams from the relief",
+            ButtonPressed = now.Streams,
+            Disabled = !S.IsUmpire || !scaled,
+            TooltipText = scaled ? "Brooks and rivers where the relief gathers water, over every ground but painted water" : GroundKinds.NeedsScale,
+        };
+        streams.Toggled += on => SendLook(l => l.Streams = on);
+        _box.AddChild(streams);
         _box.AddChild(Hint(ContourWords()));
     }
+
+    const double SnowLineMost = 5000, SnowLineStep = 50;
 
     string ContourWords()
     {

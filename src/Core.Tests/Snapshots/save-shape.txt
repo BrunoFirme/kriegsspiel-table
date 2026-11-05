@@ -1,4 +1,4 @@
-format 21
+format 22
 type AccessChanged object
   access: GameAccess
 type AddBoard object
@@ -381,6 +381,8 @@ type Lighting object
   fromClock: bool
   mapStyle: string
   shadows: bool
+  snowLine: double
+  streams: bool
   sunEnergy: double
   tableShade: double
   warmth: double

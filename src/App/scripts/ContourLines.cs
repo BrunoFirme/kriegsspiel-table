@@ -74,6 +74,13 @@ sealed class ContourLines
         return reliefs.Count == 0 ? null : Contours.Plan(ground.Highest, reliefs.Max(s => s.Height), view.Calibration);
     }
 
+    public static double SnowLineFor(GameState view, Lighting look)
+    {
+        if (look.SnowLine <= 0 || view.Calibration.UnitsPerMeter is not > 0) return 0;
+        var reliefs = view.Sheets.Where(s => s.Relief is { Length: > 0 }).ToList();
+        return reliefs.Count == 0 ? 0 : view.Calibration.ToTableUnits(look.SnowLine) * reliefs.Max(s => s.Height);
+    }
+
     void Refresh()
     {
         var s = _c.S;
@@ -82,6 +89,7 @@ sealed class ContourLines
         _plannedFor = s.Ground.Highest;
         var plan = look.Contours ? PlanFor(s.View, s.Ground) : null;
         ReliefSurface.ContourStep(plan?.Step ?? 0);
+        ReliefSurface.SnowLine(SnowLineFor(s.View, look));
         Clear();
         if (plan is { Numbered: true }) Letter(plan, s.Ground, MapStyles.Index(look.MapStyle));
     }

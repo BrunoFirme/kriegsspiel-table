@@ -443,6 +443,8 @@ public sealed class Lighting
     public static bool IsSeeThrough(double tableShade) => tableShade > Black;
     public string MapStyle { get; set; } = MapStyles.Survey;
     public bool Contours { get; set; }
+    public double SnowLine { get; set; }
+    public bool Streams { get; set; }
 }
 
 public sealed class Wind

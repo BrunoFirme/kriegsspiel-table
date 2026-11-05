@@ -379,7 +379,7 @@ public partial class Table : Node3D
         ? "Drag over a sheet to shape the ground · Shift+click goes straight on from the last stroke · Ctrl+wheel sizes the brush"
         : _c.Settings.ReliefPaint switch
         {
-            "fill" => "Click a patch of ground to fill it up to other ground types, or a bare sheet whole · Alt+click picks up the ground there",
+            "fill" => "Click a patch of ground to fill it up to other ground types, or a bare sheet whole; on its own kind, lays it afresh · Alt+click picks up the ground there",
             "rect" => "Drag the rectangle across the ground · Shift for a square",
             "ellipse" => "Drag the ellipse across the ground · Shift for a circle",
             "polygon" => "Click the polygon's corners, then the first again or double-click to close it · Esc drops it",

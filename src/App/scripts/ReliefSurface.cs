@@ -31,7 +31,7 @@ public partial class ReliefSurface : Node3D
     static bool _contours;
     static double _contourStep = -1;
 
-    const string StyleParameter = "ground_style", ContourParameter = "contour_interval", ScaleParameter = "units_per_metre";
+    const string StyleParameter = "ground_style", ContourParameter = "contour_interval", ScaleParameter = "units_per_metre", SnowParameter = "snow_line";
 
     public static void ShowScale(Calibration c) => RenderingServer.GlobalShaderParameterSet(ScaleParameter, (float)(c.UnitsPerMeter is { } upm && upm > 0 ? upm : 0));
 
@@ -45,6 +45,8 @@ public partial class ReliefSurface : Node3D
         _contours = on;
         return true;
     }
+
+    public static void SnowLine(double height) => RenderingServer.GlobalShaderParameterSet(SnowParameter, (float)height);
 
     public static void ContourStep(double step)
     {
