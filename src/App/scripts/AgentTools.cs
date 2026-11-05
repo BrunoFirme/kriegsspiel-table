@@ -139,7 +139,7 @@ sealed class AppTools
         }
         var store = new KTable.Core.PackageStore(KTable.Core.PackageStore.DefaultRoot);
         string id;
-        if (a.Str("new_pack") is { Length: > 0 } name) id = PackEdit.CreatePack(store, name.Trim(), string.IsNullOrWhiteSpace(_a.PlayerName) ? System.Environment.UserName : _a.PlayerName);
+        if (a.Str("new_pack") is { Length: > 0 } name) id = PackEdit.CreatePack(store, name.Trim(), string.IsNullOrWhiteSpace(_a.PlayerName) ? TitleScreen.NoName : _a.PlayerName);
         else if (a.Str("pack") is { Length: > 0 } p) { if (store.Pack(p) == null) return ToolResult.Fail($"No pack {p} on this PC (list_packs)."); id = p; }
         else return ToolResult.Fail("Give pack (an id) or new_pack (a name).");
         if (_a.OpenStudio(id) is { } why) return ToolResult.Fail(why);

@@ -51,7 +51,8 @@ sealed class TitleScreen
 
     public bool OffersUpdates => UpdateOffer.Applies(_platform);
 
-    public string HostName => PlayerName.Text.Trim().Length > 0 ? PlayerName.Text.Trim() : System.Environment.UserName;
+    public const string NoName = "Unnamed";
+    public string HostName => PlayerName.Text.Trim().Length > 0 ? PlayerName.Text.Trim() : NoName;
 
     public void Close()
     {
