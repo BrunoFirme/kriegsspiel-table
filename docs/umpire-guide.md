@@ -212,9 +212,15 @@ ground.
 - The selected sheet's **Relief** group: **Height ×** (0 flat, 1 true proportions), **Add / Replace / Remove
   relief…** and **Picture…**.
 - The **Relief** tool (the hill on the tool strip) raises, lowers, smooths and flattens, and paints grass, field,
-  wood, marsh, water, road, earth, rock, sand or snow; ✕ rubs paint out. A road drawn across water is a bridge. On a
-  sheet without relief, the first stroke gives it flat ground to shape. **Ctrl+wheel** sizes the brush; each stroke
-  is one undo.
+  wood, marsh, water, road, earth, rock, sand, snow or town; ✕ rubs paint out. A road drawn across water is a
+  bridge, a road through a town its street. On a sheet without relief, the first stroke gives it flat ground to
+  shape. **Ctrl+wheel** sizes the brush; each stroke is one undo.
+- The Relief tool needs the map's scale: calibrate first, or let **New blank ground…** set it. Painted ground is
+  drawn at that scale, in the style's own hand: each stroke draws its own plots, hedges, farms, trees, streets and
+  walls, afresh every time it is painted. Field and grass take **Plots** and **Buildings**, wood **Trees**, road
+  **Road** (a track, a country road or a chaussée; a bridge keeps its road's), town **Houses** and **Walls** (none,
+  a wall with towers, a bastioned fort); the rows show under Density for the ground in hand. Town is the one brush
+  for village, town and city: its size says which.
 - Painting: **Fill** colours the whole patch clicked, up to other ground types (a bare sheet whole), so a map starts
   with one click of grass. The **rectangle** and **ellipse** beside it paint a field, a wood or a pond in one drag
   (**Shift** for a square or a circle, lined up with the view); the **polygon** paints the shape of its corners,
