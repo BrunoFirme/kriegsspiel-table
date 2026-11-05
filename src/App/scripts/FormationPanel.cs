@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using Godot;
 using KTable.Client.Hand;
+using KTable.Core.Model;
 
 namespace KTable.App;
 
@@ -98,12 +99,16 @@ public partial class FormationGlyph : Control
     const float Margin = 5;
     static readonly Pitch Sample = new(1.2, 0.85);
 
-    const double StretchShown = 6;
+    const int CurvePoints = 24;
+    const double CurveLength = 8, CurveSway = 1.1;
 
-    static (int n, int depth, double span) Shown(string id) => id switch
+    static readonly Vec2[] Curve = Enumerable.Range(0, CurvePoints + 1)
+        .Select(i => { double t = i / (double)CurvePoints; return new Vec2(CurveLength * (0.5 - t), CurveSway * Math.Sin(2 * Math.PI * t)); }).ToArray();
+
+    static (int n, int depth) Shown(string id) => id switch
     {
-        "line" => (6, 1, 0), "stretch" => (4, 0, StretchShown), "column" => (8, 2, 0), "block" => (9, 0, 0), "square" => (12, 0, 0), "ring" => (10, 0, 0),
-        "wedge" => (10, 0, 0), "arrowhead" or "vee" => (7, 0, 0), "diamond" => (9, 0, 0), "chequer" => (8, 2, 0), "crescent" => (7, 1, 0), "open" => (8, 2, 0), _ => (6, 0, 0),
+        "line" => (6, 1), "stretch" => (5, 0), "column" => (8, 2), "block" => (9, 0), "square" => (12, 0), "ring" => (10, 0),
+        "wedge" => (10, 0), "arrowhead" or "vee" => (7, 0), "diamond" => (9, 0), "chequer" => (8, 2), "crescent" => (7, 1), "open" => (8, 2), _ => (6, 0),
     };
 
     public override void _Ready()
@@ -115,8 +120,8 @@ public partial class FormationGlyph : Control
 
     public override void _Draw()
     {
-        var (n, depth, span) = Shown(Kind.Id);
-        var slots = Formations.Slots(Kind, n, Sample, depth, span: span);
+        var (n, depth) = Shown(Kind.Id);
+        var slots = Kind.AlongLine ? Formations.Along(Curve, n, Sample.Across).Select(Formations.AsSlot).ToList() : Formations.Slots(Kind, n, Sample, depth);
         const double w = 1, d = 0.6;
         var quads = slots.Select(q =>
         {

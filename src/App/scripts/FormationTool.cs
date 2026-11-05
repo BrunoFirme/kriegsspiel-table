@@ -36,9 +36,10 @@ sealed class FormationTool
     public int Depth(int n) => _depth > 0 ? _depth : Formations.DefaultDepth(Kind, n);
 
     const float RideAbove = 0.005f;
-    const double SameSpot = 1e-3, SameTurn = 0.5, LeastDrag = 0.4, GapFine = 0.05, GapCoarse = 0.25, GapFineBelow = 0.5;
+    const double SameSpot = 1e-3, SameTurn = 0.5, LeastDrag = 0.4, DrawEvery = 0.1, GapFine = 0.05, GapCoarse = 0.25, GapFineBelow = 0.5;
 
-    sealed record Formed(HashSet<string> Ids, string Kind, double Facing, int? Front, double Span, Dictionary<PieceNode, (Vec2 Pos, double Rot)> Spots, Dictionary<PieceNode, int> Order);
+    sealed record Formed(HashSet<string> Ids, string Kind, double Facing, int? Front, IReadOnlyList<Vec2>? Path, Dictionary<PieceNode, (Vec2 Pos, double Rot)> Spots,
+        Dictionary<PieceNode, int> Order);
     Formed? _formed;
 
     public List<PieceNode> Units()
@@ -53,7 +54,8 @@ sealed class FormationTool
 
     public string Hint() => Count < 2
         ? "Select the pieces to form up: click, Shift+click or drag a box · double-click a piece for all of its kind in view"
-        : "Right-drag where the front should stand, or pick a formation · Q/E turn · Ctrl + wheel spacing · Shift + wheel ranks · Alt + right-drag turns the view";
+        : (Kind.AlongLine ? "Right-drag the line to string them along, any shape" : "Right-drag where the front should stand")
+            + ", or pick a formation · Q/E turn · Ctrl + wheel spacing · Shift + wheel ranks · Alt + right-drag turns the view";
 
     Pitch PitchOf(List<PieceNode> units)
     {
@@ -100,17 +102,25 @@ sealed class FormationTool
         double facing = mine?.Facing ?? Formations.Facing(units.Select(RotOf)) ?? units[0].Piece.RotDeg;
         bool same = mine != null && mine.Kind == kind.Id;
         int? front = same ? mine!.Front : null;
-        double span = same ? mine!.Span : Spread(units, facing);
-        Lay(units, kind, Centre(units), facing, front, span, frontAt: false, mine);
-        _c.Say(Describe(kind, units.Count, front));
+        var path = kind.AlongLine ? (same ? mine!.Path : null) ?? Straight(units, facing) : null;
+        Lay(units, kind, Centre(units), facing, front, path, frontAt: false, mine);
+        _c.Say(path != null ? Strung(kind, units, path) : Describe(kind, units.Count, front));
     }
 
-    double Spread(List<PieceNode> units, double facing)
+    List<Vec2> Straight(List<PieceNode> units, double facing)
     {
         var (right, _) = Formations.Axes(facing);
         var along = units.Select(n => { var p = Where(n); return p.X * right.X + p.Z * right.Z; }).ToList();
-        return along.Max() - along.Min();
+        double half = Math.Max(along.Max() - along.Min(), (units.Count - 1) * PitchOf(units).Across) / 2;
+        var c = Centre(units);
+        return new() { new(c.X - right.X * half, c.Z - right.Z * half), new(c.X + right.X * half, c.Z + right.Z * half) };
     }
+
+    string Strung(FormationKind kind, List<PieceNode> units, IReadOnlyList<Vec2> path) => kind.Name + TooShort(units, path);
+
+    string TooShort(List<PieceNode> units, IReadOnlyList<Vec2>? path) =>
+        path != null && Formations.PastTheEnd(path, units.Count, PitchOf(units).Across) is var past and > 0
+            ? $" · the line is too short at this spacing: the last {past} run on past its end" : "";
 
     string Describe(FormationKind kind, int n, int? front)
     {
@@ -131,7 +141,8 @@ sealed class FormationTool
         var targets = units.Select(n => (n, centre + Formation.Turned(Where(n) - centre, rad), Angles.Norm360(RotOf(n) + deg))).ToList();
         var facing = mine != null ? Angles.Norm360(mine.Facing + deg) : Formations.Facing(targets.Select(t => t.Item3)) ?? targets[0].Item3;
         var spots = targets.ToDictionary(t => t.n, t => (t.Item2, t.Item3));
-        _formed = new Formed(units.Select(n => n.Piece.Id).ToHashSet(), mine?.Kind ?? "", facing, mine?.Front, mine?.Span ?? 0, spots, mine?.Order ?? new());
+        var path = mine?.Path?.Select(p => centre + Formation.Turned(p - centre, rad)).ToList();
+        _formed = new Formed(units.Select(n => n.Piece.Id).ToHashSet(), mine?.Kind ?? "", facing, mine?.Front, path, spots, mine?.Order ?? new());
         _hand.March(targets);
     }
 
@@ -145,8 +156,7 @@ sealed class FormationTool
     {
         Cfg.FormationGap = Math.Round(Math.Clamp(gap, 0, Formations.MostGap), 2);
         Cfg.Save();
-        Relay(keepFront: true);
-        _c.Say($"Spacing {Gap * 100:0}% of a piece");
+        _c.Say($"Spacing {Gap * 100:0}% of a piece" + Relay(keepFront: true));
         Changed?.Invoke();
     }
 
@@ -166,17 +176,20 @@ sealed class FormationTool
         Changed?.Invoke();
     }
 
-    void Relay(bool keepFront)
+    string Relay(bool keepFront)
     {
         var units = Units();
-        if (units.Count < 2 || Mine(units) is not { } mine || Formations.Find(mine.Kind) is not { } kind) return;
-        Lay(units, kind, Centre(units), mine.Facing, keepFront ? mine.Front : null, mine.Span, frontAt: false, mine);
+        if (units.Count < 2 || Mine(units) is not { } mine || Formations.Find(mine.Kind) is not { } kind) return "";
+        Lay(units, kind, Centre(units), mine.Facing, keepFront ? mine.Front : null, mine.Path, frontAt: false, mine);
+        return TooShort(units, mine.Path);
     }
 
-    List<(PieceNode Node, Vec2 Pos, double Rot)> Plan(List<PieceNode> units, FormationKind kind, Vec2 at, double facing, int? front, double span, bool frontAt,
-        Formed? before, out Dictionary<PieceNode, int> order)
+    List<(PieceNode Node, Vec2 Pos, double Rot)> Plan(List<PieceNode> units, FormationKind kind, Vec2 at, double facing, int? front, IReadOnlyList<Vec2>? path,
+        bool frontAt, Formed? before, out Dictionary<PieceNode, int> order)
     {
-        var places = Formations.Place(Formations.Slots(kind, units.Count, PitchOf(units), _depth, front, span), at, facing, frontAt);
+        var places = kind.AlongLine && path != null
+            ? Formations.Along(path, units.Count, PitchOf(units).Across)
+            : Formations.Place(Formations.Slots(kind, units.Count, PitchOf(units), _depth, front), at, facing, frontAt);
         if (before is { } b && b.Kind == kind.Id && b.Order.Count == units.Count && units.All(b.Order.ContainsKey)) order = b.Order;
         else
         {
@@ -187,16 +200,18 @@ sealed class FormationTool
         return units.Select(n => (n, places[o[n]].Pos, places[o[n]].Rot)).ToList();
     }
 
-    void Lay(List<PieceNode> units, FormationKind kind, Vec2 at, double facing, int? front, double span, bool frontAt, Formed? before)
+    void Lay(List<PieceNode> units, FormationKind kind, Vec2 at, double facing, int? front, IReadOnlyList<Vec2>? path, bool frontAt, Formed? before)
     {
-        var targets = Plan(units, kind, at, facing, front, span, frontAt, before, out var order);
-        _formed = new Formed(units.Select(n => n.Piece.Id).ToHashSet(), kind.Id, facing, front, span, targets.ToDictionary(t => t.Node, t => (t.Pos, t.Rot)), order);
+        var targets = Plan(units, kind, at, facing, front, path, frontAt, before, out var order);
+        _formed = new Formed(units.Select(n => n.Piece.Id).ToHashSet(), kind.Id, facing, front, kind.AlongLine ? path : null,
+            targets.ToDictionary(t => t.Node, t => (t.Pos, t.Rot)), order);
         _hand.March(targets);
         Changed?.Invoke();
     }
 
     public bool Dragging { get; private set; }
     Vec2 _from, _to;
+    readonly List<Vec2> _drawn = new();
     List<(Vec2 Pos, double Rot, Vector2 Size)>? _ghost;
 
     public bool Press(Vec2 g)
@@ -205,17 +220,28 @@ sealed class FormationTool
         _hand.Land();
         Dragging = true;
         _from = _to = g;
+        _drawn.Clear();
+        _drawn.Add(g);
         _ghost = null;
         return true;
     }
 
-    (FormationKind kind, double facing, int? front, double span)? DragShape(List<PieceNode> units)
+    List<Vec2> Drawn() => _drawn.Count > 0 && (_to - _drawn[^1]).Length > Formations.Least ? _drawn.Append(_to).ToList() : _drawn.ToList();
+
+    (FormationKind kind, double facing, int? front, IReadOnlyList<Vec2>? path)? DragShape(List<PieceNode> units)
     {
-        double len = (_to - _from).Length;
-        if (units.Count < 2 || len < PitchOf(units).Across * LeastDrag) return null;
+        if (units.Count < 2) return null;
         var kind = Kind;
-        int? front = kind.TakesFront ? Math.Clamp((int)Math.Round(len / PitchOf(units).Across), 1, units.Count) : null;
-        return (kind, Formations.FacingAlong(_from, _to), front, len);
+        double across = PitchOf(units).Across;
+        if (kind.AlongLine)
+        {
+            var path = Drawn();
+            return Formations.Length(path) < across * LeastDrag ? null : (kind, Formations.FacingOf(path), null, path);
+        }
+        double len = (_to - _from).Length;
+        if (len < across * LeastDrag) return null;
+        int? front = kind.TakesFront ? Math.Clamp((int)Math.Round(len / across), 1, units.Count) : null;
+        return (kind, Formations.FacingAlong(_from, _to), front, null);
     }
 
     Vec2 Mid => new((_from.X + _to.X) / 2, (_from.Z + _to.Z) / 2);
@@ -224,9 +250,10 @@ sealed class FormationTool
     {
         _to = g;
         var units = Units();
-        if (DragShape(units) is not var (kind, facing, front, span)) { _ghost = null; return; }
-        _ghost = Plan(units, kind, Mid, facing, front, span, frontAt: true, null, out _).Select(t => (t.Pos, t.Rot, t.Node.Footprint)).ToList();
-        _c.Say(Describe(kind, units.Count, front));
+        if (units.Count >= 2 && _drawn.Count > 0 && (g - _drawn[^1]).Length >= PitchOf(units).Across * DrawEvery) _drawn.Add(g);
+        if (DragShape(units) is not var (kind, facing, front, path)) { _ghost = null; return; }
+        _ghost = Plan(units, kind, Mid, facing, front, path, frontAt: true, null, out _).Select(t => (t.Pos, t.Rot, t.Node.Footprint)).ToList();
+        _c.Say(path != null ? Strung(kind, units, path) : Describe(kind, units.Count, front));
     }
 
     public void Release()
@@ -235,8 +262,8 @@ sealed class FormationTool
         Dragging = false;
         _ghost = null;
         var units = Units();
-        if (DragShape(units) is not var (kind, facing, front, span)) return;
-        Lay(units, kind, Mid, facing, front, span, frontAt: true, null);
+        if (DragShape(units) is not var (kind, facing, front, path)) return;
+        Lay(units, kind, Mid, facing, front, path, frontAt: true, null);
     }
 
     public void Cancel()
@@ -258,7 +285,8 @@ sealed class FormationTool
     {
         if (!Dragging) return;
         var im = _overlay.Mesh;
-        _overlay.SegPx(im, FrontInk, _from, _to, 0.3f, Table.ToolPx);
+        if (Kind.AlongLine) _overlay.RibbonPx(im, FrontInk, Drawn(), 0.3f, Table.ToolPx);
+        else _overlay.SegPx(im, FrontInk, _from, _to, 0.3f, Table.ToolPx);
         if (_ghost == null) return;
         foreach (var (pos, rot, size) in _ghost)
         {

@@ -4,7 +4,10 @@ namespace KTable.Client.Hand;
 
 public enum FormationDepth { None, Ranks, Abreast }
 
-public sealed record FormationKind(string Id, string Name, string What, FormationDepth Depth, bool TakesFront);
+public sealed record FormationKind(string Id, string Name, string What, FormationDepth Depth, bool TakesFront)
+{
+    public bool AlongLine { get; init; }
+}
 
 public readonly record struct Slot(double X, double Z, double Turn);
 
@@ -15,7 +18,7 @@ public static class Formations
     public static readonly FormationKind[] All =
     {
         new("line", "Line", "Side by side, facing the front, in as many ranks as you set", FormationDepth.Ranks, true),
-        new("stretch", "Stretch in a line", "Strung out evenly along the line you right-drag, the first piece at its start and the last at its end: pickets, outposts, a screen", FormationDepth.None, false),
+        new("stretch", "Stretch in a line", "Strung out evenly along a line you draw with a right-drag, straight, curved or round, the first piece at its start and the last at its end: pickets, outposts, a screen", FormationDepth.None, false) { AlongLine = true },
         new("column", "Column", "One behind another, as many abreast as you set: a column of march or of attack", FormationDepth.Abreast, true),
         new("block", "Block", "A dense mass about as deep as it is wide: phalanx, pike block, tercio, testudo", FormationDepth.None, true),
         new("square", "Square", "A hollow square, every face looking out", FormationDepth.None, false),
@@ -199,9 +202,85 @@ public static class Formations
 
     static List<Slot> Stretch(int n, double a, double span)
     {
-        double step = n > 1 ? Math.Max(a, span / (n - 1)) : 0;
-        return Enumerable.Range(0, n).Select(j => new Slot((j - (n - 1) / 2.0) * step, 0, 0)).ToList();
+        double half = Math.Max(Math.Max(span, (n - 1) * a), AnyLength) / 2;
+        return Along(new[] { new Vec2(half, 0), new Vec2(-half, 0) }, n, a).Select(AsSlot).ToList();
     }
+
+    public static Slot AsSlot((Vec2 Pos, double Rot) p) => new(-p.Pos.X, p.Pos.Z, p.Rot);
+
+    public const double Least = 1e-9;
+    const double TangentReach = 0.5, AnyLength = 1;
+
+    public static double Length(IReadOnlyList<Vec2> path)
+    {
+        double len = 0;
+        for (int i = 1; i < path.Count; i++) len += (path[i] - path[i - 1]).Length;
+        return len;
+    }
+
+    public static double FacingOf(IReadOnlyList<Vec2> path)
+    {
+        var pts = Distinct(path);
+        if (pts.Count < 2) return 0;
+        return (pts[^1] - pts[0]).Length > Least ? FacingAlong(pts[0], pts[^1]) : FacingAlong(pts[0], pts[1]);
+    }
+
+    public static int PastTheEnd(IReadOnlyList<Vec2> path, int n, double spacing)
+    {
+        var pts = Distinct(path);
+        if (n < 2 || pts.Count < 2) return 0;
+        var (step, len) = Spread(pts, n, spacing);
+        return Enumerable.Range(0, n).Count(j => j * step - len > Least * (1 + len));
+    }
+
+    public static List<(Vec2 Pos, double Rot)> Along(IReadOnlyList<Vec2> path, int n, double spacing)
+    {
+        var pts = Distinct(path);
+        if (n <= 0 || pts.Count < 2) return new();
+        var cum = new double[pts.Count];
+        for (int i = 1; i < pts.Count; i++) cum[i] = cum[i - 1] + (pts[i] - pts[i - 1]).Length;
+        var (step, len) = Spread(pts, n, spacing);
+        double reach = Math.Max(spacing * TangentReach, Least);
+        Vec2 On(double s)
+        {
+            if (s <= 0) return pts[0];
+            if (s >= len) return pts[^1];
+            int i = Array.BinarySearch(cum, s);
+            if (i >= 0) return pts[i];
+            i = ~i - 1;
+            return Lerp(pts[i], pts[i + 1], (s - cum[i]) / (cum[i + 1] - cum[i]));
+        }
+        var endFrom = On(len - reach);
+        var endWay = Unit(pts[^1] - endFrom);
+        return Enumerable.Range(0, n).Select(j =>
+        {
+            double s = n == 1 ? len / 2 : j * step;
+            if (s > len) return (pts[^1] + Scaled(endWay, s - len), FacingAlong(endFrom, pts[^1]));
+            return (On(s), FacingAlong(On(s - reach), On(s + reach)));
+        }).ToList();
+    }
+
+    static (double Step, double Len) Spread(List<Vec2> pts, int n, double spacing)
+    {
+        double len = Length(pts);
+        bool closed = (pts[^1] - pts[0]).Length < spacing && len > 2 * spacing;
+        int gaps = closed ? n : n - 1;
+        return (gaps > 0 ? Math.Max(spacing, len / gaps) : 0, len);
+    }
+
+    static List<Vec2> Distinct(IReadOnlyList<Vec2> path)
+    {
+        var pts = new List<Vec2>(path.Count);
+        foreach (var p in path)
+            if (pts.Count == 0 || (p - pts[^1]).Length > Least) pts.Add(p);
+        return pts;
+    }
+
+    static Vec2 Lerp(Vec2 a, Vec2 b, double t) => new(a.X + (b.X - a.X) * t, a.Z + (b.Z - a.Z) * t);
+
+    static Vec2 Scaled(Vec2 v, double k) => new(v.X * k, v.Z * k);
+
+    static Vec2 Unit(Vec2 v) => v.Length > 0 ? Scaled(v, 1 / v.Length) : new Vec2(1, 0);
 
     static List<Slot> Square(int n, double a, double b)
     {

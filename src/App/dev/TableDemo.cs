@@ -54,6 +54,40 @@ sealed class TableDemo
         T.Ruler.B = b;
     }
 
+    public void Stretch(string arg) => Report(StretchAsync(arg));
+
+    async Task StretchAsync(string arg)
+    {
+        const int Steps = 40;
+        await After(5.0);
+        var a = arg.Split(',');
+        var ids = S.View.Layer(Layers.Umpire).Where(p => p.Def.Contains(a[0], StringComparison.Ordinal)).Select(p => p.Id).ToArray();
+        GD.Print($"[stretch] {ids.Length} pieces of {a[0]}");
+        T.SetTool(Tool.Formation);
+        T.SetSelection(ids);
+        T.Settings.Formation = "stretch";
+        T.Forms.SetGap(T.Forms.Gap);
+        var vp = T.GetViewport().GetVisibleRect().Size;
+        bool s = a.Length > 1 && a[1] == "s", hold = a.Length > 2 && a[2] == "hold";
+        Vector2 At(float t) => vp * (s ? new Vector2(0.4f + 0.5f * t, 0.5f - 0.17f * Mathf.Sin(Mathf.Tau * t)) : new Vector2(0.42f + 0.46f * t, 0.7f - 0.32f * Mathf.Sin(Mathf.Pi * t)));
+        static void Right(Vector2 at, bool down) =>
+            Input.ParseInputEvent(new InputEventMouseButton { ButtonIndex = MouseButton.Right, Pressed = down, Position = at, GlobalPosition = at, ButtonMask = down ? MouseButtonMask.Right : 0 });
+        Input.ParseInputEvent(new InputEventMouseMotion { Position = At(0), GlobalPosition = At(0) });
+        Right(At(0), true);
+        await NextFrame();
+        for (int i = 1; i <= Steps; i++)
+        {
+            Vector2 to = At(i / (float)Steps), from = At((i - 1) / (float)Steps);
+            Input.ParseInputEvent(new InputEventMouseMotion { Position = to, GlobalPosition = to, Relative = to - from, ButtonMask = MouseButtonMask.Right });
+            await NextFrame();
+        }
+        if (hold) { GD.Print("[stretch] holding the right button down, the ghost showing"); return; }
+        Right(At(1), false);
+        await After(2.0);
+        foreach (var id in ids)
+            if (S.View.Find(Layers.Umpire, id) is { } p) GD.Print($"[stretch] {id} at {p.Pos.X:0.00},{p.Pos.Z:0.00} turned {p.RotDeg:0.0}");
+    }
+
     public void Shapes() => Report(ShapesAsync());
 
     async Task ShapesAsync()

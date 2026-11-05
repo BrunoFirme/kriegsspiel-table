@@ -379,6 +379,25 @@ public class TableToolsTests
     }
 
     [Fact]
+    public async Task Pieces_are_strung_along_a_drawn_path_and_formed_up_along_another()
+    {
+        var r = await Call("place_pieces", new { kind = "user.t.bn", count = 3, path = new[] { new[] { 0.0, 0.0 }, new[] { 4.0, 4.0 }, new[] { 8.0, 0.0 } } });
+        Assert.False(r.IsError, r.Text);
+        var placed = _s.View.Layer(Layers.Umpire).Where(p => p.Def == "user.t.bn").OrderBy(p => p.Pos.X).ToList();
+        Assert.Equal(new[] { (0.0, 0.0), (4.0, 4.0), (8.0, 0.0) }, placed.Select(p => (Math.Round(p.Pos.X, 6), Math.Round(p.Pos.Z, 6))));
+        Assert.Equal(180, placed[1].RotDeg, 3);
+        var ids = placed.Select(p => p.Id).ToArray();
+        var formed = await Call("form_up", new { ids, formation = "stretch", path = new[] { new[] { 0.0, 10.0 }, new[] { 0.0, 20.0 } } });
+        Assert.False(formed.IsError, formed.Text);
+        var now = ids.Select(id => _s.View.Find(Layers.Umpire, id)!).OrderBy(p => p.Pos.Z).ToList();
+        Assert.Equal(new[] { 10.0, 15.0, 20.0 }, now.Select(p => Math.Round(p.Pos.Z, 6)));
+        Assert.All(now, p => Assert.Equal(90, p.RotDeg, 3));
+        Assert.True((await Call("form_up", new { ids, formation = "line", path = new[] { new[] { 0.0, 0.0 }, new[] { 5.0, 0.0 } } })).IsError);
+        Assert.True((await Call("place_pieces", new { kind = "user.t.bn", count = 2, path = new[] { new[] { 1.0, 1.0 }, new[] { 1.0, 1.0 } } })).IsError);
+        Assert.True((await Call("place_pieces", new { kind = "user.t.bn", count = 2 })).IsError);
+    }
+
+    [Fact]
     public async Task A_button_and_a_menu_row_a_script_made_are_pressed_as_a_player_does()
     {
         await Call("write_script", new { id = "p-1", text = "function on_load()\n  self.button{ face = 'front', x = 0, z = 0, w = 0.4, h = 0.2, label = 'Fire', on_click = 'fire' }\n  self.menu_add('Rally', 'rally')\nend\nfunction fire(who) print('bang') end\nfunction rally(who) print('rallied') end\n" });

@@ -97,10 +97,14 @@ The tool strip runs down the left. Point at any tool and press **F1** for its se
 - Pick pieces as with Select: click one, **Shift+click** to add or take one out, drag a box on the empty table
   (**Shift** adds), click the empty table to let them all go. **Double-click** a piece for every piece of its kind in view.
 - **Right-drag** where the front should stand: the drag sets which way it faces, and how far you drag sets how many
-  stand in the front rank. In stretch in a line, every piece is strung evenly along the drag, the first at its start
-  and the last at its end, never closer than the spacing. A right-click alone still opens the menu; **Alt+right-drag** turns the view.
-- **Q / E** or the wheel over the pieces wheel the whole formation. **Ctrl+wheel** sets the spacing (0 is shoulder to
-  shoulder); **Shift+wheel** the ranks of a line, or how many abreast in a column.
+  stand in the front rank. A right-click alone still opens the menu; **Alt+right-drag** turns the view.
+- In stretch in a line, the right-drag draws the line itself, straight, curved or in an S: the pieces are strung evenly
+  along it, the first at its start and the last at its end, each facing across it the way a line drawn left to right
+  faces the top. Never closer than the spacing: on a line too short for them, the last run on past its end, and the
+  status line says so. Draw it round on itself and they go evenly all the way round.
+- **Q / E** or the wheel over the pieces wheel the whole formation; a drawn stretch turns whole, keeping its shape.
+  **Ctrl+wheel** sets the spacing (0 is shoulder to shoulder), a drawn stretch keeping its line; **Shift+wheel** the
+  ranks of a line, or how many abreast in a column.
 - Drag one of the pieces to carry the formation as it stands.
 
 ### Pieces

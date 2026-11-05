@@ -16,14 +16,17 @@ public sealed partial class TableTools
 
     static readonly Arg StretchLength = new("length", "number", "for stretch: map units from the first piece to the last (never closer than the spacing)");
 
+    static readonly Arg StretchPath = new("path", "array",
+        "for stretch, in place of x, z, facing and length: the line to string the pieces along, [[x, z], …] map units, straight or curved; the first stands at its start, the last at its end, each facing across it as a line drawn left to right faces the map's top");
+
     IEnumerable<AgentTool> GameTools()
     {
         yield return new AgentTool("place_pieces",
             "Puts many pieces down at once in a formation (" + FormationWords + ") round a centre, facing a direction. Use kinds for a mix (one kind each, in order) or kind with count. Spacing defaults to the pieces' own size. Undoable piece by piece.",
             Args.Schema(new Arg("kind", "string", "one kind's id (list_kinds)"), new Arg("count", "number", "how many of it"), new Arg("kinds", "array", "kind ids, one a piece, in order"),
-                new Arg("x", "number", "centre, map units", true), new Arg("z", "number", "centre, map units", true), new Arg("formation", "string", FormationWords),
+                new Arg("x", "number", "centre, map units (needed unless a path is given)"), new Arg("z", "number", "centre, map units"), new Arg("formation", "string", FormationWords + " (stretch when a path is given)"),
                 new Arg("facing", "number", "the way the pieces face, as their turn in degrees (180 faces the map's top)"), new Arg("spacing", "number", "map units between pieces across"), new Arg("depth", "number", "map units between ranks"),
-                new Arg("ranks", "number", "ranks for line, chequer, crescent and open order; how many abreast for column"), StretchLength,
+                new Arg("ranks", "number", "ranks for line, chequer, crescent and open order; how many abreast for column"), StretchLength, StretchPath,
                 new Arg("labels", "array", "a name for each piece, in order")),
             PlacePieces);
         yield return new AgentTool("form_up",
@@ -31,7 +34,7 @@ public sealed partial class TableTools
             Args.Schema(new Arg("ids", "array", "the pieces' ids", true), new Arg("formation", "string", FormationWords, true),
                 new Arg("x", "number", "where the formation's centre goes, map units"), new Arg("z", "number", "map units"), new Arg("facing", "number", "the way the pieces face, as their turn in degrees (180 faces the map's top)"),
                 new Arg("gap", "number", "space between pieces as a share of their size: 0 touching, 0.1 close (the default), 1 a piece's width apart"),
-                new Arg("ranks", "number", "ranks for line, chequer, crescent and open order; how many abreast for column"), StretchLength),
+                new Arg("ranks", "number", "ranks for line, chequer, crescent and open order; how many abreast for column"), StretchLength, StretchPath),
             FormUp);
         yield return new AgentTool("press_button",
             "Presses a button a piece's script drew on it, as a player clicking it does (so it tests what people see). By its label or its number from list_buttons.",
@@ -111,6 +114,17 @@ public sealed partial class TableTools
         return l.All(p => p != null) ? l.Select(p => p!.Value).ToList() : null;
     }
 
+    static bool Given(JsonElement a, string name) => a.ValueKind == JsonValueKind.Object && a.TryGetProperty(name, out _);
+
+    static ToolResult? PathFor(JsonElement a, FormationKind kind, out List<Vec2>? path)
+    {
+        path = null;
+        if (!Given(a, "path")) return null;
+        if (!kind.AlongLine) return ToolResult.Fail("A path is for stretch only.");
+        path = Points(a, "path");
+        return path is { Count: >= 2 } && Formations.Length(path) > Formations.Least ? null : ToolResult.Fail("path is two or more [x, z] points, not all on one spot.");
+    }
+
     static List<string> List(JsonElement a, string name) =>
         a.ValueKind == JsonValueKind.Object && a.TryGetProperty(name, out var v) && v.ValueKind == JsonValueKind.Array
             ? v.EnumerateArray().Where(x => x.ValueKind == JsonValueKind.String).Select(x => x.GetString()!).ToList() : new();
@@ -122,6 +136,7 @@ public sealed partial class TableTools
         var ids = List(a, "ids").Distinct().ToList();
         if (ids.Count < 2 || ids.Count > MaxPlaced) return ToolResult.Fail($"Give 2 to {MaxPlaced} ids.");
         if (Formations.Named(a.Str("formation") ?? "") is not var (kind, namedDepth)) return ToolResult.Fail("formation is one of " + FormationWords);
+        if (PathFor(a, kind, out var path) is { } badPath) return badPath;
         var layer = s.View.Layer(Layers.Umpire);
         var found = new List<PieceInstance>();
         foreach (var id in ids)
@@ -134,9 +149,10 @@ public sealed partial class TableTools
         var sizes = units.Select(p => s.Def(p.Def) is { } d ? (W: d.Size.W * p.Scale, H: d.Size.H * p.Scale) : (W: 1.0, H: 1.0)).ToList();
         var pitch = new Pitch(sizes.Max(z => z.W) * (1 + gap), sizes.Max(z => z.H) * (1 + gap));
         var at = new Vec2(a.Num("x") ?? units.Average(p => p.Pos.X), a.Num("z") ?? units.Average(p => p.Pos.Z));
-        double facing = a.Num("facing") ?? Formations.Facing(units.Select(p => p.RotDeg)) ?? units[0].RotDeg;
+        double facing = path != null ? Formations.FacingOf(path) : a.Num("facing") ?? Formations.Facing(units.Select(p => p.RotDeg)) ?? units[0].RotDeg;
         int depth = a.Num("ranks") is { } r ? (int)Math.Clamp(r, 1, Formations.MostRanks) : namedDepth;
-        var places = Formations.Place(Formations.Slots(kind, units.Count, pitch, depth, span: a.Num("length") ?? 0), at, facing);
+        var places = path != null ? Formations.Along(path, units.Count, pitch.Across)
+            : Formations.Place(Formations.Slots(kind, units.Count, pitch, depth, span: a.Num("length") ?? 0), at, facing);
         var match = Formations.Match(units.Select(p => p.Pos).ToList(), places.Select(q => q.Pos).ToList());
         var to = units.Select((p, i) => (p.Id, places[match[i]].Pos, places[match[i]].Rot)).ToList();
         s.Do(new Batch { Items = to.Select(t => (Command)new KTable.Core.Protocol.MovePiece { Layer = Layers.Umpire, Id = t.Id, Pos = t.Pos, RotDeg = t.Rot }).ToList() });
@@ -155,14 +171,17 @@ public sealed partial class TableTools
         if (kinds.Count == 0 || kinds.Count > MaxPlaced) return ToolResult.Fail($"Give kind and count, or kinds (1 to {MaxPlaced} pieces).");
         foreach (var k in kinds.Distinct())
             if (s.Def(k) is null || s.Store.PackOfDef(k) is not { } pack || !s.View.Packs.Contains(pack.Id)) return ToolResult.Fail($"No kind {k} in this game's packs (list_kinds).");
-        var formation = a.Str("formation") ?? "line";
+        var formation = a.Str("formation") ?? (Given(a, "path") ? "stretch" : "line");
         if (Formations.Named(formation) is not var (kind, depth)) return ToolResult.Fail("formation is one of " + FormationWords);
-        if (a.Num("x") is not { } x || a.Num("z") is not { } z) return ToolResult.Fail("x and z are needed.");
+        if (PathFor(a, kind, out var path) is { } badPath) return badPath;
+        double? x = a.Num("x"), z = a.Num("z");
+        if (path == null && (x == null || z == null)) return ToolResult.Fail("x and z are needed, or a path for stretch.");
         var first = s.Def(kinds[0])!;
         double across = a.Num("spacing") ?? first.Size.W * 1.1, deep = a.Num("depth") ?? first.Size.H * 1.6;
         double facing = a.Num("facing") ?? 0;
         if (a.Num("ranks") is { } ranks) depth = (int)Math.Clamp(ranks, 1, Formations.MostRanks);
-        var at = Formations.Place(Formations.Slots(kind, kinds.Count, new Pitch(across, deep), depth, span: a.Num("length") ?? 0), new Vec2(x, z), facing);
+        var at = path != null ? Formations.Along(path, kinds.Count, across)
+            : Formations.Place(Formations.Slots(kind, kinds.Count, new Pitch(across, deep), depth, span: a.Num("length") ?? 0), new Vec2(x ?? 0, z ?? 0), facing);
         var labels = List(a, "labels");
         var before = s.View.Layer(Layers.Umpire).Select(p => p.Id).ToHashSet();
         for (int i = 0; i < kinds.Count; i++)

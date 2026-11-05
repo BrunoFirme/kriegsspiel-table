@@ -76,6 +76,112 @@ public class FormationsTests
         Assert.Equal(8, cramped.Max(s => s.X) - cramped.Min(s => s.X), 6);
     }
 
+    static List<Vec2> Arc(Vec2 centre, double radius, double fromDeg, double toDeg, int points = 240) =>
+        Enumerable.Range(0, points + 1).Select(i =>
+        {
+            double a = (fromDeg + (toDeg - fromDeg) * i / points) * Math.PI / 180;
+            return new Vec2(centre.X + radius * Math.Cos(a), centre.Z + radius * Math.Sin(a));
+        }).ToList();
+
+    static double ArcAt(List<Vec2> path, Vec2 p)
+    {
+        double s = 0;
+        for (int i = 1; i < path.Count; s += (path[i] - path[i - 1]).Length, i++)
+        {
+            var seg = path[i] - path[i - 1];
+            double t = Math.Clamp(Dot(p - path[i - 1], seg) / Dot(seg, seg), 0, 1);
+            var near = new Vec2(path[i - 1].X + seg.X * t, path[i - 1].Z + seg.Z * t);
+            if ((p - near).Length < 1e-9) return s + seg.Length * t;
+        }
+        throw new InvalidOperationException($"{p} is not on the path");
+    }
+
+    [Fact]
+    public void A_stretch_along_a_curve_is_spaced_evenly_by_the_length_along_it_from_its_start_to_its_end()
+    {
+        var arc = Arc(new Vec2(0, 0), 10, 0, 90);
+        var placed = Formations.Along(arc, 5, 1);
+        Assert.Equal(arc[0], placed[0].Pos);
+        Assert.True((placed[^1].Pos - arc[^1]).Length < 1e-9);
+        var along = placed.Select(p => ArcAt(arc, p.Pos)).ToList();
+        double length = Formations.Length(arc);
+        for (int j = 0; j < placed.Count; j++) Assert.Equal(length * j / 4, along[j], 9);
+        Assert.All(placed, p => Assert.True(Dot(Front(p.Rot), new Vec2(-p.Pos.X, -p.Pos.Z)) / p.Pos.Length > 0.999, $"{p} faces the arc's inside"));
+        Assert.Equal(0, Formations.PastTheEnd(arc, 5, 1));
+    }
+
+    [Fact]
+    public void An_s_shaped_stretch_reaches_both_ends_and_each_piece_faces_across_its_own_bend()
+    {
+        var s = Arc(new Vec2(5, 0), 5, 180, 0).Concat(Arc(new Vec2(15, 0), 5, 180, 360).Skip(1)).ToList();
+        var placed = Formations.Along(s, 9, 1);
+        Assert.True((placed[0].Pos - new Vec2(0, 0)).Length < 1e-9);
+        Assert.True((placed[^1].Pos - new Vec2(20, 0)).Length < 1e-9);
+        var along = placed.Select(p => ArcAt(s, p.Pos)).ToList();
+        for (int j = 1; j < along.Count; j++) Assert.Equal(Formations.Length(s) / 8, along[j] - along[j - 1], 9);
+        Assert.True(Dot(Front(placed[2].Rot), new Vec2(0, 1)) > 0.99, "on the first bend's crest the front looks out of the bend, to the top");
+        Assert.True(Dot(Front(placed[6].Rot), new Vec2(0, 1)) > 0.99, "and in the second's trough into it, on the same side of the line");
+        Assert.True(Dot(Front(placed[0].Rot), new Vec2(-1, 0)) > 0.99, "where the line sets off upwards, the front is on its left");
+        Assert.Equal(180, Formations.FacingOf(s), 9);
+    }
+
+    [Fact]
+    public void A_straight_stretch_drawn_left_to_right_faces_the_top_as_a_dragged_line_does()
+    {
+        var placed = Formations.Along(new[] { new Vec2(0, 0), new Vec2(9, 0) }, 4, 1);
+        Assert.Equal(new[] { 0.0, 3.0, 6.0, 9.0 }, placed.Select(p => Math.Round(p.Pos.X, 9)));
+        Assert.All(placed, p => Assert.Equal(180, p.Rot, 9));
+    }
+
+    [Fact]
+    public void A_line_too_short_for_the_spacing_runs_on_past_its_end_the_way_it_last_went()
+    {
+        var bent = new[] { new Vec2(0, 0), new Vec2(2, 0), new Vec2(2, 1) };
+        var placed = Formations.Along(bent, 5, 1.5);
+        var want = new[] { new Vec2(0, 0), new Vec2(1.5, 0), new Vec2(2, 1), new Vec2(2, 2.5), new Vec2(2, 4) };
+        for (int j = 0; j < want.Length; j++) Assert.True((placed[j].Pos - want[j]).Length < 1e-9, $"{j}: {placed[j].Pos}");
+        Assert.Equal(90, placed[^1].Rot, 9);
+        Assert.Equal(2, Formations.PastTheEnd(bent, 5, 1.5));
+    }
+
+    [Fact]
+    public void A_line_drawn_round_on_itself_spaces_them_evenly_all_round_with_no_two_on_one_spot()
+    {
+        var ring = Arc(new Vec2(0, 0), 6, 0, 360);
+        var placed = Formations.Along(ring, 6, 1);
+        for (int i = 0; i < placed.Count; i++)
+            for (int j = i + 1; j < placed.Count; j++) Assert.True((placed[i].Pos - placed[j].Pos).Length > 5.9, $"{i} and {j}");
+    }
+
+    [Theory]
+    [InlineData(2, 0.5)]
+    [InlineData(7, 1)]
+    [InlineData(12, 2.5)]
+    public void Along_any_drawn_line_no_two_neighbours_are_closer_along_it_than_the_spacing(int n, double spacing)
+    {
+        var rng = new Random(n * 31 + (int)(spacing * 10));
+        var wander = new List<Vec2> { new(0, 0) };
+        for (int i = 0; i < 40; i++) wander.Add(new Vec2(wander[^1].X + rng.NextDouble() * 0.6, wander[^1].Z + rng.NextDouble() * 0.8 - 0.4));
+        var placed = Formations.Along(wander, n, spacing);
+        double length = Formations.Length(wander), step = Math.Max(spacing, length / (n - 1));
+        Assert.Equal(n, placed.Count);
+        Assert.Equal(wander[0], placed[0].Pos);
+        for (int j = 0; j < n; j++)
+        {
+            double s = j * step;
+            double at = s <= length + 1e-9 ? ArcAt(wander, placed[j].Pos) : length + (placed[j].Pos - wander[^1]).Length;
+            Assert.Equal(s, at, 9);
+        }
+        Assert.Equal(Enumerable.Range(0, n).Count(j => j * step > length + 1e-9), Formations.PastTheEnd(wander, n, spacing));
+    }
+
+    [Fact]
+    public void A_path_with_no_length_strings_nothing()
+    {
+        Assert.Empty(Formations.Along(new[] { new Vec2(1, 1), new Vec2(1, 1) }, 3, 1));
+        Assert.Empty(Formations.Along(new[] { new Vec2(1, 1) }, 3, 1));
+    }
+
     [Fact]
     public void The_old_names_still_form_up()
     {
