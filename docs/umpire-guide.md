@@ -176,6 +176,11 @@ Lines traced in 2D still cut off what lies behind them. Each Capture is one pict
 **Text → Hidden** leaves names, counters, notes and the studio's own lettering out of the picture, and off the
 table while the tool is out. Words baked into imported pictures stay.
 
+**Shot → GIF** records a moving picture instead. **Record** or **Enter** starts it, **Stop** or **Enter** ends it,
+**Cancel** drops it. From above it is 720 × 720, from the eye 768 × 432, 10 frames a second, and it stops by
+itself at 60 s or 9 MB, under Discord's upload limit. It goes to the capture folder, and to the clipboard as a
+file: Ctrl+V in Discord uploads it. While it records the reach stays as it was.
+
 Nothing is sent: paste it into that side's channel.
 
 ### Capture

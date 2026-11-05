@@ -11,11 +11,18 @@ sealed class PovPanel : HudPart
     readonly VBoxContainer _box;
 
     readonly IHudShell Shell;
-    public PovPanel(HudContext ctx, IHudShell shell) : base(ctx)
+    readonly Captures _captures;
+    Label? _recordLine;
+
+    const double BytesPerMegabyte = 1e6;
+
+    public PovPanel(HudContext ctx, IHudShell shell, Captures captures) : base(ctx)
     {
         Shell = shell;
+        _captures = captures;
         Panel = shell.MakePanel("sighting", "POV tool");
         _box = Panel.Body;
+        captures.RecordingTicked += ShowRecording;
     }
 
     public void Rebuild()
@@ -28,6 +35,11 @@ sealed class PovPanel : HudPart
     void Build()
     {
         var d = T.Draft!;
+        if (_captures.Recording != null)
+        {
+            BuildRecording(d);
+            return;
+        }
         var grid = Ui.Form(76);
         _box.AddChild(grid);
         AddView(grid, d);
@@ -43,13 +55,44 @@ sealed class PovPanel : HudPart
             AddFormat(grid, d);
         }
         AddText(grid, d);
+        AddShot(grid, d);
         Ui.AlignForm(grid);
         if (!d.FirstPerson) AddTraced();
         _box.AddChild(Hint($"{d.Included.Count} pieces in the picture"));
-        _box.AddChild(Ui.Actions(
-            Ui.Primary("Capture", () => _ = Shell.CaptureSighting(), "The picture goes to the clipboard and the capture folder"),
-            Btn("Cancel", T.CancelSighting)));
+        var take = d.Gif
+            ? Ui.Primary("Record", () => _ = Shell.CaptureSighting(), "Records until Stop or Enter; the GIF goes to the clipboard as a file and to the capture folder")
+            : Ui.Primary("Capture", () => _ = Shell.CaptureSighting(), "The picture goes to the clipboard and the capture folder");
+        _box.AddChild(Ui.Actions(take, Btn("Cancel", T.CancelSighting)));
         Panel.Fit();
+    }
+
+    void BuildRecording(SightingDraft d)
+    {
+        _recordLine = Hint("");
+        _box.AddChild(_recordLine);
+        ShowRecording();
+        _box.AddChild(Hint($"{d.Included.Count} pieces in the picture"));
+        _box.AddChild(Ui.Actions(
+            Ui.Primary("Stop", () => _ = Shell.CaptureSighting(), "Ends the GIF and hands it over, as Enter does"),
+            Btn("Cancel", T.CancelSighting, "Drops the GIF")));
+        Panel.Fit();
+    }
+
+    void ShowRecording()
+    {
+        if (_captures.Recording is not { } r || _recordLine == null || !GodotObject.IsInstanceValid(_recordLine)) return;
+        _recordLine.Text = $"Recording {r.Seconds:0.0} s · {r.Bytes / BytesPerMegabyte:0.0} of {PovRecording.StopAtBytes / BytesPerMegabyte:0} MB";
+    }
+
+    void AddShot(GridContainer grid, SightingDraft d) =>
+        AddChoice(grid, "Shot", d.Gif, on => Keep(() => Cfg.SightingGif = on, () => SetGif(d, on)),
+            ("Picture", "One still picture"),
+            ("GIF", $"A moving picture, {PovRecording.FramesPerSecond} frames a second, up to {PovRecording.MostSeconds:0} s or {PovRecording.StopAtBytes / BytesPerMegabyte:0} MB"));
+
+    void SetGif(SightingDraft d, bool on)
+    {
+        d.Gif = on;
+        T.RefreshSightingPanel();
     }
 
     void Keep(Action remember, Action apply)

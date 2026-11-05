@@ -12,6 +12,7 @@ public sealed class SightingDraft
     public bool Wide;
     public double EyeHeight;
     public bool HideText;
+    public bool Gif;
     public string? Facing;
     public List<List<Vec2>> Walls = new();
     public List<Vec2> Polygon = new();

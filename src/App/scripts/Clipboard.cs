@@ -8,12 +8,15 @@ public static class AppClipboard
 {
     static bool _keptInApp;
     static Image? _image;
+    static string? _file;
 
     public static void KeepInApp() => _keptInApp = true;
 
+    public static string? KeptFile => _keptInApp ? _file : null;
+
     public static void SetText(string text)
     {
-        if (_keptInApp) _image = null;
+        if (_keptInApp) Forget();
         else DisplayServer.ClipboardSet(text);
     }
 
@@ -24,14 +27,31 @@ public static class AppClipboard
     public static string? SetImage(Image img)
     {
         if (!_keptInApp) return ImageClipboard.Copy(img);
+        Forget();
         _image = (Image)img.Duplicate();
         return null;
+    }
+
+    public static string? SetFile(string path)
+    {
+        if (!_keptInApp) return ImageClipboard.CopyFile(path);
+        Forget();
+        _file = path;
+        return null;
+    }
+
+    static void Forget()
+    {
+        _image = null;
+        _file = null;
     }
 }
 
 public static class ImageClipboard
 {
     const uint CF_DIB = 8;
+    const uint CF_HDROP = 15;
+    const int DropFilesSize = 20, DropFilesWideAt = 16, DropEffectCopy = 1, OpenAttempts = 10, OpenRetryMs = 20;
     const uint GMEM_MOVEABLE = 0x0002;
 
     [DllImport("user32.dll", SetLastError = true)] static extern bool OpenClipboard(IntPtr hWnd);
@@ -85,6 +105,43 @@ public static class ImageClipboard
         }
         finally { CloseClipboard(); }
         return null;
+    }
+
+    public static string? CopyFile(string path)
+    {
+        path = System.IO.Path.GetFullPath(path);
+        if (OS.GetName() != "Windows") return CopyFileUnix(path);
+        var name = System.Text.Encoding.Unicode.GetBytes(path + "\0\0");
+        var drop = new byte[DropFilesSize + name.Length];
+        BitConverter.GetBytes(DropFilesSize).CopyTo(drop, 0);
+        BitConverter.GetBytes(1).CopyTo(drop, DropFilesWideAt);
+        name.CopyTo(drop, DropFilesSize);
+        var hwnd = (IntPtr)DisplayServer.WindowGetNativeHandle(DisplayServer.HandleType.WindowHandle);
+        bool open = false;
+        for (int attempt = 0; attempt < OpenAttempts && !(open = OpenClipboard(hwnd)); attempt++) System.Threading.Thread.Sleep(OpenRetryMs);
+        if (!open) return "another program is holding the clipboard";
+        try
+        {
+            EmptyClipboard();
+            SetClipboardData(CF_HDROP, ToGlobal(drop));
+            var effect = RegisterClipboardFormat("Preferred DropEffect");
+            if (effect != 0) SetClipboardData(effect, ToGlobal(BitConverter.GetBytes(DropEffectCopy)));
+        }
+        finally { CloseClipboard(); }
+        return null;
+    }
+
+    static string? CopyFileUnix(string path)
+    {
+        var output = new Godot.Collections.Array();
+        if (OS.GetName() == "macOS")
+        {
+            var quoted = path.Replace("\\", "\\\\").Replace("\"", "\\\"");
+            return OS.Execute("osascript", new[] { "-e", $"set the clipboard to (POSIX file \"{quoted}\")" }, output) == 0 ? null : "osascript refused the file";
+        }
+        var uri = new Uri(path).AbsoluteUri;
+        const string Copy = "printf '%s\r\n' \"$1\" | (wl-copy -t text/uri-list || xclip -selection clipboard -t text/uri-list -i)";
+        return OS.Execute("sh", new[] { "-c", Copy, "sh", uri }, output) == 0 ? null : "no wl-copy/xclip";
     }
 
     static IntPtr ToGlobal(byte[] data)

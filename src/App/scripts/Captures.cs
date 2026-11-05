@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using Godot;
+using KTable.Client;
+using KTable.Core;
 
 namespace KTable.App;
 
@@ -11,7 +13,90 @@ sealed class Captures : HudPart
     readonly Func<RectOverlay> _rect;
     public Captures(HudContext ctx, Func<RectOverlay> rect) : base(ctx) { _rect = rect; }
 
-    public async Task Sighting()
+    const string GifFolder = "ktable-pov-gifs", PartSuffix = ".part";
+    const double BytesPerMegabyte = 1e6;
+
+    public PovRecording? Recording { get; private set; }
+    public event Action? RecordingTicked;
+
+    public Task Sighting() => T.Draft switch
+    {
+        null => Task.CompletedTask,
+        { Gif: false } => Picture(),
+        _ when Recording is { } r => Stopping(r),
+        var d => Record(d),
+    };
+
+    static Task Stopping(PovRecording r)
+    {
+        r.Stop();
+        return Task.CompletedTask;
+    }
+
+    async Task Record(SightingDraft d)
+    {
+        var folder = Cfg.CaptureToFolder ? Cfg.CaptureFolder : Path.Combine(Path.GetTempPath(), GifFolder);
+        var file = Path.Combine(folder, $"{S.View.ScenarioId}_{S.View.Clock.Turn}_pov_{DateTime.Now:HHmmss}.gif");
+        try { Directory.CreateDirectory(folder); }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            Say($"could not write to {folder}: {e.Message}");
+            return;
+        }
+        var rec = new PovRecording(T.Sighting, d, HudNode, file + PartSuffix);
+        rec.Ticked += () => RecordingTicked?.Invoke();
+        Recording = rec;
+        T.RefreshSightingPanel();
+        bool kept = false;
+        try
+        {
+            var end = await rec.Run();
+            Recording = null;
+            if (end == PovRecording.End.Dropped) { Say("GIF dropped"); return; }
+            if (end == PovRecording.End.Failed || rec.Frames == 0)
+            {
+                Say("GIF not made: " + (rec.Failure ?? "no picture came"));
+                T.RefreshSightingPanel();
+                return;
+            }
+            File.Move(file + PartSuffix, file, overwrite: true);
+            kept = true;
+            if (T.Draft == d) T.EndDraft();
+            DeliverGif(file, rec, end);
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            Say($"GIF not made: could not write to {folder}: {e.Message}");
+        }
+        finally
+        {
+            Recording = null;
+            if (!kept) BestEffort.DeleteFile(file + PartSuffix);
+        }
+    }
+
+    void DeliverGif(string file, PovRecording rec, PovRecording.End end)
+    {
+        var msgs = new List<string>();
+        if (Cfg.CaptureToClipboard)
+        {
+            string? err;
+            try { err = AppClipboard.SetFile(file); } catch (Exception e) { err = e.Message; }
+            msgs.Add(err == null ? "copied to clipboard" : "clipboard failed: " + err);
+        }
+        if (Cfg.CaptureToFolder) msgs.Add("saved " + Path.GetFileName(file));
+        var cut = end switch
+        {
+            PovRecording.End.LongestTime => $", stopped at {PovRecording.MostSeconds:0} s",
+            PovRecording.End.LargestFile => $", stopped at {PovRecording.StopAtBytes / BytesPerMegabyte:0} MB",
+            _ => "",
+        };
+        var made = $"GIF {rec.Seconds:0.0} s, {rec.Frames} frames, {rec.Bytes / BytesPerMegabyte:0.0} MB{cut}";
+        Log($"{made}: {string.Join(", ", msgs)}");
+        Say($"{made}: {string.Join(", ", msgs)} — Ctrl+V into Discord.");
+    }
+
+    async Task Picture()
     {
         var d = T.Draft;
         if (d == null) return;

@@ -14,6 +14,7 @@ public sealed class Settings
     public bool SightingFirstPerson { get; set; }
     public bool SightingWide { get; set; }
     public bool SightingHideText { get; set; }
+    public bool SightingGif { get; set; }
     public string LastName { get; set; } = "";
     public string LastAddress { get; set; } = "127.0.0.1";
     public int Port { get; set; } = 7777;

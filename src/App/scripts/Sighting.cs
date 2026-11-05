@@ -196,9 +196,11 @@ sealed class Sighting
         }
     }
 
+    public bool Recording { get; set; }
+
     public void Aim()
     {
-        if (Draft == null || _c.Tool != Tool.Sighting) return;
+        if (Draft == null || Recording || _c.Tool != Tool.Sighting) return;
         if (_selection.Ids.Count != 1) return;
         var obs = _selection.Nodes.FirstOrDefault();
         if (obs == null || obs.Piece.Id == Draft.ObserverId) return;
@@ -215,7 +217,7 @@ sealed class Sighting
         Draft = new SightingDraft
         {
             ObserverId = obs.Piece.Id, Center = obs.Piece.Pos, Radius = radius ?? (_c.S.View.VisionRadius > 0 ? _c.S.View.VisionRadius : 40),
-            Square = _c.Settings.SightingSquare, FirstPerson = _c.Settings.SightingFirstPerson, Wide = _c.Settings.SightingWide, HideText = _c.Settings.SightingHideText,
+            Square = _c.Settings.SightingSquare, FirstPerson = _c.Settings.SightingFirstPerson, Wide = _c.Settings.SightingWide, HideText = _c.Settings.SightingHideText, Gif = _c.Settings.SightingGif,
             EyeHeight = EyeOnTopOf(obs.Piece.Id),
         };
         Draft.Recompute(UmpirePiecesIn);
@@ -338,7 +340,7 @@ sealed class Sighting
     public void Wheel(float f, Vector2 at, bool alt)
     {
         var rig = _c.Rig;
-        if (alt && Looking) return;
+        if (alt && Looking || !alt && Recording) return;
         if (alt)
         {
             rig.Zoom(f, at);
@@ -455,6 +457,18 @@ sealed class Sighting
 
     public async System.Threading.Tasks.Task<Image?> Render(SightingDraft d, int px)
     {
+        var shot = await OpenPicture(d, px);
+        try
+        {
+            await _c.Scene.ToSignal(RenderingServer.Singleton, RenderingServer.SignalName.FramePostDraw);
+            await _c.Scene.ToSignal(RenderingServer.Singleton, RenderingServer.SignalName.FramePostDraw);
+            return shot.GetTexture().GetImage();
+        }
+        finally { ClosePicture(shot); }
+    }
+
+    public async System.Threading.Tasks.Task<SubViewport> OpenPicture(SightingDraft d, int px)
+    {
         var shot = MakeShotViewport(d, px);
         PrepareForPicture(d);
         for (int i = 0; i < PictureWaitFrames; i++)
@@ -463,19 +477,20 @@ sealed class Sighting
             bool settling = i < AssetWaitFrames && _c.S.Assets.Busy;
             if (i >= 2 && !settling && !_c.S.Art.FacesPending) break;
         }
-        try
-        {
-            await _c.Scene.ToSignal(RenderingServer.Singleton, RenderingServer.SignalName.FramePostDraw);
-            await _c.Scene.ToSignal(RenderingServer.Singleton, RenderingServer.SignalName.FramePostDraw);
-            return shot.GetTexture().GetImage();
-        }
-        finally
-        {
-            shot.QueueFree();
-            _pieces.Lettering.Release();
-            _shotPlane.Position = new Vector3(0, 0.021f, 0);
-            foreach (var n in _pieces.Nodes) n.HideFromPicture(false);
-        }
+        return shot;
+    }
+
+    public void FollowEye(SubViewport shot, SightingDraft d)
+    {
+        if (d.FirstPerson && shot.GetChildCount() > 0 && shot.GetChild(0) is Camera3D cam) cam.GlobalTransform = _c.Rig.Cam.GlobalTransform;
+    }
+
+    public void ClosePicture(SubViewport shot)
+    {
+        shot.QueueFree();
+        _pieces.Lettering.Release();
+        _shotPlane.Position = new Vector3(0, 0.021f, 0);
+        foreach (var n in _pieces.Nodes) n.HideFromPicture(false);
     }
 
     const int EyePictureWidth = 16, EyePictureHeight = 9;

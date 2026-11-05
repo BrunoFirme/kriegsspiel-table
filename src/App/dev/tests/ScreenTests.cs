@@ -190,4 +190,97 @@ static class ScreenTests
         var img = muted!.GetImage();
         Check.That(img.GetWidth() == 64 && Pale(img, 22, 22, 20) == 0 && Near(img.GetPixel(32, 32), Color.FromHtml("#c0392b")), "where the 7 was there is only the paint");
     }
+
+    static Button? PovButton(HudTests.Rig h, string text) =>
+        h.Hud.Pov.Panel.FindChildren("*", nameof(Button), true, false).OfType<Button>().FirstOrDefault(b => b.Text == text);
+
+    static async Task<(HudTests.Rig h, string folder)> PovGifTable(TestRunner r)
+    {
+        var h = await HudTests.Host(r);
+        var folder = Path.Combine(Path.GetTempPath(), "ktable-povgif-" + System.Guid.NewGuid().ToString("N"));
+        h.Hud.Cfg.CaptureFolder = folder;
+        h.Hud.Cfg.CaptureToFolder = true;
+        h.Hud.Cfg.CaptureToClipboard = false;
+        h.Table.Selection.Set(new[] { "p1" });
+        h.Table.SetTool(Tool.Sighting);
+        await r.Frames(2);
+        PovButton(h, "GIF")!.EmitSignal(Button.SignalName.Pressed);
+        await r.Frames(2);
+        return (h, folder);
+    }
+
+    static async Task Tidy(TestRunner r, HudTests.Rig h, string folder)
+    {
+        if (h.Table.Draft != null) h.Table.CancelSighting();
+        for (int i = 0; i < 600 && h.Hud.Captures.Recording != null; i++) await r.Frame();
+        KTable.Core.BestEffort.DeleteFolder(folder);
+    }
+
+    static async Task<Task> RecordFrames(TestRunner r, HudTests.Rig h, int frames)
+    {
+        var run = h.Hud.CaptureSighting();
+        for (int i = 0; i < 600 && (h.Hud.Captures.Recording?.Frames ?? 0) < frames; i++) await r.Frame();
+        return run;
+    }
+
+    [ScreenTest]
+    static async Task A_pov_gif_records_until_stopped_and_lands_in_the_capture_folder(TestRunner r)
+    {
+        var (h, folder) = await PovGifTable(r);
+        try
+        {
+            Check.That(h.Table.Draft is { Gif: true } && h.Hud.Cfg.SightingGif, "GIF is chosen and remembered");
+            Check.That(PovButton(h, "Record") != null && PovButton(h, "Capture") == null, "the panel offers Record");
+            var run = await RecordFrames(r, h, 3);
+            var rec = h.Hud.Captures.Recording;
+            Check.That(rec is { Frames: >= 1 }, $"frames are coming: {rec?.Frames}");
+            Check.That(PovButton(h, "Stop") != null && PovButton(h, "Record") == null && PovButton(h, "Round") == null, "while recording the panel holds Stop and Cancel only");
+            h.Table.Selection.Set(new[] { "p2" });
+            await r.Frames(4);
+            Check.That(h.Table.Draft?.ObserverId == "p1" && h.Hud.Captures.Recording == rec, "picking another piece does not move the recording");
+            await h.Hud.CaptureSighting();
+            await run;
+            Check.That(h.Hud.Captures.Recording == null && h.Table.Draft == null, "the recording and the tool are done");
+            var made = Directory.GetFiles(folder);
+            Check.That(made.Length == 1 && made[0].EndsWith(".gif"), "one GIF and no part file: " + string.Join(", ", made.Select(Path.GetFileName)));
+            var bytes = File.ReadAllBytes(made[0]);
+            int w = bytes[6] | bytes[7] << 8, ht = bytes[8] | bytes[9] << 8;
+            Check.That(System.Text.Encoding.ASCII.GetString(bytes, 0, 6) == "GIF89a" && bytes[^1] == 0x3B, "a whole GIF file");
+            Check.That(w == PovRecording.AboveSide && ht == PovRecording.AboveSide, $"square from above: {w}×{ht}");
+        }
+        finally { await Tidy(r, h, folder); }
+    }
+
+    [ScreenTest]
+    static async Task A_first_person_pov_gif_is_wide_the_choice_is_kept_and_cancelling_leaves_nothing(TestRunner r)
+    {
+        var (h, folder) = await PovGifTable(r);
+        try
+        {
+            PovButton(h, "First person")!.EmitSignal(Button.SignalName.Pressed);
+            await r.Frames(2);
+            var run = await RecordFrames(r, h, 2);
+            Check.That(h.Hud.Captures.Recording is { Frames: >= 1 }, "frames are coming from the eye");
+            await h.Hud.CaptureSighting();
+            await run;
+            var made = Directory.GetFiles(folder);
+            Check.That(made.Length == 1, "one GIF: " + string.Join(", ", made.Select(Path.GetFileName)));
+            var bytes = File.ReadAllBytes(made[0]);
+            int w = bytes[6] | bytes[7] << 8, ht = bytes[8] | bytes[9] << 8;
+            Check.That(ht == PovRecording.EyeHeight && w == PovRecording.EyeHeight * 16 / 9, $"16:9 from the eye: {w}×{ht}");
+            File.Delete(made[0]);
+            h.Table.Selection.Set(new[] { "p1" });
+            h.Table.SetTool(Tool.Sighting);
+            await r.Frames(2);
+            Check.That(h.Table.Draft is { Gif: true, FirstPerson: true }, "the next POV opens as it was left: GIF, first person");
+            run = await RecordFrames(r, h, 1);
+            h.Table.CancelSighting();
+            await run;
+            Check.That(h.Hud.Captures.Recording == null && Directory.GetFiles(folder).Length == 0, "cancelling drops the GIF");
+            Check.That(h.Table.Rig.Eye == null
+                && h.Table.Pieces.Nodes.All(n => n.FindChildren("*", nameof(VisualInstance3D), true, false).OfType<VisualInstance3D>().All(v => (v.Layers & Table.OutOfPictureLayer) == 0)),
+                "the eye is left and every piece is back in view");
+        }
+        finally { await Tidy(r, h, folder); }
+    }
 }

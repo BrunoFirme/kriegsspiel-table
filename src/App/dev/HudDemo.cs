@@ -15,7 +15,7 @@ sealed class HudDemo : HudPart
     public void Run(string what)
     {
         var centre = Hud.GetViewport().GetVisibleRect().Size / 2;
-        if (Pages(what) || CompassDrag(what) || Hearts(what) || Scripts(what) || View(what) || PovPictures(what) || PovTool(what) || PovFormat(what) || PovEye(what)
+        if (Pages(what) || CompassDrag(what) || Hearts(what) || Scripts(what) || View(what) || PovPictures(what) || PovTool(what) || PovFormat(what) || PovEye(what) || PovGif(what)
             || DrawingPanels(what) || PanelMoves(what) || Hands(what) || PieceMoves(what) || Lettering(what) || Dialogs(what)) return;
         if (what == "dice") Hud.OpenPanel("dice");
         else if (what == "dice:roll")
@@ -667,6 +667,44 @@ sealed class HudDemo : HudPart
             if (img == null) { GD.Print("[poveye] no picture"); return; }
             var path = ProjectSettings.GlobalizePath("user://poveye.png");
             GD.Print($"[poveye] {img.GetWidth()}×{img.GetHeight()} written to {path}: {img.SavePng(path)}");
+        })).CallDeferred();
+        return true;
+    }
+
+    bool PovGif(string what)
+    {
+        if (!what.StartsWith("povgif")) return false;
+        var parts = what.Split(':');
+        int pn = parts.Length > 1 && int.TryParse(parts[1], out var n) ? n : 0;
+        var board = S.View.Layer(KTable.Core.Model.Layers.Umpire);
+        if (board.Count <= pn) { GD.Print("[povgif] no such piece"); return true; }
+        Cfg.CaptureToClipboard = false;
+        Cfg.CaptureToFolder = true;
+        Cfg.CaptureFolder = ProjectSettings.GlobalizePath("user://povgif");
+        T.SetSelection(new[] { board[pn].Id });
+        T.SetTool(Tool.Sighting);
+        Callable.From((Action)(async () =>
+        {
+            await Hud.ToSignal(Hud.GetTree().CreateTimer(0.4), Timer.SignalName.Timeout);
+            if (T.Draft is not { } d) { GD.Print("[povgif] no draft"); return; }
+            d.Gif = true;
+            bool eye = what.Contains("eye");
+            if (eye) T.SetSightingFirstPerson(true);
+            await Hud.ToSignal(Hud.GetTree().CreateTimer(1.5), Timer.SignalName.Timeout);
+            var run = Hud.CaptureSighting();
+            float yaw = T.Rig.Yaw;
+            var started = Time.GetTicksMsec();
+            while (Time.GetTicksMsec() - started < 4000)
+            {
+                await Hud.ToSignal(Hud.GetTree(), SceneTree.SignalName.ProcessFrame);
+                if (eye && what.Contains("turn")) T.Rig.Face(yaw + (Time.GetTicksMsec() - started) / 4000f * Mathf.Pi / 3, CameraRig.EyeTiltRadians);
+            }
+            var rec = Hud.Captures.Recording;
+            GD.Print($"[povgif] recording {rec?.Seconds:0.0} s, {rec?.Frames} frames, {rec?.Bytes} bytes");
+            await Hud.CaptureSighting();
+            await run;
+            GD.Print("[povgif] the top line says: " + Hud.Top.Said!.Text);
+            foreach (var f in System.IO.Directory.GetFiles(Cfg.CaptureFolder)) GD.Print($"[povgif] {f}: {new System.IO.FileInfo(f).Length} bytes");
         })).CallDeferred();
         return true;
     }

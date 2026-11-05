@@ -70,7 +70,7 @@ public partial class Hud
         if (S.IsUmpire) Relief = new ReliefPanel(Ctx, this);
         FormPanel = new FormationPanel(Ctx, this);
         Boards = new LayersPanel(Ctx, MakePanel("boards", "Layers"), Paint, Strip);
-        Pov = new PovPanel(Ctx, this);
+        Pov = new PovPanel(Ctx, this, Captures);
         LogPanel = new LogPanel(Ctx, MakePanel("log", "Log"));
         if (S.IsUmpire) ScriptConsole = new ConsolePanel(Ctx, MakePanel("console", "Script console"));
         Paint.Rebuild();
