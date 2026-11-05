@@ -12,21 +12,63 @@ public static class GroundEdges
     public const int Channels = 4;
     const float Diagonal = 1.41421356f;
 
-    public static byte[] Distances(ReliefGrid g) => Chamfer(g, Edges(g), StepsPerCell);
+    public static byte[] Distances(ReliefGrid g) => Chamfer(g.Cols, g.Rows, Edges(g.Cols, g.Rows, g.Kind), StepsPerCell);
 
-    public static byte[] Roads(ReliefGrid g)
+    public static byte[] Roads(ReliefGrid g) => Derive(g.Cols, g.Rows, g.Kind).Roads;
+
+    public static byte[] Fields(ReliefGrid g) => Derive(g.Cols, g.Rows, g.Kind).Fields;
+
+    public static (byte[] Roads, byte[] Fields) Derive(int cols, int rows, byte[] kinds)
     {
-        var road = Cells(g, k => k == GroundKinds.Road || k == GroundKinds.Bridge);
-        var away = Chamfer(g, road, RoadStepsPerCell);
-        var wide = Widest(g, Distances(g), road);
-        var o = new byte[g.Kind.Length];
-        for (int i = 0; i < o.Length; i++) o[i] = road[i] ? wide[i] : away[i];
+        int n = kinds.Length;
+        byte marsh = GroundKinds.Of("marsh")!.Value;
+        var road = new bool[n];
+        var town = new bool[n];
+        var wet = new bool[n];
+        var open = new bool[n];
+        bool anyRoad = false, anyTown = false, anyWet = false;
+        for (int i = 0; i < n; i++)
+        {
+            byte k = kinds[i];
+            road[i] = k is GroundKinds.Road or GroundKinds.Bridge;
+            town[i] = k == GroundKinds.Town;
+            wet[i] = k == GroundKinds.Water || k == marsh;
+            open[i] = !town[i] && !road[i];
+            anyRoad |= road[i];
+            anyTown |= town[i];
+            anyWet |= wet[i];
+        }
+        var edges = Chamfer(cols, rows, Edges(cols, rows, kinds), StepsPerCell);
+        var roads = Filled(n, Far);
+        if (anyRoad)
+        {
+            var away = Chamfer(cols, rows, road, RoadStepsPerCell);
+            var wide = Widest(cols, rows, edges, road);
+            for (int i = 0; i < n; i++) roads[i] = road[i] ? wide[i] : away[i];
+        }
+        var townField = anyTown ? Chamfer(cols, rows, town, FieldStepsPerCell) : Filled(n, Far);
+        var wetField = anyWet ? Chamfer(cols, rows, wet, FieldStepsPerCell) : Filled(n, Far);
+        var depth = anyTown ? Chamfer(cols, rows, open, TownStepsPerCell) : Filled(n, (byte)Math.Round(0.5 * TownStepsPerCell));
+        var fields = new byte[n * Channels];
+        for (int i = 0; i < n; i++)
+        {
+            fields[i * Channels] = edges[i];
+            fields[i * Channels + 1] = townField[i];
+            fields[i * Channels + 2] = wetField[i];
+            fields[i * Channels + 3] = depth[i];
+        }
+        return (roads, fields);
+    }
+
+    static byte[] Filled(int n, byte value)
+    {
+        var o = new byte[n];
+        Array.Fill(o, value);
         return o;
     }
 
-    static byte[] Widest(ReliefGrid g, byte[] inner, bool[] road)
+    static byte[] Widest(int w, int h, byte[] inner, bool[] road)
     {
-        int w = g.Cols, h = g.Rows;
         var o = new byte[inner.Length];
         for (int y = 0; y < h; y++)
             for (int x = 0; x < w; x++)
@@ -60,51 +102,25 @@ public static class GroundEdges
         return o;
     }
 
-    public static byte[] Fields(ReliefGrid g)
+    static bool[] Edges(int w, int h, byte[] kinds)
     {
-        var o = new byte[g.Kind.Length * Channels];
-        var edges = Distances(g);
-        var town = Chamfer(g, Cells(g, k => k == GroundKinds.Town), FieldStepsPerCell);
-        var wet = Chamfer(g, Cells(g, k => k == GroundKinds.Water || k == GroundKinds.Of("marsh")), FieldStepsPerCell);
-        var depth = Chamfer(g, Cells(g, k => k != GroundKinds.Town && k != GroundKinds.Road && k != GroundKinds.Bridge), TownStepsPerCell);
-        for (int i = 0; i < g.Kind.Length; i++)
-        {
-            o[i * Channels] = edges[i];
-            o[i * Channels + 1] = town[i];
-            o[i * Channels + 2] = wet[i];
-            o[i * Channels + 3] = depth[i];
-        }
-        return o;
-    }
-
-    static bool[] Edges(ReliefGrid g)
-    {
-        var e = new bool[g.Kind.Length];
-        if (!g.Painted) return e;
-        int w = g.Cols, h = g.Rows;
+        var e = new bool[kinds.Length];
+        if (Array.TrueForAll(kinds, k => k == GroundKinds.None)) return e;
         for (int y = 0; y < h; y++)
             for (int x = 0; x < w; x++)
             {
                 int i = y * w + x;
-                byte k = GroundKinds.BrushOf(g.Kind[i]);
-                bool Differs(int j) => GroundKinds.BrushOf(g.Kind[j]) != k;
+                byte k = GroundKinds.BrushOf(kinds[i]);
+                bool Differs(int j) => GroundKinds.BrushOf(kinds[j]) != k;
                 e[i] = (x > 0 && Differs(i - 1)) || (x < w - 1 && Differs(i + 1)) || (y > 0 && Differs(i - w)) || (y < h - 1 && Differs(i + w));
             }
         return e;
     }
 
-    static bool[] Cells(ReliefGrid g, Func<byte, bool> of)
+    static byte[] Chamfer(int w, int h, bool[] seeds, int stepsPerCell)
     {
-        var e = new bool[g.Kind.Length];
-        for (int i = 0; i < e.Length; i++) e[i] = of(g.Kind[i]);
-        return e;
-    }
-
-    static byte[] Chamfer(ReliefGrid g, bool[] seeds, int stepsPerCell)
-    {
-        var o = new byte[g.Kind.Length];
-        if (!seeds.Any(s => s)) { Array.Fill(o, Far); return o; }
-        int w = g.Cols, h = g.Rows;
+        var o = new byte[seeds.Length];
+        if (!Array.Exists(seeds, s => s)) { Array.Fill(o, Far); return o; }
         var d = new float[w * h];
         float far = Far / (float)stepsPerCell;
         for (int i = 0; i < d.Length; i++) d[i] = seeds[i] ? 0.5f : far;

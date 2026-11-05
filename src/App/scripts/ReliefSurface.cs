@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Godot;
 using KTable.Core.Model;
 
@@ -23,12 +24,19 @@ public partial class ReliefSurface : Node3D
     ImageTexture? _kindsTex;
     ImageTexture? _edgesTex;
     byte[]? _edgesOf;
+    byte[]? _roads;
+    bool _edgesBusy;
+    (int Cols, int Rows, byte[] Kinds)? _edgesNext;
+    ReliefGrid? _grid;
     ImageTexture? _heightsTex;
     float[]? _heightsOf;
+    float[]? _heightTexels;
     float _heightsScale;
     int _heightsBlur;
     bool _heightsStreams;
-    byte[]? _heightsKinds;
+    byte[]? _flowKinds;
+    bool _flowBusy;
+    (int Cols, int Rows, float[] Soft, byte[] Kinds, double CellMetres, double MetresPerUnit)? _flowNext;
     float _cellWorld = 1;
     static bool _contours, _streams;
     static double _unitsPerMetre;
@@ -153,54 +161,184 @@ public partial class ReliefSurface : Node3D
 
     void UpdateKinds(ReliefGrid grid)
     {
-        var roads = GroundEdges.Roads(grid);
+        _grid = grid;
+        bool changed = _edgesOf == null || !_edgesOf.AsSpan().SequenceEqual(grid.Kind);
+        bool sized = _kindsTex != null && _edgesTex != null && _kindsTex.GetWidth() == grid.Cols && _kindsTex.GetHeight() == grid.Rows;
+        if (sized && !changed) return;
+        _edgesOf = (byte[])grid.Kind.Clone();
+        if (!sized)
+        {
+            var (roads, fields) = GroundEdges.Derive(grid.Cols, grid.Rows, grid.Kind);
+            _roads = roads;
+            UploadKinds(grid);
+            UploadEdges(grid.Cols, grid.Rows, fields);
+            return;
+        }
+        UploadKinds(grid);
+        if (_edgesBusy) { _edgesNext = (grid.Cols, grid.Rows, _edgesOf); return; }
+        DeriveEdges(grid.Cols, grid.Rows, _edgesOf);
+    }
+
+    void DeriveEdges(int cols, int rows, byte[] kinds)
+    {
+        _edgesBusy = true;
+        Task.Run(() =>
+        {
+            try
+            {
+                var derived = GroundEdges.Derive(cols, rows, kinds);
+                Callable.From(() => EdgesDerived(cols, rows, derived.Roads, derived.Fields)).CallDeferred();
+            }
+            catch (Exception e)
+            {
+                GD.PrintErr("[relief] deriving the ground's edges: " + e.Message);
+                Callable.From(() => EdgesDerived(cols, rows, null, null)).CallDeferred();
+            }
+        });
+    }
+
+    void EdgesDerived(int cols, int rows, byte[]? roads, byte[]? fields)
+    {
+        _edgesBusy = false;
+        if (_edgesNext is { } next)
+        {
+            _edgesNext = null;
+            DeriveEdges(next.Cols, next.Rows, next.Kinds);
+        }
+        if (roads == null || fields == null || !GodotObject.IsInstanceValid(this) || _grid == null || _grid.Cols != cols || _grid.Rows != rows) return;
+        _roads = roads;
+        UploadKinds(_grid);
+        UploadEdges(cols, rows, fields);
+    }
+
+    void UploadKinds(ReliefGrid grid)
+    {
+        var roads = _roads is { } r && r.Length == grid.Kind.Length ? r : null;
         var texels = new byte[grid.Kind.Length * 4];
         for (int i = 0; i < grid.Kind.Length; i++)
         {
             texels[4 * i] = grid.Kind[i];
             texels[4 * i + 1] = grid.Salt[i];
             texels[4 * i + 2] = grid.Detail[i];
-            texels[4 * i + 3] = roads[i];
+            texels[4 * i + 3] = roads?[i] ?? GroundEdges.Far;
         }
         var img = Image.CreateFromData(grid.Cols, grid.Rows, false, Image.Format.Rgba8, texels);
         if (_kindsTex != null && _kindsTex.GetWidth() == grid.Cols && _kindsTex.GetHeight() == grid.Rows) _kindsTex.Update(img);
         else _kindsTex = ImageTexture.CreateFromImage(img);
-        if (_edgesTex != null && _edgesOf != null && _edgesOf.AsSpan().SequenceEqual(grid.Kind)) return;
-        _edgesOf = (byte[])grid.Kind.Clone();
-        var edges = Image.CreateFromData(grid.Cols, grid.Rows, false, Image.Format.Rgba8, GroundEdges.Fields(grid));
-        if (_edgesTex != null && _edgesTex.GetWidth() == grid.Cols && _edgesTex.GetHeight() == grid.Rows) _edgesTex.Update(edges);
-        else _edgesTex = ImageTexture.CreateFromImage(edges);
+    }
+
+    void UploadEdges(int cols, int rows, byte[] fields)
+    {
+        var img = Image.CreateFromData(cols, rows, false, Image.Format.Rgba8, fields);
+        if (_edgesTex != null && _edgesTex.GetWidth() == cols && _edgesTex.GetHeight() == rows) _edgesTex.Update(img);
+        else _edgesTex = ImageTexture.CreateFromImage(img);
     }
 
     void UpdateHeights(ReliefGrid grid, float scale, int blur)
     {
         bool streams = _streams && _unitsPerMetre > 0;
-        bool sameKinds = !streams || (_heightsKinds != null && _heightsKinds.AsSpan().SequenceEqual(grid.Kind));
-        if (_heightsTex != null && _heightsOf != null && _heightsScale == scale && _heightsBlur == blur && _heightsStreams == streams && sameKinds && _heightsOf.AsSpan().SequenceEqual(grid.H)) return;
-        _heightsKinds = streams ? (byte[])grid.Kind.Clone() : null;
-        _heightsOf = (float[])grid.H.Clone();
-        _heightsScale = scale;
-        _heightsBlur = blur;
+        bool sized = _heightsTex != null && _heightTexels != null && _heightsTex.GetWidth() == grid.Cols && _heightsTex.GetHeight() == grid.Rows;
+        bool heightsChanged = !sized || _heightsOf == null || _heightsScale != scale || _heightsBlur != blur || !_heightsOf.AsSpan().SequenceEqual(grid.H);
+        bool kindsChanged = streams && (_flowKinds == null || !_flowKinds.AsSpan().SequenceEqual(grid.Kind));
+        bool streamsChanged = _heightsStreams != streams;
+        if (!heightsChanged && !kindsChanged && !streamsChanged) return;
         _heightsStreams = streams;
-        var soft = GroundHeights.Blurred(grid, blur);
-        var texels = new float[grid.H.Length * 4];
-        for (int i = 0; i < grid.H.Length; i++)
+        float[]? soft = null;
+        if (heightsChanged)
         {
-            texels[4 * i] = grid.H[i] * scale;
-            texels[4 * i + 1] = soft[i] * scale;
-            texels[4 * i + 2] = GroundStreams.NoFlow;
-        }
-        if (streams)
-        {
-            var (order, direction, node) = GroundStreams.Flow(grid.Cols, grid.Rows, soft, grid.Kind, _cellWorld / _unitsPerMetre, scale / _unitsPerMetre);
+            _heightsOf = (float[])grid.H.Clone();
+            _heightsScale = scale;
+            _heightsBlur = blur;
+            soft = GroundHeights.Blurred(grid, blur);
+            var texels = new float[grid.H.Length * 4];
+            var old = sized ? _heightTexels : null;
             for (int i = 0; i < grid.H.Length; i++)
             {
-                texels[4 * i + 2] = GroundStreams.Packed(direction[i], node[i]);
-                texels[4 * i + 3] = order[i];
+                texels[4 * i] = grid.H[i] * scale;
+                texels[4 * i + 1] = soft[i] * scale;
+                texels[4 * i + 2] = old?[4 * i + 2] ?? GroundStreams.NoFlow;
+                texels[4 * i + 3] = old?[4 * i + 3] ?? 0;
             }
+            _heightTexels = texels;
         }
-        var img = Image.CreateFromData(grid.Cols, grid.Rows, false, Image.Format.Rgbaf, System.Runtime.InteropServices.MemoryMarshal.AsBytes(texels.AsSpan()).ToArray());
-        if (_heightsTex != null && _heightsTex.GetWidth() == grid.Cols && _heightsTex.GetHeight() == grid.Rows) _heightsTex.Update(img);
+        if (!streams)
+        {
+            _flowKinds = null;
+            if (streamsChanged) ClearFlow();
+            if (heightsChanged || streamsChanged) UploadHeights(grid.Cols, grid.Rows);
+            return;
+        }
+        _flowKinds = (byte[])grid.Kind.Clone();
+        soft ??= GroundHeights.Blurred(grid, blur);
+        double cellMetres = _cellWorld / _unitsPerMetre, metresPerUnit = scale / _unitsPerMetre;
+        if (!sized)
+        {
+            var (order, direction, node) = GroundStreams.Flow(grid.Cols, grid.Rows, soft, _flowKinds, cellMetres, metresPerUnit);
+            WriteFlow(order, direction, node);
+            UploadHeights(grid.Cols, grid.Rows);
+            return;
+        }
+        if (heightsChanged) UploadHeights(grid.Cols, grid.Rows);
+        if (_flowBusy) { _flowNext = (grid.Cols, grid.Rows, soft, _flowKinds, cellMetres, metresPerUnit); return; }
+        DeriveFlow(grid.Cols, grid.Rows, soft, _flowKinds, cellMetres, metresPerUnit);
+    }
+
+    void DeriveFlow(int cols, int rows, float[] soft, byte[] kinds, double cellMetres, double metresPerUnit)
+    {
+        _flowBusy = true;
+        Task.Run(() =>
+        {
+            try
+            {
+                var (order, direction, node) = GroundStreams.Flow(cols, rows, soft, kinds, cellMetres, metresPerUnit);
+                Callable.From(() => FlowDerived(cols, rows, order, direction, node)).CallDeferred();
+            }
+            catch (Exception e)
+            {
+                GD.PrintErr("[relief] deriving the streams: " + e.Message);
+                Callable.From(() => FlowDerived(cols, rows, null, null, null)).CallDeferred();
+            }
+        });
+    }
+
+    void FlowDerived(int cols, int rows, byte[]? order, byte[]? direction, (float x, float y)[]? node)
+    {
+        _flowBusy = false;
+        if (_flowNext is { } next)
+        {
+            _flowNext = null;
+            DeriveFlow(next.Cols, next.Rows, next.Soft, next.Kinds, next.CellMetres, next.MetresPerUnit);
+        }
+        if (order == null || direction == null || node == null || !GodotObject.IsInstanceValid(this) || !_heightsStreams) return;
+        if (_heightTexels == null || _heightTexels.Length != order.Length * 4 || _heightsTex == null || _heightsTex.GetWidth() != cols || _heightsTex.GetHeight() != rows) return;
+        WriteFlow(order, direction, node);
+        UploadHeights(cols, rows);
+    }
+
+    void WriteFlow(byte[] order, byte[] direction, (float x, float y)[] node)
+    {
+        var texels = _heightTexels!;
+        for (int i = 0; i < order.Length; i++)
+        {
+            texels[4 * i + 2] = GroundStreams.Packed(direction[i], node[i]);
+            texels[4 * i + 3] = order[i];
+        }
+    }
+
+    void ClearFlow()
+    {
+        var texels = _heightTexels!;
+        for (int i = 0; i < texels.Length / 4; i++)
+        {
+            texels[4 * i + 2] = GroundStreams.NoFlow;
+            texels[4 * i + 3] = 0;
+        }
+    }
+
+    void UploadHeights(int cols, int rows)
+    {
+        var img = Image.CreateFromData(cols, rows, false, Image.Format.Rgbaf, System.Runtime.InteropServices.MemoryMarshal.AsBytes(_heightTexels.AsSpan()).ToArray());
+        if (_heightsTex != null && _heightsTex.GetWidth() == cols && _heightsTex.GetHeight() == rows) _heightsTex.Update(img);
         else _heightsTex = ImageTexture.CreateFromImage(img);
     }
 

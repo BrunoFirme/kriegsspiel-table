@@ -600,6 +600,29 @@ public class ReliefTests : IDisposable
     }
 
     [Fact]
+    public void The_road_and_field_passes_share_one_derivation_and_absent_kinds_cost_no_pass()
+    {
+        const int n = 48;
+        var g = new ReliefGrid(n, n);
+        Array.Fill(g.Kind, GroundKinds.Of("grass")!.Value);
+        for (int y = 20; y < 23; y++)
+            for (int x = 0; x < n; x++) g.Kind[y * n + x] = GroundKinds.Road;
+        for (int y = 30; y < 40; y++)
+            for (int x = 30; x < 40; x++) g.Kind[y * n + x] = GroundKinds.Town;
+        var (roads, fields) = GroundEdges.Derive(n, n, g.Kind);
+        Assert.Equal(GroundEdges.Roads(g), roads);
+        Assert.Equal(GroundEdges.Fields(g), fields);
+        Assert.Equal(GroundEdges.Distances(g)[5 * n + 5], fields[(5 * n + 5) * GroundEdges.Channels]);
+        var plain = new byte[n * n];
+        Array.Fill(plain, GroundKinds.Of("grass")!.Value);
+        var (noRoads, noFields) = GroundEdges.Derive(n, n, plain);
+        Assert.All(noRoads, r => Assert.Equal(GroundEdges.Far, r));
+        Assert.All(Enumerable.Range(0, n * n), i => Assert.Equal(GroundEdges.Far, noFields[i * GroundEdges.Channels + 1]));
+        Assert.All(Enumerable.Range(0, n * n), i => Assert.Equal(GroundEdges.Far, noFields[i * GroundEdges.Channels + 2]));
+        Assert.All(Enumerable.Range(0, n * n), i => Assert.Equal((byte)Math.Round(0.5 * GroundEdges.TownStepsPerCell), noFields[i * GroundEdges.Channels + 3]));
+    }
+
+    [Fact]
     public void Streams_gather_down_a_valley_and_a_pit_drains_out()
     {
         const int n = 64;

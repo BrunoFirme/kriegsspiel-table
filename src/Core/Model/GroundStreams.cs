@@ -36,9 +36,12 @@ public static class GroundStreams
             }
         var area = new int[n];
         Array.Fill(area, 1);
-        var downhill = Enumerable.Range(0, n).OrderByDescending(i => filled[i]).ToArray();
-        foreach (int i in downhill)
+        var downhill = new int[n];
+        for (int i = 0; i < n; i++) downhill[i] = i;
+        Array.Sort((float[])filled.Clone(), downhill);
+        for (int k = n - 1; k >= 0; k--)
         {
+            int i = downhill[k];
             if (direction[i] == NoFlow) continue;
             area[Downstream(i, direction[i], cols)] += area[i];
         }
