@@ -109,7 +109,7 @@ static class TitleStyle
         return l;
     }
 
-    public static readonly Color Warning = new(1, 0.6f, 0.45f);
+    public static readonly Color Warning = Ui.Danger;
 
     public static string PieceCount(int n) => n == 1 ? "1 piece" : n.ToString("N0", System.Globalization.CultureInfo.InvariantCulture) + " pieces";
 

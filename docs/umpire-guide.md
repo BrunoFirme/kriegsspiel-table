@@ -11,9 +11,10 @@ Simulator module, or makes a new pack. The standard dice are always there.
 
 ### Scenarios
 
-A scenario is a map plus the pieces on it. **Host a game → New blank scenario…**, then add map sheets in the
-**Map** drawer (PNG, JPG, TIFF, or a GIMP `.xcf`). Importing a TTS module also makes one. Right-click a card to
-file, export or delete it.
+A scenario is a map plus the pieces on it. **Host a game → New blank scenario…** (the first card), then add map
+sheets in the **Map** drawer (PNG, JPG, TIFF, or a GIMP `.xcf`). Importing a TTS module also makes one. Right-click a
+card to file, export or delete it. Hosting opens the table on your PC only: nobody joins until you invite them, so
+preparing a scenario is hosting it alone.
 
 ### Saves
 
@@ -21,7 +22,7 @@ The table saves itself within a second. **Saves…** (Menu, Ctrl+S or a card's �
 saves as folders and tiles, in `Documents\KriegsspielTable\saves\<scenario>\`.
 
 - **Plays:** each play is a folder (**Run 1**, **Run 2 · from Turn 6**) holding every ended turn. **New play…**
-  starts one from the scenario's start, the table now or a save; **Start over** on a card does the same.
+  starts one from the scenario's start, the table now or a save; **New play** on a card does the same.
 - **Save** keeps the table under a name. **New folder** sorts your saves.
 - **Load** puts a save on the table for everyone; play goes on in a new folder and the old one stays whole.
   **Look** shows a save without loading it.

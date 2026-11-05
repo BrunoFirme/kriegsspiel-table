@@ -41,10 +41,7 @@ sealed class HostPage
     public void Show(PackageStore store, List<(string id, string path, Scenario? s)> scenarios)
     {
         var v = _t.NewPage("Host a game", "");
-        var newBtn = new Button { Text = "New blank scenario…", FocusMode = Control.FocusModeEnum.None, TooltipText = "An empty table with its own name and clock: lay map sheets on it and place pieces" };
-        newBtn.AddThemeFontSizeOverride("font_size", 13);
-        newBtn.Pressed += () => NewBlankScenarioDialog.Open(_main);
-        v.AddChild(_t.Folders.Strip(() => { _t.Select(0); Show(store, scenarios); }, newBtn));
+        v.AddChild(_t.Folders.Strip(() => { _t.Select(0); Show(store, scenarios); }));
         var page = new Cards();
         PickActions(page, store, scenarios);
         v.AddChild(page.Picks.Bar);
@@ -55,20 +52,33 @@ sealed class HostPage
         col.AddThemeConstantOverride("separation", 10);
         scroll.AddChild(col);
 
-        if (scenarios.Count == 0) col.AddChild(new Label { Text = "No scenarios. Piece studio installs one.", Modulate = Muted });
+        bool newShown = false;
         foreach (var (folder, items) in _t.Folders.Grouped(scenarios, x => x.id, pack: false))
         {
             if (items.Count == 0 && folder.Length == 0) continue;
             col.AddChild(Section(folder.Length > 0 ? folder : _t.Folders.Lib.Folders.Count > 0 ? "Unfiled" : "Scenarios"));
-            if (items.Count == 0) col.AddChild(new Label { Text = "Empty", Modulate = Muted });
+            if (items.Count == 0 && newShown) col.AddChild(new Label { Text = "Empty", Modulate = Muted });
             var grid = Grid();
             col.AddChild(grid);
+            if (!newShown)
+            {
+                grid.AddChild(NewScenarioCard());
+                newShown = true;
+            }
             foreach (var (id, path, s) in items)
             {
                 var card = ScenarioCard(page, store, scenarios, id, path, s);
                 page.All.Add(card);
                 grid.AddChild(card);
             }
+        }
+
+        if (!newShown)
+        {
+            col.AddChild(Section("Scenarios"));
+            var grid = Grid();
+            col.AddChild(grid);
+            grid.AddChild(NewScenarioCard());
         }
 
         var mirrors = Main.Saves.Mirrors();
@@ -127,6 +137,33 @@ sealed class HostPage
         }, $"They go to the trash with their saves, for {SaveStore.TrashDays} days."));
     }
 
+    PanelContainer NewScenarioCard()
+    {
+        var (card, cv, nameRow) = CardFace(null, "New blank scenario…", plate: true);
+        if (cv.GetChild(0) is Panel plate)
+        {
+            var plus = new Label { Text = "+", HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center, MouseFilter = Control.MouseFilterEnum.Ignore };
+            plus.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
+            plus.AddThemeFontSizeOverride("font_size", NewCardPlusSize);
+            plus.AddThemeColorOverride("font_color", Muted);
+            plate.AddChild(plus);
+        }
+        cv.AddChild(nameRow);
+        card.TooltipText = "An empty table with its own name and clock: lay map sheets on it and place pieces";
+        card.MouseDefaultCursorShape = Control.CursorShape.PointingHand;
+        card.MouseEntered += () => card.AddThemeStyleboxOverride("panel", Ui.Box(new Color(1, 1, 1, NewCardHover), 8, 12, 10));
+        card.MouseExited += () => card.AddThemeStyleboxOverride("panel", CardStyle(false));
+        card.GuiInput += e =>
+        {
+            if (e is InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.Left }) NewBlankScenarioDialog.Open(_main);
+        };
+        return card;
+    }
+
+    const int NewCardPlusSize = 44;
+    const float NewCardHover = 0.09f;
+    const string OpensForYou = "Opens the table on this PC; nobody joins until you invite them";
+
     static HFlowContainer Grid()
     {
         var grid = new HFlowContainer();
@@ -154,17 +191,18 @@ sealed class HostPage
         var row = new HBoxContainer { Visible = false };
         row.AddThemeConstantOverride("separation", 8);
         var host = Primary("Host", () => _main.DoHost(target, page.InPlay.ContainsKey(target)));
+        host.TooltipText = OpensForYou;
         host.CustomMinimumSize = new Vector2(110, 34);
         host.AddThemeFontSizeOverride("font_size", 14);
         row.AddChild(host);
-        var over = new Button { Text = "Start over", FocusMode = Control.FocusModeEnum.None, Visible = false, TooltipText = "Host the scenario from its start; its saves stay where they are" };
+        var over = new Button { Text = "New play", FocusMode = Control.FocusModeEnum.None, Visible = false, TooltipText = "Host the scenario from its start; the saved play stays where it is" };
         over.AddThemeFontSizeOverride("font_size", 13);
         over.Pressed += () =>
         {
             if (!page.InPlay.ContainsKey(target)) return;
             var store0 = new PackageStore(PackageStore.DefaultRoot);
             var (setup, keep, back) = Main.StartOverPlan(store0, target);
-            Ui.Confirm(_main, "Start over", "Start over", () => _main.StartOver(store0, target, setup, keep, m => _t.Status.Text = m),
+            Ui.Confirm(_main, "New play", "Start it", () => _main.StartOver(store0, target, setup, keep, m => _t.Status.Text = m),
                 $"The game starts again in a new folder of saves; every save made so far stays. {back}");
         };
         row.AddChild(over);
@@ -215,7 +253,7 @@ sealed class HostPage
         if (Main.Saves.HasGame(id))
         {
             page.InPlay[id] = save;
-            cv.AddChild(CardLine(InPlayText(save), Ui.AccentInk));
+            cv.AddChild(CardLine(InPlayText(save), Ink));
         }
         var missing = s != null ? WorkshopContent.MissingPacks(store, s) : new List<string>();
         if (missing.Count > 0) cv.AddChild(CardLine($"Missing {missing.Count} pack{(missing.Count == 1 ? "" : "s")}: {string.Join(", ", missing)}", Warning));
@@ -256,7 +294,7 @@ sealed class HostPage
         nameRow.AddChild(more);
         cv.AddChild(nameRow);
         var what = !ok ? $"The copy cannot be read: {save.Error}" : $"Mirror of {save.MirrorOf ?? "a game"} · turn {save.Clock!.Turn}, {ShortClock(save.Clock)} · {Ago(File.GetLastWriteTime(mp))}";
-        cv.AddChild(CardLine(what, Ui.AccentInk));
+        cv.AddChild(CardLine(what, Ink));
         if (ok && sc0 == null)
             cv.AddChild(CardLine("The scenario is not installed here: the map tiles you never looked at are missing until you install its .ktpack", Warning));
         page.InPlay[target] = target;
@@ -287,10 +325,10 @@ sealed class HostPage
     {
         if (File.Exists(live))
         {
-            if (ScenarioCards.Save(live) is { Clock: { } c }) return $"In play · turn {c.Turn}, {ShortClock(c)} · {Ago(File.GetLastWriteTime(live))}";
+            if (ScenarioCards.Save(live) is { Clock: { } c }) return $"Saved · turn {c.Turn}, {ShortClock(c)} · {Ago(File.GetLastWriteTime(live))}";
         }
         var cps = Main.Saves.Checkpoints(live);
-        if (cps.Count == 0) return $"In play · the save cannot be read: {ScenarioCards.Save(live).Error}";
+        if (cps.Count == 0) return $"Saved · the save cannot be read: {ScenarioCards.Save(live).Error}";
         return $"{(File.Exists(live) ? "Save damaged" : "Save missing")} · Resume continues from the {cps[0].Describe()}";
     }
 }
