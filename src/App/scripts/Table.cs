@@ -361,7 +361,7 @@ public partial class Table : Node3D
         Tool.Range => Ranges.Hint(),
         Tool.Sighting => Sighting.Hint(),
         Tool.Place => "Shift+click places another",
-        Tool.Relief => "Drag over a sheet to shape or paint the ground · Shift+click goes straight on from the last stroke · Alt+click picks up the ground there · Ctrl+wheel sizes the brush",
+        Tool.Relief => ReliefLine(),
         Tool.Formation => Forms.Hint(),
         Tool.Transform => "The round knob turns, the square knob resizes · Shift snaps · the wheel over the piece turns 10° a notch, Ctrl 2°, Shift ½°",
         Tool.Ruler => "Drag to measure · map units until the map is calibrated",
@@ -374,6 +374,17 @@ public partial class Table : Node3D
         Tool.Crop => "Drag the knobs to trim the sheet · Apply or Cancel in the Map page",
         _ => null,
     };
+
+    string ReliefLine() => !_c.Settings.ReliefMode.StartsWith("paint:", StringComparison.Ordinal)
+        ? "Drag over a sheet to shape the ground · Shift+click goes straight on from the last stroke · Ctrl+wheel sizes the brush"
+        : _c.Settings.ReliefPaint switch
+        {
+            "fill" => "Click a patch of ground to fill it up to other ground types, or a bare sheet whole · Alt+click picks up the ground there",
+            "rect" => "Drag the rectangle across the ground · Shift for a square",
+            "ellipse" => "Drag the ellipse across the ground · Shift for a circle",
+            "polygon" => "Click the polygon's corners, then the first again or double-click to close it · Esc drops it",
+            _ => "Drag over a sheet to paint the ground · Shift+click goes straight on from the last stroke · Alt+click picks up the ground there · Ctrl+wheel sizes the brush",
+        };
 
     internal Vec2? Ground(Vector2 screen) => _c.Ground(screen);
 

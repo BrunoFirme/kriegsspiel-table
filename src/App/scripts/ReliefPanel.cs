@@ -43,7 +43,7 @@ sealed class ReliefPanel : HudPart
         {
             Cfg.ReliefMode = mode;
             Cfg.Save();
-            if (T.Tool != Tool.Relief) T.SetTool(Tool.Relief);
+            T.SetTool(Tool.Relief);
             Rebuild();
         };
         return b;
@@ -75,7 +75,7 @@ sealed class ReliefPanel : HudPart
             {
                 Cfg.ReliefMode = mode;
                 Cfg.Save();
-                if (T.Tool != Tool.Relief) T.SetTool(Tool.Relief);
+                T.SetTool(Tool.Relief);
                 Rebuild();
             };
             grid.AddChild(b);
@@ -114,7 +114,7 @@ sealed class ReliefPanel : HudPart
             {
                 Cfg.ReliefPaint = key;
                 Cfg.Save();
-                if (T.Tool != Tool.Relief) T.SetTool(Tool.Relief);
+                T.SetTool(Tool.Relief);
                 Rebuild();
             };
             row.AddChild(b);

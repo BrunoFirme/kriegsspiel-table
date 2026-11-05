@@ -122,7 +122,8 @@ The tool strip runs down the left. Point at any tool and press **F1** for its se
 - **Locked:** right-click → **Locked** pins a piece: it can be read and deleted, not moved.
 - **Tint:** right-click → **Tint** colours every selected piece: a swatch, **+** for any colour, **Reset** for the
   colour it was made with. Where it shows follows TTS: a token's picture, a tile's sides; decals keep their colours.
-- **Effects** (fire, smoke, fog, musketry, arrow volleys) are placed like pieces.
+- **Effects** (smoke, fire, volleys, melee, mist) and props are pieces of **Firme's Effects and Props**; resized, an effect
+  covers more ground.
 - **Scripts:** a piece's buttons and boxes work with a click. Right-click → **Scripting…** opens its script;
   see the [scripting guide](scripting.md).
 
