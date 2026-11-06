@@ -125,6 +125,7 @@ const float LAID_LINES = 0.27;
 const float WOOD_TINT = 0.28;
 const float WATER_TINT = 0.25;
 const float TOWN_TINT = 0.1;
+const float MODERN_PITCH = 0.55;
 const float HAND_WOBBLE = 0.06;
 const float HAND_GRAIN = 3.0;
 const float BLEED = 0.12;

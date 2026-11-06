@@ -15,28 +15,28 @@ vec3 modern_wood(vec3 c, vec2 p, vec2 uv, mat2 to_uv, float fw, float ledges, fl
 				if (ledges > 0.5 && hash(id + 9.9) > LEDGE_TREES) continue;
 				if (room < 0.1 * k) continue;
 				if (hash(id + 1.3) < clearing_at(o, salt) * (1.0 - closed) || hash(id + 2.4) > keep) continue;
-				if (coppice_at(o, salt) > 0.5) {
-					m = max(m, ink(abs(length(p - o) - 0.12 * k), M1 * 0.6, fw));
-					m = max(m, ink(segment(p, o + vec2(0.12, 0.0) * k, o + vec2(0.22, -0.08) * k), M1 * 0.5, fw));
-					continue;
-				}
+				k *= mix(1.0, 0.7, coppice_at(o, salt));
 				if (hash(id + 6.1) < conifer_share(o, salt)) {
-					vec2 top = o + NORTH * 0.8 * k;
-					m = max(m, ink(segment(p, top, o + vec2(-0.22, 0.2) * k), M1 * 0.6, fw));
-					m = max(m, ink(segment(p, top, o + vec2(0.22, 0.2) * k), M1 * 0.6, fw));
-					m = max(m, ink(segment(p, o + NORTH * 0.5 * k, o - NORTH * 0.3 * k), M1 * 0.6, fw));
+					vec2 top = o + NORTH * 0.95 * k;
+					vec2 q = p - top;
+					float along = q.y;
+					float half_w = 0.22 * k * clamp(along / (0.8 * k), 0.0, 1.0);
+					float tri = 1.0 - smoothstep(-fw * 0.5, fw * 0.5, max(abs(q.x) - half_w, max(-along, along - 0.8 * k)));
+					m = max(m, tri);
+					m = max(m, ink(segment(p, o + NORTH * 0.15 * k, o - NORTH * 0.25 * k), M1 * 0.6, fw));
 				} else {
-					vec2 ring = o + NORTH * 0.22 * k;
-					m = max(m, ink(abs(length(p - ring) - 0.2 * k), M1 * 0.6, fw));
-					if (hash(id + 8.4) < 0.4) m = max(m, ink(abs(length(p - ring - vec2(0.16, -0.06) * k) - 0.13 * k), M1 * 0.55, fw));
-					m = max(m, ink(segment(p, ring - NORTH * 0.2 * k, o - NORTH * 0.3 * k), M1 * 0.6, fw));
+					vec2 crown = o + NORTH * 0.34 * k;
+					vec2 q = p - crown;
+					float rr = 0.26 * k * (1.0 + 0.12 * sin(3.0 * atan(q.y, q.x) + hash(id + 7.7) * 6.2832));
+					m = max(m, 1.0 - smoothstep(rr - fw * 0.5, rr + fw * 0.5, length(q)));
+					m = max(m, ink(segment(p, crown, o - NORTH * 0.25 * k), M1 * 0.6, fw));
 				}
 			}
 		}
 	}
 	cover = m;
-	m = mix(m, 0.05, far_blend(fw, S));
-	return mix(c, MODERN_BLACK, m * 0.92);
+	m = mix(m, 0.09, far_blend(fw, S));
+	return mix(c, MODERN_BLACK, m * 0.85);
 }
 
 vec3 modern_farm(vec3 c, vec2 p, vec2 site, vec2 seed, float turn, float fw, inout float cover) {
@@ -132,7 +132,7 @@ vec3 modern(int k, int beside, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_u
 	} else if (k == WOOD) {
 		float open = clearing_at(p, own) * (1.0 - smoothstep(CLOSED_FROM, CLOSED_FULL, levels.x));
 		c = mix(mix(sheet, MODERN_GREEN, WOOD_TINT * mix(0.85, 1.4, levels.x)), sheet, open);
-		c = modern_wood(c, p, uv, to_uv, fw, ledges, metres(mix(TREES_OPEN_M, TREES_CLOSED_M, levels.x)), levels.x * (1.0 - near_town * NEAR_TOWN_THINS), cover);
+		c = modern_wood(c, p, uv, to_uv, fw, ledges, metres(mix(TREES_OPEN_M, TREES_CLOSED_M, levels.x)) * MODERN_PITCH, levels.x * (1.0 - near_town * NEAR_TOWN_THINS), cover);
 		c = mix(c, MODERN_BLACK, dotted_line(p, uv, to_uv, M1 * 2.0, 0.2, M1 * 0.6, fw) * 0.95);
 		c = mix(c, MODERN_BLACK, rides(p, levels.x, M1 * 0.4, metres(6.0), fw) * (1.0 - ledges) * 0.9);
 		if (open > 0.5) {
