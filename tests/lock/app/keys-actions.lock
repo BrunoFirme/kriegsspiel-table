@@ -1,0 +1,82 @@
+include _host.inc
+key M
+settle
+checkpoint ruler-on
+key M
+key T
+settle
+checkpoint gizmo-on
+key T
+click world:-4,0.2,0
+key F
+settle
+checkpoint flipped
+key F
+key Q
+key Q mod=Shift
+settle
+key E
+settle
+checkpoint turned
+key Equal
+key Equal
+key Minus
+settle
+checkpoint resized
+key BracketRight
+settle
+checkpoint state-next
+key BracketLeft
+settle
+key Ctrl+C
+hover world:0,0,2
+key Ctrl+V
+settle
+checkpoint pasted
+key Ctrl+A
+settle
+checkpoint select-all
+key Escape
+click world:-4,0.2,0
+key Delete
+settle
+checkpoint deleted
+key Ctrl+Z
+settle
+checkpoint undone
+key F2
+settle
+checkpoint map2d
+key F2
+key Home
+settle
+checkpoint framed
+click world:2,0.3,-6
+key R
+settle 30 900 noimage=1
+note "dice-mask 0,0,1260,720"
+checkpoint rolled-no-picture
+key Escape
+key Ctrl+Shift+C
+settle
+checkpoint capture-tool
+drag @500,300 @700,450
+settle 60 1200
+checkpoint captured
+key Ctrl+Shift+X
+settle 60 1200
+checkpoint captured-again
+key Escape
+click world:4,0.2,0
+key V
+settle
+checkpoint pov
+key Escape
+key Escape
+key QuoteLeft
+settle
+checkpoint console
+key QuoteLeft
+key Ctrl+Shift+L
+settle
+checkpoint scripts-window

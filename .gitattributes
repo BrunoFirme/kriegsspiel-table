@@ -1,0 +1,4 @@
+src/App/standard/** -text
+*.ico binary
+*.png binary
+tests/lock/** -text

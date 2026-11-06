@@ -1,0 +1,33 @@
+<Project Sdk="Godot.NET.Sdk/4.7.2">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+    <RootNamespace>KTable.App</RootNamespace>
+    <AssemblyName>KriegsspielTable</AssemblyName>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <KTableSteam Condition="'$(KTableSteam)' == ''">false</KTableSteam>
+    <DefineConstants Condition="'$(KTableSteam)' == 'true'">$(DefineConstants);KTABLE_STEAM</DefineConstants>
+    <KTableDev Condition="'$(KTableDev)' == '' and '$(Configuration)' == 'ExportRelease'">false</KTableDev>
+    <KTableDev Condition="'$(KTableDev)' == ''">true</KTableDev>
+    <DefineConstants Condition="'$(KTableDev)' == 'true'">$(DefineConstants);KTABLE_DEV</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="BitMiracle.LibTiff.NET" Version="2.4.660" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(KTableSteam)' == 'true'">
+    <PackageReference Include="Steamworks.NET" Version="2024.8.0" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(KTableDev)' != 'true'">
+    <Compile Remove="dev/**" />
+    <Compile Include="dev/LockHarness.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="../../docs/start.md;../../docs/umpire-guide.md;../../docs/player-guide.md;../../docs/community-guide.md;../../docs/makers.md;../../docs/scripting.md" LogicalName="docs/%(Filename)%(Extension)" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Core/Core.csproj" />
+    <ProjectReference Include="../Server/Server.csproj" />
+    <ProjectReference Include="../Client/Client.csproj" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,61 @@
+include _studio.inc
+click "Red battalion"
+key Alt+2
+settle 60 2400
+checkpoint paint-view
+key B
+drag @560,330 @700,380 steps=12
+settle
+checkpoint brushed
+key E
+drag @600,330 @640,380
+settle
+checkpoint rubbed
+key U
+drag @520,300 @600,360
+settle
+checkpoint shape
+key T
+click @650,400
+type "Lock"
+key Escape
+settle
+checkpoint text
+key G
+click @540,420
+settle
+checkpoint filled
+key Ctrl+Z
+key Ctrl+Z
+settle
+checkpoint undone
+key I
+click @560,330
+key C
+settle
+checkpoint crop-tool
+key O
+click @520,300
+click @760,300
+click @760,440
+key Escape
+key N
+settle
+checkpoint namebox-tool
+key M
+drag @520,300 @760,300
+settle
+checkpoint measured
+key H
+drag @640,360 @600,340
+settle
+key V
+key Ctrl+D
+settle
+checkpoint layer-duplicated
+key Alt+3
+settle 60 2400
+checkpoint try-it-after-paint
+click "Done"
+settle 60 3000
+checkpoint saved

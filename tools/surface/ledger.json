@@ -1,0 +1,8389 @@
+{
+ "types": [
+  {
+   "row": "HandTrigger",
+   "status": "dropped",
+   "where": "hands are seats here; no hand zones (decided 2026-11-06)",
+   "instead": "sit players at their seats; pieces meant for a hand stay on the table",
+   "held_by": "",
+   "count": 490,
+   "modules": 54
+  },
+  {
+   "row": "Custom_Model",
+   "status": "native",
+   "where": "converter",
+   "instead": "",
+   "held_by": "",
+   "count": 4902,
+   "modules": 51
+  },
+  {
+   "row": "Custom_Token",
+   "status": "native",
+   "where": "converter",
+   "instead": "",
+   "held_by": "",
+   "count": 24525,
+   "modules": 49
+  },
+  {
+   "row": "Custom_Tile",
+   "status": "native",
+   "where": "converter",
+   "instead": "",
+   "held_by": "",
+   "count": 36747,
+   "modules": 48
+  },
+  {
+   "row": "Custom_Assetbundle",
+   "status": "native",
+   "where": "BundleBake / BundleEffects (models baked, effects mapped to Firme's Effects)",
+   "instead": "",
+   "held_by": "import-sweep: prairie-grove, suriagehara, zeke",
+   "count": 36533,
+   "modules": 48
+  },
+  {
+   "row": "Chinese_Checkers_Piece",
+   "status": "dropped",
+   "where": "a stock piece; in every IKS module it is the Flex Table control",
+   "instead": "nothing is needed; the table has no Flex Table",
+   "held_by": "",
+   "count": 45,
+   "modules": 45
+  },
+  {
+   "row": "Custom_Board",
+   "status": "native",
+   "where": "converter",
+   "instead": "",
+   "held_by": "",
+   "count": 22,
+   "modules": 22
+  },
+  {
+   "row": "Notecard",
+   "status": "native",
+   "where": "converter",
+   "instead": "",
+   "held_by": "",
+   "count": 28,
+   "modules": 16
+  },
+  {
+   "row": "Custom_PDF",
+   "status": "native",
+   "where": "a book: every page a state, turned from the bar on the piece and read in the Book window",
+   "instead": "",
+   "held_by": "BookTests",
+   "count": 15,
+   "modules": 14
+  },
+  {
+   "row": "BlockSquare",
+   "status": "native",
+   "where": "converter",
+   "instead": "",
+   "held_by": "",
+   "count": 665,
+   "modules": 12
+  },
+  {
+   "row": "BlockRectangle",
+   "status": "native",
+   "where": "converter",
+   "instead": "",
+   "held_by": "",
+   "count": 333,
+   "modules": 11
+  },
+  {
+   "row": "3DText",
+   "status": "native",
+   "where": "converter",
+   "instead": "",
+   "held_by": "",
+   "count": 109,
+   "modules": 11
+  },
+  {
+   "row": "Die_20",
+   "status": "native",
+   "where": "the app's d20, showing the face it was saved on",
+   "instead": "",
+   "held_by": "DiceTests",
+   "count": 77,
+   "modules": 11
+  },
+  {
+   "row": "Bag",
+   "status": "native",
+   "where": "a box, chest or crate of Firme's Effects and Props, picked by its name, then by how much it holds; it keeps a coloured bag's colour and holds its contents stowed",
+   "instead": "",
+   "held_by": "BagBoxTests",
+   "count": 17,
+   "modules": 11
+  },
+  {
+   "row": "Infinite_Bag",
+   "status": "dropped",
+   "where": "infinite bags (decided 2026-11-06)",
+   "instead": "place pieces from the Pieces drawer; a stowed bag holds spares",
+   "held_by": "",
+   "count": 86,
+   "modules": 8
+  },
+  {
+   "row": "Custom_Model_Bag",
+   "status": "native",
+   "where": "the bag's own model, holding its contents stowed",
+   "instead": "",
+   "held_by": "import-sweep: naval, scripted-war-game",
+   "count": 48,
+   "modules": 8
+  },
+  {
+   "row": "Custom_Dice",
+   "status": "partial",
+   "where": "the picture d6 with its pictures; other counts as the app's die of that count without their pictures",
+   "instead": "",
+   "held_by": "DiceTests",
+   "count": 35,
+   "modules": 7
+  },
+  {
+   "row": "CardCustom",
+   "status": "native",
+   "where": "converter",
+   "instead": "",
+   "held_by": "",
+   "count": 1144,
+   "modules": 6
+  },
+  {
+   "row": "Die_12",
+   "status": "native",
+   "where": "the app's d12, showing the face it was saved on",
+   "instead": "",
+   "held_by": "DiceTests",
+   "count": 11,
+   "modules": 5
+  },
+  {
+   "row": "Die_10",
+   "status": "native",
+   "where": "the app's d10, showing the face it was saved on",
+   "instead": "",
+   "held_by": "DiceTests",
+   "count": 9,
+   "modules": 4
+  },
+  {
+   "row": "Die_6_Rounded",
+   "status": "native",
+   "where": "the app's d6, showing the face it was saved on",
+   "instead": "",
+   "held_by": "DiceTests",
+   "count": 7,
+   "modules": 4
+  },
+  {
+   "row": "BlockTriangle",
+   "status": "dropped",
+   "where": "a stock block; no module in the roster has one",
+   "instead": "make a block in the piece studio",
+   "held_by": "",
+   "count": 9,
+   "modules": 3
+  },
+  {
+   "row": "Die_6",
+   "status": "native",
+   "where": "the app's d6, showing the face it was saved on",
+   "instead": "",
+   "held_by": "DiceTests",
+   "count": 24,
+   "modules": 2
+  },
+  {
+   "row": "Tileset_Tree",
+   "status": "dropped",
+   "where": "the tabletop's own art is never extracted",
+   "instead": "paint the ground where it stood, or place a tree of our own",
+   "held_by": "",
+   "count": 119,
+   "modules": 1
+  },
+  {
+   "row": "Card",
+   "status": "native",
+   "where": "converter",
+   "instead": "",
+   "held_by": "",
+   "count": 82,
+   "modules": 1
+  },
+  {
+   "row": "Checker_white",
+   "status": "native",
+   "where": "converter",
+   "instead": "",
+   "held_by": "",
+   "count": 17,
+   "modules": 1
+  },
+  {
+   "row": "Figurine_Custom",
+   "status": "dropped",
+   "where": "a standing picture; no module in the roster has one",
+   "instead": "make a block with the picture in the piece studio",
+   "held_by": "",
+   "count": 16,
+   "modules": 1
+  },
+  {
+   "row": "Deck",
+   "status": "native",
+   "where": "converter",
+   "instead": "",
+   "held_by": "",
+   "count": 15,
+   "modules": 1
+  },
+  {
+   "row": "PlayerPawn",
+   "status": "native",
+   "where": "a round piece in the pawn's colour, as tall as a pawn",
+   "instead": "",
+   "held_by": "PawnTests",
+   "count": 7,
+   "modules": 1
+  },
+  {
+   "row": "Die_8",
+   "status": "native",
+   "where": "the app's d8, showing the face it was saved on",
+   "instead": "",
+   "held_by": "DiceTests",
+   "count": 2,
+   "modules": 1
+  },
+  {
+   "row": "Calculator",
+   "status": "dropped",
+   "where": "a stock gadget",
+   "instead": "a counter on a piece, or the umpire's own",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Counter",
+   "status": "dropped",
+   "where": "a stock gadget",
+   "instead": "a counter on a piece",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Custom_Assetbundle_Infinite_Bag",
+   "status": "dropped",
+   "where": "infinite bags (decided 2026-11-06)",
+   "instead": "place pieces from the Pieces drawer; a stowed bag holds spares",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Custom_Model_Infinite_Bag",
+   "status": "dropped",
+   "where": "infinite bags (decided 2026-11-06)",
+   "instead": "place pieces from the Pieces drawer; a stowed bag holds spares",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Die_4",
+   "status": "native",
+   "where": "the app's d4, showing the face it was saved on",
+   "instead": "",
+   "held_by": "DiceTests",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Digital_Clock",
+   "status": "dropped",
+   "where": "a stock gadget",
+   "instead": "the game clock",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "FogOfWarTrigger",
+   "status": "dropped",
+   "where": "hidden zones (decided 2026-11-06)",
+   "instead": "the umpire layer and side layers hide what a side must not see",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Go_Game_Piece_Black",
+   "status": "dropped",
+   "where": "a stock piece",
+   "instead": "a piece of our own",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Go_Game_Piece_White",
+   "status": "dropped",
+   "where": "a stock piece",
+   "instead": "a piece of our own",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Quarter",
+   "status": "dropped",
+   "where": "a stock coin",
+   "instead": "roll a die",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "ScriptingTrigger",
+   "status": "stub",
+   "where": "no module in the roster has one; the table's own zones raise no script events yet",
+   "instead": "draw the zone at the table; a script reads board.zones()",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Tablet",
+   "status": "dropped",
+   "where": "a stock gadget (a web browser on the table)",
+   "instead": "open the page outside the game",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Tileset_*",
+   "status": "dropped",
+   "where": "the tabletop's own art is never extracted",
+   "instead": "paint the ground or place a prop of our own",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  }
+ ],
+ "save": [
+  {
+   "row": "ObjectState.ColorDiffuse",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 106139,
+   "modules": 54
+  },
+  {
+   "row": "ObjectState.Transform",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 106139,
+   "modules": 54
+  },
+  {
+   "row": "ObjectState.GUID",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 104839,
+   "modules": 54
+  },
+  {
+   "row": "TransformState.posX",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 104839,
+   "modules": 54
+  },
+  {
+   "row": "TransformState.posY",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 104839,
+   "modules": 54
+  },
+  {
+   "row": "TransformState.posZ",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 104839,
+   "modules": 54
+  },
+  {
+   "row": "TransformState.rotY",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 104839,
+   "modules": 54
+  },
+  {
+   "row": "TransformState.scaleX",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 96083,
+   "modules": 54
+  },
+  {
+   "row": "TransformState.scaleZ",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 95009,
+   "modules": 54
+  },
+  {
+   "row": "ObjectState.Name",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 69392,
+   "modules": 54
+  },
+  {
+   "row": "ColourState.g",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 40201,
+   "modules": 54
+  },
+  {
+   "row": "TransformState.scaleY",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 39844,
+   "modules": 54
+  },
+  {
+   "row": "ColourState.b",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 39643,
+   "modules": 54
+  },
+  {
+   "row": "ColourState.r",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 34140,
+   "modules": 54
+  },
+  {
+   "row": "ObjectState.Locked",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 16911,
+   "modules": 54
+  },
+  {
+   "row": "ObjectState.Grid",
+   "status": "dropped",
+   "where": "snap to grid (grid, decided 2026-11-06)",
+   "instead": "the table's own grid snaps",
+   "held_by": "",
+   "count": 4449,
+   "modules": 54
+  },
+  {
+   "row": "ObjectState.FogColor",
+   "status": "dropped",
+   "where": "hidden zones (decided 2026-11-06)",
+   "instead": "the umpire layer and side layers",
+   "held_by": "",
+   "count": 423,
+   "modules": 54
+  },
+  {
+   "row": "SaveState.ComponentTags",
+   "status": "dropped",
+   "where": "tag labels of the tabletop's UI",
+   "instead": "nothing is needed; pieces keep their tags",
+   "held_by": "",
+   "count": 54,
+   "modules": 54
+  },
+  {
+   "row": "SaveState.Grid",
+   "status": "dropped",
+   "where": "grid (decided 2026-11-06)",
+   "instead": "set the table's own grid",
+   "held_by": "",
+   "count": 54,
+   "modules": 54
+  },
+  {
+   "row": "SaveState.Hands",
+   "status": "dropped",
+   "where": "hands are seats here (decided 2026-11-06)",
+   "instead": "sit players at their seats",
+   "held_by": "",
+   "count": 54,
+   "modules": 54
+  },
+  {
+   "row": "SaveState.Lighting",
+   "status": "dropped",
+   "where": "lighting (decided 2026-11-06)",
+   "instead": "set the table's own light and backdrop",
+   "held_by": "",
+   "count": 54,
+   "modules": 54
+  },
+  {
+   "row": "SaveState.TabStates",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 54,
+   "modules": 54
+  },
+  {
+   "row": "SaveState.Turns",
+   "status": "dropped",
+   "where": "turns (decided 2026-11-06)",
+   "instead": "the game clock and turn order here",
+   "held_by": "",
+   "count": 54,
+   "modules": 54
+  },
+  {
+   "row": "ObjectState.Nickname",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 49582,
+   "modules": 53
+  },
+  {
+   "row": "SaveState.Date",
+   "status": "dropped",
+   "where": "save metadata",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 53,
+   "modules": 53
+  },
+  {
+   "row": "SaveState.EpochTime",
+   "status": "dropped",
+   "where": "save metadata",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 53,
+   "modules": 53
+  },
+  {
+   "row": "SaveState.SaveName",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 53,
+   "modules": 53
+  },
+  {
+   "row": "TransformState.rotX",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 104393,
+   "modules": 52
+  },
+  {
+   "row": "TransformState.rotZ",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 103985,
+   "modules": 52
+  },
+  {
+   "row": "ObjectState.LuaScriptState",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 14950,
+   "modules": 51
+  },
+  {
+   "row": "ObjectState.CustomMesh",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 4950,
+   "modules": 51
+  },
+  {
+   "row": "CustomMeshState.MeshURL",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 3974,
+   "modules": 51
+  },
+  {
+   "row": "CustomMeshState.TypeIndex",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 2824,
+   "modules": 51
+  },
+  {
+   "row": "ObjectState.CustomImage",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 61345,
+   "modules": 50
+  },
+  {
+   "row": "CustomImageState.ImageURL",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 55611,
+   "modules": 50
+  },
+  {
+   "row": "ObjectState.LuaScript",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 11272,
+   "modules": 50
+  },
+  {
+   "row": "CustomImageState.CustomToken",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 24525,
+   "modules": 49
+  },
+  {
+   "row": "CustomMeshState.DiffuseURL",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 2835,
+   "modules": 49
+  },
+  {
+   "row": "CustomImageState.CustomTile",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 36747,
+   "modules": 48
+  },
+  {
+   "row": "ObjectState.CustomAssetbundle",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 36533,
+   "modules": 48
+  },
+  {
+   "row": "CustomAssetbundleState.AssetbundleURL",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 28788,
+   "modules": 48
+  },
+  {
+   "row": "CustomAssetbundleState.AssetbundleSecondaryURL",
+   "status": "dropped",
+   "where": "a bundle's second picture",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 13030,
+   "modules": 48
+  },
+  {
+   "row": "CustomTokenState.MergeDistancePixels",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 12794,
+   "modules": 48
+  },
+  {
+   "row": "CustomAssetbundleState.MaterialIndex",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 12333,
+   "modules": 48
+  },
+  {
+   "row": "CustomMeshState.CustomShader",
+   "status": "dropped",
+   "where": "specular shader settings",
+   "instead": "a look of our own",
+   "held_by": "",
+   "count": 1100,
+   "modules": 48
+  },
+  {
+   "row": "CustomAssetbundleState.TypeIndex",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 618,
+   "modules": 48
+  },
+  {
+   "row": "ObjectState.States",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 11157,
+   "modules": 47
+  },
+  {
+   "row": "ObjectState.Tooltip",
+   "status": "dropped",
+   "where": "hiding a piece's name on hover (hidden information, decided 2026-11-06)",
+   "instead": "the umpire layer hides a piece whole",
+   "held_by": "",
+   "count": 1360,
+   "modules": 47
+  },
+  {
+   "row": "ObjectState.MaterialIndex",
+   "status": "dropped",
+   "where": "the tabletop's stock material (plastic, wood, metal...) on a block or model",
+   "instead": "the piece keeps its tint; a look is the pack's own",
+   "held_by": "",
+   "count": 182,
+   "modules": 47
+  },
+  {
+   "row": "ObjectState.GridProjection",
+   "status": "dropped",
+   "where": "grid (decided 2026-11-06)",
+   "instead": "set the table's own grid",
+   "held_by": "",
+   "count": 78,
+   "modules": 46
+  },
+  {
+   "row": "ObjectState.Description",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 16860,
+   "modules": 44
+  },
+  {
+   "row": "ObjectState.Snap",
+   "status": "dropped",
+   "where": "snap points (grid, decided 2026-11-06)",
+   "instead": "the table's own grid snaps",
+   "held_by": "",
+   "count": 3149,
+   "modules": 40
+  },
+  {
+   "row": "ObjectState.ChildObjects",
+   "status": "native",
+   "where": "ModuleSave.cs Children: attachments and glued parts",
+   "instead": "",
+   "held_by": "import-sweep: triangles, richmond",
+   "count": 25386,
+   "modules": 38
+  },
+  {
+   "row": "CustomTileState.Thickness",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 13329,
+   "modules": 38
+  },
+  {
+   "row": "GridState.xSize",
+   "status": "dropped",
+   "where": "grid (decided 2026-11-06)",
+   "instead": "set the table's own grid",
+   "held_by": "",
+   "count": 38,
+   "modules": 38
+  },
+  {
+   "row": "GridState.ySize",
+   "status": "dropped",
+   "where": "grid (decided 2026-11-06)",
+   "instead": "set the table's own grid",
+   "held_by": "",
+   "count": 38,
+   "modules": 38
+  },
+  {
+   "row": "CustomTokenState.Thickness",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 1527,
+   "modules": 36
+  },
+  {
+   "row": "SaveState.GameMode",
+   "status": "dropped",
+   "where": "save metadata",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 34,
+   "modules": 34
+  },
+  {
+   "row": "CustomImageState.ImageSecondaryURL",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 3532,
+   "modules": 32
+  },
+  {
+   "row": "SaveState.PlayerCounts",
+   "status": "dropped",
+   "where": "save metadata",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 31,
+   "modules": 31
+  },
+  {
+   "row": "SaveState.PlayingTime",
+   "status": "dropped",
+   "where": "save metadata",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 31,
+   "modules": 31
+  },
+  {
+   "row": "SaveState.GameComplexity",
+   "status": "dropped",
+   "where": "save metadata",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 29,
+   "modules": 29
+  },
+  {
+   "row": "SaveState.PlayArea",
+   "status": "dropped",
+   "where": "the table's size here is the map's",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 29,
+   "modules": 29
+  },
+  {
+   "row": "ObjectState.Sticky",
+   "status": "partial",
+   "where": "a holder always carries its stack when moved (true in modules); false is not kept",
+   "instead": "take the top piece off first",
+   "held_by": "",
+   "count": 1334,
+   "modules": 26
+  },
+  {
+   "row": "ObjectState.RotationValues",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 181,
+   "modules": 26
+  },
+  {
+   "row": "TagsState.labels",
+   "status": "dropped",
+   "where": "tag labels of the tabletop's UI",
+   "instead": "nothing is needed; pieces keep their tags",
+   "held_by": "",
+   "count": 26,
+   "modules": 26
+  },
+  {
+   "row": "SaveState.GameType",
+   "status": "dropped",
+   "where": "save metadata",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 25,
+   "modules": 25
+  },
+  {
+   "row": "SaveState.LuaScript",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 25,
+   "modules": 25
+  },
+  {
+   "row": "SaveState.VersionNumber",
+   "status": "dropped",
+   "where": "save metadata",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 25,
+   "modules": 25
+  },
+  {
+   "row": "ObjectState.AttachedVectorLines",
+   "status": "native",
+   "where": "the piece's own lines, in its frame and local unit",
+   "instead": "",
+   "held_by": "DrawingTests",
+   "count": 114,
+   "modules": 22
+  },
+  {
+   "row": "CustomImageState.WidthScale",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 22,
+   "modules": 22
+  },
+  {
+   "row": "CustomMeshState.MaterialIndex",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 1480,
+   "modules": 21
+  },
+  {
+   "row": "CustomAssetbundleState.LoopingEffectIndex",
+   "status": "partial",
+   "where": "BundleEffects: the effect family, not the index",
+   "instead": "",
+   "held_by": "",
+   "count": 71,
+   "modules": 21
+  },
+  {
+   "row": "ObjectState.ContainedObjects",
+   "status": "native",
+   "where": "ScenarioBuilder.StowContents: a bag's contents become its stowed pieces, decks as their cards",
+   "instead": "",
+   "held_by": "TablePiecesTests",
+   "count": 156,
+   "modules": 20
+  },
+  {
+   "row": "CustomMeshState.ColliderURL",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 2969,
+   "modules": 19
+  },
+  {
+   "row": "CustomTileState.Type",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 1721,
+   "modules": 19
+  },
+  {
+   "row": "GridState.Opacity",
+   "status": "dropped",
+   "where": "grid (decided 2026-11-06)",
+   "instead": "set the table's own grid",
+   "held_by": "",
+   "count": 18,
+   "modules": 18
+  },
+  {
+   "row": "ObjectState.Bag",
+   "status": "dropped",
+   "where": "the order a bag gives its pieces back in",
+   "instead": "stowed pieces come out first in first, or by name",
+   "held_by": "",
+   "count": 64,
+   "modules": 17
+  },
+  {
+   "row": "ObjectState.Tags",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 17646,
+   "modules": 16
+  },
+  {
+   "row": "SaveState.Sky",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 16,
+   "modules": 16
+  },
+  {
+   "row": "SaveState.Note",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 15,
+   "modules": 15
+  },
+  {
+   "row": "ObjectState.CustomPDF",
+   "status": "native",
+   "where": "a book with every page",
+   "instead": "",
+   "held_by": "BookTests",
+   "count": 15,
+   "modules": 14
+  },
+  {
+   "row": "GridState.PosOffset",
+   "status": "dropped",
+   "where": "grid (decided 2026-11-06)",
+   "instead": "set the table's own grid",
+   "held_by": "",
+   "count": 14,
+   "modules": 14
+  },
+  {
+   "row": "ObjectState.PhysicsMaterial",
+   "status": "dropped",
+   "where": "engine physics",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 368,
+   "modules": 13
+  },
+  {
+   "row": "ObjectState.Rigidbody",
+   "status": "dropped",
+   "where": "engine physics",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 368,
+   "modules": 13
+  },
+  {
+   "row": "PhysicsMaterialState.DynamicFriction",
+   "status": "dropped",
+   "where": "engine physics",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 198,
+   "modules": 13
+  },
+  {
+   "row": "RigidbodyState.AngularDrag",
+   "status": "dropped",
+   "where": "engine physics",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 198,
+   "modules": 13
+  },
+  {
+   "row": "RigidbodyState.Drag",
+   "status": "dropped",
+   "where": "engine physics",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 198,
+   "modules": 13
+  },
+  {
+   "row": "ObjectState.Memo",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 5023,
+   "modules": 12
+  },
+  {
+   "row": "CustomMeshState.Convex",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 710,
+   "modules": 12
+  },
+  {
+   "row": "LightingState.AmbientIntensity",
+   "status": "dropped",
+   "where": "lighting (decided 2026-11-06)",
+   "instead": "set the table's own light and backdrop",
+   "held_by": "",
+   "count": 12,
+   "modules": 12
+  },
+  {
+   "row": "LightingState.LightIntensity",
+   "status": "dropped",
+   "where": "lighting (decided 2026-11-06)",
+   "instead": "set the table's own light and backdrop",
+   "held_by": "",
+   "count": 12,
+   "modules": 12
+  },
+  {
+   "row": "ObjectState.Text",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 109,
+   "modules": 11
+  },
+  {
+   "row": "TextState.Text",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 105,
+   "modules": 11
+  },
+  {
+   "row": "GridState.Lines",
+   "status": "dropped",
+   "where": "grid (decided 2026-11-06)",
+   "instead": "set the table's own grid",
+   "held_by": "",
+   "count": 11,
+   "modules": 11
+  },
+  {
+   "row": "CustomTileState.Stretch",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 569,
+   "modules": 10
+  },
+  {
+   "row": "SaveState.Gravity",
+   "status": "dropped",
+   "where": "engine physics",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 9,
+   "modules": 9
+  },
+  {
+   "row": "SaveState.VectorLines",
+   "status": "native",
+   "where": "strokes on the umpire's drawing board",
+   "instead": "",
+   "held_by": "DrawingTests",
+   "count": 9,
+   "modules": 9
+  },
+  {
+   "row": "ObjectState.DragSelectable",
+   "status": "dropped",
+   "where": "whether a drag selects the piece",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 335,
+   "modules": 8
+  },
+  {
+   "row": "CustomPDFState.PDFUrl",
+   "status": "partial",
+   "where": "PDFUrl gives the book its pages; the saved page, offset and password are not kept",
+   "instead": "turn to the page at the table",
+   "held_by": "BookTests",
+   "count": 9,
+   "modules": 8
+  },
+  {
+   "row": "SaveState.MusicPlayer",
+   "status": "dropped",
+   "where": "music player",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 8,
+   "modules": 8
+  },
+  {
+   "row": "ObjectState.Autoraise",
+   "status": "dropped",
+   "where": "a dropped piece always rests on what is under it",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 354,
+   "modules": 7
+  },
+  {
+   "row": "CustomImageState.CustomDice",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 35,
+   "modules": 7
+  },
+  {
+   "row": "LightingState.LightColor",
+   "status": "dropped",
+   "where": "lighting (decided 2026-11-06)",
+   "instead": "set the table's own light and backdrop",
+   "held_by": "",
+   "count": 7,
+   "modules": 7
+  },
+  {
+   "row": "MusicPlayerState.AudioLibrary",
+   "status": "dropped",
+   "where": "music player",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 7,
+   "modules": 7
+  },
+  {
+   "row": "SaveState.Table",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 7,
+   "modules": 7
+  },
+  {
+   "row": "SaveState.Tags",
+   "status": "dropped",
+   "where": "save metadata",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 7,
+   "modules": 7
+  },
+  {
+   "row": "ObjectState.CustomDeck",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 1241,
+   "modules": 6
+  },
+  {
+   "row": "ObjectState.Hands",
+   "status": "dropped",
+   "where": "hands are seats here (decided 2026-11-06)",
+   "instead": "sit players at their seats",
+   "held_by": "",
+   "count": 1226,
+   "modules": 6
+  },
+  {
+   "row": "ObjectState.CardID",
+   "status": "native",
+   "where": "ModuleSave.cs CardId",
+   "instead": "",
+   "held_by": "import-sweep: naval",
+   "count": 1196,
+   "modules": 6
+  },
+  {
+   "row": "ObjectState.HideWhenFaceDown",
+   "status": "dropped",
+   "where": "hidden information (decided 2026-11-06)",
+   "instead": "the umpire layer hides a piece whole",
+   "held_by": "",
+   "count": 1158,
+   "modules": 6
+  },
+  {
+   "row": "CustomShaderState.SpecularIntensity",
+   "status": "dropped",
+   "where": "specular shader settings",
+   "instead": "a look of our own",
+   "held_by": "",
+   "count": 357,
+   "modules": 6
+  },
+  {
+   "row": "CustomShaderState.SpecularColor",
+   "status": "dropped",
+   "where": "specular shader settings",
+   "instead": "a look of our own",
+   "held_by": "",
+   "count": 310,
+   "modules": 6
+  },
+  {
+   "row": "PhysicsMaterialState.StaticFriction",
+   "status": "dropped",
+   "where": "engine physics",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 184,
+   "modules": 6
+  },
+  {
+   "row": "RigidbodyState.Mass",
+   "status": "dropped",
+   "where": "engine physics",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 45,
+   "modules": 6
+  },
+  {
+   "row": "TextState.fontSize",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 26,
+   "modules": 6
+  },
+  {
+   "row": "CustomMeshState.CastShadows",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 341,
+   "modules": 5
+  },
+  {
+   "row": "ObjectState.CustomUIAssets",
+   "status": "partial",
+   "where": "pictures a run-time panel names: links in the XML are fetched, named assets are not",
+   "instead": "put the picture's link in the panel's XML",
+   "held_by": "",
+   "count": 35,
+   "modules": 5
+  },
+  {
+   "row": "CustomDiceState.Type",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 22,
+   "modules": 5
+  },
+  {
+   "row": "RigidbodyState.UseGravity",
+   "status": "dropped",
+   "where": "engine physics",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 14,
+   "modules": 5
+  },
+  {
+   "row": "LightingState.AmbientType",
+   "status": "dropped",
+   "where": "lighting (decided 2026-11-06)",
+   "instead": "set the table's own light and backdrop",
+   "held_by": "",
+   "count": 5,
+   "modules": 5
+  },
+  {
+   "row": "MusicPlayerState.CurrentAudioTitle",
+   "status": "dropped",
+   "where": "music player",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 5,
+   "modules": 5
+  },
+  {
+   "row": "MusicPlayerState.CurrentAudioURL",
+   "status": "dropped",
+   "where": "music player",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 5,
+   "modules": 5
+  },
+  {
+   "row": "SaveState.CameraStates",
+   "status": "dropped",
+   "where": "saved camera positions",
+   "instead": "views are saved here per person",
+   "held_by": "",
+   "count": 5,
+   "modules": 5
+  },
+  {
+   "row": "ObjectState.AttachedDecals",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 2590,
+   "modules": 4
+  },
+  {
+   "row": "ObjectState.AttachedSnapPoints",
+   "status": "dropped",
+   "where": "snap points (grid, decided 2026-11-06)",
+   "instead": "the table's own grid snaps",
+   "held_by": "",
+   "count": 87,
+   "modules": 4
+  },
+  {
+   "row": "SaveState.LuaScriptState",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 4,
+   "modules": 4
+  },
+  {
+   "row": "SaveState.SkyURL",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 4,
+   "modules": 4
+  },
+  {
+   "row": "CustomMeshState.NormalURL",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 232,
+   "modules": 3
+  },
+  {
+   "row": "CustomShaderState.FresnelStrength",
+   "status": "dropped",
+   "where": "specular shader settings",
+   "instead": "a look of our own",
+   "held_by": "",
+   "count": 216,
+   "modules": 3
+  },
+  {
+   "row": "CustomShaderState.SpecularSharpness",
+   "status": "dropped",
+   "where": "specular shader settings",
+   "instead": "a look of our own",
+   "held_by": "",
+   "count": 153,
+   "modules": 3
+  },
+  {
+   "row": "ColourState.a",
+   "status": "dropped",
+   "where": "a tint's transparency",
+   "instead": "a tint has no transparency here",
+   "held_by": "",
+   "count": 22,
+   "modules": 3
+  },
+  {
+   "row": "ObjectState.MeasureMovement",
+   "status": "dropped",
+   "where": "the measure-on-move overlay",
+   "instead": "the measure tool here",
+   "held_by": "",
+   "count": 15,
+   "modules": 3
+  },
+  {
+   "row": "GridState.Type",
+   "status": "dropped",
+   "where": "grid (decided 2026-11-06)",
+   "instead": "set the table's own grid",
+   "held_by": "",
+   "count": 3,
+   "modules": 3
+  },
+  {
+   "row": "MusicPlayerState.PlaylistEntry",
+   "status": "dropped",
+   "where": "music player",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 3,
+   "modules": 3
+  },
+  {
+   "row": "MusicPlayerState.RepeatSong",
+   "status": "dropped",
+   "where": "music player",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 3,
+   "modules": 3
+  },
+  {
+   "row": "SaveState.CustomUIAssets",
+   "status": "partial",
+   "where": "pictures a run-time panel names: links in the XML are fetched, named assets are not",
+   "instead": "put the picture's link in the panel's XML",
+   "held_by": "",
+   "count": 3,
+   "modules": 3
+  },
+  {
+   "row": "ObjectState.GMNotes",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 117,
+   "modules": 2
+  },
+  {
+   "row": "CustomTileState.Stackable",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 29,
+   "modules": 2
+  },
+  {
+   "row": "CustomPDFState.PDFPage",
+   "status": "partial",
+   "where": "PDFUrl gives the book its pages; the saved page, offset and password are not kept",
+   "instead": "turn to the page at the table",
+   "held_by": "BookTests",
+   "count": 2,
+   "modules": 2
+  },
+  {
+   "row": "GridState.BothSnapping",
+   "status": "dropped",
+   "where": "grid (decided 2026-11-06)",
+   "instead": "set the table's own grid",
+   "held_by": "",
+   "count": 2,
+   "modules": 2
+  },
+  {
+   "row": "GridState.Offset",
+   "status": "dropped",
+   "where": "grid (decided 2026-11-06)",
+   "instead": "set the table's own grid",
+   "held_by": "",
+   "count": 2,
+   "modules": 2
+  },
+  {
+   "row": "TextState.colorstate",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 19,
+   "modules": 1
+  },
+  {
+   "row": "ObjectState.DeckIDs",
+   "status": "native",
+   "where": "ModuleSave.cs: a deck's cards by id",
+   "instead": "",
+   "held_by": "import-sweep: naval",
+   "count": 15,
+   "modules": 1
+  },
+  {
+   "row": "GridState.Color",
+   "status": "dropped",
+   "where": "grid (decided 2026-11-06)",
+   "instead": "set the table's own grid",
+   "held_by": "",
+   "count": 1,
+   "modules": 1
+  },
+  {
+   "row": "LightingState.LutContribution",
+   "status": "dropped",
+   "where": "lighting (decided 2026-11-06)",
+   "instead": "set the table's own light and backdrop",
+   "held_by": "",
+   "count": 1,
+   "modules": 1
+  },
+  {
+   "row": "LightingState.ReflectionIntensity",
+   "status": "dropped",
+   "where": "lighting (decided 2026-11-06)",
+   "instead": "set the table's own light and backdrop",
+   "held_by": "",
+   "count": 1,
+   "modules": 1
+  },
+  {
+   "row": "ObjectState.IgnoreFoW",
+   "status": "dropped",
+   "where": "hidden zones (decided 2026-11-06)",
+   "instead": "the umpire layer and side layers",
+   "held_by": "",
+   "count": 1,
+   "modules": 1
+  },
+  {
+   "row": "SaveState.DecalPallet",
+   "status": "dropped",
+   "where": "the table's decal palette",
+   "instead": "lay a picture as a map sheet",
+   "held_by": "",
+   "count": 1,
+   "modules": 1
+  },
+  {
+   "row": "SaveState.TableURL",
+   "status": "dropped",
+   "where": "custom table picture",
+   "instead": "the backdrop and the table's shade",
+   "held_by": "",
+   "count": 1,
+   "modules": 1
+  },
+  {
+   "row": "BagState.Order",
+   "status": "dropped",
+   "where": "the order a bag gives its pieces back in",
+   "instead": "stowed pieces come out first in first, or by name",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "CalculatorState.memory",
+   "status": "dropped",
+   "where": "a stock gadget",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "CalculatorState.value",
+   "status": "dropped",
+   "where": "a stock gadget",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "CameraState.AbsolutePosition",
+   "status": "dropped",
+   "where": "saved camera positions",
+   "instead": "views are saved here per person",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "CameraState.Distance",
+   "status": "dropped",
+   "where": "saved camera positions",
+   "instead": "views are saved here per person",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "CameraState.Position",
+   "status": "dropped",
+   "where": "saved camera positions",
+   "instead": "views are saved here per person",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "CameraState.Rotation",
+   "status": "dropped",
+   "where": "saved camera positions",
+   "instead": "views are saved here per person",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "CameraState.Zoomed",
+   "status": "dropped",
+   "where": "saved camera positions",
+   "instead": "views are saved here per person",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "ClockState.Mode",
+   "status": "dropped",
+   "where": "a stock gadget",
+   "instead": "the game clock",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "ClockState.Paused",
+   "status": "dropped",
+   "where": "a stock gadget",
+   "instead": "the game clock",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "ClockState.SecondsPassed",
+   "status": "dropped",
+   "where": "a stock gadget",
+   "instead": "the game clock",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "CounterState.value",
+   "status": "dropped",
+   "where": "a stock gadget",
+   "instead": "a counter on a piece",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "CustomAssetState.Name",
+   "status": "partial",
+   "where": "pictures a run-time panel names: links in the XML are fetched, named assets are not",
+   "instead": "put the picture's link in the panel's XML",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "CustomAssetState.Type",
+   "status": "partial",
+   "where": "pictures a run-time panel names: links in the XML are fetched, named assets are not",
+   "instead": "put the picture's link in the panel's XML",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "CustomAssetState.URL",
+   "status": "partial",
+   "where": "pictures a run-time panel names: links in the XML are fetched, named assets are not",
+   "instead": "put the picture's link in the panel's XML",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "CustomDecalState.ImageURL",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "CustomDecalState.Name",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "CustomDecalState.Size",
+   "status": "unknown",
+   "where": "",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "CustomDeckState.BackIsHidden",
+   "status": "dropped",
+   "where": "a face-down card shows the back its sheet gives it",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "CustomDeckState.BackURL",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "CustomDeckState.FaceURL",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "CustomDeckState.NumHeight",
+   "status": "unknown",
+   "where": "",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "CustomDeckState.NumWidth",
+   "status": "unknown",
+   "where": "",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "CustomDeckState.Type",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "CustomDeckState.UniqueBack",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "CustomFigurineState.MirroredBack",
+   "status": "dropped",
+   "where": "a standing picture; no module in the roster has one",
+   "instead": "make a block with the picture in the piece studio",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "CustomFigurineState.UseMinimalCollider",
+   "status": "dropped",
+   "where": "a standing picture; no module in the roster has one",
+   "instead": "make a block with the picture in the piece studio",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "CustomImageState.CustomFigurine",
+   "status": "unknown",
+   "where": "",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "CustomImageState.CustomJigsawPuzzle",
+   "status": "unknown",
+   "where": "",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "CustomImageState.ImageScalar",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "CustomJigsawPuzzleState.ImageOnBoard",
+   "status": "dropped",
+   "where": "jigsaw puzzles",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "CustomJigsawPuzzleState.NumPuzzlePieces",
+   "status": "dropped",
+   "where": "jigsaw puzzles",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "CustomPDFState.PDFPageOffset",
+   "status": "partial",
+   "where": "PDFUrl gives the book its pages; the saved page, offset and password are not kept",
+   "instead": "turn to the page at the table",
+   "held_by": "BookTests",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "CustomPDFState.PDFPassword",
+   "status": "partial",
+   "where": "PDFUrl gives the book its pages; the saved page, offset and password are not kept",
+   "instead": "turn to the page at the table",
+   "held_by": "BookTests",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "CustomTokenState.Stackable",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "CustomTokenState.StandUp",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "DecalState.CustomDecal",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "DecalState.OwnerSteamID",
+   "status": "dropped",
+   "where": "who laid a decal",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "DecalState.Transform",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "FogOfWarRevealerState.Active",
+   "status": "dropped",
+   "where": "hidden zones (decided 2026-11-06)",
+   "instead": "the umpire layer and side layers",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "FogOfWarRevealerState.Color",
+   "status": "dropped",
+   "where": "hidden zones (decided 2026-11-06)",
+   "instead": "the umpire layer and side layers",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "FogOfWarRevealerState.FoV",
+   "status": "dropped",
+   "where": "hidden zones (decided 2026-11-06)",
+   "instead": "the umpire layer and side layers",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "FogOfWarRevealerState.FoVOffset",
+   "status": "dropped",
+   "where": "hidden zones (decided 2026-11-06)",
+   "instead": "the umpire layer and side layers",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "FogOfWarRevealerState.Height",
+   "status": "dropped",
+   "where": "hidden zones (decided 2026-11-06)",
+   "instead": "the umpire layer and side layers",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "FogOfWarRevealerState.Range",
+   "status": "dropped",
+   "where": "hidden zones (decided 2026-11-06)",
+   "instead": "the umpire layer and side layers",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "FogOfWarRevealerState.ShowOutLine",
+   "status": "dropped",
+   "where": "hidden zones (decided 2026-11-06)",
+   "instead": "the umpire layer and side layers",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "FogOfWarState.Height",
+   "status": "dropped",
+   "where": "hidden zones (decided 2026-11-06)",
+   "instead": "the umpire layer and side layers",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "FogOfWarState.HideGmPointer",
+   "status": "dropped",
+   "where": "hidden zones (decided 2026-11-06)",
+   "instead": "the umpire layer and side layers",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "FogOfWarState.HideObjects",
+   "status": "dropped",
+   "where": "hidden zones (decided 2026-11-06)",
+   "instead": "the umpire layer and side layers",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "FogOfWarState.ReHideObjects",
+   "status": "dropped",
+   "where": "hidden zones (decided 2026-11-06)",
+   "instead": "the umpire layer and side layers",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "FogOfWarState.RevealedLocations",
+   "status": "dropped",
+   "where": "hidden zones (decided 2026-11-06)",
+   "instead": "the umpire layer and side layers",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "GridState.Snapping",
+   "status": "dropped",
+   "where": "grid (decided 2026-11-06)",
+   "instead": "set the table's own grid",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "GridState.ThickLines",
+   "status": "dropped",
+   "where": "grid (decided 2026-11-06)",
+   "instead": "set the table's own grid",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "HandTransformState.Color",
+   "status": "dropped",
+   "where": "hands are seats here (decided 2026-11-06)",
+   "instead": "sit players at their seats",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "HandTransformState.Transform",
+   "status": "dropped",
+   "where": "hands are seats here (decided 2026-11-06)",
+   "instead": "sit players at their seats",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "HandsState.DisableUnused",
+   "status": "dropped",
+   "where": "hands are seats here (decided 2026-11-06)",
+   "instead": "sit players at their seats",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "HandsState.Enable",
+   "status": "dropped",
+   "where": "hands are seats here (decided 2026-11-06)",
+   "instead": "sit players at their seats",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "HandsState.HandTransforms",
+   "status": "dropped",
+   "where": "hands are seats here (decided 2026-11-06)",
+   "instead": "sit players at their seats",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "HandsState.Hiding",
+   "status": "dropped",
+   "where": "hands are seats here (decided 2026-11-06)",
+   "instead": "sit players at their seats",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "JointHingeState.Limits",
+   "status": "dropped",
+   "where": "engine physics (joints)",
+   "instead": "attach the piece instead",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "JointHingeState.Motor",
+   "status": "dropped",
+   "where": "engine physics (joints)",
+   "instead": "attach the piece instead",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "JointHingeState.Spring",
+   "status": "dropped",
+   "where": "engine physics (joints)",
+   "instead": "attach the piece instead",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "JointHingeState.UseLimits",
+   "status": "dropped",
+   "where": "engine physics (joints)",
+   "instead": "attach the piece instead",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "JointHingeState.UseMotor",
+   "status": "dropped",
+   "where": "engine physics (joints)",
+   "instead": "attach the piece instead",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "JointHingeState.UseSpring",
+   "status": "dropped",
+   "where": "engine physics (joints)",
+   "instead": "attach the piece instead",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "JointSpringState.Damper",
+   "status": "dropped",
+   "where": "engine physics (joints)",
+   "instead": "attach the piece instead",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "JointSpringState.MaxDistance",
+   "status": "dropped",
+   "where": "engine physics (joints)",
+   "instead": "attach the piece instead",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "JointSpringState.MinDistance",
+   "status": "dropped",
+   "where": "engine physics (joints)",
+   "instead": "attach the piece instead",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "JointSpringState.Spring",
+   "status": "dropped",
+   "where": "engine physics (joints)",
+   "instead": "attach the piece instead",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "JointState.Anchor",
+   "status": "dropped",
+   "where": "engine physics (joints)",
+   "instead": "attach the piece instead",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "JointState.Axis",
+   "status": "dropped",
+   "where": "engine physics (joints)",
+   "instead": "attach the piece instead",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "JointState.BreakForce",
+   "status": "dropped",
+   "where": "engine physics (joints)",
+   "instead": "attach the piece instead",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "JointState.BreakTorgue",
+   "status": "dropped",
+   "where": "engine physics (joints)",
+   "instead": "attach the piece instead",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "JointState.ConnectedAnchor",
+   "status": "dropped",
+   "where": "engine physics (joints)",
+   "instead": "attach the piece instead",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "JointState.ConnectedBodyGUID",
+   "status": "dropped",
+   "where": "engine physics (joints)",
+   "instead": "attach the piece instead",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "JointState.EnableCollision",
+   "status": "dropped",
+   "where": "engine physics (joints)",
+   "instead": "attach the piece instead",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "LayoutZoneState.GroupsInZone",
+   "status": "dropped",
+   "where": "layout zones",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "LayoutZoneState.Options",
+   "status": "dropped",
+   "where": "layout zones",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "LightingState.AmbientEquatorColor",
+   "status": "dropped",
+   "where": "lighting (decided 2026-11-06)",
+   "instead": "set the table's own light and backdrop",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "LightingState.AmbientGroundColor",
+   "status": "dropped",
+   "where": "lighting (decided 2026-11-06)",
+   "instead": "set the table's own light and backdrop",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "LightingState.AmbientSkyColor",
+   "status": "dropped",
+   "where": "lighting (decided 2026-11-06)",
+   "instead": "set the table's own light and backdrop",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "LightingState.LutIndex",
+   "status": "dropped",
+   "where": "lighting (decided 2026-11-06)",
+   "instead": "set the table's own light and backdrop",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "LightingState.LutURL",
+   "status": "dropped",
+   "where": "lighting (decided 2026-11-06)",
+   "instead": "set the table's own light and backdrop",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Mp3PlayerState.genre",
+   "status": "dropped",
+   "where": "a stock gadget",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Mp3PlayerState.isPlaying",
+   "status": "dropped",
+   "where": "a stock gadget",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Mp3PlayerState.loopOne",
+   "status": "dropped",
+   "where": "a stock gadget",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Mp3PlayerState.menu",
+   "status": "dropped",
+   "where": "a stock gadget",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Mp3PlayerState.menuTitle",
+   "status": "dropped",
+   "where": "a stock gadget",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Mp3PlayerState.songTitle",
+   "status": "dropped",
+   "where": "a stock gadget",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Mp3PlayerState.volume",
+   "status": "dropped",
+   "where": "a stock gadget",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "ObjectState.AltLookAngle",
+   "status": "dropped",
+   "where": "the alt-zoom angle",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "ObjectState.AltSound",
+   "status": "dropped",
+   "where": "sounds",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "ObjectState.AltZoomable",
+   "status": "dropped",
+   "where": "the alt-zoom",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "ObjectState.Calculator",
+   "status": "dropped",
+   "where": "a stock gadget",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "ObjectState.Clock",
+   "status": "dropped",
+   "where": "a stock gadget",
+   "instead": "the game clock",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "ObjectState.Counter",
+   "status": "dropped",
+   "where": "a stock gadget",
+   "instead": "a counter on a piece",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "ObjectState.FogHidePointers",
+   "status": "dropped",
+   "where": "hidden zones (decided 2026-11-06)",
+   "instead": "the umpire layer and side layers",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "ObjectState.FogOfWar",
+   "status": "dropped",
+   "where": "hidden zones (decided 2026-11-06)",
+   "instead": "the umpire layer and side layers",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "ObjectState.FogOfWarRevealer",
+   "status": "dropped",
+   "where": "hidden zones (decided 2026-11-06)",
+   "instead": "the umpire layer and side layers",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "ObjectState.FogReverseHiding",
+   "status": "dropped",
+   "where": "hidden zones (decided 2026-11-06)",
+   "instead": "the umpire layer and side layers",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "ObjectState.FogSeethrough",
+   "status": "dropped",
+   "where": "hidden zones (decided 2026-11-06)",
+   "instead": "the umpire layer and side layers",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "ObjectState.JointFixed",
+   "status": "dropped",
+   "where": "engine physics (joints)",
+   "instead": "attach the piece instead",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "ObjectState.JointHinge",
+   "status": "dropped",
+   "where": "engine physics (joints)",
+   "instead": "attach the piece instead",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "ObjectState.JointSpring",
+   "status": "dropped",
+   "where": "engine physics (joints)",
+   "instead": "attach the piece instead",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "ObjectState.LayoutGroupSortIndex",
+   "status": "dropped",
+   "where": "layout zones",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "ObjectState.LayoutZone",
+   "status": "dropped",
+   "where": "layout zones",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "ObjectState.MeshIndex",
+   "status": "dropped",
+   "where": "the tabletop's stock shape of a block",
+   "instead": "a piece of our own",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "ObjectState.Mp3Player",
+   "status": "dropped",
+   "where": "a stock gadget",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "ObjectState.Number",
+   "status": "dropped",
+   "where": "a number typed over the piece",
+   "instead": "a counter on the piece",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "ObjectState.RPGdead",
+   "status": "dropped",
+   "where": "rpg figurines",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "ObjectState.RPGmode",
+   "status": "dropped",
+   "where": "rpg figurines",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "ObjectState.SidewaysCard",
+   "status": "dropped",
+   "where": "a card keeps its sheet's orientation",
+   "instead": "turn it at the table",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "ObjectState.Tablet",
+   "status": "dropped",
+   "where": "a stock gadget",
+   "instead": "open the page outside the game",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "ObjectState.Value",
+   "status": "dropped",
+   "where": "the piece's counting value",
+   "instead": "a counter on the piece",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "ObjectState.miscID",
+   "status": "dropped",
+   "where": "tabletop internal",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "ObjectState.vector",
+   "status": "dropped",
+   "where": "tabletop internal",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "PhysicsMaterialState.BounceCombine",
+   "status": "dropped",
+   "where": "engine physics",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "PhysicsMaterialState.Bounciness",
+   "status": "dropped",
+   "where": "engine physics",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "PhysicsMaterialState.FrictionCombine",
+   "status": "dropped",
+   "where": "engine physics",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "RotationValueState.Rotation",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "RotationValueState.Value",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "SaveState.Decals",
+   "status": "dropped",
+   "where": "decals laid on the table",
+   "instead": "lay the picture as a map sheet",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "SaveState.ObjectStates",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "SaveState.Rules",
+   "status": "native",
+   "where": "the scenario's briefing",
+   "instead": "",
+   "held_by": "DrawingTests",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "SaveState.SnapPoints",
+   "status": "dropped",
+   "where": "snap points (decided 2026-11-06 with the grid)",
+   "instead": "the table's own grid snaps",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "SnapPointState.Position",
+   "status": "dropped",
+   "where": "snap points (grid, decided 2026-11-06)",
+   "instead": "the table's own grid snaps",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "SnapPointState.Rotation",
+   "status": "dropped",
+   "where": "snap points (grid, decided 2026-11-06)",
+   "instead": "the table's own grid snaps",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "SnapPointState.Tags",
+   "status": "dropped",
+   "where": "snap points (grid, decided 2026-11-06)",
+   "instead": "the table's own grid snaps",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "TabState.body",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "TabState.color",
+   "status": "dropped",
+   "where": "notebook tab colour",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "TabState.id",
+   "status": "dropped",
+   "where": "notebook tab id",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "TabState.title",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "TabState.visibleColor",
+   "status": "dropped",
+   "where": "notebook tab colour",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "TabletState.PageURL",
+   "status": "dropped",
+   "where": "a stock gadget",
+   "instead": "open the page outside the game",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "TextState.OwnerSteamID",
+   "status": "dropped",
+   "where": "who wrote a 3D text",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "TurnsState.DisableInteractions",
+   "status": "dropped",
+   "where": "turns (decided 2026-11-06)",
+   "instead": "the game clock and turn order here",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "TurnsState.Enable",
+   "status": "dropped",
+   "where": "turns (decided 2026-11-06)",
+   "instead": "the game clock and turn order here",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "TurnsState.PassTurns",
+   "status": "dropped",
+   "where": "turns (decided 2026-11-06)",
+   "instead": "the game clock and turn order here",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "TurnsState.Reverse",
+   "status": "dropped",
+   "where": "turns (decided 2026-11-06)",
+   "instead": "the game clock and turn order here",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "TurnsState.SkipEmpty",
+   "status": "dropped",
+   "where": "turns (decided 2026-11-06)",
+   "instead": "the game clock and turn order here",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "TurnsState.TurnColor",
+   "status": "dropped",
+   "where": "turns (decided 2026-11-06)",
+   "instead": "the game clock and turn order here",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "TurnsState.TurnOrder",
+   "status": "dropped",
+   "where": "turns (decided 2026-11-06)",
+   "instead": "the game clock and turn order here",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "TurnsState.Type",
+   "status": "dropped",
+   "where": "turns (decided 2026-11-06)",
+   "instead": "the game clock and turn order here",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "VectorLineState.OwnerSteamID",
+   "status": "native",
+   "where": "lines on pieces and on the table",
+   "instead": "",
+   "held_by": "DrawingTests",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "VectorLineState.color",
+   "status": "native",
+   "where": "lines on pieces and on the table",
+   "instead": "",
+   "held_by": "DrawingTests",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "VectorLineState.loop",
+   "status": "native",
+   "where": "lines on pieces and on the table",
+   "instead": "",
+   "held_by": "DrawingTests",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "VectorLineState.points3",
+   "status": "native",
+   "where": "lines on pieces and on the table",
+   "instead": "",
+   "held_by": "DrawingTests",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "VectorLineState.rotation",
+   "status": "native",
+   "where": "lines on pieces and on the table",
+   "instead": "",
+   "held_by": "DrawingTests",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "VectorLineState.square",
+   "status": "native",
+   "where": "lines on pieces and on the table",
+   "instead": "",
+   "held_by": "DrawingTests",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "VectorLineState.thickness",
+   "status": "native",
+   "where": "lines on pieces and on the table",
+   "instead": "",
+   "held_by": "DrawingTests",
+   "count": 0,
+   "modules": 0
+  }
+ ],
+ "object": [
+  {
+   "row": "createButton",
+   "status": "compat",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 49915,
+   "modules": 51
+  },
+  {
+   "row": "getPosition",
+   "status": "compat",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 2419,
+   "modules": 51
+  },
+  {
+   "row": "editButton",
+   "status": "compat",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 46055,
+   "modules": 50
+  },
+  {
+   "row": "getScale",
+   "status": "compat",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 14744,
+   "modules": 50
+  },
+  {
+   "row": "clearButtons",
+   "status": "compat",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 6478,
+   "modules": 50
+  },
+  {
+   "row": "createInput",
+   "status": "compat",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 19982,
+   "modules": 49
+  },
+  {
+   "row": "setCustomObject",
+   "status": "partial",
+   "where": "compat.set_custom_object: picture and mesh (mesh uncommitted); item 8",
+   "instead": "",
+   "held_by": "",
+   "count": 3483,
+   "modules": 49
+  },
+  {
+   "row": "reload",
+   "status": "native",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 754,
+   "modules": 49
+  },
+  {
+   "row": "positionToWorld",
+   "status": "compat",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 1179,
+   "modules": 48
+  },
+  {
+   "row": "setVar",
+   "status": "native",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 179,
+   "modules": 48
+  },
+  {
+   "row": "editInput",
+   "status": "compat",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 37103,
+   "modules": 46
+  },
+  {
+   "row": "getInputs",
+   "status": "compat",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 15454,
+   "modules": 46
+  },
+  {
+   "row": "clearInputs",
+   "status": "compat",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 5166,
+   "modules": 46
+  },
+  {
+   "row": "getButtons",
+   "status": "compat",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 3949,
+   "modules": 46
+  },
+  {
+   "row": "setPosition",
+   "status": "compat",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 407,
+   "modules": 46
+  },
+  {
+   "row": "setScale",
+   "status": "compat",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 226,
+   "modules": 46
+  },
+  {
+   "row": "getCustomObject",
+   "status": "compat",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 90,
+   "modules": 45
+  },
+  {
+   "row": "setName",
+   "status": "native",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 5505,
+   "modules": 37
+  },
+  {
+   "row": "getRotation",
+   "status": "compat",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 5932,
+   "modules": 34
+  },
+  {
+   "row": "addContextMenuItem",
+   "status": "compat",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 44562,
+   "modules": 32
+  },
+  {
+   "row": "setDescription",
+   "status": "native",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 4640,
+   "modules": 29
+  },
+  {
+   "row": "getColorTint",
+   "status": "compat",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 2098,
+   "modules": 28
+  },
+  {
+   "row": "call",
+   "status": "native",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 36379,
+   "modules": 27
+  },
+  {
+   "row": "clearContextMenu",
+   "status": "native",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 7079,
+   "modules": 25
+  },
+  {
+   "row": "getGUID",
+   "status": "compat",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 1013,
+   "modules": 24
+  },
+  {
+   "row": "setColorTint",
+   "status": "native",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 1395,
+   "modules": 23
+  },
+  {
+   "row": "highlightOn",
+   "status": "compat",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 480,
+   "modules": 22
+  },
+  {
+   "row": "setLock",
+   "status": "compat",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 204,
+   "modules": 20
+  },
+  {
+   "row": "getName",
+   "status": "compat",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 679,
+   "modules": 19
+  },
+  {
+   "row": "destruct",
+   "status": "native",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 981,
+   "modules": 17
+  },
+  {
+   "row": "getVar",
+   "status": "native",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 1991,
+   "modules": 15
+  },
+  {
+   "row": "positionToLocal",
+   "status": "compat",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 979,
+   "modules": 15
+  },
+  {
+   "row": "setVectorLines",
+   "status": "compat",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 196,
+   "modules": 15
+  },
+  {
+   "row": "getDescription",
+   "status": "compat",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 76,
+   "modules": 15
+  },
+  {
+   "row": "removeFromPlayerSelection",
+   "status": "compat",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 1954,
+   "modules": 14
+  },
+  {
+   "row": "interactable",
+   "status": "compat",
+   "where": "ObjectProps (get_prop/set_prop)",
+   "instead": "",
+   "held_by": "",
+   "count": 1952,
+   "modules": 14
+  },
+  {
+   "row": "scale",
+   "status": "compat",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 1826,
+   "modules": 14
+  },
+  {
+   "row": "locked",
+   "status": "compat",
+   "where": "compat.get_prop / set_prop on the piece's lock",
+   "instead": "",
+   "held_by": "StowEventTests",
+   "count": 976,
+   "modules": 14
+  },
+  {
+   "row": "removeInput",
+   "status": "compat",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 976,
+   "modules": 14
+  },
+  {
+   "row": "getData",
+   "status": "compat",
+   "where": "compat.get_data",
+   "instead": "",
+   "held_by": "",
+   "count": 21,
+   "modules": 13
+  },
+  {
+   "row": "getGMNotes",
+   "status": "compat",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 15,
+   "modules": 13
+  },
+  {
+   "row": "hasTag",
+   "status": "compat",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 150,
+   "modules": 12
+  },
+  {
+   "row": "split",
+   "status": "stub",
+   "where": "card dealing; no module calls it",
+   "instead": "take cards out of the holder",
+   "held_by": "",
+   "count": 26,
+   "modules": 12
+  },
+  {
+   "row": "setGMNotes",
+   "status": "compat",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 12,
+   "modules": 12
+  },
+  {
+   "row": "getTransformUp",
+   "status": "compat",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 12435,
+   "modules": 11
+  },
+  {
+   "row": "setDecals",
+   "status": "compat",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 4145,
+   "modules": 11
+  },
+  {
+   "row": "highlightOff",
+   "status": "compat",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 154,
+   "modules": 10
+  },
+  {
+   "row": "setPositionSmooth",
+   "status": "compat",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 51,
+   "modules": 10
+  },
+  {
+   "row": "takeObject",
+   "status": "compat",
+   "where": "compat.take_object: unstow by guid or index at the position and rotation given, then the callback",
+   "instead": "",
+   "held_by": "StowScriptTests",
+   "count": 80,
+   "modules": 9
+  },
+  {
+   "row": "getBounds",
+   "status": "compat",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 50,
+   "modules": 9
+  },
+  {
+   "row": "getLock",
+   "status": "compat",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 50,
+   "modules": 9
+  },
+  {
+   "row": "getObjects",
+   "status": "compat",
+   "where": "compat.get_objects: the stowed list with guid, name and 0-based index",
+   "instead": "",
+   "held_by": "StowScriptTests",
+   "count": 50,
+   "modules": 9
+  },
+  {
+   "row": "putObject",
+   "status": "compat",
+   "where": "compat.put_object: stow",
+   "instead": "",
+   "held_by": "StowScriptTests",
+   "count": 50,
+   "modules": 9
+  },
+  {
+   "row": "setRotationSmooth",
+   "status": "compat",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 50,
+   "modules": 9
+  },
+  {
+   "row": "setLuaScript",
+   "status": "native",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 3169,
+   "modules": 7
+  },
+  {
+   "row": "setState",
+   "status": "native",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 180,
+   "modules": 3
+  },
+  {
+   "row": "isDestroyed",
+   "status": "compat",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 5,
+   "modules": 3
+  },
+  {
+   "row": "guid",
+   "status": "compat",
+   "where": "ObjectProps (get_prop/set_prop)",
+   "instead": "",
+   "held_by": "",
+   "count": 137,
+   "modules": 2
+  },
+  {
+   "row": "getTags",
+   "status": "native",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 18,
+   "modules": 2
+  },
+  {
+   "row": "setRotation",
+   "status": "compat",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 2,
+   "modules": 2
+  },
+  {
+   "row": "getLuaScript",
+   "status": "compat",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 19474,
+   "modules": 1
+  },
+  {
+   "row": "getVectorLines",
+   "status": "compat",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 2,
+   "modules": 1
+  },
+  {
+   "row": "getValue",
+   "status": "compat",
+   "where": "compat.get_value: the look's name as a number where it is one",
+   "instead": "",
+   "held_by": "DiceScriptTests",
+   "count": 1,
+   "modules": 1
+  },
+  {
+   "row": "roll",
+   "status": "compat",
+   "where": "compat.roll: a random look of the piece",
+   "instead": "",
+   "held_by": "DiceScriptTests",
+   "count": 1,
+   "modules": 1
+  },
+  {
+   "row": "setSnapPoints",
+   "status": "compat",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 1,
+   "modules": 1
+  },
+  {
+   "row": "AssetBundle.getLoopingEffectIndex",
+   "status": "dropped",
+   "where": "a bundle's own animations never come over",
+   "instead": "effects here are pieces of Firme's Effects and Props",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "AssetBundle.getLoopingEffects",
+   "status": "dropped",
+   "where": "a bundle's own animations never come over",
+   "instead": "effects here are pieces of Firme's Effects and Props",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "AssetBundle.getTriggerEffects",
+   "status": "dropped",
+   "where": "a bundle's own animations never come over",
+   "instead": "effects here are pieces of Firme's Effects and Props",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "AssetBundle.playLoopingEffect",
+   "status": "dropped",
+   "where": "a bundle's own animations never come over",
+   "instead": "effects here are pieces of Firme's Effects and Props",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "AssetBundle.playTriggerEffect",
+   "status": "dropped",
+   "where": "a bundle's own animations never come over",
+   "instead": "effects here are pieces of Firme's Effects and Props",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Book.clearHighlight",
+   "status": "stub",
+   "where": "a book's page is its state; no module calls these",
+   "instead": "set_state turns the page",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Book.getPage",
+   "status": "stub",
+   "where": "a book's page is its state; no module calls these",
+   "instead": "set_state turns the page",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Book.page_offset",
+   "status": "stub",
+   "where": "a book's page is its state; no module calls these",
+   "instead": "set_state turns the page",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Book.setHighlight",
+   "status": "stub",
+   "where": "a book's page is its state; no module calls these",
+   "instead": "set_state turns the page",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Book.setPage",
+   "status": "stub",
+   "where": "a book's page is its state; no module calls these",
+   "instead": "set_state turns the page",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Browser.pixel_width",
+   "status": "dropped",
+   "where": "a stock gadget",
+   "instead": "open the page outside the game",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Browser.url",
+   "status": "dropped",
+   "where": "a stock gadget",
+   "instead": "open the page outside the game",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Clock.getValue",
+   "status": "dropped",
+   "where": "a stock gadget",
+   "instead": "the game clock",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Clock.pauseStart",
+   "status": "dropped",
+   "where": "a stock gadget",
+   "instead": "the game clock",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Clock.paused",
+   "status": "dropped",
+   "where": "a stock gadget",
+   "instead": "the game clock",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Clock.setValue",
+   "status": "dropped",
+   "where": "a stock gadget",
+   "instead": "the game clock",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Clock.showCurrentTime",
+   "status": "dropped",
+   "where": "a stock gadget",
+   "instead": "the game clock",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Clock.startStopwatch",
+   "status": "dropped",
+   "where": "a stock gadget",
+   "instead": "the game clock",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Container.addData",
+   "status": "compat",
+   "where": "holders: getObjects, putObject, takeObject, getQuantity through stow",
+   "instead": "",
+   "held_by": "StowScriptTests",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Container.getCount",
+   "status": "compat",
+   "where": "holders: getObjects, putObject, takeObject, getQuantity through stow",
+   "instead": "",
+   "held_by": "StowScriptTests",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Container.getData",
+   "status": "compat",
+   "where": "holders: getObjects, putObject, takeObject, getQuantity through stow",
+   "instead": "",
+   "held_by": "StowScriptTests",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Container.getInfo",
+   "status": "compat",
+   "where": "holders: getObjects, putObject, takeObject, getQuantity through stow",
+   "instead": "",
+   "held_by": "StowScriptTests",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Container.putObject",
+   "status": "compat",
+   "where": "holders: getObjects, putObject, takeObject, getQuantity through stow",
+   "instead": "",
+   "held_by": "StowScriptTests",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Container.randomize",
+   "status": "compat",
+   "where": "holders: getObjects, putObject, takeObject, getQuantity through stow",
+   "instead": "",
+   "held_by": "StowScriptTests",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Container.removeData",
+   "status": "compat",
+   "where": "holders: getObjects, putObject, takeObject, getQuantity through stow",
+   "instead": "",
+   "held_by": "StowScriptTests",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Container.search",
+   "status": "compat",
+   "where": "holders: getObjects, putObject, takeObject, getQuantity through stow",
+   "instead": "",
+   "held_by": "StowScriptTests",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Container.setData",
+   "status": "compat",
+   "where": "holders: getObjects, putObject, takeObject, getQuantity through stow",
+   "instead": "",
+   "held_by": "StowScriptTests",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Container.takeObject",
+   "status": "compat",
+   "where": "holders: getObjects, putObject, takeObject, getQuantity through stow",
+   "instead": "",
+   "held_by": "StowScriptTests",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Counter.clear",
+   "status": "dropped",
+   "where": "a stock gadget",
+   "instead": "a counter on a piece",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Counter.decrement",
+   "status": "dropped",
+   "where": "a stock gadget",
+   "instead": "a counter on a piece",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Counter.getValue",
+   "status": "dropped",
+   "where": "a stock gadget",
+   "instead": "a counter on a piece",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Counter.increment",
+   "status": "dropped",
+   "where": "a stock gadget",
+   "instead": "a counter on a piece",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Counter.setValue",
+   "status": "dropped",
+   "where": "a stock gadget",
+   "instead": "a counter on a piece",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "LayoutZone.getOptions",
+   "status": "dropped",
+   "where": "layout zones",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "LayoutZone.layout",
+   "status": "dropped",
+   "where": "layout zones",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "LayoutZone.setOptions",
+   "status": "dropped",
+   "where": "layout zones",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "RPGFigurine.attack",
+   "status": "dropped",
+   "where": "rpg figurines",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "RPGFigurine.changeMode",
+   "status": "dropped",
+   "where": "rpg figurines",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "RPGFigurine.die",
+   "status": "dropped",
+   "where": "rpg figurines",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "RPGFigurine.onAttack",
+   "status": "dropped",
+   "where": "rpg figurines",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "RPGFigurine.onHit",
+   "status": "dropped",
+   "where": "rpg figurines",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "TextTool.getFontColor",
+   "status": "stub",
+   "where": "3D text made at run time; no module calls it",
+   "instead": "set_name or a note",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "TextTool.getFontSize",
+   "status": "stub",
+   "where": "3D text made at run time; no module calls it",
+   "instead": "set_name or a note",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "TextTool.getValue",
+   "status": "stub",
+   "where": "3D text made at run time; no module calls it",
+   "instead": "set_name or a note",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "TextTool.setFontColor",
+   "status": "stub",
+   "where": "3D text made at run time; no module calls it",
+   "instead": "set_name or a note",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "TextTool.setFontSize",
+   "status": "stub",
+   "where": "3D text made at run time; no module calls it",
+   "instead": "set_name or a note",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "TextTool.setValue",
+   "status": "stub",
+   "where": "3D text made at run time; no module calls it",
+   "instead": "set_name or a note",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "UI",
+   "status": "unknown",
+   "where": "",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Zone.getObjects",
+   "status": "stub",
+   "where": "no module in the roster has one; the table's own zones raise no script events yet",
+   "instead": "draw the zone at the table; a script reads board.zones()",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "addAttachment",
+   "status": "native",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "addDecal",
+   "status": "compat",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "addForce",
+   "status": "dropped",
+   "where": "engine physics",
+   "instead": "move the piece instead",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "addTag",
+   "status": "native",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "addToPlayerSelection",
+   "status": "compat",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "addTorque",
+   "status": "dropped",
+   "where": "engine physics",
+   "instead": "turn the piece instead",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "alt_view_angle",
+   "status": "dropped",
+   "where": "the alt-zoom angle",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "angular_drag",
+   "status": "dropped",
+   "where": "engine physics",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "assetBundle",
+   "status": "unknown",
+   "where": "",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "attachHider",
+   "status": "dropped",
+   "where": "hidden information (decided 2026-11-06)",
+   "instead": "the umpire layer and side layers",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "attachInvisibleHider",
+   "status": "dropped",
+   "where": "hidden information (decided 2026-11-06)",
+   "instead": "the umpire layer and side layers",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "auto_raise",
+   "status": "compat",
+   "where": "ObjectProps (get_prop/set_prop)",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "book",
+   "status": "unknown",
+   "where": "",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "bounciness",
+   "status": "dropped",
+   "where": "engine physics",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "browser",
+   "status": "unknown",
+   "where": "",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "childPairs",
+   "status": "dropped",
+   "where": "Unity components",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "clock",
+   "status": "unknown",
+   "where": "",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "component",
+   "status": "unknown",
+   "where": "",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "componentIndex",
+   "status": "unknown",
+   "where": "",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "componentName",
+   "status": "unknown",
+   "where": "",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "container",
+   "status": "unknown",
+   "where": "",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "counter",
+   "status": "unknown",
+   "where": "",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "cut",
+   "status": "stub",
+   "where": "card dealing; no module calls it",
+   "instead": "take cards out of the holder",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "deal",
+   "status": "stub",
+   "where": "card dealing; no module calls it",
+   "instead": "take cards out of the holder",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "dealToAll",
+   "status": "stub",
+   "where": "card dealing; no module calls it",
+   "instead": "take cards out of the holder",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "dealToColor",
+   "status": "stub",
+   "where": "card dealing; no module calls it",
+   "instead": "take cards out of the holder",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "dealToColorWithOffset",
+   "status": "stub",
+   "where": "card dealing; no module calls it",
+   "instead": "take cards out of the holder",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "destroy",
+   "status": "native",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "drag",
+   "status": "dropped",
+   "where": "engine physics",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "drag_selectable",
+   "status": "compat",
+   "where": "ObjectProps (get_prop/set_prop)",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "drop",
+   "status": "unknown",
+   "where": "",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "dynamic_friction",
+   "status": "dropped",
+   "where": "engine physics",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "flip",
+   "status": "native",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "getAngularVelocity",
+   "status": "dropped",
+   "where": "engine physics (answers zero)",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "getAttachments",
+   "status": "compat",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "getBoundsNormalized",
+   "status": "compat",
+   "where": "compat.get_bounds",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "getChild",
+   "status": "dropped",
+   "where": "Unity components",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "getChildren",
+   "status": "dropped",
+   "where": "Unity components",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "getComponent",
+   "status": "dropped",
+   "where": "Unity components",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "getComponentInChildren",
+   "status": "dropped",
+   "where": "Unity components",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "getComponentVar",
+   "status": "dropped",
+   "where": "Unity components",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "getComponentVars",
+   "status": "dropped",
+   "where": "Unity components",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "getComponents",
+   "status": "dropped",
+   "where": "Unity components",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "getComponentsInChildren",
+   "status": "dropped",
+   "where": "Unity components",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "getDecals",
+   "status": "compat",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "getFogOfWar",
+   "status": "dropped",
+   "where": "hidden zones (decided 2026-11-06)",
+   "instead": "the umpire layer and side layers",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "getFogOfWarReveal",
+   "status": "dropped",
+   "where": "hidden zones (decided 2026-11-06; answers off)",
+   "instead": "the umpire layer and side layers",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "getJSON",
+   "status": "compat",
+   "where": "compat.get_json",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "getJoints",
+   "status": "dropped",
+   "where": "engine physics (joints; answers none)",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "getLuaScriptState",
+   "status": "compat",
+   "where": "script_state",
+   "instead": "",
+   "held_by": "ModuleHelpersTests",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "getMaterialValue",
+   "status": "dropped",
+   "where": "Unity materials",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "getMaterialVars",
+   "status": "dropped",
+   "where": "Unity materials",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "getMaterials",
+   "status": "dropped",
+   "where": "Unity materials",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "getMaterialsInChildren",
+   "status": "dropped",
+   "where": "Unity materials",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "getMemo",
+   "status": "native",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "getNearestPointFromObject",
+   "status": "dropped",
+   "where": "engine physics",
+   "instead": "work from positions",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "getNearestPointFromPosition",
+   "status": "dropped",
+   "where": "engine physics",
+   "instead": "work from positions",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "getPositionSmooth",
+   "status": "compat",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "getQuantity",
+   "status": "compat",
+   "where": "compat.get_quantity: how many are stowed",
+   "instead": "",
+   "held_by": "StowScriptTests",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "getRotationSmooth",
+   "status": "compat",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "getRotationValue",
+   "status": "compat",
+   "where": "compat.get_value: the look's name as a number where it is one",
+   "instead": "",
+   "held_by": "DiceScriptTests",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "getRotationValues",
+   "status": "compat",
+   "where": "compat.get_rotation_values: the looks, without rotations",
+   "instead": "",
+   "held_by": "DiceScriptTests",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "getSelectingPlayers",
+   "status": "compat",
+   "where": "compat.get_selecting_players",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "getSnapPoints",
+   "status": "compat",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "getStateId",
+   "status": "native",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "getStates",
+   "status": "compat",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "getTable",
+   "status": "native",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "getTransformForward",
+   "status": "compat",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "getTransformRight",
+   "status": "compat",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "getVelocity",
+   "status": "dropped",
+   "where": "engine physics (answers zero)",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "getZones",
+   "status": "stub",
+   "where": "no module calls it; answers an empty list",
+   "instead": "board.zones()",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "gizmo_selectable",
+   "status": "dropped",
+   "where": "the tabletop's gizmo tool",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "grid_projection",
+   "status": "dropped",
+   "where": "grid (decided 2026-11-06)",
+   "instead": "set the table's own grid",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "hasAnyTag",
+   "status": "compat",
+   "where": "compat.has_any_tag",
+   "instead": "",
+   "held_by": "ModuleHelpersTests",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "hasMatchingTag",
+   "status": "compat",
+   "where": "compat.has_matching_tag",
+   "instead": "",
+   "held_by": "ModuleHelpersTests",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "held_by_color",
+   "status": "compat",
+   "where": "ObjectProps",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "held_flip_index",
+   "status": "dropped",
+   "where": "what a held piece does on flip",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "held_position_offset",
+   "status": "dropped",
+   "where": "a held piece's offset",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "held_reduce_force",
+   "status": "dropped",
+   "where": "engine physics",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "held_rotation_offset",
+   "status": "dropped",
+   "where": "a held piece's offset",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "held_spin_index",
+   "status": "dropped",
+   "where": "what a held piece does on spin",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "hide_when_face_down",
+   "status": "dropped",
+   "where": "hidden information (decided 2026-11-06)",
+   "instead": "the umpire layer hides a piece whole",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "ignore_fog_of_war",
+   "status": "dropped",
+   "where": "hidden zones (decided 2026-11-06)",
+   "instead": "the umpire layer and side layers",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "isSmoothMoving",
+   "status": "stub",
+   "where": "moves finish at once here (answers false)",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "is_face_down",
+   "status": "native",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "jointTo",
+   "status": "dropped",
+   "where": "engine physics (joints)",
+   "instead": "attach the piece instead",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "layoutZone",
+   "status": "unknown",
+   "where": "",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "loading_custom",
+   "status": "compat",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "luaCollision",
+   "status": "unknown",
+   "where": "",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "mass",
+   "status": "dropped",
+   "where": "engine physics",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "material",
+   "status": "unknown",
+   "where": "",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "materialIndex",
+   "status": "unknown",
+   "where": "",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "max_typed_number",
+   "status": "compat",
+   "where": "ObjectProps (get_prop/set_prop)",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "measure_movement",
+   "status": "dropped",
+   "where": "the measure-on-move overlay",
+   "instead": "the measure tool here",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "memo",
+   "status": "compat",
+   "where": "ObjectProps (get_prop/set_prop)",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "name",
+   "status": "compat",
+   "where": "ObjectProps (get_prop/set_prop)",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "pick_up_position",
+   "status": "dropped",
+   "where": "where a piece was picked up",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "pick_up_rotation",
+   "status": "dropped",
+   "where": "where a piece was picked up",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "rPGFigurine",
+   "status": "unknown",
+   "where": "",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "randomize",
+   "status": "stub",
+   "where": "no module calls it; a die rolls through roll",
+   "instead": "roll",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "registerCollisions",
+   "status": "dropped",
+   "where": "engine physics (collisions)",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "remainder",
+   "status": "unknown",
+   "where": "",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "removeAttachment",
+   "status": "compat",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "removeAttachments",
+   "status": "compat",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "removeButton",
+   "status": "compat",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "removeTag",
+   "status": "native",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "rendererIndex",
+   "status": "unknown",
+   "where": "",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "reset",
+   "status": "stub",
+   "where": "no module calls it; a holder keeps what was put in it",
+   "instead": "unstow and stow at the table",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "resting",
+   "status": "compat",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "rotate",
+   "status": "compat",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "script",
+   "status": "unknown",
+   "where": "",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "sendToHand",
+   "status": "dropped",
+   "where": "hands are seats here (decided 2026-11-06)",
+   "instead": "sit players at their seats",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "setAngularVelocity",
+   "status": "dropped",
+   "where": "engine physics",
+   "instead": "turn the piece instead",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "setComponentVar",
+   "status": "dropped",
+   "where": "Unity components",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "setFogOfWar",
+   "status": "dropped",
+   "where": "hidden zones (decided 2026-11-06)",
+   "instead": "the umpire layer and side layers",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "setFogOfWarReveal",
+   "status": "dropped",
+   "where": "hidden zones (decided 2026-11-06)",
+   "instead": "the umpire layer and side layers",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "setHiddenFrom",
+   "status": "dropped",
+   "where": "hidden information (decided 2026-11-06)",
+   "instead": "the umpire layer and side layers",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "setInvisibleTo",
+   "status": "dropped",
+   "where": "hidden information (decided 2026-11-06)",
+   "instead": "the umpire layer and side layers",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "setLuaScriptState",
+   "status": "compat",
+   "where": "script_state",
+   "instead": "",
+   "held_by": "ModuleHelpersTests",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "setMaterialValue",
+   "status": "dropped",
+   "where": "Unity materials",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "setMemo",
+   "status": "native",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "setRotationValue",
+   "status": "compat",
+   "where": "compat.set_value: the look named so",
+   "instead": "",
+   "held_by": "DiceScriptTests",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "setRotationValues",
+   "status": "dropped",
+   "where": "redefining a die's faces",
+   "instead": "make a die of your own in the piece studio",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "setTable",
+   "status": "native",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "setTags",
+   "status": "native",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "setValue",
+   "status": "compat",
+   "where": "compat.set_value: the look named so",
+   "instead": "",
+   "held_by": "DiceScriptTests",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "setVelocity",
+   "status": "dropped",
+   "where": "engine physics",
+   "instead": "move the piece instead",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "shuffle",
+   "status": "stub",
+   "where": "no module calls it; a holder keeps its order",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "shuffleStates",
+   "status": "unknown",
+   "where": "",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "spawning",
+   "status": "compat",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "spread",
+   "status": "stub",
+   "where": "card dealing; no module calls it",
+   "instead": "take cards out of the holder",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "startLuaCoroutine",
+   "status": "unknown",
+   "where": "",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "static_friction",
+   "status": "dropped",
+   "where": "engine physics",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "sticky",
+   "status": "compat",
+   "where": "ObjectProps (get_prop/set_prop)",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "tag",
+   "status": "compat",
+   "where": "ObjectProps (get_prop/set_prop)",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "textTool",
+   "status": "unknown",
+   "where": "",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "tooltip",
+   "status": "compat",
+   "where": "ObjectProps (get_prop/set_prop)",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "translate",
+   "status": "compat",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "type",
+   "status": "compat",
+   "where": "ObjectProps (get_prop/set_prop)",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "unregisterCollisions",
+   "status": "dropped",
+   "where": "engine physics (collisions)",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "use_gravity",
+   "status": "dropped",
+   "where": "engine physics",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "use_grid",
+   "status": "dropped",
+   "where": "grid (decided 2026-11-06)",
+   "instead": "the table's own grid snaps",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "use_hands",
+   "status": "dropped",
+   "where": "hands are seats here (decided 2026-11-06)",
+   "instead": "sit players at their seats",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "use_rotation_value_flip",
+   "status": "dropped",
+   "where": "a die's face is read from its rotation values",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "use_snap_points",
+   "status": "dropped",
+   "where": "snap points (decided 2026-11-06 with the grid)",
+   "instead": "the table's own grid snaps",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "value",
+   "status": "compat",
+   "where": "ObjectProps (get_prop/set_prop)",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "value_flags",
+   "status": "unknown",
+   "where": "",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "zone",
+   "status": "unknown",
+   "where": "",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  }
+ ],
+ "global": [
+  {
+   "row": "getObjectFromGUID",
+   "status": "native",
+   "where": "GlobalFunctionCall",
+   "instead": "",
+   "held_by": "",
+   "count": 1193,
+   "modules": 49
+  },
+  {
+   "row": "broadcastToAll",
+   "status": "native",
+   "where": "GlobalFunctionCall",
+   "instead": "",
+   "held_by": "",
+   "count": 737,
+   "modules": 49
+  },
+  {
+   "row": "broadcastToColor",
+   "status": "compat",
+   "where": "GlobalFunctionCall",
+   "instead": "",
+   "held_by": "",
+   "count": 58823,
+   "modules": 29
+  },
+  {
+   "row": "spawnObject",
+   "status": "compat",
+   "where": "GlobalFunctionCall",
+   "instead": "",
+   "held_by": "",
+   "count": 2866,
+   "modules": 18
+  },
+  {
+   "row": "getObjects",
+   "status": "native",
+   "where": "GlobalFunctionCall",
+   "instead": "",
+   "held_by": "",
+   "count": 1525,
+   "modules": 14
+  },
+  {
+   "row": "spawnObjectData",
+   "status": "compat",
+   "where": "GlobalFunctionCall",
+   "instead": "",
+   "held_by": "",
+   "count": 32,
+   "modules": 13
+  },
+  {
+   "row": "startLuaCoroutine",
+   "status": "compat",
+   "where": "GlobalFunctionCall",
+   "instead": "",
+   "held_by": "",
+   "count": 4147,
+   "modules": 12
+  },
+  {
+   "row": "getAllObjects",
+   "status": "native",
+   "where": "GlobalFunctionCall",
+   "instead": "",
+   "held_by": "",
+   "count": 426,
+   "modules": 12
+  },
+  {
+   "row": "log",
+   "status": "compat",
+   "where": "compat.log: the value, a table as JSON, with its label, on the script console",
+   "instead": "",
+   "held_by": "StowEventTests",
+   "count": 376,
+   "modules": 12
+  },
+  {
+   "row": "printToColor",
+   "status": "compat",
+   "where": "GlobalFunctionCall",
+   "instead": "",
+   "held_by": "",
+   "count": 20,
+   "modules": 12
+  },
+  {
+   "row": "addHotkey",
+   "status": "compat",
+   "where": "GlobalFunctionCall",
+   "instead": "",
+   "held_by": "",
+   "count": 20,
+   "modules": 4
+  },
+  {
+   "row": "addContextMenuItem",
+   "status": "compat",
+   "where": "GlobalFunctionCall",
+   "instead": "",
+   "held_by": "",
+   "count": 2,
+   "modules": 2
+  },
+  {
+   "row": "printToAll",
+   "status": "native",
+   "where": "GlobalFunctionCall",
+   "instead": "",
+   "held_by": "",
+   "count": 2,
+   "modules": 2
+  },
+  {
+   "row": "stringColorToRGB",
+   "status": "compat",
+   "where": "GlobalFunctionCall",
+   "instead": "",
+   "held_by": "",
+   "count": 1,
+   "modules": 1
+  },
+  {
+   "row": "addConsoleCommand",
+   "status": "dropped",
+   "where": "console commands",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "allowAutomaticRewindSave",
+   "status": "dropped",
+   "where": "rewind saves",
+   "instead": "saves are kept here every turn",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "chooseInHand",
+   "status": "dropped",
+   "where": "hands are seats here (decided 2026-11-06)",
+   "instead": "sit players at their seats",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "chooseInHandOrCancel",
+   "status": "dropped",
+   "where": "hands are seats here (decided 2026-11-06)",
+   "instead": "sit players at their seats",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "clearConsoleCommands",
+   "status": "dropped",
+   "where": "console commands",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "clearContextMenu",
+   "status": "native",
+   "where": "GlobalFunctionCall",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "clearHotkeys",
+   "status": "native",
+   "where": "GlobalFunctionCall",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "clearPixelPaint",
+   "status": "compat",
+   "where": "compat.erase_all: every stroke on the drawing board",
+   "instead": "",
+   "held_by": "ModuleHelpersTests",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "clearVectorPaint",
+   "status": "compat",
+   "where": "compat.erase_all: every stroke on the drawing board",
+   "instead": "",
+   "held_by": "ModuleHelpersTests",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "colorToHex",
+   "status": "compat",
+   "where": "compat.Color:toHex",
+   "instead": "",
+   "held_by": "ModuleHelpersTests",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "colorToPlayerName",
+   "status": "compat",
+   "where": "compat.Color:toString",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "constructColor",
+   "status": "compat",
+   "where": "compat.Color",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "constructVector",
+   "status": "compat",
+   "where": "compat.Vector",
+   "instead": "",
+   "held_by": "ModuleVectorColorTests",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "copy",
+   "status": "stub",
+   "where": "the clipboard; no module calls it",
+   "instead": "copy at the table",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "copyLuaTable",
+   "status": "compat",
+   "where": "compat.copy_table",
+   "instead": "",
+   "held_by": "ModuleHelpersTests",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "debugLog",
+   "status": "compat",
+   "where": "compat.log",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "flipTable",
+   "status": "dropped",
+   "where": "flipping the table",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "getAllLuaScriptStates",
+   "status": "dropped",
+   "where": "undocumented internal; no module calls it",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "getAllTags",
+   "status": "compat",
+   "where": "compat.all_tags",
+   "instead": "",
+   "held_by": "ModuleHelpersTests",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "getColor",
+   "status": "dropped",
+   "where": "undocumented internal; no module calls it",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "getGlobalTable",
+   "status": "compat",
+   "where": "game.get_var",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "getGlobalVar",
+   "status": "compat",
+   "where": "game.get_var",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "getObjectsWithAllTags",
+   "status": "compat",
+   "where": "GlobalFunctionCall",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "getObjectsWithAnyTags",
+   "status": "compat",
+   "where": "GlobalFunctionCall",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "getObjectsWithTag",
+   "status": "native",
+   "where": "GlobalFunctionCall",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "getPlayer",
+   "status": "compat",
+   "where": "compat.player",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "getPlayerHandPositionAndRotation",
+   "status": "dropped",
+   "where": "hands are seats here (decided 2026-11-06)",
+   "instead": "sit players at their seats",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "getPointerPosition",
+   "status": "stub",
+   "where": "the pointer is not shared with the host; answers nil",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "getPointerRotation",
+   "status": "stub",
+   "where": "the pointer is not shared with the host; answers nil",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "getScriptState",
+   "status": "compat",
+   "where": "script_state",
+   "instead": "",
+   "held_by": "ModuleHelpersTests",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "getSeatedPlayers",
+   "status": "compat",
+   "where": "GlobalFunctionCall",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "group",
+   "status": "stub",
+   "where": "card dealing; no module calls it",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "hexToColor",
+   "status": "compat",
+   "where": "compat.Color.fromHex",
+   "instead": "",
+   "held_by": "ModuleHelpersTests",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "logFormat",
+   "status": "compat",
+   "where": "compat.log",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "logStyle",
+   "status": "stub",
+   "where": "log styles",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "paste",
+   "status": "stub",
+   "where": "the clipboard; no module calls it",
+   "instead": "paste at the table",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "setGlobalTable",
+   "status": "compat",
+   "where": "game.set_var",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "setUITheme",
+   "status": "dropped",
+   "where": "UI theme",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "showHotkeyConfig",
+   "status": "dropped",
+   "where": "hotkey panel",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "spawnObjectJSON",
+   "status": "compat",
+   "where": "GlobalFunctionCall",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "stringColorToHex",
+   "status": "compat",
+   "where": "compat.Color.fromString:toHex",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  }
+ ],
+ "namespaces": [
+  {
+   "row": "JSON.encode",
+   "status": "native",
+   "where": "json.encode / json.decode",
+   "instead": "",
+   "held_by": "",
+   "count": 12638,
+   "modules": 51
+  },
+  {
+   "row": "JSON.decode",
+   "status": "native",
+   "where": "json.encode / json.decode",
+   "instead": "",
+   "held_by": "",
+   "count": 11657,
+   "modules": 50
+  },
+  {
+   "row": "Wait.frames",
+   "status": "compat",
+   "where": "compat.wait_*",
+   "instead": "",
+   "held_by": "",
+   "count": 13333,
+   "modules": 26
+  },
+  {
+   "row": "Wait.time",
+   "status": "compat",
+   "where": "compat.wait_*",
+   "instead": "",
+   "held_by": "",
+   "count": 5520,
+   "modules": 14
+  },
+  {
+   "row": "UI.setAttribute",
+   "status": "partial",
+   "where": "run-time UI through ui.*: the attributes a player sees; item 8",
+   "instead": "",
+   "held_by": "",
+   "count": 19237,
+   "modules": 13
+  },
+  {
+   "row": "Wait.stop",
+   "status": "compat",
+   "where": "compat.wait_*",
+   "instead": "",
+   "held_by": "",
+   "count": 4021,
+   "modules": 12
+  },
+  {
+   "row": "UI.setXmlTable",
+   "status": "partial",
+   "where": "run-time UI through ui.*: the attributes a player sees; item 8",
+   "instead": "",
+   "held_by": "",
+   "count": 141,
+   "modules": 4
+  },
+  {
+   "row": "Wait.condition",
+   "status": "compat",
+   "where": "compat.wait_*",
+   "instead": "",
+   "held_by": "",
+   "count": 138,
+   "modules": 3
+  },
+  {
+   "row": "Player.getPlayers",
+   "status": "partial",
+   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
+   "instead": "",
+   "held_by": "",
+   "count": 3,
+   "modules": 3
+  },
+  {
+   "row": "UI.hide",
+   "status": "partial",
+   "where": "run-time UI through ui.*: the attributes a player sees; item 8",
+   "instead": "",
+   "held_by": "",
+   "count": 1781,
+   "modules": 2
+  },
+  {
+   "row": "UI.show",
+   "status": "partial",
+   "where": "run-time UI through ui.*: the attributes a player sees; item 8",
+   "instead": "",
+   "held_by": "",
+   "count": 1370,
+   "modules": 2
+  },
+  {
+   "row": "Global.getVar",
+   "status": "native",
+   "where": "game.get_var",
+   "instead": "",
+   "held_by": "",
+   "count": 411,
+   "modules": 2
+  },
+  {
+   "row": "Global.setVar",
+   "status": "native",
+   "where": "game.set_var",
+   "instead": "",
+   "held_by": "",
+   "count": 274,
+   "modules": 2
+  },
+  {
+   "row": "UI.getXml",
+   "status": "partial",
+   "where": "run-time UI through ui.*: the attributes a player sees; item 8",
+   "instead": "",
+   "held_by": "",
+   "count": 137,
+   "modules": 2
+  },
+  {
+   "row": "UI.getXmlTable",
+   "status": "partial",
+   "where": "run-time UI through ui.*: the attributes a player sees; item 8",
+   "instead": "",
+   "held_by": "",
+   "count": 137,
+   "modules": 2
+  },
+  {
+   "row": "UI.setXml",
+   "status": "partial",
+   "where": "run-time UI through ui.*: the attributes a player sees; item 8",
+   "instead": "",
+   "held_by": "",
+   "count": 137,
+   "modules": 2
+  },
+  {
+   "row": "Player.getColors",
+   "status": "partial",
+   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
+   "instead": "",
+   "held_by": "",
+   "count": 2,
+   "modules": 2
+  },
+  {
+   "row": "UI.getAttribute",
+   "status": "partial",
+   "where": "run-time UI through ui.*: the attributes a player sees; item 8",
+   "instead": "",
+   "held_by": "",
+   "count": 2,
+   "modules": 2
+  },
+  {
+   "row": "Global.getVectorLines",
+   "status": "compat",
+   "where": "compat.global_vector_lines: the lines the script last set",
+   "instead": "",
+   "held_by": "BoardDrawingTests",
+   "count": 3,
+   "modules": 1
+  },
+  {
+   "row": "Global.setVectorLines",
+   "status": "compat",
+   "where": "compat.set_global_vector_lines: strokes on the umpire's drawing board through board.draw",
+   "instead": "",
+   "held_by": "BoardDrawingTests",
+   "count": 3,
+   "modules": 1
+  },
+  {
+   "row": "Physics.cast",
+   "status": "compat",
+   "where": "compat.cast",
+   "instead": "",
+   "held_by": "",
+   "count": 1,
+   "modules": 1
+  },
+  {
+   "row": "Timer.create",
+   "status": "compat",
+   "where": "compat.Timer",
+   "instead": "",
+   "held_by": "",
+   "count": 1,
+   "modules": 1
+  },
+  {
+   "row": "Timer.destroy",
+   "status": "compat",
+   "where": "compat.Timer",
+   "instead": "",
+   "held_by": "",
+   "count": 1,
+   "modules": 1
+  },
+  {
+   "row": "Backgrounds.getBackground",
+   "status": "dropped",
+   "where": "the sky (read once at import as the backdrop)",
+   "instead": "set the backdrop",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Backgrounds.getCustomURL",
+   "status": "dropped",
+   "where": "the sky (read once at import as the backdrop)",
+   "instead": "set the backdrop",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Backgrounds.setBackground",
+   "status": "dropped",
+   "where": "the sky (read once at import as the backdrop)",
+   "instead": "set the backdrop",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Backgrounds.setCustomURL",
+   "status": "dropped",
+   "where": "the sky (read once at import as the backdrop)",
+   "instead": "set the backdrop",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Global.call",
+   "status": "native",
+   "where": "game.call",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Global.getTable",
+   "status": "native",
+   "where": "game.get_var",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Global.setTable",
+   "status": "native",
+   "where": "game.set_var",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Grid.color",
+   "status": "dropped",
+   "where": "grid (decided 2026-11-06)",
+   "instead": "set the table's own grid",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Grid.offsetX",
+   "status": "dropped",
+   "where": "grid (decided 2026-11-06)",
+   "instead": "set the table's own grid",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Grid.offsetY",
+   "status": "dropped",
+   "where": "grid (decided 2026-11-06)",
+   "instead": "set the table's own grid",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Grid.opacity",
+   "status": "dropped",
+   "where": "grid (decided 2026-11-06)",
+   "instead": "set the table's own grid",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Grid.show_lines",
+   "status": "dropped",
+   "where": "grid (decided 2026-11-06)",
+   "instead": "set the table's own grid",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Grid.sizeX",
+   "status": "dropped",
+   "where": "grid (decided 2026-11-06)",
+   "instead": "set the table's own grid",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Grid.sizeY",
+   "status": "dropped",
+   "where": "grid (decided 2026-11-06)",
+   "instead": "set the table's own grid",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Grid.snapping",
+   "status": "dropped",
+   "where": "grid (decided 2026-11-06)",
+   "instead": "set the table's own grid",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Grid.thick_lines",
+   "status": "dropped",
+   "where": "grid (decided 2026-11-06)",
+   "instead": "set the table's own grid",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Grid.type",
+   "status": "dropped",
+   "where": "grid (decided 2026-11-06)",
+   "instead": "set the table's own grid",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Hands.disable_unused",
+   "status": "dropped",
+   "where": "hands are seats here (decided 2026-11-06)",
+   "instead": "sit players at their seats",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Hands.enable",
+   "status": "dropped",
+   "where": "hands are seats here (decided 2026-11-06)",
+   "instead": "sit players at their seats",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Hands.getHands",
+   "status": "dropped",
+   "where": "hands are seats here (decided 2026-11-06)",
+   "instead": "sit players at their seats",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Hands.hiding",
+   "status": "dropped",
+   "where": "hands are seats here (decided 2026-11-06)",
+   "instead": "sit players at their seats",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Info.complexity",
+   "status": "dropped",
+   "where": "save metadata",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Info.name",
+   "status": "dropped",
+   "where": "save metadata",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Info.number_of_players",
+   "status": "dropped",
+   "where": "save metadata",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Info.playing_time",
+   "status": "dropped",
+   "where": "save metadata",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Info.tags",
+   "status": "dropped",
+   "where": "save metadata",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Info.type",
+   "status": "dropped",
+   "where": "save metadata",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Lighting.ambient_intensity",
+   "status": "dropped",
+   "where": "lighting (decided 2026-11-06)",
+   "instead": "set the table's own light and backdrop",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Lighting.ambient_type",
+   "status": "dropped",
+   "where": "lighting (decided 2026-11-06)",
+   "instead": "set the table's own light and backdrop",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Lighting.apply",
+   "status": "dropped",
+   "where": "lighting (decided 2026-11-06)",
+   "instead": "set the table's own light and backdrop",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Lighting.getAmbientEquatorColor",
+   "status": "dropped",
+   "where": "lighting (decided 2026-11-06)",
+   "instead": "set the table's own light and backdrop",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Lighting.getAmbientGroundColor",
+   "status": "dropped",
+   "where": "lighting (decided 2026-11-06)",
+   "instead": "set the table's own light and backdrop",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Lighting.getAmbientSkyColor",
+   "status": "dropped",
+   "where": "lighting (decided 2026-11-06)",
+   "instead": "set the table's own light and backdrop",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Lighting.getLightColor",
+   "status": "dropped",
+   "where": "lighting (decided 2026-11-06)",
+   "instead": "set the table's own light and backdrop",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Lighting.light_intensity",
+   "status": "dropped",
+   "where": "lighting (decided 2026-11-06)",
+   "instead": "set the table's own light and backdrop",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Lighting.lut_contribution",
+   "status": "dropped",
+   "where": "lighting (decided 2026-11-06)",
+   "instead": "set the table's own light and backdrop",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Lighting.lut_index",
+   "status": "dropped",
+   "where": "lighting (decided 2026-11-06)",
+   "instead": "set the table's own light and backdrop",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Lighting.lut_url",
+   "status": "dropped",
+   "where": "lighting (decided 2026-11-06)",
+   "instead": "set the table's own light and backdrop",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Lighting.reflection_intensity",
+   "status": "dropped",
+   "where": "lighting (decided 2026-11-06)",
+   "instead": "set the table's own light and backdrop",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Lighting.setAmbientEquatorColor",
+   "status": "dropped",
+   "where": "lighting (decided 2026-11-06)",
+   "instead": "set the table's own light and backdrop",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Lighting.setAmbientGroundColor",
+   "status": "dropped",
+   "where": "lighting (decided 2026-11-06)",
+   "instead": "set the table's own light and backdrop",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Lighting.setAmbientSkyColor",
+   "status": "dropped",
+   "where": "lighting (decided 2026-11-06)",
+   "instead": "set the table's own light and backdrop",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Lighting.setLightColor",
+   "status": "dropped",
+   "where": "lighting (decided 2026-11-06)",
+   "instead": "set the table's own light and backdrop",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "MusicPlayer.getCurrentAudioclip",
+   "status": "dropped",
+   "where": "music player",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "MusicPlayer.getPlaylist",
+   "status": "dropped",
+   "where": "music player",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "MusicPlayer.pause",
+   "status": "dropped",
+   "where": "music player",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "MusicPlayer.play",
+   "status": "dropped",
+   "where": "music player",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "MusicPlayer.player_status",
+   "status": "dropped",
+   "where": "music player",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "MusicPlayer.playlistIndex",
+   "status": "dropped",
+   "where": "music player",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "MusicPlayer.playlist_index",
+   "status": "dropped",
+   "where": "music player",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "MusicPlayer.repeat_track",
+   "status": "dropped",
+   "where": "music player",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "MusicPlayer.setCurrentAudioclip",
+   "status": "dropped",
+   "where": "music player",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "MusicPlayer.setPlaylist",
+   "status": "dropped",
+   "where": "music player",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "MusicPlayer.shuffle",
+   "status": "dropped",
+   "where": "music player",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "MusicPlayer.skipBack",
+   "status": "dropped",
+   "where": "music player",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "MusicPlayer.skipForward",
+   "status": "dropped",
+   "where": "music player",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Notes.addNotebookTab",
+   "status": "stub",
+   "where": "notes live on the script's side only; the briefing is the scenario's text",
+   "instead": "set_briefing",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Notes.editNotebookTab",
+   "status": "stub",
+   "where": "notes live on the script's side only; the briefing is the scenario's text",
+   "instead": "set_briefing",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Notes.getNotebookTabs",
+   "status": "stub",
+   "where": "notes live on the script's side only; the briefing is the scenario's text",
+   "instead": "set_briefing",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Notes.getNotes",
+   "status": "stub",
+   "where": "notes live on the script's side only; the briefing is the scenario's text",
+   "instead": "set_briefing",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Notes.removeNotebookTab",
+   "status": "stub",
+   "where": "notes live on the script's side only; the briefing is the scenario's text",
+   "instead": "set_briefing",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Notes.setNotes",
+   "status": "stub",
+   "where": "notes live on the script's side only; the briefing is the scenario's text",
+   "instead": "set_briefing",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Physics.getGravity",
+   "status": "dropped",
+   "where": "engine physics",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Physics.play_area",
+   "status": "dropped",
+   "where": "engine physics",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Physics.setGravity",
+   "status": "dropped",
+   "where": "engine physics",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Player.action",
+   "status": "partial",
+   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Player.admin",
+   "status": "partial",
+   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Player.attachCameraToObject",
+   "status": "partial",
+   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Player.blind",
+   "status": "partial",
+   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Player.blindfolded",
+   "status": "partial",
+   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Player.broadcast",
+   "status": "partial",
+   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Player.changeColor",
+   "status": "partial",
+   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Player.changeTeam",
+   "status": "partial",
+   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Player.clearSelectedObjects",
+   "status": "partial",
+   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Player.color",
+   "status": "partial",
+   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Player.copy",
+   "status": "partial",
+   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Player.drawHandStash",
+   "status": "partial",
+   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Player.getAvailableColors",
+   "status": "partial",
+   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Player.getHandCount",
+   "status": "partial",
+   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Player.getHandObjects",
+   "status": "partial",
+   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Player.getHandPlayer",
+   "status": "partial",
+   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Player.getHandTransform",
+   "status": "partial",
+   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Player.getHoldingObjects",
+   "status": "partial",
+   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Player.getHoverObject",
+   "status": "partial",
+   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Player.getPlayer",
+   "status": "partial",
+   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Player.getPlayerHand",
+   "status": "partial",
+   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Player.getPointerPosition",
+   "status": "partial",
+   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Player.getPointerRotation",
+   "status": "partial",
+   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Player.getSelectedObjects",
+   "status": "partial",
+   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Player.getSpectators",
+   "status": "partial",
+   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Player.hand_choice_label",
+   "status": "partial",
+   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Player.host",
+   "status": "partial",
+   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Player.id",
+   "status": "partial",
+   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Player.kick",
+   "status": "partial",
+   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Player.lift_height",
+   "status": "partial",
+   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Player.lookAt",
+   "status": "partial",
+   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Player.mute",
+   "status": "partial",
+   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Player.paste",
+   "status": "partial",
+   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Player.pingTable",
+   "status": "partial",
+   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Player.playerColor",
+   "status": "partial",
+   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Player.print",
+   "status": "partial",
+   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Player.promote",
+   "status": "partial",
+   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Player.promoted",
+   "status": "partial",
+   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Player.seated",
+   "status": "partial",
+   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Player.setCameraMode",
+   "status": "partial",
+   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Player.setHandStashLocation",
+   "status": "partial",
+   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Player.setHandTransform",
+   "status": "partial",
+   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Player.setUITheme",
+   "status": "partial",
+   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Player.showColorDialog",
+   "status": "partial",
+   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Player.showConfirmDialog",
+   "status": "partial",
+   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Player.showInfoDialog",
+   "status": "partial",
+   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Player.showInputDialog",
+   "status": "partial",
+   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Player.showMemoDialog",
+   "status": "partial",
+   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Player.showOptionsDialog",
+   "status": "partial",
+   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Player.steam_id",
+   "status": "partial",
+   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Player.steam_name",
+   "status": "partial",
+   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Player.team",
+   "status": "partial",
+   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Player.unblind",
+   "status": "partial",
+   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Player.userDataDescriptor",
+   "status": "partial",
+   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Tables.getCustomURL",
+   "status": "dropped",
+   "where": "the table model",
+   "instead": "the table's shade and the backdrop",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Tables.getTable",
+   "status": "dropped",
+   "where": "the table model",
+   "instead": "the table's shade and the backdrop",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Tables.getTableObject",
+   "status": "dropped",
+   "where": "the table model",
+   "instead": "the table's shade and the backdrop",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Tables.setCustomURL",
+   "status": "dropped",
+   "where": "the table model",
+   "instead": "the table's shade and the backdrop",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Tables.setTable",
+   "status": "dropped",
+   "where": "the table model",
+   "instead": "the table's shade and the backdrop",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Time.delta_time",
+   "status": "compat",
+   "where": "compat.Time: time from the clock, frames at 60 a second",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Time.fixed_delta_time",
+   "status": "compat",
+   "where": "compat.Time: time from the clock, frames at 60 a second",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Time.fixed_time",
+   "status": "compat",
+   "where": "compat.Time: time from the clock, frames at 60 a second",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Time.frame_count",
+   "status": "compat",
+   "where": "compat.Time: time from the clock, frames at 60 a second",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Time.time",
+   "status": "compat",
+   "where": "compat.Time: time from the clock, frames at 60 a second",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Timer.timers",
+   "status": "compat",
+   "where": "compat.Timer",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Turns.disable_interactations",
+   "status": "dropped",
+   "where": "turns (decided 2026-11-06)",
+   "instead": "the game clock and turn order here",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Turns.enable",
+   "status": "dropped",
+   "where": "turns (decided 2026-11-06)",
+   "instead": "the game clock and turn order here",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Turns.endTurn",
+   "status": "dropped",
+   "where": "turns (decided 2026-11-06)",
+   "instead": "the game clock and turn order here",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Turns.getNextTurnColor",
+   "status": "dropped",
+   "where": "turns (decided 2026-11-06)",
+   "instead": "the game clock and turn order here",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Turns.getPreviousTurnColor",
+   "status": "dropped",
+   "where": "turns (decided 2026-11-06)",
+   "instead": "the game clock and turn order here",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Turns.getTurnOrder",
+   "status": "dropped",
+   "where": "turns (decided 2026-11-06)",
+   "instead": "the game clock and turn order here",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Turns.order",
+   "status": "dropped",
+   "where": "turns (decided 2026-11-06)",
+   "instead": "the game clock and turn order here",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Turns.pass_turns",
+   "status": "dropped",
+   "where": "turns (decided 2026-11-06)",
+   "instead": "the game clock and turn order here",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Turns.reverse_order",
+   "status": "dropped",
+   "where": "turns (decided 2026-11-06)",
+   "instead": "the game clock and turn order here",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Turns.skip_empty_hands",
+   "status": "dropped",
+   "where": "turns (decided 2026-11-06)",
+   "instead": "the game clock and turn order here",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Turns.turn_color",
+   "status": "dropped",
+   "where": "turns (decided 2026-11-06)",
+   "instead": "the game clock and turn order here",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Turns.type",
+   "status": "dropped",
+   "where": "turns (decided 2026-11-06)",
+   "instead": "the game clock and turn order here",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "UI.assetType",
+   "status": "partial",
+   "where": "run-time UI through ui.*: the attributes a player sees; item 8",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "UI.getAttributes",
+   "status": "partial",
+   "where": "run-time UI through ui.*: the attributes a player sees; item 8",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "UI.getCustomAssets",
+   "status": "partial",
+   "where": "run-time UI through ui.*: the attributes a player sees; item 8",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "UI.getValue",
+   "status": "partial",
+   "where": "run-time UI through ui.*: the attributes a player sees; item 8",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "UI.loading",
+   "status": "partial",
+   "where": "run-time UI through ui.*: the attributes a player sees; item 8",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "UI.setAttributes",
+   "status": "partial",
+   "where": "run-time UI through ui.*: the attributes a player sees; item 8",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "UI.setClass",
+   "status": "partial",
+   "where": "run-time UI through ui.*: the attributes a player sees; item 8",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "UI.setCustomAssets",
+   "status": "partial",
+   "where": "run-time UI through ui.*: the attributes a player sees; item 8",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "UI.setValue",
+   "status": "partial",
+   "where": "run-time UI through ui.*: the attributes a player sees; item 8",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "Wait.stopAll",
+   "status": "compat",
+   "where": "compat.wait_stop_all",
+   "instead": "",
+   "held_by": "ModuleHelpersTests",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "WebRequest.custom",
+   "status": "dropped",
+   "where": "scripts never reach the web here (script safety)",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "WebRequest.delete",
+   "status": "dropped",
+   "where": "scripts never reach the web here (script safety)",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "WebRequest.head",
+   "status": "dropped",
+   "where": "scripts never reach the web here (script safety)",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "WebRequest.post",
+   "status": "dropped",
+   "where": "scripts never reach the web here (script safety)",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "WebRequest.put",
+   "status": "dropped",
+   "where": "scripts never reach the web here (script safety)",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  }
+ ],
+ "events": [
+  {
+   "row": "onSave",
+   "status": "native",
+   "where": "EventRenames",
+   "instead": "",
+   "held_by": "",
+   "count": 4865,
+   "modules": 50
+  },
+  {
+   "row": "onLoad",
+   "status": "native",
+   "where": "EventRenames",
+   "instead": "",
+   "held_by": "",
+   "count": 2275,
+   "modules": 28
+  },
+  {
+   "row": "onObjectSpawn",
+   "status": "native",
+   "where": "EventRenames",
+   "instead": "",
+   "held_by": "",
+   "count": 1510,
+   "modules": 13
+  },
+  {
+   "row": "onObjectDestroy",
+   "status": "native",
+   "where": "EventRenames",
+   "instead": "",
+   "held_by": "",
+   "count": 12,
+   "modules": 12
+  },
+  {
+   "row": "onPlayerAction",
+   "status": "native",
+   "where": "on_player_action(who, action, pieces) before an umpire's delete or flip; false refuses it with a message",
+   "instead": "",
+   "held_by": "PlayerActionTests",
+   "count": 12,
+   "modules": 12
+  },
+  {
+   "row": "onChat",
+   "status": "native",
+   "where": "EventRenames",
+   "instead": "",
+   "held_by": "",
+   "count": 10,
+   "modules": 10
+  },
+  {
+   "row": "onScriptingButtonDown",
+   "status": "native",
+   "where": "EventRenames",
+   "instead": "",
+   "held_by": "",
+   "count": 10,
+   "modules": 10
+  },
+  {
+   "row": "onObjectPickUp",
+   "status": "native",
+   "where": "EventRenames",
+   "instead": "",
+   "held_by": "",
+   "count": 4,
+   "modules": 2
+  },
+  {
+   "row": "onBlindfold",
+   "status": "dropped",
+   "where": "blindfolds",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "onCollisionEnter",
+   "status": "dropped",
+   "where": "engine physics (collisions)",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "onCollisionExit",
+   "status": "dropped",
+   "where": "engine physics (collisions)",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "onCollisionStay",
+   "status": "dropped",
+   "where": "engine physics (collisions)",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "onExternalMessage",
+   "status": "dropped",
+   "where": "the external editor port",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "onFilter",
+   "status": "dropped",
+   "where": "layout zones",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "onFixedUpdate",
+   "status": "dropped",
+   "where": "the physics tick",
+   "instead": "on_update",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "onGameRoundEnd",
+   "status": "dropped",
+   "where": "game rounds",
+   "instead": "the game clock",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "onGameRoundStart",
+   "status": "dropped",
+   "where": "game rounds",
+   "instead": "the game clock",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "onHandSelectModeEnd",
+   "status": "dropped",
+   "where": "hands are seats here (decided 2026-11-06)",
+   "instead": "sit players at their seats",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "onHover",
+   "status": "dropped",
+   "where": "no hover events here",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "onObjectCollisionEnter",
+   "status": "dropped",
+   "where": "engine physics (collisions)",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "onObjectCollisionExit",
+   "status": "dropped",
+   "where": "engine physics (collisions)",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "onObjectCollisionStay",
+   "status": "dropped",
+   "where": "engine physics (collisions)",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "onObjectDrop",
+   "status": "native",
+   "where": "EventRenames",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "onObjectEnterContainer",
+   "status": "native",
+   "where": "on_stowed(holder, piece) after a stow",
+   "instead": "",
+   "held_by": "StowEventTests",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "onObjectEnterScriptingZone",
+   "status": "stub",
+   "where": "the table's own zones raise no script events yet; no module handles it",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "onObjectEnterZone",
+   "status": "stub",
+   "where": "the table's own zones raise no script events yet; no module handles it",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "onObjectFlick",
+   "status": "dropped",
+   "where": "engine physics (flicking)",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "onObjectHover",
+   "status": "dropped",
+   "where": "no hover events here",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "onObjectLeaveContainer",
+   "status": "native",
+   "where": "on_unstowed(holder, piece) after an unstow, with on_spawn for the piece",
+   "instead": "",
+   "held_by": "StowEventTests",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "onObjectLeaveScriptingZone",
+   "status": "stub",
+   "where": "the table's own zones raise no script events yet; no module handles it",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "onObjectLeaveZone",
+   "status": "stub",
+   "where": "the table's own zones raise no script events yet; no module handles it",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "onObjectLoopingEffect",
+   "status": "dropped",
+   "where": "a bundle's own animations never come over",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "onObjectPageChange",
+   "status": "stub",
+   "where": "a page turn is a state change; no module handles it",
+   "instead": "on_state",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "onObjectPeek",
+   "status": "dropped",
+   "where": "peeking at a hidden piece",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "onObjectRandomize",
+   "status": "stub",
+   "where": "no event when a die rolls; no module handles it",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "onObjectRotate",
+   "status": "native",
+   "where": "EventRenames",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "onObjectSearchEnd",
+   "status": "dropped",
+   "where": "a holder's contents are a card, not a search",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "onObjectSearchStart",
+   "status": "dropped",
+   "where": "a holder's contents are a card, not a search",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "onObjectTriggerEffect",
+   "status": "dropped",
+   "where": "a bundle's own animations never come over",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "onPageChange",
+   "status": "stub",
+   "where": "a page turn is a state change; no module handles it",
+   "instead": "on_state",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "onPlayerChangeColor",
+   "status": "stub",
+   "where": "seats change without an event here; no module handles it",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "onPlayerConnect",
+   "status": "stub",
+   "where": "seats change without an event here; no module handles it",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "onPlayerDisconnect",
+   "status": "stub",
+   "where": "seats change without an event here; no module handles it",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "onPlayerPing",
+   "status": "dropped",
+   "where": "no pings here",
+   "instead": "say",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "onPlayerTurnEnd",
+   "status": "compat",
+   "where": "on_turn when the clock advances",
+   "instead": "",
+   "held_by": "ModuleHelpersTests",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "onPlayerTurnStart",
+   "status": "compat",
+   "where": "on_turn when the clock advances",
+   "instead": "",
+   "held_by": "ModuleHelpersTests",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "onPlayersConnect",
+   "status": "stub",
+   "where": "seats change without an event here; no module handles it",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "onPlayersDisconnect",
+   "status": "stub",
+   "where": "seats change without an event here; no module handles it",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "onScriptingButtonUp",
+   "status": "native",
+   "where": "EventRenames",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "onZoneGroupSort",
+   "status": "dropped",
+   "where": "layout zones",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "tryObjectEnterContainer",
+   "status": "native",
+   "where": "try_stow(holder, piece) before a stow; false keeps the piece out",
+   "instead": "",
+   "held_by": "StowEventTests",
+   "count": 0,
+   "modules": 0
+  }
+ ],
+ "engine": [
+  {
+   "row": "Lua table to vector, colour and params and back (positional and named)",
+   "status": "compat",
+   "where": "compat.Vector / compat.Color / vec(): named, positional and mixed tables, names and hex",
+   "instead": "",
+   "held_by": "ModuleVectorColorTests",
+   "count": 54,
+   "modules": 54
+  },
+  {
+   "row": "MoonSharp 2.0.0 on both sides: the Lua dialect matches",
+   "status": "native",
+   "where": "Server.csproj",
+   "instead": "",
+   "held_by": "",
+   "count": 54,
+   "modules": 54
+  },
+  {
+   "row": "Wait.frames counts frames, Wait.time seconds, onUpdate per frame",
+   "status": "partial",
+   "where": "ScriptTimers: ticks",
+   "instead": "",
+   "held_by": "",
+   "count": 54,
+   "modules": 54
+  },
+  {
+   "row": "a script call has no time limit in modules",
+   "status": "partial",
+   "where": "ScriptHost.CallBudgetMs: a second of the script's own time per call, the table work it asks for not counted, so a bag placing hundreds of pieces in one click runs; a runaway loop still stops",
+   "instead": "",
+   "held_by": "import-sweep: naval (the Midway bag's Place)",
+   "count": 54,
+   "modules": 54
+  },
+  {
+   "row": "button and input defaults (width, height, font_size, colours, position, scale)",
+   "status": "compat",
+   "where": "compat.module_defaults, from the tabletop's LuaUIState classes; a button or input with no handler is refused, as modules expect",
+   "instead": "",
+   "held_by": "ModuleDefaultsTests",
+   "count": 54,
+   "modules": 54
+  },
+  {
+   "row": "click_function(obj, player_color, alt_click)",
+   "status": "compat",
+   "where": "compat.create_button / module_handler",
+   "instead": "",
+   "held_by": "TranslatorTests.Handlers_get_the_piece_their_widget_is_on",
+   "count": 54,
+   "modules": 54
+  },
+  {
+   "row": "context menu callback(player_color, menu_position, object)",
+   "status": "compat",
+   "where": "compat.add_context_menu_item",
+   "instead": "",
+   "held_by": "",
+   "count": 54,
+   "modules": 54
+  },
+  {
+   "row": "getObjectFromGUID answers nil for a piece inside a bag",
+   "status": "native",
+   "where": "a stowed piece is off the layer, so board.find does not see it",
+   "instead": "",
+   "held_by": "StowScriptTests",
+   "count": 54,
+   "modules": 54
+  },
+  {
+   "row": "input_function(obj, player_color, text, selected)",
+   "status": "compat",
+   "where": "compat.create_input / module_handler",
+   "instead": "",
+   "held_by": "TranslatorTests.A_name_typed_letter_by_letter_reaches_the_face",
+   "count": 54,
+   "modules": 54
+  },
+  {
+   "row": "load order: global before objects; onLoad(script_state)",
+   "status": "partial",
+   "where": "ScriptHost.Load; the saved state string",
+   "instead": "",
+   "held_by": "",
+   "count": 54,
+   "modules": 54
+  },
+  {
+   "row": "member names fold (exact, first letter up, snake to camel, both)",
+   "status": "native",
+   "where": "ModuleTranslator.FoldMember before every object member lookup",
+   "instead": "",
+   "held_by": "TranslatorFoldTests",
+   "count": 54,
+   "modules": 54
+  },
+  {
+   "row": "module Vector and Color classes with their methods",
+   "status": "compat",
+   "where": "compat.Vector and compat.Color: every documented method, operator and named colour",
+   "instead": "",
+   "held_by": "ModuleVectorColorTests",
+   "count": 54,
+   "modules": 54
+  },
+  {
+   "row": "player model: colours, Black as GM, promoted, seated, host",
+   "status": "partial",
+   "where": "compat.color_of: the host is Black as a module's GM, the other umpires White, Red, Blue... in seat order, so Player[color] finds each; sides and observers have no seat colour",
+   "instead": "",
+   "held_by": "PlayerActionTests",
+   "count": 54,
+   "modules": 54
+  },
+  {
+   "row": "positionToWorld and positionToLocal: the module transform, local x along +X at rotation zero, in mesh units times scale for a model and the size rule for a flat",
+   "status": "compat",
+   "where": "compat.position_to_world / position_to_local; a model def carries local_unit from the converter",
+   "instead": "",
+   "held_by": "ModuleLocalFrameTests",
+   "count": 54,
+   "modules": 54
+  },
+  {
+   "row": "save quirk: a number written as a string, or NaN",
+   "status": "native",
+   "where": "ModuleObj.D falls back to the default and the report says so",
+   "instead": "",
+   "held_by": "ConverterTests",
+   "count": 54,
+   "modules": 54
+  },
+  {
+   "row": "save quirk: duplicate GUIDs inside bags",
+   "status": "native",
+   "where": "a guid names the first piece found, as getObjectFromGUID answers in modules",
+   "instead": "",
+   "held_by": "",
+   "count": 54,
+   "modules": 54
+  },
+  {
+   "row": "save quirk: negative scale mirrors",
+   "status": "partial",
+   "where": "the size is taken unsigned, so a mirrored piece comes over unmirrored, and the report names it",
+   "instead": "",
+   "held_by": "ConverterTests",
+   "count": 54,
+   "modules": 54
+  },
+  {
+   "row": "save quirk: rotX/rotZ near 180 means face down; other tilts stand or lean",
+   "status": "partial",
+   "where": "ModuleObj.Flipped: 180 only",
+   "instead": "",
+   "held_by": "",
+   "count": 54,
+   "modules": 54
+  },
+  {
+   "row": "script safety cuts the self-copying block and keeps the rest",
+   "status": "native",
+   "where": "ScriptSafety; over the roster only the German Team Planning Table is cut, 1,463 copies of the Object base code worm, and no other rule fires",
+   "instead": "",
+   "held_by": "ScriptSafetyTests; import-sweep",
+   "count": 54,
+   "modules": 54
+  },
+  {
+   "row": "setState keeps the GUID",
+   "status": "partial",
+   "where": "a piece keeps its id and guid through its looks; in a module each state object has a guid of its own that takes over",
+   "instead": "",
+   "held_by": "",
+   "count": 54,
+   "modules": 54
+  },
+  {
+   "row": "smooth moves end at once",
+   "status": "compat",
+   "where": "compat.set_position",
+   "instead": "",
+   "held_by": "",
+   "count": 54,
+   "modules": 54
+  },
+  {
+   "row": "spawning and loading_custom flags",
+   "status": "compat",
+   "where": "ObjectProps (get_prop)",
+   "instead": "",
+   "held_by": "",
+   "count": 54,
+   "modules": 54
+  },
+  {
+   "row": "widget indices are 0-based in editButton/editInput/removeButton",
+   "status": "compat",
+   "where": "compat.edit_button",
+   "instead": "",
+   "held_by": "",
+   "count": 54,
+   "modules": 54
+  }
+ ],
+ "defaults": {
+  "BagState.Order": "0",
+  "ColourState.a": "0",
+  "ColourState.b": "1",
+  "ColourState.g": "1",
+  "ColourState.r": "1",
+  "CustomAssetbundleState.AssetbundleSecondaryURL": "\"https://steamusercontent-a.akamaihd.net/ugc/978865225526086320/4A530C63F6BEA2C6607A62F40036AB3E90CC9850/\"",
+  "CustomAssetbundleState.AssetbundleURL": "\"https://steamusercontent-a.akamaihd.net/ugc/978865621713894093/EF3DC9EB610B18F3833F7962667B08738CEB2B7D/\"",
+  "CustomAssetbundleState.LoopingEffectIndex": "0",
+  "CustomAssetbundleState.MaterialIndex": "0",
+  "CustomAssetbundleState.TypeIndex": "1",
+  "CustomDiceState.Type": "5",
+  "CustomImageState.ImageScalar": "1",
+  "CustomImageState.ImageSecondaryURL": "\"\"",
+  "CustomImageState.ImageURL": "\"https://steamusercontent-a.akamaihd.net/ugc/2258055576441788119/E35DFB667C40A16C46CADE28C87A166185F4D346/\"",
+  "CustomImageState.WidthScale": "0",
+  "CustomMeshState.CastShadows": "true",
+  "CustomMeshState.ColliderURL": "\"\"",
+  "CustomMeshState.Convex": "true",
+  "CustomMeshState.DiffuseURL": "\"\"",
+  "CustomMeshState.MaterialIndex": "1",
+  "CustomMeshState.MeshURL": "\"https://steamusercontent-a.akamaihd.net/ugc/1478820768302617365/27883B7913E0E69143C3AA03493B7E7C4E8C29C0/\"",
+  "CustomMeshState.NormalURL": "\"\"",
+  "CustomMeshState.TypeIndex": "0",
+  "CustomPDFState.PDFPage": "0",
+  "CustomPDFState.PDFPageOffset": "0",
+  "CustomPDFState.PDFPassword": "\"\"",
+  "CustomPDFState.PDFUrl": "\"https://steamusercontent-a.akamaihd.net/ugc/2459617657724679091/63606A222A83D9ADFB3E5A4D0C44678AD2E3EE0E/\"",
+  "CustomShaderState.FresnelStrength": "0",
+  "CustomShaderState.SpecularColor": "{\"b\":1,\"g\":1,\"r\":1}",
+  "CustomShaderState.SpecularIntensity": "0",
+  "CustomShaderState.SpecularSharpness": "2",
+  "CustomTileState.Stackable": "false",
+  "CustomTileState.Stretch": "true",
+  "CustomTileState.Thickness": "0.1",
+  "CustomTileState.Type": "0",
+  "CustomTokenState.MergeDistancePixels": "5",
+  "CustomTokenState.Stackable": "false",
+  "CustomTokenState.StandUp": "false",
+  "CustomTokenState.Thickness": "0.1",
+  "GridState.BothSnapping": "false",
+  "GridState.Color": "{\"b\":0,\"g\":0,\"r\":0}",
+  "GridState.Lines": "false",
+  "GridState.Offset": "false",
+  "GridState.Opacity": "0.75",
+  "GridState.PosOffset": "{\"x\":0,\"y\":1,\"z\":0}",
+  "GridState.Snapping": "false",
+  "GridState.ThickLines": "false",
+  "GridState.Type": "0",
+  "GridState.xSize": "2",
+  "GridState.ySize": "2",
+  "HandsState.DisableUnused": "false",
+  "HandsState.Enable": "true",
+  "HandsState.Hiding": "0",
+  "LightingState.AmbientEquatorColor": "{\"b\":0.5,\"g\":0.5,\"r\":0.5}",
+  "LightingState.AmbientGroundColor": "{\"b\":0.5,\"g\":0.5,\"r\":0.5}",
+  "LightingState.AmbientIntensity": "1.3",
+  "LightingState.AmbientSkyColor": "{\"b\":0.5,\"g\":0.5,\"r\":0.5}",
+  "LightingState.AmbientType": "0",
+  "LightingState.LightColor": "{\"b\":0.8902,\"g\":0.9804,\"r\":1}",
+  "LightingState.LightIntensity": "0.54",
+  "LightingState.LutContribution": "1",
+  "LightingState.LutIndex": "0",
+  "LightingState.LutURL": "\"\"",
+  "LightingState.ReflectionIntensity": "1",
+  "MusicPlayerState.CurrentAudioTitle": "\"Ultramarines Chant\"",
+  "MusicPlayerState.CurrentAudioURL": "\"https://steamusercontent-a.akamaihd.net/ugc/771729113224675711/32FB11610C3D92E679140F6C2D5FD498F096A3B4/\"",
+  "MusicPlayerState.PlaylistEntry": "-1",
+  "MusicPlayerState.RepeatSong": "false",
+  "ObjectState.AltLookAngle": "{\"x\":0,\"y\":0,\"z\":0}",
+  "ObjectState.AltSound": "true",
+  "ObjectState.Autoraise": "true",
+  "ObjectState.CardID": "1200",
+  "ObjectState.Description": "\"\"",
+  "ObjectState.DragSelectable": "true",
+  "ObjectState.FogColor": "\"White\"",
+  "ObjectState.GMNotes": "\"\"",
+  "ObjectState.GUID": "\"8f31bd\"",
+  "ObjectState.Grid": "true",
+  "ObjectState.GridProjection": "false",
+  "ObjectState.Hands": "false",
+  "ObjectState.HideWhenFaceDown": "false",
+  "ObjectState.IgnoreFoW": "false",
+  "ObjectState.LayoutGroupSortIndex": "0",
+  "ObjectState.Locked": "false",
+  "ObjectState.LuaScript": "\"\"",
+  "ObjectState.LuaScriptState": "\"\"",
+  "ObjectState.MaterialIndex": "-1",
+  "ObjectState.MeasureMovement": "false",
+  "ObjectState.Memo": "\"1\"",
+  "ObjectState.MeshIndex": "-1",
+  "ObjectState.Name": "\"Custom_Tile\"",
+  "ObjectState.Nickname": "\"\"",
+  "ObjectState.Number": "0",
+  "ObjectState.SidewaysCard": "false",
+  "ObjectState.Snap": "true",
+  "ObjectState.Sticky": "true",
+  "ObjectState.Tooltip": "true",
+  "ObjectState.Value": "0",
+  "ObjectState.XmlUI": "\"\"",
+  "PhysicsMaterialState.BounceCombine": "0",
+  "PhysicsMaterialState.Bounciness": "0",
+  "PhysicsMaterialState.DynamicFriction": "0.8",
+  "PhysicsMaterialState.FrictionCombine": "0",
+  "PhysicsMaterialState.StaticFriction": "0.6",
+  "RigidbodyState.AngularDrag": "100",
+  "RigidbodyState.Drag": "5",
+  "RigidbodyState.Mass": "1",
+  "RigidbodyState.UseGravity": "true",
+  "SaveState.Date": "\"4/14/2021 11:51:13 PM\"",
+  "SaveState.EpochTime": "1618437073",
+  "SaveState.GameComplexity": "\"\"",
+  "SaveState.GameMode": "\"Flex Table\"",
+  "SaveState.GameType": "\"Game\"",
+  "SaveState.Gravity": "0.5",
+  "SaveState.LuaScript": "\"--\"",
+  "SaveState.LuaScriptState": "\"\"",
+  "SaveState.Note": "\"\"",
+  "SaveState.PlayArea": "1",
+  "SaveState.SaveName": "\"Vol de l'Aigle - Bavaria 1809\"",
+  "SaveState.Sky": "\"Sky_Museum\"",
+  "SaveState.SkyURL": "\"http://u.cubeupload.com/noodlesinsoup/MilkywayBG22.jpg\"",
+  "SaveState.Table": "\"Table_None\"",
+  "SaveState.TableURL": "\"\"",
+  "SaveState.VersionNumber": "\"v13.3\"",
+  "SaveState.XmlUI": "\"<!-- Xml UI. See documentation: https://api.tabletopsimulator.com/ui/introUI/ -->\"",
+  "TextState.OwnerSteamID": "0",
+  "TextState.Text": "\"3\"",
+  "TextState.colorstate": "{\"b\":1,\"g\":1,\"r\":1}",
+  "TextState.fontSize": "64",
+  "TransformState.posX": "30.7537136",
+  "TransformState.posY": "1.40987647",
+  "TransformState.posZ": "-97.66685",
+  "TransformState.rotX": "0",
+  "TransformState.rotY": "180.072525",
+  "TransformState.rotZ": "0",
+  "TransformState.scaleX": "1",
+  "TransformState.scaleY": "1",
+  "TransformState.scaleZ": "1",
+  "TurnsState.DisableInteractions": "false",
+  "TurnsState.Enable": "false",
+  "TurnsState.PassTurns": "true",
+  "TurnsState.Reverse": "false",
+  "TurnsState.SkipEmpty": "false",
+  "TurnsState.TurnColor": "\"\"",
+  "TurnsState.Type": "0"
+ }
+}

@@ -1,0 +1,40 @@
+include _host.inc
+key Escape
+settle
+checkpoint esc-menu
+key Escape
+hover world:-4,0.2,0
+key 2
+settle
+checkpoint digit-state
+hover world:0,0,-1
+click world:-4,0.2,0
+click world:-4,0.2,3 mod=Shift
+click world:4,0.2,0 mod=Shift
+key Ctrl+3
+settle
+checkpoint three-rows
+key Ctrl+1
+settle
+checkpoint one-row
+key Escape
+keydown W
+wait 30
+keyup W
+keydown D
+wait 20
+keyup D
+settle
+checkpoint wasd
+keydown Space
+drag @640,500 @540,450
+keyup Space
+settle
+checkpoint space-pan
+key Home
+key F1
+settle
+checkpoint help
+key Escape
+settle
+checkpoint help-closed

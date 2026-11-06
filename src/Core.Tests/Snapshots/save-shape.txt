@@ -1,0 +1,1209 @@
+format 24
+type AccessChanged object
+  access: GameAccess
+type AddBoard object
+  actor: long
+  at: long
+  id: string
+  index: int?
+  name: string
+  seq: long
+  undoOf: long
+type AddPack object
+  actor: long
+  at: long
+  hash: string
+  id: string
+  seq: long
+  undoOf: long
+type AddSheet object
+  actor: long
+  at: long
+  index: int?
+  seq: long
+  sheet: SheetDef
+  undoOf: long
+type Admit object
+  peerId: long
+  role: Role
+type AdvanceClock object
+  actor: long
+  at: long
+  seq: long
+  undoOf: long
+type Approved object
+  name: string
+  role: Role
+  tokenHash: string
+type AssetChunk object
+  offset: long
+  package: string
+  path: string
+  total: long
+type AssetEntry object
+  file: string
+  h: int
+  kind: string
+  url: string
+  w: int
+type Attach object
+  actor: long
+  at: long
+  child: string
+  layer: string
+  parent: string
+  seq: long
+  undoOf: long
+type AttachmentDef object
+  offset: Vec2
+  piece: string
+type Batch object
+  actor: long
+  at: long
+  items: List<Command>
+  seq: long
+  undoOf: long
+type BoardDef object
+  id: string
+  name: string
+type Calibration object
+  perMetre: double read-only
+  unitName: string read-only
+  units: string
+  unitsPerMeter: double?
+type ChunkAck object
+  offset: long
+  package: string
+  path: string
+type ClickWidget object
+  actor: long
+  alt: bool
+  at: long
+  id: string
+  index: int
+  layer: string
+  seq: long
+  undoOf: long
+type Command abstract
+  discriminator type unknown=FailSerialization
+  derived AddBoard = AddBoard
+  derived AddPack = AddPack
+  derived AddSheet = AddSheet
+  derived AdvanceClock = AdvanceClock
+  derived Attach = Attach
+  derived Batch = Batch
+  derived ClickWidget = ClickWidget
+  derived CropSheet = CropSheet
+  derived DeletePiece = DeletePiece
+  derived Detach = Detach
+  derived DialogResult = DialogResult
+  derived Draw = Draw
+  derived EditWidget = EditWidget
+  derived EraseStroke = EraseStroke
+  derived FlipPiece = FlipPiece
+  derived HoldPiece = HoldPiece
+  derived Hotkey = Hotkey
+  derived LoadSave = LoadSave
+  derived LockSheet = LockSheet
+  derived MovePiece = MovePiece
+  derived MoveSheet = MoveSheet
+  derived NumberTyped = NumberTyped
+  derived PickGlobalMenuItem = PickGlobalMenuItem
+  derived PickMenuItem = PickMenuItem
+  derived PublishSighting = PublishSighting
+  derived RemoveBoard = RemoveBoard
+  derived RemoveSheet = RemoveSheet
+  derived RemoveZone = RemoveZone
+  derived RenameBoard = RenameBoard
+  derived RenameSheet = RenameSheet
+  derived RestorePiece = RestorePiece
+  derived RestoreTurn = RestoreTurn
+  derived RollDice = RollDice
+  derived Say = Say
+  derived SelectPiece = SelectPiece
+  derived SetBriefing = SetBriefing
+  derived SetCalibration = SetCalibration
+  derived SetClock = SetClock
+  derived SetCounter = SetCounter
+  derived SetDecals = SetDecals
+  derived SetDef = SetDef
+  derived SetGlobalMenuItems = SetGlobalMenuItems
+  derived SetGlobalScript = SetGlobalScript
+  derived SetGlobalScriptState = SetGlobalScriptState
+  derived SetGrid = SetGrid
+  derived SetHotkeys = SetHotkeys
+  derived SetLabel = SetLabel
+  derived SetLighting = SetLighting
+  derived SetLines = SetLines
+  derived SetLocked = SetLocked
+  derived SetMemo = SetMemo
+  derived SetMenuItems = SetMenuItems
+  derived SetNote = SetNote
+  derived SetPicture = SetPicture
+  derived SetPieceOption = SetPieceOption
+  derived SetPointerRule = SetPointerRule
+  derived SetScale = SetScale
+  derived SetScript = SetScript
+  derived SetScriptState = SetScriptState
+  derived SetSheetPicture = SetSheetPicture
+  derived SetSheetRelief = SetSheetRelief
+  derived SetState = SetState
+  derived SetTags = SetTags
+  derived SetText = SetText
+  derived SetTint = SetTint
+  derived SetUi = SetUi
+  derived SetUiAttributes = SetUiAttributes
+  derived SetVisionRadius = SetVisionRadius
+  derived SetWidgets = SetWidgets
+  derived SetWind = SetWind
+  derived SetZone = SetZone
+  derived ShowDialog = ShowDialog
+  derived SpawnPiece = SpawnPiece
+  derived Stow = Stow
+  derived UiEvent = UiEvent
+  derived Undo = Undo
+  derived Unstow = Unstow
+  actor: long
+  at: long
+  seq: long
+  undoOf: long
+type CommandMessage object
+  command: Command
+type ConsoleLine object
+  at: string
+  kind: string
+  line: int
+  name: string
+  seq: long
+  source: string
+  text: string
+type CounterDef object
+  default: int
+  max: int
+  min: int
+  name: string
+  place: PrintPlace
+  showButtons: bool
+  showName: bool
+  spawnsMarker: string
+type CropSheet object
+  actor: long
+  at: long
+  crop: FaceBox
+  id: string
+  pos: Vec2?
+  seq: long
+  size: Size2?
+  undoOf: long
+type DecalDef object
+  face: string
+  h: double
+  name: string
+  picture: string
+  rot: double
+  w: double
+  x: double
+  z: double
+type DeletePiece object
+  actor: long
+  at: long
+  id: string
+  layer: string
+  seq: long
+  undoOf: long
+type Detach object
+  actor: long
+  at: long
+  child: string
+  layer: string
+  seq: long
+  undoOf: long
+type DialogResult object
+  actor: long
+  at: long
+  seq: long
+  token: string
+  undoOf: long
+  value: string
+type DiceRoll object
+  actor: string
+  label: string
+  results: List<int>
+  seq: long
+  sides: int
+type Dictionary<string,AssetEntry> map string to AssetEntry
+type Dictionary<string,JsonElement> map string to JsonElement
+type Dictionary<string,List<PieceInstance>> map string to List<PieceInstance>
+type Dictionary<string,List<Stroke>> map string to List<Stroke>
+type Dictionary<string,int> map string to int
+type Dictionary<string,string> map string to string
+type Draw object
+  actor: long
+  at: long
+  index: int?
+  layer: string
+  seq: long
+  stroke: Stroke
+  undoOf: long
+type EditWidget object
+  actor: long
+  at: long
+  id: string
+  index: int
+  layer: string
+  seq: long
+  undoOf: long
+  value: string
+type EffectDef object
+  amount: double
+  at: List<double>
+  color: string
+  every: double
+  height: double
+  kind: string
+  light: bool
+  lingers: bool
+  ownPicture: bool
+  puff: double
+  smoke: bool
+  speed: double
+  volley: string
+  wind: double
+type EraseStroke object
+  actor: long
+  at: long
+  layer: string
+  seq: long
+  strokeId: string
+  undoOf: long
+type ErrorMessage object
+  text: string
+type FaceBox object
+  h: double
+  w: double
+  x: double
+  y: double
+type FlipPiece object
+  actor: long
+  at: long
+  faceDown: bool
+  id: string
+  layer: string
+  seq: long
+  undoOf: long
+type GameAccess object
+  approved: List<Approved>
+  password: string
+type GameClock object
+  gameTime: string
+  incrementMinutes: int
+  turn: int
+type GameState object
+  boards: List<BoardDef>
+  briefing: string
+  calibration: Calibration
+  clock: GameClock
+  dice: List<DiceRoll>
+  drawings: Dictionary<string,List<Stroke>>
+  format: int
+  grid: GridDef
+  hotkeys: List<HotkeyDef>
+  lastSeq: long
+  layers: Dictionary<string,List<PieceInstance>>
+  lighting: Lighting
+  menuItems: List<MenuItemDef>
+  name: string
+  nextId: long
+  packs: List<string>
+  pointersAlwaysShown: bool
+  scenarioId: string
+  script: string
+  scriptState: string
+  sheets: List<SheetDef>
+  ui: List<UiNode>
+  visionRadius: double
+  wind: Wind
+  zones: List<Zone>
+type GetScripts object
+type GetSnapshot object
+type GetTurn object
+  index: int
+type GetTurns object
+type GridDef object
+  color: string
+  kind: string
+  pitch: double
+  subdivisions: int
+type HoldPiece object
+  actor: long
+  at: long
+  held: bool
+  id: string
+  layer: string
+  seq: long
+  undoOf: long
+type Hotkey object
+  actor: long
+  at: long
+  index: int
+  layer: string
+  piece: string
+  pos: Vec2?
+  selected: List<string>
+  seq: long
+  undoOf: long
+  up: bool
+type HotkeyDef object
+  label: string
+  onUp: bool
+type JoinRequest object
+  appVersion: string
+  name: string
+  password: string
+  protocol: int
+  token: string
+type JoinResult object
+  access: GameAccess
+  created: string
+  error: string
+  ok: bool
+  peerId: long
+  role: Role
+  token: string
+  view: GameState
+  waiting: bool
+type JsonElement value
+type Knock object
+  name: string
+  peerId: long
+type Lighting object
+  ambient: double
+  backdrop: string
+  contours: bool
+  fromClock: bool
+  mapStyle: string
+  shadows: bool
+  snowLine: double
+  streams: bool
+  sunEnergy: double
+  tableShade: double
+  warmth: double
+type LineDef object
+  color: string
+  loop: bool
+  points: List<Vec2>
+  width: double
+type List<Approved> list of Approved
+type List<AttachmentDef> list of AttachmentDef
+type List<BoardDef> list of BoardDef
+type List<Command> list of Command
+type List<ConsoleLine> list of ConsoleLine
+type List<CounterDef> list of CounterDef
+type List<DecalDef> list of DecalDef
+type List<DiceRoll> list of DiceRoll
+type List<HotkeyDef> list of HotkeyDef
+type List<LineDef> list of LineDef
+type List<MenuItemDef> list of MenuItemDef
+type List<PeerInfo> list of PeerInfo
+type List<PieceDef> list of PieceDef
+type List<PieceInstance> list of PieceInstance
+type List<PieceStateDef> list of PieceStateDef
+type List<ScriptInfo> list of ScriptInfo
+type List<SheetDef> list of SheetDef
+type List<Stroke> list of Stroke
+type List<TextLineDef> list of TextLineDef
+type List<TurnInfo> list of TurnInfo
+type List<TurnRecord> list of TurnRecord
+type List<UiNode> list of UiNode
+type List<Vec2> list of Vec2
+type List<Widget> list of Widget
+type List<Zone> list of Zone
+type List<double> list of double
+type List<int> list of int
+type List<string> list of string
+type LoadSave object
+  actor: long
+  at: long
+  name: string
+  seq: long
+  state: GameState
+  undoOf: long
+type LockSheet object
+  actor: long
+  at: long
+  id: string
+  locked: bool
+  seq: long
+  undoOf: long
+type MenuItemDef object
+  label: string
+  onSelect: string
+type Message abstract
+  discriminator msg unknown=FailSerialization
+  derived AccessChanged = AccessChanged
+  derived Admit = Admit
+  derived AssetChunk = AssetChunk
+  derived ChunkAck = ChunkAck
+  derived Command = CommandMessage
+  derived Error = ErrorMessage
+  derived GetScripts = GetScripts
+  derived GetSnapshot = GetSnapshot
+  derived GetTurn = GetTurn
+  derived GetTurns = GetTurns
+  derived Join = JoinRequest
+  derived JoinResult = JoinResult
+  derived Knock = Knock
+  derived NeedAsset = NeedAsset
+  derived PeerList = PeerList
+  derived Refuse = Refuse
+  derived Revoke = Revoke
+  derived RoleChanged = RoleChanged
+  derived RunLua = RunLua
+  derived ScriptConsole = ScriptConsole
+  derived ScriptList = ScriptList
+  derived SetPassword = SetPassword
+  derived SetRole = SetRole
+  derived Snapshot = Snapshot
+  derived TurnList = TurnList
+  derived TurnState = TurnState
+  derived UploadAsset = UploadAsset
+type MovePiece object
+  actor: long
+  at: long
+  id: string
+  layer: string
+  pos: Vec2
+  rotDeg: double
+  seq: long
+  stack: int
+  undoOf: long
+  y: double
+type MoveSheet object
+  actor: long
+  at: long
+  id: string
+  pos: Vec2
+  rotDeg: double
+  seq: long
+  size: Size2?
+  undoOf: long
+  z: int
+type NeedAsset object
+  offset: long
+  package: string
+  path: string
+  urgent: bool
+type NumberTyped object
+  actor: long
+  at: long
+  id: string
+  layer: string
+  number: int
+  seq: long
+  undoOf: long
+type PackManifest object
+  apiVersion: int
+  assets: Dictionary<string,AssetEntry>
+  description: string
+  format: int
+  id: string
+  name: string
+  partial: bool
+  pieces: List<PieceDef>
+  source: PackSource
+type PackSource object
+  authors: List<string>
+  license: string
+  url: string
+  workshopId: string
+type PeerInfo object
+  name: string
+  peerId: long
+  role: Role
+type PeerList object
+  peers: List<PeerInfo>
+  waiting: List<PeerInfo>
+type PickGlobalMenuItem object
+  actor: long
+  at: long
+  index: int
+  pos: Vec2?
+  seq: long
+  undoOf: long
+type PickMenuItem object
+  actor: long
+  at: long
+  id: string
+  index: int
+  layer: string
+  seq: long
+  undoOf: long
+type PieceDef object
+  addOnMesh: string
+  addOnTexture: string
+  attachments: List<AttachmentDef>
+  back: string
+  counters: List<CounterDef>
+  effect: EffectDef
+  id: string
+  image: string
+  kind: string
+  localUnit: Size2?
+  mesh: string
+  name: string
+  nameBox: FaceBox
+  script: string
+  scriptHash: string
+  scriptState: string
+  shape: string
+  size: Size2
+  states: List<PieceStateDef>
+  tags: List<string>
+  textLines: List<TextLineDef>
+  texture: string
+  thickness: double
+  tint: string
+  tintsPictures: bool
+type PieceInstance object
+  attached: List<string>
+  counters: Dictionary<string,int>
+  decals: List<DecalDef>
+  decalsOnState: int?
+  def: string
+  drawnOnState: int
+  faceDown: bool
+  guid: string
+  id: string
+  label: string
+  lines: List<LineDef>
+  locked: bool
+  memo: string
+  menuItems: List<MenuItemDef>
+  noCollision: bool
+  note: string
+  physicalRoll: bool
+  picture: string
+  pos: Vec2
+  rotDeg: double
+  scale: double
+  script: string
+  scriptState: string
+  stack: int
+  state: int
+  stowed: List<PieceInstance>
+  tags: List<string>
+  text: Dictionary<string,string>
+  tintOverride: string
+  ui: List<UiNode>
+  widgets: List<Widget>
+  y: double
+type PieceStateDef object
+  back: string
+  decals: List<DecalDef>
+  image: string
+  mesh: string
+  name: string
+  script: string
+  shape: string
+  size: Size2?
+  texture: string
+  up: double[]
+type PrintPlace object
+  h: double
+  side: string
+  w: double
+  x: double
+  y: double
+type PublishSighting object
+  actor: long
+  at: long
+  old: Dictionary<string,JsonElement> extension-data
+  seq: long
+  undoOf: long
+type Refuse object
+  peerId: long
+type RemoveBoard object
+  actor: long
+  at: long
+  id: string
+  seq: long
+  undoOf: long
+type RemoveSheet object
+  actor: long
+  at: long
+  id: string
+  seq: long
+  undoOf: long
+type RemoveZone object
+  actor: long
+  at: long
+  id: string
+  seq: long
+  undoOf: long
+type RenameBoard object
+  actor: long
+  at: long
+  id: string
+  name: string
+  seq: long
+  undoOf: long
+type RenameSheet object
+  actor: long
+  at: long
+  id: string
+  name: string
+  seq: long
+  undoOf: long
+type RestorePiece object
+  actor: long
+  at: long
+  index: int?
+  layer: string
+  piece: PieceInstance
+  seq: long
+  undoOf: long
+type RestoreTurn object
+  actor: long
+  at: long
+  index: int
+  seq: long
+  state: GameState
+  undoOf: long
+type Revoke object
+  peerId: long
+type Role enum Observer,Umpire,LeadUmpire,HostUmpire
+type RoleChanged object
+  role: Role
+  view: GameState
+type RollDice object
+  actor: long
+  actorName: string
+  at: long
+  count: int
+  label: string
+  layer: string
+  physical: bool
+  pieceIds: List<string>
+  results: List<int>
+  seq: long
+  sides: int
+  undoOf: long
+type RunLua object
+  code: string
+  target: string
+type SaveFile object
+  access: GameAccess
+  commands: List<Command>
+  created: string
+  format: int
+  mirrorOf: string
+  preview: SavePreview
+  saved: string
+  scenarioId: string
+  snapshot: GameState
+  turns: List<TurnRecord>
+type SavePreview object
+  gameTime: string
+  picture: byte[]
+  pieces: int
+  turn: int
+type Say object
+  actor: long
+  at: long
+  color: string
+  seq: long
+  text: string
+  to: string
+  undoOf: long
+type Scenario object
+  apiVersion: int
+  boards: List<BoardDef>
+  briefing: string
+  calibration: Calibration
+  clock: GameClock
+  drawings: Dictionary<string,List<Stroke>>
+  format: int
+  grid: GridDef
+  id: string
+  lighting: Lighting
+  name: string
+  packs: List<string>
+  pointersAlwaysShown: bool
+  script: string
+  scriptState: string
+  sheets: List<SheetDef>
+  umpireBoard: List<PieceInstance>
+  visionRadius: double
+  wind: Wind
+type ScriptConsole object
+  backlog: bool
+  lines: List<ConsoleLine>
+type ScriptInfo object
+  def: string
+  errorLine: int
+  guid: string
+  id: string
+  lastError: string
+  name: string
+  own: bool
+  status: string
+  timers: int
+type ScriptList object
+  scripts: List<ScriptInfo>
+type SelectPiece object
+  actor: long
+  at: long
+  id: string
+  layer: string
+  selected: bool
+  seq: long
+  to: string
+  undoOf: long
+type SetBriefing object
+  actor: long
+  at: long
+  seq: long
+  text: string
+  undoOf: long
+type SetCalibration object
+  actor: long
+  at: long
+  seq: long
+  undoOf: long
+  units: string
+  unitsPerMeter: double?
+type SetClock object
+  actor: long
+  at: long
+  gameTime: string
+  incrementMinutes: int
+  seq: long
+  turn: int
+  undoOf: long
+type SetCounter object
+  actor: long
+  at: long
+  clear: bool
+  id: string
+  layer: string
+  name: string
+  seq: long
+  undoOf: long
+  value: int
+type SetDecals object
+  actor: long
+  at: long
+  decals: List<DecalDef>
+  id: string
+  layer: string
+  onState: int
+  seq: long
+  undoOf: long
+type SetDef object
+  actor: long
+  at: long
+  def: string
+  id: string
+  layer: string
+  seq: long
+  undoOf: long
+type SetGlobalMenuItems object
+  actor: long
+  at: long
+  items: List<MenuItemDef>
+  seq: long
+  undoOf: long
+type SetGlobalScript object
+  actor: long
+  at: long
+  seq: long
+  text: string
+  undoOf: long
+type SetGlobalScriptState object
+  actor: long
+  at: long
+  seq: long
+  state: string
+  undoOf: long
+type SetGrid object
+  actor: long
+  at: long
+  grid: GridDef
+  seq: long
+  undoOf: long
+type SetHotkeys object
+  actor: long
+  at: long
+  items: List<HotkeyDef>
+  seq: long
+  undoOf: long
+type SetLabel object
+  actor: long
+  at: long
+  id: string
+  layer: string
+  seq: long
+  undoOf: long
+  value: string
+type SetLighting object
+  actor: long
+  at: long
+  lighting: Lighting
+  seq: long
+  undoOf: long
+type SetLines object
+  actor: long
+  at: long
+  id: string
+  layer: string
+  lines: List<LineDef>
+  onState: int
+  seq: long
+  undoOf: long
+type SetLocked object
+  actor: long
+  at: long
+  id: string
+  layer: string
+  seq: long
+  undoOf: long
+  value: bool
+type SetMemo object
+  actor: long
+  at: long
+  id: string
+  layer: string
+  memo: string
+  seq: long
+  undoOf: long
+type SetMenuItems object
+  actor: long
+  at: long
+  id: string
+  items: List<MenuItemDef>
+  layer: string
+  onState: int
+  seq: long
+  undoOf: long
+type SetNote object
+  actor: long
+  at: long
+  id: string
+  layer: string
+  seq: long
+  undoOf: long
+  value: string
+type SetPassword object
+  password: string
+type SetPicture object
+  actor: long
+  at: long
+  id: string
+  layer: string
+  picture: string
+  seq: long
+  undoOf: long
+type SetPieceOption object
+  actor: long
+  at: long
+  id: string
+  layer: string
+  name: string
+  seq: long
+  undoOf: long
+  value: bool
+type SetPointerRule object
+  actor: long
+  alwaysShown: bool
+  at: long
+  seq: long
+  undoOf: long
+type SetRole object
+  peerId: long
+  role: Role
+type SetScale object
+  actor: long
+  at: long
+  id: string
+  layer: string
+  scale: double
+  seq: long
+  undoOf: long
+type SetScript object
+  actor: long
+  at: long
+  id: string
+  layer: string
+  seq: long
+  text: string
+  undoOf: long
+type SetScriptState object
+  actor: long
+  at: long
+  id: string
+  layer: string
+  seq: long
+  state: string
+  undoOf: long
+type SetSheetPicture object
+  actor: long
+  at: long
+  crop: FaceBox
+  id: string
+  image: string
+  package: string
+  seq: long
+  size: Size2?
+  undoOf: long
+type SetSheetRelief object
+  actor: long
+  at: long
+  height: double
+  id: string
+  relief: string
+  seq: long
+  undoOf: long
+type SetState object
+  actor: long
+  at: long
+  id: string
+  layer: string
+  seq: long
+  state: int
+  undoOf: long
+type SetTags object
+  actor: long
+  at: long
+  id: string
+  layer: string
+  seq: long
+  tags: List<string>
+  undoOf: long
+type SetText object
+  actor: long
+  at: long
+  clear: bool
+  id: string
+  layer: string
+  name: string
+  seq: long
+  undoOf: long
+  value: string
+type SetTint object
+  actor: long
+  at: long
+  id: string
+  layer: string
+  seq: long
+  undoOf: long
+  value: string
+type SetUi object
+  actor: long
+  at: long
+  layer: string
+  piece: string
+  seq: long
+  tree: List<UiNode>
+  undoOf: long
+type SetUiAttributes object
+  actor: long
+  at: long
+  attributes: Dictionary<string,string>
+  id: string
+  layer: string
+  piece: string
+  seq: long
+  undoOf: long
+type SetVisionRadius object
+  actor: long
+  at: long
+  radius: double
+  seq: long
+  undoOf: long
+type SetWidgets object
+  actor: long
+  at: long
+  id: string
+  layer: string
+  onState: int
+  seq: long
+  undoOf: long
+  widgets: List<Widget>
+type SetWind object
+  actor: long
+  at: long
+  seq: long
+  undoOf: long
+  wind: Wind
+type SetZone object
+  actor: long
+  at: long
+  index: int?
+  seq: long
+  undoOf: long
+  zone: Zone
+type SheetDef object
+  crop: FaceBox
+  height: double
+  id: string
+  image: string
+  kind: string
+  locked: bool
+  name: string
+  package: string
+  pos: Vec2
+  relief: string
+  rotDeg: double
+  size: Size2
+  url: string
+  z: int
+type ShowDialog object
+  actor: long
+  at: long
+  kind: string
+  options: List<string>
+  seq: long
+  text: string
+  title: string
+  to: string
+  token: string
+  undoOf: long
+type Size2 object
+  h: double
+  w: double
+type Snapshot object
+  view: GameState
+type SpawnPiece object
+  actor: long
+  at: long
+  def: string
+  guid: string
+  id: string
+  label: string
+  layer: string
+  memo: string
+  pos: Vec2
+  rotDeg: double
+  scale: double
+  scriptState: string
+  seq: long
+  tags: List<string>
+  undoOf: long
+  y: double
+type Stow object
+  actor: long
+  at: long
+  holder: string
+  id: string
+  layer: string
+  seq: long
+  slot: int?
+  undoOf: long
+type Stroke object
+  board: string
+  color: string
+  id: string
+  points: List<Vec2>
+  text: string
+  width: double
+type TextLineDef object
+  default: string
+  name: string
+  place: PrintPlace
+type TurnInfo object
+  endedAt: string
+  gameTime: string
+  index: int
+  isTurn: bool read-only
+  pieces: int
+  saveName: string
+  turn: int
+type TurnList object
+  turns: List<TurnInfo>
+type TurnRecord object
+  endedAt: string
+  gameTime: string
+  lastSeq: long
+  packed: byte[]
+  pieces: int
+  state: GameState
+  turn: int
+type TurnState object
+  index: int
+  info: TurnInfo
+  state: GameState
+type UiEvent object
+  actor: long
+  at: long
+  event: string
+  id: string
+  layer: string
+  piece: string
+  seq: long
+  undoOf: long
+  value: string
+type UiNode object
+  attributes: Dictionary<string,string>
+  children: List<UiNode>
+  id: string read-only
+  tag: string
+type Undo object
+  actor: long
+  at: long
+  seq: long
+  targetSeq: long
+  undoOf: long
+type Unstow object
+  actor: long
+  at: long
+  holder: string
+  id: string
+  index: int?
+  layer: string
+  pos: Vec2?
+  rotDeg: double?
+  seq: long
+  undoOf: long
+type UploadAsset object
+  offset: long
+  package: string
+  path: string
+  total: long
+type Vec2 object
+  x: double
+  z: double
+type Widget object
+  align: string
+  color: string
+  face: string
+  font: double
+  h: double
+  kind: string
+  label: string
+  lines: int
+  onChange: string
+  onClick: string
+  placeholder: string
+  rot: double
+  textColor: string
+  tooltip: string
+  value: string
+  w: double
+  x: double
+  z: double
+type Wind object
+  from: double
+  strength: double
+type Zone object
+  color: string
+  id: string
+  name: string
+  owner: string
+  polygon: List<Vec2>
+type bool value
+type byte[] value
+type double value
+type double[] list of double
+type int value
+type long value
+type string value

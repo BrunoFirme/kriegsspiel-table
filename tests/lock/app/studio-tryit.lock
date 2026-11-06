@@ -1,0 +1,15 @@
+include _studio.inc
+click "Red battalion"
+key Alt+3
+settle 60 2400
+checkpoint try-it
+rclick @640,360
+settle
+checkpoint tryit-menu
+key Escape
+key Home
+settle
+checkpoint framed
+click "Done"
+settle 60 3000
+checkpoint saved

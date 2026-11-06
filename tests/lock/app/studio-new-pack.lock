@@ -1,0 +1,15 @@
+settle
+click "Piece studio"
+wait 30
+click "New pack…"
+settle
+checkpoint dialog
+click "Create and edit"
+settle 60 3000
+checkpoint empty-studio
+click "Unit block"
+settle 60 2400
+checkpoint first-piece
+click "Done"
+settle 60 3000
+checkpoint title-after

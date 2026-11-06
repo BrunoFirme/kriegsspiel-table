@@ -1,0 +1,34 @@
+include _host.inc
+click world:-4,0.2,0
+settle
+checkpoint one-selected
+click world:4,0.2,0 mod=Shift
+click world:-4,0.2,3 mod=Ctrl
+settle
+checkpoint three-selected
+click world:4,0.2,0
+settle
+checkpoint narrowed
+drag world:4,0.2,0 world:2,0,2
+settle
+checkpoint carried
+drag world:-6,0,-2 world:6,0,5
+settle
+checkpoint boxed
+click world:0,0,-1
+settle
+checkpoint cleared
+click world:-4,0.2,0
+drag world:-6,0,-2 world:-2,0,5 mod=Shift
+settle
+checkpoint shift-box
+dclick world:4,0.2,3
+settle
+checkpoint double-click
+type "Grey"
+key Enter
+settle
+checkpoint renamed-back
+click world:0,0,-1 mod=Alt
+settle
+checkpoint alt-click

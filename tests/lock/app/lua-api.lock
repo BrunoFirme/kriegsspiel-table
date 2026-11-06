@@ -1,0 +1,20 @@
+include _host.inc
+key Home
+settle
+click world:-6,0.1,6
+settle 60 1200
+key QuoteLeft
+settle
+checkpoint api-run
+key QuoteLeft
+drag world:1.5,0.1,9.5 world:0,0.1,8
+settle
+key Q
+mclick world:0,0.1,8
+settle
+checkpoint events
+key Delete
+settle
+key QuoteLeft
+settle
+checkpoint destroyed

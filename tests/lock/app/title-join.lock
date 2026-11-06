@@ -1,0 +1,12 @@
+settle
+click "Join a game"
+settle
+click "your name"
+type "Boggs"
+click "the game's password, if it has one"
+type "secret"
+settle
+checkpoint filled
+click "Join"
+wait 120
+checkpoint joining

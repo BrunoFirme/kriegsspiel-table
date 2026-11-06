@@ -1,0 +1,4 @@
+@quick
+settle
+click "Quit"
+wait 120

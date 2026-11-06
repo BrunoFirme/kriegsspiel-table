@@ -1,0 +1,53 @@
+include _host.inc
+click world:-4,0.2,0.36
+settle
+checkpoint button-clicked
+click world:-4.2,0.2,-0.36
+type "Advance"
+key Enter
+settle
+checkpoint input-typed
+hover world:-4,0.2,3
+key 7
+settle
+checkpoint hotkey
+rclick world:-4,0.2,0
+click "Rally"
+settle
+checkpoint menu-row
+click world:-3.45,0.2,2.64
+settle
+checkpoint dialog-open
+type "Pogue's guard"
+key Enter
+settle
+checkpoint dialog-answered
+click "Signal"
+click "Ready"
+click "note"
+type "steady\n"
+settle
+checkpoint panel-used
+rclick world:2,0,6
+click "Signal here"
+settle
+checkpoint table-menu-row
+key QuoteLeft
+settle
+type "print(#board.pieces())\n"
+settle
+type "game.roll(6, 2, 'lock')\n"
+settle
+checkpoint console
+key Up
+key Up
+settle
+checkpoint console-history
+click world:-4,0.2,0
+key Ctrl+Shift+L
+settle
+checkpoint scripts-window
+close-window
+click "Next turn ▸"
+settle
+checkpoint on-turn

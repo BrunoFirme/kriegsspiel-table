@@ -1,0 +1,90 @@
+@quick
+include _host.inc
+rclick world:-4,0.2,0
+settle
+checkpoint menu-red
+key Escape
+rclick world:-4,0.2,0
+click "Turn left 15°"
+settle
+rclick world:-4,0.2,0
+click "Turn right 15°"
+settle
+rclick world:-4,0.2,0
+click "Turn around 180°"
+settle
+rclick world:-4,0.2,0
+click "Larger"
+settle
+rclick world:-4,0.2,0
+click "Smaller"
+settle
+checkpoint turned-sized
+rclick world:-4,0.2,0
+click "Turn over (show the back)"
+settle
+checkpoint flipped
+rclick world:-4,0.2,0
+click "Turn over (show the back)"
+settle
+rclick world:-4,0.2,0
+click "Rally"
+settle
+checkpoint script-row
+rclick world:-4,0.2,0
+click "Shaken"
+settle
+rclick world:-4,0.2,0
+click ~"Strength"
+settle
+checkpoint state-counter
+rclick world:-4,0.2,0
+click "Favourite"
+settle
+rclick world:-4,0.2,0
+click "Locked"
+settle
+checkpoint fav-locked
+rclick world:-4,0.2,0
+click "Locked"
+rclick world:-4,0.2,0
+click "Label (shown on hover)"
+type "Pogue's own\n"
+settle
+key Escape
+rclick world:-4,0.2,0
+click "Description (shown on hover)"
+type "Fought at the ford"
+key Escape
+settle
+checkpoint label-desc
+rclick world:-4,0.2,0
+click "Copy"
+settle
+table-click 0,1
+key Ctrl+V
+settle
+checkpoint copied
+rclick world:-4,0.2,0
+click "Properties…"
+settle
+checkpoint properties
+close-window
+settle
+rclick world:-4,0.2,0
+click "Scripting…"
+settle
+checkpoint scripting
+close-window "Scripting"
+settle
+rclick world:4,0.2,0
+click "Delete"
+settle
+checkpoint deleted
+rclick world:0,0.15,-4
+click ~"Place"
+settle
+rclick world:2,0.3,-6
+settle
+checkpoint die-menu
+key Escape

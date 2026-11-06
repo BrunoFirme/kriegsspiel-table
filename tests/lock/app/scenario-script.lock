@@ -1,0 +1,14 @@
+include _host.inc
+click "Scenario properties: clock, lighting, scale, wind, distances, script"
+click "Edit…"
+settle
+checkpoint global-script
+key Ctrl+End
+type "\nfunction on_turn(turn) ui.set_value('caption', 'Turn ' .. turn) end\n"
+key Ctrl+S
+settle 60 1200
+checkpoint saved
+close-window
+click "Next turn ▸"
+settle
+checkpoint on-turn

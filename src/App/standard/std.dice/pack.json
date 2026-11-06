@@ -1,0 +1,933 @@
+{
+  "format": 1,
+  "id": "std.dice",
+  "name": "Dice",
+  "source": {
+    "authors": [
+      "Kriegsspiel Table"
+    ],
+    "url": "",
+    "license": "standard pack, included with the app"
+  },
+  "pieces": [
+    {
+      "id": "std.dice.d4",
+      "name": "d4",
+      "kind": "model",
+      "mesh": "38b7c4d7c1c6198e58839e8cb67291a5740094ebbd0eecff2f3b90613938d3b1",
+      "texture": "0333280ea1c7b12a3b64b305a6ec45b8b45b9584b7f3d1e00e3b428b3b85ae0e",
+      "image": "d01b91c5238f83c1b8a56864c950b477b4e0b4951466c3186dcb344415b9f591",
+      "size": {
+        "w": 0.6,
+        "h": 0.6
+      },
+      "shape": "box",
+      "thickness": 0.6,
+      "tint": "#FFFFFF",
+      "tags": [
+        "die",
+        "dice",
+        "d4"
+      ],
+      "states": [
+        {
+          "name": "1",
+          "up": [
+            0.57735,
+            0.57735,
+            0.57735
+          ]
+        },
+        {
+          "name": "2",
+          "up": [
+            0.57735,
+            -0.57735,
+            -0.57735
+          ]
+        },
+        {
+          "name": "3",
+          "up": [
+            -0.57735,
+            0.57735,
+            -0.57735
+          ]
+        },
+        {
+          "name": "4",
+          "up": [
+            -0.57735,
+            -0.57735,
+            0.57735
+          ]
+        }
+      ],
+      "counters": [],
+      "textLines": [],
+      "attachments": []
+    },
+    {
+      "id": "std.dice.d6",
+      "name": "d6",
+      "kind": "model",
+      "mesh": "b6538f2144d4df364ba0d8bd2ddd1056846e0cd975d5486f91c306065c7b4029",
+      "texture": "bf0e947186bf21976c8b644f513abae265449e458788374a6f919e59e5cbabe6",
+      "image": "10c7cdb4b64e6421aa5076ad273dba588739cd0e8fdb74e16d8f9b65798ee2c7",
+      "size": {
+        "w": 0.6,
+        "h": 0.6
+      },
+      "shape": "box",
+      "thickness": 0.6,
+      "tint": "#FFFFFF",
+      "tags": [
+        "die",
+        "dice",
+        "d6"
+      ],
+      "states": [
+        {
+          "name": "1",
+          "up": [
+            -1.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "name": "2",
+          "up": [
+            0.0,
+            -1.0,
+            0.0
+          ]
+        },
+        {
+          "name": "3",
+          "up": [
+            0.0,
+            0.0,
+            -1.0
+          ]
+        },
+        {
+          "name": "4",
+          "up": [
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "name": "5",
+          "up": [
+            0.0,
+            1.0,
+            0.0
+          ]
+        },
+        {
+          "name": "6",
+          "up": [
+            1.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "counters": [],
+      "textLines": [],
+      "attachments": []
+    },
+    {
+      "id": "std.dice.d8",
+      "name": "d8",
+      "kind": "model",
+      "mesh": "dca7d0290060aae6038c386db7ea8f986bca3d595d4a895092c1061cafa91a97",
+      "texture": "d3b7ba9014930f162356324b3025dc27e629031c4bda7421749c12aebdc68279",
+      "image": "a0a5d56e4fdf3aa8eae44fdfcf50931eeef4780198a61448c23b2e897a7a500a",
+      "size": {
+        "w": 0.6,
+        "h": 0.6
+      },
+      "shape": "box",
+      "thickness": 0.6,
+      "tint": "#FFFFFF",
+      "tags": [
+        "die",
+        "dice",
+        "d8"
+      ],
+      "states": [
+        {
+          "name": "1",
+          "up": [
+            0.57735,
+            0.57735,
+            0.57735
+          ]
+        },
+        {
+          "name": "2",
+          "up": [
+            0.57735,
+            0.57735,
+            -0.57735
+          ]
+        },
+        {
+          "name": "3",
+          "up": [
+            0.57735,
+            -0.57735,
+            0.57735
+          ]
+        },
+        {
+          "name": "4",
+          "up": [
+            0.57735,
+            -0.57735,
+            -0.57735
+          ]
+        },
+        {
+          "name": "5",
+          "up": [
+            -0.57735,
+            0.57735,
+            0.57735
+          ]
+        },
+        {
+          "name": "6",
+          "up": [
+            -0.57735,
+            0.57735,
+            -0.57735
+          ]
+        },
+        {
+          "name": "7",
+          "up": [
+            -0.57735,
+            -0.57735,
+            0.57735
+          ]
+        },
+        {
+          "name": "8",
+          "up": [
+            -0.57735,
+            -0.57735,
+            -0.57735
+          ]
+        }
+      ],
+      "counters": [],
+      "textLines": [],
+      "attachments": []
+    },
+    {
+      "id": "std.dice.d10",
+      "name": "d10",
+      "kind": "model",
+      "mesh": "993e9413c0ee60ddea73369279401e4024b91a25c4f6118ee3d9053bfd50fe18",
+      "texture": "3d754916aeac0168c9070a8629f4d195f16c4e8c4316e93ab8f1958e57941ba4",
+      "image": "0b4be72aca7d773a7fe02c7d18550d7e6d0f36a90dde332c5805e434cfffa089",
+      "size": {
+        "w": 0.6,
+        "h": 0.6
+      },
+      "shape": "box",
+      "thickness": 0.6,
+      "tint": "#FFFFFF",
+      "tags": [
+        "die",
+        "dice",
+        "d10"
+      ],
+      "states": [
+        {
+          "name": "1",
+          "up": [
+            0.805937,
+            0.592001,
+            -0.0
+          ]
+        },
+        {
+          "name": "2",
+          "up": [
+            0.652017,
+            -0.592001,
+            0.473718
+          ]
+        },
+        {
+          "name": "3",
+          "up": [
+            0.249048,
+            0.592001,
+            0.766492
+          ]
+        },
+        {
+          "name": "4",
+          "up": [
+            -0.249048,
+            -0.592001,
+            0.766492
+          ]
+        },
+        {
+          "name": "5",
+          "up": [
+            -0.652017,
+            0.592001,
+            0.473718
+          ]
+        },
+        {
+          "name": "6",
+          "up": [
+            0.652017,
+            -0.592001,
+            -0.473718
+          ]
+        },
+        {
+          "name": "7",
+          "up": [
+            0.249048,
+            0.592001,
+            -0.766492
+          ]
+        },
+        {
+          "name": "8",
+          "up": [
+            -0.249048,
+            -0.592001,
+            -0.766492
+          ]
+        },
+        {
+          "name": "9",
+          "up": [
+            -0.652017,
+            0.592001,
+            -0.473718
+          ]
+        },
+        {
+          "name": "10",
+          "up": [
+            -0.805937,
+            -0.592001,
+            0.0
+          ]
+        }
+      ],
+      "counters": [],
+      "textLines": [],
+      "attachments": []
+    },
+    {
+      "id": "std.dice.d12",
+      "name": "d12",
+      "kind": "model",
+      "mesh": "2a5d06cc358a9a8315b07b8da37c62f59aea031846347af79c5d61ea2da45b8b",
+      "texture": "8a826353ae2757a4369182118dad8b40ee6bd273e91878872e612b4ecae51c92",
+      "image": "9cee558314e6f64bd75bde09010cf35a5ae886334accf792eb291182400b5277",
+      "size": {
+        "w": 0.6,
+        "h": 0.6
+      },
+      "shape": "box",
+      "thickness": 0.6,
+      "tint": "#FFFFFF",
+      "tags": [
+        "die",
+        "dice",
+        "d12"
+      ],
+      "states": [
+        {
+          "name": "1",
+          "up": [
+            -0.525731,
+            -0.0,
+            -0.850651
+          ]
+        },
+        {
+          "name": "2",
+          "up": [
+            -0.0,
+            -0.850651,
+            -0.525731
+          ]
+        },
+        {
+          "name": "3",
+          "up": [
+            -0.850651,
+            -0.525731,
+            -0.0
+          ]
+        },
+        {
+          "name": "4",
+          "up": [
+            -0.525731,
+            0.0,
+            0.850651
+          ]
+        },
+        {
+          "name": "5",
+          "up": [
+            0.0,
+            0.850651,
+            -0.525731
+          ]
+        },
+        {
+          "name": "6",
+          "up": [
+            0.850651,
+            -0.525731,
+            0.0
+          ]
+        },
+        {
+          "name": "7",
+          "up": [
+            -0.850651,
+            0.525731,
+            0.0
+          ]
+        },
+        {
+          "name": "8",
+          "up": [
+            0.0,
+            -0.850651,
+            0.525731
+          ]
+        },
+        {
+          "name": "9",
+          "up": [
+            0.525731,
+            0.0,
+            -0.850651
+          ]
+        },
+        {
+          "name": "10",
+          "up": [
+            0.850651,
+            0.525731,
+            0.0
+          ]
+        },
+        {
+          "name": "11",
+          "up": [
+            0.0,
+            0.850651,
+            0.525731
+          ]
+        },
+        {
+          "name": "12",
+          "up": [
+            0.525731,
+            0.0,
+            0.850651
+          ]
+        }
+      ],
+      "counters": [],
+      "textLines": [],
+      "attachments": []
+    },
+    {
+      "id": "std.dice.d20",
+      "name": "d20",
+      "kind": "model",
+      "mesh": "53ee4171898f5571dd172fb0b89c6ddf4a8b604162bc8e2995e02c6a97bb5e2a",
+      "texture": "15a342909386bb1583e1a3080be37fd897cacb1f58461c3b9c5b3cb22b600dae",
+      "image": "e2b7b063a65e9ef3e3eb72e7db20402879c190bc76357515089b8c560c1261df",
+      "size": {
+        "w": 0.6,
+        "h": 0.6
+      },
+      "shape": "box",
+      "thickness": 0.6,
+      "tint": "#FFFFFF",
+      "tags": [
+        "die",
+        "dice",
+        "d20"
+      ],
+      "states": [
+        {
+          "name": "1",
+          "up": [
+            -0.57735,
+            -0.57735,
+            -0.57735
+          ]
+        },
+        {
+          "name": "2",
+          "up": [
+            0.0,
+            -0.934172,
+            -0.356822
+          ]
+        },
+        {
+          "name": "3",
+          "up": [
+            -0.356822,
+            -0.0,
+            -0.934172
+          ]
+        },
+        {
+          "name": "4",
+          "up": [
+            0.356822,
+            0.0,
+            -0.934172
+          ]
+        },
+        {
+          "name": "5",
+          "up": [
+            0.57735,
+            -0.57735,
+            -0.57735
+          ]
+        },
+        {
+          "name": "6",
+          "up": [
+            -0.934172,
+            -0.356822,
+            0.0
+          ]
+        },
+        {
+          "name": "7",
+          "up": [
+            0.0,
+            -0.934172,
+            0.356822
+          ]
+        },
+        {
+          "name": "8",
+          "up": [
+            -0.57735,
+            -0.57735,
+            0.57735
+          ]
+        },
+        {
+          "name": "9",
+          "up": [
+            -0.57735,
+            0.57735,
+            -0.57735
+          ]
+        },
+        {
+          "name": "10",
+          "up": [
+            -0.934172,
+            0.356822,
+            0.0
+          ]
+        },
+        {
+          "name": "11",
+          "up": [
+            0.934172,
+            -0.356822,
+            0.0
+          ]
+        },
+        {
+          "name": "12",
+          "up": [
+            0.57735,
+            -0.57735,
+            0.57735
+          ]
+        },
+        {
+          "name": "13",
+          "up": [
+            0.57735,
+            0.57735,
+            -0.57735
+          ]
+        },
+        {
+          "name": "14",
+          "up": [
+            0.0,
+            0.934172,
+            -0.356822
+          ]
+        },
+        {
+          "name": "15",
+          "up": [
+            0.934172,
+            0.356822,
+            0.0
+          ]
+        },
+        {
+          "name": "16",
+          "up": [
+            -0.57735,
+            0.57735,
+            0.57735
+          ]
+        },
+        {
+          "name": "17",
+          "up": [
+            -0.356822,
+            0.0,
+            0.934172
+          ]
+        },
+        {
+          "name": "18",
+          "up": [
+            0.356822,
+            0.0,
+            0.934172
+          ]
+        },
+        {
+          "name": "19",
+          "up": [
+            0.0,
+            0.934172,
+            0.356822
+          ]
+        },
+        {
+          "name": "20",
+          "up": [
+            0.57735,
+            0.57735,
+            0.57735
+          ]
+        }
+      ],
+      "counters": [],
+      "textLines": [],
+      "attachments": []
+    },
+    {
+      "id": "std.dice.hit-die",
+      "name": "hit die",
+      "kind": "model",
+      "mesh": "308542c877a0997143329185516897863c76070f12c93d728a8b60d0c9815e5d",
+      "texture": "89618bdfa25972f3449bbe9fd9064c814045291a83cfc093f5b5eb12ea5748d1",
+      "image": "8fbed2d5e602da157c73030d0334f49ac4ab70ae9241230eb6ee0482fd16d87f",
+      "size": {
+        "w": 0.6,
+        "h": 0.6
+      },
+      "shape": "box",
+      "thickness": 0.6,
+      "tint": "#FFFFFF",
+      "tags": [
+        "die",
+        "dice",
+        "d6",
+        "picture"
+      ],
+      "states": [
+        {
+          "name": "7",
+          "up": [
+            0.0,
+            1.0,
+            0.0
+          ]
+        },
+        {
+          "name": "8",
+          "up": [
+            -1.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "name": "10",
+          "up": [
+            0.0,
+            -1.0,
+            0.0
+          ]
+        },
+        {
+          "name": "6",
+          "up": [
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "name": "9",
+          "up": [
+            1.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "name": "Aborted / missing",
+          "up": [
+            0.0,
+            0.0,
+            -1.0
+          ]
+        }
+      ],
+      "counters": [],
+      "textLines": [],
+      "attachments": []
+    },
+    {
+      "id": "std.dice.direction-die",
+      "name": "direction die",
+      "kind": "model",
+      "mesh": "308542c877a0997143329185516897863c76070f12c93d728a8b60d0c9815e5d",
+      "texture": "80e12804415c0decb3570c5ac805fa2b7d886f4d97ec942ba18572d68f7304a8",
+      "image": "f0902aa63e2c7b9212a9efac204d8b6c6ae602945612f6c64201177a267cbb36",
+      "size": {
+        "w": 0.6,
+        "h": 0.6
+      },
+      "shape": "box",
+      "thickness": 0.6,
+      "tint": "#FFFFFF",
+      "tags": [
+        "die",
+        "dice",
+        "d6",
+        "picture"
+      ],
+      "states": [
+        {
+          "name": "Straight",
+          "up": [
+            0.0,
+            1.0,
+            0.0
+          ]
+        },
+        {
+          "name": "Straight, left or right",
+          "up": [
+            -1.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "name": "Straight",
+          "up": [
+            0.0,
+            -1.0,
+            0.0
+          ]
+        },
+        {
+          "name": "Left",
+          "up": [
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "name": "Left or right",
+          "up": [
+            1.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "name": "Right",
+          "up": [
+            0.0,
+            0.0,
+            -1.0
+          ]
+        }
+      ],
+      "counters": [],
+      "textLines": [],
+      "attachments": []
+    }
+  ],
+  "assets": {
+    "0333280ea1c7b12a3b64b305a6ec45b8b45b9584b7f3d1e00e3b428b3b85ae0e": {
+      "file": "assets/0333280ea1c7b12a3b64b305a6ec45b8b45b9584b7f3d1e00e3b428b3b85ae0e.png",
+      "kind": "image",
+      "w": 680,
+      "h": 1020
+    },
+    "38b7c4d7c1c6198e58839e8cb67291a5740094ebbd0eecff2f3b90613938d3b1": {
+      "file": "assets/38b7c4d7c1c6198e58839e8cb67291a5740094ebbd0eecff2f3b90613938d3b1.obj",
+      "kind": "mesh",
+      "w": 0,
+      "h": 0
+    },
+    "d01b91c5238f83c1b8a56864c950b477b4e0b4951466c3186dcb344415b9f591": {
+      "file": "assets/d01b91c5238f83c1b8a56864c950b477b4e0b4951466c3186dcb344415b9f591.png",
+      "kind": "image",
+      "w": 160,
+      "h": 160
+    },
+    "bf0e947186bf21976c8b644f513abae265449e458788374a6f919e59e5cbabe6": {
+      "file": "assets/bf0e947186bf21976c8b644f513abae265449e458788374a6f919e59e5cbabe6.png",
+      "kind": "image",
+      "w": 1020,
+      "h": 1020
+    },
+    "b6538f2144d4df364ba0d8bd2ddd1056846e0cd975d5486f91c306065c7b4029": {
+      "file": "assets/b6538f2144d4df364ba0d8bd2ddd1056846e0cd975d5486f91c306065c7b4029.obj",
+      "kind": "mesh",
+      "w": 0,
+      "h": 0
+    },
+    "10c7cdb4b64e6421aa5076ad273dba588739cd0e8fdb74e16d8f9b65798ee2c7": {
+      "file": "assets/10c7cdb4b64e6421aa5076ad273dba588739cd0e8fdb74e16d8f9b65798ee2c7.png",
+      "kind": "image",
+      "w": 160,
+      "h": 160
+    },
+    "d3b7ba9014930f162356324b3025dc27e629031c4bda7421749c12aebdc68279": {
+      "file": "assets/d3b7ba9014930f162356324b3025dc27e629031c4bda7421749c12aebdc68279.png",
+      "kind": "image",
+      "w": 768,
+      "h": 1024
+    },
+    "dca7d0290060aae6038c386db7ea8f986bca3d595d4a895092c1061cafa91a97": {
+      "file": "assets/dca7d0290060aae6038c386db7ea8f986bca3d595d4a895092c1061cafa91a97.obj",
+      "kind": "mesh",
+      "w": 0,
+      "h": 0
+    },
+    "a0a5d56e4fdf3aa8eae44fdfcf50931eeef4780198a61448c23b2e897a7a500a": {
+      "file": "assets/a0a5d56e4fdf3aa8eae44fdfcf50931eeef4780198a61448c23b2e897a7a500a.png",
+      "kind": "image",
+      "w": 160,
+      "h": 160
+    },
+    "3d754916aeac0168c9070a8629f4d195f16c4e8c4316e93ab8f1958e57941ba4": {
+      "file": "assets/3d754916aeac0168c9070a8629f4d195f16c4e8c4316e93ab8f1958e57941ba4.png",
+      "kind": "image",
+      "w": 1024,
+      "h": 1024
+    },
+    "993e9413c0ee60ddea73369279401e4024b91a25c4f6118ee3d9053bfd50fe18": {
+      "file": "assets/993e9413c0ee60ddea73369279401e4024b91a25c4f6118ee3d9053bfd50fe18.obj",
+      "kind": "mesh",
+      "w": 0,
+      "h": 0
+    },
+    "0b4be72aca7d773a7fe02c7d18550d7e6d0f36a90dde332c5805e434cfffa089": {
+      "file": "assets/0b4be72aca7d773a7fe02c7d18550d7e6d0f36a90dde332c5805e434cfffa089.png",
+      "kind": "image",
+      "w": 160,
+      "h": 160
+    },
+    "8a826353ae2757a4369182118dad8b40ee6bd273e91878872e612b4ecae51c92": {
+      "file": "assets/8a826353ae2757a4369182118dad8b40ee6bd273e91878872e612b4ecae51c92.png",
+      "kind": "image",
+      "w": 1024,
+      "h": 1024
+    },
+    "2a5d06cc358a9a8315b07b8da37c62f59aea031846347af79c5d61ea2da45b8b": {
+      "file": "assets/2a5d06cc358a9a8315b07b8da37c62f59aea031846347af79c5d61ea2da45b8b.obj",
+      "kind": "mesh",
+      "w": 0,
+      "h": 0
+    },
+    "9cee558314e6f64bd75bde09010cf35a5ae886334accf792eb291182400b5277": {
+      "file": "assets/9cee558314e6f64bd75bde09010cf35a5ae886334accf792eb291182400b5277.png",
+      "kind": "image",
+      "w": 160,
+      "h": 160
+    },
+    "15a342909386bb1583e1a3080be37fd897cacb1f58461c3b9c5b3cb22b600dae": {
+      "file": "assets/15a342909386bb1583e1a3080be37fd897cacb1f58461c3b9c5b3cb22b600dae.png",
+      "kind": "image",
+      "w": 1020,
+      "h": 1020
+    },
+    "53ee4171898f5571dd172fb0b89c6ddf4a8b604162bc8e2995e02c6a97bb5e2a": {
+      "file": "assets/53ee4171898f5571dd172fb0b89c6ddf4a8b604162bc8e2995e02c6a97bb5e2a.obj",
+      "kind": "mesh",
+      "w": 0,
+      "h": 0
+    },
+    "e2b7b063a65e9ef3e3eb72e7db20402879c190bc76357515089b8c560c1261df": {
+      "file": "assets/e2b7b063a65e9ef3e3eb72e7db20402879c190bc76357515089b8c560c1261df.png",
+      "kind": "image",
+      "w": 160,
+      "h": 160
+    },
+    "89618bdfa25972f3449bbe9fd9064c814045291a83cfc093f5b5eb12ea5748d1": {
+      "file": "assets/89618bdfa25972f3449bbe9fd9064c814045291a83cfc093f5b5eb12ea5748d1.png",
+      "kind": "image",
+      "w": 1024,
+      "h": 1024
+    },
+    "308542c877a0997143329185516897863c76070f12c93d728a8b60d0c9815e5d": {
+      "file": "assets/308542c877a0997143329185516897863c76070f12c93d728a8b60d0c9815e5d.obj",
+      "kind": "mesh",
+      "w": 0,
+      "h": 0
+    },
+    "8fbed2d5e602da157c73030d0334f49ac4ab70ae9241230eb6ee0482fd16d87f": {
+      "file": "assets/8fbed2d5e602da157c73030d0334f49ac4ab70ae9241230eb6ee0482fd16d87f.png",
+      "kind": "image",
+      "w": 160,
+      "h": 160
+    },
+    "80e12804415c0decb3570c5ac805fa2b7d886f4d97ec942ba18572d68f7304a8": {
+      "file": "assets/80e12804415c0decb3570c5ac805fa2b7d886f4d97ec942ba18572d68f7304a8.png",
+      "kind": "image",
+      "w": 1024,
+      "h": 1024
+    },
+    "f0902aa63e2c7b9212a9efac204d8b6c6ae602945612f6c64201177a267cbb36": {
+      "file": "assets/f0902aa63e2c7b9212a9efac204d8b6c6ae602945612f6c64201177a267cbb36.png",
+      "kind": "image",
+      "w": 160,
+      "h": 160
+    }
+  },
+  "partial": false
+}

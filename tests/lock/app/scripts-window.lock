@@ -1,0 +1,24 @@
+include _host.inc
+key Ctrl+Shift+L
+settle
+checkpoint window
+click ~"Lock table"
+settle
+checkpoint global-script
+click "Red battalion"
+settle
+checkpoint piece-script
+key Ctrl+S
+settle 60 1200
+checkpoint saved-reloaded
+key F1
+settle
+checkpoint reference
+close-window
+close-window
+click "Menu"
+click "Scripting"
+click ~"Check this scenario's scripts"
+settle 60 3000
+checkpoint check
+close-window

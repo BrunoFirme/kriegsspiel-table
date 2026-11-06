@@ -1,0 +1,36 @@
+@instances host,join
+@timeout 300
+host: include _host.inc
+sync hosted
+join: include _join.inc
+sync knocked
+host: click "Observer" timeout=900
+host: settle 60 1800
+sync admitted
+join: settle 60 3000
+join: checkpoint observer-view
+join: rclick world:-4,0.2,0
+join: settle
+join: checkpoint observer-menu
+join: key Escape
+sync observed
+host: click "Umpires"
+host: settle
+host: checkpoint people
+host: click "⋯"
+host: click "Make umpire"
+host: settle 60 1200
+sync promoted
+join: settle 60 2400
+join: checkpoint now-umpire
+sync seen
+host: click "⋯"
+host: click "Put out of the table"
+host: settle
+host: checkpoint put-out-ask
+host: click "Put out"
+host: settle 60 1200
+sync out
+join: settle 60 3000
+join: checkpoint put-out-title
+host: checkpoint host-after

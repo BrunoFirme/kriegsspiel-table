@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>KTable.Server</RootNamespace>
+    <AssemblyName>KTable.Server</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="MoonSharp" Version="2.0.0" />
+    <PackageReference Include="Loretta.CodeAnalysis.Lua" Version="0.2.13" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Core\Core.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Scripting\compat.lua" LogicalName="compat.lua" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,35 @@
+include _host.inc
+click "Map"
+click "Add map sheets from images…"
+settle
+checkpoint file-dialog
+click "map.png"
+click "Open"
+settle 60 3000
+checkpoint sheet-added
+click "free  ·  map"
+settle
+checkpoint sheet-picked
+key Right
+key Right mod=Shift
+key Up
+settle
+checkpoint nudged
+click "Crop…"
+settle
+checkpoint cropping
+click "Apply"
+settle
+click "Free · click to lock it in place"
+settle
+checkpoint locked
+key Right
+settle
+checkpoint locked-nudge
+click "Calibrate"
+drag world:0,0,0 world:8,0,0
+settle
+checkpoint calibrate-dialog
+click "Set scale"
+settle
+checkpoint calibrated

@@ -1,0 +1,68 @@
+@quick
+include _host.inc
+click "Menu"
+settle
+checkpoint menu
+click "Invite…"
+settle
+checkpoint invite
+close-window
+click "Menu"
+click "Scenario properties…"
+settle
+checkpoint scenario-properties
+close-window
+click "Menu"
+click "Settings…"
+settle
+checkpoint settings
+close-window
+click "Menu"
+click "Keyboard and mouse…"
+settle
+checkpoint help
+close-window
+click "Menu"
+click "Convert to a digital tabletop save"
+settle
+checkpoint export-save-submenu
+dismiss
+click "Menu"
+click "Scripting"
+settle
+checkpoint scripting-submenu
+click "Scripting reference…"
+settle
+checkpoint reference
+close-window
+click "Menu"
+click "Scripting"
+click ~"Script console"
+settle
+checkpoint console
+click "Menu"
+click "Scripting"
+click ~"Check this scenario's scripts…"
+settle 60 2400
+checkpoint check-scripts
+close-window
+click "Menu"
+click "Save a copy as a new scenario…"
+settle
+checkpoint save-copy
+close-window
+click "Menu"
+click "Leave the table…"
+settle
+checkpoint leave-confirm
+click "Cancel"
+settle
+key Escape
+settle
+checkpoint esc-menu
+dismiss
+click "Menu"
+click "Leave the table…"
+click "Leave"
+settle 60 3000
+checkpoint left

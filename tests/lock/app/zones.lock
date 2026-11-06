@@ -1,0 +1,12 @@
+include _host.inc
+click "Umpires"
+settle
+click ~"Split the board"
+drag world:2,0,-2 world:7,0,4
+settle
+checkpoint assign-dialog
+click "umpire name"
+type "Boggs"
+click "Assign"
+settle
+checkpoint zone-assigned

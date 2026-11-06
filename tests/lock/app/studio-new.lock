@@ -1,0 +1,31 @@
+include _studio.inc
+key Ctrl+N
+settle
+checkpoint cards
+click "Unit block"
+settle 60 2400
+checkpoint unit-block
+key Ctrl+N
+click "Tile"
+settle 60 2400
+key Ctrl+N
+click "Round token"
+settle 60 2400
+key Ctrl+N
+click "Hex token"
+settle 60 2400
+checkpoint tokens
+key Ctrl+N
+click "Figure on a base"
+settle 60 2400
+checkpoint figure
+key Ctrl+N
+click "Effect"
+settle
+checkpoint effect-dialog
+click "Musket volley"
+settle 60 2400 noimage=1
+checkpoint effect-made
+click "Done"
+settle 60 3000
+checkpoint saved

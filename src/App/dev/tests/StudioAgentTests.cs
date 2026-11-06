@@ -1,0 +1,140 @@
+using System.Linq;
+using System.Text.Json.Nodes;
+using System.Threading.Tasks;
+using KTable.Client.Prefs;
+
+namespace KTable.App;
+
+static class StudioAgentTests
+{
+    sealed record Bench(StudioTests.Rig Rig, AgentEndpoint Agent)
+    {
+        public async Task<string> Call(string tool, string args)
+        {
+            var reply = await Agent.Handle($$$"""{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"{{{tool}}}","arguments":{{{args}}}}}""") ?? "";
+            return reply;
+        }
+
+        public async Task<string> Ok(string tool, string args)
+        {
+            var reply = await Call(tool, args);
+            Check.That(!Failed(reply), $"{tool} works: {reply}");
+            return Text(reply);
+        }
+
+        public async Task Refused(string tool, string args, string why)
+        {
+            var reply = await Call(tool, args);
+            Check.That(Failed(reply), $"{tool} is refused {why}: {reply}");
+        }
+
+        public string IdOf(string name) => Rig.Studio.Pack.Pieces.First(p => p.Name == name).Id;
+    }
+
+    static bool Failed(string reply) => JsonNode.Parse(reply)?["result"]?["isError"]?.GetValue<bool>() != false;
+
+    static string Text(string reply) => JsonNode.Parse(reply)?["result"]?["content"]?[0]?["text"]?.GetValue<string>() ?? "";
+
+    static async Task<Bench> Open(TestRunner r)
+    {
+        var rig = await StudioTests.Open(r);
+        var agent = new AgentEndpoint(new Settings()) { Studio = rig.Studio };
+        r.AddChild(agent);
+        return new Bench(rig, agent);
+    }
+
+    [ScreenTest]
+    static async Task An_agent_makes_a_block_a_token_and_an_effect_and_the_pack_on_disk_holds_all_three(TestRunner r)
+    {
+        var b = await Open(r);
+        await b.Ok("studio_make_block", """{"name":"Grenadiers","fill":"#335577","symbol":"infantry","width":2}""");
+        await b.Ok("studio_new_piece", """{"name":"Marker","shape":"round","colour":"#aa3322"}""");
+        await b.Ok("studio_new_effect", """{"name":"Smoke","kind":"smoke"}""");
+        await b.Refused("studio_new_piece", """{"name":"Odd","shape":"star"}""", "for a shape it does not make");
+        Check.That(b.Rig.Studio.FlushPack(), "the pack saves");
+        var names = b.Rig.OnDisk().Pieces.Select(p => p.Name).ToList();
+        foreach (var n in new[] { "Grenadiers", "Marker", "Smoke" }) Check.That(names.Contains(n), n + " is in the pack on disk: " + string.Join(", ", names));
+        Check.That(!names.Contains("Odd"), "a refused kind is not made");
+    }
+
+    [ScreenTest]
+    static async Task An_agent_sizes_tags_letters_and_gives_looks_to_a_kind_and_reads_them_back(TestRunner r)
+    {
+        var b = await Open(r);
+        await b.Ok("studio_make_block", """{"name":"Fusiliers"}""");
+        var id = b.IdOf("Fusiliers");
+        await b.Ok("studio_set_piece", $$"""{"id":"{{id}}","width":3,"tint":"#112233","tags":["line","french"]}""");
+        await b.Ok("studio_set_text_line", $$"""{"id":"{{id}}","name":"Regiment","default":"1st"}""");
+        await b.Ok("studio_add_look", $$"""{"id":"{{id}}","name":"Shattered"}""");
+        await b.Ok("studio_rename_look", $$"""{"id":"{{id}}","look":2,"name":"Broken"}""");
+        await b.Ok("studio_set_look", $$"""{"id":"{{id}}","look":2,"width":1.5}""");
+        await b.Ok("studio_set_markers", $$"""{"id":"{{id}}","markers":[]}""");
+        var read = await b.Ok("studio_read_piece", $$"""{"id":"{{id}}"}""");
+        foreach (var said in new[] { "Regiment", "Broken", "french" }) Check.That(read.Contains(said), $"the kind reads back with {said}: {read}");
+        await b.Ok("studio_remove", $$"""{"id":"{{id}}","text_line":"Regiment"}""");
+        Check.That(!(await b.Ok("studio_read_piece", $$"""{"id":"{{id}}"}""")).Contains("Regiment"), "the text line is gone");
+        await b.Refused("studio_set_piece", """{"id":"no-such-kind","width":1}""", "for a kind the pack does not have");
+    }
+
+    [ScreenTest]
+    static async Task An_agent_copies_a_kind_deletes_the_copy_and_takes_a_rename_back_with_undo(TestRunner r)
+    {
+        var b = await Open(r);
+        var hussars = b.IdOf("Hussars");
+        await b.Ok("studio_duplicate_piece", $$"""{"id":"{{hussars}}","name":"Hussars copy"}""");
+        var copy = b.IdOf("Hussars copy");
+        Check.That(copy != hussars, "the copy is a kind of its own");
+        await b.Ok("studio_delete_piece", $$"""{"id":"{{copy}}"}""");
+        Check.That(b.Rig.Studio.Pack.Pieces.All(p => p.Name != "Hussars copy"), "the copy is deleted");
+        await b.Ok("studio_set_piece", $$"""{"id":"{{hussars}}","name":"Dragoons"}""");
+        Check.Equal("Dragoons", b.Rig.Studio.Pack.Pieces.First(p => p.Id == hussars).Name, "the kind is renamed");
+        await b.Ok("studio_undo", "{}");
+        Check.Equal("Hussars", b.Rig.Studio.Pack.Pieces.First(p => p.Id == hussars).Name, "undo takes the rename back");
+    }
+
+    [ScreenTest]
+    static async Task An_agent_makes_units_with_counters_lines_and_looks_in_one_call_each(TestRunner r)
+    {
+        var b = await Open(r);
+        await b.Ok("make_unit", """
+            {"name":"1st Line","fill":"#223344","symbol":"infantry","counters":[{"name":"Strength","min":0,"max":12,"default":10}],
+             "text_lines":[{"name":"Colonel","default":"Ney"}],"looks":["Shattered"],"tags":["brigade"]}
+            """);
+        await b.Ok("make_units", """{"units":[{"name":"2nd Line","symbol":"infantry"},{"name":"Guns","symbol":"artillery"}]}""");
+        var read = await b.Ok("studio_read_piece", $$"""{"id":"{{b.IdOf("1st Line")}}"}""");
+        foreach (var said in new[] { "Strength", "Colonel", "Shattered" }) Check.That(read.Contains(said), $"the unit has {said}: {read}");
+        Check.That(b.Rig.Studio.FlushPack(), "the pack saves");
+        var names = b.Rig.OnDisk().Pieces.Select(p => p.Name).ToList();
+        Check.That(names.Contains("2nd Line") && names.Contains("Guns"), "every unit of the batch is on disk: " + string.Join(", ", names));
+    }
+
+    [ScreenTest]
+    static async Task A_face_read_by_an_agent_writes_back_as_it_was(TestRunner r)
+    {
+        var b = await Open(r);
+        await b.Ok("studio_make_block", """{"name":"Cuirassiers","symbol":"cavalry"}""");
+        var id = b.IdOf("Cuirassiers");
+        var face = await b.Ok("studio_read_face", $$"""{"id":"{{id}}"}""");
+        var layers = face[(face.IndexOf('\n') + 1)..];
+        Check.That(JsonNode.Parse(layers) is JsonObject, "the face comes back as its layers: " + face);
+        await b.Ok("studio_write_face", $$"""{"id":"{{id}}","doc":{{layers}}}""");
+        await b.Refused("studio_write_face", $$"""{"id":"{{id}}","doc":"not layers"}""", "for a face that is not layers");
+    }
+
+    [ScreenTest]
+    static async Task An_agent_builds_paints_renames_and_takes_apart_a_model_on_a_block(TestRunner r)
+    {
+        var b = await Open(r);
+        await b.Ok("studio_make_block", """{"name":"Battery"}""");
+        var id = b.IdOf("Battery");
+        await b.Ok("studio_model_add_part", $$"""{"id":"{{id}}","shape":"cylinder","name":"Barrel","pos":[0,0.2,0],"size":[0.2,0.2,1]}""");
+        await b.Refused("studio_model_add_part", $$"""{"id":"{{id}}","shape":"dodecahedron"}""", "for a shape it does not add");
+        var parts = await b.Ok("studio_model_parts", $$"""{"id":"{{id}}"}""");
+        Check.That(parts.Contains("Barrel"), "the part is listed: " + parts);
+        await b.Ok("studio_model_set_part", $$"""{"id":"{{id}}","part":"Barrel","name":"Gun","tint":"#444444"}""");
+        await b.Ok("studio_model_paint", $$"""{"id":"{{id}}","colour":"#806040","part":"Gun"}""");
+        await b.Ok("studio_model_view", $$"""{"id":"{{id}}","side":"three-quarter"}""");
+        await b.Ok("studio_model_remove_part", $$"""{"id":"{{id}}","part":"Gun"}""");
+        Check.That(!(await b.Ok("studio_model_parts", $$"""{"id":"{{id}}"}""")).Contains("Gun"), "the part is gone");
+    }
+}

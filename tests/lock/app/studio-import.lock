@@ -1,0 +1,19 @@
+include _studio.inc
+drop-file "{fixtures}/cube.obj"
+settle 60 3000
+checkpoint obj
+drop-file "{fixtures}/cube.stl"
+settle 60 3000
+checkpoint stl
+drop-file "{fixtures}/cube.ply"
+settle 60 3000
+checkpoint ply
+drop-file "{fixtures}/cube.glb"
+settle 60 3000
+checkpoint glb
+drop-file "{fixtures}/picture.png"
+settle 60 3000
+checkpoint picture
+click "Done"
+settle 60 3000
+checkpoint saved

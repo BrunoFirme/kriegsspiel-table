@@ -1,0 +1,33 @@
+include _host.inc
+wheel world:0,0,2 3
+settle
+checkpoint zoom-in
+wheel world:0,0,2 -3
+settle
+checkpoint zoom-out
+click world:-4,0.2,0
+wheel world:-4,0.2,0 2
+settle
+checkpoint turned-wheel
+wheel world:-4,0.2,0 2 mod=Ctrl
+settle
+wheel world:-4,0.2,0 2 mod=Shift
+settle
+checkpoint turned-ctrl-shift
+wheel world:-4,0.2,0 2 mod=Alt
+settle
+checkpoint alt-zoom
+wheel world:0,0,2 2
+settle
+checkpoint zoom-with-selection
+wheel "Select" 3
+settle
+checkpoint over-panel
+mousedown world:4,0.2,0
+move world:4,0,1
+move world:3,0,2
+wheel world:3,0,2 2
+settle
+mouseup world:3,0,2
+settle
+checkpoint carried-turned

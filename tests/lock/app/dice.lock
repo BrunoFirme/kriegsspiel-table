@@ -1,0 +1,20 @@
+include _host.inc
+click "Dice"
+settle
+checkpoint popover
+click "d6"
+click "d6"
+click "d20"
+settle
+checkpoint hand
+click "Clear"
+click "d8"
+click "Roll"
+settle
+checkpoint rolled
+key Escape
+click world:2,0.3,-6
+key R
+settle 30 900 noimage=1
+note "dice-mask 0,40,1260,680"
+checkpoint thrown

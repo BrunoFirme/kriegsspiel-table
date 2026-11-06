@@ -1,0 +1,28 @@
+@instances host,join
+@timeout 300
+host: include _host.inc
+sync hosted
+join: include _join.inc
+sync knocked
+host: click "Umpire" timeout=900
+host: settle 60 1800
+sync admitted
+host: click "Umpires"
+host: click ~"Split the board"
+host: drag world:2,0,-2 world:7,0,5
+host: settle
+host: checkpoint assign
+host: click "Assign"
+host: settle
+host: checkpoint zone-made
+sync zoned
+join: settle 60 3000
+join: checkpoint join-sees-zone
+join: drag world:4,0.2,0 world:5,0,1
+join: settle
+join: drag world:-4,0.2,0 world:-5,0,1
+join: settle
+join: checkpoint join-moves
+sync moved
+host: settle
+host: checkpoint host-after

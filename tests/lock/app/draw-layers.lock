@@ -1,0 +1,35 @@
+include _host.inc
+click "Draw"
+settle
+checkpoint draw-panel
+drag world:-6,0,5 world:6,0,6 steps=20
+settle
+checkpoint line-drawn
+click "red"
+click "Rectangle"
+drag world:-3,0,-2 world:3,0,2
+settle
+checkpoint shape-drawn
+click "Erase"
+drag world:0,0,4 world:0,0,7
+settle
+checkpoint rubbed
+click "Draw"
+click "Layers"
+settle
+checkpoint layers-panel
+click "A fresh sheet of tracing paper over the map"
+settle
+dclick "Layer 2"
+type "Orders\n"
+settle
+checkpoint renamed
+click "Hide this layer (on your screen only)"#2
+settle
+checkpoint hidden
+click ~"Remove this layer"
+settle
+checkpoint remove-ask
+click "Remove"
+settle
+checkpoint removed

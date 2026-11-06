@@ -1,0 +1,38 @@
+include _host.inc
+click "Menu"
+click "Settings…"
+settle
+checkpoint settings
+click "Say what just happened"
+click "Table"
+click "Names on pieces, counters on their backs"
+click "Graphics"
+click "4 samples"
+click "8 samples"
+click "Captures"
+click "Copy to the clipboard"
+click "Keys"
+click "Key for Ruler"
+key N
+settle
+checkpoint changed
+click "Done"
+settle
+key N
+settle
+checkpoint rebound-ruler
+restart
+settle
+click "Lock table"
+click "Resume"
+settle 60 3000
+click "Menu"
+click "Settings…"
+settle
+checkpoint settings-after-restart
+click "Keys"
+click "Reset to defaults"
+click "Done"
+key M
+settle
+checkpoint reset-keys

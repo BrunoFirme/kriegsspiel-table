@@ -1,0 +1,39 @@
+@quick
+settle
+checkpoint host-page
+click "Lock table"
+settle
+checkpoint chosen
+click "Lock small"
+settle
+checkpoint chosen-other
+rclick "Lock table"
+settle
+checkpoint item-menu
+click "Move to"
+settle
+checkpoint move-to-submenu
+dismiss
+settle
+click "Move to a folder, export, delete (also on right-click)"#1
+settle
+checkpoint dots-menu
+dismiss
+click "Join a game"
+settle
+checkpoint join-page
+click "Piece studio"
+settle
+checkpoint packs-page
+rclick "Lock pieces"
+settle
+checkpoint pack-item-menu
+dismiss
+click "For makers"
+settle
+checkpoint makers-guide
+close-window
+settle
+click "Scenarios"
+settle
+checkpoint back-to-host

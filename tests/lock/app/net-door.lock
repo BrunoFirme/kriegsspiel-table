@@ -1,0 +1,39 @@
+@instances host,join
+@timeout 300
+host: include _host.inc
+host: click "Menu"
+host: click "Invite…"
+host: click "none: open door"
+host: type "ford\n"
+host: close-window
+host: settle
+sync hosted
+join: settle
+join: click "Join a game"
+join: wait 30
+join: click "your name"
+join: type "Boggs"
+join: click "the game's password, if it has one"
+join: type "wrong"
+join: click "Join"
+join: settle 30 1200 noimage=1
+join: checkpoint wrong-password
+sync tried
+join: click "the game's password, if it has one"
+join: clear
+join: type "ford"
+join: click "Join"
+sync knocked
+host: click "Refuse" timeout=900
+host: settle
+host: checkpoint refused
+sync refused
+join: settle 30 1200 noimage=1
+join: checkpoint refused-title
+join: click "Join"
+sync knocked-again
+host: click "Lead" timeout=900
+host: settle 60 1800
+sync admitted
+join: settle 60 3000
+join: checkpoint lead

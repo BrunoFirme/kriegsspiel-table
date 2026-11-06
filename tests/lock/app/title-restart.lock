@@ -1,0 +1,11 @@
+include _host.inc
+drag world:-4,0.2,0 world:-6,0,-2
+settle
+checkpoint moved
+restart
+settle
+checkpoint title-after-restart
+click "Lock table"
+click "Resume"
+settle 60 3000
+checkpoint resumed

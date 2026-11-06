@@ -1,0 +1,44 @@
+settle
+click "Folders ▾"
+settle
+checkpoint folders-menu
+click "New folder…"
+settle
+checkpoint new-folder-prompt
+type "Campaign"
+key Enter
+settle
+checkpoint folder-made
+click "All"
+wait 30
+rclick "Lock table"
+click "Move to"
+click "Campaign"
+settle
+checkpoint moved
+click "Campaign"
+settle
+checkpoint viewing-folder
+click "Folders ▾"
+click ~"Rename"
+clear
+type "Summer"
+click "OK"
+settle
+checkpoint renamed
+click "Folders ▾"
+click ~"Delete"
+settle
+checkpoint delete-folder-ask
+click "Delete"
+settle
+checkpoint folder-deleted
+click "Piece studio"
+wait 30
+rclick "Lock pieces"
+click "Move to"
+click "New folder…"
+type "Mine"
+key Enter
+settle
+checkpoint pack-in-new-folder
