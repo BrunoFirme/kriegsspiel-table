@@ -15,7 +15,7 @@ the plan says translate it), unknown (nobody has decided).
 | global | 14 | 13 | 1 | 55 |
 | namespaces | 23 | 21 | 2 | 180 |
 | events | 8 | 7 | 1 | 50 |
-| engine | 21 | 17 | 4 | 21 |
+| engine | 22 | 18 | 4 | 22 |
 
 ## types
 
@@ -953,6 +953,7 @@ the plan says translate it), unknown (nobody has decided).
 | `load order: global before objects; onLoad(script_state)` | 54 / 54 | partial | ScriptHost.Load; the saved state string |  |
 | `member names fold (exact, first letter up, snake to camel, both)` | 54 / 54 | native | TtsTranslator.FoldMember before every object member lookup | TranslatorFoldTests |
 | `player model: colours, Black as GM, promoted, seated, host` | 54 / 54 | partial | compat.player / compat.color_of: umpires and sides |  |
+| `positionToWorld and positionToLocal: TTS's transform, local x along +X at rotation zero, in mesh units times scale for a model and the size rule for a flat` | 54 / 54 | compat | compat.position_to_world / position_to_local; a model def carries local_unit from the converter | TtsLocalFrameTests |
 | `save quirk: a number written as a string, or NaN` | 54 / 54 | native | Tts.D falls back to the default and the report says so | ConverterTests |
 | `save quirk: duplicate GUIDs inside bags` | 54 / 54 | unknown |  |  |
 | `save quirk: negative scale mirrors` | 54 / 54 | unknown |  |  |

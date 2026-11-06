@@ -161,6 +161,7 @@ public static partial class ApiDoc
         F("piece", "size", "Size", "Its size on the map at its state and scale: { w =, h = }.", "getBounds");
         Note("A state with a size of its own gives that size; otherwise the kind's. Both are multiplied by `scale`.");
         F("piece", "picture_size", "Size?", "Its picture's width and height in pixels at its state, or nil without a picture.");
+        F("piece", "local_unit", "Size?", "For a model that came from TTS, what one unit of its script's local frame is in piece units: { x =, z = }; nil for every other piece.");
         F("piece", "shape", "string", "Its outline at its state: \"box\", \"rounded\", \"circle\", \"hex\", or \"alpha\" for a token cut along its picture.");
         F("piece", "face_down", "boolean", "Turned over.", "is_face_down");
         See("self.flip", "on_flip");

@@ -206,6 +206,7 @@ Read from `self` or from any piece `board.find` or `board.pieces` hands back. Fi
 | [`self.scale`](#selfscale) | Its size multiplier on the table. |
 | [`self.size`](#selfsize) | Its size on the map at its state and scale: { w =, h = }. |
 | [`self.picture_size`](#selfpicture_size) | Its picture's width and height in pixels at its state, or nil without a picture. |
+| [`self.local_unit`](#selflocal_unit) | For a model that came from TTS, what one unit of its script's local frame is in piece units: { x =, z = }; nil for every other piece. |
 | [`self.shape`](#selfshape) | Its outline at its state: "box", "rounded", "circle", "hex", or "alpha" for a token cut along its picture. |
 | [`self.face_down`](#selfface_down) | Turned over. |
 | [`self.locked`](#selflocked) | Pinned to the table: not dragged, turned or resized by hand. |
@@ -393,6 +394,16 @@ self.picture_size
 ```
 
 Its picture's width and height in pixels at its state, or nil without a picture.
+
+**Type** `Size?`, read-only.
+
+### `self.local_unit`
+
+```lua
+self.local_unit
+```
+
+For a model that came from TTS, what one unit of its script's local frame is in piece units: { x =, z = }; nil for every other piece.
 
 **Type** `Size?`, read-only.
 

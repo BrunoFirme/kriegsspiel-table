@@ -9,6 +9,8 @@ local function vec(v, k, i, d)
 end
 local TOKEN_AREA = 14
 local function units(obj)
+  local lu = obj.local_unit
+  if type(lu) == "table" then return num(lu.x, 1), num(lu.z, 1) end
   local s = obj.size
   if not s then return 0.5, 0.5 end
   local k = obj.scale
@@ -159,13 +161,13 @@ function compat.rotate(obj, v) obj.set_rot((obj.rot or 0) + vec(v, "y", 2, 0)) e
 function compat.translate(obj, v) obj.set_pos(obj.pos.x + vec(v, "x", 1, 0), obj.pos.z + vec(v, "z", 3, 0)) end
 function compat.position_to_world(obj, v)
   local ux, uz = units(obj)
-  local w = obj.to_world(vec(v, "x", 1, 0) * ux, vec(v, "z", 3, 0) * uz)
+  local w = obj.to_world(-vec(v, "x", 1, 0) * ux, vec(v, "z", 3, 0) * uz)
   return compat.Vector(w.x, vec(v, "y", 2, 0), w.z)
 end
 function compat.position_to_local(obj, v)
   local ux, uz = units(obj)
   local l = obj.to_local(vec(v, "x", 1, 0), vec(v, "z", 3, 0))
-  return compat.Vector(l.x / ux, vec(v, "y", 2, 0), l.z / uz)
+  return compat.Vector(-l.x / ux, vec(v, "y", 2, 0), l.z / uz)
 end
 function compat.transform_forward(obj) local a = math.rad(obj.rot or 0); return compat.Vector(math.sin(a), 0, math.cos(a)) end
 function compat.transform_right(obj) local a = math.rad(obj.rot or 0); return compat.Vector(math.cos(a), 0, -math.sin(a)) end

@@ -344,6 +344,7 @@ public sealed partial class DefFactory
         {
             Name = Name(b),
             Size = size,
+            LocalUnit = b.Name == "Custom_Model" ? new Size2(Math.Round(r, 4), Math.Round(r * (b.ScaleX == 0 ? 1 : Math.Abs(b.ScaleZ / b.ScaleX)), 4)) : null,
             Thickness = Math.Round(Math.Clamp(BaseThickness(b) * Math.Abs(b.ScaleY) * (b.Name == "Custom_Model" ? r / Math.Max(1e-6, Math.Abs(b.ScaleX)) : heightScale), 0.02, 3), 3),
             Tint = b.Color ?? "#FFFFFF",
             TintsPictures = b.Name == "Custom_Token" || b.Name.StartsWith("Block"),

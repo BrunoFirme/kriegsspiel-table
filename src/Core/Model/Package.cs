@@ -150,6 +150,7 @@ public sealed class PieceDef
     public string? AddOnMesh { get; set; }
     public string? AddOnTexture { get; set; }
     public Size2 Size { get; set; } = new(1, 1);
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public Size2? LocalUnit { get; set; }
     public string Shape { get; set; } = "box";
     public double Thickness { get; set; } = 0.2;
     public string Tint { get; set; } = "#FFFFFF";

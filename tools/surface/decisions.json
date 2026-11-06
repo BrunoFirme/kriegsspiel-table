@@ -366,6 +366,7 @@
  },
  "engine": {
   "member names fold (exact, first letter up, snake to camel, both)": ["native", "TtsTranslator.FoldMember before every object member lookup", "", "TranslatorFoldTests"],
+  "positionToWorld and positionToLocal: TTS's transform, local x along +X at rotation zero, in mesh units times scale for a model and the size rule for a flat": ["compat", "compat.position_to_world / position_to_local; a model def carries local_unit from the converter", "", "TtsLocalFrameTests"],
   "Lua table to vector, colour and params and back (positional and named)": ["partial", "compat.Vector / compat.Color / vec(): the forms met so far", ""],
   "TTS Vector and Color classes with their methods": ["partial", "compat.Vector / compat.Color: the methods met so far", ""],
   "click_function(obj, player_color, alt_click)": ["compat", "compat.create_button / tts_handler", "", "TranslatorTests.Handlers_get_the_piece_their_widget_is_on"],

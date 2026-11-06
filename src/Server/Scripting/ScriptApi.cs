@@ -341,6 +341,14 @@ internal sealed class PieceHandles(ScriptHost host)
                 return t;
             }
             case "picture_size": return PictureSize(p, def);
+            case "local_unit":
+            {
+                if (def?.LocalUnit is not { } lu) return DynValue.Nil;
+                var t = T();
+                t.Table["x"] = N(lu.W);
+                t.Table["z"] = N(lu.H);
+                return t;
+            }
             case "shape":
             {
                 var sh = def != null && p.State > 0 && p.State < def.States.Count ? def.States[p.State].Shape : null;

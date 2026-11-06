@@ -8131,6 +8131,15 @@
    "modules": 54
   },
   {
+   "row": "positionToWorld and positionToLocal: TTS's transform, local x along +X at rotation zero, in mesh units times scale for a model and the size rule for a flat",
+   "status": "compat",
+   "where": "compat.position_to_world / position_to_local; a model def carries local_unit from the converter",
+   "instead": "",
+   "held_by": "TtsLocalFrameTests",
+   "count": 54,
+   "modules": 54
+  },
+  {
    "row": "save quirk: a number written as a string, or NaN",
    "status": "native",
    "where": "Tts.D falls back to the default and the report says so",

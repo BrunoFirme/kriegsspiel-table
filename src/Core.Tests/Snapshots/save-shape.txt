@@ -1,4 +1,4 @@
-format 23
+format 24
 type AccessChanged object
   access: GameAccess
 type AddBoard object
@@ -546,6 +546,7 @@ type PieceDef object
   id: string
   image: string
   kind: string
+  localUnit: Size2?
   mesh: string
   name: string
   nameBox: FaceBox
