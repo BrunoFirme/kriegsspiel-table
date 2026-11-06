@@ -352,7 +352,9 @@ gives each direct match.
   it saved, so the look keeps its own. Decals on web links are downloaded by the host. An input dialog asking for an image or URL
   offers a picture from this computer or a web link. A button or input turned face down above the piece shows
   but takes no clicks, as TTS's locked text does.
-- **Noted:** calls with no meaning here (`addForce`, decks, bags) become `compat.todo(...)`, which prints once.
+- **Bags:** `putObject`, `takeObject` (by guid or index, at a position and rotation, with its callback), `getObjects`
+  and `getQuantity` run on the piece's own `stow`, `unstow` and `stowed`, so a bag script places and recalls as in TTS.
+- **Noted:** calls with no meaning here (`addForce`, decks) become `compat.todo(...)`, which prints once.
 
 Handlers keep their TTS parameters, bound in a first line:
 

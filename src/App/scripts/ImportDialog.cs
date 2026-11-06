@@ -41,7 +41,7 @@ public partial class ImportDialog : AcceptDialog
         var root = new VBoxContainer();
         root.AddThemeConstantOverride("separation", 6);
         AddChild(root);
-        root.AddChild(Ui.Hint("A TTS module or save becomes a pack (every piece, bags opened up) and a scenario (its table laid out; big locked boards become map sheets). Scripts are translated; the report beside the scenario lists what did not convert."));
+        root.AddChild(Ui.Hint("A TTS module or save becomes a pack (every piece, bags holding their contents) and a scenario (its table laid out; big locked boards become map sheets). Scripts are translated; the report beside the scenario lists what did not convert and what is not taken from TTS exactly."));
 
         var cols = new HBoxContainer { SizeFlagsVertical = Control.SizeFlags.ExpandFill };
         root.AddChild(cols);
@@ -414,6 +414,11 @@ public partial class ImportDialog : AcceptDialog
                 var parts = line[8..].Split(' ', 2);
                 leftOut = parts[0] == "1" ? "1 piece left out" : $"{parts[0]} pieces left out";
                 Log($"[color=#ff5f5f][b]{leftOut}:[/b] {Fmt.Bb(parts.Length > 1 ? parts[1] : "")}. Their pictures or models are gone from the web and TTS has no copy on this computer, so TTS cannot show them either. Everything else came in; the report lists each one with its link.[/color]");
+                return;
+            }
+            if (line.StartsWith("NOTEXACT "))
+            {
+                Log($"[color=#fc6][b]{Fmt.Bb(line[9..])} not taken from TTS exactly[/b]: left out, stood in for or only partly done, each named in the report with what to do instead.[/color]");
                 return;
             }
             if (line.StartsWith("Output") || line.StartsWith("Cache")) return;

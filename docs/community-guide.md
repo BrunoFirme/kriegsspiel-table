@@ -8,19 +8,21 @@ folder in any Steam library).
 
 You get:
 
-- a **pack** with every piece (bags opened up);
+- a **pack** with every piece, the contents of bags included;
 - a **scenario** laid out as in the module: boards become map sheets, the rest goes on the umpire board, and the
-  module's own sky becomes its backdrop;
-- a further scenario for each memory bag, with the layout it places;
-- `import-report.md` beside the scenario: what did not convert. Pieces whose picture TTS cannot show either (the
+  module's own sky becomes its backdrop; a bag is a piece that holds its contents off the table, opened from its
+  right-click card, and a memory bag places and recalls its layout from there as it did in TTS;
+- `import-report.md` beside the scenario: what did not convert, and a list of everything the module uses that is
+  not taken from TTS exactly, with what to do instead. Pieces whose picture TTS cannot show either (the
   link is gone, or its server keeps answering with a web page instead of the picture) are left out and named there.
   A server that fails only once gets a stand-in picture, and the next import tries again.
 
 | Converts | Does not |
 |---|---|
-| Tiles, tokens, boards, 3D models | Physics, hands (listed in the report) |
-| Cards, and decks as piles | Asset-bundle models (houses, trees, ships) |
-| Checkers, and six-sided picture dice | Bags as containers |
+| Tiles, tokens, boards, 3D models | Physics, hands, hidden zones, grid, lighting, turns (listed in the report) |
+| Cards, and decks as piles | Infinite bags (place pieces from the Pieces drawer) |
+| Checkers, and six-sided picture dice | |
+| Bags, holding their contents | |
 | States (formation, shattered…) | Plain TTS dice (use the app's) |
 | IKS script counters and text | |
 | Notecards, Notes and Notebook pages, as note cards you can type into | |

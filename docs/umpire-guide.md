@@ -123,6 +123,9 @@ The tool strip runs down the left. Point at any tool and press **F1** for its se
 - **Label and description:** at the foot of the right-click menu. Both show on hover to everyone, observers
   included, and are in the scenario file: not a hiding place.
 - **Markers:** drop a small piece on a larger one and it rides along. Drop it elsewhere to free it.
+- **Holding:** any piece can hold others off the table, as a bag does. Select the pieces and the holder, right-click
+  the holder → **Put the others into** it; hover shows how many it holds, and its card lists them under **Take
+  out**. A held piece keeps everything it had and comes back where you put it.
 - **Locked:** right-click → **Locked** pins a piece: it can be read and deleted, not moved.
 - **Tint:** right-click → **Tint** colours every selected piece: a swatch, **+** for any colour, **Reset** for the
   colour it was made with. Where it shows follows TTS: a token's picture, a tile's sides; decals keep their colours.
