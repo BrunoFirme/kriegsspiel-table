@@ -110,7 +110,7 @@ sealed class ReleaseDemo
         var nodes = T.SelectedNodes.ToList();
         var gs = nodes.Count == 0 ? T.Gizmo.Sheet : null;
         if (gs != null || nodes.Count > 0) T.Gizmo.Measure(nodes, gs);
-        return T.Rig.Cam.UnprojectPosition((turn ? T.Gizmo.RotateKnobWorld() : T.Gizmo.ScaleKnobWorld()) + Vector3.Up * 0.4f);
+        return T.Rig.Cam.UnprojectPosition(turn ? T.Gizmo.RotateKnobWorld() : T.Gizmo.ScaleKnobWorld());
     }
     Vector2 CropKnob() { var r = T.CropRect; return T.Rig.Cam.UnprojectPosition(T.Crop.World(r.X + r.W, r.Y + r.H / 2)); }
     bool Pick(Tool t) { T.SetTool(t); return T.Tool == t; }

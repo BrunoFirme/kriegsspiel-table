@@ -182,18 +182,18 @@ public partial class PieceNode
         _model.GlobalTransform = new Transform3D(worldBasis * Basis.FromScale(_model.Scale), worldCenter);
     }
 
-    public (double rotDeg, double y) SettleFromPhysics(int state, Basis rest, Vector3 center)
+    public (double rotDeg, double y) SettleFromPhysics(int state, Basis rest, Vector3 center, Func<Vec2, double, double, double> stored)
     {
         if (_hull == null) return (Piece.RotDeg, Piece.Y);
         var R = new Basis(FaceQuat(state));
         var v = (rest * R.Inverse()) * Vector3.Right;
         float theta = Mathf.Atan2(-v.Z, v.X);
         var (loR, _) = ExtentY(rest);
-        double y = Math.Max(0, center.Y + loR - 0.03);
-        if (y < 0.02) y = 0;
-        _animGen++;
+        var pos = Coords.FromWorld(center);
         double rotDeg = ((180 - Mathf.RadToDeg(theta)) % 360 + 360) % 360;
-        FinishAt(state, Coords.FromWorld(center), rotDeg, y);
+        double y = stored(pos, rotDeg, Math.Max(0, center.Y + loR - 0.03));
+        _animGen++;
+        FinishAt(state, pos, rotDeg, y);
         return (rotDeg, y);
     }
 
@@ -245,7 +245,7 @@ public partial class PieceNode
         int gen = ++_animGen;
         var T = new Basis(Vector3.Up, Coords.Yaw(rotDeg)) * new Basis(FaceQuat(state));
         var (loT, _) = ExtentY(T);
-        var toC = Coords.ToWorld(pos, 0.03f + (float)y - loT);
+        var toC = Coords.ToWorld(pos, BaseAt(pos, rotDeg, y, 0) - loT);
         await Animate(fromB, fromC, T, toC, 0.3, 0.25f, gen);
         if (gen != _animGen) return;
         Sounds?.Tumble(this, 0.2f);
@@ -275,7 +275,7 @@ public partial class PieceNode
         _lastRot = rotDeg;
         _lastY = y;
         Scale = Vector3.One;
-        Position = Coords.ToWorld(pos, 0.03f + (float)y);
+        Position = Coords.ToWorld(pos, BaseAt(pos, rotDeg, y, 0));
         Rotation = new Vector3(0, Coords.Yaw(rotDeg), 0);
         ApplyFace(state);
         if (!Rolling && Piece.State != state) BeginSpin();

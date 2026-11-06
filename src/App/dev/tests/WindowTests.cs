@@ -203,12 +203,12 @@ static class WindowTests
         var nodes = t.Table.Selection.Nodes.ToList();
         g.Measure(nodes, null);
         var cam = t.Table.Rig.Cam;
-        var up = Vector3.Up * 0.4f;
         var center = nodes.Aggregate(Vector3.Zero, (a, n) => a + (n.Position with { Y = 0 })) / nodes.Count;
-        var knob = g.ScaleKnobWorld();
-        Check.Equal(Gizmo.Handle.Scale, g.At(cam.UnprojectPosition(knob + up)), "the scale knob is where it is drawn");
-        g.Begin(Gizmo.Handle.Scale, cam.UnprojectPosition(knob + up));
-        g.Drag(cam.UnprojectPosition(center + (knob - center) * 2 + up), snap: false);
+        var press = cam.UnprojectPosition(g.ScaleKnobWorld());
+        Check.Equal(Gizmo.Handle.Scale, g.At(press), "the scale knob is where it is drawn");
+        var grip = t.Table.Rig.GroundAt(press)!.Value;
+        g.Begin(Gizmo.Handle.Scale, press);
+        g.Drag(cam.UnprojectPosition(center + (grip - center) * 2), snap: false);
         Check.That(g.Dragging, "the knob is held");
         g.End();
         t.Table.Poses.Flush();

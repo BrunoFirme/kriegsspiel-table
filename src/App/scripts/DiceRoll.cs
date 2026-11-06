@@ -11,11 +11,13 @@ sealed class Dice
     readonly TableContext _c;
     readonly PieceLayer _pieces;
     readonly Selection _selection;
-    public Dice(TableContext c, PieceLayer pieces, Selection selection)
+    readonly Carry _hand;
+    public Dice(TableContext c, PieceLayer pieces, Selection selection, Carry hand)
     {
         _c = c;
         _pieces = pieces;
         _selection = selection;
+        _hand = hand;
     }
 
     Hover _hover = null!;
@@ -93,12 +95,12 @@ sealed class Dice
 
     List<(PieceNode n, RigidBody3D b)> Bodies(Node3D world, List<PieceNode> dice, Vector3 throwVel, bool hop)
     {
-        var floor = new StaticBody3D { Position = new Vector3(0, -0.5f, 0) };
-        floor.AddChild(new CollisionShape3D { Shape = new BoxShape3D { Size = new Vector3(100000, 1, 100000) } });
-        world.AddChild(floor);
         var mat = new PhysicsMaterial { Friction = 0.85f, Bounce = 0.25f };
         var set = dice.ToHashSet();
         var centers = dice.Select(n => n.ModelWorldCenter).ToList();
+        var middle = centers.Aggregate(Vector3.Zero, (a, c) => a + c) / centers.Count;
+        float spread = centers.Max(c => (c - middle with { Y = c.Y }).Length()) * 2;
+        TerrainCollider.AddGround(world, _c.S.Ground, middle, TerrainCollider.Span + spread);
         foreach (var n in _pieces.Nodes)
         {
             if (set.Contains(n) || n.Layer != dice[0].Layer || n.Rolling || n.Piece.NoCollision) continue;
@@ -148,7 +150,7 @@ sealed class Dice
             {
                 int face = n.Piece.PhysicalRoll ? n.FaceUp(r.b) : n.PendingState ?? n.Piece.State;
                 if (n.Piece.PhysicalRoll) real.Add((n, face));
-                var (rot, y) = n.SettleFromPhysics(face, r.b, r.c);
+                var (rot, y) = n.SettleFromPhysics(face, r.b, r.c, (pos, rotDeg, top) => _hand.RestingY(n, pos, rotDeg, top));
                 cmds.Add(new MovePiece { Layer = n.Layer, Id = n.Piece.Id, Pos = Coords.FromWorld(r.c), RotDeg = rot, Stack = 0, Y = y });
                 _c.Moving(n);
             }

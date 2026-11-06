@@ -50,20 +50,16 @@ sealed class Gizmo : IKnobDrag
         var mat =
             new StandardMaterial3D { AlbedoColor = new Color(1, 0.93f, 0.22f, 1), ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded, NoDepthTest = true,
                 CullMode = BaseMaterial3D.CullModeEnum.Disabled };
-        var up = Vector3.Up * 0.4f;
         float k = KnobSize();
-        float bw = k * 0.22f;
-        mesh.SurfaceBegin(Mesh.PrimitiveType.TriangleStrip, mat);
-        for (int i = 0; i <= 72; i++)
+        var ring = new List<Vec2>(RingSegments + 1);
+        for (int i = 0; i <= RingSegments; i++)
         {
-            var a = Mathf.Tau * i / 72;
-            var d = new Vector3(Mathf.Cos(a), 0, Mathf.Sin(a));
-            mesh.SurfaceAddVertex(_center + d * (_radius - bw) + up);
-            mesh.SurfaceAddVertex(_center + d * (_radius + bw) + up);
+            var a = Mathf.Tau * i / RingSegments;
+            ring.Add(Coords.FromWorld(_center + new Vector3(Mathf.Cos(a), 0, Mathf.Sin(a)) * _radius));
         }
-        mesh.SurfaceEnd();
-        var rk = RotateKnobWorld() + up;
-        var sk = ScaleKnobWorld() + up;
+        Ribbon.Draw(mesh, mat, ring, k * 0.44f, _c.SheetsTop + Lift, _c.S.Ground);
+        var rk = RotateKnobWorld();
+        var sk = ScaleKnobWorld();
         mesh.SurfaceBegin(Mesh.PrimitiveType.Triangles, mat);
         for (int i = 0; i < 20; i++)
         {
@@ -77,6 +73,11 @@ sealed class Gizmo : IKnobDrag
             mesh.SurfaceAddVertex(sk + new Vector3(dx * k * 0.85f, 0, dz * k * 0.85f));
         mesh.SurfaceEnd();
     }
+
+    const float Lift = 0.4f;
+    const int RingSegments = 72;
+
+    Vector3 Seated(Vector3 w) => w with { Y = _c.SheetsTop + Lift + (float)_c.S.Ground.At(Coords.FromWorld(w)) };
 
     public float KnobSize() => Mathf.Max(0.05f, 8f / Mathf.Max(0.01f, Rig.PixelsPerUnit()));
 
@@ -104,8 +105,8 @@ sealed class Gizmo : IKnobDrag
         _radius = Mathf.Max(r * 1.06f, 18f / Mathf.Max(0.01f, Rig.PixelsPerUnit()));
     }
 
-    public Vector3 RotateKnobWorld() => _center + new Vector3(0, 0, -_radius).Rotated(Vector3.Up, Rig.Yaw + Mathf.Pi);
-    public Vector3 ScaleKnobWorld() => _center + new Vector3(_radius * 0.7071f, 0, _radius * 0.7071f).Rotated(Vector3.Up, Rig.Yaw + Mathf.Pi);
+    public Vector3 RotateKnobWorld() => Seated(_center + new Vector3(0, 0, -_radius).Rotated(Vector3.Up, Rig.Yaw + Mathf.Pi));
+    public Vector3 ScaleKnobWorld() => Seated(_center + new Vector3(_radius * 0.7071f, 0, _radius * 0.7071f).Rotated(Vector3.Up, Rig.Yaw + Mathf.Pi));
 
     public Handle At(Vector2 screen)
     {
@@ -113,9 +114,8 @@ sealed class Gizmo : IKnobDrag
         var sheet = nodes.Count == 0 ? Sheet : null;
         if (nodes.Count == 0 && sheet == null) return Handle.None;
         Measure(nodes, sheet);
-        var up = Vector3.Up * 0.4f;
-        if ((Rig.Cam.UnprojectPosition(RotateKnobWorld() + up) - screen).Length() < 16) return Handle.Rotate;
-        if ((Rig.Cam.UnprojectPosition(ScaleKnobWorld() + up) - screen).Length() < 16) return Handle.Scale;
+        if ((Rig.Cam.UnprojectPosition(RotateKnobWorld()) - screen).Length() < 16) return Handle.Rotate;
+        if ((Rig.Cam.UnprojectPosition(ScaleKnobWorld()) - screen).Length() < 16) return Handle.Scale;
         return Handle.None;
     }
 
