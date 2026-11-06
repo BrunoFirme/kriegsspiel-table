@@ -39,12 +39,12 @@ sealed class TopBar : HudPart
         SaidGap = new Control { MouseFilter = Control.MouseFilterEnum.Ignore, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         Shell.Hook<Action>(h => T.MenuRequested += h, h => T.MenuRequested -= h, () => { if (GodotObject.IsInstanceValid(MenuButton)) MenuButton!.ShowPopup(); });
         row.AddChild(new VSeparator());
-        Role = new Label { SizeFlagsVertical = Control.SizeFlags.ShrinkCenter };
+        Role = new Label { SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, MaxLinesVisible = 1 };
         Role.AddThemeFontSizeOverride("font_size", 12);
         row.AddChild(Role);
         Title =
             new Label { Modulate = Ui.Muted, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, ClipText = true, TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis,
-                CustomMinimumSize = new Vector2(236, 0), SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin, MouseFilter = Control.MouseFilterEnum.Ignore };
+                CustomMinimumSize = new Vector2(236, 0), SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin, MouseFilter = Control.MouseFilterEnum.Ignore, MaxLinesVisible = 1 };
         if (S.IsUmpire) row.AddChild(BuildScenarioButton());
         else row.AddChild(Title);
         row.AddChild(new VSeparator());
@@ -152,13 +152,13 @@ sealed class TopBar : HudPart
         Said = new Label
         {
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
-            ClipText = true, TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis,
+            ClipText = true, TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis, MaxLinesVisible = 1,
             HorizontalAlignment = HorizontalAlignment.Left, Modulate = Ui.Muted, MouseFilter = Control.MouseFilterEnum.Ignore,
         };
         Said.AddThemeFontSizeOverride("font_size", 12);
         row.AddChild(Said);
         row.AddChild(SaidGap);
-        SaveWarn = new Label { Text = "NOT SAVED", Visible = false, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, MouseFilter = Control.MouseFilterEnum.Stop };
+        SaveWarn = new Label { Text = "NOT SAVED", Visible = false, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, MouseFilter = Control.MouseFilterEnum.Stop, MaxLinesVisible = 1 };
         SaveWarn.AddThemeFontSizeOverride("font_size", 12);
         SaveWarn.AddThemeColorOverride("font_color", Ui.Danger);
         row.AddChild(SaveWarn);
@@ -176,8 +176,8 @@ sealed class TopBar : HudPart
         BackNow.Visible = S.Reviewing;
         PrevTurn.Visible = NextRev.Visible = S.ReviewInfo is { IsTurn: true };
         PrevTurn.Disabled = !(S.ReviewInfo?.Index > 0);
-        Title.Text = S.ReviewInfo is { SaveName: { } saveName } ? $"{saveName.ToUpperInvariant()}  ·  read-only"
-            : S.Reviewing ? $"TURN {S.ReviewInfo?.Turn} AS IT ENDED  ·  read-only" : S.View.Name;
+        Title.Text = Fmt.OneLine(S.ReviewInfo is { SaveName: { } saveName } ? $"{saveName.ToUpperInvariant()}  ·  read-only"
+            : S.Reviewing ? $"TURN {S.ReviewInfo?.Turn} AS IT ENDED  ·  read-only" : S.View.Name);
         Title.CustomMinimumSize = new Vector2(Mathf.Min(236, Title.GetThemeFont("font").GetStringSize(Title.Text, HorizontalAlignment.Left, -1, Title.GetThemeFontSize("font_size")).X + 6), 0);
         Title.Modulate = S.Reviewing ? Ui.AccentInk : Colors.White;
         if (ScenarioBtn != null)
@@ -238,7 +238,7 @@ sealed class TopBar : HudPart
             if (text.Length > 0) Log($"[color=#8a8f98]{Fmt.Bb(text)}[/color]");
             return;
         }
-        Said!.Text = text;
+        Said!.Text = Fmt.OneLine(text);
         _saidAt = Time.GetTicksMsec();
     }
 

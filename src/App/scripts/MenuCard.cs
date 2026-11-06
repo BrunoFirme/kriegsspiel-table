@@ -38,7 +38,11 @@ sealed class MenuCard
             t.AddThemeColorOverride("font_color", Ui.AccentInk);
             h.AddChild(t);
         }
-        h.AddChild(new Label { Text = text, ClipText = true, TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill });
+        h.AddChild(new Label
+        {
+            Text = Fmt.OneLine(text), ClipText = true, TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis, MaxLinesVisible = 1,
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+        });
         if (accel.Length > 0)
         {
             var a = new Label { Text = accel, Modulate = Ui.Muted };
@@ -64,8 +68,8 @@ sealed class MenuCard
     public void Head(string text)
     {
         var l =
-            new Label { Text = text, ClipText = true, TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis, CustomMinimumSize = new Vector2(0, 26),
-                VerticalAlignment = VerticalAlignment.Center };
+            new Label { Text = Fmt.OneLine(text), ClipText = true, TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis, MaxLinesVisible = 1,
+                CustomMinimumSize = new Vector2(0, 26), VerticalAlignment = VerticalAlignment.Center };
         l.AddThemeColorOverride("font_color", Colors.White);
         l.AddThemeFontOverride("font", Ui.SansStrong());
         var m = new MarginContainer();

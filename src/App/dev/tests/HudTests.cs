@@ -202,4 +202,32 @@ static class HudTests
         await r.Frame();
         Check.That(h.Table.Draft == null && (h.Table.Rig.Cam.CullMask & Table.TextLayer) != 0, "the tool is down and text is back");
     }
+
+    [NodeTest]
+    static async Task A_name_written_over_two_lines_is_said_on_one_and_leaves_the_bar_its_height(TestRunner r)
+    {
+        var h = await Host(r);
+        h.Hud.Top.SayLine("Look 6: Horizontal: closed column by division");
+        await r.Frames(2);
+        float height = h.Hud.Top.Panel.Size.Y;
+        h.Hud.Top.SayLine("Look 6: Horizontal: closed column by division\nVertical: closed column by company");
+        await r.Frames(2);
+        var said = h.Hud.Top.Said!.Text;
+        Check.That(!said.Contains('\n'), "the top line: " + said);
+        Check.That(said.Contains("by division") && said.Contains("by company"), "both lines are kept: " + said);
+        Check.Equal(height, h.Hud.Top.Panel.Size.Y, "the top bar's height");
+    }
+
+    [NodeTest]
+    static async Task A_menu_row_keeps_a_two_line_name_on_its_one_line(TestRunner r)
+    {
+        var card = new MenuCard();
+        card.Item("Horizontal: closed column by division\nVertical: closed column by company", () => { });
+        var labels = card.Pop.FindChildren("*", nameof(Label), true, false).OfType<Label>().ToList();
+        Check.Equal(1, labels.Count, "the row has one label");
+        Check.That(!labels[0].Text.Contains('\n'), "the row reads: " + labels[0].Text);
+        Check.Equal(1, labels[0].MaxLinesVisible, "the row draws one line");
+        card.Pop.QueueFree();
+        await r.Frame();
+    }
 }

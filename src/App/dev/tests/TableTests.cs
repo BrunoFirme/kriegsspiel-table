@@ -59,6 +59,26 @@ static class TableTests
     }
 
     [NodeTest]
+    static async Task Holding_ctrl_z_or_ctrl_y_keeps_rolling_through_the_steps(TestRunner r)
+    {
+        var t = OfflineTable.Make(r, pieces: 2);
+        await r.Frame();
+        void Hold(Key key) => t.Table.Router.Handle(new InputEventKey { Keycode = key, CtrlPressed = true, Pressed = true, Echo = true });
+        t.S.Do(new MovePiece { Layer = U, Id = "p1", Pos = new Vec2(5, 2) });
+        t.S.Do(new MovePiece { Layer = U, Id = "p1", Pos = new Vec2(7, 4) });
+        await r.Frame();
+        Hold(Key.Z);
+        Hold(Key.Z);
+        await r.Frame();
+        Check.Equal(new Vec2(1, 0), t.Node("p1").Piece.Pos, "held down, Ctrl+Z keeps taking steps back");
+        Hold(Key.Y);
+        Hold(Key.Y);
+        await r.Frame();
+        Check.Equal(new Vec2(7, 4), t.Node("p1").Piece.Pos, "and Ctrl+Y keeps putting them back");
+        Check.That(t.Errors.Count == 0, "no command refused: " + string.Join("; ", t.Errors));
+    }
+
+    [NodeTest]
     static async Task Selecting_marks_the_nodes_and_tells_whoever_listens(TestRunner r)
     {
         var t = OfflineTable.Make(r, pieces: 3);

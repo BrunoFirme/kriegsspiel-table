@@ -102,7 +102,7 @@ sealed class TableInput
             case InputEventKey k when k.Pressed && !k.Echo:
                 KeyPressed?.Invoke(k);
                 break;
-            case InputEventKey k when k.Pressed && k.Echo && (k.Keycode is Key.Left or Key.Right or Key.Up or Key.Down or Key.Q or Key.E or Key.Equal or Key.Minus):
+            case InputEventKey k when k.Pressed && k.Echo && RepeatsOnHold(k):
                 KeyPressed?.Invoke(k);
                 break;
             case InputEventKey k when !k.Pressed && !k.Echo && !Table.AnyTextFocus():
@@ -110,6 +110,10 @@ sealed class TableInput
                 break;
         }
     }
+
+    bool RepeatsOnHold(InputEventKey k) =>
+        k.Keycode is Key.Left or Key.Right or Key.Up or Key.Down or Key.Q or Key.E or Key.Equal or Key.Minus
+        || _c.Settings.Keys.Is(k, "undo") || _c.Settings.Keys.Is(k, "redo");
 
     bool WheelOnSelection(Vector2 screen)
     {

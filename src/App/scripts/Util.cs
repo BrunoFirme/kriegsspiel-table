@@ -56,6 +56,25 @@ public static class Fmt
 {
     public static string Bb(string? s) => (s ?? "").Replace("[", "[lb]");
 
+    static readonly char[] Breaks = { '\n', '\r' };
+    const string LineJoin = "  ·  ";
+
+    public static string OneLine(string? s)
+    {
+        if (s == null) return "";
+        if (s.IndexOfAny(Breaks) < 0) return s;
+        var parts = s.Split(Breaks, StringSplitOptions.RemoveEmptyEntries);
+        var one = new System.Text.StringBuilder();
+        foreach (var part in parts)
+        {
+            var t = part.Trim();
+            if (t.Length == 0) continue;
+            if (one.Length > 0) one.Append(LineJoin);
+            one.Append(t);
+        }
+        return one.ToString();
+    }
+
     public static string BbColor(string? c, string fallback) =>
         c != null && System.Text.RegularExpressions.Regex.IsMatch(c, "^(#[0-9a-fA-F]{3,8}|[a-zA-Z]{1,20})$") ? c : fallback;
 
