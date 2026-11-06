@@ -172,7 +172,7 @@ sealed class ViewSync
             case Batch b:
                 foreach (var i in b.Items) OnApplied(i);
                 return true;
-            case LayerCommand when c is Draw or EraseStroke:
+            case LayerCommand when c is Draw or EraseStroke or StampDecal or RemoveDecal:
                 if (_batch != null) _batch.Drawings = true;
                 else _drawings.Sync();
                 return true;

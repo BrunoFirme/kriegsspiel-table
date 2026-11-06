@@ -47,6 +47,7 @@ public static class StateMachine
             case RemoveSheet rs: return ApplyRemoveSheet(g, rs, ref inverse);
             case Draw dr: return ApplyDraw(g, dr, ref inverse);
             case EraseStroke er: return ApplyEraseStroke(g, er, ref inverse);
+            case StampDecal or RemoveDecal or SetDecalPalette: return ApplyDecals(g, c, ref inverse);
             case AddBoard ab: return ApplyAddBoard(g, ab, ref inverse);
             case RenameBoard nb: return ApplyRenameBoard(g, nb, ref inverse);
             case RemoveBoard rb: return ApplyRemoveBoard(g, rb, ref inverse);
@@ -592,6 +593,65 @@ public static class StateMachine
         return null;
     }
 
+    static string? ApplyDecals(GameState g, Command c, ref Command? inverse) => c switch
+    {
+        StampDecal st => ApplyStampDecal(g, st, ref inverse),
+        RemoveDecal rd => ApplyRemoveDecal(g, rd, ref inverse),
+        SetDecalPalette sp => ApplySetDecalPalette(g, sp, ref inverse),
+        _ => "unknown command",
+    };
+
+    static string? ApplyStampDecal(GameState g, StampDecal st, ref Command? inverse)
+    {
+        var d = st.Decal;
+        if (DecalProblem(d) is { } why) return why;
+        var l = g.DecalLayer(st.Layer);
+        if (l.Count >= PaletteDecal.MostOnTheTable) return $"the table carries at most {PaletteDecal.MostOnTheTable} decals";
+        if (string.IsNullOrEmpty(d.Id)) d.Id = g.NewId("dc");
+        if (l.Any(x => x.Id == d.Id)) return "a decal of that id is already there";
+        var c = d.Clone();
+        c.Name ??= "";
+        PutBack(l, c, st.Index);
+        BumpId(g, c.Id!);
+        inverse = new RemoveDecal { Layer = st.Layer, DecalId = c.Id! };
+        return null;
+    }
+
+    static string? ApplyRemoveDecal(GameState g, RemoveDecal rd, ref Command? inverse)
+    {
+        var l = g.DecalLayer(rd.Layer);
+        var d = l.FirstOrDefault(x => x.Id == rd.DecalId);
+        if (d == null) return "no such decal";
+        int at = l.IndexOf(d);
+        l.RemoveAt(at);
+        inverse = new StampDecal { Layer = rd.Layer, Decal = d, Index = at };
+        return null;
+    }
+
+    static string? ApplySetDecalPalette(GameState g, SetDecalPalette sp, ref Command? inverse)
+    {
+        if (sp.Entries == null || sp.Entries.Count > PaletteDecal.MostInAPalette) return $"a palette holds at most {PaletteDecal.MostInAPalette} decals";
+        foreach (var e in sp.Entries)
+            if (e == null || string.IsNullOrEmpty(e.Picture) || e.Picture.Length > LongestDecalText || (e.Name?.Length ?? 0) > LongestDecalText
+                || !double.IsFinite(e.Size) || e.Size < PaletteDecal.SmallestSize || e.Size > PaletteDecal.LargestSize)
+                return "a palette decal needs a picture and a size";
+        inverse = new SetDecalPalette { Entries = g.DecalPalette.Select(e => e.Clone()).ToList() };
+        g.DecalPalette = sp.Entries.Select(e => e.Clone()).ToList();
+        foreach (var e in g.DecalPalette) e.Name ??= "";
+        return null;
+    }
+
+    const int LongestDecalText = 256;
+
+    static string? DecalProblem(DecalDef? d)
+    {
+        if (d == null || string.IsNullOrEmpty(d.Picture) || d.Picture.Length > LongestDecalText || (d.Name?.Length ?? 0) > LongestDecalText) return "a decal needs a picture";
+        if (d.Face is not ("front" or "back")) return "a decal's face is front or back";
+        if (!double.IsFinite(d.X) || !double.IsFinite(d.Z) || !double.IsFinite(d.Rot) || !(d.W > 0) || !(d.H > 0) || !double.IsFinite(d.W) || !double.IsFinite(d.H))
+            return "a decal's place and size must be numbers, its size above 0";
+        return null;
+    }
+
     static string? ApplyAddBoard(GameState g, AddBoard ab, ref Command? inverse)
     {
         if (string.IsNullOrEmpty(ab.Id)) ab.Id = g.NewId("b");
@@ -918,17 +978,11 @@ public static class StateMachine
 
     static string? ApplySetDecals(GameState g, SetDecals sd, ref Command? inverse)
     {
-        const int LongestText = 256;
         var p = g.Find(sd.Layer, sd.Id);
         if (p == null) return "no such piece";
         if (sd.Decals == null || sd.Decals.Count > DecalDef.MostOnAPiece) return $"a piece carries at most {DecalDef.MostOnAPiece} decals";
         foreach (var d in sd.Decals)
-        {
-            if (d == null || string.IsNullOrEmpty(d.Picture) || d.Picture.Length > LongestText || (d.Name?.Length ?? 0) > LongestText) return "a decal needs a picture";
-            if (d.Face is not ("front" or "back")) return "a decal's face is front or back";
-            if (!double.IsFinite(d.X) || !double.IsFinite(d.Z) || !double.IsFinite(d.Rot) || !(d.W > 0) || !(d.H > 0) || !double.IsFinite(d.W) || !double.IsFinite(d.H))
-                return "a decal's place and size must be numbers, its size above 0";
-        }
+            if (DecalProblem(d) is { } why) return why;
         inverse = new SetDecals { Layer = sd.Layer, Id = sd.Id, Decals = p.Decals.Select(d => d.Clone()).ToList(), OnState = p.DecalsOnState ?? -1 };
         p.Decals = sd.Decals.Select(d =>
         {

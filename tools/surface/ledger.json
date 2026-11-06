@@ -1723,10 +1723,10 @@
   },
   {
    "row": "SaveState.DecalPallet",
-   "status": "dropped",
-   "where": "the table's decal palette",
-   "instead": "lay a picture as a map sheet",
-   "held_by": "",
+   "status": "native",
+   "where": "the scenario's decals, offered in the Decals panel: name, picture and size",
+   "instead": "",
+   "held_by": "DecalPaletteTests, StampTests",
    "count": 1,
    "modules": 1
   },
@@ -1894,10 +1894,10 @@
   },
   {
    "row": "CustomDecalState.Size",
-   "status": "unknown",
-   "where": "",
+   "status": "native",
+   "where": "a palette decal's height on the table; its width follows the picture",
    "instead": "",
-   "held_by": "",
+   "held_by": "DecalPaletteTests",
    "count": 0,
    "modules": 0
   },
@@ -2830,10 +2830,10 @@
   },
   {
    "row": "SaveState.Decals",
-   "status": "dropped",
-   "where": "decals laid on the table",
-   "instead": "lay the picture as a map sheet",
-   "held_by": "",
+   "status": "native",
+   "where": "decals stamped on the table, lying over the ground on the umpire layer; the Decals tool stamps and lifts them",
+   "instead": "",
+   "held_by": "DecalPaletteTests, StampToolTests",
    "count": 0,
    "modules": 0
   },

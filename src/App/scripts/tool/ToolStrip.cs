@@ -36,7 +36,7 @@ sealed class ToolStrip : HudPart
         ("layers", 6), ("zones", 6),
         ("select", 1), ("gizmo", 1), ("formation", 1),
         ("ruler", 2), ("range", 2),
-        ("boards", 3), ("paint", 3), ("relief", 3),
+        ("boards", 3), ("paint", 3), ("decals", 3), ("relief", 3),
         ("sighting", 4), ("capture", 4),
         ("2d", 5), ("text", 5), ("frame", 5), ("compass", 5), ("log", 5),
     };
@@ -45,7 +45,7 @@ sealed class ToolStrip : HudPart
     {
         "map" => "map-sheets", "calibrate" => "calibrate", "pieces" => "pieces", "dice" => "dice", "layers" => "umpires-and-zones",
         "select" => "selecting-and-moving", "gizmo" => "turn-and-resize", "formation" => "formations", "ruler" => "ruler", "range" => "ranging",
-        "boards" => "layers", "paint" => "draw", "relief" => "relief", "sighting" => "pov-capture", "capture" => "capture", "log" => "log", "zones" => "umpires-and-zones",
+        "boards" => "layers", "paint" => "draw", "decals" => "decals", "relief" => "relief", "sighting" => "pov-capture", "capture" => "capture", "log" => "log", "zones" => "umpires-and-zones",
         _ => "views",
     };
 
@@ -182,6 +182,7 @@ sealed class ToolStrip : HudPart
         switch (key)
         {
             case "paint": return PanelToggle("paint", "draw", "Draw", "The pen, the shapes and the rubber");
+            case "decals": return PanelToggle("decals", "decal", "Decals", "Stamp pictures on the table or a piece: blood where a fight is, arrows, marks · click a stamp to lift it off");
             case "formation": return PanelToggle("formation", "formation", $"Formations   ({Cfg.Keys.Label("formations")})", "Form the selected pieces up: line, column, square, wedge and more · right-drag across the table to set the front");
             case "relief": return PanelToggle("relief", "relief", "Relief", "Raise, lower, smooth and flatten the ground, and paint grass, fields, woods, marsh, water and roads on it");
             case "boards": return PanelToggle("boards", "stack", "Layers", "The sheets of tracing paper the drawings are on: draw on one, hide it for a screenshot");

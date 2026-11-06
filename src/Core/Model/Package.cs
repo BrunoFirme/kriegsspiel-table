@@ -423,6 +423,7 @@ public sealed class DecalDef
     }
 
     public const int MostOnAPiece = 64;
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? Id { get; set; }
     public string Picture { get; set; } = "";
     public string Name { get; set; } = "";
     public string Face { get; set; } = "front";
@@ -432,6 +433,16 @@ public sealed class DecalDef
     public double H { get; set; } = 0.2;
     public double Rot { get; set; }
     public DecalDef Clone() => (DecalDef)MemberwiseClone();
+}
+
+public sealed class PaletteDecal
+{
+    public const int MostInAPalette = 64, MostOnTheTable = 1024;
+    public const double SmallestSize = 0.01, LargestSize = 1000;
+    public string Name { get; set; } = "";
+    public string Picture { get; set; } = "";
+    public double Size { get; set; } = 1;
+    public PaletteDecal Clone() => (PaletteDecal)MemberwiseClone();
 }
 
 public sealed class Widget
@@ -546,6 +557,8 @@ public sealed class Scenario : IJsonOnDeserialized, IJsonOnSerializing
     public List<BoardDef> Boards { get; set; } = new();
     public List<PieceInstance> UmpireBoard { get; set; } = new();
     public Dictionary<string, List<Stroke>> Drawings { get; set; } = new();
+    public Dictionary<string, List<DecalDef>> Decals { get; set; } = new();
+    public List<PaletteDecal> DecalPalette { get; set; } = new();
     public string? Script { get; set; }
     public string ScriptState { get; set; } = "";
 

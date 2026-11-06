@@ -42,6 +42,9 @@ namespace KTable.Core.Protocol;
 [JsonDerivedType(typeof(RemoveBoard), "RemoveBoard")]
 [JsonDerivedType(typeof(Draw), "Draw")]
 [JsonDerivedType(typeof(EraseStroke), "EraseStroke")]
+[JsonDerivedType(typeof(StampDecal), "StampDecal")]
+[JsonDerivedType(typeof(RemoveDecal), "RemoveDecal")]
+[JsonDerivedType(typeof(SetDecalPalette), "SetDecalPalette")]
 [JsonDerivedType(typeof(RollDice), "RollDice")]
 [JsonDerivedType(typeof(SetClock), "SetClock")]
 [JsonDerivedType(typeof(AdvanceClock), "AdvanceClock")]
@@ -496,6 +499,37 @@ public sealed class Draw : LayerCommand
 public sealed class EraseStroke : LayerCommand
 {
     public string StrokeId { get; set; } = "";
+    public override Sender SentBy() => Sender.Umpire;
+    public override bool OnUndoStack() => true;
+    public override Shown ShownToObservers() => Shown.Table;
+    public override IEnumerable<(string Layer, string Id)> ZonePieces() => [];
+    public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [];
+    public override IEnumerable<string> ScriptsToReload() => [];
+}
+public sealed class StampDecal : LayerCommand
+{
+    public DecalDef Decal { get; set; } = new();
+    public int? Index { get; set; }
+    public override Sender SentBy() => Sender.Umpire;
+    public override bool OnUndoStack() => true;
+    public override Shown ShownToObservers() => Shown.Table;
+    public override IEnumerable<(string Layer, string Id)> ZonePieces() => [];
+    public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [];
+    public override IEnumerable<string> ScriptsToReload() => [];
+}
+public sealed class RemoveDecal : LayerCommand
+{
+    public string DecalId { get; set; } = "";
+    public override Sender SentBy() => Sender.Umpire;
+    public override bool OnUndoStack() => true;
+    public override Shown ShownToObservers() => Shown.Table;
+    public override IEnumerable<(string Layer, string Id)> ZonePieces() => [];
+    public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [];
+    public override IEnumerable<string> ScriptsToReload() => [];
+}
+public sealed class SetDecalPalette : Command
+{
+    public List<PaletteDecal> Entries { get; set; } = new();
     public override Sender SentBy() => Sender.Umpire;
     public override bool OnUndoStack() => true;
     public override Shown ShownToObservers() => Shown.Table;

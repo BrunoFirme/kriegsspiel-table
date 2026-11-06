@@ -112,6 +112,7 @@ type Command abstract
   derived PickMenuItem = PickMenuItem
   derived PublishSighting = PublishSighting
   derived RemoveBoard = RemoveBoard
+  derived RemoveDecal = RemoveDecal
   derived RemoveSheet = RemoveSheet
   derived RemoveZone = RemoveZone
   derived RenameBoard = RenameBoard
@@ -125,6 +126,7 @@ type Command abstract
   derived SetCalibration = SetCalibration
   derived SetClock = SetClock
   derived SetCounter = SetCounter
+  derived SetDecalPalette = SetDecalPalette
   derived SetDecals = SetDecals
   derived SetDef = SetDef
   derived SetGlobalMenuItems = SetGlobalMenuItems
@@ -159,6 +161,7 @@ type Command abstract
   derived SetZone = SetZone
   derived ShowDialog = ShowDialog
   derived SpawnPiece = SpawnPiece
+  derived StampDecal = StampDecal
   derived Stow = Stow
   derived UiEvent = UiEvent
   derived Undo = Undo
@@ -198,6 +201,7 @@ type CropSheet object
 type DecalDef object
   face: string
   h: double
+  id: string
   name: string
   picture: string
   rot: double
@@ -233,6 +237,7 @@ type DiceRoll object
   sides: int
 type Dictionary<string,AssetEntry> map string to AssetEntry
 type Dictionary<string,JsonElement> map string to JsonElement
+type Dictionary<string,List<DecalDef>> map string to List<DecalDef>
 type Dictionary<string,List<PieceInstance>> map string to List<PieceInstance>
 type Dictionary<string,List<Stroke>> map string to List<Stroke>
 type Dictionary<string,int> map string to int
@@ -303,6 +308,8 @@ type GameState object
   briefing: string
   calibration: Calibration
   clock: GameClock
+  decalPalette: List<PaletteDecal>
+  decals: Dictionary<string,List<DecalDef>>
   dice: List<DiceRoll>
   drawings: Dictionary<string,List<Stroke>>
   format: int
@@ -404,6 +411,7 @@ type List<DiceRoll> list of DiceRoll
 type List<HotkeyDef> list of HotkeyDef
 type List<LineDef> list of LineDef
 type List<MenuItemDef> list of MenuItemDef
+type List<PaletteDecal> list of PaletteDecal
 type List<PeerInfo> list of PeerInfo
 type List<PieceDef> list of PieceDef
 type List<PieceInstance> list of PieceInstance
@@ -516,6 +524,10 @@ type PackSource object
   license: string
   url: string
   workshopId: string
+type PaletteDecal object
+  name: string
+  picture: string
+  size: double
 type PeerInfo object
   name: string
   peerId: long
@@ -632,6 +644,13 @@ type RemoveBoard object
   id: string
   seq: long
   undoOf: long
+type RemoveDecal object
+  actor: long
+  at: long
+  decalId: string
+  layer: string
+  seq: long
+  undoOf: long
 type RemoveSheet object
   actor: long
   at: long
@@ -725,6 +744,8 @@ type Scenario object
   briefing: string
   calibration: Calibration
   clock: GameClock
+  decalPalette: List<PaletteDecal>
+  decals: Dictionary<string,List<DecalDef>>
   drawings: Dictionary<string,List<Stroke>>
   format: int
   grid: GridDef
@@ -794,6 +815,12 @@ type SetCounter object
   seq: long
   undoOf: long
   value: int
+type SetDecalPalette object
+  actor: long
+  at: long
+  entries: List<PaletteDecal>
+  seq: long
+  undoOf: long
 type SetDecals object
   actor: long
   at: long
@@ -1094,6 +1121,14 @@ type SpawnPiece object
   tags: List<string>
   undoOf: long
   y: double
+type StampDecal object
+  actor: long
+  at: long
+  decal: DecalDef
+  index: int?
+  layer: string
+  seq: long
+  undoOf: long
 type Stow object
   actor: long
   at: long

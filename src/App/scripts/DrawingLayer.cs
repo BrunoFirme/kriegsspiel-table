@@ -12,6 +12,7 @@ sealed class DrawingLayer
 
     readonly TableContext _c;
     readonly Dictionary<string, MeshInstance3D> _drawings = new();
+    readonly List<MeshInstance3D> _decals = new();
     public Node3D Root = null!;
 
     readonly MapLettering _lettering;
@@ -44,6 +45,7 @@ sealed class DrawingLayer
     {
         foreach (var d in _drawings.Values) d.QueueFree();
         _drawings.Clear();
+        SyncDecals();
         foreach (var (layer, strokes) in _c.S.View.Drawings)
         {
             if (!_c.LayerShown(layer)) continue;
@@ -69,8 +71,93 @@ sealed class DrawingLayer
 
     public void Reground(Rect2? where)
     {
-        if (where is { } box && !_c.S.View.Drawings.Values.Any(strokes => strokes.Any(st => st.Points.Any(p => box.HasPoint(new Vector2((float)p.X, (float)-p.Z)))))) return;
+        if (where is { } box && !_c.S.View.Drawings.Values.Any(strokes => strokes.Any(st => st.Points.Any(p => box.HasPoint(new Vector2((float)p.X, (float)-p.Z)))))
+            && !_c.S.View.Decals.Values.Any(l => l.Any(d => box.HasPoint(new Vector2((float)d.X, (float)-d.Z))))) return;
         Sync();
+    }
+
+    public const float DecalLift = 0.015f;
+    const int DecalSteps = 8, DecalPriority = 1, LargestDecal = 1024;
+
+    void SyncDecals()
+    {
+        foreach (var d in _decals) if (GodotObject.IsInstanceValid(d)) d.QueueFree();
+        _decals.Clear();
+        foreach (var (layer, decals) in _c.S.View.Decals)
+        {
+            if (!_c.LayerShown(layer)) continue;
+            foreach (var d in decals)
+                if (KTable.Client.PieceFiles.DecalFile(_c.S.View, _c.S.Store, d.Picture) is { } file) _decals.Add(Decal(d, file.Package, file.Path));
+        }
+    }
+
+    MeshInstance3D Decal(DecalDef d, string package, string file)
+    {
+        var mat = new StandardMaterial3D
+        {
+            Transparency = BaseMaterial3D.TransparencyEnum.Alpha, CullMode = BaseMaterial3D.CullModeEnum.Disabled, RenderPriority = DecalPriority, AlbedoColor = Colors.White,
+        };
+        var mi = new MeshInstance3D { Mesh = DecalMesh(d, _c.SheetsTop + DecalLift, _c.S.Ground), MaterialOverride = mat, CastShadow = GeometryInstance3D.ShadowCastingSetting.Off };
+        var tex = _c.S.Assets.Texture(package, file, t => { if (GodotObject.IsInstanceValid(mi)) mat.AlbedoTexture = t; }, maxSize: LargestDecal);
+        if (tex != null) mat.AlbedoTexture = tex;
+        Root.AddChild(mi);
+        return mi;
+    }
+
+    public static Vec2 DecalPoint(DecalDef d, double s, double t)
+    {
+        double lx = (s - 0.5) * d.W, lz = (0.5 - t) * d.H, a = d.Rot * System.Math.PI / 180, c = System.Math.Cos(a), n = System.Math.Sin(a);
+        return new Vec2(d.X + lx * c + lz * n, d.Z - lx * n + lz * c);
+    }
+
+    public static ImmediateMesh DecalMesh(DecalDef d, float lift, Ground ground, ImmediateMesh? into = null, Material? material = null)
+    {
+        var im = into ?? new ImmediateMesh();
+        im.SurfaceBegin(Mesh.PrimitiveType.Triangles, material);
+        Vector3 At(int i, int j)
+        {
+            double s = i / (double)DecalSteps, t = j / (double)DecalSteps;
+            var p = DecalPoint(d, s, t);
+            return Coords.ToWorld(p, lift + (float)ground.At(p));
+        }
+        void V(int i, int j)
+        {
+            im.SurfaceSetNormal(Vector3.Up);
+            im.SurfaceSetUV(new Vector2(i / (float)DecalSteps, j / (float)DecalSteps));
+            im.SurfaceAddVertex(At(i, j));
+        }
+        for (int i = 0; i < DecalSteps; i++)
+            for (int j = 0; j < DecalSteps; j++)
+            {
+                V(i, j);
+                V(i + 1, j);
+                V(i + 1, j + 1);
+                V(i, j);
+                V(i + 1, j + 1);
+                V(i, j + 1);
+            }
+        im.SurfaceEnd();
+        return im;
+    }
+
+    public DecalDef? TableDecalAt(Vec2 point)
+    {
+        foreach (var (layer, decals) in _c.S.View.Decals)
+        {
+            if (!_c.LayerShown(layer) || !_c.S.CanEdit(layer)) continue;
+            for (int i = decals.Count - 1; i >= 0; i--)
+                if (Covers(decals[i], point)) return decals[i];
+        }
+        return null;
+    }
+
+    public string? LayerOf(DecalDef d) => _c.S.View.Decals.FirstOrDefault(kv => kv.Value.Contains(d)).Key;
+
+    public static bool Covers(DecalDef d, Vec2 point)
+    {
+        double a = d.Rot * System.Math.PI / 180, c = System.Math.Cos(a), n = System.Math.Sin(a), dx = point.X - d.X, dz = point.Z - d.Z;
+        double lx = dx * c - dz * n, lz = dx * n + dz * c;
+        return System.Math.Abs(lx) <= d.W / 2 && System.Math.Abs(lz) <= d.H / 2;
     }
 
     public int DrawnSurfaces() => _drawings.Values.Sum(mi => mi.Mesh is ImmediateMesh im ? im.GetSurfaceCount() : 0);

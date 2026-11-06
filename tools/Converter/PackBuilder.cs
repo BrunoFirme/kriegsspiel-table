@@ -24,7 +24,7 @@ public sealed class PackBuilder
 
     public static IEnumerable<string> Urls(ModuleSave save) =>
         save.Objects.SelectMany(o => o.Walk()).SelectMany(o => o.Urls().Concat(ScriptUrls(o.Lua)).Concat(ScriptUrls(o.LuaState))).Concat(ScriptUrls(save.Lua)).Concat(ScriptUrls(save.LuaState))
-            .Concat(save.SkyUrl is { } sky ? new[] { sky } : []);
+            .Concat(save.SkyUrl is { } sky ? new[] { sky } : []).Concat(save.TableDecals.Select(d => d.Url)).Concat(save.DecalPalette.Select(d => d.Url));
 
     public static IEnumerable<string> PieceUrls(ModuleSave save) =>
         save.Objects.SelectMany(o => o.Walk()).Where(o => o.Name != "Custom_Assetbundle" && !o.IsFurniture).SelectMany(o => o.Urls());

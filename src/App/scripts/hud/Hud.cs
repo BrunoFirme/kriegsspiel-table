@@ -24,6 +24,7 @@ public partial class Hud : CanvasLayer
     internal MapPage Map = null!;
     internal PiecesPanel Pieces = null!;
     internal DrawPanel Paint = null!;
+    internal StampPanel Stamps = null!;
     internal ReliefPanel? Relief;
     internal FormationPanel FormPanel = null!;
     internal LayersPanel Boards = null!;
@@ -133,14 +134,18 @@ public partial class Hud : CanvasLayer
         var rig = T.Rig;
         Hook<Action>(h => rig.ViewChanged += h, h => rig.ViewChanged -= h, Strip.SyncViewButton);
         Hook<Action>(h => T.SelectionChanged += h, h => T.SelectionChanged -= h, Pov.Rebuild);
+        Hook<Action>(h => T.Decals.Changed += h, h => T.Decals.Changed -= h, Stamps.Rebuild);
         Hook<Action>(h => T.ToolChanged += h, h => T.ToolChanged -= h, () =>
         {
             Strip.SyncToolButtons();
             Pov.Rebuild();
             Paint.Rebuild();
+            Stamps.Rebuild();
             Relief?.Rebuild();
             if (T.Tool is Tool.Draw or Tool.Shape or Tool.Erase or Tool.Letter) OpenPanel("paint");
             else ClosePanel("paint");
+            if (T.Tool == Tool.Decal) OpenPanel("decals");
+            else ClosePanel("decals");
             if (T.Tool == Tool.Relief) OpenPanel("relief");
             else ClosePanel("relief");
             if (T.Tool == Tool.Formation) OpenPanel("formation");
@@ -181,6 +186,7 @@ public partial class Hud : CanvasLayer
             }
             if (one is SetZone or RemoveZone) Umpires.Rebuild();
             if (one is Draw or EraseStroke) Boards.Rebuild();
+            if (one is SetDecalPalette or StampDecal or RemoveDecal) Stamps.Rebuild();
             if (one is AdvanceClock or SetClock or RestoreTurn or LoadSave && S.IsUmpire) N.RequestTurns();
             Transcript.Write(one);
         }

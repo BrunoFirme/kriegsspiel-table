@@ -35,6 +35,9 @@ public class RoleAndJoinTests
         yield return new Unstow { Layer = layer, Holder = "p-000004", Id = "p-000002", Pos = new(1, 1) };
         yield return new Draw { Layer = layer, Stroke = new Stroke { Points = { new(0, 0) } } };
         yield return new EraseStroke { Layer = layer, StrokeId = "d-000005" };
+        yield return new StampDecal { Layer = layer, Decal = new DecalDef { Picture = "blood", W = 1, H = 1 } };
+        yield return new RemoveDecal { Layer = layer, DecalId = "dc-000005" };
+        yield return new SetDecalPalette { Entries = new() { new PaletteDecal { Name = "Guts", Picture = "guts", Size = 0.5 } } };
         yield return new AddSheet { Sheet = new SheetDef { Name = "new" } };
         yield return new MoveSheet { Id = "s-000001", Pos = new(1, 1) };
         yield return new LockSheet { Id = "s-000001", Locked = false };

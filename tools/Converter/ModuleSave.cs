@@ -171,7 +171,16 @@ public sealed class ModuleObj
 
     public sealed record Decal(string Name, string Url, double PosX, double PosY, double PosZ, double RotY, double ScaleX, double ScaleY);
 
-    public List<Decal> Decals => (J["AttachedDecals"] as JsonArray)?.OfType<JsonObject>()
+    public List<Decal> Decals => DecalsOf(J["AttachedDecals"]);
+
+    public sealed record PaletteEntry(string Name, string Url, double Size);
+
+    public static List<PaletteEntry> PaletteOf(JsonNode? node) => (node as JsonArray)?.OfType<JsonObject>()
+        .Where(c => Blank(S(c["ImageURL"])) != null)
+        .Select(c => new PaletteEntry(S(c["Name"]) ?? "", Blank(S(c["ImageURL"]))!, D(c, "Size", 1)))
+        .ToList() ?? new();
+
+    public static List<Decal> DecalsOf(JsonNode? node) => (node as JsonArray)?.OfType<JsonObject>()
         .Select(d => (t: d["Transform"] as JsonObject, c: d["CustomDecal"] as JsonObject))
         .Where(d => Blank(S(d.c?["ImageURL"])) != null)
         .Select(d => new Decal(S(d.c!["Name"]) ?? "", Blank(S(d.c!["ImageURL"]))!, D(d.t, "posX"), D(d.t, "posY"), D(d.t, "posZ"), D(d.t, "rotY"), D(d.t, "scaleX", 1), D(d.t, "scaleY", 1)))
@@ -229,6 +238,8 @@ public sealed class ModuleSave
     public List<(string Title, string Body)> Notebook { get; init; } = new();
     public string Rules { get; init; } = "";
     public List<ModuleObj.Line> VectorLines { get; init; } = new();
+    public List<ModuleObj.Decal> TableDecals { get; init; } = new();
+    public List<ModuleObj.PaletteEntry> DecalPalette { get; init; } = new();
 
     public static ModuleSave Load(Config cfg, string workshopIdOrPath)
     {
@@ -250,6 +261,8 @@ public sealed class ModuleSave
                 .Where(t => t.Body.Trim().Length > 0).ToList() ?? new(),
             Rules = root["Rules"] is JsonValue rules && rules.TryGetValue<string>(out var rl) ? rl : "",
             VectorLines = ModuleObj.LinesOf(root["VectorLines"]),
+            TableDecals = ModuleObj.DecalsOf(root["Decals"]),
+            DecalPalette = ModuleObj.PaletteOf(root["DecalPallet"]),
         };
     }
 }

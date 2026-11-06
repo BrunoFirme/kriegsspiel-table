@@ -168,6 +168,14 @@ its course, on a patch of ground spaced capitals across it, on bare paper a plai
 retype it, drag it to move it; the rubber takes a name whole. A name is a drawing: it sits on the layer picked
 and undoes like a stroke.
 
+### Decals
+
+Pictures stamped on the table or on a piece: blood where a fight is, arrows, marks. The panel holds the
+scenario's decals; **Add a decal…** takes a picture file or a web link, and right-click takes one out. Pick a
+decal and click to stamp it: on a piece it rides with the piece, elsewhere it lies on the table. The wheel turns
+it, **Shift**+wheel sizes it, and clicking a stamped decal lifts it off. **Lift every stamp off** clears the
+table and leaves the pieces' decals. A converted module brings its decals and those already stamped.
+
 ### Layers
 
 Drawings sit on layers, like tracing paper. The eye hides a layer **on your screen only**: handy before a

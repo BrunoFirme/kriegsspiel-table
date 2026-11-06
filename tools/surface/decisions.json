@@ -62,8 +62,8 @@
   "MusicPlayerState.*": ["dropped", "music player", "nothing is needed"],
   "SaveState.TableURL": ["dropped", "the table's cloth or picture: the table is the tabletop's abstraction, its look only; no script in the 55 saves touches it (decided 2026-11-06)", "the app's own table"],
   "SaveState.Rules": ["native", "the scenario's briefing", "", "DrawingTests"],
-  "SaveState.DecalPallet": ["dropped", "the table's decal palette", "lay a picture as a map sheet"],
-  "SaveState.Decals": ["dropped", "decals laid on the table", "lay the picture as a map sheet"],
+  "SaveState.DecalPallet": ["native", "the scenario's decals, offered in the Decals panel: name, picture and size", "", "DecalPaletteTests, StampTests"],
+  "SaveState.Decals": ["native", "decals stamped on the table, lying over the ground on the umpire layer; the Decals tool stamps and lifts them", "", "DecalPaletteTests, StampToolTests"],
   "SaveState.VectorLines": ["native", "strokes on the umpire's drawing board", "", "DrawingTests"],
   "SaveState.SnapPoints": ["dropped", "snap points (decided 2026-11-06 with the grid)", "the table's own grid snaps"],
   "SaveState.CustomUIAssets": ["partial", "pictures a run-time panel names: links in the XML are fetched, named assets are not", "put the picture's link in the panel's XML"],
@@ -148,6 +148,7 @@
   "TabState.visibleColor": ["dropped", "notebook tab colour", "nothing is needed"],
   "TabState.id": ["dropped", "notebook tab id", "nothing is needed"],
   "TextState.OwnerSteamID": ["dropped", "who wrote a 3D text", "nothing is needed"],
+  "CustomDecalState.Size": ["native", "a palette decal's height on the table; its width follows the picture", "", "DecalPaletteTests"],
   "DecalState.OwnerSteamID": ["dropped", "who laid a decal", "nothing is needed"]
  },
  "object": {

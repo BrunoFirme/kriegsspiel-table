@@ -16,12 +16,19 @@ public static class PieceFiles
                 if (pack.Assets.TryGetValue(hash, out var asset)) yield return (pack.Id, asset.File.Replace('\\', '/'));
         }
         if (Backdrops.IsPicture(view.Lighting.Backdrop)) yield return (UploadAsset.ReliefPackage, view.Lighting.Backdrop);
-        var decals = view.Layers.Values.SelectMany(l => l).SelectMany(p => p.Decals).Select(d => d.Picture).Distinct().ToList();
-        if (decals.Count == 0) yield break;
-        var packs = view.Packs.Select(store.Pack).OfType<PackManifest>().ToList();
+        var decals = view.Layers.Values.SelectMany(l => l).SelectMany(p => p.Decals).Select(d => d.Picture)
+            .Concat(view.Decals.Values.SelectMany(l => l).Select(d => d.Picture)).Concat(view.DecalPalette.Select(d => d.Picture)).Distinct().ToList();
         foreach (var picture in decals)
-            if (UploadAsset.IsWebPicture(UploadAsset.ReliefPackage, picture)) yield return (UploadAsset.ReliefPackage, picture);
-            else if (packs.FirstOrDefault(p => p.Assets.ContainsKey(picture)) is { } pack)
-                yield return (pack.Id, pack.Assets[picture].File.Replace('\\', '/'));
+            if (DecalFile(view, store, picture) is { } file) yield return file;
+    }
+
+    public static (string Package, string Path)? DecalFile(GameState view, PackageStore store, string picture, string? ownDef = null)
+    {
+        if (UploadAsset.IsWebPicture(UploadAsset.ReliefPackage, picture)) return (UploadAsset.ReliefPackage, picture);
+        var own = ownDef == null ? null : store.PackOfDef(ownDef);
+        var packs = view.Packs.Select(store.Pack).OfType<PackManifest>();
+        foreach (var p in own == null ? packs : packs.Prepend(own))
+            if (p.Assets.TryGetValue(picture, out var a)) return (p.Id, a.File.Replace('\\', '/'));
+        return null;
     }
 }

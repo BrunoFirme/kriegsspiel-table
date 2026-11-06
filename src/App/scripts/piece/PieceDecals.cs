@@ -54,14 +54,6 @@ sealed class PieceDecals
         }
     }
 
-    (string pack, string file)? FileOf(string picture)
-    {
-        if (UploadAsset.IsWebPicture(UploadAsset.ReliefPackage, picture)) return (UploadAsset.ReliefPackage, picture);
-        var store = _piece.Session.Store;
-        var own = store.PackOfDef(_piece.Piece.Def);
-        var packs = _piece.Session.View.Packs.Select(store.Pack).Where(p => p != null).Cast<PackManifest>();
-        foreach (var p in own == null ? packs : packs.Prepend(own))
-            if (p.Assets.TryGetValue(picture, out var a)) return (p.Id, a.File);
-        return null;
-    }
+    (string pack, string file)? FileOf(string picture) =>
+        KTable.Client.PieceFiles.DecalFile(_piece.Session.View, _piece.Session.Store, picture, _piece.Piece.Def) is { } f ? (f.Package, f.Path) : null;
 }

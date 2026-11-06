@@ -101,6 +101,7 @@ public sealed class ScenarioBuilder
 
         scenario.UmpireBoard = layers[0].Pieces;
         scenario.Drawings["umpire"] = TableStrokes(master);
+        AddDecals(master, scenario, extras, usedPacks);
         if (master.Rules.Trim().Length > 0) scenario.Briefing = master.Rules.Trim();
         if (_stowed > 0) _rep.Counts[$"{sc.Id}: pieces held inside bags"] = _stowed.ToString();
         if (_hiddenByScale > 0) _rep.Note($"{sc.Id}: {_hiddenByScale} piece(s) the module hid by scaling them to nothing show here at a tenth of their size; delete or hold them if they are in the way.");
@@ -314,6 +315,27 @@ public sealed class ScenarioBuilder
         }
     }
 
+    const double ModuleDecalTurn = 180;
+
+    void AddDecals(ModuleSave master, Scenario scenario, PackOut extras, HashSet<string> usedPacks)
+    {
+        var where = $"{_cfg.Scenario.Id} decal";
+        scenario.DecalPalette = master.DecalPalette
+            .Select(p => _defs.UiAsset(extras, p.Url, where) is { } pic
+                ? new PaletteDecal { Name = p.Name, Picture = pic, Size = Math.Clamp(p.Size, PaletteDecal.SmallestSize, PaletteDecal.LargestSize) } : null)
+            .OfType<PaletteDecal>().Take(PaletteDecal.MostInAPalette).ToList();
+        var stamped = new List<DecalDef>();
+        foreach (var d in master.TableDecals.Take(PaletteDecal.MostOnTheTable))
+            if (_defs.UiAsset(extras, d.Url, where) is { } pic)
+                stamped.Add(new DecalDef
+                {
+                    Id = $"dc-{_nextId++:D6}", Picture = pic, Name = d.Name, X = Math.Round(d.PosX, 4), Z = Math.Round(d.PosZ, 4),
+                    W = Math.Round(Math.Abs(d.ScaleX), 4), H = Math.Round(Math.Abs(d.ScaleY), 4), Rot = Norm(d.RotY - ModuleDecalTurn),
+                });
+        scenario.Decals["umpire"] = stamped;
+        if (scenario.DecalPalette.Count > 0 || stamped.Count > 0) usedPacks.Add(extras.M.Id);
+    }
+
     static void PruneExtras(PackOut extras, List<Layer> layers, Scenario scenario)
     {
         var pieces = layers.SelectMany(l => l.Pieces).ToList();
@@ -338,6 +360,7 @@ public sealed class ScenarioBuilder
             extras.M.Pieces.SelectMany(d => new[] { d.Image, d.Back, d.Mesh, d.Texture, d.AddOnMesh, d.AddOnTexture }.Concat(d.States.SelectMany(s => new[] { s.Image, s.Back, s.Mesh, s.Texture })))
             .OfType<string>().ToHashSet();
         usedAssets.UnionWith(pieces.SelectMany(p => p.Decals).Select(d => d.Picture));
+        usedAssets.UnionWith(scenario.Decals.Values.SelectMany(l => l).Select(d => d.Picture).Concat(scenario.DecalPalette.Select(d => d.Picture)));
         usedAssets.UnionWith(extras.M.Assets.Keys.Where(k => !usedAssets.Contains(k) && texts.Any(t => t.Contains(k, StringComparison.Ordinal))));
         foreach (var k in extras.M.Assets.Keys.Where(k => !usedAssets.Contains(k)).ToList()) extras.M.Assets.Remove(k);
         extras.Save();

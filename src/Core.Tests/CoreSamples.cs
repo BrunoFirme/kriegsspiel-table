@@ -112,6 +112,9 @@ public static class CoreSamples
         yield return new RemoveBoard { Id = "b-000001" };
         yield return new Draw { Layer = "scratch:red", Stroke = Stroke("d-000300") };
         yield return new EraseStroke { Layer = L, StrokeId = "d-000004" };
+        yield return new StampDecal { Layer = L, Decal = new DecalDef { Id = "dc-000001", Picture = "blood", Name = "Blood", X = 1, Z = 2, W = 1.5, H = 1, Rot = 30 } };
+        yield return new RemoveDecal { Layer = L, DecalId = "dc-000001" };
+        yield return new SetDecalPalette { Entries = new() { new PaletteDecal { Name = "Guts", Picture = "guts", Size = 0.5 } } };
         yield return new RollDice { Sides = 10, Count = 3, Label = "melee", Results = new() { 1, 5, 10 }, ActorName = "Ann" };
         yield return new SetClock { Turn = 5, GameTime = "1809-05-21T12:00", IncrementMinutes = 30 };
         yield return new AdvanceClock();

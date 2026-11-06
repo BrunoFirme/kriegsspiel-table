@@ -217,7 +217,7 @@ the plan says translate it), unknown (nobody has decided).
 | `LightingState.LutContribution` | 1 / 1 | dropped | lighting (decided 2026-11-06) |  |
 | `LightingState.ReflectionIntensity` | 1 / 1 | dropped | lighting (decided 2026-11-06) |  |
 | `ObjectState.IgnoreFoW` | 1 / 1 | dropped | hidden zones (decided 2026-11-06) |  |
-| `SaveState.DecalPallet` | 1 / 1 | dropped | the table's decal palette |  |
+| `SaveState.DecalPallet` | 1 / 1 | native | the scenario's decals, offered in the Decals panel: name, picture and size | DecalPaletteTests, StampTests |
 | `SaveState.TableURL` | 1 / 1 | dropped | the table's cloth or picture: the table is the tabletop's abstraction, its look only; no script in the 55 saves touches it (decided 2026-11-06) |  |
 | `BagState.Order` | - | dropped | the order a bag gives its pieces back in |  |
 | `CalculatorState.memory` | - | dropped | a stock gadget |  |
@@ -236,7 +236,7 @@ the plan says translate it), unknown (nobody has decided).
 | `CustomAssetState.URL` | - | partial | pictures a run-time panel names: links in the XML are fetched, named assets are not |  |
 | `CustomDecalState.ImageURL` | - | native | converter reads it |  |
 | `CustomDecalState.Name` | - | native | converter reads it |  |
-| `CustomDecalState.Size` | - | unknown |  |  |
+| `CustomDecalState.Size` | - | native | a palette decal's height on the table; its width follows the picture | DecalPaletteTests |
 | `CustomDeckState.BackIsHidden` | - | dropped | a face-down card shows the back its sheet gives it |  |
 | `CustomDeckState.BackURL` | - | native | converter reads it |  |
 | `CustomDeckState.FaceURL` | - | native | converter reads it |  |
@@ -340,7 +340,7 @@ the plan says translate it), unknown (nobody has decided).
 | `PhysicsMaterialState.FrictionCombine` | - | dropped | engine physics |  |
 | `RotationValueState.Rotation` | - | native | converter reads it |  |
 | `RotationValueState.Value` | - | native | converter reads it |  |
-| `SaveState.Decals` | - | dropped | decals laid on the table |  |
+| `SaveState.Decals` | - | native | decals stamped on the table, lying over the ground on the umpire layer; the Decals tool stamps and lifts them | DecalPaletteTests, StampToolTests |
 | `SaveState.ObjectStates` | - | native | converter reads it |  |
 | `SaveState.Rules` | - | native | the scenario's briefing | DrawingTests |
 | `SaveState.SnapPoints` | - | dropped | snap points (decided 2026-11-06 with the grid) |  |
