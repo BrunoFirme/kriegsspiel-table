@@ -167,18 +167,37 @@ public sealed class GameState
         return l;
     }
 
+    const int ScanIsFasterBelow = 64, RefileAfterMisses = 16;
+
     public PieceInstance? Find(string layer, string id)
     {
         if (!Layers.TryGetValue(layer, out var l)) return null;
-        const int ScanIsFasterBelow = 64;
         if (l.Count < ScanIsFasterBelow) return l.FirstOrDefault(p => p.Id == id);
-        _index ??= new();
-        if (!_index.TryGetValue(layer, out var ix) || ix.List != l) _index[layer] = ix = new Index(l);
+        var ix = IndexOf(layer, l);
         if (ix.At.TryGetValue(id, out var at) && at < l.Count && l[at].Id == id) return l[at];
         int found = l.FindIndex(p => p.Id == id);
-        if (++ix.Misses > 16) ix.Refile();
+        if (++ix.Misses > RefileAfterMisses) ix.Refile();
         else if (found >= 0) ix.At[id] = found;
         return found >= 0 ? l[found] : null;
+    }
+
+    public PieceInstance? FindByGuid(string layer, string guid)
+    {
+        if (!Layers.TryGetValue(layer, out var l)) return null;
+        if (l.Count < ScanIsFasterBelow) return l.FirstOrDefault(p => p.Guid == guid);
+        var ix = IndexOf(layer, l);
+        if (ix.ByGuid.TryGetValue(guid, out var at) && at < l.Count && l[at].Guid == guid) return l[at];
+        int found = l.FindIndex(p => p.Guid == guid);
+        if (++ix.Misses > RefileAfterMisses) ix.Refile();
+        else if (found >= 0) ix.ByGuid[guid] = found;
+        return found >= 0 ? l[found] : null;
+    }
+
+    Index IndexOf(string layer, List<PieceInstance> l)
+    {
+        _index ??= new();
+        if (!_index.TryGetValue(layer, out var ix) || ix.List != l) _index[layer] = ix = new Index(l);
+        return ix;
     }
 
     Dictionary<string, Index>? _index;
@@ -187,13 +206,19 @@ public sealed class GameState
     {
         public readonly List<PieceInstance> List;
         public readonly Dictionary<string, int> At = new(StringComparer.Ordinal);
+        public readonly Dictionary<string, int> ByGuid = new(StringComparer.Ordinal);
         public int Misses;
         public Index(List<PieceInstance> list) { List = list; Refile(); }
         public void Refile()
         {
             At.Clear();
+            ByGuid.Clear();
             Misses = 0;
-            for (int i = 0; i < List.Count; i++) At.TryAdd(List[i].Id, i);
+            for (int i = 0; i < List.Count; i++)
+            {
+                At.TryAdd(List[i].Id, i);
+                if (List[i].Guid is { Length: > 0 } g) ByGuid.TryAdd(g, i);
+            }
         }
     }
 

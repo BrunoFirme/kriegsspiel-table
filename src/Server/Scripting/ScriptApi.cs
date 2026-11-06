@@ -180,7 +180,7 @@ public sealed partial class ScriptHost
     DynValue FindHandle(string idOrGuid)
     {
         if (idOrGuid.Length == 0) return DynValue.Nil;
-        var p = _s.State.Layer(Layers.Umpire).FirstOrDefault(x => x.Id == idOrGuid) ?? _s.State.Layer(Layers.Umpire).FirstOrDefault(x => x.Guid == idOrGuid);
+        var p = _s.State.Find(Layers.Umpire, idOrGuid) ?? _s.State.FindByGuid(Layers.Umpire, idOrGuid);
         return p == null ? DynValue.Nil : Handle(p.Id);
     }
 

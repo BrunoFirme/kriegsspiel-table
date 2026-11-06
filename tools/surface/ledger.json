@@ -1012,10 +1012,10 @@
   },
   {
    "row": "ObjectState.AttachedVectorLines",
-   "status": "planned",
-   "where": "Phase C item 4: drawings on pieces",
+   "status": "native",
+   "where": "the piece's own lines, in its frame and local unit",
    "instead": "",
-   "held_by": "",
+   "held_by": "DrawingTests",
    "count": 114,
    "modules": 22
   },
@@ -1264,10 +1264,10 @@
   },
   {
    "row": "SaveState.VectorLines",
-   "status": "planned",
-   "where": "Phase C item 4: table drawings",
+   "status": "native",
+   "where": "strokes on the umpire's drawing board",
    "instead": "",
-   "held_by": "",
+   "held_by": "DrawingTests",
    "count": 9,
    "modules": 9
   },
@@ -1516,9 +1516,9 @@
   },
   {
    "row": "ObjectState.AttachedSnapPoints",
-   "status": "planned",
-   "where": "Phase C item 7: snap points",
-   "instead": "",
+   "status": "dropped",
+   "where": "snap points (grid, decided 2026-11-06)",
+   "instead": "the table's own grid snaps",
    "held_by": "",
    "count": 87,
    "modules": 4
@@ -1723,9 +1723,9 @@
   },
   {
    "row": "SaveState.DecalPallet",
-   "status": "planned",
-   "where": "Phase C item 4: table decals",
-   "instead": "",
+   "status": "dropped",
+   "where": "the table's decal palette",
+   "instead": "lay a picture as a map sheet",
    "held_by": "",
    "count": 1,
    "modules": 1
@@ -2830,9 +2830,9 @@
   },
   {
    "row": "SaveState.Decals",
-   "status": "planned",
-   "where": "Phase C item 4: table decals",
-   "instead": "",
+   "status": "dropped",
+   "where": "decals laid on the table",
+   "instead": "lay the picture as a map sheet",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -2848,10 +2848,10 @@
   },
   {
    "row": "SaveState.Rules",
-   "status": "planned",
-   "where": "Phase C item 7: rules text as a note card",
+   "status": "native",
+   "where": "the scenario's briefing",
    "instead": "",
-   "held_by": "",
+   "held_by": "DrawingTests",
    "count": 0,
    "modules": 0
   },
@@ -2866,27 +2866,27 @@
   },
   {
    "row": "SnapPointState.Position",
-   "status": "planned",
-   "where": "Phase C item 7: snap points",
-   "instead": "",
+   "status": "dropped",
+   "where": "snap points (grid, decided 2026-11-06)",
+   "instead": "the table's own grid snaps",
    "held_by": "",
    "count": 0,
    "modules": 0
   },
   {
    "row": "SnapPointState.Rotation",
-   "status": "planned",
-   "where": "Phase C item 7: snap points",
-   "instead": "",
+   "status": "dropped",
+   "where": "snap points (grid, decided 2026-11-06)",
+   "instead": "the table's own grid snaps",
    "held_by": "",
    "count": 0,
    "modules": 0
   },
   {
    "row": "SnapPointState.Tags",
-   "status": "planned",
-   "where": "Phase C item 7: snap points",
-   "instead": "",
+   "status": "dropped",
+   "where": "snap points (grid, decided 2026-11-06)",
+   "instead": "the table's own grid snaps",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -3028,64 +3028,64 @@
   },
   {
    "row": "VectorLineState.OwnerSteamID",
-   "status": "planned",
-   "where": "Phase C item 4: drawings",
+   "status": "native",
+   "where": "lines on pieces and on the table",
    "instead": "",
-   "held_by": "",
+   "held_by": "DrawingTests",
    "count": 0,
    "modules": 0
   },
   {
    "row": "VectorLineState.color",
-   "status": "planned",
-   "where": "Phase C item 4: drawings",
+   "status": "native",
+   "where": "lines on pieces and on the table",
    "instead": "",
-   "held_by": "",
+   "held_by": "DrawingTests",
    "count": 0,
    "modules": 0
   },
   {
    "row": "VectorLineState.loop",
-   "status": "planned",
-   "where": "Phase C item 4: drawings",
+   "status": "native",
+   "where": "lines on pieces and on the table",
    "instead": "",
-   "held_by": "",
+   "held_by": "DrawingTests",
    "count": 0,
    "modules": 0
   },
   {
    "row": "VectorLineState.points3",
-   "status": "planned",
-   "where": "Phase C item 4: drawings",
+   "status": "native",
+   "where": "lines on pieces and on the table",
    "instead": "",
-   "held_by": "",
+   "held_by": "DrawingTests",
    "count": 0,
    "modules": 0
   },
   {
    "row": "VectorLineState.rotation",
-   "status": "planned",
-   "where": "Phase C item 4: drawings",
+   "status": "native",
+   "where": "lines on pieces and on the table",
    "instead": "",
-   "held_by": "",
+   "held_by": "DrawingTests",
    "count": 0,
    "modules": 0
   },
   {
    "row": "VectorLineState.square",
-   "status": "planned",
-   "where": "Phase C item 4: drawings",
+   "status": "native",
+   "where": "lines on pieces and on the table",
    "instead": "",
-   "held_by": "",
+   "held_by": "DrawingTests",
    "count": 0,
    "modules": 0
   },
   {
    "row": "VectorLineState.thickness",
-   "status": "planned",
-   "where": "Phase C item 4: drawings",
+   "status": "native",
+   "where": "lines on pieces and on the table",
    "instead": "",
-   "held_by": "",
+   "held_by": "DrawingTests",
    "count": 0,
    "modules": 0
   }
@@ -8055,6 +8055,15 @@
    "where": "ScriptTimers: ticks",
    "instead": "",
    "held_by": "",
+   "count": 54,
+   "modules": 54
+  },
+  {
+   "row": "a script call has no time limit in TTS",
+   "status": "partial",
+   "where": "ScriptHost.CallBudgetMs: a second of the script's own time per call, the table work it asks for not counted, so a bag placing hundreds of pieces in one click runs; a runaway loop still stops",
+   "instead": "",
+   "held_by": "import-sweep: naval (the Midway bag's Place)",
    "count": 54,
    "modules": 54
   },

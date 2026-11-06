@@ -10,12 +10,12 @@ the plan says translate it), unknown (nobody has decided).
 | area | rows used by the corpus | decided | planned or unknown | rows in all |
 |---|---|---|---|---|
 | types | 30 | 26 | 4 | 43 |
-| save | 150 | 133 | 17 | 300 |
+| save | 150 | 137 | 13 | 300 |
 | object | 65 | 63 | 2 | 262 |
 | global | 14 | 13 | 1 | 55 |
 | namespaces | 23 | 21 | 2 | 180 |
 | events | 8 | 7 | 1 | 50 |
-| engine | 22 | 19 | 3 | 22 |
+| engine | 23 | 20 | 3 | 23 |
 
 ## types
 
@@ -138,7 +138,7 @@ the plan says translate it), unknown (nobody has decided).
 | `SaveState.GameType` | 25 / 25 | dropped | save metadata |  |
 | `SaveState.LuaScript` | 25 / 25 | native | converter reads it |  |
 | `SaveState.VersionNumber` | 25 / 25 | dropped | save metadata |  |
-| `ObjectState.AttachedVectorLines` | 114 / 22 | planned | Phase C item 4: drawings on pieces |  |
+| `ObjectState.AttachedVectorLines` | 114 / 22 | native | the piece's own lines, in its frame and local unit | DrawingTests |
 | `CustomImageState.WidthScale` | 22 / 22 | native | converter reads it |  |
 | `CustomMeshState.MaterialIndex` | 1480 / 21 | native | converter reads it |  |
 | `CustomAssetbundleState.LoopingEffectIndex` | 71 / 21 | partial | BundleEffects: the effect family, not the index |  |
@@ -166,7 +166,7 @@ the plan says translate it), unknown (nobody has decided).
 | `GridState.Lines` | 11 / 11 | dropped | grid (decided 2026-11-06) |  |
 | `CustomTileState.Stretch` | 569 / 10 | native | converter reads it |  |
 | `SaveState.Gravity` | 9 / 9 | dropped | engine physics |  |
-| `SaveState.VectorLines` | 9 / 9 | planned | Phase C item 4: table drawings |  |
+| `SaveState.VectorLines` | 9 / 9 | native | strokes on the umpire's drawing board | DrawingTests |
 | `ObjectState.DragSelectable` | 335 / 8 | planned | Phase C item 7: piece flags |  |
 | `CustomPDFState.PDFUrl` | 9 / 8 | planned | Battle Lines session: books (uncommitted on main) |  |
 | `SaveState.MusicPlayer` | 8 / 8 | dropped | music player |  |
@@ -194,7 +194,7 @@ the plan says translate it), unknown (nobody has decided).
 | `MusicPlayerState.CurrentAudioURL` | 5 / 5 | dropped | music player |  |
 | `SaveState.CameraStates` | 5 / 5 | dropped | saved camera positions |  |
 | `ObjectState.AttachedDecals` | 2590 / 4 | native | converter reads it |  |
-| `ObjectState.AttachedSnapPoints` | 87 / 4 | planned | Phase C item 7: snap points |  |
+| `ObjectState.AttachedSnapPoints` | 87 / 4 | dropped | snap points (grid, decided 2026-11-06) |  |
 | `SaveState.LuaScriptState` | 4 / 4 | native | converter reads it |  |
 | `SaveState.SkyURL` | 4 / 4 | native | converter reads it |  |
 | `CustomMeshState.NormalURL` | 232 / 3 | native | converter reads it |  |
@@ -217,7 +217,7 @@ the plan says translate it), unknown (nobody has decided).
 | `LightingState.LutContribution` | 1 / 1 | dropped | lighting (decided 2026-11-06) |  |
 | `LightingState.ReflectionIntensity` | 1 / 1 | dropped | lighting (decided 2026-11-06) |  |
 | `ObjectState.IgnoreFoW` | 1 / 1 | dropped | hidden zones (decided 2026-11-06) |  |
-| `SaveState.DecalPallet` | 1 / 1 | planned | Phase C item 4: table decals |  |
+| `SaveState.DecalPallet` | 1 / 1 | dropped | the table's decal palette |  |
 | `SaveState.TableURL` | 1 / 1 | dropped | custom table picture |  |
 | `BagState.Order` | - | dropped | the order a bag gives its pieces back in |  |
 | `CalculatorState.memory` | - | dropped | TTS stock gadget |  |
@@ -340,13 +340,13 @@ the plan says translate it), unknown (nobody has decided).
 | `PhysicsMaterialState.FrictionCombine` | - | dropped | engine physics |  |
 | `RotationValueState.Rotation` | - | native | converter reads it |  |
 | `RotationValueState.Value` | - | native | converter reads it |  |
-| `SaveState.Decals` | - | planned | Phase C item 4: table decals |  |
+| `SaveState.Decals` | - | dropped | decals laid on the table |  |
 | `SaveState.ObjectStates` | - | native | converter reads it |  |
-| `SaveState.Rules` | - | planned | Phase C item 7: rules text as a note card |  |
+| `SaveState.Rules` | - | native | the scenario's briefing | DrawingTests |
 | `SaveState.SnapPoints` | - | planned | Phase C item 7: snap points |  |
-| `SnapPointState.Position` | - | planned | Phase C item 7: snap points |  |
-| `SnapPointState.Rotation` | - | planned | Phase C item 7: snap points |  |
-| `SnapPointState.Tags` | - | planned | Phase C item 7: snap points |  |
+| `SnapPointState.Position` | - | dropped | snap points (grid, decided 2026-11-06) |  |
+| `SnapPointState.Rotation` | - | dropped | snap points (grid, decided 2026-11-06) |  |
+| `SnapPointState.Tags` | - | dropped | snap points (grid, decided 2026-11-06) |  |
 | `TabState.body` | - | native | converter reads it |  |
 | `TabState.color` | - | dropped | notebook tab colour |  |
 | `TabState.id` | - | dropped | notebook tab id |  |
@@ -362,13 +362,13 @@ the plan says translate it), unknown (nobody has decided).
 | `TurnsState.TurnColor` | - | dropped | turns (decided 2026-11-06) |  |
 | `TurnsState.TurnOrder` | - | dropped | turns (decided 2026-11-06) |  |
 | `TurnsState.Type` | - | dropped | turns (decided 2026-11-06) |  |
-| `VectorLineState.OwnerSteamID` | - | planned | Phase C item 4: drawings |  |
-| `VectorLineState.color` | - | planned | Phase C item 4: drawings |  |
-| `VectorLineState.loop` | - | planned | Phase C item 4: drawings |  |
-| `VectorLineState.points3` | - | planned | Phase C item 4: drawings |  |
-| `VectorLineState.rotation` | - | planned | Phase C item 4: drawings |  |
-| `VectorLineState.square` | - | planned | Phase C item 4: drawings |  |
-| `VectorLineState.thickness` | - | planned | Phase C item 4: drawings |  |
+| `VectorLineState.OwnerSteamID` | - | native | lines on pieces and on the table | DrawingTests |
+| `VectorLineState.color` | - | native | lines on pieces and on the table | DrawingTests |
+| `VectorLineState.loop` | - | native | lines on pieces and on the table | DrawingTests |
+| `VectorLineState.points3` | - | native | lines on pieces and on the table | DrawingTests |
+| `VectorLineState.rotation` | - | native | lines on pieces and on the table | DrawingTests |
+| `VectorLineState.square` | - | native | lines on pieces and on the table | DrawingTests |
+| `VectorLineState.thickness` | - | native | lines on pieces and on the table | DrawingTests |
 
 ## object
 
@@ -945,6 +945,7 @@ the plan says translate it), unknown (nobody has decided).
 | `MoonSharp 2.0.0 on both sides: the Lua dialect matches` | 54 / 54 | native | Server.csproj |  |
 | `TTS Vector and Color classes with their methods` | 54 / 54 | partial | compat.Vector / compat.Color: the methods met so far |  |
 | `Wait.frames counts frames, Wait.time seconds, onUpdate per frame` | 54 / 54 | partial | ScriptTimers: ticks |  |
+| `a script call has no time limit in TTS` | 54 / 54 | partial | ScriptHost.CallBudgetMs: a second of the script's own time per call, the table work it asks for not counted, so a bag placing hundreds of pieces in one click runs; a runaway loop still stops | import-sweep: naval (the Midway bag's Place) |
 | `button and input defaults (width, height, font_size, colours, position, scale)` | 54 / 54 | compat | compat.tts_defaults, from TTS's LuaUIState classes; a button or input with no handler is refused as TTS refuses it | TtsDefaultsTests |
 | `click_function(obj, player_color, alt_click)` | 54 / 54 | compat | compat.create_button / tts_handler | TranslatorTests.Handlers_get_the_piece_their_widget_is_on |
 | `context menu callback(player_color, menu_position, object)` | 54 / 54 | compat | compat.add_context_menu_item |  |

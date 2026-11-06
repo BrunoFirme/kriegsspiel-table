@@ -8,7 +8,7 @@ namespace KTable.Server.Scripting;
 
 public sealed partial class ScriptHost
 {
-    public const double CallBudgetMs = 100;
+    public const double CallBudgetMs = 1000;
     public const double LoadBudgetMs = 10_000;
     public const long YieldEvery = 100_000;
     const int LoadFrames = 600;
@@ -680,6 +680,7 @@ public sealed partial class ScriptHost
             _depth++;
             try { Before(c); } finally { _depth--; }
         }
+        var started = _guards.Elapsed;
         var (err, inverse) = _s.ApplyEmitted(c, r.Actor);
         if (err != null) throw new ScriptRuntimeException(err);
         r.Items.Add(c);
@@ -690,6 +691,7 @@ public sealed partial class ScriptHost
             _depth++;
             try { React(c, r.Actor); } finally { _depth--; }
         }
+        _guards.Deadline += _guards.Elapsed - started;
     }
 
     void FlushStaging()
