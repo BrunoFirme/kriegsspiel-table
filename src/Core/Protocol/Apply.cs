@@ -108,11 +108,16 @@ public static class StateMachine
     {
         if (string.IsNullOrEmpty(s.Id)) s.Id = g.NewId();
         var layer = g.Layer(s.Layer);
-        if (layer.Any(p => p.Id == s.Id)) return "duplicate id";
+        int stack = 0;
+        foreach (var p in layer)
+        {
+            if (p.Id == s.Id) return "duplicate id";
+            if ((p.Pos - s.Pos).Length < 0.01) stack++;
+        }
         layer.Add(new PieceInstance
         {
             Id = s.Id, Def = s.Def, Pos = s.Pos, RotDeg = s.RotDeg, Label = s.Label, Scale = s.Scale, Y = Math.Max(0, s.Y),
-            Stack = layer.Count(p => (p.Pos - s.Pos).Length < 0.01), Guid = s.Guid, ScriptState = s.ScriptState ?? "",
+            Stack = stack, Guid = s.Guid, ScriptState = s.ScriptState ?? "",
             Tags = CleanTags(s.Tags), Memo = s.Memo ?? "",
         });
         BumpId(g, s.Id);
@@ -170,13 +175,17 @@ public static class StateMachine
     static string? ApplyDelete(GameState g, DeletePiece d, ref Command? inverse)
     {
         var layer = g.Layer(d.Layer);
-        var p = layer.FirstOrDefault(x => x.Id == d.Id);
-        if (p == null) return "no such piece";
-        var holder = layer.FirstOrDefault(x => x.Attached?.Contains(d.Id) == true);
-        int at = layer.IndexOf(p);
+        int at = layer.FindIndex(x => x.Id == d.Id);
+        if (at < 0) return "no such piece";
+        var p = layer[at];
         var restore = new RestorePiece { Layer = d.Layer, Piece = p.Clone(), Index = at };
+        PieceInstance? holder = null;
+        foreach (var x in layer)
+        {
+            bool holds = x == p ? x.Attached?.Contains(d.Id) == true : x.Attached?.Remove(d.Id) == true;
+            if (holds) holder ??= x;
+        }
         layer.RemoveAt(at);
-        foreach (var other in layer) other.Attached?.Remove(d.Id);
         inverse = holder == null ? restore
             : new Batch { Items = new() { restore, new Attach { Layer = d.Layer, Parent = holder.Id, Child = d.Id } } };
         return null;
