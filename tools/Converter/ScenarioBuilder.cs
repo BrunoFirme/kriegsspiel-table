@@ -31,6 +31,7 @@ public sealed class ScenarioBuilder
         public List<PieceInstance> Pieces = new();
         public Dictionary<PieceInstance, double> Y = new();
         public Dictionary<PieceInstance, double> Bottom = new();
+        public Dictionary<PieceInstance, double> Top = new();
         public Dictionary<PieceInstance, (PieceInstance Root, double Bottom)> Glued = new();
         public Dictionary<PieceInstance, double> HeightScale = new();
     }
@@ -497,6 +498,7 @@ public sealed class ScenarioBuilder
         layer.Pieces.Add(inst);
         layer.Y[inst] = o.PosY;
         layer.Bottom[inst] = _defs.Bottom(o);
+        layer.Top[inst] = _defs.Bottom(o) + _defs.BaseThickness(o) * Math.Abs(o.ScaleY);
 
         PlaceChildren(o, _defs.BakesChildren(o) ? Enumerable.Empty<TtsObj>() : o.Children, inst, refScale, baseScale, absolute, extras, packDefs, layer, usedPacks, ref rekeyed);
         return inst;
@@ -609,26 +611,30 @@ public sealed class ScenarioBuilder
 
     List<(double bottom, double y)> Seat(Layer l, List<(double bottom, double y)> levels)
     {
-        const double Above = 0.02, Digits = 4;
-        var order = l.Pieces.Where(p => !l.Glued.ContainsKey(p)).OrderBy(p => l.Y[p]).ToList();
-        var placed = new List<(PieceInstance p, double y, double top)>();
+        const double Sunk = 0.02, Digits = 4;
+        var order = l.Pieces.Where(p => !l.Glued.ContainsKey(p)).OrderBy(p => l.Bottom.GetValueOrDefault(p, l.Y[p])).ThenBy(p => l.Y[p]).ToList();
+        var placed = new List<(PieceInstance p, double ttsTop, double ktTop)>();
         var held = new List<(double bottom, double y)>();
         foreach (var p in order)
         {
-            int s = 0;
-            double rest = 0;
-            foreach (var (q, qy, qtop) in placed)
-            {
-                if (l.Y[p] <= qy + Above || !Holds(q, p.Pos)) continue;
-                s = Math.Max(s, q.Stack + 1);
-                rest = Math.Max(rest, qtop);
-            }
             bool bottomKnown = l.Bottom.TryGetValue(p, out var bottom);
-            if (s > 0 && rest > 0 && bottomKnown) held.Add((bottom, rest));
-            if (s == 0 && bottomKnown && LevelOf(bottom, levels) is { } level) rest = level;
-            p.Stack = s;
+            (PieceInstance p, double ttsTop, double ktTop)? under = null;
+            foreach (var q in placed)
+                if (l.Y[q.p] + Sunk < l.Y[p] && q.ttsTop <= l.Y[p] + Sunk && (under == null || q.ttsTop > under.Value.ttsTop) && Overlaps(q.p, p)) under = q;
+            double rest = 0;
+            if (under is { } u)
+            {
+                p.Stack = u.p.Stack + 1;
+                rest = u.ktTop;
+                if (bottomKnown) held.Add((bottom, rest));
+            }
+            else
+            {
+                p.Stack = 0;
+                if (bottomKnown && LevelOf(bottom, levels) is { } level) rest = level;
+            }
             p.Y = rest > 0 ? Math.Round(rest, (int)Digits) : 0;
-            placed.Add((p, l.Y[p], rest + (Lookup(p.Def)?.Thickness ?? 0) * p.Scale));
+            placed.Add((p, l.Top.GetValueOrDefault(p, l.Y[p]), rest + (Lookup(p.Def)?.Thickness ?? 0) * p.Scale));
         }
         return held;
     }
@@ -658,14 +664,29 @@ public sealed class ScenarioBuilder
         }
     }
 
-    bool Holds(PieceInstance q, Vec2 at)
+    sealed record Footprint(Vec2 Centre, double HalfW, double HalfH, double Turn)
+    {
+        public (double x, double z) Across => (Math.Cos(Turn), -Math.Sin(Turn));
+        public (double x, double z) Along => (Math.Sin(Turn), Math.Cos(Turn));
+        public double Reach((double x, double z) axis) =>
+            HalfW * Math.Abs(Across.x * axis.x + Across.z * axis.z) + HalfH * Math.Abs(Along.x * axis.x + Along.z * axis.z);
+    }
+
+    Footprint FootprintOf(PieceInstance p)
     {
         const double Smallest = 0.1;
-        var def = Lookup(q.Def);
-        double halfW = Math.Max(Smallest, (def?.Size.W ?? 1) * q.Scale / 2), halfH = Math.Max(Smallest, (def?.Size.H ?? 1) * q.Scale / 2);
-        double th = q.RotDeg * Math.PI / 180, dx = at.X - q.Pos.X, dz = at.Z - q.Pos.Z;
-        double lx = dx * Math.Cos(th) - dz * Math.Sin(th), lz = dx * Math.Sin(th) + dz * Math.Cos(th);
-        return Math.Abs(lx) <= halfW && Math.Abs(lz) <= halfH;
+        var def = Lookup(p.Def);
+        return new Footprint(p.Pos, Math.Max(Smallest, (def?.Size.W ?? 1) * p.Scale / 2), Math.Max(Smallest, (def?.Size.H ?? 1) * p.Scale / 2), p.RotDeg * Math.PI / 180);
+    }
+
+    bool Overlaps(PieceInstance a, PieceInstance b)
+    {
+        var fa = FootprintOf(a);
+        var fb = FootprintOf(b);
+        double dx = fb.Centre.X - fa.Centre.X, dz = fb.Centre.Z - fa.Centre.Z;
+        foreach (var axis in new[] { fa.Across, fa.Along, fb.Across, fb.Along })
+            if (Math.Abs(dx * axis.x + dz * axis.z) > fa.Reach(axis) + fb.Reach(axis)) return false;
+        return true;
     }
 
     readonly Dictionary<string, PieceDef> _lookup = new();
