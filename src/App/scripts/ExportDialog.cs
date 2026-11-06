@@ -80,7 +80,7 @@ public partial class ExportDialog : ConfirmationDialog
             {
                 savesPick = SavesPicker(saves, _id);
                 var row = new HBoxContainer();
-                row.AddThemeConstantOverride("separation", 8);
+                row.AddThemeConstantOverride("separation", Ui.Gap.Group);
                 row.AddChild(new Label { Text = "Saves" });
                 savesPick.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
                 row.AddChild(savesPick);

@@ -47,7 +47,7 @@ sealed class PacksPage
         var scroll = new ScrollContainer { SizeFlagsVertical = Control.SizeFlags.ExpandFill, HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled };
         v.AddChild(scroll);
         var col = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-        col.AddThemeConstantOverride("separation", 10);
+        col.AddThemeConstantOverride("separation", Ui.Gap.Block);
         scroll.AddChild(col);
 
         var ids = store.ListPackIds().Where(id => !StandardPacks.IsStandard(id)).OrderBy(id => store.Pack(id)?.Name ?? id, StringComparer.OrdinalIgnoreCase).ToList();
@@ -80,7 +80,7 @@ sealed class PacksPage
         }
 
         var foot = new HBoxContainer();
-        foot.AddThemeConstantOverride("separation", 4);
+        foot.AddThemeConstantOverride("separation", Ui.Gap.Tight);
         foot.AddChild(MakersLink());
         foot.AddChild(_t.Trash.Link(packs: true));
         v.AddChild(foot);
@@ -91,7 +91,7 @@ sealed class PacksPage
     HBoxContainer Actions()
     {
         var actions = new HBoxContainer();
-        actions.AddThemeConstantOverride("separation", 12);
+        actions.AddThemeConstantOverride("separation", Ui.Gap.Block);
         var install = Primary("Install a .ktpack file…", () =>
         {
             var fd = new FileDialog { FileMode = FileDialog.FileModeEnum.OpenFile, Access = FileDialog.AccessEnum.Filesystem, Filters = new[] { "*.ktpack ; Kriegsspiel Table file" }, Size = new Vector2I(820, 520) };
@@ -166,7 +166,7 @@ sealed class PacksPage
     void AddActions(Cards page, PanelContainer card, VBoxContainer face, string id)
     {
         var row = new HBoxContainer { Visible = false };
-        row.AddThemeConstantOverride("separation", 8);
+        row.AddThemeConstantOverride("separation", Ui.Gap.Group);
         var edit = Primary("Edit pieces", () => _main.OpenEditor(id));
         edit.TooltipText = "Open the pack on the editor table";
         edit.CustomMinimumSize = new Vector2(110, 34);

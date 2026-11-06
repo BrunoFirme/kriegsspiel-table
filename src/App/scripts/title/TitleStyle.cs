@@ -93,7 +93,7 @@ static class TitleStyle
         var row = new PanelContainer { MouseFilter = Control.MouseFilterEnum.Stop };
         row.AddThemeStyleboxOverride("panel", CardStyle(false));
         var h = new HBoxContainer();
-        h.AddThemeConstantOverride("separation", 10);
+        h.AddThemeConstantOverride("separation", Ui.Gap.Group);
         row.AddChild(h);
         var nm = new Label { Text = name, ClipText = true, CustomMinimumSize = new Vector2(260, 0), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsStretchRatio = 1.4f };
         nm.AddThemeFontOverride("font", Serif());
@@ -105,8 +105,8 @@ static class TitleStyle
     public static HFlowContainer Grid()
     {
         var grid = new HFlowContainer();
-        grid.AddThemeConstantOverride("h_separation", 12);
-        grid.AddThemeConstantOverride("v_separation", 12);
+        grid.AddThemeConstantOverride("h_separation", Ui.Gap.Block);
+        grid.AddThemeConstantOverride("v_separation", Ui.Gap.Block);
         return grid;
     }
 
@@ -126,7 +126,7 @@ static class TitleStyle
             cv.AddChild(blank);
         }
         var nameRow = new HBoxContainer();
-        nameRow.AddThemeConstantOverride("separation", 4);
+        nameRow.AddThemeConstantOverride("separation", Ui.Gap.Tight);
         var label = new Label { Text = name, AutowrapMode = TextServer.AutowrapMode.WordSmart, CustomMinimumSize = new Vector2(196, 0), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         label.AddThemeFontOverride("font", Serif());
         label.AddThemeFontSizeOverride("font_size", 18);

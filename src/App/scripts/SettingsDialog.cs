@@ -6,6 +6,7 @@ namespace KTable.App;
 
 sealed class SettingsDialog : HudPart
 {
+    const int KeyLabels = 272;
     VBoxContainer _box = null!;
 
     readonly IHudShell Shell;
@@ -52,8 +53,8 @@ sealed class SettingsDialog : HudPart
     static HBoxContainer Row(string label, Control control, Control? value = null, bool fill = true)
     {
         var r = new HBoxContainer();
-        r.AddThemeConstantOverride("separation", 10);
-        r.AddChild(new Label { Text = label, CustomMinimumSize = new Vector2(150, 0), SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, Modulate = new Color(1, 1, 1, 0.74f) });
+        r.AddThemeConstantOverride("separation", Ui.Gap.Group);
+        r.AddChild(Ui.RowLabel(label, Ui.DialogLabels));
         control.SizeFlagsVertical = Control.SizeFlags.ShrinkCenter;
         if (fill) control.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
         r.AddChild(control);
@@ -67,22 +68,9 @@ sealed class SettingsDialog : HudPart
         return r;
     }
 
-    static Control Option(CheckBox box)
-    {
-        var m = new MarginContainer();
-        m.AddThemeConstantOverride("margin_left", 154);
-        m.AddChild(box);
-        return m;
-    }
+    static Control Option(CheckBox box) => Ui.UnderControls(box, Ui.DialogLabels);
 
-    static Control Action(Button b)
-    {
-        b.SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin;
-        var m = new MarginContainer();
-        m.AddThemeConstantOverride("margin_left", 160);
-        m.AddChild(b);
-        return m;
-    }
+    static Control Action(Button b) => Ui.UnderControls(b, Ui.DialogLabels);
 
     void AddInterface()
     {
@@ -90,9 +78,7 @@ sealed class SettingsDialog : HudPart
         var size = AppSettings.SizeSlider(Cfg, () => Callable.From(Shell.Relayout).CallDeferred());
         _box.AddChild(Row("Interface size", size.Size, size.Shown));
         _box.AddChild(Option(size.Match));
-        var cappedAt = new MarginContainer();
-        cappedAt.AddThemeConstantOverride("margin_left", 160);
-        cappedAt.AddChild(size.Capped);
+        var cappedAt = Ui.UnderControls(size.Capped, Ui.DialogLabels);
         cappedAt.Visible = size.Capped.Visible;
         size.Capped.VisibilityChanged += () => cappedAt.Visible = size.Capped.Visible;
         _box.AddChild(cappedAt);
@@ -369,7 +355,7 @@ sealed class SettingsDialog : HudPart
         var hint = Hint("Click a key, then press the new one. Esc, Ctrl+1–9 and the arrow keys are fixed.");
         hint.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
         head.AddChild(hint);
-        var kg = Ui.Form(250);
+        var kg = Ui.Form(KeyLabels);
         var reset = Btn("Reset to defaults", () =>
         {
             Cfg.Keys.Reset();

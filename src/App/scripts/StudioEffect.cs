@@ -20,7 +20,7 @@ internal sealed class EffectTab
         var e = d.Effect ?? EffectKinds.FromName(d.Name);
         var p = _s.Inspector.Section(page, "Effect");
         KindRows(p, d, e);
-        var sg = Ui.Form(76);
+        var sg = Ui.Form(Ui.PanelLabels);
         p.AddChild(sg);
         Sliders(sg, e);
         LookRows(sg, e);
@@ -32,7 +32,7 @@ internal sealed class EffectTab
 
     void KindRows(VBoxContainer p, PieceDef d, EffectDef e)
     {
-        var g = Ui.Form(76);
+        var g = Ui.Form(Ui.PanelLabels);
         p.AddChild(g);
         g.AddChild(new Label { Text = "Kind" });
         var kind = new OptionButton { FitToLongestItem = false };
@@ -56,7 +56,7 @@ internal sealed class EffectTab
         Ui.AlignForm(g);
         p.AddChild(Ui.Hint(EffectKinds.Kinds.FirstOrDefault(k => k.Id == e.Kind).What ?? ""));
         if (!EffectKinds.Volleys(e.Kind)) return;
-        var vf = Ui.Form(76);
+        var vf = Ui.Form(Ui.PanelLabels);
         vf.AddChild(new Label { Text = "Firing" });
         var how = new OptionButton { FitToLongestItem = false };
         var modes = e.Kind switch
@@ -153,7 +153,7 @@ internal sealed class EffectTab
     void ParticleSection(VBoxContainer page, EffectDef e)
     {
         var p = _s.Inspector.Section(page, "Particle", open: e.OwnPicture);
-        var pg = Ui.Form(76);
+        var pg = Ui.Form(Ui.PanelLabels);
         p.AddChild(pg);
         pg.AddChild(new Label { Text = "Picture" });
         var pic = new OptionButton { FitToLongestItem = false };

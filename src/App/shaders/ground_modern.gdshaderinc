@@ -8,35 +8,21 @@ vec3 modern_wood(vec3 c, vec2 p, vec2 uv, mat2 to_uv, float fw, float ledges, fl
 			for (int i = -1; i <= 1; i++) {
 				vec2 id;
 				float salt;
-				vec2 o = grid_point_at(p, uv, to_uv, S, 0.5, i, j, id, salt);
+				vec2 o = grid_point_at(p, uv, to_uv, S, 0.3, i, j, id, salt);
 				float room = room_at(o, p, uv, to_uv, WOOD, salt);
-				float k = GLYPH * 1.15 * mix(0.8, 1.15, hash(id + 3.1));
+				float k = GLYPH * mix(0.85, 1.1, hash(id + 3.1));
 				if (hash(id + 5.0) > 0.97) continue;
 				if (ledges > 0.5 && hash(id + 9.9) > LEDGE_TREES) continue;
 				if (room < 0.1 * k) continue;
 				if (hash(id + 1.3) < clearing_at(o, salt) * (1.0 - closed) || hash(id + 2.4) > keep) continue;
-				if (coppice_at(o, salt) > 0.5) {
-					m = max(m, ink(abs(length(p - o) - 0.12 * k), M1 * 0.6, fw));
-					m = max(m, ink(segment(p, o + vec2(0.12, 0.0) * k, o + vec2(0.22, -0.08) * k), M1 * 0.5, fw));
-					continue;
-				}
-				if (hash(id + 6.1) < conifer_share(o, salt)) {
-					vec2 top = o + NORTH * 0.5 * k;
-					m = max(m, ink(segment(p, top, o + vec2(-0.2, 0.08) * k), M1 * 0.6, fw));
-					m = max(m, ink(segment(p, top, o + vec2(0.2, 0.08) * k), M1 * 0.6, fw));
-					m = max(m, ink(segment(p, o + NORTH * 0.3 * k, o - NORTH * 0.3 * k), M1 * 0.6, fw));
-				} else {
-					vec2 ring = o + NORTH * 0.22 * k;
-					m = max(m, ink(abs(length(p - ring) - 0.2 * k), M1 * 0.6, fw));
-					if (hash(id + 8.4) < 0.4) m = max(m, ink(abs(length(p - ring - vec2(0.16, -0.06) * k) - 0.13 * k), M1 * 0.55, fw));
-					m = max(m, ink(segment(p, ring - NORTH * 0.2 * k, o - NORTH * 0.3 * k), M1 * 0.6, fw));
-				}
+				k *= mix(1.0, 0.7, coppice_at(o, salt));
+				m = max(m, crown_sign(p, o - NORTH * 0.25 * k, 0.26 * k, step(hash(id + 6.1), conifer_share(o, salt)), 0.3 * k, M1 * 0.6, fw, id));
 			}
 		}
 	}
 	cover = m;
-	m = mix(m, 0.05, far_blend(fw, S));
-	return mix(c, MODERN_BLACK, m * 0.92);
+	m = mix(m, 0.09, far_blend(fw, S));
+	return mix(c, MODERN_BLACK, m * 0.85);
 }
 
 vec3 modern_farm(vec3 c, vec2 p, vec2 site, vec2 seed, float turn, float fw, inout float cover) {
@@ -48,52 +34,30 @@ vec3 modern_farm(vec3 c, vec2 p, vec2 site, vec2 seed, float turn, float fw, ino
 	return c;
 }
 
-vec3 modern_lanes(vec3 c, vec3 sheet, vec2 p, float settle, float fw) {
-	float along;
-	float w = metres(LANE_HALF_M);
-	float d = lane_iso(p, LANE_CYCLE_M, 3.7, along);
-	float on = lane_cut(p, 11.0, mix(0.45, 0.75, settle));
-	c = mix(c, sheet, (1.0 - smoothstep(w - fw, w + fw, d)) * on);
-	c = mix(c, MODERN_BLACK, ink(abs(d - w), M1 * 0.5, fw) * on * 0.95);
-	float d2 = lane_iso(p, LANE_SECOND_M, 8.1, along);
-	float on2 = lane_cut(p, 17.0, mix(0.2, 0.55, settle));
-	return mix(c, MODERN_BLACK, dashed(along, abs(d2 - w), metres(10.0), 0.55, M1 * 0.45, fw) * on2 * 0.9);
-}
-
 vec3 modern_field(vec3 c, vec3 sheet, vec2 p, vec2 uv, mat2 to_uv, float own, vec2 levels, vec2 along, float follow, float fw, out float cover) {
 	p = curled(p);
 	Lot l = lot_at(p, uv, to_uv, metres(mix(PLOT_OPEN_M, PLOT_SMALL_M, levels.x)), 0.56, FIELD, own, levels);
 	cover = 0.0;
-	vec2 site_uv = uv + to_uv * (l.site - p);
-	float wet = wet_field_at(site_uv, follow);
-	if (wet > 0.5) return wet_field(MODERN, c, sheet, p, uv, to_uv, own, levels, fw);
-	float fronts = fronts_road(site_uv, follow);
-	vec2 road_along = road_along_at(site_uv);
-	float furrow;
-	float strip_edge = strips(p, l, mix(along, road_along, fronts), max(follow, fronts), fw, furrow);
 	float use = hash(l.id + 9.4);
 	float small = step(l.room, metres(ORCHARD_LOT_M));
-	if (use < 0.6 || small < 0.5) c = mix(c, MODERN_BLACK, strip_edge * 0.5);
-	else if (use < 0.75) { float o = orchard(p, l, 0.1, fw); c = mix(c, MODERN_BLACK, o * 0.85); cover = o; }
-	else if (use < 0.85) c = mix(c, MODERN_BLACK, vine_rows(p, l, along, fw) * 0.6);
-	float bounded = smoothstep(0.15, 0.6, l.levels.x);
-	vec2 pair = l.id + l.other;
-	float marked = step(hash(pair + 4.4), mix(0.1, 0.8, bounded));
-	int line = HEDGE + int(hash(pair + 1.1) * 4.0);
-	c = mix(c, MODERN_BLACK, edge_line(MODERN, line, l, p, fw, M1 * 0.5, M1, M2) * marked * mix(0.4, 0.9, hash(pair + 2.2)));
-	c = modern_lanes(c, sheet, p, smoothstep(0.1, 0.8, l.levels.y), fw);
-	float near_road = 1.0 - smoothstep(metres(60.0), metres(160.0), road_away_at(site_uv));
-	if (l.room > metres(30.0) && hash(l.id + 8.2) < farms_here(l) * (1.0 + near_road)) {
-		float turn = mix(hash(l.id + 11.3) * 3.1416, atan(road_along.y, road_along.x), step(0.5, near_road));
-		c = modern_farm(c, p, l.site, l.id, turn, fw, cover);
-		if (hamlet_here(l) > 0.5) c = modern_farm(c, p, second_site(l), l.id + 21.0, turn + 0.4, fw, cover);
+	if (small > 0.5 && use >= 0.75 && use < 0.79) c = mix(c, MODERN_BLACK, vine_strokes(p, 0.45, M1 * 0.45, fw) * 0.85);
+	float wet = wet_meadow(uv, follow);
+	if (wet > 0.001) {
+		c = mix(c, sheet, wet * 0.8);
+		c = mix(c, MODERN_BLACK, marks(p, own, MEADOW_ROW * 0.5, MEADOW_LEN, M1 * 0.4, 0.0, 0.0, 0.6, fw) * 0.85 * wet);
+		c = mix(c, MODERN_BLUE, tufts(p + 0.9, own, MEADOW_ROW * 0.6, 0.1, M1 * 0.4, 0.5, fw) * 0.8 * wet);
 	}
+	float bounded = smoothstep(ENCLOSED_FROM, ENCLOSED_FULL, l.levels.x);
+	vec2 pair = l.id + l.other;
+	float marked = step(hash(pair + 4.4), bounded * 0.8);
+	int line = HEDGE + int(hash(pair + 1.1) * 4.0);
+	c = mix(c, MODERN_BLACK, edge_line(MODERN, line, l, p, fw, M1 * 0.5, M1, M2) * marked * mix(0.6, 0.9, hash(pair + 2.2)));
 	return c;
 }
 
 vec3 plate_spills(vec3 c, vec3 sheet, int k, int beside, vec2 p, float edge, float fw) {
-	if (beside == WOOD && k != WOOD) c = mix(c, MODERN_GREEN, dot_screen(p, 0.2618, SCREEN_PITCH, 0.25, fw) * plate_spill(edge, PLATE_GREEN, fw));
-	if (beside == WATER && k != WATER) c = mix(c, MODERN_BLUE, dot_screen(p, 0.7854, SCREEN_PITCH, 0.25, fw) * plate_spill(edge, PLATE_BLUE, fw));
+	if (beside == WOOD && k != WOOD) c = mix(c, MODERN_GREEN, WOOD_TINT * plate_spill(edge, PLATE_GREEN, fw));
+	if (beside == WATER && k != WATER) c = mix(c, MODERN_BLUE, WATER_TINT * plate_spill(edge, PLATE_BLUE, fw));
 	return c;
 }
 
@@ -102,16 +66,15 @@ vec3 modern(int k, int beside, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_u
 	cover = 0.0;
 	if (units_per_metre <= 0.0) return mix(c, MODERN_BLACK, ink(edge, M1, fw) * 0.6);
 	if (k == TOWN) {
-		c = mix(sheet, MODERN_BLACK, dot_screen(p, 0.0, SCREEN_PITCH, 0.1, fw));
+		c = mix(sheet, MODERN_BLACK, TOWN_TINT);
 		return town_draw(MODERN, c, sheet, p, uv, to_uv, own, levels, road_w, fw, cover);
 	} else if (k == GRASS) {
 		Lot l = lot_at(p, uv, to_uv, metres(PADDOCK_M), 0.5, GRASS, own, levels);
 		float rough = step(0.6, hash(l.id + 1.1));
-		float wet = 1.0 - smoothstep(metres(WET_NEAR_M * 0.7), metres(WET_NEAR_M), wet_at(uv));
+		float wet = wet_meadow(uv, 0.0);
 		c = mix(c, MODERN_BLACK, marks(p, own, MEADOW_ROW * 0.5, MEADOW_LEN, M1 * 0.4, 0.0, 0.0, mix(0.55, 0.75, rough), fw) * 0.85);
 		if (rough > 0.5) c = mix(c, MODERN_BLACK, tufts(p + 0.4, own, MEADOW_ROW, 0.12, M1 * 0.4, 0.4, fw) * 0.8);
 		c = mix(c, MODERN_BLUE, tufts(p + 0.9, own, MEADOW_ROW * 0.6, 0.1, M1 * 0.4, 0.5, fw) * 0.8 * wet);
-		c = modern_lanes(c, sheet, p, smoothstep(0.1, 0.8, levels.y) * 0.6, fw);
 		if (l.room >= 0.0) {
 			float fenced = smoothstep(0.2, 0.6, max(l.levels.x, near_town)) * step(mix(0.65, 0.3, near_town), hash(l.id + 7.2));
 			c = mix(c, MODERN_BLACK, edge_line(MODERN, FENCE, l, p, fw, M1 * 0.5, M1, M2) * fenced * 0.9);
@@ -119,7 +82,7 @@ vec3 modern(int k, int beside, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_u
 			float body;
 			if (what < 0.08 && l.room > metres(20.0)) {
 				float o = pond(p, l, fw, body);
-				c = mix(c, mix(sheet, MODERN_BLUE, dot_screen(p, 0.7854, SCREEN_PITCH, 0.25, fw)), body);
+				c = mix(c, mix(sheet, MODERN_BLUE, WATER_TINT), body);
 				c = mix(c, MODERN_BLUE, o);
 			} else if (what < 0.2 && l.room > metres(8.0)) {
 				float o = lone_tree(p, l, fw, body);
@@ -130,16 +93,14 @@ vec3 modern(int k, int beside, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_u
 	} else if (k == FIELD) {
 		c = modern_field(c, sheet, p, uv, to_uv, own, vec2(max(levels.x, near_town * NEAR_TOWN_PLOTS), levels.y), along, follow, fw, cover);
 	} else if (k == WOOD) {
-		Lot s = lot_at(p, uv, to_uv, metres(STAND_M), 0.5, WOOD, own, levels);
 		float open = clearing_at(p, own) * (1.0 - smoothstep(CLOSED_FROM, CLOSED_FULL, levels.x));
-		c = mix(mix(sheet, MODERN_GREEN, dot_screen(p, 0.2618, SCREEN_PITCH, mix(0.24, 0.42, levels.x), fw)), sheet, open);
-		c = modern_wood(c, p, uv, to_uv, fw, ledges, metres(mix(TREES_OPEN_M, TREES_CLOSED_M, levels.x)), levels.x * (1.0 - near_town * NEAR_TOWN_THINS), cover);
+		c = mix(mix(sheet, MODERN_GREEN, WOOD_TINT * mix(0.85, 1.4, levels.x)), sheet, open);
+		c = modern_wood(c, p, uv, to_uv, fw, ledges, metres(mix(TREES_OPEN_M, TREES_CLOSED_M, levels.x)) * MODERN_PITCH, levels.x * (1.0 - near_town * NEAR_TOWN_THINS), cover);
 		c = mix(c, MODERN_BLACK, dotted_line(p, uv, to_uv, M1 * 2.0, 0.2, M1 * 0.6, fw) * 0.95);
-		if (s.room >= 0.0) {
-			float ride = (1.0 - smoothstep(metres(3.0), metres(3.0) + fw, s.edge)) * step(0.7, hash(s.id + 2.2)) * (1.0 - ledges);
-			c = mix(c, sheet, ride * RIDE);
-			c = mix(c, MODERN_BLACK, dashed(dot(p - s.site, s.across), abs(s.edge - metres(3.0)), 0.25, 0.5, M1 * 0.4, fw) * ride * 0.8);
-			if (open > 0.5 && hash(s.id + 3.9) < 0.5) c = mix(c, MODERN_BLACK, hut(p, s, fw));
+		c = mix(c, MODERN_BLACK, rides(p, levels.x, M1 * 0.4, metres(6.0), fw) * (1.0 - ledges) * 0.9);
+		if (open > 0.5) {
+			Lot s = lot_at(p, uv, to_uv, metres(STAND_M), 0.5, WOOD, own, levels);
+			if (s.room >= 0.0 && hash(s.id + 3.9) < 0.5) c = mix(c, MODERN_BLACK, hut(p, s, fw));
 		}
 	} else if (k == MARSH) {
 		Lot l = lot_at(p, uv, to_uv, metres(MARSH_LOT_M), 0.5, MARSH, own, levels);
@@ -148,7 +109,7 @@ vec3 modern(int k, int beside, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_u
 		if (l.room >= 0.0 && hash(l.id + 4.4) < 0.5) c = mix(c, MODERN_BLUE, dashed(dot(p - l.site, l.across), l.edge, metres(6.0), 0.6, M1 * 0.5, fw) * 0.8);
 	} else if (k == WATER) {
 		float blue = plate_fill(edge, PLATE_BLUE, fw);
-		c = mix(sheet, MODERN_BLUE, dot_screen(p, 0.7854, SCREEN_PITCH, 0.25, fw) * blue);
+		c = mix(sheet, MODERN_BLUE, WATER_TINT * blue);
 		Lot l = lot_at(p, uv, to_uv, metres(WATER_LOT_M), 0.5, WATER, own, levels);
 		if (l.room > metres(ISLET_SHORE_M) && hash(l.id + 6.1) < ISLET_SHARE) {
 			float body;

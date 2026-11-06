@@ -38,12 +38,12 @@ sealed class PeopleList : HudPart
     {
         _pill = new Button { Flat = true, FocusMode = Control.FocusModeEnum.None, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, Visible = false };
         var row = _row = new HBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
-        row.AddThemeConstantOverride("separation", 6);
+        row.AddThemeConstantOverride("separation", Ui.Gap.Row);
         row.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
         row.OffsetLeft = PillPadding / 2;
         row.OffsetRight = -PillPadding / 2;
         _dots = new HBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter };
-        _dots.AddThemeConstantOverride("separation", 3);
+        _dots.AddThemeConstantOverride("separation", Ui.Gap.Tight);
         row.AddChild(_dots);
         _more = Small(Ui.Muted);
         row.AddChild(_more);
@@ -132,7 +132,7 @@ sealed class PeopleList : HudPart
         {
             _pop = new PopupPanel();
             _list = new VBoxContainer { CustomMinimumSize = new Vector2(ListWidth, 0) };
-            _list.AddThemeConstantOverride("separation", 6);
+            _list.AddThemeConstantOverride("separation", Ui.Gap.Row);
             _pop.AddChild(_list);
             HudNode.AddChild(_pop);
         }
@@ -188,7 +188,7 @@ sealed class PeopleList : HudPart
     Control Row(PeerInfo p)
     {
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", 8);
+        row.AddThemeConstantOverride("separation", Ui.Gap.Group);
         row.AddChild(Dot(Visibility.IsUmpire(p.Role) ? Hue(p) : null));
         row.AddChild(new Label { Text = p.PeerId == S.Me.PeerId ? $"{p.Name} (you)" : p.Name, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, ClipText = true,
             TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis });

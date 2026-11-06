@@ -170,11 +170,11 @@ and undoes like a stroke.
 Drawings sit on layers, like tracing paper. The eye hides a layer **on your screen only**: handy before a
 screenshot. Click a name to draw on it; the rubber works on that layer alone.
 
-### POV screenshot
+### POV capture
 
 A turn report as a picture, from one piece's point of view.
 
-1. Select the piece and press **V** (or right-click → POV screenshot from here).
+1. Select the piece and press **V** (or right-click → POV capture from here).
 2. Set how far it sees (the wheel, or the Radius field).
 3. Drag to trace what blocks the view: walls, wood edges, ridges. What lies behind goes black.
 4. **Enter** or **Capture**. The picture goes to the clipboard and the capture folder, stamped with the

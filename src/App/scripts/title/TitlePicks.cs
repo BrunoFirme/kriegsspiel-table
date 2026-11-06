@@ -22,7 +22,7 @@ sealed class TitlePicks
     public TitlePicks()
     {
         Latest = this;
-        _bar.AddThemeConstantOverride("separation", 8);
+        _bar.AddThemeConstantOverride("separation", Ui.Gap.Group);
         _bar.AddChild(_count);
         var clear = new Button { Text = "Clear", Flat = true, FocusMode = Control.FocusModeEnum.None };
         clear.AddThemeColorOverride("font_color", Muted);

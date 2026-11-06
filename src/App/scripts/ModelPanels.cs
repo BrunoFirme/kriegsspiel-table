@@ -105,7 +105,7 @@ internal sealed class ModelPanels
         var def = _m.Def;
         bool blockChosen = _m.Flat && !_m.IsPart(_m.SelPartId ?? "");
         var list = new VBoxContainer();
-        list.AddThemeConstantOverride("separation", 3);
+        list.AddThemeConstantOverride("separation", Ui.Gap.Tight);
         if (_m.Flat && def != null) list.AddChild(ShapeRow(blockChosen, null, "Block", studio.Framer.NameOf(def, Math.Max(0, _m.FlatState)).ToLowerInvariant(), () =>
         {
             _m.SelPartId = PieceFaces.Key(Math.Max(0, _m.FlatState), false);
@@ -164,8 +164,8 @@ internal sealed class ModelPanels
     static GridContainer Buttons(int columns, params Button[] buttons)
     {
         var g = new GridContainer { Columns = columns };
-        g.AddThemeConstantOverride("h_separation", 4);
-        g.AddThemeConstantOverride("v_separation", 4);
+        g.AddThemeConstantOverride("h_separation", Ui.Gap.Tight);
+        g.AddThemeConstantOverride("v_separation", Ui.Gap.Tight);
         foreach (var b in buttons)
         {
             b.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
@@ -207,7 +207,7 @@ internal sealed class ModelPanels
             else studio.AskFrame(def);
         };
         g1.AddChild(outline);
-        var g = Ui.Form(76);
+        var g = Ui.Form(Ui.PanelLabels);
         var size = (look > 0 && own ? def.States[look].Size : null) ?? def.Size;
         var metres = SizeForm.Rows(g, studio.Prefs, size, "Depth", v => studio.Apply(x => { if (look > 0 && own) x.States[look].Size = v; else x.Size = v; }, what: "the size"), own);
         g.AddChild(new Label { Text = "Thickness" });
@@ -289,7 +289,7 @@ internal sealed class ModelPanels
         ends.AddChild(Icon("dup", "Duplicate this shape, paint and all", () => Duplicate(studio, s)));
         if (_m.Flat || _m.Doc.Parts.Count > 1) ends.AddChild(Icon("trash", "Remove this shape   (Delete; Ctrl+Z brings it back)", () => _m.RemovePart(s)));
         var g = Inspector.Group(box, s.Kind == "mesh" ? "Model" : "Shape", ends);
-        var form = Ui.Form(52);
+        var form = Ui.Form(Ui.PanelLabels);
         form.AddChild(new Label { Text = "Name" });
         var rename = new LineEdit { Text = s.Name, TooltipText = "The shape's name" };
         void Rename()
@@ -356,11 +356,11 @@ internal sealed class ModelPanels
     {
         var g = Inspector.Group(box, "Place");
         var grid = new GridContainer { Columns = 4 };
-        grid.AddThemeConstantOverride("h_separation", 4);
-        grid.AddThemeConstantOverride("v_separation", 4);
+        grid.AddThemeConstantOverride("h_separation", Ui.Gap.Tight);
+        grid.AddThemeConstantOverride("v_separation", Ui.Gap.Tight);
         void Vec(string label, float[] arr, float step, string suffix, bool scale = false)
         {
-            grid.AddChild(new Label { Text = label, CustomMinimumSize = new Vector2(44, 0), Modulate = new Color(1, 1, 1, 0.74f), SizeFlagsVertical = Control.SizeFlags.ShrinkCenter });
+            grid.AddChild(Ui.RowLabel(label, Ui.PanelLabels));
             for (int i = 0; i < 3; i++)
             {
                 int ii = i;
@@ -422,7 +422,7 @@ internal sealed class ModelPanels
     {
         var g = Inspector.Group(box, "Colour");
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", 6);
+        row.AddThemeConstantOverride("separation", Ui.Gap.Row);
         var tint = new ColorPickerButton { Color = Hex.To(s.Tint, Colors.White), CustomMinimumSize = new Vector2(48, 26), EditAlpha = false, TooltipText = "Multiplies the shape's colours" };
         Ui.WhenPicked(tint, c =>
         {
@@ -431,7 +431,7 @@ internal sealed class ModelPanels
             _m.RefreshSelection();
             _m.Changed(mesh: false);
         });
-        row.AddChild(new Label { Text = "Tint", CustomMinimumSize = new Vector2(44, 0), Modulate = new Color(1, 1, 1, 0.74f), SizeFlagsVertical = Control.SizeFlags.ShrinkCenter });
+        row.AddChild(Ui.RowLabel("Tint", Ui.PanelLabels));
         row.AddChild(tint);
         var clear = Ui.Btn("Clear its paint", () =>
         {
@@ -449,7 +449,7 @@ internal sealed class ModelPanels
     void ModelSize(PieceStudio studio, VBoxContainer box)
     {
         var g0 = Inspector.Group(box, "On the table");
-        var g = Ui.Form(76);
+        var g = Ui.Form(Ui.PanelLabels);
         var span = _m.Views.Count == 0 ? 1 : _m.FootprintWide();
         g.AddChild(new Label { Text = "Width" });
         var row = new HBoxContainer();

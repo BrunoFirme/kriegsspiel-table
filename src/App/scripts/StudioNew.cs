@@ -201,13 +201,13 @@ internal sealed class NewPieces
     public Control Cards(Action chosen)
     {
         var box = new VBoxContainer();
-        box.AddThemeConstantOverride("separation", 6);
+        box.AddThemeConstantOverride("separation", Ui.Gap.Row);
         void Row(string title, params (string icon, string name, string what, Action act)[] cards)
         {
             box.AddChild(Ui.Header(title));
             var grid = new GridContainer { Columns = 5 };
-            grid.AddThemeConstantOverride("h_separation", 6);
-            grid.AddThemeConstantOverride("v_separation", 6);
+            grid.AddThemeConstantOverride("h_separation", Ui.Gap.Row);
+            grid.AddThemeConstantOverride("v_separation", Ui.Gap.Row);
             foreach (var (icon, name, what, act) in cards)
             {
                 var a = act;
@@ -239,13 +239,13 @@ internal sealed class NewPieces
         var dlg = new AcceptDialog { Title = FirmeEffects.PackName, OkButtonText = "Close" };
         var scroll = new ScrollContainer { CustomMinimumSize = new Vector2(740, 460), HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled };
         var col = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-        col.AddThemeConstantOverride("separation", 6);
+        col.AddThemeConstantOverride("separation", Ui.Gap.Row);
         var eras = new[] { ("ancient", "Bows, blades and siege engines"), ("napoleonic", "The age of the musket"), ("modern", "The World Wars and after"), ("naval", "At sea") };
         void Group(string title, IEnumerable<PieceDef> pieces)
         {
             var grid = new GridContainer { Columns = 4 };
-            grid.AddThemeConstantOverride("h_separation", 6);
-            grid.AddThemeConstantOverride("v_separation", 6);
+            grid.AddThemeConstantOverride("h_separation", Ui.Gap.Row);
+            grid.AddThemeConstantOverride("v_separation", Ui.Gap.Row);
             foreach (var d in pieces)
             {
                 var src = d;
@@ -297,7 +297,7 @@ internal sealed class NewPieces
         card.MouseEntered += () => card.AddThemeStyleboxOverride("panel", hover);
         card.MouseExited += () => card.AddThemeStyleboxOverride("panel", normal);
         var v = new VBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
-        v.AddThemeConstantOverride("separation", 3);
+        v.AddThemeConstantOverride("separation", Ui.Gap.Tight);
         card.AddChild(v);
         var holder = new Control { CustomMinimumSize = new Vector2(28, 28), MouseFilter = Control.MouseFilterEnum.Ignore, SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin };
         Control glyph = icon is "round" or "ngon" or "star" ? new ShapeGlyph { Kind = icon } : new StudioIcon { Kind = icon };
@@ -329,13 +329,13 @@ internal sealed class NewPieces
         if (files.Length == 0) return;
         var dlg = new ConfirmationDialog { Title = files.Length == 1 ? "A piece from a picture" : $"Pieces from {files.Length} pictures", OkButtonText = "Make" };
         var box = new VBoxContainer();
-        box.AddThemeConstantOverride("separation", 8);
+        box.AddThemeConstantOverride("separation", Ui.Gap.Group);
         dlg.AddChild(box);
         box.AddChild(ToolPanel.Small("Frame"));
         string frame = "As it is";
         var frames = new HFlowContainer { CustomMinimumSize = new Vector2(460, 0) };
         var group = new ButtonGroup();
-        var g = Ui.Form(70);
+        var g = Ui.Form(Ui.DialogLabels);
         foreach (var f in new[] { "As it is" }.Concat(PieceFramer.Outlines.Where(o => o != PieceFramer.AlongThePicture)))
         {
             var b =

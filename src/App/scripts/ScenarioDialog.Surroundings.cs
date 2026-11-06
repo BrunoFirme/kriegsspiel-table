@@ -50,7 +50,7 @@ sealed partial class ScenarioDialog
             }
             S.Do(new SetLighting { Lighting = look });
         };
-        var form = Ui.Form(84);
+        var form = Ui.Form(Ui.DialogLabels);
         form.AddChild(new Label { Text = "Backdrop" });
         form.AddChild(pick);
         form.AddChild(new Control());
@@ -63,7 +63,7 @@ sealed partial class ScenarioDialog
         _box.AddChild(form);
         _box.AddChild(Hint("Everyone at the table sees it past the table's edge. A sky sets its own light; change it above."));
 
-        var tableForm = Ui.Form(84);
+        var tableForm = Ui.Form(Ui.DialogLabels);
         var table = LightRow(tableForm, "Surface", 0, Lighting.SeeThrough, 0.05, now.TableShade, ShadeWord);
         table.TooltipText = "The table around and under the map sheets: squared paper … grey … black … see-through, with no table under the sheets";
         table.Editable = S.IsUmpire;
@@ -74,12 +74,16 @@ sealed partial class ScenarioDialog
         table.DragEnded += _ => { dragging = false; SendLook(l => l.TableShade = table.Value); };
         _box.AddChild(Header("Table"));
         _box.AddChild(tableForm);
+    }
 
+    void AddGround()
+    {
+        var now = S.View.Lighting;
         var style = new OptionButton { CustomMinimumSize = new Vector2(220, 0), Disabled = !S.IsUmpire, TooltipText = "How ground painted with the Relief tool is drawn: its colours, outlines and marks" };
         foreach (var (_, name) in MapStyles.All) style.AddItem(name);
         style.Selected = MapStyles.All.ToList().FindIndex(m => m.Id == MapStyles.Of(now.MapStyle));
         style.ItemSelected += i => SendLook(l => l.MapStyle = MapStyles.All[(int)i].Id);
-        var mapForm = Ui.Form(84);
+        var mapForm = Ui.Form(Ui.DialogLabels);
         mapForm.AddChild(new Label { Text = "Style" });
         mapForm.AddChild(style);
         bool scaled = S.View.Calibration.UnitsPerMeter is > 0;
@@ -91,7 +95,7 @@ sealed partial class ScenarioDialog
         snow.ValueChanged += v => { PreviewLook(l => l.SnowLine = v); if (!snowing) SendLook(l => l.SnowLine = v); };
         snow.DragEnded += _ => { snowing = false; SendLook(l => l.SnowLine = snow.Value); };
         Ui.AlignForm(mapForm);
-        _box.AddChild(Header("Map"));
+        _box.AddChild(Header("Ground"));
         _box.AddChild(mapForm);
         var contours = new CheckBox
         {

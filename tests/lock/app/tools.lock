@@ -32,7 +32,7 @@ checkpoint layers
 click "Draw"
 settle
 checkpoint draw
-click "POV screenshot"
+click "POV capture"
 settle
 checkpoint pov
 click "Capture"

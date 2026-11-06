@@ -78,7 +78,7 @@ public static class GuideReader
             bg.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
             Window.AddChild(bg);
             var split = new HBoxContainer();
-            split.AddThemeConstantOverride("separation", 0);
+            split.AddThemeConstantOverride("separation", Ui.Gap.None);
             bg.AddChild(split);
 
             var side = new PanelContainer { CustomMinimumSize = new Vector2(264, 0) };
@@ -86,18 +86,17 @@ public static class GuideReader
                 new StyleBoxFlat { BgColor = Ui.Bar, CornerRadiusBottomLeft = 5, ContentMarginLeft = 12, ContentMarginRight = 10, ContentMarginTop = 12, ContentMarginBottom = 10 });
             split.AddChild(side);
             var sideBox = new VBoxContainer();
-            sideBox.AddThemeConstantOverride("separation", 8);
+            sideBox.AddThemeConstantOverride("separation", Ui.Gap.Group);
             side.AddChild(sideBox);
             sideBox.AddChild(_search);
-            _nav.AddThemeConstantOverride("separation", 1);
+            _nav.AddThemeConstantOverride("separation", Ui.Gap.Hair);
             sideBox.AddChild(_nav);
             BuildNav();
-            var contents = new Label { Text = Ui.Spaced("On this page") };
-            Ui.HeadStyle(contents);
+            var contents = Ui.HeadLabel("On this page");
             sideBox.AddChild(new Control { CustomMinimumSize = new Vector2(0, 4) });
             sideBox.AddChild(contents);
             _toc.AddThemeStyleboxOverride("panel", new StyleBoxEmpty());
-            _toc.AddThemeConstantOverride("v_separation", 3);
+            _toc.AddThemeConstantOverride("v_separation", Ui.Gap.Tight);
             _toc.AddThemeConstantOverride("draw_guides", 0);
             _toc.AddThemeConstantOverride("draw_relationship_lines", 0);
             _toc.AddThemeColorOverride("font_color", Ui.Muted);
@@ -109,17 +108,17 @@ public static class GuideReader
             sideBox.AddChild(_toc);
             Ui.HeadStyle(_linksHead);
             sideBox.AddChild(_linksHead);
-            _links.AddThemeConstantOverride("h_separation", 0);
+            _links.AddThemeConstantOverride("h_separation", Ui.Gap.None);
             sideBox.AddChild(_links);
 
             var main = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-            main.AddThemeConstantOverride("separation", 0);
+            main.AddThemeConstantOverride("separation", Ui.Gap.None);
             split.AddChild(main);
             var top = new PanelContainer();
             top.AddThemeStyleboxOverride("panel", Ui.TopBar());
             main.AddChild(top);
             var bar = new HBoxContainer();
-            bar.AddThemeConstantOverride("separation", 4);
+            bar.AddThemeConstantOverride("separation", Ui.Gap.Tight);
             top.AddChild(bar);
             _back = Ui.Bare(Ui.Btn("‹", Back, "Back (Alt+Left)"));
             _forward = Ui.Bare(Ui.Btn("›", Forward, "Forward (Alt+Right)"));
@@ -132,7 +131,7 @@ public static class GuideReader
 
             main.AddChild(_scroll);
             _scroll.AddChild(_pad);
-            _column.AddThemeConstantOverride("separation", 12);
+            _column.AddThemeConstantOverride("separation", Ui.Gap.Block);
             _pad.AddChild(_column);
             _scroll.Resized += Fit;
             _scroll.GetVScrollBar().ValueChanged += _ => Track();
@@ -190,8 +189,7 @@ public static class GuideReader
                 if (d.Group != group && d.Group.Length > 0)
                 {
                     group = d.Group;
-                    var h = new Label { Text = Ui.Spaced(group) };
-                    Ui.HeadStyle(h);
+                    var h = Ui.HeadLabel(group);
                     var pad = new MarginContainer();
                     pad.AddThemeConstantOverride("margin_top", _nav.GetChildCount() == 0 ? 6 : 12);
                     pad.AddThemeConstantOverride("margin_bottom", 2);
@@ -478,7 +476,7 @@ public static class GuideReader
             panel.MouseEntered += () => panel.AddThemeStyleboxOverride("panel", hover);
             panel.MouseExited += () => panel.AddThemeStyleboxOverride("panel", rest);
             var box = new VBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
-            box.AddThemeConstantOverride("separation", 3);
+            box.AddThemeConstantOverride("separation", Ui.Gap.Tight);
             panel.AddChild(box);
             int ignore = 0;
             var where = MarkdownView.Label(13);

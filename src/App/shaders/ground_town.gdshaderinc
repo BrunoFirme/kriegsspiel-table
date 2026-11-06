@@ -1,23 +1,3 @@
-float town_at(vec2 uv) {
-	return max(0.0, textureLod(edges, clamp(uv, vec2(0.0), vec2(1.0)), 0.0).g * 255.0 / FIELD_STEPS - 0.5) * cell_world;
-}
-
-float wet_at(vec2 uv) {
-	return max(0.0, textureLod(edges, clamp(uv, vec2(0.0), vec2(1.0)), 0.0).b * 255.0 / FIELD_STEPS - 0.5) * cell_world;
-}
-
-float town_depth_at(vec2 uv) {
-	return max(0.0, textureLod(edges, clamp(uv, vec2(0.0), vec2(1.0)), 0.0).a * 255.0 / TOWN_STEPS - 0.5) * cell_world;
-}
-
-float depth_at(vec2 o, vec2 p, vec2 uv, mat2 to_uv) {
-	return town_depth_at(uv + to_uv * (o - p));
-}
-
-float wet_field_at(vec2 site_uv, float follow) {
-	return (1.0 - follow) * (1.0 - step(metres(WET_NEAR_M), wet_at(site_uv)));
-}
-
 float square_block(vec2 p, vec2 uv, mat2 to_uv, float size, float jitter, float salt) {
 	vec2 n = floor(p / size);
 	vec2 f = p / size - n;
@@ -161,7 +141,7 @@ vec3 village_draw(int style, vec3 c, vec3 sheet, vec2 p, vec2 uv, mat2 to_uv, fl
 		c = wash(GARTENGRUEN, sheet, SURVEY_PAPER, p, SEAMLESS, 0.3);
 		c = mix(c, ink_c, hatch(p.x + p.y, metres(GARDEN_HATCH_M), W1 * 0.5, fw) * 0.3);
 	} else {
-		c = mix(sheet, MODERN_BLACK, dot_screen(p, 0.7854, SCREEN_PITCH, 0.1, fw));
+		c = mix(sheet, MODERN_BLACK, TOWN_TINT);
 	}
 	c = mix(c, ink_c, ink(b.edge, W1 * 0.6, fw) * 0.6);
 	float pitch = metres(HOUSE_M + HOUSE_GAP_M);
@@ -194,7 +174,7 @@ vec3 village_draw(int style, vec3 c, vec3 sheet, vec2 p, vec2 uv, mat2 to_uv, fl
 vec3 town_draw(int style, vec3 c, vec3 sheet, vec2 p, vec2 uv, mat2 to_uv, float own, vec2 levels, float road_w, float fw, out float cover) {
 	vec3 ink_c = style == MODERN ? MODERN_BLACK : style == ANCIENT ? ANCIENT_INK : SURVEY_INK;
 	vec3 church_c = style == SURVEY ? CINNABAR : ink_c;
-	float houses = levels.x;
+	float houses = max(levels.x, HAMLET_HOUSES);
 	float walls = levels.y;
 	if (houses < 0.5 && walls < 0.02) return village_draw(style, c, sheet, p, uv, to_uv, own, houses, road_w, fw, cover);
 	float jitter = style == ANCIENT ? 0.0 : 0.5;
@@ -216,7 +196,7 @@ vec3 town_draw(int style, vec3 c, vec3 sheet, vec2 p, vec2 uv, mat2 to_uv, float
 		c = mix(c, wash(GARTENGRUEN, sheet, SURVEY_PAPER, p, SEAMLESS, 0.3), ring);
 		c = mix(c, ink_c, hatch(p.x + p.y, metres(GARDEN_HATCH_M), W1 * 0.5, fw) * 0.3 * ring * (1.0 - open));
 	} else if (style == MODERN) {
-		c = mix(c, mix(sheet, MODERN_BLACK, dot_screen(p, 0.7854, SCREEN_PITCH, 0.1, fw)), ring);
+		c = mix(c, mix(sheet, MODERN_BLACK, TOWN_TINT), ring);
 	}
 	float keep = (1.0 - ring) * (1.0 - square) * (1.0 - open) * inside;
 	float depth_built = metres(mix(HOUSE_DEPTH_M, TOWN_BLOCK_M * 0.5, smoothstep(0.5, 1.0, houses)));

@@ -84,7 +84,7 @@ public partial class FindBar : HBoxContainer
 
     public FindBar()
     {
-        AddThemeConstantOverride("separation", 2);
+        AddThemeConstantOverride("separation", Ui.Gap.Hair);
         AddChild(_field);
         AddChild(_count);
         AddChild(Ui.Bare(Ui.Btn("‹", () => Step(-1), "Previous match (Shift+Enter)")));

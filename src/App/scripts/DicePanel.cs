@@ -39,8 +39,8 @@ sealed class DicePanel : HudPart
         var line = new Label { HorizontalAlignment = HorizontalAlignment.Center, Text = "—", CustomMinimumSize = new Vector2(0, 22) };
         string Spell() => pool.Count == 0 ? "—" : string.Join(" + ", pool.Where(e => e.Value > 0).OrderBy(e => e.Key).Select(e => $"{e.Value}d{e.Key}"));
         var faces = new GridContainer { Columns = 3 };
-        faces.AddThemeConstantOverride("h_separation", 4);
-        faces.AddThemeConstantOverride("v_separation", 4);
+        faces.AddThemeConstantOverride("h_separation", Ui.Gap.Tight);
+        faces.AddThemeConstantOverride("v_separation", Ui.Gap.Tight);
         foreach (var sides in new[] { 4, 6, 8, 10, 12, 20 })
         {
             int n = sides;
@@ -60,7 +60,7 @@ sealed class DicePanel : HudPart
             else S.Do(new Batch { Items = items });
         }
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", 4);
+        row.AddThemeConstantOverride("separation", Ui.Gap.Tight);
         var clear = Btn("Clear", () =>
         {
             pool.Clear();

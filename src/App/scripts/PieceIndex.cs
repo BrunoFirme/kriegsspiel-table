@@ -24,7 +24,7 @@ sealed class PieceIndex : HudPart
 
     public PieceIndex(HudContext ctx) : base(ctx)
     {
-        Root.AddThemeConstantOverride("separation", 4);
+        Root.AddThemeConstantOverride("separation", Ui.Gap.Tight);
         _search = new LineEdit { PlaceholderText = "search name, kind, pack, tag, text, counter…", ClearButtonEnabled = true, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         _search.TextChanged += _ => Rebuild();
         Root.AddChild(_search);
@@ -48,7 +48,7 @@ sealed class PieceIndex : HudPart
         var show = Btn("Show", () => Locate(_list.GetSelectedItems()), "Selects them on the table and brings the camera to them · double-click a row does the same");
         _delete = Btn("Delete", Delete, "Deletes the selected pieces; Ctrl+Z brings them back");
         var actions = new HBoxContainer();
-        actions.AddThemeConstantOverride("separation", 10);
+        actions.AddThemeConstantOverride("separation", Ui.Gap.Group);
         actions.AddChild(show);
         actions.AddChild(_count);
         actions.AddChild(new Control { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill });

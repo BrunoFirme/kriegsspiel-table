@@ -10,13 +10,12 @@ sealed class InviteDialog : HudPart
 
     public static void Open(HudContext c) => new InviteDialog(c).Show();
 
-    public const int NameWidth = 96;
 
     void Show()
     {
         var dlg = new AcceptDialog { Title = "Invite", OkButtonText = "Copy invitation" };
         var box = new VBoxContainer { CustomMinimumSize = new Vector2(480, 0) };
-        box.AddThemeConstantOverride("separation", 8);
+        box.AddThemeConstantOverride("separation", Ui.Gap.Group);
         box.AddChild(Header("Where they connect"));
         var lan = Net.LanAddresses();
         var port = Cfg.Port.ToString(System.Globalization.CultureInfo.InvariantCulture);
@@ -68,24 +67,16 @@ sealed class InviteDialog : HudPart
 
     static Button Copy(string text) => Btn("Copy", () => AppClipboard.SetText(text.Replace("  port ", ":")), "Copy the address and port");
 
-    static HBoxContainer Fact(string name, string value, Button? copy)
-    {
-        var r = new HBoxContainer();
-        r.AddThemeConstantOverride("separation", 10);
-        r.AddChild(new Label { Text = name, CustomMinimumSize = new Vector2(NameWidth, 0), SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, Modulate = new Color(1, 1, 1, 0.74f) });
-        r.AddChild(new Label { Text = value, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, ClipText = true,
-            TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis });
-        if (copy != null) r.AddChild(copy);
-        return r;
-    }
+    static HBoxContainer Fact(string name, string value, Button? copy) => Ui.Fact(name, value, Ui.DialogLabels, copy);
+
 
     public static Control PasswordRow(HudContext c, Window owner)
     {
         var S = c.S;
         var N = c.N;
         var r = new HBoxContainer();
-        r.AddThemeConstantOverride("separation", 10);
-        r.AddChild(new Label { Text = "Password", CustomMinimumSize = new Vector2(NameWidth, 0), SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, Modulate = new Color(1, 1, 1, 0.74f) });
+        r.AddThemeConstantOverride("separation", Ui.Gap.Group);
+        r.AddChild(Ui.RowLabel("Password", Ui.DialogLabels));
         var field = new LineEdit { Text = S.Access?.Password ?? "", Editable = S.IsLead, PlaceholderText = S.IsLead ? "none: the door is open" : "", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         r.AddChild(field);
         r.AddChild(Btn("Copy", () => AppClipboard.SetText(field.Text), "Copy the password"));

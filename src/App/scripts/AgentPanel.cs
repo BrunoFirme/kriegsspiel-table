@@ -8,7 +8,7 @@ static class AgentPanel
     static HBoxContainer Row(VBoxContainer box, string label)
     {
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", 6);
+        row.AddThemeConstantOverride("separation", Ui.Gap.Row);
         row.AddChild(new Label { Text = label, CustomMinimumSize = new Vector2(110, 0) });
         box.AddChild(row);
         return row;
@@ -16,11 +16,11 @@ static class AgentPanel
 
     public static void Simple(VBoxContainer box, AgentEndpoint a, Settings cfg)
     {
-        box.AddThemeConstantOverride("separation", 8);
+        box.AddThemeConstantOverride("separation", Ui.Gap.Group);
         var state = new Label { AutowrapMode = TextServer.AutowrapMode.WordSmart, CustomMinimumSize = new Vector2(420, 0) };
         box.AddChild(state);
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", 8);
+        row.AddThemeConstantOverride("separation", Ui.Gap.Group);
         row.AddChild(Ui.Btn(AgentConnect.Title, () => AgentConnect.Show(box, a, cfg), "Switches it on and copies a note to paste into your agent's chat"));
         var technical = Ui.Btn("Technical settings…", () => Show(box, a, cfg), "Helper command, address, port, key and the agent's settings file, for doing it by hand");
         Ui.MakeQuiet(technical);
@@ -44,7 +44,7 @@ static class AgentPanel
 
     public static void Build(VBoxContainer box, AgentEndpoint a, Settings cfg)
     {
-        box.AddThemeConstantOverride("separation", 8);
+        box.AddThemeConstantOverride("separation", Ui.Gap.Group);
         box.AddChild(AgentNotice.Line(box));
         var on = new CheckBox { Text = "AI agent on", ButtonPressed = a.On, FocusMode = Control.FocusModeEnum.None };
         box.AddChild(on);

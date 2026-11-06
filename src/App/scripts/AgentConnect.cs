@@ -12,7 +12,7 @@ static class AgentConnect
     static (HBoxContainer Head, VBoxContainer Body) Step(VBoxContainer box, int n, string title)
     {
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", 12);
+        row.AddThemeConstantOverride("separation", Ui.Gap.Block);
         var mark =
             new Label { Text = n.ToString(), HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center, CustomMinimumSize = new Vector2(Mark, Mark),
                 SizeFlagsVertical = Control.SizeFlags.ShrinkBegin };
@@ -21,10 +21,10 @@ static class AgentConnect
         mark.AddThemeFontSizeOverride("font_size", 13);
         row.AddChild(mark);
         var body = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-        body.AddThemeConstantOverride("separation", 6);
+        body.AddThemeConstantOverride("separation", Ui.Gap.Row);
         row.AddChild(body);
         var head = new HBoxContainer();
-        head.AddThemeConstantOverride("separation", 10);
+        head.AddThemeConstantOverride("separation", Ui.Gap.Group);
         var name = new Label { Text = title, VerticalAlignment = VerticalAlignment.Center, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, CustomMinimumSize = new Vector2(0, Mark) };
         name.AddThemeFontOverride("font", Ui.SansStrong());
         name.AddThemeFontSizeOverride("font_size", 15);
@@ -47,7 +47,7 @@ static class AgentConnect
         bool copied = a.On;
         if (copied) AppClipboard.SetText(a.Note);
         var box = InPlace.SubPage(page, PageTitle, Back);
-        box.AddThemeConstantOverride("separation", 18);
+        box.AddThemeConstantOverride("separation", Ui.Gap.Section);
 
         var (pasteHead, pasteBody) = Step(box, 1, "Paste the note into your agent's chat");
         var pasted = Status();
@@ -71,7 +71,7 @@ static class AgentConnect
         foreach (var ask in Asks) askBody.AddChild(Ui.Hint("“" + ask + "”"));
 
         var actions = new HBoxContainer();
-        actions.AddThemeConstantOverride("separation", 8);
+        actions.AddThemeConstantOverride("separation", Ui.Gap.Group);
         actions.AddChild(Ui.Btn("Technical settings…", () => AgentPanel.Show(page, a, cfg), "Address, port, key and the agent's settings file, for doing it by hand"));
         var power = Ui.Btn("", () => { if (a.On) a.TurnOff(); else a.TurnOn(); });
         Ui.MakeQuiet(power);

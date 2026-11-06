@@ -22,8 +22,8 @@ sealed class JoinPage
     {
         var v = _t.NewPage("Join a game", "");
         var g = new GridContainer { Columns = 2 };
-        g.AddThemeConstantOverride("h_separation", 16);
-        g.AddThemeConstantOverride("v_separation", 12);
+        g.AddThemeConstantOverride("h_separation", Ui.Gap.Block);
+        g.AddThemeConstantOverride("v_separation", Ui.Gap.Block);
         v.AddChild(g);
         g.AddChild(Caps("Address"));
         var addr = new LineEdit { Text = _cfg.LastAddress, CustomMinimumSize = new Vector2(320, 0) };

@@ -213,4 +213,22 @@ sealed partial class TableDemos
         gp.River(1.5, 0.885, 0.485);
         gp.PaintRoad(50, 3, (0.815, 0.44), (0.815, 0.76));
     }
+
+    const double SceneSettleSeconds = 14;
+
+    async System.Threading.Tasks.Task ScenarioTour(Hud hud, string dir, string views)
+    {
+        await _main.ToSignal(Tree.CreateTimer(SceneSettleSeconds), SceneTreeTimer.SignalName.Timeout);
+        hud.Visible = false;
+        System.IO.Directory.CreateDirectory(dir);
+        RenderingServer.ViewportSetMeasureRenderTime(_main.GetViewport().GetViewportRid(), true);
+        var inv = System.Globalization.CultureInfo.InvariantCulture;
+        foreach (var view in views.Split(';', System.StringSplitOptions.RemoveEmptyEntries))
+        {
+            var halves = view.Split('=');
+            var f = halves[^1].Split(',').Select(x => float.Parse(x, inv)).ToArray();
+            await Shoot(dir, (halves[0], f[0], f[1], f[2], f.Length > 3 ? f[3] : 90, f.Length > 4 ? f[4] : 0));
+        }
+        _main.QuitApp();
+    }
 }

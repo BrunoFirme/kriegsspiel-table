@@ -332,9 +332,17 @@ public static class Ui
     public static Label Header(string t)
     {
         var l = new Label { Text = Spaced(t), VerticalAlignment = VerticalAlignment.Bottom };
+        l.SetMeta(HeaderMeta, t);
         HeadStyle(l);
-        var rule = new StyleBoxFlat { BgColor = new Color(0, 0, 0, 0), BorderColor = Line, BorderWidthBottom = 1, ContentMarginBottom = 2, ContentMarginTop = 5 };
+        var rule = new StyleBoxFlat { BgColor = new Color(0, 0, 0, 0), BorderColor = Line, BorderWidthBottom = 1, ContentMarginBottom = 2, ContentMarginTop = Gap.Block };
         l.AddThemeStyleboxOverride("normal", rule);
+        return l;
+    }
+
+    public static Label HeadLabel(string t)
+    {
+        var l = new Label { Text = Spaced(t) };
+        HeadStyle(l);
         return l;
     }
 
@@ -348,8 +356,8 @@ public static class Ui
     public static GridContainer Form(int labelWidth = 72, int columns = 2)
     {
         var g = new GridContainer { Columns = columns };
-        g.AddThemeConstantOverride("h_separation", 8);
-        g.AddThemeConstantOverride("v_separation", 4);
+        g.AddThemeConstantOverride("h_separation", Gap.Group);
+        g.AddThemeConstantOverride("v_separation", Gap.Tight);
         g.SetMeta("labelWidth", labelWidth);
         return g;
     }
@@ -365,14 +373,61 @@ public static class Ui
             {
                 if (c is Label l)
                 {
-                    l.CustomMinimumSize = new Vector2(w, 0);
+                    MarkRowLabel(l, w);
                     l.ClipText = true;
-                    l.SizeFlagsVertical = Control.SizeFlags.ShrinkCenter;
-                    l.Modulate = new Color(1, 1, 1, 0.74f);
                 }
             }
             else if (c.SizeFlagsHorizontal == Control.SizeFlags.Fill) c.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
         }
+    }
+
+    public const string HeaderMeta = "uiHeader", RowLabelMeta = "uiRowLabel";
+    public const int DialogLabels = 128, PanelLabels = 76;
+
+    public static class Gap
+    {
+        public const int None = 0, Hair = 2, Tight = 4, Row = 6, Group = 8, Block = 12, Section = 20;
+    }
+    static readonly Color RowLabelInk = new(1, 1, 1, 0.74f);
+
+    public static Label RowLabel(string text, int width) => MarkRowLabel(new Label { Text = text }, width);
+
+    public static Label MarkRowLabel(Label l, int width)
+    {
+        l.CustomMinimumSize = new Vector2(width, l.CustomMinimumSize.Y);
+        l.SizeFlagsVertical = Control.SizeFlags.ShrinkCenter;
+        l.Modulate = RowLabelInk;
+        l.SetMeta(RowLabelMeta, width);
+        return l;
+    }
+
+    const int CheckInset = 10;
+
+    public static MarginContainer UnderControls(Control c, int labels)
+    {
+        var m = new MarginContainer();
+        m.AddThemeConstantOverride("margin_left", labels + Gap.Group - (c is CheckBox ? CheckInset : 0));
+        c.SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin;
+        m.AddChild(c);
+        return m;
+    }
+
+    public static HBoxContainer Fact(string name, string value, int width, Control? extra = null)
+    {
+        var r = new HBoxContainer();
+        r.AddThemeConstantOverride("separation", Gap.Group);
+        r.AddChild(RowLabel(name, width));
+        r.AddChild(new Label
+        {
+            Text = value, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, ClipText = true,
+            TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis,
+        });
+        if (extra != null)
+        {
+            extra.SizeFlagsVertical = Control.SizeFlags.ShrinkCenter;
+            r.AddChild(extra);
+        }
+        return r;
     }
 
     public static Button Primary(string text, Action onPress, string tip = "")
@@ -420,7 +475,7 @@ public static class Ui
     public static HBoxContainer Actions(params Button[] buttons)
     {
         var h = new HBoxContainer();
-        h.AddThemeConstantOverride("separation", 6);
+        h.AddThemeConstantOverride("separation", Gap.Row);
         foreach (var b in buttons) { b.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill; h.AddChild(b); }
         return h;
     }
@@ -580,7 +635,7 @@ public static class Ui
             bool first = true;
             foreach (var c in bar.GetChildren())
                 if (c is Control ctl and not Button) { ctl.Visible = first; first = false; }
-            bar.AddThemeConstantOverride("separation", 8);
+            bar.AddThemeConstantOverride("separation", Gap.Group);
         }
         dlg.GetOkButton().CustomMinimumSize = new Vector2(80, 0);
         MakePrimary(dlg.GetOkButton());
@@ -682,7 +737,7 @@ public partial class LoadingStrip : PanelContainer
         MouseFilter = MouseFilterEnum.Ignore;
         Visible = false;
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", 10);
+        row.AddThemeConstantOverride("separation", Ui.Gap.Group);
         AddChild(row);
         _text = new Label { SizeFlagsVertical = SizeFlags.ShrinkCenter };
         _text.AddThemeFontSizeOverride("font_size", 12);

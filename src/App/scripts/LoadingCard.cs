@@ -27,7 +27,7 @@ public partial class LoadingCard : PanelContainer
         card.ContentMarginBottom = 12;
         AddThemeStyleboxOverride("panel", card);
         var col = new VBoxContainer();
-        col.AddThemeConstantOverride("separation", 8);
+        col.AddThemeConstantOverride("separation", Ui.Gap.Group);
         AddChild(col);
 
         var head = new HBoxContainer();

@@ -11,7 +11,7 @@ public static class GroundStreams
     const double FloorSlope = 0.002, RapidsSlope = 0.02, RiverHalfWidthMetres = 50, FallMetres = 5;
     const double CrossingCosine = 0.866, RoadAxisClarity = 0.2;
     const int MaxReach = 8, RoadReach = 4, CrossingRun = 3;
-    const float Lift = 1e-6f, NodeReach = 0.45f, NodePull = 0.25f;
+    const float Lift = 1e-6f, NodeReach = 0.45f, NodePull = 0.4f;
     const int NodeSteps = 31, NodeShift = 4, NodeBits = 5, CurrentBit = 1 << 14, CulvertBit = 1 << 15;
     static readonly (int dx, int dy)[] Eight = [(1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1), (0, -1), (1, -1)];
 

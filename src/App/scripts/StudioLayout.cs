@@ -81,7 +81,7 @@ public partial class PieceStudio
         _centre.AddChild(FaceBar.Build());
         _zoomPill = MakePill();
         var zr = new HBoxContainer();
-        zr.AddThemeConstantOverride("separation", 6);
+        zr.AddThemeConstantOverride("separation", Ui.Gap.Row);
         _status = new Label { MouseFilter = Control.MouseFilterEnum.Ignore, VerticalAlignment = VerticalAlignment.Center, Modulate = Ui.Muted };
         _status.AddThemeFontSizeOverride("font_size", 11);
         zr.AddChild(_status);
@@ -101,11 +101,11 @@ public partial class PieceStudio
         _right.AddThemeStyleboxOverride("panel", Ui.Panel());
         _root.AddChild(_right);
         var col = new VBoxContainer();
-        col.AddThemeConstantOverride("separation", 4);
+        col.AddThemeConstantOverride("separation", Ui.Gap.Tight);
         _right.AddChild(col);
         var split = PieceList.Build(col);
         var pieceBox = new VBoxContainer();
-        pieceBox.AddThemeConstantOverride("separation", 2);
+        pieceBox.AddThemeConstantOverride("separation", Ui.Gap.Hair);
         split.AddChild(pieceBox);
         var ph = new HBoxContainer();
         _pieceName = new Label { ClipText = true, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter };
@@ -183,7 +183,7 @@ public partial class PieceStudio
         var p = new PanelContainer { Visible = false };
         p.AddThemeStyleboxOverride("panel", Ui.Panel(0.96f));
         var box = new VBoxContainer();
-        box.AddThemeConstantOverride("separation", 10);
+        box.AddThemeConstantOverride("separation", Ui.Gap.Block);
         p.AddChild(box);
         var h = new Label { Text = "This pack has no pieces yet", HorizontalAlignment = HorizontalAlignment.Center };
         h.AddThemeFontSizeOverride("font_size", 18);

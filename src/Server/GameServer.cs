@@ -416,11 +416,7 @@ public sealed partial class GameServer
         LastInverse = inverse;
         Dirty = true;
 
-        foreach (var p in _peers.Values)
-        {
-            var copy = Visibility.ForPeer(c, p, State);
-            if (copy != null) res.Add(new(p.PeerId, new CommandMessage { Command = copy }));
-        }
+        res.AddRange(ToPeers(c));
         try { res.AddRange(Scripts.AfterApplied(c, peerId, undoTarget != null)); }
         catch (Exception e) { res.Add(new(peerId, new ErrorMessage { Text = "a script failed after the change: " + e.Message })); }
         return res;
@@ -552,10 +548,24 @@ public sealed partial class GameServer
         State.LastSeq = c.Seq;
         Remember(c, inverse);
         Dirty = true;
+        return ToPeers(c);
+    }
+
+    List<Outgoing> ToPeers(Command c)
+    {
         var res = new List<Outgoing>();
+        bool sameForEveryObserver = c.ShownToObservers() == Shown.WholeTable;
+        Command? forObservers = null;
+        bool filtered = false;
         foreach (var p in _peers.Values)
         {
-            var copy = Visibility.ForPeer(c, p, State);
+            Command? copy;
+            if (sameForEveryObserver && p.Role == Role.Observer)
+            {
+                if (!filtered) { forObservers = Visibility.ForPeer(c, p, State); filtered = true; }
+                copy = forObservers;
+            }
+            else copy = Visibility.ForPeer(c, p, State);
             if (copy != null) res.Add(new(p.PeerId, new CommandMessage { Command = copy }));
         }
         return res;
@@ -672,9 +682,7 @@ public sealed partial class GameServer
         Remember(c, null, toSaveLog: false);
         LastInverse = null;
         Dirty = true;
-        var res = new List<Outgoing>();
-        foreach (var p in _peers.Values)
-            if (Visibility.ForPeer(c, p, State) is { } copy) res.Add(new(p.PeerId, new CommandMessage { Command = copy }));
+        var res = ToPeers(c);
         try { res.AddRange(Scripts.AfterApplied(c, 1, false)); }
         catch (Exception e) { res.Add(new(1, new ErrorMessage { Text = "a script failed after the save was loaded: " + e.Message })); }
         return res;

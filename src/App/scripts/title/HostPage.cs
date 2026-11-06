@@ -49,7 +49,7 @@ sealed class HostPage
         var scroll = new ScrollContainer { SizeFlagsVertical = Control.SizeFlags.ExpandFill, HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled };
         v.AddChild(scroll);
         var col = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-        col.AddThemeConstantOverride("separation", 10);
+        col.AddThemeConstantOverride("separation", Ui.Gap.Block);
         scroll.AddChild(col);
 
         bool newShown = false;
@@ -158,7 +158,7 @@ sealed class HostPage
     void AddActions(Cards page, PanelContainer card, VBoxContainer face, string target)
     {
         var row = new HBoxContainer { Visible = false };
-        row.AddThemeConstantOverride("separation", 8);
+        row.AddThemeConstantOverride("separation", Ui.Gap.Group);
         var host = Primary("Open", () => _main.DoHost(target, page.InPlay.ContainsKey(target)));
         host.TooltipText = OpensForYou;
         host.CustomMinimumSize = new Vector2(110, 34);

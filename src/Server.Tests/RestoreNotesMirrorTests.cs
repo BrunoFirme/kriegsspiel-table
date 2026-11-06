@@ -266,4 +266,20 @@ public sealed class RestoreNotesMirrorTests
         Assert.All(all, c => Assert.Equal("restore", c.Kind));
         Assert.Contains("before a turn was restored", all[0].Describe());
     }
+
+    [Fact]
+    public void A_loaded_turn_reaches_every_observer_with_the_observers_view_and_every_umpire_with_the_whole_table()
+    {
+        using var t = new Table();
+        const long SecondWatcher = 31;
+        t.LetIn(SecondWatcher, "Second watcher", Role.Observer);
+        t.Ok(Table.Ump, new SetBriefing { Text = "UMPIRE-SECRET-PLAN" });
+        t.Ok(Table.Ump, new AdvanceClock());
+        var res = LoadTurn(t, 0);
+        GameState Restored(long peer) => Assert.IsType<LoadSave>(Assert.IsType<CommandMessage>(res.Single(o => o.PeerId == peer && o.Message is CommandMessage).Message).Command).State!;
+        var observerViews = new[] { Table.Obs, SecondWatcher }.Select(Restored).ToList();
+        Assert.All(observerViews, v => Assert.Null(v.Briefing));
+        Assert.Equal(Json.Serialize(observerViews[0]), Json.Serialize(observerViews[1]));
+        Assert.All(new[] { Table.Ump, Table.Ump2, Table.Ump3 }, u => Assert.Equal("UMPIRE-SECRET-PLAN", Restored(u).Briefing));
+    }
 }

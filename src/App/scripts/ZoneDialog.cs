@@ -16,7 +16,7 @@ sealed class ZoneDialog : HudPart
     void Show(List<Vec2> poly)
     {
         var dlg = new ConfirmationDialog { Title = "Assign zone to an umpire", OkButtonText = "Assign" };
-        var grid = Ui.Form(90);
+        var grid = Ui.Form(Ui.DialogLabels);
         grid.AddChild(new Label { Text = "Zone name" });
         var name = new LineEdit { Text = $"Zone {S.View.Zones.Count + 1}", CustomMinimumSize = new Vector2(220, 0) };
         grid.AddChild(name);

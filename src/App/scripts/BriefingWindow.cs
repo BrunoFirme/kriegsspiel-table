@@ -37,7 +37,7 @@ static class BriefingWindow
         foreach (var side in new[] { "left", "right", "top", "bottom" }) pad.AddThemeConstantOverride("margin_" + side, 14);
         bg.AddChild(pad);
         var box = new VBoxContainer();
-        box.AddThemeConstantOverride("separation", 8);
+        box.AddThemeConstantOverride("separation", Ui.Gap.Group);
         pad.AddChild(box);
         var text = new RichTextLabel { BbcodeEnabled = true, SelectionEnabled = true, SizeFlagsVertical = Control.SizeFlags.ExpandFill, ScrollActive = true };
         text.AddThemeFontSizeOverride("normal_font_size", 14);

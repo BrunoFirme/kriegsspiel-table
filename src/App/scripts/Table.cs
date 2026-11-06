@@ -118,7 +118,7 @@ public partial class Table : Node3D
         Hand = new Carry(_c, press, Pieces, Selection, Poses);
         Motion = new SharedMotion(_c, Pieces, Hand);
         _c.Moving = Motion.Moving;
-        Dice = new Dice(_c, Pieces, Selection);
+        Dice = new Dice(_c, Pieces, Selection, Hand);
         Clip = new PieceClipboard(_c, Pieces, Selection, Hand);
         Hover = new Hover(_c, press, Pieces, Hand);
         Actions = new PieceActions(_c, Selection, Poses, Hand, Hover);

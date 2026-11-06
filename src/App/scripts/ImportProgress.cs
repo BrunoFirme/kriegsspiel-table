@@ -67,11 +67,11 @@ public partial class ImportProgress : PanelContainer
         card.ContentMarginBottom = 10;
         AddThemeStyleboxOverride("panel", card);
         var col = new VBoxContainer();
-        col.AddThemeConstantOverride("separation", 6);
+        col.AddThemeConstantOverride("separation", Ui.Gap.Row);
         AddChild(col);
 
         var head = new HBoxContainer();
-        head.AddThemeConstantOverride("separation", 8);
+        head.AddThemeConstantOverride("separation", Ui.Gap.Group);
         _title = new Label { SizeFlagsHorizontal = SizeFlags.ExpandFill, ClipText = true, TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis, VerticalAlignment = VerticalAlignment.Center };
         _title.AddThemeFontOverride("font", Ui.SansStrong());
         _title.AddThemeFontSizeOverride("font_size", TitleSize);
@@ -95,7 +95,7 @@ public partial class ImportProgress : PanelContainer
         col.AddChild(_item);
         _past = new HFlowContainer();
         _past.AddThemeConstantOverride("h_separation", PastGap);
-        _past.AddThemeConstantOverride("v_separation", 2);
+        _past.AddThemeConstantOverride("v_separation", Ui.Gap.Hair);
         col.AddChild(_past);
     }
 

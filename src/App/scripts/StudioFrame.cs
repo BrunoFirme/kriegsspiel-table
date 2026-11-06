@@ -225,9 +225,9 @@ internal sealed class PieceFramer
         if (d == null || d.Kind == "model") return;
         var dlg = new ConfirmationDialog { Title = "Frame", OkButtonText = "Frame it" };
         var box = new VBoxContainer();
-        box.AddThemeConstantOverride("separation", 8);
+        box.AddThemeConstantOverride("separation", Ui.Gap.Group);
         dlg.AddChild(box);
-        var g = Ui.Form(70);
+        var g = Ui.Form(Ui.DialogLabels);
         g.AddChild(new Label { Text = "Border" });
         var br = new HBoxContainer();
         var col = new ColorPickerButton { Color = new Color(0.12f, 0.12f, 0.12f), EditAlpha = false, CustomMinimumSize = new Vector2(44, 24) };

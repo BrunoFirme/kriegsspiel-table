@@ -39,7 +39,7 @@ public partial class ImportDialog : AcceptDialog
     public override void _Ready()
     {
         var root = new VBoxContainer();
-        root.AddThemeConstantOverride("separation", 6);
+        root.AddThemeConstantOverride("separation", Ui.Gap.Row);
         AddChild(root);
         root.AddChild(Ui.Hint("A TTS module or save becomes a pack (every piece, bags holding their contents) and a scenario (its table laid out; big locked boards become map sheets). Scripts are translated; the report beside the scenario lists what did not convert and what is not taken from TTS exactly."));
 
@@ -57,7 +57,7 @@ public partial class ImportDialog : AcceptDialog
 
         var right = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         cols.AddChild(right);
-        var g = new GridContainer { Columns = 2 };
+        var g = Ui.Form(Ui.DialogLabels);
         right.AddChild(g);
         g.AddChild(new Label { Text = "Source" });
         var srcRow = new HBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
@@ -77,8 +77,9 @@ public partial class ImportDialog : AcceptDialog
             TooltipText = "Titles and labels a module floats over its table come in as flat label pieces; a big module can hold dozens. Notecards come in either way.",
         };
         g.AddChild(_skipText);
+        Ui.AlignForm(g);
         var goRow = new HBoxContainer();
-        goRow.AddThemeConstantOverride("separation", 8);
+        goRow.AddThemeConstantOverride("separation", Ui.Gap.Group);
         _go = new Button { Text = "Convert", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         _go.Pressed += Go;
         goRow.AddChild(_go);
@@ -91,7 +92,7 @@ public partial class ImportDialog : AcceptDialog
         _stop.Pressed += Stop;
         _progress = new ImportProgress(_stop);
         right.AddChild(_progress);
-        _status = new Label { Modulate = new Color(1, 1, 1, 0.8f), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, ClipText = true, Visible = false };
+        _status = new Label { Modulate = Ui.Muted, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, ClipText = true, Visible = false };
         right.AddChild(_status);
         _log = new RichTextLabel { SizeFlagsVertical = Control.SizeFlags.ExpandFill, ScrollFollowing = true, SelectionEnabled = true, BbcodeEnabled = true, CustomMinimumSize = new Vector2(0, 160) };
         _find = FindBar.ForLabel(_log, () => _logText.ToString());

@@ -109,7 +109,7 @@ internal sealed class StudioMenu
         var pack = _s.Pack;
         var dlg = new ConfirmationDialog { Title = "Pack details", OkButtonText = "Save" };
         var box = new VBoxContainer();
-        box.AddThemeConstantOverride("separation", 6);
+        box.AddThemeConstantOverride("separation", Ui.Gap.Row);
         dlg.AddChild(box);
         var authors = new LineEdit { Text = string.Join(", ", pack.Source.Authors), PlaceholderText = "your name, and anyone who made it with you", CustomMinimumSize = new Vector2(420, 0) };
         var about = new TextEdit { Text = pack.Description ?? "", WrapMode = TextEdit.LineWrappingMode.Boundary, CustomMinimumSize = new Vector2(420, 140), PlaceholderText = "What the pack holds, its period and scale, how its pieces are meant to be used" };
@@ -143,7 +143,7 @@ internal sealed class StudioMenu
     void AskDocSize()
     {
         var dlg = new ConfirmationDialog { Title = "Picture size", OkButtonText = "Apply" };
-        var g = Ui.Form(90);
+        var g = Ui.Form(Ui.DialogLabels);
         var w = new SpinBox { MinValue = 8, MaxValue = 4096, Value = Canvas.Doc.W, Suffix = "px" };
         var h = new SpinBox { MinValue = 8, MaxValue = 4096, Value = Canvas.Doc.H, Suffix = "px" };
         var how = new OptionButton();

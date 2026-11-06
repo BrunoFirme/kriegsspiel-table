@@ -115,7 +115,7 @@ internal sealed class ScriptTab
     void Linked(VBoxContainer p, HBoxContainer tools, ScriptLink link)
     {
         var line = new HBoxContainer();
-        line.AddThemeConstantOverride("separation", 6);
+        line.AddThemeConstantOverride("separation", Ui.Gap.Row);
         line.AddChild(new Label { Text = "Edited as a file: " + link.File, TooltipText = link.Path, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, ClipText = true,
             TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis });
         line.AddChild(Ui.Btn("Open folder", _s.FileWatch.OpenFolder, "The folder with the script, ktable-api.lua and console.log"));

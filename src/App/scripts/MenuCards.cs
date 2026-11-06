@@ -143,7 +143,7 @@ sealed class MenuCards : HudPart
             });
         }
         TakeOutRows(menu, hit);
-        if (S.IsUmpire && nodes[0].Layer == Layers.Umpire) menu.Item("POV screenshot from here", () => T.SetTool(Tool.Sighting), "V");
+        if (S.IsUmpire && nodes[0].Layer == Layers.Umpire) menu.Item("POV capture from here", () => T.SetTool(Tool.Sighting), "V");
         menu.Separator("Options");
         var pieces = _pieces();
         var kinds = nodes.Select(n => n.Piece.Def).Distinct().ToList();
@@ -267,7 +267,7 @@ sealed class MenuCards : HudPart
         var p = node.Piece;
         var layer = node.Layer;
         var v = new VBoxContainer();
-        v.AddThemeConstantOverride("separation", 4);
+        v.AddThemeConstantOverride("separation", Ui.Gap.Tight);
         var label = new LineEdit { Text = p.Label ?? "", PlaceholderText = "Label (shown on hover)", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         var note = new TextEdit
         {

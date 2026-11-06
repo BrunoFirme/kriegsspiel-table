@@ -33,7 +33,7 @@ sealed class TopBar : HudPart
         Panel.SetAnchorsPreset(Control.LayoutPreset.TopWide);
         root.AddChild(Panel);
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", 8);
+        row.AddThemeConstantOverride("separation", Ui.Gap.Group);
         Panel.AddChild(row);
         row.AddChild(MenuButton = new MainMenu(Ctx, Shell).Build());
         SaidGap = new Control { MouseFilter = Control.MouseFilterEnum.Ignore, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
@@ -52,7 +52,7 @@ sealed class TopBar : HudPart
         BuildRightEnd(row);
         Panel.Resized += Shell.Relayout;
         Knocks = new VBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
-        Knocks.AddThemeConstantOverride("separation", 6);
+        Knocks.AddThemeConstantOverride("separation", Ui.Gap.Row);
         Knocks.SetAnchorsPreset(Control.LayoutPreset.TopWide);
         Knocks.OffsetLeft = 360;
         Knocks.OffsetRight = -12;
@@ -71,7 +71,7 @@ sealed class TopBar : HudPart
         ScenarioBtn.AddThemeStyleboxOverride("pressed", Ui.Pill(0.2f));
         ScenarioBtn.AddThemeStyleboxOverride("disabled", Ui.Pill(0.04f));
         var inner = new HBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
-        inner.AddThemeConstantOverride("separation", 6);
+        inner.AddThemeConstantOverride("separation", Ui.Gap.Row);
         inner.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
         inner.OffsetLeft = 8;
         inner.OffsetRight = -10;
@@ -212,7 +212,7 @@ sealed class TopBar : HudPart
             var card = new PanelContainer { SizeFlagsHorizontal = Control.SizeFlags.ShrinkEnd };
             card.AddThemeStyleboxOverride("panel", Ui.TopBar());
             var row = new HBoxContainer();
-            row.AddThemeConstantOverride("separation", 6);
+            row.AddThemeConstantOverride("separation", Ui.Gap.Row);
             row.AddChild(new Label { Text = $"{w.Name} wants to join", SizeFlagsVertical = Control.SizeFlags.ShrinkCenter });
             foreach (var b in PeopleList.AdmitButtons(S, N, w)) row.AddChild(b);
             card.AddChild(row);

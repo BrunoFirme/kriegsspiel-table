@@ -32,7 +32,7 @@ sealed class PropertiesDialog : HudPart
     {
         var p = _p;
         var layer = _layer;
-        _box.AddThemeConstantOverride("separation", 6);
+        _box.AddThemeConstantOverride("separation", Ui.Gap.Row);
         _dlg.AddChild(_box);
         _box.AddChild(Hint($"{(layer == Layers.Umpire ? "umpire board" : layer)} · at {p.Pos.X:0.0}, {p.Pos.Z:0.0} · {p.RotDeg:0}°"));
         AddFields();
@@ -51,7 +51,7 @@ sealed class PropertiesDialog : HudPart
         var layer = _layer;
         var dlg = _dlg;
         _box.AddChild(Header("Text"));
-        var grid = Ui.Form(88);
+        var grid = Ui.Form(Ui.DialogLabels);
         _box.AddChild(grid);
         grid.AddChild(new Label { Text = "Label" });
         var label = new LineEdit { Text = p.Label ?? "", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
@@ -85,7 +85,7 @@ sealed class PropertiesDialog : HudPart
     void AddSize()
     {
         _box.AddChild(Header("Look"));
-        var tg = Ui.Form(88, 3);
+        var tg = Ui.Form(Ui.DialogLabels, 3);
         var cur = T.Current(_node);
         double lo = Math.Log(Table.MinScale), hi = Math.Log(Table.MaxScale);
         var scS =
@@ -120,9 +120,9 @@ sealed class PropertiesDialog : HudPart
     {
         var p = _p;
         var layer = _layer;
-        var tg = Ui.Form(88);
+        var tg = Ui.Form(Ui.DialogLabels);
         var tintRow = new HBoxContainer();
-        tintRow.AddThemeConstantOverride("separation", 6);
+        tintRow.AddThemeConstantOverride("separation", Ui.Gap.Row);
         var cp = new ColorPickerButton { Color = Coords.ParseColor(p.TintOverride ?? _def?.Tint, Colors.White), CustomMinimumSize = new Vector2(60, 26), EditAlpha = false };
         Ui.WhenPicked(cp, c => S.Do(new SetTint { Layer = layer, Id = p.Id, Value = "#" + c.ToHtml(false) }));
         tintRow.AddChild(cp);
@@ -159,7 +159,7 @@ sealed class PropertiesDialog : HudPart
         var dlg = _dlg;
         _box.AddChild(Header("Scripting"));
         var code = p.Script != null ? "its own" : def?.Script != null ? "its pack's" : "none";
-        var facts = Ui.Form(88);
+        var facts = Ui.Form(Ui.DialogLabels);
         void Fact(string name, string value)
         {
             facts.AddChild(new Label { Text = name });
@@ -175,7 +175,7 @@ sealed class PropertiesDialog : HudPart
         Ui.AlignForm(facts);
         _box.AddChild(facts);
         var sr = new HBoxContainer();
-        sr.AddThemeConstantOverride("separation", 6);
+        sr.AddThemeConstantOverride("separation", Ui.Gap.Row);
         sr.AddChild(Btn("Copy id", () => AppClipboard.SetText(p.Id), "For board.find(\"…\") in a script"));
         if (p.Guid != null && p.Guid != p.Id) { var g = p.Guid; sr.AddChild(Btn("Copy GUID", () => AppClipboard.SetText(g), "The TTS GUID it came with; board.find takes it too")); }
         sr.AddChild(Btn("Scripting…", () => { dlg.Hide(); Ctx.ShowScriptWindow(p.Id); }, "This piece's script in the scripts window"));

@@ -387,7 +387,7 @@ static class TableTests
         Check.That(rig.Eye == null, "and nothing drags the view back while the ruler is out");
         t.Table.SetTool(Tool.Sighting);
         await r.Frame();
-        Check.That(rig.Eye != null && t.Table.Draft is { FirstPerson: true }, "back in the POV tool the eye is on the piece again");
+        Check.That(rig.Eye != null && t.Table.Draft is { FirstPerson: true }, "back in the POV capture tool the eye is on the piece again");
         t.Table.Sighting.SetFirstPerson(false);
         await r.Frame();
         Check.That(rig.TopDown && rig.Eye == null, "2D frames from above");

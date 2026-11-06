@@ -22,10 +22,10 @@ public partial class FloatPanel : PanelContainer
     public FloatPanel(string title)
     {
         var box = new VBoxContainer();
-        box.AddThemeConstantOverride("separation", 5);
+        box.AddThemeConstantOverride("separation", Ui.Gap.Row);
         AddChild(box);
         _bar = new HBoxContainer { MouseFilter = MouseFilterEnum.Stop, TooltipText = "Drag to move this panel" };
-        _bar.AddThemeConstantOverride("separation", 4);
+        _bar.AddThemeConstantOverride("separation", Ui.Gap.Tight);
         box.AddChild(_bar);
         _title = new Label { Text = Spaced(title), SizeFlagsHorizontal = SizeFlags.ExpandFill, MouseFilter = MouseFilterEnum.Ignore, VerticalAlignment = VerticalAlignment.Center };
         Ui.HeadStyle(_title);
@@ -37,7 +37,7 @@ public partial class FloatPanel : PanelContainer
         _bar.AddChild(close);
         box.AddChild(new HSeparator());
         Body = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill, SizeFlagsVertical = SizeFlags.ShrinkBegin };
-        Body.AddThemeConstantOverride("separation", 6);
+        Body.AddThemeConstantOverride("separation", Ui.Gap.Row);
         box.AddChild(Body);
         _bar.GuiInput += BarInput;
         GuiInput += PanelInput;

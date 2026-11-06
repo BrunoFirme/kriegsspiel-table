@@ -359,7 +359,7 @@ internal sealed class FaceBar
     public PanelContainer Build()
     {
         Pill = PieceStudio.MakePill();
-        _row.AddThemeConstantOverride("separation", 4);
+        _row.AddThemeConstantOverride("separation", Ui.Gap.Tight);
         Pill.AddChild(_row);
         return Pill;
     }
@@ -399,7 +399,7 @@ internal sealed class FaceBar
             _row.AddChild(looks);
         }
         var sides = new HBoxContainer();
-        sides.AddThemeConstantOverride("separation", 0);
+        sides.AddThemeConstantOverride("separation", Ui.Gap.None);
         foreach (var (isBack, text) in new[] { (false, "Front"), (true, "Back") })
         {
             var f = PieceFaces.Of(d).FirstOrDefault(x => x.Key == PieceFaces.Key(state, isBack));

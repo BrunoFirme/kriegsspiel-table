@@ -18,9 +18,9 @@ sealed class FolderView
     public Control Strip(Action refresh, Control? beside = null)
     {
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", 8);
+        row.AddThemeConstantOverride("separation", Ui.Gap.Group);
         var flow = new HFlowContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-        flow.AddThemeConstantOverride("h_separation", 4);
+        flow.AddThemeConstantOverride("h_separation", Ui.Gap.Tight);
         if (!Lib.Folders.Contains(_view)) _view = "";
         void Add(string label, string key)
         {

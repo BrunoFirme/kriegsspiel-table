@@ -10,7 +10,7 @@ For people who want to change the code. The player and umpire guides are elsewhe
 | `src/Server` | The authoritative game (`GameServer`): who is at the table, who may do what, the turn record, undo, and the Lua scripts (`Scripting/`). Transport-agnostic: it takes joins and commands and returns the messages to send. | Core |
 | `src/Client` | The client side that needs no engine: the session and its undo stack, the host's save policy and co-umpire mirrors, asset waits, file transfers over the asset channel, message framing. | Core, Server |
 | `src/App` | The Godot 4 game: the 3D table, the interface, the piece studio, the network transport (ENet), the title screen. | Core, Server, Client |
-| `tools/Converter` | Tabletop Simulator modules and saves into packs and scenarios, and back; the scripting API reference. A separate program the app runs. | Core, Server |
+| `tools/Converter` | Tabletop Simulator modules and saves into packs and scenarios, and back; the scripting API reference. A separate program the app runs. | Core, Server, Client |
 
 `dotnet build KriegsspielTable.sln` builds everything except the app, which Godot builds itself:
 `dotnet build src/App`. `tools/check.ps1` builds all of it, runs every test and checks the size and hygiene rules.

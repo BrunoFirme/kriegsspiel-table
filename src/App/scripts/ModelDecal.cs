@@ -288,7 +288,7 @@ internal sealed class DecalTool
             box.AddChild(Ui.Btn("No picture", Clear, "Let go of this picture: nothing is held over the model"));
         }
         else box.AddChild(Ui.Hint("No picture yet."));
-        var g = Ui.Form(64);
+        var g = Ui.Form(Ui.PanelLabels);
         HSlider Slider(string label, double min, double max, double step, double value, Action<double> set, string suffix)
         {
             g.AddChild(new Label { Text = label });

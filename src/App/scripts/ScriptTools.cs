@@ -155,10 +155,10 @@ public partial class ScriptConsoleView : VBoxContainer
     public ScriptConsoleView(Session s, bool prompt, int fontSize = 12)
     {
         _s = s;
-        AddThemeConstantOverride("separation", 4);
+        AddThemeConstantOverride("separation", Ui.Gap.Tight);
         SizeFlagsVertical = SizeFlags.ExpandFill;
         var bar = new HBoxContainer();
-        bar.AddThemeConstantOverride("separation", 6);
+        bar.AddThemeConstantOverride("separation", Ui.Gap.Row);
         _filter = new LineEdit { PlaceholderText = "Filter: a piece or a word", SizeFlagsHorizontal = SizeFlags.ExpandFill, ClearButtonEnabled = true };
         _filter.TextChanged += _ => Rebuild();
         bar.AddChild(_filter);
@@ -188,7 +188,7 @@ public partial class ScriptConsoleView : VBoxContainer
         if (prompt)
         {
             var row = new HBoxContainer();
-            row.AddThemeConstantOverride("separation", 6);
+            row.AddThemeConstantOverride("separation", Ui.Gap.Row);
             _where = new Label { Modulate = Ui.Muted, ClipText = true, CustomMinimumSize = new Vector2(90, 0), TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis };
             row.AddChild(_where);
             _prompt = new LineEdit { PlaceholderText = "Lua — Enter runs it; Up and Down go through what was run", SizeFlagsHorizontal = SizeFlags.ExpandFill };
@@ -371,7 +371,7 @@ public partial class ScriptWindow : Window
         bg.AddChild(outer);
 
         var left = new VBoxContainer();
-        left.AddThemeConstantOverride("separation", 4);
+        left.AddThemeConstantOverride("separation", Ui.Gap.Tight);
         left.AddChild(_find);
         left.AddChild(_list);
         left.AddChild(Ui.Hint("Red: its last call failed. Amber: stopped, or it does not load. • : changes not saved. A kind whose pieces run their pack's script is one line."));
@@ -384,13 +384,13 @@ public partial class ScriptWindow : Window
 #pragma warning restore CS0618
         outer.AddChild(right);
         var top = new VBoxContainer();
-        top.AddThemeConstantOverride("separation", 4);
+        top.AddThemeConstantOverride("separation", Ui.Gap.Tight);
         right.AddChild(top);
         _head.AddThemeColorOverride("font_color", Colors.White);
         top.AddChild(_head);
         _note.Modulate = Ui.Muted;
         top.AddChild(_note);
-        _linkRow.AddThemeConstantOverride("separation", 6);
+        _linkRow.AddThemeConstantOverride("separation", Ui.Gap.Row);
         _linkRow.AddChild(_linkLabel);
         _linkRow.AddChild(Ui.Btn("Open folder", _files.OpenFolder, "The folder with the script, ktable-api.lua and console.log"));
         _linkRow.AddChild(Ui.Btn("Copy path", () => { if (_key != null && _files.Of(_key) is { } l) AppClipboard.SetText(l.Path); }, "The file's full path"));
@@ -457,7 +457,7 @@ public partial class ScriptWindow : Window
     HBoxContainer ButtonRow()
     {
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", 8);
+        row.AddThemeConstantOverride("separation", Ui.Gap.Group);
         row.AddChild(_show);
         row.AddChild(Ui.Btn("Reference (F1)", () => GuideReader.ShowEntry(this, ScriptAssist.EntryAt(_code, _code.GetCaretLine(), _code.GetCaretColumn())), "Every call, field and event, with the TTS call each stands for"));
         _status.AddThemeColorOverride("font_color", Ui.Danger);
@@ -738,7 +738,7 @@ public static class ScriptCheckWindow
         bg.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
         w.AddChild(bg);
         var box = new VBoxContainer();
-        box.AddThemeConstantOverride("separation", 6);
+        box.AddThemeConstantOverride("separation", Ui.Gap.Row);
         bg.AddChild(box);
         box.AddChild(Ui.Hint(what));
         var text = new RichTextLabel { BbcodeEnabled = true, ScrollFollowing = true, SelectionEnabled = true, SizeFlagsVertical = Control.SizeFlags.ExpandFill };

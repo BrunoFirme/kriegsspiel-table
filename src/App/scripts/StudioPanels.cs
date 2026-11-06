@@ -34,7 +34,7 @@ internal sealed class ToolPanel
         _panel.AddThemeStyleboxOverride("panel", Ui.Panel(0.95f));
         _body = _panel.Body;
         _body.CustomMinimumSize = new Vector2(PanelW, 0);
-        _body.AddThemeConstantOverride("separation", 5);
+        _body.AddThemeConstantOverride("separation", Ui.Gap.Row);
         _panel.Closed = () =>
         {
             _panel.Visible = false;
@@ -208,8 +208,8 @@ internal sealed class ToolPanel
             ("arrow", "shape-arrow", "Arrow"), ("poly", "outline", "Polygon: click the corners"), ("ngon", "ngon", "Regular polygon"), ("star", "star", "Star"),
         };
         var grid = new GridContainer { Columns = 4 };
-        grid.AddThemeConstantOverride("h_separation", 3);
-        grid.AddThemeConstantOverride("v_separation", 3);
+        grid.AddThemeConstantOverride("h_separation", Ui.Gap.Tight);
+        grid.AddThemeConstantOverride("v_separation", Ui.Gap.Tight);
         foreach (var (key, icon, tip) in kinds)
         {
             var b =
@@ -238,7 +238,7 @@ internal sealed class ToolPanel
     {
         if (Prefs.ShapeKind is "line" or "arrow") return;
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", 2);
+        row.AddThemeConstantOverride("separation", Ui.Gap.Hair);
         foreach (var (key, text, tip) in new[] { ("line", "Line", "Only the line round it"), ("fill", "Filled", "Filled with the colour, no line"), ("both", "Both", "A line round a fill of the second colour") })
         {
             var b =
@@ -410,7 +410,7 @@ internal sealed class ToolPanel
     {
         if (Canvas.Sel is not { } l) { _body.AddChild(Small("Click a layer on the picture.")); return; }
         var g = new GridContainer { Columns = 4 };
-        g.AddThemeConstantOverride("h_separation", 4);
+        g.AddThemeConstantOverride("h_separation", Ui.Gap.Tight);
         void Num(string label, double v, double min, double max, double step, string tip, Action<double> set)
         {
             g.AddChild(Small(label));
@@ -433,7 +433,7 @@ internal sealed class ToolPanel
         Num("°", l.Rot, -360, 360, 1, "Turned, in degrees", v => l.Rot = (float)v);
         _body.AddChild(g);
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", 2);
+        row.AddThemeConstantOverride("separation", Ui.Gap.Hair);
         void Ico(string icon, string tip, Action a)
         {
             var b = new Button { CustomMinimumSize = new Vector2(30, 26), TooltipText = tip, FocusMode = Control.FocusModeEnum.None, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
@@ -453,7 +453,7 @@ internal sealed class ToolPanel
         Txt("+90°", "A quarter turn right", () => { l.Rot += 90; Changed(); });
         _body.AddChild(row);
         var row2 = new HBoxContainer();
-        row2.AddThemeConstantOverride("separation", 2);
+        row2.AddThemeConstantOverride("separation", Ui.Gap.Hair);
         foreach (var (text, tip, act) in new (string, string, Action)[]
         {
             ("Centre", "Its middle on the face's middle", () => CentreLayer(l, true, true)),
@@ -532,8 +532,8 @@ internal sealed class ToolPanel
         int target = look <= 0 || PieceFaces.OwnSize(d, look) ? look : 0;
         _body.AddChild(Small("Outline: " + _s.Framer.NameOf(d, target) + (target == look ? "" : ", look 1's")));
         var grid = new GridContainer { Columns = 3 };
-        grid.AddThemeConstantOverride("h_separation", 2);
-        grid.AddThemeConstantOverride("v_separation", 2);
+        grid.AddThemeConstantOverride("h_separation", Ui.Gap.Hair);
+        grid.AddThemeConstantOverride("v_separation", Ui.Gap.Hair);
         foreach (var name in PieceFramer.Outlines.Where(o => o != PieceFramer.AlongThePicture))
         {
             var n = name;
@@ -581,7 +581,7 @@ internal sealed class ColourChooser
     {
         var body = _panel.Body;
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", 4);
+        row.AddThemeConstantOverride("separation", Ui.Gap.Tight);
         Button Swatch(Color c, bool which, string tip)
         {
             var b = Ui.Swatch(c, new Vector2(40, 26), tip + " — click for every colour");
@@ -599,15 +599,15 @@ internal sealed class ColourChooser
         row.AddChild(ToolPanel.Small(Hex.Of(Canvas.Ink)[..7].ToUpperInvariant()));
         body.AddChild(row);
         var grid = new GridContainer { Columns = 6 };
-        grid.AddThemeConstantOverride("h_separation", 2);
-        grid.AddThemeConstantOverride("v_separation", 2);
+        grid.AddThemeConstantOverride("h_separation", Ui.Gap.Hair);
+        grid.AddThemeConstantOverride("v_separation", Ui.Gap.Hair);
         foreach (var (h, name) in Palette) grid.AddChild(Chip(h, name));
         body.AddChild(grid);
         var recent = Prefs.Recent.Where(r => !Palette.Any(p => p.Hex.Equals(r, StringComparison.OrdinalIgnoreCase))).Take(6).ToList();
         if (recent.Count > 0)
         {
             var rg = new GridContainer { Columns = 6 };
-            rg.AddThemeConstantOverride("h_separation", 2);
+            rg.AddThemeConstantOverride("h_separation", Ui.Gap.Hair);
             foreach (var h in recent) rg.AddChild(Chip(h, "used lately " + h[..7]));
             body.AddChild(rg);
         }

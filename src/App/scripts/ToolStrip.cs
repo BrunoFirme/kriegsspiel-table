@@ -26,7 +26,7 @@ sealed class ToolStrip : HudPart
         Panel.AddThemeStyleboxOverride("panel", stripStyle);
         root.AddChild(Panel);
         _strip = new VBoxContainer();
-        _strip.AddThemeConstantOverride("separation", 2);
+        _strip.AddThemeConstantOverride("separation", Ui.Gap.Hair);
         Panel.AddChild(_strip);
     }
 
@@ -45,7 +45,7 @@ sealed class ToolStrip : HudPart
     {
         "map" => "map-sheets", "calibrate" => "calibrate", "pieces" => "pieces", "dice" => "dice", "layers" => "umpires-and-zones",
         "select" => "selecting-and-moving", "gizmo" => "turn-and-resize", "formation" => "formations", "ruler" => "ruler", "range" => "ranging",
-        "boards" => "layers", "paint" => "draw", "relief" => "relief", "sighting" => "pov-screenshot", "capture" => "capture", "log" => "log", "zones" => "umpires-and-zones",
+        "boards" => "layers", "paint" => "draw", "relief" => "relief", "sighting" => "pov-capture", "capture" => "capture", "log" => "log", "zones" => "umpires-and-zones",
         _ => "views",
     };
 
@@ -168,7 +168,7 @@ sealed class ToolStrip : HudPart
             case "range": return ToolB(Tool.Range, "range", "Ranging", "Click a piece to see how far it reaches: the wheel sets the standing reach, and a piece carrying a \"range\" counter uses its own");
             case "sighting":
             {
-                var b = ToolB(Tool.Sighting, "sighting", $"POV screenshot   ({Cfg.Keys.Label("sighting")})", "The picture a piece would send home: from above, trace the edge of what it can see, or look out from its own eyes. The shot goes to the clipboard and the capture folder. The wheel sets its reach; Alt + wheel zooms in to trace");
+                var b = ToolB(Tool.Sighting, "sighting", $"POV capture   ({Cfg.Keys.Label("sighting")})", "The picture a piece would send home: from above, trace the edge of what it can see, or look out from its own eyes. The shot goes to the clipboard and the capture folder. The wheel sets its reach; Alt + wheel zooms in to trace");
                 Buttons["sighting"] = b;
                 return b;
             }

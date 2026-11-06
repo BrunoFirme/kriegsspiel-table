@@ -13,16 +13,17 @@ sealed class DialogPages
     readonly string _key;
 
     internal static readonly Dictionary<string, string> LastPage = new();
+    public const string PageMeta = "uiPage";
 
     public DialogPages(string key, Vector2 size)
     {
         _key = key;
         Root.CustomMinimumSize = size;
-        Root.AddThemeConstantOverride("separation", 0);
-        _nav.AddThemeConstantOverride("separation", 2);
+        Root.AddThemeConstantOverride("separation", Ui.Gap.None);
+        _nav.AddThemeConstantOverride("separation", Ui.Gap.Hair);
         Root.AddChild(_nav);
         var rule = new VSeparator();
-        rule.AddThemeConstantOverride("separation", 20);
+        rule.AddThemeConstantOverride("separation", Ui.Gap.Section);
         Root.AddChild(rule);
         Root.AddChild(_stack);
     }
@@ -34,12 +35,13 @@ sealed class DialogPages
         NavStyle(tab);
         _nav.AddChild(tab);
         var page = new ScrollContainer { HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled, Visible = false };
+        page.SetMeta(PageMeta, name);
         page.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
         var pad = new MarginContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         pad.AddThemeConstantOverride("margin_right", 14);
         pad.AddThemeConstantOverride("margin_bottom", 6);
         var box = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-        box.AddThemeConstantOverride("separation", 8);
+        box.AddThemeConstantOverride("separation", Ui.Gap.Group);
         pad.AddChild(box);
         page.AddChild(pad);
         _stack.AddChild(page);

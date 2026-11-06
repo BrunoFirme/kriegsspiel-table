@@ -12,7 +12,7 @@ sealed class ClockDialog : HudPart
     void Show()
     {
         var dlg = new ConfirmationDialog { Title = "Game clock", OkButtonText = "Set the clock" };
-        var grid = Ui.Form(110);
+        var grid = Ui.Form(Ui.DialogLabels);
         grid.AddChild(new Label { Text = "Turn" });
         var turn = new SpinBox { MinValue = 0, MaxValue = 100000, Value = S.View.Clock.Turn };
         grid.AddChild(turn);

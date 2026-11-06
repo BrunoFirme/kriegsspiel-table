@@ -32,13 +32,13 @@ internal sealed class StudioLayersPanel
         if (_s.View != "paint" || !_s.Faces.CanvasOpen) return;
         var doc = Canvas.Doc;
         var list = new VBoxContainer();
-        list.AddThemeConstantOverride("separation", 2);
+        list.AddThemeConstantOverride("separation", Ui.Gap.Hair);
         for (int i = doc.Layers.Count - 1; i >= 0; i--) list.AddChild(LayerRow(doc.Layers[i]));
         if (doc.Layers.Count == 0) list.AddChild(Ui.Hint("No layers: add one below."));
         _body.AddChild(list);
 
         var add = new HBoxContainer();
-        add.AddThemeConstantOverride("separation", 3);
+        add.AddThemeConstantOverride("separation", Ui.Gap.Tight);
         Button Ico(HBoxContainer row, string icon, string tip, Action a, bool enabled = true)
         {
             var b =
@@ -76,7 +76,7 @@ internal sealed class StudioLayersPanel
         var sel = Canvas.Sel;
         int at = sel != null ? doc.Layers.IndexOf(sel) : -1;
         var ops = new HBoxContainer();
-        ops.AddThemeConstantOverride("separation", 3);
+        ops.AddThemeConstantOverride("separation", Ui.Gap.Tight);
         Ico(ops, "dup", "Duplicate   (Ctrl+D)", Duplicate, sel != null);
         Ico(ops, "up", "Up one", () => MoveLayer(1), sel != null && at < doc.Layers.Count - 1);
         Ico(ops, "down", "Down one", () => MoveLayer(-1), sel != null && at > 0);
@@ -95,7 +95,7 @@ internal sealed class StudioLayersPanel
         var panel = new PanelContainer { MouseFilter = Control.MouseFilterEnum.Stop, TooltipText = l.Kind switch { "image" => "A picture", "text" => "Text", "block" => "A unit plate", _ => "Paint" } + " · click to pick, double-click to rename" };
         panel.AddThemeStyleboxOverride("panel", Ui.Box(on ? new Color(1, 1, 1, 0.13f) : new Color(1, 1, 1, 0.03f), 3, 4, 2));
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", 4);
+        row.AddThemeConstantOverride("separation", Ui.Gap.Tight);
         panel.AddChild(row);
         var eye = new Button { Flat = true, CustomMinimumSize = new Vector2(24, 24), FocusMode = Control.FocusModeEnum.None, TooltipText = l.Visible ? "Shown: click to hide" : "Hidden: click to show" };
         eye.AddChild(new StudioIcon { Kind = l.Visible ? "eye" : "eye-off", Color = l.Visible ? Ui.Ink : Ui.Muted });
@@ -199,7 +199,8 @@ internal sealed class StudioLayersPanel
     {
         var into = Inspector.Group(_body, l.Name);
         var op = new HBoxContainer();
-        op.AddChild(new Label { Text = "Opacity", CustomMinimumSize = new Vector2(56, 0), SizeFlagsVertical = Control.SizeFlags.ShrinkCenter });
+        op.AddThemeConstantOverride("separation", Ui.Gap.Group);
+        op.AddChild(Ui.RowLabel("Opacity", Ui.PanelLabels));
         var s =
             new HSlider { MinValue = 0, MaxValue = 100, Step = 1, Value = Math.Round(l.Opacity * 100), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
                 SizeFlagsVertical = Control.SizeFlags.ShrinkCenter };
@@ -273,7 +274,7 @@ internal sealed class StudioLayersPanel
     void BlockSettings(VBoxContainer into, ArtLayer l, BlockSpec b)
     {
         void Changed(string what) { Canvas.Refresh(l); Canvas.Commit(what); }
-        var g = Ui.Form(76);
+        var g = Ui.Form(Ui.PanelLabels);
         g.AddChild(new Label { Text = "Plate" });
         var shape = new OptionButton { FitToLongestItem = false, TooltipText = "The plate's own shape on the face; the piece's outline is set on its Block layer in 3D" };
         foreach (var (n, id) in new[] { ("Rectangle", "box"), ("Rounded", "rounded"), ("Round", "circle"), ("Hex", "hex") })

@@ -343,12 +343,22 @@ public partial class Net : Node
         else SendRaw(1, new CommandMessage { Command = c });
     }
 
-    void SendRaw(long peerId, Message m)
+    void SendRaw(long peerId, Message m) => SendOut(peerId, m, null);
+
+    void SendOut(long peerId, Message m, Dictionary<Command, byte[]>? framedTables)
     {
         if (PieceNode.DebugDice && m is not FilePiece) GD.Print($"[net {System.DateTime.Now:HH:mm:ss.fff}] send {m.GetType().Name} to {peerId}{(m is CommandMessage cm1 ? " " + cm1.Command.GetType().Name : "")}");
         KTable.Core.WireTap.Note("send", peerId, m);
         if (m is FilePiece piece) { RpcId(peerId, MethodName.RecvBulk, BulkFrame.Encode(piece)); return; }
-        RpcId(peerId, MethodName.Recv, Framing.ForWire(Json.SerializeBytes<Message>(m)));
+        RpcId(peerId, MethodName.Recv, Framed(m, framedTables));
+    }
+
+    static byte[] Framed(Message m, Dictionary<Command, byte[]>? framedTables)
+    {
+        static byte[] Frame(Message m) => Framing.ForWire(Json.SerializeBytes<Message>(m));
+        if (framedTables == null || m is not CommandMessage { Command: { } c } || c.ShownToObservers() != Shown.WholeTable) return Frame(m);
+        if (!framedTables.TryGetValue(c, out var bytes)) framedTables[c] = bytes = Frame(m);
+        return bytes;
     }
 
     [Rpc(MultiplayerApi.RpcMode.AnyPeer, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable, TransferChannel = 1)]
@@ -367,9 +377,10 @@ public partial class Net : Node
 
     void Dispatch(List<Outgoing> outs)
     {
+        var framedTables = outs.Count > 1 ? new Dictionary<Command, byte[]>(ReferenceEqualityComparer.Instance) : null;
         foreach (var o in outs)
         {
-            if (o.PeerId != 1) { SendRaw(o.PeerId, o.Message); continue; }
+            if (o.PeerId != 1) { SendOut(o.PeerId, o.Message, framedTables); continue; }
             KTable.Core.WireTap.Note("local", 1, o.Message);
             DeliverOrResync(o.Message);
         }

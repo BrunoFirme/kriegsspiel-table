@@ -242,6 +242,8 @@ sealed partial class Carry : IHeldPieces
 
     public double StoredY(Vec2 p, string layer) => _footing.StoredAt(p, SurfaceY(p, layer));
 
+    public double RestingY(PieceNode n, Vec2 pos, double rot, double y) => _footing.Stored(n, pos, rot, y);
+
     public double StoredAt(Vec2 p, double y) => _footing.StoredAt(p, y);
 
     void SettleDrop(List<Held> held)
@@ -381,10 +383,7 @@ sealed partial class Carry : IHeldPieces
         void DoneSettling() { foreach (var n in settling) if (GodotObject.IsInstanceValid(n)) n.EndSettle(); settling.Clear(); }
         try
         {
-            var floor = new StaticBody3D { Position = new Vector3(0, -0.5f, 0) };
-            floor.AddChild(new CollisionShape3D { Shape = new BoxShape3D { Size = new Vector3(100000, 1, 100000) } });
-            world.AddChild(floor);
-            if (_c.S.Ground.Any) world.AddChild(TerrainBody(Coords.ToWorld(_cursor)));
+            TerrainCollider.AddGround(world, _c.S.Ground, Coords.ToWorld(_cursor));
             scene.Mat = new PhysicsMaterial { Friction = 0.8f, Bounce = 0f };
             var layer = held[0].Node.Layer;
             var heldSet = held.Select(h => h.Node).ToHashSet();
@@ -403,35 +402,6 @@ sealed partial class Carry : IHeldPieces
             world.QueueFree();
             DoneSettling();
         }
-    }
-
-    const float TerrainSpan = 80;
-    const int TerrainCells = 64;
-
-    StaticBody3D TerrainBody(Vector3 centre)
-    {
-        var g = _c.S.Ground;
-        float step = TerrainSpan / TerrainCells, x0 = centre.X - TerrainSpan / 2, z0 = centre.Z - TerrainSpan / 2;
-        float H(int i, int j) => (float)g.At(Coords.FromWorld(new Vector3(x0 + i * step, 0, z0 + j * step)));
-        var faces = new Vector3[TerrainCells * TerrainCells * 6];
-        int k = 0;
-        for (int j = 0; j < TerrainCells; j++)
-            for (int i = 0; i < TerrainCells; i++)
-            {
-                var a = new Vector3(x0 + i * step, H(i, j), z0 + j * step);
-                var b = new Vector3(x0 + (i + 1) * step, H(i + 1, j), z0 + j * step);
-                var c = new Vector3(x0 + i * step, H(i, j + 1), z0 + (j + 1) * step);
-                var d = new Vector3(x0 + (i + 1) * step, H(i + 1, j + 1), z0 + (j + 1) * step);
-                faces[k++] = a;
-                faces[k++] = b;
-                faces[k++] = c;
-                faces[k++] = b;
-                faces[k++] = d;
-                faces[k++] = c;
-            }
-        var body = new StaticBody3D();
-        body.AddChild(new CollisionShape3D { Shape = new ConcavePolygonShape3D { Data = faces, BackfaceCollision = true } });
-        return body;
     }
 
     void AddNeighbours(DropScene scene, string layer, HashSet<PieceNode> heldSet, List<Vector3> area)
