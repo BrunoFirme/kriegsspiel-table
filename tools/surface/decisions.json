@@ -234,7 +234,7 @@
   "Zone.*": ["planned", "Phase C item 9: zones", ""],
   "getZones": ["planned", "Phase C item 9: zones", ""],
   "getSelectingPlayers": ["compat", "compat.get_selecting_players", ""],
-  "locked": ["planned", "Phase C item 7: the locked property (getLock/setLock translate)", ""],
+  "locked": ["compat", "compat.get_prop / set_prop on the piece's lock", "", "StowEventTests"],
   "gizmo_selectable": ["dropped", "the TTS gizmo tool", "nothing is needed"],
   "alt_view_angle": ["dropped", "the alt-zoom angle", "nothing is needed"],
   "held_by_color": ["compat", "ObjectProps", ""],
@@ -290,7 +290,7 @@
   "getPointerPosition": ["planned", "Phase C item 8: the player's pointer", ""],
   "getPointerRotation": ["planned", "Phase C item 8: the player's pointer", ""],
   "debugLog": ["planned", "Phase C item 8: logging", ""],
-  "log": ["planned", "Phase C item 8: logging", ""],
+  "log": ["compat", "compat.log: the value, a table as JSON, with its label, on the script console", "", "StowEventTests"],
   "logFormat": ["planned", "Phase C item 8: logging", ""]
  },
  "namespaces": {
@@ -323,8 +323,9 @@
   "Timer.*": ["compat", "compat.Timer", ""]
  },
  "events": {
-  "onObjectEnterContainer": ["planned", "Phase C item 1: stow", ""],
-  "onObjectLeaveContainer": ["planned", "Phase C item 1: stow", ""],
+  "onObjectEnterContainer": ["native", "on_stowed(holder, piece) after a stow", "", "StowEventTests"],
+  "onObjectLeaveContainer": ["native", "on_unstowed(holder, piece) after an unstow, with on_spawn for the piece", "", "StowEventTests"],
+  "tryObjectEnterContainer": ["native", "try_stow(holder, piece) before a stow; false keeps the piece out", "", "StowEventTests"],
   "onObjectEnterZone": ["planned", "Phase C item 9: zones", ""],
   "onObjectLeaveZone": ["planned", "Phase C item 9: zones", ""],
   "onObjectEnterScriptingZone": ["planned", "Phase C item 9: zones", ""],

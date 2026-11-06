@@ -719,20 +719,27 @@ public sealed partial class ScriptHost
 
     public List<Outgoing> BeforeApply(Command c, long actor) => Run(actor, false, () => Before(c));
 
-    public const string PlayerActionHook = "on_player_action";
+    public const string PlayerActionHook = "on_player_action", StowHook = "try_stow";
 
-    public string? PlayerActionVeto(Command c, long actor, List<Outgoing> res)
+    bool HasGlobal(string fn) => _global != null && _global.Env.Get(fn).Type == DataType.Function;
+
+    public string? ScriptVeto(Command c, long actor, List<Outgoing> res)
     {
-        if (_global == null || _global.Env.Get(PlayerActionHook).Type != DataType.Function) return null;
+        if (c is Stow sw) return HasGlobal(StowHook) ? Refusal(actor, res, StowHook, $"the game's script keeps {sw.Id} out of {sw.Holder}", Handle(sw.Holder), Handle(sw.Id)) : null;
+        if (!HasGlobal(PlayerActionHook)) return null;
         var (action, ids) = PlayerActionOf(c);
         if (action == null || ids.Count == 0) return null;
+        var targets = new Table(Vm);
+        for (int i = 0; i < ids.Count; i++) targets[i + 1] = Handle(ids[i]);
+        return Refusal(actor, res, PlayerActionHook, $"the game's script does not allow this {action} here", Who(actor), DynValue.NewString(action), DynValue.NewTable(targets));
+    }
+
+    string? Refusal(long actor, List<Outgoing> res, string hook, string why, params DynValue[] args)
+    {
         string? refused = null;
         res.AddRange(Run(actor, false, () =>
         {
-            var targets = new Table(Vm);
-            for (int i = 0; i < ids.Count; i++) targets[i + 1] = Handle(ids[i]);
-            var answer = Call(_global, PlayerActionHook, Who(actor), DynValue.NewString(action), DynValue.NewTable(targets));
-            if (answer is { Type: DataType.Boolean, Boolean: false }) refused = $"the game's script does not allow this {action} here";
+            if (Call(_global!, hook, args) is { Type: DataType.Boolean, Boolean: false }) refused = why;
         }));
         return refused;
     }
@@ -811,6 +818,14 @@ public sealed partial class ScriptHost
                 break;
             case DeletePiece d:
                 Unload(d.Id, pieceGone: true);
+                break;
+            case Stow sw:
+                Unload(sw.Id, pieceGone: true);
+                if (_global != null) Call(_global, "on_stowed", Handle(sw.Holder), Handle(sw.Id));
+                break;
+            case Unstow us:
+                if (Find(us.Id) is { } out1) { LoadPiece(out1); if (_global != null) Call(_global, "on_spawn", Handle(us.Id)); }
+                if (_global != null) Call(_global, "on_unstowed", Handle(us.Holder), Handle(us.Id));
                 break;
             case MovePiece m:
                 ReactToMove(m, who);
@@ -914,6 +929,15 @@ public sealed partial class ScriptHost
     }
 
     internal PieceInstance? Find(string id) => _s.State.Find(Layers.Umpire, id);
+
+    internal PieceInstance? FindStowed(string id)
+    {
+        foreach (var p in _s.State.Layer(Layers.Umpire))
+            if (p.Stowed != null)
+                foreach (var s in p.AllStowed())
+                    if (s.Id == id) return s;
+        return null;
+    }
 
     internal List<Widget> Staging(string id) => _drawing.Widgets(id);
     internal List<MenuItemDef> MenuStaging(string id) => _drawing.Menus(id);

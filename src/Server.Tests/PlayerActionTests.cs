@@ -34,7 +34,7 @@ public class PlayerActionTests
     {
         using var t = Prepared();
         var outs = new List<Outgoing>();
-        var direct = t.Server.Scripts.PlayerActionVeto(new DeletePiece { Layer = U, Id = P }, Table.Host, outs);
+        var direct = t.Server.Scripts.ScriptVeto(new DeletePiece { Layer = U, Id = P }, Table.Host, outs);
         Assert.True(direct != null, "direct: " + string.Join(" | ", outs.Select(o => o.Message switch { CommandMessage cm when cm.Command is Say s => "S:" + s.Text, var m => m.GetType().Name })));
         var refused = t.Server.Handle(Table.Host, new DeletePiece { Layer = U, Id = P });
         var said = string.Join(" | ", refused.Select(o => o.Message switch { ErrorMessage e => "E:" + e.Text, CommandMessage cm when cm.Command is Say s => "S:" + s.Text, var m => m.GetType().Name }));

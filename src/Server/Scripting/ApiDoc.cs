@@ -919,6 +919,16 @@ public static partial class ApiDoc
         P("action", "string", "\"delete\" or \"flip\".");
         P("pieces", "Piece[]", "The pieces the action would touch.");
 
+        E("global event", "try_stow(holder, piece)", "A piece is about to be put into another: return false to keep it out.", "tryObjectEnterContainer");
+        P("holder", "Piece", "The piece that would hold it.");
+        P("piece", "Piece", "The piece going in.");
+        E("global event", "on_stowed(holder, piece)", "A piece went into another, off the table.", "onObjectEnterContainer");
+        P("holder", "Piece", "The piece holding it.");
+        P("piece", "Piece", "The piece held; its fields still answer, its changes do not.");
+        E("global event", "on_unstowed(holder, piece)", "A held piece came back onto the table; on_spawn runs for it as well.", "onObjectLeaveContainer");
+        P("holder", "Piece", "The piece that held it.");
+        P("piece", "Piece", "The piece back on the table.");
+
         E("global event", "on_number_typed(piece, who, n)", "An umpire typed a number over a piece: return true to keep its state, else the state becomes n.", "onObjectNumberTyped");
         P("piece", "Piece", "The piece under the pointer, or each piece of the selection.");
         P("who", "Who", "The umpire.");

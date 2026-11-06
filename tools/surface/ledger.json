@@ -3426,10 +3426,10 @@
   },
   {
    "row": "locked",
-   "status": "planned",
-   "where": "Phase C item 7: the locked property (getLock/setLock translate)",
+   "status": "compat",
+   "where": "compat.get_prop / set_prop on the piece's lock",
    "instead": "",
-   "held_by": "",
+   "held_by": "StowEventTests",
    "count": 976,
    "modules": 14
   },
@@ -5525,10 +5525,10 @@
   },
   {
    "row": "log",
-   "status": "planned",
-   "where": "Phase C item 8: logging",
+   "status": "compat",
+   "where": "compat.log: the value, a table as JSON, with its label, on the script console",
    "instead": "",
-   "held_by": "",
+   "held_by": "StowEventTests",
    "count": 376,
    "modules": 12
   },
@@ -7779,10 +7779,10 @@
   },
   {
    "row": "onObjectEnterContainer",
-   "status": "planned",
-   "where": "Phase C item 1: stow",
+   "status": "native",
+   "where": "on_stowed(holder, piece) after a stow",
    "instead": "",
-   "held_by": "",
+   "held_by": "StowEventTests",
    "count": 0,
    "modules": 0
   },
@@ -7824,10 +7824,10 @@
   },
   {
    "row": "onObjectLeaveContainer",
-   "status": "planned",
-   "where": "Phase C item 1: stow",
+   "status": "native",
+   "where": "on_unstowed(holder, piece) after an unstow, with on_spawn for the piece",
    "instead": "",
-   "held_by": "",
+   "held_by": "StowEventTests",
    "count": 0,
    "modules": 0
   },
@@ -8017,6 +8017,15 @@
    "where": "layout zones",
    "instead": "nothing is needed",
    "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "tryObjectEnterContainer",
+   "status": "native",
+   "where": "try_stow(holder, piece) before a stow; false keeps the piece out",
+   "instead": "",
+   "held_by": "StowEventTests",
    "count": 0,
    "modules": 0
   }

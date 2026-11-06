@@ -304,6 +304,7 @@ internal sealed class PieceHandles(ScriptHost host)
     {
         var p = host.Find(id);
         if (key == "exists") return B(p != null);
+        p ??= host.FindStowed(id);
         if (p == null)
         {
             if (key.StartsWith("set_") || key is "delete" or "button" or "input" or "edit" or "flip" or "move" or "attach" or "detach" or "stow" or "unstow" or "call")

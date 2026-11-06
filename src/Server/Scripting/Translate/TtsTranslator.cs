@@ -55,7 +55,7 @@ public static class TtsTranslator
 
     static readonly HashSet<string> ObjectProps = new(StringComparer.Ordinal)
     {
-        "interactable","tooltip","sticky","grid_projection","use_gravity","use_grid","use_snap_points","use_hands","use_rotation_value_flip","auto_raise","bounciness","drag","drag_selectable","angular_drag","hide_when_face_down","ignore_fog_of_war","loading_custom","mass","max_typed_number","measure_movement","script_state","spawning","static_friction","dynamic_friction","value","alt_view_angle","held_flip_index","held_position_offset","held_reduce_force","held_rotation_offset","memo","AssetBundle","type","tag","name","guid","held_by_color","resting","is_face_down",
+        "interactable","tooltip","sticky","grid_projection","use_gravity","use_grid","use_snap_points","use_hands","use_rotation_value_flip","auto_raise","bounciness","drag","drag_selectable","angular_drag","hide_when_face_down","ignore_fog_of_war","loading_custom","mass","max_typed_number","measure_movement","script_state","spawning","static_friction","dynamic_friction","value","alt_view_angle","held_flip_index","held_position_offset","held_reduce_force","held_rotation_offset","memo","AssetBundle","type","tag","name","guid","held_by_color","resting","is_face_down","locked",
     };
 
     static readonly HashSet<string> EventNames = new(StringComparer.Ordinal)
@@ -69,7 +69,7 @@ public static class TtsTranslator
         ["onDrop"] = "on_drop", ["onPickUp"] = "on_pick_up", ["onPickup"] = "on_pick_up", ["onObjectDrop"] = "on_drop", ["onObjectPickUp"] = "on_pick_up", ["onObjectPickup"] = "on_pick_up",
         ["onObjectSpawn"] = "on_spawn", ["onObjectDestroy"] = "on_destroy", ["onObjectStateChange"] = "on_state", ["onPlayerTurn"] = "on_turn", ["onRotate"] = "on_rotate", ["onObjectRotate"] = "on_rotate",
         ["onChat"] = "on_chat", ["onObjectNumberTyped"] = "on_number_typed", ["onScriptingButtonDown"] = "on_scripting_button_down", ["onScriptingButtonUp"] = "on_scripting_button_up",
-        ["onPlayerAction"] = "on_player_action",
+        ["onPlayerAction"] = "on_player_action", ["onObjectEnterContainer"] = "on_stowed", ["onObjectLeaveContainer"] = "on_unstowed", ["tryObjectEnterContainer"] = "try_stow",
     };
 
     static readonly HashSet<string> Stubbed = new(StringComparer.Ordinal)
@@ -310,6 +310,7 @@ public static class TtsTranslator
                 case "startLuaCoroutine": return Compat($"compat.start_coroutine({All()})", node);
                 case "getSeatedPlayers": return Compat("compat.seated_players()", node);
                 case "logString": return Compat($"compat.log_string({All()})", node);
+                case "log": return Compat($"compat.log({All()})", node);
                 case "stringColorToRGB": return Compat($"compat.string_color_to_rgb({All()})", node);
                 case "Vector": return Compat($"compat.Vector({All()})", node);
                 case "Color": return Compat($"compat.Color({All()})", node);
@@ -455,7 +456,7 @@ public static class TtsTranslator
                 case "memo":
                     if (visited.Parent is AssignmentStatementSyntax) return visited;
                     return Direct($"{recv}.memo", node);
-                case "interactable" or "tooltip" or "sticky" or "use_gravity" or "grid_projection" or "auto_raise" or "use_snap_points" or "use_grid" or "hide_when_face_down":
+                case "interactable" or "tooltip" or "sticky" or "use_gravity" or "grid_projection" or "auto_raise" or "use_snap_points" or "use_grid" or "hide_when_face_down" or "locked":
                     if (visited.Parent is AssignmentStatementSyntax) return visited;
                     return Compat($"compat.get_prop({recv}, \"{name}\", {DefaultProp(name)})", node);
             }
@@ -564,6 +565,9 @@ public static class TtsTranslator
                 case "onObjectRotate": return ("on_rotate", "__rot, __old, __who", Bind(new[] { "self", "__rot", "self.face_down and 180 or 0", "compat.color_of(__who)", "__old", "self.face_down and 180 or 0" }));
                 case "onChat": return ("on_chat", "__text, __who", Bind(new[] { "__text", "compat.player(compat.color_of(__who))" }));
                 case "onPlayerAction": return ("on_player_action", "__who, __action, __targets", Bind(new[] { "compat.player(compat.color_of(__who))", "__action", "__targets" }));
+                case "onObjectEnterContainer": return ("on_stowed", "__holder, __piece", Bind(new[] { "__holder", "__piece" }));
+                case "onObjectLeaveContainer": return ("on_unstowed", "__holder, __piece", Bind(new[] { "__holder", "__piece" }));
+                case "tryObjectEnterContainer": return ("try_stow", "__holder, __piece", Bind(new[] { "__holder", "__piece" }));
                 case "onObjectNumberTyped": return ("on_number_typed", "__piece, __who, __n", Bind(new[] { "__piece", "compat.color_of(__who)", "__n" }));
                 case "onScriptingButtonDown": return ("on_scripting_button_down", "__index, __who", Bind(new[] { "__index", "compat.color_of(__who)" }));
                 case "onScriptingButtonUp": return ("on_scripting_button_up", "__index, __who", Bind(new[] { "__index", "compat.color_of(__who)" }));

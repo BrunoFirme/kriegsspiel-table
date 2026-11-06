@@ -371,7 +371,7 @@ public sealed partial class GameServer
             if (Admission(peer, c) is { } refused) return Refuse(res, peerId, refused);
             if (TakeBack(peer, ref c, out undoTarget) is { } noUndo) return Refuse(res, peerId, noUndo);
             if (Readiness(c) is { } notReady) return Refuse(res, peerId, notReady);
-            if (Scripts.PlayerActionVeto(c, peerId, res) is { } vetoed) return Refuse(res, peerId, vetoed);
+            if (Scripts.ScriptVeto(c, peerId, res) is { } vetoed) return Refuse(res, peerId, vetoed);
 
             c.Actor = peerId;
             c.At = _clock();

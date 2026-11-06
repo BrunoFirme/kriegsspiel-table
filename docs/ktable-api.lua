@@ -601,6 +601,21 @@ function on_spawn(piece) end
 ---@param pieces Piece[] The pieces the action would touch.
 function on_player_action(who, action, pieces) end
 
+---A piece is about to be put into another: return false to keep it out.
+---@param holder Piece The piece that would hold it.
+---@param piece Piece The piece going in.
+function try_stow(holder, piece) end
+
+---A piece went into another, off the table.
+---@param holder Piece The piece holding it.
+---@param piece Piece The piece held; its fields still answer, its changes do not.
+function on_stowed(holder, piece) end
+
+---A held piece came back onto the table; on_spawn runs for it as well.
+---@param holder Piece The piece that held it.
+---@param piece Piece The piece back on the table.
+function on_unstowed(holder, piece) end
+
 ---An umpire typed a number over a piece: return true to keep its state, else the state becomes n.
 ---@param piece Piece The piece under the pointer, or each piece of the selection.
 ---@param who Who The umpire.

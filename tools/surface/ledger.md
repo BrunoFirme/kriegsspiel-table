@@ -11,10 +11,10 @@ the plan says translate it), unknown (nobody has decided).
 |---|---|---|---|---|
 | types | 30 | 26 | 4 | 43 |
 | save | 150 | 137 | 13 | 300 |
-| object | 65 | 63 | 2 | 262 |
-| global | 14 | 13 | 1 | 55 |
+| object | 65 | 64 | 1 | 262 |
+| global | 14 | 14 | 0 | 55 |
 | namespaces | 23 | 21 | 2 | 180 |
-| events | 8 | 8 | 0 | 50 |
+| events | 8 | 8 | 0 | 51 |
 | engine | 23 | 20 | 3 | 23 |
 
 ## types
@@ -411,7 +411,7 @@ the plan says translate it), unknown (nobody has decided).
 | `removeFromPlayerSelection` | 1954 / 14 | compat | ObjectCall |  |
 | `interactable` | 1952 / 14 | compat | ObjectProps (get_prop/set_prop) |  |
 | `scale` | 1826 / 14 | compat | ObjectCall |  |
-| `locked` | 976 / 14 | planned | Phase C item 7: the locked property (getLock/setLock translate) |  |
+| `locked` | 976 / 14 | compat | compat.get_prop / set_prop on the piece's lock | StowEventTests |
 | `removeInput` | 976 / 14 | compat | ObjectCall |  |
 | `getData` | 21 / 13 | compat | compat.get_data |  |
 | `getGMNotes` | 15 / 13 | compat | ObjectCall |  |
@@ -649,7 +649,7 @@ the plan says translate it), unknown (nobody has decided).
 | `spawnObjectData` | 32 / 13 | compat | GlobalFunctionCall |  |
 | `startLuaCoroutine` | 4147 / 12 | compat | GlobalFunctionCall |  |
 | `getAllObjects` | 426 / 12 | native | GlobalFunctionCall |  |
-| `log` | 376 / 12 | planned | Phase C item 8: logging |  |
+| `log` | 376 / 12 | compat | compat.log: the value, a table as JSON, with its label, on the script console | StowEventTests |
 | `printToColor` | 20 / 12 | compat | GlobalFunctionCall |  |
 | `addHotkey` | 20 / 4 | compat | GlobalFunctionCall |  |
 | `addContextMenuItem` | 2 / 2 | compat | GlobalFunctionCall |  |
@@ -909,12 +909,12 @@ the plan says translate it), unknown (nobody has decided).
 | `onObjectCollisionExit` | - | dropped | engine physics (collisions) |  |
 | `onObjectCollisionStay` | - | dropped | engine physics (collisions) |  |
 | `onObjectDrop` | - | native | EventRenames |  |
-| `onObjectEnterContainer` | - | planned | Phase C item 1: stow |  |
+| `onObjectEnterContainer` | - | native | on_stowed(holder, piece) after a stow | StowEventTests |
 | `onObjectEnterScriptingZone` | - | planned | Phase C item 9: zones |  |
 | `onObjectEnterZone` | - | planned | Phase C item 9: zones |  |
 | `onObjectFlick` | - | dropped | engine physics (flicking) |  |
 | `onObjectHover` | - | planned | Phase C item 9 |  |
-| `onObjectLeaveContainer` | - | planned | Phase C item 1: stow |  |
+| `onObjectLeaveContainer` | - | native | on_unstowed(holder, piece) after an unstow, with on_spawn for the piece | StowEventTests |
 | `onObjectLeaveScriptingZone` | - | planned | Phase C item 9: zones |  |
 | `onObjectLeaveZone` | - | planned | Phase C item 9: zones |  |
 | `onObjectLoopingEffect` | - | planned | Phase C item 9: effects |  |
@@ -936,6 +936,7 @@ the plan says translate it), unknown (nobody has decided).
 | `onPlayersDisconnect` | - | planned | Phase C item 9: seats |  |
 | `onScriptingButtonUp` | - | native | EventRenames |  |
 | `onZoneGroupSort` | - | dropped | layout zones |  |
+| `tryObjectEnterContainer` | - | native | try_stow(holder, piece) before a stow; false keeps the piece out | StowEventTests |
 
 ## engine
 

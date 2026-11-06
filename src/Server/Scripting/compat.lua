@@ -236,13 +236,20 @@ function compat.set_prop(obj, k, v)
   if not is_piece(obj) then if type(obj) == "table" then obj[k] = v end return end
   if k == "memo" then obj.set_memo(v) return end
   if k == "script_state" then obj.set_script_state(v) return end
+  if k == "locked" then obj.set_locked(v and true or false) return end
   pbag(obj)[k] = v
 end
 function compat.get_prop(obj, k, d)
   if not is_piece(obj) then if type(obj) == "table" and obj[k] ~= nil then return obj[k] end return d end
   if k == "memo" then local m = obj.memo; if m == nil or m == "" then return d end return m end
   if k == "script_state" then local v = obj.script_state; if v == nil or v == "" then return d end return v end
+  if k == "locked" then return obj.locked == true end
   local v = pbag(obj)[k]; if v == nil then return d end return v
+end
+function compat.log(value, label, tags)
+  local text = type(value) == "table" and json.encode(value) or tostring(value)
+  if label ~= nil and label ~= "" then text = tostring(label) .. ": " .. text end
+  print(text)
 end
 function compat.set_lock(obj, v) obj.set_locked(v and true or false) end
 function compat.get_lock(obj) return obj.locked == true end
