@@ -11,7 +11,7 @@ settle
 checkpoint ranging
 click "Select"
 click world:4,0.2,0
-click "POV screenshot"
+click "POV capture"
 settle
 checkpoint pov
 drag @500,250 @700,260

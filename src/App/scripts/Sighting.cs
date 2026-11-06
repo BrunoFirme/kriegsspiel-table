@@ -379,7 +379,7 @@ sealed class Sighting
     {
         if (Draft == null) return;
         KeepRadius();
-        _c.Say($"POV screenshot taken: {Draft.Included.Count} pieces in the picture — Ctrl+V into Discord.");
+        _c.Say($"POV capture taken: {Draft.Included.Count} pieces in the picture — Ctrl+V into Discord.");
         _pieces.ShowRings();
         Draft = null;
         _wallRedo.Clear();
