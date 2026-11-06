@@ -170,10 +170,10 @@ public class TranslatorTests
     [Fact]
     public void What_has_no_rule_is_listed_with_its_line()
     {
-        var r = TtsTranslator.Translate("function onLoad()\n  self.addForce({0, 1, 0})\n  Wait.stopAll()\nend\nfunction onCollisionEnter(info) end\n");
+        var r = TtsTranslator.Translate("function onLoad()\n  self.addForce({0, 1, 0})\n  Tables.getTable()\nend\nfunction onCollisionEnter(info) end\n");
         Assert.True(r.Parsed);
         Assert.Contains(r.Untranslated, u => u.Line == 2 && u.What == "addForce");
-        Assert.Contains(r.Untranslated, u => u.Line == 3 && u.What == "Wait.stopAll");
+        Assert.Contains(r.Untranslated, u => u.Line == 3 && u.What == "Tables.getTable");
         Assert.Contains(r.Untranslated, u => u.What == "event" && u.Text.StartsWith("onCollisionEnter"));
         Assert.Contains("compat.todo(self, \"addForce\")", r.Script);
     }

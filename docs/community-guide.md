@@ -26,6 +26,7 @@ You get:
 | States (formation, shattered…) | Plain TTS dice (use the app's) |
 | IKS script counters and text | |
 | Notecards, Notes and Notebook pages, as note cards you can type into | |
+| PDF documents, as a note card carrying the link (the pages are not shown) | Cards dealt by script (listed in the report) |
 | Tints, names, attached markers, locks, face down | |
 | Asset-bundle effects (smoke, fire, gun fire, mist, rain), as the closest of Firme's Effects | |
 | Lua scripts and XML panels, translated | |

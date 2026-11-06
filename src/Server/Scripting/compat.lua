@@ -897,6 +897,40 @@ compat.Timer = {
 }
 
 local told = {}
+function compat.copy_table(t, seen)
+  if type(t) ~= "table" then return t end
+  seen = seen or {}
+  if seen[t] then return seen[t] end
+  local out = {}
+  seen[t] = out
+  for k, v in pairs(t) do out[compat.copy_table(k, seen)] = compat.copy_table(v, seen) end
+  return setmetatable(out, getmetatable(t))
+end
+function compat.wait_stop_all()
+  local ids = {}
+  for id in pairs(series) do ids[#ids + 1] = id end
+  for _, id in ipairs(ids) do compat.wait_stop(id) end
+end
+function compat.has_any_tag(obj, tags)
+  for _, t in ipairs(tags or {}) do if compat.has_tag(obj, t) then return true end end
+  return false
+end
+function compat.has_matching_tag(obj, other)
+  if type(other) ~= "table" then return false end
+  for _, t in ipairs(obj.tags or {}) do if compat.has_tag(other, t) then return true end end
+  return false
+end
+function compat.all_tags()
+  local seen, out = {}, {}
+  for _, p in ipairs(board.pieces()) do
+    for _, t in ipairs(p.tags or {}) do if not seen[t] then seen[t] = true; out[#out + 1] = t end end
+  end
+  table.sort(out)
+  return out
+end
+function compat.erase_all()
+  for _, s in ipairs(board.strokes()) do board.erase(s.id) end
+end
 function compat.todo(obj, name, ...)
   if not told[name] then
     told[name] = true

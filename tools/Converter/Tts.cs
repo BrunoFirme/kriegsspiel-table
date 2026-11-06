@@ -56,6 +56,7 @@ public sealed class TtsObj
     public string? MeshUrl => Blank(S(CM?["MeshURL"]));
     public string? DiffuseUrl => Blank(S(CM?["DiffuseURL"]));
     public string? BundleUrl => Blank(S((J["CustomAssetbundle"] as JsonObject)?["AssetbundleURL"]));
+    public string? PdfUrl => Blank(S((J["CustomPDF"] as JsonObject)?["PDFUrl"]));
 
     public string? Color => J["ColorDiffuse"] is JsonObject c ? HexOf(c) : null;
 

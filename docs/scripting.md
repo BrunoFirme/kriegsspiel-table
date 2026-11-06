@@ -354,7 +354,11 @@ gives each direct match.
   but takes no clicks, as TTS's locked text does.
 - **Bags:** `putObject`, `takeObject` (by guid or index, at a position and rotation, with its callback), `getObjects`
   and `getQuantity` run on the piece's own `stow`, `unstow` and `stowed`, so a bag script places and recalls as in TTS.
-- **Noted:** calls with no meaning here (`addForce`, decks) become `compat.todo(...)`, which prints once.
+- **Vector and Color:** TTS's classes come over whole: every method and operator, `v[1]`, named colours, `Color.fromString`,
+  `fromHex` and `toHex`; `getColorTint()` answers a Color. The colour and table helpers (`hexToColor`, `copyLuaTable`, `getGlobalVar`…),
+  the script state calls and the tag calls run through `compat` too.
+- **Noted:** calls with no meaning here (`addForce`, dealing cards, scripting zones) become `compat.todo(...)`, which prints once;
+  the import report names each under "Not taken from TTS exactly".
 
 Handlers keep their TTS parameters, bound in a first line:
 

@@ -9,9 +9,9 @@ the plan says translate it), unknown (nobody has decided).
 
 | area | rows used by the corpus | decided | planned or unknown | rows in all |
 |---|---|---|---|---|
-| types | 30 | 27 | 3 | 43 |
-| save | 150 | 143 | 7 | 300 |
-| object | 65 | 64 | 1 | 262 |
+| types | 30 | 30 | 0 | 43 |
+| save | 150 | 150 | 0 | 300 |
+| object | 65 | 65 | 0 | 262 |
 | global | 14 | 14 | 0 | 55 |
 | namespaces | 23 | 23 | 0 | 180 |
 | events | 8 | 8 | 0 | 51 |
@@ -29,7 +29,7 @@ the plan says translate it), unknown (nobody has decided).
 | `Chinese_Checkers_Piece` | 45 / 45 | dropped | TTS stock piece; in every IKS module it is the Flex Table control |  |
 | `Custom_Board` | 22 / 22 | native | converter |  |
 | `Notecard` | 28 / 16 | native | converter |  |
-| `Custom_PDF` | 15 / 14 | planned | Battle Lines session: imports as a book (uncommitted on main) |  |
+| `Custom_PDF` | 15 / 14 | partial | a note carrying the PDF's link and description; its pages are not shown | PdfTests |
 | `BlockSquare` | 665 / 12 | native | converter |  |
 | `BlockRectangle` | 333 / 11 | native | converter |  |
 | `3DText` | 109 / 11 | native | converter |  |
@@ -42,12 +42,12 @@ the plan says translate it), unknown (nobody has decided).
 | `Die_12` | 11 / 5 | native | the app's d12, showing the face it was saved on | DiceTests |
 | `Die_10` | 9 / 4 | native | the app's d10, showing the face it was saved on | DiceTests |
 | `Die_6_Rounded` | 7 / 4 | native | the app's d6, showing the face it was saved on | DiceTests |
-| `BlockTriangle` | 9 / 3 | planned | Phase C item 7: a block of our own |  |
+| `BlockTriangle` | 9 / 3 | dropped | TTS stock block; no module in the roster has one |  |
 | `Die_6` | 24 / 2 | native | the app's d6, showing the face it was saved on | DiceTests |
 | `Tileset_Tree` | 119 / 1 | dropped | TTS's own art is never extracted |  |
 | `Card` | 82 / 1 | native | converter |  |
 | `Checker_white` | 17 / 1 | native | converter |  |
-| `Figurine_Custom` | 16 / 1 | planned | Phase C item 7: a standing picture |  |
+| `Figurine_Custom` | 16 / 1 | dropped | a standing picture; no module in the roster has one |  |
 | `Deck` | 15 / 1 | native | converter |  |
 | `PlayerPawn` | 7 / 1 | native | a round piece in the pawn's colour, as tall as a pawn | PawnTests |
 | `Die_8` | 2 / 1 | native | the app's d8, showing the face it was saved on | DiceTests |
@@ -61,7 +61,7 @@ the plan says translate it), unknown (nobody has decided).
 | `Go_Game_Piece_Black` | - | dropped | TTS stock piece |  |
 | `Go_Game_Piece_White` | - | dropped | TTS stock piece |  |
 | `Quarter` | - | dropped | TTS stock coin |  |
-| `ScriptingTrigger` | - | planned | Phase C item 9: zones raise onObjectEnterScriptingZone |  |
+| `ScriptingTrigger` | - | stub | no module in the roster has one; the table's own zones raise no script events yet |  |
 | `Tablet` | - | dropped | TTS stock gadget (a web browser on the table) |  |
 | `Tileset_*` | - | dropped | TTS's own art is never extracted |  |
 
@@ -132,7 +132,7 @@ the plan says translate it), unknown (nobody has decided).
 | `SaveState.PlayingTime` | 31 / 31 | dropped | save metadata |  |
 | `SaveState.GameComplexity` | 29 / 29 | dropped | save metadata |  |
 | `SaveState.PlayArea` | 29 / 29 | dropped | the table's size here is the map's |  |
-| `ObjectState.Sticky` | 1334 / 26 | planned | Phase C item 10: lifting a holder lifts its stack |  |
+| `ObjectState.Sticky` | 1334 / 26 | partial | a holder always carries its stack when moved (TTS's true); false is not kept |  |
 | `ObjectState.RotationValues` | 181 / 26 | native | converter reads it |  |
 | `TagsState.labels` | 26 / 26 | dropped | tag labels of the TTS UI |  |
 | `SaveState.GameType` | 25 / 25 | dropped | save metadata |  |
@@ -150,7 +150,7 @@ the plan says translate it), unknown (nobody has decided).
 | `ObjectState.Tags` | 17646 / 16 | native | converter reads it |  |
 | `SaveState.Sky` | 16 / 16 | native | converter reads it |  |
 | `SaveState.Note` | 15 / 15 | native | converter reads it |  |
-| `ObjectState.CustomPDF` | 15 / 14 | planned | Battle Lines session: books (uncommitted on main) |  |
+| `ObjectState.CustomPDF` | 15 / 14 | partial | a note carrying the PDF's link | PdfTests |
 | `GridState.PosOffset` | 14 / 14 | dropped | grid (decided 2026-11-06) |  |
 | `ObjectState.PhysicsMaterial` | 368 / 13 | dropped | engine physics |  |
 | `ObjectState.Rigidbody` | 368 / 13 | dropped | engine physics |  |
@@ -168,9 +168,9 @@ the plan says translate it), unknown (nobody has decided).
 | `SaveState.Gravity` | 9 / 9 | dropped | engine physics |  |
 | `SaveState.VectorLines` | 9 / 9 | native | strokes on the umpire's drawing board | DrawingTests |
 | `ObjectState.DragSelectable` | 335 / 8 | dropped | whether a drag selects the piece |  |
-| `CustomPDFState.PDFUrl` | 9 / 8 | planned | Battle Lines session: books (uncommitted on main) |  |
+| `CustomPDFState.PDFUrl` | 9 / 8 | partial | PDFUrl goes on the note; page and password are dropped | PdfTests |
 | `SaveState.MusicPlayer` | 8 / 8 | dropped | music player |  |
-| `ObjectState.Autoraise` | 354 / 7 | planned | Phase C item 10: resting |  |
+| `ObjectState.Autoraise` | 354 / 7 | dropped | a dropped piece always rests on what is under it |  |
 | `CustomImageState.CustomDice` | 35 / 7 | native | converter reads it |  |
 | `LightingState.LightColor` | 7 / 7 | dropped | lighting (decided 2026-11-06) |  |
 | `MusicPlayerState.AudioLibrary` | 7 / 7 | dropped | music player |  |
@@ -186,7 +186,7 @@ the plan says translate it), unknown (nobody has decided).
 | `RigidbodyState.Mass` | 45 / 6 | dropped | engine physics |  |
 | `TextState.fontSize` | 26 / 6 | native | converter reads it |  |
 | `CustomMeshState.CastShadows` | 341 / 5 | native | converter reads it |  |
-| `ObjectState.CustomUIAssets` | 35 / 5 | planned | Phase C item 8: run-time UI assets |  |
+| `ObjectState.CustomUIAssets` | 35 / 5 | partial | pictures a run-time panel names: links in the XML are fetched, named assets are not |  |
 | `CustomDiceState.Type` | 22 / 5 | native | converter reads it |  |
 | `RigidbodyState.UseGravity` | 14 / 5 | dropped | engine physics |  |
 | `LightingState.AmbientType` | 5 / 5 | dropped | lighting (decided 2026-11-06) |  |
@@ -205,10 +205,10 @@ the plan says translate it), unknown (nobody has decided).
 | `GridState.Type` | 3 / 3 | dropped | grid (decided 2026-11-06) |  |
 | `MusicPlayerState.PlaylistEntry` | 3 / 3 | dropped | music player |  |
 | `MusicPlayerState.RepeatSong` | 3 / 3 | dropped | music player |  |
-| `SaveState.CustomUIAssets` | 3 / 3 | planned | Phase C item 8: run-time UI assets |  |
+| `SaveState.CustomUIAssets` | 3 / 3 | partial | pictures a run-time panel names: links in the XML are fetched, named assets are not |  |
 | `ObjectState.GMNotes` | 117 / 2 | native | converter reads it |  |
 | `CustomTileState.Stackable` | 29 / 2 | native | converter reads it |  |
-| `CustomPDFState.PDFPage` | 2 / 2 | planned | Battle Lines session: books (uncommitted on main) |  |
+| `CustomPDFState.PDFPage` | 2 / 2 | partial | PDFUrl goes on the note; page and password are dropped | PdfTests |
 | `GridState.BothSnapping` | 2 / 2 | dropped | grid (decided 2026-11-06) |  |
 | `GridState.Offset` | 2 / 2 | dropped | grid (decided 2026-11-06) |  |
 | `TextState.colorstate` | 19 / 1 | native | converter reads it |  |
@@ -231,28 +231,28 @@ the plan says translate it), unknown (nobody has decided).
 | `ClockState.Paused` | - | dropped | TTS stock gadget |  |
 | `ClockState.SecondsPassed` | - | dropped | TTS stock gadget |  |
 | `CounterState.value` | - | dropped | TTS stock gadget |  |
-| `CustomAssetState.Name` | - | planned | Phase C item 8: run-time UI assets |  |
-| `CustomAssetState.Type` | - | planned | Phase C item 8: run-time UI assets |  |
-| `CustomAssetState.URL` | - | planned | Phase C item 8: run-time UI assets |  |
+| `CustomAssetState.Name` | - | partial | pictures a run-time panel names: links in the XML are fetched, named assets are not |  |
+| `CustomAssetState.Type` | - | partial | pictures a run-time panel names: links in the XML are fetched, named assets are not |  |
+| `CustomAssetState.URL` | - | partial | pictures a run-time panel names: links in the XML are fetched, named assets are not |  |
 | `CustomDecalState.ImageURL` | - | native | converter reads it |  |
 | `CustomDecalState.Name` | - | native | converter reads it |  |
 | `CustomDecalState.Size` | - | unknown |  |  |
-| `CustomDeckState.BackIsHidden` | - | planned | Phase C item 7: cards |  |
+| `CustomDeckState.BackIsHidden` | - | dropped | a face-down card shows the back its sheet gives it |  |
 | `CustomDeckState.BackURL` | - | native | converter reads it |  |
 | `CustomDeckState.FaceURL` | - | native | converter reads it |  |
 | `CustomDeckState.NumHeight` | - | unknown |  |  |
 | `CustomDeckState.NumWidth` | - | unknown |  |  |
 | `CustomDeckState.Type` | - | native | converter reads it |  |
 | `CustomDeckState.UniqueBack` | - | native | converter reads it |  |
-| `CustomFigurineState.MirroredBack` | - | planned | Phase C item 7: a standing picture |  |
-| `CustomFigurineState.UseMinimalCollider` | - | planned | Phase C item 7: a standing picture |  |
+| `CustomFigurineState.MirroredBack` | - | dropped | a standing picture; no module in the roster has one |  |
+| `CustomFigurineState.UseMinimalCollider` | - | dropped | a standing picture; no module in the roster has one |  |
 | `CustomImageState.CustomFigurine` | - | unknown |  |  |
 | `CustomImageState.CustomJigsawPuzzle` | - | unknown |  |  |
 | `CustomImageState.ImageScalar` | - | native | converter reads it |  |
 | `CustomJigsawPuzzleState.ImageOnBoard` | - | dropped | TTS jigsaw puzzles |  |
 | `CustomJigsawPuzzleState.NumPuzzlePieces` | - | dropped | TTS jigsaw puzzles |  |
-| `CustomPDFState.PDFPageOffset` | - | planned | Battle Lines session: books (uncommitted on main) |  |
-| `CustomPDFState.PDFPassword` | - | planned | Battle Lines session: books (uncommitted on main) |  |
+| `CustomPDFState.PDFPageOffset` | - | partial | PDFUrl goes on the note; page and password are dropped | PdfTests |
+| `CustomPDFState.PDFPassword` | - | partial | PDFUrl goes on the note; page and password are dropped | PdfTests |
 | `CustomTokenState.Stackable` | - | native | converter reads it |  |
 | `CustomTokenState.StandUp` | - | native | converter reads it |  |
 | `DecalState.CustomDecal` | - | native | converter reads it |  |
@@ -330,7 +330,7 @@ the plan says translate it), unknown (nobody has decided).
 | `ObjectState.Number` | - | dropped | a number typed over the piece |  |
 | `ObjectState.RPGdead` | - | dropped | TTS rpg figurines |  |
 | `ObjectState.RPGmode` | - | dropped | TTS rpg figurines |  |
-| `ObjectState.SidewaysCard` | - | planned | Phase C item 7: cards |  |
+| `ObjectState.SidewaysCard` | - | dropped | a card keeps its sheet's orientation |  |
 | `ObjectState.Tablet` | - | dropped | TTS stock gadget |  |
 | `ObjectState.Value` | - | dropped | the piece's counting value |  |
 | `ObjectState.miscID` | - | dropped | TTS internal |  |
@@ -343,7 +343,7 @@ the plan says translate it), unknown (nobody has decided).
 | `SaveState.Decals` | - | dropped | decals laid on the table |  |
 | `SaveState.ObjectStates` | - | native | converter reads it |  |
 | `SaveState.Rules` | - | native | the scenario's briefing | DrawingTests |
-| `SaveState.SnapPoints` | - | planned | Phase C item 7: snap points |  |
+| `SaveState.SnapPoints` | - | dropped | snap points (decided 2026-11-06 with the grid) |  |
 | `SnapPointState.Position` | - | dropped | snap points (grid, decided 2026-11-06) |  |
 | `SnapPointState.Rotation` | - | dropped | snap points (grid, decided 2026-11-06) |  |
 | `SnapPointState.Tags` | - | dropped | snap points (grid, decided 2026-11-06) |  |
@@ -416,7 +416,7 @@ the plan says translate it), unknown (nobody has decided).
 | `getData` | 21 / 13 | compat | compat.get_data |  |
 | `getGMNotes` | 15 / 13 | compat | ObjectCall |  |
 | `hasTag` | 150 / 12 | compat | ObjectCall |  |
-| `split` | 26 / 12 | planned | Phase C item 7: cards |  |
+| `split` | 26 / 12 | stub | card dealing; no module calls it |  |
 | `setGMNotes` | 12 / 12 | compat | ObjectCall |  |
 | `getTransformUp` | 12435 / 11 | compat | ObjectCall |  |
 | `setDecals` | 4145 / 11 | compat | ObjectCall |  |
@@ -439,16 +439,16 @@ the plan says translate it), unknown (nobody has decided).
 | `getValue` | 1 / 1 | compat | compat.get_value: the look's name as a number where it is one | DiceScriptTests |
 | `roll` | 1 / 1 | compat | compat.roll: a random look of the piece | DiceScriptTests |
 | `setSnapPoints` | 1 / 1 | compat | ObjectCall |  |
-| `AssetBundle.getLoopingEffectIndex` | - | planned | Phase C item 9: effects played by a script |  |
-| `AssetBundle.getLoopingEffects` | - | planned | Phase C item 9: effects played by a script |  |
-| `AssetBundle.getTriggerEffects` | - | planned | Phase C item 9: effects played by a script |  |
-| `AssetBundle.playLoopingEffect` | - | planned | Phase C item 9: effects played by a script |  |
-| `AssetBundle.playTriggerEffect` | - | planned | Phase C item 9: effects played by a script |  |
-| `Book.clearHighlight` | - | planned | Battle Lines session: books (uncommitted on main) |  |
-| `Book.getPage` | - | planned | Battle Lines session: books (uncommitted on main) |  |
-| `Book.page_offset` | - | planned | Battle Lines session: books (uncommitted on main) |  |
-| `Book.setHighlight` | - | planned | Battle Lines session: books (uncommitted on main) |  |
-| `Book.setPage` | - | planned | Battle Lines session: books (uncommitted on main) |  |
+| `AssetBundle.getLoopingEffectIndex` | - | dropped | a bundle's own animations never come over |  |
+| `AssetBundle.getLoopingEffects` | - | dropped | a bundle's own animations never come over |  |
+| `AssetBundle.getTriggerEffects` | - | dropped | a bundle's own animations never come over |  |
+| `AssetBundle.playLoopingEffect` | - | dropped | a bundle's own animations never come over |  |
+| `AssetBundle.playTriggerEffect` | - | dropped | a bundle's own animations never come over |  |
+| `Book.clearHighlight` | - | dropped | PDF pages are not shown; the note carries the link |  |
+| `Book.getPage` | - | dropped | PDF pages are not shown; the note carries the link |  |
+| `Book.page_offset` | - | dropped | PDF pages are not shown; the note carries the link |  |
+| `Book.setHighlight` | - | dropped | PDF pages are not shown; the note carries the link |  |
+| `Book.setPage` | - | dropped | PDF pages are not shown; the note carries the link |  |
 | `Browser.pixel_width` | - | dropped | TTS stock gadget |  |
 | `Browser.url` | - | dropped | TTS stock gadget |  |
 | `Clock.getValue` | - | dropped | TTS stock gadget |  |
@@ -457,16 +457,16 @@ the plan says translate it), unknown (nobody has decided).
 | `Clock.setValue` | - | dropped | TTS stock gadget |  |
 | `Clock.showCurrentTime` | - | dropped | TTS stock gadget |  |
 | `Clock.startStopwatch` | - | dropped | TTS stock gadget |  |
-| `Container.addData` | - | planned | Phase C item 1: stow |  |
-| `Container.getCount` | - | planned | Phase C item 1: stow |  |
-| `Container.getData` | - | planned | Phase C item 1: stow |  |
-| `Container.getInfo` | - | planned | Phase C item 1: stow |  |
-| `Container.putObject` | - | planned | Phase C item 1: stow |  |
-| `Container.randomize` | - | planned | Phase C item 1: stow |  |
-| `Container.removeData` | - | planned | Phase C item 1: stow |  |
-| `Container.search` | - | planned | Phase C item 1: stow |  |
-| `Container.setData` | - | planned | Phase C item 1: stow |  |
-| `Container.takeObject` | - | planned | Phase C item 1: stow |  |
+| `Container.addData` | - | compat | holders: getObjects, putObject, takeObject, getQuantity through stow | StowScriptTests |
+| `Container.getCount` | - | compat | holders: getObjects, putObject, takeObject, getQuantity through stow | StowScriptTests |
+| `Container.getData` | - | compat | holders: getObjects, putObject, takeObject, getQuantity through stow | StowScriptTests |
+| `Container.getInfo` | - | compat | holders: getObjects, putObject, takeObject, getQuantity through stow | StowScriptTests |
+| `Container.putObject` | - | compat | holders: getObjects, putObject, takeObject, getQuantity through stow | StowScriptTests |
+| `Container.randomize` | - | compat | holders: getObjects, putObject, takeObject, getQuantity through stow | StowScriptTests |
+| `Container.removeData` | - | compat | holders: getObjects, putObject, takeObject, getQuantity through stow | StowScriptTests |
+| `Container.search` | - | compat | holders: getObjects, putObject, takeObject, getQuantity through stow | StowScriptTests |
+| `Container.setData` | - | compat | holders: getObjects, putObject, takeObject, getQuantity through stow | StowScriptTests |
+| `Container.takeObject` | - | compat | holders: getObjects, putObject, takeObject, getQuantity through stow | StowScriptTests |
 | `Counter.clear` | - | dropped | TTS stock gadget |  |
 | `Counter.decrement` | - | dropped | TTS stock gadget |  |
 | `Counter.getValue` | - | dropped | TTS stock gadget |  |
@@ -480,14 +480,14 @@ the plan says translate it), unknown (nobody has decided).
 | `RPGFigurine.die` | - | dropped | TTS rpg figurines |  |
 | `RPGFigurine.onAttack` | - | dropped | TTS rpg figurines |  |
 | `RPGFigurine.onHit` | - | dropped | TTS rpg figurines |  |
-| `TextTool.getFontColor` | - | planned | Phase C item 7: 3D text at run time |  |
-| `TextTool.getFontSize` | - | planned | Phase C item 7: 3D text at run time |  |
-| `TextTool.getValue` | - | planned | Phase C item 7: 3D text at run time |  |
-| `TextTool.setFontColor` | - | planned | Phase C item 7: 3D text at run time |  |
-| `TextTool.setFontSize` | - | planned | Phase C item 7: 3D text at run time |  |
-| `TextTool.setValue` | - | planned | Phase C item 7: 3D text at run time |  |
+| `TextTool.getFontColor` | - | stub | 3D text made at run time; no module calls it |  |
+| `TextTool.getFontSize` | - | stub | 3D text made at run time; no module calls it |  |
+| `TextTool.getValue` | - | stub | 3D text made at run time; no module calls it |  |
+| `TextTool.setFontColor` | - | stub | 3D text made at run time; no module calls it |  |
+| `TextTool.setFontSize` | - | stub | 3D text made at run time; no module calls it |  |
+| `TextTool.setValue` | - | stub | 3D text made at run time; no module calls it |  |
 | `UI` | - | unknown |  |  |
-| `Zone.getObjects` | - | planned | Phase C item 9: zones |  |
+| `Zone.getObjects` | - | stub | no module in the roster has one; the table's own zones raise no script events yet |  |
 | `addAttachment` | - | native | ObjectCall |  |
 | `addDecal` | - | compat | ObjectCall |  |
 | `addForce` | - | dropped | engine physics |  |
@@ -510,11 +510,11 @@ the plan says translate it), unknown (nobody has decided).
 | `componentName` | - | unknown |  |  |
 | `container` | - | unknown |  |  |
 | `counter` | - | unknown |  |  |
-| `cut` | - | planned | Phase C item 7: cards |  |
-| `deal` | - | planned | Phase C item 7: cards |  |
-| `dealToAll` | - | planned | Phase C item 7: cards |  |
-| `dealToColor` | - | planned | Phase C item 7: cards |  |
-| `dealToColorWithOffset` | - | planned | Phase C item 7: cards |  |
+| `cut` | - | stub | card dealing; no module calls it |  |
+| `deal` | - | stub | card dealing; no module calls it |  |
+| `dealToAll` | - | stub | card dealing; no module calls it |  |
+| `dealToColor` | - | stub | card dealing; no module calls it |  |
+| `dealToColorWithOffset` | - | stub | card dealing; no module calls it |  |
 | `destroy` | - | native | ObjectCall |  |
 | `drag` | - | dropped | engine physics |  |
 | `drag_selectable` | - | compat | ObjectProps (get_prop/set_prop) |  |
@@ -537,7 +537,7 @@ the plan says translate it), unknown (nobody has decided).
 | `getFogOfWarReveal` | - | dropped | hidden zones (decided 2026-11-06; answers off) |  |
 | `getJSON` | - | compat | compat.get_json |  |
 | `getJoints` | - | dropped | engine physics (joints; answers none) |  |
-| `getLuaScriptState` | - | planned | Phase C item 8: a script's own saved state |  |
+| `getLuaScriptState` | - | compat | script_state | TtsHelpersTests |
 | `getMaterialValue` | - | dropped | Unity materials |  |
 | `getMaterialVars` | - | dropped | Unity materials |  |
 | `getMaterials` | - | dropped | Unity materials |  |
@@ -558,11 +558,11 @@ the plan says translate it), unknown (nobody has decided).
 | `getTransformForward` | - | compat | ObjectCall |  |
 | `getTransformRight` | - | compat | ObjectCall |  |
 | `getVelocity` | - | dropped | engine physics (answers zero) |  |
-| `getZones` | - | planned | Phase C item 9: zones |  |
+| `getZones` | - | stub | no module calls it; answers an empty list |  |
 | `gizmo_selectable` | - | dropped | the TTS gizmo tool |  |
 | `grid_projection` | - | dropped | grid (decided 2026-11-06) |  |
-| `hasAnyTag` | - | planned | Phase C item 9: tags |  |
-| `hasMatchingTag` | - | planned | Phase C item 9: tags |  |
+| `hasAnyTag` | - | compat | compat.has_any_tag | TtsHelpersTests |
+| `hasMatchingTag` | - | compat | compat.has_matching_tag | TtsHelpersTests |
 | `held_by_color` | - | compat | ObjectProps |  |
 | `held_flip_index` | - | dropped | what a held piece does on flip |  |
 | `held_position_offset` | - | dropped | a held piece's offset |  |
@@ -587,7 +587,7 @@ the plan says translate it), unknown (nobody has decided).
 | `pick_up_position` | - | dropped | where a piece was picked up |  |
 | `pick_up_rotation` | - | dropped | where a piece was picked up |  |
 | `rPGFigurine` | - | unknown |  |  |
-| `randomize` | - | planned | Phase C item 1: stow |  |
+| `randomize` | - | stub | no module calls it; a die rolls through roll |  |
 | `registerCollisions` | - | dropped | engine physics (collisions) |  |
 | `remainder` | - | unknown |  |  |
 | `removeAttachment` | - | compat | ObjectCall |  |
@@ -595,7 +595,7 @@ the plan says translate it), unknown (nobody has decided).
 | `removeButton` | - | compat | ObjectCall |  |
 | `removeTag` | - | native | ObjectCall |  |
 | `rendererIndex` | - | unknown |  |  |
-| `reset` | - | planned | Phase C item 1: stow |  |
+| `reset` | - | stub | no module calls it; a holder keeps what was put in it |  |
 | `resting` | - | compat | ObjectCall |  |
 | `rotate` | - | compat | ObjectCall |  |
 | `script` | - | unknown |  |  |
@@ -606,7 +606,7 @@ the plan says translate it), unknown (nobody has decided).
 | `setFogOfWarReveal` | - | dropped | hidden zones (decided 2026-11-06) |  |
 | `setHiddenFrom` | - | dropped | hidden information (decided 2026-11-06) |  |
 | `setInvisibleTo` | - | dropped | hidden information (decided 2026-11-06) |  |
-| `setLuaScriptState` | - | planned | Phase C item 8: a script's own saved state |  |
+| `setLuaScriptState` | - | compat | script_state | TtsHelpersTests |
 | `setMaterialValue` | - | dropped | Unity materials |  |
 | `setMemo` | - | native | ObjectCall |  |
 | `setRotationValue` | - | compat | compat.set_value: the look named so | DiceScriptTests |
@@ -615,10 +615,10 @@ the plan says translate it), unknown (nobody has decided).
 | `setTags` | - | native | ObjectCall |  |
 | `setValue` | - | compat | compat.set_value: the look named so | DiceScriptTests |
 | `setVelocity` | - | dropped | engine physics |  |
-| `shuffle` | - | planned | Phase C item 1: stow |  |
+| `shuffle` | - | stub | no module calls it; a holder keeps its order |  |
 | `shuffleStates` | - | unknown |  |  |
 | `spawning` | - | compat | ObjectCall |  |
-| `spread` | - | planned | Phase C item 7: cards |  |
+| `spread` | - | stub | card dealing; no module calls it |  |
 | `startLuaCoroutine` | - | unknown |  |  |
 | `static_friction` | - | dropped | engine physics |  |
 | `sticky` | - | compat | ObjectProps (get_prop/set_prop) |  |
@@ -629,10 +629,10 @@ the plan says translate it), unknown (nobody has decided).
 | `type` | - | compat | ObjectProps (get_prop/set_prop) |  |
 | `unregisterCollisions` | - | dropped | engine physics (collisions) |  |
 | `use_gravity` | - | dropped | engine physics |  |
-| `use_grid` | - | planned | Phase C item 7: snap to grid |  |
+| `use_grid` | - | dropped | grid (decided 2026-11-06) |  |
 | `use_hands` | - | dropped | hands are seats here (decided 2026-11-06) |  |
-| `use_rotation_value_flip` | - | planned | Phase C item 3: dice faces |  |
-| `use_snap_points` | - | planned | Phase C item 7: snap points |  |
+| `use_rotation_value_flip` | - | dropped | a die's face is read from its rotation values |  |
+| `use_snap_points` | - | dropped | snap points (decided 2026-11-06 with the grid) |  |
 | `value` | - | compat | ObjectProps (get_prop/set_prop) |  |
 | `value_flags` | - | unknown |  |  |
 | `zone` | - | unknown |  |  |
@@ -662,40 +662,40 @@ the plan says translate it), unknown (nobody has decided).
 | `clearConsoleCommands` | - | dropped | TTS console commands |  |
 | `clearContextMenu` | - | native | GlobalFunctionCall |  |
 | `clearHotkeys` | - | native | GlobalFunctionCall |  |
-| `clearPixelPaint` | - | planned | Phase C item 4: drawings |  |
-| `clearVectorPaint` | - | planned | Phase C item 4: drawings |  |
-| `colorToHex` | - | planned | Phase C item 8: colour helpers |  |
-| `colorToPlayerName` | - | planned | Phase C item 8: colour helpers |  |
-| `constructColor` | - | planned | Phase C item 8: colour helpers |  |
+| `clearPixelPaint` | - | compat | compat.erase_all: every stroke on the drawing board | TtsHelpersTests |
+| `clearVectorPaint` | - | compat | compat.erase_all: every stroke on the drawing board | TtsHelpersTests |
+| `colorToHex` | - | compat | compat.Color:toHex | TtsHelpersTests |
+| `colorToPlayerName` | - | compat | compat.Color:toString |  |
+| `constructColor` | - | compat | compat.Color |  |
 | `constructVector` | - | compat | compat.Vector | TtsVectorColorTests |
-| `copy` | - | planned | Phase C item 8: the clipboard |  |
-| `copyLuaTable` | - | planned | Phase C item 8: table helpers |  |
-| `debugLog` | - | planned | Phase C item 8: logging |  |
+| `copy` | - | stub | the clipboard; no module calls it |  |
+| `copyLuaTable` | - | compat | compat.copy_table | TtsHelpersTests |
+| `debugLog` | - | compat | compat.log |  |
 | `flipTable` | - | dropped | flipping the table |  |
-| `getAllLuaScriptStates` | - | planned | Phase C item 8: a script's own saved state |  |
-| `getAllTags` | - | planned | Phase C item 9: tags |  |
-| `getColor` | - | planned | Phase C item 8: colour helpers |  |
-| `getGlobalTable` | - | planned | Phase C item 8: global script variables |  |
-| `getGlobalVar` | - | planned | Phase C item 8: global script variables |  |
+| `getAllLuaScriptStates` | - | dropped | undocumented TTS internal; no module calls it |  |
+| `getAllTags` | - | compat | compat.all_tags | TtsHelpersTests |
+| `getColor` | - | dropped | undocumented TTS internal; no module calls it |  |
+| `getGlobalTable` | - | compat | game.get_var |  |
+| `getGlobalVar` | - | compat | game.get_var |  |
 | `getObjectsWithAllTags` | - | compat | GlobalFunctionCall |  |
 | `getObjectsWithAnyTags` | - | compat | GlobalFunctionCall |  |
 | `getObjectsWithTag` | - | native | GlobalFunctionCall |  |
 | `getPlayer` | - | compat | compat.player |  |
 | `getPlayerHandPositionAndRotation` | - | dropped | hands are seats here (decided 2026-11-06) |  |
-| `getPointerPosition` | - | planned | Phase C item 8: the player's pointer |  |
-| `getPointerRotation` | - | planned | Phase C item 8: the player's pointer |  |
-| `getScriptState` | - | planned | Phase C item 8: a script's own saved state |  |
+| `getPointerPosition` | - | stub | the pointer is not shared with the host; answers nil |  |
+| `getPointerRotation` | - | stub | the pointer is not shared with the host; answers nil |  |
+| `getScriptState` | - | compat | script_state | TtsHelpersTests |
 | `getSeatedPlayers` | - | compat | GlobalFunctionCall |  |
-| `group` | - | planned | Phase C item 7: cards |  |
-| `hexToColor` | - | planned | Phase C item 8: colour helpers |  |
-| `logFormat` | - | planned | Phase C item 8: logging |  |
+| `group` | - | stub | card dealing; no module calls it |  |
+| `hexToColor` | - | compat | compat.Color.fromHex | TtsHelpersTests |
+| `logFormat` | - | compat | compat.log |  |
 | `logStyle` | - | stub | log styles |  |
-| `paste` | - | planned | Phase C item 8: the clipboard |  |
-| `setGlobalTable` | - | planned | Phase C item 8: global script variables |  |
+| `paste` | - | stub | the clipboard; no module calls it |  |
+| `setGlobalTable` | - | compat | game.set_var |  |
 | `setUITheme` | - | dropped | TTS UI theme |  |
 | `showHotkeyConfig` | - | dropped | TTS hotkey panel |  |
 | `spawnObjectJSON` | - | compat | GlobalFunctionCall |  |
-| `stringColorToHex` | - | planned | Phase C item 8: colour helpers |  |
+| `stringColorToHex` | - | compat | compat.Color.fromString:toHex |  |
 
 ## namespaces
 
@@ -780,12 +780,12 @@ the plan says translate it), unknown (nobody has decided).
 | `MusicPlayer.shuffle` | - | dropped | music player |  |
 | `MusicPlayer.skipBack` | - | dropped | music player |  |
 | `MusicPlayer.skipForward` | - | dropped | music player |  |
-| `Notes.addNotebookTab` | - | planned | Phase C item 7: notes at run time |  |
-| `Notes.editNotebookTab` | - | planned | Phase C item 7: notes at run time |  |
-| `Notes.getNotebookTabs` | - | planned | Phase C item 7: notes at run time |  |
-| `Notes.getNotes` | - | planned | Phase C item 7: notes at run time |  |
-| `Notes.removeNotebookTab` | - | planned | Phase C item 7: notes at run time |  |
-| `Notes.setNotes` | - | planned | Phase C item 7: notes at run time |  |
+| `Notes.addNotebookTab` | - | stub | notes live on the script's side only; the briefing is the scenario's text |  |
+| `Notes.editNotebookTab` | - | stub | notes live on the script's side only; the briefing is the scenario's text |  |
+| `Notes.getNotebookTabs` | - | stub | notes live on the script's side only; the briefing is the scenario's text |  |
+| `Notes.getNotes` | - | stub | notes live on the script's side only; the briefing is the scenario's text |  |
+| `Notes.removeNotebookTab` | - | stub | notes live on the script's side only; the briefing is the scenario's text |  |
+| `Notes.setNotes` | - | stub | notes live on the script's side only; the briefing is the scenario's text |  |
 | `Physics.getGravity` | - | dropped | engine physics |  |
 | `Physics.play_area` | - | dropped | engine physics |  |
 | `Physics.setGravity` | - | dropped | engine physics |  |
@@ -848,11 +848,11 @@ the plan says translate it), unknown (nobody has decided).
 | `Tables.getTableObject` | - | dropped | the table model |  |
 | `Tables.setCustomURL` | - | dropped | the table model |  |
 | `Tables.setTable` | - | dropped | the table model |  |
-| `Time.delta_time` | - | planned | Phase C item 8: time |  |
-| `Time.fixed_delta_time` | - | planned | Phase C item 8: time |  |
-| `Time.fixed_time` | - | planned | Phase C item 8: time |  |
-| `Time.frame_count` | - | planned | Phase C item 8: time |  |
-| `Time.time` | - | planned | Phase C item 8: time |  |
+| `Time.delta_time` | - | compat | compat.Time: time from the clock, frames at 60 a second |  |
+| `Time.fixed_delta_time` | - | compat | compat.Time: time from the clock, frames at 60 a second |  |
+| `Time.fixed_time` | - | compat | compat.Time: time from the clock, frames at 60 a second |  |
+| `Time.frame_count` | - | compat | compat.Time: time from the clock, frames at 60 a second |  |
+| `Time.time` | - | compat | compat.Time: time from the clock, frames at 60 a second |  |
 | `Timer.timers` | - | compat | compat.Timer |  |
 | `Turns.disable_interactations` | - | dropped | turns (decided 2026-11-06) |  |
 | `Turns.enable` | - | dropped | turns (decided 2026-11-06) |  |
@@ -875,7 +875,7 @@ the plan says translate it), unknown (nobody has decided).
 | `UI.setClass` | - | partial | run-time UI through ui.*: the attributes a player sees; item 8 |  |
 | `UI.setCustomAssets` | - | partial | run-time UI through ui.*: the attributes a player sees; item 8 |  |
 | `UI.setValue` | - | partial | run-time UI through ui.*: the attributes a player sees; item 8 |  |
-| `Wait.stopAll` | - | planned | Phase C item 8: Wait.stopAll |  |
+| `Wait.stopAll` | - | compat | compat.wait_stop_all | TtsHelpersTests |
 | `WebRequest.custom` | - | dropped | scripts never reach the web here (script safety) |  |
 | `WebRequest.delete` | - | dropped | scripts never reach the web here (script safety) |  |
 | `WebRequest.head` | - | dropped | scripts never reach the web here (script safety) |  |
@@ -904,36 +904,36 @@ the plan says translate it), unknown (nobody has decided).
 | `onGameRoundEnd` | - | dropped | TTS game rounds |  |
 | `onGameRoundStart` | - | dropped | TTS game rounds |  |
 | `onHandSelectModeEnd` | - | dropped | hands are seats here (decided 2026-11-06) |  |
-| `onHover` | - | planned | Phase C item 9 |  |
+| `onHover` | - | dropped | no hover events here |  |
 | `onObjectCollisionEnter` | - | dropped | engine physics (collisions) |  |
 | `onObjectCollisionExit` | - | dropped | engine physics (collisions) |  |
 | `onObjectCollisionStay` | - | dropped | engine physics (collisions) |  |
 | `onObjectDrop` | - | native | EventRenames |  |
 | `onObjectEnterContainer` | - | native | on_stowed(holder, piece) after a stow | StowEventTests |
-| `onObjectEnterScriptingZone` | - | planned | Phase C item 9: zones |  |
-| `onObjectEnterZone` | - | planned | Phase C item 9: zones |  |
+| `onObjectEnterScriptingZone` | - | stub | the table's own zones raise no script events yet; no module handles it |  |
+| `onObjectEnterZone` | - | stub | the table's own zones raise no script events yet; no module handles it |  |
 | `onObjectFlick` | - | dropped | engine physics (flicking) |  |
-| `onObjectHover` | - | planned | Phase C item 9 |  |
+| `onObjectHover` | - | dropped | no hover events here |  |
 | `onObjectLeaveContainer` | - | native | on_unstowed(holder, piece) after an unstow, with on_spawn for the piece | StowEventTests |
-| `onObjectLeaveScriptingZone` | - | planned | Phase C item 9: zones |  |
-| `onObjectLeaveZone` | - | planned | Phase C item 9: zones |  |
-| `onObjectLoopingEffect` | - | planned | Phase C item 9: effects |  |
-| `onObjectPageChange` | - | planned | Battle Lines session: books |  |
+| `onObjectLeaveScriptingZone` | - | stub | the table's own zones raise no script events yet; no module handles it |  |
+| `onObjectLeaveZone` | - | stub | the table's own zones raise no script events yet; no module handles it |  |
+| `onObjectLoopingEffect` | - | dropped | a bundle's own animations never come over |  |
+| `onObjectPageChange` | - | dropped | PDF pages are not shown |  |
 | `onObjectPeek` | - | dropped | peeking at a hidden piece |  |
-| `onObjectRandomize` | - | planned | Phase C item 3: dice |  |
+| `onObjectRandomize` | - | stub | no event when a die rolls; no module handles it |  |
 | `onObjectRotate` | - | native | EventRenames |  |
-| `onObjectSearchEnd` | - | planned | Phase C item 1: stow |  |
-| `onObjectSearchStart` | - | planned | Phase C item 1: stow |  |
-| `onObjectTriggerEffect` | - | planned | Phase C item 9: effects |  |
-| `onPageChange` | - | planned | Battle Lines session: books |  |
-| `onPlayerChangeColor` | - | planned | Phase C item 9: seats |  |
-| `onPlayerConnect` | - | planned | Phase C item 9: seats |  |
-| `onPlayerDisconnect` | - | planned | Phase C item 9: seats |  |
-| `onPlayerPing` | - | planned | Phase C item 9: pings |  |
-| `onPlayerTurnEnd` | - | planned | Phase C item 9: turns here |  |
-| `onPlayerTurnStart` | - | planned | Phase C item 9: turns here |  |
-| `onPlayersConnect` | - | planned | Phase C item 9: seats |  |
-| `onPlayersDisconnect` | - | planned | Phase C item 9: seats |  |
+| `onObjectSearchEnd` | - | dropped | a holder's contents are a card, not a search |  |
+| `onObjectSearchStart` | - | dropped | a holder's contents are a card, not a search |  |
+| `onObjectTriggerEffect` | - | dropped | a bundle's own animations never come over |  |
+| `onPageChange` | - | dropped | PDF pages are not shown |  |
+| `onPlayerChangeColor` | - | stub | seats change without an event here; no module handles it |  |
+| `onPlayerConnect` | - | stub | seats change without an event here; no module handles it |  |
+| `onPlayerDisconnect` | - | stub | seats change without an event here; no module handles it |  |
+| `onPlayerPing` | - | dropped | no pings here |  |
+| `onPlayerTurnEnd` | - | compat | on_turn when the clock advances | TtsHelpersTests |
+| `onPlayerTurnStart` | - | compat | on_turn when the clock advances | TtsHelpersTests |
+| `onPlayersConnect` | - | stub | seats change without an event here; no module handles it |  |
+| `onPlayersDisconnect` | - | stub | seats change without an event here; no module handles it |  |
 | `onScriptingButtonUp` | - | native | EventRenames |  |
 | `onZoneGroupSort` | - | dropped | layout zones |  |
 | `tryObjectEnterContainer` | - | native | try_stow(holder, piece) before a stow; false keeps the piece out | StowEventTests |

@@ -68,6 +68,7 @@ public static class TtsTranslator
         ["onLoad"] = "on_load", ["onload"] = "on_load", ["onSave"] = "on_save", ["onsave"] = "on_save", ["onUpdate"] = "on_update", ["onDestroy"] = "on_destroy",
         ["onDrop"] = "on_drop", ["onPickUp"] = "on_pick_up", ["onPickup"] = "on_pick_up", ["onObjectDrop"] = "on_drop", ["onObjectPickUp"] = "on_pick_up", ["onObjectPickup"] = "on_pick_up",
         ["onObjectSpawn"] = "on_spawn", ["onObjectDestroy"] = "on_destroy", ["onObjectStateChange"] = "on_state", ["onPlayerTurn"] = "on_turn", ["onRotate"] = "on_rotate", ["onObjectRotate"] = "on_rotate",
+        ["onPlayerTurnStart"] = "on_turn", ["onPlayerTurnEnd"] = "on_turn",
         ["onChat"] = "on_chat", ["onObjectNumberTyped"] = "on_number_typed", ["onScriptingButtonDown"] = "on_scripting_button_down", ["onScriptingButtonUp"] = "on_scripting_button_up",
         ["onPlayerAction"] = "on_player_action", ["onObjectEnterContainer"] = "on_stowed", ["onObjectLeaveContainer"] = "on_unstowed", ["tryObjectEnterContainer"] = "try_stow",
     };
@@ -245,7 +246,7 @@ public static class TtsTranslator
                         "frames" => Direct($"wait.frames({A(1)}, {A(0)})", node),
                         "condition" => Compat($"compat.wait_condition({All()})", node),
                         "stop" => Compat($"compat.wait_stop({All()})", node),
-                        "stopAll" => Todo("Wait.stopAll", "compat.todo(nil, \"Wait.stopAll\")", node),
+                        "stopAll" => Compat("compat.wait_stop_all()", node),
                         _ => Todo("Wait." + name, $"compat.todo(nil, \"Wait.{name}\")", node),
                     };
                 case "Global":
@@ -323,7 +324,18 @@ public static class TtsTranslator
                 case "clearHotkeys": return Direct("game.hotkeys_clear()", node);
                 case "addContextMenuItem": return Compat($"compat.add_global_context_menu_item(_ENV, {All()})", node);
                 case "clearContextMenu": return Direct("game.menu_clear()", node);
-                case "logStyle" or "sendExternalMessage" or "setLookingForPlayers" or "flipTable" or "group" or "paste" or "copy" or "clearPixelPaint" or "clearVectorPaint":
+                case "copyLuaTable": return Compat($"compat.copy_table({All()})", node);
+                case "getGlobalVar" or "getGlobalTable": return Direct($"game.get_var({All()})", node);
+                case "setGlobalVar" or "setGlobalTable": return Direct($"game.set_var({All()})", node);
+                case "debugLog" or "logFormat": return Compat($"compat.log({All()})", node);
+                case "hexToColor": return Compat($"compat.Color.fromHex({All()})", node);
+                case "colorToHex": return Compat($"compat.Color({A(0)}):toHex({A(1)})", node);
+                case "stringColorToHex": return Compat($"compat.Color.fromString({A(0)}):toHex()", node);
+                case "colorToPlayerName": return Compat($"compat.Color({A(0)}):toString()", node);
+                case "constructColor": return Compat($"compat.Color({All()})", node);
+                case "clearPixelPaint" or "clearVectorPaint": return Compat("compat.erase_all()", node);
+                case "getAllTags": return Compat("compat.all_tags()", node);
+                case "logStyle" or "sendExternalMessage" or "setLookingForPlayers" or "flipTable" or "group" or "paste" or "copy":
                     return Todo(name, $"compat.todo(nil, \"{name}\")", node);
             }
             return null;
@@ -432,9 +444,21 @@ public static class TtsTranslator
                 case "getJoints" or "getZones": return Compat("{}", node);
                 case "isSmoothMoving": return Compat("false", node);
                 case "getFogOfWarReveal": return Compat("{ reveal = false, color = \"\", range = 0 }", node);
-                case "getLuaScriptState" or "setLuaScriptState": return Todo(name, $"compat.todo({recv}, \"{name}\")", node);
             }
-            return null;
+            return StateOrTagCall(recv, name, a, node);
+        }
+
+        ExpressionSyntax? StateOrTagCall(string recv, string name, List<string> a, SyntaxNode node)
+        {
+            string A(int i) => i < a.Count ? a[i] : "nil";
+            return name switch
+            {
+                "getLuaScriptState" or "getScriptState" => Compat($"compat.get_prop({recv}, \"script_state\", \"\")", node),
+                "setLuaScriptState" => Compat($"compat.set_prop({recv}, \"script_state\", {A(0)})", node),
+                "hasAnyTag" => Compat($"compat.has_any_tag({recv}, {A(0)})", node),
+                "hasMatchingTag" => Compat($"compat.has_matching_tag({recv}, {A(0)})", node),
+                _ => null,
+            };
         }
 
         public override SyntaxNode? VisitMemberAccessExpression(MemberAccessExpressionSyntax node)
@@ -566,6 +590,7 @@ public static class TtsTranslator
                 case "onObjectDestroy": return ("on_destroy", "__piece", Bind(new[] { "__piece" }));
                 case "onObjectStateChange": return ("on_state", "__old, __new", Bind(new[] { "self", "tostring(__old)" }));
                 case "onPlayerTurn": return ("on_turn", "__turn", Bind(new[] { "compat.player(\"White\")", "nil" }));
+                case "onPlayerTurnStart" or "onPlayerTurnEnd": return ("on_turn", "__turn", Bind(new[] { "\"White\"", "nil" }));
                 case "onRotate": return ("on_rotate", "__rot, __old, __who", Bind(new[] { "__rot", "self.face_down and 180 or 0", "compat.color_of(__who)", "__old", "self.face_down and 180 or 0" }));
                 case "onObjectRotate" when _ctx.IsGlobal:
                     return ("on_rotate", "__piece, __rot, __old, __who", Bind(new[] { "__piece", "__rot", "__piece.face_down and 180 or 0", "compat.color_of(__who)", "__old", "__piece.face_down and 180 or 0" }));

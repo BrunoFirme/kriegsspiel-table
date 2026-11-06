@@ -9,8 +9,9 @@ namespace KTable.Converter;
 public sealed partial class DefFactory
 {
     const double TextUnitsPerFontSize = 1.0 / 80;
+    const string PdfName = "PDF";
 
-    public static bool IsTextObject(TtsObj o) => o.Name is "Notecard" or "3DText";
+    public static bool IsTextObject(TtsObj o) => o.Name is "Notecard" or "3DText" or "Custom_PDF";
 
     public DefResult? TextDef(TtsObj o, PackOut pack, double? refScale)
     {
@@ -18,6 +19,12 @@ public sealed partial class DefFactory
         double r = refScale ?? bs;
         double instScale = Math.Round(bs / r, 4);
         if (o.Name == "Notecard") return new DefResult(NoteDef(pack, o.Nickname, o.Description, r), pack, instScale, 0, o, ScriptInfo.Parse("", ""));
+        if (o.Name == "Custom_PDF")
+        {
+            _rep.Note($"{Context} Custom_PDF '{o.Nickname}' {o.Guid}: the PDF's pages are not shown here; a note carries its link.");
+            var text = (o.Description.Trim().Length > 0 ? o.Description.Trim() + "\n" : "") + (o.PdfUrl ?? "");
+            return new DefResult(NoteDef(pack, o.Nickname.Length > 0 ? o.Nickname : PdfName, text, r), pack, instScale, 0, o, ScriptInfo.Parse("", ""));
+        }
         string body = o.J["Text"]?["Text"]?.GetValue<string>() ?? "";
         double fontSize = o.J["Text"]?["fontSize"]?.GetValue<double>() ?? 64;
         var colour = ColourOf(o.J["Text"]?["colorstate"] as JsonObject);
