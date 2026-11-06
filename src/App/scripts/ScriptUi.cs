@@ -48,7 +48,7 @@ public partial class ScriptUi : Control
         if (d.Kind == "picture") { AskPicture(d); return; }
         var dlg = new AcceptDialog { Title = d.Title.Length > 0 ? d.Title : "Script", OkButtonText = "OK" };
         var box = new VBoxContainer { CustomMinimumSize = new Vector2(420, 0) };
-        box.AddThemeConstantOverride("separation", 6);
+        box.AddThemeConstantOverride("separation", Ui.Gap.Row);
         dlg.AddChild(box);
         Func<string?> value;
         switch (d.Kind)

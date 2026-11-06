@@ -90,14 +90,14 @@ sealed partial class SavesWindow : Window
         bg.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
         AddChild(bg);
         var outer = new HBoxContainer();
-        outer.AddThemeConstantOverride("separation", 10);
+        outer.AddThemeConstantOverride("separation", Ui.Gap.Block);
         bg.AddChild(outer);
 
         var left = new VBoxContainer { CustomMinimumSize = new Vector2(230, 0) };
-        left.AddThemeConstantOverride("separation", 6);
+        left.AddThemeConstantOverride("separation", Ui.Gap.Row);
         outer.AddChild(left);
         var make = new HBoxContainer();
-        make.AddThemeConstantOverride("separation", 6);
+        make.AddThemeConstantOverride("separation", Ui.Gap.Row);
         var newPlay = Ui.Btn("New play…", NewPlay, "A new folder for another play of the scenario: from its start, the table now or the save chosen");
         var newFolder = Ui.Btn("New folder", NewFolder, "A folder in the one shown, named in the list");
         newPlay.SizeFlagsHorizontal = newFolder.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
@@ -108,27 +108,27 @@ sealed partial class SavesWindow : Window
         SetUpTree();
 
         var right = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-        right.AddThemeConstantOverride("separation", 8);
+        right.AddThemeConstantOverride("separation", Ui.Gap.Group);
         outer.AddChild(right);
 
         var top = new HBoxContainer();
-        top.AddThemeConstantOverride("separation", 6);
+        top.AddThemeConstantOverride("separation", Ui.Gap.Row);
         _path.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
-        _path.AddThemeConstantOverride("separation", 2);
+        _path.AddThemeConstantOverride("separation", Ui.Gap.Hair);
         top.AddChild(_path);
         top.AddChild(_filter);
         right.AddChild(top);
         _filter.TextChanged += _ => FillTiles();
 
         var scroll = new ScrollContainer { SizeFlagsVertical = Control.SizeFlags.ExpandFill, HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled };
-        _tiles.AddThemeConstantOverride("h_separation", 10);
-        _tiles.AddThemeConstantOverride("v_separation", 10);
+        _tiles.AddThemeConstantOverride("h_separation", Ui.Gap.Block);
+        _tiles.AddThemeConstantOverride("v_separation", Ui.Gap.Block);
         scroll.AddChild(_tiles);
         right.AddChild(scroll);
         scroll.GuiInput += e => { if (e is InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.Left }) { _pick.Clear(); Paint(); } };
 
         var bottom = new HBoxContainer();
-        bottom.AddThemeConstantOverride("separation", 6);
+        bottom.AddThemeConstantOverride("separation", Ui.Gap.Row);
         bottom.AddChild(_name);
         _save = Ui.Primary("Save", () => SaveHere(false), "Save the table into this folder under that name");
         bottom.AddChild(_save);
@@ -307,7 +307,7 @@ sealed partial class SavesWindow : Window
         var tile = new PanelContainer { CustomMinimumSize = new Vector2(TileWidth, 0), MouseFilter = Control.MouseFilterEnum.Stop, TooltipText = e.Folder ? "" : e.Path };
         tile.AddThemeStyleboxOverride("panel", Ui.Card(6, 6));
         var v = new VBoxContainer();
-        v.AddThemeConstantOverride("separation", 3);
+        v.AddThemeConstantOverride("separation", Ui.Gap.Tight);
         tile.AddChild(v);
         var picture = new TextureRect
         {
@@ -834,7 +834,7 @@ sealed partial class SavesWindow : Window
     {
         if (_c.N.Server is not { } server) return;
         var chosen = Chosen() is { Folder: false, Run: null } save ? save : null;
-        var form = Ui.Form(90);
+        var form = Ui.Form(Ui.DialogLabels);
         var name = new LineEdit { Text = _store.NextRunName(_scenarioDir), CustomMinimumSize = new Vector2(280, 0), SelectAllOnFocus = true };
         var from = new OptionButton { FitToLongestItem = false };
         from.AddItem("The scenario's start", 0);
@@ -847,7 +847,7 @@ sealed partial class SavesWindow : Window
         Ui.AlignForm(form);
         var play = new CheckBox { Text = "Put it on the table now", FocusMode = Control.FocusModeEnum.None };
         var box = new VBoxContainer();
-        box.AddThemeConstantOverride("separation", 8);
+        box.AddThemeConstantOverride("separation", Ui.Gap.Group);
         box.AddChild(form);
         box.AddChild(play);
         InPlace.Ask(this, "New play", "Create", () => CreatePlay(server, SaveNames.Clean(name.Text, _store.NextRunName(_scenarioDir)), from.GetSelectedId(), chosen, play.ButtonPressed), null, box, name);

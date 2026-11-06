@@ -72,8 +72,10 @@ internal sealed class Inspector
     {
         Gap(page);
         var head = new HBoxContainer();
-        var label = new Label { Text = title.ToUpperInvariant(), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, ClipText = true };
-        Ui.HeadStyle(label);
+        var label = Ui.HeadLabel(title);
+        label.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
+        label.SizeFlagsVertical = Control.SizeFlags.ShrinkCenter;
+        label.ClipText = true;
         head.AddChild(label);
         if (end != null) head.AddChild(end);
         page.AddChild(head);
@@ -120,7 +122,7 @@ internal sealed class Inspector
         margin.AddThemeConstantOverride("margin_bottom", 10);
         scroll.AddChild(margin);
         var box = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ExpandFill };
-        box.AddThemeConstantOverride("separation", 4);
+        box.AddThemeConstantOverride("separation", Ui.Gap.Tight);
         margin.AddChild(box);
         Tabs.AddChild(scroll);
         return box;
@@ -149,7 +151,7 @@ internal sealed class PieceTab
         if (EffectFx.IsEffect(d))
         {
             var p = _i.Section(page, "Size");
-            var sg = Ui.Form(76);
+            var sg = Ui.Form(Ui.PanelLabels);
             p.AddChild(sg);
             var metres = SizeForm.Rows(sg, _s.Prefs, d.Size, "Height", v => Apply(x => x.Size = v, "the size"));
             Ui.AlignForm(sg);
@@ -171,7 +173,7 @@ internal sealed class PieceTab
     void NameSection(VBoxContainer page)
     {
         var d = _d;
-        var g = Ui.Form(76);
+        var g = Ui.Form(Ui.PanelLabels);
         page.AddChild(g);
         g.AddChild(new Label { Text = "Name" });
         var name = new LineEdit { Text = d.Name };
@@ -218,7 +220,7 @@ internal sealed class PieceTab
         var p = _i.Section(page, "Counters", open: d.Counters.Count > 0, count: Count(d.Counters.Count));
         p.AddChild(Ui.Hint("Numbers on each piece: ammunition, morale, strength. They print on the back until placed with the Place tool (N)."));
         var cg = new GridContainer { Columns = 5 };
-        cg.AddThemeConstantOverride("h_separation", 3);
+        cg.AddThemeConstantOverride("h_separation", Ui.Gap.Tight);
         if (d.Counters.Count > 0) foreach (var hdr in new[] { "Name", "Min", "Max", "Start", "" }) cg.AddChild(new Label { Text = hdr, Modulate = Ui.Muted });
         for (int i = 0; i < d.Counters.Count; i++)
         {
@@ -251,7 +253,7 @@ internal sealed class PieceTab
         var p = _i.Section(page, "Text lines", open: d.TextLines.Count > 0, count: Count(d.TextLines.Count));
         p.AddChild(Ui.Hint("Text on each piece, on every look: unit, commander, formation. It prints in the name band until placed with the Place tool (N)."));
         var tg = new GridContainer { Columns = 3 };
-        tg.AddThemeConstantOverride("h_separation", 3);
+        tg.AddThemeConstantOverride("h_separation", Ui.Gap.Tight);
         for (int i = 0; i < d.TextLines.Count; i++)
         {
             var tl = d.TextLines[i];

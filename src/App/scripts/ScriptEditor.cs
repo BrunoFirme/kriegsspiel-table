@@ -10,7 +10,7 @@ public static class ScriptEditor
     {
         var dlg = new AcceptDialog { Title = title, OkButtonText = "Close" };
         var box = new VBoxContainer();
-        box.AddThemeConstantOverride("separation", 6);
+        box.AddThemeConstantOverride("separation", Ui.Gap.Row);
         dlg.AddChild(box);
         box.AddChild(Ui.Hint(hint));
         var edit = new CodeEdit
@@ -26,7 +26,7 @@ public static class ScriptEditor
         status.AddThemeColorOverride("font_color", Ui.Danger);
         box.AddChild(status);
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", 8);
+        row.AddThemeConstantOverride("separation", Ui.Gap.Group);
         if (clearLabel != null) row.AddChild(Ui.Btn(clearLabel, () => { save(null); dlg.Hide(); }));
         row.AddChild(new Control { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill });
         row.AddChild(Ui.Primary("Save and reload", () =>

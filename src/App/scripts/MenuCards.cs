@@ -241,7 +241,7 @@ sealed class MenuCards : HudPart
         var p = node.Piece;
         var layer = node.Layer;
         var v = new VBoxContainer();
-        v.AddThemeConstantOverride("separation", 4);
+        v.AddThemeConstantOverride("separation", Ui.Gap.Tight);
         var label = new LineEdit { Text = p.Label ?? "", PlaceholderText = "Label (shown on hover)", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         var note = new TextEdit
         {

@@ -115,7 +115,7 @@ public static partial class MarkdownView
         if (b.Level == 2)
         {
             var box = new VBoxContainer();
-            box.AddThemeConstantOverride("separation", 6);
+            box.AddThemeConstantOverride("separation", Ui.Gap.Row);
             pad.RemoveChild(l);
             box.AddChild(l);
             box.AddChild(new HSeparator());

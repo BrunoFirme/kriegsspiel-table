@@ -27,7 +27,7 @@ sealed class AgentPill
         foreach (var st in new[] { "normal", "pressed", "disabled" }) _pill.AddThemeStyleboxOverride(st, Ui.Pill());
         _pill.AddThemeStyleboxOverride("hover", Ui.Pill(0.12f));
         _row = new HBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
-        _row.AddThemeConstantOverride("separation", 6);
+        _row.AddThemeConstantOverride("separation", Ui.Gap.Row);
         _row.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
         _row.OffsetLeft = PillPadding / 2;
         _row.OffsetRight = -PillPadding / 2;
@@ -123,7 +123,7 @@ sealed class AgentPill
         {
             _pop = new PopupPanel();
             _list = new VBoxContainer { CustomMinimumSize = new Vector2(ListWidth, 0) };
-            _list.AddThemeConstantOverride("separation", 6);
+            _list.AddThemeConstantOverride("separation", Ui.Gap.Row);
             _pop.AddChild(_list);
             _pill.AddChild(_pop);
         }
@@ -138,7 +138,7 @@ sealed class AgentPill
         foreach (var c in _list!.GetChildren()) { _list.RemoveChild(c); c.QueueFree(); }
         var phase = Now;
         var head = new HBoxContainer();
-        head.AddThemeConstantOverride("separation", 8);
+        head.AddThemeConstantOverride("separation", Ui.Gap.Group);
         head.AddChild(new TextureRect
         {
             Texture = Ui.Dot, CustomMinimumSize = new Vector2(DotSize, DotSize), StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
@@ -159,7 +159,7 @@ sealed class AgentPill
         }
         _list.AddChild(new HSeparator());
         var actions = new HBoxContainer();
-        actions.AddThemeConstantOverride("separation", 8);
+        actions.AddThemeConstantOverride("separation", Ui.Gap.Group);
         actions.AddChild(Ui.Btn("Settings…", () => { _pop!.Hide(); _settings(); }, "Connect an agent, or the technical settings"));
         actions.AddChild(new Control { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill });
         var off = Ui.Btn("Switch off", () => { _pop!.Hide(); _a.TurnOff(); }, "Your agent can no longer use the app until you connect again");
@@ -171,7 +171,7 @@ sealed class AgentPill
     static HBoxContainer Line(string what, string when)
     {
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", 10);
+        row.AddThemeConstantOverride("separation", Ui.Gap.Group);
         var w = new Label { Text = what, ClipText = true, TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, TooltipText = what };
         w.AddThemeFontSizeOverride("font_size", 12);
         row.AddChild(w);

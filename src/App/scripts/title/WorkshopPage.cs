@@ -32,7 +32,7 @@ sealed class WorkshopPage
         var scroll = new ScrollContainer { SizeFlagsVertical = Control.SizeFlags.ExpandFill, HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled };
         v.AddChild(scroll);
         var col = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-        col.AddThemeConstantOverride("separation", 10);
+        col.AddThemeConstantOverride("separation", Ui.Gap.Block);
         scroll.AddChild(col);
         if (_platform.Available) Browse(col);
         Mine(col);
@@ -50,8 +50,8 @@ sealed class WorkshopPage
         bar.AddChild(kind);
         col.AddChild(bar);
         var results = new HFlowContainer();
-        results.AddThemeConstantOverride("h_separation", 12);
-        results.AddThemeConstantOverride("v_separation", 12);
+        results.AddThemeConstantOverride("h_separation", Ui.Gap.Block);
+        results.AddThemeConstantOverride("v_separation", Ui.Gap.Block);
         col.AddChild(results);
         void Run()
         {

@@ -26,7 +26,7 @@ sealed class ToolStrip : HudPart
         Panel.AddThemeStyleboxOverride("panel", stripStyle);
         root.AddChild(Panel);
         _strip = new VBoxContainer();
-        _strip.AddThemeConstantOverride("separation", 2);
+        _strip.AddThemeConstantOverride("separation", Ui.Gap.Hair);
         Panel.AddChild(_strip);
     }
 

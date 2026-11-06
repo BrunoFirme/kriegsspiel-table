@@ -22,14 +22,14 @@ sealed class PiecesPanel : HudPart
     {
         Shell = shell;
         var packs = new VBoxContainer { Name = "Packs" };
-        packs.AddThemeConstantOverride("separation", 4);
+        packs.AddThemeConstantOverride("separation", Ui.Gap.Tight);
         PackPick = new OptionButton { ClipText = true, FitToLongestItem = false };
         PackPick.ItemSelected += _ => RebuildList();
         packs.AddChild(PackPick);
         Search = new LineEdit { PlaceholderText = "search name, tag, colour…", ClearButtonEnabled = true, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         Search.TextChanged += _ => RebuildList();
         var searchRow = new HBoxContainer();
-        searchRow.AddThemeConstantOverride("separation", 4);
+        searchRow.AddThemeConstantOverride("separation", Ui.Gap.Tight);
         searchRow.AddChild(Search);
         var hearts = Hearts = Ui.IconBtn("heart", "Favourites only", "Right-click a piece here, or on the table, to make it a favourite: favourites come first");
         hearts.ToggleMode = true;

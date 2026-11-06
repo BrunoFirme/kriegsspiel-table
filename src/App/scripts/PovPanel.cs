@@ -40,7 +40,7 @@ sealed class PovPanel : HudPart
             BuildRecording(d);
             return;
         }
-        var grid = Ui.Form(76);
+        var grid = Ui.Form(Ui.PanelLabels);
         _box.AddChild(grid);
         AddView(grid, d);
         if (d.FirstPerson)
@@ -139,7 +139,7 @@ sealed class PovPanel : HudPart
         var cal = S.View.Calibration;
         grid.AddChild(new Label { Text = "Eye" });
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", 4);
+        row.AddThemeConstantOverride("separation", Ui.Gap.Tight);
         var slider =
             new HSlider { MinValue = 0, MaxValue = T.SightingEyeHighest, Step = EyeStep, Value = Math.Min(d.EyeHeight, T.SightingEyeHighest),
                 CustomMinimumSize = new Vector2(80, 0), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
@@ -168,7 +168,7 @@ sealed class PovPanel : HudPart
     {
         grid.AddChild(new Label { Text = "Facing" });
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", 2);
+        row.AddThemeConstantOverride("separation", Ui.Gap.Hair);
         foreach (var cardinal in Sighting.CardinalNames)
         {
             var name = cardinal;
@@ -193,7 +193,7 @@ sealed class PovPanel : HudPart
     {
         grid.AddChild(new Label { Text = label });
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", 2);
+        row.AddThemeConstantOverride("separation", Ui.Gap.Hair);
         Button? a = null, b = null;
         void Pick(bool wantOther)
         {
@@ -218,7 +218,7 @@ sealed class PovPanel : HudPart
     void AddTraced()
     {
         var traced = new HBoxContainer();
-        traced.AddThemeConstantOverride("separation", 4);
+        traced.AddThemeConstantOverride("separation", Ui.Gap.Tight);
         var undoW = Ui.IconBtn("undo", $"Undo the last line traced   ({Cfg.Keys.Label("undo")})", "Takes back the last thing you traced");
         var redoW = Ui.IconBtn("redo", $"Put it back   ({Cfg.Keys.Label("redo")})", "Traces the last line you took back again");
         undoW.CustomMinimumSize = redoW.CustomMinimumSize = new Vector2(28, 24);

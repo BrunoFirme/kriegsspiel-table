@@ -33,7 +33,7 @@ public partial class PublishDialog : AcceptDialog
         var existing = _platform.PublishedId(_kind, _id);
 
         var root = new HBoxContainer();
-        root.AddThemeConstantOverride("separation", 18);
+        root.AddThemeConstantOverride("separation", Ui.Gap.Section);
         AddChild(root);
         var previewBox = new VBoxContainer();
         root.AddChild(previewBox);

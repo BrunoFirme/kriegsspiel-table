@@ -11,8 +11,11 @@ sealed class CacheShelf(Node asksIn, Action<string> say, Func<CacheKind, string?
     public HBoxContainer Row(Cache c)
     {
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", AppSettings.RowGap);
-        row.AddChild(new Label { Text = c.Name, TooltipText = c.Holds, MouseFilter = Control.MouseFilterEnum.Pass, CustomMinimumSize = new Vector2(AppSettings.LabelWidth, 0) });
+        row.AddThemeConstantOverride("separation", Ui.Gap.Group);
+        var name = Ui.RowLabel(c.Name, Ui.DialogLabels);
+        name.TooltipText = c.Holds;
+        name.MouseFilter = Control.MouseFilterEnum.Pass;
+        row.AddChild(name);
         var size = Ui.Readout("", 72);
         size.HorizontalAlignment = HorizontalAlignment.Left;
         row.AddChild(size);

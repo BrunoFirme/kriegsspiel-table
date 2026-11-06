@@ -22,6 +22,10 @@ NEXT_MEMBER_RX = re.compile(r"\s+" + MODIFIER)
 CATCH_RX = re.compile(r"\bcatch\b\s*(\([^)]*\))?\s*(when\b[^{]*)?\{")
 BROAD_CATCH_RX = re.compile(r"\(\s*(?:System\.)?Exception\s+(\w+)\s*\)")
 UNNAMED_CATCH_RX = re.compile(r"\(\s*(?:System\.)?Exception\s*\)")
+HAND_DIMMED_RX = re.compile(r"\bModulate\s*=\s*new\s+Color\(\s*1f?\s*,\s*1f?\s*,\s*1f?\s*,")
+HAND_GAP_RX = re.compile(r'(?:AddThemeConstantOverride|SetConstant)\(\s*"(?:h_|v_)?separation"\s*,\s*\d')
+HAND_LABEL_WIDTH_RX = re.compile(r"\bUi\.(?:Form\(\s*\d|RowLabel\([^,]+,\s*\d)")
+UI_FOLDER, UI_HOME = "src/App/", "src/App/scripts/Ui.cs"
 
 
 def blank(text):
@@ -338,6 +342,18 @@ def scan(path, classes, methods, comments, density, catches):
             pending = None
 
 
+def ui_problems(rel, code):
+    if not rel.startswith(UI_FOLDER) or rel == UI_HOME:
+        return
+    for ln, line in enumerate(code.split("\n"), 1):
+        if HAND_DIMMED_RX.search(line):
+            yield f"{rel}:{ln} (text dimmed by hand: Ui.RowLabel, Ui.Fact or Ui.Muted)"
+        if HAND_GAP_RX.search(line):
+            yield f"{rel}:{ln} (spacing by hand: a Ui.Gap step)"
+        if HAND_LABEL_WIDTH_RX.search(line):
+            yield f"{rel}:{ln} (label width by hand: Ui.DialogLabels, Ui.PanelLabels or a named constant)"
+
+
 def selftest():
     def cs(code):
         return split_code_and_comments(code)[1]
@@ -383,6 +399,14 @@ def selftest():
     assert list(catch_problems("try { a(); } catch (IOException) { }")) == []
     assert list(catch_problems("try { a(); } catch (Exception e) { Log(e.Message); }")) == []
     assert list(catch_problems("try { a(); }\ncatch (Exception e)\n{\n    Log(e);\n}")) == []
+    assert list(ui_problems("src/App/scripts/X.cs", "var l = new Label { Modulate = new Color(1, 1, 1, 0.7f) };")) != []
+    assert list(ui_problems("src/App/scripts/Ui.cs", "l.Modulate = new Color(1, 1, 1, 0.7f);")) == []
+    assert list(ui_problems("src/App/scripts/X.cs", "g.SelfModulate = new Color(1, 1, 1, a);")) == []
+    assert list(ui_problems("src/App/scripts/X.cs", 'row.AddThemeConstantOverride("separation", 10);')) != []
+    assert list(ui_problems("src/App/scripts/X.cs", 'g.AddThemeConstantOverride("h_separation", Ui.Gap.Row);')) == []
+    assert list(ui_problems("src/App/scripts/X.cs", "var g = Ui.Form(84);")) != []
+    assert list(ui_problems("src/App/scripts/X.cs", 'r.AddChild(Ui.RowLabel("Tint", 44));')) != []
+    assert list(ui_problems("src/App/scripts/X.cs", "var g = Ui.Form(Ui.PanelLabels);")) == []
     told = 'try { a(); } catch (Exception e) { Say($"no: {e.Message}"); }'
     assert list(catch_problems(split_code_and_comments(told)[0], told)) == []
 
@@ -403,11 +427,12 @@ def walk_files():
 
 def main():
     selftest()
-    classes, methods, comments, density, catches = defaultdict(list), [], [], [], []
+    classes, methods, comments, density, catches, ui = defaultdict(list), [], [], [], [], []
     for path in walk_files():
         name = os.path.basename(path)
         if name.endswith(".cs"):
             scan(path, classes, methods, comments, density, catches)
+            ui.extend(ui_problems(relative(path), open(path, encoding="utf-8-sig").read()))
         elif finder_for(name):
             scan_comments(path, comments)
     totals = sorted(((sum(l for _, l in parts), name, parts) for name, parts in classes.items()), reverse=True)
@@ -419,6 +444,7 @@ def main():
         print(f"Comments: {len(comments)}")
         print(f"Dense lines: {len(density)}")
         print(f"Catches over the rules: {len(catches)}")
+        print(f"UI built by hand: {len(ui)}")
         return 0
     for t, n, parts in big:
         print(f"class over {MAX_CLASS} lines: {n} ({t}) in " + ", ".join(f"{p} {l}" for p, l in parts))
@@ -430,8 +456,10 @@ def main():
         print(f"dense line: {d}")
     for c in catches:
         print(f"catch: {c}")
-    if big or long_methods or comments or density or catches:
-        print(f"codecheck: {len(big)} class(es), {len(long_methods)} method(s), {len(comments)} comment(s), {len(density)} dense line(s), {len(catches)} catch(es) over the rules")
+    for u in ui:
+        print(f"ui: {u}")
+    if big or long_methods or comments or density or catches or ui:
+        print(f"codecheck: {len(big)} class(es), {len(long_methods)} method(s), {len(comments)} comment(s), {len(density)} dense line(s), {len(catches)} catch(es), {len(ui)} hand-built UI line(s) over the rules")
         return 1
     print("codecheck: clean")
     return 0

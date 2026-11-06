@@ -62,8 +62,8 @@ sealed class ReliefPanel : HudPart
     void AddShapes()
     {
         var grid = new GridContainer { Columns = 2 };
-        grid.AddThemeConstantOverride("h_separation", 3);
-        grid.AddThemeConstantOverride("v_separation", 3);
+        grid.AddThemeConstantOverride("h_separation", Ui.Gap.Tight);
+        grid.AddThemeConstantOverride("v_separation", Ui.Gap.Tight);
         foreach (var (key, text, tip) in Shapes) grid.AddChild(Choice(text, key, tip));
         _box.AddChild(grid);
     }
@@ -72,8 +72,8 @@ sealed class ReliefPanel : HudPart
     {
         _box.AddChild(Header("Ground"));
         var grid = new GridContainer { Columns = 4 };
-        grid.AddThemeConstantOverride("h_separation", 3);
-        grid.AddThemeConstantOverride("v_separation", 3);
+        grid.AddThemeConstantOverride("h_separation", Ui.Gap.Tight);
+        grid.AddThemeConstantOverride("v_separation", Ui.Gap.Tight);
         foreach (var kind in GroundKinds.Brushes)
         {
             var name = GroundKinds.Name(kind);
@@ -114,7 +114,7 @@ sealed class ReliefPanel : HudPart
     void AddHowToPaint()
     {
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", 3);
+        row.AddThemeConstantOverride("separation", Ui.Gap.Tight);
         foreach (var (key, text, icon, tip) in Paintings)
         {
             var b =
@@ -140,7 +140,7 @@ sealed class ReliefPanel : HudPart
         HSlider Row(string label, double min, double max, double step, double value, Func<double, string> show, Action<double> set, string tip, bool exp = false)
         {
             var row = new HBoxContainer();
-            row.AddThemeConstantOverride("separation", 4);
+            row.AddThemeConstantOverride("separation", Ui.Gap.Tight);
             row.AddChild(new Label { Text = label, CustomMinimumSize = new Vector2(54, 0), SizeFlagsVertical = Control.SizeFlags.ShrinkCenter });
             var s =
                 new HSlider { MinValue = min, MaxValue = max, Step = step, Value = value, ExpEdit = exp, CustomMinimumSize = new Vector2(80, 0), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,

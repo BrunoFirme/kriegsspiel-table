@@ -22,7 +22,7 @@ sealed class ReportPage(TitleScreen t)
         var v = closed != null
             ? t.NewPage("It closed unexpectedly", $"Kriegsspiel Table stopped without being quit (the run started {closed.Started:d MMM, HH:mm}). Games save themselves as you play: host it again to carry on where it stopped.")
             : t.NewPage("Report a problem", "");
-        v.AddThemeConstantOverride("separation", 12);
+        v.AddThemeConstantOverride("separation", Ui.Gap.Block);
         var copied = new Label { Modulate = Muted };
         var copy = Primary(closed != null ? "Copy the report" : "Copy diagnostics", () =>
         {
@@ -34,7 +34,7 @@ sealed class ReportPage(TitleScreen t)
             : "Version, PC, graphics card, the latest errors and the last commands, onto the clipboard";
         var issue = Ui.Btn("Open an issue on GitHub", () => OS.ShellOpen(Diagnostics.IssueUrl), "Opens the problem form in your browser");
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", 10);
+        row.AddThemeConstantOverride("separation", Ui.Gap.Group);
         row.AddChild(copy);
         row.AddChild(issue);
         row.AddChild(copied);

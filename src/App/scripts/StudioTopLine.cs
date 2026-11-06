@@ -44,7 +44,7 @@ internal sealed class TopLine
         Panel.SetAnchorsPreset(Control.LayoutPreset.TopWide);
         _s.Root.AddChild(Panel);
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", 8);
+        row.AddThemeConstantOverride("separation", Ui.Gap.Group);
         Panel.AddChild(row);
         var menuBtn = new Button { Flat = true, CustomMinimumSize = new Vector2(30, 24), FocusMode = Control.FocusModeEnum.None, TooltipText = "The studio's menu" };
         menuBtn.AddChild(new ToolIcon { Kind = "menu" });
@@ -69,7 +69,7 @@ internal sealed class TopLine
         _hint.AddThemeFontSizeOverride("font_size", 12);
         row.AddChild(_hint);
         _views = new HBoxContainer();
-        _views.AddThemeConstantOverride("separation", 2);
+        _views.AddThemeConstantOverride("separation", Ui.Gap.Hair);
         row.AddChild(_views);
         _saved = new Label { Modulate = Ui.Muted, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, CustomMinimumSize = new Vector2(64, 0), HorizontalAlignment = HorizontalAlignment.Right };
         _saved.AddThemeFontSizeOverride("font_size", 11);
@@ -164,7 +164,7 @@ internal sealed class StudioToolStrip
         Panel.AddThemeStyleboxOverride("panel", ss);
         _s.Root.AddChild(Panel);
         _box = new VBoxContainer();
-        _box.AddThemeConstantOverride("separation", 2);
+        _box.AddThemeConstantOverride("separation", Ui.Gap.Hair);
         Panel.AddChild(_box);
         return Panel;
     }

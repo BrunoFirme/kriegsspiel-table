@@ -75,7 +75,7 @@ internal sealed class PrintPlacer
             : null;
         if (now is not { } n) return;
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", 3);
+        row.AddThemeConstantOverride("separation", Ui.Gap.Tight);
         var vals = new[] { n.box.X, n.box.Y, n.box.W, n.box.H };
         var tips = new[] { "left", "top", "width", "height" };
         var boxes = new SpinBox[vals.Length];

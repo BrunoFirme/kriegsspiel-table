@@ -30,8 +30,8 @@ sealed class FormationPanel : HudPart
     void AddKinds()
     {
         var grid = new GridContainer { Columns = 4 };
-        grid.AddThemeConstantOverride("h_separation", 3);
-        grid.AddThemeConstantOverride("v_separation", 3);
+        grid.AddThemeConstantOverride("h_separation", Ui.Gap.Tight);
+        grid.AddThemeConstantOverride("v_separation", Ui.Gap.Tight);
         var current = T.Forms.Kind;
         foreach (var kind in Formations.All)
         {
@@ -59,7 +59,7 @@ sealed class FormationPanel : HudPart
     HBoxContainer Row(string label, string tip)
     {
         var row = new HBoxContainer { TooltipText = tip };
-        row.AddThemeConstantOverride("separation", 4);
+        row.AddThemeConstantOverride("separation", Ui.Gap.Tight);
         row.AddChild(new Label { Text = label, CustomMinimumSize = new Vector2(62, 0), SizeFlagsVertical = Control.SizeFlags.ShrinkCenter });
         _box.AddChild(row);
         return row;

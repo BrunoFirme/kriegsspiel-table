@@ -46,8 +46,8 @@ sealed class DrawPanel : HudPart
         bool locked = T.DrawingLocked;
         string current = T.Tool == Tool.Draw ? "free" : T.Tool == Tool.Erase ? "erase" : T.Tool == Tool.Letter ? "name" : T.ShapeKind;
         var tools = new GridContainer { Columns = 3 };
-        tools.AddThemeConstantOverride("h_separation", 3);
-        tools.AddThemeConstantOverride("v_separation", 3);
+        tools.AddThemeConstantOverride("h_separation", Ui.Gap.Tight);
+        tools.AddThemeConstantOverride("v_separation", Ui.Gap.Tight);
         foreach (var (key, icon, tip) in kinds)
         {
             var b =
@@ -84,8 +84,8 @@ sealed class DrawPanel : HudPart
     void AddInk()
     {
         var sw = new GridContainer { Columns = 3 };
-        sw.AddThemeConstantOverride("h_separation", 3);
-        sw.AddThemeConstantOverride("v_separation", 3);
+        sw.AddThemeConstantOverride("h_separation", Ui.Gap.Tight);
+        sw.AddThemeConstantOverride("v_separation", Ui.Gap.Tight);
         var ink = new ColorPickerButton { Color = T.PenColor, EditAlpha = false, CustomMinimumSize = new Vector2(0, 24), TooltipText = "Any other colour" };
         foreach (var (hex, what) in new[] { ("#1a1a1a", "pencil"), ("#c0392b", "red"), ("#2a6ebb", "blue"), ("#2e8b45", "green"), ("#d9a21b", "yellow"), ("#f2f2f2", "chalk") })
         {
@@ -114,7 +114,7 @@ sealed class DrawPanel : HudPart
     void AddPen()
     {
         var penRow = new HBoxContainer();
-        penRow.AddThemeConstantOverride("separation", 4);
+        penRow.AddThemeConstantOverride("separation", Ui.Gap.Tight);
         var pen =
             new HSlider { MinValue = 1, MaxValue = 40, Step = 0.5, Value = T.PenPixels, CustomMinimumSize = new Vector2(62, 0), SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
                 TooltipText = "How thick the line is, in screen pixels" };
@@ -129,7 +129,7 @@ sealed class DrawPanel : HudPart
         penRow.AddChild(penL);
         _box.AddChild(penRow);
         var seeRow = new HBoxContainer();
-        seeRow.AddThemeConstantOverride("separation", 4);
+        seeRow.AddThemeConstantOverride("separation", Ui.Gap.Tight);
         var see =
             new HSlider { MinValue = LeastOpacity * 100, MaxValue = 100, Step = 5, Value = Mathf.Round(T.PenOpacity * 100), CustomMinimumSize = new Vector2(62, 0),
                 SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, TooltipText = "How see-through new lines are: 100% hides what is under them" };
@@ -151,7 +151,7 @@ sealed class DrawPanel : HudPart
     {
         var board = S.View.Boards.FirstOrDefault(b => b.Id == T.DrawBoard());
         var layRow = new HBoxContainer();
-        layRow.AddThemeConstantOverride("separation", 2);
+        layRow.AddThemeConstantOverride("separation", Ui.Gap.Hair);
         var lay = new Button { Text = board?.Name ?? "no layer", ClipText = true, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, CustomMinimumSize = new Vector2(74, 24), TooltipText = "The layer being drawn on · click for the layers" };
         lay.Pressed += () => { if (!Shell.Panels["boards"].Visible) Shell.TogglePanel("boards"); };
         layRow.AddChild(lay);

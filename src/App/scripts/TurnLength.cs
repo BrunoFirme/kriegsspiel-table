@@ -25,7 +25,7 @@ sealed class TurnLength
         _count.Value = minutes / Units[unit].Minutes;
         _unit.ItemSelected += _ => Bound();
         Row = new HBoxContainer();
-        Row.AddThemeConstantOverride("separation", 6);
+        Row.AddThemeConstantOverride("separation", Ui.Gap.Row);
         Row.AddChild(_count);
         Row.AddChild(_unit);
     }

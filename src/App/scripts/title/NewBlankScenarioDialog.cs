@@ -9,8 +9,8 @@ static class NewBlankScenarioDialog
     public static void Open(Main main)
     {
         var dlg = new ConfirmationDialog { Title = "New blank scenario", OkButtonText = "Create and host" };
-        var g = new GridContainer { Columns = 2, CustomMinimumSize = new Vector2(460, 0) };
-        g.AddThemeConstantOverride("v_separation", 8);
+        var g = Ui.Form(Ui.DialogLabels);
+        g.CustomMinimumSize = new Vector2(460, 0);
         LineEdit Field(string label, string value, string placeholder = "")
         {
             g.AddChild(new Label { Text = label });
@@ -23,6 +23,7 @@ static class NewBlankScenarioDialog
         g.AddChild(new Label { Text = "Each turn" });
         var step = new TurnLength(15);
         g.AddChild(step.Row);
+        Ui.AlignForm(g);
         dlg.AddChild(g);
         dlg.Confirmed += () =>
         {

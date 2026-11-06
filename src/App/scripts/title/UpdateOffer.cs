@@ -78,7 +78,7 @@ sealed class UpdateOffer
         foreach (var c in _row.GetChildren()) c.QueueFree();
         if (_asked is not { IsCompletedSuccessfully: true, Result: { } found }) return;
         var line = new HBoxContainer();
-        line.AddThemeConstantOverride("separation", 6);
+        line.AddThemeConstantOverride("separation", Ui.Gap.Row);
         bool installs = found.Setup != null && CanReplaceItself.Value;
         bool ready = installs && _downloaded != null && File.Exists(_downloaded);
         line.AddChild(new Label { Text = ready ? $"{found.Name} downloaded" : $"{found.Name} is out", Modulate = Ui.AccentInk, VerticalAlignment = VerticalAlignment.Center });

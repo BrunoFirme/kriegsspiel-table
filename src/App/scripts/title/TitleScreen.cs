@@ -86,7 +86,7 @@ sealed class TitleScreen
         var leftRoom =
             new ScrollContainer { OffsetLeft = 72, OffsetTop = 64, OffsetRight = 72 + 360, AnchorBottom = 1, OffsetBottom = -48, HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled };
         var left = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ExpandFill };
-        left.AddThemeConstantOverride("separation", 4);
+        left.AddThemeConstantOverride("separation", Ui.Gap.Tight);
         leftRoom.AddChild(left);
         root.AddChild(leftRoom);
         Menu(left, store, scenarios);
@@ -168,7 +168,7 @@ sealed class TitleScreen
         if (OffersUpdates) UpdateOffer.Put(left, _main, _cfg);
         left.AddChild(new Control { CustomMinimumSize = new Vector2(0, 6) });
         var contactRow = new HBoxContainer();
-        contactRow.AddThemeConstantOverride("separation", 0);
+        contactRow.AddThemeConstantOverride("separation", Ui.Gap.None);
         var contact = new Label { Text = "by Firme  ·  Discord b.firme  ·  ", Modulate = Muted };
         contact.AddThemeFontSizeOverride("font_size", 12);
         contactRow.AddChild(contact);
@@ -223,7 +223,7 @@ sealed class TitleScreen
         });
         _page.AddChild(panel);
         var v = new VBoxContainer();
-        v.AddThemeConstantOverride("separation", 10);
+        v.AddThemeConstantOverride("separation", Ui.Gap.Block);
         panel.AddChild(v);
         var h = new Label { Text = heading };
         h.AddThemeFontOverride("font", Serif());

@@ -37,7 +37,7 @@ sealed class LayersPanel : HudPart
     HBoxContainer Row(BoardDef b)
     {
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", 1);
+        row.AddThemeConstantOverride("separation", Ui.Gap.Hair);
         var id = b.Id;
         bool shown = !T.HiddenBoards.Contains(id);
         var eye = new Button { Flat = true, FocusMode = Control.FocusModeEnum.None, CustomMinimumSize = new Vector2(22, 22), TooltipText = shown ? "Hide this layer (on your screen only)" : "Show it again" };

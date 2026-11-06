@@ -27,6 +27,7 @@ sealed partial class ScenarioDialog : HudPart
         _box = pages.Add("Map");
         AddDistances();
         AddGrid();
+        AddGround();
         _box = _lookBox = pages.Add("Light & surroundings");
         AddLighting();
         _box = pages.Add("Wind");
@@ -37,16 +38,7 @@ sealed partial class ScenarioDialog : HudPart
         Ui.FreeOnClose(_dlg);
     }
 
-    static HBoxContainer Fact(string name, string value, Button? change = null)
-    {
-        var r = new HBoxContainer();
-        r.AddThemeConstantOverride("separation", 10);
-        r.AddChild(new Label { Text = name, CustomMinimumSize = new Vector2(InviteDialog.NameWidth, 0), SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, Modulate = new Color(1, 1, 1, 0.74f) });
-        r.AddChild(new Label { Text = value, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, ClipText = true,
-            TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis });
-        if (change != null) { change.SizeFlagsVertical = Control.SizeFlags.ShrinkCenter; r.AddChild(change); }
-        return r;
-    }
+    static HBoxContainer Fact(string name, string value, Button? change = null) => Ui.Fact(name, value, Ui.DialogLabels, change);
 
     void AddHead()
     {
@@ -80,7 +72,7 @@ sealed partial class ScenarioDialog : HudPart
             unitPick.AddItem(units[i].Item2);
             if (units[i].Item1 == (S.View.Calibration.Units ?? "m")) unitPick.Selected = i;
         }
-        var unitForm = Ui.Form(96);
+        var unitForm = Ui.Form(Ui.DialogLabels);
         unitForm.AddChild(new Label { Text = "Written in" });
         unitForm.AddChild(unitPick);
         Ui.AlignForm(unitForm);
@@ -106,7 +98,7 @@ sealed partial class ScenarioDialog : HudPart
         _box.AddChild(Header("Grid"));
         var g0 = S.View.Grid ?? new GridDef();
         var kinds = new[] { ("none", "None"), ("square", "Squares"), ("hex", "Hexes") };
-        var gridForm = Ui.Form(96);
+        var gridForm = Ui.Form(Ui.DialogLabels);
         var kindPick = new OptionButton();
         for (int i = 0; i < kinds.Length; i++) { kindPick.AddItem(kinds[i].Item2); if (kinds[i].Item1 == g0.Kind) kindPick.Selected = i; }
         gridForm.AddChild(new Label { Text = "Shape" });
@@ -131,6 +123,7 @@ sealed partial class ScenarioDialog : HudPart
             subs.Visible = canDivide;
             foreach (var c in gridForm.GetChildren())
                 if (c is Label l) l.Visible = l.Text switch { "Across" => on, "Divide by" => canDivide, _ => true };
+            gridHint.Visible = on;
             gridHint.Text = !on ? ""
                 : gd.Kind == "hex" ? $"One hex is {Fmt.Distance(gd.Pitch, S.View.Calibration)} across the flats. Nothing snaps to it."
                 : $"One cell is {Fmt.Distance(gd.Pitch, S.View.Calibration)}{(gd.Subdivisions > 1 ? $", divided into {gd.Subdivisions}" : "")}. Nothing snaps to it.";
@@ -146,7 +139,7 @@ sealed partial class ScenarioDialog : HudPart
     {
         lg.AddChild(new Label { Text = label });
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", 8);
+        row.AddThemeConstantOverride("separation", Ui.Gap.Group);
         var sl =
             new HSlider { MinValue = min, MaxValue = max, Step = step, Value = v, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
                 CustomMinimumSize = new Vector2(170, 0) };
@@ -166,7 +159,7 @@ sealed partial class ScenarioDialog : HudPart
         pick.AddItem("Custom");
         foreach (var (name, _) in presets) pick.AddItem(name);
         for (int i = 0; i < presets.Count; i++) if (LightPresets.Same(presets[i].Light, l0)) pick.Selected = i + 1;
-        var lg = Ui.Form(84);
+        var lg = Ui.Form(Ui.DialogLabels);
         static string Percent(double v) => $"{v * 100:0}%";
         static string Warmth(double v) => v < -0.55 ? "cold" : v < -0.15 ? "cool" : v <= 0.15 ? "neutral" : v <= 0.55 ? "warm" : "hot";
         var sun = LightRow(lg, "Light", 0, 1.5, 0.05, l0.SunEnergy, Percent);
@@ -224,8 +217,8 @@ sealed partial class ScenarioDialog : HudPart
         };
         var clockHint = Hint("");
         var manual = new VBoxContainer();
-        manual.AddThemeConstantOverride("separation", 8);
-        var presetForm = Ui.Form(84);
+        manual.AddThemeConstantOverride("separation", Ui.Gap.Group);
+        var presetForm = Ui.Form(Ui.DialogLabels);
         presetForm.AddChild(new Label { Text = "Preset" });
         presetForm.AddChild(pick);
         Ui.AlignForm(presetForm);
@@ -249,7 +242,6 @@ sealed partial class ScenarioDialog : HudPart
         _box.AddChild(byClock);
         _box.AddChild(clockHint);
         _box.AddChild(manual);
-        _box.AddChild(Header("Shadows"));
         _box.AddChild(shadows);
         AddSurroundings(cur);
     }
@@ -275,7 +267,7 @@ sealed partial class ScenarioDialog : HudPart
         };
         _box.AddChild(text);
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", 8);
+        row.AddThemeConstantOverride("separation", Ui.Gap.Group);
         row.AddChild(new Control { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill });
         Action keep = () => { };
         row.AddChild(Btn("Read it…", () =>
@@ -300,17 +292,17 @@ sealed partial class ScenarioDialog : HudPart
     {
         var w0 = S.View.Wind.Clone();
         var windRow = new HBoxContainer();
-        windRow.AddThemeConstantOverride("separation", 12);
+        windRow.AddThemeConstantOverride("separation", Ui.Gap.Block);
         var rose = new WindRose { From = w0.From, Strength = w0.Strength };
         windRow.AddChild(rose);
         var wcol = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, Alignment = BoxContainer.AlignmentMode.Center };
-        var wf = Ui.Form(84);
+        var wf = Ui.Form(Ui.DialogLabels);
         wf.AddChild(new Label { Text = "From" });
         var fromBox = new SpinBox { MinValue = 0, MaxValue = 360, Step = 1, Value = w0.From, Suffix = "°", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, TooltipText = "0 north (the top of the map), 90 east, 180 south, 270 west" };
         wf.AddChild(fromBox);
         wf.AddChild(new Label { Text = "Strength" });
         var strRow = new HBoxContainer();
-        strRow.AddThemeConstantOverride("separation", 8);
+        strRow.AddThemeConstantOverride("separation", Ui.Gap.Group);
         var strength =
             new HSlider { MinValue = 0, MaxValue = 5, Step = 0.25, Value = w0.Strength, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
                 CustomMinimumSize = new Vector2(120, 0) };

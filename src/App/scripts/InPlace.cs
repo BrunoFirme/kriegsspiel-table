@@ -71,7 +71,7 @@ static class InPlace
         sheet.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.BottomWide);
         sheet.GrowVertical = Control.GrowDirection.Begin;
         var box = new VBoxContainer();
-        box.AddThemeConstantOverride("separation", 10);
+        box.AddThemeConstantOverride("separation", Ui.Gap.Block);
         sheet.AddChild(box);
         var head = new Label { Text = title };
         head.AddThemeFontOverride("font", Ui.SansStrong());
@@ -80,7 +80,7 @@ static class InPlace
         if (text != null) box.AddChild(Capped(new Label { Text = text, AutowrapMode = TextServer.AutowrapMode.WordSmart }));
         if (body != null) box.AddChild(Capped(body));
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", 8);
+        row.AddThemeConstantOverride("separation", Ui.Gap.Group);
         row.AddChild(new Control { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill });
         var cancel = Ui.Btn("Cancel", () => scrim.Answer(false));
         var ok = Ui.Primary(okText, () => scrim.Answer(true));
@@ -129,9 +129,9 @@ static class InPlace
         if (page.HasMeta(SubKey) && page.GetMeta(SubKey).AsGodotObject() is Control open && GodotObject.IsInstanceValid(open)) open.QueueFree();
         var host = page.GetParent();
         var sub = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-        sub.AddThemeConstantOverride("separation", 14);
+        sub.AddThemeConstantOverride("separation", Ui.Gap.Block);
         var head = new HBoxContainer();
-        head.AddThemeConstantOverride("separation", 10);
+        head.AddThemeConstantOverride("separation", Ui.Gap.Group);
         var backBtn = new Button { Text = "‹ " + back, Flat = true, FocusMode = Control.FocusModeEnum.None, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter };
         backBtn.AddThemeColorOverride("font_color", Ui.Muted);
         backBtn.AddThemeColorOverride("font_hover_color", Ui.Ink);
@@ -142,7 +142,7 @@ static class InPlace
         head.AddChild(name);
         sub.AddChild(head);
         var body = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-        body.AddThemeConstantOverride("separation", 8);
+        body.AddThemeConstantOverride("separation", Ui.Gap.Group);
         sub.AddChild(body);
         host.AddChild(sub);
         host.MoveChild(sub, page.GetIndex() + 1);

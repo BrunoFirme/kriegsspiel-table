@@ -43,10 +43,10 @@ sealed class ReliefSheets : HudPart
         var jobs = Paired(reliefs, pictures);
         var dlg = new ConfirmationDialog { Title = "Relief and picture", OkButtonText = "Add" };
         var box = new VBoxContainer();
-        box.AddThemeConstantOverride("separation", 6);
+        box.AddThemeConstantOverride("separation", Ui.Gap.Row);
         var grid = new GridContainer { Columns = 2 };
-        grid.AddThemeConstantOverride("h_separation", 10);
-        grid.AddThemeConstantOverride("v_separation", 4);
+        grid.AddThemeConstantOverride("h_separation", Ui.Gap.Group);
+        grid.AddThemeConstantOverride("v_separation", Ui.Gap.Tight);
         var choices = new List<Func<ReliefJob>>();
         foreach (var job in jobs)
         {
@@ -235,7 +235,7 @@ sealed class ReliefSheets : HudPart
     {
         var (w0, d0) = BlankSize();
         var dlg = new ConfirmationDialog { Title = "New blank ground", OkButtonText = "Add" };
-        var grid = Ui.Form(64);
+        var grid = Ui.Form(Ui.DialogLabels);
         SpinBox Num(string label, double v)
         {
             grid.AddChild(new Label { Text = label });
@@ -323,8 +323,8 @@ sealed class ReliefSheets : HudPart
         if (sel.Relief is { Length: > 0 })
         {
             var row = new HBoxContainer();
-            row.AddThemeConstantOverride("separation", 4);
-            row.AddChild(new Label { Text = "Height ×", SizeFlagsVertical = Control.SizeFlags.ShrinkCenter });
+            row.AddThemeConstantOverride("separation", Ui.Gap.Group);
+            row.AddChild(Ui.RowLabel("Height ×", Ui.PanelLabels));
             var slider =
                 new HSlider { MinValue = 0, MaxValue = 5, Step = 0.05, Value = sel.Height, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
                     TooltipText = "0 lies flat; 1 keeps the model's own proportions" };
@@ -336,7 +336,7 @@ sealed class ReliefSheets : HudPart
             if (S.Relief.Grid(sel) == null) box.AddChild(Hint("Loading"));
         }
         var actions = new HFlowContainer();
-        actions.AddThemeConstantOverride("h_separation", 6);
+        actions.AddThemeConstantOverride("h_separation", Ui.Gap.Row);
         actions.AddChild(Btn(sel.Relief is { Length: > 0 } ? "Replace relief…" : "Add relief…", () => PickRelief(sel), "A 3D model, heightmap or elevation file, stretched over this sheet"));
         if (sel.Relief is { Length: > 0 } && sel.HasPicture) actions.AddChild(Btn("Remove relief", () => S.Do(new SetSheetRelief { Id = sel.Id, Relief = null, Height = 1 })));
         actions.AddChild(Btn(sel.HasPicture ? "Picture…" : "Add a picture…", () => PickPicture(sel), "A map picture laid over this sheet"));

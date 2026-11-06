@@ -13,7 +13,7 @@ sealed class MenuCard
     public MenuCard(float width = 244)
     {
         _box = new VBoxContainer { CustomMinimumSize = new Vector2(width, 0), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-        _box.AddThemeConstantOverride("separation", 0);
+        _box.AddThemeConstantOverride("separation", Ui.Gap.None);
         _scroll.AddChild(_box);
         Pop.AddChild(_scroll);
     }
@@ -31,7 +31,7 @@ sealed class MenuCard
         h.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
         h.OffsetLeft = 8;
         h.OffsetRight = -8;
-        h.AddThemeConstantOverride("separation", 6);
+        h.AddThemeConstantOverride("separation", Ui.Gap.Row);
         if (tick != null)
         {
             var t = new Label { Text = tick.Value ? "✓" : " ", CustomMinimumSize = new Vector2(14, 0) };
@@ -82,12 +82,10 @@ sealed class MenuCard
     public void Separator(string label = "")
     {
         var sep = new HSeparator();
-        sep.AddThemeConstantOverride("separation", 6);
+        sep.AddThemeConstantOverride("separation", Ui.Gap.Row);
         _box.AddChild(sep);
         if (label.Length == 0) return;
-        var l = new Label { Text = label.ToUpperInvariant() };
-        Ui.HeadStyle(l);
-        l.AddThemeFontSizeOverride("font_size", 10);
+        var l = Ui.HeadLabel(label);
         var m = new MarginContainer();
         m.AddThemeConstantOverride("margin_left", 8);
         m.AddThemeConstantOverride("margin_bottom", 2);

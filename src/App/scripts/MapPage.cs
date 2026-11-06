@@ -58,7 +58,7 @@ sealed class MapPage : HudPart
         {
             var id = sh.Id;
             var row = new HBoxContainer();
-            row.AddThemeConstantOverride("separation", 2);
+            row.AddThemeConstantOverride("separation", Ui.Gap.Hair);
             var b =
                 new Button { Text = sh.Name.Length > 0 ? sh.Name : sh.Id, Alignment = HorizontalAlignment.Left, FocusMode = Control.FocusModeEnum.None, ToggleMode = true,
                     ButtonPressed = T.SelectedSheet == id, ClipText = true, TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
@@ -90,7 +90,7 @@ sealed class MapPage : HudPart
     void AddSelectedForm(SheetDef sel)
     {
         _box.AddChild(Header("Selected sheet"));
-        var grid = Ui.Form(64);
+        var grid = Ui.Form(Ui.PanelLabels);
         var nameEd = new LineEdit { Text = sel.Name, CustomMinimumSize = new Vector2(60, 0) };
         void CommitName() { var n = nameEd.Text.Trim(); if (n.Length > 0 && n != sel.Name) S.Do(new RenameSheet { Id = sel.Id, Name = n }); }
         nameEd.TextSubmitted += _ => CommitName();
@@ -125,7 +125,7 @@ sealed class MapPage : HudPart
         var group = MapTurn.Joined(S.View.Sheets, sel.Id);
         _box.AddChild(Header(group.Count > 1 ? $"Turn with its {group.Count - 1} joined sheets" : "Turn with its pieces"));
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", 6);
+        row.AddThemeConstantOverride("separation", Ui.Gap.Row);
         foreach (var (text, deg) in new[] { ("Left 90°", -90.0), ("180°", 180.0), ("Right 90°", 90.0) })
         {
             var b = Btn(text, () => S.Do(MapTurn.Turned(MapTurn.Joined(S.View.Sheets, sel.Id), S.View.Layer(Layers.Umpire), Layers.Umpire, deg)),
@@ -139,7 +139,7 @@ sealed class MapPage : HudPart
     void AddCropForm()
     {
         _box.AddChild(Header("Crop"));
-        var cg = Ui.Form(64);
+        var cg = Ui.Form(Ui.PanelLabels);
         SpinBox Trim(string label, double v)
         {
             cg.AddChild(new Label { Text = label });
@@ -179,7 +179,7 @@ sealed class MapPage : HudPart
     void AddActions(SheetDef sel)
     {
         var actions = new HBoxContainer();
-        actions.AddThemeConstantOverride("separation", 6);
+        actions.AddThemeConstantOverride("separation", Ui.Gap.Row);
         if (sel.HasPicture) actions.AddChild(Btn("Crop…", () => T.BeginCrop(sel.Id), "Keep only part of the picture: trim borders and legends so sheets fit together"));
         if (sel.Crop != null) actions.AddChild(Btn("Uncrop", () => S.Do(new CropSheet { Id = sel.Id, Crop = null }), "Show the whole picture again"));
         actions.AddChild(new Control { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill });
