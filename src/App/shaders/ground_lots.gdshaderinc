@@ -306,27 +306,6 @@ float windmill(vec2 p, Lot l, float fw) {
 	return max(sails, ink(length(p - l.site), r * 0.25, fw));
 }
 
-float orchard(vec2 p, Lot l, float dot, float fw) {
-	float gap = metres(ORCHARD_M);
-	vec2 axis = lot_axis(l);
-	mat2 r = mat2(axis, vec2(-axis.y, axis.x));
-	vec2 q = r * (p - l.site);
-	vec2 c = (floor(q / gap) + 0.5) * gap;
-	return ink(length(q - c), gap * dot, fw);
-}
-
-float vine_rows(vec2 p, Lot l, vec2 down, float fw) {
-	vec2 run = length(down) > 0.5 ? down : lot_axis(l);
-	vec2 side = vec2(-run.y, run.x);
-	float rows = metres(VINE_ROW_M);
-	float stakes = metres(VINE_STAKE_M);
-	float s = dot(p - l.site, side);
-	float t = dot(p - l.site, run);
-	float line = ink(abs(fract(s / rows) - 0.5) * rows, rows * 0.06, fw);
-	float stake = ink(length(vec2(abs(fract(s / rows) - 0.5) * rows, (fract(t / stakes) - 0.5) * stakes)), rows * 0.12, fw);
-	return max(line * 0.5, stake);
-}
-
 float islet(vec2 p, Lot l, float fw, out float body) {
 	float r = metres(mix(12.0, 30.0, hash(l.id + 6.6)));
 	float d = length(p - l.site);

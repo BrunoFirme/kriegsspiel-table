@@ -64,6 +64,14 @@ const float GEWANN_M = 400.0;
 const float SURVEY_CONTOUR_PX = 0.78;
 const float SURVEY_CONTOUR_INK = 0.85;
 const float UNDER_WOOD = 0.5;
+const float HILL_FROM = 0.2;
+const float HILL_FULL = 0.32;
+const float HILL_WOBBLE = 0.3;
+const float HILL_SOFT = 0.04;
+const float HILL_ROCK_M = 2000.0;
+const float HILL_FILL = 0.65;
+const float ANCIENT_CONTOUR_PX = 0.85;
+const float ANCIENT_CONTOUR_INK = 0.75;
 const vec3 GARTENGRUEN = vec3(0.66, 0.72, 0.5);
 const vec2 PLATE_GREEN = vec2(1.5, -1.0);
 const vec2 PLATE_BLUE = vec2(-1.0, 1.5);
@@ -299,7 +307,10 @@ float contour(float h, vec2 p, int style, float steep, float rock, out float hal
 		strength *= SURVEY_CONTOUR_INK;
 	}
 	if (style == SURVEY && !index) strength *= smoothstep(BREAK_FROM, BREAK_TO, noise(p * 2.6));
-	if (style == ANCIENT) px *= 1.0 + ANCIENT_WIDTH_PLAY * noise(p * 1.3 + 7.0);
+	if (style == ANCIENT) {
+		px = LINE_PX * ANCIENT_CONTOUR_PX * (1.0 + ANCIENT_WIDTH_PLAY * noise(p * 1.3 + 7.0));
+		strength = ANCIENT_CONTOUR_INK;
+	}
 	float apart = contour_interval / fh;
 	float crowded = 1.0 - smoothstep(CROWD_PX, CROWD_PX * 3.0, index ? apart * float(INDEX_EVERY) : apart);
 	float level_ground = smoothstep(FLAT_SPAN, FLAT_SPAN * 2.0, contour_interval / max(steep, 1e-5));
@@ -340,7 +351,8 @@ void fragment() {
 	float steep = length(grad);
 	vec2 down = steep > 1e-4 ? -grad / steep : vec2(0.0);
 	float rockness = k == ROCK ? 1.0 : smoothstep(ROCK_FROM, ROCK_FULL, steep);
-	float curve = rockness > 0.0 ? (smooth_height(UV + to_uv * down * CURVE_STEP) + smooth_height(UV - to_uv * down * CURVE_STEP) - 2.0 * h) / (CURVE_STEP * CURVE_STEP) : 0.0;
+	float hill = style == ANCIENT ? smoothstep(HILL_FROM, HILL_FULL, steep) : 0.0;
+	float curve = rockness + hill > 0.0 ? (smooth_height(UV + to_uv * down * CURVE_STEP) + smooth_height(UV - to_uv * down * CURVE_STEP) - 2.0 * h) / (CURVE_STEP * CURVE_STEP) : 0.0;
 	float convex = smoothstep(CREST_FROM, CREST_FULL, -curve);
 	float gully = smoothstep(CREST_FROM, CREST_FULL, curve);
 	float crest = 4.0 * rockness * (1.0 - rockness) * convex;
@@ -402,6 +414,7 @@ void fragment() {
 		if (halo > 0.001) c = mix(c, plain(style, tint, sheet, p, edge), halo * HALO);
 		c = mix(c, c * (1.0 - MARK_SHADE), dark * cover * smoothstep(0.04, 0.35, steep_n));
 		if (bare && road_w < 0.0) c = slopes(c, n, p, world.y, fw, style, (1.0 - cover) * (1.0 - rockness) * (k == WOOD ? UNDER_WOOD : 1.0));
+		if (bare && hill > 0.001 && k != TOWN) c = ancient_hills(c, p, n, hill, convex, k == WOOD ? 0.0 : HILL_FILL, fw);
 		float keep = k == WOOD ? cover : 0.0;
 		if (bare && rockness + foot > 0.001) c = rock_face(style, c, p, h, down, steep, dark, crest, gully, sheer, foot, own, fw, max(rockness, foot) * (1.0 - keep), k == ROCK);
 	}
