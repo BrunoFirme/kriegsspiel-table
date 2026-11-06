@@ -119,10 +119,10 @@
   },
   {
    "row": "Bag",
-   "status": "partial",
-   "where": "memory bags laid out as scenarios; stow planned (item 1)",
+   "status": "native",
+   "where": "a round piece in the bag's colour that holds its contents stowed",
    "instead": "",
-   "held_by": "",
+   "held_by": "TablePiecesTests",
    "count": 17,
    "modules": 11
   },
@@ -137,10 +137,10 @@
   },
   {
    "row": "Custom_Model_Bag",
-   "status": "partial",
-   "where": "memory bags laid out as scenarios; stow planned (item 1)",
+   "status": "native",
+   "where": "the bag's own model, holding its contents stowed",
    "instead": "",
-   "held_by": "",
+   "held_by": "import-sweep: naval, scripted-war-game",
    "count": 48,
    "modules": 8
   },
@@ -1048,10 +1048,10 @@
   },
   {
    "row": "ObjectState.ContainedObjects",
-   "status": "partial",
-   "where": "memory bags only; stow planned (item 1)",
+   "status": "native",
+   "where": "ScenarioBuilder.StowContents: a bag's contents become its stowed pieces, decks as their cards",
    "instead": "",
-   "held_by": "",
+   "held_by": "TablePiecesTests",
    "count": 156,
    "modules": 20
   },
@@ -1084,9 +1084,9 @@
   },
   {
    "row": "ObjectState.Bag",
-   "status": "planned",
-   "where": "Phase C item 1: stow",
-   "instead": "",
+   "status": "dropped",
+   "where": "the order a bag gives its pieces back in",
+   "instead": "stowed pieces come out first in first, or by name",
    "held_by": "",
    "count": 64,
    "modules": 17
@@ -1741,9 +1741,9 @@
   },
   {
    "row": "BagState.Order",
-   "status": "planned",
-   "where": "Phase C item 1: stow",
-   "instead": "",
+   "status": "dropped",
+   "where": "the order a bag gives its pieces back in",
+   "instead": "stowed pieces come out first in first, or by name",
    "held_by": "",
    "count": 0,
    "modules": 0

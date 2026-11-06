@@ -414,18 +414,19 @@ public sealed partial class ConverterTests
         Assert.True(File.Exists(Path.Combine(Packages, "sheets", table.Lighting.Backdrop)));
         Assert.DoesNotContain(table.UmpireBoard, p => p.Label == "Midway");
 
-        var layout = Json.Load<Scenario>(Path.Combine(Packages, "scenarios", "fleet-midway-set-up", "scenario.json"));
-        var midway = Named(layout, "Midway");
-        Assert.Equal((-40.0, 12.0, 90.0, true), (midway.Pos.X, midway.Pos.Z, midway.RotDeg, midway.Locked));
-        var moved = Named(layout, "Tray");
-        Assert.Equal((5.0, 6.0, false), (moved.Pos.X, moved.Pos.Z, moved.Locked));
-        Assert.True(File.Exists(Path.Combine(Packages, "scenarios", "fleet-midway-set-up", "import-report.md")));
-        Assert.Equal("fleet — Midway set-up", layout.Name);
-        Assert.Contains("tts.fleet", layout.Packs);
+        var held = Named(table, "Midway set-up");
+        Assert.Equal((60.0, 60.0), (held.Pos.X, held.Pos.Z));
+        var midway = Assert.Single(held.Stowed!);
+        Assert.Equal("Midway", midway.Label);
+        Assert.False(Directory.Exists(Path.Combine(Packages, "scenarios", "fleet-midway-set-up")));
+        var bagDef = table.Packs.Where(p => p.StartsWith("tts.fleet")).Select(p => Json.Load<PackManifest>(Path.Combine(Packages, p, "pack.json")))
+            .SelectMany(m => m.Pieces).Single(d => d.Id == held.Def);
+        Assert.Contains("bag", bagDef.Tags);
+        Assert.Equal("circle", bagDef.Shape);
     }
 
     [Fact]
-    public void The_plan_names_a_scenario_and_an_extras_pack_for_each_memory_bag_that_lays_out_pieces_after_the_main_ones()
+    public void A_module_s_bags_make_no_scenarios_of_their_own()
     {
         const string At = "{\"lock\":false,\"pos\":{\"x\":1,\"y\":2,\"z\":3},\"rot\":{\"x\":0,\"y\":0,\"z\":0}}";
         var bag = new TtsObj(Obj("Bag", "Midway scenario", 1, new JsonObject
@@ -433,13 +434,10 @@ public sealed partial class ConverterTests
             ["LuaScript"] = "memoryList = {} function buttonClick_place() end",
             ["LuaScriptState"] = "{\"ml\":{\"abc123\":" + At + ",\"def456\":" + At + "}}",
         }));
-        var empty = new TtsObj(Obj("Bag", "Spare", 1, new JsonObject { ["LuaScript"] = "memoryList = {} function buttonClick_place() end", ["LuaScriptState"] = "" }));
-        var single = new TtsObj(Obj("Bag", "One ruler", 1, new JsonObject { ["LuaScript"] = "memoryList = {} function buttonClick_place() end", ["LuaScriptState"] = "{\"ml\":{\"aaa111\":" + At + "}}" }));
-        var plan = ImportPlan.Of(new TtsSave { SaveName = "Naval", Objects = new() { bag, empty, single } }, null, null);
+        var plan = ImportPlan.Of(new TtsSave { SaveName = "Naval", Objects = new() { bag } }, null, null);
 
-        Assert.Equal(new[] { "tts.naval", "tts.naval.extras", "tts.naval-midway-scenario.extras" }, plan.Packs);
-        Assert.Equal(new[] { "naval", "naval-midway-scenario" }, plan.Scenarios);
-        Assert.Equal("Naval — Midway scenario", plan.Layouts.Single().Name);
+        Assert.Equal(new[] { "tts.naval", "tts.naval.extras" }, plan.Packs);
+        Assert.Equal(new[] { "naval" }, plan.Scenarios);
     }
 
     [Fact]

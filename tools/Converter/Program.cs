@@ -115,27 +115,10 @@ try
             };
             var scenario = await new ScenarioBuilder(cfg, assets, report, way).Build(save);
             UsesPack(scenario, slug);
-            var laid = new List<(string slug, int pieces)>();
-            for (int i = 0; i < plan.Layouts.Count; i++)
-            {
-                var layout = plan.Layouts[i];
-                cfg.Scenario = new ScenarioCfg
-                {
-                    Id = "tts." + layout.Slug, Dir = layout.Slug, Name = layout.Name, Master = file,
-                    ExtrasPack = layout.ExtrasPack, ExtrasShort = $"{shortName}x{i + 2}",
-                    Clock = new ClockCfg(),
-                };
-                var own = new Report();
-                var other = await new ScenarioBuilder(cfg, assets, own, way).Build(MemoryBags.Laid(save, layout.Bag));
-                UsesPack(other, layout.Slug);
-                own.Write(Path.Combine(cfg.Output, "scenarios", layout.Slug, "import-report.md"), "import " + layout.Slug, announce: false);
-                laid.Add((layout.Slug, other.UmpireBoard.Count));
-            }
             Progress.Stage("finish");
             var importReport = Path.Combine(cfg.Output, "scenarios", slug, "import-report.md");
             report.Write(importReport, "import " + packId);
             Console.WriteLine($"IMPORTED scenario={slug} pack={packId} sheets={scenario.Sheets.Count} pieces={scenario.UmpireBoard.Count}");
-            foreach (var (other, pieces) in laid) Console.WriteLine($"ALSO scenario={other} pieces={pieces}");
             Console.WriteLine($"REPORT {importReport}");
             Console.WriteLine($"SIZES pack={plan.Packs.Sum(p => FolderBytes(Path.Combine(cfg.Output, p)))} scenario={plan.Scenarios.Sum(s => FolderBytes(Path.Combine(cfg.Output, "scenarios", s)))}");
 

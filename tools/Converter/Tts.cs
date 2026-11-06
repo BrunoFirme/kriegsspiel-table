@@ -70,6 +70,8 @@ public sealed class TtsObj
     public bool IsCard => Name is "Card" or "CardCustom";
     public bool IsDeck => Name is "Deck" or "DeckCustom";
     public bool IsChecker => Name is "Checker_white" or "Checker_red" or "Checker_black";
+    public bool IsBag => Name is "Bag" or "Custom_Model_Bag";
+    public bool IsInfiniteBag => Name.Contains("Infinite", StringComparison.Ordinal);
     public bool IsPictureDie => Name == "Custom_Dice" && (CI?["CustomDice"] as JsonObject)?["Type"]?.GetValue<int>() == PictureDieType;
     const int PictureDieType = 1;
 

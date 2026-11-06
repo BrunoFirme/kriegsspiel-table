@@ -42,7 +42,8 @@ public sealed partial class DefFactory
     public string Context { get; set; } = "";
 
     public static readonly HashSet<string> FlatTypes = new() { "Custom_Tile", "Custom_Token", "Custom_Board", "BlockSquare", "BlockRectangle" };
-    public static bool IsPiece(TtsObj o) => FlatTypes.Contains(o.Name) || o.Name == "Custom_Model" || IsTextObject(o) || IsTablePiece(o);
+    public static bool IsModel(TtsObj o) => o.Name is "Custom_Model" or "Custom_Model_Bag";
+    public static bool IsPiece(TtsObj o) => FlatTypes.Contains(o.Name) || IsModel(o) || IsTextObject(o) || IsTablePiece(o);
 
     public DefFactory(Config cfg, AssetStore assets, Report rep)
     {
@@ -135,7 +136,7 @@ public sealed partial class DefFactory
     readonly Dictionary<string, double> _meshFloor = new();
 
     public double LocalFloor(TtsObj o) =>
-        o.Name == "Custom_Model" && MeshBounds(o.MeshUrl) != null && Entry(o.MeshUrl) is { Sha: { } sha }
+        IsModel(o) && MeshBounds(o.MeshUrl) != null && Entry(o.MeshUrl) is { Sha: { } sha }
             ? _meshFloor[sha]
             : -BaseThickness(o) / 2;
 
@@ -153,7 +154,7 @@ public sealed partial class DefFactory
             aspect = e.W / (double)e.H;
         }
         double ratio = o.ScaleX == 0 ? 1 : o.ScaleZ / o.ScaleX;
-        if (o.Name == "Custom_Model")
+        if (IsModel(o))
         {
             var mb = MeshBounds(o.MeshUrl) ?? (1, 1, 1);
             return new Size2(mb.ex, mb.ez * ratio);
@@ -179,6 +180,7 @@ public sealed partial class DefFactory
             "Card" or "CardCustom" => new Size2(CardWidth, CardHeight * ratio),
             "Checker_white" or "Checker_red" or "Checker_black" => new Size2(CheckerAcross, CheckerAcross * ratio),
             "Custom_Dice" => new Size2(DieAcross, DieAcross * ratio),
+            "Bag" => new Size2(BagAcross, BagAcross * ratio),
             _ => new Size2(1, ratio),
         };
     }
@@ -186,11 +188,12 @@ public sealed partial class DefFactory
     public double BaseThickness(TtsObj o) => o.Name switch
     {
         "Custom_Tile" or "Custom_Token" => o.Thickness,
-        "Custom_Model" => (MeshBounds(o.MeshUrl)?.ey ?? 0.2),
+        "Custom_Model" or "Custom_Model_Bag" => (MeshBounds(o.MeshUrl)?.ey ?? 0.2),
         "BlockSquare" or "BlockRectangle" => _cfg.BaseSizes.BlockSquare,
         "Card" or "CardCustom" => CardThickness,
         "Checker_white" or "Checker_red" or "Checker_black" => CheckerThickness,
         "Custom_Dice" => DieAcross,
+        "Bag" => BagThickness,
         _ => 0.2,
     };
 
@@ -251,7 +254,7 @@ public sealed partial class DefFactory
                 var sd = new PieceStateDef { Name = s.Nickname.Length > 0 ? s.Nickname : $"State {def.States.Count + 1}" };
                 var stShape = PackManifest.ShapeOf(s.Name, s.TileType);
                 if (stShape != def.Shape) sd.Shape = stShape;
-                if (s.Name == "Custom_Model") { sd.Mesh = ModelMesh(pack, s, where); sd.Texture = Asset(pack, s.DiffuseUrl, "image", where); }
+                if (IsModel(s)) { sd.Mesh = ModelMesh(pack, s, where); sd.Texture = Asset(pack, s.DiffuseUrl, "image", where); }
                 else { sd.Image = Asset(pack, s.ImageUrl, "image", where); sd.Back = Asset(pack, s.BackUrl, "image", where); }
                 if (s.Lua.Trim().Length > 0 && !ReferenceEquals(s, states[0])) { sd.Script = s.Lua; _rep.Note($"{where}: the state \"{sd.Name}\" carries a script of its own (kept, not run)"); }
                 if (s.TransformNotANumber) _rep.Note($"{where}: the module scales the state \"{sd.Name}\" by something that is not a number; it takes the piece's own size");
@@ -280,7 +283,7 @@ public sealed partial class DefFactory
         var decalKey = def.States.Any(s => s.Decals is { Count: > 0 })
             ? "|d" + Hash8(string.Join(";", def.States.Select(s => string.Join(",", (s.Decals ?? new()).Select(d => d.Picture)))))
             : "";
-        var gluedKey = heightScale == 1 || b.Name == "Custom_Model" ? "" :string.Create(CultureInfo.InvariantCulture, $"|t{def.Thickness:0.###}");
+        var gluedKey = heightScale == 1 || IsModel(b) ? "" :string.Create(CultureInfo.InvariantCulture, $"|t{def.Thickness:0.###}");
         var key = string.Create(CultureInfo.InvariantCulture, $"{VisualKey(o)}|{def.Size.W:0.###}x{def.Size.H:0.###}{scriptKey}{bakedKey}{decalKey}{gluedKey}");
         int rich = def.States.Count * 100 + def.Counters.Count * 10 + def.TextLines.Count + def.Attachments.Count * 1000 + (def.Script != null ? 5000 : 0);
         if (pack.ByKey.TryGetValue(key, out var existing))
@@ -333,7 +336,7 @@ public sealed partial class DefFactory
 
     PieceDef? BuildDef(TtsObj b, PackOut pack, double r, string where, ScriptInfo script, double heightScale)
     {
-        var (lookUrl, lookKind) = b.Name == "Custom_Model" ? (b.MeshUrl, "mesh") : b.Name.StartsWith("Block") || b.IsChecker ? (null, "") : b.IsCard ? (b.Sheet?.FaceUrl, "image") : (b.ImageUrl, "image");
+        var (lookUrl, lookKind) = IsModel(b) ? (b.MeshUrl, "mesh") : b.Name.StartsWith("Block") || b.IsChecker ? (null, "") : b.IsCard ? (b.Sheet?.FaceUrl, "image") : (b.ImageUrl, "image");
         if (_assets.Gone(lookUrl, lookKind) is { } gone)
         {
             _rep.LeftOut(Name(b) is var n && n != "Piece" ? n : FileName(lookUrl!), lookUrl!, gone, where, b.Guid);
@@ -344,18 +347,19 @@ public sealed partial class DefFactory
         {
             Name = Name(b),
             Size = size,
-            LocalUnit = b.Name == "Custom_Model" ? new Size2(Math.Round(r, 4), Math.Round(r * (b.ScaleX == 0 ? 1 : Math.Abs(b.ScaleZ / b.ScaleX)), 4)) : null,
-            Thickness = Math.Round(Math.Clamp(BaseThickness(b) * Math.Abs(b.ScaleY) * (b.Name == "Custom_Model" ? r / Math.Max(1e-6, Math.Abs(b.ScaleX)) : heightScale), 0.02, 3), 3),
+            LocalUnit = IsModel(b) ? new Size2(Math.Round(r, 4), Math.Round(r * (b.ScaleX == 0 ? 1 : Math.Abs(b.ScaleZ / b.ScaleX)), 4)) : null,
+            Thickness = Math.Round(Math.Clamp(BaseThickness(b) * Math.Abs(b.ScaleY) * (IsModel(b) ? r / Math.Max(1e-6, Math.Abs(b.ScaleX)) : heightScale), 0.02, 3), 3),
             Tint = b.Color ?? "#FFFFFF",
             TintsPictures = b.Name == "Custom_Token" || b.Name.StartsWith("Block"),
             Shape = PackManifest.ShapeOf(b.Name, b.TileType),
-            Tags = b.Tags.Concat(new[] { b.Name switch { "Custom_Tile" => "tile", "Custom_Token" => "token", "Custom_Model" => "model", "Custom_Board" => "board", _ => "block" } }).Distinct().ToList(),
+            Tags = b.Tags.Concat(new[] { b.Name switch { "Custom_Tile" => "tile", "Custom_Token" => "token", "Custom_Model" or "Custom_Model_Bag" => "model", "Custom_Board" => "board", _ => "block" } })
+                .Concat(b.IsBag ? ["bag"] : []).Distinct().ToList(),
         };
         if (IsTablePiece(b))
         {
             FillTablePiece(def, b, pack, where);
         }
-        else if (b.Name == "Custom_Model")
+        else if (IsModel(b))
         {
             def.Kind = "model";
             def.Mesh = ModelMesh(pack, b, where);

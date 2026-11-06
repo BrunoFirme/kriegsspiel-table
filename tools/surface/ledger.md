@@ -10,7 +10,7 @@ the plan says translate it), unknown (nobody has decided).
 | area | rows used by the corpus | decided | planned or unknown | rows in all |
 |---|---|---|---|---|
 | types | 30 | 20 | 10 | 43 |
-| save | 150 | 132 | 18 | 300 |
+| save | 150 | 133 | 17 | 300 |
 | object | 65 | 61 | 4 | 262 |
 | global | 14 | 13 | 1 | 55 |
 | namespaces | 23 | 21 | 2 | 180 |
@@ -34,9 +34,9 @@ the plan says translate it), unknown (nobody has decided).
 | `BlockRectangle` | 333 / 11 | native | converter |  |
 | `3DText` | 109 / 11 | native | converter |  |
 | `Die_20` | 77 / 11 | planned | Phase C item 3: standard dice |  |
-| `Bag` | 17 / 11 | partial | memory bags laid out as scenarios; stow planned (item 1) |  |
+| `Bag` | 17 / 11 | native | a round piece in the bag's colour that holds its contents stowed | TablePiecesTests |
 | `Infinite_Bag` | 86 / 8 | dropped | infinite bags (decided 2026-11-06) |  |
-| `Custom_Model_Bag` | 48 / 8 | partial | memory bags laid out as scenarios; stow planned (item 1) |  |
+| `Custom_Model_Bag` | 48 / 8 | native | the bag's own model, holding its contents stowed | import-sweep: naval, scripted-war-game |
 | `Custom_Dice` | 35 / 7 | partial | TablePieces: the picture d6 only; other counts planned (item 3) |  |
 | `CardCustom` | 1144 / 6 | native | converter |  |
 | `Die_12` | 11 / 5 | planned | Phase C item 3: standard dice |  |
@@ -142,11 +142,11 @@ the plan says translate it), unknown (nobody has decided).
 | `CustomImageState.WidthScale` | 22 / 22 | native | converter reads it |  |
 | `CustomMeshState.MaterialIndex` | 1480 / 21 | native | converter reads it |  |
 | `CustomAssetbundleState.LoopingEffectIndex` | 71 / 21 | partial | BundleEffects: the effect family, not the index |  |
-| `ObjectState.ContainedObjects` | 156 / 20 | partial | memory bags only; stow planned (item 1) |  |
+| `ObjectState.ContainedObjects` | 156 / 20 | native | ScenarioBuilder.StowContents: a bag's contents become its stowed pieces, decks as their cards | TablePiecesTests |
 | `CustomMeshState.ColliderURL` | 2969 / 19 | native | converter reads it |  |
 | `CustomTileState.Type` | 1721 / 19 | native | converter reads it |  |
 | `GridState.Opacity` | 18 / 18 | dropped | grid (decided 2026-11-06) |  |
-| `ObjectState.Bag` | 64 / 17 | planned | Phase C item 1: stow |  |
+| `ObjectState.Bag` | 64 / 17 | dropped | the order a bag gives its pieces back in |  |
 | `ObjectState.Tags` | 17646 / 16 | native | converter reads it |  |
 | `SaveState.Sky` | 16 / 16 | native | converter reads it |  |
 | `SaveState.Note` | 15 / 15 | native | converter reads it |  |
@@ -219,7 +219,7 @@ the plan says translate it), unknown (nobody has decided).
 | `ObjectState.IgnoreFoW` | 1 / 1 | dropped | hidden zones (decided 2026-11-06) |  |
 | `SaveState.DecalPallet` | 1 / 1 | planned | Phase C item 4: table decals |  |
 | `SaveState.TableURL` | 1 / 1 | dropped | custom table picture |  |
-| `BagState.Order` | - | planned | Phase C item 1: stow |  |
+| `BagState.Order` | - | dropped | the order a bag gives its pieces back in |  |
 | `CalculatorState.memory` | - | dropped | TTS stock gadget |  |
 | `CalculatorState.value` | - | dropped | TTS stock gadget |  |
 | `CameraState.AbsolutePosition` | - | dropped | saved camera positions |  |

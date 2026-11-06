@@ -66,8 +66,9 @@ public sealed class ScenarioBuilder
 
         var layers = new List<Layer> { Collect("umpire", master, boardSet) };
 
-        var common = layers.SelectMany(l => l.Objects).GroupBy(_defs.VisualKey)
+        var common = layers.SelectMany(l => l.Objects).SelectMany(o => o.IsBag ? Held(o).Prepend(o) : [o]).GroupBy(_defs.VisualKey)
             .ToDictionary(g => g.Key, g => g.GroupBy(DefFactory.BaseScale).OrderByDescending(x => x.Count()).ThenBy(x => x.Key).First().Key);
+        _common = common;
 
         var packDefs = LoadPackDefs(root);
 
@@ -354,7 +355,7 @@ public sealed class ScenarioBuilder
             if (IsSheet(o)) { if (name != "umpire") _rep.Skipped("map sheet duplicated in a side module", where); continue; }
             if (o.IsDeck) { l.Objects.AddRange(Pile(o).Where(c => DefFactory.NotTranslated(c) is null)); continue; }
             if (DefFactory.NotTranslated(o) is { } why) { _rep.Skipped(why, where); continue; }
-            if (_cfg.ContainerTypes.Contains(o.Name)) { _rep.Skipped(o.Name + " (contents not placed in the scenario)", where); continue; }
+            if (o.IsInfiniteBag) { _rep.Skipped(o.Name + " (infinite bags are left out: place pieces from the Pieces drawer)", where); continue; }
             if (o.Name == BundleType && !_cfg.IsTableWall(o.BundleUrl) && _defs.ModelOfBundle(o) == null) { l.Effects.Add(o); continue; }
             if ((_cfg.IgnoreTypes.Contains(o.Name) && !_defs.Shows(o)) || o.Name.StartsWith("Die_")) { _rep.Skipped(o.Name, where); continue; }
             if (o.IsFurniture) { _rep.Skipped("table furniture (custom table / surround / under the table)", where); continue; }
@@ -499,9 +500,52 @@ public sealed class ScenarioBuilder
         layer.Y[inst] = o.PosY;
         layer.Bottom[inst] = _defs.Bottom(o);
         layer.Top[inst] = _defs.Bottom(o) + _defs.BaseThickness(o) * Math.Abs(o.ScaleY);
+        if (o.IsBag) StowContents(o, inst, extras, packDefs, layer, usedPacks, ref rekeyed);
 
         PlaceChildren(o, _defs.BakesChildren(o) ? Enumerable.Empty<TtsObj>() : o.Children, inst, refScale, baseScale, absolute, extras, packDefs, layer, usedPacks, ref rekeyed);
         return inst;
+    }
+
+    Dictionary<string, double> _common = new();
+    int _stowed;
+
+    IEnumerable<TtsObj> Held(TtsObj bag) => bag.Contained.SelectMany(c => c.IsDeck ? Pile(c) : [c]);
+
+    void StowContents(TtsObj bag, PieceInstance holder, PackOut extras, Dictionary<string, List<(PieceDef def, string pack)>> packDefs, Layer layer, HashSet<string> usedPacks, ref int rekeyed)
+    {
+        foreach (var c in Held(bag))
+        {
+            var where = $"{layer.Name} {bag.Name} '{bag.Nickname}' {bag.Guid} holds {c.Name} '{c.Nickname}' {c.Guid}";
+            if (c.Verdict.Hostile) _rep.HostileScript(c.Verdict.Reasons, where, c.Guid);
+            if (DefFactory.NotTranslated(c) is { } why) { _rep.Skipped(why, where); continue; }
+            if (c.IsInfiniteBag) { _rep.Skipped(c.Name + " (infinite bags are left out: place pieces from the Pieces drawer)", where); continue; }
+            if (!_defs.Shows(c)) { _rep.UnknownType(c.Name, where); continue; }
+            var refScale = _common.TryGetValue(_defs.VisualKey(c), out var k) ? k : DefFactory.BaseScale(c);
+            var ci = Instance(c, refScale, extras, packDefs, layer, usedPacks, ref rekeyed, null, 1, Math.Abs(c.ScaleX));
+            if (ci == null) continue;
+            holder.Stowed ??= new();
+            foreach (var moved in CarriedBy(ci, layer).Prepend(ci))
+            {
+                layer.Pieces.Remove(moved);
+                layer.Y.Remove(moved);
+                layer.Bottom.Remove(moved);
+                layer.Top.Remove(moved);
+                layer.Glued.Remove(moved);
+                holder.Stowed.Add(moved);
+            }
+            _stowed++;
+        }
+    }
+
+    static List<PieceInstance> CarriedBy(PieceInstance carrier, Layer layer)
+    {
+        var found = new List<PieceInstance>();
+        var todo = new Stack<PieceInstance>();
+        todo.Push(carrier);
+        while (todo.Count > 0)
+            foreach (var id in todo.Pop().Attached)
+                if (layer.Pieces.FirstOrDefault(p => p.Id == id) is { } next && !found.Contains(next)) { found.Add(next); todo.Push(next); }
+        return found;
     }
 
     void PlaceChildren(TtsObj o, IEnumerable<TtsObj> children, PieceInstance? parent, double refScale, double baseScale, double absolute, PackOut extras,
