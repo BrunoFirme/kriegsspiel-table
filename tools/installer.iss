@@ -71,18 +71,44 @@ begin
   Result := ExpandConstant('{param:relaunch|0}') = '1';
 end;
 
-function CanBeReplaced(const Path: String): Boolean;
+function FileIsHeld(const Path: String): Boolean;
 var
-  Spare: String;
+  Open: TFileStream;
 begin
-  if not (FileExists(Path) or DirExists(Path)) then
-  begin
+  try
+    Open := TFileStream.Create(Path, fmOpenRead or fmShareExclusive);
+    Open.Free;
+    Result := False;
+  except
     Result := True;
+  end;
+end;
+
+function HeldUnder(const Path: String): String;
+var
+  Found: TFindRec;
+  Child: String;
+begin
+  Result := '';
+  if FileExists(Path) then
+  begin
+    if FileIsHeld(Path) then Result := Path;
     Exit;
   end;
-  Spare := Path + '.replacing';
-  if RenameFile(Path, Spare) then Result := RenameFile(Spare, Path)
-  else Result := False;
+  if not DirExists(Path) then Exit;
+  if not FindFirst(AddBackslash(Path) + '*', Found) then Exit;
+  try
+    repeat
+      if (Found.Name <> '.') and (Found.Name <> '..') then
+      begin
+        Child := AddBackslash(Path) + Found.Name;
+        if Found.Attributes and FILE_ATTRIBUTE_DIRECTORY <> 0 then Result := HeldUnder(Child)
+        else if FileIsHeld(Child) then Result := Child;
+      end;
+    until (Result <> '') or not FindNext(Found);
+  finally
+    FindClose(Found);
+  end;
 end;
 
 function HeldInTheFolder: String;
@@ -93,7 +119,7 @@ var
   I: Integer;
 begin
   Result := '';
-  App := ExpandConstant('{app}') + '\';
+  App := AddBackslash(ExpandConstant('{app}'));
   SetArrayLength(Folders, 5);
   Folders[0] := 'converter';
   Folders[1] := 'standard';
@@ -101,20 +127,15 @@ begin
   Folders[3] := 'docs';
   Folders[4] := 'native';
   for I := 0 to GetArrayLength(Folders) - 1 do
-    if not CanBeReplaced(App + Folders[I]) then
-    begin
-      Result := Folders[I];
-      Exit;
-    end;
+  begin
+    Result := HeldUnder(App + Folders[I]);
+    if Result <> '' then Exit;
+  end;
   if FindFirst(App + 'data_*', Found) then
   try
     repeat
-      if not CanBeReplaced(App + Found.Name) then
-      begin
-        Result := Found.Name;
-        Exit;
-      end;
-    until not FindNext(Found);
+      Result := HeldUnder(App + Found.Name);
+    until (Result <> '') or not FindNext(Found);
   finally
     FindClose(Found);
   end;
@@ -133,6 +154,6 @@ begin
     Held := HeldInTheFolder;
   end;
   if Held = '' then Result := ''
-  else Result := 'Another program is using ' + Held + ' in ' + ExpandConstant('{app}') + '.'
+  else Result := 'Another program is using ' + Held + '.'
     + #13#10 + 'Close it and run this installer again. Nothing has been changed, and the version you have still works.';
 end;
