@@ -10,12 +10,12 @@ the plan says translate it), unknown (nobody has decided).
 | area | rows used by the corpus | decided | planned or unknown | rows in all |
 |---|---|---|---|---|
 | types | 30 | 26 | 4 | 43 |
-| save | 150 | 137 | 13 | 300 |
+| save | 150 | 143 | 7 | 300 |
 | object | 65 | 64 | 1 | 262 |
 | global | 14 | 14 | 0 | 55 |
 | namespaces | 23 | 21 | 2 | 180 |
 | events | 8 | 8 | 0 | 51 |
-| engine | 23 | 20 | 3 | 23 |
+| engine | 23 | 23 | 0 | 23 |
 
 ## types
 
@@ -84,7 +84,7 @@ the plan says translate it), unknown (nobody has decided).
 | `ColourState.b` | 39643 / 54 | native | converter reads it |  |
 | `ColourState.r` | 34140 / 54 | native | converter reads it |  |
 | `ObjectState.Locked` | 16911 / 54 | native | converter reads it |  |
-| `ObjectState.Grid` | 4449 / 54 | planned | Phase C item 7: snap to grid |  |
+| `ObjectState.Grid` | 4449 / 54 | dropped | snap to grid (grid, decided 2026-11-06) |  |
 | `ObjectState.FogColor` | 423 / 54 | dropped | hidden zones (decided 2026-11-06) |  |
 | `SaveState.ComponentTags` | 54 / 54 | dropped | tag labels of the TTS UI |  |
 | `SaveState.Grid` | 54 / 54 | dropped | grid (decided 2026-11-06) |  |
@@ -116,11 +116,11 @@ the plan says translate it), unknown (nobody has decided).
 | `CustomMeshState.CustomShader` | 1100 / 48 | dropped | specular shader settings |  |
 | `CustomAssetbundleState.TypeIndex` | 618 / 48 | native | converter reads it |  |
 | `ObjectState.States` | 11157 / 47 | native | converter reads it |  |
-| `ObjectState.Tooltip` | 1360 / 47 | planned | Phase C item 7: piece flags |  |
-| `ObjectState.MaterialIndex` | 182 / 47 | planned | Phase C item 7: a stock look of our own |  |
+| `ObjectState.Tooltip` | 1360 / 47 | dropped | hiding a piece's name on hover (hidden information, decided 2026-11-06) |  |
+| `ObjectState.MaterialIndex` | 182 / 47 | dropped | TTS's stock material (plastic, wood, metal...) on a block or model |  |
 | `ObjectState.GridProjection` | 78 / 46 | dropped | grid (decided 2026-11-06) |  |
 | `ObjectState.Description` | 16860 / 44 | native | converter reads it |  |
-| `ObjectState.Snap` | 3149 / 40 | planned | Phase C item 7: snap points |  |
+| `ObjectState.Snap` | 3149 / 40 | dropped | snap points (grid, decided 2026-11-06) |  |
 | `ObjectState.ChildObjects` | 25386 / 38 | native | Tts.cs Children: attachments and glued parts | import-sweep: triangles, richmond |
 | `CustomTileState.Thickness` | 13329 / 38 | native | converter reads it |  |
 | `GridState.xSize` | 38 / 38 | dropped | grid (decided 2026-11-06) |  |
@@ -167,7 +167,7 @@ the plan says translate it), unknown (nobody has decided).
 | `CustomTileState.Stretch` | 569 / 10 | native | converter reads it |  |
 | `SaveState.Gravity` | 9 / 9 | dropped | engine physics |  |
 | `SaveState.VectorLines` | 9 / 9 | native | strokes on the umpire's drawing board | DrawingTests |
-| `ObjectState.DragSelectable` | 335 / 8 | planned | Phase C item 7: piece flags |  |
+| `ObjectState.DragSelectable` | 335 / 8 | dropped | whether a drag selects the piece |  |
 | `CustomPDFState.PDFUrl` | 9 / 8 | planned | Battle Lines session: books (uncommitted on main) |  |
 | `SaveState.MusicPlayer` | 8 / 8 | dropped | music player |  |
 | `ObjectState.Autoraise` | 354 / 7 | planned | Phase C item 10: resting |  |
@@ -200,7 +200,7 @@ the plan says translate it), unknown (nobody has decided).
 | `CustomMeshState.NormalURL` | 232 / 3 | native | converter reads it |  |
 | `CustomShaderState.FresnelStrength` | 216 / 3 | dropped | specular shader settings |  |
 | `CustomShaderState.SpecularSharpness` | 153 / 3 | dropped | specular shader settings |  |
-| `ColourState.a` | 22 / 3 | planned | Phase C item 7: tint alpha |  |
+| `ColourState.a` | 22 / 3 | dropped | a tint's transparency |  |
 | `ObjectState.MeasureMovement` | 15 / 3 | dropped | the measure-on-move overlay |  |
 | `GridState.Type` | 3 / 3 | dropped | grid (decided 2026-11-06) |  |
 | `MusicPlayerState.PlaylistEntry` | 3 / 3 | dropped | music player |  |
@@ -325,14 +325,14 @@ the plan says translate it), unknown (nobody has decided).
 | `ObjectState.JointSpring` | - | dropped | engine physics (joints) |  |
 | `ObjectState.LayoutGroupSortIndex` | - | dropped | layout zones |  |
 | `ObjectState.LayoutZone` | - | dropped | layout zones |  |
-| `ObjectState.MeshIndex` | - | planned | Phase C item 7: a stock look of our own |  |
+| `ObjectState.MeshIndex` | - | dropped | TTS's stock shape of a block |  |
 | `ObjectState.Mp3Player` | - | dropped | TTS stock gadget |  |
-| `ObjectState.Number` | - | planned | Phase C item 7: piece flags |  |
+| `ObjectState.Number` | - | dropped | a number typed over the piece |  |
 | `ObjectState.RPGdead` | - | dropped | TTS rpg figurines |  |
 | `ObjectState.RPGmode` | - | dropped | TTS rpg figurines |  |
 | `ObjectState.SidewaysCard` | - | planned | Phase C item 7: cards |  |
 | `ObjectState.Tablet` | - | dropped | TTS stock gadget |  |
-| `ObjectState.Value` | - | planned | Phase C item 7: piece flags |  |
+| `ObjectState.Value` | - | dropped | the piece's counting value |  |
 | `ObjectState.miscID` | - | dropped | TTS internal |  |
 | `ObjectState.vector` | - | dropped | TTS internal |  |
 | `PhysicsMaterialState.BounceCombine` | - | dropped | engine physics |  |
@@ -957,11 +957,11 @@ the plan says translate it), unknown (nobody has decided).
 | `player model: colours, Black as GM, promoted, seated, host` | 54 / 54 | partial | compat.color_of: the host is Black as TTS's GM, the other umpires White, Red, Blue... in seat order, so Player[color] finds each; sides and observers have no seat colour | PlayerActionTests |
 | `positionToWorld and positionToLocal: TTS's transform, local x along +X at rotation zero, in mesh units times scale for a model and the size rule for a flat` | 54 / 54 | compat | compat.position_to_world / position_to_local; a model def carries local_unit from the converter | TtsLocalFrameTests |
 | `save quirk: a number written as a string, or NaN` | 54 / 54 | native | Tts.D falls back to the default and the report says so | ConverterTests |
-| `save quirk: duplicate GUIDs inside bags` | 54 / 54 | unknown |  |  |
-| `save quirk: negative scale mirrors` | 54 / 54 | unknown |  |  |
+| `save quirk: duplicate GUIDs inside bags` | 54 / 54 | native | a guid names the first piece found, as TTS answers getObjectFromGUID |  |
+| `save quirk: negative scale mirrors` | 54 / 54 | partial | the size is taken unsigned, so a mirrored piece comes over unmirrored, and the report names it | ConverterTests |
 | `save quirk: rotX/rotZ near 180 means face down; other tilts stand or lean` | 54 / 54 | partial | Tts.Flipped: 180 only |  |
 | `script safety cuts the self-copying block and keeps the rest` | 54 / 54 | native | ScriptSafety | ScriptSafetyTests |
-| `setState keeps the GUID` | 54 / 54 | planned | Phase B: probe |  |
+| `setState keeps the GUID` | 54 / 54 | partial | a piece keeps its id and guid through its looks; in TTS each state object has a guid of its own that takes over |  |
 | `smooth moves end at once` | 54 / 54 | compat | compat.set_position |  |
 | `spawning and loading_custom flags` | 54 / 54 | compat | ObjectProps (get_prop) |  |
 | `widget indices are 0-based in editButton/editInput/removeButton` | 54 / 54 | compat | compat.edit_button |  |

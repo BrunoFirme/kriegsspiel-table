@@ -442,6 +442,7 @@ public sealed class ScenarioBuilder
             scale = baseScale = DefFactory.HiddenByScale;
             _hiddenByScale++;
         }
+        if (o.ScaleX < 0 || o.ScaleZ < 0) _rep.Note($"{layer.Name} {o.Name} '{o.Nickname}' {o.Guid}: TTS mirrors this piece by a negative scale; it shows unmirrored here.");
         var (counters, text) = r.Script.Values(o.LuaState);
         var lua = o.SafeLua;
         if (def.Script != null) { counters = new(); text = new(); }

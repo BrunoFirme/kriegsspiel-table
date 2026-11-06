@@ -526,9 +526,9 @@
   },
   {
    "row": "ObjectState.Grid",
-   "status": "planned",
-   "where": "Phase C item 7: snap to grid",
-   "instead": "",
+   "status": "dropped",
+   "where": "snap to grid (grid, decided 2026-11-06)",
+   "instead": "the table's own grid snaps",
    "held_by": "",
    "count": 4449,
    "modules": 54
@@ -814,18 +814,18 @@
   },
   {
    "row": "ObjectState.Tooltip",
-   "status": "planned",
-   "where": "Phase C item 7: piece flags",
-   "instead": "",
+   "status": "dropped",
+   "where": "hiding a piece's name on hover (hidden information, decided 2026-11-06)",
+   "instead": "the umpire layer hides a piece whole",
    "held_by": "",
    "count": 1360,
    "modules": 47
   },
   {
    "row": "ObjectState.MaterialIndex",
-   "status": "planned",
-   "where": "Phase C item 7: a stock look of our own",
-   "instead": "",
+   "status": "dropped",
+   "where": "TTS's stock material (plastic, wood, metal...) on a block or model",
+   "instead": "the piece keeps its tint; a look is the pack's own",
    "held_by": "",
    "count": 182,
    "modules": 47
@@ -850,9 +850,9 @@
   },
   {
    "row": "ObjectState.Snap",
-   "status": "planned",
-   "where": "Phase C item 7: snap points",
-   "instead": "",
+   "status": "dropped",
+   "where": "snap points (grid, decided 2026-11-06)",
+   "instead": "the table's own grid snaps",
    "held_by": "",
    "count": 3149,
    "modules": 40
@@ -1273,9 +1273,9 @@
   },
   {
    "row": "ObjectState.DragSelectable",
-   "status": "planned",
-   "where": "Phase C item 7: piece flags",
-   "instead": "",
+   "status": "dropped",
+   "where": "whether a drag selects the piece",
+   "instead": "nothing is needed",
    "held_by": "",
    "count": 335,
    "modules": 8
@@ -1570,9 +1570,9 @@
   },
   {
    "row": "ColourState.a",
-   "status": "planned",
-   "where": "Phase C item 7: tint alpha",
-   "instead": "",
+   "status": "dropped",
+   "where": "a tint's transparency",
+   "instead": "a tint has no transparency here",
    "held_by": "",
    "count": 22,
    "modules": 3
@@ -2695,9 +2695,9 @@
   },
   {
    "row": "ObjectState.MeshIndex",
-   "status": "planned",
-   "where": "Phase C item 7: a stock look of our own",
-   "instead": "",
+   "status": "dropped",
+   "where": "TTS's stock shape of a block",
+   "instead": "a piece of our own",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -2713,9 +2713,9 @@
   },
   {
    "row": "ObjectState.Number",
-   "status": "planned",
-   "where": "Phase C item 7: piece flags",
-   "instead": "",
+   "status": "dropped",
+   "where": "a number typed over the piece",
+   "instead": "a counter on the piece",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -2758,9 +2758,9 @@
   },
   {
    "row": "ObjectState.Value",
-   "status": "planned",
-   "where": "Phase C item 7: piece flags",
-   "instead": "",
+   "status": "dropped",
+   "where": "the piece's counting value",
+   "instead": "a counter on the piece",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -8168,8 +8168,8 @@
   },
   {
    "row": "save quirk: duplicate GUIDs inside bags",
-   "status": "unknown",
-   "where": "",
+   "status": "native",
+   "where": "a guid names the first piece found, as TTS answers getObjectFromGUID",
    "instead": "",
    "held_by": "",
    "count": 54,
@@ -8177,10 +8177,10 @@
   },
   {
    "row": "save quirk: negative scale mirrors",
-   "status": "unknown",
-   "where": "",
+   "status": "partial",
+   "where": "the size is taken unsigned, so a mirrored piece comes over unmirrored, and the report names it",
    "instead": "",
-   "held_by": "",
+   "held_by": "ConverterTests",
    "count": 54,
    "modules": 54
   },
@@ -8204,8 +8204,8 @@
   },
   {
    "row": "setState keeps the GUID",
-   "status": "planned",
-   "where": "Phase B: probe",
+   "status": "partial",
+   "where": "a piece keeps its id and guid through its looks; in TTS each state object has a guid of its own that takes over",
    "instead": "",
    "held_by": "",
    "count": 54,
