@@ -194,8 +194,11 @@ public sealed partial class DefFactory
         "Checker_white" or "Checker_red" or "Checker_black" => CheckerThickness,
         "Custom_Dice" => DieAcross,
         "Bag" => BagThickness,
+        "Notecard" or "3DText" => TextThickness,
         _ => 0.2,
     };
+
+    public const double TextThickness = 0.02;
 
     static Size2 Mul(Size2 s, double k) => new(Math.Round(s.W * k, 4), Math.Round(s.H * k, 4));
 

@@ -529,6 +529,7 @@ public sealed class ScenarioBuilder
             if (c.Verdict.Hostile) _rep.HostileScript(c.Verdict.Reasons, where, c.Guid);
             if (DefFactory.NotTranslated(c) is { } why) { _rep.Skipped(why, where); continue; }
             if (c.IsInfiniteBag) { _rep.Skipped(c.Name + " (infinite bags are left out: place pieces from the Pieces drawer)", where); continue; }
+            if (c.Name == BundleType && _defs.ModelOfBundle(c) == null) { _rep.Skipped(c.Name + " (an effect inside a bag; effects live on the table, so place one from Firme's Effects)", where); continue; }
             if (!_defs.Shows(c)) { _rep.UnknownType(c.Name, where); continue; }
             var refScale = _common.TryGetValue(_defs.VisualKey(c), out var k) ? k : DefFactory.BaseScale(c);
             var ci = Instance(c, refScale, extras, packDefs, layer, usedPacks, ref rekeyed, null, 1, Math.Abs(c.ScaleX));
@@ -707,7 +708,7 @@ public sealed class ScenarioBuilder
             {
                 p.Stack = u.p.Stack + 1;
                 rest = u.ktTop;
-                if (bottomKnown) held.Add((bottom, rest));
+                if (bottomKnown && bottom >= u.ttsTop - Sunk) held.Add((bottom, rest));
             }
             else
             {
