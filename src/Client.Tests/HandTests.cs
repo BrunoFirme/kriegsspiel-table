@@ -135,6 +135,26 @@ public class HandTests
     }
 
     [Fact]
+    public void A_piece_carried_with_what_it_is_attached_to_stays_attached_wherever_it_hangs()
+    {
+        var blk = new FakePiece("blk", 0, 0, 2, 1);
+        var flag = new FakePiece("flag", 3, 0, 2, 1, y: 0.5, thickness: 0.02f);
+        blk.Piece.Attached.Add("flag");
+        var all = new List<FakePiece> { blk, flag };
+        var footing = new Footing<FakePiece>(_ => all, _ => false);
+        var sticking = new Sticking<FakePiece>(_ => all, (l, id) => all.FirstOrDefault(n => n.Piece.Id == id), _ => all.Select(n => n.Piece).ToList(), footing);
+        var hb = new HeldPiece<FakePiece> { Node = blk, Layer = blk.Layer, Id = "blk", Rot = 180 };
+        var hf = new HeldPiece<FakePiece> { Node = flag, Layer = flag.Layer, Id = "flag", Offset = new Vec2(3, 0), Rot = 180, Lift = 0.5f, Parent = hb };
+        var held = new List<HeldPiece<FakePiece>> { hb, hf };
+        var landing = new Landing<FakePiece>(footing, held, new Vec2(8, 8), 64);
+        var moved = held.Select(h => (h.Node, landing.Move(h))).ToList();
+        var nodes = moved.Select(x => x.Node).ToList();
+        var (cmds, stuck, freed, _) = sticking.Stickiness(nodes, moved, nodes.ToHashSet());
+        Assert.Equal("", Describe(cmds));
+        Assert.Equal((0, 0), (stuck, freed));
+    }
+
+    [Fact]
     public void A_stuck_marker_dropped_on_the_bare_table_comes_loose()
     {
         var blk = new FakePiece("blk", 0, 0, 2, 1);

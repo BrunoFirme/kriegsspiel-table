@@ -24,12 +24,14 @@ public sealed class Sticking<T> where T : class, ITablePiece
         int stuck = 0, freed = 0;
         string to = "";
         var pieces = _layer(dropped.Count > 0 ? dropped[0].Layer : Layers.Umpire);
+        var droppedIds = dropped.Select(d => d.Piece.Id).ToHashSet();
         foreach (var n in dropped)
         {
             var m = moved.FirstOrDefault(x => x.n == n).m;
             var pos = m?.Pos ?? n.Piece.Pos;
             double y = Absolute(n, pos, m?.RotDeg ?? n.Piece.RotDeg, m?.Y ?? n.Piece.Y);
             var parent = pieces.FirstOrDefault(p => p.Attached.Contains(n.Piece.Id));
+            if (parent != null && droppedIds.Contains(parent.Id)) continue;
             var under = BaseUnder(n, pos, y, parent, dropped.ToHashSet(), moved, simulated);
             if (under != null && parent?.Id != under.Piece.Id)
             {
