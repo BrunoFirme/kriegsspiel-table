@@ -181,6 +181,7 @@ public sealed partial class DefFactory
             "Checker_white" or "Checker_red" or "Checker_black" => new Size2(CheckerAcross, CheckerAcross * ratio),
             "Custom_Dice" => new Size2(DieAcross, DieAcross * ratio),
             "Bag" => new Size2(BagAcross, BagAcross * ratio),
+            "PlayerPawn" => new Size2(PawnAcross, PawnAcross * ratio),
             _ => new Size2(1, ratio),
         };
     }
@@ -194,6 +195,7 @@ public sealed partial class DefFactory
         "Checker_white" or "Checker_red" or "Checker_black" => CheckerThickness,
         "Custom_Dice" => DieAcross,
         "Bag" => BagThickness,
+        "PlayerPawn" => PawnHeight,
         "Notecard" or "3DText" => TextThickness,
         _ => 0.2,
     };

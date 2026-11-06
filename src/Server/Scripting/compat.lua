@@ -272,6 +272,21 @@ function compat.set_vector_lines(obj, lines)
   obj.set_lines(ours)
 end
 function compat.get_vector_lines(obj) return pbag(obj).lines or {} end
+local global_lines = { tts = {}, ids = {} }
+function compat.global_vector_lines() return global_lines.tts end
+function compat.set_global_vector_lines(lines)
+  for _, id in ipairs(global_lines.ids) do board.erase(id) end
+  global_lines = { tts = lines or {}, ids = {} }
+  for _, l in ipairs(lines or {}) do
+    local pts = {}
+    for _, p in ipairs(l.points or {}) do pts[#pts + 1] = { x = vec(p, "x", 1, 0), z = vec(p, "z", 3, 0) } end
+    if l.loop and #pts >= 2 then pts[#pts + 1] = pts[1] end
+    if #pts >= 2 then
+      local id = board.draw({ points = pts, color = compat.color(l.color), width = num(l.thickness, 0.1) })
+      if id then global_lines.ids[#global_lines.ids + 1] = id end
+    end
+  end
+end
 local web_pictures = {}
 local function is_web(url) return type(url) == "string" and url:find("://", 1, true) ~= nil end
 local function our_decal(obj, d)

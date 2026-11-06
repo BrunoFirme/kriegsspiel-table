@@ -553,6 +553,10 @@ public static partial class ApiDoc
         See("game.calibration");
 
         M("board", "zones()", "The umpire zones: { id =, name =, owner =, contains = function(piece_or_point) }.", "getZones", "table");
+
+        M("board", "draw(stroke)", "Draws a line on the umpire's drawing board and returns its id: { points = { {x=,z=}, ... }, color =, width =, loop = }.", "Global.setVectorLines", "string");
+        M("board", "erase(id)", "Takes a drawn line off the board.", null);
+        M("board", "strokes()", "The lines on the umpire's drawing board: { id =, points =, color =, width = }.", "Global.getVectorLines", "table[]");
         R("A list of zones. `contains(piece_or_point)` answers true when the piece or point lies inside.");
         X("""
             for _, z in ipairs(board.zones()) do

@@ -254,10 +254,10 @@
   },
   {
    "row": "PlayerPawn",
-   "status": "planned",
-   "where": "Phase C item 7: a stock pawn of our own",
+   "status": "native",
+   "where": "a round piece in the pawn's colour, as tall as a pawn",
    "instead": "",
-   "held_by": "",
+   "held_by": "PawnTests",
    "count": 7,
    "modules": 1
   },
@@ -6112,19 +6112,19 @@
   },
   {
    "row": "Global.getVectorLines",
-   "status": "planned",
-   "where": "Phase C item 4: table drawings",
+   "status": "compat",
+   "where": "compat.global_vector_lines: the lines the script last set",
    "instead": "",
-   "held_by": "",
+   "held_by": "BoardDrawingTests",
    "count": 3,
    "modules": 1
   },
   {
    "row": "Global.setVectorLines",
-   "status": "planned",
-   "where": "Phase C item 4: table drawings",
+   "status": "compat",
+   "where": "compat.set_global_vector_lines: strokes on the umpire's drawing board through board.draw",
    "instead": "",
-   "held_by": "",
+   "held_by": "BoardDrawingTests",
    "count": 3,
    "modules": 1
   },

@@ -9,11 +9,11 @@ the plan says translate it), unknown (nobody has decided).
 
 | area | rows used by the corpus | decided | planned or unknown | rows in all |
 |---|---|---|---|---|
-| types | 30 | 26 | 4 | 43 |
+| types | 30 | 27 | 3 | 43 |
 | save | 150 | 143 | 7 | 300 |
 | object | 65 | 64 | 1 | 262 |
 | global | 14 | 14 | 0 | 55 |
-| namespaces | 23 | 21 | 2 | 180 |
+| namespaces | 23 | 23 | 0 | 180 |
 | events | 8 | 8 | 0 | 51 |
 | engine | 23 | 23 | 0 | 23 |
 
@@ -49,7 +49,7 @@ the plan says translate it), unknown (nobody has decided).
 | `Checker_white` | 17 / 1 | native | converter |  |
 | `Figurine_Custom` | 16 / 1 | planned | Phase C item 7: a standing picture |  |
 | `Deck` | 15 / 1 | native | converter |  |
-| `PlayerPawn` | 7 / 1 | planned | Phase C item 7: a stock pawn of our own |  |
+| `PlayerPawn` | 7 / 1 | native | a round piece in the pawn's colour, as tall as a pawn | PawnTests |
 | `Die_8` | 2 / 1 | native | the app's d8, showing the face it was saved on | DiceTests |
 | `Calculator` | - | dropped | TTS stock gadget |  |
 | `Counter` | - | dropped | TTS stock gadget |  |
@@ -719,8 +719,8 @@ the plan says translate it), unknown (nobody has decided).
 | `UI.setXml` | 137 / 2 | partial | run-time UI through ui.*: the attributes a player sees; item 8 |  |
 | `Player.getColors` | 2 / 2 | partial | compat.player: the seats and colours we have; item 8 maps the rest |  |
 | `UI.getAttribute` | 2 / 2 | partial | run-time UI through ui.*: the attributes a player sees; item 8 |  |
-| `Global.getVectorLines` | 3 / 1 | planned | Phase C item 4: table drawings |  |
-| `Global.setVectorLines` | 3 / 1 | planned | Phase C item 4: table drawings |  |
+| `Global.getVectorLines` | 3 / 1 | compat | compat.global_vector_lines: the lines the script last set | BoardDrawingTests |
+| `Global.setVectorLines` | 3 / 1 | compat | compat.set_global_vector_lines: strokes on the umpire's drawing board through board.draw | BoardDrawingTests |
 | `Physics.cast` | 1 / 1 | compat | compat.cast |  |
 | `Timer.create` | 1 / 1 | compat | compat.Timer |  |
 | `Timer.destroy` | 1 / 1 | compat | compat.Timer |  |

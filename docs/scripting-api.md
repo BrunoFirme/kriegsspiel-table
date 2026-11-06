@@ -1390,6 +1390,9 @@ The umpire board: every piece a script can reach is on it.
 | [`board.spawn`](#boardspawn) | Puts a new piece of that kind on the board and returns it; its script starts at once. |
 | [`board.distance`](#boarddistance) | Metres between two pieces or two { x =, z = } points by the map's scale (map units when it has none). |
 | [`board.zones`](#boardzones) | The umpire zones: { id =, name =, owner =, contains = function(piece_or_point) }. |
+| [`board.draw`](#boarddraw) | Draws a line on the umpire's drawing board and returns its id: { points = { {x=,z=}, ... }, color =, width =, loop = }. |
+| [`board.erase`](#boarderase) | Takes a drawn line off the board. |
+| [`board.strokes`](#boardstrokes) | The lines on the umpire's drawing board: { id =, points =, color =, width = }. |
 
 ### `board.find`
 
@@ -1503,7 +1506,39 @@ board.zones()
 
 The umpire zones: { id =, name =, owner =, contains = function(piece_or_point) }.
 
-**Returns** `table`: A list of zones. `contains(piece_or_point)` answers true when the piece or point lies inside.
+**Returns** `table`.
+
+**Tabletop Simulator** `getZones`
+
+### `board.draw`
+
+```lua
+board.draw(stroke)
+```
+
+Draws a line on the umpire's drawing board and returns its id: { points = { {x=,z=}, ... }, color =, width =, loop = }.
+
+**Returns** `string`.
+
+**Tabletop Simulator** `Global.setVectorLines`
+
+### `board.erase`
+
+```lua
+board.erase(id)
+```
+
+Takes a drawn line off the board.
+
+### `board.strokes`
+
+```lua
+board.strokes()
+```
+
+The lines on the umpire's drawing board: { id =, points =, color =, width = }.
+
+**Returns** `table[]`: A list of zones. `contains(piece_or_point)` answers true when the piece or point lies inside.
 
 ```lua
 for _, z in ipairs(board.zones()) do
@@ -1511,7 +1546,7 @@ for _, z in ipairs(board.zones()) do
 end
 ```
 
-**Tabletop Simulator** `getZones`
+**Tabletop Simulator** `Global.getVectorLines`
 
 ## game
 
@@ -2812,7 +2847,9 @@ The converter rewrites a module's scripts into these calls by rule; this is the 
 | `getZones` | [`board.zones`](#boardzones) |
 | `Global.call` | [`game.call`](#gamecall) |
 | `Global.getVar` | [`game.get_var`](#gameget_var) |
+| `Global.getVectorLines` | [`board.strokes`](#boardstrokes) |
 | `Global.setVar` | [`game.set_var`](#gameset_var) |
+| `Global.setVectorLines` | [`board.draw`](#boarddraw) |
 | `isDestroyed` | [`self.exists`](#selfexists) |
 | `is_face_down` | [`self.face_down`](#selfface_down) |
 | `JSON` | [`json`](#json) |

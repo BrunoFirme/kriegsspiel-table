@@ -254,6 +254,8 @@ public static class TtsTranslator
                         "call" => Direct($"game.call({All()})", node),
                         "getVar" or "getTable" => Direct($"game.get_var({All()})", node),
                         "setVar" or "setTable" => Direct($"game.set_var({All()})", node),
+                        "getVectorLines" => Compat("compat.global_vector_lines()", node),
+                        "setVectorLines" => Compat($"compat.set_global_vector_lines({All()})", node),
                         _ => Todo("Global." + name, $"compat.todo(nil, \"Global.{name}\")", node),
                     };
                 case "Player":

@@ -19,10 +19,10 @@ public sealed partial class DefFactory
         ["Checker_black"] = ("Black checker", "#26221F"),
     };
 
-    public const double BagAcross = 1.5, BagThickness = 0.8;
-    const string BagCanvas = "#8B7355";
+    public const double BagAcross = 1.5, BagThickness = 0.8, PawnAcross = 0.8, PawnHeight = 1.2;
+    const string BagCanvas = "#8B7355", PawnIvory = "#E8E2D0";
 
-    public static bool IsTablePiece(TtsObj o) => (o.IsCard && o.Sheet != null) || o.IsChecker || o.IsPictureDie || o.Name == "Bag";
+    public static bool IsTablePiece(TtsObj o) => (o.IsCard && o.Sheet != null) || o.IsChecker || o.IsPictureDie || o.Name is "Bag" or "PlayerPawn";
 
     public const string TtsOwnProps = "Tileset_";
 
@@ -37,24 +37,26 @@ public sealed partial class DefFactory
         b.IsCard && b.Sheet is { } s ? $"|card|{s.FaceUrl}#{b.SheetCell}|{s.BackUrl}|{s.Across}x{s.Down}|{s.UniqueBack}"
         : b.IsChecker ? $"|{b.Color}"
         : b.Name == "Bag" ? $"|bag|{b.Color}|{b.Nickname}"
+        : b.Name == "PlayerPawn" ? $"|pawn|{b.Color}"
         : null;
 
     void FillTablePiece(PieceDef def, TtsObj b, PackOut pack, string where)
     {
         if (b.IsCard) FillCard(def, b, pack, where);
         else if (b.IsChecker) FillChecker(def, b, pack);
-        else if (b.Name == "Bag") FillBag(def, b, pack);
+        else if (b.Name == "Bag") FillRound(def, b, pack, "bag", "Bag", BagCanvas);
+        else if (b.Name == "PlayerPawn") FillRound(def, b, pack, "pawn", "Pawn", PawnIvory);
         else FillPictureDie(def, b, pack, where);
     }
 
-    void FillBag(PieceDef def, TtsObj b, PackOut pack)
+    void FillRound(PieceDef def, TtsObj b, PackOut pack, string tag, string name, string plain)
     {
         def.Image = WhiteSquare(pack);
         def.Shape = "circle";
         def.TintsPictures = true;
-        def.Tint = b.Color is { } c && !string.Equals(c, "#FFFFFF", StringComparison.OrdinalIgnoreCase) ? c : BagCanvas;
-        def.Tags = def.Tags.Where(t => t != "block").Append("bag").Distinct().ToList();
-        if (def.Name == "Piece") def.Name = "Bag";
+        def.Tint = b.Color is { } c && !string.Equals(c, "#FFFFFF", StringComparison.OrdinalIgnoreCase) ? c : plain;
+        def.Tags = def.Tags.Where(t => t != "block").Append(tag).Distinct().ToList();
+        if (def.Name == "Piece") def.Name = name;
     }
 
     void FillCard(PieceDef def, TtsObj b, PackOut pack, string where)

@@ -52,6 +52,9 @@ public sealed partial class ScriptHost
         board.Table["spawn"] = Fn(a => Spawn(Arg(a, 0)));
         board.Table["distance"] = Fn(a => Distance(Arg(a, 0), Arg(a, 1)));
         board.Table["zones"] = Fn(_ => Zones());
+        board.Table["draw"] = Fn(a => _handles.DrawStroke(Arg(a, 0)));
+        board.Table["erase"] = Fn(a => { Emit(new EraseStroke { Layer = Layers.Umpire, StrokeId = Arg(a, 0).CastToString() ?? "" }); return DynValue.Nil; });
+        board.Table["strokes"] = Fn(_ => _handles.Strokes());
         g["board"] = board;
 
         InstallGame(g);
@@ -666,6 +669,28 @@ internal sealed class PieceHandles(ScriptHost host)
         ln.Width = t.Get("width").Type == DataType.Number ? t.Get("width").Number : 0.1;
         ln.Loop = t.Get("loop").Type == DataType.Boolean && t.Get("loop").Boolean;
         return ln;
+    }
+
+    internal DynValue DrawStroke(DynValue v)
+    {
+        if (v.Type != DataType.Table || ParseLine(v.Table) is not { } ln || ln.Points.Count < 2) return DynValue.Nil;
+        var points = new List<Vec2>(ln.Points);
+        if (ln.Loop) points.Add(points[0]);
+        var dr = new Draw { Layer = Layers.Umpire, Stroke = new Stroke { Points = points, Color = ln.Color, Width = ln.Width } };
+        host.Emit(dr);
+        return S(dr.Stroke.Id);
+    }
+
+    internal DynValue Strokes() => ListTable(host.Server.State.DrawLayer(Layers.Umpire).Select(StrokeTable));
+
+    DynValue StrokeTable(Stroke s)
+    {
+        var t = T();
+        t.Table["id"] = S(s.Id);
+        t.Table["points"] = ListTable(s.Points.Select(p => XzTable(p.X, p.Z)));
+        t.Table["color"] = S(s.Color);
+        t.Table["width"] = N(s.Width);
+        return t;
     }
 
     bool PictureInGame(string picture) =>

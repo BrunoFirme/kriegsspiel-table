@@ -354,8 +354,19 @@ function board.spawn(spec) end
 function board.distance(a, b) end
 
 ---The umpire zones: { id =, name =, owner =, contains = function(piece_or_point) }.
----@return table # A list of zones. contains(piece_or_point) answers true when the piece or point lies inside.
+---@return table
 function board.zones() end
+
+---Draws a line on the umpire's drawing board and returns its id: { points = { {x=,z=}, ... }, color =, width =, loop = }.
+---@return string
+function board.draw() end
+
+---Takes a drawn line off the board.
+function board.erase() end
+
+---The lines on the umpire's drawing board: { id =, points =, color =, width = }.
+---@return table[] # A list of zones. contains(piece_or_point) answers true when the piece or point lies inside.
+function board.strokes() end
 
 ---@class KTGame
 ---@field turn number The turn number.
