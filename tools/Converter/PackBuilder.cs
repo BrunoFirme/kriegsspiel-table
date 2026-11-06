@@ -131,11 +131,13 @@ public sealed class PackBuilder
                 if (_defs.DefFor(c, pack, Math.Abs(c.StateList().states[0].ScaleX) * Math.Abs(o.ScaleX)) != null) objects++;
             return;
         }
-        if (_cfg.IgnoreTypes.Contains(o.Name) || o.StockSides != null) { _rep.Skipped(o.Name, where); return; }
+        if (o.StockSides != null) return;
+        if (_cfg.IgnoreTypes.Contains(o.Name)) { _rep.Skipped(o.Name, where); return; }
         if (DefFactory.NotTranslated(o) is { } why) { _rep.Skipped(why, where); return; }
         if (!DefFactory.IsPiece(o)) { _rep.UnknownType(o.Name, where); return; }
         if (o.IsFurniture) { _rep.Skipped("table furniture (custom table / surround / under the table)", where); return; }
         if (o.IsTerrain) { _rep.Skipped("3D terrain (laid as a map sheet of the scenario)", where); return; }
+        if (o.Top != null) { _rep.Skipped("table top (read with the scenario: a map picture becomes a sheet)", where); return; }
         var r = _defs.DefFor(o, pack);
         if (r == null) return;
         objects++;

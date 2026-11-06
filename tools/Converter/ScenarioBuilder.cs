@@ -85,13 +85,13 @@ public sealed class ScenarioBuilder
                 if (o.Flipped && placed is { FaceDown: false }) flipped++;
             }
         }
-        var effects = BundleEffects.Load(root);
+        var effects = Effects;
         if (master.Objects.SelectMany(o => o.Walk()).Any(o => o.Name == BundleType && !_cfg.IsTableWall(o.BundleUrl) && effects.For(o) != null))
             usedPacks.Add(KTable.Client.Effects.EffectKinds.StandardPack);
         var placedEffects = layers.ToDictionary(l => l, _ => new List<PieceInstance>());
         foreach (var layer in layers)
             foreach (var o in layer.Effects)
-                if (Effect(o, effects, extras, packDefs, layer, usedPacks, ref rekeyed) is { } fx) placedEffects[layer].Add(fx);
+                if (Effect(o, extras, packDefs, layer, usedPacks, ref rekeyed) is { } fx) placedEffects[layer].Add(fx);
         Index(extras.M.Pieces);
         foreach (var pd in packDefs.Values.SelectMany(v => v)) _lookup.TryAdd(pd.def.Id, pd.def);
         foreach (var layer in layers) Stack(layer);
@@ -192,10 +192,12 @@ public sealed class ScenarioBuilder
     HashSet<ModuleObj> AddSheets(Scenario scenario, ModuleSave master, string pkgRel, string pkgDir, string? oldScenario)
     {
         var sc = _cfg.Scenario;
+        var tops = master.Objects.Where(o => o.Top != null).ToList();
         var boards = master.Objects.Where(IsSheet).OrderBy(b => b.PosY).ToList();
         var terrain = master.Objects.Where(o => o.IsTerrain).SelectMany(WithAttachedTerrain).ToList();
-        var boardSet = boards.Concat(terrain).ToHashSet();
+        var boardSet = tops.Concat(boards).Concat(terrain).ToHashSet();
         if (boardSet.Count > 0) Progress.Stage("maps", boardSet.Count);
+        foreach (var t in tops) AddTableTop(scenario, t, pkgRel, pkgDir, oldScenario);
         foreach (var b in boards)
         {
             var e = _defs.Entry(b.ImageUrl);
@@ -210,6 +212,30 @@ public sealed class ScenarioBuilder
         }
         AddTerrain(scenario, terrain, pkgRel, pkgDir, oldScenario);
         return boardSet;
+    }
+
+    void AddTableTop(Scenario scenario, ModuleObj o, string pkgRel, string pkgDir, string? oldScenario)
+    {
+        var top = o.Top!;
+        var e = _defs.Entry(o.DiffuseUrl);
+        if (e == null || !AssetStore.IsPicture(e.Ext))
+        {
+            _rep.Missing(o.DiffuseUrl!, e == null ? _assets.Why(o.DiffuseUrl!) ?? "unresolved" : $"not a picture ({e.Ext})", $"{_cfg.Scenario.Id} table top {o.Guid}");
+            return;
+        }
+        if (BestEffort.Read(() => TableTop.IsCloth(_assets.FilePath(e)!), fallback: false))
+        {
+            _rep.Skipped("table top of plain cloth (the table's own shade stands in)", $"{_cfg.Scenario.Id} {o.Name} {o.Guid}");
+            return;
+        }
+        double across = Math.Round((top.MaxX - top.MinX) * Math.Abs(o.ScaleX), 4), deep = Math.Round((top.MaxZ - top.MinZ) * Math.Abs(o.ScaleZ), 4);
+        double lx = -(top.MinX + top.MaxX) / 2 * o.ScaleX, lz = (top.MinZ + top.MaxZ) / 2 * o.ScaleZ, th = o.RotY * Math.PI / 180;
+        var sheet = NewSheet(scenario, o, pkgRel, e);
+        sheet.Pos = new Vec2(Math.Round(o.PosX + lx * Math.Cos(th) + lz * Math.Sin(th), 4), Math.Round(o.PosZ - lx * Math.Sin(th) + lz * Math.Cos(th), 4));
+        sheet.RotDeg = Norm(o.RotY + top.Turn);
+        sheet.Size = top.Upright ? new Size2(across, deep) : new Size2(deep, across);
+        sheet.Url = o.DiffuseUrl;
+        if (Lay(sheet, e, pkgDir, oldScenario)) scenario.Sheets.Add(sheet);
     }
 
     SheetDef NewSheet(Scenario scenario, ModuleObj o, string pkgRel, CacheEntry picture) => new()
@@ -355,7 +381,7 @@ public sealed class ScenarioBuilder
             var where = $"{save.WorkshopId} {o.Name} '{o.Nickname}' {o.Guid}";
             if (o.Verdict.Hostile) _rep.HostileScript(o.Verdict.Reasons, where, o.Guid);
             if (exclude.Contains(o)) continue;
-            if (IsSheet(o)) { if (name != "umpire") _rep.Skipped("map sheet duplicated in a side module", where); continue; }
+            if (IsSheet(o) || o.Top != null) { if (name != "umpire") _rep.Skipped("map sheet duplicated in a side module", where); continue; }
             if (o.IsDeck) { l.Objects.AddRange(Pile(o).Where(c => DefFactory.NotTranslated(c) is null)); continue; }
             if (DefFactory.NotTranslated(o) is { } why) { _rep.Skipped(why, where); continue; }
             if (o.IsInfiniteBag) { _rep.Skipped(o.Name + " (infinite bags are left out: place pieces from the Pieces drawer)", where); continue; }
@@ -370,22 +396,26 @@ public sealed class ScenarioBuilder
 
     const string BundleType = "Custom_Assetbundle";
 
-    PieceInstance? Effect(ModuleObj o, BundleEffects effects, PackOut extras, Dictionary<string, List<(PieceDef def, string pack)>> packDefs,
+    PieceInstance? EffectPiece(ModuleObj o, string where, HashSet<string> usedPacks)
+    {
+        if (_assets.Gone(o.BundleUrl, "bundle") is { } gone) { _rep.LeftOut(o.Nickname.Length > 0 ? o.Nickname : "Effect", o.BundleUrl!, gone, where, o.Guid); return null; }
+        if (Effects.For(o) is not { } match)
+        {
+            _rep.Skipped(Effects.Installed ? BundleType + " (a 3D model or an effect with no counterpart among Firme's effects)" : BundleType + " (Firme's effects are not installed)", where);
+            return null;
+        }
+        usedPacks.Add(KTable.Client.Effects.EffectKinds.StandardPack);
+        return new PieceInstance
+        {
+            Id = $"p-{_nextId++:D6}", Def = match.Def.Id, Pos = new Vec2(Math.Round(o.PosX, 4), Math.Round(o.PosZ, 4)),
+            RotDeg = Norm(o.RotY), Scale = match.Scale, Guid = o.Guid.Length > 0 ? o.Guid : null,
+        };
+    }
+
+    PieceInstance? Effect(ModuleObj o, PackOut extras, Dictionary<string, List<(PieceDef def, string pack)>> packDefs,
         Layer layer, HashSet<string> usedPacks, ref int rekeyed)
     {
-        var where = $"{layer.Name} {o.Name} '{o.Nickname}' {o.Guid}";
-        PieceInstance? fx = null;
-        if (_assets.Gone(o.BundleUrl, "bundle") is { } gone) _rep.LeftOut(o.Nickname.Length > 0 ? o.Nickname : "Effect", o.BundleUrl!, gone, where, o.Guid);
-        else if (effects.For(o) is { } match)
-        {
-            fx = new PieceInstance
-            {
-                Id = $"p-{_nextId++:D6}", Def = match.Def.Id, Pos = new Vec2(Math.Round(o.PosX, 4), Math.Round(o.PosZ, 4)),
-                RotDeg = Norm(o.RotY), Scale = match.Scale, Guid = o.Guid.Length > 0 ? o.Guid : null,
-            };
-            usedPacks.Add(KTable.Client.Effects.EffectKinds.StandardPack);
-        }
-        else _rep.Skipped(effects.Installed ? BundleType + " (a 3D model or an effect with no counterpart among Firme's effects)" : BundleType + " (Firme's effects are not installed)", where);
+        var fx = EffectPiece(o, $"{layer.Name} {o.Name} '{o.Nickname}' {o.Guid}", usedPacks);
         PlaceChildren(o, o.Children, fx, Math.Abs(o.ScaleX), 1, Math.Abs(o.ScaleX), extras, packDefs, layer, usedPacks, ref rekeyed);
         return fx;
     }
@@ -491,7 +521,7 @@ public sealed class ScenarioBuilder
             Note = o.Description.Trim().Length > 0 ? o.Description.Trim() : null,
             Guid = o.Guid.Length > 0 ? o.Guid : null,
             Tags = o.Tags, Memo = _defs.RewriteUrls(o.Memo, extras, $"{layer.Name} {o.Name} '{o.Nickname}' {o.Guid} memo"),
-            Locked = parent == null && o.Locked, FaceDown = o.Flipped && def.Kind != "model" && def.Back != null,
+            Locked = parent == null && o.Locked, FaceDown = o.Flipped && def.Kind != "model" && def.Back != null, NotSticky = !o.Sticky,
         };
         if (lua.Trim().Length > 0)
         {
@@ -518,19 +548,31 @@ public sealed class ScenarioBuilder
     }
 
     Dictionary<string, double> _common = new();
+    BundleEffects? _effects;
+    BundleEffects Effects => _effects ??= BundleEffects.Load(_cfg.Output);
     int _stowed, _hiddenByScale;
 
     IEnumerable<ModuleObj> Held(ModuleObj bag) => bag.Contained.SelectMany(c => c.IsDeck ? Pile(c) : [c]);
 
     void StowContents(ModuleObj bag, PieceInstance holder, PackOut extras, Dictionary<string, List<(PieceDef def, string pack)>> packDefs, Layer layer, HashSet<string> usedPacks, ref int rekeyed)
     {
+        holder.TakeOrder = bag.TakeOrder;
         foreach (var c in Held(bag))
         {
             var where = $"{layer.Name} {bag.Name} '{bag.Nickname}' {bag.Guid} holds {c.Name} '{c.Nickname}' {c.Guid}";
             if (c.Verdict.Hostile) _rep.HostileScript(c.Verdict.Reasons, where, c.Guid);
             if (DefFactory.NotTranslated(c) is { } why) { _rep.Skipped(why, where); continue; }
             if (c.IsInfiniteBag) { _rep.Skipped(c.Name + " (infinite bags are left out: place pieces from the Pieces drawer)", where); continue; }
-            if (c.Name == BundleType && _defs.ModelOfBundle(c) == null) { _rep.Skipped(c.Name + " (an effect inside a bag; effects live on the table, so place one from Firme's Effects)", where); continue; }
+            if (c.Name == BundleType && _defs.ModelOfBundle(c) == null)
+            {
+                if (EffectPiece(c, where, usedPacks) is { } fx)
+                {
+                    holder.Stowed ??= new();
+                    holder.Stowed.Add(fx);
+                    _stowed++;
+                }
+                continue;
+            }
             if (!_defs.Shows(c)) { _rep.UnknownType(c.Name, where); continue; }
             var refScale = _common.TryGetValue(_defs.VisualKey(c), out var k) ? k : DefFactory.BaseScale(c);
             var ci = Instance(c, refScale, extras, packDefs, layer, usedPacks, ref rekeyed, null, 1, Math.Abs(c.ScaleX));

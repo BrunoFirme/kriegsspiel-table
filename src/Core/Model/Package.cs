@@ -332,6 +332,7 @@ public sealed class PieceInstance
     public bool Locked { get; set; }
     public bool NoCollision { get; set; }
     public bool PhysicalRoll { get; set; }
+    public bool NotSticky { get; set; }
     public string Memo { get; set; } = "";
     public List<Widget> Widgets { get; set; } = new();
     public int DrawnOnState { get; set; }
@@ -341,17 +342,32 @@ public sealed class PieceInstance
     public int? DecalsOnState { get; set; }
     public List<UiNode> Ui { get; set; } = new();
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<PieceInstance>? Stowed { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? TakeOrder { get; set; }
 
     public PieceInstance Clone() => new()
     {
         Id = Id, Def = Def, Pos = Pos, RotDeg = RotDeg, Stack = Stack, State = State,
         Counters = new(Counters), Text = new(Text), Attached = new(Attached),
-        TintOverride = TintOverride, Label = Label, Scale = Scale, Y = Y, FaceDown = FaceDown, Note = Note, Locked = Locked,
+        TintOverride = TintOverride, Label = Label, Scale = Scale, Y = Y, FaceDown = FaceDown, Note = Note, Picture = Picture, Locked = Locked,
+        NoCollision = NoCollision, PhysicalRoll = PhysicalRoll, NotSticky = NotSticky,
         Script = Script, ScriptState = ScriptState, Guid = Guid, Tags = Tags == null ? null : new(Tags), Memo = Memo,
         Widgets = Widgets.Select(w => w.Clone()).ToList(), DrawnOnState = DrawnOnState, MenuItems = MenuItems.Select(m => m.Clone()).ToList(),
         Lines = Lines.Select(l => l.Clone()).ToList(), Decals = Decals.Select(d => d.Clone()).ToList(), DecalsOnState = DecalsOnState,
-        Ui = Ui.Select(n => n.Clone()).ToList(), Stowed = Stowed?.Select(s => s.Clone()).ToList(),
+        Ui = Ui.Select(n => n.Clone()).ToList(), Stowed = Stowed?.Select(s => s.Clone()).ToList(), TakeOrder = TakeOrder,
     };
+
+    public PieceInstance? NextOut(Random rng)
+    {
+        if (Stowed is not { Count: > 0 } all) return null;
+        var loose = all.Where(s => !all.Any(o => o.Attached.Contains(s.Id))).ToList();
+        if (loose.Count == 0) return null;
+        return TakeOrder switch
+        {
+            TakeOrders.Last => loose[^1],
+            TakeOrders.Random => loose[rng.Next(loose.Count)],
+            _ => loose[0],
+        };
+    }
 
     public IEnumerable<PieceInstance> AllStowed()
     {
@@ -361,6 +377,11 @@ public sealed class PieceInstance
             foreach (var deeper in s.AllStowed()) yield return deeper;
         }
     }
+}
+
+public static class TakeOrders
+{
+    public const string First = "first", Last = "last", Random = "random";
 }
 
 public sealed class UiNode

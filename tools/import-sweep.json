@@ -16,6 +16,7 @@
     { "id": "2725140488", "name": "Scripted War Game (Kriegsspiel) Pieces", "tests": "735 tiles, HandTriggers, 3D text, model bags and infinite bags; a pack since phase 2, the module import is unchecked" },
     { "id": "3357570231", "name": "Battle Lines: Scripted Kriegsspiel Pieces", "tests": "a script on nearly every object, infinite bags and a Custom_PDF; unchecked" },
     { "id": "3432894392", "name": "Blazertrail's Napoleonic Pieces", "tests": "288 tokens of which 90 carry states; unchecked" },
-    { "id": "3479792399", "name": "1824 KS Pieces", "tests": "tiles over asset bundles, nothing else; unchecked" }
+    { "id": "3479792399", "name": "1824 KS Pieces", "tests": "tiles over asset bundles, nothing else; unchecked" },
+    { "id": "3828471326", "name": "Argentorarum Umpires", "tests": "a Flex Table whose top carries the map picture: the table top laid as a sheet" }
   ]
 }

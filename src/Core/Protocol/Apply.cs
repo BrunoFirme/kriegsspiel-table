@@ -288,6 +288,10 @@ public static class StateMachine
                 was = p.PhysicalRoll;
                 p.PhysicalRoll = po.Value;
                 break;
+            case PieceOptions.NotSticky:
+                was = p.NotSticky;
+                p.NotSticky = po.Value;
+                break;
             default: return "no such option: " + po.Name;
         }
         inverse = new SetPieceOption { Layer = po.Layer, Id = po.Id, Name = po.Name, Value = was };

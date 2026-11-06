@@ -137,6 +137,7 @@
 ---@field shape string Its outline at its state: "box", "rounded", "circle", "hex", or "alpha" for a token cut along its picture.
 ---@field face_down boolean Turned over.
 ---@field locked boolean Pinned to the table: not dragged, turned or resized by hand.
+---@field sticky boolean Carries the pieces resting on it when it is moved; attached pieces go with it either way.
 ---@field tint string|nil Its colour as "#RRGGBB", or nil.
 ---@field counters table Its kind's counters, name → value.
 ---@field text table Its text lines that hold a value, name → text.
@@ -195,6 +196,10 @@ function Piece.set_tint(color) end
 ---@param on? boolean true, or no argument, pins it; false lets it go.
 function Piece.set_locked(on) end
 
+---Whether it carries the pieces resting on it when it is moved.
+---@param on? boolean true, or no argument, carries them; false leaves them where they lie.
+function Piece.set_sticky(on) end
+
 ---Sets one of its kind's counters (a whole number, kept to the counter's range).
 ---@param name string The counter's name, as the piece studio shows it.
 ---@param value number Rounded to a whole number and kept to the counter's range.
@@ -250,7 +255,7 @@ function Piece.detach() end
 ---Takes another piece off the table into this one, with whatever rides on it; a piece this one rides on is refused.
 function Piece.stow() end
 
----Puts a held piece back on the table and returns it: which is its id, guid, its number in stowed, or nothing for the first; place is { x =, z = } or a piece, else beside this one; rot turns it.
+---Puts a held piece back on the table and returns it: which is its id, guid, its number in stowed, or nothing for the next by the holder's take order (first, last or random); place is { x =, z = } or a piece, else beside this one; rot turns it.
 function Piece.unstow() end
 
 ---Takes the piece off the table (on_destroy runs first).

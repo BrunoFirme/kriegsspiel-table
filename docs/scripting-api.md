@@ -210,6 +210,7 @@ Read from `self` or from any piece `board.find` or `board.pieces` hands back. Fi
 | [`self.shape`](#selfshape) | Its outline at its state: "box", "rounded", "circle", "hex", or "alpha" for a token cut along its picture. |
 | [`self.face_down`](#selfface_down) | Turned over. |
 | [`self.locked`](#selflocked) | Pinned to the table: not dragged, turned or resized by hand. |
+| [`self.sticky`](#selfsticky) | Carries the pieces resting on it when it is moved; attached pieces go with it either way. |
 | [`self.tint`](#selftint) | Its colour as "#RRGGBB", or nil. |
 | [`self.counters`](#selfcounters) | Its kind's counters, name → value. |
 | [`self.text`](#selftext) | Its text lines that hold a value, name → text. |
@@ -441,6 +442,18 @@ Pinned to the table: not dragged, turned or resized by hand.
 
 **Module call** `getLock` · **See also** [`self.set_locked`](#selfset_locked)
 
+### `self.sticky`
+
+```lua
+self.sticky
+```
+
+Carries the pieces resting on it when it is moved; attached pieces go with it either way.
+
+**Type** `boolean`, read-only.
+
+**Module call** `sticky` · **See also** [`self.set_sticky`](#selfset_sticky)
+
 ### `self.tint`
 
 ```lua
@@ -614,6 +627,7 @@ Each call is a change every umpire sees, taken back with Ctrl+Z by the umpire wh
 | [`self.flip`](#selfflip) | Turns it over; with no argument, to the other side. |
 | [`self.set_tint`](#selfset_tint) | Tints its sides: "#RRGGBB", a name, or { r, g, b }. nil goes back to its kind's. |
 | [`self.set_locked`](#selfset_locked) | Pins it to the table, or lets it go. |
+| [`self.set_sticky`](#selfset_sticky) | Whether it carries the pieces resting on it when it is moved. |
 | [`self.set_counter`](#selfset_counter) | Sets one of its kind's counters (a whole number, kept to the counter's range). |
 | [`self.set_text`](#selfset_text) | Sets one of its kind's text lines. |
 | [`self.set_tags`](#selfset_tags) | Gives it its own tags; nil goes back to its kind's. |
@@ -629,7 +643,7 @@ Each call is a change every umpire sees, taken back with Ctrl+Z by the umpire wh
 | [`self.detach`](#selfdetach) | Takes this piece off the one it rides on. |
 | [`self.stowed`](#selfstowed) | The pieces it holds off the table, first in first: { id =, name =, guid =, def =, held = }, held being how many that piece holds in turn. |
 | [`self.stow`](#selfstow) | Takes another piece off the table into this one, with whatever rides on it; a piece this one rides on is refused. |
-| [`self.unstow`](#selfunstow) | Puts a held piece back on the table and returns it: which is its id, guid, its number in stowed, or nothing for the first; place is { x =, z = } or a piece, else beside this one; rot turns it. |
+| [`self.unstow`](#selfunstow) | Puts a held piece back on the table and returns it: which is its id, guid, its number in stowed, or nothing for the next by the holder's take order (first, last or random); place is { x =, z = } or a piece, else beside this one; rot turns it. |
 | [`self.delete`](#selfdelete) | Takes the piece off the table (on_destroy runs first). |
 | [`self.set_lines`](#selfset_lines) | Draws lines round the piece that move and turn with it: { { points = { {x=, z=}, … }, color =, width =, loop = }, … } in piece units; width in map units. |
 | [`self.set_decals`](#selfset_decals) | Puts pictures on the piece's faces that move, turn and flip with it: { { picture =, x =, z =, w =, h =, rot =, face =, name = }, … } in piece units. |
@@ -810,6 +824,20 @@ Pins it to the table, or lets it go.
 A locked piece can still be picked out, read and deleted, and an umpire can unlock it from its right-click menu.
 
 **Module call** `setLock` · **See also** [`self.locked`](#selflocked)
+
+### `self.set_sticky`
+
+```lua
+self.set_sticky(on)
+```
+
+Whether it carries the pieces resting on it when it is moved.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `on` | `boolean` | _Optional._ true, or no argument, carries them; false leaves them where they lie. |
+
+**Module call** `sticky` · **See also** [`self.sticky`](#selfsticky)
 
 ### `self.set_counter`
 
@@ -1029,7 +1057,7 @@ Takes another piece off the table into this one, with whatever rides on it; a pi
 self.unstow(which, place, rot)
 ```
 
-Puts a held piece back on the table and returns it: which is its id, guid, its number in stowed, or nothing for the first; place is { x =, z = } or a piece, else beside this one; rot turns it.
+Puts a held piece back on the table and returns it: which is its id, guid, its number in stowed, or nothing for the next by the holder's take order (first, last or random); place is { x =, z = } or a piece, else beside this one; rot turns it.
 
 **Module call** `takeObject` · **See also** [`self.stowed`](#selfstowed), [`self.stow`](#selfstow), [`self.unstow`](#selfunstow)
 
@@ -2906,6 +2934,8 @@ The converter rewrites a module's scripts into these calls by rule; this is the 
 | `setVectorLines` | [`self.set_lines`](#selfset_lines) |
 | `showInputDialog` | [`game.dialog`](#gamedialog) |
 | `spawnObject` | [`board.spawn`](#boardspawn) |
+| `sticky` | [`self.set_sticky`](#selfset_sticky) |
+| `sticky` | [`self.sticky`](#selfsticky) |
 | `takeObject` | [`self.unstow`](#selfunstow) |
 | `tryObjectEnterContainer` | [`try_stow`](#try_stow-global-script) |
 | `UI` | [`self.ui`](#selfui) |

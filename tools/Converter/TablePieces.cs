@@ -24,7 +24,7 @@ public sealed partial class DefFactory
     const string BoxesMissing = "Firme's Effects and Props is not installed here, so bags come over as round pieces; open the app once and convert again for boxes, chests and crates.";
     bool _boxesMissingNoted;
 
-    public static bool IsTablePiece(ModuleObj o) => (o.IsCard && o.Sheet != null) || o.IsChecker || o.IsPictureDie || o.Name is "Bag" or "PlayerPawn";
+    public static bool IsTablePiece(ModuleObj o) => (o.IsCard && o.Sheet != null) || o.IsChecker || o.IsPictureDie || o.Name is "Bag" or "PlayerPawn" or TriangleBlock;
 
     public const string StockTilesetPrefix = "Tileset_";
 
@@ -53,6 +53,7 @@ public sealed partial class DefFactory
             _boxesMissingNoted = true;
         }
         else if (b.Name == "PlayerPawn") FillRound(def, b, pack, "pawn", "Pawn", PawnIvory);
+        else if (b.Name == TriangleBlock) FillPrism(def, pack);
         else FillPictureDie(def, b, pack, where);
     }
 
@@ -65,6 +66,39 @@ public sealed partial class DefFactory
         def.Tags = def.Tags.Where(t => t != "block").Append(tag).Distinct().ToList();
         if (def.Name == "Piece") def.Name = name;
     }
+
+    public const string TriangleBlock = "BlockTriangle";
+    public const double TriangleAcross = 1.4142, TriangleRise = 0.7071;
+
+    void FillPrism(PieceDef def, PackOut pack)
+    {
+        def.Kind = "model";
+        def.Shape = "box";
+        def.Mesh = PrismMesh(pack);
+        def.Texture = WhiteSquare(pack);
+        def.Image = null;
+        if (def.Name == "Piece") def.Name = "Triangle block";
+    }
+
+    string? _prismSha;
+
+    string PrismMesh(PackOut pack)
+    {
+        var path = Path.Combine(_cfg.Cache, "prism.obj");
+        if (_prismSha == null)
+        {
+            if (!File.Exists(path)) File.WriteAllText(path, PrismObj);
+            _prismSha = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(File.ReadAllBytes(path))).ToLowerInvariant();
+        }
+        Put(pack, _prismSha, "obj", path, "mesh", 0, 0);
+        return _prismSha;
+    }
+
+    static readonly string PrismObj = string.Join('\n',
+        "v -0.7071 0 -0.5", "v 0.7071 0 -0.5", "v 0 0.7071 -0.5", "v -0.7071 0 0.5", "v 0.7071 0 0.5", "v 0 0.7071 0.5",
+        "vt 0 0", "vt 1 0", "vt 0.5 1", "vt 1 1", "vt 0 1",
+        "vn 0 -1 0", "vn 0 0 -1", "vn 0 0 1", "vn -0.7071 0.7071 0", "vn 0.7071 0.7071 0",
+        "f 1/1/1 2/2/1 5/4/1 4/5/1", "f 1/1/2 3/3/2 2/2/2", "f 4/1/3 5/2/3 6/3/3", "f 1/1/4 4/2/4 6/4/4 3/5/4", "f 2/1/5 3/5/5 6/4/5 5/2/5") + "\n";
 
     void FillCard(PieceDef def, ModuleObj b, PackOut pack, string where)
     {

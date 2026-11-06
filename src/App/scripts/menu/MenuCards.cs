@@ -112,6 +112,11 @@ sealed class MenuCards : HudPart
         const double Apart = 1.5;
         menu.Separator($"Holds {held.Count}");
         string NameOf(PieceInstance s) => s.Label is { Length: > 0 } lb ? lb : S.Store.Def(s.Def)?.Name ?? s.Def;
+        if (held.Count > 1 && hit.Piece.TakeOrder is TakeOrders.Last or TakeOrders.Random)
+            menu.Item(hit.Piece.TakeOrder == TakeOrders.Random ? "Draw one at random" : "Take the top one out", () =>
+            {
+                if (hit.Piece.NextOut(Random.Shared) is { } next) S.Do(new Unstow { Layer = hit.Layer, Holder = hit.Piece.Id, Id = next.Id });
+            });
         foreach (var s in held.Take(RowsShown))
         {
             var id = s.Id;
@@ -157,6 +162,8 @@ sealed class MenuCards : HudPart
                 : new Batch { Items = nodes.Select(n => (Command)new SetLocked { Layer = n.Layer, Id = n.Piece.Id, Value = !allLocked }).ToList() }));
         bool allCollide = nodes.All(n => !n.Piece.NoCollision);
         menu.Check("Collides with other pieces", allCollide, () => SetOption(nodes, PieceOptions.NoCollision, allCollide));
+        bool allSticky = nodes.All(n => !n.Piece.NotSticky);
+        menu.Check("Carries what rests on it", allSticky, () => SetOption(nodes, PieceOptions.NotSticky, allSticky));
         var dice = nodes.Where(n => n.IsDie).ToList();
         if (dice.Count > 0)
         {

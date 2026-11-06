@@ -39,8 +39,7 @@
   "ignoreTypes": [
     "HandTrigger", "Chinese_Checkers_Piece", "FogOfWarTrigger", "ScriptingTrigger",
     "Tablet", "Calculator", "Counter", "Digital_Clock",
-    "Custom_Assetbundle", "Quarter", "Go_Game_Piece_White", "Go_Game_Piece_Black",
-    "BlockTriangle"
+    "Custom_Assetbundle", "Quarter", "Go_Game_Piece_White", "Go_Game_Piece_Black"
   ],
   "ignoreBundles": [ "723C50F43FAB3DE3DC12CB8460536E8CB34B60A3", "14ED0DBD593370733A0309B0950004F33EB9FACA" ],
   "containerTypes": [ "Bag", "Infinite_Bag", "Custom_Model_Bag", "Custom_Model_Infinite_Bag" ],

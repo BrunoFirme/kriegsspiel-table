@@ -51,6 +51,20 @@ public sealed partial class DefFactory
         _assets = assets;
         _rep = rep;
         ModuleObj.MeshSize = MeshBounds;
+        ModuleObj.MeshTop = MeshTopOf;
+    }
+
+    readonly Dictionary<string, TableTop?> _tops = new();
+
+    TableTop? MeshTopOf(string url)
+    {
+        var e = Entry(url);
+        if (e == null || e.Ext != "obj") return null;
+        if (_tops.TryGetValue(e.Sha!, out var top)) return top;
+        try { top = TableTop.Read(_assets.FilePath(e)!); }
+        catch (IOException) { top = null; }
+        _tops[e.Sha!] = top;
+        return top;
     }
 
     public string? Asset(PackOut pack, string? url, string kind, string where)
@@ -179,6 +193,7 @@ public sealed partial class DefFactory
             "Custom_Board" => new Size2(b.CustomBoard * aw, b.CustomBoard * ah * ratio),
             "BlockSquare" => new Size2(b.BlockSquare, b.BlockSquare * ratio),
             "BlockRectangle" => new Size2(b.BlockSquare, 2 * b.BlockSquare * ratio),
+            TriangleBlock => new Size2(TriangleAcross * b.BlockSquare, b.BlockSquare * ratio),
             "Card" or "CardCustom" => new Size2(CardWidth, CardHeight * ratio),
             "Checker_white" or "Checker_red" or "Checker_black" => new Size2(CheckerAcross, CheckerAcross * ratio),
             "Custom_Dice" => new Size2(DieAcross, DieAcross * ratio),
@@ -194,6 +209,7 @@ public sealed partial class DefFactory
         "Custom_PDF" => BookThickness,
         "Custom_Model" or "Custom_Model_Bag" => (MeshBounds(o.MeshUrl)?.ey ?? 0.2),
         "BlockSquare" or "BlockRectangle" => _cfg.BaseSizes.BlockSquare,
+        TriangleBlock => TriangleRise * _cfg.BaseSizes.BlockSquare,
         "Card" or "CardCustom" => CardThickness,
         "Checker_white" or "Checker_red" or "Checker_black" => CheckerThickness,
         "Custom_Dice" => DieAcross,

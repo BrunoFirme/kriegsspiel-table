@@ -94,6 +94,7 @@ sealed partial class Carry : IHeldPieces
             var h = _held[i];
             foreach (var cid in h.Node.Piece.Attached)
                 if (_pieces.NodeOf(h.Node.Layer, cid) is { } cn && !_heldNodes.Contains(cn) && _c.LayerInteractive(cn.Layer)) Ride(h, cn);
+            if (h.Node.Piece.NotSticky) continue;
             foreach (var cn in RestingOn(h.Node)) if (!_heldNodes.Contains(cn)) Ride(h, cn);
         }
     }

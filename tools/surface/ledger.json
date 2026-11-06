@@ -6,8 +6,8 @@
    "where": "hands are seats here; no hand zones (decided 2026-11-06)",
    "instead": "sit players at their seats; pieces meant for a hand stay on the table",
    "held_by": "",
-   "count": 490,
-   "modules": 54
+   "count": 494,
+   "modules": 55
   },
   {
    "row": "Custom_Model",
@@ -15,8 +15,8 @@
    "where": "converter",
    "instead": "",
    "held_by": "",
-   "count": 4902,
-   "modules": 51
+   "count": 4903,
+   "modules": 52
   },
   {
    "row": "Custom_Token",
@@ -24,8 +24,8 @@
    "where": "converter",
    "instead": "",
    "held_by": "",
-   "count": 24525,
-   "modules": 49
+   "count": 25836,
+   "modules": 50
   },
   {
    "row": "Custom_Tile",
@@ -33,8 +33,8 @@
    "where": "converter",
    "instead": "",
    "held_by": "",
-   "count": 36747,
-   "modules": 48
+   "count": 36769,
+   "modules": 49
   },
   {
    "row": "Custom_Assetbundle",
@@ -42,17 +42,17 @@
    "where": "BundleBake / BundleEffects (models baked, effects mapped to Firme's Effects)",
    "instead": "",
    "held_by": "import-sweep: prairie-grove, suriagehara, zeke",
-   "count": 36533,
-   "modules": 48
+   "count": 36541,
+   "modules": 49
   },
   {
    "row": "Chinese_Checkers_Piece",
    "status": "dropped",
    "where": "a stock piece; in every IKS module it is the Flex Table control",
-   "instead": "nothing is needed; the table has no Flex Table",
+   "instead": "nothing is needed: the table top it sizes comes over as the map sheet, its picture at the size the control left",
    "held_by": "",
-   "count": 45,
-   "modules": 45
+   "count": 46,
+   "modules": 46
   },
   {
    "row": "Custom_Board",
@@ -190,22 +190,22 @@
    "modules": 4
   },
   {
-   "row": "BlockTriangle",
-   "status": "dropped",
-   "where": "a stock block; no module in the roster has one",
-   "instead": "make a block in the piece studio",
-   "held_by": "",
-   "count": 9,
-   "modules": 3
-  },
-  {
    "row": "Die_6",
    "status": "native",
    "where": "the app's d6, showing the face it was saved on",
    "instead": "",
    "held_by": "DiceTests",
-   "count": 24,
-   "modules": 2
+   "count": 27,
+   "modules": 3
+  },
+  {
+   "row": "BlockTriangle",
+   "status": "native",
+   "where": "a triangular prism lying on a side, 1.414 x 1 x 0.707 as in the tabletop's own prefab, tinted like the other blocks",
+   "instead": "",
+   "held_by": "TriangleBlockTests",
+   "count": 9,
+   "modules": 3
   },
   {
    "row": "Tileset_Tree",
@@ -395,8 +395,8 @@
    "where": "converter reads it",
    "instead": "",
    "held_by": "",
-   "count": 106139,
-   "modules": 54
+   "count": 107489,
+   "modules": 55
   },
   {
    "row": "ObjectState.Transform",
@@ -404,8 +404,8 @@
    "where": "converter reads it",
    "instead": "",
    "held_by": "",
-   "count": 106139,
-   "modules": 54
+   "count": 107489,
+   "modules": 55
   },
   {
    "row": "ObjectState.GUID",
@@ -413,8 +413,8 @@
    "where": "converter reads it",
    "instead": "",
    "held_by": "",
-   "count": 104839,
-   "modules": 54
+   "count": 106189,
+   "modules": 55
   },
   {
    "row": "TransformState.posX",
@@ -422,8 +422,8 @@
    "where": "converter reads it",
    "instead": "",
    "held_by": "",
-   "count": 104839,
-   "modules": 54
+   "count": 106189,
+   "modules": 55
   },
   {
    "row": "TransformState.posY",
@@ -431,8 +431,8 @@
    "where": "converter reads it",
    "instead": "",
    "held_by": "",
-   "count": 104839,
-   "modules": 54
+   "count": 106189,
+   "modules": 55
   },
   {
    "row": "TransformState.posZ",
@@ -440,8 +440,8 @@
    "where": "converter reads it",
    "instead": "",
    "held_by": "",
-   "count": 104839,
-   "modules": 54
+   "count": 106189,
+   "modules": 55
   },
   {
    "row": "TransformState.rotY",
@@ -449,8 +449,8 @@
    "where": "converter reads it",
    "instead": "",
    "held_by": "",
-   "count": 104839,
-   "modules": 54
+   "count": 106188,
+   "modules": 55
   },
   {
    "row": "TransformState.scaleX",
@@ -458,8 +458,8 @@
    "where": "converter reads it",
    "instead": "",
    "held_by": "",
-   "count": 96083,
-   "modules": 54
+   "count": 97221,
+   "modules": 55
   },
   {
    "row": "TransformState.scaleZ",
@@ -467,8 +467,8 @@
    "where": "converter reads it",
    "instead": "",
    "held_by": "",
-   "count": 95009,
-   "modules": 54
+   "count": 96198,
+   "modules": 55
   },
   {
    "row": "ObjectState.Name",
@@ -476,8 +476,8 @@
    "where": "converter reads it",
    "instead": "",
    "held_by": "",
-   "count": 69392,
-   "modules": 54
+   "count": 70720,
+   "modules": 55
   },
   {
    "row": "ColourState.g",
@@ -485,17 +485,8 @@
    "where": "converter reads it",
    "instead": "",
    "held_by": "",
-   "count": 40201,
-   "modules": 54
-  },
-  {
-   "row": "TransformState.scaleY",
-   "status": "native",
-   "where": "converter reads it",
-   "instead": "",
-   "held_by": "",
-   "count": 39844,
-   "modules": 54
+   "count": 40837,
+   "modules": 55
   },
   {
    "row": "ColourState.b",
@@ -503,8 +494,17 @@
    "where": "converter reads it",
    "instead": "",
    "held_by": "",
-   "count": 39643,
-   "modules": 54
+   "count": 40277,
+   "modules": 55
+  },
+  {
+   "row": "TransformState.scaleY",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 39852,
+   "modules": 55
   },
   {
    "row": "ColourState.r",
@@ -512,8 +512,8 @@
    "where": "converter reads it",
    "instead": "",
    "held_by": "",
-   "count": 34140,
-   "modules": 54
+   "count": 34766,
+   "modules": 55
   },
   {
    "row": "ObjectState.Locked",
@@ -521,8 +521,8 @@
    "where": "converter reads it",
    "instead": "",
    "held_by": "",
-   "count": 16911,
-   "modules": 54
+   "count": 16925,
+   "modules": 55
   },
   {
    "row": "ObjectState.Grid",
@@ -530,8 +530,8 @@
    "where": "snap to grid (grid, decided 2026-11-06)",
    "instead": "the table's own grid snaps",
    "held_by": "",
-   "count": 4449,
-   "modules": 54
+   "count": 4453,
+   "modules": 55
   },
   {
    "row": "ObjectState.FogColor",
@@ -539,8 +539,8 @@
    "where": "hidden zones (decided 2026-11-06)",
    "instead": "the umpire layer and side layers",
    "held_by": "",
-   "count": 423,
-   "modules": 54
+   "count": 426,
+   "modules": 55
   },
   {
    "row": "SaveState.ComponentTags",
@@ -548,8 +548,8 @@
    "where": "tag labels of the tabletop's UI",
    "instead": "nothing is needed; pieces keep their tags",
    "held_by": "",
-   "count": 54,
-   "modules": 54
+   "count": 55,
+   "modules": 55
   },
   {
    "row": "SaveState.Grid",
@@ -557,8 +557,8 @@
    "where": "grid (decided 2026-11-06)",
    "instead": "set the table's own grid",
    "held_by": "",
-   "count": 54,
-   "modules": 54
+   "count": 55,
+   "modules": 55
   },
   {
    "row": "SaveState.Hands",
@@ -566,8 +566,8 @@
    "where": "hands are seats here (decided 2026-11-06)",
    "instead": "sit players at their seats",
    "held_by": "",
-   "count": 54,
-   "modules": 54
+   "count": 55,
+   "modules": 55
   },
   {
    "row": "SaveState.Lighting",
@@ -575,8 +575,8 @@
    "where": "lighting (decided 2026-11-06)",
    "instead": "set the table's own light and backdrop",
    "held_by": "",
-   "count": 54,
-   "modules": 54
+   "count": 55,
+   "modules": 55
   },
   {
    "row": "SaveState.TabStates",
@@ -584,8 +584,8 @@
    "where": "converter reads it",
    "instead": "",
    "held_by": "",
-   "count": 54,
-   "modules": 54
+   "count": 55,
+   "modules": 55
   },
   {
    "row": "SaveState.Turns",
@@ -593,8 +593,8 @@
    "where": "turns (decided 2026-11-06)",
    "instead": "the game clock and turn order here",
    "held_by": "",
-   "count": 54,
-   "modules": 54
+   "count": 55,
+   "modules": 55
   },
   {
    "row": "ObjectState.Nickname",
@@ -602,8 +602,8 @@
    "where": "converter reads it",
    "instead": "",
    "held_by": "",
-   "count": 49582,
-   "modules": 53
+   "count": 50030,
+   "modules": 54
   },
   {
    "row": "SaveState.Date",
@@ -611,8 +611,8 @@
    "where": "save metadata",
    "instead": "nothing is needed",
    "held_by": "",
-   "count": 53,
-   "modules": 53
+   "count": 54,
+   "modules": 54
   },
   {
    "row": "SaveState.EpochTime",
@@ -620,8 +620,8 @@
    "where": "save metadata",
    "instead": "nothing is needed",
    "held_by": "",
-   "count": 53,
-   "modules": 53
+   "count": 54,
+   "modules": 54
   },
   {
    "row": "SaveState.SaveName",
@@ -629,8 +629,8 @@
    "where": "converter reads it",
    "instead": "",
    "held_by": "",
-   "count": 53,
-   "modules": 53
+   "count": 54,
+   "modules": 54
   },
   {
    "row": "TransformState.rotX",
@@ -638,8 +638,8 @@
    "where": "converter reads it",
    "instead": "",
    "held_by": "",
-   "count": 104393,
-   "modules": 52
+   "count": 105737,
+   "modules": 53
   },
   {
    "row": "TransformState.rotZ",
@@ -647,8 +647,8 @@
    "where": "converter reads it",
    "instead": "",
    "held_by": "",
-   "count": 103985,
-   "modules": 52
+   "count": 105326,
+   "modules": 53
   },
   {
    "row": "ObjectState.LuaScriptState",
@@ -656,8 +656,8 @@
    "where": "converter reads it",
    "instead": "",
    "held_by": "",
-   "count": 14950,
-   "modules": 51
+   "count": 15203,
+   "modules": 52
   },
   {
    "row": "ObjectState.CustomMesh",
@@ -665,8 +665,8 @@
    "where": "converter reads it",
    "instead": "",
    "held_by": "",
-   "count": 4950,
-   "modules": 51
+   "count": 4951,
+   "modules": 52
   },
   {
    "row": "CustomMeshState.MeshURL",
@@ -674,8 +674,8 @@
    "where": "converter reads it",
    "instead": "",
    "held_by": "",
-   "count": 3974,
-   "modules": 51
+   "count": 3975,
+   "modules": 52
   },
   {
    "row": "CustomMeshState.TypeIndex",
@@ -683,8 +683,8 @@
    "where": "converter reads it",
    "instead": "",
    "held_by": "",
-   "count": 2824,
-   "modules": 51
+   "count": 2825,
+   "modules": 52
   },
   {
    "row": "ObjectState.CustomImage",
@@ -692,8 +692,8 @@
    "where": "converter reads it",
    "instead": "",
    "held_by": "",
-   "count": 61345,
-   "modules": 50
+   "count": 62678,
+   "modules": 51
   },
   {
    "row": "CustomImageState.ImageURL",
@@ -701,8 +701,8 @@
    "where": "converter reads it",
    "instead": "",
    "held_by": "",
-   "count": 55611,
-   "modules": 50
+   "count": 56944,
+   "modules": 51
   },
   {
    "row": "ObjectState.LuaScript",
@@ -710,8 +710,8 @@
    "where": "converter reads it",
    "instead": "",
    "held_by": "",
-   "count": 11272,
-   "modules": 50
+   "count": 11525,
+   "modules": 51
   },
   {
    "row": "CustomImageState.CustomToken",
@@ -719,8 +719,8 @@
    "where": "converter reads it",
    "instead": "",
    "held_by": "",
-   "count": 24525,
-   "modules": 49
+   "count": 25836,
+   "modules": 50
   },
   {
    "row": "CustomMeshState.DiffuseURL",
@@ -728,8 +728,8 @@
    "where": "converter reads it",
    "instead": "",
    "held_by": "",
-   "count": 2835,
-   "modules": 49
+   "count": 2836,
+   "modules": 50
   },
   {
    "row": "CustomImageState.CustomTile",
@@ -737,8 +737,8 @@
    "where": "converter reads it",
    "instead": "",
    "held_by": "",
-   "count": 36747,
-   "modules": 48
+   "count": 36769,
+   "modules": 49
   },
   {
    "row": "ObjectState.CustomAssetbundle",
@@ -746,8 +746,8 @@
    "where": "converter reads it",
    "instead": "",
    "held_by": "",
-   "count": 36533,
-   "modules": 48
+   "count": 36541,
+   "modules": 49
   },
   {
    "row": "CustomAssetbundleState.AssetbundleURL",
@@ -755,17 +755,8 @@
    "where": "converter reads it",
    "instead": "",
    "held_by": "",
-   "count": 28788,
-   "modules": 48
-  },
-  {
-   "row": "CustomAssetbundleState.AssetbundleSecondaryURL",
-   "status": "dropped",
-   "where": "a bundle's second picture",
-   "instead": "nothing is needed",
-   "held_by": "",
-   "count": 13030,
-   "modules": 48
+   "count": 28796,
+   "modules": 49
   },
   {
    "row": "CustomTokenState.MergeDistancePixels",
@@ -773,8 +764,17 @@
    "where": "converter reads it",
    "instead": "",
    "held_by": "",
-   "count": 12794,
-   "modules": 48
+   "count": 14063,
+   "modules": 49
+  },
+  {
+   "row": "CustomAssetbundleState.AssetbundleSecondaryURL",
+   "status": "native",
+   "where": "bundle_models.py loads it beside the main bundle: in the roster it holds only the materials and textures the main bundle's figures are painted with",
+   "instead": "",
+   "held_by": "",
+   "count": 13038,
+   "modules": 49
   },
   {
    "row": "CustomAssetbundleState.MaterialIndex",
@@ -782,8 +782,8 @@
    "where": "converter reads it",
    "instead": "",
    "held_by": "",
-   "count": 12333,
-   "modules": 48
+   "count": 12341,
+   "modules": 49
   },
   {
    "row": "CustomMeshState.CustomShader",
@@ -791,8 +791,8 @@
    "where": "specular shader settings",
    "instead": "a look of our own",
    "held_by": "",
-   "count": 1100,
-   "modules": 48
+   "count": 1101,
+   "modules": 49
   },
   {
    "row": "CustomAssetbundleState.TypeIndex",
@@ -800,8 +800,8 @@
    "where": "converter reads it",
    "instead": "",
    "held_by": "",
-   "count": 618,
-   "modules": 48
+   "count": 626,
+   "modules": 49
   },
   {
    "row": "ObjectState.States",
@@ -809,8 +809,8 @@
    "where": "converter reads it",
    "instead": "",
    "held_by": "",
-   "count": 11157,
-   "modules": 47
+   "count": 11316,
+   "modules": 48
   },
   {
    "row": "ObjectState.Tooltip",
@@ -818,8 +818,8 @@
    "where": "hiding a piece's name on hover (hidden information, decided 2026-11-06)",
    "instead": "the umpire layer hides a piece whole",
    "held_by": "",
-   "count": 1360,
-   "modules": 47
+   "count": 1361,
+   "modules": 48
   },
   {
    "row": "ObjectState.MaterialIndex",
@@ -827,8 +827,8 @@
    "where": "the tabletop's stock material (plastic, wood, metal...) on a block or model",
    "instead": "the piece keeps its tint; a look is the pack's own",
    "held_by": "",
-   "count": 182,
-   "modules": 47
+   "count": 186,
+   "modules": 48
   },
   {
    "row": "ObjectState.GridProjection",
@@ -836,8 +836,8 @@
    "where": "grid (decided 2026-11-06)",
    "instead": "set the table's own grid",
    "held_by": "",
-   "count": 78,
-   "modules": 46
+   "count": 79,
+   "modules": 47
   },
   {
    "row": "ObjectState.Description",
@@ -845,8 +845,8 @@
    "where": "converter reads it",
    "instead": "",
    "held_by": "",
-   "count": 16860,
-   "modules": 44
+   "count": 17057,
+   "modules": 45
   },
   {
    "row": "ObjectState.Snap",
@@ -863,8 +863,26 @@
    "where": "ModuleSave.cs Children: attachments and glued parts",
    "instead": "",
    "held_by": "import-sweep: triangles, richmond",
-   "count": 25386,
-   "modules": 38
+   "count": 25956,
+   "modules": 39
+  },
+  {
+   "row": "GridState.xSize",
+   "status": "dropped",
+   "where": "grid (decided 2026-11-06)",
+   "instead": "set the table's own grid",
+   "held_by": "",
+   "count": 39,
+   "modules": 39
+  },
+  {
+   "row": "GridState.ySize",
+   "status": "dropped",
+   "where": "grid (decided 2026-11-06)",
+   "instead": "set the table's own grid",
+   "held_by": "",
+   "count": 39,
+   "modules": 39
   },
   {
    "row": "CustomTileState.Thickness",
@@ -876,31 +894,13 @@
    "modules": 38
   },
   {
-   "row": "GridState.xSize",
-   "status": "dropped",
-   "where": "grid (decided 2026-11-06)",
-   "instead": "set the table's own grid",
-   "held_by": "",
-   "count": 38,
-   "modules": 38
-  },
-  {
-   "row": "GridState.ySize",
-   "status": "dropped",
-   "where": "grid (decided 2026-11-06)",
-   "instead": "set the table's own grid",
-   "held_by": "",
-   "count": 38,
-   "modules": 38
-  },
-  {
    "row": "CustomTokenState.Thickness",
    "status": "native",
    "where": "converter reads it",
    "instead": "",
    "held_by": "",
-   "count": 1527,
-   "modules": 36
+   "count": 1686,
+   "modules": 37
   },
   {
    "row": "SaveState.GameMode",
@@ -908,8 +908,8 @@
    "where": "save metadata",
    "instead": "nothing is needed",
    "held_by": "",
-   "count": 34,
-   "modules": 34
+   "count": 35,
+   "modules": 35
   },
   {
    "row": "CustomImageState.ImageSecondaryURL",
@@ -917,8 +917,8 @@
    "where": "converter reads it",
    "instead": "",
    "held_by": "",
-   "count": 3532,
-   "modules": 32
+   "count": 3542,
+   "modules": 33
   },
   {
    "row": "SaveState.PlayerCounts",
@@ -926,8 +926,8 @@
    "where": "save metadata",
    "instead": "nothing is needed",
    "held_by": "",
-   "count": 31,
-   "modules": 31
+   "count": 32,
+   "modules": 32
   },
   {
    "row": "SaveState.PlayingTime",
@@ -935,8 +935,8 @@
    "where": "save metadata",
    "instead": "nothing is needed",
    "held_by": "",
-   "count": 31,
-   "modules": 31
+   "count": 32,
+   "modules": 32
   },
   {
    "row": "SaveState.GameComplexity",
@@ -944,8 +944,8 @@
    "where": "save metadata",
    "instead": "nothing is needed",
    "held_by": "",
-   "count": 29,
-   "modules": 29
+   "count": 30,
+   "modules": 30
   },
   {
    "row": "SaveState.PlayArea",
@@ -957,28 +957,37 @@
    "modules": 29
   },
   {
-   "row": "ObjectState.Sticky",
-   "status": "partial",
-   "where": "a holder always carries its stack when moved (true in modules); false is not kept",
-   "instead": "take the top piece off first",
-   "held_by": "",
-   "count": 1334,
-   "modules": 26
-  },
-  {
    "row": "ObjectState.RotationValues",
    "status": "native",
    "where": "converter reads it",
    "instead": "",
    "held_by": "",
-   "count": 181,
-   "modules": 26
+   "count": 184,
+   "modules": 27
   },
   {
    "row": "TagsState.labels",
    "status": "dropped",
    "where": "tag labels of the tabletop's UI",
    "instead": "nothing is needed; pieces keep their tags",
+   "held_by": "",
+   "count": 27,
+   "modules": 27
+  },
+  {
+   "row": "ObjectState.Sticky",
+   "status": "native",
+   "where": "the piece option Carries what rests on it; self.sticky and set_sticky in scripts",
+   "instead": "",
+   "held_by": "StickyTests",
+   "count": 1334,
+   "modules": 26
+  },
+  {
+   "row": "SaveState.VersionNumber",
+   "status": "dropped",
+   "where": "save metadata",
+   "instead": "nothing is needed",
    "held_by": "",
    "count": 26,
    "modules": 26
@@ -997,15 +1006,6 @@
    "status": "native",
    "where": "converter reads it",
    "instead": "",
-   "held_by": "",
-   "count": 25,
-   "modules": 25
-  },
-  {
-   "row": "SaveState.VersionNumber",
-   "status": "dropped",
-   "where": "save metadata",
-   "instead": "nothing is needed",
    "held_by": "",
    "count": 25,
    "modules": 25
@@ -1040,11 +1040,20 @@
   {
    "row": "CustomAssetbundleState.LoopingEffectIndex",
    "status": "partial",
-   "where": "BundleEffects: the effect family, not the index",
-   "instead": "",
+   "where": "BundleEffects: the effect family, not the index; read from the bundles 2026-11-06, every placed effect in the 55 saves runs the loop its family shows and none is saved on an Off loop",
+   "instead": "an effect saved switched off would come over burning: delete it",
    "held_by": "",
    "count": 71,
    "modules": 21
+  },
+  {
+   "row": "CustomTileState.Type",
+   "status": "native",
+   "where": "converter reads it",
+   "instead": "",
+   "held_by": "",
+   "count": 1743,
+   "modules": 20
   },
   {
    "row": "ObjectState.ContainedObjects",
@@ -1065,15 +1074,6 @@
    "modules": 19
   },
   {
-   "row": "CustomTileState.Type",
-   "status": "native",
-   "where": "converter reads it",
-   "instead": "",
-   "held_by": "",
-   "count": 1721,
-   "modules": 19
-  },
-  {
    "row": "GridState.Opacity",
    "status": "dropped",
    "where": "grid (decided 2026-11-06)",
@@ -1084,10 +1084,10 @@
   },
   {
    "row": "ObjectState.Bag",
-   "status": "dropped",
-   "where": "the order a bag gives its pieces back in",
-   "instead": "stowed pieces come out first in first, or by name",
-   "held_by": "",
+   "status": "native",
+   "where": "the holder's take order: last in first out, first in first out or random; a take with no piece named follows it, as does Take the top one out or Draw one at random",
+   "instead": "",
+   "held_by": "BagOrderTests",
    "count": 64,
    "modules": 17
   },
@@ -1182,6 +1182,15 @@
    "modules": 13
   },
   {
+   "row": "LightingState.LightIntensity",
+   "status": "dropped",
+   "where": "lighting (decided 2026-11-06)",
+   "instead": "set the table's own light and backdrop",
+   "held_by": "",
+   "count": 13,
+   "modules": 13
+  },
+  {
    "row": "ObjectState.Memo",
    "status": "native",
    "where": "converter reads it",
@@ -1201,15 +1210,6 @@
   },
   {
    "row": "LightingState.AmbientIntensity",
-   "status": "dropped",
-   "where": "lighting (decided 2026-11-06)",
-   "instead": "set the table's own light and backdrop",
-   "held_by": "",
-   "count": 12,
-   "modules": 12
-  },
-  {
-   "row": "LightingState.LightIntensity",
    "status": "dropped",
    "where": "lighting (decided 2026-11-06)",
    "instead": "set the table's own light and backdrop",
@@ -1263,6 +1263,15 @@
    "modules": 9
   },
   {
+   "row": "SaveState.MusicPlayer",
+   "status": "dropped",
+   "where": "music player",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 9,
+   "modules": 9
+  },
+  {
    "row": "SaveState.VectorLines",
    "status": "native",
    "where": "strokes on the umpire's drawing board",
@@ -1290,7 +1299,7 @@
    "modules": 8
   },
   {
-   "row": "SaveState.MusicPlayer",
+   "row": "MusicPlayerState.AudioLibrary",
    "status": "dropped",
    "where": "music player",
    "instead": "nothing is needed",
@@ -1321,15 +1330,6 @@
    "status": "dropped",
    "where": "lighting (decided 2026-11-06)",
    "instead": "set the table's own light and backdrop",
-   "held_by": "",
-   "count": 7,
-   "modules": 7
-  },
-  {
-   "row": "MusicPlayerState.AudioLibrary",
-   "status": "dropped",
-   "where": "music player",
-   "instead": "nothing is needed",
    "held_by": "",
    "count": 7,
    "modules": 7
@@ -1524,6 +1524,15 @@
    "modules": 4
   },
   {
+   "row": "MusicPlayerState.PlaylistEntry",
+   "status": "dropped",
+   "where": "music player",
+   "instead": "nothing is needed",
+   "held_by": "",
+   "count": 4,
+   "modules": 4
+  },
+  {
    "row": "SaveState.LuaScriptState",
    "status": "native",
    "where": "converter reads it",
@@ -1591,15 +1600,6 @@
    "status": "dropped",
    "where": "grid (decided 2026-11-06)",
    "instead": "set the table's own grid",
-   "held_by": "",
-   "count": 3,
-   "modules": 3
-  },
-  {
-   "row": "MusicPlayerState.PlaylistEntry",
-   "status": "dropped",
-   "where": "music player",
-   "instead": "nothing is needed",
    "held_by": "",
    "count": 3,
    "modules": 3
@@ -3097,8 +3097,8 @@
    "where": "ObjectCall",
    "instead": "",
    "held_by": "",
-   "count": 49915,
-   "modules": 51
+   "count": 50776,
+   "modules": 52
   },
   {
    "row": "getPosition",
@@ -3106,8 +3106,8 @@
    "where": "ObjectCall",
    "instead": "",
    "held_by": "",
-   "count": 2419,
-   "modules": 51
+   "count": 2421,
+   "modules": 52
   },
   {
    "row": "editButton",
@@ -3115,8 +3115,8 @@
    "where": "ObjectCall",
    "instead": "",
    "held_by": "",
-   "count": 46055,
-   "modules": 50
+   "count": 46867,
+   "modules": 51
   },
   {
    "row": "getScale",
@@ -3124,8 +3124,8 @@
    "where": "ObjectCall",
    "instead": "",
    "held_by": "",
-   "count": 14744,
-   "modules": 50
+   "count": 15144,
+   "modules": 51
   },
   {
    "row": "clearButtons",
@@ -3133,8 +3133,8 @@
    "where": "ObjectCall",
    "instead": "",
    "held_by": "",
-   "count": 6478,
-   "modules": 50
+   "count": 6680,
+   "modules": 51
   },
   {
    "row": "createInput",
@@ -3142,8 +3142,8 @@
    "where": "ObjectCall",
    "instead": "",
    "held_by": "",
-   "count": 19982,
-   "modules": 49
+   "count": 20637,
+   "modules": 50
   },
   {
    "row": "setCustomObject",
@@ -3151,8 +3151,8 @@
    "where": "compat.set_custom_object: picture and mesh (mesh uncommitted); item 8",
    "instead": "",
    "held_by": "",
-   "count": 3483,
-   "modules": 49
+   "count": 3484,
+   "modules": 50
   },
   {
    "row": "reload",
@@ -3160,8 +3160,8 @@
    "where": "ObjectCall",
    "instead": "",
    "held_by": "",
-   "count": 754,
-   "modules": 49
+   "count": 755,
+   "modules": 50
   },
   {
    "row": "positionToWorld",
@@ -3169,8 +3169,8 @@
    "where": "ObjectCall",
    "instead": "",
    "held_by": "",
-   "count": 1179,
-   "modules": 48
+   "count": 1180,
+   "modules": 49
   },
   {
    "row": "setVar",
@@ -3178,8 +3178,8 @@
    "where": "ObjectCall",
    "instead": "",
    "held_by": "",
-   "count": 179,
-   "modules": 48
+   "count": 181,
+   "modules": 49
   },
   {
    "row": "editInput",
@@ -3187,8 +3187,8 @@
    "where": "ObjectCall",
    "instead": "",
    "held_by": "",
-   "count": 37103,
-   "modules": 46
+   "count": 38689,
+   "modules": 47
   },
   {
    "row": "getInputs",
@@ -3196,8 +3196,8 @@
    "where": "ObjectCall",
    "instead": "",
    "held_by": "",
-   "count": 15454,
-   "modules": 46
+   "count": 16053,
+   "modules": 47
   },
   {
    "row": "clearInputs",
@@ -3205,8 +3205,8 @@
    "where": "ObjectCall",
    "instead": "",
    "held_by": "",
-   "count": 5166,
-   "modules": 46
+   "count": 5365,
+   "modules": 47
   },
   {
    "row": "getButtons",
@@ -3214,8 +3214,8 @@
    "where": "ObjectCall",
    "instead": "",
    "held_by": "",
-   "count": 3949,
-   "modules": 46
+   "count": 3950,
+   "modules": 47
   },
   {
    "row": "setPosition",
@@ -3223,8 +3223,8 @@
    "where": "ObjectCall",
    "instead": "",
    "held_by": "",
-   "count": 407,
-   "modules": 46
+   "count": 416,
+   "modules": 47
   },
   {
    "row": "setScale",
@@ -3232,8 +3232,8 @@
    "where": "ObjectCall",
    "instead": "",
    "held_by": "",
-   "count": 226,
-   "modules": 46
+   "count": 231,
+   "modules": 47
   },
   {
    "row": "getCustomObject",
@@ -3241,8 +3241,8 @@
    "where": "ObjectCall",
    "instead": "",
    "held_by": "",
-   "count": 90,
-   "modules": 45
+   "count": 92,
+   "modules": 46
   },
   {
    "row": "setName",
@@ -3250,8 +3250,8 @@
    "where": "ObjectCall",
    "instead": "",
    "held_by": "",
-   "count": 5505,
-   "modules": 37
+   "count": 5703,
+   "modules": 38
   },
   {
    "row": "getRotation",
@@ -3268,8 +3268,8 @@
    "where": "ObjectCall",
    "instead": "",
    "held_by": "",
-   "count": 44562,
-   "modules": 32
+   "count": 45750,
+   "modules": 33
   },
   {
    "row": "setDescription",
@@ -3277,8 +3277,17 @@
    "where": "ObjectCall",
    "instead": "",
    "held_by": "",
-   "count": 4640,
-   "modules": 29
+   "count": 4838,
+   "modules": 30
+  },
+  {
+   "row": "call",
+   "status": "native",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 37963,
+   "modules": 28
   },
   {
    "row": "getColorTint",
@@ -3290,22 +3299,13 @@
    "modules": 28
   },
   {
-   "row": "call",
-   "status": "native",
-   "where": "ObjectCall",
-   "instead": "",
-   "held_by": "",
-   "count": 36379,
-   "modules": 27
-  },
-  {
    "row": "clearContextMenu",
    "status": "native",
    "where": "ObjectCall",
    "instead": "",
    "held_by": "",
-   "count": 7079,
-   "modules": 25
+   "count": 7277,
+   "modules": 26
   },
   {
    "row": "getGUID",
@@ -3461,6 +3461,24 @@
    "modules": 13
   },
   {
+   "row": "getTransformUp",
+   "status": "compat",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 13029,
+   "modules": 12
+  },
+  {
+   "row": "setDecals",
+   "status": "compat",
+   "where": "ObjectCall",
+   "instead": "",
+   "held_by": "",
+   "count": 4343,
+   "modules": 12
+  },
+  {
    "row": "hasTag",
    "status": "compat",
    "where": "ObjectCall",
@@ -3486,24 +3504,6 @@
    "held_by": "",
    "count": 12,
    "modules": 12
-  },
-  {
-   "row": "getTransformUp",
-   "status": "compat",
-   "where": "ObjectCall",
-   "instead": "",
-   "held_by": "",
-   "count": 12435,
-   "modules": 11
-  },
-  {
-   "row": "setDecals",
-   "status": "compat",
-   "where": "ObjectCall",
-   "instead": "",
-   "held_by": "",
-   "count": 4145,
-   "modules": 11
   },
   {
    "row": "highlightOff",
@@ -5457,8 +5457,8 @@
    "where": "GlobalFunctionCall",
    "instead": "",
    "held_by": "",
-   "count": 1193,
-   "modules": 49
+   "count": 1203,
+   "modules": 50
   },
   {
    "row": "broadcastToAll",
@@ -5466,8 +5466,8 @@
    "where": "GlobalFunctionCall",
    "instead": "",
    "held_by": "",
-   "count": 737,
-   "modules": 49
+   "count": 748,
+   "modules": 50
   },
   {
    "row": "broadcastToColor",
@@ -5475,8 +5475,8 @@
    "where": "GlobalFunctionCall",
    "instead": "",
    "held_by": "",
-   "count": 58823,
-   "modules": 29
+   "count": 61397,
+   "modules": 30
   },
   {
    "row": "spawnObject",
@@ -5497,6 +5497,15 @@
    "modules": 14
   },
   {
+   "row": "startLuaCoroutine",
+   "status": "compat",
+   "where": "GlobalFunctionCall",
+   "instead": "",
+   "held_by": "",
+   "count": 4345,
+   "modules": 13
+  },
+  {
    "row": "spawnObjectData",
    "status": "compat",
    "where": "GlobalFunctionCall",
@@ -5504,15 +5513,6 @@
    "held_by": "",
    "count": 32,
    "modules": 13
-  },
-  {
-   "row": "startLuaCoroutine",
-   "status": "compat",
-   "where": "GlobalFunctionCall",
-   "instead": "",
-   "held_by": "",
-   "count": 4147,
-   "modules": 12
   },
   {
    "row": "getAllObjects",
@@ -5954,8 +5954,8 @@
    "where": "json.encode / json.decode",
    "instead": "",
    "held_by": "",
-   "count": 12638,
-   "modules": 51
+   "count": 12891,
+   "modules": 52
   },
   {
    "row": "JSON.decode",
@@ -5963,8 +5963,8 @@
    "where": "json.encode / json.decode",
    "instead": "",
    "held_by": "",
-   "count": 11657,
-   "modules": 50
+   "count": 11910,
+   "modules": 51
   },
   {
    "row": "Wait.frames",
@@ -5972,8 +5972,8 @@
    "where": "compat.wait_*",
    "instead": "",
    "held_by": "",
-   "count": 13333,
-   "modules": 26
+   "count": 13927,
+   "modules": 27
   },
   {
    "row": "Wait.time",
@@ -5981,8 +5981,8 @@
    "where": "compat.wait_*",
    "instead": "",
    "held_by": "",
-   "count": 5520,
-   "modules": 14
+   "count": 5718,
+   "modules": 15
   },
   {
    "row": "UI.setAttribute",
@@ -5990,8 +5990,8 @@
    "where": "run-time UI through ui.*: the attributes a player sees; item 8",
    "instead": "",
    "held_by": "",
-   "count": 19237,
-   "modules": 13
+   "count": 19435,
+   "modules": 14
   },
   {
    "row": "Wait.stop",
@@ -5999,8 +5999,8 @@
    "where": "compat.wait_*",
    "instead": "",
    "held_by": "",
-   "count": 4021,
-   "modules": 12
+   "count": 4219,
+   "modules": 13
   },
   {
    "row": "UI.setXmlTable",
@@ -7576,8 +7576,8 @@
    "where": "EventRenames",
    "instead": "",
    "held_by": "",
-   "count": 4865,
-   "modules": 50
+   "count": 4920,
+   "modules": 51
   },
   {
    "row": "onLoad",
@@ -8037,8 +8037,8 @@
    "where": "compat.Vector / compat.Color / vec(): named, positional and mixed tables, names and hex",
    "instead": "",
    "held_by": "ModuleVectorColorTests",
-   "count": 54,
-   "modules": 54
+   "count": 55,
+   "modules": 55
   },
   {
    "row": "MoonSharp 2.0.0 on both sides: the Lua dialect matches",
@@ -8046,8 +8046,8 @@
    "where": "Server.csproj",
    "instead": "",
    "held_by": "",
-   "count": 54,
-   "modules": 54
+   "count": 55,
+   "modules": 55
   },
   {
    "row": "Wait.frames counts frames, Wait.time seconds, onUpdate per frame",
@@ -8055,8 +8055,8 @@
    "where": "ScriptTimers: ticks",
    "instead": "",
    "held_by": "",
-   "count": 54,
-   "modules": 54
+   "count": 55,
+   "modules": 55
   },
   {
    "row": "a script call has no time limit in modules",
@@ -8064,8 +8064,8 @@
    "where": "ScriptHost.CallBudgetMs: a second of the script's own time per call, the table work it asks for not counted, so a bag placing hundreds of pieces in one click runs; a runaway loop still stops",
    "instead": "",
    "held_by": "import-sweep: naval (the Midway bag's Place)",
-   "count": 54,
-   "modules": 54
+   "count": 55,
+   "modules": 55
   },
   {
    "row": "button and input defaults (width, height, font_size, colours, position, scale)",
@@ -8073,8 +8073,8 @@
    "where": "compat.module_defaults, from the tabletop's LuaUIState classes; a button or input with no handler is refused, as modules expect",
    "instead": "",
    "held_by": "ModuleDefaultsTests",
-   "count": 54,
-   "modules": 54
+   "count": 55,
+   "modules": 55
   },
   {
    "row": "click_function(obj, player_color, alt_click)",
@@ -8082,8 +8082,8 @@
    "where": "compat.create_button / module_handler",
    "instead": "",
    "held_by": "TranslatorTests.Handlers_get_the_piece_their_widget_is_on",
-   "count": 54,
-   "modules": 54
+   "count": 55,
+   "modules": 55
   },
   {
    "row": "context menu callback(player_color, menu_position, object)",
@@ -8091,8 +8091,8 @@
    "where": "compat.add_context_menu_item",
    "instead": "",
    "held_by": "",
-   "count": 54,
-   "modules": 54
+   "count": 55,
+   "modules": 55
   },
   {
    "row": "getObjectFromGUID answers nil for a piece inside a bag",
@@ -8100,8 +8100,8 @@
    "where": "a stowed piece is off the layer, so board.find does not see it",
    "instead": "",
    "held_by": "StowScriptTests",
-   "count": 54,
-   "modules": 54
+   "count": 55,
+   "modules": 55
   },
   {
    "row": "input_function(obj, player_color, text, selected)",
@@ -8109,8 +8109,8 @@
    "where": "compat.create_input / module_handler",
    "instead": "",
    "held_by": "TranslatorTests.A_name_typed_letter_by_letter_reaches_the_face",
-   "count": 54,
-   "modules": 54
+   "count": 55,
+   "modules": 55
   },
   {
    "row": "load order: global before objects; onLoad(script_state)",
@@ -8118,8 +8118,8 @@
    "where": "ScriptHost.Load; the saved state string",
    "instead": "",
    "held_by": "",
-   "count": 54,
-   "modules": 54
+   "count": 55,
+   "modules": 55
   },
   {
    "row": "member names fold (exact, first letter up, snake to camel, both)",
@@ -8127,8 +8127,8 @@
    "where": "ModuleTranslator.FoldMember before every object member lookup",
    "instead": "",
    "held_by": "TranslatorFoldTests",
-   "count": 54,
-   "modules": 54
+   "count": 55,
+   "modules": 55
   },
   {
    "row": "module Vector and Color classes with their methods",
@@ -8136,8 +8136,8 @@
    "where": "compat.Vector and compat.Color: every documented method, operator and named colour",
    "instead": "",
    "held_by": "ModuleVectorColorTests",
-   "count": 54,
-   "modules": 54
+   "count": 55,
+   "modules": 55
   },
   {
    "row": "player model: colours, Black as GM, promoted, seated, host",
@@ -8145,8 +8145,8 @@
    "where": "compat.color_of: the host is Black as a module's GM, the other umpires White, Red, Blue... in seat order, so Player[color] finds each; sides and observers have no seat colour",
    "instead": "",
    "held_by": "PlayerActionTests",
-   "count": 54,
-   "modules": 54
+   "count": 55,
+   "modules": 55
   },
   {
    "row": "positionToWorld and positionToLocal: the module transform, local x along +X at rotation zero, in mesh units times scale for a model and the size rule for a flat",
@@ -8154,8 +8154,8 @@
    "where": "compat.position_to_world / position_to_local; a model def carries local_unit from the converter",
    "instead": "",
    "held_by": "ModuleLocalFrameTests",
-   "count": 54,
-   "modules": 54
+   "count": 55,
+   "modules": 55
   },
   {
    "row": "save quirk: a number written as a string, or NaN",
@@ -8163,8 +8163,8 @@
    "where": "ModuleObj.D falls back to the default and the report says so",
    "instead": "",
    "held_by": "ConverterTests",
-   "count": 54,
-   "modules": 54
+   "count": 55,
+   "modules": 55
   },
   {
    "row": "save quirk: duplicate GUIDs inside bags",
@@ -8172,8 +8172,8 @@
    "where": "a guid names the first piece found, as getObjectFromGUID answers in modules",
    "instead": "",
    "held_by": "",
-   "count": 54,
-   "modules": 54
+   "count": 55,
+   "modules": 55
   },
   {
    "row": "save quirk: negative scale mirrors",
@@ -8181,8 +8181,8 @@
    "where": "the size is taken unsigned, so a mirrored piece comes over unmirrored, and the report names it",
    "instead": "",
    "held_by": "ConverterTests",
-   "count": 54,
-   "modules": 54
+   "count": 55,
+   "modules": 55
   },
   {
    "row": "save quirk: rotX/rotZ near 180 means face down; other tilts stand or lean",
@@ -8190,8 +8190,8 @@
    "where": "ModuleObj.Flipped: 180 only",
    "instead": "",
    "held_by": "",
-   "count": 54,
-   "modules": 54
+   "count": 55,
+   "modules": 55
   },
   {
    "row": "script safety cuts the self-copying block and keeps the rest",
@@ -8199,8 +8199,8 @@
    "where": "ScriptSafety; over the roster only the German Team Planning Table is cut, 1,463 copies of the Object base code worm, and no other rule fires",
    "instead": "",
    "held_by": "ScriptSafetyTests; import-sweep",
-   "count": 54,
-   "modules": 54
+   "count": 55,
+   "modules": 55
   },
   {
    "row": "setState keeps the GUID",
@@ -8208,8 +8208,8 @@
    "where": "a piece keeps its id and guid through its looks; in a module each state object has a guid of its own that takes over",
    "instead": "",
    "held_by": "",
-   "count": 54,
-   "modules": 54
+   "count": 55,
+   "modules": 55
   },
   {
    "row": "smooth moves end at once",
@@ -8217,8 +8217,8 @@
    "where": "compat.set_position",
    "instead": "",
    "held_by": "",
-   "count": 54,
-   "modules": 54
+   "count": 55,
+   "modules": 55
   },
   {
    "row": "spawning and loading_custom flags",
@@ -8226,8 +8226,8 @@
    "where": "ObjectProps (get_prop)",
    "instead": "",
    "held_by": "",
-   "count": 54,
-   "modules": 54
+   "count": 55,
+   "modules": 55
   },
   {
    "row": "widget indices are 0-based in editButton/editInput/removeButton",
@@ -8235,8 +8235,8 @@
    "where": "compat.edit_button",
    "instead": "",
    "held_by": "",
-   "count": 54,
-   "modules": 54
+   "count": 55,
+   "modules": 55
   }
  ],
  "defaults": {
@@ -8304,7 +8304,7 @@
   "LightingState.LutIndex": "0",
   "LightingState.LutURL": "\"\"",
   "LightingState.ReflectionIntensity": "1",
-  "MusicPlayerState.CurrentAudioTitle": "\"Ultramarines Chant\"",
+  "MusicPlayerState.CurrentAudioTitle": "\"The Binding of Isaac Antibirth OST Subterranean Homesick Malign (Caves)\"",
   "MusicPlayerState.CurrentAudioURL": "\"https://steamusercontent-a.akamaihd.net/ugc/771729113224675711/32FB11610C3D92E679140F6C2D5FD498F096A3B4/\"",
   "MusicPlayerState.PlaylistEntry": "-1",
   "MusicPlayerState.RepeatSong": "false",
@@ -8373,7 +8373,7 @@
   "TransformState.posY": "1.40987647",
   "TransformState.posZ": "-97.66685",
   "TransformState.rotX": "0",
-  "TransformState.rotY": "180.072525",
+  "TransformState.rotY": "0",
   "TransformState.rotZ": "0",
   "TransformState.scaleX": "1",
   "TransformState.scaleY": "1",

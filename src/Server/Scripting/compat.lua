@@ -371,6 +371,7 @@ function compat.set_prop(obj, k, v)
   if k == "memo" then obj.set_memo(v) return end
   if k == "script_state" then obj.set_script_state(v) return end
   if k == "locked" then obj.set_locked(v and true or false) return end
+  if k == "sticky" then obj.set_sticky(v ~= false) return end
   pbag(obj)[k] = v
 end
 function compat.get_prop(obj, k, d)
@@ -378,6 +379,7 @@ function compat.get_prop(obj, k, d)
   if k == "memo" then local m = obj.memo; if m == nil or m == "" then return d end return m end
   if k == "script_state" then local v = obj.script_state; if v == nil or v == "" then return d end return v end
   if k == "locked" then return obj.locked == true end
+  if k == "sticky" then return obj.sticky ~= false end
   local v = pbag(obj)[k]; if v == nil then return d end return v
 end
 function compat.log(value, label, tags)

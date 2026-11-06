@@ -31,7 +31,11 @@ public sealed class ModuleObj
     double Span => MeshUrl is { } u && MeshSize?.Invoke(u) is { } b ? Math.Max(Math.Abs(ScaleX) * b.ex, Math.Abs(ScaleZ) * b.ez) : 0;
     public bool IsTerrain => Name == "Custom_Model" && Locked && PosY >= UnderTheTable && MeshUrl != null && DiffuseUrl != null
                              && (Math.Abs(ScaleX) >= TableScale || Span >= TerrainSpan);
-    public bool IsFurniture => (Name == "Custom_Model" && Math.Abs(ScaleX) >= TableScale && !IsTerrain) || (Locked && PosY < UnderTheTable && Name is "Custom_Model" or "Custom_Tile" or "Custom_Token" or "Custom_Board");
+    public bool IsFurniture => ((Name == "Custom_Model" && Math.Abs(ScaleX) >= TableScale && !IsTerrain) || (Locked && PosY < UnderTheTable && Name is "Custom_Model" or "Custom_Tile" or "Custom_Token" or "Custom_Board"))
+                               && Top == null;
+    public static Func<string, TableTop?>? MeshTop { get; set; }
+    public TableTop? Top => Name == "Custom_Model" && Locked && DiffuseUrl != null && MeshUrl is { } u && ScaleX * ScaleZ > 0 && PosY < UnderTheTable
+                            && MeshTop?.Invoke(u) is { } t && PosY + t.Top * ScaleY >= UnderTheTable ? t : null;
     public double RotX => D(T, "rotX");
     public double RotY => D(T, "rotY");
     public double RotZ => D(T, "rotZ");
@@ -72,13 +76,16 @@ public sealed class ModuleObj
 
     public static List<Line> LinesOf(JsonNode? node)
     {
-        const double DefaultThickness = 0.1;
+        const double DefaultThickness = 0.1, Opaque = 1;
         var lines = new List<Line>();
         foreach (var l in (node as JsonArray)?.OfType<JsonObject>() ?? [])
         {
             var points = (l["points3"] as JsonArray)?.OfType<JsonObject>().Select(p => (D(p, "x"), D(p, "y"), D(p, "z"))).ToList() ?? new();
             if (points.Count < 2) continue;
-            var colour = l["color"] is JsonObject c ? HexOf(c) : "#FFFFFF";
+            var c = l["color"] as JsonObject;
+            double alpha = c is null ? Opaque : Math.Clamp(D(c, "a", Opaque), 0, Opaque);
+            if (alpha <= 0) continue;
+            var colour = c is null ? "#FFFFFF" : alpha < Opaque ? $"{HexOf(c)}{(int)Math.Round(alpha * 255):X2}" : HexOf(c);
             lines.Add(new Line(points, colour, D(l, "thickness", DefaultThickness), l["loop"]?.GetValue<bool>() ?? false));
         }
         return lines;
@@ -88,7 +95,15 @@ public sealed class ModuleObj
     public bool IsDeck => Name is "Deck" or "DeckCustom";
     public bool IsChecker => Name is "Checker_white" or "Checker_red" or "Checker_black";
     public bool IsBag => Name is "Bag" or "Custom_Model_Bag";
+    public bool Sticky => J["Sticky"] is not JsonValue v || !v.TryGetValue<bool>(out var on) || on;
     public bool IsInfiniteBag => Name.Contains("Infinite", StringComparison.Ordinal);
+    const int LastInFirstOut = 0, RandomOrder = 2;
+    public string? TakeOrder => (J["Bag"] is JsonObject b && b["Order"] != null ? I(b, "Order") : LastInFirstOut) switch
+    {
+        LastInFirstOut => KTable.Core.Model.TakeOrders.Last,
+        RandomOrder => KTable.Core.Model.TakeOrders.Random,
+        _ => null,
+    };
     public bool IsPictureDie => Name == "Custom_Dice" && DiceType == PictureDieType;
     const int PictureDieType = 1;
     public int DiceType => (CI?["CustomDice"] as JsonObject)?["Type"]?.GetValue<int>() ?? -1;

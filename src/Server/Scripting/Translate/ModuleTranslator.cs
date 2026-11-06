@@ -532,7 +532,7 @@ public static class ModuleTranslator
             return visited;
         }
 
-        static string DefaultProp(string name) => name switch { "interactable" or "use_gravity" or "auto_raise" => "true", "memo" or "tooltip" => "\"\"", _ => "false" };
+        static string DefaultProp(string name) => name switch { "interactable" or "use_gravity" or "auto_raise" or "sticky" or "tooltip" => "true", "memo" => "\"\"", _ => "false" };
 
         public override SyntaxNode? VisitAssignmentStatement(AssignmentStatementSyntax node)
         {

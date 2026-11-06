@@ -47,4 +47,21 @@ public sealed partial class ConverterTests
         Assert.Equal(line.Points[1].Z, -line.Points[0].X, 6);
         Assert.True(line.Points[0].X < 0 && line.Points[1].Z > 0, "a module's local +x lies along the piece's own -x here, as positionToWorld has it; z stays");
     }
+
+    static JsonObject SeeThrough(JsonObject line, double alpha)
+    {
+        line["color"]!["a"] = alpha;
+        return line;
+    }
+
+    [Fact]
+    public void A_line_switched_off_by_its_alpha_stays_off_and_a_see_through_line_keeps_its_alpha()
+    {
+        var lines = ModuleObj.LinesOf(new JsonArray(
+            SeeThrough(ModuleLine(0.45, false, "blue", (0, 90), (90, 0)), 0),
+            SeeThrough(ModuleLine(0.2, false, "red", (0, 1), (1, 0)), 0.5),
+            ModuleLine(0.2, false, "blue", (0, 1), (1, 0))));
+
+        Assert.Equal(new[] { "#FF000080", "#0000FF" }, lines.Select(l => l.Color));
+    }
 }

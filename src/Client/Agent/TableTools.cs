@@ -237,7 +237,8 @@ public sealed partial class TableTools
         if (s.View.Find(Layers.Umpire, holder) is not { } h) return ToolResult.Fail($"No piece {holder} on this table.");
         if (h.Stowed is not { Count: > 0 } held) return ToolResult.Fail($"{NameOf(s, h)} holds nothing.");
         var which = a.Str("id")?.Trim() ?? "";
-        var target = which.Length == 0 ? held[0] : held.FirstOrDefault(p => p.Id == which) ?? held.FirstOrDefault(p => string.Equals(NameOf(s, p), which, StringComparison.OrdinalIgnoreCase));
+        var target = which.Length == 0 ? h.NextOut(Random.Shared) : held.FirstOrDefault(p => p.Id == which)
+            ?? held.FirstOrDefault(p => string.Equals(NameOf(s, p), which, StringComparison.OrdinalIgnoreCase));
         if (target == null) return ToolResult.Fail($"{NameOf(s, h)} holds no {which}; read_piece {holder} lists what it holds.");
         var cmd = new Unstow { Layer = Layers.Umpire, Holder = holder, Id = target.Id, RotDeg = a.Num("turn") };
         if (a.Num("x") is { } x && a.Num("z") is { } z) cmd.Pos = new Vec2(x, z);

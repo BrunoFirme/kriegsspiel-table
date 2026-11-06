@@ -272,6 +272,7 @@ public static class PieceOptions
 {
     public const string NoCollision = "no-collision";
     public const string PhysicalRoll = "physical-roll";
+    public const string NotSticky = "not-sticky";
 }
 
 public sealed class SetLocked : LayerCommand

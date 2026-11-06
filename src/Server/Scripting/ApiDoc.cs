@@ -167,6 +167,8 @@ public static partial class ApiDoc
         See("self.flip", "on_flip");
         F("piece", "locked", "boolean", "Pinned to the table: not dragged, turned or resized by hand.", "getLock");
         See("self.set_locked");
+        F("piece", "sticky", "boolean", "Carries the pieces resting on it when it is moved; attached pieces go with it either way.", "sticky");
+        See("self.set_sticky");
         F("piece", "tint", "string?", "Its colour as \"#RRGGBB\", or nil.", "getColorTint");
         See("self.set_tint");
         F("piece", "counters", "table", "Its kind's counters, name → value.");
@@ -269,6 +271,10 @@ public static partial class ApiDoc
     O("on", "boolean", "true, or no argument, pins it; false lets it go.");
     Note("A locked piece can still be picked out, read and deleted, and an umpire can unlock it from its right-click menu.");
     See("self.locked");
+
+    M("piece", "set_sticky(on)", "Whether it carries the pieces resting on it when it is moved.", "sticky");
+    O("on", "boolean", "true, or no argument, carries them; false leaves them where they lie.");
+    See("self.sticky");
     }
 
     static void PieceCarrying()
@@ -282,7 +288,7 @@ public static partial class ApiDoc
 
         F("piece", "stowed", "list", "The pieces it holds off the table, first in first: { id =, name =, guid =, def =, held = }, held being how many that piece holds in turn.", "getObjects");
         M("piece", "stow(piece)", "Takes another piece off the table into this one, with whatever rides on it; a piece this one rides on is refused.", "putObject");
-        M("piece", "unstow(which, place, rot)", "Puts a held piece back on the table and returns it: which is its id, guid, its number in stowed, or nothing for the first; place is { x =, z = } or a piece, else beside this one; rot turns it.", "takeObject");
+        M("piece", "unstow(which, place, rot)", "Puts a held piece back on the table and returns it: which is its id, guid, its number in stowed, or nothing for the next by the holder's take order (first, last or random); place is { x =, z = } or a piece, else beside this one; rot turns it.", "takeObject");
         See("self.stowed", "self.stow", "self.unstow");
     }
 
