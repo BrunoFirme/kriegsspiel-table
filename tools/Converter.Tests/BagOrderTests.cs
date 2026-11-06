@@ -41,4 +41,13 @@ public sealed partial class ConverterTests
         var loose = Obj("Custom_Tile", "Map", 1, new JsonObject { ["Sticky"] = false });
         Assert.Equal((false, true), (new ModuleObj(loose).Sticky, new ModuleObj(Obj("Custom_Tile", "Unit", 1, new JsonObject())).Sticky));
     }
+
+    [Fact]
+    public void A_piece_a_drag_box_must_skip_or_that_measures_its_move_comes_over_so()
+    {
+        var plain = new ModuleObj(Obj("Custom_Tile", "Unit", 1, new JsonObject()));
+        var set = new ModuleObj(Obj("Custom_Tile", "Wagon", 1, new JsonObject { ["DragSelectable"] = false, ["MeasureMovement"] = true }));
+        Assert.Equal((true, false, false, true), (plain.DragSelectable, plain.MeasureMovement, set.DragSelectable, set.MeasureMovement));
+    }
 }
+

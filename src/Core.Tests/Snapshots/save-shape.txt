@@ -577,9 +577,11 @@ type PieceInstance object
   label: string
   lines: List<LineDef>
   locked: bool
+  measuresMoves: bool
   memo: string
   menuItems: List<MenuItemDef>
   noCollision: bool
+  notBoxSelected: bool
   notSticky: bool
   note: string
   physicalRoll: bool

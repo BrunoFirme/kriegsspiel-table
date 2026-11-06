@@ -124,6 +124,29 @@ sealed partial class Carry : IHeldPieces
         PlaceHeld();
     }
 
+    readonly HashSet<string> _measured = new();
+
+    public void DrawMeasures(ToolOverlay overlay)
+    {
+        foreach (var id in _measured) _c.Labels.Remove($"moved:{id}");
+        _measured.Clear();
+        if (Marching) return;
+        var mat = new StandardMaterial3D { AlbedoColor = MeasureColour, ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded, NoDepthTest = true };
+        var cal = _c.S.View.Calibration;
+        foreach (var h in _held.Where(h => h.Parent == null && GodotObject.IsInstanceValid(h.Node) && h.Node.Piece.MeasuresMoves))
+        {
+            Vec2 from = h.Node.Piece.Pos, to = _cursor + h.Offset;
+            const float Above = 0.3f;
+            overlay.SegPx(overlay.Mesh, mat, from, to, Above);
+            var mid = new Vec2((from.X + to.X) / 2, (from.Z + to.Z) / 2);
+            _c.Labels.Set($"moved:{h.Id}", Coords.ToWorld(mid, Above + (float)_c.S.Ground.At(mid)), Fmt.Distance((to - from).Length, cal), MeasureText, 14,
+                new Vector2(0, -16), centered: true);
+            _measured.Add(h.Id);
+        }
+    }
+
+    static readonly Color MeasureColour = new(1f, 0.42f, 0.28f), MeasureText = new(1f, 0.95f, 0.85f);
+
     void PlaceHeld()
     {
         foreach (var h in _held)

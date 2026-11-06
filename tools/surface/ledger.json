@@ -1282,10 +1282,10 @@
   },
   {
    "row": "ObjectState.DragSelectable",
-   "status": "dropped",
-   "where": "whether a drag selects the piece",
-   "instead": "nothing is needed",
-   "held_by": "",
+   "status": "native",
+   "where": "the piece option Taken by a selection box; self.box_selected and set_box_selected",
+   "instead": "",
+   "held_by": "ModuleOptionsTests",
    "count": 335,
    "modules": 8
   },
@@ -1588,10 +1588,10 @@
   },
   {
    "row": "ObjectState.MeasureMovement",
-   "status": "dropped",
-   "where": "the measure-on-move overlay",
-   "instead": "the measure tool here",
-   "held_by": "",
+   "status": "native",
+   "where": "the piece option Shows how far it is moved: a line and the distance from where it was picked up while it is held; self.measures_moves and set_measures_moves",
+   "instead": "",
+   "held_by": "ModuleOptionsTests",
    "count": 15,
    "modules": 3
   },

@@ -211,6 +211,8 @@ Read from `self` or from any piece `board.find` or `board.pieces` hands back. Fi
 | [`self.face_down`](#selfface_down) | Turned over. |
 | [`self.locked`](#selflocked) | Pinned to the table: not dragged, turned or resized by hand. |
 | [`self.sticky`](#selfsticky) | Carries the pieces resting on it when it is moved; attached pieces go with it either way. |
+| [`self.box_selected`](#selfbox_selected) | Taken by a selection box dragged over it. |
+| [`self.measures_moves`](#selfmeasures_moves) | Shows how far it is moved while it is held. |
 | [`self.tint`](#selftint) | Its colour as "#RRGGBB", or nil. |
 | [`self.counters`](#selfcounters) | Its kind's counters, name → value. |
 | [`self.text`](#selftext) | Its text lines that hold a value, name → text. |
@@ -454,6 +456,30 @@ Carries the pieces resting on it when it is moved; attached pieces go with it ei
 
 **Module call** `sticky` · **See also** [`self.set_sticky`](#selfset_sticky)
 
+### `self.box_selected`
+
+```lua
+self.box_selected
+```
+
+Taken by a selection box dragged over it.
+
+**Type** `boolean`, read-only.
+
+**Module call** `drag_selectable` · **See also** [`self.set_box_selected`](#selfset_box_selected)
+
+### `self.measures_moves`
+
+```lua
+self.measures_moves
+```
+
+Shows how far it is moved while it is held.
+
+**Type** `boolean`, read-only.
+
+**Module call** `measure_movement` · **See also** [`self.set_measures_moves`](#selfset_measures_moves)
+
 ### `self.tint`
 
 ```lua
@@ -627,6 +653,8 @@ Each call is a change every umpire sees, taken back with Ctrl+Z by the umpire wh
 | [`self.flip`](#selfflip) | Turns it over; with no argument, to the other side. |
 | [`self.set_tint`](#selfset_tint) | Tints its sides: "#RRGGBB", a name, or { r, g, b }. nil goes back to its kind's. |
 | [`self.set_locked`](#selfset_locked) | Pins it to the table, or lets it go. |
+| [`self.set_box_selected`](#selfset_box_selected) | Whether a selection box dragged over it takes it. |
+| [`self.set_measures_moves`](#selfset_measures_moves) | Whether it shows how far it is moved while it is held. |
 | [`self.set_sticky`](#selfset_sticky) | Whether it carries the pieces resting on it when it is moved. |
 | [`self.set_counter`](#selfset_counter) | Sets one of its kind's counters (a whole number, kept to the counter's range). |
 | [`self.set_text`](#selfset_text) | Sets one of its kind's text lines. |
@@ -824,6 +852,34 @@ Pins it to the table, or lets it go.
 A locked piece can still be picked out, read and deleted, and an umpire can unlock it from its right-click menu.
 
 **Module call** `setLock` · **See also** [`self.locked`](#selflocked)
+
+### `self.set_box_selected`
+
+```lua
+self.set_box_selected(on)
+```
+
+Whether a selection box dragged over it takes it.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `on` | `boolean` | _Optional._ true, or no argument, lets a box take it; false leaves it out. |
+
+**Module call** `drag_selectable` · **See also** [`self.box_selected`](#selfbox_selected)
+
+### `self.set_measures_moves`
+
+```lua
+self.set_measures_moves(on)
+```
+
+Whether it shows how far it is moved while it is held.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `on` | `boolean` | _Optional._ true, or no argument, shows the distance; false hides it. |
+
+**Module call** `measure_movement` · **See also** [`self.measures_moves`](#selfmeasures_moves)
 
 ### `self.set_sticky`
 
@@ -2846,6 +2902,8 @@ The converter rewrites a module's scripts into these calls by rule; this is the 
 | `createButton` | [`self.button`](#selfbutton) |
 | `createInput` | [`self.input`](#selfinput) |
 | `destruct` | [`self.delete`](#selfdelete) |
+| `drag_selectable` | [`self.box_selected`](#selfbox_selected) |
+| `drag_selectable` | [`self.set_box_selected`](#selfset_box_selected) |
 | `editButton` | [`self.edit`](#selfedit) |
 | `flip` | [`self.flip`](#selfflip) |
 | `getAttachments` | [`self.attached`](#selfattached) |
@@ -2884,6 +2942,8 @@ The converter rewrites a module's scripts into these calls by rule; this is the 
 | `JSON.decode` | [`json.decode`](#jsondecode) |
 | `JSON.encode` | [`json.encode`](#jsonencode) |
 | `log` | [`log`](#log) |
+| `measure_movement` | [`self.measures_moves`](#selfmeasures_moves) |
+| `measure_movement` | [`self.set_measures_moves`](#selfset_measures_moves) |
 | `memo` | [`self.memo`](#selfmemo) |
 | `onChat` | [`on_chat`](#on_chat-global-script) |
 | `onDestroy` | [`on_destroy`](#on_destroy) |

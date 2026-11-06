@@ -292,6 +292,14 @@ public static class StateMachine
                 was = p.NotSticky;
                 p.NotSticky = po.Value;
                 break;
+            case PieceOptions.NotBoxSelected:
+                was = p.NotBoxSelected;
+                p.NotBoxSelected = po.Value;
+                break;
+            case PieceOptions.MeasuresMoves:
+                was = p.MeasuresMoves;
+                p.MeasuresMoves = po.Value;
+                break;
             default: return "no such option: " + po.Name;
         }
         inverse = new SetPieceOption { Layer = po.Layer, Id = po.Id, Name = po.Name, Value = was };

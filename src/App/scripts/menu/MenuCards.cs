@@ -164,6 +164,10 @@ sealed class MenuCards : HudPart
         menu.Check("Collides with other pieces", allCollide, () => SetOption(nodes, PieceOptions.NoCollision, allCollide));
         bool allSticky = nodes.All(n => !n.Piece.NotSticky);
         menu.Check("Carries what rests on it", allSticky, () => SetOption(nodes, PieceOptions.NotSticky, allSticky));
+        bool allBoxed = nodes.All(n => !n.Piece.NotBoxSelected);
+        menu.Check("Taken by a selection box", allBoxed, () => SetOption(nodes, PieceOptions.NotBoxSelected, allBoxed));
+        bool allMeasured = nodes.All(n => n.Piece.MeasuresMoves);
+        menu.Check("Shows how far it is moved", allMeasured, () => SetOption(nodes, PieceOptions.MeasuresMoves, !allMeasured));
         var dice = nodes.Where(n => n.IsDie).ToList();
         if (dice.Count > 0)
         {

@@ -522,6 +522,7 @@ public sealed class ScenarioBuilder
             Guid = o.Guid.Length > 0 ? o.Guid : null,
             Tags = o.Tags, Memo = _defs.RewriteUrls(o.Memo, extras, $"{layer.Name} {o.Name} '{o.Nickname}' {o.Guid} memo"),
             Locked = parent == null && o.Locked, FaceDown = o.Flipped && def.Kind != "model" && def.Back != null, NotSticky = !o.Sticky,
+            NotBoxSelected = !o.DragSelectable, MeasuresMoves = o.MeasureMovement,
         };
         if (lua.Trim().Length > 0)
         {

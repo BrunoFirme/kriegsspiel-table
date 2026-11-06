@@ -147,6 +147,7 @@ public partial class Table : Node3D
         Overlay.Drawing += Zones.DrawDraft;
         Overlay.Drawing += Ranges.Draw;
         Overlay.Drawing += Ruler.Draw;
+        Overlay.Drawing += () => Hand.DrawMeasures(Overlay);
         Overlay.Drawing += Pen.DrawInHand;
         Overlay.Drawing += Letters.Draw;
         Overlay.Drawing += Forms.Draw;

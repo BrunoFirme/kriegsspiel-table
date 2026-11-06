@@ -99,7 +99,10 @@ public sealed class ModuleObj
     public bool IsDeck => Name is "Deck" or "DeckCustom";
     public bool IsChecker => Name is "Checker_white" or "Checker_red" or "Checker_black";
     public bool IsBag => Name is "Bag" or "Custom_Model_Bag";
-    public bool Sticky => J["Sticky"] is not JsonValue v || !v.TryGetValue<bool>(out var on) || on;
+    public bool Sticky => Flag("Sticky", true);
+    public bool DragSelectable => Flag("DragSelectable", true);
+    public bool MeasureMovement => Flag("MeasureMovement", false);
+    bool Flag(string key, bool unset) => J[key] is JsonValue v && v.TryGetValue<bool>(out var on) ? on : unset;
     public bool IsInfiniteBag => Name.Contains("Infinite", StringComparison.Ordinal);
     const int LastInFirstOut = 0, RandomOrder = 2;
     public string? TakeOrder => (J["Bag"] is JsonObject b && b["Order"] != null ? I(b, "Order") : LastInFirstOut) switch

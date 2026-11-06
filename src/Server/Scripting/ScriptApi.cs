@@ -362,6 +362,8 @@ internal sealed class PieceHandles(ScriptHost host)
             case "face_down": return B(p.FaceDown);
             case "locked": return B(p.Locked);
             case "sticky": return B(!p.NotSticky);
+            case "box_selected": return B(!p.NotBoxSelected);
+            case "measures_moves": return B(p.MeasuresMoves);
             case "tint": return p.TintOverride is { } ti ? S(ti) : def != null ? S(def.Tint) : DynValue.Nil;
             case "counters":
             {
@@ -497,6 +499,8 @@ internal sealed class PieceHandles(ScriptHost host)
             case "flip": return Fn(a => { host.Emit(new FlipPiece { Layer = L, Id = id, FaceDown = Arg(a, 0).IsNil() ? !p.FaceDown : Arg(a, 0).CastToBool() }); return DynValue.Nil; });
             case "set_tint": return Fn(a => { host.Emit(new SetTint { Layer = L, Id = id, Value = Arg(a, 0).IsNil() ? null : ColorOf(Arg(a, 0)) }); return DynValue.Nil; });
             case "set_locked": return Fn(a => { host.Emit(new SetLocked { Layer = L, Id = id, Value = Arg(a, 0).IsNil() || Arg(a, 0).CastToBool() }); return DynValue.Nil; });
+            case "set_box_selected": return Option(id, PieceOptions.NotBoxSelected, inverted: true);
+            case "set_measures_moves": return Option(id, PieceOptions.MeasuresMoves, inverted: false);
             case "set_sticky": return Fn(a =>
             {
                 host.Emit(new SetPieceOption { Layer = L, Id = id, Name = PieceOptions.NotSticky, Value = !(Arg(a, 0).IsNil() || Arg(a, 0).CastToBool()) });
@@ -530,6 +534,13 @@ internal sealed class PieceHandles(ScriptHost host)
         }
         return list;
     }
+
+    DynValue Option(string id, string option, bool inverted) => Fn(a =>
+    {
+        bool on = Arg(a, 0).IsNil() || Arg(a, 0).CastToBool();
+        host.Emit(new SetPieceOption { Layer = Layers.Umpire, Id = id, Name = option, Value = inverted ? !on : on });
+        return DynValue.Nil;
+    });
 
     DynValue TakeOut(string id, PieceInstance holder, DynValue which, DynValue place, DynValue rot)
     {

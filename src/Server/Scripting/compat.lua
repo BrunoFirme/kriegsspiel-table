@@ -372,6 +372,8 @@ function compat.set_prop(obj, k, v)
   if k == "script_state" then obj.set_script_state(v) return end
   if k == "locked" then obj.set_locked(v and true or false) return end
   if k == "sticky" then obj.set_sticky(v ~= false) return end
+  if k == "drag_selectable" then obj.set_box_selected(v ~= false) return end
+  if k == "measure_movement" then obj.set_measures_moves(v == true) return end
   pbag(obj)[k] = v
 end
 function compat.get_prop(obj, k, d)
@@ -380,6 +382,8 @@ function compat.get_prop(obj, k, d)
   if k == "script_state" then local v = obj.script_state; if v == nil or v == "" then return d end return v end
   if k == "locked" then return obj.locked == true end
   if k == "sticky" then return obj.sticky ~= false end
+  if k == "drag_selectable" then return obj.box_selected ~= false end
+  if k == "measure_movement" then return obj.measures_moves == true end
   local v = pbag(obj)[k]; if v == nil then return d end return v
 end
 function compat.log(value, label, tags)

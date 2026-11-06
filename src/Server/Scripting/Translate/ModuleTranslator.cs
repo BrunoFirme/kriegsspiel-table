@@ -525,14 +525,15 @@ public static class ModuleTranslator
                 case "memo":
                     if (visited.Parent is AssignmentStatementSyntax) return visited;
                     return Direct($"{recv}.memo", node);
-                case "interactable" or "tooltip" or "sticky" or "use_gravity" or "grid_projection" or "auto_raise" or "use_snap_points" or "use_grid" or "hide_when_face_down" or "locked":
+                case "interactable" or "tooltip" or "sticky" or "use_gravity" or "grid_projection" or "auto_raise" or "use_snap_points" or "use_grid" or "hide_when_face_down" or "locked"
+                    or "drag_selectable" or "measure_movement":
                     if (visited.Parent is AssignmentStatementSyntax) return visited;
                     return Compat($"compat.get_prop({recv}, \"{name}\", {DefaultProp(name)})", node);
             }
             return visited;
         }
 
-        static string DefaultProp(string name) => name switch { "interactable" or "use_gravity" or "auto_raise" or "sticky" or "tooltip" => "true", "memo" => "\"\"", _ => "false" };
+        static string DefaultProp(string name) => name switch { "interactable" or "use_gravity" or "auto_raise" or "sticky" or "tooltip" or "drag_selectable" => "true", "memo" => "\"\"", _ => "false" };
 
         public override SyntaxNode? VisitAssignmentStatement(AssignmentStatementSyntax node)
         {

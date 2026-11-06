@@ -186,7 +186,8 @@ sealed class SelectTool
             if (r.Size.Length() > 6)
             {
                 var cam = _c.Rig.Cam;
-                var ids = _pieces.Nodes.Where(n => _c.LayerInteractive(n.Layer) && !cam.IsPositionBehind(n.GlobalPosition) && r.HasPoint(cam.UnprojectPosition(n.GlobalPosition)))
+                var ids =
+                    _pieces.Nodes.Where(n => _c.LayerInteractive(n.Layer) && !n.Piece.NotBoxSelected && !cam.IsPositionBehind(n.GlobalPosition) && r.HasPoint(cam.UnprojectPosition(n.GlobalPosition)))
                     .Select(n => n.Piece.Id);
                 _selection.Set(ids, add: mb.ShiftPressed);
             }

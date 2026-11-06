@@ -333,6 +333,8 @@ public sealed class PieceInstance
     public bool NoCollision { get; set; }
     public bool PhysicalRoll { get; set; }
     public bool NotSticky { get; set; }
+    public bool NotBoxSelected { get; set; }
+    public bool MeasuresMoves { get; set; }
     public string Memo { get; set; } = "";
     public List<Widget> Widgets { get; set; } = new();
     public int DrawnOnState { get; set; }
@@ -349,7 +351,7 @@ public sealed class PieceInstance
         Id = Id, Def = Def, Pos = Pos, RotDeg = RotDeg, Stack = Stack, State = State,
         Counters = new(Counters), Text = new(Text), Attached = new(Attached),
         TintOverride = TintOverride, Label = Label, Scale = Scale, Y = Y, FaceDown = FaceDown, Note = Note, Picture = Picture, Locked = Locked,
-        NoCollision = NoCollision, PhysicalRoll = PhysicalRoll, NotSticky = NotSticky,
+        NoCollision = NoCollision, PhysicalRoll = PhysicalRoll, NotSticky = NotSticky, NotBoxSelected = NotBoxSelected, MeasuresMoves = MeasuresMoves,
         Script = Script, ScriptState = ScriptState, Guid = Guid, Tags = Tags == null ? null : new(Tags), Memo = Memo,
         Widgets = Widgets.Select(w => w.Clone()).ToList(), DrawnOnState = DrawnOnState, MenuItems = MenuItems.Select(m => m.Clone()).ToList(),
         Lines = Lines.Select(l => l.Clone()).ToList(), Decals = Decals.Select(d => d.Clone()).ToList(), DecalsOnState = DecalsOnState,

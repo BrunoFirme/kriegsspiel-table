@@ -168,7 +168,7 @@ the plan says translate it), unknown (nobody has decided).
 | `SaveState.Gravity` | 9 / 9 | dropped | engine physics |  |
 | `SaveState.MusicPlayer` | 9 / 9 | dropped | music player |  |
 | `SaveState.VectorLines` | 9 / 9 | native | strokes on the umpire's drawing board | DrawingTests |
-| `ObjectState.DragSelectable` | 335 / 8 | dropped | whether a drag selects the piece |  |
+| `ObjectState.DragSelectable` | 335 / 8 | native | the piece option Taken by a selection box; self.box_selected and set_box_selected | ModuleOptionsTests |
 | `CustomPDFState.PDFUrl` | 9 / 8 | partial | PDFUrl gives the book its pages and PDFPage the page it lies open at; the page offset (how the pages are numbered) and a password are not kept | BookTests |
 | `MusicPlayerState.AudioLibrary` | 8 / 8 | dropped | music player |  |
 | `ObjectState.Autoraise` | 354 / 7 | dropped | a dropped piece always rests on what is under it |  |
@@ -202,7 +202,7 @@ the plan says translate it), unknown (nobody has decided).
 | `CustomShaderState.FresnelStrength` | 216 / 3 | dropped | specular shader settings |  |
 | `CustomShaderState.SpecularSharpness` | 153 / 3 | dropped | specular shader settings |  |
 | `ColourState.a` | 22 / 3 | native | a tint's alpha: under 1 the piece is drawn see-through, its face, sides and model, as the tabletop switches to its transparent shader; the movable text tool's helper saved at 0 stays invisible under its words | ConverterTests |
-| `ObjectState.MeasureMovement` | 15 / 3 | dropped | the measure-on-move overlay |  |
+| `ObjectState.MeasureMovement` | 15 / 3 | native | the piece option Shows how far it is moved: a line and the distance from where it was picked up while it is held; self.measures_moves and set_measures_moves | ModuleOptionsTests |
 | `GridState.Type` | 3 / 3 | dropped | grid (decided 2026-11-06) |  |
 | `MusicPlayerState.RepeatSong` | 3 / 3 | dropped | music player |  |
 | `SaveState.CustomUIAssets` | 3 / 3 | partial | pictures a run-time panel names: links in the XML are fetched, named assets are not |  |

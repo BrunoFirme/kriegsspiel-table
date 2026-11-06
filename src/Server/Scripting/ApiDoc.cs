@@ -169,6 +169,10 @@ public static partial class ApiDoc
         See("self.set_locked");
         F("piece", "sticky", "boolean", "Carries the pieces resting on it when it is moved; attached pieces go with it either way.", "sticky");
         See("self.set_sticky");
+        F("piece", "box_selected", "boolean", "Taken by a selection box dragged over it.", "drag_selectable");
+        See("self.set_box_selected");
+        F("piece", "measures_moves", "boolean", "Shows how far it is moved while it is held.", "measure_movement");
+        See("self.set_measures_moves");
         F("piece", "tint", "string?", "Its colour as \"#RRGGBB\", or nil.", "getColorTint");
         See("self.set_tint");
         F("piece", "counters", "table", "Its kind's counters, name → value.");
@@ -271,6 +275,14 @@ public static partial class ApiDoc
     O("on", "boolean", "true, or no argument, pins it; false lets it go.");
     Note("A locked piece can still be picked out, read and deleted, and an umpire can unlock it from its right-click menu.");
     See("self.locked");
+
+    M("piece", "set_box_selected(on)", "Whether a selection box dragged over it takes it.", "drag_selectable");
+    O("on", "boolean", "true, or no argument, lets a box take it; false leaves it out.");
+    See("self.box_selected");
+
+    M("piece", "set_measures_moves(on)", "Whether it shows how far it is moved while it is held.", "measure_movement");
+    O("on", "boolean", "true, or no argument, shows the distance; false hides it.");
+    See("self.measures_moves");
 
     M("piece", "set_sticky(on)", "Whether it carries the pieces resting on it when it is moved.", "sticky");
     O("on", "boolean", "true, or no argument, carries them; false leaves them where they lie.");

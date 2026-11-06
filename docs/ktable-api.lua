@@ -138,6 +138,8 @@
 ---@field face_down boolean Turned over.
 ---@field locked boolean Pinned to the table: not dragged, turned or resized by hand.
 ---@field sticky boolean Carries the pieces resting on it when it is moved; attached pieces go with it either way.
+---@field box_selected boolean Taken by a selection box dragged over it.
+---@field measures_moves boolean Shows how far it is moved while it is held.
 ---@field tint string|nil Its colour as "#RRGGBB", or nil.
 ---@field counters table Its kind's counters, name → value.
 ---@field text table Its text lines that hold a value, name → text.
@@ -195,6 +197,14 @@ function Piece.set_tint(color) end
 ---Pins it to the table, or lets it go.
 ---@param on? boolean true, or no argument, pins it; false lets it go.
 function Piece.set_locked(on) end
+
+---Whether a selection box dragged over it takes it.
+---@param on? boolean true, or no argument, lets a box take it; false leaves it out.
+function Piece.set_box_selected(on) end
+
+---Whether it shows how far it is moved while it is held.
+---@param on? boolean true, or no argument, shows the distance; false hides it.
+function Piece.set_measures_moves(on) end
 
 ---Whether it carries the pieces resting on it when it is moved.
 ---@param on? boolean true, or no argument, carries them; false leaves them where they lie.
