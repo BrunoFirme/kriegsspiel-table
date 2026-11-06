@@ -169,7 +169,7 @@ the plan says translate it), unknown (nobody has decided).
 | `SaveState.MusicPlayer` | 9 / 9 | dropped | music player |  |
 | `SaveState.VectorLines` | 9 / 9 | native | strokes on the umpire's drawing board | DrawingTests |
 | `ObjectState.DragSelectable` | 335 / 8 | dropped | whether a drag selects the piece |  |
-| `CustomPDFState.PDFUrl` | 9 / 8 | partial | PDFUrl gives the book its pages; the saved page, offset and password are not kept | BookTests |
+| `CustomPDFState.PDFUrl` | 9 / 8 | partial | PDFUrl gives the book its pages and PDFPage the page it lies open at; the page offset (how the pages are numbered) and a password are not kept | BookTests |
 | `MusicPlayerState.AudioLibrary` | 8 / 8 | dropped | music player |  |
 | `ObjectState.Autoraise` | 354 / 7 | dropped | a dropped piece always rests on what is under it |  |
 | `CustomImageState.CustomDice` | 35 / 7 | native | converter reads it |  |
@@ -201,14 +201,14 @@ the plan says translate it), unknown (nobody has decided).
 | `CustomMeshState.NormalURL` | 232 / 3 | native | converter reads it |  |
 | `CustomShaderState.FresnelStrength` | 216 / 3 | dropped | specular shader settings |  |
 | `CustomShaderState.SpecularSharpness` | 153 / 3 | dropped | specular shader settings |  |
-| `ColourState.a` | 22 / 3 | dropped | a tint's transparency |  |
+| `ColourState.a` | 22 / 3 | native | a tint's alpha: under 1 the piece is drawn see-through, its face, sides and model, as the tabletop switches to its transparent shader; the movable text tool's helper saved at 0 stays invisible under its words | ConverterTests |
 | `ObjectState.MeasureMovement` | 15 / 3 | dropped | the measure-on-move overlay |  |
 | `GridState.Type` | 3 / 3 | dropped | grid (decided 2026-11-06) |  |
 | `MusicPlayerState.RepeatSong` | 3 / 3 | dropped | music player |  |
 | `SaveState.CustomUIAssets` | 3 / 3 | partial | pictures a run-time panel names: links in the XML are fetched, named assets are not |  |
 | `ObjectState.GMNotes` | 117 / 2 | native | converter reads it |  |
 | `CustomTileState.Stackable` | 29 / 2 | native | converter reads it |  |
-| `CustomPDFState.PDFPage` | 2 / 2 | partial | PDFUrl gives the book its pages; the saved page, offset and password are not kept | BookTests |
+| `CustomPDFState.PDFPage` | 2 / 2 | partial | PDFUrl gives the book its pages and PDFPage the page it lies open at; the page offset (how the pages are numbered) and a password are not kept | BookTests |
 | `GridState.BothSnapping` | 2 / 2 | dropped | grid (decided 2026-11-06) |  |
 | `GridState.Offset` | 2 / 2 | dropped | grid (decided 2026-11-06) |  |
 | `TextState.colorstate` | 19 / 1 | native | converter reads it |  |
@@ -251,8 +251,8 @@ the plan says translate it), unknown (nobody has decided).
 | `CustomImageState.ImageScalar` | - | native | converter reads it |  |
 | `CustomJigsawPuzzleState.ImageOnBoard` | - | dropped | jigsaw puzzles |  |
 | `CustomJigsawPuzzleState.NumPuzzlePieces` | - | dropped | jigsaw puzzles |  |
-| `CustomPDFState.PDFPageOffset` | - | partial | PDFUrl gives the book its pages; the saved page, offset and password are not kept | BookTests |
-| `CustomPDFState.PDFPassword` | - | partial | PDFUrl gives the book its pages; the saved page, offset and password are not kept | BookTests |
+| `CustomPDFState.PDFPageOffset` | - | partial | PDFUrl gives the book its pages and PDFPage the page it lies open at; the page offset (how the pages are numbered) and a password are not kept | BookTests |
+| `CustomPDFState.PDFPassword` | - | partial | PDFUrl gives the book its pages and PDFPage the page it lies open at; the page offset (how the pages are numbered) and a password are not kept | BookTests |
 | `CustomTokenState.Stackable` | - | native | converter reads it |  |
 | `CustomTokenState.StandUp` | - | native | converter reads it |  |
 | `DecalState.CustomDecal` | - | native | converter reads it |  |

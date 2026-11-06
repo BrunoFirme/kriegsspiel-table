@@ -1292,8 +1292,8 @@
   {
    "row": "CustomPDFState.PDFUrl",
    "status": "partial",
-   "where": "PDFUrl gives the book its pages; the saved page, offset and password are not kept",
-   "instead": "turn to the page at the table",
+   "where": "PDFUrl gives the book its pages and PDFPage the page it lies open at; the page offset (how the pages are numbered) and a password are not kept",
+   "instead": "a password-locked PDF: save it unlocked and convert again",
    "held_by": "BookTests",
    "count": 9,
    "modules": 8
@@ -1579,10 +1579,10 @@
   },
   {
    "row": "ColourState.a",
-   "status": "dropped",
-   "where": "a tint's transparency",
-   "instead": "a tint has no transparency here",
-   "held_by": "",
+   "status": "native",
+   "where": "a tint's alpha: under 1 the piece is drawn see-through, its face, sides and model, as the tabletop switches to its transparent shader; the movable text tool's helper saved at 0 stays invisible under its words",
+   "instead": "",
+   "held_by": "ConverterTests",
    "count": 22,
    "modules": 3
   },
@@ -1643,8 +1643,8 @@
   {
    "row": "CustomPDFState.PDFPage",
    "status": "partial",
-   "where": "PDFUrl gives the book its pages; the saved page, offset and password are not kept",
-   "instead": "turn to the page at the table",
+   "where": "PDFUrl gives the book its pages and PDFPage the page it lies open at; the page offset (how the pages are numbered) and a password are not kept",
+   "instead": "a password-locked PDF: save it unlocked and convert again",
    "held_by": "BookTests",
    "count": 2,
    "modules": 2
@@ -2030,8 +2030,8 @@
   {
    "row": "CustomPDFState.PDFPageOffset",
    "status": "partial",
-   "where": "PDFUrl gives the book its pages; the saved page, offset and password are not kept",
-   "instead": "turn to the page at the table",
+   "where": "PDFUrl gives the book its pages and PDFPage the page it lies open at; the page offset (how the pages are numbered) and a password are not kept",
+   "instead": "a password-locked PDF: save it unlocked and convert again",
    "held_by": "BookTests",
    "count": 0,
    "modules": 0
@@ -2039,8 +2039,8 @@
   {
    "row": "CustomPDFState.PDFPassword",
    "status": "partial",
-   "where": "PDFUrl gives the book its pages; the saved page, offset and password are not kept",
-   "instead": "turn to the page at the table",
+   "where": "PDFUrl gives the book its pages and PDFPage the page it lies open at; the page offset (how the pages are numbered) and a password are not kept",
+   "instead": "a password-locked PDF: save it unlocked and convert again",
    "held_by": "BookTests",
    "count": 0,
    "modules": 0

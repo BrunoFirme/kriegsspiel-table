@@ -353,14 +353,17 @@ public sealed partial class DefFactory
                 if (existing.Name == "Piece" && def.Name != "Piece") existing.Name = def.Name;
                 pack.Richness[existing.Id] = rich;
             }
-            return new DefResult(existing, pack, instScale, o.IsPictureDie ? DieFace(o, existing) : self, b, script);
+            return new DefResult(existing, pack, instScale, Shown(o, existing, self), b, script);
         }
         def.Id = $"{pack.Short}.{Slug(def.Name)}-{Hash8(key)}";
         pack.ByKey[key] = def;
         pack.Richness[def.Id] = rich;
         pack.M.Pieces.Add(def);
-        return new DefResult(def, pack, instScale, o.IsPictureDie ? DieFace(o, def) : self, b, script);
+        return new DefResult(def, pack, instScale, Shown(o, def, self), b, script);
     }
+
+    public static int Shown(ModuleObj o, PieceDef def, int self) =>
+        o.IsPictureDie ? DieFace(o, def) : o.Name == "Custom_PDF" ? Math.Min(o.PdfPage, Math.Max(0, def.States.Count - 1)) : self;
 
     public TranslateResult Translate(string lua, PackOut pack, string where, bool isGlobal = false)
     {

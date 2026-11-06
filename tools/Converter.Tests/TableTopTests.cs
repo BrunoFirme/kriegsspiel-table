@@ -93,4 +93,32 @@ public sealed partial class ConverterTests
         Assert.Equal("http://a/battlefield.png", sheet.Url);
         Assert.Empty(table.UmpireBoard);
     }
+
+    [Fact]
+    public void A_book_lies_open_at_the_page_the_module_left_it_at_and_never_past_its_last()
+    {
+        static ModuleObj Book(int? page)
+        {
+            var pdf = new JsonObject { ["PDFUrl"] = "http://a/rules.pdf" };
+            if (page is { } p) pdf["PDFPage"] = p;
+            return new ModuleObj(Obj("Custom_PDF", "Rules", 1, new JsonObject { ["CustomPDF"] = pdf }));
+        }
+        var threePages = new PieceDef { States = Enumerable.Range(1, 3).Select(i => new PieceStateDef { Name = $"Page {i}" }).ToList() };
+
+        Assert.Equal(new[] { 0, 2, 2 }, new[] { Book(null), Book(2), Book(9) }.Select(b => DefFactory.Shown(b, threePages, 0)));
+    }
+
+    [Fact]
+    public void A_tint_s_alpha_comes_over_so_a_helper_saved_invisible_stays_invisible()
+    {
+        static string? Tint(double? a)
+        {
+            var colour = new JsonObject { ["r"] = 1.0, ["g"] = 0.5, ["b"] = 0.0 };
+            if (a is { } alpha) colour["a"] = alpha;
+            return new ModuleObj(Obj("Custom_Model", "Text Tool", 1, new JsonObject { ["ColorDiffuse"] = colour })).Color;
+        }
+
+        Assert.Equal(new[] { "#FF8000", "#FF8000", "#FF8000D6", "#FF800000" }, new[] { Tint(null), Tint(1), Tint(0.84), Tint(0) });
+    }
 }
+

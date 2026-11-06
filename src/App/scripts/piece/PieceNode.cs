@@ -254,8 +254,8 @@ public partial class PieceNode : Node3D
     }
 
     Color Tint() => Coords.ParseColor(Piece.TintOverride ?? Def?.Tint, Colors.White) * _layerTint;
-    Color SideColor() => (Tint() * 0.82f) with { A = 1 };
-    Color PrintTint() => Def is { TintsPictures: true } ? Tint() : _layerTint;
+    Color SideColor() => (Tint() * 0.82f) with { A = Tint().A };
+    Color PrintTint() => Def is { TintsPictures: true } ? Tint() : _layerTint with { A = _layerTint.A * Tint().A };
 
     (string? pkg, string? rel, int size) TexKey()
     {
@@ -266,6 +266,7 @@ public partial class PieceNode : Node3D
     }
 
     public float Thickness => _thickness;
+    public float ModelTop => _plates.ModelTop;
     public float BaseY(PieceInstance p) => BaseAt(p.Pos, p.RotDeg, p.Y, p.Stack);
 
     float BaseAt(Vec2 pos, double rotDeg, double y, int stack)
@@ -419,7 +420,8 @@ public partial class PieceNode : Node3D
         StandardMaterial3D Body(Color c) => die
             ? new StandardMaterial3D { AlbedoColor = c, Roughness = 0.32f, Metallic = 0f, MetallicSpecular = 0.6f, CullMode = BaseMaterial3D.CullModeEnum.Back,
                 TextureFilter = BaseMaterial3D.TextureFilterEnum.LinearWithMipmapsAnisotropic }
-            : new StandardMaterial3D { AlbedoColor = c, CullMode = BaseMaterial3D.CullModeEnum.Disabled, Transparency = BaseMaterial3D.TransparencyEnum.AlphaScissor };
+            : new StandardMaterial3D { AlbedoColor = c, CullMode = BaseMaterial3D.CullModeEnum.Disabled, Transparency = PieceArt.SeeThrough(c) ? BaseMaterial3D.TransparencyEnum.Alpha
+                : BaseMaterial3D.TransparencyEnum.AlphaScissor };
         var mat = _modelMat = Body(tint);
         var untinted = Body(_layerTint);
         _model = new MeshInstance3D { RotationDegrees = new Vector3(0, 180, 0) };
@@ -445,6 +447,7 @@ public partial class PieceNode : Node3D
             model.Scale = new Vector3(sx, sy, sz);
             _plates.ModelTop = aabb.Size.Y * sy;
             if (Piece.Ui.Count > 0) SyncUi(force: true);
+            if (Piece.Widgets.Count > 0) SyncWidgets(force: true);
             if (IsDie)
             {
                 var verts = Enumerable.Range(0, mesh.GetSurfaceCount()).SelectMany(s => mesh.SurfaceGetArrays(s)[(int)Mesh.ArrayType.Vertex].AsVector3Array());

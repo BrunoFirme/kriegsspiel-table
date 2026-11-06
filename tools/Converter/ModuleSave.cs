@@ -61,8 +61,13 @@ public sealed class ModuleObj
     public string? DiffuseUrl => Blank(S(CM?["DiffuseURL"]));
     public string? BundleUrl => Blank(S((J["CustomAssetbundle"] as JsonObject)?["AssetbundleURL"]));
     public string? PdfUrl => Blank(S((J["CustomPDF"] as JsonObject)?["PDFUrl"]));
+    public int PdfPage => J["CustomPDF"] is JsonObject pdf && pdf["PDFPage"] != null ? Math.Max(0, I(pdf, "PDFPage")) : 0;
 
-    public string? Color => J["ColorDiffuse"] is JsonObject c ? HexOf(c) : null;
+    public string? Color => J["ColorDiffuse"] is JsonObject c ? HexOf(c) + AlphaOf(c) : null;
+
+    const double Opaque = 0.999;
+
+    static string AlphaOf(JsonObject c) => c["a"] != null && D(c, "a", 1) is var a and < Opaque ? $"{(int)Math.Round(Math.Clamp(a, 0, 1) * 255):X2}" : "";
 
     public static string HexOf(JsonObject c)
     {
@@ -76,16 +81,15 @@ public sealed class ModuleObj
 
     public static List<Line> LinesOf(JsonNode? node)
     {
-        const double DefaultThickness = 0.1, Opaque = 1;
+        const double DefaultThickness = 0.1;
         var lines = new List<Line>();
         foreach (var l in (node as JsonArray)?.OfType<JsonObject>() ?? [])
         {
             var points = (l["points3"] as JsonArray)?.OfType<JsonObject>().Select(p => (D(p, "x"), D(p, "y"), D(p, "z"))).ToList() ?? new();
             if (points.Count < 2) continue;
             var c = l["color"] as JsonObject;
-            double alpha = c is null ? Opaque : Math.Clamp(D(c, "a", Opaque), 0, Opaque);
-            if (alpha <= 0) continue;
-            var colour = c is null ? "#FFFFFF" : alpha < Opaque ? $"{HexOf(c)}{(int)Math.Round(alpha * 255):X2}" : HexOf(c);
+            if (c?["a"] != null && D(c, "a", 1) <= 0) continue;
+            var colour = c is null ? "#FFFFFF" : HexOf(c) + AlphaOf(c);
             lines.Add(new Line(points, colour, D(l, "thickness", DefaultThickness), l["loop"]?.GetValue<bool>() ?? false));
         }
         return lines;
