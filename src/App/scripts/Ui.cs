@@ -83,7 +83,7 @@ public static class Ui
 
     static void Buttons(Theme t)
     {
-        foreach (var type in new[] { "Button", "MenuButton", "OptionButton", "CheckBox", "CheckButton", "ColorPickerButton" })
+        foreach (var type in new[] { "Button", "MenuButton", "OptionButton", "CheckBox", "CheckButton" })
         {
             bool tick = type is "CheckBox" or "CheckButton";
             t.SetStylebox("normal", type, Box(White(tick ? 0f : Rest), 3, 10, 4));
@@ -100,6 +100,7 @@ public static class Ui
             t.SetColor("font_disabled_color", type, Faint);
             t.SetColor("icon_disabled_color", type, Faint);
         }
+        ColourChips(t);
         t.SetColor("font_pressed_color", "CheckBox", Ink);
         t.SetColor("font_pressed_color", "CheckButton", Ink);
         foreach (var type in new[] { "CheckBox", "PopupMenu" })
@@ -576,12 +577,22 @@ public static class Ui
         return b;
     }
 
-    static StyleBoxFlat SwatchBox(Color colour, Color edge, int width)
+    static StyleBoxFlat SwatchBox(Color colour, Color edge, int width, int radius = 3)
     {
-        var b = Box(colour, 3, 0, 0);
+        var b = Box(colour, radius, width, width);
         b.BorderColor = edge;
         b.SetBorderWidthAll(width);
         return b;
+    }
+
+    static void ColourChips(Theme t)
+    {
+        const string Type = "ColorPickerButton";
+        const int Edge = 1, Corner = 2;
+        var clear = new Color(0, 0, 0, 0);
+        foreach (var st in new[] { "normal", "pressed", "disabled" }) t.SetStylebox(st, Type, SwatchBox(clear, LineStrong, Edge, Corner));
+        foreach (var st in new[] { "hover", "hover_pressed" }) t.SetStylebox(st, Type, SwatchBox(clear, White(0.40f), Edge, Corner));
+        t.SetStylebox("focus", Type, new StyleBoxEmpty());
     }
 
     public static Label Hint(string text)

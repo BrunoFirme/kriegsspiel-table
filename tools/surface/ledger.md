@@ -29,7 +29,7 @@ the plan says translate it), unknown (nobody has decided).
 | `Chinese_Checkers_Piece` | 45 / 45 | dropped | TTS stock piece; in every IKS module it is the Flex Table control |  |
 | `Custom_Board` | 22 / 22 | native | converter |  |
 | `Notecard` | 28 / 16 | native | converter |  |
-| `Custom_PDF` | 15 / 14 | partial | a note carrying the PDF's link and description; its pages are not shown | PdfTests |
+| `Custom_PDF` | 15 / 14 | native | a book: every page a state, turned from the bar on the piece and read in the Book window | BookTests |
 | `BlockSquare` | 665 / 12 | native | converter |  |
 | `BlockRectangle` | 333 / 11 | native | converter |  |
 | `3DText` | 109 / 11 | native | converter |  |
@@ -150,7 +150,7 @@ the plan says translate it), unknown (nobody has decided).
 | `ObjectState.Tags` | 17646 / 16 | native | converter reads it |  |
 | `SaveState.Sky` | 16 / 16 | native | converter reads it |  |
 | `SaveState.Note` | 15 / 15 | native | converter reads it |  |
-| `ObjectState.CustomPDF` | 15 / 14 | partial | a note carrying the PDF's link | PdfTests |
+| `ObjectState.CustomPDF` | 15 / 14 | native | a book with every page | BookTests |
 | `GridState.PosOffset` | 14 / 14 | dropped | grid (decided 2026-11-06) |  |
 | `ObjectState.PhysicsMaterial` | 368 / 13 | dropped | engine physics |  |
 | `ObjectState.Rigidbody` | 368 / 13 | dropped | engine physics |  |
@@ -168,7 +168,7 @@ the plan says translate it), unknown (nobody has decided).
 | `SaveState.Gravity` | 9 / 9 | dropped | engine physics |  |
 | `SaveState.VectorLines` | 9 / 9 | native | strokes on the umpire's drawing board | DrawingTests |
 | `ObjectState.DragSelectable` | 335 / 8 | dropped | whether a drag selects the piece |  |
-| `CustomPDFState.PDFUrl` | 9 / 8 | partial | PDFUrl goes on the note; page and password are dropped | PdfTests |
+| `CustomPDFState.PDFUrl` | 9 / 8 | partial | PDFUrl gives the book its pages; the saved page, offset and password are not kept | BookTests |
 | `SaveState.MusicPlayer` | 8 / 8 | dropped | music player |  |
 | `ObjectState.Autoraise` | 354 / 7 | dropped | a dropped piece always rests on what is under it |  |
 | `CustomImageState.CustomDice` | 35 / 7 | native | converter reads it |  |
@@ -208,7 +208,7 @@ the plan says translate it), unknown (nobody has decided).
 | `SaveState.CustomUIAssets` | 3 / 3 | partial | pictures a run-time panel names: links in the XML are fetched, named assets are not |  |
 | `ObjectState.GMNotes` | 117 / 2 | native | converter reads it |  |
 | `CustomTileState.Stackable` | 29 / 2 | native | converter reads it |  |
-| `CustomPDFState.PDFPage` | 2 / 2 | partial | PDFUrl goes on the note; page and password are dropped | PdfTests |
+| `CustomPDFState.PDFPage` | 2 / 2 | partial | PDFUrl gives the book its pages; the saved page, offset and password are not kept | BookTests |
 | `GridState.BothSnapping` | 2 / 2 | dropped | grid (decided 2026-11-06) |  |
 | `GridState.Offset` | 2 / 2 | dropped | grid (decided 2026-11-06) |  |
 | `TextState.colorstate` | 19 / 1 | native | converter reads it |  |
@@ -251,8 +251,8 @@ the plan says translate it), unknown (nobody has decided).
 | `CustomImageState.ImageScalar` | - | native | converter reads it |  |
 | `CustomJigsawPuzzleState.ImageOnBoard` | - | dropped | TTS jigsaw puzzles |  |
 | `CustomJigsawPuzzleState.NumPuzzlePieces` | - | dropped | TTS jigsaw puzzles |  |
-| `CustomPDFState.PDFPageOffset` | - | partial | PDFUrl goes on the note; page and password are dropped | PdfTests |
-| `CustomPDFState.PDFPassword` | - | partial | PDFUrl goes on the note; page and password are dropped | PdfTests |
+| `CustomPDFState.PDFPageOffset` | - | partial | PDFUrl gives the book its pages; the saved page, offset and password are not kept | BookTests |
+| `CustomPDFState.PDFPassword` | - | partial | PDFUrl gives the book its pages; the saved page, offset and password are not kept | BookTests |
 | `CustomTokenState.Stackable` | - | native | converter reads it |  |
 | `CustomTokenState.StandUp` | - | native | converter reads it |  |
 | `DecalState.CustomDecal` | - | native | converter reads it |  |
@@ -444,11 +444,11 @@ the plan says translate it), unknown (nobody has decided).
 | `AssetBundle.getTriggerEffects` | - | dropped | a bundle's own animations never come over |  |
 | `AssetBundle.playLoopingEffect` | - | dropped | a bundle's own animations never come over |  |
 | `AssetBundle.playTriggerEffect` | - | dropped | a bundle's own animations never come over |  |
-| `Book.clearHighlight` | - | dropped | PDF pages are not shown; the note carries the link |  |
-| `Book.getPage` | - | dropped | PDF pages are not shown; the note carries the link |  |
-| `Book.page_offset` | - | dropped | PDF pages are not shown; the note carries the link |  |
-| `Book.setHighlight` | - | dropped | PDF pages are not shown; the note carries the link |  |
-| `Book.setPage` | - | dropped | PDF pages are not shown; the note carries the link |  |
+| `Book.clearHighlight` | - | stub | a book's page is its state; no module calls these |  |
+| `Book.getPage` | - | stub | a book's page is its state; no module calls these |  |
+| `Book.page_offset` | - | stub | a book's page is its state; no module calls these |  |
+| `Book.setHighlight` | - | stub | a book's page is its state; no module calls these |  |
+| `Book.setPage` | - | stub | a book's page is its state; no module calls these |  |
 | `Browser.pixel_width` | - | dropped | TTS stock gadget |  |
 | `Browser.url` | - | dropped | TTS stock gadget |  |
 | `Clock.getValue` | - | dropped | TTS stock gadget |  |
@@ -918,14 +918,14 @@ the plan says translate it), unknown (nobody has decided).
 | `onObjectLeaveScriptingZone` | - | stub | the table's own zones raise no script events yet; no module handles it |  |
 | `onObjectLeaveZone` | - | stub | the table's own zones raise no script events yet; no module handles it |  |
 | `onObjectLoopingEffect` | - | dropped | a bundle's own animations never come over |  |
-| `onObjectPageChange` | - | dropped | PDF pages are not shown |  |
+| `onObjectPageChange` | - | stub | a page turn is a state change; no module handles it |  |
 | `onObjectPeek` | - | dropped | peeking at a hidden piece |  |
 | `onObjectRandomize` | - | stub | no event when a die rolls; no module handles it |  |
 | `onObjectRotate` | - | native | EventRenames |  |
 | `onObjectSearchEnd` | - | dropped | a holder's contents are a card, not a search |  |
 | `onObjectSearchStart` | - | dropped | a holder's contents are a card, not a search |  |
 | `onObjectTriggerEffect` | - | dropped | a bundle's own animations never come over |  |
-| `onPageChange` | - | dropped | PDF pages are not shown |  |
+| `onPageChange` | - | stub | a page turn is a state change; no module handles it |  |
 | `onPlayerChangeColor` | - | stub | seats change without an event here; no module handles it |  |
 | `onPlayerConnect` | - | stub | seats change without an event here; no module handles it |  |
 | `onPlayerDisconnect` | - | stub | seats change without an event here; no module handles it |  |

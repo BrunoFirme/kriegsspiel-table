@@ -102,6 +102,7 @@ sealed class SelectTool
         if (hit.CardTitleAt(f)) return "title";
         if (S.CanTouch(hit.Layer, hit.Piece) && hit.NotePartAt(f) is { } part) return part ? "note body" : "note title";
         if (hit.CardButtonAt(f) is { } cb) return $"c:{cb.name}:{cb.value}";
+        if (S.CanTouch(hit.Layer, hit.Piece) && hit.PageButtonAt(f) is { } page) return $"page:{page}";
         return null;
     }
 
@@ -118,7 +119,8 @@ sealed class SelectTool
         }
         if (hit.CardTitleAt(f)) { _names.Begin(hit); return; }
         if (S.CanTouch(hit.Layer, hit.Piece) && hit.NotePartAt(f) is { } part) { _names.BeginNote(hit, part); return; }
-        if (hit.CardButtonAt(f) is { } cb) S.Do(new SetCounter { Layer = hit.Layer, Id = hit.Piece.Id, Name = cb.name, Value = cb.value });
+        if (hit.CardButtonAt(f) is { } cb) { S.Do(new SetCounter { Layer = hit.Layer, Id = hit.Piece.Id, Name = cb.name, Value = cb.value }); return; }
+        if (S.CanTouch(hit.Layer, hit.Piece) && hit.PageButtonAt(f) is { } page) S.Do(new SetState { Layer = hit.Layer, Id = hit.Piece.Id, State = page });
     }
 
     void PressPiece(InputEventMouseButton mb, Vec2 g, PieceNode hit) => PressPiece(mb.ShiftPressed || mb.CtrlPressed, g, hit);

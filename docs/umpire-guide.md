@@ -120,6 +120,9 @@ The tool strip runs down the left. Point at any tool and press **F1** for its se
   Enter starts a new line, Ctrl+Enter keeps it, Esc leaves it as it was; Ctrl+click picks it out instead. Imported
   TTS notecards, Notes and Notebook pages come in as these cards.
 - **Looks:** point at a piece and press **1–9** (0 is the tenth), or **[ ]** to step.
+- **Books:** a PDF brought in from a module, or made in the piece studio, is a book. Double-click it, or
+  right-click → **Read…**, to turn its pages in a window of your own; **Show on the table** turns the piece
+  itself to the page you are on, for everyone.
 - **Label and description:** at the foot of the right-click menu. Both show on hover to everyone, observers
   included, and are in the scenario file: not a hiding place.
 - **Markers:** drop a small piece on a larger one and it rides along. Drop it elsewhere to free it.

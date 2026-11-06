@@ -74,10 +74,10 @@
   },
   {
    "row": "Custom_PDF",
-   "status": "partial",
-   "where": "a note carrying the PDF's link and description; its pages are not shown",
-   "instead": "open the link outside the table",
-   "held_by": "PdfTests",
+   "status": "native",
+   "where": "a book: every page a state, turned from the bar on the piece and read in the Book window",
+   "instead": "",
+   "held_by": "BookTests",
    "count": 15,
    "modules": 14
   },
@@ -1120,10 +1120,10 @@
   },
   {
    "row": "ObjectState.CustomPDF",
-   "status": "partial",
-   "where": "a note carrying the PDF's link",
-   "instead": "open the link outside the table",
-   "held_by": "PdfTests",
+   "status": "native",
+   "where": "a book with every page",
+   "instead": "",
+   "held_by": "BookTests",
    "count": 15,
    "modules": 14
   },
@@ -1283,9 +1283,9 @@
   {
    "row": "CustomPDFState.PDFUrl",
    "status": "partial",
-   "where": "PDFUrl goes on the note; page and password are dropped",
-   "instead": "open the link outside the table",
-   "held_by": "PdfTests",
+   "where": "PDFUrl gives the book its pages; the saved page, offset and password are not kept",
+   "instead": "turn to the page at the table",
+   "held_by": "BookTests",
    "count": 9,
    "modules": 8
   },
@@ -1643,9 +1643,9 @@
   {
    "row": "CustomPDFState.PDFPage",
    "status": "partial",
-   "where": "PDFUrl goes on the note; page and password are dropped",
-   "instead": "open the link outside the table",
-   "held_by": "PdfTests",
+   "where": "PDFUrl gives the book its pages; the saved page, offset and password are not kept",
+   "instead": "turn to the page at the table",
+   "held_by": "BookTests",
    "count": 2,
    "modules": 2
   },
@@ -2030,18 +2030,18 @@
   {
    "row": "CustomPDFState.PDFPageOffset",
    "status": "partial",
-   "where": "PDFUrl goes on the note; page and password are dropped",
-   "instead": "open the link outside the table",
-   "held_by": "PdfTests",
+   "where": "PDFUrl gives the book its pages; the saved page, offset and password are not kept",
+   "instead": "turn to the page at the table",
+   "held_by": "BookTests",
    "count": 0,
    "modules": 0
   },
   {
    "row": "CustomPDFState.PDFPassword",
    "status": "partial",
-   "where": "PDFUrl goes on the note; page and password are dropped",
-   "instead": "open the link outside the table",
-   "held_by": "PdfTests",
+   "where": "PDFUrl gives the book its pages; the saved page, offset and password are not kept",
+   "instead": "turn to the page at the table",
+   "held_by": "BookTests",
    "count": 0,
    "modules": 0
   },
@@ -3723,45 +3723,45 @@
   },
   {
    "row": "Book.clearHighlight",
-   "status": "dropped",
-   "where": "PDF pages are not shown; the note carries the link",
-   "instead": "open the link outside the table",
+   "status": "stub",
+   "where": "a book's page is its state; no module calls these",
+   "instead": "set_state turns the page",
    "held_by": "",
    "count": 0,
    "modules": 0
   },
   {
    "row": "Book.getPage",
-   "status": "dropped",
-   "where": "PDF pages are not shown; the note carries the link",
-   "instead": "open the link outside the table",
+   "status": "stub",
+   "where": "a book's page is its state; no module calls these",
+   "instead": "set_state turns the page",
    "held_by": "",
    "count": 0,
    "modules": 0
   },
   {
    "row": "Book.page_offset",
-   "status": "dropped",
-   "where": "PDF pages are not shown; the note carries the link",
-   "instead": "open the link outside the table",
+   "status": "stub",
+   "where": "a book's page is its state; no module calls these",
+   "instead": "set_state turns the page",
    "held_by": "",
    "count": 0,
    "modules": 0
   },
   {
    "row": "Book.setHighlight",
-   "status": "dropped",
-   "where": "PDF pages are not shown; the note carries the link",
-   "instead": "open the link outside the table",
+   "status": "stub",
+   "where": "a book's page is its state; no module calls these",
+   "instead": "set_state turns the page",
    "held_by": "",
    "count": 0,
    "modules": 0
   },
   {
    "row": "Book.setPage",
-   "status": "dropped",
-   "where": "PDF pages are not shown; the note carries the link",
-   "instead": "open the link outside the table",
+   "status": "stub",
+   "where": "a book's page is its state; no module calls these",
+   "instead": "set_state turns the page",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -7860,9 +7860,9 @@
   },
   {
    "row": "onObjectPageChange",
-   "status": "dropped",
-   "where": "PDF pages are not shown",
-   "instead": "nothing is needed",
+   "status": "stub",
+   "where": "a page turn is a state change; no module handles it",
+   "instead": "on_state",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -7923,9 +7923,9 @@
   },
   {
    "row": "onPageChange",
-   "status": "dropped",
-   "where": "PDF pages are not shown",
-   "instead": "nothing is needed",
+   "status": "stub",
+   "where": "a page turn is a state change; no module handles it",
+   "instead": "on_state",
    "held_by": "",
    "count": 0,
    "modules": 0

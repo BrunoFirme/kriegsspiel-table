@@ -51,6 +51,7 @@ sealed class MenuCards : HudPart
     void OnePieceRows(MenuCard menu, PieceNode one)
     {
         menu.Separator();
+        if (BookWindow.Is(one.Def)) menu.Item("Read…", () => BookWindow.Open(Ctx.Root, S, one));
         menu.Item("Properties…", () => PropertiesDialog.Open(Ctx, one));
         if (S.IsUmpire) menu.Item("Scripting…", () => Ctx.ShowScriptWindow(one.Piece.Id), Cfg.Keys.Label("scriptWindow"));
         if (Cfg.MakerTools)
@@ -73,7 +74,7 @@ sealed class MenuCards : HudPart
 
     void StateAndCounterRows(MenuCard menu, PieceNode one, PieceDef def)
     {
-        if (def.States.Count > 1)
+        if (def.States.Count > 1 && !BookWindow.Is(def))
         {
             menu.Separator("Look");
             for (int i = 0; i < def.States.Count; i++)

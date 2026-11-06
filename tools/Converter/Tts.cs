@@ -158,7 +158,7 @@ public sealed class TtsObj
 
     public IEnumerable<string> Urls()
     {
-        foreach (var u in new[] { ImageUrl, BackUrl, MeshUrl, DiffuseUrl, BundleUrl }) if (u != null) yield return u;
+        foreach (var u in new[] { ImageUrl, BackUrl, MeshUrl, DiffuseUrl, BundleUrl, PdfUrl }) if (u != null) yield return u;
         foreach (var d in Decals) yield return d.Url;
         foreach (var s in CardSheets.Values)
         {

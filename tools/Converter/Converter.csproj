@@ -25,6 +25,7 @@
   <ItemGroup>
     <PackageReference Include="AssetsTools.NET" Version="3.0.5" />
     <PackageReference Include="AssetRipper.TextureDecoder" Version="2.6.3" />
+    <PackageReference Include="PDFtoImage" Version="5.4.0" />
     <PackageReference Include="SkiaSharp" Version="4.154.0" />
     <PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="4.154.0" Condition="$(RuntimeIdentifier.StartsWith('linux'))" />
   </ItemGroup>
