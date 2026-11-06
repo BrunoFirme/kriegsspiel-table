@@ -93,6 +93,7 @@ Step "app node tests (headless, under coverage)" { Run-NodeTests }
 Step "app screen tests (a window opens for a moment)" { Run-ScreenTests }
 Step "app coverage floor" { Check-CoverageFloor }
 Step "size and hygiene rules" { python -I tools/codecheck.py }
+Step "TTS surface gate" { python -I tools/tts-surface.py --gate --quiet }
 if (-not $Quick) { Step "installer guard" { & (Join-Path $PSScriptRoot "installer-guard-test.ps1") } }
 if (-not $Quick) { Report-VulnerablePackages }
 if ($Lock) { Run-BehaviourLock $Lock }

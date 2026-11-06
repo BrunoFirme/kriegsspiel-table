@@ -1,0 +1,2404 @@
+{
+ "events": [
+  "onBlindfold",
+  "onChat",
+  "onExternalMessage",
+  "onGameRoundEnd",
+  "onGameRoundStart",
+  "onHandSelectModeEnd",
+  "onLoad",
+  "onObjectDestroy",
+  "onObjectDrop",
+  "onObjectEnterContainer",
+  "onObjectEnterZone",
+  "onObjectFlick",
+  "onObjectHover",
+  "onObjectLeaveContainer",
+  "onObjectLeaveZone",
+  "onObjectLoopingEffect",
+  "onObjectPageChange",
+  "onObjectPeek",
+  "onObjectPickUp",
+  "onObjectRandomize",
+  "onObjectRotate",
+  "onObjectSearchEnd",
+  "onObjectSearchStart",
+  "onObjectSpawn",
+  "onObjectTriggerEffect",
+  "onPlayerAction",
+  "onPlayerChangeColor",
+  "onPlayerPing",
+  "onPlayerTurnEnd",
+  "onPlayerTurnStart",
+  "onPlayersConnect",
+  "onPlayersDisconnect",
+  "onSave",
+  "onScriptingButtonDown",
+  "onScriptingButtonUp"
+ ],
+ "global": {
+  "addConsoleCommand": {
+   "cs": "AddConsoleCommand",
+   "kind": "method"
+  },
+  "addContextMenuItem": {
+   "cs": "AddContextMenuItem",
+   "kind": "method"
+  },
+  "addHotkey": {
+   "cs": "AddHotkey",
+   "kind": "method"
+  },
+  "allowAutomaticRewindSave": {
+   "cs": "AllowAutomaticRewindSave",
+   "kind": "method"
+  },
+  "broadcastToAll": {
+   "cs": "BroadcastToAll",
+   "kind": "method"
+  },
+  "broadcastToColor": {
+   "cs": "BroadcastToColor",
+   "kind": "method"
+  },
+  "chooseInHand": {
+   "cs": "ChooseInHand",
+   "kind": "method"
+  },
+  "chooseInHandOrCancel": {
+   "cs": "ChooseInHandOrCancel",
+   "kind": "method"
+  },
+  "clearConsoleCommands": {
+   "cs": "ClearConsoleCommands",
+   "kind": "method"
+  },
+  "clearContextMenu": {
+   "cs": "ClearContextMenu",
+   "kind": "method"
+  },
+  "clearHotkeys": {
+   "cs": "ClearHotkeys",
+   "kind": "method"
+  },
+  "clearPixelPaint": {
+   "cs": "ClearPixelPaint",
+   "kind": "method"
+  },
+  "clearVectorPaint": {
+   "cs": "ClearVectorPaint",
+   "kind": "method"
+  },
+  "colorToHex": {
+   "cs": "ColorToHex",
+   "kind": "method"
+  },
+  "colorToPlayerName": {
+   "cs": "ColorToPlayerName",
+   "kind": "method"
+  },
+  "constructColor": {
+   "cs": "ConstructColor",
+   "kind": "method"
+  },
+  "constructVector": {
+   "cs": "ConstructVector",
+   "kind": "method"
+  },
+  "copy": {
+   "cs": "Copy",
+   "kind": "method"
+  },
+  "copyLuaTable": {
+   "cs": "CopyLuaTable",
+   "kind": "method"
+  },
+  "debugLog": {
+   "cs": "DebugLog",
+   "kind": "method"
+  },
+  "flipTable": {
+   "cs": "FlipTable",
+   "kind": "method"
+  },
+  "getAllLuaScriptStates": {
+   "cs": "GetAllLuaScriptStates",
+   "kind": "method"
+  },
+  "getAllObjects": {
+   "cs": "GetAllObjects",
+   "kind": "method"
+  },
+  "getAllTags": {
+   "cs": "GetAllTags",
+   "kind": "method"
+  },
+  "getColor": {
+   "cs": "GetColor",
+   "kind": "method"
+  },
+  "getGlobalTable": {
+   "cs": "GetGlobalTable",
+   "kind": "method"
+  },
+  "getGlobalVar": {
+   "cs": "GetGlobalVar",
+   "kind": "method"
+  },
+  "getObjectFromGUID": {
+   "cs": "GetObjectFromGUID",
+   "kind": "method"
+  },
+  "getObjects": {
+   "cs": "GetObjects",
+   "kind": "method"
+  },
+  "getObjectsWithAllTags": {
+   "cs": "GetObjectsWithAllTags",
+   "kind": "method"
+  },
+  "getObjectsWithAnyTags": {
+   "cs": "GetObjectsWithAnyTags",
+   "kind": "method"
+  },
+  "getObjectsWithTag": {
+   "cs": "GetObjectsWithTag",
+   "kind": "method"
+  },
+  "getPlayer": {
+   "cs": "GetPlayer",
+   "kind": "method"
+  },
+  "getPlayerHandPositionAndRotation": {
+   "cs": "GetPlayerHandPositionAndRotation",
+   "kind": "method"
+  },
+  "getPointerPosition": {
+   "cs": "GetPointerPosition",
+   "kind": "method"
+  },
+  "getPointerRotation": {
+   "cs": "GetPointerRotation",
+   "kind": "method"
+  },
+  "getScriptState": {
+   "cs": "GetScriptState",
+   "kind": "method"
+  },
+  "getSeatedPlayers": {
+   "cs": "GetSeatedPlayers",
+   "kind": "method"
+  },
+  "group": {
+   "cs": "Group",
+   "kind": "method"
+  },
+  "hexToColor": {
+   "cs": "HexToColor",
+   "kind": "method"
+  },
+  "log": {
+   "cs": "Log",
+   "kind": "method"
+  },
+  "logFormat": {
+   "cs": "LogFormat",
+   "kind": "method"
+  },
+  "logStyle": {
+   "cs": "LogStyle",
+   "kind": "method"
+  },
+  "paste": {
+   "cs": "Paste",
+   "kind": "method"
+  },
+  "printToAll": {
+   "cs": "PrintToAll",
+   "kind": "method"
+  },
+  "printToColor": {
+   "cs": "PrintToColor",
+   "kind": "method"
+  },
+  "setGlobalTable": {
+   "cs": "SetGlobalTable",
+   "kind": "method"
+  },
+  "setUITheme": {
+   "cs": "SetUITheme",
+   "kind": "method"
+  },
+  "showHotkeyConfig": {
+   "cs": "ShowHotkeyConfig",
+   "kind": "method"
+  },
+  "spawnObject": {
+   "cs": "SpawnObject",
+   "kind": "method"
+  },
+  "spawnObjectData": {
+   "cs": "SpawnObjectData",
+   "kind": "method"
+  },
+  "spawnObjectJSON": {
+   "cs": "SpawnObjectJSON",
+   "kind": "method"
+  },
+  "startLuaCoroutine": {
+   "cs": "StartLuaCoroutine",
+   "kind": "method"
+  },
+  "stringColorToHex": {
+   "cs": "StringColorToHex",
+   "kind": "method"
+  },
+  "stringColorToRGB": {
+   "cs": "StringColorToRGB",
+   "kind": "method"
+  }
+ },
+ "namespaces": {
+  "Backgrounds": {
+   "getBackground": {
+    "cs": "GetBackground",
+    "kind": "method"
+   },
+   "getCustomURL": {
+    "cs": "GetCustomURL",
+    "kind": "method"
+   },
+   "setBackground": {
+    "cs": "SetBackground",
+    "kind": "method"
+   },
+   "setCustomURL": {
+    "cs": "SetCustomURL",
+    "kind": "method"
+   }
+  },
+  "Grid": {
+   "color": {
+    "cs": "color",
+    "kind": "property"
+   },
+   "offsetX": {
+    "cs": "offsetX",
+    "kind": "property"
+   },
+   "offsetY": {
+    "cs": "offsetY",
+    "kind": "property"
+   },
+   "opacity": {
+    "cs": "opacity",
+    "kind": "property"
+   },
+   "show_lines": {
+    "cs": "show_lines",
+    "kind": "property"
+   },
+   "sizeX": {
+    "cs": "sizeX",
+    "kind": "property"
+   },
+   "sizeY": {
+    "cs": "sizeY",
+    "kind": "property"
+   },
+   "snapping": {
+    "cs": "snapping",
+    "kind": "property"
+   },
+   "thick_lines": {
+    "cs": "thick_lines",
+    "kind": "property"
+   },
+   "type": {
+    "cs": "type",
+    "kind": "property"
+   }
+  },
+  "Hands": {
+   "disable_unused": {
+    "cs": "disable_unused",
+    "kind": "property"
+   },
+   "enable": {
+    "cs": "enable",
+    "kind": "property"
+   },
+   "getHands": {
+    "cs": "GetHands",
+    "kind": "method"
+   },
+   "hiding": {
+    "cs": "hiding",
+    "kind": "property"
+   }
+  },
+  "Info": {
+   "complexity": {
+    "cs": "complexity",
+    "kind": "property"
+   },
+   "name": {
+    "cs": "name",
+    "kind": "property"
+   },
+   "number_of_players": {
+    "cs": "number_of_players",
+    "kind": "property"
+   },
+   "playing_time": {
+    "cs": "playing_time",
+    "kind": "property"
+   },
+   "tags": {
+    "cs": "tags",
+    "kind": "property"
+   },
+   "type": {
+    "cs": "type",
+    "kind": "property"
+   }
+  },
+  "JSON": {},
+  "Lighting": {
+   "ambient_intensity": {
+    "cs": "ambient_intensity",
+    "kind": "property"
+   },
+   "ambient_type": {
+    "cs": "ambient_type",
+    "kind": "property"
+   },
+   "apply": {
+    "cs": "Apply",
+    "kind": "method"
+   },
+   "getAmbientEquatorColor": {
+    "cs": "GetAmbientEquatorColor",
+    "kind": "method"
+   },
+   "getAmbientGroundColor": {
+    "cs": "GetAmbientGroundColor",
+    "kind": "method"
+   },
+   "getAmbientSkyColor": {
+    "cs": "GetAmbientSkyColor",
+    "kind": "method"
+   },
+   "getLightColor": {
+    "cs": "GetLightColor",
+    "kind": "method"
+   },
+   "light_intensity": {
+    "cs": "light_intensity",
+    "kind": "property"
+   },
+   "lut_contribution": {
+    "cs": "lut_contribution",
+    "kind": "property"
+   },
+   "lut_index": {
+    "cs": "lut_index",
+    "kind": "property"
+   },
+   "lut_url": {
+    "cs": "lut_url",
+    "kind": "property"
+   },
+   "reflection_intensity": {
+    "cs": "reflection_intensity",
+    "kind": "property"
+   },
+   "setAmbientEquatorColor": {
+    "cs": "SetAmbientEquatorColor",
+    "kind": "method"
+   },
+   "setAmbientGroundColor": {
+    "cs": "SetAmbientGroundColor",
+    "kind": "method"
+   },
+   "setAmbientSkyColor": {
+    "cs": "SetAmbientSkyColor",
+    "kind": "method"
+   },
+   "setLightColor": {
+    "cs": "SetLightColor",
+    "kind": "method"
+   }
+  },
+  "MusicPlayer": {
+   "getCurrentAudioclip": {
+    "cs": "getCurrentAudioclip",
+    "kind": "method"
+   },
+   "getPlaylist": {
+    "cs": "getPlaylist",
+    "kind": "method"
+   },
+   "pause": {
+    "cs": "pause",
+    "kind": "method"
+   },
+   "play": {
+    "cs": "play",
+    "kind": "method"
+   },
+   "player_status": {
+    "cs": "player_status",
+    "kind": "property"
+   },
+   "playlistIndex": {
+    "cs": "playlistIndex",
+    "kind": "property"
+   },
+   "playlist_index": {
+    "cs": "playlist_index",
+    "kind": "property"
+   },
+   "repeat_track": {
+    "cs": "repeat_track",
+    "kind": "property"
+   },
+   "setCurrentAudioclip": {
+    "cs": "setCurrentAudioclip",
+    "kind": "method"
+   },
+   "setPlaylist": {
+    "cs": "setPlaylist",
+    "kind": "method"
+   },
+   "shuffle": {
+    "cs": "shuffle",
+    "kind": "property"
+   },
+   "skipBack": {
+    "cs": "skipBack",
+    "kind": "method"
+   },
+   "skipForward": {
+    "cs": "skipForward",
+    "kind": "method"
+   }
+  },
+  "Notes": {
+   "addNotebookTab": {
+    "cs": "AddNotebookTab",
+    "kind": "method"
+   },
+   "editNotebookTab": {
+    "cs": "EditNotebookTab",
+    "kind": "method"
+   },
+   "getNotebookTabs": {
+    "cs": "GetNotebookTabs",
+    "kind": "method"
+   },
+   "getNotes": {
+    "cs": "GetNotes",
+    "kind": "method"
+   },
+   "removeNotebookTab": {
+    "cs": "RemoveNotebookTab",
+    "kind": "method"
+   },
+   "setNotes": {
+    "cs": "SetNotes",
+    "kind": "method"
+   }
+  },
+  "Physics": {
+   "cast": {
+    "cs": "Cast",
+    "kind": "method"
+   },
+   "getGravity": {
+    "cs": "GetGravity",
+    "kind": "method"
+   },
+   "play_area": {
+    "cs": "play_area",
+    "kind": "property"
+   },
+   "setGravity": {
+    "cs": "SetGravity",
+    "kind": "method"
+   }
+  },
+  "Player": {
+   "action": {
+    "cs": "Action",
+    "kind": "property"
+   },
+   "admin": {
+    "cs": "admin",
+    "kind": "property"
+   },
+   "attachCameraToObject": {
+    "cs": "AttachCameraToObject",
+    "kind": "method"
+   },
+   "blind": {
+    "cs": "Blind",
+    "kind": "method"
+   },
+   "blindfolded": {
+    "cs": "blindfolded",
+    "kind": "property"
+   },
+   "broadcast": {
+    "cs": "broadcast",
+    "kind": "method"
+   },
+   "changeColor": {
+    "cs": "ChangeColor",
+    "kind": "method"
+   },
+   "changeTeam": {
+    "cs": "ChangeTeam",
+    "kind": "method"
+   },
+   "clearSelectedObjects": {
+    "cs": "ClearSelectedObjects",
+    "kind": "method"
+   },
+   "color": {
+    "cs": "color",
+    "kind": "property"
+   },
+   "copy": {
+    "cs": "Copy",
+    "kind": "method"
+   },
+   "drawHandStash": {
+    "cs": "DrawHandStash",
+    "kind": "method"
+   },
+   "getAvailableColors": {
+    "cs": "GetAvailableColors",
+    "kind": "method"
+   },
+   "getColors": {
+    "cs": "GetColors",
+    "kind": "method"
+   },
+   "getHandCount": {
+    "cs": "GetHandCount",
+    "kind": "method"
+   },
+   "getHandObjects": {
+    "cs": "GetHandObjects",
+    "kind": "method"
+   },
+   "getHandPlayer": {
+    "cs": "GetHandPlayer",
+    "kind": "method"
+   },
+   "getHandTransform": {
+    "cs": "GetHandTransform",
+    "kind": "method"
+   },
+   "getHoldingObjects": {
+    "cs": "GetHoldingObjects",
+    "kind": "method"
+   },
+   "getHoverObject": {
+    "cs": "GetHoverObject",
+    "kind": "method"
+   },
+   "getPlayer": {
+    "cs": "GetPlayer",
+    "kind": "method"
+   },
+   "getPlayerHand": {
+    "cs": "GetPlayerHand",
+    "kind": "method"
+   },
+   "getPlayers": {
+    "cs": "GetPlayers",
+    "kind": "method"
+   },
+   "getPointerPosition": {
+    "cs": "GetPointerPosition",
+    "kind": "method"
+   },
+   "getPointerRotation": {
+    "cs": "GetPointerRotation",
+    "kind": "method"
+   },
+   "getSelectedObjects": {
+    "cs": "GetSelectedObjects",
+    "kind": "method"
+   },
+   "getSpectators": {
+    "cs": "GetSpectators",
+    "kind": "method"
+   },
+   "hand_choice_label": {
+    "cs": "hand_choice_label",
+    "kind": "property"
+   },
+   "host": {
+    "cs": "host",
+    "kind": "property"
+   },
+   "id": {
+    "cs": "id",
+    "kind": "property"
+   },
+   "kick": {
+    "cs": "Kick",
+    "kind": "method"
+   },
+   "lift_height": {
+    "cs": "lift_height",
+    "kind": "property"
+   },
+   "lookAt": {
+    "cs": "LookAt",
+    "kind": "method"
+   },
+   "mute": {
+    "cs": "Mute",
+    "kind": "method"
+   },
+   "paste": {
+    "cs": "Paste",
+    "kind": "method"
+   },
+   "pingTable": {
+    "cs": "PingTable",
+    "kind": "method"
+   },
+   "playerColor": {
+    "cs": "playerColor",
+    "kind": "property"
+   },
+   "print": {
+    "cs": "print",
+    "kind": "method"
+   },
+   "promote": {
+    "cs": "Promote",
+    "kind": "method"
+   },
+   "promoted": {
+    "cs": "promoted",
+    "kind": "property"
+   },
+   "seated": {
+    "cs": "seated",
+    "kind": "property"
+   },
+   "setCameraMode": {
+    "cs": "SetCameraMode",
+    "kind": "method"
+   },
+   "setHandStashLocation": {
+    "cs": "SetHandStashLocation",
+    "kind": "method"
+   },
+   "setHandTransform": {
+    "cs": "SetHandTransform",
+    "kind": "method"
+   },
+   "setUITheme": {
+    "cs": "SetUITheme",
+    "kind": "method"
+   },
+   "showColorDialog": {
+    "cs": "ShowColorDialog",
+    "kind": "method"
+   },
+   "showConfirmDialog": {
+    "cs": "ShowConfirmDialog",
+    "kind": "method"
+   },
+   "showInfoDialog": {
+    "cs": "ShowInfoDialog",
+    "kind": "method"
+   },
+   "showInputDialog": {
+    "cs": "ShowInputDialog",
+    "kind": "method"
+   },
+   "showMemoDialog": {
+    "cs": "ShowMemoDialog",
+    "kind": "method"
+   },
+   "showOptionsDialog": {
+    "cs": "ShowOptionsDialog",
+    "kind": "method"
+   },
+   "steam_id": {
+    "cs": "steam_id",
+    "kind": "property"
+   },
+   "steam_name": {
+    "cs": "steam_name",
+    "kind": "property"
+   },
+   "team": {
+    "cs": "team",
+    "kind": "property"
+   },
+   "unblind": {
+    "cs": "Unblind",
+    "kind": "method"
+   },
+   "userDataDescriptor": {
+    "cs": "UserDataDescriptor",
+    "kind": "property"
+   }
+  },
+  "Tables": {
+   "getCustomURL": {
+    "cs": "GetCustomURL",
+    "kind": "method"
+   },
+   "getTable": {
+    "cs": "GetTable",
+    "kind": "method"
+   },
+   "getTableObject": {
+    "cs": "GetTableObject",
+    "kind": "method"
+   },
+   "setCustomURL": {
+    "cs": "SetCustomURL",
+    "kind": "method"
+   },
+   "setTable": {
+    "cs": "SetTable",
+    "kind": "method"
+   }
+  },
+  "Time": {
+   "delta_time": {
+    "cs": "delta_time",
+    "kind": "property"
+   },
+   "fixed_delta_time": {
+    "cs": "fixed_delta_time",
+    "kind": "property"
+   },
+   "fixed_time": {
+    "cs": "fixed_time",
+    "kind": "property"
+   },
+   "frame_count": {
+    "cs": "frame_count",
+    "kind": "property"
+   },
+   "time": {
+    "cs": "time",
+    "kind": "property"
+   }
+  },
+  "Timer": {
+   "create": {
+    "cs": "Create",
+    "kind": "method"
+   },
+   "destroy": {
+    "cs": "Destroy",
+    "kind": "method"
+   },
+   "timers": {
+    "cs": "Timers",
+    "kind": "property"
+   }
+  },
+  "Turns": {
+   "disable_interactations": {
+    "cs": "disable_interactations",
+    "kind": "property"
+   },
+   "enable": {
+    "cs": "enable",
+    "kind": "property"
+   },
+   "endTurn": {
+    "cs": "endTurn",
+    "kind": "method"
+   },
+   "getNextTurnColor": {
+    "cs": "getNextTurnColor",
+    "kind": "method"
+   },
+   "getPreviousTurnColor": {
+    "cs": "getPreviousTurnColor",
+    "kind": "method"
+   },
+   "getTurnOrder": {
+    "cs": "getTurnOrder",
+    "kind": "method"
+   },
+   "order": {
+    "cs": "order",
+    "kind": "property"
+   },
+   "pass_turns": {
+    "cs": "pass_turns",
+    "kind": "property"
+   },
+   "reverse_order": {
+    "cs": "reverse_order",
+    "kind": "property"
+   },
+   "skip_empty_hands": {
+    "cs": "skip_empty_hands",
+    "kind": "property"
+   },
+   "turn_color": {
+    "cs": "turn_color",
+    "kind": "property"
+   },
+   "type": {
+    "cs": "type",
+    "kind": "property"
+   }
+  },
+  "UI": {
+   "assetType": {
+    "cs": "AssetType",
+    "kind": "property"
+   },
+   "getAttribute": {
+    "cs": "GetAttribute",
+    "kind": "method"
+   },
+   "getAttributes": {
+    "cs": "GetAttributes",
+    "kind": "method"
+   },
+   "getCustomAssets": {
+    "cs": "GetCustomAssets",
+    "kind": "method"
+   },
+   "getValue": {
+    "cs": "GetValue",
+    "kind": "method"
+   },
+   "getXml": {
+    "cs": "GetXml",
+    "kind": "method"
+   },
+   "getXmlTable": {
+    "cs": "GetXmlTable",
+    "kind": "method"
+   },
+   "hide": {
+    "cs": "Hide",
+    "kind": "method"
+   },
+   "loading": {
+    "cs": "loading",
+    "kind": "property"
+   },
+   "setAttribute": {
+    "cs": "SetAttribute",
+    "kind": "method"
+   },
+   "setAttributes": {
+    "cs": "SetAttributes",
+    "kind": "method"
+   },
+   "setClass": {
+    "cs": "SetClass",
+    "kind": "method"
+   },
+   "setCustomAssets": {
+    "cs": "SetCustomAssets",
+    "kind": "method"
+   },
+   "setValue": {
+    "cs": "SetValue",
+    "kind": "method"
+   },
+   "setXml": {
+    "cs": "SetXml",
+    "kind": "method"
+   },
+   "setXmlTable": {
+    "cs": "SetXmlTable",
+    "kind": "method"
+   },
+   "show": {
+    "cs": "Show",
+    "kind": "method"
+   }
+  },
+  "Wait": {
+   "condition": {
+    "cs": "Condition",
+    "kind": "method"
+   },
+   "frames": {
+    "cs": "Frames",
+    "kind": "method"
+   },
+   "stop": {
+    "cs": "Stop",
+    "kind": "method"
+   },
+   "stopAll": {
+    "cs": "StopAll",
+    "kind": "method"
+   },
+   "time": {
+    "cs": "Time",
+    "kind": "method"
+   }
+  },
+  "WebRequest": {
+   "custom": {
+    "cs": "Custom",
+    "kind": "method"
+   },
+   "delete": {
+    "cs": "Delete",
+    "kind": "method"
+   },
+   "head": {
+    "cs": "Head",
+    "kind": "method"
+   },
+   "post": {
+    "cs": "Post",
+    "kind": "method"
+   },
+   "put": {
+    "cs": "Put",
+    "kind": "method"
+   }
+  }
+ },
+ "object": {
+  "AssetBundle.getLoopingEffectIndex": {
+   "cs": "getLoopingEffectIndex",
+   "kind": "method"
+  },
+  "AssetBundle.getLoopingEffects": {
+   "cs": "getLoopingEffects",
+   "kind": "method"
+  },
+  "AssetBundle.getTriggerEffects": {
+   "cs": "getTriggerEffects",
+   "kind": "method"
+  },
+  "AssetBundle.playLoopingEffect": {
+   "cs": "playLoopingEffect",
+   "kind": "method"
+  },
+  "AssetBundle.playTriggerEffect": {
+   "cs": "playTriggerEffect",
+   "kind": "method"
+  },
+  "Book.clearHighlight": {
+   "cs": "ClearHighlight",
+   "kind": "method"
+  },
+  "Book.getPage": {
+   "cs": "GetPage",
+   "kind": "method"
+  },
+  "Book.page_offset": {
+   "cs": "page_offset",
+   "kind": "property"
+  },
+  "Book.setHighlight": {
+   "cs": "SetHighlight",
+   "kind": "method"
+  },
+  "Book.setPage": {
+   "cs": "SetPage",
+   "kind": "method"
+  },
+  "Browser.pixel_width": {
+   "cs": "pixel_width",
+   "kind": "property"
+  },
+  "Browser.url": {
+   "cs": "url",
+   "kind": "property"
+  },
+  "Clock.getValue": {
+   "cs": "getValue",
+   "kind": "method"
+  },
+  "Clock.pauseStart": {
+   "cs": "pauseStart",
+   "kind": "method"
+  },
+  "Clock.paused": {
+   "cs": "paused",
+   "kind": "property"
+  },
+  "Clock.setValue": {
+   "cs": "setValue",
+   "kind": "method"
+  },
+  "Clock.showCurrentTime": {
+   "cs": "showCurrentTime",
+   "kind": "method"
+  },
+  "Clock.startStopwatch": {
+   "cs": "startStopwatch",
+   "kind": "method"
+  },
+  "Container.addData": {
+   "cs": "AddData",
+   "kind": "method"
+  },
+  "Container.getCount": {
+   "cs": "GetCount",
+   "kind": "method"
+  },
+  "Container.getData": {
+   "cs": "GetData",
+   "kind": "method"
+  },
+  "Container.getInfo": {
+   "cs": "GetInfo",
+   "kind": "method"
+  },
+  "Container.putObject": {
+   "cs": "PutObject",
+   "kind": "method"
+  },
+  "Container.randomize": {
+   "cs": "Randomize",
+   "kind": "method"
+  },
+  "Container.removeData": {
+   "cs": "RemoveData",
+   "kind": "method"
+  },
+  "Container.search": {
+   "cs": "Search",
+   "kind": "method"
+  },
+  "Container.setData": {
+   "cs": "SetData",
+   "kind": "method"
+  },
+  "Container.takeObject": {
+   "cs": "TakeObject",
+   "kind": "method"
+  },
+  "Counter.clear": {
+   "cs": "clear",
+   "kind": "method"
+  },
+  "Counter.decrement": {
+   "cs": "decrement",
+   "kind": "method"
+  },
+  "Counter.getValue": {
+   "cs": "getValue",
+   "kind": "method"
+  },
+  "Counter.increment": {
+   "cs": "increment",
+   "kind": "method"
+  },
+  "Counter.setValue": {
+   "cs": "setValue",
+   "kind": "method"
+  },
+  "LayoutZone.getOptions": {
+   "cs": "GetOptions",
+   "kind": "method"
+  },
+  "LayoutZone.layout": {
+   "cs": "Layout",
+   "kind": "method"
+  },
+  "LayoutZone.setOptions": {
+   "cs": "SetOptions",
+   "kind": "method"
+  },
+  "RPGFigurine.attack": {
+   "cs": "attack",
+   "kind": "method"
+  },
+  "RPGFigurine.changeMode": {
+   "cs": "changeMode",
+   "kind": "method"
+  },
+  "RPGFigurine.die": {
+   "cs": "die",
+   "kind": "method"
+  },
+  "RPGFigurine.onAttack": {
+   "cs": "onAttack",
+   "kind": "property"
+  },
+  "RPGFigurine.onHit": {
+   "cs": "onHit",
+   "kind": "property"
+  },
+  "TextTool.getFontColor": {
+   "cs": "getFontColor",
+   "kind": "method"
+  },
+  "TextTool.getFontSize": {
+   "cs": "getFontSize",
+   "kind": "method"
+  },
+  "TextTool.getValue": {
+   "cs": "getValue",
+   "kind": "method"
+  },
+  "TextTool.setFontColor": {
+   "cs": "setFontColor",
+   "kind": "method"
+  },
+  "TextTool.setFontSize": {
+   "cs": "setFontSize",
+   "kind": "method"
+  },
+  "TextTool.setValue": {
+   "cs": "setValue",
+   "kind": "method"
+  },
+  "UI": {
+   "cs": "UI",
+   "kind": "property"
+  },
+  "Zone.getObjects": {
+   "cs": "GetObjects",
+   "kind": "method"
+  },
+  "addAttachment": {
+   "cs": "AddAttachment",
+   "kind": "method"
+  },
+  "addContextMenuItem": {
+   "cs": "AddContextMenuItem",
+   "kind": "method"
+  },
+  "addDecal": {
+   "cs": "AddDecal",
+   "kind": "method"
+  },
+  "addForce": {
+   "cs": "AddForce",
+   "kind": "method"
+  },
+  "addTag": {
+   "cs": "AddTag",
+   "kind": "method"
+  },
+  "addToPlayerSelection": {
+   "cs": "AddToPlayerSelection",
+   "kind": "method"
+  },
+  "addTorque": {
+   "cs": "AddTorque",
+   "kind": "method"
+  },
+  "alt_view_angle": {
+   "cs": "alt_view_angle",
+   "kind": "property"
+  },
+  "angular_drag": {
+   "cs": "angular_drag",
+   "kind": "property"
+  },
+  "assetBundle": {
+   "cs": "AssetBundle",
+   "kind": "property"
+  },
+  "attachHider": {
+   "cs": "AttachHider",
+   "kind": "method"
+  },
+  "attachInvisibleHider": {
+   "cs": "AttachInvisibleHider",
+   "kind": "method"
+  },
+  "auto_raise": {
+   "cs": "auto_raise",
+   "kind": "property"
+  },
+  "book": {
+   "cs": "Book",
+   "kind": "property"
+  },
+  "bounciness": {
+   "cs": "bounciness",
+   "kind": "property"
+  },
+  "browser": {
+   "cs": "Browser",
+   "kind": "property"
+  },
+  "call": {
+   "cs": "Call",
+   "kind": "method"
+  },
+  "childPairs": {
+   "cs": "childPairs",
+   "kind": "property"
+  },
+  "clearButtons": {
+   "cs": "ClearButtons",
+   "kind": "method"
+  },
+  "clearContextMenu": {
+   "cs": "ClearContextMenu",
+   "kind": "method"
+  },
+  "clearInputs": {
+   "cs": "ClearInputs",
+   "kind": "method"
+  },
+  "clock": {
+   "cs": "Clock",
+   "kind": "property"
+  },
+  "component": {
+   "cs": "component",
+   "kind": "property"
+  },
+  "componentIndex": {
+   "cs": "componentIndex",
+   "kind": "property"
+  },
+  "componentName": {
+   "cs": "componentName",
+   "kind": "property"
+  },
+  "container": {
+   "cs": "Container",
+   "kind": "property"
+  },
+  "counter": {
+   "cs": "Counter",
+   "kind": "property"
+  },
+  "createButton": {
+   "cs": "CreateButton",
+   "kind": "method"
+  },
+  "createInput": {
+   "cs": "CreateInput",
+   "kind": "method"
+  },
+  "cut": {
+   "cs": "Cut",
+   "kind": "method"
+  },
+  "deal": {
+   "cs": "Deal",
+   "kind": "method"
+  },
+  "dealToAll": {
+   "cs": "DealToAll",
+   "kind": "method"
+  },
+  "dealToColor": {
+   "cs": "DealToColor",
+   "kind": "method"
+  },
+  "dealToColorWithOffset": {
+   "cs": "DealToColorWithOffset",
+   "kind": "method"
+  },
+  "destroy": {
+   "cs": "Destroy",
+   "kind": "method"
+  },
+  "destruct": {
+   "cs": "Destruct",
+   "kind": "method"
+  },
+  "drag": {
+   "cs": "drag",
+   "kind": "property"
+  },
+  "drag_selectable": {
+   "cs": "drag_selectable",
+   "kind": "property"
+  },
+  "drop": {
+   "cs": "Drop",
+   "kind": "method"
+  },
+  "dynamic_friction": {
+   "cs": "dynamic_friction",
+   "kind": "property"
+  },
+  "editButton": {
+   "cs": "EditButton",
+   "kind": "method"
+  },
+  "editInput": {
+   "cs": "EditInput",
+   "kind": "method"
+  },
+  "flip": {
+   "cs": "Flip",
+   "kind": "method"
+  },
+  "getAngularVelocity": {
+   "cs": "GetAngularVelocity",
+   "kind": "method"
+  },
+  "getAttachments": {
+   "cs": "GetAttachments",
+   "kind": "method"
+  },
+  "getBounds": {
+   "cs": "GetBounds",
+   "kind": "method"
+  },
+  "getBoundsNormalized": {
+   "cs": "GetBoundsNormalized",
+   "kind": "method"
+  },
+  "getButtons": {
+   "cs": "GetButtons",
+   "kind": "method"
+  },
+  "getChild": {
+   "cs": "getChild",
+   "kind": "method"
+  },
+  "getChildren": {
+   "cs": "getChildren",
+   "kind": "method"
+  },
+  "getColorTint": {
+   "cs": "GetColorTint",
+   "kind": "method"
+  },
+  "getComponent": {
+   "cs": "getComponent",
+   "kind": "method"
+  },
+  "getComponentInChildren": {
+   "cs": "getComponentInChildren",
+   "kind": "method"
+  },
+  "getComponentVar": {
+   "cs": "getComponentVar",
+   "kind": "method"
+  },
+  "getComponentVars": {
+   "cs": "getComponentVars",
+   "kind": "method"
+  },
+  "getComponents": {
+   "cs": "getComponents",
+   "kind": "method"
+  },
+  "getComponentsInChildren": {
+   "cs": "getComponentsInChildren",
+   "kind": "method"
+  },
+  "getCustomObject": {
+   "cs": "GetCustomObject",
+   "kind": "method"
+  },
+  "getData": {
+   "cs": "GetData",
+   "kind": "method"
+  },
+  "getDecals": {
+   "cs": "GetDecals",
+   "kind": "method"
+  },
+  "getDescription": {
+   "cs": "GetDescription",
+   "kind": "method"
+  },
+  "getFogOfWar": {
+   "cs": "GetFogOfWar",
+   "kind": "method"
+  },
+  "getFogOfWarReveal": {
+   "cs": "GetFogOfWarReveal",
+   "kind": "method"
+  },
+  "getGMNotes": {
+   "cs": "GetGMNotes",
+   "kind": "method"
+  },
+  "getGUID": {
+   "cs": "GetGUID",
+   "kind": "method"
+  },
+  "getInputs": {
+   "cs": "GetInputs",
+   "kind": "method"
+  },
+  "getJSON": {
+   "cs": "GetJSON",
+   "kind": "method"
+  },
+  "getJoints": {
+   "cs": "GetJoints",
+   "kind": "method"
+  },
+  "getLock": {
+   "cs": "GetLock",
+   "kind": "method"
+  },
+  "getLuaScript": {
+   "cs": "GetLuaScript",
+   "kind": "method"
+  },
+  "getMaterialValue": {
+   "cs": "getMaterialValue",
+   "kind": "method"
+  },
+  "getMaterialVars": {
+   "cs": "getMaterialVars",
+   "kind": "method"
+  },
+  "getMaterials": {
+   "cs": "getMaterials",
+   "kind": "method"
+  },
+  "getMaterialsInChildren": {
+   "cs": "getMaterialsInChildren",
+   "kind": "method"
+  },
+  "getMemo": {
+   "cs": "GetMemo",
+   "kind": "method"
+  },
+  "getName": {
+   "cs": "GetName",
+   "kind": "method"
+  },
+  "getNearestPointFromObject": {
+   "cs": "GetNearestPointFromObject",
+   "kind": "method"
+  },
+  "getNearestPointFromPosition": {
+   "cs": "GetNearestPointFromPosition",
+   "kind": "method"
+  },
+  "getObjects": {
+   "cs": "GetObjects",
+   "kind": "method"
+  },
+  "getPosition": {
+   "cs": "GetPosition",
+   "kind": "method"
+  },
+  "getPositionSmooth": {
+   "cs": "GetPositionSmooth",
+   "kind": "method"
+  },
+  "getQuantity": {
+   "cs": "GetQuantity",
+   "kind": "method"
+  },
+  "getRotation": {
+   "cs": "GetRotation",
+   "kind": "method"
+  },
+  "getRotationSmooth": {
+   "cs": "GetRotationSmooth",
+   "kind": "method"
+  },
+  "getRotationValue": {
+   "cs": "GetRotationValue",
+   "kind": "method"
+  },
+  "getRotationValues": {
+   "cs": "GetRotationValues",
+   "kind": "method"
+  },
+  "getScale": {
+   "cs": "GetScale",
+   "kind": "method"
+  },
+  "getSelectingPlayers": {
+   "cs": "GetSelectingPlayers",
+   "kind": "method"
+  },
+  "getSnapPoints": {
+   "cs": "GetSnapPoints",
+   "kind": "method"
+  },
+  "getStateId": {
+   "cs": "GetStateId",
+   "kind": "method"
+  },
+  "getStates": {
+   "cs": "GetStates",
+   "kind": "method"
+  },
+  "getTable": {
+   "cs": "GetTable",
+   "kind": "method"
+  },
+  "getTags": {
+   "cs": "GetTags",
+   "kind": "method"
+  },
+  "getTransformForward": {
+   "cs": "GetTransformForward",
+   "kind": "method"
+  },
+  "getTransformRight": {
+   "cs": "GetTransformRight",
+   "kind": "method"
+  },
+  "getTransformUp": {
+   "cs": "GetTransformUp",
+   "kind": "method"
+  },
+  "getValue": {
+   "cs": "GetValue",
+   "kind": "method"
+  },
+  "getVar": {
+   "cs": "GetVar",
+   "kind": "method"
+  },
+  "getVectorLines": {
+   "cs": "GetVectorLines",
+   "kind": "method"
+  },
+  "getVelocity": {
+   "cs": "GetVelocity",
+   "kind": "method"
+  },
+  "getZones": {
+   "cs": "GetZones",
+   "kind": "method"
+  },
+  "gizmo_selectable": {
+   "cs": "gizmo_selectable",
+   "kind": "property"
+  },
+  "grid_projection": {
+   "cs": "grid_projection",
+   "kind": "property"
+  },
+  "guid": {
+   "cs": "guid",
+   "kind": "property"
+  },
+  "hasAnyTag": {
+   "cs": "HasAnyTag",
+   "kind": "method"
+  },
+  "hasMatchingTag": {
+   "cs": "HasMatchingTag",
+   "kind": "method"
+  },
+  "hasTag": {
+   "cs": "HasTag",
+   "kind": "method"
+  },
+  "held_by_color": {
+   "cs": "held_by_color",
+   "kind": "property"
+  },
+  "held_flip_index": {
+   "cs": "held_flip_index",
+   "kind": "property"
+  },
+  "held_position_offset": {
+   "cs": "held_position_offset",
+   "kind": "property"
+  },
+  "held_reduce_force": {
+   "cs": "held_reduce_force",
+   "kind": "property"
+  },
+  "held_rotation_offset": {
+   "cs": "held_rotation_offset",
+   "kind": "property"
+  },
+  "held_spin_index": {
+   "cs": "held_spin_index",
+   "kind": "property"
+  },
+  "hide_when_face_down": {
+   "cs": "hide_when_face_down",
+   "kind": "property"
+  },
+  "highlightOff": {
+   "cs": "HighlightOff",
+   "kind": "method"
+  },
+  "highlightOn": {
+   "cs": "HighlightOn",
+   "kind": "method"
+  },
+  "ignore_fog_of_war": {
+   "cs": "ignore_fog_of_war",
+   "kind": "property"
+  },
+  "interactable": {
+   "cs": "interactable",
+   "kind": "property"
+  },
+  "isDestroyed": {
+   "cs": "IsDestroyed",
+   "kind": "method"
+  },
+  "isSmoothMoving": {
+   "cs": "IsSmoothMoving",
+   "kind": "method"
+  },
+  "is_face_down": {
+   "cs": "is_face_down",
+   "kind": "property"
+  },
+  "jointTo": {
+   "cs": "JointTo",
+   "kind": "method"
+  },
+  "layoutZone": {
+   "cs": "LayoutZone",
+   "kind": "property"
+  },
+  "loading_custom": {
+   "cs": "loading_custom",
+   "kind": "property"
+  },
+  "locked": {
+   "cs": "locked",
+   "kind": "property"
+  },
+  "luaCollision": {
+   "cs": "luaCollision",
+   "kind": "property"
+  },
+  "mass": {
+   "cs": "mass",
+   "kind": "property"
+  },
+  "material": {
+   "cs": "material",
+   "kind": "property"
+  },
+  "materialIndex": {
+   "cs": "materialIndex",
+   "kind": "property"
+  },
+  "max_typed_number": {
+   "cs": "max_typed_number",
+   "kind": "property"
+  },
+  "measure_movement": {
+   "cs": "measure_movement",
+   "kind": "property"
+  },
+  "memo": {
+   "cs": "memo",
+   "kind": "property"
+  },
+  "name": {
+   "cs": "name",
+   "kind": "property"
+  },
+  "pick_up_position": {
+   "cs": "pick_up_position",
+   "kind": "property"
+  },
+  "pick_up_rotation": {
+   "cs": "pick_up_rotation",
+   "kind": "property"
+  },
+  "positionToLocal": {
+   "cs": "PositionToLocal",
+   "kind": "method"
+  },
+  "positionToWorld": {
+   "cs": "PositionToWorld",
+   "kind": "method"
+  },
+  "putObject": {
+   "cs": "PutObject",
+   "kind": "method"
+  },
+  "rPGFigurine": {
+   "cs": "RPGFigurine",
+   "kind": "property"
+  },
+  "randomize": {
+   "cs": "Randomize",
+   "kind": "method"
+  },
+  "registerCollisions": {
+   "cs": "RegisterCollisions",
+   "kind": "method"
+  },
+  "reload": {
+   "cs": "Reload",
+   "kind": "method"
+  },
+  "remainder": {
+   "cs": "remainder",
+   "kind": "property"
+  },
+  "removeAttachment": {
+   "cs": "RemoveAttachment",
+   "kind": "method"
+  },
+  "removeAttachments": {
+   "cs": "RemoveAttachments",
+   "kind": "method"
+  },
+  "removeButton": {
+   "cs": "RemoveButton",
+   "kind": "method"
+  },
+  "removeFromPlayerSelection": {
+   "cs": "RemoveFromPlayerSelection",
+   "kind": "method"
+  },
+  "removeInput": {
+   "cs": "RemoveInput",
+   "kind": "method"
+  },
+  "removeTag": {
+   "cs": "RemoveTag",
+   "kind": "method"
+  },
+  "rendererIndex": {
+   "cs": "rendererIndex",
+   "kind": "property"
+  },
+  "resting": {
+   "cs": "resting",
+   "kind": "property"
+  },
+  "roll": {
+   "cs": "Roll",
+   "kind": "method"
+  },
+  "rotate": {
+   "cs": "Rotate",
+   "kind": "method"
+  },
+  "scale": {
+   "cs": "Scale",
+   "kind": "method"
+  },
+  "script": {
+   "cs": "script",
+   "kind": "property"
+  },
+  "sendToHand": {
+   "cs": "SendToHand",
+   "kind": "method"
+  },
+  "setAngularVelocity": {
+   "cs": "SetAngularVelocity",
+   "kind": "method"
+  },
+  "setColorTint": {
+   "cs": "SetColorTint",
+   "kind": "method"
+  },
+  "setComponentVar": {
+   "cs": "setComponentVar",
+   "kind": "method"
+  },
+  "setCustomObject": {
+   "cs": "SetCustomObject",
+   "kind": "method"
+  },
+  "setDecals": {
+   "cs": "SetDecals",
+   "kind": "method"
+  },
+  "setDescription": {
+   "cs": "SetDescription",
+   "kind": "method"
+  },
+  "setFogOfWar": {
+   "cs": "SetFogOfWar",
+   "kind": "method"
+  },
+  "setFogOfWarReveal": {
+   "cs": "SetFogOfWarReveal",
+   "kind": "method"
+  },
+  "setGMNotes": {
+   "cs": "SetGMNotes",
+   "kind": "method"
+  },
+  "setHiddenFrom": {
+   "cs": "SetHiddenFrom",
+   "kind": "method"
+  },
+  "setInvisibleTo": {
+   "cs": "SetInvisibleTo",
+   "kind": "method"
+  },
+  "setLock": {
+   "cs": "SetLock",
+   "kind": "method"
+  },
+  "setLuaScript": {
+   "cs": "SetLuaScript",
+   "kind": "method"
+  },
+  "setMaterialValue": {
+   "cs": "setMaterialValue",
+   "kind": "method"
+  },
+  "setMemo": {
+   "cs": "SetMemo",
+   "kind": "method"
+  },
+  "setName": {
+   "cs": "SetName",
+   "kind": "method"
+  },
+  "setPosition": {
+   "cs": "SetPosition",
+   "kind": "method"
+  },
+  "setPositionSmooth": {
+   "cs": "SetPositionSmooth",
+   "kind": "method"
+  },
+  "setRotation": {
+   "cs": "SetRotation",
+   "kind": "method"
+  },
+  "setRotationSmooth": {
+   "cs": "SetRotationSmooth",
+   "kind": "method"
+  },
+  "setRotationValue": {
+   "cs": "SetRotationValue",
+   "kind": "method"
+  },
+  "setRotationValues": {
+   "cs": "SetRotationValues",
+   "kind": "method"
+  },
+  "setScale": {
+   "cs": "SetScale",
+   "kind": "method"
+  },
+  "setSnapPoints": {
+   "cs": "SetSnapPoints",
+   "kind": "method"
+  },
+  "setState": {
+   "cs": "SetState",
+   "kind": "method"
+  },
+  "setTable": {
+   "cs": "SetTable",
+   "kind": "method"
+  },
+  "setTags": {
+   "cs": "SetTags",
+   "kind": "method"
+  },
+  "setValue": {
+   "cs": "SetValue",
+   "kind": "method"
+  },
+  "setVar": {
+   "cs": "SetVar",
+   "kind": "method"
+  },
+  "setVectorLines": {
+   "cs": "SetVectorLines",
+   "kind": "method"
+  },
+  "setVelocity": {
+   "cs": "SetVelocity",
+   "kind": "method"
+  },
+  "shuffle": {
+   "cs": "Shuffle",
+   "kind": "method"
+  },
+  "shuffleStates": {
+   "cs": "ShuffleStates",
+   "kind": "method"
+  },
+  "spawning": {
+   "cs": "spawning",
+   "kind": "property"
+  },
+  "split": {
+   "cs": "Split",
+   "kind": "method"
+  },
+  "spread": {
+   "cs": "Spread",
+   "kind": "method"
+  },
+  "startLuaCoroutine": {
+   "cs": "StartLuaCoroutine",
+   "kind": "method"
+  },
+  "static_friction": {
+   "cs": "static_friction",
+   "kind": "property"
+  },
+  "sticky": {
+   "cs": "sticky",
+   "kind": "property"
+  },
+  "tag": {
+   "cs": "tag",
+   "kind": "property"
+  },
+  "takeObject": {
+   "cs": "TakeObject",
+   "kind": "method"
+  },
+  "textTool": {
+   "cs": "TextTool",
+   "kind": "property"
+  },
+  "tooltip": {
+   "cs": "tooltip",
+   "kind": "property"
+  },
+  "translate": {
+   "cs": "Translate",
+   "kind": "method"
+  },
+  "type": {
+   "cs": "type",
+   "kind": "property"
+  },
+  "unregisterCollisions": {
+   "cs": "UnregisterCollisions",
+   "kind": "method"
+  },
+  "use_gravity": {
+   "cs": "use_gravity",
+   "kind": "property"
+  },
+  "use_grid": {
+   "cs": "use_grid",
+   "kind": "property"
+  },
+  "use_hands": {
+   "cs": "use_hands",
+   "kind": "property"
+  },
+  "use_rotation_value_flip": {
+   "cs": "use_rotation_value_flip",
+   "kind": "property"
+  },
+  "use_snap_points": {
+   "cs": "use_snap_points",
+   "kind": "property"
+  },
+  "value": {
+   "cs": "value",
+   "kind": "property"
+  },
+  "value_flags": {
+   "cs": "value_flags",
+   "kind": "property"
+  },
+  "zone": {
+   "cs": "Zone",
+   "kind": "property"
+  }
+ },
+ "save": {
+  "BagState": [
+   "Order"
+  ],
+  "CalculatorState": [
+   "value",
+   "memory"
+  ],
+  "CameraState": [
+   "Position",
+   "Rotation",
+   "Distance",
+   "Zoomed",
+   "AbsolutePosition"
+  ],
+  "ClockState": [
+   "Mode",
+   "SecondsPassed",
+   "Paused"
+  ],
+  "CounterState": [
+   "value"
+  ],
+  "CustomAssetState": [
+   "Type",
+   "Name",
+   "URL"
+  ],
+  "CustomAssetbundleState": [
+   "AssetbundleURL",
+   "AssetbundleSecondaryURL",
+   "MaterialIndex",
+   "TypeIndex",
+   "LoopingEffectIndex"
+  ],
+  "CustomDecalState": [
+   "Name",
+   "ImageURL",
+   "Size"
+  ],
+  "CustomDeckState": [
+   "FaceURL",
+   "BackURL",
+   "NumWidth",
+   "NumHeight",
+   "BackIsHidden",
+   "UniqueBack",
+   "Type"
+  ],
+  "CustomDiceState": [
+   "Type"
+  ],
+  "CustomFigurineState": [
+   "UseMinimalCollider",
+   "MirroredBack"
+  ],
+  "CustomImageState": [
+   "ImageURL",
+   "ImageSecondaryURL",
+   "ImageScalar",
+   "WidthScale",
+   "CustomDice",
+   "CustomToken",
+   "CustomJigsawPuzzle",
+   "CustomTile",
+   "CustomFigurine"
+  ],
+  "CustomJigsawPuzzleState": [
+   "NumPuzzlePieces",
+   "ImageOnBoard"
+  ],
+  "CustomMeshState": [
+   "MeshURL",
+   "DiffuseURL",
+   "NormalURL",
+   "ColliderURL",
+   "Convex",
+   "MaterialIndex",
+   "TypeIndex",
+   "CustomShader",
+   "CastShadows"
+  ],
+  "CustomPDFState": [
+   "PDFUrl",
+   "PDFPassword",
+   "PDFPage",
+   "PDFPageOffset"
+  ],
+  "CustomShaderState": [
+   "SpecularColor",
+   "SpecularIntensity",
+   "SpecularSharpness",
+   "FresnelStrength"
+  ],
+  "CustomTileState": [
+   "Type",
+   "Thickness",
+   "Stackable",
+   "Stretch"
+  ],
+  "CustomTokenState": [
+   "Thickness",
+   "MergeDistancePixels",
+   "StandUp",
+   "Stackable"
+  ],
+  "DecalState": [
+   "Transform",
+   "CustomDecal",
+   "OwnerSteamID"
+  ],
+  "FogOfWarRevealerState": [
+   "Active",
+   "ShowOutLine",
+   "Range",
+   "Height",
+   "Color",
+   "FoV",
+   "FoVOffset"
+  ],
+  "FogOfWarState": [
+   "HideGmPointer",
+   "HideObjects",
+   "ReHideObjects",
+   "Height",
+   "RevealedLocations"
+  ],
+  "GridState": [
+   "Type",
+   "Lines",
+   "Color",
+   "Opacity",
+   "ThickLines",
+   "Snapping",
+   "Offset",
+   "BothSnapping",
+   "xSize",
+   "ySize",
+   "PosOffset"
+  ],
+  "HandTransformState": [
+   "Color",
+   "Transform"
+  ],
+  "HandsState": [
+   "Enable",
+   "DisableUnused",
+   "Hiding",
+   "HandTransforms"
+  ],
+  "JointFixedState": [],
+  "JointHingeState": [
+   "UseLimits",
+   "Limits",
+   "UseMotor",
+   "Motor",
+   "UseSpring",
+   "Spring"
+  ],
+  "JointSpringState": [
+   "Damper",
+   "MaxDistance",
+   "MinDistance",
+   "Spring"
+  ],
+  "JointState": [
+   "ConnectedBodyGUID",
+   "EnableCollision",
+   "Axis",
+   "Anchor",
+   "ConnectedAnchor",
+   "BreakForce",
+   "BreakTorgue"
+  ],
+  "LayoutZoneState": [
+   "Options",
+   "GroupsInZone"
+  ],
+  "LightingState": [
+   "LightIntensity",
+   "LightColor",
+   "AmbientIntensity",
+   "AmbientType",
+   "AmbientSkyColor",
+   "AmbientEquatorColor",
+   "AmbientGroundColor",
+   "ReflectionIntensity",
+   "LutIndex",
+   "LutContribution",
+   "LutURL"
+  ],
+  "Mp3PlayerState": [
+   "songTitle",
+   "genre",
+   "volume",
+   "isPlaying",
+   "loopOne",
+   "menuTitle",
+   "menu"
+  ],
+  "MusicPlayerState": [
+   "RepeatSong",
+   "PlaylistEntry",
+   "CurrentAudioTitle",
+   "CurrentAudioURL"
+  ],
+  "ObjectState": [
+   "GUID",
+   "Name",
+   "Transform",
+   "Nickname",
+   "Description",
+   "GMNotes",
+   "Memo",
+   "AltLookAngle",
+   "ColorDiffuse",
+   "Tags",
+   "LayoutGroupSortIndex",
+   "Value",
+   "Locked",
+   "Grid",
+   "Snap",
+   "IgnoreFoW",
+   "MeasureMovement",
+   "DragSelectable",
+   "Autoraise",
+   "Sticky",
+   "Tooltip",
+   "GridProjection",
+   "HideWhenFaceDown",
+   "Hands",
+   "AltZoomable",
+   "AltSound",
+   "MaterialIndex",
+   "MeshIndex",
+   "Number",
+   "RPGmode",
+   "RPGdead",
+   "FogColor",
+   "FogHidePointers",
+   "FogReverseHiding",
+   "FogSeethrough",
+   "miscID",
+   "vector",
+   "CardID",
+   "SidewaysCard",
+   "DeckIDs",
+   "CustomDeck",
+   "CustomMesh",
+   "CustomImage",
+   "CustomAssetbundle",
+   "CustomPDF",
+   "FogOfWar",
+   "FogOfWarRevealer",
+   "LayoutZone",
+   "Clock",
+   "Counter",
+   "Tablet",
+   "Mp3Player",
+   "Calculator",
+   "Text",
+   "Bag",
+   "LuaScript",
+   "LuaScriptState",
+   "CustomUIAssets",
+   "PhysicsMaterial",
+   "Rigidbody",
+   "JointFixed",
+   "JointHinge",
+   "JointSpring",
+   "ContainedObjects",
+   "AttachedSnapPoints",
+   "AttachedVectorLines",
+   "AttachedDecals",
+   "States",
+   "RotationValues",
+   "ChildObjects"
+  ],
+  "PhysicsMaterialState": [
+   "StaticFriction",
+   "DynamicFriction",
+   "Bounciness",
+   "FrictionCombine",
+   "BounceCombine"
+  ],
+  "RigidbodyState": [
+   "Mass",
+   "Drag",
+   "AngularDrag",
+   "UseGravity"
+  ],
+  "RotationValueState": [
+   "Value",
+   "Rotation"
+  ],
+  "SaveState": [
+   "SaveName",
+   "EpochTime",
+   "Date",
+   "VersionNumber",
+   "GameMode",
+   "GameType",
+   "GameComplexity",
+   "PlayingTime",
+   "PlayerCounts",
+   "Tags",
+   "Gravity",
+   "PlayArea",
+   "Table",
+   "TableURL",
+   "Sky",
+   "SkyURL",
+   "Note",
+   "TabStates",
+   "MusicPlayer",
+   "Grid",
+   "Lighting",
+   "Hands",
+   "ComponentTags",
+   "Turns",
+   "CameraStates",
+   "DecalPallet",
+   "LuaScript",
+   "LuaScriptState",
+   "CustomUIAssets",
+   "Decals",
+   "VectorLines",
+   "SnapPoints",
+   "ObjectStates",
+   "Rules"
+  ],
+  "SnapPointState": [
+   "Position",
+   "Rotation",
+   "Tags"
+  ],
+  "TabState": [
+   "title",
+   "body",
+   "color",
+   "visibleColor",
+   "id"
+  ],
+  "TabletState": [
+   "PageURL"
+  ],
+  "TagsState": [
+   "labels"
+  ],
+  "TextState": [
+   "Text",
+   "OwnerSteamID",
+   "colorstate",
+   "fontSize"
+  ],
+  "TransformState": [
+   "posX",
+   "posY",
+   "posZ",
+   "rotX",
+   "rotY",
+   "rotZ",
+   "scaleX",
+   "scaleY",
+   "scaleZ"
+  ],
+  "TurnsState": [
+   "Enable",
+   "Type",
+   "TurnOrder",
+   "Reverse",
+   "SkipEmpty",
+   "DisableInteractions",
+   "PassTurns",
+   "TurnColor"
+  ],
+  "VectorLineState": [
+   "OwnerSteamID",
+   "points3",
+   "color",
+   "thickness",
+   "rotation",
+   "loop",
+   "square"
+  ]
+ }
+}
