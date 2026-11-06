@@ -227,6 +227,12 @@ try
     }
     way.Done();
 }
+catch (Exception e) when (e is InvalidDataException or FileNotFoundException)
+{
+    way.PutBack();
+    Console.Error.WriteLine(e.Message);
+    return 3;
+}
 catch
 {
     way.PutBack();

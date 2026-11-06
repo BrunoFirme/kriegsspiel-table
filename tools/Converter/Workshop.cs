@@ -30,7 +30,7 @@ public static class Workshop
         var resp = await Http.PostAsync("https://api.steampowered.com/ISteamRemoteStorage/GetPublishedFileDetails/v1/", form);
         resp.EnsureSuccessStatusCode();
         var details = JsonNode.Parse(await resp.Content.ReadAsStringAsync())?["response"]?["publishedfiledetails"]?[0];
-        if (details?["result"]?.GetValue<int>() != 1) throw new InvalidDataException($"Steam does not know workshop item {id} (private, removed, or not public)");
+        if (details?["result"]?.GetValue<int>() != 1) throw new InvalidDataException($"Steam will not hand out workshop item {id}: it is unlisted, friends-only, private or removed. Subscribe to it in your digital tabletop, then import it from this PC.");
         if (details["consumer_app_id"]?.GetValue<int>() is int app && app != 286160) throw new InvalidDataException($"workshop item {id} is not a digital tabletop module (app {app})");
         var url = details["file_url"]?.GetValue<string>();
         if (string.IsNullOrEmpty(url)) throw new InvalidDataException($"Steam gives no download link for {id}; subscribe to it once in your digital tabletop, then import it from this PC");
