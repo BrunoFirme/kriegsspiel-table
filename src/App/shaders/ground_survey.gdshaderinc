@@ -48,24 +48,10 @@ vec3 survey_farm(vec3 c, vec3 sheet, vec2 p, vec2 site, vec2 seed, float turn, f
 	return c;
 }
 
-vec3 survey_lanes(vec3 c, vec3 sheet, vec2 p, float settle, float fw) {
-	float along;
-	float w = metres(LANE_HALF_M);
-	float d = lane_iso(p, LANE_CYCLE_M, 3.7, along);
-	float on = lane_cut(p, 11.0, mix(0.45, 0.75, settle));
-	c = mix(c, wash(palette[ROAD].rgb, sheet, SURVEY_PAPER, p, w - d, 0.5), (1.0 - smoothstep(w - fw, w + fw, d)) * on);
-	c = mix(c, SURVEY_INK, hand_ink(abs(d - w + W1), W1, p, fw) * on * 0.9);
-	float d2 = lane_iso(p, LANE_SECOND_M, 8.1, along);
-	float on2 = lane_cut(p, 17.0, mix(0.2, 0.55, settle));
-	return mix(c, WEGEBRAUN, dashed(along, d2, metres(10.0), 0.55, W2 * 0.8, fw) * on2 * 0.85);
-}
-
 vec3 survey_field(vec3 c, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_uv, float own, vec2 levels, vec2 along, float follow, float fw, float edge, out float cover) {
 	p = curled(p);
 	Lot l = lot_at(p, uv, to_uv, metres(mix(PLOT_OPEN_M, PLOT_SMALL_M, levels.x)), 0.56, FIELD, own, levels);
 	cover = 0.0;
-	vec2 site_uv = uv + to_uv * (l.site - p);
-	vec2 road_along = road_along_at(site_uv);
 	float use = hash(l.id + 9.4);
 	float small = step(l.room, metres(ORCHARD_LOT_M));
 	if (use < 0.55 || small < 0.5) {
@@ -91,15 +77,6 @@ vec3 survey_field(vec3 c, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_uv, fl
 	float marked = step(hash(pair + 4.4), bounded * 0.85);
 	int line = HEDGE + int(hash(pair + 1.1) * 4.0);
 	c = mix(c, SURVEY_INK, edge_line(SURVEY, line, l, p, fw, W1, W2, W3) * marked * mix(0.5, 1.0, hash(pair + 2.2)));
-	float settle = smoothstep(0.1, 0.8, l.levels.y);
-	c = survey_lanes(c, sheet, p, settle, fw);
-	c = mix(c, WEGEBRAUN, access_lanes(p, uv, to_uv, l.levels, settle, W1, metres(10.0), fw) * 0.9);
-	float near_road = near_road_at(site_uv);
-	if (farm_here(l.id, l.site, l.room, l.levels, near_road) > 0.5) {
-		float turn = mix(hash(l.id + 11.3) * 3.1416, atan(road_along.y, road_along.x), step(0.5, near_road));
-		c = survey_farm(c, sheet, p, l.site, l.id, turn, edge, fw, cover);
-		if (hamlet_here(l) > 0.5) c = survey_farm(c, sheet, p, second_site(l), l.id + 21.0, turn + 0.4, edge, fw, cover);
-	}
 	if (l.room > metres(15.0) && hash(l.id + 4.9) < l.levels.y * 0.15) {
 		float m = windmill(p, l, fw);
 		c = mix(c, SURVEY_INK, m);
@@ -137,8 +114,6 @@ vec3 survey(int k, int beside, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_u
 		if (rough > 0.5) c = mix(c, SURVEY_INK, pasture(p, own, MEADOW_ROW, W1 * 0.5, 0.75, fw) * 0.6);
 		else c = mix(c, SURVEY_INK, meadow_pairs(p, own, MEADOW_ROW, MEADOW_LEN, W1 * 0.55, 0.75, fw) * 0.7);
 		c = mix(c, SURVEY_BLUE, marks(p + 0.3, own, 0.55, 0.16, W1 * 0.55, 0.0, 0.15, 0.7, fw) * 0.7 * wet);
-		c = survey_lanes(c, sheet, p, smoothstep(0.1, 0.8, levels.y) * 0.6, fw);
-		c = mix(c, WEGEBRAUN, access_lanes(p, uv, to_uv, levels, smoothstep(0.1, 0.8, levels.y), W1, metres(10.0), fw) * 0.9);
 		if (l.room >= 0.0) {
 			float fenced = smoothstep(0.2, 0.6, max(l.levels.x, near_town)) * step(mix(0.65, 0.3, near_town), hash(l.id + 7.2));
 			c = mix(c, SURVEY_INK, edge_line(SURVEY, HEDGE + int(hash(l.id + 3.3) * 2.0), l, p, fw, W1, W2, W3) * fenced * 0.8);

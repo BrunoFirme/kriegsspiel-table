@@ -4,6 +4,9 @@ render_mode cull_disabled, specular_disabled;
 uniform sampler2D kinds : filter_nearest, repeat_disable;
 uniform sampler2D edges : filter_linear, repeat_disable;
 uniform sampler2D heights : filter_linear, repeat_disable;
+uniform sampler2D network : filter_nearest, repeat_disable;
+uniform sampler2D road_axes : filter_nearest, repeat_disable;
+uniform sampler2D farm_sites : filter_nearest, repeat_disable;
 uniform vec4 palette[39];
 uniform bool painted_only = false;
 uniform vec2 cells = vec2(64.0, 64.0);
@@ -126,10 +129,7 @@ const float WOOD_TINT = 0.28;
 const float WATER_TINT = 0.25;
 const float TOWN_TINT = 0.1;
 const float MODERN_PITCH = 0.55;
-const float LANE_REACH_M = 700.0;
-const float LANE_NEAR_M = 20.0;
-const float TOWN_LANE_NEAR_M = 60.0;
-const float LANE_BEND = 0.2;
+const float TOWN_ENTRANCE_M = 40.0;
 const float HAND_WOBBLE = 0.06;
 const float HAND_GRAIN = 3.0;
 const float BLEED = 0.12;
@@ -222,19 +222,20 @@ const float NEAR_TOWN_FAR_M = 140.0;
 const float NEAR_TOWN_PLOTS = 0.8;
 const float NEAR_TOWN_THINS = 0.4;
 const int FARM_VARIANTS = 7;
-const float FARM_CLUSTER_M = 900.0;
 const float LOT_CURL_CYCLES = 0.07;
 const float LOT_CURL_M = 45.0;
 const float CROWN_CROWDING = 0.62;
 const float CLOSED_FROM = 0.5;
 const float CLOSED_FULL = 0.8;
 const float STRIP_REGION_M = 1200.0;
-const float LANE_CYCLE_M = 700.0;
-const float LANE_SECOND_M = 1100.0;
-const float LANE_CUT_M = 500.0;
 const float LANE_HALF_M = 3.0;
-const float LANE_DRIFT = 1.5;
-const float LANE_SPACING = 3.0;
+const float TRACK_DASH_M = 10.0;
+const float LINE_OFFSET_SCALE = 32.0;
+const float SITE_OFFSET_SCALE = 8.0;
+const int NET_LANE = 2;
+const float ROAD_OFFSET_SCALE = 16.0;
+const float TOWN_FABRIC = 0.7;
+const float ROAD_EDGE_ROOM = 0.1;
 const float PAPYRUS_STRIP = 0.6;
 const float ORCHARD_LOT_M = 120.0;
 const float CROWN_SHADE_SHIFT = 0.22;
@@ -250,6 +251,7 @@ varying vec3 world;
 #include "res://shaders/ground_survey.gdshaderinc"
 #include "res://shaders/ground_ancient.gdshaderinc"
 #include "res://shaders/ground_modern.gdshaderinc"
+#include "res://shaders/ground_network.gdshaderinc"
 
 vec3 snow_cap(int style, vec3 sheet, vec2 p, float fw, int k) {
 	vec3 white = plain(style, palette[style * KINDS + SNOW].rgb, sheet, p, SEAMLESS);
@@ -375,23 +377,47 @@ void fragment() {
 	float road_w = -1.0;
 	float road_class = levels.x;
 	bool over_water = false;
-	float band_edge = SEAMLESS;
-	if (k == ROAD || k == BRIDGE) {
-		mid = road_mid(UV);
-		road_w = road_width(style, levels.x);
-		band_edge = edge;
+	float band_half = 1e3;
+	bool in_band = k == ROAD || k == BRIDGE;
+	float town_deep = in_band ? town_depth_at(UV) : 0.0;
+	bool in_town = in_band && town_deep > metres(TOWN_ENTRANCE_M) && town_at(UV) < town_deep;
+	float band_edge = edge;
+	vec2 road_levels = levels;
+	bool verge = false;
+	if (in_band) {
 		vec2 o = beyond_band(UV, p);
 		int beyond = kind_of(floor(clamp(UV + to_uv * (o - p), vec2(0.0), vec2(1.0)) * cells));
+		bool town_beyond = beyond == TOWN;
 		if (beyond <= 0 || beyond == ROAD || beyond == BRIDGE) beyond = beside;
 		over_water = beyond == WATER;
+		if (in_town) beyond = TOWN;
 		if (beyond > 0 && beyond < KINDS && beyond != ROAD && beyond != BRIDGE) {
 			k = beyond;
+			verge = !in_town && beyond != TOWN && beyond != WATER;
 			beside = ROAD;
 			own = salt_at(o, p, UV, to_uv);
-			levels = levels_at(o, p, UV, to_uv);
+			levels = in_town && !town_beyond ? vec2(TOWN_FABRIC, 0.0) : levels_at(o, p, UV, to_uv);
 			edge = SEAMLESS;
 			shore = SEAMLESS;
 			border = cell_world * 2.0;
+		}
+	}
+	if (!in_town && (in_band || k != TOWN)) {
+		float texel_p = length(from_uv * vec2(1.0 / cells.x, 0.0));
+		RoadHit rh = road_at(UV, texel_p);
+		if (rh.found && (k != WATER || rh.bridge)) {
+			float w = road_width(style, rh.cls);
+			if (rh.d < w + ROAD_EDGE_ROOM && road_away_at(UV) < w + texel_p) {
+				road_w = w;
+				road_class = rh.cls;
+				mid = rh.d;
+				over_water = over_water || k == WATER;
+			}
+		} else if (in_band && !rh.found) {
+			road_class = road_levels.x;
+			road_w = road_width(style, road_class);
+			band_half = band_half_at(UV);
+			mid = max(0.0, band_half - min(band_edge, road_edge_smooth(UV) + cell_world * 0.5));
 		}
 	}
 	float bump = 0.0;
@@ -405,16 +431,18 @@ void fragment() {
 	} else {
 		vec3 tint = palette[style * KINDS + k].rgb;
 		bool bare = k != WATER && k != ROAD && k != BRIDGE;
-		if (style == ANCIENT) c = ancient(k, beside, tint, sheet, p, UV, to_uv, own, levels, near_town, mid, road_w, down, follow, rockness, fw, edge, shore, cover);
+		if (verge) c = plain(style, tint, sheet, p, SEAMLESS);
+		else if (style == ANCIENT) c = ancient(k, beside, tint, sheet, p, UV, to_uv, own, levels, near_town, mid, road_w, down, follow, rockness, fw, edge, shore, cover);
 		else if (style == MODERN) c = modern(k, beside, tint, sheet, p, UV, to_uv, own, levels, near_town, mid, road_w, down, follow, rockness, fw, edge, shore, cover);
 		else c = survey(k, beside, tint, sheet, p, UV, to_uv, own, levels, near_town, mid, road_w, down, follow, rockness, fw, edge, shore, bump, cover);
 		float culvert = 0.0;
+		if (bare && k != TOWN && units_per_metre > 0.0) c = network_over(style, c, sheet, p, UV, from_uv, fw, k == FIELD || k == GRASS, edge, cover);
 		if (k != WATER) {
 			float order_here;
 			float brook = streams(style, p, UV, from_uv, fw, mid, road_w, order_here, culvert);
 			if (brook > 0.001) c = mix(c, style == MODERN ? MODERN_BLUE : style == ANCIENT ? ANCIENT_INK : SURVEY_BLUE, brook);
 		} else c = current(style, c, p, UV, to_uv, from_uv, border, fw);
-		if (road_w >= 0.0) c = road_over(style, c, sheet, p, UV, road_class, mid, band_edge, fw, over_water);
+		if (road_w >= 0.0) c = road_over(style, c, sheet, p, UV, road_class, mid, band_half, fw, over_water);
 		if (culvert > 0.001) c = mix(c, style == MODERN ? MODERN_BLACK : style == ANCIENT ? ANCIENT_INK : SURVEY_INK, culvert);
 		if (halo > 0.001) c = mix(c, plain(style, tint, sheet, p, edge), halo * HALO);
 		c = mix(c, c * (1.0 - MARK_SHADE), dark * cover * smoothstep(0.04, 0.35, steep_n));

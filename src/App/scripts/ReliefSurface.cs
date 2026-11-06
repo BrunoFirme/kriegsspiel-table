@@ -29,10 +29,13 @@ public partial class ReliefSurface : Node3D
     byte[]? _kindTexels;
     byte[]? _fields;
     byte[]? _edgesOf;
+    byte[]? _detailOf;
+    byte[]? _axes;
+    ImageTexture? _axesTex;
     byte[]? _roads;
     bool _edgesBusy;
     int _edgesVersion;
-    (int Cols, int Rows, byte[] Kinds)? _edgesNext;
+    (int Cols, int Rows, byte[] Kinds, byte[] Detail)? _edgesNext;
     ReliefGrid? _grid;
     ImageTexture? _heightsTex;
     float[]? _heightsOf;
@@ -47,6 +50,15 @@ public partial class ReliefSurface : Node3D
     bool _flowAgain;
     (int Cols, int Rows, float[] Soft, byte[] Kinds, double CellMetres, double MetresPerUnit)? _flowNext;
     float _cellWorld = 1;
+    ImageTexture? _linesTex;
+    ImageTexture? _sitesTex;
+    bool _networkBusy;
+    NetworkJob? _networkNext;
+    static ImageTexture? _noNetwork;
+    const int SettledKept = 8;
+    static readonly Dictionary<string, (long Key, int Cols, int Rows, GroundSettlement Plan)> Settled = new();
+
+    sealed record NetworkJob(string Id, int Cols, int Rows, long Key, byte[] Kinds, byte[] Salt, byte[] Detail, float[] Soft, double CellMetres, double MetresPerHeight);
     static bool _contours, _streams;
     static double _unitsPerMetre;
     static double _contourStep = -1;
@@ -115,6 +127,7 @@ public partial class ReliefSurface : Node3D
         int blur = Math.Max(step, (int)Math.Round(ContourBlurUnits / _cellWorld));
         UpdateKinds(grid);
         UpdateHeights(grid, scale, blur);
+        UpdateNetwork(def.Id, grid);
         _builtFor = new BuiltFor(def.Id, def.Size.W, def.Size.H, c.X, c.Y, c.W, c.H, grid.Cols, grid.Rows, nx, nz, scale, blur);
         var cells = new Vector2(grid.Cols, grid.Rows);
         bool drawsGround = picture == null && !def.HasPicture;
@@ -190,7 +203,9 @@ public partial class ReliefSurface : Node3D
         return true;
     }
 
-    bool Patchable => _grid != null && _kindTexels != null && _edgesOf != null && _roads != null && _fields != null && _heightsOf != null && _soft != null && _heightTexels != null;
+    bool Patchable => KindsKept && _heightsOf != null && _soft != null && _heightTexels != null;
+
+    bool KindsKept => _grid != null && _kindTexels != null && _edgesOf != null && _detailOf != null && _roads != null && _fields != null && _axes != null;
 
     CellBox CellBoxOf(SheetDef def, ReliefGrid grid, Transform3D sheetXf, Rect2 where)
     {
@@ -225,9 +240,12 @@ public partial class ReliefSurface : Node3D
                 _kindTexels![4 * i] = grid.Kind[i];
                 _kindTexels[4 * i + 1] = grid.Salt[i];
                 _kindTexels[4 * i + 2] = grid.Detail[i];
+                _detailOf![i] = grid.Detail[i];
             }
         _edgesVersion++;
         GroundEdges.Derive(grid.Cols, grid.Rows, _edgesOf!, box, _roads!, _fields!);
+        GroundRoads.Axes(grid.Cols, grid.Rows, _edgesOf!, _detailOf!, box, _axes!);
+        Upload(ref _axesTex, grid.Cols, grid.Rows, _axes!);
         var reach = box.Grow(GroundEdges.Reach).Clip(grid.Cols, grid.Rows);
         for (int y = reach.Y0; y <= reach.Y1; y++)
             for (int x = reach.X0; x <= reach.X1; x++)
@@ -279,6 +297,9 @@ public partial class ReliefSurface : Node3D
         m.SetShaderParameter("kinds", _kindsTex!);
         m.SetShaderParameter("edges", _edgesTex!);
         m.SetShaderParameter("heights", _heightsTex!);
+        m.SetShaderParameter("network", _linesTex ?? NoNetwork);
+        m.SetShaderParameter("road_axes", _axesTex ?? NoNetwork);
+        m.SetShaderParameter("farm_sites", _sitesTex ?? NoNetwork);
         m.SetShaderParameter("cell_world", _cellWorld);
         m.SetShaderParameter("palette", Palette());
         m.SetShaderParameter("painted_only", paintedOnly);
@@ -287,28 +308,108 @@ public partial class ReliefSurface : Node3D
         return m;
     }
 
+    static ImageTexture NoNetwork => _noNetwork ??= ImageTexture.CreateFromImage(Image.CreateEmpty(1, 1, false, Image.Format.Rgba8));
+
+    void UpdateNetwork(string id, ReliefGrid grid)
+    {
+        if (_unitsPerMetre <= 0 || _soft == null || _soft.Length != grid.H.Length) return;
+        double cellMetres = _cellWorld / _unitsPerMetre;
+        long key = NetworkKey(grid, cellMetres, _heightsScale);
+        if (Settled.TryGetValue(id, out var last) && last.Cols == grid.Cols && last.Rows == grid.Rows)
+        {
+            ShowNetwork(last.Plan, grid.Cols, grid.Rows);
+            if (last.Key == key) return;
+        }
+        var job = new NetworkJob(id, grid.Cols, grid.Rows, key, (byte[])grid.Kind.Clone(), (byte[])grid.Salt.Clone(), (byte[])grid.Detail.Clone(),
+            (float[])_soft.Clone(), cellMetres, _heightsScale / _unitsPerMetre);
+        if (_networkBusy) { _networkNext = job; return; }
+        PlanNetwork(job);
+    }
+
+    static long NetworkKey(ReliefGrid grid, double cellMetres, float heightScale)
+    {
+        const long Prime = 1099511628211;
+        long h = unchecked((long)14695981039346656037UL);
+        foreach (var arr in new[] { grid.Kind, grid.Salt, grid.Detail })
+            foreach (byte b in arr) h = unchecked((h ^ b) * Prime);
+        foreach (float f in grid.H) h = unchecked((h ^ BitConverter.SingleToInt32Bits(f)) * Prime);
+        h = unchecked((h ^ BitConverter.DoubleToInt64Bits(cellMetres)) * Prime);
+        return unchecked((h ^ BitConverter.SingleToInt32Bits(heightScale)) * Prime);
+    }
+
+    void PlanNetwork(NetworkJob job)
+    {
+        _networkBusy = true;
+        Task.Run(() =>
+        {
+            try
+            {
+                var plan = GroundNetwork.Plan(job.Cols, job.Rows, job.Kinds, job.Salt, job.Detail, job.Soft, job.CellMetres, job.MetresPerHeight);
+                Callable.From(() => NetworkPlanned(job, plan)).CallDeferred();
+            }
+            catch (Exception e)
+            {
+                GD.PrintErr("[relief] planning farms and lanes: " + e.Message);
+                Callable.From(() => NetworkPlanned(job, null)).CallDeferred();
+            }
+        });
+    }
+
+    void NetworkPlanned(NetworkJob job, GroundSettlement? plan)
+    {
+        if (plan != null)
+        {
+            if (Settled.Count >= SettledKept && !Settled.ContainsKey(job.Id)) Settled.Clear();
+            Settled[job.Id] = (job.Key, job.Cols, job.Rows, plan);
+        }
+        if (!GodotObject.IsInstanceValid(this)) return;
+        _networkBusy = false;
+        if (_networkNext is { } next)
+        {
+            _networkNext = null;
+            PlanNetwork(next);
+        }
+        if (plan == null || _grid == null || _grid.Cols != job.Cols || _grid.Rows != job.Rows) return;
+        ShowNetwork(plan, job.Cols, job.Rows);
+    }
+
+    void ShowNetwork(GroundSettlement plan, int cols, int rows)
+    {
+        bool fresh = _linesTex == null || _linesTex.GetWidth() != cols || _linesTex.GetHeight() != rows;
+        Upload(ref _linesTex, cols, rows, plan.Lines);
+        Upload(ref _sitesTex, cols, rows, plan.Sites);
+        if (!fresh) return;
+        foreach (var m in new[] { _base as ShaderMaterial, _paint })
+        {
+            m?.SetShaderParameter("network", _linesTex!);
+            m?.SetShaderParameter("farm_sites", _sitesTex!);
+        }
+    }
+
     void UpdateKinds(ReliefGrid grid)
     {
         _grid = grid;
-        bool changed = _edgesOf == null || !_edgesOf.AsSpan().SequenceEqual(grid.Kind);
+        bool changed = _edgesOf == null || _detailOf == null || !_edgesOf.AsSpan().SequenceEqual(grid.Kind) || !_detailOf.AsSpan().SequenceEqual(grid.Detail);
         bool sized = _kindsTex != null && _edgesTex != null && _kindsTex.GetWidth() == grid.Cols && _kindsTex.GetHeight() == grid.Rows;
         if (sized && !changed) return;
         _edgesOf = (byte[])grid.Kind.Clone();
+        _detailOf = (byte[])grid.Detail.Clone();
         if (!sized)
         {
             var (roads, fields) = GroundEdges.Derive(grid.Cols, grid.Rows, grid.Kind);
             _roads = roads;
             UploadKinds(grid);
             UploadEdges(grid.Cols, grid.Rows, fields);
+            UploadAxes(grid.Cols, grid.Rows, GroundRoads.Axes(grid.Cols, grid.Rows, grid.Kind, grid.Detail));
             return;
         }
         UploadKinds(grid);
         _edgesVersion++;
-        if (_edgesBusy) { _edgesNext = (grid.Cols, grid.Rows, (byte[])grid.Kind.Clone()); return; }
-        DeriveEdges(grid.Cols, grid.Rows, (byte[])grid.Kind.Clone());
+        if (_edgesBusy) { _edgesNext = (grid.Cols, grid.Rows, (byte[])grid.Kind.Clone(), (byte[])grid.Detail.Clone()); return; }
+        DeriveEdges(grid.Cols, grid.Rows, (byte[])grid.Kind.Clone(), (byte[])grid.Detail.Clone());
     }
 
-    void DeriveEdges(int cols, int rows, byte[] kinds)
+    void DeriveEdges(int cols, int rows, byte[] kinds, byte[] detail)
     {
         _edgesBusy = true;
         int version = _edgesVersion;
@@ -317,28 +418,40 @@ public partial class ReliefSurface : Node3D
             try
             {
                 var derived = GroundEdges.Derive(cols, rows, kinds);
-                Callable.From(() => EdgesDerived(cols, rows, version, derived.Roads, derived.Fields)).CallDeferred();
+                var axes = GroundRoads.Axes(cols, rows, kinds, detail);
+                Callable.From(() => EdgesDerived(cols, rows, version, derived.Roads, derived.Fields, axes)).CallDeferred();
             }
             catch (Exception e)
             {
                 GD.PrintErr("[relief] deriving the ground's edges: " + e.Message);
-                Callable.From(() => EdgesDerived(cols, rows, version, null, null)).CallDeferred();
+                Callable.From(() => EdgesDerived(cols, rows, version, null, null, null)).CallDeferred();
             }
         });
     }
 
-    void EdgesDerived(int cols, int rows, int version, byte[]? roads, byte[]? fields)
+    void EdgesDerived(int cols, int rows, int version, byte[]? roads, byte[]? fields, byte[]? axes)
     {
         _edgesBusy = false;
         if (_edgesNext is { } next)
         {
             _edgesNext = null;
-            DeriveEdges(next.Cols, next.Rows, next.Kinds);
+            DeriveEdges(next.Cols, next.Rows, next.Kinds, next.Detail);
         }
-        if (roads == null || fields == null || version != _edgesVersion || !GodotObject.IsInstanceValid(this) || _grid == null || _grid.Cols != cols || _grid.Rows != rows) return;
+        if (roads == null || fields == null || axes == null || version != _edgesVersion || !GodotObject.IsInstanceValid(this) || _grid == null || _grid.Cols != cols || _grid.Rows != rows) return;
         _roads = roads;
         UploadKinds(_grid);
         UploadEdges(cols, rows, fields);
+        UploadAxes(cols, rows, axes);
+    }
+
+    void UploadAxes(int cols, int rows, byte[] axes)
+    {
+        bool fresh = _axesTex == null || _axesTex.GetWidth() != cols || _axesTex.GetHeight() != rows;
+        _axes = axes;
+        Upload(ref _axesTex, cols, rows, axes);
+        if (!fresh) return;
+        (_base as ShaderMaterial)?.SetShaderParameter("road_axes", _axesTex!);
+        _paint?.SetShaderParameter("road_axes", _axesTex!);
     }
 
     void UploadKinds(ReliefGrid grid)

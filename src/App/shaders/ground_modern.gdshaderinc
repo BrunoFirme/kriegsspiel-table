@@ -34,28 +34,13 @@ vec3 modern_farm(vec3 c, vec2 p, vec2 site, vec2 seed, float turn, float fw, ino
 	return c;
 }
 
-vec3 modern_lanes(vec3 c, vec3 sheet, vec2 p, float settle, float fw) {
-	float along;
-	float w = metres(LANE_HALF_M);
-	float d = lane_iso(p, LANE_CYCLE_M, 3.7, along);
-	float on = lane_cut(p, 11.0, mix(0.45, 0.75, settle));
-	c = mix(c, sheet, (1.0 - smoothstep(w - fw, w + fw, d)) * on);
-	c = mix(c, MODERN_BLACK, ink(abs(d - w), M1 * 0.5, fw) * on * 0.95);
-	float d2 = lane_iso(p, LANE_SECOND_M, 8.1, along);
-	float on2 = lane_cut(p, 17.0, mix(0.2, 0.55, settle));
-	return mix(c, MODERN_BLACK, dashed(along, abs(d2 - w), metres(10.0), 0.55, M1 * 0.45, fw) * on2 * 0.9);
-}
-
 vec3 modern_field(vec3 c, vec3 sheet, vec2 p, vec2 uv, mat2 to_uv, float own, vec2 levels, vec2 along, float follow, float fw, out float cover) {
 	p = curled(p);
 	Lot l = lot_at(p, uv, to_uv, metres(mix(PLOT_OPEN_M, PLOT_SMALL_M, levels.x)), 0.56, FIELD, own, levels);
 	cover = 0.0;
-	vec2 site_uv = uv + to_uv * (l.site - p);
-	vec2 road_along = road_along_at(site_uv);
 	float use = hash(l.id + 9.4);
 	float small = step(l.room, metres(ORCHARD_LOT_M));
-	if (small > 0.5 && use >= 0.6 && use < 0.67) { float o = orchard_rings(p, l, M1 * 0.5, fw); c = mix(c, MODERN_BLACK, o * 0.9); cover = o; }
-	else if (small > 0.5 && use >= 0.75 && use < 0.79) c = mix(c, MODERN_BLACK, vine_strokes(p, 0.45, M1 * 0.45, fw) * 0.85);
+	if (small > 0.5 && use >= 0.75 && use < 0.79) c = mix(c, MODERN_BLACK, vine_strokes(p, 0.45, M1 * 0.45, fw) * 0.85);
 	float wet = wet_meadow(uv, follow);
 	if (wet > 0.001) {
 		c = mix(c, sheet, wet * 0.8);
@@ -67,15 +52,6 @@ vec3 modern_field(vec3 c, vec3 sheet, vec2 p, vec2 uv, mat2 to_uv, float own, ve
 	float marked = step(hash(pair + 4.4), bounded * 0.8);
 	int line = HEDGE + int(hash(pair + 1.1) * 4.0);
 	c = mix(c, MODERN_BLACK, edge_line(MODERN, line, l, p, fw, M1 * 0.5, M1, M2) * marked * mix(0.6, 0.9, hash(pair + 2.2)));
-	float settle = smoothstep(0.1, 0.8, l.levels.y);
-	c = modern_lanes(c, sheet, p, settle, fw);
-	c = mix(c, MODERN_BLACK, access_lanes(p, uv, to_uv, l.levels, settle, M1 * 0.45, metres(10.0), fw) * 0.9);
-	float near_road = near_road_at(site_uv);
-	if (farm_here(l.id, l.site, l.room, l.levels, near_road) > 0.5) {
-		float turn = mix(hash(l.id + 11.3) * 3.1416, atan(road_along.y, road_along.x), step(0.5, near_road));
-		c = modern_farm(c, p, l.site, l.id, turn, fw, cover);
-		if (hamlet_here(l) > 0.5) c = modern_farm(c, p, second_site(l), l.id + 21.0, turn + 0.4, fw, cover);
-	}
 	return c;
 }
 
@@ -99,8 +75,6 @@ vec3 modern(int k, int beside, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_u
 		c = mix(c, MODERN_BLACK, marks(p, own, MEADOW_ROW * 0.5, MEADOW_LEN, M1 * 0.4, 0.0, 0.0, mix(0.55, 0.75, rough), fw) * 0.85);
 		if (rough > 0.5) c = mix(c, MODERN_BLACK, tufts(p + 0.4, own, MEADOW_ROW, 0.12, M1 * 0.4, 0.4, fw) * 0.8);
 		c = mix(c, MODERN_BLUE, tufts(p + 0.9, own, MEADOW_ROW * 0.6, 0.1, M1 * 0.4, 0.5, fw) * 0.8 * wet);
-		c = modern_lanes(c, sheet, p, smoothstep(0.1, 0.8, levels.y) * 0.6, fw);
-		c = mix(c, MODERN_BLACK, access_lanes(p, uv, to_uv, levels, smoothstep(0.1, 0.8, levels.y), M1 * 0.45, metres(10.0), fw) * 0.9);
 		if (l.room >= 0.0) {
 			float fenced = smoothstep(0.2, 0.6, max(l.levels.x, near_town)) * step(mix(0.65, 0.3, near_town), hash(l.id + 7.2));
 			c = mix(c, MODERN_BLACK, edge_line(MODERN, FENCE, l, p, fw, M1 * 0.5, M1, M2) * fenced * 0.9);
