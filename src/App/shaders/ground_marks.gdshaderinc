@@ -276,15 +276,6 @@ float double_strokes(vec2 p, float salt, float spacing, float len, float width, 
 	return mix(m, clamp(mean, 0.0, 1.0), far_blend(fw, spacing));
 }
 
-float dot_screen(vec2 p, float angle, float pitch, float share, float fw) {
-	mat2 r = mat2(vec2(cos(angle), sin(angle)), vec2(-sin(angle), cos(angle)));
-	vec2 f = fract(r * p / pitch) - 0.5;
-	float radius = sqrt(share / 3.1416);
-	float soft = fw / pitch * 0.5;
-	float d = 1.0 - smoothstep(radius - soft, radius + soft, length(f));
-	return mix(d, share, far_blend(fw, pitch));
-}
-
 vec3 wash(vec3 tint, vec3 sheet, vec3 ref, vec2 p, float edge, float strength) {
 	float bloom = fbm(p * 0.18 + 4.0) - 0.5;
 	float grain = noise(p * 7.5) - 0.5;

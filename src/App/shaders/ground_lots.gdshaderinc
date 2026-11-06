@@ -111,19 +111,6 @@ float mid_at(vec2 uv) {
 	return band_half_at(u) - distance_at(u);
 }
 
-float dotted_road(vec2 p, vec2 uv, mat2 to_uv, float at, float spacing, float width, float fw) {
-	float m = 0.0;
-	for (int j = 0; j <= 1; j++) {
-		for (int i = 0; i <= 1; i++) {
-			vec2 id;
-			vec2 o = grid_point(p - spacing * 0.5, 0.0, spacing, 0.0, i, j, id) + spacing * 0.5;
-			float there = abs(mid_at(uv + to_uv * (o - p)));
-			m = max(m, ink(length(p - o), width, fw) * step(abs(there - at), spacing * 0.5));
-		}
-	}
-	return m;
-}
-
 float rides(vec2 p, float trees, float width, float dash, float fw) {
 	if (trees < RIDES_FROM) return 0.0;
 	vec2 region = floor(p / metres(STRIP_REGION_M));
@@ -134,10 +121,6 @@ float rides(vec2 p, float trees, float width, float dash, float fw) {
 	float along = f.x < f.y ? q.y : q.x;
 	float on = dash > 0.0 ? mix(step(0.5, fract(along / dash)), 0.5, far_blend(fw, dash)) : 1.0;
 	return ink(min(f.x, f.y), width, fw) * on;
-}
-
-float fronts_road(vec2 site_uv, float follow) {
-	return (1.0 - follow) * (1.0 - smoothstep(metres(FRONTS_M) * 0.8, metres(FRONTS_M), road_away_at(site_uv)));
 }
 
 vec2 road_along_at(vec2 site_uv) {
@@ -314,15 +297,6 @@ vec2 curled(vec2 p) {
 	return p + (vec2(noise(p * LOT_CURL_CYCLES + 3.0), noise(p * LOT_CURL_CYCLES + 8.0)) - 0.5) * metres(LOT_CURL_M);
 }
 
-float haystacks(vec2 p, Lot l, float fw) {
-	float m = 0.0;
-	for (int i = 0; i < 3; i++) {
-		vec2 o = l.site + (hash2(l.id + float(i) * 4.7) - 0.5) * metres(30.0);
-		m = max(m, ink(length(p - o), metres(2.0), fw) * step(float(i) * 0.3, hash(l.id + 8.8)));
-	}
-	return m;
-}
-
 float windmill(vec2 p, Lot l, float fw) {
 	float r = metres(6.0);
 	float a = hash(l.id + 3.3) * 1.57;
@@ -351,17 +325,6 @@ float vine_rows(vec2 p, Lot l, vec2 down, float fw) {
 	float line = ink(abs(fract(s / rows) - 0.5) * rows, rows * 0.06, fw);
 	float stake = ink(length(vec2(abs(fract(s / rows) - 0.5) * rows, (fract(t / stakes) - 0.5) * stakes)), rows * 0.12, fw);
 	return max(line * 0.5, stake);
-}
-
-float strips(vec2 p, Lot l, vec2 along, float follow, float fw, out float furrow) {
-	float width = metres(mix(28.0, 58.0, hash(l.id + 4.4)));
-	vec2 dir = lot_axis(l);
-	dir = normalize(mix(dir, along * (dot(dir, along) < 0.0 ? -1.0 : 1.0), step(0.8, follow) * step(0.5, length(along))));
-	float s = dot(p - l.site, dir) / width + hash(l.id) * 10.0;
-	float strip = floor(s);
-	float edge = min(fract(s), 1.0 - fract(s)) * width;
-	furrow = hatch(dot(p - l.site, vec2(-dir.y, dir.x)), metres(FURROW_M), metres(0.3), fw) * step(0.6, hash(l.id + strip * 0.71 + 8.5));
-	return ink(edge, metres(0.25), fw);
 }
 
 float islet(vec2 p, Lot l, float fw, out float body) {
@@ -399,19 +362,6 @@ float pit(vec2 p, Lot l, float fw) {
 	float a = atan(q.y, q.x);
 	float ticks = ink(abs(d - r * 0.8), metres(0.3), fw) * step(0.6, fract(a * 4.0)) * step(0.0, q.y);
 	return max(rim, ticks);
-}
-
-float spruce(vec2 p, vec2 o, float r, float width, float fw) {
-	vec2 top = o + NORTH * r * 1.3;
-	float m = ink(segment(p, o, top), width, fw);
-	for (int b = 0; b < 3; b++) {
-		float at = 0.25 + 0.3 * float(b);
-		float reach = r * (0.8 - 0.22 * float(b));
-		vec2 from = mix(o, top, at);
-		m = max(m, ink(segment(p, from, from + vec2(reach, r * 0.35)), width, fw));
-		m = max(m, ink(segment(p, from, from + vec2(-reach, r * 0.35)), width, fw));
-	}
-	return m;
 }
 
 float conifer_share(vec2 o, float salt) {

@@ -161,7 +161,7 @@ vec3 village_draw(int style, vec3 c, vec3 sheet, vec2 p, vec2 uv, mat2 to_uv, fl
 		c = wash(GARTENGRUEN, sheet, SURVEY_PAPER, p, SEAMLESS, 0.3);
 		c = mix(c, ink_c, hatch(p.x + p.y, metres(GARDEN_HATCH_M), W1 * 0.5, fw) * 0.3);
 	} else {
-		c = mix(sheet, MODERN_BLACK, dot_screen(p, 0.7854, SCREEN_PITCH, 0.1, fw));
+		c = mix(sheet, MODERN_BLACK, TOWN_TINT);
 	}
 	c = mix(c, ink_c, ink(b.edge, W1 * 0.6, fw) * 0.6);
 	float pitch = metres(HOUSE_M + HOUSE_GAP_M);
@@ -216,7 +216,7 @@ vec3 town_draw(int style, vec3 c, vec3 sheet, vec2 p, vec2 uv, mat2 to_uv, float
 		c = mix(c, wash(GARTENGRUEN, sheet, SURVEY_PAPER, p, SEAMLESS, 0.3), ring);
 		c = mix(c, ink_c, hatch(p.x + p.y, metres(GARDEN_HATCH_M), W1 * 0.5, fw) * 0.3 * ring * (1.0 - open));
 	} else if (style == MODERN) {
-		c = mix(c, mix(sheet, MODERN_BLACK, dot_screen(p, 0.7854, SCREEN_PITCH, 0.1, fw)), ring);
+		c = mix(c, mix(sheet, MODERN_BLACK, TOWN_TINT), ring);
 	}
 	float keep = (1.0 - ring) * (1.0 - square) * (1.0 - open) * inside;
 	float depth_built = metres(mix(HOUSE_DEPTH_M, TOWN_BLOCK_M * 0.5, smoothstep(0.5, 1.0, houses)));

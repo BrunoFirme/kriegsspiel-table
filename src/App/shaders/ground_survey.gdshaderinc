@@ -87,7 +87,7 @@ vec3 survey_field(vec3 c, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_uv, fl
 		c = mix(c, SURVEY_INK, meadow_pairs(p, own, MEADOW_ROW, MEADOW_LEN, W1 * 0.55, 0.7, fw) * 0.65 * wet);
 		c = mix(c, SURVEY_BLUE, marks(p + 0.3, own, 0.55, 0.16, W1 * 0.55, 0.0, 0.15, 0.7, fw) * 0.7 * wet);
 	}
-	float bounded = smoothstep(0.15, 0.6, l.levels.x);
+	float bounded = smoothstep(ENCLOSED_FROM, ENCLOSED_FULL, l.levels.x);
 	vec2 pair = l.id + l.other;
 	float marked = step(hash(pair + 4.4), bounded * 0.85);
 	int line = HEDGE + int(hash(pair + 1.1) * 4.0);
