@@ -667,7 +667,7 @@ the plan says translate it), unknown (nobody has decided).
 | `colorToHex` | - | planned | Phase C item 8: colour helpers |  |
 | `colorToPlayerName` | - | planned | Phase C item 8: colour helpers |  |
 | `constructColor` | - | planned | Phase C item 8: colour helpers |  |
-| `constructVector` | - | planned | Phase C item 8: vector helpers |  |
+| `constructVector` | - | compat | compat.Vector | TtsVectorColorTests |
 | `copy` | - | planned | Phase C item 8: the clipboard |  |
 | `copyLuaTable` | - | planned | Phase C item 8: table helpers |  |
 | `debugLog` | - | planned | Phase C item 8: logging |  |
@@ -942,9 +942,9 @@ the plan says translate it), unknown (nobody has decided).
 
 | row | used (calls / modules) | status | where | held by |
 |---|---|---|---|---|
-| `Lua table to vector, colour and params and back (positional and named)` | 54 / 54 | partial | compat.Vector / compat.Color / vec(): the forms met so far |  |
+| `Lua table to vector, colour and params and back (positional and named)` | 54 / 54 | compat | compat.Vector / compat.Color / vec(): named, positional and mixed tables, names and hex | TtsVectorColorTests |
 | `MoonSharp 2.0.0 on both sides: the Lua dialect matches` | 54 / 54 | native | Server.csproj |  |
-| `TTS Vector and Color classes with their methods` | 54 / 54 | partial | compat.Vector / compat.Color: the methods met so far |  |
+| `TTS Vector and Color classes with their methods` | 54 / 54 | compat | compat.Vector and compat.Color: every documented method, operator and named colour | TtsVectorColorTests |
 | `Wait.frames counts frames, Wait.time seconds, onUpdate per frame` | 54 / 54 | partial | ScriptTimers: ticks |  |
 | `a script call has no time limit in TTS` | 54 / 54 | partial | ScriptHost.CallBudgetMs: a second of the script's own time per call, the table work it asks for not counted, so a bag placing hundreds of pieces in one click runs; a runaway loop still stops | import-sweep: naval (the Midway bag's Place) |
 | `button and input defaults (width, height, font_size, colours, position, scale)` | 54 / 54 | compat | compat.tts_defaults, from TTS's LuaUIState classes; a button or input with no handler is refused as TTS refuses it | TtsDefaultsTests |
@@ -960,7 +960,7 @@ the plan says translate it), unknown (nobody has decided).
 | `save quirk: duplicate GUIDs inside bags` | 54 / 54 | native | a guid names the first piece found, as TTS answers getObjectFromGUID |  |
 | `save quirk: negative scale mirrors` | 54 / 54 | partial | the size is taken unsigned, so a mirrored piece comes over unmirrored, and the report names it | ConverterTests |
 | `save quirk: rotX/rotZ near 180 means face down; other tilts stand or lean` | 54 / 54 | partial | Tts.Flipped: 180 only |  |
-| `script safety cuts the self-copying block and keeps the rest` | 54 / 54 | native | ScriptSafety | ScriptSafetyTests |
+| `script safety cuts the self-copying block and keeps the rest` | 54 / 54 | native | ScriptSafety; over the roster only the German Team Planning Table is cut, 1,463 copies of the Object base code worm, and no other rule fires | ScriptSafetyTests; import-sweep |
 | `setState keeps the GUID` | 54 / 54 | partial | a piece keeps its id and guid through its looks; in TTS each state object has a guid of its own that takes over |  |
 | `smooth moves end at once` | 54 / 54 | compat | compat.set_position |  |
 | `spawning and loading_custom flags` | 54 / 54 | compat | ObjectProps (get_prop) |  |

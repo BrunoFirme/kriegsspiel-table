@@ -5687,10 +5687,10 @@
   },
   {
    "row": "constructVector",
-   "status": "planned",
-   "where": "Phase C item 8: vector helpers",
+   "status": "compat",
+   "where": "compat.Vector",
    "instead": "",
-   "held_by": "",
+   "held_by": "TtsVectorColorTests",
    "count": 0,
    "modules": 0
   },
@@ -8033,10 +8033,10 @@
  "engine": [
   {
    "row": "Lua table to vector, colour and params and back (positional and named)",
-   "status": "partial",
-   "where": "compat.Vector / compat.Color / vec(): the forms met so far",
+   "status": "compat",
+   "where": "compat.Vector / compat.Color / vec(): named, positional and mixed tables, names and hex",
    "instead": "",
-   "held_by": "",
+   "held_by": "TtsVectorColorTests",
    "count": 54,
    "modules": 54
   },
@@ -8051,10 +8051,10 @@
   },
   {
    "row": "TTS Vector and Color classes with their methods",
-   "status": "partial",
-   "where": "compat.Vector / compat.Color: the methods met so far",
+   "status": "compat",
+   "where": "compat.Vector and compat.Color: every documented method, operator and named colour",
    "instead": "",
-   "held_by": "",
+   "held_by": "TtsVectorColorTests",
    "count": 54,
    "modules": 54
   },
@@ -8196,9 +8196,9 @@
   {
    "row": "script safety cuts the self-copying block and keeps the rest",
    "status": "native",
-   "where": "ScriptSafety",
+   "where": "ScriptSafety; over the roster only the German Team Planning Table is cut, 1,463 copies of the Object base code worm, and no other rule fires",
    "instead": "",
-   "held_by": "ScriptSafetyTests",
+   "held_by": "ScriptSafetyTests; import-sweep",
    "count": 54,
    "modules": 54
   },

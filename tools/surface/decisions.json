@@ -283,7 +283,7 @@
   "hexToColor": ["planned", "Phase C item 8: colour helpers", ""],
   "stringColorToHex": ["planned", "Phase C item 8: colour helpers", ""],
   "constructColor": ["planned", "Phase C item 8: colour helpers", ""],
-  "constructVector": ["planned", "Phase C item 8: vector helpers", ""],
+  "constructVector": ["compat", "compat.Vector", "", "TtsVectorColorTests"],
   "copyLuaTable": ["planned", "Phase C item 8: table helpers", ""],
   "getColor": ["planned", "Phase C item 8: colour helpers", ""],
   "getPlayer": ["compat", "compat.player", ""],
@@ -368,8 +368,8 @@
  "engine": {
   "member names fold (exact, first letter up, snake to camel, both)": ["native", "TtsTranslator.FoldMember before every object member lookup", "", "TranslatorFoldTests"],
   "positionToWorld and positionToLocal: TTS's transform, local x along +X at rotation zero, in mesh units times scale for a model and the size rule for a flat": ["compat", "compat.position_to_world / position_to_local; a model def carries local_unit from the converter", "", "TtsLocalFrameTests"],
-  "Lua table to vector, colour and params and back (positional and named)": ["partial", "compat.Vector / compat.Color / vec(): the forms met so far", ""],
-  "TTS Vector and Color classes with their methods": ["partial", "compat.Vector / compat.Color: the methods met so far", ""],
+  "Lua table to vector, colour and params and back (positional and named)": ["compat", "compat.Vector / compat.Color / vec(): named, positional and mixed tables, names and hex", "", "TtsVectorColorTests"],
+  "TTS Vector and Color classes with their methods": ["compat", "compat.Vector and compat.Color: every documented method, operator and named colour", "", "TtsVectorColorTests"],
   "click_function(obj, player_color, alt_click)": ["compat", "compat.create_button / tts_handler", "", "TranslatorTests.Handlers_get_the_piece_their_widget_is_on"],
   "input_function(obj, player_color, text, selected)": ["compat", "compat.create_input / tts_handler", "", "TranslatorTests.A_name_typed_letter_by_letter_reaches_the_face"],
   "context menu callback(player_color, menu_position, object)": ["compat", "compat.add_context_menu_item", ""],
@@ -388,7 +388,7 @@
   "save quirk: rotX/rotZ near 180 means face down; other tilts stand or lean": ["partial", "Tts.Flipped: 180 only", ""],
   "save quirk: duplicate GUIDs inside bags": ["native", "a guid names the first piece found, as TTS answers getObjectFromGUID", ""],
   "setState keeps the GUID": ["partial", "a piece keeps its id and guid through its looks; in TTS each state object has a guid of its own that takes over", ""],
-  "script safety cuts the self-copying block and keeps the rest": ["native", "ScriptSafety", "", "ScriptSafetyTests"],
+  "script safety cuts the self-copying block and keeps the rest": ["native", "ScriptSafety; over the roster only the German Team Planning Table is cut, 1,463 copies of the Object base code worm, and no other rule fires", "", "ScriptSafetyTests; import-sweep"],
   "MoonSharp 2.0.0 on both sides: the Lua dialect matches": ["native", "Server.csproj", ""]
  }
 }

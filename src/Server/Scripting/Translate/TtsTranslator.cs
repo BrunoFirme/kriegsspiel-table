@@ -264,6 +264,8 @@ public static class TtsTranslator
                         "getPlayers" => Compat("compat.Player.getPlayers()", node),
                         _ => Compat($"compat.Player.{name}({All()})", node),
                     };
+                case "Vector" or "Color":
+                    return Compat($"compat.{recv}.{name}({All()})", node);
                 case "Physics":
                     return name == "cast" ? Compat($"compat.cast({All()})", node) : Todo("Physics." + name, $"compat.todo(nil, \"Physics.{name}\")", node);
                 case "UI" or "Global.UI":
@@ -314,7 +316,7 @@ public static class TtsTranslator
                 case "logString": return Compat($"compat.log_string({All()})", node);
                 case "log": return Compat($"compat.log({All()})", node);
                 case "stringColorToRGB": return Compat($"compat.string_color_to_rgb({All()})", node);
-                case "Vector": return Compat($"compat.Vector({All()})", node);
+                case "Vector" or "constructVector": return Compat($"compat.Vector({All()})", node);
                 case "Color": return Compat($"compat.Color({All()})", node);
                 case "destroyObject": return Compat($"compat.piece_of({A(0)}).delete()", node);
                 case "addHotkey": return Compat($"compat.add_hotkey(_ENV, {All()})", node);
@@ -445,6 +447,7 @@ public static class TtsTranslator
             {
                 case "Turns": return name == "turn_number" ? Direct("game.turn", node) : Compat($"compat.Turns.{name}", node);
                 case "Player": return Compat($"compat.Player.{name}", node);
+                case "Vector" or "Color": return Compat($"compat.{recv}.{name}", node);
                 case "Time" or "Lighting" or "Grid" or "Hands" or "Notes" or "MusicPlayer" or "Backgrounds": return Compat($"compat.{recv}.{name}", node);
                 case "JSON": return Direct($"json.{name}", node);
             }
@@ -485,6 +488,8 @@ public static class TtsTranslator
             var name = node.ToString().Trim();
             if (name == "Global" && node.Parent is not MemberAccessExpressionSyntax) return Keep(SyntaxFactory.ParseExpression("compat.Global"), node);
             if (name == "JSON" && node.Parent is not MemberAccessExpressionSyntax) return Keep(SyntaxFactory.ParseExpression("json"), node);
+            if ((name is "Vector" or "Color") && node.Parent is not MemberAccessExpressionSyntax && node.Parent is not FunctionCallExpressionSyntax)
+                return Keep(SyntaxFactory.ParseExpression("compat." + name), node);
             return base.VisitIdentifierName(node);
         }
 
