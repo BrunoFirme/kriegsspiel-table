@@ -473,7 +473,7 @@ public class ScriptingTests
         Assert.Empty(tr.Untranslated);
         SetScript(t, tr.Script);
         ln = Assert.Single(p.Lines);
-        Assert.Equal(new KTable.Core.Model.Vec2(1, 0), ln.Points[0]);
+        Assert.Equal(new KTable.Core.Model.Vec2(-1, 0), ln.Points[0]);
         Assert.Equal(new KTable.Core.Model.Vec2(0, 1), ln.Points[1]);
         Assert.Equal("#FF000080", ln.Color);
         Assert.Equal(0.3, ln.Width);

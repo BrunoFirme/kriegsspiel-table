@@ -199,6 +199,17 @@ public sealed partial class DefFactory
 
     static Size2 Mul(Size2 s, double k) => new(Math.Round(s.W * k, 4), Math.Round(s.H * k, 4));
 
+    public (double X, double Z) LocalUnits(PieceDef def, TtsObj o)
+    {
+        if (def.LocalUnit is { } lu) return (lu.W, lu.H);
+        if (def.Shape == "alpha" && o.ImageUrl != null && Entry(o.ImageUrl) is { W: > 0, H: > 0 } e)
+        {
+            double aspect = e.W / (double)e.H, area = _cfg.BaseSizes.CustomTokenArea;
+            return (def.Size.W / Math.Sqrt(area * aspect), def.Size.H / Math.Sqrt(area / aspect));
+        }
+        return (def.Size.H / 2, def.Size.H / 2);
+    }
+
     public string VisualKey(TtsObj o)
     {
         var (states, _) = o.StateList();
@@ -214,6 +225,8 @@ public sealed partial class DefFactory
     public (PieceDef Def, string Pack)? ModelOfBundle(TtsObj o) =>
         o.Name == "Custom_Assetbundle" && !_cfg.IsTableWall(o.BundleUrl) ? Models.For(o.BundleUrl) : null;
 
+    public const double NoScale = 1e-6, HiddenByScale = 0.1;
+
     public bool Shows(TtsObj o) => IsPiece(o) || ModelOfBundle(o) != null || o.StockSides != null;
 
     public DefResult? DefFor(TtsObj o, PackOut pack, double? refScale = null, double heightScale = 1)
@@ -222,8 +235,8 @@ public sealed partial class DefFactory
         if (IsTextObject(o)) return TextDef(o, pack, refScale);
         var (states, self) = o.StateList();
         var b = states[0];
-        double bs = Math.Abs(b.ScaleX) < 1e-6 ? 1 : Math.Abs(b.ScaleX);
-        double r = refScale ?? bs;
+        double bs = Math.Abs(b.ScaleX) < NoScale ? 1 : Math.Abs(b.ScaleX);
+        double r = refScale is > NoScale ? refScale.Value : bs;
         double instScale = Math.Round(bs / r, 4);
         if (ModelOfBundle(o) is { } model)
             return new DefResult(model.Def, pack, instScale, 0, b, ScriptInfo.Parse("", "")) { FromPack = model.Pack };

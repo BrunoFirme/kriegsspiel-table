@@ -253,7 +253,7 @@ function compat.set_vector_lines(obj, lines)
   local ours = {}
   for _, l in ipairs(lines or {}) do
     local pts = {}
-    for _, p in ipairs(l.points or {}) do pts[#pts + 1] = { x = vec(p, "x", 1, 0) * ux, z = vec(p, "z", 3, 0) * uz } end
+    for _, p in ipairs(l.points or {}) do pts[#pts + 1] = { x = -vec(p, "x", 1, 0) * ux, z = vec(p, "z", 3, 0) * uz } end
     if #pts >= 2 then ours[#ours + 1] = { points = pts, color = compat.color(l.color), width = num(l.thickness, 0.1), loop = l.loop == true } end
   end
   obj.set_lines(ours)

@@ -57,14 +57,30 @@ public sealed class TtsObj
     public string? DiffuseUrl => Blank(S(CM?["DiffuseURL"]));
     public string? BundleUrl => Blank(S((J["CustomAssetbundle"] as JsonObject)?["AssetbundleURL"]));
 
-    public string? Color
+    public string? Color => J["ColorDiffuse"] is JsonObject c ? HexOf(c) : null;
+
+    public static string HexOf(JsonObject c)
     {
-        get
+        int r = (int)Math.Round(Math.Clamp(D(c, "r"), 0, 1) * 255), g = (int)Math.Round(Math.Clamp(D(c, "g"), 0, 1) * 255), b = (int)Math.Round(Math.Clamp(D(c, "b"), 0, 1) * 255);
+        return $"#{r:X2}{g:X2}{b:X2}";
+    }
+
+    public sealed record Line(List<(double X, double Y, double Z)> Points, string Color, double Thickness, bool Loop);
+
+    public List<Line> VectorLines => LinesOf(J["AttachedVectorLines"]);
+
+    public static List<Line> LinesOf(JsonNode? node)
+    {
+        const double DefaultThickness = 0.1;
+        var lines = new List<Line>();
+        foreach (var l in (node as JsonArray)?.OfType<JsonObject>() ?? [])
         {
-            if (J["ColorDiffuse"] is not JsonObject c) return null;
-            int r = (int)Math.Round(Math.Clamp(D(c, "r"), 0, 1) * 255), g = (int)Math.Round(Math.Clamp(D(c, "g"), 0, 1) * 255), b = (int)Math.Round(Math.Clamp(D(c, "b"), 0, 1) * 255);
-            return $"#{r:X2}{g:X2}{b:X2}";
+            var points = (l["points3"] as JsonArray)?.OfType<JsonObject>().Select(p => (D(p, "x"), D(p, "y"), D(p, "z"))).ToList() ?? new();
+            if (points.Count < 2) continue;
+            var colour = l["color"] is JsonObject c ? HexOf(c) : "#FFFFFF";
+            lines.Add(new Line(points, colour, D(l, "thickness", DefaultThickness), l["loop"]?.GetValue<bool>() ?? false));
         }
+        return lines;
     }
 
     public bool IsCard => Name is "Card" or "CardCustom";
@@ -189,6 +205,8 @@ public sealed class TtsSave
     public string Table { get; init; } = "";
     public string Notes { get; init; } = "";
     public List<(string Title, string Body)> Notebook { get; init; } = new();
+    public string Rules { get; init; } = "";
+    public List<TtsObj.Line> VectorLines { get; init; } = new();
 
     public static TtsSave Load(Config cfg, string workshopIdOrPath)
     {
@@ -208,6 +226,8 @@ public sealed class TtsSave
             Notebook = (root["TabStates"] as JsonObject)?.Select(t => t.Value).OfType<JsonObject>()
                 .Select(t => (Title: t["title"] is JsonValue tv && tv.TryGetValue<string>(out var ts) ? ts : "", Body: t["body"] is JsonValue bv && bv.TryGetValue<string>(out var bs) ? bs : ""))
                 .Where(t => t.Body.Trim().Length > 0).ToList() ?? new(),
+            Rules = root["Rules"] is JsonValue rules && rules.TryGetValue<string>(out var rl) ? rl : "",
+            VectorLines = TtsObj.LinesOf(root["VectorLines"]),
         };
     }
 }

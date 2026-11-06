@@ -100,7 +100,10 @@ public sealed class ScenarioBuilder
         if (placedEffects.Values.Sum(p => p.Count) is var effectCount and > 0) _rep.Counts[$"{sc.Id}: effects placed as Firme's effects"] = effectCount.ToString();
 
         scenario.UmpireBoard = layers[0].Pieces;
-        scenario.Drawings["umpire"] = new();
+        scenario.Drawings["umpire"] = TableStrokes(master);
+        if (master.Rules.Trim().Length > 0) scenario.Briefing = master.Rules.Trim();
+        if (_stowed > 0) _rep.Counts[$"{sc.Id}: pieces held inside bags"] = _stowed.ToString();
+        if (_hiddenByScale > 0) _rep.Note($"{sc.Id}: {_hiddenByScale} piece(s) the module hid by scaling them to nothing show here at a tenth of their size; delete or hold them if they are in the way.");
 
         PruneExtras(extras, layers, scenario);
         usedPacks.Add(extras.M.Id);
@@ -434,6 +437,11 @@ public sealed class ScenarioBuilder
         string packId = r.FromPack ?? extras.M.Id;
         double scale = r.Scale, baseScale = r.Scale;
         if (r.FromPack != null) scale = baseScale = Math.Round(absolute, 4);
+        if (Math.Abs(o.ScaleX) < DefFactory.NoScale)
+        {
+            scale = baseScale = DefFactory.HiddenByScale;
+            _hiddenByScale++;
+        }
         var (counters, text) = r.Script.Values(o.LuaState);
         var lua = o.SafeLua;
         if (def.Script != null) { counters = new(); text = new(); }
@@ -494,6 +502,7 @@ public sealed class ScenarioBuilder
             }
         }
         if (o.Color is { } col && !string.Equals(col, def.Tint, StringComparison.OrdinalIgnoreCase)) inst.TintOverride = col;
+        if (o.VectorLines.Count > 0) inst.Lines = LinesOf(o, def);
         if (!def.States.Any(s => s.Decals is { Count: > 0 }))
             inst.Decals = DecalsOf(o, def, _cfg.BaseSizes.CustomTokenArea, url => _defs.UiAsset(extras, url, $"{layer.Name} {o.Name} '{o.Nickname}' {o.Guid} decal"));
         layer.Pieces.Add(inst);
@@ -507,7 +516,7 @@ public sealed class ScenarioBuilder
     }
 
     Dictionary<string, double> _common = new();
-    int _stowed;
+    int _stowed, _hiddenByScale;
 
     IEnumerable<TtsObj> Held(TtsObj bag) => bag.Contained.SelectMany(c => c.IsDeck ? Pile(c) : [c]);
 
@@ -585,6 +594,33 @@ public sealed class ScenarioBuilder
     const double NoteTurn = 180;
 
     static double Facing(PieceDef? def, double ttsRot) => Norm(NoteCard.Is(def) ? ttsRot + NoteTurn : ttsRot);
+
+    const double ThinnestStroke = 0.05;
+
+    static List<Stroke> TableStrokes(TtsSave master)
+    {
+        var strokes = new List<Stroke>();
+        foreach (var l in master.VectorLines)
+        {
+            var points = l.Points.Select(p => new Vec2(Math.Round(p.X, 4), Math.Round(p.Z, 4))).ToList();
+            if (l.Loop) points.Add(points[0]);
+            strokes.Add(new Stroke { Id = $"d-{strokes.Count + 1:D6}", Points = points, Width = Math.Max(ThinnestStroke, l.Thickness), Color = l.Color });
+        }
+        return strokes;
+    }
+
+    List<LineDef> LinesOf(TtsObj o, PieceDef def)
+    {
+        var (ux, uz) = _defs.LocalUnits(def, o);
+        var lines = new List<LineDef>();
+        foreach (var l in o.VectorLines)
+            lines.Add(new LineDef
+            {
+                Points = l.Points.Select(p => new Vec2(Math.Round(-p.X * ux, 4), Math.Round(p.Z * uz, 4))).ToList(),
+                Color = l.Color, Width = Math.Max(ThinnestStroke, l.Thickness), Loop = l.Loop,
+            });
+        return lines;
+    }
 
     void LayNotes(TtsSave master, Scenario scenario, PackOut extras, Layer layer, HashSet<string> usedPacks)
     {
