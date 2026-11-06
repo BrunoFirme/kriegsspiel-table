@@ -21,6 +21,7 @@
   <ItemGroup>
     <EmbeddedResource Include="../../src/App/standard/std.dice/pack.json" LogicalName="std.dice/pack.json" />
     <EmbeddedResource Include="../../src/App/standard/std.dice/assets/*.obj" LogicalName="std.dice/assets/%(Filename)%(Extension)" />
+    <EmbeddedResource Include="Dice/*.*" LogicalName="dice/%(Filename)%(Extension)" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="AssetsTools.NET" Version="3.0.5" />

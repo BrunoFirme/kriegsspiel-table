@@ -105,7 +105,7 @@ public sealed partial class ConverterTests
         Assert.Null(DefFactory.NotTranslated(new ModuleObj(die)));
         die["CustomImage"]!["CustomDice"]!["Type"] = 5;
         Assert.Null(DefFactory.NotTranslated(new ModuleObj(die)));
-        Assert.Equal(20, new ModuleObj(die).StockSides);
+        Assert.Equal(((int?)null, 20), (new ModuleObj(die).StockSides, new ModuleObj(die).DieSides));
         die["CustomImage"]!["CustomDice"]!["Type"] = 9;
         Assert.NotNull(DefFactory.NotTranslated(new ModuleObj(die)));
     }

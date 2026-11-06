@@ -146,8 +146,8 @@
   },
   {
    "row": "Custom_Dice",
-   "status": "partial",
-   "where": "the picture d6 with its pictures; other counts as the app's die of that count without their pictures",
+   "status": "native",
+   "where": "a picture die of every count: the d6 on the standard picture die, the others on dice built to the module template's layout (tools/make-template-dice.py), each side showing the value saved nearest to it",
    "instead": "",
    "held_by": "DiceTests",
    "count": 35,

@@ -175,6 +175,7 @@ public sealed partial class DefFactory
             return new Size2(mb.ex, mb.ez * ratio);
         }
         if (Boxes.For(o) is { } box) return new Size2(box.Size.W, box.Size.H * ratio);
+        if (o.DieSides is var n and not (0 or PictureD6)) return new Size2(TemplateDie(n).Size[0], TemplateDie(n).Size[2] * ratio);
         if (o.Name == "Custom_Board") return Mul(new Size2(b.CustomBoard * (o.WidthScale > 0 ? o.WidthScale : aspect), b.CustomBoard * ratio), BoardGrowth);
         return TypeSize(o.Name, aw, ah, aspect, ratio, stretched: o.TileType is 0 or 3 && o.TileStretch);
     }
@@ -212,7 +213,7 @@ public sealed partial class DefFactory
         TriangleBlock => TriangleRise * _cfg.BaseSizes.BlockSquare,
         "Card" or "CardCustom" => CardThickness,
         "Checker_white" or "Checker_red" or "Checker_black" => CheckerThickness,
-        "Custom_Dice" => DieAcross,
+        "Custom_Dice" => o.DieSides is var n and not (0 or PictureD6) ? TemplateDie(n).Size[1] : DieAcross,
         "Bag" => Boxes.For(o)?.Thickness ?? BagThickness,
         "PlayerPawn" => PawnHeight,
         "Notecard" or "3DText" => TextThickness,
@@ -263,10 +264,7 @@ public sealed partial class DefFactory
             return new DefResult(model.Def, pack, instScale, 0, b, ScriptInfo.Parse("", "")) { FromPack = model.Pack };
         var script = ScriptInfo.Parse(b.SafeLua.Length > 0 ? b.SafeLua : o.SafeLua, o.LuaState);
         if (o.StockSides is { } sides && StandardDie(sides) is { } die)
-        {
-            if (o.Name == "Custom_Dice") _rep.Note($"{Context} {o.Name} '{o.Nickname}' {o.Guid}: a picture die with {sides} sides is the app's d{sides}, without its pictures.");
             return new DefResult(die, pack, Math.Round(bs, 4), DieFace(o, die), b, script) { FromPack = StdDicePack };
-        }
         if (Boxes.For(o) is { } box)
             return new DefResult(box, pack, Math.Round(bs, 4), 0, b, script) { FromPack = KTable.Client.Effects.EffectKinds.StandardPack };
         return null;
@@ -355,13 +353,13 @@ public sealed partial class DefFactory
                 if (existing.Name == "Piece" && def.Name != "Piece") existing.Name = def.Name;
                 pack.Richness[existing.Id] = rich;
             }
-            return new DefResult(existing, pack, instScale, self, b, script);
+            return new DefResult(existing, pack, instScale, o.IsPictureDie ? DieFace(o, existing) : self, b, script);
         }
         def.Id = $"{pack.Short}.{Slug(def.Name)}-{Hash8(key)}";
         pack.ByKey[key] = def;
         pack.Richness[def.Id] = rich;
         pack.M.Pieces.Add(def);
-        return new DefResult(def, pack, instScale, self, b, script);
+        return new DefResult(def, pack, instScale, o.IsPictureDie ? DieFace(o, def) : self, b, script);
     }
 
     public TranslateResult Translate(string lua, PackOut pack, string where, bool isGlobal = false)

@@ -37,7 +37,7 @@ the plan says translate it), unknown (nobody has decided).
 | `Bag` | 17 / 11 | native | a box, chest or crate of Firme's Effects and Props, picked by its name, then by how much it holds; it keeps a coloured bag's colour and holds its contents stowed | BagBoxTests |
 | `Infinite_Bag` | 86 / 8 | dropped | infinite bags (decided 2026-11-06) |  |
 | `Custom_Model_Bag` | 48 / 8 | native | the bag's own model, holding its contents stowed | import-sweep: naval, scripted-war-game |
-| `Custom_Dice` | 35 / 7 | partial | the picture d6 with its pictures; other counts as the app's die of that count without their pictures | DiceTests |
+| `Custom_Dice` | 35 / 7 | native | a picture die of every count: the d6 on the standard picture die, the others on dice built to the module template's layout (tools/make-template-dice.py), each side showing the value saved nearest to it | DiceTests |
 | `CardCustom` | 1144 / 6 | native | converter |  |
 | `Die_12` | 11 / 5 | native | the app's d12, showing the face it was saved on | DiceTests |
 | `Die_10` | 9 / 4 | native | the app's d10, showing the face it was saved on | DiceTests |

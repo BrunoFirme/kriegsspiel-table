@@ -104,14 +104,13 @@ public sealed class ModuleObj
         RandomOrder => KTable.Core.Model.TakeOrders.Random,
         _ => null,
     };
-    public bool IsPictureDie => Name == "Custom_Dice" && DiceType == PictureDieType;
-    const int PictureDieType = 1;
+    public bool IsPictureDie => Name == "Custom_Dice" && DiceType >= 0 && DiceType < DiceTypeSides.Length;
+    public int DieSides => IsPictureDie ? DiceTypeSides[DiceType] : 0;
     public int DiceType => (CI?["CustomDice"] as JsonObject)?["Type"]?.GetValue<int>() ?? -1;
     static readonly int[] DiceTypeSides = { 4, 6, 8, 10, 12, 20 };
     public int? StockSides => Name switch
     {
         "Die_4" => 4, "Die_6" or "Die_6_Rounded" => 6, "Die_8" => 8, "Die_10" => 10, "Die_12" => 12, "Die_20" => 20,
-        "Custom_Dice" when !IsPictureDie && DiceType >= 0 && DiceType < DiceTypeSides.Length => DiceTypeSides[DiceType],
         _ => null,
     };
 
