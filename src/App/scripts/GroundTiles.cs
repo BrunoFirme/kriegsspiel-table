@@ -8,7 +8,7 @@ namespace KTable.App;
 public partial class GroundTiles : Node
 {
     public const int TilePx = 256, GutterPx = 2, Slots = 16;
-    const int AtlasPx = TilePx * Slots, BakesPerFrame = 8, MostLevel = 9, RetireFrames = 180;
+    const int AtlasPx = TilePx * Slots, BakesPerFrame = 8, MostLevel = 9, RetireFrames = 180, Budget = Slots * Slots - BakesPerFrame * 2, Relaxings = 4;
     const float FinestTexelWorld = 0.004f, Sharpness = 1.1f;
     static GroundTiles? _shared;
     static Shader? _viewShader, _bakeShader;
@@ -151,15 +151,22 @@ public partial class GroundTiles : Node
         {
             var frustum = cam.GetFrustum();
             var wanted = new List<(Sheet Sheet, Tile Tile, float Size)>();
-            foreach (var s in _sheets)
-                if (IsInstanceValid(s.Owner) && s.Owner.IsVisibleInTree()) Need(s, cam, frustum, new Tile(0, 0, 0), wanted);
+            float sharpness = Sharpness;
+            for (int relaxed = 0; ; relaxed++)
+            {
+                wanted.Clear();
+                foreach (var s in _sheets)
+                    if (IsInstanceValid(s.Owner) && s.Owner.IsVisibleInTree()) Need(s, cam, frustum, new Tile(0, 0, 0), sharpness, wanted);
+                if (wanted.Count <= Budget || relaxed >= Relaxings) break;
+                sharpness *= 2;
+            }
             Bake(wanted);
         }
         foreach (var s in _sheets)
             if (s.PagesDirty) Repage(s);
     }
 
-    void Need(Sheet s, Camera3D cam, Godot.Collections.Array<Plane> frustum, Tile t, List<(Sheet, Tile, float)> wanted)
+    void Need(Sheet s, Camera3D cam, Godot.Collections.Array<Plane> frustum, Tile t, float sharpness, List<(Sheet, Tile, float)> wanted)
     {
         var uv = t.Uv;
         Span<Vector3> pts = stackalloc Vector3[8];
@@ -186,13 +193,10 @@ public partial class GroundTiles : Node
             screen[i] = cam.UnprojectPosition(mid);
         }
         if (!behind) size = Math.Max((screen[0] - screen[2]).Length(), (screen[1] - screen[3]).Length()) / Mathf.Sqrt2;
-        if (t.Level < s.Levels && (behind || size > (TilePx - 2 * GutterPx) * Sharpness))
-        {
-            for (int j = 0; j < 2; j++)
-                for (int i = 0; i < 2; i++) Need(s, cam, frustum, new Tile(t.Level + 1, t.X * 2 + i, t.Y * 2 + j), wanted);
-            return;
-        }
         wanted.Add((s, t, size));
+        if (t.Level >= s.Levels || (!behind && size <= (TilePx - 2 * GutterPx) * sharpness)) return;
+        for (int j = 0; j < 2; j++)
+            for (int i = 0; i < 2; i++) Need(s, cam, frustum, new Tile(t.Level + 1, t.X * 2 + i, t.Y * 2 + j), sharpness, wanted);
     }
 
     void Bake(List<(Sheet Sheet, Tile Tile, float Size)> wanted)
