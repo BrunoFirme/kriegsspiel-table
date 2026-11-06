@@ -69,6 +69,7 @@ public static class TtsTranslator
         ["onDrop"] = "on_drop", ["onPickUp"] = "on_pick_up", ["onPickup"] = "on_pick_up", ["onObjectDrop"] = "on_drop", ["onObjectPickUp"] = "on_pick_up", ["onObjectPickup"] = "on_pick_up",
         ["onObjectSpawn"] = "on_spawn", ["onObjectDestroy"] = "on_destroy", ["onObjectStateChange"] = "on_state", ["onPlayerTurn"] = "on_turn", ["onRotate"] = "on_rotate", ["onObjectRotate"] = "on_rotate",
         ["onChat"] = "on_chat", ["onObjectNumberTyped"] = "on_number_typed", ["onScriptingButtonDown"] = "on_scripting_button_down", ["onScriptingButtonUp"] = "on_scripting_button_up",
+        ["onPlayerAction"] = "on_player_action",
     };
 
     static readonly HashSet<string> Stubbed = new(StringComparer.Ordinal)
@@ -562,6 +563,7 @@ public static class TtsTranslator
                     return ("on_rotate", "__piece, __rot, __old, __who", Bind(new[] { "__piece", "__rot", "__piece.face_down and 180 or 0", "compat.color_of(__who)", "__old", "__piece.face_down and 180 or 0" }));
                 case "onObjectRotate": return ("on_rotate", "__rot, __old, __who", Bind(new[] { "self", "__rot", "self.face_down and 180 or 0", "compat.color_of(__who)", "__old", "self.face_down and 180 or 0" }));
                 case "onChat": return ("on_chat", "__text, __who", Bind(new[] { "__text", "compat.player(compat.color_of(__who))" }));
+                case "onPlayerAction": return ("on_player_action", "__who, __action, __targets", Bind(new[] { "compat.player(compat.color_of(__who))", "__action", "__targets" }));
                 case "onObjectNumberTyped": return ("on_number_typed", "__piece, __who, __n", Bind(new[] { "__piece", "compat.color_of(__who)", "__n" }));
                 case "onScriptingButtonDown": return ("on_scripting_button_down", "__index, __who", Bind(new[] { "__index", "compat.color_of(__who)" }));
                 case "onScriptingButtonUp": return ("on_scripting_button_up", "__index, __who", Bind(new[] { "__index", "compat.color_of(__who)" }));

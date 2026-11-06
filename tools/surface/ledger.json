@@ -7608,10 +7608,10 @@
   },
   {
    "row": "onPlayerAction",
-   "status": "planned",
-   "where": "Phase C item 2",
+   "status": "native",
+   "where": "on_player_action(who, action, pieces) before an umpire's delete or flip; false refuses it with a message",
    "instead": "",
-   "held_by": "",
+   "held_by": "PlayerActionTests",
    "count": 12,
    "modules": 12
   },
@@ -8133,9 +8133,9 @@
   {
    "row": "player model: colours, Black as GM, promoted, seated, host",
    "status": "partial",
-   "where": "compat.player / compat.color_of: umpires and sides",
+   "where": "compat.color_of: the host is Black as TTS's GM, the other umpires White, Red, Blue... in seat order, so Player[color] finds each; sides and observers have no seat colour",
    "instead": "",
-   "held_by": "",
+   "held_by": "PlayerActionTests",
    "count": 54,
    "modules": 54
   },

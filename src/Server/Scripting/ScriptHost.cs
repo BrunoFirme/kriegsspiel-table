@@ -719,6 +719,33 @@ public sealed partial class ScriptHost
 
     public List<Outgoing> BeforeApply(Command c, long actor) => Run(actor, false, () => Before(c));
 
+    public const string PlayerActionHook = "on_player_action";
+
+    public string? PlayerActionVeto(Command c, long actor, List<Outgoing> res)
+    {
+        if (_global == null || _global.Env.Get(PlayerActionHook).Type != DataType.Function) return null;
+        var (action, ids) = PlayerActionOf(c);
+        if (action == null || ids.Count == 0) return null;
+        string? refused = null;
+        res.AddRange(Run(actor, false, () =>
+        {
+            var targets = new Table(Vm);
+            for (int i = 0; i < ids.Count; i++) targets[i + 1] = Handle(ids[i]);
+            var answer = Call(_global, PlayerActionHook, Who(actor), DynValue.NewString(action), DynValue.NewTable(targets));
+            if (answer is { Type: DataType.Boolean, Boolean: false }) refused = $"the game's script does not allow this {action} here";
+        }));
+        return refused;
+    }
+
+    static (string? Action, List<string> Ids) PlayerActionOf(Command c) => c switch
+    {
+        DeletePiece d => ("delete", [d.Id]),
+        FlipPiece f => ("flip", [f.Id]),
+        Batch b when b.Items.Count > 0 && b.Items.All(i => i is DeletePiece) => ("delete", b.Items.Cast<DeletePiece>().Select(d => d.Id).ToList()),
+        Batch b when b.Items.Count > 0 && b.Items.All(i => i is FlipPiece) => ("flip", b.Items.Cast<FlipPiece>().Select(f => f.Id).ToList()),
+        _ => (null, []),
+    };
+
     void Before(Command c)
     {
         switch (c)

@@ -32,13 +32,14 @@ function compat.color(c)
   return nil
 end
 
+local GM = "Black"
 function compat.color_of(who)
   if type(who) ~= "table" then return "White" end
-  if who.role == "host" then return "White" end
-  local i = 2
+  if who.role == "host" then return GM end
+  local i = 1
   for _, u in ipairs(umpires()) do
     if u.role ~= "host" then
-      if u.id == who.id then return TTS_COLORS[math.min(i, #TTS_COLORS)] end
+      if u.id == who.id then return TTS_COLORS[math.min(i, #TTS_COLORS - 1)] end
       i = i + 1
     end
   end
@@ -95,6 +96,11 @@ compat.Player = setmetatable({
   getAvailableColors = function() return { "Red", "Blue", "Green", "Yellow", "Orange", "Purple", "Pink", "Brown", "Teal" } end,
   getColors = function() return TTS_COLORS end,
   getSpectators = function() return {} end,
+  Action = {
+    Copy = "copy", Cut = "cut", Delete = "delete", FlipIncremental = "flip_incremental", FlipOver = "flip", Group = "group", Paste = "paste",
+    PickUp = "pick_up", Randomize = "randomize", RotateIncrementalLeft = "rotate_left", RotateIncrementalRight = "rotate_right", RotateOver = "rotate_over",
+    Select = "select", Under = "under",
+  },
 }, { __index = function(_, color) return compat.player(color) end })
 
 function compat.seated_players()

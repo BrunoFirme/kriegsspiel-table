@@ -368,11 +368,11 @@ public class ScriptingTests
         Assert.Equal(2.2 * p.Widgets[1].W, p.Widgets[0].W, 6);
         Assert.Equal(2.2 * p.Widgets[1].H, p.Widgets[0].H, 6);
         t.Server.Handle(Table.Host, new EditWidget { Layer = U, Id = P, Index = 1, Value = "typed" });
-        Assert.Equal("typed/White/false", p.Label);
+        Assert.Equal("typed/Black/false", p.Label);
         t.Server.Handle(Table.Host, new ClickWidget { Layer = U, Id = P, Index = 2 });
-        Assert.Equal("typed!Whitefalse", p.Label);
+        Assert.Equal("typed!Blackfalse", p.Label);
         t.Server.Handle(Table.Host, new ClickWidget { Layer = U, Id = P, Index = 3 });
-        Assert.Equal("named White", p.Label);
+        Assert.Equal("named Black", p.Label);
     }
 
     [Fact]

@@ -914,6 +914,11 @@ public static partial class ApiDoc
         P("piece", "Piece", "The piece.");
         P("who", "Who", "The umpire.");
 
+        E("global event", "on_player_action(who, action, pieces)", "An umpire is about to delete or flip pieces: return false to refuse it, with action \"delete\" or \"flip\" and the pieces it would touch.", "onPlayerAction");
+        P("who", "Who", "The umpire.");
+        P("action", "string", "\"delete\" or \"flip\".");
+        P("pieces", "Piece[]", "The pieces the action would touch.");
+
         E("global event", "on_number_typed(piece, who, n)", "An umpire typed a number over a piece: return true to keep its state, else the state becomes n.", "onObjectNumberTyped");
         P("piece", "Piece", "The piece under the pointer, or each piece of the selection.");
         P("who", "Who", "The umpire.");

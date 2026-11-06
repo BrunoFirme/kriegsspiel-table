@@ -2406,6 +2406,7 @@ The global script gets on_load, on_save, on_update and on_turn too, and these fo
 | [`on_drop`](#on_drop-global-script) | An umpire let a piece go. |
 | [`on_rotate`](#on_rotate-global-script) | An umpire turned a piece in place. |
 | [`on_pick_up`](#on_pick_up-global-script) | An umpire picked a piece up. |
+| [`on_player_action`](#on_player_action-global-script) | An umpire is about to delete or flip pieces: return false to refuse it, with action "delete" or "flip" and the pieces it would touch. |
 | [`on_number_typed`](#on_number_typed-global-script) | An umpire typed a number over a piece: return true to keep its state, else the state becomes n. |
 | [`on_chat`](#on_chat-global-script) | An umpire wrote a line in the Log (not a script's line). |
 | [`on_scripting_button_down`](#on_scripting_button_down-global-script) | Defining it gives ten hotkeys, Scripting button 1–10 (the keypad until rebound). |
@@ -2503,6 +2504,24 @@ An event: define this function and the table calls it.
 | `who` | `Who` | The umpire. |
 
 **Tabletop Simulator** `onObjectPickUp`
+
+### `on_player_action` (global script)
+
+```lua
+on_player_action(who, action, pieces)
+```
+
+An umpire is about to delete or flip pieces: return false to refuse it, with action "delete" or "flip" and the pieces it would touch.
+
+An event: define this function and the table calls it.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `who` | `Who` | The umpire. |
+| `action` | `string` | "delete" or "flip". |
+| `pieces` | `Piece[]` | The pieces the action would touch. |
+
+**Tabletop Simulator** `onPlayerAction`
 
 ### `on_number_typed` (global script)
 
@@ -2759,6 +2778,7 @@ The converter rewrites a module's scripts into these calls by rule; this is the 
 | `onObjectSpawn` | [`on_spawn`](#on_spawn-global-script) |
 | `onObjectStateChange` | [`on_state`](#on_state) |
 | `onPickUp` | [`on_pick_up`](#on_pick_up) |
+| `onPlayerAction` | [`on_player_action`](#on_player_action-global-script) |
 | `onPlayerTurn` | [`on_turn`](#on_turn) |
 | `onRotate` | [`on_rotate`](#on_rotate) |
 | `onSave` | [`on_save`](#on_save) |

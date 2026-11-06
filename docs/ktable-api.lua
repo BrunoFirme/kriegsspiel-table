@@ -595,6 +595,12 @@ function on_destroy() end
 ---@param piece Piece The new piece.
 function on_spawn(piece) end
 
+---An umpire is about to delete or flip pieces: return false to refuse it, with action "delete" or "flip" and the pieces it would touch.
+---@param who Who The umpire.
+---@param action string "delete" or "flip".
+---@param pieces Piece[] The pieces the action would touch.
+function on_player_action(who, action, pieces) end
+
 ---An umpire typed a number over a piece: return true to keep its state, else the state becomes n.
 ---@param piece Piece The piece under the pointer, or each piece of the selection.
 ---@param who Who The umpire.
