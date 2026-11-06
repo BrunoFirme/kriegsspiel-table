@@ -4,7 +4,7 @@
 
 1. **Pieces:** make them in the [piece studio](community-guide.md#the-piece-studio). Counters, text lines, looks
    and markers need no script.
-2. **TTS modules:** [import them](community-guide.md#import-a-tabletop-simulator-module); scripts come along.
+2. **TTS modules:** [convert them](community-guide.md#convert-a-tts-module); scripts come along.
 3. **Scripts:** for buttons of your own, panels and reactions. Start with the
    [scripting guide](scripting.md); look names up in the [API reference](scripting-api.md).
 4. **Sharing:** [packs and scenarios](community-guide.md#share-packs-and-scenarios).
