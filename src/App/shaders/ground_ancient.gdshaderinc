@@ -72,8 +72,11 @@ vec3 ancient_field(vec3 c, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_uv, f
 	cover = 0.0;
 	vec2 pair = l.id + l.other;
 	c = mix(c, ANCIENT_INK, ink(l.edge, W1, fw) * step(hash(pair + 4.4), 0.1) * 0.7);
-	c = ancient_lanes(c, p, smoothstep(0.1, 0.8, l.levels.y), fw);
-	if (l.room > metres(30.0) && hash(l.id + 8.2) < farms_here(l)) {
+	float settle = smoothstep(0.1, 0.8, l.levels.y);
+	c = ancient_lanes(c, p, settle, fw);
+	c = mix(c, RED_OCHRE, access_lanes(p, uv, to_uv, l.levels, settle, W1, 0.0, fw) * 0.85);
+	vec2 site_uv = uv + to_uv * (l.site - p);
+	if (farm_here(l.id, l.site, l.room, l.levels, near_road_at(site_uv)) > 0.5) {
 		float turn = hash(l.id + 11.3) * 3.1416;
 		c = ancient_farm(c, p, l.site, l.id, turn, fw, cover);
 		if (hamlet_here(l) > 0.5) c = ancient_farm(c, p, second_site(l), l.id + 21.0, turn + 0.4, fw, cover);
@@ -98,6 +101,7 @@ vec3 ancient(int k, int beside, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_
 			c = mix(c, ANCIENT_INK, o * 0.9);
 		}
 		c = ancient_lanes(c, p, smoothstep(0.1, 0.8, levels.y) * 0.5, fw);
+		c = mix(c, RED_OCHRE, access_lanes(p, uv, to_uv, levels, smoothstep(0.1, 0.8, levels.y), W1, 0.0, fw) * 0.85);
 		rim = 0.0;
 	} else if (k == FIELD) {
 		c = ancient_field(c, tint, sheet, p, uv, to_uv, own, vec2(max(levels.x, near_town * NEAR_TOWN_PLOTS), levels.y), along, follow, fw, edge, cover);

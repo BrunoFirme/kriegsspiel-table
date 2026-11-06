@@ -1,23 +1,3 @@
-float town_at(vec2 uv) {
-	return max(0.0, textureLod(edges, clamp(uv, vec2(0.0), vec2(1.0)), 0.0).g * 255.0 / FIELD_STEPS - 0.5) * cell_world;
-}
-
-float wet_at(vec2 uv) {
-	return max(0.0, textureLod(edges, clamp(uv, vec2(0.0), vec2(1.0)), 0.0).b * 255.0 / FIELD_STEPS - 0.5) * cell_world;
-}
-
-float town_depth_at(vec2 uv) {
-	return max(0.0, textureLod(edges, clamp(uv, vec2(0.0), vec2(1.0)), 0.0).a * 255.0 / TOWN_STEPS - 0.5) * cell_world;
-}
-
-float depth_at(vec2 o, vec2 p, vec2 uv, mat2 to_uv) {
-	return town_depth_at(uv + to_uv * (o - p));
-}
-
-float wet_meadow(vec2 uv, float follow) {
-	return (1.0 - smoothstep(metres(WET_NEAR_M * 0.7), metres(WET_NEAR_M), wet_at(uv))) * (1.0 - follow);
-}
-
 float square_block(vec2 p, vec2 uv, mat2 to_uv, float size, float jitter, float salt) {
 	vec2 n = floor(p / size);
 	vec2 f = p / size - n;

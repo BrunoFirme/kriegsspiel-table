@@ -19,8 +19,7 @@ vec3 survey_wood(vec3 c, vec3 tint, vec2 p, vec2 uv, mat2 to_uv, float fw, float
 			float small = coppice_at(o, salt);
 			float r = min(RING_R * mix(0.7, 1.2, hash(id + 3.1)) * mix(1.0, 0.6, small) * mix(0.85, 1.0, trees), room * 0.9);
 			if (length(p - o) > r * 3.0) continue;
-			if (hash(id + 6.1) < conifer_share(o, salt) && small < 0.5) m = max(m, fir_sign(p, o - NORTH * r, r * 2.2, W1 * 0.75, fw));
-			else m = max(m, tree_ring(p, o, r, W1 * 0.8, fw));
+			m = max(m, crown_sign(p, o - NORTH * r * 0.4, r * 0.85, step(hash(id + 6.1), conifer_share(o, salt)) * (1.0 - small), r * 0.5, W1 * 0.8, fw, id));
 		}
 	}
 	cover = m;
@@ -92,9 +91,11 @@ vec3 survey_field(vec3 c, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_uv, fl
 	float marked = step(hash(pair + 4.4), bounded * 0.85);
 	int line = HEDGE + int(hash(pair + 1.1) * 4.0);
 	c = mix(c, SURVEY_INK, edge_line(SURVEY, line, l, p, fw, W1, W2, W3) * marked * mix(0.5, 1.0, hash(pair + 2.2)));
-	c = survey_lanes(c, sheet, p, smoothstep(0.1, 0.8, l.levels.y), fw);
-	float near_road = 1.0 - smoothstep(metres(60.0), metres(160.0), road_away_at(site_uv));
-	if (l.room > metres(30.0) && hash(l.id + 8.2) < farms_here(l) * (1.0 + near_road)) {
+	float settle = smoothstep(0.1, 0.8, l.levels.y);
+	c = survey_lanes(c, sheet, p, settle, fw);
+	c = mix(c, WEGEBRAUN, access_lanes(p, uv, to_uv, l.levels, settle, W1, metres(10.0), fw) * 0.9);
+	float near_road = near_road_at(site_uv);
+	if (farm_here(l.id, l.site, l.room, l.levels, near_road) > 0.5) {
 		float turn = mix(hash(l.id + 11.3) * 3.1416, atan(road_along.y, road_along.x), step(0.5, near_road));
 		c = survey_farm(c, sheet, p, l.site, l.id, turn, edge, fw, cover);
 		if (hamlet_here(l) > 0.5) c = survey_farm(c, sheet, p, second_site(l), l.id + 21.0, turn + 0.4, edge, fw, cover);
@@ -137,6 +138,7 @@ vec3 survey(int k, int beside, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_u
 		else c = mix(c, SURVEY_INK, meadow_pairs(p, own, MEADOW_ROW, MEADOW_LEN, W1 * 0.55, 0.75, fw) * 0.7);
 		c = mix(c, SURVEY_BLUE, marks(p + 0.3, own, 0.55, 0.16, W1 * 0.55, 0.0, 0.15, 0.7, fw) * 0.7 * wet);
 		c = survey_lanes(c, sheet, p, smoothstep(0.1, 0.8, levels.y) * 0.6, fw);
+		c = mix(c, WEGEBRAUN, access_lanes(p, uv, to_uv, levels, smoothstep(0.1, 0.8, levels.y), W1, metres(10.0), fw) * 0.9);
 		if (l.room >= 0.0) {
 			float fenced = smoothstep(0.2, 0.6, max(l.levels.x, near_town)) * step(mix(0.65, 0.3, near_town), hash(l.id + 7.2));
 			c = mix(c, SURVEY_INK, edge_line(SURVEY, HEDGE + int(hash(l.id + 3.3) * 2.0), l, p, fw, W1, W2, W3) * fenced * 0.8);

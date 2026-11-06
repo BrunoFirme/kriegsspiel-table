@@ -16,21 +16,7 @@ vec3 modern_wood(vec3 c, vec2 p, vec2 uv, mat2 to_uv, float fw, float ledges, fl
 				if (room < 0.1 * k) continue;
 				if (hash(id + 1.3) < clearing_at(o, salt) * (1.0 - closed) || hash(id + 2.4) > keep) continue;
 				k *= mix(1.0, 0.7, coppice_at(o, salt));
-				if (hash(id + 6.1) < conifer_share(o, salt)) {
-					vec2 top = o + NORTH * 0.95 * k;
-					vec2 q = p - top;
-					float along = q.y;
-					float half_w = 0.22 * k * clamp(along / (0.8 * k), 0.0, 1.0);
-					float tri = 1.0 - smoothstep(-fw * 0.5, fw * 0.5, max(abs(q.x) - half_w, max(-along, along - 0.8 * k)));
-					m = max(m, tri);
-					m = max(m, ink(segment(p, o + NORTH * 0.15 * k, o - NORTH * 0.25 * k), M1 * 0.6, fw));
-				} else {
-					vec2 crown = o + NORTH * 0.34 * k;
-					vec2 q = p - crown;
-					float rr = 0.26 * k * (1.0 + 0.12 * sin(3.0 * atan(q.y, q.x) + hash(id + 7.7) * 6.2832));
-					m = max(m, 1.0 - smoothstep(rr - fw * 0.5, rr + fw * 0.5, length(q)));
-					m = max(m, ink(segment(p, crown, o - NORTH * 0.25 * k), M1 * 0.6, fw));
-				}
+				m = max(m, crown_sign(p, o - NORTH * 0.25 * k, 0.26 * k, step(hash(id + 6.1), conifer_share(o, salt)), 0.3 * k, M1 * 0.6, fw, id));
 			}
 		}
 	}
@@ -81,9 +67,11 @@ vec3 modern_field(vec3 c, vec3 sheet, vec2 p, vec2 uv, mat2 to_uv, float own, ve
 	float marked = step(hash(pair + 4.4), bounded * 0.8);
 	int line = HEDGE + int(hash(pair + 1.1) * 4.0);
 	c = mix(c, MODERN_BLACK, edge_line(MODERN, line, l, p, fw, M1 * 0.5, M1, M2) * marked * mix(0.6, 0.9, hash(pair + 2.2)));
-	c = modern_lanes(c, sheet, p, smoothstep(0.1, 0.8, l.levels.y), fw);
-	float near_road = 1.0 - smoothstep(metres(60.0), metres(160.0), road_away_at(site_uv));
-	if (l.room > metres(30.0) && hash(l.id + 8.2) < farms_here(l) * (1.0 + near_road)) {
+	float settle = smoothstep(0.1, 0.8, l.levels.y);
+	c = modern_lanes(c, sheet, p, settle, fw);
+	c = mix(c, MODERN_BLACK, access_lanes(p, uv, to_uv, l.levels, settle, M1 * 0.45, metres(10.0), fw) * 0.9);
+	float near_road = near_road_at(site_uv);
+	if (farm_here(l.id, l.site, l.room, l.levels, near_road) > 0.5) {
 		float turn = mix(hash(l.id + 11.3) * 3.1416, atan(road_along.y, road_along.x), step(0.5, near_road));
 		c = modern_farm(c, p, l.site, l.id, turn, fw, cover);
 		if (hamlet_here(l) > 0.5) c = modern_farm(c, p, second_site(l), l.id + 21.0, turn + 0.4, fw, cover);
@@ -112,6 +100,7 @@ vec3 modern(int k, int beside, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_u
 		if (rough > 0.5) c = mix(c, MODERN_BLACK, tufts(p + 0.4, own, MEADOW_ROW, 0.12, M1 * 0.4, 0.4, fw) * 0.8);
 		c = mix(c, MODERN_BLUE, tufts(p + 0.9, own, MEADOW_ROW * 0.6, 0.1, M1 * 0.4, 0.5, fw) * 0.8 * wet);
 		c = modern_lanes(c, sheet, p, smoothstep(0.1, 0.8, levels.y) * 0.6, fw);
+		c = mix(c, MODERN_BLACK, access_lanes(p, uv, to_uv, levels, smoothstep(0.1, 0.8, levels.y), M1 * 0.45, metres(10.0), fw) * 0.9);
 		if (l.room >= 0.0) {
 			float fenced = smoothstep(0.2, 0.6, max(l.levels.x, near_town)) * step(mix(0.65, 0.3, near_town), hash(l.id + 7.2));
 			c = mix(c, MODERN_BLACK, edge_line(MODERN, FENCE, l, p, fw, M1 * 0.5, M1, M2) * fenced * 0.9);

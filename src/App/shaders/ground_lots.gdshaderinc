@@ -2,6 +2,26 @@ float metres(float m) {
 	return m * units_per_metre;
 }
 
+float town_at(vec2 uv) {
+	return max(0.0, textureLod(edges, clamp(uv, vec2(0.0), vec2(1.0)), 0.0).g * 255.0 / FIELD_STEPS - 0.5) * cell_world;
+}
+
+float wet_at(vec2 uv) {
+	return max(0.0, textureLod(edges, clamp(uv, vec2(0.0), vec2(1.0)), 0.0).b * 255.0 / FIELD_STEPS - 0.5) * cell_world;
+}
+
+float town_depth_at(vec2 uv) {
+	return max(0.0, textureLod(edges, clamp(uv, vec2(0.0), vec2(1.0)), 0.0).a * 255.0 / TOWN_STEPS - 0.5) * cell_world;
+}
+
+float depth_at(vec2 o, vec2 p, vec2 uv, mat2 to_uv) {
+	return town_depth_at(uv + to_uv * (o - p));
+}
+
+float wet_meadow(vec2 uv, float follow) {
+	return (1.0 - smoothstep(metres(WET_NEAR_M * 0.7), metres(WET_NEAR_M), wet_at(uv))) * (1.0 - follow);
+}
+
 vec2 levels_at(vec2 o, vec2 p, vec2 uv, mat2 to_uv) {
 	vec2 u = clamp(uv + to_uv * (o - p), vec2(0.0), vec2(1.0));
 	float b = texel_of(floor(u * cells)).b;
@@ -186,24 +206,13 @@ float farm_garden(vec2 p, vec2 site, vec2 seed, float turn, float scale, float f
 	return block(p, site + r * at, half_size, turn, fw);
 }
 
-float tree_ring(vec2 p, vec2 o, float r, float width, float fw) {
-	vec2 q = p - o;
-	float d = length(q);
-	float ring = ink(abs(d - r), width, fw);
-	float shade = ink(abs(d - r), width * 2.2, fw) * step(0.35, dot(q / max(d, 1e-5), vec2(0.7071, 0.7071)));
-	return max(ring, shade);
-}
-
-float fir_sign(vec2 p, vec2 o, float h, float width, float fw) {
-	vec2 top = o + NORTH * h;
-	float m = ink(segment(p, o, top), width, fw);
-	for (int b = 0; b < 2; b++) {
-		vec2 from = mix(o, top, 0.3 + 0.3 * float(b));
-		float reach = h * (0.32 - 0.1 * float(b));
-		m = max(m, ink(segment(p, from, from + vec2(reach, h * 0.18)), width, fw));
-		m = max(m, ink(segment(p, from, from + vec2(-reach, h * 0.18)), width, fw));
-	}
-	return m;
+float crown_sign(vec2 p, vec2 o, float r, float pointy, float stem, float width, float fw, vec2 id) {
+	vec2 c = o + NORTH * (stem + r * 0.9);
+	vec2 q = (p - c) * vec2(1.0, mix(1.0, 0.72, pointy));
+	float a = atan(q.y, q.x);
+	float rr = r * (1.0 + 0.12 * sin(3.0 * a + hash(id + 7.7) * 6.2832)) * (1.0 - pointy * 0.3 * max(0.0, -sin(a)));
+	float body = 1.0 - smoothstep(rr - fw * 0.5, rr + fw * 0.5, length(q));
+	return max(body, ink(segment(p, o, o + NORTH * stem), width, fw));
 }
 
 float farm_trees(vec2 p, vec2 site, vec2 seed, float turn, float scale, float width, float fw) {
@@ -215,7 +224,7 @@ float farm_trees(vec2 p, vec2 site, vec2 seed, float turn, float scale, float wi
 	for (int i = 0; i < 2; i++) {
 		if (float(i) >= n) break;
 		vec2 at = r * vec2((float(i) - (n - 1.0) * 0.5) * h * 1.2, -h * 2.0);
-		m = max(m, tree_ring(p, site + at, metres(6.0), width, fw));
+		m = max(m, crown_sign(p, site + at, metres(5.0), 0.0, metres(3.0), width, fw, seed + float(i)));
 	}
 	return m;
 }
@@ -235,10 +244,7 @@ float orchard_rings(vec2 p, Lot l, float width, float fw) {
 	vec2 axis = lot_axis(l);
 	vec2 q = mat2(axis, vec2(-axis.y, axis.x)) * (p - l.site);
 	vec2 c = (floor(q / gap) + 0.5) * gap;
-	float rr = gap * 0.17;
-	float ring = ink(abs(length(q - c) - rr), width, fw);
-	float stem = ink(segment(q, c + vec2(0.0, rr), c + vec2(0.0, rr * 1.8)), width, fw);
-	return max(ring, stem);
+	return crown_sign(q, c + vec2(0.0, gap * 0.2), gap * 0.14, 0.0, gap * 0.12, width, fw, floor(q / gap));
 }
 
 float vine_strokes(vec2 p, float slant, float width, float fw) {
@@ -290,6 +296,91 @@ float lane_iso(vec2 p, float cycle_m, float seed, out float along) {
 
 float lane_cut(vec2 p, float seed, float keep) {
 	return step(1.0 - keep, noise(p / metres(LANE_CUT_M) + seed));
+}
+
+vec2 lane_toward(vec2 p, float cycle_m, float seed, out float d) {
+	vec2 q = p / metres(cycle_m);
+	vec2 drift = vec2(cos(seed), sin(seed));
+	float e = 0.02;
+	float v = lane_field(q, seed, drift);
+	vec2 g = vec2(lane_field(q + vec2(e, 0.0), seed, drift) - v, lane_field(q + vec2(0.0, e), seed, drift) - v) / e;
+	float gl = max(length(g), 0.05);
+	float f = fract(v / LANE_SPACING);
+	d = min(f, 1.0 - f) * LANE_SPACING / gl * metres(cycle_m);
+	return g / gl * (f < 0.5 ? -1.0 : 1.0);
+}
+
+float lane_stroke(vec2 p, vec2 a, vec2 b, vec2 seed, float width, float dash, float fw) {
+	vec2 ab = b - a;
+	vec2 c = (a + b) * 0.5 + vec2(-ab.y, ab.x) * (hash(seed + 3.1) - 0.5) * LANE_BEND;
+	float d1 = segment(p, a, c);
+	float d2 = segment(p, c, b);
+	float first = length(c - a);
+	float t = d1 < d2 ? clamp(dot(p - a, c - a) / max(dot(c - a, c - a), 1e-6), 0.0, 1.0) * first : first + clamp(dot(p - c, b - c) / max(dot(b - c, b - c), 1e-6), 0.0, 1.0) * length(b - c);
+	float on = dash > 0.0 ? mix(step(0.45, fract(t / dash)), 0.55, far_blend(fw, dash)) : 1.0;
+	return ink(min(d1, d2), width, fw) * on;
+}
+
+float lane_to_road(vec2 p, vec2 site, vec2 uv, mat2 to_uv, vec2 seed, float near_m, float settle, float width, float dash, float fw) {
+	vec2 site_uv = uv + to_uv * (site - p);
+	float away = road_away_at(site_uv);
+	if (away <= metres(near_m)) return 0.0;
+	if (away < metres(LANE_REACH_M)) return lane_stroke(p, site, site - road_normal_at(site_uv) * away, seed, width, dash, fw);
+	float d;
+	vec2 dir = lane_toward(site, LANE_CYCLE_M, 3.7, d);
+	vec2 target = site + dir * d;
+	if (d > metres(LANE_REACH_M) || lane_cut(target, 11.0, mix(0.45, 0.75, settle)) < 0.5) return 0.0;
+	return lane_stroke(p, site, target, seed, width, dash, fw);
+}
+
+float farm_here(vec2 id, vec2 site, float room, vec2 levels, float near_road) {
+	Lot l;
+	l.id = id;
+	l.site = site;
+	l.levels = levels;
+	return step(metres(30.0), room) * step(hash(id + 8.2), farms_here(l) * (1.0 + near_road));
+}
+
+float near_road_at(vec2 site_uv) {
+	return 1.0 - smoothstep(metres(60.0), metres(160.0), road_away_at(site_uv));
+}
+
+float access_lanes(vec2 p, vec2 uv, mat2 to_uv, vec2 levels, float settle, float width, float dash, float fw) {
+	float m = 0.0;
+	if (levels.y > 0.05) {
+		float size = metres(mix(PLOT_OPEN_M, PLOT_SMALL_M, levels.x));
+		vec2 n = floor(p / size);
+		for (int j = -2; j <= 2; j++) {
+			for (int i = -2; i <= 2; i++) {
+				vec2 cell = n + vec2(float(i), float(j));
+				vec2 centre = (cell + 0.5) * size;
+				float salt = salt_at(centre, p, uv, to_uv);
+				vec2 id = seeded(cell, salt);
+				vec2 site = centre + (hash2(id) - 0.5) * 0.56 * size;
+				float room = room_at(site, p, uv, to_uv, FIELD, salt);
+				if (room < metres(30.0)) continue;
+				vec2 site_uv = uv + to_uv * (site - p);
+				if (farm_here(id, site, room, levels_at(site, p, uv, to_uv), near_road_at(site_uv)) < 0.5) continue;
+				m = max(m, lane_to_road(p, site, uv, to_uv, id, LANE_NEAR_M, settle, width, dash, fw));
+			}
+		}
+	}
+	if (town_at(uv) < metres(LANE_REACH_M)) {
+		float size = metres(TOWN_QUARTER_M);
+		vec2 n = floor(p / size);
+		for (int j = -2; j <= 2; j++) {
+			for (int i = -2; i <= 2; i++) {
+				vec2 cell = n + vec2(float(i), float(j));
+				vec2 centre = (cell + 0.5) * size;
+				float salt = salt_at(centre, p, uv, to_uv);
+				vec2 id = seeded(cell, salt);
+				vec2 site = centre + (hash2(id) - 0.5) * 0.5 * size;
+				if (room_at(site, p, uv, to_uv, TOWN, salt) < 0.0) continue;
+				m = max(m, lane_to_road(p, site, uv, to_uv, id, TOWN_LANE_NEAR_M, settle, width, dash, fw));
+			}
+		}
+	}
+	return m;
 }
 
 
