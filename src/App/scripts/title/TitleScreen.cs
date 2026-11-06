@@ -134,6 +134,9 @@ sealed class TitleScreen
         NavItem(left, "Join a game", Join.Show);
         NavItem(left, "Piece studio", Packs.Show);
         if (HasWorkshop) NavItem(left, "Steam Workshop", Workshop.Show);
+        var help = NavItem(left, "Help", () => GuideReader.Show(_main), page: false);
+        help.Shortcut = new Shortcut { Events = new Godot.Collections.Array { new InputEventKey { Keycode = Key.F1 } } };
+        help.TooltipText = "The guides (F1)";
         NavItem(left, "Settings", SettingsPage.Show);
         NavItem(left, "Quit", _main.QuitApp);
     }
@@ -184,7 +187,7 @@ sealed class TitleScreen
         left.AddChild(ver);
     }
 
-    void NavItem(VBoxContainer col, string text, Action open)
+    Button NavItem(VBoxContainer col, string text, Action open, bool page = true)
     {
         var b =
             new Button { Text = text, Flat = false, Alignment = HorizontalAlignment.Left, FocusMode = Control.FocusModeEnum.None, ToggleMode = true, CustomMinimumSize = new Vector2(264, 42),
@@ -201,9 +204,15 @@ sealed class TitleScreen
         b.AddThemeStyleboxOverride("pressed", Item(0.10f));
         b.AddThemeStyleboxOverride("hover_pressed", Item(0.12f));
         int idx = _nav.Count;
-        b.Pressed += () => { Select(idx); open(); };
+        b.Pressed += () =>
+        {
+            if (page) Select(idx);
+            else b.SetPressedNoSignal(false);
+            open();
+        };
         _nav.Add(b);
         col.AddChild(b);
+        return b;
     }
 
     public void Select(int i)
