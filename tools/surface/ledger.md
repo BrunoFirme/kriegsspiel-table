@@ -44,7 +44,7 @@ the plan says translate it), unknown (nobody has decided).
 | `Die_6_Rounded` | 7 / 4 | native | the app's d6, showing the face it was saved on | DiceTests |
 | `Die_6` | 27 / 3 | native | the app's d6, showing the face it was saved on | DiceTests |
 | `BlockTriangle` | 9 / 3 | native | a triangular prism lying on a side, 1.414 x 1 x 0.707 as in the tabletop's own prefab, tinted like the other blocks | TriangleBlockTests |
-| `Tileset_Tree` | 119 / 1 | dropped | the tabletop's own art is never extracted |  |
+| `Tileset_Tree` | 119 / 1 | native | a tree of Firme's Effects and Props at the stock tree's crown size (3.62 across, measured from the tabletop's prefab, never copied) | BagBoxTests |
 | `Card` | 82 / 1 | native | converter |  |
 | `Checker_white` | 17 / 1 | native | converter |  |
 | `Figurine_Custom` | 16 / 1 | dropped | a standing picture; no module in the roster has one |  |
@@ -201,7 +201,7 @@ the plan says translate it), unknown (nobody has decided).
 | `CustomMeshState.NormalURL` | 232 / 3 | native | converter reads it |  |
 | `CustomShaderState.FresnelStrength` | 216 / 3 | dropped | specular shader settings |  |
 | `CustomShaderState.SpecularSharpness` | 153 / 3 | dropped | specular shader settings |  |
-| `ColourState.a` | 22 / 3 | native | a tint's alpha: under 1 the piece is drawn see-through, its face, sides and model, as the tabletop switches to its transparent shader; the movable text tool's helper saved at 0 stays invisible under its words | ConverterTests |
+| `ColourState.a` | 22 / 3 | native | a tint's alpha: under 1 the piece is drawn see-through, its face, sides and model, as the tabletop switches to its transparent shader; the movable text tool's helper saved at 0 stays invisible under its words | TableTopTests |
 | `ObjectState.MeasureMovement` | 15 / 3 | native | the piece option Shows how far it is moved: a line and the distance from where it was picked up while it is held; self.measures_moves and set_measures_moves | ModuleOptionsTests |
 | `GridState.Type` | 3 / 3 | dropped | grid (decided 2026-11-06) |  |
 | `MusicPlayerState.RepeatSong` | 3 / 3 | dropped | music player |  |
@@ -218,7 +218,7 @@ the plan says translate it), unknown (nobody has decided).
 | `LightingState.ReflectionIntensity` | 1 / 1 | dropped | lighting (decided 2026-11-06) |  |
 | `ObjectState.IgnoreFoW` | 1 / 1 | dropped | hidden zones (decided 2026-11-06) |  |
 | `SaveState.DecalPallet` | 1 / 1 | dropped | the table's decal palette |  |
-| `SaveState.TableURL` | 1 / 1 | dropped | custom table picture |  |
+| `SaveState.TableURL` | 1 / 1 | dropped | the table's cloth or picture: the table is the tabletop's abstraction, its look only; no script in the 55 saves touches it (decided 2026-11-06) |  |
 | `BagState.Order` | - | dropped | the order a bag gives its pieces back in |  |
 | `CalculatorState.memory` | - | dropped | a stock gadget |  |
 | `CalculatorState.value` | - | dropped | a stock gadget |  |
@@ -418,7 +418,7 @@ the plan says translate it), unknown (nobody has decided).
 | `getTransformUp` | 13029 / 12 | compat | ObjectCall |  |
 | `setDecals` | 4343 / 12 | compat | ObjectCall |  |
 | `hasTag` | 150 / 12 | compat | ObjectCall |  |
-| `split` | 26 / 12 | stub | card dealing; no module calls it |  |
+| `split` | 26 / 12 | stub | card dealing; no module deals with it: the uses the scan counts are the modules' own string split helpers, which run as written (StringSplitTests) |  |
 | `setGMNotes` | 12 / 12 | compat | ObjectCall |  |
 | `highlightOff` | 154 / 10 | compat | ObjectCall |  |
 | `setPositionSmooth` | 51 / 10 | compat | ObjectCall |  |

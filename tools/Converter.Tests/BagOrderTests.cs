@@ -3,7 +3,7 @@ using KTable.Core.Model;
 
 namespace KTable.Converter.Tests;
 
-public sealed partial class ConverterTests
+public sealed partial class FidelityTests
 {
     static ModuleObj BagWithOrder(int? order)
     {

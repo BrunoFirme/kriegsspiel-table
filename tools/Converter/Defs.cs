@@ -30,6 +30,7 @@ public sealed class PackOut
 public sealed record DefResult(PieceDef Def, PackOut Pack, double Scale, int State, ModuleObj Base, ScriptInfo Script)
 {
     public string? FromPack { get; init; }
+    public double Fit { get; init; } = 1;
 }
 
 public sealed partial class DefFactory
@@ -239,7 +240,8 @@ public sealed partial class DefFactory
     {
         var (states, _) = o.StateList();
         var b = states[0];
-        return $"{b.Name}|{Entry(b.ImageUrl)?.Sha ?? b.ImageUrl}|{Entry(b.BackUrl)?.Sha ?? b.BackUrl}|{Entry(b.MeshUrl)?.Sha ?? b.MeshUrl}|{Entry(b.DiffuseUrl)?.Sha ?? b.DiffuseUrl}|{Entry(b.PdfUrl)?.Sha ?? b.PdfUrl}|{(b.Name.StartsWith("Block") ? b.Color : "")}{TableVisualKey(b)}";
+        var pdf = b.PdfUrl is { } url ? $"|pdf:{Entry(url)?.Sha ?? url}" : "";
+        return $"{b.Name}|{Entry(b.ImageUrl)?.Sha ?? b.ImageUrl}|{Entry(b.BackUrl)?.Sha ?? b.BackUrl}|{Entry(b.MeshUrl)?.Sha ?? b.MeshUrl}|{Entry(b.DiffuseUrl)?.Sha ?? b.DiffuseUrl}|{(b.Name.StartsWith("Block") ? Rgb(b.Color) : "")}{TableVisualKey(b)}{pdf}";
     }
 
     public const double BookThickness = 0.1;
@@ -248,6 +250,34 @@ public sealed partial class DefFactory
 
     public BundleModels Models => _models ??= BundleModels.Load(_cfg.Output);
     public BagBoxes Boxes => _boxes ??= BagBoxes.Load(_cfg.Output);
+
+    public const string TilesetTree = "Tileset_Tree";
+    const double TreeCrownAcross = 3.62;
+    const string TreeMissing = "Firme's Effects and Props is not installed here, so the module's trees were left out; open the app once and convert again for trees.";
+    bool _treeMissingNoted;
+    Dictionary<string, PieceDef>? _firme;
+
+    PieceDef? FirmeProp(string name)
+    {
+        if (_firme == null)
+        {
+            var path = Path.Combine(_cfg.Output, KTable.Client.Effects.EffectKinds.StandardPack, "pack.json");
+            _firme = File.Exists(path) ? Json.Load<PackManifest>(path).Pieces.Where(p => p.Kind == "model").ToDictionary(p => p.Id) : new();
+        }
+        return _firme.GetValueOrDefault($"{KTable.Client.Effects.EffectKinds.StandardPack}.{name}");
+    }
+
+    DefResult? TreeDef(ModuleObj o, ModuleObj b, PackOut pack, ScriptInfo script)
+    {
+        if (FirmeProp("tree") is not { Size.W: > 0 } tree)
+        {
+            if (!_treeMissingNoted) _rep.Note(TreeMissing);
+            _treeMissingNoted = true;
+            return null;
+        }
+        double fit = TreeCrownAcross / tree.Size.W;
+        return new DefResult(tree, pack, Math.Round(Math.Abs(o.ScaleX) * fit, 4), 0, b, script) { FromPack = KTable.Client.Effects.EffectKinds.StandardPack, Fit = fit };
+    }
     BagBoxes? _boxes;
     BundleModels? _models;
 
@@ -256,7 +286,7 @@ public sealed partial class DefFactory
 
     public const double NoScale = 1e-6, HiddenByScale = 0.1;
 
-    public bool Shows(ModuleObj o) => IsPiece(o) || ModelOfBundle(o) != null || o.StockSides != null;
+    public bool Shows(ModuleObj o) => IsPiece(o) || ModelOfBundle(o) != null || o.StockSides != null || o.Name == TilesetTree;
 
     DefResult? StandardDef(ModuleObj o, ModuleObj b, PackOut pack, double bs, double instScale)
     {
@@ -267,6 +297,7 @@ public sealed partial class DefFactory
             return new DefResult(die, pack, Math.Round(bs, 4), DieFace(o, die), b, script) { FromPack = StdDicePack };
         if (Boxes.For(o) is { } box)
             return new DefResult(box, pack, Math.Round(bs, 4), 0, b, script) { FromPack = KTable.Client.Effects.EffectKinds.StandardPack };
+        if (o.Name == TilesetTree) return TreeDef(o, b, pack, script);
         return null;
     }
 
@@ -280,6 +311,7 @@ public sealed partial class DefFactory
         double r = refScale is > NoScale ? refScale.Value : bs;
         double instScale = Math.Round(bs / r, 4);
         if (StandardDef(o, b, pack, bs, instScale) is { } standard) return standard;
+        if (o.Name == TilesetTree) return null;
         var where = $"{Context} {o.Name} '{o.Nickname}' {o.Guid}";
 
         var script = ScriptInfo.Parse(b.SafeLua.Length > 0 ? b.SafeLua : o.SafeLua, o.LuaState);

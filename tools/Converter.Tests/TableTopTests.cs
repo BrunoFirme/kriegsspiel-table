@@ -5,7 +5,7 @@ using SkiaSharp;
 
 namespace KTable.Converter.Tests;
 
-public sealed partial class ConverterTests
+public sealed partial class FidelityTests
 {
     const double Edge = 18, TopY = 10.48;
 

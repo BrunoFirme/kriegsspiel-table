@@ -322,6 +322,7 @@ public static class Props
     public static PropMade TateShields() => Maker.TateShields();
     public static PropMade CampCurtain() => Maker.CampCurtain();
     public static PropMade Box() => Maker.SmallBox();
+    public static PropMade Tree() => Maker.Tree();
     public static PropMade Chest() => Maker.Chest();
     public static PropMade Crate() => Maker.Crate();
 

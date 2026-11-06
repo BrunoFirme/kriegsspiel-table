@@ -9,17 +9,6 @@ public sealed partial class ConverterTests
 {
     static readonly SKColor[] Cells = { SKColors.Red, SKColors.Green, SKColors.Blue, SKColors.Yellow, SKColors.Cyan, SKColors.Magenta, SKColors.White, SKColors.Black };
 
-    void LocalPicture(Config cfg, string url, int w, int h, Func<int, int, SKColor> colour)
-    {
-        var images = Path.Combine(cfg.ModsPath, "Images");
-        Directory.CreateDirectory(images);
-        using var bmp = new SKBitmap(w, h);
-        for (int y = 0; y < h; y++)
-            for (int x = 0; x < w; x++) bmp.SetPixel(x, y, colour(x, y));
-        using var png = bmp.Encode(SKEncodedImageFormat.Png, 100);
-        File.WriteAllBytes(Path.Combine(images, AssetStore.Key(url) + ".png"), png.ToArray());
-    }
-
     static JsonObject Card(string nick, int sheet, int cell, string face, string back, int across, int down, double rotZ = 0) =>
         Obj("CardCustom", nick, 1, new JsonObject
         {

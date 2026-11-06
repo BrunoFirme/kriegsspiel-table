@@ -6,57 +6,8 @@ using KTable.Core.Model;
 
 namespace KTable.Converter.Tests;
 
-public sealed partial class ConverterTests : IDisposable
+public sealed partial class ConverterTests : ConverterHarness
 {
-    readonly string _root = Path.Combine(Path.GetTempPath(), "ktable-converter-tests", Guid.NewGuid().ToString("N"));
-
-    public void Dispose()
-    {
-        BestEffort.DeleteFolder(_root);
-    }
-
-    string Packages => Path.Combine(_root, "packages");
-
-    Config TempConfig()
-    {
-        var cfgPath = WriteConfig();
-        return Config.Load(cfgPath);
-    }
-
-    string WriteConfig(JsonArray? packs = null)
-    {
-        var cfg = JsonNode.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "converter.json")))!.AsObject();
-        if (packs != null) cfg["packs"] = packs;
-        cfg["modsPath"] = Path.Combine(_root, "modules", "Mods");
-        cfg["cachePath"] = Path.Combine(_root, "cache");
-        cfg["outputPath"] = Packages;
-        Directory.CreateDirectory(Path.Combine(_root, "modules", "Mods", "Workshop"));
-        var path = Path.Combine(_root, "converter.json");
-        File.WriteAllText(path, cfg.ToJsonString());
-        return path;
-    }
-
-    static JsonObject Obj(string type, string nick, double scale, JsonObject? extra = null)
-    {
-        var o = new JsonObject
-        {
-            ["Name"] = type, ["GUID"] = Guid.NewGuid().ToString("N")[..6], ["Nickname"] = nick, ["Description"] = "", ["GMNotes"] = "",
-            ["Transform"] = new JsonObject { ["posX"] = 0, ["posY"] = 1, ["posZ"] = 0, ["rotX"] = 0, ["rotY"] = 180, ["rotZ"] = 0, ["scaleX"] = scale, ["scaleY"] = 1, ["scaleZ"] = scale },
-            ["ColorDiffuse"] = new JsonObject { ["r"] = 0.5, ["g"] = 0.25, ["b"] = 0.75 },
-        };
-        if (extra != null) foreach (var (k, v) in extra) o[k] = v?.DeepClone();
-        return o;
-    }
-
-    string Module(string name, params JsonObject[] objects)
-    {
-        var save = new JsonObject { ["SaveName"] = name, ["LuaScript"] = "", ["LuaScriptState"] = "", ["ObjectStates"] = new JsonArray(objects.Select(o => (JsonNode)o).ToArray()) };
-        var path = Path.Combine(_root, "modules", name + ".json");
-        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-        File.WriteAllText(path, save.ToJsonString());
-        return path;
-    }
-
     List<string> IdsUnder(string culture, params JsonObject[] objects)
     {
         var was = CultureInfo.CurrentCulture;
@@ -534,10 +485,10 @@ public sealed partial class ConverterTests : IDisposable
     {
         static ModuleObj Prop(string type) => new(Obj(type, "", 1, new JsonObject()));
 
-        var why = DefFactory.NotTranslated(Prop("Tileset_Tree"));
+        var why = DefFactory.NotTranslated(Prop("Tileset_Wall"));
         Assert.NotNull(why);
-        Assert.StartsWith("Tileset_Tree (one of the digital tabletop's own props", why);
-        Assert.NotNull(DefFactory.NotTranslated(Prop("Tileset_Wall")));
+        Assert.StartsWith("Tileset_Wall (one of the digital tabletop's own props", why);
+        Assert.Null(DefFactory.NotTranslated(Prop(DefFactory.TilesetTree)));
         Assert.Null(DefFactory.NotTranslated(Prop("Custom_Model")));
 
         var report = new Report();

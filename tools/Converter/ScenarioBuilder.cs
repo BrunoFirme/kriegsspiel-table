@@ -466,7 +466,7 @@ public sealed class ScenarioBuilder
         var def = r.Def;
         string packId = r.FromPack ?? extras.M.Id;
         double scale = r.Scale, baseScale = r.Scale;
-        if (r.FromPack != null) scale = baseScale = Math.Round(absolute, 4);
+        if (r.FromPack != null) scale = baseScale = Math.Round(absolute * r.Fit, 4);
         if (Math.Abs(o.ScaleX) < DefFactory.NoScale)
         {
             scale = baseScale = DefFactory.HiddenByScale;

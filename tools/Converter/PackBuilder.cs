@@ -134,6 +134,7 @@ public sealed class PackBuilder
         if (o.StockSides != null) return;
         if (_cfg.IgnoreTypes.Contains(o.Name)) { _rep.Skipped(o.Name, where); return; }
         if (DefFactory.NotTranslated(o) is { } why) { _rep.Skipped(why, where); return; }
+        if (o.Name == DefFactory.TilesetTree) return;
         if (!DefFactory.IsPiece(o)) { _rep.UnknownType(o.Name, where); return; }
         if (o.IsFurniture) { _rep.Skipped("table furniture (custom table / surround / under the table)", where); return; }
         if (o.IsTerrain) { _rep.Skipped("3D terrain (laid as a map sheet of the scenario)", where); return; }

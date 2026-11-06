@@ -4,7 +4,7 @@ using KTable.Core.Model;
 
 namespace KTable.Converter.Tests;
 
-public sealed partial class ConverterTests
+public sealed partial class FidelityTests
 {
     [Fact]
     public void A_triangle_block_comes_over_as_a_tinted_prism_alone_or_on_another_block()

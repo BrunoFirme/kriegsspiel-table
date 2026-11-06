@@ -5,7 +5,7 @@ using KTable.Core.Model;
 
 namespace KTable.Converter.Tests;
 
-public sealed partial class ConverterTests
+public sealed partial class FidelityTests : ConverterHarness
 {
     static void InstallBoxes(string packages)
     {
@@ -71,4 +71,28 @@ public sealed partial class ConverterTests
         var own = table.Packs.Where(p => p.StartsWith("tts.stores")).SelectMany(p => Json.Load<PackManifest>(Path.Combine(Packages, p, "pack.json")).Pieces);
         Assert.DoesNotContain(own, d => d.Tags.Contains("bag"));
     }
+
+    [Fact]
+    public void The_tabletop_s_own_tree_comes_over_as_Firme_s_tree_at_its_crown_size_and_is_left_out_with_a_note_without_it()
+    {
+        TempConfig();
+        var main = typeof(Config).Assembly.EntryPoint!;
+        int Import(string name) => (int)main.Invoke(null, new object[]
+        {
+            new[] { "import", Module(name, Obj("Tileset_Tree", "Oak", 1.5, new JsonObject())), "--config", Path.Combine(_root, "converter.json"), "--out", Packages },
+        })!;
+
+        Assert.Equal(0, Import("bare"));
+        Assert.Empty(Json.Load<Scenario>(Path.Combine(Packages, "scenarios", "bare", "scenario.json")).UmpireBoard);
+        Assert.Contains("left out", File.ReadAllText(Path.Combine(Packages, "scenarios", "bare", "import-report.md")));
+
+        InstallBoxes(Packages);
+        var pack = Json.Load<PackManifest>(Path.Combine(Packages, EffectKinds.StandardPack, "pack.json"));
+        pack.Pieces.Add(new PieceDef { Id = EffectKinds.StandardPack + ".tree", Name = "Tree", Kind = "model", Size = new Size2(3.62 / 2, 3.4 / 2), Thickness = 1.25, Tags = new() { "prop" } });
+        Json.Save(Path.Combine(Packages, EffectKinds.StandardPack, "pack.json"), pack);
+        Assert.Equal(0, Import("grove"));
+        var oak = Assert.Single(Json.Load<Scenario>(Path.Combine(Packages, "scenarios", "grove", "scenario.json")).UmpireBoard);
+        Assert.Equal((EffectKinds.StandardPack + ".tree", 3.0, "Oak"), (oak.Def, oak.Scale, oak.Label));
+    }
 }
+

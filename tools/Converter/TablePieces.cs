@@ -31,17 +31,21 @@ public sealed partial class DefFactory
     public static string? NotTranslated(ModuleObj o) =>
         o.IsCard && o.Sheet == null ? o.Name + " (the digital tabletop's own playing cards, which have no picture in the module)"
         : o.Name == "Custom_Dice" && !o.IsPictureDie && o.StockSides == null ? o.Name + " (a die of a kind the app has not got)"
-        : o.Name.StartsWith(StockTilesetPrefix, StringComparison.Ordinal)
+        : o.Name.StartsWith(StockTilesetPrefix, StringComparison.Ordinal) && o.Name != TilesetTree
             ? o.Name + " (one of the digital tabletop's own props: its model ships with the game and is not ours to copy, so paint the ground there or put a piece of your own on it)"
         : null;
 
     static string? TableVisualKey(ModuleObj b) =>
         b.IsCard && b.Sheet is { } s ? $"|card|{s.FaceUrl}#{b.SheetCell}|{s.BackUrl}|{s.Across}x{s.Down}|{s.UniqueBack}"
-        : b.IsChecker ? $"|{b.Color}"
-        : b.Name == "Bag" ? $"|bag|{b.Color}|{b.Nickname}"
-        : b.Name == "PlayerPawn" ? $"|pawn|{b.Color}"
-        : b.IsPictureDie ? $"|die{b.DieSides}"
+        : b.IsChecker ? $"|{Rgb(b.Color)}"
+        : b.Name == "Bag" ? $"|bag|{Rgb(b.Color)}|{b.Nickname}"
+        : b.Name == "PlayerPawn" ? $"|pawn|{Rgb(b.Color)}"
+        : b.IsPictureDie && b.DieSides != PictureD6 ? $"|die{b.DieSides}"
         : null;
+
+    const int RgbHex = 7;
+
+    static string? Rgb(string? colour) => colour is { Length: > RgbHex } ? colour[..RgbHex] : colour;
 
     void FillTablePiece(PieceDef def, ModuleObj b, PackOut pack, string where)
     {

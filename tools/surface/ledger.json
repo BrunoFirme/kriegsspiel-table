@@ -209,10 +209,10 @@
   },
   {
    "row": "Tileset_Tree",
-   "status": "dropped",
-   "where": "the tabletop's own art is never extracted",
-   "instead": "paint the ground where it stood, or place a tree of our own",
-   "held_by": "",
+   "status": "native",
+   "where": "a tree of Firme's Effects and Props at the stock tree's crown size (3.62 across, measured from the tabletop's prefab, never copied)",
+   "instead": "",
+   "held_by": "BagBoxTests",
    "count": 119,
    "modules": 1
   },
@@ -1582,7 +1582,7 @@
    "status": "native",
    "where": "a tint's alpha: under 1 the piece is drawn see-through, its face, sides and model, as the tabletop switches to its transparent shader; the movable text tool's helper saved at 0 stays invisible under its words",
    "instead": "",
-   "held_by": "ConverterTests",
+   "held_by": "TableTopTests",
    "count": 22,
    "modules": 3
   },
@@ -1733,8 +1733,8 @@
   {
    "row": "SaveState.TableURL",
    "status": "dropped",
-   "where": "custom table picture",
-   "instead": "the backdrop and the table's shade",
+   "where": "the table's cloth or picture: the table is the tabletop's abstraction, its look only; no script in the 55 saves touches it (decided 2026-11-06)",
+   "instead": "the app's own table",
    "held_by": "",
    "count": 1,
    "modules": 1
@@ -3490,7 +3490,7 @@
   {
    "row": "split",
    "status": "stub",
-   "where": "card dealing; no module calls it",
+   "where": "card dealing; no module deals with it: the uses the scan counts are the modules' own string split helpers, which run as written (StringSplitTests)",
    "instead": "take cards out of the holder",
    "held_by": "",
    "count": 26,
