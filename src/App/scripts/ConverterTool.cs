@@ -44,7 +44,7 @@ public static class ConverterTool
         return folders.Select(f => Path.Combine(f, ExeName)).FirstOrDefault(File.Exists);
     }
 
-    static string ExeName => OperatingSystem.IsWindows() ? "Converter.exe" : "Converter";
+    internal static string ExeName => OperatingSystem.IsWindows() ? "Converter.exe" : "Converter";
 
     public static ConverterRun? Run(IEnumerable<string> args, Action<string> onLine, Action<int> onExit, string? writesTo = null, IDisposable? hold = null)
     {

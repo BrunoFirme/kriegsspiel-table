@@ -136,10 +136,36 @@ sealed class UpdateOffer
         Show();
     }
 
+    static bool RunsFrom(Process p, string exe)
+    {
+        try { return p.MainModule is { FileName: { } from } && string.Equals(Path.GetFullPath(from), Path.GetFullPath(exe), StringComparison.OrdinalIgnoreCase); }
+        catch (Exception e) when (e is System.ComponentModel.Win32Exception or InvalidOperationException or NotSupportedException) { return false; }
+    }
+
+    static string? HoldingTheFolder()
+    {
+        if (ConverterTool.Running) return "An import is still running: let it finish, then Install.";
+        var helper = Path.Combine(ExeDir, "converter", ConverterTool.ExeName);
+        if (!File.Exists(helper)) return null;
+        foreach (var other in Process.GetProcessesByName(Path.GetFileNameWithoutExtension(helper)))
+        {
+            using var _ = other;
+            if (RunsFrom(other, helper)) return "An AI agent's helper is still running: close the program you connected, then Install.";
+        }
+        return null;
+    }
+
     void Install(string file)
     {
+        if (HoldingTheFolder() is { } held)
+        {
+            GD.PrintErr("[update] not installing: " + held);
+            _failed = held;
+            Show();
+            return;
+        }
         var start = new ProcessStartInfo(file) { UseShellExecute = false };
-        foreach (var arg in new[] { "/SILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/RELAUNCH=1", $"/DIR={ExeDir}" }) start.ArgumentList.Add(arg);
+        foreach (var arg in new[] { "/SILENT", "/NORESTART", "/RELAUNCH=1", $"/DIR={ExeDir}" }) start.ArgumentList.Add(arg);
         try { using var _ = Process.Start(start); }
         catch (Exception e) when (e is System.ComponentModel.Win32Exception or IOException or InvalidOperationException)
         {

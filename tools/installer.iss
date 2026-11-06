@@ -62,7 +62,77 @@ Filename: "{app}\KriegsspielTable.exe"; Description: "Open Kriegsspiel Table"; F
 Filename: "{app}\KriegsspielTable.exe"; Flags: nowait; Check: RelaunchAsked
 
 [Code]
+const
+  TriesWhileHeld = 40;
+  WaitBetweenTries = 500;
+
 function RelaunchAsked: Boolean;
 begin
   Result := ExpandConstant('{param:relaunch|0}') = '1';
+end;
+
+function CanBeReplaced(const Path: String): Boolean;
+var
+  Spare: String;
+begin
+  if not (FileExists(Path) or DirExists(Path)) then
+  begin
+    Result := True;
+    Exit;
+  end;
+  Spare := Path + '.replacing';
+  if RenameFile(Path, Spare) then Result := RenameFile(Spare, Path)
+  else Result := False;
+end;
+
+function HeldInTheFolder: String;
+var
+  Folders: TArrayOfString;
+  Found: TFindRec;
+  App: String;
+  I: Integer;
+begin
+  Result := '';
+  App := ExpandConstant('{app}') + '\';
+  SetArrayLength(Folders, 5);
+  Folders[0] := 'converter';
+  Folders[1] := 'standard';
+  Folders[2] := 'backdrops';
+  Folders[3] := 'docs';
+  Folders[4] := 'native';
+  for I := 0 to GetArrayLength(Folders) - 1 do
+    if not CanBeReplaced(App + Folders[I]) then
+    begin
+      Result := Folders[I];
+      Exit;
+    end;
+  if FindFirst(App + 'data_*', Found) then
+  try
+    repeat
+      if not CanBeReplaced(App + Found.Name) then
+      begin
+        Result := Found.Name;
+        Exit;
+      end;
+    until not FindNext(Found);
+  finally
+    FindClose(Found);
+  end;
+end;
+
+function PrepareToInstall(var NeedsRestart: Boolean): String;
+var
+  Held: String;
+  I: Integer;
+begin
+  Held := HeldInTheFolder;
+  for I := 1 to TriesWhileHeld do
+  begin
+    if Held = '' then Break;
+    Sleep(WaitBetweenTries);
+    Held := HeldInTheFolder;
+  end;
+  if Held = '' then Result := ''
+  else Result := 'Another program is using ' + Held + ' in ' + ExpandConstant('{app}') + '.'
+    + #13#10 + 'Close it and run this installer again. Nothing has been changed, and the version you have still works.';
 end;
