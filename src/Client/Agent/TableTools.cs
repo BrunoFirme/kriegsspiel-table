@@ -72,6 +72,13 @@ public sealed partial class TableTools
             Args.Schema(new Arg("id", "string", "the piece's id", true), new Arg("label", "string", "its own name; empty clears it"), new Arg("note", "string", "the umpires' note on it; empty clears it"),
                 new Arg("kind", "string", "another kind's id (list_kinds) to turn it into, keeping its place"), new Arg("state", "number", "look number from 1"),
                 new Arg("counters", "object", "counter name to a whole number"), new Arg("text", "object", "text line name to its text")), SetValues);
+        yield return new AgentTool("stow_pieces",
+            "Puts pieces away inside another piece, off the table, as a bag holds them in Tabletop Simulator; unstow_piece brings one back. One undoable change.",
+            Args.Schema(new Arg("holder", "string", "the id of the piece that will hold them", true), new Arg("ids", "array", "the ids of the pieces to put in", true)), StowPieces);
+        yield return new AgentTool("unstow_piece",
+            "Takes a held piece out of the piece holding it and puts it on the table, beside the holder or at x, z; read_piece on the holder lists what it holds under stowed.",
+            Args.Schema(new Arg("holder", "string", "the holding piece's id", true), new Arg("id", "string", "the held piece's id or name; leave out for the first held"),
+                new Arg("x", "number", "map units"), new Arg("z", "number", "map units"), new Arg("turn", "number", "degrees")), UnstowPiece);
         yield return new AgentTool("delete_piece",
             "Takes a piece off the table. Undoable.",
             Args.Schema(new Arg("id", "string", "the piece's id", true)), DeletePiece);
@@ -204,6 +211,43 @@ public sealed partial class TableTools
         return new ToolResult($"Took {NameOf(s, p)} off the table (undo brings it back).");
     }
 
+    async Task<ToolResult> StowPieces(JsonElement a)
+    {
+        if (Open(out var why) is not { } s) return why!;
+        if (!CanChange(s, out why)) return why!;
+        var holder = a.Str("holder") ?? "";
+        if (s.View.Find(Layers.Umpire, holder) is not { } h) return ToolResult.Fail($"No piece {holder} on this table.");
+        var given = a.TryGetProperty("ids", out var arr) && arr.ValueKind == JsonValueKind.Array ? arr.EnumerateArray().Select(e => e.GetString() ?? "") : [];
+        var ids = given.Where(id => id.Length > 0 && id != holder).ToList();
+        var found = ids.Where(id => s.View.Find(Layers.Umpire, id) != null).ToList();
+        if (found.Count == 0) return ToolResult.Fail("ids names no piece on this table.");
+        s.Do(new Batch { Items = found.Select(id => (Command)new Stow { Layer = Layers.Umpire, Holder = holder, Id = id }).ToList() });
+        await Until(() => found.All(id => s.View.Find(Layers.Umpire, id) == null), 3);
+        var lost = ids.Except(found).ToList();
+        _log($"put {found.Count} piece{(found.Count > 1 ? "s" : "")} into {NameOf(s, h)} ({holder})");
+        var missed = lost.Count > 0 ? $" No such piece: {string.Join(", ", lost)}." : "";
+        return new ToolResult($"{NameOf(s, h)} holds {h.Stowed?.Count ?? found.Count} now.{missed}");
+    }
+
+    async Task<ToolResult> UnstowPiece(JsonElement a)
+    {
+        if (Open(out var why) is not { } s) return why!;
+        if (!CanChange(s, out why)) return why!;
+        var holder = a.Str("holder") ?? "";
+        if (s.View.Find(Layers.Umpire, holder) is not { } h) return ToolResult.Fail($"No piece {holder} on this table.");
+        if (h.Stowed is not { Count: > 0 } held) return ToolResult.Fail($"{NameOf(s, h)} holds nothing.");
+        var which = a.Str("id")?.Trim() ?? "";
+        var target = which.Length == 0 ? held[0] : held.FirstOrDefault(p => p.Id == which) ?? held.FirstOrDefault(p => string.Equals(NameOf(s, p), which, StringComparison.OrdinalIgnoreCase));
+        if (target == null) return ToolResult.Fail($"{NameOf(s, h)} holds no {which}; read_piece {holder} lists what it holds.");
+        var cmd = new Unstow { Layer = Layers.Umpire, Holder = holder, Id = target.Id, RotDeg = a.Num("turn") };
+        if (a.Num("x") is { } x && a.Num("z") is { } z) cmd.Pos = new Vec2(x, z);
+        s.Do(cmd);
+        await Until(() => s.View.Find(Layers.Umpire, target.Id) != null, 3);
+        var p = s.View.Find(Layers.Umpire, target.Id);
+        _log($"took {NameOf(s, target)} ({target.Id}) out of {NameOf(s, h)}");
+        return new ToolResult(p == null ? $"{NameOf(s, target)} did not come out." : $"{NameOf(s, target)} ({target.Id}) is on the table at {Math.Round(p.Pos.X, 2)}, {Math.Round(p.Pos.Z, 2)}.");
+    }
+
     async Task<ToolResult> Undo(JsonElement a)
     {
         if (Open(out var why) is not { } s) return why!;
@@ -245,6 +289,7 @@ public sealed partial class TableTools
                     ["id"] = p.Id, ["name"] = name, ["kind"] = p.Def, ["layer"] = layer,
                     ["x"] = Math.Round(p.Pos.X, 3), ["z"] = Math.Round(p.Pos.Z, 3), ["turn"] = Math.Round(p.RotDeg, 1),
                     ["script"] = p.Script != null ? "own" : s.Def(p.Def)?.Script is { Length: > 0 } ? "kind" : null,
+                    ["holds"] = p.Stowed is { Count: > 0 } held ? held.Count : null,
                 });
             }
         var head = total > limit ? $"{limit} of {total} pieces (raise limit or filter for the rest)" : $"{total} pieces";

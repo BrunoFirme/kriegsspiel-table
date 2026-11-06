@@ -538,6 +538,7 @@ public partial class PieceNode : Node3D
             && !string.Equals(st, title, StringComparison.OrdinalIgnoreCase))
             parts.Add(st);
         if (Piece.Note is { Length: > 0 } note) parts.Add(note.Trim());
+        if (Piece.Stowed is { Count: > 0 } held) parts.Add($"holds {held.Count}");
         return string.Join("\n", parts);
     }
 

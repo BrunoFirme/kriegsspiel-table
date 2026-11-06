@@ -283,6 +283,24 @@ public class TableToolsTests
     }
 
     [Fact]
+    public async Task Pieces_are_put_into_another_and_taken_out_again()
+    {
+        var put = await Call("stow_pieces", new { holder = "p-1", ids = new[] { "p-2", "p-9" } });
+        Assert.False(put.IsError, put.Text);
+        Assert.Contains("holds 1 now", put.Text);
+        Assert.Contains("No such piece: p-9", put.Text);
+        Assert.Null(_s.View.Find(Layers.Umpire, "p-2"));
+        Assert.Contains("\"holds\": 1", (await Call("list_pieces", new { })).Text);
+        var none = await Call("unstow_piece", new { holder = "p-1", id = "nobody" });
+        Assert.True(none.IsError);
+        var back = await Call("unstow_piece", new { holder = "p-1", x = 4, z = 5, turn = 90 });
+        Assert.False(back.IsError, back.Text);
+        var p = _s.View.Find(Layers.Umpire, "p-2")!;
+        Assert.Equal((new Vec2(4, 5), 90.0), (p.Pos, p.RotDeg));
+        Assert.Null(_s.View.Find(Layers.Umpire, "p-1")!.Stowed);
+    }
+
+    [Fact]
     public async Task A_script_written_runs_and_its_prints_come_back()
     {
         var r = await Call("write_script", new { id = "p-1", text = "function on_load() print('ready ' .. self.name) end\n" });
