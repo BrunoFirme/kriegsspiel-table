@@ -66,7 +66,7 @@ try
             if (cmd == "import") Progress.Stage("read");
             var save = TtsSave.Load(cfg, file);
             foreach (var u in Surface.NotExact(save)) report.NotExact(u.Row, u.Count);
-            var plan = ImportPlan.Of(save, name, slugArg, id => PackOwner(cfg.Output, id));
+            var plan = ImportPlan.Of(save, name, slugArg, id => PackOwner(cfg.Output, id), workshopId => PackOfModule(cfg.Output, workshopId));
             if (cmd == "plan")
             {
                 foreach (var p in plan.Packs) Console.WriteLine($"PLAN pack {p}");
@@ -234,6 +234,15 @@ static string? Take(List<string> a, string name)
 
 static long FolderBytes(string dir) => KTable.Core.BestEffort.Read(() =>
     Directory.Exists(dir) ? new DirectoryInfo(dir).EnumerateFiles("*", SearchOption.AllDirectories).Sum(f => f.Length) : 0L, fallback: 0L);
+
+static string? PackOfModule(string root, string workshopId)
+{
+    if (!Directory.Exists(root)) return null;
+    return Directory.EnumerateDirectories(root).Select(Path.GetFileName).OfType<string>()
+        .Where(id => id.StartsWith(ImportPlan.TtsPrefix, StringComparison.Ordinal) && !id.EndsWith(".extras", StringComparison.Ordinal))
+        .OrderBy(id => id, StringComparer.Ordinal)
+        .FirstOrDefault(id => PackOwner(root, id) == workshopId);
+}
 
 static string? PackOwner(string root, string packId)
 {

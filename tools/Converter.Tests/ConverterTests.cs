@@ -168,6 +168,20 @@ public sealed partial class ConverterTests : IDisposable
     }
 
     [Fact]
+    public void A_module_imported_again_under_another_name_replaces_its_own_pack_and_scenario()
+    {
+        var here = new Dictionary<string, string> { ["tts.battle-lines"] = "3357570231" };
+        string? Owner(string id) => here.GetValueOrDefault(id);
+        string? PackOf(string workshopId) => here.FirstOrDefault(kv => kv.Value == workshopId).Key;
+        var byTitle = ImportPlan.Of(new TtsSave { SaveName = "Battle Lines", WorkshopId = "3357570231" }, "Battle Lines: Scripted Kriegsspiel Pieces", null, Owner, PackOf);
+        Assert.Equal(("tts.battle-lines", "battle-lines", "Battle Lines: Scripted Kriegsspiel Pieces", null), (byTitle.Packs[0], byTitle.Scenario, byTitle.Name, byTitle.Taken));
+        var other = ImportPlan.Of(new TtsSave { SaveName = "Battle Lines", WorkshopId = "1111111111" }, null, null, Owner, PackOf);
+        Assert.Equal(("tts.battle-lines-1111111111", "tts.battle-lines"), (other.Packs[0], other.Taken));
+        var chosen = ImportPlan.Of(new TtsSave { SaveName = "Battle Lines", WorkshopId = "3357570231" }, null, "lines-2", Owner, PackOf);
+        Assert.Equal("tts.lines-2", chosen.Packs[0]);
+    }
+
+    [Fact]
     public void A_piece_the_module_scales_by_something_that_is_not_a_number_still_comes_over_and_can_be_written()
     {
         var o = new TtsObj(new JsonObject

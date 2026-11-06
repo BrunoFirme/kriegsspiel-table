@@ -4,7 +4,9 @@ public sealed record ImportPlan(bool Restore, string Name, IReadOnlyList<string>
 {
     const int MostOfTheSameName = 99;
 
-    public static ImportPlan Of(TtsSave save, string? name, string? slugArg, Func<string, string?>? packOwner = null)
+    public const string TtsPrefix = "tts.";
+
+    public static ImportPlan Of(TtsSave save, string? name, string? slugArg, Func<string, string?>? packOwner = null, Func<string, string?>? packOfModule = null)
     {
         if (KtMarker.Find(save) is { } shared)
         {
@@ -14,12 +16,14 @@ public sealed record ImportPlan(bool Restore, string Name, IReadOnlyList<string>
         name ??= save.SaveName;
         var slug = DefFactory.Slug(slugArg ?? name);
         string? taken = null;
-        if (slugArg == null && packOwner != null && MarkFor(packOwner, "tts." + slug, save.WorkshopId) is { } mark)
+        var mine = slugArg == null && save.WorkshopId.Length > 0 ? packOfModule?.Invoke(save.WorkshopId) : null;
+        if (mine != null && mine.StartsWith(TtsPrefix, StringComparison.Ordinal)) slug = mine[TtsPrefix.Length..];
+        else if (slugArg == null && packOwner != null && MarkFor(packOwner, TtsPrefix + slug, save.WorkshopId) is { } mark)
         {
-            taken = "tts." + slug;
+            taken = TtsPrefix + slug;
             slug = $"{slug}-{mark}";
         }
-        var packId = "tts." + slug;
+        var packId = TtsPrefix + slug;
         return new ImportPlan(false, name, new[] { packId, packId + ".extras" }, slug, taken);
     }
 
