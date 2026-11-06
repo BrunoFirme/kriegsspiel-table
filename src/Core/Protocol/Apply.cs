@@ -25,8 +25,7 @@ public static class StateMachine
             case SetPieceOption po: return ApplySetPieceOption(g, po, ref inverse);
             case FlipPiece fp: return ApplyFlip(g, fp, ref inverse);
             case SetScale sz: return ApplySetScale(g, sz, ref inverse);
-            case Attach a: return ApplyAttach(g, a, ref inverse);
-            case Detach dt: return ApplyDetach(g, dt, ref inverse);
+            case Attach or Detach or Stow or Unstow: return ApplyCarrying(g, c, ref inverse);
             case AddSheet ash: return ApplyAddSheet(g, ash, ref inverse);
             case MoveSheet ms: return ApplyMoveSheet(g, ms, ref inverse);
             case SetVisionRadius sv: return ApplySetVisionRadius(g, sv, ref inverse);
@@ -340,6 +339,94 @@ public static class StateMachine
         parent.Attached!.Remove(dt.Child);
         inverse = new Attach { Layer = dt.Layer, Parent = parent.Id, Child = dt.Child };
         return null;
+    }
+
+    static string? ApplyCarrying(GameState g, Command c, ref Command? inverse) => c switch
+    {
+        Attach a => ApplyAttach(g, a, ref inverse),
+        Detach dt => ApplyDetach(g, dt, ref inverse),
+        Stow sw => ApplyStow(g, sw, ref inverse),
+        Unstow us => ApplyUnstow(g, us, ref inverse),
+        _ => "unknown command",
+    };
+
+    const double TakenOutBeside = 2;
+
+    static List<PieceInstance> Carried(GameState g, string layer, PieceInstance carrier)
+    {
+        var found = new List<PieceInstance>();
+        var todo = new Stack<PieceInstance>();
+        todo.Push(carrier);
+        while (todo.Count > 0)
+            foreach (var cid in todo.Pop().Attached ?? [])
+                if (g.Find(layer, cid) is { } next && !found.Contains(next)) { found.Add(next); todo.Push(next); }
+        return found;
+    }
+
+    static string? ApplyStow(GameState g, Stow s, ref Command? inverse)
+    {
+        var layer = g.Layer(s.Layer);
+        var holder = g.Find(s.Layer, s.Holder);
+        var p = g.Find(s.Layer, s.Id);
+        if (holder == null || p == null || s.Holder == s.Id) return "no such piece";
+        if (Carries(g, s.Layer, p, s.Holder)) return "a piece cannot hold one it rides on";
+        int at = layer.IndexOf(p);
+        var previous = layer.FirstOrDefault(o => o.Attached?.Contains(s.Id) == true);
+        var carried = Carried(g, s.Layer, p);
+        foreach (var o in layer) o.Attached?.Remove(s.Id);
+        layer.Remove(p);
+        foreach (var c in carried) layer.Remove(c);
+        holder.Stowed ??= new();
+        PutBack(holder.Stowed, p, s.Slot);
+        holder.Stowed.AddRange(carried);
+        var back = new Unstow { Layer = s.Layer, Holder = s.Holder, Id = s.Id, Pos = p.Pos, RotDeg = p.RotDeg, Index = at };
+        inverse = previous == null ? back : new Batch { Items = new() { back, new Attach { Layer = s.Layer, Parent = previous.Id, Child = s.Id } } };
+        return null;
+    }
+
+    static string? ApplyUnstow(GameState g, Unstow u, ref Command? inverse)
+    {
+        var layer = g.Layer(u.Layer);
+        var holder = g.Find(u.Layer, u.Holder);
+        if (holder?.Stowed is not { Count: > 0 } stowed) return "nothing stowed there";
+        var p = u.Id.Length == 0 ? stowed[0] : stowed.FirstOrDefault(x => x.Id == u.Id);
+        if (p == null) return "not stowed there";
+        if (layer.Any(x => x.Id == p.Id)) return "duplicate id";
+        int slot = stowed.IndexOf(p);
+        var carried = stowed.Where(x => x != p && CarriedWithin(p, x.Id, stowed)).ToList();
+        var pos = u.Pos ?? new Vec2(holder.Pos.X + TakenOutBeside, holder.Pos.Z);
+        var delta = new Vec2(pos.X - p.Pos.X, pos.Z - p.Pos.Z);
+        stowed.Remove(p);
+        foreach (var c in carried) stowed.Remove(c);
+        if (stowed.Count == 0) holder.Stowed = null;
+        p.Pos = pos;
+        if (u.RotDeg is { } r) p.RotDeg = Norm(r);
+        p.Y = 0;
+        p.Stack = 0;
+        PutBack(layer, p, u.Index);
+        BumpId(g, p.Id);
+        foreach (var c in carried)
+        {
+            c.Pos = new Vec2(c.Pos.X + delta.X, c.Pos.Z + delta.Z);
+            layer.Add(c);
+            BumpId(g, c.Id);
+        }
+        inverse = new Stow { Layer = u.Layer, Holder = u.Holder, Id = p.Id, Slot = slot };
+        return null;
+    }
+
+    static bool CarriedWithin(PieceInstance carrier, string id, List<PieceInstance> among)
+    {
+        var seen = new HashSet<string>();
+        var todo = new Stack<PieceInstance>();
+        todo.Push(carrier);
+        while (todo.Count > 0)
+            foreach (var cid in todo.Pop().Attached ?? [])
+            {
+                if (cid == id) return true;
+                if (seen.Add(cid) && among.FirstOrDefault(x => x.Id == cid) is { } next) todo.Push(next);
+            }
+        return false;
     }
 
     static string? ApplyAddSheet(GameState g, AddSheet ash, ref Command? inverse)

@@ -31,6 +31,8 @@ public class RoleAndJoinTests
         yield return new AddPack { Id = "user.bobs-pieces" };
         yield return new Attach { Layer = layer, Parent = "p-000004", Child = "p-000002" };
         yield return new Detach { Layer = layer, Child = "p-000002" };
+        yield return new Stow { Layer = layer, Holder = "p-000004", Id = "p-000002" };
+        yield return new Unstow { Layer = layer, Holder = "p-000004", Id = "p-000002", Pos = new(1, 1) };
         yield return new Draw { Layer = layer, Stroke = new Stroke { Points = { new(0, 0) } } };
         yield return new EraseStroke { Layer = layer, StrokeId = "d-000005" };
         yield return new AddSheet { Sheet = new SheetDef { Name = "new" } };

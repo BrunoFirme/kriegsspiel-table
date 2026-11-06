@@ -159,8 +159,10 @@ type Command abstract
   derived SetZone = SetZone
   derived ShowDialog = ShowDialog
   derived SpawnPiece = SpawnPiece
+  derived Stow = Stow
   derived UiEvent = UiEvent
   derived Undo = Undo
+  derived Unstow = Unstow
   actor: long
   at: long
   seq: long
@@ -588,6 +590,7 @@ type PieceInstance object
   scriptState: string
   stack: int
   state: int
+  stowed: List<PieceInstance>
   tags: List<string>
   text: Dictionary<string,string>
   tintOverride: string
@@ -1087,6 +1090,15 @@ type SpawnPiece object
   tags: List<string>
   undoOf: long
   y: double
+type Stow object
+  actor: long
+  at: long
+  holder: string
+  id: string
+  layer: string
+  seq: long
+  slot: int?
+  undoOf: long
 type Stroke object
   board: string
   color: string
@@ -1140,6 +1152,17 @@ type Undo object
   at: long
   seq: long
   targetSeq: long
+  undoOf: long
+type Unstow object
+  actor: long
+  at: long
+  holder: string
+  id: string
+  index: int?
+  layer: string
+  pos: Vec2?
+  rotDeg: double?
+  seq: long
   undoOf: long
 type UploadAsset object
   offset: long

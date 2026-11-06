@@ -149,6 +149,7 @@
 ---@field lines Line[] The lines set_lines drew round it.
 ---@field decals Decal[] The pictures on its faces: the ones its look carries, or those set_decals put there.
 ---@field exists boolean False once the piece is gone (its other fields are nil then).
+---@field stowed list The pieces it holds off the table, first in first: { id =, name =, guid =, def =, held = }, held being how many that piece holds in turn.
 local Piece = {}
 
 ---Sets the label under the piece; nil takes it away.
@@ -245,6 +246,12 @@ function Piece.attach(piece) end
 
 ---Takes this piece off the one it rides on.
 function Piece.detach() end
+
+---Takes another piece off the table into this one, with whatever rides on it; a piece this one rides on is refused.
+function Piece.stow() end
+
+---Puts a held piece back on the table and returns it: which is its id, guid, its number in stowed, or nothing for the first; place is { x =, z = } or a piece, else beside this one; rot turns it.
+function Piece.unstow() end
 
 ---Takes the piece off the table (on_destroy runs first).
 function Piece.delete() end

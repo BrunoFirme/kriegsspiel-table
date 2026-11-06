@@ -627,6 +627,9 @@ Each call is a change every umpire sees, taken back with Ctrl+Z by the umpire wh
 | [`self.reload`](#selfreload) | Starts its script again from on_load. |
 | [`self.attach`](#selfattach) | Puts another piece on this one, to ride with it. |
 | [`self.detach`](#selfdetach) | Takes this piece off the one it rides on. |
+| [`self.stowed`](#selfstowed) | The pieces it holds off the table, first in first: { id =, name =, guid =, def =, held = }, held being how many that piece holds in turn. |
+| [`self.stow`](#selfstow) | Takes another piece off the table into this one, with whatever rides on it; a piece this one rides on is refused. |
+| [`self.unstow`](#selfunstow) | Puts a held piece back on the table and returns it: which is its id, guid, its number in stowed, or nothing for the first; place is { x =, z = } or a piece, else beside this one; rot turns it. |
 | [`self.delete`](#selfdelete) | Takes the piece off the table (on_destroy runs first). |
 | [`self.set_lines`](#selfset_lines) | Draws lines round the piece that move and turn with it: { { points = { {x=, z=}, … }, color =, width =, loop = }, … } in piece units; width in map units. |
 | [`self.set_decals`](#selfset_decals) | Puts pictures on the piece's faces that move, turn and flip with it: { { picture =, x =, z =, w =, h =, rot =, face =, name = }, … } in piece units. |
@@ -997,6 +1000,38 @@ self.detach()
 Takes this piece off the one it rides on.
 
 **Tabletop Simulator** `removeAttachment` · **See also** [`self.attach`](#selfattach)
+
+### `self.stowed`
+
+```lua
+self.stowed
+```
+
+The pieces it holds off the table, first in first: { id =, name =, guid =, def =, held = }, held being how many that piece holds in turn.
+
+**Type** `list`, read-only.
+
+**Tabletop Simulator** `getObjects`
+
+### `self.stow`
+
+```lua
+self.stow(piece)
+```
+
+Takes another piece off the table into this one, with whatever rides on it; a piece this one rides on is refused.
+
+**Tabletop Simulator** `putObject`
+
+### `self.unstow`
+
+```lua
+self.unstow(which, place, rot)
+```
+
+Puts a held piece back on the table and returns it: which is its id, guid, its number in stowed, or nothing for the first; place is { x =, z = } or a piece, else beside this one; rot turns it.
+
+**Tabletop Simulator** `takeObject` · **See also** [`self.stowed`](#selfstowed), [`self.stow`](#selfstow), [`self.unstow`](#selfunstow)
 
 ### `self.delete`
 
@@ -2690,6 +2725,7 @@ The converter rewrites a module's scripts into these calls by rule; this is the 
 | `getName` | [`self.name`](#selfname) |
 | `getObjectFromGUID` | [`board.find`](#boardfind) |
 | `getObjects` | [`board.pieces`](#boardpieces) |
+| `getObjects` | [`self.stowed`](#selfstowed) |
 | `getPlayers` | [`game.umpires`](#gameumpires) |
 | `getPosition` | [`self.pos`](#selfpos) |
 | `getRotation` | [`self.rot`](#selfrot) |
@@ -2732,6 +2768,7 @@ The converter rewrites a module's scripts into these calls by rule; this is the 
 | `positionToLocal` | [`self.to_local`](#selfto_local) |
 | `positionToWorld` | [`self.to_world`](#selfto_world) |
 | `print` | [`print`](#print) |
+| `putObject` | [`self.stow`](#selfstow) |
 | `reload` | [`self.reload`](#selfreload) |
 | `removeAttachment` | [`self.detach`](#selfdetach) |
 | `removeButton` | [`self.remove_widget`](#selfremove_widget) |
@@ -2756,6 +2793,7 @@ The converter rewrites a module's scripts into these calls by rule; this is the 
 | `setVectorLines` | [`self.set_lines`](#selfset_lines) |
 | `showInputDialog` | [`game.dialog`](#gamedialog) |
 | `spawnObject` | [`board.spawn`](#boardspawn) |
+| `takeObject` | [`self.unstow`](#selfunstow) |
 | `UI` | [`self.ui`](#selfui) |
 | `UI` | [`ui`](#ui) |
 | `UI.getAttribute` | [`ui.get_attribute`](#uiget_attribute) |

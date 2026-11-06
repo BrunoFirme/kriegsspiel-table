@@ -340,6 +340,7 @@ public sealed class PieceInstance
     public List<DecalDef> Decals { get; set; } = new();
     public int? DecalsOnState { get; set; }
     public List<UiNode> Ui { get; set; } = new();
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<PieceInstance>? Stowed { get; set; }
 
     public PieceInstance Clone() => new()
     {
@@ -349,8 +350,17 @@ public sealed class PieceInstance
         Script = Script, ScriptState = ScriptState, Guid = Guid, Tags = Tags == null ? null : new(Tags), Memo = Memo,
         Widgets = Widgets.Select(w => w.Clone()).ToList(), DrawnOnState = DrawnOnState, MenuItems = MenuItems.Select(m => m.Clone()).ToList(),
         Lines = Lines.Select(l => l.Clone()).ToList(), Decals = Decals.Select(d => d.Clone()).ToList(), DecalsOnState = DecalsOnState,
-        Ui = Ui.Select(n => n.Clone()).ToList(),
+        Ui = Ui.Select(n => n.Clone()).ToList(), Stowed = Stowed?.Select(s => s.Clone()).ToList(),
     };
+
+    public IEnumerable<PieceInstance> AllStowed()
+    {
+        foreach (var s in Stowed ?? [])
+        {
+            yield return s;
+            foreach (var deeper in s.AllStowed()) yield return deeper;
+        }
+    }
 }
 
 public sealed class UiNode

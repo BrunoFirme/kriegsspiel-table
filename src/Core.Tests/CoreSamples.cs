@@ -92,6 +92,8 @@ public static class CoreSamples
         yield return new RemoveZone { Id = "z-000001" };
         yield return new Attach { Layer = L, Parent = "p-000001", Child = "p-000002" };
         yield return new Detach { Layer = L, Child = "p-000002" };
+        yield return new Stow { Layer = L, Holder = "p-000001", Id = "p-000002", Slot = 0 };
+        yield return new Unstow { Layer = L, Holder = "p-000001", Id = "p-000002", Pos = new Vec2(3, 4), RotDeg = 90, Index = 1 };
         yield return new AddSheet { Sheet = Sheet("s-000200") };
         yield return new MoveSheet { Id = "s-000001", Pos = new(7, 8), RotDeg = 180, Z = 3 };
         yield return new LockSheet { Id = "s-000001", Locked = true };

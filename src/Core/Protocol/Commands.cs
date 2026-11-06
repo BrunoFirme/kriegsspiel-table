@@ -8,6 +8,8 @@ namespace KTable.Core.Protocol;
 [JsonDerivedType(typeof(RestorePiece), "RestorePiece")]
 [JsonDerivedType(typeof(MovePiece), "MovePiece")]
 [JsonDerivedType(typeof(DeletePiece), "DeletePiece")]
+[JsonDerivedType(typeof(Stow), "Stow")]
+[JsonDerivedType(typeof(Unstow), "Unstow")]
 [JsonDerivedType(typeof(SetState), "SetState")]
 [JsonDerivedType(typeof(SetCounter), "SetCounter")]
 [JsonDerivedType(typeof(SetText), "SetText")]
@@ -349,6 +351,34 @@ public sealed class Detach : LayerCommand
     public override IEnumerable<(string Layer, string Id)> ZonePieces() => [(Layer, Child)];
     public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [];
     public override IEnumerable<string> ScriptsToReload() => [];
+}
+
+public sealed class Stow : LayerCommand
+{
+    public string Holder { get; set; } = "";
+    public string Id { get; set; } = "";
+    public int? Slot { get; set; }
+    public override Sender SentBy() => Sender.Umpire;
+    public override bool OnUndoStack() => true;
+    public override Shown ShownToObservers() => Shown.Table;
+    public override IEnumerable<(string Layer, string Id)> ZonePieces() => [(Layer, Id)];
+    public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [];
+    public override IEnumerable<string> ScriptsToReload() => [Id];
+}
+
+public sealed class Unstow : LayerCommand
+{
+    public string Holder { get; set; } = "";
+    public string Id { get; set; } = "";
+    public Vec2? Pos { get; set; }
+    public double? RotDeg { get; set; }
+    public int? Index { get; set; }
+    public override Sender SentBy() => Sender.Umpire;
+    public override bool OnUndoStack() => true;
+    public override Shown ShownToObservers() => Shown.Table;
+    public override IEnumerable<(string Layer, string Id)> ZonePieces() => [];
+    public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => Pos is { } p ? [(Layer, p)] : [];
+    public override IEnumerable<string> ScriptsToReload() => [Id];
 }
 
 public sealed class AddSheet : Command

@@ -84,6 +84,8 @@ public class MalformedInputTests
             t.Server.Handle(Table.Host, new MovePiece { Layer = U, Id = "p-000002", Pos = new(4, 4), RotDeg = 90 });
         },
         ["detach a null child"] = t => t.Server.Handle(Table.Host, new Detach { Layer = U, Child = null! }),
+        ["stow a null piece into a null holder"] = t => t.Server.Handle(Table.Host, new Stow { Layer = U, Holder = null!, Id = null! }),
+        ["unstow a null piece from a null holder"] = t => t.Server.Handle(Table.Host, new Unstow { Layer = U, Holder = null!, Id = null! }),
         ["scale NaN and negative"] = t => { t.Server.Handle(Table.Host, new SetScale { Layer = U, Id = "p-000002", Scale = double.NaN }); t.Server.Handle(Table.Host, new SetScale { Layer = U, Id = "p-000002", Scale = -1 }); },
         ["label of ten megabytes"] = t => t.Server.Handle(Table.Host, new SetLabel { Layer = U, Id = "p-000002", Value = new string('x', 10_000_000) }),
         ["add a null sheet"] = t => t.Server.Handle(Table.Host, new AddSheet { Sheet = null! }),
@@ -271,6 +273,8 @@ public class MalformedInputTests
     [InlineData("attach a piece to itself and to nothing")]
     [InlineData("attach in a ring then move")]
     [InlineData("detach a null child")]
+    [InlineData("stow a null piece into a null holder")]
+    [InlineData("unstow a null piece from a null holder")]
     [InlineData("scale NaN and negative")]
     [InlineData("label of ten megabytes")]
     [InlineData("add a null sheet")]
@@ -468,6 +472,8 @@ public class MalformedInputTests
     [InlineData("CropSheet")]
     [InlineData("DeletePiece")]
     [InlineData("Detach")]
+    [InlineData("Stow")]
+    [InlineData("Unstow")]
     [InlineData("DialogResult")]
     [InlineData("Draw")]
     [InlineData("EditWidget")]

@@ -271,6 +271,21 @@ public static partial class ApiDoc
     See("self.locked");
     }
 
+    static void PieceCarrying()
+    {
+        M("piece", "attach(piece)", "Puts another piece on this one, to ride with it.", "addAttachment");
+        P("piece", "Piece|string", "The piece to carry, or its id.");
+        See("self.detach", "self.attached");
+
+        M("piece", "detach()", "Takes this piece off the one it rides on.", "removeAttachment");
+        See("self.attach");
+
+        F("piece", "stowed", "list", "The pieces it holds off the table, first in first: { id =, name =, guid =, def =, held = }, held being how many that piece holds in turn.", "getObjects");
+        M("piece", "stow(piece)", "Takes another piece off the table into this one, with whatever rides on it; a piece this one rides on is refused.", "putObject");
+        M("piece", "unstow(which, place, rot)", "Puts a held piece back on the table and returns it: which is its id, guid, its number in stowed, or nothing for the first; place is { x =, z = } or a piece, else beside this one; rot turns it.", "takeObject");
+        See("self.stowed", "self.stow", "self.unstow");
+    }
+
     static void PieceData()
     {
     M("piece", "set_counter(name, value)", "Sets one of its kind's counters (a whole number, kept to the counter's range).");
@@ -324,12 +339,7 @@ public static partial class ApiDoc
     M("piece", "reload()", "Starts its script again from on_load.", "reload");
     See("on_load");
 
-    M("piece", "attach(piece)", "Puts another piece on this one, to ride with it.", "addAttachment");
-    P("piece", "Piece|string", "The piece to carry, or its id.");
-    See("self.detach", "self.attached");
-
-    M("piece", "detach()", "Takes this piece off the one it rides on.", "removeAttachment");
-    See("self.attach");
+    PieceCarrying();
 
     M("piece", "delete()", "Takes the piece off the table (on_destroy runs first).", "destruct");
     Note("The piece's own `on_destroy` and the global script's `on_destroy(piece)` run before it goes. Its handle answers `exists = false` afterwards.");

@@ -330,8 +330,31 @@ function compat.get_data(obj, state)
   return d
 end
 function compat.get_json(obj) return json.encode(compat.get_data(obj)) end
-function compat.get_objects(obj) return {} end
-function compat.get_quantity(obj) return -1 end
+function compat.get_objects(obj)
+  local t = {}
+  for i, s in ipairs(obj.stowed or {}) do
+    t[#t + 1] = { guid = s.guid, name = s.name, nickname = s.name, index = i - 1, description = "", gm_notes = "", memo = "", lua_script = "", lua_script_state = "", tags = {} }
+  end
+  return t
+end
+function compat.get_quantity(obj) return #(obj.stowed or {}) end
+function compat.take_object(obj, params)
+  params = type(params) == "table" and params or {}
+  local which = params.guid or (type(params.index) == "number" and params.index + 1) or nil
+  local place = nil
+  if type(params.position) == "table" then place = { x = vec(params.position, "x", 1, 0), z = vec(params.position, "z", 3, 0) } end
+  local rot = type(params.rotation) == "table" and vec(params.rotation, "y", 2, nil) or nil
+  local p = obj.unstow(which, place, rot)
+  if p == nil then return nil end
+  local cb = params.callback_function
+  if type(cb) == "string" then cb = _G[cb] end
+  if type(cb) == "function" then cb(p) end
+  return p
+end
+function compat.put_object(obj, piece)
+  if is_piece(piece) then obj.stow(piece) end
+  return obj
+end
 function compat.get_bounds(obj)
   local s = obj.size
   return { center = compat.position(obj), size = compat.Vector(s.w, 0.2, s.h), offset = compat.Vector(0, 0, 0) }

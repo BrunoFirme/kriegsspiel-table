@@ -71,6 +71,13 @@ public static class TtsTranslator
         ["onChat"] = "on_chat", ["onObjectNumberTyped"] = "on_number_typed", ["onScriptingButtonDown"] = "on_scripting_button_down", ["onScriptingButtonUp"] = "on_scripting_button_up",
     };
 
+    static readonly HashSet<string> Stubbed = new(StringComparer.Ordinal)
+    {
+        "setHiddenFrom", "setInvisibleTo", "attachHider", "attachInvisibleHider", "setFogOfWarReveal", "registerCollisions", "unregisterCollisions", "jointTo",
+        "addForce", "addTorque", "setVelocity", "setAngularVelocity", "drop", "cut", "deal", "shuffle", "shuffleStates", "randomize", "reset", "resetAttachments",
+        "split", "spread", "setRotationValue", "setRotationValues", "setValue", "getComponent", "getComponents",
+    };
+
     static string LowerFirst(string s) => s.Length == 0 ? s : char.ToLowerInvariant(s[0]) + s[1..];
 
     static string Camelify(string s)
@@ -393,6 +400,8 @@ public static class TtsTranslator
                 case "getJSON": return Compat($"compat.get_json({recv})", node);
                 case "getObjects": return Compat($"compat.get_objects({recv})", node);
                 case "getQuantity": return Compat($"compat.get_quantity({recv})", node);
+                case "takeObject": return Compat($"compat.take_object({recv}, {A(0)})", node);
+                case "putObject": return Compat($"compat.put_object({recv}, {A(0)})", node);
                 case "getAttachments": return Compat($"compat.get_attachments({recv})", node);
                 case "addAttachment": return Direct($"{recv}.attach({A(0)})", node);
                 case "removeAttachment": return Compat($"compat.remove_attachment({recv}, {A(0)})", node);
@@ -402,10 +411,7 @@ public static class TtsTranslator
                 case "addToPlayerSelection": return Compat($"compat.select({recv}, {A(0)}, true)", node);
                 case "removeFromPlayerSelection": return Compat($"compat.select({recv}, {A(0)}, false)", node);
                 case "clone": return Compat($"compat.clone({recv}{Rest()})", node);
-                case "setHiddenFrom" or "setInvisibleTo" or "attachHider" or "attachInvisibleHider"
-                    or "setFogOfWarReveal" or "registerCollisions" or "unregisterCollisions" or "jointTo" or "addForce" or "addTorque" or "setVelocity" or "setAngularVelocity"
-                    or "drop" or "cut" or "deal" or "shuffle" or "shuffleStates" or "randomize" or "reset" or "resetAttachments" or "split" or "spread" or "putObject" or "takeObject"
-                    or "setRotationValue" or "setRotationValues" or "setValue" or "getComponent" or "getComponents":
+                case var stubbed when Stubbed.Contains(stubbed):
                     return Todo(name, $"compat.todo({recv}, \"{name}\")", node);
                 case "getVelocity" or "getAngularVelocity": return Compat("compat.Vector(0, 0, 0)", node);
                 case "getRotationValue" or "getRotationValues" or "getValue": return Compat("nil", node);

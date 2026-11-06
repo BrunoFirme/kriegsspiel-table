@@ -306,7 +306,7 @@ internal sealed class PieceHandles(ScriptHost host)
         if (key == "exists") return B(p != null);
         if (p == null)
         {
-            if (key.StartsWith("set_") || key is "delete" or "button" or "input" or "edit" or "flip" or "move" or "attach" or "detach" or "call")
+            if (key.StartsWith("set_") || key is "delete" or "button" or "input" or "edit" or "flip" or "move" or "attach" or "detach" or "stow" or "unstow" or "call")
                 return Fn(_ => throw new ScriptRuntimeException($"piece {id} is gone"));
             return DynValue.Nil;
         }
@@ -341,6 +341,7 @@ internal sealed class PieceHandles(ScriptHost host)
                 return t;
             }
             case "picture_size": return PictureSize(p, def);
+            case "stowed": return StowedList(p);
             case "local_unit":
             {
                 if (def?.LocalUnit is not { } lu) return DynValue.Nil;
@@ -496,9 +497,51 @@ internal sealed class PieceHandles(ScriptHost host)
             case "set_text": return Fn(a => { host.Emit(new SetText { Layer = L, Id = id, Name = Arg(a, 0).CastToString() ?? "", Value = Arg(a, 1).CastToString() ?? "" }); return DynValue.Nil; });
             case "attach": return Fn(a => { host.Emit(new Attach { Layer = L, Parent = id, Child = IdOf(Arg(a, 0)) }); return DynValue.Nil; });
             case "detach": return Fn(_ => { host.Emit(new Detach { Layer = L, Child = id }); return DynValue.Nil; });
+            case "stow": return Fn(a => { host.Emit(new Stow { Layer = L, Holder = id, Id = IdOf(Arg(a, 0)) }); return DynValue.Nil; });
+            case "unstow": return Fn(a => TakeOut(id, p, Arg(a, 0), Arg(a, 1), Arg(a, 2)));
             case "delete": return Fn(_ => { host.Emit(new DeletePiece { Layer = L, Id = id }); return DynValue.Nil; });
             default: return null;
         }
+    }
+
+    DynValue StowedList(PieceInstance holder)
+    {
+        var list = T();
+        int n = 0;
+        foreach (var s in holder.Stowed ?? [])
+        {
+            var e = T();
+            e.Table["id"] = S(s.Id);
+            e.Table["name"] = S(s.Label ?? host.Server.Store?.Def(s.Def)?.Name ?? "");
+            e.Table["guid"] = S(s.Guid ?? s.Id);
+            e.Table["def"] = S(s.Def);
+            e.Table["held"] = N(s.Stowed?.Count ?? 0);
+            list.Table[++n] = e;
+        }
+        return list;
+    }
+
+    DynValue TakeOut(string id, PieceInstance holder, DynValue which, DynValue place, DynValue rot)
+    {
+        const string L = Layers.Umpire;
+        var stowed = holder.Stowed ?? [];
+        var target = which.Type switch
+        {
+            DataType.Number => stowed.ElementAtOrDefault((int)which.Number - 1),
+            DataType.String => stowed.FirstOrDefault(s => s.Id == which.String || s.Guid == which.String),
+            DataType.Table => stowed.FirstOrDefault(s => s.Id == IdOf(which)),
+            _ => stowed.FirstOrDefault(),
+        };
+        if (target == null) return DynValue.Nil;
+        var cmd = new Unstow { Layer = L, Holder = id, Id = target.Id };
+        if (place.Type == DataType.Table)
+        {
+            var at = place.Table.Get("id").Type == DataType.String ? host.Find(IdOf(place))?.Pos : null;
+            cmd.Pos = at ?? new Vec2(place.Table.Get("x").CastToNumber() ?? 0, place.Table.Get("z").CastToNumber() ?? 0);
+        }
+        if (rot.Type == DataType.Number) cmd.RotDeg = rot.Number;
+        host.Emit(cmd);
+        return Handle(target.Id);
     }
 
     DynValue? Drawing(string id, string key)

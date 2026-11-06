@@ -3525,10 +3525,10 @@
   },
   {
    "row": "takeObject",
-   "status": "planned",
-   "where": "Phase C item 1: stow",
+   "status": "compat",
+   "where": "compat.take_object: unstow by guid or index at the position and rotation given, then the callback",
    "instead": "",
-   "held_by": "",
+   "held_by": "StowScriptTests",
    "count": 80,
    "modules": 9
   },
@@ -3552,19 +3552,19 @@
   },
   {
    "row": "getObjects",
-   "status": "planned",
-   "where": "Phase C item 1: stow (compat lists the table today)",
+   "status": "compat",
+   "where": "compat.get_objects: the stowed list with guid, name and 0-based index",
    "instead": "",
-   "held_by": "",
+   "held_by": "StowScriptTests",
    "count": 50,
    "modules": 9
   },
   {
    "row": "putObject",
-   "status": "planned",
-   "where": "Phase C item 1: stow",
+   "status": "compat",
+   "where": "compat.put_object: stow",
    "instead": "",
-   "held_by": "",
+   "held_by": "StowScriptTests",
    "count": 50,
    "modules": 9
   },
@@ -4389,8 +4389,8 @@
   },
   {
    "row": "drop",
-   "status": "stub",
-   "where": "ObjectCall",
+   "status": "unknown",
+   "where": "",
    "instead": "",
    "held_by": "",
    "count": 0,
@@ -4641,10 +4641,10 @@
   },
   {
    "row": "getQuantity",
-   "status": "planned",
-   "where": "Phase C item 1: stow",
+   "status": "compat",
+   "where": "compat.get_quantity: how many are stowed",
    "instead": "",
-   "held_by": "",
+   "held_by": "StowScriptTests",
    "count": 0,
    "modules": 0
   },
@@ -5271,8 +5271,8 @@
   },
   {
    "row": "shuffleStates",
-   "status": "stub",
-   "where": "ObjectCall",
+   "status": "unknown",
+   "where": "",
    "instead": "",
    "held_by": "",
    "count": 0,
@@ -8087,10 +8087,10 @@
   },
   {
    "row": "getObjectFromGUID answers nil for a piece inside a bag",
-   "status": "planned",
-   "where": "Phase C item 1: stow",
+   "status": "native",
+   "where": "a stowed piece is off the layer, so board.find does not see it",
    "instead": "",
-   "held_by": "",
+   "held_by": "StowScriptTests",
    "count": 54,
    "modules": 54
   },

@@ -22,6 +22,28 @@ public class StateMachineTests
     }
 
     [Fact]
+    public void A_stowed_piece_is_off_the_table_with_what_it_carries_and_comes_back_where_it_is_put()
+    {
+        var g = Base();
+        var holder = g.Find(U, "p-000006")!;
+        Assert.Null(StateMachine.Apply(g, new Stow { Layer = U, Holder = "p-000006", Id = "p-000001" }, out var undo));
+        Assert.Null(g.Find(U, "p-000001"));
+        Assert.Null(g.Find(U, "p-000002"));
+        Assert.Equal(new[] { "p-000001", "p-000002" }, holder.Stowed!.Select(s => s.Id));
+        Assert.IsType<Unstow>(undo);
+        Assert.Null(StateMachine.Apply(g, new Unstow { Layer = U, Holder = "p-000006", Id = "p-000001", Pos = new(10, 10), RotDeg = 90 }, out var back));
+        var p = g.Find(U, "p-000001")!;
+        Assert.Equal((new Vec2(10, 10), 90.0, 0.0, 0), (p.Pos, p.RotDeg, p.Y, p.Stack));
+        Assert.NotNull(g.Find(U, "p-000002"));
+        Assert.Contains("p-000002", p.Attached);
+        Assert.Null(holder.Stowed);
+        Assert.IsType<Stow>(back);
+        Assert.Equal("nothing stowed there", StateMachine.Apply(g, new Unstow { Layer = U, Holder = "p-000006" }, out _));
+        Assert.Null(StateMachine.Apply(g, new Attach { Layer = U, Parent = "p-000001", Child = "p-000006" }, out _));
+        Assert.Equal("a piece cannot hold one it rides on", StateMachine.Apply(g, new Stow { Layer = U, Holder = "p-000006", Id = "p-000001" }, out _));
+    }
+
+    [Fact]
     public void Every_registered_command_has_its_case_in_apply()
     {
         var missing = new List<string>();
@@ -94,6 +116,8 @@ public class StateMachineTests
         yield return C("attach-new", new Attach { Layer = U, Parent = "p-000006", Child = "p-000001" });
         yield return C("attach-reparent", new Attach { Layer = U, Parent = "p-000006", Child = "p-000002" });
         yield return C("attach-same-parent", new Attach { Layer = U, Parent = "p-000001", Child = "p-000002" });
+        yield return C("stow", new Stow { Layer = U, Holder = "p-000006", Id = "p-000001" });
+        yield return C("stow-attached-child", new Stow { Layer = U, Holder = "p-000006", Id = "p-000002" });
         yield return C("detach", new Detach { Layer = U, Child = "p-000002" });
         yield return C("add-sheet", new AddSheet { Sheet = CoreSamples.Sheet("") });
         yield return C("move-sheet", new MoveSheet { Id = "s-000001", Pos = new(9, 9), RotDeg = -90, Z = 5 });

@@ -11,11 +11,11 @@ the plan says translate it), unknown (nobody has decided).
 |---|---|---|---|---|
 | types | 30 | 20 | 10 | 43 |
 | save | 150 | 132 | 18 | 300 |
-| object | 65 | 58 | 7 | 262 |
+| object | 65 | 61 | 4 | 262 |
 | global | 14 | 13 | 1 | 55 |
 | namespaces | 23 | 21 | 2 | 180 |
 | events | 8 | 7 | 1 | 50 |
-| engine | 22 | 18 | 4 | 22 |
+| engine | 22 | 19 | 3 | 22 |
 
 ## types
 
@@ -422,11 +422,11 @@ the plan says translate it), unknown (nobody has decided).
 | `setDecals` | 4145 / 11 | compat | ObjectCall |  |
 | `highlightOff` | 154 / 10 | compat | ObjectCall |  |
 | `setPositionSmooth` | 51 / 10 | compat | ObjectCall |  |
-| `takeObject` | 80 / 9 | planned | Phase C item 1: stow |  |
+| `takeObject` | 80 / 9 | compat | compat.take_object: unstow by guid or index at the position and rotation given, then the callback | StowScriptTests |
 | `getBounds` | 50 / 9 | compat | ObjectCall |  |
 | `getLock` | 50 / 9 | compat | ObjectCall |  |
-| `getObjects` | 50 / 9 | planned | Phase C item 1: stow (compat lists the table today) |  |
-| `putObject` | 50 / 9 | planned | Phase C item 1: stow |  |
+| `getObjects` | 50 / 9 | compat | compat.get_objects: the stowed list with guid, name and 0-based index | StowScriptTests |
+| `putObject` | 50 / 9 | compat | compat.put_object: stow | StowScriptTests |
 | `setRotationSmooth` | 50 / 9 | compat | ObjectCall |  |
 | `setLuaScript` | 3169 / 7 | native | ObjectCall |  |
 | `setState` | 180 / 3 | native | ObjectCall |  |
@@ -518,7 +518,7 @@ the plan says translate it), unknown (nobody has decided).
 | `destroy` | - | native | ObjectCall |  |
 | `drag` | - | dropped | engine physics |  |
 | `drag_selectable` | - | compat | ObjectProps (get_prop/set_prop) |  |
-| `drop` | - | stub | ObjectCall |  |
+| `drop` | - | unknown |  |  |
 | `dynamic_friction` | - | dropped | engine physics |  |
 | `flip` | - | native | ObjectCall |  |
 | `getAngularVelocity` | - | dropped | engine physics (answers zero) |  |
@@ -546,7 +546,7 @@ the plan says translate it), unknown (nobody has decided).
 | `getNearestPointFromObject` | - | dropped | engine physics |  |
 | `getNearestPointFromPosition` | - | dropped | engine physics |  |
 | `getPositionSmooth` | - | compat | ObjectCall |  |
-| `getQuantity` | - | planned | Phase C item 1: stow |  |
+| `getQuantity` | - | compat | compat.get_quantity: how many are stowed | StowScriptTests |
 | `getRotationSmooth` | - | compat | ObjectCall |  |
 | `getRotationValue` | - | planned | Phase C item 3: dice faces |  |
 | `getRotationValues` | - | planned | Phase C item 3: dice faces |  |
@@ -616,7 +616,7 @@ the plan says translate it), unknown (nobody has decided).
 | `setValue` | - | planned | Phase C item 3: dice faces and values |  |
 | `setVelocity` | - | dropped | engine physics |  |
 | `shuffle` | - | planned | Phase C item 1: stow |  |
-| `shuffleStates` | - | stub | ObjectCall |  |
+| `shuffleStates` | - | unknown |  |  |
 | `spawning` | - | compat | ObjectCall |  |
 | `spread` | - | planned | Phase C item 7: cards |  |
 | `startLuaCoroutine` | - | unknown |  |  |
@@ -948,7 +948,7 @@ the plan says translate it), unknown (nobody has decided).
 | `button and input defaults (width, height, font_size, colours, position, scale)` | 54 / 54 | compat | compat.tts_defaults, from TTS's LuaUIState classes; a button or input with no handler is refused as TTS refuses it | TtsDefaultsTests |
 | `click_function(obj, player_color, alt_click)` | 54 / 54 | compat | compat.create_button / tts_handler | TranslatorTests.Handlers_get_the_piece_their_widget_is_on |
 | `context menu callback(player_color, menu_position, object)` | 54 / 54 | compat | compat.add_context_menu_item |  |
-| `getObjectFromGUID answers nil for a piece inside a bag` | 54 / 54 | planned | Phase C item 1: stow |  |
+| `getObjectFromGUID answers nil for a piece inside a bag` | 54 / 54 | native | a stowed piece is off the layer, so board.find does not see it | StowScriptTests |
 | `input_function(obj, player_color, text, selected)` | 54 / 54 | compat | compat.create_input / tts_handler | TranslatorTests.A_name_typed_letter_by_letter_reaches_the_face |
 | `load order: global before objects; onLoad(script_state)` | 54 / 54 | partial | ScriptHost.Load; the saved state string |  |
 | `member names fold (exact, first letter up, snake to camel, both)` | 54 / 54 | native | TtsTranslator.FoldMember before every object member lookup | TranslatorFoldTests |
