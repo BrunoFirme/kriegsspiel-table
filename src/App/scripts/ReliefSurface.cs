@@ -50,6 +50,8 @@ public partial class ReliefSurface : Node3D
     bool _flowAgain;
     (int Cols, int Rows, float[] Soft, byte[] Kinds, double CellMetres, double MetresPerUnit)? _flowNext;
     float _cellWorld = 1;
+    GroundTiles.Sheet? _tiles;
+    ShaderMaterial? _bake;
     ImageTexture? _linesTex;
     ImageTexture? _sitesTex;
     bool _networkBusy;
@@ -69,33 +71,45 @@ public partial class ReliefSurface : Node3D
     {
         _unitsPerMetre = c.UnitsPerMeter is { } upm && upm > 0 ? upm : 0;
         RenderingServer.GlobalShaderParameterSet(ScaleParameter, (float)_unitsPerMetre);
+        GroundTiles.StaleEverything();
     }
 
     public static bool ShowStreams(bool on)
     {
         if (_streams == on) return false;
         _streams = on;
+        GroundTiles.StaleEverything();
         return true;
     }
 
     static Shader GroundShader => _shader ??= new Shader { Code = FileAccess.GetFileAsString("res://shaders/ground.gdshader") };
 
-    public static void ShowStyle(string? style) => RenderingServer.GlobalShaderParameterSet(StyleParameter, MapStyles.Index(style));
+    public static void ShowStyle(string? style)
+    {
+        RenderingServer.GlobalShaderParameterSet(StyleParameter, MapStyles.Index(style));
+        GroundTiles.StaleEverything();
+    }
 
     public static bool ShowContours(bool on)
     {
         if (_contours == on) return false;
         _contours = on;
+        GroundTiles.StaleEverything();
         return true;
     }
 
-    public static void SnowLine(double height) => RenderingServer.GlobalShaderParameterSet(SnowParameter, (float)height);
+    public static void SnowLine(double height)
+    {
+        RenderingServer.GlobalShaderParameterSet(SnowParameter, (float)height);
+        GroundTiles.StaleEverything();
+    }
 
     public static void ContourStep(double step)
     {
         if (step == _contourStep) return;
         _contourStep = step;
         RenderingServer.GlobalShaderParameterSet(ContourParameter, (float)step);
+        GroundTiles.StaleEverything();
     }
 
     public static Vector4[] Palette()
@@ -131,8 +145,10 @@ public partial class ReliefSurface : Node3D
         _builtFor = new BuiltFor(def.Id, def.Size.W, def.Size.H, c.X, c.Y, c.W, c.H, grid.Cols, grid.Rows, nx, nz, scale, blur);
         var cells = new Vector2(grid.Cols, grid.Rows);
         bool drawsGround = picture == null && !def.HasPicture;
-        _base = picture ?? (drawsGround ? Material(false, cells) : null);
-        if (grid.Painted || (_contours && def.Relief is { Length: > 0 })) _paint = Material(true, cells);
+        bool tiled = GroundTiles.Enabled && IsInsideTree();
+        _base = picture ?? (!drawsGround ? null : tiled ? Tiled(def, grid, sheetXf, level, scale, step, cells, false) : Material(false, cells));
+        if (grid.Painted || (_contours && def.Relief is { Length: > 0 }))
+            _paint = tiled && !drawsGround ? Tiled(def, grid, sheetXf, level, scale, step, cells, true) : Material(true, cells);
         for (int bz = 0; bz < nz; bz += BlockCells)
             for (int bx = 0; bx < nx; bx += BlockCells)
             {
@@ -255,6 +271,7 @@ public partial class ReliefSurface : Node3D
             }
         Upload(ref _kindsTex, grid.Cols, grid.Rows, _kindTexels!);
         Upload(ref _edgesTex, grid.Cols, grid.Rows, _fields!);
+        _tiles?.StaleUv(UvOf(box.Grow(GroundRoads.Influence + GroundEdges.Reach), grid));
     }
 
     void PatchHeights(SheetDef def, ReliefGrid grid, Ground ground, Transform3D sheetXf, CellBox box, BuiltFor built)
@@ -275,6 +292,7 @@ public partial class ReliefSurface : Node3D
                 _heightTexels![4 * i + 1] = _soft![i] * built.Scale;
             }
         UploadHeights(grid.Cols, grid.Rows);
+        _tiles?.StaleUv(UvOf(softened.Grow(2), grid));
         float W = (float)def.Size.W, H = (float)def.Size.H;
         var h = GroundMesh.WeldedHeights(ground, sheetXf, W / 2, H / 2);
         var local = LocalRect(built, box);
@@ -291,9 +309,46 @@ public partial class ReliefSurface : Node3D
         DeriveFlow(grid.Cols, grid.Rows, (float[])_soft!.Clone(), _flowKinds, _cellWorld / _unitsPerMetre, _heightsScale / _unitsPerMetre);
     }
 
-    ShaderMaterial Material(bool paintedOnly, Vector2 cells)
+    ShaderMaterial Tiled(SheetDef def, ReliefGrid grid, Transform3D sheetXf, float level, float scale, int step, Vector2 cells, bool paintedOnly)
     {
-        var m = new ShaderMaterial { Shader = GroundShader };
+        var c = def.Crop ?? SheetGeometry.Whole;
+        float W = (float)def.Size.W, H = (float)def.Size.H;
+        float perU = (float)(W / c.W), perV = (float)(H / c.H);
+        float u0 = (float)(-W * c.X / c.W - W / 2), v0 = (float)(-H * c.Y / c.H - H / 2);
+        Vector3 World(Vector2 uv, float y) => sheetXf * new Vector3(u0 + perU * uv.X, level + y, v0 + perV * uv.Y);
+        var origin = World(Vector2.Zero, 0);
+        var alongU = sheetXf.Basis * new Vector3(perU, 0, 0);
+        var alongV = sheetXf.Basis * new Vector3(0, 0, perV);
+        _bake = Material(paintedOnly, cells, GroundTiles.BakeShader);
+        _bake.SetShaderParameter("world_origin", new Vector2(origin.X, origin.Z));
+        _bake.SetShaderParameter("world_u", new Vector2(alongU.X, alongU.Z));
+        _bake.SetShaderParameter("world_v", new Vector2(alongV.X, alongV.Z));
+        _bake.SetShaderParameter("sheet_level", origin.Y);
+        _bake.SetShaderParameter("normal_step", (float)step);
+        float high = 0;
+        foreach (float v in grid.H) high = Math.Max(high, v);
+        _tiles = GroundTiles.For(this).Track(def.Id, this, _bake, World, (float)Ground.FullWidth(def), 0, high * scale, paintedOnly);
+        return _tiles.View;
+    }
+
+    public override void _ExitTree() => Untile();
+
+    void Untile()
+    {
+        if (_tiles != null) GroundTiles.Release(_tiles);
+        _tiles = null;
+        _bake = null;
+    }
+
+    Rect2 UvOf(CellBox box, ReliefGrid grid)
+    {
+        float cx = Math.Max(1, grid.Cols - 1), cy = Math.Max(1, grid.Rows - 1);
+        return new Rect2(box.X0 / cx, box.Y0 / cy, (box.X1 - box.X0 + 1) / cx, (box.Y1 - box.Y0 + 1) / cy);
+    }
+
+    ShaderMaterial Material(bool paintedOnly, Vector2 cells, Shader? shader = null)
+    {
+        var m = new ShaderMaterial { Shader = shader ?? GroundShader };
         m.SetShaderParameter("kinds", _kindsTex!);
         m.SetShaderParameter("edges", _edgesTex!);
         m.SetShaderParameter("heights", _heightsTex!);
@@ -378,8 +433,9 @@ public partial class ReliefSurface : Node3D
         bool fresh = _linesTex == null || _linesTex.GetWidth() != cols || _linesTex.GetHeight() != rows;
         Upload(ref _linesTex, cols, rows, plan.Lines);
         Upload(ref _sitesTex, cols, rows, plan.Sites);
+        _tiles?.StaleAll();
         if (!fresh) return;
-        foreach (var m in new[] { _base as ShaderMaterial, _paint })
+        foreach (var m in new[] { _base as ShaderMaterial, _paint, _bake })
         {
             m?.SetShaderParameter("network", _linesTex!);
             m?.SetShaderParameter("farm_sites", _sitesTex!);
@@ -442,6 +498,7 @@ public partial class ReliefSurface : Node3D
         UploadKinds(_grid);
         UploadEdges(cols, rows, fields);
         UploadAxes(cols, rows, axes);
+        _tiles?.StaleAll();
     }
 
     void UploadAxes(int cols, int rows, byte[] axes)
@@ -452,6 +509,7 @@ public partial class ReliefSurface : Node3D
         if (!fresh) return;
         (_base as ShaderMaterial)?.SetShaderParameter("road_axes", _axesTex!);
         _paint?.SetShaderParameter("road_axes", _axesTex!);
+        _bake?.SetShaderParameter("road_axes", _axesTex!);
     }
 
     void UploadKinds(ReliefGrid grid)
@@ -572,6 +630,7 @@ public partial class ReliefSurface : Node3D
         _flow = flow;
         WriteFlow(flow);
         UploadHeights(cols, rows);
+        _tiles?.StaleAll();
     }
 
     void WriteFlow(GroundFlow flow)
@@ -610,5 +669,6 @@ public partial class ReliefSurface : Node3D
         _base = null;
         _paint = null;
         _builtFor = null;
+        Untile();
     }
 }
