@@ -71,6 +71,21 @@ public static class TtsTranslator
         ["onChat"] = "on_chat", ["onObjectNumberTyped"] = "on_number_typed", ["onScriptingButtonDown"] = "on_scripting_button_down", ["onScriptingButtonUp"] = "on_scripting_button_up",
     };
 
+    static string LowerFirst(string s) => s.Length == 0 ? s : char.ToLowerInvariant(s[0]) + s[1..];
+
+    static string Camelify(string s)
+    {
+        var parts = s.Split('_');
+        return parts.Length == 1 ? s : parts[0] + string.Concat(parts.Skip(1).Select(p => p.Length == 0 ? p : char.ToUpperInvariant(p[0]) + p[1..]));
+    }
+
+    public static string FoldMember(string name)
+    {
+        foreach (var candidate in new[] { name, LowerFirst(name), Camelify(name), LowerFirst(Camelify(name)) })
+            if (ObjectApi.Contains(candidate) || ObjectProps.Contains(candidate)) return candidate;
+        return name;
+    }
+
     sealed class Rewriter : LuaSyntaxRewriter
     {
         readonly TranslateResult _res;
@@ -197,7 +212,7 @@ public static class TtsTranslator
                 var inner = recv.StartsWith("Player[") ? recv[7..^1] : "\"" + recv[7..] + "\"";
                 return Compat($"compat.player({inner}).{name}({All()})", node);
             }
-            var o = ObjectCall(recv, name, a, args, node);
+            var o = ObjectCall(recv, FoldMember(name), a, args, node);
             if (o != null) return o;
             return visited;
         }
@@ -415,6 +430,7 @@ public static class TtsTranslator
                 case "Time" or "Lighting" or "Grid" or "Hands" or "Notes" or "MusicPlayer" or "Backgrounds": return Compat($"compat.{recv}.{name}", node);
                 case "JSON": return Direct($"json.{name}", node);
             }
+            name = FoldMember(name);
             switch (name)
             {
                 case "is_face_down": return Direct($"{recv}.face_down", node);
@@ -435,12 +451,12 @@ public static class TtsTranslator
 
         public override SyntaxNode? VisitAssignmentStatement(AssignmentStatementSyntax node)
         {
-            if (node.Variables.Count == 1 && node.EqualsValues.Values.Count == 1 && node.Variables[0] is MemberAccessExpressionSyntax ma && ObjectProps.Contains(ma.MemberName.Text)
+            if (node.Variables.Count == 1 && node.EqualsValues.Values.Count == 1 && node.Variables[0] is MemberAccessExpressionSyntax ma && ObjectProps.Contains(FoldMember(ma.MemberName.Text))
                 && ma.Expression.ToString().Trim() is var recv && recv is not ("Turns" or "Lighting" or "Grid" or "Hands" or "Notes" or "Time"))
             {
                 var value = (ExpressionSyntax)Visit(node.EqualsValues.Values[0])!;
                 _res.CompatCalls++;
-                var stmt = Stmt($"compat.set_prop({recv}, \"{ma.MemberName.Text}\", {value.ToString().Trim()})", node);
+                var stmt = Stmt($"compat.set_prop({recv}, \"{FoldMember(ma.MemberName.Text)}\", {value.ToString().Trim()})", node);
                 return stmt;
             }
             return base.VisitAssignmentStatement(node);

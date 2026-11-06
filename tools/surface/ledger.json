@@ -8114,10 +8114,10 @@
   },
   {
    "row": "member names fold (exact, first letter up, snake to camel, both)",
-   "status": "planned",
-   "where": "rework: translator member dispatch",
+   "status": "native",
+   "where": "TtsTranslator.FoldMember before every object member lookup",
    "instead": "",
-   "held_by": "",
+   "held_by": "TranslatorFoldTests",
    "count": 54,
    "modules": 54
   },
