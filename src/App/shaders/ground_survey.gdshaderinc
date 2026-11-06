@@ -49,16 +49,6 @@ vec3 survey_blocks(vec3 c, float body, float shadow, vec3 fill) {
 	return mix(c, fill, body);
 }
 
-vec3 wet_field(int style, vec3 c, vec3 sheet, vec2 p, vec2 uv, mat2 to_uv, float own, vec2 levels, float fw) {
-	Lot w = lot_at(p, uv, to_uv, metres(WET_LOT_M), 0.4, FIELD, own + 0.5, levels);
-	vec3 ink_c = style == MODERN ? MODERN_BLACK : style == ANCIENT ? ANCIENT_INK : SURVEY_INK;
-	vec3 wet_c = style == MODERN ? MODERN_BLUE : style == ANCIENT ? ANCIENT_INK : SURVEY_BLUE;
-	float w1 = style == MODERN ? M1 : W1;
-	if (style == SURVEY) c = mix(c, c * vec3(0.93, 1.0, 0.86), 0.6);
-	c = mix(c, ink_c, levees(w, w1, fw) * 0.8);
-	return mix(c, wet_c, marks(p, own, 0.3, 0.1, w1 * 0.4, 0.0, 0.0, 0.5, fw) * 0.6);
-}
-
 vec3 survey_farm(vec3 c, vec3 sheet, vec2 p, vec2 site, vec2 seed, float turn, float edge, float fw, inout float cover) {
 	float scale = farm_scale(seed);
 	float yard, court, shade_yard, shade_court;
@@ -92,8 +82,6 @@ vec3 survey_field(vec3 c, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_uv, fl
 	Lot l = lot_at(p, uv, to_uv, metres(mix(PLOT_OPEN_M, PLOT_SMALL_M, levels.x)), 0.56, FIELD, own, levels);
 	cover = 0.0;
 	vec2 site_uv = uv + to_uv * (l.site - p);
-	float wet = wet_field_at(site_uv, follow);
-	if (wet > 0.5) return wet_field(SURVEY, c, sheet, p, uv, to_uv, own, levels, fw);
 	float fronts = fronts_road(site_uv, follow);
 	vec2 road_along = road_along_at(site_uv);
 	float furrow;
@@ -112,6 +100,12 @@ vec3 survey_field(vec3 c, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_uv, fl
 		c = wash(GAMBOGE, sheet, SURVEY_PAPER, p, l.edge, 0.45);
 		c = mix(c, SURVEY_INK, vine_rows(p, l, along, fw) * 0.55);
 	} else if (use < 0.9) c = mix(c, SURVEY_INK, scatter(p, own, metres(12.0), metres(0.5), 0.9, 0.3, fw) * 0.4);
+	float wet = wet_meadow(uv, follow);
+	if (wet > 0.001) {
+		c = mix(c, wash(palette[GRASS].rgb, sheet, SURVEY_PAPER, p, edge, 0.3), wet * 0.85);
+		c = mix(c, SURVEY_INK, meadow_pairs(p, own, MEADOW_ROW, MEADOW_LEN, W1 * 0.55, 0.7, fw) * 0.65 * wet);
+		c = mix(c, SURVEY_BLUE, marks(p + 0.3, own, 0.55, 0.16, W1 * 0.55, 0.0, 0.15, 0.7, fw) * 0.7 * wet);
+	}
 	float bounded = smoothstep(0.15, 0.6, l.levels.x);
 	vec2 pair = l.id + l.other;
 	float marked = step(hash(pair + 4.4), mix(0.12, 0.85, bounded));
@@ -159,7 +153,7 @@ vec3 survey(int k, int beside, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_u
 	} else if (k == GRASS) {
 		Lot l = lot_at(p, uv, to_uv, metres(PADDOCK_M), 0.5, GRASS, own, levels);
 		float rough = step(0.6, hash(l.id + 1.1));
-		float wet = 1.0 - smoothstep(metres(WET_NEAR_M * 0.7), metres(WET_NEAR_M), wet_at(uv));
+		float wet = wet_meadow(uv, 0.0);
 		if (rough > 0.5) c = mix(c, SURVEY_INK, pasture(p, own, MEADOW_ROW, W1 * 0.5, 0.75, fw) * 0.6);
 		else c = mix(c, SURVEY_INK, meadow_pairs(p, own, MEADOW_ROW, MEADOW_LEN, W1 * 0.55, 0.75, fw) * 0.7);
 		c = mix(c, SURVEY_BLUE, marks(p + 0.3, own, 0.55, 0.16, W1 * 0.55, 0.0, 0.15, 0.7, fw) * 0.7 * wet);
@@ -183,17 +177,15 @@ vec3 survey(int k, int beside, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_u
 	} else if (k == FIELD) {
 		c = survey_field(c, tint, sheet, p, uv, to_uv, own, vec2(max(levels.x, near_town * NEAR_TOWN_PLOTS), levels.y), along, follow, fw, edge, cover);
 	} else if (k == WOOD) {
-		Lot s = lot_at(p, uv, to_uv, metres(STAND_M), 0.5, WOOD, own, levels);
 		float open = clearing_at(p, own) * (1.0 - smoothstep(CLOSED_FROM, CLOSED_FULL, levels.x));
 		float conifer = conifer_share(p, own);
 		vec3 ground = mix(tint, CONIFER_WASH, smoothstep(0.4, 0.9, conifer)) * mix(1.0, 0.8, levels.x) * (1.0 + (fbm(p * 0.5) - 0.5) * 0.14);
 		c = wash(mix(ground, palette[GRASS].rgb, open), sheet, SURVEY_PAPER, p, wash_edge, pooling);
 		c = survey_wood(c, tint, p, uv, to_uv, fw, ledges, metres(mix(TREES_OPEN_M, TREES_CLOSED_M, levels.x)), levels.x * (1.0 - near_town * NEAR_TOWN_THINS), cover);
-		if (s.room >= 0.0) {
-			float ride = (1.0 - smoothstep(metres(3.0), metres(3.0) + fw, s.edge)) * step(0.7, hash(s.id + 2.2)) * (1.0 - ledges);
-			c = mix(c, sheet, ride * RIDE);
-			c = mix(c, SURVEY_INK, dashed(dot(p - s.site, s.across), abs(s.edge - metres(3.0)), 0.25, 0.5, W1 * 0.5, fw) * ride * 0.7);
-			if (open > 0.5 && hash(s.id + 3.9) < 0.5) c = mix(c, SURVEY_INK, hut(p, s, fw));
+		c = mix(c, SURVEY_INK, rides(p, levels.x, W1 * 0.6, 0.0, fw) * (1.0 - ledges) * 0.7);
+		if (open > 0.5) {
+			Lot s = lot_at(p, uv, to_uv, metres(STAND_M), 0.5, WOOD, own, levels);
+			if (s.room >= 0.0 && hash(s.id + 3.9) < 0.5) c = mix(c, SURVEY_INK, hut(p, s, fw));
 		}
 	} else if (k == MARSH) {
 		Lot l = lot_at(p, uv, to_uv, metres(MARSH_LOT_M), 0.5, MARSH, own, levels);

@@ -376,6 +376,7 @@ sealed partial class TableDemos
         if (_args.TryGetValue("demo-ground", out var dgr)) DemoGround(hud, dgr);
         if (_args.TryGetValue("demo-reference", out var dref)) _ = DemoReference(hud, dref);
         if (_args.TryGetValue("ground-look", out var glk)) { GroundLook(glk); hud.Visible = false; }
+        if (_args.TryGetValue("tour", out var tour) && _args.TryGetValue("ground-shots", out var tourDir)) _ = ScenarioTour(hud, tourDir, tour);
         if (_args.TryGetValue("demo-backdrop", out var dbd))
         {
             var parts = dbd.Split(':');

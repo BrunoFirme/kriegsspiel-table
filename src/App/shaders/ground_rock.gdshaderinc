@@ -52,40 +52,32 @@ float rock_fill(vec2 p, float h, vec2 down, float steep, float dark, float sheer
 	return hachure_field(p, h, down, band_h, spacing, width, keep, fw);
 }
 
-vec3 survey_rock(vec3 c, vec2 p, float own, float h, vec2 down, float steep, float dark, float crest, float gully, float sheer, float foot, float fw) {
-	vec3 sepia = SURVEY_INK;
-	c = mix(c, c * vec3(0.9, 0.88, 0.84), 0.35 * (1.0 - foot));
+vec3 survey_rock(vec3 c, vec3 tone, vec2 p, float own, float h, vec2 down, float steep, float dark, float crest, float gully, float sheer, float foot, float amount, float fw) {
 	float fill = rock_fill(p, h, down, steep, dark, sheer, 0.28, 0.16, 0.012, 0.03, fw);
 	fill *= 1.0 - crest * (1.0 - dark);
 	float shape = gully * dark > 0.02 ? rock_fill(p + 7.3, h, down, steep, dark, 0.0, 0.24, 0.24, 0.028, 0.034, fw) * gully * dark : 0.0;
-	c = mix(c, sepia, fill * mix(0.55, 1.0, dark) * (1.0 - foot));
-	c = mix(c, sepia, shape * 0.9 * (1.0 - foot));
-	c = mix(c, sepia, crest * mix(0.45, 0.9, dark) * (1.0 - foot));
-	if (foot > 0.01) c = mix(c, sepia, scatter(p + 3.1, own, 0.09, 0.009, 0.9, 0.5, fw) * 0.6 * foot);
-	return c;
+	float m = max(max(fill * mix(0.55, 1.0, dark), shape * 0.9), crest * mix(0.45, 0.9, dark)) * (1.0 - foot);
+	if (foot > 0.01) m = max(m, scatter(p + 3.1, own, 0.09, 0.009, 0.9, 0.5, fw) * 0.6 * foot);
+	return mix(c, tone, m * amount);
 }
 
-vec3 ancient_rock(vec3 c, vec2 p, float h, vec2 down, float steep, float dark, float crest, float sheer, float fw) {
-	vec3 umber = ANCIENT_RIDGE;
+vec3 ancient_rock(vec3 c, vec2 p, float h, vec2 down, float steep, float dark, float crest, float sheer, float amount, float fw) {
 	float strokes = rock_fill(p, h, down, steep, dark, sheer, 0.2, 0.2, 0.012, 0.016, fw);
-	c = mix(c, umber, strokes * 0.75);
-	c = mix(c, umber, crest * mix(0.2, 0.9, dark));
-	return c;
+	float m = max(strokes * 0.75, crest * mix(0.2, 0.9, dark));
+	return mix(c, ANCIENT_RIDGE, m * amount);
 }
 
-vec3 modern_rock(vec3 c, vec2 p, float h, vec2 down, float steep, float dark, float crest, float sheer, float foot, float own, float fw) {
-	vec3 black = MODERN_BLACK;
+vec3 modern_rock(vec3 c, vec2 p, float h, vec2 down, float steep, float dark, float crest, float sheer, float foot, float own, float amount, float fw) {
 	float ticks = rock_fill(p, h, down, steep, dark, sheer, 0.12, 0.12, 0.011, 0.013, fw);
-	c = mix(c, black, ticks * 0.85 * (1.0 - foot));
-	c = mix(c, black, crest * 0.9 * (1.0 - foot));
-	c = mix(c, black, screen(p, own, 0.1, 0.012, fw) * 0.7 * foot);
-	return c;
+	float m = max(ticks * 0.85, crest * 0.9) * (1.0 - foot);
+	m = max(m, screen(p, own, 0.1, 0.012, fw) * 0.7 * foot);
+	return mix(c, MODERN_BLACK, m * amount);
 }
 
-vec3 rock_face(int style, vec3 c, vec2 p, vec2 uv, mat2 to_uv, float h, vec2 down, float steep, float dark, float crest, float gully, float sheer, float foot, float own, float fw) {
-	if (style == MODERN) return modern_rock(c, p, h, down, steep, dark, crest, sheer, foot, own, fw);
-	if (style == ANCIENT) return ancient_rock(c, p, h, down, steep, dark, crest, sheer, fw);
-	return survey_rock(c, p, own, h, down, steep, dark, crest, gully, sheer, foot, fw);
+vec3 rock_face(int style, vec3 c, vec2 p, float h, vec2 down, float steep, float dark, float crest, float gully, float sheer, float foot, float own, float fw, float amount, bool painted) {
+	if (style == MODERN) return modern_rock(c, p, h, down, steep, dark, crest, sheer, foot, own, amount, fw);
+	if (style == ANCIENT) return ancient_rock(c, p, h, down, steep, dark, crest, sheer, amount, fw);
+	return survey_rock(c, painted ? CINNABAR : SURVEY_INK, p, own, h, down, steep, dark, crest, gully, sheer, foot, amount, fw);
 }
 
 vec3 hachures(vec3 c, vec3 n, vec2 p, float h, float fw, vec3 tone, float mask) {

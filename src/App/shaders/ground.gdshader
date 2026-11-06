@@ -56,7 +56,6 @@ const float MEADOW_ROW = 1.25;
 const float MEADOW_LEN = 0.25;
 const float SHADOW_M = 1.5;
 const float VILLAGE_RING = 0.6;
-const float WET_LOT_M = 50.0;
 const float WET_NEAR_M = 60.0;
 const float FRONTS_M = 300.0;
 const float VINE_ROW_M = 12.0;
@@ -73,6 +72,8 @@ const int SURVEY = 0;
 const int ANCIENT = 1;
 const int MODERN = 2;
 const float WARP = 0.42;
+const float WARP_LONG = 1.2;
+const float VOTE_FALL = 0.347;
 const float EDGE_STEPS = 16.0;
 const float ANCHOR = 3.0;
 const vec2 NORTH = vec2(0.0, -1.0);
@@ -139,15 +140,14 @@ const vec3 LUMA = vec3(0.3, 0.59, 0.11);
 const vec3 SURVEY_BLUE = vec3(0.2, 0.325, 0.443);
 const vec3 MODERN_BLUE = vec3(0.255, 0.329, 0.49);
 const float GENTLE = 0.268;
-const float ROCK_FROM = 0.577;
-const float ROCK_FULL = 0.839;
-const float SHEER = 1.732;
+const float ROCK_FROM = 1.0;
+const float ROCK_FULL = 1.732;
+const float SHEER = 3.0;
 const float SHEER_THINS = 0.7;
 const float ROCK_STROKE = 1.0;
 const float ROCK_BAND_LEAST = 0.15;
 const float CURVE_STEP = 0.6;
 const float GRAD_STEP = 0.35;
-const float SLOPE_ROCK_WASH = 0.4;
 const float CREST_FROM = 0.05;
 const float CREST_FULL = 0.5;
 const float LEDGE_TREES = 0.2;
@@ -167,6 +167,9 @@ const float TREES_OPEN_M = 80.0;
 const float TREES_CLOSED_M = 50.0;
 const float OPEN_WOOD_KEEP = 0.5;
 const float RIDE = 0.5;
+const float RIDES_FROM = 0.75;
+const float RIDE_M = 500.0;
+const float HAMLET_HOUSES = 0.2;
 const int HEDGE = 1;
 const int FENCE = 2;
 const int WALL = 3;
@@ -336,7 +339,7 @@ void fragment() {
 	float convex = smoothstep(CREST_FROM, CREST_FULL, -curve);
 	float gully = smoothstep(CREST_FROM, CREST_FULL, curve);
 	float crest = 4.0 * rockness * (1.0 - rockness) * convex;
-	float sheer = smoothstep(ROCK_FULL * 1.4, SHEER, steep);
+	float sheer = smoothstep(ROCK_FULL * 1.2, SHEER, steep);
 	float foot = smoothstep(ROCK_FROM - FOOT_BAND, ROCK_FROM, steep) * (1.0 - rockness) * (k == ROCK ? 0.0 : 1.0);
 	float follow = smoothstep(GENTLE, GENTLE * 1.5, steep);
 	vec3 n = normalize((INV_VIEW_MATRIX * vec4(NORMAL, 0.0)).xyz);
@@ -370,34 +373,30 @@ void fragment() {
 	float bump = 0.0;
 	float cover = 0.0;
 	vec3 sheet = paper(style, p, fw);
-	vec3 rock = sheet;
-	if (rockness + foot > 0.001) rock = rock_face(style, mix(sheet, plain(style, palette[style * KINDS + ROCK].rgb, sheet, p, SEAMLESS), k == ROCK ? 1.0 : SLOPE_ROCK_WASH), p, UV, to_uv, h, down, steep, dark, crest, gully, sheer, foot, own, fw);
 	vec3 c;
 	if (k <= 0 || k >= KINDS) {
 		if (painted_only && lines < 0.02) discard;
-		c = painted_only ? contour_ink(style, k, sheet) : mix(slopes(sheet, n, p, world.y, fw, style, 1.0 - rockness), rock, rockness);
+		c = painted_only ? contour_ink(style, k, sheet) : slopes(sheet, n, p, world.y, fw, style, 1.0 - rockness);
+		if (!painted_only && rockness + foot > 0.001) c = rock_face(style, c, p, h, down, steep, dark, crest, gully, sheer, foot, own, fw, max(rockness, foot), false);
 	} else {
 		vec3 tint = palette[style * KINDS + k].rgb;
 		bool bare = k != WATER && k != ROAD && k != BRIDGE;
-		if (bare && rockness >= 1.0 - 1e-3 && k != WOOD) c = rock;
-		else {
-			if (style == ANCIENT) c = ancient(k, beside, tint, sheet, p, UV, to_uv, own, levels, near_town, mid, road_w, down, follow, rockness, fw, edge, shore, cover);
-			else if (style == MODERN) c = modern(k, beside, tint, sheet, p, UV, to_uv, own, levels, near_town, mid, road_w, down, follow, rockness, fw, edge, shore, cover);
-			else c = survey(k, beside, tint, sheet, p, UV, to_uv, own, levels, near_town, mid, road_w, down, follow, rockness, fw, edge, shore, bump, cover);
-			float culvert = 0.0;
-			if (k != WATER) {
-				float order_here;
-				float brook = streams(style, p, UV, from_uv, fw, mid, road_w, order_here, culvert);
-				if (brook > 0.001) c = mix(c, style == MODERN ? MODERN_BLUE : style == ANCIENT ? ANCIENT_INK : SURVEY_BLUE, brook);
-			} else c = current(style, c, p, UV, to_uv, from_uv, border, fw);
-			if (road_w >= 0.0) c = road_over(style, c, sheet, p, UV, to_uv, road_class, mid, fw, over_water);
-			if (culvert > 0.001) c = mix(c, style == MODERN ? MODERN_BLACK : style == ANCIENT ? ANCIENT_INK : SURVEY_INK, culvert);
-			if (halo > 0.001) c = mix(c, plain(style, tint, sheet, p, edge), halo * HALO);
-			c = mix(c, c * (1.0 - MARK_SHADE), dark * cover * smoothstep(0.04, 0.35, steep_n));
-			if (bare) c = slopes(c, n, p, world.y, fw, style, (1.0 - cover) * (1.0 - rockness));
-			float keep = k == WOOD ? cover : 0.0;
-			if (bare) c = mix(c, rock, rockness * (1.0 - keep));
-		}
+		if (style == ANCIENT) c = ancient(k, beside, tint, sheet, p, UV, to_uv, own, levels, near_town, mid, road_w, down, follow, rockness, fw, edge, shore, cover);
+		else if (style == MODERN) c = modern(k, beside, tint, sheet, p, UV, to_uv, own, levels, near_town, mid, road_w, down, follow, rockness, fw, edge, shore, cover);
+		else c = survey(k, beside, tint, sheet, p, UV, to_uv, own, levels, near_town, mid, road_w, down, follow, rockness, fw, edge, shore, bump, cover);
+		float culvert = 0.0;
+		if (k != WATER) {
+			float order_here;
+			float brook = streams(style, p, UV, from_uv, fw, mid, road_w, order_here, culvert);
+			if (brook > 0.001) c = mix(c, style == MODERN ? MODERN_BLUE : style == ANCIENT ? ANCIENT_INK : SURVEY_BLUE, brook);
+		} else c = current(style, c, p, UV, to_uv, from_uv, border, fw);
+		if (road_w >= 0.0) c = road_over(style, c, sheet, p, UV, to_uv, road_class, mid, fw, over_water);
+		if (culvert > 0.001) c = mix(c, style == MODERN ? MODERN_BLACK : style == ANCIENT ? ANCIENT_INK : SURVEY_INK, culvert);
+		if (halo > 0.001) c = mix(c, plain(style, tint, sheet, p, edge), halo * HALO);
+		c = mix(c, c * (1.0 - MARK_SHADE), dark * cover * smoothstep(0.04, 0.35, steep_n));
+		if (bare) c = slopes(c, n, p, world.y, fw, style, (1.0 - cover) * (1.0 - rockness));
+		float keep = k == WOOD ? cover : 0.0;
+		if (bare && rockness + foot > 0.001) c = rock_face(style, c, p, h, down, steep, dark, crest, gully, sheer, foot, own, fw, max(rockness, foot) * (1.0 - keep), k == ROCK);
 	}
 	if (snow_line > 0.0) {
 		float band = snow_line * SNOW_BAND;

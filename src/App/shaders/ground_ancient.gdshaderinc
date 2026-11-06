@@ -70,8 +70,6 @@ vec3 ancient_field(vec3 c, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_uv, f
 	p = curled(p);
 	Lot l = lot_at(p, uv, to_uv, metres(mix(PLOT_OPEN_M, PLOT_SMALL_M, levels.x)), 0.56, FIELD, own, levels);
 	cover = 0.0;
-	vec2 site_uv = uv + to_uv * (l.site - p);
-	if (wet_field_at(site_uv, follow) > 0.5) return wet_field(ANCIENT, c, sheet, p, uv, to_uv, own, levels, fw);
 	float use = hash(l.id + 9.4);
 	float small = step(l.room, metres(ORCHARD_LOT_M));
 	if (use < 0.2 && small > 0.5) { float o = orchard(p, l, 0.18, fw); c = mix(c, ANCIENT_INK, o * 0.85); cover = o; }
@@ -109,14 +107,12 @@ vec3 ancient(int k, int beside, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_
 		c = ancient_field(c, tint, sheet, p, uv, to_uv, own, vec2(max(levels.x, near_town * NEAR_TOWN_PLOTS), levels.y), along, follow, fw, edge, cover);
 		weight = W1;
 	} else if (k == WOOD) {
-		Lot s = lot_at(p, uv, to_uv, metres(STAND_M), 0.5, WOOD, own, levels);
 		float open = clearing_at(p, own) * (1.0 - smoothstep(CLOSED_FROM, CLOSED_FULL, levels.x));
 		c = mix(c, palette[ANCIENT * KINDS + GRASS].rgb * (sheet / ANCIENT_PAPER), open);
 		c = ancient_wood(c, tint, p, uv, to_uv, fw, ledges, metres(mix(TREES_OPEN_M, TREES_CLOSED_M, levels.x)) * 1.2, levels.x * (1.0 - near_town * NEAR_TOWN_THINS), cover);
-		if (s.room >= 0.0) {
-			float ride = (1.0 - smoothstep(metres(2.0), metres(2.0) + fw, s.edge)) * step(0.7, hash(s.id + 2.2)) * (1.0 - ledges);
-			c = mix(c, sheet, ride * RIDE);
-			if (open > 0.5 && hash(s.id + 3.9) < 0.5) c = mix(c, ANCIENT_INK, hut(p, s, fw));
+		if (open > 0.5) {
+			Lot s = lot_at(p, uv, to_uv, metres(STAND_M), 0.5, WOOD, own, levels);
+			if (s.room >= 0.0 && hash(s.id + 3.9) < 0.5) c = mix(c, ANCIENT_INK, hut(p, s, fw));
 		}
 	} else if (k == MARSH) {
 		c = mix(c, ANCIENT_INK, marks(p, own, 0.16, 0.05, W1 * 0.6, 0.0, 0.0, 0.8, fw) * 0.85);

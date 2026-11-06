@@ -14,8 +14,8 @@ float depth_at(vec2 o, vec2 p, vec2 uv, mat2 to_uv) {
 	return town_depth_at(uv + to_uv * (o - p));
 }
 
-float wet_field_at(vec2 site_uv, float follow) {
-	return (1.0 - follow) * (1.0 - step(metres(WET_NEAR_M), wet_at(site_uv)));
+float wet_meadow(vec2 uv, float follow) {
+	return (1.0 - smoothstep(metres(WET_NEAR_M * 0.7), metres(WET_NEAR_M), wet_at(uv))) * (1.0 - follow);
 }
 
 float square_block(vec2 p, vec2 uv, mat2 to_uv, float size, float jitter, float salt) {
@@ -194,7 +194,7 @@ vec3 village_draw(int style, vec3 c, vec3 sheet, vec2 p, vec2 uv, mat2 to_uv, fl
 vec3 town_draw(int style, vec3 c, vec3 sheet, vec2 p, vec2 uv, mat2 to_uv, float own, vec2 levels, float road_w, float fw, out float cover) {
 	vec3 ink_c = style == MODERN ? MODERN_BLACK : style == ANCIENT ? ANCIENT_INK : SURVEY_INK;
 	vec3 church_c = style == SURVEY ? CINNABAR : ink_c;
-	float houses = levels.x;
+	float houses = max(levels.x, HAMLET_HOUSES);
 	float walls = levels.y;
 	if (houses < 0.5 && walls < 0.02) return village_draw(style, c, sheet, p, uv, to_uv, own, houses, road_w, fw, cover);
 	float jitter = style == ANCIENT ? 0.0 : 0.5;

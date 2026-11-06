@@ -124,8 +124,16 @@ float dotted_road(vec2 p, vec2 uv, mat2 to_uv, float at, float spacing, float wi
 	return m;
 }
 
-float levees(Lot w, float w1, float fw) {
-	return max(ink(abs(w.edge - w1), w1 * 0.45, fw), ink(abs(w.edge - w1 * 3.0), w1 * 0.45, fw));
+float rides(vec2 p, float trees, float width, float dash, float fw) {
+	if (trees < RIDES_FROM) return 0.0;
+	vec2 region = floor(p / metres(STRIP_REGION_M));
+	float a = hash(region + 5.5) * 3.1416;
+	vec2 q = mat2(vec2(cos(a), sin(a)), vec2(-sin(a), cos(a))) * p + hash2(region + 6.6) * metres(RIDE_M);
+	vec2 pitch = vec2(metres(RIDE_M), metres(RIDE_M) * 2.0);
+	vec2 f = abs(fract(q / pitch) - 0.5) * pitch;
+	float along = f.x < f.y ? q.y : q.x;
+	float on = dash > 0.0 ? mix(step(0.5, fract(along / dash)), 0.5, far_blend(fw, dash)) : 1.0;
+	return ink(min(f.x, f.y), width, fw) * on;
 }
 
 float fronts_road(vec2 site_uv, float follow) {
