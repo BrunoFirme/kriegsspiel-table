@@ -23,7 +23,7 @@ settle
 checkpoint help
 close-window
 click "Menu"
-click "Export to Tabletop Simulator"
+click "Convert to TTS"
 settle
 checkpoint export-tts-submenu
 dismiss

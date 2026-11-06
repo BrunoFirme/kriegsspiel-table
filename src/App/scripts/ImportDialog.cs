@@ -31,7 +31,7 @@ public partial class ImportDialog : AcceptDialog
     {
         _packagesRoot = packagesRoot;
         _done = done;
-        Title = "Import a Tabletop Simulator module";
+        Title = "Convert a TTS module";
         OkButtonText = "Close";
         Size = new Vector2I(900, 640);
     }
@@ -79,14 +79,14 @@ public partial class ImportDialog : AcceptDialog
         g.AddChild(_skipText);
         var goRow = new HBoxContainer();
         goRow.AddThemeConstantOverride("separation", 8);
-        _go = new Button { Text = "Import", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+        _go = new Button { Text = "Convert", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         _go.Pressed += Go;
         goRow.AddChild(_go);
         right.AddChild(goRow);
         _stop = new Button
         {
             Text = "Stop", Visible = false, FocusMode = Control.FocusModeEnum.None,
-            TooltipText = "Stops the import and puts back what it had moved aside.",
+            TooltipText = "Stops the conversion and puts back what it had moved aside.",
         };
         _stop.Pressed += Stop;
         _progress = new ImportProgress(_stop);
@@ -104,8 +104,8 @@ public partial class ImportDialog : AcceptDialog
             _run = earlier;
             _go.Disabled = true;
             _stop.Visible = true;
-            if (_watch is { Ended: null } watch) _progress.Follow(watch, "Importing");
-            else SetStatus("An import started earlier is still running.");
+            if (_watch is { Ended: null } watch) _progress.Follow(watch, "Converting");
+            else SetStatus("A conversion started earlier is still running.");
         }
 
         Log("Looking for TTS modules…");
@@ -149,7 +149,7 @@ public partial class ImportDialog : AcceptDialog
         var fetch = e.Measured && e.Fetch > 0 ? $" · {e.Fetch} not on this PC" : "";
         _list.SetItemText(i, $"{e.Name.Trim()}   ·   {where}{size}{fetch}");
         if (e.Measured)
-            _list.SetItemTooltip(i, "Pictures and models of its pieces and maps that TTS keeps on this PC" + (e.Fetch > 0 ? $"; {e.Fetch} more come from the web during the import" : ""));
+            _list.SetItemTooltip(i, "Pictures and models of its pieces and maps that TTS keeps on this PC" + (e.Fetch > 0 ? $"; {e.Fetch} more come from the web during the conversion" : ""));
     }
 
     static Texture2D? SmallIcon(string file)
@@ -215,7 +215,7 @@ public partial class ImportDialog : AcceptDialog
         _go.Disabled = false;
         _stop.Visible = false;
         _stop.Disabled = false;
-        if (!_progress.Visible) SetStatus("The import started earlier has ended.");
+        if (!_progress.Visible) SetStatus("The conversion started earlier has ended.");
     }
 
     void Stop()
@@ -223,7 +223,7 @@ public partial class ImportDialog : AcceptDialog
         if (_run == null) return;
         _run.Cancel();
         _stop.Disabled = true;
-        SetStatus("Stopping, and putting back what the import had moved aside…");
+        SetStatus("Stopping, and putting back what the conversion had moved aside…");
     }
 
     static readonly JsonSerializerOptions ListedOptions = new() { PropertyNameCaseInsensitive = true };
@@ -245,7 +245,7 @@ public partial class ImportDialog : AcceptDialog
         if (_running || _source.Text.Trim().Length == 0) return;
         _running = true;
         _go.Disabled = true;
-        _go.Text = "Importing…";
+        _go.Text = "Converting…";
         var source = _source.Text.Trim();
         var name = _name.Text.Trim();
         bool skipText = _skipText.ButtonPressed;
@@ -276,7 +276,7 @@ public partial class ImportDialog : AcceptDialog
             if (code != 0 || packs.Count == 0)
             {
                 foreach (var l in said) Log(Fmt.Bb(l));
-                Log($"[color=#f87]The module could not be read, so nothing was imported (exit {code}).[/color]");
+                Log($"[color=#f87]The module could not be read, so nothing was converted (exit {code}).[/color]");
                 Reset(Failed);
                 return;
             }
@@ -286,20 +286,20 @@ public partial class ImportDialog : AcceptDialog
             _progress.Waiting("Waiting for your answer");
             AskFirst(worked, () => Import(source, name, skipText, packs, scenarios, watch), () =>
             {
-                Log("Not imported: nothing was changed.");
+                Log("Not converted: nothing was changed.");
                 Reset(NotImported);
             });
         });
         if (_run != null) { _stop.Visible = true; _stop.Disabled = false; }
     }
 
-    const string Done = "Done", Stopped = "Stopped", Failed = "Failed", NotImported = "Not imported";
+    const string Done = "Done", Stopped = "Stopped", Failed = "Failed", NotImported = "Not converted";
 
     void Reset(string outcome)
     {
         _running = false;
         _go.Disabled = false;
-        _go.Text = "Import";
+        _go.Text = "Convert";
         _stop.Visible = false;
         _stop.Disabled = false;
         _watch?.End(outcome);
@@ -307,7 +307,7 @@ public partial class ImportDialog : AcceptDialog
     }
 
     void AskFirst(List<(string id, string name, PackChange change)> worked, Action go, Action cancel) =>
-        AskBeforeReplacing(this, worked, "Importing this module again", "Import anyway", go, cancel);
+        AskBeforeReplacing(this, worked, "Converting this module again", "Convert anyway", go, cancel);
 
     public static List<(string id, string name, PackChange change)> WorkedOn(string packagesRoot, IEnumerable<string> packIds)
     {
@@ -344,11 +344,11 @@ public partial class ImportDialog : AcceptDialog
         {
             var folders = plannedPacks.Select(p => (InUse.Pack(_packagesRoot, p), $"the pack {p}")).ToList();
             folders.AddRange(plannedScenarios.Select(s => (InUse.Scenario(_packagesRoot, s), $"the scenario {s}")));
-            return InUse.Claim(folders, "being imported from Tabletop Simulator");
+            return InUse.Claim(folders, "being converted from TTS");
         }
         catch (InUseException e)
         {
-            Log($"[color=#f87]Not imported: {Fmt.Bb(e.Message)}[/color]");
+            Log($"[color=#f87]Not converted: {Fmt.Bb(e.Message)}[/color]");
             Reset(NotImported);
             return null;
         }
@@ -364,7 +364,7 @@ public partial class ImportDialog : AcceptDialog
         if (skipText) args.AddRange(new[] { "--skip", "3DText" });
         string? scenario = null, pack = null, report = null, hostile = null, leftOut = null;
         var also = new List<string>();
-        Log($"[b]Importing {Fmt.Bb(source)}[/b]");
+        Log($"[b]Converting {Fmt.Bb(source)}[/b]");
         int movedAside = 0, putBack = 0;
         string Left() => movedAside == 0 ? "" : putBack >= movedAside
             ? " What you had before is back in place."
@@ -427,13 +427,13 @@ public partial class ImportDialog : AcceptDialog
                 _running = false;
                 _run = null;
                 _go.Disabled = false;
-                _go.Text = "Import";
+                _go.Text = "Convert";
                 _stop.Visible = false;
                 _stop.Disabled = false;
                 SetStatus("");
                 if (stopped)
                     Log(movedAside > 0
-                        ? "[color=#ffd75e]Stopped. Nothing of this import was kept." + Left() + "[/color]"
+                        ? "[color=#ffd75e]Stopped. Nothing of this conversion was kept." + Left() + "[/color]"
                         : "[color=#ffd75e]Stopped before anything was changed.[/color]");
                 else if (pack != null)
                 {
@@ -443,7 +443,7 @@ public partial class ImportDialog : AcceptDialog
                     if (hostile != null) Log("[color=#f87]A hostile script was removed from this module; see the report.[/color]");
                     if (leftOut != null) Log($"[color=#ff5f5f][font_size=20][b]{leftOut}: broken in TTS too[/b][/font_size][/color]");
                 }
-                else Log($"[color=#f87]Import failed (exit {code}).[/color]" + Left());
+                else Log($"[color=#f87]Conversion failed (exit {code}).[/color]" + Left());
             }
             if (!stopped && pack != null) _done(scenario ?? "", pack);
         }, writesTo: _packagesRoot, hold: hold);

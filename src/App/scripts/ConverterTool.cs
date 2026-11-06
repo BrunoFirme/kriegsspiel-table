@@ -63,7 +63,7 @@ public static class ConverterTool
                 if (Writer != null)
                 {
                     hold?.Dispose();
-                    onLine("Another import is still running. Wait for it to finish, or stop it, before starting this one.");
+                    onLine("Another conversion is still running. Wait for it to finish, or stop it, before starting this one.");
                     onExit(-1);
                     return null;
                 }
@@ -118,12 +118,12 @@ public static class ConverterTool
             {
                 finished |= u.WasFinished && run.Journal != null && string.Equals(Path.GetFullPath(u.File), Path.GetFullPath(run.Journal), StringComparison.OrdinalIgnoreCase);
                 foreach (var b in u.Back) Post(() => onLine("PUTBACK " + b));
-                foreach (var t in u.Trashed) Post(() => onLine($"What the import had begun of {t} is in the trash."));
+                foreach (var t in u.Trashed) Post(() => onLine($"What the conversion had begun of {t} is in the trash."));
                 foreach (var pr in u.Problems) Post(() => onLine(char.ToUpperInvariant(pr[0]) + pr[1..] + ": restore it from the trash at the foot of Piece studio or Scenarios."));
-                if (u.Notes.Count > 0) Post(() => onLine("The import's record: " + string.Join("; ", u.Notes) + "."));
+                if (u.Notes.Count > 0) Post(() => onLine("The conversion's record: " + string.Join("; ", u.Notes) + "."));
             }
         }
-        catch (Exception ex) { Post(() => onLine("Could not put back what the import had moved aside: " + ex.Message + ". It is in the trash.")); }
+        catch (Exception ex) { Post(() => onLine("Could not put back what the conversion had moved aside: " + ex.Message + ". It is in the trash.")); }
         return finished;
     }
 

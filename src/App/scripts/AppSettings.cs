@@ -197,7 +197,7 @@ sealed class SettingsPage
 
     string? Busy(CacheKind kind) => kind switch
     {
-        CacheKind.TtsDownloads when ConverterTool.Running => "An import is running. Clear its downloads once it ends.",
+        CacheKind.TtsDownloads when ConverterTool.Running => "A conversion is running. Clear its downloads once it ends.",
         _ when _main.OpeningTitle is { } opening => $"{opening} is opening. Clear once it is open or stopped.",
         _ => null,
     };

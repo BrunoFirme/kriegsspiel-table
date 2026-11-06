@@ -102,6 +102,64 @@ static class TitleStyle
         return (row, h);
     }
 
+    public static HFlowContainer Grid()
+    {
+        var grid = new HFlowContainer();
+        grid.AddThemeConstantOverride("h_separation", 12);
+        grid.AddThemeConstantOverride("v_separation", 12);
+        return grid;
+    }
+
+    public static (PanelContainer card, VBoxContainer face, HBoxContainer nameRow) CardFace(Texture2D? thumb, string name, bool plate)
+    {
+        var card = new PanelContainer { CustomMinimumSize = new Vector2(250, 0), MouseFilter = Control.MouseFilterEnum.Stop };
+        card.AddThemeStyleboxOverride("panel", CardStyle(false));
+        var cv = new VBoxContainer();
+        card.AddChild(cv);
+        if (thumb != null) cv.AddChild(new TextureRect { Texture = thumb, CustomMinimumSize = new Vector2(226, 130), ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
+            StretchMode = TextureRect.StretchModeEnum.KeepAspectCovered });
+        else if (plate)
+        {
+            var blank = new Panel { CustomMinimumSize = new Vector2(226, 130), MouseFilter = Control.MouseFilterEnum.Ignore };
+            blank.AddThemeStyleboxOverride("panel",
+                new StyleBoxFlat { BgColor = new Color(1, 1, 1, 0.03f), CornerRadiusTopLeft = 4, CornerRadiusTopRight = 4, CornerRadiusBottomLeft = 4, CornerRadiusBottomRight = 4 });
+            cv.AddChild(blank);
+        }
+        var nameRow = new HBoxContainer();
+        nameRow.AddThemeConstantOverride("separation", 4);
+        var label = new Label { Text = name, AutowrapMode = TextServer.AutowrapMode.WordSmart, CustomMinimumSize = new Vector2(196, 0), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+        label.AddThemeFontOverride("font", Serif());
+        label.AddThemeFontSizeOverride("font_size", 18);
+        nameRow.AddChild(label);
+        return (card, cv, nameRow);
+    }
+
+    const int PlusCardSize = 44;
+    const float PlusCardHover = 0.09f;
+
+    public static PanelContainer PlusCard(string name, string tip, Action open)
+    {
+        var (card, cv, nameRow) = CardFace(null, name, plate: true);
+        if (cv.GetChild(0) is Panel plate)
+        {
+            var plus = new Label { Text = "+", HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center, MouseFilter = Control.MouseFilterEnum.Ignore };
+            plus.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
+            plus.AddThemeFontSizeOverride("font_size", PlusCardSize);
+            plus.AddThemeColorOverride("font_color", Muted);
+            plate.AddChild(plus);
+        }
+        cv.AddChild(nameRow);
+        card.TooltipText = tip;
+        card.MouseDefaultCursorShape = Control.CursorShape.PointingHand;
+        card.MouseEntered += () => card.AddThemeStyleboxOverride("panel", Ui.Box(new Color(1, 1, 1, PlusCardHover), 8, 12, 10));
+        card.MouseExited += () => card.AddThemeStyleboxOverride("panel", CardStyle(false));
+        card.GuiInput += e =>
+        {
+            if (e is InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.Left }) open();
+        };
+        return card;
+    }
+
     public static Label CardLine(string text, Color colour)
     {
         var l = new Label { Text = text, Modulate = colour, AutowrapMode = TextServer.AutowrapMode.WordSmart, CustomMinimumSize = new Vector2(226, 0) };

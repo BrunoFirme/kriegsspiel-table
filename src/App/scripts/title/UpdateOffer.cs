@@ -144,7 +144,7 @@ sealed class UpdateOffer
 
     static string? HoldingTheFolder()
     {
-        if (ConverterTool.Running) return "An import is still running: let it finish, then Install.";
+        if (ConverterTool.Running) return "A conversion is still running: let it finish, then Install.";
         var helper = Path.Combine(ExeDir, "converter", ConverterTool.ExeName);
         if (!File.Exists(helper)) return null;
         foreach (var other in Process.GetProcessesByName(Path.GetFileNameWithoutExtension(helper)))

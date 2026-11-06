@@ -23,8 +23,8 @@ public static class Caches
 
     public static IReadOnlyList<Cache> All =>
     [
-        new(CacheKind.TtsDownloads, "TTS downloads", "What importing from Tabletop Simulator downloaded. Imported packs keep their own copies.",
-            "Imported packs keep their own copies. Importing a module again downloads it again, except what has gone from the web since.", TtsDownloads),
+        new(CacheKind.TtsDownloads, "TTS downloads", "What converting from TTS downloaded. Converted packs keep their own copies.",
+            "Converted packs keep their own copies. Converting a module again downloads it again, except what has gone from the web since.", TtsDownloads),
         new(CacheKind.FromHosts, "Packs from hosts", "Packs fetched to join other people's games",
             "Joining a game fetches its packs again.", FromHosts),
         new(CacheKind.Display, "Display pictures", "Smaller copies of pictures, for drawing them on screen",

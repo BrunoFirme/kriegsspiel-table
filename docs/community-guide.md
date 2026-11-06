@@ -1,8 +1,8 @@
 # Modules, pieces and sharing
 
-## Import a Tabletop Simulator module
+## Convert a TTS module
 
-**Piece studio → Import from Tabletop Simulator…**, then pick a module or save from the list, **Browse…** to a
+**Piece studio → Convert from…**, then pick a module or save from the list, **Browse…** to a
 `.json` (each one shows its module's picture), or paste a Steam Workshop link. The list holds what TTS has on this PC, wherever TTS keeps its mods (Documents, or the game's own
 folder in any Steam library).
 
@@ -32,12 +32,12 @@ You get:
 
 Scripts keep working: see [what imported TTS scripts become](scripting.md#what-imported-tts-scripts-become).
 
-What an import downloads stays on this PC, so a module imports again without downloading. **Settings → Storage**
-on the title screen shows its size and clears it; imported packs keep their own copies.
+What a conversion downloads stays on this PC, so a module converts again without downloading. **Settings → Storage**
+on the title screen shows its size and clears it; converted packs keep their own copies.
 
-## Export to Tabletop Simulator
+## Convert to TTS
 
-**Menu → Export to Tabletop Simulator** writes the umpire board as a TTS save in your TTS Saves folder. Pictures
+**Menu → Convert to TTS → The umpire board…** writes the umpire board as a TTS save in your TTS Saves folder. Pictures
 keep their Steam links; your own pictures load only on your PC.
 
 ## The piece studio

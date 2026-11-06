@@ -110,7 +110,7 @@ public partial class PublishDialog : AcceptDialog
         {
             var pack = _store.Pack(_id)!;
             if (!PackManifest.IsUserPackId(_id))
-                warnings.Add("This pack was converted from someone else's Tabletop Simulator module. Publish it only with its authors' permission, and credit them in the description.");
+                warnings.Add("This pack was converted from someone else's TTS module. Publish it only with its authors' permission, and credit them in the description.");
             return (pack.Name, $"{pack.Pieces.Count} pieces" + (pack.Source.Authors.Count > 0 ? $" by {string.Join(", ", pack.Source.Authors)}" : "") + ".", warnings);
         }
         var sc = Json.Load<Scenario>(Path.Combine(_store.Root, "scenarios", _id, "scenario.json"));

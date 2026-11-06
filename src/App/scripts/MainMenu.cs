@@ -27,7 +27,7 @@ sealed class MainMenu : HudPart
             var tts = new PopupMenu { Name = "tts" };
             Shell.FillTtsMenu(tts);
             pm.AddChild(tts);
-            pm.AddSubmenuNodeItem("Export to Tabletop Simulator", tts);
+            pm.AddSubmenuNodeItem("Convert to TTS", tts);
         }
         pm.AddSeparator();
         pm.AddItem("Settings…", 30);

@@ -1,7 +1,9 @@
 settle
 click "Piece studio"
 wait 30
-click "Edit pieces"#2
+click "Scripted War Game (Kriegsspiel) Pieces"
+settle
+click "Edit pieces"
 settle 60 3000
 click "Blue model"
 settle 60 2400

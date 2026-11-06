@@ -184,7 +184,7 @@ public partial class Main : Node
             foreach (var u in recovered.Where(u => u.Any || u.Notes.Count > 0)) GD.Print("[install] undone: " + u.Details());
             var undone = recovered.Where(u => u.Any).ToList();
             var said = undone.Select(u => u.Describe()).ToList();
-            if (said.Count > 0) _pendingNotice = said.Count == 1 ? said[0] : $"{said.Count} imports or installs were cut off half way when the app last closed and have been undone: {string.Join(" ", said)}";
+            if (said.Count > 0) _pendingNotice = said.Count == 1 ? said[0] : $"{said.Count} conversions or installs were cut off half way when the app last closed and have been undone: {string.Join(" ", said)}";
         }
         catch (Exception e) { GD.PushError("undoing a cut-off install: " + e.Message); }
     }

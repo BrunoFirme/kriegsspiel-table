@@ -136,40 +136,10 @@ sealed class HostPage
         }, $"They go to the trash with their saves, for {SaveStore.TrashDays} days."));
     }
 
-    PanelContainer NewScenarioCard()
-    {
-        var (card, cv, nameRow) = CardFace(null, "New blank scenario…", plate: true);
-        if (cv.GetChild(0) is Panel plate)
-        {
-            var plus = new Label { Text = "+", HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center, MouseFilter = Control.MouseFilterEnum.Ignore };
-            plus.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
-            plus.AddThemeFontSizeOverride("font_size", NewCardPlusSize);
-            plus.AddThemeColorOverride("font_color", Muted);
-            plate.AddChild(plus);
-        }
-        cv.AddChild(nameRow);
-        card.TooltipText = "An empty table with its own name and clock: lay map sheets on it and place pieces";
-        card.MouseDefaultCursorShape = Control.CursorShape.PointingHand;
-        card.MouseEntered += () => card.AddThemeStyleboxOverride("panel", Ui.Box(new Color(1, 1, 1, NewCardHover), 8, 12, 10));
-        card.MouseExited += () => card.AddThemeStyleboxOverride("panel", CardStyle(false));
-        card.GuiInput += e =>
-        {
-            if (e is InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.Left }) NewBlankScenarioDialog.Open(_main);
-        };
-        return card;
-    }
+    PanelContainer NewScenarioCard() =>
+        PlusCard("New blank scenario…", "An empty table with its own name and clock: lay map sheets on it and place pieces", () => NewBlankScenarioDialog.Open(_main));
 
-    const int NewCardPlusSize = 44;
-    const float NewCardHover = 0.09f;
     const string OpensForYou = "Opens the table on this PC: yours alone, to plot or prepare, until you invite someone";
-
-    static HFlowContainer Grid()
-    {
-        var grid = new HFlowContainer();
-        grid.AddThemeConstantOverride("h_separation", 12);
-        grid.AddThemeConstantOverride("v_separation", 12);
-        return grid;
-    }
 
     void Choose(Cards page, string target, PanelContainer? card)
     {
@@ -207,30 +177,6 @@ sealed class HostPage
         row.AddChild(over);
         face.AddChild(row);
         page.Actions[card] = (row, host, over);
-    }
-
-    static (PanelContainer card, VBoxContainer face, HBoxContainer nameRow) CardFace(Texture2D? thumb, string name, bool plate)
-    {
-        var card = new PanelContainer { CustomMinimumSize = new Vector2(250, 0), MouseFilter = Control.MouseFilterEnum.Stop };
-        card.AddThemeStyleboxOverride("panel", CardStyle(false));
-        var cv = new VBoxContainer();
-        card.AddChild(cv);
-        if (thumb != null) cv.AddChild(new TextureRect { Texture = thumb, CustomMinimumSize = new Vector2(226, 130), ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
-            StretchMode = TextureRect.StretchModeEnum.KeepAspectCovered });
-        else if (plate)
-        {
-            var blank = new Panel { CustomMinimumSize = new Vector2(226, 130), MouseFilter = Control.MouseFilterEnum.Ignore };
-            blank.AddThemeStyleboxOverride("panel",
-                new StyleBoxFlat { BgColor = new Color(1, 1, 1, 0.03f), CornerRadiusTopLeft = 4, CornerRadiusTopRight = 4, CornerRadiusBottomLeft = 4, CornerRadiusBottomRight = 4 });
-            cv.AddChild(blank);
-        }
-        var nameRow = new HBoxContainer();
-        nameRow.AddThemeConstantOverride("separation", 4);
-        var label = new Label { Text = name, AutowrapMode = TextServer.AutowrapMode.WordSmart, CustomMinimumSize = new Vector2(196, 0), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-        label.AddThemeFontOverride("font", Serif());
-        label.AddThemeFontSizeOverride("font_size", 18);
-        nameRow.AddChild(label);
-        return (card, cv, nameRow);
     }
 
     PanelContainer ScenarioCard(Cards page, PackageStore store, List<(string id, string path, Scenario? s)> scenarios, string id, string path, Scenario? s)

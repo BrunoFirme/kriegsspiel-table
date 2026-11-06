@@ -102,7 +102,7 @@ public partial class Hud
     {
         var tmp = Path.Combine(OS.GetUserDataDir(), "tts_export.kstable");
         Json.Save(tmp, new SaveFile { ScenarioId = S.View.ScenarioId, Snapshot = S.View });
-        Log("Exporting to TTS…");
+        Log("Converting to TTS…");
         string? outFile = null;
         ConverterTool.Run(new[] { "export-tts", tmp, "--out", S.Store.Root }, line =>
         {
