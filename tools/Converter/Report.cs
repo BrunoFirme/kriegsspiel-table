@@ -19,9 +19,28 @@ public sealed class Report
     readonly ConcurrentQueue<(string where, int line, string what, string text)> _untranslated = new();
     int _scripts, _direct, _compat, _unparsed;
     readonly ConcurrentQueue<string> _notes = new();
+    readonly ConcurrentDictionary<Surface.Row, int> _notExact = new();
     public readonly Dictionary<string, string> Counts = new();
 
     public int UnknownTypes => _unknown.Count;
+    public int NotExactRows => _notExact.Count;
+    const string NothingNeeded = "nothing is needed";
+
+    public void NotExact(Surface.Row row, int uses) => _notExact.AddOrUpdate(row, uses, (_, n) => n + uses);
+
+    static string NotExactLine(Surface.Row row, int uses)
+    {
+        var plan = System.Text.RegularExpressions.Regex.Replace(row.Where, @"^Phase [A-Z] item \d+: ", "");
+        var what = row.Status switch
+        {
+            "dropped" => $"left out; {row.Instead}",
+            "stub" => $"accepted and ignored; {row.Instead}",
+            "partial" => $"partly: {row.Where}",
+            "planned" => $"not here yet: {plan}",
+            _ => "undecided",
+        };
+        return $"- {uses}× `{row.Name}` ({row.Area}): {what}";
+    }
 
     public void Missing(string url, string why, string where) => _unresolved.TryAdd(url, new Unresolved(url, why, where));
     public void LeftOut(string name, string url, string why, string where, string guid) =>
@@ -88,6 +107,17 @@ public sealed class Report
             foreach (var p in _leftOut.Values.OrderBy(p => p.Name, StringComparer.OrdinalIgnoreCase)) sb.AppendLine($"- {p.Name} — `{p.Url}` — {p.Why} — {p.Where}");
             sb.AppendLine();
             if (announce) Console.WriteLine($"LEFTOUT {_leftOut.Count} {NameList(_leftOut.Values.Select(p => p.Name), NamesOnTheLine)}");
+        }
+        if (!_notExact.IsEmpty)
+        {
+            var ordered = _notExact.OrderByDescending(x => x.Value).ThenBy(x => x.Key.Name, StringComparer.Ordinal).ToList();
+            var idle = ordered.Where(x => x.Key.Instead.StartsWith(NothingNeeded, StringComparison.Ordinal)).ToList();
+            sb.AppendLine($"### Not taken from TTS exactly ({_notExact.Count})");
+            sb.AppendLine("What this module uses that is left out, stood in for, or only partly done here, by name, with what to do instead. The whole ledger is `tools/surface/ledger.md` in the source.");
+            foreach (var (row, uses) in ordered.Except(idle)) sb.AppendLine(NotExactLine(row, uses));
+            if (idle.Count > 0) sb.AppendLine($"- Left out with nothing to do about it: {string.Join(", ", idle.Select(x => $"`{x.Key.Name}`"))}");
+            sb.AppendLine();
+            if (announce) Console.WriteLine($"NOTEXACT {_notExact.Count}");
         }
         if (!_notes.IsEmpty)
         {

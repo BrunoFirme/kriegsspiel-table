@@ -65,6 +65,7 @@ try
             var file = await Workshop.Resolve(cfg, rest[0]);
             if (cmd == "import") Progress.Stage("read");
             var save = TtsSave.Load(cfg, file);
+            foreach (var u in Surface.NotExact(save)) report.NotExact(u.Row, u.Count);
             var plan = ImportPlan.Of(save, name, slugArg, id => PackOwner(cfg.Output, id));
             if (cmd == "plan")
             {

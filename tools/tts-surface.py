@@ -107,12 +107,51 @@ class Usage:
         self.count = defaultdict(int)
         self.modules = defaultdict(set)
         self.example = {}
+        self.values = defaultdict(lambda: defaultdict(lambda: defaultdict(int)))
+        self.defaults = {}
 
     def add(self, row, module, example=None):
         self.count[row] += 1
         self.modules[row].add(module)
         if example and row not in self.example:
             self.example[row] = example
+
+    def value(self, row, module, v):
+        self.values[row][canonical(v)][module] += 1
+
+    def settle(self):
+        for row, seen in self.values.items():
+            mode = max(seen.items(), key=lambda kv: sum(kv[1].values()))[0]
+            self.defaults[row] = mode
+            for text, by_module in seen.items():
+                if text == mode:
+                    continue
+                for module, n in by_module.items():
+                    self.count[row] += n
+                    self.modules[row].add(module)
+
+
+def canonical(v):
+    if isinstance(v, bool) or v is None or isinstance(v, str):
+        return json.dumps(v, separators=(",", ":"))
+    if isinstance(v, float):
+        return json.dumps(int(v) if v.is_integer() else v, separators=(",", ":"))
+    if isinstance(v, int):
+        return json.dumps(v, separators=(",", ":"))
+    if isinstance(v, dict):
+        return "{" + ",".join(json.dumps(k) + ":" + canonical(v[k]) for k in sorted(v)) + "}"
+    if isinstance(v, list):
+        return "[" + ",".join(canonical(x) for x in v) + "]"
+    return json.dumps(str(v))
+
+
+def field(use, row, module, v):
+    if isinstance(v, (list, dict)) and len(v) == 0:
+        return
+    if isinstance(v, list) or (isinstance(v, dict) and any(isinstance(x, (dict, list)) for x in v.values())):
+        use.add(row, module, module)
+        return
+    use.value(row, module, v)
 
 
 def scan_lua(lua, module, api, use):
@@ -149,19 +188,24 @@ def scan_object(o, module, use, api):
         use.add(("types", name), module, module)
     for k, v in o.items():
         if k in ("ContainedObjects", "ChildObjects", "States", "CustomDeck"):
-            use.add(("save", "ObjectState." + k), module, module)
+            field(use, ("save", "ObjectState." + k), module, v)
+            continue
+        sub = SUB_STATES.get(k)
+        if not (sub and isinstance(v, dict)):
+            field(use, ("save", "ObjectState." + k), module, v)
             continue
         use.add(("save", "ObjectState." + k), module, module)
-        sub = SUB_STATES.get(k)
-        if sub and isinstance(v, dict):
-            for k2, v2 in v.items():
+        for k2, v2 in v.items():
+            if k == "CustomImage" and isinstance(v2, dict):
                 use.add(("save", sub + "." + k2), module, module)
-                if k == "CustomImage" and isinstance(v2, dict):
-                    for k3 in v2:
-                        use.add(("save", k2 + "State." + k3), module, module)
-                if k == "CustomMesh" and isinstance(v2, dict):
-                    for k3 in v2:
-                        use.add(("save", "CustomShaderState." + k3), module, module)
+                for k3, v3 in v2.items():
+                    field(use, ("save", k2 + "State." + k3), module, v3)
+            elif k == "CustomMesh" and isinstance(v2, dict):
+                use.add(("save", sub + "." + k2), module, module)
+                for k3, v3 in v2.items():
+                    field(use, ("save", "CustomShaderState." + k3), module, v3)
+            else:
+                field(use, ("save", sub + "." + k2), module, v2)
     for k in ("ContainedObjects", "ChildObjects"):
         for c in o.get(k) or []:
             scan_object(c, module, use, api)
@@ -181,11 +225,13 @@ def scan_save(path, use, api):
         return False
     module = os.path.splitext(os.path.basename(path))[0]
     for k, v in save.items():
-        use.add(("save", "SaveState." + k), module, module)
         sub = SUB_STATES.get(k)
         if sub and isinstance(v, dict):
-            for k2 in v:
-                use.add(("save", sub + "." + k2), module, module)
+            use.add(("save", "SaveState." + k), module, module)
+            for k2, v2 in v.items():
+                field(use, ("save", sub + "." + k2), module, v2)
+        elif k != "ObjectStates":
+            field(use, ("save", "SaveState." + k), module, v)
     for o in save.get("ObjectStates") or []:
         if isinstance(o, dict):
             scan_object(o, module, use, api)
@@ -338,7 +384,8 @@ def build(api, use, decided, rules, reads, scanned):
             count, modules = use.count.get((area, row), 0), len(use.modules.get((area, row), ()))
             if area == "engine":
                 count, modules = scanned, scanned
-            entries.append({"row": row, "status": status, "where": where, "held_by": held, "count": count, "modules": modules})
+            d = decision(row, decided.get(area, {})) or {}
+            entries.append({"row": row, "status": status, "where": where, "instead": d.get("instead", ""), "held_by": held, "count": count, "modules": modules})
         entries.sort(key=lambda e: (-e["modules"], -e["count"], e["row"]))
         ledger[area] = entries
     return ledger
@@ -359,6 +406,8 @@ def coverage(ledger):
 
 def write_markdown(ledger, modules_scanned, workshop):
     out = ["# TTS surface ledger", "", f"Generated by `tools/tts-surface.py` over {modules_scanned} saves in `{workshop}`.",
+           "A save field counts as used only where its value is not the one most saves carry, so a flag every object",
+           "writes at its default is not a use of it.",
            "Status: native (ours, checked), compat (through compat.lua, checked), partial (works for the cases met; gap named),",
            "stub (accepted and ignored), dropped (left out on purpose, named in the import report), planned (left out today,",
            "the plan says translate it), unknown (nobody has decided).", "",
@@ -374,9 +423,13 @@ def write_markdown(ledger, modules_scanned, workshop):
         w.write("\n".join(out) + "\n")
 
 
+def undecided_in_use(ledger):
+    return {(area, e["row"]) for area in AREAS for e in ledger.get(area, []) if e["status"] in UNDECIDED and e["modules"] > 0}
+
+
 def gate(ledger, previous):
-    before = {(area, e["row"]) for area, entries in previous.items() for e in entries if e["status"] in UNDECIDED and e["modules"] > 0}
-    now = {(area, e["row"]) for area, entries in ledger.items() for e in entries if e["status"] in UNDECIDED and e["modules"] > 0}
+    before = undecided_in_use(previous)
+    now = undecided_in_use(ledger)
     new = sorted(now - before)
     if new:
         print("surface gate: rows the corpus uses that nobody has decided, new since the committed ledger:")
@@ -406,7 +459,9 @@ def main():
         sys.exit(0)
     if scanned == 0:
         sys.exit(f"no TTS saves found under {workshop}\n{USAGE}")
+    use.settle()
     ledger = build(api, use, decided, translator_rules(), converter_reads(), scanned)
+    ledger["defaults"] = {row[1]: text for row, text in sorted(use.defaults.items())}
     previous = load_json(LEDGER_JSON, {})
     ok = gate(ledger, previous) if a.gate else True
     write_markdown(ledger, scanned, workshop)

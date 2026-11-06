@@ -16,6 +16,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Update="converter.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../surface/ledger.json" Link="surface/ledger.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="../../src/App/standard/std.dice/pack.json" LogicalName="std.dice/pack.json" />
