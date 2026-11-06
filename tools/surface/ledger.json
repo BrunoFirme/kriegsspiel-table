@@ -8060,10 +8060,10 @@
   },
   {
    "row": "button and input defaults (width, height, font_size, colours, position, scale)",
-   "status": "planned",
-   "where": "Phase B: a tts_defaults table from TTS's code",
+   "status": "compat",
+   "where": "compat.tts_defaults, from TTS's LuaUIState classes; a button or input with no handler is refused as TTS refuses it",
    "instead": "",
-   "held_by": "",
+   "held_by": "TtsDefaultsTests",
    "count": 54,
    "modules": 54
   },

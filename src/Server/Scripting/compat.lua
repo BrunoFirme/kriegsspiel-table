@@ -401,6 +401,13 @@ end
 
 local BUTTON_EM, TOKEN_BUTTON_EM, INPUT_SCALE = 0.87, 1.87, 2.2
 local ALIGN = { [2] = "left", [3] = "center", [4] = "right" }
+compat.tts_defaults = {
+  width = 100, height = 100, font_size = 100, alignment = 1,
+  color = { 1, 1, 1, 1 }, font_color = { 0, 0, 0, 1 },
+  position = { 0, 0, 0 }, rotation = { 0, 0, 0 }, scale = { 1, 1, 1 },
+  value = "", validation = 1, tab = 2,
+}
+local D = compat.tts_defaults
 
 function compat.widget_spec(obj, t, kind, env)
   local ux, uz = units(obj)
@@ -415,13 +422,13 @@ function compat.widget_spec(obj, t, kind, env)
   local s = {
     face = back and "back" or "front", kind = turned and on_top and "label" or kind,
     x = (back and -px or px) * ux, z = pz * uz, rot = ry,
-    w = num(t.width, 0) / 1000 * sx * ux, h = num(t.height, 0) / 1000 * sz * uz,
-    font = num(t.font_size, 100) / 1000 * sx * uz * em,
-    color = compat.color(t.color), text_color = compat.color(t.font_color), tooltip = t.tooltip,
-    align = ALIGN[num(t.alignment, 3)] or "center",
+    w = num(t.width, D.width) / 1000 * sx * ux, h = num(t.height, D.height) / 1000 * sz * uz,
+    font = num(t.font_size, D.font_size) / 1000 * sx * uz * em,
+    color = compat.color(t.color) or D.color, text_color = compat.color(t.font_color) or D.font_color, tooltip = t.tooltip,
+    align = ALIGN[num(t.alignment, D.alignment)] or "center",
   }
   if kind == "input" then
-    s.value = tostring(t.value or ""); s.placeholder = tostring(t.label or "")
+    s.value = tostring(t.value or D.value); s.placeholder = tostring(t.label or "")
     s.on_change = handler(t.input_function, t.function_owner, obj, env)
   else
     s.label = tostring(t.label or "")
@@ -457,17 +464,25 @@ local function rebuild(obj, b)
   for _, e in ipairs(b.inputs) do e.index = obj.input(e.spec) end
 end
 
+local function refused(what, fn)
+  print(what .. ": " .. fn .. " was null or an empty string")
+  return false
+end
 function compat.create_button(obj, t, env)
+  if type(t) ~= "table" then return false end
+  if t.click_function == nil or t.click_function == "" then return refused("createButton", "click_function") end
   local b = book(obj)
   local spec = compat.widget_spec(obj, t, "button", env)
   b.buttons[#b.buttons + 1] = { spec = spec, index = obj.button(spec), tts = t }
-  return #b.buttons - 1
+  return true
 end
 function compat.create_input(obj, t, env)
+  if type(t) ~= "table" then return false end
+  if t.input_function == nil or t.input_function == "" then return refused("createInput", "input_function") end
   local b = book(obj)
   local spec = compat.widget_spec(obj, t, "input", env)
   b.inputs[#b.inputs + 1] = { spec = spec, index = obj.input(spec), tts = t }
-  return #b.inputs - 1
+  return true
 end
 local function edit(obj, list, t, kind, env)
   local e = list[num(t.index, 0) + 1]

@@ -15,7 +15,7 @@ the plan says translate it), unknown (nobody has decided).
 | global | 14 | 13 | 1 | 55 |
 | namespaces | 23 | 21 | 2 | 180 |
 | events | 8 | 7 | 1 | 50 |
-| engine | 21 | 16 | 5 | 21 |
+| engine | 21 | 17 | 4 | 21 |
 
 ## types
 
@@ -945,7 +945,7 @@ the plan says translate it), unknown (nobody has decided).
 | `MoonSharp 2.0.0 on both sides: the Lua dialect matches` | 54 / 54 | native | Server.csproj |  |
 | `TTS Vector and Color classes with their methods` | 54 / 54 | partial | compat.Vector / compat.Color: the methods met so far |  |
 | `Wait.frames counts frames, Wait.time seconds, onUpdate per frame` | 54 / 54 | partial | ScriptTimers: ticks |  |
-| `button and input defaults (width, height, font_size, colours, position, scale)` | 54 / 54 | planned | Phase B: a tts_defaults table from TTS's code |  |
+| `button and input defaults (width, height, font_size, colours, position, scale)` | 54 / 54 | compat | compat.tts_defaults, from TTS's LuaUIState classes; a button or input with no handler is refused as TTS refuses it | TtsDefaultsTests |
 | `click_function(obj, player_color, alt_click)` | 54 / 54 | compat | compat.create_button / tts_handler | TranslatorTests.Handlers_get_the_piece_their_widget_is_on |
 | `context menu callback(player_color, menu_position, object)` | 54 / 54 | compat | compat.add_context_menu_item |  |
 | `getObjectFromGUID answers nil for a piece inside a bag` | 54 / 54 | planned | Phase C item 1: stow |  |
