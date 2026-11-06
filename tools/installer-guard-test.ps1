@@ -22,11 +22,32 @@ function Note($wrong) {
     Write-Host "   $wrong" -ForegroundColor Red
 }
 
-$iscc = Find-Iscc
-if (-not $iscc) { Write-Host "   Inno Setup 6 not found (winget install JRSoftware.InnoSetup)"; exit 1 }
+function Check-TheGuardCoversWhatIsDeleted($removed, $code) {
+    $listed = @([regex]::Matches($code, "Folders\[\d+\]\s*:=\s*'([^']+)'") | ForEach-Object { $_.Groups[1].Value })
+    $length = [regex]::Match($code, "SetArrayLength\(Folders,\s*(\d+)\)")
+    if (-not $length.Success) { Note "the guard no longer sets the length of its folder list"; return }
+    if ([int]$length.Groups[1].Value -ne $listed.Count) { Note "the guard names $($listed.Count) folder(s) and sets its list to $($length.Groups[1].Value)" }
+    foreach ($name in $removed) {
+        if ($name.Contains("*")) {
+            if (-not $code.Contains("'$name'")) { Note "[InstallDelete] removes $name and the guard does not look for it" }
+        }
+        elseif ($listed -notcontains $name) { Note "[InstallDelete] removes $name and the guard's folder list leaves it out" }
+    }
+    foreach ($name in $listed) {
+        if ($removed -notcontains $name) { Note "the guard checks $name and [InstallDelete] does not remove it" }
+    }
+}
 
 $source = Get-Content $iss -Raw
-$shipped = (Section $source "[InstallDelete]" "[Files]") + (Section $source "[Code]")
+$deletes = Section $source "[InstallDelete]" "[Files]"
+$code = Section $source "[Code]"
+$shipped = $deletes + $code
+$removed = @([regex]::Matches($deletes, 'Name:\s*"\{app\}\\([^"]+)"') | ForEach-Object { $_.Groups[1].Value })
+if ($removed.Count -eq 0) { Note "[InstallDelete] removes nothing from {app}" }
+Check-TheGuardCoversWhatIsDeleted $removed $code
+
+$iscc = Find-Iscc
+if (-not $iscc) { Write-Host "   Inno Setup 6 not found (winget install JRSoftware.InnoSetup)"; exit 1 }
 
 $stand = @'
 [Setup]
@@ -107,5 +128,5 @@ if ($problems.Count -gt 0) {
     Write-Host "installer guard: $($problems.Count) problem(s)"
     exit 1
 }
-Write-Host "installer guard: a held file stops the installer before it deletes anything, and a free folder installs clean"
+Write-Host "installer guard: the guard covers every folder [InstallDelete] removes, a held file stops the installer before it deletes anything, and a free folder installs clean"
 exit 0
