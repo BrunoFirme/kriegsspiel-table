@@ -236,10 +236,10 @@
   },
   {
    "row": "Figurine_Custom",
-   "status": "dropped",
-   "where": "a standing picture; no module in the roster has one",
-   "instead": "make a block with the picture in the piece studio",
-   "held_by": "",
+   "status": "native",
+   "where": "a picture card standing in a round base, sized as the tabletop's prefab (card 1.96 high at its aspect, base 1.96 across, scaled 0.9146), the back picture behind it, the tint on the base",
+   "instead": "",
+   "held_by": "FigurineTests",
    "count": 16,
    "modules": 1
   },

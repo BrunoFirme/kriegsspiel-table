@@ -176,6 +176,7 @@ public sealed partial class DefFactory
             return new Size2(mb.ex, mb.ez * ratio);
         }
         if (Boxes.For(o) is { } box) return new Size2(box.Size.W, box.Size.H * ratio);
+        if (o.Name == Figurine) return FigurineSize(o, ratio);
         if (o.DieSides is var n and not (0 or PictureD6)) return new Size2(TemplateDie(n).Size[0], TemplateDie(n).Size[2] * ratio);
         if (o.Name == "Custom_Board") return Mul(new Size2(b.CustomBoard * (o.WidthScale > 0 ? o.WidthScale : aspect), b.CustomBoard * ratio), BoardGrowth);
         return TypeSize(o.Name, aw, ah, aspect, ratio, stretched: o.TileType is 0 or 3 && o.TileStretch);
@@ -215,6 +216,7 @@ public sealed partial class DefFactory
         "Card" or "CardCustom" => CardThickness,
         "Checker_white" or "Checker_red" or "Checker_black" => CheckerThickness,
         "Custom_Dice" => o.DieSides is var n and not (0 or PictureD6) ? TemplateDie(n).Size[1] : DieAcross,
+        Figurine => FigurineTop,
         "Bag" => Boxes.For(o)?.Thickness ?? BagThickness,
         "PlayerPawn" => PawnHeight,
         "Notecard" or "3DText" => TextThickness,

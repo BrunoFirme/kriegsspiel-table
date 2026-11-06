@@ -47,7 +47,7 @@ the plan says translate it), unknown (nobody has decided).
 | `Tileset_Tree` | 119 / 1 | native | a tree of Firme's Effects and Props at the stock tree's crown size (3.62 across, measured from the tabletop's prefab, never copied) | BagBoxTests |
 | `Card` | 82 / 1 | native | converter |  |
 | `Checker_white` | 17 / 1 | native | converter |  |
-| `Figurine_Custom` | 16 / 1 | dropped | a standing picture; no module in the roster has one |  |
+| `Figurine_Custom` | 16 / 1 | native | a picture card standing in a round base, sized as the tabletop's prefab (card 1.96 high at its aspect, base 1.96 across, scaled 0.9146), the back picture behind it, the tint on the base | FigurineTests |
 | `Deck` | 15 / 1 | native | converter |  |
 | `PlayerPawn` | 7 / 1 | native | a round piece in the pawn's colour, as tall as a pawn | PawnTests |
 | `Die_8` | 2 / 1 | native | the app's d8, showing the face it was saved on | DiceTests |

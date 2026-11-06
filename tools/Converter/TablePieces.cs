@@ -24,7 +24,7 @@ public sealed partial class DefFactory
     const string BoxesMissing = "Firme's Effects and Props is not installed here, so bags come over as round pieces; open the app once and convert again for boxes, chests and crates.";
     bool _boxesMissingNoted;
 
-    public static bool IsTablePiece(ModuleObj o) => (o.IsCard && o.Sheet != null) || o.IsChecker || o.IsPictureDie || o.Name is "Bag" or "PlayerPawn" or TriangleBlock;
+    public static bool IsTablePiece(ModuleObj o) => (o.IsCard && o.Sheet != null) || o.IsChecker || o.IsPictureDie || o.Name is "Bag" or "PlayerPawn" or TriangleBlock or Figurine;
 
     public const string StockTilesetPrefix = "Tileset_";
 
@@ -59,6 +59,7 @@ public sealed partial class DefFactory
         }
         else if (b.Name == "PlayerPawn") FillRound(def, b, pack, "pawn", "Pawn", PawnIvory);
         else if (b.Name == TriangleBlock) FillPrism(def, pack);
+        else if (b.Name == Figurine) FillFigurine(def, b, pack, where);
         else FillPictureDie(def, b, pack, where);
     }
 
