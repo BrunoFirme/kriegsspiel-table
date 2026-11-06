@@ -75,8 +75,8 @@ float edge_line(int style, int kind, Lot l, vec2 p, float fw, float w1, float w2
 	float along = dot(p - l.site, l.across);
 	if (kind == HEDGE) {
 		float bumps = metres(2.5);
-		float r = ink(length(vec2(l.edge, (fract(along / bumps) - 0.5) * bumps)), bumps * 0.45, fw);
-		return style == SURVEY ? max(r, ink(l.edge, w1, fw)) : ink(l.edge, w1, fw);
+		float r = ink(length(vec2(l.edge, (fract(along / bumps) - 0.5) * bumps)), bumps * 0.4, fw);
+		return style == SURVEY ? r : ink(l.edge, w1, fw);
 	}
 	if (kind == FENCE) {
 		float ticks = metres(6.0);
@@ -203,18 +203,70 @@ float farm_garden(vec2 p, vec2 site, vec2 seed, float turn, float scale, float f
 	return block(p, site + r * at, half_size, turn, fw);
 }
 
-float farm_trees(vec2 p, vec2 site, vec2 seed, float turn, float scale, float fw) {
-	if (hash(seed + 9.1) > 0.3) return 0.0;
+float tree_ring(vec2 p, vec2 o, float r, float width, float fw) {
+	vec2 q = p - o;
+	float d = length(q);
+	float ring = ink(abs(d - r), width, fw);
+	float shade = ink(abs(d - r), width * 2.2, fw) * step(0.35, dot(q / max(d, 1e-5), vec2(0.7071, 0.7071)));
+	return max(ring, shade);
+}
+
+float fir_sign(vec2 p, vec2 o, float h, float width, float fw) {
+	vec2 top = o + NORTH * h;
+	float m = ink(segment(p, o, top), width, fw);
+	for (int b = 0; b < 2; b++) {
+		vec2 from = mix(o, top, 0.3 + 0.3 * float(b));
+		float reach = h * (0.32 - 0.1 * float(b));
+		m = max(m, ink(segment(p, from, from + vec2(reach, h * 0.18)), width, fw));
+		m = max(m, ink(segment(p, from, from + vec2(-reach, h * 0.18)), width, fw));
+	}
+	return m;
+}
+
+float farm_trees(vec2 p, vec2 site, vec2 seed, float turn, float scale, float width, float fw) {
+	if (hash(seed + 9.1) > 0.35) return 0.0;
 	float h = metres(HOUSE_M) * scale;
 	mat2 r = turned(turn);
 	float m = 0.0;
-	float n = 3.0 + floor(hash(seed + 9.5) * 3.0);
-	for (int i = 0; i < 5; i++) {
+	float n = 1.0 + floor(hash(seed + 9.5) * 2.0);
+	for (int i = 0; i < 2; i++) {
 		if (float(i) >= n) break;
-		vec2 at = r * vec2((float(i) - (n - 1.0) * 0.5) * h * 0.55, -h * 1.9);
-		m = max(m, ink(length(p - site - at), metres(2.2), fw));
+		vec2 at = r * vec2((float(i) - (n - 1.0) * 0.5) * h * 1.2, -h * 2.0);
+		m = max(m, tree_ring(p, site + at, metres(6.0), width, fw));
 	}
 	return m;
+}
+
+float gewann_lines(vec2 p, vec2 uv, mat2 to_uv, float own, vec2 along, float follow, float width, float fw) {
+	Lot g = lot_at(p, uv, to_uv, metres(GEWANN_M), 0.56, FIELD, own, vec2(0.0));
+	vec2 dir = lot_axis(g);
+	dir = normalize(mix(dir, along * (dot(dir, along) < 0.0 ? -1.0 : 1.0), step(0.8, follow) * step(0.5, length(along))));
+	float pitch = metres(mix(30.0, 55.0, hash(g.id + 4.4)));
+	float s = dot(p - g.site, dir) / pitch + hash(g.id) * 10.0;
+	float lines = ink(min(fract(s), 1.0 - fract(s)) * pitch, width, fw);
+	return max(lines, ink(g.edge, width * 1.15, fw) * 0.9);
+}
+
+float orchard_rings(vec2 p, Lot l, float width, float fw) {
+	float gap = metres(ORCHARD_M);
+	vec2 axis = lot_axis(l);
+	vec2 q = mat2(axis, vec2(-axis.y, axis.x)) * (p - l.site);
+	vec2 c = (floor(q / gap) + 0.5) * gap;
+	float rr = gap * 0.17;
+	float ring = ink(abs(length(q - c) - rr), width, fw);
+	float stem = ink(segment(q, c + vec2(0.0, rr), c + vec2(0.0, rr * 1.8)), width, fw);
+	return max(ring, stem);
+}
+
+float vine_strokes(vec2 p, float slant, float width, float fw) {
+	float rows = metres(VINE_ROW_M);
+	float stakes = metres(VINE_STAKE_M);
+	float row = floor(p.y / rows);
+	float x = p.x / stakes + 0.5 * mod(row, 2.0);
+	vec2 q = vec2((fract(x) - 0.5) * stakes, (fract(p.y / rows) - 0.5) * rows);
+	vec2 half_stroke = vec2(slant, 1.0) * rows * 0.22;
+	float stroke = ink(segment(q, -half_stroke, half_stroke), width, fw);
+	return mix(stroke, clamp(0.88 * width / stakes, 0.0, 1.0), far_blend(fw, stakes));
 }
 
 float farm_scale(vec2 seed) {

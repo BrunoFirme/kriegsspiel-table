@@ -60,7 +60,11 @@ const float WET_NEAR_M = 60.0;
 const float FRONTS_M = 300.0;
 const float VINE_ROW_M = 12.0;
 const float VINE_STAKE_M = 8.0;
-const float ORCHARD_M = 15.0;
+const float ORCHARD_M = 37.0;
+const float GEWANN_M = 400.0;
+const float SURVEY_CONTOUR_PX = 0.78;
+const float SURVEY_CONTOUR_INK = 0.85;
+const float UNDER_WOOD = 0.5;
 const float FURROW_M = 8.0;
 const vec3 GARTENGRUEN = vec3(0.66, 0.72, 0.5);
 const vec2 PLATE_GREEN = vec2(1.5, -1.0);
@@ -292,7 +296,10 @@ float contour(float h, vec2 p, int style, float steep, float rock, out float hal
 	bool index = abs(mod(round(level), float(INDEX_EVERY))) < 0.5;
 	float px = index ? INDEX_PX : LINE_PX;
 	float strength = index ? INDEX_INK : LINE_INK;
-	if (style == SURVEY) px *= 1.0 + HAND_WOBBLE * (noise(p * HAND_GRAIN) - 0.5) * 2.0;
+	if (style == SURVEY) {
+		px *= SURVEY_CONTOUR_PX * (1.0 + HAND_WOBBLE * (noise(p * HAND_GRAIN) - 0.5) * 2.0);
+		strength *= SURVEY_CONTOUR_INK;
+	}
 	if (style == SURVEY && !index) strength *= smoothstep(BREAK_FROM, BREAK_TO, noise(p * 2.6));
 	if (style == ANCIENT) px *= 1.0 + ANCIENT_WIDTH_PLAY * noise(p * 1.3 + 7.0);
 	float apart = contour_interval / fh;
@@ -394,7 +401,7 @@ void fragment() {
 		if (culvert > 0.001) c = mix(c, style == MODERN ? MODERN_BLACK : style == ANCIENT ? ANCIENT_INK : SURVEY_INK, culvert);
 		if (halo > 0.001) c = mix(c, plain(style, tint, sheet, p, edge), halo * HALO);
 		c = mix(c, c * (1.0 - MARK_SHADE), dark * cover * smoothstep(0.04, 0.35, steep_n));
-		if (bare) c = slopes(c, n, p, world.y, fw, style, (1.0 - cover) * (1.0 - rockness));
+		if (bare) c = slopes(c, n, p, world.y, fw, style, (1.0 - cover) * (1.0 - rockness) * (k == WOOD ? UNDER_WOOD : 1.0));
 		float keep = k == WOOD ? cover : 0.0;
 		if (bare && rockness + foot > 0.001) c = rock_face(style, c, p, h, down, steep, dark, crest, gully, sheer, foot, own, fw, max(rockness, foot) * (1.0 - keep), k == ROCK);
 	}
