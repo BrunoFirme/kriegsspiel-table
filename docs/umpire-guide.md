@@ -127,7 +127,7 @@ The tool strip runs down the left. Point at any tool and press **F1** for its se
 - **Tint:** right-click → **Tint** colours every selected piece: a swatch, **+** for any colour, **Reset** for the
   colour it was made with. Where it shows follows TTS: a token's picture, a tile's sides; decals keep their colours.
 - **Effects** (smoke, fire, volleys, melee, mist) and props are pieces of **Firme's Effects and Props**; resized, an effect
-  covers more ground.
+  covers more ground. To change one, copy it into a pack of your own in the piece studio (＋ New piece).
 - **Scripts:** a piece's buttons and boxes work with a click. Right-click → **Scripting…** opens its script;
   see the [scripting guide](scripting.md).
 
@@ -274,8 +274,8 @@ Who joined, rolls, turns and sheets. The console of scripts is separate (Menu �
 
 ### Turns
 
-**Next turn ▸** moves the clock on and keeps a snapshot. Pick a past turn under **History** to look back
-(read only); pick it again to return.
+**Next turn ▸** moves the clock on and keeps a snapshot. Click the clock to set how long a turn lasts, in minutes,
+hours or days. Pick a past turn under **History** to look back (read only); pick it again to return.
 
 ### The scenario
 

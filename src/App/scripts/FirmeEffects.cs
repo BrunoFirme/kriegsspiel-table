@@ -57,6 +57,11 @@ public static class FirmeEffects
         ("Melee", "The press of a fight: dust churned up and clods thrown", 3, 1.5, new EffectDef { Kind = "melee" }, A),
         ("Cavalry melee", "Horsemen at close quarters: thicker dust, thrown higher", 4, 2.5, new EffectDef { Kind = "melee", Amount = 1.5, Height = 1.4, Puff = 1.2 }, A),
         ("Trebuchet stones", "Great stones arcing in over the back edge and crashing down", 3, 3, new EffectDef { Kind = "stones" }, A),
+        ("Javelin volley", "Javelins or pila thrown together before the charge, coming in low and sticking where they land", 3, 2, new EffectDef { Kind = "javelins" }, A),
+        ("Javelins at will", "Skirmishers throwing as each finds a mark", 3, 2, new EffectDef { Kind = "javelins", Volley = "random" }, A),
+        ("Sling stones", "Slingers shooting at will, their shot whipping in flat and kicking up the dirt", 4, 3, new EffectDef { Kind = "slingstones", Volley = "random" }, A),
+        ("Sling volley", "A band of slingers loosing together", 4, 3, new EffectDef { Kind = "slingstones" }, A),
+        ("Falling rocks", "Rocks dropped from a wall or tumbling off a crag one after another, rolling on towards the front edge", 2, 2, new EffectDef { Kind = "rockfall", Volley = "rolling" }, A),
         ("Arquebus volley", "Arquebusiers firing by ranks, one after another: Nagashino's teppō, a tercio's shot", 4, 0.6, new EffectDef { Kind = "powder", Volley = "rolling", Amount = 0.8, Puff = 0.8 }, A),
         ("Signal beacon", "A beacon fire on a hill or a tower, its smoke standing high", 0.8, 0.8, new EffectDef { Kind = "fire", Amount = 0.7, Height = 2.4 }, A),
         ("Artillery barrage", "Shells landing one after another over the ground", 12, 8, new EffectDef { Kind = "barrage" }, M),
@@ -92,31 +97,38 @@ public static class FirmeEffects
     public static string IdOf(string presetName) =>
         PackId + "." + PackEdit.Slug(presetName.EndsWith(StandardSmoke, StringComparison.Ordinal) ? presetName[..^StandardSmoke.Length] : presetName);
 
-    public static readonly (string Name, Func<PropMade> Make, string Era)[] PropList =
+    public static readonly (string Name, string What, Func<PropMade> Make, string Era)[] PropList =
     {
-        ("Bivouac", Props.Bivouac, N),
-        ("Picket post", Props.PicketPost, N),
-        ("Bivouac fire", Props.CampFire, N),
-        ("Czech hedgehog", Props.Hedgehog, M),
-        ("Shell crater", () => Props.Crater(0.35f, 3), M),
-        ("Large crater", () => Props.Crater(0.8f, 7), M),
-        ("Trench", () => Props.Trench(new[] { new Vector2(-1.5f, 0), new Vector2(1.5f, 0) }), M),
-        ("Barricade", Props.Barricade, N),
-        ("Breastwork", Props.Breastwork, N),
-        ("Earthwork rampart", Props.Earthwork, N),
-        ("Chevaux de frise", Props.ChevauxDeFrise, N),
-        ("Stakes", Props.Stakes, A),
-        ("Palisade", Props.Palisade, A),
-        ("Moat", Props.Moat, A),
-        ("Pavises", Props.Pavises, A),
-        ("Tate shields", Props.TateShields, A),
-        ("Camp curtain", Props.CampCurtain, A),
-        ("Trench with traverse",
+        ("Bivouac", "Tents round their camp fires", Props.Bivouac, N),
+        ("Picket post", "An outpost's shelter and fire", Props.PicketPost, N),
+        ("Bivouac fire", "A single camp fire", Props.CampFire, N),
+        ("Czech hedgehog", "Steel beams against tanks", Props.Hedgehog, M),
+        ("Shell crater", "Ground torn up by a shell", () => Props.Crater(0.35f, 3), M),
+        ("Large crater", "A heavy shell's or a mine's crater", () => Props.Crater(0.8f, 7), M),
+        ("Trench", "A straight stretch of trench", () => Props.Trench(new[] { new Vector2(-1.5f, 0), new Vector2(1.5f, 0) }), M),
+        ("Barricade", "A road blocked with carts and timber", Props.Barricade, N),
+        ("Breastwork", "A low wall of earth and timber", Props.Breastwork, N),
+        ("Earthwork rampart", "A field work's rampart", Props.Earthwork, N),
+        ("Chevaux de frise", "Spiked timbers against horse", Props.ChevauxDeFrise, N),
+        ("Stakes", "Sharpened stakes against horse", Props.Stakes, A),
+        ("Palisade", "A wall of upright logs", Props.Palisade, A),
+        ("Moat", "A ditch before a wall", Props.Moat, A),
+        ("Pavises", "Large standing shields", Props.Pavises, A),
+        ("Tate shields", "Japanese standing shields", Props.TateShields, A),
+        ("Camp curtain", "A commander's cloth screen", Props.CampCurtain, A),
+        ("Trench with traverse", "A trench stepping round a traverse",
             () =>
                 Props.Trench(new[] { new Vector2(-1.6f, 0.35f), new Vector2(-0.55f, 0.35f), new Vector2(-0.55f, -0.35f), new Vector2(0.55f, -0.35f), new Vector2(0.55f, 0.35f),
                     new Vector2(1.6f, 0.35f) }),
             M),
     };
+
+    const string MarkerWhat = "Marks a torpedo's run; a look for spent", NoteWhat = "A card with a name and a note";
+
+    public static string What(PieceDef d) =>
+        Presets.FirstOrDefault(p => IdOf(p.Name) == d.Id).What
+        ?? PropList.FirstOrDefault(p => PackId + "." + PackEdit.Slug(p.Name) == d.Id).What
+        ?? (d.Tags.Contains("marker") ? MarkerWhat : d.Tags.Contains(NoteCard.Tag) ? NoteWhat : "");
 
     public static PackManifest Pack(Dictionary<string, byte[]> files)
     {
@@ -142,7 +154,7 @@ public static class FirmeEffects
         }
         var atlas = Props.Atlas();
         var atlasSha = Add(atlas.SavePngToBuffer(), "png", "image", atlas.GetWidth(), atlas.GetHeight());
-        foreach (var (name, make, era) in PropList)
+        foreach (var (name, _, make, era) in PropList)
         {
             var made = make();
             var b = made.Mesh.Bounds();

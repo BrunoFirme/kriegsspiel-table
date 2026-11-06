@@ -19,13 +19,13 @@ sealed class ClockDialog : HudPart
         grid.AddChild(new Label { Text = "Game time" });
         var time = new LineEdit { Text = S.View.Clock.GameTime, PlaceholderText = "1812-07-22T06:00", TooltipText = "Year-month-day, T, then hours and minutes" };
         grid.AddChild(time);
-        grid.AddChild(new Label { Text = "Minutes / turn" });
-        var inc = new SpinBox { MinValue = 1, MaxValue = 1440, Value = S.View.Clock.IncrementMinutes };
-        grid.AddChild(inc);
+        grid.AddChild(new Label { Text = "Each turn" });
+        var step = new TurnLength(S.View.Clock.IncrementMinutes);
+        grid.AddChild(step.Row);
         Ui.AlignForm(grid);
         dlg.AddChild(grid);
-        dlg.Confirmed += () => S.Do(new SetClock { Turn = (int)turn.Value, GameTime = time.Text, IncrementMinutes = (int)inc.Value });
-        Ui.Open(HudNode, dlg, new Vector2I(360, 160));
+        dlg.Confirmed += () => S.Do(new SetClock { Turn = (int)turn.Value, GameTime = time.Text, IncrementMinutes = step.Minutes });
+        Ui.Open(HudNode, dlg, new Vector2I(380, 160));
         Ui.FreeOnClose(dlg);
     }
 }

@@ -62,8 +62,8 @@ internal sealed class EffectTab
         var modes = e.Kind switch
         {
             "powder" => new[] { ("At will", "random"), ("Volleys", "together"), ("Rolling, by platoons", "rolling") },
-            "arrows" => new[] { ("At will", "random"), ("Volleys", "together"), ("In turn along the front", "rolling") },
-            "column" or "stones" => new[] { ("All at once", "together"), ("One after another", "rolling") },
+            "arrows" or "javelins" or "slingstones" => new[] { ("At will", "random"), ("Volleys", "together"), ("In turn along the front", "rolling") },
+            "column" or "stones" or "rockfall" => new[] { ("All at once", "together"), ("One after another", "rolling") },
             "firearrows" => new[] { ("Volleys", "together"), ("In turn along the front", "rolling") },
             _ => new[] { ("All guns together", "together"), ("In turn down the line", "rolling") },
         };
@@ -97,7 +97,7 @@ internal sealed class EffectTab
         string many = e.Kind switch
         {
             "column" => "How many shells fall", "broadside" => "How many turrets fire", "wake" => "How many torpedoes run",
-            "arrows" or "firearrows" => "How many arrows", "stones" => "How many stones", _ => "How many puffs, flames or sparks",
+            "arrows" or "firearrows" => "How many arrows", "javelins" => "How many javelins", "stones" or "slingstones" => "How many stones", "rockfall" => "How many rocks", _ => "How many puffs, flames or sparks",
         };
         Slide("Amount", many, e.Amount, 0.1, 4, (x, v) => x.Amount = v);
         Slide("Height", "How high it rises, or how far it is thrown", e.Height, 0.2, 4, (x, v) => x.Height = v);

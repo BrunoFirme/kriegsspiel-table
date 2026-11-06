@@ -299,6 +299,16 @@ public class StateMachineTests
     }
 
     [Fact]
+    public void Operational_turns_last_hours_or_days()
+    {
+        var g = new GameState { Clock = new GameClock { Turn = 1, GameTime = "1812-09-05T18:00", IncrementMinutes = 3 * GameClock.MinutesInDay } };
+        Assert.Null(StateMachine.Apply(g, new AdvanceClock(), out _));
+        Assert.Equal("1812-09-08T18:00", g.Clock.GameTime);
+        Assert.Equal(new[] { "15′", "1 h", "1 h 30′", "6 h", "1 day", "3 days", "25 h" },
+            new[] { 15, 60, 90, 360, 1440, 4320, 1500 }.Select(GameClock.StepText));
+    }
+
+    [Fact]
     public void LayerOf_reports_batches()
     {
         Assert.Equal(U, StateMachine.LayerOf(new MovePiece { Layer = U }));

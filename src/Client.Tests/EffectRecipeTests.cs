@@ -258,6 +258,9 @@ public class EffectRecipeTests
     [InlineData("Longbow volley", "arrows")]
     [InlineData("Flaming arrows", "firearrows")]
     [InlineData("Trebuchet", "stones")]
+    [InlineData("Javelin volley", "javelins")]
+    [InlineData("Slingers", "slingstones")]
+    [InlineData("Falling rocks", "rockfall")]
     [InlineData("Cavalry melee", "melee")]
     public void An_effect_with_no_settings_is_the_kind_its_name_says(string name, string kind) =>
         Assert.Equal(kind, EffectKinds.FromName(name).Kind);
@@ -267,8 +270,31 @@ public class EffectRecipeTests
     [InlineData("Archer volley", "powder")]
     [InlineData("Catapult smoke", "smoke")]
     [InlineData("Arrow", null)]
+    [InlineData("Javelin", null)]
+    [InlineData("Sling volley", "powder")]
     public void Imported_effects_keep_the_kinds_they_had_before_the_old_wars_came_in(string name, string? kind) =>
         Assert.Equal(kind, EffectKinds.KindOf(name));
+
+    [Fact]
+    public void Javelins_stick_where_they_land_sling_stones_do_not_and_only_arrows_darken_the_ground_as_they_come()
+    {
+        EffectPlan P(string kind, string? volley = null) => Plan(new EffectDef { Kind = kind, Volley = volley }, 4, 3);
+        int Streaks(EffectPlan p) => p.Layers.Count(l => l.Sprite == "streak");
+        int Thrown(EffectPlan p) => p.Layers.First(l => l.Sprite == "streak").Amount;
+        Assert.Contains(P("arrows").Layers, l => l.Lying);
+        Assert.All(new[] { "javelins", "slingstones" }, k => Assert.DoesNotContain(P(k).Layers, l => l.Lying));
+        Assert.Equal((2, 2, 1, 1), (Streaks(P("javelins")), Streaks(P("javelins", "random")), Streaks(P("slingstones")), Streaks(P("slingstones", "random"))));
+        Assert.True(Thrown(P("javelins")) < Thrown(P("arrows")) && Thrown(P("arrows")) < Thrown(P("slingstones")));
+    }
+
+    [Fact]
+    public void Falling_rocks_one_after_another_come_down_through_the_whole_cycle()
+    {
+        float[] Starts(string volley) => Plan(new EffectDef { Kind = "rockfall", Volley = volley }, 2, 2).Layers.Where(l => l.Sprite == "drop" && l.Amount == 1).Select(l => l.Offset).ToArray();
+        Assert.Equal(4, Starts("rolling").Length);
+        Assert.True(Starts("rolling").Max() - Starts("rolling").Min() > 0.5f);
+        Assert.True(Starts("together").Max() - Starts("together").Min() < 0.1f);
+    }
 
     [Fact]
     public void A_fire_named_without_smoke_has_none()

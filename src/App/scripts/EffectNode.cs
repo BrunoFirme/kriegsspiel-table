@@ -21,7 +21,7 @@ public partial class PieceNode
     void BuildEffect()
     {
         if (IsEffect) _thickness = 0.02f;
-        var e = EffectSpec;
+        var e = SpotsAtSize(EffectSpec);
         Texture2D? own = null;
         if (e.OwnPicture && Def?.Image is { } sha && _s.Store.PackOfDef(Piece.Def) is { } pack && pack.Assets.TryGetValue(sha, out var a))
         {
@@ -33,6 +33,15 @@ public partial class PieceNode
         _smokeAirBuilt = EffectFx.SmokeAirNow;
         _emitters.AddRange(EffectFx.Build(this, e, Footprint.X, Footprint.Y, phase, own));
         SteerEffect();
+    }
+
+    EffectDef SpotsAtSize(EffectDef e)
+    {
+        if (e.At is not { Count: >= 2 } at || Def?.Size is not { W: > 0, H: > 0 } size) return e;
+        double kx = Footprint.X / size.W, kz = Footprint.Y / size.H;
+        var placed = e.Clone();
+        placed.At = at.Select((v, i) => v * (i % 2 == 0 ? kx : kz)).ToList();
+        return placed;
     }
 
     bool _built;

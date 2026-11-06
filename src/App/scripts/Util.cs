@@ -98,7 +98,7 @@ public static class Fmt
     public static string Clock(GameClock c)
     {
         if (DateTime.TryParse(c.GameTime, CultureInfo.InvariantCulture, DateTimeStyles.None, out var t))
-            return $"Turn {c.Turn}  ·  {t:ddd d MMM yyyy  HH:mm}  (+{c.IncrementMinutes}′)";
+            return $"Turn {c.Turn}  ·  {t:ddd d MMM yyyy  HH:mm}  (+{GameClock.StepText(c.IncrementMinutes)})";
         return $"Turn {c.Turn}  ·  {c.GameTime}";
     }
 }

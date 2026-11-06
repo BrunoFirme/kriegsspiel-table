@@ -50,9 +50,10 @@ the pack's pieces and the chosen piece down the right. The top line says what th
 
 ### New pieces
 
-**＋ New piece** (Ctrl+N) makes a block, a tile, a token, pieces from pictures or the clipboard, a 3D model, or an
-effect (smoke, volleys, guns, fire, dust, mist; from bows to the World Wars, and at sea). Pictures and models dropped
-on the window become pieces too. Every picture chooser also takes a web link.
+**＋ New piece** (Ctrl+N) makes a block, a tile, a token, pieces from pictures or the clipboard, or a 3D model, or
+copies any effect, prop or marker of **Firme's Effects and Props** into the pack, to change like any piece of your own;
+the originals stay as they are. Pictures and models dropped on the window become pieces too. Every picture chooser also
+takes a web link.
 
 ### The views (Alt+1, 2, 3)
 

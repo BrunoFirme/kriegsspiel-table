@@ -86,7 +86,7 @@ sealed class TopBar : HudPart
 
     void BuildClockAndTurns(HBoxContainer row)
     {
-        ClockBtn = new Button { Flat = true, FocusMode = Control.FocusModeEnum.None, TooltipText = S.IsUmpire ? "Set turn, time and minutes per turn" : "Game clock" };
+        ClockBtn = new Button { Flat = true, FocusMode = Control.FocusModeEnum.None, TooltipText = S.IsUmpire ? "Set the turn, the time and how long a turn lasts" : "Game clock" };
         ClockBtn.AddThemeStyleboxOverride("normal", new StyleBoxEmpty());
         ClockBtn.Pressed += () => { if (S.IsUmpire) ClockDialog.Open(Ctx); };
         row.AddChild(ClockBtn);

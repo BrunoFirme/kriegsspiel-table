@@ -140,7 +140,13 @@ sealed class AppTools
         var store = new KTable.Core.PackageStore(KTable.Core.PackageStore.DefaultRoot);
         string id;
         if (a.Str("new_pack") is { Length: > 0 } name) id = PackEdit.CreatePack(store, name.Trim(), string.IsNullOrWhiteSpace(_a.PlayerName) ? TitleScreen.NoName : _a.PlayerName);
-        else if (a.Str("pack") is { Length: > 0 } p) { if (store.Pack(p) == null) return ToolResult.Fail($"No pack {p} on this PC (list_packs)."); id = p; }
+        else if (a.Str("pack") is { Length: > 0 } p)
+        {
+            if (store.Pack(p) is not { } found) return ToolResult.Fail($"No pack {p} on this PC (list_packs).");
+            if (StandardPacks.IsStandard(p))
+                return ToolResult.Fail($"{found.Name} comes with the app and stays as it is: open a pack of your own (or new_pack) and copy its pieces in with studio_duplicate_piece.");
+            id = p;
+        }
         else return ToolResult.Fail("Give pack (an id) or new_pack (a name).");
         if (_a.OpenStudio(id) is { } why) return ToolResult.Fail(why);
         for (int i = 0; i < 600 && !_a.InStudio; i++) await _a.Delay(0.1);

@@ -535,6 +535,8 @@ public static class EffectFx
         }
     }
 
+    static readonly Color IconEarth = new(0.62f, 0.53f, 0.4f, 0.6f);
+
     static bool PaintOldWarIcon(float[] acc, EffectDef e, Color c, Color flame)
     {
         switch (e.Kind)
@@ -549,6 +551,18 @@ public static class EffectFx
                 if (fire) foreach (var x in new[] { 0.3f, 0.62f, 0.8f }) Stamp(acc, "flame", flame, x, 0.82f, 0.18f, true);
                 return true;
             }
+            case "javelins":
+                for (int i = 0; i < 5; i++) Stamp(acc, "streak", c.Lightened(0.35f), 0.16f + i * 0.17f, 0.3f + (i * 0.53f % 1) * 0.4f, 0.55f, false);
+                for (int i = 0; i < 4; i++) Stamp(acc, "dust", IconEarth, 0.2f + i * 0.2f, 0.86f, 0.22f, false);
+                return true;
+            case "slingstones":
+                for (int i = 0; i < 14; i++) Stamp(acc, "streak", c.Lightened(0.45f), 0.1f + (i * 0.37f % 1) * 0.8f, 0.2f + (i * 0.61f % 1) * 0.5f, 0.12f, false);
+                for (int i = 0; i < 6; i++) Stamp(acc, "dust", IconEarth, 0.12f + i * 0.15f, 0.84f - (i % 2) * 0.05f, 0.24f, false);
+                return true;
+            case "rockfall":
+                foreach (var (x, y, z) in new[] { (0.3f, 0.22f, 0.2f), (0.62f, 0.4f, 0.26f), (0.45f, 0.6f, 0.16f) }) Stamp(acc, "drop", new Color(0.3f, 0.28f, 0.25f), x, y, z, false);
+                for (int i = 0; i < 5; i++) Stamp(acc, "dust", c, 0.25f + i * 0.12f, 0.84f - (i % 2) * 0.06f, 0.34f, false);
+                return true;
             case "melee":
                 for (int i = 0; i < 5; i++) Stamp(acc, "dust", c, 0.15f + i * 0.17f, 0.66f - (i % 2) * 0.12f, 0.5f, false);
                 return true;

@@ -284,6 +284,15 @@ public sealed class GameClock
     public string GameTime { get; set; } = "1800-01-01T06:00";
     public int IncrementMinutes { get; set; } = 15;
 
+    public const int MinutesInHour = 60, MinutesInDay = 1440, MostMinutes = 100000;
+
+    public static string StepText(int minutes)
+    {
+        if (minutes >= MinutesInDay && minutes % MinutesInDay == 0) return minutes == MinutesInDay ? "1 day" : $"{minutes / MinutesInDay} days";
+        if (minutes < MinutesInHour) return $"{minutes}′";
+        return minutes % MinutesInHour == 0 ? $"{minutes / MinutesInHour} h" : $"{minutes / MinutesInHour} h {minutes % MinutesInHour}′";
+    }
+
     public bool CanAdvance() =>
         !DateTime.TryParse(GameTime, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out var t)
         || (DateTime.MaxValue - t).TotalMinutes >= IncrementMinutes;

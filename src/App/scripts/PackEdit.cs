@@ -121,6 +121,24 @@ public static class PackEdit
         return copy;
     }
 
+    public static PieceDef CopyInto(PackageStore store, PackManifest from, PieceDef src, PackManifest to)
+    {
+        var copy = Json.Clone(src);
+        copy.Id = NewDefId(to, src.Name);
+        copy.Attachments.RemoveAll(a => to.Pieces.All(p => p.Id != a.Piece));
+        var fromDir = store.PackageDir(from.Id);
+        var toDir = store.PackageDir(to.Id);
+        foreach (var hash in AssetsOf(src).Distinct())
+        {
+            if (to.Assets.ContainsKey(hash) || !from.Assets.TryGetValue(hash, out var asset)) continue;
+            WriteContent(Path.Combine(toDir, asset.File), File.ReadAllBytes(Path.Combine(fromDir, asset.File)));
+            to.Assets[hash] = Json.Clone(asset);
+        }
+        to.Pieces.Add(copy);
+        store.RegisterDef(to, copy);
+        return copy;
+    }
+
     public static void Remove(PackageStore store, PackManifest pack, PieceDef def)
     {
         pack.Pieces.Remove(def);

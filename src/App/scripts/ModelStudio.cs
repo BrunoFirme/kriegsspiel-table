@@ -73,6 +73,7 @@ public partial class ModelStudio : Control
     Task<bool>? _bakeTask;
     int _openGen;
     string? _openedTex, _openedMesh;
+    float _spotsScale = 1;
     public string? Problem { get; private set; }
     internal static readonly JsonSerializerOptions Opts = new() { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull };
 
@@ -273,6 +274,7 @@ public partial class ModelStudio : Control
             }
         }
         _doc = doc;
+        _spotsScale = doc.Scale;
         var unread = new List<string>();
         foreach (var part in _doc.Parts)
         {
@@ -536,6 +538,7 @@ public partial class ModelStudio : Control
         def.Texture = texSha;
         def.Kind = "model";
         def.Size = new Size2(Math.Round(Math.Max(0.02, b.Size.X * doc.Scale), 4), Math.Round(Math.Max(0.02, b.Size.Z * doc.Scale), 4));
+        if (def == _def) FollowScale(def, doc.Scale);
         foreach (var st in def.States)
         {
             if (st.Texture != null && st.Texture == oldTex) st.Texture = texSha;
@@ -546,6 +549,13 @@ public partial class ModelStudio : Control
         _studio.MadeHere.Add(meshSha);
         _studio.Superseded(oldTex, texSha);
         _studio.Superseded(oldMesh, meshSha);
+    }
+
+    void FollowScale(PieceDef def, float scale)
+    {
+        if (def.Effect?.At is { Count: > 0 } at && _spotsScale > 1e-4f && Math.Abs(scale - _spotsScale) > 1e-5f)
+            def.Effect.At = at.Select(v => Math.Round(v * scale / _spotsScale, 4)).ToList();
+        _spotsScale = scale;
     }
 
     internal void Changed(bool mesh)

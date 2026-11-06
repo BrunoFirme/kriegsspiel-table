@@ -57,11 +57,11 @@ public sealed partial class TableTools
                 new Arg("scale", "number", "1 is its own size"), new Arg("face_down", "boolean", "turned over"), new Arg("attach_to", "string", "a piece it rides on"), new Arg("detach", "boolean", "off what it rides on")),
             SetOptions);
         yield return new AgentTool("end_turn",
-            "Ends the turn: the clock goes on by the turn's minutes, the turn is kept in the history and saved.",
+            "Ends the turn: the clock goes on by the turn's length, the turn is kept in the history and saved.",
             Args.Schema(), EndTurn);
         yield return new AgentTool("set_clock",
-            "Sets the game clock: the turn number, the date and time (yyyy-mm-ddThh:mm) and the minutes each turn lasts.",
-            Args.Schema(new Arg("turn", "number", "turn number"), new Arg("time", "string", "yyyy-mm-ddThh:mm"), new Arg("minutes_per_turn", "number", "minutes")), SetClockTool);
+            "Sets the game clock: the turn number, the date and time (yyyy-mm-ddThh:mm) and how long each turn lasts, in minutes (60 an hour, 1440 a day).",
+            Args.Schema(new Arg("turn", "number", "turn number"), new Arg("time", "string", "yyyy-mm-ddThh:mm"), new Arg("minutes_per_turn", "number", "minutes a turn lasts: 60 an hour, 1440 a day")), SetClockTool);
         yield return new AgentTool("roll_dice",
             "Rolls dice for everyone to see in the log, and returns the results.",
             Args.Schema(new Arg("count", "number", "how many (default 1)"), new Arg("sides", "number", "sides (default 6)"), new Arg("label", "string", "what the roll is for")), RollDiceTool);
@@ -326,11 +326,11 @@ public sealed partial class TableTools
         var time = a.Str("time") ?? c.GameTime;
         if (!DateTime.TryParseExact(time, new[] { "yyyy-MM-ddTHH:mm", "yyyy-MM-dd HH:mm", "yyyy-MM-ddTHH:mm:ss" }, CultureInfo.InvariantCulture, DateTimeStyles.None, out var t)) return ToolResult.Fail("time is yyyy-mm-ddThh:mm.");
         int minutes = (int)(a.Num("minutes_per_turn") ?? c.IncrementMinutes);
-        if (minutes is < 1 or > 100000) return ToolResult.Fail("minutes_per_turn is at least 1.");
+        if (minutes is < 1 or > GameClock.MostMinutes) return ToolResult.Fail($"minutes_per_turn is 1 to {GameClock.MostMinutes}.");
         s.Do(new SetClock { Turn = (int)(a.Num("turn") ?? c.Turn), GameTime = t.ToString("yyyy-MM-ddTHH:mm", CultureInfo.InvariantCulture), IncrementMinutes = minutes });
         await Landed(s);
         _log("set the clock");
-        return new ToolResult($"Turn {s.View.Clock.Turn} · {s.View.Clock.GameTime} · {s.View.Clock.IncrementMinutes} minutes a turn.");
+        return new ToolResult($"Turn {s.View.Clock.Turn} · {s.View.Clock.GameTime} · {GameClock.StepText(s.View.Clock.IncrementMinutes)} a turn.");
     }
 
     async Task<ToolResult> RollDiceTool(JsonElement a)

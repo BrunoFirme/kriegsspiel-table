@@ -1,10 +1,12 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Godot;
 using KTable.Client.Studio;
 using KTable.Client;
+using KTable.Client.Effects;
 using KTable.Core;
 using KTable.Core.Model;
 
@@ -167,6 +169,25 @@ internal sealed class NewPieces
         var def = FirmeEffects.Def(PackEdit.NewDefId(Pack, name), name, w, h, fx);
         Pack.Pieces.Add(def);
         Store.RegisterDef(Pack, def);
+        Added(def);
+    }
+
+    public PieceDef? CopyFirme(PieceDef src)
+    {
+        if (Store.Pack(FirmeEffects.PackId) is not { } firme) return null;
+        PieceDef def;
+        try { def = PackEdit.CopyInto(Store, firme, src, Pack); }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            _s.Flash("Not copied: " + e.Message);
+            return null;
+        }
+        Added(def);
+        return def;
+    }
+
+    void Added(PieceDef def)
+    {
         _s.SavePack();
         _s.RebuildList();
         _s.Paper.LayOutAll();
@@ -204,36 +225,50 @@ internal sealed class NewPieces
             ("image", "Pictures", "A piece from each, as it is or framed as a token", TokenFromPictures),
             ("3d", "3D model", "glTF, GLB, FBX, OBJ, STL, PLY or Collada", () => NewPiece(8)),
             ("pick", "Clipboard", "The picture you just copied", () => NewPiece(7)));
-        box.AddChild(Ui.Header("Effects"));
+        box.AddChild(Ui.Header("From " + FirmeEffects.PackName));
         var fx = new GridContainer { Columns = 5 };
-        fx.AddChild(Card(EffectFx.Icon(new EffectDef { Kind = "cannon" }), "Effect", "Smoke, volleys, guns, fire, dust or mist, floating over the table", () => { chosen(); ShowEffectPresets(); }));
+        fx.AddChild(Card(EffectFx.Icon(new EffectDef { Kind = "cannon" }), "Effects and props", "Smoke, fire, volleys, weather, camps, field works and markers, copied into this pack to change as you like",
+            () => { chosen(); ShowFirmePieces(); }));
         box.AddChild(fx);
         return box;
     }
 
-    public void ShowEffectPresets()
+    public void ShowFirmePieces()
     {
-        var dlg = new AcceptDialog { Title = "New effect", OkButtonText = "Close" };
+        if (Store.Pack(FirmeEffects.PackId) is not { } firme) { _s.Flash(FirmeEffects.PackName + " is not installed."); return; }
+        var dlg = new AcceptDialog { Title = FirmeEffects.PackName, OkButtonText = "Close" };
         var scroll = new ScrollContainer { CustomMinimumSize = new Vector2(740, 460), HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled };
         var col = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         col.AddThemeConstantOverride("separation", 6);
-        foreach (var (era, title) in new[] { ("ancient", "Bows, blades and siege engines"), ("napoleonic", "The age of the musket"), ("modern", "The World Wars and after"), ("naval", "At sea") })
+        var eras = new[] { ("ancient", "Bows, blades and siege engines"), ("napoleonic", "The age of the musket"), ("modern", "The World Wars and after"), ("naval", "At sea") };
+        void Group(string title, IEnumerable<PieceDef> pieces)
         {
-            col.AddChild(Ui.Header(title));
             var grid = new GridContainer { Columns = 4 };
             grid.AddThemeConstantOverride("h_separation", 6);
             grid.AddThemeConstantOverride("v_separation", 6);
-            foreach (var p in FirmeEffects.Presets.Where(x => x.Era == era))
+            foreach (var d in pieces)
             {
-                var preset = p;
-                grid.AddChild(Card(EffectFx.Icon(p.Fx), p.Name, p.What, () => { dlg.Hide(); NewEffect(preset.Name, preset.W, preset.H, preset.Fx); }));
+                var src = d;
+                grid.AddChild(FirmeCard(firme, d, () => { dlg.Hide(); CopyFirme(src); }));
             }
+            if (grid.GetChildCount() == 0) { grid.QueueFree(); return; }
+            col.AddChild(Ui.Header(title));
             col.AddChild(grid);
         }
+        foreach (var (era, title) in eras) Group(title, firme.Pieces.Where(d => d.Tags.Contains(era)));
+        Group("Any table", firme.Pieces.Where(d => !eras.Any(e => d.Tags.Contains(e.Item1))));
         scroll.AddChild(col);
         dlg.AddChild(scroll);
         Ui.Open(_s.Root, dlg);
         Ui.FreeOnClose(dlg);
+    }
+
+    Control FirmeCard(PackManifest firme, PieceDef d, Action press)
+    {
+        if (EffectFx.IsEffect(d)) return Card(EffectFx.Icon(d.Effect ?? EffectKinds.FromName(d.Name)), d.Name, FirmeEffects.What(d), press);
+        return PackEdit.LoadAsset(Store, firme, d.Image) is { } img
+            ? Card(ImageTexture.CreateFromImage(img), d.Name, FirmeEffects.What(d), press)
+            : Card("image", d.Name, FirmeEffects.What(d), press);
     }
 
     static Control Card(Texture2D picture, string name, string what, Action press)

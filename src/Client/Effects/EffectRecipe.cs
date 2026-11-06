@@ -247,7 +247,16 @@ public static class EffectRecipe
                     break;
                 case "arrows":
                 case "firearrows":
-                    Arrows(e.Kind == "firearrows");
+                    Missiles(Arrow, e.Kind == "firearrows");
+                    break;
+                case "javelins":
+                    Missiles(Javelin, false);
+                    break;
+                case "slingstones":
+                    Missiles(SlingStone, false);
+                    break;
+                case "rockfall":
+                    Rockfall();
                     break;
                 case "melee":
                     Melee();
@@ -807,42 +816,49 @@ public static class EffectRecipe
             }
         }
 
-        const float ArrowPitch = 0.95f, ArrowFall = 0.5f, ArrowStays = 2.4f, FireBurns = 2.2f, LeastLead = 0.8f, MostLead = 1.6f;
+        const float FireBurns = 2.2f, LeastLead = 0.8f, MostLead = 1.6f;
+
+        sealed record Missile(float Many, float Wide, float Long, float StuckWide, float StuckLong, float Pitch, float Top, float LeastTop, float Fall, float Stays, bool Shadow, float Dust);
+
+        static readonly Missile Arrow = new(60, 0.024f, 0.17f, 0.022f, 0.11f, 0.95f, 0.55f, 1.2f, 0.5f, 2.4f, true, 0.25f);
+        static readonly Missile Javelin = new(14, 0.036f, 0.4f, 0.033f, 0.27f, 0.62f, 0.3f, 0.6f, 0.45f, 3.6f, false, 1f);
+        static readonly Missile SlingStone = new(70, 0.022f, 0.06f, 0, 0, 0.42f, 0.22f, 0.45f, 0.32f, 0, false, 0.6f);
         static readonly Rgba Shadow = new(0.03f, 0.03f, 0.04f, 1);
         static readonly Rgba Flame = new(1, 0.62f, 0.22f, 1);
         static readonly Rgba Earth = new(0.52f, 0.45f, 0.35f, 1);
 
         static float Wrap01(float v) => v - Mathf.Floor(v);
 
-        void Arrows(bool fire)
+        void Missiles(Missile m, bool fire)
         {
             string mode = EffectKinds.Mode(e);
-            if (mode == "random") { ArrowsAtWill(fire); return; }
+            if (mode == "random") { MissilesAtWill(m, fire); return; }
             int sections = mode == "rolling" ? Math.Clamp((int)Math.Round(w / Mathf.Max(1.5f, h)), 2, 6) : 1;
             float hw = ex.X / sections;
             for (int i = 0; i < sections; i++)
-                ArrowVolley(new Vector3(-ex.X + hw * (2 * i + 1), 0, 0), new Vector3(hw, 0, ex.Z), sections > 1 ? i / (float)sections * 0.6f : 0, fire);
+                MissileVolley(m, new Vector3(-ex.X + hw * (2 * i + 1), 0, 0), new Vector3(hw, 0, ex.Z), sections > 1 ? i / (float)sections * 0.6f : 0, fire);
         }
 
-        (float top, Vector3 dir, float speed, float ahead) Flight()
+        (float top, Vector3 dir, float speed, float ahead) Flight(Missile m)
         {
-            float top = Mathf.Max(1.2f, 0.55f * s * H), down = top / ArrowFall, ahead = down / MathF.Tan(ArrowPitch);
+            float top = Mathf.Max(m.LeastTop, m.Top * s * H), down = top / m.Fall, ahead = down / MathF.Tan(m.Pitch);
             var v = new Vector3(0, -down, -ahead);
             return (top, v.Normalized(), v.Length(), ahead);
         }
 
-        int ArrowCount(Vector3 half) => Math.Clamp((int)Math.Round(60 * A * Mathf.Sqrt(Mathf.Max(1, half.X * half.Z * 4 / 6))), 6, 500);
+        int MissileCount(Missile m, Vector3 half) =>
+            Math.Clamp((int)Math.Round(m.Many * A * Mathf.Sqrt(Mathf.Max(1, half.X * half.Z * 4 / 6))), Math.Max(2, (int)(m.Many / 10)), 500);
 
-        EffectLayer FallingArrows(Vector3 at, Vector3 half, bool fire, int amount, float life, (float top, Vector3 dir, float speed, float ahead) f) => new()
+        EffectLayer FallingMissiles(Missile m, Vector3 at, Vector3 half, bool fire, int amount, float life, (float top, Vector3 dir, float speed, float ahead) f) => new()
         {
-            Sprite = "streak", Cross = new Vector2(0.024f * s, 0.17f * s), Add = fire, Amount = amount, Life = life,
-            Box = new Vector3(half.X * 0.9f, f.top * 0.04f, half.Z * 0.9f), At = at + new Vector3(0, f.top, f.ahead * ArrowFall),
+            Sprite = "streak", Cross = new Vector2(m.Wide * s, m.Long * s), Add = fire, Amount = amount, Life = life,
+            Box = new Vector3(half.X * 0.9f, f.top * 0.04f, half.Z * 0.9f), At = at + new Vector3(0, f.top, f.ahead * m.Fall),
             Dir = f.dir, Spread = 2, VMin = f.speed * 0.97f, VMax = f.speed * 1.03f, SMin = P, SMax = P, Spin = 0, Soft = false,
         };
 
-        EffectLayer StuckArrows(Vector3 at, Vector3 half, bool fire, int amount, float life, Vector3 dir) => new()
+        EffectLayer StuckMissiles(Missile m, Vector3 at, Vector3 half, bool fire, int amount, float life, Vector3 dir) => new()
         {
-            Sprite = "streak", Cross = new Vector2(0.022f * s, 0.11f * s), Amount = amount, Life = life,
+            Sprite = "streak", Cross = new Vector2(m.StuckWide * s, m.StuckLong * s), Amount = amount, Life = life,
             Box = new Vector3(half.X * 0.9f, 0.001f, half.Z * 0.9f), At = at + new Vector3(0, 0.01f, 0),
             Dir = dir, Spread = 3, VMin = 0.001f, VMax = 0.002f, SMin = P, SMax = P, Spin = 0, Soft = false,
             Ramp = fire
@@ -857,14 +873,15 @@ public static class EffectRecipe
             Curve = new[] { (0f, 0.5f), (1f, 1.6f) },
         };
 
-        void ArrowVolley(Vector3 at, Vector3 half, float off, bool fire)
+        void MissileVolley(Missile m, Vector3 at, Vector3 half, float off, bool fire)
         {
-            var f = Flight();
+            var f = Flight(m);
             float lead = Mathf.Clamp(every * 0.3f, LeastLead, MostLead), life = every, sweep = f.ahead * lead;
-            float arrowsOff = Wrap01(off - (lead - ArrowFall) / life), landOff = Wrap01(off - lead / life);
+            float arrowsOff = Wrap01(off - (lead - m.Fall) / life), landOff = Wrap01(off - lead / life);
             float shadow = Mathf.Max(half.X, half.Z) * 0.7f * P, landed = lead / life;
-            int arrows = ArrowCount(half);
-            layers.Add(new EffectLayer
+            int arrows = MissileCount(m, half);
+            if (m.Shadow)
+                layers.Add(new EffectLayer
             {
                 Sprite = "mist", Lying = true, Amount = 28, Fixed = true, Life = life, Explosive = 1, Offset = off,
                 Box = new Vector3(half.X * 0.6f, 0, half.Z * 0.6f), At = at + new Vector3(0, 0.04f, sweep),
@@ -872,22 +889,25 @@ public static class EffectRecipe
                 Ramp =
                     new[] { (0f, Fade(Shadow, 0)), (landed * 0.3f, Fade(Shadow, 0.16f)), (landed + 0.15f / life, Fade(Shadow, 0.16f)), (landed + 0.6f / life, Fade(Shadow, 0)), (1f, Fade(Shadow, 0)) },
             });
-            var falling = FallingArrows(at, half, fire, arrows, life, f);
+            var falling = FallingMissiles(m, at, half, fire, arrows, life, f);
             falling.Fixed = true;
             falling.Explosive = 0.9f;
             falling.Offset = arrowsOff;
-            float down = ArrowFall / life;
+            float down = m.Fall / life;
             var arrowInk = fire ? Flame : c;
             falling.Ramp = new[] { (0f, Fade(arrowInk, 0)), (down * 0.05f, Fade(arrowInk, 0.95f)), (down * 0.97f, Fade(arrowInk, 0.95f)), (down, Fade(arrowInk, 0)), (1f, Fade(arrowInk, 0)) };
             layers.Add(falling);
-            float stays = Mathf.Min(fire ? FireBurns : ArrowStays, life * 0.6f) / life;
-            var stuck = StuckArrows(at, half, fire, Math.Max(3, arrows * 3 / 5), life, f.dir);
-            stuck.Fixed = true;
-            stuck.Explosive = 0.9f;
-            stuck.Offset = landOff;
-            stuck.Ramp = stuck.Ramp.Select(k => (k.at * stays, k.c)).Append((1f, stuck.Ramp[^1].c)).ToArray();
-            layers.Add(stuck);
-            var dust = ArrowDust(at, half, Math.Max(2, arrows / 4), life);
+            float stays = Mathf.Min(fire ? FireBurns : m.Stays, life * 0.6f) / life;
+            if (m.StuckLong > 0)
+            {
+                var stuck = StuckMissiles(m, at, half, fire, Math.Max(3, arrows * 3 / 5), life, f.dir);
+                stuck.Fixed = true;
+                stuck.Explosive = 0.9f;
+                stuck.Offset = landOff;
+                stuck.Ramp = stuck.Ramp.Select(k => (k.at * stays, k.c)).Append((1f, stuck.Ramp[^1].c)).ToArray();
+                layers.Add(stuck);
+            }
+            var dust = ArrowDust(at, half, Math.Max(2, (int)(arrows * m.Dust)), life);
             dust.Fixed = true;
             dust.Explosive = 0.9f;
             dust.Offset = landOff;
@@ -921,17 +941,17 @@ public static class EffectRecipe
             });
         }
 
-        void ArrowsAtWill(bool fire)
+        void MissilesAtWill(Missile m, bool fire)
         {
-            var f = Flight();
+            var f = Flight(m);
             var half = new Vector3(ex.X, 0, ex.Z);
-            int arrows = Math.Max(3, ArrowCount(half) / 4);
-            var falling = FallingArrows(Vector3.Zero, half, fire, arrows, ArrowFall, f);
+            int arrows = Math.Max(3, MissileCount(m, half) / 4);
+            var falling = FallingMissiles(m, Vector3.Zero, half, fire, arrows, m.Fall, f);
             var ink = fire ? Flame : c;
             falling.Ramp = new[] { (0f, Fade(ink, 0)), (0.05f, Fade(ink, 0.95f)), (0.97f, Fade(ink, 0.95f)), (1f, Fade(ink, 0)) };
             layers.Add(falling);
-            layers.Add(StuckArrows(Vector3.Zero, half, fire, Math.Max(3, (int)(arrows * ArrowStays / ArrowFall * 0.5f)), ArrowStays, f.dir));
-            var dust = ArrowDust(Vector3.Zero, half, Math.Max(2, arrows / 2), 0.9f);
+            if (m.StuckLong > 0) layers.Add(StuckMissiles(m, Vector3.Zero, half, fire, Math.Max(3, (int)(arrows * m.Stays / m.Fall * 0.5f)), m.Stays, f.dir));
+            var dust = ArrowDust(Vector3.Zero, half, Math.Max(2, (int)(arrows * m.Dust * 2)), 0.9f);
             dust.Ramp = new[] { (0f, Fade(Earth, 0)), (0.1f, Fade(Earth, 0.45f)), (1f, Fade(Earth, 0)) };
             layers.Add(dust);
         }
@@ -953,6 +973,35 @@ public static class EffectRecipe
             });
         }
 
+        void Rockfall()
+        {
+            var rng = new Random(EffectKinds.Seed(phase));
+            int n = Math.Clamp((int)Math.Round(4 * A), 1, 16);
+            bool rolling = EffectKinds.Mode(e) == "rolling";
+            float sb = Mathf.Clamp(s / 3f, 0.25f, 20f), pull = 4f * s * H, start = 1.2f * s * H;
+            float flight = Mathf.Clamp(Mathf.Sqrt(2 * start / pull), 0.3f, 2f);
+            for (int i = 0; i < n; i++)
+            {
+                var at = new Vector3(((float)rng.NextDouble() * 2 - 1) * ex.X * 0.8f, 0, ((float)rng.NextDouble() * 2 - 1) * ex.Z * 0.6f);
+                float off = rolling ? i / (float)n : (float)rng.NextDouble() * 0.08f;
+                float size = sb * (0.6f + 0.7f * (float)rng.NextDouble());
+                Stone(at, size, off, 0.3f * s, start, flight);
+                RollingOn(at, size, off + flight / every);
+            }
+        }
+
+        void RollingOn(Vector3 at, float sb, float off)
+        {
+            var rock = new Rgba(0.3f, 0.28f, 0.25f, 1);
+            float rolls = 1.2f / every;
+            layers.Add(new EffectLayer
+            {
+                Sprite = "drop", Amount = 4, Fixed = true, Life = every, Explosive = 1, Offset = Wrap01(off), Box = new Vector3(0.1f * sb, 0.02f, 0.05f * sb), At = at + new Vector3(0, 0.04f, 0),
+                Dir = new Vector3(0, 0.15f, -1), Spread = 30, VMin = 0.5f * sb, VMax = 1.3f * sb, Damp = 0.6f * sb, SMin = 0.1f * sb * P, SMax = 0.2f * sb * P, Spin = 0, Soft = false,
+                Ramp = new[] { (0f, Fade(rock, 0)), (0.03f * rolls, Fade(rock, 1)), (0.8f * rolls, Fade(rock, 1)), (rolls, Fade(rock, 0)), (1f, Fade(rock, 0)) },
+            });
+        }
+
         void Stones()
         {
             var rng = new Random(EffectKinds.Seed(phase));
@@ -963,13 +1012,13 @@ public static class EffectRecipe
             {
                 var at = new Vector3(((float)rng.NextDouble() * 2 - 1) * ex.X * 0.7f, 0, ((float)rng.NextDouble() * 2 - 1) * ex.Z * 0.7f);
                 float off = rolling ? i / (float)n * 0.7f : (float)rng.NextDouble() * 0.08f;
-                Stone(at, sb * (0.85f + 0.3f * (float)rng.NextDouble()), off);
+                Stone(at, sb * (0.85f + 0.3f * (float)rng.NextDouble()), off, 2.4f * s, 0.45f * s * H, Mathf.Clamp(1.1f * Mathf.Sqrt(H), 0.7f, 2f));
             }
         }
 
-        void Stone(Vector3 at, float sb, float off)
+        void Stone(Vector3 at, float sb, float off, float reach, float start, float flight)
         {
-            float flight = Mathf.Clamp(1.1f * Mathf.Sqrt(H), 0.7f, 2f), reach = 2.4f * s, start = 0.45f * s * H, pull = 4f * s * H;
+            float pull = 4f * s * H;
             float up = (pull * flight * flight / 2 - start) / flight, ahead = reach / flight;
             var v = new Vector3(0, up, -ahead);
             float life = every, landed = flight / life, landOff = Wrap01(off - landed);

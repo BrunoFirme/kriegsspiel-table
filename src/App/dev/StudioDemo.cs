@@ -54,7 +54,12 @@ sealed class StudioDemo
                 await Frames(3);
                 break;
             case "fxmenu":
-                _s.NewPieces.ShowEffectPresets();
+                _s.NewPieces.ShowFirmePieces();
+                await Frames(3);
+                break;
+            case "firme":
+                if (_s.Store.Pack(FirmeEffects.PackId)?.Pieces.FirstOrDefault(d => d.Id == FirmeEffects.PackId + "." + arg) is { } std) _s.NewPieces.CopyFirme(std);
+                else GD.PrintErr($"[studio] no {arg} in {FirmeEffects.PackName}");
                 await Frames(3);
                 break;
             case "wait":

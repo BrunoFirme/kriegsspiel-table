@@ -34,20 +34,23 @@ public static class EffectKinds
         ("firearrows", "Fire arrows", "Burning arrows falling in a volley, small fires where they land"),
         ("melee", "Melee", "The press of a fight: dust churned up and clods thrown"),
         ("stones", "Siege stones", "Stones from catapults or trebuchets arcing in over the back edge and crashing down in dust and splinters"),
+        ("javelins", "Javelins", "Javelins or pila thrown in low over the back edge, sticking where they land; in volleys, in turn along the front or at will"),
+        ("slingstones", "Sling stones", "Slingers' shot whipping in flat over the back edge and kicking up the dirt; in volleys, in turn along the front or at will"),
+        ("rockfall", "Falling rocks", "Rocks dropped from a wall or tumbling off a crag, crashing down in dust and rolling on towards the front edge"),
     };
 
-    public static bool Fires(EffectDef e) => e.Kind is "cannon" or "burst" or "spray" or "barrage" or "rocket" or "flare" or "column" or "broadside" or "firearrows" or "stones"
-        || e.Kind is "powder" or "arrows" && Mode(e) != "random";
+    public static bool Fires(EffectDef e) => e.Kind is "cannon" or "burst" or "spray" or "barrage" or "rocket" or "flare" or "column" or "broadside" or "firearrows" or "stones" or "rockfall"
+        || e.Kind is "powder" or "arrows" or "javelins" or "slingstones" && Mode(e) != "random";
     public static bool Burns(string kind) => kind is "fire" or "cannon" or "burst" or "powder" or "sparks" or "lamps" or "camp" or "barrage" or "flare" or "broadside" or "oil" or "firearrows";
     public static bool Smokes(string kind) => kind is "fire" or "cannon" or "burst" or "camp" or "rocket" or "barrage" or "broadside" or "oil" or "firearrows";
-    public static bool Volleys(string kind) => kind is "powder" or "cannon" or "column" or "broadside" or "arrows" or "firearrows" or "stones";
+    public static bool Volleys(string kind) => kind is "powder" or "cannon" or "column" or "broadside" or "arrows" or "firearrows" or "stones" or "javelins" or "slingstones" or "rockfall";
     public static bool Lingers(string kind) => kind is "powder" or "cannon";
     public static string Mode(EffectDef e) => e.Volley is "random" or "together" or "rolling" ? e.Volley : e.Kind == "powder" ? "random" : "together";
 
     public static double Interval(EffectDef e) => e.Every > 0.05 ? e.Every : e.Kind switch
     {
         "cannon" => 5, "burst" => 6, "spray" => 3.5, "powder" => 8, "barrage" => 5, "rocket" => 5, "flare" => 14, "column" => 6, "broadside" => 8,
-        "arrows" => 7, "firearrows" => 8, "stones" => 7, _ => 0,
+        "arrows" => 7, "firearrows" => 8, "stones" => 7, "javelins" => 9, "slingstones" => 6, "rockfall" => 8, _ => 0,
     };
 
     public static string DefaultColor(string kind) => kind switch
@@ -75,7 +78,9 @@ public static class EffectKinds
         "arrows" => "#2b241c",
         "firearrows" => "#4a433c",
         "melee" => "#7a6748",
-        "stones" => "#857a6b",
+        "stones" or "rockfall" => "#857a6b",
+        "javelins" => "#3b3024",
+        "slingstones" => "#3a3632",
         _ => "#8f8b85",
     };
 
@@ -95,6 +100,9 @@ public static class EffectKinds
             Has("fire arrow", "flaming arrow", "burning arrow") ? "firearrows" :
             Has("arrow", "archer", "longbow", "bowmen", "crossbow") ? "arrows" :
             Has("catapult", "trebuchet", "mangonel", "onager", "siege stone") ? "stones" :
+            Has("javelin", "pilum", "pila ") ? "javelins" :
+            Has("sling") ? "slingstones" :
+            Has("falling rock", "rockfall", "rock fall", "rockslide", "boulder") ? "rockfall" :
             Has("melee", "mêlée", "hand to hand", "hand-to-hand", "clash") ? "melee" : null;
     }
 

@@ -126,7 +126,7 @@ sealed partial class StudioTools
             Args.Schema(new Arg("id", "string", "the kind's id", true), new Arg("text", "string", "the whole Lua script", true)),
             WriteScript);
         yield return new AgentTool("studio_duplicate_piece",
-            "Copies a kind (looks, counters, script and all) under a new name.",
+            "Copies a kind (looks, counters, script and all) under a new name. An id of " + FirmeEffects.PackName + " (" + FirmeEffects.PackId + ".<its name in lower case, words joined by ->, e.g. " + FirmeEffects.PackId + ".bivouac) copies that piece into this pack, where it can be changed like any other; the original stays as it is.",
             Args.Schema(new Arg("id", "string", "the kind's id", true), new Arg("name", "string", "the copy's name")),
             Duplicate);
         yield return new AgentTool("studio_delete_piece",
@@ -586,10 +586,17 @@ sealed partial class StudioTools
     async Task<ToolResult> Duplicate(JsonElement a)
     {
         if (_a.Studio is not { } s || !_a.InStudio) return NotOpen;
-        if (Def(s, a) is not { } d) return NoKind(a);
+        if (Def(s, a) is not { } d) return FirmePiece(s, a) is { } std ? Copied(s, s.NewPieces.CopyFirme(std), a) : NoKind(a);
         var before = s.Pack.Pieces.ToHashSet();
         await s.DuplicateSelAsync(d);
-        var copy = s.Pack.Pieces.FirstOrDefault(p => !before.Contains(p));
+        return Copied(s, s.Pack.Pieces.FirstOrDefault(p => !before.Contains(p)), a);
+    }
+
+    static PieceDef? FirmePiece(PieceStudio s, JsonElement a) =>
+        a.Str("id") is { } id && s.Pack.Id != FirmeEffects.PackId ? s.Store.Pack(FirmeEffects.PackId)?.Pieces.FirstOrDefault(d => d.Id == id) : null;
+
+    ToolResult Copied(PieceStudio s, PieceDef? copy, JsonElement a)
+    {
         if (copy == null) return ToolResult.Fail("It was not copied (the studio could not save what is open).");
         if (a.Str("name") is { Length: > 0 } name) Edit(s, copy, x => x.Name = name.Trim());
         return Made(s, copy, "copied");
