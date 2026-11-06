@@ -41,7 +41,7 @@ public sealed partial class DefFactory
     string? _placeholderSha;
     public string Context { get; set; } = "";
 
-    public static readonly HashSet<string> FlatTypes = new() { "Custom_Tile", "Custom_Token", "Custom_Board", "BlockSquare", "BlockRectangle" };
+    public static readonly HashSet<string> FlatTypes = new() { "Custom_Tile", "Custom_Token", "Custom_Board", "BlockSquare", "BlockRectangle", "Custom_PDF" };
     public static bool IsPiece(TtsObj o) => FlatTypes.Contains(o.Name) || o.Name == "Custom_Model" || IsTextObject(o) || IsTablePiece(o);
 
     public DefFactory(Config cfg, AssetStore assets, Report rep)
@@ -153,6 +153,7 @@ public sealed partial class DefFactory
             aspect = e.W / (double)e.H;
         }
         double ratio = o.ScaleX == 0 ? 1 : o.ScaleZ / o.ScaleX;
+        if (o.Name == "Custom_PDF") return new Size2(b.CustomTile * (PdfOf(o.PdfUrl)?.Aspect ?? 1), b.CustomTile * ratio);
         if (o.Name == "Custom_Model")
         {
             var mb = MeshBounds(o.MeshUrl) ?? (1, 1, 1);
@@ -186,6 +187,7 @@ public sealed partial class DefFactory
     public double BaseThickness(TtsObj o) => o.Name switch
     {
         "Custom_Tile" or "Custom_Token" => o.Thickness,
+        "Custom_PDF" => BookThickness,
         "Custom_Model" => (MeshBounds(o.MeshUrl)?.ey ?? 0.2),
         "BlockSquare" or "BlockRectangle" => _cfg.BaseSizes.BlockSquare,
         "Card" or "CardCustom" => CardThickness,
@@ -200,8 +202,10 @@ public sealed partial class DefFactory
     {
         var (states, _) = o.StateList();
         var b = states[0];
-        return $"{b.Name}|{Entry(b.ImageUrl)?.Sha ?? b.ImageUrl}|{Entry(b.BackUrl)?.Sha ?? b.BackUrl}|{Entry(b.MeshUrl)?.Sha ?? b.MeshUrl}|{Entry(b.DiffuseUrl)?.Sha ?? b.DiffuseUrl}|{(b.Name.StartsWith("Block") ? b.Color : "")}{TableVisualKey(b)}";
+        return $"{b.Name}|{Entry(b.ImageUrl)?.Sha ?? b.ImageUrl}|{Entry(b.BackUrl)?.Sha ?? b.BackUrl}|{Entry(b.MeshUrl)?.Sha ?? b.MeshUrl}|{Entry(b.DiffuseUrl)?.Sha ?? b.DiffuseUrl}|{Entry(b.PdfUrl)?.Sha ?? b.PdfUrl}|{(b.Name.StartsWith("Block") ? b.Color : "")}{TableVisualKey(b)}";
     }
+
+    public const double BookThickness = 0.1;
 
     public static double BaseScale(TtsObj o) => Math.Round(Math.Abs(o.StateList().states[0].ScaleX), 4);
 
@@ -312,6 +316,7 @@ public sealed partial class DefFactory
         {
             IsGlobal = isGlobal,
             ResolveImage = (url, type, scale) => MarkerDef(pack, new SpawnSpec(type, scale, url, "Marker"), where)?.Id,
+            ResolveModel = (mesh, diffuse, sx, sy) => MarkerModelDef(pack, mesh, diffuse, sx, sy, where)?.Id,
             ResolveAsset = url => UiAsset(pack, url, where),
         });
         _rep.ScriptTranslated(tr, where);
@@ -333,7 +338,8 @@ public sealed partial class DefFactory
 
     PieceDef? BuildDef(TtsObj b, PackOut pack, double r, string where, ScriptInfo script, double heightScale)
     {
-        var (lookUrl, lookKind) = b.Name == "Custom_Model" ? (b.MeshUrl, "mesh") : b.Name.StartsWith("Block") || b.IsChecker ? (null, "") : b.IsCard ? (b.Sheet?.FaceUrl, "image") : (b.ImageUrl, "image");
+        var (lookUrl, lookKind) = b.Name == "Custom_Model" ? (b.MeshUrl, "mesh") : b.Name == "Custom_PDF" ? (b.PdfUrl, "pdf")
+            : b.Name.StartsWith("Block") || b.IsChecker ? (null, "") : b.IsCard ? (b.Sheet?.FaceUrl, "image") : (b.ImageUrl, "image");
         if (_assets.Gone(lookUrl, lookKind) is { } gone)
         {
             _rep.LeftOut(Name(b) is var n && n != "Piece" ? n : FileName(lookUrl!), lookUrl!, gone, where, b.Guid);
@@ -348,7 +354,7 @@ public sealed partial class DefFactory
             Tint = b.Color ?? "#FFFFFF",
             TintsPictures = b.Name == "Custom_Token" || b.Name.StartsWith("Block"),
             Shape = PackManifest.ShapeOf(b.Name, b.TileType),
-            Tags = b.Tags.Concat(new[] { b.Name switch { "Custom_Tile" => "tile", "Custom_Token" => "token", "Custom_Model" => "model", "Custom_Board" => "board", _ => "block" } }).Distinct().ToList(),
+            Tags = b.Tags.Concat(new[] { b.Name switch { "Custom_Tile" => "tile", "Custom_Token" => "token", "Custom_Model" => "model", "Custom_Board" => "board", "Custom_PDF" => "book", _ => "block" } }).Distinct().ToList(),
         };
         if (IsTablePiece(b))
         {
@@ -360,6 +366,10 @@ public sealed partial class DefFactory
             def.Mesh = ModelMesh(pack, b, where);
             def.Texture = Asset(pack, b.DiffuseUrl, "image", where);
             if (def.Mesh == null) { def.Kind = "flat"; def.Image = def.Texture ?? Placeholder(pack); }
+        }
+        else if (b.Name == "Custom_PDF")
+        {
+            FillBook(def, b, pack, where);
         }
         else if (b.Name.StartsWith("Block"))
         {
@@ -402,6 +412,40 @@ public sealed partial class DefFactory
         return d;
     }
 
+    PieceDef? MarkerModelDef(PackOut pack, string meshUrl, string? diffuseUrl, double sx, double sy, string where)
+    {
+        var spawned = SpawnedModel(meshUrl, diffuseUrl, sx, sy);
+        var mesh = ModelMesh(pack, spawned, where + " (spawned model)");
+        if (mesh == null) return null;
+        var texture = Asset(pack, diffuseUrl, "image", where + " (spawned model)");
+        double r = Math.Abs(sx) < 1e-6 ? 1 : Math.Abs(sx);
+        var size = Mul(BaseSize(spawned), r);
+        var key = string.Create(CultureInfo.InvariantCulture, $"model|{mesh}|{texture}|{size.W:0.###}x{size.H:0.###}");
+        if (pack.ByKey.TryGetValue(key, out var d)) return d;
+        d = new PieceDef
+        {
+            Name = "Marker", Kind = "model", Mesh = mesh, Texture = texture, Size = size,
+            Thickness = Math.Round(Math.Clamp(BaseThickness(spawned) * Stretch(spawned) * r, 0.02, 3), 3),
+            Shape = PackManifest.ShapeOf("Custom_Model", 0), Tags = new() { "marker", "model" },
+        };
+        d.Id = $"{pack.Short}.{Slug(d.Name)}-{Hash8(key)}";
+        pack.ByKey[key] = d;
+        pack.M.Pieces.Add(d);
+        return d;
+    }
+
+    static TtsObj SpawnedModel(string meshUrl, string? diffuseUrl, double sx, double sy)
+    {
+        var mesh = new System.Text.Json.Nodes.JsonObject { ["MeshURL"] = meshUrl };
+        if (diffuseUrl != null) mesh["DiffuseURL"] = diffuseUrl;
+        return new TtsObj(new System.Text.Json.Nodes.JsonObject
+        {
+            ["Name"] = "Custom_Model",
+            ["CustomMesh"] = mesh,
+            ["Transform"] = new System.Text.Json.Nodes.JsonObject { ["scaleX"] = sx, ["scaleY"] = sy, ["scaleZ"] = sx },
+        });
+    }
+
     string? _whiteSha;
     string WhiteSquare(PackOut pack)
     {
@@ -422,6 +466,7 @@ public sealed partial class DefFactory
 
     static string Describe(PackOut pack, PieceDef def)
     {
+        if (def.Tags.Contains("book")) return def.States.Count > 1 ? $"Book of {def.States.Count} pages" : "Book";
         var form = def.Kind == "model" ? "model" : def.Shape switch
         {
             "alpha" => "token", "circle" => "disc", "hex" => "hex",

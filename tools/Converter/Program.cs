@@ -209,6 +209,24 @@ try
             Console.WriteLine("written: " + Path.GetFullPath(Path.Combine(docs, "scripting-api.md")) + ", ktable-api.lua");
             return 0;
         }
+        case "pdf-pages":
+        {
+            if (rest.Count == 0) { Console.Error.WriteLine("pdf-pages <file.pdf> --out <folder> [--dpi N]"); return 1; }
+            var into = outOverride ?? Path.Combine(Path.GetTempPath(), "ktable-pdf");
+            var dpi = int.TryParse(Take(rest, "--dpi"), out var d) ? Math.Clamp(d, 36, 400) : DefFactory.PageDpi;
+            var pdf = await File.ReadAllBytesAsync(rest[0]);
+            Directory.CreateDirectory(into);
+            int written = 0;
+            foreach (var (page, bytes, w, h) in DefFactory.Pages(pdf, dpi, cfg.Tiles.WebpQuality))
+            {
+                var file = Path.Combine(into, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"page-{page:000}.webp"));
+                await File.WriteAllBytesAsync(file, bytes);
+                Console.WriteLine(string.Create(System.Globalization.CultureInfo.InvariantCulture, $"PAGE {page} {w} {h} {file}"));
+                written++;
+            }
+            Console.WriteLine($"PAGES {written}");
+            return written > 0 ? 0 : 1;
+        }
         case "check-scripts":
             return ScriptCheck.Run(cfg, rest);
         case "tally-scripts":

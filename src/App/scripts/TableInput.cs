@@ -303,7 +303,8 @@ sealed class TableInput
         switch (_c.Tool)
         {
             case Tool.Select: case Tool.Transform: case Tool.Range:
-                _selectTool.Press(mb, g.Value);
+                if (mb.DoubleClick && _pieces.Pick(g.Value, screen: mb.Position) is { } opened && BookWindow.Is(opened.Def)) BookWindow.Open(_c.Scene, S, opened);
+                else _selectTool.Press(mb, g.Value);
                 break;
             case Tool.Crop:
                 _crop.Press(mb.Position);

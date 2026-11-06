@@ -24,6 +24,7 @@ You get:
 | States (formation, shattered…) | Plain TTS dice (use the app's) |
 | IKS script counters and text | |
 | Notecards, Notes and Notebook pages, as note cards you can type into | |
+| PDFs, as books: every page comes over, and double-clicking one at the table opens it to read | |
 | Tints, names, attached markers, locks, face down | |
 | Asset-bundle effects (smoke, fire, gun fire, mist, rain), as the closest of Firme's Effects | |
 | Lua scripts and XML panels, translated | |
@@ -50,7 +51,7 @@ the pack's pieces and the chosen piece down the right. The top line says what th
 
 ### New pieces
 
-**＋ New piece** (Ctrl+N) makes a block, a tile, a token, pieces from pictures or the clipboard, or a 3D model, or
+**＋ New piece** (Ctrl+N) makes a block, a tile, a token, pieces from pictures or the clipboard, a 3D model, a book from a PDF, or
 copies any effect, prop or marker of **Firme's Effects and Props** into the pack, to change like any piece of your own;
 the originals stay as they are. Pictures and models dropped on the window become pieces too. Every picture chooser also
 takes a web link.

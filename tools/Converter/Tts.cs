@@ -56,6 +56,7 @@ public sealed class TtsObj
     public string? MeshUrl => Blank(S(CM?["MeshURL"]));
     public string? DiffuseUrl => Blank(S(CM?["DiffuseURL"]));
     public string? BundleUrl => Blank(S((J["CustomAssetbundle"] as JsonObject)?["AssetbundleURL"]));
+    public string? PdfUrl => Blank(S((J["CustomPDF"] as JsonObject)?["PDFUrl"]));
 
     public string? Color
     {
@@ -131,7 +132,7 @@ public sealed class TtsObj
 
     public IEnumerable<string> Urls()
     {
-        foreach (var u in new[] { ImageUrl, BackUrl, MeshUrl, DiffuseUrl, BundleUrl }) if (u != null) yield return u;
+        foreach (var u in new[] { ImageUrl, BackUrl, MeshUrl, DiffuseUrl, BundleUrl, PdfUrl }) if (u != null) yield return u;
         foreach (var d in Decals) yield return d.Url;
         foreach (var s in CardSheets.Values)
         {

@@ -149,6 +149,7 @@ public sealed partial class AssetStore
         if (b.Length >= 4 && b[0] == 'G' && b[1] == 'I' && b[2] == 'F') return "gif";
         if (b.Length >= 2 && b[0] == 'B' && b[1] == 'M') return "bmp";
         if (b.Length >= 12 && b[0] == 'R' && b[1] == 'I' && b[2] == 'F' && b[3] == 'F' && b[8] == 'W' && b[9] == 'E' && b[10] == 'B' && b[11] == 'P') return "webp";
+        if (b.Length >= 5 && Encoding.ASCII.GetString(b[..5]) == "%PDF-") return "pdf";
         if (b.Length >= 7 && Encoding.ASCII.GetString(b[..7]) is "UnityFS" or "UnityWe" or "UnityRa") return "unity3d";
         if (b.Length >= 5 && Encoding.ASCII.GetString(b[..5]) == "<!DOC" || b.Length >= 5 && Encoding.ASCII.GetString(b[..5]).StartsWith("<html", StringComparison.OrdinalIgnoreCase)) return "html";
         var head = Encoding.ASCII.GetString(b[..Math.Min(b.Length, 4096)]);

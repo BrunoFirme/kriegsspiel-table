@@ -28,6 +28,7 @@ public partial class PieceNode : Node3D
     Color _layerTint = Colors.White;
     int _shownState = -1;
     string? _shownPicture;
+    string? _shownDef;
     string? _shownTint;
     string? _texPackage, _texRel;
     int _texSize;
@@ -111,26 +112,29 @@ public partial class PieceNode : Node3D
     void Build()
     {
         Def = _s.Def(Piece.Def);
-        var size = Def?.Size ?? new Size2(1.5, 0.75);
-        if (CurState?.Size is { } ss) size = ss;
+        var worn = WornModel;
+        var shown = worn ?? Def;
+        var size = shown?.Size ?? new Size2(1.5, 0.75);
+        if (worn == null && CurState?.Size is { } ss) size = ss;
         float w = (float)(size.W * Piece.Scale), h = (float)(size.H * Piece.Scale);
         Footprint = new Vector2(w, h);
         BuiltScale = Piece.Scale;
-        _thickness = (float)Mathf.Clamp((Def?.Thickness ?? 0.2) * Piece.Scale, 0.02, 2);
-        Shape = CurState?.Shape ?? Def?.Shape ?? "box";
-        if (Shape == "box" && Def?.Kind != "model" && !IsEffect && TexKey() is { pkg: not null } k && _s.Assets.Mask(k.pkg, k.rel!, k.size) is { } mk && mk.TransparentFraction > 0.01f)
+        _thickness = (float)Mathf.Clamp((shown?.Thickness ?? 0.2) * Piece.Scale, 0.02, 2);
+        Shape = worn?.Shape ?? CurState?.Shape ?? Def?.Shape ?? "box";
+        if (Shape == "box" && shown?.Kind != "model" && !IsEffect && TexKey() is { pkg: not null } k && _s.Assets.Mask(k.pkg, k.rel!, k.size) is { } mk && mk.TransparentFraction > 0.01f)
             Shape = mk.TransparentFraction > CutoutFraction ? "alpha" : "rounded";
         _shownState = Piece.State;
+        _shownDef = Piece.Def;
         _shownPicture = Piece.Picture;
         _shownTint = Piece.TintOverride;
         var tint = Tint();
 
         if (IsEffect) { Shape = Def!.Effect != null ? "box" : "circle"; BuildEffect(); }
         else if (PrintingOnly) { if (Def?.Kind != "model") LoadTexture(); }
-        else if (Def?.Kind == "model" && CurrentMesh() is { } meshHash)
+        else if (shown?.Kind == "model" && CurrentMesh() is { } meshHash)
         {
             BuildModel(meshHash, w, h, tint);
-            if (Def.Effect != null) BuildEffect();
+            if (Def?.Effect != null) BuildEffect();
         }
         else if (Shape == "alpha")
             BuildCutout(tint);
@@ -327,7 +331,9 @@ public partial class PieceNode : Node3D
         return Def.Image ?? Def.Texture;
     }
 
-    string? CurrentMesh() => CurState?.Mesh ?? Def?.Mesh;
+    string? CurrentMesh() => WornModel?.Mesh ?? CurState?.Mesh ?? Def?.Mesh;
+
+    PieceDef? WornModel => PictureDef is { Kind: "model", Mesh.Length: > 0 } worn && !ReferenceEquals(worn, Def) ? worn : null;
 
     string? CurrentBack() => PictureDef is { } other && !ReferenceEquals(other, Def) ? other.Back
         : CurState is { } st && Piece.State > 0 ? st.Back : Def?.Back;
@@ -418,7 +424,7 @@ public partial class PieceNode : Node3D
         var untinted = Body(_layerTint);
         _model = new MeshInstance3D { RotationDegrees = new Vector3(0, 180, 0) };
         AddChild(_model);
-        var texHash = CurState?.Texture ?? Def!.Texture;
+        var texHash = WornModel?.Texture ?? CurState?.Texture ?? Def!.Texture;
         if (texHash != null && pack.Assets.TryGetValue(texHash, out var ta))
         {
             var tex = _s.Assets.Texture(pack.Id, ta.File, t => { if (IsInstanceValid(this)) mat.AlbedoTexture = untinted.AlbedoTexture = t; }, maxSize: die ? 1024 : 2048);
@@ -485,7 +491,7 @@ public partial class PieceNode : Node3D
     public void Refresh(PieceInstance p)
     {
         if (IsDie) { RefreshDie(p); return; }
-        bool rebuild = p.State != _shownState || p.Picture != _shownPicture || p.TintOverride != _shownTint;
+        bool rebuild = p.State != _shownState || p.Picture != _shownPicture || p.TintOverride != _shownTint || p.Def != _shownDef;
         Piece = p;
         if (rebuild) { Rebuild(); return; }
         SyncWidgets();

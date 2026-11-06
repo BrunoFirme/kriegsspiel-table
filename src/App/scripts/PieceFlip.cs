@@ -89,6 +89,9 @@ public partial class PieceNode
     public bool CardTitleAt(Vec2 point) =>
         Piece.FaceDown && !_flipping && _back.TitleAt(Coords.ToLocal(point, Piece.Pos, Piece.RotDeg));
 
+    public int? PageButtonAt(Vec2 point) =>
+        _flipping || Piece.FaceDown ? null : _prints.PageAt(Coords.ToLocal(point, Piece.Pos, Piece.RotDeg));
+
     public (string name, int value)? CardButtonAt(Vec2 point)
     {
         if (_flipping) return null;

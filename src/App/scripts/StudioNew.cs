@@ -224,6 +224,7 @@ internal sealed class NewPieces
         Row("Start from files",
             ("image", "Pictures", "A piece from each, as it is or framed as a token", TokenFromPictures),
             ("3d", "3D model", "glTF, GLB, FBX, OBJ, STL, PLY or Collada", () => NewPiece(8)),
+            ("text-layer", "PDF book", "Every page of a PDF, read at the table", BookFromPdf),
             ("pick", "Clipboard", "The picture you just copied", () => NewPiece(7)));
         box.AddChild(Ui.Header("From " + FirmeEffects.PackName));
         var fx = new GridContainer { Columns = 5 };
@@ -320,6 +321,41 @@ internal sealed class NewPieces
         dlg.AddChild(Cards(() => dlg.Hide()));
         Ui.Open(_s.Root, dlg);
         Ui.FreeOnClose(dlg);
+    }
+
+    const string PdfFilter = "*.pdf ; PDF";
+    const double BookLongestSide = 5.0;
+
+    void BookFromPdf() => _s.PickFiles(PdfFilter, f => { if (f.Length > 0) RenderBook(f[0]); }, "A PDF to read at the table");
+
+    void RenderBook(string file)
+    {
+        var into = Path.Combine(Path.GetTempPath(), "ktable-pdf", System.Guid.NewGuid().ToString("N")[..8]);
+        var pages = new List<string>();
+        _s.Flash($"Reading {Path.GetFileName(file)}…");
+        ConverterTool.Run(new[] { "pdf-pages", file, "--out", into },
+            line => { if (line.StartsWith("PAGE ", StringComparison.Ordinal) && line.Split(' ', 5) is { Length: 5 } p) pages.Add(p[4]); },
+            code =>
+            {
+                if (pages.Count == 0) { _s.Flash(code == 0 ? "That PDF has no pages." : "That PDF could not be read."); return; }
+                MakeBook(pages, Pretty(Path.GetFileNameWithoutExtension(file)));
+                KTable.Core.BestEffort.Try(() => Directory.Delete(into, true));
+            });
+    }
+
+    void MakeBook(List<string> files, string name)
+    {
+        var pages = new List<(string sha, int w, int h)>();
+        foreach (var f in files)
+            if (PackEdit.AddImageFile(Store, Pack, f) is { } a) pages.Add((a.sha, a.w, a.h));
+        if (pages.Count == 0) { _s.Flash("No pages it could read."); return; }
+        var def = PackEdit.NewDef(Store, Pack, name, pages[0].sha, pages[0].w, pages[0].h, BookLongestSide, "box", new[] { "book" });
+        def.States = pages.Select((p, i) => new PieceStateDef { Name = $"Page {i + 1}", Image = p.sha }).ToList();
+        _s.SavePack();
+        _s.RebuildList();
+        _s.Paper.LayOutAll();
+        _s.Select(def, frame: true);
+        _s.Flash($"{name}: {pages.Count} pages. At the table, double-click it to read it.");
     }
 
     void TokenFromPictures() => _s.PickFiles(ImageFiles.Filter, AskTokenFrame, "Pictures for tokens");

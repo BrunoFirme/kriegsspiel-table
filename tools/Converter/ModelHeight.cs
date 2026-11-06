@@ -9,11 +9,17 @@ public sealed partial class DefFactory
 {
     const double SameHeight = 0.01;
 
-    string? ModelMesh(PackOut pack, TtsObj m, string where)
+    double Stretch(TtsObj m)
     {
         double across = Math.Abs(m.ScaleX) + Math.Abs(m.ScaleZ);
         double stretch = across > 0 ? 2 * Math.Abs(m.ScaleY) / across : 1;
-        if (Math.Abs(stretch - 1) <= SameHeight || Entry(m.MeshUrl) is not { Ext: "obj" } e || _assets.FilePath(e) is not { } src)
+        return Math.Abs(stretch - 1) <= SameHeight || Entry(m.MeshUrl) is not { Ext: "obj" } e || _assets.FilePath(e) == null ? 1 : stretch;
+    }
+
+    string? ModelMesh(PackOut pack, TtsObj m, string where)
+    {
+        double stretch = Stretch(m);
+        if (stretch == 1 || Entry(m.MeshUrl) is not { Ext: "obj" } e || _assets.FilePath(e) is not { } src)
             return Asset(pack, m.MeshUrl, "mesh", where);
         var file = Path.Combine(_cfg.Cache, "stretched", string.Create(CultureInfo.InvariantCulture, $"{e.Sha}-{stretch:0.####}.obj"));
         if (!File.Exists(file))

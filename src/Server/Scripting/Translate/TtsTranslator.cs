@@ -20,8 +20,10 @@ public sealed class TranslateResult
 public sealed class TranslateContext
 {
     public Func<string, string, double, string?>? ResolveImage;
+    public Func<string, string?, double, double, string?>? ResolveModel;
     public Func<string, string?>? ResolveAsset;
     public bool IsGlobal;
+    public int Depth;
 }
 
 public static class TtsTranslator
@@ -84,12 +86,14 @@ public static class TtsTranslator
             MakesWidgets = true;
             return call;
         }
-        readonly Dictionary<string, (string type, double scale)> _spawnShapes = new();
+        readonly HashSet<SyntaxNode> _scriptLiterals = new();
+        readonly SyntaxNode _root;
 
         public Rewriter(TranslateResult res, TranslateContext ctx, SyntaxNode root)
         {
             _res = res;
             _ctx = ctx;
+            _root = root;
             foreach (var f in root.DescendantNodes().OfType<IdentifierKeyedTableFieldSyntax>())
             {
                 var key = f.Identifier.Text;
@@ -104,42 +108,78 @@ public static class TtsTranslator
                 var fn = (slash >= 0 ? v[(slash + 1)..] : v).Trim();
                 if (fn.Length > 0 && fn.All(ch => char.IsLetterOrDigit(ch) || ch == '_')) _uiHandlers.Add(fn);
             }
-            foreach (var asg in root.DescendantNodes().OfType<AssignmentStatementSyntax>())
+            foreach (var call in root.DescendantNodes().OfType<FunctionCallExpressionSyntax>())
             {
-                if (asg.Variables.Count != 1 || asg.EqualsValues.Values.Count != 1) continue;
-                if (asg.EqualsValues.Values[0] is FunctionCallExpressionSyntax sc && sc.Expression is IdentifierNameSyntax id && id.ToString().Trim() == "spawnObject")
-                    _spawnShapes[asg.Variables[0].ToString().Trim()] = SpawnShape(sc);
-            }
-            foreach (var loc in root.DescendantNodes().OfType<LocalVariableDeclarationStatementSyntax>())
-            {
-                if (loc.Names.Count != 1 || loc.EqualsValues == null || loc.EqualsValues.Values.Count != 1) continue;
-                if (loc.EqualsValues.Values[0] is FunctionCallExpressionSyntax sc && sc.Expression is IdentifierNameSyntax id && id.ToString().Trim() == "spawnObject")
-                    _spawnShapes[loc.Names[0].ToString().Trim()] = SpawnShape(sc);
+                if (call.Expression is not MemberAccessExpressionSyntax ma || ma.MemberName.Text != "setLuaScript") continue;
+                if (Args(call).FirstOrDefault() is { } arg && LiteralOf(arg, Scope(call)) is { } lit) _scriptLiterals.Add(lit);
             }
         }
 
-        static (string type, double scale) SpawnShape(FunctionCallExpressionSyntax spawn)
+        static SyntaxNode Scope(SyntaxNode node) =>
+            node.Ancestors().FirstOrDefault(n => n is FunctionDeclarationStatementSyntax or LocalFunctionDeclarationStatementSyntax or AnonymousFunctionExpressionSyntax)
+            ?? node.SyntaxTree.GetRoot();
+
+        static ExpressionSyntax? AssignedBefore(ExpressionSyntax arg, SyntaxNode scope)
+        {
+            if (arg is not IdentifierNameSyntax id) return null;
+            var name = id.ToString().Trim();
+            ExpressionSyntax? found = null;
+            foreach (var n in scope.DescendantNodes().Where(n => n.SpanStart < arg.SpanStart))
+            {
+                if (n is AssignmentStatementSyntax asg && asg.Variables.Count == 1 && asg.EqualsValues.Values.Count == 1 && asg.Variables[0].ToString().Trim() == name)
+                    found = asg.EqualsValues.Values[0];
+                else if (n is LocalVariableDeclarationStatementSyntax loc && loc.Names.Count == 1 && loc.EqualsValues is { } ev && ev.Values.Count == 1 && loc.Names[0].ToString().Trim() == name)
+                    found = ev.Values[0];
+            }
+            return found;
+        }
+
+        static LiteralExpressionSyntax? LiteralOf(ExpressionSyntax arg, SyntaxNode scope)
+        {
+            var lit = arg as LiteralExpressionSyntax ?? AssignedBefore(arg, scope) as LiteralExpressionSyntax;
+            return lit != null && lit.IsKind(SyntaxKind.StringLiteralExpression) ? lit : null;
+        }
+
+        static TableConstructorExpressionSyntax? TableOf(ExpressionSyntax arg, SyntaxNode scope) =>
+            arg as TableConstructorExpressionSyntax ?? AssignedBefore(arg, scope) as TableConstructorExpressionSyntax;
+
+        static (string type, double sx, double sy) SpawnShape(FunctionCallExpressionSyntax spawn)
         {
             string type = "Custom_Token";
-            double scale = 1;
-            if (Args(spawn).FirstOrDefault() is TableConstructorExpressionSyntax t)
+            double sx = 1, sy = 1;
+            if (Args(spawn).FirstOrDefault() is { } arg && TableOf(arg, Scope(spawn)) is { } t)
             {
                 foreach (var f in t.Fields.OfType<IdentifierKeyedTableFieldSyntax>())
                 {
                     if (f.Identifier.Text == "type" && f.Value is LiteralExpressionSyntax l) type = l.Token.ValueText;
-                    if (f.Identifier.Text == "scale" && f.Value is TableConstructorExpressionSyntax st)
-                    {
-                        foreach (var sf in st.Fields)
-                        {
-                            string? text = sf switch { IdentifierKeyedTableFieldSyntax k when k.Identifier.Text == "x" => k.Value.ToString(), UnkeyedTableFieldSyntax u => u.Value.ToString(), _ => null };
-                            if (text != null && double.TryParse(text.Trim(), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture,
-                                out var v)) { scale = v; break; }
-                        }
-                    }
+                    if (f.Identifier.Text == "scale" && f.Value is TableConstructorExpressionSyntax st) (sx, sy) = Axes(st);
                 }
             }
-            return (type, scale);
+            return (type, sx, sy);
         }
+
+        static (double x, double y) Axes(TableConstructorExpressionSyntax t)
+        {
+            double x = 1, y = 1;
+            int loose = 0;
+            foreach (var f in t.Fields)
+            {
+                switch (f)
+                {
+                    case IdentifierKeyedTableFieldSyntax k when k.Identifier.Text is "x" or "y":
+                        if (Number(k.Value) is { } kv) { if (k.Identifier.Text == "x") x = kv; else y = kv; }
+                        break;
+                    case UnkeyedTableFieldSyntax u:
+                        if (Number(u.Value) is { } uv && loose < 2) { if (loose == 0) x = uv; else y = uv; }
+                        loose++;
+                        break;
+                }
+            }
+            return (x, y);
+        }
+
+        static double? Number(ExpressionSyntax e) =>
+            double.TryParse(e.ToString().Trim(), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var v) && double.IsFinite(v) ? v : null;
 
         static List<ExpressionSyntax> Args(FunctionCallExpressionSyntax call) => call.Argument switch
         {
@@ -454,11 +494,14 @@ public static class TtsTranslator
             return base.VisitIdentifierName(node);
         }
 
+        const int MostNestedScripts = 3;
+
         public override SyntaxNode? VisitLiteralExpression(LiteralExpressionSyntax node)
         {
+            if (_scriptLiterals.Contains(node) && _ctx.Depth < MostNestedScripts) return Keep(SyntaxFactory.ParseExpression(Spawned(node.Token.ValueText)), node);
             if (node.IsKind(SyntaxKind.StringLiteralExpression) && _ctx.ResolveAsset != null && node.Token.ValueText is { } url
                 && url.StartsWith("http", StringComparison.OrdinalIgnoreCase) && url.Contains("://")
-                && node.Parent is not IdentifierKeyedTableFieldSyntax { Identifier.Text: "image" or "diffuse" }
+                && node.Parent is not IdentifierKeyedTableFieldSyntax { Identifier.Text: "image" or "diffuse" or "mesh" }
                 && _ctx.ResolveAsset(url) is { } asset)
             {
                 _res.DirectCalls++;
@@ -467,35 +510,75 @@ public static class TtsTranslator
             return base.VisitLiteralExpression(node);
         }
 
+        string Spawned(string lua)
+        {
+            var inner = Translate(lua, new TranslateContext
+            {
+                ResolveImage = _ctx.ResolveImage, ResolveModel = _ctx.ResolveModel, ResolveAsset = _ctx.ResolveAsset, Depth = _ctx.Depth + 1,
+            });
+            _res.CompatCalls += inner.CompatCalls;
+            _res.DirectCalls += inner.DirectCalls;
+            foreach (var u in inner.Untranslated) _res.Untranslated.Add(new Untranslated(u.Line, "in a spawned script: " + u.What, u.Text));
+            return LongString(inner.Script);
+        }
+
+        static string LongString(string text)
+        {
+            var level = "";
+            while (text.Contains("]" + level + "]", StringComparison.Ordinal)) level += "=";
+            return $"[{level}[\n{text}\n]{level}]";
+        }
+
         public override SyntaxNode? VisitIdentifierKeyedTableField(IdentifierKeyedTableFieldSyntax node)
         {
             var visited = (IdentifierKeyedTableFieldSyntax)base.VisitIdentifierKeyedTableField(node)!;
-            if (node.Identifier.Text is "image" or "diffuse" && node.Value is LiteralExpressionSyntax lit && lit.IsKind(SyntaxKind.StringLiteralExpression) && _ctx.ResolveImage != null)
+            var key = node.Identifier.Text;
+            if (key == "mesh" && Url(node) is { } meshUrl && _ctx.ResolveModel != null)
             {
-                var url = lit.Token.ValueText;
-                if (url.StartsWith("http", StringComparison.OrdinalIgnoreCase))
-                {
-                    var (type, scale) = ShapeFor(node);
-                    var def = _ctx.ResolveImage(url, type, scale);
-                    if (def != null)
-                        return visited.WithValue(Keep(SyntaxFactory.ParseExpression("\"" + def + "\""), node.Value));
-                    _res.Untranslated.Add(new Untranslated(Line(node), "picture", url));
-                }
+                var (_, sx, sy) = ModelShape(node);
+                var def = _ctx.ResolveModel(meshUrl, Sibling(node, "diffuse"), sx, sy);
+                if (def != null)
+                    return visited.WithValue(Keep(SyntaxFactory.ParseExpression("\"" + def + "\""), node.Value))
+                        .WithIdentifier(SyntaxFactory.Identifier(visited.Identifier.LeadingTrivia, "def", visited.Identifier.TrailingTrivia));
+                _res.Untranslated.Add(new Untranslated(Line(node), "model", meshUrl));
+                return visited;
+            }
+            if (key is "image" or "diffuse" && Url(node) is { } url && _ctx.ResolveImage != null)
+            {
+                if (Sibling(node, "mesh") != null) return visited;
+                var (type, scale, _) = ShapeFor(node);
+                var def = _ctx.ResolveImage(url, type, scale);
+                if (def != null)
+                    return visited.WithValue(Keep(SyntaxFactory.ParseExpression("\"" + def + "\""), node.Value));
+                _res.Untranslated.Add(new Untranslated(Line(node), "picture", url));
             }
             return visited;
         }
 
-        (string type, double scale) ShapeFor(SyntaxNode node)
+        static string? Url(IdentifierKeyedTableFieldSyntax field) =>
+            field.Value is LiteralExpressionSyntax lit && lit.IsKind(SyntaxKind.StringLiteralExpression)
+            && lit.Token.ValueText is { } text && text.StartsWith("http", StringComparison.OrdinalIgnoreCase) ? text : null;
+
+        static string? Sibling(IdentifierKeyedTableFieldSyntax field, string key) =>
+            field.Parent is TableConstructorExpressionSyntax t
+                ? t.Fields.OfType<IdentifierKeyedTableFieldSyntax>().Where(f => f.Identifier.Text == key).Select(Url).FirstOrDefault(u => u != null)
+                : null;
+
+        static (string type, double sx, double sy) ShapeFor(SyntaxNode node) =>
+            Spawn(Scope(node), model: false) is { } own ? SpawnShape(own) : ("Custom_Token", 1, 1);
+
+        (string type, double sx, double sy) ModelShape(SyntaxNode node)
         {
-            var fn = node.Ancestors().FirstOrDefault(n => n is FunctionDeclarationStatementSyntax or LocalFunctionDeclarationStatementSyntax or AnonymousFunctionExpressionSyntax);
-            if (fn == null) return ("Custom_Token", 1);
-            foreach (var call in fn.DescendantNodes().OfType<FunctionCallExpressionSyntax>())
-                if (call.Expression is MemberAccessExpressionSyntax ma && ma.MemberName.Text == "setCustomObject" && _spawnShapes.TryGetValue(ma.Expression.ToString().Trim(), out var shape))
-                    return shape;
-            foreach (var call in fn.DescendantNodes().OfType<FunctionCallExpressionSyntax>())
-                if (call.Expression is IdentifierNameSyntax id && id.ToString().Trim() == "spawnObject") return SpawnShape(call);
-            return ("Custom_Token", 1);
+            var scope = Scope(node);
+            if (Spawn(scope, model: true) is { } own) return SpawnShape(own);
+            if (!ReferenceEquals(scope, _root) && Spawn(_root, model: true) is { } elsewhere) return SpawnShape(elsewhere);
+            return ("Custom_Model", 1, 1);
         }
+
+        static FunctionCallExpressionSyntax? Spawn(SyntaxNode scope, bool model) =>
+            scope.DescendantNodes().OfType<FunctionCallExpressionSyntax>()
+                .Where(c => c.Expression is IdentifierNameSyntax id && id.ToString().Trim() == "spawnObject")
+                .FirstOrDefault(c => !model || SpawnShape(c).type == "Custom_Model");
 
         public override SyntaxNode? VisitFunctionDeclarationStatement(FunctionDeclarationStatementSyntax node)
         {

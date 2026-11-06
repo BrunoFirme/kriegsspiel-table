@@ -486,4 +486,80 @@ public class TranslatorTests
         Assert.Equal("reported to " + P, t.Server.State.Find(U, "p-000003")!.Label);
         Assert.Empty(Errors(t));
     }
+
+    [Fact]
+    public void A_spawned_model_takes_its_mesh_its_spawn_scale_and_its_own_script()
+    {
+        var ctx = Ctx();
+        var asked = new List<string>();
+        ctx.ResolveModel = (mesh, diffuse, sx, sy) =>
+        {
+            asked.Add(string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{mesh}|{diffuse}|{sx}|{sy}"));
+            return "pack.brigade";
+        };
+        var r = TtsTranslator.Translate("""
+            function spawnBrigade()
+              local spawnparams = { type = 'Custom_Model', position = {0, 1, 0}, scale = {x = 1.3, y = 1, z = 1.3} }
+              object = spawnObject(spawnparams)
+              params = { mesh = "https://example.test/column.obj", diffuse = "https://example.test/blue.png", material = 3 }
+              object.setCustomObject(params)
+              createUnit()
+            end
+            function createUnit()
+              local code_string = [[
+                function onLoad()
+                  self.addContextMenuItem("Battle Line", setLine)
+                end
+                function setLine()
+                  params = { mesh = "https://example.test/line.obj" }
+                  self.setCustomObject(params)
+                  self.reload()
+                end
+                function spawnSkirmishers()
+                  local sk = { type = 'Custom_Model', scale = {x = 1.3, y = 1, z = 1.3} }
+                  local o = spawnObject(sk)
+                  o.setCustomObject({ mesh = "https://example.test/skirmish.obj" })
+                end
+              ]]
+              object.setLuaScript(code_string)
+            end
+            function spawnSmoke()
+              local puff = { type = 'Custom_Token', scale = {x = 0.16, y = 1, z = 0.16} }
+              local token = spawnObject(puff)
+              token.setCustomObject({ image = "https://example.test/smoke.png" })
+            end
+            """, ctx);
+        var s = r.Script;
+        Assert.True(r.Parsed);
+        Assert.Contains("def = \"pack.brigade\"", s);
+        Assert.DoesNotContain("mesh = \"https://example.test/column.obj\"", s);
+        Assert.Equal("https://example.test/column.obj|https://example.test/blue.png|1.3|1", asked[0]);
+        Assert.Equal("https://example.test/line.obj||1.3|1", asked[1]);
+        Assert.Equal("https://example.test/skirmish.obj||1.3|1", asked[2]);
+        Assert.Contains("compat.add_context_menu_item(_ENV, self, \"Battle Line\", setLine)", s);
+        Assert.Contains("compat.set_custom_object(self, params)", s);
+        Assert.Contains("image = \"marker\"", s);
+    }
+
+    [Fact]
+    public void A_spawn_reads_its_type_and_scale_through_the_variable_it_was_given()
+    {
+        var ctx = Ctx();
+        var asked = new List<(string type, double scale)>();
+        ctx.ResolveImage = (url, type, scale) => { asked.Add((type, scale)); return "marker"; };
+        TtsTranslator.Translate("""
+            function spawnSmoke()
+              local puff = { type = 'Custom_Token', scale = {x = 0.16, y = 1, z = 0.16} }
+              local token = spawnObject(puff)
+              token.setCustomObject({ image = "https://example.test/smoke.png" })
+            end
+            function spawnFlag()
+              flagparams = { type = 'Custom_Tile', scale = {2, 1, 2} }
+              local flag = spawnObject(flagparams)
+              flag.setCustomObject({ image = "https://example.test/flag.png" })
+            end
+            """, ctx);
+        Assert.Equal(("Custom_Token", 0.16), asked[0]);
+        Assert.Equal(("Custom_Tile", 2.0), asked[1]);
+    }
 }

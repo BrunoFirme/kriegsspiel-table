@@ -23,8 +23,9 @@ sealed partial class ScenarioDialog
         int Shown(string backdrop) => backdrop.Length == 0 || Backdrops.IsColour(backdrop) ? 0
             : Backdrops.All.ToList().FindIndex(b => b.Id == backdrop) is var i and >= 0 ? i + 1 : own;
         pick.Selected = Shown(now.Backdrop);
-        var colour = new ColorPickerButton { Color = TableBackdrop.ColourOf(now.Backdrop), EditAlpha = false, CustomMinimumSize = new Vector2(64, 26), Disabled = !S.IsUmpire };
-        colour.SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin;
+        pick.TooltipText = "A sky also sets the light";
+        pick.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
+        var colour = new ColorPickerButton { Color = TableBackdrop.ColourOf(now.Backdrop), EditAlpha = false, CustomMinimumSize = new Vector2(44, 0), Disabled = !S.IsUmpire, TooltipText = "The colour" };
         colour.Visible = pick.Selected == 0;
         string Hex() => "#" + colour.Color.ToHtml(false);
         colour.ColorChanged += _ => PreviewLook(l => l.Backdrop = Hex());
@@ -32,7 +33,6 @@ sealed partial class ScenarioDialog
         var choose = Btn("Choose a picture…", () => ChooseBackdrop(() => pick.Selected = Shown(S.View.Lighting.Backdrop)),
             "A panorama twice as wide as it is tall wraps all the way round; any picture or web link will do");
         choose.Visible = pick.Selected == own;
-        choose.SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin;
         pick.ItemSelected += i =>
         {
             colour.Visible = i == 0;
@@ -52,16 +52,15 @@ sealed partial class ScenarioDialog
         };
         var form = Ui.Form(Ui.DialogLabels);
         form.AddChild(new Label { Text = "Backdrop" });
-        form.AddChild(pick);
-        form.AddChild(new Control());
-        var extra = new HBoxContainer();
-        extra.AddChild(colour);
-        extra.AddChild(choose);
-        form.AddChild(extra);
+        var row = new HBoxContainer();
+        row.AddThemeConstantOverride("separation", Ui.Gap.Row);
+        row.AddChild(pick);
+        row.AddChild(colour);
+        row.AddChild(choose);
+        form.AddChild(row);
         Ui.AlignForm(form);
         _box.AddChild(Header("Around the table"));
         _box.AddChild(form);
-        _box.AddChild(Hint("Everyone at the table sees it past the table's edge. A sky sets its own light; change it above."));
 
         var tableForm = Ui.Form(Ui.DialogLabels);
         var table = LightRow(tableForm, "Surface", 0, Lighting.SeeThrough, 0.05, now.TableShade, ShadeWord);
@@ -104,8 +103,11 @@ sealed partial class ScenarioDialog
             Disabled = !S.IsUmpire,
             TooltipText = "Redrawn as the ground is shaped; every fifth line is bolder",
         };
-        contours.Toggled += on => SendLook(l => l.Contours = on);
+        var spacing = Hint(ContourWords());
+        spacing.Visible = now.Contours;
+        contours.Toggled += on => { spacing.Visible = on; SendLook(l => l.Contours = on); };
         _box.AddChild(contours);
+        _box.AddChild(spacing);
         var streams = new CheckBox
         {
             Text = "Streams from the relief",
@@ -115,7 +117,6 @@ sealed partial class ScenarioDialog
         };
         streams.Toggled += on => SendLook(l => l.Streams = on);
         _box.AddChild(streams);
-        _box.AddChild(Hint(ContourWords()));
     }
 
     const double SnowLineMost = 5000, SnowLineStep = 50;
