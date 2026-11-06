@@ -23,7 +23,7 @@ public partial class PublishDialog : AcceptDialog
         _kind = kind;
         _id = id;
         Title = "Publish to the Steam Workshop";
-        OkButtonText = "Close";
+        OkButtonText = Ui.CloseWord;
         Size = new Vector2I(760, 560);
     }
 
@@ -76,6 +76,7 @@ public partial class PublishDialog : AcceptDialog
         var status = new Label { AutowrapMode = TextServer.AutowrapMode.WordSmart };
         form.AddChild(status);
         var go = new Button { Text = existing == null ? "Publish" : "Publish update" };
+        Ui.MakePrimary(go);
         form.AddChild(go);
         if (!_platform.Available) { go.Disabled = true; status.Text = _platform.Status ?? "Steam is not available."; }
 

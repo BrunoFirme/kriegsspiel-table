@@ -49,7 +49,7 @@ sealed partial class ScenarioDialog : HudPart
         pointers.Toggled += on => S.Do(new SetPointerRule { AlwaysShown = on });
         _box.AddChild(pointers);
         _box.AddChild(Header("Clock"));
-        _box.AddChild(Fact("Now", Fmt.Clock(S.View.Clock), Btn("Set the clock…", () => { dlg.Hide(); ClockDialog.Open(Ctx); })));
+        _box.AddChild(Fact("Now", Fmt.Clock(S.View.Clock), Btn("Set…", () => { dlg.Hide(); ClockDialog.Open(Ctx); })));
         _box.AddChild(Header("Script"));
         _box.AddChild(Fact("Global script", S.View.Script != null ? "set" : "none", S.IsLead ? Btn("Edit…", () =>
         {

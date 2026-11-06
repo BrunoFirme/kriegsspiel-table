@@ -8,7 +8,7 @@ public static class ScriptEditor
 {
     public static void Open(Node parent, string title, string hint, string? text, Action<string?> save, string? clearLabel = null)
     {
-        var dlg = new AcceptDialog { Title = title, OkButtonText = "Close" };
+        var dlg = new AcceptDialog { Title = title, OkButtonText = Ui.CloseWord };
         var box = new VBoxContainer();
         box.AddThemeConstantOverride("separation", Ui.Gap.Row);
         dlg.AddChild(box);

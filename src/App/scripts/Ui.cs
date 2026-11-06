@@ -421,7 +421,7 @@ public static class Ui
         r.AddChild(new Label
         {
             Text = value, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, ClipText = true,
-            TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis,
+            TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis, TooltipText = value, MouseFilter = Control.MouseFilterEnum.Pass,
         });
         if (extra != null)
         {
@@ -639,6 +639,8 @@ public static class Ui
     public static void FreeOnClose(Window w) =>
         w.VisibilityChanged += () => { if (GodotObject.IsInstanceValid(w) && !w.Visible) w.QueueFree(); };
 
+    public const string CloseWord = "Close";
+
     public static void Slim(AcceptDialog dlg)
     {
         if (dlg.GetOkButton().GetParent() is HBoxContainer bar)
@@ -649,7 +651,7 @@ public static class Ui
             bar.AddThemeConstantOverride("separation", Gap.Group);
         }
         dlg.GetOkButton().CustomMinimumSize = new Vector2(80, 0);
-        MakePrimary(dlg.GetOkButton());
+        if (dlg.OkButtonText != CloseWord) MakePrimary(dlg.GetOkButton());
         if (dlg is ConfirmationDialog cd) cd.GetCancelButton().CustomMinimumSize = new Vector2(80, 0);
     }
 

@@ -32,7 +32,7 @@ public partial class ImportDialog : AcceptDialog
         _packagesRoot = packagesRoot;
         _done = done;
         Title = "Convert a digital tabletop module";
-        OkButtonText = "Close";
+        OkButtonText = Ui.CloseWord;
         Size = new Vector2I(900, 640);
     }
 
@@ -61,7 +61,11 @@ public partial class ImportDialog : AcceptDialog
         right.AddChild(g);
         g.AddChild(new Label { Text = "Source" });
         var srcRow = new HBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-        _source = new LineEdit { PlaceholderText = "file, Workshop id or steamcommunity.com link", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+        _source = new LineEdit
+        {
+            PlaceholderText = "file or Workshop link", TooltipText = "A module or save file, a Workshop id, or a steamcommunity.com link",
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+        };
         srcRow.AddChild(_source);
         var browse = new Button { Text = "Browse…", TooltipText = "Each module shows its own picture" };
         browse.Pressed += Browse;
@@ -81,6 +85,7 @@ public partial class ImportDialog : AcceptDialog
         var goRow = new HBoxContainer();
         goRow.AddThemeConstantOverride("separation", Ui.Gap.Group);
         _go = new Button { Text = "Convert", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+        Ui.MakePrimary(_go);
         _go.Pressed += Go;
         goRow.AddChild(_go);
         right.AddChild(goRow);

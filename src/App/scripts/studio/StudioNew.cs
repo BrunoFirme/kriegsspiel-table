@@ -237,7 +237,7 @@ internal sealed class NewPieces
     public void ShowFirmePieces()
     {
         if (Store.Pack(FirmeEffects.PackId) is not { } firme) { _s.Flash(FirmeEffects.PackName + " is not installed."); return; }
-        var dlg = new AcceptDialog { Title = FirmeEffects.PackName, OkButtonText = "Close" };
+        var dlg = new AcceptDialog { Title = FirmeEffects.PackName, OkButtonText = Ui.CloseWord };
         var scroll = new ScrollContainer { CustomMinimumSize = new Vector2(740, 460), HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled };
         var col = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         col.AddThemeConstantOverride("separation", Ui.Gap.Row);
@@ -317,7 +317,7 @@ internal sealed class NewPieces
 
     public void Show()
     {
-        var dlg = new AcceptDialog { Title = "New piece", OkButtonText = "Close" };
+        var dlg = new AcceptDialog { Title = "New piece", OkButtonText = Ui.CloseWord };
         dlg.AddChild(Cards(() => dlg.Hide()));
         Ui.Open(_s.Root, dlg);
         Ui.FreeOnClose(dlg);
