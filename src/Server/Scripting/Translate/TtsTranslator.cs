@@ -50,7 +50,7 @@ public static class TtsTranslator
 
     static readonly HashSet<string> ObjectApi = new(StringComparer.Ordinal)
     {
-        "addAttachment","addContextMenuItem","addDecal","addForce","addTag","addTorque","addToPlayerSelection","attachHider","attachInvisibleHider","call","clearButtons","clearContextMenu","clearInputs","clone","createButton","createInput","cut","deal","destruct","destroy","drop","editButton","editInput","flip","getAngularVelocity","getAttachments","getBounds","getBoundsNormalized","getButtons","getColorTint","getComponent","getComponents","getCustomObject","getData","getDecals","getDescription","getFogOfWarReveal","getGMNotes","getGUID","getInputs","getJoints","getJSON","getLock","getLuaScript","getMemo","getName","getObjects","getPosition","getPositionSmooth","getQuantity","getRotation","getRotationSmooth","getRotationValue","getRotationValues","getScale","getSelectingPlayers","getSnapPoints","getStateId","getStates","getTable","getTags","getTransformForward","getTransformRight","getTransformUp","getValue","getVar","getVectorLines","getVelocity","getZones","hasTag","highlightOff","highlightOn","isDestroyed","isSmoothMoving","jointTo","positionToLocal","positionToWorld","putObject","randomize","registerCollisions","reload","removeAttachment","removeAttachments","removeButton","removeFromPlayerSelection","removeInput","removeTag","reset","resetAttachments","rotate","scale","setAngularVelocity","setColorTint","setCustomObject","setDecals","setDescription","setFogOfWarReveal","setGMNotes","setHiddenFrom","setInvisibleTo","setLock","setLuaScript","setMemo","setName","setPosition","setPositionSmooth","setRotation","setRotationSmooth","setRotationValue","setRotationValues","setScale","setSnapPoints","setState","setTable","setTags","setValue","setVar","setVectorLines","setVelocity","shuffle","shuffleStates","split","spread","takeObject","translate","unregisterCollisions","getLuaScriptState","setLuaScriptState",
+        "addAttachment","addContextMenuItem","addDecal","addForce","addTag","addTorque","addToPlayerSelection","attachHider","attachInvisibleHider","call","clearButtons","clearContextMenu","clearInputs","clone","createButton","createInput","cut","deal","destruct","destroy","drop","editButton","editInput","flip","getAngularVelocity","getAttachments","getBounds","getBoundsNormalized","getButtons","getColorTint","getComponent","getComponents","getCustomObject","getData","getDecals","getDescription","getFogOfWarReveal","getGMNotes","getGUID","getInputs","getJoints","getJSON","getLock","getLuaScript","getMemo","getName","getObjects","getPosition","getPositionSmooth","getQuantity","getRotation","getRotationSmooth","getRotationValue","getRotationValues","roll","getScale","getSelectingPlayers","getSnapPoints","getStateId","getStates","getTable","getTags","getTransformForward","getTransformRight","getTransformUp","getValue","getVar","getVectorLines","getVelocity","getZones","hasTag","highlightOff","highlightOn","isDestroyed","isSmoothMoving","jointTo","positionToLocal","positionToWorld","putObject","randomize","registerCollisions","reload","removeAttachment","removeAttachments","removeButton","removeFromPlayerSelection","removeInput","removeTag","reset","resetAttachments","rotate","scale","setAngularVelocity","setColorTint","setCustomObject","setDecals","setDescription","setFogOfWarReveal","setGMNotes","setHiddenFrom","setInvisibleTo","setLock","setLuaScript","setMemo","setName","setPosition","setPositionSmooth","setRotation","setRotationSmooth","setRotationValue","setRotationValues","setScale","setSnapPoints","setState","setTable","setTags","setValue","setVar","setVectorLines","setVelocity","shuffle","shuffleStates","split","spread","takeObject","translate","unregisterCollisions","getLuaScriptState","setLuaScriptState",
     };
 
     static readonly HashSet<string> ObjectProps = new(StringComparer.Ordinal)
@@ -75,7 +75,7 @@ public static class TtsTranslator
     {
         "setHiddenFrom", "setInvisibleTo", "attachHider", "attachInvisibleHider", "setFogOfWarReveal", "registerCollisions", "unregisterCollisions", "jointTo",
         "addForce", "addTorque", "setVelocity", "setAngularVelocity", "drop", "cut", "deal", "shuffle", "shuffleStates", "randomize", "reset", "resetAttachments",
-        "split", "spread", "setRotationValue", "setRotationValues", "setValue", "getComponent", "getComponents",
+        "split", "spread", "setRotationValues", "getComponent", "getComponents",
     };
 
     static string LowerFirst(string s) => s.Length == 0 ? s : char.ToLowerInvariant(s[0]) + s[1..];
@@ -323,6 +323,14 @@ public static class TtsTranslator
             return null;
         }
 
+        ExpressionSyntax DieCall(string recv, string name, string value, SyntaxNode node) => name switch
+        {
+            "getRotationValues" => Compat($"compat.get_rotation_values({recv})", node),
+            "setRotationValue" or "setValue" => Compat($"compat.set_value({recv}, {value})", node),
+            "roll" => Compat($"compat.roll({recv})", node),
+            _ => Compat($"compat.get_value({recv})", node),
+        };
+
         ExpressionSyntax? ObjectCall(string recv, string name, List<string> a, List<ExpressionSyntax> args, SyntaxNode node)
         {
             string A(int i) => i < a.Count ? a[i] : "nil";
@@ -414,7 +422,7 @@ public static class TtsTranslator
                 case var stubbed when Stubbed.Contains(stubbed):
                     return Todo(name, $"compat.todo({recv}, \"{name}\")", node);
                 case "getVelocity" or "getAngularVelocity": return Compat("compat.Vector(0, 0, 0)", node);
-                case "getRotationValue" or "getRotationValues" or "getValue": return Compat("nil", node);
+                case "getRotationValue" or "getValue" or "getRotationValues" or "setRotationValue" or "setValue" or "roll": return DieCall(recv, name, A(0), node);
                 case "getJoints" or "getZones": return Compat("{}", node);
                 case "isSmoothMoving": return Compat("false", node);
                 case "getFogOfWarReveal": return Compat("{ reveal = false, color = \"\", range = 0 }", node);

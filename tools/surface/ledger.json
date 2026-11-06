@@ -110,10 +110,10 @@
   },
   {
    "row": "Die_20",
-   "status": "planned",
-   "where": "Phase C item 3: standard dice",
+   "status": "native",
+   "where": "the app's d20, showing the face it was saved on",
    "instead": "",
-   "held_by": "",
+   "held_by": "DiceTests",
    "count": 77,
    "modules": 11
   },
@@ -147,9 +147,9 @@
   {
    "row": "Custom_Dice",
    "status": "partial",
-   "where": "TablePieces: the picture d6 only; other counts planned (item 3)",
+   "where": "the picture d6 with its pictures; other counts as the app's die of that count without their pictures",
    "instead": "",
-   "held_by": "",
+   "held_by": "DiceTests",
    "count": 35,
    "modules": 7
   },
@@ -164,28 +164,28 @@
   },
   {
    "row": "Die_12",
-   "status": "planned",
-   "where": "Phase C item 3: standard dice",
+   "status": "native",
+   "where": "the app's d12, showing the face it was saved on",
    "instead": "",
-   "held_by": "",
+   "held_by": "DiceTests",
    "count": 11,
    "modules": 5
   },
   {
    "row": "Die_10",
-   "status": "planned",
-   "where": "Phase C item 3: standard dice",
+   "status": "native",
+   "where": "the app's d10, showing the face it was saved on",
    "instead": "",
-   "held_by": "",
+   "held_by": "DiceTests",
    "count": 9,
    "modules": 4
   },
   {
    "row": "Die_6_Rounded",
-   "status": "planned",
-   "where": "Phase C item 3: standard dice",
+   "status": "native",
+   "where": "the app's d6, showing the face it was saved on",
    "instead": "",
-   "held_by": "",
+   "held_by": "DiceTests",
    "count": 7,
    "modules": 4
   },
@@ -200,10 +200,10 @@
   },
   {
    "row": "Die_6",
-   "status": "planned",
-   "where": "Phase C item 3: standard dice",
+   "status": "native",
+   "where": "the app's d6, showing the face it was saved on",
    "instead": "",
-   "held_by": "",
+   "held_by": "DiceTests",
    "count": 24,
    "modules": 2
   },
@@ -263,10 +263,10 @@
   },
   {
    "row": "Die_8",
-   "status": "planned",
-   "where": "Phase C item 3: standard dice",
+   "status": "native",
+   "where": "the app's d8, showing the face it was saved on",
    "instead": "",
-   "held_by": "",
+   "held_by": "DiceTests",
    "count": 2,
    "modules": 1
   },
@@ -308,10 +308,10 @@
   },
   {
    "row": "Die_4",
-   "status": "planned",
-   "where": "Phase C item 3: standard dice",
+   "status": "native",
+   "where": "the app's d4, showing the face it was saved on",
    "instead": "",
-   "held_by": "",
+   "held_by": "DiceTests",
    "count": 0,
    "modules": 0
   },
@@ -3651,19 +3651,19 @@
   },
   {
    "row": "getValue",
-   "status": "planned",
-   "where": "Phase C item 3: dice faces and values",
+   "status": "compat",
+   "where": "compat.get_value: the look's name as a number where it is one",
    "instead": "",
-   "held_by": "",
+   "held_by": "DiceScriptTests",
    "count": 1,
    "modules": 1
   },
   {
    "row": "roll",
-   "status": "planned",
-   "where": "Phase C item 3: standard dice",
+   "status": "compat",
+   "where": "compat.roll: a random look of the piece",
    "instead": "",
-   "held_by": "",
+   "held_by": "DiceScriptTests",
    "count": 1,
    "modules": 1
   },
@@ -4659,19 +4659,19 @@
   },
   {
    "row": "getRotationValue",
-   "status": "planned",
-   "where": "Phase C item 3: dice faces",
+   "status": "compat",
+   "where": "compat.get_value: the look's name as a number where it is one",
    "instead": "",
-   "held_by": "",
+   "held_by": "DiceScriptTests",
    "count": 0,
    "modules": 0
   },
   {
    "row": "getRotationValues",
-   "status": "planned",
-   "where": "Phase C item 3: dice faces",
+   "status": "compat",
+   "where": "compat.get_rotation_values: the looks, without rotations",
    "instead": "",
-   "held_by": "",
+   "held_by": "DiceScriptTests",
    "count": 0,
    "modules": 0
   },
@@ -5208,18 +5208,18 @@
   },
   {
    "row": "setRotationValue",
-   "status": "planned",
-   "where": "Phase C item 3: dice faces",
+   "status": "compat",
+   "where": "compat.set_value: the look named so",
    "instead": "",
-   "held_by": "",
+   "held_by": "DiceScriptTests",
    "count": 0,
    "modules": 0
   },
   {
    "row": "setRotationValues",
-   "status": "planned",
-   "where": "Phase C item 3: dice faces",
-   "instead": "",
+   "status": "dropped",
+   "where": "redefining a die's faces",
+   "instead": "make a die of your own in the piece studio",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -5244,10 +5244,10 @@
   },
   {
    "row": "setValue",
-   "status": "planned",
-   "where": "Phase C item 3: dice faces and values",
+   "status": "compat",
+   "where": "compat.set_value: the look named so",
    "instead": "",
-   "held_by": "",
+   "held_by": "DiceScriptTests",
    "count": 0,
    "modules": 0
   },

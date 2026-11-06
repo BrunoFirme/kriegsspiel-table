@@ -28,7 +28,7 @@ public sealed partial class DefFactory
 
     public static string? NotTranslated(TtsObj o) =>
         o.IsCard && o.Sheet == null ? o.Name + " (TTS's own playing cards, which have no picture in the module)"
-        : o.Name == "Custom_Dice" && !o.IsPictureDie ? o.Name + " (a picture die with other than six sides)"
+        : o.Name == "Custom_Dice" && !o.IsPictureDie && o.StockSides == null ? o.Name + " (a die of a kind the app has not got)"
         : o.Name.StartsWith(TtsOwnProps, StringComparison.Ordinal)
             ? o.Name + " (one of TTS's own props: its model ships with the game and is not ours to copy, so paint the ground there or put a piece of your own on it)"
         : null;
@@ -122,14 +122,42 @@ public sealed partial class DefFactory
 
     sealed record PictureDie(string Mesh, string MeshFile, List<double[]> Faces);
 
-    PictureDie? _pictureDie;
-    PictureDie StandardPictureDie => _pictureDie ??= LoadPictureDie(_cfg.Cache);
+    public const string StdDicePack = "std.dice";
+    PackManifest? _stdDice;
+    PackManifest StdDice => _stdDice ??= LoadStdDice();
 
-    static PictureDie LoadPictureDie(string cache)
+    static PackManifest LoadStdDice()
     {
         var asm = Assembly.GetExecutingAssembly();
         using var packStream = asm.GetManifestResourceStream("std.dice/pack.json") ?? throw new InvalidDataException("the standard dice are missing from the converter");
-        var pack = Json.Deserialize<PackManifest>(new StreamReader(packStream).ReadToEnd());
+        return Json.Deserialize<PackManifest>(new StreamReader(packStream).ReadToEnd());
+    }
+
+    PieceDef? StandardDie(int sides) => StdDice.Pieces.FirstOrDefault(p => p.Tags.Contains("d" + sides) && !p.Tags.Contains("picture"));
+
+    public static int DieFace(TtsObj o, PieceDef die)
+    {
+        var up = UpOf(new TtsObj.Face("", o.RotX, o.RotY, o.RotZ));
+        double Dot(double[] a) => a[0] * up[0] + a[1] * up[1] + a[2] * up[2];
+        if (o.RotationValues.Count > 0)
+        {
+            var face = o.RotationValues.MaxBy(f => Dot(UpOf(f)))!;
+            int byName = die.States.FindIndex(s => string.Equals(s.Name, face.Value.Trim(), StringComparison.OrdinalIgnoreCase));
+            if (byName >= 0) return byName;
+        }
+        int byUp = 0;
+        double best = double.NegativeInfinity;
+        for (int i = 0; i < die.States.Count; i++)
+            if (die.States[i].Up is { } su && Dot(su) > best) { best = Dot(su); byUp = i; }
+        return byUp;
+    }
+
+    PictureDie? _pictureDie;
+    PictureDie StandardPictureDie => _pictureDie ??= LoadPictureDie(_cfg.Cache, StdDice);
+
+    static PictureDie LoadPictureDie(string cache, PackManifest pack)
+    {
+        var asm = Assembly.GetExecutingAssembly();
         var die = pack.Pieces.First(p => p.Tags.Contains("picture") && p.Mesh != null);
         using var meshStream = asm.GetManifestResourceStream($"std.dice/assets/{die.Mesh}.obj") ?? throw new InvalidDataException("the picture die's shape is missing from the converter");
         var file = Path.Combine(cache, $"{die.Mesh}.obj");

@@ -9,9 +9,9 @@ the plan says translate it), unknown (nobody has decided).
 
 | area | rows used by the corpus | decided | planned or unknown | rows in all |
 |---|---|---|---|---|
-| types | 30 | 20 | 10 | 43 |
+| types | 30 | 26 | 4 | 43 |
 | save | 150 | 133 | 17 | 300 |
-| object | 65 | 61 | 4 | 262 |
+| object | 65 | 63 | 2 | 262 |
 | global | 14 | 13 | 1 | 55 |
 | namespaces | 23 | 21 | 2 | 180 |
 | events | 8 | 7 | 1 | 50 |
@@ -33,29 +33,29 @@ the plan says translate it), unknown (nobody has decided).
 | `BlockSquare` | 665 / 12 | native | converter |  |
 | `BlockRectangle` | 333 / 11 | native | converter |  |
 | `3DText` | 109 / 11 | native | converter |  |
-| `Die_20` | 77 / 11 | planned | Phase C item 3: standard dice |  |
+| `Die_20` | 77 / 11 | native | the app's d20, showing the face it was saved on | DiceTests |
 | `Bag` | 17 / 11 | native | a round piece in the bag's colour that holds its contents stowed | TablePiecesTests |
 | `Infinite_Bag` | 86 / 8 | dropped | infinite bags (decided 2026-11-06) |  |
 | `Custom_Model_Bag` | 48 / 8 | native | the bag's own model, holding its contents stowed | import-sweep: naval, scripted-war-game |
-| `Custom_Dice` | 35 / 7 | partial | TablePieces: the picture d6 only; other counts planned (item 3) |  |
+| `Custom_Dice` | 35 / 7 | partial | the picture d6 with its pictures; other counts as the app's die of that count without their pictures | DiceTests |
 | `CardCustom` | 1144 / 6 | native | converter |  |
-| `Die_12` | 11 / 5 | planned | Phase C item 3: standard dice |  |
-| `Die_10` | 9 / 4 | planned | Phase C item 3: standard dice |  |
-| `Die_6_Rounded` | 7 / 4 | planned | Phase C item 3: standard dice |  |
+| `Die_12` | 11 / 5 | native | the app's d12, showing the face it was saved on | DiceTests |
+| `Die_10` | 9 / 4 | native | the app's d10, showing the face it was saved on | DiceTests |
+| `Die_6_Rounded` | 7 / 4 | native | the app's d6, showing the face it was saved on | DiceTests |
 | `BlockTriangle` | 9 / 3 | planned | Phase C item 7: a block of our own |  |
-| `Die_6` | 24 / 2 | planned | Phase C item 3: standard dice |  |
+| `Die_6` | 24 / 2 | native | the app's d6, showing the face it was saved on | DiceTests |
 | `Tileset_Tree` | 119 / 1 | dropped | TTS's own art is never extracted |  |
 | `Card` | 82 / 1 | native | converter |  |
 | `Checker_white` | 17 / 1 | native | converter |  |
 | `Figurine_Custom` | 16 / 1 | planned | Phase C item 7: a standing picture |  |
 | `Deck` | 15 / 1 | native | converter |  |
 | `PlayerPawn` | 7 / 1 | planned | Phase C item 7: a stock pawn of our own |  |
-| `Die_8` | 2 / 1 | planned | Phase C item 3: standard dice |  |
+| `Die_8` | 2 / 1 | native | the app's d8, showing the face it was saved on | DiceTests |
 | `Calculator` | - | dropped | TTS stock gadget |  |
 | `Counter` | - | dropped | TTS stock gadget |  |
 | `Custom_Assetbundle_Infinite_Bag` | - | dropped | infinite bags (decided 2026-11-06) |  |
 | `Custom_Model_Infinite_Bag` | - | dropped | infinite bags (decided 2026-11-06) |  |
-| `Die_4` | - | planned | Phase C item 3: standard dice |  |
+| `Die_4` | - | native | the app's d4, showing the face it was saved on | DiceTests |
 | `Digital_Clock` | - | dropped | TTS stock gadget |  |
 | `FogOfWarTrigger` | - | dropped | hidden zones (decided 2026-11-06) |  |
 | `Go_Game_Piece_Black` | - | dropped | TTS stock piece |  |
@@ -436,8 +436,8 @@ the plan says translate it), unknown (nobody has decided).
 | `setRotation` | 2 / 2 | compat | ObjectCall |  |
 | `getLuaScript` | 19474 / 1 | compat | ObjectCall |  |
 | `getVectorLines` | 2 / 1 | compat | ObjectCall |  |
-| `getValue` | 1 / 1 | planned | Phase C item 3: dice faces and values |  |
-| `roll` | 1 / 1 | planned | Phase C item 3: standard dice |  |
+| `getValue` | 1 / 1 | compat | compat.get_value: the look's name as a number where it is one | DiceScriptTests |
+| `roll` | 1 / 1 | compat | compat.roll: a random look of the piece | DiceScriptTests |
 | `setSnapPoints` | 1 / 1 | compat | ObjectCall |  |
 | `AssetBundle.getLoopingEffectIndex` | - | planned | Phase C item 9: effects played by a script |  |
 | `AssetBundle.getLoopingEffects` | - | planned | Phase C item 9: effects played by a script |  |
@@ -548,8 +548,8 @@ the plan says translate it), unknown (nobody has decided).
 | `getPositionSmooth` | - | compat | ObjectCall |  |
 | `getQuantity` | - | compat | compat.get_quantity: how many are stowed | StowScriptTests |
 | `getRotationSmooth` | - | compat | ObjectCall |  |
-| `getRotationValue` | - | planned | Phase C item 3: dice faces |  |
-| `getRotationValues` | - | planned | Phase C item 3: dice faces |  |
+| `getRotationValue` | - | compat | compat.get_value: the look's name as a number where it is one | DiceScriptTests |
+| `getRotationValues` | - | compat | compat.get_rotation_values: the looks, without rotations | DiceScriptTests |
 | `getSelectingPlayers` | - | compat | compat.get_selecting_players |  |
 | `getSnapPoints` | - | compat | ObjectCall |  |
 | `getStateId` | - | native | ObjectCall |  |
@@ -609,11 +609,11 @@ the plan says translate it), unknown (nobody has decided).
 | `setLuaScriptState` | - | planned | Phase C item 8: a script's own saved state |  |
 | `setMaterialValue` | - | dropped | Unity materials |  |
 | `setMemo` | - | native | ObjectCall |  |
-| `setRotationValue` | - | planned | Phase C item 3: dice faces |  |
-| `setRotationValues` | - | planned | Phase C item 3: dice faces |  |
+| `setRotationValue` | - | compat | compat.set_value: the look named so | DiceScriptTests |
+| `setRotationValues` | - | dropped | redefining a die's faces |  |
 | `setTable` | - | native | ObjectCall |  |
 | `setTags` | - | native | ObjectCall |  |
-| `setValue` | - | planned | Phase C item 3: dice faces and values |  |
+| `setValue` | - | compat | compat.set_value: the look named so | DiceScriptTests |
 | `setVelocity` | - | dropped | engine physics |  |
 | `shuffle` | - | planned | Phase C item 1: stow |  |
 | `shuffleStates` | - | unknown |  |  |

@@ -214,7 +214,7 @@ public sealed partial class DefFactory
     public (PieceDef Def, string Pack)? ModelOfBundle(TtsObj o) =>
         o.Name == "Custom_Assetbundle" && !_cfg.IsTableWall(o.BundleUrl) ? Models.For(o.BundleUrl) : null;
 
-    public bool Shows(TtsObj o) => IsPiece(o) || ModelOfBundle(o) != null;
+    public bool Shows(TtsObj o) => IsPiece(o) || ModelOfBundle(o) != null || o.StockSides != null;
 
     public DefResult? DefFor(TtsObj o, PackOut pack, double? refScale = null, double heightScale = 1)
     {
@@ -227,6 +227,12 @@ public sealed partial class DefFactory
         double instScale = Math.Round(bs / r, 4);
         if (ModelOfBundle(o) is { } model)
             return new DefResult(model.Def, pack, instScale, 0, b, ScriptInfo.Parse("", "")) { FromPack = model.Pack };
+        if (o.StockSides is { } sides && StandardDie(sides) is { } die)
+        {
+            if (o.Name == "Custom_Dice") _rep.Note($"{Context} {o.Name} '{o.Nickname}' {o.Guid}: a picture die with {sides} sides is the app's d{sides}, without its pictures.");
+            var dieScript = ScriptInfo.Parse(b.SafeLua.Length > 0 ? b.SafeLua : o.SafeLua, o.LuaState);
+            return new DefResult(die, pack, Math.Round(bs, 4), DieFace(o, die), b, dieScript) { FromPack = StdDicePack };
+        }
         var where = $"{Context} {o.Name} '{o.Nickname}' {o.Guid}";
 
         var script = ScriptInfo.Parse(b.SafeLua.Length > 0 ? b.SafeLua : o.SafeLua, o.LuaState);

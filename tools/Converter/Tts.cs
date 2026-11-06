@@ -72,8 +72,16 @@ public sealed class TtsObj
     public bool IsChecker => Name is "Checker_white" or "Checker_red" or "Checker_black";
     public bool IsBag => Name is "Bag" or "Custom_Model_Bag";
     public bool IsInfiniteBag => Name.Contains("Infinite", StringComparison.Ordinal);
-    public bool IsPictureDie => Name == "Custom_Dice" && (CI?["CustomDice"] as JsonObject)?["Type"]?.GetValue<int>() == PictureDieType;
+    public bool IsPictureDie => Name == "Custom_Dice" && DiceType == PictureDieType;
     const int PictureDieType = 1;
+    public int DiceType => (CI?["CustomDice"] as JsonObject)?["Type"]?.GetValue<int>() ?? -1;
+    static readonly int[] DiceTypeSides = { 4, 6, 8, 10, 12, 20 };
+    public int? StockSides => Name switch
+    {
+        "Die_4" => 4, "Die_6" or "Die_6_Rounded" => 6, "Die_8" => 8, "Die_10" => 10, "Die_12" => 12, "Die_20" => 20,
+        "Custom_Dice" when !IsPictureDie && DiceType >= 0 && DiceType < DiceTypeSides.Length => DiceTypeSides[DiceType],
+        _ => null,
+    };
 
     public sealed record CardSheet(string FaceUrl, string? BackUrl, int Across, int Down, bool UniqueBack, int Type);
 

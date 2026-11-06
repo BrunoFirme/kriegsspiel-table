@@ -131,7 +131,7 @@ public sealed class PackBuilder
                 if (_defs.DefFor(c, pack, Math.Abs(c.StateList().states[0].ScaleX) * Math.Abs(o.ScaleX)) != null) objects++;
             return;
         }
-        if (_cfg.IgnoreTypes.Contains(o.Name) || o.Name.StartsWith("Die_")) { _rep.Skipped(o.Name, where); return; }
+        if (_cfg.IgnoreTypes.Contains(o.Name) || o.StockSides != null) { _rep.Skipped(o.Name, where); return; }
         if (DefFactory.NotTranslated(o) is { } why) { _rep.Skipped(why, where); return; }
         if (!DefFactory.IsPiece(o)) { _rep.UnknownType(o.Name, where); return; }
         if (o.IsFurniture) { _rep.Skipped("table furniture (custom table / surround / under the table)", where); return; }

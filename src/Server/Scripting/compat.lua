@@ -338,6 +338,27 @@ function compat.get_objects(obj)
   return t
 end
 function compat.get_quantity(obj) return #(obj.stowed or {}) end
+function compat.roll(obj)
+  local n = #(obj.states or {})
+  if n > 1 then obj.set_state(math.random(n)) end
+end
+function compat.get_value(obj)
+  local s = obj.states
+  if type(s) ~= "table" or #s < 2 then return nil end
+  local name = s[obj.state]
+  return tonumber(name) or name
+end
+function compat.get_rotation_values(obj)
+  local t = {}
+  for _, name in ipairs(obj.states or {}) do t[#t + 1] = { value = tonumber(name) or name, rotation = compat.Vector(0, 0, 0) } end
+  return t
+end
+function compat.set_value(obj, v)
+  for i, name in ipairs(obj.states or {}) do
+    if name == tostring(v) or (tonumber(name) ~= nil and tonumber(name) == tonumber(v)) then obj.set_state(i) return true end
+  end
+  return false
+end
 function compat.take_object(obj, params)
   params = type(params) == "table" and params or {}
   local which = params.guid or (type(params.index) == "number" and params.index + 1) or nil

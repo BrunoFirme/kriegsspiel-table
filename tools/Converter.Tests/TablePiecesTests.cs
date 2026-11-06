@@ -104,6 +104,9 @@ public sealed partial class ConverterTests
         Assert.Equal(Math.Round(DefFactory.DieAcross * 1.55, 4), def.Size.W);
         Assert.Null(DefFactory.NotTranslated(new TtsObj(die)));
         die["CustomImage"]!["CustomDice"]!["Type"] = 5;
+        Assert.Null(DefFactory.NotTranslated(new TtsObj(die)));
+        Assert.Equal(20, new TtsObj(die).StockSides);
+        die["CustomImage"]!["CustomDice"]!["Type"] = 9;
         Assert.NotNull(DefFactory.NotTranslated(new TtsObj(die)));
     }
 

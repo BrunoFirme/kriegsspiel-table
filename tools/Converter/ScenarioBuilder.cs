@@ -357,7 +357,7 @@ public sealed class ScenarioBuilder
             if (DefFactory.NotTranslated(o) is { } why) { _rep.Skipped(why, where); continue; }
             if (o.IsInfiniteBag) { _rep.Skipped(o.Name + " (infinite bags are left out: place pieces from the Pieces drawer)", where); continue; }
             if (o.Name == BundleType && !_cfg.IsTableWall(o.BundleUrl) && _defs.ModelOfBundle(o) == null) { l.Effects.Add(o); continue; }
-            if ((_cfg.IgnoreTypes.Contains(o.Name) && !_defs.Shows(o)) || o.Name.StartsWith("Die_")) { _rep.Skipped(o.Name, where); continue; }
+            if (_cfg.IgnoreTypes.Contains(o.Name) && !_defs.Shows(o)) { _rep.Skipped(o.Name, where); continue; }
             if (o.IsFurniture) { _rep.Skipped("table furniture (custom table / surround / under the table)", where); continue; }
             if (!_defs.Shows(o)) { _rep.UnknownType(o.Name, where); continue; }
             l.Objects.Add(o);
