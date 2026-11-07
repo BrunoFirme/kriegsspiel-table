@@ -408,7 +408,7 @@ def coverage(ledger):
             by[e["status"]] += 1
         decided = sum(v for k, v in by.items() if k not in UNDECIDED)
         total_rows = len(ledger[area])
-        unaudited = sum(1 for e in used if e["status"] not in OUT_OF_BOUNDS + UNDECIDED and not e.get("audited"))
+        unaudited = sum(1 for e in ledger[area] if e["status"] not in OUT_OF_BOUNDS and not e.get("audited"))
         lines.append((area, len(used), decided, by["unknown"] + by["planned"], unaudited, total_rows))
     return lines
 
@@ -421,8 +421,8 @@ def write_markdown(ledger, modules_scanned, workshop):
            "stub (accepted and ignored), dropped (left out on purpose, named in the import report), planned (left out today,",
            "the plan says translate it), unknown (nobody has decided).", "",
            "Audited: every branch of the game's own implementation of the row was read and ours matches it, held by the named test;",
-           "a row in use that is not dropped must end audited.", "",
-           "| area | rows used by the corpus | decided | planned or unknown | in use, not audited | rows in all |", "|---|---|---|---|---|---|"]
+           "every row that is not dropped must end audited, used by the corpus or not.", "",
+           "| area | rows used by the corpus | decided | planned or unknown | not dropped, not audited | rows in all |", "|---|---|---|---|---|---|"]
     for area, used, decided, unknown, unaudited, total in coverage(ledger):
         out.append(f"| {area} | {used} | {decided} | {unknown} | {unaudited} | {total} |")
     for area in AREAS:
@@ -443,9 +443,8 @@ def committed_ledger():
     return json.loads(shown.stdout.lstrip("\ufeff")) if shown.returncode == 0 and shown.stdout.strip() else load_json(LEDGER_JSON, {})
 
 
-def unaudited_in_use(ledger):
-    return {(area, e["row"]) for area in AREAS for e in ledger.get(area, [])
-            if e["modules"] > 0 and e["status"] not in OUT_OF_BOUNDS + UNDECIDED and not e.get("audited")}
+def unaudited(ledger):
+    return {(area, e["row"]) for area in AREAS for e in ledger.get(area, []) if e["status"] not in OUT_OF_BOUNDS and not e.get("audited")}
 
 
 def undecided_in_use(ledger):
@@ -463,14 +462,14 @@ def gate(ledger, previous):
     if len(now) > len(before):
         print(f"surface gate: {len(now)} undecided rows in use, was {len(before)}")
     ok = not new and len(now) <= len(before)
-    was, left = unaudited_in_use(previous) if any("audited" in e for a in AREAS for e in previous.get(a, [])) else None, unaudited_in_use(ledger)
+    was, left = unaudited(previous) if any("audited" in e for a in AREAS for e in previous.get(a, [])) else None, unaudited(ledger)
     fresh = sorted(left - was) if was is not None else []
     if fresh:
-        print("surface gate: rows in use that lost their audit or are new and unaudited:")
+        print("surface gate: rows that lost their audit or are new and unaudited:")
         for area, row in fresh:
             print(f"  {area}: {row}")
     if was is not None and len(left) > len(was):
-        print(f"surface gate: {len(left)} rows in use not audited, was {len(was)}")
+        print(f"surface gate: {len(left)} rows not audited, was {len(was)}")
     return ok and not fresh and (was is None or len(left) <= len(was))
 
 
@@ -508,7 +507,7 @@ def main():
         json.dump(ledger, w, indent=1)
         w.write("\n")
     if a.left:
-        for area, row in sorted(unaudited_in_use(ledger)):
+        for area, row in sorted(unaudited(ledger)):
             e = next(x for x in ledger[area] if x["row"] == row)
             print(f"{area}\t{row}\t{e['status']}\t{e['count']}\t{e['modules']}")
     if not a.quiet:

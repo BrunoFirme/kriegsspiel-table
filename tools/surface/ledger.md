@@ -8,16 +8,16 @@ stub (accepted and ignored), dropped (left out on purpose, named in the import r
 the plan says translate it), unknown (nobody has decided).
 
 Audited: every branch of the game's own implementation of the row was read and ours matches it, held by the named test;
-a row in use that is not dropped must end audited.
+every row that is not dropped must end audited, used by the corpus or not.
 
-| area | rows used by the corpus | decided | planned or unknown | in use, not audited | rows in all |
+| area | rows used by the corpus | decided | planned or unknown | not dropped, not audited | rows in all |
 |---|---|---|---|---|---|
-| types | 30 | 30 | 0 | 27 | 43 |
-| save | 150 | 150 | 0 | 84 | 302 |
-| object | 65 | 65 | 0 | 55 | 262 |
-| global | 14 | 14 | 0 | 14 | 55 |
-| namespaces | 23 | 23 | 0 | 21 | 180 |
-| events | 8 | 8 | 0 | 8 | 52 |
+| types | 30 | 30 | 0 | 28 | 43 |
+| save | 150 | 150 | 0 | 127 | 302 |
+| object | 65 | 65 | 0 | 154 | 262 |
+| global | 14 | 14 | 0 | 38 | 55 |
+| namespaces | 23 | 23 | 0 | 46 | 180 |
+| events | 8 | 8 | 0 | 22 | 52 |
 | engine | 23 | 23 | 0 | 22 | 23 |
 
 ## types
