@@ -315,4 +315,18 @@ public class PanelInteractionTests
         Assert.Equal(new[] { "s2", "s1", "s3" }, again.ById("a")!.Children.Where(c => c.Tag == PanelAccordions.Section).Select(c => c.Element!.Get("id")));
         Assert.True(again.Screen(again.ById("s2")!).Y < again.Screen(again.ById("s1")!).Y);
     }
+
+    [Fact]
+    public void A_button_sized_by_a_layout_group_lays_its_label_out_at_the_button_s_full_height()
+    {
+        var s = Scene("<Panel width=\"400\" height=\"400\"><VerticalLayout childForceExpandHeight=\"false\"><HorizontalLayout preferredHeight=\"36\"><Button id=\"b1\">Send</Button>"
+            + "<Button>Clear</Button></HorizontalLayout><Button id=\"solo\" preferredHeight=\"36\">Solo</Button></VerticalLayout></Panel>");
+        foreach (var id in new[] { "b1", "solo" })
+        {
+            var button = s.ById(id)!;
+            var label = button.Part("Text Cell")!.Part("Text")!;
+            Assert.True(button.RectSize.Y >= 36);
+            Assert.Equal(button.RectSize.Y, label.RectSize.Y, 2);
+        }
+    }
 }

@@ -191,7 +191,7 @@ public static class PanelLayout
             b.SetSize(axis, fit == 1 ? MinSize(b, axis, meter, inputs) : PreferredSize(b, axis, meter, inputs));
             b.Place();
         }
-        if (b.Table != null && axis == Horizontal) PanelTables.Lay(b);
+        if (b.Table != null) PanelTables.Lay(b);
         if (b.Group is { Enabled: true } g)
         {
             if (g.Kind == GroupKind.Grid) GridCells(b, g, axis);

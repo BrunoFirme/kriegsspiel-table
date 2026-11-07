@@ -441,4 +441,46 @@ static class PanelTests
         Check.Equal(0, t.Errors.Count, string.Join("; ", t.Errors));
         ui.QueueFree();
     }
+
+    [ScreenTest]
+    static async Task Labels_inside_layout_groups_draw_their_words_on_buttons_dropdowns_and_fields(TestRunner r)
+    {
+        var t = OfflineTable.Make(r, pieces: 0);
+        await r.Frames(3);
+        const string Xml = """
+            <Panel width="400" height="400"><VerticalLayout childForceExpandHeight="false">
+              <Dropdown preferredHeight="34"><Option>I Corps</Option></Dropdown>
+              <InputField preferredHeight="34" placeholder="Note"/>
+              <HorizontalLayout preferredHeight="36"><Button>Send</Button><Button>Clear</Button></HorizontalLayout>
+              <Button preferredHeight="36">Solo</Button>
+            </VerticalLayout></Panel>
+            """;
+        var layout = KTable.Core.Panels.PanelBuild.Of(Xml).Layout;
+        var data = KTable.Core.Panels.PanelData.Parse(Xml)!;
+        t.Server.State.Ui = data;
+        t.Server.State.UiLayout = layout;
+        t.S.View.Ui = data.Select(n => n.Clone()).ToList();
+        t.S.View.UiLayout = layout.Clone();
+        var layer = new CanvasLayer { Layer = 50 };
+        r.AddChild(layer);
+        var ui = new ScriptUi();
+        layer.AddChild(ui);
+        ui.Bind(t.S, null!);
+        await r.Frames(8);
+        var image = r.GetViewport().GetTexture().GetImage();
+        var size = image.GetSize();
+        const float Ink = 0.9f;
+        foreach (var word in new[] { "I Corps", "Note", "Send", "Clear", "Solo" })
+        {
+            var label = ui.FindChildren("*", "Label", true, false).OfType<Label>().First(l => l.Text == word);
+            var rect = label.GetGlobalRect();
+            int inked = 0;
+            for (int x = (int)rect.Position.X; x < (int)rect.End.X; x++)
+                for (int y = (int)rect.Position.Y; y < (int)rect.End.Y; y++)
+                    if (x >= 0 && y >= 0 && x < size.X && y < size.Y && image.GetPixel(x, y).V < Ink) inked++;
+            Check.That(inked > 0, $"'{word}' is drawn where its label sits ({rect})");
+        }
+        ui.QueueFree();
+        layer.QueueFree();
+    }
 }
