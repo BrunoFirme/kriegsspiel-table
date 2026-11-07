@@ -346,6 +346,27 @@ public sealed class SaveFieldTests : ConverterHarness
         Assert.True(fine.Outline!.Single().Count > usual.Outline!.Single().Count);
     }
 
+    [Fact]
+    public void A_token_saved_standing_up_stands_on_its_edge_as_tall_as_its_picture_and_as_deep_as_its_thickness()
+    {
+        var cfg = TempConfig();
+        LocalPicture(cfg, "http://a/man.png", 20, 40, (_, _) => SKColors.Navy);
+        var rep = new Report();
+        var defs = new DefFactory(cfg, new AssetStore(cfg, rep), rep);
+        var pack = new PackOut(cfg.Output, "t", "T", "t", null);
+        JsonObject Token(bool up) => Obj("Custom_Token", "", 1, new JsonObject
+        {
+            ["CustomImage"] = new JsonObject { ["ImageURL"] = "http://a/man.png", ["CustomToken"] = new JsonObject { ["Thickness"] = 0.3, ["StandUp"] = up } },
+        });
+
+        var flat = defs.DefFor(new ModuleObj(Token(false)), pack)!.Def;
+        var standing = defs.DefFor(new ModuleObj(Token(true)), pack)!.Def;
+
+        Assert.Equal(("flat", "model"), (flat.Kind, standing.Kind));
+        Assert.Equal((flat.Size.W, 0.3, Math.Round(flat.Size.H, 3)), (standing.Size.W, standing.Size.H, standing.Thickness));
+        Assert.Equal(flat.Image, standing.Texture);
+    }
+
     static byte[] TwoPagePdf(double w1, double h1, double w2, double h2)
     {
         var inv = System.Globalization.CultureInfo.InvariantCulture;

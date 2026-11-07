@@ -398,7 +398,7 @@ public sealed partial class DefFactory
             : "";
         var gluedKey = heightScale == 1 || IsModel(b) ? "" :string.Create(CultureInfo.InvariantCulture, $"|t{def.Thickness:0.###}");
         var facesKey = !RollsOnItsValues(o) ? "" : "|f" + Hash8(string.Join(";", def.Faces.Select(f => string.Create(CultureInfo.InvariantCulture, $"{f.Value}@{f.Up[0]},{f.Up[1]},{f.Up[2]}"))));
-        var surfaceKey = (def.Shadowless ? "|ns" : "") + (def.Normal is { } normal ? "|n" + normal : "") + MergeKey(o);
+        var surfaceKey = (def.Shadowless ? "|ns" : "") + (def.Normal is { } normal ? "|n" + normal : "") + MergeKey(o) + (b.StandsUp ? "|up" : "");
         var key = string.Create(CultureInfo.InvariantCulture, $"{VisualKey(o)}|{def.Size.W:0.###}x{def.Size.H:0.###}{scriptKey}{bakedKey}{decalKey}{gluedKey}{facesKey}{surfaceKey}");
         int rich = def.States.Count * 100 + def.Counters.Count * 10 + def.TextLines.Count + def.Attachments.Count * 1000 + (def.Script != null ? 5000 : 0);
         if (pack.ByKey.TryGetValue(key, out var existing))
@@ -504,6 +504,7 @@ public sealed partial class DefFactory
             def.Back = Asset(pack, b.BackUrl, "image", where);
             if (b.Name == "Custom_Token") def.Outline = OutlineOf(b.ImageUrl, b.MergeDistance);
             def.Image ??= Placeholder(pack);
+            if (b.Name == "Custom_Token" && b.StandsUp) StandUp(def, pack);
         }
         if (def.Name == "Piece") def.Name = Describe(pack, def);
         def.Counters = script.Counters.Select(c => new CounterDef { Name = c.Name, Min = c.Min, Max = c.Max, Default = c.Default }).ToList();
