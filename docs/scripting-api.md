@@ -220,7 +220,7 @@ Read from `self` or from any piece `board.find` or `board.pieces` hands back. Fi
 | [`self.local_unit`](#selflocal_unit) | For a model that came from a module, what one unit of its script's local frame is in piece units: { x =, z = }; nil for every other piece. |
 | [`self.shape`](#selfshape) | Its outline at its state: "box", "rounded", "circle", "hex", or "alpha" for a token cut along its picture. |
 | [`self.face_down`](#selfface_down) | Turned over. |
-| [`self.holds`](#selfholds) | Whether it is a holder that other pieces can be stowed in, as a bag is. |
+| [`self.holds`](#selfholds) | Whether it is a holder that other pieces can be stowed in: a piece holding some, one made a holder, or a kind tagged bag. |
 | [`self.locked`](#selflocked) | Pinned to the table: not dragged, turned or resized by hand. |
 | [`self.sticky`](#selfsticky) | Carries the pieces resting on it when it is moved; attached pieces go with it either way. |
 | [`self.box_selected`](#selfbox_selected) | Taken by a selection box dragged over it. |
@@ -576,7 +576,7 @@ Turned over.
 self.holds
 ```
 
-Whether it is a holder that other pieces can be stowed in, as a bag is.
+Whether it is a holder that other pieces can be stowed in: a piece holding some, one made a holder, or a kind tagged bag.
 
 **Type** `boolean`, read-only.
 

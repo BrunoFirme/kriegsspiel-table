@@ -363,7 +363,7 @@ internal sealed partial class PieceHandles(ScriptHost host)
                 return S(sh ?? def?.Shape ?? "box");
             }
             case "face_down": return B(p.FaceDown);
-            case "holds": return B(p.HoldsPieces(def));
+            case "holds": return B(p.HoldsPieces(def) || def?.Tags.Contains("bag") == true);
             case "locked": return B(p.Locked);
             case "sticky": return B(!p.NotSticky);
             case "box_selected": return B(!p.NotBoxSelected);

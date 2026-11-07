@@ -583,11 +583,7 @@ function compat.global_get_table(name) return compat.copy_lua_table(game.get_var
 function compat.global_set_table(name, t) game.set_var(name, compat.copy_lua_table(t)) return true end
 function compat.global_set_var(name, v) game.set_var(name, v) return true end
 
-function compat.holds(obj)
-  if obj.holds then return true end
-  for _, t in ipairs(obj.tags or {}) do if t == "bag" then return true end end
-  return false
-end
+function compat.holds(obj) return obj.holds == true end
 function compat.take_object(obj, params)
   params = type(params) == "table" and params or {}
   local position = compat.optional_vector_arg(params.position)

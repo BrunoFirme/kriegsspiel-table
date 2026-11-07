@@ -603,6 +603,16 @@ public class ModuleObjectCallTests
     }
 
     [Fact]
+    public void A_piece_of_a_kind_tagged_bag_is_a_bag_even_with_tags_of_its_own()
+    {
+        using var t = new Table();
+        t.Store.Def("marker")!.Tags.Add("bag");
+        t.Server.State.Find(U, Marker)!.Tags = new() { "Memory" };
+        const string lua = "function onLoad()\n  local m = getObjectFromGUID('p-000003')\n  self.setName(m.getQuantity() .. '|' .. #m.getObjects())\nend\n";
+        Assert.Equal("0|0", Run(t, lua));
+    }
+
+    [Fact]
     public void Time_reads_the_scripts_clock_and_frame_count()
     {
         using var t = new Table();

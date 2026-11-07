@@ -175,7 +175,7 @@ public static partial class ApiDoc
         F("piece", "local_unit", "Size?", "For a model that came from a module, what one unit of its script's local frame is in piece units: { x =, z = }; nil for every other piece.");
         F("piece", "shape", "string", "Its outline at its state: \"box\", \"rounded\", \"circle\", \"hex\", or \"alpha\" for a token cut along its picture.");
         F("piece", "face_down", "boolean", "Turned over.", "is_face_down");
-        F("piece", "holds", "boolean", "Whether it is a holder that other pieces can be stowed in, as a bag is.", "getQuantity");
+        F("piece", "holds", "boolean", "Whether it is a holder that other pieces can be stowed in: a piece holding some, one made a holder, or a kind tagged bag.", "getQuantity");
         See("self.flip", "on_flip");
         F("piece", "locked", "boolean", "Pinned to the table: not dragged, turned or resized by hand.", "getLock");
         See("self.set_locked");
