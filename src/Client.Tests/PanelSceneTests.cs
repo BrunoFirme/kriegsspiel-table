@@ -120,6 +120,10 @@ public class PanelSceneTests
         Assert.Equal("Go", s.ById("b")!.Part("Text Cell")!.Part("Text")!.Text!.Text);
         Assert.Equal(new Paint(1, 0, 0, 1), s.ById("c")!.Part("Text Cell")!.Part("Text")!.Text!.Color);
         Assert.Same(s.ById("dt"), s.ById("d")!.Part("Text Cell")!.Children[0]);
+        Assert.Equal(Paint.Bytes(0x1F, 0x87, 0xFF), s.ById("dt")!.Text!.Color);
+        var plain = Scene("<Button id=\"e\"><Text id=\"et\">Own</Text></Button><Button id=\"f\" textColors=\"#00FF00|#FF0000\">Go</Button>");
+        Assert.Equal(Paint.Black, plain.ById("et")!.Text!.Color);
+        Assert.Equal(new Paint(0, 1, 0, 1), plain.ById("f")!.Part("Text Cell")!.Part("Text")!.Text!.Color);
     }
 
     [Fact]

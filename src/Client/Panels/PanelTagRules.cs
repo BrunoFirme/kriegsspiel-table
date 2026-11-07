@@ -70,7 +70,7 @@ public static partial class PanelApply
         ColorBlock block = ColorBlock.Black;
         if (attrs.TryGetValue("textcolors", out var tcs)) block = PanelValues.Block(tcs, ctx.Colors);
         else if ((attrs.GetValueOrDefault("textcolor") ?? attrs.GetValueOrDefault("deselectedtextcolor")) is { } tc) block = Same(ctx.Color(tc));
-        var first = b.Children.FirstOrDefault(c => c.Element != null);
+        var first = b.Part("Text Cell")?.Children.FirstOrDefault(c => c.Element != null) ?? b.Children.FirstOrDefault(c => c.Element != null);
         if (first is { Tag: "Text" } t)
         {
             ownText = false;
@@ -78,6 +78,7 @@ public static partial class PanelApply
             if (first.Element!.Attributes.ContainsKey("color") && t.Text != null) block = Same(t.Text.Color);
         }
         if (ownText) ApplyText(text, TextPart(attrs, true), ctx);
+        if ((ownText ? text : first)?.Text is { } words) words.Color = block.Normal;
         b.Extra["textColorsNow"] = string.Join("|", new[] { block.Normal, block.Highlighted, block.Pressed, block.Disabled }.Select(Hex));
         if (attrs.TryGetValue("preserveaspect", out var pa) && b.Image != null) b.Image.PreserveAspect = PanelValues.Bool(pa);
         if (attrs.ContainsKey("icon") || e.Attributes.ContainsKey("icon")) Icon(b, e, attrs, ctx);
