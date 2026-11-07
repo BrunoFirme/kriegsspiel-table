@@ -51,7 +51,7 @@ public sealed partial class BagBoxes
     public static string? Tint(ModuleObj bag)
     {
         if (bag.J["ColorDiffuse"] is not System.Text.Json.Nodes.JsonObject c) return null;
-        double V(string k) => Math.Clamp(c[k]?.GetValue<double>() ?? 1, 0, 1);
+        double V(string k) => Math.Clamp(ModuleValues.Finite(c[k], 1), 0, 1);
         double r = V("r"), g = V("g"), b = V("b");
         return Math.Max(r, Math.Max(g, b)) - Math.Min(r, Math.Min(g, b)) < Neutral ? null : bag.Color;
     }

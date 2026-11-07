@@ -56,6 +56,8 @@ public sealed class ModuleObj
     public bool Garbage => T is { } t && TransformKeys.All(k => ModuleValues.Number(t[k], 0) == 0);
     static readonly string[] TransformKeys = { "posX", "posY", "posZ", "scaleX", "scaleY", "scaleZ" };
     public bool Flipped => Near180(RotX) ^ Near180(RotZ);
+    public double Heading => Near180(RotX) ? RotY + HalfTurn : RotY;
+    const double HalfTurn = 180;
     static bool Near180(double a) { a = ((a % 360) + 360) % 360; return Math.Abs(a - 180) < 30; }
 
     JsonObject? CI => J["CustomImage"] as JsonObject;

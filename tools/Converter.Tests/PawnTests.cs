@@ -21,6 +21,6 @@ public sealed partial class ConverterTests
         Assert.Equal(("circle", "#1A33E6", true), (def.Shape, def.Tint, def.TintsPictures));
         Assert.Contains("pawn", def.Tags);
         Assert.Equal(DefFactory.PawnAcross, def.Size.W);
-        Assert.Equal(DefFactory.PawnHeight, def.Thickness);
+        Assert.Equal(DefFactory.PawnHeight, def.Thickness, 3);
     }
 }

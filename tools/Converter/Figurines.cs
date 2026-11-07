@@ -11,15 +11,20 @@ public sealed partial class DefFactory
     public const string Figurine = "Figurine_Custom";
     public const double FigurineBase = 1.789, FigurineBaseRise = 0.316, FigurineCard = 1.7926, FigurineCardFoot = 0.2495;
     const int FigurineSegments = 24, BaseStripPx = 8;
-    static readonly SKColor BaseColour = new(0xEE, 0xEC, 0xE6);
+    const string StandColour = "#000000";
 
     public static double FigurineAspect(int w, int h) => w > 0 && h > 0 ? w / (double)h : 1;
 
     public static double FigurineTop => FigurineCardFoot + FigurineCard;
 
+    public static double FigurineTopOf(ModuleObj o) => FigurineTop * o.ImageScalar;
+
     double FigurineAspectOf(ModuleObj o) => Entry(o.ImageUrl) is { W: > 0, H: > 0 } e ? FigurineAspect(e.W, e.H) : 1;
 
-    public Size2 FigurineSize(ModuleObj o, double ratio) => new(Math.Max(FigurineBase, FigurineCard * FigurineAspectOf(o)), FigurineBase * ratio);
+    double FigurineBackAspectOf(ModuleObj o) => Entry(o.BackUrl) is { W: > 0, H: > 0 } e && AssetStore.IsPicture(e.Ext) ? FigurineAspect(e.W, e.H) : FigurineAspectOf(o);
+
+    public Size2 FigurineSize(ModuleObj o, double ratio) =>
+        new(Math.Max(FigurineBase, FigurineCard * o.ImageScalar * Math.Max(FigurineAspectOf(o), FigurineBackAspectOf(o))), FigurineBase * ratio);
 
     void FillFigurine(PieceDef def, ModuleObj b, PackOut pack, string where)
     {
@@ -31,17 +36,19 @@ public sealed partial class DefFactory
             return;
         }
         var back = Entry(b.BackUrl) is { } be && AssetStore.IsPicture(be.Ext) ? _assets.FilePath(be) : null;
-        using var atlas = FigurineAtlas(frontPath, back ?? frontPath, b.MirroredBack, out double frontShare, out double pictureShare);
+        using var atlas = FigurineAtlas(frontPath, back ?? frontPath, b.MirroredBack, SKColor.Parse(b.Color is { Length: >= 7 } c ? c[..7] : StandColour), out double frontShare, out double pictureShare);
         if (atlas == null)
         {
             def.Image = Placeholder(pack);
             return;
         }
         var png = atlas.Encode(SKEncodedImageFormat.Png, 100).ToArray();
-        var obj = Encoding.UTF8.GetBytes(FigurineObj(FigurineAspectOf(b), frontShare, pictureShare));
+        var card = new FigurineCardShape(FigurineAspectOf(b), FigurineBackAspectOf(b), b.ImageScalar);
+        var obj = Encoding.UTF8.GetBytes(FigurineObj(card, frontShare, pictureShare));
         def.Kind = "model";
         def.Shape = "box";
         def.Image = null;
+        def.Tint = "#FFFFFF";
         def.Texture = Generated(pack, png, "png", "image", atlas.Width, atlas.Height);
         def.Mesh = Generated(pack, obj, "obj", "mesh", 0, 0);
         if (def.Name == "Piece") def.Name = "Figurine";
@@ -60,7 +67,7 @@ public sealed partial class DefFactory
         return sha;
     }
 
-    static SKBitmap? FigurineAtlas(string frontPath, string backPath, bool mirrored, out double frontShare, out double pictureShare)
+    static SKBitmap? FigurineAtlas(string frontPath, string backPath, bool mirrored, SKColor stand, out double frontShare, out double pictureShare)
     {
         frontShare = pictureShare = 1;
         using var front = SKBitmap.Decode(frontPath);
@@ -80,7 +87,7 @@ public sealed partial class DefFactory
                 canvas.DrawImage(image, new SKRect(front.Width, 0, w, h), sampling);
                 canvas.Restore();
             }
-            using var paint = new SKPaint { Color = BaseColour };
+            using var paint = new SKPaint { Color = stand };
             canvas.DrawRect(0, h, w, BaseStripPx, paint);
         }
         frontShare = front.Width / (double)w;
@@ -88,7 +95,9 @@ public sealed partial class DefFactory
         return atlas;
     }
 
-    static string FigurineObj(double aspect, double frontShare, double pictureShare)
+    sealed record FigurineCardShape(double Front, double Back, double Scalar);
+
+    static string FigurineObj(FigurineCardShape card, double frontShare, double pictureShare)
     {
         var inv = CultureInfo.InvariantCulture;
         var v = new List<string>();
@@ -104,7 +113,8 @@ public sealed partial class DefFactory
             }
             f.Add("f " + string.Join(' ', Enumerable.Range(at + 1, corners.Length).Select(i => $"{i}/{i}")));
         }
-        double hw = FigurineCard * aspect / 2, y0 = FigurineCardFoot, y1 = FigurineTop, low = 1 - pictureShare;
+        double hw = FigurineCard * card.Scalar * card.Front / 2, hb = FigurineCard * card.Scalar * card.Back / 2;
+        double y0 = FigurineCardFoot * card.Scalar, y1 = FigurineTop * card.Scalar, low = 1 - pictureShare;
         double r = FigurineBase / 2, strip = low / 2;
         f.Add("usemtl base");
         for (int i = 0; i < FigurineSegments; i++)
@@ -117,7 +127,7 @@ public sealed partial class DefFactory
         }
         f.Add("usemtl card");
         Face((-hw, y0, 0, 0, low), (hw, y0, 0, frontShare, low), (hw, y1, 0, frontShare, 1), (-hw, y1, 0, 0, 1));
-        Face((hw, y0, 0, frontShare, low), (-hw, y0, 0, 1, low), (-hw, y1, 0, 1, 1), (hw, y1, 0, frontShare, 1));
+        Face((hb, y0, 0, frontShare, low), (-hb, y0, 0, 1, low), (-hb, y1, 0, 1, 1), (hb, y1, 0, frontShare, 1));
         return string.Join('\n', v.Concat(vt).Concat(f)) + "\n";
     }
 }

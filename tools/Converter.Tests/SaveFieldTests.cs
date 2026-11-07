@@ -140,6 +140,46 @@ public sealed partial class ConverterTests
         Assert.Matches("^[0-9a-f]{6}$", pieces[2].Guid!);
     }
 
+    [Fact]
+    public void A_piece_turned_end_over_end_faces_the_other_way_and_one_rolled_over_keeps_its_heading()
+    {
+        static ModuleObj Turned(double rx, double ry, double rz) => new(new JsonObject
+        {
+            ["Name"] = "Custom_Tile", ["Transform"] = new JsonObject { ["rotX"] = rx, ["rotY"] = ry, ["rotZ"] = rz, ["scaleX"] = 1.0, ["scaleY"] = 1.0, ["scaleZ"] = 1.0 },
+        });
+
+        Assert.Equal((true, 30.0), (Turned(0, 30, 180).Flipped, Turned(0, 30, 180).Heading));
+        Assert.Equal((true, 210.0), (Turned(180, 30, 0).Flipped, Turned(180, 30, 0).Heading));
+        Assert.Equal((false, 210.0), (Turned(180, 30, 180).Flipped, Turned(180, 30, 180).Heading));
+    }
+
+    [Fact]
+    public void A_figurine_wears_its_colour_on_its_stand_only_and_its_card_grows_with_its_image_scalar_each_side_as_wide_as_its_own_picture()
+    {
+        var cfg = TempConfig();
+        LocalPicture(cfg, "http://a/front.png", 20, 40, (_, _) => SKColors.White);
+        LocalPicture(cfg, "http://a/back.png", 40, 40, (_, _) => SKColors.White);
+        var rep = new Report();
+        var defs = new DefFactory(cfg, new AssetStore(cfg, rep), rep);
+        var pack = new PackOut(cfg.Output, "t", "T", "t", null);
+        var figure = Obj(DefFactory.Figurine, "Ney", 1, new JsonObject
+        {
+            ["ColorDiffuse"] = new JsonObject { ["r"] = 0.0, ["g"] = 0.0, ["b"] = 1.0 },
+            ["CustomImage"] = new JsonObject { ["ImageURL"] = "http://a/front.png", ["ImageSecondaryURL"] = "http://a/back.png", ["ImageScalar"] = 2.0 },
+        });
+
+        var def = defs.DefFor(new ModuleObj(figure), pack)!.Def;
+
+        Assert.Equal("#FFFFFF", def.Tint);
+        Assert.Equal(DefFactory.FigurineTop * 2, defs.BaseThickness(new ModuleObj(figure)), 3);
+        Assert.Equal(DefFactory.FigurineCard * 2, def.Size.W, 3);
+        using var atlas = SKBitmap.Decode(Path.Combine(pack.Dir, pack.M.Assets[def.Texture!].File));
+        Assert.Equal(SKColors.Blue, atlas.GetPixel(1, atlas.Height - 1));
+        var xs = File.ReadAllLines(Path.Combine(pack.Dir, pack.M.Assets[def.Mesh!].File)).Where(l => l.StartsWith("v ", StringComparison.Ordinal))
+            .Select(l => double.Parse(l.Split(' ')[1], System.Globalization.CultureInfo.InvariantCulture)).ToList();
+        Assert.Equal(DefFactory.FigurineCard, xs.Max(), 3);
+    }
+
     static byte[] TwoPagePdf(double w1, double h1, double w2, double h2)
     {
         var inv = System.Globalization.CultureInfo.InvariantCulture;

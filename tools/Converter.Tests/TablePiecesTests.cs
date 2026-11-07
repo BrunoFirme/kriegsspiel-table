@@ -353,7 +353,7 @@ public sealed partial class ConverterTests
         var a = defs.DefFor(new ModuleObj(plain), pack)!.Def;
         var b = defs.DefFor(new ModuleObj(green), pack)!.Def;
 
-        Assert.Equal(("White checker", "circle", "#EDE8DC", true), (a.Name, a.Shape, a.Tint, a.TintsPictures));
+        Assert.Equal(("White checker", "circle", "#FFFFFF", true), (a.Name, a.Shape, a.Tint, a.TintsPictures));
         Assert.Equal(("Objective", "#008000"), (b.Name, b.Tint));
         Assert.Equal(DefFactory.CheckerAcross, a.Size.W);
         Assert.Equal(Math.Round(DefFactory.CheckerAcross * 0.65, 4), b.Size.W);

@@ -29,12 +29,12 @@ public sealed partial class DefFactory
 
     static readonly Dictionary<string, (string Name, string Colour)> Checkers = new()
     {
-        ["Checker_white"] = ("White checker", "#EDE8DC"),
+        ["Checker_white"] = ("White checker", "#FFFFFF"),
         ["Checker_red"] = ("Red checker", "#B3261E"),
         ["Checker_black"] = ("Black checker", "#26221F"),
     };
 
-    public const double BagAcross = 1.5, BagThickness = 0.8, PawnAcross = 0.8, PawnHeight = 1.2;
+    public const double BagAcross = 2.4573, BagThickness = 2.5823, PawnAcross = 0.6916, PawnHeight = 1.1839;
     const string BagCanvas = "#8B7355", PawnIvory = "#E8E2D0";
     const string BoxesMissing = "Firme's Effects and Props is not installed here, so bags come over as round pieces; open the app once and convert again for boxes, chests and crates.";
     bool _boxesMissingNoted;
@@ -58,7 +58,7 @@ public sealed partial class DefFactory
         : b.Name == "Bag" ? $"|bag|{Rgb(b.Color)}|{b.Nickname}"
         : b.Name == "PlayerPawn" ? $"|pawn|{Rgb(b.Color)}"
         : b.IsPictureDie && b.DieSides != PictureD6 ? $"|die{b.DieSides}"
-        : b.Name == Figurine && b.MirroredBack ? "|mirrored"
+        : b.Name == Figurine ? (b.MirroredBack ? "|mirrored" : "") + string.Create(System.Globalization.CultureInfo.InvariantCulture, $"|{Rgb(b.Color)}|{b.ImageScalar:0.###}")
         : null;
 
     const int RgbHex = 7;
@@ -86,7 +86,7 @@ public sealed partial class DefFactory
         def.Image = WhiteSquare(pack);
         def.Shape = "circle";
         def.TintsPictures = true;
-        def.Tint = b.Color is { } c && !string.Equals(c, "#FFFFFF", StringComparison.OrdinalIgnoreCase) ? c : plain;
+        def.Tint = b.Color ?? plain;
         def.Tags = def.Tags.Where(t => t != "block").Append(tag).Distinct().ToList();
         if (def.Name == "Piece") def.Name = name;
     }
@@ -154,7 +154,7 @@ public sealed partial class DefFactory
         def.Image = WhiteSquare(pack);
         def.Shape = "circle";
         def.TintsPictures = true;
-        def.Tint = b.Color is { } c && !string.Equals(c, "#FFFFFF", StringComparison.OrdinalIgnoreCase) ? c : colour;
+        def.Tint = b.Color ?? colour;
         def.Tags = def.Tags.Where(t => t != "block").Append("checker").Distinct().ToList();
         if (def.Name == "Piece") def.Name = name;
     }

@@ -546,7 +546,7 @@ public sealed partial class ScenarioBuilder
         var inst = new PieceInstance
         {
             Id = $"p-{_nextId++:D6}", Def = def.Id,
-            Pos = new Vec2(Math.Round(o.PosX, 4), Math.Round(o.PosZ, 4)), RotDeg = Facing(def, o.RotY),
+            Pos = new Vec2(Math.Round(o.PosX, 4), Math.Round(o.PosZ, 4)), RotDeg = Facing(def, o.Heading),
             State = def.Faces.Count > 1 ? 0 : Math.Min(r.State, Math.Max(0, def.States.Count - 1)),
             Face = def.Faces.Count > 1 ? Math.Clamp(r.State, 0, def.Faces.Count - 1) : -1,
             Counters = counters, Text = text, Label = o.Nickname.Length > 0 ? o.Nickname : null, Scale = scale,
@@ -569,7 +569,7 @@ public sealed partial class ScenarioBuilder
                 if (tr.Script != def.Script) inst.Script = tr.Script;
             }
         }
-        var colour = r.FromPack == KTable.Client.Effects.EffectKinds.StandardPack && o.Name == "Bag" ? BagBoxes.Tint(o) : o.Color;
+        var colour = r.FromPack == KTable.Client.Effects.EffectKinds.StandardPack && o.Name == "Bag" ? BagBoxes.Tint(o) : o.Name == DefFactory.Figurine ? null : o.Color;
         if (colour is { } col && !string.Equals(col, def.Tint, StringComparison.OrdinalIgnoreCase)) inst.TintOverride = col;
         if (o.VectorLines.Count > 0) inst.Lines = LinesOf(o, def);
         if (!def.States.Any(s => s.Decals is { Count: > 0 }))
