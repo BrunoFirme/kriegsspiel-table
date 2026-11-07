@@ -96,6 +96,7 @@ public sealed partial class ScenarioBuilder
         Index(extras.M.Pieces);
         foreach (var pd in packDefs.Values.SelectMany(v => v)) _lookup.TryAdd(pd.def.Id, pd.def);
         foreach (var layer in layers) Stack(layer);
+        foreach (var layer in layers) UniqueGuids(layer.Pieces);
         foreach (var (layer, placed) in placedEffects) layer.Pieces.AddRange(placed);
         LayNotes(master, scenario, extras, layers[0], usedPacks);
         if (placedEffects.Values.Sum(p => p.Count) is var effectCount and > 0) _rep.Counts[$"{sc.Id}: effects placed as Firme's effects"] = effectCount.ToString();
@@ -667,6 +668,17 @@ public sealed partial class ScenarioBuilder
             if (root != null) layer.Glued[ci] = (root, parentBottom + (floor - parentFloor) * parentHeight);
             else layer.Y[ci] = o.PosY;
             parent?.Attached.Add(ci.Id);
+        }
+    }
+
+    public static void UniqueGuids(List<PieceInstance> pieces)
+    {
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var p in pieces)
+        {
+            if (p.Guid == null || seen.Add(p.Guid)) continue;
+            p.Guid = KTable.Core.Protocol.StateMachine.FreshGuid(pieces, p.Id);
+            seen.Add(p.Guid);
         }
     }
 

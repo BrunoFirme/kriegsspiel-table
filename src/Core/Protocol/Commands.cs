@@ -429,6 +429,7 @@ public sealed class Stow : LayerCommand
     public string Holder { get; set; } = "";
     public string Id { get; set; } = "";
     public int? Slot { get; set; }
+    public string? Guid { get; set; }
     public override Sender SentBy() => Sender.Umpire;
     public override bool OnUndoStack() => true;
     public override Shown ShownToObservers() => Shown.Table;
@@ -444,6 +445,7 @@ public sealed class Unstow : LayerCommand
     public Vec2? Pos { get; set; }
     public double? RotDeg { get; set; }
     public int? Index { get; set; }
+    public bool KeepGuid { get; set; }
     public override Sender SentBy() => Sender.Umpire;
     public override bool OnUndoStack() => true;
     public override Shown ShownToObservers() => Shown.Table;

@@ -427,10 +427,11 @@ public static class StateMachine
         foreach (var o in layer) o.Attached?.Remove(s.Id);
         layer.Remove(p);
         foreach (var c in carried) layer.Remove(c);
+        if (s.Guid != null) p.Guid = s.Guid;
         holder.Stowed ??= new();
         PutBack(holder.Stowed, p, s.Slot);
         holder.Stowed.AddRange(carried);
-        var back = new Unstow { Layer = s.Layer, Holder = s.Holder, Id = s.Id, Pos = p.Pos, RotDeg = p.RotDeg, Index = at };
+        var back = new Unstow { Layer = s.Layer, Holder = s.Holder, Id = s.Id, Pos = p.Pos, RotDeg = p.RotDeg, Index = at, KeepGuid = true };
         inverse = previous == null ? back : new Batch { Items = new() { back, new Attach { Layer = s.Layer, Parent = previous.Id, Child = s.Id } } };
         return null;
     }
@@ -454,6 +455,8 @@ public static class StateMachine
         if (u.RotDeg is { } r) p.RotDeg = Norm(r);
         p.Y = 0;
         p.Stack = 0;
+        var heldGuid = p.Guid;
+        if (!u.KeepGuid && heldGuid != null && layer.Any(x => x.Guid == heldGuid)) p.Guid = FreshGuid(layer, p.Id);
         PutBack(layer, p, u.Index);
         BumpId(g, p.Id);
         foreach (var c in carried)
@@ -462,7 +465,7 @@ public static class StateMachine
             layer.Add(c);
             BumpId(g, c.Id);
         }
-        inverse = new Stow { Layer = u.Layer, Holder = u.Holder, Id = p.Id, Slot = slot };
+        inverse = new Stow { Layer = u.Layer, Holder = u.Holder, Id = p.Id, Slot = slot, Guid = p.Guid != heldGuid ? heldGuid : null };
         return null;
     }
 
@@ -1093,6 +1096,19 @@ public static class StateMachine
     {
         if (index is int i && i >= 0 && i <= list.Count) list.Insert(i, item);
         else list.Add(item);
+    }
+
+    public static string FreshGuid(IEnumerable<PieceInstance> layer, string seed)
+    {
+        const uint Offset = 2166136261, Prime = 16777619, SixHex = 0x1000000;
+        var taken = layer.Select(x => x.Guid).OfType<string>().ToHashSet();
+        uint h = Offset;
+        foreach (var ch in seed) h = (h ^ ch) * Prime;
+        for (uint k = 0; ; k++)
+        {
+            var g = ((h + k) % SixHex).ToString("x6", System.Globalization.CultureInfo.InvariantCulture);
+            if (!taken.Contains(g)) return g;
+        }
     }
 
     static void BumpId(GameState g, string id)

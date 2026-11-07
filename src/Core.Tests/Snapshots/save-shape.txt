@@ -1,4 +1,4 @@
-format 25
+format 26
 type AccessChanged object
   access: GameAccess
 type AddBoard object
@@ -583,10 +583,12 @@ type PieceDef object
   mesh: string
   name: string
   nameBox: FaceBox
+  normal: string
   pageOffset: int
   script: string
   scriptHash: string
   scriptState: string
+  shadowless: bool
   shape: string
   shine: ShineDef
   size: Size2
@@ -1209,6 +1211,7 @@ type StampDecal object
 type Stow object
   actor: long
   at: long
+  guid: string
   holder: string
   id: string
   layer: string
@@ -1283,6 +1286,7 @@ type Unstow object
   holder: string
   id: string
   index: int?
+  keepGuid: bool
   layer: string
   pos: Vec2?
   rotDeg: double?

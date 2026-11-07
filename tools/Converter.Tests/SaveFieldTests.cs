@@ -125,6 +125,21 @@ public sealed partial class ConverterTests
         Assert.Equal(radius, drawn, 3);
     }
 
+    [Fact]
+    public void The_first_object_loaded_keeps_a_guid_two_objects_share_and_the_later_one_gets_a_fresh_one()
+    {
+        var pieces = new List<PieceInstance>
+        {
+            new() { Id = "p-000001", Guid = "aaaaaa" }, new() { Id = "p-000002", Guid = "bbbbbb" }, new() { Id = "p-000003", Guid = "aaaaaa" }, new() { Id = "p-000004" },
+        };
+
+        ScenarioBuilder.UniqueGuids(pieces);
+
+        Assert.Equal(("aaaaaa", "bbbbbb", (string?)null), (pieces[0].Guid, pieces[1].Guid, pieces[3].Guid));
+        Assert.DoesNotContain(pieces[2].Guid, new[] { "aaaaaa", "bbbbbb" });
+        Assert.Matches("^[0-9a-f]{6}$", pieces[2].Guid!);
+    }
+
     static byte[] TwoPagePdf(double w1, double h1, double w2, double h2)
     {
         var inv = System.Globalization.CultureInfo.InvariantCulture;
