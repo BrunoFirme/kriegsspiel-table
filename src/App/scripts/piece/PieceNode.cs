@@ -258,7 +258,7 @@ public partial class PieceNode : Node3D
 
     Color Tint() => Spoken ? Colors.Transparent : Coords.ParseColor(Piece.TintOverride ?? Def?.Tint, Colors.White) * _layerTint;
     Color SideColor() => (Tint() * 0.82f) with { A = Tint().A };
-    Color PrintTint() => Def is { TintsPictures: true } ? Tint() : _layerTint with { A = _layerTint.A * Tint().A };
+    Color PrintTint() => PieceArt.PictureTint(Def is { TintsPictures: true }, Spoken, Tint(), _layerTint);
 
     (string? pkg, string? rel, int size) TexKey()
     {

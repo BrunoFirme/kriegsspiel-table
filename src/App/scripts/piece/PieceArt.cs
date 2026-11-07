@@ -36,6 +36,9 @@ public sealed class PieceArt
         return _planes[key] = new PlaneMesh { Size = size, FlipFaces = flip };
     }
 
+    internal static Color PictureTint(bool tintsPictures, bool spoken, Color tint, Color layer) =>
+        tintsPictures ? tint : spoken ? layer with { A = 0 } : layer;
+
     public ArrayMesh? Walls(string texKey, AlphaMask mask, float w, float h, float t)
     {
         var key = (texKey, w, h, t);
