@@ -379,8 +379,10 @@ public partial class PieceNode : Node3D
         AddFarQuad(faceMat);
         var (pkg, rel, size) = TexKey();
         var mask = pkg == null ? null : _s.Assets.Mask(pkg, rel!, size);
-        _wallsPending = mask == null;
-        if (mask != null && Art.Walls($"{pkg}|{rel}|{size}", mask, Footprint.X, Footprint.Y, t) is { } walls)
+        var outline = Piece.Picture != null || WornModel != null ? null : CurState?.Image != null ? CurState.Outline : Def?.Outline;
+        _wallsPending = mask == null && outline == null;
+        var walls = outline != null ? Art.Walls(outline, Footprint.X, Footprint.Y, t) : mask != null ? Art.Walls($"{pkg}|{rel}|{size}", mask, Footprint.X, Footprint.Y, t) : null;
+        if (walls != null)
         {
             var node = new MeshInstance3D { Mesh = walls, VisibilityRangeEnd = BodyRange() };
             AddChild(node);

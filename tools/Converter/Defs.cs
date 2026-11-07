@@ -89,6 +89,24 @@ public sealed partial class DefFactory
 
     public CacheEntry? Entry(string? url) => url == null ? null : _assets.Get(url);
 
+    const double UsualMergeDistance = 15;
+    readonly Dictionary<(string, double), List<List<Vec2>>?> _outlines = new();
+
+    static string MergeKey(ModuleObj o) =>
+        o.StateList().states.Any(s => s.Name == "Custom_Token" && s.MergeDistance != UsualMergeDistance)
+            ? "|m" + string.Join(",", o.StateList().states.Select(s => s.MergeDistance.ToString(CultureInfo.InvariantCulture)))
+            : "";
+
+    List<List<Vec2>>? OutlineOf(string? url, double mergeDistance)
+    {
+        if (Entry(url) is not { Sha: { } sha } e || _assets.FilePath(e) is not { } file || !AssetStore.IsPicture(e.Ext)) return null;
+        if (_outlines.TryGetValue((sha, mergeDistance), out var known)) return known;
+        using var bmp = BestEffort.Read(() => SKBitmap.Decode(file), fallback: null);
+        var outline = bmp == null ? null : TokenOutline.Of(bmp, mergeDistance);
+        _outlines[(sha, mergeDistance)] = outline;
+        return outline;
+    }
+
     public static void Put(PackOut pack, string sha, string ext, string src, string kind, int w, int h, string? url = null)
     {
         var rel = $"assets/{sha}.{ext}";
@@ -349,6 +367,7 @@ public sealed partial class DefFactory
                 if (stShape != def.Shape) sd.Shape = stShape;
                 if (IsModel(s)) { sd.Mesh = ModelMesh(pack, s, where); sd.Texture = Asset(pack, s.DiffuseUrl, "image", where); }
                 else { sd.Image = Asset(pack, s.ImageUrl, "image", where); sd.Back = Asset(pack, s.BackUrl, "image", where); }
+                if (s.Name == "Custom_Token") sd.Outline = OutlineOf(s.ImageUrl, s.MergeDistance);
                 if (s.Lua.Trim().Length > 0 && !ReferenceEquals(s, states[0])) { sd.Script = s.Lua; _rep.Note($"{where}: the state \"{sd.Name}\" carries a script of its own (kept, not run)"); }
                 if (s.TransformNotANumber) _rep.Note($"{where}: the module scales the state \"{sd.Name}\" by something that is not a number; it takes the piece's own size");
                 if (Math.Abs(sz.W - def.Size.W) > 0.01 * def.Size.W || Math.Abs(sz.H - def.Size.H) > 0.01 * def.Size.H) sd.Size = sz;
@@ -379,7 +398,7 @@ public sealed partial class DefFactory
             : "";
         var gluedKey = heightScale == 1 || IsModel(b) ? "" :string.Create(CultureInfo.InvariantCulture, $"|t{def.Thickness:0.###}");
         var facesKey = !RollsOnItsValues(o) ? "" : "|f" + Hash8(string.Join(";", def.Faces.Select(f => string.Create(CultureInfo.InvariantCulture, $"{f.Value}@{f.Up[0]},{f.Up[1]},{f.Up[2]}"))));
-        var surfaceKey = (def.Shadowless ? "|ns" : "") + (def.Normal is { } normal ? "|n" + normal : "");
+        var surfaceKey = (def.Shadowless ? "|ns" : "") + (def.Normal is { } normal ? "|n" + normal : "") + MergeKey(o);
         var key = string.Create(CultureInfo.InvariantCulture, $"{VisualKey(o)}|{def.Size.W:0.###}x{def.Size.H:0.###}{scriptKey}{bakedKey}{decalKey}{gluedKey}{facesKey}{surfaceKey}");
         int rich = def.States.Count * 100 + def.Counters.Count * 10 + def.TextLines.Count + def.Attachments.Count * 1000 + (def.Script != null ? 5000 : 0);
         if (pack.ByKey.TryGetValue(key, out var existing))
@@ -483,6 +502,7 @@ public sealed partial class DefFactory
         {
             def.Image = Asset(pack, b.ImageUrl, "image", where);
             def.Back = Asset(pack, b.BackUrl, "image", where);
+            if (b.Name == "Custom_Token") def.Outline = OutlineOf(b.ImageUrl, b.MergeDistance);
             def.Image ??= Placeholder(pack);
         }
         if (def.Name == "Piece") def.Name = Describe(pack, def);

@@ -294,6 +294,58 @@ public sealed class SaveFieldTests : ConverterHarness
         Assert.Equal("Custom_Tile", new ModuleObj(stack.J).Name);
     }
 
+    static SKBitmap Picture(int w, int h, Func<int, int, byte> alpha)
+    {
+        var bmp = new SKBitmap(w, h, SKColorType.Rgba8888, SKAlphaType.Unpremul);
+        for (int y = 0; y < h; y++)
+            for (int x = 0; x < w; x++) bmp.SetPixel(x, y, new SKColor(200, 50, 50, alpha(x, y)));
+        return bmp;
+    }
+
+    [Fact]
+    public void A_tokens_outline_runs_through_the_centres_of_its_fully_opaque_pixels_as_the_game_cuts_it()
+    {
+        using var square = Picture(20, 10, (x, _) => (byte)(x < 10 ? 255 : 254));
+
+        var loop = Assert.Single(TokenOutline.Of(square, 0)!);
+
+        Assert.InRange(loop.Count, 4, 5);
+        Assert.Equal((0.025, 0.475), (loop.Min(p => p.X), loop.Max(p => p.X)));
+        Assert.Equal((0.05, 0.95), (loop.Min(p => p.Z), loop.Max(p => p.Z)));
+    }
+
+    [Fact]
+    public void A_tokens_outline_merges_points_closer_than_its_merge_distance_and_keeps_each_island()
+    {
+        using var round = Picture(64, 64, (x, y) => (byte)((x - 31.5) * (x - 31.5) + (y - 31.5) * (y - 31.5) < 900 ? 255 : 0));
+        using var two = Picture(40, 10, (x, _) => (byte)(x < 10 || x >= 30 ? 255 : 0));
+
+        int fine = TokenOutline.Of(round, 0)!.Single().Count, coarse = TokenOutline.Of(round, 15)!.Single().Count;
+
+        Assert.True(coarse < fine && coarse >= 3, $"{coarse} points merged from {fine}");
+        Assert.Equal(2, TokenOutline.Of(two, 2)!.Count);
+    }
+
+    [Fact]
+    public void A_token_carries_the_games_outline_of_its_picture_cut_at_its_own_merge_distance()
+    {
+        var cfg = TempConfig();
+        LocalPicture(cfg, "http://a/round.png", 64, 64, (x, y) => (x - 31.5) * (x - 31.5) + (y - 31.5) * (y - 31.5) < 900 ? SKColors.Red : SKColors.Transparent);
+        var rep = new Report();
+        var defs = new DefFactory(cfg, new AssetStore(cfg, rep), rep);
+        var pack = new PackOut(cfg.Output, "t", "T", "t", null);
+        JsonObject Token(double merge) => Obj("Custom_Token", "", 1, new JsonObject
+        {
+            ["CustomImage"] = new JsonObject { ["ImageURL"] = "http://a/round.png", ["CustomToken"] = new JsonObject { ["Thickness"] = 0.2, ["MergeDistancePixels"] = merge } },
+        });
+
+        var usual = defs.DefFor(new ModuleObj(Token(15)), pack)!.Def;
+        var fine = defs.DefFor(new ModuleObj(Token(1)), pack)!.Def;
+
+        Assert.NotEqual(usual.Id, fine.Id);
+        Assert.True(fine.Outline!.Single().Count > usual.Outline!.Single().Count);
+    }
+
     static byte[] TwoPagePdf(double w1, double h1, double w2, double h2)
     {
         var inv = System.Globalization.CultureInfo.InvariantCulture;

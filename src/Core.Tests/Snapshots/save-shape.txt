@@ -427,6 +427,7 @@ type List<DiceRoll> list of DiceRoll
 type List<DieFace> list of DieFace
 type List<HotkeyDef> list of HotkeyDef
 type List<LineDef> list of LineDef
+type List<List<Vec2>> list of List<Vec2>
 type List<MenuItemDef> list of MenuItemDef
 type List<PaletteDecal> list of PaletteDecal
 type List<PeerInfo> list of PeerInfo
@@ -585,6 +586,7 @@ type PieceDef object
   name: string
   nameBox: FaceBox
   normal: string
+  outline: List<List<Vec2>>
   pageOffset: int
   script: string
   scriptHash: string
@@ -652,6 +654,7 @@ type PieceStateDef object
   image: string
   mesh: string
   name: string
+  outline: List<List<Vec2>>
   script: string
   shape: string
   size: Size2?

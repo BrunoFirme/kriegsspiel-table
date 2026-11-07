@@ -43,6 +43,39 @@ public sealed class PieceArt
         return _walls[key] = SilhouetteWalls(mask, w, h, t);
     }
 
+    readonly Dictionary<(List<List<KTable.Core.Model.Vec2>> outline, float w, float h, float t), ArrayMesh?> _outlineWalls = new();
+
+    public ArrayMesh? Walls(List<List<KTable.Core.Model.Vec2>> outline, float w, float h, float t)
+    {
+        var key = (outline, w, h, t);
+        if (_outlineWalls.TryGetValue(key, out var m)) return m;
+        return _outlineWalls[key] = OutlineWalls(outline, w, h, t);
+    }
+
+    internal static ArrayMesh? OutlineWalls(List<List<KTable.Core.Model.Vec2>> outline, float w, float h, float t)
+    {
+        const int Fewest = 3;
+        var st = new SurfaceTool();
+        st.Begin(Mesh.PrimitiveType.Triangles);
+        int quads = 0;
+        foreach (var loop in outline.Where(l => l.Count >= Fewest))
+        {
+            Vector3 P(KTable.Core.Model.Vec2 g, float y) => new(((float)g.X - 0.5f) * w, y, ((float)g.Z - 0.5f) * h);
+            for (int i = 0; i < loop.Count; i++)
+            {
+                var a = loop[i];
+                var b = loop[(i + 1) % loop.Count];
+                foreach (var v in new[] { P(a, 0), P(b, 0), P(b, t), P(a, 0), P(b, t), P(a, t) }) st.AddVertex(v);
+                quads++;
+            }
+        }
+        if (quads == 0) return null;
+        st.GenerateNormals();
+        var mesh = new ArrayMesh();
+        st.Commit(mesh);
+        return mesh;
+    }
+
     internal static ArrayMesh? SilhouetteWalls(AlphaMask mask, float w, float h, float t)
     {
         const int N = AlphaMask.N;

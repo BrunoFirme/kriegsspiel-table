@@ -80,6 +80,7 @@ public sealed class PieceStateDef
 {
     public string Name { get; set; } = "";
     public string? Shape { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<List<Vec2>>? Outline { get; set; }
     public string? Image { get; set; }
     public string? Back { get; set; }
     public string? Mesh { get; set; }
@@ -181,6 +182,7 @@ public sealed class PieceDef : IJsonOnDeserialized
     public string? Mesh { get; set; }
     public string? Texture { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? Normal { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<List<Vec2>>? Outline { get; set; }
     public string? AddOnMesh { get; set; }
     public string? AddOnTexture { get; set; }
     public Size2 Size { get; set; } = new(1, 1);
