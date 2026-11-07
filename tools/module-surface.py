@@ -1,4 +1,5 @@
 import argparse
+import glob
 import json
 import os
 import re
@@ -12,7 +13,7 @@ ROOT = os.path.dirname(HERE)
 SURFACE = os.path.join(HERE, "surface")
 API = os.path.join(SURFACE, "module-api.json")
 DECISIONS = os.path.join(SURFACE, "decisions.json")
-AUDITED = os.path.join(SURFACE, "audited.json")
+AUDITED = os.path.join(SURFACE, "audited*.json")
 LEDGER_MD = os.path.join(SURFACE, "ledger.md")
 LEDGER_JSON = os.path.join(SURFACE, "ledger.json")
 TRANSLATOR = os.path.join(ROOT, "src", "Server", "Scripting", "Translate", "ModuleTranslator.cs")
@@ -483,7 +484,10 @@ def main():
     a = p.parse_args()
     api = Api(load_json(API, {"object": {}, "global": {}, "namespaces": {}, "events": [], "save": {}}))
     decided = load_json(DECISIONS, {})
-    audited = load_json(AUDITED, {})
+    audited = defaultdict(dict)
+    for path in sorted(glob.glob(AUDITED)):
+        for area, rows in load_json(path, {}).items():
+            audited[area].update(rows)
     workshop = a.workshop or os.path.join(os.path.expanduser("~"), "OneDrive", "Documentos", "My Games", "Tabletop Simulator", "Mods", "Workshop")
     files = [os.path.join(workshop, f) for f in sorted(os.listdir(workshop))] if os.path.isdir(workshop) else []
     files += [s for s in (a.saves or "").split(",") if s]
