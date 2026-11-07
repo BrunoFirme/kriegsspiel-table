@@ -9,7 +9,16 @@ public sealed partial class DefFactory
     public const double CardWidth = 2.1437, CardHeight = 3.0625, CardThickness = 0.0272;
     public const double CheckerAcross = 1.3428, CheckerThickness = 0.2505;
     public const double DieAcross = 0.6604;
-    const int RoundedRectangleCard = 0;
+    const int RoundedHexCard = 2, HexCard = 3;
+    static readonly string[] CardShapes = { "rounded", "box", "hex", "hex", "circle" };
+
+    double CardWidthOf(ModuleObj.CardSheet s)
+    {
+        const double CardStretch = 1.4286;
+        if (s.Type is RoundedHexCard or HexCard) return Math.Round(CardWidth * CardStretch, 4);
+        if (Entry(s.FaceUrl) is not { W: > 0, H: > 0 } e) return CardWidth;
+        return Math.Round(CardWidth * CardStretch * (e.W / (double)s.Across) / (e.H / (double)s.Down), 4);
+    }
     const double FaceMatch = 0.9;
     const int DiceType = 2, CoinType = 3;
 
@@ -129,8 +138,8 @@ public sealed partial class DefFactory
         var s = b.Sheet!;
         def.Image = CardCell(pack, s.FaceUrl, s, b.SheetCell, where) ?? Placeholder(pack);
         def.Back = s.BackUrl == null ? null : s.UniqueBack ? CardCell(pack, s.BackUrl, s, b.SheetCell, where) : Asset(pack, s.BackUrl, "image", where);
-        def.Shape = "rounded";
-        if (s.Type != RoundedRectangleCard) _rep.Note($"The card '{b.Nickname}' ({b.Guid}) has card shape {s.Type}, drawn here as a rounded rectangle.");
+        def.Shape = CardShapes.ElementAtOrDefault(s.Type) ?? "rounded";
+        if (s.Type == RoundedHexCard) _rep.Note($"The card '{b.Nickname}' ({b.Guid}) is a hex with rounded corners, drawn here as a hex.");
         def.Tags = def.Tags.Where(t => t != "block").Append("card").Distinct().ToList();
         if (def.Name == "Piece") def.Name = "Card";
     }

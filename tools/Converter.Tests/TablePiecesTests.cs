@@ -42,7 +42,7 @@ public sealed partial class ConverterTests
 
         Assert.Equal((SKColors.Magenta, SKColors.Red), (Middle(pack, sixth.Image!), Middle(pack, first.Image!)));
         Assert.Equal(SKColors.Gray, Middle(pack, sixth.Back!));
-        Assert.Equal((DefFactory.CardWidth, DefFactory.CardHeight, "rounded"), (sixth.Size.W, sixth.Size.H, sixth.Shape));
+        Assert.Equal((3.0625, DefFactory.CardHeight, "rounded"), (sixth.Size.W, sixth.Size.H, sixth.Shape));
         Assert.Contains("card", sixth.Tags);
         Assert.Equal(("Hood", "Card"), (sixth.Name, first.Name));
         Assert.NotEqual(sixth.Id, first.Id);

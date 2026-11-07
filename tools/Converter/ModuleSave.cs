@@ -192,15 +192,20 @@ public sealed class ModuleObj
             foreach (var (k, v) in deck)
             {
                 if (!int.TryParse(k, out var id) || v is not JsonObject s || Blank(S(s["FaceURL"])) is not { } face) continue;
-                sheets[id] = new CardSheet(face, Blank(S(s["BackURL"])), Math.Max(1, I(s, "NumWidth")), Math.Max(1, I(s, "NumHeight")),
-                    ModuleValues.Flag(s["UniqueBack"], false), I(s, "Type"));
+                var back = Blank(S(s["BackURL"]));
+                bool unique = ModuleValues.Flag(s["UniqueBack"], false) || (back ?? "").EndsWith(UniqueMark, StringComparison.Ordinal);
+                sheets[id] = new CardSheet(face, back, Math.Max(1, ModuleValues.Whole(s["NumWidth"], SheetAcross)), Math.Max(1, ModuleValues.Whole(s["NumHeight"], SheetDown)),
+                    unique, I(s, "Type"));
             }
             return sheets;
         }
     }
 
+    const int SheetAcross = 10, SheetDown = 7;
+    const string UniqueMark = "{Unique}";
+
     public CardSheet? Sheet => CardSheets.GetValueOrDefault(CardId / CardsPerSheet);
-    public int SheetCell => CardId % CardsPerSheet;
+    public int SheetCell => Sheet is { } s ? Math.Clamp(CardId % CardsPerSheet, 0, s.Across * s.Down - 1) : CardId % CardsPerSheet;
     const int CardsPerSheet = 100;
 
     public sealed record Face(string Value, double RotX, double RotY, double RotZ);

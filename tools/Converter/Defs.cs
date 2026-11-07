@@ -177,6 +177,7 @@ public sealed partial class DefFactory
             return new Size2(mb.ex, mb.ez * ratio);
         }
         if (Boxes.For(o) is { } box) return new Size2(box.Size.W, box.Size.H * ratio);
+        if (o.IsCard && o.Sheet is { } sheet) return new Size2(CardWidthOf(sheet), CardHeight * ratio);
         if (o.Name == Figurine) return FigurineSize(o, ratio);
         if (o.DieSides is var n and not (0 or PictureD6)) return new Size2(TemplateDie(n).Size[0], TemplateDie(n).Size[2] * ratio);
         if (o.Name == "Custom_Board") return Mul(new Size2(b.CustomBoard * (o.WidthScale > 0 ? o.WidthScale : aspect), b.CustomBoard * ratio), BoardGrowth);

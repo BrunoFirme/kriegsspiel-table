@@ -215,6 +215,42 @@ public sealed class SaveFieldTests : ConverterHarness
         Assert.Equal("#FF000080", one.Lettering.Color);
     }
 
+    [Theory]
+    [InlineData(0, 10, 7, 2.1437, "rounded")]
+    [InlineData(1, 10, 7, 2.1437, "box")]
+    [InlineData(3, 10, 7, 3.0625, "hex")]
+    [InlineData(4, 10, 7, 2.1437, "circle")]
+    [InlineData(0, 5, 7, 4.2875, "rounded")]
+    public void A_card_takes_its_cells_shape_at_the_game_s_card_height_and_the_outline_its_card_type_names(int type, int across, int down, double width, string shape)
+    {
+        var cfg = TempConfig();
+        LocalPicture(cfg, "http://a/sheet.png", 700, 700, (_, _) => SKColors.White);
+        var rep = new Report();
+        var defs = new DefFactory(cfg, new AssetStore(cfg, rep), rep);
+        var pack = new PackOut(cfg.Output, "t", "T", "t", null);
+        var card = Obj("CardCustom", "", 1, new JsonObject
+        {
+            ["CardID"] = 100,
+            ["CustomDeck"] = new JsonObject { ["1"] = new JsonObject { ["FaceURL"] = "http://a/sheet.png", ["BackURL"] = "", ["NumWidth"] = across, ["NumHeight"] = down, ["Type"] = type } },
+        });
+
+        var def = defs.DefFor(new ModuleObj(card), pack)!.Def;
+
+        Assert.Equal((width, DefFactory.CardHeight, shape), (Math.Round(def.Size.W, 4), def.Size.H, def.Shape));
+    }
+
+    [Fact]
+    public void A_card_sheet_saved_without_its_size_is_ten_by_seven_a_card_past_the_sheet_is_its_last_cell_and_a_back_marked_unique_is_cut_per_card()
+    {
+        var o = new ModuleObj(new JsonObject
+        {
+            ["Name"] = "CardCustom", ["CardID"] = 199,
+            ["CustomDeck"] = new JsonObject { ["1"] = new JsonObject { ["FaceURL"] = "http://a/f.png", ["BackURL"] = "http://a/b.png{Unique}" } },
+        });
+
+        Assert.Equal((10, 7, true, 69), (o.Sheet!.Across, o.Sheet.Down, o.Sheet.UniqueBack, o.SheetCell));
+    }
+
     static byte[] TwoPagePdf(double w1, double h1, double w2, double h2)
     {
         var inv = System.Globalization.CultureInfo.InvariantCulture;
