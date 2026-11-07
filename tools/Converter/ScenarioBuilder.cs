@@ -549,8 +549,8 @@ public sealed partial class ScenarioBuilder
             Pos = new Vec2(Math.Round(o.PosX, 4), Math.Round(o.PosZ, 4)), RotDeg = Facing(def, o.Heading),
             State = def.Faces.Count > 1 ? 0 : Math.Min(r.State, Math.Max(0, def.States.Count - 1)),
             Face = def.Faces.Count > 1 ? Math.Clamp(r.State, 0, def.Faces.Count - 1) : -1,
-            Counters = counters, Text = text, Label = o.Nickname.Length > 0 ? o.Nickname : null, Scale = scale,
-            Note = o.Description.Trim().Length > 0 ? o.Description.Trim() : null,
+            Counters = counters, Text = text, Label = o.RawNickname.Length > 0 ? o.RawNickname : null, Scale = scale,
+            Note = o.Description.Length > 0 ? o.Description : null,
             Guid = o.Guid.Length > 0 ? o.Guid : null,
             Tags = o.Tags, Memo = _defs.RewriteUrls(o.Memo, extras, $"{layer.Name} {o.Name} '{o.Nickname}' {o.Guid} memo"),
             Locked = parent == null && o.Locked, FaceDown = o.Flipped && def.Kind != "model" && def.Back != null, NotSticky = !o.Sticky,
@@ -560,9 +560,10 @@ public sealed partial class ScenarioBuilder
             Lettering = r.Lettering,
             StateGuids = StateGuidsOf(o, def),
         };
+        if (lua.Trim().Length > 0 || o.LuaState.Length > 0)
+            inst.ScriptState = _defs.RewriteUrls(o.LuaState, extras, $"{layer.Name} {o.Name} '{o.Nickname}' {o.Guid} script state");
         if (lua.Trim().Length > 0)
         {
-            inst.ScriptState = _defs.RewriteUrls(o.LuaState, extras, $"{layer.Name} {o.Name} '{o.Nickname}' {o.Guid} script state");
             if (def.ScriptHash != DefFactory.Hash8(lua))
             {
                 var tr = _defs.Translate(lua, extras, $"{layer.Name} {o.Name} '{o.Nickname}' {o.Guid}");

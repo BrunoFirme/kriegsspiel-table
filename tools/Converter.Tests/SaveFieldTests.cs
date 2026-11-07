@@ -251,6 +251,25 @@ public sealed class SaveFieldTests : ConverterHarness
         Assert.Equal((10, 7, true, 69), (o.Sheet!.Across, o.Sheet.Down, o.Sheet.UniqueBack, o.SheetCell));
     }
 
+    [Fact]
+    public void A_piece_keeps_its_name_and_description_as_saved_its_script_state_without_a_script_and_one_tag_per_spelling_the_game_counts_as_one()
+    {
+        TempConfig();
+        var block = Obj("BlockSquare", " 1st Brigade ", 1, new JsonObject
+        {
+            ["Description"] = "  Holds the ford ", ["LuaScriptState"] = "{\"n\":3}", ["Tags"] = new JsonArray("Red Army", "red_army", "Guard"),
+        });
+        var module = Module("named", block);
+        var main = typeof(Config).Assembly.EntryPoint!;
+
+        var code = (int)main.Invoke(null, new object[] { new[] { "import", module, "--config", Path.Combine(_root, "converter.json"), "--out", Packages } })!;
+
+        Assert.Equal(0, code);
+        var piece = Assert.Single(Json.Load<Scenario>(Path.Combine(Packages, "scenarios", "named", "scenario.json")).UmpireBoard);
+        Assert.Equal((" 1st Brigade ", "  Holds the ford ", "{\"n\":3}"), (piece.Label, piece.Note, piece.ScriptState));
+        Assert.Equal(new[] { "Red Army", "Guard" }, piece.Tags);
+    }
+
     static byte[] TwoPagePdf(double w1, double h1, double w2, double h2)
     {
         var inv = System.Globalization.CultureInfo.InvariantCulture;

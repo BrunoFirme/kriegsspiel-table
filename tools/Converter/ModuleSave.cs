@@ -9,7 +9,8 @@ public sealed class ModuleObj
     public ModuleObj(JsonObject j) { J = j; }
 
     public string Name => S(J["Name"]) ?? "";
-    public string Nickname => (S(J["Nickname"]) ?? "").Trim();
+    public string Nickname => RawNickname.Trim();
+    public string RawNickname => S(J["Nickname"]) ?? "";
     public string Guid => S(J["GUID"]) ?? "";
     public bool Locked => ModuleValues.Flag(J["Locked"], false);
     public string Lua => S(J["LuaScript"]) ?? "";
@@ -28,7 +29,9 @@ public sealed class ModuleObj
     public static List<(string Name, string Url)> UiAssetsOf(JsonNode? node) => (node as JsonArray)?.OfType<JsonObject>()
         .Where(a => I(a, "Type") == 0 && Blank(S(a["Name"])) != null && Blank(S(a["URL"])) != null)
         .Select(a => (Blank(S(a["Name"]))!, Blank(S(a["URL"]))!)).ToList() ?? new();
-    public List<string> Tags => (J["Tags"] as JsonArray)?.Select(t => S(t) ?? "").Where(t => t.Length > 0).ToList() ?? new();
+    public List<string> Tags => (J["Tags"] as JsonArray)?.Select(t => S(t) ?? "").Where(t => t.Length > 0).DistinctBy(TagKey).ToList() ?? new();
+
+    public static string TagKey(string tag) => tag.ToLowerInvariant().Replace(" ", "_", StringComparison.Ordinal);
 
     JsonObject? T => J["Transform"] as JsonObject;
     public double PosX => D(T, "posX");
