@@ -509,11 +509,7 @@ internal sealed partial class PieceHandles(ScriptHost host)
             case "set_box_selected": return Option(id, PieceOptions.NotBoxSelected, inverted: true);
             case "set_measures_moves": return Option(id, PieceOptions.MeasuresMoves, inverted: false);
             case "set_interactable": return Option(id, PieceOptions.NotInteractable, inverted: true);
-            case "set_highlight": return Fn(a =>
-            {
-                host.Emit(new SetHighlight { Layer = L, Id = id, Color = Arg(a, 0).IsNil() ? null : ColorOf(Arg(a, 0)) });
-                return DynValue.Nil;
-            });
+            case "set_highlight": return Fn(a => Highlight(id, Arg(a, 0)));
             case "set_effect_on": return Option(id, PieceOptions.EffectOff, inverted: true);
             case "set_sticky": return Fn(a =>
             {
@@ -530,6 +526,12 @@ internal sealed partial class PieceHandles(ScriptHost host)
             case "delete": return Fn(_ => { host.Emit(new DeletePiece { Layer = L, Id = id }); return DynValue.Nil; });
             default: return null;
         }
+    }
+
+    DynValue Highlight(string id, DynValue color)
+    {
+        host.Emit(new SetHighlight { Layer = Layers.Umpire, Id = id, Color = color.IsNil() ? null : ColorOf(color) });
+        return DynValue.Nil;
     }
 
     DynValue StowedList(PieceInstance holder)
