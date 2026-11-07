@@ -132,7 +132,8 @@
   "onRandomize": "DiceScriptTests.A_roll_an_umpire_makes_reaches_the_die_s_script_and_the_global_one",
   "onObjectLoopingEffect": "BookNotesScriptTests.An_effect_a_module_script_or_an_umpire_stops_and_starts_answers_as_a_looping_effect",
   "onObjectPageChange": "BookNotesScriptTests.A_module_script_turns_a_book_by_its_printed_page_numbers_and_hears_the_page_turn",
-  "onPageChange": "BookNotesScriptTests.A_module_script_turns_a_book_by_its_printed_page_numbers_and_hears_the_page_turn"
+  "onPageChange": "BookNotesScriptTests.A_module_script_turns_a_book_by_its_printed_page_numbers_and_hears_the_page_turn",
+  "onScriptingButtonUp": "ModuleEventTests.A_scripting_button_released_calls_the_up_function_with_the_index_and_the_colour"
  },
  "namespaces": {
   "JSON.encode": "ModuleObjectCallTests.Json_writes_sorted_keys_empty_tables_as_arrays_text_as_it_is_and_reads_past_trailing_text",

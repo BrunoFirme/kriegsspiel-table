@@ -106,6 +106,19 @@ public class ModuleEventTests
     }
 
     [Fact]
+    public void A_scripting_button_released_calls_the_up_function_with_the_index_and_the_colour()
+    {
+        using var t = new Table();
+        Load(t, "", "function onScriptingButtonUp(index, color) broadcastToAll('up ' .. index .. ' ' .. color) end", global: true);
+        var sb2 = t.Server.State.Hotkeys.FindIndex(h => h.Label == "Scripting button 2") + 1;
+        Assert.True(sb2 > 0);
+        t.Server.Handle(Table.Ump3, new Hotkey { Index = sb2, Layer = U, Piece = P, Up = true });
+        Assert.Contains(Flat(t.Server.Log).OfType<Say>(), x => x.Text == "up 2 Red");
+    }
+
+    static IEnumerable<Command> Flat(IEnumerable<Command> log) => log.SelectMany(c => c is Batch b ? Flat(b.Items) : new[] { c });
+
+    [Fact]
     public void A_save_answer_that_is_not_text_clears_the_saved_state_and_nothing_keeps_it()
     {
         Assert.Equal("", Saved("function onSave() return 5 end"));
