@@ -726,6 +726,25 @@ public class ModuleObjectCallTests
     }
 
     [Fact]
+    public void A_smooth_move_is_shown_gliding_on_every_screen_and_lands_on_the_step_the_shared_glide_does()
+    {
+        using var t = new Table();
+        Run(t, "function onLoad() getObjectFromGUID('p-000003').setPositionSmooth({ 6, 0, 0 }) end");
+        var shown = Assert.Single(Flat(t.Server.Log).OfType<GlidePiece>());
+        Assert.Equal((Marker, (Vec2?)new Vec2(6, 0), (double?)null), (shown.Id, shown.To, shown.Rot));
+        var glide = new KTable.Core.Glide();
+        glide.MoveTo(new Vec2(1, 0), new Vec2(6, 0));
+        while (!glide.Done) glide.Advance();
+        int frame = 0;
+        while (t.Server.State.Find(U, Marker)!.Pos != new Vec2(6, 0) && frame < KTable.Core.Glide.MostSteps)
+        {
+            frame++;
+            t.Server.Scripts.Tick(frame * KTable.Core.Glide.Step);
+        }
+        Assert.InRange(frame, glide.Steps, glide.Steps + 2);
+    }
+
+    [Fact]
     public void Matching_tags_a_removed_attachment_the_global_menu_clear_and_an_outside_message_answer_as_the_tabletop_does()
     {
         using var t = new Table();

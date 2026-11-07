@@ -56,6 +56,7 @@ internal sealed partial class PieceHandles
         "set_book_highlight" => Fn(a => BookHighlight(id, Arg(a, 0))),
         "show_contents" => Fn(a => ShowContents(id, p.HoldsPieces(def) || def?.Tags.Contains("bag") == true, Arg(a, 0), Arg(a, 1))),
         "play_effect" => Fn(a => PlayOnce(id, def, Arg(a, 0))),
+        "show_glide" => Fn(a => ShowGlide(id, Arg(a, 0))),
         _ => null,
     };
 
@@ -95,6 +96,17 @@ internal sealed partial class PieceHandles
         if (def?.Tags.Contains("effect") != true) return DynValue.False;
         var n = index.CastToNumber() is { } v && double.IsFinite(v) ? (int)Math.Clamp(v, 0, int.MaxValue) : 0;
         host.Emit(new PlayEffect { Layer = Layers.Umpire, Id = id, Index = n });
+        return DynValue.True;
+    }
+
+    DynValue ShowGlide(string id, DynValue spec)
+    {
+        if (spec.Type != DataType.Table) return DynValue.False;
+        double? x = spec.Table.Get("x").CastToNumber(), z = spec.Table.Get("z").CastToNumber(), rot = spec.Table.Get("rot").CastToNumber();
+        Vec2? to = x is { } gx && z is { } gz && double.IsFinite(gx) && double.IsFinite(gz) ? new Vec2(gx, gz) : null;
+        if (rot is { } r && !double.IsFinite(r)) rot = null;
+        if (to == null && rot == null) return DynValue.False;
+        host.Emit(new GlidePiece { Layer = Layers.Umpire, Id = id, To = to, Rot = rot, Fast = spec.Table.Get("fast").CastToBool() });
         return DynValue.True;
     }
 

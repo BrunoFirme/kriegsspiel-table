@@ -101,6 +101,7 @@ type Command abstract
   derived EditWidget = EditWidget
   derived EraseStroke = EraseStroke
   derived FlipPiece = FlipPiece
+  derived GlidePiece = GlidePiece
   derived HoldPiece = HoldPiece
   derived Hotkey = Hotkey
   derived LoadSave = LoadSave
@@ -351,6 +352,16 @@ type GetSnapshot object
 type GetTurn object
   index: int
 type GetTurns object
+type GlidePiece object
+  actor: long
+  at: long
+  fast: bool
+  id: string
+  layer: string
+  rot: double?
+  seq: long
+  to: Vec2?
+  undoOf: long
 type GridDef object
   color: string
   kind: string

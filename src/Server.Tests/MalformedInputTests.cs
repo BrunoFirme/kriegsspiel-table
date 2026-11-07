@@ -520,6 +520,7 @@ public class MalformedInputTests
     [InlineData("SetHighlight")]
     [InlineData("SetBookHighlight")]
     [InlineData("PlayEffect")]
+    [InlineData("GlidePiece")]
     [InlineData("SetPieceOption")]
     [InlineData("SetPointerRule")]
     [InlineData("SetBriefing")]

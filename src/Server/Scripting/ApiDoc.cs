@@ -253,6 +253,13 @@ public static partial class ApiDoc
     P("changes", "table?", "{ text =, size =, color = }, each optional.");
     See("self.lettering");
 
+    M("piece", "show_glide{ x, z, rot, fast }", "Shows it gliding towards a point or a heading on every screen, pulled and slowed as a module's smooth move is; the piece itself stays where it is until set_pos or set_rot puts it there.", "setPositionSmooth");
+    O("x", "number", "Where it glides to, with z; leave both out to only turn.");
+    O("z", "number", "Where it glides to, with x.");
+    O("rot", "number", "The heading it turns to, in degrees; leave it out to keep its heading.");
+    O("fast", "boolean", "true pulls it ten times as hard, as a module's fast smooth move does.");
+    R("false when neither a point nor a heading is given.");
+
     M("piece", "play_effect(index)", "Plays an effect once on every screen, one round of it, whether it is running or not; false for a piece that is not an effect.", "AssetBundle.playTriggerEffect");
     O("index", "number", "Which one-off it is, from 0, handed on to on_burst; 0 when left out.");
     See("self.set_effect_on");

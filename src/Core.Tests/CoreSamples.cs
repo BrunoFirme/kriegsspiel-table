@@ -73,6 +73,7 @@ public static class CoreSamples
         yield return new SetBookHighlight { Layer = layer, Id = "p-000001", Box = [0.1, 0.2, 0.5, 0.6] };
         yield return new PlayEffect { Layer = layer, Id = "p-000001", Index = 1 };
         yield return new ShowContents { Layer = layer, Id = "p-000001", To = "p:7", Most = 2 };
+        yield return new GlidePiece { Layer = layer, Id = "p-000001", To = new Vec2(2, 3), Rot = 90, Fast = true };
     }
 
     public static IEnumerable<Command> AllCommands()

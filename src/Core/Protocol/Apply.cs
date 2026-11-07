@@ -85,14 +85,13 @@ public static class StateMachine
             case PickGlobalMenuItem pgm:
                 return pgm.Index >= 1 && pgm.Index <= g.MenuItems.Count ? null : "no such menu row";
             case NumberTyped nt: return Present(g, nt.Layer, nt.Id);
-            case SelectPiece:
-                return null;
+            case SelectPiece: return null;
             case ShowContents sc: return Present(g, sc.Layer, sc.Id);
             case PlayEffect pe: return Present(g, pe.Layer, pe.Id);
+            case GlidePiece gp: return Present(g, gp.Layer, gp.Id);
             case PickMenuItem pm: return Present(g, pm.Layer, pm.Id);
             case HoldPiece hp: return Present(g, hp.Layer, hp.Id);
-            case Say:
-                return null;
+            case Say: return null;
             case SetUi or SetUiAttributes or SetUiPictures: return ApplyUi(g, c, ref inverse);
             case UiEvent ue: return ApplyUiEvent(g, ue);
             case ShowDialog or DialogResult:

@@ -48,6 +48,12 @@
 ---@class GlobalPrintOptions
 ---@field ..? any The values to write; each is written as tostring would.
 
+---@class PieceShowglideSpec
+---@field x? number Where it glides to, with z; leave both out to only turn.
+---@field z? number Where it glides to, with x.
+---@field rot? number The heading it turns to, in degrees; leave it out to keep its heading.
+---@field fast? boolean true pulls it ten times as hard, as a module's fast smooth move does.
+
 ---@class PieceButtonSpec
 ---@field face? "front"|"back" The face it is drawn on. Default "front".
 ---@field x? number Centre, piece units right of the piece's centre. Default 0.
@@ -270,6 +276,10 @@ function Piece.set_face_picture(link) end
 ---Changes the text drawn on the piece: any of text, size and color; nil takes the lettering away.
 ---@param changes table|nil { text =, size =, color = }, each optional.
 function Piece.set_lettering(changes) end
+
+---Shows it gliding towards a point or a heading on every screen, pulled and slowed as a module's smooth move is; the piece itself stays where it is until set_pos or set_rot puts it there.
+---@param spec PieceShowglideSpec
+function Piece.show_glide(spec) end
 
 ---Plays an effect once on every screen, one round of it, whether it is running or not; false for a piece that is not an effect.
 ---@param index? number Which one-off it is, from 0, handed on to on_burst; 0 when left out.

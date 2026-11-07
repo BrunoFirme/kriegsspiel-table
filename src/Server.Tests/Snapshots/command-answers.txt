@@ -17,6 +17,7 @@ Draw layer | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same 
 EditWidget layer | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone Id | apply refused:no_such_widget | undo-reloads Id
 EraseStroke layer | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone - | apply refused:no_such_stroke | undo-reloads -
 FlipPiece layer | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone Id | apply ok inverse:FlipPiece | undo-reloads -
+GlidePiece layer | allowed O:n U:n L:n H:n | in-batch O:n U:n L:n H:n | observer same | zone Id | apply ok inverse:none | undo-reloads -
 HoldPiece layer | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone Id | apply ok inverse:none | undo-reloads -
 Hotkey table | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone - | apply refused:no_such_hotkey | undo-reloads -
 LoadSave table | allowed O:n U:n L:n H:n | in-batch O:n U:n L:n H:n | observer changed:{"type":"LoadSave","name":"","seq":0,"actor":0,"at":0,"undoOf":0} | zone - | apply refused:nothing_to_load | undo-reloads -

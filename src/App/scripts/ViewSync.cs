@@ -187,6 +187,9 @@ sealed class ViewSync
             case SelectPiece sp:
                 if (sp.To == $"p:{s.Me.PeerId}" && (sp.Selected ? _picked.Add(sp.Id) : _picked.Remove(sp.Id))) _c.NotifySelectionChanged();
                 return true;
+            case GlidePiece gp:
+                if (pieces.TryGet(gp.Layer, gp.Id, out var gn)) gn.StartGlide(gp);
+                return true;
             case PlayEffect pe:
                 if (pieces.TryGet(pe.Layer, pe.Id, out var fx)) fx.PlayOnce();
                 return true;
@@ -205,6 +208,7 @@ sealed class ViewSync
                 return true;
             case LayerCommand lc:
                 if (lc is MovePiece mp) NoteMove(mp);
+                if (lc is MovePiece mv && pieces.TryGet(mv.Layer, mv.Id, out var landed)) landed.StopGlide();
                 SyncAfter(lc.Layer, TouchedIds(lc));
                 if (_batch != null) _batch.Arrived = true;
                 else _clip.SelectArrived();

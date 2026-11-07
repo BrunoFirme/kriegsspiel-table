@@ -879,6 +879,7 @@ Each call is a change every umpire sees, taken back with Ctrl+Z by the umpire wh
 | [`self.set_faces`](#selfset_faces) | Gives this die sides of its own; nil gives it back its kind's. |
 | [`self.set_face_picture`](#selfset_face_picture) | Shows a picture on the piece's face in place of its kind's: a web link is fetched first; nil puts the kind's back. |
 | [`self.set_lettering`](#selfset_lettering) | Changes the text drawn on the piece: any of text, size and color; nil takes the lettering away. |
+| [`self.show_glide`](#selfshow_glide) | Shows it gliding towards a point or a heading on every screen, pulled and slowed as a module's smooth move is; the piece itself stays where it is until set_pos or set_rot puts it there. |
 | [`self.play_effect`](#selfplay_effect) | Plays an effect once on every screen, one round of it, whether it is running or not; false for a piece that is not an effect. |
 | [`self.set_effect_on`](#selfset_effect_on) | Starts or stops an effect. |
 | [`self.set_worth`](#selfset_worth) | Sets what the piece counts for, and optionally the groups it adds up with. |
@@ -1244,6 +1245,25 @@ Changes the text drawn on the piece: any of text, size and color; nil takes the 
 | `changes` | `table?` | { text =, size =, color = }, each optional. |
 
 **Module call** `TextTool.setValue` · **See also** [`self.lettering`](#selflettering)
+
+### `self.show_glide`
+
+```lua
+self.show_glide{ x, z, rot, fast }
+```
+
+Shows it gliding towards a point or a heading on every screen, pulled and slowed as a module's smooth move is; the piece itself stays where it is until set_pos or set_rot puts it there.
+
+| Field | Type | Description |
+|---|---|---|
+| `x` | `number` | _Optional._ Where it glides to, with z; leave both out to only turn. |
+| `z` | `number` | _Optional._ Where it glides to, with x. |
+| `rot` | `number` | _Optional._ The heading it turns to, in degrees; leave it out to keep its heading. |
+| `fast` | `boolean` | _Optional._ true pulls it ten times as hard, as a module's fast smooth move does. |
+
+**Returns**: false when neither a point nor a heading is given.
+
+**Module call** `setPositionSmooth`
 
 ### `self.play_effect`
 
@@ -3716,6 +3736,7 @@ The converter rewrites a module's scripts into these calls by rule; this is the 
 | `setMemo` | [`self.set_memo`](#selfset_memo) |
 | `setName` | [`self.set_name`](#selfset_name) |
 | `setPosition` | [`self.set_pos`](#selfset_pos) |
+| `setPositionSmooth` | [`self.show_glide`](#selfshow_glide) |
 | `setRotation` | [`self.set_rot`](#selfset_rot) |
 | `setRotationValue` | [`self.set_value`](#selfset_value) |
 | `setRotationValues` | [`self.set_faces`](#selfset_faces) |

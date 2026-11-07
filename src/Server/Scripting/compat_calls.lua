@@ -460,6 +460,7 @@ function compat.glide(obj, to, turn_to, fast, after)
   end
   local fresh = gliding[obj.id] ~= g
   gliding[obj.id] = g
+  obj.show_glide({ x = g.at and g.to.x or nil, z = g.at and g.to.z or nil, rot = g.heading and g.goal or nil, fast = g.fast })
   if fresh then run(obj, g) end
 end
 function compat.gliding(obj) return gliding[obj.id] ~= nil end
