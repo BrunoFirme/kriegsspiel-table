@@ -120,7 +120,7 @@ public sealed class SaveFieldTests : ConverterHarness
         var (defs, pack) = Factory();
         var r = defs.DefFor(new ModuleObj(Obj(type, "", 1)), pack)!;
         using var mesh = typeof(DefFactory).Assembly.GetManifestResourceStream($"std.dice/assets/{r.Def.Mesh}.obj")!;
-        double drawn = DefFactory.DrawnRadius(new StreamReader(mesh).ReadToEnd(), r.Def.Size) * r.Fit;
+        double drawn = StockDice.DrawnRadius(new StreamReader(mesh).ReadToEnd(), r.Def.Size) * r.Fit;
 
         Assert.Equal(radius, drawn, 3);
     }
