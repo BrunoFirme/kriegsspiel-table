@@ -592,7 +592,7 @@ public sealed partial class GameServer
                     if (d.Physical && d.Results.Count == d.PieceIds.Count)
                         for (int i = 0; i < d.PieceIds.Count; i++) landed.TryAdd(d.PieceIds[i], d.Results[i]);
                     d.PieceIds = d.PieceIds.Where(id => State.Find(d.Layer, id) != null).Distinct().Take(50).ToList();
-                    int Faces(string id) => Math.Max(2, Store?.Def(State.Find(d.Layer, id)!.Def)?.States.Count ?? d.Sides);
+                    int Faces(string id) => State.Find(d.Layer, id) is { } die ? Math.Max(2, PieceInstance.FacesOf(Store?.Def(die.Def), die) is { Count: > 0 } f ? f.Count : d.Sides) : d.Sides;
                     int Result(string id) => State.Find(d.Layer, id)!.PhysicalRoll && landed.TryGetValue(id, out var r) && r >= 1 && r <= Faces(id) ? r : _rng.Next(1, Faces(id) + 1);
                     d.Results = d.PieceIds.Select(Result).ToList();
                     d.Count = d.PieceIds.Count;

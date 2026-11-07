@@ -14,6 +14,7 @@ public static class StateMachine
             case MovePiece m: return ApplyMove(g, m, ref inverse);
             case DeletePiece d: return ApplyDelete(g, d, ref inverse);
             case SetState st: return ApplySetState(g, st, ref inverse);
+            case TurnDie or SetDieFaces or SetWorth or SetFacePicture or SetLettering: return ApplyDie(g, c, ref inverse);
             case SetCounter sc: return ApplySetCounter(g, sc, ref inverse);
             case SetText t: return ApplySetText(g, t, ref inverse);
             case SetLabel l: return ApplySetLabel(g, l, ref inverse);
@@ -47,6 +48,7 @@ public static class StateMachine
             case RemoveSheet rs: return ApplyRemoveSheet(g, rs, ref inverse);
             case Draw dr: return ApplyDraw(g, dr, ref inverse);
             case EraseStroke er: return ApplyEraseStroke(g, er, ref inverse);
+            case StampDecal or RemoveDecal or SetDecalPalette: return ApplyDecals(g, c, ref inverse);
             case AddBoard ab: return ApplyAddBoard(g, ab, ref inverse);
             case RenameBoard nb: return ApplyRenameBoard(g, nb, ref inverse);
             case RemoveBoard rb: return ApplyRemoveBoard(g, rb, ref inverse);
@@ -90,8 +92,7 @@ public static class StateMachine
                 return g.Find(hp.Layer, hp.Id) == null ? "no such piece" : null;
             case Say:
                 return null;
-            case SetUi su: return ApplySetUi(g, su, ref inverse);
-            case SetUiAttributes sua: return ApplySetUiAttributes(g, sua, ref inverse);
+            case SetUi or SetUiAttributes or SetUiPictures: return ApplyUi(g, c, ref inverse);
             case UiEvent ue: return ApplyUiEvent(g, ue);
             case ShowDialog or DialogResult:
                 return null;
@@ -196,6 +197,27 @@ public static class StateMachine
         if (p == null) return "no such piece";
         inverse = new SetState { Layer = st.Layer, Id = st.Id, State = p.State };
         p.State = Math.Max(0, st.State);
+        if (p.StateGuids is { } guids && p.State < guids.Count && guids[p.State].Length > 0) p.Guid = guids[p.State];
+        return null;
+    }
+
+    static string? ApplyTurnDie(GameState g, TurnDie td, ref Command? inverse)
+    {
+        var p = g.Find(td.Layer, td.Id);
+        if (p == null) return "no such piece";
+        if (td.Face < 0) return "no such face";
+        inverse = new TurnDie { Layer = td.Layer, Id = td.Id, Face = p.ShownFace };
+        p.Face = td.Face;
+        return null;
+    }
+
+    static string? ApplySetDieFaces(GameState g, SetDieFaces sdf, ref Command? inverse)
+    {
+        var p = g.Find(sdf.Layer, sdf.Id);
+        if (p == null) return "no such piece";
+        if (sdf.Faces != null && sdf.Faces.Any(f => f == null || f.Up is not { Length: 3 } || f.Up.Any(x => !double.IsFinite(x)))) return "a face without a direction";
+        inverse = new SetDieFaces { Layer = sdf.Layer, Id = sdf.Id, Faces = p.Faces?.Select(f => f.Clone()).ToList() };
+        p.Faces = sdf.Faces?.Select(f => f.Clone()).ToList();
         return null;
     }
 
@@ -292,6 +314,22 @@ public static class StateMachine
                 inverse = new SetPieceOption { Layer = po.Layer, Id = po.Id, Name = po.Name, Value = p.Holds ?? false, Inherit = p.Holds == null };
                 p.Holds = po.Inherit ? null : po.Value;
                 return null;
+            case PieceOptions.NotSticky:
+                was = p.NotSticky;
+                p.NotSticky = po.Value;
+                break;
+            case PieceOptions.NotBoxSelected:
+                was = p.NotBoxSelected;
+                p.NotBoxSelected = po.Value;
+                break;
+            case PieceOptions.MeasuresMoves:
+                was = p.MeasuresMoves;
+                p.MeasuresMoves = po.Value;
+                break;
+            case PieceOptions.EffectOff:
+                was = p.EffectOff;
+                p.EffectOff = po.Value;
+                break;
             default: return "no such option: " + po.Name;
         }
         inverse = new SetPieceOption { Layer = po.Layer, Id = po.Id, Name = po.Name, Value = was };
@@ -584,6 +622,112 @@ public static class StateMachine
         return null;
     }
 
+    static string? ApplyDie(GameState g, Command c, ref Command? inverse) => c switch
+    {
+        TurnDie td => ApplyTurnDie(g, td, ref inverse),
+        SetDieFaces sdf => ApplySetDieFaces(g, sdf, ref inverse),
+        SetWorth sw => ApplySetWorth(g, sw, ref inverse),
+        SetFacePicture sfp => ApplySetFacePicture(g, sfp, ref inverse),
+        SetLettering sl => ApplySetLettering(g, sl, ref inverse),
+        _ => "unknown command",
+    };
+
+    static string? ApplySetLettering(GameState g, SetLettering sl, ref Command? inverse)
+    {
+        var p = g.Find(sl.Layer, sl.Id);
+        if (p == null) return "no such piece";
+        if (sl.Lettering is { } l && (!double.IsFinite(l.Size) || l.Size <= 0 || !double.IsFinite(l.UnitsPerPixel) || l.UnitsPerPixel <= 0)) return "lettering of no size";
+        inverse = new SetLettering { Layer = sl.Layer, Id = sl.Id, Lettering = p.Lettering?.Clone() };
+        p.Lettering = sl.Lettering?.Clone();
+        return null;
+    }
+
+    static string? ApplySetFacePicture(GameState g, SetFacePicture sfp, ref Command? inverse)
+    {
+        var p = g.Find(sfp.Layer, sfp.Id);
+        if (p == null) return "no such piece";
+        inverse = new SetFacePicture { Layer = sfp.Layer, Id = sfp.Id, Picture = p.FacePicture };
+        p.FacePicture = string.IsNullOrWhiteSpace(sfp.Picture) ? null : sfp.Picture;
+        return null;
+    }
+
+    static string? ApplySetWorth(GameState g, SetWorth sw, ref Command? inverse)
+    {
+        var p = g.Find(sw.Layer, sw.Id);
+        if (p == null) return "no such piece";
+        inverse = new SetWorth { Layer = sw.Layer, Id = sw.Id, Worth = p.Worth, Groups = p.WorthGroups };
+        p.Worth = sw.Worth;
+        p.WorthGroups = sw.Groups;
+        return null;
+    }
+
+    static string? ApplyUi(GameState g, Command c, ref Command? inverse) => c switch
+    {
+        SetUi su => ApplySetUi(g, su, ref inverse),
+        SetUiAttributes sua => ApplySetUiAttributes(g, sua, ref inverse),
+        SetUiPictures sup => ApplySetUiPictures(g, sup, ref inverse),
+        _ => "unknown command",
+    };
+
+    static string? ApplyDecals(GameState g, Command c, ref Command? inverse) => c switch
+    {
+        StampDecal st => ApplyStampDecal(g, st, ref inverse),
+        RemoveDecal rd => ApplyRemoveDecal(g, rd, ref inverse),
+        SetDecalPalette sp => ApplySetDecalPalette(g, sp, ref inverse),
+        _ => "unknown command",
+    };
+
+    static string? ApplyStampDecal(GameState g, StampDecal st, ref Command? inverse)
+    {
+        var d = st.Decal;
+        if (DecalProblem(d) is { } why) return why;
+        var l = g.DecalLayer(st.Layer);
+        if (l.Count >= PaletteDecal.MostOnTheTable) return $"the table carries at most {PaletteDecal.MostOnTheTable} decals";
+        if (string.IsNullOrEmpty(d.Id)) d.Id = g.NewId("dc");
+        if (l.Any(x => x.Id == d.Id)) return "a decal of that id is already there";
+        var c = d.Clone();
+        c.Name ??= "";
+        PutBack(l, c, st.Index);
+        BumpId(g, c.Id!);
+        inverse = new RemoveDecal { Layer = st.Layer, DecalId = c.Id! };
+        return null;
+    }
+
+    static string? ApplyRemoveDecal(GameState g, RemoveDecal rd, ref Command? inverse)
+    {
+        var l = g.DecalLayer(rd.Layer);
+        var d = l.FirstOrDefault(x => x.Id == rd.DecalId);
+        if (d == null) return "no such decal";
+        int at = l.IndexOf(d);
+        l.RemoveAt(at);
+        inverse = new StampDecal { Layer = rd.Layer, Decal = d, Index = at };
+        return null;
+    }
+
+    static string? ApplySetDecalPalette(GameState g, SetDecalPalette sp, ref Command? inverse)
+    {
+        if (sp.Entries == null || sp.Entries.Count > PaletteDecal.MostInAPalette) return $"a palette holds at most {PaletteDecal.MostInAPalette} decals";
+        foreach (var e in sp.Entries)
+            if (e == null || string.IsNullOrEmpty(e.Picture) || e.Picture.Length > LongestDecalText || (e.Name?.Length ?? 0) > LongestDecalText
+                || !double.IsFinite(e.Size) || e.Size < PaletteDecal.SmallestSize || e.Size > PaletteDecal.LargestSize)
+                return "a palette decal needs a picture and a size";
+        inverse = new SetDecalPalette { Entries = g.DecalPalette.Select(e => e.Clone()).ToList() };
+        g.DecalPalette = sp.Entries.Select(e => e.Clone()).ToList();
+        foreach (var e in g.DecalPalette) e.Name ??= "";
+        return null;
+    }
+
+    const int LongestDecalText = 256;
+
+    static string? DecalProblem(DecalDef? d)
+    {
+        if (d == null || string.IsNullOrEmpty(d.Picture) || d.Picture.Length > LongestDecalText || (d.Name?.Length ?? 0) > LongestDecalText) return "a decal needs a picture";
+        if (d.Face is not ("front" or "back")) return "a decal's face is front or back";
+        if (!double.IsFinite(d.X) || !double.IsFinite(d.Z) || !double.IsFinite(d.Rot) || !(d.W > 0) || !(d.H > 0) || !double.IsFinite(d.W) || !double.IsFinite(d.H))
+            return "a decal's place and size must be numbers, its size above 0";
+        return null;
+    }
+
     static string? ApplyAddBoard(GameState g, AddBoard ab, ref Command? inverse)
     {
         if (string.IsNullOrEmpty(ab.Id)) ab.Id = g.NewId("b");
@@ -633,7 +777,7 @@ public static class StateMachine
         if (g.Dice.Count > 500) g.Dice.RemoveAt(0);
         if (rd.Layer != null)
             for (int i = 0; i < rd.PieceIds.Count && i < rd.Results.Count; i++)
-                if (g.Find(rd.Layer, rd.PieceIds[i]) is { } die) die.State = Math.Max(0, rd.Results[i] - 1);
+                if (g.Find(rd.Layer, rd.PieceIds[i]) is { } die) die.Face = Math.Max(0, rd.Results[i] - 1);
         return null;
     }
 
@@ -752,12 +896,12 @@ public static class StateMachine
             case RollDice rd:
             {
                 var history = g.Dice.ToList();
-                var faces = rd.Layer == null ? new() : rd.PieceIds.Select(id => g.Find(rd.Layer, id)).Where(p => p != null).Select(p => (p!, p!.State)).ToList();
+                var faces = rd.Layer == null ? new() : rd.PieceIds.Select(id => g.Find(rd.Layer, id)).Where(p => p != null).Select(p => (p!, p!.Face)).ToList();
                 return () =>
                 {
                     g.Dice.Clear();
                     g.Dice.AddRange(history);
-                    foreach (var (p, s) in faces) p.State = s;
+                    foreach (var (p, f) in faces) p.Face = f;
                 };
             }
             default:
@@ -876,6 +1020,13 @@ public static class StateMachine
         return null;
     }
 
+    static string? ApplySetUiPictures(GameState g, SetUiPictures sup, ref Command? inverse)
+    {
+        inverse = new SetUiPictures { Pictures = new(g.UiPictures) };
+        g.UiPictures = new(sup.Pictures);
+        return null;
+    }
+
     static string? ApplySetUiAttributes(GameState g, SetUiAttributes sua, ref Command? inverse)
     {
         var node = g.UiNode(sua.Layer, sua.Piece, sua.Id);
@@ -892,7 +1043,7 @@ public static class StateMachine
         if (node == null) return "no such element";
         if (ue.Event is "end" or "change")
         {
-            var key = node.Tag switch { "Toggle" => "isOn", "Slider" or "ProgressBar" => "value", "Dropdown" => "value", _ => "text" };
+            var key = node.Tag switch { "Toggle" or "ToggleButton" => "isOn", "Slider" or "ProgressBar" => "value", "Dropdown" => "value", _ => "text" };
             node.Attributes[key] = ue.Value;
         }
         return null;
@@ -910,17 +1061,11 @@ public static class StateMachine
 
     static string? ApplySetDecals(GameState g, SetDecals sd, ref Command? inverse)
     {
-        const int LongestText = 256;
         var p = g.Find(sd.Layer, sd.Id);
         if (p == null) return "no such piece";
         if (sd.Decals == null || sd.Decals.Count > DecalDef.MostOnAPiece) return $"a piece carries at most {DecalDef.MostOnAPiece} decals";
         foreach (var d in sd.Decals)
-        {
-            if (d == null || string.IsNullOrEmpty(d.Picture) || d.Picture.Length > LongestText || (d.Name?.Length ?? 0) > LongestText) return "a decal needs a picture";
-            if (d.Face is not ("front" or "back")) return "a decal's face is front or back";
-            if (!double.IsFinite(d.X) || !double.IsFinite(d.Z) || !double.IsFinite(d.Rot) || !(d.W > 0) || !(d.H > 0) || !double.IsFinite(d.W) || !double.IsFinite(d.H))
-                return "a decal's place and size must be numbers, its size above 0";
-        }
+            if (DecalProblem(d) is { } why) return why;
         inverse = new SetDecals { Layer = sd.Layer, Id = sd.Id, Decals = p.Decals.Select(d => d.Clone()).ToList(), OnState = p.DecalsOnState ?? -1 };
         p.Decals = sd.Decals.Select(d =>
         {

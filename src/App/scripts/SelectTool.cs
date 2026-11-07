@@ -99,6 +99,7 @@ sealed class SelectTool
     string? FaceItem(PieceNode hit, Vec2 f)
     {
         if (S.CanTouch(hit.Layer, hit.Piece) && hit.WidgetAt(f) is { } wh) return "w" + wh.index;
+        if (S.CanTouch(hit.Layer, hit.Piece) && hit.PanelAt(f) is { } panel) return "u:" + panel.Id;
         if (hit.CardTitleAt(f)) return "title";
         if (S.CanTouch(hit.Layer, hit.Piece) && hit.NotePartAt(f) is { } part) return part ? "note body" : "note title";
         if (hit.CardButtonAt(f) is { } cb) return $"c:{cb.name}:{cb.value}";
@@ -117,6 +118,7 @@ sealed class SelectTool
             _actions.PressWidget(hit, wh.index, wh.widget);
             return;
         }
+        if (S.CanTouch(hit.Layer, hit.Piece) && hit.PanelAt(f) is { } panel) { hit.PressPanel(panel); return; }
         if (hit.CardTitleAt(f)) { _names.Begin(hit); return; }
         if (S.CanTouch(hit.Layer, hit.Piece) && hit.NotePartAt(f) is { } part) { _names.BeginNote(hit, part); return; }
         if (hit.CardButtonAt(f) is { } cb) { S.Do(new SetCounter { Layer = hit.Layer, Id = hit.Piece.Id, Name = cb.name, Value = cb.value }); return; }
@@ -186,7 +188,8 @@ sealed class SelectTool
             if (r.Size.Length() > 6)
             {
                 var cam = _c.Rig.Cam;
-                var ids = _pieces.Nodes.Where(n => _c.LayerInteractive(n.Layer) && !cam.IsPositionBehind(n.GlobalPosition) && r.HasPoint(cam.UnprojectPosition(n.GlobalPosition)))
+                var ids =
+                    _pieces.Nodes.Where(n => _c.LayerInteractive(n.Layer) && !n.Piece.NotBoxSelected && !cam.IsPositionBehind(n.GlobalPosition) && r.HasPoint(cam.UnprojectPosition(n.GlobalPosition)))
                     .Select(n => n.Piece.Id);
                 _selection.Set(ids, add: mb.ShiftPressed);
             }

@@ -130,7 +130,7 @@ public sealed class PieceArt
         {
             Roughness = 1f, Metallic = 0f, SpecularMode = BaseMaterial3D.SpecularModeEnum.Disabled,
             AlbedoColor = tint,
-            Transparency = scissor ? BaseMaterial3D.TransparencyEnum.AlphaScissor : BaseMaterial3D.TransparencyEnum.Disabled,
+            Transparency = SeeThrough(tint) ? BaseMaterial3D.TransparencyEnum.Alpha : scissor ? BaseMaterial3D.TransparencyEnum.AlphaScissor : BaseMaterial3D.TransparencyEnum.Disabled,
             AlphaScissorThreshold = 0.5f,
             TextureFilter = BaseMaterial3D.TextureFilterEnum.LinearWithMipmapsAnisotropic,
             TextureRepeat = false,
@@ -177,8 +177,13 @@ public sealed class PieceArt
         {
             AlbedoColor = c, Roughness = 1f, Metallic = 0f,
             SpecularMode = BaseMaterial3D.SpecularModeEnum.Disabled, CullMode = BaseMaterial3D.CullModeEnum.Disabled,
+            Transparency = SeeThrough(c) ? BaseMaterial3D.TransparencyEnum.Alpha : BaseMaterial3D.TransparencyEnum.Disabled,
         };
     }
+
+    const float Opaque = 0.999f;
+
+    public static bool SeeThrough(Color tint) => tint.A < Opaque;
 
     public void Clear()
     {

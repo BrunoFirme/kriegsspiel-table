@@ -112,6 +112,7 @@ type Command abstract
   derived PickMenuItem = PickMenuItem
   derived PublishSighting = PublishSighting
   derived RemoveBoard = RemoveBoard
+  derived RemoveDecal = RemoveDecal
   derived RemoveSheet = RemoveSheet
   derived RemoveZone = RemoveZone
   derived RenameBoard = RenameBoard
@@ -125,14 +126,18 @@ type Command abstract
   derived SetCalibration = SetCalibration
   derived SetClock = SetClock
   derived SetCounter = SetCounter
+  derived SetDecalPalette = SetDecalPalette
   derived SetDecals = SetDecals
   derived SetDef = SetDef
+  derived SetDieFaces = SetDieFaces
+  derived SetFacePicture = SetFacePicture
   derived SetGlobalMenuItems = SetGlobalMenuItems
   derived SetGlobalScript = SetGlobalScript
   derived SetGlobalScriptState = SetGlobalScriptState
   derived SetGrid = SetGrid
   derived SetHotkeys = SetHotkeys
   derived SetLabel = SetLabel
+  derived SetLettering = SetLettering
   derived SetLighting = SetLighting
   derived SetLines = SetLines
   derived SetLocked = SetLocked
@@ -153,13 +158,17 @@ type Command abstract
   derived SetTint = SetTint
   derived SetUi = SetUi
   derived SetUiAttributes = SetUiAttributes
+  derived SetUiPictures = SetUiPictures
   derived SetVisionRadius = SetVisionRadius
   derived SetWidgets = SetWidgets
   derived SetWind = SetWind
+  derived SetWorth = SetWorth
   derived SetZone = SetZone
   derived ShowDialog = ShowDialog
   derived SpawnPiece = SpawnPiece
+  derived StampDecal = StampDecal
   derived Stow = Stow
+  derived TurnDie = TurnDie
   derived UiEvent = UiEvent
   derived Undo = Undo
   derived Unstow = Unstow
@@ -198,6 +207,7 @@ type CropSheet object
 type DecalDef object
   face: string
   h: double
+  id: string
   name: string
   picture: string
   rot: double
@@ -233,10 +243,14 @@ type DiceRoll object
   sides: int
 type Dictionary<string,AssetEntry> map string to AssetEntry
 type Dictionary<string,JsonElement> map string to JsonElement
+type Dictionary<string,List<DecalDef>> map string to List<DecalDef>
 type Dictionary<string,List<PieceInstance>> map string to List<PieceInstance>
 type Dictionary<string,List<Stroke>> map string to List<Stroke>
 type Dictionary<string,int> map string to int
 type Dictionary<string,string> map string to string
+type DieFace object
+  up: double[]
+  value: string
 type Draw object
   actor: long
   at: long
@@ -303,6 +317,8 @@ type GameState object
   briefing: string
   calibration: Calibration
   clock: GameClock
+  decalPalette: List<PaletteDecal>
+  decals: Dictionary<string,List<DecalDef>>
   dice: List<DiceRoll>
   drawings: Dictionary<string,List<Stroke>>
   format: int
@@ -321,6 +337,7 @@ type GameState object
   scriptState: string
   sheets: List<SheetDef>
   ui: List<UiNode>
+  uiPictures: Dictionary<string,string>
   visionRadius: double
   wind: Wind
   zones: List<Zone>
@@ -376,6 +393,11 @@ type JsonElement value
 type Knock object
   name: string
   peerId: long
+type Lettering object
+  color: string
+  size: double
+  text: string
+  unitsPerPixel: double
 type Lighting object
   ambient: double
   backdrop: string
@@ -401,9 +423,11 @@ type List<ConsoleLine> list of ConsoleLine
 type List<CounterDef> list of CounterDef
 type List<DecalDef> list of DecalDef
 type List<DiceRoll> list of DiceRoll
+type List<DieFace> list of DieFace
 type List<HotkeyDef> list of HotkeyDef
 type List<LineDef> list of LineDef
 type List<MenuItemDef> list of MenuItemDef
+type List<PaletteDecal> list of PaletteDecal
 type List<PeerInfo> list of PeerInfo
 type List<PieceDef> list of PieceDef
 type List<PieceInstance> list of PieceInstance
@@ -516,6 +540,10 @@ type PackSource object
   license: string
   url: string
   workshopId: string
+type PaletteDecal object
+  name: string
+  picture: string
+  size: double
 type PeerInfo object
   name: string
   peerId: long
@@ -545,6 +573,8 @@ type PieceDef object
   back: string
   counters: List<CounterDef>
   effect: EffectDef
+  faces: List<DieFace>
+  finish: string
   holds: bool
   id: string
   image: string
@@ -553,10 +583,12 @@ type PieceDef object
   mesh: string
   name: string
   nameBox: FaceBox
+  pageOffset: int
   script: string
   scriptHash: string
   scriptState: string
   shape: string
+  shine: ShineDef
   size: Size2
   states: List<PieceStateDef>
   tags: List<string>
@@ -572,16 +604,24 @@ type PieceInstance object
   decalsOnState: int?
   def: string
   drawnOnState: int
+  effectOff: bool
+  face: int
   faceDown: bool
+  facePicture: string
+  faces: List<DieFace>
   guid: string
   holds: bool?
   id: string
   label: string
+  lettering: Lettering
   lines: List<LineDef>
   locked: bool
+  measuresMoves: bool
   memo: string
   menuItems: List<MenuItemDef>
   noCollision: bool
+  notBoxSelected: bool
+  notSticky: bool
   note: string
   physicalRoll: bool
   picture: string
@@ -592,12 +632,16 @@ type PieceInstance object
   scriptState: string
   stack: int
   state: int
+  stateGuids: List<string>
   stowed: List<PieceInstance>
   tags: List<string>
+  takeOrder: string
   text: Dictionary<string,string>
   tintOverride: string
   ui: List<UiNode>
   widgets: List<Widget>
+  worth: int
+  worthGroups: int
   y: double
 type PieceStateDef object
   back: string
@@ -628,6 +672,13 @@ type RemoveBoard object
   actor: long
   at: long
   id: string
+  seq: long
+  undoOf: long
+type RemoveDecal object
+  actor: long
+  at: long
+  decalId: string
+  layer: string
   seq: long
   undoOf: long
 type RemoveSheet object
@@ -723,6 +774,8 @@ type Scenario object
   briefing: string
   calibration: Calibration
   clock: GameClock
+  decalPalette: List<PaletteDecal>
+  decals: Dictionary<string,List<DecalDef>>
   drawings: Dictionary<string,List<Stroke>>
   format: int
   grid: GridDef
@@ -734,6 +787,8 @@ type Scenario object
   script: string
   scriptState: string
   sheets: List<SheetDef>
+  ui: List<UiNode>
+  uiPictures: Dictionary<string,string>
   umpireBoard: List<PieceInstance>
   visionRadius: double
   wind: Wind
@@ -792,6 +847,12 @@ type SetCounter object
   seq: long
   undoOf: long
   value: int
+type SetDecalPalette object
+  actor: long
+  at: long
+  entries: List<PaletteDecal>
+  seq: long
+  undoOf: long
 type SetDecals object
   actor: long
   at: long
@@ -807,6 +868,22 @@ type SetDef object
   def: string
   id: string
   layer: string
+  seq: long
+  undoOf: long
+type SetDieFaces object
+  actor: long
+  at: long
+  faces: List<DieFace>
+  id: string
+  layer: string
+  seq: long
+  undoOf: long
+type SetFacePicture object
+  actor: long
+  at: long
+  id: string
+  layer: string
+  picture: string
   seq: long
   undoOf: long
 type SetGlobalMenuItems object
@@ -847,6 +924,14 @@ type SetLabel object
   seq: long
   undoOf: long
   value: string
+type SetLettering object
+  actor: long
+  at: long
+  id: string
+  layer: string
+  lettering: Lettering
+  seq: long
+  undoOf: long
 type SetLighting object
   actor: long
   at: long
@@ -1017,6 +1102,12 @@ type SetUiAttributes object
   piece: string
   seq: long
   undoOf: long
+type SetUiPictures object
+  actor: long
+  at: long
+  pictures: Dictionary<string,string>
+  seq: long
+  undoOf: long
 type SetVisionRadius object
   actor: long
   at: long
@@ -1038,6 +1129,15 @@ type SetWind object
   seq: long
   undoOf: long
   wind: Wind
+type SetWorth object
+  actor: long
+  at: long
+  groups: int
+  id: string
+  layer: string
+  seq: long
+  undoOf: long
+  worth: int
 type SetZone object
   actor: long
   at: long
@@ -1060,6 +1160,11 @@ type SheetDef object
   size: Size2
   url: string
   z: int
+type ShineDef object
+  color: string
+  rim: double
+  sharpness: double
+  strength: double
 type ShowDialog object
   actor: long
   at: long
@@ -1093,6 +1198,14 @@ type SpawnPiece object
   tags: List<string>
   undoOf: long
   y: double
+type StampDecal object
+  actor: long
+  at: long
+  decal: DecalDef
+  index: int?
+  layer: string
+  seq: long
+  undoOf: long
 type Stow object
   actor: long
   at: long
@@ -1113,6 +1226,14 @@ type TextLineDef object
   default: string
   name: string
   place: PrintPlace
+type TurnDie object
+  actor: long
+  at: long
+  face: int
+  id: string
+  layer: string
+  seq: long
+  undoOf: long
 type TurnInfo object
   endedAt: string
   gameTime: string

@@ -7,7 +7,7 @@ namespace KTable.Server.Scripting;
 
 internal static class UiTrees
 {
-    public static string ValueKey(UiNode? n) => n?.Tag switch { "Toggle" => "isOn", "Slider" or "ProgressBar" or "Dropdown" => "value", _ => "text" };
+    public static string ValueKey(UiNode? n) => n?.Tag switch { "Toggle" or "ToggleButton" => "isOn", "Slider" or "ProgressBar" or "Dropdown" => "value", _ => "text" };
 
     public static string AttrText(DynValue v) => v.Type switch
     {

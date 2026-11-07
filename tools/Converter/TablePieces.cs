@@ -24,23 +24,29 @@ public sealed partial class DefFactory
     const string BoxesMissing = "Firme's Effects and Props is not installed here, so bags come over as round pieces; open the app once and convert again for boxes, chests and crates.";
     bool _boxesMissingNoted;
 
-    public static bool IsTablePiece(ModuleObj o) => (o.IsCard && o.Sheet != null) || o.IsChecker || o.IsPictureDie || o.Name is "Bag" or "PlayerPawn";
+    public static bool IsTablePiece(ModuleObj o) => (o.IsCard && o.Sheet != null) || o.IsChecker || o.IsPictureDie || o.Name is "Bag" or "PlayerPawn" or TriangleBlock or Figurine;
 
     public const string StockTilesetPrefix = "Tileset_";
 
     public static string? NotTranslated(ModuleObj o) =>
         o.IsCard && o.Sheet == null ? o.Name + " (the digital tabletop's own playing cards, which have no picture in the module)"
         : o.Name == "Custom_Dice" && !o.IsPictureDie && o.StockSides == null ? o.Name + " (a die of a kind the app has not got)"
-        : o.Name.StartsWith(StockTilesetPrefix, StringComparison.Ordinal)
+        : o.Name.StartsWith(StockTilesetPrefix, StringComparison.Ordinal) && o.Name != TilesetTree
             ? o.Name + " (one of the digital tabletop's own props: its model ships with the game and is not ours to copy, so paint the ground there or put a piece of your own on it)"
         : null;
 
     static string? TableVisualKey(ModuleObj b) =>
         b.IsCard && b.Sheet is { } s ? $"|card|{s.FaceUrl}#{b.SheetCell}|{s.BackUrl}|{s.Across}x{s.Down}|{s.UniqueBack}"
-        : b.IsChecker ? $"|{b.Color}"
-        : b.Name == "Bag" ? $"|bag|{b.Color}|{b.Nickname}"
-        : b.Name == "PlayerPawn" ? $"|pawn|{b.Color}"
+        : b.IsChecker ? $"|{Rgb(b.Color)}"
+        : b.Name == "Bag" ? $"|bag|{Rgb(b.Color)}|{b.Nickname}"
+        : b.Name == "PlayerPawn" ? $"|pawn|{Rgb(b.Color)}"
+        : b.IsPictureDie && b.DieSides != PictureD6 ? $"|die{b.DieSides}"
+        : b.Name == Figurine && b.MirroredBack ? "|mirrored"
         : null;
+
+    const int RgbHex = 7;
+
+    static string? Rgb(string? colour) => colour is { Length: > RgbHex } ? colour[..RgbHex] : colour;
 
     void FillTablePiece(PieceDef def, ModuleObj b, PackOut pack, string where)
     {
@@ -53,6 +59,8 @@ public sealed partial class DefFactory
             _boxesMissingNoted = true;
         }
         else if (b.Name == "PlayerPawn") FillRound(def, b, pack, "pawn", "Pawn", PawnIvory);
+        else if (b.Name == TriangleBlock) FillPrism(def, pack);
+        else if (b.Name == Figurine) FillFigurine(def, b, pack, where);
         else FillPictureDie(def, b, pack, where);
     }
 
@@ -65,6 +73,39 @@ public sealed partial class DefFactory
         def.Tags = def.Tags.Where(t => t != "block").Append(tag).Distinct().ToList();
         if (def.Name == "Piece") def.Name = name;
     }
+
+    public const string TriangleBlock = "BlockTriangle";
+    public const double TriangleAcross = 1.4142, TriangleRise = 0.7071;
+
+    void FillPrism(PieceDef def, PackOut pack)
+    {
+        def.Kind = "model";
+        def.Shape = "box";
+        def.Mesh = PrismMesh(pack);
+        def.Texture = WhiteSquare(pack);
+        def.Image = null;
+        if (def.Name == "Piece") def.Name = "Triangle block";
+    }
+
+    string? _prismSha;
+
+    string PrismMesh(PackOut pack)
+    {
+        var path = Path.Combine(_cfg.Cache, "prism.obj");
+        if (_prismSha == null)
+        {
+            if (!File.Exists(path)) File.WriteAllText(path, PrismObj);
+            _prismSha = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(File.ReadAllBytes(path))).ToLowerInvariant();
+        }
+        Put(pack, _prismSha, "obj", path, "mesh", 0, 0);
+        return _prismSha;
+    }
+
+    static readonly string PrismObj = string.Join('\n',
+        "v -0.7071 0 -0.5", "v 0.7071 0 -0.5", "v 0 0.7071 -0.5", "v -0.7071 0 0.5", "v 0.7071 0 0.5", "v 0 0.7071 0.5",
+        "vt 0 0", "vt 1 0", "vt 0.5 1", "vt 1 1", "vt 0 1",
+        "vn 0 -1 0", "vn 0 0 -1", "vn 0 0 1", "vn -0.7071 0.7071 0", "vn 0.7071 0.7071 0",
+        "f 1/1/1 2/2/1 5/4/1 4/5/1", "f 1/1/2 3/3/2 2/2/2", "f 4/1/3 5/2/3 6/3/3", "f 1/1/4 4/2/4 6/4/4 3/5/4", "f 2/1/5 3/5/5 6/4/5 5/2/5") + "\n";
 
     void FillCard(PieceDef def, ModuleObj b, PackOut pack, string where)
     {
@@ -103,33 +144,70 @@ public sealed partial class DefFactory
 
     void FillPictureDie(PieceDef def, ModuleObj b, PackOut pack, string where)
     {
-        var die = StandardPictureDie;
+        var die = b.DieSides == PictureD6 ? StandardPictureDie : TemplateDie(b.DieSides);
         def.Kind = "model";
         def.Shape = "box";
         def.Texture = Asset(pack, b.ImageUrl, "image", where) ?? Placeholder(pack);
         def.Mesh = die.Mesh;
         Put(pack, die.Mesh, "obj", die.MeshFile, "mesh", 0, 0);
         def.Image = null;
-        def.Tags = def.Tags.Where(t => t != "block").Concat(new[] { "die", "dice", "d6" }).Distinct().ToList();
+        def.Tags = def.Tags.Where(t => t != "block").Concat(new[] { "die", "dice", $"d{b.DieSides}" }).Distinct().ToList();
         if (def.Name == "Piece") def.Name = "Picture die";
+        static double Dot(double[] a, double[] b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
         foreach (var f in b.RotationValues)
         {
             var up = UpOf(f);
-            var face = die.Faces.MaxBy(n => n[0] * up[0] + n[1] * up[1] + n[2] * up[2])!;
-            if (face[0] * up[0] + face[1] * up[1] + face[2] * up[2] < FaceMatch) { _rep.Note($"{where}: the face '{f.Value}' does not lie on a side of the die and was left out."); continue; }
-            if (def.States.Any(s => s.Up!.SequenceEqual(face))) continue;
-            def.States.Add(new PieceStateDef { Name = f.Value.Length > 0 ? f.Value : (def.States.Count + 1).ToString(), Up = face });
+            var face = die.Faces.MaxBy(n => Dot(n, up))!;
+            if (Dot(face, up) < FaceMatch || def.Faces.Any(s => s.Up.SequenceEqual(face))) continue;
+            def.Faces.Add(new DieFace { Value = f.Value.Length > 0 ? f.Value : (def.Faces.Count + 1).ToString(), Up = face });
         }
+        var bare = die.Faces.Where(n => !def.Faces.Any(s => s.Up.SequenceEqual(n))).ToList();
+        if (bare.Count == 0) return;
+        foreach (var n in bare)
+        {
+            var nearest = b.RotationValues.Count > 0 ? b.RotationValues.MaxBy(f => Dot(n, UpOf(f)))!.Value : "";
+            def.Faces.Add(new DieFace { Value = nearest.Length > 0 ? nearest : (def.Faces.Count + 1).ToString(), Up = n });
+        }
+        if (b.RotationValues.Count > 0) _rep.Note($"{where}: {bare.Count} of its sides have no value of their own, so each shows the value saved nearest to it, as the module reads it.");
     }
 
-    public static double[] UpOf(ModuleObj.Face f)
+    public static double[] UpOf(ModuleObj.Face f) => DieTurns.UpOf(f.RotX, f.RotZ);
+
+    sealed record PictureDie(string Mesh, string MeshFile, List<double[]> Faces, double[] Size);
+
+    public const int PictureD6 = 6;
+    readonly Dictionary<int, PictureDie> _templates = new();
+
+    PictureDie TemplateDie(int sides)
     {
-        static double R(double deg) => deg * Math.PI / 180;
-        double cx = Math.Cos(R(f.RotX)), sx = Math.Sin(R(f.RotX)), cz = Math.Cos(R(f.RotZ)), sz = Math.Sin(R(f.RotZ));
-        return new[] { -cx * sz, cx * cz, -sx };
+        if (_templates.TryGetValue(sides, out var known)) return known;
+        var asm = Assembly.GetExecutingAssembly();
+        using var meshStream = asm.GetManifestResourceStream($"dice/d{sides}.obj") ?? throw new InvalidDataException($"the d{sides} picture die is missing from the converter");
+        using var copy = new MemoryStream();
+        meshStream.CopyTo(copy);
+        var bytes = copy.ToArray();
+        var sha = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(bytes)).ToLowerInvariant();
+        var file = Path.Combine(_cfg.Cache, $"{sha}.obj");
+        if (!File.Exists(file)) Json.WriteAtomic(file, bytes);
+        var layout = TemplateLayout[$"d{sides}"];
+        var die = new PictureDie(sha, file, layout.Faces, layout.Size);
+        _templates[sides] = die;
+        return die;
     }
 
-    sealed record PictureDie(string Mesh, string MeshFile, List<double[]> Faces);
+    public sealed record TemplateFaces(List<double[]> Faces, double[] Size);
+
+    static Dictionary<string, TemplateFaces>? _layout;
+
+    public static Dictionary<string, TemplateFaces> TemplateLayout => _layout ??= LoadTemplateLayout();
+
+    static Dictionary<string, TemplateFaces> LoadTemplateLayout()
+    {
+        using var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("dice/dice.json") ?? throw new InvalidDataException("the picture dice are missing from the converter");
+        var root = System.Text.Json.Nodes.JsonNode.Parse(new StreamReader(stream).ReadToEnd())!.AsObject();
+        static double[] Numbers(System.Text.Json.Nodes.JsonNode? n) => n!.AsArray().Select(x => x!.GetValue<double>()).ToArray();
+        return root.ToDictionary(kv => kv.Key, kv => new TemplateFaces(kv.Value!["faces"]!.AsArray().Select(Numbers).ToList(), Numbers(kv.Value!["size"])));
+    }
 
     public const string StdDicePack = "std.dice";
     PackManifest? _stdDice;
@@ -144,20 +222,20 @@ public sealed partial class DefFactory
 
     PieceDef? StandardDie(int sides) => StdDice.Pieces.FirstOrDefault(p => p.Tags.Contains("d" + sides) && !p.Tags.Contains("picture"));
 
-    public static int DieFace(ModuleObj o, PieceDef die)
+    public static int FaceShown(ModuleObj o, PieceDef die)
     {
         var up = UpOf(new ModuleObj.Face("", o.RotX, o.RotY, o.RotZ));
         double Dot(double[] a) => a[0] * up[0] + a[1] * up[1] + a[2] * up[2];
         if (o.RotationValues.Count > 0)
         {
             var face = o.RotationValues.MaxBy(f => Dot(UpOf(f)))!;
-            int byName = die.States.FindIndex(s => string.Equals(s.Name, face.Value.Trim(), StringComparison.OrdinalIgnoreCase));
+            int byName = die.Faces.FindIndex(s => string.Equals(s.Value, face.Value.Trim(), StringComparison.OrdinalIgnoreCase));
             if (byName >= 0) return byName;
         }
         int byUp = 0;
         double best = double.NegativeInfinity;
-        for (int i = 0; i < die.States.Count; i++)
-            if (die.States[i].Up is { } su && Dot(su) > best) { best = Dot(su); byUp = i; }
+        for (int i = 0; i < die.Faces.Count; i++)
+            if (Dot(die.Faces[i].Up) > best) { best = Dot(die.Faces[i].Up); byUp = i; }
         return byUp;
     }
 
@@ -176,6 +254,6 @@ public sealed partial class DefFactory
             meshStream.CopyTo(into);
             Json.WriteAtomic(file, into.ToArray());
         }
-        return new PictureDie(die.Mesh!, file, die.States.Select(s => s.Up!).ToList());
+        return new PictureDie(die.Mesh!, file, die.Faces.Select(s => s.Up).ToList(), [DieAcross, DieAcross, DieAcross]);
     }
 }

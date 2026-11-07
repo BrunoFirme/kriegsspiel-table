@@ -8,7 +8,7 @@ public sealed partial class ScriptHost
 {
     public Func<string, Task<string?>>? FetchPicture { get; set; }
 
-    sealed record Fetched(PieceScript Owner, DynValue Fn, string? Picture, DynValue Who);
+    sealed record Fetched(PieceScript? Owner, DynValue Fn, string? Picture, DynValue Who, Action<string?>? Then = null);
 
     readonly ConcurrentQueue<Fetched> _fetched = new();
 
@@ -28,17 +28,28 @@ public sealed partial class ScriptHost
         fetch.ContinueWith(t => _fetched.Enqueue(new Fetched(owner, fn, t.IsCompletedSuccessfully ? t.Result : null, who)), TaskContinuationOptions.ExecuteSynchronously);
     }
 
+    internal void FetchThen(string link, Action<string?> then)
+    {
+        var fetch = FetchPicture is { } f && IsWebLink(link) ? f(link.Trim()) : Task.FromResult<string?>(null);
+        fetch.ContinueWith(t => _fetched.Enqueue(new Fetched(null, DynValue.Nil, t.IsCompletedSuccessfully ? t.Result : null, DynValue.Nil, then)),
+            TaskContinuationOptions.ExecuteSynchronously);
+    }
+
     public static bool IsWebLink(string text) =>
         Uri.TryCreate(text.Trim(), UriKind.Absolute, out var uri) && uri.Scheme is "http" or "https";
 
     void DeliverPictures()
     {
         while (_fetched.TryDequeue(out var f))
+        {
+            if (f.Then is { } then) { Guard("", () => then(f.Picture)); continue; }
+            if (f.Owner == null) continue;
             Guard(f.Owner.Id, () =>
             {
                 if (f.Picture == null && f.Who.Type == DataType.Table && f.Who.Table.Get("id").Type == DataType.Number)
                     Emit(new Core.Protocol.Say { Text = "No picture came from that link.", To = $"p:{(long)f.Who.Table.Get("id").Number}", Color = "#f87" });
                 if (f.Owner.Enabled && IsCurrent(f.Owner)) Invoke(f.Owner, f.Fn, f.Picture == null ? DynValue.Nil : DynValue.NewString(f.Picture), f.Who);
             });
+        }
     }
 }

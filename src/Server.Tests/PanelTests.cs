@@ -115,6 +115,30 @@ public class PanelTests
     }
 
     [Fact]
+    public void A_module_s_panel_classes_attributes_and_named_pictures_answer_as_in_the_tabletop()
+    {
+        using var t = new Table();
+        var r = ModuleTranslator.Translate("""
+            function onLoad()
+              UI.setXml('<Panel id="p" class="a" width="90"><Image id="i" image="crest"/></Panel>')
+              UI.setClass("p", "big bold")
+              UI.setCustomAssets({ { name = "crest", url = "pic-crest", type = UI.assetType.Image } })
+              local attrs = UI.getAttributes("p")
+              local assets = UI.getCustomAssets()
+              UI.setAttribute("i", "text", attrs.class .. "|" .. attrs.width .. "|" .. assets[1].name .. "|" .. assets[1].url .. "|" .. tostring(UI.loading) .. "|" .. UI.assetType.AssetBundle)
+            end
+            """, new TranslateContext { IsGlobal = true });
+        Assert.DoesNotContain(r.Untranslated, u => u.What.StartsWith("UI"));
+        var res = t.Server.Handle(Table.Lead, new SetGlobalScript { Text = r.Script });
+        Assert.DoesNotContain(res, o => o.Message is ErrorMessage);
+        Assert.DoesNotContain(Flat(t.Server.Log).OfType<Say>(), s => s.Text.StartsWith("Script error"));
+        Assert.Equal("big bold", t.Server.State.UiNode("p")!.Attributes["class"]);
+        Assert.Equal("pic-crest", t.Server.State.UiPictures["crest"]);
+        Assert.Equal("big bold|90|crest|pic-crest|false|1", t.Server.State.UiNode("i")!.Attributes["text"]);
+        Assert.Equal(Json.Serialize(t.Server.State), Json.Serialize(SaveLoader.Replay(t.Scenario, t.Server.Log)));
+    }
+
+    [Fact]
     public void A_piece_carries_panels_of_its_own()
     {
         using var t = new Table();

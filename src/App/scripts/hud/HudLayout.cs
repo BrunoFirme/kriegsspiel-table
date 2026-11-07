@@ -67,6 +67,7 @@ public partial class Hud
     {
         Dice = new DicePanel(Ctx, this) { ShowTableDice = () => { OpenPanel("pieces"); Pieces.SelectPack("std.dice"); } };
         Paint = new DrawPanel(Ctx, this);
+        Stamps = new StampPanel(Ctx, this);
         if (S.IsUmpire) Relief = new ReliefPanel(Ctx, this);
         FormPanel = new FormationPanel(Ctx, this);
         Boards = new LayersPanel(Ctx, MakePanel("boards", "Layers"), Paint, Strip);
@@ -169,6 +170,7 @@ public partial class Hud
         if (!Panels.TryGetValue(key, out var p)) return;
         if (key == "paint" && T != null && T.Tool is not (Tool.Draw or Tool.Shape or Tool.Erase or Tool.Letter)) T.SetTool(Tool.Draw);
         if (key == "relief" && T != null && T.Tool != Tool.Relief) T.SetTool(Tool.Relief);
+        if (key == "decals" && T != null && T.Tool != Tool.Decal) T.SetTool(Tool.Decal);
         if (key == "formation" && T != null && T.Tool != Tool.Formation) T.SetTool(Tool.Formation);
         p.Visible = true;
         Raise(p);
@@ -203,6 +205,7 @@ public partial class Hud
         p.Visible = false;
         if (key == "paint" && T != null && T.Tool is Tool.Draw or Tool.Shape or Tool.Erase or Tool.Letter) T.SetTool(Tool.Select);
         if (key == "relief" && T != null && T.Tool == Tool.Relief) T.SetTool(Tool.Select);
+        if (key == "decals" && T != null && T.Tool == Tool.Decal) T.SetTool(Tool.Select);
         if (key == "formation" && T != null && T.Tool == Tool.Formation) T.SetTool(Tool.Select);
         if (key == "pieces" && T != null && T.Tool == Tool.Place) T.SetTool(Tool.Select);
         if (key == "sighting" && T != null && T.Draft != null) T.CancelSighting();

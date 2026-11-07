@@ -17,6 +17,12 @@ public sealed class Table : IDisposable
     public readonly Dictionary<long, string> Tokens = new();
     long _now = 1_000;
 
+    public static List<DieFace> SixSides() =>
+    [
+        new() { Value = "1", Up = [0, 0, 1] }, new() { Value = "2", Up = [0, 1, 0] }, new() { Value = "3", Up = [1, 0, 0] },
+        new() { Value = "4", Up = [-1, 0, 0] }, new() { Value = "5", Up = [0, -1, 0] }, new() { Value = "6", Up = [0, 0, -1] },
+    ];
+
     public Table(bool join = true)
     {
         Root = Path.Combine(Path.GetTempPath(), "ktable-server-tests", Guid.NewGuid().ToString("N"));
@@ -27,7 +33,7 @@ public sealed class Table : IDisposable
             {
                 new PieceDef { Id = "inf", Name = "Infantry", Counters = { new CounterDef { Name = "str", Min = 0, Max = 12, Default = 8 }, new CounterDef { Name = "ammo", Min = -2, Max = 3 } } },
                 new PieceDef { Id = "marker", Name = "Marker" },
-                new PieceDef { Id = "die6", Name = "d6", Kind = "model", Tags = { "die" }, States = Enumerable.Range(1, 6).Select(i => new PieceStateDef { Name = i.ToString() }).ToList() },
+                new PieceDef { Id = "die6", Name = "d6", Kind = "model", Tags = { "die" }, Faces = SixSides() },
             },
             Assets = { ["arms"] = new AssetEntry { File = "assets/arms.png", W = 64, H = 64 } },
         });

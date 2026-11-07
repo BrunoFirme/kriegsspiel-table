@@ -77,7 +77,45 @@ public sealed partial class ScriptHost
         ui.Table["hide"] = Fn(a => B(SetAttrs(layer, piece, Arg(a, 0).CastToString() ?? "", new() { ["active"] = "false" })));
         ui.Table["set_value"] = Fn(a => { var id = Arg(a, 0).CastToString() ?? ""; return B(SetAttrs(layer, piece, id, new() { [UiTrees.ValueKey(Node(id))] = UiTrees.AttrText(Arg(a, 1)) })); });
         ui.Table["get_value"] = Fn(a => { var n = Node(Arg(a, 0).CastToString() ?? ""); return n != null && n.Attributes.TryGetValue(UiTrees.ValueKey(n), out var v) ? S(v) : DynValue.Nil; });
+        ui.Table["get_attributes"] = Fn(a =>
+        {
+            if (Node(Arg(a, 0).CastToString() ?? "") is not { } n) return DynValue.Nil;
+            var t = T();
+            foreach (var (k, v) in n.Attributes) t.Table[k] = v;
+            return t;
+        });
+        ui.Table["set_class"] = Fn(a => B(SetAttrs(layer, piece, Arg(a, 0).CastToString() ?? "", new() { ["class"] = UiTrees.AttrText(Arg(a, 1)) })));
+        ui.Table["pictures"] = Fn(_ => UiPictures());
+        ui.Table["set_pictures"] = Fn(a =>
+        {
+            var pictures = new Dictionary<string, string>();
+            if (Arg(a, 0).Type == DataType.Table)
+                foreach (var e in Arg(a, 0).Table.Values)
+                    if (e.Type == DataType.Table && e.Table.Get("name").CastToString() is { Length: > 0 } name && e.Table.Get("url").CastToString() is { Length: > 0 } url)
+                        pictures[name] = url;
+            Emit(new SetUiPictures { Pictures = pictures });
+            return DynValue.True;
+        });
+        ui.Table["loading"] = DynValue.False;
+        var types = T();
+        types.Table["Image"] = UiPictureType;
+        types.Table["AssetBundle"] = UiPictureType + 1;
+        ui.Table["assetType"] = types;
         return ui;
+    }
+
+    DynValue UiPictures()
+    {
+        var t = T();
+        foreach (var (name, picture) in _s.State.UiPictures)
+        {
+            var e = T();
+            e.Table["name"] = name;
+            e.Table["url"] = picture;
+            e.Table["type"] = UiPictureType;
+            t.Table.Append(e);
+        }
+        return t;
     }
 
     bool SetAttrs(string? layer, string? piece, string id, Dictionary<string, string> attrs)
@@ -122,6 +160,7 @@ public sealed partial class ScriptHost
     }
 
     public const int MaxUiDepth = 24, MaxUiNodes = 20_000;
+    const int UiPictureType = 0;
 
     public static List<UiNode> ParseXml(string xml) => UiTrees.ParseXml(xml);
 

@@ -76,6 +76,11 @@ public static class CoreSamples
         yield return new MovePiece { Layer = L, Id = "p-000001", Pos = new(3, 4), RotDeg = 45, Stack = 1 };
         yield return new DeletePiece { Layer = L, Id = "p-000001" };
         yield return new SetState { Layer = L, Id = "p-000001", State = 2 };
+        yield return new TurnDie { Layer = L, Id = "p-000001", Face = 4 };
+        yield return new SetWorth { Layer = L, Id = "p-000001", Worth = 25, Groups = 3 };
+        yield return new SetFacePicture { Layer = L, Id = "p-000001", Picture = "pictures/face.png" };
+        yield return new SetLettering { Layer = L, Id = "p-000001", Lettering = new Lettering { Text = "HQ", Size = 48, Color = "#FF0000FF" } };
+        yield return new SetDieFaces { Layer = L, Id = "p-000001", Faces = [new DieFace { Value = "Hit", Up = [0, 1, 0] }, new DieFace { Value = "Miss", Up = [0, -1, 0] }] };
         yield return new SetCounter { Layer = L, Id = "p-000001", Name = "str", Value = 3 };
         yield return new SetText { Layer = L, Id = "p-000001", Name = "name", Value = "2nd Bn" };
         yield return new SetLabel { Layer = L, Id = "p-000001", Value = "new" };
@@ -112,6 +117,9 @@ public static class CoreSamples
         yield return new RemoveBoard { Id = "b-000001" };
         yield return new Draw { Layer = "scratch:red", Stroke = Stroke("d-000300") };
         yield return new EraseStroke { Layer = L, StrokeId = "d-000004" };
+        yield return new StampDecal { Layer = L, Decal = new DecalDef { Id = "dc-000001", Picture = "blood", Name = "Blood", X = 1, Z = 2, W = 1.5, H = 1, Rot = 30 } };
+        yield return new RemoveDecal { Layer = L, DecalId = "dc-000001" };
+        yield return new SetDecalPalette { Entries = new() { new PaletteDecal { Name = "Guts", Picture = "guts", Size = 0.5 } } };
         yield return new RollDice { Sides = 10, Count = 3, Label = "melee", Results = new() { 1, 5, 10 }, ActorName = "Ann" };
         yield return new SetClock { Turn = 5, GameTime = "1809-05-21T12:00", IncrementMinutes = 30 };
         yield return new AdvanceClock();
@@ -144,6 +152,7 @@ public static class CoreSamples
         yield return new SetDecals { Layer = L, Id = "p-000001", Decals = { new DecalDef { Picture = "aa11", Name = "Arms", Face = "back", X = 0.2, Z = -0.1, W = 0.3, H = 0.25, Rot = 30 } } };
         yield return new SetUi { Tree = { new UiNode { Tag = "Panel", Attributes = { ["id"] = "p1", ["width"] = "200" }, Children = { new UiNode { Tag = "Button", Attributes = { ["id"] = "b1", ["text"] = "Go", ["onClick"] = "go" } } } } } };
         yield return new SetUiAttributes { Layer = L, Piece = "p-000001", Id = "b1", Attributes = { ["text"] = "Stop", ["active"] = "false" } };
+        yield return new SetUiPictures { Pictures = { ["crest"] = "pic-crest" } };
         yield return new UiEvent { Id = "b1", Event = "click", Value = "-1" };
         yield return new ShowDialog { To = "p:7", Kind = "memo", Title = "Edit Unit", Text = "strength: 9", Options = { "a", "b" }, Token = "d-000001" };
         yield return new DialogResult { Token = "d-000001", Value = "strength: 8" };

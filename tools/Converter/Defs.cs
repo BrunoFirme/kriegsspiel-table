@@ -30,6 +30,8 @@ public sealed class PackOut
 public sealed record DefResult(PieceDef Def, PackOut Pack, double Scale, int State, ModuleObj Base, ScriptInfo Script)
 {
     public string? FromPack { get; init; }
+    public double Fit { get; init; } = 1;
+    public Lettering? Lettering { get; init; }
 }
 
 public sealed partial class DefFactory
@@ -51,6 +53,20 @@ public sealed partial class DefFactory
         _assets = assets;
         _rep = rep;
         ModuleObj.MeshSize = MeshBounds;
+        ModuleObj.MeshTop = MeshTopOf;
+    }
+
+    readonly Dictionary<string, TableTop?> _tops = new();
+
+    TableTop? MeshTopOf(string url)
+    {
+        var e = Entry(url);
+        if (e == null || e.Ext != "obj") return null;
+        if (_tops.TryGetValue(e.Sha!, out var top)) return top;
+        try { top = TableTop.Read(_assets.FilePath(e)!); }
+        catch (IOException) { top = null; }
+        _tops[e.Sha!] = top;
+        return top;
     }
 
     public string? Asset(PackOut pack, string? url, string kind, string where)
@@ -154,13 +170,15 @@ public sealed partial class DefFactory
             aspect = e.W / (double)e.H;
         }
         double ratio = o.ScaleX == 0 ? 1 : o.ScaleZ / o.ScaleX;
-        if (o.Name == "Custom_PDF") return new Size2(b.CustomTile * (PdfOf(o.PdfUrl)?.Aspect ?? 1), b.CustomTile * ratio);
+        if (o.Name == "Custom_PDF") return new Size2(b.CustomTile * (PdfOf(o.PdfUrl, o.PdfPassword)?.Aspect ?? 1), b.CustomTile * ratio);
         if (IsModel(o))
         {
             var mb = MeshBounds(o.MeshUrl) ?? (1, 1, 1);
             return new Size2(mb.ex, mb.ez * ratio);
         }
         if (Boxes.For(o) is { } box) return new Size2(box.Size.W, box.Size.H * ratio);
+        if (o.Name == Figurine) return FigurineSize(o, ratio);
+        if (o.DieSides is var n and not (0 or PictureD6)) return new Size2(TemplateDie(n).Size[0], TemplateDie(n).Size[2] * ratio);
         if (o.Name == "Custom_Board") return Mul(new Size2(b.CustomBoard * (o.WidthScale > 0 ? o.WidthScale : aspect), b.CustomBoard * ratio), BoardGrowth);
         return TypeSize(o.Name, aw, ah, aspect, ratio, stretched: o.TileType is 0 or 3 && o.TileStretch);
     }
@@ -179,6 +197,7 @@ public sealed partial class DefFactory
             "Custom_Board" => new Size2(b.CustomBoard * aw, b.CustomBoard * ah * ratio),
             "BlockSquare" => new Size2(b.BlockSquare, b.BlockSquare * ratio),
             "BlockRectangle" => new Size2(b.BlockSquare, 2 * b.BlockSquare * ratio),
+            TriangleBlock => new Size2(TriangleAcross * b.BlockSquare, b.BlockSquare * ratio),
             "Card" or "CardCustom" => new Size2(CardWidth, CardHeight * ratio),
             "Checker_white" or "Checker_red" or "Checker_black" => new Size2(CheckerAcross, CheckerAcross * ratio),
             "Custom_Dice" => new Size2(DieAcross, DieAcross * ratio),
@@ -194,9 +213,11 @@ public sealed partial class DefFactory
         "Custom_PDF" => BookThickness,
         "Custom_Model" or "Custom_Model_Bag" => (MeshBounds(o.MeshUrl)?.ey ?? 0.2),
         "BlockSquare" or "BlockRectangle" => _cfg.BaseSizes.BlockSquare,
+        TriangleBlock => TriangleRise * _cfg.BaseSizes.BlockSquare,
         "Card" or "CardCustom" => CardThickness,
         "Checker_white" or "Checker_red" or "Checker_black" => CheckerThickness,
-        "Custom_Dice" => DieAcross,
+        "Custom_Dice" => o.DieSides is var n and not (0 or PictureD6) ? TemplateDie(n).Size[1] : DieAcross,
+        Figurine => FigurineTop,
         "Bag" => Boxes.For(o)?.Thickness ?? BagThickness,
         "PlayerPawn" => PawnHeight,
         "Notecard" or "3DText" => TextThickness,
@@ -222,7 +243,8 @@ public sealed partial class DefFactory
     {
         var (states, _) = o.StateList();
         var b = states[0];
-        return $"{b.Name}|{Entry(b.ImageUrl)?.Sha ?? b.ImageUrl}|{Entry(b.BackUrl)?.Sha ?? b.BackUrl}|{Entry(b.MeshUrl)?.Sha ?? b.MeshUrl}|{Entry(b.DiffuseUrl)?.Sha ?? b.DiffuseUrl}|{Entry(b.PdfUrl)?.Sha ?? b.PdfUrl}|{(b.Name.StartsWith("Block") ? b.Color : "")}{TableVisualKey(b)}";
+        var pdf = b.PdfUrl is { } url ? $"|pdf:{Entry(url)?.Sha ?? url}" : "";
+        return $"{b.Name}|{Entry(b.ImageUrl)?.Sha ?? b.ImageUrl}|{Entry(b.BackUrl)?.Sha ?? b.BackUrl}|{Entry(b.MeshUrl)?.Sha ?? b.MeshUrl}|{Entry(b.DiffuseUrl)?.Sha ?? b.DiffuseUrl}|{(b.Name.StartsWith("Block") ? Rgb(b.Color) : "")}{TableVisualKey(b)}{pdf}";
     }
 
     public const double BookThickness = 0.1;
@@ -231,6 +253,34 @@ public sealed partial class DefFactory
 
     public BundleModels Models => _models ??= BundleModels.Load(_cfg.Output);
     public BagBoxes Boxes => _boxes ??= BagBoxes.Load(_cfg.Output);
+
+    public const string TilesetTree = "Tileset_Tree";
+    const double TreeCrownAcross = 3.62;
+    const string TreeMissing = "Firme's Effects and Props is not installed here, so the module's trees were left out; open the app once and convert again for trees.";
+    bool _treeMissingNoted;
+    Dictionary<string, PieceDef>? _firme;
+
+    PieceDef? FirmeProp(string name)
+    {
+        if (_firme == null)
+        {
+            var path = Path.Combine(_cfg.Output, KTable.Client.Effects.EffectKinds.StandardPack, "pack.json");
+            _firme = File.Exists(path) ? Json.Load<PackManifest>(path).Pieces.Where(p => p.Kind == "model").ToDictionary(p => p.Id) : new();
+        }
+        return _firme.GetValueOrDefault($"{KTable.Client.Effects.EffectKinds.StandardPack}.{name}");
+    }
+
+    DefResult? TreeDef(ModuleObj o, ModuleObj b, PackOut pack, ScriptInfo script)
+    {
+        if (FirmeProp("tree") is not { Size.W: > 0 } tree)
+        {
+            if (!_treeMissingNoted) _rep.Note(TreeMissing);
+            _treeMissingNoted = true;
+            return null;
+        }
+        double fit = TreeCrownAcross / tree.Size.W;
+        return new DefResult(tree, pack, Math.Round(Math.Abs(o.ScaleX) * fit, 4), 0, b, script) { FromPack = KTable.Client.Effects.EffectKinds.StandardPack, Fit = fit };
+    }
     BagBoxes? _boxes;
     BundleModels? _models;
 
@@ -239,7 +289,7 @@ public sealed partial class DefFactory
 
     public const double NoScale = 1e-6, HiddenByScale = 0.1;
 
-    public bool Shows(ModuleObj o) => IsPiece(o) || ModelOfBundle(o) != null || o.StockSides != null;
+    public bool Shows(ModuleObj o) => IsPiece(o) || ModelOfBundle(o) != null || o.StockSides != null || o.Name == TilesetTree;
 
     DefResult? StandardDef(ModuleObj o, ModuleObj b, PackOut pack, double bs, double instScale)
     {
@@ -247,12 +297,10 @@ public sealed partial class DefFactory
             return new DefResult(model.Def, pack, instScale, 0, b, ScriptInfo.Parse("", "")) { FromPack = model.Pack };
         var script = ScriptInfo.Parse(b.SafeLua.Length > 0 ? b.SafeLua : o.SafeLua, o.LuaState);
         if (o.StockSides is { } sides && StandardDie(sides) is { } die)
-        {
-            if (o.Name == "Custom_Dice") _rep.Note($"{Context} {o.Name} '{o.Nickname}' {o.Guid}: a picture die with {sides} sides is the app's d{sides}, without its pictures.");
-            return new DefResult(die, pack, Math.Round(bs, 4), DieFace(o, die), b, script) { FromPack = StdDicePack };
-        }
+            return new DefResult(die, pack, Math.Round(bs, 4), FaceShown(o, die), b, script) { FromPack = StdDicePack };
         if (Boxes.For(o) is { } box)
             return new DefResult(box, pack, Math.Round(bs, 4), 0, b, script) { FromPack = KTable.Client.Effects.EffectKinds.StandardPack };
+        if (o.Name == TilesetTree) return TreeDef(o, b, pack, script);
         return null;
     }
 
@@ -266,6 +314,7 @@ public sealed partial class DefFactory
         double r = refScale is > NoScale ? refScale.Value : bs;
         double instScale = Math.Round(bs / r, 4);
         if (StandardDef(o, b, pack, bs, instScale) is { } standard) return standard;
+        if (o.Name == TilesetTree) return null;
         var where = $"{Context} {o.Name} '{o.Nickname}' {o.Guid}";
 
         var script = ScriptInfo.Parse(b.SafeLua.Length > 0 ? b.SafeLua : o.SafeLua, o.LuaState);
@@ -339,14 +388,17 @@ public sealed partial class DefFactory
                 if (existing.Name == "Piece" && def.Name != "Piece") existing.Name = def.Name;
                 pack.Richness[existing.Id] = rich;
             }
-            return new DefResult(existing, pack, instScale, self, b, script);
+            return new DefResult(existing, pack, instScale, Shown(o, existing, self), b, script);
         }
         def.Id = $"{pack.Short}.{Slug(def.Name)}-{Hash8(key)}";
         pack.ByKey[key] = def;
         pack.Richness[def.Id] = rich;
         pack.M.Pieces.Add(def);
-        return new DefResult(def, pack, instScale, self, b, script);
+        return new DefResult(def, pack, instScale, Shown(o, def, self), b, script);
     }
+
+    public static int Shown(ModuleObj o, PieceDef def, int self) =>
+        o.IsPictureDie ? FaceShown(o, def) : o.Name == "Custom_PDF" ? Math.Min(o.PdfPage, Math.Max(0, def.States.Count - 1)) : self;
 
     public TranslateResult Translate(string lua, PackOut pack, string where, bool isGlobal = false)
     {
@@ -405,6 +457,8 @@ public sealed partial class DefFactory
             def.Kind = "model";
             def.Mesh = ModelMesh(pack, b, where);
             def.Texture = Asset(pack, b.DiffuseUrl, "image", where);
+            def.Finish = b.Finish;
+            def.Shine = b.Shine;
             if (def.Mesh == null) { def.Kind = "flat"; def.Image = def.Texture ?? Placeholder(pack); }
         }
         else if (b.Name == "Custom_PDF")
@@ -464,7 +518,7 @@ public sealed partial class DefFactory
         if (pack.ByKey.TryGetValue(key, out var d)) return d;
         d = new PieceDef
         {
-            Name = "Marker", Kind = "model", Mesh = mesh, Texture = texture, Size = size,
+            Name = "Marker", Kind = "model", Mesh = mesh, Texture = texture, Size = size, LocalUnit = new Size2(Math.Round(r, 4), Math.Round(r, 4)),
             Thickness = Math.Round(Math.Clamp(BaseThickness(spawned) * Stretch(spawned) * r, 0.02, 3), 3),
             Shape = PackManifest.ShapeOf("Custom_Model", 0), Tags = new() { "marker", "model" },
         };

@@ -11,6 +11,11 @@ namespace KTable.Core.Protocol;
 [JsonDerivedType(typeof(Stow), "Stow")]
 [JsonDerivedType(typeof(Unstow), "Unstow")]
 [JsonDerivedType(typeof(SetState), "SetState")]
+[JsonDerivedType(typeof(TurnDie), "TurnDie")]
+[JsonDerivedType(typeof(SetWorth), "SetWorth")]
+[JsonDerivedType(typeof(SetFacePicture), "SetFacePicture")]
+[JsonDerivedType(typeof(SetLettering), "SetLettering")]
+[JsonDerivedType(typeof(SetDieFaces), "SetDieFaces")]
 [JsonDerivedType(typeof(SetCounter), "SetCounter")]
 [JsonDerivedType(typeof(SetText), "SetText")]
 [JsonDerivedType(typeof(SetLabel), "SetLabel")]
@@ -42,6 +47,9 @@ namespace KTable.Core.Protocol;
 [JsonDerivedType(typeof(RemoveBoard), "RemoveBoard")]
 [JsonDerivedType(typeof(Draw), "Draw")]
 [JsonDerivedType(typeof(EraseStroke), "EraseStroke")]
+[JsonDerivedType(typeof(StampDecal), "StampDecal")]
+[JsonDerivedType(typeof(RemoveDecal), "RemoveDecal")]
+[JsonDerivedType(typeof(SetDecalPalette), "SetDecalPalette")]
 [JsonDerivedType(typeof(RollDice), "RollDice")]
 [JsonDerivedType(typeof(SetClock), "SetClock")]
 [JsonDerivedType(typeof(AdvanceClock), "AdvanceClock")]
@@ -78,6 +86,7 @@ namespace KTable.Core.Protocol;
 [JsonDerivedType(typeof(SetDecals), "SetDecals")]
 [JsonDerivedType(typeof(SetUi), "SetUi")]
 [JsonDerivedType(typeof(SetUiAttributes), "SetUiAttributes")]
+[JsonDerivedType(typeof(SetUiPictures), "SetUiPictures")]
 [JsonDerivedType(typeof(UiEvent), "UiEvent")]
 [JsonDerivedType(typeof(ShowDialog), "ShowDialog")]
 [JsonDerivedType(typeof(DialogResult), "DialogResult")]
@@ -196,6 +205,62 @@ public sealed class SetState : LayerCommand
     public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [];
     public override IEnumerable<string> ScriptsToReload() => [Id];
 }
+public sealed class TurnDie : LayerCommand
+{
+    public string Id { get; set; } = "";
+    public int Face { get; set; }
+    public override Sender SentBy() => Sender.Umpire;
+    public override bool OnUndoStack() => true;
+    public override Shown ShownToObservers() => Shown.Table;
+    public override IEnumerable<(string Layer, string Id)> ZonePieces() => [(Layer, Id)];
+    public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [];
+    public override IEnumerable<string> ScriptsToReload() => [];
+}
+public sealed class SetFacePicture : LayerCommand
+{
+    public string Id { get; set; } = "";
+    public string? Picture { get; set; }
+    public override Sender SentBy() => Sender.Umpire;
+    public override bool OnUndoStack() => true;
+    public override Shown ShownToObservers() => Shown.Table;
+    public override IEnumerable<(string Layer, string Id)> ZonePieces() => [(Layer, Id)];
+    public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [];
+    public override IEnumerable<string> ScriptsToReload() => [];
+}
+public sealed class SetLettering : LayerCommand
+{
+    public string Id { get; set; } = "";
+    public Lettering? Lettering { get; set; }
+    public override Sender SentBy() => Sender.Umpire;
+    public override bool OnUndoStack() => true;
+    public override Shown ShownToObservers() => Shown.Table;
+    public override IEnumerable<(string Layer, string Id)> ZonePieces() => [(Layer, Id)];
+    public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [];
+    public override IEnumerable<string> ScriptsToReload() => [];
+}
+public sealed class SetWorth : LayerCommand
+{
+    public string Id { get; set; } = "";
+    public int Worth { get; set; }
+    public int Groups { get; set; }
+    public override Sender SentBy() => Sender.Umpire;
+    public override bool OnUndoStack() => true;
+    public override Shown ShownToObservers() => Shown.Table;
+    public override IEnumerable<(string Layer, string Id)> ZonePieces() => [(Layer, Id)];
+    public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [];
+    public override IEnumerable<string> ScriptsToReload() => [];
+}
+public sealed class SetDieFaces : LayerCommand
+{
+    public string Id { get; set; } = "";
+    public List<DieFace>? Faces { get; set; }
+    public override Sender SentBy() => Sender.Umpire;
+    public override bool OnUndoStack() => true;
+    public override Shown ShownToObservers() => Shown.Table;
+    public override IEnumerable<(string Layer, string Id)> ZonePieces() => [(Layer, Id)];
+    public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [];
+    public override IEnumerable<string> ScriptsToReload() => [];
+}
 public sealed class SetCounter : LayerCommand
 {
     public string Id { get; set; } = "";
@@ -274,6 +339,10 @@ public static class PieceOptions
     public const string NoCollision = "no-collision";
     public const string PhysicalRoll = "physical-roll";
     public const string Holds = "holds";
+    public const string NotSticky = "not-sticky";
+    public const string NotBoxSelected = "not-box-selected";
+    public const string MeasuresMoves = "measures-moves";
+    public const string EffectOff = "effect-off";
 }
 
 public sealed class SetLocked : LayerCommand
@@ -495,6 +564,37 @@ public sealed class Draw : LayerCommand
 public sealed class EraseStroke : LayerCommand
 {
     public string StrokeId { get; set; } = "";
+    public override Sender SentBy() => Sender.Umpire;
+    public override bool OnUndoStack() => true;
+    public override Shown ShownToObservers() => Shown.Table;
+    public override IEnumerable<(string Layer, string Id)> ZonePieces() => [];
+    public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [];
+    public override IEnumerable<string> ScriptsToReload() => [];
+}
+public sealed class StampDecal : LayerCommand
+{
+    public DecalDef Decal { get; set; } = new();
+    public int? Index { get; set; }
+    public override Sender SentBy() => Sender.Umpire;
+    public override bool OnUndoStack() => true;
+    public override Shown ShownToObservers() => Shown.Table;
+    public override IEnumerable<(string Layer, string Id)> ZonePieces() => [];
+    public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [];
+    public override IEnumerable<string> ScriptsToReload() => [];
+}
+public sealed class RemoveDecal : LayerCommand
+{
+    public string DecalId { get; set; } = "";
+    public override Sender SentBy() => Sender.Umpire;
+    public override bool OnUndoStack() => true;
+    public override Shown ShownToObservers() => Shown.Table;
+    public override IEnumerable<(string Layer, string Id)> ZonePieces() => [];
+    public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [];
+    public override IEnumerable<string> ScriptsToReload() => [];
+}
+public sealed class SetDecalPalette : Command
+{
+    public List<PaletteDecal> Entries { get; set; } = new();
     public override Sender SentBy() => Sender.Umpire;
     public override bool OnUndoStack() => true;
     public override Shown ShownToObservers() => Shown.Table;
@@ -968,6 +1068,16 @@ public sealed class SetUi : Command
     public List<UiNode> Tree { get; set; } = new();
     public string? Layer { get; set; }
     public string? Piece { get; set; }
+    public override Sender SentBy() => Sender.Runtime;
+    public override bool OnUndoStack() => true;
+    public override Shown ShownToObservers() => Shown.Table;
+    public override IEnumerable<(string Layer, string Id)> ZonePieces() => [];
+    public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [];
+    public override IEnumerable<string> ScriptsToReload() => [];
+}
+public sealed class SetUiPictures : Command
+{
+    public Dictionary<string, string> Pictures { get; set; } = new();
     public override Sender SentBy() => Sender.Runtime;
     public override bool OnUndoStack() => true;
     public override Shown ShownToObservers() => Shown.Table;

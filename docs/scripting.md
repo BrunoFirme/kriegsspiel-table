@@ -65,9 +65,10 @@ than they should.
 
 | When | The table calls |
 |---|---|
-| Hosting, resuming, reload, a save loaded | top-level code, then `on_load(saved)` |
+| Hosting, resuming, reload, a save loaded | every script's top-level code, then every `on_load(saved)`; the global script first each time |
 | A click, typing, a menu row, a hotkey | the handler it names |
 | Drop, pick up, turn, turn over, state change | `on_drop`, `on_pick_up`, `on_rotate`, `on_flip`, `on_state` |
+| A roll, a book's page turned, an effect started or stopped | `on_roll`, `on_page`, `on_effect` |
 | Next turn | `on_turn(turn)` |
 | Saving, and after each umpire action | `on_save()` |
 | Deletion | `on_destroy()` |
@@ -357,6 +358,10 @@ gives each direct match.
 - **Vector and Color:** the module classes come over whole: every method and operator, `v[1]`, named colours, `Color.fromString`,
   `fromHex` and `toHex`; `getColorTint()` answers a Color. The colour and table helpers (`hexToColor`, `copyLuaTable`, `getGlobalVar`…),
   the script state calls and the tag calls run through `compat` too.
+- **Panels, dice, books, notes, text, effects:** a save's own XML panels and a piece's come over with the pictures they
+  name; a die's sides answer `getValue`, `setRotationValues` and `randomize`; a book turns by `Book.setPage`; `Notes`
+  reads and writes the note cards the module's notes became; 3D text answers `TextTool`; an effect answers `AssetBundle`
+  as one looping effect. A picture link a script builds while it runs is fetched by the host and shown on the piece.
 - **Noted:** calls with no meaning here (`addForce`, dealing cards, scripting zones) become `compat.todo(...)`, which prints once;
   the import report names each under "Not taken from the module exactly".
 

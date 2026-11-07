@@ -57,12 +57,12 @@ public static class ModuleTranslator
 
     static readonly HashSet<string> ObjectProps = new(StringComparer.Ordinal)
     {
-        "interactable","tooltip","sticky","grid_projection","use_gravity","use_grid","use_snap_points","use_hands","use_rotation_value_flip","auto_raise","bounciness","drag","drag_selectable","angular_drag","hide_when_face_down","ignore_fog_of_war","loading_custom","mass","max_typed_number","measure_movement","script_state","spawning","static_friction","dynamic_friction","value","alt_view_angle","held_flip_index","held_position_offset","held_reduce_force","held_rotation_offset","memo","AssetBundle","type","tag","name","guid","held_by_color","resting","is_face_down","locked",
+        "interactable","tooltip","sticky","grid_projection","use_gravity","use_grid","use_snap_points","use_hands","use_rotation_value_flip","auto_raise","bounciness","drag","drag_selectable","angular_drag","hide_when_face_down","ignore_fog_of_war","loading_custom","mass","max_typed_number","measure_movement","script_state","spawning","static_friction","dynamic_friction","value","value_flags","alt_view_angle","held_flip_index","held_spin_index","pick_up_position","pick_up_rotation","held_position_offset","held_reduce_force","held_rotation_offset","memo","AssetBundle","type","tag","name","guid","held_by_color","resting","is_face_down","locked",
     };
 
     static readonly HashSet<string> EventNames = new(StringComparer.Ordinal)
     {
-        "onLoad","onload","onSave","onsave","onUpdate","onDrop","onPickUp","onPickup","onDestroy","onCollisionEnter","onCollisionExit","onCollisionStay","onObjectDrop","onObjectPickUp","onObjectPickup","onObjectSpawn","onObjectDestroy","onObjectEnterContainer","onObjectLeaveContainer","onObjectEnterScriptingZone","onObjectLeaveScriptingZone","onPlayerTurn","onPlayerChangeColor","onPlayerConnect","onPlayerDisconnect","onChat","onScriptingButtonDown","onScriptingButtonUp","onObjectStateChange","onObjectRandomize","onPlayerAction","onObjectNumberTyped","onObjectSearchStart","onObjectSearchEnd","onObjectRotate","onRotate","onObjectHover","onHover","onBlindfold","onFixedUpdate","onPlayerPing","onObjectLoopingEffect","onObjectTriggerEffect","onObjectPeek","onObjectFlick","onObjectCollisionEnter","onObjectCollisionExit","onObjectCollisionStay","onObjectPageChange","onPageChange","onZoneGroupSort","onFilter","onExternalMessage",
+        "onLoad","onload","onSave","onsave","onUpdate","onDrop","onPickUp","onPickup","onDestroy","onCollisionEnter","onCollisionExit","onCollisionStay","onObjectDrop","onObjectPickUp","onObjectPickup","onObjectSpawn","onObjectDestroy","onObjectEnterContainer","onObjectLeaveContainer","onObjectEnterScriptingZone","onObjectLeaveScriptingZone","onPlayerTurn","onPlayerChangeColor","onPlayerConnect","onPlayerDisconnect","onChat","onScriptingButtonDown","onScriptingButtonUp","onObjectStateChange","onObjectRandomize","onRandomize","onPlayerAction","onObjectNumberTyped","onObjectSearchStart","onObjectSearchEnd","onObjectRotate","onRotate","onObjectHover","onHover","onBlindfold","onFixedUpdate","onPlayerPing","onObjectLoopingEffect","onObjectTriggerEffect","onObjectPeek","onObjectFlick","onObjectCollisionEnter","onObjectCollisionExit","onObjectCollisionStay","onObjectPageChange","onPageChange","onZoneGroupSort","onFilter","onExternalMessage",
     };
 
     static readonly Dictionary<string, string> EventRenames = new(StringComparer.Ordinal)
@@ -72,14 +72,14 @@ public static class ModuleTranslator
         ["onObjectSpawn"] = "on_spawn", ["onObjectDestroy"] = "on_destroy", ["onObjectStateChange"] = "on_state", ["onPlayerTurn"] = "on_turn", ["onRotate"] = "on_rotate", ["onObjectRotate"] = "on_rotate",
         ["onPlayerTurnStart"] = "on_turn", ["onPlayerTurnEnd"] = "on_turn",
         ["onChat"] = "on_chat", ["onObjectNumberTyped"] = "on_number_typed", ["onScriptingButtonDown"] = "on_scripting_button_down", ["onScriptingButtonUp"] = "on_scripting_button_up",
-        ["onPlayerAction"] = "on_player_action", ["onObjectEnterContainer"] = "on_stowed", ["onObjectLeaveContainer"] = "on_unstowed", ["tryObjectEnterContainer"] = "try_stow",
+        ["onPlayerAction"] = "on_player_action", ["onObjectRandomize"] = "on_roll", ["onRandomize"] = "on_roll", ["onPageChange"] = "on_page", ["onObjectPageChange"] = "on_page", ["onObjectLoopingEffect"] = "on_effect", ["onObjectTriggerEffect"] = "on_effect", ["onObjectEnterContainer"] = "on_stowed", ["onObjectLeaveContainer"] = "on_unstowed", ["tryObjectEnterContainer"] = "try_stow",
     };
 
     static readonly HashSet<string> Stubbed = new(StringComparer.Ordinal)
     {
         "setHiddenFrom", "setInvisibleTo", "attachHider", "attachInvisibleHider", "setFogOfWarReveal", "registerCollisions", "unregisterCollisions", "jointTo",
-        "addForce", "addTorque", "setVelocity", "setAngularVelocity", "drop", "cut", "deal", "shuffle", "shuffleStates", "randomize", "reset", "resetAttachments",
-        "split", "spread", "setRotationValues", "getComponent", "getComponents",
+        "addForce", "addTorque", "setVelocity", "setAngularVelocity", "drop", "cut", "deal", "shuffle", "reset", "resetAttachments",
+        "split", "spread", "getComponent", "getComponents",
     };
 
     static string LowerFirst(string s) => s.Length == 0 ? s : char.ToLowerInvariant(s[0]) + s[1..];
@@ -243,6 +243,7 @@ public static class ModuleTranslator
         SyntaxNode MemberCall(FunctionCallExpressionSyntax visited, MemberAccessExpressionSyntax ma, List<string> a, List<ExpressionSyntax> args, SyntaxNode node)
         {
             string All() => ArgText(args);
+            string A(int i) => i < a.Count ? a[i] : "nil";
             var recv = ma.Expression.ToString().Trim();
             var name = ma.MemberName.Text;
             if (GlobalObjectCall(visited, recv, name, a, args, node) is { } global) return global;
@@ -252,9 +253,24 @@ public static class ModuleTranslator
                 var mapped = name switch
                 {
                     "setXml" or "setXmlTable" => "set", "getXml" => "xml", "getXmlTable" => "tree", "setAttribute" => "set_attribute", "setAttributes" => "set_attributes",
-                    "getAttribute" => "get_attribute", "show" => "show", "hide" => "hide", "setValue" => "set_value", "getValue" => "get_value", _ => null,
+                    "getAttribute" => "get_attribute", "show" => "show", "hide" => "hide", "setValue" => "set_value", "getValue" => "get_value",
+                    "getAttributes" => "get_attributes", "setClass" => "set_class", "getCustomAssets" => "pictures", "setCustomAssets" => "set_pictures", _ => null,
                 };
                 return mapped != null ? Direct($"{obj}.ui.{mapped}({All()})", node) : Todo("object UI." + name, $"compat.todo({obj}, \"UI.{name}\")", node);
+            }
+            if (recv.EndsWith(".AssetBundle")) return Compat($"compat.bundle({recv[..^12]}).{name}({All()})", node);
+            if (recv.EndsWith(".TextTool")) return Compat($"compat.text_tool({recv[..^9]}).{name}({All()})", node);
+            if (recv.EndsWith(".Book"))
+            {
+                var book = recv[..^5];
+                return name switch
+                {
+                    "getPage" => Compat($"compat.book_page({book}, {A(0)})", node),
+                    "setPage" => Compat($"compat.set_book_page({book}, {A(0)}, {A(1)})", node),
+                    "setHighlight" => Compat($"compat.book_highlight({book}{(args.Count > 0 ? ", " + All() : "")})", node),
+                    "clearHighlight" => Compat($"compat.book_highlight({book})", node),
+                    _ => Todo("Book." + name, $"compat.todo({book}, \"Book.{name}\")", node),
+                };
             }
             if (recv.StartsWith("Player[") || recv.StartsWith("Player."))
             {
@@ -322,6 +338,10 @@ public static class ModuleTranslator
                         "hide" => Direct($"ui.hide({All()})", node),
                         "setValue" => Direct($"ui.set_value({All()})", node),
                         "getValue" => Direct($"ui.get_value({All()})", node),
+                        "getAttributes" => Direct($"ui.get_attributes({All()})", node),
+                        "setClass" => Direct($"ui.set_class({All()})", node),
+                        "getCustomAssets" => Direct("ui.pictures()", node),
+                        "setCustomAssets" => Direct($"ui.set_pictures({All()})", node),
                         _ => Todo("UI." + name, $"compat.todo(nil, \"UI.{name}\")", node),
                     };
                 case "Turns" or "Notes" or "Lighting" or "Grid" or "Hands" or "MusicPlayer" or "Backgrounds" or "Timer":
@@ -384,8 +404,12 @@ public static class ModuleTranslator
         ExpressionSyntax DieCall(string recv, string name, string value, SyntaxNode node) => name switch
         {
             "getRotationValues" => Compat($"compat.get_rotation_values({recv})", node),
-            "setRotationValue" or "setValue" => Compat($"compat.set_value({recv}, {value})", node),
-            "roll" => Compat($"compat.roll({recv})", node),
+            "setRotationValues" => Compat($"compat.set_rotation_values({recv}, {value})", node),
+            "getRotationValue" => Compat($"compat.get_rotation_value({recv})", node),
+            "setRotationValue" => Compat($"compat.set_rotation_value({recv}, {value})", node),
+            "setValue" => Compat($"compat.set_value({recv}, {value})", node),
+            "roll" or "randomize" => Compat($"compat.randomize({recv})", node),
+            "shuffleStates" => Compat($"compat.shuffle_states({recv})", node),
             _ => Compat($"compat.get_value({recv})", node),
         };
 
@@ -404,7 +428,7 @@ public static class ModuleTranslator
                 case "getStateId": return Direct($"{recv}.state", node);
                 case "setState": return Direct($"{recv}.set_state({All()})", node);
                 case "getStates": return Compat($"compat.states({recv})", node);
-                case "flip": return Direct($"{recv}.flip()", node);
+                case "flip": return Compat($"compat.flip({recv})", node);
                 case "destruct" or "destroy": return Direct($"{recv}.delete()", node);
                 case "call": return Direct($"{recv}.call({All()})", node);
                 case "getVar" or "getTable": return Direct($"{recv}.get_var({All()})", node);
@@ -480,7 +504,8 @@ public static class ModuleTranslator
                 case var stubbed when Stubbed.Contains(stubbed):
                     return Todo(name, $"compat.todo({recv}, \"{name}\")", node);
                 case "getVelocity" or "getAngularVelocity": return Compat("compat.Vector(0, 0, 0)", node);
-                case "getRotationValue" or "getValue" or "getRotationValues" or "setRotationValue" or "setValue" or "roll": return DieCall(recv, name, A(0), node);
+                case "getRotationValue" or "getValue" or "getRotationValues" or "setRotationValues" or "setRotationValue" or "setValue" or "roll" or "randomize" or "shuffleStates":
+                    return DieCall(recv, name, A(0), node);
                 case "getJoints" or "getZones": return Compat("{}", node);
                 case "isSmoothMoving": return Compat("false", node);
                 case "getFogOfWarReveal": return Compat("{ reveal = false, color = \"\", range = 0 }", node);
@@ -514,7 +539,10 @@ public static class ModuleTranslator
                 case "Vector" or "Color": return Compat($"compat.{recv}.{name}", node);
                 case "Time" or "Lighting" or "Grid" or "Hands" or "Notes" or "MusicPlayer" or "Backgrounds": return Compat($"compat.{recv}.{name}", node);
                 case "JSON": return Direct($"json.{name}", node);
+                case "UI" or "Global.UI": return Direct($"ui.{name}", node);
             }
+            if (recv.EndsWith(".UI")) return Direct($"{recv[..^3]}.ui.{name}", node);
+            if (recv.EndsWith(".Book") && name == "page_offset" && visited.Parent is not AssignmentStatementSyntax) return Compat($"compat.book_offset({recv[..^5]})", node);
             name = FoldMember(name);
             switch (name)
             {
@@ -525,17 +553,29 @@ public static class ModuleTranslator
                 case "memo":
                     if (visited.Parent is AssignmentStatementSyntax) return visited;
                     return Direct($"{recv}.memo", node);
-                case "interactable" or "tooltip" or "sticky" or "use_gravity" or "grid_projection" or "auto_raise" or "use_snap_points" or "use_grid" or "hide_when_face_down" or "locked":
+                case "interactable" or "tooltip" or "sticky" or "use_gravity" or "grid_projection" or "auto_raise" or "use_snap_points" or "use_grid" or "hide_when_face_down" or "locked"
+                    or "drag_selectable" or "measure_movement" or "value" or "value_flags"
+                    or "held_spin_index" or "held_flip_index" or "pick_up_position" or "pick_up_rotation":
                     if (visited.Parent is AssignmentStatementSyntax) return visited;
                     return Compat($"compat.get_prop({recv}, \"{name}\", {DefaultProp(name)})", node);
             }
             return visited;
         }
 
-        static string DefaultProp(string name) => name switch { "interactable" or "use_gravity" or "auto_raise" => "true", "memo" or "tooltip" => "\"\"", _ => "false" };
+        static string DefaultProp(string name) => name switch
+        {
+            "interactable" or "use_gravity" or "auto_raise" or "sticky" or "tooltip" or "drag_selectable" => "true", "memo" => "\"\"", "value" or "value_flags" => "0", _ => "false",
+        };
 
         public override SyntaxNode? VisitAssignmentStatement(AssignmentStatementSyntax node)
         {
+            if (node.Variables.Count == 1 && node.EqualsValues.Values.Count == 1 && node.Variables[0] is MemberAccessExpressionSyntax pa && pa.MemberName.Text == "page_offset"
+                && pa.Expression.ToString().Trim() is var owner && owner.EndsWith(".Book"))
+            {
+                var value = (ExpressionSyntax)Visit(node.EqualsValues.Values[0])!;
+                _res.CompatCalls++;
+                return Stmt($"compat.set_book_offset({owner[..^5]}, {value.ToString().Trim()})", node);
+            }
             if (node.Variables.Count == 1 && node.EqualsValues.Values.Count == 1 && node.Variables[0] is MemberAccessExpressionSyntax ma && ObjectProps.Contains(FoldMember(ma.MemberName.Text))
                 && ma.Expression.ToString().Trim() is var recv && recv is not ("Turns" or "Lighting" or "Grid" or "Hands" or "Notes" or "Time"))
             {
@@ -671,7 +711,13 @@ public static class ModuleTranslator
                 case "onObjectPickUp" or "onObjectPickup": return ("on_pick_up", "__piece, __who", Bind(new[] { "compat.color_of(__who)", "__piece" }));
                 case "onObjectSpawn": return ("on_spawn", "__piece", Bind(new[] { "__piece" }));
                 case "onObjectDestroy": return ("on_destroy", "__piece", Bind(new[] { "__piece" }));
+                case "onObjectStateChange" when _ctx.IsGlobal: return ("on_state", "__piece, __old, __new", Bind(new[] { "__piece", "tostring(__old)" }));
                 case "onObjectStateChange": return ("on_state", "__old, __new", Bind(new[] { "self", "tostring(__old)" }));
+                case "onPageChange": return ("on_page", "", "");
+                case "onObjectLoopingEffect" or "onObjectTriggerEffect" when _ctx.IsGlobal: return ("on_effect", "__piece, __index", Bind(new[] { "__piece", "__index" }));
+                case "onObjectLoopingEffect" or "onObjectTriggerEffect": return ("on_effect", "__index", Bind(new[] { "self", "__index" }));
+                case "onObjectPageChange" when _ctx.IsGlobal: return ("on_page", "__piece", Bind(new[] { "__piece" }));
+                case "onObjectPageChange": return ("on_page", "", Bind(new[] { "self" }));
                 case "onPlayerTurn": return ("on_turn", "__turn", Bind(new[] { "compat.player(\"White\")", "nil" }));
                 case "onPlayerTurnStart" or "onPlayerTurnEnd": return ("on_turn", "__turn", Bind(new[] { "\"White\"", "nil" }));
                 case "onRotate": return ("on_rotate", "__rot, __old, __who", Bind(new[] { "__rot", "self.face_down and 180 or 0", "compat.color_of(__who)", "__old", "self.face_down and 180 or 0" }));
@@ -684,6 +730,9 @@ public static class ModuleTranslator
                 case "onObjectLeaveContainer": return ("on_unstowed", "__holder, __piece", Bind(new[] { "__holder", "__piece" }));
                 case "tryObjectEnterContainer": return ("try_stow", "__holder, __piece", Bind(new[] { "__holder", "__piece" }));
                 case "onObjectNumberTyped": return ("on_number_typed", "__piece, __who, __n", Bind(new[] { "__piece", "compat.color_of(__who)", "__n" }));
+                case "onRandomize": return ("on_roll", "__who", Bind(new[] { "compat.color_of(__who)" }));
+                case "onObjectRandomize" when _ctx.IsGlobal: return ("on_roll", "__piece, __who", Bind(new[] { "__piece", "compat.color_of(__who)" }));
+                case "onObjectRandomize": return ("on_roll", "__who", Bind(new[] { "self", "compat.color_of(__who)" }));
                 case "onScriptingButtonDown": return ("on_scripting_button_down", "__index, __who", Bind(new[] { "__index", "compat.color_of(__who)" }));
                 case "onScriptingButtonUp": return ("on_scripting_button_up", "__index, __who", Bind(new[] { "__index", "compat.color_of(__who)" }));
             }

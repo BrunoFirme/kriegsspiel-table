@@ -127,6 +127,17 @@
 ---@field note string|nil Its description, shown on hover; umpires only. nil when empty.
 ---@field state number Its state, from 1.
 ---@field states string[] The names of its kind's states, in order.
+---@field faces Face[] A die's sides in order: { value =, up = { x, y, z }, rotation = { x, y, z } }; empty for every other piece.
+---@field face number|nil The side of a die showing, from 1; nil for every other piece.
+---@field value number|string|nil The value of the side of a die showing; nil for every other piece.
+---@field picked_up table|nil Where an umpire last picked the piece up: { x =, y =, z =, rot = }; nil until then.
+---@field face_picture string|nil A picture shown on the piece's face in place of its kind's, set by set_face_picture; nil for none.
+---@field page_offset number For a book, what its page numbers start from, as the module set it; 0 for every other piece.
+---@field effect_on boolean For an effect, whether it is running.
+---@field kind_name string The name of its kind.
+---@field lettering table|nil Text drawn on the piece in place of its picture, as 3D text from a module is: { text =, size =, color = }; nil for most pieces.
+---@field worth number What the piece counts for when pieces are added up; 0 for most.
+---@field worth_groups number Which groups it adds up with, as bits; 0 adds up with any piece of worth.
 ---@field pos Point Where it stands, in map units: { x =, z = }.
 ---@field rot number Its heading in degrees.
 ---@field y number How high it sits above the table (stacked pieces).
@@ -137,6 +148,9 @@
 ---@field shape string Its outline at its state: "box", "rounded", "circle", "hex", or "alpha" for a token cut along its picture.
 ---@field face_down boolean Turned over.
 ---@field locked boolean Pinned to the table: not dragged, turned or resized by hand.
+---@field sticky boolean Carries the pieces resting on it when it is moved; attached pieces go with it either way.
+---@field box_selected boolean Taken by a selection box dragged over it.
+---@field measures_moves boolean Shows how far it is moved while it is held.
 ---@field tint string|nil Its colour as "#RRGGBB", or nil.
 ---@field counters table Its kind's counters, name → value.
 ---@field text table Its text lines that hold a value, name → text.
@@ -195,6 +209,54 @@ function Piece.set_tint(color) end
 ---@param on? boolean true, or no argument, pins it; false lets it go.
 function Piece.set_locked(on) end
 
+---Whether a selection box dragged over it takes it.
+---@param on? boolean true, or no argument, lets a box take it; false leaves it out.
+function Piece.set_box_selected(on) end
+
+---Whether it shows how far it is moved while it is held.
+---@param on? boolean true, or no argument, shows the distance; false hides it.
+function Piece.set_measures_moves(on) end
+
+---Whether it carries the pieces resting on it when it is moved.
+---@param on? boolean true, or no argument, carries them; false leaves them where they lie.
+function Piece.set_sticky(on) end
+
+---Turns a die to show a side, from 1; false when it has no such side.
+---@param n number The side, from 1, in the order of self.faces.
+---@return boolean
+function Piece.set_face(n) end
+
+---Turns a die to the first side with this value; false when no side has it.
+---@param value number|string The value to show.
+---@return boolean
+function Piece.set_value(value) end
+
+---Gives this die sides of its own; nil gives it back its kind's.
+---@param list table|nil { value =, up = { x, y, z } } or { value =, rotation = { x, y, z } } for each side.
+---@return boolean
+function Piece.set_faces(list) end
+
+---Shows a picture on the piece's face in place of its kind's: a web link is fetched first; nil puts the kind's back.
+---@param link string|nil A web link to a picture, or a picture the table already holds.
+function Piece.set_face_picture(link) end
+
+---Changes the text drawn on the piece: any of text, size and color; nil takes the lettering away.
+---@param changes table|nil { text =, size =, color = }, each optional.
+function Piece.set_lettering(changes) end
+
+---Starts or stops an effect.
+---@param on boolean true runs it; false stops it.
+function Piece.set_effect_on(on) end
+
+---Sets what the piece counts for, and optionally the groups it adds up with.
+---@param worth number A whole number.
+---@param groups? number Groups as bits; nil keeps them.
+function Piece.set_worth(worth, groups) end
+
+---Rolls a die, or turns a piece of several states to one at random; false for anything else.
+---@return boolean
+function Piece.roll() end
+
 ---Sets one of its kind's counters (a whole number, kept to the counter's range).
 ---@param name string The counter's name, as the piece studio shows it.
 ---@param value number Rounded to a whole number and kept to the counter's range.
@@ -250,7 +312,7 @@ function Piece.detach() end
 ---Takes another piece off the table into this one, with whatever rides on it; a piece this one rides on is refused.
 function Piece.stow() end
 
----Puts a held piece back on the table and returns it: which is its id, guid, its number in stowed, or nothing for the first; place is { x =, z = } or a piece, else beside this one; rot turns it.
+---Puts a held piece back on the table and returns it: which is its id, guid, its number in stowed, or nothing for the next by the holder's take order (first, last or random); place is { x =, z = } or a piece, else beside this one; rot turns it.
 function Piece.unstow() end
 
 ---Takes the piece off the table (on_destroy runs first).
@@ -457,6 +519,8 @@ function game.dialog(who, spec, fn) end
 function game.fetch_picture(link, fn) end
 
 ---@class KTUi
+---@field loading boolean false: panel pictures come with their packs.
+---@field assetType table { Image = 0, AssetBundle = 1 }, as module scripts name picture types.
 ui = {}
 
 ---Replaces the panels: XML (several roots allowed) or tables { tag =, attributes = {}, children = {}, value = }.
@@ -510,6 +574,26 @@ function ui.set_value(id, value) end
 ---@param id string The element's id.
 ---@return string|nil
 function ui.get_value(id) end
+
+---Every attribute of an element, or nil.
+---@param id string The element's id.
+---@return table|nil
+function ui.get_attributes(id) end
+
+---Sets an element's classes, which take their looks from the Defaults the panels hold.
+---@param id string The element's id.
+---@param classes string Class names, separated by spaces.
+---@return boolean # true when the element exists.
+function ui.set_class(id, classes) end
+
+---The pictures panels name: a list of { name =, url =, type = }.
+---@return table
+function ui.pictures() end
+
+---Replaces the pictures panels name. An image attribute holding a name shows that picture.
+---@param list table { name =, url = } entries; url is a picture of a pack.
+---@return boolean
+function ui.set_pictures(list) end
 
 ---@class KTWait
 wait = {}
@@ -573,17 +657,26 @@ function on_save() end
 function on_update() end
 
 ---An umpire let the piece go.
+function on_drop() end
+
+---An umpire rolled this die.
 ---@param who Who The umpire.
-function on_drop(who) end
+function on_roll(who) end
 
 ---An umpire picked the piece up.
 ---@param who Who The umpire.
 function on_pick_up(who) end
 
 ---Its state changed, by anyone.
+function on_state() end
+
+---This book turned to another page.
+function on_page() end
+
+---An umpire started (0) or stopped (-1) this effect.
 ---@param old number The state it left, from 1.
 ---@param new number The state it is in now, from 1.
-function on_state(old, new) end
+function on_effect(old, new) end
 
 ---It was turned over or back.
 ---@param face_down boolean true when it is face down now.

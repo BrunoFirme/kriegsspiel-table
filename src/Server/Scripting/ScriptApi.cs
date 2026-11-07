@@ -276,7 +276,7 @@ public sealed partial class ScriptHost
     DynValue Handle(string id) => _handles.Handle(id);
 }
 
-internal sealed class PieceHandles(ScriptHost host)
+internal sealed partial class PieceHandles(ScriptHost host)
 {
     readonly Dictionary<string, DynValue> _handles = new();
 
@@ -315,7 +315,7 @@ internal sealed class PieceHandles(ScriptHost host)
             return DynValue.Nil;
         }
         var def = host.Server.Store?.Def(p.Def);
-        return Field(id, p, def, key) ?? Setter(id, p, def, key) ?? Drawing(id, key) ?? Scripted(id, p, key) ?? DynValue.Nil;
+        return Field(id, p, def, key) ?? DieField(p, def, key) ?? Setter(id, p, def, key) ?? DieSetter(id, p, def, key) ?? Drawing(id, key) ?? Scripted(id, p, key) ?? DynValue.Nil;
     }
 
     DynValue? Field(string id, PieceInstance p, PieceDef? def, string key)
@@ -361,6 +361,10 @@ internal sealed class PieceHandles(ScriptHost host)
             }
             case "face_down": return B(p.FaceDown);
             case "locked": return B(p.Locked);
+            case "sticky": return B(!p.NotSticky);
+            case "box_selected": return B(!p.NotBoxSelected);
+            case "measures_moves": return B(p.MeasuresMoves);
+            case "effect_on": return B(!p.EffectOff);
             case "tint": return p.TintOverride is { } ti ? S(ti) : def != null ? S(def.Tint) : DynValue.Nil;
             case "counters":
             {
@@ -496,6 +500,14 @@ internal sealed class PieceHandles(ScriptHost host)
             case "flip": return Fn(a => { host.Emit(new FlipPiece { Layer = L, Id = id, FaceDown = Arg(a, 0).IsNil() ? !p.FaceDown : Arg(a, 0).CastToBool() }); return DynValue.Nil; });
             case "set_tint": return Fn(a => { host.Emit(new SetTint { Layer = L, Id = id, Value = Arg(a, 0).IsNil() ? null : ColorOf(Arg(a, 0)) }); return DynValue.Nil; });
             case "set_locked": return Fn(a => { host.Emit(new SetLocked { Layer = L, Id = id, Value = Arg(a, 0).IsNil() || Arg(a, 0).CastToBool() }); return DynValue.Nil; });
+            case "set_box_selected": return Option(id, PieceOptions.NotBoxSelected, inverted: true);
+            case "set_measures_moves": return Option(id, PieceOptions.MeasuresMoves, inverted: false);
+            case "set_effect_on": return Option(id, PieceOptions.EffectOff, inverted: true);
+            case "set_sticky": return Fn(a =>
+            {
+                host.Emit(new SetPieceOption { Layer = L, Id = id, Name = PieceOptions.NotSticky, Value = !(Arg(a, 0).IsNil() || Arg(a, 0).CastToBool()) });
+                return DynValue.Nil;
+            });
             case "set_counter" : return Fn(a => { host.Emit(new SetCounter { Layer = L, Id = id, Name = Arg(a, 0).CastToString()
                 ?? "", Value = (int)Math.Round(Arg(a, 1).CastToNumber() ?? 0) }); return DynValue.Nil; });
             case "set_text": return Fn(a => { host.Emit(new SetText { Layer = L, Id = id, Name = Arg(a, 0).CastToString() ?? "", Value = Arg(a, 1).CastToString() ?? "" }); return DynValue.Nil; });
@@ -525,6 +537,13 @@ internal sealed class PieceHandles(ScriptHost host)
         return list;
     }
 
+    DynValue Option(string id, string option, bool inverted) => Fn(a =>
+    {
+        bool on = Arg(a, 0).IsNil() || Arg(a, 0).CastToBool();
+        host.Emit(new SetPieceOption { Layer = Layers.Umpire, Id = id, Name = option, Value = inverted ? !on : on });
+        return DynValue.Nil;
+    });
+
     DynValue TakeOut(string id, PieceInstance holder, DynValue which, DynValue place, DynValue rot)
     {
         const string L = Layers.Umpire;
@@ -534,7 +553,7 @@ internal sealed class PieceHandles(ScriptHost host)
             DataType.Number => stowed.ElementAtOrDefault((int)which.Number - 1),
             DataType.String => stowed.FirstOrDefault(s => s.Id == which.String || s.Guid == which.String),
             DataType.Table => stowed.FirstOrDefault(s => s.Id == IdOf(which)),
-            _ => stowed.FirstOrDefault(),
+            _ => holder.NextOut(Random.Shared),
         };
         if (target == null) return DynValue.Nil;
         var cmd = new Unstow { Layer = L, Holder = id, Id = target.Id };

@@ -29,6 +29,7 @@ sealed class TableInput
     readonly PenTool _pen;
     readonly LetterTool _letters;
     readonly RulerTool _ruler;
+    internal required StampTool Decals { get; init; }
     readonly RangeRings _ranges;
     readonly CropTool _crop;
     readonly ZoneLayer _zones;
@@ -150,6 +151,11 @@ sealed class TableInput
         if (_c.Tool == Tool.Formation && WheelOnSelection(mb.Position) && !mb.AltPressed && _forms.Count >= 2)
         {
             _forms.Turn(mb.ButtonIndex == MouseButton.WheelUp ? -10 : 10);
+            return;
+        }
+        if (_c.Tool == Tool.Decal && Decals.Armed != null && !mb.AltPressed)
+        {
+            Decals.Wheel(mb.ButtonIndex == MouseButton.WheelUp, mb.ShiftPressed);
             return;
         }
         if (_c.Tool == Tool.Range && WheelOnSelection(mb.Position))
@@ -308,6 +314,9 @@ sealed class TableInput
                 break;
             case Tool.Crop:
                 _crop.Press(mb.Position);
+                break;
+            case Tool.Decal:
+                Decals.Press(g.Value, mb.Position);
                 break;
             case Tool.Zone:
                 _zones.Press(g.Value);

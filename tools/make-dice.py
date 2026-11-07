@@ -631,7 +631,7 @@ def main():
             "id": f"std.dice.{slug}", "name": name, "kind": "model", "mesh": mesh_sha, "texture": atlas_sha, "image": thumb_sha,
             "size": {"w": 0.6, "h": 0.6}, "shape": "box", "thickness": 0.6, "tint": "#FFFFFF",
             "tags": ["die", "dice", name.split()[0]],
-            "states": [{"name": str(k), "up": [round(x, 6) for x in n]} for k, n in states],
+            "faces": [{"value": str(k), "up": [round(x, 6) for x in n]} for k, n in states],
             "counters": [], "textLines": [], "attachments": [],
         })
     for name, faces in PICTURE_DICE:
@@ -647,7 +647,7 @@ def main():
             "id": f"std.dice.{name.replace(' ', '-')}", "name": name, "kind": "model", "mesh": mesh_sha, "texture": atlas_sha, "image": thumb_sha,
             "size": {"w": 0.6, "h": 0.6}, "shape": "box", "thickness": 0.6, "tint": "#FFFFFF",
             "tags": ["die", "dice", "d6", "picture"],
-            "states": [{"name": k, "up": [round(x, 6) for x in n]} for k, n in states],
+            "faces": [{"value": k, "up": [round(x, 6) for x in n]} for k, n in states],
             "counters": [], "textLines": [], "attachments": [],
         })
     pack = {

@@ -172,7 +172,7 @@ sealed class ViewSync
             case Batch b:
                 foreach (var i in b.Items) OnApplied(i);
                 return true;
-            case LayerCommand when c is Draw or EraseStroke:
+            case LayerCommand when c is Draw or EraseStroke or StampDecal or RemoveDecal:
                 if (_batch != null) _batch.Drawings = true;
                 else _drawings.Sync();
                 return true;
@@ -187,6 +187,10 @@ sealed class ViewSync
                 return true;
             case SetUiAttributes { Piece: not null } sua:
                 if (pieces.TryGet(sua.Layer ?? Layers.Umpire, sua.Piece, out var un2)) un2.SyncUi(force: true);
+                return true;
+            case SetUiPictures:
+                foreach (var p in s.View.Layer(Layers.Umpire).Where(p => p.Ui.Count > 0))
+                    if (pieces.TryGet(Layers.Umpire, p.Id, out var pn)) pn.SyncUi(force: true);
                 return true;
             case UiEvent { Piece: not null } uev:
                 if (pieces.TryGet(uev.Layer ?? Layers.Umpire, uev.Piece, out var un3)) un3.SyncUi(force: true);

@@ -108,6 +108,7 @@ public sealed partial class ScriptHost
         Volatile.Write(ref _loadTotal, pieces.Count);
         Volatile.Write(ref _loadDone, 0);
         bool mine = BeginRedraw(pieces, clearUndrawn: false);
+        _loadsWaiting = new();
         try
         {
             if (_s.State.Script is { } g) Guard("", () => LoadGlobal(g));
@@ -117,8 +118,24 @@ public sealed partial class ScriptHost
                 if (Find(pieces[i].Id) is { } still) Guard(still.Id, () => LoadPiece(still));
                 Volatile.Write(ref _loadDone, i + 1);
             }
+            var waiting = _loadsWaiting;
+            _loadsWaiting = null;
+            foreach (var (ps, state) in waiting)
+                Guard(ps.Id, () => UnderLoadBudget(() => { if (ps.Enabled && IsCurrent(ps)) Call(ps, "on_load", DynValue.NewString(state)); }));
         }
-        finally { if (mine) EndRedraw(); }
+        finally
+        {
+            _loadsWaiting = null;
+            if (mine) EndRedraw();
+        }
+    }
+
+    List<(PieceScript ps, string state)>? _loadsWaiting;
+
+    void OnLoad(PieceScript ps, string state)
+    {
+        if (_loadsWaiting != null) { _loadsWaiting.Add((ps, state)); return; }
+        Call(ps, "on_load", DynValue.NewString(state));
     }
 
     public int LoadDone => Volatile.Read(ref _loadDone);
@@ -342,7 +359,7 @@ public sealed partial class ScriptHost
             _pieces[p.Id] = ps;
             if (!redrawn) _drawing.Blank(p.Id);
             _drawing.FromLoad(p.Id);
-            Call(ps, "on_load", DynValue.NewString(p.ScriptState));
+            OnLoad(ps, p.ScriptState);
         });
     }
 
@@ -378,7 +395,7 @@ public sealed partial class ScriptHost
             if (!Compile(ps, null)) return;
             ps.HasUpdate = ps.Env.Get("on_update").Type == DataType.Function;
             _global = ps;
-            Call(ps, "on_load", DynValue.NewString(_s.State.ScriptState));
+            OnLoad(ps, _s.State.ScriptState);
             InstallScriptingButtons(ps);
         });
     }
@@ -522,6 +539,8 @@ public sealed partial class ScriptHost
         if (_reaction != null)
             BestEffort.Try(() => Emit(new Say { Text = line, To = "u:", Color = "#f87" }));
     }
+
+    internal void Report(string pieceId, string message) => Print(message, "error", pieceId);
 
     void Print(string text, string kind = "print", string? source = null, int line = 0)
     {
@@ -775,6 +794,62 @@ public sealed partial class ScriptHost
 
     static bool IsAction(Command c) => c is ClickWidget or EditWidget or PickMenuItem or UiEvent or DialogResult or Hotkey or PickGlobalMenuItem || (c is Batch b && b.Items.Any(IsAction));
 
+    internal readonly Dictionary<string, (Vec2 Pos, double Rot, double Y)> PickedUp = new();
+
+    void ReactToState(SetState st)
+    {
+        var (old, now) = (DynValue.NewNumber(OldState(st) + 1), DynValue.NewNumber(st.State + 1));
+        bool book = Find(st.Id) is { } p && _s.Store?.Def(p.Def)?.Tags.Contains("book") == true;
+        if (_pieces.TryGetValue(st.Id, out var pst))
+        {
+            Call(pst, "on_state", old, now);
+            if (book) Call(pst, "on_page");
+        }
+        if (_global == null) return;
+        Call(_global, "on_state", Handle(st.Id), old, now);
+        if (book) Call(_global, "on_page", Handle(st.Id));
+    }
+
+    void ReactToPiece(Command c, long actor, DynValue who)
+    {
+        switch (c)
+        {
+            case HoldPiece { Held: true } h:
+                if (Find(h.Id) is { } held) PickedUp[h.Id] = (held.Pos, held.RotDeg, held.Y);
+                if (_pieces.TryGetValue(h.Id, out var ph)) Call(ph, "on_pick_up", who);
+                if (_global != null) Call(_global, "on_pick_up", Handle(h.Id), who);
+                break;
+            case SetState st:
+                ReactToState(st);
+                break;
+            case FlipPiece fp:
+                if (_pieces.TryGetValue(fp.Id, out var pfp)) Call(pfp, "on_flip", DynValue.NewBoolean(fp.FaceDown));
+                break;
+            case SetPieceOption { Name: PieceOptions.EffectOff } eo when actor != 0:
+                ReactToEffect(eo);
+                break;
+            case RollDice { Layer: not null } rd when actor != 0:
+                ReactToRoll(rd, who);
+                break;
+        }
+    }
+
+    void ReactToEffect(SetPieceOption eo)
+    {
+        var index = DynValue.NewNumber(eo.Value ? -1 : 0);
+        if (_pieces.TryGetValue(eo.Id, out var peo)) Call(peo, "on_effect", index);
+        if (_global != null) Call(_global, "on_effect", Handle(eo.Id), index);
+    }
+
+    void ReactToRoll(RollDice rd, DynValue who)
+    {
+        foreach (var id in rd.PieceIds.Where(id => Find(id) != null).ToList())
+        {
+            if (_pieces.TryGetValue(id, out var prd)) Call(prd, "on_roll", who);
+            if (_global != null) Call(_global, "on_roll", Handle(id), who);
+        }
+    }
+
     void ReactToMove(MovePiece m, DynValue who)
     {
         var old = _s.LastInverse is MovePiece inv && inv.Id == m.Id ? inv : null;
@@ -830,15 +905,8 @@ public sealed partial class ScriptHost
             case MovePiece m:
                 ReactToMove(m, who);
                 break;
-            case HoldPiece { Held: true } h:
-                if (_pieces.TryGetValue(h.Id, out var ph)) Call(ph, "on_pick_up", who);
-                if (_global != null) Call(_global, "on_pick_up", Handle(h.Id), who);
-                break;
-            case SetState st:
-                if (_pieces.TryGetValue(st.Id, out var pst)) Call(pst, "on_state", DynValue.NewNumber(OldState(st) + 1), DynValue.NewNumber(st.State + 1));
-                break;
-            case FlipPiece fp:
-                if (_pieces.TryGetValue(fp.Id, out var pfp)) Call(pfp, "on_flip", DynValue.NewBoolean(fp.FaceDown));
+            case HoldPiece or SetState or FlipPiece or SetPieceOption or RollDice:
+                ReactToPiece(c, actor, who);
                 break;
             case AdvanceClock or SetClock:
             {
@@ -892,8 +960,15 @@ public sealed partial class ScriptHost
             && Call(_global, "on_number_typed", Handle(nt.Id), who, DynValue.NewNumber(nt.Number)) is { Type: DataType.Boolean, Boolean: true };
         if (keep || Find(nt.Id) is not { } still) return;
         var ndef = _s.Store?.Def(still.Def);
-        if (ndef != null && nt.Number >= 1 && nt.Number <= ndef.States.Count && ndef.States.Count > 1 && still.State != nt.Number - 1)
-            try { Emit(new SetState { Layer = Layers.Umpire, Id = nt.Id, State = nt.Number - 1 }); } catch (ScriptRuntimeException e) { Error("", e.Message); }
+        var faces = PieceInstance.FacesOf(ndef, still);
+        try
+        {
+            if (faces.Count > 1 && nt.Number >= 1 && nt.Number <= faces.Count && still.ShownFace != nt.Number - 1)
+                Emit(new TurnDie { Layer = Layers.Umpire, Id = nt.Id, Face = nt.Number - 1 });
+            else if (faces.Count <= 1 && ndef != null && nt.Number >= 1 && nt.Number <= ndef.States.Count && ndef.States.Count > 1 && still.State != nt.Number - 1)
+                Emit(new SetState { Layer = Layers.Umpire, Id = nt.Id, State = nt.Number - 1 });
+        }
+        catch (ScriptRuntimeException e) { Error("", e.Message); }
     }
 
     void ReactToHotkey(Hotkey hk, long actor, DynValue who)

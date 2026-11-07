@@ -8,7 +8,7 @@ using KTable.Core.Protocol;
 
 namespace KTable.App;
 
-public enum Tool { Select, Transform, Place, Ruler, Draw, Erase, Calibrate, Sighting, Capture, Zone, Crop, Range, Shape, Relief, Formation, Letter }
+public enum Tool { Select, Transform, Place, Ruler, Draw, Erase, Calibrate, Sighting, Capture, Zone, Crop, Range, Shape, Relief, Formation, Letter, Decal }
 
 public partial class Table : Node3D
 {
@@ -86,6 +86,7 @@ public partial class Table : Node3D
     internal LetterTool Letters { get; }
     internal RulerTool Ruler { get; }
     internal RangeRings Ranges { get; }
+    internal StampTool Decals { get; }
     internal CropTool Crop { get; }
     internal ZoneLayer Zones { get; }
     internal ReliefTool Relief { get; }
@@ -128,13 +129,17 @@ public partial class Table : Node3D
         Letters = new LetterTool(_c, Overlay, Drawings);
         Ruler = new RulerTool(_c, Overlay);
         Ranges = new RangeRings(_c, Overlay, Selection);
+        Decals = new StampTool(_c, Overlay, Pieces, Drawings);
         Crop = new CropTool(_c, Overlay, Gizmo);
         Zones = new ZoneLayer(_c, Overlay);
         Relief = new ReliefTool(_c, Overlay, Sheets);
         Forms = new FormationTool(_c, Overlay, Selection, Hand);
         Pointers = new UmpirePointers(_c, p => Hand.SurfaceY(p, Layers.Umpire), Motion.Carrying, name => UmpireHue.Of(_c.S, name) ?? UmpireHue.Unassigned);
         SelectTool = new SelectTool(_c, press, Sheets, Pieces, Selection, Hand, Names, Actions);
-        Router = new TableInput(_c, press, Cam, Pieces, Sighting, Selection, Poses, Gizmo, Hand, Actions, Names, Palette, Pen, Letters, Ruler, Ranges, Crop, Zones, SelectTool, Relief, Forms);
+        Router = new TableInput(_c, press, Cam, Pieces, Sighting, Selection, Poses, Gizmo, Hand, Actions, Names, Palette, Pen, Letters, Ruler, Ranges, Crop, Zones, SelectTool, Relief, Forms)
+        {
+            Decals = Decals,
+        };
         Keys = new TableKeys(_c, Router, Cam, Sheets, Pieces, Sighting, Selection, Poses, Hand, Dice, Clip, Hover, Actions, Pen, Ruler, Forms);
 
         Stage.ShadeChanged += Pieces.ShadeEffects;
@@ -146,7 +151,9 @@ public partial class Table : Node3D
         Overlay.Drawing += Crop.Draw;
         Overlay.Drawing += Zones.DrawDraft;
         Overlay.Drawing += Ranges.Draw;
+        Overlay.Drawing += Decals.Draw;
         Overlay.Drawing += Ruler.Draw;
+        Overlay.Drawing += () => Hand.DrawMeasures(Overlay);
         Overlay.Drawing += Pen.DrawInHand;
         Overlay.Drawing += Letters.Draw;
         Overlay.Drawing += Forms.Draw;
@@ -368,6 +375,7 @@ public partial class Table : Node3D
     string? ToolLine(Tool t) => t switch
     {
         Tool.Range => Ranges.Hint(),
+        Tool.Decal => Decals.Hint(),
         Tool.Sighting => Sighting.Hint(),
         Tool.Place => "Shift+click places another",
         Tool.Relief => ReliefLine(),

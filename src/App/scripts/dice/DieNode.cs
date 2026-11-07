@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Godot;
 using KTable.Core.Model;
@@ -7,7 +8,8 @@ namespace KTable.App;
 
 public partial class PieceNode
 {
-    public bool IsDie => Def is { Kind: "model" } d && d.States.Count > 1 && d.Tags.Contains("die");
+    public bool IsDie => Def is { Kind: "model" } d && PieceInstance.FacesOf(d, Piece).Count > 1;
+    List<DieFace> Faces => PieceInstance.FacesOf(Def, Piece);
 
     Vector3[]? _hull;
     bool _meshReady;
@@ -33,17 +35,20 @@ public partial class PieceNode
 
     Quaternion FaceQuat(int state)
     {
-        var up = Def!.States[Math.Clamp(state, 0, Def.States.Count - 1)].Up;
+        var faces = Faces;
+        if (faces.Count == 0) return Quaternion.Identity;
+        var up = faces[Math.Clamp(state, 0, faces.Count - 1)].Up;
         if (up is not { Length: 3 }) return Quaternion.Identity;
         return ArcTo(new Vector3((float)up[0], (float)up[1], (float)up[2]).Normalized(), Vector3.Up);
     }
 
     public int FaceUp(Basis rest)
     {
-        int best = Piece.State;
+        int best = Piece.ShownFace;
         float most = float.MinValue;
-        for (int i = 0; i < Def!.States.Count; i++)
-            if (Def.States[i].Up is { Length: 3 } up)
+        var faces = Faces;
+        for (int i = 0; i < faces.Count; i++)
+            if (faces[i].Up is { Length: 3 } up)
             {
                 float d = (rest * new Vector3((float)up[0], (float)up[1], (float)up[2]).Normalized()).Dot(Vector3.Up);
                 if (d > most) { most = d; best = i; }
@@ -87,8 +92,8 @@ public partial class PieceNode
         }
         if (Rolling)
         {
-            PendingState = p.State;
-            Dbg($"rolling: pending face {p.State + 1}");
+            PendingState = p.ShownFace;
+            Dbg($"rolling: pending face {p.ShownFace + 1}");
             return;
         }
         if (Placed)
@@ -96,12 +101,12 @@ public partial class PieceNode
             _lastPos = p.Pos;
             _lastRot = p.RotDeg;
             _lastY = p.Y;
-            if (_meshReady && p.State != _shownState) ApplyFace(p.State);
+            if (_meshReady && p.ShownFace != _shownState) ApplyFace(p.ShownFace);
             return;
         }
         bool moved = (p.Pos - _lastPos).Length > 1e-6 || Math.Abs(p.RotDeg - _lastRot) > 1e-6 || Math.Abs(p.Y - _lastY) > 1e-6;
-        bool faceChanged = _meshReady && p.State != _shownState;
-        Dbg($"refresh: state {p.State + 1} shown {_shownState + 1} meshReady {_meshReady} moved {moved} spinning {_spinning} landing {_landing}");
+        bool faceChanged = _meshReady && p.ShownFace != _shownState;
+        Dbg($"refresh: face {p.ShownFace + 1} shown {_shownState + 1} meshReady {_meshReady} moved {moved} spinning {_spinning} landing {_landing}");
         if (_spinning || _landing) { if (moved) LandSpin(); return; }
         if (faceChanged) { BeginSpin(); return; }
         _lastPos = p.Pos;
@@ -134,7 +139,7 @@ public partial class PieceNode
     {
         if (Rolling)
         {
-            int face = PendingState ?? Piece.State;
+            int face = PendingState ?? Piece.ShownFace;
             EndRoll();
             TakeFace(face);
             return;
@@ -144,7 +149,7 @@ public partial class PieceNode
         _spinning = false;
         _landing = false;
         SetProcess(false);
-        TakeFace(Piece.State);
+        TakeFace(Piece.ShownFace);
     }
 
     public void TakeFace(int state)
@@ -236,8 +241,8 @@ public partial class PieceNode
         _lastPos = p.Pos;
         _lastRot = p.RotDeg;
         _lastY = p.Y;
-        Dbg($"landing at {p.Pos.X:0.0},{p.Pos.Z:0.0} face {p.State + 1}");
-        _ = GlideTo(p.State, p.Pos, p.RotDeg, p.Y, ModelWorldBasis, ModelWorldCenter);
+        Dbg($"landing at {p.Pos.X:0.0},{p.Pos.Z:0.0} face {p.ShownFace + 1}");
+        _ = GlideTo(p.ShownFace, p.Pos, p.RotDeg, p.Y, ModelWorldBasis, ModelWorldCenter);
     }
 
     async Task GlideTo(int state, Vec2 pos, double rotDeg, double y, Basis fromB, Vector3 fromC)
@@ -278,6 +283,6 @@ public partial class PieceNode
         Position = Coords.ToWorld(pos, BaseAt(pos, rotDeg, y, 0));
         Rotation = new Vector3(0, Coords.Yaw(rotDeg), 0);
         ApplyFace(state);
-        if (!Rolling && Piece.State != state) BeginSpin();
+        if (!Rolling && Piece.ShownFace != state) BeginSpin();
     }
 }

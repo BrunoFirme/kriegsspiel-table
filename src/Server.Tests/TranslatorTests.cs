@@ -285,9 +285,9 @@ public class TranslatorTests
         Assert.Contains("local x = self.ui.get_attribute(\"g1\", \"image\")", s);
         Assert.Contains("self.ui.show(\"g1\")", s);
         Assert.Contains("obj.ui.set(\"<Panel/>\")", s);
-        Assert.Contains("compat.todo(obj, \"UI.setCustomAssets\")", s);
+        Assert.Contains("obj.ui.set_pictures({})", s);
         Assert.Contains("image = \"marker\"", s);
-        Assert.Single(r.Untranslated);
+        Assert.Empty(r.Untranslated);
     }
 
     [Fact]

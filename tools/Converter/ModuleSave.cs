@@ -20,6 +20,14 @@ public sealed class ModuleObj
     public string Description => S(J["Description"]) ?? "";
     public string LuaState => S(J["LuaScriptState"]) ?? "";
     public string Memo => S(J["Memo"]) ?? "";
+    public int Worth => J["Value"] != null ? I(J, "Value") : 0;
+    public int StackCount => J["Number"] != null ? Math.Max(1, I(J, "Number")) : 1;
+    public string XmlUi => S(J["XmlUI"]) ?? "";
+    public List<(string Name, string Url)> UiAssets => UiAssetsOf(J["CustomUIAssets"]);
+
+    public static List<(string Name, string Url)> UiAssetsOf(JsonNode? node) => (node as JsonArray)?.OfType<JsonObject>()
+        .Where(a => I(a, "Type") == 0 && Blank(S(a["Name"])) != null && Blank(S(a["URL"])) != null)
+        .Select(a => (Blank(S(a["Name"]))!, Blank(S(a["URL"]))!)).ToList() ?? new();
     public List<string> Tags => (J["Tags"] as JsonArray)?.Select(t => S(t) ?? "").Where(t => t.Length > 0).ToList() ?? new();
 
     JsonObject? T => J["Transform"] as JsonObject;
@@ -31,7 +39,11 @@ public sealed class ModuleObj
     double Span => MeshUrl is { } u && MeshSize?.Invoke(u) is { } b ? Math.Max(Math.Abs(ScaleX) * b.ex, Math.Abs(ScaleZ) * b.ez) : 0;
     public bool IsTerrain => Name == "Custom_Model" && Locked && PosY >= UnderTheTable && MeshUrl != null && DiffuseUrl != null
                              && (Math.Abs(ScaleX) >= TableScale || Span >= TerrainSpan);
-    public bool IsFurniture => (Name == "Custom_Model" && Math.Abs(ScaleX) >= TableScale && !IsTerrain) || (Locked && PosY < UnderTheTable && Name is "Custom_Model" or "Custom_Tile" or "Custom_Token" or "Custom_Board");
+    public bool IsFurniture => ((Name == "Custom_Model" && Math.Abs(ScaleX) >= TableScale && !IsTerrain) || (Locked && PosY < UnderTheTable && Name is "Custom_Model" or "Custom_Tile" or "Custom_Token" or "Custom_Board"))
+                               && Top == null;
+    public static Func<string, TableTop?>? MeshTop { get; set; }
+    public TableTop? Top => Name == "Custom_Model" && Locked && DiffuseUrl != null && MeshUrl is { } u && ScaleX * ScaleZ > 0 && PosY < UnderTheTable
+                            && MeshTop?.Invoke(u) is { } t && PosY + t.Top * ScaleY >= UnderTheTable ? t : null;
     public double RotX => D(T, "rotX");
     public double RotY => D(T, "rotY");
     public double RotZ => D(T, "rotZ");
@@ -45,6 +57,7 @@ public sealed class ModuleObj
     JsonObject? CI => J["CustomImage"] as JsonObject;
     public string? ImageUrl => Blank(S(CI?["ImageURL"]));
     public string? BackUrl => Blank(S(CI?["ImageSecondaryURL"]));
+    public bool MirroredBack => CI?["CustomFigurine"] is JsonObject fig && fig["MirroredBack"] is JsonValue m && m.TryGetValue<bool>(out var mirrored) && mirrored;
     public int TileType => (CI?["CustomTile"] as JsonObject)?["Type"]?.GetValue<int>() ?? 0;
     public bool TileStretch => (CI?["CustomTile"] as JsonObject)?["Stretch"]?.GetValue<bool>() ?? true;
     public double WidthScale => CI?["WidthScale"] is JsonValue v && v.TryGetValue<double>(out var d) ? d : 0;
@@ -55,10 +68,25 @@ public sealed class ModuleObj
     JsonObject? CM => J["CustomMesh"] as JsonObject;
     public string? MeshUrl => Blank(S(CM?["MeshURL"]));
     public string? DiffuseUrl => Blank(S(CM?["DiffuseURL"]));
+    public string? Finish => KTable.Core.Model.Finishes.Of(CM?["MaterialIndex"] != null ? I(CM, "MaterialIndex") : J["MaterialIndex"] != null ? I(J, "MaterialIndex") : -1);
+    public KTable.Core.Model.ShineDef? Shine => CM?["CustomShader"] is JsonObject sh
+        ? new KTable.Core.Model.ShineDef
+        {
+            Color = sh["SpecularColor"] is JsonObject c ? HexOf(c) : "#E6E6E6", Strength = D(sh, "SpecularIntensity", 0.1), Sharpness = D(sh, "SpecularSharpness", 3),
+            Rim = D(sh, "FresnelStrength", 0.1),
+        }
+        : null;
     public string? BundleUrl => Blank(S((J["CustomAssetbundle"] as JsonObject)?["AssetbundleURL"]));
     public string? PdfUrl => Blank(S((J["CustomPDF"] as JsonObject)?["PDFUrl"]));
+    public int PdfPage => J["CustomPDF"] is JsonObject pdf && pdf["PDFPage"] != null ? Math.Max(0, I(pdf, "PDFPage")) : 0;
+    public int PdfPageOffset => J["CustomPDF"] is JsonObject pdf && pdf["PDFPageOffset"] != null ? I(pdf, "PDFPageOffset") : 0;
+    public string? PdfPassword => J["CustomPDF"] is JsonObject pdf ? Blank(S(pdf["PDFPassword"])) : null;
 
-    public string? Color => J["ColorDiffuse"] is JsonObject c ? HexOf(c) : null;
+    public string? Color => J["ColorDiffuse"] is JsonObject c ? HexOf(c) + AlphaOf(c) : null;
+
+    const double Opaque = 0.999;
+
+    static string AlphaOf(JsonObject c) => c["a"] != null && D(c, "a", 1) is var a and < Opaque ? $"{(int)Math.Round(Math.Clamp(a, 0, 1) * 255):X2}" : "";
 
     public static string HexOf(JsonObject c)
     {
@@ -78,7 +106,9 @@ public sealed class ModuleObj
         {
             var points = (l["points3"] as JsonArray)?.OfType<JsonObject>().Select(p => (D(p, "x"), D(p, "y"), D(p, "z"))).ToList() ?? new();
             if (points.Count < 2) continue;
-            var colour = l["color"] is JsonObject c ? HexOf(c) : "#FFFFFF";
+            var c = l["color"] as JsonObject;
+            if (c?["a"] != null && D(c, "a", 1) <= 0) continue;
+            var colour = c is null ? "#FFFFFF" : HexOf(c) + AlphaOf(c);
             lines.Add(new Line(points, colour, D(l, "thickness", DefaultThickness), l["loop"]?.GetValue<bool>() ?? false));
         }
         return lines;
@@ -88,15 +118,25 @@ public sealed class ModuleObj
     public bool IsDeck => Name is "Deck" or "DeckCustom";
     public bool IsChecker => Name is "Checker_white" or "Checker_red" or "Checker_black";
     public bool IsBag => Name is "Bag" or "Custom_Model_Bag";
+    public bool Sticky => Flag("Sticky", true);
+    public bool DragSelectable => Flag("DragSelectable", true);
+    public bool MeasureMovement => Flag("MeasureMovement", false);
+    bool Flag(string key, bool unset) => J[key] is JsonValue v && v.TryGetValue<bool>(out var on) ? on : unset;
     public bool IsInfiniteBag => Name.Contains("Infinite", StringComparison.Ordinal);
-    public bool IsPictureDie => Name == "Custom_Dice" && DiceType == PictureDieType;
-    const int PictureDieType = 1;
+    const int LastInFirstOut = 0, RandomOrder = 2;
+    public string? TakeOrder => (J["Bag"] is JsonObject b && b["Order"] != null ? I(b, "Order") : LastInFirstOut) switch
+    {
+        LastInFirstOut => KTable.Core.Model.TakeOrders.Last,
+        RandomOrder => KTable.Core.Model.TakeOrders.Random,
+        _ => null,
+    };
+    public bool IsPictureDie => Name == "Custom_Dice" && DiceType >= 0 && DiceType < DiceTypeSides.Length;
+    public int DieSides => IsPictureDie ? DiceTypeSides[DiceType] : 0;
     public int DiceType => (CI?["CustomDice"] as JsonObject)?["Type"]?.GetValue<int>() ?? -1;
     static readonly int[] DiceTypeSides = { 4, 6, 8, 10, 12, 20 };
     public int? StockSides => Name switch
     {
         "Die_4" => 4, "Die_6" or "Die_6_Rounded" => 6, "Die_8" => 8, "Die_10" => 10, "Die_12" => 12, "Die_20" => 20,
-        "Custom_Dice" when !IsPictureDie && DiceType >= 0 && DiceType < DiceTypeSides.Length => DiceTypeSides[DiceType],
         _ => null,
     };
 
@@ -150,7 +190,16 @@ public sealed class ModuleObj
 
     public sealed record Decal(string Name, string Url, double PosX, double PosY, double PosZ, double RotY, double ScaleX, double ScaleY);
 
-    public List<Decal> Decals => (J["AttachedDecals"] as JsonArray)?.OfType<JsonObject>()
+    public List<Decal> Decals => DecalsOf(J["AttachedDecals"]);
+
+    public sealed record PaletteEntry(string Name, string Url, double Size);
+
+    public static List<PaletteEntry> PaletteOf(JsonNode? node) => (node as JsonArray)?.OfType<JsonObject>()
+        .Where(c => Blank(S(c["ImageURL"])) != null)
+        .Select(c => new PaletteEntry(S(c["Name"]) ?? "", Blank(S(c["ImageURL"]))!, D(c, "Size", 1)))
+        .ToList() ?? new();
+
+    public static List<Decal> DecalsOf(JsonNode? node) => (node as JsonArray)?.OfType<JsonObject>()
         .Select(d => (t: d["Transform"] as JsonObject, c: d["CustomDecal"] as JsonObject))
         .Where(d => Blank(S(d.c?["ImageURL"])) != null)
         .Select(d => new Decal(S(d.c!["Name"]) ?? "", Blank(S(d.c!["ImageURL"]))!, D(d.t, "posX"), D(d.t, "posY"), D(d.t, "posZ"), D(d.t, "rotY"), D(d.t, "scaleX", 1), D(d.t, "scaleY", 1)))
@@ -160,6 +209,7 @@ public sealed class ModuleObj
     {
         foreach (var u in new[] { ImageUrl, BackUrl, MeshUrl, DiffuseUrl, BundleUrl, PdfUrl }) if (u != null) yield return u;
         foreach (var d in Decals) yield return d.Url;
+        foreach (var a in UiAssets) yield return a.Url;
         foreach (var s in CardSheets.Values)
         {
             yield return s.FaceUrl;
@@ -208,6 +258,10 @@ public sealed class ModuleSave
     public List<(string Title, string Body)> Notebook { get; init; } = new();
     public string Rules { get; init; } = "";
     public List<ModuleObj.Line> VectorLines { get; init; } = new();
+    public List<ModuleObj.Decal> TableDecals { get; init; } = new();
+    public List<ModuleObj.PaletteEntry> DecalPalette { get; init; } = new();
+    public string XmlUi { get; init; } = "";
+    public List<(string Name, string Url)> UiAssets { get; init; } = new();
 
     public static ModuleSave Load(Config cfg, string workshopIdOrPath)
     {
@@ -229,6 +283,10 @@ public sealed class ModuleSave
                 .Where(t => t.Body.Trim().Length > 0).ToList() ?? new(),
             Rules = root["Rules"] is JsonValue rules && rules.TryGetValue<string>(out var rl) ? rl : "",
             VectorLines = ModuleObj.LinesOf(root["VectorLines"]),
+            TableDecals = ModuleObj.DecalsOf(root["Decals"]),
+            DecalPalette = ModuleObj.PaletteOf(root["DecalPallet"]),
+            XmlUi = root["XmlUI"] is JsonValue x && x.TryGetValue<string>(out var xml) ? xml : "",
+            UiAssets = ModuleObj.UiAssetsOf(root["CustomUIAssets"]),
         };
     }
 }

@@ -451,7 +451,7 @@ public class GameFlowTests
             t.Ok(Table.Ump, new RollDice { Layer = U, PieceIds = { real, drawn }, Results = { 4, 4 }, Physical = true });
             var rd = (RollDice)t.Server.Log[^1];
             Assert.Equal(4, rd.Results[0]);
-            Assert.Equal(3, t.Server.State.Find(U, real)!.State);
+            Assert.Equal(3, t.Server.State.Find(U, real)!.ShownFace);
             fromDrawn.Add(rd.Results[1]);
         }
         Assert.True(fromDrawn.Count > 1, "the die not thrown for real took the reported face every time");
@@ -476,7 +476,7 @@ public class GameFlowTests
             Assert.Single(rd.Results);
             Assert.InRange(rd.Results[0], 1, 6);
             Assert.Equal(6, rd.Sides);
-            Assert.Equal(rd.Results[0] - 1, t.Server.State.Find(U, id)!.State);
+            Assert.Equal(rd.Results[0] - 1, t.Server.State.Find(U, id)!.ShownFace);
             seen.Add(rd.Results[0]);
         }
         Assert.True(seen.Count >= 3, "forty rolls of a d6 should show several faces");

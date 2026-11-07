@@ -169,8 +169,25 @@ static class WindowTests
         Check.That(die.Rolling, "it is in the air");
         await r.Seconds(5);
         Check.That(!die.Rolling, "it has come to rest");
-        int state = t.S.View.Find(U, "d1")!.State;
-        Check.That(state >= 0 && state < 6, $"it shows one of its six faces ({state})");
+        int face = t.S.View.Find(U, "d1")!.ShownFace;
+        Check.That(face >= 0 && face < 6, $"it shows one of its six faces ({face})");
+        Check.Equal(face, die.FaceUp(die.ModelWorldBasis), "the side drawn on top is the side it shows");
+        Check.That(t.Errors.Count == 0, "no command refused: " + string.Join("; ", t.Errors));
+    }
+
+    [NodeTest]
+    static async Task A_die_turned_to_a_side_comes_to_rest_with_that_side_on_top(TestRunner r)
+    {
+        var t = OfflineTable.Make(r, pieces: 0, packs: new[] { "std.dice" }, prepare: StandardPacks.Ensure);
+        await r.Frame();
+        t.S.Do(new KTable.Core.Protocol.SpawnPiece { Layer = U, Def = "std.dice.d20", Id = "d1", Pos = new Vec2(0, 0) });
+        await r.Frames(3);
+        var die = t.Node("d1");
+        Check.That(die.IsDie, "the d20 is a die");
+        t.S.Do(new KTable.Core.Protocol.TurnDie { Layer = U, Id = "d1", Face = 13 });
+        for (int i = 0; i < 16 && die.FaceUp(die.ModelWorldBasis) != 13; i++) await r.Seconds(0.5);
+        Check.Equal(13, t.S.View.Find(U, "d1")!.ShownFace, "it shows side 14");
+        Check.Equal(13, die.FaceUp(die.ModelWorldBasis), "with side 14 drawn on top");
         Check.That(t.Errors.Count == 0, "no command refused: " + string.Join("; ", t.Errors));
     }
 
@@ -186,6 +203,13 @@ static class WindowTests
         await r.Seconds(0.5);
         var fx = t.Node("fx1");
         Check.That(fx.IsEffect && fx.CarriesEffect, "the piece is an effect with emitters");
+        int running = fx.Emitters;
+        t.S.Do(new KTable.Core.Protocol.SetPieceOption { Layer = U, Id = "fx1", Name = KTable.Core.Protocol.PieceOptions.EffectOff, Value = true });
+        await r.Frames(3);
+        Check.That(running > 0 && t.Node("fx1").Emitters == 0, $"stopped, it sends nothing out ({running} before)");
+        t.S.Do(new KTable.Core.Protocol.SetPieceOption { Layer = U, Id = "fx1", Name = KTable.Core.Protocol.PieceOptions.EffectOff, Value = false });
+        await r.Frames(3);
+        Check.Equal(running, t.Node("fx1").Emitters, "started again, it runs as before");
         t.S.Do(new KTable.Core.Protocol.DeletePiece { Layer = U, Id = "fx1" });
         await r.Frames(2);
         Check.That(t.Table.Pieces.NodeOf(U, "fx1") == null, "it goes with the piece");

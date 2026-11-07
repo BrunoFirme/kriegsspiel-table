@@ -31,6 +31,8 @@ public sealed class GameState
     public string? Briefing { get; set; }
     public Dictionary<string, List<PieceInstance>> Layers { get; set; } = new();
     public Dictionary<string, List<Stroke>> Drawings { get; set; } = new();
+    public Dictionary<string, List<DecalDef>> Decals { get; set; } = new();
+    public List<PaletteDecal> DecalPalette { get; set; } = new();
     public List<BoardDef> Boards { get; set; } = new();
     public List<DiceRoll> Dice { get; set; } = new();
     public long NextId { get; set; } = 1;
@@ -39,6 +41,7 @@ public sealed class GameState
     public string? Script { get; set; }
     public string ScriptState { get; set; } = "";
     public List<UiNode> Ui { get; set; } = new();
+    public Dictionary<string, string> UiPictures { get; set; } = new();
     public List<HotkeyDef> Hotkeys { get; set; } = new();
     public List<MenuItemDef> MenuItems { get; set; } = new();
 
@@ -74,7 +77,11 @@ public sealed class GameState
             Script = Script, ScriptState = ScriptState,
         };
         s.Drawings["umpire"] = DrawLayer(Model.Layers.Umpire).Select(Json.Clone).ToList();
+        s.Decals["umpire"] = DecalLayer(Model.Layers.Umpire).Select(d => d.Clone()).ToList();
+        s.DecalPalette = DecalPalette.Select(d => d.Clone()).ToList();
         s.Boards = Boards.Select(b => b.Clone()).ToList();
+        s.Ui = Ui.Select(n => n.Clone()).ToList();
+        s.UiPictures = new(UiPictures);
         return s;
     }
 
@@ -91,7 +98,11 @@ public sealed class GameState
         };
         g.Layers[Model.Layers.Umpire] = s.UmpireBoard.Select(p => p.Clone()).ToList();
         g.Drawings[Model.Layers.Umpire] = s.Drawings.TryGetValue("umpire", out var u) ? u.Select(Json.Clone).ToList() : new();
+        g.Decals[Model.Layers.Umpire] = s.Decals.TryGetValue("umpire", out var d) ? d.Select(x => x.Clone()).ToList() : new();
+        g.DecalPalette = s.DecalPalette.Select(x => x.Clone()).ToList();
         g.Boards = s.Boards.Select(b => b.Clone()).ToList();
+        g.Ui = (s.Ui ?? new()).Select(n => n.Clone()).ToList();
+        g.UiPictures = new(s.UiPictures ?? new());
         g.NextId = 1;
         g.EnsureNextId();
         g.EnsureBoard();
@@ -112,6 +123,7 @@ public sealed class GameState
         long max = 0;
         var ids = Layers.Values.SelectMany(x => x).Select(p => p.Id)
             .Concat(Drawings.Values.SelectMany(x => x).Select(s => s.Id))
+            .Concat(Decals.Values.SelectMany(x => x).Select(d => d.Id))
             .Concat(Sheets.Select(s => s.Id))
             .Concat(Zones.Select(z => z.Id))
             .Concat(Boards.Select(b => b.Id));
@@ -143,12 +155,15 @@ public sealed class GameState
         Briefing = s.Briefing;
         Layers = s.Layers;
         Drawings = s.Drawings;
+        Decals = s.Decals ?? new();
+        DecalPalette = s.DecalPalette ?? new();
         Dice = s.Dice;
         Zones = s.Zones;
         Boards = s.Boards;
         Script = s.Script;
         ScriptState = s.ScriptState;
         Ui = s.Ui;
+        UiPictures = s.UiPictures ?? new();
         Hotkeys = s.Hotkeys;
         MenuItems = s.MenuItems;
         NextId = Math.Max(NextId, s.NextId);
@@ -158,6 +173,12 @@ public sealed class GameState
     public List<PieceInstance> Layer(string layer)
     {
         if (!Layers.TryGetValue(layer, out var l)) Layers[layer] = l = new();
+        return l;
+    }
+
+    public List<DecalDef> DecalLayer(string layer)
+    {
+        if (!Decals.TryGetValue(layer, out var l)) Decals[layer] = l = new();
         return l;
     }
 

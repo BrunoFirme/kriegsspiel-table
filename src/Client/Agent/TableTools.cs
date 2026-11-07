@@ -68,11 +68,12 @@ public sealed partial class TableTools
             "Moves or turns a piece on the table. One undoable change.",
             Args.Schema(new Arg("id", "string", "the piece's id", true), new Arg("x", "number", "map units"), new Arg("z", "number", "map units"), new Arg("turn", "number", "degrees")), MovePiece);
         yield return new AgentTool("set_piece_values",
-            "Sets a piece's own name, its description, its tags, its kind, its look (state number from 1), its counters and its text lines, each as the table's own commands (undoable).",
+            "Sets a piece's own name, its description, its tags, its kind, its look (state number from 1), the side a die shows, its counters and its text lines, each as the table's own commands (undoable).",
             Args.Schema(new Arg("id", "string", "the piece's id", true), new Arg("label", "string", "its own name; empty clears it"),
                 new Arg("note", "string", "its description, shown on hover to everyone at the table, observers included; empty clears it"),
                 new Arg("tags", "array", "its own tags, replacing those it has; [] clears them (scripts read them)"),
                 new Arg("kind", "string", "another kind's id (list_kinds) to turn it into, keeping its place"), new Arg("state", "number", "look number from 1"),
+                new Arg("side", "number", "for a die, the side to show, from 1"),
                 new Arg("counters", "object", "counter name to a whole number"), new Arg("text", "object", "text line name to its text")), SetValues);
         yield return new AgentTool("stow_pieces",
             "Puts pieces away inside another piece, off the table, as a bag holds them; unstow_piece brings one back. One undoable change.",
@@ -180,6 +181,13 @@ public sealed partial class TableTools
             if (st < 1 || st > looks) problems.Add($"state is 1 to {looks}");
             else { s.Do(new SetState { Layer = Layers.Umpire, Id = id, State = (int)st - 1 }); sent.Add("look"); }
         }
+        if (a.Num("side") is { } side)
+        {
+            int sides = PieceInstance.FacesOf(def, p).Count;
+            if (sides < 2) problems.Add("only a die has sides");
+            else if (side < 1 || side > sides) problems.Add($"side is 1 to {sides}");
+            else { s.Do(new TurnDie { Layer = Layers.Umpire, Id = id, Face = (int)side - 1 }); sent.Add("side"); }
+        }
         if (a.ValueKind == JsonValueKind.Object && a.TryGetProperty("counters", out var cs) && cs.ValueKind == JsonValueKind.Object)
             foreach (var c in cs.EnumerateObject())
             {
@@ -197,11 +205,12 @@ public sealed partial class TableTools
                 s.Do(new SetText { Layer = Layers.Umpire, Id = id, Name = tdef?.Name ?? t.Name, Value = t.Value.ValueKind == JsonValueKind.String ? t.Value.GetString() ?? "" : t.Value.GetRawText() });
                 sent.Add($"{tdef?.Name ?? t.Name}");
             }
-        if (sent.Count == 0) return ToolResult.Fail(problems.Count > 0 ? string.Join("; ", problems) : "Nothing to set: give label, note, kind, state, counters or text.");
+        if (sent.Count == 0) return ToolResult.Fail(problems.Count > 0 ? string.Join("; ", problems) : "Nothing to set: give label, note, kind, state, side, counters or text.");
         await Landed(s);
         _log($"set {string.Join(", ", sent)} on {NameOf(s, p)}");
         var now = s.View.Find(Layers.Umpire, id);
-        var report = now == null ? "" : "\n" + JsonSerializer.Serialize(new { now.Label, now.Note, Kind = now.Def, State = now.State + 1, now.Counters, now.Text }, Json);
+        int? shown = now != null && PieceInstance.FacesOf(def, now).Count > 1 ? now.ShownFace + 1 : null;
+        var report = now == null ? "" : "\n" + JsonSerializer.Serialize(new { now.Label, now.Note, Kind = now.Def, State = now.State + 1, Side = shown, now.Counters, now.Text }, Json);
         return new ToolResult($"Set {string.Join(", ", sent)}." + (problems.Count > 0 ? " Not set: " + string.Join("; ", problems) + "." : "") + report, problems.Count > 0);
     }
 
@@ -243,7 +252,8 @@ public sealed partial class TableTools
         if (s.View.Find(Layers.Umpire, holder) is not { } h) return ToolResult.Fail($"No piece {holder} on this table.");
         if (h.Stowed is not { Count: > 0 } held) return ToolResult.Fail($"{NameOf(s, h)} holds nothing.");
         var which = a.Str("id")?.Trim() ?? "";
-        var target = which.Length == 0 ? held[0] : held.FirstOrDefault(p => p.Id == which) ?? held.FirstOrDefault(p => string.Equals(NameOf(s, p), which, StringComparison.OrdinalIgnoreCase));
+        var target = which.Length == 0 ? h.NextOut(Random.Shared) : held.FirstOrDefault(p => p.Id == which)
+            ?? held.FirstOrDefault(p => string.Equals(NameOf(s, p), which, StringComparison.OrdinalIgnoreCase));
         if (target == null) return ToolResult.Fail($"{NameOf(s, h)} holds no {which}; read_piece {holder} lists what it holds.");
         var cmd = new Unstow { Layer = Layers.Umpire, Holder = holder, Id = target.Id, RotDeg = a.Num("turn") };
         if (a.Num("x") is { } x && a.Num("z") is { } z) cmd.Pos = new Vec2(x, z);

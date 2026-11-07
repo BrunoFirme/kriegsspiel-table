@@ -798,6 +798,22 @@ public sealed class PropMaker
         return Done(m, new List<Vector2>());
     }
 
+    public PropMade Tree()
+    {
+        var m = new PropMesh(_noise);
+        m.Cylinder(Vector3.Zero, new Vector3(0, 1.5f, 0), 0.18f, M.Bark, 9, M.EndGrain, r2: 0.11f);
+        foreach (var (x, z, d) in new[] { (0.7f, 0.25f, 35f), (-0.65f, -0.3f, 160f), (0.1f, -0.7f, 260f) })
+            m.Cylinder(new Vector3(0, 1.0f, 0), new Vector3(x, 1.45f, z), 0.06f, M.Bark, 6, M.EndGrain, r2: 0.035f);
+        var crown = new[]
+        {
+            (new Vector3(0, 1.65f, 0), new Vector3(2.8f, 1.5f, 2.8f)), (new Vector3(0.85f, 1.35f, 0.4f), new Vector3(1.7f, 1.1f, 1.7f)),
+            (new Vector3(-0.8f, 1.4f, -0.35f), new Vector3(1.8f, 1.1f, 1.6f)), (new Vector3(0.2f, 2.0f, -0.6f), new Vector3(1.6f, 1.0f, 1.5f)),
+            (new Vector3(-0.3f, 2.05f, 0.6f), new Vector3(1.5f, 0.9f, 1.4f)),
+        };
+        for (int i = 0; i < crown.Length; i++) m.Lump(crown[i].Item1, crown[i].Item2, Yaw(i * 47), M.Turf, 31 + i, 0.24f);
+        return Done(m, new List<Vector2>());
+    }
+
     public PropMade SmallBox()
     {
         var m = new PropMesh(_noise);

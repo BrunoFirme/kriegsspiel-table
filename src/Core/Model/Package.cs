@@ -85,7 +85,7 @@ public sealed class PieceStateDef
     public string? Mesh { get; set; }
     public string? Texture { get; set; }
     public Size2? Size { get; set; }
-    public double[]? Up { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public double[]? Up { get; set; }
     public string? Script { get; set; }
     public List<DecalDef>? Decals { get; set; }
 }
@@ -138,7 +138,40 @@ public sealed class FaceBox
     public double H { get; set; } = 0.2;
 }
 
-public sealed class PieceDef
+public sealed class ShineDef
+{
+    public string Color { get; set; } = "#E6E6E6";
+    public double Strength { get; set; } = 0.1;
+    public double Sharpness { get; set; } = 3;
+    public double Rim { get; set; } = 0.1;
+    public ShineDef Clone() => new() { Color = Color, Strength = Strength, Sharpness = Sharpness, Rim = Rim };
+}
+
+public static class Finishes
+{
+    public const string Plastic = "plastic", Wood = "wood", Metal = "metal", Cardboard = "cardboard", Glass = "glass";
+    public static readonly string[] All = [Plastic, Wood, Metal, Cardboard, Glass];
+    public static string? Of(int index) => index >= 0 && index < All.Length ? All[index] : null;
+}
+
+public sealed class Lettering
+{
+    public string Text { get; set; } = "";
+    public double Size { get; set; } = 64;
+    public string Color { get; set; } = "#FFFFFF";
+    public double UnitsPerPixel { get; set; } = 1.0 / 80;
+    public Lettering Clone() => (Lettering)MemberwiseClone();
+}
+
+public sealed class DieFace
+{
+    public string Value { get; set; } = "";
+    public double[] Up { get; set; } = [0, 1, 0];
+    public DieFace Clone() => new() { Value = Value, Up = Up.ToArray() };
+    [JsonIgnore] public double? Number => double.TryParse(Value, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var n) ? n : null;
+}
+
+public sealed class PieceDef : IJsonOnDeserialized
 {
     public string Id { get; set; } = "";
     public string Name { get; set; } = "";
@@ -158,6 +191,10 @@ public sealed class PieceDef
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool Holds { get; set; }
     public List<string> Tags { get; set; } = new();
     public List<PieceStateDef> States { get; set; } = new();
+    public List<DieFace> Faces { get; set; } = new();
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? Finish { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public ShineDef? Shine { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public int PageOffset { get; set; }
     public List<CounterDef> Counters { get; set; } = new();
     public List<TextLineDef> TextLines { get; set; } = new();
     public List<AttachmentDef> Attachments { get; set; } = new();
@@ -166,6 +203,14 @@ public sealed class PieceDef
     public string? ScriptHash { get; set; }
     public string? ScriptState { get; set; }
     public EffectDef? Effect { get; set; }
+
+    void IJsonOnDeserialized.OnDeserialized()
+    {
+        if (Faces.Count > 0 || States.Count < 2) return;
+        if (!States.All(s => s.Up is { Length: 3 }) && !(Kind == "model" && Tags.Contains("die"))) return;
+        Faces = States.Select(s => new DieFace { Value = s.Name, Up = s.Up is { Length: 3 } up ? up : [0, 1, 0] }).ToList();
+        States = new();
+    }
 
     public IEnumerable<AttachmentDef> Markers()
     {
@@ -316,6 +361,14 @@ public sealed class PieceInstance
     public double RotDeg { get; set; }
     public int Stack { get; set; }
     public int State { get; set; }
+    public int Face { get; set; } = -1;
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? FacePicture { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool EffectOff { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public Lettering? Lettering { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<string>? StateGuids { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public int Worth { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public int WorthGroups { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<DieFace>? Faces { get; set; }
     public Dictionary<string, int> Counters { get; set; } = new();
     public Dictionary<string, string> Text { get; set; } = new();
     public List<string> Attached { get; set; } = new();
@@ -333,6 +386,9 @@ public sealed class PieceInstance
     public bool Locked { get; set; }
     public bool NoCollision { get; set; }
     public bool PhysicalRoll { get; set; }
+    public bool NotSticky { get; set; }
+    public bool NotBoxSelected { get; set; }
+    public bool MeasuresMoves { get; set; }
     public string Memo { get; set; } = "";
     public List<Widget> Widgets { get; set; } = new();
     public int DrawnOnState { get; set; }
@@ -345,17 +401,37 @@ public sealed class PieceInstance
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public bool? Holds { get; set; }
 
     public bool HoldsPieces(PieceDef? def) => Holds ?? (def?.Holds == true || Stowed is { Count: > 0 });
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? TakeOrder { get; set; }
 
     public PieceInstance Clone() => new()
     {
-        Id = Id, Def = Def, Pos = Pos, RotDeg = RotDeg, Stack = Stack, State = State,
+        Id = Id, Def = Def, Pos = Pos, RotDeg = RotDeg, Stack = Stack, State = State, Face = Face, Faces = Faces?.Select(f => f.Clone()).ToList(),
+        Worth = Worth, WorthGroups = WorthGroups, FacePicture = FacePicture, EffectOff = EffectOff, Lettering = Lettering?.Clone(), StateGuids = StateGuids?.ToList(),
         Counters = new(Counters), Text = new(Text), Attached = new(Attached),
-        TintOverride = TintOverride, Label = Label, Scale = Scale, Y = Y, FaceDown = FaceDown, Note = Note, Locked = Locked, NoCollision = NoCollision, PhysicalRoll = PhysicalRoll, Holds = Holds,
+        TintOverride = TintOverride, Label = Label, Scale = Scale, Y = Y, FaceDown = FaceDown, Note = Note, Picture = Picture, Locked = Locked, Holds = Holds,
+        NoCollision = NoCollision, PhysicalRoll = PhysicalRoll, NotSticky = NotSticky, NotBoxSelected = NotBoxSelected, MeasuresMoves = MeasuresMoves,
         Script = Script, ScriptState = ScriptState, Guid = Guid, Tags = Tags == null ? null : new(Tags), Memo = Memo,
         Widgets = Widgets.Select(w => w.Clone()).ToList(), DrawnOnState = DrawnOnState, MenuItems = MenuItems.Select(m => m.Clone()).ToList(),
         Lines = Lines.Select(l => l.Clone()).ToList(), Decals = Decals.Select(d => d.Clone()).ToList(), DecalsOnState = DecalsOnState,
-        Ui = Ui.Select(n => n.Clone()).ToList(), Stowed = Stowed?.Select(s => s.Clone()).ToList(),
+        Ui = Ui.Select(n => n.Clone()).ToList(), Stowed = Stowed?.Select(s => s.Clone()).ToList(), TakeOrder = TakeOrder,
     };
+
+    [JsonIgnore] public int ShownFace => Face >= 0 ? Face : State;
+
+    public static List<DieFace> FacesOf(PieceDef? def, PieceInstance p) => p.Faces ?? def?.Faces ?? [];
+
+    public PieceInstance? NextOut(Random rng)
+    {
+        if (Stowed is not { Count: > 0 } all) return null;
+        var loose = all.Where(s => !all.Any(o => o.Attached.Contains(s.Id))).ToList();
+        if (loose.Count == 0) return null;
+        return TakeOrder switch
+        {
+            TakeOrders.Last => loose[^1],
+            TakeOrders.Random => loose[rng.Next(loose.Count)],
+            _ => loose[0],
+        };
+    }
 
     public IEnumerable<PieceInstance> AllStowed()
     {
@@ -365,6 +441,11 @@ public sealed class PieceInstance
             foreach (var deeper in s.AllStowed()) yield return deeper;
         }
     }
+}
+
+public static class TakeOrders
+{
+    public const string First = "first", Last = "last", Random = "random";
 }
 
 public sealed class UiNode
@@ -404,6 +485,7 @@ public sealed class DecalDef
     }
 
     public const int MostOnAPiece = 64;
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? Id { get; set; }
     public string Picture { get; set; } = "";
     public string Name { get; set; } = "";
     public string Face { get; set; } = "front";
@@ -413,6 +495,16 @@ public sealed class DecalDef
     public double H { get; set; } = 0.2;
     public double Rot { get; set; }
     public DecalDef Clone() => (DecalDef)MemberwiseClone();
+}
+
+public sealed class PaletteDecal
+{
+    public const int MostInAPalette = 64, MostOnTheTable = 1024;
+    public const double SmallestSize = 0.01, LargestSize = 1000;
+    public string Name { get; set; } = "";
+    public string Picture { get; set; } = "";
+    public double Size { get; set; } = 1;
+    public PaletteDecal Clone() => (PaletteDecal)MemberwiseClone();
 }
 
 public sealed class Widget
@@ -527,8 +619,12 @@ public sealed class Scenario : IJsonOnDeserialized, IJsonOnSerializing
     public List<BoardDef> Boards { get; set; } = new();
     public List<PieceInstance> UmpireBoard { get; set; } = new();
     public Dictionary<string, List<Stroke>> Drawings { get; set; } = new();
+    public Dictionary<string, List<DecalDef>> Decals { get; set; } = new();
+    public List<PaletteDecal> DecalPalette { get; set; } = new();
     public string? Script { get; set; }
     public string ScriptState { get; set; } = "";
+    public List<UiNode> Ui { get; set; } = new();
+    public Dictionary<string, string> UiPictures { get; set; } = new();
 
     void IJsonOnDeserialized.OnDeserialized() => ContentVersions.Check("scenario", Name is { Length: > 0 } ? Name : Id ?? "", Format, CurrentFormat, ApiVersion);
     void IJsonOnSerializing.OnSerializing() { Format = CurrentFormat; ApiVersion = ScriptApi.Version; }

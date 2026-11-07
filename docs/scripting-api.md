@@ -200,6 +200,17 @@ Read from `self` or from any piece `board.find` or `board.pieces` hands back. Fi
 | [`self.note`](#selfnote) | Its description, shown on hover; umpires only. nil when empty. |
 | [`self.state`](#selfstate) | Its state, from 1. |
 | [`self.states`](#selfstates) | The names of its kind's states, in order. |
+| [`self.faces`](#selffaces) | A die's sides in order: { value =, up = { x, y, z }, rotation = { x, y, z } }; empty for every other piece. |
+| [`self.face`](#selfface) | The side of a die showing, from 1; nil for every other piece. |
+| [`self.value`](#selfvalue) | The value of the side of a die showing; nil for every other piece. |
+| [`self.picked_up`](#selfpicked_up) | Where an umpire last picked the piece up: { x =, y =, z =, rot = }; nil until then. |
+| [`self.face_picture`](#selfface_picture) | A picture shown on the piece's face in place of its kind's, set by set_face_picture; nil for none. |
+| [`self.page_offset`](#selfpage_offset) | For a book, what its page numbers start from, as the module set it; 0 for every other piece. |
+| [`self.effect_on`](#selfeffect_on) | For an effect, whether it is running. |
+| [`self.kind_name`](#selfkind_name) | The name of its kind. |
+| [`self.lettering`](#selflettering) | Text drawn on the piece in place of its picture, as 3D text from a module is: { text =, size =, color = }; nil for most pieces. |
+| [`self.worth`](#selfworth) | What the piece counts for when pieces are added up; 0 for most. |
+| [`self.worth_groups`](#selfworth_groups) | Which groups it adds up with, as bits; 0 adds up with any piece of worth. |
 | [`self.pos`](#selfpos) | Where it stands, in map units: { x =, z = }. |
 | [`self.rot`](#selfrot) | Its heading in degrees. |
 | [`self.y`](#selfy) | How high it sits above the table (stacked pieces). |
@@ -210,6 +221,9 @@ Read from `self` or from any piece `board.find` or `board.pieces` hands back. Fi
 | [`self.shape`](#selfshape) | Its outline at its state: "box", "rounded", "circle", "hex", or "alpha" for a token cut along its picture. |
 | [`self.face_down`](#selfface_down) | Turned over. |
 | [`self.locked`](#selflocked) | Pinned to the table: not dragged, turned or resized by hand. |
+| [`self.sticky`](#selfsticky) | Carries the pieces resting on it when it is moved; attached pieces go with it either way. |
+| [`self.box_selected`](#selfbox_selected) | Taken by a selection box dragged over it. |
+| [`self.measures_moves`](#selfmeasures_moves) | Shows how far it is moved while it is held. |
 | [`self.tint`](#selftint) | Its colour as "#RRGGBB", or nil. |
 | [`self.counters`](#selfcounters) | Its kind's counters, name → value. |
 | [`self.text`](#selftext) | Its text lines that hold a value, name → text. |
@@ -324,6 +338,132 @@ end
 ```
 
 **Module call** `getStates`
+
+### `self.faces`
+
+```lua
+self.faces
+```
+
+A die's sides in order: { value =, up = { x, y, z }, rotation = { x, y, z } }; empty for every other piece.
+
+**Type** `Face[]`, read-only.
+
+**Module call** `getRotationValues`
+
+### `self.face`
+
+```lua
+self.face
+```
+
+The side of a die showing, from 1; nil for every other piece.
+
+**Type** `number?`, read-only.
+
+**Module call** `getValue`
+
+### `self.value`
+
+```lua
+self.value
+```
+
+The value of the side of a die showing; nil for every other piece.
+
+**Type** `number|string|nil`, read-only.
+
+**Module call** `getRotationValue`
+
+### `self.picked_up`
+
+```lua
+self.picked_up
+```
+
+Where an umpire last picked the piece up: { x =, y =, z =, rot = }; nil until then.
+
+**Type** `table?`, read-only.
+
+**Module call** `pick_up_position`
+
+### `self.face_picture`
+
+```lua
+self.face_picture
+```
+
+A picture shown on the piece's face in place of its kind's, set by set_face_picture; nil for none.
+
+**Type** `string?`, read-only.
+
+### `self.page_offset`
+
+```lua
+self.page_offset
+```
+
+For a book, what its page numbers start from, as the module set it; 0 for every other piece.
+
+**Type** `number`, read-only.
+
+**Module call** `Book.page_offset`
+
+### `self.effect_on`
+
+```lua
+self.effect_on
+```
+
+For an effect, whether it is running.
+
+**Type** `boolean`, read-only.
+
+### `self.kind_name`
+
+```lua
+self.kind_name
+```
+
+The name of its kind.
+
+**Type** `string`, read-only.
+
+### `self.lettering`
+
+```lua
+self.lettering
+```
+
+Text drawn on the piece in place of its picture, as 3D text from a module is: { text =, size =, color = }; nil for most pieces.
+
+**Type** `table?`, read-only.
+
+**Module call** `TextTool.getValue`
+
+### `self.worth`
+
+```lua
+self.worth
+```
+
+What the piece counts for when pieces are added up; 0 for most.
+
+**Type** `number`, read-only.
+
+**Module call** `value`
+
+### `self.worth_groups`
+
+```lua
+self.worth_groups
+```
+
+Which groups it adds up with, as bits; 0 adds up with any piece of worth.
+
+**Type** `number`, read-only.
+
+**Module call** `value_flags`
 
 ### `self.pos`
 
@@ -440,6 +580,42 @@ Pinned to the table: not dragged, turned or resized by hand.
 **Type** `boolean`, read-only.
 
 **Module call** `getLock` · **See also** [`self.set_locked`](#selfset_locked)
+
+### `self.sticky`
+
+```lua
+self.sticky
+```
+
+Carries the pieces resting on it when it is moved; attached pieces go with it either way.
+
+**Type** `boolean`, read-only.
+
+**Module call** `sticky` · **See also** [`self.set_sticky`](#selfset_sticky)
+
+### `self.box_selected`
+
+```lua
+self.box_selected
+```
+
+Taken by a selection box dragged over it.
+
+**Type** `boolean`, read-only.
+
+**Module call** `drag_selectable` · **See also** [`self.set_box_selected`](#selfset_box_selected)
+
+### `self.measures_moves`
+
+```lua
+self.measures_moves
+```
+
+Shows how far it is moved while it is held.
+
+**Type** `boolean`, read-only.
+
+**Module call** `measure_movement` · **See also** [`self.set_measures_moves`](#selfset_measures_moves)
 
 ### `self.tint`
 
@@ -614,6 +790,17 @@ Each call is a change every umpire sees, taken back with Ctrl+Z by the umpire wh
 | [`self.flip`](#selfflip) | Turns it over; with no argument, to the other side. |
 | [`self.set_tint`](#selfset_tint) | Tints its sides: "#RRGGBB", a name, or { r, g, b }. nil goes back to its kind's. |
 | [`self.set_locked`](#selfset_locked) | Pins it to the table, or lets it go. |
+| [`self.set_box_selected`](#selfset_box_selected) | Whether a selection box dragged over it takes it. |
+| [`self.set_measures_moves`](#selfset_measures_moves) | Whether it shows how far it is moved while it is held. |
+| [`self.set_sticky`](#selfset_sticky) | Whether it carries the pieces resting on it when it is moved. |
+| [`self.set_face`](#selfset_face) | Turns a die to show a side, from 1; false when it has no such side. |
+| [`self.set_value`](#selfset_value) | Turns a die to the first side with this value; false when no side has it. |
+| [`self.set_faces`](#selfset_faces) | Gives this die sides of its own; nil gives it back its kind's. |
+| [`self.set_face_picture`](#selfset_face_picture) | Shows a picture on the piece's face in place of its kind's: a web link is fetched first; nil puts the kind's back. |
+| [`self.set_lettering`](#selfset_lettering) | Changes the text drawn on the piece: any of text, size and color; nil takes the lettering away. |
+| [`self.set_effect_on`](#selfset_effect_on) | Starts or stops an effect. |
+| [`self.set_worth`](#selfset_worth) | Sets what the piece counts for, and optionally the groups it adds up with. |
+| [`self.roll`](#selfroll) | Rolls a die, or turns a piece of several states to one at random; false for anything else. |
 | [`self.set_counter`](#selfset_counter) | Sets one of its kind's counters (a whole number, kept to the counter's range). |
 | [`self.set_text`](#selfset_text) | Sets one of its kind's text lines. |
 | [`self.set_tags`](#selfset_tags) | Gives it its own tags; nil goes back to its kind's. |
@@ -629,7 +816,7 @@ Each call is a change every umpire sees, taken back with Ctrl+Z by the umpire wh
 | [`self.detach`](#selfdetach) | Takes this piece off the one it rides on. |
 | [`self.stowed`](#selfstowed) | The pieces it holds off the table, first in first: { id =, name =, guid =, def =, held = }, held being how many that piece holds in turn. |
 | [`self.stow`](#selfstow) | Takes another piece off the table into this one, with whatever rides on it; a piece this one rides on is refused. |
-| [`self.unstow`](#selfunstow) | Puts a held piece back on the table and returns it: which is its id, guid, its number in stowed, or nothing for the first; place is { x =, z = } or a piece, else beside this one; rot turns it. |
+| [`self.unstow`](#selfunstow) | Puts a held piece back on the table and returns it: which is its id, guid, its number in stowed, or nothing for the next by the holder's take order (first, last or random); place is { x =, z = } or a piece, else beside this one; rot turns it. |
 | [`self.delete`](#selfdelete) | Takes the piece off the table (on_destroy runs first). |
 | [`self.set_lines`](#selfset_lines) | Draws lines round the piece that move and turn with it: { { points = { {x=, z=}, … }, color =, width =, loop = }, … } in piece units; width in map units. |
 | [`self.set_decals`](#selfset_decals) | Puts pictures on the piece's faces that move, turn and flip with it: { { picture =, x =, z =, w =, h =, rot =, face =, name = }, … } in piece units. |
@@ -810,6 +997,169 @@ Pins it to the table, or lets it go.
 A locked piece can still be picked out, read and deleted, and an umpire can unlock it from its right-click menu.
 
 **Module call** `setLock` · **See also** [`self.locked`](#selflocked)
+
+### `self.set_box_selected`
+
+```lua
+self.set_box_selected(on)
+```
+
+Whether a selection box dragged over it takes it.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `on` | `boolean` | _Optional._ true, or no argument, lets a box take it; false leaves it out. |
+
+**Module call** `drag_selectable` · **See also** [`self.box_selected`](#selfbox_selected)
+
+### `self.set_measures_moves`
+
+```lua
+self.set_measures_moves(on)
+```
+
+Whether it shows how far it is moved while it is held.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `on` | `boolean` | _Optional._ true, or no argument, shows the distance; false hides it. |
+
+**Module call** `measure_movement` · **See also** [`self.measures_moves`](#selfmeasures_moves)
+
+### `self.set_sticky`
+
+```lua
+self.set_sticky(on)
+```
+
+Whether it carries the pieces resting on it when it is moved.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `on` | `boolean` | _Optional._ true, or no argument, carries them; false leaves them where they lie. |
+
+**Module call** `sticky` · **See also** [`self.sticky`](#selfsticky)
+
+### `self.set_face`
+
+```lua
+self.set_face(n)
+```
+
+Turns a die to show a side, from 1; false when it has no such side.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `n` | `number` | The side, from 1, in the order of self.faces. |
+
+**Returns** `boolean`.
+
+**Module call** `setValue` · **See also** [`self.face`](#selfface), [`self.set_value`](#selfset_value)
+
+### `self.set_value`
+
+```lua
+self.set_value(value)
+```
+
+Turns a die to the first side with this value; false when no side has it.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `value` | `number\|string` | The value to show. |
+
+**Returns** `boolean`.
+
+```lua
+self.set_value(6)
+```
+
+**Module call** `setRotationValue` · **See also** [`self.value`](#selfvalue), [`self.set_face`](#selfset_face)
+
+### `self.set_faces`
+
+```lua
+self.set_faces(list)
+```
+
+Gives this die sides of its own; nil gives it back its kind's.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `list` | `table?` | { value =, up = { x, y, z } } or { value =, rotation = { x, y, z } } for each side. |
+
+**Returns** `boolean`.
+
+**Module call** `setRotationValues` · **See also** [`self.faces`](#selffaces)
+
+### `self.set_face_picture`
+
+```lua
+self.set_face_picture(link)
+```
+
+Shows a picture on the piece's face in place of its kind's: a web link is fetched first; nil puts the kind's back.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `link` | `string?` | A web link to a picture, or a picture the table already holds. |
+
+**Module call** `setCustomObject` · **See also** [`self.face_picture`](#selfface_picture)
+
+### `self.set_lettering`
+
+```lua
+self.set_lettering(changes)
+```
+
+Changes the text drawn on the piece: any of text, size and color; nil takes the lettering away.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `changes` | `table?` | { text =, size =, color = }, each optional. |
+
+**Module call** `TextTool.setValue` · **See also** [`self.lettering`](#selflettering)
+
+### `self.set_effect_on`
+
+```lua
+self.set_effect_on(on)
+```
+
+Starts or stops an effect.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `on` | `boolean` | true runs it; false stops it. |
+
+**Module call** `AssetBundle.playLoopingEffect` · **See also** [`self.effect_on`](#selfeffect_on)
+
+### `self.set_worth`
+
+```lua
+self.set_worth(worth, groups)
+```
+
+Sets what the piece counts for, and optionally the groups it adds up with.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `worth` | `number` | A whole number. |
+| `groups` | `number` | _Optional._ Groups as bits; nil keeps them. |
+
+**Module call** `value` · **See also** [`self.worth`](#selfworth)
+
+### `self.roll`
+
+```lua
+self.roll()
+```
+
+Rolls a die, or turns a piece of several states to one at random; false for anything else.
+
+**Returns** `boolean`.
+
+**Module call** `randomize` · **See also** [`game.roll`](#gameroll), [`self.set_face`](#selfset_face)
 
 ### `self.set_counter`
 
@@ -1029,7 +1379,7 @@ Takes another piece off the table into this one, with whatever rides on it; a pi
 self.unstow(which, place, rot)
 ```
 
-Puts a held piece back on the table and returns it: which is its id, guid, its number in stowed, or nothing for the first; place is { x =, z = } or a piece, else beside this one; rot turns it.
+Puts a held piece back on the table and returns it: which is its id, guid, its number in stowed, or nothing for the next by the holder's take order (first, last or random); place is { x =, z = } or a piece, else beside this one; rot turns it.
 
 **Module call** `takeObject` · **See also** [`self.stowed`](#selfstowed), [`self.stow`](#selfstow), [`self.unstow`](#selfunstow)
 
@@ -1916,6 +2266,12 @@ Screen panels, written in XML. A piece's own panels (`self.ui`) take the same ca
 | [`ui.hide`](#uihide) | Hides an element (active = false). |
 | [`ui.set_value`](#uiset_value) | Sets an element's value: the text, a toggle's isOn, a slider's or dropdown's value. |
 | [`ui.get_value`](#uiget_value) | Reads an element's value. |
+| [`ui.get_attributes`](#uiget_attributes) | Every attribute of an element, or nil. |
+| [`ui.set_class`](#uiset_class) | Sets an element's classes, which take their looks from the Defaults the panels hold. |
+| [`ui.pictures`](#uipictures) | The pictures panels name: a list of { name =, url =, type = }. |
+| [`ui.set_pictures`](#uiset_pictures) | Replaces the pictures panels name. An `image` attribute holding a name shows that picture. |
+| [`ui.loading`](#uiloading) | false: panel pictures come with their packs. |
+| [`ui.assetType`](#uiassettype) | { Image = 0, AssetBundle = 1 }, as module scripts name picture types. |
 
 ### `ui.set`
 
@@ -2084,6 +2440,91 @@ Reads an element's value.
 
 **Module call** `UI.getValue` · **See also** [`ui.set_value`](#uiset_value)
 
+### `ui.get_attributes`
+
+```lua
+ui.get_attributes(id)
+```
+
+Every attribute of an element, or nil.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `id` | `string` | The element's id. |
+
+**Returns** `table?`.
+
+**Module call** `UI.getAttributes` · **See also** [`ui.get_attribute`](#uiget_attribute)
+
+### `ui.set_class`
+
+```lua
+ui.set_class(id, classes)
+```
+
+Sets an element's classes, which take their looks from the Defaults the panels hold.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `id` | `string` | The element's id. |
+| `classes` | `string` | Class names, separated by spaces. |
+
+**Returns** `boolean`: true when the element exists.
+
+**Module call** `UI.setClass`
+
+### `ui.pictures`
+
+```lua
+ui.pictures()
+```
+
+The pictures panels name: a list of { name =, url =, type = }.
+
+**Returns** `table`.
+
+**Module call** `UI.getCustomAssets` · **See also** [`ui.set_pictures`](#uiset_pictures)
+
+### `ui.set_pictures`
+
+```lua
+ui.set_pictures(list)
+```
+
+Replaces the pictures panels name. An `image` attribute holding a name shows that picture.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `list` | `table` | { name =, url = } entries; url is a picture of a pack. |
+
+**Returns** `boolean`.
+
+**Module call** `UI.setCustomAssets` · **See also** [`ui.pictures`](#uipictures)
+
+### `ui.loading`
+
+```lua
+ui.loading
+```
+
+false: panel pictures come with their packs.
+
+**Type** `boolean`, read-only.
+
+**Module call** `UI.loading`
+
+### `ui.assetType`
+
+```lua
+ui.assetType
+```
+
+{ Image = 0, AssetBundle = 1 }, as module scripts name picture types.
+
+**Type** `table`, read-only.
+
+**Module call** `UI.assetType`
+
 ## wait
 
 Timers are not saved: a script that must go on after a reload starts its timers again in on_load. A timer belongs to the script that made it and stops with it.
@@ -2239,8 +2680,11 @@ Define any of these in a piece's script and the table calls it.
 | [`on_save`](#on_save) | The game is being saved, or an umpire's action has just run the script: return a string to keep. |
 | [`on_update`](#on_update) | Every frame on the host. Keep it short: it runs under the same time limit as any call. |
 | [`on_drop`](#on_drop) | An umpire let the piece go. |
+| [`on_roll`](#on_roll) | An umpire rolled this die. |
 | [`on_pick_up`](#on_pick_up) | An umpire picked the piece up. |
 | [`on_state`](#on_state) | Its state changed, by anyone. |
+| [`on_page`](#on_page) | This book turned to another page. |
+| [`on_effect`](#on_effect) | An umpire started (0) or stopped (-1) this effect. |
 | [`on_flip`](#on_flip) | It was turned over or back. |
 | [`on_rotate`](#on_rotate) | An umpire turned it in place. |
 | [`on_turn`](#on_turn) | The clock advanced. |
@@ -2315,11 +2759,23 @@ An umpire let the piece go.
 
 An event: define this function and the table calls it.
 
+**Module call** `onDrop`
+
+### `on_roll`
+
+```lua
+on_roll(who)
+```
+
+An umpire rolled this die.
+
+An event: define this function and the table calls it.
+
 | Parameter | Type | Description |
 |---|---|---|
 | `who` | `Who` | The umpire. |
 
-**Module call** `onDrop` · **See also** [`on_pick_up`](#on_pick_up)
+**Module call** `onRandomize` · **See also** [`on_pick_up`](#on_pick_up)
 
 ### `on_pick_up`
 
@@ -2347,6 +2803,30 @@ Its state changed, by anyone.
 
 An event: define this function and the table calls it.
 
+**Module call** `onObjectStateChange`
+
+### `on_page`
+
+```lua
+on_page()
+```
+
+This book turned to another page.
+
+An event: define this function and the table calls it.
+
+**Module call** `onPageChange`
+
+### `on_effect`
+
+```lua
+on_effect(index)
+```
+
+An umpire started (0) or stopped (-1) this effect.
+
+An event: define this function and the table calls it.
+
 | Parameter | Type | Description |
 |---|---|---|
 | `old` | `number` | The state it left, from 1. |
@@ -2360,7 +2840,7 @@ end
 
 What the script draws here belongs to the new state.
 
-**Module call** `onObjectStateChange` · **See also** [`self.set_state`](#selfset_state)
+**Module call** `onObjectLoopingEffect` · **See also** [`self.set_state`](#selfset_state)
 
 ### `on_flip`
 
@@ -2439,6 +2919,10 @@ The global script gets on_load, on_save, on_update and on_turn too, and these fo
 | [`on_spawn`](#on_spawn-global-script) | A piece came onto the table. |
 | [`on_destroy`](#on_destroy-global-script) | A piece is about to go. |
 | [`on_drop`](#on_drop-global-script) | An umpire let a piece go. |
+| [`on_state`](#on_state-global-script) | A piece's state changed, by anyone. |
+| [`on_page`](#on_page-global-script) | A book turned to another page. |
+| [`on_effect`](#on_effect-global-script) | An umpire started (0) or stopped (-1) an effect. |
+| [`on_roll`](#on_roll-global-script) | An umpire rolled a die, or turned a piece of several looks to one at random. |
 | [`on_rotate`](#on_rotate-global-script) | An umpire turned a piece in place. |
 | [`on_pick_up`](#on_pick_up-global-script) | An umpire picked a piece up. |
 | [`on_player_action`](#on_player_action-global-script) | An umpire is about to delete or flip pieces: return false to refuse it, with action "delete" or "flip" and the pieces it would touch. |
@@ -2492,6 +2976,54 @@ An umpire let a piece go.
 
 An event: define this function and the table calls it.
 
+**Module call** `onObjectDrop`
+
+### `on_state` (global script)
+
+```lua
+on_state(piece, old, new)
+```
+
+A piece's state changed, by anyone.
+
+An event: define this function and the table calls it.
+
+**Module call** `onObjectStateChange`
+
+### `on_page` (global script)
+
+```lua
+on_page(piece)
+```
+
+A book turned to another page.
+
+An event: define this function and the table calls it.
+
+**Module call** `onObjectPageChange`
+
+### `on_effect` (global script)
+
+```lua
+on_effect(piece, index)
+```
+
+An umpire started (0) or stopped (-1) an effect.
+
+An event: define this function and the table calls it.
+
+**Module call** `onObjectLoopingEffect`
+
+### `on_roll` (global script)
+
+```lua
+on_roll(piece, who)
+```
+
+An umpire rolled a die, or turned a piece of several looks to one at random.
+
+An event: define this function and the table calls it.
+
 | Parameter | Type | Description |
 |---|---|---|
 | `piece` | `Piece` | The piece. |
@@ -2505,7 +3037,7 @@ function on_drop(piece, who)
 end
 ```
 
-**Module call** `onObjectDrop`
+**Module call** `onObjectRandomize`
 
 ### `on_rotate` (global script)
 
@@ -2809,6 +3341,8 @@ The converter rewrites a module's scripts into these calls by rule; this is the 
 | `addHotkey` | [`game.hotkey`](#gamehotkey) |
 | `addTag` | [`self.add_tag`](#selfadd_tag) |
 | `addToPlayerSelection` | [`game.select`](#gameselect) |
+| `AssetBundle.playLoopingEffect` | [`self.set_effect_on`](#selfset_effect_on) |
+| `Book.page_offset` | [`self.page_offset`](#selfpage_offset) |
 | `broadcastToAll` | [`game.say`](#gamesay) |
 | `call` | [`self.call`](#selfcall) |
 | `clearButtons` | [`self.clear_widgets`](#selfclear_widgets) |
@@ -2818,6 +3352,8 @@ The converter rewrites a module's scripts into these calls by rule; this is the 
 | `createButton` | [`self.button`](#selfbutton) |
 | `createInput` | [`self.input`](#selfinput) |
 | `destruct` | [`self.delete`](#selfdelete) |
+| `drag_selectable` | [`self.box_selected`](#selfbox_selected) |
+| `drag_selectable` | [`self.set_box_selected`](#selfset_box_selected) |
 | `editButton` | [`self.edit`](#selfedit) |
 | `flip` | [`self.flip`](#selfflip) |
 | `getAttachments` | [`self.attached`](#selfattached) |
@@ -2837,11 +3373,14 @@ The converter rewrites a module's scripts into these calls by rule; this is the 
 | `getPlayers` | [`game.umpires`](#gameumpires) |
 | `getPosition` | [`self.pos`](#selfpos) |
 | `getRotation` | [`self.rot`](#selfrot) |
+| `getRotationValue` | [`self.value`](#selfvalue) |
+| `getRotationValues` | [`self.faces`](#selffaces) |
 | `getScale` | [`self.scale`](#selfscale) |
 | `getSelectedObjects` | [`game.selected`](#gameselected) |
 | `getStateId` | [`self.state`](#selfstate) |
 | `getStates` | [`self.states`](#selfstates) |
 | `getTags` | [`self.tags`](#selftags) |
+| `getValue` | [`self.face`](#selfface) |
 | `getVar` | [`self.get_var`](#selfget_var) |
 | `getVectorLines` | [`self.lines`](#selflines) |
 | `getZones` | [`board.zones`](#boardzones) |
@@ -2856,6 +3395,8 @@ The converter rewrites a module's scripts into these calls by rule; this is the 
 | `JSON.decode` | [`json.decode`](#jsondecode) |
 | `JSON.encode` | [`json.encode`](#jsonencode) |
 | `log` | [`log`](#log) |
+| `measure_movement` | [`self.measures_moves`](#selfmeasures_moves) |
+| `measure_movement` | [`self.set_measures_moves`](#selfset_measures_moves) |
 | `memo` | [`self.memo`](#selfmemo) |
 | `onChat` | [`on_chat`](#on_chat-global-script) |
 | `onDestroy` | [`on_destroy`](#on_destroy) |
@@ -2865,23 +3406,32 @@ The converter rewrites a module's scripts into these calls by rule; this is the 
 | `onObjectDrop` | [`on_drop`](#on_drop-global-script) |
 | `onObjectEnterContainer` | [`on_stowed`](#on_stowed-global-script) |
 | `onObjectLeaveContainer` | [`on_unstowed`](#on_unstowed-global-script) |
+| `onObjectLoopingEffect` | [`on_effect`](#on_effect) |
+| `onObjectLoopingEffect` | [`on_effect`](#on_effect-global-script) |
 | `onObjectNumberTyped` | [`on_number_typed`](#on_number_typed-global-script) |
+| `onObjectPageChange` | [`on_page`](#on_page-global-script) |
 | `onObjectPickUp` | [`on_pick_up`](#on_pick_up-global-script) |
+| `onObjectRandomize` | [`on_roll`](#on_roll-global-script) |
 | `onObjectRotate` | [`on_rotate`](#on_rotate-global-script) |
 | `onObjectSpawn` | [`on_spawn`](#on_spawn-global-script) |
 | `onObjectStateChange` | [`on_state`](#on_state) |
+| `onObjectStateChange` | [`on_state`](#on_state-global-script) |
+| `onPageChange` | [`on_page`](#on_page) |
 | `onPickUp` | [`on_pick_up`](#on_pick_up) |
 | `onPlayerAction` | [`on_player_action`](#on_player_action-global-script) |
 | `onPlayerTurn` | [`on_turn`](#on_turn) |
+| `onRandomize` | [`on_roll`](#on_roll) |
 | `onRotate` | [`on_rotate`](#on_rotate) |
 | `onSave` | [`on_save`](#on_save) |
 | `onScriptingButtonDown` | [`on_scripting_button_down`](#on_scripting_button_down-global-script) |
 | `onScriptingButtonUp` | [`on_scripting_button_up`](#on_scripting_button_up-global-script) |
 | `onUpdate` | [`on_update`](#on_update) |
+| `pick_up_position` | [`self.picked_up`](#selfpicked_up) |
 | `positionToLocal` | [`self.to_local`](#selfto_local) |
 | `positionToWorld` | [`self.to_world`](#selfto_world) |
 | `print` | [`print`](#print) |
 | `putObject` | [`self.stow`](#selfstow) |
+| `randomize` | [`self.roll`](#selfroll) |
 | `reload` | [`self.reload`](#selfreload) |
 | `removeAttachment` | [`self.detach`](#selfdetach) |
 | `removeButton` | [`self.remove_widget`](#selfremove_widget) |
@@ -2890,6 +3440,7 @@ The converter rewrites a module's scripts into these calls by rule; this is the 
 | `script_state` | [`self.set_script_state`](#selfset_script_state) |
 | `self` | [`self`](#self) |
 | `setColorTint` | [`self.set_tint`](#selfset_tint) |
+| `setCustomObject` | [`self.set_face_picture`](#selfset_face_picture) |
 | `setCustomObject` | [`self.set_picture`](#selfset_picture) |
 | `setDecals` | [`self.set_decals`](#selfset_decals) |
 | `setDescription` | [`self.set_note`](#selfset_note) |
@@ -2899,27 +3450,43 @@ The converter rewrites a module's scripts into these calls by rule; this is the 
 | `setName` | [`self.set_name`](#selfset_name) |
 | `setPosition` | [`self.set_pos`](#selfset_pos) |
 | `setRotation` | [`self.set_rot`](#selfset_rot) |
+| `setRotationValue` | [`self.set_value`](#selfset_value) |
+| `setRotationValues` | [`self.set_faces`](#selfset_faces) |
 | `setScale` | [`self.set_scale`](#selfset_scale) |
 | `setState` | [`self.set_state`](#selfset_state) |
 | `setTags` | [`self.set_tags`](#selfset_tags) |
+| `setValue` | [`self.set_face`](#selfset_face) |
 | `setVar` | [`self.set_var`](#selfset_var) |
 | `setVectorLines` | [`self.set_lines`](#selfset_lines) |
 | `showInputDialog` | [`game.dialog`](#gamedialog) |
 | `spawnObject` | [`board.spawn`](#boardspawn) |
+| `sticky` | [`self.set_sticky`](#selfset_sticky) |
+| `sticky` | [`self.sticky`](#selfsticky) |
 | `takeObject` | [`self.unstow`](#selfunstow) |
+| `TextTool.getValue` | [`self.lettering`](#selflettering) |
+| `TextTool.setValue` | [`self.set_lettering`](#selfset_lettering) |
 | `tryObjectEnterContainer` | [`try_stow`](#try_stow-global-script) |
 | `UI` | [`self.ui`](#selfui) |
 | `UI` | [`ui`](#ui) |
+| `UI.assetType` | [`ui.assetType`](#uiassettype) |
 | `UI.getAttribute` | [`ui.get_attribute`](#uiget_attribute) |
+| `UI.getAttributes` | [`ui.get_attributes`](#uiget_attributes) |
+| `UI.getCustomAssets` | [`ui.pictures`](#uipictures) |
 | `UI.getValue` | [`ui.get_value`](#uiget_value) |
 | `UI.getXml` | [`ui.xml`](#uixml) |
 | `UI.getXmlTable` | [`ui.tree`](#uitree) |
 | `UI.hide` | [`ui.hide`](#uihide) |
+| `UI.loading` | [`ui.loading`](#uiloading) |
 | `UI.setAttribute` | [`ui.set_attribute`](#uiset_attribute) |
 | `UI.setAttributes` | [`ui.set_attributes`](#uiset_attributes) |
+| `UI.setClass` | [`ui.set_class`](#uiset_class) |
+| `UI.setCustomAssets` | [`ui.set_pictures`](#uiset_pictures) |
 | `UI.setValue` | [`ui.set_value`](#uiset_value) |
 | `UI.setXml` | [`ui.set`](#uiset) |
 | `UI.show` | [`ui.show`](#uishow) |
+| `value` | [`self.set_worth`](#selfset_worth) |
+| `value` | [`self.worth`](#selfworth) |
+| `value_flags` | [`self.worth_groups`](#selfworth_groups) |
 | `Wait` | [`wait`](#wait) |
 | `Wait.condition` | [`wait.condition`](#waitcondition) |
 | `Wait.frames` | [`wait.frames`](#waitframes) |

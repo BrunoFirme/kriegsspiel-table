@@ -32,7 +32,7 @@ sealed class MenuCards : HudPart
     {
         var one = nodes.Count == 1 ? nodes[0] : null;
         var head = one != null ? (one.Piece.Label is { Length: > 0 } lb ? lb : one.Def?.Name ?? one.Piece.Def) : $"{nodes.Count} pieces";
-        menu.Head(head);
+        menu.Head(Tally(hit, nodes) is { Length: > 0 } sum ? $"{head} · {sum}" : head);
         menu.Separator();
         if (nodes.Any(Table.IsDie)) menu.Item("Roll", () => T.RollDiceAtHand(), "R");
         menu.Item("Turn left 15°", () => T.RotateSmooth(-15), "Q");
@@ -72,8 +72,30 @@ sealed class MenuCards : HudPart
         }
     }
 
+    const int MostSidesListed = 20;
+
+    static string Tally(PieceNode hit, List<PieceNode> nodes)
+    {
+        var shown = nodes.Where(n => n.IsDie).Select(n => PieceInstance.FacesOf(n.Def, n.Piece) is var f && f.Count > 0 ? f[Math.Clamp(n.Piece.ShownFace, 0, f.Count - 1)].Number : null).ToList();
+        if (shown.Count > 1 && shown.All(v => v != null)) return $"{string.Join(" + ", shown)} = {shown.Sum()}";
+        int groups = hit.Piece.WorthGroups;
+        var counted = nodes.Where(n => groups == 0 || (n.Piece.WorthGroups & groups) != 0).ToList();
+        return counted.Any(n => n.Piece.Worth != 0) ? $"worth {counted.Sum(n => n.Piece.Worth)}" : "";
+    }
+
     void StateAndCounterRows(MenuCard menu, PieceNode one, PieceDef def)
     {
+        var faces = PieceInstance.FacesOf(def, one.Piece);
+        if (one.IsDie && faces.Count <= MostSidesListed)
+        {
+            menu.Separator("Side");
+            for (int i = 0; i < faces.Count; i++)
+            {
+                var fi = i;
+                menu.Check(faces[i].Value.Length > 0 ? faces[i].Value : $"#{i + 1}", one.Piece.ShownFace == i,
+                    () => S.Do(new TurnDie { Layer = one.Layer, Id = one.Piece.Id, Face = fi }), i < 9 ? (i + 1).ToString() : i == 9 ? "0" : "");
+            }
+        }
         if (def.States.Count > 1 && !BookWindow.Is(def))
         {
             menu.Separator("Look");
@@ -110,6 +132,11 @@ sealed class MenuCards : HudPart
         if (!hit.Piece.HoldsPieces(hit.Def) && hit.Piece.Stowed is not { Count: > 0 }) return;
         int held = hit.Piece.Stowed?.Count ?? 0;
         menu.Item(held > 0 ? $"Open {Short(hit)} ({held})…" : $"Open {Short(hit)}…", () => HolderWindow.Open(Ctx.Root, S, T, hit));
+        if (held > 1 && hit.Piece.TakeOrder is TakeOrders.Last or TakeOrders.Random)
+            menu.Item(hit.Piece.TakeOrder == TakeOrders.Random ? "Draw one at random" : "Take the top one out", () =>
+            {
+                if (hit.Piece.NextOut(Random.Shared) is { } next) S.Do(new Unstow { Layer = hit.Layer, Holder = hit.Piece.Id, Id = next.Id });
+            });
     }
 
     void SelectionRows(MenuCard menu, PieceNode hit, List<PieceNode> nodes)
@@ -152,6 +179,15 @@ sealed class MenuCards : HudPart
             bool allHold = holders.All(n => n.Piece.HoldsPieces(n.Def));
             menu.Check("Holds pieces", allHold, () => SetOption(holders, PieceOptions.Holds, !allHold));
         }
+        bool allSticky = nodes.All(n => !n.Piece.NotSticky);
+        menu.Check("Carries what rests on it", allSticky, () => SetOption(nodes, PieceOptions.NotSticky, allSticky));
+        bool allBoxed = nodes.All(n => !n.Piece.NotBoxSelected);
+        menu.Check("Taken by a selection box", allBoxed, () => SetOption(nodes, PieceOptions.NotBoxSelected, allBoxed));
+        bool allMeasured = nodes.All(n => n.Piece.MeasuresMoves);
+        menu.Check("Shows how far it is moved", allMeasured, () => SetOption(nodes, PieceOptions.MeasuresMoves, !allMeasured));
+        var effects = nodes.Where(n => n.IsEffect).ToList();
+        bool allRunning = effects.All(n => !n.Piece.EffectOff);
+        if (effects.Count > 0) menu.Check("Running", allRunning, () => SetOption(effects, PieceOptions.EffectOff, allRunning));
         var dice = nodes.Where(n => n.IsDie).ToList();
         if (dice.Count > 0)
         {

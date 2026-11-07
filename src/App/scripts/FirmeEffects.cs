@@ -122,6 +122,7 @@ public static class FirmeEffects
                     new Vector2(1.6f, 0.35f) }),
             M),
         ("Box", "A small painted box to keep pieces in", Props.Box, AnyTable),
+        ("Tree", "A broad-leaved tree standing on its own", Props.Tree, AnyTable),
         ("Chest", "An iron-bound chest to keep pieces in", Props.Chest, AnyTable),
         ("Crate", "A slatted crate to keep pieces in", Props.Crate, AnyTable),
     };

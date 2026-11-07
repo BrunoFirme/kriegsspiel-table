@@ -131,6 +131,11 @@ public partial class ToolIcon : Control
                 DrawRect(new Rect2(P(2.4f, 7.4f), new Vector2(9.2f, 9.2f) * _k), _c, false, 1.5f * _k);
                 DrawArc(P(13.2f, 7.2f), 4.8f * _k, 0, Mathf.Tau, 28, _c, 1.5f * _k, antialiased: true);
                 break;
+            case "decal":
+                DrawColoredPolygon(new[] { P(3f, 3f), P(17f, 3f), P(17f, 11.5f), P(11.5f, 17f), P(3f, 17f) }, _c);
+                DrawColoredPolygon(new[] { P(17f, 11.5f), P(11.5f, 11.5f), P(11.5f, 17f) }, new Color(0, 0, 0, 0.45f));
+                DrawArc(P(8.6f, 8.6f), 2.6f * _k, 0, Mathf.Tau, 18, new Color(0, 0, 0, 0.5f), 1.3f * _k, antialiased: true);
+                break;
             case "erase":
                 DrawColoredPolygon(new[] { P(10.8f, 2.6f), P(16.8f, 8.6f), P(9.6f, 15.8f), P(3.6f, 9.8f) }, _c);
                 DrawLine(P(7.2f, 6.2f), P(13.2f, 12.2f), new Color(0, 0, 0, 0.5f), 1.3f * _k, antialiased: true);

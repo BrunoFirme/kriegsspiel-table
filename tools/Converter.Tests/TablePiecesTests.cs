@@ -9,17 +9,6 @@ public sealed partial class ConverterTests
 {
     static readonly SKColor[] Cells = { SKColors.Red, SKColors.Green, SKColors.Blue, SKColors.Yellow, SKColors.Cyan, SKColors.Magenta, SKColors.White, SKColors.Black };
 
-    void LocalPicture(Config cfg, string url, int w, int h, Func<int, int, SKColor> colour)
-    {
-        var images = Path.Combine(cfg.ModsPath, "Images");
-        Directory.CreateDirectory(images);
-        using var bmp = new SKBitmap(w, h);
-        for (int y = 0; y < h; y++)
-            for (int x = 0; x < w; x++) bmp.SetPixel(x, y, colour(x, y));
-        using var png = bmp.Encode(SKEncodedImageFormat.Png, 100);
-        File.WriteAllBytes(Path.Combine(images, AssetStore.Key(url) + ".png"), png.ToArray());
-    }
-
     static JsonObject Card(string nick, int sheet, int cell, string face, string back, int across, int down, double rotZ = 0) =>
         Obj("CardCustom", nick, 1, new JsonObject
         {
@@ -98,14 +87,14 @@ public sealed partial class ConverterTests
         Assert.Equal("model", def.Kind);
         Assert.Contains("die", def.Tags);
         Assert.True(pack.M.Assets.ContainsKey(def.Mesh!));
-        Assert.Equal(new[] { "1", "2", "3", "4", "5", "6" }, def.States.Select(s => s.Name));
+        Assert.Equal(new[] { "1", "2", "3", "4", "5", "6" }, def.Faces.Select(s => s.Value));
         Assert.Equal(new[] { (0, 0, 1), (0, 1, 0), (1, 0, 0), (-1, 0, 0), (0, -1, 0), (0, 0, -1) },
-            def.States.Select(s => ((int)Math.Round(s.Up![0]), (int)Math.Round(s.Up[1]), (int)Math.Round(s.Up[2]))));
+            def.Faces.Select(s => ((int)Math.Round(s.Up[0]), (int)Math.Round(s.Up[1]), (int)Math.Round(s.Up[2]))));
         Assert.Equal(Math.Round(DefFactory.DieAcross * 1.55, 4), def.Size.W);
         Assert.Null(DefFactory.NotTranslated(new ModuleObj(die)));
         die["CustomImage"]!["CustomDice"]!["Type"] = 5;
         Assert.Null(DefFactory.NotTranslated(new ModuleObj(die)));
-        Assert.Equal(20, new ModuleObj(die).StockSides);
+        Assert.Equal(((int?)null, 20), (new ModuleObj(die).StockSides, new ModuleObj(die).DieSides));
         die["CustomImage"]!["CustomDice"]!["Type"] = 9;
         Assert.NotNull(DefFactory.NotTranslated(new ModuleObj(die)));
     }
@@ -478,5 +467,37 @@ public sealed partial class ConverterTests
         Assert.Equal(0.4, DrawnHeight(even), 3);
         Assert.Equal(defs.Entry(Box)!.Sha, even.Mesh);
         Assert.Contains("vn 0 1 0", File.ReadAllText(Path.Combine(pack.Dir, pack.M.Assets[stretched.Mesh!].File)));
+    }
+
+    [Fact]
+    public async Task A_model_a_script_spawns_keeps_the_local_frame_a_placed_model_of_its_scale_has()
+    {
+        var cfg = TempConfig();
+        const string Gun = "http://a/gun.obj";
+        var models = Path.Combine(cfg.ModsPath, "Models");
+        Directory.CreateDirectory(models);
+        var corners = from x in new[] { -0.4, 0.4 } from y in new[] { 0, 0.3 } from z in new[] { -0.2, 0.2 } select FormattableString.Invariant($"v {x} {y} {z}");
+        File.WriteAllLines(Path.Combine(models, AssetStore.Key(Gun) + ".obj"), corners.Append("f 1 2 3"));
+        var rep = new Report();
+        var assets = new AssetStore(cfg, rep);
+        await assets.FetchAll(new[] { Gun });
+        var defs = new DefFactory(cfg, assets, rep);
+        var pack = new PackOut(cfg.Output, "t", "T", "t", null);
+        var placed = defs.DefFor(new ModuleObj(Obj("Custom_Model", "Gun", 0.6, new JsonObject
+        {
+            ["Transform"] = new JsonObject { ["posX"] = 0.0, ["posY"] = 1.0, ["posZ"] = 0.0, ["rotX"] = 0.0, ["rotY"] = 0.0, ["rotZ"] = 0.0, ["scaleX"] = 0.6, ["scaleY"] = 0.6, ["scaleZ"] = 0.6 },
+            ["CustomMesh"] = new JsonObject { ["MeshURL"] = Gun },
+        })), pack)!.Def;
+
+        defs.Translate($$"""
+            function spawnGun()
+              local o = spawnObject({ type = 'Custom_Model', position = {0, 1, 0}, scale = {x = 0.6, y = 0.6, z = 0.6} })
+              o.setCustomObject({ mesh = "{{Gun}}" })
+            end
+            """, pack, "spawner");
+
+        var spawned = Assert.Single(pack.M.Pieces, d => d.Tags.Contains("marker"));
+        Assert.NotNull(spawned.LocalUnit);
+        Assert.Equal(placed.LocalUnit, spawned.LocalUnit);
     }
 }

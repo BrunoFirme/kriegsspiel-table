@@ -150,6 +150,17 @@ public static partial class ApiDoc
               print(i, name, i == self.state and "(now)" or "")
             end
             """);
+        F("piece", "faces", "Face[]", "A die's sides in order: { value =, up = { x, y, z }, rotation = { x, y, z } }; empty for every other piece.", "getRotationValues");
+        F("piece", "face", "number?", "The side of a die showing, from 1; nil for every other piece.", "getValue");
+        F("piece", "value", "number|string|nil", "The value of the side of a die showing; nil for every other piece.", "getRotationValue");
+        F("piece", "picked_up", "table?", "Where an umpire last picked the piece up: { x =, y =, z =, rot = }; nil until then.", "pick_up_position");
+        F("piece", "face_picture", "string?", "A picture shown on the piece's face in place of its kind's, set by set_face_picture; nil for none.");
+        F("piece", "page_offset", "number", "For a book, what its page numbers start from, as the module set it; 0 for every other piece.", "Book.page_offset");
+        F("piece", "effect_on", "boolean", "For an effect, whether it is running.");
+        F("piece", "kind_name", "string", "The name of its kind.");
+        F("piece", "lettering", "table?", "Text drawn on the piece in place of its picture, as 3D text from a module is: { text =, size =, color = }; nil for most pieces.", "TextTool.getValue");
+        F("piece", "worth", "number", "What the piece counts for when pieces are added up; 0 for most.", "value");
+        F("piece", "worth_groups", "number", "Which groups it adds up with, as bits; 0 adds up with any piece of worth.", "value_flags");
         F("piece", "pos", "Point", "Where it stands, in map units: { x =, z = }.", "getPosition");
         Note("Each read gives a new table; changing it moves nothing. Use `set_pos` or `move`.");
         See("self.set_pos", "self.move", "board.distance");
@@ -167,6 +178,12 @@ public static partial class ApiDoc
         See("self.flip", "on_flip");
         F("piece", "locked", "boolean", "Pinned to the table: not dragged, turned or resized by hand.", "getLock");
         See("self.set_locked");
+        F("piece", "sticky", "boolean", "Carries the pieces resting on it when it is moved; attached pieces go with it either way.", "sticky");
+        See("self.set_sticky");
+        F("piece", "box_selected", "boolean", "Taken by a selection box dragged over it.", "drag_selectable");
+        See("self.set_box_selected");
+        F("piece", "measures_moves", "boolean", "Shows how far it is moved while it is held.", "measure_movement");
+        See("self.set_measures_moves");
         F("piece", "tint", "string?", "Its colour as \"#RRGGBB\", or nil.", "getColorTint");
         See("self.set_tint");
         F("piece", "counters", "table", "Its kind's counters, name → value.");
@@ -203,8 +220,45 @@ public static partial class ApiDoc
     static ApiSection PieceChanges() => Section("A piece: changes", "Each call is a change every umpire sees, taken back with Ctrl+Z by the umpire whose action ran the script. Everything one reaction changes is one step of undo.", () =>
     {
         PieceLooks();
+        PieceSides();
         PieceData();
     });
+
+    static void PieceSides()
+    {
+    M("piece", "set_face(n)", "Turns a die to show a side, from 1; false when it has no such side.", "setValue", "boolean");
+    P("n", "number", "The side, from 1, in the order of self.faces.");
+    See("self.face", "self.set_value");
+
+    M("piece", "set_value(value)", "Turns a die to the first side with this value; false when no side has it.", "setRotationValue", "boolean");
+    P("value", "number|string", "The value to show.");
+    X("self.set_value(6)");
+    See("self.value", "self.set_face");
+
+    M("piece", "set_faces(list)", "Gives this die sides of its own; nil gives it back its kind's.", "setRotationValues", "boolean");
+    P("list", "table?", "{ value =, up = { x, y, z } } or { value =, rotation = { x, y, z } } for each side.");
+    See("self.faces");
+
+    M("piece", "set_face_picture(link)", "Shows a picture on the piece's face in place of its kind's: a web link is fetched first; nil puts the kind's back.", "setCustomObject");
+    P("link", "string?", "A web link to a picture, or a picture the table already holds.");
+    See("self.face_picture");
+
+    M("piece", "set_lettering(changes)", "Changes the text drawn on the piece: any of text, size and color; nil takes the lettering away.", "TextTool.setValue");
+    P("changes", "table?", "{ text =, size =, color = }, each optional.");
+    See("self.lettering");
+
+    M("piece", "set_effect_on(on)", "Starts or stops an effect.", "AssetBundle.playLoopingEffect");
+    P("on", "boolean", "true runs it; false stops it.");
+    See("self.effect_on");
+
+    M("piece", "set_worth(worth, groups)", "Sets what the piece counts for, and optionally the groups it adds up with.", "value");
+    P("worth", "number", "A whole number.");
+    O("groups", "number", "Groups as bits; nil keeps them.");
+    See("self.worth");
+
+    M("piece", "roll()", "Rolls a die, or turns a piece of several states to one at random; false for anything else.", "randomize", "boolean");
+    See("game.roll", "self.set_face");
+    }
 
     static void PieceLooks()
     {
@@ -269,6 +323,18 @@ public static partial class ApiDoc
     O("on", "boolean", "true, or no argument, pins it; false lets it go.");
     Note("A locked piece can still be picked out, read and deleted, and an umpire can unlock it from its right-click menu.");
     See("self.locked");
+
+    M("piece", "set_box_selected(on)", "Whether a selection box dragged over it takes it.", "drag_selectable");
+    O("on", "boolean", "true, or no argument, lets a box take it; false leaves it out.");
+    See("self.box_selected");
+
+    M("piece", "set_measures_moves(on)", "Whether it shows how far it is moved while it is held.", "measure_movement");
+    O("on", "boolean", "true, or no argument, shows the distance; false hides it.");
+    See("self.measures_moves");
+
+    M("piece", "set_sticky(on)", "Whether it carries the pieces resting on it when it is moved.", "sticky");
+    O("on", "boolean", "true, or no argument, carries them; false leaves them where they lie.");
+    See("self.sticky");
     }
 
     static void PieceCarrying()
@@ -282,7 +348,7 @@ public static partial class ApiDoc
 
         F("piece", "stowed", "list", "The pieces it holds off the table, first in first: { id =, name =, guid =, def =, held = }, held being how many that piece holds in turn.", "getObjects");
         M("piece", "stow(piece)", "Takes another piece off the table into this one, with whatever rides on it; a piece this one rides on is refused.", "putObject");
-        M("piece", "unstow(which, place, rot)", "Puts a held piece back on the table and returns it: which is its id, guid, its number in stowed, or nothing for the first; place is { x =, z = } or a piece, else beside this one; rot turns it.", "takeObject");
+        M("piece", "unstow(which, place, rot)", "Puts a held piece back on the table and returns it: which is its id, guid, its number in stowed, or nothing for the next by the holder's take order (first, last or random); place is { x =, z = } or a piece, else beside this one; rot turns it.", "takeObject");
         See("self.stowed", "self.stow", "self.unstow");
     }
 
@@ -762,6 +828,25 @@ public static partial class ApiDoc
         M("ui", "get_value(id)", "Reads an element's value.", "UI.getValue", "string?");
         P("id", "string", "The element's id.");
         See("ui.set_value");
+
+        M("ui", "get_attributes(id)", "Every attribute of an element, or nil.", "UI.getAttributes", "table?");
+        P("id", "string", "The element's id.");
+        See("ui.get_attribute");
+
+        M("ui", "set_class(id, classes)", "Sets an element's classes, which take their looks from the Defaults the panels hold.", "UI.setClass", "boolean");
+        P("id", "string", "The element's id.");
+        P("classes", "string", "Class names, separated by spaces.");
+        R("true when the element exists.");
+
+        M("ui", "pictures()", "The pictures panels name: a list of { name =, url =, type = }.", "UI.getCustomAssets", "table");
+        See("ui.set_pictures");
+
+        M("ui", "set_pictures(list)", "Replaces the pictures panels name. An `image` attribute holding a name shows that picture.", "UI.setCustomAssets", "boolean");
+        P("list", "table", "{ name =, url = } entries; url is a picture of a pack.");
+        See("ui.pictures");
+
+        F("ui", "loading", "boolean", "false: panel pictures come with their packs.", "UI.loading");
+        F("ui", "assetType", "table", "{ Image = 0, AssetBundle = 1 }, as module scripts name picture types.", "UI.assetType");
     });
 
     static ApiSection Wait() => Section("wait", "Timers are not saved: a script that must go on after a reload starts its timers again in on_load. A timer belongs to the script that made it and stops with it.", () =>
@@ -848,6 +933,7 @@ public static partial class ApiDoc
         Note("Prefer `wait.seconds` or an event: a script that does its work every frame costs the host every frame.");
 
         E("event", "on_drop(who)", "An umpire let the piece go.", "onDrop");
+        E("event", "on_roll(who)", "An umpire rolled this die.", "onRandomize");
         P("who", "Who", "The umpire.");
         See("on_pick_up");
 
@@ -856,6 +942,8 @@ public static partial class ApiDoc
         See("on_drop");
 
         E("event", "on_state(old, new)", "Its state changed, by anyone.", "onObjectStateChange");
+        E("event", "on_page()", "This book turned to another page.", "onPageChange");
+        E("event", "on_effect(index)", "An umpire started (0) or stopped (-1) this effect.", "onObjectLoopingEffect");
         P("old", "number", "The state it left, from 1.");
         P("new", "number", "The state it is in now, from 1.");
         X("""
@@ -898,6 +986,10 @@ public static partial class ApiDoc
         P("piece", "Piece", "The piece; its fields still answer.");
 
         E("global event", "on_drop(piece, who)", "An umpire let a piece go.", "onObjectDrop");
+        E("global event", "on_state(piece, old, new)", "A piece's state changed, by anyone.", "onObjectStateChange");
+        E("global event", "on_page(piece)", "A book turned to another page.", "onObjectPageChange");
+        E("global event", "on_effect(piece, index)", "An umpire started (0) or stopped (-1) an effect.", "onObjectLoopingEffect");
+        E("global event", "on_roll(piece, who)", "An umpire rolled a die, or turned a piece of several looks to one at random.", "onObjectRandomize");
         P("piece", "Piece", "The piece.");
         P("who", "Who", "The umpire.");
         X("""

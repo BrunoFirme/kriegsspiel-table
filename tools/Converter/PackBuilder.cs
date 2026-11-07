@@ -23,8 +23,9 @@ public sealed class PackBuilder
     }
 
     public static IEnumerable<string> Urls(ModuleSave save) =>
-        save.Objects.SelectMany(o => o.Walk()).SelectMany(o => o.Urls().Concat(ScriptUrls(o.Lua)).Concat(ScriptUrls(o.LuaState))).Concat(ScriptUrls(save.Lua)).Concat(ScriptUrls(save.LuaState))
-            .Concat(save.SkyUrl is { } sky ? new[] { sky } : []);
+        save.Objects.SelectMany(o => o.Walk()).SelectMany(o => o.Urls().Concat(ScriptUrls(o.Lua)).Concat(ScriptUrls(o.LuaState)).Concat(ScriptUrls(o.XmlUi)))
+            .Concat(ScriptUrls(save.Lua)).Concat(ScriptUrls(save.LuaState)).Concat(ScriptUrls(save.XmlUi)).Concat(save.UiAssets.Select(a => a.Url))
+            .Concat(save.SkyUrl is { } sky ? new[] { sky } : []).Concat(save.TableDecals.Select(d => d.Url)).Concat(save.DecalPalette.Select(d => d.Url));
 
     public static IEnumerable<string> PieceUrls(ModuleSave save) =>
         save.Objects.SelectMany(o => o.Walk()).Where(o => o.Name != "Custom_Assetbundle" && !o.IsFurniture).SelectMany(o => o.Urls());
@@ -131,11 +132,14 @@ public sealed class PackBuilder
                 if (_defs.DefFor(c, pack, Math.Abs(c.StateList().states[0].ScaleX) * Math.Abs(o.ScaleX)) != null) objects++;
             return;
         }
-        if (_cfg.IgnoreTypes.Contains(o.Name) || o.StockSides != null) { _rep.Skipped(o.Name, where); return; }
+        if (o.StockSides != null) return;
+        if (_cfg.IgnoreTypes.Contains(o.Name)) { _rep.Skipped(o.Name, where); return; }
         if (DefFactory.NotTranslated(o) is { } why) { _rep.Skipped(why, where); return; }
+        if (o.Name == DefFactory.TilesetTree) return;
         if (!DefFactory.IsPiece(o)) { _rep.UnknownType(o.Name, where); return; }
         if (o.IsFurniture) { _rep.Skipped("table furniture (custom table / surround / under the table)", where); return; }
         if (o.IsTerrain) { _rep.Skipped("3D terrain (laid as a map sheet of the scenario)", where); return; }
+        if (o.Top != null) { _rep.Skipped("table top (read with the scenario: a map picture becomes a sheet)", where); return; }
         var r = _defs.DefFor(o, pack);
         if (r == null) return;
         objects++;

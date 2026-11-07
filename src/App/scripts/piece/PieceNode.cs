@@ -143,6 +143,7 @@ public partial class PieceNode : Node3D
         if (!PrintingOnly && !IsEffect && Def is { Kind: not "model", AddOnMesh: { } addOn }) BuildAddOn(addOn, tint);
 
         if (Lettered) _lettering.Add();
+        BuildLiveText();
         _shownFaceDown = Piece.FaceDown;
         Refresh(Piece);
     }
@@ -210,6 +211,8 @@ public partial class PieceNode : Node3D
     }
 
     public void SyncUi(bool force = false) => _plates.Sync(force);
+    public (string Id, Control Control, Vector2 Pixel)? PanelAt(Vec2 point) => _flipping ? null : _plates.ControlAt(Coords.ToLocal(point, Piece.Pos, Piece.RotDeg));
+    public void PressPanel((string Id, Control Control, Vector2 Pixel) at) => _plates.Press(at.Id, at.Control, at.Pixel);
 
     public void SyncLines() => _lines.Sync();
 
@@ -253,12 +256,15 @@ public partial class PieceNode : Node3D
         return Coords.FromWorld(Position + new Vector3(level.X, 0, level.Z));
     }
 
-    Color Tint() => Coords.ParseColor(Piece.TintOverride ?? Def?.Tint, Colors.White) * _layerTint;
-    Color SideColor() => (Tint() * 0.82f) with { A = 1 };
-    Color PrintTint() => Def is { TintsPictures: true } ? Tint() : _layerTint;
+    Color Tint() => Spoken ? Colors.Transparent : Coords.ParseColor(Piece.TintOverride ?? Def?.Tint, Colors.White) * _layerTint;
+    Color SideColor() => (Tint() * 0.82f) with { A = Tint().A };
+    Color PrintTint() => Def is { TintsPictures: true } ? Tint() : _layerTint with { A = _layerTint.A * Tint().A };
 
     (string? pkg, string? rel, int size) TexKey()
     {
+        if (Spoken) return (null, null, 0);
+        if (Piece.FacePicture is { } fp && !Piece.FaceDown && KTable.Client.PieceFiles.DecalFile(_s.View, _s.Store, fp, Piece.Def) is { } own)
+            return (own.Package, own.Path, Assets.PieceTexSize(Mathf.Max(Footprint.X, Footprint.Y)));
         var pack = _s.Store.PackOfDef(PictureDefId);
         var img = CurrentImage();
         if (pack == null || img == null || !pack.Assets.TryGetValue(img, out var a)) return (null, null, 0);
@@ -266,6 +272,7 @@ public partial class PieceNode : Node3D
     }
 
     public float Thickness => _thickness;
+    public float ModelTop => _plates.ModelTop;
     public float BaseY(PieceInstance p) => BaseAt(p.Pos, p.RotDeg, p.Y, p.Stack);
 
     float BaseAt(Vec2 pos, double rotDeg, double y, int stack)
@@ -419,9 +426,15 @@ public partial class PieceNode : Node3D
         StandardMaterial3D Body(Color c) => die
             ? new StandardMaterial3D { AlbedoColor = c, Roughness = 0.32f, Metallic = 0f, MetallicSpecular = 0.6f, CullMode = BaseMaterial3D.CullModeEnum.Back,
                 TextureFilter = BaseMaterial3D.TextureFilterEnum.LinearWithMipmapsAnisotropic }
-            : new StandardMaterial3D { AlbedoColor = c, CullMode = BaseMaterial3D.CullModeEnum.Disabled, Transparency = BaseMaterial3D.TransparencyEnum.AlphaScissor };
+            : new StandardMaterial3D { AlbedoColor = c, CullMode = BaseMaterial3D.CullModeEnum.Disabled, Transparency = PieceArt.SeeThrough(c) ? BaseMaterial3D.TransparencyEnum.Alpha
+                : BaseMaterial3D.TransparencyEnum.AlphaScissor };
         var mat = _modelMat = Body(tint);
         var untinted = Body(_layerTint);
+        if (!die)
+        {
+            PieceFinish.Apply(mat, Def!);
+            PieceFinish.Apply(untinted, Def!);
+        }
         _model = new MeshInstance3D { RotationDegrees = new Vector3(0, 180, 0) };
         AddChild(_model);
         var texHash = WornModel?.Texture ?? CurState?.Texture ?? Def!.Texture;
@@ -445,6 +458,7 @@ public partial class PieceNode : Node3D
             model.Scale = new Vector3(sx, sy, sz);
             _plates.ModelTop = aabb.Size.Y * sy;
             if (Piece.Ui.Count > 0) SyncUi(force: true);
+            if (Piece.Widgets.Count > 0) SyncWidgets(force: true);
             if (IsDie)
             {
                 var verts = Enumerable.Range(0, mesh.GetSurfaceCount()).SelectMany(s => mesh.SurfaceGetArrays(s)[(int)Mesh.ArrayType.Vertex].AsVector3Array());
@@ -491,9 +505,9 @@ public partial class PieceNode : Node3D
     public void Refresh(PieceInstance p)
     {
         if (IsDie) { RefreshDie(p); return; }
-        bool rebuild = p.State != _shownState || p.Picture != _shownPicture || p.TintOverride != _shownTint || p.Def != _shownDef;
+        bool rebuild = p.State != _shownState || p.Picture != _shownPicture || p.TintOverride != _shownTint || p.Def != _shownDef || LooksChanged(p);
         Piece = p;
-        if (rebuild) { Rebuild(); return; }
+        if (rebuild || EffectSwitched) { Rebuild(); return; }
         SyncWidgets();
         SyncLines();
         if (!Placed) Scale = Vector3.One;
