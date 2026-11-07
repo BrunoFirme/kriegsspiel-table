@@ -34,6 +34,7 @@ public sealed partial class ScenarioBuilder
         public Dictionary<PieceInstance, double> Top = new();
         public Dictionary<PieceInstance, (PieceInstance Root, double Bottom)> Glued = new();
         public Dictionary<PieceInstance, double> HeightScale = new();
+        public Dictionary<PieceInstance, double> Rise = new();
     }
 
     public Task<Scenario> Build(string masterId) => Build(ModuleSave.Load(_cfg, masterId));
@@ -544,10 +545,12 @@ public sealed partial class ScenarioBuilder
         if (Math.Abs(scale - 1) < ModuleScaleRoundingNoise) scale = 1;
         if (def.Script != null) { counters = new(); text = new(); }
 
+        bool rolls = def.Faces.Count > 1 || r.FromPack == DefFactory.StdDicePack;
+        var pose = rolls ? new PieceTilt.Pose(o.Heading, o.Flipped, 0, 0) : PieceTilt.Of(o.RotX, o.RotY, o.RotZ, def.Kind == "model", o.Name == "3DText");
         var inst = new PieceInstance
         {
-            Id = $"p-{_nextId++:D6}", Def = def.Id,
-            Pos = new Vec2(Math.Round(o.PosX, 4), Math.Round(o.PosZ, 4)), RotDeg = Facing(def, o.Heading),
+            Id = $"p-{_nextId++:D6}", Def = def.Id, TiltX = pose.X, TiltZ = pose.Z,
+            Pos = new Vec2(Math.Round(o.PosX, 4), Math.Round(o.PosZ, 4)), RotDeg = Facing(def, pose.Heading),
             State = def.Faces.Count > 1 ? 0 : Math.Min(r.State, Math.Max(0, def.States.Count - 1)),
             Face = def.Faces.Count > 1 ? Math.Clamp(r.State, 0, def.Faces.Count - 1) : -1,
             Counters = counters, Text = text, Label = o.RawNickname.Length > 0 ? o.RawNickname : null, Scale = scale,
@@ -555,7 +558,7 @@ public sealed partial class ScenarioBuilder
             Guid = o.Guid.Length > 0 ? o.Guid : null,
             GmNotes = o.GmNotes.Length > 0 && !o.GmNotes.StartsWith(KtMarker.Def, StringComparison.Ordinal) ? o.GmNotes : null,
             Tags = o.Tags, Memo = _defs.RewriteUrls(o.Memo, extras, $"{layer.Name} {o.Name} '{o.Nickname}' {o.Guid} memo"),
-            Locked = parent == null && o.Locked, FaceDown = o.Flipped && def.Kind != "model" && def.Back != null, NotSticky = !o.Sticky,
+            Locked = parent == null && o.Locked, FaceDown = pose.Down && def.Kind != "model" && def.Back != null, NotSticky = !o.Sticky,
             NotBoxSelected = !o.DragSelectable, MeasuresMoves = o.MeasureMovement,
             Ui = ObjectPanels(o, extras, $"{layer.Name} {o.Name} '{o.Nickname}' {o.Guid}"),
             Worth = o.Worth,
@@ -572,23 +575,38 @@ public sealed partial class ScenarioBuilder
                 if (tr.Script != def.Script) inst.Script = tr.Script;
             }
         }
-        var colour = r.FromPack == KTable.Client.Effects.EffectKinds.StandardPack && o.Name == "Bag" ? BagBoxes.Tint(o) : o.Name == DefFactory.Figurine ? null : o.Color;
-        if (colour is { } col && !string.Equals(col, def.Tint, StringComparison.OrdinalIgnoreCase)) inst.TintOverride = col;
-        if (o.VectorLines.Count > 0) inst.Lines = LinesOf(o, def);
-        if (!def.States.Any(s => s.Decals is { Count: > 0 }))
-            inst.Decals = DecalsOf(o, def, _cfg.BaseSizes.CustomTokenArea, url => _defs.UiAsset(extras, url, $"{layer.Name} {o.Name} '{o.Nickname}' {o.Guid} decal"),
-                sha => _defs.FlippedPicture(extras, sha));
+        Dress(inst, o, def, r, extras, layer.Name);
         layer.Pieces.Add(inst);
         layer.Y[inst] = o.PosY;
         bool baked = _defs.IsBaked(r.Def);
         var (low, high) = baked ? _defs.BakedSpan(o) : (_defs.LocalFloor(o), _defs.LocalFloor(o) + _defs.BaseThickness(o));
         layer.Bottom[inst] = o.PosY + low * Math.Abs(o.ScaleY);
         layer.Top[inst] = o.PosY + high * Math.Abs(o.ScaleY);
+        if (pose.Tilted) Tilt(layer, inst, o, def, low, high);
         StackCopies(o, inst, layer);
         if (o.IsBag) StowContents(o, inst, extras, packDefs, layer, usedPacks, ref rekeyed);
 
         PlaceChildren(o, baked ? Enumerable.Empty<ModuleObj>() : o.Children, inst, refScale, baseScale, absolute, extras, packDefs, layer, usedPacks, ref rekeyed);
         return inst;
+    }
+
+    void Dress(PieceInstance inst, ModuleObj o, PieceDef def, DefResult r, PackOut extras, string layerName)
+    {
+        var colour = r.FromPack == KTable.Client.Effects.EffectKinds.StandardPack && o.Name == "Bag" ? BagBoxes.Tint(o) : o.Name == DefFactory.Figurine ? null : o.Color;
+        if (colour is { } col && !string.Equals(col, def.Tint, StringComparison.OrdinalIgnoreCase)) inst.TintOverride = col;
+        if (o.VectorLines.Count > 0) inst.Lines = LinesOf(o, def);
+        if (!def.States.Any(s => s.Decals is { Count: > 0 }))
+            inst.Decals = DecalsOf(o, def, _cfg.BaseSizes.CustomTokenArea, url => _defs.UiAsset(extras, url, $"{layerName} {o.Name} '{o.Nickname}' {o.Guid} decal"),
+                sha => _defs.FlippedPicture(extras, sha));
+    }
+
+    static void Tilt(Layer layer, PieceInstance inst, ModuleObj o, PieceDef def, double low, double high)
+    {
+        double sy = Math.Abs(o.ScaleY);
+        var (bottom, top) = PieceTilt.Span(def.Size.W * inst.Scale, def.Size.H * inst.Scale, low * sy, high * sy, o.RotX, o.RotZ);
+        layer.Bottom[inst] = o.PosY + bottom;
+        layer.Top[inst] = o.PosY + top;
+        layer.Rise[inst] = top - bottom;
     }
 
     Dictionary<string, double> _common = new();
@@ -844,7 +862,7 @@ public sealed partial class ScenarioBuilder
                 if (bottomKnown && LevelOf(bottom, levels) is { } level) rest = level;
             }
             p.Y = rest > 0 ? Math.Round(rest, (int)Digits) : 0;
-            placed.Add((p, l.Top.GetValueOrDefault(p, l.Y[p]), rest + (Lookup(p.Def)?.Thickness ?? 0) * p.Scale));
+            placed.Add((p, l.Top.GetValueOrDefault(p, l.Y[p]), rest + (l.Rise.TryGetValue(p, out var rise) ? rise : (Lookup(p.Def)?.Thickness ?? 0) * p.Scale)));
         }
         return held;
     }

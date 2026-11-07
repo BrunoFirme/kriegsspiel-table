@@ -299,13 +299,13 @@ public partial class PieceNode : Node3D
         var (baseY, up) = RestAt(pos, rotDeg, y, stack);
         var euler = Pose(rotDeg);
         _tilt = TiltTo(up);
-        Transform = new Transform3D(_tilt * Basis.FromEuler(euler), Coords.ToWorld(pos, baseY) + Up * LiftY);
+        Transform = Piece.HasTilt ? TiltedRest(_tilt, pos, baseY) : new Transform3D(_tilt * Basis.FromEuler(euler), Coords.ToWorld(pos, baseY) + Up * LiftY);
     }
 
     public Quaternion RestingTurn(Vec2 pos, double rotDeg, double storedY)
     {
         var (_, up) = RestAt(pos, rotDeg, storedY, 0);
-        return new Quaternion((TiltTo(up) * Basis.FromEuler(new Vector3(0, Coords.Yaw(rotDeg), Piece.FaceDown ? Mathf.Pi : 0))).Orthonormalized());
+        return new Quaternion((TiltTo(up) * PoseBasis(Coords.Yaw(rotDeg), Piece.FaceDown ? Mathf.Pi : 0)).Orthonormalized());
     }
 
     float GroundUnder(Vec2 pos, double rotDeg) => _s.Ground is { Any: true } g ? (float)g.Under(pos, rotDeg, Footprint.X, Footprint.Y) : 0;
@@ -317,7 +317,7 @@ public partial class PieceNode : Node3D
         if (IsDie) { Position = Coords.ToWorld(Piece.Pos, BaseY(Piece)); return; }
         if (!_flipping && !Placed && !Held) Rest(Piece.Pos, Piece.RotDeg, Piece.Y, Piece.Stack);
     }
-    public float TopY => (Position + Up * (Piece.FaceDown ? 0 : _thickness)).Y;
+    public float TopY => Piece.HasTilt ? TiltedTop : (Position + Up * (Piece.FaceDown ? 0 : _thickness)).Y;
 
     public float TopAt(Vector3 world)
     {
@@ -614,7 +614,7 @@ public partial class PieceNode : Node3D
     {
         _tilt = Basis.Identity;
         Position = Coords.ToWorld(pos, (y ?? RestAt(pos, rotDeg, Piece.Y, Piece.Stack).y + 0.05f) + LiftY);
-        Rotation = Pose(rotDeg);
+        Turn(PoseBasis(Pose(rotDeg)));
         Scale = Vector3.One * (float)(scale / Math.Max(1e-6, BuiltScale));
     }
 
@@ -717,6 +717,7 @@ public partial class PieceNode : Node3D
     public bool ContainsAt(Vec2 point, Vec2 at, double rotDeg)
     {
         var l = Coords.ToLocal(point, at, rotDeg);
+        if (Piece.HasTilt) return InsideTilted(l);
         if (!KTable.Client.Geometry.PieceShapes.Inside(Shape, Footprint.X, Footprint.Y, new System.Numerics.Vector2(l.X, l.Y))) return false;
         switch (Shape)
         {

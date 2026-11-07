@@ -643,6 +643,8 @@ type PieceInstance object
   tags: List<string>
   takeOrder: string
   text: Dictionary<string,string>
+  tiltX: double
+  tiltZ: double
   tintOverride: string
   ui: List<UiNode>
   widgets: List<Widget>

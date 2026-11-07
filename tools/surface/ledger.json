@@ -9114,23 +9114,23 @@
   },
   {
    "row": "save quirk: negative scale mirrors",
-   "status": "partial",
-   "where": "the size is taken unsigned, so a mirrored piece comes over unmirrored and the report names it; mirroring its picture or model at conversion is a decision for the user",
+   "status": "native",
+   "where": "a piece is mirrored on each axis its scale is negative, as Unity draws a negative localScale: picture, back, outline, mesh, decals, lines and glued parts (decided 2026-11-07); a piece drawn from a shared pack (stock dice, Firme's boxes and trees, baked bundle figures) keeps the shared look",
    "instead": "",
-   "held_by": "ConverterTests",
+   "held_by": "MirrorTests",
    "count": 55,
    "modules": 55,
-   "audited": ""
+   "audited": "MirrorTests.A_piece_scaled_negative_across_shows_its_picture_mirrored_across_and_one_scaled_negative_along_shows_it_upside_down; MirrorTests.A_models_mesh_is_mirrored_on_every_axis_its_scale_is_negative_and_its_faces_turned_the_right_way_out; MirrorTests.Decals_on_a_mirrored_piece_are_mirrored_with_it; MirrorTests.Lines_drawn_on_a_mirrored_piece_are_mirrored_with_it"
   },
   {
    "row": "save quirk: rotX/rotZ near 180 means face down; other tilts stand or lean",
-   "status": "partial",
-   "where": "ModuleObj.Flipped reads face down; a piece standing on edge or leaning needs a tilt the table does not keep, a decision for the user",
+   "status": "native",
+   "where": "a piece keeps its saved turn: heading and face down as before, the rest as its own tilt (a model its whole turn, 3D text from lying flat), resting on its lowest corner and picked where it stands; locked pieces keep it in the game and unlocked ones were saved at rest (decided 2026-11-07); dice keep their rolled face",
    "instead": "",
-   "held_by": "",
+   "held_by": "TiltTests",
    "count": 55,
    "modules": 55,
-   "audited": ""
+   "audited": "TiltTests.A_flat_piece_keeps_what_is_left_of_its_turn_once_heading_and_face_down_are_taken_out; TiltTests.A_model_keeps_its_whole_turn_and_three_d_text_is_measured_from_lying_flat; TiltTests.A_triangle_block_on_its_side_keeps_its_tilt_and_what_rests_on_it_sits_on_its_turned_top; TiltTests.A_triangle_block_on_its_side_stands_tilted_is_picked_where_it_stands_and_carries_what_lies_on_it"
   },
   {
    "row": "script safety cuts the self-copying block and keeps the rest",

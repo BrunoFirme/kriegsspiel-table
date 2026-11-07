@@ -69,17 +69,17 @@ public partial class PieceNode
             float a = from + Mathf.Pi * (1 - Mathf.Cos(Mathf.Pi * k)) / 2;
             var p = Piece;
             _flipA = a;
-            if (Placed) { Rotation = new Vector3(0, _poseYaw, _flipA); continue; }
+            if (Placed) { Turn(PoseBasis(_poseYaw, _flipA)); continue; }
             float s = Mathf.Abs(Mathf.Sin(a));
             float lift = depth / 2 * s + th * (1 - Mathf.Cos(a)) / 2 + Mathf.Min(0.35f, depth * 0.15f) * s;
             var (baseY, up) = RestAt(p.Pos, p.RotDeg, p.Y, p.Stack);
             _tilt = TiltTo(up);
-            Transform = new Transform3D(_tilt * Basis.FromEuler(new Vector3(0, _poseYaw, _flipA)), Coords.ToWorld(p.Pos, baseY) + Up * lift);
+            Transform = p.HasTilt ? TiltedRest(_tilt, p.Pos, baseY) : new Transform3D(_tilt * Basis.FromEuler(new Vector3(0, _poseYaw, _flipA)), Coords.ToWorld(p.Pos, baseY) + Up * lift);
         }
         _flipping = false;
         _flipA = Piece.FaceDown ? Mathf.Pi : 0;
         if (!Placed) Rest(Piece.Pos, Piece.RotDeg, Piece.Y, Piece.Stack);
-        else Rotation = new Vector3(0, _poseYaw, _flipA);
+        else Turn(PoseBasis(_poseYaw, _flipA));
         if (!Piece.FaceDown) _back.Clear();
         SyncWidgets(force: true);
     }

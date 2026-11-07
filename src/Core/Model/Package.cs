@@ -381,6 +381,9 @@ public sealed class PieceInstance
     public double Scale { get; set; } = 1.0;
     public double Y { get; set; }
     public bool FaceDown { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public double TiltX { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public double TiltZ { get; set; }
+    [JsonIgnore] public bool HasTilt => TiltX != 0 || TiltZ != 0;
     public string? Note { get; set; }
     public string? Picture { get; set; }
     public string? Script { get; set; }
@@ -413,7 +416,7 @@ public sealed class PieceInstance
         Id = Id, Def = Def, Pos = Pos, RotDeg = RotDeg, Stack = Stack, State = State, Face = Face, Faces = Faces?.Select(f => f.Clone()).ToList(),
         Worth = Worth, WorthGroups = WorthGroups, FacePicture = FacePicture, EffectOff = EffectOff, Lettering = Lettering?.Clone(), StateGuids = StateGuids?.ToList(),
         Counters = new(Counters), Text = new(Text), Attached = new(Attached),
-        TintOverride = TintOverride, Label = Label, Scale = Scale, Y = Y, FaceDown = FaceDown, Note = Note, Picture = Picture, Locked = Locked, Holds = Holds,
+        TintOverride = TintOverride, Label = Label, Scale = Scale, Y = Y, FaceDown = FaceDown, TiltX = TiltX, TiltZ = TiltZ, Note = Note, Picture = Picture, Locked = Locked, Holds = Holds,
         NoCollision = NoCollision, PhysicalRoll = PhysicalRoll, NotSticky = NotSticky, NotBoxSelected = NotBoxSelected, MeasuresMoves = MeasuresMoves,
         Script = Script, ScriptState = ScriptState, Guid = Guid, Tags = Tags == null ? null : new(Tags), Memo = Memo, GmNotes = GmNotes,
         Widgets = Widgets.Select(w => w.Clone()).ToList(), DrawnOnState = DrawnOnState, MenuItems = MenuItems.Select(m => m.Clone()).ToList(),

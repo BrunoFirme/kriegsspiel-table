@@ -514,7 +514,7 @@ sealed partial class Carry : IHeldPieces
                 if (b.Freeze || !GodotObject.IsInstanceValid(n)) continue;
                 if (n.Held) { b.SetDeferred(RigidBody3D.PropertyName.Freeze, true); continue; }
                 n.Position = b.GlobalPosition - Vector3.Up * n.Thickness / 2 + Vector3.Up * n.LiftY;
-                n.Rotation = n.PoseFromYaw(b.GlobalRotation.Y);
+                n.Quaternion = n.PoseTurn(b.GlobalRotation.Y);
                 _c.Moving(n);
                 knocks.Frame(b, dt, jolt => _c.Sound.Knock(n, b.GlobalPosition, jolt));
                 if (!b.Sleeping && b.LinearVelocity.Length() > 0.05f) settled = false;
