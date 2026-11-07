@@ -17,6 +17,25 @@ public sealed class MakeWayTests
     static SaveStore Store(string root) => new(Path.Combine(root, "live"), Path.Combine(root, "history"), Path.Combine(root, "trash"));
 
     [Fact]
+    public async Task A_pack_folder_held_open_for_a_moment_still_goes_to_the_trash_once_it_is_let_go()
+    {
+        const int HeldMs = 300;
+        var root = TempRoot();
+        var packages = Path.Combine(root, "packages");
+        var file = Path.Combine(packages, "pk", "pack.json");
+        Directory.CreateDirectory(Path.GetDirectoryName(file)!);
+        File.WriteAllText(file, "{}");
+        var held = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.None);
+        var letGo = Task.Delay(HeldMs).ContinueWith(_ => held.Dispose());
+
+        var entry = Store(root).TrashPackFolder(packages, "pk", T0);
+        await letGo;
+
+        Assert.False(Directory.Exists(Path.Combine(packages, "pk")));
+        Assert.True(File.Exists(Path.Combine(entry, "pack", "pack.json")));
+    }
+
+    [Fact]
     public void A_scenario_folder_goes_to_the_trash_alone_and_its_game_in_play_stays()
     {
         var root = TempRoot();

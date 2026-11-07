@@ -175,9 +175,8 @@ public sealed partial class SaveStore
     {
         if (!Directory.Exists(from)) return;
         Directory.CreateDirectory(entry);
-        try { Directory.Move(from, Path.Combine(entry, sub)); }
-        catch (IOException e) when (e.HResult == ErrorNotSameDevice
-            || !string.Equals(Path.GetPathRoot(Path.GetFullPath(from)), Path.GetPathRoot(Path.GetFullPath(entry)), StringComparison.OrdinalIgnoreCase))
+        try { MoveWhileHeld(from, Path.Combine(entry, sub)); }
+        catch (IOException e) when (OtherDevice(e, from, entry))
         {
             MoveInto(from, Path.Combine(entry, sub));
         }
@@ -185,6 +184,28 @@ public sealed partial class SaveStore
         {
             BestEffort.DeleteEmptyFolder(entry);
             throw;
+        }
+    }
+
+    const int MoveTries = 5;
+    const int MoveBackoffMs = 200;
+
+    static bool OtherDevice(IOException e, string from, string to) =>
+        e.HResult == ErrorNotSameDevice || !string.Equals(Path.GetPathRoot(Path.GetFullPath(from)), Path.GetPathRoot(Path.GetFullPath(to)), StringComparison.OrdinalIgnoreCase);
+
+    static void MoveWhileHeld(string from, string to)
+    {
+        for (int tries = 1; ; tries++)
+        {
+            try
+            {
+                Directory.Move(from, to);
+                return;
+            }
+            catch (Exception e) when (tries < MoveTries && (e is UnauthorizedAccessException || e is IOException io && !OtherDevice(io, from, to)))
+            {
+                Thread.Sleep(MoveBackoffMs * tries);
+            }
         }
     }
 

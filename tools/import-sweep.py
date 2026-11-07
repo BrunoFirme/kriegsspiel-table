@@ -182,11 +182,15 @@ def sweep(modules, sides, jobs, kept_base=None):
         for module in modules:
             runs[module["id"]]["base"] = kept_base[module["id"]]
     work = [(place, module) for module in sorted(modules, key=lambda m: -m.get("seconds", 0)) for place in sides]
+    named = [(place, module) for place, module in work if save_name(place, module) != module["id"]]
+    unnamed = [(place, module) for place, module in work if (place, module) not in named]
     with concurrent.futures.ThreadPoolExecutor(max_workers=max(1, jobs)) as pool:
-        done = {pool.submit(one_import, place, module): (place, module) for place, module in work}
+        done = {pool.submit(one_import, place, module): (place, module) for place, module in named}
         for future in concurrent.futures.as_completed(done):
             place, module = done[future]
             runs[module["id"]][place["name"]] = future.result()
+    for place, module in unnamed:
+        runs[module["id"]][place["name"]] = one_import(place, module)
     return runs
 
 

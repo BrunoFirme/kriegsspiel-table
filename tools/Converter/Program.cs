@@ -221,7 +221,7 @@ try
     }
     way.Done();
 }
-catch (Exception e) when (e is InvalidDataException or FileNotFoundException)
+catch (Exception e) when (e is InvalidDataException or IOException or UnauthorizedAccessException)
 {
     way.PutBack();
     Console.Error.WriteLine(e.Message);
