@@ -235,7 +235,7 @@ public sealed partial class ConverterTests
         Assert.Equal(190.0, orders.p.RotDeg);
         var panel = notes.Single(n => Line(n.d, NoteCard.TitleLine) == "Notes");
         Assert.Equal("1  Turn\nInitiative\nNaval Movement", Line(panel.d, NoteCard.BodyLine));
-        double mapRight = board["Transform"]!["scaleX"]!.GetValue<double>() * 16.7 / 2;
+        double mapRight = board["Transform"]!["scaleX"]!.GetValue<double>() * 16.8345 / 2;
         Assert.True(panel.p.Pos.X > mapRight, $"the notes lie right of the map: {panel.p.Pos.X}");
         Assert.Equal(180.0, panel.p.RotDeg);
         Assert.Single(notes, n => Line(n.d, NoteCard.TitleLine) == "Rules");

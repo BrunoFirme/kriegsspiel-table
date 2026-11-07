@@ -36,7 +36,8 @@ public sealed partial class DefFactory
             return;
         }
         var back = Entry(b.BackUrl) is { } be && AssetStore.IsPicture(be.Ext) ? _assets.FilePath(be) : null;
-        using var atlas = FigurineAtlas(frontPath, back ?? frontPath, b.MirroredBack, SKColor.Parse(b.Color is { Length: >= 7 } c ? c[..7] : StandColour), out double frontShare, out double pictureShare);
+        var stand = SKColor.Parse(b.Color is { Length: >= 7 } c ? c[..7] : StandColour);
+        using var atlas = FigurineAtlas(frontPath, back ?? frontPath, b.MirroredBack, stand, out double frontShare, out double pictureShare);
         if (atlas == null)
         {
             def.Image = Placeholder(pack);

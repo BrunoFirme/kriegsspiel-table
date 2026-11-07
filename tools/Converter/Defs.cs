@@ -299,7 +299,10 @@ public sealed partial class DefFactory
         if (o.StockSides is { } sides && StandardDie(sides) is { } die)
             return new DefResult(die, pack, Math.Round(bs, 4), FaceShown(o, die), b, script) { FromPack = StdDicePack, Fit = StockDieFit(o.Name, die) };
         if (Boxes.For(o) is { } box)
-            return new DefResult(box, pack, Math.Round(bs, 4), 0, b, script) { FromPack = KTable.Client.Effects.EffectKinds.StandardPack, Fit = box.Size.W > 0 ? Math.Round(BagAcross / box.Size.W, 4) : 1 };
+        {
+            double fit = box.Size.W > 0 ? Math.Round(BagAcross / box.Size.W, 4) : 1;
+            return new DefResult(box, pack, Math.Round(bs, 4), 0, b, script) { FromPack = KTable.Client.Effects.EffectKinds.StandardPack, Fit = fit };
+        }
         if (o.Name == TilesetTree) return TreeDef(o, b, pack, script);
         return null;
     }

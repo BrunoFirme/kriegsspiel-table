@@ -6,7 +6,7 @@ using SkiaSharp;
 
 namespace KTable.Converter.Tests;
 
-public sealed partial class ConverterTests
+public sealed class SaveFieldTests : ConverterHarness
 {
     (DefFactory defs, PackOut pack) Factory()
     {

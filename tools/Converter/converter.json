@@ -33,7 +33,7 @@
     "customTileNote": "height at scale 1 for stretched tiles (width = height × image aspect), as modules are drawn",
     "customTokenArea": 14.0,
     "customTokenAreaNote": "width × depth at scale 1 for any picture (width = √(area × image aspect)), as modules are drawn",
-    "customBoard": 16.7,
+    "customBoard": 16.8345,
     "blockSquare": 1.0
   },
   "ignoreTypes": [
