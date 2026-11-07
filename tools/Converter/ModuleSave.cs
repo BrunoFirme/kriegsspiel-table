@@ -20,6 +20,8 @@ public sealed class ModuleObj
     public string Description => S(J["Description"]) ?? "";
     public string LuaState => S(J["LuaScriptState"]) ?? "";
     public string Memo => S(J["Memo"]) ?? "";
+    public int Worth => J["Value"] != null ? I(J, "Value") : 0;
+    public int StackCount => J["Number"] != null ? Math.Max(1, I(J, "Number")) : 1;
     public string XmlUi => S(J["XmlUI"]) ?? "";
     public List<(string Name, string Url)> UiAssets => UiAssetsOf(J["CustomUIAssets"]);
 
@@ -55,6 +57,7 @@ public sealed class ModuleObj
     JsonObject? CI => J["CustomImage"] as JsonObject;
     public string? ImageUrl => Blank(S(CI?["ImageURL"]));
     public string? BackUrl => Blank(S(CI?["ImageSecondaryURL"]));
+    public bool MirroredBack => CI?["CustomFigurine"] is JsonObject fig && fig["MirroredBack"] is JsonValue m && m.TryGetValue<bool>(out var mirrored) && mirrored;
     public int TileType => (CI?["CustomTile"] as JsonObject)?["Type"]?.GetValue<int>() ?? 0;
     public bool TileStretch => (CI?["CustomTile"] as JsonObject)?["Stretch"]?.GetValue<bool>() ?? true;
     public double WidthScale => CI?["WidthScale"] is JsonValue v && v.TryGetValue<double>(out var d) ? d : 0;
@@ -65,6 +68,14 @@ public sealed class ModuleObj
     JsonObject? CM => J["CustomMesh"] as JsonObject;
     public string? MeshUrl => Blank(S(CM?["MeshURL"]));
     public string? DiffuseUrl => Blank(S(CM?["DiffuseURL"]));
+    public string? Finish => KTable.Core.Model.Finishes.Of(CM?["MaterialIndex"] != null ? I(CM, "MaterialIndex") : J["MaterialIndex"] != null ? I(J, "MaterialIndex") : -1);
+    public KTable.Core.Model.ShineDef? Shine => CM?["CustomShader"] is JsonObject sh
+        ? new KTable.Core.Model.ShineDef
+        {
+            Color = sh["SpecularColor"] is JsonObject c ? HexOf(c) : "#E6E6E6", Strength = D(sh, "SpecularIntensity", 0.1), Sharpness = D(sh, "SpecularSharpness", 3),
+            Rim = D(sh, "FresnelStrength", 0.1),
+        }
+        : null;
     public string? BundleUrl => Blank(S((J["CustomAssetbundle"] as JsonObject)?["AssetbundleURL"]));
     public string? PdfUrl => Blank(S((J["CustomPDF"] as JsonObject)?["PDFUrl"]));
     public int PdfPage => J["CustomPDF"] is JsonObject pdf && pdf["PDFPage"] != null ? Math.Max(0, I(pdf, "PDFPage")) : 0;

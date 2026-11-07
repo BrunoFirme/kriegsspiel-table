@@ -32,7 +32,7 @@ sealed class MenuCards : HudPart
     {
         var one = nodes.Count == 1 ? nodes[0] : null;
         var head = one != null ? (one.Piece.Label is { Length: > 0 } lb ? lb : one.Def?.Name ?? one.Piece.Def) : $"{nodes.Count} pieces";
-        menu.Head(head);
+        menu.Head(Tally(hit, nodes) is { Length: > 0 } sum ? $"{head} · {sum}" : head);
         menu.Separator();
         if (nodes.Any(Table.IsDie)) menu.Item("Roll", () => T.RollDiceAtHand(), "R");
         menu.Item("Turn left 15°", () => T.RotateSmooth(-15), "Q");
@@ -73,6 +73,15 @@ sealed class MenuCards : HudPart
     }
 
     const int MostSidesListed = 20;
+
+    static string Tally(PieceNode hit, List<PieceNode> nodes)
+    {
+        var shown = nodes.Where(n => n.IsDie).Select(n => PieceInstance.FacesOf(n.Def, n.Piece) is var f && f.Count > 0 ? f[Math.Clamp(n.Piece.ShownFace, 0, f.Count - 1)].Number : null).ToList();
+        if (shown.Count > 1 && shown.All(v => v != null)) return $"{string.Join(" + ", shown)} = {shown.Sum()}";
+        int groups = hit.Piece.WorthGroups;
+        var counted = nodes.Where(n => groups == 0 || (n.Piece.WorthGroups & groups) != 0).ToList();
+        return counted.Any(n => n.Piece.Worth != 0) ? $"worth {counted.Sum(n => n.Piece.Worth)}" : "";
+    }
 
     void StateAndCounterRows(MenuCard menu, PieceNode one, PieceDef def)
     {

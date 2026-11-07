@@ -113,11 +113,11 @@ the plan says translate it), unknown (nobody has decided).
 | `CustomTokenState.MergeDistancePixels` | 14063 / 49 | native | converter reads it |  |
 | `CustomAssetbundleState.AssetbundleSecondaryURL` | 13038 / 49 | native | bundle_models.py loads it beside the main bundle: in the roster it holds only the materials and textures the main bundle's figures are painted with |  |
 | `CustomAssetbundleState.MaterialIndex` | 12341 / 49 | native | converter reads it |  |
-| `CustomMeshState.CustomShader` | 1101 / 49 | dropped | specular shader settings |  |
+| `CustomMeshState.CustomShader` | 1101 / 49 | native | a model's shine: strength, sharpness and rim | WorthImportTests |
 | `CustomAssetbundleState.TypeIndex` | 626 / 49 | native | converter reads it |  |
 | `ObjectState.States` | 11316 / 48 | native | converter reads it |  |
 | `ObjectState.Tooltip` | 1361 / 48 | dropped | hiding a piece's name on hover (hidden information, decided 2026-11-06) |  |
-| `ObjectState.MaterialIndex` | 186 / 48 | dropped | the tabletop's stock material (plastic, wood, metal...) on a block or model |  |
+| `ObjectState.MaterialIndex` | 186 / 48 | native | the finish of a model (plastic, wood, metal, cardboard, glass): its sheen and its sound | WorthImportTests |
 | `ObjectState.GridProjection` | 79 / 47 | dropped | grid (decided 2026-11-06) |  |
 | `ObjectState.Description` | 17057 / 45 | native | converter reads it |  |
 | `ObjectState.Snap` | 3149 / 40 | dropped | snap points (grid, decided 2026-11-06) |  |
@@ -171,7 +171,7 @@ the plan says translate it), unknown (nobody has decided).
 | `ObjectState.DragSelectable` | 335 / 8 | native | the piece option Taken by a selection box; self.box_selected and set_box_selected | ModuleOptionsTests |
 | `CustomPDFState.PDFUrl` | 9 / 8 | partial | PDFUrl gives the book its pages and PDFPage the page it lies open at; the page offset (how the pages are numbered) and a password are not kept | BookTests |
 | `MusicPlayerState.AudioLibrary` | 8 / 8 | dropped | music and sound players (decided 2026-11-06) |  |
-| `ObjectState.Autoraise` | 354 / 7 | dropped | a dropped piece always rests on what is under it |  |
+| `ObjectState.Autoraise` | 354 / 7 | dropped | with the engine's physics (decided 2026-11-06): a held piece rides above what it passes over and pushes nothing |  |
 | `CustomImageState.CustomDice` | 35 / 7 | native | converter reads it |  |
 | `LightingState.LightColor` | 7 / 7 | dropped | lighting (decided 2026-11-06) |  |
 | `SaveState.Table` | 7 / 7 | native | converter reads it |  |
@@ -180,8 +180,8 @@ the plan says translate it), unknown (nobody has decided).
 | `ObjectState.Hands` | 1226 / 6 | dropped | hands are seats here (decided 2026-11-06) |  |
 | `ObjectState.CardID` | 1196 / 6 | native | ModuleSave.cs CardId | import-sweep: naval |
 | `ObjectState.HideWhenFaceDown` | 1158 / 6 | dropped | hidden information (decided 2026-11-06) |  |
-| `CustomShaderState.SpecularIntensity` | 357 / 6 | dropped | specular shader settings |  |
-| `CustomShaderState.SpecularColor` | 310 / 6 | dropped | specular shader settings |  |
+| `CustomShaderState.SpecularIntensity` | 357 / 6 | native | the shine's strength | WorthImportTests |
+| `CustomShaderState.SpecularColor` | 310 / 6 | native | kept with the shine | WorthImportTests |
 | `PhysicsMaterialState.StaticFriction` | 184 / 6 | dropped | engine physics |  |
 | `RigidbodyState.Mass` | 45 / 6 | dropped | engine physics |  |
 | `TextState.fontSize` | 26 / 6 | native | converter reads it |  |
@@ -199,8 +199,8 @@ the plan says translate it), unknown (nobody has decided).
 | `SaveState.LuaScriptState` | 4 / 4 | native | converter reads it |  |
 | `SaveState.SkyURL` | 4 / 4 | native | converter reads it |  |
 | `CustomMeshState.NormalURL` | 232 / 3 | native | converter reads it |  |
-| `CustomShaderState.FresnelStrength` | 216 / 3 | dropped | specular shader settings |  |
-| `CustomShaderState.SpecularSharpness` | 153 / 3 | dropped | specular shader settings |  |
+| `CustomShaderState.FresnelStrength` | 216 / 3 | native | the shine's rim | WorthImportTests |
+| `CustomShaderState.SpecularSharpness` | 153 / 3 | native | the shine's sharpness | WorthImportTests |
 | `ColourState.a` | 22 / 3 | native | a tint's alpha: under 1 the piece is drawn see-through, its face, sides and model, as the tabletop switches to its transparent shader; the movable text tool's helper saved at 0 stays invisible under its words | TableTopTests |
 | `ObjectState.MeasureMovement` | 15 / 3 | native | the piece option Shows how far it is moved: a line and the distance from where it was picked up while it is held; self.measures_moves and set_measures_moves | ModuleOptionsTests |
 | `GridState.Type` | 3 / 3 | dropped | grid (decided 2026-11-06) |  |
@@ -244,7 +244,7 @@ the plan says translate it), unknown (nobody has decided).
 | `CustomDeckState.NumWidth` | - | native | ModuleSave card sheets: each card cut from its own cell | ConverterTests |
 | `CustomDeckState.Type` | - | native | converter reads it |  |
 | `CustomDeckState.UniqueBack` | - | native | converter reads it |  |
-| `CustomFigurineState.MirroredBack` | - | dropped | a standing picture; no module in the roster has one |  |
+| `CustomFigurineState.MirroredBack` | - | native | the back picture mirrored | FigurineTests |
 | `CustomFigurineState.UseMinimalCollider` | - | dropped | the engine's physics colliders |  |
 | `CustomImageState.CustomFigurine` | - | native | Figurines.cs: the picture on a card in a round base | FigurineTests |
 | `CustomImageState.CustomJigsawPuzzle` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
@@ -309,9 +309,9 @@ the plan says translate it), unknown (nobody has decided).
 | `Mp3PlayerState.menuTitle` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
 | `Mp3PlayerState.songTitle` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
 | `Mp3PlayerState.volume` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
-| `ObjectState.AltLookAngle` | - | dropped | the alt-zoom angle |  |
-| `ObjectState.AltSound` | - | dropped | sounds |  |
-| `ObjectState.AltZoomable` | - | dropped | the alt-zoom |  |
+| `ObjectState.AltLookAngle` | - | planned | the Alt-zoom view: a decision for the user |  |
+| `ObjectState.AltSound` | - | planned | a piece's other sound: a decision for the user |  |
+| `ObjectState.AltZoomable` | - | planned | the Alt-zoom view: a decision for the user |  |
 | `ObjectState.Calculator` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
 | `ObjectState.Clock` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
 | `ObjectState.Counter` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
@@ -325,17 +325,17 @@ the plan says translate it), unknown (nobody has decided).
 | `ObjectState.JointSpring` | - | dropped | engine physics (joints) |  |
 | `ObjectState.LayoutGroupSortIndex` | - | dropped | scripting and layout zones (decided 2026-11-06) |  |
 | `ObjectState.LayoutZone` | - | dropped | scripting and layout zones (decided 2026-11-06) |  |
-| `ObjectState.MeshIndex` | - | dropped | the tabletop's stock shape of a block |  |
+| `ObjectState.MeshIndex` | - | dropped | the tabletop's stock meshes are never extracted |  |
 | `ObjectState.Mp3Player` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
-| `ObjectState.Number` | - | dropped | a number typed over the piece |  |
+| `ObjectState.Number` | - | native | a module's stack comes over as that many pieces laid one on another | WorthImportTests |
 | `ObjectState.RPGdead` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
 | `ObjectState.RPGmode` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
 | `ObjectState.SidewaysCard` | - | dropped | a card keeps its sheet's orientation |  |
 | `ObjectState.Tablet` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
-| `ObjectState.Value` | - | dropped | the piece's counting value |  |
+| `ObjectState.Value` | - | native | a piece's worth (self.worth); the menu adds up the worth of what is chosen | WorthImportTests |
 | `ObjectState.XmlUI` | - | native | ScenarioPanels: a piece's own panels, drawn on it | PanelImportTests |
-| `ObjectState.miscID` | - | dropped | tabletop internal |  |
-| `ObjectState.vector` | - | dropped | tabletop internal |  |
+| `ObjectState.miscID` | - | dropped | the engine's own bookkeeping |  |
+| `ObjectState.vector` | - | dropped | the engine's own bookkeeping |  |
 | `PhysicsMaterialState.BounceCombine` | - | dropped | engine physics |  |
 | `PhysicsMaterialState.Bounciness` | - | dropped | engine physics |  |
 | `PhysicsMaterialState.FrictionCombine` | - | dropped | engine physics |  |
@@ -382,7 +382,7 @@ the plan says translate it), unknown (nobody has decided).
 | `getScale` | 15144 / 51 | compat | ObjectCall |  |
 | `clearButtons` | 6680 / 51 | compat | ObjectCall |  |
 | `createInput` | 20637 / 50 | compat | ObjectCall |  |
-| `setCustomObject` | 3484 / 50 | partial | compat.set_custom_object: picture and mesh (mesh uncommitted); item 8 |  |
+| `setCustomObject` | 3484 / 50 | partial | a picture by a link built at run time is fetched and shown on the piece's face (self.set_face_picture); a model by such a link is not | ScriptingTests |
 | `reload` | 755 / 50 | native | ObjectCall |  |
 | `positionToWorld` | 1180 / 49 | compat | ObjectCall |  |
 | `setVar` | 181 / 49 | native | ObjectCall |  |
@@ -496,7 +496,7 @@ the plan says translate it), unknown (nobody has decided).
 | `addTag` | - | native | ObjectCall |  |
 | `addToPlayerSelection` | - | compat | ObjectCall |  |
 | `addTorque` | - | dropped | engine physics |  |
-| `alt_view_angle` | - | dropped | the alt-zoom angle |  |
+| `alt_view_angle` | - | planned | the Alt-zoom view: a decision for the user |  |
 | `angular_drag` | - | dropped | engine physics |  |
 | `assetBundle` | - | unknown |  |  |
 | `attachHider` | - | dropped | hidden information (decided 2026-11-06) |  |
@@ -522,7 +522,7 @@ the plan says translate it), unknown (nobody has decided).
 | `drag_selectable` | - | compat | ObjectProps (get_prop/set_prop) |  |
 | `drop` | - | dropped | the Player API (decided 2026-11-06) |  |
 | `dynamic_friction` | - | dropped | engine physics |  |
-| `flip` | - | native | ObjectCall |  |
+| `flip` | - | compat | ObjectCall |  |
 | `getAngularVelocity` | - | dropped | engine physics (answers zero) |  |
 | `getAttachments` | - | compat | ObjectCall |  |
 | `getBoundsNormalized` | - | compat | compat.get_bounds |  |
@@ -561,16 +561,16 @@ the plan says translate it), unknown (nobody has decided).
 | `getTransformRight` | - | compat | ObjectCall |  |
 | `getVelocity` | - | dropped | engine physics (answers zero) |  |
 | `getZones` | - | dropped | scripting and layout zones (decided 2026-11-06) |  |
-| `gizmo_selectable` | - | dropped | the tabletop's gizmo tool |  |
+| `gizmo_selectable` | - | planned | whether the transform tool takes it: a decision for the user |  |
 | `grid_projection` | - | dropped | grid (decided 2026-11-06) |  |
 | `hasAnyTag` | - | compat | compat.has_any_tag | ModuleHelpersTests |
 | `hasMatchingTag` | - | compat | compat.has_matching_tag | ModuleHelpersTests |
 | `held_by_color` | - | compat | ObjectProps |  |
-| `held_flip_index` | - | dropped | what a held piece does on flip |  |
-| `held_position_offset` | - | dropped | a held piece's offset |  |
-| `held_reduce_force` | - | dropped | engine physics |  |
-| `held_rotation_offset` | - | dropped | a held piece's offset |  |
-| `held_spin_index` | - | dropped | what a held piece does on spin |  |
+| `held_flip_index` | - | compat | face down is 12, face up 0 | DiceScriptTests |
+| `held_position_offset` | - | planned | where the hand holds a piece: a decision for the user |  |
+| `held_reduce_force` | - | dropped | with the engine's physics (decided 2026-11-06) |  |
+| `held_rotation_offset` | - | planned | how the hand tilts a held piece: a decision for the user |  |
+| `held_spin_index` | - | compat | the piece's heading in 15° steps | DiceScriptTests |
 | `hide_when_face_down` | - | dropped | hidden information (decided 2026-11-06) |  |
 | `ignore_fog_of_war` | - | dropped | hidden zones (decided 2026-11-06) |  |
 | `isSmoothMoving` | - | stub | moves finish at once here (answers false) |  |
@@ -586,8 +586,8 @@ the plan says translate it), unknown (nobody has decided).
 | `measure_movement` | - | native | the piece option Shows how far it is moved; self.measures_moves and set_measures_moves | MeasureTests |
 | `memo` | - | compat | ObjectProps (get_prop/set_prop) |  |
 | `name` | - | compat | ObjectProps (get_prop/set_prop) |  |
-| `pick_up_position` | - | dropped | where a piece was picked up |  |
-| `pick_up_rotation` | - | dropped | where a piece was picked up |  |
+| `pick_up_position` | - | compat | self.picked_up: where an umpire last picked it up | DiceScriptTests |
+| `pick_up_rotation` | - | compat | self.picked_up.rot | DiceScriptTests |
 | `rPGFigurine` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
 | `randomize` | - | native | a die rolls (logged as a roll), a piece of several looks takes one at random; bags and decks are not shuffled (deck logic dropped) | DiceScriptTests |
 | `registerCollisions` | - | dropped | engine physics (collisions) |  |
@@ -633,10 +633,10 @@ the plan says translate it), unknown (nobody has decided).
 | `use_gravity` | - | dropped | engine physics |  |
 | `use_grid` | - | dropped | grid (decided 2026-11-06) |  |
 | `use_hands` | - | dropped | hands are seats here (decided 2026-11-06) |  |
-| `use_rotation_value_flip` | - | dropped | a die's face is read from its rotation values |  |
+| `use_rotation_value_flip` | - | native | a die turned over always shows its other side | DiceScriptTests |
 | `use_snap_points` | - | dropped | snap points (decided 2026-11-06 with the grid) |  |
-| `value` | - | compat | ObjectProps (get_prop/set_prop) |  |
-| `value_flags` | - | unknown |  |  |
+| `value` | - | native | self.worth / set_worth | DiceScriptTests |
+| `value_flags` | - | native | self.worth_groups: which pieces it adds up with | DiceScriptTests |
 | `zone` | - | dropped | scripting and layout zones (decided 2026-11-06) |  |
 
 ## global

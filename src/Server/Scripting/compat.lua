@@ -374,6 +374,10 @@ function compat.set_prop(obj, k, v)
   if k == "sticky" then obj.set_sticky(v ~= false) return end
   if k == "drag_selectable" then obj.set_box_selected(v ~= false) return end
   if k == "measure_movement" then obj.set_measures_moves(v == true) return end
+  if k == "value" then obj.set_worth(tonumber(v) or 0) return end
+  if k == "held_spin_index" then obj.set_rot((tonumber(v) or 0) * 15) return end
+  if k == "held_flip_index" then if ((tonumber(v) or 0) % 24 >= 6 and (tonumber(v) or 0) % 24 < 18) ~= (obj.face_down == true) then obj.flip() end return end
+  if k == "value_flags" then obj.set_worth(obj.worth, tonumber(v) or 0) return end
   pbag(obj)[k] = v
 end
 function compat.get_prop(obj, k, d)
@@ -384,6 +388,12 @@ function compat.get_prop(obj, k, d)
   if k == "sticky" then return obj.sticky ~= false end
   if k == "drag_selectable" then return obj.box_selected ~= false end
   if k == "measure_movement" then return obj.measures_moves == true end
+  if k == "value" then return obj.worth end
+  if k == "held_spin_index" then return math.floor(((obj.rot or 0) % 360) / 15 + 0.5) % 24 end
+  if k == "held_flip_index" then return obj.face_down and 12 or 0 end
+  if k == "pick_up_position" then local at = obj.picked_up or { x = obj.pos.x, y = obj.y or 0, z = obj.pos.z }; return compat.Vector(at.x, at.y, at.z) end
+  if k == "pick_up_rotation" then local at = obj.picked_up; return compat.Vector(0, at and at.rot or obj.rot or 0, obj.face_down and 180 or 0) end
+  if k == "value_flags" then return obj.worth_groups end
   local v = pbag(obj)[k]; if v == nil then return d end return v
 end
 function compat.log(value, label, tags)
@@ -506,6 +516,17 @@ function compat.get_objects(obj)
   return t
 end
 function compat.get_quantity(obj) return #(obj.stowed or {}) end
+function compat.flip(obj)
+  local faces = obj.faces
+  if faces == nil or #faces < 2 then return obj.flip() end
+  local now = faces[obj.face].up
+  local best, most = obj.face, -2
+  for i, f in ipairs(faces) do
+    local d = -(f.up.x * now.x + f.up.y * now.y + f.up.z * now.z)
+    if d > most then most = d best = i end
+  end
+  return obj.set_face(best)
+end
 function compat.randomize(obj) return obj.roll() end
 function compat.roll(obj) return obj.roll() end
 function compat.shuffle_states(obj)
@@ -810,6 +831,10 @@ end
 function compat.set_custom_object(obj, c)
   c = c or {}
   local def = c.def or c.image or c.diffuse
+  if type(def) == "string" and def:find("^https?://") and c.mesh == nil then
+    local p = compat.piece_of(obj)
+    if p ~= nil then p.set_face_picture(def) return end
+  end
   if type(def) ~= "string" or def == "" or def:find("^https?://") then
     compat.todo(obj, "setCustomObject", def)
     return

@@ -530,6 +530,8 @@ public class MalformedInputTests
     [InlineData("SetSheetRelief")]
     [InlineData("SetState")]
     [InlineData("TurnDie")]
+    [InlineData("SetWorth")]
+    [InlineData("SetFacePicture")]
     [InlineData("SetDieFaces")]
     [InlineData("SetTags")]
     [InlineData("SetText")]

@@ -153,6 +153,10 @@ public static partial class ApiDoc
         F("piece", "faces", "Face[]", "A die's sides in order: { value =, up = { x, y, z }, rotation = { x, y, z } }; empty for every other piece.", "getRotationValues");
         F("piece", "face", "number?", "The side of a die showing, from 1; nil for every other piece.", "getValue");
         F("piece", "value", "number|string|nil", "The value of the side of a die showing; nil for every other piece.", "getRotationValue");
+        F("piece", "picked_up", "table?", "Where an umpire last picked the piece up: { x =, y =, z =, rot = }; nil until then.", "pick_up_position");
+        F("piece", "face_picture", "string?", "A picture shown on the piece's face in place of its kind's, set by set_face_picture; nil for none.");
+        F("piece", "worth", "number", "What the piece counts for when pieces are added up; 0 for most.", "value");
+        F("piece", "worth_groups", "number", "Which groups it adds up with, as bits; 0 adds up with any piece of worth.", "value_flags");
         F("piece", "pos", "Point", "Where it stands, in map units: { x =, z = }.", "getPosition");
         Note("Each read gives a new table; changing it moves nothing. Use `set_pos` or `move`.");
         See("self.set_pos", "self.move", "board.distance");
@@ -212,8 +216,37 @@ public static partial class ApiDoc
     static ApiSection PieceChanges() => Section("A piece: changes", "Each call is a change every umpire sees, taken back with Ctrl+Z by the umpire whose action ran the script. Everything one reaction changes is one step of undo.", () =>
     {
         PieceLooks();
+        PieceSides();
         PieceData();
     });
+
+    static void PieceSides()
+    {
+    M("piece", "set_face(n)", "Turns a die to show a side, from 1; false when it has no such side.", "setValue", "boolean");
+    P("n", "number", "The side, from 1, in the order of self.faces.");
+    See("self.face", "self.set_value");
+
+    M("piece", "set_value(value)", "Turns a die to the first side with this value; false when no side has it.", "setRotationValue", "boolean");
+    P("value", "number|string", "The value to show.");
+    X("self.set_value(6)");
+    See("self.value", "self.set_face");
+
+    M("piece", "set_faces(list)", "Gives this die sides of its own; nil gives it back its kind's.", "setRotationValues", "boolean");
+    P("list", "table?", "{ value =, up = { x, y, z } } or { value =, rotation = { x, y, z } } for each side.");
+    See("self.faces");
+
+    M("piece", "set_face_picture(link)", "Shows a picture on the piece's face in place of its kind's: a web link is fetched first; nil puts the kind's back.", "setCustomObject");
+    P("link", "string?", "A web link to a picture, or a picture the table already holds.");
+    See("self.face_picture");
+
+    M("piece", "set_worth(worth, groups)", "Sets what the piece counts for, and optionally the groups it adds up with.", "value");
+    P("worth", "number", "A whole number.");
+    O("groups", "number", "Groups as bits; nil keeps them.");
+    See("self.worth");
+
+    M("piece", "roll()", "Rolls a die, or turns a piece of several states to one at random; false for anything else.", "randomize", "boolean");
+    See("game.roll", "self.set_face");
+    }
 
     static void PieceLooks()
     {
@@ -235,22 +268,6 @@ public static partial class ApiDoc
     Note("A name or number the kind does not have is an error.");
     Note("Widgets, menu rows and lines a script draws belong to the state they were drawn in; see the guide, States.");
     See("self.state", "self.states", "on_state");
-
-    M("piece", "set_face(n)", "Turns a die to show a side, from 1; false when it has no such side.", "setValue", "boolean");
-    P("n", "number", "The side, from 1, in the order of self.faces.");
-    See("self.face", "self.set_value");
-
-    M("piece", "set_value(value)", "Turns a die to the first side with this value; false when no side has it.", "setRotationValue", "boolean");
-    P("value", "number|string", "The value to show.");
-    X("self.set_value(6)");
-    See("self.value", "self.set_face");
-
-    M("piece", "set_faces(list)", "Gives this die sides of its own; nil gives it back its kind's.", "setRotationValues", "boolean");
-    P("list", "table?", "{ value =, up = { x, y, z } } or { value =, rotation = { x, y, z } } for each side.");
-    See("self.faces");
-
-    M("piece", "roll()", "Rolls a die, or turns a piece of several states to one at random; false for anything else.", "randomize", "boolean");
-    See("game.roll", "self.set_face");
 
     M("piece", "set_pos(x, z)", "Moves it, in map units; its heading stays. A place { x, z } or another piece works in place of x and z.", "setPosition");
     O("x", "number", "The new x in map units; nil keeps the current one.");

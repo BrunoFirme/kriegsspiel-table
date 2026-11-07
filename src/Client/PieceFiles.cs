@@ -16,7 +16,7 @@ public static class PieceFiles
                 if (pack.Assets.TryGetValue(hash, out var asset)) yield return (pack.Id, asset.File.Replace('\\', '/'));
         }
         if (Backdrops.IsPicture(view.Lighting.Backdrop)) yield return (UploadAsset.ReliefPackage, view.Lighting.Backdrop);
-        var decals = view.Layers.Values.SelectMany(l => l).SelectMany(p => p.Decals).Select(d => d.Picture)
+        var decals = view.Layers.Values.SelectMany(l => l).SelectMany(p => p.Decals.Select(d => d.Picture).Concat(p.FacePicture is { } fp ? [fp] : []))
             .Concat(view.Decals.Values.SelectMany(l => l).Select(d => d.Picture)).Concat(view.DecalPalette.Select(d => d.Picture)).Distinct().ToList();
         foreach (var picture in decals)
             if (DecalFile(view, store, picture) is { } file) yield return file;

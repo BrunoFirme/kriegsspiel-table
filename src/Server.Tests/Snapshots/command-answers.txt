@@ -53,6 +53,7 @@ SetDecalPalette table | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | obs
 SetDecals layer | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone Id | apply ok inverse:SetDecals | undo-reloads -
 SetDef layer | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone Id | apply ok inverse:SetDef | undo-reloads Id
 SetDieFaces layer | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone Id | apply ok inverse:SetDieFaces | undo-reloads -
+SetFacePicture layer | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone Id | apply ok inverse:SetFacePicture | undo-reloads -
 SetGlobalMenuItems table | allowed O:n U:n L:n H:n | in-batch O:n U:n L:n H:n | observer same | zone - | apply ok inverse:SetGlobalMenuItems | undo-reloads -
 SetGlobalScript table | allowed O:n U:n L:y H:y | in-batch O:n U:n L:y H:y | observer same | zone - | apply ok inverse:SetGlobalScript | undo-reloads (global script)
 SetGlobalScriptState table | allowed O:n U:n L:n H:n | in-batch O:n U:n L:n H:n | observer same | zone - | apply ok inverse:SetGlobalScriptState | undo-reloads (global script)
@@ -83,6 +84,7 @@ SetUiPictures table | allowed O:n U:n L:n H:n | in-batch O:n U:n L:n H:n | obser
 SetVisionRadius table | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone - | apply ok inverse:SetVisionRadius | undo-reloads -
 SetWidgets layer | allowed O:n U:n L:n H:n | in-batch O:n U:n L:n H:n | observer same | zone - | apply ok inverse:SetWidgets | undo-reloads Id
 SetWind table | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone - | apply ok inverse:SetWind | undo-reloads -
+SetWorth layer | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone Id | apply ok inverse:SetWorth | undo-reloads -
 SetZone table | allowed O:n U:n L:y H:y | in-batch O:n U:n L:y H:y | observer drop | zone - | apply ok inverse:RemoveZone | undo-reloads -
 ShowDialog table | allowed O:n U:n L:n H:n | in-batch O:n U:n L:n H:n | observer drop | zone - | apply ok inverse:none | undo-reloads -
 ShowDialog(to=other) table | allowed O:n U:n L:n H:n | in-batch O:n U:n L:n H:n | observer drop | zone - | apply ok inverse:none | undo-reloads -

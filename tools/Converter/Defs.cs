@@ -456,6 +456,8 @@ public sealed partial class DefFactory
             def.Kind = "model";
             def.Mesh = ModelMesh(pack, b, where);
             def.Texture = Asset(pack, b.DiffuseUrl, "image", where);
+            def.Finish = b.Finish;
+            def.Shine = b.Shine;
             if (def.Mesh == null) { def.Kind = "flat"; def.Image = def.Texture ?? Placeholder(pack); }
         }
         else if (b.Name == "Custom_PDF")

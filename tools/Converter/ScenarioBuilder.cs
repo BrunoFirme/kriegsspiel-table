@@ -373,6 +373,7 @@ public sealed partial class ScenarioBuilder
     {
         var sc = _cfg.Scenario;
         _rep.Counts[$"{sc.Id}: umpire pieces"] = scenario.UmpireBoard.Count.ToString();
+        if (_stacked > 0) _rep.Counts[$"{sc.Id}: pieces laid out of the module's stacks"] = _stacked.ToString();
         _rep.Counts[$"{sc.Id}: extras defs"] = extras.M.Pieces.Count.ToString();
         _rep.Counts[$"{sc.Id}: instances using pack defs"] = rekeyed.ToString();
         _rep.Counts[$"{sc.Id}: packs"] = string.Join(", ", scenario.Packs);
@@ -550,6 +551,7 @@ public sealed partial class ScenarioBuilder
             Locked = parent == null && o.Locked, FaceDown = o.Flipped && def.Kind != "model" && def.Back != null, NotSticky = !o.Sticky,
             NotBoxSelected = !o.DragSelectable, MeasuresMoves = o.MeasureMovement,
             Ui = ObjectPanels(o, extras, $"{layer.Name} {o.Name} '{o.Nickname}' {o.Guid}"),
+            Worth = o.Worth,
         };
         if (lua.Trim().Length > 0)
         {
@@ -569,6 +571,7 @@ public sealed partial class ScenarioBuilder
         layer.Y[inst] = o.PosY;
         layer.Bottom[inst] = _defs.Bottom(o);
         layer.Top[inst] = _defs.Bottom(o) + _defs.BaseThickness(o) * Math.Abs(o.ScaleY);
+        StackCopies(o, inst, layer);
         if (o.IsBag) StowContents(o, inst, extras, packDefs, layer, usedPacks, ref rekeyed);
 
         PlaceChildren(o, _defs.BakesChildren(o) ? Enumerable.Empty<ModuleObj>() : o.Children, inst, refScale, baseScale, absolute, extras, packDefs, layer, usedPacks, ref rekeyed);
@@ -722,6 +725,26 @@ public sealed partial class ScenarioBuilder
         usedPacks.Add(extras.M.Id);
         _rep.Counts[$"{_cfg.Scenario.Id}: notes laid beside the map"] = notes.Count.ToString();
     }
+
+    void StackCopies(ModuleObj o, PieceInstance inst, Layer layer)
+    {
+        double each = _defs.BaseThickness(o) * Math.Abs(o.ScaleY);
+        for (int k = 1; k < o.StackCount; k++)
+        {
+            var copy = inst.Clone();
+            copy.Id = $"p-{_nextId++:D6}";
+            copy.Guid = null;
+            copy.Script = null;
+            copy.ScriptState = "";
+            layer.Pieces.Add(copy);
+            layer.Y[copy] = layer.Y[inst] + k * each;
+            layer.Bottom[copy] = layer.Bottom[inst] + k * each;
+            layer.Top[copy] = layer.Top[inst] + k * each;
+        }
+        if (o.StackCount > 1) _stacked += o.StackCount;
+    }
+
+    int _stacked;
 
     static IEnumerable<Vec2> Corners(SheetDef s)
     {

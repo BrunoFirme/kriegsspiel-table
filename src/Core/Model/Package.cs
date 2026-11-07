@@ -138,6 +138,22 @@ public sealed class FaceBox
     public double H { get; set; } = 0.2;
 }
 
+public sealed class ShineDef
+{
+    public string Color { get; set; } = "#E6E6E6";
+    public double Strength { get; set; } = 0.1;
+    public double Sharpness { get; set; } = 3;
+    public double Rim { get; set; } = 0.1;
+    public ShineDef Clone() => new() { Color = Color, Strength = Strength, Sharpness = Sharpness, Rim = Rim };
+}
+
+public static class Finishes
+{
+    public const string Plastic = "plastic", Wood = "wood", Metal = "metal", Cardboard = "cardboard", Glass = "glass";
+    public static readonly string[] All = [Plastic, Wood, Metal, Cardboard, Glass];
+    public static string? Of(int index) => index >= 0 && index < All.Length ? All[index] : null;
+}
+
 public sealed class DieFace
 {
     public string Value { get; set; } = "";
@@ -166,6 +182,8 @@ public sealed class PieceDef : IJsonOnDeserialized
     public List<string> Tags { get; set; } = new();
     public List<PieceStateDef> States { get; set; } = new();
     public List<DieFace> Faces { get; set; } = new();
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? Finish { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public ShineDef? Shine { get; set; }
     public List<CounterDef> Counters { get; set; } = new();
     public List<TextLineDef> TextLines { get; set; } = new();
     public List<AttachmentDef> Attachments { get; set; } = new();
@@ -333,6 +351,9 @@ public sealed class PieceInstance
     public int Stack { get; set; }
     public int State { get; set; }
     public int Face { get; set; } = -1;
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? FacePicture { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public int Worth { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public int WorthGroups { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<DieFace>? Faces { get; set; }
     public Dictionary<string, int> Counters { get; set; } = new();
     public Dictionary<string, string> Text { get; set; } = new();
@@ -368,6 +389,7 @@ public sealed class PieceInstance
     public PieceInstance Clone() => new()
     {
         Id = Id, Def = Def, Pos = Pos, RotDeg = RotDeg, Stack = Stack, State = State, Face = Face, Faces = Faces?.Select(f => f.Clone()).ToList(),
+        Worth = Worth, WorthGroups = WorthGroups, FacePicture = FacePicture,
         Counters = new(Counters), Text = new(Text), Attached = new(Attached),
         TintOverride = TintOverride, Label = Label, Scale = Scale, Y = Y, FaceDown = FaceDown, Note = Note, Picture = Picture, Locked = Locked,
         NoCollision = NoCollision, PhysicalRoll = PhysicalRoll, NotSticky = NotSticky, NotBoxSelected = NotBoxSelected, MeasuresMoves = MeasuresMoves,

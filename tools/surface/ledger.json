@@ -787,10 +787,10 @@
   },
   {
    "row": "CustomMeshState.CustomShader",
-   "status": "dropped",
-   "where": "specular shader settings",
-   "instead": "a look of our own",
-   "held_by": "",
+   "status": "native",
+   "where": "a model's shine: strength, sharpness and rim",
+   "instead": "",
+   "held_by": "WorthImportTests",
    "count": 1101,
    "modules": 49
   },
@@ -823,10 +823,10 @@
   },
   {
    "row": "ObjectState.MaterialIndex",
-   "status": "dropped",
-   "where": "the tabletop's stock material (plastic, wood, metal...) on a block or model",
-   "instead": "the piece keeps its tint; a look is the pack's own",
-   "held_by": "",
+   "status": "native",
+   "where": "the finish of a model (plastic, wood, metal, cardboard, glass): its sheen and its sound",
+   "instead": "",
+   "held_by": "WorthImportTests",
    "count": 186,
    "modules": 48
   },
@@ -1310,7 +1310,7 @@
   {
    "row": "ObjectState.Autoraise",
    "status": "dropped",
-   "where": "a dropped piece always rests on what is under it",
+   "where": "with the engine's physics (decided 2026-11-06): a held piece rides above what it passes over and pushes nothing",
    "instead": "nothing is needed",
    "held_by": "",
    "count": 354,
@@ -1390,19 +1390,19 @@
   },
   {
    "row": "CustomShaderState.SpecularIntensity",
-   "status": "dropped",
-   "where": "specular shader settings",
-   "instead": "a look of our own",
-   "held_by": "",
+   "status": "native",
+   "where": "the shine's strength",
+   "instead": "",
+   "held_by": "WorthImportTests",
    "count": 357,
    "modules": 6
   },
   {
    "row": "CustomShaderState.SpecularColor",
-   "status": "dropped",
-   "where": "specular shader settings",
-   "instead": "a look of our own",
-   "held_by": "",
+   "status": "native",
+   "where": "kept with the shine",
+   "instead": "",
+   "held_by": "WorthImportTests",
    "count": 310,
    "modules": 6
   },
@@ -1561,19 +1561,19 @@
   },
   {
    "row": "CustomShaderState.FresnelStrength",
-   "status": "dropped",
-   "where": "specular shader settings",
-   "instead": "a look of our own",
-   "held_by": "",
+   "status": "native",
+   "where": "the shine's rim",
+   "instead": "",
+   "held_by": "WorthImportTests",
    "count": 216,
    "modules": 3
   },
   {
    "row": "CustomShaderState.SpecularSharpness",
-   "status": "dropped",
-   "where": "specular shader settings",
-   "instead": "a look of our own",
-   "held_by": "",
+   "status": "native",
+   "where": "the shine's sharpness",
+   "instead": "",
+   "held_by": "WorthImportTests",
    "count": 153,
    "modules": 3
   },
@@ -1966,10 +1966,10 @@
   },
   {
    "row": "CustomFigurineState.MirroredBack",
-   "status": "dropped",
-   "where": "a standing picture; no module in the roster has one",
-   "instead": "make a block with the picture in the piece studio",
-   "held_by": "",
+   "status": "native",
+   "where": "the back picture mirrored",
+   "instead": "",
+   "held_by": "FigurineTests",
    "count": 0,
    "modules": 0
   },
@@ -2551,27 +2551,27 @@
   },
   {
    "row": "ObjectState.AltLookAngle",
-   "status": "dropped",
-   "where": "the alt-zoom angle",
-   "instead": "nothing is needed",
+   "status": "planned",
+   "where": "the Alt-zoom view: a decision for the user",
+   "instead": "",
    "held_by": "",
    "count": 0,
    "modules": 0
   },
   {
    "row": "ObjectState.AltSound",
-   "status": "dropped",
-   "where": "sounds",
-   "instead": "nothing is needed",
+   "status": "planned",
+   "where": "a piece's other sound: a decision for the user",
+   "instead": "",
    "held_by": "",
    "count": 0,
    "modules": 0
   },
   {
    "row": "ObjectState.AltZoomable",
-   "status": "dropped",
-   "where": "the alt-zoom",
-   "instead": "nothing is needed",
+   "status": "planned",
+   "where": "the Alt-zoom view: a decision for the user",
+   "instead": "",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -2696,8 +2696,8 @@
   {
    "row": "ObjectState.MeshIndex",
    "status": "dropped",
-   "where": "the tabletop's stock shape of a block",
-   "instead": "a piece of our own",
+   "where": "the tabletop's stock meshes are never extracted",
+   "instead": "a piece or prop of our own",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -2713,10 +2713,10 @@
   },
   {
    "row": "ObjectState.Number",
-   "status": "dropped",
-   "where": "a number typed over the piece",
-   "instead": "a counter on the piece",
-   "held_by": "",
+   "status": "native",
+   "where": "a module's stack comes over as that many pieces laid one on another",
+   "instead": "",
+   "held_by": "WorthImportTests",
    "count": 0,
    "modules": 0
   },
@@ -2758,10 +2758,10 @@
   },
   {
    "row": "ObjectState.Value",
-   "status": "dropped",
-   "where": "the piece's counting value",
-   "instead": "a counter on the piece",
-   "held_by": "",
+   "status": "native",
+   "where": "a piece's worth (self.worth); the menu adds up the worth of what is chosen",
+   "instead": "",
+   "held_by": "WorthImportTests",
    "count": 0,
    "modules": 0
   },
@@ -2777,7 +2777,7 @@
   {
    "row": "ObjectState.miscID",
    "status": "dropped",
-   "where": "tabletop internal",
+   "where": "the engine's own bookkeeping",
    "instead": "nothing is needed",
    "held_by": "",
    "count": 0,
@@ -2786,7 +2786,7 @@
   {
    "row": "ObjectState.vector",
    "status": "dropped",
-   "where": "tabletop internal",
+   "where": "the engine's own bookkeeping",
    "instead": "nothing is needed",
    "held_by": "",
    "count": 0,
@@ -3166,9 +3166,9 @@
   {
    "row": "setCustomObject",
    "status": "partial",
-   "where": "compat.set_custom_object: picture and mesh (mesh uncommitted); item 8",
+   "where": "a picture by a link built at run time is fetched and shown on the piece's face (self.set_face_picture); a model by such a link is not",
    "instead": "",
-   "held_by": "",
+   "held_by": "ScriptingTests",
    "count": 3484,
    "modules": 50
   },
@@ -4191,9 +4191,9 @@
   },
   {
    "row": "alt_view_angle",
-   "status": "dropped",
-   "where": "the alt-zoom angle",
-   "instead": "nothing is needed",
+   "status": "planned",
+   "where": "the Alt-zoom view: a decision for the user",
+   "instead": "",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -4425,7 +4425,7 @@
   },
   {
    "row": "flip",
-   "status": "native",
+   "status": "compat",
    "where": "ObjectCall",
    "instead": "",
    "held_by": "",
@@ -4776,9 +4776,9 @@
   },
   {
    "row": "gizmo_selectable",
-   "status": "dropped",
-   "where": "the tabletop's gizmo tool",
-   "instead": "nothing is needed",
+   "status": "planned",
+   "where": "whether the transform tool takes it: a decision for the user",
+   "instead": "",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -4821,18 +4821,18 @@
   },
   {
    "row": "held_flip_index",
-   "status": "dropped",
-   "where": "what a held piece does on flip",
-   "instead": "nothing is needed",
-   "held_by": "",
+   "status": "compat",
+   "where": "face down is 12, face up 0",
+   "instead": "",
+   "held_by": "DiceScriptTests",
    "count": 0,
    "modules": 0
   },
   {
    "row": "held_position_offset",
-   "status": "dropped",
-   "where": "a held piece's offset",
-   "instead": "nothing is needed",
+   "status": "planned",
+   "where": "where the hand holds a piece: a decision for the user",
+   "instead": "",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -4840,7 +4840,7 @@
   {
    "row": "held_reduce_force",
    "status": "dropped",
-   "where": "engine physics",
+   "where": "with the engine's physics (decided 2026-11-06)",
    "instead": "nothing is needed",
    "held_by": "",
    "count": 0,
@@ -4848,19 +4848,19 @@
   },
   {
    "row": "held_rotation_offset",
-   "status": "dropped",
-   "where": "a held piece's offset",
-   "instead": "nothing is needed",
+   "status": "planned",
+   "where": "how the hand tilts a held piece: a decision for the user",
+   "instead": "",
    "held_by": "",
    "count": 0,
    "modules": 0
   },
   {
    "row": "held_spin_index",
-   "status": "dropped",
-   "where": "what a held piece does on spin",
-   "instead": "nothing is needed",
-   "held_by": "",
+   "status": "compat",
+   "where": "the piece's heading in 15\u00b0 steps",
+   "instead": "",
+   "held_by": "DiceScriptTests",
    "count": 0,
    "modules": 0
   },
@@ -5001,19 +5001,19 @@
   },
   {
    "row": "pick_up_position",
-   "status": "dropped",
-   "where": "where a piece was picked up",
-   "instead": "nothing is needed",
-   "held_by": "",
+   "status": "compat",
+   "where": "self.picked_up: where an umpire last picked it up",
+   "instead": "",
+   "held_by": "DiceScriptTests",
    "count": 0,
    "modules": 0
   },
   {
    "row": "pick_up_rotation",
-   "status": "dropped",
-   "where": "where a piece was picked up",
-   "instead": "nothing is needed",
-   "held_by": "",
+   "status": "compat",
+   "where": "self.picked_up.rot",
+   "instead": "",
+   "held_by": "DiceScriptTests",
    "count": 0,
    "modules": 0
   },
@@ -5424,10 +5424,10 @@
   },
   {
    "row": "use_rotation_value_flip",
-   "status": "dropped",
-   "where": "a die's face is read from its rotation values",
-   "instead": "nothing is needed",
-   "held_by": "",
+   "status": "native",
+   "where": "a die turned over always shows its other side",
+   "instead": "",
+   "held_by": "DiceScriptTests",
    "count": 0,
    "modules": 0
   },
@@ -5442,19 +5442,19 @@
   },
   {
    "row": "value",
-   "status": "compat",
-   "where": "ObjectProps (get_prop/set_prop)",
+   "status": "native",
+   "where": "self.worth / set_worth",
    "instead": "",
-   "held_by": "",
+   "held_by": "DiceScriptTests",
    "count": 0,
    "modules": 0
   },
   {
    "row": "value_flags",
-   "status": "unknown",
-   "where": "",
+   "status": "native",
+   "where": "self.worth_groups: which pieces it adds up with",
    "instead": "",
-   "held_by": "",
+   "held_by": "DiceScriptTests",
    "count": 0,
    "modules": 0
   },

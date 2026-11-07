@@ -14,7 +14,7 @@ public static class StateMachine
             case MovePiece m: return ApplyMove(g, m, ref inverse);
             case DeletePiece d: return ApplyDelete(g, d, ref inverse);
             case SetState st: return ApplySetState(g, st, ref inverse);
-            case TurnDie or SetDieFaces: return ApplyDie(g, c, ref inverse);
+            case TurnDie or SetDieFaces or SetWorth or SetFacePicture: return ApplyDie(g, c, ref inverse);
             case SetCounter sc: return ApplySetCounter(g, sc, ref inverse);
             case SetText t: return ApplySetText(g, t, ref inverse);
             case SetLabel l: return ApplySetLabel(g, l, ref inverse);
@@ -617,8 +617,29 @@ public static class StateMachine
     {
         TurnDie td => ApplyTurnDie(g, td, ref inverse),
         SetDieFaces sdf => ApplySetDieFaces(g, sdf, ref inverse),
+        SetWorth sw => ApplySetWorth(g, sw, ref inverse),
+        SetFacePicture sfp => ApplySetFacePicture(g, sfp, ref inverse),
         _ => "unknown command",
     };
+
+    static string? ApplySetFacePicture(GameState g, SetFacePicture sfp, ref Command? inverse)
+    {
+        var p = g.Find(sfp.Layer, sfp.Id);
+        if (p == null) return "no such piece";
+        inverse = new SetFacePicture { Layer = sfp.Layer, Id = sfp.Id, Picture = p.FacePicture };
+        p.FacePicture = string.IsNullOrWhiteSpace(sfp.Picture) ? null : sfp.Picture;
+        return null;
+    }
+
+    static string? ApplySetWorth(GameState g, SetWorth sw, ref Command? inverse)
+    {
+        var p = g.Find(sw.Layer, sw.Id);
+        if (p == null) return "no such piece";
+        inverse = new SetWorth { Layer = sw.Layer, Id = sw.Id, Worth = p.Worth, Groups = p.WorthGroups };
+        p.Worth = sw.Worth;
+        p.WorthGroups = sw.Groups;
+        return null;
+    }
 
     static string? ApplyUi(GameState g, Command c, ref Command? inverse) => c switch
     {

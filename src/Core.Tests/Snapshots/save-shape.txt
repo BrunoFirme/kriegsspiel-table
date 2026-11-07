@@ -130,6 +130,7 @@ type Command abstract
   derived SetDecals = SetDecals
   derived SetDef = SetDef
   derived SetDieFaces = SetDieFaces
+  derived SetFacePicture = SetFacePicture
   derived SetGlobalMenuItems = SetGlobalMenuItems
   derived SetGlobalScript = SetGlobalScript
   derived SetGlobalScriptState = SetGlobalScriptState
@@ -160,6 +161,7 @@ type Command abstract
   derived SetVisionRadius = SetVisionRadius
   derived SetWidgets = SetWidgets
   derived SetWind = SetWind
+  derived SetWorth = SetWorth
   derived SetZone = SetZone
   derived ShowDialog = ShowDialog
   derived SpawnPiece = SpawnPiece
@@ -566,6 +568,7 @@ type PieceDef object
   counters: List<CounterDef>
   effect: EffectDef
   faces: List<DieFace>
+  finish: string
   id: string
   image: string
   kind: string
@@ -577,6 +580,7 @@ type PieceDef object
   scriptHash: string
   scriptState: string
   shape: string
+  shine: ShineDef
   size: Size2
   states: List<PieceStateDef>
   tags: List<string>
@@ -594,6 +598,7 @@ type PieceInstance object
   drawnOnState: int
   face: int
   faceDown: bool
+  facePicture: string
   faces: List<DieFace>
   guid: string
   id: string
@@ -623,6 +628,8 @@ type PieceInstance object
   tintOverride: string
   ui: List<UiNode>
   widgets: List<Widget>
+  worth: int
+  worthGroups: int
   y: double
 type PieceStateDef object
   back: string
@@ -859,6 +866,14 @@ type SetDieFaces object
   layer: string
   seq: long
   undoOf: long
+type SetFacePicture object
+  actor: long
+  at: long
+  id: string
+  layer: string
+  picture: string
+  seq: long
+  undoOf: long
 type SetGlobalMenuItems object
   actor: long
   at: long
@@ -1093,6 +1108,15 @@ type SetWind object
   seq: long
   undoOf: long
   wind: Wind
+type SetWorth object
+  actor: long
+  at: long
+  groups: int
+  id: string
+  layer: string
+  seq: long
+  undoOf: long
+  worth: int
 type SetZone object
   actor: long
   at: long
@@ -1115,6 +1139,11 @@ type SheetDef object
   size: Size2
   url: string
   z: int
+type ShineDef object
+  color: string
+  rim: double
+  sharpness: double
+  strength: double
 type ShowDialog object
   actor: long
   at: long

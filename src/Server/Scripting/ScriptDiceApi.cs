@@ -16,6 +16,19 @@ internal sealed partial class PieceHandles
             case "faces": return ListTable(faces.Select(FaceTable));
             case "face": return faces.Count > 0 ? N(Math.Clamp(p.ShownFace, 0, faces.Count - 1) + 1) : DynValue.Nil;
             case "value": return faces.Count > 0 ? ValueOf(faces[Math.Clamp(p.ShownFace, 0, faces.Count - 1)].Value) : DynValue.Nil;
+            case "worth": return N(p.Worth);
+            case "face_picture": return p.FacePicture == null ? DynValue.Nil : S(p.FacePicture);
+            case "picked_up":
+            {
+                if (!host.PickedUp.TryGetValue(p.Id, out var at)) return DynValue.Nil;
+                var t = T();
+                t.Table["x"] = N(at.Pos.X);
+                t.Table["y"] = N(at.Y);
+                t.Table["z"] = N(at.Pos.Z);
+                t.Table["rot"] = N(at.Rot);
+                return t;
+            }
+            case "worth_groups": return N(p.WorthGroups);
             default: return null;
         }
     }
@@ -75,6 +88,23 @@ internal sealed partial class PieceHandles
                 }
                 host.Emit(new SetDieFaces { Layer = L, Id = id, Faces = list });
                 return DynValue.True;
+            });
+            case "set_face_picture": return Fn(a =>
+            {
+                var link = Arg(a, 0).IsNil() ? null : Arg(a, 0).CastToString();
+                if (string.IsNullOrWhiteSpace(link) || !ScriptHost.IsWebLink(link)) { host.Emit(new SetFacePicture { Layer = L, Id = id, Picture = link }); return DynValue.Nil; }
+                host.FetchThen(link, pic =>
+                {
+                    if (pic != null && host.Find(id) != null) host.Emit(new SetFacePicture { Layer = L, Id = id, Picture = pic });
+                    else host.Report(id, $"no picture came from {link}");
+                });
+                return DynValue.Nil;
+            });
+            case "set_worth": return Fn(a =>
+            {
+                int worth = (int)(Arg(a, 0).CastToNumber() ?? 0), groups = (int)(Arg(a, 1).CastToNumber() ?? p.WorthGroups);
+                host.Emit(new SetWorth { Layer = L, Id = id, Worth = worth, Groups = groups });
+                return DynValue.Nil;
             });
             case "roll": return Fn(_ =>
             {

@@ -203,6 +203,10 @@ Read from `self` or from any piece `board.find` or `board.pieces` hands back. Fi
 | [`self.faces`](#selffaces) | A die's sides in order: { value =, up = { x, y, z }, rotation = { x, y, z } }; empty for every other piece. |
 | [`self.face`](#selfface) | The side of a die showing, from 1; nil for every other piece. |
 | [`self.value`](#selfvalue) | The value of the side of a die showing; nil for every other piece. |
+| [`self.picked_up`](#selfpicked_up) | Where an umpire last picked the piece up: { x =, y =, z =, rot = }; nil until then. |
+| [`self.face_picture`](#selfface_picture) | A picture shown on the piece's face in place of its kind's, set by set_face_picture; nil for none. |
+| [`self.worth`](#selfworth) | What the piece counts for when pieces are added up; 0 for most. |
+| [`self.worth_groups`](#selfworth_groups) | Which groups it adds up with, as bits; 0 adds up with any piece of worth. |
 | [`self.pos`](#selfpos) | Where it stands, in map units: { x =, z = }. |
 | [`self.rot`](#selfrot) | Its heading in degrees. |
 | [`self.y`](#selfy) | How high it sits above the table (stacked pieces). |
@@ -366,6 +370,52 @@ The value of the side of a die showing; nil for every other piece.
 **Type** `number|string|nil`, read-only.
 
 **Module call** `getRotationValue`
+
+### `self.picked_up`
+
+```lua
+self.picked_up
+```
+
+Where an umpire last picked the piece up: { x =, y =, z =, rot = }; nil until then.
+
+**Type** `table?`, read-only.
+
+**Module call** `pick_up_position`
+
+### `self.face_picture`
+
+```lua
+self.face_picture
+```
+
+A picture shown on the piece's face in place of its kind's, set by set_face_picture; nil for none.
+
+**Type** `string?`, read-only.
+
+### `self.worth`
+
+```lua
+self.worth
+```
+
+What the piece counts for when pieces are added up; 0 for most.
+
+**Type** `number`, read-only.
+
+**Module call** `value`
+
+### `self.worth_groups`
+
+```lua
+self.worth_groups
+```
+
+Which groups it adds up with, as bits; 0 adds up with any piece of worth.
+
+**Type** `number`, read-only.
+
+**Module call** `value_flags`
 
 ### `self.pos`
 
@@ -685,10 +735,6 @@ Each call is a change every umpire sees, taken back with Ctrl+Z by the umpire wh
 | [`self.set_name`](#selfset_name) | Sets the label under the piece; nil takes it away. |
 | [`self.set_note`](#selfset_note) | Sets its description; nil takes it away. |
 | [`self.set_state`](#selfset_state) | Changes its state: a number from 1, or a state's name. What the scripts drew belongs to the state it was drawn on. |
-| [`self.set_face`](#selfset_face) | Turns a die to show a side, from 1; false when it has no such side. |
-| [`self.set_value`](#selfset_value) | Turns a die to the first side with this value; false when no side has it. |
-| [`self.set_faces`](#selfset_faces) | Gives this die sides of its own; nil gives it back its kind's. |
-| [`self.roll`](#selfroll) | Rolls a die, or turns a piece of several states to one at random; false for anything else. |
 | [`self.set_pos`](#selfset_pos) | Moves it, in map units; its heading stays. A place { x, z } or another piece works in place of x and z. |
 | [`self.set_rot`](#selfset_rot) | Turns it to a heading in degrees. |
 | [`self.move`](#selfmove) | Moves and turns it in one change. A place { x, z } or another piece works in place of x and z: move(place, rot). |
@@ -699,6 +745,12 @@ Each call is a change every umpire sees, taken back with Ctrl+Z by the umpire wh
 | [`self.set_box_selected`](#selfset_box_selected) | Whether a selection box dragged over it takes it. |
 | [`self.set_measures_moves`](#selfset_measures_moves) | Whether it shows how far it is moved while it is held. |
 | [`self.set_sticky`](#selfset_sticky) | Whether it carries the pieces resting on it when it is moved. |
+| [`self.set_face`](#selfset_face) | Turns a die to show a side, from 1; false when it has no such side. |
+| [`self.set_value`](#selfset_value) | Turns a die to the first side with this value; false when no side has it. |
+| [`self.set_faces`](#selfset_faces) | Gives this die sides of its own; nil gives it back its kind's. |
+| [`self.set_face_picture`](#selfset_face_picture) | Shows a picture on the piece's face in place of its kind's: a web link is fetched first; nil puts the kind's back. |
+| [`self.set_worth`](#selfset_worth) | Sets what the piece counts for, and optionally the groups it adds up with. |
+| [`self.roll`](#selfroll) | Rolls a die, or turns a piece of several states to one at random; false for anything else. |
 | [`self.set_counter`](#selfset_counter) | Sets one of its kind's counters (a whole number, kept to the counter's range). |
 | [`self.set_text`](#selfset_text) | Sets one of its kind's text lines. |
 | [`self.set_tags`](#selfset_tags) | Gives it its own tags; nil goes back to its kind's. |
@@ -775,70 +827,6 @@ A name or number the kind does not have is an error.
 Widgets, menu rows and lines a script draws belong to the state they were drawn in; see the guide, States.
 
 **Module call** `setState` · **See also** [`self.state`](#selfstate), [`self.states`](#selfstates), [`on_state`](#on_state)
-
-### `self.set_face`
-
-```lua
-self.set_face(n)
-```
-
-Turns a die to show a side, from 1; false when it has no such side.
-
-| Parameter | Type | Description |
-|---|---|---|
-| `n` | `number` | The side, from 1, in the order of self.faces. |
-
-**Returns** `boolean`.
-
-**Module call** `setValue` · **See also** [`self.face`](#selfface), [`self.set_value`](#selfset_value)
-
-### `self.set_value`
-
-```lua
-self.set_value(value)
-```
-
-Turns a die to the first side with this value; false when no side has it.
-
-| Parameter | Type | Description |
-|---|---|---|
-| `value` | `number\|string` | The value to show. |
-
-**Returns** `boolean`.
-
-```lua
-self.set_value(6)
-```
-
-**Module call** `setRotationValue` · **See also** [`self.value`](#selfvalue), [`self.set_face`](#selfset_face)
-
-### `self.set_faces`
-
-```lua
-self.set_faces(list)
-```
-
-Gives this die sides of its own; nil gives it back its kind's.
-
-| Parameter | Type | Description |
-|---|---|---|
-| `list` | `table?` | { value =, up = { x, y, z } } or { value =, rotation = { x, y, z } } for each side. |
-
-**Returns** `boolean`.
-
-**Module call** `setRotationValues` · **See also** [`self.faces`](#selffaces)
-
-### `self.roll`
-
-```lua
-self.roll()
-```
-
-Rolls a die, or turns a piece of several states to one at random; false for anything else.
-
-**Returns** `boolean`.
-
-**Module call** `randomize` · **See also** [`game.roll`](#gameroll), [`self.set_face`](#selfset_face)
 
 ### `self.set_pos`
 
@@ -1001,6 +989,99 @@ Whether it carries the pieces resting on it when it is moved.
 | `on` | `boolean` | _Optional._ true, or no argument, carries them; false leaves them where they lie. |
 
 **Module call** `sticky` · **See also** [`self.sticky`](#selfsticky)
+
+### `self.set_face`
+
+```lua
+self.set_face(n)
+```
+
+Turns a die to show a side, from 1; false when it has no such side.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `n` | `number` | The side, from 1, in the order of self.faces. |
+
+**Returns** `boolean`.
+
+**Module call** `setValue` · **See also** [`self.face`](#selfface), [`self.set_value`](#selfset_value)
+
+### `self.set_value`
+
+```lua
+self.set_value(value)
+```
+
+Turns a die to the first side with this value; false when no side has it.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `value` | `number\|string` | The value to show. |
+
+**Returns** `boolean`.
+
+```lua
+self.set_value(6)
+```
+
+**Module call** `setRotationValue` · **See also** [`self.value`](#selfvalue), [`self.set_face`](#selfset_face)
+
+### `self.set_faces`
+
+```lua
+self.set_faces(list)
+```
+
+Gives this die sides of its own; nil gives it back its kind's.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `list` | `table?` | { value =, up = { x, y, z } } or { value =, rotation = { x, y, z } } for each side. |
+
+**Returns** `boolean`.
+
+**Module call** `setRotationValues` · **See also** [`self.faces`](#selffaces)
+
+### `self.set_face_picture`
+
+```lua
+self.set_face_picture(link)
+```
+
+Shows a picture on the piece's face in place of its kind's: a web link is fetched first; nil puts the kind's back.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `link` | `string?` | A web link to a picture, or a picture the table already holds. |
+
+**Module call** `setCustomObject` · **See also** [`self.face_picture`](#selfface_picture)
+
+### `self.set_worth`
+
+```lua
+self.set_worth(worth, groups)
+```
+
+Sets what the piece counts for, and optionally the groups it adds up with.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `worth` | `number` | A whole number. |
+| `groups` | `number` | _Optional._ Groups as bits; nil keeps them. |
+
+**Module call** `value` · **See also** [`self.worth`](#selfworth)
+
+### `self.roll`
+
+```lua
+self.roll()
+```
+
+Rolls a die, or turns a piece of several states to one at random; false for anything else.
+
+**Returns** `boolean`.
+
+**Module call** `randomize` · **See also** [`game.roll`](#gameroll), [`self.set_face`](#selfset_face)
 
 ### `self.set_counter`
 
@@ -3195,6 +3276,7 @@ The converter rewrites a module's scripts into these calls by rule; this is the 
 | `onScriptingButtonDown` | [`on_scripting_button_down`](#on_scripting_button_down-global-script) |
 | `onScriptingButtonUp` | [`on_scripting_button_up`](#on_scripting_button_up-global-script) |
 | `onUpdate` | [`on_update`](#on_update) |
+| `pick_up_position` | [`self.picked_up`](#selfpicked_up) |
 | `positionToLocal` | [`self.to_local`](#selfto_local) |
 | `positionToWorld` | [`self.to_world`](#selfto_world) |
 | `print` | [`print`](#print) |
@@ -3208,6 +3290,7 @@ The converter rewrites a module's scripts into these calls by rule; this is the 
 | `script_state` | [`self.set_script_state`](#selfset_script_state) |
 | `self` | [`self`](#self) |
 | `setColorTint` | [`self.set_tint`](#selfset_tint) |
+| `setCustomObject` | [`self.set_face_picture`](#selfset_face_picture) |
 | `setCustomObject` | [`self.set_picture`](#selfset_picture) |
 | `setDecals` | [`self.set_decals`](#selfset_decals) |
 | `setDescription` | [`self.set_note`](#selfset_note) |
@@ -3249,6 +3332,9 @@ The converter rewrites a module's scripts into these calls by rule; this is the 
 | `UI.setValue` | [`ui.set_value`](#uiset_value) |
 | `UI.setXml` | [`ui.set`](#uiset) |
 | `UI.show` | [`ui.show`](#uishow) |
+| `value` | [`self.set_worth`](#selfset_worth) |
+| `value` | [`self.worth`](#selfworth) |
+| `value_flags` | [`self.worth_groups`](#selfworth_groups) |
 | `Wait` | [`wait`](#wait) |
 | `Wait.condition` | [`wait.condition`](#waitcondition) |
 | `Wait.frames` | [`wait.frames`](#waitframes) |

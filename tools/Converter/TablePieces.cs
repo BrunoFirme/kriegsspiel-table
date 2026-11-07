@@ -41,6 +41,7 @@ public sealed partial class DefFactory
         : b.Name == "Bag" ? $"|bag|{Rgb(b.Color)}|{b.Nickname}"
         : b.Name == "PlayerPawn" ? $"|pawn|{Rgb(b.Color)}"
         : b.IsPictureDie && b.DieSides != PictureD6 ? $"|die{b.DieSides}"
+        : b.Name == Figurine && b.MirroredBack ? "|mirrored"
         : null;
 
     const int RgbHex = 7;

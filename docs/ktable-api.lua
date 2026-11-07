@@ -130,6 +130,10 @@
 ---@field faces Face[] A die's sides in order: { value =, up = { x, y, z }, rotation = { x, y, z } }; empty for every other piece.
 ---@field face number|nil The side of a die showing, from 1; nil for every other piece.
 ---@field value number|string|nil The value of the side of a die showing; nil for every other piece.
+---@field picked_up table|nil Where an umpire last picked the piece up: { x =, y =, z =, rot = }; nil until then.
+---@field face_picture string|nil A picture shown on the piece's face in place of its kind's, set by set_face_picture; nil for none.
+---@field worth number What the piece counts for when pieces are added up; 0 for most.
+---@field worth_groups number Which groups it adds up with, as bits; 0 adds up with any piece of worth.
 ---@field pos Point Where it stands, in map units: { x =, z = }.
 ---@field rot number Its heading in degrees.
 ---@field y number How high it sits above the table (stacked pieces).
@@ -169,25 +173,6 @@ function Piece.set_note(text) end
 ---Changes its state: a number from 1, or a state's name. What the scripts drew belongs to the state it was drawn on.
 ---@param n_or_name number|string A state number from 1, or a state's name (case does not matter).
 function Piece.set_state(n_or_name) end
-
----Turns a die to show a side, from 1; false when it has no such side.
----@param n number The side, from 1, in the order of self.faces.
----@return boolean
-function Piece.set_face(n) end
-
----Turns a die to the first side with this value; false when no side has it.
----@param value number|string The value to show.
----@return boolean
-function Piece.set_value(value) end
-
----Gives this die sides of its own; nil gives it back its kind's.
----@param list table|nil { value =, up = { x, y, z } } or { value =, rotation = { x, y, z } } for each side.
----@return boolean
-function Piece.set_faces(list) end
-
----Rolls a die, or turns a piece of several states to one at random; false for anything else.
----@return boolean
-function Piece.roll() end
 
 ---Moves it, in map units; its heading stays. A place { x, z } or another piece works in place of x and z.
 ---@param x? number The new x in map units; nil keeps the current one.
@@ -231,6 +216,34 @@ function Piece.set_measures_moves(on) end
 ---Whether it carries the pieces resting on it when it is moved.
 ---@param on? boolean true, or no argument, carries them; false leaves them where they lie.
 function Piece.set_sticky(on) end
+
+---Turns a die to show a side, from 1; false when it has no such side.
+---@param n number The side, from 1, in the order of self.faces.
+---@return boolean
+function Piece.set_face(n) end
+
+---Turns a die to the first side with this value; false when no side has it.
+---@param value number|string The value to show.
+---@return boolean
+function Piece.set_value(value) end
+
+---Gives this die sides of its own; nil gives it back its kind's.
+---@param list table|nil { value =, up = { x, y, z } } or { value =, rotation = { x, y, z } } for each side.
+---@return boolean
+function Piece.set_faces(list) end
+
+---Shows a picture on the piece's face in place of its kind's: a web link is fetched first; nil puts the kind's back.
+---@param link string|nil A web link to a picture, or a picture the table already holds.
+function Piece.set_face_picture(link) end
+
+---Sets what the piece counts for, and optionally the groups it adds up with.
+---@param worth number A whole number.
+---@param groups? number Groups as bits; nil keeps them.
+function Piece.set_worth(worth, groups) end
+
+---Rolls a die, or turns a piece of several states to one at random; false for anything else.
+---@return boolean
+function Piece.roll() end
 
 ---Sets one of its kind's counters (a whole number, kept to the counter's range).
 ---@param name string The counter's name, as the piece studio shows it.

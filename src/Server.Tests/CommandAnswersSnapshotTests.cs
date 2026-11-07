@@ -49,7 +49,7 @@ public class CommandAnswersSnapshotTests
         var named = ReadLines(SnapshotPath).Select(l => l.Split(' ')[0]).ToHashSet();
         var missing = Registered().Where(r => !named.Contains(r.name)).Select(r => r.name).ToList();
         Assert.True(missing.Count == 0, "command types with no line in the snapshot (decide who may send them and what observers get, then re-take it): " + string.Join(", ", missing));
-        Assert.Equal(83, Registered().Count);
+        Assert.Equal(85, Registered().Count);
     }
 
     static List<string> ReadLines(string path) =>

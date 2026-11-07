@@ -85,4 +85,33 @@ public class DiceScriptTests
         Assert.Equal(new[] { Die }, roll.PieceIds);
         Assert.Equal(roll.Results[0] - 1, t.Server.State.Find(U, Die)!.ShownFace);
     }
+
+    [Fact]
+    public void A_module_script_reads_and_sets_worth_held_turns_the_pick_up_place_and_flips_a_die_to_its_other_side()
+    {
+        using var t = new Table();
+        const string P = "p-000002";
+        t.Server.Handle(Table.Host, new SpawnPiece { Layer = U, Def = "die6", Id = Die, Pos = new(3, 3) });
+        t.Server.Handle(Table.Ump3, new TurnDie { Layer = U, Id = Die, Face = 1 });
+        t.Server.Handle(Table.Ump3, new HoldPiece { Layer = U, Id = P, Held = true });
+        t.Server.Handle(Table.Ump3, new MovePiece { Layer = U, Id = P, Pos = new(4, 2), RotDeg = 0 });
+        const string lua = """
+            function onLoad()
+              self.value = 25
+              self.value_flags = 3
+              self.held_spin_index = 6
+              local die = getObjectFromGUID("p-000009")
+              die.flip()
+              local from = self.pick_up_position
+              self.setName(self.value .. ":" .. self.value_flags .. ":" .. self.held_spin_index .. ":" .. from.x .. "," .. from.z .. ":" .. die.getValue())
+            end
+            """;
+        var r = ModuleTranslator.Translate(lua, Ctx());
+        var res = t.Server.Handle(Table.Host, new SetScript { Layer = U, Id = P, Text = r.Script });
+        Assert.DoesNotContain(res, o => o.Message is ErrorMessage);
+        var p = t.Server.State.Find(U, P)!;
+        Assert.Equal((25, 3, 90.0), (p.Worth, p.WorthGroups, p.RotDeg));
+        Assert.Equal("25:3:6:0,0:5", p.Label);
+        Assert.Equal(4, t.Server.State.Find(U, Die)!.ShownFace);
+    }
 }

@@ -23,6 +23,7 @@ sealed class TableSounds
     {
         if (n.IsDie) return Matter.Dice;
         if (n.IsEffect) return Matter.Silent;
+        if (PieceFinish.MatterOf(n.Def) is { } finish) return finish;
         if (n.Def?.Kind == "model") return Matter.Plastic;
         float side = Mathf.Max(0.05f, Mathf.Min(n.Footprint.X, n.Footprint.Y));
         return n.Thickness / side >= 0.08f ? Matter.Wood : Matter.Card;

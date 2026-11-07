@@ -57,7 +57,7 @@ public static class ModuleTranslator
 
     static readonly HashSet<string> ObjectProps = new(StringComparer.Ordinal)
     {
-        "interactable","tooltip","sticky","grid_projection","use_gravity","use_grid","use_snap_points","use_hands","use_rotation_value_flip","auto_raise","bounciness","drag","drag_selectable","angular_drag","hide_when_face_down","ignore_fog_of_war","loading_custom","mass","max_typed_number","measure_movement","script_state","spawning","static_friction","dynamic_friction","value","alt_view_angle","held_flip_index","held_position_offset","held_reduce_force","held_rotation_offset","memo","AssetBundle","type","tag","name","guid","held_by_color","resting","is_face_down","locked",
+        "interactable","tooltip","sticky","grid_projection","use_gravity","use_grid","use_snap_points","use_hands","use_rotation_value_flip","auto_raise","bounciness","drag","drag_selectable","angular_drag","hide_when_face_down","ignore_fog_of_war","loading_custom","mass","max_typed_number","measure_movement","script_state","spawning","static_friction","dynamic_friction","value","value_flags","alt_view_angle","held_flip_index","held_spin_index","pick_up_position","pick_up_rotation","held_position_offset","held_reduce_force","held_rotation_offset","memo","AssetBundle","type","tag","name","guid","held_by_color","resting","is_face_down","locked",
     };
 
     static readonly HashSet<string> EventNames = new(StringComparer.Ordinal)
@@ -413,7 +413,7 @@ public static class ModuleTranslator
                 case "getStateId": return Direct($"{recv}.state", node);
                 case "setState": return Direct($"{recv}.set_state({All()})", node);
                 case "getStates": return Compat($"compat.states({recv})", node);
-                case "flip": return Direct($"{recv}.flip()", node);
+                case "flip": return Compat($"compat.flip({recv})", node);
                 case "destruct" or "destroy": return Direct($"{recv}.delete()", node);
                 case "call": return Direct($"{recv}.call({All()})", node);
                 case "getVar" or "getTable": return Direct($"{recv}.get_var({All()})", node);
@@ -538,14 +538,18 @@ public static class ModuleTranslator
                     if (visited.Parent is AssignmentStatementSyntax) return visited;
                     return Direct($"{recv}.memo", node);
                 case "interactable" or "tooltip" or "sticky" or "use_gravity" or "grid_projection" or "auto_raise" or "use_snap_points" or "use_grid" or "hide_when_face_down" or "locked"
-                    or "drag_selectable" or "measure_movement":
+                    or "drag_selectable" or "measure_movement" or "value" or "value_flags"
+                    or "held_spin_index" or "held_flip_index" or "pick_up_position" or "pick_up_rotation":
                     if (visited.Parent is AssignmentStatementSyntax) return visited;
                     return Compat($"compat.get_prop({recv}, \"{name}\", {DefaultProp(name)})", node);
             }
             return visited;
         }
 
-        static string DefaultProp(string name) => name switch { "interactable" or "use_gravity" or "auto_raise" or "sticky" or "tooltip" or "drag_selectable" => "true", "memo" => "\"\"", _ => "false" };
+        static string DefaultProp(string name) => name switch
+        {
+            "interactable" or "use_gravity" or "auto_raise" or "sticky" or "tooltip" or "drag_selectable" => "true", "memo" => "\"\"", "value" or "value_flags" => "0", _ => "false",
+        };
 
         public override SyntaxNode? VisitAssignmentStatement(AssignmentStatementSyntax node)
         {

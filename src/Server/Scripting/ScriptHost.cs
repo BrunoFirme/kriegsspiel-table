@@ -523,6 +523,8 @@ public sealed partial class ScriptHost
             BestEffort.Try(() => Emit(new Say { Text = line, To = "u:", Color = "#f87" }));
     }
 
+    internal void Report(string pieceId, string message) => Print(message, "error", pieceId);
+
     void Print(string text, string kind = "print", string? source = null, int line = 0)
     {
         var src = source ?? _current?.Id ?? "";
@@ -775,6 +777,8 @@ public sealed partial class ScriptHost
 
     static bool IsAction(Command c) => c is ClickWidget or EditWidget or PickMenuItem or UiEvent or DialogResult or Hotkey or PickGlobalMenuItem || (c is Batch b && b.Items.Any(IsAction));
 
+    internal readonly Dictionary<string, (Vec2 Pos, double Rot, double Y)> PickedUp = new();
+
     void ReactToRoll(RollDice rd, DynValue who)
     {
         foreach (var id in rd.PieceIds.Where(id => Find(id) != null).ToList())
@@ -840,6 +844,7 @@ public sealed partial class ScriptHost
                 ReactToMove(m, who);
                 break;
             case HoldPiece { Held: true } h:
+                if (Find(h.Id) is { } held) PickedUp[h.Id] = (held.Pos, held.RotDeg, held.Y);
                 if (_pieces.TryGetValue(h.Id, out var ph)) Call(ph, "on_pick_up", who);
                 if (_global != null) Call(_global, "on_pick_up", Handle(h.Id), who);
                 break;

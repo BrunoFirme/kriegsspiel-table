@@ -16,6 +16,8 @@ public class RoleAndJoinTests
         yield return new DeletePiece { Layer = layer, Id = "p-000004" };
         yield return new SetState { Layer = layer, Id = "p-000004", State = 1 };
         yield return new TurnDie { Layer = layer, Id = "p-000004", Face = 1 };
+        yield return new SetWorth { Layer = layer, Id = "p-000004", Worth = 5 };
+        yield return new SetFacePicture { Layer = layer, Id = "p-000004", Picture = "pictures/face.png" };
         yield return new SetDieFaces { Layer = layer, Id = "p-000004", Faces = [new DieFace { Value = "1" }] };
         yield return new SetCounter { Layer = layer, Id = "p-000004", Name = "str", Value = 3 };
         yield return new SetText { Layer = layer, Id = "p-000004", Name = "name", Value = "x" };

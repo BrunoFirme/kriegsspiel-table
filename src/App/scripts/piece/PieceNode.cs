@@ -261,6 +261,8 @@ public partial class PieceNode : Node3D
 
     (string? pkg, string? rel, int size) TexKey()
     {
+        if (Piece.FacePicture is { } fp && !Piece.FaceDown && KTable.Client.PieceFiles.DecalFile(_s.View, _s.Store, fp, Piece.Def) is { } own)
+            return (own.Package, own.Path, Assets.PieceTexSize(Mathf.Max(Footprint.X, Footprint.Y)));
         var pack = _s.Store.PackOfDef(PictureDefId);
         var img = CurrentImage();
         if (pack == null || img == null || !pack.Assets.TryGetValue(img, out var a)) return (null, null, 0);
@@ -426,6 +428,11 @@ public partial class PieceNode : Node3D
                 : BaseMaterial3D.TransparencyEnum.AlphaScissor };
         var mat = _modelMat = Body(tint);
         var untinted = Body(_layerTint);
+        if (!die)
+        {
+            PieceFinish.Apply(mat, Def!);
+            PieceFinish.Apply(untinted, Def!);
+        }
         _model = new MeshInstance3D { RotationDegrees = new Vector3(0, 180, 0) };
         AddChild(_model);
         var texHash = WornModel?.Texture ?? CurState?.Texture ?? Def!.Texture;

@@ -31,7 +31,7 @@ public sealed partial class DefFactory
             return;
         }
         var back = Entry(b.BackUrl) is { } be && AssetStore.IsPicture(be.Ext) ? _assets.FilePath(be) : null;
-        using var atlas = FigurineAtlas(frontPath, back ?? frontPath, out double frontShare, out double pictureShare);
+        using var atlas = FigurineAtlas(frontPath, back ?? frontPath, b.MirroredBack, out double frontShare, out double pictureShare);
         if (atlas == null)
         {
             def.Image = Placeholder(pack);
@@ -60,7 +60,7 @@ public sealed partial class DefFactory
         return sha;
     }
 
-    static SKBitmap? FigurineAtlas(string frontPath, string backPath, out double frontShare, out double pictureShare)
+    static SKBitmap? FigurineAtlas(string frontPath, string backPath, bool mirrored, out double frontShare, out double pictureShare)
     {
         frontShare = pictureShare = 1;
         using var front = SKBitmap.Decode(frontPath);
@@ -73,7 +73,13 @@ public sealed partial class DefFactory
             canvas.Clear(SKColors.Transparent);
             var sampling = new SKSamplingOptions(SKFilterMode.Linear, SKMipmapMode.None);
             using (var image = SKImage.FromBitmap(front)) canvas.DrawImage(image, new SKRect(0, 0, front.Width, h), sampling);
-            using (var image = SKImage.FromBitmap(back)) canvas.DrawImage(image, new SKRect(front.Width, 0, w, h), sampling);
+            using (var image = SKImage.FromBitmap(back))
+            {
+                canvas.Save();
+                if (mirrored) canvas.Scale(-1, 1, front.Width + back.Width / 2f, 0);
+                canvas.DrawImage(image, new SKRect(front.Width, 0, w, h), sampling);
+                canvas.Restore();
+            }
             using var paint = new SKPaint { Color = BaseColour };
             canvas.DrawRect(0, h, w, BaseStripPx, paint);
         }

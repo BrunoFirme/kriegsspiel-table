@@ -1,4 +1,4 @@
-using KTable.Core;
+﻿using KTable.Core;
 using KTable.Core.Model;
 using KTable.Core.Protocol;
 
@@ -454,6 +454,26 @@ public class ScriptingTests
         var said = t.Server.Scripts.Tick(0.3);
         Assert.Equal([name], t.Server.State.Find(U, P)!.Decals.Select(d => d.Picture));
         Assert.Contains(Flat(said.Select(o => o.Message).OfType<CommandMessage>().Select(m => m.Command)).OfType<Say>(), x => x.Text == "No picture came from that link.");
+    }
+
+    [Fact]
+    public void A_picture_link_a_module_script_builds_while_it_runs_is_fetched_and_shown_on_the_piece()
+    {
+        using var t = new Table();
+        var name = $"pictures/{new string('b', 64)}.png";
+        Directory.CreateDirectory(Path.Combine(t.Store.PackageDir("sheets"), "pictures"));
+        File.WriteAllBytes(Path.Combine(t.Store.PackageDir("sheets"), name), [1]);
+        t.Server.Scripts.FetchPicture = link => Task.FromResult<string?>(link == "https://example.com/units/7.png" ? name : null);
+        var tr = KTable.Server.Scripting.Translate.ModuleTranslator.Translate("""
+            function onLoad()
+              local n = 7
+              self.setCustomObject({ image = "https://example.com/units/" .. n .. ".png" })
+              self.reload()
+            end
+            """);
+        SetScript(t, tr.Script);
+        t.Server.Scripts.Tick(0.1);
+        Assert.Equal(name, t.Server.State.Find(U, P)!.FacePicture);
     }
 
     [Fact]
