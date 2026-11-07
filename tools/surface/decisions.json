@@ -289,6 +289,7 @@
   "Zone.*": ["stub", "no module in the roster has one; the table's own zones raise no script events yet", "draw the zone at the table; a script reads board.zones()"],
   "getZones": ["dropped", "scripting and layout zones (decided 2026-11-06)", "draw the zone at the table; scripts that ask a zone what is in it get nothing"],
   "getSelectingPlayers": ["compat", "compat.get_selecting_players", ""],
+  "getLuaScript": ["compat", "compat.get_script: the translated script the piece runs, not the module's source (decided 2026-11-07: the only module that reads it is a self-copying script)", ""],
   "locked": ["compat", "compat.get_prop / set_prop on the piece's lock", "", "StowEventTests"],
   "gizmo_selectable": ["planned", "whether the transform tool takes it: a decision for the user", ""],
   "alt_view_angle": ["dropped", "no Alt-zoom view here (decided 2026-11-07)", "the camera and the piece reader"],
