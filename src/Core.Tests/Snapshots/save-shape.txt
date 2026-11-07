@@ -119,6 +119,7 @@ type Command abstract
   derived RemoveZone = RemoveZone
   derived RenameBoard = RenameBoard
   derived RenameSheet = RenameSheet
+  derived ReportSelection = ReportSelection
   derived RestorePiece = RestorePiece
   derived RestoreTurn = RestoreTurn
   derived RollDice = RollDice
@@ -164,6 +165,7 @@ type Command abstract
   derived SetUiAttributes = SetUiAttributes
   derived SetUiPictures = SetUiPictures
   derived SetVisionRadius = SetVisionRadius
+  derived SetWebModel = SetWebModel
   derived SetWidgets = SetWidgets
   derived SetWind = SetWind
   derived SetWorth = SetWorth
@@ -706,6 +708,8 @@ type PieceInstance object
   ui: List<UiNode>
   uiAssets: List<UiAsset>
   uiLayout: UiLayout
+  webMesh: string
+  webTexture: string
   widgets: List<Widget>
   worth: int
   worthGroups: int
@@ -784,6 +788,12 @@ type RenameSheet object
   at: long
   id: string
   name: string
+  seq: long
+  undoOf: long
+type ReportSelection object
+  actor: long
+  at: long
+  selected: List<string>
   seq: long
   undoOf: long
 type RestorePiece object
@@ -1221,6 +1231,15 @@ type SetVisionRadius object
   at: long
   radius: double
   seq: long
+  undoOf: long
+type SetWebModel object
+  actor: long
+  at: long
+  id: string
+  layer: string
+  mesh: string
+  seq: long
+  texture: string
   undoOf: long
 type SetWidgets object
   actor: long

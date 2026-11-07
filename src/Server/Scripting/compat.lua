@@ -792,6 +792,11 @@ function compat.set_custom_object(obj, c)
     local p = compat.piece_of(obj)
     if p ~= nil then p.set_face_picture(def) return end
   end
+  local p = compat.piece_of(obj)
+  if p ~= nil and known == nil and type(c.mesh) == "string" and c.mesh:find("^https?://") then
+    p.set_web_model({ mesh = c.mesh, texture = c.diffuse })
+    return
+  end
   if type(def) ~= "string" or def == "" or def:find("^https?://") then
     compat.todo(obj, "setCustomObject", def)
     return

@@ -79,7 +79,10 @@ public sealed partial class ScriptHost
         InstallApi();
         InstallUiApi();
         InstallCompat();
+        _libraries = new ScriptLibraries(_vm, () => _current?.Env);
     }
+
+    ScriptLibraries? _libraries;
 
     public const CoreModules Libraries = CoreModules.Preset_SoftSandbox & ~(CoreModules.LoadMethods | CoreModules.OS_System | CoreModules.IO | CoreModules.Debug | CoreModules.Dynamic);
 
@@ -417,6 +420,7 @@ public sealed partial class ScriptHost
         meta["__index"] = _vm.Globals;
         env.MetaTable = meta;
         env["_G"] = env;
+        _libraries?.Give(env);
         return env;
     }
 
@@ -824,10 +828,10 @@ public sealed partial class ScriptHost
             case FlipPiece fp:
                 if (_pieces.TryGetValue(fp.Id, out var pfp)) Call(pfp, "on_flip", DynValue.NewBoolean(fp.FaceDown));
                 break;
-            case SetPieceOption { Name: PieceOptions.EffectOff } eo when actor != 0:
+            case SetPieceOption { Name: PieceOptions.EffectOff } eo:
                 ReactToEffect(eo);
                 break;
-            case PlayEffect pe when actor != 0:
+            case PlayEffect pe:
                 if (_pieces.TryGetValue(pe.Id, out var ppe)) Call(ppe, "on_burst", DynValue.NewNumber(pe.Index));
                 _every.Tell("on_burst", Handle(pe.Id), DynValue.NewNumber(pe.Index));
                 break;
@@ -872,6 +876,9 @@ public sealed partial class ScriptHost
         var who = Who(actor);
         switch (c)
         {
+            case ReportSelection rs:
+                _controls.Pointed(actor, rs.Selected.Where(id => Find(id) != null).ToList(), _controls.HoveredBy(actor));
+                break;
             case Batch b:
                 foreach (var i in b.Items) React(i, actor);
                 break;

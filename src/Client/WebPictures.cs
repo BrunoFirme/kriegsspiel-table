@@ -24,16 +24,20 @@ public sealed class WebPictures(string packagesRoot, HttpClient? http = null)
         return c;
     }
 
-    public async Task<string?> Fetch(string url)
+    public Task<string?> Fetch(string url) => FetchAs(url, UploadAsset.WebPictures, Keep);
+
+    public Task<string?> FetchModel(string url) => FetchAs(url, UploadAsset.WebModels, KeepModel);
+
+    async Task<string?> FetchAs(string url, string folder, Func<byte[], string?> keep)
     {
         if (!Uri.TryCreate(url, UriKind.Absolute, out var uri) || uri.Scheme is not ("http" or "https")) return null;
-        if (Known(url) is { } had && File.Exists(PathOf(had))) return had;
+        if (Known(url) is { } had && had.StartsWith(folder + "/", StringComparison.Ordinal) && File.Exists(PathOf(had))) return had;
         try
         {
             using var resp = await (http ?? Shared).GetAsync(uri, HttpCompletionOption.ResponseHeadersRead);
             if (!resp.IsSuccessStatusCode || resp.Content.Headers.ContentLength > MostBytes) return null;
             await using var s = await resp.Content.ReadAsStreamAsync();
-            if (await ReadAtMost(s) is not { } bytes || Keep(bytes) is not { } name) return null;
+            if (await ReadAtMost(s) is not { } bytes || keep(bytes) is not { } name) return null;
             Remember(url, name);
             return name;
         }
@@ -49,6 +53,33 @@ public sealed class WebPictures(string packagesRoot, HttpClient? http = null)
         Directory.CreateDirectory(Folder);
         Json.WriteAtomic(file, bytes);
         return name;
+    }
+
+    public string? KeepModel(byte[] bytes)
+    {
+        if (bytes.Length > ContentLimits.MaxModelBytes || !LooksLikeObj(bytes)) return null;
+        var name = $"{UploadAsset.WebModels}/{Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant()}.obj";
+        var file = PathOf(name);
+        if (File.Exists(file)) return name;
+        Directory.CreateDirectory(Path.GetDirectoryName(file)!);
+        Json.WriteAtomic(file, bytes);
+        return name;
+    }
+
+    const char LineBreak = '\n';
+
+    public static bool LooksLikeObj(byte[] bytes)
+    {
+        if (Array.IndexOf(bytes, (byte)0) >= 0) return false;
+        bool vertex = false, face = false;
+        foreach (var raw in System.Text.Encoding.UTF8.GetString(bytes).Split(LineBreak))
+        {
+            var line = raw.TrimStart();
+            vertex |= line.StartsWith("v ", StringComparison.Ordinal);
+            face |= line.StartsWith("f ", StringComparison.Ordinal);
+            if (vertex && face) return true;
+        }
+        return false;
     }
 
     public string PathOf(string name) => Path.Combine(packagesRoot, UploadAsset.ReliefPackage, name);

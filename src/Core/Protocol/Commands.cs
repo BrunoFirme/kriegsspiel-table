@@ -29,6 +29,8 @@ namespace KTable.Core.Protocol;
 [JsonDerivedType(typeof(PlayEffect), "PlayEffect")]
 [JsonDerivedType(typeof(GlidePiece), "GlidePiece")]
 [JsonDerivedType(typeof(ShowCast), "ShowCast")]
+[JsonDerivedType(typeof(ReportSelection), "ReportSelection")]
+[JsonDerivedType(typeof(SetWebModel), "SetWebModel")]
 [JsonDerivedType(typeof(SetPieceOption), "SetPieceOption")]
 [JsonDerivedType(typeof(SetPointerRule), "SetPointerRule")]
 [JsonDerivedType(typeof(SetBriefing), "SetBriefing")]
@@ -427,6 +429,19 @@ public sealed class ShowCast : Command
         if (new[] { From, To, Size, Turn }.Any(v => v is not { Length: Axes } || v.Any(x => !double.IsFinite(x)))) return "a cast's points are three numbers each";
         return double.IsFinite(Seconds) && Seconds > 0 && Seconds <= MostSeconds ? null : "a cast is shown for a few seconds";
     }
+}
+
+public sealed class SetWebModel : LayerCommand
+{
+    public string Id { get; set; } = "";
+    public string? Mesh { get; set; }
+    public string? Texture { get; set; }
+    public override Sender SentBy() => Sender.Runtime;
+    public override bool OnUndoStack() => false;
+    public override Shown ShownToObservers() => Shown.Table;
+    public override IEnumerable<(string Layer, string Id)> ZonePieces() => [(Layer, Id)];
+    public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [];
+    public override IEnumerable<string> ScriptsToReload() => [];
 }
 
 public sealed class SetLocked : LayerCommand
@@ -1026,6 +1041,17 @@ public sealed class SetGlobalMenuItems : Command
     public override Sender SentBy() => Sender.Runtime;
     public override bool OnUndoStack() => true;
     public override Shown ShownToObservers() => Shown.Table;
+    public override IEnumerable<(string Layer, string Id)> ZonePieces() => [];
+    public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [];
+    public override IEnumerable<string> ScriptsToReload() => [];
+}
+public sealed class ReportSelection : Command
+{
+    public const int MostPieces = 10000;
+    public List<string> Selected { get; set; } = new();
+    public override Sender SentBy() => Sender.Umpire;
+    public override bool OnUndoStack() => false;
+    public override Shown ShownToObservers() => Shown.UmpiresOnly;
     public override IEnumerable<(string Layer, string Id)> ZonePieces() => [];
     public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [];
     public override IEnumerable<string> ScriptsToReload() => [];

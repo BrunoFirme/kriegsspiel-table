@@ -893,6 +893,7 @@ Each call is a change every umpire sees, taken back with Ctrl+Z by the umpire wh
 | [`self.set_face_picture`](#selfset_face_picture) | Shows a picture on the piece's face in place of its kind's: a web link is fetched first; nil puts the kind's back. |
 | [`self.set_lettering`](#selfset_lettering) | Changes the text drawn on the piece: any of text, size and color; nil takes the lettering away. |
 | [`self.show_glide`](#selfshow_glide) | Shows it gliding towards a point or a heading on every screen, pulled and slowed as a module's smooth move is; the piece itself stays where it is until set_pos or set_rot puts it there. |
+| [`self.set_web_model`](#selfset_web_model) | Fetches a model and its picture from web links and shows the piece as that model on every screen; a link that gives no model shows the picture flat, or a plain placeholder. |
 | [`self.play_effect`](#selfplay_effect) | Plays an effect once on every screen, one round of it, whether it is running or not; false for a piece that is not an effect. |
 | [`self.set_effect_on`](#selfset_effect_on) | Starts or stops an effect. |
 | [`self.set_worth`](#selfset_worth) | Sets what the piece counts for, and optionally the groups it adds up with. |
@@ -1277,6 +1278,23 @@ Shows it gliding towards a point or a heading on every screen, pulled and slowed
 **Returns**: false when neither a point nor a heading is given.
 
 **Module call** `setPositionSmooth`
+
+### `self.set_web_model`
+
+```lua
+self.set_web_model{ mesh, texture }
+```
+
+Fetches a model and its picture from web links and shows the piece as that model on every screen; a link that gives no model shows the picture flat, or a plain placeholder.
+
+| Field | Type | Description |
+|---|---|---|
+| `mesh` | `string` | A web link to an .obj model. |
+| `texture` | `string` | _Optional._ A web link to the picture wrapped on it. |
+
+**Returns**: false when the mesh is not a web link; the model comes a moment later.
+
+**Module call** `setCustomObject`
 
 ### `self.play_effect`
 
@@ -2970,8 +2988,8 @@ Define any of these in a piece's script and the table calls it.
 | [`on_pick_up`](#on_pick_up) | An umpire picked the piece up. |
 | [`on_state`](#on_state) | Its state changed, by anyone. |
 | [`on_page`](#on_page) | This book turned to another page. |
-| [`on_effect`](#on_effect) | An umpire started (0) or stopped (-1) this effect. |
-| [`on_burst`](#on_burst) | An umpire played this effect once (Play once in its menu); index is the one-off asked for, 0 from the menu. |
+| [`on_effect`](#on_effect) | An umpire or a script started (0) or stopped (-1) this effect. |
+| [`on_burst`](#on_burst) | This effect was played once, from its menu (index 0) or by a script's play_effect (the index it gave). |
 | [`on_flip`](#on_flip) | It was turned over or back. |
 | [`on_rotate`](#on_rotate) | An umpire turned it in place. |
 | [`on_turn`](#on_turn) | The clock advanced. |
@@ -3110,7 +3128,7 @@ An event: define this function and the table calls it.
 on_effect(index)
 ```
 
-An umpire started (0) or stopped (-1) this effect.
+An umpire or a script started (0) or stopped (-1) this effect.
 
 An event: define this function and the table calls it.
 
@@ -3122,7 +3140,7 @@ An event: define this function and the table calls it.
 on_burst(index)
 ```
 
-An umpire played this effect once (Play once in its menu); index is the one-off asked for, 0 from the menu.
+This effect was played once, from its menu (index 0) or by a script's play_effect (the index it gave).
 
 An event: define this function and the table calls it.
 
@@ -3220,8 +3238,8 @@ The global script gets on_load, on_save, on_update and on_turn too, and these fo
 | [`on_drop`](#on_drop-global-script) | An umpire let a piece go. |
 | [`on_state`](#on_state-global-script) | A piece's state changed, by anyone. |
 | [`on_page`](#on_page-global-script) | A book turned to another page. |
-| [`on_effect`](#on_effect-global-script) | An umpire started (0) or stopped (-1) an effect. |
-| [`on_burst`](#on_burst-global-script) | An umpire played an effect once. |
+| [`on_effect`](#on_effect-global-script) | An umpire or a script started (0) or stopped (-1) an effect. |
+| [`on_burst`](#on_burst-global-script) | An effect was played once, from its menu or by a script. |
 | [`on_roll`](#on_roll-global-script) | An umpire rolled a die, or turned a piece of several looks to one at random. |
 | [`on_rotate`](#on_rotate-global-script) | An umpire turned a piece in place. |
 | [`on_pick_up`](#on_pick_up-global-script) | An umpire picked a piece up. |
@@ -3308,7 +3326,7 @@ An event: define this function and the table calls it.
 on_effect(piece, index)
 ```
 
-An umpire started (0) or stopped (-1) an effect.
+An umpire or a script started (0) or stopped (-1) an effect.
 
 An event: define this function and the table calls it.
 
@@ -3320,7 +3338,7 @@ An event: define this function and the table calls it.
 on_burst(piece, index)
 ```
 
-An umpire played an effect once.
+An effect was played once, from its menu or by a script.
 
 An event: define this function and the table calls it.
 
@@ -3769,6 +3787,7 @@ The converter rewrites a module's scripts into these calls by rule; this is the 
 | `setColorTint` | [`self.set_tint`](#selfset_tint) |
 | `setCustomObject` | [`self.set_face_picture`](#selfset_face_picture) |
 | `setCustomObject` | [`self.set_picture`](#selfset_picture) |
+| `setCustomObject` | [`self.set_web_model`](#selfset_web_model) |
 | `setDecals` | [`self.set_decals`](#selfset_decals) |
 | `setDescription` | [`self.set_note`](#selfset_note) |
 | `setLock` | [`self.set_locked`](#selfset_locked) |

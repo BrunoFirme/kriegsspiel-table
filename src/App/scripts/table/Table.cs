@@ -73,6 +73,7 @@ public partial class Table : Node3D
     internal ToolOverlay Overlay { get; }
     internal ViewSync Sync { get; }
     internal Selection Selection { get; }
+    internal SelectionReport Report { get; }
     internal PendingPoses Poses { get; }
     internal Gizmo Gizmo { get; }
     internal Carry Hand { get; }
@@ -115,6 +116,7 @@ public partial class Table : Node3D
         Overlay = new ToolOverlay(_c);
         Sync = new ViewSync(_c, picked, Stage, Sheets, Pieces, Drawings);
         Selection = new Selection(_c, picked, Pieces);
+        Report = new SelectionReport(_c, Selection);
         Poses = new PendingPoses(_c, Pieces, Selection);
         Gizmo = new Gizmo(_c, Sheets, Overlay, Selection, Poses);
         Hand = new Carry(_c, press, Pieces, Selection, Poses);

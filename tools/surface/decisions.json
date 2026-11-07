@@ -262,7 +262,7 @@
   "getValue": ["native", "a die's sides are its own (PieceDef.Faces, a value and the way up each); self.faces / face / value, set_face / set_value / set_faces / roll; compat maps the module calls", "", "DiceScriptTests"],
   "setValue": ["native", "a die's sides are its own (PieceDef.Faces, a value and the way up each); self.faces / face / value, set_face / set_value / set_faces / roll; compat maps the module calls", "", "DiceScriptTests"],
   "use_rotation_value_flip": ["native", "a die turned over always shows its other side", "", "DiceScriptTests"],
-  "setCustomObject": ["partial", "a picture by a link built at run time is fetched and shown on the piece's face (self.set_face_picture); a model by such a link is not", "", "ScriptingTests"],
+  "setCustomObject": ["compat", "compat.set_custom_object: a link built at run time finds the kind made from it, else its picture is fetched onto the face or its model onto the piece (set_web_model)", "", "ScriptingTests"],
   "getComponent": ["dropped", "the engine's materials and components (decided 2026-11-06)", "a look of the piece's own"],
   "getComponents": ["dropped", "the engine's materials and components (decided 2026-11-06)", "a look of the piece's own"],
   "getComponentInChildren": ["dropped", "the engine's materials and components (decided 2026-11-06)", "a look of the piece's own"],

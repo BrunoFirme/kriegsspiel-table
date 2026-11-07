@@ -1030,6 +1030,59 @@ public class ModuleObjectCallTests
     }
 
     [Fact]
+    public void A_selection_an_umpire_reports_is_what_scripts_read_as_theirs()
+    {
+        using var t = new Table();
+        Assert.DoesNotContain(t.Server.Handle(Table.Ump3, new ReportSelection { Selected = { P, "p-gone" } }), o => o.Message is ErrorMessage);
+        var label = Run(t, """
+            function onLoad()
+              local who = self.getSelectingPlayers()
+              self.setName(#who .. ' ' .. tostring(who[1]) .. ' ' .. #getObjectFromGUID('p-000003').getSelectingPlayers())
+            end
+            """);
+        Assert.Equal("1 Red 0", label);
+        t.Server.Handle(Table.Ump3, new ReportSelection());
+        Assert.Equal("0 nil 0", Run(t, "function onLoad() local who = self.getSelectingPlayers() self.setName(#who .. ' ' .. tostring(who[1]) .. ' ' .. #getObjectFromGUID('p-000003').getSelectingPlayers()) end"));
+    }
+
+    [Fact]
+    public void A_model_link_no_kind_was_made_from_is_fetched_and_worn_and_a_bad_link_falls_back_as_the_import_does()
+    {
+        using var t = new Table();
+        var mesh = "models/" + new string('d', 64) + ".obj";
+        var picture = "pictures/" + new string('e', 64) + ".png";
+        t.Server.Scripts.FetchModel = link => Task.FromResult<string?>(link.EndsWith("good.obj") ? mesh : null);
+        t.Server.Scripts.FetchPicture = link => Task.FromResult<string?>(link.EndsWith("skin.png") ? picture : null);
+        Run(t, """
+            function onLoad()
+              local base = 'https://example.test/'
+              self.setCustomObject({ mesh = base .. 'good.obj', diffuse = base .. 'skin.png' })
+              self.reload()
+            end
+            """);
+        t.Server.Scripts.Tick(0.1);
+        t.Server.Scripts.Tick(0.2);
+        var p = t.Server.State.Find(U, P)!;
+        Assert.Equal((mesh, picture), (p.WebMesh, p.WebTexture));
+        t.Server.Handle(Table.Host, new SpawnPiece { Layer = U, Def = "marker", Id = "p-000090", Pos = new(9, 9) });
+        var other = ModuleTranslator.Translate("""
+            function onLoad()
+              local base = 'https://example.test/'
+              self.setCustomObject({ mesh = base .. 'bad.obj', diffuse = base .. 'skin.png' })
+              self.reload()
+              getObjectFromGUID('p-000090').setCustomObject({ mesh = base .. 'bad.obj', diffuse = base .. 'none.png' })
+              getObjectFromGUID('p-000090').reload()
+            end
+            """, Ctx());
+        Assert.DoesNotContain(t.Server.Handle(Table.Host, new SetScript { Layer = U, Id = Marker, Text = other.Script }), o => o.Message is ErrorMessage);
+        t.Server.Scripts.Tick(0.3);
+        t.Server.Scripts.Tick(0.4);
+        var m = t.Server.State.Find(U, Marker)!;
+        Assert.Equal((picture, (string?)null), (m.FacePicture, m.WebMesh));
+        Assert.Equal("", t.Server.State.Find(U, "p-000090")!.WebMesh);
+    }
+
+    [Fact]
     public void Selecting_players_are_the_seated_colours_whose_selection_holds_the_piece()
     {
         using var t = new Table();

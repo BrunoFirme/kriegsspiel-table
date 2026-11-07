@@ -115,7 +115,9 @@ public partial class Net : Node
     {
         Server = server;
         server.AppVersion = AppVersion;
-        server.Scripts.FetchPicture = new WebPictures(Session.Store.Root).Fetch;
+        var web = new WebPictures(Session.Store.Root);
+        server.Scripts.FetchPicture = web.Fetch;
+        server.Scripts.FetchModel = web.FetchModel;
         if (Session.Store.RepointLostTiles(server.State.Sheets) is var moved and > 0) GD.Print($"[sheets] {moved} map sheet(s) found their tiles in another folder");
         KTable.Core.WireTap.HostState = () => Server?.State;
         Session.SavePath = savePath;

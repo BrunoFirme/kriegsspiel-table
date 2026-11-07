@@ -385,7 +385,7 @@ every row that is not dropped must end audited, used by the corpus or not.
 | `getScale` | 15144 / 51 | compat | ObjectCall |  | ModuleObjectCallTests.Scale_reads_one_local_unit_and_setting_it_back_keeps_the_piece_the_same_size |
 | `clearButtons` | 6680 / 51 | compat | ObjectCall |  | ScriptingTests.Removing_module_buttons_keeps_their_numbers_until_the_next_frame_so_a_loop_removes_them_all |
 | `createInput` | 20637 / 50 | compat | ObjectCall |  | ScriptingTests.A_module_input_inside_its_piece_is_not_drawn_but_still_listed_and_raising_it_above_the_piece_draws_it; ModuleDefaultsTests |
-| `setCustomObject` | 3484 / 50 | partial | a picture by a link built at run time is fetched and shown on the piece's face (self.set_face_picture); a model by such a link is not | ScriptingTests | ModuleObjectCallTests.Links_made_at_run_time_find_the_kind_made_from_them_and_raw_data_spawns_that_kind |
+| `setCustomObject` | 3484 / 50 | compat | compat.set_custom_object: a link built at run time finds the kind made from it, else its picture is fetched onto the face or its model onto the piece (set_web_model) | ScriptingTests | ModuleObjectCallTests.Links_made_at_run_time_find_the_kind_made_from_them_and_raw_data_spawns_that_kind |
 | `reload` | 755 / 50 | compat | ObjectCall |  | ModuleObjectCallTests.Plain_reads_and_small_calls_answer_as_the_tabletop_does |
 | `positionToWorld` | 1180 / 49 | compat | ObjectCall |  | ModuleObjectCallTests.A_local_point_goes_to_the_world_with_its_height_scaled_and_turned_over_with_the_piece |
 | `setVar` | 181 / 49 | compat | ObjectCall |  | ModuleObjectCallTests.Object_setters_answer_true_as_module_code_checks |
@@ -935,7 +935,7 @@ every row that is not dropped must end audited, used by the corpus or not.
 | `onObjectRotate` | - | native | EventRenames |  | ModuleEventTests.A_piece_script_hears_every_drop_and_turn_with_the_tabletops_arguments |
 | `onObjectSearchEnd` | - | dropped | a holder's contents are a card, not a search |  |  |
 | `onObjectSearchStart` | - | dropped | a holder's contents are a card, not a search |  |  |
-| `onObjectTriggerEffect` | - | native | on_burst: an umpire played an effect once | ModuleEventTests | ModuleEventTests.A_trigger_effect_played_by_an_umpire_reaches_the_piece_and_every_script_with_its_index |
+| `onObjectTriggerEffect` | - | native | on_burst: an umpire played an effect once | ModuleEventTests | ModuleEventTests.A_trigger_effect_played_by_a_script_or_an_umpire_reaches_the_piece_and_every_script_with_its_index |
 | `onPageChange` | - | native | on_page() in the book's own script | BookNotesScriptTests | BookNotesScriptTests.A_module_script_turns_a_book_by_its_printed_page_numbers_and_hears_the_page_turn |
 | `onPlayerChangeColor` | - | dropped | the Player API (decided 2026-11-06) |  |  |
 | `onPlayerConnect` | - | dropped | the Player API (decided 2026-11-06) |  |  |

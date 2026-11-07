@@ -522,6 +522,8 @@ public class MalformedInputTests
     [InlineData("PlayEffect")]
     [InlineData("GlidePiece")]
     [InlineData("ShowCast")]
+    [InlineData("ReportSelection")]
+    [InlineData("SetWebModel")]
     [InlineData("SetPieceOption")]
     [InlineData("SetPointerRule")]
     [InlineData("SetBriefing")]

@@ -8,6 +8,8 @@ public sealed partial class ScriptHost
 {
     public Func<string, Task<string?>>? FetchPicture { get; set; }
 
+    public Func<string, Task<string?>>? FetchModel { get; set; }
+
     sealed record Fetched(PieceScript? Owner, DynValue Fn, string? Picture, DynValue Who, Action<string?>? Then = null);
 
     readonly ConcurrentQueue<Fetched> _fetched = new();
@@ -31,6 +33,13 @@ public sealed partial class ScriptHost
     internal void FetchThen(string link, Action<string?> then)
     {
         var fetch = FetchPicture is { } f && IsWebLink(link) ? f(link.Trim()) : Task.FromResult<string?>(null);
+        fetch.ContinueWith(t => _fetched.Enqueue(new Fetched(null, DynValue.Nil, t.IsCompletedSuccessfully ? t.Result : null, DynValue.Nil, then)),
+            TaskContinuationOptions.ExecuteSynchronously);
+    }
+
+    internal void FetchModelThen(string link, Action<string?> then)
+    {
+        var fetch = FetchModel is { } f && IsWebLink(link) ? f(link.Trim()) : Task.FromResult<string?>(null);
         fetch.ContinueWith(t => _fetched.Enqueue(new Fetched(null, DynValue.Nil, t.IsCompletedSuccessfully ? t.Result : null, DynValue.Nil, then)),
             TaskContinuationOptions.ExecuteSynchronously);
     }

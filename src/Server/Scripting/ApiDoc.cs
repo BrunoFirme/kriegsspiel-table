@@ -261,6 +261,11 @@ public static partial class ApiDoc
     O("fast", "boolean", "true pulls it ten times as hard, as a module's fast smooth move does.");
     R("false when neither a point nor a heading is given.");
 
+    M("piece", "set_web_model{ mesh, texture }", "Fetches a model and its picture from web links and shows the piece as that model on every screen; a link that gives no model shows the picture flat, or a plain placeholder.", "setCustomObject");
+    P("mesh", "string", "A web link to an .obj model.");
+    O("texture", "string", "A web link to the picture wrapped on it.");
+    R("false when the mesh is not a web link; the model comes a moment later.");
+
     M("piece", "play_effect(index)", "Plays an effect once on every screen, one round of it, whether it is running or not; false for a piece that is not an effect.", "AssetBundle.playTriggerEffect");
     O("index", "number", "Which one-off it is, from 0, handed on to on_burst; 0 when left out.");
     See("self.set_effect_on");
@@ -1012,8 +1017,8 @@ public static partial class ApiDoc
 
         E("event", "on_state(old, new)", "Its state changed, by anyone.", "onObjectStateChange");
         E("event", "on_page()", "This book turned to another page.", "onPageChange");
-        E("event", "on_effect(index)", "An umpire started (0) or stopped (-1) this effect.", "onObjectLoopingEffect");
-        E("event", "on_burst(index)", "An umpire played this effect once (Play once in its menu); index is the one-off asked for, 0 from the menu.", "onObjectTriggerEffect");
+        E("event", "on_effect(index)", "An umpire or a script started (0) or stopped (-1) this effect.", "onObjectLoopingEffect");
+        E("event", "on_burst(index)", "This effect was played once, from its menu (index 0) or by a script's play_effect (the index it gave).", "onObjectTriggerEffect");
         P("old", "number", "The state it left, from 1.");
         P("new", "number", "The state it is in now, from 1.");
         X("""
@@ -1058,8 +1063,8 @@ public static partial class ApiDoc
         E("global event", "on_drop(piece, who)", "An umpire let a piece go.", "onObjectDrop");
         E("global event", "on_state(piece, old, new)", "A piece's state changed, by anyone.", "onObjectStateChange");
         E("global event", "on_page(piece)", "A book turned to another page.", "onObjectPageChange");
-        E("global event", "on_effect(piece, index)", "An umpire started (0) or stopped (-1) an effect.", "onObjectLoopingEffect");
-        E("global event", "on_burst(piece, index)", "An umpire played an effect once.", "onObjectTriggerEffect");
+        E("global event", "on_effect(piece, index)", "An umpire or a script started (0) or stopped (-1) an effect.", "onObjectLoopingEffect");
+        E("global event", "on_burst(piece, index)", "An effect was played once, from its menu or by a script.", "onObjectTriggerEffect");
         E("global event", "on_roll(piece, who)", "An umpire rolled a die, or turned a piece of several looks to one at random.", "onObjectRandomize");
         P("piece", "Piece", "The piece.");
         P("who", "Who", "The umpire.");

@@ -25,6 +25,7 @@ public static partial class StateMachine
             case SetLocked lk: return ApplySetLocked(g, lk, ref inverse);
             case SetHighlight hl: return ApplySetHighlight(g, hl, ref inverse);
             case SetBookHighlight bh: return ApplySetBookHighlight(g, bh, ref inverse);
+            case SetWebModel wm: return ApplySetWebModel(g, wm, ref inverse);
             case SetPieceOption po: return ApplySetPieceOption(g, po, ref inverse);
             case FlipPiece fp: return ApplyFlip(g, fp, ref inverse);
             case SetScale sz: return ApplySetScale(g, sz, ref inverse);
@@ -85,10 +86,7 @@ public static partial class StateMachine
                 return pgm.Index >= 1 && pgm.Index <= g.MenuItems.Count ? null : "no such menu row";
             case NumberTyped nt: return Present(g, nt.Layer, nt.Id);
             case SelectPiece: return null;
-            case ShowContents sc: return Present(g, sc.Layer, sc.Id);
-            case PlayEffect pe: return Present(g, pe.Layer, pe.Id);
-            case GlidePiece gp: return Present(g, gp.Layer, gp.Id);
-            case ShowCast sc2: return sc2.Problem();
+            case ShowContents or PlayEffect or GlidePiece or ShowCast or ReportSelection: return CheckShown(g, c);
             case PickMenuItem pm: return Present(g, pm.Layer, pm.Id);
             case HoldPiece hp: return Present(g, hp.Layer, hp.Id);
             case Say: return null;
@@ -105,6 +103,16 @@ public static partial class StateMachine
     }
 
     static string? Present(GameState g, string layer, string id) => g.Find(layer, id) == null ? "no such piece" : null;
+
+    static string? CheckShown(GameState g, Command c) => c switch
+    {
+        ShowContents sc => Present(g, sc.Layer, sc.Id),
+        PlayEffect pe => Present(g, pe.Layer, pe.Id),
+        GlidePiece gp => Present(g, gp.Layer, gp.Id),
+        ShowCast cast => cast.Problem(),
+        ReportSelection rs => rs.Selected is { Count: <= ReportSelection.MostPieces } ? null : "too many pieces in one selection",
+        _ => null,
+    };
 
     static string? ApplySpawn(GameState g, SpawnPiece s, ref Command? inverse)
     {
@@ -305,6 +313,17 @@ public static partial class StateMachine
         if (bh.Box is { } box && (box.Length != SetBookHighlight.Corners || box.Any(v => !double.IsFinite(v)))) return "a highlight box is four numbers: left, bottom, right, top";
         inverse = new SetBookHighlight { Layer = bh.Layer, Id = bh.Id, Box = p.BookHighlight };
         p.BookHighlight = bh.Box?.ToArray();
+        return null;
+    }
+
+    static string? ApplySetWebModel(GameState g, SetWebModel wm, ref Command? inverse)
+    {
+        var p = g.Find(wm.Layer, wm.Id);
+        if (p == null) return "no such piece";
+        if (wm.Mesh is { Length: > 0 } && !UploadAsset.IsWebModel(UploadAsset.ReliefPackage, wm.Mesh)) return "a model fetched from a link is kept under models/";
+        if (wm.Texture != null && !UploadAsset.IsWebPicture(UploadAsset.ReliefPackage, wm.Texture)) return "a picture fetched from a link is kept under pictures/";
+        inverse = new SetWebModel { Layer = wm.Layer, Id = wm.Id, Mesh = p.WebMesh, Texture = p.WebTexture };
+        (p.WebMesh, p.WebTexture) = (wm.Mesh, wm.Texture);
         return null;
     }
 

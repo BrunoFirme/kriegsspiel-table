@@ -153,7 +153,12 @@ public sealed class UploadAsset : FilePiece
     public static bool IsWebPicture(string package, string path) =>
         package == ReliefPackage && System.Text.RegularExpressions.Regex.IsMatch(path, @"^pictures/[0-9a-f]{64}\.(png|jpg|webp|bmp)$");
 
-    public static bool PathAllowed(string package, string path) => IsRelief(package, path) || IsWebPicture(package, path) ||
+    public const string WebModels = "models";
+
+    public static bool IsWebModel(string package, string path) =>
+        package == ReliefPackage && System.Text.RegularExpressions.Regex.IsMatch(path, @"^models/[0-9a-f]{64}\.obj$");
+
+    public static bool PathAllowed(string package, string path) => IsRelief(package, path) || IsWebPicture(package, path) || IsWebModel(package, path) ||
         Model.PackManifest.IsUserPackId(package) &&
         (path == "pack.json" || System.Text.RegularExpressions.Regex.IsMatch(path, @"^assets/[0-9a-f]{64}\.(png|jpg|jpeg|webp|obj)$"));
 }

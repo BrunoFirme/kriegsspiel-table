@@ -3516,8 +3516,8 @@
   },
   {
    "row": "setCustomObject",
-   "status": "partial",
-   "where": "a picture by a link built at run time is fetched and shown on the piece's face (self.set_face_picture); a model by such a link is not",
+   "status": "compat",
+   "where": "compat.set_custom_object: a link built at run time finds the kind made from it, else its picture is fetched onto the face or its model onto the piece (set_web_model)",
    "instead": "",
    "held_by": "ScriptingTests",
    "count": 3484,
@@ -8878,7 +8878,7 @@
    "held_by": "ModuleEventTests",
    "count": 0,
    "modules": 0,
-   "audited": "ModuleEventTests.A_trigger_effect_played_by_an_umpire_reaches_the_piece_and_every_script_with_its_index"
+   "audited": "ModuleEventTests.A_trigger_effect_played_by_a_script_or_an_umpire_reaches_the_piece_and_every_script_with_its_index"
   },
   {
    "row": "onPageChange",

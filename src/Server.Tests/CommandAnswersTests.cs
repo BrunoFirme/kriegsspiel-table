@@ -16,7 +16,7 @@ public class CommandAnswersTests
     {
         typeof(RollDice), typeof(AddPack), typeof(RestoreTurn), typeof(LoadSave), typeof(ClickWidget), typeof(EditWidget), typeof(PickMenuItem),
         typeof(HoldPiece), typeof(Say), typeof(Hotkey), typeof(PickGlobalMenuItem), typeof(NumberTyped), typeof(SelectPiece), typeof(ShowContents), typeof(SetHighlight),
-        typeof(SetBookHighlight), typeof(PlayEffect), typeof(GlidePiece), typeof(ShowCast),
+        typeof(SetBookHighlight), typeof(PlayEffect), typeof(GlidePiece), typeof(ShowCast), typeof(ReportSelection), typeof(SetWebModel),
     };
 
     public static IEnumerable<Type> Registered() =>
