@@ -77,6 +77,21 @@ public class ModuleEventTests
     }
 
     [Fact]
+    public void A_piece_script_hears_every_spawn_and_every_destroy_with_the_piece()
+    {
+        using var t = new Table();
+        Load(t, P, """
+            function onObjectSpawn(obj) self.setDescription('spawned ' .. obj.getGUID()) end
+            function onObjectDestroy(obj) self.setName('gone ' .. obj.getGUID()) end
+            """);
+        t.Server.Handle(Table.Host, new DeletePiece { Layer = U, Id = Marker });
+        Assert.Equal("gone " + Marker, t.Server.State.Find(U, P)!.Label);
+        var spawned = t.Server.Handle(Table.Host, new SpawnPiece { Layer = U, Def = "marker", Pos = new(4, 4) });
+        Assert.DoesNotContain(spawned, o => o.Message is ErrorMessage);
+        Assert.StartsWith("spawned ", t.Server.State.Find(U, P)!.Note);
+    }
+
+    [Fact]
     public void A_save_answer_that_is_not_text_clears_the_saved_state_and_nothing_keeps_it()
     {
         Assert.Equal("", Saved("function onSave() return 5 end"));

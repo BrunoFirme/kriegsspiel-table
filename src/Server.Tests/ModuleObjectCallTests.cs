@@ -579,6 +579,30 @@ public class ModuleObjectCallTests
     }
 
     [Fact]
+    public void Object_lists_tag_lists_seat_names_and_world_lines_answer_as_the_tabletop_does()
+    {
+        using var t = new Table();
+        const string lua = """
+            function onLoad()
+              local m = getObjectFromGUID('p-000003')
+              m.setTags({ 'Foot', 'Guard' })
+              local all, every = #getObjects(), #getAllObjects()
+              local any = #getObjectsWithAnyTags({ 'guard', 'none' })
+              local both = #getObjectsWithAllTags({ 'foot', 'GUARD' })
+              local none = #getObjectsWithAllTags({ 'foot', 'none' })
+              local who = colorToPlayerName('Red')
+              local noone = pcall(colorToPlayerName, 'Teal')
+              local drew = Global.setVectorLines({ { points = { {0, 0, 0}, {2, 0, 2} } } })
+              local back = #Global.getVectorLines()
+              local gone = destroyObject(m)
+              self.setName(all .. every .. any .. both .. none .. '|' .. who .. '|' .. tostring(noone) .. '|' .. tostring(drew) .. back .. '|' .. tostring(gone) .. '|' .. Time.fixed_time)
+            end
+            """;
+        Assert.Equal("22110|Umpire Three|false|true1|true|0", Run(t, lua));
+        Assert.Null(t.Server.State.Find(U, Marker));
+    }
+
+    [Fact]
     public void Time_reads_the_scripts_clock_and_frame_count()
     {
         using var t = new Table();
