@@ -78,7 +78,7 @@
 ---@field align? "left"|"center"|"right" Default "center".
 ---@field lines? number Lines of text the box holds. Default 1.
 ---@field tooltip? string Shown when the pointer rests on it.
----@field on_change? string The handler's name: called as fn(who, value, index, piece) when the umpire finishes typing.
+---@field on_change? string The handler's name: called as fn(who, value, index, piece) when the umpire finishes typing; text it returns replaces what was typed.
 ---@field kind? "button"|"input"|"label" "label" shows its value but takes no typing: locked text.
 
 ---@class PieceCallOptions
@@ -156,6 +156,7 @@
 ---@field text table Its text lines that hold a value, name → text.
 ---@field attached Piece[] The pieces riding on it.
 ---@field tags string[] Its own tags, or its kind's when it has none of its own.
+---@field gm_notes string The umpire's notes a module saved on the piece; empty when it had none.
 ---@field memo string A string the scripts keep on the piece; saved with the game.
 ---@field script_state string What its on_save last returned.
 ---@field script string|nil The script it runs (its own, or its kind's), or nil.

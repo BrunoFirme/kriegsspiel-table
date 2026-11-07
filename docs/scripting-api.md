@@ -229,6 +229,7 @@ Read from `self` or from any piece `board.find` or `board.pieces` hands back. Fi
 | [`self.text`](#selftext) | Its text lines that hold a value, name → text. |
 | [`self.attached`](#selfattached) | The pieces riding on it. |
 | [`self.tags`](#selftags) | Its own tags, or its kind's when it has none of its own. |
+| [`self.gm_notes`](#selfgm_notes) | The umpire's notes a module saved on the piece; empty when it had none. |
 | [`self.memo`](#selfmemo) | A string the scripts keep on the piece; saved with the game. |
 | [`self.script_state`](#selfscript_state) | What its on_save last returned. |
 | [`self.script`](#selfscript) | The script it runs (its own, or its kind's), or nil. |
@@ -683,6 +684,18 @@ Its own tags, or its kind's when it has none of its own.
 **Type** `string[]`, read-only.
 
 **Module call** `getTags` · **See also** [`self.set_tags`](#selfset_tags), [`self.add_tag`](#selfadd_tag), [`board.pieces`](#boardpieces)
+
+### `self.gm_notes`
+
+```lua
+self.gm_notes
+```
+
+The umpire's notes a module saved on the piece; empty when it had none.
+
+**Type** `string`, read-only.
+
+**Module call** `getGMNotes`
 
 ### `self.memo`
 
@@ -1561,7 +1574,7 @@ Draws an input box and returns its index. on_change names a function called as f
 | `align` | `"left"\|"center"\|"right"` | _Optional._ Default "center". |
 | `lines` | `number` | _Optional._ Lines of text the box holds. Default 1. |
 | `tooltip` | `string` | _Optional._ Shown when the pointer rests on it. |
-| `on_change` | `string` | _Optional._ The handler's name: called as fn(who, value, index, piece) when the umpire finishes typing. |
+| `on_change` | `string` | _Optional._ The handler's name: called as fn(who, value, index, piece) when the umpire finishes typing; text it returns replaces what was typed. |
 | `kind` | `"button"\|"input"\|"label"` | _Optional._ "label" shows its value but takes no typing: locked text. |
 
 **Returns** `number`: The widget's index, from 1.
@@ -3362,6 +3375,7 @@ The converter rewrites a module's scripts into these calls by rule; this is the 
 | `getColorTint` | [`self.tint`](#selftint) |
 | `getDecals` | [`self.decals`](#selfdecals) |
 | `getDescription` | [`self.note`](#selfnote) |
+| `getGMNotes` | [`self.gm_notes`](#selfgm_notes) |
 | `getGUID` | [`self.guid`](#selfguid) |
 | `getHoverObject` | [`game.hovered`](#gamehovered) |
 | `getLock` | [`self.locked`](#selflocked) |

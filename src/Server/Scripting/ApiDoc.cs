@@ -199,6 +199,7 @@ public static partial class ApiDoc
         See("self.attach", "self.detach");
         F("piece", "tags", "string[]", "Its own tags, or its kind's when it has none of its own.", "getTags");
         See("self.set_tags", "self.add_tag", "board.pieces");
+        F("piece", "gm_notes", "string", "The umpire's notes a module saved on the piece; empty when it had none.", "getGMNotes");
         F("piece", "memo", "string", "A string the scripts keep on the piece; saved with the game.", "memo");
         Note("The memo travels with the piece: a copy made from its data keeps it. For a script's own state, `on_save` is the usual place.");
         See("self.set_memo");

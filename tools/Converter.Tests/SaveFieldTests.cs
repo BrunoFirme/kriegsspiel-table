@@ -426,6 +426,33 @@ public sealed class SaveFieldTests : ConverterHarness
         Assert.Equal("Spare", Assert.Single(piece.Stowed!).Label);
     }
 
+    [Theory]
+    [InlineData("", "")]
+    [InlineData("function onLoad() end", "{\"turn\":3}")]
+    public void The_global_script_state_comes_in_only_with_a_global_script_as_the_game_reads_it(string lua, string kept)
+    {
+        TempConfig();
+        var module = Module("global", Obj("BlockSquare", "Marker", 1));
+        var json = JsonNode.Parse(File.ReadAllText(module))!.AsObject();
+        json["LuaScript"] = lua;
+        json["LuaScriptState"] = "{\"turn\":3}";
+        File.WriteAllText(module, json.ToJsonString());
+        var main = typeof(Config).Assembly.EntryPoint!;
+
+        var code = (int)main.Invoke(null, new object[] { new[] { "import", module, "--config", Path.Combine(_root, "converter.json"), "--out", Packages } })!;
+
+        Assert.Equal(0, code);
+        Assert.Equal(kept, Json.Load<Scenario>(Path.Combine(Packages, "scenarios", "global", "scenario.json")).ScriptState ?? "");
+    }
+
+    [Fact]
+    public void A_pdf_book_keeps_its_page_offset_and_opens_with_its_password()
+    {
+        var o = new ModuleObj(new JsonObject { ["Name"] = "Custom_PDF", ["CustomPDF"] = new JsonObject { ["PDFUrl"] = "http://a/b.pdf", ["PDFPassword"] = "kriegs", ["PDFPage"] = 3, ["PDFPageOffset"] = -2 } });
+
+        Assert.Equal(("kriegs", 3, -2), (o.PdfPassword, o.PdfPage, o.PdfPageOffset));
+    }
+
     static byte[] TwoPagePdf(double w1, double h1, double w2, double h2)
     {
         var inv = System.Globalization.CultureInfo.InvariantCulture;

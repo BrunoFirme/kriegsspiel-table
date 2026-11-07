@@ -41,8 +41,8 @@
 == Stow
   sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
   in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
-  zone:        all inside=ok; Holder-x outside=ok; Id-x outside=outside your umpire zone; on another layer, all outside=ok
-  zone, none of mine: all inside=no zone on the umpire board has been assigned to you; Holder-x outside=no zone on the umpire board has been assigned to you; Id-x outside=no zone on the umpire board has been assigned to you; on another layer, all outside=ok
+  zone:        all inside=ok; Holder-x outside=ok; Id-x outside=outside your umpire zone; Guid-x outside=ok; on another layer, all outside=ok
+  zone, none of mine: all inside=no zone on the umpire board has been assigned to you; Holder-x outside=no zone on the umpire board has been assigned to you; Id-x outside=no zone on the umpire board has been assigned to you; Guid-x outside=no zone on the umpire board has been assigned to you; on another layer, all outside=ok
   observer:    it
   stranger:    nothing
   umpires:     it it it
