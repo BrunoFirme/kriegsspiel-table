@@ -414,6 +414,7 @@ type LineDef object
   color: string
   loop: bool
   points: List<Vec2>
+  round: bool
   width: double
 type List<Approved> list of Approved
 type List<AttachmentDef> list of AttachmentDef
@@ -1223,6 +1224,7 @@ type Stroke object
   color: string
   id: string
   points: List<Vec2>
+  round: bool
   text: string
   width: double
 type TextLineDef object

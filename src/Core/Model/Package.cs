@@ -471,7 +471,8 @@ public sealed class LineDef
     public string Color { get; set; } = "#FFFFFF";
     public double Width { get; set; } = 0.1;
     public bool Loop { get; set; }
-    public LineDef Clone() => new() { Points = new(Points), Color = Color, Width = Width, Loop = Loop };
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool Round { get; set; }
+    public LineDef Clone() => new() { Points = new(Points), Color = Color, Width = Width, Loop = Loop, Round = Round };
 }
 
 public sealed class DecalDef
@@ -555,6 +556,7 @@ public sealed class Stroke
     public string Color { get; set; } = "#000000";
     public string Board { get; set; } = "";
     public string? Text { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool Round { get; set; }
 }
 
 public sealed class BoardDef

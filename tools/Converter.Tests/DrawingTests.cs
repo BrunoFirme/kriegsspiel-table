@@ -37,9 +37,8 @@ public sealed partial class ConverterTests
         var table = Json.Load<Scenario>(Path.Combine(Packages, "scenarios", "drawn", "scenario.json"));
         Assert.Equal("March orders are written before dawn.", table.Briefing);
         var strokes = table.Drawings["umpire"];
-        Assert.Equal(2, strokes.Count);
+        Assert.Single(strokes);
         Assert.Equal((new Vec2(10, 10), new Vec2(20, 10), 0.3, "#0000FF"), (strokes[0].Points[0], strokes[0].Points[1], strokes[0].Width, strokes[0].Color));
-        Assert.Equal((4, new Vec2(0, 0), 0.05), (strokes[1].Points.Count, strokes[1].Points[3], strokes[1].Width));
         var range = table.UmpireBoard.Single(p => p.Label == "Range");
         var line = Assert.Single(range.Lines);
         Assert.Equal((3, true, "#FF0000", 0.2), (line.Points.Count, line.Loop, line.Color, line.Width));

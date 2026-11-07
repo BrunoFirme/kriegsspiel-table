@@ -691,8 +691,6 @@ public sealed partial class ScenarioBuilder
 
     static double Facing(PieceDef? def, double moduleRot) => Norm(NoteCard.Is(def) ? moduleRot + NoteTurn : moduleRot);
 
-    const double ThinnestStroke = 0.05;
-
     static List<Stroke> TableStrokes(ModuleSave master)
     {
         var strokes = new List<Stroke>();
@@ -700,7 +698,7 @@ public sealed partial class ScenarioBuilder
         {
             var points = l.Points.Select(p => new Vec2(Math.Round(p.X, 4), Math.Round(p.Z, 4))).ToList();
             if (l.Loop) points.Add(points[0]);
-            strokes.Add(new Stroke { Id = $"d-{strokes.Count + 1:D6}", Points = points, Width = Math.Max(ThinnestStroke, l.Thickness), Color = l.Color });
+            strokes.Add(new Stroke { Id = $"d-{strokes.Count + 1:D6}", Points = points, Width = l.Thickness, Color = l.Color, Round = l.Round });
         }
         return strokes;
     }
@@ -713,7 +711,7 @@ public sealed partial class ScenarioBuilder
             lines.Add(new LineDef
             {
                 Points = l.Points.Select(p => new Vec2(Math.Round(-p.X * ux, 4), Math.Round(p.Z * uz, 4))).ToList(),
-                Color = l.Color, Width = Math.Max(ThinnestStroke, l.Thickness), Loop = l.Loop,
+                Color = l.Color, Width = l.Thickness, Loop = l.Loop, Round = l.Round,
             });
         return lines;
     }

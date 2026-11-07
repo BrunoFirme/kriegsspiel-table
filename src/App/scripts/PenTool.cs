@@ -144,7 +144,7 @@ sealed class PenTool
                 cmds.Add(new EraseStroke { Layer = layer, StrokeId = st.Id });
                 if (st.Text != null) continue;
                 foreach (var piece in Polyline.Cut(st.Points, p, r))
-                    cmds.Add(new Draw { Layer = layer, Stroke = new Stroke { Points = piece, Color = st.Color, Width = st.Width, Board = st.Board } });
+                    cmds.Add(new Draw { Layer = layer, Stroke = new Stroke { Points = piece, Color = st.Color, Width = st.Width, Board = st.Board, Round = st.Round } });
             }
         }
         if (cmds.Count == 0)

@@ -180,6 +180,24 @@ public sealed class SaveFieldTests : ConverterHarness
         Assert.Equal(DefFactory.FigurineCard, xs.Max(), 3);
     }
 
+    [Fact]
+    public void A_line_turns_by_its_saved_rotation_ends_round_unless_saved_square_and_a_line_of_no_thickness_draws_nothing()
+    {
+        static JsonObject Line(double thickness, bool? square, double turnY) => new()
+        {
+            ["points3"] = new JsonArray(new JsonObject { ["x"] = 0.0, ["y"] = 0.0, ["z"] = 0.0 }, new JsonObject { ["x"] = 1.0, ["y"] = 0.0, ["z"] = 0.0 }),
+            ["color"] = new JsonObject { ["r"] = 1.0, ["g"] = 1.0, ["b"] = 1.0 }, ["thickness"] = thickness,
+            ["rotation"] = new JsonObject { ["x"] = 0.0, ["y"] = turnY, ["z"] = 0.0 }, ["square"] = square is { } s ? JsonValue.Create(s) : null,
+        };
+
+        var lines = ModuleObj.LinesOf(new JsonArray(Line(0.01, null, 90), Line(0.2, true, 0), Line(0, false, 0)));
+
+        Assert.Equal(2, lines.Count);
+        Assert.Equal((0.0, 0.0, -1.0), (Math.Round(lines[0].Points[1].X, 6), Math.Round(lines[0].Points[1].Y, 6), Math.Round(lines[0].Points[1].Z, 6)));
+        Assert.Equal((0.01, true), (lines[0].Thickness, lines[0].Round));
+        Assert.Equal((1.0, false), (lines[1].Points[1].X, lines[1].Round));
+    }
+
     static byte[] TwoPagePdf(double w1, double h1, double w2, double h2)
     {
         var inv = System.Globalization.CultureInfo.InvariantCulture;

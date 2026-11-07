@@ -24,7 +24,7 @@ static class Ribbon
         return o;
     }
 
-    public static void Draw(ImmediateMesh im, StandardMaterial3D mat, List<Vec2> pts, double width, float y, Ground? ground = null)
+    public static void Draw(ImmediateMesh im, StandardMaterial3D mat, List<Vec2> pts, double width, float y, Ground? ground = null, bool round = false)
     {
         var g = ground ?? Ground.Flat;
         pts = Draped(pts, g);
@@ -57,6 +57,29 @@ static class Ribbon
             var p = W(i);
             im.SurfaceAddVertex(p + off);
             im.SurfaceAddVertex(p - off);
+        }
+        im.SurfaceEnd();
+        if (!round || closed) return;
+        Cap(im, mat, W(0), -Dir(0, 1), half);
+        Cap(im, mat, W(m - 1), Dir(m - 2, m - 1), half);
+    }
+
+    public static int CapSteps(double width) => (int)(CapBase + Math.Sqrt(Math.Max(0, width)) * CapPerRoot);
+
+    const double CapBase = 4, CapPerRoot = 7;
+
+    static void Cap(ImmediateMesh im, StandardMaterial3D mat, Vector3 at, Vector3 outward, float half)
+    {
+        if (outward == Vector3.Zero) return;
+        var side = new Vector3(-outward.Z, 0, outward.X);
+        int steps = Math.Max(1, CapSteps(half * 2));
+        im.SurfaceBegin(Mesh.PrimitiveType.Triangles, mat);
+        for (int k = 0; k < steps; k++)
+        {
+            float a0 = Mathf.Pi * k / steps, a1 = Mathf.Pi * (k + 1) / steps;
+            im.SurfaceAddVertex(at);
+            im.SurfaceAddVertex(at + (side * Mathf.Cos(a0) + outward * Mathf.Sin(a0)) * half);
+            im.SurfaceAddVertex(at + (side * Mathf.Cos(a1) + outward * Mathf.Sin(a1)) * half);
         }
         im.SurfaceEnd();
     }

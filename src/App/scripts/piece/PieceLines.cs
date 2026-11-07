@@ -49,6 +49,11 @@ sealed class PieceLines
                 mesh.SurfaceAddVertex(pts[i] + side);
             }
             mesh.SurfaceEnd();
+            if (ln.Round && !ln.Loop)
+            {
+                Cap(mesh, color, pts[0], pts[0] - pts[1], hw);
+                Cap(mesh, color, pts[^1], pts[^1] - pts[^2], hw);
+            }
             any = true;
         }
         if (!any) return;
@@ -60,5 +65,27 @@ sealed class PieceLines
                     CullMode = BaseMaterial3D.CullModeEnum.Disabled, RenderPriority = 1 },
         };
         _piece.AddChild(_node);
+    }
+
+    static void Cap(ImmediateMesh mesh, Color color, Vector3 at, Vector3 outward, float hw)
+    {
+        outward.Y = 0;
+        if (outward.LengthSquared() < 0.000001f) return;
+        outward = outward.Normalized();
+        var side = new Vector3(-outward.Z, 0, outward.X);
+        int steps = Mathf.Max(1, Ribbon.CapSteps(hw * 2));
+        mesh.SurfaceBegin(Mesh.PrimitiveType.Triangles);
+        mesh.SurfaceSetColor(color);
+        for (int k = 0; k < steps; k++)
+        {
+            float a0 = Mathf.Pi * k / steps, a1 = Mathf.Pi * (k + 1) / steps;
+            mesh.SurfaceSetNormal(Vector3.Up);
+            mesh.SurfaceAddVertex(at);
+            mesh.SurfaceSetNormal(Vector3.Up);
+            mesh.SurfaceAddVertex(at + (side * Mathf.Cos(a0) + outward * Mathf.Sin(a0)) * hw);
+            mesh.SurfaceSetNormal(Vector3.Up);
+            mesh.SurfaceAddVertex(at + (side * Mathf.Cos(a1) + outward * Mathf.Sin(a1)) * hw);
+        }
+        mesh.SurfaceEnd();
     }
 }

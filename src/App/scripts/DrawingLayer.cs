@@ -60,7 +60,7 @@ sealed class DrawingLayer
                     AlbedoColor = color, ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded,
                     Transparency = color.A < 1 ? BaseMaterial3D.TransparencyEnum.Alpha : BaseMaterial3D.TransparencyEnum.Disabled,
                 };
-                Ribbon.Draw(im, mat, st.Points, st.Width, _c.SheetsTop + StrokeLift, _c.S.Ground);
+                Ribbon.Draw(im, mat, st.Points, st.Width, _c.SheetsTop + StrokeLift, _c.S.Ground, st.Round);
             }
             var mi = new MeshInstance3D { Mesh = im, CastShadow = GeometryInstance3D.ShadowCastingSetting.Off };
             Root.AddChild(mi);

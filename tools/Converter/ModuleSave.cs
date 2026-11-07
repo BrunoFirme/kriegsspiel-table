@@ -120,7 +120,7 @@ public sealed class ModuleObj
         return $"#{r:X2}{g:X2}{b:X2}";
     }
 
-    public sealed record Line(List<(double X, double Y, double Z)> Points, string Color, double Thickness, bool Loop);
+    public sealed record Line(List<(double X, double Y, double Z)> Points, string Color, double Thickness, bool Loop, bool Round = false);
 
     public List<Line> VectorLines => LinesOf(J["AttachedVectorLines"]);
 
@@ -130,14 +130,27 @@ public sealed class ModuleObj
         var lines = new List<Line>();
         foreach (var l in (node as JsonArray)?.OfType<JsonObject>() ?? [])
         {
-            var points = (l["points3"] as JsonArray)?.OfType<JsonObject>().Select(p => (D(p, "x"), D(p, "y"), D(p, "z"))).ToList() ?? new();
-            if (points.Count < 2) continue;
+            var turn = l["rotation"] as JsonObject;
+            var points = (l["points3"] as JsonArray)?.OfType<JsonObject>().Select(p => Turned((D(p, "x"), D(p, "y"), D(p, "z")), D(turn, "x"), D(turn, "y"), D(turn, "z")))
+                .ToList() ?? new();
+            double thickness = D(l, "thickness", DefaultThickness);
+            if (points.Count < 2 || thickness <= 0) continue;
             var c = l["color"] as JsonObject;
             if (c?["a"] != null && D(c, "a", 1) <= 0) continue;
             var colour = c is null ? "#FFFFFF" : HexOf(c) + AlphaOf(c);
-            lines.Add(new Line(points, colour, D(l, "thickness", DefaultThickness), ModuleValues.Flag(l["loop"], false)));
+            lines.Add(new Line(points, colour, thickness, ModuleValues.Flag(l["loop"], false), !ModuleValues.Flag(l["square"], false)));
         }
         return lines;
+    }
+
+    public static (double X, double Y, double Z) Turned((double X, double Y, double Z) p, double rx, double ry, double rz)
+    {
+        const double Degree = Math.PI / 180;
+        double cz = Math.Cos(rz * Degree), sz = Math.Sin(rz * Degree), cx = Math.Cos(rx * Degree), sx = Math.Sin(rx * Degree);
+        double cy = Math.Cos(ry * Degree), sy = Math.Sin(ry * Degree);
+        double x1 = p.X * cz - p.Y * sz, y1 = p.X * sz + p.Y * cz, z1 = p.Z;
+        double y2 = y1 * cx - z1 * sx, z2 = y1 * sx + z1 * cx;
+        return (x1 * cy + z2 * sy, y2, -x1 * sy + z2 * cy);
     }
 
     public bool IsCard => Name is "Card" or "CardCustom";
