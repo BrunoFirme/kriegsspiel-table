@@ -366,7 +366,7 @@ public sealed partial class ScenarioBuilder
         var usedAssets = extras.M.Pieces.SelectMany(KTable.Client.Naming.AssetsOf).ToHashSet();
         usedAssets.UnionWith(pieces.SelectMany(p => p.Decals).Select(d => d.Picture));
         usedAssets.UnionWith(scenario.Decals.Values.SelectMany(l => l).Select(d => d.Picture).Concat(scenario.DecalPalette.Select(d => d.Picture)));
-        usedAssets.UnionWith(scenario.UiPictures.Values.Concat(PanelPictures(scenario.Ui)).Concat(pieces.SelectMany(p => PanelPictures(p.Ui))));
+        usedAssets.UnionWith(PanelAssets(scenario, pieces));
         usedAssets.UnionWith(extras.M.Assets.Keys.Where(k => !usedAssets.Contains(k) && texts.Any(t => t.Contains(k, StringComparison.Ordinal))));
         foreach (var k in extras.M.Assets.Keys.Where(k => !usedAssets.Contains(k)).ToList()) extras.M.Assets.Remove(k);
         extras.Save();
@@ -554,7 +554,8 @@ public sealed partial class ScenarioBuilder
             Tags = o.Tags, Memo = _defs.RewriteUrls(o.Memo, extras, $"{layer.Name} {o.Name} '{o.Nickname}' {o.Guid} memo"),
             Locked = parent == null && o.Locked, FaceDown = o.Flipped && def.Kind != "model" && def.Back != null, NotSticky = !o.Sticky,
             NotBoxSelected = !o.DragSelectable, MeasuresMoves = o.MeasureMovement,
-            Ui = ObjectPanels(o, extras, $"{layer.Name} {o.Name} '{o.Nickname}' {o.Guid}"),
+            Ui = ObjectPanels(o, extras, $"{layer.Name} {o.Name} '{o.Nickname}' {o.Guid}", out var uiLayout, out var uiAssets),
+            UiLayout = uiLayout, UiAssets = uiAssets,
             Worth = o.Worth,
             Lettering = r.Lettering,
             StateGuids = StateGuidsOf(o, def),

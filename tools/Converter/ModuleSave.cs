@@ -25,6 +25,11 @@ public sealed class ModuleObj
     public string XmlUi => S(J["XmlUI"]) ?? "";
     public List<(string Name, string Url)> UiAssets => UiAssetsOf(J["CustomUIAssets"]);
 
+    public List<(string Name, string Url, int Type)> UiAssetStates => UiAssetStatesOf(J["CustomUIAssets"]);
+
+    public static List<(string Name, string Url, int Type)> UiAssetStatesOf(JsonNode? node) => (node as JsonArray)?.OfType<JsonObject>()
+        .Select(a => (S(a["Name"]) ?? "", S(a["URL"]) ?? "", a["Type"] != null ? I(a, "Type") : 0)).ToList() ?? new();
+
     public static List<(string Name, string Url)> UiAssetsOf(JsonNode? node) => (node as JsonArray)?.OfType<JsonObject>()
         .Where(a => I(a, "Type") == 0 && Blank(S(a["Name"])) != null && Blank(S(a["URL"])) != null)
         .Select(a => (Blank(S(a["Name"]))!, Blank(S(a["URL"]))!)).ToList() ?? new();
@@ -268,6 +273,7 @@ public sealed class ModuleSave
     public List<ModuleObj.PaletteEntry> DecalPalette { get; init; } = new();
     public string XmlUi { get; init; } = "";
     public List<(string Name, string Url)> UiAssets { get; init; } = new();
+    public List<(string Name, string Url, int Type)> UiAssetStates { get; init; } = new();
 
     public static ModuleSave Load(Config cfg, string workshopIdOrPath)
     {
@@ -294,6 +300,7 @@ public sealed class ModuleSave
             DecalPalette = ModuleObj.PaletteOf(root["DecalPallet"]),
             XmlUi = root["XmlUI"] is JsonValue x && x.TryGetValue<string>(out var xml) ? xml : "",
             UiAssets = ModuleObj.UiAssetsOf(root["CustomUIAssets"]),
+            UiAssetStates = ModuleObj.UiAssetStatesOf(root["CustomUIAssets"]),
         };
     }
 }

@@ -2,7 +2,7 @@ using KTable.Core.Model;
 
 namespace KTable.Core.Protocol;
 
-public static class StateMachine
+public static partial class StateMachine
 {
     public static string? Apply(GameState g, Command c, out Command? inverse)
     {
@@ -1006,46 +1006,6 @@ public static class StateMachine
     {
         inverse = new SetGlobalMenuItems { Items = g.MenuItems.Select(m => m.Clone()).ToList() };
         g.MenuItems = sgm.Items.Select(m => m.Clone()).ToList();
-        return null;
-    }
-
-    static string? ApplySetUi(GameState g, SetUi su, ref Command? inverse)
-    {
-        var root = g.UiRoot(su.Layer, su.Piece);
-        if (root == null) return "no such piece";
-        inverse = new SetUi { Layer = su.Layer, Piece = su.Piece, Tree = root.Select(n => n.Clone()).ToList() };
-        var tree = su.Tree.Select(n => n.Clone()).ToList();
-        if (su.Piece == null) g.Ui = tree;
-        else g.Find(su.Layer ?? Layers.Umpire, su.Piece)!.Ui = tree;
-        return null;
-    }
-
-    static string? ApplySetUiPictures(GameState g, SetUiPictures sup, ref Command? inverse)
-    {
-        inverse = new SetUiPictures { Pictures = new(g.UiPictures) };
-        g.UiPictures = new(sup.Pictures);
-        return null;
-    }
-
-    static string? ApplySetUiAttributes(GameState g, SetUiAttributes sua, ref Command? inverse)
-    {
-        var node = g.UiNode(sua.Layer, sua.Piece, sua.Id);
-        if (node == null) return "no such element";
-        var old = new Dictionary<string, string>();
-        foreach (var (k, v) in sua.Attributes) { old[k] = node.Attributes.TryGetValue(k, out var ov) ? ov : ""; node.Attributes[k] = v; }
-        inverse = new SetUiAttributes { Layer = sua.Layer, Piece = sua.Piece, Id = sua.Id, Attributes = old };
-        return null;
-    }
-
-    static string? ApplyUiEvent(GameState g, UiEvent ue)
-    {
-        var node = g.UiNode(ue.Layer, ue.Piece, ue.Id);
-        if (node == null) return "no such element";
-        if (ue.Event is "end" or "change")
-        {
-            var key = node.Tag switch { "Toggle" or "ToggleButton" => "isOn", "Slider" or "ProgressBar" => "value", "Dropdown" => "value", _ => "text" };
-            node.Attributes[key] = ue.Value;
-        }
         return null;
     }
 

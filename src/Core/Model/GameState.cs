@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace KTable.Core.Model;
 
 public enum Role { Observer, Umpire, LeadUmpire, HostUmpire }
@@ -42,6 +44,9 @@ public sealed class GameState
     public string ScriptState { get; set; } = "";
     public List<UiNode> Ui { get; set; } = new();
     public Dictionary<string, string> UiPictures { get; set; } = new();
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public KTable.Core.Panels.UiLayout? UiLayout { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<KTable.Core.Panels.UiAsset>? UiAssets { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public Dictionary<string, string>? UiLinks { get; set; }
     public List<HotkeyDef> Hotkeys { get; set; } = new();
     public List<MenuItemDef> MenuItems { get; set; } = new();
 
@@ -82,6 +87,9 @@ public sealed class GameState
         s.Boards = Boards.Select(b => b.Clone()).ToList();
         s.Ui = Ui.Select(n => n.Clone()).ToList();
         s.UiPictures = new(UiPictures);
+        s.UiLayout = UiLayout?.Clone();
+        s.UiAssets = UiAssets?.Select(a => a.Clone()).ToList();
+        s.UiLinks = UiLinks == null ? null : new(UiLinks);
         return s;
     }
 
@@ -103,6 +111,10 @@ public sealed class GameState
         g.Boards = s.Boards.Select(b => b.Clone()).ToList();
         g.Ui = (s.Ui ?? new()).Select(n => n.Clone()).ToList();
         g.UiPictures = new(s.UiPictures ?? new());
+        g.UiLayout = s.UiLayout?.Clone();
+        g.UiAssets = s.UiAssets?.Select(a => a.Clone()).ToList();
+        g.UiLinks = s.UiLinks == null ? null : new(s.UiLinks);
+        KTable.Core.Panels.PanelState.Ensure(g);
         g.NextId = 1;
         g.EnsureNextId();
         g.EnsureBoard();
@@ -164,10 +176,14 @@ public sealed class GameState
         ScriptState = s.ScriptState;
         Ui = s.Ui;
         UiPictures = s.UiPictures ?? new();
+        UiLayout = s.UiLayout;
+        UiAssets = s.UiAssets;
+        UiLinks = s.UiLinks;
         Hotkeys = s.Hotkeys;
         MenuItems = s.MenuItems;
         NextId = Math.Max(NextId, s.NextId);
         EnsureNextId();
+        KTable.Core.Panels.PanelState.Ensure(this);
     }
 
     public List<PieceInstance> Layer(string layer)

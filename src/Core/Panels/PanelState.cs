@@ -1,0 +1,23 @@
+using KTable.Core.Model;
+
+namespace KTable.Core.Panels;
+
+public static class PanelState
+{
+    public static void Ensure(GameState g)
+    {
+        if (g.UiLayout == null && g.Ui.Count > 0) g.UiLayout = Legacy(g.Ui);
+        if (g.UiAssets == null && g.UiPictures.Count > 0) g.UiAssets = Assets(g.UiPictures);
+        foreach (var p in g.Layers.Values.SelectMany(l => l)) Ensure(p);
+    }
+
+    public static void Ensure(PieceInstance p)
+    {
+        if (p.UiLayout == null && p.Ui.Count > 0) p.UiLayout = Legacy(p.Ui);
+        foreach (var s in p.Stowed ?? []) Ensure(s);
+    }
+
+    public static UiLayout Legacy(List<UiNode> tree) => PanelBuild.Of(PanelData.Write(tree)).Layout;
+
+    public static List<UiAsset> Assets(Dictionary<string, string> pictures) => pictures.Select(p => new UiAsset { Name = p.Key, Url = p.Value }).ToList();
+}

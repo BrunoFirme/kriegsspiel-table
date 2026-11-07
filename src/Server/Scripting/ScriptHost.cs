@@ -256,7 +256,7 @@ public sealed partial class ScriptHost
         var resumes = _timers.TakeResumes();
         var updating = _pieces.Values.Where(ps => ps.HasUpdate && ps.Enabled).ToList();
         if (_global is { HasUpdate: true, Enabled: true }) updating.Add(_global);
-        if (due.Count == 0 && resumes.Count == 0 && updating.Count == 0 && _fetched.IsEmpty) return new();
+        if (due.Count == 0 && resumes.Count == 0 && updating.Count == 0 && _fetched.IsEmpty && !Panels.Busy) return new();
         return Run(0, false, () =>
         {
             DeliverPictures();
@@ -283,6 +283,7 @@ public sealed partial class ScriptHost
                 });
             foreach (var (owner, co, loadFrames) in resumes)
                 Guard(owner.Id, () => { if (owner.Enabled && IsCurrent(owner)) WhileLoading(loadFrames, () => Resume(owner, co)); });
+            Panels.Land();
         });
     }
 
@@ -316,6 +317,7 @@ public sealed partial class ScriptHost
         {
             _handles.Forget(id);
             _uiTables.Remove(id);
+            Panels.Forget(id);
             _compatProps?.Set(id, DynValue.Nil);
         }
     }
@@ -548,7 +550,7 @@ public sealed partial class ScriptHost
         _feed.Add(text, kind, src, src.Length == 0 ? null : NameOf(src), line);
     }
 
-    string NameOf(string id) => Find(id) is { } p ? p.Label ?? _s.Store?.Def(p.Def)?.Name ?? id : id;
+    internal string NameOf(string id) => Find(id) is { } p ? p.Label ?? _s.Store?.Def(p.Def)?.Name ?? id : id;
 
     public List<ScriptInfo> Describe()
     {
@@ -649,6 +651,7 @@ public sealed partial class ScriptHost
         try
         {
             Guard("", body);
+            Guard("", Panels.Flush);
             Guard("", SaveReacted);
             FlushStaging();
         }
@@ -929,7 +932,7 @@ public sealed partial class ScriptHost
                 }
                 break;
             case UiEvent ue:
-                UiEventReact(ue, who);
+                Panels.React(ue, who);
                 break;
             case DialogResult dr:
                 DialogReact(dr, who);

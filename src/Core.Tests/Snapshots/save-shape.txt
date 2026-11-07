@@ -1,4 +1,4 @@
-format 25
+format 26
 type AccessChanged object
   access: GameAccess
 type AddBoard object
@@ -246,6 +246,7 @@ type Dictionary<string,JsonElement> map string to JsonElement
 type Dictionary<string,List<DecalDef>> map string to List<DecalDef>
 type Dictionary<string,List<PieceInstance>> map string to List<PieceInstance>
 type Dictionary<string,List<Stroke>> map string to List<Stroke>
+type Dictionary<string,List<int>> map string to List<int>
 type Dictionary<string,int> map string to int
 type Dictionary<string,string> map string to string
 type DieFace object
@@ -337,6 +338,9 @@ type GameState object
   scriptState: string
   sheets: List<SheetDef>
   ui: List<UiNode>
+  uiAssets: List<UiAsset>
+  uiLayout: UiLayout
+  uiLinks: Dictionary<string,string>
   uiPictures: Dictionary<string,string>
   visionRadius: double
   wind: Wind
@@ -438,7 +442,10 @@ type List<Stroke> list of Stroke
 type List<TextLineDef> list of TextLineDef
 type List<TurnInfo> list of TurnInfo
 type List<TurnRecord> list of TurnRecord
+type List<UiAsset> list of UiAsset
+type List<UiElement> list of UiElement
 type List<UiNode> list of UiNode
+type List<UiRule> list of UiRule
 type List<Vec2> list of Vec2
 type List<Widget> list of Widget
 type List<Zone> list of Zone
@@ -583,10 +590,12 @@ type PieceDef object
   mesh: string
   name: string
   nameBox: FaceBox
+  normal: string
   pageOffset: int
   script: string
   scriptHash: string
   scriptState: string
+  shadowless: bool
   shape: string
   shine: ShineDef
   size: Size2
@@ -639,6 +648,8 @@ type PieceInstance object
   text: Dictionary<string,string>
   tintOverride: string
   ui: List<UiNode>
+  uiAssets: List<UiAsset>
+  uiLayout: UiLayout
   widgets: List<Widget>
   worth: int
   worthGroups: int
@@ -788,6 +799,9 @@ type Scenario object
   scriptState: string
   sheets: List<SheetDef>
   ui: List<UiNode>
+  uiAssets: List<UiAsset>
+  uiLayout: UiLayout
+  uiLinks: Dictionary<string,string>
   uiPictures: Dictionary<string,string>
   umpireBoard: List<PieceInstance>
   visionRadius: double
@@ -1087,21 +1101,31 @@ type SetTint object
   value: string
 type SetUi object
   actor: long
+  assets: List<UiAsset>
   at: long
   layer: string
+  layout: UiLayout
   piece: string
   seq: long
   tree: List<UiNode>
   undoOf: long
+  xml: string
 type SetUiAttributes object
   actor: long
   at: long
   attributes: Dictionary<string,string>
+  data: UiNode
+  dataPath: List<int>
   id: string
+  ids: Dictionary<string,List<int>>
+  kind: string
   layer: string
+  live: UiElement
+  livePath: List<int>
   piece: string
   seq: long
   undoOf: long
+  value: string
 type SetUiPictures object
   actor: long
   at: long
@@ -1256,21 +1280,51 @@ type TurnState object
   index: int
   info: TurnInfo
   state: GameState
+type UiAsset object
+  name: string
+  type: int
+  url: string
+type UiElement object
+  active: string
+  attributes: Dictionary<string,string>
+  children: List<UiElement>
+  classes: List<string>
+  inner: string
+  options: List<UiNode>
+  own: List<string>
+  shown: string
+  tag: string
 type UiEvent object
   actor: long
   at: long
   event: string
   id: string
   layer: string
+  path: List<int>
   piece: string
   seq: long
   undoOf: long
   value: string
+type UiLayout object
+  broken: string
+  colors: Dictionary<string,string>
+  elements: List<UiElement>
+  ids: Dictionary<string,List<int>>
+  rules: List<UiRule>
+  seen: List<UiRule>
+  tooltip: Dictionary<string,string>
 type UiNode object
   attributes: Dictionary<string,string>
   children: List<UiNode>
   id: string read-only
   tag: string
+  value: string
+type UiRule object
+  attributes: Dictionary<string,string>
+  key: string
+  order: int
+  selector: string
+  type: string
 type Undo object
   actor: long
   at: long

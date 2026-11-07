@@ -78,7 +78,7 @@
 ---@field align? "left"|"center"|"right" Default "center".
 ---@field lines? number Lines of text the box holds. Default 1.
 ---@field tooltip? string Shown when the pointer rests on it.
----@field on_change? string The handler's name: called as fn(who, value, index, piece) when the umpire finishes typing.
+---@field on_change? string The handler's name: called as fn(who, value, index, piece) when the umpire finishes typing; text it returns replaces what was typed.
 ---@field kind? "button"|"input"|"label" "label" shows its value but takes no typing: locked text.
 
 ---@class PieceCallOptions
@@ -519,15 +519,17 @@ function game.dialog(who, spec, fn) end
 function game.fetch_picture(link, fn) end
 
 ---@class KTUi
----@field loading boolean false: panel pictures come with their packs.
----@field assetType table { Image = 0, AssetBundle = 1 }, as module scripts name picture types.
+---@field loading boolean true from setting panels until they land, and while panels that did not read are in place.
+---@field assetType table { Image = 0, AssetBundle = 1 }, also as image and assetBundle, as module scripts name picture types.
 ui = {}
 
----Replaces the panels: XML (several roots allowed) or tables { tag =, attributes = {}, children = {}, value = }.
----@param xml_or_table string|UiNode[] XML, or a list of element tables.
-function ui.set(xml_or_table) end
+---Replaces the panels: XML (several roots allowed) or a list of tables { tag =, attributes = {}, children = {}, value = }. They land on the next frame.
+---@param xml_or_list string|UiNode[] XML, or a list of element tables; a single table that is not a list is refused, as the tabletop refuses it.
+---@param pictures? table { name =, url = } entries, as ui.set_pictures takes, set at once.
+---@return boolean # true when the panels were taken; false for nil or a table that is not a list.
+function ui.set(xml_or_list, pictures) end
 
----The panels as XML, to add to and set again.
+---The panels as they were written, with the changes made since: each element on its own lines.
 ---@return string
 function ui.xml() end
 
@@ -535,47 +537,47 @@ function ui.xml() end
 ---@return UiNode[] # A list of { tag =, attributes = {}, children = {}, value = } tables.
 function ui.tree() end
 
----Sets one attribute of an element; false when there is no such element.
----@param id string The element's id.
----@param name string The attribute, as in the XML (text, color, active, percentage…).
----@param value string|number|boolean The value; numbers and booleans are written as the XML would hold them.
----@return boolean # true when the element exists.
+---Changes one attribute of an element; it lands when the call ends.
+---@param id string The element's id, in any letter case.
+---@param name string The attribute, as in the XML (text, color, active, percentage…). class changes only what ui.xml gives back: use ui.set_class.
+---@param value string|number|boolean The value; true and false are written True and False, as the tabletop writes them.
+---@return boolean # true when the element is there now and both name and value are given.
 function ui.set_attribute(id, name, value) end
 
----Sets several attributes at once.
+---Changes several attributes at once.
 ---@param id string The element's id.
 ---@param table table Attribute → value.
----@return boolean # true when the element exists.
+---@return boolean # true when the element is there now.
 function ui.set_attributes(id, table) end
 
----Reads an attribute, or nil.
+---Reads an attribute of the element as it stands, with what the panels' Defaults give it, or nil.
 ---@param id string The element's id.
 ---@param name string The attribute.
 ---@return string|nil
 function ui.get_attribute(id, name) end
 
----Shows an element (active = true).
+---Shows an element.
 ---@param id string The element's id.
----@return boolean # true when the element exists.
+---@return boolean # true when the element is there now.
 function ui.show(id) end
 
----Hides an element (active = false).
+---Hides an element; one inside a hidden element stays as it is.
 ---@param id string The element's id.
----@return boolean # true when the element exists.
+---@return boolean # true when the element is there now.
 function ui.hide(id) end
 
----Sets an element's value: the text, a toggle's isOn, a slider's or dropdown's value.
+---Sets the value the panels hold between an element's tags; a Text element shows it as its words.
 ---@param id string The element's id.
 ---@param value string|number|boolean The new value.
----@return boolean # true when the element exists.
+---@return boolean # true when the element is there now and a value is given.
 function ui.set_value(id, value) end
 
----Reads an element's value.
----@param id string The element's id.
+---Reads the value held between an element's tags, or nil.
+---@param id string The element's id, in its exact letter case.
 ---@return string|nil
 function ui.get_value(id) end
 
----Every attribute of an element, or nil.
+---Every attribute of the element as it stands, or nil.
 ---@param id string The element's id.
 ---@return table|nil
 function ui.get_attributes(id) end
@@ -583,15 +585,15 @@ function ui.get_attributes(id) end
 ---Sets an element's classes, which take their looks from the Defaults the panels hold.
 ---@param id string The element's id.
 ---@param classes string Class names, separated by spaces.
----@return boolean # true when the element exists.
+---@return boolean # true when the element is there now.
 function ui.set_class(id, classes) end
 
----The pictures panels name: a list of { name =, url =, type = }.
+---The pictures panels name: a list of { type =, name =, url = }.
 ---@return table
 function ui.pictures() end
 
----Replaces the pictures panels name. An image attribute holding a name shows that picture.
----@param list table { name =, url = } entries; url is a picture of a pack.
+---Replaces the pictures panels name, at once, and builds the panels again from what they hold.
+---@param list table { name =, url =, type = } entries; url is a picture of a pack.
 ---@return boolean
 function ui.set_pictures(list) end
 
