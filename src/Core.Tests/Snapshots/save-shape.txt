@@ -122,6 +122,7 @@ type Command abstract
   derived RollDice = RollDice
   derived Say = Say
   derived SelectPiece = SelectPiece
+  derived SetBookHighlight = SetBookHighlight
   derived SetBriefing = SetBriefing
   derived SetCalibration = SetCalibration
   derived SetClock = SetClock
@@ -165,6 +166,7 @@ type Command abstract
   derived SetWind = SetWind
   derived SetWorth = SetWorth
   derived SetZone = SetZone
+  derived ShowContents = ShowContents
   derived ShowDialog = ShowDialog
   derived SpawnPiece = SpawnPiece
   derived StampDecal = StampDecal
@@ -616,6 +618,7 @@ type PieceDef object
   tintsPictures: bool
 type PieceInstance object
   attached: List<string>
+  bookHighlight: double[]
   counters: Dictionary<string,int>
   decals: List<DecalDef>
   decalsOnState: int?
@@ -835,6 +838,14 @@ type SelectPiece object
   selected: bool
   seq: long
   to: string
+  undoOf: long
+type SetBookHighlight object
+  actor: long
+  at: long
+  box: double[]
+  id: string
+  layer: string
+  seq: long
   undoOf: long
 type SetBriefing object
   actor: long
@@ -1193,6 +1204,15 @@ type ShineDef object
   rim: double
   sharpness: double
   strength: double
+type ShowContents object
+  actor: long
+  at: long
+  id: string
+  layer: string
+  most: int
+  seq: long
+  to: string
+  undoOf: long
 type ShowDialog object
   actor: long
   at: long

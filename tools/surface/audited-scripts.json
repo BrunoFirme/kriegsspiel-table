@@ -143,7 +143,10 @@
   "setCustomObject": "ModuleObjectCallTests.Links_made_at_run_time_find_the_kind_made_from_them_and_raw_data_spawns_that_kind",
   "getStates": "ModuleObjectCallTests.Other_states_answer_the_module_data_they_were_kept_with_and_script_init_calls_the_pieces_init",
   "script": "ModuleObjectCallTests.Other_states_answer_the_module_data_they_were_kept_with_and_script_init_calls_the_pieces_init",
-  "getLuaScript": "ModuleObjectCallTests.A_plain_table_keeps_its_keys_as_written_and_lua_script_reads_the_script_the_piece_runs"
+  "getLuaScript": "ModuleObjectCallTests.A_plain_table_keeps_its_keys_as_written_and_lua_script_reads_the_script_the_piece_runs",
+  "Book.setHighlight": "ModuleObjectCallTests.A_books_highlight_box_marks_its_open_page_until_it_is_cleared_or_the_page_turns",
+  "Book.clearHighlight": "ModuleObjectCallTests.A_books_highlight_box_marks_its_open_page_until_it_is_cleared_or_the_page_turns",
+  "Container.search": "ModuleObjectCallTests.Searching_a_container_opens_what_it_holds_on_that_seats_screen_with_the_limit_asked"
  },
  "global": {
   "broadcastToAll": "ModuleObjectCallTests.Printing_to_a_seat_nobody_holds_is_an_error_and_seat_names_are_exact",

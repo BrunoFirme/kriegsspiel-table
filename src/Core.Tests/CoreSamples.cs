@@ -90,6 +90,7 @@ public static class CoreSamples
         yield return new SetTint { Layer = L, Id = "p-000001", Value = "#00FF00" };
         yield return new SetLocked { Layer = L, Id = "p-000001", Value = true };
         yield return new SetHighlight { Layer = L, Id = "p-000001", Color = "#FF0000" };
+        yield return new SetBookHighlight { Layer = L, Id = "p-000001", Box = [0.1, 0.2, 0.5, 0.6] };
         yield return new SetPieceOption { Layer = L, Id = "p-000001", Name = PieceOptions.NoCollision, Value = true };
         yield return new FlipPiece { Layer = L, Id = "p-000001", FaceDown = true };
         yield return new SetScale { Layer = L, Id = "p-000001", Scale = 1.5 };
@@ -144,6 +145,7 @@ public static class CoreSamples
         yield return new PickGlobalMenuItem { Index = 1, Pos = new Vec2(1, 2) };
         yield return new NumberTyped { Layer = L, Id = "p-000001", Number = 3 };
         yield return new SelectPiece { Layer = L, Id = "p-000001", To = "p:7", Selected = false };
+        yield return new ShowContents { Layer = L, Id = "p-000001", To = "p:7", Most = 2 };
         yield return new EditWidget { Layer = L, Id = "p-000001", Index = 1, Value = "Regiment" };
         yield return new PickMenuItem { Layer = L, Id = "p-000001", Index = 1 };
         yield return new HoldPiece { Layer = L, Id = "p-000001", Held = true };

@@ -25,6 +25,7 @@ public partial class Table : Node3D
     public event Action? ToolChanged;
     public event Action<string>? Hint { add => _c.Hint += value; remove => _c.Hint -= value; }
     public event Action<Rect2?>? ScreenRect { add => _c.ScreenRect += value; remove => _c.ScreenRect -= value; }
+    public event Action<PieceNode, int>? ContentsAsked { add => _c.ContentsAsked += value; remove => _c.ContentsAsked -= value; }
     public event Action<double>? CalibrationMeasured { add => Router.CalibrationMeasured += value; remove => Router.CalibrationMeasured -= value; }
     public event Action? SightingChanged { add => Sighting.Changed += value; remove => Sighting.Changed -= value; }
     public event Action? MenuRequested { add => Keys.MenuRequested += value; remove => Keys.MenuRequested -= value; }

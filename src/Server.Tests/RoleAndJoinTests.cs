@@ -29,6 +29,7 @@ public class RoleAndJoinTests
         yield return new SetTint { Layer = layer, Id = "p-000004", Value = "#123456" };
         yield return new SetLocked { Layer = layer, Id = "p-000004", Value = true };
         yield return new SetHighlight { Layer = layer, Id = "p-000004", Color = "#FF0000" };
+        yield return new SetBookHighlight { Layer = layer, Id = "p-000004", Box = [0.1, 0.2, 0.5, 0.6] };
         yield return new SetPieceOption { Layer = layer, Id = "p-000004", Name = PieceOptions.NoCollision, Value = true };
         yield return new FlipPiece { Layer = layer, Id = "p-000004", FaceDown = true };
         yield return new SetScale { Layer = layer, Id = "p-000004", Scale = 1.25 };
@@ -84,6 +85,7 @@ public class RoleAndJoinTests
         yield return new PickGlobalMenuItem { Index = 1 };
         yield return new NumberTyped { Layer = layer, Id = "p-000004", Number = 2 };
         yield return new SelectPiece { Layer = layer, Id = "p-000004", To = "p:1" };
+        yield return new ShowContents { Layer = layer, Id = "p-000004", To = "p:1", Most = 3 };
         yield return new EditWidget { Layer = layer, Id = "p-000004", Index = 1, Value = "v" };
         yield return new PickMenuItem { Layer = layer, Id = "p-000004", Index = 1 };
         yield return new HoldPiece { Layer = layer, Id = "p-000004", Held = true };
@@ -110,7 +112,7 @@ public class RoleAndJoinTests
     static bool RuntimeOnly(Command c) =>
         c is RestoreTurn or LoadSave or SetScriptState or SetGlobalScriptState or SetWidgets or SetMenuItems or SetUi or SetUiAttributes or SetUiPictures or ShowDialog
             or SetMemo or SetHotkeys
-            or SetGlobalMenuItems or SelectPiece;
+            or SetGlobalMenuItems or SelectPiece or ShowContents;
 
     public static TheoryData<string, string> Cases()
     {

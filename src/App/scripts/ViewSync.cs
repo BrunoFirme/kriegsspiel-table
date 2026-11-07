@@ -107,6 +107,7 @@ sealed class ViewSync
         SetTint x => x.Id,
         SetLocked x => x.Id,
         SetHighlight x => x.Id,
+        SetBookHighlight x => x.Id,
         SetPieceOption x => x.Id,
         KTable.Core.Protocol.SetScale x => x.Id,
         FlipPiece x => x.Id,
@@ -185,6 +186,9 @@ sealed class ViewSync
                 return true;
             case SelectPiece sp:
                 if (sp.To == $"p:{s.Me.PeerId}" && (sp.Selected ? _picked.Add(sp.Id) : _picked.Remove(sp.Id))) _c.NotifySelectionChanged();
+                return true;
+            case ShowContents sc:
+                if (sc.To == $"p:{s.Me.PeerId}" && pieces.TryGet(sc.Layer, sc.Id, out var holder)) _c.NotifyContentsAsked(holder, sc.Most);
                 return true;
             case SetUiAttributes { Piece: not null } sua:
                 if (pieces.TryGet(sua.Layer ?? Layers.Umpire, sua.Piece, out var un2)) un2.SyncUi(force: true);

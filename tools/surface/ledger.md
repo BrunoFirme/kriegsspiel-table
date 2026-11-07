@@ -14,7 +14,7 @@ every row that is not dropped must end audited, used by the corpus or not.
 |---|---|---|---|---|---|
 | types | 30 | 30 | 0 | 28 | 43 |
 | save | 150 | 150 | 0 | 127 | 302 |
-| object | 65 | 65 | 0 | 4 | 260 |
+| object | 65 | 65 | 0 | 1 | 260 |
 | global | 16 | 16 | 0 | 0 | 63 |
 | namespaces | 23 | 23 | 0 | 17 | 180 |
 | events | 8 | 8 | 0 | 1 | 52 |
@@ -449,10 +449,10 @@ every row that is not dropped must end audited, used by the corpus or not.
 | `AssetBundle.getTriggerEffects` | - | partial | an effect piece has no one-shot effects of the bundle's: the list is empty | BookNotesScriptTests | BookNotesScriptTests.An_effect_a_module_script_or_an_umpire_stops_and_starts_answers_as_a_looping_effect |
 | `AssetBundle.playLoopingEffect` | - | compat | an effect piece answers as a bundle with one looping effect, its own; starting and stopping it is the piece option Running (self.effect_on) | BookNotesScriptTests | BookNotesScriptTests.An_effect_a_module_script_or_an_umpire_stops_and_starts_answers_as_a_looping_effect |
 | `AssetBundle.playTriggerEffect` | - | partial | an effect piece has no one-shot effects of the bundle's: nothing plays | BookNotesScriptTests | BookNotesScriptTests.An_effect_a_module_script_or_an_umpire_stops_and_starts_answers_as_a_looping_effect |
-| `Book.clearHighlight` | - | partial | kept with the script; a highlight box is not drawn on the page | BookNotesScriptTests |  |
+| `Book.clearHighlight` | - | compat | compat.book_highlight: set_book_highlight(nil) |  | ModuleObjectCallTests.A_books_highlight_box_marks_its_open_page_until_it_is_cleared_or_the_page_turns |
 | `Book.getPage` | - | compat | compat.book_page: the page it lies open at, from 0, or by its printed number | BookNotesScriptTests | BookNotesScriptTests.A_module_script_turns_a_book_by_its_printed_page_numbers_and_hears_the_page_turn |
 | `Book.page_offset` | - | compat | the kind's page offset from the save; a script may set another | BookNotesScriptTests | BookNotesScriptTests.A_module_script_turns_a_book_by_its_printed_page_numbers_and_hears_the_page_turn |
-| `Book.setHighlight` | - | partial | kept with the script; a highlight box is not drawn on the page | BookNotesScriptTests |  |
+| `Book.setHighlight` | - | compat | compat.book_highlight: set_book_highlight, drawn in the book reader |  | ModuleObjectCallTests.A_books_highlight_box_marks_its_open_page_until_it_is_cleared_or_the_page_turns |
 | `Book.setPage` | - | compat | compat.set_book_page: turns it, by index or printed number | BookNotesScriptTests | BookNotesScriptTests.A_module_script_turns_a_book_by_its_printed_page_numbers_and_hears_the_page_turn |
 | `Browser.pixel_width` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |  |
 | `Browser.url` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |  |
@@ -469,7 +469,7 @@ every row that is not dropped must end audited, used by the corpus or not.
 | `Container.putObject` | - | compat | holders: getObjects, putObject, takeObject, getQuantity through stow | StowScriptTests | ModuleObjectCallTests.A_bags_container_answers_as_the_tabletops_bag_container_which_does_nothing |
 | `Container.randomize` | - | compat | holders: getObjects, putObject, takeObject, getQuantity through stow | StowScriptTests | ModuleObjectCallTests.A_bags_container_answers_as_the_tabletops_bag_container_which_does_nothing |
 | `Container.removeData` | - | compat | holders: getObjects, putObject, takeObject, getQuantity through stow | StowScriptTests | ModuleObjectCallTests.A_bags_container_answers_as_the_tabletops_bag_container_which_does_nothing |
-| `Container.search` | - | compat | holders: getObjects, putObject, takeObject, getQuantity through stow | StowScriptTests |  |
+| `Container.search` | - | compat | holders: getObjects, putObject, takeObject, getQuantity through stow | StowScriptTests | ModuleObjectCallTests.Searching_a_container_opens_what_it_holds_on_that_seats_screen_with_the_limit_asked |
 | `Container.setData` | - | compat | holders: getObjects, putObject, takeObject, getQuantity through stow | StowScriptTests | ModuleObjectCallTests.A_bags_container_answers_as_the_tabletops_bag_container_which_does_nothing |
 | `Container.takeObject` | - | compat | holders: getObjects, putObject, takeObject, getQuantity through stow | StowScriptTests | ModuleObjectCallTests.A_bags_container_answers_as_the_tabletops_bag_container_which_does_nothing |
 | `Counter.clear` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |  |

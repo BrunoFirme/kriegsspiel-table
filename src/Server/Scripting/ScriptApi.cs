@@ -319,7 +319,8 @@ internal sealed partial class PieceHandles(ScriptHost host)
             return DynValue.Nil;
         }
         var def = host.Server.Store?.Def(p.Def);
-        return Field(id, p, def, key) ?? DieField(p, def, key) ?? Setter(id, p, def, key) ?? DieSetter(id, p, def, key) ?? Drawing(id, key) ?? Scripted(id, p, key) ?? DynValue.Nil;
+        var found = Field(id, p, def, key) ?? DieField(p, def, key) ?? Setter(id, p, def, key) ?? MarkSetter(id, p, def, key);
+        return found ?? DieSetter(id, p, def, key) ?? Drawing(id, key) ?? Scripted(id, p, key) ?? DynValue.Nil;
     }
 
     DynValue? Field(string id, PieceInstance p, PieceDef? def, string key)
@@ -373,6 +374,7 @@ internal sealed partial class PieceHandles(ScriptHost host)
             case "source": return def?.ModuleType != null ? SourceTable(def) : DynValue.Nil;
             case "held_by": return host.Every.HeldBy.TryGetValue(id, out var holder) ? holder : DynValue.Nil;
             case "highlight": return p.Highlight is { } hl ? S(hl) : DynValue.Nil;
+            case "book_highlight": return p.BookHighlight is { Length: SetBookHighlight.Corners } bx ? BoxTable(bx) : DynValue.Nil;
             case "effect_on": return B(!p.EffectOff);
             case "tint": return p.TintOverride is { } ti ? S(ti) : def != null ? S(def.Tint) : DynValue.Nil;
             case "counters":
@@ -512,7 +514,6 @@ internal sealed partial class PieceHandles(ScriptHost host)
             case "set_box_selected": return Option(id, PieceOptions.NotBoxSelected, inverted: true);
             case "set_measures_moves": return Option(id, PieceOptions.MeasuresMoves, inverted: false);
             case "set_interactable": return Option(id, PieceOptions.NotInteractable, inverted: true);
-            case "set_highlight": return Fn(a => Highlight(id, Arg(a, 0)));
             case "set_effect_on": return Option(id, PieceOptions.EffectOff, inverted: true);
             case "set_sticky": return Fn(a =>
             {

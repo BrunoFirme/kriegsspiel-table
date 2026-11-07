@@ -179,6 +179,7 @@ public static partial class ApiDoc
         F("piece", "held_by", "Who", "The umpire carrying it now, or nil.", "held_by_color");
         F("piece", "source", "table", "For a kind converted from a module: { type =, links = { image =, mesh =, … }, top =, tag =, tags = } — the module object's type, its picture and model links, its top surface in its own units, the kind of object it was (Tile, Figurine, Board, Bag…) and its own tags; for a piece of several states, `states` lists each state's { type, guid, description, gm_notes, memo, script_state, tags, script } as the module kept them; nil otherwise.", "name");
         F("piece", "highlight", "string", "The colour it is ringed in, or nil (set_highlight).", "highlightOn");
+        F("piece", "book_highlight", "table", "For a book, the box marked on the page it is open at: { left =, bottom =, right =, top = }, each from 0 to 1 across the page from its lower left corner; nil for none. Turning the page clears it.", "Book.setHighlight");
         F("piece", "holds", "boolean", "Whether it is a holder that other pieces can be stowed in: a piece holding some, one made a holder, or a kind tagged bag.", "getQuantity");
         See("self.flip", "on_flip");
         F("piece", "locked", "boolean", "Pinned to the table: not dragged, turned or resized by hand.", "getLock");
@@ -343,6 +344,9 @@ public static partial class ApiDoc
     M("piece", "set_highlight(color)", "Rings it in a colour on every screen; nil takes the ring away.", "highlightOn");
     O("color", "Color", "The ring's colour, or nil.");
 
+    M("piece", "set_book_highlight(box)", "Marks a box on the page a book is open at, in its reader on every screen; nil clears it. Turning the page clears it too.", "Book.setHighlight");
+    O("box", "table", "{ left =, bottom =, right =, top = }, each from 0 to 1 across the page from its lower left corner; nil clears the box.");
+
     M("piece", "set_sticky(on)", "Whether it carries the pieces resting on it when it is moved.", "sticky");
     O("on", "boolean", "true, or no argument, carries them; false leaves them where they lie.");
     See("self.sticky");
@@ -358,6 +362,10 @@ public static partial class ApiDoc
         See("self.attach");
 
         F("piece", "stowed", "list", "The pieces it holds off the table, first in first: { id =, name =, guid =, def =, held = }, held being how many that piece holds in turn.", "getObjects");
+        M("piece", "show_contents(umpire, most)", "Opens the window of what it holds on that umpire's screen, as if they had opened it; false when it holds nothing by its kind or the umpire is not here.", "Container.search");
+        P("umpire", "Who", "Whose screen: an entry of game.umpires().");
+        O("most", "number", "Show only the first this many; leave it out for all.");
+        R("true when the window was sent.");
         M("piece", "stow(piece)", "Takes another piece off the table into this one, with whatever rides on it; a piece this one rides on is refused.", "putObject");
         M("piece", "unstow(which, place, rot)", "Puts a held piece back on the table and returns it: which is its id, guid, its number in stowed, or nothing for the next by the holder's take order (first, last or random); place is { x =, z = } or a piece, else beside this one; rot turns it.", "takeObject");
         See("self.stowed", "self.stow", "self.unstow");

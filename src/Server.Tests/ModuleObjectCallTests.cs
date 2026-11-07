@@ -11,6 +11,8 @@ public class ModuleObjectCallTests
     const string P = "p-000002";
     const string Marker = "p-000003";
 
+    static IEnumerable<Command> Flat(IEnumerable<Command> log) => log.SelectMany(c => c is Batch b ? Flat(b.Items) : new[] { c });
+
     static TranslateContext Ctx() => new() { ResolveImage = (url, type, scale) => "marker" };
 
     static string Run(Table t, string lua, bool errorsExpected = false)
@@ -864,6 +866,54 @@ public class ModuleObjectCallTests
         Assert.Equal("true,nil,mm,nil,4", label);
         var p = t.Server.State.Find(U, P)!;
         Assert.Equal(p.Script, p.Note);
+    }
+
+    [Fact]
+    public void A_books_highlight_box_marks_its_open_page_until_it_is_cleared_or_the_page_turns()
+    {
+        using var t = new Table();
+        t.Store.RegisterDef(new PackManifest { Id = "testpack" }, new PieceDef
+        {
+            Id = "manual", Name = "Manual", Tags = { "book" }, States = { new PieceStateDef { Name = "1" }, new PieceStateDef { Name = "2" } },
+        });
+        t.Server.Handle(Table.Host, new SpawnPiece { Layer = U, Def = "manual", Id = "p-000062", Pos = new(2, 2) });
+        const string lua = """
+            function onLoad()
+              local first = self.Book.setHighlight(0.1, 0.2, 0.3, 0.4)
+              local plain = getObjectFromGUID('p-000002').Book.setHighlight(0, 0, 1, 1)
+              local box = self.book_highlight
+              self.Book.clearHighlight()
+              local cleared = self.book_highlight
+              self.setName(tostring(first) .. ',' .. tostring(plain) .. ',' .. box.left .. ' ' .. box.top .. ',' .. tostring(cleared))
+              self.Book.setHighlight(0.5, 0.5, 0.6, 0.6)
+            end
+            """;
+        var r = ModuleTranslator.Translate(lua, Ctx());
+        var saved = System.Globalization.CultureInfo.CurrentCulture;
+        System.Globalization.CultureInfo.CurrentCulture = System.Globalization.CultureInfo.InvariantCulture;
+        var answers = t.Server.Handle(Table.Host, new SetScript { Layer = U, Id = "p-000062", Text = r.Script });
+        System.Globalization.CultureInfo.CurrentCulture = saved;
+        Assert.DoesNotContain(answers, o => o.Message is ErrorMessage);
+        var p = t.Server.State.Find(U, "p-000062")!;
+        Assert.Equal("true,false,0.1 0.4,nil", p.Label);
+        Assert.Equal([0.5, 0.5, 0.6, 0.6], p.BookHighlight!);
+        t.Server.Handle(Table.Host, new SetState { Layer = U, Id = "p-000062", State = 1 });
+        Assert.Null(t.Server.State.Find(U, "p-000062")!.BookHighlight);
+    }
+
+    [Fact]
+    public void Searching_a_container_opens_what_it_holds_on_that_seats_screen_with_the_limit_asked()
+    {
+        using var t = new Table();
+        t.Server.State.Find(U, P)!.Holds = true;
+        var label = Run(t, """
+            function onLoad()
+              self.setName(tostring(self.Container.search('Red', 2)) .. ',' .. tostring(self.Container.search('Purple')))
+            end
+            """);
+        Assert.Equal("true,false", label);
+        var sent = Assert.Single(Flat(t.Server.Log).OfType<ShowContents>());
+        Assert.Equal((P, $"p:{Table.Ump3}", 2), (sent.Id, sent.To, sent.Most));
     }
 
     [Fact]

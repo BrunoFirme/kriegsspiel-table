@@ -163,6 +163,7 @@ public partial class Hud : CanvasLayer
         Hook<Action<string, Command>>(h => T.ReliefShaped += h, h => T.ReliefShaped -= h, Map.Reliefs.Share);
         Hook<Action>(h => T.ReliefPicked += h, h => T.ReliefPicked -= h, () => Relief?.Rebuild());
         Hook<Action<Rect2?>>(h => T.ScreenRect += h, h => T.ScreenRect -= h, r => Rect.SetRect(r));
+        Hook<Action<PieceNode, int>>(h => T.ContentsAsked += h, h => T.ContentsAsked -= h, (holder, most) => HolderWindow.Open(Root, S, T, holder, most));
         Hook<Action<double>>(h => T.CalibrationMeasured += h, h => T.CalibrationMeasured -= h, units => CalibrateDialog.Open(Ctx, units));
         Hook<Action>(h => T.SightingChanged += h, h => T.SightingChanged -= h, Pov.Rebuild);
         Hook<Action>(h => T.BoardsChanged += h, h => T.BoardsChanged -= h, () => { Boards.Rebuild(); Paint.Rebuild(); });

@@ -45,6 +45,7 @@ Say(to=other) table | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | obser
 Say(to=umpires) table | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer drop | zone - | apply ok inverse:none | undo-reloads -
 SelectPiece table | allowed O:n U:n L:n H:n | in-batch O:n U:n L:n H:n | observer drop | zone - | apply ok inverse:none | undo-reloads -
 SelectPiece(to=me) table | allowed O:n U:n L:n H:n | in-batch O:n U:n L:n H:n | observer same | zone - | apply ok inverse:none | undo-reloads -
+SetBookHighlight layer | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone Id | apply ok inverse:SetBookHighlight | undo-reloads -
 SetBriefing table | allowed O:n U:n L:y H:y | in-batch O:n U:n L:y H:y | observer drop | zone - | apply ok inverse:SetBriefing | undo-reloads -
 SetCalibration table | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone - | apply ok inverse:SetCalibration | undo-reloads -
 SetClock table | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone - | apply ok inverse:SetClock | undo-reloads -
@@ -88,6 +89,7 @@ SetWidgets layer | allowed O:n U:n L:n H:n | in-batch O:n U:n L:n H:n | observer
 SetWind table | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone - | apply ok inverse:SetWind | undo-reloads -
 SetWorth layer | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone Id | apply ok inverse:SetWorth | undo-reloads -
 SetZone table | allowed O:n U:n L:y H:y | in-batch O:n U:n L:y H:y | observer drop | zone - | apply ok inverse:RemoveZone | undo-reloads -
+ShowContents table | allowed O:n U:n L:n H:n | in-batch O:n U:n L:n H:n | observer drop | zone - | apply refused:no_such_piece | undo-reloads -
 ShowDialog table | allowed O:n U:n L:n H:n | in-batch O:n U:n L:n H:n | observer drop | zone - | apply ok inverse:none | undo-reloads -
 ShowDialog(to=other) table | allowed O:n U:n L:n H:n | in-batch O:n U:n L:n H:n | observer drop | zone - | apply ok inverse:none | undo-reloads -
 SpawnPiece layer | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone Pos | apply ok inverse:DeletePiece | undo-reloads -

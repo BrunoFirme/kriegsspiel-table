@@ -52,6 +52,8 @@ public static class Visibility
                 return s.To == null || s.To == $"p:{peer.PeerId}" ? c : null;
             case Shown.Addressee when c is SelectPiece sp:
                 return sp.To == $"p:{peer.PeerId}" ? c : null;
+            case Shown.Addressee when c is ShowContents sc:
+                return sc.To == $"p:{peer.PeerId}" ? c : null;
             case Shown.DiceOnBoard when c is RollDice rd:
                 return rd.Layer != null && rd.PieceIds.Count > 0 ? c : null;
             case Shown.WholeTable when c is RestoreTurn rt:

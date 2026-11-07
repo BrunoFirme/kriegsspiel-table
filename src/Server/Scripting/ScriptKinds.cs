@@ -1,4 +1,5 @@
 using KTable.Core.Model;
+using KTable.Core.Protocol;
 using MoonSharp.Interpreter;
 using static KTable.Server.Scripting.LuaArgs;
 
@@ -47,6 +48,45 @@ internal sealed partial class PieceHandles
             t.Table.Append(e);
         }
         return t;
+    }
+
+    DynValue? MarkSetter(string id, PieceInstance p, PieceDef? def, string key) => key switch
+    {
+        "set_highlight" => Fn(a => Highlight(id, Arg(a, 0))),
+        "set_book_highlight" => Fn(a => BookHighlight(id, Arg(a, 0))),
+        "show_contents" => Fn(a => ShowContents(id, p.HoldsPieces(def) || def?.Tags.Contains("bag") == true, Arg(a, 0), Arg(a, 1))),
+        _ => null,
+    };
+
+    static readonly string[] BoxSides = ["left", "bottom", "right", "top"];
+
+    DynValue BoxTable(double[] box)
+    {
+        var t = T();
+        for (int i = 0; i < BoxSides.Length; i++) t.Table[BoxSides[i]] = N(box[i]);
+        return t;
+    }
+
+    DynValue BookHighlight(string id, DynValue box)
+    {
+        if (box.Type != DataType.Table)
+        {
+            host.Emit(new SetBookHighlight { Layer = Layers.Umpire, Id = id });
+            return DynValue.Nil;
+        }
+        var sides = BoxSides.Select(side => box.Table.Get(side).CastToNumber()).ToArray();
+        if (sides.Any(v => v is null || !double.IsFinite(v.Value))) throw new ScriptRuntimeException("set_book_highlight needs { left =, bottom =, right =, top = } as numbers");
+        host.Emit(new SetBookHighlight { Layer = Layers.Umpire, Id = id, Box = sides.Select(v => v!.Value).ToArray() });
+        return DynValue.Nil;
+    }
+
+    DynValue ShowContents(string id, bool holds, DynValue who, DynValue most)
+    {
+        var peer = PeerOf(who);
+        if (!holds || peer < 0) return DynValue.False;
+        var n = most.CastToNumber() is { } m && double.IsFinite(m) && m >= 0 ? (int)Math.Min(m, int.MaxValue) : -1;
+        host.Emit(new ShowContents { Layer = Layers.Umpire, Id = id, To = $"p:{peer}", Most = n });
+        return DynValue.True;
     }
 
     DynValue KindTable(PieceDef def)

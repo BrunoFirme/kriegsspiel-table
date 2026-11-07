@@ -160,6 +160,7 @@
 ---@field held_by Who The umpire carrying it now, or nil.
 ---@field source table For a kind converted from a module: { type =, links = { image =, mesh =, … }, top =, tag =, tags = } — the module object's type, its picture and model links, its top surface in its own units, the kind of object it was (Tile, Figurine, Board, Bag…) and its own tags; for a piece of several states, states lists each state's { type, guid, description, gm_notes, memo, script_state, tags, script } as the module kept them; nil otherwise.
 ---@field highlight string The colour it is ringed in, or nil (set_highlight).
+---@field book_highlight table For a book, the box marked on the page it is open at: { left =, bottom =, right =, top = }, each from 0 to 1 across the page from its lower left corner; nil for none. Turning the page clears it.
 ---@field holds boolean Whether it is a holder that other pieces can be stowed in: a piece holding some, one made a holder, or a kind tagged bag.
 ---@field locked boolean Pinned to the table: not dragged, turned or resized by hand.
 ---@field sticky boolean Carries the pieces resting on it when it is moved; attached pieces go with it either way.
@@ -238,6 +239,10 @@ function Piece.set_interactable(on) end
 ---Rings it in a colour on every screen; nil takes the ring away.
 ---@param color? Color The ring's colour, or nil.
 function Piece.set_highlight(color) end
+
+---Marks a box on the page a book is open at, in its reader on every screen; nil clears it. Turning the page clears it too.
+---@param box? table { left =, bottom =, right =, top = }, each from 0 to 1 across the page from its lower left corner; nil clears the box.
+function Piece.set_book_highlight(box) end
 
 ---Whether it carries the pieces resting on it when it is moved.
 ---@param on? boolean true, or no argument, carries them; false leaves them where they lie.
@@ -330,6 +335,11 @@ function Piece.attach(piece) end
 
 ---Takes this piece off the one it rides on.
 function Piece.detach() end
+
+---Opens the window of what it holds on that umpire's screen, as if they had opened it; false when it holds nothing by its kind or the umpire is not here.
+---@param umpire Who Whose screen: an entry of game.umpires().
+---@param most? number Show only the first this many; leave it out for all.
+function Piece.show_contents(umpire, most) end
 
 ---Takes another piece off the table into this one, with whatever rides on it; a piece this one rides on is refused.
 function Piece.stow() end

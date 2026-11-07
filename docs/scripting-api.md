@@ -224,6 +224,7 @@ Read from `self` or from any piece `board.find` or `board.pieces` hands back. Fi
 | [`self.held_by`](#selfheld_by) | The umpire carrying it now, or nil. |
 | [`self.source`](#selfsource) | For a kind converted from a module: { type =, links = { image =, mesh =, … }, top =, tag =, tags = } — the module object's type, its picture and model links, its top surface in its own units, the kind of object it was (Tile, Figurine, Board, Bag…) and its own tags; for a piece of several states, `states` lists each state's { type, guid, description, gm_notes, memo, script_state, tags, script } as the module kept them; nil otherwise. |
 | [`self.highlight`](#selfhighlight) | The colour it is ringed in, or nil (set_highlight). |
+| [`self.book_highlight`](#selfbook_highlight) | For a book, the box marked on the page it is open at: { left =, bottom =, right =, top = }, each from 0 to 1 across the page from its lower left corner; nil for none. Turning the page clears it. |
 | [`self.holds`](#selfholds) | Whether it is a holder that other pieces can be stowed in: a piece holding some, one made a holder, or a kind tagged bag. |
 | [`self.locked`](#selflocked) | Pinned to the table: not dragged, turned or resized by hand. |
 | [`self.sticky`](#selfsticky) | Carries the pieces resting on it when it is moved; attached pieces go with it either way. |
@@ -622,6 +623,18 @@ The colour it is ringed in, or nil (set_highlight).
 
 **Module call** `highlightOn`
 
+### `self.book_highlight`
+
+```lua
+self.book_highlight
+```
+
+For a book, the box marked on the page it is open at: { left =, bottom =, right =, top = }, each from 0 to 1 across the page from its lower left corner; nil for none. Turning the page clears it.
+
+**Type** `table`, read-only.
+
+**Module call** `Book.setHighlight`
+
 ### `self.holds`
 
 ```lua
@@ -859,6 +872,7 @@ Each call is a change every umpire sees, taken back with Ctrl+Z by the umpire wh
 | [`self.set_measures_moves`](#selfset_measures_moves) | Whether it shows how far it is moved while it is held. |
 | [`self.set_interactable`](#selfset_interactable) | Whether hands can take it: off, it cannot be picked up, dragged, selected or opened, though its buttons still press. |
 | [`self.set_highlight`](#selfset_highlight) | Rings it in a colour on every screen; nil takes the ring away. |
+| [`self.set_book_highlight`](#selfset_book_highlight) | Marks a box on the page a book is open at, in its reader on every screen; nil clears it. Turning the page clears it too. |
 | [`self.set_sticky`](#selfset_sticky) | Whether it carries the pieces resting on it when it is moved. |
 | [`self.set_face`](#selfset_face) | Turns a die to show a side, from 1; false when it has no such side. |
 | [`self.set_value`](#selfset_value) | Turns a die to the first side with this value; false when no side has it. |
@@ -882,6 +896,7 @@ Each call is a change every umpire sees, taken back with Ctrl+Z by the umpire wh
 | [`self.attach`](#selfattach) | Puts another piece on this one, to ride with it. |
 | [`self.detach`](#selfdetach) | Takes this piece off the one it rides on. |
 | [`self.stowed`](#selfstowed) | The pieces it holds off the table, first in first: { id =, name =, guid =, def =, held = }, held being how many that piece holds in turn. |
+| [`self.show_contents`](#selfshow_contents) | Opens the window of what it holds on that umpire's screen, as if they had opened it; false when it holds nothing by its kind or the umpire is not here. |
 | [`self.stow`](#selfstow) | Takes another piece off the table into this one, with whatever rides on it; a piece this one rides on is refused. |
 | [`self.unstow`](#selfunstow) | Puts a held piece back on the table and returns it: which is its id, guid, its number in stowed, or nothing for the next by the holder's take order (first, last or random); place is { x =, z = } or a piece, else beside this one; rot turns it. |
 | [`self.delete`](#selfdelete) | Takes the piece off the table (on_destroy runs first). |
@@ -1120,6 +1135,20 @@ Rings it in a colour on every screen; nil takes the ring away.
 | `color` | `Color` | _Optional._ The ring's colour, or nil. |
 
 **Module call** `highlightOn`
+
+### `self.set_book_highlight`
+
+```lua
+self.set_book_highlight(box)
+```
+
+Marks a box on the page a book is open at, in its reader on every screen; nil clears it. Turning the page clears it too.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `box` | `table` | _Optional._ { left =, bottom =, right =, top = }, each from 0 to 1 across the page from its lower left corner; nil clears the box. |
+
+**Module call** `Book.setHighlight`
 
 ### `self.set_sticky`
 
@@ -1457,6 +1486,23 @@ The pieces it holds off the table, first in first: { id =, name =, guid =, def =
 **Type** `list`, read-only.
 
 **Module call** `getObjects`
+
+### `self.show_contents`
+
+```lua
+self.show_contents(umpire, most)
+```
+
+Opens the window of what it holds on that umpire's screen, as if they had opened it; false when it holds nothing by its kind or the umpire is not here.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `umpire` | `Who` | Whose screen: an entry of game.umpires(). |
+| `most` | `number` | _Optional._ Show only the first this many; leave it out for all. |
+
+**Returns**: true when the window was sent.
+
+**Module call** `Container.search`
 
 ### `self.stow`
 
@@ -3510,12 +3556,15 @@ The converter rewrites a module's scripts into these calls by rule; this is the 
 | `addToPlayerSelection` | [`game.select`](#gameselect) |
 | `AssetBundle.playLoopingEffect` | [`self.set_effect_on`](#selfset_effect_on) |
 | `Book.page_offset` | [`self.page_offset`](#selfpage_offset) |
+| `Book.setHighlight` | [`self.book_highlight`](#selfbook_highlight) |
+| `Book.setHighlight` | [`self.set_book_highlight`](#selfset_book_highlight) |
 | `broadcastToAll` | [`game.say`](#gamesay) |
 | `call` | [`self.call`](#selfcall) |
 | `clearButtons` | [`self.clear_widgets`](#selfclear_widgets) |
 | `clearContextMenu` | [`game.menu_clear`](#gamemenu_clear) |
 | `clearContextMenu` | [`self.menu_clear`](#selfmenu_clear) |
 | `clearHotkeys` | [`game.hotkeys_clear`](#gamehotkeys_clear) |
+| `Container.search` | [`self.show_contents`](#selfshow_contents) |
 | `createButton` | [`self.button`](#selfbutton) |
 | `createInput` | [`self.input`](#selfinput) |
 | `destruct` | [`self.delete`](#selfdelete) |

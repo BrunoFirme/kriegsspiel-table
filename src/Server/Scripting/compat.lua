@@ -399,7 +399,13 @@ function compat.set_book_page(obj, page, use_offset)
   return true
 end
 function compat.book_highlight(obj, x1, y1, x2, y2)
-  if x1 == nil then pbag(obj).highlight = nil else pbag(obj).highlight = { x1, y1, x2, y2 } end
+  local p = compat.piece_of(obj)
+  if type(p) ~= "table" or p.set_book_highlight == nil then return false end
+  local book = p.source ~= nil and p.source.type == "Custom_PDF"
+  for _, t in ipairs(p.tags or {}) do if t == "book" then book = true end end
+  if not book then return false end
+  if x1 == nil then p.set_book_highlight(nil) return true end
+  p.set_book_highlight({ left = tonumber(x1) or 0, bottom = tonumber(y1) or 0, right = tonumber(x2) or 0, top = tonumber(y2) or 0 })
   return true
 end
 compat.AssetBundle = {}

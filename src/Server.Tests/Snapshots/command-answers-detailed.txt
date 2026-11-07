@@ -208,6 +208,16 @@
   umpires:     it it it
   reloads:     
   undo stack:  no
+== SetBookHighlight
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; Id-x outside=outside your umpire zone; on another layer, all outside=ok
+  zone, none of mine: all inside=no zone on the umpire board has been assigned to you; Id-x outside=no zone on the umpire board has been assigned to you; on another layer, all outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  no
 == SetPieceOption
   sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
   in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
@@ -738,6 +748,16 @@
   umpires:     it it it
   reloads:     
   undo stack:  no
+== ShowContents
+  sent by:     Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  in a batch:  Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  zone:        all inside=ok; Id-x outside=ok; To-x outside=ok
+  zone, none of mine: all inside=ok; Id-x outside=ok; To-x outside=ok
+  observer:    nothing
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  no
 == EditWidget
   sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
   in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
@@ -1069,6 +1089,16 @@
   reloads:     
   undo stack:  yes
 == SetHighlight (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok;  outside=outside your umpire zone; on another layer, all outside=ok
+  zone, none of mine: all inside=no zone on the umpire board has been assigned to you;  outside=no zone on the umpire board has been assigned to you; on another layer, all outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  no
+== SetBookHighlight (empty)
   sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
   in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
   zone:        all inside=ok;  outside=outside your umpire zone; on another layer, all outside=ok
@@ -1608,6 +1638,16 @@
   umpires:     it it it
   reloads:     
   undo stack:  no
+== ShowContents (empty)
+  sent by:     Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  in a batch:  Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  zone:        all inside=ok;  outside=ok
+  zone, none of mine: all inside=ok;  outside=ok
+  observer:    nothing
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  no
 == EditWidget (empty)
   sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
   in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
@@ -1794,6 +1834,16 @@
   zone:        all inside=ok; p-1 outside=ok
   zone, none of mine: all inside=ok; p-1 outside=ok
   observer:    nothing
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  no
+== ShowContents for the observer
+  sent by:     Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  in a batch:  Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  zone:        all inside=ok; p-1 outside=ok; p:4 outside=ok
+  zone, none of mine: all inside=ok; p-1 outside=ok; p:4 outside=ok
+  observer:    it
   stranger:    nothing
   umpires:     it it it
   reloads:     

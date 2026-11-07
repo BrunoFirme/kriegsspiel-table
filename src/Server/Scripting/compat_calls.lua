@@ -915,7 +915,11 @@ function compat.container(obj)
     putObject = function() return nil end, takeObject = function() return nil end, getData = function() return nil end,
     setData = function() return true end, addData = function() return true end, removeData = function() return nil end,
     getInfo = function() return nil end, reset = function() return true end, randomize = function() return true end, getCount = function() return 0 end,
-    search = function(color) return compat.who_at(color) ~= nil end,
+    search = function(color, most)
+      local who = compat.who_at(color)
+      if who == nil then return false end
+      return obj.show_contents(who, most) == true
+    end,
   }
 end
 

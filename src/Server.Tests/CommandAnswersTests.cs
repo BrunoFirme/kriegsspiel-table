@@ -15,7 +15,7 @@ public class CommandAnswersTests
     static readonly HashSet<Type> NotOnUndoStack = new()
     {
         typeof(RollDice), typeof(AddPack), typeof(RestoreTurn), typeof(LoadSave), typeof(ClickWidget), typeof(EditWidget), typeof(PickMenuItem),
-        typeof(HoldPiece), typeof(Say), typeof(Hotkey), typeof(PickGlobalMenuItem), typeof(NumberTyped), typeof(SelectPiece), typeof(SetHighlight),
+        typeof(HoldPiece), typeof(Say), typeof(Hotkey), typeof(PickGlobalMenuItem), typeof(NumberTyped), typeof(SelectPiece), typeof(ShowContents), typeof(SetHighlight), typeof(SetBookHighlight),
     };
 
     public static IEnumerable<Type> Registered() =>
@@ -140,6 +140,7 @@ public class CommandAnswersTests
         yield return ("Say to the umpires", () => new Say { Text = "hi", To = "u:" });
         yield return ("SelectPiece for the observer", () => new SelectPiece { Layer = U, Id = "p-1", To = "p:4" });
         yield return ("SelectPiece for no one", () => new SelectPiece { Layer = U, Id = "p-1", To = null! });
+        yield return ("ShowContents for the observer", () => new ShowContents { Layer = U, Id = "p-1", To = "p:4" });
         yield return ("ShowDialog to another peer", () => new ShowDialog { To = "p:3", Title = "t" });
         yield return ("RollDice on the board", () => new RollDice { Layer = U, PieceIds = { "p-1", "p-2" }, Results = { 3, 4 } });
         yield return ("RollDice on a layer without pieces", () => new RollDice { Layer = U });
@@ -238,7 +239,7 @@ public class CommandAnswersTests
         var rules = new Dictionary<Shown, Type[]>
         {
             [Shown.Parts] = new[] { typeof(Batch) },
-            [Shown.Addressee] = new[] { typeof(Say), typeof(SelectPiece) },
+            [Shown.Addressee] = new[] { typeof(Say), typeof(SelectPiece), typeof(ShowContents) },
             [Shown.DiceOnBoard] = new[] { typeof(RollDice) },
             [Shown.WholeTable] = new[] { typeof(RestoreTurn), typeof(LoadSave) },
         };

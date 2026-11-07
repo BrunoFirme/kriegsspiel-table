@@ -4156,13 +4156,13 @@
   },
   {
    "row": "Book.clearHighlight",
-   "status": "partial",
-   "where": "kept with the script; a highlight box is not drawn on the page",
+   "status": "compat",
+   "where": "compat.book_highlight: set_book_highlight(nil)",
    "instead": "",
-   "held_by": "BookNotesScriptTests",
+   "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.A_books_highlight_box_marks_its_open_page_until_it_is_cleared_or_the_page_turns"
   },
   {
    "row": "Book.getPage",
@@ -4186,13 +4186,13 @@
   },
   {
    "row": "Book.setHighlight",
-   "status": "partial",
-   "where": "kept with the script; a highlight box is not drawn on the page",
+   "status": "compat",
+   "where": "compat.book_highlight: set_book_highlight, drawn in the book reader",
    "instead": "",
-   "held_by": "BookNotesScriptTests",
+   "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.A_books_highlight_box_marks_its_open_page_until_it_is_cleared_or_the_page_turns"
   },
   {
    "row": "Book.setPage",
@@ -4362,7 +4362,7 @@
    "held_by": "StowScriptTests",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Searching_a_container_opens_what_it_holds_on_that_seats_screen_with_the_limit_asked"
   },
   {
    "row": "Container.setData",

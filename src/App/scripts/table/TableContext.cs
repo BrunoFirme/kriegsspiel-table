@@ -35,10 +35,12 @@ sealed class TableContext
     public event Action<string>? Hint;
     public event Action? SelectionChanged;
     public event Action<Rect2?>? ScreenRect;
+    public event Action<PieceNode, int>? ContentsAsked;
 
     public void Say(string hint) => Hint?.Invoke(hint);
     public void NotifySelectionChanged() => SelectionChanged?.Invoke();
     public void NotifyScreenRect(Rect2? r) => ScreenRect?.Invoke(r);
+    public void NotifyContentsAsked(PieceNode holder, int most) => ContentsAsked?.Invoke(holder, most);
 
     public bool LayerShown(string layer) => layer == Layers.Umpire && S.SeesBoard;
 
