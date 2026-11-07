@@ -329,6 +329,21 @@ function compat.get_quantity(obj)
   return #(obj.stowed or {})
 end
 
+function compat.save_answer(...)
+  if select("#", ...) == 0 then return nil end
+  local r = ...
+  if r == nil or r ~= r then return nil end
+  if type(r) == "string" then return r end
+  return ""
+end
+function compat.try_answer(...)
+  if select("#", ...) == 0 then return false end
+  local r = ...
+  if type(r) == "boolean" then return r end
+  if type(r) == "number" then return r == r and r ~= 0 end
+  return false
+end
+
 function compat.none() return nil end
 function compat.no() return false end
 

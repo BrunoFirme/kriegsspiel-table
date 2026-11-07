@@ -75,6 +75,12 @@ public static class ModuleTranslator
         ["onPlayerAction"] = "on_player_action", ["onObjectRandomize"] = "on_roll", ["onRandomize"] = "on_roll", ["onPageChange"] = "on_page", ["onObjectPageChange"] = "on_page", ["onObjectLoopingEffect"] = "on_effect", ["onObjectTriggerEffect"] = "on_effect", ["onObjectEnterContainer"] = "on_stowed", ["onObjectLeaveContainer"] = "on_unstowed", ["tryObjectEnterContainer"] = "try_stow",
     };
 
+    static readonly HashSet<string> EveryScriptEvents = new(StringComparer.Ordinal)
+    {
+        "onObjectSpawn", "onObjectDestroy", "onObjectPickUp", "onObjectPickup", "onObjectDrop", "onObjectRotate", "onObjectRandomize", "onObjectPageChange",
+        "onObjectLoopingEffect", "onObjectTriggerEffect", "onObjectEnterContainer", "onObjectLeaveContainer", "onObjectStateChange", "onChat",
+    };
+
     static readonly HashSet<string> Stubbed = new(StringComparer.Ordinal)
     {
         "setHiddenFrom", "setInvisibleTo", "attachHider", "attachInvisibleHider", "setFogOfWarReveal", "registerCollisions", "unregisterCollisions", "jointTo",
@@ -735,14 +741,28 @@ public static class ModuleTranslator
             if (visited.Name is not SimpleFunctionNameSyntax simple) return visited;
             var name = simple.ToString().Trim();
             var pars = visited.Parameters.Parameters.Select(p => p.ToString().Trim()).ToList();
-            var (newName, sig, prelude) = Signature(name, pars);
+            bool everyone = !_ctx.IsGlobal && EveryScriptEvents.Contains(name);
+            var (newName, sig, prelude) = Signature(name, pars, _ctx.IsGlobal || everyone);
             if (newName == null) return visited;
+            if (everyone) newName = KTable.Server.Scripting.EveryScript.ModulePrefix + newName;
             var body = visited.Body.ToFullString();
-            var text = $"function {newName}({sig})\n{(prelude.Length > 0 ? "  " + prelude + "\n" : "")}{body}end";
+            var head = prelude.Length > 0 ? "  " + prelude + "\n" : "";
+            if (Answered.TryGetValue(name, out var reader))
+            {
+                var inner = "__module_" + newName;
+                var wrapped = $"do\nfunction {inner}({sig})\n{head}{body}end\nfunction {newName}({sig}) return {reader}(({inner}({sig}))) end\nend";
+                return Keep(Stmt(wrapped, node), node);
+            }
+            var text = $"function {newName}({sig})\n{head}{body}end";
             return Keep(Stmt(text, node), node);
         }
 
-        (string? name, string sig, string prelude) Signature(string name, List<string> pars)
+        static readonly Dictionary<string, string> Answered = new(StringComparer.Ordinal)
+        {
+            ["onSave"] = "compat.save_answer", ["onsave"] = "compat.save_answer", ["tryObjectEnterContainer"] = "compat.try_answer",
+        };
+
+        (string? name, string sig, string prelude) Signature(string name, List<string> pars, bool global)
         {
             string Bind(IEnumerable<string> values) => Prelude(pars, values.ToList());
             switch (name)
@@ -757,17 +777,17 @@ public static class ModuleTranslator
                 case "onObjectPickUp" or "onObjectPickup": return ("on_pick_up", "__piece, __who", Bind(new[] { "compat.color_of(__who)", "__piece" }));
                 case "onObjectSpawn": return ("on_spawn", "__piece", Bind(new[] { "__piece" }));
                 case "onObjectDestroy": return ("on_destroy", "__piece", Bind(new[] { "__piece" }));
-                case "onObjectStateChange" when _ctx.IsGlobal: return ("on_state", "__piece, __old, __new", Bind(new[] { "__piece", "tostring(__old)" }));
+                case "onObjectStateChange" when global: return ("on_state", "__piece, __old, __new", Bind(new[] { "__piece", "tostring(__old)" }));
                 case "onObjectStateChange": return ("on_state", "__old, __new", Bind(new[] { "self", "tostring(__old)" }));
                 case "onPageChange": return ("on_page", "", "");
-                case "onObjectLoopingEffect" or "onObjectTriggerEffect" when _ctx.IsGlobal: return ("on_effect", "__piece, __index", Bind(new[] { "__piece", "__index" }));
+                case "onObjectLoopingEffect" or "onObjectTriggerEffect" when global: return ("on_effect", "__piece, __index", Bind(new[] { "__piece", "__index" }));
                 case "onObjectLoopingEffect" or "onObjectTriggerEffect": return ("on_effect", "__index", Bind(new[] { "self", "__index" }));
-                case "onObjectPageChange" when _ctx.IsGlobal: return ("on_page", "__piece", Bind(new[] { "__piece" }));
+                case "onObjectPageChange" when global: return ("on_page", "__piece", Bind(new[] { "__piece" }));
                 case "onObjectPageChange": return ("on_page", "", Bind(new[] { "self" }));
                 case "onPlayerTurn": return ("on_turn", "__turn", Bind(new[] { "compat.player(\"White\")", "nil" }));
                 case "onPlayerTurnStart" or "onPlayerTurnEnd": return ("on_turn", "__turn", Bind(new[] { "\"White\"", "nil" }));
                 case "onRotate": return ("on_rotate", "__rot, __old, __who", Bind(new[] { "__rot", "self.face_down and 180 or 0", "compat.color_of(__who)", "__old", "self.face_down and 180 or 0" }));
-                case "onObjectRotate" when _ctx.IsGlobal:
+                case "onObjectRotate" when global:
                     return ("on_rotate", "__piece, __rot, __old, __who", Bind(new[] { "__piece", "__rot", "__piece.face_down and 180 or 0", "compat.color_of(__who)", "__old", "__piece.face_down and 180 or 0" }));
                 case "onObjectRotate": return ("on_rotate", "__rot, __old, __who", Bind(new[] { "self", "__rot", "self.face_down and 180 or 0", "compat.color_of(__who)", "__old", "self.face_down and 180 or 0" }));
                 case "onChat": return ("on_chat", "__text, __who", Bind(new[] { "__text", "compat.player(compat.color_of(__who))" }));
@@ -777,7 +797,7 @@ public static class ModuleTranslator
                 case "tryObjectEnterContainer": return ("try_stow", "__holder, __piece", Bind(new[] { "__holder", "__piece" }));
                 case "onObjectNumberTyped": return ("on_number_typed", "__piece, __who, __n", Bind(new[] { "__piece", "compat.color_of(__who)", "__n" }));
                 case "onRandomize": return ("on_roll", "__who", Bind(new[] { "compat.color_of(__who)" }));
-                case "onObjectRandomize" when _ctx.IsGlobal: return ("on_roll", "__piece, __who", Bind(new[] { "__piece", "compat.color_of(__who)" }));
+                case "onObjectRandomize" when global: return ("on_roll", "__piece, __who", Bind(new[] { "__piece", "compat.color_of(__who)" }));
                 case "onObjectRandomize": return ("on_roll", "__who", Bind(new[] { "self", "compat.color_of(__who)" }));
                 case "onScriptingButtonDown": return ("on_scripting_button_down", "__index, __who", Bind(new[] { "__index", "compat.color_of(__who)" }));
                 case "onScriptingButtonUp": return ("on_scripting_button_up", "__index, __who", Bind(new[] { "__index", "compat.color_of(__who)" }));

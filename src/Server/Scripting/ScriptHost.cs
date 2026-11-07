@@ -37,6 +37,7 @@ public sealed partial class ScriptHost
     readonly Dictionary<string, PieceScript> _pieces = new();
     PieceScript? _global;
     readonly PieceHandles _handles;
+    readonly EveryScript _every;
     readonly PieceDrawing _drawing;
     readonly SaveRounds _saves;
     readonly TableControls _controls = new();
@@ -68,6 +69,7 @@ public sealed partial class ScriptHost
     {
         _s = server;
         _handles = new PieceHandles(this);
+        _every = new EveryScript(this);
         _drawing = new PieceDrawing(Find);
         _saves = new SaveRounds(this);
         var modules = CoreModules.Preset_SoftSandbox & ~(CoreModules.LoadMethods | CoreModules.OS_System | CoreModules.IO | CoreModules.Debug | CoreModules.Dynamic);
@@ -773,7 +775,7 @@ public sealed partial class ScriptHost
                 break;
             case DeletePiece d:
                 if (_pieces.TryGetValue(d.Id, out var ps)) Call(ps, "on_destroy");
-                if (_global != null) Call(_global, "on_destroy", Handle(d.Id));
+                _every.Tell("on_destroy", Handle(d.Id));
                 break;
         }
     }
@@ -797,9 +799,8 @@ public sealed partial class ScriptHost
             Call(pst, "on_state", old, now);
             if (book) Call(pst, "on_page");
         }
-        if (_global == null) return;
-        Call(_global, "on_state", Handle(st.Id), old, now);
-        if (book) Call(_global, "on_page", Handle(st.Id));
+        _every.Tell("on_state", Handle(st.Id), old, now);
+        if (book) _every.Tell("on_page", Handle(st.Id));
     }
 
     void ReactToPiece(Command c, long actor, DynValue who)
@@ -809,7 +810,7 @@ public sealed partial class ScriptHost
             case HoldPiece { Held: true } h:
                 if (Find(h.Id) is { } held) PickedUp[h.Id] = (held.Pos, held.RotDeg, held.Y);
                 if (_pieces.TryGetValue(h.Id, out var ph)) Call(ph, "on_pick_up", who);
-                if (_global != null) Call(_global, "on_pick_up", Handle(h.Id), who);
+                _every.Tell("on_pick_up", Handle(h.Id), who);
                 break;
             case SetState st:
                 ReactToState(st);
@@ -830,7 +831,7 @@ public sealed partial class ScriptHost
     {
         var index = DynValue.NewNumber(eo.Value ? -1 : 0);
         if (_pieces.TryGetValue(eo.Id, out var peo)) Call(peo, "on_effect", index);
-        if (_global != null) Call(_global, "on_effect", Handle(eo.Id), index);
+        _every.Tell("on_effect", Handle(eo.Id), index);
     }
 
     void ReactToRoll(RollDice rd, DynValue who)
@@ -838,7 +839,7 @@ public sealed partial class ScriptHost
         foreach (var id in rd.PieceIds.Where(id => Find(id) != null).ToList())
         {
             if (_pieces.TryGetValue(id, out var prd)) Call(prd, "on_roll", who);
-            if (_global != null) Call(_global, "on_roll", Handle(id), who);
+            _every.Tell("on_roll", Handle(id), who);
         }
     }
 
@@ -851,9 +852,8 @@ public sealed partial class ScriptHost
             if (turnedOnly) Call(pm, "on_rotate", DynValue.NewNumber(m.RotDeg), DynValue.NewNumber(old!.RotDeg), who);
             else Call(pm, "on_drop", who);
         }
-        if (_global == null) return;
-        if (turnedOnly) Call(_global, "on_rotate", Handle(m.Id), DynValue.NewNumber(m.RotDeg), DynValue.NewNumber(old!.RotDeg), who);
-        else Call(_global, "on_drop", Handle(m.Id), who);
+        if (turnedOnly) _every.Tell("on_rotate", Handle(m.Id), DynValue.NewNumber(m.RotDeg), DynValue.NewNumber(old!.RotDeg), who);
+        else _every.Tell("on_drop", Handle(m.Id), who);
     }
 
     void React(Command c, long actor)
@@ -878,21 +878,21 @@ public sealed partial class ScriptHost
                 LoadPiece(pd);
                 break;
             case SpawnPiece sp when sp.Id != null:
-                if (Find(sp.Id) is { } p2) { LoadPiece(p2); if (_global != null) Call(_global, "on_spawn", Handle(sp.Id)); }
+                if (Find(sp.Id) is { } p2) { LoadPiece(p2); _every.Tell("on_spawn", Handle(sp.Id)); }
                 break;
             case RestorePiece rp:
-                if (Find(rp.Piece.Id) is { } p3) { LoadPiece(p3); if (_global != null) Call(_global, "on_spawn", Handle(rp.Piece.Id)); }
+                if (Find(rp.Piece.Id) is { } p3) { LoadPiece(p3); _every.Tell("on_spawn", Handle(rp.Piece.Id)); }
                 break;
             case DeletePiece d:
                 Unload(d.Id, pieceGone: true);
                 break;
             case Stow sw:
                 Unload(sw.Id, pieceGone: true);
-                if (_global != null) Call(_global, "on_stowed", Handle(sw.Holder), Handle(sw.Id));
+                _every.Tell("on_stowed", Handle(sw.Holder), Handle(sw.Id));
                 break;
             case Unstow us:
-                if (Find(us.Id) is { } out1) { LoadPiece(out1); if (_global != null) Call(_global, "on_spawn", Handle(us.Id)); }
-                if (_global != null) Call(_global, "on_unstowed", Handle(us.Holder), Handle(us.Id));
+                if (Find(us.Id) is { } out1) { LoadPiece(out1); _every.Tell("on_spawn", Handle(us.Id)); }
+                _every.Tell("on_unstowed", Handle(us.Holder), Handle(us.Id));
                 break;
             case MovePiece m:
                 ReactToMove(m, who);
@@ -933,8 +933,8 @@ public sealed partial class ScriptHost
             case NumberTyped nt:
                 ReactToNumber(nt, who);
                 break;
-            case Say sy when actor != 0 && sy.To == null && _global != null:
-                Call(_global, "on_chat", DynValue.NewString(sy.Text), who);
+            case Say sy when actor != 0 && sy.To == null:
+                _every.Tell("on_chat", DynValue.NewString(sy.Text), who);
                 break;
             case Hotkey hk:
                 ReactToHotkey(hk, actor, who);
