@@ -210,8 +210,8 @@ local function is_piece(obj)
 end
 local function pbag(obj) local id = obj.id or obj; props[id] = props[id] or {}; return props[id] end
 compat.is_piece = is_piece
-function compat.set_prop(obj, k, v)
-  if not is_piece(obj) then if type(obj) == "table" then obj[k] = v end return end
+function compat.set_prop(obj, k, v, as_written)
+  if not is_piece(obj) then if type(obj) == "table" then obj[as_written or k] = v end return end
   if k == "memo" then obj.set_memo(v) return end
   if k == "script_state" then obj.set_script_state(v) return end
   if k == "locked" then obj.set_locked(v and true or false) return end
@@ -225,8 +225,13 @@ function compat.set_prop(obj, k, v)
   if k == "value_flags" then obj.set_worth(obj.worth, tonumber(v) or 0) return end
   pbag(obj)[k] = v
 end
-function compat.get_prop(obj, k, d)
-  if not is_piece(obj) then if type(obj) == "table" and obj[k] ~= nil then return obj[k] end return d end
+function compat.get_prop(obj, k, d, as_written)
+  if not is_piece(obj) then
+    if type(obj) ~= "table" then return d end
+    if as_written then return obj[as_written] end
+    if obj[k] ~= nil then return obj[k] end
+    return d
+  end
   if k == "memo" then local m = obj.memo; if m == nil or m == "" then return d end return m end
   if k == "script_state" then local v = obj.script_state; if v == nil or v == "" then return d end return v end
   if k == "locked" then return obj.locked == true end

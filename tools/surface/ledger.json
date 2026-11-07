@@ -4062,7 +4062,7 @@
    "held_by": "",
    "count": 19474,
    "modules": 1,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.A_plain_table_keeps_its_keys_as_written_and_lua_script_reads_the_script_the_piece_runs"
   },
   {
    "row": "getVectorLines",
@@ -5242,7 +5242,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Other_states_answer_the_module_data_they_were_kept_with_and_script_init_calls_the_pieces_init"
   },
   {
    "row": "getTable",
@@ -5686,13 +5686,13 @@
   },
   {
    "row": "script",
-   "status": "unknown",
-   "where": "",
+   "status": "compat",
+   "where": "ObjectProps (get_prop/set_prop)",
    "instead": "",
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Other_states_answer_the_module_data_they_were_kept_with_and_script_init_calls_the_pieces_init"
   },
   {
    "row": "sendToHand",

@@ -14,7 +14,7 @@ every row that is not dropped must end audited, used by the corpus or not.
 |---|---|---|---|---|---|
 | types | 30 | 30 | 0 | 28 | 43 |
 | save | 150 | 150 | 0 | 127 | 302 |
-| object | 65 | 65 | 0 | 7 | 260 |
+| object | 65 | 65 | 0 | 4 | 260 |
 | global | 16 | 16 | 0 | 0 | 63 |
 | namespaces | 23 | 23 | 0 | 17 | 180 |
 | events | 8 | 8 | 0 | 1 | 52 |
@@ -439,7 +439,7 @@ every row that is not dropped must end audited, used by the corpus or not.
 | `guid` | 137 / 2 | compat | ObjectProps (get_prop/set_prop) |  | ModuleObjectCallTests.Plain_reads_and_small_calls_answer_as_the_tabletop_does |
 | `getTags` | 18 / 2 | compat | ObjectCall |  | ModuleObjectCallTests.Tags_match_without_case_and_with_spaces_as_underscores |
 | `setRotation` | 2 / 2 | compat | ObjectCall |  | ModuleObjectCallTests.Object_setters_answer_true_as_module_code_checks; ModuleObjectCallTests.Turning_over_by_x_or_z_lays_the_piece_face_down_and_rotation_reads_back_in_0_to_360 |
-| `getLuaScript` | 19474 / 1 | compat | ObjectCall |  |  |
+| `getLuaScript` | 19474 / 1 | compat | ObjectCall |  | ModuleObjectCallTests.A_plain_table_keeps_its_keys_as_written_and_lua_script_reads_the_script_the_piece_runs |
 | `getVectorLines` | 2 / 1 | compat | ObjectCall |  | ModuleObjectCallTests.Vector_lines_read_back_nil_until_set_and_then_as_given_with_vectors_and_colours |
 | `getValue` | 1 / 1 | native | a die's sides are its own (PieceDef.Faces, a value and the way up each); self.faces / face / value, set_face / set_value / set_faces / roll; compat maps the module calls | DiceScriptTests | DiceScriptTests.A_module_script_rolls_a_die_reads_its_value_and_sets_a_face |
 | `roll` | 1 / 1 | native | a die's sides are its own (PieceDef.Faces, a value and the way up each); self.faces / face / value, set_face / set_value / set_faces / roll; compat maps the module calls | DiceScriptTests | DiceScriptTests.A_module_script_rolls_a_die_reads_its_value_and_sets_a_face |
@@ -557,7 +557,7 @@ every row that is not dropped must end audited, used by the corpus or not.
 | `getSelectingPlayers` | - | compat | compat.get_selecting_players |  | ModuleObjectCallTests.Selecting_players_are_the_seated_colours_whose_selection_holds_the_piece |
 | `getSnapPoints` | - | compat | ObjectCall |  | ModuleObjectCallTests.Snap_points_read_back_with_their_rotation_only_when_they_snap_rotation |
 | `getStateId` | - | compat | ObjectCall |  | ModuleObjectCallTests.A_piece_without_states_has_state_id_minus_one_no_states_and_refuses_set_state |
-| `getStates` | - | compat | ObjectCall |  |  |
+| `getStates` | - | compat | ObjectCall |  | ModuleObjectCallTests.Other_states_answer_the_module_data_they_were_kept_with_and_script_init_calls_the_pieces_init |
 | `getTable` | - | compat | ObjectCall |  | ModuleObjectCallTests.A_call_into_another_script_copies_its_table_both_ways_and_an_error_there_is_logged_and_answers_nil |
 | `getTransformForward` | - | compat | ObjectCall |  | ModuleObjectCallTests.Turning_over_by_x_or_z_lays_the_piece_face_down_and_rotation_reads_back_in_0_to_360 |
 | `getTransformRight` | - | compat | ObjectCall |  | ModuleObjectCallTests.Turning_over_by_x_or_z_lays_the_piece_face_down_and_rotation_reads_back_in_0_to_360 |
@@ -602,7 +602,7 @@ every row that is not dropped must end audited, used by the corpus or not.
 | `reset` | - | dropped | deck and card logic (decided 2026-11-06) |  |  |
 | `resting` | - | compat | ObjectCall |  | ModuleObjectCallTests.Plain_object_properties_start_at_the_tabletops_defaults_and_keep_what_a_script_sets |
 | `rotate` | - | compat | ObjectCall |  | ModuleObjectCallTests.A_smooth_move_takes_the_tabletops_time_reads_its_target_meanwhile_and_lands_at_the_end |
-| `script` | - | unknown |  |  |  |
+| `script` | - | compat | ObjectProps (get_prop/set_prop) |  | ModuleObjectCallTests.Other_states_answer_the_module_data_they_were_kept_with_and_script_init_calls_the_pieces_init |
 | `sendToHand` | - | dropped | hands are seats here (decided 2026-11-06) |  |  |
 | `setAngularVelocity` | - | dropped | engine physics |  |  |
 | `setComponentVar` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |  |

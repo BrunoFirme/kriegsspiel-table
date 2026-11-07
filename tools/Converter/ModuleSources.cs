@@ -28,7 +28,17 @@ public static class ModuleSources
             _ => null,
         };
         def.ModuleObjectTag = ObjectTag(b);
+        var (states, _) = b.StateList();
+        for (int i = 0; i < def.States.Count && i < states.Count; i++) def.States[i].Module = StateData(states[i]);
     }
+
+    static string? Text(string s) => s.Length > 0 ? s : null;
+
+    static ModuleStateData StateData(ModuleObj s) => new()
+    {
+        Type = s.Name, Guid = s.Guid, Description = Text(s.Description), GmNotes = Text(s.GmNotes), Memo = Text(s.Memo), ScriptState = Text(s.LuaState),
+        Tags = s.Tags.Count > 0 ? s.Tags : null,
+    };
 
     const double Half = 2;
     const int Digits = 4;

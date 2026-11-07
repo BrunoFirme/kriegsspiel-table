@@ -821,6 +821,52 @@ public class ModuleObjectCallTests
     }
 
     [Fact]
+    public void Other_states_answer_the_module_data_they_were_kept_with_and_script_init_calls_the_pieces_init()
+    {
+        using var t = new Table();
+        t.Store.RegisterDef(new PackManifest { Id = "testpack" }, new PieceDef
+        {
+            Id = "duo", Name = "Duo", ModuleType = "Custom_Tile",
+            States =
+            {
+                new PieceStateDef { Name = "Front", Module = new ModuleStateData { Type = "Custom_Tile", Guid = "aaa111", Description = "first", Tags = ["A"] } },
+                new PieceStateDef { Name = "Back", Script = "x = 1", Module = new ModuleStateData { Type = "Custom_Tile", Guid = "bbb222", Description = "second", Memo = "m", ScriptState = "s", Tags = ["B"] } },
+            },
+        });
+        t.Server.Handle(Table.Host, new SpawnPiece { Layer = U, Def = "duo", Id = "p-000061", Pos = new(2, 2) });
+        const string lua = """
+            function init(a, b) return a + b end
+            function onLoad()
+              local o = self.getStates()[1]
+              self.setName(#self.getStates() .. '|' .. o.id .. '|' .. o.name .. '|' .. o.guid .. '|' .. o.description .. '|' .. o.memo .. '|' .. o.lua_script_state .. '|' .. o.lua_script .. '|' .. o.tags[1])
+              self.setDescription(tostring(self.script.init(2, 3)) .. ',' .. tostring(({ script = 't' }).script))
+            end
+            """;
+        var r = ModuleTranslator.Translate(lua, Ctx());
+        Assert.DoesNotContain(t.Server.Handle(Table.Host, new SetScript { Layer = U, Id = "p-000061", Text = r.Script }), o => o.Message is ErrorMessage);
+        var p = t.Server.State.Find(U, "p-000061")!;
+        Assert.Equal(("1|2|Back|bbb222|second|m|s|x = 1|B", "5,t"), (p.Label, p.Note));
+    }
+
+    [Fact]
+    public void A_plain_table_keeps_its_keys_as_written_and_lua_script_reads_the_script_the_piece_runs()
+    {
+        using var t = new Table();
+        var label = Run(t, """
+            function onLoad()
+              local d = {}
+              d.Locked = true
+              d.Memo = 'mm'
+              self.setName(tostring(d.Locked) .. ',' .. tostring(d.locked) .. ',' .. d.Memo .. ',' .. tostring(({}).value) .. ',' .. tostring(({ Value = 4 }).Value))
+              self.setDescription(self.getLuaScript())
+            end
+            """);
+        Assert.Equal("true,nil,mm,nil,4", label);
+        var p = t.Server.State.Find(U, P)!;
+        Assert.Equal(p.Script, p.Note);
+    }
+
+    [Fact]
     public void Selecting_players_are_the_seated_colours_whose_selection_holds_the_piece()
     {
         using var t = new Table();

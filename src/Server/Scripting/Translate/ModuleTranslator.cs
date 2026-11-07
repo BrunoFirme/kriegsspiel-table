@@ -57,7 +57,7 @@ public static class ModuleTranslator
 
     static readonly HashSet<string> ObjectProps = new(StringComparer.Ordinal)
     {
-        "interactable","tooltip","sticky","grid_projection","use_gravity","use_grid","use_snap_points","use_hands","use_rotation_value_flip","auto_raise","bounciness","drag","drag_selectable","angular_drag","hide_when_face_down","ignore_fog_of_war","loading_custom","mass","max_typed_number","measure_movement","script_state","spawning","static_friction","dynamic_friction","value","value_flags","alt_view_angle","held_flip_index","held_spin_index","pick_up_position","pick_up_rotation","held_position_offset","held_reduce_force","held_rotation_offset","memo","AssetBundle","type","tag","name","guid","held_by_color","resting","is_face_down","locked",
+        "interactable","tooltip","sticky","grid_projection","use_gravity","use_grid","use_snap_points","use_hands","use_rotation_value_flip","auto_raise","bounciness","drag","drag_selectable","angular_drag","hide_when_face_down","ignore_fog_of_war","loading_custom","mass","max_typed_number","measure_movement","script_state","spawning","static_friction","dynamic_friction","value","value_flags","alt_view_angle","held_flip_index","held_spin_index","pick_up_position","pick_up_rotation","held_position_offset","held_reduce_force","held_rotation_offset","memo","AssetBundle","type","tag","name","guid","held_by_color","resting","is_face_down","locked","script",
     };
 
     static readonly HashSet<string> EventNames = new(StringComparer.Ordinal)
@@ -609,17 +609,19 @@ public static class ModuleTranslator
                 case "is_face_down": return Direct($"{recv}.face_down", node);
                 case "name" when visited.Parent is not AssignmentStatementSyntax: return Compat($"compat.object_type({recv}, \"{visited.MemberName.Text}\")", node);
                 case "type" or "tag" when visited.Parent is not AssignmentStatementSyntax: return Compat($"compat.object_tag({recv}, \"{visited.MemberName.Text}\")", node);
+                case "script" when visited.Parent is not AssignmentStatementSyntax: return Compat($"compat.script_of({recv}, \"{visited.MemberName.Text}\")", node);
                 case "held_by_color": return Compat($"compat.held_by_color({recv})", node);
                 case "resting": return Compat("true", node);
                 case "spawning" or "loading_custom": return Compat($"compat.get_prop({recv}, \"spawning\", false)", node);
                 case "memo":
                     if (visited.Parent is AssignmentStatementSyntax) return visited;
+                    if (visited.MemberName.Text != "memo") return Compat($"compat.get_prop({recv}, \"memo\", \"\", \"{visited.MemberName.Text}\")", node);
                     return Direct($"{recv}.memo", node);
                 case "interactable" or "tooltip" or "sticky" or "use_gravity" or "grid_projection" or "auto_raise" or "use_snap_points" or "use_grid" or "hide_when_face_down" or "locked"
                     or "drag_selectable" or "measure_movement" or "value" or "value_flags"
                     or "held_spin_index" or "held_flip_index" or "pick_up_position" or "pick_up_rotation" or "max_typed_number" or "use_rotation_value_flip":
                     if (visited.Parent is AssignmentStatementSyntax) return visited;
-                    return Compat($"compat.get_prop({recv}, \"{name}\", {DefaultProp(name)})", node);
+                    return Compat($"compat.get_prop({recv}, \"{name}\", {DefaultProp(name)}, \"{visited.MemberName.Text}\")", node);
             }
             return visited;
         }
@@ -643,7 +645,9 @@ public static class ModuleTranslator
             {
                 var value = (ExpressionSyntax)Visit(node.EqualsValues.Values[0])!;
                 _res.CompatCalls++;
-                var stmt = Stmt($"compat.set_prop({recv}, \"{FoldMember(ma.MemberName.Text)}\", {value.ToString().Trim()})", node);
+                var folded = FoldMember(ma.MemberName.Text);
+                var written = folded == ma.MemberName.Text ? "" : $", \"{ma.MemberName.Text}\"";
+                var stmt = Stmt($"compat.set_prop({recv}, \"{folded}\", {value.ToString().Trim()}{written})", node);
                 return stmt;
             }
             return base.VisitAssignmentStatement(node);

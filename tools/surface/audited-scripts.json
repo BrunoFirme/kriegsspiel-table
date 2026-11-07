@@ -140,7 +140,10 @@
   "type": "ModuleObjectCallTests.A_converted_piece_answers_its_module_type_kind_links_and_covers_widgets_below_its_top",
   "tag": "ModuleObjectCallTests.A_converted_piece_answers_its_module_type_kind_links_and_covers_widgets_below_its_top",
   "getSelectingPlayers": "ModuleObjectCallTests.Selecting_players_are_the_seated_colours_whose_selection_holds_the_piece",
-  "setCustomObject": "ModuleObjectCallTests.Links_made_at_run_time_find_the_kind_made_from_them_and_raw_data_spawns_that_kind"
+  "setCustomObject": "ModuleObjectCallTests.Links_made_at_run_time_find_the_kind_made_from_them_and_raw_data_spawns_that_kind",
+  "getStates": "ModuleObjectCallTests.Other_states_answer_the_module_data_they_were_kept_with_and_script_init_calls_the_pieces_init",
+  "script": "ModuleObjectCallTests.Other_states_answer_the_module_data_they_were_kept_with_and_script_init_calls_the_pieces_init",
+  "getLuaScript": "ModuleObjectCallTests.A_plain_table_keeps_its_keys_as_written_and_lua_script_reads_the_script_the_piece_runs"
  },
  "global": {
   "broadcastToAll": "ModuleObjectCallTests.Printing_to_a_seat_nobody_holds_is_an_error_and_seat_names_are_exact",

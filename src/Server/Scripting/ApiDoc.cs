@@ -177,7 +177,7 @@ public static partial class ApiDoc
         F("piece", "face_down", "boolean", "Turned over.", "is_face_down");
         F("piece", "interactable", "boolean", "Whether hands can take it (set_interactable).", "interactable");
         F("piece", "held_by", "Who", "The umpire carrying it now, or nil.", "held_by_color");
-        F("piece", "source", "table", "For a kind converted from a module: { type =, links = { image =, mesh =, … }, top =, tag =, tags = } — the module object's type, its picture and model links, its top surface in its own units, the kind of object it was (Tile, Figurine, Board, Bag…) and its own tags; nil otherwise.", "name");
+        F("piece", "source", "table", "For a kind converted from a module: { type =, links = { image =, mesh =, … }, top =, tag =, tags = } — the module object's type, its picture and model links, its top surface in its own units, the kind of object it was (Tile, Figurine, Board, Bag…) and its own tags; for a piece of several states, `states` lists each state's { type, guid, description, gm_notes, memo, script_state, tags, script } as the module kept them; nil otherwise.", "name");
         F("piece", "highlight", "string", "The colour it is ringed in, or nil (set_highlight).", "highlightOn");
         F("piece", "holds", "boolean", "Whether it is a holder that other pieces can be stowed in: a piece holding some, one made a holder, or a kind tagged bag.", "getQuantity");
         See("self.flip", "on_flip");

@@ -26,4 +26,19 @@ public sealed class ModuleSourcesTests
         Assert.Equal(((double?)null, "Board"), (board.ModuleTop, board.ModuleObjectTag));
         Assert.Equal("Infinite", odd.ModuleObjectTag);
     }
+
+    [Fact]
+    public void Each_state_keeps_the_module_data_the_tabletop_answers_for_it()
+    {
+        var j = new JsonObject
+        {
+            ["Name"] = "Custom_Tile", ["GUID"] = "aaa111", ["Description"] = "first", ["Transform"] = new JsonObject { ["posX"] = 0, ["posY"] = 1, ["posZ"] = 0 },
+            ["States"] = new JsonObject { ["2"] = new JsonObject { ["Name"] = "Custom_Tile", ["GUID"] = "bbb222", ["Memo"] = "m", ["LuaScriptState"] = "s", ["Tags"] = new JsonArray("B") } },
+        };
+        var def = new PieceDef { States = { new PieceStateDef { Name = "Front" }, new PieceStateDef { Name = "Back" } } };
+        ModuleSources.Fill(def, new ModuleObj(j));
+        Assert.Equal(("aaa111", "first", (string?)null), (def.States[0].Module!.Guid, def.States[0].Module!.Description, def.States[0].Module!.Memo));
+        Assert.Equal(("bbb222", "m", "s"), (def.States[1].Module!.Guid, def.States[1].Module!.Memo, def.States[1].Module!.ScriptState));
+        Assert.Equal(["B"], def.States[1].Module!.Tags!);
+    }
 }

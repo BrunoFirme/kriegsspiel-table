@@ -590,13 +590,31 @@ end
 function compat.states(obj)
   local names = obj.states or {}
   if #names < 2 then return nil end
+  local kept = obj.source and obj.source.states or {}
   local t = {}
   for i, name in ipairs(names) do
     if i ~= obj.state then
-      t[#t + 1] = { id = i, name = name, nickname = name, description = "", gm_notes = "", guid = compat.guid(obj), lua_script = "", lua_script_state = "", memo = "", tags = {} }
+      local m = kept[i] or {}
+      local tags = {}
+      for k, tg in ipairs(m.tags or {}) do tags[k] = tg end
+      t[#t + 1] = { id = i, name = name ~= "" and name or (m.type or ""), nickname = name, description = m.description or "", gm_notes = m.gm_notes or "",
+        guid = m.guid or compat.guid(obj), lua_script = m.script or "", lua_script_state = m.script_state or "", memo = m.memo or "", tags = tags }
     end
   end
   return t
+end
+function compat.script_of(obj, member)
+  if not compat.is_piece(obj) then
+    if type(obj) == "table" then return obj[member or "script"] end
+    return nil
+  end
+  local p = compat.piece_of(obj)
+  return { init = function(...)
+    local ok, r = pcall(p.call, "init", ...)
+    if ok then return r end
+    print("Error in Script.init: " .. tostring(r))
+    return nil
+  end }
 end
 
 local function norm_tag(s) return (tostring(s):lower():gsub(" ", "_")) end

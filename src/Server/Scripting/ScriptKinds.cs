@@ -26,6 +26,29 @@ internal sealed partial class PieceHandles
         return t;
     }
 
+    DynValue StateSources(PieceDef def)
+    {
+        var t = T();
+        foreach (var st in def.States)
+        {
+            var m = st.Module;
+            var e = T();
+            if (m != null)
+            {
+                e.Table["type"] = S(m.Type);
+                e.Table["guid"] = S(m.Guid);
+                e.Table["description"] = S(m.Description ?? "");
+                e.Table["gm_notes"] = S(m.GmNotes ?? "");
+                e.Table["memo"] = S(m.Memo ?? "");
+                e.Table["script_state"] = S(m.ScriptState ?? "");
+                e.Table["tags"] = ListTable((m.Tags ?? new()).Select(tg => S(tg)));
+            }
+            e.Table["script"] = S(st.Script ?? "");
+            t.Table.Append(e);
+        }
+        return t;
+    }
+
     DynValue KindTable(PieceDef def)
     {
         var k = T();

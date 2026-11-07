@@ -493,6 +493,14 @@ type Message abstract
   derived TurnList = TurnList
   derived TurnState = TurnState
   derived UploadAsset = UploadAsset
+type ModuleStateData object
+  description: string
+  gmNotes: string
+  guid: string
+  memo: string
+  scriptState: string
+  tags: List<string>
+  type: string
 type MovePiece object
   actor: long
   at: long
@@ -659,6 +667,7 @@ type PieceStateDef object
   decals: List<DecalDef>
   image: string
   mesh: string
+  module: ModuleStateData
   name: string
   script: string
   shape: string

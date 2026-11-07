@@ -546,6 +546,7 @@ internal sealed partial class PieceHandles(ScriptHost host)
         var links = T();
         foreach (var (k, v) in def.Sources ?? new()) links.Table[LinkNames.GetValueOrDefault(k, k)] = S(v);
         t.Table["links"] = links;
+        if (def.States.Count > 1) t.Table["states"] = StateSources(def);
         return t;
     }
 
