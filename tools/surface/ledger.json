@@ -3722,7 +3722,7 @@
    "held_by": "",
    "count": 480,
    "modules": 22,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.A_highlight_rings_the_piece_for_its_seconds_and_interactable_off_keeps_hands_off; PieceHighlightTests.A_highlight_rings_the_piece_and_a_piece_hands_cannot_take_is_passed_over_by_the_pointer"
   },
   {
    "row": "setLock",
@@ -3812,7 +3812,7 @@
    "held_by": "",
    "count": 1952,
    "modules": 14,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.A_highlight_rings_the_piece_for_its_seconds_and_interactable_off_keeps_hands_off; PieceHighlightTests.A_highlight_rings_the_piece_and_a_piece_hands_cannot_take_is_passed_over_by_the_pointer"
   },
   {
    "row": "scale",
@@ -3922,7 +3922,7 @@
    "held_by": "",
    "count": 154,
    "modules": 10,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.A_highlight_rings_the_piece_for_its_seconds_and_interactable_off_keeps_hands_off; PieceHighlightTests.A_highlight_rings_the_piece_and_a_piece_hands_cannot_take_is_passed_over_by_the_pointer"
   },
   {
    "row": "setPositionSmooth",
@@ -3932,7 +3932,7 @@
    "held_by": "",
    "count": 51,
    "modules": 10,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.A_smooth_move_takes_the_tabletops_time_reads_its_target_meanwhile_and_lands_at_the_end"
   },
   {
    "row": "takeObject",
@@ -3992,7 +3992,7 @@
    "held_by": "",
    "count": 50,
    "modules": 9,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.A_smooth_move_takes_the_tabletops_time_reads_its_target_meanwhile_and_lands_at_the_end"
   },
   {
    "row": "setLuaScript",
@@ -4002,7 +4002,7 @@
    "held_by": "",
    "count": 3169,
    "modules": 7,
-   "audited": ""
+   "audited": "ScriptingTests.Set_script_is_allowed_only_from_an_action_or_on_a_spawned_piece (our script-safety rule, kept by decision 2026-11-07)"
   },
   {
    "row": "setState",
@@ -4112,7 +4112,7 @@
    "held_by": "BookNotesScriptTests",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "BookNotesScriptTests.An_effect_a_module_script_or_an_umpire_stops_and_starts_answers_as_a_looping_effect"
   },
   {
    "row": "AssetBundle.getLoopingEffects",
@@ -4122,7 +4122,7 @@
    "held_by": "BookNotesScriptTests",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "BookNotesScriptTests.An_effect_a_module_script_or_an_umpire_stops_and_starts_answers_as_a_looping_effect"
   },
   {
    "row": "AssetBundle.getTriggerEffects",
@@ -4132,7 +4132,7 @@
    "held_by": "BookNotesScriptTests",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "BookNotesScriptTests.An_effect_a_module_script_or_an_umpire_stops_and_starts_answers_as_a_looping_effect"
   },
   {
    "row": "AssetBundle.playLoopingEffect",
@@ -4142,7 +4142,7 @@
    "held_by": "BookNotesScriptTests",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "BookNotesScriptTests.An_effect_a_module_script_or_an_umpire_stops_and_starts_answers_as_a_looping_effect"
   },
   {
    "row": "AssetBundle.playTriggerEffect",
@@ -4152,7 +4152,7 @@
    "held_by": "BookNotesScriptTests",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "BookNotesScriptTests.An_effect_a_module_script_or_an_umpire_stops_and_starts_answers_as_a_looping_effect"
   },
   {
    "row": "Book.clearHighlight",
@@ -4172,7 +4172,7 @@
    "held_by": "BookNotesScriptTests",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "BookNotesScriptTests.A_module_script_turns_a_book_by_its_printed_page_numbers_and_hears_the_page_turn"
   },
   {
    "row": "Book.page_offset",
@@ -4182,7 +4182,7 @@
    "held_by": "BookNotesScriptTests",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "BookNotesScriptTests.A_module_script_turns_a_book_by_its_printed_page_numbers_and_hears_the_page_turn"
   },
   {
    "row": "Book.setHighlight",
@@ -4202,7 +4202,7 @@
    "held_by": "BookNotesScriptTests",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "BookNotesScriptTests.A_module_script_turns_a_book_by_its_printed_page_numbers_and_hears_the_page_turn"
   },
   {
    "row": "Browser.pixel_width",
@@ -4292,7 +4292,7 @@
    "held_by": "StowScriptTests",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.A_bags_container_answers_as_the_tabletops_bag_container_which_does_nothing"
   },
   {
    "row": "Container.getCount",
@@ -4302,7 +4302,7 @@
    "held_by": "StowScriptTests",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.A_bags_container_answers_as_the_tabletops_bag_container_which_does_nothing"
   },
   {
    "row": "Container.getData",
@@ -4312,7 +4312,7 @@
    "held_by": "StowScriptTests",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.A_bags_container_answers_as_the_tabletops_bag_container_which_does_nothing"
   },
   {
    "row": "Container.getInfo",
@@ -4322,7 +4322,7 @@
    "held_by": "StowScriptTests",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.A_bags_container_answers_as_the_tabletops_bag_container_which_does_nothing"
   },
   {
    "row": "Container.putObject",
@@ -4332,7 +4332,7 @@
    "held_by": "StowScriptTests",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.A_bags_container_answers_as_the_tabletops_bag_container_which_does_nothing"
   },
   {
    "row": "Container.randomize",
@@ -4342,7 +4342,7 @@
    "held_by": "StowScriptTests",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.A_bags_container_answers_as_the_tabletops_bag_container_which_does_nothing"
   },
   {
    "row": "Container.removeData",
@@ -4352,7 +4352,7 @@
    "held_by": "StowScriptTests",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.A_bags_container_answers_as_the_tabletops_bag_container_which_does_nothing"
   },
   {
    "row": "Container.search",
@@ -4372,7 +4372,7 @@
    "held_by": "StowScriptTests",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.A_bags_container_answers_as_the_tabletops_bag_container_which_does_nothing"
   },
   {
    "row": "Container.takeObject",
@@ -4382,7 +4382,7 @@
    "held_by": "StowScriptTests",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.A_bags_container_answers_as_the_tabletops_bag_container_which_does_nothing"
   },
   {
    "row": "Counter.clear",
@@ -4522,7 +4522,7 @@
    "held_by": "BookNotesScriptTests",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "BookNotesScriptTests.A_module_script_rewrites_3d_text_its_size_and_its_colour"
   },
   {
    "row": "TextTool.getFontSize",
@@ -4532,7 +4532,7 @@
    "held_by": "BookNotesScriptTests",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "BookNotesScriptTests.A_module_script_rewrites_3d_text_its_size_and_its_colour"
   },
   {
    "row": "TextTool.getValue",
@@ -4542,7 +4542,7 @@
    "held_by": "BookNotesScriptTests",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "BookNotesScriptTests.A_module_script_rewrites_3d_text_its_size_and_its_colour"
   },
   {
    "row": "TextTool.setFontColor",
@@ -4552,7 +4552,7 @@
    "held_by": "BookNotesScriptTests",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "BookNotesScriptTests.A_module_script_rewrites_3d_text_its_size_and_its_colour"
   },
   {
    "row": "TextTool.setFontSize",
@@ -4562,7 +4562,7 @@
    "held_by": "BookNotesScriptTests",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "BookNotesScriptTests.A_module_script_rewrites_3d_text_its_size_and_its_colour"
   },
   {
    "row": "TextTool.setValue",
@@ -4572,7 +4572,7 @@
    "held_by": "BookNotesScriptTests",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "BookNotesScriptTests.A_module_script_rewrites_3d_text_its_size_and_its_colour"
   },
   {
    "row": "UI",
@@ -4596,13 +4596,13 @@
   },
   {
    "row": "addAttachment",
-   "status": "native",
+   "status": "compat",
    "where": "ObjectCall",
    "instead": "",
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Attachments_answer_true_list_their_saved_fields_and_come_off_together_as_a_list"
   },
   {
    "row": "addDecal",
@@ -4642,7 +4642,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "TranslatorTests.The_long_tail_translates_and_runs (the same selection call as removeFromPlayerSelection)"
   },
   {
    "row": "addTorque",
@@ -4656,9 +4656,9 @@
   },
   {
    "row": "alt_view_angle",
-   "status": "planned",
-   "where": "the Alt-zoom view: a decision for the user",
-   "instead": "",
+   "status": "dropped",
+   "where": "no Alt-zoom view here (decided 2026-11-07)",
+   "instead": "the camera and the piece reader",
    "held_by": "",
    "count": 0,
    "modules": 0,
@@ -4682,7 +4682,7 @@
    "held_by": "BookNotesScriptTests",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "BookNotesScriptTests.An_effect_a_module_script_or_an_umpire_stops_and_starts_answers_as_a_looping_effect"
   },
   {
    "row": "attachHider",
@@ -4712,7 +4712,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Plain_object_properties_start_at_the_tabletops_defaults_and_keep_what_a_script_sets"
   },
   {
    "row": "book",
@@ -4722,7 +4722,7 @@
    "held_by": "BookNotesScriptTests",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "BookNotesScriptTests.A_module_script_turns_a_book_by_its_printed_page_numbers_and_hears_the_page_turn"
   },
   {
    "row": "bounciness",
@@ -4892,7 +4892,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Plain_object_properties_start_at_the_tabletops_defaults_and_keep_what_a_script_sets"
   },
   {
    "row": "drop",
@@ -4942,7 +4942,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Attachments_answer_true_list_their_saved_fields_and_come_off_together_as_a_list"
   },
   {
    "row": "getBoundsNormalized",
@@ -5132,7 +5132,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Plain_object_properties_start_at_the_tabletops_defaults_and_keep_what_a_script_sets"
   },
   {
    "row": "getNearestPointFromObject",
@@ -5162,7 +5162,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.A_smooth_move_takes_the_tabletops_time_reads_its_target_meanwhile_and_lands_at_the_end"
   },
   {
    "row": "getQuantity",
@@ -5182,7 +5182,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.A_smooth_move_takes_the_tabletops_time_reads_its_target_meanwhile_and_lands_at_the_end"
   },
   {
    "row": "getRotationValue",
@@ -5296,9 +5296,9 @@
   },
   {
    "row": "gizmo_selectable",
-   "status": "planned",
-   "where": "whether the transform tool takes it: a decision for the user",
-   "instead": "",
+   "status": "dropped",
+   "where": "no transform tool here (decided 2026-11-07)",
+   "instead": "move and turn pieces with the hand and the handles",
    "held_by": "",
    "count": 0,
    "modules": 0,
@@ -5342,7 +5342,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleEventTests.A_piece_carried_by_an_umpire_reads_their_colour_as_held_by_until_it_is_put_down"
   },
   {
    "row": "held_flip_index",
@@ -5352,13 +5352,13 @@
    "held_by": "DiceScriptTests",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Plain_object_properties_start_at_the_tabletops_defaults_and_keep_what_a_script_sets"
   },
   {
    "row": "held_position_offset",
-   "status": "planned",
-   "where": "where the hand holds a piece: a decision for the user",
-   "instead": "",
+   "status": "dropped",
+   "where": "no hands here (decided 2026-11-07)",
+   "instead": "pieces are carried by the pointer",
    "held_by": "",
    "count": 0,
    "modules": 0,
@@ -5376,9 +5376,9 @@
   },
   {
    "row": "held_rotation_offset",
-   "status": "planned",
-   "where": "how the hand tilts a held piece: a decision for the user",
-   "instead": "",
+   "status": "dropped",
+   "where": "no hands here (decided 2026-11-07)",
+   "instead": "pieces are carried by the pointer",
    "held_by": "",
    "count": 0,
    "modules": 0,
@@ -5392,7 +5392,7 @@
    "held_by": "DiceScriptTests",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Plain_object_properties_start_at_the_tabletops_defaults_and_keep_what_a_script_sets"
   },
   {
    "row": "hide_when_face_down",
@@ -5422,7 +5422,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.A_smooth_move_takes_the_tabletops_time_reads_its_target_meanwhile_and_lands_at_the_end"
   },
   {
    "row": "is_face_down",
@@ -5432,7 +5432,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Plain_object_properties_start_at_the_tabletops_defaults_and_keep_what_a_script_sets"
   },
   {
    "row": "jointTo",
@@ -5512,7 +5512,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Plain_object_properties_start_at_the_tabletops_defaults_and_keep_what_a_script_sets"
   },
   {
    "row": "measure_movement",
@@ -5522,7 +5522,7 @@
    "held_by": "MeasureTests",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Plain_object_properties_start_at_the_tabletops_defaults_and_keep_what_a_script_sets"
   },
   {
    "row": "memo",
@@ -5532,7 +5532,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Plain_object_properties_start_at_the_tabletops_defaults_and_keep_what_a_script_sets"
   },
   {
    "row": "name",
@@ -5552,7 +5552,7 @@
    "held_by": "DiceScriptTests",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "DiceScriptTests.A_module_script_reads_and_sets_worth_held_turns_the_pick_up_place_and_flips_a_die_to_its_other_side"
   },
   {
    "row": "pick_up_rotation",
@@ -5562,7 +5562,7 @@
    "held_by": "DiceScriptTests",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "DiceScriptTests.A_module_script_reads_and_sets_worth_held_turns_the_pick_up_place_and_flips_a_die_to_its_other_side"
   },
   {
    "row": "rPGFigurine",
@@ -5622,7 +5622,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Attachments_answer_true_list_their_saved_fields_and_come_off_together_as_a_list"
   },
   {
    "row": "removeButton",
@@ -5672,7 +5672,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Plain_object_properties_start_at_the_tabletops_defaults_and_keep_what_a_script_sets"
   },
   {
    "row": "rotate",
@@ -5682,7 +5682,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.A_smooth_move_takes_the_tabletops_time_reads_its_target_meanwhile_and_lands_at_the_end"
   },
   {
    "row": "script",
@@ -5782,7 +5782,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Plain_object_properties_start_at_the_tabletops_defaults_and_keep_what_a_script_sets"
   },
   {
    "row": "setRotationValue",
@@ -5912,7 +5912,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Plain_object_properties_start_at_the_tabletops_defaults_and_keep_what_a_script_sets"
   },
   {
    "row": "tag",
@@ -5932,7 +5932,7 @@
    "held_by": "BookNotesScriptTests",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "BookNotesScriptTests.A_module_script_rewrites_3d_text_its_size_and_its_colour"
   },
   {
    "row": "tooltip",
@@ -5942,7 +5942,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Plain_object_properties_start_at_the_tabletops_defaults_and_keep_what_a_script_sets"
   },
   {
    "row": "translate",
@@ -5952,7 +5952,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.A_smooth_move_takes_the_tabletops_time_reads_its_target_meanwhile_and_lands_at_the_end"
   },
   {
    "row": "type",
@@ -6012,7 +6012,7 @@
    "held_by": "DiceScriptTests",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Plain_object_properties_start_at_the_tabletops_defaults_and_keep_what_a_script_sets"
   },
   {
    "row": "use_snap_points",
@@ -6032,7 +6032,7 @@
    "held_by": "DiceScriptTests",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Plain_object_properties_start_at_the_tabletops_defaults_and_keep_what_a_script_sets"
   },
   {
    "row": "value_flags",
@@ -6042,7 +6042,7 @@
    "held_by": "DiceScriptTests",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "DiceScriptTests.A_module_script_reads_and_sets_worth_held_turns_the_pick_up_place_and_flips_a_die_to_its_other_side"
   },
   {
    "row": "zone",
@@ -6558,9 +6558,9 @@
   },
   {
    "row": "inspect",
-   "status": "unknown",
-   "where": "",
-   "instead": "",
+   "status": "dropped",
+   "where": "reflection of the tabletop's own C# classes (decided 2026-11-07)",
+   "instead": "the scripting reference",
    "held_by": "",
    "count": 0,
    "modules": 0,
@@ -6890,9 +6890,9 @@
   },
   {
    "row": "Physics.cast",
-   "status": "compat",
-   "where": "compat.cast",
-   "instead": "",
+   "status": "dropped",
+   "where": "a collider cast; colliders are dropped (decided 2026-11-07)",
+   "instead": "board.pieces and the piece footprints",
    "held_by": "",
    "count": 1,
    "modules": 1,
@@ -8938,7 +8938,7 @@
    "held_by": "ModuleHelpersTests",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleHelpersTests.A_turn_start_handler_runs_when_the_clock_advances (clock turn for player turn, kept by decision 2026-11-07)"
   },
   {
    "row": "onPlayerTurnStart",
@@ -8948,7 +8948,7 @@
    "held_by": "ModuleHelpersTests",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleHelpersTests.A_turn_start_handler_runs_when_the_clock_advances (clock turn for player turn, kept by decision 2026-11-07)"
   },
   {
    "row": "onPlayersConnect",
@@ -9050,7 +9050,7 @@
    "held_by": "import-sweep: naval (the Midway bag's Place)",
    "count": 55,
    "modules": 55,
-   "audited": ""
+   "audited": "ScriptingTests.A_runaway_script_is_stopped_and_switched_off (our time limit, kept by decision 2026-11-07)"
   },
   {
    "row": "button and input defaults (width, height, font_size, colours, position, scale)",
@@ -9120,7 +9120,7 @@
    "held_by": "TranslatorFoldTests",
    "count": 55,
    "modules": 55,
-   "audited": ""
+   "audited": "TranslatorFoldTests.A_member_written_in_any_casing_modules_accept_is_the_same_member_here; TranslatorFoldTests.A_name_a_module_would_not_resolve_is_left_alone"
   },
   {
    "row": "module Vector and Color classes with their methods",
@@ -9200,7 +9200,7 @@
    "held_by": "ScriptSafetyTests; import-sweep",
    "count": 55,
    "modules": 55,
-   "audited": ""
+   "audited": "ScriptSafetyTests (our own rule, kept by decision 2026-11-07)"
   },
   {
    "row": "setState keeps the GUID",
@@ -9215,12 +9215,12 @@
   {
    "row": "smooth moves end at once",
    "status": "compat",
-   "where": "compat.set_position",
+   "where": "compat.glide: a smooth move follows the tabletop's pull and damping in 50 Hz steps; scripts see it moving and the piece lands at the end",
    "instead": "",
-   "held_by": "",
+   "held_by": "ModuleObjectCallTests",
    "count": 55,
    "modules": 55,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.A_smooth_move_takes_the_tabletops_time_reads_its_target_meanwhile_and_lands_at_the_end (they now take the tabletop's time; the row's wording is the old rule)"
   },
   {
    "row": "spawning and loading_custom flags",
