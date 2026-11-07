@@ -739,7 +739,7 @@ public sealed partial class ScriptHost
     public string? ScriptVeto(Command c, long actor, List<Outgoing> res)
     {
         if (c is Stow sw) return HasGlobal(StowHook) ? Refusal(actor, res, StowHook, $"the game's script keeps {sw.Id} out of {sw.Holder}", Handle(sw.Holder), Handle(sw.Id)) : null;
-        if (!HasGlobal(PlayerActionHook)) return null;
+        if (!_every.Listens(PlayerActionHook)) return null;
         var (action, ids) = PlayerActionOf(c);
         if (action == null || ids.Count == 0) return null;
         var targets = new Table(Vm);
@@ -752,7 +752,7 @@ public sealed partial class ScriptHost
         string? refused = null;
         res.AddRange(Run(actor, false, () =>
         {
-            if (Call(_global!, hook, args) is { Type: DataType.Boolean, Boolean: false }) refused = why;
+            if (_every.Refuses(hook, args)) refused = why;
         }));
         return refused;
     }

@@ -78,7 +78,7 @@ public static class ModuleTranslator
     static readonly HashSet<string> EveryScriptEvents = new(StringComparer.Ordinal)
     {
         "onObjectSpawn", "onObjectDestroy", "onObjectPickUp", "onObjectPickup", "onObjectDrop", "onObjectRotate", "onObjectRandomize", "onObjectPageChange",
-        "onObjectLoopingEffect", "onObjectTriggerEffect", "onObjectEnterContainer", "onObjectLeaveContainer", "onObjectStateChange", "onChat",
+        "onObjectLoopingEffect", "onObjectTriggerEffect", "onObjectEnterContainer", "onObjectLeaveContainer", "onObjectStateChange", "onChat", "onPlayerAction",
     };
 
     static readonly HashSet<string> Stubbed = new(StringComparer.Ordinal)

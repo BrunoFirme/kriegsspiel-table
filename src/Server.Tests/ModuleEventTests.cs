@@ -51,6 +51,16 @@ public class ModuleEventTests
     }
 
     [Fact]
+    public void A_piece_script_asked_about_a_player_action_can_refuse_it_with_false()
+    {
+        using var t = new Table();
+        Load(t, P, "function onPlayerAction(player, action, targets) return not (action == Player.Action.Delete and targets[1].getGUID() == 'p-000003') end");
+        var refused = t.Server.Handle(Table.Host, new DeletePiece { Layer = U, Id = Marker });
+        Assert.Contains(refused.Select(o => o.Message).OfType<ErrorMessage>(), e => e.Text.Contains("does not allow"));
+        Assert.NotNull(t.Server.State.Find(U, Marker));
+    }
+
+    [Fact]
     public void A_save_answer_that_is_not_text_clears_the_saved_state_and_nothing_keeps_it()
     {
         Assert.Equal("", Saved("function onSave() return 5 end"));
