@@ -163,4 +163,58 @@ public class PanelInteractionTests
         Assert.DoesNotContain(local.Keys, k => k.StartsWith(PanelClasses.Prefix));
         Assert.Empty(layout.ById("i")!.Classes);
     }
+
+    const string Folds = "<Accordion id=\"a\" width=\"300\" height=\"400\"><AccordionSection id=\"s1\" expanded=\"true\"><AccordionSectionHeader id=\"h1\"><AccordionSectionHeaderIcon id=\"i1\"/></AccordionSectionHeader>"
+        + "<AccordionSectionContent id=\"c1\"><Text>One</Text></AccordionSectionContent></AccordionSection><AccordionSection id=\"s2\" contentHeight=\"50\"><AccordionSectionHeader id=\"h2\"/>"
+        + "<AccordionSectionContent id=\"c2\"><Button id=\"b2\">Go</Button></AccordionSectionContent></AccordionSection></Accordion>";
+
+    [Fact]
+    public void An_accordion_shows_a_grey_sixty_four_high_header_per_section_and_opens_only_the_expanded_ones()
+    {
+        var s = Scene(Folds);
+        Assert.Equal(64 + 128, s.Screen(s.ById("s1")!).H, 2);
+        Assert.Equal(64, s.Screen(s.ById("s2")!).H, 2);
+        Assert.Equal(128, s.Screen(s.ById("c1")!).H, 2);
+        Assert.Equal(0, s.Screen(s.ById("c2")!).H, 2);
+        Assert.Equal(new Paint(0.5f, 0.5f, 0.5f, 1), s.ById("h1")!.Image!.Color);
+        Assert.Equal(PanelAccordions.Expanded, s.ById("i1")!.Image!.Sprite);
+        Assert.False(s.ById("b2")!.Select!.Interactable);
+        var layout = PanelBuild.Of(Folds).Layout;
+        Assert.Contains("expanded", layout.ById("s1")!.Classes);
+        Assert.Contains("collapsed", layout.ById("s2")!.Classes);
+    }
+
+    [Fact]
+    public void A_section_half_way_through_opening_shows_half_its_content_height()
+    {
+        var local = new Dictionary<string, string>();
+        var first = Scene(Folds, local).ById("s2")!;
+        local[PanelAccordions.Key(first)] = "True";
+        local[PanelAccordions.Opening + PanelAccordions.Key(first)] = "0.5";
+        var s = Scene(Folds, local);
+        Assert.Equal(64 + 25, s.Screen(s.ById("s2")!).H, 2);
+        Assert.True(s.ById("b2")!.Select!.Interactable);
+    }
+
+    [Fact]
+    public void A_data_table_takes_ninety_six_units_and_draws_nothing_because_nothing_in_the_tabletop_ever_gives_it_rows()
+    {
+        var s = Scene("<VerticalLayout width=\"300\" height=\"300\" childForceExpandHeight=\"false\"><DataTable id=\"d\"/></VerticalLayout>");
+        var d = s.ById("d")!;
+        Assert.Equal(96, s.Screen(d).H, 2);
+        Assert.Equal(0, d.Image!.Color.A);
+        Assert.False(d.Image.RaycastTarget);
+    }
+
+    [Fact]
+    public void Text_mesh_pro_text_draws_no_letters_since_the_tabletop_ships_no_text_mesh_pro_font_but_its_input_field_keeps_its_white_box()
+    {
+        var s = Scene("<TextMeshPro id=\"t\">Hello</TextMeshPro><TextMeshProInputField id=\"i\"/>");
+        var t = s.ById("t")!;
+        Assert.Null(t.Text);
+        Assert.Equal(100, s.Screen(t).W, 2);
+        var i = s.ById("i")!;
+        Assert.Equal(Paint.White, i.Image!.Color);
+        Assert.Equal(PanelPrefabs.ToolSprite, i.Image.Sprite);
+    }
 }

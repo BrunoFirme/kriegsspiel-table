@@ -16,12 +16,12 @@ public static class PanelPrefabs
     public static readonly Dictionary<string, string> Known = new()
     {
         ["Sprites/Elements/UISprite_XmlLayout"] = ToolSprite, ["Sprites/Elements/Background_XmlLayout"] = ToolBackground, ["Sprites/Elements/Checkmark"] = Checkmark,
-        ["Sprites/Elements/DropdownArrow"] = DropdownArrow, ["Sprites/Elements/ToggleGroup_Background"] = GroupBackground, ["Sprites/Elements/ToggleGroup_Selected"] = GroupSelected,
+        ["Sprites/Elements/DropdownArrow"] = DropdownArrow, ["Sprites/Elements/AccordionCollapsed"] = PanelAccordions.Collapsed, ["Sprites/Elements/AccordionExpanded"] = PanelAccordions.Expanded, ["Sprites/Elements/ToggleGroup_Background"] = GroupBackground, ["Sprites/Elements/ToggleGroup_Selected"] = GroupSelected,
     };
 
     static readonly string[] KnownBlank =
     {
-        "Sprites/Elements/AccordionCollapsed", "Sprites/Elements/AccordionExpanded", "Sprites/Elements/TriangleRight", "Sprites/Elements/Background", "Sprites/HUD/", "Sprites/Icons/",
+        "Sprites/Elements/TriangleRight", "Sprites/Elements/Background", "Sprites/HUD/", "Sprites/Icons/",
         "Sprites/Layout/", "Sprites/Shop/", "Sprites/XmlLayout", "Cursors/",
     };
 
@@ -50,9 +50,38 @@ public static class PanelPrefabs
         "Cell" => Cell(),
         "Mask" => MaskBox(),
         "VerticalScrollView" or "HorizontalScrollView" => Scroll(tag == "VerticalScrollView"),
+        "Accordion" or "AccordionSection" or "AccordionSectionHeader" or "AccordionSectionHeaderIcon" or "AccordionSectionContent" => PanelAccordions.Make(tag)!,
+        "DataTable" => new PanelBox { Name = tag, Tag = tag, AnchorMin = new V2(0, 1), AnchorMax = V2.One, SizeDelta = new V2(0, DataTableHeight), Pivot = new V2(0.5f, 1),
+            Image = new ImageProps { Color = Faint, Type = Sliced }, Layout = new LayoutProps { PreferredHeight = DataTableHeight } },
+        "TextMeshPro" => Bare(tag),
+        "TextMeshProInputField" => TypedBare(tag),
+        "TextMeshProDropdown" => TextlessDropdown(),
         "Canvas" => new PanelBox { Name = tag, Tag = tag, AnchorMax = V2.Zero, Pivot = V2.Zero, Image = new ImageProps { Color = Faint, Type = Sliced, RaycastTarget = true } },
         _ => Plain(tag, Faint, null),
     };
+
+    const float DataTableHeight = 96, BareSize = 100;
+
+    static PanelBox Bare(string tag) => new() { Name = tag, Tag = tag, AnchorMin = V2.Half, AnchorMax = V2.Half, SizeDelta = new V2(BareSize, BareSize), Layout = new LayoutProps() };
+
+    static PanelBox TypedBare(string tag)
+    {
+        var b = Bare(tag);
+        b.Image = new ImageProps { Color = Paint.White, Sprite = ToolSprite, Type = Sliced, RaycastTarget = true };
+        b.Select = new SelectProps { TargetGraphic = tag };
+        return b;
+    }
+
+    static PanelBox TextlessDropdown()
+    {
+        var d = Centered("TextMeshProDropdown", 160, 30);
+        d.Image = new ImageProps { Color = Paint.White, Sprite = UiSprite, Type = Sliced, RaycastTarget = true };
+        d.Select = new SelectProps { TargetGraphic = "TextMeshProDropdown" };
+        d.Add(new PanelBox { Name = "Label", Position = new V2(-7.5f, -0.5f), SizeDelta = new V2(-35, -13) });
+        d.Add(new PanelBox { Name = "Arrow", AnchorMin = new V2(1, 0.5f), AnchorMax = new V2(1, 0.5f), Position = new V2(-15, 0), SizeDelta = new V2(20, 20),
+            Image = new ImageProps { Color = Paint.White, Sprite = DropdownArrow, Type = Simple, RaycastTarget = true } });
+        return d;
+    }
 
     static PanelBox Plain(string tag, Paint color, string? sprite) =>
         new() { Name = tag, Tag = tag, Image = new ImageProps { Color = color, Sprite = sprite, Type = Sliced }, Layout = new LayoutProps() };
@@ -248,6 +277,7 @@ public static class PanelPrefabs
     public static PanelBox ContentOf(PanelBox element) => element.Tag switch
     {
         "VerticalScrollView" or "HorizontalScrollView" => element.Part("Content")!,
+        PanelAccordions.Content => element.Part(PanelAccordions.Holder)!,
         _ => element,
     };
 }

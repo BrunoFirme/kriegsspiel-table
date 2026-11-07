@@ -60,6 +60,9 @@ public static partial class PanelApply
             case "VerticalScrollView" or "HorizontalScrollView":
                 Scroll(b, attrs, ctx);
                 break;
+            case PanelAccordions.Accordion or PanelAccordions.Section or PanelAccordions.Icon:
+                foreach (var k in PanelAccordions.Looks) if (attrs.TryGetValue(k, out var v)) b.Extra[k] = v;
+                break;
         }
     }
 

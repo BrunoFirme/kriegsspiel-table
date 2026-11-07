@@ -48,6 +48,7 @@ public sealed class PanelScene
             if (keep != null && box.Path != null && keep.Contains(Key(box.Path))) box.Active = true;
         }
         foreach (var group in scene.Elements.Where(b => b.Tag == "ToggleGroup")) GroupLooks(group, ctx);
+        PanelAccordions.Settle(scene.Elements, local, ctx);
         PanelLayout.Run(top, meter);
         foreach (var view in scene.Elements.Where(b => b.Tag is "VerticalScrollView" or "HorizontalScrollView"))
         {

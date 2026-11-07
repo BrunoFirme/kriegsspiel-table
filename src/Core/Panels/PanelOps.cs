@@ -101,6 +101,14 @@ public static class PanelOps
         for (int n = 1; n < path.Count; n++) if (layout.At(path.Take(n).ToList()) is { } a) yield return a;
     }
 
+    public const string ExpandedClass = "expanded", CollapsedClass = "collapsed";
+
+    public static void Expanded(UiLayout layout, List<int> path, bool open)
+    {
+        RemoveClass(layout, path, open ? CollapsedClass : ExpandedClass);
+        AddClass(layout, path, open ? ExpandedClass : CollapsedClass);
+    }
+
     public static void AddClass(UiLayout layout, List<int> path, string cls)
     {
         if (layout.At(path) is not { } e || e.Classes.Contains(cls)) return;

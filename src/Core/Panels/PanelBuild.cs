@@ -152,6 +152,7 @@ public sealed partial class PanelBuild
         if (merged.TryGetValue("id", out var mid) && mid.Length > 0) PanelIds.Register(_layout, mid, path);
         if (merged.ContainsKey("active") || merged.ContainsKey("visibility")) PanelOps.Activate(e);
         PanelTags.AfterApply(e, merged);
+        if (e.Tag == PanelTags.AccordionSection) PanelOps.Expanded(_layout, path, PanelOps.Bool(e.Get("expanded")));
         if (!PanelTags.Renders(e.Tag)) Unrender(at, path);
     }
 

@@ -4,7 +4,7 @@ namespace KTable.Core.Panels;
 
 public static class PanelTags
 {
-    public const string Text = "Text", Dropdown = "Dropdown", Button = "Button", ToggleButton = "ToggleButton", Toggle = "Toggle", Panel = "Panel";
+    public const string Text = "Text", Dropdown = "Dropdown", Button = "Button", ToggleButton = "ToggleButton", Toggle = "Toggle", Panel = "Panel", AccordionSection = "AccordionSection";
 
     public static readonly string[] All =
     {

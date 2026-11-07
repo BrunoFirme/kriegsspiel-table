@@ -137,7 +137,8 @@ sealed partial class PanelView
 
     static Control Rounded(string sprite, Color tint, int radius)
     {
-        if (sprite is PanelPrefabs.Checkmark or PanelPrefabs.Knob or PanelPrefabs.DropdownArrow or PanelPrefabs.GroupSelected) return Glyph(sprite, tint);
+        if (sprite is PanelPrefabs.Checkmark or PanelPrefabs.Knob or PanelPrefabs.DropdownArrow or PanelPrefabs.GroupSelected or PanelAccordions.Collapsed or PanelAccordions.Expanded)
+            return Glyph(sprite, tint);
         var p = new Panel();
         p.AddThemeStyleboxOverride("panel", new StyleBoxFlat
         {
@@ -152,11 +153,11 @@ sealed partial class PanelView
         else if (img.FillMethod == 1) paint.AnchorTop = 1 - Math.Clamp(img.FillAmount, 0, 1);
     }
 
-    const string Tick = "✔", Dot = "●", Down = "▼";
+    const string Tick = "✔", Dot = "●", Down = "▼", Right = "▶";
 
     static Control Glyph(string sprite, Color tint)
     {
-        var l = new Label { Text = sprite == PanelPrefabs.Checkmark ? Tick : sprite is PanelPrefabs.Knob or PanelPrefabs.GroupSelected ? Dot : Down,
+        var l = new Label { Text = sprite == PanelPrefabs.Checkmark ? Tick : sprite is PanelPrefabs.Knob or PanelPrefabs.GroupSelected ? Dot : sprite == PanelAccordions.Collapsed ? Right : Down,
             HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
         l.AddThemeColorOverride("font_color", tint);
         return l;
@@ -168,7 +169,7 @@ sealed partial class PanelView
     {
         PanelPrefabs.UiSprite or PanelPrefabs.Background or PanelPrefabs.MaskSprite => 5,
         PanelPrefabs.ToolSprite or PanelPrefabs.ToolBackground => 3,
-        PanelPrefabs.Checkmark or PanelPrefabs.Knob or PanelPrefabs.DropdownArrow or PanelPrefabs.GroupSelected => 0,
+        PanelPrefabs.Checkmark or PanelPrefabs.Knob or PanelPrefabs.DropdownArrow or PanelPrefabs.GroupSelected or PanelAccordions.Collapsed or PanelAccordions.Expanded => 0,
         PanelPrefabs.GroupBackground => Round,
         PanelPrefabs.Outline or PanelPrefabs.OutlineSharp => 2,
         _ => null,

@@ -109,6 +109,9 @@ sealed partial class PanelView
             case "Dropdown":
                 OpenList(owner);
                 break;
+            case PanelAccordions.Header:
+                Section(owner);
+                break;
         }
     }
 

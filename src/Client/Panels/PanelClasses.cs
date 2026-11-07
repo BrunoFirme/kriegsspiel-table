@@ -21,6 +21,15 @@ public static class PanelClasses
         return true;
     }
 
+    public static void Ops(Dictionary<string, string> local, PanelBox b, params string[] changes)
+    {
+        if (b.Path == null) return;
+        var key = Prefix + PanelScene.Key(b.Path);
+        var ops = local.GetValueOrDefault(key) is { Length: > 0 } s ? s.Split(' ').ToList() : new List<string>();
+        ops.AddRange(changes.Where(c => c.Length > 1 && c[0] is Add or Remove));
+        local[key] = string.Join(" ", ops);
+    }
+
     public static UiLayout Apply(UiLayout layout, Dictionary<string, string> local)
     {
         var keys = local.Keys.Where(k => k.StartsWith(Prefix, StringComparison.Ordinal)).ToList();
