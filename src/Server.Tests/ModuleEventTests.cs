@@ -92,6 +92,20 @@ public class ModuleEventTests
     }
 
     [Fact]
+    public void A_piece_script_hears_every_drop_and_turn_with_the_tabletops_arguments()
+    {
+        using var t = new Table();
+        Load(t, P, """
+            function onObjectDrop(color, obj) self.setName('dropped ' .. color .. ' ' .. obj.getGUID()) end
+            function onObjectRotate(obj, spin, flip, color, old_spin, old_flip) self.setDescription('turned ' .. obj.getGUID() .. ' ' .. spin .. ' ' .. flip .. ' ' .. color) end
+            """);
+        t.Server.Handle(Table.Ump3, new MovePiece { Layer = U, Id = Marker, Pos = new(5, 5) });
+        Assert.Equal("dropped Red " + Marker, t.Server.State.Find(U, P)!.Label);
+        t.Server.Handle(Table.Ump3, new MovePiece { Layer = U, Id = Marker, Pos = new(5, 5), RotDeg = 90 });
+        Assert.Equal("turned " + Marker + " 90 0 Red", t.Server.State.Find(U, P)!.Note);
+    }
+
+    [Fact]
     public void A_save_answer_that_is_not_text_clears_the_saved_state_and_nothing_keeps_it()
     {
         Assert.Equal("", Saved("function onSave() return 5 end"));

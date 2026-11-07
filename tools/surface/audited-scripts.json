@@ -61,7 +61,16 @@
   "setTable": "ModuleObjectCallTests.Object_setters_answer_true_as_module_code_checks",
   "destroy": "ModuleObjectCallTests.Plain_reads_and_small_calls_answer_as_the_tabletop_does",
   "getTransformForward": "ModuleObjectCallTests.Turning_over_by_x_or_z_lays_the_piece_face_down_and_rotation_reads_back_in_0_to_360",
-  "getTransformRight": "ModuleObjectCallTests.Turning_over_by_x_or_z_lays_the_piece_face_down_and_rotation_reads_back_in_0_to_360"
+  "getTransformRight": "ModuleObjectCallTests.Turning_over_by_x_or_z_lays_the_piece_face_down_and_rotation_reads_back_in_0_to_360",
+  "getValue": "DiceScriptTests.A_module_script_rolls_a_die_reads_its_value_and_sets_a_face",
+  "setValue": "DiceScriptTests.A_module_script_rolls_a_die_reads_its_value_and_sets_a_face",
+  "roll": "DiceScriptTests.A_module_script_rolls_a_die_reads_its_value_and_sets_a_face",
+  "randomize": "DiceScriptTests.Randomize_turns_a_piece_of_several_looks_to_another_and_rolls_a_die",
+  "getRotationValue": "DiceScriptTests.A_module_script_rolls_a_die_reads_its_value_and_sets_a_face",
+  "setRotationValue": "DiceScriptTests.A_module_script_rolls_a_die_reads_its_value_and_sets_a_face",
+  "getRotationValues": "DiceScriptTests.A_module_script_rolls_a_die_reads_its_value_and_sets_a_face",
+  "setRotationValues": "DiceScriptTests.A_module_script_rolls_a_die_reads_its_value_and_sets_a_face",
+  "shuffleStates": "DiceScriptTests.Randomize_turns_a_piece_of_several_looks_to_another_and_rolls_a_die"
  },
  "global": {
   "broadcastToAll": "ModuleObjectCallTests.Printing_to_a_seat_nobody_holds_is_an_error_and_seat_names_are_exact",
@@ -116,7 +125,14 @@
   "onScriptingButtonDown": "TranslatorTests.The_long_tail_translates_and_runs",
   "onObjectSpawn": "ModuleEventTests.A_piece_script_hears_every_spawn_and_every_destroy_with_the_piece",
   "onObjectDestroy": "ModuleEventTests.A_piece_script_hears_every_spawn_and_every_destroy_with_the_piece",
-  "onLoad": "BookNotesScriptTests.On_a_load_every_script_is_read_before_any_on_load_so_the_global_one_can_call_into_a_piece"
+  "onLoad": "BookNotesScriptTests.On_a_load_every_script_is_read_before_any_on_load_so_the_global_one_can_call_into_a_piece",
+  "onObjectDrop": "ModuleEventTests.A_piece_script_hears_every_drop_and_turn_with_the_tabletops_arguments",
+  "onObjectRotate": "ModuleEventTests.A_piece_script_hears_every_drop_and_turn_with_the_tabletops_arguments",
+  "onObjectRandomize": "DiceScriptTests.A_roll_an_umpire_makes_reaches_the_die_s_script_and_the_global_one",
+  "onRandomize": "DiceScriptTests.A_roll_an_umpire_makes_reaches_the_die_s_script_and_the_global_one",
+  "onObjectLoopingEffect": "BookNotesScriptTests.An_effect_a_module_script_or_an_umpire_stops_and_starts_answers_as_a_looping_effect",
+  "onObjectPageChange": "BookNotesScriptTests.A_module_script_turns_a_book_by_its_printed_page_numbers_and_hears_the_page_turn",
+  "onPageChange": "BookNotesScriptTests.A_module_script_turns_a_book_by_its_printed_page_numbers_and_hears_the_page_turn"
  },
  "namespaces": {
   "JSON.encode": "ModuleObjectCallTests.Json_writes_sorted_keys_empty_tables_as_arrays_text_as_it_is_and_reads_past_trailing_text",

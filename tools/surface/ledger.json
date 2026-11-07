@@ -3456,8 +3456,8 @@
  "object": [
   {
    "row": "createButton",
-   "status": "unknown",
-   "where": "",
+   "status": "compat",
+   "where": "ObjectCall",
    "instead": "",
    "held_by": "",
    "count": 50776,
@@ -3472,12 +3472,12 @@
    "held_by": "",
    "count": 2421,
    "modules": 52,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.A_vector_argument_takes_x_y_z_names_first_then_three_numbers_then_two_and_otherwise_fails"
   },
   {
    "row": "editButton",
-   "status": "unknown",
-   "where": "",
+   "status": "compat",
+   "where": "ObjectCall",
    "instead": "",
    "held_by": "",
    "count": 46867,
@@ -3492,12 +3492,12 @@
    "held_by": "",
    "count": 15144,
    "modules": 51,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Scale_reads_one_local_unit_and_setting_it_back_keeps_the_piece_the_same_size"
   },
   {
    "row": "clearButtons",
-   "status": "unknown",
-   "where": "",
+   "status": "compat",
+   "where": "ObjectCall",
    "instead": "",
    "held_by": "",
    "count": 6680,
@@ -3506,8 +3506,8 @@
   },
   {
    "row": "createInput",
-   "status": "unknown",
-   "where": "",
+   "status": "compat",
+   "where": "ObjectCall",
    "instead": "",
    "held_by": "",
    "count": 20637,
@@ -3532,7 +3532,7 @@
    "held_by": "",
    "count": 755,
    "modules": 50,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Plain_reads_and_small_calls_answer_as_the_tabletop_does"
   },
   {
    "row": "positionToWorld",
@@ -3542,7 +3542,7 @@
    "held_by": "",
    "count": 1180,
    "modules": 49,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.A_local_point_goes_to_the_world_with_its_height_scaled_and_turned_over_with_the_piece"
   },
   {
    "row": "setVar",
@@ -3552,12 +3552,12 @@
    "held_by": "",
    "count": 181,
    "modules": 49,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Object_setters_answer_true_as_module_code_checks"
   },
   {
    "row": "editInput",
-   "status": "unknown",
-   "where": "",
+   "status": "compat",
+   "where": "ObjectCall",
    "instead": "",
    "held_by": "",
    "count": 38689,
@@ -3566,8 +3566,8 @@
   },
   {
    "row": "getInputs",
-   "status": "unknown",
-   "where": "",
+   "status": "compat",
+   "where": "ObjectCall",
    "instead": "",
    "held_by": "",
    "count": 16053,
@@ -3576,8 +3576,8 @@
   },
   {
    "row": "clearInputs",
-   "status": "unknown",
-   "where": "",
+   "status": "compat",
+   "where": "ObjectCall",
    "instead": "",
    "held_by": "",
    "count": 5365,
@@ -3586,8 +3586,8 @@
   },
   {
    "row": "getButtons",
-   "status": "unknown",
-   "where": "",
+   "status": "compat",
+   "where": "ObjectCall",
    "instead": "",
    "held_by": "",
    "count": 3950,
@@ -3602,7 +3602,7 @@
    "held_by": "",
    "count": 416,
    "modules": 47,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Object_setters_answer_true_as_module_code_checks; ModuleObjectCallTests.A_vector_argument_takes_x_y_z_names_first_then_three_numbers_then_two_and_otherwise_fails"
   },
   {
    "row": "setScale",
@@ -3612,7 +3612,7 @@
    "held_by": "",
    "count": 231,
    "modules": 47,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Object_setters_answer_true_as_module_code_checks; ModuleObjectCallTests.Scale_reads_one_local_unit_and_setting_it_back_keeps_the_piece_the_same_size"
   },
   {
    "row": "getCustomObject",
@@ -3632,7 +3632,7 @@
    "held_by": "",
    "count": 5703,
    "modules": 38,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Object_setters_answer_true_as_module_code_checks"
   },
   {
    "row": "getRotation",
@@ -3642,7 +3642,7 @@
    "held_by": "",
    "count": 5932,
    "modules": 34,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Turning_over_by_x_or_z_lays_the_piece_face_down_and_rotation_reads_back_in_0_to_360"
   },
   {
    "row": "addContextMenuItem",
@@ -3652,7 +3652,7 @@
    "held_by": "",
    "count": 45750,
    "modules": 33,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.The_same_menu_function_under_the_same_label_is_one_row_and_a_missing_function_is_refused; ModuleObjectCallTests.A_menu_row_calls_its_function_with_the_colour_the_pieces_position_and_the_piece"
   },
   {
    "row": "setDescription",
@@ -3662,7 +3662,7 @@
    "held_by": "",
    "count": 4838,
    "modules": 30,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Object_setters_answer_true_as_module_code_checks"
   },
   {
    "row": "call",
@@ -3672,7 +3672,7 @@
    "held_by": "",
    "count": 37963,
    "modules": 28,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.A_call_into_another_script_copies_its_table_both_ways_and_an_error_there_is_logged_and_answers_nil"
   },
   {
    "row": "getColorTint",
@@ -3682,7 +3682,7 @@
    "held_by": "",
    "count": 2098,
    "modules": 28,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.A_colour_argument_takes_a_seat_name_exactly_or_r_g_b_and_alpha_defaults_to_one"
   },
   {
    "row": "clearContextMenu",
@@ -3692,7 +3692,7 @@
    "held_by": "",
    "count": 7277,
    "modules": 26,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Object_setters_answer_true_as_module_code_checks"
   },
   {
    "row": "getGUID",
@@ -3702,7 +3702,7 @@
    "held_by": "",
    "count": 1013,
    "modules": 24,
-   "audited": ""
+   "audited": "ModuleEventTests.A_piece_script_hears_every_piece_picked_up_with_the_colour_first_and_the_piece_second"
   },
   {
    "row": "setColorTint",
@@ -3712,7 +3712,7 @@
    "held_by": "",
    "count": 1395,
    "modules": 23,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Object_setters_answer_true_as_module_code_checks; ModuleObjectCallTests.A_colour_argument_takes_a_seat_name_exactly_or_r_g_b_and_alpha_defaults_to_one"
   },
   {
    "row": "highlightOn",
@@ -3732,7 +3732,7 @@
    "held_by": "",
    "count": 204,
    "modules": 20,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Object_setters_answer_true_as_module_code_checks"
   },
   {
    "row": "getName",
@@ -3742,7 +3742,7 @@
    "held_by": "",
    "count": 679,
    "modules": 19,
-   "audited": ""
+   "audited": "StowEventTests.Putting_a_piece_in_and_taking_it_out_raise_the_bag_events_and_a_script_can_keep_one_out"
   },
   {
    "row": "destruct",
@@ -3752,7 +3752,7 @@
    "held_by": "",
    "count": 981,
    "modules": 17,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Plain_reads_and_small_calls_answer_as_the_tabletop_does"
   },
   {
    "row": "getVar",
@@ -3762,7 +3762,7 @@
    "held_by": "",
    "count": 1991,
    "modules": 15,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.In_a_frame_waits_on_frames_fire_before_waits_on_seconds_and_a_failing_condition_fires_its_function"
   },
   {
    "row": "positionToLocal",
@@ -3772,7 +3772,7 @@
    "held_by": "",
    "count": 979,
    "modules": 15,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.A_local_point_goes_to_the_world_with_its_height_scaled_and_turned_over_with_the_piece"
   },
   {
    "row": "setVectorLines",
@@ -3782,7 +3782,7 @@
    "held_by": "",
    "count": 196,
    "modules": 15,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Vector_lines_read_back_nil_until_set_and_then_as_given_with_vectors_and_colours"
   },
   {
    "row": "getDescription",
@@ -3792,7 +3792,7 @@
    "held_by": "",
    "count": 76,
    "modules": 15,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Plain_reads_and_small_calls_answer_as_the_tabletop_does"
   },
   {
    "row": "removeFromPlayerSelection",
@@ -3802,7 +3802,7 @@
    "held_by": "",
    "count": 1954,
    "modules": 14,
-   "audited": ""
+   "audited": "TranslatorTests.The_long_tail_translates_and_runs"
   },
   {
    "row": "interactable",
@@ -3822,7 +3822,7 @@
    "held_by": "",
    "count": 1826,
    "modules": 14,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Object_setters_answer_true_as_module_code_checks; ModuleObjectCallTests.Scale_reads_one_local_unit_and_setting_it_back_keeps_the_piece_the_same_size"
   },
   {
    "row": "locked",
@@ -3832,12 +3832,12 @@
    "held_by": "StowEventTests",
    "count": 976,
    "modules": 14,
-   "audited": ""
+   "audited": "StowEventTests.The_locked_property_reads_and_sets_the_lock"
   },
   {
    "row": "removeInput",
-   "status": "unknown",
-   "where": "",
+   "status": "compat",
+   "where": "ObjectCall",
    "instead": "",
    "held_by": "",
    "count": 976,
@@ -3862,7 +3862,7 @@
    "held_by": "",
    "count": 15,
    "modules": 13,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Plain_reads_and_small_calls_answer_as_the_tabletop_does"
   },
   {
    "row": "getTransformUp",
@@ -3872,7 +3872,7 @@
    "held_by": "",
    "count": 13029,
    "modules": 12,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Turning_over_by_x_or_z_lays_the_piece_face_down_and_rotation_reads_back_in_0_to_360"
   },
   {
    "row": "setDecals",
@@ -3882,7 +3882,7 @@
    "held_by": "",
    "count": 4343,
    "modules": 12,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Decals_need_a_name_and_a_link_and_read_back_nil_until_set"
   },
   {
    "row": "hasTag",
@@ -3892,7 +3892,7 @@
    "held_by": "",
    "count": 150,
    "modules": 12,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Tags_match_without_case_and_with_spaces_as_underscores"
   },
   {
    "row": "split",
@@ -3912,7 +3912,7 @@
    "held_by": "",
    "count": 12,
    "modules": 12,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Object_setters_answer_true_as_module_code_checks; ModuleObjectCallTests.Plain_reads_and_small_calls_answer_as_the_tabletop_does"
   },
   {
    "row": "highlightOff",
@@ -3942,7 +3942,7 @@
    "held_by": "StowScriptTests",
    "count": 80,
    "modules": 9,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.A_piece_that_is_not_a_bag_counts_minus_one_lists_nothing_and_takes_nothing_in; StowScriptTests.A_module_bag_script_puts_and_takes_through_the_same_calls"
   },
   {
    "row": "getBounds",
@@ -3952,7 +3952,7 @@
    "held_by": "",
    "count": 50,
    "modules": 9,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Bounds_of_a_turned_piece_hold_its_turned_outline_and_normalized_bounds_ignore_the_turn"
   },
   {
    "row": "getLock",
@@ -3962,7 +3962,7 @@
    "held_by": "",
    "count": 50,
    "modules": 9,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Plain_reads_and_small_calls_answer_as_the_tabletop_does"
   },
   {
    "row": "getObjects",
@@ -3972,7 +3972,7 @@
    "held_by": "StowScriptTests",
    "count": 50,
    "modules": 9,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.A_piece_that_is_not_a_bag_counts_minus_one_lists_nothing_and_takes_nothing_in"
   },
   {
    "row": "putObject",
@@ -3982,7 +3982,7 @@
    "held_by": "StowScriptTests",
    "count": 50,
    "modules": 9,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.A_piece_that_is_not_a_bag_counts_minus_one_lists_nothing_and_takes_nothing_in"
   },
   {
    "row": "setRotationSmooth",
@@ -4012,7 +4012,7 @@
    "held_by": "",
    "count": 180,
    "modules": 3,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.A_piece_without_states_has_state_id_minus_one_no_states_and_refuses_set_state"
   },
   {
    "row": "isDestroyed",
@@ -4022,7 +4022,7 @@
    "held_by": "",
    "count": 5,
    "modules": 3,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Plain_reads_and_small_calls_answer_as_the_tabletop_does"
   },
   {
    "row": "guid",
@@ -4032,7 +4032,7 @@
    "held_by": "",
    "count": 137,
    "modules": 2,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Plain_reads_and_small_calls_answer_as_the_tabletop_does"
   },
   {
    "row": "getTags",
@@ -4042,7 +4042,7 @@
    "held_by": "",
    "count": 18,
    "modules": 2,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Tags_match_without_case_and_with_spaces_as_underscores"
   },
   {
    "row": "setRotation",
@@ -4052,7 +4052,7 @@
    "held_by": "",
    "count": 2,
    "modules": 2,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Object_setters_answer_true_as_module_code_checks; ModuleObjectCallTests.Turning_over_by_x_or_z_lays_the_piece_face_down_and_rotation_reads_back_in_0_to_360"
   },
   {
    "row": "getLuaScript",
@@ -4072,7 +4072,7 @@
    "held_by": "",
    "count": 2,
    "modules": 1,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Vector_lines_read_back_nil_until_set_and_then_as_given_with_vectors_and_colours"
   },
   {
    "row": "getValue",
@@ -4102,7 +4102,7 @@
    "held_by": "",
    "count": 1,
    "modules": 1,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Snap_points_read_back_with_their_rotation_only_when_they_snap_rotation"
   },
   {
    "row": "AssetBundle.getLoopingEffectIndex",
@@ -4612,7 +4612,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Decals_need_a_name_and_a_link_and_read_back_nil_until_set"
   },
   {
    "row": "addForce",
@@ -4632,7 +4632,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Object_setters_answer_true_as_module_code_checks; ModuleObjectCallTests.Tags_match_without_case_and_with_spaces_as_underscores"
   },
   {
    "row": "addToPlayerSelection",
@@ -4872,7 +4872,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Plain_reads_and_small_calls_answer_as_the_tabletop_does"
   },
   {
    "row": "drag",
@@ -4922,7 +4922,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Object_setters_answer_true_as_module_code_checks"
   },
   {
    "row": "getAngularVelocity",
@@ -4952,7 +4952,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Bounds_of_a_turned_piece_hold_its_turned_outline_and_normalized_bounds_ignore_the_turn"
   },
   {
    "row": "getChild",
@@ -5042,7 +5042,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Decals_need_a_name_and_a_link_and_read_back_nil_until_set"
   },
   {
    "row": "getFogOfWar",
@@ -5182,7 +5182,7 @@
    "held_by": "StowScriptTests",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.A_piece_that_is_not_a_bag_counts_minus_one_lists_nothing_and_takes_nothing_in"
   },
   {
    "row": "getRotationSmooth",
@@ -5232,7 +5232,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Snap_points_read_back_with_their_rotation_only_when_they_snap_rotation"
   },
   {
    "row": "getStateId",
@@ -5242,7 +5242,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.A_piece_without_states_has_state_id_minus_one_no_states_and_refuses_set_state"
   },
   {
    "row": "getStates",
@@ -5262,7 +5262,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.A_call_into_another_script_copies_its_table_both_ways_and_an_error_there_is_logged_and_answers_nil"
   },
   {
    "row": "getTransformForward",
@@ -5272,7 +5272,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Turning_over_by_x_or_z_lays_the_piece_face_down_and_rotation_reads_back_in_0_to_360"
   },
   {
    "row": "getTransformRight",
@@ -5282,7 +5282,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Turning_over_by_x_or_z_lays_the_piece_face_down_and_rotation_reads_back_in_0_to_360"
   },
   {
    "row": "getVelocity",
@@ -5332,7 +5332,7 @@
    "held_by": "ModuleHelpersTests",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleHelpersTests.Tag_and_script_state_helpers_answer_as_modules_expect"
   },
   {
    "row": "hasMatchingTag",
@@ -5472,7 +5472,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.A_spawned_piece_is_spawning_until_the_next_frame_when_its_callback_runs"
   },
   {
    "row": "luaCollision",
@@ -5636,8 +5636,8 @@
   },
   {
    "row": "removeButton",
-   "status": "unknown",
-   "where": "",
+   "status": "compat",
+   "where": "ObjectCall",
    "instead": "",
    "held_by": "",
    "count": 0,
@@ -5652,7 +5652,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Tags_match_without_case_and_with_spaces_as_underscores"
   },
   {
    "row": "rendererIndex",
@@ -5832,7 +5832,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Object_setters_answer_true_as_module_code_checks"
   },
   {
    "row": "setTags",
@@ -5842,7 +5842,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Object_setters_answer_true_as_module_code_checks"
   },
   {
    "row": "setValue",
@@ -5892,7 +5892,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.A_spawned_piece_is_spawning_until_the_next_frame_when_its_callback_runs"
   },
   {
    "row": "spread",
@@ -5906,13 +5906,13 @@
   },
   {
    "row": "startLuaCoroutine",
-   "status": "unknown",
-   "where": "",
+   "status": "compat",
+   "where": "ObjectCall",
    "instead": "",
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.A_coroutine_runs_to_its_first_yield_at_once_goes_on_each_frame_while_it_yields_zero_and_stops_on_any_other_number"
   },
   {
    "row": "static_friction",
@@ -6084,7 +6084,7 @@
    "held_by": "",
    "count": 1203,
    "modules": 50,
-   "audited": ""
+   "audited": "StowScriptTests.A_module_bag_script_puts_and_takes_through_the_same_calls"
   },
   {
    "row": "broadcastToAll",
@@ -6094,7 +6094,7 @@
    "held_by": "",
    "count": 748,
    "modules": 50,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Printing_to_a_seat_nobody_holds_is_an_error_and_seat_names_are_exact"
   },
   {
    "row": "broadcastToColor",
@@ -6104,7 +6104,7 @@
    "held_by": "",
    "count": 61397,
    "modules": 30,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Printing_to_a_seat_nobody_holds_is_an_error_and_seat_names_are_exact"
   },
   {
    "row": "spawnObject",
@@ -6114,7 +6114,7 @@
    "held_by": "",
    "count": 2866,
    "modules": 18,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.A_spawned_piece_is_spawning_until_the_next_frame_when_its_callback_runs"
   },
   {
    "row": "getObjects",
@@ -6124,7 +6124,7 @@
    "held_by": "",
    "count": 1525,
    "modules": 14,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Object_lists_tag_lists_seat_names_and_world_lines_answer_as_the_tabletop_does"
   },
   {
    "row": "destroyObject",
@@ -6134,7 +6134,7 @@
    "held_by": "",
    "count": 20,
    "modules": 14,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Object_lists_tag_lists_seat_names_and_world_lines_answer_as_the_tabletop_does"
   },
   {
    "row": "startLuaCoroutine",
@@ -6144,7 +6144,7 @@
    "held_by": "",
    "count": 4345,
    "modules": 13,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.A_coroutine_runs_to_its_first_yield_at_once_goes_on_each_frame_while_it_yields_zero_and_stops_on_any_other_number"
   },
   {
    "row": "spawnObjectData",
@@ -6164,7 +6164,7 @@
    "held_by": "",
    "count": 426,
    "modules": 12,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Object_lists_tag_lists_seat_names_and_world_lines_answer_as_the_tabletop_does"
   },
   {
    "row": "log",
@@ -6174,7 +6174,7 @@
    "held_by": "StowEventTests",
    "count": 376,
    "modules": 12,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Log_writes_a_table_as_indented_key_lines_under_its_label_and_answers_true"
   },
   {
    "row": "printToColor",
@@ -6184,7 +6184,7 @@
    "held_by": "",
    "count": 20,
    "modules": 12,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Printing_to_a_seat_nobody_holds_is_an_error_and_seat_names_are_exact"
   },
   {
    "row": "vector",
@@ -6194,7 +6194,7 @@
    "held_by": "",
    "count": 117,
    "modules": 7,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.The_tabletops_own_global_names_reach_the_global_script"
   },
   {
    "row": "addHotkey",
@@ -6204,7 +6204,7 @@
    "held_by": "",
    "count": 20,
    "modules": 4,
-   "audited": ""
+   "audited": "TranslatorTests.Module_hotkeys_and_the_global_context_menu_translate_and_run"
   },
   {
    "row": "addContextMenuItem",
@@ -6214,7 +6214,7 @@
    "held_by": "",
    "count": 2,
    "modules": 2,
-   "audited": ""
+   "audited": "TranslatorTests.Module_hotkeys_and_the_global_context_menu_translate_and_run"
   },
   {
    "row": "printToAll",
@@ -6224,7 +6224,7 @@
    "held_by": "",
    "count": 2,
    "modules": 2,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Printing_to_a_seat_nobody_holds_is_an_error_and_seat_names_are_exact"
   },
   {
    "row": "stringColorToRGB",
@@ -6234,7 +6234,7 @@
    "held_by": "",
    "count": 1,
    "modules": 1,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Printing_to_a_seat_nobody_holds_is_an_error_and_seat_names_are_exact"
   },
   {
    "row": "addConsoleCommand",
@@ -6254,7 +6254,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Notebook_tabs_need_a_title_adding_one_answers_the_new_count_and_notes_refuse_nil"
   },
   {
    "row": "allowRewindStore",
@@ -6274,7 +6274,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.The_tabletops_own_global_names_reach_the_global_script; ModuleObjectCallTests.A_call_into_another_script_copies_its_table_both_ways_and_an_error_there_is_logged_and_answers_nil"
   },
   {
    "row": "callLuaFunctionInOtherScriptWithParams",
@@ -6284,7 +6284,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.The_tabletops_own_global_names_reach_the_global_script"
   },
   {
    "row": "chooseInHand",
@@ -6344,7 +6344,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "TranslatorTests.Module_hotkeys_and_the_global_context_menu_translate_and_run"
   },
   {
    "row": "clearPixelPaint",
@@ -6354,7 +6354,7 @@
    "held_by": "ModuleHelpersTests",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Plain_reads_and_small_calls_answer_as_the_tabletop_does"
   },
   {
    "row": "clearVectorPaint",
@@ -6364,7 +6364,7 @@
    "held_by": "ModuleHelpersTests",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleHelpersTests.Clearing_the_paint_erases_every_stroke_and_stop_all_ends_every_wait"
   },
   {
    "row": "color",
@@ -6374,17 +6374,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
-  },
-  {
-   "row": "colorToHex",
-   "status": "compat",
-   "where": "compat.Color:toHex",
-   "instead": "",
-   "held_by": "ModuleHelpersTests",
-   "count": 0,
-   "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.The_tabletops_own_global_names_reach_the_global_script"
   },
   {
    "row": "colorToPlayerName",
@@ -6394,27 +6384,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
-  },
-  {
-   "row": "constructColor",
-   "status": "compat",
-   "where": "compat.Color",
-   "instead": "",
-   "held_by": "",
-   "count": 0,
-   "modules": 0,
-   "audited": ""
-  },
-  {
-   "row": "constructVector",
-   "status": "compat",
-   "where": "compat.Vector",
-   "instead": "",
-   "held_by": "ModuleVectorColorTests",
-   "count": 0,
-   "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Object_lists_tag_lists_seat_names_and_world_lines_answer_as_the_tabletop_does"
   },
   {
    "row": "copy",
@@ -6422,16 +6392,6 @@
    "where": "the Player API (decided 2026-11-06)",
    "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
-   "count": 0,
-   "modules": 0,
-   "audited": ""
-  },
-  {
-   "row": "copyLuaTable",
-   "status": "compat",
-   "where": "compat.copy_table",
-   "instead": "",
-   "held_by": "ModuleHelpersTests",
    "count": 0,
    "modules": 0,
    "audited": ""
@@ -6454,7 +6414,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Plain_reads_and_small_calls_answer_as_the_tabletop_does"
   },
   {
    "row": "editNotebookTab",
@@ -6464,23 +6424,13 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Notebook_tabs_need_a_title_adding_one_answers_the_new_count_and_notes_refuse_nil"
   },
   {
    "row": "flipTable",
    "status": "dropped",
    "where": "the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06)",
    "instead": "the backdrop themes and the app's own table and views",
-   "held_by": "",
-   "count": 0,
-   "modules": 0,
-   "audited": ""
-  },
-  {
-   "row": "getAllLuaScriptStates",
-   "status": "dropped",
-   "where": "undocumented internal; no module calls it",
-   "instead": "nothing is needed",
    "held_by": "",
    "count": 0,
    "modules": 0,
@@ -6494,17 +6444,7 @@
    "held_by": "ModuleHelpersTests",
    "count": 0,
    "modules": 0,
-   "audited": ""
-  },
-  {
-   "row": "getColor",
-   "status": "dropped",
-   "where": "undocumented internal; no module calls it",
-   "instead": "nothing is needed",
-   "held_by": "",
-   "count": 0,
-   "modules": 0,
-   "audited": ""
+   "audited": "ModuleHelpersTests.Tag_and_script_state_helpers_answer_as_modules_expect"
   },
   {
    "row": "getGlobalScriptTable",
@@ -6514,7 +6454,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.The_tabletops_own_global_names_reach_the_global_script"
   },
   {
    "row": "getGlobalScriptVar",
@@ -6524,27 +6464,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
-  },
-  {
-   "row": "getGlobalTable",
-   "status": "compat",
-   "where": "game.get_var",
-   "instead": "",
-   "held_by": "",
-   "count": 0,
-   "modules": 0,
-   "audited": ""
-  },
-  {
-   "row": "getGlobalVar",
-   "status": "compat",
-   "where": "game.get_var",
-   "instead": "",
-   "held_by": "",
-   "count": 0,
-   "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.The_tabletops_own_global_names_reach_the_global_script"
   },
   {
    "row": "getNotebookTabs",
@@ -6554,7 +6474,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Notebook_tabs_need_a_title_adding_one_answers_the_new_count_and_notes_refuse_nil"
   },
   {
    "row": "getNotes",
@@ -6564,7 +6484,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Notebook_tabs_need_a_title_adding_one_answers_the_new_count_and_notes_refuse_nil"
   },
   {
    "row": "getObjectsWithAllTags",
@@ -6574,7 +6494,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Object_lists_tag_lists_seat_names_and_world_lines_answer_as_the_tabletop_does"
   },
   {
    "row": "getObjectsWithAnyTags",
@@ -6584,7 +6504,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Object_lists_tag_lists_seat_names_and_world_lines_answer_as_the_tabletop_does"
   },
   {
    "row": "getObjectsWithTag",
@@ -6594,7 +6514,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Tags_match_without_case_and_with_spaces_as_underscores"
   },
   {
    "row": "getPlayer",
@@ -6637,16 +6557,6 @@
    "audited": ""
   },
   {
-   "row": "getScriptState",
-   "status": "compat",
-   "where": "script_state",
-   "instead": "",
-   "held_by": "ModuleHelpersTests",
-   "count": 0,
-   "modules": 0,
-   "audited": ""
-  },
-  {
    "row": "getSeatedPlayers",
    "status": "compat",
    "where": "GlobalFunctionCall",
@@ -6654,7 +6564,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Seated_players_leave_out_the_game_master_seat"
   },
   {
    "row": "group",
@@ -6662,16 +6572,6 @@
    "where": "the Player API (decided 2026-11-06)",
    "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
-   "count": 0,
-   "modules": 0,
-   "audited": ""
-  },
-  {
-   "row": "hexToColor",
-   "status": "compat",
-   "where": "compat.Color.fromHex",
-   "instead": "",
-   "held_by": "ModuleHelpersTests",
    "count": 0,
    "modules": 0,
    "audited": ""
@@ -6687,16 +6587,6 @@
    "audited": ""
   },
   {
-   "row": "logFormat",
-   "status": "compat",
-   "where": "compat.log",
-   "instead": "",
-   "held_by": "",
-   "count": 0,
-   "modules": 0,
-   "audited": ""
-  },
-  {
    "row": "logString",
    "status": "compat",
    "where": "GlobalFunctionCall",
@@ -6704,7 +6594,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Log_writes_a_table_as_indented_key_lines_under_its_label_and_answers_true; ModuleObjectCallTests.The_tabletops_own_global_names_reach_the_global_script"
   },
   {
    "row": "logStyle",
@@ -6734,11 +6624,11 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "BookNotesScriptTests.A_module_script_reads_and_writes_the_notes_and_notebook_tabs_on_the_note_cards"
   },
   {
    "row": "sendExternalMessage",
-   "status": "stub",
+   "status": "compat",
    "where": "GlobalFunctionCall",
    "instead": "",
    "held_by": "",
@@ -6754,7 +6644,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.The_tabletops_own_global_names_reach_the_global_script"
   },
   {
    "row": "setGlobalScriptVar",
@@ -6764,27 +6654,17 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
-  },
-  {
-   "row": "setGlobalTable",
-   "status": "compat",
-   "where": "game.set_var",
-   "instead": "",
-   "held_by": "",
-   "count": 0,
-   "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.The_tabletops_own_global_names_reach_the_global_script"
   },
   {
    "row": "setLookingForPlayers",
-   "status": "stub",
+   "status": "compat",
    "where": "GlobalFunctionCall",
    "instead": "",
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.The_tabletops_own_global_names_reach_the_global_script"
   },
   {
    "row": "setNotes",
@@ -6794,17 +6674,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
-  },
-  {
-   "row": "setUITheme",
-   "status": "dropped",
-   "where": "the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06)",
-   "instead": "the backdrop themes and the app's own table and views",
-   "held_by": "",
-   "count": 0,
-   "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Notebook_tabs_need_a_title_adding_one_answers_the_new_count_and_notes_refuse_nil"
   },
   {
    "row": "showHotkeyConfig",
@@ -6835,16 +6705,6 @@
    "count": 0,
    "modules": 0,
    "audited": ""
-  },
-  {
-   "row": "stringColorToHex",
-   "status": "compat",
-   "where": "compat.Color.fromString:toHex",
-   "instead": "",
-   "held_by": "",
-   "count": 0,
-   "modules": 0,
-   "audited": ""
   }
  ],
  "namespaces": [
@@ -6856,7 +6716,7 @@
    "held_by": "",
    "count": 12891,
    "modules": 52,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Json_writes_sorted_keys_empty_tables_as_arrays_text_as_it_is_and_reads_past_trailing_text"
   },
   {
    "row": "JSON.decode",
@@ -6866,7 +6726,7 @@
    "held_by": "",
    "count": 11910,
    "modules": 51,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Json_writes_sorted_keys_empty_tables_as_arrays_text_as_it_is_and_reads_past_trailing_text"
   },
   {
    "row": "Wait.frames",
@@ -6876,7 +6736,7 @@
    "held_by": "",
    "count": 13927,
    "modules": 27,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Wait_stop_answers_whether_a_timer_was_waiting_and_a_nil_function_is_an_error; ModuleObjectCallTests.In_a_frame_waits_on_frames_fire_before_waits_on_seconds_and_a_failing_condition_fires_its_function"
   },
   {
    "row": "Wait.time",
@@ -6886,7 +6746,7 @@
    "held_by": "",
    "count": 5718,
    "modules": 15,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.In_a_frame_waits_on_frames_fire_before_waits_on_seconds_and_a_failing_condition_fires_its_function; TranslatorTests.A_repeating_wait_stops_when_told_and_a_condition_times_out"
   },
   {
    "row": "UI.setAttribute",
@@ -6906,7 +6766,7 @@
    "held_by": "",
    "count": 4219,
    "modules": 13,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Wait_stop_answers_whether_a_timer_was_waiting_and_a_nil_function_is_an_error"
   },
   {
    "row": "UI.setXmlTable",
@@ -6926,7 +6786,7 @@
    "held_by": "",
    "count": 138,
    "modules": 3,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Wait_stop_answers_whether_a_timer_was_waiting_and_a_nil_function_is_an_error; ModuleObjectCallTests.In_a_frame_waits_on_frames_fire_before_waits_on_seconds_and_a_failing_condition_fires_its_function"
   },
   {
    "row": "Player.getPlayers",
@@ -6966,7 +6826,7 @@
    "held_by": "",
    "count": 411,
    "modules": 2,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.The_tabletops_own_global_names_reach_the_global_script"
   },
   {
    "row": "Global.setVar",
@@ -6976,7 +6836,7 @@
    "held_by": "",
    "count": 274,
    "modules": 2,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.The_tabletops_own_global_names_reach_the_global_script"
   },
   {
    "row": "UI.getXml",
@@ -7036,7 +6896,7 @@
    "held_by": "BoardDrawingTests",
    "count": 3,
    "modules": 1,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Plain_reads_and_small_calls_answer_as_the_tabletop_does"
   },
   {
    "row": "Global.setVectorLines",
@@ -7046,7 +6906,7 @@
    "held_by": "BoardDrawingTests",
    "count": 3,
    "modules": 1,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Object_lists_tag_lists_seat_names_and_world_lines_answer_as_the_tabletop_does"
   },
   {
    "row": "Physics.cast",
@@ -7066,7 +6926,7 @@
    "held_by": "",
    "count": 1,
    "modules": 1,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.A_timer_calls_the_named_function_of_the_script_that_made_it_and_refuses_a_name_in_use"
   },
   {
    "row": "Timer.destroy",
@@ -7076,7 +6936,7 @@
    "held_by": "",
    "count": 1,
    "modules": 1,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.A_timer_calls_the_named_function_of_the_script_that_made_it_and_refuses_a_name_in_use; TranslatorTests.A_repeating_wait_stops_when_told_and_a_condition_times_out"
   },
   {
    "row": "Backgrounds.getBackground",
@@ -7126,7 +6986,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.A_call_into_another_script_copies_its_table_both_ways_and_an_error_there_is_logged_and_answers_nil; ModuleObjectCallTests.The_tabletops_own_global_names_reach_the_global_script"
   },
   {
    "row": "Global.getTable",
@@ -7136,7 +6996,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.A_call_into_another_script_copies_its_table_both_ways_and_an_error_there_is_logged_and_answers_nil"
   },
   {
    "row": "Global.setTable",
@@ -7146,7 +7006,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.A_call_into_another_script_copies_its_table_both_ways_and_an_error_there_is_logged_and_answers_nil"
   },
   {
    "row": "Grid.color",
@@ -7646,7 +7506,7 @@
    "held_by": "BookNotesScriptTests",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Notebook_tabs_need_a_title_adding_one_answers_the_new_count_and_notes_refuse_nil"
   },
   {
    "row": "Notes.editNotebookTab",
@@ -7656,7 +7516,7 @@
    "held_by": "BookNotesScriptTests",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Notebook_tabs_need_a_title_adding_one_answers_the_new_count_and_notes_refuse_nil"
   },
   {
    "row": "Notes.getNotebookTabs",
@@ -7666,7 +7526,7 @@
    "held_by": "BookNotesScriptTests",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Notebook_tabs_need_a_title_adding_one_answers_the_new_count_and_notes_refuse_nil"
   },
   {
    "row": "Notes.getNotes",
@@ -7676,7 +7536,7 @@
    "held_by": "BookNotesScriptTests",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Notebook_tabs_need_a_title_adding_one_answers_the_new_count_and_notes_refuse_nil"
   },
   {
    "row": "Notes.removeNotebookTab",
@@ -7686,7 +7546,7 @@
    "held_by": "BookNotesScriptTests",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "BookNotesScriptTests.A_module_script_reads_and_writes_the_notes_and_notebook_tabs_on_the_note_cards"
   },
   {
    "row": "Notes.setNotes",
@@ -7696,7 +7556,7 @@
    "held_by": "BookNotesScriptTests",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Notebook_tabs_need_a_title_adding_one_answers_the_new_count_and_notes_refuse_nil"
   },
   {
    "row": "Physics.getGravity",
@@ -8326,7 +8186,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Time_reads_the_scripts_clock_and_frame_count"
   },
   {
    "row": "Time.fixed_delta_time",
@@ -8336,7 +8196,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Time_reads_the_scripts_clock_and_frame_count"
   },
   {
    "row": "Time.fixed_time",
@@ -8346,7 +8206,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Object_lists_tag_lists_seat_names_and_world_lines_answer_as_the_tabletop_does"
   },
   {
    "row": "Time.frame_count",
@@ -8356,7 +8216,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Time_reads_the_scripts_clock_and_frame_count"
   },
   {
    "row": "Time.time",
@@ -8366,7 +8226,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Time_reads_the_scripts_clock_and_frame_count"
   },
   {
    "row": "Timer.timers",
@@ -8376,7 +8236,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Plain_reads_and_small_calls_answer_as_the_tabletop_does"
   },
   {
    "row": "Turns.disable_interactations",
@@ -8596,7 +8456,7 @@
    "held_by": "ModuleHelpersTests",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleHelpersTests.Clearing_the_paint_erases_every_stroke_and_stop_all_ends_every_wait"
   },
   {
    "row": "WebRequest.custom",
@@ -8658,7 +8518,7 @@
    "held_by": "",
    "count": 4920,
    "modules": 51,
-   "audited": ""
+   "audited": "ModuleEventTests.A_save_answer_that_is_not_text_clears_the_saved_state_and_nothing_keeps_it"
   },
   {
    "row": "onLoad",
@@ -8668,7 +8528,7 @@
    "held_by": "",
    "count": 2275,
    "modules": 28,
-   "audited": ""
+   "audited": "BookNotesScriptTests.On_a_load_every_script_is_read_before_any_on_load_so_the_global_one_can_call_into_a_piece"
   },
   {
    "row": "onObjectSpawn",
@@ -8678,7 +8538,7 @@
    "held_by": "",
    "count": 1510,
    "modules": 13,
-   "audited": ""
+   "audited": "ModuleEventTests.A_piece_script_hears_every_spawn_and_every_destroy_with_the_piece"
   },
   {
    "row": "onObjectDestroy",
@@ -8688,7 +8548,7 @@
    "held_by": "",
    "count": 12,
    "modules": 12,
-   "audited": ""
+   "audited": "ModuleEventTests.A_piece_script_hears_every_spawn_and_every_destroy_with_the_piece"
   },
   {
    "row": "onPlayerAction",
@@ -8698,7 +8558,7 @@
    "held_by": "PlayerActionTests",
    "count": 12,
    "modules": 12,
-   "audited": ""
+   "audited": "ModuleEventTests.A_piece_script_asked_about_a_player_action_can_refuse_it_with_false; PlayerActionTests.A_module_s_onPlayerAction_can_refuse_a_delete_or_a_flip_and_lets_the_rest_through"
   },
   {
    "row": "onChat",
@@ -8708,7 +8568,7 @@
    "held_by": "",
    "count": 10,
    "modules": 10,
-   "audited": ""
+   "audited": "ModuleEventTests.Chat_reaches_piece_scripts_as_well_as_the_global_one"
   },
   {
    "row": "onScriptingButtonDown",
@@ -8718,7 +8578,7 @@
    "held_by": "",
    "count": 10,
    "modules": 10,
-   "audited": ""
+   "audited": "TranslatorTests.The_long_tail_translates_and_runs"
   },
   {
    "row": "onObjectPickUp",
@@ -8728,7 +8588,7 @@
    "held_by": "",
    "count": 4,
    "modules": 2,
-   "audited": ""
+   "audited": "ModuleEventTests.A_piece_script_hears_every_piece_picked_up_with_the_colour_first_and_the_piece_second"
   },
   {
    "row": "onBlindfold",
@@ -8888,7 +8748,7 @@
    "held_by": "StowEventTests",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "StowEventTests.Putting_a_piece_in_and_taking_it_out_raise_the_bag_events_and_a_script_can_keep_one_out"
   },
   {
    "row": "onObjectEnterScriptingZone",
@@ -8938,7 +8798,7 @@
    "held_by": "StowEventTests",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "StowEventTests.Putting_a_piece_in_and_taking_it_out_raise_the_bag_events_and_a_script_can_keep_one_out"
   },
   {
    "row": "onObjectLeaveScriptingZone",
@@ -9168,7 +9028,7 @@
    "held_by": "StowEventTests",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleEventTests.A_try_enter_function_that_answers_nothing_keeps_the_piece_out_and_true_lets_it_in"
   }
  ],
  "engine": [
@@ -9180,7 +9040,7 @@
    "held_by": "ModuleVectorColorTests",
    "count": 55,
    "modules": 55,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.A_vector_argument_takes_x_y_z_names_first_then_three_numbers_then_two_and_otherwise_fails; ModuleObjectCallTests.A_colour_argument_takes_a_seat_name_exactly_or_r_g_b_and_alpha_defaults_to_one; ModuleObjectCallTests.A_piece_that_is_not_a_bag_counts_minus_one_lists_nothing_and_takes_nothing_in"
   },
   {
    "row": "MoonSharp 2.0.0 on both sides: the Lua dialect matches",
@@ -9230,7 +9090,7 @@
    "held_by": "TranslatorTests.Handlers_get_the_piece_their_widget_is_on",
    "count": 55,
    "modules": 55,
-   "audited": ""
+   "audited": "TranslatorTests.Handlers_get_the_piece_their_widget_is_on"
   },
   {
    "row": "context menu callback(player_color, menu_position, object)",
@@ -9240,7 +9100,7 @@
    "held_by": "",
    "count": 55,
    "modules": 55,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.A_menu_row_calls_its_function_with_the_colour_the_pieces_position_and_the_piece"
   },
   {
    "row": "getObjectFromGUID answers nil for a piece inside a bag",
@@ -9250,7 +9110,7 @@
    "held_by": "StowScriptTests",
    "count": 55,
    "modules": 55,
-   "audited": ""
+   "audited": "StowScriptTests.A_module_bag_script_puts_and_takes_through_the_same_calls"
   },
   {
    "row": "input_function(obj, player_color, text, selected)",
@@ -9260,7 +9120,7 @@
    "held_by": "TranslatorTests.A_name_typed_letter_by_letter_reaches_the_face",
    "count": 55,
    "modules": 55,
-   "audited": ""
+   "audited": "ModuleEventTests.An_input_function_hears_selected_true_while_typing_and_false_when_the_umpire_leaves_the_box"
   },
   {
    "row": "load order: global before objects; onLoad(script_state)",
@@ -9270,7 +9130,7 @@
    "held_by": "BookNotesScriptTests",
    "count": 55,
    "modules": 55,
-   "audited": ""
+   "audited": "BookNotesScriptTests.On_a_load_every_script_is_read_before_any_on_load_so_the_global_one_can_call_into_a_piece"
   },
   {
    "row": "member names fold (exact, first letter up, snake to camel, both)",
@@ -9290,7 +9150,7 @@
    "held_by": "ModuleVectorColorTests",
    "count": 55,
    "modules": 55,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Module_vectors_follow_the_tabletop_class_two_numbers_make_zero_equality_is_within_a_squared_thousandth_and_moves_change_the_vector; ModuleObjectCallTests.Module_colours_follow_the_tabletop_class_named_channels_only_clamped_and_strict_about_names_and_hex; ModuleVectorColorTests"
   },
   {
    "row": "player model: colours, Black as GM, promoted, seated, host",
@@ -9310,7 +9170,7 @@
    "held_by": "ModuleLocalFrameTests",
    "count": 55,
    "modules": 55,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.A_local_point_goes_to_the_world_with_its_height_scaled_and_turned_over_with_the_piece; ModuleLocalFrameTests"
   },
   {
    "row": "save quirk: a number written as a string, or NaN",
@@ -9370,7 +9230,7 @@
    "held_by": "BookNotesScriptTests",
    "count": 55,
    "modules": 55,
-   "audited": ""
+   "audited": "BookNotesScriptTests.A_piece_takes_the_guid_of_the_state_it_turns_to_as_each_state_is_its_own_object_in_the_tabletop"
   },
   {
    "row": "smooth moves end at once",
@@ -9390,7 +9250,7 @@
    "held_by": "",
    "count": 55,
    "modules": 55,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.A_spawned_piece_is_spawning_until_the_next_frame_when_its_callback_runs"
   },
   {
    "row": "widget indices are 0-based in editButton/editInput/removeButton",
@@ -9400,7 +9260,7 @@
    "held_by": "",
    "count": 55,
    "modules": 55,
-   "audited": ""
+   "audited": "ScriptingTests.Removing_module_buttons_keeps_their_numbers_until_the_next_frame_so_a_loop_removes_them_all"
   }
  ],
  "defaults": {

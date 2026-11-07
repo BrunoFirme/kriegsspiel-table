@@ -14,11 +14,11 @@ every row that is not dropped must end audited, used by the corpus or not.
 |---|---|---|---|---|---|
 | types | 30 | 30 | 0 | 28 | 43 |
 | save | 150 | 150 | 0 | 127 | 302 |
-| object | 65 | 56 | 9 | 154 | 262 |
-| global | 16 | 16 | 0 | 57 | 77 |
-| namespaces | 23 | 23 | 0 | 46 | 180 |
-| events | 8 | 8 | 0 | 22 | 52 |
-| engine | 23 | 23 | 0 | 22 | 23 |
+| object | 65 | 65 | 0 | 92 | 262 |
+| global | 16 | 16 | 0 | 6 | 63 |
+| namespaces | 23 | 23 | 0 | 18 | 180 |
+| events | 8 | 8 | 0 | 11 | 52 |
+| engine | 23 | 23 | 0 | 11 | 23 |
 
 ## types
 
@@ -379,71 +379,71 @@ every row that is not dropped must end audited, used by the corpus or not.
 
 | row | used (calls / modules) | status | where | held by | audited |
 |---|---|---|---|---|---|
-| `createButton` | 50776 / 52 | unknown |  |  | ScriptingTests.A_module_input_inside_its_piece_is_not_drawn_but_still_listed_and_raising_it_above_the_piece_draws_it; ModuleDefaultsTests |
-| `getPosition` | 2421 / 52 | compat | ObjectCall |  |  |
-| `editButton` | 46867 / 51 | unknown |  |  | ScriptingTests.A_module_input_turned_over_on_top_is_locked_text_on_the_front_and_turning_it_back_unlocks_it |
-| `getScale` | 15144 / 51 | compat | ObjectCall |  |  |
-| `clearButtons` | 6680 / 51 | unknown |  |  | ScriptingTests.Removing_module_buttons_keeps_their_numbers_until_the_next_frame_so_a_loop_removes_them_all |
-| `createInput` | 20637 / 50 | unknown |  |  | ScriptingTests.A_module_input_inside_its_piece_is_not_drawn_but_still_listed_and_raising_it_above_the_piece_draws_it; ModuleDefaultsTests |
+| `createButton` | 50776 / 52 | compat | ObjectCall |  | ScriptingTests.A_module_input_inside_its_piece_is_not_drawn_but_still_listed_and_raising_it_above_the_piece_draws_it; ModuleDefaultsTests |
+| `getPosition` | 2421 / 52 | compat | ObjectCall |  | ModuleObjectCallTests.A_vector_argument_takes_x_y_z_names_first_then_three_numbers_then_two_and_otherwise_fails |
+| `editButton` | 46867 / 51 | compat | ObjectCall |  | ScriptingTests.A_module_input_turned_over_on_top_is_locked_text_on_the_front_and_turning_it_back_unlocks_it |
+| `getScale` | 15144 / 51 | compat | ObjectCall |  | ModuleObjectCallTests.Scale_reads_one_local_unit_and_setting_it_back_keeps_the_piece_the_same_size |
+| `clearButtons` | 6680 / 51 | compat | ObjectCall |  | ScriptingTests.Removing_module_buttons_keeps_their_numbers_until_the_next_frame_so_a_loop_removes_them_all |
+| `createInput` | 20637 / 50 | compat | ObjectCall |  | ScriptingTests.A_module_input_inside_its_piece_is_not_drawn_but_still_listed_and_raising_it_above_the_piece_draws_it; ModuleDefaultsTests |
 | `setCustomObject` | 3484 / 50 | partial | a picture by a link built at run time is fetched and shown on the piece's face (self.set_face_picture); a model by such a link is not | ScriptingTests |  |
-| `reload` | 755 / 50 | compat | ObjectCall |  |  |
-| `positionToWorld` | 1180 / 49 | compat | ObjectCall |  |  |
-| `setVar` | 181 / 49 | compat | ObjectCall |  |  |
-| `editInput` | 38689 / 47 | unknown |  |  | ScriptingTests.A_module_input_inside_its_piece_is_not_drawn_but_still_listed_and_raising_it_above_the_piece_draws_it |
-| `getInputs` | 16053 / 47 | unknown |  |  | ScriptingTests.Module_handlers_named_at_run_time_get_module_arguments_and_getInputs_holds_what_was_typed |
-| `clearInputs` | 5365 / 47 | unknown |  |  | ScriptingTests.Removing_module_buttons_keeps_their_numbers_until_the_next_frame_so_a_loop_removes_them_all |
-| `getButtons` | 3950 / 47 | unknown |  |  | ScriptingTests.Removing_module_buttons_keeps_their_numbers_until_the_next_frame_so_a_loop_removes_them_all |
-| `setPosition` | 416 / 47 | compat | ObjectCall |  |  |
-| `setScale` | 231 / 47 | compat | ObjectCall |  |  |
+| `reload` | 755 / 50 | compat | ObjectCall |  | ModuleObjectCallTests.Plain_reads_and_small_calls_answer_as_the_tabletop_does |
+| `positionToWorld` | 1180 / 49 | compat | ObjectCall |  | ModuleObjectCallTests.A_local_point_goes_to_the_world_with_its_height_scaled_and_turned_over_with_the_piece |
+| `setVar` | 181 / 49 | compat | ObjectCall |  | ModuleObjectCallTests.Object_setters_answer_true_as_module_code_checks |
+| `editInput` | 38689 / 47 | compat | ObjectCall |  | ScriptingTests.A_module_input_inside_its_piece_is_not_drawn_but_still_listed_and_raising_it_above_the_piece_draws_it |
+| `getInputs` | 16053 / 47 | compat | ObjectCall |  | ScriptingTests.Module_handlers_named_at_run_time_get_module_arguments_and_getInputs_holds_what_was_typed |
+| `clearInputs` | 5365 / 47 | compat | ObjectCall |  | ScriptingTests.Removing_module_buttons_keeps_their_numbers_until_the_next_frame_so_a_loop_removes_them_all |
+| `getButtons` | 3950 / 47 | compat | ObjectCall |  | ScriptingTests.Removing_module_buttons_keeps_their_numbers_until_the_next_frame_so_a_loop_removes_them_all |
+| `setPosition` | 416 / 47 | compat | ObjectCall |  | ModuleObjectCallTests.Object_setters_answer_true_as_module_code_checks; ModuleObjectCallTests.A_vector_argument_takes_x_y_z_names_first_then_three_numbers_then_two_and_otherwise_fails |
+| `setScale` | 231 / 47 | compat | ObjectCall |  | ModuleObjectCallTests.Object_setters_answer_true_as_module_code_checks; ModuleObjectCallTests.Scale_reads_one_local_unit_and_setting_it_back_keeps_the_piece_the_same_size |
 | `getCustomObject` | 92 / 46 | compat | ObjectCall |  |  |
-| `setName` | 5703 / 38 | compat | ObjectCall |  |  |
-| `getRotation` | 5932 / 34 | compat | ObjectCall |  |  |
-| `addContextMenuItem` | 45750 / 33 | compat | ObjectCall |  |  |
-| `setDescription` | 4838 / 30 | compat | ObjectCall |  |  |
-| `call` | 37963 / 28 | compat | ObjectCall |  |  |
-| `getColorTint` | 2098 / 28 | compat | ObjectCall |  |  |
-| `clearContextMenu` | 7277 / 26 | compat | ObjectCall |  |  |
-| `getGUID` | 1013 / 24 | compat | ObjectCall |  |  |
-| `setColorTint` | 1395 / 23 | compat | ObjectCall |  |  |
+| `setName` | 5703 / 38 | compat | ObjectCall |  | ModuleObjectCallTests.Object_setters_answer_true_as_module_code_checks |
+| `getRotation` | 5932 / 34 | compat | ObjectCall |  | ModuleObjectCallTests.Turning_over_by_x_or_z_lays_the_piece_face_down_and_rotation_reads_back_in_0_to_360 |
+| `addContextMenuItem` | 45750 / 33 | compat | ObjectCall |  | ModuleObjectCallTests.The_same_menu_function_under_the_same_label_is_one_row_and_a_missing_function_is_refused; ModuleObjectCallTests.A_menu_row_calls_its_function_with_the_colour_the_pieces_position_and_the_piece |
+| `setDescription` | 4838 / 30 | compat | ObjectCall |  | ModuleObjectCallTests.Object_setters_answer_true_as_module_code_checks |
+| `call` | 37963 / 28 | compat | ObjectCall |  | ModuleObjectCallTests.A_call_into_another_script_copies_its_table_both_ways_and_an_error_there_is_logged_and_answers_nil |
+| `getColorTint` | 2098 / 28 | compat | ObjectCall |  | ModuleObjectCallTests.A_colour_argument_takes_a_seat_name_exactly_or_r_g_b_and_alpha_defaults_to_one |
+| `clearContextMenu` | 7277 / 26 | compat | ObjectCall |  | ModuleObjectCallTests.Object_setters_answer_true_as_module_code_checks |
+| `getGUID` | 1013 / 24 | compat | ObjectCall |  | ModuleEventTests.A_piece_script_hears_every_piece_picked_up_with_the_colour_first_and_the_piece_second |
+| `setColorTint` | 1395 / 23 | compat | ObjectCall |  | ModuleObjectCallTests.Object_setters_answer_true_as_module_code_checks; ModuleObjectCallTests.A_colour_argument_takes_a_seat_name_exactly_or_r_g_b_and_alpha_defaults_to_one |
 | `highlightOn` | 480 / 22 | compat | ObjectCall |  |  |
-| `setLock` | 204 / 20 | compat | ObjectCall |  |  |
-| `getName` | 679 / 19 | compat | ObjectCall |  |  |
-| `destruct` | 981 / 17 | compat | ObjectCall |  |  |
-| `getVar` | 1991 / 15 | native | ObjectCall |  |  |
-| `positionToLocal` | 979 / 15 | compat | ObjectCall |  |  |
-| `setVectorLines` | 196 / 15 | compat | ObjectCall |  |  |
-| `getDescription` | 76 / 15 | compat | ObjectCall |  |  |
-| `removeFromPlayerSelection` | 1954 / 14 | compat | ObjectCall |  |  |
+| `setLock` | 204 / 20 | compat | ObjectCall |  | ModuleObjectCallTests.Object_setters_answer_true_as_module_code_checks |
+| `getName` | 679 / 19 | compat | ObjectCall |  | StowEventTests.Putting_a_piece_in_and_taking_it_out_raise_the_bag_events_and_a_script_can_keep_one_out |
+| `destruct` | 981 / 17 | compat | ObjectCall |  | ModuleObjectCallTests.Plain_reads_and_small_calls_answer_as_the_tabletop_does |
+| `getVar` | 1991 / 15 | native | ObjectCall |  | ModuleObjectCallTests.In_a_frame_waits_on_frames_fire_before_waits_on_seconds_and_a_failing_condition_fires_its_function |
+| `positionToLocal` | 979 / 15 | compat | ObjectCall |  | ModuleObjectCallTests.A_local_point_goes_to_the_world_with_its_height_scaled_and_turned_over_with_the_piece |
+| `setVectorLines` | 196 / 15 | compat | ObjectCall |  | ModuleObjectCallTests.Vector_lines_read_back_nil_until_set_and_then_as_given_with_vectors_and_colours |
+| `getDescription` | 76 / 15 | compat | ObjectCall |  | ModuleObjectCallTests.Plain_reads_and_small_calls_answer_as_the_tabletop_does |
+| `removeFromPlayerSelection` | 1954 / 14 | compat | ObjectCall |  | TranslatorTests.The_long_tail_translates_and_runs |
 | `interactable` | 1952 / 14 | compat | ObjectProps (get_prop/set_prop) |  |  |
-| `scale` | 1826 / 14 | compat | ObjectCall |  |  |
-| `locked` | 976 / 14 | compat | compat.get_prop / set_prop on the piece's lock | StowEventTests |  |
-| `removeInput` | 976 / 14 | unknown |  |  | ScriptingTests.Removing_module_buttons_keeps_their_numbers_until_the_next_frame_so_a_loop_removes_them_all |
+| `scale` | 1826 / 14 | compat | ObjectCall |  | ModuleObjectCallTests.Object_setters_answer_true_as_module_code_checks; ModuleObjectCallTests.Scale_reads_one_local_unit_and_setting_it_back_keeps_the_piece_the_same_size |
+| `locked` | 976 / 14 | compat | compat.get_prop / set_prop on the piece's lock | StowEventTests | StowEventTests.The_locked_property_reads_and_sets_the_lock |
+| `removeInput` | 976 / 14 | compat | ObjectCall |  | ScriptingTests.Removing_module_buttons_keeps_their_numbers_until_the_next_frame_so_a_loop_removes_them_all |
 | `getData` | 21 / 13 | compat | compat.get_data |  |  |
-| `getGMNotes` | 15 / 13 | compat | ObjectCall |  |  |
-| `getTransformUp` | 13029 / 12 | compat | ObjectCall |  |  |
-| `setDecals` | 4343 / 12 | compat | ObjectCall |  |  |
-| `hasTag` | 150 / 12 | compat | ObjectCall |  |  |
+| `getGMNotes` | 15 / 13 | compat | ObjectCall |  | ModuleObjectCallTests.Plain_reads_and_small_calls_answer_as_the_tabletop_does |
+| `getTransformUp` | 13029 / 12 | compat | ObjectCall |  | ModuleObjectCallTests.Turning_over_by_x_or_z_lays_the_piece_face_down_and_rotation_reads_back_in_0_to_360 |
+| `setDecals` | 4343 / 12 | compat | ObjectCall |  | ModuleObjectCallTests.Decals_need_a_name_and_a_link_and_read_back_nil_until_set |
+| `hasTag` | 150 / 12 | compat | ObjectCall |  | ModuleObjectCallTests.Tags_match_without_case_and_with_spaces_as_underscores |
 | `split` | 26 / 12 | dropped | deck and card logic (decided 2026-11-06) |  |  |
-| `setGMNotes` | 12 / 12 | compat | ObjectCall |  |  |
+| `setGMNotes` | 12 / 12 | compat | ObjectCall |  | ModuleObjectCallTests.Object_setters_answer_true_as_module_code_checks; ModuleObjectCallTests.Plain_reads_and_small_calls_answer_as_the_tabletop_does |
 | `highlightOff` | 154 / 10 | compat | ObjectCall |  |  |
 | `setPositionSmooth` | 51 / 10 | compat | ObjectCall |  |  |
-| `takeObject` | 80 / 9 | compat | compat.take_object: unstow by guid or index at the position and rotation given, then the callback | StowScriptTests |  |
-| `getBounds` | 50 / 9 | compat | ObjectCall |  |  |
-| `getLock` | 50 / 9 | compat | ObjectCall |  |  |
-| `getObjects` | 50 / 9 | compat | compat.get_objects: the stowed list with guid, name and 0-based index | StowScriptTests |  |
-| `putObject` | 50 / 9 | compat | compat.put_object: stow | StowScriptTests |  |
+| `takeObject` | 80 / 9 | compat | compat.take_object: unstow by guid or index at the position and rotation given, then the callback | StowScriptTests | ModuleObjectCallTests.A_piece_that_is_not_a_bag_counts_minus_one_lists_nothing_and_takes_nothing_in; StowScriptTests.A_module_bag_script_puts_and_takes_through_the_same_calls |
+| `getBounds` | 50 / 9 | compat | ObjectCall |  | ModuleObjectCallTests.Bounds_of_a_turned_piece_hold_its_turned_outline_and_normalized_bounds_ignore_the_turn |
+| `getLock` | 50 / 9 | compat | ObjectCall |  | ModuleObjectCallTests.Plain_reads_and_small_calls_answer_as_the_tabletop_does |
+| `getObjects` | 50 / 9 | compat | compat.get_objects: the stowed list with guid, name and 0-based index | StowScriptTests | ModuleObjectCallTests.A_piece_that_is_not_a_bag_counts_minus_one_lists_nothing_and_takes_nothing_in |
+| `putObject` | 50 / 9 | compat | compat.put_object: stow | StowScriptTests | ModuleObjectCallTests.A_piece_that_is_not_a_bag_counts_minus_one_lists_nothing_and_takes_nothing_in |
 | `setRotationSmooth` | 50 / 9 | compat | ObjectCall |  |  |
 | `setLuaScript` | 3169 / 7 | compat | ObjectCall |  |  |
-| `setState` | 180 / 3 | compat | ObjectCall |  |  |
-| `isDestroyed` | 5 / 3 | compat | ObjectCall |  |  |
-| `guid` | 137 / 2 | compat | ObjectProps (get_prop/set_prop) |  |  |
-| `getTags` | 18 / 2 | compat | ObjectCall |  |  |
-| `setRotation` | 2 / 2 | compat | ObjectCall |  |  |
+| `setState` | 180 / 3 | compat | ObjectCall |  | ModuleObjectCallTests.A_piece_without_states_has_state_id_minus_one_no_states_and_refuses_set_state |
+| `isDestroyed` | 5 / 3 | compat | ObjectCall |  | ModuleObjectCallTests.Plain_reads_and_small_calls_answer_as_the_tabletop_does |
+| `guid` | 137 / 2 | compat | ObjectProps (get_prop/set_prop) |  | ModuleObjectCallTests.Plain_reads_and_small_calls_answer_as_the_tabletop_does |
+| `getTags` | 18 / 2 | compat | ObjectCall |  | ModuleObjectCallTests.Tags_match_without_case_and_with_spaces_as_underscores |
+| `setRotation` | 2 / 2 | compat | ObjectCall |  | ModuleObjectCallTests.Object_setters_answer_true_as_module_code_checks; ModuleObjectCallTests.Turning_over_by_x_or_z_lays_the_piece_face_down_and_rotation_reads_back_in_0_to_360 |
 | `getLuaScript` | 19474 / 1 | compat | ObjectCall |  |  |
-| `getVectorLines` | 2 / 1 | compat | ObjectCall |  |  |
+| `getVectorLines` | 2 / 1 | compat | ObjectCall |  | ModuleObjectCallTests.Vector_lines_read_back_nil_until_set_and_then_as_given_with_vectors_and_colours |
 | `getValue` | 1 / 1 | native | a die's sides are its own (PieceDef.Faces, a value and the way up each); self.faces / face / value, set_face / set_value / set_faces / roll; compat maps the module calls | DiceScriptTests |  |
 | `roll` | 1 / 1 | native | a die's sides are its own (PieceDef.Faces, a value and the way up each); self.faces / face / value, set_face / set_value / set_faces / roll; compat maps the module calls | DiceScriptTests |  |
-| `setSnapPoints` | 1 / 1 | compat | ObjectCall |  |  |
+| `setSnapPoints` | 1 / 1 | compat | ObjectCall |  | ModuleObjectCallTests.Snap_points_read_back_with_their_rotation_only_when_they_snap_rotation |
 | `AssetBundle.getLoopingEffectIndex` | - | compat | an effect piece answers as a bundle with one looping effect, its own; starting and stopping it is the piece option Running (self.effect_on) | BookNotesScriptTests |  |
 | `AssetBundle.getLoopingEffects` | - | compat | an effect piece answers as a bundle with one looping effect, its own; starting and stopping it is the piece option Running (self.effect_on) | BookNotesScriptTests |  |
 | `AssetBundle.getTriggerEffects` | - | partial | an effect piece has no one-shot effects of the bundle's: the list is empty | BookNotesScriptTests |  |
@@ -494,9 +494,9 @@ every row that is not dropped must end audited, used by the corpus or not.
 | `UI` | - | native | self.ui / obj.ui: the piece's own panels, the same calls as ui | PanelTests |  |
 | `Zone.getObjects` | - | dropped | scripting and layout zones (decided 2026-11-06) |  |  |
 | `addAttachment` | - | native | ObjectCall |  |  |
-| `addDecal` | - | compat | ObjectCall |  |  |
+| `addDecal` | - | compat | ObjectCall |  | ModuleObjectCallTests.Decals_need_a_name_and_a_link_and_read_back_nil_until_set |
 | `addForce` | - | dropped | engine physics |  |  |
-| `addTag` | - | compat | ObjectCall |  |  |
+| `addTag` | - | compat | ObjectCall |  | ModuleObjectCallTests.Object_setters_answer_true_as_module_code_checks; ModuleObjectCallTests.Tags_match_without_case_and_with_spaces_as_underscores |
 | `addToPlayerSelection` | - | compat | ObjectCall |  |  |
 | `addTorque` | - | dropped | engine physics |  |  |
 | `alt_view_angle` | - | planned | the Alt-zoom view: a decision for the user |  |  |
@@ -520,15 +520,15 @@ every row that is not dropped must end audited, used by the corpus or not.
 | `dealToAll` | - | dropped | deck and card logic (decided 2026-11-06) |  |  |
 | `dealToColor` | - | dropped | deck and card logic (decided 2026-11-06) |  |  |
 | `dealToColorWithOffset` | - | dropped | deck and card logic (decided 2026-11-06) |  |  |
-| `destroy` | - | compat | ObjectCall |  |  |
+| `destroy` | - | compat | ObjectCall |  | ModuleObjectCallTests.Plain_reads_and_small_calls_answer_as_the_tabletop_does |
 | `drag` | - | dropped | engine physics |  |  |
 | `drag_selectable` | - | compat | ObjectProps (get_prop/set_prop) |  |  |
 | `drop` | - | dropped | the Player API (decided 2026-11-06) |  |  |
 | `dynamic_friction` | - | dropped | engine physics |  |  |
-| `flip` | - | compat | ObjectCall |  |  |
+| `flip` | - | compat | ObjectCall |  | ModuleObjectCallTests.Object_setters_answer_true_as_module_code_checks |
 | `getAngularVelocity` | - | dropped | engine physics (answers zero) |  |  |
 | `getAttachments` | - | compat | ObjectCall |  |  |
-| `getBoundsNormalized` | - | compat | compat.get_bounds |  |  |
+| `getBoundsNormalized` | - | compat | compat.get_bounds |  | ModuleObjectCallTests.Bounds_of_a_turned_piece_hold_its_turned_outline_and_normalized_bounds_ignore_the_turn |
 | `getChild` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |  |
 | `getChildren` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |  |
 | `getComponent` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |  |
@@ -537,7 +537,7 @@ every row that is not dropped must end audited, used by the corpus or not.
 | `getComponentVars` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |  |
 | `getComponents` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |  |
 | `getComponentsInChildren` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |  |
-| `getDecals` | - | compat | ObjectCall |  |  |
+| `getDecals` | - | compat | ObjectCall |  | ModuleObjectCallTests.Decals_need_a_name_and_a_link_and_read_back_nil_until_set |
 | `getFogOfWar` | - | dropped | hidden zones (decided 2026-11-06) |  |  |
 | `getFogOfWarReveal` | - | dropped | hidden zones (decided 2026-11-06; answers off) |  |  |
 | `getJSON` | - | compat | compat.get_json |  |  |
@@ -551,22 +551,22 @@ every row that is not dropped must end audited, used by the corpus or not.
 | `getNearestPointFromObject` | - | dropped | engine physics |  |  |
 | `getNearestPointFromPosition` | - | dropped | engine physics |  |  |
 | `getPositionSmooth` | - | compat | ObjectCall |  |  |
-| `getQuantity` | - | compat | compat.get_quantity: how many are stowed | StowScriptTests |  |
+| `getQuantity` | - | compat | compat.get_quantity: how many are stowed | StowScriptTests | ModuleObjectCallTests.A_piece_that_is_not_a_bag_counts_minus_one_lists_nothing_and_takes_nothing_in |
 | `getRotationSmooth` | - | compat | ObjectCall |  |  |
 | `getRotationValue` | - | native | a die's sides are its own (PieceDef.Faces, a value and the way up each); self.faces / face / value, set_face / set_value / set_faces / roll; compat maps the module calls | DiceScriptTests |  |
 | `getRotationValues` | - | native | a die's sides are its own (PieceDef.Faces, a value and the way up each); self.faces / face / value, set_face / set_value / set_faces / roll; compat maps the module calls | DiceScriptTests |  |
 | `getSelectingPlayers` | - | compat | compat.get_selecting_players |  |  |
-| `getSnapPoints` | - | compat | ObjectCall |  |  |
-| `getStateId` | - | compat | ObjectCall |  |  |
+| `getSnapPoints` | - | compat | ObjectCall |  | ModuleObjectCallTests.Snap_points_read_back_with_their_rotation_only_when_they_snap_rotation |
+| `getStateId` | - | compat | ObjectCall |  | ModuleObjectCallTests.A_piece_without_states_has_state_id_minus_one_no_states_and_refuses_set_state |
 | `getStates` | - | compat | ObjectCall |  |  |
-| `getTable` | - | compat | ObjectCall |  |  |
-| `getTransformForward` | - | compat | ObjectCall |  |  |
-| `getTransformRight` | - | compat | ObjectCall |  |  |
+| `getTable` | - | compat | ObjectCall |  | ModuleObjectCallTests.A_call_into_another_script_copies_its_table_both_ways_and_an_error_there_is_logged_and_answers_nil |
+| `getTransformForward` | - | compat | ObjectCall |  | ModuleObjectCallTests.Turning_over_by_x_or_z_lays_the_piece_face_down_and_rotation_reads_back_in_0_to_360 |
+| `getTransformRight` | - | compat | ObjectCall |  | ModuleObjectCallTests.Turning_over_by_x_or_z_lays_the_piece_face_down_and_rotation_reads_back_in_0_to_360 |
 | `getVelocity` | - | dropped | engine physics (answers zero) |  |  |
 | `getZones` | - | dropped | scripting and layout zones (decided 2026-11-06) |  |  |
 | `gizmo_selectable` | - | planned | whether the transform tool takes it: a decision for the user |  |  |
 | `grid_projection` | - | dropped | grid (decided 2026-11-06) |  |  |
-| `hasAnyTag` | - | compat | compat.has_any_tag | ModuleHelpersTests |  |
+| `hasAnyTag` | - | compat | compat.has_any_tag | ModuleHelpersTests | ModuleHelpersTests.Tag_and_script_state_helpers_answer_as_modules_expect |
 | `hasMatchingTag` | - | compat | compat.has_matching_tag | ModuleHelpersTests |  |
 | `held_by_color` | - | compat | ObjectProps |  |  |
 | `held_flip_index` | - | compat | face down is 12, face up 0 | DiceScriptTests |  |
@@ -580,7 +580,7 @@ every row that is not dropped must end audited, used by the corpus or not.
 | `is_face_down` | - | native | ObjectCall |  |  |
 | `jointTo` | - | dropped | engine physics (joints) |  |  |
 | `layoutZone` | - | dropped | scripting and layout zones (decided 2026-11-06) |  |  |
-| `loading_custom` | - | compat | ObjectCall |  |  |
+| `loading_custom` | - | compat | ObjectCall |  | ModuleObjectCallTests.A_spawned_piece_is_spawning_until_the_next_frame_when_its_callback_runs |
 | `luaCollision` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |  |
 | `mass` | - | dropped | engine physics |  |  |
 | `material` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |  |
@@ -597,8 +597,8 @@ every row that is not dropped must end audited, used by the corpus or not.
 | `remainder` | - | dropped | deck and card logic (decided 2026-11-06) |  |  |
 | `removeAttachment` | - | compat | ObjectCall |  |  |
 | `removeAttachments` | - | compat | ObjectCall |  |  |
-| `removeButton` | - | unknown |  |  | ScriptingTests.Removing_module_buttons_keeps_their_numbers_until_the_next_frame_so_a_loop_removes_them_all |
-| `removeTag` | - | compat | ObjectCall |  |  |
+| `removeButton` | - | compat | ObjectCall |  | ScriptingTests.Removing_module_buttons_keeps_their_numbers_until_the_next_frame_so_a_loop_removes_them_all |
+| `removeTag` | - | compat | ObjectCall |  | ModuleObjectCallTests.Tags_match_without_case_and_with_spaces_as_underscores |
 | `rendererIndex` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |  |
 | `reset` | - | dropped | deck and card logic (decided 2026-11-06) |  |  |
 | `resting` | - | compat | ObjectCall |  |  |
@@ -616,15 +616,15 @@ every row that is not dropped must end audited, used by the corpus or not.
 | `setMemo` | - | compat | ObjectCall |  |  |
 | `setRotationValue` | - | native | a die's sides are its own (PieceDef.Faces, a value and the way up each); self.faces / face / value, set_face / set_value / set_faces / roll; compat maps the module calls | DiceScriptTests |  |
 | `setRotationValues` | - | native | a die's sides are its own (PieceDef.Faces, a value and the way up each); self.faces / face / value, set_face / set_value / set_faces / roll; compat maps the module calls | DiceScriptTests |  |
-| `setTable` | - | compat | ObjectCall |  |  |
-| `setTags` | - | compat | ObjectCall |  |  |
+| `setTable` | - | compat | ObjectCall |  | ModuleObjectCallTests.Object_setters_answer_true_as_module_code_checks |
+| `setTags` | - | compat | ObjectCall |  | ModuleObjectCallTests.Object_setters_answer_true_as_module_code_checks |
 | `setValue` | - | native | a die's sides are its own (PieceDef.Faces, a value and the way up each); self.faces / face / value, set_face / set_value / set_faces / roll; compat maps the module calls | DiceScriptTests |  |
 | `setVelocity` | - | dropped | engine physics |  |  |
 | `shuffle` | - | dropped | deck and card logic (decided 2026-11-06) |  |  |
 | `shuffleStates` | - | native | compat.shuffle_states: another of its looks at random | DiceScriptTests |  |
-| `spawning` | - | compat | ObjectCall |  |  |
+| `spawning` | - | compat | ObjectCall |  | ModuleObjectCallTests.A_spawned_piece_is_spawning_until_the_next_frame_when_its_callback_runs |
 | `spread` | - | dropped | deck and card logic (decided 2026-11-06) |  |  |
-| `startLuaCoroutine` | - | unknown |  |  |  |
+| `startLuaCoroutine` | - | compat | ObjectCall |  | ModuleObjectCallTests.A_coroutine_runs_to_its_first_yield_at_once_goes_on_each_frame_while_it_yields_zero_and_stops_on_any_other_number |
 | `static_friction` | - | dropped | engine physics |  |  |
 | `sticky` | - | compat | ObjectProps (get_prop/set_prop) |  |  |
 | `tag` | - | compat | ObjectProps (get_prop/set_prop) |  |  |
@@ -646,118 +646,104 @@ every row that is not dropped must end audited, used by the corpus or not.
 
 | row | used (calls / modules) | status | where | held by | audited |
 |---|---|---|---|---|---|
-| `getObjectFromGUID` | 1203 / 50 | native | GlobalFunctionCall |  |  |
-| `broadcastToAll` | 748 / 50 | compat | GlobalFunctionCall |  |  |
-| `broadcastToColor` | 61397 / 30 | compat | GlobalFunctionCall |  |  |
-| `spawnObject` | 2866 / 18 | compat | GlobalFunctionCall |  |  |
-| `getObjects` | 1525 / 14 | native | GlobalFunctionCall |  |  |
-| `destroyObject` | 20 / 14 | compat | GlobalFunctionCall |  |  |
-| `startLuaCoroutine` | 4345 / 13 | compat | GlobalFunctionCall |  |  |
+| `getObjectFromGUID` | 1203 / 50 | native | GlobalFunctionCall |  | StowScriptTests.A_module_bag_script_puts_and_takes_through_the_same_calls |
+| `broadcastToAll` | 748 / 50 | compat | GlobalFunctionCall |  | ModuleObjectCallTests.Printing_to_a_seat_nobody_holds_is_an_error_and_seat_names_are_exact |
+| `broadcastToColor` | 61397 / 30 | compat | GlobalFunctionCall |  | ModuleObjectCallTests.Printing_to_a_seat_nobody_holds_is_an_error_and_seat_names_are_exact |
+| `spawnObject` | 2866 / 18 | compat | GlobalFunctionCall |  | ModuleObjectCallTests.A_spawned_piece_is_spawning_until_the_next_frame_when_its_callback_runs |
+| `getObjects` | 1525 / 14 | native | GlobalFunctionCall |  | ModuleObjectCallTests.Object_lists_tag_lists_seat_names_and_world_lines_answer_as_the_tabletop_does |
+| `destroyObject` | 20 / 14 | compat | GlobalFunctionCall |  | ModuleObjectCallTests.Object_lists_tag_lists_seat_names_and_world_lines_answer_as_the_tabletop_does |
+| `startLuaCoroutine` | 4345 / 13 | compat | GlobalFunctionCall |  | ModuleObjectCallTests.A_coroutine_runs_to_its_first_yield_at_once_goes_on_each_frame_while_it_yields_zero_and_stops_on_any_other_number |
 | `spawnObjectData` | 32 / 13 | compat | GlobalFunctionCall |  |  |
-| `getAllObjects` | 426 / 12 | native | GlobalFunctionCall |  |  |
-| `log` | 376 / 12 | compat | compat.log: the value, a table as JSON, with its label, on the script console | StowEventTests |  |
-| `printToColor` | 20 / 12 | compat | GlobalFunctionCall |  |  |
-| `vector` | 117 / 7 | compat | GlobalFunctionCall |  |  |
-| `addHotkey` | 20 / 4 | compat | GlobalFunctionCall |  |  |
-| `addContextMenuItem` | 2 / 2 | compat | GlobalFunctionCall |  |  |
-| `printToAll` | 2 / 2 | compat | GlobalFunctionCall |  |  |
-| `stringColorToRGB` | 1 / 1 | compat | GlobalFunctionCall |  |  |
+| `getAllObjects` | 426 / 12 | native | GlobalFunctionCall |  | ModuleObjectCallTests.Object_lists_tag_lists_seat_names_and_world_lines_answer_as_the_tabletop_does |
+| `log` | 376 / 12 | compat | compat.log: the value, a table as JSON, with its label, on the script console | StowEventTests | ModuleObjectCallTests.Log_writes_a_table_as_indented_key_lines_under_its_label_and_answers_true |
+| `printToColor` | 20 / 12 | compat | GlobalFunctionCall |  | ModuleObjectCallTests.Printing_to_a_seat_nobody_holds_is_an_error_and_seat_names_are_exact |
+| `vector` | 117 / 7 | compat | GlobalFunctionCall |  | ModuleObjectCallTests.The_tabletops_own_global_names_reach_the_global_script |
+| `addHotkey` | 20 / 4 | compat | GlobalFunctionCall |  | TranslatorTests.Module_hotkeys_and_the_global_context_menu_translate_and_run |
+| `addContextMenuItem` | 2 / 2 | compat | GlobalFunctionCall |  | TranslatorTests.Module_hotkeys_and_the_global_context_menu_translate_and_run |
+| `printToAll` | 2 / 2 | compat | GlobalFunctionCall |  | ModuleObjectCallTests.Printing_to_a_seat_nobody_holds_is_an_error_and_seat_names_are_exact |
+| `stringColorToRGB` | 1 / 1 | compat | GlobalFunctionCall |  | ModuleObjectCallTests.Printing_to_a_seat_nobody_holds_is_an_error_and_seat_names_are_exact |
 | `addConsoleCommand` | - | dropped | console commands and other host controls (decided 2026-11-06) |  |  |
-| `addNotebookTab` | - | compat | GlobalFunctionCall |  |  |
+| `addNotebookTab` | - | compat | GlobalFunctionCall |  | ModuleObjectCallTests.Notebook_tabs_need_a_title_adding_one_answers_the_new_count_and_notes_refuse_nil |
 | `allowRewindStore` | - | dropped | console commands and other host controls (decided 2026-11-06) |  |  |
-| `callLuaFunctionInOtherScript` | - | compat | GlobalFunctionCall |  |  |
-| `callLuaFunctionInOtherScriptWithParams` | - | compat | GlobalFunctionCall |  |  |
+| `callLuaFunctionInOtherScript` | - | compat | GlobalFunctionCall |  | ModuleObjectCallTests.The_tabletops_own_global_names_reach_the_global_script; ModuleObjectCallTests.A_call_into_another_script_copies_its_table_both_ways_and_an_error_there_is_logged_and_answers_nil |
+| `callLuaFunctionInOtherScriptWithParams` | - | compat | GlobalFunctionCall |  | ModuleObjectCallTests.The_tabletops_own_global_names_reach_the_global_script |
 | `chooseInHand` | - | dropped | hands are seats here (decided 2026-11-06) |  |  |
 | `chooseInHandOrCancel` | - | dropped | hands are seats here (decided 2026-11-06) |  |  |
 | `clearChooseInHand` | - | dropped | hands are seats here (decided 2026-11-06) |  |  |
 | `clearConsoleCommands` | - | dropped | console commands and other host controls (decided 2026-11-06) |  |  |
 | `clearContextMenu` | - | compat | GlobalFunctionCall |  |  |
-| `clearHotkeys` | - | compat | GlobalFunctionCall |  |  |
-| `clearPixelPaint` | - | compat | compat.erase_all: every stroke on the drawing board | ModuleHelpersTests |  |
-| `clearVectorPaint` | - | compat | compat.erase_all: every stroke on the drawing board | ModuleHelpersTests |  |
-| `color` | - | compat | GlobalFunctionCall |  |  |
-| `colorToHex` | - | compat | compat.Color:toHex | ModuleHelpersTests |  |
-| `colorToPlayerName` | - | compat | compat.Color:toString |  |  |
-| `constructColor` | - | compat | compat.Color |  |  |
-| `constructVector` | - | compat | compat.Vector | ModuleVectorColorTests |  |
+| `clearHotkeys` | - | compat | GlobalFunctionCall |  | TranslatorTests.Module_hotkeys_and_the_global_context_menu_translate_and_run |
+| `clearPixelPaint` | - | compat | compat.erase_all: every stroke on the drawing board | ModuleHelpersTests | ModuleObjectCallTests.Plain_reads_and_small_calls_answer_as_the_tabletop_does |
+| `clearVectorPaint` | - | compat | compat.erase_all: every stroke on the drawing board | ModuleHelpersTests | ModuleHelpersTests.Clearing_the_paint_erases_every_stroke_and_stop_all_ends_every_wait |
+| `color` | - | compat | GlobalFunctionCall |  | ModuleObjectCallTests.The_tabletops_own_global_names_reach_the_global_script |
+| `colorToPlayerName` | - | compat | compat.Color:toString |  | ModuleObjectCallTests.Object_lists_tag_lists_seat_names_and_world_lines_answer_as_the_tabletop_does |
 | `copy` | - | dropped | the Player API (decided 2026-11-06) |  |  |
-| `copyLuaTable` | - | compat | compat.copy_table | ModuleHelpersTests |  |
 | `currentChooseInHand` | - | dropped | hands are seats here (decided 2026-11-06) |  |  |
-| `debugLog` | - | compat | compat.log |  |  |
-| `editNotebookTab` | - | compat | GlobalFunctionCall |  |  |
+| `debugLog` | - | compat | compat.log |  | ModuleObjectCallTests.Plain_reads_and_small_calls_answer_as_the_tabletop_does |
+| `editNotebookTab` | - | compat | GlobalFunctionCall |  | ModuleObjectCallTests.Notebook_tabs_need_a_title_adding_one_answers_the_new_count_and_notes_refuse_nil |
 | `flipTable` | - | dropped | the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06) |  |  |
-| `getAllLuaScriptStates` | - | dropped | undocumented internal; no module calls it |  |  |
-| `getAllTags` | - | compat | compat.all_tags | ModuleHelpersTests |  |
-| `getColor` | - | dropped | undocumented internal; no module calls it |  |  |
-| `getGlobalScriptTable` | - | compat | GlobalFunctionCall |  |  |
-| `getGlobalScriptVar` | - | native | GlobalFunctionCall |  |  |
-| `getGlobalTable` | - | compat | game.get_var |  |  |
-| `getGlobalVar` | - | compat | game.get_var |  |  |
-| `getNotebookTabs` | - | compat | GlobalFunctionCall |  |  |
-| `getNotes` | - | compat | GlobalFunctionCall |  |  |
-| `getObjectsWithAllTags` | - | compat | GlobalFunctionCall |  |  |
-| `getObjectsWithAnyTags` | - | compat | GlobalFunctionCall |  |  |
-| `getObjectsWithTag` | - | compat | GlobalFunctionCall |  |  |
+| `getAllTags` | - | compat | compat.all_tags | ModuleHelpersTests | ModuleHelpersTests.Tag_and_script_state_helpers_answer_as_modules_expect |
+| `getGlobalScriptTable` | - | compat | GlobalFunctionCall |  | ModuleObjectCallTests.The_tabletops_own_global_names_reach_the_global_script |
+| `getGlobalScriptVar` | - | native | GlobalFunctionCall |  | ModuleObjectCallTests.The_tabletops_own_global_names_reach_the_global_script |
+| `getNotebookTabs` | - | compat | GlobalFunctionCall |  | ModuleObjectCallTests.Notebook_tabs_need_a_title_adding_one_answers_the_new_count_and_notes_refuse_nil |
+| `getNotes` | - | compat | GlobalFunctionCall |  | ModuleObjectCallTests.Notebook_tabs_need_a_title_adding_one_answers_the_new_count_and_notes_refuse_nil |
+| `getObjectsWithAllTags` | - | compat | GlobalFunctionCall |  | ModuleObjectCallTests.Object_lists_tag_lists_seat_names_and_world_lines_answer_as_the_tabletop_does |
+| `getObjectsWithAnyTags` | - | compat | GlobalFunctionCall |  | ModuleObjectCallTests.Object_lists_tag_lists_seat_names_and_world_lines_answer_as_the_tabletop_does |
+| `getObjectsWithTag` | - | compat | GlobalFunctionCall |  | ModuleObjectCallTests.Tags_match_without_case_and_with_spaces_as_underscores |
 | `getPlayer` | - | compat | compat.player |  |  |
 | `getPlayerHandPositionAndRotation` | - | dropped | hands are seats here (decided 2026-11-06) |  |  |
 | `getPointerPosition` | - | dropped | the Player API (decided 2026-11-06) |  |  |
 | `getPointerRotation` | - | dropped | the Player API (decided 2026-11-06) |  |  |
-| `getScriptState` | - | compat | script_state | ModuleHelpersTests |  |
-| `getSeatedPlayers` | - | compat | GlobalFunctionCall |  |  |
+| `getSeatedPlayers` | - | compat | GlobalFunctionCall |  | ModuleObjectCallTests.Seated_players_leave_out_the_game_master_seat |
 | `group` | - | dropped | the Player API (decided 2026-11-06) |  |  |
-| `hexToColor` | - | compat | compat.Color.fromHex | ModuleHelpersTests |  |
 | `inspect` | - | unknown |  |  |  |
-| `logFormat` | - | compat | compat.log |  |  |
-| `logString` | - | compat | GlobalFunctionCall |  |  |
+| `logString` | - | compat | GlobalFunctionCall |  | ModuleObjectCallTests.Log_writes_a_table_as_indented_key_lines_under_its_label_and_answers_true; ModuleObjectCallTests.The_tabletops_own_global_names_reach_the_global_script |
 | `logStyle` | - | dropped | console commands and other host controls (decided 2026-11-06) |  |  |
 | `paste` | - | dropped | the Player API (decided 2026-11-06) |  |  |
-| `removeNotebookTab` | - | compat | GlobalFunctionCall |  |  |
-| `sendExternalMessage` | - | stub | GlobalFunctionCall |  |  |
-| `setGlobalScriptTable` | - | compat | GlobalFunctionCall |  |  |
-| `setGlobalScriptVar` | - | compat | GlobalFunctionCall |  |  |
-| `setGlobalTable` | - | compat | game.set_var |  |  |
-| `setLookingForPlayers` | - | stub | GlobalFunctionCall |  |  |
-| `setNotes` | - | compat | GlobalFunctionCall |  |  |
-| `setUITheme` | - | dropped | the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06) |  |  |
+| `removeNotebookTab` | - | compat | GlobalFunctionCall |  | BookNotesScriptTests.A_module_script_reads_and_writes_the_notes_and_notebook_tabs_on_the_note_cards |
+| `sendExternalMessage` | - | compat | GlobalFunctionCall |  |  |
+| `setGlobalScriptTable` | - | compat | GlobalFunctionCall |  | ModuleObjectCallTests.The_tabletops_own_global_names_reach_the_global_script |
+| `setGlobalScriptVar` | - | compat | GlobalFunctionCall |  | ModuleObjectCallTests.The_tabletops_own_global_names_reach_the_global_script |
+| `setLookingForPlayers` | - | compat | GlobalFunctionCall |  | ModuleObjectCallTests.The_tabletops_own_global_names_reach_the_global_script |
+| `setNotes` | - | compat | GlobalFunctionCall |  | ModuleObjectCallTests.Notebook_tabs_need_a_title_adding_one_answers_the_new_count_and_notes_refuse_nil |
 | `showHotkeyConfig` | - | dropped | console commands and other host controls (decided 2026-11-06) |  |  |
 | `spawnObjectJSON` | - | compat | GlobalFunctionCall |  |  |
 | `storeRewindState` | - | dropped | console commands and other host controls (decided 2026-11-06) |  |  |
-| `stringColorToHex` | - | compat | compat.Color.fromString:toHex |  |  |
 
 ## namespaces
 
 | row | used (calls / modules) | status | where | held by | audited |
 |---|---|---|---|---|---|
-| `JSON.encode` | 12891 / 52 | native | json.encode / json.decode |  |  |
-| `JSON.decode` | 11910 / 51 | native | json.encode / json.decode |  |  |
-| `Wait.frames` | 13927 / 27 | compat | compat.wait_* |  |  |
-| `Wait.time` | 5718 / 15 | compat | compat.wait_* |  |  |
+| `JSON.encode` | 12891 / 52 | native | json.encode / json.decode |  | ModuleObjectCallTests.Json_writes_sorted_keys_empty_tables_as_arrays_text_as_it_is_and_reads_past_trailing_text |
+| `JSON.decode` | 11910 / 51 | native | json.encode / json.decode |  | ModuleObjectCallTests.Json_writes_sorted_keys_empty_tables_as_arrays_text_as_it_is_and_reads_past_trailing_text |
+| `Wait.frames` | 13927 / 27 | compat | compat.wait_* |  | ModuleObjectCallTests.Wait_stop_answers_whether_a_timer_was_waiting_and_a_nil_function_is_an_error; ModuleObjectCallTests.In_a_frame_waits_on_frames_fire_before_waits_on_seconds_and_a_failing_condition_fires_its_function |
+| `Wait.time` | 5718 / 15 | compat | compat.wait_* |  | ModuleObjectCallTests.In_a_frame_waits_on_frames_fire_before_waits_on_seconds_and_a_failing_condition_fires_its_function; TranslatorTests.A_repeating_wait_stops_when_told_and_a_condition_times_out |
 | `UI.setAttribute` | 19435 / 14 | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) |  |
-| `Wait.stop` | 4219 / 13 | compat | compat.wait_* |  |  |
+| `Wait.stop` | 4219 / 13 | compat | compat.wait_* |  | ModuleObjectCallTests.Wait_stop_answers_whether_a_timer_was_waiting_and_a_nil_function_is_an_error |
 | `UI.setXmlTable` | 141 / 4 | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) |  |
-| `Wait.condition` | 138 / 3 | compat | compat.wait_* |  |  |
+| `Wait.condition` | 138 / 3 | compat | compat.wait_* |  | ModuleObjectCallTests.Wait_stop_answers_whether_a_timer_was_waiting_and_a_nil_function_is_an_error; ModuleObjectCallTests.In_a_frame_waits_on_frames_fire_before_waits_on_seconds_and_a_failing_condition_fires_its_function |
 | `Player.getPlayers` | 3 / 3 | dropped | the Player API (decided 2026-11-06) |  |  |
 | `UI.hide` | 1781 / 2 | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) |  |
 | `UI.show` | 1370 / 2 | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) |  |
-| `Global.getVar` | 411 / 2 | native | game.get_var |  |  |
-| `Global.setVar` | 274 / 2 | native | game.set_var |  |  |
+| `Global.getVar` | 411 / 2 | native | game.get_var |  | ModuleObjectCallTests.The_tabletops_own_global_names_reach_the_global_script |
+| `Global.setVar` | 274 / 2 | native | game.set_var |  | ModuleObjectCallTests.The_tabletops_own_global_names_reach_the_global_script |
 | `UI.getXml` | 137 / 2 | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) |  |
 | `UI.getXmlTable` | 137 / 2 | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) |  |
 | `UI.setXml` | 137 / 2 | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) |  |
 | `Player.getColors` | 2 / 2 | dropped | the Player API (decided 2026-11-06) |  |  |
 | `UI.getAttribute` | 2 / 2 | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) |  |
-| `Global.getVectorLines` | 3 / 1 | compat | compat.global_vector_lines: the lines the script last set | BoardDrawingTests |  |
-| `Global.setVectorLines` | 3 / 1 | compat | compat.set_global_vector_lines: strokes on the umpire's drawing board through board.draw | BoardDrawingTests |  |
+| `Global.getVectorLines` | 3 / 1 | compat | compat.global_vector_lines: the lines the script last set | BoardDrawingTests | ModuleObjectCallTests.Plain_reads_and_small_calls_answer_as_the_tabletop_does |
+| `Global.setVectorLines` | 3 / 1 | compat | compat.set_global_vector_lines: strokes on the umpire's drawing board through board.draw | BoardDrawingTests | ModuleObjectCallTests.Object_lists_tag_lists_seat_names_and_world_lines_answer_as_the_tabletop_does |
 | `Physics.cast` | 1 / 1 | compat | compat.cast |  |  |
-| `Timer.create` | 1 / 1 | compat | compat.Timer |  |  |
-| `Timer.destroy` | 1 / 1 | compat | compat.Timer |  |  |
+| `Timer.create` | 1 / 1 | compat | compat.Timer |  | ModuleObjectCallTests.A_timer_calls_the_named_function_of_the_script_that_made_it_and_refuses_a_name_in_use |
+| `Timer.destroy` | 1 / 1 | compat | compat.Timer |  | ModuleObjectCallTests.A_timer_calls_the_named_function_of_the_script_that_made_it_and_refuses_a_name_in_use; TranslatorTests.A_repeating_wait_stops_when_told_and_a_condition_times_out |
 | `Backgrounds.getBackground` | - | dropped | the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06) |  |  |
 | `Backgrounds.getCustomURL` | - | dropped | the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06) |  |  |
 | `Backgrounds.setBackground` | - | dropped | the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06) |  |  |
 | `Backgrounds.setCustomURL` | - | dropped | the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06) |  |  |
-| `Global.call` | - | native | game.call |  |  |
-| `Global.getTable` | - | native | game.get_var |  |  |
-| `Global.setTable` | - | native | game.set_var |  |  |
+| `Global.call` | - | native | game.call |  | ModuleObjectCallTests.A_call_into_another_script_copies_its_table_both_ways_and_an_error_there_is_logged_and_answers_nil; ModuleObjectCallTests.The_tabletops_own_global_names_reach_the_global_script |
+| `Global.getTable` | - | native | game.get_var |  | ModuleObjectCallTests.A_call_into_another_script_copies_its_table_both_ways_and_an_error_there_is_logged_and_answers_nil |
+| `Global.setTable` | - | native | game.set_var |  | ModuleObjectCallTests.A_call_into_another_script_copies_its_table_both_ways_and_an_error_there_is_logged_and_answers_nil |
 | `Grid.color` | - | dropped | grid (decided 2026-11-06) |  |  |
 | `Grid.offsetX` | - | dropped | grid (decided 2026-11-06) |  |  |
 | `Grid.offsetY` | - | dropped | grid (decided 2026-11-06) |  |  |
@@ -807,12 +793,12 @@ every row that is not dropped must end audited, used by the corpus or not.
 | `MusicPlayer.shuffle` | - | dropped | music and sound players (decided 2026-11-06) |  |  |
 | `MusicPlayer.skipBack` | - | dropped | music and sound players (decided 2026-11-06) |  |  |
 | `MusicPlayer.skipForward` | - | dropped | music and sound players (decided 2026-11-06) |  |  |
-| `Notes.addNotebookTab` | - | compat | the save's Notes and notebook tabs are note cards beside the map (tagged notes and notebook); the Notes calls read and write those cards | BookNotesScriptTests |  |
-| `Notes.editNotebookTab` | - | compat | the save's Notes and notebook tabs are note cards beside the map (tagged notes and notebook); the Notes calls read and write those cards | BookNotesScriptTests |  |
-| `Notes.getNotebookTabs` | - | compat | the save's Notes and notebook tabs are note cards beside the map (tagged notes and notebook); the Notes calls read and write those cards | BookNotesScriptTests |  |
-| `Notes.getNotes` | - | compat | the save's Notes and notebook tabs are note cards beside the map (tagged notes and notebook); the Notes calls read and write those cards | BookNotesScriptTests |  |
-| `Notes.removeNotebookTab` | - | compat | the save's Notes and notebook tabs are note cards beside the map (tagged notes and notebook); the Notes calls read and write those cards | BookNotesScriptTests |  |
-| `Notes.setNotes` | - | compat | the save's Notes and notebook tabs are note cards beside the map (tagged notes and notebook); the Notes calls read and write those cards | BookNotesScriptTests |  |
+| `Notes.addNotebookTab` | - | compat | the save's Notes and notebook tabs are note cards beside the map (tagged notes and notebook); the Notes calls read and write those cards | BookNotesScriptTests | ModuleObjectCallTests.Notebook_tabs_need_a_title_adding_one_answers_the_new_count_and_notes_refuse_nil |
+| `Notes.editNotebookTab` | - | compat | the save's Notes and notebook tabs are note cards beside the map (tagged notes and notebook); the Notes calls read and write those cards | BookNotesScriptTests | ModuleObjectCallTests.Notebook_tabs_need_a_title_adding_one_answers_the_new_count_and_notes_refuse_nil |
+| `Notes.getNotebookTabs` | - | compat | the save's Notes and notebook tabs are note cards beside the map (tagged notes and notebook); the Notes calls read and write those cards | BookNotesScriptTests | ModuleObjectCallTests.Notebook_tabs_need_a_title_adding_one_answers_the_new_count_and_notes_refuse_nil |
+| `Notes.getNotes` | - | compat | the save's Notes and notebook tabs are note cards beside the map (tagged notes and notebook); the Notes calls read and write those cards | BookNotesScriptTests | ModuleObjectCallTests.Notebook_tabs_need_a_title_adding_one_answers_the_new_count_and_notes_refuse_nil |
+| `Notes.removeNotebookTab` | - | compat | the save's Notes and notebook tabs are note cards beside the map (tagged notes and notebook); the Notes calls read and write those cards | BookNotesScriptTests | BookNotesScriptTests.A_module_script_reads_and_writes_the_notes_and_notebook_tabs_on_the_note_cards |
+| `Notes.setNotes` | - | compat | the save's Notes and notebook tabs are note cards beside the map (tagged notes and notebook); the Notes calls read and write those cards | BookNotesScriptTests | ModuleObjectCallTests.Notebook_tabs_need_a_title_adding_one_answers_the_new_count_and_notes_refuse_nil |
 | `Physics.getGravity` | - | dropped | engine physics |  |  |
 | `Physics.play_area` | - | dropped | engine physics |  |  |
 | `Physics.setGravity` | - | dropped | engine physics |  |  |
@@ -875,12 +861,12 @@ every row that is not dropped must end audited, used by the corpus or not.
 | `Tables.getTableObject` | - | dropped | the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06) |  |  |
 | `Tables.setCustomURL` | - | dropped | the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06) |  |  |
 | `Tables.setTable` | - | dropped | the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06) |  |  |
-| `Time.delta_time` | - | compat | compat.Time: time from the clock, frames at 60 a second |  |  |
-| `Time.fixed_delta_time` | - | compat | compat.Time: time from the clock, frames at 60 a second |  |  |
-| `Time.fixed_time` | - | compat | compat.Time: time from the clock, frames at 60 a second |  |  |
-| `Time.frame_count` | - | compat | compat.Time: time from the clock, frames at 60 a second |  |  |
-| `Time.time` | - | compat | compat.Time: time from the clock, frames at 60 a second |  |  |
-| `Timer.timers` | - | compat | compat.Timer |  |  |
+| `Time.delta_time` | - | compat | compat.Time: time from the clock, frames at 60 a second |  | ModuleObjectCallTests.Time_reads_the_scripts_clock_and_frame_count |
+| `Time.fixed_delta_time` | - | compat | compat.Time: time from the clock, frames at 60 a second |  | ModuleObjectCallTests.Time_reads_the_scripts_clock_and_frame_count |
+| `Time.fixed_time` | - | compat | compat.Time: time from the clock, frames at 60 a second |  | ModuleObjectCallTests.Object_lists_tag_lists_seat_names_and_world_lines_answer_as_the_tabletop_does |
+| `Time.frame_count` | - | compat | compat.Time: time from the clock, frames at 60 a second |  | ModuleObjectCallTests.Time_reads_the_scripts_clock_and_frame_count |
+| `Time.time` | - | compat | compat.Time: time from the clock, frames at 60 a second |  | ModuleObjectCallTests.Time_reads_the_scripts_clock_and_frame_count |
+| `Timer.timers` | - | compat | compat.Timer |  | ModuleObjectCallTests.Plain_reads_and_small_calls_answer_as_the_tabletop_does |
 | `Turns.disable_interactations` | - | dropped | turns (decided 2026-11-06) |  |  |
 | `Turns.enable` | - | dropped | turns (decided 2026-11-06) |  |  |
 | `Turns.endTurn` | - | dropped | turns (decided 2026-11-06) |  |  |
@@ -902,7 +888,7 @@ every row that is not dropped must end audited, used by the corpus or not.
 | `UI.setClass` | - | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) |  |
 | `UI.setCustomAssets` | - | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) |  |
 | `UI.setValue` | - | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) |  |
-| `Wait.stopAll` | - | compat | compat.wait_stop_all | ModuleHelpersTests |  |
+| `Wait.stopAll` | - | compat | compat.wait_stop_all | ModuleHelpersTests | ModuleHelpersTests.Clearing_the_paint_erases_every_stroke_and_stop_all_ends_every_wait |
 | `WebRequest.custom` | - | dropped | web requests (decided 2026-11-06) |  |  |
 | `WebRequest.delete` | - | dropped | web requests (decided 2026-11-06) |  |  |
 | `WebRequest.head` | - | dropped | web requests (decided 2026-11-06) |  |  |
@@ -913,14 +899,14 @@ every row that is not dropped must end audited, used by the corpus or not.
 
 | row | used (calls / modules) | status | where | held by | audited |
 |---|---|---|---|---|---|
-| `onSave` | 4920 / 51 | native | EventRenames |  |  |
-| `onLoad` | 2275 / 28 | native | EventRenames |  |  |
-| `onObjectSpawn` | 1510 / 13 | native | EventRenames |  |  |
-| `onObjectDestroy` | 12 / 12 | native | EventRenames |  |  |
-| `onPlayerAction` | 12 / 12 | native | on_player_action(who, action, pieces) before an umpire's delete or flip; false refuses it with a message | PlayerActionTests |  |
-| `onChat` | 10 / 10 | native | EventRenames |  |  |
-| `onScriptingButtonDown` | 10 / 10 | native | EventRenames |  |  |
-| `onObjectPickUp` | 4 / 2 | native | EventRenames |  |  |
+| `onSave` | 4920 / 51 | native | EventRenames |  | ModuleEventTests.A_save_answer_that_is_not_text_clears_the_saved_state_and_nothing_keeps_it |
+| `onLoad` | 2275 / 28 | native | EventRenames |  | BookNotesScriptTests.On_a_load_every_script_is_read_before_any_on_load_so_the_global_one_can_call_into_a_piece |
+| `onObjectSpawn` | 1510 / 13 | native | EventRenames |  | ModuleEventTests.A_piece_script_hears_every_spawn_and_every_destroy_with_the_piece |
+| `onObjectDestroy` | 12 / 12 | native | EventRenames |  | ModuleEventTests.A_piece_script_hears_every_spawn_and_every_destroy_with_the_piece |
+| `onPlayerAction` | 12 / 12 | native | on_player_action(who, action, pieces) before an umpire's delete or flip; false refuses it with a message | PlayerActionTests | ModuleEventTests.A_piece_script_asked_about_a_player_action_can_refuse_it_with_false; PlayerActionTests.A_module_s_onPlayerAction_can_refuse_a_delete_or_a_flip_and_lets_the_rest_through |
+| `onChat` | 10 / 10 | native | EventRenames |  | ModuleEventTests.Chat_reaches_piece_scripts_as_well_as_the_global_one |
+| `onScriptingButtonDown` | 10 / 10 | native | EventRenames |  | TranslatorTests.The_long_tail_translates_and_runs |
+| `onObjectPickUp` | 4 / 2 | native | EventRenames |  | ModuleEventTests.A_piece_script_hears_every_piece_picked_up_with_the_colour_first_and_the_piece_second |
 | `onBlindfold` | - | dropped | the Player API (decided 2026-11-06) |  |  |
 | `onCollisionEnter` | - | dropped | engine physics (collisions) |  |  |
 | `onCollisionExit` | - | dropped | engine physics (collisions) |  |  |
@@ -936,12 +922,12 @@ every row that is not dropped must end audited, used by the corpus or not.
 | `onObjectCollisionExit` | - | dropped | engine physics (collisions) |  |  |
 | `onObjectCollisionStay` | - | dropped | engine physics (collisions) |  |  |
 | `onObjectDrop` | - | native | EventRenames |  |  |
-| `onObjectEnterContainer` | - | native | on_stowed(holder, piece) after a stow | StowEventTests |  |
+| `onObjectEnterContainer` | - | native | on_stowed(holder, piece) after a stow | StowEventTests | StowEventTests.Putting_a_piece_in_and_taking_it_out_raise_the_bag_events_and_a_script_can_keep_one_out |
 | `onObjectEnterScriptingZone` | - | dropped | scripting and layout zones (decided 2026-11-06) |  |  |
 | `onObjectEnterZone` | - | dropped | scripting and layout zones (decided 2026-11-06) |  |  |
 | `onObjectFlick` | - | dropped | engine physics (flicking) |  |  |
 | `onObjectHover` | - | dropped | no hover events here |  |  |
-| `onObjectLeaveContainer` | - | native | on_unstowed(holder, piece) after an unstow, with on_spawn for the piece | StowEventTests |  |
+| `onObjectLeaveContainer` | - | native | on_unstowed(holder, piece) after an unstow, with on_spawn for the piece | StowEventTests | StowEventTests.Putting_a_piece_in_and_taking_it_out_raise_the_bag_events_and_a_script_can_keep_one_out |
 | `onObjectLeaveScriptingZone` | - | dropped | scripting and layout zones (decided 2026-11-06) |  |  |
 | `onObjectLeaveZone` | - | dropped | scripting and layout zones (decided 2026-11-06) |  |  |
 | `onObjectLoopingEffect` | - | native | on_effect(piece, index) when an umpire starts (0) or stops (-1) an effect | BookNotesScriptTests |  |
@@ -964,32 +950,32 @@ every row that is not dropped must end audited, used by the corpus or not.
 | `onRandomize` | - | native | on_roll(who) in the die's own script | DiceScriptTests |  |
 | `onScriptingButtonUp` | - | native | EventRenames |  |  |
 | `onZoneGroupSort` | - | dropped | scripting and layout zones (decided 2026-11-06) |  |  |
-| `tryObjectEnterContainer` | - | native | try_stow(holder, piece) before a stow; false keeps the piece out | StowEventTests |  |
+| `tryObjectEnterContainer` | - | native | try_stow(holder, piece) before a stow; false keeps the piece out | StowEventTests | ModuleEventTests.A_try_enter_function_that_answers_nothing_keeps_the_piece_out_and_true_lets_it_in |
 
 ## engine
 
 | row | used (calls / modules) | status | where | held by | audited |
 |---|---|---|---|---|---|
-| `Lua table to vector, colour and params and back (positional and named)` | 55 / 55 | compat | compat.Vector / compat.Color / vec(): named, positional and mixed tables, names and hex | ModuleVectorColorTests |  |
+| `Lua table to vector, colour and params and back (positional and named)` | 55 / 55 | compat | compat.Vector / compat.Color / vec(): named, positional and mixed tables, names and hex | ModuleVectorColorTests | ModuleObjectCallTests.A_vector_argument_takes_x_y_z_names_first_then_three_numbers_then_two_and_otherwise_fails; ModuleObjectCallTests.A_colour_argument_takes_a_seat_name_exactly_or_r_g_b_and_alpha_defaults_to_one; ModuleObjectCallTests.A_piece_that_is_not_a_bag_counts_minus_one_lists_nothing_and_takes_nothing_in |
 | `MoonSharp 2.0.0 on both sides: the Lua dialect matches` | 55 / 55 | native | Server.csproj |  |  |
 | `Wait.frames counts frames, Wait.time seconds, onUpdate per frame` | 55 / 55 | native | the host runs scripts every frame it draws, as the tabletop does: Wait.frames counts those frames and on_update runs on each | Net._Process ticks the scripts each frame (no test of its own) |  |
 | `a script call has no time limit in modules` | 55 / 55 | native | kept on purpose (2026-11-06): a call gets a second of its own time, the table work it asks for not counted; the tabletop freezes for good on a runaway loop, here the loop stops and its script and line are named | import-sweep: naval (the Midway bag's Place) |  |
 | `button and input defaults (width, height, font_size, colours, position, scale)` | 55 / 55 | compat | compat.module_defaults, from the tabletop's LuaUIState classes; a button or input with no handler is refused, as modules expect | ModuleDefaultsTests |  |
-| `click_function(obj, player_color, alt_click)` | 55 / 55 | compat | compat.create_button / module_handler | TranslatorTests.Handlers_get_the_piece_their_widget_is_on |  |
-| `context menu callback(player_color, menu_position, object)` | 55 / 55 | compat | compat.add_context_menu_item |  |  |
-| `getObjectFromGUID answers nil for a piece inside a bag` | 55 / 55 | native | a stowed piece is off the layer, so board.find does not see it | StowScriptTests |  |
-| `input_function(obj, player_color, text, selected)` | 55 / 55 | compat | compat.create_input / module_handler | TranslatorTests.A_name_typed_letter_by_letter_reaches_the_face |  |
-| `load order: global before objects; onLoad(script_state)` | 55 / 55 | native | as the tabletop: on a load every script's top-level code runs, the global's first, then on_load runs, the global's first, so the global on_load can call into any piece | BookNotesScriptTests |  |
+| `click_function(obj, player_color, alt_click)` | 55 / 55 | compat | compat.create_button / module_handler | TranslatorTests.Handlers_get_the_piece_their_widget_is_on | TranslatorTests.Handlers_get_the_piece_their_widget_is_on |
+| `context menu callback(player_color, menu_position, object)` | 55 / 55 | compat | compat.add_context_menu_item |  | ModuleObjectCallTests.A_menu_row_calls_its_function_with_the_colour_the_pieces_position_and_the_piece |
+| `getObjectFromGUID answers nil for a piece inside a bag` | 55 / 55 | native | a stowed piece is off the layer, so board.find does not see it | StowScriptTests | StowScriptTests.A_module_bag_script_puts_and_takes_through_the_same_calls |
+| `input_function(obj, player_color, text, selected)` | 55 / 55 | compat | compat.create_input / module_handler | TranslatorTests.A_name_typed_letter_by_letter_reaches_the_face | ModuleEventTests.An_input_function_hears_selected_true_while_typing_and_false_when_the_umpire_leaves_the_box |
+| `load order: global before objects; onLoad(script_state)` | 55 / 55 | native | as the tabletop: on a load every script's top-level code runs, the global's first, then on_load runs, the global's first, so the global on_load can call into any piece | BookNotesScriptTests | BookNotesScriptTests.On_a_load_every_script_is_read_before_any_on_load_so_the_global_one_can_call_into_a_piece |
 | `member names fold (exact, first letter up, snake to camel, both)` | 55 / 55 | native | ModuleTranslator.FoldMember before every object member lookup | TranslatorFoldTests |  |
-| `module Vector and Color classes with their methods` | 55 / 55 | compat | compat.Vector and compat.Color: every documented method, operator and named colour | ModuleVectorColorTests |  |
+| `module Vector and Color classes with their methods` | 55 / 55 | compat | compat.Vector and compat.Color: every documented method, operator and named colour | ModuleVectorColorTests | ModuleObjectCallTests.Module_vectors_follow_the_tabletop_class_two_numbers_make_zero_equality_is_within_a_squared_thousandth_and_moves_change_the_vector; ModuleObjectCallTests.Module_colours_follow_the_tabletop_class_named_channels_only_clamped_and_strict_about_names_and_hex; ModuleVectorColorTests |
 | `player model: colours, Black as GM, promoted, seated, host` | 55 / 55 | dropped | with the Player API (decided 2026-11-06); compat.color_of still names umpires by seat colour |  |  |
-| `positionToWorld and positionToLocal: the module transform, local x along +X at rotation zero, in mesh units times scale for a model and the size rule for a flat` | 55 / 55 | compat | compat.position_to_world / position_to_local; a model def carries local_unit from the converter | ModuleLocalFrameTests |  |
+| `positionToWorld and positionToLocal: the module transform, local x along +X at rotation zero, in mesh units times scale for a model and the size rule for a flat` | 55 / 55 | compat | compat.position_to_world / position_to_local; a model def carries local_unit from the converter | ModuleLocalFrameTests | ModuleObjectCallTests.A_local_point_goes_to_the_world_with_its_height_scaled_and_turned_over_with_the_piece; ModuleLocalFrameTests |
 | `save quirk: a number written as a string, or NaN` | 55 / 55 | native | ModuleObj.D falls back to the default and the report says so | ConverterTests |  |
 | `save quirk: duplicate GUIDs inside bags` | 55 / 55 | native | a guid names the first piece found, as getObjectFromGUID answers in modules |  |  |
 | `save quirk: negative scale mirrors` | 55 / 55 | partial | the size is taken unsigned, so a mirrored piece comes over unmirrored and the report names it; mirroring its picture or model at conversion is a decision for the user | ConverterTests |  |
 | `save quirk: rotX/rotZ near 180 means face down; other tilts stand or lean` | 55 / 55 | partial | ModuleObj.Flipped reads face down; a piece standing on edge or leaning needs a tilt the table does not keep, a decision for the user |  |  |
 | `script safety cuts the self-copying block and keeps the rest` | 55 / 55 | native | ScriptSafety; over the roster only the German Team Planning Table is cut, 1,463 copies of the Object base code worm, and no other rule fires | ScriptSafetyTests; import-sweep |  |
-| `setState keeps the GUID` | 55 / 55 | native | a converted piece keeps its states' GUIDs and wears the one of the state it shows, as each state is its own object in the tabletop | BookNotesScriptTests |  |
+| `setState keeps the GUID` | 55 / 55 | native | a converted piece keeps its states' GUIDs and wears the one of the state it shows, as each state is its own object in the tabletop | BookNotesScriptTests | BookNotesScriptTests.A_piece_takes_the_guid_of_the_state_it_turns_to_as_each_state_is_its_own_object_in_the_tabletop |
 | `smooth moves end at once` | 55 / 55 | compat | compat.set_position |  |  |
-| `spawning and loading_custom flags` | 55 / 55 | compat | ObjectProps (get_prop) |  |  |
-| `widget indices are 0-based in editButton/editInput/removeButton` | 55 / 55 | compat | compat.edit_button |  |  |
+| `spawning and loading_custom flags` | 55 / 55 | compat | ObjectProps (get_prop) |  | ModuleObjectCallTests.A_spawned_piece_is_spawning_until_the_next_frame_when_its_callback_runs |
+| `widget indices are 0-based in editButton/editInput/removeButton` | 55 / 55 | compat | compat.edit_button |  | ScriptingTests.Removing_module_buttons_keeps_their_numbers_until_the_next_frame_so_a_loop_removes_them_all |
