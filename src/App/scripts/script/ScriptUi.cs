@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using Godot;
+using KTable.Client.Panels;
+using KTable.Core.Panels;
 using KTable.Core.Protocol;
 
 namespace KTable.App;
@@ -20,25 +22,69 @@ public partial class ScriptUi : Control
         Rebuild();
     }
 
-    public void Rebuild()
+    readonly Dictionary<string, string> _local = new();
+    PanelView? _view;
+
+    readonly HashSet<string> _hiding = new();
+    readonly HashSet<string> _said = new();
+
+    public override void _Input(InputEvent e)
     {
-        foreach (var c in GetChildren()) c.QueueFree();
-        if (!IsInstanceValid(this) || _s == null) return;
-        var size = GetViewportRect().Size;
-        var b = new UiBuilder(Send, (id, ready) => UiBuilder.AssetTexture(_s, id, ready));
-        foreach (var n in UiStyles.Styled(_s.View.Ui))
+        if (e is InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.Left } mb) PanelFocus.Pressed(mb.GlobalPosition);
+        else if (e is InputEventKey key && PanelFocus.Key(key)) GetViewport().SetInputAsHandled();
+    }
+
+    public override void _ExitTree()
+    {
+        PanelFocus.Forget(_local);
+        PanelCursors.Reset();
+    }
+
+    public void Applied(Command c)
+    {
+        foreach (var one in PanelChanges.Flat(c))
         {
-            var c = b.Build(n, size);
-            if (c == null) continue;
-            UiBuilder.Place(c, n, size, null);
-            AddChild(c);
+            if (one is SetUi { Piece: null })
+            {
+                _local.Clear();
+                _said.Clear();
+            }
+            else if (one is SetUiAttributes { Piece: null } sua) PanelChanges.Forget(_local, _s.View.UiLayout, sua.Id);
+        }
+        var moves = PanelMoves.Of(c, _s.View.UiLayout, null);
+        foreach (var m in moves) if (!m.Showing) _hiding.Add(PanelScene.Key(m.Path));
+        Rebuild();
+        foreach (var m in moves)
+        {
+            _view?.Announce(m);
+            if (_view?.Scene?.At(m.Path) is not { } box || !_view.Nodes.TryGetValue(box, out var node)) continue;
+            var key = PanelScene.Key(m.Path);
+            PanelAnimate.Play(node, m, m.Showing ? null : () => { if (_hiding.Remove(key)) Rebuild(); });
         }
     }
 
-    void Send(string id, string ev, string value)
+    public void Rebuild()
+    {
+        foreach (var c in GetChildren()) if (c is not AcceptDialog and not FileDialog) c.QueueFree();
+        if (!IsInstanceValid(this) || _s == null) return;
+        var layout = _s.View.UiLayout ?? (_s.View.Ui.Count > 0 ? PanelState.Legacy(_s.View.Ui) : null);
+        if (layout == null || layout.Elements.Count == 0) return;
+        var screen = GetViewportRect().Size;
+        float scale = Mathf.Max(0.01f, screen.Y / PanelScene.ScreenHeight);
+        var canvas = new V2(screen.X / scale, PanelScene.ScreenHeight);
+        var (color, host, admin) = PanelSeats.Of(_s.Me, _s.Peers);
+        layout = PanelClasses.Apply(layout, _local);
+        var scene = PanelScene.Build(layout, canvas, new PanelContext(layout.Colors, color, host, admin), PanelPictures.Meter(_s), _local, _hiding);
+        _view = new PanelView(PanelHost.Hooks(_s, Send, (name, ready) => PanelPictures.Texture(_s, name, ready), _local, () => Callable.From(Rebuild).CallDeferred(), _said));
+        var root = _view.Show(scene, scene.Root);
+        root.Scale = new Vector2(scale, scale);
+        AddChild(root);
+    }
+
+    void Send(List<int> path, string ev, string value)
     {
         if (!_s.IsUmpire) return;
-        _s.Do(new UiEvent { Id = id, Event = ev, Value = value });
+        _s.Do(new UiEvent { Path = path, Event = ev, Value = value });
     }
 
     public void ShowDialog(ShowDialog d)

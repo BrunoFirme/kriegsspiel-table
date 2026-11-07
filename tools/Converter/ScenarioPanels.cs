@@ -1,58 +1,61 @@
 using System.Text.RegularExpressions;
 using KTable.Core.Model;
-using KTable.Server.Scripting;
-using MoonSharp.Interpreter;
+using KTable.Core.Panels;
 
 namespace KTable.Converter;
 
 public sealed partial class ScenarioBuilder
 {
-    Dictionary<string, string> _uiPictures = new();
+    static readonly Regex PanelLink = new(@"https?://[^""'<>\s]+");
+    readonly Dictionary<string, string> _uiLinks = new();
 
     void ReadPanelPictures(ModuleSave master, Scenario scenario, PackOut extras)
     {
         var where = $"{_cfg.Scenario.Id} panel picture";
-        _uiPictures = PicturesOf(master.UiAssets, extras, where, new());
-        scenario.UiPictures = new(_uiPictures);
-        scenario.Ui = Panels(master.XmlUi, _uiPictures, extras, $"{_cfg.Scenario.Id} Global panels");
+        scenario.UiAssets = AssetsOf(master.UiAssetStates, extras, where);
+        scenario.Ui = Panels(master.XmlUi, extras, $"{_cfg.Scenario.Id} Global panels", out var layout);
+        scenario.UiLayout = layout;
+        if (layout != null && !PanelState.Loads(scenario.UiAssets)) (scenario.Ui, scenario.UiLayout) = (new(), Stuck());
     }
 
-    Dictionary<string, string> PicturesOf(List<(string Name, string Url)> assets, PackOut extras, string where, Dictionary<string, string> over)
+    List<UiAsset>? AssetsOf(List<(string Name, string Url, int Type)> assets, PackOut extras, string where)
     {
-        var map = new Dictionary<string, string>(over);
-        foreach (var (name, url) in assets)
-            if (_defs.UiAsset(extras, url, where) is { } picture) map[name] = picture;
-        return map;
-    }
-
-    List<UiNode> ObjectPanels(ModuleObj o, PackOut extras, string where) =>
-        o.XmlUi.Trim().Length == 0 ? new() : Panels(o.XmlUi, PicturesOf(o.UiAssets, extras, where + " panel picture", _uiPictures), extras, where + " panels");
-
-    List<UiNode> Panels(string xml, Dictionary<string, string> pictures, PackOut extras, string where)
-    {
-        if (xml.Trim().Length == 0) return new();
-        var text = _defs.RewriteUrls(Regex.Replace(xml, @"<\?xml[^>]*\?>", ""), extras, where);
-        List<UiNode> tree;
-        try { tree = ScriptHost.ParseXml(text); }
-        catch (ScriptRuntimeException e)
+        if (assets.Count == 0) return null;
+        return assets.Select(a => new UiAsset
         {
-            _rep.Note($"{where}: the module's panels do not read as XML ({e.Message}), so they are left out.");
+            Name = a.Name, Type = a.Type,
+            Url = a.Type == 0 && a.Name.Trim().Length > 0 && a.Url.Trim().Length > 0 ? _defs.UiAsset(extras, a.Url.Trim(), where) ?? a.Url : a.Url,
+        }).ToList();
+    }
+
+    List<UiNode> ObjectPanels(ModuleObj o, PackOut extras, string where, out UiLayout? layout, out List<UiAsset>? assets)
+    {
+        assets = AssetsOf(o.UiAssetStates, extras, where + " panel picture");
+        layout = null;
+        var ui = o.XmlUi.Trim().Length == 0 ? new() : Panels(o.XmlUi, extras, where + " panels", out layout);
+        if (layout == null || PanelState.Loads(assets)) return ui;
+        layout = Stuck();
+        return new();
+    }
+
+    List<UiNode> Panels(string xml, PackOut extras, string where, out UiLayout? layout)
+    {
+        layout = null;
+        if (PanelData.IsNothing(xml)) return new();
+        foreach (Match m in PanelLink.Matches(xml))
+            if (!_uiLinks.ContainsKey(m.Value) && _defs.UiAsset(extras, m.Value, where) is { } picture) _uiLinks[m.Value] = picture;
+        var (built, _) = PanelBuild.Of(xml);
+        layout = built;
+        if (built.Broken != null)
+        {
+            _rep.Note($"{where}: the module's panels do not build in the tabletop either ({built.Broken}), so they come over as the tabletop shows them: not at all.");
             return new();
         }
-        foreach (var n in tree) NamePictures(n, pictures);
-        return tree;
+        return PanelData.Parse(xml) ?? new();
     }
 
-    static void NamePictures(UiNode n, Dictionary<string, string> pictures)
-    {
-        foreach (var (k, v) in n.Attributes.ToList())
-            if (IsPictureAttribute(k) && pictures.TryGetValue(v.Trim(), out var picture)) n.Attributes[k] = picture;
-        foreach (var c in n.Children) NamePictures(c, pictures);
-    }
+    static UiLayout Stuck() => new() { Broken = PanelState.NeverLoads };
 
-    static bool IsPictureAttribute(string name) =>
-        name.Contains("image", StringComparison.OrdinalIgnoreCase) || name.Contains("icon", StringComparison.OrdinalIgnoreCase) || name.Equals("sprite", StringComparison.OrdinalIgnoreCase);
-
-    static IEnumerable<string> PanelPictures(IEnumerable<UiNode> tree) =>
-        tree.SelectMany(n => n.Attributes.Where(a => IsPictureAttribute(a.Key)).Select(a => a.Value).Concat(PanelPictures(n.Children)));
+    static IEnumerable<string> PanelAssets(Scenario scenario, IEnumerable<PieceInstance> pieces) =>
+        (scenario.UiAssets ?? new()).Concat(pieces.SelectMany(p => p.UiAssets ?? new())).Select(a => a.Url).Concat(scenario.UiLinks?.Values ?? Enumerable.Empty<string>());
 }

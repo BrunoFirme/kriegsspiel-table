@@ -2265,38 +2265,41 @@ A module script's setDecals fetches its web links this way by itself.
 
 ## ui
 
-Screen panels, written in XML. A piece's own panels (`self.ui`) take the same calls. A click, a finished edit or a changed value calls the function the element names, as fn(who, value, id): in the global script, or as "id/fn" in that piece's.
+Screen panels, written in XML as a digital tabletop module writes them. A piece's own panels (`self.ui`) take the same calls. New panels land on the next frame, and every change to an element lands when the call that made it ends, so the same call still reads what was there. A click, a typed or changed value calls the function the element names, as fn(who, value, id): with no slash in the global script for screen panels or in the piece's own script for its panels, as "global/fn" in the global script, or as "guid/fn" in that piece's.
 
 | Name | What it does |
 |---|---|
-| [`ui.set`](#uiset) | Replaces the panels: XML (several roots allowed) or tables { tag =, attributes = {}, children = {}, value = }. |
-| [`ui.xml`](#uixml) | The panels as XML, to add to and set again. |
+| [`ui.set`](#uiset) | Replaces the panels: XML (several roots allowed) or a list of tables { tag =, attributes = {}, children = {}, value = }. They land on the next frame. |
+| [`ui.xml`](#uixml) | The panels as they were written, with the changes made since: each element on its own lines. |
 | [`ui.tree`](#uitree) | The panels as tables. |
-| [`ui.set_attribute`](#uiset_attribute) | Sets one attribute of an element; false when there is no such element. |
-| [`ui.set_attributes`](#uiset_attributes) | Sets several attributes at once. |
-| [`ui.get_attribute`](#uiget_attribute) | Reads an attribute, or nil. |
-| [`ui.show`](#uishow) | Shows an element (active = true). |
-| [`ui.hide`](#uihide) | Hides an element (active = false). |
-| [`ui.set_value`](#uiset_value) | Sets an element's value: the text, a toggle's isOn, a slider's or dropdown's value. |
-| [`ui.get_value`](#uiget_value) | Reads an element's value. |
-| [`ui.get_attributes`](#uiget_attributes) | Every attribute of an element, or nil. |
+| [`ui.set_attribute`](#uiset_attribute) | Changes one attribute of an element; it lands when the call ends. |
+| [`ui.set_attributes`](#uiset_attributes) | Changes several attributes at once. |
+| [`ui.get_attribute`](#uiget_attribute) | Reads an attribute of the element as it stands, with what the panels' Defaults give it, or nil. |
+| [`ui.show`](#uishow) | Shows an element. |
+| [`ui.hide`](#uihide) | Hides an element; one inside a hidden element stays as it is. |
+| [`ui.set_value`](#uiset_value) | Sets the value the panels hold between an element's tags; a Text element shows it as its words. |
+| [`ui.get_value`](#uiget_value) | Reads the value held between an element's tags, or nil. |
+| [`ui.get_attributes`](#uiget_attributes) | Every attribute of the element as it stands, or nil. |
 | [`ui.set_class`](#uiset_class) | Sets an element's classes, which take their looks from the Defaults the panels hold. |
-| [`ui.pictures`](#uipictures) | The pictures panels name: a list of { name =, url =, type = }. |
-| [`ui.set_pictures`](#uiset_pictures) | Replaces the pictures panels name. An `image` attribute holding a name shows that picture. |
-| [`ui.loading`](#uiloading) | false: panel pictures come with their packs. |
-| [`ui.assetType`](#uiassettype) | { Image = 0, AssetBundle = 1 }, as module scripts name picture types. |
+| [`ui.pictures`](#uipictures) | The pictures panels name: a list of { type =, name =, url = }. |
+| [`ui.set_pictures`](#uiset_pictures) | Replaces the pictures panels name, at once, and builds the panels again from what they hold. |
+| [`ui.loading`](#uiloading) | true from setting panels until they land, and while panels that did not read are in place. |
+| [`ui.assetType`](#uiassettype) | { Image = 0, AssetBundle = 1 }, also as image and assetBundle, as module scripts name picture types. |
 
 ### `ui.set`
 
 ```lua
-ui.set(xml_or_table)
+ui.set(xml_or_list, pictures)
 ```
 
-Replaces the panels: XML (several roots allowed) or tables { tag =, attributes = {}, children = {}, value = }.
+Replaces the panels: XML (several roots allowed) or a list of tables { tag =, attributes = {}, children = {}, value = }. They land on the next frame.
 
 | Parameter | Type | Description |
 |---|---|---|
-| `xml_or_table` | `string\|UiNode[]` | XML, or a list of element tables. |
+| `xml_or_list` | `string\|UiNode[]` | XML, or a list of element tables; a single table that is not a list is refused, as the tabletop refuses it. |
+| `pictures` | `table` | _Optional._ { name =, url = } entries, as `ui.set_pictures` takes, set at once. |
+
+**Returns** `boolean`: true when the panels were taken; false for nil or a table that is not a list.
 
 ```lua
 ui.set([[<Panel id="clock" rectAlignment="UpperCenter" offsetXY="0 -20" width="260" height="44" color="#1b1b1bd8">
@@ -2304,7 +2307,7 @@ ui.set([[<Panel id="clock" rectAlignment="UpperCenter" offsetXY="0 -20" width="2
 </Panel>]])
 ```
 
-A tree deeper than 24 levels, larger than 20,000 elements, or one that holds itself is refused with an error.
+Panels that do not read as XML leave the old panels in place, say why in the chat and keep `ui.loading` true until panels that read are set.
 
 **Module call** `UI.setXml` · **See also** [`ui.xml`](#uixml), [`ui.set_attribute`](#uiset_attribute), [`self.ui`](#selfui)
 
@@ -2314,7 +2317,7 @@ A tree deeper than 24 levels, larger than 20,000 elements, or one that holds its
 ui.xml()
 ```
 
-The panels as XML, to add to and set again.
+The panels as they were written, with the changes made since: each element on its own lines.
 
 **Returns** `string`.
 
@@ -2338,15 +2341,15 @@ The panels as tables.
 ui.set_attribute(id, name, value)
 ```
 
-Sets one attribute of an element; false when there is no such element.
+Changes one attribute of an element; it lands when the call ends.
 
 | Parameter | Type | Description |
 |---|---|---|
-| `id` | `string` | The element's id. |
-| `name` | `string` | The attribute, as in the XML (`text`, `color`, `active`, `percentage`…). |
-| `value` | `string\|number\|boolean` | The value; numbers and booleans are written as the XML would hold them. |
+| `id` | `string` | The element's id, in any letter case. |
+| `name` | `string` | The attribute, as in the XML (`text`, `color`, `active`, `percentage`…). `class` changes only what `ui.xml` gives back: use `ui.set_class`. |
+| `value` | `string\|number\|boolean` | The value; true and false are written True and False, as the tabletop writes them. |
 
-**Returns** `boolean`: true when the element exists.
+**Returns** `boolean`: true when the element is there now and both name and value are given.
 
 ```lua
 ui.set_attribute("time", "text", game.time:sub(12, 16))
@@ -2360,14 +2363,14 @@ ui.set_attribute("time", "text", game.time:sub(12, 16))
 ui.set_attributes(id, table)
 ```
 
-Sets several attributes at once.
+Changes several attributes at once.
 
 | Parameter | Type | Description |
 |---|---|---|
 | `id` | `string` | The element's id. |
 | `table` | `table` | Attribute → value. |
 
-**Returns** `boolean`: true when the element exists.
+**Returns** `boolean`: true when the element is there now.
 
 **Module call** `UI.setAttributes` · **See also** [`ui.set_attribute`](#uiset_attribute)
 
@@ -2377,7 +2380,7 @@ Sets several attributes at once.
 ui.get_attribute(id, name)
 ```
 
-Reads an attribute, or nil.
+Reads an attribute of the element as it stands, with what the panels' Defaults give it, or nil.
 
 | Parameter | Type | Description |
 |---|---|---|
@@ -2394,13 +2397,13 @@ Reads an attribute, or nil.
 ui.show(id)
 ```
 
-Shows an element (active = true).
+Shows an element.
 
 | Parameter | Type | Description |
 |---|---|---|
 | `id` | `string` | The element's id. |
 
-**Returns** `boolean`: true when the element exists.
+**Returns** `boolean`: true when the element is there now.
 
 **Module call** `UI.show` · **See also** [`ui.hide`](#uihide)
 
@@ -2410,13 +2413,13 @@ Shows an element (active = true).
 ui.hide(id)
 ```
 
-Hides an element (active = false).
+Hides an element; one inside a hidden element stays as it is.
 
 | Parameter | Type | Description |
 |---|---|---|
 | `id` | `string` | The element's id. |
 
-**Returns** `boolean`: true when the element exists.
+**Returns** `boolean`: true when the element is there now.
 
 **Module call** `UI.hide` · **See also** [`ui.show`](#uishow)
 
@@ -2426,14 +2429,14 @@ Hides an element (active = false).
 ui.set_value(id, value)
 ```
 
-Sets an element's value: the text, a toggle's isOn, a slider's or dropdown's value.
+Sets the value the panels hold between an element's tags; a Text element shows it as its words.
 
 | Parameter | Type | Description |
 |---|---|---|
 | `id` | `string` | The element's id. |
 | `value` | `string\|number\|boolean` | The new value. |
 
-**Returns** `boolean`: true when the element exists.
+**Returns** `boolean`: true when the element is there now and a value is given.
 
 **Module call** `UI.setValue` · **See also** [`ui.get_value`](#uiget_value)
 
@@ -2443,11 +2446,11 @@ Sets an element's value: the text, a toggle's isOn, a slider's or dropdown's val
 ui.get_value(id)
 ```
 
-Reads an element's value.
+Reads the value held between an element's tags, or nil.
 
 | Parameter | Type | Description |
 |---|---|---|
-| `id` | `string` | The element's id. |
+| `id` | `string` | The element's id, in its exact letter case. |
 
 **Returns** `string?`.
 
@@ -2459,7 +2462,7 @@ Reads an element's value.
 ui.get_attributes(id)
 ```
 
-Every attribute of an element, or nil.
+Every attribute of the element as it stands, or nil.
 
 | Parameter | Type | Description |
 |---|---|---|
@@ -2482,7 +2485,7 @@ Sets an element's classes, which take their looks from the Defaults the panels h
 | `id` | `string` | The element's id. |
 | `classes` | `string` | Class names, separated by spaces. |
 
-**Returns** `boolean`: true when the element exists.
+**Returns** `boolean`: true when the element is there now.
 
 **Module call** `UI.setClass`
 
@@ -2492,7 +2495,7 @@ Sets an element's classes, which take their looks from the Defaults the panels h
 ui.pictures()
 ```
 
-The pictures panels name: a list of { name =, url =, type = }.
+The pictures panels name: a list of { type =, name =, url = }.
 
 **Returns** `table`.
 
@@ -2504,11 +2507,11 @@ The pictures panels name: a list of { name =, url =, type = }.
 ui.set_pictures(list)
 ```
 
-Replaces the pictures panels name. An `image` attribute holding a name shows that picture.
+Replaces the pictures panels name, at once, and builds the panels again from what they hold.
 
 | Parameter | Type | Description |
 |---|---|---|
-| `list` | `table` | { name =, url = } entries; url is a picture of a pack. |
+| `list` | `table` | { name =, url =, type = } entries; url is a picture of a pack. |
 
 **Returns** `boolean`.
 
@@ -2520,7 +2523,7 @@ Replaces the pictures panels name. An `image` attribute holding a name shows tha
 ui.loading
 ```
 
-false: panel pictures come with their packs.
+true from setting panels until they land, and while panels that did not read are in place.
 
 **Type** `boolean`, read-only.
 
@@ -2532,7 +2535,7 @@ false: panel pictures come with their packs.
 ui.assetType
 ```
 
-{ Image = 0, AssetBundle = 1 }, as module scripts name picture types.
+{ Image = 0, AssetBundle = 1 }, also as image and assetBundle, as module scripts name picture types.
 
 **Type** `table`, read-only.
 

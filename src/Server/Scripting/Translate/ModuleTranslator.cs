@@ -328,7 +328,7 @@ public static class ModuleTranslator
                 case "UI" or "Global.UI":
                     return name switch
                     {
-                        "setXml" or "setXmlTable" => Direct($"ui.set({A(0)})", node),
+                        "setXml" or "setXmlTable" => Direct($"ui.set({All()})", node),
                         "getXml" => Direct("ui.xml()", node),
                         "getXmlTable" => Direct("ui.tree()", node),
                         "setAttribute" => Direct($"ui.set_attribute({All()})", node),

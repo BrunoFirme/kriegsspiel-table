@@ -96,6 +96,7 @@ public partial class Hud
         _scriptUi = new ScriptUi { Name = "ScriptUi" };
         Root.AddChild(_scriptUi);
         _scriptUi.Bind(S, N);
+        PanelHost.Log = Log;
     }
 
     void BuildOverlays()

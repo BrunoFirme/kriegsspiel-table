@@ -801,8 +801,8 @@
 == SetUi
   sent by:     Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
   in a batch:  Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
-  zone:        all inside=ok; Piece-x outside=ok
-  zone, none of mine: all inside=ok; Piece-x outside=ok
+  zone:        all inside=ok; Xml-x outside=ok; Piece-x outside=ok
+  zone, none of mine: all inside=ok; Xml-x outside=ok; Piece-x outside=ok
   observer:    it
   stranger:    nothing
   umpires:     it it it
@@ -811,8 +811,8 @@
 == SetUiAttributes
   sent by:     Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
   in a batch:  Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
-  zone:        all inside=ok; Id-x outside=ok; Piece-x outside=ok
-  zone, none of mine: all inside=ok; Id-x outside=ok; Piece-x outside=ok
+  zone:        all inside=ok; Id-x outside=ok; Kind-x outside=ok; Value-x outside=ok; Piece-x outside=ok
+  zone, none of mine: all inside=ok; Id-x outside=ok; Kind-x outside=ok; Value-x outside=ok; Piece-x outside=ok
   observer:    it
   stranger:    nothing
   umpires:     it it it

@@ -43,6 +43,7 @@ NAMES_THE_IMPORTER_NEEDS = {
     "tools/Converter/Config.cs": [CACHE_FOLDER],
     "src/Client/Caches.cs": ['Root, "tts"'],
     "tools/surface/ledger.json": ["api.tabletopsimulator.com/ui/introUI"],
+    "src/Core/Panels/PanelData.cs": ["api.tabletopsimulator.com/ui/introUI"],
 }
 
 

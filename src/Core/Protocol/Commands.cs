@@ -1068,6 +1068,9 @@ public sealed class SetLines : LayerCommand
 public sealed class SetUi : Command
 {
     public List<UiNode> Tree { get; set; } = new();
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? Xml { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public KTable.Core.Panels.UiLayout? Layout { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<KTable.Core.Panels.UiAsset>? Assets { get; set; }
     public string? Layer { get; set; }
     public string? Piece { get; set; }
     public override Sender SentBy() => Sender.Runtime;
@@ -1091,6 +1094,13 @@ public sealed class SetUiAttributes : Command
 {
     public string Id { get; set; } = "";
     public Dictionary<string, string> Attributes { get; set; } = new();
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? Kind { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? Value { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public UiNode? Data { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<int>? DataPath { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public KTable.Core.Panels.UiElement? Live { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<int>? LivePath { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public Dictionary<string, List<int>>? Ids { get; set; }
     public string? Layer { get; set; }
     public string? Piece { get; set; }
     public override Sender SentBy() => Sender.Runtime;
@@ -1105,6 +1115,7 @@ public sealed class UiEvent : Command
     public string Id { get; set; } = "";
     public string Event { get; set; } = "click";
     public string Value { get; set; } = "";
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<int>? Path { get; set; }
     public string? Layer { get; set; }
     public string? Piece { get; set; }
     public override Sender SentBy() => Sender.Umpire;

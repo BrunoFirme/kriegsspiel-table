@@ -408,6 +408,8 @@ public sealed class PieceInstance
     public List<DecalDef> Decals { get; set; } = new();
     public int? DecalsOnState { get; set; }
     public List<UiNode> Ui { get; set; } = new();
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public KTable.Core.Panels.UiLayout? UiLayout { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<KTable.Core.Panels.UiAsset>? UiAssets { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<PieceInstance>? Stowed { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public bool? Holds { get; set; }
 
@@ -424,7 +426,8 @@ public sealed class PieceInstance
         Script = Script, ScriptState = ScriptState, Guid = Guid, Tags = Tags == null ? null : new(Tags), Memo = Memo, GmNotes = GmNotes,
         Widgets = Widgets.Select(w => w.Clone()).ToList(), DrawnOnState = DrawnOnState, MenuItems = MenuItems.Select(m => m.Clone()).ToList(),
         Lines = Lines.Select(l => l.Clone()).ToList(), Decals = Decals.Select(d => d.Clone()).ToList(), DecalsOnState = DecalsOnState,
-        Ui = Ui.Select(n => n.Clone()).ToList(), Stowed = Stowed?.Select(s => s.Clone()).ToList(), TakeOrder = TakeOrder,
+        Ui = Ui.Select(n => n.Clone()).ToList(), UiLayout = UiLayout?.Clone(), UiAssets = UiAssets?.Select(a => a.Clone()).ToList(),
+        Stowed = Stowed?.Select(s => s.Clone()).ToList(), TakeOrder = TakeOrder,
     };
 
     [JsonIgnore] public int ShownFace => Face >= 0 ? Face : State;
@@ -461,16 +464,31 @@ public static class TakeOrders
 
 public sealed class UiNode
 {
+    Dictionary<string, string> _attributes = UiAttributes.Fresh();
     public string Tag { get; set; } = "Panel";
-    public Dictionary<string, string> Attributes { get; set; } = new();
+    public Dictionary<string, string> Attributes { get => _attributes; set => _attributes = UiAttributes.Folded(value); }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? Value { get; set; }
     public List<UiNode> Children { get; set; } = new();
     public string? Id => Attributes.GetValueOrDefault("id");
-    public UiNode Clone() => new() { Tag = Tag, Attributes = new(Attributes), Children = Children.Select(c => c.Clone()).ToList() };
+    public UiNode Clone() => new() { Tag = Tag, Attributes = new(Attributes, StringComparer.OrdinalIgnoreCase), Value = Value, Children = Children.Select(c => c.Clone()).ToList() };
     public UiNode? Find(string id)
     {
         if (Id == id) return this;
         foreach (var c in Children) if (c.Find(id) is { } f) return f;
         return null;
+    }
+}
+
+public static class UiAttributes
+{
+    public static Dictionary<string, string> Fresh() => new(StringComparer.OrdinalIgnoreCase);
+
+    public static Dictionary<string, string> Folded(Dictionary<string, string>? from)
+    {
+        var d = Fresh();
+        if (from == null) return d;
+        foreach (var (k, v) in from) d[k] = v;
+        return d;
     }
 }
 
@@ -638,6 +656,9 @@ public sealed class Scenario : IJsonOnDeserialized, IJsonOnSerializing
     public string ScriptState { get; set; } = "";
     public List<UiNode> Ui { get; set; } = new();
     public Dictionary<string, string> UiPictures { get; set; } = new();
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public KTable.Core.Panels.UiLayout? UiLayout { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<KTable.Core.Panels.UiAsset>? UiAssets { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public Dictionary<string, string>? UiLinks { get; set; }
 
     void IJsonOnDeserialized.OnDeserialized() => ContentVersions.Check("scenario", Name is { Length: > 0 } ? Name : Id ?? "", Format, CurrentFormat, ApiVersion);
     void IJsonOnSerializing.OnSerializing() { Format = CurrentFormat; ApiVersion = ScriptApi.Version; }

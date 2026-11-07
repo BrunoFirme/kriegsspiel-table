@@ -47,6 +47,8 @@ sealed partial class Sfx : Node
             AddChild(p);
             _voices.Add((p, 0));
         }
+        _flat = new AudioStreamPlayer { Bus = BusName, MaxPolyphony = FlatVoices };
+        AddChild(_flat);
         Apply();
     }
 
@@ -90,6 +92,17 @@ sealed partial class Sfx : Node
         v.Play();
         _voices[pick] = (v, gain);
         _started++;
+    }
+
+    AudioStreamPlayer? _flat;
+    const int FlatVoices = 4;
+
+    public void PlayFlat(Sound s, float gain)
+    {
+        if (_quiet || _flat == null || _bank == null || !_bank.TryGetValue(s, out var takes) || takes.Length == 0 || gain <= 0) return;
+        _flat.Stream = takes[0];
+        _flat.VolumeDb = Mathf.LinearToDb(Mathf.Clamp(gain, 0.001f, 1));
+        _flat.Play();
     }
 
     public void PlayAfter(double seconds, Sound s, Vector3 at, float gain, float pitch)

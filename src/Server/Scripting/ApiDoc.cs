@@ -772,82 +772,88 @@ public static partial class ApiDoc
     See("self.set_decals", "game.dialog");
     }
 
-    static ApiSection Ui() => Section("ui", "Screen panels, written in XML. A piece's own panels (`self.ui`) take the same calls. A click, a finished edit or a changed value calls the function the element names, as fn(who, value, id): in the global script, or as \"id/fn\" in that piece's.", () =>
+    static ApiSection Ui() => Section("ui", "Screen panels, written in XML as a digital tabletop module writes them. A piece's own panels (`self.ui`) take the same calls. "
+        + "New panels land on the next frame, and every change to an element lands when the call that made it ends, so the same call still reads what was there. "
+        + "A click, a typed or changed value calls the function the element names, as fn(who, value, id): with no slash in the global script for screen panels or in the piece's own script for "
+        + "its panels, as \"global/fn\" in the global script, or as \"guid/fn\" in that piece's.", () =>
     {
-        M("ui", "set(xml_or_table)", "Replaces the panels: XML (several roots allowed) or tables { tag =, attributes = {}, children = {}, value = }.", "UI.setXml");
-        P("xml_or_table", "string|UiNode[]", "XML, or a list of element tables.");
+        M("ui", "set(xml_or_list, pictures)", "Replaces the panels: XML (several roots allowed) or a list of tables { tag =, attributes = {}, children = {}, value = }. They land on the next frame.",
+            "UI.setXml", "boolean");
+        P("xml_or_list", "string|UiNode[]", "XML, or a list of element tables; a single table that is not a list is refused, as the tabletop refuses it.");
+        O("pictures", "table", "{ name =, url = } entries, as `ui.set_pictures` takes, set at once.");
+        R("true when the panels were taken; false for nil or a table that is not a list.");
         X("""
             ui.set([[<Panel id="clock" rectAlignment="UpperCenter" offsetXY="0 -20" width="260" height="44" color="#1b1b1bd8">
               <Text id="time" fontSize="20" color="#ffffff">06:00</Text>
             </Panel>]])
             """);
-        Note("A tree deeper than 24 levels, larger than 20,000 elements, or one that holds itself is refused with an error.");
+        Note("Panels that do not read as XML leave the old panels in place, say why in the chat and keep `ui.loading` true until panels that read are set.");
         See("ui.xml", "ui.set_attribute", "self.ui");
 
-        M("ui", "xml()", "The panels as XML, to add to and set again.", "UI.getXml", "string");
+        M("ui", "xml()", "The panels as they were written, with the changes made since: each element on its own lines.", "UI.getXml", "string");
         See("ui.set");
 
         M("ui", "tree()", "The panels as tables.", "UI.getXmlTable", "UiNode[]");
         R("A list of `{ tag =, attributes = {}, children = {}, value = }` tables.");
         See("ui.set");
 
-        M("ui", "set_attribute(id, name, value)", "Sets one attribute of an element; false when there is no such element.", "UI.setAttribute", "boolean");
-        P("id", "string", "The element's id.");
-        P("name", "string", "The attribute, as in the XML (`text`, `color`, `active`, `percentage`…).");
-        P("value", "string|number|boolean", "The value; numbers and booleans are written as the XML would hold them.");
-        R("true when the element exists.");
+        M("ui", "set_attribute(id, name, value)", "Changes one attribute of an element; it lands when the call ends.", "UI.setAttribute", "boolean");
+        P("id", "string", "The element's id, in any letter case.");
+        P("name", "string", "The attribute, as in the XML (`text`, `color`, `active`, `percentage`…). `class` changes only what `ui.xml` gives back: use `ui.set_class`.");
+        P("value", "string|number|boolean", "The value; true and false are written True and False, as the tabletop writes them.");
+        R("true when the element is there now and both name and value are given.");
         X("""ui.set_attribute("time", "text", game.time:sub(12, 16))""");
         See("ui.set_attributes", "ui.get_attribute");
 
-        M("ui", "set_attributes(id, table)", "Sets several attributes at once.", "UI.setAttributes", "boolean");
+        M("ui", "set_attributes(id, table)", "Changes several attributes at once.", "UI.setAttributes", "boolean");
         P("id", "string", "The element's id.");
         P("table", "table", "Attribute → value.");
-        R("true when the element exists.");
+        R("true when the element is there now.");
         See("ui.set_attribute");
 
-        M("ui", "get_attribute(id, name)", "Reads an attribute, or nil.", "UI.getAttribute", "string?");
+        M("ui", "get_attribute(id, name)", "Reads an attribute of the element as it stands, with what the panels' Defaults give it, or nil.", "UI.getAttribute", "string?");
         P("id", "string", "The element's id.");
         P("name", "string", "The attribute.");
         See("ui.set_attribute");
 
-        M("ui", "show(id)", "Shows an element (active = true).", "UI.show", "boolean");
+        M("ui", "show(id)", "Shows an element.", "UI.show", "boolean");
         P("id", "string", "The element's id.");
-        R("true when the element exists.");
+        R("true when the element is there now.");
         See("ui.hide");
 
-        M("ui", "hide(id)", "Hides an element (active = false).", "UI.hide", "boolean");
+        M("ui", "hide(id)", "Hides an element; one inside a hidden element stays as it is.", "UI.hide", "boolean");
         P("id", "string", "The element's id.");
-        R("true when the element exists.");
+        R("true when the element is there now.");
         See("ui.show");
 
-        M("ui", "set_value(id, value)", "Sets an element's value: the text, a toggle's isOn, a slider's or dropdown's value.", "UI.setValue", "boolean");
+        M("ui", "set_value(id, value)", "Sets the value the panels hold between an element's tags; a Text element shows it as its words.", "UI.setValue", "boolean");
         P("id", "string", "The element's id.");
         P("value", "string|number|boolean", "The new value.");
-        R("true when the element exists.");
+        R("true when the element is there now and a value is given.");
         See("ui.get_value");
 
-        M("ui", "get_value(id)", "Reads an element's value.", "UI.getValue", "string?");
-        P("id", "string", "The element's id.");
+        M("ui", "get_value(id)", "Reads the value held between an element's tags, or nil.", "UI.getValue", "string?");
+        P("id", "string", "The element's id, in its exact letter case.");
         See("ui.set_value");
 
-        M("ui", "get_attributes(id)", "Every attribute of an element, or nil.", "UI.getAttributes", "table?");
+        M("ui", "get_attributes(id)", "Every attribute of the element as it stands, or nil.", "UI.getAttributes", "table?");
         P("id", "string", "The element's id.");
         See("ui.get_attribute");
 
         M("ui", "set_class(id, classes)", "Sets an element's classes, which take their looks from the Defaults the panels hold.", "UI.setClass", "boolean");
         P("id", "string", "The element's id.");
         P("classes", "string", "Class names, separated by spaces.");
-        R("true when the element exists.");
+        R("true when the element is there now.");
 
-        M("ui", "pictures()", "The pictures panels name: a list of { name =, url =, type = }.", "UI.getCustomAssets", "table");
+        M("ui", "pictures()", "The pictures panels name: a list of { type =, name =, url = }.", "UI.getCustomAssets", "table");
         See("ui.set_pictures");
 
-        M("ui", "set_pictures(list)", "Replaces the pictures panels name. An `image` attribute holding a name shows that picture.", "UI.setCustomAssets", "boolean");
-        P("list", "table", "{ name =, url = } entries; url is a picture of a pack.");
+        M("ui", "set_pictures(list)", "Replaces the pictures panels name, at once, and builds the panels again from what they hold.", "UI.setCustomAssets", "boolean");
+        P("list", "table", "{ name =, url =, type = } entries; url is a picture of a pack.");
         See("ui.pictures");
 
-        F("ui", "loading", "boolean", "false: panel pictures come with their packs.", "UI.loading");
-        F("ui", "assetType", "table", "{ Image = 0, AssetBundle = 1 }, as module scripts name picture types.", "UI.assetType");
+        F("ui", "loading", "boolean", "true from setting panels until they land, and while panels that did not read are in place.", "UI.loading");
+        F("ui", "assetType", "table", "{ Image = 0, AssetBundle = 1 }, also as image and assetBundle, as module scripts name picture types.", "UI.assetType");
     });
 
     static ApiSection Wait() => Section("wait", "Timers are not saved: a script that must go on after a reload starts its timers again in on_load. A timer belongs to the script that made it and stops with it.", () =>

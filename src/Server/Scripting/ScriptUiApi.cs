@@ -1,4 +1,5 @@
 using KTable.Core.Model;
+using KTable.Core.Panels;
 using KTable.Core.Protocol;
 using MoonSharp.Interpreter;
 using static KTable.Server.Scripting.LuaArgs;
@@ -50,119 +51,63 @@ public sealed partial class ScriptHost
     DynValue UiTable(string? layer, string? piece)
     {
         var ui = T();
-        List<UiNode> Root() => _s.State.UiRoot(layer, piece) ?? throw new ScriptRuntimeException($"ui: piece {piece} is gone");
-        UiNode? Node(string id) => _s.State.UiNode(layer, piece, id);
-        ui.Table["set"] = Fn(a =>
+        var key = piece ?? "";
+        List<UiNode> Data() => _s.State.UiRoot(layer, piece) ?? throw new ScriptRuntimeException($"ui: piece {piece} is gone");
+        UiLayout? Live() => piece == null ? _s.State.UiLayout : _s.State.Find(layer ?? Layers.Umpire, piece)?.UiLayout;
+        UiElement? Element(DynValue id) => Live()?.ById(UiTrees.ClrText(id) ?? throw new ScriptRuntimeException("Value cannot be null.\nParameter name: key"));
+        DynValue Queue(DynValue id, string kind, Dictionary<string, string> attrs, string? value)
         {
-            Root();
-            Emit(new SetUi { Layer = layer, Piece = piece, Tree = UiTrees.TreeOf(Arg(a, 0)) });
-            return DynValue.Nil;
-        });
-        ui.Table["xml"] = Fn(_ => S(ToXml(Root())));
-        ui.Table["tree"] = Fn(_ =>
+            if (Element(id) == null) return DynValue.False;
+            Panels.Queue(layer, piece, new UiOp(kind, UiTrees.ClrText(id)!, attrs, value));
+            return DynValue.True;
+        }
+        ui.Table["set"] = Fn(a => B(Panels.Set(layer, piece, Arg(a, 0), Arg(a, 1), Data)));
+        ui.Table["xml"] = Fn(_ => S(PanelData.Write(Data())));
+        ui.Table["tree"] = Fn(_ => UiTrees.Tables(_vm, Data()));
+        ui.Table["set_attribute"] = Fn(a =>
         {
-            var t = T();
-            foreach (var n in Root()) t.Table.Append(UiTrees.NodeTable(_vm, n));
-            return t;
+            var name = UiTrees.ClrText(Arg(a, 1));
+            var value = UiTrees.ClrText(Arg(a, 2));
+            if (Element(Arg(a, 0)) == null || name == null || value == null) return DynValue.False;
+            return Queue(Arg(a, 0), PanelOps.SetAttribute, new Dictionary<string, string> { [name] = value }, null);
         });
-        ui.Table["set_attribute"] = Fn(a => B(SetAttrs(layer, piece, Arg(a, 0).CastToString() ?? "", new() { [Arg(a, 1).CastToString() ?? ""] = UiTrees.AttrText(Arg(a, 2)) })));
         ui.Table["set_attributes"] = Fn(a =>
         {
+            if (Element(Arg(a, 0)) == null) return DynValue.False;
             var attrs = new Dictionary<string, string>();
-            if (Arg(a, 1).Type == DataType.Table) foreach (var pair in Arg(a, 1).Table.Pairs) if (pair.Key.Type == DataType.String) attrs[pair.Key.String] = UiTrees.AttrText(pair.Value);
-            return B(SetAttrs(layer, piece, Arg(a, 0).CastToString() ?? "", attrs));
+            if (Arg(a, 1).Type == DataType.Table)
+                foreach (var pair in Arg(a, 1).Table.Pairs) attrs.Add(UiTrees.ClrText(pair.Key)!, UiTrees.ClrText(pair.Value)!);
+            return Queue(Arg(a, 0), PanelOps.SetAttributes, attrs, null);
         });
-        ui.Table["get_attribute"] = Fn(a => Node(Arg(a, 0).CastToString() ?? "")?.Attributes.GetValueOrDefault(Arg(a, 1).CastToString() ?? "") is { } v ? S(v) : DynValue.Nil);
-        ui.Table["show"] = Fn(a => B(SetAttrs(layer, piece, Arg(a, 0).CastToString() ?? "", new() { ["active"] = "true" })));
-        ui.Table["hide"] = Fn(a => B(SetAttrs(layer, piece, Arg(a, 0).CastToString() ?? "", new() { ["active"] = "false" })));
-        ui.Table["set_value"] = Fn(a => { var id = Arg(a, 0).CastToString() ?? ""; return B(SetAttrs(layer, piece, id, new() { [UiTrees.ValueKey(Node(id))] = UiTrees.AttrText(Arg(a, 1)) })); });
-        ui.Table["get_value"] = Fn(a => { var n = Node(Arg(a, 0).CastToString() ?? ""); return n != null && n.Attributes.TryGetValue(UiTrees.ValueKey(n), out var v) ? S(v) : DynValue.Nil; });
-        ui.Table["get_attributes"] = Fn(a =>
-        {
-            if (Node(Arg(a, 0).CastToString() ?? "") is not { } n) return DynValue.Nil;
-            var t = T();
-            foreach (var (k, v) in n.Attributes) t.Table[k] = v;
-            return t;
-        });
-        ui.Table["set_class"] = Fn(a => B(SetAttrs(layer, piece, Arg(a, 0).CastToString() ?? "", new() { ["class"] = UiTrees.AttrText(Arg(a, 1)) })));
-        ui.Table["pictures"] = Fn(_ => UiPictures());
+        ui.Table["get_attribute"] = Fn(a => Element(Arg(a, 0))?.Get(UiTrees.ClrText(Arg(a, 1)) ?? throw new ScriptRuntimeException("Value cannot be null.")) is { } v ? S(v) : DynValue.Nil);
+        ui.Table["get_attributes"] = Fn(a => Element(Arg(a, 0)) is { } e ? UiTrees.Attributes(_vm, e.Attributes) : DynValue.Nil);
+        ui.Table["show"] = Fn(a => Queue(Arg(a, 0), PanelOps.Show, new(), null));
+        ui.Table["hide"] = Fn(a => Queue(Arg(a, 0), PanelOps.Hide, new(), null));
+        ui.Table["set_class"] = Fn(a => Queue(Arg(a, 0), PanelOps.SetClass, new(), UiTrees.ClrText(Arg(a, 1)) ?? ""));
+        ui.Table["set_value"] = Fn(a => UiTrees.ClrText(Arg(a, 1)) is { } v ? Queue(Arg(a, 0), PanelOps.SetValue, new(), v) : DynValue.False);
+        ui.Table["get_value"] = Fn(a => PanelData.ById(Data(), UiTrees.ClrText(Arg(a, 0)) ?? "")?.Value is { } v ? S(v) : DynValue.Nil);
+        ui.Table["pictures"] = Fn(_ => Panels.Pictures(Panels.AssetsOf(key, layer, piece)));
         ui.Table["set_pictures"] = Fn(a =>
         {
-            var pictures = new Dictionary<string, string>();
-            if (Arg(a, 0).Type == DataType.Table)
-                foreach (var e in Arg(a, 0).Table.Values)
-                    if (e.Type == DataType.Table && e.Table.Get("name").CastToString() is { Length: > 0 } name && e.Table.Get("url").CastToString() is { Length: > 0 } url)
-                        pictures[name] = url;
-            Emit(new SetUiPictures { Pictures = pictures });
+            Panels.OwnerOf(key).Assets = PanelQueue.AssetList(Arg(a, 0));
+            Panels.StartLoad(layer, piece, PanelData.Write(Data()));
             return DynValue.True;
         });
-        ui.Table["loading"] = DynValue.False;
         var types = T();
         types.Table["Image"] = UiPictureType;
         types.Table["AssetBundle"] = UiPictureType + 1;
+        types.Table["image"] = UiPictureType;
+        types.Table["assetBundle"] = UiPictureType + 1;
         ui.Table["assetType"] = types;
+        var meta = T();
+        meta.Table["__index"] = DynValue.NewCallback((_, a) => Arg(a, 1).CastToString() == "loading" ? B(Panels.Loading(key, Live())) : DynValue.Nil);
+        ui.Table.MetaTable = meta.Table;
         return ui;
     }
 
-    DynValue UiPictures()
-    {
-        var t = T();
-        foreach (var (name, picture) in _s.State.UiPictures)
-        {
-            var e = T();
-            e.Table["name"] = name;
-            e.Table["url"] = picture;
-            e.Table["type"] = UiPictureType;
-            t.Table.Append(e);
-        }
-        return t;
-    }
+    const int UiPictureType = PanelQueue.PictureType;
 
-    bool SetAttrs(string? layer, string? piece, string id, Dictionary<string, string> attrs)
-    {
-        if (_s.State.UiNode(layer, piece, id) == null) return false;
-        Emit(new SetUiAttributes { Layer = layer, Piece = piece, Id = id, Attributes = attrs });
-        return true;
-    }
+    public static List<UiNode> ParseXml(string xml) => PanelData.Parse(xml) ?? throw new ScriptRuntimeException("ui.set: the XML does not parse");
 
-    void UiEventReact(UiEvent e, DynValue who)
-    {
-        var node = _s.State.UiNode(e.Layer, e.Piece, e.Id);
-        if (node == null) return;
-        var attr = e.Event switch { "click" => "onClick", "end" => "onEndEdit", _ => "onValueChanged" };
-        if (!node.Attributes.TryGetValue(attr, out var handler) || handler.Length == 0)
-        {
-            if (e.Event == "end" && node.Attributes.TryGetValue("onValueChanged", out handler) && handler.Length > 0) { }
-            else return;
-        }
-        var (ps, fn) = e.Piece != null && !handler.Contains('/') ? HandlerOwner(e.Piece, handler) : ResolveHandler(handler);
-        if (ps == null) return;
-        Call(ps, fn, who, DynValue.NewString(e.Value), DynValue.NewString(e.Id));
-    }
-
-    (PieceScript? ps, string fn) ResolveHandler(string handler)
-    {
-        var slash = handler.IndexOf('/');
-        if (slash < 0) return (_global, handler);
-        var target = handler[..slash];
-        var fn = handler[(slash + 1)..];
-        var p = _s.State.Layer(Layers.Umpire).FirstOrDefault(x => x.Id == target || x.Guid == target);
-        if (p == null || !_pieces.TryGetValue(p.Id, out var ps)) return (null, fn);
-        return (ps, fn);
-    }
-
-    void DialogReact(DialogResult r, DynValue who)
-    {
-        if (!_dialogs.Remove(r.Token, out var d)) return;
-        if (!d.owner.Enabled || !IsCurrent(d.owner)) return;
-        if (d.kind == "picture" && r.Value != null && IsWebLink(r.Value)) { Fetch(d.owner, d.fn, r.Value, who); return; }
-        Invoke(d.owner, d.fn, r.Value == null ? DynValue.Nil : DynValue.NewString(r.Value), who);
-    }
-
-    public const int MaxUiDepth = 24, MaxUiNodes = 20_000;
-    const int UiPictureType = 0;
-
-    public static List<UiNode> ParseXml(string xml) => UiTrees.ParseXml(xml);
-
-    public static string ToXml(IEnumerable<UiNode> tree) => UiTrees.ToXml(tree);
+    public static string ToXml(IEnumerable<UiNode> tree) => PanelData.Write(tree.ToList());
 }

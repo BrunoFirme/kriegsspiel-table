@@ -2,7 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Godot;
+using KTable.Client.Panels;
 using KTable.Core.Model;
+using KTable.Core.Panels;
+using KTable.Core.Protocol;
 
 namespace KTable.App;
 
@@ -11,31 +14,76 @@ sealed class PieceUi
     readonly PieceNode _piece;
     readonly List<Node> _nodes = new();
     readonly List<Plate> _plates = new();
+    readonly Dictionary<string, string> _local = new();
 
-    sealed record Plate(UiBuilder Builder, Vector2 Center, float Turn, Vector2 Size, Vector2 Pixels, float Fit);
-    List<UiNode>? _built;
+    sealed record Plate(PanelView View, Vector2 Center, float Turn, Vector2 Size, Vector2 Pixels, float Fit, SubViewport Port);
+    object? _built;
     bool _builtFaceDown;
     const int PlatePixels = 1024;
+    const float Thousandth = 0.001f, Upright = 180, Lift = 0.010f;
 
     public PieceUi(PieceNode piece) => _piece = piece;
 
     public float ModelTop;
 
+    public void Changed(Command c)
+    {
+        foreach (var one in PanelChanges.Flat(c))
+        {
+            if (one is SetUi su && su.Piece == _piece.Piece.Id)
+            {
+                _local.Clear();
+                _said.Clear();
+            }
+            else if (one is SetUiAttributes sua && sua.Piece == _piece.Piece.Id) PanelChanges.Forget(_local, _piece.Piece.UiLayout, sua.Id);
+        }
+        var moves = PanelMoves.Of(c, _piece.Piece.UiLayout, _piece.Piece.Id);
+        foreach (var m in moves) if (!m.Showing) _hiding.Add(PanelScene.Key(m.Path));
+        Sync(true);
+        foreach (var m in moves) Animate(m);
+    }
+
+    readonly HashSet<string> _hiding = new();
+    readonly HashSet<string> _said = new();
+
+    void Animate(PanelMove m)
+    {
+        foreach (var p in _plates)
+        {
+            if (p.View.Scene?.At(m.Path) is not { } box || !p.View.Nodes.TryGetValue(box, out var node)) continue;
+            p.View.Announce(m);
+            p.Port.RenderTargetUpdateMode = SubViewport.UpdateMode.Always;
+            var key = PanelScene.Key(m.Path);
+            PanelAnimate.Play(node, m, () =>
+            {
+                if (GodotObject.IsInstanceValid(p.Port)) p.Port.RenderTargetUpdateMode = SubViewport.UpdateMode.Once;
+                if (!m.Showing && _hiding.Remove(key)) Sync(true);
+            });
+            return;
+        }
+    }
+
     public void Sync(bool force)
     {
         var piece = _piece.Piece;
-        if (!force && ReferenceEquals(_built, piece.Ui) && _builtFaceDown == piece.FaceDown && _nodes.All(n => GodotObject.IsInstanceValid(n) && !n.IsQueuedForDeletion())) return;
+        object? shown = piece.UiLayout ?? (object)piece.Ui;
+        if (!force && ReferenceEquals(_built, shown) && _builtFaceDown == piece.FaceDown && _nodes.All(n => GodotObject.IsInstanceValid(n) && !n.IsQueuedForDeletion())) return;
         if (!_piece.IsInsideTree())
         {
             Callable.From(() => { if (GodotObject.IsInstanceValid(_piece) && _piece.IsInsideTree()) _piece.SyncUi(true); }).CallDeferred();
             return;
         }
-        _built = piece.Ui;
+        _built = shown;
         _builtFaceDown = piece.FaceDown;
         Clear();
-        if (piece.Ui.Count == 0 || piece.FaceDown || _piece.IsDie || _piece.IsEffect) return;
-        foreach (var root in UiStyles.Styled(piece.Ui))
-            if (!UiBuilder.Attr(root, "active", "true").Equals("false", StringComparison.OrdinalIgnoreCase)) DrawPlate(root);
+        var layout = piece.UiLayout ?? (piece.Ui.Count > 0 ? PanelState.Legacy(piece.Ui) : null);
+        if (layout == null || layout.Elements.Count == 0 || piece.FaceDown || _piece.IsDie || _piece.IsEffect) return;
+        var s = _piece.Session;
+        var (color, host, admin) = PanelSeats.Of(s.Me, s.Peers);
+        layout = PanelClasses.Apply(layout, _local);
+        var scene = PanelScene.Build(layout, new V2(PanelScene.PieceCanvas, PanelScene.PieceCanvas), new PanelContext(layout.Colors, color, host, admin), PanelPictures.Meter(s), _local, _hiding);
+        var top = scene.Root.Children[0];
+        foreach (var root in top.Children.Where(r => r.Active && r.Element != null)) DrawPlate(scene, root);
     }
 
     void Clear()
@@ -63,88 +111,35 @@ sealed class PieceUi
             var onPlate = new Vector2(d.X * c - d.Y * s, d.X * s + d.Y * c);
             var uv = new Vector2(onPlate.X / p.Size.X + 0.5f, onPlate.Y / p.Size.Y + 0.5f);
             if (uv.X < 0 || uv.X > 1 || uv.Y < 0 || uv.Y > 1) continue;
-            var pixel = uv * p.Pixels;
-            (string Id, Control Control, Vector2 Pixel)? best = null;
-            float least = float.MaxValue;
-            foreach (var (id, ctl) in p.Builder.ById)
-            {
-                if (!GodotObject.IsInstanceValid(ctl) || !ctl.IsVisibleInTree() || !Answers(ctl)) continue;
-                var rect = ctl.GetGlobalRect();
-                if (!rect.HasPoint(pixel * p.Fit) || rect.Area >= least) continue;
-                least = rect.Area;
-                best = (id, ctl, pixel * p.Fit - rect.Position);
-            }
-            if (best != null) return best;
+            var pixel = uv * p.Pixels * p.Fit;
+            if (p.View.Hit(pixel) is { Path: not null } hit && p.View.Nodes.TryGetValue(hit, out var ctl)) return (i + ":" + PanelScene.Key(hit.Path), ctl, pixel);
+            if (p.View.Hit(pixel) is { } part && p.View.Nodes.TryGetValue(part, out var pc)) return (i + ":" + part.Name, pc, pixel);
         }
         return null;
     }
 
-    static bool Answers(Control c) => c is BaseButton { Disabled: false } or LineEdit { Editable: true } or TextEdit { Editable: true } or Slider { Editable: true };
-
     public void Press(string id, Control c, Vector2 inside)
     {
-        switch (c)
-        {
-            case OptionButton ob:
-                var menu = new PopupMenu();
-                for (int i = 0; i < ob.ItemCount; i++) menu.AddItem(ob.GetItemText(i), i);
-                menu.IdPressed += pick =>
-                {
-                    ob.Select((int)pick);
-                    ob.EmitSignal(OptionButton.SignalName.ItemSelected, pick);
-                    menu.QueueFree();
-                };
-                menu.PopupHide += () => { if (GodotObject.IsInstanceValid(menu)) menu.QueueFree(); };
-                _piece.GetTree().Root.AddChild(menu);
-                menu.Popup(new Rect2I((Vector2I)_piece.GetViewport().GetMousePosition(), Vector2I.Zero));
-                break;
-            case BaseButton { ToggleMode: true } tb:
-                tb.ButtonPressed = !tb.ButtonPressed;
-                break;
-            case BaseButton b:
-                b.EmitSignal(BaseButton.SignalName.Pressed);
-                break;
-            case Slider sl:
-                sl.Value = sl.MinValue + (sl.MaxValue - sl.MinValue) * Mathf.Clamp(inside.X / Mathf.Max(1, sl.Size.X), 0, 1);
-                sl.EmitSignal(Slider.SignalName.DragEnded, true);
-                break;
-            case LineEdit or TextEdit:
-                AskText(id, c is LineEdit le ? le.Text : ((TextEdit)c).Text, c is TextEdit);
-                break;
-        }
+        var colon = id.IndexOf(':');
+        if (colon < 0 || !int.TryParse(id[..colon], out var i) || i >= _plates.Count) return;
+        var view = _plates[i].View;
+        var box = view.Nodes.FirstOrDefault(n => n.Value == c).Key;
+        if (box != null) view.Click(box, inside);
     }
 
-    void AskText(string id, string text, bool lines)
-    {
-        var dlg = new ConfirmationDialog { Title = _piece.Piece.Label ?? "Text", OkButtonText = "OK" };
-        Control field = lines
-            ? new TextEdit { Text = text, CustomMinimumSize = new Vector2(420, 160) }
-            : new LineEdit { Text = text, CustomMinimumSize = new Vector2(320, 0), SelectAllOnFocus = true };
-        dlg.AddChild(field);
-        dlg.Confirmed += () => Send(id, "end", field is LineEdit l ? l.Text : ((TextEdit)field).Text);
-        dlg.VisibilityChanged += () => { if (!dlg.Visible) dlg.QueueFree(); };
-        _piece.GetTree().Root.AddChild(dlg);
-        dlg.PopupCentered();
-        field.GrabFocus();
-    }
-
-    void Send(string id, string ev, string value)
+    void Send(List<int> path, string ev, string value)
     {
         var s = _piece.Session;
         if (!s.CanTouch(_piece.Layer, _piece.Piece)) return;
-        s.Do(new KTable.Core.Protocol.UiEvent { Layer = _piece.Layer, Piece = _piece.Piece.Id, Id = id, Event = ev, Value = value });
+        s.Do(new UiEvent { Layer = _piece.Layer, Piece = _piece.Piece.Id, Path = path, Event = ev, Value = value });
     }
 
-    void DrawPlate(UiNode root)
+    void DrawPlate(PanelScene scene, PanelBox root)
     {
-        float w = Mathf.Max(1, UiBuilder.Num(root, "width", 100)), h = Mathf.Max(1, UiBuilder.Num(root, "height", 100));
-        var scale = UiBuilder.Vec3(root, "scale", 1);
-        var pos = UiBuilder.Vec3(root, "position", 0);
-        var rot = UiBuilder.Vec3(root, "rotation", 0);
-        const float thousandth = 0.001f;
-        float pw = w * thousandth * scale.X, ph = h * thousandth * scale.Y;
-        if (pw < 0.001f || ph < 0.001f) return;
-
+        float w = Mathf.Max(1, root.RectSize.X), h = Mathf.Max(1, root.RectSize.Y);
+        float pw = w * Thousandth * Math.Abs(root.Scale.X), ph = h * Thousandth * Math.Abs(root.Scale.Y);
+        if (pw < Thousandth || ph < Thousandth) return;
+        var center = root.PivotAt + root.RectMin + root.RectSize * 0.5f;
         float f = Mathf.Min(1, PlatePixels / Mathf.Max(w, h));
         var vp = new SubViewport
         {
@@ -154,27 +149,26 @@ sealed class PieceUi
         var canvas = new Control { Size = new Vector2(w, h), Scale = new Vector2(f, f) };
         vp.AddChild(canvas);
         var s = _piece.Session;
-        var builder =
-            new UiBuilder(Send,
-                (id, ready) => UiBuilder.AssetTexture(s, id, t => { ready(t); if (GodotObject.IsInstanceValid(vp)) vp.RenderTargetUpdateMode = SubViewport.UpdateMode.Once; }));
-        var c = builder.Build(root, new Vector2(w, h));
-        if (c == null) { vp.QueueFree(); return; }
-        c.Position = Vector2.Zero;
-        c.Size = new Vector2(w, h);
-        canvas.AddChild(c);
+        void Fresh() { if (GodotObject.IsInstanceValid(vp)) vp.RenderTargetUpdateMode = SubViewport.UpdateMode.Once; }
+        var view = new PanelView(PanelHost.Hooks(s, Send, (name, ready) => PanelPictures.Texture(s, name, t =>
+        {
+            ready(t);
+            Fresh();
+        }), _local, () => Callable.From(() => Sync(true)).CallDeferred(), _said, vp));
+        canvas.AddChild(view.Show(scene, root));
         _piece.AddChild(vp);
         _nodes.Add(vp);
-        _plates.Add(new Plate(builder, new Vector2(pos.X * thousandth, -pos.Y * thousandth), -(rot.Z - 180), new Vector2(pw, ph), new Vector2(w, h), f));
-
+        float turn = -(root.Rotation.Z - Upright);
+        _plates.Add(new Plate(view, new Vector2(center.X * Thousandth, -center.Y * Thousandth), turn, new Vector2(pw, ph), new Vector2(w, h), f, vp));
         var mat = new StandardMaterial3D
         {
             AlbedoTexture = vp.GetTexture(), ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded, Transparency = BaseMaterial3D.TransparencyEnum.Alpha,
             CullMode = BaseMaterial3D.CullModeEnum.Back, RenderPriority = 2, TextureFilter = BaseMaterial3D.TextureFilterEnum.LinearWithMipmaps,
         };
         var quad = new MeshInstance3D { Mesh = new PlaneMesh { Size = new Vector2(pw, ph) }, MaterialOverride = mat, CastShadow = GeometryInstance3D.ShadowCastingSetting.Off };
-        float faceY = (_piece.Def?.Kind == "model" && ModelTop > 0 ? ModelTop : _piece.Thickness) + 0.010f;
-        quad.Position = new Vector3(pos.X * thousandth, faceY, -pos.Y * thousandth);
-        quad.RotationDegrees = new Vector3(0, -(rot.Z - 180), 0);
+        float faceY = (_piece.Def?.Kind == "model" && ModelTop > 0 ? ModelTop : _piece.Thickness) + Lift;
+        quad.Position = new Vector3(center.X * Thousandth, faceY, -center.Y * Thousandth);
+        quad.RotationDegrees = new Vector3(0, turn, 0);
         _piece.AddChild(quad);
         _nodes.Add(quad);
     }

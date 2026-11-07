@@ -103,6 +103,7 @@ public sealed partial class ScenarioBuilder
         if (placedEffects.Values.Sum(p => p.Count) is var effectCount and > 0) _rep.Counts[$"{sc.Id}: effects placed as Firme's effects"] = effectCount.ToString();
 
         scenario.UmpireBoard = layers[0].Pieces;
+        scenario.UiLinks = _uiLinks.Count > 0 ? _uiLinks : null;
         scenario.Drawings["umpire"] = TableStrokes(master);
         AddDecals(master, scenario, extras, usedPacks);
         if (master.Rules.Trim().Length > 0) scenario.Briefing = master.Rules.Trim();
@@ -368,7 +369,7 @@ public sealed partial class ScenarioBuilder
         var usedAssets = extras.M.Pieces.SelectMany(KTable.Client.Naming.AssetsOf).ToHashSet();
         usedAssets.UnionWith(pieces.SelectMany(p => p.Decals).Select(d => d.Picture));
         usedAssets.UnionWith(scenario.Decals.Values.SelectMany(l => l).Select(d => d.Picture).Concat(scenario.DecalPalette.Select(d => d.Picture)));
-        usedAssets.UnionWith(scenario.UiPictures.Values.Concat(PanelPictures(scenario.Ui)).Concat(pieces.SelectMany(p => PanelPictures(p.Ui))));
+        usedAssets.UnionWith(PanelAssets(scenario, pieces));
         usedAssets.UnionWith(extras.M.Assets.Keys.Where(k => !usedAssets.Contains(k) && texts.Any(t => t.Contains(k, StringComparison.Ordinal))));
         foreach (var k in extras.M.Assets.Keys.Where(k => !usedAssets.Contains(k)).ToList()) extras.M.Assets.Remove(k);
         extras.Save();
@@ -560,7 +561,8 @@ public sealed partial class ScenarioBuilder
             Tags = o.Tags, Memo = _defs.RewriteUrls(o.Memo, extras, $"{layer.Name} {o.Name} '{o.Nickname}' {o.Guid} memo"),
             Locked = parent == null && o.Locked, FaceDown = pose.Down && def.Kind != "model" && def.Back != null, NotSticky = !o.Sticky,
             NotBoxSelected = !o.DragSelectable, MeasuresMoves = o.MeasureMovement,
-            Ui = ObjectPanels(o, extras, $"{layer.Name} {o.Name} '{o.Nickname}' {o.Guid}"),
+            Ui = ObjectPanels(o, extras, $"{layer.Name} {o.Name} '{o.Nickname}' {o.Guid}", out var uiLayout, out var uiAssets),
+            UiLayout = uiLayout, UiAssets = uiAssets,
             Worth = o.Worth,
             Lettering = r.Lettering,
             StateGuids = StateGuidsOf(o, def),

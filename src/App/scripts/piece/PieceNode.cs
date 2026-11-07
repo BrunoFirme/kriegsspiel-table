@@ -211,6 +211,7 @@ public partial class PieceNode : Node3D
     }
 
     public void SyncUi(bool force = false) => _plates.Sync(force);
+    public void PanelChanged(KTable.Core.Protocol.Command c) => _plates.Changed(c);
     public (string Id, Control Control, Vector2 Pixel)? PanelAt(Vec2 point) => _flipping ? null : _plates.ControlAt(Coords.ToLocal(point, Piece.Pos, Piece.RotDeg));
     public void PressPanel((string Id, Control Control, Vector2 Pixel) at) => _plates.Press(at.Id, at.Control, at.Pixel);
 
