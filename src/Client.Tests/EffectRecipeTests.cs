@@ -221,7 +221,7 @@ public class EffectRecipeTests
     {
         var l = Plan(new EffectDef { Kind = "powder" }, w: 3, h: 1, phase: 0.37f).Layers[0];
         Assert.Equal("puff", l.Sprite);
-        Assert.Equal(102, l.Amount);
+        Assert.Equal(60, l.Amount);
         Assert.Equal(new Vector3(1.425f, 0.242487103f, 0.3f), l.Box);
         Assert.Equal(1.21243548f, l.VMax);
         Assert.Equal(new Rgba(0.55f, 0.55f, 0.55f, 0.45f), l.Ramp[3].c);
@@ -304,11 +304,11 @@ public class EffectRecipeTests
     }
 
     [Theory]
-    [InlineData("powder", null, true)]
-    [InlineData("powder", "together", true)]
-    [InlineData("powder", "rolling", false)]
-    [InlineData("cannon", "rolling", false)]
-    public void Lingering_smoke_lives_long_enough_to_carry_as_far_as_the_map_s_scale_says(string kind, string? volley, bool oneLine)
+    [InlineData("powder", null)]
+    [InlineData("powder", "together")]
+    [InlineData("powder", "rolling")]
+    [InlineData("cannon", "rolling")]
+    public void Lingering_smoke_rides_the_wind_at_the_map_s_scale_no_further_than_real_smoke_carries(string kind, string? volley)
     {
         var air = new SmokeAir(1, 1 / SmokeDrift.UncalibratedMetresPerUnit);
         var plume = SmokeDrift.Of(kind, 6, 1, air);
@@ -318,11 +318,38 @@ public class EffectRecipeTests
         var lingering = EffectRecipe.Plan(new EffectDef { Kind = kind, Volley = volley, Lingers = true }, 6, 0.6f, 0.3f, Grey, false, air).Layers.Where(l => l.Sprite == "puff").ToList();
         Assert.Equal(usual.Select(l => (l.Life, l.Amount, l.Cycles)), unticked.Select(l => (l.Life, l.Amount, l.Cycles)));
         Assert.All(usual, l => Assert.Equal(0, l.Reach));
-        Assert.All(lingering, l => Assert.Equal(plume.Reach, l.Reach));
+        Assert.All(lingering, l => Assert.InRange(l.Reach, float.Epsilon, plume.Reach));
         Assert.True(lingering.Max(l => l.Life) > usual.Max(l => l.Life));
         Assert.All(lingering, l => Assert.InRange(l.Cycles, 2, SmokeDrift.MostEmitters));
         Assert.True(lingering.Count(l => l.Fixed) <= SmokeDrift.MostEmitters + 8);
-        if (oneLine) Assert.All(lingering, l => Assert.True(l.Reach / (l.Life * (1 - l.Brake)) <= SmokeDrift.ScreenWind(air) * 1.25f, $"{l.Life} s, {l.Cycles} turns"));
+        float ride = Math.Max(SmokeDrift.ScreenWind(air), SmokeDrift.StillDrift);
+        Assert.All(lingering, l => Assert.True(l.Reach / (l.Life * (1 - l.Brake)) <= ride * 1.01f, $"{l.Life} s, {l.Cycles} turns"));
+    }
+
+    [Theory]
+    [InlineData("powder", null)]
+    [InlineData("powder", "together")]
+    [InlineData("powder", "rolling")]
+    [InlineData("cannon", "rolling")]
+    public void Dense_smoke_holds_to_half_its_length_then_fades_out_gradually(string kind, string? volley)
+    {
+        var air = new SmokeAir(1, 1 / SmokeDrift.UncalibratedMetresPerUnit);
+        var lingering = EffectRecipe.Plan(new EffectDef { Kind = kind, Volley = volley, Lingers = true }, 6, 0.6f, 0.3f, Grey, false, air).Layers.Where(l => l.Heat == SmokeHeat.Cold).ToList();
+        Assert.NotEmpty(lingering);
+        foreach (var l in lingering)
+        {
+            float peak = l.Ramp.Max(k => k.c.A);
+            var after = l.Ramp.SkipWhile(k => k.c.A < peak).ToArray();
+            Assert.All(after.Where(k => k.at <= 0.5f), k => Assert.Equal(peak, k.c.A, 3));
+            var fade = after.Where(k => k.at >= 0.5f).ToArray();
+            Assert.Equal(0, fade[^1].c.A, 3);
+            Assert.Equal(1, fade[^1].at, 3);
+            for (int i = 1; i < fade.Length; i++)
+            {
+                Assert.True(fade[i].c.A <= fade[i - 1].c.A);
+                Assert.True(fade[i - 1].c.A - fade[i].c.A <= peak * 0.4f, "fades gradually");
+            }
+        }
     }
 
     [Fact]

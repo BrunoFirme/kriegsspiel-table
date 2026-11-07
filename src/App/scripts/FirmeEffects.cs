@@ -26,7 +26,7 @@ public static class FirmeEffects
         ("Battalion volley, dense smoke", "Volleys on the word of command, the smoke banking up and carried off downwind as far as real powder smoke on the map's scale", 6, 0.6, new EffectDef { Kind = "powder", Volley = "together", Lingers = true, Amount = 1.5, Wind = 1.4 }, N),
         ("Rolling fire, standard smoke", "Fire by platoons, rippling down the line from one flank to the other", 6, 0.6, new EffectDef { Kind = "powder", Volley = "rolling" }, N),
         ("Rolling fire, dense smoke", "Fire by platoons down the line, every platoon's smoke hanging and drifting as far as real powder smoke on the map's scale", 6, 0.6, new EffectDef { Kind = "powder", Volley = "rolling", Lingers = true, Amount = 1.5, Wind = 1.4 }, N),
-        ("Skirmish fire", "Light troops in open order, a puff here and there", 5, 2, new EffectDef { Kind = "powder", Amount = 0.3, Puff = 0.6, Height = 0.8 }, N),
+        ("Skirmish fire", "Light troops in open order, a puff here and there", 5, 2, new EffectDef { Kind = "powder", Amount = 0.5, Puff = 0.6, Height = 0.8 }, N),
         ("Battery firing, standard smoke", "A battery of guns firing in turn", 4, 1, new EffectDef { Kind = "cannon", Every = 4, Volley = "rolling" }, N),
         ("Battery firing, dense smoke", "Guns firing in turn, their smoke rolling away downwind as far as real powder smoke on the map's scale", 4, 1, new EffectDef { Kind = "cannon", Every = 4, Volley = "rolling", Lingers = true, Amount = 1.4, Wind = 1.4 }, N),
         ("Battery salvo", "Every gun of the battery at once", 4, 1, new EffectDef { Kind = "cannon", Every = 6 }, N),
