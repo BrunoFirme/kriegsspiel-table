@@ -68,6 +68,8 @@ sealed partial class AgentTableTools
             Args.Schema(new Arg("name", "string", "a save's name (list_saves)"), new Arg("turn", "number", "a kept turn's number"), new Arg("start_over", "boolean", "the first turn kept")),
             LoadSave);
         foreach (var t in ReliefTools()) yield return t;
+        foreach (var t in MeasureTools()) yield return t;
+        foreach (var t in RecordTools()) yield return t;
     }
 
     (Session s, Hud hud)? Table(out ToolResult? why)

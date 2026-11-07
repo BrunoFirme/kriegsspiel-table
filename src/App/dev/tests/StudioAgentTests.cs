@@ -58,6 +58,20 @@ static class StudioAgentTests
     }
 
     [ScreenTest]
+    static async Task An_agent_resizes_a_face_s_picture_and_lays_the_pieces_out_again(TestRunner r)
+    {
+        var b = await Open(r);
+        await b.Ok("studio_make_block", """{"name":"Dragoons"}""");
+        var id = b.IdOf("Dragoons");
+        var said = await b.Ok("studio_picture_size", $$"""{"id":"{{id}}","width":640,"height":320}""");
+        Check.That(said.Contains("640×320"), "the face is the size asked: " + said);
+        var face = await b.Ok("studio_read_face", $$"""{"id":"{{id}}"}""");
+        Check.That(face.Contains("\"W\":640") && face.Contains("\"H\":320"), "the face reads back at that size: " + face[..System.Math.Min(200, face.Length)]);
+        await b.Refused("studio_picture_size", $$"""{"id":"{{id}}","width":4,"height":320}""", "for a side under the smallest");
+        Check.That((await b.Ok("studio_lay_out", "{}")).Contains("Laid out"), "the pieces are laid out again");
+    }
+
+    [ScreenTest]
     static async Task An_agent_sizes_tags_letters_and_gives_looks_to_a_kind_and_reads_them_back(TestRunner r)
     {
         var b = await Open(r);

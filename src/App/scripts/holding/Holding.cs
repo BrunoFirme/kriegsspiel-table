@@ -127,7 +127,10 @@ sealed partial class Carry : IHeldPieces
     {
         foreach (var h in _held)
             if (GodotObject.IsInstanceValid(h.Node))
-                h.Node.Preview(_cursor + h.Offset, h.Rot, h.Node.Piece.Scale, Math.Max(0, _floor) + _lift + h.Lift);
+            {
+                var (pos, scale, y) = Pulled(_cursor + h.Offset, h.Node.Piece.Scale, Math.Max(0, _floor) + _lift + h.Lift);
+                h.Node.Preview(pos, h.Rot, scale, y);
+            }
     }
 
     public void Tick(bool overUi)
@@ -138,8 +141,16 @@ sealed partial class Carry : IHeldPieces
         bool down = _fromDrawer != null ? Input.IsMouseButtonPressed(MouseButton.Left) : _press.LeftDown;
         bool over = _fromDrawer != null ? _fromDrawer(m) : overUi;
         if (down && !over) ShakeAt(Time.GetTicksMsec() / 1000.0, new System.Numerics.Vector2(m.X, m.Y));
-        if (down && !over && _c.Ground(m) is { } g) Move(g);
-        else PlaceHeld();
+        if (down && !over && _c.Ground(m) is { } g)
+        {
+            WatchStow(g);
+            Move(g);
+        }
+        else
+        {
+            if (over) LeaveStow();
+            PlaceHeld();
+        }
     }
 
     Func<Vector2, bool>? _fromDrawer;
@@ -335,6 +346,8 @@ sealed partial class Carry : IHeldPieces
     {
         Rehome();
         EndMarch();
+        if (HolderWindow.Under(Pointer.In(_c.Scene.GetViewport())) is { } w && PutInto(w.Layer, w.Holder)) return;
+        if (DropIntoHolder()) return;
         if (_held.Any(h => !_c.S.CanTouch(h.Layer, _cursor + h.Offset)))
         {
             ReturnHome();
@@ -570,6 +583,7 @@ sealed partial class Carry : IHeldPieces
 
     void StopShake()
     {
+        LeaveStow();
         _shake.Clear();
         _clumping = null;
         _tumbling = null;

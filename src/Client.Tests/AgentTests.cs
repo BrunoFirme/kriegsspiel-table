@@ -301,6 +301,23 @@ public class TableToolsTests
     }
 
     [Fact]
+    public async Task A_change_undone_is_redone_and_options_tags_and_description_are_set()
+    {
+        var set = await Call("set_piece_options", new { id = "p-1", collides = false, thrown_for_real = true });
+        Assert.False(set.IsError, set.Text);
+        var p = _s.View.Find(Layers.Umpire, "p-1")!;
+        Assert.Equal((true, true), (p.NoCollision, p.PhysicalRoll));
+        var values = await Call("set_piece_values", new { id = "p-1", note = "Holds the bridge", tags = new[] { "guard", " guard", "reserve" } });
+        Assert.False(values.IsError, values.Text);
+        p = _s.View.Find(Layers.Umpire, "p-1")!;
+        Assert.Equal(("Holds the bridge", "guard,reserve"), (p.Note, string.Join(",", p.Tags!)));
+        Assert.False((await Call("undo", new { })).IsError);
+        Assert.False((await Call("redo", new { })).IsError);
+        Assert.Equal("guard,reserve", string.Join(",", _s.View.Find(Layers.Umpire, "p-1")!.Tags!));
+        Assert.True((await Call("redo", new { })).IsError);
+    }
+
+    [Fact]
     public async Task A_script_written_runs_and_its_prints_come_back()
     {
         var r = await Call("write_script", new { id = "p-1", text = "function on_load() print('ready ' .. self.name) end\n" });

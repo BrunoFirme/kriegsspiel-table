@@ -303,7 +303,7 @@ public partial class Table : Node3D
         Sighting.TickShade();
         Cam.TickMemory(delta);
         _aura.Active = Selected.Count > 0;
-        _hoverAura.Active = Hover.Node is { } hv && GodotObject.IsInstanceValid(hv) && !hv.Ringed;
+        _hoverAura.Active = Hand.StowTarget != null || Hover.Node is { } hv && GodotObject.IsInstanceValid(hv) && !hv.Ringed;
         Sighting.TickFraming();
         if (S.Art.Look.FlatSelection != Rig.TopDown) { S.Art.Look.FlatSelection = Rig.TopDown; foreach (var n in SelectedNodes) n.RefreshSelectionLook(); }
         Pieces.Lettering.Tick();
@@ -457,6 +457,7 @@ public partial class Table : Node3D
     public bool PaletteDragging => Palette.Dragging;
     public void BeginPaletteDrag(string def, Func<Vector2, bool> overDrawer) => Palette.Begin(def, overDrawer);
     public void EndPaletteDrag(bool drop) => Palette.End(drop);
+    public void BeginTakeOut(string layer, string holder, string id, Func<Vector2, bool> overWindow) => Palette.BeginTakeOut(layer, holder, id, overWindow);
 
     public string? SelectedSheet { get => Sheets.SelectedId; set => Sheets.SelectedId = value; }
     public void SelectSheet(string? id) => Sheets.Select(id);

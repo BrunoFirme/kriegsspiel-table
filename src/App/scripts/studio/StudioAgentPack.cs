@@ -27,6 +27,14 @@ sealed partial class StudioTools
         yield return new AgentTool("studio_set_pack",
             "Sets the pack's name (its id stays), who made it, and its description (what it holds, its period and scale, how its pieces are used).",
             Args.Schema(new Arg("name", "string", "the pack's name"), new Arg("authors", "array", "who made it"), new Arg("description", "string", "a few lines; empty clears it")), SetPack);
+        yield return new AgentTool("studio_lay_out",
+            "Lays every piece of the pack out again on the studio's table, in rows, as Lay the pieces out again does.",
+            Args.Schema(), _ => On(s =>
+            {
+                s.Paper.LayOutAll(force: true);
+                _a.Log("laid the studio's pieces out again");
+                return Task.FromResult(new ToolResult($"Laid out the {s.Pack.Pieces.Count} pieces of {s.Pack.Name} again."));
+            }));
         yield return new AgentTool("studio_tidy_pack",
             "Moves the pack's pictures and files that nothing uses any more to the trash, as Remove pictures nothing uses does.",
             Args.Schema(), _ => TidyPack());

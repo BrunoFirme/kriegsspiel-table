@@ -65,7 +65,7 @@ sealed class RulerTool
             cal ? new Color(0.6f, 0.95f, 1f) : new Color(1f, 0.95f, 0.85f), 14, new Vector2(0, -16), centered: true);
         if (!cal && len > 1e-6)
         {
-            double bearing = Table.Norm360(Mathf.RadToDeg((float)Math.Atan2(b.X - a.X, -(b.Z - a.Z))));
+            double bearing = Table.Norm360(Mathf.RadToDeg((float)Math.Atan2(b.X - a.X, b.Z - a.Z)));
             double rise = ground.At(b) - ground.At(a);
             var heading = string.Format(System.Globalization.CultureInfo.InvariantCulture, "{0:000}°", bearing);
             if (Math.Abs(rise) >= MinRise) heading += $" · {(rise > 0 ? "up" : "down")} {Fmt.Distance(Math.Abs(rise), c)}";

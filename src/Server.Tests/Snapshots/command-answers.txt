@@ -71,7 +71,7 @@ SetScriptState layer | allowed O:n U:n L:n H:n | in-batch O:n U:n L:n H:n | obse
 SetSheetPicture table | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone - | apply refused:no_such_sheet | undo-reloads -
 SetSheetRelief table | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone - | apply refused:no_such_sheet | undo-reloads -
 SetState layer | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone Id | apply ok inverse:SetState | undo-reloads Id
-SetTags layer | allowed O:n U:n L:n H:n | in-batch O:n U:n L:n H:n | observer same | zone - | apply ok inverse:SetTags | undo-reloads -
+SetTags layer | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone - | apply ok inverse:SetTags | undo-reloads -
 SetText layer | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone Id | apply ok inverse:SetText | undo-reloads Id
 SetTint layer | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone Id | apply ok inverse:SetTint | undo-reloads -
 SetUi table | allowed O:n U:n L:n H:n | in-batch O:n U:n L:n H:n | observer same | zone - | apply ok inverse:SetUi | undo-reloads -

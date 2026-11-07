@@ -61,8 +61,11 @@ sealed class LogPanel : HudPart
 
     public const int MaxLines = 5000;
 
+    public long Written { get; private set; }
+
     public void Append(string bb)
     {
+        Written++;
         Text.AppendText($"[color=#a09c94]{DateTime.Now:HH:mm}[/color]  {bb}\n");
         while (Text.GetParagraphCount() > MaxLines + 1 && Text.RemoveParagraph(0)) { }
     }

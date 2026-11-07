@@ -25,11 +25,13 @@ public partial class AgentEndpoint : Node
         "give it native data before any script (studio_set_piece, studio_set_counter, studio_set_text_line, studio_add_look, studio_set_markers, studio_set_effect); " +
         "draw its faces as layers (studio_read_face, then studio_write_face); add behaviour with studio_write_script after reading api_reference with find. " +
         "For a 3D figure: studio_import_models (a model file), then studio_model_view from each side, studio_model_paint (whole, by material or by a box) and studio_model_decal; studio_model_add_part builds from shapes or a model file (file), also onto a block, where it sits centred on top. " +
-        "Look at what you made (studio_view_piece, studio_model_view, the pictures the tools return) and correct it until it matches what was asked; studio_undo takes your last step back. " +
-        "At the table: view_map shows the map from above with a grid in the coordinates pieces are placed by, so find places on it before placing; add_pack, list_kinds, place_piece or place_pieces (many at once, in a formation) and form_up (pieces already there, into a line, column, square, wedge…, or strung along a path), add_map_sheets (pictures, 3D terrain and heightmaps) and set_map_sheet (also a sheet's relief, its height, its picture and a crop), shape_ground (raise, lower, smooth, flatten; paint ground types by stroke, fill or shape, sparse at a density, each with its own details: plots and buildings, trees, road class, houses and walls; a road over water is a bridge, through a town its street; the map needs a scale first, which set_map_scale or a blank sheet made with one gives) and ground_at, set_map_scale, set_piece_values, set_piece_options, press_button and pick_menu_row (as a player), " +
+        "Look at what you made (studio_view_piece, studio_model_view, the pictures the tools return) and correct it until it matches what was asked; studio_undo takes your last step back; studio_picture_size sizes a face's picture, studio_lay_out lays the pieces out again. " +
+        "At the table: view_map shows the map from above with a grid in the coordinates pieces are placed by, so find places on it before placing; add_pack, list_kinds, place_piece or place_pieces (many at once, in a formation) and form_up (pieces already there, into a line, column, square, wedge…, or strung along a path), add_map_sheets (pictures, 3D terrain and heightmaps) and set_map_sheet (also a sheet's relief, its height, its picture and a crop), shape_ground (raise, lower, smooth, flatten; paint ground types by stroke, fill or shape, sparse at a density, each with its own details: plots and buildings, trees, road class, houses and walls; a road over water is a bridge, through a town its street; the map needs a scale first, which set_map_scale or a blank sheet made with one gives) and ground_at, measure (distances, bearings and rises, as the ruler does) and in_range (the pieces within reach of one, as the range rings show), set_map_scale, set_piece_values, set_piece_options, press_button and pick_menu_row (as a player), " +
         "copy_pieces and paste_pieces carry pieces as they stand from one scenario into another: the clipboard outlives the game, so copy before leave_game and paste after host_game, and the packs they need come into that game with them. " +
         "stow_pieces puts pieces away inside another piece, off the table, as a bag holds them, and unstow_piece takes one out again; read_piece on the holder lists what it holds. " +
-        "end_turn, set_clock, roll_dice, say, draw (on a named drawing board if asked), list_drawings, erase_drawings, set_zone, set_grid, set_light (the light, the backdrop round the table, the table's shade, the map style painted ground is drawn in, contour lines, a snow line, streams from the relief, the wind), set_briefing (the scenario's written situation), save_game, load_save, write_script, run_lua, read_console, snapshot, show_view (turns the person's own view), undo. " +
+        "end_turn, set_clock, roll_dice, say, draw (on a named drawing board if asked), list_drawings, erase_drawings, drawing_layers, set_zone, set_grid, set_light (the light, the backdrop round the table, the table's shade, the map style painted ground is drawn in, contour lines, a snow line, streams from the relief, the wind), set_briefing (the scenario's written situation), save_game, load_save, write_script, run_lua, read_console, snapshot, show_view (turns the person's own view), set_view (map view, label plates, piece ids, sound, when asked), undo and redo. " +
+        "read_log reads the Log everyone reads; look_back reads a kept turn or a save against the table now; saves does the Saves window's work (plays, folders, renames, the trash); save_scenario_copy makes a new scenario of the table; read_book reads a book piece's pages. " +
+        "From the title screen, list_modules and import_module convert a digital tabletop module into a pack and a scenario. " +
         "Effects (smoke, fire, volleys, mist) are pieces of the standard pack " + FirmeEffects.PackName + ": add_pack it if list_packs shows it is not at the table, then place them. " +
         "A pack's name, authors and description: studio_set_pack. This PC's settings (graphics, sound, interface size, captures…): read_settings, and set_settings only when the person asks.";
 
@@ -50,6 +52,7 @@ public partial class AgentEndpoint : Node
     public Func<string, bool, string?> Host = (_, _) => "not ready";
     public Func<string?> CloseStudio = () => "not ready";
     public Func<string?> LeaveGame = () => "not ready";
+    public Action Refresh = () => { };
 
     public event Action? Changed;
 
@@ -324,6 +327,7 @@ public partial class AgentEndpoint : Node
         tools.AddRange(new StudioTools(this).Tools());
         tools.AddRange(new AgentTableTools(this).Tools());
         tools.AddRange(new AgentSettingsTools(this, _cfg).Tools());
+        tools.AddRange(new AgentImport(this).Tools());
         var version = ProjectSettings.GetSetting("application/config/version", "dev").AsString();
         return new Mcp(tools, version, Instructions, AgentRecipes.All);
     }

@@ -43,14 +43,7 @@ sealed class PiecesPanel : HudPart
         searchRow.AddChild(hearts);
         packs.AddChild(searchRow);
         BuildList();
-        var listHost = new Control
-        {
-            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ExpandFill,
-            ClipContents = true, CustomMinimumSize = new Vector2(0, 80),
-        };
-        listHost.AddChild(List);
-        List.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
-        packs.AddChild(listHost);
+        packs.AddChild(PieceTiles.Host(List));
         var dragHint = Hint("Drag a piece onto the table, or click it and then the table · Shift keeps placing");
         dragHint.CustomMinimumSize = new Vector2(240, 0);
         packs.AddChild(dragHint);
@@ -74,13 +67,7 @@ sealed class PiecesPanel : HudPart
     [System.Diagnostics.CodeAnalysis.MemberNotNull(nameof(List))]
     void BuildList()
     {
-        List = new ItemList
-        {
-            SizeFlagsVertical = Control.SizeFlags.ExpandFill, IconMode = ItemList.IconModeEnum.Top, MaxColumns = 0,
-            FixedIconSize = new Vector2I(72, 72), FixedColumnWidth = 84, SameColumnWidth = true, MaxTextLines = 2,
-            TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis, AllowReselect = true,
-        };
-        List.AddThemeFontSizeOverride("font_size", 11);
+        List = PieceTiles.List();
         List.ItemSelected += i => { if (List.GetItemMetadata((int)i).AsString() is { Length: > 0 } id) { Shell.EnsureInGame(id); T.SetTool(Tool.Place, id); } };
         Vector2 palPress = Vector2.Zero;
         int palItem = -1;
@@ -196,24 +183,15 @@ sealed class PiecesPanel : HudPart
                 (d.States.Count > 1 ? $"\nstates: {string.Join(", ", d.States.Select(st => st.Name))}" : "") +
                 (d.Counters.Count > 0 ? $"\ncounters: {string.Join(", ", d.Counters.Select(c => $"{c.Name} {c.Min}–{c.Max}"))}" : "") +
                 (d.Tags.Count > 0 ? $"\ntags: {string.Join(", ", d.Tags)}" : ""));
-            if (EffectFx.ListIcon(d) is { } fxIcon) { List.SetItemIcon(idx, fxIcon); continue; }
-            var img = d.Image ?? d.Texture ?? d.States.Select(st => st.Image ?? st.Texture).FirstOrDefault(h => h != null);
-            if (img == null || !p.Assets.TryGetValue(img, out var a)) continue;
-            int i2 = idx;
-            var tex = S.Assets.Texture(p.Id, a.File, t => { if (gen == _listGen && i2 < List.ItemCount) List.SetItemIcon(i2, t); }, mipmaps: false, maxSize: 128);
-            if (tex != null) List.SetItemIcon(idx, tex);
+            PieceTiles.Picture(S, List, idx, d, p, () => gen == _listGen);
         }
         if (defs.Count == 1200) List.AddItem("… refine the search to see more");
     }
 
-    static string ShapeWord(PieceDef d) => d.Kind == "model" ? (d.Tags.Contains("die") ? "die" : "3D model") : d.Tags.Contains("effect") ? "effect" : d.Shape switch
+    public static string ShapeWord(PieceDef d) => d.Kind == "model" ? (d.Tags.Contains("die") ? "die" : "3D model") : d.Tags.Contains("effect") ? "effect" : d.Shape switch
     {
         "alpha" => "token", "circle" => "round tile", "hex" => "hex tile", "rounded" => "tile", _ => d.Tags.Contains("block") ? "block" : "tile",
     } + (d.States.Count > 1 && !d.Tags.Contains("effect") ? $" ⇄{d.States.Count}" : "") + (d.Counters.Count > 0 ? " ⚙" : "");
 
-    public Vector2 ItemCentre(int i)
-    {
-        var r = List.GetItemRect(i, true);
-        return List.GetGlobalRect().Position + r.Position + r.Size / 2;
-    }
+    public Vector2 ItemCentre(int i) => PieceTiles.Centre(List, i);
 }

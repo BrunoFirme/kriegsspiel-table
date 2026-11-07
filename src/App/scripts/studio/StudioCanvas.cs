@@ -1056,16 +1056,41 @@ public partial class StudioCanvas : Control
         Commit("Crop the face");
     }
 
+    public const int SmallestSide = 8, LargestSide = 4096;
+
     public void ResizeDocument(int w, int h, Vector2 shift)
     {
-        Doc.W = Math.Clamp(w, 8, 4096);
-        Doc.H = Math.Clamp(h, 8, 4096);
-        foreach (var l in Doc.Layers) { l.X += shift.X; l.Y += shift.Y; }
-        if (Doc.Outline != null) for (int i = 0; i + 1 < Doc.Outline.Count; i += 2) { Doc.Outline[i] += shift.X; Doc.Outline[i + 1] += shift.Y; }
-        for (int i = 0; i + 1 < Doc.Measures.Count; i += 2) { Doc.Measures[i] += shift.X; Doc.Measures[i + 1] += shift.Y; }
+        Shift(Doc, w, h, shift);
         R.Resized();
         _flat = null;
         Fit();
+    }
+
+    static void Shift(ArtDoc doc, int w, int h, Vector2 shift)
+    {
+        doc.W = Math.Clamp(w, SmallestSide, LargestSide);
+        doc.H = Math.Clamp(h, SmallestSide, LargestSide);
+        foreach (var l in doc.Layers) { l.X += shift.X; l.Y += shift.Y; }
+        if (doc.Outline != null) for (int i = 0; i + 1 < doc.Outline.Count; i += 2) { doc.Outline[i] += shift.X; doc.Outline[i + 1] += shift.Y; }
+        for (int i = 0; i + 1 < doc.Measures.Count; i += 2) { doc.Measures[i] += shift.X; doc.Measures[i + 1] += shift.Y; }
+    }
+
+    public static void ScaleLayers(ArtDoc doc, int w, int h)
+    {
+        float kx = w / (float)doc.W, ky = h / (float)doc.H;
+        foreach (var l in doc.Layers) l.SetXf(new Transform2D(0, new Vector2(kx, ky), 0, Vector2.Zero) * l.Xf());
+        if (doc.Outline != null) for (int i = 0; i + 1 < doc.Outline.Count; i += 2) { doc.Outline[i] *= kx; doc.Outline[i + 1] *= ky; }
+        for (int i = 0; i + 1 < doc.Measures.Count; i += 2) { doc.Measures[i] *= kx; doc.Measures[i + 1] *= ky; }
+    }
+
+    public static void Resize(ArtDoc doc, int w, int h, bool scale)
+    {
+        if (scale)
+        {
+            ScaleLayers(doc, w, h);
+            Shift(doc, w, h, Vector2.Zero);
+        }
+        else Shift(doc, w, h, new Vector2(w - doc.W, h - doc.H) / 2);
     }
 
     public List<Vector2> OutlinePts()

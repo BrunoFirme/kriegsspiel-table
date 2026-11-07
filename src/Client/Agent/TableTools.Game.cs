@@ -52,9 +52,10 @@ public sealed partial class TableTools
             Args.Schema(new Arg("label", "string", "the hotkey's label", true), new Arg("selected", "array", "piece ids to have selected"), new Arg("id", "string", "the piece under the pointer")),
             PressHotkey);
         yield return new AgentTool("set_piece_options",
-            "Locks or unlocks a piece, sets its side tint, its size (scale), turns it face down or up, or attaches it to another piece (it then moves with it).",
+            "Locks or unlocks a piece, sets its side tint, its size (scale), turns it face down or up, lets pieces be dropped into it (holds), sets whether it collides with other pieces and whether a die lands on its real face, or attaches it to another piece (it then moves with it).",
             Args.Schema(new Arg("id", "string", "the piece's id", true), new Arg("locked", "boolean", "locked in place"), new Arg("tint", "string", "#rrggbb, or empty for its own"),
-                new Arg("scale", "number", "1 is its own size"), new Arg("face_down", "boolean", "turned over"), new Arg("attach_to", "string", "a piece it rides on"), new Arg("detach", "boolean", "off what it rides on")),
+                new Arg("scale", "number", "1 is its own size"), new Arg("face_down", "boolean", "turned over"), new Arg("holds", "boolean", "pieces dropped on it go inside"), new Arg("collides", "boolean", "other pieces push against it and rest on it (true for most)"),
+                new Arg("thrown_for_real", "boolean", "a die shows the face it lands on, as thrown, instead of a fair random face"), new Arg("attach_to", "string", "a piece it rides on"), new Arg("detach", "boolean", "off what it rides on")),
             SetOptions);
         yield return new AgentTool("end_turn",
             "Ends the turn: the clock goes on by the turn's length, the turn is kept in the history and saved.",
@@ -289,6 +290,9 @@ public sealed partial class TableTools
             done.Add("sized");
         }
         if (a.Flag("face_down") is { } down) { s.Do(new FlipPiece { Layer = Layers.Umpire, Id = id, FaceDown = down }); done.Add(down ? "turned face down" : "turned face up"); }
+        if (a.Flag("collides") is { } collides) { s.Do(new SetPieceOption { Layer = Layers.Umpire, Id = id, Name = PieceOptions.NoCollision, Value = !collides }); done.Add(collides ? "collides" : "passes through pieces"); }
+        if (a.Flag("thrown_for_real") is { } real) { s.Do(new SetPieceOption { Layer = Layers.Umpire, Id = id, Name = PieceOptions.PhysicalRoll, Value = real }); done.Add(real ? "lands on its real face" : "rolls a fair face"); }
+        if (a.Flag("holds") is { } holds) { s.Do(new SetPieceOption { Layer = Layers.Umpire, Id = id, Name = PieceOptions.Holds, Value = holds }); done.Add(holds ? "holds pieces" : "holds no more pieces"); }
         if (a.Str("attach_to") is { Length: > 0 } parent)
         {
             if (Find(s, parent) == null || parent == id) return ToolResult.Fail($"No other piece {parent} to attach to.");
@@ -304,7 +308,11 @@ public sealed partial class TableTools
         await Landed(s);
         _log($"{string.Join(", ", done)}: {NameOf(s, p)}");
         var now = Find(s, id);
-        return new ToolResult($"{NameOf(s, p)}: {string.Join(", ", done)}." + (now == null ? "" : "\n" + JsonSerializer.Serialize(new { now.Locked, Tint = now.TintOverride, now.Scale, now.FaceDown, now.Attached }, Json)));
+        var said = $"{NameOf(s, p)}: {string.Join(", ", done)}.";
+        if (now == null) return new ToolResult(said);
+        var holdsNow = now.HoldsPieces(s.Store.Def(now.Def));
+        var shown = new { now.Locked, Tint = now.TintOverride, now.Scale, now.FaceDown, Collides = !now.NoCollision, ThrownForReal = now.PhysicalRoll, Holds = holdsNow, now.Attached };
+        return new ToolResult(said + "\n" + JsonSerializer.Serialize(shown, Json));
     }
 
     async Task<ToolResult> EndTurn(JsonElement a)

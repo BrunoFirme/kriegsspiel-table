@@ -103,6 +103,7 @@ public partial class Main : Node
                 return null;
             },
             LeaveGame = AgentLeavesGame,
+            Refresh = () => { if (AgentAtTitle()) RebuildLobby(); },
         };
         AddChild(_agent);
         if ((_cfg.AgentOn && !devRun) || args.ContainsKey("agent")) _agent.TurnOn();

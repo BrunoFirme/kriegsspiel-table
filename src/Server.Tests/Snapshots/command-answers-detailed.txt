@@ -539,8 +539,8 @@
   reloads:     (global script)
   undo stack:  yes
 == SetTags
-  sent by:     Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
-  in a batch:  Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
   zone:        all inside=ok; Id-x outside=ok; Tags-1 outside=ok; Tags-2 outside=ok; on another layer, all outside=ok
   zone, none of mine: all inside=ok; Id-x outside=ok; Tags-1 outside=ok; Tags-2 outside=ok; on another layer, all outside=ok
   observer:    it
@@ -1309,8 +1309,8 @@
   reloads:     (global script)
   undo stack:  yes
 == SetTags (empty)
-  sent by:     Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
-  in a batch:  Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
   zone:        all inside=ok;  outside=ok; on another layer, all outside=ok
   zone, none of mine: all inside=ok;  outside=ok; on another layer, all outside=ok
   observer:    it

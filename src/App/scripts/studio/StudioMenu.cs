@@ -166,14 +166,7 @@ internal sealed class StudioMenu
             var doc = Canvas.Doc;
             if (how.Selected == 0)
             {
-                float kx = nw / (float)doc.W, ky = nh / (float)doc.H;
-                foreach (var l in doc.Layers)
-                {
-                    var t = new Transform2D(0, new Vector2(kx, ky), 0, Vector2.Zero) * l.Xf();
-                    l.SetXf(t);
-                }
-                if (doc.Outline != null) for (int i = 0; i + 1 < doc.Outline.Count; i += 2) { doc.Outline[i] *= kx; doc.Outline[i + 1] *= ky; }
-                for (int i = 0; i + 1 < doc.Measures.Count; i += 2) { doc.Measures[i] *= kx; doc.Measures[i + 1] *= ky; }
+                StudioCanvas.ScaleLayers(doc, nw, nh);
                 Canvas.ResizeDocument(nw, nh, Vector2.Zero);
             }
             else Canvas.ResizeDocument(nw, nh, new Vector2(nw - doc.W, nh - doc.H) / 2);

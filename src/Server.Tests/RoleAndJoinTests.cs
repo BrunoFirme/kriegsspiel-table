@@ -98,7 +98,7 @@ public class RoleAndJoinTests
 
     static bool LeadsOnly(Command c) => c is SetZone or RemoveZone or SetGlobalScript or SetPointerRule or SetBriefing;
     static bool RuntimeOnly(Command c) =>
-        c is RestoreTurn or LoadSave or SetScriptState or SetGlobalScriptState or SetWidgets or SetMenuItems or SetUi or SetUiAttributes or ShowDialog or SetTags or SetMemo or SetHotkeys
+        c is RestoreTurn or LoadSave or SetScriptState or SetGlobalScriptState or SetWidgets or SetMenuItems or SetUi or SetUiAttributes or ShowDialog or SetMemo or SetHotkeys
             or SetGlobalMenuItems or SelectPiece;
 
     public static TheoryData<string, string> Cases()

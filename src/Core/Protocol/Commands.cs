@@ -260,6 +260,7 @@ public sealed class SetPieceOption : LayerCommand
     public string Id { get; set; } = "";
     public string Name { get; set; } = "";
     public bool Value { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool Inherit { get; set; }
     public override Sender SentBy() => Sender.Umpire;
     public override bool OnUndoStack() => true;
     public override Shown ShownToObservers() => Shown.Table;
@@ -272,6 +273,7 @@ public static class PieceOptions
 {
     public const string NoCollision = "no-collision";
     public const string PhysicalRoll = "physical-roll";
+    public const string Holds = "holds";
 }
 
 public sealed class SetLocked : LayerCommand
@@ -768,7 +770,7 @@ public sealed class SetTags : LayerCommand
 {
     public string Id { get; set; } = "";
     public List<string>? Tags { get; set; }
-    public override Sender SentBy() => Sender.Runtime;
+    public override Sender SentBy() => Sender.Umpire;
     public override bool OnUndoStack() => true;
     public override Shown ShownToObservers() => Shown.Table;
     public override IEnumerable<(string Layer, string Id)> ZonePieces() => [];

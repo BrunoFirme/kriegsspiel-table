@@ -126,9 +126,12 @@ The tool strip runs down the left. Point at any tool and press **F1** for its se
 - **Label and description:** at the foot of the right-click menu. Both show on hover to everyone, observers
   included, and are in the scenario file: not a hiding place.
 - **Markers:** drop a small piece on a larger one and it rides along. Drop it elsewhere to free it.
-- **Holding:** any piece can hold others off the table, as a bag does. Select the pieces and the holder, right-click
-  the holder → **Put the others into** it; hover shows how many it holds, and its card lists them under **Take
-  out**. A held piece keeps everything it had and comes back where you put it.
+- **Holding:** a piece that holds pieces keeps them off the table, as a bag does. Hold pieces over it a moment: a
+  ring fills round it and they sink towards it; let go then and they go in, or move off first to keep them out. Pieces
+  dropped on its window go in too. Right-click → **Open** shows what it holds beside the piece, until it leaves the
+  view: drag one out onto the table, double-click to set it beside, **Take all out** for a row. Right-click →
+  **Holds pieces** switches it on or off for any piece; the piece studio's **Holds pieces** sets where a kind starts,
+  and the box, chest and crate of Firme's Effects and Props start on. A held piece keeps everything it had.
 - **Locked:** right-click → **Locked** pins a piece: it can be read and deleted, not moved.
 - **Tint:** right-click → **Tint** colours every selected piece: a swatch, **+** for any colour, **Reset** for the
   colour it was made with. Where it shows follows the module: a token's picture, a tile's sides; decals keep their colours.

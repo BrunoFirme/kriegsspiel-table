@@ -34,6 +34,12 @@ sealed partial class StudioTools
             Args.Schema(new Arg("id", "string", "the kind's id", true), new Arg("face", "string", "front (default), back, s1, s1b…"), new Arg("doc", "object", "the face's layers, as studio_read_face gives them", true),
                 new Arg("also", "array", "more faces to draw the same way: keys (s1, s2b…), or \"every look\" for this side of every look")),
             WriteFace);
+        yield return new AgentTool("studio_picture_size",
+            "Sets a face's picture size in pixels, as Picture size… does: scale stretches every layer with it, otherwise the layers keep their size and the picture grows or is cut round the middle. A face two units wide looks crisp at 512 px; close-up screenshots want 1024 or more.",
+            Args.Schema(new Arg("id", "string", "the kind's id", true), new Arg("face", "string", "front (default), back, s1, s1b…"),
+                new Arg("width", "number", $"pixels ({StudioCanvas.SmallestSide}–{StudioCanvas.LargestSide})", true), new Arg("height", "number", $"pixels ({StudioCanvas.SmallestSide}–{StudioCanvas.LargestSide})", true),
+                new Arg("scale", "boolean", "stretch the layers with it (true if left out)")),
+            PictureSize);
         yield return new AgentTool("studio_add_picture_source",
             "Copies a picture file into the pack so an image layer can show it; returns the Src name and its size in pixels.",
             Args.Schema(new Arg("path", "string", "full path or web link of a picture file", true)),
@@ -83,6 +89,23 @@ sealed partial class StudioTools
         if (s.View == "paint" && s.Faces.Stale(s.Sel, s.FaceKey)) s.OpenFace(s.FaceKey);
         var copies = more.Count > 0 ? $", and the same on {string.Join(", ", more)}" : "";
         return new ToolResult($"Drew {d.Name} · {f.Label} ({doc.W}×{doc.H} px, {doc.Layers.Count} layers){copies}.", false, Pictures(FacePng(s, sha)));
+    });
+
+    Task<ToolResult> PictureSize(JsonElement a) => Change(a, "changed a face's picture size", async (s, d) =>
+    {
+        if (FaceOf(d, a) is not { } f) return ToolResult.Fail($"{d.Name} has the faces {string.Join(", ", PieceFaces.Of(d).Select(x => x.Key))}.");
+        if (PieceFaces.IsShapeFace(f.Key)) return ToolResult.Fail("A model's shape faces are painted in the 3D view (studio_steps).");
+        if (a.Num("width") is not { } w || a.Num("height") is not { } h) return ToolResult.Fail("width and height are needed, in pixels.");
+        int nw = (int)Math.Round(w), nh = (int)Math.Round(h);
+        if (nw < StudioCanvas.SmallestSide || nh < StudioCanvas.SmallestSide || nw > StudioCanvas.LargestSide || nh > StudioCanvas.LargestSide)
+            return ToolResult.Fail($"width and height are {StudioCanvas.SmallestSide} to {StudioCanvas.LargestSide} px.");
+        string? note = null;
+        var doc = ArtStore.Load(s.Store, s.Pack.Id, f.Sha) ?? s.DocForPicture(d, f, out note);
+        var was = $"{doc.W}×{doc.H}";
+        StudioCanvas.Resize(doc, nw, nh, a.Flag("scale") != false);
+        var sha = await s.Faces.Write(d, f.Key, doc);
+        if (s.View == "paint" && s.Faces.Stale(s.Sel, s.FaceKey)) s.OpenFace(s.FaceKey);
+        return new ToolResult($"{d.Name} · {f.Label} ({f.Key}) is {nw}×{nh} px, was {was}{(note != null ? " · " + note : "")}.", false, Pictures(FacePng(s, sha)));
     });
 
     static string? Problem(PieceStudio s, ArtDoc doc)

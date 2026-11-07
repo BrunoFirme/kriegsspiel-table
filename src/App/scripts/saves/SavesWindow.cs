@@ -895,7 +895,7 @@ sealed partial class SavesWindow : Window
         });
     }
 
-    static (GameState, List<TurnRecord>) ScenarioStart(PackageStore store, string dir, TurnRecord? firstTurn)
+    internal static (GameState, List<TurnRecord>) ScenarioStart(PackageStore store, string dir, TurnRecord? firstTurn)
     {
         var file = System.IO.Path.Combine(store.Root, "scenarios", dir, "scenario.json");
         if (ScenarioFiles.StartPath(store, dir) is { } start && ScenarioFiles.TryLoad(start) is { } kept) return (GameState.FromScenario(kept), new());

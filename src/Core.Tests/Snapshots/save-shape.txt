@@ -1,4 +1,4 @@
-format 24
+format 25
 type AccessChanged object
   access: GameAccess
 type AddBoard object
@@ -545,6 +545,7 @@ type PieceDef object
   back: string
   counters: List<CounterDef>
   effect: EffectDef
+  holds: bool
   id: string
   image: string
   kind: string
@@ -573,6 +574,7 @@ type PieceInstance object
   drawnOnState: int
   faceDown: bool
   guid: string
+  holds: bool?
   id: string
   label: string
   lines: List<LineDef>
@@ -907,6 +909,7 @@ type SetPieceOption object
   actor: long
   at: long
   id: string
+  inherit: bool
   layer: string
   name: string
   seq: long

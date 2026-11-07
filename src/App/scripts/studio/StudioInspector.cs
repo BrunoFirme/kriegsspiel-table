@@ -188,6 +188,10 @@ internal sealed class PieceTab
         tags.TextSubmitted += _ => CommitTags();
         tags.FocusExited += CommitTags;
         g.AddChild(tags);
+        g.AddChild(new Label());
+        var holds = new CheckBox { Text = "Holds pieces", ButtonPressed = d.Holds, TooltipText = "Pieces held over it a moment go inside, as into a bag; each piece at the table can still be switched" };
+        holds.Toggled += on => Apply(x => x.Holds = on, "whether it holds pieces");
+        g.AddChild(holds);
         Ui.AlignForm(g);
     }
 

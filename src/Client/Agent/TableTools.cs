@@ -68,8 +68,10 @@ public sealed partial class TableTools
             "Moves or turns a piece on the table. One undoable change.",
             Args.Schema(new Arg("id", "string", "the piece's id", true), new Arg("x", "number", "map units"), new Arg("z", "number", "map units"), new Arg("turn", "number", "degrees")), MovePiece);
         yield return new AgentTool("set_piece_values",
-            "Sets a piece's own name, its umpires' note, its kind, its look (state number from 1), its counters and its text lines, each as the table's own commands (undoable).",
-            Args.Schema(new Arg("id", "string", "the piece's id", true), new Arg("label", "string", "its own name; empty clears it"), new Arg("note", "string", "the umpires' note on it; empty clears it"),
+            "Sets a piece's own name, its description, its tags, its kind, its look (state number from 1), its counters and its text lines, each as the table's own commands (undoable).",
+            Args.Schema(new Arg("id", "string", "the piece's id", true), new Arg("label", "string", "its own name; empty clears it"),
+                new Arg("note", "string", "its description, shown on hover to everyone at the table, observers included; empty clears it"),
+                new Arg("tags", "array", "its own tags, replacing those it has; [] clears them (scripts read them)"),
                 new Arg("kind", "string", "another kind's id (list_kinds) to turn it into, keeping its place"), new Arg("state", "number", "look number from 1"),
                 new Arg("counters", "object", "counter name to a whole number"), new Arg("text", "object", "text line name to its text")), SetValues);
         yield return new AgentTool("stow_pieces",
@@ -85,6 +87,9 @@ public sealed partial class TableTools
         yield return new AgentTool("undo",
             "Undoes the last change made from this seat at the table (the agent's or the person's own, as Ctrl+Z does).",
             Args.Schema(), Undo);
+        yield return new AgentTool("redo",
+            "Does again the last change undone from this seat (as Ctrl+Y does); a new change after an undo clears what can be redone.",
+            Args.Schema(), Redo);
         foreach (var t in GameTools()) yield return t;
         foreach (var t in DrawingTools()) yield return t;
     }
@@ -157,7 +162,8 @@ public sealed partial class TableTools
         var sent = new List<string>();
         var problems = new List<string>();
         if (a.Str("label") is { } label) { s.Do(new SetLabel { Layer = Layers.Umpire, Id = id, Value = label.Length == 0 ? null : label }); sent.Add("name"); }
-        if (a.Str("note") is { } note) { s.Do(new SetNote { Layer = Layers.Umpire, Id = id, Value = note.Length == 0 ? null : note }); sent.Add("note"); }
+        if (a.Str("note") is { } note) { s.Do(new SetNote { Layer = Layers.Umpire, Id = id, Value = note.Length == 0 ? null : note }); sent.Add("description"); }
+        if (a.Words("tags") is { } tags) { s.Do(new SetTags { Layer = Layers.Umpire, Id = id, Tags = tags.Count == 0 ? null : tags }); sent.Add("tags"); }
         if (a.Str("kind") is { Length: > 0 } kind && kind != p.Def)
         {
             if (s.Def(kind) is not { } other) problems.Add($"no kind {kind} in this game's packs (list_kinds)");
@@ -257,6 +263,17 @@ public sealed partial class TableTools
         await Landed(s);
         _log("undid the last change");
         return new ToolResult("Undone.");
+    }
+
+    async Task<ToolResult> Redo(JsonElement a)
+    {
+        if (Open(out var why) is not { } s) return why!;
+        if (!CanChange(s, out why)) return why!;
+        if (s.MyRedoable.Count == 0) return ToolResult.Fail("Nothing undone from this seat to redo.");
+        s.RedoLast();
+        await Landed(s);
+        _log("redid the last change undone");
+        return new ToolResult("Redone.");
     }
 
     ClientSession? Open(out ToolResult? why)

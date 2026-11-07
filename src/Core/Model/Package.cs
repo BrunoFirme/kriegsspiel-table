@@ -155,6 +155,7 @@ public sealed class PieceDef
     public double Thickness { get; set; } = 0.2;
     public string Tint { get; set; } = "#FFFFFF";
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool TintsPictures { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool Holds { get; set; }
     public List<string> Tags { get; set; } = new();
     public List<PieceStateDef> States { get; set; } = new();
     public List<CounterDef> Counters { get; set; } = new();
@@ -341,12 +342,15 @@ public sealed class PieceInstance
     public int? DecalsOnState { get; set; }
     public List<UiNode> Ui { get; set; } = new();
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<PieceInstance>? Stowed { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public bool? Holds { get; set; }
+
+    public bool HoldsPieces(PieceDef? def) => Holds ?? (def?.Holds == true || Stowed is { Count: > 0 });
 
     public PieceInstance Clone() => new()
     {
         Id = Id, Def = Def, Pos = Pos, RotDeg = RotDeg, Stack = Stack, State = State,
         Counters = new(Counters), Text = new(Text), Attached = new(Attached),
-        TintOverride = TintOverride, Label = Label, Scale = Scale, Y = Y, FaceDown = FaceDown, Note = Note, Locked = Locked,
+        TintOverride = TintOverride, Label = Label, Scale = Scale, Y = Y, FaceDown = FaceDown, Note = Note, Locked = Locked, NoCollision = NoCollision, PhysicalRoll = PhysicalRoll, Holds = Holds,
         Script = Script, ScriptState = ScriptState, Guid = Guid, Tags = Tags == null ? null : new(Tags), Memo = Memo,
         Widgets = Widgets.Select(w => w.Clone()).ToList(), DrawnOnState = DrawnOnState, MenuItems = MenuItems.Select(m => m.Clone()).ToList(),
         Lines = Lines.Select(l => l.Clone()).ToList(), Decals = Decals.Select(d => d.Clone()).ToList(), DecalsOnState = DecalsOnState,

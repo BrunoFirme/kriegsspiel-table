@@ -105,23 +105,11 @@ sealed class MenuCards : HudPart
         }
     }
 
-    void TakeOutRows(MenuCard menu, PieceNode hit)
+    void HolderRows(MenuCard menu, PieceNode hit)
     {
-        if (hit.Piece.Stowed is not { Count: > 0 } held) return;
-        const int RowsShown = 8;
-        const double Apart = 1.5;
-        menu.Separator($"Holds {held.Count}");
-        string NameOf(PieceInstance s) => s.Label is { Length: > 0 } lb ? lb : S.Store.Def(s.Def)?.Name ?? s.Def;
-        foreach (var s in held.Take(RowsShown))
-        {
-            var id = s.Id;
-            menu.Item($"Take out {NameOf(s)}", () => S.Do(new Unstow { Layer = hit.Layer, Holder = hit.Piece.Id, Id = id }));
-        }
-        if (held.Count > 1)
-            menu.Item($"Take out all {held.Count}", () => S.Do(new Batch
-            {
-                Items = held.Select((s, i) => (Command)new Unstow { Layer = hit.Layer, Holder = hit.Piece.Id, Id = s.Id, Pos = new Vec2(hit.Piece.Pos.X + 2 + i * Apart, hit.Piece.Pos.Z) }).ToList(),
-            }));
+        if (!hit.Piece.HoldsPieces(hit.Def) && hit.Piece.Stowed is not { Count: > 0 }) return;
+        int held = hit.Piece.Stowed?.Count ?? 0;
+        menu.Item(held > 0 ? $"Open {Short(hit)} ({held})…" : $"Open {Short(hit)}…", () => HolderWindow.Open(Ctx.Root, S, T, hit));
     }
 
     void SelectionRows(MenuCard menu, PieceNode hit, List<PieceNode> nodes)
@@ -136,14 +124,15 @@ sealed class MenuCards : HudPart
                 if (kids.Count == 0) return;
                 S.Do(new Batch { Items = kids.Select(n => (Command)new Attach { Layer = hit.Layer, Parent = hit.Piece.Id, Child = n.Piece.Id }).ToList() });
             });
-            menu.Item($"Put the others into {Short(hit)}", () =>
-            {
-                var others = nodes.Where(n => n != hit && n.Layer == hit.Layer).ToList();
-                if (others.Count == 0) return;
-                S.Do(new Batch { Items = others.Select(n => (Command)new Stow { Layer = hit.Layer, Holder = hit.Piece.Id, Id = n.Piece.Id }).ToList() });
-            });
+            if (hit.Piece.HoldsPieces(hit.Def))
+                menu.Item($"Put the others into {Short(hit)}", () =>
+                {
+                    var others = nodes.Where(n => n != hit && n.Layer == hit.Layer).ToList();
+                    if (others.Count == 0) return;
+                    S.Do(new Batch { Items = others.Select(n => (Command)new Stow { Layer = hit.Layer, Holder = hit.Piece.Id, Id = n.Piece.Id }).ToList() });
+                });
         }
-        TakeOutRows(menu, hit);
+        HolderRows(menu, hit);
         if (S.IsUmpire && nodes[0].Layer == Layers.Umpire) menu.Item("POV capture from here", () => T.SetTool(Tool.Sighting), "V");
         menu.Separator("Options");
         var pieces = _pieces();
@@ -157,6 +146,12 @@ sealed class MenuCards : HudPart
                 : new Batch { Items = nodes.Select(n => (Command)new SetLocked { Layer = n.Layer, Id = n.Piece.Id, Value = !allLocked }).ToList() }));
         bool allCollide = nodes.All(n => !n.Piece.NoCollision);
         menu.Check("Collides with other pieces", allCollide, () => SetOption(nodes, PieceOptions.NoCollision, allCollide));
+        var holders = nodes.Where(n => !n.IsDie && !n.IsEffect && S.CanTouch(n.Layer, n.Piece)).ToList();
+        if (holders.Count > 0)
+        {
+            bool allHold = holders.All(n => n.Piece.HoldsPieces(n.Def));
+            menu.Check("Holds pieces", allHold, () => SetOption(holders, PieceOptions.Holds, !allHold));
+        }
         var dice = nodes.Where(n => n.IsDie).ToList();
         if (dice.Count > 0)
         {
