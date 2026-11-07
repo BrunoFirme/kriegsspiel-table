@@ -9155,9 +9155,9 @@
   {
    "row": "save quirk: a number written as a string, or NaN",
    "status": "native",
-   "where": "ModuleObj.D falls back to the default and the report says so",
+   "where": "a number written as text reads as the game reads it; an object at NaN, or at the centre with no size, is left out as the game leaves it; a state saved with a NaN scale keeps the piece's own size, where the game destroys the piece on switching to it (decided by the user 2026-11-07)",
    "instead": "",
-   "held_by": "ConverterTests",
+   "held_by": "SaveFieldTests",
    "count": 55,
    "modules": 55,
    "audited": "SaveFieldTests.Module_values_written_as_text_numbers_or_flags_read_as_the_digital_tabletop_reads_them; SaveFieldTests.An_object_placed_where_no_number_is_or_at_the_centre_with_no_size_is_left_out_as_the_digital_tabletop_leaves_it; ConverterTests.A_piece_the_module_scales_by_something_that_is_not_a_number_still_comes_over_and_can_be_written"
