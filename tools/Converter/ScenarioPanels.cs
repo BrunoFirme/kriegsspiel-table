@@ -15,7 +15,6 @@ public sealed partial class ScenarioBuilder
         scenario.UiAssets = AssetsOf(master.UiAssetStates, extras, where);
         scenario.Ui = Panels(master.XmlUi, extras, $"{_cfg.Scenario.Id} Global panels", out var layout);
         scenario.UiLayout = layout;
-        scenario.UiLinks = _uiLinks;
     }
 
     List<UiAsset>? AssetsOf(List<(string Name, string Url, int Type)> assets, PackOut extras, string where)

@@ -40,9 +40,10 @@ static class PanelTests
         var quad = node.GetChildren().OfType<MeshInstance3D>().FirstOrDefault(m => m.Mesh is PlaneMesh pm && pm.Size.IsEqualApprox(new Vector2(0.4f, 0.2f)));
         Check.That(quad != null, "the panel is drawn on the piece");
         var plane = (PlaneMesh)quad!.Mesh;
-        Vector2 Screen(float across) => t.Table.Rig.Cam.UnprojectPosition(quad.GlobalTransform * new Vector3(across * plane.Size.X, 0, 0));
+        Vector2 Screen(float across, float up) => t.Table.Rig.Cam.UnprojectPosition(quad.GlobalTransform * new Vector3(across * plane.Size.X, 0, -up * plane.Size.Y));
+        const float ToggleBoxAbove = 32f / 200f;
 
-        await Click(r, Screen(-0.25f));
+        await Click(r, Screen(-0.25f, ToggleBoxAbove));
         var sent = t.Server.Log.SelectMany(c => c is KTable.Core.Protocol.Batch b ? b.Items : new() { c }).OfType<KTable.Core.Protocol.UiEvent>().ToList();
         Check.That(sent.Any(e => e.Event == "onValueChanged" && e.Value == "True" && e.Path is [0, 0]), "the toggle under the click tells the script it is on");
         Check.That(!sent.Any(e => e.Path is [0, 1]), "its neighbour is untouched");
@@ -75,5 +76,68 @@ static class PanelTests
         Check.Equal("3.14", PanelTyping.Valid("3.1.4x", "Decimal"), "decimals");
         Check.Equal("abc1", PanelTyping.Valid("a b-c1", "Alphanumeric"), "letters and digits");
         return Task.CompletedTask;
+    }
+
+    static Vector2 Middle(Control c) => c.GetGlobalRect().GetCenter();
+
+    static async Task Move(TestRunner r, Vector2 at, MouseButtonMask held = 0)
+    {
+        Input.ParseInputEvent(new InputEventMouseMotion { Position = at, GlobalPosition = at, ButtonMask = held });
+        await r.Frame();
+    }
+
+    [NodeTest]
+    static async Task Screen_panels_answer_clicks_hovers_ticks_slides_scrolls_drags_and_hide_animations_as_the_game_s_do(TestRunner r)
+    {
+        var t = OfflineTable.Make(r, pieces: 0);
+        await r.Frame();
+        const string Xml = """
+            <Panel id="box" width="600" height="400" color="#202020" allowDragging="true" hideAnimation="FadeOut" animationDuration="0.05">
+              <VerticalLayout padding="10 10 10 10" spacing="6">
+                <Button id="go" onClick="go" onMouseEnter="in" onMouseExit="out" textColor="#FFFFFF" fontSize="20" outline="#000000">Go <b>now</b></Button>
+                <Toggle id="tick" onValueChanged="ticked">Lock</Toggle>
+                <Slider id="slide" minValue="0" maxValue="10" onValueChanged="slid"/>
+                <ProgressBar percentage="40"/>
+                <VerticalScrollView id="list" preferredHeight="80"><VerticalLayout><Text>One</Text><Text>Two</Text></VerticalLayout></VerticalScrollView>
+              </VerticalLayout>
+            </Panel>
+            """;
+        var layout = KTable.Core.Panels.PanelBuild.Of(Xml).Layout;
+        var data = KTable.Core.Panels.PanelData.Parse(Xml)!;
+        t.Server.State.Ui = data;
+        t.Server.State.UiLayout = layout;
+        t.S.View.Ui = data.Select(n => n.Clone()).ToList();
+        t.S.View.UiLayout = layout.Clone();
+        var ui = new ScriptUi();
+        r.AddChild(ui);
+        ui.Bind(t.S, null!);
+        await r.Frames(2);
+        List<KTable.Core.Protocol.UiEvent> Sent() => t.Server.Log.SelectMany(c => c is KTable.Core.Protocol.Batch b ? b.Items : new() { c }).OfType<KTable.Core.Protocol.UiEvent>().ToList();
+        List<Control> Takers() => ui.FindChildren("*", "Control", true, false).OfType<Control>()
+            .Where(c => GodotObject.IsInstanceValid(c) && !c.IsQueuedForDeletion() && c.MouseFilter == Control.MouseFilterEnum.Stop && c.IsVisibleInTree()).ToList();
+        Check.That(Takers().Count >= 3, "the button, the toggle box and the slider take the pointer");
+        await Move(r, Middle(Takers()[0]));
+        await Click(r, Middle(Takers()[0]));
+        await Move(r, new Vector2(1, 1));
+        Check.That(Sent().Any(e => e.Event == "onClick" && e.Value == "-1" && e.Path is [0, 0, 0]), "the button's click reaches its function with the left pointer");
+        Check.That(Sent().Any(e => e.Event == "onMouseEnter") && Sent().Any(e => e.Event == "onMouseExit"), "and its pointer in and out");
+        for (int i = 1; i <= 3; i++)
+        {
+            await Click(r, Middle(Takers()[i]));
+            await r.Frames(2);
+        }
+        Check.That(Sent().Any(e => e.Event == "onValueChanged" && e.Value == "True" && e.Path is [0, 0, 1]), "the toggle tells its function it is on");
+        Check.That(Sent().Any(e => e.Event == "onValueChanged" && e.Path is [0, 0, 2]), "the slider tells its function where it was set");
+        var wheelAt = Middle(Takers().Last());
+        Input.ParseInputEvent(new InputEventMouseButton { ButtonIndex = MouseButton.WheelDown, Pressed = true, Position = wheelAt, GlobalPosition = wheelAt });
+        await r.Frame();
+        var hide = new KTable.Core.Protocol.SetUiAttributes { Id = "box", Kind = KTable.Core.Panels.PanelOps.Hide };
+        KTable.Core.Panels.PanelOps.Run(t.S.View.Ui, t.S.View.UiLayout, hide.Kind, hide.Id, new Dictionary<string, string>(), null);
+        ui.Applied(hide);
+        await r.Frames(2);
+        Check.That(ui.GetChildCount() > 0, "a hiding panel stays drawn while its fade runs");
+        await r.Frames(12);
+        Check.Equal(0, t.Errors.Count, string.Join("; ", t.Errors));
+        ui.QueueFree();
     }
 }

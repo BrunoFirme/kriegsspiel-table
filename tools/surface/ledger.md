@@ -13,10 +13,10 @@ every row that is not dropped must end audited, used by the corpus or not.
 | area | rows used by the corpus | decided | planned or unknown | not dropped, not audited | rows in all |
 |---|---|---|---|---|---|
 | types | 30 | 30 | 0 | 28 | 43 |
-| save | 150 | 150 | 0 | 127 | 302 |
-| object | 65 | 65 | 0 | 154 | 262 |
+| save | 150 | 150 | 0 | 123 | 302 |
+| object | 65 | 65 | 0 | 153 | 262 |
 | global | 14 | 14 | 0 | 38 | 55 |
-| namespaces | 23 | 23 | 0 | 46 | 180 |
+| namespaces | 23 | 23 | 0 | 29 | 180 |
 | events | 8 | 8 | 0 | 22 | 52 |
 | engine | 23 | 23 | 0 | 22 | 23 |
 
@@ -189,7 +189,7 @@ every row that is not dropped must end audited, used by the corpus or not.
 | `RigidbodyState.Mass` | 45 / 6 | dropped | engine physics |  |  |
 | `TextState.fontSize` | 26 / 6 | native | converter reads it |  |  |
 | `CustomMeshState.CastShadows` | 341 / 5 | native | the kind's Shadowless | ConverterTests.A_model_keeps_its_normal_map_and_whether_it_casts_a_shadow | ConverterTests.A_model_keeps_its_normal_map_and_whether_it_casts_a_shadow |
-| `ObjectState.CustomUIAssets` | 35 / 5 | native | a piece's own named panel pictures, over the save's | PanelImportTests |  |
+| `ObjectState.CustomUIAssets` | 35 / 5 | native | a piece's own named panel pictures, over the save's | PanelImportTests | FidelityTests.A_module_s_own_panels_and_a_piece_s_come_over_as_written_with_their_pictures_listed_in_order |
 | `CustomDiceState.Type` | 22 / 5 | native | converter reads it |  |  |
 | `RigidbodyState.UseGravity` | 14 / 5 | dropped | engine physics |  |  |
 | `LightingState.AmbientType` | 5 / 5 | dropped | lighting (decided 2026-11-06) |  |  |
@@ -208,7 +208,7 @@ every row that is not dropped must end audited, used by the corpus or not.
 | `ObjectState.MeasureMovement` | 15 / 3 | native | the piece option Shows how far it is moved: a line and the distance from where it was picked up while it is held; self.measures_moves and set_measures_moves | ModuleOptionsTests |  |
 | `GridState.Type` | 3 / 3 | dropped | grid (decided 2026-11-06) |  |  |
 | `MusicPlayerState.RepeatSong` | 3 / 3 | dropped | music and sound players (decided 2026-11-06) |  |  |
-| `SaveState.CustomUIAssets` | 3 / 3 | native | the pictures panels name, kept in the extras pack and named in the scenario (uiPictures) | PanelImportTests |  |
+| `SaveState.CustomUIAssets` | 3 / 3 | native | the pictures panels name, kept in the extras pack and named in the scenario (uiPictures) | PanelImportTests | FidelityTests.A_module_s_own_panels_and_a_piece_s_come_over_as_written_with_their_pictures_listed_in_order |
 | `ObjectState.GMNotes` | 117 / 2 | native | converter reads it |  |  |
 | `CustomTileState.Stackable` | 29 / 2 | native | a saved pile comes in as stacked copies; any piece piles on another here | converter |  |
 | `CustomPDFState.PDFPage` | 2 / 2 | native | the page it lies open at | BookTests |  |
@@ -336,7 +336,7 @@ every row that is not dropped must end audited, used by the corpus or not.
 | `ObjectState.SidewaysCard` | - | dropped | a card keeps its sheet's orientation |  |  |
 | `ObjectState.Tablet` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |  |
 | `ObjectState.Value` | - | native | a piece's worth (self.worth); the menu adds up the worth of what is chosen | WorthImportTests |  |
-| `ObjectState.XmlUI` | - | native | ScenarioPanels: a piece's own panels, drawn on it | PanelImportTests |  |
+| `ObjectState.XmlUI` | - | native | ScenarioPanels: a piece's own panels, drawn on it | PanelImportTests | FidelityTests.A_module_s_own_panels_and_a_piece_s_come_over_as_written_with_their_pictures_listed_in_order |
 | `ObjectState.miscID` | - | dropped | the engine's own bookkeeping |  |  |
 | `ObjectState.vector` | - | dropped | the engine's own bookkeeping |  |  |
 | `PhysicsMaterialState.BounceCombine` | - | dropped | engine physics |  |  |
@@ -348,7 +348,7 @@ every row that is not dropped must end audited, used by the corpus or not.
 | `SaveState.ObjectStates` | - | native | converter reads it |  |  |
 | `SaveState.Rules` | - | native | the scenario's briefing | DrawingTests |  |
 | `SaveState.SnapPoints` | - | dropped | snap points (decided 2026-11-06 with the grid) |  |  |
-| `SaveState.XmlUI` | - | native | ScenarioPanels: the save's own panels become the scenario's | PanelImportTests |  |
+| `SaveState.XmlUI` | - | native | ScenarioPanels: the save's own panels become the scenario's | PanelImportTests | FidelityTests.A_module_s_own_panels_and_a_piece_s_come_over_as_written_with_their_pictures_listed_in_order; FidelityTests.Panels_behind_an_xml_declaration_do_not_build_in_the_tabletop_and_come_over_empty |
 | `SnapPointState.Position` | - | dropped | snap points (grid, decided 2026-11-06) |  |  |
 | `SnapPointState.Rotation` | - | dropped | snap points (grid, decided 2026-11-06) |  |  |
 | `SnapPointState.Tags` | - | dropped | snap points (grid, decided 2026-11-06) |  |  |
@@ -491,7 +491,7 @@ every row that is not dropped must end audited, used by the corpus or not.
 | `TextTool.setFontColor` | - | compat | a module's 3D text comes over as live lettering on the piece (self.lettering / set_lettering), drawn in its size and colour; compat.text_tool answers the calls | BookNotesScriptTests |  |
 | `TextTool.setFontSize` | - | compat | a module's 3D text comes over as live lettering on the piece (self.lettering / set_lettering), drawn in its size and colour; compat.text_tool answers the calls | BookNotesScriptTests |  |
 | `TextTool.setValue` | - | compat | a module's 3D text comes over as live lettering on the piece (self.lettering / set_lettering), drawn in its size and colour; compat.text_tool answers the calls | BookNotesScriptTests |  |
-| `UI` | - | native | self.ui / obj.ui: the piece's own panels, the same calls as ui | PanelTests |  |
+| `UI` | - | native | self.ui / obj.ui: the piece's own panels, the same calls as ui | PanelTests | PanelTests.A_piece_s_panel_calls_its_own_script_only_and_reaches_the_global_one_through_global_slash; PanelTests.A_piece_carries_panels_of_its_own_and_undo_gives_back_the_element_as_it_was |
 | `Zone.getObjects` | - | dropped | scripting and layout zones (decided 2026-11-06) |  |  |
 | `addAttachment` | - | native | ObjectCall |  |  |
 | `addDecal` | - | compat | ObjectCall |  |  |
@@ -710,20 +710,20 @@ every row that is not dropped must end audited, used by the corpus or not.
 | `JSON.decode` | 11910 / 51 | native | json.encode / json.decode |  |  |
 | `Wait.frames` | 13927 / 27 | compat | compat.wait_* |  |  |
 | `Wait.time` | 5718 / 15 | compat | compat.wait_* |  |  |
-| `UI.setAttribute` | 19435 / 14 | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) |  |
+| `UI.setAttribute` | 19435 / 14 | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) | PanelTests.A_change_lands_when_the_call_ends_so_the_same_call_still_reads_the_old_value; PanelTests.A_change_to_an_element_only_the_new_panels_hold_is_refused_and_one_both_hold_lands_after_the_load; PanelTests.Booleans_and_numbers_given_to_an_element_become_the_words_the_tabletop_writes; PanelModelTests.Setting_the_class_attribute_changes_the_written_panels_only_and_warns; PanelModelTests.Setting_an_id_answers_to_the_new_id_and_no_longer_to_the_old |
 | `Wait.stop` | 4219 / 13 | compat | compat.wait_* |  |  |
-| `UI.setXmlTable` | 141 / 4 | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) |  |
+| `UI.setXmlTable` | 141 / 4 | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) | PanelTests.Panels_given_as_tables_must_be_a_list_and_their_booleans_are_written_in_lower_case; PanelTests.A_panel_table_without_end_is_refused_not_walked_for_ever |
 | `Wait.condition` | 138 / 3 | compat | compat.wait_* |  |  |
 | `Player.getPlayers` | 3 / 3 | dropped | the Player API (decided 2026-11-06) |  |  |
-| `UI.hide` | 1781 / 2 | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) |  |
-| `UI.show` | 1370 / 2 | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) |  |
+| `UI.hide` | 1781 / 2 | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) | PanelModelTests.Showing_inside_a_hidden_parent_turns_the_element_on_but_leaves_its_attribute_and_hiding_there_does_nothing; PanelSceneTests.A_show_or_hide_plays_the_element_s_own_animation_and_a_hiding_one_stays_drawn_until_it_ends |
+| `UI.show` | 1370 / 2 | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) | PanelModelTests.Showing_inside_a_hidden_parent_turns_the_element_on_but_leaves_its_attribute_and_hiding_there_does_nothing; PanelTests.A_piece_carries_panels_of_its_own_and_undo_gives_back_the_element_as_it_was; PanelSceneTests.A_show_or_hide_plays_the_element_s_own_animation_and_a_hiding_one_stays_drawn_until_it_ends |
 | `Global.getVar` | 411 / 2 | native | game.get_var |  |  |
 | `Global.setVar` | 274 / 2 | native | game.set_var |  |  |
-| `UI.getXml` | 137 / 2 | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) |  |
-| `UI.getXmlTable` | 137 / 2 | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) |  |
-| `UI.setXml` | 137 / 2 | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) |  |
+| `UI.getXml` | 137 / 2 | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) | PanelModelTests.The_written_panels_put_each_element_on_its_own_lines_with_doubled_indents; PanelModelTests.A_value_is_the_first_text_only_unless_the_element_holds_rich_text_whose_lone_spaces_between_tags_are_lost; PanelTests.Panels_land_on_the_next_frame_and_until_then_the_script_reads_the_old_ones |
+| `UI.getXmlTable` | 137 / 2 | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) | PanelTests.The_panels_as_tables_hold_tag_value_attributes_and_children_with_no_value_where_none_was_written |
+| `UI.setXml` | 137 / 2 | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) | PanelTests.Panels_land_on_the_next_frame_and_until_then_the_script_reads_the_old_ones; PanelTests.Panels_that_do_not_build_keep_the_old_ones_say_why_and_stay_loading; PanelTests.A_global_xml_set_with_pictures_takes_both_at_once; PanelTests.An_unknown_tag_and_a_class_set_as_an_attribute_are_named_in_the_chat; PanelModelTests.Defaults_reach_only_the_elements_that_close_after_them |
 | `Player.getColors` | 2 / 2 | dropped | the Player API (decided 2026-11-06) |  |  |
-| `UI.getAttribute` | 2 / 2 | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) |  |
+| `UI.getAttribute` | 2 / 2 | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) | PanelTests.Attributes_read_the_live_element_with_its_defaults_and_values_read_the_written_panels; PanelModelTests.Attribute_names_match_in_any_case_but_data_ids_match_exactly |
 | `Global.getVectorLines` | 3 / 1 | compat | compat.global_vector_lines: the lines the script last set | BoardDrawingTests |  |
 | `Global.setVectorLines` | 3 / 1 | compat | compat.set_global_vector_lines: strokes on the umpire's drawing board through board.draw | BoardDrawingTests |  |
 | `Physics.cast` | 1 / 1 | compat | compat.cast |  |  |
@@ -871,15 +871,15 @@ every row that is not dropped must end audited, used by the corpus or not.
 | `Turns.skip_empty_hands` | - | dropped | turns (decided 2026-11-06) |  |  |
 | `Turns.turn_color` | - | dropped | turns (decided 2026-11-06) |  |  |
 | `Turns.type` | - | dropped | turns (decided 2026-11-06) |  |  |
-| `UI.assetType` | - | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) |  |
-| `UI.getAttributes` | - | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) |  |
-| `UI.getCustomAssets` | - | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) |  |
-| `UI.getValue` | - | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) |  |
-| `UI.loading` | - | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) |  |
-| `UI.setAttributes` | - | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) |  |
-| `UI.setClass` | - | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) |  |
-| `UI.setCustomAssets` | - | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) |  |
-| `UI.setValue` | - | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) |  |
+| `UI.assetType` | - | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) | PanelTests.New_pictures_are_listed_at_once_and_build_the_panels_again_with_earlier_changes_landing_after |
+| `UI.getAttributes` | - | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) | PanelTests.Attributes_read_the_live_element_with_its_defaults_and_values_read_the_written_panels |
+| `UI.getCustomAssets` | - | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) | PanelTests.New_pictures_are_listed_at_once_and_build_the_panels_again_with_earlier_changes_landing_after |
+| `UI.getValue` | - | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) | PanelTests.Attributes_read_the_live_element_with_its_defaults_and_values_read_the_written_panels |
+| `UI.loading` | - | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) | PanelTests.Panels_land_on_the_next_frame_and_until_then_the_script_reads_the_old_ones; PanelTests.Panels_that_do_not_build_keep_the_old_ones_say_why_and_stay_loading; PanelTests.Module_ui_calls_and_player_dialogs_translate |
+| `UI.setAttributes` | - | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) | PanelTests.Booleans_and_numbers_given_to_an_element_become_the_words_the_tabletop_writes; PanelTests.A_piece_carries_panels_of_its_own_and_undo_gives_back_the_element_as_it_was |
+| `UI.setClass` | - | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) | PanelModelTests.A_new_class_brings_its_defaults_and_a_class_taken_away_gives_its_attributes_back |
+| `UI.setCustomAssets` | - | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) | PanelTests.New_pictures_are_listed_at_once_and_build_the_panels_again_with_earlier_changes_landing_after |
+| `UI.setValue` | - | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) | PanelModelTests.A_value_shows_on_a_text_element_only_and_leaves_its_text_attribute; PanelTests.New_pictures_are_listed_at_once_and_build_the_panels_again_with_earlier_changes_landing_after |
 | `Wait.stopAll` | - | compat | compat.wait_stop_all | ModuleHelpersTests |  |
 | `WebRequest.custom` | - | dropped | web requests (decided 2026-11-06) |  |  |
 | `WebRequest.delete` | - | dropped | web requests (decided 2026-11-06) |  |  |

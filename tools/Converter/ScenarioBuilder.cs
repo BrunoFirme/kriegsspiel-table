@@ -101,6 +101,7 @@ public sealed partial class ScenarioBuilder
         if (placedEffects.Values.Sum(p => p.Count) is var effectCount and > 0) _rep.Counts[$"{sc.Id}: effects placed as Firme's effects"] = effectCount.ToString();
 
         scenario.UmpireBoard = layers[0].Pieces;
+        scenario.UiLinks = _uiLinks.Count > 0 ? _uiLinks : null;
         scenario.Drawings["umpire"] = TableStrokes(master);
         AddDecals(master, scenario, extras, usedPacks);
         if (master.Rules.Trim().Length > 0) scenario.Briefing = master.Rules.Trim();
