@@ -44,7 +44,7 @@ public class ModuleEventTests
         t.Server.State.Find(U, P)!.Holds = true;
         Load(t, "", "function tryObjectEnterContainer(container, object) end", global: true);
         var kept = t.Server.Handle(Table.Host, new Stow { Layer = U, Holder = P, Id = Marker });
-        Assert.True(kept.Select(o => o.Message).OfType<ErrorMessage>().Any(e => e.Text.Contains("keeps " + Marker + " out")), string.Join(" / ", kept.Select(o => Json.Serialize(o.Message))) + " // " + string.Join(" / ", t.Server.Scripts.Console));
+        Assert.Contains(kept.Select(o => o.Message).OfType<ErrorMessage>(), e => e.Text.Contains("keeps " + Marker + " out"));
         Load(t, "", "function tryObjectEnterContainer(container, object) return true end", global: true);
         Assert.DoesNotContain(t.Server.Handle(Table.Host, new Stow { Layer = U, Holder = P, Id = Marker }), o => o.Message is ErrorMessage);
         Assert.Null(t.Server.State.Find(U, Marker));
