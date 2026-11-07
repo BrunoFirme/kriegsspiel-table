@@ -140,4 +140,59 @@ static class PanelTests
         Check.Equal(0, t.Errors.Count, string.Join("; ", t.Errors));
         ui.QueueFree();
     }
+
+    [NodeTest]
+    static async Task A_screen_field_takes_typing_in_place_its_dropdown_opens_the_game_s_list_and_an_accordion_section_opens_on_its_header(TestRunner r)
+    {
+        var t = OfflineTable.Make(r, pieces: 0);
+        await r.Frame();
+        const string Xml = """
+            <VerticalLayout id="col" width="400" height="500" spacing="10" childForceExpandHeight="false">
+              <InputField id="name" preferredHeight="30" onValueChanged="typed" onEndEdit="done"/>
+              <Dropdown id="pick" preferredHeight="30" onValueChanged="picked"><Option>Red</Option><Option>Blue</Option></Dropdown>
+              <Accordion id="acc" preferredHeight="300"><AccordionSection id="sec"><AccordionSectionHeader id="head"/>
+                <AccordionSectionContent><Text>Inside</Text></AccordionSectionContent></AccordionSection></Accordion>
+            </VerticalLayout>
+            """;
+        var layout = KTable.Core.Panels.PanelBuild.Of(Xml).Layout;
+        var data = KTable.Core.Panels.PanelData.Parse(Xml)!;
+        t.Server.State.Ui = data;
+        t.Server.State.UiLayout = layout;
+        t.S.View.Ui = data.Select(n => n.Clone()).ToList();
+        t.S.View.UiLayout = layout.Clone();
+        var ui = new ScriptUi();
+        r.AddChild(ui);
+        ui.Bind(t.S, null!);
+        await r.Frames(2);
+        List<KTable.Core.Protocol.UiEvent> Sent() => t.Server.Log.SelectMany(c => c is KTable.Core.Protocol.Batch b ? b.Items : new() { c }).OfType<KTable.Core.Protocol.UiEvent>().ToList();
+        List<Control> Takers() => ui.FindChildren("*", "Control", true, false).OfType<Control>()
+            .Where(c => GodotObject.IsInstanceValid(c) && !c.IsQueuedForDeletion() && c.MouseFilter == Control.MouseFilterEnum.Stop && c.IsVisibleInTree()).ToList();
+        var field = Takers()[0];
+        await Click(r, Middle(field));
+        await r.Frames(2);
+        var editor = ui.FindChildren("*", "LineEdit", true, false).OfType<LineEdit>().FirstOrDefault(e => GodotObject.IsInstanceValid(e) && !e.IsQueuedForDeletion());
+        Check.That(editor != null && editor.HasFocus(), "a click on the field puts a caret in it, in the panel itself");
+        editor!.InsertTextAtCaret("Ney");
+        await r.Frames(2);
+        Check.That(Sent().Any(e => e.Event == "onValueChanged" && e.Value == "Ney"), "each change tells the script the text so far");
+        Input.ParseInputEvent(new InputEventKey { Keycode = Key.Enter, Pressed = true });
+        await r.Frames(3);
+        Check.That(Sent().Any(e => e.Event == "onEndEdit" && e.Value == "Ney"), "Enter ends the typing and says the text");
+        var dropdown = Takers().First(c => c.GetGlobalRect().Position.Y > field.GetGlobalRect().End.Y + 1);
+        await Click(r, Middle(dropdown));
+        await r.Frames(3);
+        var rows = Takers().Where(c => c.GetGlobalRect().Position.Y >= dropdown.GetGlobalRect().End.Y - 3 && c.Size.Y >= 29 && c.Size.Y <= 31).ToList();
+        Check.That(rows.Count >= 2, "the dropdown opens its list of thirty-high rows under itself");
+        await Click(r, Middle(rows.OrderBy(c => c.GetGlobalRect().Position.Y).ElementAt(1)));
+        await r.Frames(3);
+        Check.That(Sent().Any(e => e.Event == "onValueChanged" && e.Path is [0, 1] && e.Value == "1"), "a row picked tells the script its place");
+        var header = Takers().OrderBy(c => c.GetGlobalRect().Position.Y).Last(c => Mathf.IsEqualApprox(c.Size.Y, 64));
+        var before = header.GetParentControl()!.Size.Y;
+        await Click(r, Middle(header));
+        await r.Frames(30);
+        var opened = Takers().OrderBy(c => c.GetGlobalRect().Position.Y).Last(c => Mathf.IsEqualApprox(c.Size.Y, 64)).GetParentControl()!.Size.Y;
+        Check.That(Mathf.Abs(opened - before - 128) < 0.5f, $"the section grows by its content height once open ({before} to {opened})");
+        Check.Equal(0, t.Errors.Count, string.Join("; ", t.Errors));
+        ui.QueueFree();
+    }
 }
