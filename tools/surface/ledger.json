@@ -440,7 +440,7 @@
    "held_by": "",
    "count": 107489,
    "modules": 55,
-   "audited": "SaveFieldTests.An_object_saved_without_a_colour_keeps_the_colour_of_the_digital_tabletops_own_piece; SaveFieldTests.A_figurine_wears_its_colour_on_its_stand_only_and_its_card_grows_with_its_image_scalar_each_side_as_wide_as_its_own_picture; FidelityTests.A_tint_s_alpha_comes_over_so_a_helper_saved_invisible_stays_invisible; ConverterTests.A_checker_is_a_round_counter_in_its_module_colour"
+   "audited": "SaveFieldTests.An_object_saved_without_a_colour_keeps_the_colour_of_the_digital_tabletops_own_piece; SaveFieldTests.A_figurine_wears_its_colour_on_its_stand_only_and_its_card_grows_with_its_image_scalar_each_side_as_wide_as_its_own_picture; FidelityTests.A_tint_s_alpha_comes_over_so_a_helper_saved_invisible_stays_invisible; ConverterTests.A_checker_is_a_round_counter_in_its_module_colour; ModuleArtTests.A_tint_that_colours_only_a_pieces_edge_never_fades_its_pictures"
   },
   {
    "row": "ObjectState.Transform",
@@ -850,7 +850,7 @@
    "held_by": "converter",
    "count": 14063,
    "modules": 49,
-   "audited": "SaveFieldTests.A_tokens_outline_runs_through_the_centres_of_its_fully_opaque_pixels_as_the_game_cuts_it; SaveFieldTests.A_tokens_outline_merges_points_closer_than_its_merge_distance_and_keeps_each_island; SaveFieldTests.A_token_carries_the_games_outline_of_its_picture_cut_at_its_own_merge_distance"
+   "audited": "SaveFieldTests.A_tokens_outline_runs_through_the_centres_of_its_fully_opaque_pixels_as_the_game_cuts_it; SaveFieldTests.A_tokens_outline_merges_points_closer_than_its_merge_distance_and_keeps_each_island; SaveFieldTests.A_token_carries_the_games_outline_of_its_picture_cut_at_its_own_merge_distance; ModuleArtTests.A_tokens_saved_outline_is_walled_along_its_own_points_and_a_loop_of_fewer_than_three_is_left_out"
   },
   {
    "row": "CustomAssetbundleState.AssetbundleSecondaryURL",
@@ -1760,7 +1760,7 @@
    "held_by": "TableTopTests",
    "count": 22,
    "modules": 3,
-   "audited": "FidelityTests.A_tint_s_alpha_comes_over_so_a_helper_saved_invisible_stays_invisible; SaveFieldTests.Three_d_text_is_drawn_at_the_game_s_three_d_ui_scale_whatever_scale_the_module_saved_and_keeps_its_colour_s_alpha"
+   "audited": "FidelityTests.A_tint_s_alpha_comes_over_so_a_helper_saved_invisible_stays_invisible; SaveFieldTests.Three_d_text_is_drawn_at_the_game_s_three_d_ui_scale_whatever_scale_the_module_saved_and_keeps_its_colour_s_alpha; ModuleArtTests.A_tint_that_colours_only_a_pieces_edge_never_fades_its_pictures"
   },
   {
    "row": "ObjectState.MeasureMovement",
@@ -3440,7 +3440,7 @@
    "held_by": "DrawingTests",
    "count": 0,
    "modules": 0,
-   "audited": "SaveFieldTests.A_line_turns_by_its_saved_rotation_ends_round_unless_saved_square_and_a_line_of_no_thickness_draws_nothing"
+   "audited": "SaveFieldTests.A_line_turns_by_its_saved_rotation_ends_round_unless_saved_square_and_a_line_of_no_thickness_draws_nothing; ModuleArtTests.A_module_line_ends_round_when_asked_and_flat_otherwise"
   },
   {
    "row": "VectorLineState.thickness",
