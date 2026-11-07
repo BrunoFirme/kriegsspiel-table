@@ -26,7 +26,7 @@ public partial class ScriptUi : Control
         if (!IsInstanceValid(this) || _s == null) return;
         var size = GetViewportRect().Size;
         var b = new UiBuilder(Send, (id, ready) => UiBuilder.AssetTexture(_s, id, ready));
-        foreach (var n in _s.View.Ui)
+        foreach (var n in UiStyles.Styled(_s.View.Ui))
         {
             var c = b.Build(n, size);
             if (c == null) continue;

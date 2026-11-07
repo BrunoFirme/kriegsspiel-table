@@ -534,6 +534,7 @@ public class MalformedInputTests
     [InlineData("SetTint")]
     [InlineData("SetUi")]
     [InlineData("SetUiAttributes")]
+    [InlineData("SetUiPictures")]
     [InlineData("SetVisionRadius")]
     [InlineData("SetWidgets")]
     [InlineData("SetWind")]

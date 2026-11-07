@@ -87,6 +87,7 @@ public class RoleAndJoinTests
         yield return new SetDecals { Layer = layer, Id = "p-000004", Decals = { new DecalDef { Picture = "aa11" } } };
         yield return new SetUi { Tree = { new UiNode { Tag = "Text", Attributes = { ["id"] = "t", ["text"] = "x" } } } };
         yield return new SetUiAttributes { Id = "t", Attributes = { ["text"] = "y" } };
+        yield return new SetUiPictures { Pictures = { ["crest"] = "pic-crest" } };
         yield return new UiEvent { Id = "t", Event = "click", Value = "-1" };
         yield return new ShowDialog { Kind = "confirm", Title = "?", Text = "sure?", Token = "d-1" };
         yield return new DialogResult { Token = "d-1", Value = "True" };
@@ -101,7 +102,8 @@ public class RoleAndJoinTests
 
     static bool LeadsOnly(Command c) => c is SetZone or RemoveZone or SetGlobalScript or SetPointerRule or SetBriefing;
     static bool RuntimeOnly(Command c) =>
-        c is RestoreTurn or LoadSave or SetScriptState or SetGlobalScriptState or SetWidgets or SetMenuItems or SetUi or SetUiAttributes or ShowDialog or SetTags or SetMemo or SetHotkeys
+        c is RestoreTurn or LoadSave or SetScriptState or SetGlobalScriptState or SetWidgets or SetMenuItems or SetUi or SetUiAttributes or SetUiPictures or ShowDialog
+            or SetTags or SetMemo or SetHotkeys
             or SetGlobalMenuItems or SelectPiece;
 
     public static TheoryData<string, string> Cases()

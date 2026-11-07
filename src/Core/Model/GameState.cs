@@ -41,6 +41,7 @@ public sealed class GameState
     public string? Script { get; set; }
     public string ScriptState { get; set; } = "";
     public List<UiNode> Ui { get; set; } = new();
+    public Dictionary<string, string> UiPictures { get; set; } = new();
     public List<HotkeyDef> Hotkeys { get; set; } = new();
     public List<MenuItemDef> MenuItems { get; set; } = new();
 
@@ -79,6 +80,8 @@ public sealed class GameState
         s.Decals["umpire"] = DecalLayer(Model.Layers.Umpire).Select(d => d.Clone()).ToList();
         s.DecalPalette = DecalPalette.Select(d => d.Clone()).ToList();
         s.Boards = Boards.Select(b => b.Clone()).ToList();
+        s.Ui = Ui.Select(n => n.Clone()).ToList();
+        s.UiPictures = new(UiPictures);
         return s;
     }
 
@@ -98,6 +101,8 @@ public sealed class GameState
         g.Decals[Model.Layers.Umpire] = s.Decals.TryGetValue("umpire", out var d) ? d.Select(x => x.Clone()).ToList() : new();
         g.DecalPalette = s.DecalPalette.Select(x => x.Clone()).ToList();
         g.Boards = s.Boards.Select(b => b.Clone()).ToList();
+        g.Ui = (s.Ui ?? new()).Select(n => n.Clone()).ToList();
+        g.UiPictures = new(s.UiPictures ?? new());
         g.NextId = 1;
         g.EnsureNextId();
         g.EnsureBoard();
@@ -158,6 +163,7 @@ public sealed class GameState
         Script = s.Script;
         ScriptState = s.ScriptState;
         Ui = s.Ui;
+        UiPictures = s.UiPictures ?? new();
         Hotkeys = s.Hotkeys;
         MenuItems = s.MenuItems;
         NextId = Math.Max(NextId, s.NextId);

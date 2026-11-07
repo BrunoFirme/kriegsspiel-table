@@ -155,6 +155,7 @@ type Command abstract
   derived SetTint = SetTint
   derived SetUi = SetUi
   derived SetUiAttributes = SetUiAttributes
+  derived SetUiPictures = SetUiPictures
   derived SetVisionRadius = SetVisionRadius
   derived SetWidgets = SetWidgets
   derived SetWind = SetWind
@@ -328,6 +329,7 @@ type GameState object
   scriptState: string
   sheets: List<SheetDef>
   ui: List<UiNode>
+  uiPictures: Dictionary<string,string>
   visionRadius: double
   wind: Wind
   zones: List<Zone>
@@ -757,6 +759,8 @@ type Scenario object
   script: string
   scriptState: string
   sheets: List<SheetDef>
+  ui: List<UiNode>
+  uiPictures: Dictionary<string,string>
   umpireBoard: List<PieceInstance>
   visionRadius: double
   wind: Wind
@@ -1043,6 +1047,12 @@ type SetUiAttributes object
   id: string
   layer: string
   piece: string
+  seq: long
+  undoOf: long
+type SetUiPictures object
+  actor: long
+  at: long
+  pictures: Dictionary<string,string>
   seq: long
   undoOf: long
 type SetVisionRadius object

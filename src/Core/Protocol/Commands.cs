@@ -81,6 +81,7 @@ namespace KTable.Core.Protocol;
 [JsonDerivedType(typeof(SetDecals), "SetDecals")]
 [JsonDerivedType(typeof(SetUi), "SetUi")]
 [JsonDerivedType(typeof(SetUiAttributes), "SetUiAttributes")]
+[JsonDerivedType(typeof(SetUiPictures), "SetUiPictures")]
 [JsonDerivedType(typeof(UiEvent), "UiEvent")]
 [JsonDerivedType(typeof(ShowDialog), "ShowDialog")]
 [JsonDerivedType(typeof(DialogResult), "DialogResult")]
@@ -1003,6 +1004,16 @@ public sealed class SetUi : Command
     public List<UiNode> Tree { get; set; } = new();
     public string? Layer { get; set; }
     public string? Piece { get; set; }
+    public override Sender SentBy() => Sender.Runtime;
+    public override bool OnUndoStack() => true;
+    public override Shown ShownToObservers() => Shown.Table;
+    public override IEnumerable<(string Layer, string Id)> ZonePieces() => [];
+    public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [];
+    public override IEnumerable<string> ScriptsToReload() => [];
+}
+public sealed class SetUiPictures : Command
+{
+    public Dictionary<string, string> Pictures { get; set; } = new();
     public override Sender SentBy() => Sender.Runtime;
     public override bool OnUndoStack() => true;
     public override Shown ShownToObservers() => Shown.Table;

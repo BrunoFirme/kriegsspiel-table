@@ -472,6 +472,8 @@ function game.dialog(who, spec, fn) end
 function game.fetch_picture(link, fn) end
 
 ---@class KTUi
+---@field loading boolean false: panel pictures come with their packs.
+---@field assetType table { Image = 0, AssetBundle = 1 }, as module scripts name picture types.
 ui = {}
 
 ---Replaces the panels: XML (several roots allowed) or tables { tag =, attributes = {}, children = {}, value = }.
@@ -525,6 +527,26 @@ function ui.set_value(id, value) end
 ---@param id string The element's id.
 ---@return string|nil
 function ui.get_value(id) end
+
+---Every attribute of an element, or nil.
+---@param id string The element's id.
+---@return table|nil
+function ui.get_attributes(id) end
+
+---Sets an element's classes, which take their looks from the Defaults the panels hold.
+---@param id string The element's id.
+---@param classes string Class names, separated by spaces.
+---@return boolean # true when the element exists.
+function ui.set_class(id, classes) end
+
+---The pictures panels name: a list of { name =, url =, type = }.
+---@return table
+function ui.pictures() end
+
+---Replaces the pictures panels name. An image attribute holding a name shows that picture.
+---@param list table { name =, url = } entries; url is a picture of a pack.
+---@return boolean
+function ui.set_pictures(list) end
 
 ---@class KTWait
 wait = {}

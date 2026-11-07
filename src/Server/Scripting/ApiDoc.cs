@@ -780,6 +780,25 @@ public static partial class ApiDoc
         M("ui", "get_value(id)", "Reads an element's value.", "UI.getValue", "string?");
         P("id", "string", "The element's id.");
         See("ui.set_value");
+
+        M("ui", "get_attributes(id)", "Every attribute of an element, or nil.", "UI.getAttributes", "table?");
+        P("id", "string", "The element's id.");
+        See("ui.get_attribute");
+
+        M("ui", "set_class(id, classes)", "Sets an element's classes, which take their looks from the Defaults the panels hold.", "UI.setClass", "boolean");
+        P("id", "string", "The element's id.");
+        P("classes", "string", "Class names, separated by spaces.");
+        R("true when the element exists.");
+
+        M("ui", "pictures()", "The pictures panels name: a list of { name =, url =, type = }.", "UI.getCustomAssets", "table");
+        See("ui.set_pictures");
+
+        M("ui", "set_pictures(list)", "Replaces the pictures panels name. An `image` attribute holding a name shows that picture.", "UI.setCustomAssets", "boolean");
+        P("list", "table", "{ name =, url = } entries; url is a picture of a pack.");
+        See("ui.pictures");
+
+        F("ui", "loading", "boolean", "false: panel pictures come with their packs.", "UI.loading");
+        F("ui", "assetType", "table", "{ Image = 0, AssetBundle = 1 }, as module scripts name picture types.", "UI.assetType");
     });
 
     static ApiSection Wait() => Section("wait", "Timers are not saved: a script that must go on after a reload starts its timers again in on_load. A timer belongs to the script that made it and stops with it.", () =>

@@ -93,6 +93,7 @@ public static class StateMachine
                 return null;
             case SetUi su: return ApplySetUi(g, su, ref inverse);
             case SetUiAttributes sua: return ApplySetUiAttributes(g, sua, ref inverse);
+            case SetUiPictures sup: return ApplySetUiPictures(g, sup, ref inverse);
             case UiEvent ue: return ApplyUiEvent(g, ue);
             case ShowDialog or DialogResult:
                 return null;
@@ -944,6 +945,13 @@ public static class StateMachine
         return null;
     }
 
+    static string? ApplySetUiPictures(GameState g, SetUiPictures sup, ref Command? inverse)
+    {
+        inverse = new SetUiPictures { Pictures = new(g.UiPictures) };
+        g.UiPictures = new(sup.Pictures);
+        return null;
+    }
+
     static string? ApplySetUiAttributes(GameState g, SetUiAttributes sua, ref Command? inverse)
     {
         var node = g.UiNode(sua.Layer, sua.Piece, sua.Id);
@@ -960,7 +968,7 @@ public static class StateMachine
         if (node == null) return "no such element";
         if (ue.Event is "end" or "change")
         {
-            var key = node.Tag switch { "Toggle" => "isOn", "Slider" or "ProgressBar" => "value", "Dropdown" => "value", _ => "text" };
+            var key = node.Tag switch { "Toggle" or "ToggleButton" => "isOn", "Slider" or "ProgressBar" => "value", "Dropdown" => "value", _ => "text" };
             node.Attributes[key] = ue.Value;
         }
         return null;

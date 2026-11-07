@@ -20,6 +20,12 @@ public sealed class ModuleObj
     public string Description => S(J["Description"]) ?? "";
     public string LuaState => S(J["LuaScriptState"]) ?? "";
     public string Memo => S(J["Memo"]) ?? "";
+    public string XmlUi => S(J["XmlUI"]) ?? "";
+    public List<(string Name, string Url)> UiAssets => UiAssetsOf(J["CustomUIAssets"]);
+
+    public static List<(string Name, string Url)> UiAssetsOf(JsonNode? node) => (node as JsonArray)?.OfType<JsonObject>()
+        .Where(a => I(a, "Type") == 0 && Blank(S(a["Name"])) != null && Blank(S(a["URL"])) != null)
+        .Select(a => (Blank(S(a["Name"]))!, Blank(S(a["URL"]))!)).ToList() ?? new();
     public List<string> Tags => (J["Tags"] as JsonArray)?.Select(t => S(t) ?? "").Where(t => t.Length > 0).ToList() ?? new();
 
     JsonObject? T => J["Transform"] as JsonObject;
@@ -190,6 +196,7 @@ public sealed class ModuleObj
     {
         foreach (var u in new[] { ImageUrl, BackUrl, MeshUrl, DiffuseUrl, BundleUrl, PdfUrl }) if (u != null) yield return u;
         foreach (var d in Decals) yield return d.Url;
+        foreach (var a in UiAssets) yield return a.Url;
         foreach (var s in CardSheets.Values)
         {
             yield return s.FaceUrl;
@@ -240,6 +247,8 @@ public sealed class ModuleSave
     public List<ModuleObj.Line> VectorLines { get; init; } = new();
     public List<ModuleObj.Decal> TableDecals { get; init; } = new();
     public List<ModuleObj.PaletteEntry> DecalPalette { get; init; } = new();
+    public string XmlUi { get; init; } = "";
+    public List<(string Name, string Url)> UiAssets { get; init; } = new();
 
     public static ModuleSave Load(Config cfg, string workshopIdOrPath)
     {
@@ -263,6 +272,8 @@ public sealed class ModuleSave
             VectorLines = ModuleObj.LinesOf(root["VectorLines"]),
             TableDecals = ModuleObj.DecalsOf(root["Decals"]),
             DecalPalette = ModuleObj.PaletteOf(root["DecalPallet"]),
+            XmlUi = root["XmlUI"] is JsonValue x && x.TryGetValue<string>(out var xml) ? xml : "",
+            UiAssets = ModuleObj.UiAssetsOf(root["CustomUIAssets"]),
         };
     }
 }

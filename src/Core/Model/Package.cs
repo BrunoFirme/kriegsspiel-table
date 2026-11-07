@@ -561,6 +561,8 @@ public sealed class Scenario : IJsonOnDeserialized, IJsonOnSerializing
     public List<PaletteDecal> DecalPalette { get; set; } = new();
     public string? Script { get; set; }
     public string ScriptState { get; set; } = "";
+    public List<UiNode> Ui { get; set; } = new();
+    public Dictionary<string, string> UiPictures { get; set; } = new();
 
     void IJsonOnDeserialized.OnDeserialized() => ContentVersions.Check("scenario", Name is { Length: > 0 } ? Name : Id ?? "", Format, CurrentFormat, ApiVersion);
     void IJsonOnSerializing.OnSerializing() { Format = CurrentFormat; ApiVersion = ScriptApi.Version; }

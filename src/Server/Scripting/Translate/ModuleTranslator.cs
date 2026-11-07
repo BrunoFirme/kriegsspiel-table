@@ -252,7 +252,8 @@ public static class ModuleTranslator
                 var mapped = name switch
                 {
                     "setXml" or "setXmlTable" => "set", "getXml" => "xml", "getXmlTable" => "tree", "setAttribute" => "set_attribute", "setAttributes" => "set_attributes",
-                    "getAttribute" => "get_attribute", "show" => "show", "hide" => "hide", "setValue" => "set_value", "getValue" => "get_value", _ => null,
+                    "getAttribute" => "get_attribute", "show" => "show", "hide" => "hide", "setValue" => "set_value", "getValue" => "get_value",
+                    "getAttributes" => "get_attributes", "setClass" => "set_class", "getCustomAssets" => "pictures", "setCustomAssets" => "set_pictures", _ => null,
                 };
                 return mapped != null ? Direct($"{obj}.ui.{mapped}({All()})", node) : Todo("object UI." + name, $"compat.todo({obj}, \"UI.{name}\")", node);
             }
@@ -322,6 +323,10 @@ public static class ModuleTranslator
                         "hide" => Direct($"ui.hide({All()})", node),
                         "setValue" => Direct($"ui.set_value({All()})", node),
                         "getValue" => Direct($"ui.get_value({All()})", node),
+                        "getAttributes" => Direct($"ui.get_attributes({All()})", node),
+                        "setClass" => Direct($"ui.set_class({All()})", node),
+                        "getCustomAssets" => Direct("ui.pictures()", node),
+                        "setCustomAssets" => Direct($"ui.set_pictures({All()})", node),
                         _ => Todo("UI." + name, $"compat.todo(nil, \"UI.{name}\")", node),
                     };
                 case "Turns" or "Notes" or "Lighting" or "Grid" or "Hands" or "MusicPlayer" or "Backgrounds" or "Timer":
@@ -514,7 +519,9 @@ public static class ModuleTranslator
                 case "Vector" or "Color": return Compat($"compat.{recv}.{name}", node);
                 case "Time" or "Lighting" or "Grid" or "Hands" or "Notes" or "MusicPlayer" or "Backgrounds": return Compat($"compat.{recv}.{name}", node);
                 case "JSON": return Direct($"json.{name}", node);
+                case "UI" or "Global.UI": return Direct($"ui.{name}", node);
             }
+            if (recv.EndsWith(".UI")) return Direct($"{recv[..^3]}.ui.{name}", node);
             name = FoldMember(name);
             switch (name)
             {

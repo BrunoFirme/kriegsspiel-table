@@ -2000,6 +2000,12 @@ Screen panels, written in XML. A piece's own panels (`self.ui`) take the same ca
 | [`ui.hide`](#uihide) | Hides an element (active = false). |
 | [`ui.set_value`](#uiset_value) | Sets an element's value: the text, a toggle's isOn, a slider's or dropdown's value. |
 | [`ui.get_value`](#uiget_value) | Reads an element's value. |
+| [`ui.get_attributes`](#uiget_attributes) | Every attribute of an element, or nil. |
+| [`ui.set_class`](#uiset_class) | Sets an element's classes, which take their looks from the Defaults the panels hold. |
+| [`ui.pictures`](#uipictures) | The pictures panels name: a list of { name =, url =, type = }. |
+| [`ui.set_pictures`](#uiset_pictures) | Replaces the pictures panels name. An `image` attribute holding a name shows that picture. |
+| [`ui.loading`](#uiloading) | false: panel pictures come with their packs. |
+| [`ui.assetType`](#uiassettype) | { Image = 0, AssetBundle = 1 }, as module scripts name picture types. |
 
 ### `ui.set`
 
@@ -2167,6 +2173,91 @@ Reads an element's value.
 **Returns** `string?`.
 
 **Module call** `UI.getValue` · **See also** [`ui.set_value`](#uiset_value)
+
+### `ui.get_attributes`
+
+```lua
+ui.get_attributes(id)
+```
+
+Every attribute of an element, or nil.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `id` | `string` | The element's id. |
+
+**Returns** `table?`.
+
+**Module call** `UI.getAttributes` · **See also** [`ui.get_attribute`](#uiget_attribute)
+
+### `ui.set_class`
+
+```lua
+ui.set_class(id, classes)
+```
+
+Sets an element's classes, which take their looks from the Defaults the panels hold.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `id` | `string` | The element's id. |
+| `classes` | `string` | Class names, separated by spaces. |
+
+**Returns** `boolean`: true when the element exists.
+
+**Module call** `UI.setClass`
+
+### `ui.pictures`
+
+```lua
+ui.pictures()
+```
+
+The pictures panels name: a list of { name =, url =, type = }.
+
+**Returns** `table`.
+
+**Module call** `UI.getCustomAssets` · **See also** [`ui.set_pictures`](#uiset_pictures)
+
+### `ui.set_pictures`
+
+```lua
+ui.set_pictures(list)
+```
+
+Replaces the pictures panels name. An `image` attribute holding a name shows that picture.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `list` | `table` | { name =, url = } entries; url is a picture of a pack. |
+
+**Returns** `boolean`.
+
+**Module call** `UI.setCustomAssets` · **See also** [`ui.pictures`](#uipictures)
+
+### `ui.loading`
+
+```lua
+ui.loading
+```
+
+false: panel pictures come with their packs.
+
+**Type** `boolean`, read-only.
+
+**Module call** `UI.loading`
+
+### `ui.assetType`
+
+```lua
+ui.assetType
+```
+
+{ Image = 0, AssetBundle = 1 }, as module scripts name picture types.
+
+**Type** `table`, read-only.
+
+**Module call** `UI.assetType`
 
 ## wait
 
@@ -3000,13 +3091,19 @@ The converter rewrites a module's scripts into these calls by rule; this is the 
 | `tryObjectEnterContainer` | [`try_stow`](#try_stow-global-script) |
 | `UI` | [`self.ui`](#selfui) |
 | `UI` | [`ui`](#ui) |
+| `UI.assetType` | [`ui.assetType`](#uiassettype) |
 | `UI.getAttribute` | [`ui.get_attribute`](#uiget_attribute) |
+| `UI.getAttributes` | [`ui.get_attributes`](#uiget_attributes) |
+| `UI.getCustomAssets` | [`ui.pictures`](#uipictures) |
 | `UI.getValue` | [`ui.get_value`](#uiget_value) |
 | `UI.getXml` | [`ui.xml`](#uixml) |
 | `UI.getXmlTable` | [`ui.tree`](#uitree) |
 | `UI.hide` | [`ui.hide`](#uihide) |
+| `UI.loading` | [`ui.loading`](#uiloading) |
 | `UI.setAttribute` | [`ui.set_attribute`](#uiset_attribute) |
 | `UI.setAttributes` | [`ui.set_attributes`](#uiset_attributes) |
+| `UI.setClass` | [`ui.set_class`](#uiset_class) |
+| `UI.setCustomAssets` | [`ui.set_pictures`](#uiset_pictures) |
 | `UI.setValue` | [`ui.set_value`](#uiset_value) |
 | `UI.setXml` | [`ui.set`](#uiset) |
 | `UI.show` | [`ui.show`](#uishow) |

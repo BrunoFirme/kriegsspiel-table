@@ -5,7 +5,7 @@ using KTable.Core.Model;
 
 namespace KTable.Converter;
 
-public sealed class ScenarioBuilder
+public sealed partial class ScenarioBuilder
 {
     readonly Config _cfg;
     readonly AssetStore _assets;
@@ -60,6 +60,7 @@ public sealed class ScenarioBuilder
             Clock = new GameClock { Turn = sc.Clock.Turn, GameTime = sc.Clock.GameTime, IncrementMinutes = sc.Clock.IncrementMinutes },
             Calibration = new Calibration { UnitsPerMeter = sc.UnitsPerMeter },
         };
+        ReadPanelPictures(master, scenario, extras);
         TranslateGlobal(scenario, master, extras);
         scenario.Lighting.Backdrop = Sky(master);
         var boardSet = AddSheets(scenario, master, pkgRel, pkgDir, oldScenario);
@@ -361,6 +362,7 @@ public sealed class ScenarioBuilder
             .OfType<string>().ToHashSet();
         usedAssets.UnionWith(pieces.SelectMany(p => p.Decals).Select(d => d.Picture));
         usedAssets.UnionWith(scenario.Decals.Values.SelectMany(l => l).Select(d => d.Picture).Concat(scenario.DecalPalette.Select(d => d.Picture)));
+        usedAssets.UnionWith(scenario.UiPictures.Values.Concat(PanelPictures(scenario.Ui)).Concat(pieces.SelectMany(p => PanelPictures(p.Ui))));
         usedAssets.UnionWith(extras.M.Assets.Keys.Where(k => !usedAssets.Contains(k) && texts.Any(t => t.Contains(k, StringComparison.Ordinal))));
         foreach (var k in extras.M.Assets.Keys.Where(k => !usedAssets.Contains(k)).ToList()) extras.M.Assets.Remove(k);
         extras.Save();
@@ -546,6 +548,7 @@ public sealed class ScenarioBuilder
             Tags = o.Tags, Memo = _defs.RewriteUrls(o.Memo, extras, $"{layer.Name} {o.Name} '{o.Nickname}' {o.Guid} memo"),
             Locked = parent == null && o.Locked, FaceDown = o.Flipped && def.Kind != "model" && def.Back != null, NotSticky = !o.Sticky,
             NotBoxSelected = !o.DragSelectable, MeasuresMoves = o.MeasureMovement,
+            Ui = ObjectPanels(o, extras, $"{layer.Name} {o.Name} '{o.Nickname}' {o.Guid}"),
         };
         if (lua.Trim().Length > 0)
         {

@@ -66,7 +66,7 @@
   "SaveState.Decals": ["native", "decals stamped on the table, lying over the ground on the umpire layer; the Decals tool stamps and lifts them", "", "DecalPaletteTests, StampToolTests"],
   "SaveState.VectorLines": ["native", "strokes on the umpire's drawing board", "", "DrawingTests"],
   "SaveState.SnapPoints": ["dropped", "snap points (decided 2026-11-06 with the grid)", "the table's own grid snaps"],
-  "SaveState.CustomUIAssets": ["partial", "pictures a run-time panel names: links in the XML are fetched, named assets are not", "put the picture's link in the panel's XML"],
+  "SaveState.CustomUIAssets": ["native", "the pictures panels name, kept in the extras pack and named in the scenario (uiPictures)", "", "PanelImportTests"],
   "ObjectState.ChildObjects": ["native", "ModuleSave.cs Children: attachments and glued parts", "", "import-sweep: triangles, richmond"],
   "ObjectState.ContainedObjects": ["native", "ScenarioBuilder.StowContents: a bag's contents become its stowed pieces, decks as their cards", "", "TablePiecesTests"],
   "ObjectState.AltLookAngle": ["dropped", "the alt-zoom angle", "nothing is needed"],
@@ -110,7 +110,7 @@
   "ObjectState.SidewaysCard": ["dropped", "a card keeps its sheet's orientation", "turn it at the table"],
   "ObjectState.DeckIDs": ["native", "ModuleSave.cs: a deck's cards by id", "", "import-sweep: naval"],
   "ObjectState.CardID": ["native", "ModuleSave.cs CardId", "", "import-sweep: naval"],
-  "ObjectState.CustomUIAssets": ["partial", "pictures a run-time panel names: links in the XML are fetched, named assets are not", "put the picture's link in the panel's XML"],
+  "ObjectState.CustomUIAssets": ["native", "a piece's own named panel pictures, over the save's", "", "PanelImportTests"],
   "CustomAssetState.*": ["partial", "pictures a run-time panel names: links in the XML are fetched, named assets are not", "put the picture's link in the panel's XML"],
   "ObjectState.Clock": ["dropped", "the tabletop's stock gadgets (decided 2026-11-06)", "a counter on a piece, the game clock, or a piece of our own"],
   "ClockState.*": ["dropped", "a stock gadget", "the game clock"],
@@ -183,8 +183,11 @@
   "CustomDeckState.NumHeight": ["native", "ModuleSave card sheets: each card cut from its own cell", "", "ConverterTests"],
   "CustomImageState.CustomFigurine": ["native", "Figurines.cs: the picture on a card in a round base", "", "FigurineTests"],
   "CustomFigurineState.UseMinimalCollider": ["dropped", "the engine's physics colliders", "nothing is needed"],
-  "SaveState.XmlUI": ["planned", "the save's own panels; the import reads them next", ""],
-  "ObjectState.XmlUI": ["planned", "a piece's own panels; the import reads them next", ""]
+  "SaveState.XmlUI": ["native", "ScenarioPanels: the save's own panels become the scenario's", "", "PanelImportTests"],
+  "ObjectState.XmlUI": ["native", "ScenarioPanels: a piece's own panels, drawn on it", "", "PanelImportTests"],
+  "CustomAssetState.Name": ["native", "the name an image attribute holds", "", "PanelImportTests"],
+  "CustomAssetState.URL": ["native", "fetched into the extras pack", "", "PanelImportTests"],
+  "CustomAssetState.Type": ["native", "pictures (type 0) come over; asset bundles hold fonts, which the app's own type replaces", "", "PanelImportTests"]
  },
  "object": {
   "addForce": ["dropped", "engine physics", "move the piece instead"],
@@ -328,7 +331,8 @@
   "rPGFigurine": ["dropped", "the tabletop's stock gadgets (decided 2026-11-06)", "a counter on a piece, the game clock, or a piece of our own"],
   "remainder": ["dropped", "deck and card logic (decided 2026-11-06)", "cards come over as plain pieces; a stowed bag holds a deck's cards"],
   "rendererIndex": ["dropped", "the engine's materials and components (decided 2026-11-06)", "a look of the piece's own"],
-  "zone": ["dropped", "scripting and layout zones (decided 2026-11-06)", "draw the zone at the table; scripts that ask a zone what is in it get nothing"]
+  "zone": ["dropped", "scripting and layout zones (decided 2026-11-06)", "draw the zone at the table; scripts that ask a zone what is in it get nothing"],
+  "UI": ["native", "self.ui / obj.ui: the piece's own panels, the same calls as ui", "", "PanelTests"]
  },
  "global": {
   "logStyle": ["dropped", "console commands and other host controls (decided 2026-11-06)", "the app's own console and settings"],
@@ -477,7 +481,24 @@
   "WebRequest.delete": ["dropped", "web requests (decided 2026-11-06)", "scripts stay inside the table"],
   "WebRequest.head": ["dropped", "web requests (decided 2026-11-06)", "scripts stay inside the table"],
   "WebRequest.post": ["dropped", "web requests (decided 2026-11-06)", "scripts stay inside the table"],
-  "WebRequest.put": ["dropped", "web requests (decided 2026-11-06)", "scripts stay inside the table"]
+  "WebRequest.put": ["dropped", "web requests (decided 2026-11-06)", "scripts stay inside the table"],
+  "UI.setAttribute": ["native", "ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table", "", "PanelTests (server and app)"],
+  "UI.setXmlTable": ["native", "ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table", "", "PanelTests (server and app)"],
+  "UI.hide": ["native", "ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table", "", "PanelTests (server and app)"],
+  "UI.show": ["native", "ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table", "", "PanelTests (server and app)"],
+  "UI.getXml": ["native", "ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table", "", "PanelTests (server and app)"],
+  "UI.getXmlTable": ["native", "ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table", "", "PanelTests (server and app)"],
+  "UI.setXml": ["native", "ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table", "", "PanelTests (server and app)"],
+  "UI.getAttribute": ["native", "ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table", "", "PanelTests (server and app)"],
+  "UI.assetType": ["native", "ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table", "", "PanelTests (server and app)"],
+  "UI.getAttributes": ["native", "ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table", "", "PanelTests (server and app)"],
+  "UI.getCustomAssets": ["native", "ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table", "", "PanelTests (server and app)"],
+  "UI.getValue": ["native", "ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table", "", "PanelTests (server and app)"],
+  "UI.loading": ["native", "ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table", "", "PanelTests (server and app)"],
+  "UI.setAttributes": ["native", "ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table", "", "PanelTests (server and app)"],
+  "UI.setClass": ["native", "ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table", "", "PanelTests (server and app)"],
+  "UI.setCustomAssets": ["native", "ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table", "", "PanelTests (server and app)"],
+  "UI.setValue": ["native", "ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table", "", "PanelTests (server and app)"]
  },
  "events": {
   "onObjectEnterContainer": ["native", "on_stowed(holder, piece) after a stow", "", "StowEventTests"],

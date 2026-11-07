@@ -23,7 +23,8 @@ public sealed class PackBuilder
     }
 
     public static IEnumerable<string> Urls(ModuleSave save) =>
-        save.Objects.SelectMany(o => o.Walk()).SelectMany(o => o.Urls().Concat(ScriptUrls(o.Lua)).Concat(ScriptUrls(o.LuaState))).Concat(ScriptUrls(save.Lua)).Concat(ScriptUrls(save.LuaState))
+        save.Objects.SelectMany(o => o.Walk()).SelectMany(o => o.Urls().Concat(ScriptUrls(o.Lua)).Concat(ScriptUrls(o.LuaState)).Concat(ScriptUrls(o.XmlUi)))
+            .Concat(ScriptUrls(save.Lua)).Concat(ScriptUrls(save.LuaState)).Concat(ScriptUrls(save.XmlUi)).Concat(save.UiAssets.Select(a => a.Url))
             .Concat(save.SkyUrl is { } sky ? new[] { sky } : []).Concat(save.TableDecals.Select(d => d.Url)).Concat(save.DecalPalette.Select(d => d.Url));
 
     public static IEnumerable<string> PieceUrls(ModuleSave save) =>

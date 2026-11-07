@@ -186,7 +186,7 @@ the plan says translate it), unknown (nobody has decided).
 | `RigidbodyState.Mass` | 45 / 6 | dropped | engine physics |  |
 | `TextState.fontSize` | 26 / 6 | native | converter reads it |  |
 | `CustomMeshState.CastShadows` | 341 / 5 | native | converter reads it |  |
-| `ObjectState.CustomUIAssets` | 35 / 5 | partial | pictures a run-time panel names: links in the XML are fetched, named assets are not |  |
+| `ObjectState.CustomUIAssets` | 35 / 5 | native | a piece's own named panel pictures, over the save's | PanelImportTests |
 | `CustomDiceState.Type` | 22 / 5 | native | converter reads it |  |
 | `RigidbodyState.UseGravity` | 14 / 5 | dropped | engine physics |  |
 | `LightingState.AmbientType` | 5 / 5 | dropped | lighting (decided 2026-11-06) |  |
@@ -205,7 +205,7 @@ the plan says translate it), unknown (nobody has decided).
 | `ObjectState.MeasureMovement` | 15 / 3 | native | the piece option Shows how far it is moved: a line and the distance from where it was picked up while it is held; self.measures_moves and set_measures_moves | ModuleOptionsTests |
 | `GridState.Type` | 3 / 3 | dropped | grid (decided 2026-11-06) |  |
 | `MusicPlayerState.RepeatSong` | 3 / 3 | dropped | music and sound players (decided 2026-11-06) |  |
-| `SaveState.CustomUIAssets` | 3 / 3 | partial | pictures a run-time panel names: links in the XML are fetched, named assets are not |  |
+| `SaveState.CustomUIAssets` | 3 / 3 | native | the pictures panels name, kept in the extras pack and named in the scenario (uiPictures) | PanelImportTests |
 | `ObjectState.GMNotes` | 117 / 2 | native | converter reads it |  |
 | `CustomTileState.Stackable` | 29 / 2 | native | converter reads it |  |
 | `CustomPDFState.PDFPage` | 2 / 2 | partial | PDFUrl gives the book its pages and PDFPage the page it lies open at; the page offset (how the pages are numbered) and a password are not kept | BookTests |
@@ -231,9 +231,9 @@ the plan says translate it), unknown (nobody has decided).
 | `ClockState.Paused` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
 | `ClockState.SecondsPassed` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
 | `CounterState.value` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
-| `CustomAssetState.Name` | - | partial | pictures a run-time panel names: links in the XML are fetched, named assets are not |  |
-| `CustomAssetState.Type` | - | partial | pictures a run-time panel names: links in the XML are fetched, named assets are not |  |
-| `CustomAssetState.URL` | - | partial | pictures a run-time panel names: links in the XML are fetched, named assets are not |  |
+| `CustomAssetState.Name` | - | native | the name an image attribute holds | PanelImportTests |
+| `CustomAssetState.Type` | - | native | pictures (type 0) come over; asset bundles hold fonts, which the app's own type replaces | PanelImportTests |
+| `CustomAssetState.URL` | - | native | fetched into the extras pack | PanelImportTests |
 | `CustomDecalState.ImageURL` | - | native | converter reads it |  |
 | `CustomDecalState.Name` | - | native | converter reads it |  |
 | `CustomDecalState.Size` | - | native | a palette decal's height on the table; its width follows the picture | DecalPaletteTests |
@@ -333,7 +333,7 @@ the plan says translate it), unknown (nobody has decided).
 | `ObjectState.SidewaysCard` | - | dropped | a card keeps its sheet's orientation |  |
 | `ObjectState.Tablet` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
 | `ObjectState.Value` | - | dropped | the piece's counting value |  |
-| `ObjectState.XmlUI` | - | planned | a piece's own panels; the import reads them next |  |
+| `ObjectState.XmlUI` | - | native | ScenarioPanels: a piece's own panels, drawn on it | PanelImportTests |
 | `ObjectState.miscID` | - | dropped | tabletop internal |  |
 | `ObjectState.vector` | - | dropped | tabletop internal |  |
 | `PhysicsMaterialState.BounceCombine` | - | dropped | engine physics |  |
@@ -345,7 +345,7 @@ the plan says translate it), unknown (nobody has decided).
 | `SaveState.ObjectStates` | - | native | converter reads it |  |
 | `SaveState.Rules` | - | native | the scenario's briefing | DrawingTests |
 | `SaveState.SnapPoints` | - | dropped | snap points (decided 2026-11-06 with the grid) |  |
-| `SaveState.XmlUI` | - | planned | the save's own panels; the import reads them next |  |
+| `SaveState.XmlUI` | - | native | ScenarioPanels: the save's own panels become the scenario's | PanelImportTests |
 | `SnapPointState.Position` | - | dropped | snap points (grid, decided 2026-11-06) |  |
 | `SnapPointState.Rotation` | - | dropped | snap points (grid, decided 2026-11-06) |  |
 | `SnapPointState.Tags` | - | dropped | snap points (grid, decided 2026-11-06) |  |
@@ -488,7 +488,7 @@ the plan says translate it), unknown (nobody has decided).
 | `TextTool.setFontColor` | - | stub | 3D text made at run time; no module calls it |  |
 | `TextTool.setFontSize` | - | stub | 3D text made at run time; no module calls it |  |
 | `TextTool.setValue` | - | stub | 3D text made at run time; no module calls it |  |
-| `UI` | - | unknown |  |  |
+| `UI` | - | native | self.ui / obj.ui: the piece's own panels, the same calls as ui | PanelTests |
 | `Zone.getObjects` | - | dropped | scripting and layout zones (decided 2026-11-06) |  |
 | `addAttachment` | - | native | ObjectCall |  |
 | `addDecal` | - | compat | ObjectCall |  |
@@ -707,20 +707,20 @@ the plan says translate it), unknown (nobody has decided).
 | `JSON.decode` | 11910 / 51 | native | json.encode / json.decode |  |
 | `Wait.frames` | 13927 / 27 | compat | compat.wait_* |  |
 | `Wait.time` | 5718 / 15 | compat | compat.wait_* |  |
-| `UI.setAttribute` | 19435 / 14 | partial | run-time UI through ui.*: the attributes a player sees; item 8 |  |
+| `UI.setAttribute` | 19435 / 14 | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) |
 | `Wait.stop` | 4219 / 13 | compat | compat.wait_* |  |
-| `UI.setXmlTable` | 141 / 4 | partial | run-time UI through ui.*: the attributes a player sees; item 8 |  |
+| `UI.setXmlTable` | 141 / 4 | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) |
 | `Wait.condition` | 138 / 3 | compat | compat.wait_* |  |
 | `Player.getPlayers` | 3 / 3 | dropped | the Player API (decided 2026-11-06) |  |
-| `UI.hide` | 1781 / 2 | partial | run-time UI through ui.*: the attributes a player sees; item 8 |  |
-| `UI.show` | 1370 / 2 | partial | run-time UI through ui.*: the attributes a player sees; item 8 |  |
+| `UI.hide` | 1781 / 2 | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) |
+| `UI.show` | 1370 / 2 | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) |
 | `Global.getVar` | 411 / 2 | native | game.get_var |  |
 | `Global.setVar` | 274 / 2 | native | game.set_var |  |
-| `UI.getXml` | 137 / 2 | partial | run-time UI through ui.*: the attributes a player sees; item 8 |  |
-| `UI.getXmlTable` | 137 / 2 | partial | run-time UI through ui.*: the attributes a player sees; item 8 |  |
-| `UI.setXml` | 137 / 2 | partial | run-time UI through ui.*: the attributes a player sees; item 8 |  |
+| `UI.getXml` | 137 / 2 | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) |
+| `UI.getXmlTable` | 137 / 2 | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) |
+| `UI.setXml` | 137 / 2 | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) |
 | `Player.getColors` | 2 / 2 | dropped | the Player API (decided 2026-11-06) |  |
-| `UI.getAttribute` | 2 / 2 | partial | run-time UI through ui.*: the attributes a player sees; item 8 |  |
+| `UI.getAttribute` | 2 / 2 | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) |
 | `Global.getVectorLines` | 3 / 1 | compat | compat.global_vector_lines: the lines the script last set | BoardDrawingTests |
 | `Global.setVectorLines` | 3 / 1 | compat | compat.set_global_vector_lines: strokes on the umpire's drawing board through board.draw | BoardDrawingTests |
 | `Physics.cast` | 1 / 1 | compat | compat.cast |  |
@@ -868,15 +868,15 @@ the plan says translate it), unknown (nobody has decided).
 | `Turns.skip_empty_hands` | - | dropped | turns (decided 2026-11-06) |  |
 | `Turns.turn_color` | - | dropped | turns (decided 2026-11-06) |  |
 | `Turns.type` | - | dropped | turns (decided 2026-11-06) |  |
-| `UI.assetType` | - | partial | run-time UI through ui.*: the attributes a player sees; item 8 |  |
-| `UI.getAttributes` | - | partial | run-time UI through ui.*: the attributes a player sees; item 8 |  |
-| `UI.getCustomAssets` | - | partial | run-time UI through ui.*: the attributes a player sees; item 8 |  |
-| `UI.getValue` | - | partial | run-time UI through ui.*: the attributes a player sees; item 8 |  |
-| `UI.loading` | - | partial | run-time UI through ui.*: the attributes a player sees; item 8 |  |
-| `UI.setAttributes` | - | partial | run-time UI through ui.*: the attributes a player sees; item 8 |  |
-| `UI.setClass` | - | partial | run-time UI through ui.*: the attributes a player sees; item 8 |  |
-| `UI.setCustomAssets` | - | partial | run-time UI through ui.*: the attributes a player sees; item 8 |  |
-| `UI.setValue` | - | partial | run-time UI through ui.*: the attributes a player sees; item 8 |  |
+| `UI.assetType` | - | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) |
+| `UI.getAttributes` | - | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) |
+| `UI.getCustomAssets` | - | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) |
+| `UI.getValue` | - | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) |
+| `UI.loading` | - | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) |
+| `UI.setAttributes` | - | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) |
+| `UI.setClass` | - | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) |
+| `UI.setCustomAssets` | - | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) |
+| `UI.setValue` | - | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) |
 | `Wait.stopAll` | - | compat | compat.wait_stop_all | ModuleHelpersTests |
 | `WebRequest.custom` | - | dropped | web requests (decided 2026-11-06) |  |
 | `WebRequest.delete` | - | dropped | web requests (decided 2026-11-06) |  |

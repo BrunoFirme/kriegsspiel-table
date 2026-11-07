@@ -18,6 +18,7 @@ public sealed class UiBuilder
     public static Texture2D? AssetTexture(Session s, string id, Action<Texture2D> onReady)
     {
         if (id.Length == 0) return null;
+        if (s.View.UiPictures.TryGetValue(id.Trim(), out var named)) id = named;
         foreach (var pk in s.Store.LoadedPacks)
             if (pk.Assets.TryGetValue(id, out var a) && a.Kind == "image") return s.Assets.Texture(pk.Id, a.File, onReady, maxSize: 512);
         return null;
@@ -94,11 +95,15 @@ public sealed class UiBuilder
             "ProgressBar" => BuildProgress(n),
             "Slider" => BuildSlider(n),
             "Image" => BuildImage(n, avail),
+            "ToggleButton" => BuildToggleButton(n),
+            "ToggleGroup" => BuildToggleGroup(n, avail),
+            "HorizontalScrollView" or "VerticalScrollView" => BuildScroll(n, avail),
             "Defaults" => new Control { Visible = false },
             _ => Fill(new VBoxContainer(), n, avail),
         };
         if (Attr(n, "tooltip", "") is { Length: > 0 } tip) c.TooltipText = tip;
         if (n.Tag is not ("Panel" or "Image")) SizeHints(c, n);
+        if (Attr(n, "raycastTarget", "true").Equals("false", StringComparison.OrdinalIgnoreCase)) c.MouseFilter = Control.MouseFilterEnum.Ignore;
         Register(n, c);
         return c;
     }
@@ -127,7 +132,33 @@ public sealed class UiBuilder
             Place(c, ch, inner, p);
             p.AddChild(c);
         }
+        if (Attr(n, "allowDragging", "false").Equals("true", StringComparison.OrdinalIgnoreCase)) Draggable(p, n);
         return p;
+    }
+
+    static void Draggable(Control p, UiNode n)
+    {
+        p.MouseFilter = Control.MouseFilterEnum.Stop;
+        bool back = Attr(n, "returnToOriginalPositionWhenReleased", "false").Equals("true", StringComparison.OrdinalIgnoreCase);
+        bool inside = Attr(n, "restrictDraggingToParentBounds", "true").Equals("true", StringComparison.OrdinalIgnoreCase);
+        Vector2? grab = null, home = null;
+        p.GuiInput += e =>
+        {
+            if (e is InputEventMouseButton { ButtonIndex: MouseButton.Left } mb)
+            {
+                if (mb.Pressed) { grab = mb.GlobalPosition - p.GlobalPosition; home ??= p.Position; }
+                else { grab = null; if (back && home is { } h) p.Position = h; }
+                p.AcceptEvent();
+            }
+            else if (e is InputEventMouseMotion mm && grab is { } g)
+            {
+                var to = mm.GlobalPosition - g;
+                if (inside && p.GetParentControl() is { } parent)
+                    to = to.Clamp(parent.GlobalPosition, parent.GlobalPosition + parent.Size - p.Size);
+                p.GlobalPosition = to;
+                p.AcceptEvent();
+            }
+        };
     }
 
     Control Fill(BoxContainer box, UiNode n, Vector2 avail)
@@ -220,7 +251,11 @@ public sealed class UiBuilder
         Control host;
         if (id.Length > 0 && _image != null)
         {
-            var tr = new TextureRect { ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize, StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered, Modulate = tint };
+            var keep = Attr(n, "preserveAspect", "false").Equals("true", StringComparison.OrdinalIgnoreCase);
+            var tr = new TextureRect
+            {
+                ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize, StretchMode = keep ? TextureRect.StretchModeEnum.KeepAspectCentered : TextureRect.StretchModeEnum.Scale, Modulate = tint,
+            };
             var tex = _image(id, t => { if (GodotObject.IsInstanceValid(tr)) tr.Texture = t; });
             if (tex != null) tr.Texture = tex;
             host = tr;
@@ -240,20 +275,72 @@ public sealed class UiBuilder
 
     Control BuildText(UiNode n)
     {
-        bool sized = Num(n, "width", 0) > 0 || Num(n, "preferredWidth", 0) > 0;
-        var l = new Label { Text = Attr(n, "text", ""), AutowrapMode = sized ? TextServer.AutowrapMode.WordSmart : TextServer.AutowrapMode.Off, MouseFilter = Control.MouseFilterEnum.Ignore };
-        l.AddThemeColorOverride("font_color", Col(n, "color", Colors.White));
-        var scale = Vec3(n, "scale", 1);
-        l.AddThemeFontSizeOverride("font_size", (int)Mathf.Clamp(Num(n, "fontSize", 14) * scale.X, 4, 200));
+        float width = Num(n, "width", Num(n, "preferredWidth", 0));
+        var text = Attr(n, "text", "");
+        var size = (int)Mathf.Clamp(Num(n, "fontSize", 14) * Vec3(n, "scale", 1).X, 4, 200);
+        if (Attr(n, "resizeTextForBestFit", "false").Equals("true", StringComparison.OrdinalIgnoreCase) && width > 0) size = BestFit(n, text, width);
         var a = Attr(n, "alignment", "MiddleCenter");
-        l.HorizontalAlignment = a.EndsWith("Left") ? HorizontalAlignment.Left : a.EndsWith("Right") ? HorizontalAlignment.Right : HorizontalAlignment.Center;
-        l.VerticalAlignment = a.StartsWith("Upper") ? VerticalAlignment.Top : a.StartsWith("Lower") ? VerticalAlignment.Bottom : VerticalAlignment.Center;
+        var across = a.EndsWith("Left") ? HorizontalAlignment.Left : a.EndsWith("Right") ? HorizontalAlignment.Right : HorizontalAlignment.Center;
+        var down = a.StartsWith("Upper") ? VerticalAlignment.Top : a.StartsWith("Lower") ? VerticalAlignment.Bottom : VerticalAlignment.Center;
+        var wrap = width > 0 ? TextServer.AutowrapMode.WordSmart : TextServer.AutowrapMode.Off;
+        if (UiStyles.IsRich(text))
+        {
+            var r = new RichTextLabel
+            {
+                BbcodeEnabled = true, Text = UiStyles.BbCode(text), FitContent = true, ScrollActive = false, MouseFilter = Control.MouseFilterEnum.Ignore,
+                AutowrapMode = wrap, HorizontalAlignment = across, VerticalAlignment = down,
+            };
+            r.AddThemeColorOverride("default_color", Col(n, "color", Colors.White));
+            foreach (var key in new[] { "normal_font_size", "bold_font_size", "italics_font_size", "bold_italics_font_size" }) r.AddThemeFontSizeOverride(key, size);
+            Lettering(r, n, "normal_font", "font_outline_color");
+            return r;
+        }
+        var l = new Label { Text = text, AutowrapMode = wrap, MouseFilter = Control.MouseFilterEnum.Ignore, HorizontalAlignment = across, VerticalAlignment = down };
+        l.AddThemeColorOverride("font_color", Col(n, "color", Colors.White));
+        l.AddThemeFontSizeOverride("font_size", size);
+        Lettering(l, n, "font", "font_outline_color");
         return l;
+    }
+
+    const int BestFitLargest = 40, BestFitSmallest = 10;
+
+    static int BestFit(UiNode n, string text, float width)
+    {
+        int most = (int)Num(n, "resizeTextMaxSize", BestFitLargest), least = (int)Num(n, "resizeTextMinSize", BestFitSmallest);
+        var font = ThemeDB.FallbackFont;
+        for (int s = most; s > least; s--)
+            if (font.GetStringSize(text, HorizontalAlignment.Left, -1, s).X <= width) return s;
+        return Math.Max(1, least);
+    }
+
+    static void Lettering(Control c, UiNode n, string fontKey, string outlineKey)
+    {
+        var style = Attr(n, "fontStyle", "Normal");
+        bool bold = style.Contains("Bold"), italic = style.Contains("Italic");
+        if (bold || italic)
+        {
+            const float Embolden = 0.6f, Slant = 0.2f;
+            var fv = new FontVariation { BaseFont = ThemeDB.FallbackFont, VariationEmbolden = bold ? Embolden : 0 };
+            if (italic) fv.VariationTransform = new Transform2D(new Vector2(1, 0), new Vector2(Slant, 1), Vector2.Zero);
+            c.AddThemeFontOverride(fontKey, fv);
+        }
+        if (n.Attributes.ContainsKey("outline"))
+        {
+            c.AddThemeColorOverride(outlineKey, Col(n, "outline", Colors.Black));
+            c.AddThemeConstantOverride("outline_size", Math.Max(1, (int)Mathf.Round(Vec(n, "outlineSize").X * 2)));
+        }
     }
 
     Control BuildButton(UiNode n)
     {
         var b = new Button { Text = Attr(n, "text", ""), Disabled = Attr(n, "interactable", "true").Equals("false", StringComparison.OrdinalIgnoreCase) };
+        Lettering(b, n, "font", "font_outline_color");
+        if (Attr(n, "icon", "") is { Length: > 0 } icon && _image != null)
+        {
+            var tex = _image(icon, t => { if (GodotObject.IsInstanceValid(b)) b.Icon = t; });
+            if (tex != null) b.Icon = tex;
+            b.ExpandIcon = true;
+        }
         b.AddThemeFontSizeOverride("font_size", (int)Mathf.Clamp(Num(n, "fontSize", 14), 6, 48));
         b.AddThemeColorOverride("font_color", Col(n, "textColor", Colors.White));
         var colors = Attr(n, "colors", "").Split('|');
@@ -280,6 +367,18 @@ public sealed class UiBuilder
         }
         var e = new LineEdit { Text = Attr(n, "text", ""), PlaceholderText = Attr(n, "placeholder", ""), Editable = !Attr(n, "interactable", "true").Equals("false", StringComparison.OrdinalIgnoreCase) };
         e.AddThemeColorOverride("font_color", Col(n, "textColor", Colors.White));
+        Lettering(e, n, "font", "font_outline_color");
+        if ((int)Num(n, "characterLimit", 0) is var limit and > 0) e.MaxLength = limit;
+        var mode = Attr(n, "characterValidation", "None");
+        if (mode != "None")
+            e.TextChanged += typed =>
+            {
+                var ok = UiStyles.Valid(typed, mode);
+                if (ok == typed) return;
+                int caret = Math.Max(0, e.CaretColumn - (typed.Length - ok.Length));
+                e.Text = ok;
+                e.CaretColumn = Math.Min(caret, ok.Length);
+            };
         if (n.Id is { } id)
         {
             bool sent = false;
@@ -295,6 +394,46 @@ public sealed class UiBuilder
         t.AddThemeColorOverride("font_color", Col(n, "textColor", Colors.White));
         if (n.Id is { } id) t.Toggled += on => _send(id, "change", on ? "True" : "False");
         return t;
+    }
+
+    Control BuildToggleButton(UiNode n)
+    {
+        var b = (Button)BuildButton(new UiNode { Tag = n.Tag, Attributes = n.Attributes.Where(a => a.Key != "id").ToDictionary(a => a.Key, a => a.Value) });
+        b.ToggleMode = true;
+        b.ButtonPressed = Attr(n, "isOn", "false").Equals("true", StringComparison.OrdinalIgnoreCase);
+        if (n.Id is { } id) b.Toggled += on => _send(id, "change", on ? "True" : "False");
+        return b;
+    }
+
+    Control BuildToggleGroup(UiNode n, Vector2 avail)
+    {
+        var host = Fill(new VBoxContainer(), n, avail);
+        var group = new ButtonGroup { AllowUnpress = Attr(n, "allowSwitchOff", "false").Equals("true", StringComparison.OrdinalIgnoreCase) };
+        foreach (var b in Buttons(host)) if (b.ToggleMode || b is CheckBox) { b.ToggleMode = true; b.ButtonGroup = group; }
+        return host;
+    }
+
+    static IEnumerable<BaseButton> Buttons(Node at)
+    {
+        foreach (var c in at.GetChildren())
+        {
+            if (c is BaseButton b) yield return b;
+            foreach (var d in Buttons(c)) yield return d;
+        }
+    }
+
+    Control BuildScroll(UiNode n, Vector2 avail)
+    {
+        bool across = n.Tag == "HorizontalScrollView";
+        var sc = new ScrollContainer
+        {
+            HorizontalScrollMode = across ? ScrollContainer.ScrollMode.Auto : ScrollContainer.ScrollMode.Disabled,
+            VerticalScrollMode = across ? ScrollContainer.ScrollMode.Disabled : ScrollContainer.ScrollMode.Auto,
+        };
+        var inner = Fill(across ? new HBoxContainer() : new VBoxContainer(), n, avail);
+        inner.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
+        sc.AddChild(inner);
+        return sc;
     }
 
     Control BuildDropdown(UiNode n)
