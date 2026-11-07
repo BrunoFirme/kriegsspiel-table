@@ -754,6 +754,30 @@ function compat.remove_attachments(obj)
   return out
 end
 
+function compat.container(obj)
+  if not compat.holds(obj) then return nil end
+  return {
+    __container = true,
+    putObject = function() return nil end, takeObject = function() return nil end, getData = function() return nil end,
+    setData = function() return true end, addData = function() return true end, removeData = function() return nil end,
+    getInfo = function() return nil end, reset = function() return true end, randomize = function() return true end, getCount = function() return 0 end,
+    search = function(color) return compat.who_at(color) ~= nil end,
+  }
+end
+
+for _, pair in ipairs({ { "get_data", "getData" }, { "randomize", "randomize" }, { "put_object", "putObject" }, { "take_object", "takeObject" } }) do
+  local before = compat[pair[1]]
+  compat[pair[1]] = function(obj, ...)
+    if type(obj) == "table" and rawget(obj, "__container") then return obj[pair[2]](...) end
+    return before(obj, ...)
+  end
+end
+local todo_before = compat.todo
+function compat.todo(obj, name, ...)
+  if type(obj) == "table" and rawget(obj, "__container") and type(obj[name]) == "function" then return obj[name](...) end
+  return todo_before(obj, name, ...)
+end
+
 function compat.none() return nil end
 function compat.no() return false end
 

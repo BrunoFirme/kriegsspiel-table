@@ -287,6 +287,7 @@ public static class ModuleTranslator
             }
             if (recv.EndsWith(".AssetBundle")) return Compat($"compat.bundle({recv[..^12]}).{name}({All()})", node);
             if (recv.EndsWith(".TextTool")) return Compat($"compat.text_tool({recv[..^9]}).{name}({All()})", node);
+            if (recv.EndsWith(".Container")) return Compat($"compat.container({recv[..^10]}).{name}({All()})", node);
             if (recv.EndsWith(".Book"))
             {
                 var book = recv[..^5];
@@ -596,6 +597,8 @@ public static class ModuleTranslator
                 case "UI" or "Global.UI": return Direct($"ui.{name}", node);
             }
             if (recv.EndsWith(".UI")) return Direct($"{recv[..^3]}.ui.{name}", node);
+            if (node.Parent is not MemberAccessExpressionSyntax && !InUi(recv) && Components.TryGetValue(name, out var component))
+                return Compat($"compat.{component}({recv})", node);
             if (recv.EndsWith(".Book") && name == "page_offset" && visited.Parent is not AssignmentStatementSyntax) return Compat($"compat.book_offset({recv[..^5]})", node);
             name = FoldMember(name);
             switch (name)
@@ -758,6 +761,13 @@ public static class ModuleTranslator
             var text = $"function {newName}({sig})\n{head}{body}end";
             return Keep(Stmt(text, node), node);
         }
+
+        static bool InUi(string recv) => recv.Split('.')[0] is "UI" or "ui" || recv.Contains(".UI", StringComparison.Ordinal) || recv.Contains(".ui", StringComparison.Ordinal);
+
+        static readonly Dictionary<string, string> Components = new(StringComparer.Ordinal)
+        {
+            ["Container"] = "container", ["AssetBundle"] = "bundle", ["TextTool"] = "text_tool",
+        };
 
         static readonly Dictionary<string, string> Answered = new(StringComparer.Ordinal)
         {

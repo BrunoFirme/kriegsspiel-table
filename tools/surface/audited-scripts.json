@@ -110,7 +110,16 @@
   "value_flags": "DiceScriptTests.A_module_script_reads_and_sets_worth_held_turns_the_pick_up_place_and_flips_a_die_to_its_other_side",
   "pick_up_position": "DiceScriptTests.A_module_script_reads_and_sets_worth_held_turns_the_pick_up_place_and_flips_a_die_to_its_other_side",
   "pick_up_rotation": "DiceScriptTests.A_module_script_reads_and_sets_worth_held_turns_the_pick_up_place_and_flips_a_die_to_its_other_side",
-  "addToPlayerSelection": "TranslatorTests.The_long_tail_translates_and_runs (the same selection call as removeFromPlayerSelection)"
+  "addToPlayerSelection": "TranslatorTests.The_long_tail_translates_and_runs (the same selection call as removeFromPlayerSelection)",
+  "Container.addData": "ModuleObjectCallTests.A_bags_container_answers_as_the_tabletops_bag_container_which_does_nothing",
+  "Container.getCount": "ModuleObjectCallTests.A_bags_container_answers_as_the_tabletops_bag_container_which_does_nothing",
+  "Container.getData": "ModuleObjectCallTests.A_bags_container_answers_as_the_tabletops_bag_container_which_does_nothing",
+  "Container.getInfo": "ModuleObjectCallTests.A_bags_container_answers_as_the_tabletops_bag_container_which_does_nothing",
+  "Container.putObject": "ModuleObjectCallTests.A_bags_container_answers_as_the_tabletops_bag_container_which_does_nothing",
+  "Container.randomize": "ModuleObjectCallTests.A_bags_container_answers_as_the_tabletops_bag_container_which_does_nothing",
+  "Container.removeData": "ModuleObjectCallTests.A_bags_container_answers_as_the_tabletops_bag_container_which_does_nothing",
+  "Container.setData": "ModuleObjectCallTests.A_bags_container_answers_as_the_tabletops_bag_container_which_does_nothing",
+  "Container.takeObject": "ModuleObjectCallTests.A_bags_container_answers_as_the_tabletops_bag_container_which_does_nothing"
  },
  "global": {
   "broadcastToAll": "ModuleObjectCallTests.Printing_to_a_seat_nobody_holds_is_an_error_and_seat_names_are_exact",

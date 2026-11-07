@@ -653,6 +653,24 @@ public class ModuleObjectCallTests
     }
 
     [Fact]
+    public void A_bags_container_answers_as_the_tabletops_bag_container_which_does_nothing()
+    {
+        using var t = new Table();
+        t.Server.State.Find(U, Marker)!.Holds = true;
+        const string lua = """
+            function onLoad()
+              local c = getObjectFromGUID('p-000003').Container
+              local r = { c.putObject(self), c.takeObject({}), c.getData(), c.setData({}), c.addData({}), c.removeData(0), c.getInfo(), c.randomize(), c.getCount() }
+              local out = {}
+              for i = 1, 9 do out[i] = tostring(r[i]) end
+              self.setName(table.concat(out, ','))
+            end
+            """;
+        Assert.Equal("nil,nil,nil,true,true,nil,nil,true,0", Run(t, lua));
+        Assert.NotNull(t.Server.State.Find(U, P));
+    }
+
+    [Fact]
     public void Time_reads_the_scripts_clock_and_frame_count()
     {
         using var t = new Table();
