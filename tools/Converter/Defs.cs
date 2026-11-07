@@ -90,6 +90,8 @@ public sealed partial class DefFactory
     public CacheEntry? Entry(string? url) => url == null ? null : _assets.Get(url);
 
     TokenOutlines? _tokenOutlines;
+    PieceMirror? _mirrors;
+    public string? FlippedPicture(PackOut pack, string? sha) => (_mirrors ??= new PieceMirror(_cfg.Cache)).Picture(pack, sha, new Mirror(true, false, false));
     TokenOutlines Outlines => _tokenOutlines ??= new TokenOutlines(_assets);
 
     public static void Put(PackOut pack, string sha, string ext, string src, string kind, int w, int h, string? url = null)
@@ -172,7 +174,7 @@ public sealed partial class DefFactory
             ah = e.H / m;
             aspect = e.W / (double)e.H;
         }
-        double ratio = o.ScaleX == 0 ? 1 : o.ScaleZ / o.ScaleX;
+        double ratio = o.ScaleX == 0 ? 1 : Math.Abs(o.ScaleZ / o.ScaleX);
         if (o.Name == "Custom_PDF") return new Size2(BookSpan * (PdfOf(o.PdfUrl, o.PdfPassword)?.Aspect ?? 1), BookSpan * ratio);
         if (IsModel(o))
         {
@@ -365,7 +367,7 @@ public sealed partial class DefFactory
         {
             var sd = def.States[i];
             var decals = ScenarioBuilder.DecalsOf(states[i], sd.Size ?? def.Size, def.Tags.Contains("token"),
-                _cfg.BaseSizes.CustomTokenArea, url => UiAsset(pack, url, $"{where} state \"{sd.Name}\" decal"));
+                _cfg.BaseSizes.CustomTokenArea, url => UiAsset(pack, url, $"{where} state \"{sd.Name}\" decal"), sha => FlippedPicture(pack, sha));
             if (decals.Count > 0) sd.Decals = decals;
         }
         foreach (var c in baked ? Enumerable.Empty<ModuleObj>() : o.Children)
@@ -374,9 +376,12 @@ public sealed partial class DefFactory
             if (NotTranslated(c) is { } why) { _rep.Skipped(why, where); continue; }
             var cr = DefFor(c, pack, Math.Abs(c.StateList().states[0].ScaleX) * r, heightScale * Math.Abs(b.ScaleY));
             if (cr == null) continue;
-            def.Attachments.Add(new AttachmentDef { Piece = cr.Def.Id, Offset = new Vec2(Math.Round(c.PosX * r, 4), Math.Round(c.PosZ * r * (b.ScaleZ / b.ScaleX), 4)) });
+            double ox = c.PosX * r * Mirror.Of(o).SignX, oz = c.PosZ * r * Math.Abs(b.ScaleZ / b.ScaleX) * Mirror.Of(o).SignZ;
+            def.Attachments.Add(new AttachmentDef { Piece = cr.Def.Id, Offset = new Vec2(Math.Round(ox, 4), Math.Round(oz, 4)) });
         }
 
+        var mirror = Mirror.Of(o);
+        (_mirrors ??= new PieceMirror(_cfg.Cache)).Apply(def, pack, mirror);
         var bakedKey = baked ? "|" + string.Join(",", def.States.Select(s => s.Image)) : "";
         var decalKey = def.States.Any(s => s.Decals is { Count: > 0 })
             ? "|d" + Hash8(string.Join(";", def.States.Select(s => string.Join(",", (s.Decals ?? new()).Select(d => d.Picture)))))
@@ -384,7 +389,7 @@ public sealed partial class DefFactory
         var gluedKey = heightScale == 1 || IsModel(b) ? "" :string.Create(CultureInfo.InvariantCulture, $"|t{def.Thickness:0.###}");
         var facesKey = !RollsOnItsValues(o) ? "" : "|f" + Hash8(string.Join(";", def.Faces.Select(f => string.Create(CultureInfo.InvariantCulture, $"{f.Value}@{f.Up[0]},{f.Up[1]},{f.Up[2]}"))));
         var surfaceKey = (def.Shadowless ? "|ns" : "") + (def.Normal is { } normal ? "|n" + normal : "") + TokenOutlines.MergeKey(o) + (b.StandsUp ? "|up" : "");
-        var key = string.Create(CultureInfo.InvariantCulture, $"{VisualKey(o)}|{def.Size.W:0.###}x{def.Size.H:0.###}{scriptKey}{bakedKey}{decalKey}{gluedKey}{facesKey}{surfaceKey}");
+        var key = string.Create(CultureInfo.InvariantCulture, $"{VisualKey(o)}|{def.Size.W:0.###}x{def.Size.H:0.###}{scriptKey}{bakedKey}{decalKey}{gluedKey}{facesKey}{surfaceKey}{mirror.Key}");
         int rich = def.States.Count * 100 + def.Counters.Count * 10 + def.TextLines.Count + def.Attachments.Count * 1000 + (def.Script != null ? 5000 : 0);
         if (pack.ByKey.TryGetValue(key, out var existing))
         {

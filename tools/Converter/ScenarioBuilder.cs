@@ -463,17 +463,19 @@ public sealed partial class ScenarioBuilder
         return (x, x * depth);
     }
 
-    public static List<DecalDef> DecalsOf(ModuleObj o, PieceDef def, double tokenArea, Func<string, string?> picture) =>
-        DecalsOf(o, def.Size, def.Tags.Contains("token"), tokenArea, picture);
+    public static List<DecalDef> DecalsOf(ModuleObj o, PieceDef def, double tokenArea, Func<string, string?> picture, Func<string, string?>? flip = null) =>
+        DecalsOf(o, def.Size, def.Tags.Contains("token"), tokenArea, picture, flip);
 
-    public static List<DecalDef> DecalsOf(ModuleObj o, Size2 size, bool token, double tokenArea, Func<string, string?> picture)
+    public static List<DecalDef> DecalsOf(ModuleObj o, Size2 size, bool token, double tokenArea, Func<string, string?> picture, Func<string, string?>? flip = null)
     {
+        var m = Mirror.Of(o);
         const double ModuleDecalTurn = 180, Digits = 4;
         var (ux, uz) = LocalUnits(o, size, token, tokenArea);
         var list = new List<DecalDef>();
         foreach (var d in o.Decals.Take(DecalDef.MostOnAPiece))
         {
-            if (picture(d.Url) is not { } pic) continue;
+            if (picture(d.Url) is not { } shown) continue;
+            var pic = m.X ^ m.Z && flip?.Invoke(shown) is { } flipped ? flipped : shown;
             bool back = d.PosY < 0;
             double turn = (d.RotY - ModuleDecalTurn) * Math.PI / 180, cos = Math.Cos(turn), sin = Math.Sin(turn);
             double w = Math.Abs(d.ScaleX) * Math.Sqrt(ux * ux * cos * cos + uz * uz * sin * sin);
@@ -482,8 +484,8 @@ public sealed partial class ScenarioBuilder
             list.Add(new DecalDef
             {
                 Picture = pic, Name = d.Name, Face = back ? "back" : "front",
-                X = Math.Round((back ? d.PosX : -d.PosX) * ux, (int)Digits), Z = Math.Round(d.PosZ * uz, (int)Digits),
-                W = Math.Round(w, (int)Digits), H = Math.Round(h, (int)Digits), Rot = Math.Round(d.RotY - ModuleDecalTurn, 2),
+                X = Math.Round((back ? d.PosX : -d.PosX) * ux * m.SignX, (int)Digits), Z = Math.Round(d.PosZ * uz * m.SignZ, (int)Digits),
+                W = Math.Round(w, (int)Digits), H = Math.Round(h, (int)Digits), Rot = Math.Round(m.Decal(d.RotY - ModuleDecalTurn), 2),
             });
         }
         return list;
@@ -503,7 +505,6 @@ public sealed partial class ScenarioBuilder
             scale = baseScale = DefFactory.HiddenByScale;
             _hiddenByScale++;
         }
-        if (o.ScaleX < 0 || o.ScaleZ < 0) _rep.Note($"{layer.Name} {o.Name} '{o.Nickname}' {o.Guid}: the module mirrors this piece by a negative scale; it shows unmirrored here.");
         var (counters, text) = r.Script.Values(o.LuaState);
         var lua = o.SafeLua;
         if (def.Script != null) { counters = new(); text = new(); }
@@ -575,7 +576,8 @@ public sealed partial class ScenarioBuilder
         if (colour is { } col && !string.Equals(col, def.Tint, StringComparison.OrdinalIgnoreCase)) inst.TintOverride = col;
         if (o.VectorLines.Count > 0) inst.Lines = LinesOf(o, def);
         if (!def.States.Any(s => s.Decals is { Count: > 0 }))
-            inst.Decals = DecalsOf(o, def, _cfg.BaseSizes.CustomTokenArea, url => _defs.UiAsset(extras, url, $"{layer.Name} {o.Name} '{o.Nickname}' {o.Guid} decal"));
+            inst.Decals = DecalsOf(o, def, _cfg.BaseSizes.CustomTokenArea, url => _defs.UiAsset(extras, url, $"{layer.Name} {o.Name} '{o.Nickname}' {o.Guid} decal"),
+                sha => _defs.FlippedPicture(extras, sha));
         layer.Pieces.Add(inst);
         layer.Y[inst] = o.PosY;
         bool baked = _defs.IsBaked(r.Def);
@@ -712,7 +714,7 @@ public sealed partial class ScenarioBuilder
         foreach (var l in o.VectorLines)
             lines.Add(new LineDef
             {
-                Points = l.Points.Select(p => new Vec2(Math.Round(-p.X * ux, 4), Math.Round(p.Z * uz, 4))).ToList(),
+                Points = l.Points.Select(p => new Vec2(Math.Round(-p.X * ux * Mirror.Of(o).SignX, 4), Math.Round(p.Z * uz * Mirror.Of(o).SignZ, 4))).ToList(),
                 Color = l.Color, Width = l.Thickness, Loop = l.Loop, Round = l.Round,
             });
         return lines;
