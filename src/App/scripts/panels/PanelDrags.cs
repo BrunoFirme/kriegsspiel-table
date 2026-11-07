@@ -241,6 +241,7 @@ sealed partial class PanelView
         if (_motions.TryGetValue(view, out var m)) m.Offset = now;
         if (view.Path != null) _local[PanelScrolls.Key(view)] = PanelScrolls.Text(now);
         Refit(view);
+        Follow();
         if (_hooks.Port is { } port && GodotObject.IsInstanceValid(port)) port.RenderTargetUpdateMode = SubViewport.UpdateMode.Once;
     }
 

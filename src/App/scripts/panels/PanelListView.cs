@@ -44,10 +44,10 @@ sealed partial class PanelView
         holder.CreateTween().TweenProperty(holder, "modulate:a", 1f, ListFade);
     }
 
-    Transform2D Relative(Control node)
+    Transform2D Relative(Control node, Control? stop = null)
     {
         var t = Transform2D.Identity;
-        for (Control? at = node; at != null && at != _top; at = at.GetParentControl()) t = at.GetTransform() * t;
+        for (Control? at = node; at != null && at != _top && at != stop; at = at.GetParentControl()) t = at.GetTransform() * t;
         return t;
     }
 

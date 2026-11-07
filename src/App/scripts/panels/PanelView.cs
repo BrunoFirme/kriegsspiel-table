@@ -46,6 +46,7 @@ sealed partial class PanelView
         Nodes.Clear();
         _hovered.Clear();
         _top = Node(from, null);
+        Lift(from);
         PanelFocus.Showing(this);
         Restore(scene);
         return _top;
@@ -81,11 +82,6 @@ sealed partial class PanelView
     {
         var c = b.Mask && b.Image != null ? MaskShape(b) : new Control { MouseFilter = Control.MouseFilterEnum.Ignore, ClipContents = b.RectMask };
         Fit(c, b, parent);
-        if (b.Tag == "Canvas" && b.Extra.TryGetValue("sortingorder", out var order))
-        {
-            c.ZAsRelative = false;
-            c.ZIndex = (int)Math.Clamp(PanelValues.Int(order), RenderingServer.CanvasItemZMin, RenderingServer.CanvasItemZMax);
-        }
         if (parent != null)
         {
             c.RotationDegrees = -b.Rotation.Z;
@@ -107,12 +103,18 @@ sealed partial class PanelView
         return c;
     }
 
+    bool _hardEdges;
+
     Control MaskShape(PanelBox b)
     {
+        _hardEdges = true;
         var shape = Paint(b);
+        _hardEdges = false;
         shape.SetAnchorsPreset(Control.LayoutPreset.TopLeft);
         shape.ClipContents = true;
-        shape.ClipChildren = b.ShowMaskGraphic ? CanvasItem.ClipChildrenMode.AndDraw : CanvasItem.ClipChildrenMode.Only;
+        if (shape is Panel panel && panel.GetThemeStylebox("panel") is StyleBoxFlat box) box.AntiAliasing = false;
+        shape.ClipChildren = CanvasItem.ClipChildrenMode.Only;
+        if (b.ShowMaskGraphic) shape.AddChild(Paint(b));
         return shape;
     }
 
@@ -146,9 +148,16 @@ sealed partial class PanelView
     {
         var tr = new TextureRect { ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize, SelfModulate = tint,
             StretchMode = keep ? TextureRect.StretchModeEnum.KeepAspectCentered : TextureRect.StretchModeEnum.Scale };
-        var tex = _hooks.Picture(sprite, t => { if (GodotObject.IsInstanceValid(tr)) tr.Texture = t; });
-        if (tex != null) tr.Texture = tex;
-        else if (!IsLink(sprite) && !_hooks.Known(sprite)) _hooks.Notice(string.Format(System.Globalization.CultureInfo.InvariantCulture, NoSprite, sprite));
+        bool hard = _hardEdges;
+        if (hard) tr.TextureFilter = CanvasItem.TextureFilterEnum.Nearest;
+        var tex = _hooks.Picture(sprite, t => { if (GodotObject.IsInstanceValid(tr)) tr.Texture = hard ? PanelStencil.Hard(t) : t; });
+        if (tex != null) tr.Texture = hard ? PanelStencil.Hard(tex) : tex;
+        else if (!IsLink(sprite) && !_hooks.Known(sprite))
+        {
+            _hooks.Notice(string.Format(System.Globalization.CultureInfo.InvariantCulture, NoSprite, sprite));
+            tr.QueueFree();
+            return new ColorRect { Color = tint };
+        }
         return tr;
     }
 

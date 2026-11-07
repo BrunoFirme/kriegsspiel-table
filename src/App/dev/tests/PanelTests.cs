@@ -302,4 +302,65 @@ static class PanelTests
         Check.Equal(Families, shipped.Count(f => f.EndsWith("-OFL.txt") || f.EndsWith("-LICENSE.txt")), "each of the sixteen families ships its licence beside its files");
         return Task.CompletedTask;
     }
+
+    [NodeTest]
+    static async Task A_canvas_with_a_higher_sorting_order_takes_the_click_over_one_written_after_it(TestRunner r)
+    {
+        var t = OfflineTable.Make(r, pieces: 0);
+        await r.Frame();
+        const string Xml = """
+            <Canvas id="high" sortingOrder="5" rectAlignment="MiddleCenter" width="400" height="300"><Button id="top" width="300" height="200" onClick="hit"/></Canvas>
+            <Canvas id="plain" rectAlignment="MiddleCenter" width="400" height="300"><Button id="under" width="300" height="200" onClick="hit"/></Canvas>
+            """;
+        var layout = KTable.Core.Panels.PanelBuild.Of(Xml).Layout;
+        var data = KTable.Core.Panels.PanelData.Parse(Xml)!;
+        t.Server.State.Ui = data;
+        t.Server.State.UiLayout = layout;
+        t.S.View.Ui = data.Select(n => n.Clone()).ToList();
+        t.S.View.UiLayout = layout.Clone();
+        var ui = new ScriptUi();
+        r.AddChild(ui);
+        ui.Bind(t.S, null!);
+        await r.Frames(3);
+        var button = ui.FindChildren("*", "Control", true, false).OfType<Control>()
+            .First(c => c.MouseFilter == Control.MouseFilterEnum.Stop && c.IsVisibleInTree() && c.Size.IsEqualApprox(new Vector2(300, 200)));
+        await Click(r, Middle(button));
+        var sent = t.Server.Log.SelectMany(c => c is KTable.Core.Protocol.Batch b ? b.Items : new() { c }).OfType<KTable.Core.Protocol.UiEvent>().Where(e => e.Event == "onClick").ToList();
+        Check.That(sent.Count == 1 && sent[0].Path is [0, 0], "the button on the sorted canvas takes the click, not the one written after it");
+        Check.Equal(0, t.Errors.Count, string.Join("; ", t.Errors));
+        ui.QueueFree();
+    }
+
+    [ScreenTest]
+    static async Task A_mask_cuts_its_children_all_or_nothing_at_its_picture_s_edge_as_a_stencil_does(TestRunner r)
+    {
+        const int Side = 128;
+        const string Xml = """<Mask id="m" width="128" height="128" image="Sprites/Elements/UISprite_XmlLayout" showMaskGraphic="false"><Image color="#FF0000"/></Mask>""";
+        var layout = KTable.Core.Panels.PanelBuild.Of(Xml).Layout;
+        var scene = KTable.Client.Panels.PanelScene.Build(layout, new KTable.Client.Panels.V2(Side, Side), new KTable.Client.Panels.PanelContext(layout.Colors, "Black", true, true),
+            new PanelMeter(_ => null));
+        var port = new SubViewport { Size = new Vector2I(Side, Side), TransparentBg = false, RenderTargetUpdateMode = SubViewport.UpdateMode.Always };
+        port.AddChild(new ColorRect { Color = Colors.Black, Size = new Vector2(Side, Side) });
+        var view = new PanelView(new PanelHooks((_, _, _) => { }, (_, _) => null, new Dictionary<string, string>(), () => { }));
+        port.AddChild(view.Show(scene, scene.Root));
+        r.AddChild(port);
+        await r.Frames(6);
+        var image = port.GetTexture().GetImage();
+        var inside = image.GetPixel(Side / 2, Side / 2);
+        const float Near = 0.02f;
+        static float Gap(Color a, Color b) => Mathf.Max(Mathf.Max(Mathf.Abs(a.R - b.R), Mathf.Abs(a.G - b.G)), Mathf.Abs(a.B - b.B));
+        int shown = 0, hidden = 0, between = 0;
+        for (int x = 0; x < Side; x++)
+            for (int y = 0; y < Side; y++)
+            {
+                var c = image.GetPixel(x, y);
+                if (Gap(c, inside) < Near) shown++;
+                else if (Gap(c, Colors.Black) < Near) hidden++;
+                else between++;
+            }
+        Check.That(inside.R > inside.G + 0.5f, $"the child shows red inside the mask ({inside})");
+        Check.That(shown > 0 && hidden > 0, $"the mask shows its child inside its picture and nothing past its rounded corners ({shown} shown, {hidden} hidden)");
+        Check.Equal(0, between, "no pixel is half masked");
+        port.QueueFree();
+    }
 }
