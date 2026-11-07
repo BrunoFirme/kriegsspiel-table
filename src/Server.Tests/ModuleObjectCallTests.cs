@@ -724,6 +724,32 @@ public class ModuleObjectCallTests
     }
 
     [Fact]
+    public void Matching_tags_a_removed_attachment_the_global_menu_clear_and_an_outside_message_answer_as_the_tabletop_does()
+    {
+        using var t = new Table();
+        const string lua = """
+            function onLoad()
+              local m = getObjectFromGUID('p-000003')
+              self.setTags({ 'Guard' })
+              m.setTags({ 'guard', 'Foot' })
+              local match = self.hasMatchingTag(m)
+              m.setTags({ 'Foot' })
+              local none = self.hasMatchingTag(m)
+              self.addAttachment(m)
+              local off = self.removeAttachment(0)
+              ticks = 0
+              self.setName(tostring(match) .. tostring(none) .. '|' .. off.getGUID() .. '|' .. tostring(clearContextMenu()) .. tostring(sendExternalMessage({ a = 1 })))
+            end
+            function onUpdate() ticks = ticks + 1 end
+            """;
+        Assert.Equal("truefalse|p-000003|truetrue", Run(t, lua));
+        for (int f = 1; f <= 3; f++) t.Server.Scripts.Tick(f * 0.016);
+        var r = ModuleTranslator.Translate("function onLoad() self.setName(tostring(getObjectFromGUID('p-000002').getVar('ticks'))) end", Ctx());
+        t.Server.Handle(Table.Host, new SetScript { Layer = U, Id = Marker, Text = r.Script });
+        Assert.Equal("3", t.Server.State.Find(U, Marker)!.Label);
+    }
+
+    [Fact]
     public void Time_reads_the_scripts_clock_and_frame_count()
     {
         using var t = new Table();
