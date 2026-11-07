@@ -204,4 +204,20 @@ static class PanelTests
         Check.Equal(0, t.Errors.Count, string.Join("; ", t.Errors));
         ui.QueueFree();
     }
+
+    [NodeTest]
+    static Task Panel_font_names_reach_the_bundled_open_licence_files_with_the_weight_they_name_and_others_stay_on_system_fonts(TestRunner r)
+    {
+        Check.That(PanelFonts.Find("Bangers/Bangers-Regular") is FontFile, "a family with one file is that file");
+        Check.That(PanelFonts.Find("Fonts/Crete_Round/CreteRound-Italic") is FontFile { ResourcePath: var italic } && italic.EndsWith("CreteRound-Italic.ttf"), "the game's Fonts/ prefix and an italic file");
+        var bold = PanelFonts.Find("Montserrat/Montserrat-Bold") as FontVariation;
+        Check.That(bold != null && bold.VariationOpentype.Count == 1, "a weight of a variable family is a variation of its file");
+        var thinItalic = PanelFonts.Find("IBM_Plex_Sans/IBMPlexSans-ThinItalic") as FontVariation;
+        Check.That(thinItalic?.BaseFont is FontFile { ResourcePath: var slanted } && slanted.Contains("Italic"), "an italic weight comes from the italic file");
+        Check.That(PanelFonts.Find("Fonts/Arial") == null, "fonts the game does not ship openly stay on system fonts");
+        var shipped = DirAccess.GetFilesAt("res://fonts/panels");
+        const int Families = 16;
+        Check.Equal(Families, shipped.Count(f => f.EndsWith("-OFL.txt") || f.EndsWith("-LICENSE.txt")), "each of the sixteen families ships its licence beside its files");
+        return Task.CompletedTask;
+    }
 }
