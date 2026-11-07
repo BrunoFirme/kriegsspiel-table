@@ -18,7 +18,7 @@ sealed class PanelMeter(System.Func<string, Vector2?> pictureSize) : IPanelMeter
         {
             var family = name.Contains('/') ? name[(name.LastIndexOf('/') + 1)..] : name;
             var dash = family.IndexOf('-');
-            face = new SystemFont { FontNames = new[] { dash > 0 ? family[..dash] : family, family }, Fallbacks = new Godot.Collections.Array<Font> { Fonts.Face } };
+            face = PanelFonts.Find(name) ?? new SystemFont { FontNames = new[] { dash > 0 ? family[..dash] : family, family }, Fallbacks = new Godot.Collections.Array<Font> { Fonts.Face } };
         }
         if (t.Style != KTable.Client.Panels.FontStyle.Normal)
         {
