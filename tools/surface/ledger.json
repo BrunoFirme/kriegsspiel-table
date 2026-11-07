@@ -8078,17 +8078,17 @@
   },
   {
    "row": "Wait.frames counts frames, Wait.time seconds, onUpdate per frame",
-   "status": "partial",
-   "where": "ScriptTimers: ticks",
+   "status": "native",
+   "where": "the host runs scripts every frame it draws, as the tabletop does: Wait.frames counts those frames and on_update runs on each",
    "instead": "",
-   "held_by": "",
+   "held_by": "Net._Process ticks the scripts each frame (no test of its own)",
    "count": 55,
    "modules": 55
   },
   {
    "row": "a script call has no time limit in modules",
-   "status": "partial",
-   "where": "ScriptHost.CallBudgetMs: a second of the script's own time per call, the table work it asks for not counted, so a bag placing hundreds of pieces in one click runs; a runaway loop still stops",
+   "status": "native",
+   "where": "kept on purpose (2026-11-06): a call gets a second of its own time, the table work it asks for not counted; the tabletop freezes for good on a runaway loop, here the loop stops and its script and line are named",
    "instead": "",
    "held_by": "import-sweep: naval (the Midway bag's Place)",
    "count": 55,
@@ -8141,10 +8141,10 @@
   },
   {
    "row": "load order: global before objects; onLoad(script_state)",
-   "status": "partial",
-   "where": "ScriptHost.Load; the saved state string",
+   "status": "native",
+   "where": "as the tabletop: on a load every script's top-level code runs, the global's first, then on_load runs, the global's first, so the global on_load can call into any piece",
    "instead": "",
-   "held_by": "",
+   "held_by": "BookNotesScriptTests",
    "count": 55,
    "modules": 55
   },
@@ -8168,10 +8168,10 @@
   },
   {
    "row": "player model: colours, Black as GM, promoted, seated, host",
-   "status": "partial",
-   "where": "compat.color_of: the host is Black as a module's GM, the other umpires White, Red, Blue... in seat order, so Player[color] finds each; sides and observers have no seat colour",
-   "instead": "",
-   "held_by": "PlayerActionTests",
+   "status": "dropped",
+   "where": "with the Player API (decided 2026-11-06); compat.color_of still names umpires by seat colour",
+   "instead": "seats and roles are the app's own",
+   "held_by": "",
    "count": 55,
    "modules": 55
   },
@@ -8204,17 +8204,17 @@
   },
   {
    "row": "save quirk: negative scale mirrors",
-   "status": "partial",
-   "where": "the size is taken unsigned, so a mirrored piece comes over unmirrored, and the report names it",
+   "status": "planned",
+   "where": "a mirrored piece comes over unmirrored: mirroring a picture or a model at conversion is a decision for the user",
    "instead": "",
-   "held_by": "ConverterTests",
+   "held_by": "",
    "count": 55,
    "modules": 55
   },
   {
    "row": "save quirk: rotX/rotZ near 180 means face down; other tilts stand or lean",
-   "status": "partial",
-   "where": "ModuleObj.Flipped: 180 only",
+   "status": "planned",
+   "where": "face down is read; a piece standing on edge or leaning needs a tilt the table does not keep: a decision for the user",
    "instead": "",
    "held_by": "",
    "count": 55,
@@ -8231,10 +8231,10 @@
   },
   {
    "row": "setState keeps the GUID",
-   "status": "partial",
-   "where": "a piece keeps its id and guid through its looks; in a module each state object has a guid of its own that takes over",
+   "status": "native",
+   "where": "a converted piece keeps its states' GUIDs and wears the one of the state it shows, as each state is its own object in the tabletop",
    "instead": "",
-   "held_by": "",
+   "held_by": "BookNotesScriptTests",
    "count": 55,
    "modules": 55
   },

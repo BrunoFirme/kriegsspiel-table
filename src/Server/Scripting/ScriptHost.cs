@@ -108,6 +108,7 @@ public sealed partial class ScriptHost
         Volatile.Write(ref _loadTotal, pieces.Count);
         Volatile.Write(ref _loadDone, 0);
         bool mine = BeginRedraw(pieces, clearUndrawn: false);
+        _loadsWaiting = new();
         try
         {
             if (_s.State.Script is { } g) Guard("", () => LoadGlobal(g));
@@ -117,8 +118,24 @@ public sealed partial class ScriptHost
                 if (Find(pieces[i].Id) is { } still) Guard(still.Id, () => LoadPiece(still));
                 Volatile.Write(ref _loadDone, i + 1);
             }
+            var waiting = _loadsWaiting;
+            _loadsWaiting = null;
+            foreach (var (ps, state) in waiting)
+                Guard(ps.Id, () => UnderLoadBudget(() => { if (ps.Enabled && IsCurrent(ps)) Call(ps, "on_load", DynValue.NewString(state)); }));
         }
-        finally { if (mine) EndRedraw(); }
+        finally
+        {
+            _loadsWaiting = null;
+            if (mine) EndRedraw();
+        }
+    }
+
+    List<(PieceScript ps, string state)>? _loadsWaiting;
+
+    void OnLoad(PieceScript ps, string state)
+    {
+        if (_loadsWaiting != null) { _loadsWaiting.Add((ps, state)); return; }
+        Call(ps, "on_load", DynValue.NewString(state));
     }
 
     public int LoadDone => Volatile.Read(ref _loadDone);
@@ -342,7 +359,7 @@ public sealed partial class ScriptHost
             _pieces[p.Id] = ps;
             if (!redrawn) _drawing.Blank(p.Id);
             _drawing.FromLoad(p.Id);
-            Call(ps, "on_load", DynValue.NewString(p.ScriptState));
+            OnLoad(ps, p.ScriptState);
         });
     }
 
@@ -378,7 +395,7 @@ public sealed partial class ScriptHost
             if (!Compile(ps, null)) return;
             ps.HasUpdate = ps.Env.Get("on_update").Type == DataType.Function;
             _global = ps;
-            Call(ps, "on_load", DynValue.NewString(_s.State.ScriptState));
+            OnLoad(ps, _s.State.ScriptState);
             InstallScriptingButtons(ps);
         });
     }

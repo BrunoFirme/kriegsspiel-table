@@ -553,6 +553,7 @@ public sealed partial class ScenarioBuilder
             Ui = ObjectPanels(o, extras, $"{layer.Name} {o.Name} '{o.Nickname}' {o.Guid}"),
             Worth = o.Worth,
             Lettering = r.Lettering,
+            StateGuids = StateGuidsOf(o, def),
         };
         if (lua.Trim().Length > 0)
         {
@@ -730,6 +731,14 @@ public sealed partial class ScenarioBuilder
         _rep.Counts[$"{_cfg.Scenario.Id}: notes laid beside the map"] = notes.Count.ToString();
     }
 
+    static List<string>? StateGuidsOf(ModuleObj o, PieceDef def)
+    {
+        var (states, _) = o.StateList();
+        if (states.Count < 2 || states.Count != def.States.Count) return null;
+        var guids = states.Select(s => s.Guid).ToList();
+        return guids.All(g => g.Length > 0) && guids.Distinct().Count() == guids.Count ? guids : null;
+    }
+
     void StackCopies(ModuleObj o, PieceInstance inst, Layer layer)
     {
         double each = _defs.BaseThickness(o) * Math.Abs(o.ScaleY);
@@ -738,6 +747,7 @@ public sealed partial class ScenarioBuilder
             var copy = inst.Clone();
             copy.Id = $"p-{_nextId++:D6}";
             copy.Guid = null;
+            copy.StateGuids = null;
             copy.Script = null;
             copy.ScriptState = "";
             layer.Pieces.Add(copy);

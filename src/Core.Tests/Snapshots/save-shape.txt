@@ -630,6 +630,7 @@ type PieceInstance object
   scriptState: string
   stack: int
   state: int
+  stateGuids: List<string>
   stowed: List<PieceInstance>
   tags: List<string>
   takeOrder: string

@@ -91,6 +91,40 @@ public class BookNotesScriptTests
     }
 
     [Fact]
+    public void On_a_load_every_script_is_read_before_any_on_load_so_the_global_one_can_call_into_a_piece()
+    {
+        using var t = new Table();
+        const string P = "p-000002";
+        var state = Json.Clone(t.Server.State);
+        state.Script = ModuleTranslator.Translate("""
+            function onLoad()
+              getObjectFromGUID("p-000002").call("greet", { who = "global" })
+            end
+            """, new TranslateContext { IsGlobal = true }).Script;
+        state.Find(U, P)!.Script = ModuleTranslator.Translate("""
+            function greet(params) self.setName("hello " .. params.who) end
+            """, new TranslateContext()).Script;
+        t.Server.LoadSave(state, new List<TurnRecord>(), "Loaded");
+        Assert.DoesNotContain(Flat(t.Server.Log).OfType<Say>(), s => s.Text.StartsWith("Script error"));
+        Assert.Equal("hello global", t.Server.State.Find(U, P)!.Label);
+    }
+
+    [Fact]
+    public void A_piece_takes_the_guid_of_the_state_it_turns_to_as_each_state_is_its_own_object_in_the_tabletop()
+    {
+        using var t = new Table();
+        t.Store.RegisterDef(new PackManifest { Id = "testpack" }, new PieceDef { Id = "flag", States = { new() { Name = "Up" }, new() { Name = "Down" } } });
+        t.Server.Handle(Table.Host, new SpawnPiece { Layer = U, Def = "flag", Id = "p-000060", Pos = new(1, 1) });
+        var flag = t.Server.State.Find(U, "p-000060")!;
+        flag.Guid = "aaa111";
+        flag.StateGuids = ["aaa111", "bbb222"];
+        t.Server.Handle(Table.Ump3, new SetState { Layer = U, Id = "p-000060", State = 1 });
+        Assert.Equal("bbb222", t.Server.State.Find(U, "p-000060")!.Guid);
+        t.Server.Handle(Table.Ump3, new Undo { TargetSeq = t.Server.Log[^1].Seq });
+        Assert.Equal("aaa111", t.Server.State.Find(U, "p-000060")!.Guid);
+    }
+
+    [Fact]
     public void A_module_script_rewrites_3d_text_its_size_and_its_colour()
     {
         using var t = new Table();

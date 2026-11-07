@@ -15,7 +15,7 @@ the plan says translate it), unknown (nobody has decided).
 | global | 14 | 14 | 0 | 55 |
 | namespaces | 23 | 23 | 0 | 180 |
 | events | 8 | 8 | 0 | 52 |
-| engine | 23 | 23 | 0 | 23 |
+| engine | 23 | 21 | 2 | 23 |
 
 ## types
 
@@ -947,24 +947,24 @@ the plan says translate it), unknown (nobody has decided).
 |---|---|---|---|---|
 | `Lua table to vector, colour and params and back (positional and named)` | 55 / 55 | compat | compat.Vector / compat.Color / vec(): named, positional and mixed tables, names and hex | ModuleVectorColorTests |
 | `MoonSharp 2.0.0 on both sides: the Lua dialect matches` | 55 / 55 | native | Server.csproj |  |
-| `Wait.frames counts frames, Wait.time seconds, onUpdate per frame` | 55 / 55 | partial | ScriptTimers: ticks |  |
-| `a script call has no time limit in modules` | 55 / 55 | partial | ScriptHost.CallBudgetMs: a second of the script's own time per call, the table work it asks for not counted, so a bag placing hundreds of pieces in one click runs; a runaway loop still stops | import-sweep: naval (the Midway bag's Place) |
+| `Wait.frames counts frames, Wait.time seconds, onUpdate per frame` | 55 / 55 | native | the host runs scripts every frame it draws, as the tabletop does: Wait.frames counts those frames and on_update runs on each | Net._Process ticks the scripts each frame (no test of its own) |
+| `a script call has no time limit in modules` | 55 / 55 | native | kept on purpose (2026-11-06): a call gets a second of its own time, the table work it asks for not counted; the tabletop freezes for good on a runaway loop, here the loop stops and its script and line are named | import-sweep: naval (the Midway bag's Place) |
 | `button and input defaults (width, height, font_size, colours, position, scale)` | 55 / 55 | compat | compat.module_defaults, from the tabletop's LuaUIState classes; a button or input with no handler is refused, as modules expect | ModuleDefaultsTests |
 | `click_function(obj, player_color, alt_click)` | 55 / 55 | compat | compat.create_button / module_handler | TranslatorTests.Handlers_get_the_piece_their_widget_is_on |
 | `context menu callback(player_color, menu_position, object)` | 55 / 55 | compat | compat.add_context_menu_item |  |
 | `getObjectFromGUID answers nil for a piece inside a bag` | 55 / 55 | native | a stowed piece is off the layer, so board.find does not see it | StowScriptTests |
 | `input_function(obj, player_color, text, selected)` | 55 / 55 | compat | compat.create_input / module_handler | TranslatorTests.A_name_typed_letter_by_letter_reaches_the_face |
-| `load order: global before objects; onLoad(script_state)` | 55 / 55 | partial | ScriptHost.Load; the saved state string |  |
+| `load order: global before objects; onLoad(script_state)` | 55 / 55 | native | as the tabletop: on a load every script's top-level code runs, the global's first, then on_load runs, the global's first, so the global on_load can call into any piece | BookNotesScriptTests |
 | `member names fold (exact, first letter up, snake to camel, both)` | 55 / 55 | native | ModuleTranslator.FoldMember before every object member lookup | TranslatorFoldTests |
 | `module Vector and Color classes with their methods` | 55 / 55 | compat | compat.Vector and compat.Color: every documented method, operator and named colour | ModuleVectorColorTests |
-| `player model: colours, Black as GM, promoted, seated, host` | 55 / 55 | partial | compat.color_of: the host is Black as a module's GM, the other umpires White, Red, Blue... in seat order, so Player[color] finds each; sides and observers have no seat colour | PlayerActionTests |
+| `player model: colours, Black as GM, promoted, seated, host` | 55 / 55 | dropped | with the Player API (decided 2026-11-06); compat.color_of still names umpires by seat colour |  |
 | `positionToWorld and positionToLocal: the module transform, local x along +X at rotation zero, in mesh units times scale for a model and the size rule for a flat` | 55 / 55 | compat | compat.position_to_world / position_to_local; a model def carries local_unit from the converter | ModuleLocalFrameTests |
 | `save quirk: a number written as a string, or NaN` | 55 / 55 | native | ModuleObj.D falls back to the default and the report says so | ConverterTests |
 | `save quirk: duplicate GUIDs inside bags` | 55 / 55 | native | a guid names the first piece found, as getObjectFromGUID answers in modules |  |
-| `save quirk: negative scale mirrors` | 55 / 55 | partial | the size is taken unsigned, so a mirrored piece comes over unmirrored, and the report names it | ConverterTests |
-| `save quirk: rotX/rotZ near 180 means face down; other tilts stand or lean` | 55 / 55 | partial | ModuleObj.Flipped: 180 only |  |
+| `save quirk: negative scale mirrors` | 55 / 55 | planned | a mirrored piece comes over unmirrored: mirroring a picture or a model at conversion is a decision for the user |  |
+| `save quirk: rotX/rotZ near 180 means face down; other tilts stand or lean` | 55 / 55 | planned | face down is read; a piece standing on edge or leaning needs a tilt the table does not keep: a decision for the user |  |
 | `script safety cuts the self-copying block and keeps the rest` | 55 / 55 | native | ScriptSafety; over the roster only the German Team Planning Table is cut, 1,463 copies of the Object base code worm, and no other rule fires | ScriptSafetyTests; import-sweep |
-| `setState keeps the GUID` | 55 / 55 | partial | a piece keeps its id and guid through its looks; in a module each state object has a guid of its own that takes over |  |
+| `setState keeps the GUID` | 55 / 55 | native | a converted piece keeps its states' GUIDs and wears the one of the state it shows, as each state is its own object in the tabletop | BookNotesScriptTests |
 | `smooth moves end at once` | 55 / 55 | compat | compat.set_position |  |
 | `spawning and loading_custom flags` | 55 / 55 | compat | ObjectProps (get_prop) |  |
 | `widget indices are 0-based in editButton/editInput/removeButton` | 55 / 55 | compat | compat.edit_button |  |

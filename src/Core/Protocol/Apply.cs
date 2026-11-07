@@ -197,6 +197,7 @@ public static class StateMachine
         if (p == null) return "no such piece";
         inverse = new SetState { Layer = st.Layer, Id = st.Id, State = p.State };
         p.State = Math.Max(0, st.State);
+        if (p.StateGuids is { } guids && p.State < guids.Count && guids[p.State].Length > 0) p.Guid = guids[p.State];
         return null;
     }
 
