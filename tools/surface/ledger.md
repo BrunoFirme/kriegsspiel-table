@@ -14,8 +14,8 @@ every row that is not dropped must end audited, used by the corpus or not.
 |---|---|---|---|---|---|
 | types | 30 | 30 | 0 | 28 | 43 |
 | save | 150 | 150 | 0 | 127 | 302 |
-| object | 65 | 65 | 0 | 9 | 260 |
-| global | 16 | 16 | 0 | 3 | 63 |
+| object | 65 | 65 | 0 | 7 | 260 |
+| global | 16 | 16 | 0 | 0 | 63 |
 | namespaces | 23 | 23 | 0 | 17 | 180 |
 | events | 8 | 8 | 0 | 1 | 52 |
 | engine | 23 | 23 | 0 | 6 | 23 |
@@ -385,7 +385,7 @@ every row that is not dropped must end audited, used by the corpus or not.
 | `getScale` | 15144 / 51 | compat | ObjectCall |  | ModuleObjectCallTests.Scale_reads_one_local_unit_and_setting_it_back_keeps_the_piece_the_same_size |
 | `clearButtons` | 6680 / 51 | compat | ObjectCall |  | ScriptingTests.Removing_module_buttons_keeps_their_numbers_until_the_next_frame_so_a_loop_removes_them_all |
 | `createInput` | 20637 / 50 | compat | ObjectCall |  | ScriptingTests.A_module_input_inside_its_piece_is_not_drawn_but_still_listed_and_raising_it_above_the_piece_draws_it; ModuleDefaultsTests |
-| `setCustomObject` | 3484 / 50 | partial | a picture by a link built at run time is fetched and shown on the piece's face (self.set_face_picture); a model by such a link is not | ScriptingTests |  |
+| `setCustomObject` | 3484 / 50 | partial | a picture by a link built at run time is fetched and shown on the piece's face (self.set_face_picture); a model by such a link is not | ScriptingTests | ModuleObjectCallTests.Links_made_at_run_time_find_the_kind_made_from_them_and_raw_data_spawns_that_kind |
 | `reload` | 755 / 50 | compat | ObjectCall |  | ModuleObjectCallTests.Plain_reads_and_small_calls_answer_as_the_tabletop_does |
 | `positionToWorld` | 1180 / 49 | compat | ObjectCall |  | ModuleObjectCallTests.A_local_point_goes_to_the_world_with_its_height_scaled_and_turned_over_with_the_piece |
 | `setVar` | 181 / 49 | compat | ObjectCall |  | ModuleObjectCallTests.Object_setters_answer_true_as_module_code_checks |
@@ -554,7 +554,7 @@ every row that is not dropped must end audited, used by the corpus or not.
 | `getRotationSmooth` | - | compat | ObjectCall |  | ModuleObjectCallTests.A_smooth_move_takes_the_tabletops_time_reads_its_target_meanwhile_and_lands_at_the_end |
 | `getRotationValue` | - | native | a die's sides are its own (PieceDef.Faces, a value and the way up each); self.faces / face / value, set_face / set_value / set_faces / roll; compat maps the module calls | DiceScriptTests | DiceScriptTests.A_module_script_rolls_a_die_reads_its_value_and_sets_a_face |
 | `getRotationValues` | - | native | a die's sides are its own (PieceDef.Faces, a value and the way up each); self.faces / face / value, set_face / set_value / set_faces / roll; compat maps the module calls | DiceScriptTests | DiceScriptTests.A_module_script_rolls_a_die_reads_its_value_and_sets_a_face |
-| `getSelectingPlayers` | - | compat | compat.get_selecting_players |  |  |
+| `getSelectingPlayers` | - | compat | compat.get_selecting_players |  | ModuleObjectCallTests.Selecting_players_are_the_seated_colours_whose_selection_holds_the_piece |
 | `getSnapPoints` | - | compat | ObjectCall |  | ModuleObjectCallTests.Snap_points_read_back_with_their_rotation_only_when_they_snap_rotation |
 | `getStateId` | - | compat | ObjectCall |  | ModuleObjectCallTests.A_piece_without_states_has_state_id_minus_one_no_states_and_refuses_set_state |
 | `getStates` | - | compat | ObjectCall |  |  |
@@ -651,7 +651,7 @@ every row that is not dropped must end audited, used by the corpus or not.
 | `getObjects` | 1525 / 14 | native | GlobalFunctionCall |  | ModuleObjectCallTests.Object_lists_tag_lists_seat_names_and_world_lines_answer_as_the_tabletop_does |
 | `destroyObject` | 20 / 14 | compat | GlobalFunctionCall |  | ModuleObjectCallTests.Object_lists_tag_lists_seat_names_and_world_lines_answer_as_the_tabletop_does |
 | `startLuaCoroutine` | 4345 / 13 | compat | GlobalFunctionCall |  | ModuleObjectCallTests.A_coroutine_runs_to_its_first_yield_at_once_goes_on_each_frame_while_it_yields_zero_and_stops_on_any_other_number |
-| `spawnObjectData` | 32 / 13 | compat | GlobalFunctionCall |  |  |
+| `spawnObjectData` | 32 / 13 | compat | GlobalFunctionCall |  | ModuleObjectCallTests.Links_made_at_run_time_find_the_kind_made_from_them_and_raw_data_spawns_that_kind |
 | `getAllObjects` | 426 / 12 | native | GlobalFunctionCall |  | ModuleObjectCallTests.Object_lists_tag_lists_seat_names_and_world_lines_answer_as_the_tabletop_does |
 | `log` | 376 / 12 | compat | compat.log: the value, a table as JSON, with its label, on the script console | StowEventTests | ModuleObjectCallTests.Log_writes_a_table_as_indented_key_lines_under_its_label_and_answers_true |
 | `printToColor` | 20 / 12 | compat | GlobalFunctionCall |  | ModuleObjectCallTests.Printing_to_a_seat_nobody_holds_is_an_error_and_seat_names_are_exact |
@@ -688,7 +688,7 @@ every row that is not dropped must end audited, used by the corpus or not.
 | `getObjectsWithAllTags` | - | compat | GlobalFunctionCall |  | ModuleObjectCallTests.Object_lists_tag_lists_seat_names_and_world_lines_answer_as_the_tabletop_does |
 | `getObjectsWithAnyTags` | - | compat | GlobalFunctionCall |  | ModuleObjectCallTests.Object_lists_tag_lists_seat_names_and_world_lines_answer_as_the_tabletop_does |
 | `getObjectsWithTag` | - | compat | GlobalFunctionCall |  | ModuleObjectCallTests.Tags_match_without_case_and_with_spaces_as_underscores |
-| `getPlayer` | - | compat | compat.player |  |  |
+| `getPlayer` | - | dropped | the Player API (decided 2026-11-06) |  |  |
 | `getPlayerHandPositionAndRotation` | - | dropped | hands are seats here (decided 2026-11-06) |  |  |
 | `getPointerPosition` | - | dropped | the Player API (decided 2026-11-06) |  |  |
 | `getPointerRotation` | - | dropped | the Player API (decided 2026-11-06) |  |  |
@@ -705,7 +705,7 @@ every row that is not dropped must end audited, used by the corpus or not.
 | `setLookingForPlayers` | - | compat | GlobalFunctionCall |  | ModuleObjectCallTests.The_tabletops_own_global_names_reach_the_global_script |
 | `setNotes` | - | compat | GlobalFunctionCall |  | ModuleObjectCallTests.Notebook_tabs_need_a_title_adding_one_answers_the_new_count_and_notes_refuse_nil |
 | `showHotkeyConfig` | - | dropped | console commands and other host controls (decided 2026-11-06) |  |  |
-| `spawnObjectJSON` | - | compat | GlobalFunctionCall |  |  |
+| `spawnObjectJSON` | - | compat | GlobalFunctionCall |  | ModuleObjectCallTests.Links_made_at_run_time_find_the_kind_made_from_them_and_raw_data_spawns_that_kind |
 | `storeRewindState` | - | dropped | console commands and other host controls (decided 2026-11-06) |  |  |
 
 ## namespaces

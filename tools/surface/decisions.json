@@ -393,7 +393,7 @@
   "getAllTags": ["compat", "compat.all_tags", "", "ModuleHelpersTests"],
   "colorToPlayerName": ["compat", "compat.Color:toString", ""],
   "inspect": ["dropped", "reflection of the tabletop's own C# classes (decided 2026-11-07)", "the scripting reference"],
-  "getPlayer": ["compat", "compat.player", ""],
+  "getPlayer": ["dropped", "the Player API (decided 2026-11-06)", "seats and roles are the app's own; scripts reach umpires through game.umpires()"],
   "getPointerPosition": ["dropped", "the Player API (decided 2026-11-06)", "seats and roles are the app's own; scripts reach umpires through game.umpires()"],
   "getPointerRotation": ["dropped", "the Player API (decided 2026-11-06)", "seats and roles are the app's own; scripts reach umpires through game.umpires()"],
   "debugLog": ["compat", "compat.log", ""],

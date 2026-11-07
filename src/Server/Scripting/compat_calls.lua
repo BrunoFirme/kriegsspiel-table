@@ -986,8 +986,15 @@ local get_data_before = compat.get_data
 function compat.get_data(obj, state)
   local d = get_data_before(obj, state)
   if type(d) ~= "table" or not compat.is_piece(obj) then return d end
-  local t = kind_type(compat.piece_of(obj))
+  local piece = compat.piece_of(obj)
+  local t = kind_type(piece)
   d.Name = t
+  d.Tags = compat.tags(piece)
+  local sc = compat.scale3(piece)
+  d.Transform.scaleX, d.Transform.scaleY, d.Transform.scaleZ = sc.x, sc.y, sc.z
+  local tint = compat.color_tint(piece)
+  d.ColorDiffuse = { r = tint.r, g = tint.g, b = tint.b, a = tint.a }
+  d.Locked = piece.locked and true or false
   local c = compat.get_custom_object(compat.piece_of(obj))
   if MODEL_TYPES[t] then
     d.CustomMesh = { MeshURL = c.mesh, DiffuseURL = c.diffuse, NormalURL = c.normal, ColliderURL = "", Convex = true, MaterialIndex = 0, TypeIndex = c.type, CastShadows = true }
@@ -995,6 +1002,49 @@ function compat.get_data(obj, state)
     d.CustomImage = { ImageURL = c.image, ImageSecondaryURL = c.image_secondary, ImageScalar = 1, WidthScale = 0 }
   end
   return d
+end
+local function data_links(data)
+  local img, mesh, bundle = data.CustomImage or {}, data.CustomMesh or {}, data.CustomAssetbundle or {}
+  return compat.kind_for_link(mesh.MeshURL, mesh.DiffuseURL, "diffuse") or compat.kind_for_link(bundle.AssetbundleURL)
+    or compat.kind_for_link(img.ImageURL, img.ImageSecondaryURL, "image_secondary"), img.ImageURL
+end
+function compat.spawn_object_data(d)
+  d = type(d) == "table" and d or {}
+  local data = type(d.data) == "table" and d.data or d
+  local tr = data.Transform or {}
+  local def, picture = data.def, nil
+  if def == nil then def, picture = data_links(data) end
+  local fallback = false
+  if def == nil and type(data.Name) == "string" then
+    local same = board.kinds{ type = data.Name }[1]
+    if same then def, fallback = same.id, true end
+  end
+  local h = compat.spawn_object({
+    position = d.position or { tr.posX, tr.posY, tr.posZ }, rotation = d.rotation or { tr.rotX, tr.rotY, tr.rotZ },
+    nickname = data.Nickname, guid = d.guid or data.GUID, def = def, callback_function = d.callback_function, callback = d.callback, callback_owner = d.callback_owner, params = d.params,
+    state = data.State, tags = data.Tags, memo = data.Memo, script_state = data.LuaScriptState, script = data.LuaScript,
+    description = data.Description, gm_notes = data.GMNotes,
+  })
+  local piece = compat.piece_of(h)
+  if def == nil or piece == nil then
+    compat.todo(nil, "spawnObjectData", data.Name)
+    return h
+  end
+  if fallback and type(picture) == "string" and picture ~= "" then piece.set_face_picture(picture) end
+  local scale = d.scale or (tr.scaleX and { tr.scaleX, tr.scaleY or tr.scaleX, tr.scaleZ or tr.scaleX })
+  if scale then compat.set_scale(piece, scale) end
+  if type(data.ColorDiffuse) == "table" then compat.set_color_tint(piece, data.ColorDiffuse) end
+  if data.Locked ~= nil then compat.set_lock(piece, data.Locked) end
+  return h
+end
+function compat.spawn_object_json(p)
+  if type(p) ~= "table" or type(p.json) ~= "string" then return nil end
+  local ok, data = pcall(json.decode, p.json)
+  if not ok or type(data) ~= "table" then return nil end
+  local q = {}
+  for k, v in pairs(p) do q[k] = v end
+  q.json, q.data = nil, data
+  return compat.spawn_object_data(q)
 end
 
 function compat.none() return nil end
@@ -1227,6 +1277,23 @@ function compat.color_to_player_name(color)
   return who.name
 end
 function compat.get_player(color) return compat.player(color) end
+function compat.get_selecting_players(obj)
+  local p = compat.piece_of(obj)
+  local out = {}
+  if type(p) ~= "table" or p.id == nil then return out end
+  for _, u in ipairs(game.umpires()) do
+    local c = compat.color_of(u)
+    if c ~= "Grey" then
+      for _, s in ipairs(game.selected(u)) do
+        if s.id == p.id then
+          out[#out + 1] = c
+          break
+        end
+      end
+    end
+  end
+  return out
+end
 function compat.destroy_object(obj)
   local p = compat.piece_of(obj)
   if type(p) ~= "table" or p.id == nil then error(clr("LuaObject", obj), 0) end

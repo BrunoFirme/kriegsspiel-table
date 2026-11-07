@@ -762,9 +762,21 @@ function compat.spawn_object(p)
   return h
 end
 
+function compat.kind_for_link(link, other, other_key)
+  if type(link) ~= "string" or link == "" then return nil end
+  local found = board.kinds{ link = link }
+  for _, k in ipairs(found) do
+    local links = k.source and k.source.links or {}
+    if other == nil or other == "" or links[other_key] == other then return k.id end
+  end
+  return found[1] and found[1].id or nil
+end
 function compat.set_custom_object(obj, c)
   c = c or {}
   local def = c.def or c.image or c.diffuse
+  local known = c.def == nil and (c.mesh and compat.kind_for_link(c.mesh, c.diffuse, "diffuse") or c.assetbundle and compat.kind_for_link(c.assetbundle)
+    or compat.kind_for_link(c.image, c.image_secondary, "image_secondary"))
+  if known then def = known end
   if type(def) == "string" and def:find("^https?://") and c.mesh == nil then
     local p = compat.piece_of(obj)
     if p ~= nil then p.set_face_picture(def) return end

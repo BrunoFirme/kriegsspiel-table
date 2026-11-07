@@ -3522,7 +3522,7 @@
    "held_by": "ScriptingTests",
    "count": 3484,
    "modules": 50,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Links_made_at_run_time_find_the_kind_made_from_them_and_raw_data_spawns_that_kind"
   },
   {
    "row": "reload",
@@ -5212,7 +5212,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Selecting_players_are_the_seated_colours_whose_selection_holds_the_piece"
   },
   {
    "row": "getSnapPoints",
@@ -6134,7 +6134,7 @@
    "held_by": "",
    "count": 32,
    "modules": 13,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Links_made_at_run_time_find_the_kind_made_from_them_and_raw_data_spawns_that_kind"
   },
   {
    "row": "getAllObjects",
@@ -6498,9 +6498,9 @@
   },
   {
    "row": "getPlayer",
-   "status": "compat",
-   "where": "compat.player",
-   "instead": "",
+   "status": "dropped",
+   "where": "the Player API (decided 2026-11-06)",
+   "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
    "modules": 0,
@@ -6674,7 +6674,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Links_made_at_run_time_find_the_kind_made_from_them_and_raw_data_spawns_that_kind"
   },
   {
    "row": "storeRewindState",

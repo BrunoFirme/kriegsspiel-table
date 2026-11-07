@@ -93,6 +93,11 @@
 ---@field tag? string Only pieces with this tag (their own, or their kind's).
 ---@field name? string Only pieces with this label; case does not matter.
 
+---@class BoardKindsOptions
+---@field link? string Only kinds made from this picture or model link (one of their source links).
+---@field type? string Only kinds converted from this module object type, such as Custom_Token.
+---@field tag? string Only kinds with this tag.
+
 ---@class BoardSpawnSpec
 ---@field def string The id of a piece definition in this game's packs.
 ---@field x? number Map units. Default 0.
@@ -420,6 +425,11 @@ function board.find(id_or_guid) end
 ---@param filter? BoardPiecesOptions
 ---@return Piece[] # A list; empty when nothing matches. Every field given must match.
 function board.pieces(filter) end
+
+---The kinds this game's packs hold, or those that match { link =, type =, tag = }: { id =, name =, tags =, source = }.
+---@param filter? BoardKindsOptions
+---@return table[] # A list; empty when nothing matches. source is the kind's module source, as a piece's source field gives it, or nil.
+function board.kinds(filter) end
 
 ---Puts a new piece of that kind on the board and returns it; its script starts at once.
 ---@param spec BoardSpawnSpec

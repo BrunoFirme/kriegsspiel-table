@@ -788,6 +788,54 @@ public class ModuleObjectCallTests
     }
 
     [Fact]
+    public void Links_made_at_run_time_find_the_kind_made_from_them_and_raw_data_spawns_that_kind()
+    {
+        using var t = new Table();
+        var pack = new PackManifest { Id = "testpack" };
+        t.Store.RegisterDef(pack, new PieceDef { Id = "foot", Name = "Foot", ModuleType = "Custom_Token", Sources = new() { ["ImageURL"] = "https://example.test/foot.png" } });
+        t.Store.RegisterDef(pack, new PieceDef { Id = "gun", Name = "Gun", ModuleType = "Custom_Model", Sources = new() { ["MeshURL"] = "https://example.test/gun.obj", ["DiffuseURL"] = "https://example.test/gun.png" } });
+        var picture = $"pictures/{new string('c', 64)}.png";
+        Directory.CreateDirectory(Path.Combine(t.Store.PackageDir("sheets"), "pictures"));
+        File.WriteAllBytes(Path.Combine(t.Store.PackageDir("sheets"), picture), [1]);
+        t.Server.Scripts.FetchPicture = link => Task.FromResult<string?>(link == "https://example.test/other.png" ? picture : null);
+        var label = Run(t, """
+            function onLoad()
+              local base = 'https://example.test/'
+              if self.getDescription() == 'reloaded' then return end
+              self.setDescription('reloaded')
+              local a = spawnObjectData({ data = { Name = 'Custom_Token', Nickname = 'raw', CustomImage = { ImageURL = base .. 'foot.png' }, Transform = { posX = 2, posY = 1, posZ = 3 } } })
+              local b = spawnObjectJSON({ json = JSON.encode({ Name = 'Custom_Token', Nickname = 'json', CustomImage = { ImageURL = base .. 'other.png' } }), position = { 4, 1, 4 } })
+              local c = spawnObjectJSON({ json = 'not json' })
+              self.setName(tostring(c == nil))
+              self.setCustomObject({ mesh = base .. 'gun.obj', diffuse = base .. 'gun.png' })
+              self.reload()
+            end
+            """);
+        Assert.Equal("true", label);
+        t.Server.Scripts.Tick(0.1);
+        Assert.Equal("gun", t.Server.State.Find(U, P)!.Picture);
+        var raw = t.Server.State.Layer(U).Single(q => q.Label == "raw");
+        Assert.Equal(("foot", new Vec2(2, 3)), (raw.Def, raw.Pos));
+        var fallback = t.Server.State.Layer(U).Single(q => q.Label == "json");
+        Assert.Equal(("foot", picture), (fallback.Def, fallback.FacePicture));
+    }
+
+    [Fact]
+    public void Selecting_players_are_the_seated_colours_whose_selection_holds_the_piece()
+    {
+        using var t = new Table();
+        var label = Run(t, """
+            function onLoad()
+              local before = #self.getSelectingPlayers()
+              self.addToPlayerSelection('Red')
+              local after = self.getSelectingPlayers()
+              self.setName(before .. ' ' .. #after .. ' ' .. tostring(after[1]))
+            end
+            """);
+        Assert.Equal("0 1 Red", label);
+    }
+
+    [Fact]
     public void Time_reads_the_scripts_clock_and_frame_count()
     {
         using var t = new Table();

@@ -53,6 +53,7 @@ public sealed partial class ScriptHost
         board.Table["find"] = Fn(a => FindHandle(Arg(a, 0).CastToString() ?? ""));
         board.Table["pieces"] = Fn(a => Pieces(Arg(a, 0)));
         board.Table["spawn"] = Fn(a => Spawn(Arg(a, 0)));
+        board.Table["kinds"] = Fn(a => _handles.Kinds(Arg(a, 0)));
         board.Table["distance"] = Fn(a => Distance(Arg(a, 0), Arg(a, 1)));
         board.Table["zones"] = Fn(_ => Zones());
         board.Table["draw"] = Fn(a => _handles.DrawStroke(Arg(a, 0)));

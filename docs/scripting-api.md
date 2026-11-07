@@ -1836,6 +1836,7 @@ The umpire board: every piece a script can reach is on it.
 |---|---|
 | [`board.find`](#boardfind) | The piece with that id or module GUID, or nil. |
 | [`board.pieces`](#boardpieces) | Every piece, or those that match { def =, tag =, name = }. |
+| [`board.kinds`](#boardkinds) | The kinds this game's packs hold, or those that match { link =, type =, tag = }: { id =, name =, tags =, source = }. |
 | [`board.spawn`](#boardspawn) | Puts a new piece of that kind on the board and returns it; its script starts at once. |
 | [`board.distance`](#boarddistance) | Metres between two pieces or two { x =, z = } points by the map's scale (map units when it has none). |
 | [`board.zones`](#boardzones) | The umpire zones: { id =, name =, owner =, contains = function(piece_or_point) }. |
@@ -1887,6 +1888,29 @@ end
 ```
 
 **Module call** `getObjects` · **See also** [`board.find`](#boardfind), [`self.tags`](#selftags)
+
+### `board.kinds`
+
+```lua
+board.kinds(filter)
+```
+
+The kinds this game's packs hold, or those that match { link =, type =, tag = }: { id =, name =, tags =, source = }.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `filter.link` | `string` | _Optional._ Only kinds made from this picture or model link (one of their source links). |
+| `filter.type` | `string` | _Optional._ Only kinds converted from this module object type, such as Custom_Token. |
+| `filter.tag` | `string` | _Optional._ Only kinds with this tag. |
+
+**Returns** `table[]`: A list; empty when nothing matches. `source` is the kind's module source, as a piece's `source` field gives it, or nil.
+
+```lua
+local found = board.kinds{ link = "https://example.test/infantry.png" }[1]
+if found then self.set_picture(found.id) end
+```
+
+**See also** [`board.spawn`](#boardspawn), [`self.source`](#selfsource)
 
 ### `board.spawn`
 

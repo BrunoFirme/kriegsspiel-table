@@ -599,6 +599,17 @@ public static partial class ApiDoc
             """);
         See("board.find", "self.tags");
 
+        M("board", "kinds(filter)", "The kinds this game's packs hold, or those that match { link =, type =, tag = }: { id =, name =, tags =, source = }.", null, "table[]");
+        O("filter.link", "string", "Only kinds made from this picture or model link (one of their source links).");
+        O("filter.type", "string", "Only kinds converted from this module object type, such as Custom_Token.");
+        O("filter.tag", "string", "Only kinds with this tag.");
+        R("A list; empty when nothing matches. `source` is the kind's module source, as a piece's `source` field gives it, or nil.");
+        X("""
+            local found = board.kinds{ link = "https://example.test/infantry.png" }[1]
+            if found then self.set_picture(found.id) end
+            """);
+        See("board.spawn", "self.source");
+
         M("board", "spawn{ def, x, z, rot, label, state, scale, y, script, tags, memo, note, script_state, guid }", "Puts a new piece of that kind on the board and returns it; its script starts at once.", "spawnObject", "Piece");
         P("def", "string", "The id of a piece definition in this game's packs.");
         O("x", "number", "Map units. Default 0.");
