@@ -1,4 +1,4 @@
-format 25
+format 26
 type AccessChanged object
   access: GameAccess
 type AddBoard object
@@ -266,6 +266,7 @@ type EditWidget object
   index: int
   layer: string
   seq: long
+  typing: bool
   undoOf: long
   value: string
 type EffectDef object
@@ -583,10 +584,12 @@ type PieceDef object
   mesh: string
   name: string
   nameBox: FaceBox
+  normal: string
   pageOffset: int
   script: string
   scriptHash: string
   scriptState: string
+  shadowless: bool
   shape: string
   shine: ShineDef
   size: Size2
@@ -1302,15 +1305,19 @@ type Widget object
   face: string
   font: double
   h: double
+  hoverColor: string
   kind: string
   label: string
   lines: int
   onChange: string
   onClick: string
   placeholder: string
+  pressColor: string
   rot: double
+  tab: string
   textColor: string
   tooltip: string
+  validation: string
   value: string
   w: double
   x: double

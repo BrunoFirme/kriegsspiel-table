@@ -813,7 +813,7 @@ public static class ModuleTranslator
             }
             if (_uiHandlers.Contains(name)) return (name, "__who, __value, __id", Bind(new[] { "compat.player(compat.color_of(__who))", "__value", "__id" }));
             if (_clickHandlers.Contains(name)) return (name, "__who, __alt, __index, __piece", Bind(new[] { "__piece or self", "compat.color_of(__who)", "__alt" }));
-            if (_inputHandlers.Contains(name)) return (name, "__who, __value, __index, __piece", Bind(new[] { "__piece or self", "compat.color_of(__who)", "__value", "false" }));
+            if (_inputHandlers.Contains(name)) return (name, "__who, __value, __index, __piece, __typing", Bind(new[] { "__piece or self", "compat.color_of(__who)", "__value", "__typing == true" }));
             return (null, "", "");
         }
 

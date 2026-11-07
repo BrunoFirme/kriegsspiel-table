@@ -999,6 +999,7 @@ public sealed class EditWidget : LayerCommand
     public string Id { get; set; } = "";
     public int Index { get; set; }
     public string Value { get; set; } = "";
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)] public bool Typing { get; set; }
     public override Sender SentBy() => Sender.Umpire;
     public override bool OnUndoStack() => false;
     public override Shown ShownToObservers() => Shown.Table;

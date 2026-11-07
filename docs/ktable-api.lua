@@ -60,6 +60,8 @@
 ---@field color? Color The box's colour.
 ---@field text_color? Color The text's colour.
 ---@field tooltip? string Shown when the pointer rests on it.
+---@field hover_color? Color The box's colour under the pointer. Default: each of red, green and blue 0.2 nearer the middle grey.
+---@field press_color? Color The box's colour while pressed. Default: each 0.4 nearer the middle grey.
 ---@field on_click? string The handler's name: called as fn(who, alt, index, piece); alt is true for a right-click.
 ---@field kind? "button"|"input"|"label" "label" shows it but takes no clicks or typing: locked text. A module's button or input turned face down above the piece comes across this way. edit can change it.
 
@@ -78,7 +80,9 @@
 ---@field align? "left"|"center"|"right" Default "center".
 ---@field lines? number Lines of text the box holds. Default 1.
 ---@field tooltip? string Shown when the pointer rests on it.
----@field on_change? string The handler's name: called as fn(who, value, index, piece) when the umpire finishes typing; text it returns replaces what was typed.
+---@field on_change? string The handler's name: called as fn(who, value, index, piece, typing) each time the text changes while the umpire types (typing true) and once more when they leave the box (typing false); text it returns replaces what was typed.
+---@field validation? "integer"|"float"|"alphanumeric"|"username"|"name" Keys the box takes: digits and a leading minus; also one point; letters and digits; lower-case letters and digits; or a name, capitalised by word. Default any.
+---@field tab? "next"|"spaces"|"none" What Tab does: go on to the piece's next input (the default), type four spaces, or nothing.
 ---@field kind? "button"|"input"|"label" "label" shows its value but takes no typing: locked text.
 
 ---@class PieceCallOptions
@@ -344,7 +348,7 @@ function Piece.to_local(x, z) end
 ---@return number # The widget's index, from 1, for edit and remove_widget.
 function Piece.button(spec) end
 
----Draws an input box and returns its index. on_change names a function called as fn(who, value, index, piece) when the umpire has typed.
+---Draws an input box and returns its index. on_change names a function called as fn(who, value, index, piece, typing) as the umpire types and when they leave the box.
 ---@param spec PieceInputSpec
 ---@return number # The widget's index, from 1.
 function Piece.input(spec) end

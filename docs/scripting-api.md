@@ -1500,7 +1500,7 @@ Widgets are drawn on a face in piece units: map units measured on the piece's ki
 | Name | What it does |
 |---|---|
 | [`self.button`](#selfbutton) | Draws a button and returns its index from 1. With no w and h it is a bare label that takes no clicks. on_click names a function called as fn(who, alt, index, piece). |
-| [`self.input`](#selfinput) | Draws an input box and returns its index. on_change names a function called as fn(who, value, index, piece) when the umpire has typed. |
+| [`self.input`](#selfinput) | Draws an input box and returns its index. on_change names a function called as fn(who, value, index, piece, typing) as the umpire types and when they leave the box. |
 | [`self.edit`](#selfedit) | Changes a widget: any of the fields button and input take. |
 | [`self.remove_widget`](#selfremove_widget) | Takes one widget away (the later ones move up). |
 | [`self.clear_widgets`](#selfclear_widgets) | Takes every widget away. |
@@ -1511,7 +1511,7 @@ Widgets are drawn on a face in piece units: map units measured on the piece's ki
 ### `self.button`
 
 ```lua
-self.button{ face, x, z, w, h, rot, label, font, color, text_color, tooltip, on_click, kind }
+self.button{ face, x, z, w, h, rot, label, font, color, text_color, hover_color, press_color, tooltip, on_click, kind }
 ```
 
 Draws a button and returns its index from 1. With no w and h it is a bare label that takes no clicks. on_click names a function called as fn(who, alt, index, piece).
@@ -1529,6 +1529,8 @@ Draws a button and returns its index from 1. With no w and h it is a bare label 
 | `color` | `Color` | _Optional._ The box's colour. |
 | `text_color` | `Color` | _Optional._ The text's colour. |
 | `tooltip` | `string` | _Optional._ Shown when the pointer rests on it. |
+| `hover_color` | `Color` | _Optional._ The box's colour under the pointer. Default: each of red, green and blue 0.2 nearer the middle grey. |
+| `press_color` | `Color` | _Optional._ The box's colour while pressed. Default: each 0.4 nearer the middle grey. |
 | `on_click` | `string` | _Optional._ The handler's name: called as fn(who, alt, index, piece); `alt` is true for a right-click. |
 | `kind` | `"button"\|"input"\|"label"` | _Optional._ "label" shows it but takes no clicks or typing: locked text. A module's button or input turned face down above the piece comes across this way. `edit` can change it. |
 
@@ -1553,10 +1555,10 @@ The handler is looked up in this script first, then in the global script. `"glob
 ### `self.input`
 
 ```lua
-self.input{ face, x, z, w, h, rot, value, placeholder, font, color, text_color, align, lines, tooltip, on_change, kind }
+self.input{ face, x, z, w, h, rot, value, placeholder, font, color, text_color, align, lines, tooltip, on_change, validation, tab, kind }
 ```
 
-Draws an input box and returns its index. on_change names a function called as fn(who, value, index, piece) when the umpire has typed.
+Draws an input box and returns its index. on_change names a function called as fn(who, value, index, piece, typing) as the umpire types and when they leave the box.
 
 | Field | Type | Description |
 |---|---|---|
@@ -1574,7 +1576,9 @@ Draws an input box and returns its index. on_change names a function called as f
 | `align` | `"left"\|"center"\|"right"` | _Optional._ Default "center". |
 | `lines` | `number` | _Optional._ Lines of text the box holds. Default 1. |
 | `tooltip` | `string` | _Optional._ Shown when the pointer rests on it. |
-| `on_change` | `string` | _Optional._ The handler's name: called as fn(who, value, index, piece) when the umpire finishes typing; text it returns replaces what was typed. |
+| `on_change` | `string` | _Optional._ The handler's name: called as fn(who, value, index, piece, typing) each time the text changes while the umpire types (typing true) and once more when they leave the box (typing false); text it returns replaces what was typed. |
+| `validation` | `"integer"\|"float"\|"alphanumeric"\|"username"\|"name"` | _Optional._ Keys the box takes: digits and a leading minus; also one point; letters and digits; lower-case letters and digits; or a name, capitalised by word. Default any. |
+| `tab` | `"next"\|"spaces"\|"none"` | _Optional._ What Tab does: go on to the piece's next input (the default), type four spaces, or nothing. |
 | `kind` | `"button"\|"input"\|"label"` | _Optional._ "label" shows its value but takes no typing: locked text. |
 
 **Returns** `number`: The widget's index, from 1.

@@ -842,6 +842,18 @@ internal sealed partial class PieceHandles(ScriptHost host)
                 case "on_change":
                     w.OnChange = v.CastToString();
                     break;
+                case "hover_color":
+                    w.HoverColor = ColorOf(v);
+                    break;
+                case "press_color":
+                    w.PressColor = ColorOf(v);
+                    break;
+                case "validation":
+                    w.Validation = v.CastToString() is "integer" or "float" or "alphanumeric" or "username" or "name" ? v.String : null;
+                    break;
+                case "tab":
+                    w.Tab = v.CastToString() is "next" or "spaces" or "none" ? v.String : null;
+                    break;
                 case "kind" when v.CastToString() is "button" or "input" or "label":
                     w.Kind = v.String;
                     break;

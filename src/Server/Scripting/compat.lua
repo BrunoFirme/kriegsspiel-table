@@ -541,6 +541,8 @@ function compat.module_handler(fn)
 end
 
 local BUTTON_EM, TOKEN_BUTTON_EM, INPUT_SCALE = 0.87, 1.87, 2.2
+local VALIDATION = { [2] = "integer", [3] = "float", [4] = "alphanumeric", [5] = "username", [6] = "name" }
+local TABS = { [2] = "next", [3] = "spaces" }
 local ALIGN = { [2] = "left", [3] = "center", [4] = "right" }
 compat.module_defaults = {
   width = 100, height = 100, font_size = 100, alignment = 1,
@@ -568,9 +570,11 @@ function compat.widget_spec(obj, t, kind, env)
     font = num(t.font_size, D.font_size) / 1000 * sx * uz * em,
     color = compat.color(t.color) or D.color, text_color = compat.color(t.font_color) or D.font_color, tooltip = t.tooltip,
     align = ALIGN[num(t.alignment, D.alignment)] or "center",
+    hover_color = compat.color(t.hover_color), press_color = compat.color(t.press_color),
   }
   if kind == "input" then
     s.value = tostring(t.value or D.value); s.placeholder = tostring(t.label or "")
+    s.validation = VALIDATION[num(t.validation, D.validation)]; s.tab = TABS[num(t.tab, D.tab)] or "none"
     s.on_change = handler(t.input_function, t.function_owner, obj, env)
   else
     s.label = tostring(t.label or "")
@@ -594,6 +598,10 @@ function compat.widget_patch(obj, t, kind, full, env)
   if t.color ~= nil then p.color = compat.color(t.color) end
   if t.font_color ~= nil then p.text_color = compat.color(t.font_color) end
   if t.tooltip ~= nil then p.tooltip = t.tooltip end
+  if t.hover_color ~= nil then p.hover_color = compat.color(t.hover_color) end
+  if t.press_color ~= nil then p.press_color = compat.color(t.press_color) end
+  if t.validation ~= nil and kind == "input" then p.validation = VALIDATION[num(t.validation, 1)] or "any" end
+  if t.tab ~= nil and kind == "input" then p.tab = TABS[num(t.tab, 2)] or "none" end
   if t.alignment ~= nil then p.align = ALIGN[num(t.alignment, 3)] or "center" end
   if t.click_function ~= nil then p.on_click = handler(t.click_function, t.function_owner, obj, env) end
   if t.input_function ~= nil then p.on_change = handler(t.input_function, t.function_owner, obj, env) end

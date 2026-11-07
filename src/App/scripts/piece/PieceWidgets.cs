@@ -23,7 +23,7 @@ sealed class PieceWidgets
     List<Widget>? _built;
     int _builtState = -1;
     bool _builtFaceDown;
-    readonly Dictionary<int, (MeshInstance3D? box, Color color)> _boxes = new();
+    readonly Dictionary<int, (MeshInstance3D? box, Color color, Color hover, Color press)> _boxes = new();
     int _hover;
     static readonly Color WidgetBox = new(1, 1, 1), WidgetBoxText = new(0, 0, 0), WidgetLabelText = new(1, 1, 1), InputBox = new(0.95f, 0.95f, 0.95f);
     static readonly Dictionary<string, StandardMaterial3D> WidgetMats = new();
@@ -100,21 +100,27 @@ sealed class PieceWidgets
     public void SetHover(int index)
     {
         if (index == _hover) return;
-        Shade(_hover, 0);
+        Shade(_hover, Look.Plain);
         _hover = index;
-        Shade(index, 0.18f);
+        Shade(index, Look.Hover);
     }
 
     public void Flash(int index)
     {
-        Shade(index, -0.25f);
-        _piece.GetTree().CreateTimer(0.12).Timeout += () => { if (GodotObject.IsInstanceValid(_piece)) Shade(index, index == _hover ? 0.18f : 0); };
+        Shade(index, Look.Pressed);
+        _piece.GetTree().CreateTimer(0.12).Timeout += () => { if (GodotObject.IsInstanceValid(_piece)) Shade(index, index == _hover ? Look.Hover : Look.Plain); };
     }
 
-    void Shade(int index, float amount)
+    enum Look { Plain, Hover, Pressed }
+
+    const float HoverStep = 0.2f, PressStep = 0.4f, StepTurn = 0.4f, UnfocusedText = 0.8f;
+
+    static Color Toward(Color c, float by) => new(c.R > StepTurn ? c.R - by : c.R + by, c.G > StepTurn ? c.G - by : c.G + by, c.B > StepTurn ? c.B - by : c.B + by, c.A);
+
+    void Shade(int index, Look look)
     {
         if (index <= 0 || !_boxes.TryGetValue(index, out var b) || b.box == null || !GodotObject.IsInstanceValid(b.box)) return;
-        b.box.MaterialOverride = WidgetMat(amount > 0 ? b.color.Lightened(amount) : amount < 0 ? b.color.Darkened(-amount) : b.color);
+        b.box.MaterialOverride = WidgetMat(look == Look.Hover ? b.hover : look == Look.Pressed ? b.press : b.color);
     }
 
     void Draw(Widget w, int index, bool back, float faceY)
@@ -127,10 +133,12 @@ sealed class PieceWidgets
         var textColor = w.TextColor != null ? Coords.ParseColor(w.TextColor, WidgetBoxText) : boxed ? WidgetBoxText : WidgetLabelText;
         float turn = Mathf.DegToRad((float)w.Rot);
         MeshInstance3D? box = boxed ? Plane(x, z, bw, bh, turn, WidgetMat(boxColor), back, faceY, 0.002f) : null;
-        _boxes[index] = (box, boxColor);
+        var hover = w.HoverColor != null ? Coords.ParseColor(w.HoverColor, boxColor) : Toward(boxColor, HoverStep);
+        var press = w.PressColor != null ? Coords.ParseColor(w.PressColor, boxColor) : Toward(boxColor, PressStep);
+        _boxes[index] = (box, boxColor, hover, press);
         bool typing = index == _editWidget;
         var text = typing ? _editText : input ? (w.Value.Length > 0 ? w.Value : w.Placeholder) : label && w.Value.Length > 0 ? w.Value : w.Label;
-        var color = !typing && input && w.Value.Length == 0 ? textColor with { A = 0.55f } : textColor;
+        var color = !typing && input ? textColor with { A = textColor.A * UnfocusedText } : textColor;
         float grow = Mathf.Max(0.01f, _piece.Look.FaceTextScale);
         float em = Mathf.Max(0.002f, (float)w.Font * k * grow);
         if ((input || label) && boxed && !typing) text = Fitting(text, em, bw * 0.94f);

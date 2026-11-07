@@ -1014,8 +1014,15 @@ function compat.debug_log(msg)
 end
 
 local GM_NOTES = "gm_notes"
-function compat.set_gm_notes(obj, s) compat.set_prop(obj, GM_NOTES, s) return true end
-function compat.get_gm_notes(obj) return compat.get_prop(obj, GM_NOTES, "") end
+function compat.set_gm_notes(obj, s)
+  if type(obj.set_gm_notes) == "function" then obj.set_gm_notes(s) else compat.set_prop(obj, GM_NOTES, s) end
+  return true
+end
+function compat.get_gm_notes(obj)
+  local own = compat.get_prop(obj, GM_NOTES, nil)
+  if own ~= nil then return own end
+  return obj.gm_notes or ""
+end
 function compat.highlight(obj, color, seconds)
   compat.color_arg(color)
   return true

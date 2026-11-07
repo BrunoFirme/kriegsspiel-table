@@ -36,7 +36,7 @@ public class TranslatorTests
         Assert.Contains("compat.create_button(self, markFor(form), _G)", s);
         Assert.Contains("compat.edit_button(self, {index = 1, label = ammo}, _G)", s);
         Assert.Contains("function ammoUp(__who, __alt, __index, __piece)", s);
-        Assert.Contains("function rename(__who, __value, __index, __piece)", s);
+        Assert.Contains("function rename(__who, __value, __index, __piece, __typing)", s);
         Assert.Contains("local obj, color, value = __piece or self, compat.color_of(__who), __value", s);
         Assert.Contains("compat.scale_by(self, 1.25)", s);
         Assert.Contains("compat.position_to_world(self, {0, -0.25, -1.75})", s);

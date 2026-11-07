@@ -61,6 +61,22 @@ public class ModuleEventTests
     }
 
     [Fact]
+    public void An_input_function_hears_selected_true_while_typing_and_false_when_the_umpire_leaves_the_box()
+    {
+        using var t = new Table();
+        Load(t, P, """
+            function typed(obj, color, text, selected) log(text .. ' ' .. tostring(selected)) end
+            function onLoad() self.createInput({ input_function = 'typed', function_owner = self, position = {0, 1, 0}, width = 400, height = 100, validation = 2, tab = 3 }) end
+            """);
+        var w = t.Server.State.Find(U, P)!.Widgets[0];
+        Assert.Equal(("integer", "spaces"), (w.Validation, w.Tab));
+        t.Server.Handle(Table.Ump3, new EditWidget { Layer = U, Id = P, Index = 1, Value = "4", Typing = true });
+        t.Server.Handle(Table.Ump3, new EditWidget { Layer = U, Id = P, Index = 1, Value = "4" });
+        Assert.Contains(t.Server.Scripts.Console, l => l == "4 true");
+        Assert.Contains(t.Server.Scripts.Console, l => l == "4 false");
+    }
+
+    [Fact]
     public void A_save_answer_that_is_not_text_clears_the_saved_state_and_nothing_keeps_it()
     {
         Assert.Equal("", Saved("function onSave() return 5 end"));

@@ -529,6 +529,10 @@ public sealed class Widget
     public string? Tooltip { get; set; }
     public string? OnClick { get; set; }
     public string? OnChange { get; set; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)] public string? HoverColor { get; set; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)] public string? PressColor { get; set; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)] public string? Validation { get; set; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)] public string? Tab { get; set; }
     [System.Text.Json.Serialization.JsonIgnore] public bool Locked => Kind == "label";
     public Widget Clone() => (Widget)MemberwiseClone();
 }

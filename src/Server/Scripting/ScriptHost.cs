@@ -917,7 +917,7 @@ public sealed partial class ScriptHost
                     var staged = Staging(ew.Id);
                     if (ew.Index <= staged.Count) staged[ew.Index - 1].Value = ew.Value;
                     if (pe.Widgets[ew.Index - 1].OnChange is { } fn2 && HandlerOwner(ew.Id, fn2) is ({ } pew, var efn))
-                        InputReplies.Retyped(this, ew, Call(pew, efn, who, DynValue.NewString(ew.Value), DynValue.NewNumber(ew.Index), Handle(ew.Id)));
+                        InputReplies.Retyped(this, ew, Call(pew, efn, who, DynValue.NewString(ew.Value), DynValue.NewNumber(ew.Index), Handle(ew.Id), DynValue.NewBoolean(ew.Typing)));
                 }
                 break;
             case UiEvent ue:

@@ -451,7 +451,7 @@ public static partial class ApiDoc
 
     static ApiSection PieceWidgets() => Section("A piece: widgets and its menu", "Widgets are drawn on a face in piece units: map units measured on the piece's kind before the table scales it, centre (0, 0), x right, z down the picture. A kind 1.2 wide and 0.6 high runs from x = -0.6 to 0.6 and z = -0.3 to 0.3. Colours are \"#RRGGBB[AA]\", a name or { r, g, b, a }.", () =>
     {
-        M("piece", "button{ face, x, z, w, h, rot, label, font, color, text_color, tooltip, on_click, kind }", "Draws a button and returns its index from 1. With no w and h it is a bare label that takes no clicks. on_click names a function called as fn(who, alt, index, piece).", "createButton", "number");
+        M("piece", "button{ face, x, z, w, h, rot, label, font, color, text_color, hover_color, press_color, tooltip, on_click, kind }", "Draws a button and returns its index from 1. With no w and h it is a bare label that takes no clicks. on_click names a function called as fn(who, alt, index, piece).", "createButton", "number");
         O("face", "\"front\"|\"back\"", "The face it is drawn on. Default \"front\".");
         O("x", "number", "Centre, piece units right of the piece's centre. Default 0.");
         O("z", "number", "Centre, piece units down the picture. Default 0.");
@@ -463,6 +463,8 @@ public static partial class ApiDoc
         O("color", "Color", "The box's colour.");
         O("text_color", "Color", "The text's colour.");
         O("tooltip", "string", "Shown when the pointer rests on it.");
+        O("hover_color", "Color", "The box's colour under the pointer. Default: each of red, green and blue 0.2 nearer the middle grey.");
+        O("press_color", "Color", "The box's colour while pressed. Default: each 0.4 nearer the middle grey.");
         O("on_click", "string", "The handler's name: called as fn(who, alt, index, piece); `alt` is true for a right-click.");
         O("kind", "\"button\"|\"input\"|\"label\"", "\"label\" shows it but takes no clicks or typing: locked text. A module's button or input turned face down above the piece comes across this way. `edit` can change it.");
         R("The widget's index, from 1, for `edit` and `remove_widget`.");
@@ -480,7 +482,7 @@ public static partial class ApiDoc
         Note("The handler is looked up in this script first, then in the global script. `\"global:fn\"` names the global script's; `\"<id or GUID>/fn\"` another piece's.");
         See("self.input", "self.edit", "self.clear_widgets");
 
-        M("piece", "input{ face, x, z, w, h, rot, value, placeholder, font, color, text_color, align, lines, tooltip, on_change, kind }", "Draws an input box and returns its index. on_change names a function called as fn(who, value, index, piece) when the umpire has typed.", "createInput", "number");
+        M("piece", "input{ face, x, z, w, h, rot, value, placeholder, font, color, text_color, align, lines, tooltip, on_change, validation, tab, kind }", "Draws an input box and returns its index. on_change names a function called as fn(who, value, index, piece, typing) as the umpire types and when they leave the box.", "createInput", "number");
         O("face", "\"front\"|\"back\"", "The face it is drawn on. Default \"front\".");
         O("x", "number", "Centre, piece units. Default 0.");
         O("z", "number", "Centre, piece units. Default 0.");
@@ -495,7 +497,9 @@ public static partial class ApiDoc
         O("align", "\"left\"|\"center\"|\"right\"", "Default \"center\".");
         O("lines", "number", "Lines of text the box holds. Default 1.");
         O("tooltip", "string", "Shown when the pointer rests on it.");
-        O("on_change", "string", "The handler's name: called as fn(who, value, index, piece) when the umpire finishes typing; text it returns replaces what was typed.");
+        O("on_change", "string", "The handler's name: called as fn(who, value, index, piece, typing) each time the text changes while the umpire types (typing true) and once more when they leave the box (typing false); text it returns replaces what was typed.");
+        O("validation", "\"integer\"|\"float\"|\"alphanumeric\"|\"username\"|\"name\"", "Keys the box takes: digits and a leading minus; also one point; letters and digits; lower-case letters and digits; or a name, capitalised by word. Default any.");
+        O("tab", "\"next\"|\"spaces\"|\"none\"", "What Tab does: go on to the piece's next input (the default), type four spaces, or nothing.");
         O("kind", "\"button\"|\"input\"|\"label\"", "\"label\" shows its value but takes no typing: locked text.");
         R("The widget's index, from 1.");
         X("""
