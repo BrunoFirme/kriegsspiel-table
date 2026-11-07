@@ -21,13 +21,37 @@ public class ModuleHelpersTests
     }
 
     [Fact]
-    public void Table_colour_tag_and_script_state_helpers_answer_as_modules_expect()
+    public void Tag_and_script_state_helpers_answer_as_modules_expect()
     {
-        const string lua = "function onLoad()\n  local t = copyLuaTable({a = {1, 2}, b = 'x'})\n  t.a[1] = 9\n  local h = colorToHex({r=1, g=0, b=0})\n  local c = hexToColor('#00ff00')\n"
-                           + "  self.setLuaScriptState('{\"n\":1}')\n  self.addTag('alpha')\n  local any = self.hasAnyTag({'zeta', 'alpha'})\n  local all = #getAllTags()\n"
-                           + "  self.setName(h .. '|' .. c.g .. '|' .. self.getLuaScriptState() .. '|' .. tostring(any) .. '|' .. all .. '|' .. t.a[1])\nend\n";
+        const string lua = """
+            function onLoad()
+              local before = self.hasAnyTag()
+              self.setLuaScriptState('{"n":1}')
+              self.addTag('alpha')
+              local any = self.hasAnyTag()
+              local all = #getAllTags()
+              self.setName(self.getLuaScriptState() .. '|' .. tostring(before) .. '|' .. tostring(any) .. '|' .. all)
+            end
+            """;
         using var t = new Table();
-        Assert.Equal("ff0000|1|{\"n\":1}|true|1|9", Run(t, lua));
+        Assert.Equal("{\"n\":1}|false|true|1", Run(t, lua));
+    }
+
+    [Fact]
+    public void Helper_names_the_tabletop_never_installs_are_not_there_for_a_module()
+    {
+        const string lua = """
+            function onLoad()
+              local t = {}
+              local names = {'copyLuaTable', 'colorToHex', 'hexToColor', 'stringColorToHex', 'constructColor', 'constructVector', 'getGlobalVar', 'getGlobalTable', 'setGlobalTable', 'logFormat', 'getScriptState'}
+              for _, n in ipairs(names) do
+                t[#t + 1] = tostring(pcall(function() return _ENV[n]() end))
+              end
+              self.setName(table.concat(t, ','))
+            end
+            """;
+        using var t = new Table();
+        Assert.Equal(string.Join(",", Enumerable.Repeat("false", 11)), Run(t, lua));
     }
 
     [Fact]

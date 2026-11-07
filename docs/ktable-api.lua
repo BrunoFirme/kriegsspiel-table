@@ -78,7 +78,7 @@
 ---@field align? "left"|"center"|"right" Default "center".
 ---@field lines? number Lines of text the box holds. Default 1.
 ---@field tooltip? string Shown when the pointer rests on it.
----@field on_change? string The handler's name: called as fn(who, value, index, piece) when the umpire finishes typing.
+---@field on_change? string The handler's name: called as fn(who, value, index, piece) when the umpire finishes typing; text it returns replaces what was typed.
 ---@field kind? "button"|"input"|"label" "label" shows its value but takes no typing: locked text.
 
 ---@class PieceCallOptions
@@ -147,6 +147,7 @@
 ---@field local_unit Size|nil For a model that came from a module, what one unit of its script's local frame is in piece units: { x =, z = }; nil for every other piece.
 ---@field shape string Its outline at its state: "box", "rounded", "circle", "hex", or "alpha" for a token cut along its picture.
 ---@field face_down boolean Turned over.
+---@field holds boolean Whether it is a holder that other pieces can be stowed in, as a bag is.
 ---@field locked boolean Pinned to the table: not dragged, turned or resized by hand.
 ---@field sticky boolean Carries the pieces resting on it when it is moved; attached pieces go with it either way.
 ---@field box_selected boolean Taken by a selection box dragged over it.
@@ -620,7 +621,20 @@ function wait.condition(predicate, fn, timeout_s, on_timeout) end
 
 ---Stops a timer before it fires.
 ---@param handle number What seconds, frames or condition returned. A timer that has fired already is no error.
+---@return boolean # true when a timer was waiting and is stopped now, false when there was none.
 function wait.stop(handle) end
+
+---The scripts' clock: seconds since the table started running scripts.
+---@return number
+function wait.now() end
+
+---How many frames the scripts have run since the table started.
+---@return number
+function wait.frame() end
+
+---Seconds between the last frame and the one before it.
+---@return number
+function wait.delta() end
 
 ---@class KTJson
 json = {}

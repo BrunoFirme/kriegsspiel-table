@@ -85,18 +85,10 @@ public sealed partial class ScriptHost
 
     void InstallCompat()
     {
-        using var stream = typeof(ScriptHost).Assembly.GetManifestResourceStream("compat.lua");
-        if (stream == null) return;
-        using var reader = new StreamReader(stream);
-        var compat = _vm.DoString(reader.ReadToEnd(), null, "compat.lua");
-        _vm.Globals["compat"] = compat;
-        if (compat.Type == DataType.Table)
-        {
-            _compatBooks = compat.Table.Get("__books").Type == DataType.Table ? compat.Table.Get("__books").Table : null;
-            _compatProps = compat.Table.Get("__props").Type == DataType.Table ? compat.Table.Get("__props").Table : null;
-            foreach (var name in new[] { "Global", "Player", "Turns", "Notes", "Lighting", "Grid", "Hands", "MusicPlayer", "Backgrounds", "Time", "Timer", "Vector", "Color" })
-                { var v = compat.Table.Get(name); if (!v.IsNil()) _vm.Globals[name] = v; }
-        }
+        var compat = CompatScripts.Install(_vm);
+        if (compat.Type != DataType.Table) return;
+        _compatBooks = compat.Table.Get("__books").Type == DataType.Table ? compat.Table.Get("__books").Table : null;
+        _compatProps = compat.Table.Get("__props").Type == DataType.Table ? compat.Table.Get("__props").Table : null;
     }
 
     public List<Outgoing> Load() => Run(0, false, LoadAll);

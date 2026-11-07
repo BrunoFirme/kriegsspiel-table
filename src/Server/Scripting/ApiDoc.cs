@@ -175,6 +175,7 @@ public static partial class ApiDoc
         F("piece", "local_unit", "Size?", "For a model that came from a module, what one unit of its script's local frame is in piece units: { x =, z = }; nil for every other piece.");
         F("piece", "shape", "string", "Its outline at its state: \"box\", \"rounded\", \"circle\", \"hex\", or \"alpha\" for a token cut along its picture.");
         F("piece", "face_down", "boolean", "Turned over.", "is_face_down");
+        F("piece", "holds", "boolean", "Whether it is a holder that other pieces can be stowed in, as a bag is.", "getQuantity");
         See("self.flip", "on_flip");
         F("piece", "locked", "boolean", "Pinned to the table: not dragged, turned or resized by hand.", "getLock");
         See("self.set_locked");
@@ -849,7 +850,7 @@ public static partial class ApiDoc
         F("ui", "assetType", "table", "{ Image = 0, AssetBundle = 1 }, as module scripts name picture types.", "UI.assetType");
     });
 
-    static ApiSection Wait() => Section("wait", "Timers are not saved: a script that must go on after a reload starts its timers again in on_load. A timer belongs to the script that made it and stops with it.", () =>
+    static ApiSection Wait() => Section("wait", "Timers are not saved: a script that must go on after a reload starts its timers again in on_load. A timer belongs to the script that made it and stops with it. In a frame, the timers counting frames fire first, then those counting seconds, then the conditions, each kind in the order it was set.", () =>
     {
         M("wait", "seconds(s, fn)", "Calls fn once, s seconds from now; returns a handle.", "Wait.time", "number");
         P("s", "number", "Seconds from now.");
@@ -883,8 +884,15 @@ public static partial class ApiDoc
         Note("A predicate that errors is reported once and dropped.");
         See("wait.stop");
 
-        M("wait", "stop(handle)", "Stops a timer before it fires.", "Wait.stop");
+        M("wait", "stop(handle)", "Stops a timer before it fires.", "Wait.stop", "boolean");
         P("handle", "number", "What `seconds`, `frames` or `condition` returned. A timer that has fired already is no error.");
+        R("true when a timer was waiting and is stopped now, false when there was none.");
+
+        M("wait", "now()", "The scripts' clock: seconds since the table started running scripts.", "Time.time", "number");
+
+        M("wait", "frame()", "How many frames the scripts have run since the table started.", "Time.frame_count", "number");
+
+        M("wait", "delta()", "Seconds between the last frame and the one before it.", "Time.delta_time", "number");
     });
 
     static ApiSection JsonCalls() => Section("json", "JSON in and out; numbers are written the same on every PC.", () =>

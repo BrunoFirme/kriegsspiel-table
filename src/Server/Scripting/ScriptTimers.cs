@@ -23,12 +23,21 @@ internal sealed class ScriptTimers
 
     public double Now { get; private set; }
     public long Frame { get; private set; }
+    public double Delta { get; private set; }
 
     public List<ScriptTimer> Advance(double nowSeconds)
     {
+        Delta = Frame == 0 ? 0 : Math.Max(0, nowSeconds - Now);
         Now = nowSeconds;
         Frame++;
-        return _timers.Where(t => (!double.IsNaN(t.Due) && t.Due <= Now) || (t.DueFrame >= 0 && t.DueFrame <= Frame) || t.Predicate.Type == DataType.Function).ToList();
+        return _timers.Where(t => (!double.IsNaN(t.Due) && t.Due <= Now) || (t.DueFrame >= 0 && t.DueFrame <= Frame) || t.Predicate.Type == DataType.Function)
+            .OrderBy(Kind).ToList();
+    }
+
+    static int Kind(ScriptTimer t)
+    {
+        const int Frames = 0, Seconds = 1, Conditions = 2;
+        return t.Predicate.Type == DataType.Function ? Conditions : t.DueFrame >= 0 ? Frames : Seconds;
     }
 
     public List<(PieceScript owner, DynValue co, int loadFrames)> TakeResumes()
@@ -51,7 +60,7 @@ internal sealed class ScriptTimers
 
     public void Remove(ScriptTimer t) { t.Gone = true; _timers.Remove(t); }
 
-    public void RemoveWhere(Predicate<ScriptTimer> which) => _timers.RemoveAll(t =>
+    public int RemoveWhere(Predicate<ScriptTimer> which) => _timers.RemoveAll(t =>
     {
         if (!which(t)) return false;
         t.Gone = true;

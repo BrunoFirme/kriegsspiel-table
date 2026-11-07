@@ -220,6 +220,7 @@ Read from `self` or from any piece `board.find` or `board.pieces` hands back. Fi
 | [`self.local_unit`](#selflocal_unit) | For a model that came from a module, what one unit of its script's local frame is in piece units: { x =, z = }; nil for every other piece. |
 | [`self.shape`](#selfshape) | Its outline at its state: "box", "rounded", "circle", "hex", or "alpha" for a token cut along its picture. |
 | [`self.face_down`](#selfface_down) | Turned over. |
+| [`self.holds`](#selfholds) | Whether it is a holder that other pieces can be stowed in, as a bag is. |
 | [`self.locked`](#selflocked) | Pinned to the table: not dragged, turned or resized by hand. |
 | [`self.sticky`](#selfsticky) | Carries the pieces resting on it when it is moved; attached pieces go with it either way. |
 | [`self.box_selected`](#selfbox_selected) | Taken by a selection box dragged over it. |
@@ -567,7 +568,19 @@ Turned over.
 
 **Type** `boolean`, read-only.
 
-**Module call** `is_face_down` · **See also** [`self.flip`](#selfflip), [`on_flip`](#on_flip)
+**Module call** `is_face_down`
+
+### `self.holds`
+
+```lua
+self.holds
+```
+
+Whether it is a holder that other pieces can be stowed in, as a bag is.
+
+**Type** `boolean`, read-only.
+
+**Module call** `getQuantity` · **See also** [`self.flip`](#selfflip), [`on_flip`](#on_flip)
 
 ### `self.locked`
 
@@ -1561,7 +1574,7 @@ Draws an input box and returns its index. on_change names a function called as f
 | `align` | `"left"\|"center"\|"right"` | _Optional._ Default "center". |
 | `lines` | `number` | _Optional._ Lines of text the box holds. Default 1. |
 | `tooltip` | `string` | _Optional._ Shown when the pointer rests on it. |
-| `on_change` | `string` | _Optional._ The handler's name: called as fn(who, value, index, piece) when the umpire finishes typing. |
+| `on_change` | `string` | _Optional._ The handler's name: called as fn(who, value, index, piece) when the umpire finishes typing; text it returns replaces what was typed. |
 | `kind` | `"button"\|"input"\|"label"` | _Optional._ "label" shows its value but takes no typing: locked text. |
 
 **Returns** `number`: The widget's index, from 1.
@@ -2527,7 +2540,7 @@ ui.assetType
 
 ## wait
 
-Timers are not saved: a script that must go on after a reload starts its timers again in on_load. A timer belongs to the script that made it and stops with it.
+Timers are not saved: a script that must go on after a reload starts its timers again in on_load. A timer belongs to the script that made it and stops with it. In a frame, the timers counting frames fire first, then those counting seconds, then the conditions, each kind in the order it was set.
 
 | Name | What it does |
 |---|---|
@@ -2535,6 +2548,9 @@ Timers are not saved: a script that must go on after a reload starts its timers 
 | [`wait.frames`](#waitframes) | Calls fn once, n frames from now; returns a handle. |
 | [`wait.condition`](#waitcondition) | Calls fn once predicate() is true, or on_timeout() if timeout_s comes first; returns a handle. |
 | [`wait.stop`](#waitstop) | Stops a timer before it fires. |
+| [`wait.now`](#waitnow) | The scripts' clock: seconds since the table started running scripts. |
+| [`wait.frame`](#waitframe) | How many frames the scripts have run since the table started. |
+| [`wait.delta`](#waitdelta) | Seconds between the last frame and the one before it. |
 
 ### `wait.seconds`
 
@@ -2616,7 +2632,45 @@ Stops a timer before it fires.
 |---|---|---|
 | `handle` | `number` | What `seconds`, `frames` or `condition` returned. A timer that has fired already is no error. |
 
+**Returns** `boolean`: true when a timer was waiting and is stopped now, false when there was none.
+
 **Module call** `Wait.stop`
+
+### `wait.now`
+
+```lua
+wait.now()
+```
+
+The scripts' clock: seconds since the table started running scripts.
+
+**Returns** `number`.
+
+**Module call** `Time.time`
+
+### `wait.frame`
+
+```lua
+wait.frame()
+```
+
+How many frames the scripts have run since the table started.
+
+**Returns** `number`.
+
+**Module call** `Time.frame_count`
+
+### `wait.delta`
+
+```lua
+wait.delta()
+```
+
+Seconds between the last frame and the one before it.
+
+**Returns** `number`.
+
+**Module call** `Time.delta_time`
 
 ## json
 
@@ -3372,6 +3426,7 @@ The converter rewrites a module's scripts into these calls by rule; this is the 
 | `getObjects` | [`self.stowed`](#selfstowed) |
 | `getPlayers` | [`game.umpires`](#gameumpires) |
 | `getPosition` | [`self.pos`](#selfpos) |
+| `getQuantity` | [`self.holds`](#selfholds) |
 | `getRotation` | [`self.rot`](#selfrot) |
 | `getRotationValue` | [`self.value`](#selfvalue) |
 | `getRotationValues` | [`self.faces`](#selffaces) |
@@ -3465,6 +3520,9 @@ The converter rewrites a module's scripts into these calls by rule; this is the 
 | `takeObject` | [`self.unstow`](#selfunstow) |
 | `TextTool.getValue` | [`self.lettering`](#selflettering) |
 | `TextTool.setValue` | [`self.set_lettering`](#selfset_lettering) |
+| `Time.delta_time` | [`wait.delta`](#waitdelta) |
+| `Time.frame_count` | [`wait.frame`](#waitframe) |
+| `Time.time` | [`wait.now`](#waitnow) |
 | `tryObjectEnterContainer` | [`try_stow`](#try_stow-global-script) |
 | `UI` | [`self.ui`](#selfui) |
 | `UI` | [`ui`](#ui) |

@@ -12,5 +12,6 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Scripting\compat.lua" LogicalName="compat.lua" />
+    <EmbeddedResource Include="Scripting\compat_calls.lua" LogicalName="compat_calls.lua" />
   </ItemGroup>
 </Project>

@@ -27,7 +27,7 @@ public class TranslatorTests
         var r = ModuleTranslator.Translate(Fixture("unit_block.lua"), Ctx());
         Assert.True(r.Parsed);
         Assert.Empty(r.Untranslated);
-        Assert.True(r.DirectCalls >= 4, "direct calls");
+        Assert.True(r.DirectCalls >= 2, "direct calls");
         Assert.True(r.CompatCalls > 10, "compat calls");
         var s = r.Script;
         Assert.Contains("function on_load(saved)", s);
@@ -41,7 +41,7 @@ public class TranslatorTests
         Assert.Contains("compat.scale_by(self, 1.25)", s);
         Assert.Contains("compat.position_to_world(self, {0, -0.25, -1.75})", s);
         Assert.Contains("compat.spawn_object({ type = 'Custom_Token'", s);
-        Assert.Contains("tile.set_name(name)", s);
+        Assert.Contains("compat.set_name(tile, name)", s);
         Assert.Contains("image = \"marker\"", s);
         Assert.DoesNotContain("steamusercontent", s);
         Assert.Contains("---adjust these values", s);
@@ -242,15 +242,15 @@ public class TranslatorTests
             end
             """, Ctx());
         var s = r.Script;
-        Assert.Contains("self.add_tag(\"Source\")", s);
+        Assert.Contains("compat.add_tag(self, \"Source\")", s);
         Assert.Contains("compat.has_tag(self, \"Source\")", s);
         Assert.Contains("compat.set_prop(self, \"memo\", \"1\")", s);
         Assert.Contains("local m = self.memo", s);
-        Assert.Contains("self.set_memo(m .. \"x\")", s);
+        Assert.Contains("compat.set_memo(self, m .. \"x\")", s);
         Assert.Contains("compat.pieces_with_any_tags({\"a\", \"b\"})", s);
         Assert.Contains("compat.pieces_with_all_tags({\"a\"})", s);
-        Assert.Contains("self.remove_tag(\"Source\")", s);
-        Assert.Contains("self.set_tags({\"France\"})", s);
+        Assert.Contains("compat.remove_tag(self, \"Source\")", s);
+        Assert.Contains("compat.set_tags(self, {\"France\"})", s);
         Assert.Contains("compat.get_data(self)", s);
         Assert.Contains("compat.spawn_object_data({ data = d })", s);
         Assert.Contains("compat.log_string(d, \"data\")", s);
@@ -308,14 +308,14 @@ public class TranslatorTests
         var s = r.Script;
         Assert.Contains("compat.add_hotkey(_ENV, \"Magic Hotkey #1\", function(playerColor, hoveredObject, pointerPosition, isKeyUp)", s);
         Assert.Contains("compat.add_global_context_menu_item(_ENV, \"Casualty Report\", function(player_color, menu_position)", s);
-        Assert.Contains("game.hotkeys_clear()", s);
+        Assert.Contains("compat.clear_hotkeys()", s);
         Assert.Empty(r.Untranslated);
         using var t = new Table();
         t.Server.Handle(Table.Lead, new SetGlobalScript { Text = s });
         Assert.DoesNotContain(Flat(t.Server.Log).OfType<Say>(), x => x.Text.StartsWith("Script error"));
         Assert.Equal(new[] { "Again" }, t.Server.State.Hotkeys.Select(h => h.Label));
         Assert.Equal("Casualty Report", Assert.Single(t.Server.State.MenuItems).Label);
-        t.Server.Handle(Table.Lead, new SetGlobalScript { Text = s.Replace("clearHotkeys()", "").Replace("game.hotkeys_clear()", "") });
+        t.Server.Handle(Table.Lead, new SetGlobalScript { Text = s.Replace("clearHotkeys()", "").Replace("compat.clear_hotkeys()", "") });
         t.Server.Handle(Table.Ump3, new Hotkey { Index = 1, Layer = U, Piece = P, Pos = new Vec2(3, 0), Selected = new() { P } });
         var label = t.Server.State.Find(U, P)!.Label;
         Assert.NotNull(label);

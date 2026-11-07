@@ -111,6 +111,7 @@ public static class ModuleTranslator
             return call;
         }
         readonly HashSet<SyntaxNode> _scriptLiterals = new();
+        readonly HashSet<string> _ownGlobals = new(StringComparer.Ordinal);
         readonly SyntaxNode _root;
 
         public Rewriter(TranslateResult res, TranslateContext ctx, SyntaxNode root)
@@ -132,10 +133,30 @@ public static class ModuleTranslator
                 var fn = (slash >= 0 ? v[(slash + 1)..] : v).Trim();
                 if (fn.Length > 0 && fn.All(ch => char.IsLetterOrDigit(ch) || ch == '_')) _uiHandlers.Add(fn);
             }
+            foreach (var n in root.DescendantNodes()) OwnGlobal(n);
             foreach (var call in root.DescendantNodes().OfType<FunctionCallExpressionSyntax>())
             {
                 if (call.Expression is not MemberAccessExpressionSyntax ma || ma.MemberName.Text != "setLuaScript") continue;
                 if (Args(call).FirstOrDefault() is { } arg && LiteralOf(arg, Scope(call)) is { } lit) _scriptLiterals.Add(lit);
+            }
+        }
+
+        void OwnGlobal(SyntaxNode n)
+        {
+            switch (n)
+            {
+                case FunctionDeclarationStatementSyntax { Name: SimpleFunctionNameSyntax f }:
+                    _ownGlobals.Add(f.ToString().Trim());
+                    break;
+                case LocalFunctionDeclarationStatementSyntax lf:
+                    _ownGlobals.Add(lf.Name.ToString().Trim());
+                    break;
+                case LocalVariableDeclarationStatementSyntax lv:
+                    foreach (var v in lv.Names) _ownGlobals.Add(v.IdentifierName.ToString().Trim());
+                    break;
+                case AssignmentStatementSyntax asg:
+                    foreach (var v in asg.Variables.OfType<IdentifierNameSyntax>()) _ownGlobals.Add(v.ToString().Trim());
+                    break;
             }
         }
 
@@ -299,7 +320,7 @@ public static class ModuleTranslator
                     return name switch
                     {
                         "time" => Compat($"compat.wait_time({All()})", node),
-                        "frames" => Direct($"wait.frames({A(1)}, {A(0)})", node),
+                        "frames" => Compat($"compat.wait_frames({All()})", node),
                         "condition" => Compat($"compat.wait_condition({All()})", node),
                         "stop" => Compat($"compat.wait_stop({All()})", node),
                         "stopAll" => Compat("compat.wait_stop_all()", node),
@@ -308,9 +329,11 @@ public static class ModuleTranslator
                 case "Global":
                     return name switch
                     {
-                        "call" => Direct($"game.call({All()})", node),
-                        "getVar" or "getTable" => Direct($"game.get_var({All()})", node),
-                        "setVar" or "setTable" => Direct($"game.set_var({All()})", node),
+                        "call" => Compat($"compat.global_call({A(0)}, {A(1)})", node),
+                        "getVar" => Direct($"game.get_var({A(0)})", node),
+                        "getTable" => Compat($"compat.global_get_table({A(0)})", node),
+                        "setVar" => Compat($"compat.global_set_var({A(0)}, {A(1)})", node),
+                        "setTable" => Compat($"compat.global_set_table({A(0)}, {A(1)})", node),
                         "getVectorLines" => Compat("compat.global_vector_lines()", node),
                         "setVectorLines" => Compat($"compat.set_global_vector_lines({All()})", node),
                         _ => Todo("Global." + name, $"compat.todo(nil, \"Global.{name}\")", node),
@@ -344,6 +367,8 @@ public static class ModuleTranslator
                         "setCustomAssets" => Direct($"ui.set_pictures({All()})", node),
                         _ => Todo("UI." + name, $"compat.todo(nil, \"UI.{name}\")", node),
                     };
+                case "Timer" when name == "create":
+                    return Compat($"compat.timer_create(_ENV, {A(0)})", node);
                 case "Turns" or "Notes" or "Lighting" or "Grid" or "Hands" or "MusicPlayer" or "Backgrounds" or "Timer":
                     return Compat($"compat.{recv}.{name}({All()})", node);
                 case "Time" or "Info" or "Tables" or "WebRequest":
@@ -360,39 +385,46 @@ public static class ModuleTranslator
             string All() => ArgText(args);
             var name = id.ToString().Trim();
             if (EventRenames.TryGetValue(name, out var renamed)) return Direct($"{renamed}({All()})", node);
+            if (_ownGlobals.Contains(name)) return null;
             switch (name)
             {
-                case "getObjectFromGUID": return Direct($"board.find({All()})", node);
+                case "getObjectFromGUID": return Direct($"board.find({A(0)})", node);
                 case "getAllObjects" or "getObjects": return Direct("board.pieces()", node);
-                case "getObjectsWithTag": return Direct($"board.pieces{{ tag = {A(0)} }}", node);
-                case "getObjectsWithAnyTags": return Compat($"compat.pieces_with_any_tags({All()})", node);
-                case "getObjectsWithAllTags": return Compat($"compat.pieces_with_all_tags({All()})", node);
+                case "getObjectsWithTag": return Compat($"compat.pieces_with_tag({A(0)})", node);
+                case "getObjectsWithAnyTags": return Compat($"compat.pieces_with_any_tags({A(0)})", node);
+                case "getObjectsWithAllTags": return Compat($"compat.pieces_with_all_tags({A(0)})", node);
                 case "spawnObject": return Compat($"compat.spawn_object({All()})", node);
                 case "spawnObjectJSON": return Compat($"compat.spawn_object_json({All()})", node);
                 case "spawnObjectData": return Compat($"compat.spawn_object_data({All()})", node);
-                case "broadcastToAll" or "printToAll": return Direct($"game.say({A(0)}, {{ color = compat.color({A(1)}) }})", node);
-                case "broadcastToColor" or "printToColor": return Compat($"compat.broadcast_to_color({All()})", node);
+                case "broadcastToAll": return Compat($"compat.print_to_all({A(0)}, {A(1)}, true)", node);
+                case "printToAll": return Compat($"compat.print_to_all({A(0)}, {A(1)}, false)", node);
+                case "broadcastToColor": return Compat($"compat.print_to_color({A(0)}, {A(1)}, {A(2)}, \"BroadcastToColor\")", node);
+                case "printToColor": return Compat($"compat.print_to_color({A(0)}, {A(1)}, {A(2)}, \"printToColor\")", node);
                 case "startLuaCoroutine": return Compat($"compat.start_coroutine({All()})", node);
                 case "getSeatedPlayers": return Compat("compat.seated_players()", node);
                 case "logString": return Compat($"compat.log_string({All()})", node);
                 case "log": return Compat($"compat.log({All()})", node);
-                case "stringColorToRGB": return Compat($"compat.string_color_to_rgb({All()})", node);
-                case "Vector" or "constructVector": return Compat($"compat.Vector({All()})", node);
+                case "debugLog": return Compat($"compat.debug_log({A(0)})", node);
+                case "stringColorToRGB": return Compat($"compat.string_color_to_rgb({A(0)})", node);
+                case "Vector": return Compat($"compat.Vector({All()})", node);
+                case "vector": return Compat($"compat.Vector({All()})", node);
                 case "Color": return Compat($"compat.Color({All()})", node);
-                case "destroyObject": return Compat($"compat.piece_of({A(0)}).delete()", node);
+                case "color": return Compat($"compat.Color({All()})", node);
+                case "destroyObject": return Compat($"compat.destroy_object({A(0)})", node);
                 case "addHotkey": return Compat($"compat.add_hotkey(_ENV, {All()})", node);
-                case "clearHotkeys": return Direct("game.hotkeys_clear()", node);
+                case "clearHotkeys": return Compat("compat.clear_hotkeys()", node);
                 case "addContextMenuItem": return Compat($"compat.add_global_context_menu_item(_ENV, {All()})", node);
-                case "clearContextMenu": return Direct("game.menu_clear()", node);
-                case "copyLuaTable": return Compat($"compat.copy_table({All()})", node);
-                case "getGlobalVar" or "getGlobalTable": return Direct($"game.get_var({All()})", node);
-                case "setGlobalVar" or "setGlobalTable": return Direct($"game.set_var({All()})", node);
-                case "debugLog" or "logFormat": return Compat($"compat.log({All()})", node);
-                case "hexToColor": return Compat($"compat.Color.fromHex({All()})", node);
-                case "colorToHex": return Compat($"compat.Color({A(0)}):toHex({A(1)})", node);
-                case "stringColorToHex": return Compat($"compat.Color.fromString({A(0)}):toHex()", node);
-                case "colorToPlayerName": return Compat($"compat.Color({A(0)}):toString()", node);
-                case "constructColor": return Compat($"compat.Color({All()})", node);
+                case "clearContextMenu": return Compat("compat.clear_global_context_menu()", node);
+                case "getGlobalScriptVar": return Direct($"game.get_var({A(0)})", node);
+                case "setGlobalScriptVar": return Compat($"compat.global_set_var({A(0)}, {A(1)})", node);
+                case "getGlobalScriptTable": return Compat($"compat.global_get_table({A(0)})", node);
+                case "setGlobalScriptTable": return Compat($"compat.global_set_table({A(0)}, {A(1)})", node);
+                case "callLuaFunctionInOtherScript": return Compat($"compat.call({A(0)}, {A(1)})", node);
+                case "callLuaFunctionInOtherScriptWithParams": return Compat($"compat.call({A(0)}, {A(1)}, {A(2)})", node);
+                case "getPlayer": return Compat($"compat.get_player({A(0)})", node);
+                case "colorToPlayerName": return Compat($"compat.color_to_player_name({A(0)})", node);
+                case "getNotes" or "setNotes" or "getNotebookTabs" or "editNotebookTab" or "addNotebookTab" or "removeNotebookTab":
+                    return Compat($"compat.Notes.{name}({All()})", node);
                 case "clearPixelPaint" or "clearVectorPaint": return Compat("compat.erase_all()", node);
                 case "getAllTags": return Compat("compat.all_tags()", node);
                 case "logStyle" or "sendExternalMessage" or "setLookingForPlayers" or "flipTable" or "group" or "paste" or "copy":
@@ -420,24 +452,27 @@ public static class ModuleTranslator
             string Rest() => a.Count == 0 ? "" : ", " + All();
             switch (name)
             {
-                case "setName": return Direct($"{recv}.set_name({All()})", node);
+                case "setName": return Compat($"compat.set_name({recv}, {A(0)})", node);
                 case "getName": return Compat($"compat.name({recv})", node);
-                case "setDescription": return Direct($"{recv}.set_note({All()})", node);
+                case "setDescription": return Compat($"compat.set_description({recv}, {A(0)})", node);
                 case "getDescription": return Compat($"compat.description({recv})", node);
                 case "getGUID": return Compat($"compat.guid({recv})", node);
-                case "getStateId": return Direct($"{recv}.state", node);
-                case "setState": return Direct($"{recv}.set_state({All()})", node);
+                case "getStateId": return Compat($"compat.state_id({recv})", node);
+                case "setState": return Compat($"compat.set_state({recv}, {A(0)})", node);
                 case "getStates": return Compat($"compat.states({recv})", node);
                 case "flip": return Compat($"compat.flip({recv})", node);
-                case "destruct" or "destroy": return Direct($"{recv}.delete()", node);
-                case "call": return Direct($"{recv}.call({All()})", node);
-                case "getVar" or "getTable": return Direct($"{recv}.get_var({All()})", node);
-                case "setVar" or "setTable": return Direct($"{recv}.set_var({All()})", node);
-                case "setColorTint": return Direct($"{recv}.set_tint(compat.color({A(0)}))", node);
+                case "destruct" or "destroy": return Compat($"compat.destroy({recv})", node);
+                case "call": return Compat($"compat.call({recv}, {A(0)}, {A(1)})", node);
+                case "getVar": return Direct($"{recv}.get_var({A(0)})", node);
+                case "getTable": return Compat($"compat.get_table({recv}, {A(0)})", node);
+                case "setVar": return Compat($"compat.set_var({recv}, {A(0)}, {A(1)})", node);
+                case "setTable": return Compat($"compat.set_table({recv}, {A(0)}, {A(1)})", node);
+                case "setColorTint": return Compat($"compat.set_color_tint({recv}, {A(0)})", node);
                 case "getColorTint": return Compat($"compat.color_tint({recv})", node);
-                case "getPosition" or "getPositionSmooth": return Compat($"compat.position({recv})", node);
+                case "getPosition": return Compat($"compat.position({recv})", node);
+                case "getPositionSmooth" or "getRotationSmooth": return Compat($"compat.none({recv})", node);
                 case "setPosition" or "setPositionSmooth": return Compat($"compat.set_position({recv}, {A(0)})", node);
-                case "getRotation" or "getRotationSmooth": return Compat($"compat.rotation({recv})", node);
+                case "getRotation": return Compat($"compat.rotation({recv})", node);
                 case "setRotation" or "setRotationSmooth": return Compat($"compat.set_rotation({recv}, {A(0)})", node);
                 case "getScale": return Compat($"compat.scale3({recv})", node);
                 case "setScale": return Compat($"compat.set_scale({recv}, {A(0)})", node);
@@ -450,29 +485,19 @@ public static class ModuleTranslator
                 case "getTransformRight": return Compat($"compat.transform_right({recv})", node);
                 case "getTransformUp": return Compat($"compat.transform_up({recv})", node);
                 case "getBounds" or "getBoundsNormalized": return Compat($"compat.get_bounds({recv})", node);
-                case "createButton": return Compat(Widgets($"compat.create_button({recv}, {A(0)}, _G)"), node);
-                case "createInput": return Compat(Widgets($"compat.create_input({recv}, {A(0)}, _G)"), node);
-                case "editButton": return Compat(Widgets($"compat.edit_button({recv}, {A(0)}, _G)"), node);
-                case "editInput": return Compat(Widgets($"compat.edit_input({recv}, {A(0)}, _G)"), node);
-                case "removeButton": return Compat($"compat.remove_button({recv}, {A(0)})", node);
-                case "removeInput": return Compat($"compat.remove_input({recv}, {A(0)})", node);
-                case "clearButtons": return Compat($"compat.clear_buttons({recv})", node);
-                case "clearInputs": return Compat($"compat.clear_inputs({recv})", node);
-                case "getButtons": return Compat($"compat.get_buttons({recv})", node);
-                case "getInputs": return Compat($"compat.get_inputs({recv})", node);
                 case "addContextMenuItem": return Compat($"compat.add_context_menu_item(_ENV, {recv}, {All()})", node);
-                case "clearContextMenu": return Direct($"{recv}.menu_clear()", node);
-                case "reload": return Direct($"{recv}.reload()", node);
-                case "setLuaScript": return Direct($"{recv}.set_script({All()})", node);
+                case "clearContextMenu": return Compat($"compat.clear_context_menu({recv})", node);
+                case "reload": return Compat($"compat.reload({recv})", node);
+                case "setLuaScript": return Compat($"compat.set_lua_script({recv}, {A(0)})", node);
                 case "getLuaScript": return Compat($"compat.get_script({recv})", node);
-                case "getTags": return Direct($"{recv}.tags", node);
+                case "getTags": return Compat($"compat.tags({recv})", node);
                 case "hasTag": return Compat($"compat.has_tag({recv}, {A(0)})", node);
-                case "addTag": return Direct($"{recv}.add_tag({A(0)})", node);
-                case "removeTag": return Direct($"{recv}.remove_tag({A(0)})", node);
-                case "setTags": return Direct($"{recv}.set_tags({A(0)})", node);
+                case "addTag": return Compat($"compat.add_tag({recv}, {A(0)})", node);
+                case "removeTag": return Compat($"compat.remove_tag({recv}, {A(0)})", node);
+                case "setTags": return Compat($"compat.set_tags({recv}, {A(0)})", node);
                 case "setLock": return Compat($"compat.set_lock({recv}, {A(0)})", node);
                 case "getLock": return Compat($"compat.get_lock({recv})", node);
-                case "setMemo": return Direct($"{recv}.set_memo({A(0)})", node);
+                case "setMemo": return Compat($"compat.set_memo({recv}, {A(0)})", node);
                 case "getMemo": return Direct($"{recv}.memo", node);
                 case "setGMNotes": return Compat($"compat.set_gm_notes({recv}, {A(0)})", node);
                 case "getGMNotes": return Compat($"compat.get_gm_notes({recv})", node);
@@ -501,16 +526,36 @@ public static class ModuleTranslator
                 case "addToPlayerSelection": return Compat($"compat.select({recv}, {A(0)}, true)", node);
                 case "removeFromPlayerSelection": return Compat($"compat.select({recv}, {A(0)}, false)", node);
                 case "clone": return Compat($"compat.clone({recv}{Rest()})", node);
+                case var widget when WidgetCall(recv, widget, a, node) is { } w: return w;
                 case var stubbed when Stubbed.Contains(stubbed):
                     return Todo(name, $"compat.todo({recv}, \"{name}\")", node);
                 case "getVelocity" or "getAngularVelocity": return Compat("compat.Vector(0, 0, 0)", node);
                 case "getRotationValue" or "getValue" or "getRotationValues" or "setRotationValues" or "setRotationValue" or "setValue" or "roll" or "randomize" or "shuffleStates":
                     return DieCall(recv, name, A(0), node);
                 case "getJoints" or "getZones": return Compat("{}", node);
-                case "isSmoothMoving": return Compat("false", node);
+                case "isSmoothMoving": return Compat($"compat.no({recv})", node);
                 case "getFogOfWarReveal": return Compat("{ reveal = false, color = \"\", range = 0 }", node);
             }
             return StateOrTagCall(recv, name, a, node);
+        }
+
+        ExpressionSyntax? WidgetCall(string recv, string name, List<string> a, SyntaxNode node)
+        {
+            string A(int i) => i < a.Count ? a[i] : "nil";
+            return name switch
+            {
+                "createButton" => Compat(Widgets($"compat.create_button({recv}, {A(0)}, _G)"), node),
+                "createInput" => Compat(Widgets($"compat.create_input({recv}, {A(0)}, _G)"), node),
+                "editButton" => Compat(Widgets($"compat.edit_button({recv}, {A(0)}, _G)"), node),
+                "editInput" => Compat(Widgets($"compat.edit_input({recv}, {A(0)}, _G)"), node),
+                "removeButton" => Compat($"compat.remove_button({recv}, {A(0)})", node),
+                "removeInput" => Compat($"compat.remove_input({recv}, {A(0)})", node),
+                "clearButtons" => Compat($"compat.clear_buttons({recv})", node),
+                "clearInputs" => Compat($"compat.clear_inputs({recv})", node),
+                "getButtons" => Compat($"compat.get_buttons({recv})", node),
+                "getInputs" => Compat($"compat.get_inputs({recv})", node),
+                _ => null,
+            };
         }
 
         ExpressionSyntax? StateOrTagCall(string recv, string name, List<string> a, SyntaxNode node)
@@ -520,7 +565,7 @@ public static class ModuleTranslator
             {
                 "getLuaScriptState" or "getScriptState" => Compat($"compat.get_prop({recv}, \"script_state\", \"\")", node),
                 "setLuaScriptState" => Compat($"compat.set_prop({recv}, \"script_state\", {A(0)})", node),
-                "hasAnyTag" => Compat($"compat.has_any_tag({recv}, {A(0)})", node),
+                "hasAnyTag" => Compat($"compat.has_any_tag({recv})", node),
                 "hasMatchingTag" => Compat($"compat.has_matching_tag({recv}, {A(0)})", node),
                 _ => null,
             };

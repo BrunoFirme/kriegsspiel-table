@@ -41,9 +41,11 @@ public sealed partial class ScriptHost
         wait.Table["stop"] = Fn(a =>
         {
             var h = (int)(Arg(a, 0).CastToNumber() ?? 0);
-            _timers.RemoveWhere(t => t.Handle == h);
-            return DynValue.Nil;
+            return B(_timers.RemoveWhere(t => t.Handle == h) > 0);
         });
+        wait.Table["now"] = Fn(_ => N(_timers.Now));
+        wait.Table["frame"] = Fn(_ => N(_timers.Frame));
+        wait.Table["delta"] = Fn(_ => N(_timers.Delta));
         g["wait"] = wait;
 
         var board = T();
@@ -360,6 +362,7 @@ internal sealed partial class PieceHandles(ScriptHost host)
                 return S(sh ?? def?.Shape ?? "box");
             }
             case "face_down": return B(p.FaceDown);
+            case "holds": return B(p.HoldsPieces(def));
             case "locked": return B(p.Locked);
             case "sticky": return B(!p.NotSticky);
             case "box_selected": return B(!p.NotBoxSelected);
