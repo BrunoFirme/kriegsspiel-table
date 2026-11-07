@@ -15,7 +15,7 @@ the plan says translate it), unknown (nobody has decided).
 | global | 14 | 14 | 0 | 55 |
 | namespaces | 23 | 23 | 0 | 180 |
 | events | 8 | 8 | 0 | 52 |
-| engine | 23 | 21 | 2 | 23 |
+| engine | 23 | 23 | 0 | 23 |
 
 ## types
 
@@ -961,8 +961,8 @@ the plan says translate it), unknown (nobody has decided).
 | `positionToWorld and positionToLocal: the module transform, local x along +X at rotation zero, in mesh units times scale for a model and the size rule for a flat` | 55 / 55 | compat | compat.position_to_world / position_to_local; a model def carries local_unit from the converter | ModuleLocalFrameTests |
 | `save quirk: a number written as a string, or NaN` | 55 / 55 | native | ModuleObj.D falls back to the default and the report says so | ConverterTests |
 | `save quirk: duplicate GUIDs inside bags` | 55 / 55 | native | a guid names the first piece found, as getObjectFromGUID answers in modules |  |
-| `save quirk: negative scale mirrors` | 55 / 55 | planned | a mirrored piece comes over unmirrored: mirroring a picture or a model at conversion is a decision for the user |  |
-| `save quirk: rotX/rotZ near 180 means face down; other tilts stand or lean` | 55 / 55 | planned | face down is read; a piece standing on edge or leaning needs a tilt the table does not keep: a decision for the user |  |
+| `save quirk: negative scale mirrors` | 55 / 55 | partial | the size is taken unsigned, so a mirrored piece comes over unmirrored and the report names it; mirroring its picture or model at conversion is a decision for the user | ConverterTests |
+| `save quirk: rotX/rotZ near 180 means face down; other tilts stand or lean` | 55 / 55 | partial | ModuleObj.Flipped reads face down; a piece standing on edge or leaning needs a tilt the table does not keep, a decision for the user |  |
 | `script safety cuts the self-copying block and keeps the rest` | 55 / 55 | native | ScriptSafety; over the roster only the German Team Planning Table is cut, 1,463 copies of the Object base code worm, and no other rule fires | ScriptSafetyTests; import-sweep |
 | `setState keeps the GUID` | 55 / 55 | native | a converted piece keeps its states' GUIDs and wears the one of the state it shows, as each state is its own object in the tabletop | BookNotesScriptTests |
 | `smooth moves end at once` | 55 / 55 | compat | compat.set_position |  |

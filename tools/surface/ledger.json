@@ -8204,17 +8204,17 @@
   },
   {
    "row": "save quirk: negative scale mirrors",
-   "status": "planned",
-   "where": "a mirrored piece comes over unmirrored: mirroring a picture or a model at conversion is a decision for the user",
+   "status": "partial",
+   "where": "the size is taken unsigned, so a mirrored piece comes over unmirrored and the report names it; mirroring its picture or model at conversion is a decision for the user",
    "instead": "",
-   "held_by": "",
+   "held_by": "ConverterTests",
    "count": 55,
    "modules": 55
   },
   {
    "row": "save quirk: rotX/rotZ near 180 means face down; other tilts stand or lean",
-   "status": "planned",
-   "where": "face down is read; a piece standing on edge or leaning needs a tilt the table does not keep: a decision for the user",
+   "status": "partial",
+   "where": "ModuleObj.Flipped reads face down; a piece standing on edge or leaning needs a tilt the table does not keep, a decision for the user",
    "instead": "",
    "held_by": "",
    "count": 55,
