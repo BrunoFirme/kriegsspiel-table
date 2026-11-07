@@ -1,4 +1,5 @@
 import argparse
+import concurrent.futures
 import json
 import os
 import re
@@ -9,7 +10,10 @@ import time
 from collections import defaultdict
 
 USAGE = ("python -I tools/import-sweep.py [--base <rev>] [--base-exe <Converter.exe>] [--modules <id|name>,...] "
-         "[--out <dir>] [--standard <packages dir>] [--keep] [--diff-only]")
+         "[--out <dir>] [--standard <packages dir>] [--jobs <n>] [--fresh-base] [--keep] [--diff-only]")
+JOBS = 4
+BASES = os.path.join(os.environ.get("TEMP", "/tmp"), "ktable-sweep-bases")
+WORKSHOP = os.path.join(os.path.expanduser("~"), "OneDrive", "Documentos", "My Games", "Tabletop Simulator", "Mods", "Workshop")
 STANDARD = "std.effects"
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
@@ -104,8 +108,9 @@ def seed(standard, output):
         shutil.copytree(theirs, ours)
 
 
-def side(name, source, out, exe, standard):
-    cache, output, binaries = (os.path.join(out, f"{name}-{what}") for what in ("cache", "out", "bin"))
+def side(name, source, out, exe, standard, output=None):
+    cache, written, binaries = (os.path.join(out, f"{name}-{what}") for what in ("cache", "out", "bin"))
+    output = output or written
     os.makedirs(output, exist_ok=True)
     seed(standard, output)
     linked = own_cache(real_cache(), cache)
@@ -139,15 +144,49 @@ def scripts_clean(place, slug):
     return max(counted) if counted else None
 
 
-def sweep(modules, sides):
-    runs = {}
-    for module in modules:
-        runs[module["id"]] = row = {"name": module["name"]}
-        for place in sides:
-            print(f"  {place['name']:4} {module['name']}", flush=True)
-            row[place["name"]] = brought = bring_in(place, module)
-            brought["errors"] = {slug: scripts_clean(place, slug) for slug in brought["scenarios"]}
+def one_import(place, module):
+    brought = bring_in(place, module)
+    brought["errors"] = {slug: scripts_clean(place, slug) for slug in brought["scenarios"]}
+    print(f"  {place['name']:4} {module['name']} ({brought['seconds']} s)", flush=True)
+    return brought
+
+
+def sweep(modules, sides, jobs, kept_base=None):
+    runs = {m["id"]: {"name": m["name"]} for m in modules}
+    if kept_base:
+        for module in modules:
+            runs[module["id"]]["base"] = kept_base[module["id"]]
+    work = [(place, module) for module in sorted(modules, key=lambda m: -m.get("seconds", 0)) for place in sides]
+    with concurrent.futures.ThreadPoolExecutor(max_workers=max(1, jobs)) as pool:
+        done = {pool.submit(one_import, place, module): (place, module) for place, module in work}
+        for future in concurrent.futures.as_completed(done):
+            place, module = done[future]
+            runs[module["id"]][place["name"]] = future.result()
     return runs
+
+
+def module_mark(module):
+    path = os.path.join(WORKSHOP, module["id"] + ".json")
+    try:
+        state = os.stat(path)
+        return f"{state.st_size}:{int(state.st_mtime)}"
+    except OSError:
+        return "steam"
+
+
+def kept_base_for(sha, modules):
+    store = os.path.join(BASES, sha)
+    runs = read_json(os.path.join(store, "runs.json")) or {}
+    if not os.path.isdir(os.path.join(store, "out")):
+        return store, None
+    if all(m["id"] in runs and runs[m["id"]].get("mark") == module_mark(m) and not runs[m["id"]].get("code") for m in modules):
+        return store, runs
+    return store, None
+
+
+def keep_base(store, modules, runs):
+    with open(os.path.join(store, "runs.json"), "w", encoding="utf-8", newline="\n") as f:
+        json.dump({m["id"]: dict(runs[m["id"]]["base"], mark=module_mark(m)) for m in modules}, f, indent=2)
 
 
 def read_json(path):
@@ -298,8 +337,23 @@ def report_apart(said, now, lines):
     return bool(gone or new)
 
 
-def compare(base, new):
+def written_by(runs):
+    names = {STANDARD}
+    for row in runs.values():
+        for which in ("base", "new"):
+            for line in (row.get(which) or {}).get("said") or []:
+                names.update(re.findall(r"(?:scenario|pack)=(\S+)", line))
+    return names | {n + ".extras" for n in names}
+
+
+def only(side, names):
+    return {kind: {k: v for k, v in side[kind].items() if k in names} for kind in ("packs", "scenarios")}
+
+
+def compare(base, new, names=None):
     one, two = read_side(base), read_side(new)
+    if names is not None:
+        one, two = only(one, names), only(two, names)
     lines, apart = [], False
     for kind in ("packs", "scenarios"):
         for name in sorted(set(one[kind]) | set(two[kind])):
@@ -362,6 +416,8 @@ def main():
     ap.add_argument("--modules", default="")
     ap.add_argument("--out", default=os.path.join(os.environ.get("TEMP", "/tmp"), "ktable-sweep"))
     ap.add_argument("--keep", action="store_true")
+    ap.add_argument("--jobs", type=int, default=JOBS)
+    ap.add_argument("--fresh-base", action="store_true")
     ap.add_argument("--diff-only", action="store_true")
     ap.add_argument("--standard", default=installed_packages())
     a = ap.parse_args()
@@ -378,14 +434,32 @@ def main():
         if dirty:
             print(f"the working tree has {len(dirty)} changed file(s): the new side is built from them", flush=True)
         print(f"base {a.base}; {len(modules)} module(s); {out}", flush=True)
-        sides = [side("base", source_at(a.base, out) if not a.base_exe else ROOT, out, a.base_exe, a.standard),
-                 side("new", ROOT, out, a.new_exe, a.standard)]
-        print(f"caches linked: base {sides[0]['linked']}, new {sides[1]['linked']} file(s)", flush=True)
-        runs = sweep(modules, sides)
+        sha = shell(["git", "rev-parse", a.base]).stdout.strip()
+        store, kept_base = (None, None) if a.base_exe or not sha else kept_base_for(sha, modules)
+        if a.fresh_base:
+            kept_base = None
+        new = side("new", ROOT, out, a.new_exe, a.standard)
+        if kept_base:
+            print(f"base {sha[:8]} kept from an earlier sweep: only the new side is converted", flush=True)
+            base_out = os.path.join(store, "out")
+            sides = [new]
+        else:
+            if store:
+                shutil.rmtree(store, ignore_errors=True)
+            base_out = os.path.join(store, "out") if store else None
+            base = side("base", source_at(a.base, out) if not a.base_exe else ROOT, out, a.base_exe, a.standard, base_out)
+            base_out = base["output"]
+            sides = [base, new]
+        print("caches linked: " + ", ".join(f"{s['name']} {s['linked']}" for s in sides) + " file(s)", flush=True)
+        runs = sweep(modules, sides, a.jobs, kept_base)
+        if store and not kept_base and all(not runs[m["id"]]["base"].get("code") for m in modules):
+            keep_base(store, modules, runs)
         with open(kept, "w", encoding="utf-8", newline="\n") as f:
             json.dump(runs, f, indent=2)
     told_lines, trouble = summary(runs)
-    apart_lines, apart, found = compare(os.path.join(out, "base-out"), os.path.join(out, "new-out"))
+    if a.diff_only:
+        base_out = os.path.join(out, "base-out")
+    apart_lines, apart, found = compare(base_out, os.path.join(out, "new-out"), written_by(runs))
     if not found:
         trouble = True
         apart_lines = [f"neither side wrote a pack or a scenario under {out}: nothing was compared"]
