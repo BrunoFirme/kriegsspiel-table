@@ -936,6 +936,50 @@ public class ModuleObjectCallTests
     }
 
     [Fact]
+    public void Scripts_run_on_the_tabletops_lua_libraries_less_its_expression_evaluator()
+    {
+        Assert.Equal(MoonSharp.Interpreter.CoreModules.Preset_SoftSandbox & ~MoonSharp.Interpreter.CoreModules.Dynamic, KTable.Server.Scripting.ScriptHost.Libraries);
+        using var t = new Table();
+        var label = Run(t, """
+            function onLoad()
+              local seen = {}
+              for _, name in ipairs({ 'load', 'loadstring', 'dofile', 'require', 'io', 'debug', 'dynamic' }) do seen[#seen + 1] = type(_G[name]) end
+              local parts = { table.concat(seen, ' '), type(os.time), type(os.execute), type(coroutine.wrap), type(bit32.band), type(setmetatable), type(pcall) }
+              local n = 0
+              ::again::
+              n = n + 1
+              if n < 3 then goto again end
+              parts[#parts + 1] = n .. ('ab'):upper() .. select('#', 1, 2) .. math.floor(7 / 2)
+              self.setName(table.concat(parts, '|'))
+            end
+            """);
+        Assert.Equal("nil nil nil nil nil nil nil|function|nil|function|function|function|function|3AB23", label);
+    }
+
+    [Fact]
+    public void A_button_or_input_given_nothing_comes_out_as_one_given_the_tabletops_defaults()
+    {
+        using var t = new Table();
+        Run(t, """
+            function onLoad()
+              self.createButton({ click_function = 'x', function_owner = self })
+              self.createButton({ click_function = 'x', function_owner = self, label = '', position = { 0, 0, 0 }, rotation = { 0, 0, 0 }, scale = { 1, 1, 1 },
+                width = 100, height = 100, font_size = 100, color = { 1, 1, 1, 1 }, font_color = { 0, 0, 0, 1 }, alignment = 1 })
+              self.createInput({ input_function = 'y', function_owner = self })
+              self.createInput({ input_function = 'y', function_owner = self, value = '', label = '', position = { 0, 0, 0 }, rotation = { 0, 0, 0 }, scale = { 1, 1, 1 },
+                width = 100, height = 100, font_size = 100, color = { 1, 1, 1, 1 }, font_color = { 0, 0, 0, 1 }, alignment = 1, validation = 1, tab = 2 })
+            end
+            function x() end
+            function y() end
+            """);
+        var w = t.Server.State.Find(U, P)!.Widgets;
+        Assert.Equal(4, w.Count);
+        Assert.Equal(KTable.Core.Json.Serialize(w[0]), KTable.Core.Json.Serialize(w[1]));
+        Assert.Equal(KTable.Core.Json.Serialize(w[2]), KTable.Core.Json.Serialize(w[3]));
+        Assert.Equal(("next", (string?)null, "#FFFFFF"), (w[2].Tab, w[2].Validation, w[0].Color?.ToUpperInvariant()[..7]));
+    }
+
+    [Fact]
     public void Selecting_players_are_the_seated_colours_whose_selection_holds_the_piece()
     {
         using var t = new Table();

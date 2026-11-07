@@ -18,7 +18,7 @@ every row that is not dropped must end audited, used by the corpus or not.
 | global | 16 | 16 | 0 | 0 | 63 |
 | namespaces | 23 | 23 | 0 | 17 | 180 |
 | events | 8 | 8 | 0 | 0 | 52 |
-| engine | 23 | 23 | 0 | 6 | 23 |
+| engine | 23 | 23 | 0 | 4 | 23 |
 
 ## types
 
@@ -955,10 +955,10 @@ every row that is not dropped must end audited, used by the corpus or not.
 | row | used (calls / modules) | status | where | held by | audited |
 |---|---|---|---|---|---|
 | `Lua table to vector, colour and params and back (positional and named)` | 55 / 55 | compat | compat.Vector / compat.Color / vec(): named, positional and mixed tables, names and hex | ModuleVectorColorTests | ModuleObjectCallTests.A_vector_argument_takes_x_y_z_names_first_then_three_numbers_then_two_and_otherwise_fails; ModuleObjectCallTests.A_colour_argument_takes_a_seat_name_exactly_or_r_g_b_and_alpha_defaults_to_one; ModuleObjectCallTests.A_piece_that_is_not_a_bag_counts_minus_one_lists_nothing_and_takes_nothing_in |
-| `MoonSharp 2.0.0 on both sides: the Lua dialect matches` | 55 / 55 | native | Server.csproj |  |  |
+| `MoonSharp 2.0.0 on both sides: the Lua dialect matches` | 55 / 55 | native | Server.csproj |  | ModuleObjectCallTests.Scripts_run_on_the_tabletops_lua_libraries_less_its_expression_evaluator |
 | `Wait.frames counts frames, Wait.time seconds, onUpdate per frame` | 55 / 55 | native | the host runs scripts every frame it draws, as the tabletop does: Wait.frames counts those frames and on_update runs on each | Net._Process ticks the scripts each frame (no test of its own) | ModuleObjectCallTests.Matching_tags_a_removed_attachment_the_global_menu_clear_and_an_outside_message_answer_as_the_tabletop_does; ModuleObjectCallTests.In_a_frame_waits_on_frames_fire_before_waits_on_seconds_and_a_failing_condition_fires_its_function |
 | `a script call has no time limit in modules` | 55 / 55 | native | kept on purpose (2026-11-06): a call gets a second of its own time, the table work it asks for not counted; the tabletop freezes for good on a runaway loop, here the loop stops and its script and line are named | import-sweep: naval (the Midway bag's Place) | ScriptingTests.A_runaway_script_is_stopped_and_switched_off (our time limit, kept by decision 2026-11-07) |
-| `button and input defaults (width, height, font_size, colours, position, scale)` | 55 / 55 | compat | compat.module_defaults, from the tabletop's LuaUIState classes; a button or input with no handler is refused, as modules expect | ModuleDefaultsTests |  |
+| `button and input defaults (width, height, font_size, colours, position, scale)` | 55 / 55 | compat | compat.module_defaults, from the tabletop's LuaUIState classes; a button or input with no handler is refused, as modules expect | ModuleDefaultsTests | ModuleObjectCallTests.A_button_or_input_given_nothing_comes_out_as_one_given_the_tabletops_defaults |
 | `click_function(obj, player_color, alt_click)` | 55 / 55 | compat | compat.create_button / module_handler | TranslatorTests.Handlers_get_the_piece_their_widget_is_on | TranslatorTests.Handlers_get_the_piece_their_widget_is_on |
 | `context menu callback(player_color, menu_position, object)` | 55 / 55 | compat | compat.add_context_menu_item |  | ModuleObjectCallTests.A_menu_row_calls_its_function_with_the_colour_the_pieces_position_and_the_piece |
 | `getObjectFromGUID answers nil for a piece inside a bag` | 55 / 55 | native | a stowed piece is off the layer, so board.find does not see it | StowScriptTests | StowScriptTests.A_module_bag_script_puts_and_takes_through_the_same_calls |

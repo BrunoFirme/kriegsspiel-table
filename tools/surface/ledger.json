@@ -9030,7 +9030,7 @@
    "held_by": "",
    "count": 55,
    "modules": 55,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Scripts_run_on_the_tabletops_lua_libraries_less_its_expression_evaluator"
   },
   {
    "row": "Wait.frames counts frames, Wait.time seconds, onUpdate per frame",
@@ -9060,7 +9060,7 @@
    "held_by": "ModuleDefaultsTests",
    "count": 55,
    "modules": 55,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.A_button_or_input_given_nothing_comes_out_as_one_given_the_tabletops_defaults"
   },
   {
    "row": "click_function(obj, player_color, alt_click)",

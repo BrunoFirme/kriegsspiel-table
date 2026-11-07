@@ -73,14 +73,15 @@ public sealed partial class ScriptHost
         _every = new EveryScript(this);
         _drawing = new PieceDrawing(Find);
         _saves = new SaveRounds(this);
-        var modules = CoreModules.Preset_SoftSandbox & ~(CoreModules.LoadMethods | CoreModules.OS_System | CoreModules.IO | CoreModules.Debug | CoreModules.Dynamic);
-        _vm = new Script(modules);
+        _vm = new Script(Libraries);
         if (Repeatable.On) _vm.Call(_vm.Globals.Get("math").Table.Get("randomseed"), Repeatable.NewRandom().Next());
         InstallGuards();
         InstallApi();
         InstallUiApi();
         InstallCompat();
     }
+
+    public const CoreModules Libraries = CoreModules.Preset_SoftSandbox & ~(CoreModules.LoadMethods | CoreModules.OS_System | CoreModules.IO | CoreModules.Debug | CoreModules.Dynamic);
 
     void InstallGuards() => _guards = new ScriptGuards(_vm);
 
