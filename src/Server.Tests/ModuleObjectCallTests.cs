@@ -532,6 +532,53 @@ public class ModuleObjectCallTests
     }
 
     [Fact]
+    public void Plain_reads_and_small_calls_answer_as_the_tabletop_does()
+    {
+        using var t = new Table();
+        const string lua = """
+            function onLoad()
+              local m = getObjectFromGUID('p-000003')
+              m.setGMNotes('secret')
+              local a = { m.getDescription(), m.getGMNotes(), tostring(m.getLock()), tostring(m.guid), tostring(m.reload() == m) }
+              local b = { tostring(clearPixelPaint()), tostring(debugLog('x')), tostring(pcall(function() return Timer.timers end)), tostring(Global.getVectorLines()) }
+              local gone = m.destruct()
+              self.setName(table.concat(a, ',') .. '|' .. table.concat(b, ',') .. '|' .. tostring(gone) .. tostring(m.isDestroyed()))
+            end
+            """;
+        Assert.Equal(",secret,false,p-000003,true|false,true,false,nil|truetrue", Run(t, lua));
+        Assert.Null(t.Server.State.Find(U, Marker));
+    }
+
+    [Fact]
+    public void Notebook_tabs_need_a_title_adding_one_answers_the_new_count_and_notes_refuse_nil()
+    {
+        const string lua = """
+            function onLoad()
+              local none = Notes.addNotebookTab({ body = 'x' })
+              local n = Notes.addNotebookTab({ title = 'Orders', body = 'advance', color = 'Red' })
+              local tab = Notes.getNotebookTabs()[1]
+              local edited = Notes.editNotebookTab({ index = 5, title = 'no' })
+              local ok = pcall(Notes.setNotes, nil)
+              self.setName(none .. '|' .. n .. '|' .. tab.title .. ',' .. tab.body .. ',' .. tab.color .. ',' .. tab.index .. '|' .. tostring(edited) .. '|' .. tostring(ok))
+            end
+            """;
+        Assert.Equal("-1|1|Orders,advance,Red,0|false|false", Run(lua));
+    }
+
+    [Fact]
+    public void A_menu_row_calls_its_function_with_the_colour_the_pieces_position_and_the_piece()
+    {
+        using var t = new Table();
+        const string lua = """
+            function act(color, pos, obj) obj.setDescription(color .. ' ' .. pos.x .. ' ' .. obj.getGUID()) end
+            function onLoad() self.addContextMenuItem('Act', act) end
+            """;
+        Run(t, lua);
+        Assert.DoesNotContain(t.Server.Handle(Table.Ump3, new PickMenuItem { Layer = U, Id = P, Index = 1 }), o => o.Message is ErrorMessage);
+        Assert.Equal("Red 0 " + P, t.Server.State.Find(U, P)!.Note);
+    }
+
+    [Fact]
     public void Time_reads_the_scripts_clock_and_frame_count()
     {
         using var t = new Table();

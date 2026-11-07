@@ -432,7 +432,8 @@ public static class ModuleTranslator
                 case "colorToPlayerName": return Compat($"compat.color_to_player_name({A(0)})", node);
                 case "getNotes" or "setNotes" or "getNotebookTabs" or "editNotebookTab" or "addNotebookTab" or "removeNotebookTab":
                     return Compat($"compat.Notes.{name}({All()})", node);
-                case "clearPixelPaint" or "clearVectorPaint": return Compat("compat.erase_all()", node);
+                case "clearPixelPaint": return Compat("compat.clear_pixel_paint()", node);
+                case "clearVectorPaint": return Compat("compat.erase_all()", node);
                 case "getAllTags": return Compat("compat.all_tags()", node);
                 case "sendExternalMessage" or "setLookingForPlayers": return Compat($"compat.yes({All()})", node);
                 case "logStyle" or "flipTable" or "group" or "paste" or "copy":

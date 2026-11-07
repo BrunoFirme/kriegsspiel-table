@@ -660,6 +660,58 @@ function compat.start_coroutine(owner, name)
   return true
 end
 
+local global_lines_set = false
+local set_global_lines_before = compat.set_global_vector_lines
+local global_lines_before = compat.global_vector_lines
+function compat.set_global_vector_lines(lines)
+  global_lines_set = true
+  set_global_lines_before(lines)
+  return true
+end
+function compat.global_vector_lines()
+  if not global_lines_set then return nil end
+  return global_lines_before()
+end
+
+local notes_before = compat.Notes
+local tab_colors = {}
+local function tab_cards() return board.pieces({ tag = "notebook" }) or {} end
+compat.Notes = {
+  getNotes = notes_before.getNotes,
+  setNotes = function(s)
+    if s == nil then error("Error: missing parameter or parameter was null for setNotes.", 0) end
+    return notes_before.setNotes(s)
+  end,
+  getNotebookTabs = function()
+    local list = notes_before.getNotebookTabs()
+    local cards = tab_cards()
+    table.sort(cards, function(a, b) return a.id < b.id end)
+    for i, t in ipairs(list) do t.color = cards[i] and tab_colors[cards[i].id] or "Grey" end
+    return list
+  end,
+  addNotebookTab = function(p)
+    p = type(p) == "table" and p or {}
+    if p.title == nil or tostring(p.title) == "" then return -1 end
+    if notes_before.addNotebookTab({ title = p.title, body = p.body or "" }) < 0 then return -1 end
+    local cards = tab_cards()
+    table.sort(cards, function(a, b) return a.id < b.id end)
+    if p.color ~= nil and cards[#cards] then tab_colors[cards[#cards].id] = LABELS[p.color] and p.color or "White" end
+    return #cards
+  end,
+  editNotebookTab = function(p)
+    p = type(p) == "table" and p or {}
+    local ok = notes_before.editNotebookTab(p)
+    if ok and p.color ~= nil then
+      local cards = tab_cards()
+      table.sort(cards, function(a, b) return a.id < b.id end)
+      local c = cards[(tonumber(p.index) or -1) + 1]
+      if c then tab_colors[c.id] = LABELS[p.color] and p.color or "White" end
+    end
+    return ok
+  end,
+  removeNotebookTab = notes_before.removeNotebookTab,
+}
+
 function compat.none() return nil end
 function compat.no() return false end
 

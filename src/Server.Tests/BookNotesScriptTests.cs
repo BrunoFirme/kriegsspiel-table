@@ -62,7 +62,7 @@ public class BookNotesScriptTests
         var res = t.Server.Handle(Table.Lead, new SetGlobalScript { Text = r.Script });
         Assert.DoesNotContain(res, o => o.Message is ErrorMessage);
         Assert.DoesNotContain(Flat(t.Server.Log).OfType<Say>(), s => s.Text.StartsWith("Script error"));
-        Assert.Contains(Flat(t.Server.Log).OfType<Say>(), s => s.Text == "Turn 1: rain|1|Orders|Hold the bridge|1");
+        Assert.Contains(Flat(t.Server.Log).OfType<Say>(), s => s.Text == "Turn 1: rain|1|Orders|Hold the bridge|2");
         Assert.Equal("Turn 2: fog", t.Server.State.Find(U, "p-000040")!.Text[NoteCard.BodyLine]);
         Assert.Equal("Cross the river", t.Server.State.Find(U, "p-000041")!.Text[NoteCard.BodyLine]);
         var supply = Assert.Single(t.Server.State.Layer(U), p => p.Tags?.Contains("notebook") == true && p.Id != "p-000041");
