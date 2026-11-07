@@ -128,21 +128,17 @@ sealed partial class PanelView
         foreach (var c in b.Children) Announce(c, key);
     }
 
-    int _hoverStamp;
     const string HoveredKey = "#hovered";
 
     void Hover(PanelBox hit, bool entering)
     {
-        int stamp = ++_hoverStamp;
         if (entering)
         {
             Track(Chain(hit));
             return;
         }
-        Callable.From(() =>
-        {
-            if (stamp == _hoverStamp && _top != null && GodotObject.IsInstanceValid(_top)) Track(new List<PanelBox>());
-        }).CallDeferred();
+        bool live = _top != null && GodotObject.IsInstanceValid(_top) && _top.IsInsideTree();
+        Track(live && Hit(_top!.GetGlobalMousePosition()) is { } now && now != hit ? Chain(now) : new List<PanelBox>());
     }
 
     static List<PanelBox> Chain(PanelBox hit)
