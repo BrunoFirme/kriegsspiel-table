@@ -15,6 +15,7 @@ USAGE = ("python -I tools/import-sweep.py [--base <rev>] [--base-exe <Converter.
          "[--out <dir>] [--standard <packages dir>] [--jobs <n>] [--fresh-base] [--keep] [--diff-only]")
 JOBS = 4
 IMPORT_LIMIT, TIMED_OUT = 1800, 124
+STALE_LOCK, LOCK_WAIT = 6 * 3600, 15
 BASES = os.path.join(os.environ.get("TEMP", "/tmp"), "ktable-sweep-bases")
 GAMES = [os.path.join(os.path.expanduser("~"), *inside, "My Games") for inside in ((), ("Documents",), ("OneDrive", "Documents"), ("OneDrive", "Documentos"))]
 STANDARD = "std.effects"
@@ -203,6 +204,35 @@ def module_mark(module):
         return f"{state.st_size}:{int(state.st_mtime)}"
     except OSError:
         return "steam"
+
+
+def base_lock(sha):
+    os.makedirs(BASES, exist_ok=True)
+    path = os.path.join(BASES, sha + ".lock")
+    told = False
+    while True:
+        try:
+            os.close(os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY))
+            return path
+        except FileExistsError:
+            pass
+        try:
+            if time.time() - os.path.getmtime(path) > STALE_LOCK:
+                os.remove(path)
+                continue
+        except OSError:
+            continue
+        if not told:
+            print(f"another sweep is converting base {sha[:8]}: waiting for it", flush=True)
+            told = True
+        time.sleep(LOCK_WAIT)
+
+
+def release(path):
+    try:
+        os.remove(path)
+    except OSError:
+        pass
 
 
 def kept_base_for(sha, modules):
@@ -469,25 +499,30 @@ def main():
             print(f"the working tree has {len(dirty)} changed file(s): the new side is built from them", flush=True)
         print(f"base {a.base}; {len(modules)} module(s); {out}", flush=True)
         sha = shell(["git", "rev-parse", a.base]).stdout.strip()
-        store, kept_base = (None, None) if a.base_exe or not sha else kept_base_for(sha, modules)
-        if a.fresh_base:
-            kept_base = None
-        new = side("new", ROOT, out, a.new_exe, a.standard)
-        if kept_base:
-            print(f"base {sha[:8]} kept from an earlier sweep: only the new side is converted", flush=True)
-            base_out = os.path.join(store, "out")
-            sides = [new]
-        else:
-            if store:
-                shutil.rmtree(store, ignore_errors=True)
-            base_out = os.path.join(store, "out") if store else None
-            base = side("base", source_at(a.base, out) if not a.base_exe else ROOT, out, a.base_exe, a.standard, base_out)
-            base_out = base["output"]
-            sides = [base, new]
-        print("caches linked: " + ", ".join(f"{s['name']} {s['linked']}" for s in sides) + " file(s)", flush=True)
-        runs = sweep(modules, sides, a.jobs, kept_base)
-        if store and not kept_base and all(not runs[m["id"]]["base"].get("code") for m in modules):
-            keep_base(store, modules, runs)
+        lock = base_lock(sha) if sha and not a.base_exe else None
+        try:
+            store, kept_base = (None, None) if a.base_exe or not sha else kept_base_for(sha, modules)
+            if a.fresh_base:
+                kept_base = None
+            new = side("new", ROOT, out, a.new_exe, a.standard)
+            if kept_base:
+                print(f"base {sha[:8]} kept from an earlier sweep: only the new side is converted", flush=True)
+                base_out = os.path.join(store, "out")
+                sides = [new]
+            else:
+                if store:
+                    shutil.rmtree(store, ignore_errors=True)
+                base_out = os.path.join(store, "out") if store else None
+                base = side("base", source_at(a.base, out) if not a.base_exe else ROOT, out, a.base_exe, a.standard, base_out)
+                base_out = base["output"]
+                sides = [base, new]
+            print("caches linked: " + ", ".join(f"{s['name']} {s['linked']}" for s in sides) + " file(s)", flush=True)
+            runs = sweep(modules, sides, a.jobs, kept_base)
+            if store and not kept_base and all(not runs[m["id"]]["base"].get("code") for m in modules):
+                keep_base(store, modules, runs)
+        finally:
+            if lock:
+                release(lock)
         with open(kept, "w", encoding="utf-8", newline="\n") as f:
             json.dump(runs, f, indent=2)
     told_lines, trouble = summary(runs)
