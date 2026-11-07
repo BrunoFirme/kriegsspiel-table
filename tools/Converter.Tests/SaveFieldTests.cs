@@ -198,6 +198,23 @@ public sealed class SaveFieldTests : ConverterHarness
         Assert.Equal((1.0, false), (lines[1].Points[1].X, lines[1].Round));
     }
 
+    [Fact]
+    public void Three_d_text_is_drawn_at_the_game_s_three_d_ui_scale_whatever_scale_the_module_saved_and_keeps_its_colour_s_alpha()
+    {
+        var (defs, pack) = Factory();
+        JsonObject Text(double scale) => Obj("3DText", "", scale, new JsonObject
+        {
+            ["Text"] = new JsonObject { ["Text"] = "Ford", ["fontSize"] = 64, ["colorstate"] = new JsonObject { ["r"] = 1.0, ["g"] = 0.0, ["b"] = 0.0, ["a"] = 0.5 } },
+        });
+
+        var one = defs.DefFor(new ModuleObj(Text(1)), pack)!;
+        var big = defs.DefFor(new ModuleObj(Text(3)), pack)!;
+
+        Assert.Equal(DefFactory.TextUnitsPerFontSize, one.Lettering!.UnitsPerPixel, 6);
+        Assert.Equal((one.Def.Size, 1.0), (big.Def.Size, big.Scale));
+        Assert.Equal("#FF000080", one.Lettering.Color);
+    }
+
     static byte[] TwoPagePdf(double w1, double h1, double w2, double h2)
     {
         var inv = System.Globalization.CultureInfo.InvariantCulture;

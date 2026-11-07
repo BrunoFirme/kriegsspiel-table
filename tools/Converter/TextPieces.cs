@@ -8,18 +8,20 @@ namespace KTable.Converter;
 
 public sealed partial class DefFactory
 {
-    const double TextUnitsPerFontSize = 1.0 / 80;
+    public const double TextUnitsPerFontSize = 0.015;
+
+    const double DefaultFontSize = 64;
 
     public static bool IsTextObject(ModuleObj o) => o.Name is "Notecard" or "3DText";
 
     public DefResult? TextDef(ModuleObj o, PackOut pack, double? refScale)
     {
-        double bs = Math.Abs(o.ScaleX) < 1e-6 ? 1 : Math.Abs(o.ScaleX);
-        double r = refScale ?? bs;
+        double bs = o.Name == "3DText" || Math.Abs(o.ScaleX) < 1e-6 ? 1 : Math.Abs(o.ScaleX);
+        double r = o.Name == "3DText" ? 1 : refScale ?? bs;
         double instScale = Math.Round(bs / r, 4);
         if (o.Name == "Notecard") return new DefResult(NoteDef(pack, o.Nickname, o.Description, r), pack, instScale, 0, o, ScriptInfo.Parse("", ""));
-        string body = o.J["Text"]?["Text"]?.GetValue<string>() ?? "";
-        double fontSize = o.J["Text"]?["fontSize"]?.GetValue<double>() ?? 64;
+        string body = ModuleValues.Text(o.J["Text"]?["Text"]) ?? "";
+        double fontSize = ModuleValues.Finite(o.J["Text"]?["fontSize"], DefaultFontSize);
         var colour = ColourOf(o.J["Text"]?["colorstate"] as JsonObject);
         if (body.Trim().Length == 0) return null;
 
@@ -95,8 +97,8 @@ public sealed partial class DefFactory
     static SKColor ColourOf(JsonObject? c)
     {
         if (c == null) return SKColors.White;
-        byte V(string k) => (byte)Math.Clamp(Math.Round((c[k]?.GetValue<double>() ?? 1) * 255), 0, 255);
-        return new SKColor(V("r"), V("g"), V("b"));
+        byte V(string k) => (byte)Math.Clamp(Math.Round(ModuleValues.Finite(c[k], 1) * 255), 0, 255);
+        return new SKColor(V("r"), V("g"), V("b"), V("a"));
     }
 
     static SKFont Font(float size, bool bold) =>

@@ -235,8 +235,8 @@ public sealed class ModuleObj
 
     public static List<PaletteEntry> PaletteOf(JsonNode? node) => (node as JsonArray)?.OfType<JsonObject>()
         .Where(c => Blank(S(c["ImageURL"])) != null)
-        .Select(c => new PaletteEntry(S(c["Name"]) ?? "", Blank(S(c["ImageURL"]))!, D(c, "Size", 1)))
-        .ToList() ?? new();
+        .Select(c => new PaletteEntry(S(c["Name"]) ?? "", Blank(S(c["ImageURL"]))!, D(c, "Size", 0)))
+        .Distinct().ToList() ?? new();
 
     public static List<Decal> DecalsOf(JsonNode? node) => (node as JsonArray)?.OfType<JsonObject>()
         .Select(d => (t: d["Transform"] as JsonObject, c: d["CustomDecal"] as JsonObject))
