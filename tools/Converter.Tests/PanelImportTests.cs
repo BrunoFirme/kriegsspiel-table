@@ -13,7 +13,8 @@ public sealed partial class FidelityTests
         LocalPicture(cfg, "http://a/crest.png", 8, 8, (_, _) => SKColors.Gold);
         LocalPicture(cfg, "http://a/tile.png", 8, 8, (_, _) => SKColors.Gray);
         var assets = new JsonArray(new JsonObject { ["Type"] = 0, ["Name"] = "crest", ["URL"] = "http://a/crest.png" }, new JsonObject { ["Type"] = 1, ["Name"] = "font", ["URL"] = "http://a/font.unity3d" });
-        var tile = Obj("Custom_Tile", "Brigade", 1, new JsonObject { ["CustomImage"] = new JsonObject { ["ImageURL"] = "http://a/tile.png" }, ["XmlUI"] = objectXml });
+        var tile = Obj("Custom_Tile", "Brigade", 1, new JsonObject { ["CustomImage"] = new JsonObject { ["ImageURL"] = "http://a/tile.png" }, ["XmlUI"] = objectXml,
+            ["CustomUIAssets"] = new JsonArray(new JsonObject { ["Type"] = 0, ["Name"] = "badge", ["URL"] = "http://a/tile.png" }) });
         var module = Module("panelled", tile);
         var json = JsonNode.Parse(File.ReadAllText(module))!.AsObject();
         json["XmlUI"] = globalXml;
@@ -41,7 +42,8 @@ public sealed partial class FidelityTests
         var brigade = Assert.Single(table.UmpireBoard);
         Assert.Equal("http://a/crest.png", Assert.Single(brigade.Ui).Find("badge")!.Attributes["image"]);
         Assert.NotNull(brigade.UiLayout!.ById("badge"));
-        Assert.Null(brigade.UiAssets);
+        Assert.Equal("badge", Assert.Single(brigade.UiAssets!).Name);
+        Assert.NotEqual("http://a/tile.png", brigade.UiAssets![0].Url);
         Assert.Equal(picture, table.UiLinks!["http://a/crest.png"]);
         var pack = Json.Load<PackManifest>(Path.Combine(Packages, "tts.panelled", "pack.json"));
         Assert.True(pack.Assets.ContainsKey(picture), "the picture panels name is kept in the module's pack");

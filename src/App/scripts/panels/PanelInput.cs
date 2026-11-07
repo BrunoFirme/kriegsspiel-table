@@ -31,9 +31,57 @@ sealed partial class PanelView
             if (wheel.Pressed) Scroll(owner, wheel.ButtonIndex == MouseButton.WheelUp ? 1 : -1);
             return;
         }
+        if (e is InputEventMouseMotion { ButtonMask: MouseButtonMask.Left } motion)
+        {
+            Drag(owner, motion.GlobalPosition);
+            return;
+        }
         if (e is not InputEventMouseButton mb) return;
+        if (!mb.Pressed && mb.ButtonIndex == MouseButton.Left && _drag is { } d && d.Moved)
+        {
+            EndDrag(d);
+            _pressed = null;
+            return;
+        }
+        if (mb.Pressed && mb.ButtonIndex == MouseButton.Left) _drag = Draggable(owner) && Nodes.TryGetValue(owner, out var dc) ? new DragState(owner, dc, mb.GlobalPosition, dc.Position) : null;
         Press(hit, owner, mb.ButtonIndex, mb.Pressed, mb.Position);
         Nodes.GetValueOrDefault(hit)?.AcceptEvent();
+    }
+
+    sealed record DragState(PanelBox Owner, Control Node, Vector2 From, Vector2 Home)
+    {
+        public bool Moved { get; set; }
+    }
+
+    DragState? _drag;
+    const float DragThreshold = 5;
+
+    static bool Draggable(PanelBox owner) => PanelValues.Bool(owner.Extra.GetValueOrDefault("allowdragging"));
+
+    void Drag(PanelBox owner, Vector2 at)
+    {
+        if (_drag is not { } d || !GodotObject.IsInstanceValid(d.Node)) return;
+        if (!d.Moved && (at - d.From).Length() < DragThreshold) return;
+        if (!d.Moved)
+        {
+            d.Moved = true;
+            Fire(d.Owner, "onBeginDrag", "");
+        }
+        var scale = d.Node.GetGlobalTransform().Scale;
+        var to = d.Home + (at - d.From) / new Vector2(Mathf.Max(1e-6f, Mathf.Abs(scale.X)), Mathf.Max(1e-6f, Mathf.Abs(scale.Y)));
+        bool inside = !d.Owner.Extra.TryGetValue("restrictdraggingtoparentbounds", out var r) || PanelValues.Bool(r);
+        if (inside && d.Node.GetParentControl() is { } parent)
+            to = new Vector2(Mathf.Clamp(to.X, 0, Mathf.Max(0, parent.Size.X - d.Node.Size.X)), Mathf.Clamp(to.Y, 0, Mathf.Max(0, parent.Size.Y - d.Node.Size.Y)));
+        d.Node.Position = to;
+        Fire(d.Owner, "onDrag", "");
+    }
+
+    void EndDrag(DragState d)
+    {
+        _drag = null;
+        bool home = !d.Owner.Extra.TryGetValue("returntooriginalpositionwhenreleased", out var r) || PanelValues.Bool(r);
+        if (home && GodotObject.IsInstanceValid(d.Node)) d.Node.Position = d.Home;
+        Fire(d.Owner, "onEndDrag", "");
     }
 
     public void Press(PanelBox hit, PanelBox owner, MouseButton button, bool down, Vector2 inside)

@@ -359,4 +359,19 @@ public class PanelTests
         Assert.Equal("crest", t.Server.State.UiLayout!.ById("i")!.Get("image"));
         Assert.Equal("pic-2", Assert.Single(t.Server.State.UiAssets!).Url);
     }
+
+    [Fact]
+    public void The_panels_as_tables_hold_tag_value_attributes_and_children_with_no_value_where_none_was_written()
+    {
+        using var t = Global("""
+            function on_load(s) ui.set('<Panel id="p" width="4"><Text id="t">Hi</Text></Panel>') end
+            function on_chat(m)
+              local tree = ui.tree()
+              local p, c = tree[1], tree[1].children[1]
+              game.say(p.tag .. "|" .. tostring(p.value) .. "|" .. p.attributes.width .. "|" .. #p.children .. "|" .. c.tag .. "|" .. c.value .. "|" .. c.attributes.id .. "|" .. #c.children)
+            end
+            """);
+        t.Server.Handle(Table.Ump3, new Say { Text = "go" });
+        Assert.Contains(Said(t), s => s.Text == "Panel|nil|4|1|Text|Hi|t|0");
+    }
 }

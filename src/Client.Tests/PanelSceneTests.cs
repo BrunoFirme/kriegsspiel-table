@@ -198,4 +198,21 @@ public class PanelSceneTests
         Assert.False(shared.ById("t")!.Part("Checkmark")!.Active);
         Assert.Equal("A", shared.ById("d")!.Part("Label")!.Text!.Text);
     }
+
+    [Fact]
+    public void A_show_or_hide_plays_the_element_s_own_animation_and_a_hiding_one_stays_drawn_until_it_ends()
+    {
+        var layout = PanelBuild.Of("<Panel id=\"p\" hideAnimation=\"FadeOut\" showAnimation=\"Grow\" animationDuration=\"0.5\"/><Panel id=\"q\"/>").Layout;
+        var hide = new KTable.Core.Protocol.Batch
+        {
+            Items = { new KTable.Core.Protocol.SetUiAttributes { Id = "p", Kind = PanelOps.Hide }, new KTable.Core.Protocol.SetUiAttributes { Id = "q", Kind = PanelOps.Hide } },
+        };
+        var move = Assert.Single(PanelMoves.Of(hide, layout, null));
+        Assert.Equal(("FadeOut", false, 0.5f), (move.Animation, move.Showing, move.Duration));
+        Assert.Equal("Grow", Assert.Single(PanelMoves.Of(new KTable.Core.Protocol.SetUiAttributes { Id = "p", Kind = PanelOps.Show }, layout, null)).Animation);
+        layout.ById("p")!.Active = PanelOps.Off;
+        var kept = PanelScene.Build(layout, Screen, Viewer(), new Meter(), null, new HashSet<string> { "0" });
+        Assert.True(kept.ById("p")!.Active);
+        Assert.False(PanelScene.Build(layout, Screen, Viewer(), new Meter()).ById("p")!.Active);
+    }
 }

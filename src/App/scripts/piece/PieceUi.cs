@@ -16,7 +16,7 @@ sealed class PieceUi
     readonly List<Plate> _plates = new();
     readonly Dictionary<string, string> _local = new();
 
-    sealed record Plate(PanelView View, Vector2 Center, float Turn, Vector2 Size, Vector2 Pixels, float Fit);
+    sealed record Plate(PanelView View, Vector2 Center, float Turn, Vector2 Size, Vector2 Pixels, float Fit, SubViewport Port);
     object? _built;
     bool _builtFaceDown;
     const int PlatePixels = 1024;
@@ -33,7 +33,28 @@ sealed class PieceUi
             if (one is SetUi su && su.Piece == _piece.Piece.Id) _local.Clear();
             else if (one is SetUiAttributes sua && sua.Piece == _piece.Piece.Id) PanelChanges.Forget(_local, _piece.Piece.UiLayout, sua.Id);
         }
+        var moves = PanelMoves.Of(c, _piece.Piece.UiLayout, _piece.Piece.Id);
+        foreach (var m in moves) if (!m.Showing) _hiding.Add(PanelScene.Key(m.Path));
         Sync(true);
+        foreach (var m in moves) Animate(m);
+    }
+
+    readonly HashSet<string> _hiding = new();
+
+    void Animate(PanelMove m)
+    {
+        foreach (var p in _plates)
+        {
+            if (p.View.Scene?.At(m.Path) is not { } box || !p.View.Nodes.TryGetValue(box, out var node)) continue;
+            p.Port.RenderTargetUpdateMode = SubViewport.UpdateMode.Always;
+            var key = PanelScene.Key(m.Path);
+            PanelAnimate.Play(node, m, () =>
+            {
+                if (GodotObject.IsInstanceValid(p.Port)) p.Port.RenderTargetUpdateMode = SubViewport.UpdateMode.Once;
+                if (!m.Showing && _hiding.Remove(key)) Sync(true);
+            });
+            return;
+        }
     }
 
     public void Sync(bool force)
@@ -53,7 +74,7 @@ sealed class PieceUi
         if (layout == null || layout.Elements.Count == 0 || piece.FaceDown || _piece.IsDie || _piece.IsEffect) return;
         var s = _piece.Session;
         var (color, host, admin) = PanelSeats.Of(s.Me, s.Peers);
-        var scene = PanelScene.Build(layout, new V2(PanelScene.PieceCanvas, PanelScene.PieceCanvas), new PanelContext(layout.Colors, color, host, admin), PanelPictures.Meter(s), _local);
+        var scene = PanelScene.Build(layout, new V2(PanelScene.PieceCanvas, PanelScene.PieceCanvas), new PanelContext(layout.Colors, color, host, admin), PanelPictures.Meter(s), _local, _hiding);
         var top = scene.Root.Children[0];
         foreach (var root in top.Children.Where(r => r.Active && r.Element != null)) DrawPlate(scene, root);
     }
@@ -131,7 +152,7 @@ sealed class PieceUi
         _piece.AddChild(vp);
         _nodes.Add(vp);
         float turn = -(root.Rotation.Z - Upright);
-        _plates.Add(new Plate(view, new Vector2(center.X * Thousandth, -center.Y * Thousandth), turn, new Vector2(pw, ph), new Vector2(w, h), f));
+        _plates.Add(new Plate(view, new Vector2(center.X * Thousandth, -center.Y * Thousandth), turn, new Vector2(pw, ph), new Vector2(w, h), f, vp));
         var mat = new StandardMaterial3D
         {
             AlbedoTexture = vp.GetTexture(), ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded, Transparency = BaseMaterial3D.TransparencyEnum.Alpha,

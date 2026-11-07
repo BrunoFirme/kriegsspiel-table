@@ -25,6 +25,8 @@ public partial class ScriptUi : Control
     readonly Dictionary<string, string> _local = new();
     PanelView? _view;
 
+    readonly HashSet<string> _hiding = new();
+
     public void Applied(Command c)
     {
         foreach (var one in PanelChanges.Flat(c))
@@ -32,7 +34,15 @@ public partial class ScriptUi : Control
             if (one is SetUi { Piece: null }) _local.Clear();
             else if (one is SetUiAttributes { Piece: null } sua) PanelChanges.Forget(_local, _s.View.UiLayout, sua.Id);
         }
+        var moves = PanelMoves.Of(c, _s.View.UiLayout, null);
+        foreach (var m in moves) if (!m.Showing) _hiding.Add(PanelScene.Key(m.Path));
         Rebuild();
+        foreach (var m in moves)
+        {
+            if (_view?.Scene?.At(m.Path) is not { } box || !_view.Nodes.TryGetValue(box, out var node)) continue;
+            var key = PanelScene.Key(m.Path);
+            PanelAnimate.Play(node, m, m.Showing ? null : () => { if (_hiding.Remove(key)) Rebuild(); });
+        }
     }
 
     public void Rebuild()
@@ -45,7 +55,7 @@ public partial class ScriptUi : Control
         float scale = Mathf.Max(0.01f, screen.Y / PanelScene.ScreenHeight);
         var canvas = new V2(screen.X / scale, PanelScene.ScreenHeight);
         var (color, host, admin) = PanelSeats.Of(_s.Me, _s.Peers);
-        var scene = PanelScene.Build(layout, canvas, new PanelContext(layout.Colors, color, host, admin), PanelPictures.Meter(_s), _local);
+        var scene = PanelScene.Build(layout, canvas, new PanelContext(layout.Colors, color, host, admin), PanelPictures.Meter(_s), _local, _hiding);
         _view = new PanelView(Send, (name, ready) => PanelPictures.Texture(_s, name, ready), _local, () => Callable.From(Rebuild).CallDeferred());
         var root = _view.Show(scene, scene.Root);
         root.Scale = new Vector2(scale, scale);

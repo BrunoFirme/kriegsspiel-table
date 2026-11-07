@@ -160,7 +160,7 @@ public static partial class PanelApply
             case "raycasttarget":
                 i.RaycastTarget = PanelValues.Bool(v);
                 return true;
-            case "sprite":
+            case "sprite" or "texture":
                 i.Sprite = PanelValues.IsNone(v) ? null : v;
                 return true;
         }

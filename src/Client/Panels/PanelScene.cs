@@ -21,9 +21,11 @@ public sealed class PanelScene
         return (x, Root.RectSize.Y - up - b.RectSize.Y, b.RectSize.X, b.RectSize.Y);
     }
 
+    public PanelBox? At(IReadOnlyList<int> path) => Elements.FirstOrDefault(e => e.Path != null && e.Path.SequenceEqual(path));
+
     public PanelBox? ById(string id) => Elements.FirstOrDefault(e => e.Element?.Get("id") is { } v && v.Equals(id, StringComparison.OrdinalIgnoreCase));
 
-    public static PanelScene Build(UiLayout layout, V2 canvas, PanelContext ctx, IPanelMeter meter, IReadOnlyDictionary<string, string>? local = null)
+    public static PanelScene Build(UiLayout layout, V2 canvas, PanelContext ctx, IPanelMeter meter, IReadOnlyDictionary<string, string>? local = null, ISet<string>? keep = null)
     {
         var top = new PanelBox { Name = "Canvas", AnchorMin = V2.Zero, AnchorMax = V2.Zero, SizeDelta = canvas, Pivot = V2.Half };
         top.RectSize = canvas;
@@ -32,7 +34,11 @@ public sealed class PanelScene
         var scene = new PanelScene(top);
         var made = new List<(PanelBox Box, UiElement Element)>();
         for (int i = 0; i < layout.Elements.Count; i++) scene.Make(root, layout.Elements[i], new List<int> { i }, made);
-        foreach (var (box, element) in made) Apply(box, element, ctx, local);
+        foreach (var (box, element) in made)
+        {
+            Apply(box, element, ctx, local);
+            if (keep != null && box.Path != null && keep.Contains(Key(box.Path))) box.Active = true;
+        }
         PanelLayout.Run(top, meter);
         return scene;
     }
