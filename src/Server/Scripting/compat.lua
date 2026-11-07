@@ -398,10 +398,10 @@ compat.AssetBundle = {}
 function compat.bundle(obj)
   return {
     getLoopingEffects = function() return { { index = 0, name = obj.name or obj.kind_name } } end,
-    getTriggerEffects = function() return {} end,
+    getTriggerEffects = function() return nil end,
     getLoopingEffectIndex = function() if obj.effect_on then return 0 end return -1 end,
-    playLoopingEffect = function(i) obj.set_effect_on((tonumber(i) or 0) >= 0) end,
-    playTriggerEffect = function() return false end,
+    playLoopingEffect = function(i) obj.set_effect_on((tonumber(i) or 0) >= 0) return true end,
+    playTriggerEffect = function() return true end,
   }
 end
 function compat.randomize(obj) return obj.roll() end
