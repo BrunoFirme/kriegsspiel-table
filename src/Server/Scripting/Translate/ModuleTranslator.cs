@@ -528,7 +528,7 @@ public static class ModuleTranslator
                 case "takeObject": return Compat($"compat.take_object({recv}, {A(0)})", node);
                 case "putObject": return Compat($"compat.put_object({recv}, {A(0)})", node);
                 case "getAttachments": return Compat($"compat.get_attachments({recv})", node);
-                case "addAttachment": return Direct($"{recv}.attach({A(0)})", node);
+                case "addAttachment": return Compat($"compat.add_attachment({recv}, {A(0)})", node);
                 case "startLuaCoroutine": return Compat($"compat.start_coroutine({recv}, {A(0)})", node);
                 case "removeAttachment": return Compat($"compat.remove_attachment({recv}, {A(0)})", node);
                 case "removeAttachments": return Compat($"compat.remove_attachments({recv})", node);

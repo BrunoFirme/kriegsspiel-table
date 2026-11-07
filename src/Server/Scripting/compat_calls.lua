@@ -731,6 +731,29 @@ compat.Notes = {
   removeNotebookTab = notes_before.removeNotebookTab,
 }
 
+function compat.add_attachment(obj, child)
+  local c = compat.piece_of(child)
+  if type(c) ~= "table" or c.id == nil then error(clr("LuaObject", child), 0) end
+  obj.attach(c)
+  return true
+end
+function compat.get_attachments(obj)
+  local t = {}
+  for i, a in ipairs(obj.attached or {}) do
+    t[i] = { name = compat.name(a), nickname = compat.name(a), description = compat.description(a), gm_notes = compat.get_gm_notes(a), guid = compat.guid(a),
+      lua_script = a.script or "", lua_script_state = a.script_state or "", memo = a.memo or "", tags = compat.tags(a), index = i - 1 }
+  end
+  return t
+end
+function compat.remove_attachments(obj)
+  local out = {}
+  for _, a in ipairs(obj.attached or {}) do
+    a.detach()
+    out[#out + 1] = a
+  end
+  return out
+end
+
 function compat.none() return nil end
 function compat.no() return false end
 

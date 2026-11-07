@@ -636,6 +636,23 @@ public class ModuleObjectCallTests
     }
 
     [Fact]
+    public void Attachments_answer_true_list_their_saved_fields_and_come_off_together_as_a_list()
+    {
+        using var t = new Table();
+        const string lua = """
+            function onLoad()
+              local m = getObjectFromGUID('p-000003')
+              m.setName('Flag')
+              local ok = self.addAttachment(m)
+              local a = self.getAttachments()[1]
+              local off = self.removeAttachments()
+              self.setName(tostring(ok) .. '|' .. a.name .. ',' .. a.guid .. ',' .. a.index .. ',' .. type(a.tags) .. '|' .. #off .. ',' .. off[1].getGUID() .. '|' .. #self.getAttachments())
+            end
+            """;
+        Assert.Equal("true|Flag,p-000003,0,table|1,p-000003|0", Run(t, lua));
+    }
+
+    [Fact]
     public void Time_reads_the_scripts_clock_and_frame_count()
     {
         using var t = new Table();

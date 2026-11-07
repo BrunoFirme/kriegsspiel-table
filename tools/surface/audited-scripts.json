@@ -103,7 +103,14 @@
   "held_spin_index": "ModuleObjectCallTests.Plain_object_properties_start_at_the_tabletops_defaults_and_keep_what_a_script_sets",
   "memo": "ModuleObjectCallTests.Plain_object_properties_start_at_the_tabletops_defaults_and_keep_what_a_script_sets",
   "getMemo": "ModuleObjectCallTests.Plain_object_properties_start_at_the_tabletops_defaults_and_keep_what_a_script_sets",
-  "setMemo": "ModuleObjectCallTests.Plain_object_properties_start_at_the_tabletops_defaults_and_keep_what_a_script_sets"
+  "setMemo": "ModuleObjectCallTests.Plain_object_properties_start_at_the_tabletops_defaults_and_keep_what_a_script_sets",
+  "addAttachment": "ModuleObjectCallTests.Attachments_answer_true_list_their_saved_fields_and_come_off_together_as_a_list",
+  "getAttachments": "ModuleObjectCallTests.Attachments_answer_true_list_their_saved_fields_and_come_off_together_as_a_list",
+  "removeAttachments": "ModuleObjectCallTests.Attachments_answer_true_list_their_saved_fields_and_come_off_together_as_a_list",
+  "value_flags": "DiceScriptTests.A_module_script_reads_and_sets_worth_held_turns_the_pick_up_place_and_flips_a_die_to_its_other_side",
+  "pick_up_position": "DiceScriptTests.A_module_script_reads_and_sets_worth_held_turns_the_pick_up_place_and_flips_a_die_to_its_other_side",
+  "pick_up_rotation": "DiceScriptTests.A_module_script_reads_and_sets_worth_held_turns_the_pick_up_place_and_flips_a_die_to_its_other_side",
+  "addToPlayerSelection": "TranslatorTests.The_long_tail_translates_and_runs (the same selection call as removeFromPlayerSelection)"
  },
  "global": {
   "broadcastToAll": "ModuleObjectCallTests.Printing_to_a_seat_nobody_holds_is_an_error_and_seat_names_are_exact",
