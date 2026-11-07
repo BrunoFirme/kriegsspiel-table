@@ -133,7 +133,7 @@ public class ModuleEventTests
     }
 
     [Fact]
-    public void A_trigger_effect_played_by_an_umpire_reaches_the_piece_and_every_script_with_its_index()
+    public void A_trigger_effect_played_by_a_script_or_an_umpire_reaches_the_piece_and_every_script_with_its_index()
     {
         using var t = new Table();
         t.Store.RegisterDef(new PackManifest { Id = "testpack" }, new PieceDef { Id = "gun", Name = "Gun", Tags = { "effect" }, Effect = new EffectDef { Kind = "cannon" } });
@@ -146,8 +146,20 @@ public class ModuleEventTests
         var gun = t.Server.State.Find(U, "p-000070")!;
         Assert.Equal("true", gun.Note);
         Assert.Contains(Flat(t.Server.Log).OfType<PlayEffect>(), pe => pe.Id == "p-000070" && pe.Index == 2);
+        Assert.Equal("fired 2", gun.Label);
         t.Server.Handle(Table.Ump3, new PlayEffect { Layer = U, Id = "p-000070", Index = 1 });
         Assert.Equal(("fired 1", "heard p-000070 1"), (t.Server.State.Find(U, "p-000070")!.Label, t.Server.State.Find(U, P)!.Label));
+    }
+
+    [Fact]
+    public void A_looping_effect_a_script_switches_is_heard_by_every_script_as_one_an_umpire_switches()
+    {
+        using var t = new Table();
+        t.Store.RegisterDef(new PackManifest { Id = "testpack" }, new PieceDef { Id = "smoke", Name = "Smoke", Tags = { "effect" }, Effect = new EffectDef() });
+        t.Server.Handle(Table.Host, new SpawnPiece { Layer = U, Def = "smoke", Id = "p-000071", Pos = new(3, 3) });
+        Load(t, P, "function onObjectLoopingEffect(obj, index) self.setName(self.getName() .. ' ' .. obj.getGUID() .. ':' .. index) end");
+        Load(t, Marker, "function onLoad() getObjectFromGUID('p-000071').AssetBundle.playLoopingEffect(-1) getObjectFromGUID('p-000071').AssetBundle.playLoopingEffect(0) end");
+        Assert.EndsWith(" p-000071:-1 p-000071:0", t.Server.State.Find(U, P)!.Label);
     }
 
     [Fact]

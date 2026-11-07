@@ -59,7 +59,7 @@ sealed class NameEditor
         _caretT = 0;
         _caretOn = true;
         node.SetWidgetText(index, _buf + "|");
-        _c.Say($"Type {(w.Placeholder.Length > 0 ? w.Placeholder.ToLowerInvariant() : "the value")} · Enter keeps it · Esc leaves it as it was");
+        _c.Say($"Type {(w.Placeholder.Length > 0 ? w.Placeholder.ToLowerInvariant() : "the value")} · click away to finish · Esc leaves it as it was");
     }
 
     public void BeginTyped(PieceNode n, string typed)
@@ -111,6 +111,8 @@ sealed class NameEditor
                 return;
             case Godot.Key.Enter or Godot.Key.KpEnter when _noteBody == true && !k.CtrlPressed:
                 _buf += "\n";
+                break;
+            case Godot.Key.Enter or Godot.Key.KpEnter when _widget > 0:
                 break;
             case Godot.Key.Enter or Godot.Key.KpEnter:
                 End(commit: true);

@@ -753,10 +753,10 @@ function on_state() end
 ---This book turned to another page.
 function on_page() end
 
----An umpire started (0) or stopped (-1) this effect.
+---An umpire or a script started (0) or stopped (-1) this effect.
 function on_effect() end
 
----An umpire played this effect once (Play once in its menu); index is the one-off asked for, 0 from the menu.
+---This effect was played once, from its menu (index 0) or by a script's play_effect (the index it gave).
 ---@param old number The state it left, from 1.
 ---@param new number The state it is in now, from 1.
 function on_burst(old, new) end

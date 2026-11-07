@@ -2970,8 +2970,8 @@ Define any of these in a piece's script and the table calls it.
 | [`on_pick_up`](#on_pick_up) | An umpire picked the piece up. |
 | [`on_state`](#on_state) | Its state changed, by anyone. |
 | [`on_page`](#on_page) | This book turned to another page. |
-| [`on_effect`](#on_effect) | An umpire started (0) or stopped (-1) this effect. |
-| [`on_burst`](#on_burst) | An umpire played this effect once (Play once in its menu); index is the one-off asked for, 0 from the menu. |
+| [`on_effect`](#on_effect) | An umpire or a script started (0) or stopped (-1) this effect. |
+| [`on_burst`](#on_burst) | This effect was played once, from its menu (index 0) or by a script's play_effect (the index it gave). |
 | [`on_flip`](#on_flip) | It was turned over or back. |
 | [`on_rotate`](#on_rotate) | An umpire turned it in place. |
 | [`on_turn`](#on_turn) | The clock advanced. |
@@ -3110,7 +3110,7 @@ An event: define this function and the table calls it.
 on_effect(index)
 ```
 
-An umpire started (0) or stopped (-1) this effect.
+An umpire or a script started (0) or stopped (-1) this effect.
 
 An event: define this function and the table calls it.
 
@@ -3122,7 +3122,7 @@ An event: define this function and the table calls it.
 on_burst(index)
 ```
 
-An umpire played this effect once (Play once in its menu); index is the one-off asked for, 0 from the menu.
+This effect was played once, from its menu (index 0) or by a script's play_effect (the index it gave).
 
 An event: define this function and the table calls it.
 
@@ -3220,8 +3220,8 @@ The global script gets on_load, on_save, on_update and on_turn too, and these fo
 | [`on_drop`](#on_drop-global-script) | An umpire let a piece go. |
 | [`on_state`](#on_state-global-script) | A piece's state changed, by anyone. |
 | [`on_page`](#on_page-global-script) | A book turned to another page. |
-| [`on_effect`](#on_effect-global-script) | An umpire started (0) or stopped (-1) an effect. |
-| [`on_burst`](#on_burst-global-script) | An umpire played an effect once. |
+| [`on_effect`](#on_effect-global-script) | An umpire or a script started (0) or stopped (-1) an effect. |
+| [`on_burst`](#on_burst-global-script) | An effect was played once, from its menu or by a script. |
 | [`on_roll`](#on_roll-global-script) | An umpire rolled a die, or turned a piece of several looks to one at random. |
 | [`on_rotate`](#on_rotate-global-script) | An umpire turned a piece in place. |
 | [`on_pick_up`](#on_pick_up-global-script) | An umpire picked a piece up. |
@@ -3308,7 +3308,7 @@ An event: define this function and the table calls it.
 on_effect(piece, index)
 ```
 
-An umpire started (0) or stopped (-1) an effect.
+An umpire or a script started (0) or stopped (-1) an effect.
 
 An event: define this function and the table calls it.
 
@@ -3320,7 +3320,7 @@ An event: define this function and the table calls it.
 on_burst(piece, index)
 ```
 
-An umpire played an effect once.
+An effect was played once, from its menu or by a script.
 
 An event: define this function and the table calls it.
 

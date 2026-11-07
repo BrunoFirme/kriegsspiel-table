@@ -45,7 +45,10 @@ static class InputBoxTests
         Press(names, Key.Tab);
         Press(names, Key.Enter);
         await r.Frames(1);
-        Check.Equal("a" + InputKeys.FourSpaces, node.Piece.Widgets[1].Value, "a box whose Tab types spaces types four");
+        Check.That(names.Node == node, "Enter keeps the box being typed in, as the tabletop's submit does");
+        Type(names, "b");
+        await r.Frames(1);
+        Check.Equal("a" + InputKeys.FourSpaces + "b", node.Piece.Widgets[1].Value, "a box whose Tab types spaces types four, and typing goes on after Enter");
         names.BeginWidget(node, 3, node.Piece.Widgets[2]);
         Type(names, "jean  pAUL");
         Press(names, Key.Tab);
