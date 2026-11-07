@@ -23,6 +23,8 @@ local function units(obj)
   return w / math.sqrt(TOKEN_AREA * aspect), h / math.sqrt(TOKEN_AREA / aspect)
 end
 
+compat.local_units = units
+
 local PLAYER_COLORS = { "White", "Red", "Blue", "Green", "Yellow", "Orange", "Purple", "Pink", "Brown", "Teal", "Grey", "Black" }
 local function umpires() return game.umpires() end
 

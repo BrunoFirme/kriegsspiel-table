@@ -294,6 +294,125 @@ public class ModuleObjectCallTests
     }
 
     [Fact]
+    public void The_same_menu_function_under_the_same_label_is_one_row_and_a_missing_function_is_refused()
+    {
+        using var t = new Table();
+        const string lua = """
+            function act(color, pos, obj) obj.setDescription(color .. ' ' .. pos.x) end
+            function onLoad()
+              local a = self.addContextMenuItem('Act', act)
+              local b = self.addContextMenuItem('Act', act)
+              local c = self.addContextMenuItem('Other', nil)
+              self.setName(tostring(a) .. tostring(b) .. tostring(c))
+            end
+            """;
+        Assert.Equal("truetruefalse", Run(t, lua));
+        Assert.Single(t.Server.State.Find(U, P)!.MenuItems);
+        Assert.Contains(t.Server.Scripts.Console, l => l.Contains("Function required for context menu (label = \"Other\""));
+    }
+
+    [Fact]
+    public void Scale_reads_one_local_unit_and_setting_it_back_keeps_the_piece_the_same_size()
+    {
+        using var t = new Table();
+        const string lua = """
+            function onLoad()
+              local m = getObjectFromGUID('p-000003')
+              local s = m.getScale()
+              m.setScale(s)
+              local again = m.getScale()
+              m.scale(2)
+              local twice = m.getScale()
+              self.setName(s.x .. ',' .. s.z .. '|' .. again.x .. '|' .. twice.x)
+            end
+            """;
+        Assert.Equal("0.5,0.5|0.5|1", Run(t, lua));
+        Assert.Equal(2, t.Server.State.Find(U, Marker)!.Scale);
+    }
+
+    [Fact]
+    public void A_local_point_goes_to_the_world_with_its_height_scaled_and_turned_over_with_the_piece()
+    {
+        const string lua = """
+            function onLoad()
+              local m = getObjectFromGUID('p-000003')
+              local up = m.positionToWorld({0, 2, 0})
+              local back = m.positionToLocal(m.positionToWorld({1, 2, 3}))
+              m.flip()
+              local down = m.positionToWorld({0, 2, 0})
+              local back2 = m.positionToLocal(m.positionToWorld({1, 2, 3}))
+              local function f(v) return string.format('%.4g,%.4g,%.4g', v.x, v.y, v.z) end
+              self.setName(up.y .. '|' .. f(back) .. '|' .. down.y .. '|' .. f(back2))
+            end
+            """;
+        Assert.Equal("1|1,2,3|-1|1,2,3", Run(lua));
+    }
+
+    [Fact]
+    public void Bounds_of_a_turned_piece_hold_its_turned_outline_and_normalized_bounds_ignore_the_turn()
+    {
+        const string lua = """
+            function onLoad()
+              local m = getObjectFromGUID('p-000003')
+              m.setScale({1, 1, 2})
+              m.setRotation({0, 90, 0})
+              local b = m.getBounds()
+              local n = m.getBoundsNormalized()
+              self.setName(string.format('%.2f,%.2f|%.2f,%.2f', b.size.x, b.size.z, n.size.x, n.size.z))
+            end
+            """;
+        Assert.Equal("2.00,2.00|2.00,2.00", Run(lua));
+    }
+
+    [Fact]
+    public void Vector_lines_read_back_nil_until_set_and_then_as_given_with_vectors_and_colours()
+    {
+        using var t = new Table();
+        const string lua = """
+            function onLoad()
+              local before = self.getVectorLines()
+              local ok = self.setVectorLines({ { points = { {0, 0, 0}, {1, 0, 1} }, color = 'Red', thickness = 0.2, rotation = {0, 90, 0}, square = true } })
+              local l = self.getVectorLines()[1]
+              self.setName(tostring(before) .. '|' .. tostring(ok) .. '|' .. l.points[2].x .. '|' .. l.color.r .. '|' .. l.rotation.y .. '|' .. tostring(l.square) .. '|' .. tostring(l.loop))
+            end
+            """;
+        Assert.Equal("nil|true|1|0.856|90|true|false", Run(t, lua));
+        Assert.Single(t.Server.State.Find(U, P)!.Lines);
+    }
+
+    [Fact]
+    public void Decals_need_a_name_and_a_link_and_read_back_nil_until_set()
+    {
+        using var t = new Table();
+        const string lua = """
+            function onLoad()
+              local before = self.getDecals()
+              local noName = self.setDecals({ { url = 'arms', position = {0, 1, 0} } })
+              local none = self.setDecals(nil)
+              local noUrl = self.addDecal({ name = 'x' })
+              self.setName(tostring(before) .. '|' .. tostring(noName) .. '|' .. tostring(none) .. '|' .. tostring(noUrl))
+            end
+            """;
+        Assert.Equal("nil|false|false|false", Run(t, lua));
+        Assert.Contains(t.Server.Scripts.Console, l => l.Contains("name was null or an empty string"));
+        Assert.Contains(t.Server.Scripts.Console, l => l.Contains("Decal table is empty!"));
+    }
+
+    [Fact]
+    public void Snap_points_read_back_with_their_rotation_only_when_they_snap_rotation()
+    {
+        const string lua = """
+            function onLoad()
+              local before = #self.getSnapPoints()
+              self.setSnapPoints({ { position = {1, 0, 2}, rotation = {0, 45, 0} }, { position = {0, 0, 0}, rotation = {0, 30, 0}, rotation_snap = true } })
+              local s = self.getSnapPoints()
+              self.setName(before .. '|' .. s[1].position.z .. ',' .. s[1].rotation.y .. ',' .. tostring(s[1].rotation_snap) .. '|' .. s[2].rotation.y)
+            end
+            """;
+        Assert.Equal("0|2,0,false|30", Run(lua));
+    }
+
+    [Fact]
     public void Time_reads_the_scripts_clock_and_frame_count()
     {
         using var t = new Table();

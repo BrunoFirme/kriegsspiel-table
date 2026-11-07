@@ -331,7 +331,199 @@ end
 
 function compat.none() return nil end
 function compat.no() return false end
-function compat.clear_context_menu(obj) obj.menu_clear() return true end
+
+local menu_n = 0
+local function menus_of(obj)
+  local b = compat.__books[obj.id]
+  if b == nil then
+    b = { buttons = {}, inputs = {} }
+    compat.__books[obj.id] = b
+  end
+  b.menus = b.menus or {}
+  return b.menus
+end
+function compat.add_context_menu_item(env, obj, label, fn, keep_open)
+  label = tostring(label)
+  if type(fn) ~= "function" then
+    print("addContextMenuItem: Function required for context menu (label = \"" .. label .. "\", object = " .. tostring(compat.name(obj)) .. ")")
+    return false
+  end
+  local menus = menus_of(obj)
+  menus[label] = menus[label] or {}
+  if menus[label][fn] then return true end
+  menu_n = menu_n + 1
+  local name = "__menu_" .. menu_n
+  menus[label][fn] = name
+  env[name] = function(who) return fn(compat.color_of(who), compat.position(obj), obj) end
+  obj.menu_add(label, name)
+  return true
+end
+function compat.clear_context_menu(obj)
+  obj.menu_clear()
+  local b = compat.__books[obj.id]
+  if b then b.menus = {} end
+  return true
+end
+local global_menus = {}
+function compat.add_global_context_menu_item(env, label, fn, keep_open)
+  label = tostring(label)
+  if type(fn) ~= "function" then
+    print("addContextMenuItem: Function required for context menu (label = \"" .. label .. "\")")
+    return false
+  end
+  global_menus[label] = global_menus[label] or {}
+  if global_menus[label][fn] then return true end
+  global_menus[label][fn] = true
+  game.menu_add(label, function(who, pos) return fn(compat.color_of(who), compat.Vector(pos.x or 0, 0, pos.z or 0)) end)
+  return true
+end
+function compat.clear_global_context_menu()
+  game.menu_clear()
+  global_menus = {}
+  return true
+end
+
+local function axis_units(obj)
+  local x, z = compat.local_units(obj)
+  local k = obj.scale or 1
+  return x * k, x * k, z * k
+end
+function compat.scale3(obj)
+  local x, y, z = axis_units(obj)
+  return compat.Vector(x, y, z)
+end
+function compat.set_scale(obj, v)
+  local s = compat.vector_arg(v)
+  local x = compat.local_units(obj)
+  if x > 0 then obj.set_scale(s.x / x) end
+  return true
+end
+function compat.scale_by(obj, k)
+  local by = type(k) == "number" and compat.Vector(k, k, k) or compat.vector_arg(k)
+  obj.set_scale((obj.scale or 1) * by.x)
+  return true
+end
+function compat.position_to_world(obj, v)
+  local p = compat.vector_arg(v)
+  local ux, uy, uz = axis_units(obj)
+  local x, y = p.x, p.y
+  if obj.face_down then x, y = -x, -y end
+  local w = obj.to_world(-x * ux, p.z * uz)
+  return compat.Vector(w.x, (obj.y or 0) + y * uy, w.z)
+end
+function compat.position_to_local(obj, v)
+  local p = compat.vector_arg(v)
+  local ux, uy, uz = axis_units(obj)
+  local l = obj.to_local(p.x, p.z)
+  local x, y = -l.x / ux, (p.y - (obj.y or 0)) / uy
+  if obj.face_down then x, y = -x, -y end
+  return compat.Vector(x, y, l.z / uz)
+end
+local THICK = 0.2
+function compat.get_bounds(obj)
+  local s = obj.size
+  local a = math.rad(obj.rot or 0)
+  local c, si = math.abs(math.cos(a)), math.abs(math.sin(a))
+  local t = THICK * (obj.scale or 1)
+  return { center = compat.position(obj), size = compat.Vector(s.w * c + s.h * si, t, s.w * si + s.h * c), offset = compat.Vector(0, 0, 0) }
+end
+function compat.get_bounds_normalized(obj)
+  local s = obj.size
+  return { center = compat.position(obj), size = compat.Vector(s.w, THICK * (obj.scale or 1), s.h), offset = compat.Vector(0, 0, 0) }
+end
+
+function compat.get_vector_lines(obj)
+  local given = compat.get_prop(obj, "__lines", nil)
+  if given == nil then return nil end
+  local out = {}
+  for i, l in ipairs(given) do
+    local pts = {}
+    for k, p in ipairs(l.points) do pts[k] = compat.Vector(p.x, p.y, p.z) end
+    out[i] = { points = pts, color = compat.Color(l.color.r, l.color.g, l.color.b, l.color.a), thickness = l.thickness,
+      rotation = compat.Vector(l.rotation.x, l.rotation.y, l.rotation.z), loop = l.loop, square = l.square, steam_id = 0 }
+  end
+  return out
+end
+function compat.set_vector_lines(obj, lines)
+  local kept, ours = {}, {}
+  local ux, _, uz = axis_units(obj)
+  for _, l in ipairs(lines or {}) do
+    if type(l) ~= "table" then error(clr("LuaVectorLine", l), 0) end
+    local rot = l.rotation ~= nil and compat.vector_arg(l.rotation) or compat.Vector(0, 0, 0)
+    local col = l.color ~= nil and compat.color_arg(l.color) or compat.Color(1, 1, 1, 1)
+    local line = { points = {}, color = col, thickness = tonumber(l.thickness) or 0.1, rotation = rot, loop = l.loop == true, square = l.square == true }
+    local a = math.rad(rot.y)
+    local c, s = math.cos(a), math.sin(a)
+    local pts = {}
+    for k, p in ipairs(l.points or {}) do
+      local v = compat.vector_arg(p)
+      line.points[k] = v
+      local x, z = v.x * c + v.z * s, v.z * c - v.x * s
+      pts[#pts + 1] = { x = -x * ux, z = z * uz }
+    end
+    kept[#kept + 1] = line
+    if #pts >= 2 then ours[#ours + 1] = { points = pts, color = { r = col.r, g = col.g, b = col.b, a = col.a }, width = line.thickness, loop = line.loop } end
+  end
+  compat.set_prop(obj, "__lines", kept)
+  obj.set_lines(ours)
+  return true
+end
+
+local function decal_check(d, what)
+  if type(d) ~= "table" then error(clr("LuaDecal", d), 0) end
+  if d.url == nil or d.url == "" then print(what .. ": url was null or an empty string") return false end
+  if d.name == nil or d.name == "" then print(what .. ": name was null or an empty string") return false end
+  return true
+end
+local set_decals_before, add_decal_before = compat.set_decals, compat.add_decal
+function compat.set_decals(obj, list)
+  if list == nil then print("SetDecals: Decal table is empty!") return false end
+  for _, d in ipairs(list) do if not decal_check(d, "SetDecals") then return false end end
+  set_decals_before(obj, list)
+  return true
+end
+function compat.add_decal(obj, d)
+  if not decal_check(d, "AddDecal") then return false end
+  add_decal_before(obj, d)
+  return true
+end
+function compat.get_decals(obj)
+  local list = compat.get_prop(obj, "decals", nil)
+  if list == nil then return nil end
+  local out = {}
+  for i, d in ipairs(list) do
+    out[i] = { name = d.name, url = d.url, position = compat.optional_vector_arg(d.position) or compat.Vector(0, 0, 0),
+      rotation = compat.optional_vector_arg(d.rotation) or compat.Vector(0, 0, 0), scale = compat.optional_vector_arg(d.scale) or compat.Vector(1, 1, 1) }
+  end
+  return out
+end
+
+function compat.set_snap_points(obj, list)
+  local kept = {}
+  for i, sp in ipairs(list or {}) do
+    if type(sp) ~= "table" then error(clr("LuaSnapPointParameters", sp), 0) end
+    kept[i] = { position = compat.optional_vector_arg(sp.position) or compat.Vector(0, 0, 0), rotation = compat.optional_vector_arg(sp.rotation) or compat.Vector(0, 0, 0),
+      rotation_snap = sp.rotation_snap == true, tags = sp.tags or {} }
+  end
+  compat.set_prop(obj, "snap", kept)
+  return true
+end
+function compat.get_snap_points(obj)
+  local out = {}
+  for i, sp in ipairs(compat.get_prop(obj, "snap", nil) or {}) do
+    out[i] = { position = sp.position, rotation = sp.rotation_snap and sp.rotation or compat.Vector(0, 0, 0), rotation_snap = sp.rotation_snap, tags = sp.tags }
+  end
+  return out
+end
+
+function compat.select(obj, color, on)
+  local who = compat.player_target(color)
+  if who == nil then return false end
+  local now = false
+  for _, p in ipairs(game.selected(who) or {}) do if p.id == obj.id then now = true end end
+  game.select(who, obj, on)
+  return now ~= on
+end
 
 local function message(v)
   if v == nil then return "" end
@@ -446,22 +638,6 @@ function compat.highlight(obj, color, seconds)
   return true
 end
 function compat.highlight_off(obj) return true end
-local function scale_of(obj)
-  local s = obj.scale or 1
-  return compat.Vector(s, s, s)
-end
-compat.scale3 = scale_of
-function compat.set_scale(obj, v)
-  local s = compat.vector_arg(v)
-  obj.set_scale(s.x)
-  return true
-end
-function compat.scale_by(obj, k)
-  local by = type(k) == "number" and compat.Vector(k, k, k) or compat.vector_arg(k)
-  obj.set_scale((obj.scale or 1) * by.x)
-  return true
-end
-
 local live = {}
 local function closure(fn, what)
   if fn == nil then error("Error in Wait." .. what .. ": function is nil", 0) end

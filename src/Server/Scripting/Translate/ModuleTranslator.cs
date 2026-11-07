@@ -484,7 +484,8 @@ public static class ModuleTranslator
                 case "getTransformForward": return Compat($"compat.transform_forward({recv})", node);
                 case "getTransformRight": return Compat($"compat.transform_right({recv})", node);
                 case "getTransformUp": return Compat($"compat.transform_up({recv})", node);
-                case "getBounds" or "getBoundsNormalized": return Compat($"compat.get_bounds({recv})", node);
+                case "getBounds": return Compat($"compat.get_bounds({recv})", node);
+                case "getBoundsNormalized": return Compat($"compat.get_bounds_normalized({recv})", node);
                 case "addContextMenuItem": return Compat($"compat.add_context_menu_item(_ENV, {recv}, {All()})", node);
                 case "clearContextMenu": return Compat($"compat.clear_context_menu({recv})", node);
                 case "reload": return Compat($"compat.reload({recv})", node);
