@@ -391,6 +391,8 @@ public sealed class PieceInstance
     public bool NotSticky { get; set; }
     public bool NotBoxSelected { get; set; }
     public bool MeasuresMoves { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool NotInteractable { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? Highlight { get; set; }
     public string Memo { get; set; } = "";
     public List<Widget> Widgets { get; set; } = new();
     public int DrawnOnState { get; set; }
@@ -411,7 +413,7 @@ public sealed class PieceInstance
         Worth = Worth, WorthGroups = WorthGroups, FacePicture = FacePicture, EffectOff = EffectOff, Lettering = Lettering?.Clone(), StateGuids = StateGuids?.ToList(),
         Counters = new(Counters), Text = new(Text), Attached = new(Attached),
         TintOverride = TintOverride, Label = Label, Scale = Scale, Y = Y, FaceDown = FaceDown, Note = Note, Picture = Picture, Locked = Locked, Holds = Holds,
-        NoCollision = NoCollision, PhysicalRoll = PhysicalRoll, NotSticky = NotSticky, NotBoxSelected = NotBoxSelected, MeasuresMoves = MeasuresMoves,
+        NoCollision = NoCollision, PhysicalRoll = PhysicalRoll, NotSticky = NotSticky, NotBoxSelected = NotBoxSelected, MeasuresMoves = MeasuresMoves, NotInteractable = NotInteractable, Highlight = Highlight,
         Script = Script, ScriptState = ScriptState, Guid = Guid, Tags = Tags == null ? null : new(Tags), Memo = Memo,
         Widgets = Widgets.Select(w => w.Clone()).ToList(), DrawnOnState = DrawnOnState, MenuItems = MenuItems.Select(m => m.Clone()).ToList(),
         Lines = Lines.Select(l => l.Clone()).ToList(), Decals = Decals.Select(d => d.Clone()).ToList(), DecalsOnState = DecalsOnState,

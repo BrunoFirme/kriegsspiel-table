@@ -24,6 +24,7 @@ namespace KTable.Core.Protocol;
 [JsonDerivedType(typeof(LoadSave), "LoadSave")]
 [JsonDerivedType(typeof(SetTint), "SetTint")]
 [JsonDerivedType(typeof(SetLocked), "SetLocked")]
+[JsonDerivedType(typeof(SetHighlight), "SetHighlight")]
 [JsonDerivedType(typeof(SetPieceOption), "SetPieceOption")]
 [JsonDerivedType(typeof(SetPointerRule), "SetPointerRule")]
 [JsonDerivedType(typeof(SetBriefing), "SetBriefing")]
@@ -343,6 +344,19 @@ public static class PieceOptions
     public const string NotBoxSelected = "not-box-selected";
     public const string MeasuresMoves = "measures-moves";
     public const string EffectOff = "effect-off";
+    public const string NotInteractable = "not-interactable";
+}
+
+public sealed class SetHighlight : LayerCommand
+{
+    public string Id { get; set; } = "";
+    public string? Color { get; set; }
+    public override Sender SentBy() => Sender.Umpire;
+    public override bool OnUndoStack() => false;
+    public override Shown ShownToObservers() => Shown.Table;
+    public override IEnumerable<(string Layer, string Id)> ZonePieces() => [(Layer, Id)];
+    public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [];
+    public override IEnumerable<string> ScriptsToReload() => [];
 }
 
 public sealed class SetLocked : LayerCommand

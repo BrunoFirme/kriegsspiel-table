@@ -671,6 +671,29 @@ public class ModuleObjectCallTests
     }
 
     [Fact]
+    public void A_highlight_rings_the_piece_for_its_seconds_and_interactable_off_keeps_hands_off()
+    {
+        using var t = new Table();
+        const string lua = """
+            function onLoad()
+              local m = getObjectFromGUID('p-000003')
+              m.highlightOn('Red', 2)
+              self.highlightOn({0, 0, 1})
+              self.highlightOff()
+              m.interactable = false
+              self.setName(tostring(m.interactable))
+            end
+            """;
+        Assert.Equal("false", Run(t, lua));
+        var m = t.Server.State.Find(U, Marker)!;
+        Assert.Equal(("#DA1A18", true), (m.Highlight, m.NotInteractable));
+        Assert.Null(t.Server.State.Find(U, P)!.Highlight);
+        t.Server.Scripts.Tick(1);
+        t.Server.Scripts.Tick(3);
+        Assert.Null(t.Server.State.Find(U, Marker)!.Highlight);
+    }
+
+    [Fact]
     public void Time_reads_the_scripts_clock_and_frame_count()
     {
         using var t = new Table();

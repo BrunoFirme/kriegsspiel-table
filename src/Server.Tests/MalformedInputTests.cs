@@ -516,6 +516,7 @@ public class MalformedInputTests
     [InlineData("SetLighting")]
     [InlineData("SetLines")]
     [InlineData("SetLocked")]
+    [InlineData("SetHighlight")]
     [InlineData("SetPieceOption")]
     [InlineData("SetPointerRule")]
     [InlineData("SetBriefing")]

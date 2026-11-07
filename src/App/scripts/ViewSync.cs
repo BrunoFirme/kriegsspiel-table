@@ -106,6 +106,7 @@ sealed class ViewSync
         SetNote x => x.Id,
         SetTint x => x.Id,
         SetLocked x => x.Id,
+        SetHighlight x => x.Id,
         SetPieceOption x => x.Id,
         KTable.Core.Protocol.SetScale x => x.Id,
         FlipPiece x => x.Id,

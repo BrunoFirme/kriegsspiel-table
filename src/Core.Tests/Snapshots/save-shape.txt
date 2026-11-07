@@ -135,6 +135,7 @@ type Command abstract
   derived SetGlobalScript = SetGlobalScript
   derived SetGlobalScriptState = SetGlobalScriptState
   derived SetGrid = SetGrid
+  derived SetHighlight = SetHighlight
   derived SetHotkeys = SetHotkeys
   derived SetLabel = SetLabel
   derived SetLettering = SetLettering
@@ -613,6 +614,7 @@ type PieceInstance object
   facePicture: string
   faces: List<DieFace>
   guid: string
+  highlight: string
   holds: bool?
   id: string
   label: string
@@ -624,6 +626,7 @@ type PieceInstance object
   menuItems: List<MenuItemDef>
   noCollision: bool
   notBoxSelected: bool
+  notInteractable: bool
   notSticky: bool
   note: string
   physicalRoll: bool
@@ -911,6 +914,14 @@ type SetGrid object
   actor: long
   at: long
   grid: GridDef
+  seq: long
+  undoOf: long
+type SetHighlight object
+  actor: long
+  at: long
+  color: string
+  id: string
+  layer: string
   seq: long
   undoOf: long
 type SetHotkeys object

@@ -169,6 +169,7 @@ sealed class PieceLayer
         {
             if (interactiveOnly && !_c.LayerInteractive(n.Layer)) continue;
             if (!n.Contains(p)) continue;
+            if (interactiveOnly && n.Piece.NotInteractable && n.WidgetAt(p) == null) continue;
             if (best != null && n.IsEffect && !best.IsEffect) continue;
             if (best == null || (best.IsEffect && !n.IsEffect) || n.Position.Y > best.Position.Y || (Mathf.IsEqualApprox(n.Position.Y, best.Position.Y) && n.GetIndex() > best.GetIndex())) best = n;
         }
@@ -182,6 +183,7 @@ sealed class PieceLayer
         foreach (var n in Grid.Near(ground))
         {
             if (interactiveOnly && !_c.LayerInteractive(n.Layer)) continue;
+            if (interactiveOnly && n.Piece.NotInteractable && n.WidgetAt(ground) == null) continue;
             float t;
             if (n.IsDie)
             {

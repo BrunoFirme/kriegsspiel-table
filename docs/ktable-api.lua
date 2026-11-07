@@ -151,6 +151,8 @@
 ---@field local_unit Size|nil For a model that came from a module, what one unit of its script's local frame is in piece units: { x =, z = }; nil for every other piece.
 ---@field shape string Its outline at its state: "box", "rounded", "circle", "hex", or "alpha" for a token cut along its picture.
 ---@field face_down boolean Turned over.
+---@field interactable boolean Whether hands can take it (set_interactable).
+---@field highlight string The colour it is ringed in, or nil (set_highlight).
 ---@field holds boolean Whether it is a holder that other pieces can be stowed in: a piece holding some, one made a holder, or a kind tagged bag.
 ---@field locked boolean Pinned to the table: not dragged, turned or resized by hand.
 ---@field sticky boolean Carries the pieces resting on it when it is moved; attached pieces go with it either way.
@@ -221,6 +223,14 @@ function Piece.set_box_selected(on) end
 ---Whether it shows how far it is moved while it is held.
 ---@param on? boolean true, or no argument, shows the distance; false hides it.
 function Piece.set_measures_moves(on) end
+
+---Whether hands can take it: off, it cannot be picked up, dragged, selected or opened, though its buttons still press.
+---@param on? boolean true, or no argument, lets hands take it; false keeps them off.
+function Piece.set_interactable(on) end
+
+---Rings it in a colour on every screen; nil takes the ring away.
+---@param color? Color The ring's colour, or nil.
+function Piece.set_highlight(color) end
 
 ---Whether it carries the pieces resting on it when it is moved.
 ---@param on? boolean true, or no argument, carries them; false leaves them where they lie.

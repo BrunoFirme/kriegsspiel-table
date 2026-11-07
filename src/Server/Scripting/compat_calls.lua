@@ -1089,11 +1089,27 @@ function compat.get_gm_notes(obj)
   if own ~= nil then return own end
   return obj.gm_notes or ""
 end
+local lit = {}
 function compat.highlight(obj, color, seconds)
-  compat.color_arg(color)
+  local c = compat.color_arg(color)
+  local p = compat.piece_of(obj)
+  local round = (lit[p.id] or 0) + 1
+  lit[p.id] = round
+  p.set_highlight({ r = c.r, g = c.g, b = c.b, a = c.a })
+  local s = tonumber(seconds)
+  if s ~= nil then
+    wait.seconds(s, function()
+      if lit[p.id] == round and p.exists ~= false then p.set_highlight(nil) end
+    end)
+  end
   return true
 end
-function compat.highlight_off(obj) return true end
+function compat.highlight_off(obj)
+  local p = compat.piece_of(obj)
+  lit[p.id] = (lit[p.id] or 0) + 1
+  p.set_highlight(nil)
+  return true
+end
 local live = {}
 local function closure(fn, what)
   if fn == nil then error("Error in Wait." .. what .. ": function is nil", 0) end

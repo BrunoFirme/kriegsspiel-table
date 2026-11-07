@@ -220,6 +220,8 @@ Read from `self` or from any piece `board.find` or `board.pieces` hands back. Fi
 | [`self.local_unit`](#selflocal_unit) | For a model that came from a module, what one unit of its script's local frame is in piece units: { x =, z = }; nil for every other piece. |
 | [`self.shape`](#selfshape) | Its outline at its state: "box", "rounded", "circle", "hex", or "alpha" for a token cut along its picture. |
 | [`self.face_down`](#selfface_down) | Turned over. |
+| [`self.interactable`](#selfinteractable) | Whether hands can take it (set_interactable). |
+| [`self.highlight`](#selfhighlight) | The colour it is ringed in, or nil (set_highlight). |
 | [`self.holds`](#selfholds) | Whether it is a holder that other pieces can be stowed in: a piece holding some, one made a holder, or a kind tagged bag. |
 | [`self.locked`](#selflocked) | Pinned to the table: not dragged, turned or resized by hand. |
 | [`self.sticky`](#selfsticky) | Carries the pieces resting on it when it is moved; attached pieces go with it either way. |
@@ -570,6 +572,30 @@ Turned over.
 
 **Module call** `is_face_down`
 
+### `self.interactable`
+
+```lua
+self.interactable
+```
+
+Whether hands can take it (set_interactable).
+
+**Type** `boolean`, read-only.
+
+**Module call** `interactable`
+
+### `self.highlight`
+
+```lua
+self.highlight
+```
+
+The colour it is ringed in, or nil (set_highlight).
+
+**Type** `string`, read-only.
+
+**Module call** `highlightOn`
+
 ### `self.holds`
 
 ```lua
@@ -805,6 +831,8 @@ Each call is a change every umpire sees, taken back with Ctrl+Z by the umpire wh
 | [`self.set_locked`](#selfset_locked) | Pins it to the table, or lets it go. |
 | [`self.set_box_selected`](#selfset_box_selected) | Whether a selection box dragged over it takes it. |
 | [`self.set_measures_moves`](#selfset_measures_moves) | Whether it shows how far it is moved while it is held. |
+| [`self.set_interactable`](#selfset_interactable) | Whether hands can take it: off, it cannot be picked up, dragged, selected or opened, though its buttons still press. |
+| [`self.set_highlight`](#selfset_highlight) | Rings it in a colour on every screen; nil takes the ring away. |
 | [`self.set_sticky`](#selfset_sticky) | Whether it carries the pieces resting on it when it is moved. |
 | [`self.set_face`](#selfset_face) | Turns a die to show a side, from 1; false when it has no such side. |
 | [`self.set_value`](#selfset_value) | Turns a die to the first side with this value; false when no side has it. |
@@ -1038,6 +1066,34 @@ Whether it shows how far it is moved while it is held.
 | `on` | `boolean` | _Optional._ true, or no argument, shows the distance; false hides it. |
 
 **Module call** `measure_movement` · **See also** [`self.measures_moves`](#selfmeasures_moves)
+
+### `self.set_interactable`
+
+```lua
+self.set_interactable(on)
+```
+
+Whether hands can take it: off, it cannot be picked up, dragged, selected or opened, though its buttons still press.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `on` | `boolean` | _Optional._ true, or no argument, lets hands take it; false keeps them off. |
+
+**Module call** `interactable`
+
+### `self.set_highlight`
+
+```lua
+self.set_highlight(color)
+```
+
+Rings it in a colour on every screen; nil takes the ring away.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `color` | `Color` | _Optional._ The ring's colour, or nil. |
+
+**Module call** `highlightOn`
 
 ### `self.set_sticky`
 
@@ -3451,6 +3507,10 @@ The converter rewrites a module's scripts into these calls by rule; this is the 
 | `Global.getVectorLines` | [`board.strokes`](#boardstrokes) |
 | `Global.setVar` | [`game.set_var`](#gameset_var) |
 | `Global.setVectorLines` | [`board.draw`](#boarddraw) |
+| `highlightOn` | [`self.highlight`](#selfhighlight) |
+| `highlightOn` | [`self.set_highlight`](#selfset_highlight) |
+| `interactable` | [`self.interactable`](#selfinteractable) |
+| `interactable` | [`self.set_interactable`](#selfset_interactable) |
 | `isDestroyed` | [`self.exists`](#selfexists) |
 | `is_face_down` | [`self.face_down`](#selfface_down) |
 | `JSON` | [`json`](#json) |

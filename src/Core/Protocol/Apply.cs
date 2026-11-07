@@ -23,6 +23,7 @@ public static class StateMachine
             case LoadSave ls: return ApplyLoadSave(g, ls);
             case SetTint ti: return ApplySetTint(g, ti, ref inverse);
             case SetLocked lk: return ApplySetLocked(g, lk, ref inverse);
+            case SetHighlight hl: return ApplySetHighlight(g, hl, ref inverse);
             case SetPieceOption po: return ApplySetPieceOption(g, po, ref inverse);
             case FlipPiece fp: return ApplyFlip(g, fp, ref inverse);
             case SetScale sz: return ApplySetScale(g, sz, ref inverse);
@@ -286,6 +287,15 @@ public static class StateMachine
         return null;
     }
 
+    static string? ApplySetHighlight(GameState g, SetHighlight hl, ref Command? inverse)
+    {
+        var p = g.Find(hl.Layer, hl.Id);
+        if (p == null) return "no such piece";
+        inverse = new SetHighlight { Layer = hl.Layer, Id = hl.Id, Color = p.Highlight };
+        p.Highlight = hl.Color;
+        return null;
+    }
+
     static string? ApplySetLocked(GameState g, SetLocked lk, ref Command? inverse)
     {
         var p = g.Find(lk.Layer, lk.Id);
@@ -329,6 +339,10 @@ public static class StateMachine
             case PieceOptions.EffectOff:
                 was = p.EffectOff;
                 p.EffectOff = po.Value;
+                break;
+            case PieceOptions.NotInteractable:
+                was = p.NotInteractable;
+                p.NotInteractable = po.Value;
                 break;
             default: return "no such option: " + po.Name;
         }

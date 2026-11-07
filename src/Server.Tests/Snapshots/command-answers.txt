@@ -58,6 +58,7 @@ SetGlobalMenuItems table | allowed O:n U:n L:n H:n | in-batch O:n U:n L:n H:n | 
 SetGlobalScript table | allowed O:n U:n L:y H:y | in-batch O:n U:n L:y H:y | observer same | zone - | apply ok inverse:SetGlobalScript | undo-reloads (global script)
 SetGlobalScriptState table | allowed O:n U:n L:n H:n | in-batch O:n U:n L:n H:n | observer same | zone - | apply ok inverse:SetGlobalScriptState | undo-reloads (global script)
 SetGrid table | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone - | apply ok inverse:SetGrid | undo-reloads -
+SetHighlight layer | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone Id | apply ok inverse:SetHighlight | undo-reloads -
 SetHotkeys table | allowed O:n U:n L:n H:n | in-batch O:n U:n L:n H:n | observer same | zone - | apply ok inverse:SetHotkeys | undo-reloads -
 SetLabel layer | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone Id | apply ok inverse:SetLabel | undo-reloads Id
 SetLettering layer | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone Id | apply ok inverse:SetLettering | undo-reloads -

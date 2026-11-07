@@ -89,6 +89,7 @@ public static class CoreSamples
         yield return new LoadSave { Name = "Turn 1", State = new GameState { ScenarioId = "s", Name = "loaded", Clock = new GameClock { Turn = 1 } } };
         yield return new SetTint { Layer = L, Id = "p-000001", Value = "#00FF00" };
         yield return new SetLocked { Layer = L, Id = "p-000001", Value = true };
+        yield return new SetHighlight { Layer = L, Id = "p-000001", Color = "#FF0000" };
         yield return new SetPieceOption { Layer = L, Id = "p-000001", Name = PieceOptions.NoCollision, Value = true };
         yield return new FlipPiece { Layer = L, Id = "p-000001", FaceDown = true };
         yield return new SetScale { Layer = L, Id = "p-000001", Scale = 1.5 };

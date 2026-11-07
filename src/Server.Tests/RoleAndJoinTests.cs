@@ -28,6 +28,7 @@ public class RoleAndJoinTests
         yield return new LoadSave { Name = "Turn 0" };
         yield return new SetTint { Layer = layer, Id = "p-000004", Value = "#123456" };
         yield return new SetLocked { Layer = layer, Id = "p-000004", Value = true };
+        yield return new SetHighlight { Layer = layer, Id = "p-000004", Color = "#FF0000" };
         yield return new SetPieceOption { Layer = layer, Id = "p-000004", Name = PieceOptions.NoCollision, Value = true };
         yield return new FlipPiece { Layer = layer, Id = "p-000004", FaceDown = true };
         yield return new SetScale { Layer = layer, Id = "p-000004", Scale = 1.25 };

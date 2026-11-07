@@ -175,6 +175,8 @@ public static partial class ApiDoc
         F("piece", "local_unit", "Size?", "For a model that came from a module, what one unit of its script's local frame is in piece units: { x =, z = }; nil for every other piece.");
         F("piece", "shape", "string", "Its outline at its state: \"box\", \"rounded\", \"circle\", \"hex\", or \"alpha\" for a token cut along its picture.");
         F("piece", "face_down", "boolean", "Turned over.", "is_face_down");
+        F("piece", "interactable", "boolean", "Whether hands can take it (set_interactable).", "interactable");
+        F("piece", "highlight", "string", "The colour it is ringed in, or nil (set_highlight).", "highlightOn");
         F("piece", "holds", "boolean", "Whether it is a holder that other pieces can be stowed in: a piece holding some, one made a holder, or a kind tagged bag.", "getQuantity");
         See("self.flip", "on_flip");
         F("piece", "locked", "boolean", "Pinned to the table: not dragged, turned or resized by hand.", "getLock");
@@ -332,6 +334,12 @@ public static partial class ApiDoc
     M("piece", "set_measures_moves(on)", "Whether it shows how far it is moved while it is held.", "measure_movement");
     O("on", "boolean", "true, or no argument, shows the distance; false hides it.");
     See("self.measures_moves");
+
+    M("piece", "set_interactable(on)", "Whether hands can take it: off, it cannot be picked up, dragged, selected or opened, though its buttons still press.", "interactable");
+    O("on", "boolean", "true, or no argument, lets hands take it; false keeps them off.");
+
+    M("piece", "set_highlight(color)", "Rings it in a colour on every screen; nil takes the ring away.", "highlightOn");
+    O("color", "Color", "The ring's colour, or nil.");
 
     M("piece", "set_sticky(on)", "Whether it carries the pieces resting on it when it is moved.", "sticky");
     O("on", "boolean", "true, or no argument, carries them; false leaves them where they lie.");
