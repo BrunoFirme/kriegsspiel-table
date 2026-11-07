@@ -219,4 +219,16 @@ public class PanelSceneTests
         Assert.True(kept.ById("p")!.Active);
         Assert.False(PanelScene.Build(layout, Screen, Viewer(), new Meter()).ById("p")!.Active);
     }
+
+    [Fact]
+    public void Of_two_pictures_on_one_link_only_the_first_name_finds_it_and_bundles_name_no_picture()
+    {
+        var g = new KTable.Core.Model.GameState
+        {
+            UiAssets = new() { new UiAsset { Name = "a", Url = "pic" }, new UiAsset { Name = "b", Url = "pic" }, new UiAsset { Name = "font", Url = "bundle", Type = 1 } },
+        };
+        Assert.Equal("pic", PanelSeats.Picture(g, "a"));
+        Assert.Equal("b", PanelSeats.Picture(g, "b"));
+        Assert.Equal("font", PanelSeats.Picture(g, "font"));
+    }
 }

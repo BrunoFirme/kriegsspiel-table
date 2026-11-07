@@ -18,6 +18,7 @@ internal sealed class UiOwner
     public long ReadyFrame;
     public long LoadedFrame = -1;
     public List<UiAsset>? Assets;
+    public bool Stuck;
     public readonly List<UiOp> Ops = new();
     public bool Loading => PendingXml != null;
 }
@@ -50,16 +51,22 @@ internal sealed partial class PanelQueue(ScriptHost host)
         o.Layer = layer;
         if (!o.Loading) o.ReadyFrame = Frame + 1;
         o.PendingXml = xml;
+        o.Stuck = false;
         for (int i = 0; i < o.Ops.Count; i++) o.Ops[i] = o.Ops[i] with { WhileLoading = true };
     }
 
-    public bool Busy => _ui.Values.Any(o => o.Loading || (o.Ops.Count > 0 && !Broken(o)));
+    public bool Busy => _ui.Values.Any(o => (o.Loading && !o.Stuck) || (o.Ops.Count > 0 && !Broken(o) && !o.Stuck));
 
     public void Land()
     {
         foreach (var (key, o) in _ui.ToList())
         {
-            if (!o.Loading || o.ReadyFrame > Frame) continue;
+            if (!o.Loading || o.Stuck || o.ReadyFrame > Frame) continue;
+            if (!PanelState.Loads(o.Assets ?? AssetsOf(key, o.Layer, o.Piece)))
+            {
+                o.Stuck = true;
+                continue;
+            }
             var xml = o.PendingXml!;
             o.PendingXml = null;
             if (o.Piece != null && State.Find(o.Layer ?? Layers.Umpire, o.Piece) == null) { _ui.Remove(key); continue; }

@@ -1,5 +1,6 @@
 using KTable.Core;
 using KTable.Core.Model;
+using KTable.Core.Panels;
 
 namespace KTable.Client.Panels;
 
@@ -25,9 +26,16 @@ public static class PanelSeats
     {
         var list = new List<UiAssetPicture>();
         foreach (var (name, url) in g.UiPictures) list.Add(new(name, url));
-        foreach (var a in g.UiAssets ?? new()) list.Add(new(a.Name, a.Url));
-        foreach (var p in g.Layers.Values.SelectMany(l => l)) foreach (var a in p.UiAssets ?? new()) list.Add(new(a.Name, a.Url));
+        Owner(list, g.UiAssets);
+        foreach (var p in g.Layers.Values.SelectMany(l => l)) Owner(list, p.UiAssets);
         return list;
+    }
+
+    static void Owner(List<UiAssetPicture> into, List<UiAsset>? assets)
+    {
+        var urls = new HashSet<string>();
+        foreach (var a in assets ?? new())
+            if (a.Type == PanelState.ImageType && a.Name.Length > 0 && urls.Add(a.Url)) into.Add(new(a.Name, a.Url));
     }
 
     public static string? Picture(GameState g, string name)

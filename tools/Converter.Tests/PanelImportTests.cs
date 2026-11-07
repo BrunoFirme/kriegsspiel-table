@@ -7,12 +7,12 @@ namespace KTable.Converter.Tests;
 
 public sealed partial class FidelityTests
 {
-    Scenario PanelledModule(string globalXml, string objectXml)
+    Scenario PanelledModule(string globalXml, string objectXml, int assetType = 1)
     {
         var cfg = TempConfig();
         LocalPicture(cfg, "http://a/crest.png", 8, 8, (_, _) => SKColors.Gold);
         LocalPicture(cfg, "http://a/tile.png", 8, 8, (_, _) => SKColors.Gray);
-        var assets = new JsonArray(new JsonObject { ["Type"] = 0, ["Name"] = "crest", ["URL"] = "http://a/crest.png" }, new JsonObject { ["Type"] = 1, ["Name"] = "font", ["URL"] = "http://a/font.unity3d" });
+        var assets = new JsonArray(new JsonObject { ["Type"] = 0, ["Name"] = "crest", ["URL"] = "http://a/crest.png" }, new JsonObject { ["Type"] = assetType, ["Name"] = "font", ["URL"] = "http://a/font.unity3d" });
         var tile = Obj("Custom_Tile", "Brigade", 1, new JsonObject { ["CustomImage"] = new JsonObject { ["ImageURL"] = "http://a/tile.png" }, ["XmlUI"] = objectXml,
             ["CustomUIAssets"] = new JsonArray(new JsonObject { ["Type"] = 0, ["Name"] = "badge", ["URL"] = "http://a/tile.png" }) });
         var module = Module("panelled", tile);
@@ -55,5 +55,13 @@ public sealed partial class FidelityTests
         var table = PanelledModule("<?xml version=\"1.0\"?><Panel id=\"orders\"/>", "");
         Assert.Empty(table.Ui);
         Assert.NotNull(table.UiLayout!.Broken);
+    }
+
+    [Fact]
+    public void Panels_with_a_picture_of_a_type_the_tabletop_does_not_load_come_over_loading_for_ever()
+    {
+        var table = PanelledModule("<Panel id=\"orders\"/>", "", assetType: 7);
+        Assert.Empty(table.Ui);
+        Assert.Equal(KTable.Core.Panels.PanelState.NeverLoads, table.UiLayout!.Broken);
     }
 }

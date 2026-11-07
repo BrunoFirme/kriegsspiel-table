@@ -384,4 +384,16 @@ public class PanelTests
         t.Server.Handle(Table.Ump3, new UiEvent { Path = new() { 7, 3 }, Event = "onClick", Value = "-1" });
         Assert.DoesNotContain(Said(t), s => s.Text.StartsWith("Script error") || s.Text == "went");
     }
+
+    [Fact]
+    public void Panels_whose_pictures_name_a_type_the_tabletop_does_not_load_never_land()
+    {
+        using var t = Global("""
+            function on_load(s) ui.set('<Text id="a"/>', { { name = "odd", url = "pic", type = 5 } }) end
+            function on_chat(m) game.say(tostring(ui.loading)) end
+            """, frames: 4);
+        Assert.Empty(t.Server.State.Ui);
+        t.Server.Handle(Table.Ump3, new Say { Text = "go" });
+        Assert.Contains(Said(t), s => s.Text == "true");
+    }
 }

@@ -15,6 +15,7 @@ public sealed partial class ScenarioBuilder
         scenario.UiAssets = AssetsOf(master.UiAssetStates, extras, where);
         scenario.Ui = Panels(master.XmlUi, extras, $"{_cfg.Scenario.Id} Global panels", out var layout);
         scenario.UiLayout = layout;
+        if (layout != null && !PanelState.Loads(scenario.UiAssets)) (scenario.Ui, scenario.UiLayout) = (new(), Stuck());
     }
 
     List<UiAsset>? AssetsOf(List<(string Name, string Url, int Type)> assets, PackOut extras, string where)
@@ -31,7 +32,10 @@ public sealed partial class ScenarioBuilder
     {
         assets = AssetsOf(o.UiAssetStates, extras, where + " panel picture");
         layout = null;
-        return o.XmlUi.Trim().Length == 0 ? new() : Panels(o.XmlUi, extras, where + " panels", out layout);
+        var ui = o.XmlUi.Trim().Length == 0 ? new() : Panels(o.XmlUi, extras, where + " panels", out layout);
+        if (layout == null || PanelState.Loads(assets)) return ui;
+        layout = Stuck();
+        return new();
     }
 
     List<UiNode> Panels(string xml, PackOut extras, string where, out UiLayout? layout)
@@ -49,6 +53,8 @@ public sealed partial class ScenarioBuilder
         }
         return PanelData.Parse(xml) ?? new();
     }
+
+    static UiLayout Stuck() => new() { Broken = PanelState.NeverLoads };
 
     static IEnumerable<string> PanelAssets(Scenario scenario, IEnumerable<PieceInstance> pieces) =>
         (scenario.UiAssets ?? new()).Concat(pieces.SelectMany(p => p.UiAssets ?? new())).Select(a => a.Url).Concat(scenario.UiLinks?.Values ?? Enumerable.Empty<string>());

@@ -19,5 +19,10 @@ public static class PanelState
 
     public static UiLayout Legacy(List<UiNode> tree) => PanelBuild.Of(PanelData.Write(tree)).Layout;
 
+    public const int ImageType = 0, BundleType = 1;
+    public const string NeverLoads = "an asset of a type the tabletop does not load keeps the panels loading for ever";
+
+    public static bool Loads(IEnumerable<UiAsset>? assets) => assets == null || assets.All(a => a.Type is ImageType or BundleType);
+
     public static List<UiAsset> Assets(Dictionary<string, string> pictures) => pictures.Select(p => new UiAsset { Name = p.Key, Url = p.Value }).ToList();
 }
