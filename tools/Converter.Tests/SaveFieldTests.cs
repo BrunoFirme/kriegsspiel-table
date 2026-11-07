@@ -115,6 +115,9 @@ public sealed class SaveFieldTests : ConverterHarness
     [InlineData("Die_6", 0.5426)]
     [InlineData("Die_8", 0.5861)]
     [InlineData("Die_20", 0.5261)]
+    [InlineData("Die_10", 0.5724)]
+    [InlineData("Die_12", 0.5018)]
+    [InlineData("Die_6_Rounded", 0.4714)]
     public void A_stock_die_is_drawn_as_big_as_the_digital_tabletops_own_die(string type, double radius)
     {
         var (defs, pack) = Factory();
@@ -376,6 +379,51 @@ public sealed class SaveFieldTests : ConverterHarness
         var r = defs.DefFor(new ModuleObj(Obj("Notecard", "Orders", 2, new JsonObject { ["Description"] = "Hold the ford" })), pack)!;
 
         Assert.Equal((6.9031 * 2, 4.1303 * 2, 0.06), (r.Def.Size.W * r.Scale, r.Def.Size.H * r.Scale, r.Def.Thickness));
+    }
+
+    [Theory]
+    [InlineData("BlockSquare", 1.0, 1.0, 1.0)]
+    [InlineData("BlockRectangle", 1.0, 2.0, 1.0)]
+    public void A_block_is_the_games_unit_cube_or_its_double_length_block(string type, double w, double h, double thick)
+    {
+        var (defs, pack) = Factory();
+
+        var def = defs.DefFor(new ModuleObj(Obj(type, "", 1)), pack)!.Def;
+
+        Assert.Equal((w, h, thick), (def.Size.W, def.Size.H, def.Thickness));
+    }
+
+    [Fact]
+    public void The_decal_palette_holds_one_entry_for_each_name_picture_and_size_as_the_game_adds_them()
+    {
+        static JsonObject Entry(string name, double size) => new() { ["Name"] = name, ["ImageURL"] = "http://a/flag.png", ["Size"] = size };
+
+        var palette = ModuleObj.PaletteOf(new JsonArray(Entry("Flag", 1), Entry("Flag", 1), Entry("Flag", 2), Entry("Banner", 1)));
+
+        Assert.Equal(3, palette.Count);
+    }
+
+    [Fact]
+    public void A_model_bag_is_its_model_and_holds_what_the_module_put_in_it()
+    {
+        var cfg = TempConfig();
+        var models = Path.Combine(cfg.ModsPath, "Models");
+        Directory.CreateDirectory(models);
+        File.WriteAllLines(Path.Combine(models, AssetStore.Key("http://a/chest.obj") + ".obj"), new[] { "v -0.5 0 -0.5", "v 0.5 0 -0.5", "v 0.5 1 0.5", "v -0.5 1 0.5", "f 1 2 3 4" });
+        var held = Obj("BlockSquare", "Spare", 1);
+        var chest = Obj("Custom_Model_Bag", "Stores", 1, new JsonObject
+        {
+            ["CustomMesh"] = new JsonObject { ["MeshURL"] = "http://a/chest.obj" }, ["ContainedObjects"] = new JsonArray(held),
+        });
+        var main = typeof(Config).Assembly.EntryPoint!;
+
+        var code = (int)main.Invoke(null, new object[] { new[] { "import", Module("chest", chest), "--config", Path.Combine(_root, "converter.json"), "--out", Packages } })!;
+
+        Assert.Equal(0, code);
+        var piece = Assert.Single(Json.Load<Scenario>(Path.Combine(Packages, "scenarios", "chest", "scenario.json")).UmpireBoard);
+        var pack = Json.Load<PackManifest>(Path.Combine(Packages, "tts.chest", "pack.json"));
+        Assert.Equal("model", pack.Pieces.Single(d => d.Id == piece.Def).Kind);
+        Assert.Equal("Spare", Assert.Single(piece.Stowed!).Label);
     }
 
     static byte[] TwoPagePdf(double w1, double h1, double w2, double h2)
