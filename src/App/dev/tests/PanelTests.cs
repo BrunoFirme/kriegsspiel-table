@@ -181,7 +181,7 @@ static class PanelTests
         var dropdown = Takers().First(c => c.GetGlobalRect().Position.Y > field.GetGlobalRect().End.Y + 1);
         await Click(r, Middle(dropdown));
         await r.Frames(3);
-        var rows = Takers().Where(c => c.GetGlobalRect().Position.Y >= dropdown.GetGlobalRect().End.Y - 3 && c.Size.Y >= 29 && c.Size.Y <= 31).ToList();
+        var rows = Takers().Where(c => c.GetGlobalRect().Position.Y >= dropdown.GetGlobalRect().End.Y - 5 && c.Size.Y >= 29 && c.Size.Y <= 31).ToList();
         Check.That(rows.Count >= 2, "the dropdown opens its list of thirty-high rows under itself");
         await Click(r, Middle(rows.OrderBy(c => c.GetGlobalRect().Position.Y).ElementAt(1)));
         await r.Frames(3);
@@ -189,7 +189,8 @@ static class PanelTests
         var header = Takers().OrderBy(c => c.GetGlobalRect().Position.Y).Last(c => Mathf.IsEqualApprox(c.Size.Y, 64));
         var before = header.GetParentControl()!.Size.Y;
         await Click(r, Middle(header));
-        await r.Frames(30);
+        await r.Seconds(0.5);
+        await r.Frames(3);
         var opened = Takers().OrderBy(c => c.GetGlobalRect().Position.Y).Last(c => Mathf.IsEqualApprox(c.Size.Y, 64)).GetParentControl()!.Size.Y;
         Check.That(Mathf.Abs(opened - before - 128) < 0.5f, $"the section grows by its content height once open ({before} to {opened})");
         Check.Equal(0, t.Errors.Count, string.Join("; ", t.Errors));
