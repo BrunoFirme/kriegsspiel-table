@@ -283,6 +283,17 @@ public sealed class SaveFieldTests : ConverterHarness
         Assert.Null(new ModuleObj(new JsonObject { ["Name"] = "BlockSquare", ["MaterialIndex"] = 1 }).Finish);
     }
 
+    [Fact]
+    public void Only_a_stack_object_counts_its_saved_number_and_it_comes_in_as_its_own_kind_of_piece()
+    {
+        var stack = new ModuleObj(new JsonObject { ["Name"] = "Custom_Tile_Stack", ["Number"] = 5 });
+        var single = new ModuleObj(new JsonObject { ["Name"] = "Custom_Tile", ["Number"] = 5 });
+
+        Assert.Equal(("Custom_Tile", 5, true), (stack.Name, stack.StackCount, stack.IsStack));
+        Assert.Equal((1, false), (single.StackCount, single.IsStack));
+        Assert.Equal("Custom_Tile", new ModuleObj(stack.J).Name);
+    }
+
     static byte[] TwoPagePdf(double w1, double h1, double w2, double h2)
     {
         var inv = System.Globalization.CultureInfo.InvariantCulture;

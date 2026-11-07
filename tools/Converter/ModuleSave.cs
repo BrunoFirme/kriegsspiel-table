@@ -6,7 +6,24 @@ namespace KTable.Converter;
 public sealed class ModuleObj
 {
     public JsonObject J { get; }
-    public ModuleObj(JsonObject j) { J = j; }
+
+    public ModuleObj(JsonObject j)
+    {
+        J = j;
+        if (ModuleValues.Text(j["Name"]) is { } name && StackOf.TryGetValue(name, out var single))
+        {
+            j["Name"] = single;
+            j[StackMark] = true;
+        }
+    }
+
+    const string StackMark = "stack";
+    static readonly Dictionary<string, string> StackOf = new(StringComparer.Ordinal)
+    {
+        ["Custom_Tile_Stack"] = "Custom_Tile", ["Custom_Token_Stack"] = "Custom_Token", ["Custom_Model_Stack"] = "Custom_Model", ["Custom_Assetbundle_Stack"] = "Custom_Assetbundle",
+    };
+
+    public bool IsStack => J[StackMark] != null;
 
     public string Name => S(J["Name"]) ?? "";
     public string Nickname => RawNickname.Trim();
@@ -22,7 +39,7 @@ public sealed class ModuleObj
     public string LuaState => S(J["LuaScriptState"]) ?? "";
     public string Memo => S(J["Memo"]) ?? "";
     public int Worth => J["Value"] != null ? I(J, "Value") : 0;
-    public int StackCount => J["Number"] != null ? Math.Max(1, I(J, "Number")) : 1;
+    public int StackCount => IsStack && J["Number"] != null ? Math.Max(1, I(J, "Number")) : 1;
     public string XmlUi => S(J["XmlUI"]) ?? "";
     public List<(string Name, string Url)> UiAssets => UiAssetsOf(J["CustomUIAssets"]);
 

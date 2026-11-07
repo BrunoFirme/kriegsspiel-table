@@ -12,7 +12,7 @@ public sealed partial class FidelityTests
     {
         var cfg = TempConfig();
         LocalPicture(cfg, "http://a/chip.png", 8, 8, (_, _) => SKColors.Gold);
-        var chips = Obj("Custom_Token", "Gold", 1, new JsonObject { ["CustomImage"] = new JsonObject { ["ImageURL"] = "http://a/chip.png" }, ["Number"] = 4, ["Value"] = 10 });
+        var chips = Obj("Custom_Token_Stack", "Gold", 1, new JsonObject { ["CustomImage"] = new JsonObject { ["ImageURL"] = "http://a/chip.png" }, ["Number"] = 4, ["Value"] = 10 });
         var main = typeof(Config).Assembly.EntryPoint!;
 
         var code = (int)main.Invoke(null, new object[] { new[] { "import", Module("chips", chips), "--config", Path.Combine(_root, "converter.json"), "--out", Packages } })!;
