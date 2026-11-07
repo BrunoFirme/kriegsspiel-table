@@ -52,6 +52,8 @@ public partial class PieceNode
         return new Transform3D(b, Coords.ToWorld(pos, baseY + _tiltHalf) - b * SlabMiddle);
     }
 
+    public Transform3D RestBox => Piece.HasTilt ? new Transform3D(Basis.Orthonormalized(), Transform * SlabMiddle) : new Transform3D(new Basis(Vector3.Up, Heading), SlabCentre);
+
     float TiltedTop => (Transform * SlabMiddle).Y + _tiltHalf;
 
     bool InsideTilted(Vector2 local)

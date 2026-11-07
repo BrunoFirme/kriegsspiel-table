@@ -181,6 +181,20 @@ public class StateMachineTests
     }
 
     [Fact]
+    public void A_rolled_die_lands_level_on_its_face_and_a_batch_that_fails_after_the_roll_leaves_it_leaning()
+    {
+        var g = Base();
+        var die = g.Find(U, "p-000006")!;
+        (die.Face, die.TiltX, die.TiltZ) = (1, 20, -5);
+        RollDice Roll() => new() { Layer = U, PieceIds = new() { die.Id }, Results = new() { 4 } };
+
+        Assert.NotNull(StateMachine.Apply(g, new Batch { Items = { Roll(), new MovePiece { Layer = U, Id = "nobody" } } }, out _));
+        Assert.Equal((1, 20.0, -5.0), (die.Face, die.TiltX, die.TiltZ));
+        Assert.Null(StateMachine.Apply(g, Roll(), out _));
+        Assert.Equal((3, 0.0, 0.0), (die.Face, die.TiltX, die.TiltZ));
+    }
+
+    [Fact]
     public void Turning_a_piece_over_moves_nothing()
     {
         var g = Base();

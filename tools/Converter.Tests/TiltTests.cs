@@ -23,6 +23,16 @@ public sealed class TiltTests : ConverterHarness
     }
 
     [Fact]
+    public void A_die_keeps_how_far_it_leans_off_the_face_it_shows()
+    {
+        Assert.Equal(new PieceTilt.Pose(30, false, 20, 0), PieceTilt.OfDie(30, false, 20, 0, [0, 1, 0]));
+        Assert.Equal(new PieceTilt.Pose(30, false, 0, 0), PieceTilt.OfDie(30, false, 0, -90, [1, 0, 0]));
+        Assert.Equal(new PieceTilt.Pose(30, false, 15, 0), PieceTilt.OfDie(30, false, 15, -90, [1, 0, 0]));
+        Assert.Equal(new PieceTilt.Pose(30, false, 0, 0), PieceTilt.OfDie(30, false, 180, 0, [0, -1, 0]));
+        Assert.Equal(new PieceTilt.Pose(30, false, 0, 0), PieceTilt.OfDie(30, false, 20, 0, null));
+    }
+
+    [Fact]
     public void A_turned_box_reaches_as_high_and_as_low_as_its_turned_corners()
     {
         var (low, high) = PieceTilt.Span(1, 1, -0.5, 0.5, 0, 45);

@@ -15,6 +15,7 @@ public sealed record Mirror(bool X, bool Y, bool Z)
     public string Key => Any ? $"|m{(X ? "x" : "")}{(Y ? "y" : "")}{(Z ? "z" : "")}" : "";
     public double SignX => X ? -1 : 1;
     public double SignZ => Z ? -1 : 1;
+    public double[] Up(double[] u) => u.Length == 3 ? [X ? -u[0] : u[0], Y ? -u[1] : u[1], Z ? -u[2] : u[2]] : u;
     const double HalfTurn = 180;
     public double Decal(double deg) => (X, Z) switch { (true, false) => -deg, (false, true) => HalfTurn - deg, (true, true) => deg + HalfTurn, _ => deg };
 }

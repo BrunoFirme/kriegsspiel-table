@@ -89,6 +89,8 @@ public sealed class PieceStateDef
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public double[]? Up { get; set; }
     public string? Script { get; set; }
     public List<DecalDef>? Decals { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<PartDef>? Parts { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public double? Thickness { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public ModuleStateData? Module { get; set; }
 }
 
@@ -135,6 +137,24 @@ public sealed class PrintPlace
     public static PrintPlace On(string side, FaceBox b) => new() { Side = side, X = b.X, Y = b.Y, W = b.W, H = b.H };
     public FaceBox Box() => new() { X = X, Y = Y, W = W, H = H };
     public PrintPlace Turned() => new() { Side = Side == Back ? Front : Back, X = X, Y = Y, W = W, H = H };
+}
+
+public sealed class PartDef
+{
+    public string Def { get; set; } = "";
+    public double X { get; set; }
+    public double Y { get; set; }
+    public double Z { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public double Rot { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public double TiltX { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public double TiltZ { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool FaceDown { get; set; }
+    public double Scale { get; set; } = 1;
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? Tint { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public int State { get; set; }
+    public int Face { get; set; } = -1;
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<DecalDef>? Decals { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<LineDef>? Lines { get; set; }
 }
 
 public sealed class AttachmentDef
@@ -219,6 +239,8 @@ public sealed class PieceDef : IJsonOnDeserialized
     public List<CounterDef> Counters { get; set; } = new();
     public List<TextLineDef> TextLines { get; set; } = new();
     public List<AttachmentDef> Attachments { get; set; } = new();
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<PartDef>? Parts { get; set; }
+    [JsonIgnore] public IEnumerable<PartDef> AllParts => (Parts ?? []).Concat(States.SelectMany(s => s.Parts ?? []));
     public FaceBox? NameBox { get; set; }
     public string? Script { get; set; }
     public string? ScriptHash { get; set; }

@@ -31,6 +31,7 @@ public sealed record DefResult(PieceDef Def, PackOut Pack, double Scale, int Sta
 {
     public string? FromPack { get; init; }
     public double Fit { get; init; } = 1;
+    public bool Copied { get; init; }
     public Lettering? Lettering { get; init; }
 }
 
@@ -91,6 +92,11 @@ public sealed partial class DefFactory
 
     TokenOutlines? _tokenOutlines;
     PieceMirror? _mirrors;
+    GluedParts? _glued;
+    SharedMirror? _shared;
+    SharedMirror Shared => _shared ??= new SharedMirror(_cfg.Output, _cfg.Cache, _mirrors ??= new PieceMirror(_cfg.Cache));
+    public GluedParts Glued => _glued ??= new GluedParts(this, _rep, _cfg.BaseSizes.CustomTokenArea);
+    static string PartsKey(PieceDef d) => d.Parts == null && d.States.All(s => s.Parts == null) ? "" : "|p" + Hash8(Json.Serialize(d.Parts) + string.Join(";", d.States.Select(s => Json.Serialize(s.Parts))));
     public string? FlippedPicture(PackOut pack, string? sha) => (_mirrors ??= new PieceMirror(_cfg.Cache)).Picture(pack, sha, new Mirror(true, false, false));
     TokenOutlines Outlines => _tokenOutlines ??= new TokenOutlines(_assets);
 
@@ -313,7 +319,7 @@ public sealed partial class DefFactory
         return null;
     }
 
-    public DefResult? DefFor(ModuleObj o, PackOut pack, double? refScale = null, double heightScale = 1)
+    public DefResult? DefFor(ModuleObj o, PackOut pack, double? refScale = null, double heightScale = 1, bool glued = false)
     {
         if (!Shows(o)) return null;
         if (IsTextObject(o)) return TextDef(o, pack, refScale);
@@ -322,7 +328,7 @@ public sealed partial class DefFactory
         double bs = Math.Abs(b.ScaleX) < NoScale ? 1 : Math.Abs(b.ScaleX);
         double r = refScale is > NoScale && !BakesChildren(o) ? refScale.Value : bs;
         double instScale = Math.Round(bs / r, 4);
-        if (StandardDef(o, b, pack, bs, instScale) is { } standard) return standard;
+        if (StandardDef(o, b, pack, bs, instScale) is { } standard) return Shared.Of(o, standard, pack);
         if (o.Name == TilesetTree) return null;
         var where = $"{Context} {o.Name} '{o.Nickname}' {o.Guid}";
 
@@ -331,7 +337,7 @@ public sealed partial class DefFactory
         if (def == null) return null;
         if (RollsOnItsValues(b)) FillModelFaces(def, b);
         if (o.TransformNotANumber) _rep.Note($"{where}: the module gives this piece a position, turn or scale that is not a number; the usual value is taken instead");
-        var lua = b.SafeLua.Length > 0 ? b.SafeLua : o.SafeLua;
+        var lua = glued ? "" : b.SafeLua.Length > 0 ? b.SafeLua : o.SafeLua;
         string scriptKey = "";
         if (lua.Trim().Length > 0)
         {
@@ -370,15 +376,7 @@ public sealed partial class DefFactory
                 _cfg.BaseSizes.CustomTokenArea, url => UiAsset(pack, url, $"{where} state \"{sd.Name}\" decal"), sha => FlippedPicture(pack, sha));
             if (decals.Count > 0) sd.Decals = decals;
         }
-        foreach (var c in baked ? Enumerable.Empty<ModuleObj>() : o.Children)
-        {
-            if (!IsPiece(c)) { _rep.Skipped("child " + c.Name, where); continue; }
-            if (NotTranslated(c) is { } why) { _rep.Skipped(why, where); continue; }
-            var cr = DefFor(c, pack, Math.Abs(c.StateList().states[0].ScaleX) * r, heightScale * Math.Abs(b.ScaleY));
-            if (cr == null) continue;
-            double ox = c.PosX * r * Mirror.Of(o).SignX, oz = c.PosZ * r * Math.Abs(b.ScaleZ / b.ScaleX) * Mirror.Of(o).SignZ;
-            def.Attachments.Add(new AttachmentDef { Piece = cr.Def.Id, Offset = new Vec2(Math.Round(ox, 4), Math.Round(oz, 4)) });
-        }
+        if (!baked) Glued.Fill(def, states, bs, r, heightScale, pack, where, Mirror.Of(o));
 
         var mirror = Mirror.Of(o);
         (_mirrors ??= new PieceMirror(_cfg.Cache)).Apply(def, pack, mirror);
@@ -389,8 +387,8 @@ public sealed partial class DefFactory
         var gluedKey = heightScale == 1 || IsModel(b) ? "" :string.Create(CultureInfo.InvariantCulture, $"|t{def.Thickness:0.###}");
         var facesKey = !RollsOnItsValues(o) ? "" : "|f" + Hash8(string.Join(";", def.Faces.Select(f => string.Create(CultureInfo.InvariantCulture, $"{f.Value}@{f.Up[0]},{f.Up[1]},{f.Up[2]}"))));
         var surfaceKey = (def.Shadowless ? "|ns" : "") + (def.Normal is { } normal ? "|n" + normal : "") + TokenOutlines.MergeKey(o) + (b.StandsUp ? "|up" : "");
-        var key = string.Create(CultureInfo.InvariantCulture, $"{VisualKey(o)}|{def.Size.W:0.###}x{def.Size.H:0.###}{scriptKey}{bakedKey}{decalKey}{gluedKey}{facesKey}{surfaceKey}{mirror.Key}");
-        int rich = def.States.Count * 100 + def.Counters.Count * 10 + def.TextLines.Count + def.Attachments.Count * 1000 + (def.Script != null ? 5000 : 0);
+        var key = string.Create(CultureInfo.InvariantCulture, $"{VisualKey(o)}|{def.Size.W:0.###}x{def.Size.H:0.###}{scriptKey}{bakedKey}{decalKey}{gluedKey}{facesKey}{surfaceKey}{mirror.Key}{PartsKey(def)}");
+        int rich = def.States.Count * 100 + def.Counters.Count * 10 + def.TextLines.Count + (def.Parts?.Count ?? 0) * 1000 + (def.Script != null ? 5000 : 0);
         if (pack.ByKey.TryGetValue(key, out var existing))
         {
             if (rich > pack.Richness.GetValueOrDefault(existing.Id))
@@ -399,6 +397,7 @@ public sealed partial class DefFactory
                 existing.Counters = def.Counters;
                 existing.TextLines = def.TextLines;
                 existing.Attachments = def.Attachments;
+                existing.Parts = def.Parts;
                 existing.Script = def.Script;
                 existing.ScriptHash = def.ScriptHash;
                 existing.ScriptState = def.ScriptState;

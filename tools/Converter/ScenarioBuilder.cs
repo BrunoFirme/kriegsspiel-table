@@ -358,7 +358,7 @@ public sealed partial class ScenarioBuilder
             grew = false;
             foreach (var d in extras.M.Pieces.Where(d => referenced.Contains(d.Id)).ToList())
             {
-                foreach (var dep in d.Attachments.Select(a => a.Piece).Concat(d.Counters.Select(c => c.SpawnsMarker)).OfType<string>())
+                foreach (var dep in d.Attachments.Select(a => a.Piece).Concat(d.AllParts.Select(p => p.Def)).Concat(d.Counters.Select(c => c.SpawnsMarker)).OfType<string>())
                     grew |= referenced.Add(dep);
                 foreach (var t in new[] { d.Script, d.ScriptState }.OfType<string>().Where(t => t.Length > 0)) grew |= texts.Add(t);
             }
@@ -493,13 +493,16 @@ public sealed partial class ScenarioBuilder
         return list;
     }
 
+    static double[]? ShownUp(DefResult r, ModuleObj o) => PieceTilt.ValueUp(o) ??
+        (r.Def.Faces.ElementAtOrDefault(r.State)?.Up is { } up && r.Copied ? Mirror.Of(o).Up(up) : r.Def.Faces.ElementAtOrDefault(r.State)?.Up);
+
     PieceInstance? Instance(ModuleObj o, double refScale, PackOut extras, Dictionary<string, List<(PieceDef def, string pack)>> packDefs,
         Layer layer, HashSet<string> usedPacks, ref int rekeyed, PieceInstance? parent, double heightScale = 1, double absolute = 1)
     {
         var r = _defs.DefFor(o, extras, refScale, heightScale);
         if (r == null) return null;
         var def = r.Def;
-        string packId = r.FromPack ?? extras.M.Id;
+        string packId = r.Copied ? extras.M.Id : r.FromPack ?? extras.M.Id;
         double scale = r.Scale, baseScale = r.Scale;
         if (r.FromPack != null) scale = baseScale = Math.Round(absolute * r.Fit, 4);
         if (Math.Abs(o.ScaleX) < DefFactory.NoScale)
@@ -547,7 +550,7 @@ public sealed partial class ScenarioBuilder
         if (def.Script != null) { counters = new(); text = new(); }
 
         bool rolls = def.Faces.Count > 1 || r.FromPack == DefFactory.StdDicePack;
-        var pose = rolls ? new PieceTilt.Pose(o.Heading, o.Flipped, 0, 0) : PieceTilt.Of(o.RotX, o.RotY, o.RotZ, def.Kind == "model", o.Name == "3DText");
+        var pose = rolls ? PieceTilt.OfDie(o.Heading, o.Flipped, o.RotX, o.RotZ, ShownUp(r, o)) : PieceTilt.Of(o.RotX, o.RotY, o.RotZ, def.Kind == "model", o.Name == "3DText");
         var inst = new PieceInstance
         {
             Id = $"p-{_nextId++:D6}", Def = def.Id, TiltX = pose.X, TiltZ = pose.Z,
@@ -581,14 +584,14 @@ public sealed partial class ScenarioBuilder
         layer.Pieces.Add(inst);
         layer.Y[inst] = o.PosY;
         bool baked = _defs.IsBaked(r.Def);
-        var (low, high) = baked ? _defs.BakedSpan(o) : (_defs.LocalFloor(o), _defs.LocalFloor(o) + _defs.BaseThickness(o));
+        var (low, high) = baked ? _defs.BakedSpan(o) : _defs.Glued.Span(o);
         layer.Bottom[inst] = o.PosY + low * Math.Abs(o.ScaleY);
         layer.Top[inst] = o.PosY + high * Math.Abs(o.ScaleY);
         if (pose.Tilted) Tilt(layer, inst, o, def, low, high);
         StackCopies(o, inst, layer);
         if (o.IsBag) StowContents(o, inst, extras, packDefs, layer, usedPacks, ref rekeyed);
 
-        PlaceChildren(o, baked ? Enumerable.Empty<ModuleObj>() : o.Children, inst, refScale, baseScale, absolute, extras, packDefs, layer, usedPacks, ref rekeyed);
+        usedPacks.UnionWith(_defs.Glued.Packs);
         return inst;
     }
 

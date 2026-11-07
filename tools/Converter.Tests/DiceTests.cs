@@ -56,6 +56,27 @@ public sealed partial class ConverterTests
     }
 
     [Fact]
+    public void A_stock_die_saved_on_one_of_its_values_lies_level_and_one_leaning_off_it_keeps_the_lean()
+    {
+        TempConfig();
+        JsonObject Die(string nick, double rotX)
+        {
+            var die = Obj("Die_6", nick, 1, new JsonObject { ["RotationValues"] = SixFaces() });
+            (die["Transform"]!["rotX"], die["Transform"]!["rotY"], die["Transform"]!["rotZ"]) = (rotX, 37.0, -90.0);
+            return die;
+        }
+        var main = typeof(Config).Assembly.EntryPoint!;
+
+        var code = (int)main.Invoke(null, new object[] { new[] { "import", Module("leaning", Die("Level", 0), Die("Leaning", 15)), "--config", Path.Combine(_root, "converter.json"), "--out", Packages } })!;
+
+        Assert.Equal(0, code);
+        var table = Json.Load<Scenario>(Path.Combine(Packages, "scenarios", "leaning", "scenario.json"));
+        PieceInstance Named(string label) => table.UmpireBoard.Single(p => p.Label == label);
+        Assert.Equal((2, 0.0, 0.0), (Named("Level").Face, Named("Level").TiltX, Named("Level").TiltZ));
+        Assert.Equal((2, 15.0, 0.0), (Named("Leaning").Face, Math.Round(Named("Leaning").TiltX, 3), Math.Round(Named("Leaning").TiltZ, 3)));
+    }
+
+    [Fact]
     public void A_die_s_face_is_read_from_the_rotation_it_was_saved_at()
     {
         var die = new PieceDef { Faces = Enumerable.Range(1, 6).Select(i => new DieFace { Value = i.ToString() }).ToList() };

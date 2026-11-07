@@ -451,6 +451,7 @@ type List<LineDef> list of LineDef
 type List<List<Vec2>> list of List<Vec2>
 type List<MenuItemDef> list of MenuItemDef
 type List<PaletteDecal> list of PaletteDecal
+type List<PartDef> list of PartDef
 type List<PeerInfo> list of PeerInfo
 type List<PieceDef> list of PieceDef
 type List<PieceInstance> list of PieceInstance
@@ -578,6 +579,21 @@ type PaletteDecal object
   name: string
   picture: string
   size: double
+type PartDef object
+  decals: List<DecalDef>
+  def: string
+  face: int
+  faceDown: bool
+  lines: List<LineDef>
+  rot: double
+  scale: double
+  state: int
+  tiltX: double
+  tiltZ: double
+  tint: string
+  x: double
+  y: double
+  z: double
 type PeerInfo object
   name: string
   peerId: long
@@ -624,6 +640,7 @@ type PieceDef object
   normal: string
   outline: List<List<Vec2>>
   pageOffset: int
+  parts: List<PartDef>
   script: string
   scriptHash: string
   scriptState: string
@@ -701,10 +718,12 @@ type PieceStateDef object
   module: ModuleStateData
   name: string
   outline: List<List<Vec2>>
+  parts: List<PartDef>
   script: string
   shape: string
   size: Size2?
   texture: string
+  thickness: double?
   up: double[]
 type PlayEffect object
   actor: long
