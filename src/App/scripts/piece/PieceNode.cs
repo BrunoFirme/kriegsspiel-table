@@ -143,6 +143,7 @@ public partial class PieceNode : Node3D
         if (!PrintingOnly && !IsEffect && Def is { Kind: not "model", AddOnMesh: { } addOn }) BuildAddOn(addOn, tint);
 
         if (Lettered) _lettering.Add();
+        BuildLiveText();
         _shownFaceDown = Piece.FaceDown;
         Refresh(Piece);
     }
@@ -255,12 +256,13 @@ public partial class PieceNode : Node3D
         return Coords.FromWorld(Position + new Vector3(level.X, 0, level.Z));
     }
 
-    Color Tint() => Coords.ParseColor(Piece.TintOverride ?? Def?.Tint, Colors.White) * _layerTint;
+    Color Tint() => Spoken ? Colors.Transparent : Coords.ParseColor(Piece.TintOverride ?? Def?.Tint, Colors.White) * _layerTint;
     Color SideColor() => (Tint() * 0.82f) with { A = Tint().A };
     Color PrintTint() => Def is { TintsPictures: true } ? Tint() : _layerTint with { A = _layerTint.A * Tint().A };
 
     (string? pkg, string? rel, int size) TexKey()
     {
+        if (Spoken) return (null, null, 0);
         if (Piece.FacePicture is { } fp && !Piece.FaceDown && KTable.Client.PieceFiles.DecalFile(_s.View, _s.Store, fp, Piece.Def) is { } own)
             return (own.Package, own.Path, Assets.PieceTexSize(Mathf.Max(Footprint.X, Footprint.Y)));
         var pack = _s.Store.PackOfDef(PictureDefId);
@@ -503,7 +505,7 @@ public partial class PieceNode : Node3D
     public void Refresh(PieceInstance p)
     {
         if (IsDie) { RefreshDie(p); return; }
-        bool rebuild = p.State != _shownState || p.Picture != _shownPicture || p.TintOverride != _shownTint || p.Def != _shownDef || p.FacePicture != Piece.FacePicture;
+        bool rebuild = p.State != _shownState || p.Picture != _shownPicture || p.TintOverride != _shownTint || p.Def != _shownDef || LooksChanged(p);
         Piece = p;
         if (rebuild || EffectSwitched) { Rebuild(); return; }
         SyncWidgets();

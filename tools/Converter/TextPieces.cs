@@ -37,7 +37,8 @@ public sealed partial class DefFactory
         Put(pack, image, "png", path, "image", w, h);
 
         var key = $"text|{sha}";
-        if (pack.ByKey.TryGetValue(key, out var existing)) return new DefResult(existing, pack, instScale, 0, o, ScriptInfo.Parse("", ""));
+        var live = new Lettering { Text = body, Size = fontSize, Color = $"#{colour.Red:X2}{colour.Green:X2}{colour.Blue:X2}{colour.Alpha:X2}", UnitsPerPixel = TextUnitsPerFontSize * r };
+        if (pack.ByKey.TryGetValue(key, out var existing)) return new DefResult(existing, pack, instScale, 0, o, ScriptInfo.Parse("", "")) { Lettering = live };
         var name = body.Length > 24 ? body[..24].Trim() + "…" : body.Trim();
         var def = new PieceDef
         {
@@ -47,7 +48,7 @@ public sealed partial class DefFactory
         pack.ByKey[key] = def;
         pack.Richness[def.Id] = 0;
         pack.M.Pieces.Add(def);
-        return new DefResult(def, pack, instScale, 0, o, ScriptInfo.Parse("", ""));
+        return new DefResult(def, pack, instScale, 0, o, ScriptInfo.Parse("", "")) { Lettering = live };
     }
 
     [System.Text.RegularExpressions.GeneratedRegex(@"\[(/?(b|i|u|s|sub|sup)|[0-9A-Fa-f]{6}|-)\]")] private static partial System.Text.RegularExpressions.Regex ModuleMarkup();

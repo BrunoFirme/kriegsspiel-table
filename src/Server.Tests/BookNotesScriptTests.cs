@@ -89,4 +89,27 @@ public class BookNotesScriptTests
         Assert.True(t.Server.State.Find(U, "p-000050")!.EffectOff);
         Assert.Equal("effect -1", t.Server.State.Find(U, "p-000050")!.Note);
     }
+
+    [Fact]
+    public void A_module_script_rewrites_3d_text_its_size_and_its_colour()
+    {
+        using var t = new Table();
+        const string P = "p-000002";
+        t.Server.Handle(Table.Host, new SetLettering { Layer = U, Id = P, Lettering = new Lettering { Text = "HQ", Size = 48, Color = "#FF0000FF" } });
+        var r = ModuleTranslator.Translate("""
+            function onLoad()
+              local was = self.TextTool.getValue() .. ":" .. self.TextTool.getFontSize() .. ":" .. self.TextTool.getFontColor().r
+              self.TextTool.setValue("Corps HQ")
+              self.TextTool.setFontSize(72)
+              self.TextTool.setFontColor({ 0, 0, 1 })
+              self.setDescription(was .. ":" .. self.getValue())
+            end
+            """, new TranslateContext());
+        Assert.DoesNotContain(r.Untranslated, u => u.What.Contains("TextTool"));
+        var res = t.Server.Handle(Table.Host, new SetScript { Layer = U, Id = P, Text = r.Script });
+        Assert.DoesNotContain(res, o => o.Message is ErrorMessage);
+        var p = t.Server.State.Find(U, P)!;
+        Assert.Equal("HQ:48:1:Corps HQ", p.Note);
+        Assert.Equal(("Corps HQ", 72.0, "#0000ffff"), (p.Lettering!.Text, p.Lettering.Size, p.Lettering.Color));
+    }
 }

@@ -14,6 +14,7 @@ namespace KTable.Core.Protocol;
 [JsonDerivedType(typeof(TurnDie), "TurnDie")]
 [JsonDerivedType(typeof(SetWorth), "SetWorth")]
 [JsonDerivedType(typeof(SetFacePicture), "SetFacePicture")]
+[JsonDerivedType(typeof(SetLettering), "SetLettering")]
 [JsonDerivedType(typeof(SetDieFaces), "SetDieFaces")]
 [JsonDerivedType(typeof(SetCounter), "SetCounter")]
 [JsonDerivedType(typeof(SetText), "SetText")]
@@ -219,6 +220,17 @@ public sealed class SetFacePicture : LayerCommand
 {
     public string Id { get; set; } = "";
     public string? Picture { get; set; }
+    public override Sender SentBy() => Sender.Umpire;
+    public override bool OnUndoStack() => true;
+    public override Shown ShownToObservers() => Shown.Table;
+    public override IEnumerable<(string Layer, string Id)> ZonePieces() => [(Layer, Id)];
+    public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [];
+    public override IEnumerable<string> ScriptsToReload() => [];
+}
+public sealed class SetLettering : LayerCommand
+{
+    public string Id { get; set; } = "";
+    public Lettering? Lettering { get; set; }
     public override Sender SentBy() => Sender.Umpire;
     public override bool OnUndoStack() => true;
     public override Shown ShownToObservers() => Shown.Table;

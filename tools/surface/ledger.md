@@ -482,12 +482,12 @@ the plan says translate it), unknown (nobody has decided).
 | `RPGFigurine.die` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
 | `RPGFigurine.onAttack` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
 | `RPGFigurine.onHit` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
-| `TextTool.getFontColor` | - | stub | 3D text made at run time; no module calls it |  |
-| `TextTool.getFontSize` | - | stub | 3D text made at run time; no module calls it |  |
-| `TextTool.getValue` | - | stub | 3D text made at run time; no module calls it |  |
-| `TextTool.setFontColor` | - | stub | 3D text made at run time; no module calls it |  |
-| `TextTool.setFontSize` | - | stub | 3D text made at run time; no module calls it |  |
-| `TextTool.setValue` | - | stub | 3D text made at run time; no module calls it |  |
+| `TextTool.getFontColor` | - | compat | a module's 3D text comes over as live lettering on the piece (self.lettering / set_lettering), drawn in its size and colour; compat.text_tool answers the calls | BookNotesScriptTests |
+| `TextTool.getFontSize` | - | compat | a module's 3D text comes over as live lettering on the piece (self.lettering / set_lettering), drawn in its size and colour; compat.text_tool answers the calls | BookNotesScriptTests |
+| `TextTool.getValue` | - | compat | a module's 3D text comes over as live lettering on the piece (self.lettering / set_lettering), drawn in its size and colour; compat.text_tool answers the calls | BookNotesScriptTests |
+| `TextTool.setFontColor` | - | compat | a module's 3D text comes over as live lettering on the piece (self.lettering / set_lettering), drawn in its size and colour; compat.text_tool answers the calls | BookNotesScriptTests |
+| `TextTool.setFontSize` | - | compat | a module's 3D text comes over as live lettering on the piece (self.lettering / set_lettering), drawn in its size and colour; compat.text_tool answers the calls | BookNotesScriptTests |
+| `TextTool.setValue` | - | compat | a module's 3D text comes over as live lettering on the piece (self.lettering / set_lettering), drawn in its size and colour; compat.text_tool answers the calls | BookNotesScriptTests |
 | `UI` | - | native | self.ui / obj.ui: the piece's own panels, the same calls as ui | PanelTests |
 | `Zone.getObjects` | - | dropped | scripting and layout zones (decided 2026-11-06) |  |
 | `addAttachment` | - | native | ObjectCall |  |
@@ -625,7 +625,7 @@ the plan says translate it), unknown (nobody has decided).
 | `static_friction` | - | dropped | engine physics |  |
 | `sticky` | - | compat | ObjectProps (get_prop/set_prop) |  |
 | `tag` | - | compat | ObjectProps (get_prop/set_prop) |  |
-| `textTool` | - | unknown |  |  |
+| `textTool` | - | compat | a module's 3D text comes over as live lettering on the piece (self.lettering / set_lettering), drawn in its size and colour; compat.text_tool answers the calls | BookNotesScriptTests |
 | `tooltip` | - | compat | ObjectProps (get_prop/set_prop) |  |
 | `translate` | - | compat | ObjectCall |  |
 | `type` | - | compat | ObjectProps (get_prop/set_prop) |  |

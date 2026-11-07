@@ -158,6 +158,7 @@ public static partial class ApiDoc
         F("piece", "page_offset", "number", "For a book, what its page numbers start from, as the module set it; 0 for every other piece.", "Book.page_offset");
         F("piece", "effect_on", "boolean", "For an effect, whether it is running.");
         F("piece", "kind_name", "string", "The name of its kind.");
+        F("piece", "lettering", "table?", "Text drawn on the piece in place of its picture, as 3D text from a module is: { text =, size =, color = }; nil for most pieces.", "TextTool.getValue");
         F("piece", "worth", "number", "What the piece counts for when pieces are added up; 0 for most.", "value");
         F("piece", "worth_groups", "number", "Which groups it adds up with, as bits; 0 adds up with any piece of worth.", "value_flags");
         F("piece", "pos", "Point", "Where it stands, in map units: { x =, z = }.", "getPosition");
@@ -241,6 +242,10 @@ public static partial class ApiDoc
     M("piece", "set_face_picture(link)", "Shows a picture on the piece's face in place of its kind's: a web link is fetched first; nil puts the kind's back.", "setCustomObject");
     P("link", "string?", "A web link to a picture, or a picture the table already holds.");
     See("self.face_picture");
+
+    M("piece", "set_lettering(changes)", "Changes the text drawn on the piece: any of text, size and color; nil takes the lettering away.", "TextTool.setValue");
+    P("changes", "table?", "{ text =, size =, color = }, each optional.");
+    See("self.lettering");
 
     M("piece", "set_effect_on(on)", "Starts or stops an effect.", "AssetBundle.playLoopingEffect");
     P("on", "boolean", "true runs it; false stops it.");

@@ -14,7 +14,7 @@ public static class StateMachine
             case MovePiece m: return ApplyMove(g, m, ref inverse);
             case DeletePiece d: return ApplyDelete(g, d, ref inverse);
             case SetState st: return ApplySetState(g, st, ref inverse);
-            case TurnDie or SetDieFaces or SetWorth or SetFacePicture: return ApplyDie(g, c, ref inverse);
+            case TurnDie or SetDieFaces or SetWorth or SetFacePicture or SetLettering: return ApplyDie(g, c, ref inverse);
             case SetCounter sc: return ApplySetCounter(g, sc, ref inverse);
             case SetText t: return ApplySetText(g, t, ref inverse);
             case SetLabel l: return ApplySetLabel(g, l, ref inverse);
@@ -623,8 +623,19 @@ public static class StateMachine
         SetDieFaces sdf => ApplySetDieFaces(g, sdf, ref inverse),
         SetWorth sw => ApplySetWorth(g, sw, ref inverse),
         SetFacePicture sfp => ApplySetFacePicture(g, sfp, ref inverse),
+        SetLettering sl => ApplySetLettering(g, sl, ref inverse),
         _ => "unknown command",
     };
+
+    static string? ApplySetLettering(GameState g, SetLettering sl, ref Command? inverse)
+    {
+        var p = g.Find(sl.Layer, sl.Id);
+        if (p == null) return "no such piece";
+        if (sl.Lettering is { } l && (!double.IsFinite(l.Size) || l.Size <= 0 || !double.IsFinite(l.UnitsPerPixel) || l.UnitsPerPixel <= 0)) return "lettering of no size";
+        inverse = new SetLettering { Layer = sl.Layer, Id = sl.Id, Lettering = p.Lettering?.Clone() };
+        p.Lettering = sl.Lettering?.Clone();
+        return null;
+    }
 
     static string? ApplySetFacePicture(GameState g, SetFacePicture sfp, ref Command? inverse)
     {

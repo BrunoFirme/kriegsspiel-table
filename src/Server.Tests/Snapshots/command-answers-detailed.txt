@@ -98,6 +98,16 @@
   umpires:     it it it
   reloads:     
   undo stack:  yes
+== SetLettering
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; Id-x outside=outside your umpire zone; on another layer, all outside=ok
+  zone, none of mine: all inside=no zone on the umpire board has been assigned to you; Id-x outside=no zone on the umpire board has been assigned to you; on another layer, all outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
 == SetDieFaces
   sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
   in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
@@ -939,6 +949,16 @@
   reloads:     
   undo stack:  yes
 == SetFacePicture (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok;  outside=outside your umpire zone; on another layer, all outside=ok
+  zone, none of mine: all inside=no zone on the umpire board has been assigned to you;  outside=no zone on the umpire board has been assigned to you; on another layer, all outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+== SetLettering (empty)
   sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
   in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
   zone:        all inside=ok;  outside=outside your umpire zone; on another layer, all outside=ok

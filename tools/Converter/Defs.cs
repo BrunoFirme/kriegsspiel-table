@@ -31,6 +31,7 @@ public sealed record DefResult(PieceDef Def, PackOut Pack, double Scale, int Sta
 {
     public string? FromPack { get; init; }
     public double Fit { get; init; } = 1;
+    public Lettering? Lettering { get; init; }
 }
 
 public sealed partial class DefFactory

@@ -18,6 +18,15 @@ internal sealed partial class PieceHandles
             case "value": return faces.Count > 0 ? ValueOf(faces[Math.Clamp(p.ShownFace, 0, faces.Count - 1)].Value) : DynValue.Nil;
             case "worth": return N(p.Worth);
             case "kind_name": return S(def?.Name ?? p.Def);
+            case "lettering":
+            {
+                if (p.Lettering is not { } lt) return DynValue.Nil;
+                var t = T();
+                t.Table["text"] = lt.Text;
+                t.Table["size"] = lt.Size;
+                t.Table["color"] = lt.Color;
+                return t;
+            }
             case "page_offset": return N(def?.PageOffset ?? 0);
             case "face_picture": return p.FacePicture == null ? DynValue.Nil : S(p.FacePicture);
             case "picked_up":
@@ -100,6 +109,17 @@ internal sealed partial class PieceHandles
                     if (pic != null && host.Find(id) != null) host.Emit(new SetFacePicture { Layer = L, Id = id, Picture = pic });
                     else host.Report(id, $"no picture came from {link}");
                 });
+                return DynValue.Nil;
+            });
+            case "set_lettering": return Fn(a =>
+            {
+                if (Arg(a, 0).Type != DataType.Table) { host.Emit(new SetLettering { Layer = L, Id = id, Lettering = null }); return DynValue.Nil; }
+                var t = Arg(a, 0).Table;
+                var now = p.Lettering?.Clone() ?? new Lettering();
+                if (t.Get("text").CastToString() is { } text) now.Text = text;
+                if (t.Get("size").CastToNumber() is { } size && size > 0) now.Size = size;
+                if (t.Get("color").CastToString() is { Length: > 0 } color) now.Color = color;
+                host.Emit(new SetLettering { Layer = L, Id = id, Lettering = now });
                 return DynValue.Nil;
             });
             case "set_worth": return Fn(a =>

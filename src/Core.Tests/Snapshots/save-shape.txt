@@ -137,6 +137,7 @@ type Command abstract
   derived SetGrid = SetGrid
   derived SetHotkeys = SetHotkeys
   derived SetLabel = SetLabel
+  derived SetLettering = SetLettering
   derived SetLighting = SetLighting
   derived SetLines = SetLines
   derived SetLocked = SetLocked
@@ -392,6 +393,11 @@ type JsonElement value
 type Knock object
   name: string
   peerId: long
+type Lettering object
+  color: string
+  size: double
+  text: string
+  unitsPerPixel: double
 type Lighting object
   ambient: double
   backdrop: string
@@ -605,6 +611,7 @@ type PieceInstance object
   guid: string
   id: string
   label: string
+  lettering: Lettering
   lines: List<LineDef>
   locked: bool
   measuresMoves: bool
@@ -914,6 +921,14 @@ type SetLabel object
   seq: long
   undoOf: long
   value: string
+type SetLettering object
+  actor: long
+  at: long
+  id: string
+  layer: string
+  lettering: Lettering
+  seq: long
+  undoOf: long
 type SetLighting object
   actor: long
   at: long

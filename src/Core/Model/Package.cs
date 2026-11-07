@@ -154,6 +154,15 @@ public static class Finishes
     public static string? Of(int index) => index >= 0 && index < All.Length ? All[index] : null;
 }
 
+public sealed class Lettering
+{
+    public string Text { get; set; } = "";
+    public double Size { get; set; } = 64;
+    public string Color { get; set; } = "#FFFFFF";
+    public double UnitsPerPixel { get; set; } = 1.0 / 80;
+    public Lettering Clone() => (Lettering)MemberwiseClone();
+}
+
 public sealed class DieFace
 {
     public string Value { get; set; } = "";
@@ -354,6 +363,7 @@ public sealed class PieceInstance
     public int Face { get; set; } = -1;
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? FacePicture { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool EffectOff { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public Lettering? Lettering { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public int Worth { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public int WorthGroups { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<DieFace>? Faces { get; set; }
@@ -391,7 +401,7 @@ public sealed class PieceInstance
     public PieceInstance Clone() => new()
     {
         Id = Id, Def = Def, Pos = Pos, RotDeg = RotDeg, Stack = Stack, State = State, Face = Face, Faces = Faces?.Select(f => f.Clone()).ToList(),
-        Worth = Worth, WorthGroups = WorthGroups, FacePicture = FacePicture, EffectOff = EffectOff,
+        Worth = Worth, WorthGroups = WorthGroups, FacePicture = FacePicture, EffectOff = EffectOff, Lettering = Lettering?.Clone(),
         Counters = new(Counters), Text = new(Text), Attached = new(Attached),
         TintOverride = TintOverride, Label = Label, Scale = Scale, Y = Y, FaceDown = FaceDown, Note = Note, Picture = Picture, Locked = Locked,
         NoCollision = NoCollision, PhysicalRoll = PhysicalRoll, NotSticky = NotSticky, NotBoxSelected = NotBoxSelected, MeasuresMoves = MeasuresMoves,

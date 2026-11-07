@@ -50,6 +50,22 @@ static class PanelTests
     }
 
     [NodeTest]
+    static async Task Lettering_on_a_piece_is_drawn_live_and_follows_a_change(TestRunner r)
+    {
+        var t = OfflineTable.Make(r, pieces: 1);
+        await r.Frame();
+        t.S.Do(new KTable.Core.Protocol.SetLettering { Layer = U, Id = "p1", Lettering = new KTable.Core.Model.Lettering { Text = "HQ", Size = 48, Color = "#FF0000FF" } });
+        await r.Frames(3);
+        Label3D? Text() => t.Node("p1").GetChildren().OfType<Label3D>().FirstOrDefault(l => l.Text is "HQ" or "Corps HQ");
+        Check.Equal("HQ", Text()?.Text, "the lettering is drawn");
+        Check.That(Text()?.Modulate.R > 0.9f && Text()?.Modulate.B < 0.1f, "in its colour");
+        t.S.Do(new KTable.Core.Protocol.SetLettering { Layer = U, Id = "p1", Lettering = new KTable.Core.Model.Lettering { Text = "Corps HQ", Size = 48, Color = "#FF0000FF" } });
+        await r.Frames(3);
+        Check.Equal("Corps HQ", Text()?.Text, "a change redraws it");
+        Check.Equal(0, t.Errors.Count, string.Join("; ", t.Errors));
+    }
+
+    [NodeTest]
     static Task Panels_take_their_looks_from_their_defaults_classes_and_rich_text_and_inputs_keep_to_what_they_accept(TestRunner r)
     {
         var tree = UiStyles.Styled(new[]

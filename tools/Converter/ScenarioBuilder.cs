@@ -552,6 +552,7 @@ public sealed partial class ScenarioBuilder
             NotBoxSelected = !o.DragSelectable, MeasuresMoves = o.MeasureMovement,
             Ui = ObjectPanels(o, extras, $"{layer.Name} {o.Name} '{o.Nickname}' {o.Guid}"),
             Worth = o.Worth,
+            Lettering = r.Lettering,
         };
         if (lua.Trim().Length > 0)
         {

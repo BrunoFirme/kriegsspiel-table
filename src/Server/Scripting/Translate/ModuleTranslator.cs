@@ -259,6 +259,7 @@ public static class ModuleTranslator
                 return mapped != null ? Direct($"{obj}.ui.{mapped}({All()})", node) : Todo("object UI." + name, $"compat.todo({obj}, \"UI.{name}\")", node);
             }
             if (recv.EndsWith(".AssetBundle")) return Compat($"compat.bundle({recv[..^12]}).{name}({All()})", node);
+            if (recv.EndsWith(".TextTool")) return Compat($"compat.text_tool({recv[..^9]}).{name}({All()})", node);
             if (recv.EndsWith(".Book"))
             {
                 var book = recv[..^5];

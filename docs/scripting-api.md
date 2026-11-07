@@ -208,6 +208,7 @@ Read from `self` or from any piece `board.find` or `board.pieces` hands back. Fi
 | [`self.page_offset`](#selfpage_offset) | For a book, what its page numbers start from, as the module set it; 0 for every other piece. |
 | [`self.effect_on`](#selfeffect_on) | For an effect, whether it is running. |
 | [`self.kind_name`](#selfkind_name) | The name of its kind. |
+| [`self.lettering`](#selflettering) | Text drawn on the piece in place of its picture, as 3D text from a module is: { text =, size =, color = }; nil for most pieces. |
 | [`self.worth`](#selfworth) | What the piece counts for when pieces are added up; 0 for most. |
 | [`self.worth_groups`](#selfworth_groups) | Which groups it adds up with, as bits; 0 adds up with any piece of worth. |
 | [`self.pos`](#selfpos) | Where it stands, in map units: { x =, z = }. |
@@ -427,6 +428,18 @@ self.kind_name
 The name of its kind.
 
 **Type** `string`, read-only.
+
+### `self.lettering`
+
+```lua
+self.lettering
+```
+
+Text drawn on the piece in place of its picture, as 3D text from a module is: { text =, size =, color = }; nil for most pieces.
+
+**Type** `table?`, read-only.
+
+**Module call** `TextTool.getValue`
 
 ### `self.worth`
 
@@ -784,6 +797,7 @@ Each call is a change every umpire sees, taken back with Ctrl+Z by the umpire wh
 | [`self.set_value`](#selfset_value) | Turns a die to the first side with this value; false when no side has it. |
 | [`self.set_faces`](#selfset_faces) | Gives this die sides of its own; nil gives it back its kind's. |
 | [`self.set_face_picture`](#selfset_face_picture) | Shows a picture on the piece's face in place of its kind's: a web link is fetched first; nil puts the kind's back. |
+| [`self.set_lettering`](#selfset_lettering) | Changes the text drawn on the piece: any of text, size and color; nil takes the lettering away. |
 | [`self.set_effect_on`](#selfset_effect_on) | Starts or stops an effect. |
 | [`self.set_worth`](#selfset_worth) | Sets what the piece counts for, and optionally the groups it adds up with. |
 | [`self.roll`](#selfroll) | Rolls a die, or turns a piece of several states to one at random; false for anything else. |
@@ -1091,6 +1105,20 @@ Shows a picture on the piece's face in place of its kind's: a web link is fetche
 | `link` | `string?` | A web link to a picture, or a picture the table already holds. |
 
 **Module call** `setCustomObject` · **See also** [`self.face_picture`](#selfface_picture)
+
+### `self.set_lettering`
+
+```lua
+self.set_lettering(changes)
+```
+
+Changes the text drawn on the piece: any of text, size and color; nil takes the lettering away.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `changes` | `table?` | { text =, size =, color = }, each optional. |
+
+**Module call** `TextTool.setValue` · **See also** [`self.lettering`](#selflettering)
 
 ### `self.set_effect_on`
 
@@ -3435,6 +3463,8 @@ The converter rewrites a module's scripts into these calls by rule; this is the 
 | `sticky` | [`self.set_sticky`](#selfset_sticky) |
 | `sticky` | [`self.sticky`](#selfsticky) |
 | `takeObject` | [`self.unstow`](#selfunstow) |
+| `TextTool.getValue` | [`self.lettering`](#selflettering) |
+| `TextTool.setValue` | [`self.set_lettering`](#selfset_lettering) |
 | `tryObjectEnterContainer` | [`try_stow`](#try_stow-global-script) |
 | `UI` | [`self.ui`](#selfui) |
 | `UI` | [`ui`](#ui) |

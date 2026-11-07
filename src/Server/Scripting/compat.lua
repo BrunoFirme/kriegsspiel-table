@@ -573,11 +573,24 @@ function compat.shuffle_states(obj)
 end
 function compat.get_value(obj)
   if obj.face ~= nil then return obj.face end
+  if obj.lettering ~= nil then return obj.lettering.text end
   return nil
 end
 function compat.set_value(obj, v)
   if obj.face ~= nil then return obj.set_face(tonumber(v) or 0) end
+  if obj.lettering ~= nil then obj.set_lettering({ text = tostring(v) }) return true end
   return false
+end
+function compat.text_tool(obj)
+  local function now() return obj.lettering or { text = "", size = 64, color = "#FFFFFFFF" } end
+  return {
+    getValue = function() return now().text end,
+    setValue = function(s) obj.set_lettering({ text = tostring(s) }) return true end,
+    getFontSize = function() return now().size end,
+    setFontSize = function(n) obj.set_lettering({ size = tonumber(n) }) return true end,
+    getFontColor = function() return compat.Color.fromHex(now().color) end,
+    setFontColor = function(c) obj.set_lettering({ color = "#" .. compat.Color.new(c):toHex(true) }) return true end,
+  }
 end
 function compat.get_rotation_value(obj) return obj.value end
 function compat.set_rotation_value(obj, v) return obj.set_value(v) end

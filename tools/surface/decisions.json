@@ -356,7 +356,14 @@
   "AssetBundle.playLoopingEffect": ["compat", "an effect piece answers as a bundle with one looping effect, its own; starting and stopping it is the piece option Running (self.effect_on)", "", "BookNotesScriptTests"],
   "assetBundle": ["compat", "an effect piece answers as a bundle with one looping effect, its own; starting and stopping it is the piece option Running (self.effect_on)", "", "BookNotesScriptTests"],
   "AssetBundle.getTriggerEffects": ["partial", "an effect piece has no one-shot effects of the bundle's: the list is empty", "", "BookNotesScriptTests"],
-  "AssetBundle.playTriggerEffect": ["partial", "an effect piece has no one-shot effects of the bundle's: nothing plays", "", "BookNotesScriptTests"]
+  "AssetBundle.playTriggerEffect": ["partial", "an effect piece has no one-shot effects of the bundle's: nothing plays", "", "BookNotesScriptTests"],
+  "TextTool.getValue": ["compat", "a module's 3D text comes over as live lettering on the piece (self.lettering / set_lettering), drawn in its size and colour; compat.text_tool answers the calls", "", "BookNotesScriptTests"],
+  "TextTool.setValue": ["compat", "a module's 3D text comes over as live lettering on the piece (self.lettering / set_lettering), drawn in its size and colour; compat.text_tool answers the calls", "", "BookNotesScriptTests"],
+  "TextTool.getFontSize": ["compat", "a module's 3D text comes over as live lettering on the piece (self.lettering / set_lettering), drawn in its size and colour; compat.text_tool answers the calls", "", "BookNotesScriptTests"],
+  "TextTool.setFontSize": ["compat", "a module's 3D text comes over as live lettering on the piece (self.lettering / set_lettering), drawn in its size and colour; compat.text_tool answers the calls", "", "BookNotesScriptTests"],
+  "TextTool.getFontColor": ["compat", "a module's 3D text comes over as live lettering on the piece (self.lettering / set_lettering), drawn in its size and colour; compat.text_tool answers the calls", "", "BookNotesScriptTests"],
+  "TextTool.setFontColor": ["compat", "a module's 3D text comes over as live lettering on the piece (self.lettering / set_lettering), drawn in its size and colour; compat.text_tool answers the calls", "", "BookNotesScriptTests"],
+  "textTool": ["compat", "a module's 3D text comes over as live lettering on the piece (self.lettering / set_lettering), drawn in its size and colour; compat.text_tool answers the calls", "", "BookNotesScriptTests"]
  },
  "global": {
   "logStyle": ["dropped", "console commands and other host controls (decided 2026-11-06)", "the app's own console and settings"],
