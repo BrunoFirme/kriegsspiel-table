@@ -4057,7 +4057,7 @@
   {
    "row": "getLuaScript",
    "status": "compat",
-   "where": "ObjectCall",
+   "where": "compat.get_script: the translated script the piece runs, not the module's source (decided 2026-11-07: the only module that reads it is a self-copying script)",
    "instead": "",
    "held_by": "",
    "count": 19474,
