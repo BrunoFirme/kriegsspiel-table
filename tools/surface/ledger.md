@@ -13,8 +13,8 @@ every row that is not dropped must end audited, used by the corpus or not.
 | area | rows used by the corpus | decided | planned or unknown | not dropped, not audited | rows in all |
 |---|---|---|---|---|---|
 | types | 30 | 30 | 0 | 0 | 43 |
-| save | 150 | 150 | 0 | 10 | 302 |
-| object | 65 | 65 | 0 | 154 | 262 |
+| save | 150 | 150 | 0 | 7 | 302 |
+| object | 65 | 65 | 0 | 153 | 262 |
 | global | 14 | 14 | 0 | 38 | 55 |
 | namespaces | 23 | 23 | 0 | 46 | 180 |
 | events | 8 | 8 | 0 | 22 | 52 |
@@ -312,9 +312,9 @@ every row that is not dropped must end audited, used by the corpus or not.
 | `Mp3PlayerState.menuTitle` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |  |
 | `Mp3PlayerState.songTitle` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |  |
 | `Mp3PlayerState.volume` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |  |
-| `ObjectState.AltLookAngle` | - | planned | the Alt-zoom view: a decision for the user |  |  |
-| `ObjectState.AltSound` | - | planned | a piece's other sound: a decision for the user |  |  |
-| `ObjectState.AltZoomable` | - | planned | the Alt-zoom view: a decision for the user |  |  |
+| `ObjectState.AltLookAngle` | - | dropped | the Alt-zoom preview's camera angle; the app has no Alt-zoom preview (decided 2026-11-07) |  |  |
+| `ObjectState.AltSound` | - | dropped | a piece's other impact sound set; pieces here make no impact sounds of their own (decided 2026-11-07) |  |  |
+| `ObjectState.AltZoomable` | - | dropped | whether a piece may be Alt-zoomed; the app has no Alt-zoom preview (decided 2026-11-07) |  |  |
 | `ObjectState.Calculator` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |  |
 | `ObjectState.Clock` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |  |
 | `ObjectState.Counter` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |  |
@@ -499,7 +499,7 @@ every row that is not dropped must end audited, used by the corpus or not.
 | `addTag` | - | native | ObjectCall |  |  |
 | `addToPlayerSelection` | - | compat | ObjectCall |  |  |
 | `addTorque` | - | dropped | engine physics |  |  |
-| `alt_view_angle` | - | planned | the Alt-zoom view: a decision for the user |  |  |
+| `alt_view_angle` | - | dropped | the Alt-zoom preview's camera angle; the app has no Alt-zoom preview (decided 2026-11-07) |  |  |
 | `angular_drag` | - | dropped | engine physics |  |  |
 | `assetBundle` | - | compat | an effect piece answers as a bundle with one looping effect, its own; starting and stopping it is the piece option Running (self.effect_on) | BookNotesScriptTests |  |
 | `attachHider` | - | dropped | hidden information (decided 2026-11-06) |  |  |
