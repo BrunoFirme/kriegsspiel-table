@@ -284,4 +284,35 @@ public class PanelInteractionTests
         var list = PanelLists.Open(s, s.ById("d")!, 0);
         Assert.Equal(3 * 40, list.RectSize.Y, 2);
     }
+
+    const string Stack = "<Accordion id=\"a\" width=\"300\" height=\"400\" allowSectionReordering=\"true\">"
+        + "<AccordionSection id=\"s1\"><AccordionSectionHeader/><AccordionSectionContent/></AccordionSection>"
+        + "<AccordionSection id=\"s2\"><AccordionSectionHeader/><AccordionSectionContent/></AccordionSection>"
+        + "<AccordionSection id=\"s3\"><AccordionSectionHeader/><AccordionSectionContent/></AccordionSection></Accordion>";
+
+    [Fact]
+    public void A_reorderable_accordion_lets_its_sections_drag_and_places_the_gap_by_the_nearest_section_s_middle()
+    {
+        var s = Scene(Stack);
+        var sections = new[] { s.ById("s1")!, s.ById("s2")!, s.ById("s3")! };
+        Assert.All(sections, x => Assert.Equal("true", x.Extra["allowdragging"]));
+        Assert.Equal(2, PanelAccordions.Slot(sections, sections[0], sections[2].PivotAt.Y - 1));
+        Assert.Equal(1, PanelAccordions.Slot(sections, sections[0], sections[2].PivotAt.Y + 1));
+        Assert.Equal(0, PanelAccordions.Slot(sections, sections[2], sections[0].PivotAt.Y + 1));
+    }
+
+    [Fact]
+    public void A_section_dropped_after_the_others_lands_one_place_short_as_the_game_counts_it_and_the_order_holds_after_a_redraw()
+    {
+        var local = new Dictionary<string, string>();
+        var s = Scene(Stack, local);
+        var sections = new[] { s.ById("s1")!, s.ById("s2")!, s.ById("s3")! };
+        var order = PanelAccordions.Dropped(sections, sections[0], 2);
+        Assert.Equal(new[] { "s2", "s1", "s3" }, order.Select(x => x.Element!.Get("id")));
+        Assert.Equal(new[] { "s3", "s1", "s2" }, PanelAccordions.Dropped(sections, sections[2], 0).Select(x => x.Element!.Get("id")));
+        local[PanelAccordions.Order + PanelScene.Key(s.ById("a")!.Path!)] = string.Join(" ", order.Select(x => PanelScene.Key(x.Path!)));
+        var again = Scene(Stack, local);
+        Assert.Equal(new[] { "s2", "s1", "s3" }, again.ById("a")!.Children.Where(c => c.Tag == PanelAccordions.Section).Select(c => c.Element!.Get("id")));
+        Assert.True(again.Screen(again.ById("s2")!).Y < again.Screen(again.ById("s1")!).Y);
+    }
 }

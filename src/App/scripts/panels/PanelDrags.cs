@@ -112,18 +112,24 @@ sealed partial class PanelView
 
     void DragElement(DragState d, Vector2 at, bool first)
     {
-        if (first) Fire(d.Box, "onBeginDrag", "");
+        if (first)
+        {
+            Fire(d.Box, "onBeginDrag", "");
+            if (Reorders(d.Box)) SectionBegin(d);
+        }
         var scale = d.Node.GetGlobalTransform().Scale;
         var to = d.Home + (at - d.From) / new Vector2(Mathf.Max(Micro, Mathf.Abs(scale.X)), Mathf.Max(Micro, Mathf.Abs(scale.Y)));
         bool inside = !d.Box.Extra.TryGetValue("restrictdraggingtoparentbounds", out var r) || PanelValues.Bool(r);
         if (inside && d.Node.GetParentControl() is { } parent)
             to = new Vector2(Mathf.Clamp(to.X, 0, Mathf.Max(0, parent.Size.X - d.Node.Size.X)), Mathf.Clamp(to.Y, 0, Mathf.Max(0, parent.Size.Y - d.Node.Size.Y)));
         d.Node.Position = to;
+        if (Reorders(d.Box)) SectionMove(d, at);
         Fire(d.Box, "onDrag", "");
     }
 
     void EndDrag(DragState d)
     {
+        if (Reorders(d.Box)) SectionEnd(d);
         bool home = !d.Box.Extra.TryGetValue("returntooriginalpositionwhenreleased", out var r) || PanelValues.Bool(r);
         if (home && GodotObject.IsInstanceValid(d.Node)) d.Node.Position = d.Home;
         Fire(d.Box, "onEndDrag", "");
