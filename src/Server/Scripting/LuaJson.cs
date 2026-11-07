@@ -54,23 +54,24 @@ internal static class LuaJson
         sb.Append('"');
         foreach (var c in s)
         {
-            switch (c)
-            {
-                case '"': sb.Append("\\\""); break;
-                case '\\': sb.Append("\\\\"); break;
-                case '\n': sb.Append("\\n"); break;
-                case '\r': sb.Append("\\r"); break;
-                case '\t': sb.Append("\\t"); break;
-                case '\b': sb.Append("\\b"); break;
-                case '\f': sb.Append("\\f"); break;
-                default:
-                    if (char.IsControl(c)) sb.Append("\\u").Append(((int)c).ToString("x4", CultureInfo.InvariantCulture));
-                    else sb.Append(c);
-                    break;
-            }
+            if (Escape(c) is { } e) sb.Append(e);
+            else if (char.IsControl(c)) sb.Append("\\u").Append(((int)c).ToString("x4", CultureInfo.InvariantCulture));
+            else sb.Append(c);
         }
         sb.Append('"');
     }
+
+    static string? Escape(char c) => c switch
+    {
+        '"' => "\\\"",
+        '\\' => "\\\\",
+        '\n' => "\\n",
+        '\r' => "\\r",
+        '\t' => "\\t",
+        '\b' => "\\b",
+        '\f' => "\\f",
+        _ => null,
+    };
 
     static void WriteTable(StringBuilder sb, Table t, HashSet<Table> parents, bool pretty, string indent)
     {

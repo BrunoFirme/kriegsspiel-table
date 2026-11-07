@@ -68,22 +68,34 @@ internal sealed class JsonReader(Script vm, string text)
         {
             char c = text[i];
             if (c == '"') return (sb.ToString(), i + 1);
-            if (c != '\\') { sb.Append(c); i++; continue; }
+            if (c != '\\')
+            {
+                sb.Append(c);
+                i++;
+                continue;
+            }
             if (i + 1 >= text.Length) break;
             char e = text[i + 1];
-            switch (e)
+            if (e == 'u' && Hex(i + 2) is { } code)
             {
-                case 'b': sb.Append('\b'); i += 2; break;
-                case 'f': sb.Append('\f'); i += 2; break;
-                case 'n': sb.Append('\n'); i += 2; break;
-                case 'r': sb.Append('\r'); i += 2; break;
-                case 't': sb.Append('\t'); i += 2; break;
-                case 'u' when Hex(i + 2) is { } code: i = Unicode(sb, code, i + 2 + HexDigits); break;
-                default: sb.Append(e); i += 2; break;
+                i = Unicode(sb, code, i + 2 + HexDigits);
+                continue;
             }
+            sb.Append(Unescape(e));
+            i += 2;
         }
         throw Fail("found unclosed string");
     }
+
+    static char Unescape(char e) => e switch
+    {
+        'b' => '\b',
+        'f' => '\f',
+        'n' => '\n',
+        'r' => '\r',
+        't' => '\t',
+        _ => e,
+    };
 
     int? Hex(int at)
     {
