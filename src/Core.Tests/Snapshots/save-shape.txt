@@ -583,6 +583,8 @@ type PieceDef object
   kind: string
   localUnit: Size2?
   mesh: string
+  moduleTags: List<string>
+  moduleType: string
   name: string
   nameBox: FaceBox
   normal: string
@@ -595,6 +597,7 @@ type PieceDef object
   shape: string
   shine: ShineDef
   size: Size2
+  sources: Dictionary<string,string>
   states: List<PieceStateDef>
   tags: List<string>
   textLines: List<TextLineDef>

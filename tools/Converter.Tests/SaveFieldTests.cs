@@ -453,6 +453,28 @@ public sealed class SaveFieldTests : ConverterHarness
         Assert.Equal(("kriegs", 3, -2), (o.PdfPassword, o.PdfPage, o.PdfPageOffset));
     }
 
+    [Fact]
+    public void A_kind_keeps_the_module_type_its_own_tags_and_the_links_it_was_made_from()
+    {
+        var cfg = TempConfig();
+        LocalPicture(cfg, "http://a/front.png", 8, 8, (_, _) => SKColors.White);
+        LocalPicture(cfg, "http://a/back.png", 8, 8, (_, _) => SKColors.Black);
+        var rep = new Report();
+        var defs = new DefFactory(cfg, new AssetStore(cfg, rep), rep);
+        var pack = new PackOut(cfg.Output, "t", "T", "t", null);
+        var tile = Obj("Custom_Tile", "", 1, new JsonObject
+        {
+            ["Tags"] = new JsonArray("Infantry"), ["CustomImage"] = new JsonObject { ["ImageURL"] = "http://a/front.png", ["ImageSecondaryURL"] = "http://a/back.png" },
+        });
+
+        var def = defs.DefFor(new ModuleObj(tile), pack)!.Def;
+
+        Assert.Equal("Custom_Tile", def.ModuleType);
+        Assert.Equal(new[] { "Infantry" }, def.ModuleTags);
+        Assert.Equal(new Dictionary<string, string> { ["ImageURL"] = "http://a/front.png", ["ImageSecondaryURL"] = "http://a/back.png" }, def.Sources);
+        Assert.Contains("tile", def.Tags);
+    }
+
     static byte[] TwoPagePdf(double w1, double h1, double w2, double h2)
     {
         var inv = System.Globalization.CultureInfo.InvariantCulture;
