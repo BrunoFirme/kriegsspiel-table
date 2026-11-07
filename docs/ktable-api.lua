@@ -596,7 +596,7 @@ function game.fetch_picture(link, fn) end
 ui = {}
 
 ---Replaces the panels: XML (several roots allowed) or a list of tables { tag =, attributes = {}, children = {}, value = }. They land on the next frame.
----@param xml_or_list string|UiNode[] XML, or a list of element tables; a single table that is not a list is refused, as the tabletop refuses it.
+---@param xml_or_list string|UiNode[] XML, or a list of element tables; a single table that is not a list is refused.
 ---@param pictures? table { name =, url = } entries, as ui.set_pictures takes, set at once.
 ---@return boolean # true when the panels were taken; false for nil or a table that is not a list.
 function ui.set(xml_or_list, pictures) end
@@ -612,7 +612,7 @@ function ui.tree() end
 ---Changes one attribute of an element; it lands when the call ends.
 ---@param id string The element's id, in any letter case.
 ---@param name string The attribute, as in the XML (text, color, active, percentage…). class changes only what ui.xml gives back: use ui.set_class.
----@param value string|number|boolean The value; true and false are written True and False, as the tabletop writes them.
+---@param value string|number|boolean The value; true and false are written True and False.
 ---@return boolean # true when the element is there now and both name and value are given.
 function ui.set_attribute(id, name, value) end
 

@@ -21,15 +21,20 @@ You get:
 |---|---|
 | Tiles, tokens, boards, 3D models | Physics, hands, hidden zones, grid, lighting, turns (listed in the report) |
 | Cards, and decks as piles | Infinite bags (place pieces from the Pieces drawer) |
-| Checkers, and six-sided picture dice | |
+| Checkers, and picture dice of 4, 6, 8, 10, 12 and 20 sides | |
 | Bags, as boxes, chests and crates holding their contents | |
 | States (formation, shattered…) | The module's plain dice (use the app's) |
 | IKS script counters and text | |
 | Notecards, Notes and Notebook pages, as note cards you can type into | |
 | PDFs, as books: every page comes over, and double-clicking one at the table opens it to read | Cards dealt by script (listed in the report) |
 | Tints, names, attached markers, locks, face down | |
+| Figurines, their picture standing in a round base | |
+| Glued parts, as part of their piece in every look | |
+| Mirrored and tilted pieces, as the module left them | |
+| Stacks of chips, tiles or tokens, as that many pieces | |
+| 3D text, as lettering on its piece | |
 | Asset-bundle effects (smoke, fire, gun fire, mist, rain), as the closest of Firme's Effects | |
-| Lua scripts and XML panels, translated | |
+| Lua scripts, translated, and XML panels, in the fonts they name | |
 | Decals, the module's own and those stamped on the table, and the pictures scripts set from web links | |
 | Locked text and images (Lock text, Lock images) | |
 

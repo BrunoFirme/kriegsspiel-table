@@ -48,7 +48,7 @@ public sealed partial class ScenarioBuilder
         layout = built;
         if (built.Broken != null)
         {
-            _rep.Note($"{where}: the module's panels do not build in the tabletop either ({built.Broken}), so they come over as the tabletop shows them: not at all.");
+            _rep.Note($"{where}: the module's panels do not build in its digital tabletop either ({built.Broken}), so none come over.");
             return new();
         }
         return PanelData.Parse(xml) ?? new();

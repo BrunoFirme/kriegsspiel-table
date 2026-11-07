@@ -2540,7 +2540,7 @@ Replaces the panels: XML (several roots allowed) or a list of tables { tag =, at
 
 | Parameter | Type | Description |
 |---|---|---|
-| `xml_or_list` | `string\|UiNode[]` | XML, or a list of element tables; a single table that is not a list is refused, as the tabletop refuses it. |
+| `xml_or_list` | `string\|UiNode[]` | XML, or a list of element tables; a single table that is not a list is refused. |
 | `pictures` | `table` | _Optional._ { name =, url = } entries, as `ui.set_pictures` takes, set at once. |
 
 **Returns** `boolean`: true when the panels were taken; false for nil or a table that is not a list.
@@ -2591,7 +2591,7 @@ Changes one attribute of an element; it lands when the call ends.
 |---|---|---|
 | `id` | `string` | The element's id, in any letter case. |
 | `name` | `string` | The attribute, as in the XML (`text`, `color`, `active`, `percentage`…). `class` changes only what `ui.xml` gives back: use `ui.set_class`. |
-| `value` | `string\|number\|boolean` | The value; true and false are written True and False, as the tabletop writes them. |
+| `value` | `string\|number\|boolean` | The value; true and false are written True and False. |
 
 **Returns** `boolean`: true when the element is there now and both name and value are given.
 

@@ -358,10 +358,14 @@ gives each direct match.
 - **Vector and Color:** the module classes come over whole: every method and operator, `v[1]`, named colours, `Color.fromString`,
   `fromHex` and `toHex`; `getColorTint()` answers a Color. The colour and table helpers (`hexToColor`, `copyLuaTable`, `getGlobalVar`…),
   the script state calls and the tag calls run through `compat` too.
-- **Panels, dice, books, notes, text, effects:** a save's own XML panels and a piece's come over with the pictures they
-  name; a die's sides answer `getValue`, `setRotationValues` and `randomize`; a book turns by `Book.setPage`; `Notes`
+- **Panels, dice, books, notes, text, effects:** a save's own XML panels and a piece's come over with the pictures and fonts they
+  name, with their layouts, scrolling, dropdowns and inputs; a die's sides answer `getValue`, `setRotationValues` and `randomize`; a book turns by `Book.setPage`; `Notes`
   reads and writes the note cards the module's notes became; 3D text answers `TextTool`; an effect answers `AssetBundle`
   as one looping effect. A picture link a script builds while it runs is fetched by the host and shown on the piece.
+- **The engine:** each object's script keeps its own Lua state, so a helper one adds to `string` or `table` stays in it.
+  Every script is asked about a player action and any one can refuse it (`onPlayerAction`); `Physics.cast` sweeps
+  against the pieces' bounds, `setPositionSmooth` glides on every screen, `highlightOn` rings the piece, and
+  `getLuaScript` answers the translated script the piece runs.
 - **Noted:** calls with no meaning here (`addForce`, dealing cards, scripting zones) become `compat.todo(...)`, which prints once;
   the import report names each under "Not taken from the module exactly".
 

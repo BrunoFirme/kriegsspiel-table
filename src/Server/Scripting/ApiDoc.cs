@@ -837,7 +837,7 @@ public static partial class ApiDoc
     {
         M("ui", "set(xml_or_list, pictures)", "Replaces the panels: XML (several roots allowed) or a list of tables { tag =, attributes = {}, children = {}, value = }. They land on the next frame.",
             "UI.setXml", "boolean");
-        P("xml_or_list", "string|UiNode[]", "XML, or a list of element tables; a single table that is not a list is refused, as the tabletop refuses it.");
+        P("xml_or_list", "string|UiNode[]", "XML, or a list of element tables; a single table that is not a list is refused.");
         O("pictures", "table", "{ name =, url = } entries, as `ui.set_pictures` takes, set at once.");
         R("true when the panels were taken; false for nil or a table that is not a list.");
         X("""
@@ -858,7 +858,7 @@ public static partial class ApiDoc
         M("ui", "set_attribute(id, name, value)", "Changes one attribute of an element; it lands when the call ends.", "UI.setAttribute", "boolean");
         P("id", "string", "The element's id, in any letter case.");
         P("name", "string", "The attribute, as in the XML (`text`, `color`, `active`, `percentage`…). `class` changes only what `ui.xml` gives back: use `ui.set_class`.");
-        P("value", "string|number|boolean", "The value; true and false are written True and False, as the tabletop writes them.");
+        P("value", "string|number|boolean", "The value; true and false are written True and False.");
         R("true when the element is there now and both name and value are given.");
         X("""ui.set_attribute("time", "text", game.time:sub(12, 16))""");
         See("ui.set_attributes", "ui.get_attribute");
