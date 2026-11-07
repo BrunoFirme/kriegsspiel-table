@@ -16,15 +16,15 @@ internal sealed partial class PanelQueue
     {
         var layout = e.Piece == null ? State.UiLayout : State.Find(e.Layer ?? Layers.Umpire, e.Piece)?.UiLayout;
         if (layout == null) return;
-        var element = e.Path is { Count: > 0 } path ? layout.At(path) : layout.ById(e.Id);
-        if (element == null) return;
+        var element = e.Path is { Count: > 0 } path ? layout.At(path) : layout.ById(e.Id ?? "");
+        if (element == null || string.IsNullOrEmpty(e.Event)) return;
         var ev = UiEventName(e.Event);
         var handler = element.Get(ev);
         if (string.IsNullOrEmpty(handler)) return;
         var parts = handler.Trim(')', ';').Split(',', '(');
         var method = parts[0];
         var custom = parts.Length > 1 ? parts[1] : null;
-        var value = UiEventValue(element, ev, custom, e.Value);
+        var value = UiEventValue(element, ev, custom, e.Value ?? "");
         var (ps, fn) = UiHandlerOwner(e.Piece, method);
         if (ps == null) return;
         var id = element.Get("id");

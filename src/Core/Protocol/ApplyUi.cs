@@ -56,6 +56,7 @@ public static partial class StateMachine
     {
         var data = g.UiRoot(sua.Layer, sua.Piece);
         if (data == null) return "no such piece";
+        if (sua.Id == null || sua.Attributes == null) return "no such element";
         var piece = sua.Piece == null ? null : g.Find(sua.Layer ?? Layers.Umpire, sua.Piece);
         var layout = piece == null ? g.UiLayout : piece.UiLayout;
         if (sua.Kind == null) return Legacy(data, layout, sua, ref inverse);

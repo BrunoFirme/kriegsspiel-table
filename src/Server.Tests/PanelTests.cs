@@ -374,4 +374,14 @@ public class PanelTests
         t.Server.Handle(Table.Ump3, new Say { Text = "go" });
         Assert.Contains(Said(t), s => s.Text == "Panel|nil|4|1|Text|Hi|t|0");
     }
+
+    [Fact]
+    public void A_panel_event_with_no_id_or_name_is_passed_over()
+    {
+        using var t = Global("function on_load(s) ui.set('<Button id=\"b\" onClick=\"go\">Go</Button>') end function go() game.say('went') end");
+        t.Server.Handle(Table.Ump3, new UiEvent { Id = null!, Event = null!, Value = null! });
+        t.Server.Handle(Table.Ump3, new UiEvent { Id = "b", Event = null!, Value = null! });
+        t.Server.Handle(Table.Ump3, new UiEvent { Path = new() { 7, 3 }, Event = "onClick", Value = "-1" });
+        Assert.DoesNotContain(Said(t), s => s.Text.StartsWith("Script error") || s.Text == "went");
+    }
 }
