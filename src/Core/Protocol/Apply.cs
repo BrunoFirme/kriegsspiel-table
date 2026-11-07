@@ -60,8 +60,7 @@ public static partial class StateMachine
             case SetPicture sp2: return ApplySetPicture(g, sp2, ref inverse);
             case SetGrid sg: return ApplySetGrid(g, sg, ref inverse);
             case SetCalibration cal: return ApplySetCalibration(g, cal, ref inverse);
-            case PublishSighting:
-                return null;
+            case PublishSighting: return null;
             case AddPack ap: return ApplyAddPack(g, ap);
             case SetZone sz: return ApplySetZone(g, sz, ref inverse);
             case RemoveZone rz: return ApplyRemoveZone(g, rz, ref inverse);
@@ -89,6 +88,7 @@ public static partial class StateMachine
             case ShowContents sc: return Present(g, sc.Layer, sc.Id);
             case PlayEffect pe: return Present(g, pe.Layer, pe.Id);
             case GlidePiece gp: return Present(g, gp.Layer, gp.Id);
+            case ShowCast sc2: return sc2.Problem();
             case PickMenuItem pm: return Present(g, pm.Layer, pm.Id);
             case HoldPiece hp: return Present(g, hp.Layer, hp.Id);
             case Say: return null;

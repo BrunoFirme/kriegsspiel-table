@@ -238,6 +238,16 @@
   umpires:     it it it
   reloads:     
   undo stack:  no
+== ShowCast
+  sent by:     Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  in a batch:  Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  zone:        all inside=ok; Shape-x outside=ok
+  zone, none of mine: all inside=ok; Shape-x outside=ok
+  observer:    nothing
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  no
 == SetPieceOption
   sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
   in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
@@ -1144,6 +1154,16 @@
   zone:        all inside=ok;  outside=outside your umpire zone; To outside=ok; on another layer, all outside=ok
   zone, none of mine: all inside=no zone on the umpire board has been assigned to you;  outside=no zone on the umpire board has been assigned to you; To outside=no zone on the umpire board has been assigned to you; on another layer, all outside=ok
   observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  no
+== ShowCast (empty)
+  sent by:     Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  in a batch:  Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
+  zone:        all inside=ok; ray outside=ok
+  zone, none of mine: all inside=ok; ray outside=ok
+  observer:    nothing
   stranger:    nothing
   umpires:     it it it
   reloads:     

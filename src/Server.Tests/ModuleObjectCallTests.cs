@@ -980,6 +980,56 @@ public class ModuleObjectCallTests
     }
 
     [Fact]
+    public void A_cast_finds_the_pieces_its_ray_sphere_or_box_meets_nearest_first_with_where_and_how_far()
+    {
+        using var t = new Table();
+        t.Store.RegisterDef(new PackManifest { Id = "testpack" }, new PieceDef { Id = "sq", Name = "Square", Size = new Size2(2, 2) });
+        t.Store.RegisterDef(new PackManifest { Id = "testpack" }, new PieceDef { Id = "bar", Name = "Bar", Size = new Size2(4, 1) });
+        t.Server.Handle(Table.Host, new SpawnPiece { Layer = U, Def = "sq", Id = "p-000080", Pos = new(50, 0) });
+        t.Server.Handle(Table.Host, new SpawnPiece { Layer = U, Def = "sq", Id = "p-000081", Pos = new(60, 0) });
+        t.Server.Handle(Table.Host, new SpawnPiece { Layer = U, Def = "bar", Id = "p-000082", Pos = new(80, 30), RotDeg = 45 });
+        var label = Run(t, """
+            local function say(hits)
+              local out = {}
+              for _, h in ipairs(hits) do
+                out[#out + 1] = string.format('%s@%.3f(%.2f,%.2f,%.2f)n(%.0f,%.0f,%.0f)', h.hit_object.getGUID():sub(-2), h.distance, h.point.x + 0, h.point.y + 0, h.point.z + 0, h.normal.x + 0, h.normal.y + 0, h.normal.z + 0)
+              end
+              return table.concat(out, ' ')
+            end
+            function onLoad()
+              local r = {
+                say(Physics.cast({ origin = { 50, 5, 0 }, direction = { 0, -1, 0 } })),
+                say(Physics.cast({ origin = { 40, 0, 0 }, direction = { 1, 0, 0 } })),
+                say(Physics.cast({ origin = { 40, 0, 0 }, direction = { 1, 0, 0 }, max_distance = 15 })),
+                say(Physics.cast({ origin = { 50, 0, 0 }, direction = { 1, 0, 0 }, max_distance = 5 })),
+                say(Physics.cast({ origin = { 50, 5, 0 }, direction = { 0, -1, 0 }, type = 2, size = { 2, 2, 2 } })),
+                say(Physics.cast({ origin = { 60, 0, 10 }, direction = { 0, 0, -1 }, type = 3, size = { 1, 1, 1 } })),
+                say(Physics.cast({ origin = { 50, 0, 0 }, direction = { 0, 1, 0 }, type = 3, size = { 1, 1, 1 }, max_distance = 0 })),
+                say(Physics.cast({ origin = { 70, 0, 30 }, direction = { 1, 0, 0 } })),
+                tostring(#Physics.cast({ origin = { 50, 5, 0 } })),
+                tostring(#Physics.cast({ origin = { 50, 5, 0 }, direction = { 0, -1, 0 }, debug = true })),
+              }
+              self.setName(table.concat(r, '|'))
+            end
+            """);
+        Assert.Equal(string.Join("|",
+            "80@4.900(50.00,0.10,0.00)n(0,1,0)",
+            "80@9.000(49.00,0.00,0.00)n(-1,0,0) 81@19.000(59.00,0.00,0.00)n(-1,0,0)",
+            "80@9.000(49.00,0.00,0.00)n(-1,0,0)",
+            "",
+            "80@3.900(50.00,0.10,0.00)n(0,1,0)",
+            "81@8.500(60.00,0.00,1.00)n(0,0,1)",
+            "80@0.000(0.00,0.00,0.00)n(0,-1,0)",
+            "82@9.293(79.29,0.00,30.00)n(-1,0,-1)",
+            "0", "1"), label);
+        var cast = Assert.Single(Flat(t.Server.Log).OfType<ShowCast>());
+        Assert.Equal("ray", cast.Shape);
+        Assert.Equal([50.0, 5, 0], cast.From);
+        Assert.Equal([50.0, 5 - 1000, 0], cast.To);
+        Assert.Equal(25, cast.Seconds, 6);
+    }
+
+    [Fact]
     public void Selecting_players_are_the_seated_colours_whose_selection_holds_the_piece()
     {
         using var t = new Table();

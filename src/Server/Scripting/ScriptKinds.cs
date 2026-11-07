@@ -110,6 +110,30 @@ internal sealed partial class PieceHandles
         return DynValue.True;
     }
 
+    internal DynValue ShowCastOf(DynValue spec)
+    {
+        if (spec.Type != DataType.Table) return DynValue.False;
+        var t = spec.Table;
+        var cast = new ShowCast
+        {
+            Shape = t.Get("shape").CastToString() ?? "ray", From = Point(t.Get("from")), To = Point(t.Get("to")), Size = Point(t.Get("size")), Turn = Point(t.Get("turn")),
+            Seconds = t.Get("seconds").CastToNumber() ?? 1,
+        };
+        if (cast.Problem() is { } why) throw new ScriptRuntimeException("show_cast: " + why);
+        host.Emit(cast);
+        return DynValue.True;
+    }
+
+    static readonly string[] PointKeys = ["x", "y", "z"];
+
+    static double[] Point(DynValue v)
+    {
+        var p = new double[ShowCast.Axes];
+        if (v.Type != DataType.Table) return p;
+        for (int i = 0; i < PointKeys.Length; i++) p[i] = (v.Table.Get(PointKeys[i]).CastToNumber() ?? v.Table.Get(i + 1).CastToNumber()) ?? 0;
+        return p;
+    }
+
     DynValue KindTable(PieceDef def)
     {
         var k = T();

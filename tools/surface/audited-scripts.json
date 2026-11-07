@@ -246,7 +246,8 @@
   "Notes.editNotebookTab": "ModuleObjectCallTests.Notebook_tabs_need_a_title_adding_one_answers_the_new_count_and_notes_refuse_nil",
   "Notes.removeNotebookTab": "BookNotesScriptTests.A_module_script_reads_and_writes_the_notes_and_notebook_tabs_on_the_note_cards",
   "Global.setVectorLines": "ModuleObjectCallTests.Object_lists_tag_lists_seat_names_and_world_lines_answer_as_the_tabletop_does",
-  "Time.fixed_time": "ModuleObjectCallTests.Object_lists_tag_lists_seat_names_and_world_lines_answer_as_the_tabletop_does"
+  "Time.fixed_time": "ModuleObjectCallTests.Object_lists_tag_lists_seat_names_and_world_lines_answer_as_the_tabletop_does",
+  "Physics.cast": "ModuleObjectCallTests.A_cast_finds_the_pieces_its_ray_sphere_or_box_meets_nearest_first_with_where_and_how_far"
  },
  "engine": {
   "Lua table to vector, colour and params and back (positional and named)": "ModuleObjectCallTests.A_vector_argument_takes_x_y_z_names_first_then_three_numbers_then_two_and_otherwise_fails; ModuleObjectCallTests.A_colour_argument_takes_a_seat_name_exactly_or_r_g_b_and_alpha_defaults_to_one; ModuleObjectCallTests.A_piece_that_is_not_a_bag_counts_minus_one_lists_nothing_and_takes_nothing_in",

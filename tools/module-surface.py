@@ -307,9 +307,15 @@ def converter_reads():
 
 
 def compat_functions():
-    if not os.path.exists(COMPAT):
+    folder = os.path.dirname(COMPAT)
+    if not os.path.isdir(folder):
         return set()
-    return set(re.findall(r"^function compat\.([A-Za-z_][A-Za-z0-9_.]*)", open(COMPAT, encoding="utf-8-sig").read(), re.M))
+    found = set()
+    for name in sorted(os.listdir(folder)):
+        if name.startswith("compat") and name.endswith(".lua"):
+            text = open(os.path.join(folder, name), encoding="utf-8-sig").read()
+            found |= set(re.findall(r"^function compat\.([A-Za-z_][A-Za-z0-9_.]*)", text, re.M))
+    return found
 
 
 def decision(row, decided):

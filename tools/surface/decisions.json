@@ -422,7 +422,7 @@
   "Global.getVectorLines": ["compat", "compat.global_vector_lines: the lines the script last set", "", "BoardDrawingTests"],
   "Global.setVectorLines": ["compat", "compat.set_global_vector_lines: strokes on the umpire's drawing board through board.draw", "", "BoardDrawingTests"],
   "Physics.*": ["dropped", "engine physics", "nothing is needed"],
-  "Physics.cast": ["compat", "compat.cast", ""],
+  "Physics.cast": ["compat", "compat.cast: rays, spheres and boxes against each piece's bounds, nearest first; debug shows the sweep on umpires' screens", ""],
   "Player.*": ["partial", "compat.player: the seats and colours we have; item 8 maps the rest", ""],
   "UI.*": ["partial", "run-time UI through ui.*: the attributes a player sees; item 8", ""],
   "JSON.*": ["native", "json.encode / json.decode", ""],

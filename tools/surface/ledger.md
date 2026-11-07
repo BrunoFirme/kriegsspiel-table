@@ -16,7 +16,7 @@ every row that is not dropped must end audited, used by the corpus or not.
 | save | 150 | 150 | 0 | 0 | 302 |
 | object | 65 | 65 | 0 | 3 | 260 |
 | global | 16 | 16 | 0 | 1 | 63 |
-| namespaces | 23 | 23 | 0 | 1 | 180 |
+| namespaces | 23 | 23 | 0 | 0 | 180 |
 | events | 8 | 8 | 0 | 0 | 52 |
 | engine | 23 | 23 | 0 | 0 | 23 |
 
@@ -732,7 +732,7 @@ every row that is not dropped must end audited, used by the corpus or not.
 | `UI.getAttribute` | 2 / 2 | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) | PanelTests.Attributes_read_the_live_element_with_its_defaults_and_values_read_the_written_panels; PanelModelTests.Attribute_names_match_in_any_case_but_data_ids_match_exactly |
 | `Global.getVectorLines` | 3 / 1 | compat | compat.global_vector_lines: the lines the script last set | BoardDrawingTests | ModuleObjectCallTests.Plain_reads_and_small_calls_answer_as_the_tabletop_does |
 | `Global.setVectorLines` | 3 / 1 | compat | compat.set_global_vector_lines: strokes on the umpire's drawing board through board.draw | BoardDrawingTests | ModuleObjectCallTests.Object_lists_tag_lists_seat_names_and_world_lines_answer_as_the_tabletop_does |
-| `Physics.cast` | 1 / 1 | compat | compat.cast |  |  |
+| `Physics.cast` | 1 / 1 | compat | compat.cast: rays, spheres and boxes against each piece's bounds, nearest first; debug shows the sweep on umpires' screens |  | ModuleObjectCallTests.A_cast_finds_the_pieces_its_ray_sphere_or_box_meets_nearest_first_with_where_and_how_far |
 | `Timer.create` | 1 / 1 | compat | compat.Timer |  | ModuleObjectCallTests.A_timer_calls_the_named_function_of_the_script_that_made_it_and_refuses_a_name_in_use |
 | `Timer.destroy` | 1 / 1 | compat | compat.Timer |  | ModuleObjectCallTests.A_timer_calls_the_named_function_of_the_script_that_made_it_and_refuses_a_name_in_use; TranslatorTests.A_repeating_wait_stops_when_told_and_a_condition_times_out |
 | `Backgrounds.getBackground` | - | dropped | the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06) |  |  |

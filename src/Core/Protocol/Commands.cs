@@ -28,6 +28,7 @@ namespace KTable.Core.Protocol;
 [JsonDerivedType(typeof(SetBookHighlight), "SetBookHighlight")]
 [JsonDerivedType(typeof(PlayEffect), "PlayEffect")]
 [JsonDerivedType(typeof(GlidePiece), "GlidePiece")]
+[JsonDerivedType(typeof(ShowCast), "ShowCast")]
 [JsonDerivedType(typeof(SetPieceOption), "SetPieceOption")]
 [JsonDerivedType(typeof(SetPointerRule), "SetPointerRule")]
 [JsonDerivedType(typeof(SetBriefing), "SetBriefing")]
@@ -400,6 +401,32 @@ public sealed class GlidePiece : LayerCommand
     public override IEnumerable<(string Layer, string Id)> ZonePieces() => [(Layer, Id)];
     public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [];
     public override IEnumerable<string> ScriptsToReload() => [];
+}
+
+public sealed class ShowCast : Command
+{
+    public const int Axes = 3;
+    public const double MostSeconds = 60;
+    public static readonly string[] Shapes = ["ray", "sphere", "box"];
+    public string Shape { get; set; } = "ray";
+    public double[] From { get; set; } = [0, 0, 0];
+    public double[] To { get; set; } = [0, 0, 0];
+    public double[] Size { get; set; } = [0, 0, 0];
+    public double[] Turn { get; set; } = [0, 0, 0];
+    public double Seconds { get; set; } = 1;
+    public override Sender SentBy() => Sender.Runtime;
+    public override bool OnUndoStack() => false;
+    public override Shown ShownToObservers() => Shown.UmpiresOnly;
+    public override IEnumerable<(string Layer, string Id)> ZonePieces() => [];
+    public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [];
+    public override IEnumerable<string> ScriptsToReload() => [];
+
+    public string? Problem()
+    {
+        if (!Shapes.Contains(Shape)) return "a cast is a ray, a sphere or a box";
+        if (new[] { From, To, Size, Turn }.Any(v => v is not { Length: Axes } || v.Any(x => !double.IsFinite(x)))) return "a cast's points are three numbers each";
+        return double.IsFinite(Seconds) && Seconds > 0 && Seconds <= MostSeconds ? null : "a cast is shown for a few seconds";
+    }
 }
 
 public sealed class SetLocked : LayerCommand

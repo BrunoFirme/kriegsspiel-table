@@ -168,6 +168,7 @@ type Command abstract
   derived SetWind = SetWind
   derived SetWorth = SetWorth
   derived SetZone = SetZone
+  derived ShowCast = ShowCast
   derived ShowContents = ShowContents
   derived ShowDialog = ShowDialog
   derived SpawnPiece = SpawnPiece
@@ -1253,6 +1254,17 @@ type ShineDef object
   rim: double
   sharpness: double
   strength: double
+type ShowCast object
+  actor: long
+  at: long
+  from: double[]
+  seconds: double
+  seq: long
+  shape: string
+  size: double[]
+  to: double[]
+  turn: double[]
+  undoOf: long
 type ShowContents object
   actor: long
   at: long

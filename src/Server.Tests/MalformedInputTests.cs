@@ -521,6 +521,7 @@ public class MalformedInputTests
     [InlineData("SetBookHighlight")]
     [InlineData("PlayEffect")]
     [InlineData("GlidePiece")]
+    [InlineData("ShowCast")]
     [InlineData("SetPieceOption")]
     [InlineData("SetPointerRule")]
     [InlineData("SetBriefing")]

@@ -6891,12 +6891,12 @@
   {
    "row": "Physics.cast",
    "status": "compat",
-   "where": "compat.cast",
+   "where": "compat.cast: rays, spheres and boxes against each piece's bounds, nearest first; debug shows the sweep on umpires' screens",
    "instead": "",
    "held_by": "",
    "count": 1,
    "modules": 1,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.A_cast_finds_the_pieces_its_ray_sphere_or_box_meets_nearest_first_with_where_and_how_far"
   },
   {
    "row": "Timer.create",

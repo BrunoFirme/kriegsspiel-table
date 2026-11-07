@@ -74,6 +74,7 @@ public static class CoreSamples
         yield return new PlayEffect { Layer = layer, Id = "p-000001", Index = 1 };
         yield return new ShowContents { Layer = layer, Id = "p-000001", To = "p:7", Most = 2 };
         yield return new GlidePiece { Layer = layer, Id = "p-000001", To = new Vec2(2, 3), Rot = 90, Fast = true };
+        yield return new ShowCast { Shape = "sphere", From = [0, 1, 0], To = [0, 1, 5], Size = [2, 2, 2], Seconds = 0.5 };
     }
 
     public static IEnumerable<Command> AllCommands()

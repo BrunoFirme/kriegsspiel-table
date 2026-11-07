@@ -91,6 +91,7 @@ SetWidgets layer | allowed O:n U:n L:n H:n | in-batch O:n U:n L:n H:n | observer
 SetWind table | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone - | apply ok inverse:SetWind | undo-reloads -
 SetWorth layer | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone Id | apply ok inverse:SetWorth | undo-reloads -
 SetZone table | allowed O:n U:n L:y H:y | in-batch O:n U:n L:y H:y | observer drop | zone - | apply ok inverse:RemoveZone | undo-reloads -
+ShowCast table | allowed O:n U:n L:n H:n | in-batch O:n U:n L:n H:n | observer drop | zone - | apply refused:a_cast_is_a_ray,_a_sphere_or_a_box | undo-reloads -
 ShowContents table | allowed O:n U:n L:n H:n | in-batch O:n U:n L:n H:n | observer drop | zone - | apply refused:no_such_piece | undo-reloads -
 ShowDialog table | allowed O:n U:n L:n H:n | in-batch O:n U:n L:n H:n | observer drop | zone - | apply ok inverse:none | undo-reloads -
 ShowDialog(to=other) table | allowed O:n U:n L:n H:n | in-batch O:n U:n L:n H:n | observer drop | zone - | apply ok inverse:none | undo-reloads -

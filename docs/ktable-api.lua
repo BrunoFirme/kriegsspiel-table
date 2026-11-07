@@ -99,6 +99,14 @@
 ---@field tag? string Only pieces with this tag (their own, or their kind's).
 ---@field name? string Only pieces with this label; case does not matter.
 
+---@class BoardShowcastSpec
+---@field shape? string "ray", "sphere" or "box"; a ray by default.
+---@field from { x, y, z } Where it starts.
+---@field to { x, y, z } Where it ends.
+---@field size? { x, y, z } The sphere's width or the box's size.
+---@field turn? { x, y, z } The box's turn in degrees.
+---@field seconds? number How long it takes, at most 60; 1 by default.
+
 ---@class BoardKindsOptions
 ---@field link? string Only kinds made from this picture or model link (one of their source links).
 ---@field type? string Only kinds converted from this module object type, such as Custom_Token.
@@ -450,6 +458,10 @@ function board.find(id_or_guid) end
 ---@param filter? BoardPiecesOptions
 ---@return Piece[] # A list; empty when nothing matches. Every field given must match.
 function board.pieces(filter) end
+
+---Shows a see-through ray, sphere or box sliding from one point to another on every umpire's screen, to check where a script is looking.
+---@param spec BoardShowcastSpec
+function board.show_cast(spec) end
 
 ---The kinds this game's packs hold, or those that match { link =, type =, tag = }: { id =, name =, tags =, source = }.
 ---@param filter? BoardKindsOptions

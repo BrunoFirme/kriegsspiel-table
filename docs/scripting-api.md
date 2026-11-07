@@ -1930,6 +1930,7 @@ The umpire board: every piece a script can reach is on it.
 |---|---|
 | [`board.find`](#boardfind) | The piece with that id or module GUID, or nil. |
 | [`board.pieces`](#boardpieces) | Every piece, or those that match { def =, tag =, name = }. |
+| [`board.show_cast`](#boardshow_cast) | Shows a see-through ray, sphere or box sliding from one point to another on every umpire's screen, to check where a script is looking. |
 | [`board.kinds`](#boardkinds) | The kinds this game's packs hold, or those that match { link =, type =, tag = }: { id =, name =, tags =, source = }. |
 | [`board.spawn`](#boardspawn) | Puts a new piece of that kind on the board and returns it; its script starts at once. |
 | [`board.distance`](#boarddistance) | Metres between two pieces or two { x =, z = } points by the map's scale (map units when it has none). |
@@ -1982,6 +1983,27 @@ end
 ```
 
 **Module call** `getObjects` · **See also** [`board.find`](#boardfind), [`self.tags`](#selftags)
+
+### `board.show_cast`
+
+```lua
+board.show_cast{ shape, from, to, size, turn, seconds }
+```
+
+Shows a see-through ray, sphere or box sliding from one point to another on every umpire's screen, to check where a script is looking.
+
+| Field | Type | Description |
+|---|---|---|
+| `shape` | `string` | _Optional._ "ray", "sphere" or "box"; a ray by default. |
+| `from` | `{ x, y, z }` | Where it starts. |
+| `to` | `{ x, y, z }` | Where it ends. |
+| `size` | `{ x, y, z }` | _Optional._ The sphere's width or the box's size. |
+| `turn` | `{ x, y, z }` | _Optional._ The box's turn in degrees. |
+| `seconds` | `number` | _Optional._ How long it takes, at most 60; 1 by default. |
+
+**Returns**: true once it is sent.
+
+**Module call** `Physics.cast`
 
 ### `board.kinds`
 
@@ -3730,6 +3752,7 @@ The converter rewrites a module's scripts into these calls by rule; this is the 
 | `onScriptingButtonDown` | [`on_scripting_button_down`](#on_scripting_button_down-global-script) |
 | `onScriptingButtonUp` | [`on_scripting_button_up`](#on_scripting_button_up-global-script) |
 | `onUpdate` | [`on_update`](#on_update) |
+| `Physics.cast` | [`board.show_cast`](#boardshow_cast) |
 | `pick_up_position` | [`self.picked_up`](#selfpicked_up) |
 | `positionToLocal` | [`self.to_local`](#selfto_local) |
 | `positionToWorld` | [`self.to_world`](#selfto_world) |

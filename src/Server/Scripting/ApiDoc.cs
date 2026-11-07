@@ -619,6 +619,14 @@ public static partial class ApiDoc
             """);
         See("board.find", "self.tags");
 
+        M("board", "show_cast{ shape, from, to, size, turn, seconds }", "Shows a see-through ray, sphere or box sliding from one point to another on every umpire's screen, to check where a script is looking.", "Physics.cast");
+        O("shape", "string", "\"ray\", \"sphere\" or \"box\"; a ray by default.");
+        P("from", "{ x, y, z }", "Where it starts.");
+        P("to", "{ x, y, z }", "Where it ends.");
+        O("size", "{ x, y, z }", "The sphere's width or the box's size.");
+        O("turn", "{ x, y, z }", "The box's turn in degrees.");
+        O("seconds", "number", "How long it takes, at most 60; 1 by default.");
+        R("true once it is sent.");
         M("board", "kinds(filter)", "The kinds this game's packs hold, or those that match { link =, type =, tag = }: { id =, name =, tags =, source = }.", null, "table[]");
         O("filter.link", "string", "Only kinds made from this picture or model link (one of their source links).");
         O("filter.type", "string", "Only kinds converted from this module object type, such as Custom_Token.");

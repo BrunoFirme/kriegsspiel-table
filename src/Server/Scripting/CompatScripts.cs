@@ -4,7 +4,7 @@ namespace KTable.Server.Scripting;
 
 internal static class CompatScripts
 {
-    static readonly string[] Files = ["compat.lua", "compat_calls.lua"];
+    static readonly string[] Files = ["compat.lua", "compat_calls.lua", "compat_cast.lua"];
 
     static readonly string[] Namespaces = ["Global", "Player", "Turns", "Notes", "Lighting", "Grid", "Hands", "MusicPlayer", "Backgrounds", "Time", "Timer", "Vector", "Color"];
 

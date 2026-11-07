@@ -187,6 +187,9 @@ sealed class ViewSync
             case SelectPiece sp:
                 if (sp.To == $"p:{s.Me.PeerId}" && (sp.Selected ? _picked.Add(sp.Id) : _picked.Remove(sp.Id))) _c.NotifySelectionChanged();
                 return true;
+            case ShowCast cast:
+                CastPreview.Show(_c.Scene, cast);
+                return true;
             case GlidePiece gp:
                 if (pieces.TryGet(gp.Layer, gp.Id, out var gn)) gn.StartGlide(gp);
                 return true;

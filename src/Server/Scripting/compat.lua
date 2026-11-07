@@ -854,24 +854,6 @@ function compat.start_coroutine(obj, name)
   return 1
 end
 function compat.string_color_to_rgb(name) return compat.Color.fromString(name) end
-function compat.cast(p)
-  p = p or {}
-  local o = p.origin or {}
-  local ox, oz = vec(o, "x", 1, 0), vec(o, "z", 3, 0)
-  local size = p.size or {}
-  local hx, hz = vec(size, "x", 1, 1) / 2, vec(size, "z", 3, 1) / 2
-  local r = num(p.size and p.size[1] or p.size and p.size.x, 1)
-  local hits = {}
-  for _, piece in ipairs(board.pieces()) do
-    local q = piece.pos
-    local inside
-    if p.type == 1 then inside = math.abs(q.x - ox) < 0.001 and math.abs(q.z - oz) < 0.001
-    elseif p.type == 2 then inside = (q.x - ox) ^ 2 + (q.z - oz) ^ 2 <= r * r
-    else inside = math.abs(q.x - ox) <= hx and math.abs(q.z - oz) <= hz end
-    if inside then hits[#hits + 1] = { hit_object = piece, point = compat.position(piece), normal = compat.Vector(0, 1, 0), distance = 0 } end
-  end
-  return hits
-end
 compat.Turns = setmetatable({}, { __index = function(_, k) if k == "turn_number" then return game.turn end if k == "enable" then return true end return nil end, __newindex = function() end })
 local NOTES_TAG, TAB_TAG, TITLE_LINE, BODY_LINE, NOTE_DEF, NOTE_GAP = "notes", "notebook", "Name", "Note", "std.effects.note", 1
 local function note_cards(tag)
