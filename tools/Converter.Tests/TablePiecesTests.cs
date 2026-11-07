@@ -468,4 +468,36 @@ public sealed partial class ConverterTests
         Assert.Equal(defs.Entry(Box)!.Sha, even.Mesh);
         Assert.Contains("vn 0 1 0", File.ReadAllText(Path.Combine(pack.Dir, pack.M.Assets[stretched.Mesh!].File)));
     }
+
+    [Fact]
+    public async Task A_model_a_script_spawns_keeps_the_local_frame_a_placed_model_of_its_scale_has()
+    {
+        var cfg = TempConfig();
+        const string Gun = "http://a/gun.obj";
+        var models = Path.Combine(cfg.ModsPath, "Models");
+        Directory.CreateDirectory(models);
+        var corners = from x in new[] { -0.4, 0.4 } from y in new[] { 0, 0.3 } from z in new[] { -0.2, 0.2 } select FormattableString.Invariant($"v {x} {y} {z}");
+        File.WriteAllLines(Path.Combine(models, AssetStore.Key(Gun) + ".obj"), corners.Append("f 1 2 3"));
+        var rep = new Report();
+        var assets = new AssetStore(cfg, rep);
+        await assets.FetchAll(new[] { Gun });
+        var defs = new DefFactory(cfg, assets, rep);
+        var pack = new PackOut(cfg.Output, "t", "T", "t", null);
+        var placed = defs.DefFor(new ModuleObj(Obj("Custom_Model", "Gun", 0.6, new JsonObject
+        {
+            ["Transform"] = new JsonObject { ["posX"] = 0.0, ["posY"] = 1.0, ["posZ"] = 0.0, ["rotX"] = 0.0, ["rotY"] = 0.0, ["rotZ"] = 0.0, ["scaleX"] = 0.6, ["scaleY"] = 0.6, ["scaleZ"] = 0.6 },
+            ["CustomMesh"] = new JsonObject { ["MeshURL"] = Gun },
+        })), pack)!.Def;
+
+        defs.Translate($$"""
+            function spawnGun()
+              local o = spawnObject({ type = 'Custom_Model', position = {0, 1, 0}, scale = {x = 0.6, y = 0.6, z = 0.6} })
+              o.setCustomObject({ mesh = "{{Gun}}" })
+            end
+            """, pack, "spawner");
+
+        var spawned = Assert.Single(pack.M.Pieces, d => d.Tags.Contains("marker"));
+        Assert.NotNull(spawned.LocalUnit);
+        Assert.Equal(placed.LocalUnit, spawned.LocalUnit);
+    }
 }

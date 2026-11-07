@@ -515,7 +515,7 @@ public sealed partial class DefFactory
         if (pack.ByKey.TryGetValue(key, out var d)) return d;
         d = new PieceDef
         {
-            Name = "Marker", Kind = "model", Mesh = mesh, Texture = texture, Size = size,
+            Name = "Marker", Kind = "model", Mesh = mesh, Texture = texture, Size = size, LocalUnit = new Size2(Math.Round(r, 4), Math.Round(r, 4)),
             Thickness = Math.Round(Math.Clamp(BaseThickness(spawned) * Stretch(spawned) * r, 0.02, 3), 3),
             Shape = PackManifest.ShapeOf("Custom_Model", 0), Tags = new() { "marker", "model" },
         };
