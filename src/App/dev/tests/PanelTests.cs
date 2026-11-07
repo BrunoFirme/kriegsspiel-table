@@ -363,4 +363,82 @@ static class PanelTests
         Check.Equal(0, between, "no pixel is half masked");
         port.QueueFree();
     }
+
+    [ScreenTest]
+    static async Task A_tick_used_as_a_mask_cuts_its_children_all_or_nothing_too(TestRunner r)
+    {
+        const int Side = 128;
+        const string Xml = """<Mask width="128" height="128" image="Sprites/Elements/Checkmark" showMaskGraphic="false"><Image color="#FF0000"/></Mask>""";
+        var layout = KTable.Core.Panels.PanelBuild.Of(Xml).Layout;
+        var scene = KTable.Client.Panels.PanelScene.Build(layout, new KTable.Client.Panels.V2(Side, Side), new KTable.Client.Panels.PanelContext(layout.Colors, "Black", true, true),
+            new PanelMeter(_ => null));
+        var port = new SubViewport { Size = new Vector2I(Side, Side), TransparentBg = false, RenderTargetUpdateMode = SubViewport.UpdateMode.Always };
+        port.AddChild(new ColorRect { Color = Colors.Black, Size = new Vector2(Side, Side) });
+        var view = new PanelView(new PanelHooks((_, _, _) => { }, (_, _) => null, new Dictionary<string, string>(), () => { }));
+        port.AddChild(view.Show(scene, scene.Root));
+        r.AddChild(port);
+        await r.Frames(6);
+        var image = port.GetTexture().GetImage();
+        const float Near = 0.02f;
+        int shown = 0, hidden = 0, between = 0;
+        for (int x = 0; x < Side; x++)
+            for (int y = 0; y < Side; y++)
+            {
+                var c = image.GetPixel(x, y);
+                if (c.R > 1 - Near && c.G < Near && c.B < Near) shown++;
+                else if (c.R < Near && c.G < Near && c.B < Near) hidden++;
+                else between++;
+            }
+        Check.That(shown > 0 && hidden > 0, $"the red shows through the tick's shape only ({shown} shown, {hidden} hidden)");
+        Check.Equal(0, between, "no pixel at the tick's edge is half masked");
+        port.QueueFree();
+    }
+
+    [NodeTest]
+    static async Task A_dragged_accordion_section_waits_for_its_gap_to_close_and_open_and_lands_where_the_gap_was(TestRunner r)
+    {
+        var t = OfflineTable.Make(r, pieces: 0);
+        await r.Frame();
+        const string Xml = """
+            <Accordion id="acc" width="300" height="400" allowSectionReordering="true" expandSectionAfterReorder="false">
+              <AccordionSection id="s1"><AccordionSectionHeader id="h1"/><AccordionSectionContent/></AccordionSection>
+              <AccordionSection id="s2"><AccordionSectionHeader id="h2"/><AccordionSectionContent/></AccordionSection>
+              <AccordionSection id="s3"><AccordionSectionHeader id="h3"/><AccordionSectionContent/></AccordionSection>
+            </Accordion>
+            """;
+        var layout = KTable.Core.Panels.PanelBuild.Of(Xml).Layout;
+        var data = KTable.Core.Panels.PanelData.Parse(Xml)!;
+        t.Server.State.Ui = data;
+        t.Server.State.UiLayout = layout;
+        t.S.View.Ui = data.Select(n => n.Clone()).ToList();
+        t.S.View.UiLayout = layout.Clone();
+        var ui = new ScriptUi();
+        r.AddChild(ui);
+        ui.Bind(t.S, null!);
+        await r.Frames(3);
+        List<Control> Headers() => ui.FindChildren("*", "Control", true, false).OfType<Control>()
+            .Where(c => GodotObject.IsInstanceValid(c) && c.MouseFilter == Control.MouseFilterEnum.Stop && c.IsVisibleInTree() && Mathf.IsEqualApprox(c.Size.Y, 64))
+            .OrderBy(c => c.GetGlobalRect().Position.Y).ToList();
+        var first = Middle(Headers()[0]);
+        var below = Headers()[2].GetGlobalRect().End.Y + Headers()[2].GetGlobalRect().Size.Y;
+        Input.ParseInputEvent(new InputEventMouseMotion { Position = first, GlobalPosition = first });
+        Input.ParseInputEvent(new InputEventMouseButton { ButtonIndex = MouseButton.Left, Pressed = true, Position = first, GlobalPosition = first, ButtonMask = MouseButtonMask.Left });
+        await r.Frame();
+        for (int i = 1; i <= 8; i++)
+        {
+            var at = first with { Y = first.Y + (below - first.Y) * i / 8 };
+            await Move(r, at, MouseButtonMask.Left);
+        }
+        await r.Seconds(0.5);
+        await Move(r, first with { Y = below + 1 }, MouseButtonMask.Left);
+        var end = first with { Y = below + 1 };
+        Input.ParseInputEvent(new InputEventMouseButton { ButtonIndex = MouseButton.Left, Pressed = false, Position = end, GlobalPosition = end });
+        await r.Seconds(0.5);
+        await r.Frames(3);
+        var view = PanelFocus.Views().First(v => v.Scene?.ById("h1") != null);
+        float Top(string id) => view.Nodes[view.Scene!.ById(id)!].GetGlobalRect().Position.Y;
+        Check.That(Top("h2") < Top("h1") && Top("h1") < Top("h3"), $"dropped past the last, the first lands one place short as the game counts it ({Top("h1")}, {Top("h2")}, {Top("h3")})");
+        Check.Equal(0, t.Errors.Count, string.Join("; ", t.Errors));
+        ui.QueueFree();
+    }
 }

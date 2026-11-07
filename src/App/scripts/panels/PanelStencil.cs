@@ -8,6 +8,14 @@ static class PanelStencil
     const float Cut = 0.001f;
     static readonly Dictionary<ulong, Texture2D> Made = new();
 
+    static Font? _symbols;
+
+    public static Font HardSymbols => _symbols ??= new SystemFont
+    {
+        FontNames = new[] { "Segoe UI Symbol", "DejaVu Sans", "Noto Sans Symbols2", "Noto Sans Symbols" }, Antialiasing = TextServer.FontAntialiasing.None,
+        MultichannelSignedDistanceField = false, SubpixelPositioning = TextServer.SubpixelPositioning.Disabled,
+    };
+
     public static Texture2D Hard(Texture2D source)
     {
         var id = source.GetInstanceId();

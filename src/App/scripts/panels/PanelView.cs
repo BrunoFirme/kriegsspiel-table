@@ -113,6 +113,11 @@ sealed partial class PanelView
         shape.SetAnchorsPreset(Control.LayoutPreset.TopLeft);
         shape.ClipContents = true;
         if (shape is Panel panel && panel.GetThemeStylebox("panel") is StyleBoxFlat box) box.AntiAliasing = false;
+        if (shape is Label glyph)
+        {
+            glyph.AddThemeFontOverride("font", PanelStencil.HardSymbols);
+            glyph.AddThemeFontSizeOverride("font_size", Math.Max(1, (int)Math.Min(b.RectSize.X, b.RectSize.Y)));
+        }
         shape.ClipChildren = CanvasItem.ClipChildrenMode.Only;
         if (b.ShowMaskGraphic) shape.AddChild(Paint(b));
         return shape;
