@@ -155,6 +155,7 @@ public static partial class ApiDoc
         F("piece", "value", "number|string|nil", "The value of the side of a die showing; nil for every other piece.", "getRotationValue");
         F("piece", "picked_up", "table?", "Where an umpire last picked the piece up: { x =, y =, z =, rot = }; nil until then.", "pick_up_position");
         F("piece", "face_picture", "string?", "A picture shown on the piece's face in place of its kind's, set by set_face_picture; nil for none.");
+        F("piece", "page_offset", "number", "For a book, what its page numbers start from, as the module set it; 0 for every other piece.", "Book.page_offset");
         F("piece", "worth", "number", "What the piece counts for when pieces are added up; 0 for most.", "value");
         F("piece", "worth_groups", "number", "Which groups it adds up with, as bits; 0 adds up with any piece of worth.", "value_flags");
         F("piece", "pos", "Point", "Where it stands, in map units: { x =, z = }.", "getPosition");
@@ -930,6 +931,7 @@ public static partial class ApiDoc
         See("on_drop");
 
         E("event", "on_state(old, new)", "Its state changed, by anyone.", "onObjectStateChange");
+        E("event", "on_page()", "This book turned to another page.", "onPageChange");
         P("old", "number", "The state it left, from 1.");
         P("new", "number", "The state it is in now, from 1.");
         X("""
@@ -972,6 +974,8 @@ public static partial class ApiDoc
         P("piece", "Piece", "The piece; its fields still answer.");
 
         E("global event", "on_drop(piece, who)", "An umpire let a piece go.", "onObjectDrop");
+        E("global event", "on_state(piece, old, new)", "A piece's state changed, by anyone.", "onObjectStateChange");
+        E("global event", "on_page(piece)", "A book turned to another page.", "onObjectPageChange");
         E("global event", "on_roll(piece, who)", "An umpire rolled a die, or turned a piece of several looks to one at random.", "onObjectRandomize");
         P("piece", "Piece", "The piece.");
         P("who", "Who", "The umpire.");

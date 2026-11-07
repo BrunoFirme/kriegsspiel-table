@@ -169,7 +169,7 @@ public sealed partial class DefFactory
             aspect = e.W / (double)e.H;
         }
         double ratio = o.ScaleX == 0 ? 1 : o.ScaleZ / o.ScaleX;
-        if (o.Name == "Custom_PDF") return new Size2(b.CustomTile * (PdfOf(o.PdfUrl)?.Aspect ?? 1), b.CustomTile * ratio);
+        if (o.Name == "Custom_PDF") return new Size2(b.CustomTile * (PdfOf(o.PdfUrl, o.PdfPassword)?.Aspect ?? 1), b.CustomTile * ratio);
         if (IsModel(o))
         {
             var mb = MeshBounds(o.MeshUrl) ?? (1, 1, 1);

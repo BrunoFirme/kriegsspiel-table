@@ -79,6 +79,8 @@ public sealed class ModuleObj
     public string? BundleUrl => Blank(S((J["CustomAssetbundle"] as JsonObject)?["AssetbundleURL"]));
     public string? PdfUrl => Blank(S((J["CustomPDF"] as JsonObject)?["PDFUrl"]));
     public int PdfPage => J["CustomPDF"] is JsonObject pdf && pdf["PDFPage"] != null ? Math.Max(0, I(pdf, "PDFPage")) : 0;
+    public int PdfPageOffset => J["CustomPDF"] is JsonObject pdf && pdf["PDFPageOffset"] != null ? I(pdf, "PDFPageOffset") : 0;
+    public string? PdfPassword => J["CustomPDF"] is JsonObject pdf ? Blank(S(pdf["PDFPassword"])) : null;
 
     public string? Color => J["ColorDiffuse"] is JsonObject c ? HexOf(c) + AlphaOf(c) : null;
 

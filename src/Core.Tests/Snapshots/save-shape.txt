@@ -576,6 +576,7 @@ type PieceDef object
   mesh: string
   name: string
   nameBox: FaceBox
+  pageOffset: int
   script: string
   scriptHash: string
   scriptState: string

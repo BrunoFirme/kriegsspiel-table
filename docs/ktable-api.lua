@@ -132,6 +132,7 @@
 ---@field value number|string|nil The value of the side of a die showing; nil for every other piece.
 ---@field picked_up table|nil Where an umpire last picked the piece up: { x =, y =, z =, rot = }; nil until then.
 ---@field face_picture string|nil A picture shown on the piece's face in place of its kind's, set by set_face_picture; nil for none.
+---@field page_offset number For a book, what its page numbers start from, as the module set it; 0 for every other piece.
 ---@field worth number What the piece counts for when pieces are added up; 0 for most.
 ---@field worth_groups number Which groups it adds up with, as bits; 0 adds up with any piece of worth.
 ---@field pos Point Where it stands, in map units: { x =, z = }.
@@ -656,9 +657,12 @@ function on_roll(who) end
 function on_pick_up(who) end
 
 ---Its state changed, by anyone.
+function on_state() end
+
+---This book turned to another page.
 ---@param old number The state it left, from 1.
 ---@param new number The state it is in now, from 1.
-function on_state(old, new) end
+function on_page(old, new) end
 
 ---It was turned over or back.
 ---@param face_down boolean true when it is face down now.

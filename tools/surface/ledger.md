@@ -169,7 +169,7 @@ the plan says translate it), unknown (nobody has decided).
 | `SaveState.MusicPlayer` | 9 / 9 | dropped | music and sound players (decided 2026-11-06) |  |
 | `SaveState.VectorLines` | 9 / 9 | native | strokes on the umpire's drawing board | DrawingTests |
 | `ObjectState.DragSelectable` | 335 / 8 | native | the piece option Taken by a selection box; self.box_selected and set_box_selected | ModuleOptionsTests |
-| `CustomPDFState.PDFUrl` | 9 / 8 | partial | PDFUrl gives the book its pages and PDFPage the page it lies open at; the page offset (how the pages are numbered) and a password are not kept | BookTests |
+| `CustomPDFState.PDFUrl` | 9 / 8 | native | the book's pages | BookTests |
 | `MusicPlayerState.AudioLibrary` | 8 / 8 | dropped | music and sound players (decided 2026-11-06) |  |
 | `ObjectState.Autoraise` | 354 / 7 | dropped | with the engine's physics (decided 2026-11-06): a held piece rides above what it passes over and pushes nothing |  |
 | `CustomImageState.CustomDice` | 35 / 7 | native | converter reads it |  |
@@ -208,7 +208,7 @@ the plan says translate it), unknown (nobody has decided).
 | `SaveState.CustomUIAssets` | 3 / 3 | native | the pictures panels name, kept in the extras pack and named in the scenario (uiPictures) | PanelImportTests |
 | `ObjectState.GMNotes` | 117 / 2 | native | converter reads it |  |
 | `CustomTileState.Stackable` | 29 / 2 | native | converter reads it |  |
-| `CustomPDFState.PDFPage` | 2 / 2 | partial | PDFUrl gives the book its pages and PDFPage the page it lies open at; the page offset (how the pages are numbered) and a password are not kept | BookTests |
+| `CustomPDFState.PDFPage` | 2 / 2 | native | the page it lies open at | BookTests |
 | `GridState.BothSnapping` | 2 / 2 | dropped | grid (decided 2026-11-06) |  |
 | `GridState.Offset` | 2 / 2 | dropped | grid (decided 2026-11-06) |  |
 | `TextState.colorstate` | 19 / 1 | native | converter reads it |  |
@@ -251,8 +251,8 @@ the plan says translate it), unknown (nobody has decided).
 | `CustomImageState.ImageScalar` | - | native | converter reads it |  |
 | `CustomJigsawPuzzleState.ImageOnBoard` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
 | `CustomJigsawPuzzleState.NumPuzzlePieces` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
-| `CustomPDFState.PDFPageOffset` | - | partial | PDFUrl gives the book its pages and PDFPage the page it lies open at; the page offset (how the pages are numbered) and a password are not kept | BookTests |
-| `CustomPDFState.PDFPassword` | - | partial | PDFUrl gives the book its pages and PDFPage the page it lies open at; the page offset (how the pages are numbered) and a password are not kept | BookTests |
+| `CustomPDFState.PDFPageOffset` | - | native | the book's page offset (PieceDef.PageOffset) | BookNotesScriptTests |
+| `CustomPDFState.PDFPassword` | - | native | a protected PDF opens with the password the save holds | converter |
 | `CustomTokenState.Stackable` | - | native | converter reads it |  |
 | `CustomTokenState.StandUp` | - | native | converter reads it |  |
 | `DecalState.CustomDecal` | - | native | converter reads it |  |
@@ -446,11 +446,11 @@ the plan says translate it), unknown (nobody has decided).
 | `AssetBundle.getTriggerEffects` | - | dropped | a bundle's own animations never come over |  |
 | `AssetBundle.playLoopingEffect` | - | dropped | a bundle's own animations never come over |  |
 | `AssetBundle.playTriggerEffect` | - | dropped | a bundle's own animations never come over |  |
-| `Book.clearHighlight` | - | stub | a book's page is its state; no module calls these |  |
-| `Book.getPage` | - | stub | a book's page is its state; no module calls these |  |
-| `Book.page_offset` | - | stub | a book's page is its state; no module calls these |  |
-| `Book.setHighlight` | - | stub | a book's page is its state; no module calls these |  |
-| `Book.setPage` | - | stub | a book's page is its state; no module calls these |  |
+| `Book.clearHighlight` | - | partial | kept with the script; a highlight box is not drawn on the page | BookNotesScriptTests |
+| `Book.getPage` | - | compat | compat.book_page: the page it lies open at, from 0, or by its printed number | BookNotesScriptTests |
+| `Book.page_offset` | - | compat | the kind's page offset from the save; a script may set another | BookNotesScriptTests |
+| `Book.setHighlight` | - | partial | kept with the script; a highlight box is not drawn on the page | BookNotesScriptTests |
+| `Book.setPage` | - | compat | compat.set_book_page: turns it, by index or printed number | BookNotesScriptTests |
 | `Browser.pixel_width` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
 | `Browser.url` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
 | `Clock.getValue` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
@@ -502,7 +502,7 @@ the plan says translate it), unknown (nobody has decided).
 | `attachHider` | - | dropped | hidden information (decided 2026-11-06) |  |
 | `attachInvisibleHider` | - | dropped | hidden information (decided 2026-11-06) |  |
 | `auto_raise` | - | compat | ObjectProps (get_prop/set_prop) |  |
-| `book` | - | unknown |  |  |
+| `book` | - | compat | obj.Book: the page calls above | BookNotesScriptTests |
 | `bounciness` | - | dropped | engine physics |  |
 | `browser` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
 | `childPairs` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |
@@ -782,12 +782,12 @@ the plan says translate it), unknown (nobody has decided).
 | `MusicPlayer.shuffle` | - | dropped | music and sound players (decided 2026-11-06) |  |
 | `MusicPlayer.skipBack` | - | dropped | music and sound players (decided 2026-11-06) |  |
 | `MusicPlayer.skipForward` | - | dropped | music and sound players (decided 2026-11-06) |  |
-| `Notes.addNotebookTab` | - | stub | notes live on the script's side only; the briefing is the scenario's text |  |
-| `Notes.editNotebookTab` | - | stub | notes live on the script's side only; the briefing is the scenario's text |  |
-| `Notes.getNotebookTabs` | - | stub | notes live on the script's side only; the briefing is the scenario's text |  |
-| `Notes.getNotes` | - | stub | notes live on the script's side only; the briefing is the scenario's text |  |
-| `Notes.removeNotebookTab` | - | stub | notes live on the script's side only; the briefing is the scenario's text |  |
-| `Notes.setNotes` | - | stub | notes live on the script's side only; the briefing is the scenario's text |  |
+| `Notes.addNotebookTab` | - | compat | the save's Notes and notebook tabs are note cards beside the map (tagged notes and notebook); the Notes calls read and write those cards | BookNotesScriptTests |
+| `Notes.editNotebookTab` | - | compat | the save's Notes and notebook tabs are note cards beside the map (tagged notes and notebook); the Notes calls read and write those cards | BookNotesScriptTests |
+| `Notes.getNotebookTabs` | - | compat | the save's Notes and notebook tabs are note cards beside the map (tagged notes and notebook); the Notes calls read and write those cards | BookNotesScriptTests |
+| `Notes.getNotes` | - | compat | the save's Notes and notebook tabs are note cards beside the map (tagged notes and notebook); the Notes calls read and write those cards | BookNotesScriptTests |
+| `Notes.removeNotebookTab` | - | compat | the save's Notes and notebook tabs are note cards beside the map (tagged notes and notebook); the Notes calls read and write those cards | BookNotesScriptTests |
+| `Notes.setNotes` | - | compat | the save's Notes and notebook tabs are note cards beside the map (tagged notes and notebook); the Notes calls read and write those cards | BookNotesScriptTests |
 | `Physics.getGravity` | - | dropped | engine physics |  |
 | `Physics.play_area` | - | dropped | engine physics |  |
 | `Physics.setGravity` | - | dropped | engine physics |  |
@@ -920,14 +920,14 @@ the plan says translate it), unknown (nobody has decided).
 | `onObjectLeaveScriptingZone` | - | dropped | scripting and layout zones (decided 2026-11-06) |  |
 | `onObjectLeaveZone` | - | dropped | scripting and layout zones (decided 2026-11-06) |  |
 | `onObjectLoopingEffect` | - | dropped | a bundle's own animations never come over |  |
-| `onObjectPageChange` | - | stub | a page turn is a state change; no module handles it |  |
+| `onObjectPageChange` | - | native | on_page(piece) in the global script | BookNotesScriptTests |
 | `onObjectPeek` | - | dropped | peeking at a hidden piece |  |
 | `onObjectRandomize` | - | native | on_roll(piece, who) in the global script when an umpire rolls | DiceScriptTests |
 | `onObjectRotate` | - | native | EventRenames |  |
 | `onObjectSearchEnd` | - | dropped | a holder's contents are a card, not a search |  |
 | `onObjectSearchStart` | - | dropped | a holder's contents are a card, not a search |  |
 | `onObjectTriggerEffect` | - | dropped | a bundle's own animations never come over |  |
-| `onPageChange` | - | stub | a page turn is a state change; no module handles it |  |
+| `onPageChange` | - | native | on_page() in the book's own script | BookNotesScriptTests |
 | `onPlayerChangeColor` | - | dropped | the Player API (decided 2026-11-06) |  |
 | `onPlayerConnect` | - | dropped | the Player API (decided 2026-11-06) |  |
 | `onPlayerDisconnect` | - | dropped | the Player API (decided 2026-11-06) |  |

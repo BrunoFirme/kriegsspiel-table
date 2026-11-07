@@ -72,7 +72,7 @@ public static class ModuleTranslator
         ["onObjectSpawn"] = "on_spawn", ["onObjectDestroy"] = "on_destroy", ["onObjectStateChange"] = "on_state", ["onPlayerTurn"] = "on_turn", ["onRotate"] = "on_rotate", ["onObjectRotate"] = "on_rotate",
         ["onPlayerTurnStart"] = "on_turn", ["onPlayerTurnEnd"] = "on_turn",
         ["onChat"] = "on_chat", ["onObjectNumberTyped"] = "on_number_typed", ["onScriptingButtonDown"] = "on_scripting_button_down", ["onScriptingButtonUp"] = "on_scripting_button_up",
-        ["onPlayerAction"] = "on_player_action", ["onObjectRandomize"] = "on_roll", ["onRandomize"] = "on_roll", ["onObjectEnterContainer"] = "on_stowed", ["onObjectLeaveContainer"] = "on_unstowed", ["tryObjectEnterContainer"] = "try_stow",
+        ["onPlayerAction"] = "on_player_action", ["onObjectRandomize"] = "on_roll", ["onRandomize"] = "on_roll", ["onPageChange"] = "on_page", ["onObjectPageChange"] = "on_page", ["onObjectEnterContainer"] = "on_stowed", ["onObjectLeaveContainer"] = "on_unstowed", ["tryObjectEnterContainer"] = "try_stow",
     };
 
     static readonly HashSet<string> Stubbed = new(StringComparer.Ordinal)
@@ -243,6 +243,7 @@ public static class ModuleTranslator
         SyntaxNode MemberCall(FunctionCallExpressionSyntax visited, MemberAccessExpressionSyntax ma, List<string> a, List<ExpressionSyntax> args, SyntaxNode node)
         {
             string All() => ArgText(args);
+            string A(int i) => i < a.Count ? a[i] : "nil";
             var recv = ma.Expression.ToString().Trim();
             var name = ma.MemberName.Text;
             if (GlobalObjectCall(visited, recv, name, a, args, node) is { } global) return global;
@@ -256,6 +257,18 @@ public static class ModuleTranslator
                     "getAttributes" => "get_attributes", "setClass" => "set_class", "getCustomAssets" => "pictures", "setCustomAssets" => "set_pictures", _ => null,
                 };
                 return mapped != null ? Direct($"{obj}.ui.{mapped}({All()})", node) : Todo("object UI." + name, $"compat.todo({obj}, \"UI.{name}\")", node);
+            }
+            if (recv.EndsWith(".Book"))
+            {
+                var book = recv[..^5];
+                return name switch
+                {
+                    "getPage" => Compat($"compat.book_page({book}, {A(0)})", node),
+                    "setPage" => Compat($"compat.set_book_page({book}, {A(0)}, {A(1)})", node),
+                    "setHighlight" => Compat($"compat.book_highlight({book}{(args.Count > 0 ? ", " + All() : "")})", node),
+                    "clearHighlight" => Compat($"compat.book_highlight({book})", node),
+                    _ => Todo("Book." + name, $"compat.todo({book}, \"Book.{name}\")", node),
+                };
             }
             if (recv.StartsWith("Player[") || recv.StartsWith("Player."))
             {
@@ -527,6 +540,7 @@ public static class ModuleTranslator
                 case "UI" or "Global.UI": return Direct($"ui.{name}", node);
             }
             if (recv.EndsWith(".UI")) return Direct($"{recv[..^3]}.ui.{name}", node);
+            if (recv.EndsWith(".Book") && name == "page_offset" && visited.Parent is not AssignmentStatementSyntax) return Compat($"compat.book_offset({recv[..^5]})", node);
             name = FoldMember(name);
             switch (name)
             {
@@ -553,6 +567,13 @@ public static class ModuleTranslator
 
         public override SyntaxNode? VisitAssignmentStatement(AssignmentStatementSyntax node)
         {
+            if (node.Variables.Count == 1 && node.EqualsValues.Values.Count == 1 && node.Variables[0] is MemberAccessExpressionSyntax pa && pa.MemberName.Text == "page_offset"
+                && pa.Expression.ToString().Trim() is var owner && owner.EndsWith(".Book"))
+            {
+                var value = (ExpressionSyntax)Visit(node.EqualsValues.Values[0])!;
+                _res.CompatCalls++;
+                return Stmt($"compat.set_book_offset({owner[..^5]}, {value.ToString().Trim()})", node);
+            }
             if (node.Variables.Count == 1 && node.EqualsValues.Values.Count == 1 && node.Variables[0] is MemberAccessExpressionSyntax ma && ObjectProps.Contains(FoldMember(ma.MemberName.Text))
                 && ma.Expression.ToString().Trim() is var recv && recv is not ("Turns" or "Lighting" or "Grid" or "Hands" or "Notes" or "Time"))
             {
@@ -688,7 +709,11 @@ public static class ModuleTranslator
                 case "onObjectPickUp" or "onObjectPickup": return ("on_pick_up", "__piece, __who", Bind(new[] { "compat.color_of(__who)", "__piece" }));
                 case "onObjectSpawn": return ("on_spawn", "__piece", Bind(new[] { "__piece" }));
                 case "onObjectDestroy": return ("on_destroy", "__piece", Bind(new[] { "__piece" }));
+                case "onObjectStateChange" when _ctx.IsGlobal: return ("on_state", "__piece, __old, __new", Bind(new[] { "__piece", "tostring(__old)" }));
                 case "onObjectStateChange": return ("on_state", "__old, __new", Bind(new[] { "self", "tostring(__old)" }));
+                case "onPageChange": return ("on_page", "", "");
+                case "onObjectPageChange" when _ctx.IsGlobal: return ("on_page", "__piece", Bind(new[] { "__piece" }));
+                case "onObjectPageChange": return ("on_page", "", Bind(new[] { "self" }));
                 case "onPlayerTurn": return ("on_turn", "__turn", Bind(new[] { "compat.player(\"White\")", "nil" }));
                 case "onPlayerTurnStart" or "onPlayerTurnEnd": return ("on_turn", "__turn", Bind(new[] { "\"White\"", "nil" }));
                 case "onRotate": return ("on_rotate", "__rot, __old, __who", Bind(new[] { "__rot", "self.face_down and 180 or 0", "compat.color_of(__who)", "__old", "self.face_down and 180 or 0" }));

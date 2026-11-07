@@ -698,25 +698,28 @@ public sealed partial class ScenarioBuilder
         return lines;
     }
 
+    const string NotesTag = "notes", NotebookTag = "notebook";
+
     void LayNotes(ModuleSave master, Scenario scenario, PackOut extras, Layer layer, HashSet<string> usedPacks)
     {
-        var notes = new List<(string title, string body)>();
-        if (master.Notes.Trim().Length > 0) notes.Add(("Notes", master.Notes));
-        notes.AddRange(master.Notebook);
+        var notes = new List<(string title, string body, string tag)>();
+        if (master.Notes.Trim().Length > 0) notes.Add(("Notes", master.Notes, NotesTag));
+        notes.AddRange(master.Notebook.Select(n => (n.Title, n.Body, NotebookTag)));
         if (notes.Count == 0) return;
         const double Gap = 1, ShareOfMap = 0.12, Largest = 10, CharsPerLine = 42;
         var corners = scenario.Sheets.SelectMany(Corners).ToList();
         double right = corners.Count > 0 ? corners.Max(c => c.X) : 0, near = corners.Count > 0 ? corners.Min(c => c.Z) : 0;
         double mapWide = corners.Count > 0 ? right - corners.Min(c => c.X) : 0;
         double z = near;
-        foreach (var (title, body) in notes)
+        foreach (var (title, body, tag) in notes)
         {
             int lines = body.Replace("\r", "").Trim('\n').Split('\n').Sum(l => 1 + l.Length / (int)CharsPerLine);
             double scale = Math.Round(Math.Clamp(Math.Max((double)lines / NoteCard.Lines, mapWide * ShareOfMap / NoteCard.Width), 1, Largest), 2);
             var def = _defs.NoteDef(extras, title, body, scale);
             var inst = new PieceInstance
             {
-                Id = $"p-{_nextId++:D6}", Def = def.Id, RotDeg = NoteTurn,
+                Id = $"p-{_nextId++:D6}", Def = def.Id, RotDeg = NoteTurn, Tags = [tag],
+                Text = new() { [NoteCard.TitleLine] = DefFactory.Plain(title).Trim(), [NoteCard.BodyLine] = DefFactory.Plain(body).Replace("\r", "").Trim('\n') },
                 Pos = new Vec2(Math.Round(right + Gap + def.Size.W / 2, 4), Math.Round(z + def.Size.H / 2, 4)),
             };
             z += def.Size.H + Gap;

@@ -184,6 +184,7 @@ public sealed class PieceDef : IJsonOnDeserialized
     public List<DieFace> Faces { get; set; } = new();
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? Finish { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public ShineDef? Shine { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public int PageOffset { get; set; }
     public List<CounterDef> Counters { get; set; } = new();
     public List<TextLineDef> TextLines { get; set; } = new();
     public List<AttachmentDef> Attachments { get; set; } = new();

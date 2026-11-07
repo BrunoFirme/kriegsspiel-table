@@ -779,6 +779,20 @@ public sealed partial class ScriptHost
 
     internal readonly Dictionary<string, (Vec2 Pos, double Rot, double Y)> PickedUp = new();
 
+    void ReactToState(SetState st)
+    {
+        var (old, now) = (DynValue.NewNumber(OldState(st) + 1), DynValue.NewNumber(st.State + 1));
+        bool book = Find(st.Id) is { } p && _s.Store?.Def(p.Def)?.Tags.Contains("book") == true;
+        if (_pieces.TryGetValue(st.Id, out var pst))
+        {
+            Call(pst, "on_state", old, now);
+            if (book) Call(pst, "on_page");
+        }
+        if (_global == null) return;
+        Call(_global, "on_state", Handle(st.Id), old, now);
+        if (book) Call(_global, "on_page", Handle(st.Id));
+    }
+
     void ReactToRoll(RollDice rd, DynValue who)
     {
         foreach (var id in rd.PieceIds.Where(id => Find(id) != null).ToList())
@@ -849,7 +863,7 @@ public sealed partial class ScriptHost
                 if (_global != null) Call(_global, "on_pick_up", Handle(h.Id), who);
                 break;
             case SetState st:
-                if (_pieces.TryGetValue(st.Id, out var pst)) Call(pst, "on_state", DynValue.NewNumber(OldState(st) + 1), DynValue.NewNumber(st.State + 1));
+                ReactToState(st);
                 break;
             case FlipPiece fp:
                 if (_pieces.TryGetValue(fp.Id, out var pfp)) Call(pfp, "on_flip", DynValue.NewBoolean(fp.FaceDown));

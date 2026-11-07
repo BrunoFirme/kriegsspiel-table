@@ -18,31 +18,34 @@ public sealed partial class DefFactory
 
     public sealed record PdfShape(int Pages, double Aspect);
 
-    public static PdfShape Shape(byte[] pdf)
+    public static PdfShape Shape(byte[] pdf, string? password = null)
     {
-        var size = Conversion.GetPageSize(pdf, 0);
+        var size = Conversion.GetPageSize(pdf, page: 0, password: password);
         double aspect = size.Height > 0 ? size.Width / (double)size.Height : 1;
-        return new PdfShape(Conversion.GetPageCount(pdf), aspect > 0 ? aspect : 1);
+        return new PdfShape(Conversion.GetPageCount(pdf, password: password), aspect > 0 ? aspect : 1);
     }
 
-    public static IEnumerable<(int page, byte[] bytes, int w, int h)> Pages(byte[] pdf, int dpi, int quality)
+    public static IEnumerable<(int page, byte[] bytes, int w, int h)> Pages(byte[] pdf, int dpi, int quality, string? password = null)
     {
-        int count = Math.Min(Conversion.GetPageCount(pdf), MostPages);
+        int count = Math.Min(Conversion.GetPageCount(pdf, password: password), MostPages);
         for (int i = 0; i < count; i++)
         {
-            using var drawn = Conversion.ToImage(pdf, page: i, options: new RenderOptions(Dpi: dpi));
+            using var drawn = Conversion.ToImage(pdf, password: password, page: i, options: new RenderOptions(Dpi: dpi));
             using var data = drawn.Encode(SKEncodedImageFormat.Webp, quality);
             yield return (i + 1, data.ToArray(), drawn.Width, drawn.Height);
         }
     }
 
-    PdfShape? PdfOf(string? url)
+    readonly Dictionary<string, string> _pdfPasswords = new();
+
+    PdfShape? PdfOf(string? url, string? password = null)
     {
         var e = Entry(url);
         if (e is not { Ext: "pdf", Sha: { } sha } || _assets.FilePath(e) is not { } src) return null;
+        if (password is { Length: > 0 }) _pdfPasswords[sha] = password;
         if (_pdfs.TryGetValue(sha, out var known)) return known;
         PdfShape shape;
-        try { shape = Shape(File.ReadAllBytes(src)); }
+        try { shape = Shape(File.ReadAllBytes(src), _pdfPasswords.GetValueOrDefault(sha)); }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or InvalidOperationException) { return null; }
         _pdfs[sha] = shape;
         return shape;
@@ -51,7 +54,7 @@ public sealed partial class DefFactory
     void FillBook(PieceDef def, ModuleObj o, PackOut pack, string where)
     {
         var e = Entry(o.PdfUrl);
-        if (e is not { Ext: "pdf", Sha: { } sha } || _assets.FilePath(e) is not { } src || PdfOf(o.PdfUrl) is not { } shape)
+        if (e is not { Ext: "pdf", Sha: { } sha } || _assets.FilePath(e) is not { } src || PdfOf(o.PdfUrl, o.PdfPassword) is not { } shape)
         {
             _rep.Missing(o.PdfUrl ?? "a PDF", (o.PdfUrl == null ? null : _assets.Why(o.PdfUrl)) ?? "not a PDF", where);
             def.Image = Placeholder(pack);
@@ -61,6 +64,7 @@ public sealed partial class DefFactory
         if (pages.Count == 0) { def.Image = Placeholder(pack); return; }
         def.Image = pages[0];
         def.States = pages.Select((p, i) => new PieceStateDef { Name = $"Page {i + 1}", Image = p }).ToList();
+        def.PageOffset = o.PdfPageOffset;
         if (shape.Pages > pages.Count) _rep.Note($"{where}: the PDF has {shape.Pages} pages; the first {pages.Count} came over");
     }
 
@@ -86,7 +90,7 @@ public sealed partial class DefFactory
         var lines = new List<string>();
         try
         {
-            foreach (var (page, bytes, w, h) in Pages(File.ReadAllBytes(src), PageDpi, _cfg.Tiles.WebpQuality))
+            foreach (var (page, bytes, w, h) in Pages(File.ReadAllBytes(src), PageDpi, _cfg.Tiles.WebpQuality, _pdfPasswords.GetValueOrDefault(sha)))
             {
                 var pageSha = Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant();
                 var file = Path.Combine(dir, pageSha + ".webp");

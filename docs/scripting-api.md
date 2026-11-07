@@ -205,6 +205,7 @@ Read from `self` or from any piece `board.find` or `board.pieces` hands back. Fi
 | [`self.value`](#selfvalue) | The value of the side of a die showing; nil for every other piece. |
 | [`self.picked_up`](#selfpicked_up) | Where an umpire last picked the piece up: { x =, y =, z =, rot = }; nil until then. |
 | [`self.face_picture`](#selfface_picture) | A picture shown on the piece's face in place of its kind's, set by set_face_picture; nil for none. |
+| [`self.page_offset`](#selfpage_offset) | For a book, what its page numbers start from, as the module set it; 0 for every other piece. |
 | [`self.worth`](#selfworth) | What the piece counts for when pieces are added up; 0 for most. |
 | [`self.worth_groups`](#selfworth_groups) | Which groups it adds up with, as bits; 0 adds up with any piece of worth. |
 | [`self.pos`](#selfpos) | Where it stands, in map units: { x =, z = }. |
@@ -392,6 +393,18 @@ self.face_picture
 A picture shown on the piece's face in place of its kind's, set by set_face_picture; nil for none.
 
 **Type** `string?`, read-only.
+
+### `self.page_offset`
+
+```lua
+self.page_offset
+```
+
+For a book, what its page numbers start from, as the module set it; 0 for every other piece.
+
+**Type** `number`, read-only.
+
+**Module call** `Book.page_offset`
 
 ### `self.worth`
 
@@ -2605,6 +2618,7 @@ Define any of these in a piece's script and the table calls it.
 | [`on_roll`](#on_roll) | An umpire rolled this die. |
 | [`on_pick_up`](#on_pick_up) | An umpire picked the piece up. |
 | [`on_state`](#on_state) | Its state changed, by anyone. |
+| [`on_page`](#on_page) | This book turned to another page. |
 | [`on_flip`](#on_flip) | It was turned over or back. |
 | [`on_rotate`](#on_rotate) | An umpire turned it in place. |
 | [`on_turn`](#on_turn) | The clock advanced. |
@@ -2723,6 +2737,18 @@ Its state changed, by anyone.
 
 An event: define this function and the table calls it.
 
+**Module call** `onObjectStateChange`
+
+### `on_page`
+
+```lua
+on_page()
+```
+
+This book turned to another page.
+
+An event: define this function and the table calls it.
+
 | Parameter | Type | Description |
 |---|---|---|
 | `old` | `number` | The state it left, from 1. |
@@ -2736,7 +2762,7 @@ end
 
 What the script draws here belongs to the new state.
 
-**Module call** `onObjectStateChange` · **See also** [`self.set_state`](#selfset_state)
+**Module call** `onPageChange` · **See also** [`self.set_state`](#selfset_state)
 
 ### `on_flip`
 
@@ -2815,6 +2841,8 @@ The global script gets on_load, on_save, on_update and on_turn too, and these fo
 | [`on_spawn`](#on_spawn-global-script) | A piece came onto the table. |
 | [`on_destroy`](#on_destroy-global-script) | A piece is about to go. |
 | [`on_drop`](#on_drop-global-script) | An umpire let a piece go. |
+| [`on_state`](#on_state-global-script) | A piece's state changed, by anyone. |
+| [`on_page`](#on_page-global-script) | A book turned to another page. |
 | [`on_roll`](#on_roll-global-script) | An umpire rolled a die, or turned a piece of several looks to one at random. |
 | [`on_rotate`](#on_rotate-global-script) | An umpire turned a piece in place. |
 | [`on_pick_up`](#on_pick_up-global-script) | An umpire picked a piece up. |
@@ -2870,6 +2898,30 @@ An umpire let a piece go.
 An event: define this function and the table calls it.
 
 **Module call** `onObjectDrop`
+
+### `on_state` (global script)
+
+```lua
+on_state(piece, old, new)
+```
+
+A piece's state changed, by anyone.
+
+An event: define this function and the table calls it.
+
+**Module call** `onObjectStateChange`
+
+### `on_page` (global script)
+
+```lua
+on_page(piece)
+```
+
+A book turned to another page.
+
+An event: define this function and the table calls it.
+
+**Module call** `onObjectPageChange`
 
 ### `on_roll` (global script)
 
@@ -3198,6 +3250,7 @@ The converter rewrites a module's scripts into these calls by rule; this is the 
 | `addHotkey` | [`game.hotkey`](#gamehotkey) |
 | `addTag` | [`self.add_tag`](#selfadd_tag) |
 | `addToPlayerSelection` | [`game.select`](#gameselect) |
+| `Book.page_offset` | [`self.page_offset`](#selfpage_offset) |
 | `broadcastToAll` | [`game.say`](#gamesay) |
 | `call` | [`self.call`](#selfcall) |
 | `clearButtons` | [`self.clear_widgets`](#selfclear_widgets) |
@@ -3262,11 +3315,14 @@ The converter rewrites a module's scripts into these calls by rule; this is the 
 | `onObjectEnterContainer` | [`on_stowed`](#on_stowed-global-script) |
 | `onObjectLeaveContainer` | [`on_unstowed`](#on_unstowed-global-script) |
 | `onObjectNumberTyped` | [`on_number_typed`](#on_number_typed-global-script) |
+| `onObjectPageChange` | [`on_page`](#on_page-global-script) |
 | `onObjectPickUp` | [`on_pick_up`](#on_pick_up-global-script) |
 | `onObjectRandomize` | [`on_roll`](#on_roll-global-script) |
 | `onObjectRotate` | [`on_rotate`](#on_rotate-global-script) |
 | `onObjectSpawn` | [`on_spawn`](#on_spawn-global-script) |
 | `onObjectStateChange` | [`on_state`](#on_state) |
+| `onObjectStateChange` | [`on_state`](#on_state-global-script) |
+| `onPageChange` | [`on_page`](#on_page) |
 | `onPickUp` | [`on_pick_up`](#on_pick_up) |
 | `onPlayerAction` | [`on_player_action`](#on_player_action-global-script) |
 | `onPlayerTurn` | [`on_turn`](#on_turn) |

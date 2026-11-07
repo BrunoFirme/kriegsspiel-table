@@ -527,6 +527,30 @@ function compat.flip(obj)
   end
   return obj.set_face(best)
 end
+local function page_offset(obj)
+  local o = pbag(obj).page_offset
+  if o == nil then o = obj.page_offset or 0 end
+  return o
+end
+function compat.book_offset(obj) return page_offset(obj) end
+function compat.set_book_offset(obj, n) pbag(obj).page_offset = tonumber(n) or 0 end
+function compat.book_page(obj, use_offset)
+  local p = (obj.state or 1) - 1
+  if use_offset then return p + page_offset(obj) + 1 end
+  return p
+end
+function compat.set_book_page(obj, page, use_offset)
+  page = tonumber(page) or 0
+  if use_offset then page = page - (page_offset(obj) + 1) end
+  local n = math.max(#(obj.states or {}), 1)
+  if page < 0 or page >= n or page == (obj.state or 1) - 1 then return false end
+  obj.set_state(page + 1)
+  return true
+end
+function compat.book_highlight(obj, x1, y1, x2, y2)
+  if x1 == nil then pbag(obj).highlight = nil else pbag(obj).highlight = { x1, y1, x2, y2 } end
+  return true
+end
 function compat.randomize(obj) return obj.roll() end
 function compat.roll(obj) return obj.roll() end
 function compat.shuffle_states(obj)
@@ -916,7 +940,57 @@ function compat.cast(p)
   return hits
 end
 compat.Turns = setmetatable({}, { __index = function(_, k) if k == "turn_number" then return game.turn end if k == "enable" then return true end return nil end, __newindex = function() end })
-compat.Notes = { getNotes = function() return compat.notes or "" end, setNotes = function(s) compat.notes = s end, addNotebookTab = function() end, getNotebookTabs = function() return {} end, editNotebookTab = function() end, removeNotebookTab = function() end }
+local NOTES_TAG, TAB_TAG, TITLE_LINE, BODY_LINE, NOTE_DEF, NOTE_GAP = "notes", "notebook", "Name", "Note", "std.effects.note", 1
+local function note_cards(tag)
+  local list = board.pieces({ tag = tag }) or {}
+  table.sort(list, function(a, b) return a.id < b.id end)
+  return list
+end
+local function note_line(card, name) local t = card.text or {} return t[name] or "" end
+local function new_note_card(title, body, tag)
+  local all = note_cards(TAB_TAG)
+  for _, c in ipairs(note_cards(NOTES_TAG)) do all[#all + 1] = c end
+  local like = all[#all]
+  local at = like and { x = like.pos.x, z = like.pos.z - like.size.h - NOTE_GAP } or { x = 0, z = 0 }
+  local ok, card = pcall(board.spawn, { def = like and like.def or NOTE_DEF, x = at.x, z = at.z, rot = like and like.rot or 0, tags = { tag } })
+  if not ok or card == nil then compat.todo(nil, "Notes", "no note card to write on") return nil end
+  card.set_text(TITLE_LINE, tostring(title or ""))
+  card.set_text(BODY_LINE, tostring(body or ""))
+  return card
+end
+compat.Notes = {
+  getNotes = function() local c = note_cards(NOTES_TAG)[1] return c and note_line(c, BODY_LINE) or "" end,
+  setNotes = function(s)
+    local c = note_cards(NOTES_TAG)[1]
+    if c == nil then return new_note_card("Notes", s, NOTES_TAG) ~= nil end
+    c.set_text(BODY_LINE, tostring(s or ""))
+    return true
+  end,
+  getNotebookTabs = function()
+    local t = {}
+    for i, c in ipairs(note_cards(TAB_TAG)) do t[#t + 1] = { index = i - 1, title = note_line(c, TITLE_LINE), body = note_line(c, BODY_LINE), color = "Grey" } end
+    return t
+  end,
+  addNotebookTab = function(p)
+    p = type(p) == "table" and p or {}
+    if new_note_card(p.title, p.body, TAB_TAG) == nil then return -1 end
+    return #note_cards(TAB_TAG) - 1
+  end,
+  editNotebookTab = function(p)
+    p = type(p) == "table" and p or {}
+    local c = note_cards(TAB_TAG)[(tonumber(p.index) or -1) + 1]
+    if c == nil then return false end
+    if p.title ~= nil then c.set_text(TITLE_LINE, tostring(p.title)) end
+    if p.body ~= nil then c.set_text(BODY_LINE, tostring(p.body)) end
+    return true
+  end,
+  removeNotebookTab = function(i)
+    local c = note_cards(TAB_TAG)[(tonumber(i) or -1) + 1]
+    if c == nil then return false end
+    c.delete()
+    return true
+  end,
+}
 compat.Lighting = setmetatable({ apply = function() end }, { __index = function() return 0 end, __newindex = function() end })
 compat.Grid = setmetatable({}, { __index = function() return 0 end, __newindex = function() end })
 compat.Hands = { enable = false, getHands = function() return {} end }

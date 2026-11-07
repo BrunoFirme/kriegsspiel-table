@@ -192,7 +192,11 @@
   "CustomShaderState.SpecularColor": ["native", "kept with the shine", "", "WorthImportTests"],
   "CustomShaderState.SpecularIntensity": ["native", "the shine's strength", "", "WorthImportTests"],
   "CustomShaderState.SpecularSharpness": ["native", "the shine's sharpness", "", "WorthImportTests"],
-  "CustomFigurineState.MirroredBack": ["native", "the back picture mirrored", "", "FigurineTests"]
+  "CustomFigurineState.MirroredBack": ["native", "the back picture mirrored", "", "FigurineTests"],
+  "CustomPDFState.PDFPageOffset": ["native", "the book's page offset (PieceDef.PageOffset)", "", "BookNotesScriptTests"],
+  "CustomPDFState.PDFPassword": ["native", "a protected PDF opens with the password the save holds", "", "converter"],
+  "CustomPDFState.PDFUrl": ["native", "the book's pages", "", "BookTests"],
+  "CustomPDFState.PDFPage": ["native", "the page it lies open at", "", "BookTests"]
  },
  "object": {
   "addForce": ["dropped", "engine physics", "move the piece instead"],
@@ -340,7 +344,13 @@
   "UI": ["native", "self.ui / obj.ui: the piece's own panels, the same calls as ui", "", "PanelTests"],
   "shuffleStates": ["native", "compat.shuffle_states: another of its looks at random", "", "DiceScriptTests"],
   "value": ["native", "self.worth / set_worth", "", "DiceScriptTests"],
-  "value_flags": ["native", "self.worth_groups: which pieces it adds up with", "", "DiceScriptTests"]
+  "value_flags": ["native", "self.worth_groups: which pieces it adds up with", "", "DiceScriptTests"],
+  "Book.getPage": ["compat", "compat.book_page: the page it lies open at, from 0, or by its printed number", "", "BookNotesScriptTests"],
+  "Book.setPage": ["compat", "compat.set_book_page: turns it, by index or printed number", "", "BookNotesScriptTests"],
+  "Book.page_offset": ["compat", "the kind's page offset from the save; a script may set another", "", "BookNotesScriptTests"],
+  "book": ["compat", "obj.Book: the page calls above", "", "BookNotesScriptTests"],
+  "Book.setHighlight": ["partial", "kept with the script; a highlight box is not drawn on the page", "", "BookNotesScriptTests"],
+  "Book.clearHighlight": ["partial", "kept with the script; a highlight box is not drawn on the page", "", "BookNotesScriptTests"]
  },
  "global": {
   "logStyle": ["dropped", "console commands and other host controls (decided 2026-11-06)", "the app's own console and settings"],
@@ -506,7 +516,13 @@
   "UI.setAttributes": ["native", "ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table", "", "PanelTests (server and app)"],
   "UI.setClass": ["native", "ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table", "", "PanelTests (server and app)"],
   "UI.setCustomAssets": ["native", "ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table", "", "PanelTests (server and app)"],
-  "UI.setValue": ["native", "ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table", "", "PanelTests (server and app)"]
+  "UI.setValue": ["native", "ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table", "", "PanelTests (server and app)"],
+  "Notes.getNotes": ["compat", "the save's Notes and notebook tabs are note cards beside the map (tagged notes and notebook); the Notes calls read and write those cards", "", "BookNotesScriptTests"],
+  "Notes.setNotes": ["compat", "the save's Notes and notebook tabs are note cards beside the map (tagged notes and notebook); the Notes calls read and write those cards", "", "BookNotesScriptTests"],
+  "Notes.getNotebookTabs": ["compat", "the save's Notes and notebook tabs are note cards beside the map (tagged notes and notebook); the Notes calls read and write those cards", "", "BookNotesScriptTests"],
+  "Notes.addNotebookTab": ["compat", "the save's Notes and notebook tabs are note cards beside the map (tagged notes and notebook); the Notes calls read and write those cards", "", "BookNotesScriptTests"],
+  "Notes.editNotebookTab": ["compat", "the save's Notes and notebook tabs are note cards beside the map (tagged notes and notebook); the Notes calls read and write those cards", "", "BookNotesScriptTests"],
+  "Notes.removeNotebookTab": ["compat", "the save's Notes and notebook tabs are note cards beside the map (tagged notes and notebook); the Notes calls read and write those cards", "", "BookNotesScriptTests"]
  },
  "events": {
   "onObjectEnterContainer": ["native", "on_stowed(holder, piece) after a stow", "", "StowEventTests"],
@@ -529,8 +545,8 @@
   "onObjectRandomize": ["native", "on_roll(piece, who) in the global script when an umpire rolls", "", "DiceScriptTests"],
   "onObjectSearchStart": ["dropped", "a holder's contents are a card, not a search", "nothing is needed"],
   "onObjectSearchEnd": ["dropped", "a holder's contents are a card, not a search", "nothing is needed"],
-  "onObjectPageChange": ["stub", "a page turn is a state change; no module handles it", "on_state"],
-  "onPageChange": ["stub", "a page turn is a state change; no module handles it", "on_state"],
+  "onObjectPageChange": ["native", "on_page(piece) in the global script", "", "BookNotesScriptTests"],
+  "onPageChange": ["native", "on_page() in the book's own script", "", "BookNotesScriptTests"],
   "onObjectLoopingEffect": ["dropped", "a bundle's own animations never come over", "nothing is needed"],
   "onObjectTriggerEffect": ["dropped", "a bundle's own animations never come over", "nothing is needed"],
   "onObjectFlick": ["dropped", "engine physics (flicking)", "nothing is needed"],
