@@ -369,6 +369,7 @@ internal sealed partial class PieceHandles(ScriptHost host)
             case "box_selected": return B(!p.NotBoxSelected);
             case "measures_moves": return B(p.MeasuresMoves);
             case "interactable": return B(!p.NotInteractable);
+            case "held_by": return host.Every.HeldBy.TryGetValue(id, out var holder) ? holder : DynValue.Nil;
             case "highlight": return p.Highlight is { } hl ? S(hl) : DynValue.Nil;
             case "effect_on": return B(!p.EffectOff);
             case "tint": return p.TintOverride is { } ti ? S(ti) : def != null ? S(def.Tint) : DynValue.Nil;

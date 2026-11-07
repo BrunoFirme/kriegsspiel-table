@@ -6,6 +6,8 @@ internal sealed class EveryScript(ScriptHost host)
 {
     public const string ModulePrefix = "__module_any_";
 
+    public readonly Dictionary<string, DynValue> HeldBy = new();
+
     public bool Listens(string hook) =>
         host.Global?.Env.Get(hook).Type == DataType.Function || host.PieceScripts.Values.Any(ps => ps.Enabled && ps.Env.Get(ModulePrefix + hook).Type == DataType.Function);
 

@@ -152,6 +152,7 @@
 ---@field shape string Its outline at its state: "box", "rounded", "circle", "hex", or "alpha" for a token cut along its picture.
 ---@field face_down boolean Turned over.
 ---@field interactable boolean Whether hands can take it (set_interactable).
+---@field held_by Who The umpire carrying it now, or nil.
 ---@field highlight string The colour it is ringed in, or nil (set_highlight).
 ---@field holds boolean Whether it is a holder that other pieces can be stowed in: a piece holding some, one made a holder, or a kind tagged bag.
 ---@field locked boolean Pinned to the table: not dragged, turned or resized by hand.

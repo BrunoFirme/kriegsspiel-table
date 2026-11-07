@@ -221,6 +221,7 @@ Read from `self` or from any piece `board.find` or `board.pieces` hands back. Fi
 | [`self.shape`](#selfshape) | Its outline at its state: "box", "rounded", "circle", "hex", or "alpha" for a token cut along its picture. |
 | [`self.face_down`](#selfface_down) | Turned over. |
 | [`self.interactable`](#selfinteractable) | Whether hands can take it (set_interactable). |
+| [`self.held_by`](#selfheld_by) | The umpire carrying it now, or nil. |
 | [`self.highlight`](#selfhighlight) | The colour it is ringed in, or nil (set_highlight). |
 | [`self.holds`](#selfholds) | Whether it is a holder that other pieces can be stowed in: a piece holding some, one made a holder, or a kind tagged bag. |
 | [`self.locked`](#selflocked) | Pinned to the table: not dragged, turned or resized by hand. |
@@ -583,6 +584,18 @@ Whether hands can take it (set_interactable).
 **Type** `boolean`, read-only.
 
 **Module call** `interactable`
+
+### `self.held_by`
+
+```lua
+self.held_by
+```
+
+The umpire carrying it now, or nil.
+
+**Type** `Who`, read-only.
+
+**Module call** `held_by_color`
 
 ### `self.highlight`
 
@@ -3507,6 +3520,7 @@ The converter rewrites a module's scripts into these calls by rule; this is the 
 | `Global.getVectorLines` | [`board.strokes`](#boardstrokes) |
 | `Global.setVar` | [`game.set_var`](#gameset_var) |
 | `Global.setVectorLines` | [`board.draw`](#boarddraw) |
+| `held_by_color` | [`self.held_by`](#selfheld_by) |
 | `highlightOn` | [`self.highlight`](#selfhighlight) |
 | `highlightOn` | [`self.set_highlight`](#selfset_highlight) |
 | `interactable` | [`self.interactable`](#selfinteractable) |

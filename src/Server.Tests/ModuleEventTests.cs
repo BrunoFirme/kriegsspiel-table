@@ -119,6 +119,20 @@ public class ModuleEventTests
     static IEnumerable<Command> Flat(IEnumerable<Command> log) => log.SelectMany(c => c is Batch b ? Flat(b.Items) : new[] { c });
 
     [Fact]
+    public void A_piece_carried_by_an_umpire_reads_their_colour_as_held_by_until_it_is_put_down()
+    {
+        using var t = new Table();
+        Load(t, P, """
+            function onObjectPickUp(color, obj) self.setName('held ' .. tostring(obj.held_by_color)) end
+            function onObjectDrop(color, obj) self.setDescription('dropped ' .. tostring(obj.held_by_color)) end
+            """);
+        t.Server.Handle(Table.Ump3, new HoldPiece { Layer = U, Id = Marker, Held = true });
+        t.Server.Handle(Table.Ump3, new MovePiece { Layer = U, Id = Marker, Pos = new(3, 3) });
+        var p = t.Server.State.Find(U, P)!;
+        Assert.Equal(("held Red", "dropped nil"), (p.Label, p.Note));
+    }
+
+    [Fact]
     public void A_save_answer_that_is_not_text_clears_the_saved_state_and_nothing_keeps_it()
     {
         Assert.Equal("", Saved("function onSave() return 5 end"));

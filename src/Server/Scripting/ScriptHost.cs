@@ -38,6 +38,7 @@ public sealed partial class ScriptHost
     PieceScript? _global;
     readonly PieceHandles _handles;
     readonly EveryScript _every;
+    internal EveryScript Every => _every;
     readonly PieceDrawing _drawing;
     readonly SaveRounds _saves;
     readonly TableControls _controls = new();
@@ -809,6 +810,7 @@ public sealed partial class ScriptHost
         {
             case HoldPiece { Held: true } h:
                 if (Find(h.Id) is { } held) PickedUp[h.Id] = (held.Pos, held.RotDeg, held.Y);
+                _every.HeldBy[h.Id] = who;
                 if (_pieces.TryGetValue(h.Id, out var ph)) Call(ph, "on_pick_up", who);
                 _every.Tell("on_pick_up", Handle(h.Id), who);
                 break;
@@ -845,6 +847,7 @@ public sealed partial class ScriptHost
 
     void ReactToMove(MovePiece m, DynValue who)
     {
+        _every.HeldBy.Remove(m.Id);
         var old = _s.LastInverse is MovePiece inv && inv.Id == m.Id ? inv : null;
         bool turnedOnly = old != null && Math.Abs(old.RotDeg - m.RotDeg) > 0.01 && (old.Pos - m.Pos).Length < 0.001;
         if (_pieces.TryGetValue(m.Id, out var pm))

@@ -607,7 +607,7 @@ public static class ModuleTranslator
             switch (name)
             {
                 case "is_face_down": return Direct($"{recv}.face_down", node);
-                case "held_by_color": return Compat("nil", node);
+                case "held_by_color": return Compat($"compat.held_by_color({recv})", node);
                 case "resting": return Compat("true", node);
                 case "spawning" or "loading_custom": return Compat($"compat.get_prop({recv}, \"spawning\", false)", node);
                 case "memo":

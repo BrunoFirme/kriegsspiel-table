@@ -176,6 +176,7 @@ public static partial class ApiDoc
         F("piece", "shape", "string", "Its outline at its state: \"box\", \"rounded\", \"circle\", \"hex\", or \"alpha\" for a token cut along its picture.");
         F("piece", "face_down", "boolean", "Turned over.", "is_face_down");
         F("piece", "interactable", "boolean", "Whether hands can take it (set_interactable).", "interactable");
+        F("piece", "held_by", "Who", "The umpire carrying it now, or nil.", "held_by_color");
         F("piece", "highlight", "string", "The colour it is ringed in, or nil (set_highlight).", "highlightOn");
         F("piece", "holds", "boolean", "Whether it is a holder that other pieces can be stowed in: a piece holding some, one made a holder, or a kind tagged bag.", "getQuantity");
         See("self.flip", "on_flip");

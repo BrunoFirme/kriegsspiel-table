@@ -901,6 +901,12 @@ function compat.todo(obj, name, ...)
   return todo_before(obj, name, ...)
 end
 
+function compat.held_by_color(obj)
+  local who = obj.held_by
+  if who == nil then return nil end
+  return compat.color_of(who)
+end
+
 function compat.none() return nil end
 function compat.no() return false end
 
