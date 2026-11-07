@@ -33,6 +33,7 @@ public class RoleAndJoinTests
         yield return new PlayEffect { Layer = layer, Id = "p-000004", Index = 1 };
         yield return new GlidePiece { Layer = layer, Id = "p-000004", To = new Vec2(2, 3), Rot = 90 };
         yield return new ShowCast { Shape = "box", From = [0, 1, 0], To = [3, 1, 0], Size = [1, 1, 1], Seconds = 0.5 };
+        yield return new ReportSelection { Selected = { "p-000004" } };
         yield return new SetPieceOption { Layer = layer, Id = "p-000004", Name = PieceOptions.NoCollision, Value = true };
         yield return new FlipPiece { Layer = layer, Id = "p-000004", FaceDown = true };
         yield return new SetScale { Layer = layer, Id = "p-000004", Scale = 1.25 };

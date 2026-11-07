@@ -29,6 +29,7 @@ namespace KTable.Core.Protocol;
 [JsonDerivedType(typeof(PlayEffect), "PlayEffect")]
 [JsonDerivedType(typeof(GlidePiece), "GlidePiece")]
 [JsonDerivedType(typeof(ShowCast), "ShowCast")]
+[JsonDerivedType(typeof(ReportSelection), "ReportSelection")]
 [JsonDerivedType(typeof(SetPieceOption), "SetPieceOption")]
 [JsonDerivedType(typeof(SetPointerRule), "SetPointerRule")]
 [JsonDerivedType(typeof(SetBriefing), "SetBriefing")]
@@ -1026,6 +1027,17 @@ public sealed class SetGlobalMenuItems : Command
     public override Sender SentBy() => Sender.Runtime;
     public override bool OnUndoStack() => true;
     public override Shown ShownToObservers() => Shown.Table;
+    public override IEnumerable<(string Layer, string Id)> ZonePieces() => [];
+    public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [];
+    public override IEnumerable<string> ScriptsToReload() => [];
+}
+public sealed class ReportSelection : Command
+{
+    public const int MostPieces = 10000;
+    public List<string> Selected { get; set; } = new();
+    public override Sender SentBy() => Sender.Umpire;
+    public override bool OnUndoStack() => false;
+    public override Shown ShownToObservers() => Shown.UmpiresOnly;
     public override IEnumerable<(string Layer, string Id)> ZonePieces() => [];
     public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [];
     public override IEnumerable<string> ScriptsToReload() => [];

@@ -8878,7 +8878,7 @@
    "held_by": "ModuleEventTests",
    "count": 0,
    "modules": 0,
-   "audited": "ModuleEventTests.A_trigger_effect_played_by_an_umpire_reaches_the_piece_and_every_script_with_its_index"
+   "audited": "ModuleEventTests.A_trigger_effect_played_by_a_script_or_an_umpire_reaches_the_piece_and_every_script_with_its_index"
   },
   {
    "row": "onPageChange",

@@ -1030,6 +1030,22 @@ public class ModuleObjectCallTests
     }
 
     [Fact]
+    public void A_selection_an_umpire_reports_is_what_scripts_read_as_theirs()
+    {
+        using var t = new Table();
+        Assert.DoesNotContain(t.Server.Handle(Table.Ump3, new ReportSelection { Selected = { P, "p-gone" } }), o => o.Message is ErrorMessage);
+        var label = Run(t, """
+            function onLoad()
+              local who = self.getSelectingPlayers()
+              self.setName(#who .. ' ' .. tostring(who[1]) .. ' ' .. #getObjectFromGUID('p-000003').getSelectingPlayers())
+            end
+            """);
+        Assert.Equal("1 Red 0", label);
+        t.Server.Handle(Table.Ump3, new ReportSelection());
+        Assert.Equal("0 nil 0", Run(t, "function onLoad() local who = self.getSelectingPlayers() self.setName(#who .. ' ' .. tostring(who[1]) .. ' ' .. #getObjectFromGUID('p-000003').getSelectingPlayers()) end"));
+    }
+
+    [Fact]
     public void Selecting_players_are_the_seated_colours_whose_selection_holds_the_piece()
     {
         using var t = new Table();

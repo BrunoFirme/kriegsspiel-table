@@ -248,6 +248,16 @@
   umpires:     it it it
   reloads:     
   undo stack:  no
+== ReportSelection
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; Selected-1 outside=ok; Selected-2 outside=ok
+  zone, none of mine: all inside=ok; Selected-1 outside=ok; Selected-2 outside=ok
+  observer:    nothing
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  no
 == SetPieceOption
   sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
   in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
@@ -1163,6 +1173,16 @@
   in a batch:  Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
   zone:        all inside=ok; ray outside=ok
   zone, none of mine: all inside=ok; ray outside=ok
+  observer:    nothing
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  no
+== ReportSelection (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok
+  zone, none of mine: all inside=ok
   observer:    nothing
   stranger:    nothing
   umpires:     it it it

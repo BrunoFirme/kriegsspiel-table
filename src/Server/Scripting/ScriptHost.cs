@@ -872,6 +872,9 @@ public sealed partial class ScriptHost
         var who = Who(actor);
         switch (c)
         {
+            case ReportSelection rs:
+                _controls.Pointed(actor, rs.Selected.Where(id => Find(id) != null).ToList(), _controls.HoveredBy(actor));
+                break;
             case Batch b:
                 foreach (var i in b.Items) React(i, actor);
                 break;

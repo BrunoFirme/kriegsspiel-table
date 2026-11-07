@@ -935,7 +935,7 @@ every row that is not dropped must end audited, used by the corpus or not.
 | `onObjectRotate` | - | native | EventRenames |  | ModuleEventTests.A_piece_script_hears_every_drop_and_turn_with_the_tabletops_arguments |
 | `onObjectSearchEnd` | - | dropped | a holder's contents are a card, not a search |  |  |
 | `onObjectSearchStart` | - | dropped | a holder's contents are a card, not a search |  |  |
-| `onObjectTriggerEffect` | - | native | on_burst: an umpire played an effect once | ModuleEventTests | ModuleEventTests.A_trigger_effect_played_by_an_umpire_reaches_the_piece_and_every_script_with_its_index |
+| `onObjectTriggerEffect` | - | native | on_burst: an umpire played an effect once | ModuleEventTests | ModuleEventTests.A_trigger_effect_played_by_a_script_or_an_umpire_reaches_the_piece_and_every_script_with_its_index |
 | `onPageChange` | - | native | on_page() in the book's own script | BookNotesScriptTests | BookNotesScriptTests.A_module_script_turns_a_book_by_its_printed_page_numbers_and_hears_the_page_turn |
 | `onPlayerChangeColor` | - | dropped | the Player API (decided 2026-11-06) |  |  |
 | `onPlayerConnect` | - | dropped | the Player API (decided 2026-11-06) |  |  |

@@ -89,6 +89,7 @@ public static partial class StateMachine
             case PlayEffect pe: return Present(g, pe.Layer, pe.Id);
             case GlidePiece gp: return Present(g, gp.Layer, gp.Id);
             case ShowCast sc2: return sc2.Problem();
+            case ReportSelection rs: return rs.Selected is { Count: <= ReportSelection.MostPieces } ? null : "too many pieces in one selection";
             case PickMenuItem pm: return Present(g, pm.Layer, pm.Id);
             case HoldPiece hp: return Present(g, hp.Layer, hp.Id);
             case Say: return null;
