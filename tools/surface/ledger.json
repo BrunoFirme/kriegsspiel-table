@@ -273,8 +273,8 @@
   {
    "row": "Calculator",
    "status": "dropped",
-   "where": "a stock gadget",
-   "instead": "a counter on a piece, or the umpire's own",
+   "where": "the tabletop's stock gadgets (decided 2026-11-06)",
+   "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -282,8 +282,8 @@
   {
    "row": "Counter",
    "status": "dropped",
-   "where": "a stock gadget",
-   "instead": "a counter on a piece",
+   "where": "the tabletop's stock gadgets (decided 2026-11-06)",
+   "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -318,8 +318,8 @@
   {
    "row": "Digital_Clock",
    "status": "dropped",
-   "where": "a stock gadget",
-   "instead": "the game clock",
+   "where": "the tabletop's stock gadgets (decided 2026-11-06)",
+   "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -336,8 +336,8 @@
   {
    "row": "Go_Game_Piece_Black",
    "status": "dropped",
-   "where": "a stock piece",
-   "instead": "a piece of our own",
+   "where": "the tabletop's stock gadgets (decided 2026-11-06)",
+   "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -345,8 +345,8 @@
   {
    "row": "Go_Game_Piece_White",
    "status": "dropped",
-   "where": "a stock piece",
-   "instead": "a piece of our own",
+   "where": "the tabletop's stock gadgets (decided 2026-11-06)",
+   "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -354,17 +354,17 @@
   {
    "row": "Quarter",
    "status": "dropped",
-   "where": "a stock coin",
-   "instead": "roll a die",
+   "where": "the tabletop's stock gadgets (decided 2026-11-06)",
+   "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
    "modules": 0
   },
   {
    "row": "ScriptingTrigger",
-   "status": "stub",
-   "where": "no module in the roster has one; the table's own zones raise no script events yet",
-   "instead": "draw the zone at the table; a script reads board.zones()",
+   "status": "dropped",
+   "where": "scripting and layout zones (decided 2026-11-06)",
+   "instead": "draw the zone at the table; scripts that ask a zone what is in it get nothing",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -372,8 +372,8 @@
   {
    "row": "Tablet",
    "status": "dropped",
-   "where": "a stock gadget (a web browser on the table)",
-   "instead": "open the page outside the game",
+   "where": "the tabletop's stock gadgets (decided 2026-11-06)",
+   "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -950,8 +950,8 @@
   {
    "row": "SaveState.PlayArea",
    "status": "dropped",
-   "where": "the table's size here is the map's",
-   "instead": "nothing is needed",
+   "where": "the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06)",
+   "instead": "the backdrop themes and the app's own table and views",
    "held_by": "",
    "count": 29,
    "modules": 29
@@ -1265,8 +1265,8 @@
   {
    "row": "SaveState.MusicPlayer",
    "status": "dropped",
-   "where": "music player",
-   "instead": "nothing is needed",
+   "where": "music and sound players (decided 2026-11-06)",
+   "instead": "the app's own sounds",
    "held_by": "",
    "count": 9,
    "modules": 9
@@ -1301,8 +1301,8 @@
   {
    "row": "MusicPlayerState.AudioLibrary",
    "status": "dropped",
-   "where": "music player",
-   "instead": "nothing is needed",
+   "where": "music and sound players (decided 2026-11-06)",
+   "instead": "the app's own sounds",
    "held_by": "",
    "count": 8,
    "modules": 8
@@ -1481,8 +1481,8 @@
   {
    "row": "MusicPlayerState.CurrentAudioTitle",
    "status": "dropped",
-   "where": "music player",
-   "instead": "nothing is needed",
+   "where": "music and sound players (decided 2026-11-06)",
+   "instead": "the app's own sounds",
    "held_by": "",
    "count": 5,
    "modules": 5
@@ -1490,8 +1490,8 @@
   {
    "row": "MusicPlayerState.CurrentAudioURL",
    "status": "dropped",
-   "where": "music player",
-   "instead": "nothing is needed",
+   "where": "music and sound players (decided 2026-11-06)",
+   "instead": "the app's own sounds",
    "held_by": "",
    "count": 5,
    "modules": 5
@@ -1499,8 +1499,8 @@
   {
    "row": "SaveState.CameraStates",
    "status": "dropped",
-   "where": "saved camera positions",
-   "instead": "views are saved here per person",
+   "where": "the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06)",
+   "instead": "the backdrop themes and the app's own table and views",
    "held_by": "",
    "count": 5,
    "modules": 5
@@ -1526,8 +1526,8 @@
   {
    "row": "MusicPlayerState.PlaylistEntry",
    "status": "dropped",
-   "where": "music player",
-   "instead": "nothing is needed",
+   "where": "music and sound players (decided 2026-11-06)",
+   "instead": "the app's own sounds",
    "held_by": "",
    "count": 4,
    "modules": 4
@@ -1607,8 +1607,8 @@
   {
    "row": "MusicPlayerState.RepeatSong",
    "status": "dropped",
-   "where": "music player",
-   "instead": "nothing is needed",
+   "where": "music and sound players (decided 2026-11-06)",
+   "instead": "the app's own sounds",
    "held_by": "",
    "count": 3,
    "modules": 3
@@ -1741,18 +1741,18 @@
   },
   {
    "row": "BagState.Order",
-   "status": "dropped",
-   "where": "the order a bag gives its pieces back in",
-   "instead": "stowed pieces come out first in first, or by name",
-   "held_by": "",
+   "status": "native",
+   "where": "ModuleObj.TakeOrder: last in first out, first in first out or at random, as the module set it",
+   "instead": "",
+   "held_by": "BagOrderTests",
    "count": 0,
    "modules": 0
   },
   {
    "row": "CalculatorState.memory",
    "status": "dropped",
-   "where": "a stock gadget",
-   "instead": "nothing is needed",
+   "where": "the tabletop's stock gadgets (decided 2026-11-06)",
+   "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -1760,8 +1760,8 @@
   {
    "row": "CalculatorState.value",
    "status": "dropped",
-   "where": "a stock gadget",
-   "instead": "nothing is needed",
+   "where": "the tabletop's stock gadgets (decided 2026-11-06)",
+   "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -1769,8 +1769,8 @@
   {
    "row": "CameraState.AbsolutePosition",
    "status": "dropped",
-   "where": "saved camera positions",
-   "instead": "views are saved here per person",
+   "where": "the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06)",
+   "instead": "the backdrop themes and the app's own table and views",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -1778,8 +1778,8 @@
   {
    "row": "CameraState.Distance",
    "status": "dropped",
-   "where": "saved camera positions",
-   "instead": "views are saved here per person",
+   "where": "the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06)",
+   "instead": "the backdrop themes and the app's own table and views",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -1787,8 +1787,8 @@
   {
    "row": "CameraState.Position",
    "status": "dropped",
-   "where": "saved camera positions",
-   "instead": "views are saved here per person",
+   "where": "the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06)",
+   "instead": "the backdrop themes and the app's own table and views",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -1796,8 +1796,8 @@
   {
    "row": "CameraState.Rotation",
    "status": "dropped",
-   "where": "saved camera positions",
-   "instead": "views are saved here per person",
+   "where": "the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06)",
+   "instead": "the backdrop themes and the app's own table and views",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -1805,8 +1805,8 @@
   {
    "row": "CameraState.Zoomed",
    "status": "dropped",
-   "where": "saved camera positions",
-   "instead": "views are saved here per person",
+   "where": "the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06)",
+   "instead": "the backdrop themes and the app's own table and views",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -1814,8 +1814,8 @@
   {
    "row": "ClockState.Mode",
    "status": "dropped",
-   "where": "a stock gadget",
-   "instead": "the game clock",
+   "where": "the tabletop's stock gadgets (decided 2026-11-06)",
+   "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -1823,8 +1823,8 @@
   {
    "row": "ClockState.Paused",
    "status": "dropped",
-   "where": "a stock gadget",
-   "instead": "the game clock",
+   "where": "the tabletop's stock gadgets (decided 2026-11-06)",
+   "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -1832,8 +1832,8 @@
   {
    "row": "ClockState.SecondsPassed",
    "status": "dropped",
-   "where": "a stock gadget",
-   "instead": "the game clock",
+   "where": "the tabletop's stock gadgets (decided 2026-11-06)",
+   "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -1841,8 +1841,8 @@
   {
    "row": "CounterState.value",
    "status": "dropped",
-   "where": "a stock gadget",
-   "instead": "a counter on a piece",
+   "where": "the tabletop's stock gadgets (decided 2026-11-06)",
+   "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -1904,8 +1904,8 @@
   {
    "row": "CustomDeckState.BackIsHidden",
    "status": "dropped",
-   "where": "a face-down card shows the back its sheet gives it",
-   "instead": "nothing is needed",
+   "where": "deck and card logic (decided 2026-11-06)",
+   "instead": "cards come over as plain pieces; a stowed bag holds a deck's cards",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -1930,19 +1930,19 @@
   },
   {
    "row": "CustomDeckState.NumHeight",
-   "status": "unknown",
-   "where": "",
+   "status": "native",
+   "where": "ModuleSave card sheets: each card cut from its own cell",
    "instead": "",
-   "held_by": "",
+   "held_by": "ConverterTests",
    "count": 0,
    "modules": 0
   },
   {
    "row": "CustomDeckState.NumWidth",
-   "status": "unknown",
-   "where": "",
+   "status": "native",
+   "where": "ModuleSave card sheets: each card cut from its own cell",
    "instead": "",
-   "held_by": "",
+   "held_by": "ConverterTests",
    "count": 0,
    "modules": 0
   },
@@ -1976,26 +1976,26 @@
   {
    "row": "CustomFigurineState.UseMinimalCollider",
    "status": "dropped",
-   "where": "a standing picture; no module in the roster has one",
-   "instead": "make a block with the picture in the piece studio",
+   "where": "the engine's physics colliders",
+   "instead": "nothing is needed",
    "held_by": "",
    "count": 0,
    "modules": 0
   },
   {
    "row": "CustomImageState.CustomFigurine",
-   "status": "unknown",
-   "where": "",
+   "status": "native",
+   "where": "Figurines.cs: the picture on a card in a round base",
    "instead": "",
-   "held_by": "",
+   "held_by": "FigurineTests",
    "count": 0,
    "modules": 0
   },
   {
    "row": "CustomImageState.CustomJigsawPuzzle",
-   "status": "unknown",
-   "where": "",
-   "instead": "",
+   "status": "dropped",
+   "where": "the tabletop's stock gadgets (decided 2026-11-06)",
+   "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -2012,8 +2012,8 @@
   {
    "row": "CustomJigsawPuzzleState.ImageOnBoard",
    "status": "dropped",
-   "where": "jigsaw puzzles",
-   "instead": "nothing is needed",
+   "where": "the tabletop's stock gadgets (decided 2026-11-06)",
+   "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -2021,8 +2021,8 @@
   {
    "row": "CustomJigsawPuzzleState.NumPuzzlePieces",
    "status": "dropped",
-   "where": "jigsaw puzzles",
-   "instead": "nothing is needed",
+   "where": "the tabletop's stock gadgets (decided 2026-11-06)",
+   "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -2426,8 +2426,8 @@
   {
    "row": "LayoutZoneState.GroupsInZone",
    "status": "dropped",
-   "where": "layout zones",
-   "instead": "nothing is needed",
+   "where": "scripting and layout zones (decided 2026-11-06)",
+   "instead": "draw the zone at the table; scripts that ask a zone what is in it get nothing",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -2435,8 +2435,8 @@
   {
    "row": "LayoutZoneState.Options",
    "status": "dropped",
-   "where": "layout zones",
-   "instead": "nothing is needed",
+   "where": "scripting and layout zones (decided 2026-11-06)",
+   "instead": "draw the zone at the table; scripts that ask a zone what is in it get nothing",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -2489,8 +2489,8 @@
   {
    "row": "Mp3PlayerState.genre",
    "status": "dropped",
-   "where": "a stock gadget",
-   "instead": "nothing is needed",
+   "where": "the tabletop's stock gadgets (decided 2026-11-06)",
+   "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -2498,8 +2498,8 @@
   {
    "row": "Mp3PlayerState.isPlaying",
    "status": "dropped",
-   "where": "a stock gadget",
-   "instead": "nothing is needed",
+   "where": "the tabletop's stock gadgets (decided 2026-11-06)",
+   "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -2507,8 +2507,8 @@
   {
    "row": "Mp3PlayerState.loopOne",
    "status": "dropped",
-   "where": "a stock gadget",
-   "instead": "nothing is needed",
+   "where": "the tabletop's stock gadgets (decided 2026-11-06)",
+   "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -2516,8 +2516,8 @@
   {
    "row": "Mp3PlayerState.menu",
    "status": "dropped",
-   "where": "a stock gadget",
-   "instead": "nothing is needed",
+   "where": "the tabletop's stock gadgets (decided 2026-11-06)",
+   "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -2525,8 +2525,8 @@
   {
    "row": "Mp3PlayerState.menuTitle",
    "status": "dropped",
-   "where": "a stock gadget",
-   "instead": "nothing is needed",
+   "where": "the tabletop's stock gadgets (decided 2026-11-06)",
+   "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -2534,8 +2534,8 @@
   {
    "row": "Mp3PlayerState.songTitle",
    "status": "dropped",
-   "where": "a stock gadget",
-   "instead": "nothing is needed",
+   "where": "the tabletop's stock gadgets (decided 2026-11-06)",
+   "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -2543,8 +2543,8 @@
   {
    "row": "Mp3PlayerState.volume",
    "status": "dropped",
-   "where": "a stock gadget",
-   "instead": "nothing is needed",
+   "where": "the tabletop's stock gadgets (decided 2026-11-06)",
+   "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -2579,8 +2579,8 @@
   {
    "row": "ObjectState.Calculator",
    "status": "dropped",
-   "where": "a stock gadget",
-   "instead": "nothing is needed",
+   "where": "the tabletop's stock gadgets (decided 2026-11-06)",
+   "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -2588,8 +2588,8 @@
   {
    "row": "ObjectState.Clock",
    "status": "dropped",
-   "where": "a stock gadget",
-   "instead": "the game clock",
+   "where": "the tabletop's stock gadgets (decided 2026-11-06)",
+   "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -2597,8 +2597,8 @@
   {
    "row": "ObjectState.Counter",
    "status": "dropped",
-   "where": "a stock gadget",
-   "instead": "a counter on a piece",
+   "where": "the tabletop's stock gadgets (decided 2026-11-06)",
+   "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -2678,8 +2678,8 @@
   {
    "row": "ObjectState.LayoutGroupSortIndex",
    "status": "dropped",
-   "where": "layout zones",
-   "instead": "nothing is needed",
+   "where": "scripting and layout zones (decided 2026-11-06)",
+   "instead": "draw the zone at the table; scripts that ask a zone what is in it get nothing",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -2687,8 +2687,8 @@
   {
    "row": "ObjectState.LayoutZone",
    "status": "dropped",
-   "where": "layout zones",
-   "instead": "nothing is needed",
+   "where": "scripting and layout zones (decided 2026-11-06)",
+   "instead": "draw the zone at the table; scripts that ask a zone what is in it get nothing",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -2705,8 +2705,8 @@
   {
    "row": "ObjectState.Mp3Player",
    "status": "dropped",
-   "where": "a stock gadget",
-   "instead": "nothing is needed",
+   "where": "the tabletop's stock gadgets (decided 2026-11-06)",
+   "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -2723,8 +2723,8 @@
   {
    "row": "ObjectState.RPGdead",
    "status": "dropped",
-   "where": "rpg figurines",
-   "instead": "nothing is needed",
+   "where": "the tabletop's stock gadgets (decided 2026-11-06)",
+   "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -2732,8 +2732,8 @@
   {
    "row": "ObjectState.RPGmode",
    "status": "dropped",
-   "where": "rpg figurines",
-   "instead": "nothing is needed",
+   "where": "the tabletop's stock gadgets (decided 2026-11-06)",
+   "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -2750,8 +2750,8 @@
   {
    "row": "ObjectState.Tablet",
    "status": "dropped",
-   "where": "a stock gadget",
-   "instead": "open the page outside the game",
+   "where": "the tabletop's stock gadgets (decided 2026-11-06)",
+   "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -2761,6 +2761,15 @@
    "status": "dropped",
    "where": "the piece's counting value",
    "instead": "a counter on the piece",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "ObjectState.XmlUI",
+   "status": "planned",
+   "where": "a piece's own panels; the import reads them next",
+   "instead": "",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -2865,6 +2874,15 @@
    "modules": 0
   },
   {
+   "row": "SaveState.XmlUI",
+   "status": "planned",
+   "where": "the save's own panels; the import reads them next",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
    "row": "SnapPointState.Position",
    "status": "dropped",
    "where": "snap points (grid, decided 2026-11-06)",
@@ -2939,8 +2957,8 @@
   {
    "row": "TabletState.PageURL",
    "status": "dropped",
-   "where": "a stock gadget",
-   "instead": "open the page outside the game",
+   "where": "the tabletop's stock gadgets (decided 2026-11-06)",
+   "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -3489,9 +3507,9 @@
   },
   {
    "row": "split",
-   "status": "stub",
-   "where": "card dealing; no module deals with it: the uses the scan counts are the modules' own string split helpers, which run as written (StringSplitTests)",
-   "instead": "take cards out of the holder",
+   "status": "dropped",
+   "where": "deck and card logic (decided 2026-11-06)",
+   "instead": "cards come over as plain pieces; a stowed bag holds a deck's cards",
    "held_by": "",
    "count": 26,
    "modules": 12
@@ -3769,8 +3787,8 @@
   {
    "row": "Browser.pixel_width",
    "status": "dropped",
-   "where": "a stock gadget",
-   "instead": "open the page outside the game",
+   "where": "the tabletop's stock gadgets (decided 2026-11-06)",
+   "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -3778,8 +3796,8 @@
   {
    "row": "Browser.url",
    "status": "dropped",
-   "where": "a stock gadget",
-   "instead": "open the page outside the game",
+   "where": "the tabletop's stock gadgets (decided 2026-11-06)",
+   "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -3787,8 +3805,8 @@
   {
    "row": "Clock.getValue",
    "status": "dropped",
-   "where": "a stock gadget",
-   "instead": "the game clock",
+   "where": "the tabletop's stock gadgets (decided 2026-11-06)",
+   "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -3796,8 +3814,8 @@
   {
    "row": "Clock.pauseStart",
    "status": "dropped",
-   "where": "a stock gadget",
-   "instead": "the game clock",
+   "where": "the tabletop's stock gadgets (decided 2026-11-06)",
+   "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -3805,8 +3823,8 @@
   {
    "row": "Clock.paused",
    "status": "dropped",
-   "where": "a stock gadget",
-   "instead": "the game clock",
+   "where": "the tabletop's stock gadgets (decided 2026-11-06)",
+   "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -3814,8 +3832,8 @@
   {
    "row": "Clock.setValue",
    "status": "dropped",
-   "where": "a stock gadget",
-   "instead": "the game clock",
+   "where": "the tabletop's stock gadgets (decided 2026-11-06)",
+   "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -3823,8 +3841,8 @@
   {
    "row": "Clock.showCurrentTime",
    "status": "dropped",
-   "where": "a stock gadget",
-   "instead": "the game clock",
+   "where": "the tabletop's stock gadgets (decided 2026-11-06)",
+   "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -3832,8 +3850,8 @@
   {
    "row": "Clock.startStopwatch",
    "status": "dropped",
-   "where": "a stock gadget",
-   "instead": "the game clock",
+   "where": "the tabletop's stock gadgets (decided 2026-11-06)",
+   "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -3931,8 +3949,8 @@
   {
    "row": "Counter.clear",
    "status": "dropped",
-   "where": "a stock gadget",
-   "instead": "a counter on a piece",
+   "where": "the tabletop's stock gadgets (decided 2026-11-06)",
+   "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -3940,8 +3958,8 @@
   {
    "row": "Counter.decrement",
    "status": "dropped",
-   "where": "a stock gadget",
-   "instead": "a counter on a piece",
+   "where": "the tabletop's stock gadgets (decided 2026-11-06)",
+   "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -3949,8 +3967,8 @@
   {
    "row": "Counter.getValue",
    "status": "dropped",
-   "where": "a stock gadget",
-   "instead": "a counter on a piece",
+   "where": "the tabletop's stock gadgets (decided 2026-11-06)",
+   "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -3958,8 +3976,8 @@
   {
    "row": "Counter.increment",
    "status": "dropped",
-   "where": "a stock gadget",
-   "instead": "a counter on a piece",
+   "where": "the tabletop's stock gadgets (decided 2026-11-06)",
+   "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -3967,8 +3985,8 @@
   {
    "row": "Counter.setValue",
    "status": "dropped",
-   "where": "a stock gadget",
-   "instead": "a counter on a piece",
+   "where": "the tabletop's stock gadgets (decided 2026-11-06)",
+   "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -3976,8 +3994,8 @@
   {
    "row": "LayoutZone.getOptions",
    "status": "dropped",
-   "where": "layout zones",
-   "instead": "nothing is needed",
+   "where": "scripting and layout zones (decided 2026-11-06)",
+   "instead": "draw the zone at the table; scripts that ask a zone what is in it get nothing",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -3985,8 +4003,8 @@
   {
    "row": "LayoutZone.layout",
    "status": "dropped",
-   "where": "layout zones",
-   "instead": "nothing is needed",
+   "where": "scripting and layout zones (decided 2026-11-06)",
+   "instead": "draw the zone at the table; scripts that ask a zone what is in it get nothing",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -3994,8 +4012,8 @@
   {
    "row": "LayoutZone.setOptions",
    "status": "dropped",
-   "where": "layout zones",
-   "instead": "nothing is needed",
+   "where": "scripting and layout zones (decided 2026-11-06)",
+   "instead": "draw the zone at the table; scripts that ask a zone what is in it get nothing",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -4003,8 +4021,8 @@
   {
    "row": "RPGFigurine.attack",
    "status": "dropped",
-   "where": "rpg figurines",
-   "instead": "nothing is needed",
+   "where": "the tabletop's stock gadgets (decided 2026-11-06)",
+   "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -4012,8 +4030,8 @@
   {
    "row": "RPGFigurine.changeMode",
    "status": "dropped",
-   "where": "rpg figurines",
-   "instead": "nothing is needed",
+   "where": "the tabletop's stock gadgets (decided 2026-11-06)",
+   "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -4021,8 +4039,8 @@
   {
    "row": "RPGFigurine.die",
    "status": "dropped",
-   "where": "rpg figurines",
-   "instead": "nothing is needed",
+   "where": "the tabletop's stock gadgets (decided 2026-11-06)",
+   "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -4030,8 +4048,8 @@
   {
    "row": "RPGFigurine.onAttack",
    "status": "dropped",
-   "where": "rpg figurines",
-   "instead": "nothing is needed",
+   "where": "the tabletop's stock gadgets (decided 2026-11-06)",
+   "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -4039,8 +4057,8 @@
   {
    "row": "RPGFigurine.onHit",
    "status": "dropped",
-   "where": "rpg figurines",
-   "instead": "nothing is needed",
+   "where": "the tabletop's stock gadgets (decided 2026-11-06)",
+   "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -4110,9 +4128,9 @@
   },
   {
    "row": "Zone.getObjects",
-   "status": "stub",
-   "where": "no module in the roster has one; the table's own zones raise no script events yet",
-   "instead": "draw the zone at the table; a script reads board.zones()",
+   "status": "dropped",
+   "where": "scripting and layout zones (decided 2026-11-06)",
+   "instead": "draw the zone at the table; scripts that ask a zone what is in it get nothing",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -4245,9 +4263,9 @@
   },
   {
    "row": "browser",
-   "status": "unknown",
-   "where": "",
-   "instead": "",
+   "status": "dropped",
+   "where": "the tabletop's stock gadgets (decided 2026-11-06)",
+   "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -4255,107 +4273,107 @@
   {
    "row": "childPairs",
    "status": "dropped",
-   "where": "Unity components",
-   "instead": "nothing is needed",
+   "where": "the engine's materials and components (decided 2026-11-06)",
+   "instead": "a look of the piece's own",
    "held_by": "",
    "count": 0,
    "modules": 0
   },
   {
    "row": "clock",
-   "status": "unknown",
-   "where": "",
-   "instead": "",
+   "status": "dropped",
+   "where": "the tabletop's stock gadgets (decided 2026-11-06)",
+   "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
    "modules": 0
   },
   {
    "row": "component",
-   "status": "unknown",
-   "where": "",
-   "instead": "",
+   "status": "dropped",
+   "where": "the engine's materials and components (decided 2026-11-06)",
+   "instead": "a look of the piece's own",
    "held_by": "",
    "count": 0,
    "modules": 0
   },
   {
    "row": "componentIndex",
-   "status": "unknown",
-   "where": "",
-   "instead": "",
+   "status": "dropped",
+   "where": "the engine's materials and components (decided 2026-11-06)",
+   "instead": "a look of the piece's own",
    "held_by": "",
    "count": 0,
    "modules": 0
   },
   {
    "row": "componentName",
-   "status": "unknown",
-   "where": "",
-   "instead": "",
+   "status": "dropped",
+   "where": "the engine's materials and components (decided 2026-11-06)",
+   "instead": "a look of the piece's own",
    "held_by": "",
    "count": 0,
    "modules": 0
   },
   {
    "row": "container",
-   "status": "unknown",
-   "where": "",
-   "instead": "",
+   "status": "dropped",
+   "where": "deck and card logic (decided 2026-11-06)",
+   "instead": "cards come over as plain pieces; a stowed bag holds a deck's cards",
    "held_by": "",
    "count": 0,
    "modules": 0
   },
   {
    "row": "counter",
-   "status": "unknown",
-   "where": "",
-   "instead": "",
+   "status": "dropped",
+   "where": "the tabletop's stock gadgets (decided 2026-11-06)",
+   "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
    "modules": 0
   },
   {
    "row": "cut",
-   "status": "stub",
-   "where": "card dealing; no module calls it",
-   "instead": "take cards out of the holder",
+   "status": "dropped",
+   "where": "deck and card logic (decided 2026-11-06)",
+   "instead": "cards come over as plain pieces; a stowed bag holds a deck's cards",
    "held_by": "",
    "count": 0,
    "modules": 0
   },
   {
    "row": "deal",
-   "status": "stub",
-   "where": "card dealing; no module calls it",
-   "instead": "take cards out of the holder",
+   "status": "dropped",
+   "where": "deck and card logic (decided 2026-11-06)",
+   "instead": "cards come over as plain pieces; a stowed bag holds a deck's cards",
    "held_by": "",
    "count": 0,
    "modules": 0
   },
   {
    "row": "dealToAll",
-   "status": "stub",
-   "where": "card dealing; no module calls it",
-   "instead": "take cards out of the holder",
+   "status": "dropped",
+   "where": "deck and card logic (decided 2026-11-06)",
+   "instead": "cards come over as plain pieces; a stowed bag holds a deck's cards",
    "held_by": "",
    "count": 0,
    "modules": 0
   },
   {
    "row": "dealToColor",
-   "status": "stub",
-   "where": "card dealing; no module calls it",
-   "instead": "take cards out of the holder",
+   "status": "dropped",
+   "where": "deck and card logic (decided 2026-11-06)",
+   "instead": "cards come over as plain pieces; a stowed bag holds a deck's cards",
    "held_by": "",
    "count": 0,
    "modules": 0
   },
   {
    "row": "dealToColorWithOffset",
-   "status": "stub",
-   "where": "card dealing; no module calls it",
-   "instead": "take cards out of the holder",
+   "status": "dropped",
+   "where": "deck and card logic (decided 2026-11-06)",
+   "instead": "cards come over as plain pieces; a stowed bag holds a deck's cards",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -4389,9 +4407,9 @@
   },
   {
    "row": "drop",
-   "status": "unknown",
-   "where": "",
-   "instead": "",
+   "status": "dropped",
+   "where": "the Player API (decided 2026-11-06)",
+   "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -4444,8 +4462,8 @@
   {
    "row": "getChild",
    "status": "dropped",
-   "where": "Unity components",
-   "instead": "nothing is needed",
+   "where": "the engine's materials and components (decided 2026-11-06)",
+   "instead": "a look of the piece's own",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -4453,8 +4471,8 @@
   {
    "row": "getChildren",
    "status": "dropped",
-   "where": "Unity components",
-   "instead": "nothing is needed",
+   "where": "the engine's materials and components (decided 2026-11-06)",
+   "instead": "a look of the piece's own",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -4462,8 +4480,8 @@
   {
    "row": "getComponent",
    "status": "dropped",
-   "where": "Unity components",
-   "instead": "nothing is needed",
+   "where": "the engine's materials and components (decided 2026-11-06)",
+   "instead": "a look of the piece's own",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -4471,8 +4489,8 @@
   {
    "row": "getComponentInChildren",
    "status": "dropped",
-   "where": "Unity components",
-   "instead": "nothing is needed",
+   "where": "the engine's materials and components (decided 2026-11-06)",
+   "instead": "a look of the piece's own",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -4480,8 +4498,8 @@
   {
    "row": "getComponentVar",
    "status": "dropped",
-   "where": "Unity components",
-   "instead": "nothing is needed",
+   "where": "the engine's materials and components (decided 2026-11-06)",
+   "instead": "a look of the piece's own",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -4489,8 +4507,8 @@
   {
    "row": "getComponentVars",
    "status": "dropped",
-   "where": "Unity components",
-   "instead": "nothing is needed",
+   "where": "the engine's materials and components (decided 2026-11-06)",
+   "instead": "a look of the piece's own",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -4498,8 +4516,8 @@
   {
    "row": "getComponents",
    "status": "dropped",
-   "where": "Unity components",
-   "instead": "nothing is needed",
+   "where": "the engine's materials and components (decided 2026-11-06)",
+   "instead": "a look of the piece's own",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -4507,8 +4525,8 @@
   {
    "row": "getComponentsInChildren",
    "status": "dropped",
-   "where": "Unity components",
-   "instead": "nothing is needed",
+   "where": "the engine's materials and components (decided 2026-11-06)",
+   "instead": "a look of the piece's own",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -4570,8 +4588,8 @@
   {
    "row": "getMaterialValue",
    "status": "dropped",
-   "where": "Unity materials",
-   "instead": "nothing is needed",
+   "where": "the engine's materials and components (decided 2026-11-06)",
+   "instead": "a look of the piece's own",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -4579,8 +4597,8 @@
   {
    "row": "getMaterialVars",
    "status": "dropped",
-   "where": "Unity materials",
-   "instead": "nothing is needed",
+   "where": "the engine's materials and components (decided 2026-11-06)",
+   "instead": "a look of the piece's own",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -4588,8 +4606,8 @@
   {
    "row": "getMaterials",
    "status": "dropped",
-   "where": "Unity materials",
-   "instead": "nothing is needed",
+   "where": "the engine's materials and components (decided 2026-11-06)",
+   "instead": "a look of the piece's own",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -4597,8 +4615,8 @@
   {
    "row": "getMaterialsInChildren",
    "status": "dropped",
-   "where": "Unity materials",
-   "instead": "nothing is needed",
+   "where": "the engine's materials and components (decided 2026-11-06)",
+   "instead": "a look of the piece's own",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -4749,9 +4767,9 @@
   },
   {
    "row": "getZones",
-   "status": "stub",
-   "where": "no module calls it; answers an empty list",
-   "instead": "board.zones()",
+   "status": "dropped",
+   "where": "scripting and layout zones (decided 2026-11-06)",
+   "instead": "draw the zone at the table; scripts that ask a zone what is in it get nothing",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -4893,9 +4911,9 @@
   },
   {
    "row": "layoutZone",
-   "status": "unknown",
-   "where": "",
-   "instead": "",
+   "status": "dropped",
+   "where": "scripting and layout zones (decided 2026-11-06)",
+   "instead": "draw the zone at the table; scripts that ask a zone what is in it get nothing",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -4911,9 +4929,9 @@
   },
   {
    "row": "luaCollision",
-   "status": "unknown",
-   "where": "",
-   "instead": "",
+   "status": "dropped",
+   "where": "the engine's materials and components (decided 2026-11-06)",
+   "instead": "a look of the piece's own",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -4929,18 +4947,18 @@
   },
   {
    "row": "material",
-   "status": "unknown",
-   "where": "",
-   "instead": "",
+   "status": "dropped",
+   "where": "the engine's materials and components (decided 2026-11-06)",
+   "instead": "a look of the piece's own",
    "held_by": "",
    "count": 0,
    "modules": 0
   },
   {
    "row": "materialIndex",
-   "status": "unknown",
-   "where": "",
-   "instead": "",
+   "status": "dropped",
+   "where": "the engine's materials and components (decided 2026-11-06)",
+   "instead": "a look of the piece's own",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -4956,10 +4974,10 @@
   },
   {
    "row": "measure_movement",
-   "status": "dropped",
-   "where": "the measure-on-move overlay",
-   "instead": "the measure tool here",
-   "held_by": "",
+   "status": "native",
+   "where": "the piece option Shows how far it is moved; self.measures_moves and set_measures_moves",
+   "instead": "",
+   "held_by": "MeasureTests",
    "count": 0,
    "modules": 0
   },
@@ -5001,9 +5019,9 @@
   },
   {
    "row": "rPGFigurine",
-   "status": "unknown",
-   "where": "",
-   "instead": "",
+   "status": "dropped",
+   "where": "the tabletop's stock gadgets (decided 2026-11-06)",
+   "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -5028,9 +5046,9 @@
   },
   {
    "row": "remainder",
-   "status": "unknown",
-   "where": "",
-   "instead": "",
+   "status": "dropped",
+   "where": "deck and card logic (decided 2026-11-06)",
+   "instead": "cards come over as plain pieces; a stowed bag holds a deck's cards",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -5073,18 +5091,18 @@
   },
   {
    "row": "rendererIndex",
-   "status": "unknown",
-   "where": "",
-   "instead": "",
+   "status": "dropped",
+   "where": "the engine's materials and components (decided 2026-11-06)",
+   "instead": "a look of the piece's own",
    "held_by": "",
    "count": 0,
    "modules": 0
   },
   {
    "row": "reset",
-   "status": "stub",
-   "where": "no module calls it; a holder keeps what was put in it",
-   "instead": "unstow and stow at the table",
+   "status": "dropped",
+   "where": "deck and card logic (decided 2026-11-06)",
+   "instead": "cards come over as plain pieces; a stowed bag holds a deck's cards",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -5137,8 +5155,8 @@
   {
    "row": "setComponentVar",
    "status": "dropped",
-   "where": "Unity components",
-   "instead": "nothing is needed",
+   "where": "the engine's materials and components (decided 2026-11-06)",
+   "instead": "a look of the piece's own",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -5191,8 +5209,8 @@
   {
    "row": "setMaterialValue",
    "status": "dropped",
-   "where": "Unity materials",
-   "instead": "nothing is needed",
+   "where": "the engine's materials and components (decided 2026-11-06)",
+   "instead": "a look of the piece's own",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -5262,9 +5280,9 @@
   },
   {
    "row": "shuffle",
-   "status": "stub",
-   "where": "no module calls it; a holder keeps its order",
-   "instead": "nothing is needed",
+   "status": "dropped",
+   "where": "deck and card logic (decided 2026-11-06)",
+   "instead": "cards come over as plain pieces; a stowed bag holds a deck's cards",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -5289,9 +5307,9 @@
   },
   {
    "row": "spread",
-   "status": "stub",
-   "where": "card dealing; no module calls it",
-   "instead": "take cards out of the holder",
+   "status": "dropped",
+   "where": "deck and card logic (decided 2026-11-06)",
+   "instead": "cards come over as plain pieces; a stowed bag holds a deck's cards",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -5442,9 +5460,9 @@
   },
   {
    "row": "zone",
-   "status": "unknown",
-   "where": "",
-   "instead": "",
+   "status": "dropped",
+   "where": "scripting and layout zones (decided 2026-11-06)",
+   "instead": "draw the zone at the table; scripts that ask a zone what is in it get nothing",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -5580,8 +5598,8 @@
   {
    "row": "addConsoleCommand",
    "status": "dropped",
-   "where": "console commands",
-   "instead": "nothing is needed",
+   "where": "console commands and other host controls (decided 2026-11-06)",
+   "instead": "the app's own console and settings",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -5589,8 +5607,8 @@
   {
    "row": "allowAutomaticRewindSave",
    "status": "dropped",
-   "where": "rewind saves",
-   "instead": "saves are kept here every turn",
+   "where": "console commands and other host controls (decided 2026-11-06)",
+   "instead": "the app's own console and settings",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -5616,8 +5634,8 @@
   {
    "row": "clearConsoleCommands",
    "status": "dropped",
-   "where": "console commands",
-   "instead": "nothing is needed",
+   "where": "console commands and other host controls (decided 2026-11-06)",
+   "instead": "the app's own console and settings",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -5696,9 +5714,9 @@
   },
   {
    "row": "copy",
-   "status": "stub",
-   "where": "the clipboard; no module calls it",
-   "instead": "copy at the table",
+   "status": "dropped",
+   "where": "the Player API (decided 2026-11-06)",
+   "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -5724,8 +5742,8 @@
   {
    "row": "flipTable",
    "status": "dropped",
-   "where": "flipping the table",
-   "instead": "nothing is needed",
+   "where": "the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06)",
+   "instead": "the backdrop themes and the app's own table and views",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -5822,18 +5840,18 @@
   },
   {
    "row": "getPointerPosition",
-   "status": "stub",
-   "where": "the pointer is not shared with the host; answers nil",
-   "instead": "nothing is needed",
+   "status": "dropped",
+   "where": "the Player API (decided 2026-11-06)",
+   "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
    "modules": 0
   },
   {
    "row": "getPointerRotation",
-   "status": "stub",
-   "where": "the pointer is not shared with the host; answers nil",
-   "instead": "nothing is needed",
+   "status": "dropped",
+   "where": "the Player API (decided 2026-11-06)",
+   "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -5858,9 +5876,9 @@
   },
   {
    "row": "group",
-   "status": "stub",
-   "where": "card dealing; no module calls it",
-   "instead": "nothing is needed",
+   "status": "dropped",
+   "where": "the Player API (decided 2026-11-06)",
+   "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -5885,18 +5903,18 @@
   },
   {
    "row": "logStyle",
-   "status": "stub",
-   "where": "log styles",
-   "instead": "nothing is needed",
+   "status": "dropped",
+   "where": "console commands and other host controls (decided 2026-11-06)",
+   "instead": "the app's own console and settings",
    "held_by": "",
    "count": 0,
    "modules": 0
   },
   {
    "row": "paste",
-   "status": "stub",
-   "where": "the clipboard; no module calls it",
-   "instead": "paste at the table",
+   "status": "dropped",
+   "where": "the Player API (decided 2026-11-06)",
+   "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -5913,8 +5931,8 @@
   {
    "row": "setUITheme",
    "status": "dropped",
-   "where": "UI theme",
-   "instead": "nothing is needed",
+   "where": "the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06)",
+   "instead": "the backdrop themes and the app's own table and views",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -5922,8 +5940,8 @@
   {
    "row": "showHotkeyConfig",
    "status": "dropped",
-   "where": "hotkey panel",
-   "instead": "nothing is needed",
+   "where": "console commands and other host controls (decided 2026-11-06)",
+   "instead": "the app's own console and settings",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -6022,9 +6040,9 @@
   },
   {
    "row": "Player.getPlayers",
-   "status": "partial",
-   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
-   "instead": "",
+   "status": "dropped",
+   "where": "the Player API (decided 2026-11-06)",
+   "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 3,
    "modules": 3
@@ -6094,9 +6112,9 @@
   },
   {
    "row": "Player.getColors",
-   "status": "partial",
-   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
-   "instead": "",
+   "status": "dropped",
+   "where": "the Player API (decided 2026-11-06)",
+   "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 2,
    "modules": 2
@@ -6158,8 +6176,8 @@
   {
    "row": "Backgrounds.getBackground",
    "status": "dropped",
-   "where": "the sky (read once at import as the backdrop)",
-   "instead": "set the backdrop",
+   "where": "the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06)",
+   "instead": "the backdrop themes and the app's own table and views",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -6167,8 +6185,8 @@
   {
    "row": "Backgrounds.getCustomURL",
    "status": "dropped",
-   "where": "the sky (read once at import as the backdrop)",
-   "instead": "set the backdrop",
+   "where": "the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06)",
+   "instead": "the backdrop themes and the app's own table and views",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -6176,8 +6194,8 @@
   {
    "row": "Backgrounds.setBackground",
    "status": "dropped",
-   "where": "the sky (read once at import as the backdrop)",
-   "instead": "set the backdrop",
+   "where": "the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06)",
+   "instead": "the backdrop themes and the app's own table and views",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -6185,8 +6203,8 @@
   {
    "row": "Backgrounds.setCustomURL",
    "status": "dropped",
-   "where": "the sky (read once at import as the backdrop)",
-   "instead": "set the backdrop",
+   "where": "the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06)",
+   "instead": "the backdrop themes and the app's own table and views",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -6545,8 +6563,8 @@
   {
    "row": "MusicPlayer.getCurrentAudioclip",
    "status": "dropped",
-   "where": "music player",
-   "instead": "nothing is needed",
+   "where": "music and sound players (decided 2026-11-06)",
+   "instead": "the app's own sounds",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -6554,8 +6572,8 @@
   {
    "row": "MusicPlayer.getPlaylist",
    "status": "dropped",
-   "where": "music player",
-   "instead": "nothing is needed",
+   "where": "music and sound players (decided 2026-11-06)",
+   "instead": "the app's own sounds",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -6563,8 +6581,8 @@
   {
    "row": "MusicPlayer.pause",
    "status": "dropped",
-   "where": "music player",
-   "instead": "nothing is needed",
+   "where": "music and sound players (decided 2026-11-06)",
+   "instead": "the app's own sounds",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -6572,8 +6590,8 @@
   {
    "row": "MusicPlayer.play",
    "status": "dropped",
-   "where": "music player",
-   "instead": "nothing is needed",
+   "where": "music and sound players (decided 2026-11-06)",
+   "instead": "the app's own sounds",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -6581,8 +6599,8 @@
   {
    "row": "MusicPlayer.player_status",
    "status": "dropped",
-   "where": "music player",
-   "instead": "nothing is needed",
+   "where": "music and sound players (decided 2026-11-06)",
+   "instead": "the app's own sounds",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -6590,8 +6608,8 @@
   {
    "row": "MusicPlayer.playlistIndex",
    "status": "dropped",
-   "where": "music player",
-   "instead": "nothing is needed",
+   "where": "music and sound players (decided 2026-11-06)",
+   "instead": "the app's own sounds",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -6599,8 +6617,8 @@
   {
    "row": "MusicPlayer.playlist_index",
    "status": "dropped",
-   "where": "music player",
-   "instead": "nothing is needed",
+   "where": "music and sound players (decided 2026-11-06)",
+   "instead": "the app's own sounds",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -6608,8 +6626,8 @@
   {
    "row": "MusicPlayer.repeat_track",
    "status": "dropped",
-   "where": "music player",
-   "instead": "nothing is needed",
+   "where": "music and sound players (decided 2026-11-06)",
+   "instead": "the app's own sounds",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -6617,8 +6635,8 @@
   {
    "row": "MusicPlayer.setCurrentAudioclip",
    "status": "dropped",
-   "where": "music player",
-   "instead": "nothing is needed",
+   "where": "music and sound players (decided 2026-11-06)",
+   "instead": "the app's own sounds",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -6626,8 +6644,8 @@
   {
    "row": "MusicPlayer.setPlaylist",
    "status": "dropped",
-   "where": "music player",
-   "instead": "nothing is needed",
+   "where": "music and sound players (decided 2026-11-06)",
+   "instead": "the app's own sounds",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -6635,8 +6653,8 @@
   {
    "row": "MusicPlayer.shuffle",
    "status": "dropped",
-   "where": "music player",
-   "instead": "nothing is needed",
+   "where": "music and sound players (decided 2026-11-06)",
+   "instead": "the app's own sounds",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -6644,8 +6662,8 @@
   {
    "row": "MusicPlayer.skipBack",
    "status": "dropped",
-   "where": "music player",
-   "instead": "nothing is needed",
+   "where": "music and sound players (decided 2026-11-06)",
+   "instead": "the app's own sounds",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -6653,8 +6671,8 @@
   {
    "row": "MusicPlayer.skipForward",
    "status": "dropped",
-   "where": "music player",
-   "instead": "nothing is needed",
+   "where": "music and sound players (decided 2026-11-06)",
+   "instead": "the app's own sounds",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -6742,486 +6760,486 @@
   },
   {
    "row": "Player.action",
-   "status": "partial",
-   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
-   "instead": "",
+   "status": "dropped",
+   "where": "the Player API (decided 2026-11-06)",
+   "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
    "modules": 0
   },
   {
    "row": "Player.admin",
-   "status": "partial",
-   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
-   "instead": "",
+   "status": "dropped",
+   "where": "the Player API (decided 2026-11-06)",
+   "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
    "modules": 0
   },
   {
    "row": "Player.attachCameraToObject",
-   "status": "partial",
-   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
-   "instead": "",
+   "status": "dropped",
+   "where": "the Player API (decided 2026-11-06)",
+   "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
    "modules": 0
   },
   {
    "row": "Player.blind",
-   "status": "partial",
-   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
-   "instead": "",
+   "status": "dropped",
+   "where": "the Player API (decided 2026-11-06)",
+   "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
    "modules": 0
   },
   {
    "row": "Player.blindfolded",
-   "status": "partial",
-   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
-   "instead": "",
+   "status": "dropped",
+   "where": "the Player API (decided 2026-11-06)",
+   "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
    "modules": 0
   },
   {
    "row": "Player.broadcast",
-   "status": "partial",
-   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
-   "instead": "",
+   "status": "dropped",
+   "where": "the Player API (decided 2026-11-06)",
+   "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
    "modules": 0
   },
   {
    "row": "Player.changeColor",
-   "status": "partial",
-   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
-   "instead": "",
+   "status": "dropped",
+   "where": "the Player API (decided 2026-11-06)",
+   "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
    "modules": 0
   },
   {
    "row": "Player.changeTeam",
-   "status": "partial",
-   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
-   "instead": "",
+   "status": "dropped",
+   "where": "the Player API (decided 2026-11-06)",
+   "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
    "modules": 0
   },
   {
    "row": "Player.clearSelectedObjects",
-   "status": "partial",
-   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
-   "instead": "",
+   "status": "dropped",
+   "where": "the Player API (decided 2026-11-06)",
+   "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
    "modules": 0
   },
   {
    "row": "Player.color",
-   "status": "partial",
-   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
-   "instead": "",
+   "status": "dropped",
+   "where": "the Player API (decided 2026-11-06)",
+   "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
    "modules": 0
   },
   {
    "row": "Player.copy",
-   "status": "partial",
-   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
-   "instead": "",
+   "status": "dropped",
+   "where": "the Player API (decided 2026-11-06)",
+   "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
    "modules": 0
   },
   {
    "row": "Player.drawHandStash",
-   "status": "partial",
-   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
-   "instead": "",
+   "status": "dropped",
+   "where": "the Player API (decided 2026-11-06)",
+   "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
    "modules": 0
   },
   {
    "row": "Player.getAvailableColors",
-   "status": "partial",
-   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
-   "instead": "",
+   "status": "dropped",
+   "where": "the Player API (decided 2026-11-06)",
+   "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
    "modules": 0
   },
   {
    "row": "Player.getHandCount",
-   "status": "partial",
-   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
-   "instead": "",
+   "status": "dropped",
+   "where": "the Player API (decided 2026-11-06)",
+   "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
    "modules": 0
   },
   {
    "row": "Player.getHandObjects",
-   "status": "partial",
-   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
-   "instead": "",
+   "status": "dropped",
+   "where": "the Player API (decided 2026-11-06)",
+   "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
    "modules": 0
   },
   {
    "row": "Player.getHandPlayer",
-   "status": "partial",
-   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
-   "instead": "",
+   "status": "dropped",
+   "where": "the Player API (decided 2026-11-06)",
+   "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
    "modules": 0
   },
   {
    "row": "Player.getHandTransform",
-   "status": "partial",
-   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
-   "instead": "",
+   "status": "dropped",
+   "where": "the Player API (decided 2026-11-06)",
+   "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
    "modules": 0
   },
   {
    "row": "Player.getHoldingObjects",
-   "status": "partial",
-   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
-   "instead": "",
+   "status": "dropped",
+   "where": "the Player API (decided 2026-11-06)",
+   "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
    "modules": 0
   },
   {
    "row": "Player.getHoverObject",
-   "status": "partial",
-   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
-   "instead": "",
+   "status": "dropped",
+   "where": "the Player API (decided 2026-11-06)",
+   "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
    "modules": 0
   },
   {
    "row": "Player.getPlayer",
-   "status": "partial",
-   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
-   "instead": "",
+   "status": "dropped",
+   "where": "the Player API (decided 2026-11-06)",
+   "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
    "modules": 0
   },
   {
    "row": "Player.getPlayerHand",
-   "status": "partial",
-   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
-   "instead": "",
+   "status": "dropped",
+   "where": "the Player API (decided 2026-11-06)",
+   "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
    "modules": 0
   },
   {
    "row": "Player.getPointerPosition",
-   "status": "partial",
-   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
-   "instead": "",
+   "status": "dropped",
+   "where": "the Player API (decided 2026-11-06)",
+   "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
    "modules": 0
   },
   {
    "row": "Player.getPointerRotation",
-   "status": "partial",
-   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
-   "instead": "",
+   "status": "dropped",
+   "where": "the Player API (decided 2026-11-06)",
+   "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
    "modules": 0
   },
   {
    "row": "Player.getSelectedObjects",
-   "status": "partial",
-   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
-   "instead": "",
+   "status": "dropped",
+   "where": "the Player API (decided 2026-11-06)",
+   "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
    "modules": 0
   },
   {
    "row": "Player.getSpectators",
-   "status": "partial",
-   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
-   "instead": "",
+   "status": "dropped",
+   "where": "the Player API (decided 2026-11-06)",
+   "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
    "modules": 0
   },
   {
    "row": "Player.hand_choice_label",
-   "status": "partial",
-   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
-   "instead": "",
+   "status": "dropped",
+   "where": "the Player API (decided 2026-11-06)",
+   "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
    "modules": 0
   },
   {
    "row": "Player.host",
-   "status": "partial",
-   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
-   "instead": "",
+   "status": "dropped",
+   "where": "the Player API (decided 2026-11-06)",
+   "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
    "modules": 0
   },
   {
    "row": "Player.id",
-   "status": "partial",
-   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
-   "instead": "",
+   "status": "dropped",
+   "where": "the Player API (decided 2026-11-06)",
+   "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
    "modules": 0
   },
   {
    "row": "Player.kick",
-   "status": "partial",
-   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
-   "instead": "",
+   "status": "dropped",
+   "where": "the Player API (decided 2026-11-06)",
+   "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
    "modules": 0
   },
   {
    "row": "Player.lift_height",
-   "status": "partial",
-   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
-   "instead": "",
+   "status": "dropped",
+   "where": "the Player API (decided 2026-11-06)",
+   "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
    "modules": 0
   },
   {
    "row": "Player.lookAt",
-   "status": "partial",
-   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
-   "instead": "",
+   "status": "dropped",
+   "where": "the Player API (decided 2026-11-06)",
+   "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
    "modules": 0
   },
   {
    "row": "Player.mute",
-   "status": "partial",
-   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
-   "instead": "",
+   "status": "dropped",
+   "where": "the Player API (decided 2026-11-06)",
+   "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
    "modules": 0
   },
   {
    "row": "Player.paste",
-   "status": "partial",
-   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
-   "instead": "",
+   "status": "dropped",
+   "where": "the Player API (decided 2026-11-06)",
+   "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
    "modules": 0
   },
   {
    "row": "Player.pingTable",
-   "status": "partial",
-   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
-   "instead": "",
+   "status": "dropped",
+   "where": "the Player API (decided 2026-11-06)",
+   "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
    "modules": 0
   },
   {
    "row": "Player.playerColor",
-   "status": "partial",
-   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
-   "instead": "",
+   "status": "dropped",
+   "where": "the Player API (decided 2026-11-06)",
+   "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
    "modules": 0
   },
   {
    "row": "Player.print",
-   "status": "partial",
-   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
-   "instead": "",
+   "status": "dropped",
+   "where": "the Player API (decided 2026-11-06)",
+   "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
    "modules": 0
   },
   {
    "row": "Player.promote",
-   "status": "partial",
-   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
-   "instead": "",
+   "status": "dropped",
+   "where": "the Player API (decided 2026-11-06)",
+   "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
    "modules": 0
   },
   {
    "row": "Player.promoted",
-   "status": "partial",
-   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
-   "instead": "",
+   "status": "dropped",
+   "where": "the Player API (decided 2026-11-06)",
+   "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
    "modules": 0
   },
   {
    "row": "Player.seated",
-   "status": "partial",
-   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
-   "instead": "",
+   "status": "dropped",
+   "where": "the Player API (decided 2026-11-06)",
+   "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
    "modules": 0
   },
   {
    "row": "Player.setCameraMode",
-   "status": "partial",
-   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
-   "instead": "",
+   "status": "dropped",
+   "where": "the Player API (decided 2026-11-06)",
+   "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
    "modules": 0
   },
   {
    "row": "Player.setHandStashLocation",
-   "status": "partial",
-   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
-   "instead": "",
+   "status": "dropped",
+   "where": "the Player API (decided 2026-11-06)",
+   "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
    "modules": 0
   },
   {
    "row": "Player.setHandTransform",
-   "status": "partial",
-   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
-   "instead": "",
+   "status": "dropped",
+   "where": "the Player API (decided 2026-11-06)",
+   "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
    "modules": 0
   },
   {
    "row": "Player.setUITheme",
-   "status": "partial",
-   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
-   "instead": "",
+   "status": "dropped",
+   "where": "the Player API (decided 2026-11-06)",
+   "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
    "modules": 0
   },
   {
    "row": "Player.showColorDialog",
-   "status": "partial",
-   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
-   "instead": "",
+   "status": "dropped",
+   "where": "the Player API (decided 2026-11-06)",
+   "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
    "modules": 0
   },
   {
    "row": "Player.showConfirmDialog",
-   "status": "partial",
-   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
-   "instead": "",
+   "status": "dropped",
+   "where": "the Player API (decided 2026-11-06)",
+   "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
    "modules": 0
   },
   {
    "row": "Player.showInfoDialog",
-   "status": "partial",
-   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
-   "instead": "",
+   "status": "dropped",
+   "where": "the Player API (decided 2026-11-06)",
+   "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
    "modules": 0
   },
   {
    "row": "Player.showInputDialog",
-   "status": "partial",
-   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
-   "instead": "",
+   "status": "dropped",
+   "where": "the Player API (decided 2026-11-06)",
+   "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
    "modules": 0
   },
   {
    "row": "Player.showMemoDialog",
-   "status": "partial",
-   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
-   "instead": "",
+   "status": "dropped",
+   "where": "the Player API (decided 2026-11-06)",
+   "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
    "modules": 0
   },
   {
    "row": "Player.showOptionsDialog",
-   "status": "partial",
-   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
-   "instead": "",
+   "status": "dropped",
+   "where": "the Player API (decided 2026-11-06)",
+   "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
    "modules": 0
   },
   {
    "row": "Player.steam_id",
-   "status": "partial",
-   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
-   "instead": "",
+   "status": "dropped",
+   "where": "the Player API (decided 2026-11-06)",
+   "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
    "modules": 0
   },
   {
    "row": "Player.steam_name",
-   "status": "partial",
-   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
-   "instead": "",
+   "status": "dropped",
+   "where": "the Player API (decided 2026-11-06)",
+   "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
    "modules": 0
   },
   {
    "row": "Player.team",
-   "status": "partial",
-   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
-   "instead": "",
+   "status": "dropped",
+   "where": "the Player API (decided 2026-11-06)",
+   "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
    "modules": 0
   },
   {
    "row": "Player.unblind",
-   "status": "partial",
-   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
-   "instead": "",
+   "status": "dropped",
+   "where": "the Player API (decided 2026-11-06)",
+   "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
    "modules": 0
   },
   {
    "row": "Player.userDataDescriptor",
-   "status": "partial",
-   "where": "compat.player: the seats and colours we have; item 8 maps the rest",
-   "instead": "",
+   "status": "dropped",
+   "where": "the Player API (decided 2026-11-06)",
+   "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -7229,8 +7247,8 @@
   {
    "row": "Tables.getCustomURL",
    "status": "dropped",
-   "where": "the table model",
-   "instead": "the table's shade and the backdrop",
+   "where": "the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06)",
+   "instead": "the backdrop themes and the app's own table and views",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -7238,8 +7256,8 @@
   {
    "row": "Tables.getTable",
    "status": "dropped",
-   "where": "the table model",
-   "instead": "the table's shade and the backdrop",
+   "where": "the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06)",
+   "instead": "the backdrop themes and the app's own table and views",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -7247,8 +7265,8 @@
   {
    "row": "Tables.getTableObject",
    "status": "dropped",
-   "where": "the table model",
-   "instead": "the table's shade and the backdrop",
+   "where": "the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06)",
+   "instead": "the backdrop themes and the app's own table and views",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -7256,8 +7274,8 @@
   {
    "row": "Tables.setCustomURL",
    "status": "dropped",
-   "where": "the table model",
-   "instead": "the table's shade and the backdrop",
+   "where": "the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06)",
+   "instead": "the backdrop themes and the app's own table and views",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -7265,8 +7283,8 @@
   {
    "row": "Tables.setTable",
    "status": "dropped",
-   "where": "the table model",
-   "instead": "the table's shade and the backdrop",
+   "where": "the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06)",
+   "instead": "the backdrop themes and the app's own table and views",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -7526,8 +7544,8 @@
   {
    "row": "WebRequest.custom",
    "status": "dropped",
-   "where": "scripts never reach the web here (script safety)",
-   "instead": "nothing is needed",
+   "where": "web requests (decided 2026-11-06)",
+   "instead": "scripts stay inside the table",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -7535,8 +7553,8 @@
   {
    "row": "WebRequest.delete",
    "status": "dropped",
-   "where": "scripts never reach the web here (script safety)",
-   "instead": "nothing is needed",
+   "where": "web requests (decided 2026-11-06)",
+   "instead": "scripts stay inside the table",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -7544,8 +7562,8 @@
   {
    "row": "WebRequest.head",
    "status": "dropped",
-   "where": "scripts never reach the web here (script safety)",
-   "instead": "nothing is needed",
+   "where": "web requests (decided 2026-11-06)",
+   "instead": "scripts stay inside the table",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -7553,8 +7571,8 @@
   {
    "row": "WebRequest.post",
    "status": "dropped",
-   "where": "scripts never reach the web here (script safety)",
-   "instead": "nothing is needed",
+   "where": "web requests (decided 2026-11-06)",
+   "instead": "scripts stay inside the table",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -7562,8 +7580,8 @@
   {
    "row": "WebRequest.put",
    "status": "dropped",
-   "where": "scripts never reach the web here (script safety)",
-   "instead": "nothing is needed",
+   "where": "web requests (decided 2026-11-06)",
+   "instead": "scripts stay inside the table",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -7645,8 +7663,8 @@
   {
    "row": "onBlindfold",
    "status": "dropped",
-   "where": "blindfolds",
-   "instead": "nothing is needed",
+   "where": "the Player API (decided 2026-11-06)",
+   "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -7681,8 +7699,8 @@
   {
    "row": "onExternalMessage",
    "status": "dropped",
-   "where": "the external editor port",
-   "instead": "nothing is needed",
+   "where": "web requests (decided 2026-11-06)",
+   "instead": "scripts stay inside the table",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -7788,18 +7806,18 @@
   },
   {
    "row": "onObjectEnterScriptingZone",
-   "status": "stub",
-   "where": "the table's own zones raise no script events yet; no module handles it",
-   "instead": "nothing is needed",
+   "status": "dropped",
+   "where": "scripting and layout zones (decided 2026-11-06)",
+   "instead": "draw the zone at the table; scripts that ask a zone what is in it get nothing",
    "held_by": "",
    "count": 0,
    "modules": 0
   },
   {
    "row": "onObjectEnterZone",
-   "status": "stub",
-   "where": "the table's own zones raise no script events yet; no module handles it",
-   "instead": "nothing is needed",
+   "status": "dropped",
+   "where": "scripting and layout zones (decided 2026-11-06)",
+   "instead": "draw the zone at the table; scripts that ask a zone what is in it get nothing",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -7833,18 +7851,18 @@
   },
   {
    "row": "onObjectLeaveScriptingZone",
-   "status": "stub",
-   "where": "the table's own zones raise no script events yet; no module handles it",
-   "instead": "nothing is needed",
+   "status": "dropped",
+   "where": "scripting and layout zones (decided 2026-11-06)",
+   "instead": "draw the zone at the table; scripts that ask a zone what is in it get nothing",
    "held_by": "",
    "count": 0,
    "modules": 0
   },
   {
    "row": "onObjectLeaveZone",
-   "status": "stub",
-   "where": "the table's own zones raise no script events yet; no module handles it",
-   "instead": "nothing is needed",
+   "status": "dropped",
+   "where": "scripting and layout zones (decided 2026-11-06)",
+   "instead": "draw the zone at the table; scripts that ask a zone what is in it get nothing",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -7932,27 +7950,27 @@
   },
   {
    "row": "onPlayerChangeColor",
-   "status": "stub",
-   "where": "seats change without an event here; no module handles it",
-   "instead": "nothing is needed",
+   "status": "dropped",
+   "where": "the Player API (decided 2026-11-06)",
+   "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
    "modules": 0
   },
   {
    "row": "onPlayerConnect",
-   "status": "stub",
-   "where": "seats change without an event here; no module handles it",
-   "instead": "nothing is needed",
+   "status": "dropped",
+   "where": "the Player API (decided 2026-11-06)",
+   "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
    "modules": 0
   },
   {
    "row": "onPlayerDisconnect",
-   "status": "stub",
-   "where": "seats change without an event here; no module handles it",
-   "instead": "nothing is needed",
+   "status": "dropped",
+   "where": "the Player API (decided 2026-11-06)",
+   "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -7960,8 +7978,8 @@
   {
    "row": "onPlayerPing",
    "status": "dropped",
-   "where": "no pings here",
-   "instead": "say",
+   "where": "the Player API (decided 2026-11-06)",
+   "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -7986,18 +8004,18 @@
   },
   {
    "row": "onPlayersConnect",
-   "status": "stub",
-   "where": "seats change without an event here; no module handles it",
-   "instead": "nothing is needed",
+   "status": "dropped",
+   "where": "the Player API (decided 2026-11-06)",
+   "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
    "modules": 0
   },
   {
    "row": "onPlayersDisconnect",
-   "status": "stub",
-   "where": "seats change without an event here; no module handles it",
-   "instead": "nothing is needed",
+   "status": "dropped",
+   "where": "the Player API (decided 2026-11-06)",
+   "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
    "modules": 0
@@ -8014,8 +8032,8 @@
   {
    "row": "onZoneGroupSort",
    "status": "dropped",
-   "where": "layout zones",
-   "instead": "nothing is needed",
+   "where": "scripting and layout zones (decided 2026-11-06)",
+   "instead": "draw the zone at the table; scripts that ask a zone what is in it get nothing",
    "held_by": "",
    "count": 0,
    "modules": 0

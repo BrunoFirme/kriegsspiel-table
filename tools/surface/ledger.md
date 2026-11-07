@@ -10,7 +10,7 @@ the plan says translate it), unknown (nobody has decided).
 | area | rows used by the corpus | decided | planned or unknown | rows in all |
 |---|---|---|---|---|
 | types | 30 | 30 | 0 | 43 |
-| save | 150 | 150 | 0 | 300 |
+| save | 150 | 150 | 0 | 302 |
 | object | 65 | 65 | 0 | 262 |
 | global | 14 | 14 | 0 | 55 |
 | namespaces | 23 | 23 | 0 | 180 |
@@ -51,18 +51,18 @@ the plan says translate it), unknown (nobody has decided).
 | `Deck` | 15 / 1 | native | converter |  |
 | `PlayerPawn` | 7 / 1 | native | a round piece in the pawn's colour, as tall as a pawn | PawnTests |
 | `Die_8` | 2 / 1 | native | the app's d8, showing the face it was saved on | DiceTests |
-| `Calculator` | - | dropped | a stock gadget |  |
-| `Counter` | - | dropped | a stock gadget |  |
+| `Calculator` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
+| `Counter` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
 | `Custom_Assetbundle_Infinite_Bag` | - | dropped | infinite bags (decided 2026-11-06) |  |
 | `Custom_Model_Infinite_Bag` | - | dropped | infinite bags (decided 2026-11-06) |  |
 | `Die_4` | - | native | the app's d4, showing the face it was saved on | DiceTests |
-| `Digital_Clock` | - | dropped | a stock gadget |  |
+| `Digital_Clock` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
 | `FogOfWarTrigger` | - | dropped | hidden zones (decided 2026-11-06) |  |
-| `Go_Game_Piece_Black` | - | dropped | a stock piece |  |
-| `Go_Game_Piece_White` | - | dropped | a stock piece |  |
-| `Quarter` | - | dropped | a stock coin |  |
-| `ScriptingTrigger` | - | stub | no module in the roster has one; the table's own zones raise no script events yet |  |
-| `Tablet` | - | dropped | a stock gadget (a web browser on the table) |  |
+| `Go_Game_Piece_Black` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
+| `Go_Game_Piece_White` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
+| `Quarter` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
+| `ScriptingTrigger` | - | dropped | scripting and layout zones (decided 2026-11-06) |  |
+| `Tablet` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
 | `Tileset_*` | - | dropped | the tabletop's own art is never extracted |  |
 
 ## save
@@ -131,7 +131,7 @@ the plan says translate it), unknown (nobody has decided).
 | `SaveState.PlayerCounts` | 32 / 32 | dropped | save metadata |  |
 | `SaveState.PlayingTime` | 32 / 32 | dropped | save metadata |  |
 | `SaveState.GameComplexity` | 30 / 30 | dropped | save metadata |  |
-| `SaveState.PlayArea` | 29 / 29 | dropped | the table's size here is the map's |  |
+| `SaveState.PlayArea` | 29 / 29 | dropped | the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06) |  |
 | `ObjectState.RotationValues` | 184 / 27 | native | converter reads it |  |
 | `TagsState.labels` | 27 / 27 | dropped | tag labels of the tabletop's UI |  |
 | `ObjectState.Sticky` | 1334 / 26 | native | the piece option Carries what rests on it; self.sticky and set_sticky in scripts | StickyTests |
@@ -166,11 +166,11 @@ the plan says translate it), unknown (nobody has decided).
 | `GridState.Lines` | 11 / 11 | dropped | grid (decided 2026-11-06) |  |
 | `CustomTileState.Stretch` | 569 / 10 | native | converter reads it |  |
 | `SaveState.Gravity` | 9 / 9 | dropped | engine physics |  |
-| `SaveState.MusicPlayer` | 9 / 9 | dropped | music player |  |
+| `SaveState.MusicPlayer` | 9 / 9 | dropped | music and sound players (decided 2026-11-06) |  |
 | `SaveState.VectorLines` | 9 / 9 | native | strokes on the umpire's drawing board | DrawingTests |
 | `ObjectState.DragSelectable` | 335 / 8 | native | the piece option Taken by a selection box; self.box_selected and set_box_selected | ModuleOptionsTests |
 | `CustomPDFState.PDFUrl` | 9 / 8 | partial | PDFUrl gives the book its pages and PDFPage the page it lies open at; the page offset (how the pages are numbered) and a password are not kept | BookTests |
-| `MusicPlayerState.AudioLibrary` | 8 / 8 | dropped | music player |  |
+| `MusicPlayerState.AudioLibrary` | 8 / 8 | dropped | music and sound players (decided 2026-11-06) |  |
 | `ObjectState.Autoraise` | 354 / 7 | dropped | a dropped piece always rests on what is under it |  |
 | `CustomImageState.CustomDice` | 35 / 7 | native | converter reads it |  |
 | `LightingState.LightColor` | 7 / 7 | dropped | lighting (decided 2026-11-06) |  |
@@ -190,12 +190,12 @@ the plan says translate it), unknown (nobody has decided).
 | `CustomDiceState.Type` | 22 / 5 | native | converter reads it |  |
 | `RigidbodyState.UseGravity` | 14 / 5 | dropped | engine physics |  |
 | `LightingState.AmbientType` | 5 / 5 | dropped | lighting (decided 2026-11-06) |  |
-| `MusicPlayerState.CurrentAudioTitle` | 5 / 5 | dropped | music player |  |
-| `MusicPlayerState.CurrentAudioURL` | 5 / 5 | dropped | music player |  |
-| `SaveState.CameraStates` | 5 / 5 | dropped | saved camera positions |  |
+| `MusicPlayerState.CurrentAudioTitle` | 5 / 5 | dropped | music and sound players (decided 2026-11-06) |  |
+| `MusicPlayerState.CurrentAudioURL` | 5 / 5 | dropped | music and sound players (decided 2026-11-06) |  |
+| `SaveState.CameraStates` | 5 / 5 | dropped | the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06) |  |
 | `ObjectState.AttachedDecals` | 2590 / 4 | native | converter reads it |  |
 | `ObjectState.AttachedSnapPoints` | 87 / 4 | dropped | snap points (grid, decided 2026-11-06) |  |
-| `MusicPlayerState.PlaylistEntry` | 4 / 4 | dropped | music player |  |
+| `MusicPlayerState.PlaylistEntry` | 4 / 4 | dropped | music and sound players (decided 2026-11-06) |  |
 | `SaveState.LuaScriptState` | 4 / 4 | native | converter reads it |  |
 | `SaveState.SkyURL` | 4 / 4 | native | converter reads it |  |
 | `CustomMeshState.NormalURL` | 232 / 3 | native | converter reads it |  |
@@ -204,7 +204,7 @@ the plan says translate it), unknown (nobody has decided).
 | `ColourState.a` | 22 / 3 | native | a tint's alpha: under 1 the piece is drawn see-through, its face, sides and model, as the tabletop switches to its transparent shader; the movable text tool's helper saved at 0 stays invisible under its words | TableTopTests |
 | `ObjectState.MeasureMovement` | 15 / 3 | native | the piece option Shows how far it is moved: a line and the distance from where it was picked up while it is held; self.measures_moves and set_measures_moves | ModuleOptionsTests |
 | `GridState.Type` | 3 / 3 | dropped | grid (decided 2026-11-06) |  |
-| `MusicPlayerState.RepeatSong` | 3 / 3 | dropped | music player |  |
+| `MusicPlayerState.RepeatSong` | 3 / 3 | dropped | music and sound players (decided 2026-11-06) |  |
 | `SaveState.CustomUIAssets` | 3 / 3 | partial | pictures a run-time panel names: links in the XML are fetched, named assets are not |  |
 | `ObjectState.GMNotes` | 117 / 2 | native | converter reads it |  |
 | `CustomTileState.Stackable` | 29 / 2 | native | converter reads it |  |
@@ -219,38 +219,38 @@ the plan says translate it), unknown (nobody has decided).
 | `ObjectState.IgnoreFoW` | 1 / 1 | dropped | hidden zones (decided 2026-11-06) |  |
 | `SaveState.DecalPallet` | 1 / 1 | native | the scenario's decals, offered in the Decals panel: name, picture and size | DecalPaletteTests, StampTests |
 | `SaveState.TableURL` | 1 / 1 | dropped | the table's cloth or picture: the table is the tabletop's abstraction, its look only; no script in the 55 saves touches it (decided 2026-11-06) |  |
-| `BagState.Order` | - | dropped | the order a bag gives its pieces back in |  |
-| `CalculatorState.memory` | - | dropped | a stock gadget |  |
-| `CalculatorState.value` | - | dropped | a stock gadget |  |
-| `CameraState.AbsolutePosition` | - | dropped | saved camera positions |  |
-| `CameraState.Distance` | - | dropped | saved camera positions |  |
-| `CameraState.Position` | - | dropped | saved camera positions |  |
-| `CameraState.Rotation` | - | dropped | saved camera positions |  |
-| `CameraState.Zoomed` | - | dropped | saved camera positions |  |
-| `ClockState.Mode` | - | dropped | a stock gadget |  |
-| `ClockState.Paused` | - | dropped | a stock gadget |  |
-| `ClockState.SecondsPassed` | - | dropped | a stock gadget |  |
-| `CounterState.value` | - | dropped | a stock gadget |  |
+| `BagState.Order` | - | native | ModuleObj.TakeOrder: last in first out, first in first out or at random, as the module set it | BagOrderTests |
+| `CalculatorState.memory` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
+| `CalculatorState.value` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
+| `CameraState.AbsolutePosition` | - | dropped | the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06) |  |
+| `CameraState.Distance` | - | dropped | the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06) |  |
+| `CameraState.Position` | - | dropped | the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06) |  |
+| `CameraState.Rotation` | - | dropped | the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06) |  |
+| `CameraState.Zoomed` | - | dropped | the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06) |  |
+| `ClockState.Mode` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
+| `ClockState.Paused` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
+| `ClockState.SecondsPassed` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
+| `CounterState.value` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
 | `CustomAssetState.Name` | - | partial | pictures a run-time panel names: links in the XML are fetched, named assets are not |  |
 | `CustomAssetState.Type` | - | partial | pictures a run-time panel names: links in the XML are fetched, named assets are not |  |
 | `CustomAssetState.URL` | - | partial | pictures a run-time panel names: links in the XML are fetched, named assets are not |  |
 | `CustomDecalState.ImageURL` | - | native | converter reads it |  |
 | `CustomDecalState.Name` | - | native | converter reads it |  |
 | `CustomDecalState.Size` | - | native | a palette decal's height on the table; its width follows the picture | DecalPaletteTests |
-| `CustomDeckState.BackIsHidden` | - | dropped | a face-down card shows the back its sheet gives it |  |
+| `CustomDeckState.BackIsHidden` | - | dropped | deck and card logic (decided 2026-11-06) |  |
 | `CustomDeckState.BackURL` | - | native | converter reads it |  |
 | `CustomDeckState.FaceURL` | - | native | converter reads it |  |
-| `CustomDeckState.NumHeight` | - | unknown |  |  |
-| `CustomDeckState.NumWidth` | - | unknown |  |  |
+| `CustomDeckState.NumHeight` | - | native | ModuleSave card sheets: each card cut from its own cell | ConverterTests |
+| `CustomDeckState.NumWidth` | - | native | ModuleSave card sheets: each card cut from its own cell | ConverterTests |
 | `CustomDeckState.Type` | - | native | converter reads it |  |
 | `CustomDeckState.UniqueBack` | - | native | converter reads it |  |
 | `CustomFigurineState.MirroredBack` | - | dropped | a standing picture; no module in the roster has one |  |
-| `CustomFigurineState.UseMinimalCollider` | - | dropped | a standing picture; no module in the roster has one |  |
-| `CustomImageState.CustomFigurine` | - | unknown |  |  |
-| `CustomImageState.CustomJigsawPuzzle` | - | unknown |  |  |
+| `CustomFigurineState.UseMinimalCollider` | - | dropped | the engine's physics colliders |  |
+| `CustomImageState.CustomFigurine` | - | native | Figurines.cs: the picture on a card in a round base | FigurineTests |
+| `CustomImageState.CustomJigsawPuzzle` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
 | `CustomImageState.ImageScalar` | - | native | converter reads it |  |
-| `CustomJigsawPuzzleState.ImageOnBoard` | - | dropped | jigsaw puzzles |  |
-| `CustomJigsawPuzzleState.NumPuzzlePieces` | - | dropped | jigsaw puzzles |  |
+| `CustomJigsawPuzzleState.ImageOnBoard` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
+| `CustomJigsawPuzzleState.NumPuzzlePieces` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
 | `CustomPDFState.PDFPageOffset` | - | partial | PDFUrl gives the book its pages and PDFPage the page it lies open at; the page offset (how the pages are numbered) and a password are not kept | BookTests |
 | `CustomPDFState.PDFPassword` | - | partial | PDFUrl gives the book its pages and PDFPage the page it lies open at; the page offset (how the pages are numbered) and a password are not kept | BookTests |
 | `CustomTokenState.Stackable` | - | native | converter reads it |  |
@@ -295,26 +295,26 @@ the plan says translate it), unknown (nobody has decided).
 | `JointState.ConnectedAnchor` | - | dropped | engine physics (joints) |  |
 | `JointState.ConnectedBodyGUID` | - | dropped | engine physics (joints) |  |
 | `JointState.EnableCollision` | - | dropped | engine physics (joints) |  |
-| `LayoutZoneState.GroupsInZone` | - | dropped | layout zones |  |
-| `LayoutZoneState.Options` | - | dropped | layout zones |  |
+| `LayoutZoneState.GroupsInZone` | - | dropped | scripting and layout zones (decided 2026-11-06) |  |
+| `LayoutZoneState.Options` | - | dropped | scripting and layout zones (decided 2026-11-06) |  |
 | `LightingState.AmbientEquatorColor` | - | dropped | lighting (decided 2026-11-06) |  |
 | `LightingState.AmbientGroundColor` | - | dropped | lighting (decided 2026-11-06) |  |
 | `LightingState.AmbientSkyColor` | - | dropped | lighting (decided 2026-11-06) |  |
 | `LightingState.LutIndex` | - | dropped | lighting (decided 2026-11-06) |  |
 | `LightingState.LutURL` | - | dropped | lighting (decided 2026-11-06) |  |
-| `Mp3PlayerState.genre` | - | dropped | a stock gadget |  |
-| `Mp3PlayerState.isPlaying` | - | dropped | a stock gadget |  |
-| `Mp3PlayerState.loopOne` | - | dropped | a stock gadget |  |
-| `Mp3PlayerState.menu` | - | dropped | a stock gadget |  |
-| `Mp3PlayerState.menuTitle` | - | dropped | a stock gadget |  |
-| `Mp3PlayerState.songTitle` | - | dropped | a stock gadget |  |
-| `Mp3PlayerState.volume` | - | dropped | a stock gadget |  |
+| `Mp3PlayerState.genre` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
+| `Mp3PlayerState.isPlaying` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
+| `Mp3PlayerState.loopOne` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
+| `Mp3PlayerState.menu` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
+| `Mp3PlayerState.menuTitle` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
+| `Mp3PlayerState.songTitle` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
+| `Mp3PlayerState.volume` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
 | `ObjectState.AltLookAngle` | - | dropped | the alt-zoom angle |  |
 | `ObjectState.AltSound` | - | dropped | sounds |  |
 | `ObjectState.AltZoomable` | - | dropped | the alt-zoom |  |
-| `ObjectState.Calculator` | - | dropped | a stock gadget |  |
-| `ObjectState.Clock` | - | dropped | a stock gadget |  |
-| `ObjectState.Counter` | - | dropped | a stock gadget |  |
+| `ObjectState.Calculator` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
+| `ObjectState.Clock` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
+| `ObjectState.Counter` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
 | `ObjectState.FogHidePointers` | - | dropped | hidden zones (decided 2026-11-06) |  |
 | `ObjectState.FogOfWar` | - | dropped | hidden zones (decided 2026-11-06) |  |
 | `ObjectState.FogOfWarRevealer` | - | dropped | hidden zones (decided 2026-11-06) |  |
@@ -323,16 +323,17 @@ the plan says translate it), unknown (nobody has decided).
 | `ObjectState.JointFixed` | - | dropped | engine physics (joints) |  |
 | `ObjectState.JointHinge` | - | dropped | engine physics (joints) |  |
 | `ObjectState.JointSpring` | - | dropped | engine physics (joints) |  |
-| `ObjectState.LayoutGroupSortIndex` | - | dropped | layout zones |  |
-| `ObjectState.LayoutZone` | - | dropped | layout zones |  |
+| `ObjectState.LayoutGroupSortIndex` | - | dropped | scripting and layout zones (decided 2026-11-06) |  |
+| `ObjectState.LayoutZone` | - | dropped | scripting and layout zones (decided 2026-11-06) |  |
 | `ObjectState.MeshIndex` | - | dropped | the tabletop's stock shape of a block |  |
-| `ObjectState.Mp3Player` | - | dropped | a stock gadget |  |
+| `ObjectState.Mp3Player` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
 | `ObjectState.Number` | - | dropped | a number typed over the piece |  |
-| `ObjectState.RPGdead` | - | dropped | rpg figurines |  |
-| `ObjectState.RPGmode` | - | dropped | rpg figurines |  |
+| `ObjectState.RPGdead` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
+| `ObjectState.RPGmode` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
 | `ObjectState.SidewaysCard` | - | dropped | a card keeps its sheet's orientation |  |
-| `ObjectState.Tablet` | - | dropped | a stock gadget |  |
+| `ObjectState.Tablet` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
 | `ObjectState.Value` | - | dropped | the piece's counting value |  |
+| `ObjectState.XmlUI` | - | planned | a piece's own panels; the import reads them next |  |
 | `ObjectState.miscID` | - | dropped | tabletop internal |  |
 | `ObjectState.vector` | - | dropped | tabletop internal |  |
 | `PhysicsMaterialState.BounceCombine` | - | dropped | engine physics |  |
@@ -344,6 +345,7 @@ the plan says translate it), unknown (nobody has decided).
 | `SaveState.ObjectStates` | - | native | converter reads it |  |
 | `SaveState.Rules` | - | native | the scenario's briefing | DrawingTests |
 | `SaveState.SnapPoints` | - | dropped | snap points (decided 2026-11-06 with the grid) |  |
+| `SaveState.XmlUI` | - | planned | the save's own panels; the import reads them next |  |
 | `SnapPointState.Position` | - | dropped | snap points (grid, decided 2026-11-06) |  |
 | `SnapPointState.Rotation` | - | dropped | snap points (grid, decided 2026-11-06) |  |
 | `SnapPointState.Tags` | - | dropped | snap points (grid, decided 2026-11-06) |  |
@@ -352,7 +354,7 @@ the plan says translate it), unknown (nobody has decided).
 | `TabState.id` | - | dropped | notebook tab id |  |
 | `TabState.title` | - | native | converter reads it |  |
 | `TabState.visibleColor` | - | dropped | notebook tab colour |  |
-| `TabletState.PageURL` | - | dropped | a stock gadget |  |
+| `TabletState.PageURL` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
 | `TextState.OwnerSteamID` | - | dropped | who wrote a 3D text |  |
 | `TurnsState.DisableInteractions` | - | dropped | turns (decided 2026-11-06) |  |
 | `TurnsState.Enable` | - | dropped | turns (decided 2026-11-06) |  |
@@ -418,7 +420,7 @@ the plan says translate it), unknown (nobody has decided).
 | `getTransformUp` | 13029 / 12 | compat | ObjectCall |  |
 | `setDecals` | 4343 / 12 | compat | ObjectCall |  |
 | `hasTag` | 150 / 12 | compat | ObjectCall |  |
-| `split` | 26 / 12 | stub | card dealing; no module deals with it: the uses the scan counts are the modules' own string split helpers, which run as written (StringSplitTests) |  |
+| `split` | 26 / 12 | dropped | deck and card logic (decided 2026-11-06) |  |
 | `setGMNotes` | 12 / 12 | compat | ObjectCall |  |
 | `highlightOff` | 154 / 10 | compat | ObjectCall |  |
 | `setPositionSmooth` | 51 / 10 | compat | ObjectCall |  |
@@ -449,14 +451,14 @@ the plan says translate it), unknown (nobody has decided).
 | `Book.page_offset` | - | stub | a book's page is its state; no module calls these |  |
 | `Book.setHighlight` | - | stub | a book's page is its state; no module calls these |  |
 | `Book.setPage` | - | stub | a book's page is its state; no module calls these |  |
-| `Browser.pixel_width` | - | dropped | a stock gadget |  |
-| `Browser.url` | - | dropped | a stock gadget |  |
-| `Clock.getValue` | - | dropped | a stock gadget |  |
-| `Clock.pauseStart` | - | dropped | a stock gadget |  |
-| `Clock.paused` | - | dropped | a stock gadget |  |
-| `Clock.setValue` | - | dropped | a stock gadget |  |
-| `Clock.showCurrentTime` | - | dropped | a stock gadget |  |
-| `Clock.startStopwatch` | - | dropped | a stock gadget |  |
+| `Browser.pixel_width` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
+| `Browser.url` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
+| `Clock.getValue` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
+| `Clock.pauseStart` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
+| `Clock.paused` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
+| `Clock.setValue` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
+| `Clock.showCurrentTime` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
+| `Clock.startStopwatch` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
 | `Container.addData` | - | compat | holders: getObjects, putObject, takeObject, getQuantity through stow | StowScriptTests |
 | `Container.getCount` | - | compat | holders: getObjects, putObject, takeObject, getQuantity through stow | StowScriptTests |
 | `Container.getData` | - | compat | holders: getObjects, putObject, takeObject, getQuantity through stow | StowScriptTests |
@@ -467,19 +469,19 @@ the plan says translate it), unknown (nobody has decided).
 | `Container.search` | - | compat | holders: getObjects, putObject, takeObject, getQuantity through stow | StowScriptTests |
 | `Container.setData` | - | compat | holders: getObjects, putObject, takeObject, getQuantity through stow | StowScriptTests |
 | `Container.takeObject` | - | compat | holders: getObjects, putObject, takeObject, getQuantity through stow | StowScriptTests |
-| `Counter.clear` | - | dropped | a stock gadget |  |
-| `Counter.decrement` | - | dropped | a stock gadget |  |
-| `Counter.getValue` | - | dropped | a stock gadget |  |
-| `Counter.increment` | - | dropped | a stock gadget |  |
-| `Counter.setValue` | - | dropped | a stock gadget |  |
-| `LayoutZone.getOptions` | - | dropped | layout zones |  |
-| `LayoutZone.layout` | - | dropped | layout zones |  |
-| `LayoutZone.setOptions` | - | dropped | layout zones |  |
-| `RPGFigurine.attack` | - | dropped | rpg figurines |  |
-| `RPGFigurine.changeMode` | - | dropped | rpg figurines |  |
-| `RPGFigurine.die` | - | dropped | rpg figurines |  |
-| `RPGFigurine.onAttack` | - | dropped | rpg figurines |  |
-| `RPGFigurine.onHit` | - | dropped | rpg figurines |  |
+| `Counter.clear` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
+| `Counter.decrement` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
+| `Counter.getValue` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
+| `Counter.increment` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
+| `Counter.setValue` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
+| `LayoutZone.getOptions` | - | dropped | scripting and layout zones (decided 2026-11-06) |  |
+| `LayoutZone.layout` | - | dropped | scripting and layout zones (decided 2026-11-06) |  |
+| `LayoutZone.setOptions` | - | dropped | scripting and layout zones (decided 2026-11-06) |  |
+| `RPGFigurine.attack` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
+| `RPGFigurine.changeMode` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
+| `RPGFigurine.die` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
+| `RPGFigurine.onAttack` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
+| `RPGFigurine.onHit` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
 | `TextTool.getFontColor` | - | stub | 3D text made at run time; no module calls it |  |
 | `TextTool.getFontSize` | - | stub | 3D text made at run time; no module calls it |  |
 | `TextTool.getValue` | - | stub | 3D text made at run time; no module calls it |  |
@@ -487,7 +489,7 @@ the plan says translate it), unknown (nobody has decided).
 | `TextTool.setFontSize` | - | stub | 3D text made at run time; no module calls it |  |
 | `TextTool.setValue` | - | stub | 3D text made at run time; no module calls it |  |
 | `UI` | - | unknown |  |  |
-| `Zone.getObjects` | - | stub | no module in the roster has one; the table's own zones raise no script events yet |  |
+| `Zone.getObjects` | - | dropped | scripting and layout zones (decided 2026-11-06) |  |
 | `addAttachment` | - | native | ObjectCall |  |
 | `addDecal` | - | compat | ObjectCall |  |
 | `addForce` | - | dropped | engine physics |  |
@@ -502,46 +504,46 @@ the plan says translate it), unknown (nobody has decided).
 | `auto_raise` | - | compat | ObjectProps (get_prop/set_prop) |  |
 | `book` | - | unknown |  |  |
 | `bounciness` | - | dropped | engine physics |  |
-| `browser` | - | unknown |  |  |
-| `childPairs` | - | dropped | Unity components |  |
-| `clock` | - | unknown |  |  |
-| `component` | - | unknown |  |  |
-| `componentIndex` | - | unknown |  |  |
-| `componentName` | - | unknown |  |  |
-| `container` | - | unknown |  |  |
-| `counter` | - | unknown |  |  |
-| `cut` | - | stub | card dealing; no module calls it |  |
-| `deal` | - | stub | card dealing; no module calls it |  |
-| `dealToAll` | - | stub | card dealing; no module calls it |  |
-| `dealToColor` | - | stub | card dealing; no module calls it |  |
-| `dealToColorWithOffset` | - | stub | card dealing; no module calls it |  |
+| `browser` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
+| `childPairs` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |
+| `clock` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
+| `component` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |
+| `componentIndex` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |
+| `componentName` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |
+| `container` | - | dropped | deck and card logic (decided 2026-11-06) |  |
+| `counter` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
+| `cut` | - | dropped | deck and card logic (decided 2026-11-06) |  |
+| `deal` | - | dropped | deck and card logic (decided 2026-11-06) |  |
+| `dealToAll` | - | dropped | deck and card logic (decided 2026-11-06) |  |
+| `dealToColor` | - | dropped | deck and card logic (decided 2026-11-06) |  |
+| `dealToColorWithOffset` | - | dropped | deck and card logic (decided 2026-11-06) |  |
 | `destroy` | - | native | ObjectCall |  |
 | `drag` | - | dropped | engine physics |  |
 | `drag_selectable` | - | compat | ObjectProps (get_prop/set_prop) |  |
-| `drop` | - | unknown |  |  |
+| `drop` | - | dropped | the Player API (decided 2026-11-06) |  |
 | `dynamic_friction` | - | dropped | engine physics |  |
 | `flip` | - | native | ObjectCall |  |
 | `getAngularVelocity` | - | dropped | engine physics (answers zero) |  |
 | `getAttachments` | - | compat | ObjectCall |  |
 | `getBoundsNormalized` | - | compat | compat.get_bounds |  |
-| `getChild` | - | dropped | Unity components |  |
-| `getChildren` | - | dropped | Unity components |  |
-| `getComponent` | - | dropped | Unity components |  |
-| `getComponentInChildren` | - | dropped | Unity components |  |
-| `getComponentVar` | - | dropped | Unity components |  |
-| `getComponentVars` | - | dropped | Unity components |  |
-| `getComponents` | - | dropped | Unity components |  |
-| `getComponentsInChildren` | - | dropped | Unity components |  |
+| `getChild` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |
+| `getChildren` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |
+| `getComponent` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |
+| `getComponentInChildren` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |
+| `getComponentVar` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |
+| `getComponentVars` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |
+| `getComponents` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |
+| `getComponentsInChildren` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |
 | `getDecals` | - | compat | ObjectCall |  |
 | `getFogOfWar` | - | dropped | hidden zones (decided 2026-11-06) |  |
 | `getFogOfWarReveal` | - | dropped | hidden zones (decided 2026-11-06; answers off) |  |
 | `getJSON` | - | compat | compat.get_json |  |
 | `getJoints` | - | dropped | engine physics (joints; answers none) |  |
 | `getLuaScriptState` | - | compat | script_state | ModuleHelpersTests |
-| `getMaterialValue` | - | dropped | Unity materials |  |
-| `getMaterialVars` | - | dropped | Unity materials |  |
-| `getMaterials` | - | dropped | Unity materials |  |
-| `getMaterialsInChildren` | - | dropped | Unity materials |  |
+| `getMaterialValue` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |
+| `getMaterialVars` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |
+| `getMaterials` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |
+| `getMaterialsInChildren` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |
 | `getMemo` | - | native | ObjectCall |  |
 | `getNearestPointFromObject` | - | dropped | engine physics |  |
 | `getNearestPointFromPosition` | - | dropped | engine physics |  |
@@ -558,7 +560,7 @@ the plan says translate it), unknown (nobody has decided).
 | `getTransformForward` | - | compat | ObjectCall |  |
 | `getTransformRight` | - | compat | ObjectCall |  |
 | `getVelocity` | - | dropped | engine physics (answers zero) |  |
-| `getZones` | - | stub | no module calls it; answers an empty list |  |
+| `getZones` | - | dropped | scripting and layout zones (decided 2026-11-06) |  |
 | `gizmo_selectable` | - | dropped | the tabletop's gizmo tool |  |
 | `grid_projection` | - | dropped | grid (decided 2026-11-06) |  |
 | `hasAnyTag` | - | compat | compat.has_any_tag | ModuleHelpersTests |
@@ -574,40 +576,40 @@ the plan says translate it), unknown (nobody has decided).
 | `isSmoothMoving` | - | stub | moves finish at once here (answers false) |  |
 | `is_face_down` | - | native | ObjectCall |  |
 | `jointTo` | - | dropped | engine physics (joints) |  |
-| `layoutZone` | - | unknown |  |  |
+| `layoutZone` | - | dropped | scripting and layout zones (decided 2026-11-06) |  |
 | `loading_custom` | - | compat | ObjectCall |  |
-| `luaCollision` | - | unknown |  |  |
+| `luaCollision` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |
 | `mass` | - | dropped | engine physics |  |
-| `material` | - | unknown |  |  |
-| `materialIndex` | - | unknown |  |  |
+| `material` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |
+| `materialIndex` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |
 | `max_typed_number` | - | compat | ObjectProps (get_prop/set_prop) |  |
-| `measure_movement` | - | dropped | the measure-on-move overlay |  |
+| `measure_movement` | - | native | the piece option Shows how far it is moved; self.measures_moves and set_measures_moves | MeasureTests |
 | `memo` | - | compat | ObjectProps (get_prop/set_prop) |  |
 | `name` | - | compat | ObjectProps (get_prop/set_prop) |  |
 | `pick_up_position` | - | dropped | where a piece was picked up |  |
 | `pick_up_rotation` | - | dropped | where a piece was picked up |  |
-| `rPGFigurine` | - | unknown |  |  |
+| `rPGFigurine` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
 | `randomize` | - | stub | no module calls it; a die rolls through roll |  |
 | `registerCollisions` | - | dropped | engine physics (collisions) |  |
-| `remainder` | - | unknown |  |  |
+| `remainder` | - | dropped | deck and card logic (decided 2026-11-06) |  |
 | `removeAttachment` | - | compat | ObjectCall |  |
 | `removeAttachments` | - | compat | ObjectCall |  |
 | `removeButton` | - | compat | ObjectCall |  |
 | `removeTag` | - | native | ObjectCall |  |
-| `rendererIndex` | - | unknown |  |  |
-| `reset` | - | stub | no module calls it; a holder keeps what was put in it |  |
+| `rendererIndex` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |
+| `reset` | - | dropped | deck and card logic (decided 2026-11-06) |  |
 | `resting` | - | compat | ObjectCall |  |
 | `rotate` | - | compat | ObjectCall |  |
 | `script` | - | unknown |  |  |
 | `sendToHand` | - | dropped | hands are seats here (decided 2026-11-06) |  |
 | `setAngularVelocity` | - | dropped | engine physics |  |
-| `setComponentVar` | - | dropped | Unity components |  |
+| `setComponentVar` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |
 | `setFogOfWar` | - | dropped | hidden zones (decided 2026-11-06) |  |
 | `setFogOfWarReveal` | - | dropped | hidden zones (decided 2026-11-06) |  |
 | `setHiddenFrom` | - | dropped | hidden information (decided 2026-11-06) |  |
 | `setInvisibleTo` | - | dropped | hidden information (decided 2026-11-06) |  |
 | `setLuaScriptState` | - | compat | script_state | ModuleHelpersTests |
-| `setMaterialValue` | - | dropped | Unity materials |  |
+| `setMaterialValue` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |
 | `setMemo` | - | native | ObjectCall |  |
 | `setRotationValue` | - | compat | compat.set_value: the look named so | DiceScriptTests |
 | `setRotationValues` | - | dropped | redefining a die's faces |  |
@@ -615,10 +617,10 @@ the plan says translate it), unknown (nobody has decided).
 | `setTags` | - | native | ObjectCall |  |
 | `setValue` | - | compat | compat.set_value: the look named so | DiceScriptTests |
 | `setVelocity` | - | dropped | engine physics |  |
-| `shuffle` | - | stub | no module calls it; a holder keeps its order |  |
+| `shuffle` | - | dropped | deck and card logic (decided 2026-11-06) |  |
 | `shuffleStates` | - | unknown |  |  |
 | `spawning` | - | compat | ObjectCall |  |
-| `spread` | - | stub | card dealing; no module calls it |  |
+| `spread` | - | dropped | deck and card logic (decided 2026-11-06) |  |
 | `startLuaCoroutine` | - | unknown |  |  |
 | `static_friction` | - | dropped | engine physics |  |
 | `sticky` | - | compat | ObjectProps (get_prop/set_prop) |  |
@@ -635,7 +637,7 @@ the plan says translate it), unknown (nobody has decided).
 | `use_snap_points` | - | dropped | snap points (decided 2026-11-06 with the grid) |  |
 | `value` | - | compat | ObjectProps (get_prop/set_prop) |  |
 | `value_flags` | - | unknown |  |  |
-| `zone` | - | unknown |  |  |
+| `zone` | - | dropped | scripting and layout zones (decided 2026-11-06) |  |
 
 ## global
 
@@ -655,11 +657,11 @@ the plan says translate it), unknown (nobody has decided).
 | `addContextMenuItem` | 2 / 2 | compat | GlobalFunctionCall |  |
 | `printToAll` | 2 / 2 | native | GlobalFunctionCall |  |
 | `stringColorToRGB` | 1 / 1 | compat | GlobalFunctionCall |  |
-| `addConsoleCommand` | - | dropped | console commands |  |
-| `allowAutomaticRewindSave` | - | dropped | rewind saves |  |
+| `addConsoleCommand` | - | dropped | console commands and other host controls (decided 2026-11-06) |  |
+| `allowAutomaticRewindSave` | - | dropped | console commands and other host controls (decided 2026-11-06) |  |
 | `chooseInHand` | - | dropped | hands are seats here (decided 2026-11-06) |  |
 | `chooseInHandOrCancel` | - | dropped | hands are seats here (decided 2026-11-06) |  |
-| `clearConsoleCommands` | - | dropped | console commands |  |
+| `clearConsoleCommands` | - | dropped | console commands and other host controls (decided 2026-11-06) |  |
 | `clearContextMenu` | - | native | GlobalFunctionCall |  |
 | `clearHotkeys` | - | native | GlobalFunctionCall |  |
 | `clearPixelPaint` | - | compat | compat.erase_all: every stroke on the drawing board | ModuleHelpersTests |
@@ -668,10 +670,10 @@ the plan says translate it), unknown (nobody has decided).
 | `colorToPlayerName` | - | compat | compat.Color:toString |  |
 | `constructColor` | - | compat | compat.Color |  |
 | `constructVector` | - | compat | compat.Vector | ModuleVectorColorTests |
-| `copy` | - | stub | the clipboard; no module calls it |  |
+| `copy` | - | dropped | the Player API (decided 2026-11-06) |  |
 | `copyLuaTable` | - | compat | compat.copy_table | ModuleHelpersTests |
 | `debugLog` | - | compat | compat.log |  |
-| `flipTable` | - | dropped | flipping the table |  |
+| `flipTable` | - | dropped | the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06) |  |
 | `getAllLuaScriptStates` | - | dropped | undocumented internal; no module calls it |  |
 | `getAllTags` | - | compat | compat.all_tags | ModuleHelpersTests |
 | `getColor` | - | dropped | undocumented internal; no module calls it |  |
@@ -682,18 +684,18 @@ the plan says translate it), unknown (nobody has decided).
 | `getObjectsWithTag` | - | native | GlobalFunctionCall |  |
 | `getPlayer` | - | compat | compat.player |  |
 | `getPlayerHandPositionAndRotation` | - | dropped | hands are seats here (decided 2026-11-06) |  |
-| `getPointerPosition` | - | stub | the pointer is not shared with the host; answers nil |  |
-| `getPointerRotation` | - | stub | the pointer is not shared with the host; answers nil |  |
+| `getPointerPosition` | - | dropped | the Player API (decided 2026-11-06) |  |
+| `getPointerRotation` | - | dropped | the Player API (decided 2026-11-06) |  |
 | `getScriptState` | - | compat | script_state | ModuleHelpersTests |
 | `getSeatedPlayers` | - | compat | GlobalFunctionCall |  |
-| `group` | - | stub | card dealing; no module calls it |  |
+| `group` | - | dropped | the Player API (decided 2026-11-06) |  |
 | `hexToColor` | - | compat | compat.Color.fromHex | ModuleHelpersTests |
 | `logFormat` | - | compat | compat.log |  |
-| `logStyle` | - | stub | log styles |  |
-| `paste` | - | stub | the clipboard; no module calls it |  |
+| `logStyle` | - | dropped | console commands and other host controls (decided 2026-11-06) |  |
+| `paste` | - | dropped | the Player API (decided 2026-11-06) |  |
 | `setGlobalTable` | - | compat | game.set_var |  |
-| `setUITheme` | - | dropped | UI theme |  |
-| `showHotkeyConfig` | - | dropped | hotkey panel |  |
+| `setUITheme` | - | dropped | the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06) |  |
+| `showHotkeyConfig` | - | dropped | console commands and other host controls (decided 2026-11-06) |  |
 | `spawnObjectJSON` | - | compat | GlobalFunctionCall |  |
 | `stringColorToHex` | - | compat | compat.Color.fromString:toHex |  |
 
@@ -709,7 +711,7 @@ the plan says translate it), unknown (nobody has decided).
 | `Wait.stop` | 4219 / 13 | compat | compat.wait_* |  |
 | `UI.setXmlTable` | 141 / 4 | partial | run-time UI through ui.*: the attributes a player sees; item 8 |  |
 | `Wait.condition` | 138 / 3 | compat | compat.wait_* |  |
-| `Player.getPlayers` | 3 / 3 | partial | compat.player: the seats and colours we have; item 8 maps the rest |  |
+| `Player.getPlayers` | 3 / 3 | dropped | the Player API (decided 2026-11-06) |  |
 | `UI.hide` | 1781 / 2 | partial | run-time UI through ui.*: the attributes a player sees; item 8 |  |
 | `UI.show` | 1370 / 2 | partial | run-time UI through ui.*: the attributes a player sees; item 8 |  |
 | `Global.getVar` | 411 / 2 | native | game.get_var |  |
@@ -717,17 +719,17 @@ the plan says translate it), unknown (nobody has decided).
 | `UI.getXml` | 137 / 2 | partial | run-time UI through ui.*: the attributes a player sees; item 8 |  |
 | `UI.getXmlTable` | 137 / 2 | partial | run-time UI through ui.*: the attributes a player sees; item 8 |  |
 | `UI.setXml` | 137 / 2 | partial | run-time UI through ui.*: the attributes a player sees; item 8 |  |
-| `Player.getColors` | 2 / 2 | partial | compat.player: the seats and colours we have; item 8 maps the rest |  |
+| `Player.getColors` | 2 / 2 | dropped | the Player API (decided 2026-11-06) |  |
 | `UI.getAttribute` | 2 / 2 | partial | run-time UI through ui.*: the attributes a player sees; item 8 |  |
 | `Global.getVectorLines` | 3 / 1 | compat | compat.global_vector_lines: the lines the script last set | BoardDrawingTests |
 | `Global.setVectorLines` | 3 / 1 | compat | compat.set_global_vector_lines: strokes on the umpire's drawing board through board.draw | BoardDrawingTests |
 | `Physics.cast` | 1 / 1 | compat | compat.cast |  |
 | `Timer.create` | 1 / 1 | compat | compat.Timer |  |
 | `Timer.destroy` | 1 / 1 | compat | compat.Timer |  |
-| `Backgrounds.getBackground` | - | dropped | the sky (read once at import as the backdrop) |  |
-| `Backgrounds.getCustomURL` | - | dropped | the sky (read once at import as the backdrop) |  |
-| `Backgrounds.setBackground` | - | dropped | the sky (read once at import as the backdrop) |  |
-| `Backgrounds.setCustomURL` | - | dropped | the sky (read once at import as the backdrop) |  |
+| `Backgrounds.getBackground` | - | dropped | the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06) |  |
+| `Backgrounds.getCustomURL` | - | dropped | the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06) |  |
+| `Backgrounds.setBackground` | - | dropped | the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06) |  |
+| `Backgrounds.setCustomURL` | - | dropped | the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06) |  |
 | `Global.call` | - | native | game.call |  |
 | `Global.getTable` | - | native | game.get_var |  |
 | `Global.setTable` | - | native | game.set_var |  |
@@ -767,19 +769,19 @@ the plan says translate it), unknown (nobody has decided).
 | `Lighting.setAmbientGroundColor` | - | dropped | lighting (decided 2026-11-06) |  |
 | `Lighting.setAmbientSkyColor` | - | dropped | lighting (decided 2026-11-06) |  |
 | `Lighting.setLightColor` | - | dropped | lighting (decided 2026-11-06) |  |
-| `MusicPlayer.getCurrentAudioclip` | - | dropped | music player |  |
-| `MusicPlayer.getPlaylist` | - | dropped | music player |  |
-| `MusicPlayer.pause` | - | dropped | music player |  |
-| `MusicPlayer.play` | - | dropped | music player |  |
-| `MusicPlayer.player_status` | - | dropped | music player |  |
-| `MusicPlayer.playlistIndex` | - | dropped | music player |  |
-| `MusicPlayer.playlist_index` | - | dropped | music player |  |
-| `MusicPlayer.repeat_track` | - | dropped | music player |  |
-| `MusicPlayer.setCurrentAudioclip` | - | dropped | music player |  |
-| `MusicPlayer.setPlaylist` | - | dropped | music player |  |
-| `MusicPlayer.shuffle` | - | dropped | music player |  |
-| `MusicPlayer.skipBack` | - | dropped | music player |  |
-| `MusicPlayer.skipForward` | - | dropped | music player |  |
+| `MusicPlayer.getCurrentAudioclip` | - | dropped | music and sound players (decided 2026-11-06) |  |
+| `MusicPlayer.getPlaylist` | - | dropped | music and sound players (decided 2026-11-06) |  |
+| `MusicPlayer.pause` | - | dropped | music and sound players (decided 2026-11-06) |  |
+| `MusicPlayer.play` | - | dropped | music and sound players (decided 2026-11-06) |  |
+| `MusicPlayer.player_status` | - | dropped | music and sound players (decided 2026-11-06) |  |
+| `MusicPlayer.playlistIndex` | - | dropped | music and sound players (decided 2026-11-06) |  |
+| `MusicPlayer.playlist_index` | - | dropped | music and sound players (decided 2026-11-06) |  |
+| `MusicPlayer.repeat_track` | - | dropped | music and sound players (decided 2026-11-06) |  |
+| `MusicPlayer.setCurrentAudioclip` | - | dropped | music and sound players (decided 2026-11-06) |  |
+| `MusicPlayer.setPlaylist` | - | dropped | music and sound players (decided 2026-11-06) |  |
+| `MusicPlayer.shuffle` | - | dropped | music and sound players (decided 2026-11-06) |  |
+| `MusicPlayer.skipBack` | - | dropped | music and sound players (decided 2026-11-06) |  |
+| `MusicPlayer.skipForward` | - | dropped | music and sound players (decided 2026-11-06) |  |
 | `Notes.addNotebookTab` | - | stub | notes live on the script's side only; the briefing is the scenario's text |  |
 | `Notes.editNotebookTab` | - | stub | notes live on the script's side only; the briefing is the scenario's text |  |
 | `Notes.getNotebookTabs` | - | stub | notes live on the script's side only; the briefing is the scenario's text |  |
@@ -789,65 +791,65 @@ the plan says translate it), unknown (nobody has decided).
 | `Physics.getGravity` | - | dropped | engine physics |  |
 | `Physics.play_area` | - | dropped | engine physics |  |
 | `Physics.setGravity` | - | dropped | engine physics |  |
-| `Player.action` | - | partial | compat.player: the seats and colours we have; item 8 maps the rest |  |
-| `Player.admin` | - | partial | compat.player: the seats and colours we have; item 8 maps the rest |  |
-| `Player.attachCameraToObject` | - | partial | compat.player: the seats and colours we have; item 8 maps the rest |  |
-| `Player.blind` | - | partial | compat.player: the seats and colours we have; item 8 maps the rest |  |
-| `Player.blindfolded` | - | partial | compat.player: the seats and colours we have; item 8 maps the rest |  |
-| `Player.broadcast` | - | partial | compat.player: the seats and colours we have; item 8 maps the rest |  |
-| `Player.changeColor` | - | partial | compat.player: the seats and colours we have; item 8 maps the rest |  |
-| `Player.changeTeam` | - | partial | compat.player: the seats and colours we have; item 8 maps the rest |  |
-| `Player.clearSelectedObjects` | - | partial | compat.player: the seats and colours we have; item 8 maps the rest |  |
-| `Player.color` | - | partial | compat.player: the seats and colours we have; item 8 maps the rest |  |
-| `Player.copy` | - | partial | compat.player: the seats and colours we have; item 8 maps the rest |  |
-| `Player.drawHandStash` | - | partial | compat.player: the seats and colours we have; item 8 maps the rest |  |
-| `Player.getAvailableColors` | - | partial | compat.player: the seats and colours we have; item 8 maps the rest |  |
-| `Player.getHandCount` | - | partial | compat.player: the seats and colours we have; item 8 maps the rest |  |
-| `Player.getHandObjects` | - | partial | compat.player: the seats and colours we have; item 8 maps the rest |  |
-| `Player.getHandPlayer` | - | partial | compat.player: the seats and colours we have; item 8 maps the rest |  |
-| `Player.getHandTransform` | - | partial | compat.player: the seats and colours we have; item 8 maps the rest |  |
-| `Player.getHoldingObjects` | - | partial | compat.player: the seats and colours we have; item 8 maps the rest |  |
-| `Player.getHoverObject` | - | partial | compat.player: the seats and colours we have; item 8 maps the rest |  |
-| `Player.getPlayer` | - | partial | compat.player: the seats and colours we have; item 8 maps the rest |  |
-| `Player.getPlayerHand` | - | partial | compat.player: the seats and colours we have; item 8 maps the rest |  |
-| `Player.getPointerPosition` | - | partial | compat.player: the seats and colours we have; item 8 maps the rest |  |
-| `Player.getPointerRotation` | - | partial | compat.player: the seats and colours we have; item 8 maps the rest |  |
-| `Player.getSelectedObjects` | - | partial | compat.player: the seats and colours we have; item 8 maps the rest |  |
-| `Player.getSpectators` | - | partial | compat.player: the seats and colours we have; item 8 maps the rest |  |
-| `Player.hand_choice_label` | - | partial | compat.player: the seats and colours we have; item 8 maps the rest |  |
-| `Player.host` | - | partial | compat.player: the seats and colours we have; item 8 maps the rest |  |
-| `Player.id` | - | partial | compat.player: the seats and colours we have; item 8 maps the rest |  |
-| `Player.kick` | - | partial | compat.player: the seats and colours we have; item 8 maps the rest |  |
-| `Player.lift_height` | - | partial | compat.player: the seats and colours we have; item 8 maps the rest |  |
-| `Player.lookAt` | - | partial | compat.player: the seats and colours we have; item 8 maps the rest |  |
-| `Player.mute` | - | partial | compat.player: the seats and colours we have; item 8 maps the rest |  |
-| `Player.paste` | - | partial | compat.player: the seats and colours we have; item 8 maps the rest |  |
-| `Player.pingTable` | - | partial | compat.player: the seats and colours we have; item 8 maps the rest |  |
-| `Player.playerColor` | - | partial | compat.player: the seats and colours we have; item 8 maps the rest |  |
-| `Player.print` | - | partial | compat.player: the seats and colours we have; item 8 maps the rest |  |
-| `Player.promote` | - | partial | compat.player: the seats and colours we have; item 8 maps the rest |  |
-| `Player.promoted` | - | partial | compat.player: the seats and colours we have; item 8 maps the rest |  |
-| `Player.seated` | - | partial | compat.player: the seats and colours we have; item 8 maps the rest |  |
-| `Player.setCameraMode` | - | partial | compat.player: the seats and colours we have; item 8 maps the rest |  |
-| `Player.setHandStashLocation` | - | partial | compat.player: the seats and colours we have; item 8 maps the rest |  |
-| `Player.setHandTransform` | - | partial | compat.player: the seats and colours we have; item 8 maps the rest |  |
-| `Player.setUITheme` | - | partial | compat.player: the seats and colours we have; item 8 maps the rest |  |
-| `Player.showColorDialog` | - | partial | compat.player: the seats and colours we have; item 8 maps the rest |  |
-| `Player.showConfirmDialog` | - | partial | compat.player: the seats and colours we have; item 8 maps the rest |  |
-| `Player.showInfoDialog` | - | partial | compat.player: the seats and colours we have; item 8 maps the rest |  |
-| `Player.showInputDialog` | - | partial | compat.player: the seats and colours we have; item 8 maps the rest |  |
-| `Player.showMemoDialog` | - | partial | compat.player: the seats and colours we have; item 8 maps the rest |  |
-| `Player.showOptionsDialog` | - | partial | compat.player: the seats and colours we have; item 8 maps the rest |  |
-| `Player.steam_id` | - | partial | compat.player: the seats and colours we have; item 8 maps the rest |  |
-| `Player.steam_name` | - | partial | compat.player: the seats and colours we have; item 8 maps the rest |  |
-| `Player.team` | - | partial | compat.player: the seats and colours we have; item 8 maps the rest |  |
-| `Player.unblind` | - | partial | compat.player: the seats and colours we have; item 8 maps the rest |  |
-| `Player.userDataDescriptor` | - | partial | compat.player: the seats and colours we have; item 8 maps the rest |  |
-| `Tables.getCustomURL` | - | dropped | the table model |  |
-| `Tables.getTable` | - | dropped | the table model |  |
-| `Tables.getTableObject` | - | dropped | the table model |  |
-| `Tables.setCustomURL` | - | dropped | the table model |  |
-| `Tables.setTable` | - | dropped | the table model |  |
+| `Player.action` | - | dropped | the Player API (decided 2026-11-06) |  |
+| `Player.admin` | - | dropped | the Player API (decided 2026-11-06) |  |
+| `Player.attachCameraToObject` | - | dropped | the Player API (decided 2026-11-06) |  |
+| `Player.blind` | - | dropped | the Player API (decided 2026-11-06) |  |
+| `Player.blindfolded` | - | dropped | the Player API (decided 2026-11-06) |  |
+| `Player.broadcast` | - | dropped | the Player API (decided 2026-11-06) |  |
+| `Player.changeColor` | - | dropped | the Player API (decided 2026-11-06) |  |
+| `Player.changeTeam` | - | dropped | the Player API (decided 2026-11-06) |  |
+| `Player.clearSelectedObjects` | - | dropped | the Player API (decided 2026-11-06) |  |
+| `Player.color` | - | dropped | the Player API (decided 2026-11-06) |  |
+| `Player.copy` | - | dropped | the Player API (decided 2026-11-06) |  |
+| `Player.drawHandStash` | - | dropped | the Player API (decided 2026-11-06) |  |
+| `Player.getAvailableColors` | - | dropped | the Player API (decided 2026-11-06) |  |
+| `Player.getHandCount` | - | dropped | the Player API (decided 2026-11-06) |  |
+| `Player.getHandObjects` | - | dropped | the Player API (decided 2026-11-06) |  |
+| `Player.getHandPlayer` | - | dropped | the Player API (decided 2026-11-06) |  |
+| `Player.getHandTransform` | - | dropped | the Player API (decided 2026-11-06) |  |
+| `Player.getHoldingObjects` | - | dropped | the Player API (decided 2026-11-06) |  |
+| `Player.getHoverObject` | - | dropped | the Player API (decided 2026-11-06) |  |
+| `Player.getPlayer` | - | dropped | the Player API (decided 2026-11-06) |  |
+| `Player.getPlayerHand` | - | dropped | the Player API (decided 2026-11-06) |  |
+| `Player.getPointerPosition` | - | dropped | the Player API (decided 2026-11-06) |  |
+| `Player.getPointerRotation` | - | dropped | the Player API (decided 2026-11-06) |  |
+| `Player.getSelectedObjects` | - | dropped | the Player API (decided 2026-11-06) |  |
+| `Player.getSpectators` | - | dropped | the Player API (decided 2026-11-06) |  |
+| `Player.hand_choice_label` | - | dropped | the Player API (decided 2026-11-06) |  |
+| `Player.host` | - | dropped | the Player API (decided 2026-11-06) |  |
+| `Player.id` | - | dropped | the Player API (decided 2026-11-06) |  |
+| `Player.kick` | - | dropped | the Player API (decided 2026-11-06) |  |
+| `Player.lift_height` | - | dropped | the Player API (decided 2026-11-06) |  |
+| `Player.lookAt` | - | dropped | the Player API (decided 2026-11-06) |  |
+| `Player.mute` | - | dropped | the Player API (decided 2026-11-06) |  |
+| `Player.paste` | - | dropped | the Player API (decided 2026-11-06) |  |
+| `Player.pingTable` | - | dropped | the Player API (decided 2026-11-06) |  |
+| `Player.playerColor` | - | dropped | the Player API (decided 2026-11-06) |  |
+| `Player.print` | - | dropped | the Player API (decided 2026-11-06) |  |
+| `Player.promote` | - | dropped | the Player API (decided 2026-11-06) |  |
+| `Player.promoted` | - | dropped | the Player API (decided 2026-11-06) |  |
+| `Player.seated` | - | dropped | the Player API (decided 2026-11-06) |  |
+| `Player.setCameraMode` | - | dropped | the Player API (decided 2026-11-06) |  |
+| `Player.setHandStashLocation` | - | dropped | the Player API (decided 2026-11-06) |  |
+| `Player.setHandTransform` | - | dropped | the Player API (decided 2026-11-06) |  |
+| `Player.setUITheme` | - | dropped | the Player API (decided 2026-11-06) |  |
+| `Player.showColorDialog` | - | dropped | the Player API (decided 2026-11-06) |  |
+| `Player.showConfirmDialog` | - | dropped | the Player API (decided 2026-11-06) |  |
+| `Player.showInfoDialog` | - | dropped | the Player API (decided 2026-11-06) |  |
+| `Player.showInputDialog` | - | dropped | the Player API (decided 2026-11-06) |  |
+| `Player.showMemoDialog` | - | dropped | the Player API (decided 2026-11-06) |  |
+| `Player.showOptionsDialog` | - | dropped | the Player API (decided 2026-11-06) |  |
+| `Player.steam_id` | - | dropped | the Player API (decided 2026-11-06) |  |
+| `Player.steam_name` | - | dropped | the Player API (decided 2026-11-06) |  |
+| `Player.team` | - | dropped | the Player API (decided 2026-11-06) |  |
+| `Player.unblind` | - | dropped | the Player API (decided 2026-11-06) |  |
+| `Player.userDataDescriptor` | - | dropped | the Player API (decided 2026-11-06) |  |
+| `Tables.getCustomURL` | - | dropped | the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06) |  |
+| `Tables.getTable` | - | dropped | the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06) |  |
+| `Tables.getTableObject` | - | dropped | the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06) |  |
+| `Tables.setCustomURL` | - | dropped | the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06) |  |
+| `Tables.setTable` | - | dropped | the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06) |  |
 | `Time.delta_time` | - | compat | compat.Time: time from the clock, frames at 60 a second |  |
 | `Time.fixed_delta_time` | - | compat | compat.Time: time from the clock, frames at 60 a second |  |
 | `Time.fixed_time` | - | compat | compat.Time: time from the clock, frames at 60 a second |  |
@@ -876,11 +878,11 @@ the plan says translate it), unknown (nobody has decided).
 | `UI.setCustomAssets` | - | partial | run-time UI through ui.*: the attributes a player sees; item 8 |  |
 | `UI.setValue` | - | partial | run-time UI through ui.*: the attributes a player sees; item 8 |  |
 | `Wait.stopAll` | - | compat | compat.wait_stop_all | ModuleHelpersTests |
-| `WebRequest.custom` | - | dropped | scripts never reach the web here (script safety) |  |
-| `WebRequest.delete` | - | dropped | scripts never reach the web here (script safety) |  |
-| `WebRequest.head` | - | dropped | scripts never reach the web here (script safety) |  |
-| `WebRequest.post` | - | dropped | scripts never reach the web here (script safety) |  |
-| `WebRequest.put` | - | dropped | scripts never reach the web here (script safety) |  |
+| `WebRequest.custom` | - | dropped | web requests (decided 2026-11-06) |  |
+| `WebRequest.delete` | - | dropped | web requests (decided 2026-11-06) |  |
+| `WebRequest.head` | - | dropped | web requests (decided 2026-11-06) |  |
+| `WebRequest.post` | - | dropped | web requests (decided 2026-11-06) |  |
+| `WebRequest.put` | - | dropped | web requests (decided 2026-11-06) |  |
 
 ## events
 
@@ -894,11 +896,11 @@ the plan says translate it), unknown (nobody has decided).
 | `onChat` | 10 / 10 | native | EventRenames |  |
 | `onScriptingButtonDown` | 10 / 10 | native | EventRenames |  |
 | `onObjectPickUp` | 4 / 2 | native | EventRenames |  |
-| `onBlindfold` | - | dropped | blindfolds |  |
+| `onBlindfold` | - | dropped | the Player API (decided 2026-11-06) |  |
 | `onCollisionEnter` | - | dropped | engine physics (collisions) |  |
 | `onCollisionExit` | - | dropped | engine physics (collisions) |  |
 | `onCollisionStay` | - | dropped | engine physics (collisions) |  |
-| `onExternalMessage` | - | dropped | the external editor port |  |
+| `onExternalMessage` | - | dropped | web requests (decided 2026-11-06) |  |
 | `onFilter` | - | dropped | layout zones |  |
 | `onFixedUpdate` | - | dropped | the physics tick |  |
 | `onGameRoundEnd` | - | dropped | game rounds |  |
@@ -910,13 +912,13 @@ the plan says translate it), unknown (nobody has decided).
 | `onObjectCollisionStay` | - | dropped | engine physics (collisions) |  |
 | `onObjectDrop` | - | native | EventRenames |  |
 | `onObjectEnterContainer` | - | native | on_stowed(holder, piece) after a stow | StowEventTests |
-| `onObjectEnterScriptingZone` | - | stub | the table's own zones raise no script events yet; no module handles it |  |
-| `onObjectEnterZone` | - | stub | the table's own zones raise no script events yet; no module handles it |  |
+| `onObjectEnterScriptingZone` | - | dropped | scripting and layout zones (decided 2026-11-06) |  |
+| `onObjectEnterZone` | - | dropped | scripting and layout zones (decided 2026-11-06) |  |
 | `onObjectFlick` | - | dropped | engine physics (flicking) |  |
 | `onObjectHover` | - | dropped | no hover events here |  |
 | `onObjectLeaveContainer` | - | native | on_unstowed(holder, piece) after an unstow, with on_spawn for the piece | StowEventTests |
-| `onObjectLeaveScriptingZone` | - | stub | the table's own zones raise no script events yet; no module handles it |  |
-| `onObjectLeaveZone` | - | stub | the table's own zones raise no script events yet; no module handles it |  |
+| `onObjectLeaveScriptingZone` | - | dropped | scripting and layout zones (decided 2026-11-06) |  |
+| `onObjectLeaveZone` | - | dropped | scripting and layout zones (decided 2026-11-06) |  |
 | `onObjectLoopingEffect` | - | dropped | a bundle's own animations never come over |  |
 | `onObjectPageChange` | - | stub | a page turn is a state change; no module handles it |  |
 | `onObjectPeek` | - | dropped | peeking at a hidden piece |  |
@@ -926,16 +928,16 @@ the plan says translate it), unknown (nobody has decided).
 | `onObjectSearchStart` | - | dropped | a holder's contents are a card, not a search |  |
 | `onObjectTriggerEffect` | - | dropped | a bundle's own animations never come over |  |
 | `onPageChange` | - | stub | a page turn is a state change; no module handles it |  |
-| `onPlayerChangeColor` | - | stub | seats change without an event here; no module handles it |  |
-| `onPlayerConnect` | - | stub | seats change without an event here; no module handles it |  |
-| `onPlayerDisconnect` | - | stub | seats change without an event here; no module handles it |  |
-| `onPlayerPing` | - | dropped | no pings here |  |
+| `onPlayerChangeColor` | - | dropped | the Player API (decided 2026-11-06) |  |
+| `onPlayerConnect` | - | dropped | the Player API (decided 2026-11-06) |  |
+| `onPlayerDisconnect` | - | dropped | the Player API (decided 2026-11-06) |  |
+| `onPlayerPing` | - | dropped | the Player API (decided 2026-11-06) |  |
 | `onPlayerTurnEnd` | - | compat | on_turn when the clock advances | ModuleHelpersTests |
 | `onPlayerTurnStart` | - | compat | on_turn when the clock advances | ModuleHelpersTests |
-| `onPlayersConnect` | - | stub | seats change without an event here; no module handles it |  |
-| `onPlayersDisconnect` | - | stub | seats change without an event here; no module handles it |  |
+| `onPlayersConnect` | - | dropped | the Player API (decided 2026-11-06) |  |
+| `onPlayersDisconnect` | - | dropped | the Player API (decided 2026-11-06) |  |
 | `onScriptingButtonUp` | - | native | EventRenames |  |
-| `onZoneGroupSort` | - | dropped | layout zones |  |
+| `onZoneGroupSort` | - | dropped | scripting and layout zones (decided 2026-11-06) |  |
 | `tryObjectEnterContainer` | - | native | try_stow(holder, piece) before a stow; false keeps the piece out | StowEventTests |
 
 ## engine
