@@ -133,8 +133,10 @@ The tool strip runs down the left. Point at any tool and press **F1** for its se
 - **Tint:** right-click → **Tint** colours every selected piece: a swatch, **+** for any colour, **Reset** for the
   colour it was made with. Where it shows follows the module: a token's picture, a tile's sides; decals keep their colours.
 - **Effects** (smoke, fire, volleys, melee, mist) and props are pieces of **Firme's Effects and Props**; resized, an effect
-  covers more ground. To change one, copy it into a pack of your own in the piece studio (＋ New piece).
-- **Scripts:** a piece's buttons and boxes work with a click. Right-click → **Scripting…** opens its script;
+  covers more ground. Right-click → **Running** stops or starts one. To change one, copy it into a pack of your own in
+  the piece studio (＋ New piece).
+- **Worth:** pieces a module gave a worth (chips, supply) add up at the head of the right-click menu when several are chosen.
+- **Scripts:** a piece's buttons, boxes and panels work with a click. Right-click → **Scripting…** opens its script;
   see the [scripting guide](scripting.md).
 
 ### Dice
@@ -142,7 +144,8 @@ The tool strip runs down the left. Point at any tool and press **F1** for its se
 The **Dice** button shows or hides the dice panel: tap d4 to d20 (twice for two), then **Roll**. The result stays in the
 panel for the next roll. Or drag dice from the standard pack and throw them, shake them in your hand before letting go,
 or press **R** to roll in place. The host decides every result and the Log shows it. Hover a die for its result;
-right-click it for its **Tint**.
+right-click it for its **Tint**. To turn a die by hand, point at it and press the side's number, or right-click →
+**Side**. Right-click several dice to see what they show and their total.
 
 ### Ruler
 
