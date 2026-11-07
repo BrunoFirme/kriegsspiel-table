@@ -26,11 +26,11 @@ public class ModuleHelpersTests
         const string lua = """
             function onLoad()
               local before = self.hasAnyTag()
-              self.setLuaScriptState('{"n":1}')
+              self.script_state = '{"n":1}'
               self.addTag('alpha')
               local any = self.hasAnyTag()
               local all = #getAllTags()
-              self.setName(self.getLuaScriptState() .. '|' .. tostring(before) .. '|' .. tostring(any) .. '|' .. all)
+              self.setName(self.script_state .. '|' .. tostring(before) .. '|' .. tostring(any) .. '|' .. all)
             end
             """;
         using var t = new Table();
