@@ -12,53 +12,53 @@ every row that is not dropped must end audited, used by the corpus or not.
 
 | area | rows used by the corpus | decided | planned or unknown | not dropped, not audited | rows in all |
 |---|---|---|---|---|---|
-| types | 30 | 30 | 0 | 28 | 43 |
-| save | 150 | 150 | 0 | 127 | 302 |
+| types | 30 | 30 | 0 | 0 | 43 |
+| save | 150 | 150 | 0 | 10 | 302 |
 | object | 65 | 65 | 0 | 154 | 262 |
 | global | 14 | 14 | 0 | 38 | 55 |
 | namespaces | 23 | 23 | 0 | 46 | 180 |
 | events | 8 | 8 | 0 | 22 | 52 |
-| engine | 23 | 23 | 0 | 22 | 23 |
+| engine | 23 | 23 | 0 | 20 | 23 |
 
 ## types
 
 | row | used (calls / modules) | status | where | held by | audited |
 |---|---|---|---|---|---|
 | `HandTrigger` | 494 / 55 | dropped | hands are seats here; no hand zones (decided 2026-11-06) |  |  |
-| `Custom_Model` | 4903 / 52 | native | converter |  |  |
-| `Custom_Token` | 25836 / 50 | native | converter |  |  |
-| `Custom_Tile` | 36769 / 49 | native | converter |  |  |
-| `Custom_Assetbundle` | 36541 / 49 | native | BundleBake / BundleEffects (models baked, effects mapped to Firme's Effects) | import-sweep: prairie-grove, suriagehara, zeke |  |
+| `Custom_Model` | 4903 / 52 | native | converter |  | ConverterTests.A_model_a_module_stretches_taller_or_flatter_than_wide_keeps_the_height_the_module_draws; SaveFieldTests.A_model_takes_its_material_from_its_mesh_settings_plastic_when_none_is_saved_and_never_from_the_objects_own_index |
+| `Custom_Token` | 25836 / 50 | native | converter |  | SaveFieldTests.A_token_carries_the_games_outline_of_its_picture_cut_at_its_own_merge_distance; ConverterTests.A_decal_fitted_to_a_token_in_tabletop_simulator_covers_the_token_here_too |
+| `Custom_Tile` | 36769 / 49 | native | converter |  | SaveFieldTests.A_tile_saved_without_a_stretch_stays_square_and_one_without_tile_settings_stretches_as_the_prefab_does_whatever_its_shape; SaveFieldTests.A_tile_takes_only_its_own_thickness_and_ignores_its_height_scale_while_a_token_grows_with_its_height_scale |
+| `Custom_Assetbundle` | 36541 / 49 | native | BundleBake / BundleEffects (models baked, effects mapped to Firme's Effects) | import-sweep: prairie-grove, suriagehara, zeke | ConverterTests.Tabletop_effect_bundles_become_the_closest_of_firmes_effects_at_the_size_they_showed; ConverterTests.An_asset_bundle_Firmes_effects_can_play_stays_an_effect_and_is_not_baked_as_a_model |
 | `Chinese_Checkers_Piece` | 46 / 46 | dropped | a stock piece; in every IKS module it is the Flex Table control |  |  |
-| `Custom_Board` | 22 / 22 | native | converter |  |  |
-| `Notecard` | 28 / 16 | native | converter |  |  |
-| `Custom_PDF` | 15 / 14 | native | a book: every page a state, turned from the bar on the piece and read in the Book window | BookTests |  |
-| `BlockSquare` | 665 / 12 | native | converter |  |  |
-| `BlockRectangle` | 333 / 11 | native | converter |  |  |
-| `3DText` | 109 / 11 | native | converter |  |  |
-| `Die_20` | 77 / 11 | native | the app's d20, showing the face it was saved on | DiceTests |  |
-| `Bag` | 17 / 11 | native | a box, chest or crate of Firme's Effects and Props, picked by its name, then by how much it holds; it keeps a coloured bag's colour and holds its contents stowed | BagBoxTests |  |
+| `Custom_Board` | 22 / 22 | native | converter |  | ConverterTests.A_board_is_as_tall_as_its_base_and_as_wide_as_its_width_setting_says_grown_as_its_table_grows_it |
+| `Notecard` | 28 / 16 | native | converter |  | SaveFieldTests.A_module_notecard_is_as_big_and_as_thick_as_the_games_notecard_at_its_scale |
+| `Custom_PDF` | 15 / 14 | native | a book: every page a state, turned from the bar on the piece and read in the Book window | BookTests | SaveFieldTests.A_pdf_book_lies_four_units_deep_and_as_wide_as_its_page_and_a_page_of_another_shape_reshapes_it |
+| `BlockSquare` | 665 / 12 | native | converter |  | SaveFieldTests.A_block_is_the_games_unit_cube_or_its_double_length_block |
+| `BlockRectangle` | 333 / 11 | native | converter |  | SaveFieldTests.A_block_is_the_games_unit_cube_or_its_double_length_block |
+| `3DText` | 109 / 11 | native | converter |  | SaveFieldTests.Three_d_text_is_drawn_at_the_game_s_three_d_ui_scale_whatever_scale_the_module_saved_and_keeps_its_colour_s_alpha |
+| `Die_20` | 77 / 11 | native | the app's d20, showing the face it was saved on | DiceTests | SaveFieldTests.A_stock_die_is_drawn_as_big_as_the_digital_tabletops_own_die |
+| `Bag` | 17 / 11 | native | a box, chest or crate of Firme's Effects and Props, picked by its name, then by how much it holds; it keeps a coloured bag's colour and holds its contents stowed | BagBoxTests | FidelityTests.Bags_come_over_as_Firme_s_boxes_holding_their_pieces; FidelityTests.A_coloured_bag_tints_its_box_and_a_grey_or_white_one_leaves_the_wood_bare |
 | `Infinite_Bag` | 86 / 8 | dropped | infinite bags (decided 2026-11-06) |  |  |
-| `Custom_Model_Bag` | 48 / 8 | native | the bag's own model, holding its contents stowed | import-sweep: naval, scripted-war-game |  |
-| `Custom_Dice` | 35 / 7 | native | a picture die of every count: the d6 on the standard picture die, the others on dice built to the module template's layout (tools/make-template-dice.py), each side showing the value saved nearest to it | DiceTests |  |
-| `CardCustom` | 1144 / 6 | native | converter |  |  |
-| `Die_12` | 11 / 5 | native | the app's d12, showing the face it was saved on | DiceTests |  |
-| `Die_10` | 9 / 4 | native | the app's d10, showing the face it was saved on | DiceTests |  |
-| `Die_6_Rounded` | 7 / 4 | native | the app's d6, showing the face it was saved on | DiceTests |  |
-| `Die_6` | 27 / 3 | native | the app's d6, showing the face it was saved on | DiceTests |  |
-| `BlockTriangle` | 9 / 3 | native | a triangular prism lying on a side, 1.414 x 1 x 0.707 as in the tabletop's own prefab, tinted like the other blocks | TriangleBlockTests |  |
-| `Tileset_Tree` | 119 / 1 | native | a tree of Firme's Effects and Props at the stock tree's crown size (3.62 across, measured from the tabletop's prefab, never copied) | BagBoxTests |  |
-| `Card` | 82 / 1 | native | converter |  |  |
-| `Checker_white` | 17 / 1 | native | converter |  |  |
-| `Figurine_Custom` | 16 / 1 | native | a picture card standing in a round base, sized as the tabletop's prefab (card 1.96 high at its aspect, base 1.96 across, scaled 0.9146), the back picture behind it, the tint on the base | FigurineTests |  |
-| `Deck` | 15 / 1 | native | converter |  |  |
-| `PlayerPawn` | 7 / 1 | native | a round piece in the pawn's colour, as tall as a pawn | PawnTests |  |
-| `Die_8` | 2 / 1 | native | the app's d8, showing the face it was saved on | DiceTests |  |
+| `Custom_Model_Bag` | 48 / 8 | native | the bag's own model, holding its contents stowed | import-sweep: naval, scripted-war-game | SaveFieldTests.A_model_bag_is_its_model_and_holds_what_the_module_put_in_it |
+| `Custom_Dice` | 35 / 7 | native | a picture die of every count: the d6 on the standard picture die, the others on dice built to the module template's layout (tools/make-template-dice.py), each side showing the value saved nearest to it | DiceTests | ConverterTests.A_picture_die_turns_up_the_side_a_module_turns_up_for_each_value_on_the_standard_picture_die |
+| `CardCustom` | 1144 / 6 | native | converter |  | SaveFieldTests.A_card_takes_its_cells_shape_at_the_game_s_card_height_and_the_outline_its_card_type_names; ConverterTests.A_card_on_a_sheet_is_cut_from_its_own_cell_at_module_card_size_with_its_back |
+| `Die_12` | 11 / 5 | native | the app's d12, showing the face it was saved on | DiceTests | SaveFieldTests.A_stock_die_is_drawn_as_big_as_the_digital_tabletops_own_die |
+| `Die_10` | 9 / 4 | native | the app's d10, showing the face it was saved on | DiceTests | SaveFieldTests.A_stock_die_is_drawn_as_big_as_the_digital_tabletops_own_die |
+| `Die_6_Rounded` | 7 / 4 | native | the app's d6, showing the face it was saved on | DiceTests | SaveFieldTests.A_stock_die_is_drawn_as_big_as_the_digital_tabletops_own_die |
+| `Die_6` | 27 / 3 | native | the app's d6, showing the face it was saved on | DiceTests | SaveFieldTests.A_stock_die_is_drawn_as_big_as_the_digital_tabletops_own_die; ConverterTests.The_digital_tabletop_s_own_dice_become_the_app_s_dice_showing_the_face_they_were_saved_on |
+| `BlockTriangle` | 9 / 3 | native | a triangular prism lying on a side, 1.414 x 1 x 0.707 as in the tabletop's own prefab, tinted like the other blocks | TriangleBlockTests | FidelityTests.A_triangle_block_comes_over_as_a_tinted_prism_alone_or_on_another_block |
+| `Tileset_Tree` | 119 / 1 | native | a tree of Firme's Effects and Props at the stock tree's crown size (3.62 across, measured from the tabletop's prefab, never copied) | BagBoxTests | FidelityTests.The_tabletop_s_own_tree_comes_over_as_Firme_s_tree_at_its_crown_size_and_is_left_out_with_a_note_without_it |
+| `Card` | 82 / 1 | native | converter |  | ConverterTests.A_card_whose_server_answers_with_a_web_page_is_left_out_and_one_that_only_failed_to_answer_keeps_a_placeholder; SaveFieldTests.A_card_takes_its_cells_shape_at_the_game_s_card_height_and_the_outline_its_card_type_names |
+| `Checker_white` | 17 / 1 | native | converter |  | ConverterTests.A_checker_is_a_round_counter_in_its_module_colour |
+| `Figurine_Custom` | 16 / 1 | native | a picture card standing in a round base, sized as the tabletop's prefab (card 1.96 high at its aspect, base 1.96 across, scaled 0.9146), the back picture behind it, the tint on the base | FigurineTests | FidelityTests.A_standing_picture_comes_over_as_a_card_in_a_round_base_at_the_tabletop_s_size_with_its_picture; SaveFieldTests.A_figurine_wears_its_colour_on_its_stand_only_and_its_card_grows_with_its_image_scalar_each_side_as_wide_as_its_own_picture |
+| `Deck` | 15 / 1 | native | converter |  | ConverterTests.A_deck_lies_as_a_pile_with_the_card_a_module_would_deal_on_top |
+| `PlayerPawn` | 7 / 1 | native | a round piece in the pawn's colour, as tall as a pawn | PawnTests | ConverterTests.A_player_pawn_is_a_round_piece_in_its_colour |
+| `Die_8` | 2 / 1 | native | the app's d8, showing the face it was saved on | DiceTests | SaveFieldTests.A_stock_die_is_drawn_as_big_as_the_digital_tabletops_own_die |
 | `Calculator` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |  |
 | `Counter` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |  |
 | `Custom_Assetbundle_Infinite_Bag` | - | dropped | infinite bags (decided 2026-11-06) |  |  |
 | `Custom_Model_Infinite_Bag` | - | dropped | infinite bags (decided 2026-11-06) |  |  |
-| `Die_4` | - | native | the app's d4, showing the face it was saved on | DiceTests |  |
+| `Die_4` | - | native | the app's d4, showing the face it was saved on | DiceTests | SaveFieldTests.A_stock_die_is_drawn_as_big_as_the_digital_tabletops_own_die |
 | `Digital_Clock` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |  |
 | `FogOfWarTrigger` | - | dropped | hidden zones (decided 2026-11-06) |  |  |
 | `Go_Game_Piece_Black` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |  |
@@ -72,88 +72,88 @@ every row that is not dropped must end audited, used by the corpus or not.
 
 | row | used (calls / modules) | status | where | held by | audited |
 |---|---|---|---|---|---|
-| `ObjectState.ColorDiffuse` | 107489 / 55 | native | converter reads it |  |  |
-| `ObjectState.Transform` | 107489 / 55 | native | converter reads it |  |  |
-| `ObjectState.GUID` | 106189 / 55 | native | converter reads it |  |  |
-| `TransformState.posX` | 106189 / 55 | native | converter reads it |  |  |
-| `TransformState.posY` | 106189 / 55 | native | converter reads it |  |  |
-| `TransformState.posZ` | 106189 / 55 | native | converter reads it |  |  |
-| `TransformState.rotY` | 106188 / 55 | native | converter reads it |  |  |
-| `TransformState.scaleX` | 97221 / 55 | native | converter reads it |  |  |
-| `TransformState.scaleZ` | 96198 / 55 | native | converter reads it |  |  |
-| `ObjectState.Name` | 70720 / 55 | native | converter reads it |  |  |
-| `ColourState.g` | 40837 / 55 | native | converter reads it |  |  |
-| `ColourState.b` | 40277 / 55 | native | converter reads it |  |  |
-| `TransformState.scaleY` | 39852 / 55 | native | converter reads it |  |  |
-| `ColourState.r` | 34766 / 55 | native | converter reads it |  |  |
-| `ObjectState.Locked` | 16925 / 55 | native | converter reads it |  |  |
+| `ObjectState.ColorDiffuse` | 107489 / 55 | native | converter reads it |  | SaveFieldTests.An_object_saved_without_a_colour_keeps_the_colour_of_the_digital_tabletops_own_piece; SaveFieldTests.A_figurine_wears_its_colour_on_its_stand_only_and_its_card_grows_with_its_image_scalar_each_side_as_wide_as_its_own_picture; FidelityTests.A_tint_s_alpha_comes_over_so_a_helper_saved_invisible_stays_invisible; ConverterTests.A_checker_is_a_round_counter_in_its_module_colour |
+| `ObjectState.Transform` | 107489 / 55 | native | converter reads it |  | SaveFieldTests.An_object_placed_where_no_number_is_or_at_the_centre_with_no_size_is_left_out_as_the_digital_tabletop_leaves_it; SaveFieldTests.Module_values_written_as_text_numbers_or_flags_read_as_the_digital_tabletop_reads_them |
+| `ObjectState.GUID` | 106189 / 55 | native | converter reads it |  | SaveFieldTests.The_first_object_loaded_keeps_a_guid_two_objects_share_and_the_later_one_gets_a_fresh_one; GuidTakeOutTests.A_piece_taken_out_of_a_bag_under_a_guid_a_piece_on_the_table_holds_gets_a_fresh_one_and_putting_it_back_by_undo_restores_its_own |
+| `TransformState.posX` | 106189 / 55 | native | converter reads it |  | SaveFieldTests.Module_values_written_as_text_numbers_or_flags_read_as_the_digital_tabletop_reads_them; SaveFieldTests.An_object_placed_where_no_number_is_or_at_the_centre_with_no_size_is_left_out_as_the_digital_tabletop_leaves_it |
+| `TransformState.posY` | 106189 / 55 | native | converter reads it |  | ConverterTests.A_piece_beside_a_tray_at_the_tray_s_level_lies_at_that_level_and_one_on_the_table_stays_down; ConverterTests.A_piece_overlapping_a_tray_s_edge_rests_on_the_tray_though_its_centre_is_outside |
+| `TransformState.posZ` | 106189 / 55 | native | converter reads it |  | SaveFieldTests.An_object_placed_where_no_number_is_or_at_the_centre_with_no_size_is_left_out_as_the_digital_tabletop_leaves_it; ConverterTests.A_deck_lies_as_a_pile_with_the_card_a_module_would_deal_on_top |
+| `TransformState.rotY` | 106188 / 55 | native | converter reads it |  | SaveFieldTests.A_piece_turned_end_over_end_faces_the_other_way_and_one_rolled_over_keeps_its_heading; ConverterTests.A_deck_lies_as_a_pile_with_the_card_a_module_would_deal_on_top |
+| `TransformState.scaleX` | 97221 / 55 | native | converter reads it |  | SaveFieldTests.Module_values_written_as_text_numbers_or_flags_read_as_the_digital_tabletop_reads_them; ConverterTests.A_board_is_as_tall_as_its_base_and_as_wide_as_its_width_setting_says_grown_as_its_table_grows_it |
+| `TransformState.scaleZ` | 96198 / 55 | native | converter reads it |  | ConverterTests.A_board_is_as_tall_as_its_base_and_as_wide_as_its_width_setting_says_grown_as_its_table_grows_it; SaveFieldTests.A_pdf_book_lies_four_units_deep_and_as_wide_as_its_page_and_a_page_of_another_shape_reshapes_it |
+| `ObjectState.Name` | 70720 / 55 | native | converter reads it |  | ConverterTests.A_pack_with_object_types_the_converter_cannot_map_exits_with_code_2; SaveFieldTests.Only_a_stack_object_counts_its_saved_number_and_it_comes_in_as_its_own_kind_of_piece |
+| `ColourState.g` | 40837 / 55 | native | converter reads it |  | SaveFieldTests.An_object_saved_without_a_colour_keeps_the_colour_of_the_digital_tabletops_own_piece; ConverterTests.A_checker_is_a_round_counter_in_its_module_colour |
+| `ColourState.b` | 40277 / 55 | native | converter reads it |  | SaveFieldTests.An_object_saved_without_a_colour_keeps_the_colour_of_the_digital_tabletops_own_piece; ConverterTests.A_checker_is_a_round_counter_in_its_module_colour |
+| `TransformState.scaleY` | 39852 / 55 | native | converter reads it |  | SaveFieldTests.A_tile_takes_only_its_own_thickness_and_ignores_its_height_scale_while_a_token_grows_with_its_height_scale; SaveFieldTests.Three_d_text_is_drawn_at_the_game_s_three_d_ui_scale_whatever_scale_the_module_saved_and_keeps_its_colour_s_alpha |
+| `ColourState.r` | 34766 / 55 | native | converter reads it |  | SaveFieldTests.An_object_saved_without_a_colour_keeps_the_colour_of_the_digital_tabletops_own_piece; ConverterTests.A_checker_is_a_round_counter_in_its_module_colour |
+| `ObjectState.Locked` | 16925 / 55 | native | converter reads it |  | SaveFieldTests.Module_values_written_as_text_numbers_or_flags_read_as_the_digital_tabletop_reads_them; ConverterTests.A_deck_lies_as_a_pile_with_the_card_a_module_would_deal_on_top |
 | `ObjectState.Grid` | 4453 / 55 | dropped | snap to grid (grid, decided 2026-11-06) |  |  |
 | `ObjectState.FogColor` | 426 / 55 | dropped | hidden zones (decided 2026-11-06) |  |  |
 | `SaveState.ComponentTags` | 55 / 55 | dropped | tag labels of the tabletop's UI |  |  |
 | `SaveState.Grid` | 55 / 55 | dropped | grid (decided 2026-11-06) |  |  |
 | `SaveState.Hands` | 55 / 55 | dropped | hands are seats here (decided 2026-11-06) |  |  |
 | `SaveState.Lighting` | 55 / 55 | dropped | lighting (decided 2026-11-06) |  |  |
-| `SaveState.TabStates` | 55 / 55 | native | converter reads it |  |  |
+| `SaveState.TabStates` | 55 / 55 | native | converter reads it |  | ConverterTests.Notecards_the_notes_panel_and_notebook_tabs_become_note_pieces_carrying_their_text; SaveFieldTests.The_old_rules_text_comes_in_only_when_the_module_keeps_no_notebook_tabs |
 | `SaveState.Turns` | 55 / 55 | dropped | turns (decided 2026-11-06) |  |  |
-| `ObjectState.Nickname` | 50030 / 54 | native | converter reads it |  |  |
+| `ObjectState.Nickname` | 50030 / 54 | native | converter reads it |  | SaveFieldTests.A_piece_keeps_its_name_description_and_gm_notes_as_saved_its_script_state_without_a_script_and_one_tag_per_spelling_the_game_counts_as_one; SaveFieldTests.Module_values_written_as_text_numbers_or_flags_read_as_the_digital_tabletop_reads_them |
 | `SaveState.Date` | 54 / 54 | dropped | save metadata |  |  |
 | `SaveState.EpochTime` | 54 / 54 | dropped | save metadata |  |  |
-| `SaveState.SaveName` | 54 / 54 | native | converter reads it |  |  |
-| `TransformState.rotX` | 105737 / 53 | native | converter reads it |  |  |
-| `TransformState.rotZ` | 105326 / 53 | native | converter reads it |  |  |
-| `ObjectState.LuaScriptState` | 15203 / 52 | native | converter reads it |  |  |
-| `ObjectState.CustomMesh` | 4951 / 52 | native | converter reads it |  |  |
-| `CustomMeshState.MeshURL` | 3975 / 52 | native | converter reads it |  |  |
+| `SaveState.SaveName` | 54 / 54 | native | converter reads it |  | ConverterTests.A_module_saved_under_a_name_another_module_already_took_keeps_a_pack_and_a_scenario_of_its_own |
+| `TransformState.rotX` | 105737 / 53 | native | converter reads it |  | SaveFieldTests.A_piece_turned_end_over_end_faces_the_other_way_and_one_rolled_over_keeps_its_heading; ConverterTests.A_die_s_face_is_read_from_the_rotation_it_was_saved_at |
+| `TransformState.rotZ` | 105326 / 53 | native | converter reads it |  | SaveFieldTests.A_piece_turned_end_over_end_faces_the_other_way_and_one_rolled_over_keeps_its_heading; ConverterTests.A_deck_lies_as_a_pile_with_the_card_a_module_would_deal_on_top |
+| `ObjectState.LuaScriptState` | 15203 / 52 | native | converter reads it |  | SaveFieldTests.A_piece_keeps_its_name_description_and_gm_notes_as_saved_its_script_state_without_a_script_and_one_tag_per_spelling_the_game_counts_as_one |
+| `ObjectState.CustomMesh` | 4951 / 52 | native | converter reads it |  | FidelityTests.A_model_keeps_the_material_and_shine_the_module_gave_it; ConverterTests.A_model_a_module_stretches_taller_or_flatter_than_wide_keeps_the_height_the_module_draws |
+| `CustomMeshState.MeshURL` | 3975 / 52 | native | converter reads it |  | ConverterTests.A_model_a_module_stretches_taller_or_flatter_than_wide_keeps_the_height_the_module_draws |
 | `CustomMeshState.TypeIndex` | 2825 / 52 | partial | Dice and Coin models roll on their rotation values (the kind's faces); Bag by the object's name; Board only exempts from zones, fog and alt zoom, none here; Figurine held upright, and pieces here never tip; Chip stacking unused in the corpus | ConverterTests.A_model_made_a_die_rolls_on_its_saved_values_and_shows_the_one_facing_up_and_a_plain_model_does_not | ConverterTests.A_model_made_a_die_rolls_on_its_saved_values_and_shows_the_one_facing_up_and_a_plain_model_does_not |
-| `ObjectState.CustomImage` | 62678 / 51 | native | converter reads it |  |  |
-| `CustomImageState.ImageURL` | 56944 / 51 | native | converter reads it |  |  |
-| `ObjectState.LuaScript` | 11525 / 51 | native | converter reads it |  |  |
-| `CustomImageState.CustomToken` | 25836 / 50 | native | converter reads it |  |  |
-| `CustomMeshState.DiffuseURL` | 2836 / 50 | native | converter reads it |  |  |
-| `CustomImageState.CustomTile` | 36769 / 49 | native | converter reads it |  |  |
-| `ObjectState.CustomAssetbundle` | 36541 / 49 | native | converter reads it |  |  |
-| `CustomAssetbundleState.AssetbundleURL` | 28796 / 49 | native | converter reads it |  |  |
-| `CustomTokenState.MergeDistancePixels` | 14063 / 49 | partial | the token's outline traces its picture's alpha; the game's merging of outline points closer than this is not copied | converter |  |
-| `CustomAssetbundleState.AssetbundleSecondaryURL` | 13038 / 49 | native | bundle_models.py loads it beside the main bundle: in the roster it holds only the materials and textures the main bundle's figures are painted with |  |  |
-| `CustomAssetbundleState.MaterialIndex` | 12341 / 49 | native | converter reads it |  |  |
-| `CustomMeshState.CustomShader` | 1101 / 49 | native | a model's shine: strength, sharpness and rim | WorthImportTests |  |
+| `ObjectState.CustomImage` | 62678 / 51 | native | converter reads it |  | SaveFieldTests.A_tile_saved_without_a_stretch_stays_square_and_one_without_tile_settings_stretches_as_the_prefab_does_whatever_its_shape |
+| `CustomImageState.ImageURL` | 56944 / 51 | native | converter reads it |  | SaveFieldTests.A_tile_saved_without_a_stretch_stays_square_and_one_without_tile_settings_stretches_as_the_prefab_does_whatever_its_shape; ConverterTests.A_piece_whose_picture_is_gone_for_good_is_left_out_and_reported_and_one_that_only_failed_to_answer_keeps_a_placeholder |
+| `ObjectState.LuaScript` | 11525 / 51 | native | converter reads it |  | ScriptAndNameTests.No_script_is_nothing_and_one_that_holds_no_data_is_reported_as_dropped |
+| `CustomImageState.CustomToken` | 25836 / 50 | native | converter reads it |  | SaveFieldTests.A_token_carries_the_games_outline_of_its_picture_cut_at_its_own_merge_distance |
+| `CustomMeshState.DiffuseURL` | 2836 / 50 | native | converter reads it |  | FidelityTests.A_model_keeps_the_material_and_shine_the_module_gave_it |
+| `CustomImageState.CustomTile` | 36769 / 49 | native | converter reads it |  | SaveFieldTests.A_tile_saved_without_a_stretch_stays_square_and_one_without_tile_settings_stretches_as_the_prefab_does_whatever_its_shape |
+| `ObjectState.CustomAssetbundle` | 36541 / 49 | native | converter reads it |  | ConverterTests.Tabletop_effect_bundles_become_the_closest_of_firmes_effects_at_the_size_they_showed; ConverterTests.Figures_baked_out_of_asset_bundles_are_found_by_the_address_the_module_names |
+| `CustomAssetbundleState.AssetbundleURL` | 28796 / 49 | native | converter reads it |  | ConverterTests.Figures_baked_out_of_asset_bundles_are_found_by_the_address_the_module_names |
+| `CustomTokenState.MergeDistancePixels` | 14063 / 49 | partial | the token's outline traces its picture's alpha; the game's merging of outline points closer than this is not copied | converter | SaveFieldTests.A_tokens_outline_runs_through_the_centres_of_its_fully_opaque_pixels_as_the_game_cuts_it; SaveFieldTests.A_tokens_outline_merges_points_closer_than_its_merge_distance_and_keeps_each_island; SaveFieldTests.A_token_carries_the_games_outline_of_its_picture_cut_at_its_own_merge_distance |
+| `CustomAssetbundleState.AssetbundleSecondaryURL` | 13038 / 49 | native | bundle_models.py loads it beside the main bundle: in the roster it holds only the materials and textures the main bundle's figures are painted with |  | ConverterTests.Figures_baked_out_of_asset_bundles_are_found_by_the_address_the_module_names |
+| `CustomAssetbundleState.MaterialIndex` | 12341 / 49 | native | converter reads it |  | ConverterTests.Figures_baked_out_of_asset_bundles_are_found_by_the_address_the_module_names |
+| `CustomMeshState.CustomShader` | 1101 / 49 | native | a model's shine: strength, sharpness and rim | WorthImportTests | FidelityTests.A_model_keeps_the_material_and_shine_the_module_gave_it |
 | `CustomAssetbundleState.TypeIndex` | 626 / 49 | partial | as CustomMeshState.TypeIndex; the corpus has Generic, Figurine and Board bundles only | converter | ConverterTests.A_model_made_a_die_rolls_on_its_saved_values_and_shows_the_one_facing_up_and_a_plain_model_does_not |
-| `ObjectState.States` | 11316 / 48 | native | converter reads it |  |  |
+| `ObjectState.States` | 11316 / 48 | native | converter reads it |  | ConverterTests.Every_look_of_a_piece_with_states_takes_the_decals_of_its_own_state_and_the_piece_itself_takes_none; ConverterTests.Each_state_of_a_token_shows_its_own_glued_children_even_a_child_with_states_of_its_own |
 | `ObjectState.Tooltip` | 1361 / 48 | dropped | hiding a piece's name on hover (hidden information, decided 2026-11-06) |  |  |
-| `ObjectState.MaterialIndex` | 186 / 48 | native | the finish of a model (plastic, wood, metal, cardboard, glass): its sheen and its sound | WorthImportTests |  |
+| `ObjectState.MaterialIndex` | 186 / 48 | native | the finish of a model (plastic, wood, metal, cardboard, glass): its sheen and its sound | WorthImportTests | SaveFieldTests.A_model_takes_its_material_from_its_mesh_settings_plastic_when_none_is_saved_and_never_from_the_objects_own_index |
 | `ObjectState.GridProjection` | 79 / 47 | dropped | grid (decided 2026-11-06) |  |  |
-| `ObjectState.Description` | 17057 / 45 | native | converter reads it |  |  |
+| `ObjectState.Description` | 17057 / 45 | native | converter reads it |  | SaveFieldTests.A_piece_keeps_its_name_description_and_gm_notes_as_saved_its_script_state_without_a_script_and_one_tag_per_spelling_the_game_counts_as_one |
 | `ObjectState.Snap` | 3149 / 40 | dropped | snap points (grid, decided 2026-11-06) |  |  |
 | `ObjectState.ChildObjects` | 25956 / 39 | native | ModuleSave.cs Children: attachments and glued parts | import-sweep: triangles, richmond | ConverterTests.Each_state_of_a_token_shows_its_own_glued_children_even_a_child_with_states_of_its_own |
 | `GridState.xSize` | 39 / 39 | dropped | grid (decided 2026-11-06) |  |  |
 | `GridState.ySize` | 39 / 39 | dropped | grid (decided 2026-11-06) |  |  |
-| `CustomTileState.Thickness` | 13329 / 38 | native | converter reads it |  |  |
-| `CustomTokenState.Thickness` | 1686 / 37 | native | converter reads it |  |  |
+| `CustomTileState.Thickness` | 13329 / 38 | native | converter reads it |  | SaveFieldTests.A_tile_takes_only_its_own_thickness_and_ignores_its_height_scale_while_a_token_grows_with_its_height_scale |
+| `CustomTokenState.Thickness` | 1686 / 37 | native | converter reads it |  | SaveFieldTests.A_tile_takes_only_its_own_thickness_and_ignores_its_height_scale_while_a_token_grows_with_its_height_scale |
 | `SaveState.GameMode` | 35 / 35 | dropped | save metadata |  |  |
-| `CustomImageState.ImageSecondaryURL` | 3542 / 33 | native | converter reads it |  |  |
+| `CustomImageState.ImageSecondaryURL` | 3542 / 33 | native | converter reads it |  | SaveFieldTests.A_figurine_wears_its_colour_on_its_stand_only_and_its_card_grows_with_its_image_scalar_each_side_as_wide_as_its_own_picture; ConverterTests.Importing_brings_the_cards_onto_what_they_lie_on_the_sky_as_backdrop_and_each_memory_bag_as_its_own_scenario |
 | `SaveState.PlayerCounts` | 32 / 32 | dropped | save metadata |  |  |
 | `SaveState.PlayingTime` | 32 / 32 | dropped | save metadata |  |  |
 | `SaveState.GameComplexity` | 30 / 30 | dropped | save metadata |  |  |
 | `SaveState.PlayArea` | 29 / 29 | dropped | the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06) |  |  |
-| `ObjectState.RotationValues` | 184 / 27 | native | converter reads it |  |  |
+| `ObjectState.RotationValues` | 184 / 27 | native | converter reads it |  | ConverterTests.A_die_s_face_is_read_from_the_rotation_it_was_saved_at; ConverterTests.A_model_made_a_die_rolls_on_its_saved_values_and_shows_the_one_facing_up_and_a_plain_model_does_not |
 | `TagsState.labels` | 27 / 27 | dropped | tag labels of the tabletop's UI |  |  |
-| `ObjectState.Sticky` | 1334 / 26 | native | the piece option Carries what rests on it; self.sticky and set_sticky in scripts | StickyTests |  |
+| `ObjectState.Sticky` | 1334 / 26 | native | the piece option Carries what rests on it; self.sticky and set_sticky in scripts | StickyTests | FidelityTests.A_piece_the_module_made_not_sticky_comes_over_not_sticky; SaveFieldTests.Module_values_written_as_text_numbers_or_flags_read_as_the_digital_tabletop_reads_them |
 | `SaveState.VersionNumber` | 26 / 26 | dropped | save metadata |  |  |
 | `SaveState.GameType` | 25 / 25 | dropped | save metadata |  |  |
-| `SaveState.LuaScript` | 25 / 25 | native | converter reads it |  |  |
-| `ObjectState.AttachedVectorLines` | 114 / 22 | native | the piece's own lines, in its frame and local unit | DrawingTests |  |
-| `CustomImageState.WidthScale` | 22 / 22 | native | converter reads it |  |  |
-| `CustomMeshState.MaterialIndex` | 1480 / 21 | native | converter reads it |  |  |
-| `CustomAssetbundleState.LoopingEffectIndex` | 71 / 21 | native | every saved effect comes over running; Running stops and starts it | import-sweep |  |
-| `CustomTileState.Type` | 1743 / 20 | native | converter reads it |  |  |
-| `ObjectState.ContainedObjects` | 156 / 20 | native | ScenarioBuilder.StowContents: a bag's contents become its stowed pieces, decks as their cards | TablePiecesTests |  |
+| `SaveState.LuaScript` | 25 / 25 | native | converter reads it |  | SaveFieldTests.The_global_script_state_comes_in_only_with_a_global_script_as_the_game_reads_it |
+| `ObjectState.AttachedVectorLines` | 114 / 22 | native | the piece's own lines, in its frame and local unit | DrawingTests | ConverterTests.Lines_drawn_on_pieces_and_on_the_table_come_over_and_the_rules_are_the_briefing; SaveFieldTests.A_line_turns_by_its_saved_rotation_ends_round_unless_saved_square_and_a_line_of_no_thickness_draws_nothing |
+| `CustomImageState.WidthScale` | 22 / 22 | native | converter reads it |  | ConverterTests.A_board_is_as_tall_as_its_base_and_as_wide_as_its_width_setting_says_grown_as_its_table_grows_it |
+| `CustomMeshState.MaterialIndex` | 1480 / 21 | native | converter reads it |  | SaveFieldTests.A_model_takes_its_material_from_its_mesh_settings_plastic_when_none_is_saved_and_never_from_the_objects_own_index; FidelityTests.A_model_keeps_the_material_and_shine_the_module_gave_it |
+| `CustomAssetbundleState.LoopingEffectIndex` | 71 / 21 | native | every saved effect comes over running; Running stops and starts it | import-sweep | ConverterTests.An_asset_bundle_Firmes_effects_can_play_stays_an_effect_and_is_not_baked_as_a_model |
+| `CustomTileState.Type` | 1743 / 20 | native | converter reads it |  | SaveFieldTests.A_tile_saved_without_a_stretch_stays_square_and_one_without_tile_settings_stretches_as_the_prefab_does_whatever_its_shape; SaveFieldTests.Module_values_written_as_text_numbers_or_flags_read_as_the_digital_tabletop_reads_them |
+| `ObjectState.ContainedObjects` | 156 / 20 | native | ScenarioBuilder.StowContents: a bag's contents become its stowed pieces, decks as their cards | TablePiecesTests | FidelityTests.Bags_come_over_as_Firme_s_boxes_holding_their_pieces; SaveFieldTests.A_model_bag_is_its_model_and_holds_what_the_module_put_in_it |
 | `CustomMeshState.ColliderURL` | 2969 / 19 | dropped | pieces here never collide (decided 2026-11-07) |  |  |
 | `GridState.Opacity` | 18 / 18 | dropped | grid (decided 2026-11-06) |  |  |
-| `ObjectState.Bag` | 64 / 17 | native | the holder's take order: last in first out, first in first out or random; a take with no piece named follows it, as does Take the top one out or Draw one at random | BagOrderTests |  |
-| `ObjectState.Tags` | 17646 / 16 | native | converter reads it |  |  |
+| `ObjectState.Bag` | 64 / 17 | native | the holder's take order: last in first out, first in first out or random; a take with no piece named follows it, as does Take the top one out or Draw one at random | BagOrderTests | FidelityTests.A_bags_order_comes_over_as_its_take_order_last_in_first_out_when_the_module_names_none |
+| `ObjectState.Tags` | 17646 / 16 | native | converter reads it |  | SaveFieldTests.A_piece_keeps_its_name_description_and_gm_notes_as_saved_its_script_state_without_a_script_and_one_tag_per_spelling_the_game_counts_as_one |
 | `SaveState.Sky` | 16 / 16 | native | a stock sky becomes the nearest backdrop (ScenarioBuilder.StockSkies) | ConverterTests.A_module_that_names_only_a_stock_sky_gets_the_nearest_backdrop | ConverterTests.A_module_that_names_only_a_stock_sky_gets_the_nearest_backdrop |
-| `SaveState.Note` | 15 / 15 | native | converter reads it |  |  |
-| `ObjectState.CustomPDF` | 15 / 14 | native | a book with every page | BookTests |  |
+| `SaveState.Note` | 15 / 15 | native | converter reads it |  | ConverterTests.Notecards_the_notes_panel_and_notebook_tabs_become_note_pieces_carrying_their_text |
+| `ObjectState.CustomPDF` | 15 / 14 | native | a book with every page | BookTests | SaveFieldTests.A_pdf_book_lies_four_units_deep_and_as_wide_as_its_page_and_a_page_of_another_shape_reshapes_it |
 | `GridState.PosOffset` | 14 / 14 | dropped | grid (decided 2026-11-06) |  |  |
 | `ObjectState.PhysicsMaterial` | 368 / 13 | dropped | engine physics |  |  |
 | `ObjectState.Rigidbody` | 368 / 13 | dropped | engine physics |  |  |
@@ -161,68 +161,68 @@ every row that is not dropped must end audited, used by the corpus or not.
 | `RigidbodyState.AngularDrag` | 198 / 13 | dropped | engine physics |  |  |
 | `RigidbodyState.Drag` | 198 / 13 | dropped | engine physics |  |  |
 | `LightingState.LightIntensity` | 13 / 13 | dropped | lighting (decided 2026-11-06) |  |  |
-| `ObjectState.Memo` | 5023 / 12 | native | converter reads it |  |  |
+| `ObjectState.Memo` | 5023 / 12 | native | converter reads it |  | FidelityTests.A_module_s_own_panels_and_a_piece_s_come_over_with_the_pictures_they_name |
 | `CustomMeshState.Convex` | 710 / 12 | dropped | pieces here never collide (decided 2026-11-07) |  |  |
 | `LightingState.AmbientIntensity` | 12 / 12 | dropped | lighting (decided 2026-11-06) |  |  |
-| `ObjectState.Text` | 109 / 11 | native | converter reads it |  |  |
-| `TextState.Text` | 105 / 11 | native | converter reads it |  |  |
+| `ObjectState.Text` | 109 / 11 | native | converter reads it |  | SaveFieldTests.Three_d_text_is_drawn_at_the_game_s_three_d_ui_scale_whatever_scale_the_module_saved_and_keeps_its_colour_s_alpha; ConverterTests.The_same_text_bakes_to_the_same_picture_every_time |
+| `TextState.Text` | 105 / 11 | native | converter reads it |  | SaveFieldTests.Three_d_text_is_drawn_at_the_game_s_three_d_ui_scale_whatever_scale_the_module_saved_and_keeps_its_colour_s_alpha |
 | `GridState.Lines` | 11 / 11 | dropped | grid (decided 2026-11-06) |  |  |
-| `CustomTileState.Stretch` | 569 / 10 | native | converter reads it |  |  |
+| `CustomTileState.Stretch` | 569 / 10 | native | converter reads it |  | SaveFieldTests.A_tile_saved_without_a_stretch_stays_square_and_one_without_tile_settings_stretches_as_the_prefab_does_whatever_its_shape |
 | `SaveState.Gravity` | 9 / 9 | dropped | engine physics |  |  |
 | `SaveState.MusicPlayer` | 9 / 9 | dropped | music and sound players (decided 2026-11-06) |  |  |
-| `SaveState.VectorLines` | 9 / 9 | native | strokes on the umpire's drawing board | DrawingTests |  |
-| `ObjectState.DragSelectable` | 335 / 8 | native | the piece option Taken by a selection box; self.box_selected and set_box_selected | ModuleOptionsTests |  |
-| `CustomPDFState.PDFUrl` | 9 / 8 | native | the book's pages | BookTests |  |
+| `SaveState.VectorLines` | 9 / 9 | native | strokes on the umpire's drawing board | DrawingTests | ConverterTests.Lines_drawn_on_pieces_and_on_the_table_come_over_and_the_rules_are_the_briefing |
+| `ObjectState.DragSelectable` | 335 / 8 | native | the piece option Taken by a selection box; self.box_selected and set_box_selected | ModuleOptionsTests | FidelityTests.A_piece_a_drag_box_must_skip_or_that_measures_its_move_comes_over_so |
+| `CustomPDFState.PDFUrl` | 9 / 8 | native | the book's pages | BookTests | SaveFieldTests.A_pdf_book_lies_four_units_deep_and_as_wide_as_its_page_and_a_page_of_another_shape_reshapes_it |
 | `MusicPlayerState.AudioLibrary` | 8 / 8 | dropped | music and sound players (decided 2026-11-06) |  |  |
 | `ObjectState.Autoraise` | 354 / 7 | dropped | with the engine's physics (decided 2026-11-06): a held piece rides above what it passes over and pushes nothing |  |  |
-| `CustomImageState.CustomDice` | 35 / 7 | native | converter reads it |  |  |
+| `CustomImageState.CustomDice` | 35 / 7 | native | converter reads it |  | ConverterTests.A_picture_die_turns_up_the_side_a_module_turns_up_for_each_value_on_the_standard_picture_die |
 | `LightingState.LightColor` | 7 / 7 | dropped | lighting (decided 2026-11-06) |  |  |
-| `SaveState.Table` | 7 / 7 | native | converter reads it |  |  |
+| `SaveState.Table` | 7 / 7 | native | converter reads it |  | ConverterTests.A_board_is_as_tall_as_its_base_and_as_wide_as_its_width_setting_says_grown_as_its_table_grows_it |
 | `SaveState.Tags` | 7 / 7 | dropped | save metadata |  |  |
-| `ObjectState.CustomDeck` | 1241 / 6 | native | converter reads it |  |  |
+| `ObjectState.CustomDeck` | 1241 / 6 | native | converter reads it |  | SaveFieldTests.A_card_takes_its_cells_shape_at_the_game_s_card_height_and_the_outline_its_card_type_names; ConverterTests.A_card_on_a_sheet_is_cut_from_its_own_cell_at_module_card_size_with_its_back |
 | `ObjectState.Hands` | 1226 / 6 | dropped | hands are seats here (decided 2026-11-06) |  |  |
-| `ObjectState.CardID` | 1196 / 6 | native | ModuleSave.cs CardId | import-sweep: naval |  |
+| `ObjectState.CardID` | 1196 / 6 | native | ModuleSave.cs CardId | import-sweep: naval | SaveFieldTests.A_card_sheet_saved_without_its_size_is_ten_by_seven_a_card_past_the_sheet_is_its_last_cell_and_a_back_marked_unique_is_cut_per_card; ConverterTests.A_card_on_a_sheet_is_cut_from_its_own_cell_at_module_card_size_with_its_back |
 | `ObjectState.HideWhenFaceDown` | 1158 / 6 | dropped | hidden information (decided 2026-11-06) |  |  |
-| `CustomShaderState.SpecularIntensity` | 357 / 6 | native | the shine's strength | WorthImportTests |  |
-| `CustomShaderState.SpecularColor` | 310 / 6 | native | kept with the shine | WorthImportTests |  |
+| `CustomShaderState.SpecularIntensity` | 357 / 6 | native | the shine's strength | WorthImportTests | FidelityTests.A_model_keeps_the_material_and_shine_the_module_gave_it |
+| `CustomShaderState.SpecularColor` | 310 / 6 | native | kept with the shine | WorthImportTests | FidelityTests.A_model_keeps_the_material_and_shine_the_module_gave_it |
 | `PhysicsMaterialState.StaticFriction` | 184 / 6 | dropped | engine physics |  |  |
 | `RigidbodyState.Mass` | 45 / 6 | dropped | engine physics |  |  |
-| `TextState.fontSize` | 26 / 6 | native | converter reads it |  |  |
+| `TextState.fontSize` | 26 / 6 | native | converter reads it |  | SaveFieldTests.Three_d_text_is_drawn_at_the_game_s_three_d_ui_scale_whatever_scale_the_module_saved_and_keeps_its_colour_s_alpha |
 | `CustomMeshState.CastShadows` | 341 / 5 | native | the kind's Shadowless | ConverterTests.A_model_keeps_its_normal_map_and_whether_it_casts_a_shadow | ConverterTests.A_model_keeps_its_normal_map_and_whether_it_casts_a_shadow |
 | `ObjectState.CustomUIAssets` | 35 / 5 | native | a piece's own named panel pictures, over the save's | PanelImportTests |  |
-| `CustomDiceState.Type` | 22 / 5 | native | converter reads it |  |  |
+| `CustomDiceState.Type` | 22 / 5 | native | converter reads it |  | ConverterTests.A_picture_die_turns_up_the_side_a_module_turns_up_for_each_value_on_the_standard_picture_die |
 | `RigidbodyState.UseGravity` | 14 / 5 | dropped | engine physics |  |  |
 | `LightingState.AmbientType` | 5 / 5 | dropped | lighting (decided 2026-11-06) |  |  |
 | `MusicPlayerState.CurrentAudioTitle` | 5 / 5 | dropped | music and sound players (decided 2026-11-06) |  |  |
 | `MusicPlayerState.CurrentAudioURL` | 5 / 5 | dropped | music and sound players (decided 2026-11-06) |  |  |
 | `SaveState.CameraStates` | 5 / 5 | dropped | the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06) |  |  |
-| `ObjectState.AttachedDecals` | 2590 / 4 | native | converter reads it |  |  |
+| `ObjectState.AttachedDecals` | 2590 / 4 | native | converter reads it |  | ConverterTests.An_object_s_decals_come_across_on_its_faces_in_piece_units_and_a_missing_picture_is_left_out; ConverterTests.A_decal_fitted_to_a_token_in_tabletop_simulator_covers_the_token_here_too |
 | `ObjectState.AttachedSnapPoints` | 87 / 4 | dropped | snap points (grid, decided 2026-11-06) |  |  |
 | `MusicPlayerState.PlaylistEntry` | 4 / 4 | dropped | music and sound players (decided 2026-11-06) |  |  |
-| `SaveState.LuaScriptState` | 4 / 4 | native | converter reads it |  |  |
-| `SaveState.SkyURL` | 4 / 4 | native | converter reads it |  |  |
+| `SaveState.LuaScriptState` | 4 / 4 | native | converter reads it |  | SaveFieldTests.The_global_script_state_comes_in_only_with_a_global_script_as_the_game_reads_it |
+| `SaveState.SkyURL` | 4 / 4 | native | converter reads it |  | ConverterTests.Importing_brings_the_cards_onto_what_they_lie_on_the_sky_as_backdrop_and_each_memory_bag_as_its_own_scenario |
 | `CustomMeshState.NormalURL` | 232 / 3 | native | the kind's Normal (normal map on the model) | ConverterTests.A_model_keeps_its_normal_map_and_whether_it_casts_a_shadow | ConverterTests.A_model_keeps_its_normal_map_and_whether_it_casts_a_shadow |
-| `CustomShaderState.FresnelStrength` | 216 / 3 | native | the shine's rim | WorthImportTests |  |
-| `CustomShaderState.SpecularSharpness` | 153 / 3 | native | the shine's sharpness | WorthImportTests |  |
-| `ColourState.a` | 22 / 3 | native | a tint's alpha: under 1 the piece is drawn see-through, its face, sides and model, as the tabletop switches to its transparent shader; the movable text tool's helper saved at 0 stays invisible under its words | TableTopTests |  |
-| `ObjectState.MeasureMovement` | 15 / 3 | native | the piece option Shows how far it is moved: a line and the distance from where it was picked up while it is held; self.measures_moves and set_measures_moves | ModuleOptionsTests |  |
+| `CustomShaderState.FresnelStrength` | 216 / 3 | native | the shine's rim | WorthImportTests | FidelityTests.A_model_keeps_the_material_and_shine_the_module_gave_it |
+| `CustomShaderState.SpecularSharpness` | 153 / 3 | native | the shine's sharpness | WorthImportTests | FidelityTests.A_model_keeps_the_material_and_shine_the_module_gave_it |
+| `ColourState.a` | 22 / 3 | native | a tint's alpha: under 1 the piece is drawn see-through, its face, sides and model, as the tabletop switches to its transparent shader; the movable text tool's helper saved at 0 stays invisible under its words | TableTopTests | FidelityTests.A_tint_s_alpha_comes_over_so_a_helper_saved_invisible_stays_invisible; SaveFieldTests.Three_d_text_is_drawn_at_the_game_s_three_d_ui_scale_whatever_scale_the_module_saved_and_keeps_its_colour_s_alpha |
+| `ObjectState.MeasureMovement` | 15 / 3 | native | the piece option Shows how far it is moved: a line and the distance from where it was picked up while it is held; self.measures_moves and set_measures_moves | ModuleOptionsTests | FidelityTests.A_piece_a_drag_box_must_skip_or_that_measures_its_move_comes_over_so |
 | `GridState.Type` | 3 / 3 | dropped | grid (decided 2026-11-06) |  |  |
 | `MusicPlayerState.RepeatSong` | 3 / 3 | dropped | music and sound players (decided 2026-11-06) |  |  |
 | `SaveState.CustomUIAssets` | 3 / 3 | native | the pictures panels name, kept in the extras pack and named in the scenario (uiPictures) | PanelImportTests |  |
-| `ObjectState.GMNotes` | 117 / 2 | native | converter reads it |  |  |
-| `CustomTileState.Stackable` | 29 / 2 | native | a saved pile comes in as stacked copies; any piece piles on another here | converter |  |
-| `CustomPDFState.PDFPage` | 2 / 2 | native | the page it lies open at | BookTests |  |
+| `ObjectState.GMNotes` | 117 / 2 | native | converter reads it |  | SaveFieldTests.A_piece_keeps_its_name_description_and_gm_notes_as_saved_its_script_state_without_a_script_and_one_tag_per_spelling_the_game_counts_as_one; GmNotesTests.A_pieces_saved_gm_notes_are_what_a_module_script_reads_until_it_sets_its_own |
+| `CustomTileState.Stackable` | 29 / 2 | native | a saved pile comes in as stacked copies; any piece piles on another here | converter | SaveFieldTests.Only_a_stack_object_counts_its_saved_number_and_it_comes_in_as_its_own_kind_of_piece |
+| `CustomPDFState.PDFPage` | 2 / 2 | native | the page it lies open at | BookTests | FidelityTests.A_book_lies_open_at_the_page_the_module_left_it_at_and_never_past_its_last; SaveFieldTests.A_pdf_book_keeps_its_page_offset_and_opens_with_its_password |
 | `GridState.BothSnapping` | 2 / 2 | dropped | grid (decided 2026-11-06) |  |  |
 | `GridState.Offset` | 2 / 2 | dropped | grid (decided 2026-11-06) |  |  |
-| `TextState.colorstate` | 19 / 1 | native | converter reads it |  |  |
-| `ObjectState.DeckIDs` | 15 / 1 | native | ModuleSave.cs: a deck's cards by id | import-sweep: naval |  |
+| `TextState.colorstate` | 19 / 1 | native | converter reads it |  | SaveFieldTests.Three_d_text_is_drawn_at_the_game_s_three_d_ui_scale_whatever_scale_the_module_saved_and_keeps_its_colour_s_alpha |
+| `ObjectState.DeckIDs` | 15 / 1 | native | ModuleSave.cs: a deck's cards by id | import-sweep: naval | ConverterTests.A_deck_lies_as_a_pile_with_the_card_a_module_would_deal_on_top |
 | `GridState.Color` | 1 / 1 | dropped | grid (decided 2026-11-06) |  |  |
 | `LightingState.LutContribution` | 1 / 1 | dropped | lighting (decided 2026-11-06) |  |  |
 | `LightingState.ReflectionIntensity` | 1 / 1 | dropped | lighting (decided 2026-11-06) |  |  |
 | `ObjectState.IgnoreFoW` | 1 / 1 | dropped | hidden zones (decided 2026-11-06) |  |  |
-| `SaveState.DecalPallet` | 1 / 1 | native | the scenario's decals, offered in the Decals panel: name, picture and size | DecalPaletteTests, StampTests |  |
+| `SaveState.DecalPallet` | 1 / 1 | native | the scenario's decals, offered in the Decals panel: name, picture and size | DecalPaletteTests, StampTests | FidelityTests.A_module_s_decal_palette_and_its_decals_on_the_table_come_over_with_their_pictures_and_sizes; SaveFieldTests.The_decal_palette_holds_one_entry_for_each_name_picture_and_size_as_the_game_adds_them |
 | `SaveState.TableURL` | 1 / 1 | dropped | the table's cloth or picture: the table is the tabletop's abstraction, its look only; no script in the 55 saves touches it (decided 2026-11-06) |  |  |
-| `BagState.Order` | - | native | ModuleObj.TakeOrder: last in first out, first in first out or at random, as the module set it | BagOrderTests |  |
+| `BagState.Order` | - | native | ModuleObj.TakeOrder: last in first out, first in first out or at random, as the module set it | BagOrderTests | FidelityTests.A_bags_order_comes_over_as_its_take_order_last_in_first_out_when_the_module_names_none; FidelityTests.The_next_piece_out_follows_the_take_order_and_never_a_piece_riding_on_another |
 | `CalculatorState.memory` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |  |
 | `CalculatorState.value` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |  |
 | `CameraState.AbsolutePosition` | - | dropped | the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06) |  |  |
@@ -237,30 +237,30 @@ every row that is not dropped must end audited, used by the corpus or not.
 | `CustomAssetState.Name` | - | native | the name an image attribute holds | PanelImportTests |  |
 | `CustomAssetState.Type` | - | native | pictures (type 0) come over; asset bundles hold fonts, which the app's own type replaces | PanelImportTests |  |
 | `CustomAssetState.URL` | - | native | fetched into the extras pack | PanelImportTests |  |
-| `CustomDecalState.ImageURL` | - | native | converter reads it |  |  |
-| `CustomDecalState.Name` | - | native | converter reads it |  |  |
-| `CustomDecalState.Size` | - | native | a palette decal's height on the table; its width follows the picture | DecalPaletteTests |  |
+| `CustomDecalState.ImageURL` | - | native | converter reads it |  | FidelityTests.A_module_s_decal_palette_and_its_decals_on_the_table_come_over_with_their_pictures_and_sizes |
+| `CustomDecalState.Name` | - | native | converter reads it |  | FidelityTests.A_module_s_decal_palette_and_its_decals_on_the_table_come_over_with_their_pictures_and_sizes; SaveFieldTests.The_decal_palette_holds_one_entry_for_each_name_picture_and_size_as_the_game_adds_them |
+| `CustomDecalState.Size` | - | native | a palette decal's height on the table; its width follows the picture | DecalPaletteTests | SaveFieldTests.The_decal_palette_holds_one_entry_for_each_name_picture_and_size_as_the_game_adds_them |
 | `CustomDeckState.BackIsHidden` | - | dropped | deck and card logic (decided 2026-11-06) |  |  |
-| `CustomDeckState.BackURL` | - | native | converter reads it |  |  |
-| `CustomDeckState.FaceURL` | - | native | converter reads it |  |  |
-| `CustomDeckState.NumHeight` | - | native | ModuleSave card sheets: each card cut from its own cell | ConverterTests |  |
-| `CustomDeckState.NumWidth` | - | native | ModuleSave card sheets: each card cut from its own cell | ConverterTests |  |
-| `CustomDeckState.Type` | - | native | converter reads it |  |  |
-| `CustomDeckState.UniqueBack` | - | native | converter reads it |  |  |
-| `CustomFigurineState.MirroredBack` | - | native | the back picture mirrored | FigurineTests |  |
+| `CustomDeckState.BackURL` | - | native | converter reads it |  | ConverterTests.A_card_on_a_sheet_is_cut_from_its_own_cell_at_module_card_size_with_its_back |
+| `CustomDeckState.FaceURL` | - | native | converter reads it |  | ConverterTests.A_card_on_a_sheet_is_cut_from_its_own_cell_at_module_card_size_with_its_back |
+| `CustomDeckState.NumHeight` | - | native | ModuleSave card sheets: each card cut from its own cell | ConverterTests | SaveFieldTests.A_card_sheet_saved_without_its_size_is_ten_by_seven_a_card_past_the_sheet_is_its_last_cell_and_a_back_marked_unique_is_cut_per_card |
+| `CustomDeckState.NumWidth` | - | native | ModuleSave card sheets: each card cut from its own cell | ConverterTests | SaveFieldTests.A_card_sheet_saved_without_its_size_is_ten_by_seven_a_card_past_the_sheet_is_its_last_cell_and_a_back_marked_unique_is_cut_per_card; SaveFieldTests.A_card_takes_its_cells_shape_at_the_game_s_card_height_and_the_outline_its_card_type_names |
+| `CustomDeckState.Type` | - | native | converter reads it |  | SaveFieldTests.A_card_takes_its_cells_shape_at_the_game_s_card_height_and_the_outline_its_card_type_names |
+| `CustomDeckState.UniqueBack` | - | native | converter reads it |  | SaveFieldTests.A_card_sheet_saved_without_its_size_is_ten_by_seven_a_card_past_the_sheet_is_its_last_cell_and_a_back_marked_unique_is_cut_per_card |
+| `CustomFigurineState.MirroredBack` | - | native | the back picture mirrored | FigurineTests | FidelityTests.A_standing_picture_comes_over_as_a_card_in_a_round_base_at_the_tabletop_s_size_with_its_picture |
 | `CustomFigurineState.UseMinimalCollider` | - | dropped | the engine's physics colliders |  |  |
-| `CustomImageState.CustomFigurine` | - | native | Figurines.cs: the picture on a card in a round base | FigurineTests |  |
+| `CustomImageState.CustomFigurine` | - | native | Figurines.cs: the picture on a card in a round base | FigurineTests | SaveFieldTests.A_figurine_wears_its_colour_on_its_stand_only_and_its_card_grows_with_its_image_scalar_each_side_as_wide_as_its_own_picture |
 | `CustomImageState.CustomJigsawPuzzle` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |  |
-| `CustomImageState.ImageScalar` | - | unknown |  |  |  |
+| `CustomImageState.ImageScalar` | - | native | converter reads it |  | SaveFieldTests.A_figurine_wears_its_colour_on_its_stand_only_and_its_card_grows_with_its_image_scalar_each_side_as_wide_as_its_own_picture |
 | `CustomJigsawPuzzleState.ImageOnBoard` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |  |
 | `CustomJigsawPuzzleState.NumPuzzlePieces` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |  |
-| `CustomPDFState.PDFPageOffset` | - | native | the book's page offset (PieceDef.PageOffset) | BookNotesScriptTests |  |
-| `CustomPDFState.PDFPassword` | - | native | a protected PDF opens with the password the save holds | converter |  |
-| `CustomTokenState.Stackable` | - | unknown |  |  |  |
-| `CustomTokenState.StandUp` | - | unknown |  |  |  |
-| `DecalState.CustomDecal` | - | native | converter reads it |  |  |
+| `CustomPDFState.PDFPageOffset` | - | native | the book's page offset (PieceDef.PageOffset) | BookNotesScriptTests | SaveFieldTests.A_pdf_book_keeps_its_page_offset_and_opens_with_its_password |
+| `CustomPDFState.PDFPassword` | - | native | a protected PDF opens with the password the save holds | converter | SaveFieldTests.A_pdf_book_keeps_its_page_offset_and_opens_with_its_password |
+| `CustomTokenState.Stackable` | - | unknown |  |  | SaveFieldTests.Only_a_stack_object_counts_its_saved_number_and_it_comes_in_as_its_own_kind_of_piece |
+| `CustomTokenState.StandUp` | - | native | converter reads it |  | SaveFieldTests.A_token_saved_standing_up_stands_on_its_edge_as_tall_as_its_picture_and_as_deep_as_its_thickness |
+| `DecalState.CustomDecal` | - | native | converter reads it |  | ConverterTests.An_object_s_decals_come_across_on_its_faces_in_piece_units_and_a_missing_picture_is_left_out |
 | `DecalState.OwnerSteamID` | - | dropped | who laid a decal |  |  |
-| `DecalState.Transform` | - | native | converter reads it |  |  |
+| `DecalState.Transform` | - | native | converter reads it |  | ConverterTests.An_object_s_decals_come_across_on_its_faces_in_piece_units_and_a_missing_picture_is_left_out |
 | `FogOfWarRevealerState.Active` | - | dropped | hidden zones (decided 2026-11-06) |  |  |
 | `FogOfWarRevealerState.Color` | - | dropped | hidden zones (decided 2026-11-06) |  |  |
 | `FogOfWarRevealerState.FoV` | - | dropped | hidden zones (decided 2026-11-06) |  |  |
@@ -330,32 +330,32 @@ every row that is not dropped must end audited, used by the corpus or not.
 | `ObjectState.LayoutZone` | - | dropped | scripting and layout zones (decided 2026-11-06) |  |  |
 | `ObjectState.MeshIndex` | - | dropped | the tabletop's stock meshes are never extracted |  |  |
 | `ObjectState.Mp3Player` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |  |
-| `ObjectState.Number` | - | native | a module's stack comes over as that many pieces laid one on another | WorthImportTests |  |
+| `ObjectState.Number` | - | native | a module's stack comes over as that many pieces laid one on another | WorthImportTests | SaveFieldTests.Only_a_stack_object_counts_its_saved_number_and_it_comes_in_as_its_own_kind_of_piece; FidelityTests.A_stack_of_chips_comes_over_as_that_many_pieces_one_on_another_each_keeping_its_worth |
 | `ObjectState.RPGdead` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |  |
 | `ObjectState.RPGmode` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |  |
 | `ObjectState.SidewaysCard` | - | dropped | a card keeps its sheet's orientation |  |  |
 | `ObjectState.Tablet` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |  |
-| `ObjectState.Value` | - | native | a piece's worth (self.worth); the menu adds up the worth of what is chosen | WorthImportTests |  |
+| `ObjectState.Value` | - | native | a piece's worth (self.worth); the menu adds up the worth of what is chosen | WorthImportTests | FidelityTests.A_stack_of_chips_comes_over_as_that_many_pieces_one_on_another_each_keeping_its_worth |
 | `ObjectState.XmlUI` | - | native | ScenarioPanels: a piece's own panels, drawn on it | PanelImportTests |  |
 | `ObjectState.miscID` | - | dropped | the engine's own bookkeeping |  |  |
 | `ObjectState.vector` | - | dropped | the engine's own bookkeeping |  |  |
 | `PhysicsMaterialState.BounceCombine` | - | dropped | engine physics |  |  |
 | `PhysicsMaterialState.Bounciness` | - | dropped | engine physics |  |  |
 | `PhysicsMaterialState.FrictionCombine` | - | dropped | engine physics |  |  |
-| `RotationValueState.Rotation` | - | native | converter reads it |  |  |
-| `RotationValueState.Value` | - | native | converter reads it |  |  |
-| `SaveState.Decals` | - | native | decals stamped on the table, lying over the ground on the umpire layer; the Decals tool stamps and lifts them | DecalPaletteTests, StampToolTests |  |
-| `SaveState.ObjectStates` | - | native | converter reads it |  |  |
-| `SaveState.Rules` | - | native | the scenario's briefing | DrawingTests |  |
+| `RotationValueState.Rotation` | - | native | converter reads it |  | ConverterTests.A_die_s_face_is_read_from_the_rotation_it_was_saved_at |
+| `RotationValueState.Value` | - | native | converter reads it |  | ConverterTests.A_picture_die_turns_up_the_side_a_module_turns_up_for_each_value_on_the_standard_picture_die |
+| `SaveState.Decals` | - | native | decals stamped on the table, lying over the ground on the umpire layer; the Decals tool stamps and lifts them | DecalPaletteTests, StampToolTests | FidelityTests.A_module_s_decal_palette_and_its_decals_on_the_table_come_over_with_their_pictures_and_sizes |
+| `SaveState.ObjectStates` | - | native | converter reads it |  | SaveFieldTests.An_object_placed_where_no_number_is_or_at_the_centre_with_no_size_is_left_out_as_the_digital_tabletop_leaves_it |
+| `SaveState.Rules` | - | native | the scenario's briefing | DrawingTests | SaveFieldTests.The_old_rules_text_comes_in_only_when_the_module_keeps_no_notebook_tabs; ConverterTests.Lines_drawn_on_pieces_and_on_the_table_come_over_and_the_rules_are_the_briefing |
 | `SaveState.SnapPoints` | - | dropped | snap points (decided 2026-11-06 with the grid) |  |  |
 | `SaveState.XmlUI` | - | native | ScenarioPanels: the save's own panels become the scenario's | PanelImportTests |  |
 | `SnapPointState.Position` | - | dropped | snap points (grid, decided 2026-11-06) |  |  |
 | `SnapPointState.Rotation` | - | dropped | snap points (grid, decided 2026-11-06) |  |  |
 | `SnapPointState.Tags` | - | dropped | snap points (grid, decided 2026-11-06) |  |  |
-| `TabState.body` | - | native | converter reads it |  |  |
+| `TabState.body` | - | native | converter reads it |  | ConverterTests.Notecards_the_notes_panel_and_notebook_tabs_become_note_pieces_carrying_their_text |
 | `TabState.color` | - | dropped | notebook tab colour |  |  |
 | `TabState.id` | - | dropped | notebook tab id |  |  |
-| `TabState.title` | - | native | converter reads it |  |  |
+| `TabState.title` | - | native | converter reads it |  | ConverterTests.Notecards_the_notes_panel_and_notebook_tabs_become_note_pieces_carrying_their_text |
 | `TabState.visibleColor` | - | dropped | notebook tab colour |  |  |
 | `TabletState.PageURL` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |  |
 | `TextState.OwnerSteamID` | - | dropped | who wrote a 3D text |  |  |
@@ -367,13 +367,13 @@ every row that is not dropped must end audited, used by the corpus or not.
 | `TurnsState.TurnColor` | - | dropped | turns (decided 2026-11-06) |  |  |
 | `TurnsState.TurnOrder` | - | dropped | turns (decided 2026-11-06) |  |  |
 | `TurnsState.Type` | - | dropped | turns (decided 2026-11-06) |  |  |
-| `VectorLineState.OwnerSteamID` | - | native | lines on pieces and on the table | DrawingTests |  |
-| `VectorLineState.color` | - | native | lines on pieces and on the table | DrawingTests |  |
-| `VectorLineState.loop` | - | native | lines on pieces and on the table | DrawingTests |  |
-| `VectorLineState.points3` | - | native | lines on pieces and on the table | DrawingTests |  |
-| `VectorLineState.rotation` | - | native | lines on pieces and on the table | DrawingTests |  |
-| `VectorLineState.square` | - | native | lines on pieces and on the table | DrawingTests |  |
-| `VectorLineState.thickness` | - | native | lines on pieces and on the table | DrawingTests |  |
+| `VectorLineState.OwnerSteamID` | - | native | lines on pieces and on the table | DrawingTests | ConverterTests.Lines_drawn_on_pieces_and_on_the_table_come_over_and_the_rules_are_the_briefing |
+| `VectorLineState.color` | - | native | lines on pieces and on the table | DrawingTests | ConverterTests.A_line_switched_off_by_its_alpha_stays_off_and_a_see_through_line_keeps_its_alpha |
+| `VectorLineState.loop` | - | native | lines on pieces and on the table | DrawingTests | ConverterTests.Lines_drawn_on_pieces_and_on_the_table_come_over_and_the_rules_are_the_briefing |
+| `VectorLineState.points3` | - | native | lines on pieces and on the table | DrawingTests | ConverterTests.Lines_drawn_on_pieces_and_on_the_table_come_over_and_the_rules_are_the_briefing |
+| `VectorLineState.rotation` | - | native | lines on pieces and on the table | DrawingTests | SaveFieldTests.A_line_turns_by_its_saved_rotation_ends_round_unless_saved_square_and_a_line_of_no_thickness_draws_nothing |
+| `VectorLineState.square` | - | native | lines on pieces and on the table | DrawingTests | SaveFieldTests.A_line_turns_by_its_saved_rotation_ends_round_unless_saved_square_and_a_line_of_no_thickness_draws_nothing |
+| `VectorLineState.thickness` | - | native | lines on pieces and on the table | DrawingTests | SaveFieldTests.A_line_turns_by_its_saved_rotation_ends_round_unless_saved_square_and_a_line_of_no_thickness_draws_nothing |
 
 ## object
 
@@ -962,8 +962,8 @@ every row that is not dropped must end audited, used by the corpus or not.
 | `module Vector and Color classes with their methods` | 55 / 55 | compat | compat.Vector and compat.Color: every documented method, operator and named colour | ModuleVectorColorTests |  |
 | `player model: colours, Black as GM, promoted, seated, host` | 55 / 55 | dropped | with the Player API (decided 2026-11-06); compat.color_of still names umpires by seat colour |  |  |
 | `positionToWorld and positionToLocal: the module transform, local x along +X at rotation zero, in mesh units times scale for a model and the size rule for a flat` | 55 / 55 | compat | compat.position_to_world / position_to_local; a model def carries local_unit from the converter | ModuleLocalFrameTests |  |
-| `save quirk: a number written as a string, or NaN` | 55 / 55 | native | ModuleObj.D falls back to the default and the report says so | ConverterTests |  |
-| `save quirk: duplicate GUIDs inside bags` | 55 / 55 | native | a guid names the first piece found, as getObjectFromGUID answers in modules |  |  |
+| `save quirk: a number written as a string, or NaN` | 55 / 55 | native | ModuleObj.D falls back to the default and the report says so | ConverterTests | SaveFieldTests.Module_values_written_as_text_numbers_or_flags_read_as_the_digital_tabletop_reads_them; SaveFieldTests.An_object_placed_where_no_number_is_or_at_the_centre_with_no_size_is_left_out_as_the_digital_tabletop_leaves_it; ConverterTests.A_piece_the_module_scales_by_something_that_is_not_a_number_still_comes_over_and_can_be_written |
+| `save quirk: duplicate GUIDs inside bags` | 55 / 55 | native | a guid names the first piece found, as getObjectFromGUID answers in modules |  | GuidTakeOutTests.A_piece_taken_out_of_a_bag_under_a_guid_a_piece_on_the_table_holds_gets_a_fresh_one_and_putting_it_back_by_undo_restores_its_own; GuidTakeOutTests.A_piece_taken_out_under_a_guid_nobody_else_holds_keeps_it |
 | `save quirk: negative scale mirrors` | 55 / 55 | partial | the size is taken unsigned, so a mirrored piece comes over unmirrored and the report names it; mirroring its picture or model at conversion is a decision for the user | ConverterTests |  |
 | `save quirk: rotX/rotZ near 180 means face down; other tilts stand or lean` | 55 / 55 | partial | ModuleObj.Flipped reads face down; a piece standing on edge or leaning needs a tilt the table does not keep, a decision for the user |  |  |
 | `script safety cuts the self-copying block and keeps the rest` | 55 / 55 | native | ScriptSafety; over the roster only the German Team Planning Table is cut, 1,463 copies of the Object base code worm, and no other rule fires | ScriptSafetyTests; import-sweep |  |

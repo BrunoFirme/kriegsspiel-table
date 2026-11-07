@@ -18,7 +18,7 @@
    "held_by": "",
    "count": 4903,
    "modules": 52,
-   "audited": ""
+   "audited": "ConverterTests.A_model_a_module_stretches_taller_or_flatter_than_wide_keeps_the_height_the_module_draws; SaveFieldTests.A_model_takes_its_material_from_its_mesh_settings_plastic_when_none_is_saved_and_never_from_the_objects_own_index"
   },
   {
    "row": "Custom_Token",
@@ -28,7 +28,7 @@
    "held_by": "",
    "count": 25836,
    "modules": 50,
-   "audited": ""
+   "audited": "SaveFieldTests.A_token_carries_the_games_outline_of_its_picture_cut_at_its_own_merge_distance; ConverterTests.A_decal_fitted_to_a_token_in_tabletop_simulator_covers_the_token_here_too"
   },
   {
    "row": "Custom_Tile",
@@ -38,7 +38,7 @@
    "held_by": "",
    "count": 36769,
    "modules": 49,
-   "audited": ""
+   "audited": "SaveFieldTests.A_tile_saved_without_a_stretch_stays_square_and_one_without_tile_settings_stretches_as_the_prefab_does_whatever_its_shape; SaveFieldTests.A_tile_takes_only_its_own_thickness_and_ignores_its_height_scale_while_a_token_grows_with_its_height_scale"
   },
   {
    "row": "Custom_Assetbundle",
@@ -48,7 +48,7 @@
    "held_by": "import-sweep: prairie-grove, suriagehara, zeke",
    "count": 36541,
    "modules": 49,
-   "audited": ""
+   "audited": "ConverterTests.Tabletop_effect_bundles_become_the_closest_of_firmes_effects_at_the_size_they_showed; ConverterTests.An_asset_bundle_Firmes_effects_can_play_stays_an_effect_and_is_not_baked_as_a_model"
   },
   {
    "row": "Chinese_Checkers_Piece",
@@ -68,7 +68,7 @@
    "held_by": "",
    "count": 22,
    "modules": 22,
-   "audited": ""
+   "audited": "ConverterTests.A_board_is_as_tall_as_its_base_and_as_wide_as_its_width_setting_says_grown_as_its_table_grows_it"
   },
   {
    "row": "Notecard",
@@ -78,7 +78,7 @@
    "held_by": "",
    "count": 28,
    "modules": 16,
-   "audited": ""
+   "audited": "SaveFieldTests.A_module_notecard_is_as_big_and_as_thick_as_the_games_notecard_at_its_scale"
   },
   {
    "row": "Custom_PDF",
@@ -88,7 +88,7 @@
    "held_by": "BookTests",
    "count": 15,
    "modules": 14,
-   "audited": ""
+   "audited": "SaveFieldTests.A_pdf_book_lies_four_units_deep_and_as_wide_as_its_page_and_a_page_of_another_shape_reshapes_it"
   },
   {
    "row": "BlockSquare",
@@ -98,7 +98,7 @@
    "held_by": "",
    "count": 665,
    "modules": 12,
-   "audited": ""
+   "audited": "SaveFieldTests.A_block_is_the_games_unit_cube_or_its_double_length_block"
   },
   {
    "row": "BlockRectangle",
@@ -108,7 +108,7 @@
    "held_by": "",
    "count": 333,
    "modules": 11,
-   "audited": ""
+   "audited": "SaveFieldTests.A_block_is_the_games_unit_cube_or_its_double_length_block"
   },
   {
    "row": "3DText",
@@ -118,7 +118,7 @@
    "held_by": "",
    "count": 109,
    "modules": 11,
-   "audited": ""
+   "audited": "SaveFieldTests.Three_d_text_is_drawn_at_the_game_s_three_d_ui_scale_whatever_scale_the_module_saved_and_keeps_its_colour_s_alpha"
   },
   {
    "row": "Die_20",
@@ -128,7 +128,7 @@
    "held_by": "DiceTests",
    "count": 77,
    "modules": 11,
-   "audited": ""
+   "audited": "SaveFieldTests.A_stock_die_is_drawn_as_big_as_the_digital_tabletops_own_die"
   },
   {
    "row": "Bag",
@@ -138,7 +138,7 @@
    "held_by": "BagBoxTests",
    "count": 17,
    "modules": 11,
-   "audited": ""
+   "audited": "FidelityTests.Bags_come_over_as_Firme_s_boxes_holding_their_pieces; FidelityTests.A_coloured_bag_tints_its_box_and_a_grey_or_white_one_leaves_the_wood_bare"
   },
   {
    "row": "Infinite_Bag",
@@ -158,7 +158,7 @@
    "held_by": "import-sweep: naval, scripted-war-game",
    "count": 48,
    "modules": 8,
-   "audited": ""
+   "audited": "SaveFieldTests.A_model_bag_is_its_model_and_holds_what_the_module_put_in_it"
   },
   {
    "row": "Custom_Dice",
@@ -168,7 +168,7 @@
    "held_by": "DiceTests",
    "count": 35,
    "modules": 7,
-   "audited": ""
+   "audited": "ConverterTests.A_picture_die_turns_up_the_side_a_module_turns_up_for_each_value_on_the_standard_picture_die"
   },
   {
    "row": "CardCustom",
@@ -178,7 +178,7 @@
    "held_by": "",
    "count": 1144,
    "modules": 6,
-   "audited": ""
+   "audited": "SaveFieldTests.A_card_takes_its_cells_shape_at_the_game_s_card_height_and_the_outline_its_card_type_names; ConverterTests.A_card_on_a_sheet_is_cut_from_its_own_cell_at_module_card_size_with_its_back"
   },
   {
    "row": "Die_12",
@@ -188,7 +188,7 @@
    "held_by": "DiceTests",
    "count": 11,
    "modules": 5,
-   "audited": ""
+   "audited": "SaveFieldTests.A_stock_die_is_drawn_as_big_as_the_digital_tabletops_own_die"
   },
   {
    "row": "Die_10",
@@ -198,7 +198,7 @@
    "held_by": "DiceTests",
    "count": 9,
    "modules": 4,
-   "audited": ""
+   "audited": "SaveFieldTests.A_stock_die_is_drawn_as_big_as_the_digital_tabletops_own_die"
   },
   {
    "row": "Die_6_Rounded",
@@ -208,7 +208,7 @@
    "held_by": "DiceTests",
    "count": 7,
    "modules": 4,
-   "audited": ""
+   "audited": "SaveFieldTests.A_stock_die_is_drawn_as_big_as_the_digital_tabletops_own_die"
   },
   {
    "row": "Die_6",
@@ -218,7 +218,7 @@
    "held_by": "DiceTests",
    "count": 27,
    "modules": 3,
-   "audited": ""
+   "audited": "SaveFieldTests.A_stock_die_is_drawn_as_big_as_the_digital_tabletops_own_die; ConverterTests.The_digital_tabletop_s_own_dice_become_the_app_s_dice_showing_the_face_they_were_saved_on"
   },
   {
    "row": "BlockTriangle",
@@ -228,7 +228,7 @@
    "held_by": "TriangleBlockTests",
    "count": 9,
    "modules": 3,
-   "audited": ""
+   "audited": "FidelityTests.A_triangle_block_comes_over_as_a_tinted_prism_alone_or_on_another_block"
   },
   {
    "row": "Tileset_Tree",
@@ -238,7 +238,7 @@
    "held_by": "BagBoxTests",
    "count": 119,
    "modules": 1,
-   "audited": ""
+   "audited": "FidelityTests.The_tabletop_s_own_tree_comes_over_as_Firme_s_tree_at_its_crown_size_and_is_left_out_with_a_note_without_it"
   },
   {
    "row": "Card",
@@ -248,7 +248,7 @@
    "held_by": "",
    "count": 82,
    "modules": 1,
-   "audited": ""
+   "audited": "ConverterTests.A_card_whose_server_answers_with_a_web_page_is_left_out_and_one_that_only_failed_to_answer_keeps_a_placeholder; SaveFieldTests.A_card_takes_its_cells_shape_at_the_game_s_card_height_and_the_outline_its_card_type_names"
   },
   {
    "row": "Checker_white",
@@ -258,7 +258,7 @@
    "held_by": "",
    "count": 17,
    "modules": 1,
-   "audited": ""
+   "audited": "ConverterTests.A_checker_is_a_round_counter_in_its_module_colour"
   },
   {
    "row": "Figurine_Custom",
@@ -268,7 +268,7 @@
    "held_by": "FigurineTests",
    "count": 16,
    "modules": 1,
-   "audited": ""
+   "audited": "FidelityTests.A_standing_picture_comes_over_as_a_card_in_a_round_base_at_the_tabletop_s_size_with_its_picture; SaveFieldTests.A_figurine_wears_its_colour_on_its_stand_only_and_its_card_grows_with_its_image_scalar_each_side_as_wide_as_its_own_picture"
   },
   {
    "row": "Deck",
@@ -278,7 +278,7 @@
    "held_by": "",
    "count": 15,
    "modules": 1,
-   "audited": ""
+   "audited": "ConverterTests.A_deck_lies_as_a_pile_with_the_card_a_module_would_deal_on_top"
   },
   {
    "row": "PlayerPawn",
@@ -288,7 +288,7 @@
    "held_by": "PawnTests",
    "count": 7,
    "modules": 1,
-   "audited": ""
+   "audited": "ConverterTests.A_player_pawn_is_a_round_piece_in_its_colour"
   },
   {
    "row": "Die_8",
@@ -298,7 +298,7 @@
    "held_by": "DiceTests",
    "count": 2,
    "modules": 1,
-   "audited": ""
+   "audited": "SaveFieldTests.A_stock_die_is_drawn_as_big_as_the_digital_tabletops_own_die"
   },
   {
    "row": "Calculator",
@@ -348,7 +348,7 @@
    "held_by": "DiceTests",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "SaveFieldTests.A_stock_die_is_drawn_as_big_as_the_digital_tabletops_own_die"
   },
   {
    "row": "Digital_Clock",
@@ -440,7 +440,7 @@
    "held_by": "",
    "count": 107489,
    "modules": 55,
-   "audited": ""
+   "audited": "SaveFieldTests.An_object_saved_without_a_colour_keeps_the_colour_of_the_digital_tabletops_own_piece; SaveFieldTests.A_figurine_wears_its_colour_on_its_stand_only_and_its_card_grows_with_its_image_scalar_each_side_as_wide_as_its_own_picture; FidelityTests.A_tint_s_alpha_comes_over_so_a_helper_saved_invisible_stays_invisible; ConverterTests.A_checker_is_a_round_counter_in_its_module_colour"
   },
   {
    "row": "ObjectState.Transform",
@@ -450,7 +450,7 @@
    "held_by": "",
    "count": 107489,
    "modules": 55,
-   "audited": ""
+   "audited": "SaveFieldTests.An_object_placed_where_no_number_is_or_at_the_centre_with_no_size_is_left_out_as_the_digital_tabletop_leaves_it; SaveFieldTests.Module_values_written_as_text_numbers_or_flags_read_as_the_digital_tabletop_reads_them"
   },
   {
    "row": "ObjectState.GUID",
@@ -460,7 +460,7 @@
    "held_by": "",
    "count": 106189,
    "modules": 55,
-   "audited": ""
+   "audited": "SaveFieldTests.The_first_object_loaded_keeps_a_guid_two_objects_share_and_the_later_one_gets_a_fresh_one; GuidTakeOutTests.A_piece_taken_out_of_a_bag_under_a_guid_a_piece_on_the_table_holds_gets_a_fresh_one_and_putting_it_back_by_undo_restores_its_own"
   },
   {
    "row": "TransformState.posX",
@@ -470,7 +470,7 @@
    "held_by": "",
    "count": 106189,
    "modules": 55,
-   "audited": ""
+   "audited": "SaveFieldTests.Module_values_written_as_text_numbers_or_flags_read_as_the_digital_tabletop_reads_them; SaveFieldTests.An_object_placed_where_no_number_is_or_at_the_centre_with_no_size_is_left_out_as_the_digital_tabletop_leaves_it"
   },
   {
    "row": "TransformState.posY",
@@ -480,7 +480,7 @@
    "held_by": "",
    "count": 106189,
    "modules": 55,
-   "audited": ""
+   "audited": "ConverterTests.A_piece_beside_a_tray_at_the_tray_s_level_lies_at_that_level_and_one_on_the_table_stays_down; ConverterTests.A_piece_overlapping_a_tray_s_edge_rests_on_the_tray_though_its_centre_is_outside"
   },
   {
    "row": "TransformState.posZ",
@@ -490,7 +490,7 @@
    "held_by": "",
    "count": 106189,
    "modules": 55,
-   "audited": ""
+   "audited": "SaveFieldTests.An_object_placed_where_no_number_is_or_at_the_centre_with_no_size_is_left_out_as_the_digital_tabletop_leaves_it; ConverterTests.A_deck_lies_as_a_pile_with_the_card_a_module_would_deal_on_top"
   },
   {
    "row": "TransformState.rotY",
@@ -500,7 +500,7 @@
    "held_by": "",
    "count": 106188,
    "modules": 55,
-   "audited": ""
+   "audited": "SaveFieldTests.A_piece_turned_end_over_end_faces_the_other_way_and_one_rolled_over_keeps_its_heading; ConverterTests.A_deck_lies_as_a_pile_with_the_card_a_module_would_deal_on_top"
   },
   {
    "row": "TransformState.scaleX",
@@ -510,7 +510,7 @@
    "held_by": "",
    "count": 97221,
    "modules": 55,
-   "audited": ""
+   "audited": "SaveFieldTests.Module_values_written_as_text_numbers_or_flags_read_as_the_digital_tabletop_reads_them; ConverterTests.A_board_is_as_tall_as_its_base_and_as_wide_as_its_width_setting_says_grown_as_its_table_grows_it"
   },
   {
    "row": "TransformState.scaleZ",
@@ -520,7 +520,7 @@
    "held_by": "",
    "count": 96198,
    "modules": 55,
-   "audited": ""
+   "audited": "ConverterTests.A_board_is_as_tall_as_its_base_and_as_wide_as_its_width_setting_says_grown_as_its_table_grows_it; SaveFieldTests.A_pdf_book_lies_four_units_deep_and_as_wide_as_its_page_and_a_page_of_another_shape_reshapes_it"
   },
   {
    "row": "ObjectState.Name",
@@ -530,7 +530,7 @@
    "held_by": "",
    "count": 70720,
    "modules": 55,
-   "audited": ""
+   "audited": "ConverterTests.A_pack_with_object_types_the_converter_cannot_map_exits_with_code_2; SaveFieldTests.Only_a_stack_object_counts_its_saved_number_and_it_comes_in_as_its_own_kind_of_piece"
   },
   {
    "row": "ColourState.g",
@@ -540,7 +540,7 @@
    "held_by": "",
    "count": 40837,
    "modules": 55,
-   "audited": ""
+   "audited": "SaveFieldTests.An_object_saved_without_a_colour_keeps_the_colour_of_the_digital_tabletops_own_piece; ConverterTests.A_checker_is_a_round_counter_in_its_module_colour"
   },
   {
    "row": "ColourState.b",
@@ -550,7 +550,7 @@
    "held_by": "",
    "count": 40277,
    "modules": 55,
-   "audited": ""
+   "audited": "SaveFieldTests.An_object_saved_without_a_colour_keeps_the_colour_of_the_digital_tabletops_own_piece; ConverterTests.A_checker_is_a_round_counter_in_its_module_colour"
   },
   {
    "row": "TransformState.scaleY",
@@ -560,7 +560,7 @@
    "held_by": "",
    "count": 39852,
    "modules": 55,
-   "audited": ""
+   "audited": "SaveFieldTests.A_tile_takes_only_its_own_thickness_and_ignores_its_height_scale_while_a_token_grows_with_its_height_scale; SaveFieldTests.Three_d_text_is_drawn_at_the_game_s_three_d_ui_scale_whatever_scale_the_module_saved_and_keeps_its_colour_s_alpha"
   },
   {
    "row": "ColourState.r",
@@ -570,7 +570,7 @@
    "held_by": "",
    "count": 34766,
    "modules": 55,
-   "audited": ""
+   "audited": "SaveFieldTests.An_object_saved_without_a_colour_keeps_the_colour_of_the_digital_tabletops_own_piece; ConverterTests.A_checker_is_a_round_counter_in_its_module_colour"
   },
   {
    "row": "ObjectState.Locked",
@@ -580,7 +580,7 @@
    "held_by": "",
    "count": 16925,
    "modules": 55,
-   "audited": ""
+   "audited": "SaveFieldTests.Module_values_written_as_text_numbers_or_flags_read_as_the_digital_tabletop_reads_them; ConverterTests.A_deck_lies_as_a_pile_with_the_card_a_module_would_deal_on_top"
   },
   {
    "row": "ObjectState.Grid",
@@ -650,7 +650,7 @@
    "held_by": "",
    "count": 55,
    "modules": 55,
-   "audited": ""
+   "audited": "ConverterTests.Notecards_the_notes_panel_and_notebook_tabs_become_note_pieces_carrying_their_text; SaveFieldTests.The_old_rules_text_comes_in_only_when_the_module_keeps_no_notebook_tabs"
   },
   {
    "row": "SaveState.Turns",
@@ -670,7 +670,7 @@
    "held_by": "",
    "count": 50030,
    "modules": 54,
-   "audited": ""
+   "audited": "SaveFieldTests.A_piece_keeps_its_name_description_and_gm_notes_as_saved_its_script_state_without_a_script_and_one_tag_per_spelling_the_game_counts_as_one; SaveFieldTests.Module_values_written_as_text_numbers_or_flags_read_as_the_digital_tabletop_reads_them"
   },
   {
    "row": "SaveState.Date",
@@ -700,7 +700,7 @@
    "held_by": "",
    "count": 54,
    "modules": 54,
-   "audited": ""
+   "audited": "ConverterTests.A_module_saved_under_a_name_another_module_already_took_keeps_a_pack_and_a_scenario_of_its_own"
   },
   {
    "row": "TransformState.rotX",
@@ -710,7 +710,7 @@
    "held_by": "",
    "count": 105737,
    "modules": 53,
-   "audited": ""
+   "audited": "SaveFieldTests.A_piece_turned_end_over_end_faces_the_other_way_and_one_rolled_over_keeps_its_heading; ConverterTests.A_die_s_face_is_read_from_the_rotation_it_was_saved_at"
   },
   {
    "row": "TransformState.rotZ",
@@ -720,7 +720,7 @@
    "held_by": "",
    "count": 105326,
    "modules": 53,
-   "audited": ""
+   "audited": "SaveFieldTests.A_piece_turned_end_over_end_faces_the_other_way_and_one_rolled_over_keeps_its_heading; ConverterTests.A_deck_lies_as_a_pile_with_the_card_a_module_would_deal_on_top"
   },
   {
    "row": "ObjectState.LuaScriptState",
@@ -730,7 +730,7 @@
    "held_by": "",
    "count": 15203,
    "modules": 52,
-   "audited": ""
+   "audited": "SaveFieldTests.A_piece_keeps_its_name_description_and_gm_notes_as_saved_its_script_state_without_a_script_and_one_tag_per_spelling_the_game_counts_as_one"
   },
   {
    "row": "ObjectState.CustomMesh",
@@ -740,7 +740,7 @@
    "held_by": "",
    "count": 4951,
    "modules": 52,
-   "audited": ""
+   "audited": "FidelityTests.A_model_keeps_the_material_and_shine_the_module_gave_it; ConverterTests.A_model_a_module_stretches_taller_or_flatter_than_wide_keeps_the_height_the_module_draws"
   },
   {
    "row": "CustomMeshState.MeshURL",
@@ -750,7 +750,7 @@
    "held_by": "",
    "count": 3975,
    "modules": 52,
-   "audited": ""
+   "audited": "ConverterTests.A_model_a_module_stretches_taller_or_flatter_than_wide_keeps_the_height_the_module_draws"
   },
   {
    "row": "CustomMeshState.TypeIndex",
@@ -770,7 +770,7 @@
    "held_by": "",
    "count": 62678,
    "modules": 51,
-   "audited": ""
+   "audited": "SaveFieldTests.A_tile_saved_without_a_stretch_stays_square_and_one_without_tile_settings_stretches_as_the_prefab_does_whatever_its_shape"
   },
   {
    "row": "CustomImageState.ImageURL",
@@ -780,7 +780,7 @@
    "held_by": "",
    "count": 56944,
    "modules": 51,
-   "audited": ""
+   "audited": "SaveFieldTests.A_tile_saved_without_a_stretch_stays_square_and_one_without_tile_settings_stretches_as_the_prefab_does_whatever_its_shape; ConverterTests.A_piece_whose_picture_is_gone_for_good_is_left_out_and_reported_and_one_that_only_failed_to_answer_keeps_a_placeholder"
   },
   {
    "row": "ObjectState.LuaScript",
@@ -790,7 +790,7 @@
    "held_by": "",
    "count": 11525,
    "modules": 51,
-   "audited": ""
+   "audited": "ScriptAndNameTests.No_script_is_nothing_and_one_that_holds_no_data_is_reported_as_dropped"
   },
   {
    "row": "CustomImageState.CustomToken",
@@ -800,7 +800,7 @@
    "held_by": "",
    "count": 25836,
    "modules": 50,
-   "audited": ""
+   "audited": "SaveFieldTests.A_token_carries_the_games_outline_of_its_picture_cut_at_its_own_merge_distance"
   },
   {
    "row": "CustomMeshState.DiffuseURL",
@@ -810,7 +810,7 @@
    "held_by": "",
    "count": 2836,
    "modules": 50,
-   "audited": ""
+   "audited": "FidelityTests.A_model_keeps_the_material_and_shine_the_module_gave_it"
   },
   {
    "row": "CustomImageState.CustomTile",
@@ -820,7 +820,7 @@
    "held_by": "",
    "count": 36769,
    "modules": 49,
-   "audited": ""
+   "audited": "SaveFieldTests.A_tile_saved_without_a_stretch_stays_square_and_one_without_tile_settings_stretches_as_the_prefab_does_whatever_its_shape"
   },
   {
    "row": "ObjectState.CustomAssetbundle",
@@ -830,7 +830,7 @@
    "held_by": "",
    "count": 36541,
    "modules": 49,
-   "audited": ""
+   "audited": "ConverterTests.Tabletop_effect_bundles_become_the_closest_of_firmes_effects_at_the_size_they_showed; ConverterTests.Figures_baked_out_of_asset_bundles_are_found_by_the_address_the_module_names"
   },
   {
    "row": "CustomAssetbundleState.AssetbundleURL",
@@ -840,7 +840,7 @@
    "held_by": "",
    "count": 28796,
    "modules": 49,
-   "audited": ""
+   "audited": "ConverterTests.Figures_baked_out_of_asset_bundles_are_found_by_the_address_the_module_names"
   },
   {
    "row": "CustomTokenState.MergeDistancePixels",
@@ -850,7 +850,7 @@
    "held_by": "converter",
    "count": 14063,
    "modules": 49,
-   "audited": ""
+   "audited": "SaveFieldTests.A_tokens_outline_runs_through_the_centres_of_its_fully_opaque_pixels_as_the_game_cuts_it; SaveFieldTests.A_tokens_outline_merges_points_closer_than_its_merge_distance_and_keeps_each_island; SaveFieldTests.A_token_carries_the_games_outline_of_its_picture_cut_at_its_own_merge_distance"
   },
   {
    "row": "CustomAssetbundleState.AssetbundleSecondaryURL",
@@ -860,7 +860,7 @@
    "held_by": "",
    "count": 13038,
    "modules": 49,
-   "audited": ""
+   "audited": "ConverterTests.Figures_baked_out_of_asset_bundles_are_found_by_the_address_the_module_names"
   },
   {
    "row": "CustomAssetbundleState.MaterialIndex",
@@ -870,7 +870,7 @@
    "held_by": "",
    "count": 12341,
    "modules": 49,
-   "audited": ""
+   "audited": "ConverterTests.Figures_baked_out_of_asset_bundles_are_found_by_the_address_the_module_names"
   },
   {
    "row": "CustomMeshState.CustomShader",
@@ -880,7 +880,7 @@
    "held_by": "WorthImportTests",
    "count": 1101,
    "modules": 49,
-   "audited": ""
+   "audited": "FidelityTests.A_model_keeps_the_material_and_shine_the_module_gave_it"
   },
   {
    "row": "CustomAssetbundleState.TypeIndex",
@@ -900,7 +900,7 @@
    "held_by": "",
    "count": 11316,
    "modules": 48,
-   "audited": ""
+   "audited": "ConverterTests.Every_look_of_a_piece_with_states_takes_the_decals_of_its_own_state_and_the_piece_itself_takes_none; ConverterTests.Each_state_of_a_token_shows_its_own_glued_children_even_a_child_with_states_of_its_own"
   },
   {
    "row": "ObjectState.Tooltip",
@@ -920,7 +920,7 @@
    "held_by": "WorthImportTests",
    "count": 186,
    "modules": 48,
-   "audited": ""
+   "audited": "SaveFieldTests.A_model_takes_its_material_from_its_mesh_settings_plastic_when_none_is_saved_and_never_from_the_objects_own_index"
   },
   {
    "row": "ObjectState.GridProjection",
@@ -940,7 +940,7 @@
    "held_by": "",
    "count": 17057,
    "modules": 45,
-   "audited": ""
+   "audited": "SaveFieldTests.A_piece_keeps_its_name_description_and_gm_notes_as_saved_its_script_state_without_a_script_and_one_tag_per_spelling_the_game_counts_as_one"
   },
   {
    "row": "ObjectState.Snap",
@@ -990,7 +990,7 @@
    "held_by": "",
    "count": 13329,
    "modules": 38,
-   "audited": ""
+   "audited": "SaveFieldTests.A_tile_takes_only_its_own_thickness_and_ignores_its_height_scale_while_a_token_grows_with_its_height_scale"
   },
   {
    "row": "CustomTokenState.Thickness",
@@ -1000,7 +1000,7 @@
    "held_by": "",
    "count": 1686,
    "modules": 37,
-   "audited": ""
+   "audited": "SaveFieldTests.A_tile_takes_only_its_own_thickness_and_ignores_its_height_scale_while_a_token_grows_with_its_height_scale"
   },
   {
    "row": "SaveState.GameMode",
@@ -1020,7 +1020,7 @@
    "held_by": "",
    "count": 3542,
    "modules": 33,
-   "audited": ""
+   "audited": "SaveFieldTests.A_figurine_wears_its_colour_on_its_stand_only_and_its_card_grows_with_its_image_scalar_each_side_as_wide_as_its_own_picture; ConverterTests.Importing_brings_the_cards_onto_what_they_lie_on_the_sky_as_backdrop_and_each_memory_bag_as_its_own_scenario"
   },
   {
    "row": "SaveState.PlayerCounts",
@@ -1070,7 +1070,7 @@
    "held_by": "",
    "count": 184,
    "modules": 27,
-   "audited": ""
+   "audited": "ConverterTests.A_die_s_face_is_read_from_the_rotation_it_was_saved_at; ConverterTests.A_model_made_a_die_rolls_on_its_saved_values_and_shows_the_one_facing_up_and_a_plain_model_does_not"
   },
   {
    "row": "TagsState.labels",
@@ -1090,7 +1090,7 @@
    "held_by": "StickyTests",
    "count": 1334,
    "modules": 26,
-   "audited": ""
+   "audited": "FidelityTests.A_piece_the_module_made_not_sticky_comes_over_not_sticky; SaveFieldTests.Module_values_written_as_text_numbers_or_flags_read_as_the_digital_tabletop_reads_them"
   },
   {
    "row": "SaveState.VersionNumber",
@@ -1120,7 +1120,7 @@
    "held_by": "",
    "count": 25,
    "modules": 25,
-   "audited": ""
+   "audited": "SaveFieldTests.The_global_script_state_comes_in_only_with_a_global_script_as_the_game_reads_it"
   },
   {
    "row": "ObjectState.AttachedVectorLines",
@@ -1130,7 +1130,7 @@
    "held_by": "DrawingTests",
    "count": 114,
    "modules": 22,
-   "audited": ""
+   "audited": "ConverterTests.Lines_drawn_on_pieces_and_on_the_table_come_over_and_the_rules_are_the_briefing; SaveFieldTests.A_line_turns_by_its_saved_rotation_ends_round_unless_saved_square_and_a_line_of_no_thickness_draws_nothing"
   },
   {
    "row": "CustomImageState.WidthScale",
@@ -1140,7 +1140,7 @@
    "held_by": "",
    "count": 22,
    "modules": 22,
-   "audited": ""
+   "audited": "ConverterTests.A_board_is_as_tall_as_its_base_and_as_wide_as_its_width_setting_says_grown_as_its_table_grows_it"
   },
   {
    "row": "CustomMeshState.MaterialIndex",
@@ -1150,7 +1150,7 @@
    "held_by": "",
    "count": 1480,
    "modules": 21,
-   "audited": ""
+   "audited": "SaveFieldTests.A_model_takes_its_material_from_its_mesh_settings_plastic_when_none_is_saved_and_never_from_the_objects_own_index; FidelityTests.A_model_keeps_the_material_and_shine_the_module_gave_it"
   },
   {
    "row": "CustomAssetbundleState.LoopingEffectIndex",
@@ -1160,7 +1160,7 @@
    "held_by": "import-sweep",
    "count": 71,
    "modules": 21,
-   "audited": ""
+   "audited": "ConverterTests.An_asset_bundle_Firmes_effects_can_play_stays_an_effect_and_is_not_baked_as_a_model"
   },
   {
    "row": "CustomTileState.Type",
@@ -1170,7 +1170,7 @@
    "held_by": "",
    "count": 1743,
    "modules": 20,
-   "audited": ""
+   "audited": "SaveFieldTests.A_tile_saved_without_a_stretch_stays_square_and_one_without_tile_settings_stretches_as_the_prefab_does_whatever_its_shape; SaveFieldTests.Module_values_written_as_text_numbers_or_flags_read_as_the_digital_tabletop_reads_them"
   },
   {
    "row": "ObjectState.ContainedObjects",
@@ -1180,7 +1180,7 @@
    "held_by": "TablePiecesTests",
    "count": 156,
    "modules": 20,
-   "audited": ""
+   "audited": "FidelityTests.Bags_come_over_as_Firme_s_boxes_holding_their_pieces; SaveFieldTests.A_model_bag_is_its_model_and_holds_what_the_module_put_in_it"
   },
   {
    "row": "CustomMeshState.ColliderURL",
@@ -1210,7 +1210,7 @@
    "held_by": "BagOrderTests",
    "count": 64,
    "modules": 17,
-   "audited": ""
+   "audited": "FidelityTests.A_bags_order_comes_over_as_its_take_order_last_in_first_out_when_the_module_names_none"
   },
   {
    "row": "ObjectState.Tags",
@@ -1220,7 +1220,7 @@
    "held_by": "",
    "count": 17646,
    "modules": 16,
-   "audited": ""
+   "audited": "SaveFieldTests.A_piece_keeps_its_name_description_and_gm_notes_as_saved_its_script_state_without_a_script_and_one_tag_per_spelling_the_game_counts_as_one"
   },
   {
    "row": "SaveState.Sky",
@@ -1240,7 +1240,7 @@
    "held_by": "",
    "count": 15,
    "modules": 15,
-   "audited": ""
+   "audited": "ConverterTests.Notecards_the_notes_panel_and_notebook_tabs_become_note_pieces_carrying_their_text"
   },
   {
    "row": "ObjectState.CustomPDF",
@@ -1250,7 +1250,7 @@
    "held_by": "BookTests",
    "count": 15,
    "modules": 14,
-   "audited": ""
+   "audited": "SaveFieldTests.A_pdf_book_lies_four_units_deep_and_as_wide_as_its_page_and_a_page_of_another_shape_reshapes_it"
   },
   {
    "row": "GridState.PosOffset",
@@ -1330,7 +1330,7 @@
    "held_by": "",
    "count": 5023,
    "modules": 12,
-   "audited": ""
+   "audited": "FidelityTests.A_module_s_own_panels_and_a_piece_s_come_over_with_the_pictures_they_name"
   },
   {
    "row": "CustomMeshState.Convex",
@@ -1360,7 +1360,7 @@
    "held_by": "",
    "count": 109,
    "modules": 11,
-   "audited": ""
+   "audited": "SaveFieldTests.Three_d_text_is_drawn_at_the_game_s_three_d_ui_scale_whatever_scale_the_module_saved_and_keeps_its_colour_s_alpha; ConverterTests.The_same_text_bakes_to_the_same_picture_every_time"
   },
   {
    "row": "TextState.Text",
@@ -1370,7 +1370,7 @@
    "held_by": "",
    "count": 105,
    "modules": 11,
-   "audited": ""
+   "audited": "SaveFieldTests.Three_d_text_is_drawn_at_the_game_s_three_d_ui_scale_whatever_scale_the_module_saved_and_keeps_its_colour_s_alpha"
   },
   {
    "row": "GridState.Lines",
@@ -1390,7 +1390,7 @@
    "held_by": "",
    "count": 569,
    "modules": 10,
-   "audited": ""
+   "audited": "SaveFieldTests.A_tile_saved_without_a_stretch_stays_square_and_one_without_tile_settings_stretches_as_the_prefab_does_whatever_its_shape"
   },
   {
    "row": "SaveState.Gravity",
@@ -1420,7 +1420,7 @@
    "held_by": "DrawingTests",
    "count": 9,
    "modules": 9,
-   "audited": ""
+   "audited": "ConverterTests.Lines_drawn_on_pieces_and_on_the_table_come_over_and_the_rules_are_the_briefing"
   },
   {
    "row": "ObjectState.DragSelectable",
@@ -1430,7 +1430,7 @@
    "held_by": "ModuleOptionsTests",
    "count": 335,
    "modules": 8,
-   "audited": ""
+   "audited": "FidelityTests.A_piece_a_drag_box_must_skip_or_that_measures_its_move_comes_over_so"
   },
   {
    "row": "CustomPDFState.PDFUrl",
@@ -1440,7 +1440,7 @@
    "held_by": "BookTests",
    "count": 9,
    "modules": 8,
-   "audited": ""
+   "audited": "SaveFieldTests.A_pdf_book_lies_four_units_deep_and_as_wide_as_its_page_and_a_page_of_another_shape_reshapes_it"
   },
   {
    "row": "MusicPlayerState.AudioLibrary",
@@ -1470,7 +1470,7 @@
    "held_by": "",
    "count": 35,
    "modules": 7,
-   "audited": ""
+   "audited": "ConverterTests.A_picture_die_turns_up_the_side_a_module_turns_up_for_each_value_on_the_standard_picture_die"
   },
   {
    "row": "LightingState.LightColor",
@@ -1490,7 +1490,7 @@
    "held_by": "",
    "count": 7,
    "modules": 7,
-   "audited": ""
+   "audited": "ConverterTests.A_board_is_as_tall_as_its_base_and_as_wide_as_its_width_setting_says_grown_as_its_table_grows_it"
   },
   {
    "row": "SaveState.Tags",
@@ -1510,7 +1510,7 @@
    "held_by": "",
    "count": 1241,
    "modules": 6,
-   "audited": ""
+   "audited": "SaveFieldTests.A_card_takes_its_cells_shape_at_the_game_s_card_height_and_the_outline_its_card_type_names; ConverterTests.A_card_on_a_sheet_is_cut_from_its_own_cell_at_module_card_size_with_its_back"
   },
   {
    "row": "ObjectState.Hands",
@@ -1530,7 +1530,7 @@
    "held_by": "import-sweep: naval",
    "count": 1196,
    "modules": 6,
-   "audited": ""
+   "audited": "SaveFieldTests.A_card_sheet_saved_without_its_size_is_ten_by_seven_a_card_past_the_sheet_is_its_last_cell_and_a_back_marked_unique_is_cut_per_card; ConverterTests.A_card_on_a_sheet_is_cut_from_its_own_cell_at_module_card_size_with_its_back"
   },
   {
    "row": "ObjectState.HideWhenFaceDown",
@@ -1550,7 +1550,7 @@
    "held_by": "WorthImportTests",
    "count": 357,
    "modules": 6,
-   "audited": ""
+   "audited": "FidelityTests.A_model_keeps_the_material_and_shine_the_module_gave_it"
   },
   {
    "row": "CustomShaderState.SpecularColor",
@@ -1560,7 +1560,7 @@
    "held_by": "WorthImportTests",
    "count": 310,
    "modules": 6,
-   "audited": ""
+   "audited": "FidelityTests.A_model_keeps_the_material_and_shine_the_module_gave_it"
   },
   {
    "row": "PhysicsMaterialState.StaticFriction",
@@ -1590,7 +1590,7 @@
    "held_by": "",
    "count": 26,
    "modules": 6,
-   "audited": ""
+   "audited": "SaveFieldTests.Three_d_text_is_drawn_at_the_game_s_three_d_ui_scale_whatever_scale_the_module_saved_and_keeps_its_colour_s_alpha"
   },
   {
    "row": "CustomMeshState.CastShadows",
@@ -1620,7 +1620,7 @@
    "held_by": "",
    "count": 22,
    "modules": 5,
-   "audited": ""
+   "audited": "ConverterTests.A_picture_die_turns_up_the_side_a_module_turns_up_for_each_value_on_the_standard_picture_die"
   },
   {
    "row": "RigidbodyState.UseGravity",
@@ -1680,7 +1680,7 @@
    "held_by": "",
    "count": 2590,
    "modules": 4,
-   "audited": ""
+   "audited": "ConverterTests.An_object_s_decals_come_across_on_its_faces_in_piece_units_and_a_missing_picture_is_left_out; ConverterTests.A_decal_fitted_to_a_token_in_tabletop_simulator_covers_the_token_here_too"
   },
   {
    "row": "ObjectState.AttachedSnapPoints",
@@ -1710,7 +1710,7 @@
    "held_by": "",
    "count": 4,
    "modules": 4,
-   "audited": ""
+   "audited": "SaveFieldTests.The_global_script_state_comes_in_only_with_a_global_script_as_the_game_reads_it"
   },
   {
    "row": "SaveState.SkyURL",
@@ -1720,7 +1720,7 @@
    "held_by": "",
    "count": 4,
    "modules": 4,
-   "audited": ""
+   "audited": "ConverterTests.Importing_brings_the_cards_onto_what_they_lie_on_the_sky_as_backdrop_and_each_memory_bag_as_its_own_scenario"
   },
   {
    "row": "CustomMeshState.NormalURL",
@@ -1740,7 +1740,7 @@
    "held_by": "WorthImportTests",
    "count": 216,
    "modules": 3,
-   "audited": ""
+   "audited": "FidelityTests.A_model_keeps_the_material_and_shine_the_module_gave_it"
   },
   {
    "row": "CustomShaderState.SpecularSharpness",
@@ -1750,7 +1750,7 @@
    "held_by": "WorthImportTests",
    "count": 153,
    "modules": 3,
-   "audited": ""
+   "audited": "FidelityTests.A_model_keeps_the_material_and_shine_the_module_gave_it"
   },
   {
    "row": "ColourState.a",
@@ -1760,7 +1760,7 @@
    "held_by": "TableTopTests",
    "count": 22,
    "modules": 3,
-   "audited": ""
+   "audited": "FidelityTests.A_tint_s_alpha_comes_over_so_a_helper_saved_invisible_stays_invisible; SaveFieldTests.Three_d_text_is_drawn_at_the_game_s_three_d_ui_scale_whatever_scale_the_module_saved_and_keeps_its_colour_s_alpha"
   },
   {
    "row": "ObjectState.MeasureMovement",
@@ -1770,7 +1770,7 @@
    "held_by": "ModuleOptionsTests",
    "count": 15,
    "modules": 3,
-   "audited": ""
+   "audited": "FidelityTests.A_piece_a_drag_box_must_skip_or_that_measures_its_move_comes_over_so"
   },
   {
    "row": "GridState.Type",
@@ -1810,7 +1810,7 @@
    "held_by": "",
    "count": 117,
    "modules": 2,
-   "audited": ""
+   "audited": "SaveFieldTests.A_piece_keeps_its_name_description_and_gm_notes_as_saved_its_script_state_without_a_script_and_one_tag_per_spelling_the_game_counts_as_one; GmNotesTests.A_pieces_saved_gm_notes_are_what_a_module_script_reads_until_it_sets_its_own"
   },
   {
    "row": "CustomTileState.Stackable",
@@ -1820,7 +1820,7 @@
    "held_by": "converter",
    "count": 29,
    "modules": 2,
-   "audited": ""
+   "audited": "SaveFieldTests.Only_a_stack_object_counts_its_saved_number_and_it_comes_in_as_its_own_kind_of_piece"
   },
   {
    "row": "CustomPDFState.PDFPage",
@@ -1830,7 +1830,7 @@
    "held_by": "BookTests",
    "count": 2,
    "modules": 2,
-   "audited": ""
+   "audited": "FidelityTests.A_book_lies_open_at_the_page_the_module_left_it_at_and_never_past_its_last; SaveFieldTests.A_pdf_book_keeps_its_page_offset_and_opens_with_its_password"
   },
   {
    "row": "GridState.BothSnapping",
@@ -1860,7 +1860,7 @@
    "held_by": "",
    "count": 19,
    "modules": 1,
-   "audited": ""
+   "audited": "SaveFieldTests.Three_d_text_is_drawn_at_the_game_s_three_d_ui_scale_whatever_scale_the_module_saved_and_keeps_its_colour_s_alpha"
   },
   {
    "row": "ObjectState.DeckIDs",
@@ -1870,7 +1870,7 @@
    "held_by": "import-sweep: naval",
    "count": 15,
    "modules": 1,
-   "audited": ""
+   "audited": "ConverterTests.A_deck_lies_as_a_pile_with_the_card_a_module_would_deal_on_top"
   },
   {
    "row": "GridState.Color",
@@ -1920,7 +1920,7 @@
    "held_by": "DecalPaletteTests, StampTests",
    "count": 1,
    "modules": 1,
-   "audited": ""
+   "audited": "FidelityTests.A_module_s_decal_palette_and_its_decals_on_the_table_come_over_with_their_pictures_and_sizes; SaveFieldTests.The_decal_palette_holds_one_entry_for_each_name_picture_and_size_as_the_game_adds_them"
   },
   {
    "row": "SaveState.TableURL",
@@ -1940,7 +1940,7 @@
    "held_by": "BagOrderTests",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "FidelityTests.A_bags_order_comes_over_as_its_take_order_last_in_first_out_when_the_module_names_none; FidelityTests.The_next_piece_out_follows_the_take_order_and_never_a_piece_riding_on_another"
   },
   {
    "row": "CalculatorState.memory",
@@ -2090,7 +2090,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "FidelityTests.A_module_s_decal_palette_and_its_decals_on_the_table_come_over_with_their_pictures_and_sizes"
   },
   {
    "row": "CustomDecalState.Name",
@@ -2100,7 +2100,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "FidelityTests.A_module_s_decal_palette_and_its_decals_on_the_table_come_over_with_their_pictures_and_sizes; SaveFieldTests.The_decal_palette_holds_one_entry_for_each_name_picture_and_size_as_the_game_adds_them"
   },
   {
    "row": "CustomDecalState.Size",
@@ -2110,7 +2110,7 @@
    "held_by": "DecalPaletteTests",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "SaveFieldTests.The_decal_palette_holds_one_entry_for_each_name_picture_and_size_as_the_game_adds_them"
   },
   {
    "row": "CustomDeckState.BackIsHidden",
@@ -2130,7 +2130,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ConverterTests.A_card_on_a_sheet_is_cut_from_its_own_cell_at_module_card_size_with_its_back"
   },
   {
    "row": "CustomDeckState.FaceURL",
@@ -2140,7 +2140,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ConverterTests.A_card_on_a_sheet_is_cut_from_its_own_cell_at_module_card_size_with_its_back"
   },
   {
    "row": "CustomDeckState.NumHeight",
@@ -2150,7 +2150,7 @@
    "held_by": "ConverterTests",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "SaveFieldTests.A_card_sheet_saved_without_its_size_is_ten_by_seven_a_card_past_the_sheet_is_its_last_cell_and_a_back_marked_unique_is_cut_per_card"
   },
   {
    "row": "CustomDeckState.NumWidth",
@@ -2160,7 +2160,7 @@
    "held_by": "ConverterTests",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "SaveFieldTests.A_card_sheet_saved_without_its_size_is_ten_by_seven_a_card_past_the_sheet_is_its_last_cell_and_a_back_marked_unique_is_cut_per_card; SaveFieldTests.A_card_takes_its_cells_shape_at_the_game_s_card_height_and_the_outline_its_card_type_names"
   },
   {
    "row": "CustomDeckState.Type",
@@ -2170,7 +2170,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "SaveFieldTests.A_card_takes_its_cells_shape_at_the_game_s_card_height_and_the_outline_its_card_type_names"
   },
   {
    "row": "CustomDeckState.UniqueBack",
@@ -2180,7 +2180,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "SaveFieldTests.A_card_sheet_saved_without_its_size_is_ten_by_seven_a_card_past_the_sheet_is_its_last_cell_and_a_back_marked_unique_is_cut_per_card"
   },
   {
    "row": "CustomFigurineState.MirroredBack",
@@ -2190,7 +2190,7 @@
    "held_by": "FigurineTests",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "FidelityTests.A_standing_picture_comes_over_as_a_card_in_a_round_base_at_the_tabletop_s_size_with_its_picture"
   },
   {
    "row": "CustomFigurineState.UseMinimalCollider",
@@ -2210,7 +2210,7 @@
    "held_by": "FigurineTests",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "SaveFieldTests.A_figurine_wears_its_colour_on_its_stand_only_and_its_card_grows_with_its_image_scalar_each_side_as_wide_as_its_own_picture"
   },
   {
    "row": "CustomImageState.CustomJigsawPuzzle",
@@ -2224,13 +2224,13 @@
   },
   {
    "row": "CustomImageState.ImageScalar",
-   "status": "unknown",
-   "where": "",
+   "status": "native",
+   "where": "converter reads it",
    "instead": "",
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "SaveFieldTests.A_figurine_wears_its_colour_on_its_stand_only_and_its_card_grows_with_its_image_scalar_each_side_as_wide_as_its_own_picture"
   },
   {
    "row": "CustomJigsawPuzzleState.ImageOnBoard",
@@ -2260,7 +2260,7 @@
    "held_by": "BookNotesScriptTests",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "SaveFieldTests.A_pdf_book_keeps_its_page_offset_and_opens_with_its_password"
   },
   {
    "row": "CustomPDFState.PDFPassword",
@@ -2270,7 +2270,7 @@
    "held_by": "converter",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "SaveFieldTests.A_pdf_book_keeps_its_page_offset_and_opens_with_its_password"
   },
   {
    "row": "CustomTokenState.Stackable",
@@ -2280,17 +2280,17 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "SaveFieldTests.Only_a_stack_object_counts_its_saved_number_and_it_comes_in_as_its_own_kind_of_piece"
   },
   {
    "row": "CustomTokenState.StandUp",
-   "status": "unknown",
-   "where": "",
+   "status": "native",
+   "where": "converter reads it",
    "instead": "",
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "SaveFieldTests.A_token_saved_standing_up_stands_on_its_edge_as_tall_as_its_picture_and_as_deep_as_its_thickness"
   },
   {
    "row": "DecalState.CustomDecal",
@@ -2300,7 +2300,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ConverterTests.An_object_s_decals_come_across_on_its_faces_in_piece_units_and_a_missing_picture_is_left_out"
   },
   {
    "row": "DecalState.OwnerSteamID",
@@ -2320,7 +2320,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ConverterTests.An_object_s_decals_come_across_on_its_faces_in_piece_units_and_a_missing_picture_is_left_out"
   },
   {
    "row": "FogOfWarRevealerState.Active",
@@ -3020,7 +3020,7 @@
    "held_by": "WorthImportTests",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "SaveFieldTests.Only_a_stack_object_counts_its_saved_number_and_it_comes_in_as_its_own_kind_of_piece; FidelityTests.A_stack_of_chips_comes_over_as_that_many_pieces_one_on_another_each_keeping_its_worth"
   },
   {
    "row": "ObjectState.RPGdead",
@@ -3070,7 +3070,7 @@
    "held_by": "WorthImportTests",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "FidelityTests.A_stack_of_chips_comes_over_as_that_many_pieces_one_on_another_each_keeping_its_worth"
   },
   {
    "row": "ObjectState.XmlUI",
@@ -3140,7 +3140,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ConverterTests.A_die_s_face_is_read_from_the_rotation_it_was_saved_at"
   },
   {
    "row": "RotationValueState.Value",
@@ -3150,7 +3150,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ConverterTests.A_picture_die_turns_up_the_side_a_module_turns_up_for_each_value_on_the_standard_picture_die"
   },
   {
    "row": "SaveState.Decals",
@@ -3160,7 +3160,7 @@
    "held_by": "DecalPaletteTests, StampToolTests",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "FidelityTests.A_module_s_decal_palette_and_its_decals_on_the_table_come_over_with_their_pictures_and_sizes"
   },
   {
    "row": "SaveState.ObjectStates",
@@ -3170,7 +3170,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "SaveFieldTests.An_object_placed_where_no_number_is_or_at_the_centre_with_no_size_is_left_out_as_the_digital_tabletop_leaves_it"
   },
   {
    "row": "SaveState.Rules",
@@ -3180,7 +3180,7 @@
    "held_by": "DrawingTests",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "SaveFieldTests.The_old_rules_text_comes_in_only_when_the_module_keeps_no_notebook_tabs; ConverterTests.Lines_drawn_on_pieces_and_on_the_table_come_over_and_the_rules_are_the_briefing"
   },
   {
    "row": "SaveState.SnapPoints",
@@ -3240,7 +3240,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ConverterTests.Notecards_the_notes_panel_and_notebook_tabs_become_note_pieces_carrying_their_text"
   },
   {
    "row": "TabState.color",
@@ -3270,7 +3270,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ConverterTests.Notecards_the_notes_panel_and_notebook_tabs_become_note_pieces_carrying_their_text"
   },
   {
    "row": "TabState.visibleColor",
@@ -3390,7 +3390,7 @@
    "held_by": "DrawingTests",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ConverterTests.Lines_drawn_on_pieces_and_on_the_table_come_over_and_the_rules_are_the_briefing"
   },
   {
    "row": "VectorLineState.color",
@@ -3400,7 +3400,7 @@
    "held_by": "DrawingTests",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ConverterTests.A_line_switched_off_by_its_alpha_stays_off_and_a_see_through_line_keeps_its_alpha"
   },
   {
    "row": "VectorLineState.loop",
@@ -3410,7 +3410,7 @@
    "held_by": "DrawingTests",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ConverterTests.Lines_drawn_on_pieces_and_on_the_table_come_over_and_the_rules_are_the_briefing"
   },
   {
    "row": "VectorLineState.points3",
@@ -3420,7 +3420,7 @@
    "held_by": "DrawingTests",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ConverterTests.Lines_drawn_on_pieces_and_on_the_table_come_over_and_the_rules_are_the_briefing"
   },
   {
    "row": "VectorLineState.rotation",
@@ -3430,7 +3430,7 @@
    "held_by": "DrawingTests",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "SaveFieldTests.A_line_turns_by_its_saved_rotation_ends_round_unless_saved_square_and_a_line_of_no_thickness_draws_nothing"
   },
   {
    "row": "VectorLineState.square",
@@ -3440,7 +3440,7 @@
    "held_by": "DrawingTests",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "SaveFieldTests.A_line_turns_by_its_saved_rotation_ends_round_unless_saved_square_and_a_line_of_no_thickness_draws_nothing"
   },
   {
    "row": "VectorLineState.thickness",
@@ -3450,7 +3450,7 @@
    "held_by": "DrawingTests",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "SaveFieldTests.A_line_turns_by_its_saved_rotation_ends_round_unless_saved_square_and_a_line_of_no_thickness_draws_nothing"
   }
  ],
  "object": [
@@ -9100,7 +9100,7 @@
    "held_by": "ConverterTests",
    "count": 55,
    "modules": 55,
-   "audited": ""
+   "audited": "SaveFieldTests.Module_values_written_as_text_numbers_or_flags_read_as_the_digital_tabletop_reads_them; SaveFieldTests.An_object_placed_where_no_number_is_or_at_the_centre_with_no_size_is_left_out_as_the_digital_tabletop_leaves_it; ConverterTests.A_piece_the_module_scales_by_something_that_is_not_a_number_still_comes_over_and_can_be_written"
   },
   {
    "row": "save quirk: duplicate GUIDs inside bags",
@@ -9110,7 +9110,7 @@
    "held_by": "",
    "count": 55,
    "modules": 55,
-   "audited": ""
+   "audited": "GuidTakeOutTests.A_piece_taken_out_of_a_bag_under_a_guid_a_piece_on_the_table_holds_gets_a_fresh_one_and_putting_it_back_by_undo_restores_its_own; GuidTakeOutTests.A_piece_taken_out_under_a_guid_nobody_else_holds_keeps_it"
   },
   {
    "row": "save quirk: negative scale mirrors",
