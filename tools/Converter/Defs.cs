@@ -481,6 +481,7 @@ public sealed partial class DefFactory
             def.Image ??= Placeholder(pack);
         }
         if (def.Name == "Piece") def.Name = Describe(pack, def);
+        ModuleSources.Fill(def, b);
         def.Counters = script.Counters.Select(c => new CounterDef { Name = c.Name, Min = c.Min, Max = c.Max, Default = c.Default }).ToList();
         def.TextLines = script.TextLines.Select(t => new TextLineDef { Name = t.Name, Default = t.Default }).ToList();
         foreach (var (counter, sp) in script.Spawns)

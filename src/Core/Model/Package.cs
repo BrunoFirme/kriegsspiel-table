@@ -181,6 +181,9 @@ public sealed class PieceDef : IJsonOnDeserialized
     public string? Mesh { get; set; }
     public string? Texture { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? Normal { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? ModuleType { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<string>? ModuleTags { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public Dictionary<string, string>? Sources { get; set; }
     public string? AddOnMesh { get; set; }
     public string? AddOnTexture { get; set; }
     public Size2 Size { get; set; } = new(1, 1);
