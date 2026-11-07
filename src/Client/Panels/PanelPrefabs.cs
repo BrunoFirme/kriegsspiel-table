@@ -2,8 +2,30 @@ namespace KTable.Client.Panels;
 
 public static class PanelPrefabs
 {
-    public const string UiSprite = "UISprite", ToolSprite = "UISprite_XmlLayout", Background = "Background", ToolBackground = "Background_XmlLayout", Checkmark = "Checkmark",
-        DropdownArrow = "DropdownArrow", Knob = "Knob", MaskSprite = "UIMask", OutlineSharp = "Outline_Sharp";
+    public const string UiSprite = "::UISprite", ToolSprite = "::UISprite_XmlLayout", Background = "::Background", ToolBackground = "::Background_XmlLayout", Checkmark = "::Checkmark",
+        DropdownArrow = "::DropdownArrow", Knob = "::Knob", MaskSprite = "::UIMask", OutlineSharp = "::Outline_Sharp", Outline = "::Outline", GroupBackground = "::ToggleGroup_Background",
+        GroupSelected = "::ToggleGroup_Selected";
+
+    public static readonly Dictionary<string, (float W, float H, float Border, float PixelsPerUnit)> Sprites = new()
+    {
+        [UiSprite] = (32, 32, 10, 200), [Background] = (32, 32, 10, 200), [MaskSprite] = (32, 32, 10, 200), [ToolSprite] = (128, 128, 4, 128), [ToolBackground] = (128, 128, 4, 128),
+        [Checkmark] = (40, 40, 0, 128), [Knob] = (40, 40, 0, 200), [DropdownArrow] = (40, 40, 0, 128), [Outline] = (512, 512, 64, 512), [OutlineSharp] = (512, 512, 64, 512),
+        [GroupBackground] = (512, 512, 0, 100), [GroupSelected] = (512, 512, 0, 100),
+    };
+
+    public static readonly Dictionary<string, string> Known = new()
+    {
+        ["Sprites/Elements/UISprite_XmlLayout"] = ToolSprite, ["Sprites/Elements/Background_XmlLayout"] = ToolBackground, ["Sprites/Elements/Checkmark"] = Checkmark,
+        ["Sprites/Elements/DropdownArrow"] = DropdownArrow, ["Sprites/Elements/ToggleGroup_Background"] = GroupBackground, ["Sprites/Elements/ToggleGroup_Selected"] = GroupSelected,
+    };
+
+    static readonly string[] KnownBlank =
+    {
+        "Sprites/Elements/AccordionCollapsed", "Sprites/Elements/AccordionExpanded", "Sprites/Elements/TriangleRight", "Sprites/Elements/Background", "Sprites/HUD/", "Sprites/Icons/",
+        "Sprites/Layout/", "Sprites/Shop/", "Sprites/XmlLayout", "Cursors/",
+    };
+
+    public static bool KnownToTheGame(string name) => Known.ContainsKey(name) || KnownBlank.Any(k => k.EndsWith('/') ? name.StartsWith(k, StringComparison.Ordinal) : name == k);
     public const int Simple = 0, Sliced = 1;
     static readonly Paint Ink = new(0.19608f, 0.19608f, 0.19608f, 1);
     static readonly Paint Faint = new(1, 1, 1, 0);
@@ -16,7 +38,7 @@ public static class PanelPrefabs
         "Button" => Button(tag),
         "ToggleButton" => ToggleButton(),
         "Toggle" => Toggle(),
-        "ToggleGroup" => Plain(tag, Faint, Background),
+        "ToggleGroup" => Group(),
         "InputField" => Input(),
         "Slider" => Slider(),
         "ProgressBar" => Progress(),
@@ -145,6 +167,14 @@ public static class PanelPrefabs
         return d;
     }
 
+    static PanelBox Group()
+    {
+        var g = Plain("ToggleGroup", Faint, Background);
+        g.Extra["toggleBackgroundImage"] = GroupBackground;
+        g.Extra["toggleSelectedImage"] = GroupSelected;
+        return g;
+    }
+
     static PanelBox Group(string tag, GroupKind kind)
     {
         var g = Plain(tag, Faint, null);
@@ -194,12 +224,15 @@ public static class PanelPrefabs
         s.Extra["horizontal"] = vertical ? "false" : "true";
         var view = s.Add(new PanelBox { Name = "Viewport", SizeDelta = vertical ? new V2(-17, 0) : new V2(0, -17), Pivot = new V2(0, 1), Mask = true, ShowMaskGraphic = false,
             Image = new ImageProps { Color = Paint.White, Sprite = MaskSprite, Type = Sliced } });
-        var content = view.Add(new PanelBox { Name = "Content", Pivot = new V2(0, 1), AnchorMin = vertical ? new V2(0, 1) : V2.Zero, AnchorMax = vertical ? V2.One : new V2(0, 1),
+        view.Add(new PanelBox { Name = "Content", Pivot = new V2(0, 1), AnchorMin = vertical ? new V2(0, 1) : V2.Zero, AnchorMax = vertical ? V2.One : new V2(0, 1),
             SizeDelta = vertical ? new V2(0, 512) : new V2(768, 0) });
-        if (vertical) content.FitHeight = 2;
-        else content.FitWidth = 2;
-        s.Add(Bar("Scrollbar Vertical", new V2(1, 0), V2.One, new V2(20, 0), V2.One, new Paint(0.5f, 0.5f, 0.5f, 1)));
-        s.Add(Bar("Scrollbar Horizontal", V2.Zero, new V2(1, 0), new V2(0, 20), V2.Zero, Paint.White));
+        var bars = new[]
+        {
+            s.Add(Bar("Scrollbar Vertical", new V2(1, 0), V2.One, new V2(20, 0), V2.One, new Paint(0.5f, 0.5f, 0.5f, 1))),
+            s.Add(Bar("Scrollbar Horizontal", V2.Zero, new V2(1, 0), new V2(0, 20), V2.Zero, Paint.White)),
+        };
+        bars[0].Extra["visibility"] = vertical ? "0" : "1";
+        bars[1].Extra["visibility"] = vertical ? "1" : "0";
         return s;
     }
 

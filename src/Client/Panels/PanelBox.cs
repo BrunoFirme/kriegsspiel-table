@@ -95,6 +95,7 @@ public sealed class PanelBox
     public Dictionary<string, string> Extra = new(StringComparer.OrdinalIgnoreCase);
     public V2 RectMin, RectSize;
     public V2 PivotAt;
+    public V2 Scrolled;
 
     public PanelBox Add(PanelBox child)
     {

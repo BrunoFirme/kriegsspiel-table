@@ -21,6 +21,7 @@ public static partial class PanelApply
         "Row" => b.Row != null && RowProperty(b.Row, k, v),
         "Button" or "Toggle" or "ToggleButton" or "InputField" or "Slider" or "Dropdown" => b.Select != null && SelectProperty(b, k, v, ctx),
         "Mask" => k == "showmaskgraphic" && Set(() => b.ShowMaskGraphic = PanelValues.Bool(v)),
+        "ToggleGroup" => k is "togglebackgroundimage" or "togglebackgroundcolor" or "toggleselectedimage" or "toggleselectedcolor" or "allowswitchoff" && Set(() => b.Extra[k] = v),
         _ => false,
     } || b.Tag == "Cell" && b.Cell != null && CellProperty(b.Cell, k, v);
 
@@ -117,7 +118,8 @@ public static partial class PanelApply
     {
         "showanimation", "hideanimation", "animationduration", "showanimationdelay", "hideanimationdelay", "defaultopacity", "onclicksound", "onmouseentersound", "onmouseexitsound",
         "onshowsound", "onhidesound", "audiovolume", "audiomode", "audiomixergroup", "allowdragging", "restrictdraggingtoparentbounds", "returntooriginalpositionwhenreleased", "isdropreceiver",
-        "tooltip", "cursor", "cursorclick",
+        "tooltip", "cursor", "cursorclick", "highlightedsprite", "pressedsprite", "selectedsprite", "disabledsprite", "navigation", "selectonup", "selectondown", "selectonleft",
+        "selectonright", "hoverclass", "pressclass", "selectclass",
     };
 
     static bool ElementField(PanelBox b, string k, string v)

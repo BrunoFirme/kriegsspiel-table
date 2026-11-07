@@ -9,8 +9,9 @@ namespace KTable.App;
 
 sealed partial class PanelView
 {
-    PanelBox? _pressed;
+    PanelBox? _pressed, _selected;
     const string LeftPointer = "-1", RightPointer = "-2", MiddlePointer = "-3";
+    const string ClickSound = "onclicksound", EnterSound = "onmouseentersound", ExitSound = "onmouseexitsound";
 
     static string Pointer(MouseButton b) => b switch { MouseButton.Right => RightPointer, MouseButton.Middle => MiddlePointer, _ => LeftPointer };
 
@@ -20,90 +21,85 @@ sealed partial class PanelView
     {
         if (owner.Path == null || owner.Element == null) return;
         if (string.IsNullOrEmpty(owner.Element.Get(ev))) return;
-        _send(owner.Path, ev, value);
+        _hooks.Send(owner.Path, ev, value);
+    }
+
+    void Sound(PanelBox owner, string key)
+    {
+        if (owner.Path == null || owner.Extra.GetValueOrDefault(key) is not { Length: > 0 } name || PanelValues.IsNone(name)) return;
+        float volume = owner.Extra.TryGetValue("audiovolume", out var v) ? PanelValues.Float(v) : 1;
+        _hooks.Sound(name, volume);
     }
 
     void Input(PanelBox hit, InputEvent e)
     {
-        if (Owner(hit) is not { } owner) return;
-        if (e is InputEventMouseButton { ButtonIndex: MouseButton.WheelUp or MouseButton.WheelDown } wheel)
+        if (e is InputEventMouseButton { ButtonIndex: MouseButton.WheelUp or MouseButton.WheelDown or MouseButton.WheelLeft or MouseButton.WheelRight } wheel)
         {
-            if (wheel.Pressed) Scroll(owner, wheel.ButtonIndex == MouseButton.WheelUp ? 1 : -1);
+            if (wheel.Pressed) Wheel(hit, wheel);
+            Accept(hit);
             return;
         }
-        if (e is InputEventMouseMotion { ButtonMask: MouseButtonMask.Left } motion)
+        if (e is InputEventMouseMotion motion && (motion.ButtonMask & MouseButtonMask.Left) != 0)
         {
-            Drag(owner, motion.GlobalPosition);
+            Motion(motion.GlobalPosition);
             return;
         }
         if (e is not InputEventMouseButton mb) return;
-        if (!mb.Pressed && mb.ButtonIndex == MouseButton.Left && _drag is { } d && d.Moved)
+        var owner = Owner(hit);
+        if (mb.ButtonIndex == MouseButton.Left)
         {
-            EndDrag(d);
-            _pressed = null;
-            return;
+            if (mb.Pressed) Grab(hit, mb.GlobalPosition);
+            else if (Release())
+            {
+                var was = _pressed;
+                _pressed = null;
+                if (was != null) Repaint(was);
+                Accept(hit);
+                return;
+            }
         }
-        if (mb.Pressed && mb.ButtonIndex == MouseButton.Left) _drag = Draggable(owner) && Nodes.TryGetValue(owner, out var dc) ? new DragState(owner, dc, mb.GlobalPosition, dc.Position) : null;
-        Press(hit, owner, mb.ButtonIndex, mb.Pressed, mb.Position);
-        Nodes.GetValueOrDefault(hit)?.AcceptEvent();
+        if (owner != null) Press(hit, owner, mb.ButtonIndex, mb.Pressed);
+        Accept(hit);
     }
 
-    sealed record DragState(PanelBox Owner, Control Node, Vector2 From, Vector2 Home)
+    void Accept(PanelBox hit)
     {
-        public bool Moved { get; set; }
+        if (Nodes.GetValueOrDefault(hit) is { } c && GodotObject.IsInstanceValid(c)) c.AcceptEvent();
     }
 
-    DragState? _drag;
-    const float DragThreshold = 5;
-
-    static bool Draggable(PanelBox owner) => PanelValues.Bool(owner.Extra.GetValueOrDefault("allowdragging"));
-
-    void Drag(PanelBox owner, Vector2 at)
-    {
-        if (_drag is not { } d || !GodotObject.IsInstanceValid(d.Node)) return;
-        if (!d.Moved && (at - d.From).Length() < DragThreshold) return;
-        if (!d.Moved)
-        {
-            d.Moved = true;
-            Fire(d.Owner, "onBeginDrag", "");
-        }
-        var scale = d.Node.GetGlobalTransform().Scale;
-        var to = d.Home + (at - d.From) / new Vector2(Mathf.Max(1e-6f, Mathf.Abs(scale.X)), Mathf.Max(1e-6f, Mathf.Abs(scale.Y)));
-        bool inside = !d.Owner.Extra.TryGetValue("restrictdraggingtoparentbounds", out var r) || PanelValues.Bool(r);
-        if (inside && d.Node.GetParentControl() is { } parent)
-            to = new Vector2(Mathf.Clamp(to.X, 0, Mathf.Max(0, parent.Size.X - d.Node.Size.X)), Mathf.Clamp(to.Y, 0, Mathf.Max(0, parent.Size.Y - d.Node.Size.Y)));
-        d.Node.Position = to;
-        Fire(d.Owner, "onDrag", "");
-    }
-
-    void EndDrag(DragState d)
-    {
-        _drag = null;
-        bool home = !d.Owner.Extra.TryGetValue("returntooriginalpositionwhenreleased", out var r) || PanelValues.Bool(r);
-        if (home && GodotObject.IsInstanceValid(d.Node)) d.Node.Position = d.Home;
-        Fire(d.Owner, "onEndDrag", "");
-    }
-
-    public void Press(PanelBox hit, PanelBox owner, MouseButton button, bool down, Vector2 inside)
+    public void Press(PanelBox hit, PanelBox owner, MouseButton button, bool down)
     {
         var pointer = Pointer(button);
-        if (!Interactable(owner)) return;
-        if (down)
+        if (owner.Tag == PanelLists.Item)
         {
-            _pressed = owner;
-            Fire(owner, "onMouseDown", pointer);
-            if (owner.Tag == "Slider" && button == MouseButton.Left) Slide(owner, hit, inside);
+            Choose(owner, down);
             return;
         }
-        Fire(owner, "onMouseUp", pointer);
+        if (down)
+        {
+            if (!Interactable(owner)) return;
+            _pressed = owner;
+            if (button == MouseButton.Left) Select(owner);
+            Repaint(owner);
+            bool pressClassed = PanelClasses.Change(_local, owner, PanelClasses.Press, true);
+            Fire(owner, "onMouseDown", pointer);
+            if (pressClassed) Redraw();
+            return;
+        }
         bool clicked = _pressed == owner;
         _pressed = null;
+        Repaint(owner);
+        bool released = PanelClasses.Change(_local, owner, PanelClasses.Press, false);
+        if (Interactable(owner)) Fire(owner, "onMouseUp", pointer);
+        if (released) Redraw();
         if (!clicked) return;
-        if (button == MouseButton.Left) Act(owner, hit, inside);
+        Sound(owner, ClickSound);
+        if (button == MouseButton.Left && Interactable(owner)) Act(owner);
         Fire(owner, "onClick", pointer);
+        if (owner.Tag != "InputField" && _selected == owner) Deselect();
     }
 
-    void Act(PanelBox owner, PanelBox hit, Vector2 inside)
+    void Act(PanelBox owner)
     {
         switch (owner.Tag)
         {
@@ -111,59 +107,118 @@ sealed partial class PanelView
                 Flip(owner);
                 break;
             case "Dropdown":
-                Pick(owner);
-                break;
-            case "InputField":
-                Type(owner);
+                OpenList(owner);
                 break;
         }
     }
 
+    public void Announce(PanelMove m)
+    {
+        if (_scene?.At(m.Path) is not { } box) return;
+        Announce(box, m.Showing ? "onshowsound" : "onhidesound");
+    }
+
+    void Announce(PanelBox b, string key)
+    {
+        if (b.Element != null && !b.Active) return;
+        if (b.Element != null) Sound(b, key);
+        foreach (var c in b.Children) Announce(c, key);
+    }
+
+    int _hoverStamp;
+    const string HoveredKey = "#hovered";
+
     void Hover(PanelBox hit, bool entering)
     {
-        if (Owner(hit) is not { } owner) return;
-        var chain = new List<PanelBox>();
-        for (var at = owner; at != null; at = at.Parent) if (at.Element != null) chain.Add(at);
+        int stamp = ++_hoverStamp;
         if (entering)
         {
-            foreach (var b in chain.Where(b => !_hovered.Contains(b)).Reverse())
-            {
-                _hovered.Add(b);
-                if (Interactable(b)) Fire(b, "onMouseEnter", LeftPointer);
-            }
+            Track(Chain(hit));
+            return;
         }
-        else
+        Callable.From(() =>
         {
-            foreach (var b in _hovered.ToList())
-            {
-                _hovered.Remove(b);
-                if (Interactable(b)) Fire(b, "onMouseExit", LeftPointer);
-            }
+            if (stamp == _hoverStamp && _top != null && GodotObject.IsInstanceValid(_top)) Track(new List<PanelBox>());
+        }).CallDeferred();
+    }
+
+    static List<PanelBox> Chain(PanelBox hit)
+    {
+        var chain = new List<PanelBox>();
+        for (var at = Owner(hit); at != null; at = at.Parent) if (at.Element != null) chain.Add(at);
+        return chain;
+    }
+
+    void Track(List<PanelBox> chain)
+    {
+        bool changed = false;
+        foreach (var b in _hovered.Where(b => !chain.Contains(b)).ToList()) changed |= Left(b);
+        foreach (var b in chain.Where(b => !_hovered.Contains(b))) changed |= Entered(b);
+        _local[HoveredKey] = string.Join(" ", _hovered.Where(b => b.Path != null).Select(b => Key(b)));
+        if (changed) Redraw();
+    }
+
+    void RestoreHover(PanelScene scene)
+    {
+        if (_local.GetValueOrDefault(HoveredKey) is not { Length: > 0 } keys) return;
+        var wanted = keys.Split(' ').ToHashSet();
+        var boxes = scene.Elements.Where(e => e.Path != null && wanted.Contains(PanelScene.Key(e.Path))).ToList();
+        bool changed = false;
+        foreach (var b in boxes)
+        {
+            _hovered.Add(b);
+            if (!b.ActiveInHierarchy) changed |= Left(b);
         }
-        Repaint(owner);
+        _local[HoveredKey] = string.Join(" ", _hovered.Where(b => b.Path != null).Select(b => Key(b)));
+        if (changed) Redraw();
+    }
+
+    bool Entered(PanelBox b)
+    {
+        _hovered.Add(b);
+        Repaint(b);
+        if (!Interactable(b)) return false;
+        Sound(b, EnterSound);
+        bool classed = PanelClasses.Change(_local, b, PanelClasses.Hover, true);
+        Fire(b, "onMouseEnter", LeftPointer);
+        PanelCursors.Enter(b, _hooks.CursorPicture);
+        return classed;
+    }
+
+    bool Left(PanelBox b)
+    {
+        _hovered.Remove(b);
+        Repaint(b);
+        Sound(b, ExitSound);
+        bool classed = PanelClasses.Change(_local, b, PanelClasses.Hover, false);
+        if (Interactable(b)) Fire(b, "onMouseExit", LeftPointer);
+        return classed;
     }
 
     void Repaint(PanelBox owner)
     {
         if (owner.Select?.TargetGraphic is not { } target) return;
         var graphic = owner.Name == target ? owner : owner.Part(target);
-        if (graphic?.Image == null || !Nodes.TryGetValue(graphic, out var c) || c.GetChildCount() == 0) return;
-        var tint = Tinted(graphic, ToColor(graphic.Image.Color));
-        switch (c.GetChild(0))
+        if (graphic?.Image == null || !Nodes.TryGetValue(graphic, out var c) || !GodotObject.IsInstanceValid(c) || c.GetChildCount() == 0 || c.GetChild(0) is not Control old) return;
+        var fresh = Paint(graphic);
+        c.AddChild(fresh);
+        c.MoveChild(fresh, 0);
+        float fade = owner.Select.Colors.Fade;
+        if (fade <= 0 || owner.Select.Transition != 1)
         {
-            case Panel p when p.GetThemeStylebox("panel") is StyleBoxFlat sb:
-                sb.BgColor = tint;
-                break;
-            case TextureRect tr:
-                tr.SelfModulate = tint;
-                break;
-            case ColorRect cr:
-                cr.Color = tint;
-                break;
+            old.QueueFree();
+            return;
         }
+        fresh.Modulate = Colors.White with { A = 0 };
+        var tween = c.CreateTween();
+        tween.TweenProperty(fresh, "modulate:a", 1f, fade);
+        tween.TweenCallback(Callable.From(() =>
+        {
+            if (GodotObject.IsInstanceValid(old)) old.QueueFree();
+        }));
     }
 
-    string Key(PanelBox owner) => PanelScene.Key(owner.Path!);
+    static string Key(PanelBox owner) => PanelScene.Key(owner.Path!);
 
     void Flip(PanelBox owner)
     {
@@ -173,121 +228,21 @@ sealed partial class PanelView
         if (on && group != null && !PanelValues.Bool(group.Extra.GetValueOrDefault("allowswitchoff"))) return;
         _local[key] = (!on).ToString();
         if (group != null && !on)
-            foreach (var other in GroupToggles(group).Where(t => t != owner))
+            foreach (var other in PanelScene.Toggles(group).Where(t => t != owner))
                 if (PanelValues.Bool(_local.GetValueOrDefault(Key(other)) ?? other.Extra.GetValueOrDefault("ison")))
                 {
                     _local[Key(other)] = false.ToString();
                     Fire(other, "onValueChanged", false.ToString());
                 }
         Fire(owner, "onValueChanged", (!on).ToString());
-        if (group != null && !on) Fire(group, "onValueChanged", GroupToggles(group).IndexOf(owner).ToString(CultureInfo.InvariantCulture));
-        _redraw();
+        if (group != null && !on) Fire(group, "onValueChanged", PanelScene.Toggles(group).ToList().IndexOf(owner).ToString(CultureInfo.InvariantCulture));
+        Redraw();
     }
 
     static PanelBox? Group(PanelBox b)
     {
         for (var at = b.Parent; at != null; at = at.Parent) if (at.Tag == "ToggleGroup") return at;
         return null;
-    }
-
-    static List<PanelBox> GroupToggles(PanelBox group)
-    {
-        var list = new List<PanelBox>();
-        void Walk(PanelBox b)
-        {
-            foreach (var c in b.Children)
-            {
-                if (c.Element != null && c.Tag is "Toggle" or "ToggleButton") list.Add(c);
-                else if (c.Tag != "ToggleGroup") Walk(c);
-            }
-        }
-        Walk(group);
-        return list;
-    }
-
-    void Slide(PanelBox owner, PanelBox hit, Vector2 inside)
-    {
-        if (!Nodes.TryGetValue(owner, out var c)) return;
-        var local = c.GetLocalMousePosition();
-        float t = Mathf.Clamp(local.X / Mathf.Max(1, c.Size.X), 0, 1);
-        float min = PanelValues.Float(owner.Extra.GetValueOrDefault("minvalue")), max = PanelValues.Float(owner.Extra.GetValueOrDefault("maxvalue") ?? "1");
-        float v = min + (max - min) * t;
-        if (PanelValues.Bool(owner.Extra.GetValueOrDefault("wholenumbers"))) v = Mathf.Round(v);
-        var text = v.ToString(CultureInfo.InvariantCulture);
-        if (_local.GetValueOrDefault(Key(owner)) == text) return;
-        _local[Key(owner)] = text;
-        Fire(owner, "onValueChanged", text);
-        _redraw();
-    }
-
-    void Pick(PanelBox owner)
-    {
-        var options = owner.Element?.Options ?? new();
-        if (options.Count == 0 || !Nodes.TryGetValue(owner, out var c)) return;
-        var menu = new PopupMenu();
-        for (int i = 0; i < options.Count; i++) menu.AddItem(options[i].Value ?? "", i);
-        menu.IdPressed += id =>
-        {
-            var was = PanelScene.DropdownIndex(owner, owner.Element!, _local.GetValueOrDefault(Key(owner)));
-            if (was != (int)id)
-            {
-                _local[Key(owner)] = id.ToString(CultureInfo.InvariantCulture);
-                Fire(owner, "onValueChanged", id.ToString(CultureInfo.InvariantCulture));
-                _redraw();
-            }
-            menu.QueueFree();
-        };
-        menu.PopupHide += () => { if (GodotObject.IsInstanceValid(menu)) menu.QueueFree(); };
-        c.GetTree().Root.AddChild(menu);
-        menu.Popup(new Rect2I((Vector2I)c.GetViewport().GetMousePosition(), Vector2I.Zero));
-    }
-
-    void Type(PanelBox owner)
-    {
-        if (!Nodes.TryGetValue(owner, out var c) || PanelValues.Bool(owner.Extra.GetValueOrDefault("readonly"))) return;
-        var key = Key(owner);
-        var start = _local.GetValueOrDefault(key) ?? owner.Extra.GetValueOrDefault("text") ?? "";
-        bool lines = (owner.Extra.GetValueOrDefault("linetype") ?? "SingleLine") != "SingleLine";
-        int limit = PanelValues.Int(owner.Extra.GetValueOrDefault("characterlimit"));
-        var mode = owner.Extra.GetValueOrDefault("charactervalidation") ?? "None";
-        var dlg = new ConfirmationDialog { Title = "Text", OkButtonText = "OK" };
-        Control field = lines ? new TextEdit { Text = start, CustomMinimumSize = new Vector2(420, 160) } : new LineEdit { Text = start, CustomMinimumSize = new Vector2(320, 0), MaxLength = limit };
-        void Changed(string typed)
-        {
-            var ok = PanelTyping.Valid(typed, mode);
-            if (limit > 0 && ok.Length > limit) ok = ok[..limit];
-            if (_local.GetValueOrDefault(key) == ok) return;
-            _local[key] = ok;
-            Fire(owner, "onValueChanged", ok);
-        }
-        if (field is LineEdit le)
-        {
-            le.TextChanged += Changed;
-            le.TextSubmitted += _ => { Fire(owner, "onSubmit", le.Text); dlg.EmitSignal(AcceptDialog.SignalName.Confirmed); };
-        }
-        else ((TextEdit)field).TextChanged += () => Changed(((TextEdit)field).Text);
-        dlg.AddChild(field);
-        dlg.Confirmed += () => { Fire(owner, "onEndEdit", _local.GetValueOrDefault(key) ?? start); _redraw(); };
-        dlg.Canceled += () => { Fire(owner, "onEndEdit", _local.GetValueOrDefault(key) ?? start); _redraw(); };
-        dlg.VisibilityChanged += () => { if (!dlg.Visible) dlg.QueueFree(); };
-        c.GetTree().Root.AddChild(dlg);
-        dlg.PopupCentered();
-        field.GrabFocus();
-    }
-
-    void Scroll(PanelBox owner, int notches)
-    {
-        for (var at = owner; at != null; at = at.Parent)
-        {
-            if (at.Tag is not ("VerticalScrollView" or "HorizontalScrollView") || at.Part("Content") is not { } content || !Nodes.TryGetValue(content, out var c)) continue;
-            bool vertical = at.Tag == "VerticalScrollView";
-            const float Notch = 40;
-            var view = Nodes.GetValueOrDefault(at.Part("Viewport")!);
-            float room = vertical ? Math.Max(0, c.Size.Y - (view?.Size.Y ?? 0)) : Math.Max(0, c.Size.X - (view?.Size.X ?? 0));
-            if (vertical) c.Position = c.Position with { Y = Math.Clamp(c.Position.Y + notches * Notch, -room, 0) };
-            else c.Position = c.Position with { X = Math.Clamp(c.Position.X + notches * Notch, -room, 0) };
-            return;
-        }
     }
 
     public PanelBox? Hit(Vector2 pixel)
@@ -301,10 +256,23 @@ sealed partial class PanelView
         return best;
     }
 
-    public void Click(PanelBox hit, Vector2 inside)
+    static bool Within(PanelBox b, PanelBox top)
     {
+        for (var at = b; at != null; at = at.Parent) if (at == top) return true;
+        return false;
+    }
+
+    public void Click(PanelBox hit, Vector2 at)
+    {
+        if (_list != null && !Within(hit, _list))
+        {
+            CloseList();
+            return;
+        }
         if (Owner(hit) is not { } owner) return;
-        Press(hit, owner, MouseButton.Left, true, inside);
-        Press(hit, owner, MouseButton.Left, false, inside);
+        Grab(hit, at);
+        Press(hit, owner, MouseButton.Left, true);
+        Release();
+        Press(hit, owner, MouseButton.Left, false);
     }
 }

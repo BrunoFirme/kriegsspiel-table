@@ -26,12 +26,29 @@ public partial class ScriptUi : Control
     PanelView? _view;
 
     readonly HashSet<string> _hiding = new();
+    readonly HashSet<string> _said = new();
+
+    public override void _Input(InputEvent e)
+    {
+        if (e is InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.Left } mb) PanelFocus.Pressed(mb.GlobalPosition);
+        else if (e is InputEventKey key && PanelFocus.Key(key)) GetViewport().SetInputAsHandled();
+    }
+
+    public override void _ExitTree()
+    {
+        PanelFocus.Forget(_local);
+        PanelCursors.Reset();
+    }
 
     public void Applied(Command c)
     {
         foreach (var one in PanelChanges.Flat(c))
         {
-            if (one is SetUi { Piece: null }) _local.Clear();
+            if (one is SetUi { Piece: null })
+            {
+                _local.Clear();
+                _said.Clear();
+            }
             else if (one is SetUiAttributes { Piece: null } sua) PanelChanges.Forget(_local, _s.View.UiLayout, sua.Id);
         }
         var moves = PanelMoves.Of(c, _s.View.UiLayout, null);
@@ -39,6 +56,7 @@ public partial class ScriptUi : Control
         Rebuild();
         foreach (var m in moves)
         {
+            _view?.Announce(m);
             if (_view?.Scene?.At(m.Path) is not { } box || !_view.Nodes.TryGetValue(box, out var node)) continue;
             var key = PanelScene.Key(m.Path);
             PanelAnimate.Play(node, m, m.Showing ? null : () => { if (_hiding.Remove(key)) Rebuild(); });
@@ -55,8 +73,9 @@ public partial class ScriptUi : Control
         float scale = Mathf.Max(0.01f, screen.Y / PanelScene.ScreenHeight);
         var canvas = new V2(screen.X / scale, PanelScene.ScreenHeight);
         var (color, host, admin) = PanelSeats.Of(_s.Me, _s.Peers);
+        layout = PanelClasses.Apply(layout, _local);
         var scene = PanelScene.Build(layout, canvas, new PanelContext(layout.Colors, color, host, admin), PanelPictures.Meter(_s), _local, _hiding);
-        _view = new PanelView(Send, (name, ready) => PanelPictures.Texture(_s, name, ready), _local, () => Callable.From(Rebuild).CallDeferred());
+        _view = new PanelView(PanelHost.Hooks(_s, Send, (name, ready) => PanelPictures.Texture(_s, name, ready), _local, () => Callable.From(Rebuild).CallDeferred(), _said));
         var root = _view.Show(scene, scene.Root);
         root.Scale = new Vector2(scale, scale);
         AddChild(root);

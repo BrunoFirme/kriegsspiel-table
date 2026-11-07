@@ -30,7 +30,11 @@ sealed class PieceUi
     {
         foreach (var one in PanelChanges.Flat(c))
         {
-            if (one is SetUi su && su.Piece == _piece.Piece.Id) _local.Clear();
+            if (one is SetUi su && su.Piece == _piece.Piece.Id)
+            {
+                _local.Clear();
+                _said.Clear();
+            }
             else if (one is SetUiAttributes sua && sua.Piece == _piece.Piece.Id) PanelChanges.Forget(_local, _piece.Piece.UiLayout, sua.Id);
         }
         var moves = PanelMoves.Of(c, _piece.Piece.UiLayout, _piece.Piece.Id);
@@ -40,12 +44,14 @@ sealed class PieceUi
     }
 
     readonly HashSet<string> _hiding = new();
+    readonly HashSet<string> _said = new();
 
     void Animate(PanelMove m)
     {
         foreach (var p in _plates)
         {
             if (p.View.Scene?.At(m.Path) is not { } box || !p.View.Nodes.TryGetValue(box, out var node)) continue;
+            p.View.Announce(m);
             p.Port.RenderTargetUpdateMode = SubViewport.UpdateMode.Always;
             var key = PanelScene.Key(m.Path);
             PanelAnimate.Play(node, m, () =>
@@ -74,6 +80,7 @@ sealed class PieceUi
         if (layout == null || layout.Elements.Count == 0 || piece.FaceDown || _piece.IsDie || _piece.IsEffect) return;
         var s = _piece.Session;
         var (color, host, admin) = PanelSeats.Of(s.Me, s.Peers);
+        layout = PanelClasses.Apply(layout, _local);
         var scene = PanelScene.Build(layout, new V2(PanelScene.PieceCanvas, PanelScene.PieceCanvas), new PanelContext(layout.Colors, color, host, admin), PanelPictures.Meter(s), _local, _hiding);
         var top = scene.Root.Children[0];
         foreach (var root in top.Children.Where(r => r.Active && r.Element != null)) DrawPlate(scene, root);
@@ -143,11 +150,11 @@ sealed class PieceUi
         vp.AddChild(canvas);
         var s = _piece.Session;
         void Fresh() { if (GodotObject.IsInstanceValid(vp)) vp.RenderTargetUpdateMode = SubViewport.UpdateMode.Once; }
-        var view = new PanelView(Send, (name, ready) => PanelPictures.Texture(s, name, t =>
+        var view = new PanelView(PanelHost.Hooks(s, Send, (name, ready) => PanelPictures.Texture(s, name, t =>
         {
             ready(t);
             Fresh();
-        }), _local, () => Callable.From(() => Sync(true)).CallDeferred());
+        }), _local, () => Callable.From(() => Sync(true)).CallDeferred(), _said, vp));
         canvas.AddChild(view.Show(scene, root));
         _piece.AddChild(vp);
         _nodes.Add(vp);

@@ -6,44 +6,78 @@ using KTable.Client.Panels;
 
 namespace KTable.App;
 
+sealed record PanelHooks(PanelView.Sender Send, Func<string, Action<Texture2D>, Texture2D?> Picture, Dictionary<string, string> Local, Action Redraw)
+{
+    public Action<string, float> Sound { get; init; } = (_, _) => { };
+    public Action<string> Notice { get; init; } = _ => { };
+    public Func<string, bool> Known { get; init; } = _ => false;
+    public Func<string, Texture2D?> CursorPicture { get; init; } = _ => null;
+    public SubViewport? Port { get; init; }
+}
+
 sealed partial class PanelView
 {
     public delegate void Sender(List<int> path, string ev, string value);
 
-    readonly Sender _send;
-    readonly Func<string, Action<Texture2D>, Texture2D?> _picture;
+    readonly PanelHooks _hooks;
     readonly Dictionary<string, string> _local;
-    readonly Action _redraw;
     public readonly Dictionary<PanelBox, Control> Nodes = new();
     PanelScene? _scene;
+    Control? _top;
     readonly List<PanelBox> _hovered = new();
 
-    public PanelView(Sender send, Func<string, Action<Texture2D>, Texture2D?> picture, Dictionary<string, string> local, Action redraw)
+    public PanelView(PanelHooks hooks)
     {
-        _send = send;
-        _picture = picture;
-        _local = local;
-        _redraw = redraw;
+        _hooks = hooks;
+        _local = hooks.Local;
     }
 
     public PanelScene? Scene => _scene;
+
+    void Redraw() => _hooks.Redraw();
 
     public Control Show(PanelScene scene, PanelBox from)
     {
         _scene = scene;
         Nodes.Clear();
         _hovered.Clear();
-        var c = Node(from, null);
-        return c;
+        _top = Node(from, null);
+        Restore(scene);
+        return _top;
+    }
+
+    void Restore(PanelScene scene)
+    {
+        RestoreList(scene);
+        RestoreHover(scene);
+        if (_local.GetValueOrDefault(PanelFocus.Selected) is not { } key) return;
+        _selected = scene.Elements.FirstOrDefault(e => e.Path != null && PanelScene.Key(e.Path) == key && Nodes.ContainsKey(e));
+        if (_selected == null) return;
+        PanelFocus.Shown(this, _local);
+        if (_local.GetValueOrDefault(PanelFocus.Editing) == key) Callable.From(() => OpenEditor(_selected)).CallDeferred();
+    }
+
+    static void Fit(Control c, PanelBox b, PanelBox? parent)
+    {
+        c.Size = new Vector2(b.RectSize.X, b.RectSize.Y);
+        c.Visible = b.Active;
+        if (parent == null) return;
+        c.Position = new Vector2(b.PivotAt.X + b.RectMin.X - parent.RectMin.X, parent.RectMin.Y + parent.RectSize.Y - (b.PivotAt.Y + b.RectMin.Y + b.RectSize.Y));
+        c.PivotOffset = new Vector2(b.Pivot.X * b.RectSize.X, (1 - b.Pivot.Y) * b.RectSize.Y);
+    }
+
+    void Refit(PanelBox b)
+    {
+        if (Nodes.TryGetValue(b, out var c) && GodotObject.IsInstanceValid(c)) Fit(c, b, b.Parent);
+        foreach (var child in b.Children) Refit(child);
     }
 
     Control Node(PanelBox b, PanelBox? parent)
     {
-        var c = new Control { MouseFilter = Control.MouseFilterEnum.Ignore, ClipContents = b.Mask || b.RectMask, Visible = b.Active, Size = new Vector2(b.RectSize.X, b.RectSize.Y) };
+        var c = new Control { MouseFilter = Control.MouseFilterEnum.Ignore, ClipContents = b.Mask || b.RectMask };
+        Fit(c, b, parent);
         if (parent != null)
         {
-            c.Position = new Vector2(b.PivotAt.X + b.RectMin.X - parent.RectMin.X, parent.RectMin.Y + parent.RectSize.Y - (b.PivotAt.Y + b.RectMin.Y + b.RectSize.Y));
-            c.PivotOffset = new Vector2(b.Pivot.X * b.RectSize.X, (1 - b.Pivot.Y) * b.RectSize.Y);
             c.RotationDegrees = -b.Rotation.Z;
             c.Scale = new Vector2(b.Scale.X * Mathf.Cos(Mathf.DegToRad(b.Rotation.Y)), b.Scale.Y * Mathf.Cos(Mathf.DegToRad(b.Rotation.X)));
         }
@@ -71,33 +105,45 @@ sealed partial class PanelView
         return null;
     }
 
+    const string NoSprite = "[XmlLayout] Unable to load sprite '{0}'. Please ensure that it is located within a Resources folder or XmlLayout Resource Database.";
+
     Control Paint(PanelBox b)
     {
         var img = b.Image!;
         var tint = Tinted(b, ToColor(img.Color));
+        var sprite = StateSprite(b) ?? img.Sprite;
+        if (sprite != null && PanelPrefabs.Known.TryGetValue(sprite, out var builtin)) sprite = builtin;
         Control paint;
-        if (img.Sprite != null && Builtin(img.Sprite) is { } radius)
-        {
-            var p = new Panel();
-            p.AddThemeStyleboxOverride("panel", new StyleBoxFlat
-            {
-                BgColor = tint, CornerRadiusTopLeft = radius, CornerRadiusTopRight = radius, CornerRadiusBottomLeft = radius, CornerRadiusBottomRight = radius,
-            });
-            paint = p;
-            if (img.Sprite is PanelPrefabs.Checkmark or PanelPrefabs.Knob or PanelPrefabs.DropdownArrow) paint = Glyph(img.Sprite, tint);
-        }
-        else if (img.Sprite != null)
-        {
-            var tr = new TextureRect { ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize, SelfModulate = tint,
-                StretchMode = img.PreserveAspect ? TextureRect.StretchModeEnum.KeepAspectCentered : TextureRect.StretchModeEnum.Scale };
-            if (_picture(img.Sprite, t => { if (GodotObject.IsInstanceValid(tr)) tr.Texture = t; }) is { } tex) tr.Texture = tex;
-            paint = tr;
-        }
-        else paint = new ColorRect { Color = tint };
+        if (sprite != null && Builtin(sprite) is { } radius) paint = Rounded(sprite, tint, radius);
+        else if (sprite != null && !PanelPrefabs.KnownToTheGame(sprite)) paint = Picture(sprite, tint, img.PreserveAspect);
+        else paint = new ColorRect { Color = sprite != null ? Colors.Transparent : tint };
         paint.MouseFilter = Control.MouseFilterEnum.Ignore;
         paint.SetAnchorsPreset(Control.LayoutPreset.FullRect);
         if (img.Type == 3) Filled(paint, img);
         return paint;
+    }
+
+    Control Picture(string sprite, Color tint, bool keep)
+    {
+        var tr = new TextureRect { ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize, SelfModulate = tint,
+            StretchMode = keep ? TextureRect.StretchModeEnum.KeepAspectCentered : TextureRect.StretchModeEnum.Scale };
+        var tex = _hooks.Picture(sprite, t => { if (GodotObject.IsInstanceValid(tr)) tr.Texture = t; });
+        if (tex != null) tr.Texture = tex;
+        else if (!IsLink(sprite) && !_hooks.Known(sprite)) _hooks.Notice(string.Format(System.Globalization.CultureInfo.InvariantCulture, NoSprite, sprite));
+        return tr;
+    }
+
+    static bool IsLink(string s) => Uri.TryCreate(s, UriKind.Absolute, out var u) && u.Scheme is "http" or "https" or "file";
+
+    static Control Rounded(string sprite, Color tint, int radius)
+    {
+        if (sprite is PanelPrefabs.Checkmark or PanelPrefabs.Knob or PanelPrefabs.DropdownArrow or PanelPrefabs.GroupSelected) return Glyph(sprite, tint);
+        var p = new Panel();
+        p.AddThemeStyleboxOverride("panel", new StyleBoxFlat
+        {
+            BgColor = tint, CornerRadiusTopLeft = radius, CornerRadiusTopRight = radius, CornerRadiusBottomLeft = radius, CornerRadiusBottomRight = radius,
+        });
+        return p;
     }
 
     static void Filled(Control paint, ImageProps img)
@@ -106,31 +152,55 @@ sealed partial class PanelView
         else if (img.FillMethod == 1) paint.AnchorTop = 1 - Math.Clamp(img.FillAmount, 0, 1);
     }
 
+    const string Tick = "✔", Dot = "●", Down = "▼";
+
     static Control Glyph(string sprite, Color tint)
     {
-        var l = new Label { Text = sprite == PanelPrefabs.Checkmark ? "✔" : sprite == PanelPrefabs.Knob ? "●" : "▼", HorizontalAlignment = HorizontalAlignment.Center,
-            VerticalAlignment = VerticalAlignment.Center };
+        var l = new Label { Text = sprite == PanelPrefabs.Checkmark ? Tick : sprite is PanelPrefabs.Knob or PanelPrefabs.GroupSelected ? Dot : Down,
+            HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
         l.AddThemeColorOverride("font_color", tint);
         return l;
     }
+
+    const int Round = 999;
 
     static int? Builtin(string sprite) => sprite switch
     {
         PanelPrefabs.UiSprite or PanelPrefabs.Background or PanelPrefabs.MaskSprite => 5,
         PanelPrefabs.ToolSprite or PanelPrefabs.ToolBackground => 3,
-        PanelPrefabs.Checkmark or PanelPrefabs.Knob or PanelPrefabs.DropdownArrow => 0,
-        "Outline" or PanelPrefabs.OutlineSharp or "ToggleGroup_Background" or "ToggleGroup_Selected" or "InputFieldBackground" => 2,
+        PanelPrefabs.Checkmark or PanelPrefabs.Knob or PanelPrefabs.DropdownArrow or PanelPrefabs.GroupSelected => 0,
+        PanelPrefabs.GroupBackground => Round,
+        PanelPrefabs.Outline or PanelPrefabs.OutlineSharp => 2,
         _ => null,
     };
 
     public static Color ToColor(Paint p) => new(Math.Clamp(p.R, 0, 1), Math.Clamp(p.G, 0, 1), Math.Clamp(p.B, 0, 1), Math.Clamp(p.A, 0, 1));
 
+    enum Look { Normal, Highlighted, Pressed, Selected, Disabled }
+
+    Look StateOf(PanelBox owner) => owner.Select is { Interactable: false } ? Look.Disabled : _pressed == owner ? Look.Pressed : _selected == owner ? Look.Selected
+        : _hovered.Contains(owner) ? Look.Highlighted : Look.Normal;
+
+    static bool IsTarget(PanelBox b, PanelBox? owner) => owner?.Select is { } sel && sel.TargetGraphic == b.Name;
+
     Color Tinted(PanelBox b, Color c)
     {
         var owner = Owner(b);
-        if (owner?.Select is not { Transition: 1 } sel || sel.TargetGraphic != b.Name) return c;
-        var state = !sel.Interactable ? sel.Colors.Disabled : _pressed == owner ? sel.Colors.Pressed : _hovered.Contains(owner) ? sel.Colors.Highlighted : sel.Colors.Normal;
+        if (owner?.Select is not { Transition: 1 } sel || !IsTarget(b, owner)) return c;
+        var state = StateOf(owner) switch
+        {
+            Look.Disabled => sel.Colors.Disabled, Look.Pressed => sel.Colors.Pressed, Look.Highlighted => sel.Colors.Highlighted, Look.Selected => sel.Colors.Selected,
+            _ => sel.Colors.Normal,
+        };
         return c * ToColor(state.Scaled(sel.Colors.Multiplier) with { A = state.A * sel.Colors.Multiplier });
+    }
+
+    string? StateSprite(PanelBox b)
+    {
+        var owner = Owner(b);
+        if (owner?.Select is not { Transition: 2 } || !IsTarget(b, owner)) return null;
+        var key = StateOf(owner) switch { Look.Disabled => "disabledsprite", Look.Pressed => "pressedsprite", Look.Highlighted => "highlightedsprite", Look.Selected => "selectedsprite", _ => null };
+        return key != null && owner.Extra.TryGetValue(key, out var s) && !PanelValues.IsNone(s) ? s : null;
     }
 
     Control Words(PanelBox b)

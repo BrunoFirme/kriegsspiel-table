@@ -34,6 +34,37 @@ static class PanelPictures
     });
 }
 
+static class PanelHost
+{
+    public const string ClickSound = "Defaults/Sounds/ClickUI";
+    const string ErrorInk = "#ff7060";
+    public static Action<string> Log { get; set; } = _ => { };
+
+    public static void Sound(string name, float volume)
+    {
+        if (name == ClickSound) Sfx.Current?.PlayFlat(KTable.App.Sound.Tick, volume);
+    }
+
+    public static bool Known(Session s, string name)
+    {
+        var trimmed = name.Trim();
+        return PanelSeats.Assets(s.View).Any(a => a.Name == trimmed) || (s.View.UiLinks?.ContainsKey(trimmed) ?? false);
+    }
+
+    public static PanelHooks Hooks(Session s, PanelView.Sender send, Func<string, Action<Texture2D>, Texture2D?> picture, Dictionary<string, string> local, Action redraw,
+        HashSet<string> said, SubViewport? port = null) => new(send, picture, local, redraw)
+    {
+        Sound = Sound,
+        Notice = line =>
+        {
+            if (said.Add(line)) Log($"[color={ErrorInk}]{Fmt.Bb(line)}[/color]");
+        },
+        Known = name => Known(s, name),
+        CursorPicture = name => PanelPictures.Texture(s, name, _ => { }),
+        Port = port,
+    };
+}
+
 static class PanelChanges
 {
     public static IEnumerable<Command> Flat(Command c) => c is Batch b ? b.Items.SelectMany(Flat) : new[] { c };

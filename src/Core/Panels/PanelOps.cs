@@ -101,6 +101,18 @@ public static class PanelOps
         for (int n = 1; n < path.Count; n++) if (layout.At(path.Take(n).ToList()) is { } a) yield return a;
     }
 
+    public static void AddClass(UiLayout layout, List<int> path, string cls)
+    {
+        if (layout.At(path) is not { } e || e.Classes.Contains(cls)) return;
+        ClassTo(layout, path, e, e.Classes.Append(cls).ToList());
+    }
+
+    public static void RemoveClass(UiLayout layout, List<int> path, string cls)
+    {
+        if (layout.At(path) is not { } e || !e.Classes.Contains(cls)) return;
+        ClassTo(layout, path, e, e.Classes.Where(c => c != cls).ToList());
+    }
+
     static void ClassTo(UiLayout layout, List<int> path, UiElement e, List<string> classes)
     {
         var removed = e.Classes.Where(c => !classes.Contains(c)).ToList();

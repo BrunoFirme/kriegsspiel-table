@@ -226,6 +226,12 @@ public static partial class PanelApply
             if (attrs.TryGetValue(k, out var v)) b.Extra[k] = v;
     }
 
+    static readonly string[] DropdownLooks =
+    {
+        "dropdownheight", "itemheight", "checkcolor", "checkimage", "itemBackgroundColors", "itemTextColor", "scrollbarColors", "scrollbarImage", "scrollbarBackgroundColor",
+        "scrollbarBackgroundImage", "dropdownBackgroundColor", "dropdownBackgroundImage", "scrollSensitivity",
+    };
+
     static void Dropdown(PanelBox b, UiElement e, IReadOnlyDictionary<string, string> attrs, PanelContext ctx)
     {
         ApplyText(b.Part("Label"), TextPart(attrs, true), ctx);
@@ -233,7 +239,7 @@ public static partial class PanelApply
         if (attrs.TryGetValue("arrowimage", out var ai)) arrow.Image!.Sprite = PanelValues.IsNone(ai) ? null : ai;
         if (attrs.TryGetValue("arrowcolor", out var ac)) arrow.Image!.Color = ctx.Color(ac);
         if (attrs.TryGetValue("arrowOffset", out var ao)) arrow.Position = PanelValues.Vector2(ao);
-        foreach (var k in new[] { "dropdownheight", "itemheight", "checkcolor", "itemBackgroundColors", "itemTextColor", "scrollbarColors", "scrollbarImage" })
+        foreach (var k in DropdownLooks)
             if (attrs.TryGetValue(k, out var v)) b.Extra[k] = v;
     }
 
@@ -250,7 +256,7 @@ public static partial class PanelApply
         if (attrs.TryGetValue("horizontalscrollbarheight", out var hh) && b.Part("Scrollbar Horizontal") is { } hz) hz.SizeDelta = hz.SizeDelta with { Y = PanelValues.Float(hh) };
         if (attrs.TryGetValue("noscrollbars", out var none) && PanelValues.Bool(none))
             foreach (var bar in new[] { b.Part("Scrollbar Vertical"), b.Part("Scrollbar Horizontal") }) if (bar != null) bar.Active = false;
-        foreach (var k in new[] { "horizontal", "vertical", "movementType", "scrollSensitivity", "scrollbarColors" })
+        foreach (var k in new[] { "horizontal", "vertical", "movementType", "scrollSensitivity", "scrollbarColors", "inertia", "decelerationRate", "elasticity" })
             if (attrs.TryGetValue(k, out var x)) b.Extra[k] = x;
     }
 }

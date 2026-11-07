@@ -9,7 +9,15 @@ public sealed class PanelScene
     public PanelBox Root { get; }
     public List<PanelBox> Elements { get; } = new();
 
-    PanelScene(PanelBox root) => Root = root;
+    public PanelContext Context { get; }
+    public IPanelMeter Meter { get; }
+
+    PanelScene(PanelBox root, PanelContext context, IPanelMeter meter)
+    {
+        Root = root;
+        Context = context;
+        Meter = meter;
+    }
 
     public static string Key(IEnumerable<int> path) => string.Join(".", path);
 
@@ -31,7 +39,7 @@ public sealed class PanelScene
         top.RectSize = canvas;
         top.RectMin = new V2(-canvas.X / 2, -canvas.Y / 2);
         var root = top.Add(new PanelBox { Name = "XmlLayout", Tag = "XmlLayout", RectMask = true, Image = new ImageProps { Color = new Paint(1, 1, 1, 0), Type = PanelPrefabs.Sliced } });
-        var scene = new PanelScene(top);
+        var scene = new PanelScene(top, ctx, meter);
         var made = new List<(PanelBox Box, UiElement Element)>();
         for (int i = 0; i < layout.Elements.Count; i++) scene.Make(root, layout.Elements[i], new List<int> { i }, made);
         foreach (var (box, element) in made)
@@ -39,7 +47,13 @@ public sealed class PanelScene
             Apply(box, element, ctx, local);
             if (keep != null && box.Path != null && keep.Contains(Key(box.Path))) box.Active = true;
         }
+        foreach (var group in scene.Elements.Where(b => b.Tag == "ToggleGroup")) GroupLooks(group, ctx);
         PanelLayout.Run(top, meter);
+        foreach (var view in scene.Elements.Where(b => b.Tag is "VerticalScrollView" or "HorizontalScrollView"))
+        {
+            PanelScrolls.Match(view, meter);
+            PanelScrolls.Settle(view, local);
+        }
         return scene;
     }
 
@@ -54,6 +68,33 @@ public sealed class PanelScene
         for (int i = 0; i < e.Children.Count; i++) Make(box, e.Children[i], path.Append(i).ToList(), made);
         Adopt(box);
         made.Add((box, e));
+    }
+
+    static void GroupLooks(PanelBox group, PanelContext ctx)
+    {
+        string? Look(string key) => group.Extra.GetValueOrDefault(key);
+        foreach (var t in Toggles(group))
+        {
+            if (t.Part("Background")?.Image is { } bg)
+            {
+                bg.Sprite = PanelValues.IsNone(Look("toggleBackgroundImage")) ? null : Look("toggleBackgroundImage");
+                bg.Color = Look("toggleBackgroundColor") is { } c ? ctx.Color(c) : Paint.White;
+            }
+            if (t.Part("Checkmark")?.Image is { } check)
+            {
+                check.Sprite = PanelValues.IsNone(Look("toggleSelectedImage")) ? null : Look("toggleSelectedImage");
+                check.Color = Look("toggleSelectedColor") is { } c ? ctx.Color(c) : Paint.White;
+            }
+        }
+    }
+
+    public static IEnumerable<PanelBox> Toggles(PanelBox group)
+    {
+        foreach (var c in group.Children)
+        {
+            if (c.Element != null && c.Tag is "Toggle" or "ToggleButton") yield return c;
+            else if (c.Tag != "ToggleGroup") foreach (var d in Toggles(c)) yield return d;
+        }
     }
 
     static void Adopt(PanelBox box)
@@ -184,7 +225,7 @@ public sealed class PanelScene
     static void InputAt(PanelBox b, string? local)
     {
         var text = local ?? b.Extra.GetValueOrDefault("text") ?? "";
-        if (b.Part("Text")?.Text is { } t) t.Text = text;
+        if (b.Part("Text")?.Text is { } t) t.Text = PanelInputs.Shown(b, text);
         if (b.Part("Placeholder") is { } ph) ph.Active = text.Length == 0;
         b.Extra["typed"] = text;
     }

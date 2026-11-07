@@ -145,7 +145,14 @@ public static class PanelLayout
 
     static float ImagePreferred(ImageProps img, int axis, IPanelMeter meter)
     {
-        if (img.Sprite == null || meter.PictureSize(img.Sprite) is not { } px) return 0;
+        if (img.Sprite == null) return 0;
+        var name = PanelPrefabs.Known.GetValueOrDefault(img.Sprite) ?? img.Sprite;
+        if (PanelPrefabs.Sprites.TryGetValue(name, out var s))
+        {
+            float scale = s.PixelsPerUnit / 100;
+            return img.Type is PanelPrefabs.Sliced or 2 ? 2 * s.Border / scale : (axis == 0 ? s.W : s.H) / scale;
+        }
+        if (meter.PictureSize(img.Sprite) is not { } px) return 0;
         return img.Type is PanelPrefabs.Sliced or 2 ? 0 : px[axis];
     }
 
