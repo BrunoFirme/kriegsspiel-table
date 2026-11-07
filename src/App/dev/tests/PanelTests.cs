@@ -168,24 +168,32 @@ static class PanelTests
         List<Control> Takers() => ui.FindChildren("*", "Control", true, false).OfType<Control>()
             .Where(c => GodotObject.IsInstanceValid(c) && !c.IsQueuedForDeletion() && c.MouseFilter == Control.MouseFilterEnum.Stop && c.IsVisibleInTree()).ToList();
         var field = Takers()[0];
+        float fieldBottom = field.GetGlobalRect().End.Y;
         await Click(r, Middle(field));
         await r.Frames(2);
         var editor = ui.FindChildren("*", "LineEdit", true, false).OfType<LineEdit>().FirstOrDefault(e => GodotObject.IsInstanceValid(e) && !e.IsQueuedForDeletion());
         Check.That(editor != null && editor.HasFocus(), "a click on the field puts a caret in it, in the panel itself");
-        editor!.InsertTextAtCaret("Ney");
+        foreach (var ch in "Ney")
+        {
+            Input.ParseInputEvent(new InputEventKey { Pressed = true, Unicode = ch, Keycode = (Key)char.ToUpperInvariant(ch) });
+            Input.ParseInputEvent(new InputEventKey { Pressed = false, Unicode = ch, Keycode = (Key)char.ToUpperInvariant(ch) });
+            await r.Frame();
+        }
         await r.Frames(2);
         Check.That(Sent().Any(e => e.Event == "onValueChanged" && e.Value == "Ney"), "each change tells the script the text so far");
         Input.ParseInputEvent(new InputEventKey { Keycode = Key.Enter, Pressed = true });
         await r.Frames(3);
         Check.That(Sent().Any(e => e.Event == "onEndEdit" && e.Value == "Ney"), "Enter ends the typing and says the text");
-        var dropdown = Takers().First(c => c.GetGlobalRect().Position.Y > field.GetGlobalRect().End.Y + 1);
+        var dropdown = Takers().First(c => c.GetGlobalRect().Position.Y >= fieldBottom && Mathf.IsEqualApprox(c.Size.Y, 30));
+        float dropdownMiddle = dropdown.GetGlobalRect().GetCenter().Y;
         await Click(r, Middle(dropdown));
         await r.Frames(3);
-        var rows = Takers().Where(c => c.GetGlobalRect().Position.Y >= dropdown.GetGlobalRect().End.Y - 5 && c.Size.Y >= 29 && c.Size.Y <= 31).ToList();
+        var rows = Takers().Where(c => c.GetGlobalRect().Position.Y > dropdownMiddle && c.Size.Y >= 29 && c.Size.Y <= 31).ToList();
         Check.That(rows.Count >= 2, "the dropdown opens its list of thirty-high rows under itself");
         await Click(r, Middle(rows.OrderBy(c => c.GetGlobalRect().Position.Y).ElementAt(1)));
         await r.Frames(3);
-        Check.That(Sent().Any(e => e.Event == "onValueChanged" && e.Path is [0, 1] && e.Value == "1"), "a row picked tells the script its place");
+        Check.That(Sent().Any(e => e.Event == "onValueChanged" && e.Path is [0, 1] && e.Value == "1"),
+            "a row picked tells the script its place");
         var header = Takers().OrderBy(c => c.GetGlobalRect().Position.Y).Last(c => Mathf.IsEqualApprox(c.Size.Y, 64));
         var before = header.GetParentControl()!.Size.Y;
         await Click(r, Middle(header));
