@@ -22,7 +22,7 @@ public sealed class ModuleSourcesTests
         var board = Filled("Custom_Model", new JsonObject { ["CustomMesh"] = new JsonObject { ["MeshURL"] = "http://a/m.obj", ["TypeIndex"] = 4 } });
         var odd = Filled("Custom_Model", new JsonObject { ["CustomMesh"] = new JsonObject { ["MeshURL"] = "http://a/m.obj", ["TypeIndex"] = 99 } });
         Assert.Equal((0.15, "Figurine"), (standing.ModuleTop, standing.ModuleObjectTag));
-        Assert.Equal((0.2, (string?)null), (lying.ModuleTop, lying.ModuleObjectTag));
+        Assert.Equal((0.4, (string?)null), (lying.ModuleTop, lying.ModuleObjectTag));
         Assert.Equal(((double?)null, "Board"), (board.ModuleTop, board.ModuleObjectTag));
         Assert.Equal("Infinite", odd.ModuleObjectTag);
     }

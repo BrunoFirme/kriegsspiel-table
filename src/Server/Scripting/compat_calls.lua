@@ -978,7 +978,7 @@ function compat.get_custom_object(obj)
   if t == "Custom_Token" then
     c.thickness, c.merge_distance, c.stand_up, c.stackable = (src.top or 0.1) * 2, 15, src.tag == "Figurine", false
   elseif t == "Custom_Tile" then
-    c.type, c.thickness, c.stackable = 0, (src.top or 0.1) * 2, false
+    c.type, c.thickness, c.stackable = 0, src.top or 0.2, false
   end
   return c
 end
