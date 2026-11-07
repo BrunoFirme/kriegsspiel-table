@@ -93,6 +93,11 @@ sealed partial class PanelView
     bool Release()
     {
         PanelCursors.Pressed(false);
+        if (_slid)
+        {
+            _slid = false;
+            Redraw();
+        }
         if (_drag is not { } d) return false;
         _drag = null;
         if (!d.Moved) return false;
@@ -159,8 +164,17 @@ sealed partial class PanelView
         if ((_local.GetValueOrDefault(Key(owner)) ?? owner.Extra.GetValueOrDefault("value")) == text) return;
         _local[Key(owner)] = text;
         Fire(owner, "onValueChanged", text);
-        Redraw();
+        if (_drag?.Kind != Pull.Slider)
+        {
+            Redraw();
+            return;
+        }
+        PanelScene.SliderAt(owner, text);
+        Refit(owner);
+        _slid = true;
     }
+
+    bool _slid;
 
     enum SliderWay { LeftToRight, RightToLeft, BottomToTop, TopToBottom }
 

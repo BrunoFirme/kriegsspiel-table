@@ -161,7 +161,7 @@ public sealed class PanelScene
         return Math.Clamp(v, Math.Min(min, max), Math.Max(min, max));
     }
 
-    static void SliderAt(PanelBox b, string? local)
+    public static void SliderAt(PanelBox b, string? local)
     {
         float min = PanelValues.Float(b.Extra.GetValueOrDefault("minvalue")), max = PanelValues.Float(b.Extra.GetValueOrDefault("maxvalue") ?? "1");
         float v = SliderValue(b, local);
@@ -179,6 +179,16 @@ public sealed class PanelScene
         {
             handle.AnchorMin = V2.Zero.With(axis, t);
             handle.AnchorMax = V2.One.With(axis, t);
+        }
+        Replace(b);
+    }
+
+    static void Replace(PanelBox b)
+    {
+        foreach (var c in b.Children)
+        {
+            c.Place();
+            Replace(c);
         }
     }
 
