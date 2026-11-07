@@ -369,9 +369,9 @@ public sealed partial class ConverterTests : ConverterHarness
     [Fact]
     public void An_asset_bundle_Firmes_effects_can_play_stays_an_effect_and_is_not_baked_as_a_model()
     {
-        static ModuleObj Bundle(string sha, string nick) => new(Obj("Custom_Assetbundle", nick, 1, new JsonObject
+        static ModuleObj Bundle(string sha, string nick, int loop = 2) => new(Obj("Custom_Assetbundle", nick, 1, new JsonObject
         {
-            ["CustomAssetbundle"] = new JsonObject { ["AssetbundleURL"] = $"https://steamusercontent-a.akamaihd.net/ugc/17434489383496858867/{sha}/" },
+            ["CustomAssetbundle"] = new JsonObject { ["AssetbundleURL"] = $"https://steamusercontent-a.akamaihd.net/ugc/17434489383496858867/{sha}/", ["LoopingEffectIndex"] = loop },
         }));
 
         const string ShellBurst = "3259CD2646D7C3C9EC7F1103F80567181AAB20E5";
@@ -382,6 +382,7 @@ public sealed partial class ConverterTests : ConverterHarness
         Assert.True(BundleEffects.IsEffect(Bundle(GunFiring, "")));
         Assert.False(BundleEffects.IsEffect(Bundle(CasualtyCav, "")));
         Assert.True(BundleEffects.IsEffect(Bundle(CasualtyCav, "Powder Smoke")));
+        Assert.False(BundleEffects.IsEffect(Bundle(ShellBurst, "", loop: 0)));
     }
 
     [Fact]

@@ -270,6 +270,19 @@ public sealed class SaveFieldTests : ConverterHarness
         Assert.Equal(new[] { "Red Army", "Guard" }, piece.Tags);
     }
 
+    [Fact]
+    public void A_model_takes_its_material_from_its_mesh_settings_plastic_when_none_is_saved_and_never_from_the_objects_own_index()
+    {
+        static string? Finish(JsonObject mesh, int? objectIndex) => new ModuleObj(new JsonObject
+        {
+            ["Name"] = "Custom_Model", ["CustomMesh"] = mesh, ["MaterialIndex"] = objectIndex is { } i ? JsonValue.Create(i) : null,
+        }).Finish;
+
+        Assert.Equal(KTable.Core.Model.Finishes.Plastic, Finish(new JsonObject { ["MeshURL"] = "http://a/m.obj" }, 2));
+        Assert.Equal(KTable.Core.Model.Finishes.Metal, Finish(new JsonObject { ["MeshURL"] = "http://a/m.obj", ["MaterialIndex"] = 2 }, 0));
+        Assert.Null(new ModuleObj(new JsonObject { ["Name"] = "BlockSquare", ["MaterialIndex"] = 1 }).Finish);
+    }
+
     static byte[] TwoPagePdf(double w1, double h1, double w2, double h2)
     {
         var inv = System.Globalization.CultureInfo.InvariantCulture;

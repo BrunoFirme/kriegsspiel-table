@@ -90,7 +90,7 @@ public sealed class ModuleObj
     public string? NormalUrl => Blank(S(CM?["NormalURL"]));
     public bool CastsShadows => CM is not { } m || ModuleValues.Flag(m["CastShadows"], true);
     public int MeshType => ModuleValues.Whole(CM?["TypeIndex"] ?? (J["CustomAssetbundle"] as JsonObject)?["TypeIndex"], 0);
-    public string? Finish => KTable.Core.Model.Finishes.Of(CM?["MaterialIndex"] != null ? I(CM, "MaterialIndex") : J["MaterialIndex"] != null ? I(J, "MaterialIndex") : -1);
+    public string? Finish => KTable.Core.Model.Finishes.Of(CM is { } mesh ? ModuleValues.Whole(mesh["MaterialIndex"], 0) : -1);
     public KTable.Core.Model.ShineDef? Shine => CM?["CustomShader"] is JsonObject sh
         ? new KTable.Core.Model.ShineDef
         {
@@ -99,6 +99,7 @@ public sealed class ModuleObj
         }
         : null;
     public string? BundleUrl => Blank(S((J["CustomAssetbundle"] as JsonObject)?["AssetbundleURL"]));
+    public int LoopingEffect => J["CustomAssetbundle"] is JsonObject ab ? ModuleValues.Whole(ab["LoopingEffectIndex"], 0) : 0;
     public string? PdfUrl => Blank(S((J["CustomPDF"] as JsonObject)?["PDFUrl"]));
     public int PdfPage => J["CustomPDF"] is JsonObject pdf && pdf["PDFPage"] != null ? Math.Max(0, I(pdf, "PDFPage")) : 0;
     public int PdfPageOffset => J["CustomPDF"] is JsonObject pdf && pdf["PDFPageOffset"] != null ? I(pdf, "PDFPageOffset") : 0;
