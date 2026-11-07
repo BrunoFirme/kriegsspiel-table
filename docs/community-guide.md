@@ -30,7 +30,7 @@ You get:
 | Tints, names, attached markers, locks, face down | |
 | Asset-bundle effects (smoke, fire, gun fire, mist, rain), as the closest of Firme's Effects | |
 | Lua scripts and XML panels, translated | |
-| Decals, the module's decal palette and those stamped on the table, and the pictures scripts set from web links | |
+| Decals, the module's own and those stamped on the table, and the pictures scripts set from web links | |
 | Locked text and images (Lock text, Lock images) | |
 
 Scripts keep working: see [what converted module scripts become](scripting.md#what-converted-module-scripts-become).

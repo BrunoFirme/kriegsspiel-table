@@ -27,7 +27,7 @@ public static class KeysPage
             ($"{K("cut")}  {K("copy")}  {K("paste")}", "cut, copy; paste at the pointer"),
             (K("selectAll"), "select all"),
             ($"{K("statePrev")}  {K("stateNext")}", "previous and next look"),
-            ("1 … 9  0", "set the look of the piece under the pointer"),
+            ("1 … 9  0", "set the look of the piece under the pointer; a die, its side"),
             ("Wheel", "over a selected piece, turn 10° (Ctrl 2°, Shift ½°); elsewhere, zoom"),
             ("Shift / Ctrl+click", "add to the selection"),
             ("Drag the table", "box-select"),
