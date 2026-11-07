@@ -134,9 +134,15 @@ public sealed partial class ScenarioBuilder
         }
     }
 
+    static readonly Dictionary<string, string> StockSkies = new(StringComparer.Ordinal)
+    {
+        ["Sky_Field"] = "saxon-meadow", ["Sky_Forest"] = "wooded-hills", ["Sky_Sunset"] = "sundown", ["Sky_Museum"] = "drawing-room",
+        ["Sky_Cathedral"] = "drawing-room", ["Sky_Regal"] = "generals-study", ["Sky_Downtown"] = "open-sky-day", ["Sky_Tunnel"] = "open-sky-day",
+    };
+
     string Sky(ModuleSave master)
     {
-        if (master.SkyUrl is not { } url) return KTable.Client.Backdrops.None;
+        if (master.SkyUrl is not { } url) return StockSkies.GetValueOrDefault(master.StockSky, KTable.Client.Backdrops.None);
         var where = $"{_cfg.Scenario.Id} sky";
         if (_defs.Entry(url) is not { } e || !AssetStore.IsPicture(e.Ext) || _assets.FilePath(e) is not { } file)
         {
@@ -357,9 +363,7 @@ public sealed partial class ScenarioBuilder
                 grew |= referenced.Add(d.Id);
         }
         extras.M.Pieces = extras.M.Pieces.Where(d => referenced.Contains(d.Id)).OrderBy(d => d.Id, StringComparer.Ordinal).ToList();
-        var usedAssets =
-            extras.M.Pieces.SelectMany(d => new[] { d.Image, d.Back, d.Mesh, d.Texture, d.AddOnMesh, d.AddOnTexture }.Concat(d.States.SelectMany(s => new[] { s.Image, s.Back, s.Mesh, s.Texture })))
-            .OfType<string>().ToHashSet();
+        var usedAssets = extras.M.Pieces.SelectMany(KTable.Client.Naming.AssetsOf).ToHashSet();
         usedAssets.UnionWith(pieces.SelectMany(p => p.Decals).Select(d => d.Picture));
         usedAssets.UnionWith(scenario.Decals.Values.SelectMany(l => l).Select(d => d.Picture).Concat(scenario.DecalPalette.Select(d => d.Picture)));
         usedAssets.UnionWith(scenario.UiPictures.Values.Concat(PanelPictures(scenario.Ui)).Concat(pieces.SelectMany(p => PanelPictures(p.Ui))));
@@ -571,12 +575,14 @@ public sealed partial class ScenarioBuilder
             inst.Decals = DecalsOf(o, def, _cfg.BaseSizes.CustomTokenArea, url => _defs.UiAsset(extras, url, $"{layer.Name} {o.Name} '{o.Nickname}' {o.Guid} decal"));
         layer.Pieces.Add(inst);
         layer.Y[inst] = o.PosY;
-        layer.Bottom[inst] = _defs.Bottom(o);
-        layer.Top[inst] = _defs.Bottom(o) + _defs.BaseThickness(o) * Math.Abs(o.ScaleY);
+        bool baked = _defs.IsBaked(r.Def);
+        var (low, high) = baked ? _defs.BakedSpan(o) : (_defs.LocalFloor(o), _defs.LocalFloor(o) + _defs.BaseThickness(o));
+        layer.Bottom[inst] = o.PosY + low * Math.Abs(o.ScaleY);
+        layer.Top[inst] = o.PosY + high * Math.Abs(o.ScaleY);
         StackCopies(o, inst, layer);
         if (o.IsBag) StowContents(o, inst, extras, packDefs, layer, usedPacks, ref rekeyed);
 
-        PlaceChildren(o, _defs.BakesChildren(o) ? Enumerable.Empty<ModuleObj>() : o.Children, inst, refScale, baseScale, absolute, extras, packDefs, layer, usedPacks, ref rekeyed);
+        PlaceChildren(o, baked ? Enumerable.Empty<ModuleObj>() : o.Children, inst, refScale, baseScale, absolute, extras, packDefs, layer, usedPacks, ref rekeyed);
         return inst;
     }
 

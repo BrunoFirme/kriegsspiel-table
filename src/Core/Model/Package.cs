@@ -180,6 +180,7 @@ public sealed class PieceDef : IJsonOnDeserialized
     public string? Back { get; set; }
     public string? Mesh { get; set; }
     public string? Texture { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? Normal { get; set; }
     public string? AddOnMesh { get; set; }
     public string? AddOnTexture { get; set; }
     public Size2 Size { get; set; } = new(1, 1);
@@ -188,6 +189,7 @@ public sealed class PieceDef : IJsonOnDeserialized
     public double Thickness { get; set; } = 0.2;
     public string Tint { get; set; } = "#FFFFFF";
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool TintsPictures { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool Shadowless { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool Holds { get; set; }
     public List<string> Tags { get; set; } = new();
     public List<PieceStateDef> States { get; set; } = new();

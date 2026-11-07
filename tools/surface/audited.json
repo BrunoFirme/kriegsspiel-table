@@ -1,0 +1,22 @@
+{
+ "object": {
+  "createButton": "ScriptingTests.A_module_input_inside_its_piece_is_not_drawn_but_still_listed_and_raising_it_above_the_piece_draws_it; ModuleDefaultsTests",
+  "createInput": "ScriptingTests.A_module_input_inside_its_piece_is_not_drawn_but_still_listed_and_raising_it_above_the_piece_draws_it; ModuleDefaultsTests",
+  "editButton": "ScriptingTests.A_module_input_turned_over_on_top_is_locked_text_on_the_front_and_turning_it_back_unlocks_it",
+  "editInput": "ScriptingTests.A_module_input_inside_its_piece_is_not_drawn_but_still_listed_and_raising_it_above_the_piece_draws_it",
+  "getInputs": "ScriptingTests.Module_handlers_named_at_run_time_get_module_arguments_and_getInputs_holds_what_was_typed",
+  "getButtons": "ScriptingTests.Removing_module_buttons_keeps_their_numbers_until_the_next_frame_so_a_loop_removes_them_all",
+  "clearButtons": "ScriptingTests.Removing_module_buttons_keeps_their_numbers_until_the_next_frame_so_a_loop_removes_them_all",
+  "clearInputs": "ScriptingTests.Removing_module_buttons_keeps_their_numbers_until_the_next_frame_so_a_loop_removes_them_all",
+  "removeButton": "ScriptingTests.Removing_module_buttons_keeps_their_numbers_until_the_next_frame_so_a_loop_removes_them_all",
+  "removeInput": "ScriptingTests.Removing_module_buttons_keeps_their_numbers_until_the_next_frame_so_a_loop_removes_them_all"
+ },
+ "save": {
+  "ObjectState.ChildObjects": "ConverterTests.Each_state_of_a_token_shows_its_own_glued_children_even_a_child_with_states_of_its_own",
+  "CustomMeshState.TypeIndex": "ConverterTests.A_model_made_a_die_rolls_on_its_saved_values_and_shows_the_one_facing_up_and_a_plain_model_does_not",
+  "CustomAssetbundleState.TypeIndex": "ConverterTests.A_model_made_a_die_rolls_on_its_saved_values_and_shows_the_one_facing_up_and_a_plain_model_does_not",
+  "CustomMeshState.CastShadows": "ConverterTests.A_model_keeps_its_normal_map_and_whether_it_casts_a_shadow",
+  "CustomMeshState.NormalURL": "ConverterTests.A_model_keeps_its_normal_map_and_whether_it_casts_a_shadow",
+  "SaveState.Sky": "ConverterTests.A_module_that_names_only_a_stock_sky_gets_the_nearest_backdrop"
+ }
+}

@@ -11,6 +11,21 @@ public sealed partial class DefFactory
     public const double DieAcross = 0.6604;
     const int RoundedRectangleCard = 0;
     const double FaceMatch = 0.9;
+    const int DiceType = 2, CoinType = 3;
+
+    public static bool RollsOnItsValues(ModuleObj o) => IsModel(o) && o.MeshType is DiceType or CoinType && o.RotationValues.Count > 1;
+
+    static void FillModelFaces(PieceDef def, ModuleObj b)
+    {
+        static double Dot(double[] a, double[] c) => a[0] * c[0] + a[1] * c[1] + a[2] * c[2];
+        foreach (var f in b.RotationValues)
+        {
+            var up = UpOf(f).Select(x => Math.Round(x, 4)).ToArray();
+            if (def.Faces.Any(s => Dot(s.Up, up) > FaceMatch)) continue;
+            def.Faces.Add(new DieFace { Value = f.Value.Length > 0 ? f.Value : (def.Faces.Count + 1).ToString(), Up = up });
+        }
+        def.Tags = def.Tags.Concat(new[] { "die", "dice" }).Distinct().ToList();
+    }
 
     static readonly Dictionary<string, (string Name, string Colour)> Checkers = new()
     {

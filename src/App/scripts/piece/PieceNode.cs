@@ -418,6 +418,16 @@ public partial class PieceNode : Node3D
             Callable.From(Rebuild).CallDeferred();
     }
 
+    void Bumps(string pack, string file, params StandardMaterial3D[] mats)
+    {
+        void Apply(Texture2D t)
+        {
+            foreach (var m in mats) { m.NormalEnabled = true; m.NormalTexture = t; }
+        }
+        var tex = _s.Assets.Texture(pack, file, t => { if (IsInstanceValid(this)) Apply(t); }, maxSize: 2048);
+        if (tex != null) Apply(tex);
+    }
+
     void BuildModel(string meshHash, float w, float h, Color tint)
     {
         var pack = _s.Store.PackOfDef(PictureDefId)!;
@@ -435,7 +445,8 @@ public partial class PieceNode : Node3D
             PieceFinish.Apply(mat, Def!);
             PieceFinish.Apply(untinted, Def!);
         }
-        _model = new MeshInstance3D { RotationDegrees = new Vector3(0, 180, 0) };
+        var shadow = Def!.Shadowless ? GeometryInstance3D.ShadowCastingSetting.Off : GeometryInstance3D.ShadowCastingSetting.On;
+        _model = new MeshInstance3D { RotationDegrees = new Vector3(0, 180, 0), CastShadow = shadow };
         AddChild(_model);
         var texHash = WornModel?.Texture ?? CurState?.Texture ?? Def!.Texture;
         if (texHash != null && pack.Assets.TryGetValue(texHash, out var ta))
@@ -443,6 +454,7 @@ public partial class PieceNode : Node3D
             var tex = _s.Assets.Texture(pack.Id, ta.File, t => { if (IsInstanceValid(this)) mat.AlbedoTexture = untinted.AlbedoTexture = t; }, maxSize: die ? 1024 : 2048);
             if (tex != null) mat.AlbedoTexture = untinted.AlbedoTexture = tex;
         }
+        if (Def!.Normal != null && pack.Assets.TryGetValue(Def.Normal, out var na)) Bumps(pack.Id, na.File, mat, untinted);
         var model = _model;
         _s.Assets.EnsureFile(pack.Id, ma.File, () =>
         {

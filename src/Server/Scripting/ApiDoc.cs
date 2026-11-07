@@ -494,7 +494,7 @@ public static partial class ApiDoc
         O("align", "\"left\"|\"center\"|\"right\"", "Default \"center\".");
         O("lines", "number", "Lines of text the box holds. Default 1.");
         O("tooltip", "string", "Shown when the pointer rests on it.");
-        O("on_change", "string", "The handler's name: called as fn(who, value, index, piece) when the umpire finishes typing.");
+        O("on_change", "string", "The handler's name: called as fn(who, value, index, piece) when the umpire finishes typing; text it returns replaces what was typed.");
         O("kind", "\"button\"|\"input\"|\"label\"", "\"label\" shows its value but takes no typing: locked text.");
         R("The widget's index, from 1.");
         X("""

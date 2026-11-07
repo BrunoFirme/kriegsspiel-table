@@ -7,7 +7,8 @@
    "instead": "sit players at their seats; pieces meant for a hand stay on the table",
    "held_by": "",
    "count": 494,
-   "modules": 55
+   "modules": 55,
+   "audited": ""
   },
   {
    "row": "Custom_Model",
@@ -16,7 +17,8 @@
    "instead": "",
    "held_by": "",
    "count": 4903,
-   "modules": 52
+   "modules": 52,
+   "audited": ""
   },
   {
    "row": "Custom_Token",
@@ -25,7 +27,8 @@
    "instead": "",
    "held_by": "",
    "count": 25836,
-   "modules": 50
+   "modules": 50,
+   "audited": ""
   },
   {
    "row": "Custom_Tile",
@@ -34,7 +37,8 @@
    "instead": "",
    "held_by": "",
    "count": 36769,
-   "modules": 49
+   "modules": 49,
+   "audited": ""
   },
   {
    "row": "Custom_Assetbundle",
@@ -43,7 +47,8 @@
    "instead": "",
    "held_by": "import-sweep: prairie-grove, suriagehara, zeke",
    "count": 36541,
-   "modules": 49
+   "modules": 49,
+   "audited": ""
   },
   {
    "row": "Chinese_Checkers_Piece",
@@ -52,7 +57,8 @@
    "instead": "nothing is needed: the table top it sizes comes over as the map sheet, its picture at the size the control left",
    "held_by": "",
    "count": 46,
-   "modules": 46
+   "modules": 46,
+   "audited": ""
   },
   {
    "row": "Custom_Board",
@@ -61,7 +67,8 @@
    "instead": "",
    "held_by": "",
    "count": 22,
-   "modules": 22
+   "modules": 22,
+   "audited": ""
   },
   {
    "row": "Notecard",
@@ -70,7 +77,8 @@
    "instead": "",
    "held_by": "",
    "count": 28,
-   "modules": 16
+   "modules": 16,
+   "audited": ""
   },
   {
    "row": "Custom_PDF",
@@ -79,7 +87,8 @@
    "instead": "",
    "held_by": "BookTests",
    "count": 15,
-   "modules": 14
+   "modules": 14,
+   "audited": ""
   },
   {
    "row": "BlockSquare",
@@ -88,7 +97,8 @@
    "instead": "",
    "held_by": "",
    "count": 665,
-   "modules": 12
+   "modules": 12,
+   "audited": ""
   },
   {
    "row": "BlockRectangle",
@@ -97,7 +107,8 @@
    "instead": "",
    "held_by": "",
    "count": 333,
-   "modules": 11
+   "modules": 11,
+   "audited": ""
   },
   {
    "row": "3DText",
@@ -106,7 +117,8 @@
    "instead": "",
    "held_by": "",
    "count": 109,
-   "modules": 11
+   "modules": 11,
+   "audited": ""
   },
   {
    "row": "Die_20",
@@ -115,7 +127,8 @@
    "instead": "",
    "held_by": "DiceTests",
    "count": 77,
-   "modules": 11
+   "modules": 11,
+   "audited": ""
   },
   {
    "row": "Bag",
@@ -124,7 +137,8 @@
    "instead": "",
    "held_by": "BagBoxTests",
    "count": 17,
-   "modules": 11
+   "modules": 11,
+   "audited": ""
   },
   {
    "row": "Infinite_Bag",
@@ -133,7 +147,8 @@
    "instead": "place pieces from the Pieces drawer; a stowed bag holds spares",
    "held_by": "",
    "count": 86,
-   "modules": 8
+   "modules": 8,
+   "audited": ""
   },
   {
    "row": "Custom_Model_Bag",
@@ -142,7 +157,8 @@
    "instead": "",
    "held_by": "import-sweep: naval, scripted-war-game",
    "count": 48,
-   "modules": 8
+   "modules": 8,
+   "audited": ""
   },
   {
    "row": "Custom_Dice",
@@ -151,7 +167,8 @@
    "instead": "",
    "held_by": "DiceTests",
    "count": 35,
-   "modules": 7
+   "modules": 7,
+   "audited": ""
   },
   {
    "row": "CardCustom",
@@ -160,7 +177,8 @@
    "instead": "",
    "held_by": "",
    "count": 1144,
-   "modules": 6
+   "modules": 6,
+   "audited": ""
   },
   {
    "row": "Die_12",
@@ -169,7 +187,8 @@
    "instead": "",
    "held_by": "DiceTests",
    "count": 11,
-   "modules": 5
+   "modules": 5,
+   "audited": ""
   },
   {
    "row": "Die_10",
@@ -178,7 +197,8 @@
    "instead": "",
    "held_by": "DiceTests",
    "count": 9,
-   "modules": 4
+   "modules": 4,
+   "audited": ""
   },
   {
    "row": "Die_6_Rounded",
@@ -187,7 +207,8 @@
    "instead": "",
    "held_by": "DiceTests",
    "count": 7,
-   "modules": 4
+   "modules": 4,
+   "audited": ""
   },
   {
    "row": "Die_6",
@@ -196,7 +217,8 @@
    "instead": "",
    "held_by": "DiceTests",
    "count": 27,
-   "modules": 3
+   "modules": 3,
+   "audited": ""
   },
   {
    "row": "BlockTriangle",
@@ -205,7 +227,8 @@
    "instead": "",
    "held_by": "TriangleBlockTests",
    "count": 9,
-   "modules": 3
+   "modules": 3,
+   "audited": ""
   },
   {
    "row": "Tileset_Tree",
@@ -214,7 +237,8 @@
    "instead": "",
    "held_by": "BagBoxTests",
    "count": 119,
-   "modules": 1
+   "modules": 1,
+   "audited": ""
   },
   {
    "row": "Card",
@@ -223,7 +247,8 @@
    "instead": "",
    "held_by": "",
    "count": 82,
-   "modules": 1
+   "modules": 1,
+   "audited": ""
   },
   {
    "row": "Checker_white",
@@ -232,7 +257,8 @@
    "instead": "",
    "held_by": "",
    "count": 17,
-   "modules": 1
+   "modules": 1,
+   "audited": ""
   },
   {
    "row": "Figurine_Custom",
@@ -241,7 +267,8 @@
    "instead": "",
    "held_by": "FigurineTests",
    "count": 16,
-   "modules": 1
+   "modules": 1,
+   "audited": ""
   },
   {
    "row": "Deck",
@@ -250,7 +277,8 @@
    "instead": "",
    "held_by": "",
    "count": 15,
-   "modules": 1
+   "modules": 1,
+   "audited": ""
   },
   {
    "row": "PlayerPawn",
@@ -259,7 +287,8 @@
    "instead": "",
    "held_by": "PawnTests",
    "count": 7,
-   "modules": 1
+   "modules": 1,
+   "audited": ""
   },
   {
    "row": "Die_8",
@@ -268,7 +297,8 @@
    "instead": "",
    "held_by": "DiceTests",
    "count": 2,
-   "modules": 1
+   "modules": 1,
+   "audited": ""
   },
   {
    "row": "Calculator",
@@ -277,7 +307,8 @@
    "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Counter",
@@ -286,7 +317,8 @@
    "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Custom_Assetbundle_Infinite_Bag",
@@ -295,7 +327,8 @@
    "instead": "place pieces from the Pieces drawer; a stowed bag holds spares",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Custom_Model_Infinite_Bag",
@@ -304,7 +337,8 @@
    "instead": "place pieces from the Pieces drawer; a stowed bag holds spares",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Die_4",
@@ -313,7 +347,8 @@
    "instead": "",
    "held_by": "DiceTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Digital_Clock",
@@ -322,7 +357,8 @@
    "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "FogOfWarTrigger",
@@ -331,7 +367,8 @@
    "instead": "the umpire layer and side layers hide what a side must not see",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Go_Game_Piece_Black",
@@ -340,7 +377,8 @@
    "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Go_Game_Piece_White",
@@ -349,7 +387,8 @@
    "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Quarter",
@@ -358,7 +397,8 @@
    "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "ScriptingTrigger",
@@ -367,7 +407,8 @@
    "instead": "draw the zone at the table; scripts that ask a zone what is in it get nothing",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Tablet",
@@ -376,7 +417,8 @@
    "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Tileset_*",
@@ -385,7 +427,8 @@
    "instead": "paint the ground or place a prop of our own",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   }
  ],
  "save": [
@@ -396,7 +439,8 @@
    "instead": "",
    "held_by": "",
    "count": 107489,
-   "modules": 55
+   "modules": 55,
+   "audited": ""
   },
   {
    "row": "ObjectState.Transform",
@@ -405,7 +449,8 @@
    "instead": "",
    "held_by": "",
    "count": 107489,
-   "modules": 55
+   "modules": 55,
+   "audited": ""
   },
   {
    "row": "ObjectState.GUID",
@@ -414,7 +459,8 @@
    "instead": "",
    "held_by": "",
    "count": 106189,
-   "modules": 55
+   "modules": 55,
+   "audited": ""
   },
   {
    "row": "TransformState.posX",
@@ -423,7 +469,8 @@
    "instead": "",
    "held_by": "",
    "count": 106189,
-   "modules": 55
+   "modules": 55,
+   "audited": ""
   },
   {
    "row": "TransformState.posY",
@@ -432,7 +479,8 @@
    "instead": "",
    "held_by": "",
    "count": 106189,
-   "modules": 55
+   "modules": 55,
+   "audited": ""
   },
   {
    "row": "TransformState.posZ",
@@ -441,7 +489,8 @@
    "instead": "",
    "held_by": "",
    "count": 106189,
-   "modules": 55
+   "modules": 55,
+   "audited": ""
   },
   {
    "row": "TransformState.rotY",
@@ -450,7 +499,8 @@
    "instead": "",
    "held_by": "",
    "count": 106188,
-   "modules": 55
+   "modules": 55,
+   "audited": ""
   },
   {
    "row": "TransformState.scaleX",
@@ -459,7 +509,8 @@
    "instead": "",
    "held_by": "",
    "count": 97221,
-   "modules": 55
+   "modules": 55,
+   "audited": ""
   },
   {
    "row": "TransformState.scaleZ",
@@ -468,7 +519,8 @@
    "instead": "",
    "held_by": "",
    "count": 96198,
-   "modules": 55
+   "modules": 55,
+   "audited": ""
   },
   {
    "row": "ObjectState.Name",
@@ -477,7 +529,8 @@
    "instead": "",
    "held_by": "",
    "count": 70720,
-   "modules": 55
+   "modules": 55,
+   "audited": ""
   },
   {
    "row": "ColourState.g",
@@ -486,7 +539,8 @@
    "instead": "",
    "held_by": "",
    "count": 40837,
-   "modules": 55
+   "modules": 55,
+   "audited": ""
   },
   {
    "row": "ColourState.b",
@@ -495,7 +549,8 @@
    "instead": "",
    "held_by": "",
    "count": 40277,
-   "modules": 55
+   "modules": 55,
+   "audited": ""
   },
   {
    "row": "TransformState.scaleY",
@@ -504,7 +559,8 @@
    "instead": "",
    "held_by": "",
    "count": 39852,
-   "modules": 55
+   "modules": 55,
+   "audited": ""
   },
   {
    "row": "ColourState.r",
@@ -513,7 +569,8 @@
    "instead": "",
    "held_by": "",
    "count": 34766,
-   "modules": 55
+   "modules": 55,
+   "audited": ""
   },
   {
    "row": "ObjectState.Locked",
@@ -522,7 +579,8 @@
    "instead": "",
    "held_by": "",
    "count": 16925,
-   "modules": 55
+   "modules": 55,
+   "audited": ""
   },
   {
    "row": "ObjectState.Grid",
@@ -531,7 +589,8 @@
    "instead": "the table's own grid snaps",
    "held_by": "",
    "count": 4453,
-   "modules": 55
+   "modules": 55,
+   "audited": ""
   },
   {
    "row": "ObjectState.FogColor",
@@ -540,7 +599,8 @@
    "instead": "the umpire layer and side layers",
    "held_by": "",
    "count": 426,
-   "modules": 55
+   "modules": 55,
+   "audited": ""
   },
   {
    "row": "SaveState.ComponentTags",
@@ -549,7 +609,8 @@
    "instead": "nothing is needed; pieces keep their tags",
    "held_by": "",
    "count": 55,
-   "modules": 55
+   "modules": 55,
+   "audited": ""
   },
   {
    "row": "SaveState.Grid",
@@ -558,7 +619,8 @@
    "instead": "set the table's own grid",
    "held_by": "",
    "count": 55,
-   "modules": 55
+   "modules": 55,
+   "audited": ""
   },
   {
    "row": "SaveState.Hands",
@@ -567,7 +629,8 @@
    "instead": "sit players at their seats",
    "held_by": "",
    "count": 55,
-   "modules": 55
+   "modules": 55,
+   "audited": ""
   },
   {
    "row": "SaveState.Lighting",
@@ -576,7 +639,8 @@
    "instead": "set the table's own light and backdrop",
    "held_by": "",
    "count": 55,
-   "modules": 55
+   "modules": 55,
+   "audited": ""
   },
   {
    "row": "SaveState.TabStates",
@@ -585,7 +649,8 @@
    "instead": "",
    "held_by": "",
    "count": 55,
-   "modules": 55
+   "modules": 55,
+   "audited": ""
   },
   {
    "row": "SaveState.Turns",
@@ -594,7 +659,8 @@
    "instead": "the game clock and turn order here",
    "held_by": "",
    "count": 55,
-   "modules": 55
+   "modules": 55,
+   "audited": ""
   },
   {
    "row": "ObjectState.Nickname",
@@ -603,7 +669,8 @@
    "instead": "",
    "held_by": "",
    "count": 50030,
-   "modules": 54
+   "modules": 54,
+   "audited": ""
   },
   {
    "row": "SaveState.Date",
@@ -612,7 +679,8 @@
    "instead": "nothing is needed",
    "held_by": "",
    "count": 54,
-   "modules": 54
+   "modules": 54,
+   "audited": ""
   },
   {
    "row": "SaveState.EpochTime",
@@ -621,7 +689,8 @@
    "instead": "nothing is needed",
    "held_by": "",
    "count": 54,
-   "modules": 54
+   "modules": 54,
+   "audited": ""
   },
   {
    "row": "SaveState.SaveName",
@@ -630,7 +699,8 @@
    "instead": "",
    "held_by": "",
    "count": 54,
-   "modules": 54
+   "modules": 54,
+   "audited": ""
   },
   {
    "row": "TransformState.rotX",
@@ -639,7 +709,8 @@
    "instead": "",
    "held_by": "",
    "count": 105737,
-   "modules": 53
+   "modules": 53,
+   "audited": ""
   },
   {
    "row": "TransformState.rotZ",
@@ -648,7 +719,8 @@
    "instead": "",
    "held_by": "",
    "count": 105326,
-   "modules": 53
+   "modules": 53,
+   "audited": ""
   },
   {
    "row": "ObjectState.LuaScriptState",
@@ -657,7 +729,8 @@
    "instead": "",
    "held_by": "",
    "count": 15203,
-   "modules": 52
+   "modules": 52,
+   "audited": ""
   },
   {
    "row": "ObjectState.CustomMesh",
@@ -666,7 +739,8 @@
    "instead": "",
    "held_by": "",
    "count": 4951,
-   "modules": 52
+   "modules": 52,
+   "audited": ""
   },
   {
    "row": "CustomMeshState.MeshURL",
@@ -675,16 +749,18 @@
    "instead": "",
    "held_by": "",
    "count": 3975,
-   "modules": 52
+   "modules": 52,
+   "audited": ""
   },
   {
    "row": "CustomMeshState.TypeIndex",
-   "status": "native",
-   "where": "converter reads it",
+   "status": "partial",
+   "where": "Dice and Coin models roll on their rotation values (the kind's faces); Bag by the object's name; Board only exempts from zones, fog and alt zoom, none here; Figurine held upright, and pieces here never tip; Chip stacking unused in the corpus",
    "instead": "",
-   "held_by": "",
+   "held_by": "ConverterTests.A_model_made_a_die_rolls_on_its_saved_values_and_shows_the_one_facing_up_and_a_plain_model_does_not",
    "count": 2825,
-   "modules": 52
+   "modules": 52,
+   "audited": "ConverterTests.A_model_made_a_die_rolls_on_its_saved_values_and_shows_the_one_facing_up_and_a_plain_model_does_not"
   },
   {
    "row": "ObjectState.CustomImage",
@@ -693,7 +769,8 @@
    "instead": "",
    "held_by": "",
    "count": 62678,
-   "modules": 51
+   "modules": 51,
+   "audited": ""
   },
   {
    "row": "CustomImageState.ImageURL",
@@ -702,7 +779,8 @@
    "instead": "",
    "held_by": "",
    "count": 56944,
-   "modules": 51
+   "modules": 51,
+   "audited": ""
   },
   {
    "row": "ObjectState.LuaScript",
@@ -711,7 +789,8 @@
    "instead": "",
    "held_by": "",
    "count": 11525,
-   "modules": 51
+   "modules": 51,
+   "audited": ""
   },
   {
    "row": "CustomImageState.CustomToken",
@@ -720,7 +799,8 @@
    "instead": "",
    "held_by": "",
    "count": 25836,
-   "modules": 50
+   "modules": 50,
+   "audited": ""
   },
   {
    "row": "CustomMeshState.DiffuseURL",
@@ -729,7 +809,8 @@
    "instead": "",
    "held_by": "",
    "count": 2836,
-   "modules": 50
+   "modules": 50,
+   "audited": ""
   },
   {
    "row": "CustomImageState.CustomTile",
@@ -738,7 +819,8 @@
    "instead": "",
    "held_by": "",
    "count": 36769,
-   "modules": 49
+   "modules": 49,
+   "audited": ""
   },
   {
    "row": "ObjectState.CustomAssetbundle",
@@ -747,7 +829,8 @@
    "instead": "",
    "held_by": "",
    "count": 36541,
-   "modules": 49
+   "modules": 49,
+   "audited": ""
   },
   {
    "row": "CustomAssetbundleState.AssetbundleURL",
@@ -756,16 +839,18 @@
    "instead": "",
    "held_by": "",
    "count": 28796,
-   "modules": 49
+   "modules": 49,
+   "audited": ""
   },
   {
    "row": "CustomTokenState.MergeDistancePixels",
-   "status": "native",
-   "where": "converter reads it",
+   "status": "partial",
+   "where": "the token's outline traces its picture's alpha; the game's merging of outline points closer than this is not copied",
    "instead": "",
-   "held_by": "",
+   "held_by": "converter",
    "count": 14063,
-   "modules": 49
+   "modules": 49,
+   "audited": ""
   },
   {
    "row": "CustomAssetbundleState.AssetbundleSecondaryURL",
@@ -774,7 +859,8 @@
    "instead": "",
    "held_by": "",
    "count": 13038,
-   "modules": 49
+   "modules": 49,
+   "audited": ""
   },
   {
    "row": "CustomAssetbundleState.MaterialIndex",
@@ -783,7 +869,8 @@
    "instead": "",
    "held_by": "",
    "count": 12341,
-   "modules": 49
+   "modules": 49,
+   "audited": ""
   },
   {
    "row": "CustomMeshState.CustomShader",
@@ -792,16 +879,18 @@
    "instead": "",
    "held_by": "WorthImportTests",
    "count": 1101,
-   "modules": 49
+   "modules": 49,
+   "audited": ""
   },
   {
    "row": "CustomAssetbundleState.TypeIndex",
-   "status": "native",
-   "where": "converter reads it",
+   "status": "partial",
+   "where": "as CustomMeshState.TypeIndex; the corpus has Generic, Figurine and Board bundles only",
    "instead": "",
-   "held_by": "",
+   "held_by": "converter",
    "count": 626,
-   "modules": 49
+   "modules": 49,
+   "audited": "ConverterTests.A_model_made_a_die_rolls_on_its_saved_values_and_shows_the_one_facing_up_and_a_plain_model_does_not"
   },
   {
    "row": "ObjectState.States",
@@ -810,7 +899,8 @@
    "instead": "",
    "held_by": "",
    "count": 11316,
-   "modules": 48
+   "modules": 48,
+   "audited": ""
   },
   {
    "row": "ObjectState.Tooltip",
@@ -819,7 +909,8 @@
    "instead": "the umpire layer hides a piece whole",
    "held_by": "",
    "count": 1361,
-   "modules": 48
+   "modules": 48,
+   "audited": ""
   },
   {
    "row": "ObjectState.MaterialIndex",
@@ -828,7 +919,8 @@
    "instead": "",
    "held_by": "WorthImportTests",
    "count": 186,
-   "modules": 48
+   "modules": 48,
+   "audited": ""
   },
   {
    "row": "ObjectState.GridProjection",
@@ -837,7 +929,8 @@
    "instead": "set the table's own grid",
    "held_by": "",
    "count": 79,
-   "modules": 47
+   "modules": 47,
+   "audited": ""
   },
   {
    "row": "ObjectState.Description",
@@ -846,7 +939,8 @@
    "instead": "",
    "held_by": "",
    "count": 17057,
-   "modules": 45
+   "modules": 45,
+   "audited": ""
   },
   {
    "row": "ObjectState.Snap",
@@ -855,7 +949,8 @@
    "instead": "the table's own grid snaps",
    "held_by": "",
    "count": 3149,
-   "modules": 40
+   "modules": 40,
+   "audited": ""
   },
   {
    "row": "ObjectState.ChildObjects",
@@ -864,7 +959,8 @@
    "instead": "",
    "held_by": "import-sweep: triangles, richmond",
    "count": 25956,
-   "modules": 39
+   "modules": 39,
+   "audited": "ConverterTests.Each_state_of_a_token_shows_its_own_glued_children_even_a_child_with_states_of_its_own"
   },
   {
    "row": "GridState.xSize",
@@ -873,7 +969,8 @@
    "instead": "set the table's own grid",
    "held_by": "",
    "count": 39,
-   "modules": 39
+   "modules": 39,
+   "audited": ""
   },
   {
    "row": "GridState.ySize",
@@ -882,7 +979,8 @@
    "instead": "set the table's own grid",
    "held_by": "",
    "count": 39,
-   "modules": 39
+   "modules": 39,
+   "audited": ""
   },
   {
    "row": "CustomTileState.Thickness",
@@ -891,7 +989,8 @@
    "instead": "",
    "held_by": "",
    "count": 13329,
-   "modules": 38
+   "modules": 38,
+   "audited": ""
   },
   {
    "row": "CustomTokenState.Thickness",
@@ -900,7 +999,8 @@
    "instead": "",
    "held_by": "",
    "count": 1686,
-   "modules": 37
+   "modules": 37,
+   "audited": ""
   },
   {
    "row": "SaveState.GameMode",
@@ -909,7 +1009,8 @@
    "instead": "nothing is needed",
    "held_by": "",
    "count": 35,
-   "modules": 35
+   "modules": 35,
+   "audited": ""
   },
   {
    "row": "CustomImageState.ImageSecondaryURL",
@@ -918,7 +1019,8 @@
    "instead": "",
    "held_by": "",
    "count": 3542,
-   "modules": 33
+   "modules": 33,
+   "audited": ""
   },
   {
    "row": "SaveState.PlayerCounts",
@@ -927,7 +1029,8 @@
    "instead": "nothing is needed",
    "held_by": "",
    "count": 32,
-   "modules": 32
+   "modules": 32,
+   "audited": ""
   },
   {
    "row": "SaveState.PlayingTime",
@@ -936,7 +1039,8 @@
    "instead": "nothing is needed",
    "held_by": "",
    "count": 32,
-   "modules": 32
+   "modules": 32,
+   "audited": ""
   },
   {
    "row": "SaveState.GameComplexity",
@@ -945,7 +1049,8 @@
    "instead": "nothing is needed",
    "held_by": "",
    "count": 30,
-   "modules": 30
+   "modules": 30,
+   "audited": ""
   },
   {
    "row": "SaveState.PlayArea",
@@ -954,7 +1059,8 @@
    "instead": "the backdrop themes and the app's own table and views",
    "held_by": "",
    "count": 29,
-   "modules": 29
+   "modules": 29,
+   "audited": ""
   },
   {
    "row": "ObjectState.RotationValues",
@@ -963,7 +1069,8 @@
    "instead": "",
    "held_by": "",
    "count": 184,
-   "modules": 27
+   "modules": 27,
+   "audited": ""
   },
   {
    "row": "TagsState.labels",
@@ -972,7 +1079,8 @@
    "instead": "nothing is needed; pieces keep their tags",
    "held_by": "",
    "count": 27,
-   "modules": 27
+   "modules": 27,
+   "audited": ""
   },
   {
    "row": "ObjectState.Sticky",
@@ -981,7 +1089,8 @@
    "instead": "",
    "held_by": "StickyTests",
    "count": 1334,
-   "modules": 26
+   "modules": 26,
+   "audited": ""
   },
   {
    "row": "SaveState.VersionNumber",
@@ -990,7 +1099,8 @@
    "instead": "nothing is needed",
    "held_by": "",
    "count": 26,
-   "modules": 26
+   "modules": 26,
+   "audited": ""
   },
   {
    "row": "SaveState.GameType",
@@ -999,7 +1109,8 @@
    "instead": "nothing is needed",
    "held_by": "",
    "count": 25,
-   "modules": 25
+   "modules": 25,
+   "audited": ""
   },
   {
    "row": "SaveState.LuaScript",
@@ -1008,7 +1119,8 @@
    "instead": "",
    "held_by": "",
    "count": 25,
-   "modules": 25
+   "modules": 25,
+   "audited": ""
   },
   {
    "row": "ObjectState.AttachedVectorLines",
@@ -1017,7 +1129,8 @@
    "instead": "",
    "held_by": "DrawingTests",
    "count": 114,
-   "modules": 22
+   "modules": 22,
+   "audited": ""
   },
   {
    "row": "CustomImageState.WidthScale",
@@ -1026,7 +1139,8 @@
    "instead": "",
    "held_by": "",
    "count": 22,
-   "modules": 22
+   "modules": 22,
+   "audited": ""
   },
   {
    "row": "CustomMeshState.MaterialIndex",
@@ -1035,7 +1149,8 @@
    "instead": "",
    "held_by": "",
    "count": 1480,
-   "modules": 21
+   "modules": 21,
+   "audited": ""
   },
   {
    "row": "CustomAssetbundleState.LoopingEffectIndex",
@@ -1044,7 +1159,8 @@
    "instead": "",
    "held_by": "import-sweep",
    "count": 71,
-   "modules": 21
+   "modules": 21,
+   "audited": ""
   },
   {
    "row": "CustomTileState.Type",
@@ -1053,7 +1169,8 @@
    "instead": "",
    "held_by": "",
    "count": 1743,
-   "modules": 20
+   "modules": 20,
+   "audited": ""
   },
   {
    "row": "ObjectState.ContainedObjects",
@@ -1062,16 +1179,18 @@
    "instead": "",
    "held_by": "TablePiecesTests",
    "count": 156,
-   "modules": 20
+   "modules": 20,
+   "audited": ""
   },
   {
    "row": "CustomMeshState.ColliderURL",
-   "status": "native",
-   "where": "converter reads it",
-   "instead": "",
+   "status": "dropped",
+   "where": "pieces here never collide (decided 2026-11-07)",
+   "instead": "nothing is needed: pieces rest by their stacking",
    "held_by": "",
    "count": 2969,
-   "modules": 19
+   "modules": 19,
+   "audited": ""
   },
   {
    "row": "GridState.Opacity",
@@ -1080,7 +1199,8 @@
    "instead": "set the table's own grid",
    "held_by": "",
    "count": 18,
-   "modules": 18
+   "modules": 18,
+   "audited": ""
   },
   {
    "row": "ObjectState.Bag",
@@ -1089,7 +1209,8 @@
    "instead": "",
    "held_by": "BagOrderTests",
    "count": 64,
-   "modules": 17
+   "modules": 17,
+   "audited": ""
   },
   {
    "row": "ObjectState.Tags",
@@ -1098,16 +1219,18 @@
    "instead": "",
    "held_by": "",
    "count": 17646,
-   "modules": 16
+   "modules": 16,
+   "audited": ""
   },
   {
    "row": "SaveState.Sky",
    "status": "native",
-   "where": "converter reads it",
+   "where": "a stock sky becomes the nearest backdrop (ScenarioBuilder.StockSkies)",
    "instead": "",
-   "held_by": "",
+   "held_by": "ConverterTests.A_module_that_names_only_a_stock_sky_gets_the_nearest_backdrop",
    "count": 16,
-   "modules": 16
+   "modules": 16,
+   "audited": "ConverterTests.A_module_that_names_only_a_stock_sky_gets_the_nearest_backdrop"
   },
   {
    "row": "SaveState.Note",
@@ -1116,7 +1239,8 @@
    "instead": "",
    "held_by": "",
    "count": 15,
-   "modules": 15
+   "modules": 15,
+   "audited": ""
   },
   {
    "row": "ObjectState.CustomPDF",
@@ -1125,7 +1249,8 @@
    "instead": "",
    "held_by": "BookTests",
    "count": 15,
-   "modules": 14
+   "modules": 14,
+   "audited": ""
   },
   {
    "row": "GridState.PosOffset",
@@ -1134,7 +1259,8 @@
    "instead": "set the table's own grid",
    "held_by": "",
    "count": 14,
-   "modules": 14
+   "modules": 14,
+   "audited": ""
   },
   {
    "row": "ObjectState.PhysicsMaterial",
@@ -1143,7 +1269,8 @@
    "instead": "nothing is needed",
    "held_by": "",
    "count": 368,
-   "modules": 13
+   "modules": 13,
+   "audited": ""
   },
   {
    "row": "ObjectState.Rigidbody",
@@ -1152,7 +1279,8 @@
    "instead": "nothing is needed",
    "held_by": "",
    "count": 368,
-   "modules": 13
+   "modules": 13,
+   "audited": ""
   },
   {
    "row": "PhysicsMaterialState.DynamicFriction",
@@ -1161,7 +1289,8 @@
    "instead": "nothing is needed",
    "held_by": "",
    "count": 198,
-   "modules": 13
+   "modules": 13,
+   "audited": ""
   },
   {
    "row": "RigidbodyState.AngularDrag",
@@ -1170,7 +1299,8 @@
    "instead": "nothing is needed",
    "held_by": "",
    "count": 198,
-   "modules": 13
+   "modules": 13,
+   "audited": ""
   },
   {
    "row": "RigidbodyState.Drag",
@@ -1179,7 +1309,8 @@
    "instead": "nothing is needed",
    "held_by": "",
    "count": 198,
-   "modules": 13
+   "modules": 13,
+   "audited": ""
   },
   {
    "row": "LightingState.LightIntensity",
@@ -1188,7 +1319,8 @@
    "instead": "set the table's own light and backdrop",
    "held_by": "",
    "count": 13,
-   "modules": 13
+   "modules": 13,
+   "audited": ""
   },
   {
    "row": "ObjectState.Memo",
@@ -1197,16 +1329,18 @@
    "instead": "",
    "held_by": "",
    "count": 5023,
-   "modules": 12
+   "modules": 12,
+   "audited": ""
   },
   {
    "row": "CustomMeshState.Convex",
-   "status": "native",
-   "where": "converter reads it",
-   "instead": "",
+   "status": "dropped",
+   "where": "pieces here never collide (decided 2026-11-07)",
+   "instead": "nothing is needed: pieces rest by their stacking",
    "held_by": "",
    "count": 710,
-   "modules": 12
+   "modules": 12,
+   "audited": ""
   },
   {
    "row": "LightingState.AmbientIntensity",
@@ -1215,7 +1349,8 @@
    "instead": "set the table's own light and backdrop",
    "held_by": "",
    "count": 12,
-   "modules": 12
+   "modules": 12,
+   "audited": ""
   },
   {
    "row": "ObjectState.Text",
@@ -1224,7 +1359,8 @@
    "instead": "",
    "held_by": "",
    "count": 109,
-   "modules": 11
+   "modules": 11,
+   "audited": ""
   },
   {
    "row": "TextState.Text",
@@ -1233,7 +1369,8 @@
    "instead": "",
    "held_by": "",
    "count": 105,
-   "modules": 11
+   "modules": 11,
+   "audited": ""
   },
   {
    "row": "GridState.Lines",
@@ -1242,7 +1379,8 @@
    "instead": "set the table's own grid",
    "held_by": "",
    "count": 11,
-   "modules": 11
+   "modules": 11,
+   "audited": ""
   },
   {
    "row": "CustomTileState.Stretch",
@@ -1251,7 +1389,8 @@
    "instead": "",
    "held_by": "",
    "count": 569,
-   "modules": 10
+   "modules": 10,
+   "audited": ""
   },
   {
    "row": "SaveState.Gravity",
@@ -1260,7 +1399,8 @@
    "instead": "nothing is needed",
    "held_by": "",
    "count": 9,
-   "modules": 9
+   "modules": 9,
+   "audited": ""
   },
   {
    "row": "SaveState.MusicPlayer",
@@ -1269,7 +1409,8 @@
    "instead": "the app's own sounds",
    "held_by": "",
    "count": 9,
-   "modules": 9
+   "modules": 9,
+   "audited": ""
   },
   {
    "row": "SaveState.VectorLines",
@@ -1278,7 +1419,8 @@
    "instead": "",
    "held_by": "DrawingTests",
    "count": 9,
-   "modules": 9
+   "modules": 9,
+   "audited": ""
   },
   {
    "row": "ObjectState.DragSelectable",
@@ -1287,7 +1429,8 @@
    "instead": "",
    "held_by": "ModuleOptionsTests",
    "count": 335,
-   "modules": 8
+   "modules": 8,
+   "audited": ""
   },
   {
    "row": "CustomPDFState.PDFUrl",
@@ -1296,7 +1439,8 @@
    "instead": "",
    "held_by": "BookTests",
    "count": 9,
-   "modules": 8
+   "modules": 8,
+   "audited": ""
   },
   {
    "row": "MusicPlayerState.AudioLibrary",
@@ -1305,7 +1449,8 @@
    "instead": "the app's own sounds",
    "held_by": "",
    "count": 8,
-   "modules": 8
+   "modules": 8,
+   "audited": ""
   },
   {
    "row": "ObjectState.Autoraise",
@@ -1314,7 +1459,8 @@
    "instead": "nothing is needed",
    "held_by": "",
    "count": 354,
-   "modules": 7
+   "modules": 7,
+   "audited": ""
   },
   {
    "row": "CustomImageState.CustomDice",
@@ -1323,7 +1469,8 @@
    "instead": "",
    "held_by": "",
    "count": 35,
-   "modules": 7
+   "modules": 7,
+   "audited": ""
   },
   {
    "row": "LightingState.LightColor",
@@ -1332,7 +1479,8 @@
    "instead": "set the table's own light and backdrop",
    "held_by": "",
    "count": 7,
-   "modules": 7
+   "modules": 7,
+   "audited": ""
   },
   {
    "row": "SaveState.Table",
@@ -1341,7 +1489,8 @@
    "instead": "",
    "held_by": "",
    "count": 7,
-   "modules": 7
+   "modules": 7,
+   "audited": ""
   },
   {
    "row": "SaveState.Tags",
@@ -1350,7 +1499,8 @@
    "instead": "nothing is needed",
    "held_by": "",
    "count": 7,
-   "modules": 7
+   "modules": 7,
+   "audited": ""
   },
   {
    "row": "ObjectState.CustomDeck",
@@ -1359,7 +1509,8 @@
    "instead": "",
    "held_by": "",
    "count": 1241,
-   "modules": 6
+   "modules": 6,
+   "audited": ""
   },
   {
    "row": "ObjectState.Hands",
@@ -1368,7 +1519,8 @@
    "instead": "sit players at their seats",
    "held_by": "",
    "count": 1226,
-   "modules": 6
+   "modules": 6,
+   "audited": ""
   },
   {
    "row": "ObjectState.CardID",
@@ -1377,7 +1529,8 @@
    "instead": "",
    "held_by": "import-sweep: naval",
    "count": 1196,
-   "modules": 6
+   "modules": 6,
+   "audited": ""
   },
   {
    "row": "ObjectState.HideWhenFaceDown",
@@ -1386,7 +1539,8 @@
    "instead": "the umpire layer hides a piece whole",
    "held_by": "",
    "count": 1158,
-   "modules": 6
+   "modules": 6,
+   "audited": ""
   },
   {
    "row": "CustomShaderState.SpecularIntensity",
@@ -1395,7 +1549,8 @@
    "instead": "",
    "held_by": "WorthImportTests",
    "count": 357,
-   "modules": 6
+   "modules": 6,
+   "audited": ""
   },
   {
    "row": "CustomShaderState.SpecularColor",
@@ -1404,7 +1559,8 @@
    "instead": "",
    "held_by": "WorthImportTests",
    "count": 310,
-   "modules": 6
+   "modules": 6,
+   "audited": ""
   },
   {
    "row": "PhysicsMaterialState.StaticFriction",
@@ -1413,7 +1569,8 @@
    "instead": "nothing is needed",
    "held_by": "",
    "count": 184,
-   "modules": 6
+   "modules": 6,
+   "audited": ""
   },
   {
    "row": "RigidbodyState.Mass",
@@ -1422,7 +1579,8 @@
    "instead": "nothing is needed",
    "held_by": "",
    "count": 45,
-   "modules": 6
+   "modules": 6,
+   "audited": ""
   },
   {
    "row": "TextState.fontSize",
@@ -1431,16 +1589,18 @@
    "instead": "",
    "held_by": "",
    "count": 26,
-   "modules": 6
+   "modules": 6,
+   "audited": ""
   },
   {
    "row": "CustomMeshState.CastShadows",
    "status": "native",
-   "where": "converter reads it",
+   "where": "the kind's Shadowless",
    "instead": "",
-   "held_by": "",
+   "held_by": "ConverterTests.A_model_keeps_its_normal_map_and_whether_it_casts_a_shadow",
    "count": 341,
-   "modules": 5
+   "modules": 5,
+   "audited": "ConverterTests.A_model_keeps_its_normal_map_and_whether_it_casts_a_shadow"
   },
   {
    "row": "ObjectState.CustomUIAssets",
@@ -1449,7 +1609,8 @@
    "instead": "",
    "held_by": "PanelImportTests",
    "count": 35,
-   "modules": 5
+   "modules": 5,
+   "audited": ""
   },
   {
    "row": "CustomDiceState.Type",
@@ -1458,7 +1619,8 @@
    "instead": "",
    "held_by": "",
    "count": 22,
-   "modules": 5
+   "modules": 5,
+   "audited": ""
   },
   {
    "row": "RigidbodyState.UseGravity",
@@ -1467,7 +1629,8 @@
    "instead": "nothing is needed",
    "held_by": "",
    "count": 14,
-   "modules": 5
+   "modules": 5,
+   "audited": ""
   },
   {
    "row": "LightingState.AmbientType",
@@ -1476,7 +1639,8 @@
    "instead": "set the table's own light and backdrop",
    "held_by": "",
    "count": 5,
-   "modules": 5
+   "modules": 5,
+   "audited": ""
   },
   {
    "row": "MusicPlayerState.CurrentAudioTitle",
@@ -1485,7 +1649,8 @@
    "instead": "the app's own sounds",
    "held_by": "",
    "count": 5,
-   "modules": 5
+   "modules": 5,
+   "audited": ""
   },
   {
    "row": "MusicPlayerState.CurrentAudioURL",
@@ -1494,7 +1659,8 @@
    "instead": "the app's own sounds",
    "held_by": "",
    "count": 5,
-   "modules": 5
+   "modules": 5,
+   "audited": ""
   },
   {
    "row": "SaveState.CameraStates",
@@ -1503,7 +1669,8 @@
    "instead": "the backdrop themes and the app's own table and views",
    "held_by": "",
    "count": 5,
-   "modules": 5
+   "modules": 5,
+   "audited": ""
   },
   {
    "row": "ObjectState.AttachedDecals",
@@ -1512,7 +1679,8 @@
    "instead": "",
    "held_by": "",
    "count": 2590,
-   "modules": 4
+   "modules": 4,
+   "audited": ""
   },
   {
    "row": "ObjectState.AttachedSnapPoints",
@@ -1521,7 +1689,8 @@
    "instead": "the table's own grid snaps",
    "held_by": "",
    "count": 87,
-   "modules": 4
+   "modules": 4,
+   "audited": ""
   },
   {
    "row": "MusicPlayerState.PlaylistEntry",
@@ -1530,7 +1699,8 @@
    "instead": "the app's own sounds",
    "held_by": "",
    "count": 4,
-   "modules": 4
+   "modules": 4,
+   "audited": ""
   },
   {
    "row": "SaveState.LuaScriptState",
@@ -1539,7 +1709,8 @@
    "instead": "",
    "held_by": "",
    "count": 4,
-   "modules": 4
+   "modules": 4,
+   "audited": ""
   },
   {
    "row": "SaveState.SkyURL",
@@ -1548,16 +1719,18 @@
    "instead": "",
    "held_by": "",
    "count": 4,
-   "modules": 4
+   "modules": 4,
+   "audited": ""
   },
   {
    "row": "CustomMeshState.NormalURL",
    "status": "native",
-   "where": "converter reads it",
+   "where": "the kind's Normal (normal map on the model)",
    "instead": "",
-   "held_by": "",
+   "held_by": "ConverterTests.A_model_keeps_its_normal_map_and_whether_it_casts_a_shadow",
    "count": 232,
-   "modules": 3
+   "modules": 3,
+   "audited": "ConverterTests.A_model_keeps_its_normal_map_and_whether_it_casts_a_shadow"
   },
   {
    "row": "CustomShaderState.FresnelStrength",
@@ -1566,7 +1739,8 @@
    "instead": "",
    "held_by": "WorthImportTests",
    "count": 216,
-   "modules": 3
+   "modules": 3,
+   "audited": ""
   },
   {
    "row": "CustomShaderState.SpecularSharpness",
@@ -1575,7 +1749,8 @@
    "instead": "",
    "held_by": "WorthImportTests",
    "count": 153,
-   "modules": 3
+   "modules": 3,
+   "audited": ""
   },
   {
    "row": "ColourState.a",
@@ -1584,7 +1759,8 @@
    "instead": "",
    "held_by": "TableTopTests",
    "count": 22,
-   "modules": 3
+   "modules": 3,
+   "audited": ""
   },
   {
    "row": "ObjectState.MeasureMovement",
@@ -1593,7 +1769,8 @@
    "instead": "",
    "held_by": "ModuleOptionsTests",
    "count": 15,
-   "modules": 3
+   "modules": 3,
+   "audited": ""
   },
   {
    "row": "GridState.Type",
@@ -1602,7 +1779,8 @@
    "instead": "set the table's own grid",
    "held_by": "",
    "count": 3,
-   "modules": 3
+   "modules": 3,
+   "audited": ""
   },
   {
    "row": "MusicPlayerState.RepeatSong",
@@ -1611,7 +1789,8 @@
    "instead": "the app's own sounds",
    "held_by": "",
    "count": 3,
-   "modules": 3
+   "modules": 3,
+   "audited": ""
   },
   {
    "row": "SaveState.CustomUIAssets",
@@ -1620,7 +1799,8 @@
    "instead": "",
    "held_by": "PanelImportTests",
    "count": 3,
-   "modules": 3
+   "modules": 3,
+   "audited": ""
   },
   {
    "row": "ObjectState.GMNotes",
@@ -1629,16 +1809,18 @@
    "instead": "",
    "held_by": "",
    "count": 117,
-   "modules": 2
+   "modules": 2,
+   "audited": ""
   },
   {
    "row": "CustomTileState.Stackable",
    "status": "native",
-   "where": "converter reads it",
+   "where": "a saved pile comes in as stacked copies; any piece piles on another here",
    "instead": "",
-   "held_by": "",
+   "held_by": "converter",
    "count": 29,
-   "modules": 2
+   "modules": 2,
+   "audited": ""
   },
   {
    "row": "CustomPDFState.PDFPage",
@@ -1647,7 +1829,8 @@
    "instead": "",
    "held_by": "BookTests",
    "count": 2,
-   "modules": 2
+   "modules": 2,
+   "audited": ""
   },
   {
    "row": "GridState.BothSnapping",
@@ -1656,7 +1839,8 @@
    "instead": "set the table's own grid",
    "held_by": "",
    "count": 2,
-   "modules": 2
+   "modules": 2,
+   "audited": ""
   },
   {
    "row": "GridState.Offset",
@@ -1665,7 +1849,8 @@
    "instead": "set the table's own grid",
    "held_by": "",
    "count": 2,
-   "modules": 2
+   "modules": 2,
+   "audited": ""
   },
   {
    "row": "TextState.colorstate",
@@ -1674,7 +1859,8 @@
    "instead": "",
    "held_by": "",
    "count": 19,
-   "modules": 1
+   "modules": 1,
+   "audited": ""
   },
   {
    "row": "ObjectState.DeckIDs",
@@ -1683,7 +1869,8 @@
    "instead": "",
    "held_by": "import-sweep: naval",
    "count": 15,
-   "modules": 1
+   "modules": 1,
+   "audited": ""
   },
   {
    "row": "GridState.Color",
@@ -1692,7 +1879,8 @@
    "instead": "set the table's own grid",
    "held_by": "",
    "count": 1,
-   "modules": 1
+   "modules": 1,
+   "audited": ""
   },
   {
    "row": "LightingState.LutContribution",
@@ -1701,7 +1889,8 @@
    "instead": "set the table's own light and backdrop",
    "held_by": "",
    "count": 1,
-   "modules": 1
+   "modules": 1,
+   "audited": ""
   },
   {
    "row": "LightingState.ReflectionIntensity",
@@ -1710,7 +1899,8 @@
    "instead": "set the table's own light and backdrop",
    "held_by": "",
    "count": 1,
-   "modules": 1
+   "modules": 1,
+   "audited": ""
   },
   {
    "row": "ObjectState.IgnoreFoW",
@@ -1719,7 +1909,8 @@
    "instead": "the umpire layer and side layers",
    "held_by": "",
    "count": 1,
-   "modules": 1
+   "modules": 1,
+   "audited": ""
   },
   {
    "row": "SaveState.DecalPallet",
@@ -1728,7 +1919,8 @@
    "instead": "",
    "held_by": "DecalPaletteTests, StampTests",
    "count": 1,
-   "modules": 1
+   "modules": 1,
+   "audited": ""
   },
   {
    "row": "SaveState.TableURL",
@@ -1737,7 +1929,8 @@
    "instead": "the app's own table",
    "held_by": "",
    "count": 1,
-   "modules": 1
+   "modules": 1,
+   "audited": ""
   },
   {
    "row": "BagState.Order",
@@ -1746,7 +1939,8 @@
    "instead": "",
    "held_by": "BagOrderTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "CalculatorState.memory",
@@ -1755,7 +1949,8 @@
    "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "CalculatorState.value",
@@ -1764,7 +1959,8 @@
    "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "CameraState.AbsolutePosition",
@@ -1773,7 +1969,8 @@
    "instead": "the backdrop themes and the app's own table and views",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "CameraState.Distance",
@@ -1782,7 +1979,8 @@
    "instead": "the backdrop themes and the app's own table and views",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "CameraState.Position",
@@ -1791,7 +1989,8 @@
    "instead": "the backdrop themes and the app's own table and views",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "CameraState.Rotation",
@@ -1800,7 +1999,8 @@
    "instead": "the backdrop themes and the app's own table and views",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "CameraState.Zoomed",
@@ -1809,7 +2009,8 @@
    "instead": "the backdrop themes and the app's own table and views",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "ClockState.Mode",
@@ -1818,7 +2019,8 @@
    "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "ClockState.Paused",
@@ -1827,7 +2029,8 @@
    "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "ClockState.SecondsPassed",
@@ -1836,7 +2039,8 @@
    "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "CounterState.value",
@@ -1845,7 +2049,8 @@
    "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "CustomAssetState.Name",
@@ -1854,7 +2059,8 @@
    "instead": "",
    "held_by": "PanelImportTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "CustomAssetState.Type",
@@ -1863,7 +2069,8 @@
    "instead": "",
    "held_by": "PanelImportTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "CustomAssetState.URL",
@@ -1872,7 +2079,8 @@
    "instead": "",
    "held_by": "PanelImportTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "CustomDecalState.ImageURL",
@@ -1881,7 +2089,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "CustomDecalState.Name",
@@ -1890,7 +2099,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "CustomDecalState.Size",
@@ -1899,7 +2109,8 @@
    "instead": "",
    "held_by": "DecalPaletteTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "CustomDeckState.BackIsHidden",
@@ -1908,7 +2119,8 @@
    "instead": "cards come over as plain pieces; a stowed bag holds a deck's cards",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "CustomDeckState.BackURL",
@@ -1917,7 +2129,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "CustomDeckState.FaceURL",
@@ -1926,7 +2139,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "CustomDeckState.NumHeight",
@@ -1935,7 +2149,8 @@
    "instead": "",
    "held_by": "ConverterTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "CustomDeckState.NumWidth",
@@ -1944,7 +2159,8 @@
    "instead": "",
    "held_by": "ConverterTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "CustomDeckState.Type",
@@ -1953,7 +2169,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "CustomDeckState.UniqueBack",
@@ -1962,7 +2179,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "CustomFigurineState.MirroredBack",
@@ -1971,7 +2189,8 @@
    "instead": "",
    "held_by": "FigurineTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "CustomFigurineState.UseMinimalCollider",
@@ -1980,7 +2199,8 @@
    "instead": "nothing is needed",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "CustomImageState.CustomFigurine",
@@ -1989,7 +2209,8 @@
    "instead": "",
    "held_by": "FigurineTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "CustomImageState.CustomJigsawPuzzle",
@@ -1998,16 +2219,18 @@
    "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "CustomImageState.ImageScalar",
-   "status": "native",
-   "where": "converter reads it",
+   "status": "unknown",
+   "where": "",
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "CustomJigsawPuzzleState.ImageOnBoard",
@@ -2016,7 +2239,8 @@
    "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "CustomJigsawPuzzleState.NumPuzzlePieces",
@@ -2025,7 +2249,8 @@
    "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "CustomPDFState.PDFPageOffset",
@@ -2034,7 +2259,8 @@
    "instead": "",
    "held_by": "BookNotesScriptTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "CustomPDFState.PDFPassword",
@@ -2043,25 +2269,28 @@
    "instead": "",
    "held_by": "converter",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "CustomTokenState.Stackable",
-   "status": "native",
-   "where": "converter reads it",
+   "status": "unknown",
+   "where": "",
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "CustomTokenState.StandUp",
-   "status": "native",
-   "where": "converter reads it",
+   "status": "unknown",
+   "where": "",
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "DecalState.CustomDecal",
@@ -2070,7 +2299,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "DecalState.OwnerSteamID",
@@ -2079,7 +2309,8 @@
    "instead": "nothing is needed",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "DecalState.Transform",
@@ -2088,7 +2319,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "FogOfWarRevealerState.Active",
@@ -2097,7 +2329,8 @@
    "instead": "the umpire layer and side layers",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "FogOfWarRevealerState.Color",
@@ -2106,7 +2339,8 @@
    "instead": "the umpire layer and side layers",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "FogOfWarRevealerState.FoV",
@@ -2115,7 +2349,8 @@
    "instead": "the umpire layer and side layers",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "FogOfWarRevealerState.FoVOffset",
@@ -2124,7 +2359,8 @@
    "instead": "the umpire layer and side layers",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "FogOfWarRevealerState.Height",
@@ -2133,7 +2369,8 @@
    "instead": "the umpire layer and side layers",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "FogOfWarRevealerState.Range",
@@ -2142,7 +2379,8 @@
    "instead": "the umpire layer and side layers",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "FogOfWarRevealerState.ShowOutLine",
@@ -2151,7 +2389,8 @@
    "instead": "the umpire layer and side layers",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "FogOfWarState.Height",
@@ -2160,7 +2399,8 @@
    "instead": "the umpire layer and side layers",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "FogOfWarState.HideGmPointer",
@@ -2169,7 +2409,8 @@
    "instead": "the umpire layer and side layers",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "FogOfWarState.HideObjects",
@@ -2178,7 +2419,8 @@
    "instead": "the umpire layer and side layers",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "FogOfWarState.ReHideObjects",
@@ -2187,7 +2429,8 @@
    "instead": "the umpire layer and side layers",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "FogOfWarState.RevealedLocations",
@@ -2196,7 +2439,8 @@
    "instead": "the umpire layer and side layers",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "GridState.Snapping",
@@ -2205,7 +2449,8 @@
    "instead": "set the table's own grid",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "GridState.ThickLines",
@@ -2214,7 +2459,8 @@
    "instead": "set the table's own grid",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "HandTransformState.Color",
@@ -2223,7 +2469,8 @@
    "instead": "sit players at their seats",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "HandTransformState.Transform",
@@ -2232,7 +2479,8 @@
    "instead": "sit players at their seats",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "HandsState.DisableUnused",
@@ -2241,7 +2489,8 @@
    "instead": "sit players at their seats",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "HandsState.Enable",
@@ -2250,7 +2499,8 @@
    "instead": "sit players at their seats",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "HandsState.HandTransforms",
@@ -2259,7 +2509,8 @@
    "instead": "sit players at their seats",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "HandsState.Hiding",
@@ -2268,7 +2519,8 @@
    "instead": "sit players at their seats",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "JointHingeState.Limits",
@@ -2277,7 +2529,8 @@
    "instead": "attach the piece instead",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "JointHingeState.Motor",
@@ -2286,7 +2539,8 @@
    "instead": "attach the piece instead",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "JointHingeState.Spring",
@@ -2295,7 +2549,8 @@
    "instead": "attach the piece instead",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "JointHingeState.UseLimits",
@@ -2304,7 +2559,8 @@
    "instead": "attach the piece instead",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "JointHingeState.UseMotor",
@@ -2313,7 +2569,8 @@
    "instead": "attach the piece instead",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "JointHingeState.UseSpring",
@@ -2322,7 +2579,8 @@
    "instead": "attach the piece instead",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "JointSpringState.Damper",
@@ -2331,7 +2589,8 @@
    "instead": "attach the piece instead",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "JointSpringState.MaxDistance",
@@ -2340,7 +2599,8 @@
    "instead": "attach the piece instead",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "JointSpringState.MinDistance",
@@ -2349,7 +2609,8 @@
    "instead": "attach the piece instead",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "JointSpringState.Spring",
@@ -2358,7 +2619,8 @@
    "instead": "attach the piece instead",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "JointState.Anchor",
@@ -2367,7 +2629,8 @@
    "instead": "attach the piece instead",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "JointState.Axis",
@@ -2376,7 +2639,8 @@
    "instead": "attach the piece instead",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "JointState.BreakForce",
@@ -2385,7 +2649,8 @@
    "instead": "attach the piece instead",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "JointState.BreakTorgue",
@@ -2394,7 +2659,8 @@
    "instead": "attach the piece instead",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "JointState.ConnectedAnchor",
@@ -2403,7 +2669,8 @@
    "instead": "attach the piece instead",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "JointState.ConnectedBodyGUID",
@@ -2412,7 +2679,8 @@
    "instead": "attach the piece instead",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "JointState.EnableCollision",
@@ -2421,7 +2689,8 @@
    "instead": "attach the piece instead",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "LayoutZoneState.GroupsInZone",
@@ -2430,7 +2699,8 @@
    "instead": "draw the zone at the table; scripts that ask a zone what is in it get nothing",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "LayoutZoneState.Options",
@@ -2439,7 +2709,8 @@
    "instead": "draw the zone at the table; scripts that ask a zone what is in it get nothing",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "LightingState.AmbientEquatorColor",
@@ -2448,7 +2719,8 @@
    "instead": "set the table's own light and backdrop",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "LightingState.AmbientGroundColor",
@@ -2457,7 +2729,8 @@
    "instead": "set the table's own light and backdrop",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "LightingState.AmbientSkyColor",
@@ -2466,7 +2739,8 @@
    "instead": "set the table's own light and backdrop",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "LightingState.LutIndex",
@@ -2475,7 +2749,8 @@
    "instead": "set the table's own light and backdrop",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "LightingState.LutURL",
@@ -2484,7 +2759,8 @@
    "instead": "set the table's own light and backdrop",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Mp3PlayerState.genre",
@@ -2493,7 +2769,8 @@
    "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Mp3PlayerState.isPlaying",
@@ -2502,7 +2779,8 @@
    "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Mp3PlayerState.loopOne",
@@ -2511,7 +2789,8 @@
    "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Mp3PlayerState.menu",
@@ -2520,7 +2799,8 @@
    "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Mp3PlayerState.menuTitle",
@@ -2529,7 +2809,8 @@
    "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Mp3PlayerState.songTitle",
@@ -2538,7 +2819,8 @@
    "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Mp3PlayerState.volume",
@@ -2547,7 +2829,8 @@
    "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "ObjectState.AltLookAngle",
@@ -2556,7 +2839,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "ObjectState.AltSound",
@@ -2565,7 +2849,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "ObjectState.AltZoomable",
@@ -2574,7 +2859,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "ObjectState.Calculator",
@@ -2583,7 +2869,8 @@
    "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "ObjectState.Clock",
@@ -2592,7 +2879,8 @@
    "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "ObjectState.Counter",
@@ -2601,7 +2889,8 @@
    "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "ObjectState.FogHidePointers",
@@ -2610,7 +2899,8 @@
    "instead": "the umpire layer and side layers",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "ObjectState.FogOfWar",
@@ -2619,7 +2909,8 @@
    "instead": "the umpire layer and side layers",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "ObjectState.FogOfWarRevealer",
@@ -2628,7 +2919,8 @@
    "instead": "the umpire layer and side layers",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "ObjectState.FogReverseHiding",
@@ -2637,7 +2929,8 @@
    "instead": "the umpire layer and side layers",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "ObjectState.FogSeethrough",
@@ -2646,7 +2939,8 @@
    "instead": "the umpire layer and side layers",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "ObjectState.JointFixed",
@@ -2655,7 +2949,8 @@
    "instead": "attach the piece instead",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "ObjectState.JointHinge",
@@ -2664,7 +2959,8 @@
    "instead": "attach the piece instead",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "ObjectState.JointSpring",
@@ -2673,7 +2969,8 @@
    "instead": "attach the piece instead",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "ObjectState.LayoutGroupSortIndex",
@@ -2682,7 +2979,8 @@
    "instead": "draw the zone at the table; scripts that ask a zone what is in it get nothing",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "ObjectState.LayoutZone",
@@ -2691,7 +2989,8 @@
    "instead": "draw the zone at the table; scripts that ask a zone what is in it get nothing",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "ObjectState.MeshIndex",
@@ -2700,7 +2999,8 @@
    "instead": "a piece or prop of our own",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "ObjectState.Mp3Player",
@@ -2709,7 +3009,8 @@
    "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "ObjectState.Number",
@@ -2718,7 +3019,8 @@
    "instead": "",
    "held_by": "WorthImportTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "ObjectState.RPGdead",
@@ -2727,7 +3029,8 @@
    "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "ObjectState.RPGmode",
@@ -2736,7 +3039,8 @@
    "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "ObjectState.SidewaysCard",
@@ -2745,7 +3049,8 @@
    "instead": "turn it at the table",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "ObjectState.Tablet",
@@ -2754,7 +3059,8 @@
    "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "ObjectState.Value",
@@ -2763,7 +3069,8 @@
    "instead": "",
    "held_by": "WorthImportTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "ObjectState.XmlUI",
@@ -2772,7 +3079,8 @@
    "instead": "",
    "held_by": "PanelImportTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "ObjectState.miscID",
@@ -2781,7 +3089,8 @@
    "instead": "nothing is needed",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "ObjectState.vector",
@@ -2790,7 +3099,8 @@
    "instead": "nothing is needed",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "PhysicsMaterialState.BounceCombine",
@@ -2799,7 +3109,8 @@
    "instead": "nothing is needed",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "PhysicsMaterialState.Bounciness",
@@ -2808,7 +3119,8 @@
    "instead": "nothing is needed",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "PhysicsMaterialState.FrictionCombine",
@@ -2817,7 +3129,8 @@
    "instead": "nothing is needed",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "RotationValueState.Rotation",
@@ -2826,7 +3139,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "RotationValueState.Value",
@@ -2835,7 +3149,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "SaveState.Decals",
@@ -2844,7 +3159,8 @@
    "instead": "",
    "held_by": "DecalPaletteTests, StampToolTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "SaveState.ObjectStates",
@@ -2853,7 +3169,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "SaveState.Rules",
@@ -2862,7 +3179,8 @@
    "instead": "",
    "held_by": "DrawingTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "SaveState.SnapPoints",
@@ -2871,7 +3189,8 @@
    "instead": "the table's own grid snaps",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "SaveState.XmlUI",
@@ -2880,7 +3199,8 @@
    "instead": "",
    "held_by": "PanelImportTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "SnapPointState.Position",
@@ -2889,7 +3209,8 @@
    "instead": "the table's own grid snaps",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "SnapPointState.Rotation",
@@ -2898,7 +3219,8 @@
    "instead": "the table's own grid snaps",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "SnapPointState.Tags",
@@ -2907,7 +3229,8 @@
    "instead": "the table's own grid snaps",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "TabState.body",
@@ -2916,7 +3239,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "TabState.color",
@@ -2925,7 +3249,8 @@
    "instead": "nothing is needed",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "TabState.id",
@@ -2934,7 +3259,8 @@
    "instead": "nothing is needed",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "TabState.title",
@@ -2943,7 +3269,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "TabState.visibleColor",
@@ -2952,7 +3279,8 @@
    "instead": "nothing is needed",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "TabletState.PageURL",
@@ -2961,7 +3289,8 @@
    "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "TextState.OwnerSteamID",
@@ -2970,7 +3299,8 @@
    "instead": "nothing is needed",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "TurnsState.DisableInteractions",
@@ -2979,7 +3309,8 @@
    "instead": "the game clock and turn order here",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "TurnsState.Enable",
@@ -2988,7 +3319,8 @@
    "instead": "the game clock and turn order here",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "TurnsState.PassTurns",
@@ -2997,7 +3329,8 @@
    "instead": "the game clock and turn order here",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "TurnsState.Reverse",
@@ -3006,7 +3339,8 @@
    "instead": "the game clock and turn order here",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "TurnsState.SkipEmpty",
@@ -3015,7 +3349,8 @@
    "instead": "the game clock and turn order here",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "TurnsState.TurnColor",
@@ -3024,7 +3359,8 @@
    "instead": "the game clock and turn order here",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "TurnsState.TurnOrder",
@@ -3033,7 +3369,8 @@
    "instead": "the game clock and turn order here",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "TurnsState.Type",
@@ -3042,7 +3379,8 @@
    "instead": "the game clock and turn order here",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "VectorLineState.OwnerSteamID",
@@ -3051,7 +3389,8 @@
    "instead": "",
    "held_by": "DrawingTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "VectorLineState.color",
@@ -3060,7 +3399,8 @@
    "instead": "",
    "held_by": "DrawingTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "VectorLineState.loop",
@@ -3069,7 +3409,8 @@
    "instead": "",
    "held_by": "DrawingTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "VectorLineState.points3",
@@ -3078,7 +3419,8 @@
    "instead": "",
    "held_by": "DrawingTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "VectorLineState.rotation",
@@ -3087,7 +3429,8 @@
    "instead": "",
    "held_by": "DrawingTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "VectorLineState.square",
@@ -3096,7 +3439,8 @@
    "instead": "",
    "held_by": "DrawingTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "VectorLineState.thickness",
@@ -3105,7 +3449,8 @@
    "instead": "",
    "held_by": "DrawingTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   }
  ],
  "object": [
@@ -3116,7 +3461,8 @@
    "instead": "",
    "held_by": "",
    "count": 50776,
-   "modules": 52
+   "modules": 52,
+   "audited": "ScriptingTests.A_module_input_inside_its_piece_is_not_drawn_but_still_listed_and_raising_it_above_the_piece_draws_it; ModuleDefaultsTests"
   },
   {
    "row": "getPosition",
@@ -3125,7 +3471,8 @@
    "instead": "",
    "held_by": "",
    "count": 2421,
-   "modules": 52
+   "modules": 52,
+   "audited": ""
   },
   {
    "row": "editButton",
@@ -3134,7 +3481,8 @@
    "instead": "",
    "held_by": "",
    "count": 46867,
-   "modules": 51
+   "modules": 51,
+   "audited": "ScriptingTests.A_module_input_turned_over_on_top_is_locked_text_on_the_front_and_turning_it_back_unlocks_it"
   },
   {
    "row": "getScale",
@@ -3143,7 +3491,8 @@
    "instead": "",
    "held_by": "",
    "count": 15144,
-   "modules": 51
+   "modules": 51,
+   "audited": ""
   },
   {
    "row": "clearButtons",
@@ -3152,7 +3501,8 @@
    "instead": "",
    "held_by": "",
    "count": 6680,
-   "modules": 51
+   "modules": 51,
+   "audited": "ScriptingTests.Removing_module_buttons_keeps_their_numbers_until_the_next_frame_so_a_loop_removes_them_all"
   },
   {
    "row": "createInput",
@@ -3161,7 +3511,8 @@
    "instead": "",
    "held_by": "",
    "count": 20637,
-   "modules": 50
+   "modules": 50,
+   "audited": "ScriptingTests.A_module_input_inside_its_piece_is_not_drawn_but_still_listed_and_raising_it_above_the_piece_draws_it; ModuleDefaultsTests"
   },
   {
    "row": "setCustomObject",
@@ -3170,7 +3521,8 @@
    "instead": "",
    "held_by": "ScriptingTests",
    "count": 3484,
-   "modules": 50
+   "modules": 50,
+   "audited": ""
   },
   {
    "row": "reload",
@@ -3179,7 +3531,8 @@
    "instead": "",
    "held_by": "",
    "count": 755,
-   "modules": 50
+   "modules": 50,
+   "audited": ""
   },
   {
    "row": "positionToWorld",
@@ -3188,7 +3541,8 @@
    "instead": "",
    "held_by": "",
    "count": 1180,
-   "modules": 49
+   "modules": 49,
+   "audited": ""
   },
   {
    "row": "setVar",
@@ -3197,7 +3551,8 @@
    "instead": "",
    "held_by": "",
    "count": 181,
-   "modules": 49
+   "modules": 49,
+   "audited": ""
   },
   {
    "row": "editInput",
@@ -3206,7 +3561,8 @@
    "instead": "",
    "held_by": "",
    "count": 38689,
-   "modules": 47
+   "modules": 47,
+   "audited": "ScriptingTests.A_module_input_inside_its_piece_is_not_drawn_but_still_listed_and_raising_it_above_the_piece_draws_it"
   },
   {
    "row": "getInputs",
@@ -3215,7 +3571,8 @@
    "instead": "",
    "held_by": "",
    "count": 16053,
-   "modules": 47
+   "modules": 47,
+   "audited": "ScriptingTests.Module_handlers_named_at_run_time_get_module_arguments_and_getInputs_holds_what_was_typed"
   },
   {
    "row": "clearInputs",
@@ -3224,7 +3581,8 @@
    "instead": "",
    "held_by": "",
    "count": 5365,
-   "modules": 47
+   "modules": 47,
+   "audited": "ScriptingTests.Removing_module_buttons_keeps_their_numbers_until_the_next_frame_so_a_loop_removes_them_all"
   },
   {
    "row": "getButtons",
@@ -3233,7 +3591,8 @@
    "instead": "",
    "held_by": "",
    "count": 3950,
-   "modules": 47
+   "modules": 47,
+   "audited": "ScriptingTests.Removing_module_buttons_keeps_their_numbers_until_the_next_frame_so_a_loop_removes_them_all"
   },
   {
    "row": "setPosition",
@@ -3242,7 +3601,8 @@
    "instead": "",
    "held_by": "",
    "count": 416,
-   "modules": 47
+   "modules": 47,
+   "audited": ""
   },
   {
    "row": "setScale",
@@ -3251,7 +3611,8 @@
    "instead": "",
    "held_by": "",
    "count": 231,
-   "modules": 47
+   "modules": 47,
+   "audited": ""
   },
   {
    "row": "getCustomObject",
@@ -3260,7 +3621,8 @@
    "instead": "",
    "held_by": "",
    "count": 92,
-   "modules": 46
+   "modules": 46,
+   "audited": ""
   },
   {
    "row": "setName",
@@ -3269,7 +3631,8 @@
    "instead": "",
    "held_by": "",
    "count": 5703,
-   "modules": 38
+   "modules": 38,
+   "audited": ""
   },
   {
    "row": "getRotation",
@@ -3278,7 +3641,8 @@
    "instead": "",
    "held_by": "",
    "count": 5932,
-   "modules": 34
+   "modules": 34,
+   "audited": ""
   },
   {
    "row": "addContextMenuItem",
@@ -3287,7 +3651,8 @@
    "instead": "",
    "held_by": "",
    "count": 45750,
-   "modules": 33
+   "modules": 33,
+   "audited": ""
   },
   {
    "row": "setDescription",
@@ -3296,7 +3661,8 @@
    "instead": "",
    "held_by": "",
    "count": 4838,
-   "modules": 30
+   "modules": 30,
+   "audited": ""
   },
   {
    "row": "call",
@@ -3305,7 +3671,8 @@
    "instead": "",
    "held_by": "",
    "count": 37963,
-   "modules": 28
+   "modules": 28,
+   "audited": ""
   },
   {
    "row": "getColorTint",
@@ -3314,7 +3681,8 @@
    "instead": "",
    "held_by": "",
    "count": 2098,
-   "modules": 28
+   "modules": 28,
+   "audited": ""
   },
   {
    "row": "clearContextMenu",
@@ -3323,7 +3691,8 @@
    "instead": "",
    "held_by": "",
    "count": 7277,
-   "modules": 26
+   "modules": 26,
+   "audited": ""
   },
   {
    "row": "getGUID",
@@ -3332,7 +3701,8 @@
    "instead": "",
    "held_by": "",
    "count": 1013,
-   "modules": 24
+   "modules": 24,
+   "audited": ""
   },
   {
    "row": "setColorTint",
@@ -3341,7 +3711,8 @@
    "instead": "",
    "held_by": "",
    "count": 1395,
-   "modules": 23
+   "modules": 23,
+   "audited": ""
   },
   {
    "row": "highlightOn",
@@ -3350,7 +3721,8 @@
    "instead": "",
    "held_by": "",
    "count": 480,
-   "modules": 22
+   "modules": 22,
+   "audited": ""
   },
   {
    "row": "setLock",
@@ -3359,7 +3731,8 @@
    "instead": "",
    "held_by": "",
    "count": 204,
-   "modules": 20
+   "modules": 20,
+   "audited": ""
   },
   {
    "row": "getName",
@@ -3368,7 +3741,8 @@
    "instead": "",
    "held_by": "",
    "count": 679,
-   "modules": 19
+   "modules": 19,
+   "audited": ""
   },
   {
    "row": "destruct",
@@ -3377,7 +3751,8 @@
    "instead": "",
    "held_by": "",
    "count": 981,
-   "modules": 17
+   "modules": 17,
+   "audited": ""
   },
   {
    "row": "getVar",
@@ -3386,7 +3761,8 @@
    "instead": "",
    "held_by": "",
    "count": 1991,
-   "modules": 15
+   "modules": 15,
+   "audited": ""
   },
   {
    "row": "positionToLocal",
@@ -3395,7 +3771,8 @@
    "instead": "",
    "held_by": "",
    "count": 979,
-   "modules": 15
+   "modules": 15,
+   "audited": ""
   },
   {
    "row": "setVectorLines",
@@ -3404,7 +3781,8 @@
    "instead": "",
    "held_by": "",
    "count": 196,
-   "modules": 15
+   "modules": 15,
+   "audited": ""
   },
   {
    "row": "getDescription",
@@ -3413,7 +3791,8 @@
    "instead": "",
    "held_by": "",
    "count": 76,
-   "modules": 15
+   "modules": 15,
+   "audited": ""
   },
   {
    "row": "removeFromPlayerSelection",
@@ -3422,7 +3801,8 @@
    "instead": "",
    "held_by": "",
    "count": 1954,
-   "modules": 14
+   "modules": 14,
+   "audited": ""
   },
   {
    "row": "interactable",
@@ -3431,7 +3811,8 @@
    "instead": "",
    "held_by": "",
    "count": 1952,
-   "modules": 14
+   "modules": 14,
+   "audited": ""
   },
   {
    "row": "scale",
@@ -3440,7 +3821,8 @@
    "instead": "",
    "held_by": "",
    "count": 1826,
-   "modules": 14
+   "modules": 14,
+   "audited": ""
   },
   {
    "row": "locked",
@@ -3449,7 +3831,8 @@
    "instead": "",
    "held_by": "StowEventTests",
    "count": 976,
-   "modules": 14
+   "modules": 14,
+   "audited": ""
   },
   {
    "row": "removeInput",
@@ -3458,7 +3841,8 @@
    "instead": "",
    "held_by": "",
    "count": 976,
-   "modules": 14
+   "modules": 14,
+   "audited": "ScriptingTests.Removing_module_buttons_keeps_their_numbers_until_the_next_frame_so_a_loop_removes_them_all"
   },
   {
    "row": "getData",
@@ -3467,7 +3851,8 @@
    "instead": "",
    "held_by": "",
    "count": 21,
-   "modules": 13
+   "modules": 13,
+   "audited": ""
   },
   {
    "row": "getGMNotes",
@@ -3476,7 +3861,8 @@
    "instead": "",
    "held_by": "",
    "count": 15,
-   "modules": 13
+   "modules": 13,
+   "audited": ""
   },
   {
    "row": "getTransformUp",
@@ -3485,7 +3871,8 @@
    "instead": "",
    "held_by": "",
    "count": 13029,
-   "modules": 12
+   "modules": 12,
+   "audited": ""
   },
   {
    "row": "setDecals",
@@ -3494,7 +3881,8 @@
    "instead": "",
    "held_by": "",
    "count": 4343,
-   "modules": 12
+   "modules": 12,
+   "audited": ""
   },
   {
    "row": "hasTag",
@@ -3503,7 +3891,8 @@
    "instead": "",
    "held_by": "",
    "count": 150,
-   "modules": 12
+   "modules": 12,
+   "audited": ""
   },
   {
    "row": "split",
@@ -3512,7 +3901,8 @@
    "instead": "cards come over as plain pieces; a stowed bag holds a deck's cards",
    "held_by": "",
    "count": 26,
-   "modules": 12
+   "modules": 12,
+   "audited": ""
   },
   {
    "row": "setGMNotes",
@@ -3521,7 +3911,8 @@
    "instead": "",
    "held_by": "",
    "count": 12,
-   "modules": 12
+   "modules": 12,
+   "audited": ""
   },
   {
    "row": "highlightOff",
@@ -3530,7 +3921,8 @@
    "instead": "",
    "held_by": "",
    "count": 154,
-   "modules": 10
+   "modules": 10,
+   "audited": ""
   },
   {
    "row": "setPositionSmooth",
@@ -3539,7 +3931,8 @@
    "instead": "",
    "held_by": "",
    "count": 51,
-   "modules": 10
+   "modules": 10,
+   "audited": ""
   },
   {
    "row": "takeObject",
@@ -3548,7 +3941,8 @@
    "instead": "",
    "held_by": "StowScriptTests",
    "count": 80,
-   "modules": 9
+   "modules": 9,
+   "audited": ""
   },
   {
    "row": "getBounds",
@@ -3557,7 +3951,8 @@
    "instead": "",
    "held_by": "",
    "count": 50,
-   "modules": 9
+   "modules": 9,
+   "audited": ""
   },
   {
    "row": "getLock",
@@ -3566,7 +3961,8 @@
    "instead": "",
    "held_by": "",
    "count": 50,
-   "modules": 9
+   "modules": 9,
+   "audited": ""
   },
   {
    "row": "getObjects",
@@ -3575,7 +3971,8 @@
    "instead": "",
    "held_by": "StowScriptTests",
    "count": 50,
-   "modules": 9
+   "modules": 9,
+   "audited": ""
   },
   {
    "row": "putObject",
@@ -3584,7 +3981,8 @@
    "instead": "",
    "held_by": "StowScriptTests",
    "count": 50,
-   "modules": 9
+   "modules": 9,
+   "audited": ""
   },
   {
    "row": "setRotationSmooth",
@@ -3593,7 +3991,8 @@
    "instead": "",
    "held_by": "",
    "count": 50,
-   "modules": 9
+   "modules": 9,
+   "audited": ""
   },
   {
    "row": "setLuaScript",
@@ -3602,7 +4001,8 @@
    "instead": "",
    "held_by": "",
    "count": 3169,
-   "modules": 7
+   "modules": 7,
+   "audited": ""
   },
   {
    "row": "setState",
@@ -3611,7 +4011,8 @@
    "instead": "",
    "held_by": "",
    "count": 180,
-   "modules": 3
+   "modules": 3,
+   "audited": ""
   },
   {
    "row": "isDestroyed",
@@ -3620,7 +4021,8 @@
    "instead": "",
    "held_by": "",
    "count": 5,
-   "modules": 3
+   "modules": 3,
+   "audited": ""
   },
   {
    "row": "guid",
@@ -3629,7 +4031,8 @@
    "instead": "",
    "held_by": "",
    "count": 137,
-   "modules": 2
+   "modules": 2,
+   "audited": ""
   },
   {
    "row": "getTags",
@@ -3638,7 +4041,8 @@
    "instead": "",
    "held_by": "",
    "count": 18,
-   "modules": 2
+   "modules": 2,
+   "audited": ""
   },
   {
    "row": "setRotation",
@@ -3647,7 +4051,8 @@
    "instead": "",
    "held_by": "",
    "count": 2,
-   "modules": 2
+   "modules": 2,
+   "audited": ""
   },
   {
    "row": "getLuaScript",
@@ -3656,7 +4061,8 @@
    "instead": "",
    "held_by": "",
    "count": 19474,
-   "modules": 1
+   "modules": 1,
+   "audited": ""
   },
   {
    "row": "getVectorLines",
@@ -3665,7 +4071,8 @@
    "instead": "",
    "held_by": "",
    "count": 2,
-   "modules": 1
+   "modules": 1,
+   "audited": ""
   },
   {
    "row": "getValue",
@@ -3674,7 +4081,8 @@
    "instead": "",
    "held_by": "DiceScriptTests",
    "count": 1,
-   "modules": 1
+   "modules": 1,
+   "audited": ""
   },
   {
    "row": "roll",
@@ -3683,7 +4091,8 @@
    "instead": "",
    "held_by": "DiceScriptTests",
    "count": 1,
-   "modules": 1
+   "modules": 1,
+   "audited": ""
   },
   {
    "row": "setSnapPoints",
@@ -3692,7 +4101,8 @@
    "instead": "",
    "held_by": "",
    "count": 1,
-   "modules": 1
+   "modules": 1,
+   "audited": ""
   },
   {
    "row": "AssetBundle.getLoopingEffectIndex",
@@ -3701,7 +4111,8 @@
    "instead": "",
    "held_by": "BookNotesScriptTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "AssetBundle.getLoopingEffects",
@@ -3710,7 +4121,8 @@
    "instead": "",
    "held_by": "BookNotesScriptTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "AssetBundle.getTriggerEffects",
@@ -3719,7 +4131,8 @@
    "instead": "",
    "held_by": "BookNotesScriptTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "AssetBundle.playLoopingEffect",
@@ -3728,7 +4141,8 @@
    "instead": "",
    "held_by": "BookNotesScriptTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "AssetBundle.playTriggerEffect",
@@ -3737,7 +4151,8 @@
    "instead": "",
    "held_by": "BookNotesScriptTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Book.clearHighlight",
@@ -3746,7 +4161,8 @@
    "instead": "",
    "held_by": "BookNotesScriptTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Book.getPage",
@@ -3755,7 +4171,8 @@
    "instead": "",
    "held_by": "BookNotesScriptTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Book.page_offset",
@@ -3764,7 +4181,8 @@
    "instead": "",
    "held_by": "BookNotesScriptTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Book.setHighlight",
@@ -3773,7 +4191,8 @@
    "instead": "",
    "held_by": "BookNotesScriptTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Book.setPage",
@@ -3782,7 +4201,8 @@
    "instead": "",
    "held_by": "BookNotesScriptTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Browser.pixel_width",
@@ -3791,7 +4211,8 @@
    "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Browser.url",
@@ -3800,7 +4221,8 @@
    "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Clock.getValue",
@@ -3809,7 +4231,8 @@
    "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Clock.pauseStart",
@@ -3818,7 +4241,8 @@
    "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Clock.paused",
@@ -3827,7 +4251,8 @@
    "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Clock.setValue",
@@ -3836,7 +4261,8 @@
    "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Clock.showCurrentTime",
@@ -3845,7 +4271,8 @@
    "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Clock.startStopwatch",
@@ -3854,7 +4281,8 @@
    "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Container.addData",
@@ -3863,7 +4291,8 @@
    "instead": "",
    "held_by": "StowScriptTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Container.getCount",
@@ -3872,7 +4301,8 @@
    "instead": "",
    "held_by": "StowScriptTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Container.getData",
@@ -3881,7 +4311,8 @@
    "instead": "",
    "held_by": "StowScriptTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Container.getInfo",
@@ -3890,7 +4321,8 @@
    "instead": "",
    "held_by": "StowScriptTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Container.putObject",
@@ -3899,7 +4331,8 @@
    "instead": "",
    "held_by": "StowScriptTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Container.randomize",
@@ -3908,7 +4341,8 @@
    "instead": "",
    "held_by": "StowScriptTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Container.removeData",
@@ -3917,7 +4351,8 @@
    "instead": "",
    "held_by": "StowScriptTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Container.search",
@@ -3926,7 +4361,8 @@
    "instead": "",
    "held_by": "StowScriptTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Container.setData",
@@ -3935,7 +4371,8 @@
    "instead": "",
    "held_by": "StowScriptTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Container.takeObject",
@@ -3944,7 +4381,8 @@
    "instead": "",
    "held_by": "StowScriptTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Counter.clear",
@@ -3953,7 +4391,8 @@
    "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Counter.decrement",
@@ -3962,7 +4401,8 @@
    "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Counter.getValue",
@@ -3971,7 +4411,8 @@
    "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Counter.increment",
@@ -3980,7 +4421,8 @@
    "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Counter.setValue",
@@ -3989,7 +4431,8 @@
    "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "LayoutZone.getOptions",
@@ -3998,7 +4441,8 @@
    "instead": "draw the zone at the table; scripts that ask a zone what is in it get nothing",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "LayoutZone.layout",
@@ -4007,7 +4451,8 @@
    "instead": "draw the zone at the table; scripts that ask a zone what is in it get nothing",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "LayoutZone.setOptions",
@@ -4016,7 +4461,8 @@
    "instead": "draw the zone at the table; scripts that ask a zone what is in it get nothing",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "RPGFigurine.attack",
@@ -4025,7 +4471,8 @@
    "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "RPGFigurine.changeMode",
@@ -4034,7 +4481,8 @@
    "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "RPGFigurine.die",
@@ -4043,7 +4491,8 @@
    "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "RPGFigurine.onAttack",
@@ -4052,7 +4501,8 @@
    "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "RPGFigurine.onHit",
@@ -4061,7 +4511,8 @@
    "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "TextTool.getFontColor",
@@ -4070,7 +4521,8 @@
    "instead": "",
    "held_by": "BookNotesScriptTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "TextTool.getFontSize",
@@ -4079,7 +4531,8 @@
    "instead": "",
    "held_by": "BookNotesScriptTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "TextTool.getValue",
@@ -4088,7 +4541,8 @@
    "instead": "",
    "held_by": "BookNotesScriptTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "TextTool.setFontColor",
@@ -4097,7 +4551,8 @@
    "instead": "",
    "held_by": "BookNotesScriptTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "TextTool.setFontSize",
@@ -4106,7 +4561,8 @@
    "instead": "",
    "held_by": "BookNotesScriptTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "TextTool.setValue",
@@ -4115,7 +4571,8 @@
    "instead": "",
    "held_by": "BookNotesScriptTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "UI",
@@ -4124,7 +4581,8 @@
    "instead": "",
    "held_by": "PanelTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Zone.getObjects",
@@ -4133,7 +4591,8 @@
    "instead": "draw the zone at the table; scripts that ask a zone what is in it get nothing",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "addAttachment",
@@ -4142,7 +4601,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "addDecal",
@@ -4151,7 +4611,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "addForce",
@@ -4160,7 +4621,8 @@
    "instead": "move the piece instead",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "addTag",
@@ -4169,7 +4631,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "addToPlayerSelection",
@@ -4178,7 +4641,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "addTorque",
@@ -4187,7 +4651,8 @@
    "instead": "turn the piece instead",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "alt_view_angle",
@@ -4196,7 +4661,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "angular_drag",
@@ -4205,7 +4671,8 @@
    "instead": "nothing is needed",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "assetBundle",
@@ -4214,7 +4681,8 @@
    "instead": "",
    "held_by": "BookNotesScriptTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "attachHider",
@@ -4223,7 +4691,8 @@
    "instead": "the umpire layer and side layers",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "attachInvisibleHider",
@@ -4232,7 +4701,8 @@
    "instead": "the umpire layer and side layers",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "auto_raise",
@@ -4241,7 +4711,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "book",
@@ -4250,7 +4721,8 @@
    "instead": "",
    "held_by": "BookNotesScriptTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "bounciness",
@@ -4259,7 +4731,8 @@
    "instead": "nothing is needed",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "browser",
@@ -4268,7 +4741,8 @@
    "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "childPairs",
@@ -4277,7 +4751,8 @@
    "instead": "a look of the piece's own",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "clock",
@@ -4286,7 +4761,8 @@
    "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "component",
@@ -4295,7 +4771,8 @@
    "instead": "a look of the piece's own",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "componentIndex",
@@ -4304,7 +4781,8 @@
    "instead": "a look of the piece's own",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "componentName",
@@ -4313,7 +4791,8 @@
    "instead": "a look of the piece's own",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "container",
@@ -4322,7 +4801,8 @@
    "instead": "cards come over as plain pieces; a stowed bag holds a deck's cards",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "counter",
@@ -4331,7 +4811,8 @@
    "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "cut",
@@ -4340,7 +4821,8 @@
    "instead": "cards come over as plain pieces; a stowed bag holds a deck's cards",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "deal",
@@ -4349,7 +4831,8 @@
    "instead": "cards come over as plain pieces; a stowed bag holds a deck's cards",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "dealToAll",
@@ -4358,7 +4841,8 @@
    "instead": "cards come over as plain pieces; a stowed bag holds a deck's cards",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "dealToColor",
@@ -4367,7 +4851,8 @@
    "instead": "cards come over as plain pieces; a stowed bag holds a deck's cards",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "dealToColorWithOffset",
@@ -4376,7 +4861,8 @@
    "instead": "cards come over as plain pieces; a stowed bag holds a deck's cards",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "destroy",
@@ -4385,7 +4871,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "drag",
@@ -4394,7 +4881,8 @@
    "instead": "nothing is needed",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "drag_selectable",
@@ -4403,7 +4891,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "drop",
@@ -4412,7 +4901,8 @@
    "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "dynamic_friction",
@@ -4421,7 +4911,8 @@
    "instead": "nothing is needed",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "flip",
@@ -4430,7 +4921,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "getAngularVelocity",
@@ -4439,7 +4931,8 @@
    "instead": "nothing is needed",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "getAttachments",
@@ -4448,7 +4941,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "getBoundsNormalized",
@@ -4457,7 +4951,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "getChild",
@@ -4466,7 +4961,8 @@
    "instead": "a look of the piece's own",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "getChildren",
@@ -4475,7 +4971,8 @@
    "instead": "a look of the piece's own",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "getComponent",
@@ -4484,7 +4981,8 @@
    "instead": "a look of the piece's own",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "getComponentInChildren",
@@ -4493,7 +4991,8 @@
    "instead": "a look of the piece's own",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "getComponentVar",
@@ -4502,7 +5001,8 @@
    "instead": "a look of the piece's own",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "getComponentVars",
@@ -4511,7 +5011,8 @@
    "instead": "a look of the piece's own",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "getComponents",
@@ -4520,7 +5021,8 @@
    "instead": "a look of the piece's own",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "getComponentsInChildren",
@@ -4529,7 +5031,8 @@
    "instead": "a look of the piece's own",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "getDecals",
@@ -4538,7 +5041,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "getFogOfWar",
@@ -4547,7 +5051,8 @@
    "instead": "the umpire layer and side layers",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "getFogOfWarReveal",
@@ -4556,7 +5061,8 @@
    "instead": "the umpire layer and side layers",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "getJSON",
@@ -4565,7 +5071,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "getJoints",
@@ -4574,7 +5081,8 @@
    "instead": "nothing is needed",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "getLuaScriptState",
@@ -4583,7 +5091,8 @@
    "instead": "",
    "held_by": "ModuleHelpersTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "getMaterialValue",
@@ -4592,7 +5101,8 @@
    "instead": "a look of the piece's own",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "getMaterialVars",
@@ -4601,7 +5111,8 @@
    "instead": "a look of the piece's own",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "getMaterials",
@@ -4610,7 +5121,8 @@
    "instead": "a look of the piece's own",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "getMaterialsInChildren",
@@ -4619,7 +5131,8 @@
    "instead": "a look of the piece's own",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "getMemo",
@@ -4628,7 +5141,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "getNearestPointFromObject",
@@ -4637,7 +5151,8 @@
    "instead": "work from positions",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "getNearestPointFromPosition",
@@ -4646,7 +5161,8 @@
    "instead": "work from positions",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "getPositionSmooth",
@@ -4655,7 +5171,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "getQuantity",
@@ -4664,7 +5181,8 @@
    "instead": "",
    "held_by": "StowScriptTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "getRotationSmooth",
@@ -4673,7 +5191,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "getRotationValue",
@@ -4682,7 +5201,8 @@
    "instead": "",
    "held_by": "DiceScriptTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "getRotationValues",
@@ -4691,7 +5211,8 @@
    "instead": "",
    "held_by": "DiceScriptTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "getSelectingPlayers",
@@ -4700,7 +5221,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "getSnapPoints",
@@ -4709,7 +5231,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "getStateId",
@@ -4718,7 +5241,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "getStates",
@@ -4727,7 +5251,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "getTable",
@@ -4736,7 +5261,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "getTransformForward",
@@ -4745,7 +5271,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "getTransformRight",
@@ -4754,7 +5281,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "getVelocity",
@@ -4763,7 +5291,8 @@
    "instead": "nothing is needed",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "getZones",
@@ -4772,7 +5301,8 @@
    "instead": "draw the zone at the table; scripts that ask a zone what is in it get nothing",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "gizmo_selectable",
@@ -4781,7 +5311,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "grid_projection",
@@ -4790,7 +5321,8 @@
    "instead": "set the table's own grid",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "hasAnyTag",
@@ -4799,7 +5331,8 @@
    "instead": "",
    "held_by": "ModuleHelpersTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "hasMatchingTag",
@@ -4808,7 +5341,8 @@
    "instead": "",
    "held_by": "ModuleHelpersTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "held_by_color",
@@ -4817,7 +5351,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "held_flip_index",
@@ -4826,7 +5361,8 @@
    "instead": "",
    "held_by": "DiceScriptTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "held_position_offset",
@@ -4835,7 +5371,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "held_reduce_force",
@@ -4844,7 +5381,8 @@
    "instead": "nothing is needed",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "held_rotation_offset",
@@ -4853,7 +5391,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "held_spin_index",
@@ -4862,7 +5401,8 @@
    "instead": "",
    "held_by": "DiceScriptTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "hide_when_face_down",
@@ -4871,7 +5411,8 @@
    "instead": "the umpire layer hides a piece whole",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "ignore_fog_of_war",
@@ -4880,7 +5421,8 @@
    "instead": "the umpire layer and side layers",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "isSmoothMoving",
@@ -4889,7 +5431,8 @@
    "instead": "nothing is needed",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "is_face_down",
@@ -4898,7 +5441,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "jointTo",
@@ -4907,7 +5451,8 @@
    "instead": "attach the piece instead",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "layoutZone",
@@ -4916,7 +5461,8 @@
    "instead": "draw the zone at the table; scripts that ask a zone what is in it get nothing",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "loading_custom",
@@ -4925,7 +5471,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "luaCollision",
@@ -4934,7 +5481,8 @@
    "instead": "a look of the piece's own",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "mass",
@@ -4943,7 +5491,8 @@
    "instead": "nothing is needed",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "material",
@@ -4952,7 +5501,8 @@
    "instead": "a look of the piece's own",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "materialIndex",
@@ -4961,7 +5511,8 @@
    "instead": "a look of the piece's own",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "max_typed_number",
@@ -4970,7 +5521,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "measure_movement",
@@ -4979,7 +5531,8 @@
    "instead": "",
    "held_by": "MeasureTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "memo",
@@ -4988,7 +5541,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "name",
@@ -4997,7 +5551,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "pick_up_position",
@@ -5006,7 +5561,8 @@
    "instead": "",
    "held_by": "DiceScriptTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "pick_up_rotation",
@@ -5015,7 +5571,8 @@
    "instead": "",
    "held_by": "DiceScriptTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "rPGFigurine",
@@ -5024,7 +5581,8 @@
    "instead": "a counter on a piece, the game clock, or a piece of our own",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "randomize",
@@ -5033,7 +5591,8 @@
    "instead": "",
    "held_by": "DiceScriptTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "registerCollisions",
@@ -5042,7 +5601,8 @@
    "instead": "nothing is needed",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "remainder",
@@ -5051,7 +5611,8 @@
    "instead": "cards come over as plain pieces; a stowed bag holds a deck's cards",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "removeAttachment",
@@ -5060,7 +5621,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "removeAttachments",
@@ -5069,7 +5631,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "removeButton",
@@ -5078,7 +5641,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": "ScriptingTests.Removing_module_buttons_keeps_their_numbers_until_the_next_frame_so_a_loop_removes_them_all"
   },
   {
    "row": "removeTag",
@@ -5087,7 +5651,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "rendererIndex",
@@ -5096,7 +5661,8 @@
    "instead": "a look of the piece's own",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "reset",
@@ -5105,7 +5671,8 @@
    "instead": "cards come over as plain pieces; a stowed bag holds a deck's cards",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "resting",
@@ -5114,7 +5681,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "rotate",
@@ -5123,7 +5691,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "script",
@@ -5132,7 +5701,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "sendToHand",
@@ -5141,7 +5711,8 @@
    "instead": "sit players at their seats",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "setAngularVelocity",
@@ -5150,7 +5721,8 @@
    "instead": "turn the piece instead",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "setComponentVar",
@@ -5159,7 +5731,8 @@
    "instead": "a look of the piece's own",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "setFogOfWar",
@@ -5168,7 +5741,8 @@
    "instead": "the umpire layer and side layers",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "setFogOfWarReveal",
@@ -5177,7 +5751,8 @@
    "instead": "the umpire layer and side layers",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "setHiddenFrom",
@@ -5186,7 +5761,8 @@
    "instead": "the umpire layer and side layers",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "setInvisibleTo",
@@ -5195,7 +5771,8 @@
    "instead": "the umpire layer and side layers",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "setLuaScriptState",
@@ -5204,7 +5781,8 @@
    "instead": "",
    "held_by": "ModuleHelpersTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "setMaterialValue",
@@ -5213,7 +5791,8 @@
    "instead": "a look of the piece's own",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "setMemo",
@@ -5222,7 +5801,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "setRotationValue",
@@ -5231,7 +5811,8 @@
    "instead": "",
    "held_by": "DiceScriptTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "setRotationValues",
@@ -5240,7 +5821,8 @@
    "instead": "",
    "held_by": "DiceScriptTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "setTable",
@@ -5249,7 +5831,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "setTags",
@@ -5258,7 +5841,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "setValue",
@@ -5267,7 +5851,8 @@
    "instead": "",
    "held_by": "DiceScriptTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "setVelocity",
@@ -5276,7 +5861,8 @@
    "instead": "move the piece instead",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "shuffle",
@@ -5285,7 +5871,8 @@
    "instead": "cards come over as plain pieces; a stowed bag holds a deck's cards",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "shuffleStates",
@@ -5294,7 +5881,8 @@
    "instead": "",
    "held_by": "DiceScriptTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "spawning",
@@ -5303,7 +5891,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "spread",
@@ -5312,7 +5901,8 @@
    "instead": "cards come over as plain pieces; a stowed bag holds a deck's cards",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "startLuaCoroutine",
@@ -5321,7 +5911,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "static_friction",
@@ -5330,7 +5921,8 @@
    "instead": "nothing is needed",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "sticky",
@@ -5339,7 +5931,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "tag",
@@ -5348,7 +5941,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "textTool",
@@ -5357,7 +5951,8 @@
    "instead": "",
    "held_by": "BookNotesScriptTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "tooltip",
@@ -5366,7 +5961,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "translate",
@@ -5375,7 +5971,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "type",
@@ -5384,7 +5981,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "unregisterCollisions",
@@ -5393,7 +5991,8 @@
    "instead": "nothing is needed",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "use_gravity",
@@ -5402,7 +6001,8 @@
    "instead": "nothing is needed",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "use_grid",
@@ -5411,7 +6011,8 @@
    "instead": "the table's own grid snaps",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "use_hands",
@@ -5420,7 +6021,8 @@
    "instead": "sit players at their seats",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "use_rotation_value_flip",
@@ -5429,7 +6031,8 @@
    "instead": "",
    "held_by": "DiceScriptTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "use_snap_points",
@@ -5438,7 +6041,8 @@
    "instead": "the table's own grid snaps",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "value",
@@ -5447,7 +6051,8 @@
    "instead": "",
    "held_by": "DiceScriptTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "value_flags",
@@ -5456,7 +6061,8 @@
    "instead": "",
    "held_by": "DiceScriptTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "zone",
@@ -5465,7 +6071,8 @@
    "instead": "draw the zone at the table; scripts that ask a zone what is in it get nothing",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   }
  ],
  "global": [
@@ -5476,7 +6083,8 @@
    "instead": "",
    "held_by": "",
    "count": 1203,
-   "modules": 50
+   "modules": 50,
+   "audited": ""
   },
   {
    "row": "broadcastToAll",
@@ -5485,7 +6093,8 @@
    "instead": "",
    "held_by": "",
    "count": 748,
-   "modules": 50
+   "modules": 50,
+   "audited": ""
   },
   {
    "row": "broadcastToColor",
@@ -5494,7 +6103,8 @@
    "instead": "",
    "held_by": "",
    "count": 61397,
-   "modules": 30
+   "modules": 30,
+   "audited": ""
   },
   {
    "row": "spawnObject",
@@ -5503,7 +6113,8 @@
    "instead": "",
    "held_by": "",
    "count": 2866,
-   "modules": 18
+   "modules": 18,
+   "audited": ""
   },
   {
    "row": "getObjects",
@@ -5512,7 +6123,8 @@
    "instead": "",
    "held_by": "",
    "count": 1525,
-   "modules": 14
+   "modules": 14,
+   "audited": ""
   },
   {
    "row": "startLuaCoroutine",
@@ -5521,7 +6133,8 @@
    "instead": "",
    "held_by": "",
    "count": 4345,
-   "modules": 13
+   "modules": 13,
+   "audited": ""
   },
   {
    "row": "spawnObjectData",
@@ -5530,7 +6143,8 @@
    "instead": "",
    "held_by": "",
    "count": 32,
-   "modules": 13
+   "modules": 13,
+   "audited": ""
   },
   {
    "row": "getAllObjects",
@@ -5539,7 +6153,8 @@
    "instead": "",
    "held_by": "",
    "count": 426,
-   "modules": 12
+   "modules": 12,
+   "audited": ""
   },
   {
    "row": "log",
@@ -5548,7 +6163,8 @@
    "instead": "",
    "held_by": "StowEventTests",
    "count": 376,
-   "modules": 12
+   "modules": 12,
+   "audited": ""
   },
   {
    "row": "printToColor",
@@ -5557,7 +6173,8 @@
    "instead": "",
    "held_by": "",
    "count": 20,
-   "modules": 12
+   "modules": 12,
+   "audited": ""
   },
   {
    "row": "addHotkey",
@@ -5566,7 +6183,8 @@
    "instead": "",
    "held_by": "",
    "count": 20,
-   "modules": 4
+   "modules": 4,
+   "audited": ""
   },
   {
    "row": "addContextMenuItem",
@@ -5575,7 +6193,8 @@
    "instead": "",
    "held_by": "",
    "count": 2,
-   "modules": 2
+   "modules": 2,
+   "audited": ""
   },
   {
    "row": "printToAll",
@@ -5584,7 +6203,8 @@
    "instead": "",
    "held_by": "",
    "count": 2,
-   "modules": 2
+   "modules": 2,
+   "audited": ""
   },
   {
    "row": "stringColorToRGB",
@@ -5593,7 +6213,8 @@
    "instead": "",
    "held_by": "",
    "count": 1,
-   "modules": 1
+   "modules": 1,
+   "audited": ""
   },
   {
    "row": "addConsoleCommand",
@@ -5602,7 +6223,8 @@
    "instead": "the app's own console and settings",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "allowAutomaticRewindSave",
@@ -5611,7 +6233,8 @@
    "instead": "the app's own console and settings",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "chooseInHand",
@@ -5620,7 +6243,8 @@
    "instead": "sit players at their seats",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "chooseInHandOrCancel",
@@ -5629,7 +6253,8 @@
    "instead": "sit players at their seats",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "clearConsoleCommands",
@@ -5638,7 +6263,8 @@
    "instead": "the app's own console and settings",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "clearContextMenu",
@@ -5647,7 +6273,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "clearHotkeys",
@@ -5656,7 +6283,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "clearPixelPaint",
@@ -5665,7 +6293,8 @@
    "instead": "",
    "held_by": "ModuleHelpersTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "clearVectorPaint",
@@ -5674,7 +6303,8 @@
    "instead": "",
    "held_by": "ModuleHelpersTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "colorToHex",
@@ -5683,7 +6313,8 @@
    "instead": "",
    "held_by": "ModuleHelpersTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "colorToPlayerName",
@@ -5692,7 +6323,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "constructColor",
@@ -5701,7 +6333,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "constructVector",
@@ -5710,7 +6343,8 @@
    "instead": "",
    "held_by": "ModuleVectorColorTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "copy",
@@ -5719,7 +6353,8 @@
    "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "copyLuaTable",
@@ -5728,7 +6363,8 @@
    "instead": "",
    "held_by": "ModuleHelpersTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "debugLog",
@@ -5737,7 +6373,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "flipTable",
@@ -5746,7 +6383,8 @@
    "instead": "the backdrop themes and the app's own table and views",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "getAllLuaScriptStates",
@@ -5755,7 +6393,8 @@
    "instead": "nothing is needed",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "getAllTags",
@@ -5764,7 +6403,8 @@
    "instead": "",
    "held_by": "ModuleHelpersTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "getColor",
@@ -5773,7 +6413,8 @@
    "instead": "nothing is needed",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "getGlobalTable",
@@ -5782,7 +6423,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "getGlobalVar",
@@ -5791,7 +6433,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "getObjectsWithAllTags",
@@ -5800,7 +6443,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "getObjectsWithAnyTags",
@@ -5809,7 +6453,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "getObjectsWithTag",
@@ -5818,7 +6463,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "getPlayer",
@@ -5827,7 +6473,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "getPlayerHandPositionAndRotation",
@@ -5836,7 +6483,8 @@
    "instead": "sit players at their seats",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "getPointerPosition",
@@ -5845,7 +6493,8 @@
    "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "getPointerRotation",
@@ -5854,7 +6503,8 @@
    "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "getScriptState",
@@ -5863,7 +6513,8 @@
    "instead": "",
    "held_by": "ModuleHelpersTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "getSeatedPlayers",
@@ -5872,7 +6523,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "group",
@@ -5881,7 +6533,8 @@
    "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "hexToColor",
@@ -5890,7 +6543,8 @@
    "instead": "",
    "held_by": "ModuleHelpersTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "logFormat",
@@ -5899,7 +6553,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "logStyle",
@@ -5908,7 +6563,8 @@
    "instead": "the app's own console and settings",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "paste",
@@ -5917,7 +6573,8 @@
    "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "setGlobalTable",
@@ -5926,7 +6583,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "setUITheme",
@@ -5935,7 +6593,8 @@
    "instead": "the backdrop themes and the app's own table and views",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "showHotkeyConfig",
@@ -5944,7 +6603,8 @@
    "instead": "the app's own console and settings",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "spawnObjectJSON",
@@ -5953,7 +6613,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "stringColorToHex",
@@ -5962,7 +6623,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   }
  ],
  "namespaces": [
@@ -5973,7 +6635,8 @@
    "instead": "",
    "held_by": "",
    "count": 12891,
-   "modules": 52
+   "modules": 52,
+   "audited": ""
   },
   {
    "row": "JSON.decode",
@@ -5982,7 +6645,8 @@
    "instead": "",
    "held_by": "",
    "count": 11910,
-   "modules": 51
+   "modules": 51,
+   "audited": ""
   },
   {
    "row": "Wait.frames",
@@ -5991,7 +6655,8 @@
    "instead": "",
    "held_by": "",
    "count": 13927,
-   "modules": 27
+   "modules": 27,
+   "audited": ""
   },
   {
    "row": "Wait.time",
@@ -6000,7 +6665,8 @@
    "instead": "",
    "held_by": "",
    "count": 5718,
-   "modules": 15
+   "modules": 15,
+   "audited": ""
   },
   {
    "row": "UI.setAttribute",
@@ -6009,7 +6675,8 @@
    "instead": "",
    "held_by": "PanelTests (server and app)",
    "count": 19435,
-   "modules": 14
+   "modules": 14,
+   "audited": ""
   },
   {
    "row": "Wait.stop",
@@ -6018,7 +6685,8 @@
    "instead": "",
    "held_by": "",
    "count": 4219,
-   "modules": 13
+   "modules": 13,
+   "audited": ""
   },
   {
    "row": "UI.setXmlTable",
@@ -6027,7 +6695,8 @@
    "instead": "",
    "held_by": "PanelTests (server and app)",
    "count": 141,
-   "modules": 4
+   "modules": 4,
+   "audited": ""
   },
   {
    "row": "Wait.condition",
@@ -6036,7 +6705,8 @@
    "instead": "",
    "held_by": "",
    "count": 138,
-   "modules": 3
+   "modules": 3,
+   "audited": ""
   },
   {
    "row": "Player.getPlayers",
@@ -6045,7 +6715,8 @@
    "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 3,
-   "modules": 3
+   "modules": 3,
+   "audited": ""
   },
   {
    "row": "UI.hide",
@@ -6054,7 +6725,8 @@
    "instead": "",
    "held_by": "PanelTests (server and app)",
    "count": 1781,
-   "modules": 2
+   "modules": 2,
+   "audited": ""
   },
   {
    "row": "UI.show",
@@ -6063,7 +6735,8 @@
    "instead": "",
    "held_by": "PanelTests (server and app)",
    "count": 1370,
-   "modules": 2
+   "modules": 2,
+   "audited": ""
   },
   {
    "row": "Global.getVar",
@@ -6072,7 +6745,8 @@
    "instead": "",
    "held_by": "",
    "count": 411,
-   "modules": 2
+   "modules": 2,
+   "audited": ""
   },
   {
    "row": "Global.setVar",
@@ -6081,7 +6755,8 @@
    "instead": "",
    "held_by": "",
    "count": 274,
-   "modules": 2
+   "modules": 2,
+   "audited": ""
   },
   {
    "row": "UI.getXml",
@@ -6090,7 +6765,8 @@
    "instead": "",
    "held_by": "PanelTests (server and app)",
    "count": 137,
-   "modules": 2
+   "modules": 2,
+   "audited": ""
   },
   {
    "row": "UI.getXmlTable",
@@ -6099,7 +6775,8 @@
    "instead": "",
    "held_by": "PanelTests (server and app)",
    "count": 137,
-   "modules": 2
+   "modules": 2,
+   "audited": ""
   },
   {
    "row": "UI.setXml",
@@ -6108,7 +6785,8 @@
    "instead": "",
    "held_by": "PanelTests (server and app)",
    "count": 137,
-   "modules": 2
+   "modules": 2,
+   "audited": ""
   },
   {
    "row": "Player.getColors",
@@ -6117,7 +6795,8 @@
    "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 2,
-   "modules": 2
+   "modules": 2,
+   "audited": ""
   },
   {
    "row": "UI.getAttribute",
@@ -6126,7 +6805,8 @@
    "instead": "",
    "held_by": "PanelTests (server and app)",
    "count": 2,
-   "modules": 2
+   "modules": 2,
+   "audited": ""
   },
   {
    "row": "Global.getVectorLines",
@@ -6135,7 +6815,8 @@
    "instead": "",
    "held_by": "BoardDrawingTests",
    "count": 3,
-   "modules": 1
+   "modules": 1,
+   "audited": ""
   },
   {
    "row": "Global.setVectorLines",
@@ -6144,7 +6825,8 @@
    "instead": "",
    "held_by": "BoardDrawingTests",
    "count": 3,
-   "modules": 1
+   "modules": 1,
+   "audited": ""
   },
   {
    "row": "Physics.cast",
@@ -6153,7 +6835,8 @@
    "instead": "",
    "held_by": "",
    "count": 1,
-   "modules": 1
+   "modules": 1,
+   "audited": ""
   },
   {
    "row": "Timer.create",
@@ -6162,7 +6845,8 @@
    "instead": "",
    "held_by": "",
    "count": 1,
-   "modules": 1
+   "modules": 1,
+   "audited": ""
   },
   {
    "row": "Timer.destroy",
@@ -6171,7 +6855,8 @@
    "instead": "",
    "held_by": "",
    "count": 1,
-   "modules": 1
+   "modules": 1,
+   "audited": ""
   },
   {
    "row": "Backgrounds.getBackground",
@@ -6180,7 +6865,8 @@
    "instead": "the backdrop themes and the app's own table and views",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Backgrounds.getCustomURL",
@@ -6189,7 +6875,8 @@
    "instead": "the backdrop themes and the app's own table and views",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Backgrounds.setBackground",
@@ -6198,7 +6885,8 @@
    "instead": "the backdrop themes and the app's own table and views",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Backgrounds.setCustomURL",
@@ -6207,7 +6895,8 @@
    "instead": "the backdrop themes and the app's own table and views",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Global.call",
@@ -6216,7 +6905,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Global.getTable",
@@ -6225,7 +6915,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Global.setTable",
@@ -6234,7 +6925,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Grid.color",
@@ -6243,7 +6935,8 @@
    "instead": "set the table's own grid",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Grid.offsetX",
@@ -6252,7 +6945,8 @@
    "instead": "set the table's own grid",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Grid.offsetY",
@@ -6261,7 +6955,8 @@
    "instead": "set the table's own grid",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Grid.opacity",
@@ -6270,7 +6965,8 @@
    "instead": "set the table's own grid",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Grid.show_lines",
@@ -6279,7 +6975,8 @@
    "instead": "set the table's own grid",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Grid.sizeX",
@@ -6288,7 +6985,8 @@
    "instead": "set the table's own grid",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Grid.sizeY",
@@ -6297,7 +6995,8 @@
    "instead": "set the table's own grid",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Grid.snapping",
@@ -6306,7 +7005,8 @@
    "instead": "set the table's own grid",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Grid.thick_lines",
@@ -6315,7 +7015,8 @@
    "instead": "set the table's own grid",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Grid.type",
@@ -6324,7 +7025,8 @@
    "instead": "set the table's own grid",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Hands.disable_unused",
@@ -6333,7 +7035,8 @@
    "instead": "sit players at their seats",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Hands.enable",
@@ -6342,7 +7045,8 @@
    "instead": "sit players at their seats",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Hands.getHands",
@@ -6351,7 +7055,8 @@
    "instead": "sit players at their seats",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Hands.hiding",
@@ -6360,7 +7065,8 @@
    "instead": "sit players at their seats",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Info.complexity",
@@ -6369,7 +7075,8 @@
    "instead": "nothing is needed",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Info.name",
@@ -6378,7 +7085,8 @@
    "instead": "nothing is needed",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Info.number_of_players",
@@ -6387,7 +7095,8 @@
    "instead": "nothing is needed",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Info.playing_time",
@@ -6396,7 +7105,8 @@
    "instead": "nothing is needed",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Info.tags",
@@ -6405,7 +7115,8 @@
    "instead": "nothing is needed",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Info.type",
@@ -6414,7 +7125,8 @@
    "instead": "nothing is needed",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Lighting.ambient_intensity",
@@ -6423,7 +7135,8 @@
    "instead": "set the table's own light and backdrop",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Lighting.ambient_type",
@@ -6432,7 +7145,8 @@
    "instead": "set the table's own light and backdrop",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Lighting.apply",
@@ -6441,7 +7155,8 @@
    "instead": "set the table's own light and backdrop",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Lighting.getAmbientEquatorColor",
@@ -6450,7 +7165,8 @@
    "instead": "set the table's own light and backdrop",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Lighting.getAmbientGroundColor",
@@ -6459,7 +7175,8 @@
    "instead": "set the table's own light and backdrop",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Lighting.getAmbientSkyColor",
@@ -6468,7 +7185,8 @@
    "instead": "set the table's own light and backdrop",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Lighting.getLightColor",
@@ -6477,7 +7195,8 @@
    "instead": "set the table's own light and backdrop",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Lighting.light_intensity",
@@ -6486,7 +7205,8 @@
    "instead": "set the table's own light and backdrop",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Lighting.lut_contribution",
@@ -6495,7 +7215,8 @@
    "instead": "set the table's own light and backdrop",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Lighting.lut_index",
@@ -6504,7 +7225,8 @@
    "instead": "set the table's own light and backdrop",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Lighting.lut_url",
@@ -6513,7 +7235,8 @@
    "instead": "set the table's own light and backdrop",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Lighting.reflection_intensity",
@@ -6522,7 +7245,8 @@
    "instead": "set the table's own light and backdrop",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Lighting.setAmbientEquatorColor",
@@ -6531,7 +7255,8 @@
    "instead": "set the table's own light and backdrop",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Lighting.setAmbientGroundColor",
@@ -6540,7 +7265,8 @@
    "instead": "set the table's own light and backdrop",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Lighting.setAmbientSkyColor",
@@ -6549,7 +7275,8 @@
    "instead": "set the table's own light and backdrop",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Lighting.setLightColor",
@@ -6558,7 +7285,8 @@
    "instead": "set the table's own light and backdrop",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "MusicPlayer.getCurrentAudioclip",
@@ -6567,7 +7295,8 @@
    "instead": "the app's own sounds",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "MusicPlayer.getPlaylist",
@@ -6576,7 +7305,8 @@
    "instead": "the app's own sounds",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "MusicPlayer.pause",
@@ -6585,7 +7315,8 @@
    "instead": "the app's own sounds",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "MusicPlayer.play",
@@ -6594,7 +7325,8 @@
    "instead": "the app's own sounds",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "MusicPlayer.player_status",
@@ -6603,7 +7335,8 @@
    "instead": "the app's own sounds",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "MusicPlayer.playlistIndex",
@@ -6612,7 +7345,8 @@
    "instead": "the app's own sounds",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "MusicPlayer.playlist_index",
@@ -6621,7 +7355,8 @@
    "instead": "the app's own sounds",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "MusicPlayer.repeat_track",
@@ -6630,7 +7365,8 @@
    "instead": "the app's own sounds",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "MusicPlayer.setCurrentAudioclip",
@@ -6639,7 +7375,8 @@
    "instead": "the app's own sounds",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "MusicPlayer.setPlaylist",
@@ -6648,7 +7385,8 @@
    "instead": "the app's own sounds",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "MusicPlayer.shuffle",
@@ -6657,7 +7395,8 @@
    "instead": "the app's own sounds",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "MusicPlayer.skipBack",
@@ -6666,7 +7405,8 @@
    "instead": "the app's own sounds",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "MusicPlayer.skipForward",
@@ -6675,7 +7415,8 @@
    "instead": "the app's own sounds",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Notes.addNotebookTab",
@@ -6684,7 +7425,8 @@
    "instead": "",
    "held_by": "BookNotesScriptTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Notes.editNotebookTab",
@@ -6693,7 +7435,8 @@
    "instead": "",
    "held_by": "BookNotesScriptTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Notes.getNotebookTabs",
@@ -6702,7 +7445,8 @@
    "instead": "",
    "held_by": "BookNotesScriptTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Notes.getNotes",
@@ -6711,7 +7455,8 @@
    "instead": "",
    "held_by": "BookNotesScriptTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Notes.removeNotebookTab",
@@ -6720,7 +7465,8 @@
    "instead": "",
    "held_by": "BookNotesScriptTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Notes.setNotes",
@@ -6729,7 +7475,8 @@
    "instead": "",
    "held_by": "BookNotesScriptTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Physics.getGravity",
@@ -6738,7 +7485,8 @@
    "instead": "nothing is needed",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Physics.play_area",
@@ -6747,7 +7495,8 @@
    "instead": "nothing is needed",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Physics.setGravity",
@@ -6756,7 +7505,8 @@
    "instead": "nothing is needed",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Player.action",
@@ -6765,7 +7515,8 @@
    "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Player.admin",
@@ -6774,7 +7525,8 @@
    "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Player.attachCameraToObject",
@@ -6783,7 +7535,8 @@
    "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Player.blind",
@@ -6792,7 +7545,8 @@
    "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Player.blindfolded",
@@ -6801,7 +7555,8 @@
    "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Player.broadcast",
@@ -6810,7 +7565,8 @@
    "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Player.changeColor",
@@ -6819,7 +7575,8 @@
    "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Player.changeTeam",
@@ -6828,7 +7585,8 @@
    "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Player.clearSelectedObjects",
@@ -6837,7 +7595,8 @@
    "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Player.color",
@@ -6846,7 +7605,8 @@
    "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Player.copy",
@@ -6855,7 +7615,8 @@
    "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Player.drawHandStash",
@@ -6864,7 +7625,8 @@
    "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Player.getAvailableColors",
@@ -6873,7 +7635,8 @@
    "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Player.getHandCount",
@@ -6882,7 +7645,8 @@
    "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Player.getHandObjects",
@@ -6891,7 +7655,8 @@
    "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Player.getHandPlayer",
@@ -6900,7 +7665,8 @@
    "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Player.getHandTransform",
@@ -6909,7 +7675,8 @@
    "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Player.getHoldingObjects",
@@ -6918,7 +7685,8 @@
    "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Player.getHoverObject",
@@ -6927,7 +7695,8 @@
    "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Player.getPlayer",
@@ -6936,7 +7705,8 @@
    "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Player.getPlayerHand",
@@ -6945,7 +7715,8 @@
    "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Player.getPointerPosition",
@@ -6954,7 +7725,8 @@
    "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Player.getPointerRotation",
@@ -6963,7 +7735,8 @@
    "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Player.getSelectedObjects",
@@ -6972,7 +7745,8 @@
    "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Player.getSpectators",
@@ -6981,7 +7755,8 @@
    "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Player.hand_choice_label",
@@ -6990,7 +7765,8 @@
    "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Player.host",
@@ -6999,7 +7775,8 @@
    "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Player.id",
@@ -7008,7 +7785,8 @@
    "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Player.kick",
@@ -7017,7 +7795,8 @@
    "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Player.lift_height",
@@ -7026,7 +7805,8 @@
    "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Player.lookAt",
@@ -7035,7 +7815,8 @@
    "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Player.mute",
@@ -7044,7 +7825,8 @@
    "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Player.paste",
@@ -7053,7 +7835,8 @@
    "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Player.pingTable",
@@ -7062,7 +7845,8 @@
    "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Player.playerColor",
@@ -7071,7 +7855,8 @@
    "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Player.print",
@@ -7080,7 +7865,8 @@
    "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Player.promote",
@@ -7089,7 +7875,8 @@
    "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Player.promoted",
@@ -7098,7 +7885,8 @@
    "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Player.seated",
@@ -7107,7 +7895,8 @@
    "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Player.setCameraMode",
@@ -7116,7 +7905,8 @@
    "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Player.setHandStashLocation",
@@ -7125,7 +7915,8 @@
    "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Player.setHandTransform",
@@ -7134,7 +7925,8 @@
    "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Player.setUITheme",
@@ -7143,7 +7935,8 @@
    "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Player.showColorDialog",
@@ -7152,7 +7945,8 @@
    "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Player.showConfirmDialog",
@@ -7161,7 +7955,8 @@
    "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Player.showInfoDialog",
@@ -7170,7 +7965,8 @@
    "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Player.showInputDialog",
@@ -7179,7 +7975,8 @@
    "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Player.showMemoDialog",
@@ -7188,7 +7985,8 @@
    "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Player.showOptionsDialog",
@@ -7197,7 +7995,8 @@
    "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Player.steam_id",
@@ -7206,7 +8005,8 @@
    "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Player.steam_name",
@@ -7215,7 +8015,8 @@
    "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Player.team",
@@ -7224,7 +8025,8 @@
    "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Player.unblind",
@@ -7233,7 +8035,8 @@
    "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Player.userDataDescriptor",
@@ -7242,7 +8045,8 @@
    "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Tables.getCustomURL",
@@ -7251,7 +8055,8 @@
    "instead": "the backdrop themes and the app's own table and views",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Tables.getTable",
@@ -7260,7 +8065,8 @@
    "instead": "the backdrop themes and the app's own table and views",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Tables.getTableObject",
@@ -7269,7 +8075,8 @@
    "instead": "the backdrop themes and the app's own table and views",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Tables.setCustomURL",
@@ -7278,7 +8085,8 @@
    "instead": "the backdrop themes and the app's own table and views",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Tables.setTable",
@@ -7287,7 +8095,8 @@
    "instead": "the backdrop themes and the app's own table and views",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Time.delta_time",
@@ -7296,7 +8105,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Time.fixed_delta_time",
@@ -7305,7 +8115,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Time.fixed_time",
@@ -7314,7 +8125,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Time.frame_count",
@@ -7323,7 +8135,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Time.time",
@@ -7332,7 +8145,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Timer.timers",
@@ -7341,7 +8155,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Turns.disable_interactations",
@@ -7350,7 +8165,8 @@
    "instead": "the game clock and turn order here",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Turns.enable",
@@ -7359,7 +8175,8 @@
    "instead": "the game clock and turn order here",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Turns.endTurn",
@@ -7368,7 +8185,8 @@
    "instead": "the game clock and turn order here",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Turns.getNextTurnColor",
@@ -7377,7 +8195,8 @@
    "instead": "the game clock and turn order here",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Turns.getPreviousTurnColor",
@@ -7386,7 +8205,8 @@
    "instead": "the game clock and turn order here",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Turns.getTurnOrder",
@@ -7395,7 +8215,8 @@
    "instead": "the game clock and turn order here",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Turns.order",
@@ -7404,7 +8225,8 @@
    "instead": "the game clock and turn order here",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Turns.pass_turns",
@@ -7413,7 +8235,8 @@
    "instead": "the game clock and turn order here",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Turns.reverse_order",
@@ -7422,7 +8245,8 @@
    "instead": "the game clock and turn order here",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Turns.skip_empty_hands",
@@ -7431,7 +8255,8 @@
    "instead": "the game clock and turn order here",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Turns.turn_color",
@@ -7440,7 +8265,8 @@
    "instead": "the game clock and turn order here",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Turns.type",
@@ -7449,7 +8275,8 @@
    "instead": "the game clock and turn order here",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "UI.assetType",
@@ -7458,7 +8285,8 @@
    "instead": "",
    "held_by": "PanelTests (server and app)",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "UI.getAttributes",
@@ -7467,7 +8295,8 @@
    "instead": "",
    "held_by": "PanelTests (server and app)",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "UI.getCustomAssets",
@@ -7476,7 +8305,8 @@
    "instead": "",
    "held_by": "PanelTests (server and app)",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "UI.getValue",
@@ -7485,7 +8315,8 @@
    "instead": "",
    "held_by": "PanelTests (server and app)",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "UI.loading",
@@ -7494,7 +8325,8 @@
    "instead": "",
    "held_by": "PanelTests (server and app)",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "UI.setAttributes",
@@ -7503,7 +8335,8 @@
    "instead": "",
    "held_by": "PanelTests (server and app)",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "UI.setClass",
@@ -7512,7 +8345,8 @@
    "instead": "",
    "held_by": "PanelTests (server and app)",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "UI.setCustomAssets",
@@ -7521,7 +8355,8 @@
    "instead": "",
    "held_by": "PanelTests (server and app)",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "UI.setValue",
@@ -7530,7 +8365,8 @@
    "instead": "",
    "held_by": "PanelTests (server and app)",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "Wait.stopAll",
@@ -7539,7 +8375,8 @@
    "instead": "",
    "held_by": "ModuleHelpersTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "WebRequest.custom",
@@ -7548,7 +8385,8 @@
    "instead": "scripts stay inside the table",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "WebRequest.delete",
@@ -7557,7 +8395,8 @@
    "instead": "scripts stay inside the table",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "WebRequest.head",
@@ -7566,7 +8405,8 @@
    "instead": "scripts stay inside the table",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "WebRequest.post",
@@ -7575,7 +8415,8 @@
    "instead": "scripts stay inside the table",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "WebRequest.put",
@@ -7584,7 +8425,8 @@
    "instead": "scripts stay inside the table",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   }
  ],
  "events": [
@@ -7595,7 +8437,8 @@
    "instead": "",
    "held_by": "",
    "count": 4920,
-   "modules": 51
+   "modules": 51,
+   "audited": ""
   },
   {
    "row": "onLoad",
@@ -7604,7 +8447,8 @@
    "instead": "",
    "held_by": "",
    "count": 2275,
-   "modules": 28
+   "modules": 28,
+   "audited": ""
   },
   {
    "row": "onObjectSpawn",
@@ -7613,7 +8457,8 @@
    "instead": "",
    "held_by": "",
    "count": 1510,
-   "modules": 13
+   "modules": 13,
+   "audited": ""
   },
   {
    "row": "onObjectDestroy",
@@ -7622,7 +8467,8 @@
    "instead": "",
    "held_by": "",
    "count": 12,
-   "modules": 12
+   "modules": 12,
+   "audited": ""
   },
   {
    "row": "onPlayerAction",
@@ -7631,7 +8477,8 @@
    "instead": "",
    "held_by": "PlayerActionTests",
    "count": 12,
-   "modules": 12
+   "modules": 12,
+   "audited": ""
   },
   {
    "row": "onChat",
@@ -7640,7 +8487,8 @@
    "instead": "",
    "held_by": "",
    "count": 10,
-   "modules": 10
+   "modules": 10,
+   "audited": ""
   },
   {
    "row": "onScriptingButtonDown",
@@ -7649,7 +8497,8 @@
    "instead": "",
    "held_by": "",
    "count": 10,
-   "modules": 10
+   "modules": 10,
+   "audited": ""
   },
   {
    "row": "onObjectPickUp",
@@ -7658,7 +8507,8 @@
    "instead": "",
    "held_by": "",
    "count": 4,
-   "modules": 2
+   "modules": 2,
+   "audited": ""
   },
   {
    "row": "onBlindfold",
@@ -7667,7 +8517,8 @@
    "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "onCollisionEnter",
@@ -7676,7 +8527,8 @@
    "instead": "nothing is needed",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "onCollisionExit",
@@ -7685,7 +8537,8 @@
    "instead": "nothing is needed",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "onCollisionStay",
@@ -7694,7 +8547,8 @@
    "instead": "nothing is needed",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "onExternalMessage",
@@ -7703,7 +8557,8 @@
    "instead": "scripts stay inside the table",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "onFilter",
@@ -7712,7 +8567,8 @@
    "instead": "nothing is needed",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "onFixedUpdate",
@@ -7721,7 +8577,8 @@
    "instead": "on_update",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "onGameRoundEnd",
@@ -7730,7 +8587,8 @@
    "instead": "the game clock",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "onGameRoundStart",
@@ -7739,7 +8597,8 @@
    "instead": "the game clock",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "onHandSelectModeEnd",
@@ -7748,7 +8607,8 @@
    "instead": "sit players at their seats",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "onHover",
@@ -7757,7 +8617,8 @@
    "instead": "nothing is needed",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "onObjectCollisionEnter",
@@ -7766,7 +8627,8 @@
    "instead": "nothing is needed",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "onObjectCollisionExit",
@@ -7775,7 +8637,8 @@
    "instead": "nothing is needed",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "onObjectCollisionStay",
@@ -7784,7 +8647,8 @@
    "instead": "nothing is needed",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "onObjectDrop",
@@ -7793,7 +8657,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "onObjectEnterContainer",
@@ -7802,7 +8667,8 @@
    "instead": "",
    "held_by": "StowEventTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "onObjectEnterScriptingZone",
@@ -7811,7 +8677,8 @@
    "instead": "draw the zone at the table; scripts that ask a zone what is in it get nothing",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "onObjectEnterZone",
@@ -7820,7 +8687,8 @@
    "instead": "draw the zone at the table; scripts that ask a zone what is in it get nothing",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "onObjectFlick",
@@ -7829,7 +8697,8 @@
    "instead": "nothing is needed",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "onObjectHover",
@@ -7838,7 +8707,8 @@
    "instead": "nothing is needed",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "onObjectLeaveContainer",
@@ -7847,7 +8717,8 @@
    "instead": "",
    "held_by": "StowEventTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "onObjectLeaveScriptingZone",
@@ -7856,7 +8727,8 @@
    "instead": "draw the zone at the table; scripts that ask a zone what is in it get nothing",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "onObjectLeaveZone",
@@ -7865,7 +8737,8 @@
    "instead": "draw the zone at the table; scripts that ask a zone what is in it get nothing",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "onObjectLoopingEffect",
@@ -7874,7 +8747,8 @@
    "instead": "",
    "held_by": "BookNotesScriptTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "onObjectPageChange",
@@ -7883,7 +8757,8 @@
    "instead": "",
    "held_by": "BookNotesScriptTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "onObjectPeek",
@@ -7892,7 +8767,8 @@
    "instead": "nothing is needed",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "onObjectRandomize",
@@ -7901,7 +8777,8 @@
    "instead": "",
    "held_by": "DiceScriptTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "onObjectRotate",
@@ -7910,7 +8787,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "onObjectSearchEnd",
@@ -7919,7 +8797,8 @@
    "instead": "nothing is needed",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "onObjectSearchStart",
@@ -7928,7 +8807,8 @@
    "instead": "nothing is needed",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "onObjectTriggerEffect",
@@ -7937,7 +8817,8 @@
    "instead": "",
    "held_by": "BookNotesScriptTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "onPageChange",
@@ -7946,7 +8827,8 @@
    "instead": "",
    "held_by": "BookNotesScriptTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "onPlayerChangeColor",
@@ -7955,7 +8837,8 @@
    "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "onPlayerConnect",
@@ -7964,7 +8847,8 @@
    "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "onPlayerDisconnect",
@@ -7973,7 +8857,8 @@
    "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "onPlayerPing",
@@ -7982,7 +8867,8 @@
    "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "onPlayerTurnEnd",
@@ -7991,7 +8877,8 @@
    "instead": "",
    "held_by": "ModuleHelpersTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "onPlayerTurnStart",
@@ -8000,7 +8887,8 @@
    "instead": "",
    "held_by": "ModuleHelpersTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "onPlayersConnect",
@@ -8009,7 +8897,8 @@
    "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "onPlayersDisconnect",
@@ -8018,7 +8907,8 @@
    "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "onRandomize",
@@ -8027,7 +8917,8 @@
    "instead": "",
    "held_by": "DiceScriptTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "onScriptingButtonUp",
@@ -8036,7 +8927,8 @@
    "instead": "",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "onZoneGroupSort",
@@ -8045,7 +8937,8 @@
    "instead": "draw the zone at the table; scripts that ask a zone what is in it get nothing",
    "held_by": "",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   },
   {
    "row": "tryObjectEnterContainer",
@@ -8054,7 +8947,8 @@
    "instead": "",
    "held_by": "StowEventTests",
    "count": 0,
-   "modules": 0
+   "modules": 0,
+   "audited": ""
   }
  ],
  "engine": [
@@ -8065,7 +8959,8 @@
    "instead": "",
    "held_by": "ModuleVectorColorTests",
    "count": 55,
-   "modules": 55
+   "modules": 55,
+   "audited": ""
   },
   {
    "row": "MoonSharp 2.0.0 on both sides: the Lua dialect matches",
@@ -8074,7 +8969,8 @@
    "instead": "",
    "held_by": "",
    "count": 55,
-   "modules": 55
+   "modules": 55,
+   "audited": ""
   },
   {
    "row": "Wait.frames counts frames, Wait.time seconds, onUpdate per frame",
@@ -8083,7 +8979,8 @@
    "instead": "",
    "held_by": "Net._Process ticks the scripts each frame (no test of its own)",
    "count": 55,
-   "modules": 55
+   "modules": 55,
+   "audited": ""
   },
   {
    "row": "a script call has no time limit in modules",
@@ -8092,7 +8989,8 @@
    "instead": "",
    "held_by": "import-sweep: naval (the Midway bag's Place)",
    "count": 55,
-   "modules": 55
+   "modules": 55,
+   "audited": ""
   },
   {
    "row": "button and input defaults (width, height, font_size, colours, position, scale)",
@@ -8101,7 +8999,8 @@
    "instead": "",
    "held_by": "ModuleDefaultsTests",
    "count": 55,
-   "modules": 55
+   "modules": 55,
+   "audited": ""
   },
   {
    "row": "click_function(obj, player_color, alt_click)",
@@ -8110,7 +9009,8 @@
    "instead": "",
    "held_by": "TranslatorTests.Handlers_get_the_piece_their_widget_is_on",
    "count": 55,
-   "modules": 55
+   "modules": 55,
+   "audited": ""
   },
   {
    "row": "context menu callback(player_color, menu_position, object)",
@@ -8119,7 +9019,8 @@
    "instead": "",
    "held_by": "",
    "count": 55,
-   "modules": 55
+   "modules": 55,
+   "audited": ""
   },
   {
    "row": "getObjectFromGUID answers nil for a piece inside a bag",
@@ -8128,7 +9029,8 @@
    "instead": "",
    "held_by": "StowScriptTests",
    "count": 55,
-   "modules": 55
+   "modules": 55,
+   "audited": ""
   },
   {
    "row": "input_function(obj, player_color, text, selected)",
@@ -8137,7 +9039,8 @@
    "instead": "",
    "held_by": "TranslatorTests.A_name_typed_letter_by_letter_reaches_the_face",
    "count": 55,
-   "modules": 55
+   "modules": 55,
+   "audited": ""
   },
   {
    "row": "load order: global before objects; onLoad(script_state)",
@@ -8146,7 +9049,8 @@
    "instead": "",
    "held_by": "BookNotesScriptTests",
    "count": 55,
-   "modules": 55
+   "modules": 55,
+   "audited": ""
   },
   {
    "row": "member names fold (exact, first letter up, snake to camel, both)",
@@ -8155,7 +9059,8 @@
    "instead": "",
    "held_by": "TranslatorFoldTests",
    "count": 55,
-   "modules": 55
+   "modules": 55,
+   "audited": ""
   },
   {
    "row": "module Vector and Color classes with their methods",
@@ -8164,7 +9069,8 @@
    "instead": "",
    "held_by": "ModuleVectorColorTests",
    "count": 55,
-   "modules": 55
+   "modules": 55,
+   "audited": ""
   },
   {
    "row": "player model: colours, Black as GM, promoted, seated, host",
@@ -8173,7 +9079,8 @@
    "instead": "seats and roles are the app's own",
    "held_by": "",
    "count": 55,
-   "modules": 55
+   "modules": 55,
+   "audited": ""
   },
   {
    "row": "positionToWorld and positionToLocal: the module transform, local x along +X at rotation zero, in mesh units times scale for a model and the size rule for a flat",
@@ -8182,7 +9089,8 @@
    "instead": "",
    "held_by": "ModuleLocalFrameTests",
    "count": 55,
-   "modules": 55
+   "modules": 55,
+   "audited": ""
   },
   {
    "row": "save quirk: a number written as a string, or NaN",
@@ -8191,7 +9099,8 @@
    "instead": "",
    "held_by": "ConverterTests",
    "count": 55,
-   "modules": 55
+   "modules": 55,
+   "audited": ""
   },
   {
    "row": "save quirk: duplicate GUIDs inside bags",
@@ -8200,7 +9109,8 @@
    "instead": "",
    "held_by": "",
    "count": 55,
-   "modules": 55
+   "modules": 55,
+   "audited": ""
   },
   {
    "row": "save quirk: negative scale mirrors",
@@ -8209,7 +9119,8 @@
    "instead": "",
    "held_by": "ConverterTests",
    "count": 55,
-   "modules": 55
+   "modules": 55,
+   "audited": ""
   },
   {
    "row": "save quirk: rotX/rotZ near 180 means face down; other tilts stand or lean",
@@ -8218,7 +9129,8 @@
    "instead": "",
    "held_by": "",
    "count": 55,
-   "modules": 55
+   "modules": 55,
+   "audited": ""
   },
   {
    "row": "script safety cuts the self-copying block and keeps the rest",
@@ -8227,7 +9139,8 @@
    "instead": "",
    "held_by": "ScriptSafetyTests; import-sweep",
    "count": 55,
-   "modules": 55
+   "modules": 55,
+   "audited": ""
   },
   {
    "row": "setState keeps the GUID",
@@ -8236,7 +9149,8 @@
    "instead": "",
    "held_by": "BookNotesScriptTests",
    "count": 55,
-   "modules": 55
+   "modules": 55,
+   "audited": ""
   },
   {
    "row": "smooth moves end at once",
@@ -8245,7 +9159,8 @@
    "instead": "",
    "held_by": "",
    "count": 55,
-   "modules": 55
+   "modules": 55,
+   "audited": ""
   },
   {
    "row": "spawning and loading_custom flags",
@@ -8254,7 +9169,8 @@
    "instead": "",
    "held_by": "",
    "count": 55,
-   "modules": 55
+   "modules": 55,
+   "audited": ""
   },
   {
    "row": "widget indices are 0-based in editButton/editInput/removeButton",
@@ -8263,7 +9179,8 @@
    "instead": "",
    "held_by": "",
    "count": 55,
-   "modules": 55
+   "modules": 55,
+   "audited": ""
   }
  ],
  "defaults": {

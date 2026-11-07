@@ -67,6 +67,64 @@ public sealed partial class ConverterTests
         Assert.All(up, c => Assert.False(c.Flipped || c.Locked));
     }
 
+    const string UnitCube = "v -0.5 -0.5 -0.5\nv 0.5 -0.5 -0.5\nv 0.5 0.5 -0.5\nv -0.5 0.5 -0.5\nv -0.5 -0.5 0.5\nv 0.5 -0.5 0.5\nv 0.5 0.5 0.5\nv -0.5 0.5 0.5\n"
+                            + "f 1 2 3\nf 1 3 4\nf 5 7 6\nf 5 8 7\nf 1 5 6\nf 1 6 2\nf 4 3 7\nf 4 7 8\nf 1 4 8\nf 1 8 5\nf 2 6 7\nf 2 7 3\n";
+
+    [Fact]
+    public void A_model_made_a_die_rolls_on_its_saved_values_and_shows_the_one_facing_up_and_a_plain_model_does_not()
+    {
+        var cfg = TempConfig();
+        var models = Path.Combine(cfg.ModsPath, "Models");
+        Directory.CreateDirectory(models);
+        File.WriteAllText(Path.Combine(models, AssetStore.Key("http://a/die.obj") + ".obj"), UnitCube);
+        static JsonObject Value(string v, double x) => new() { ["Value"] = v, ["Rotation"] = new JsonObject { ["x"] = x, ["y"] = 0.0, ["z"] = 0.0 } };
+        JsonObject Model(int type)
+        {
+            var o = Obj("Custom_Model", "", 1, new JsonObject
+            {
+                ["CustomMesh"] = new JsonObject { ["MeshURL"] = "http://a/die.obj", ["TypeIndex"] = type },
+                ["RotationValues"] = new JsonArray(Value("1", 0), Value("2", 90), Value("6", 180), Value("6", 0.5)),
+            });
+            o["Transform"]!["rotX"] = 180.0;
+            return o;
+        }
+        var rep = new Report();
+        var defs = new DefFactory(cfg, new AssetStore(cfg, rep), rep);
+        var pack = new PackOut(cfg.Output, "t", "T", "t", null);
+
+        var die = defs.DefFor(new ModuleObj(Model(2)), pack)!;
+        var plain = defs.DefFor(new ModuleObj(Model(0)), pack)!;
+
+        Assert.Equal(new[] { "1", "2", "6" }, die.Def.Faces.Select(f => f.Value));
+        Assert.Equal(2, die.State);
+        Assert.Contains("die", die.Def.Tags);
+        Assert.Empty(plain.Def.Faces);
+    }
+
+    [Fact]
+    public void A_model_keeps_its_normal_map_and_whether_it_casts_a_shadow()
+    {
+        var cfg = TempConfig();
+        var models = Path.Combine(cfg.ModsPath, "Models");
+        Directory.CreateDirectory(models);
+        File.WriteAllText(Path.Combine(models, AssetStore.Key("http://a/hill.obj") + ".obj"), UnitCube);
+        LocalPicture(cfg, "http://a/bumps.png", 8, 8, (_, _) => new SKColor(128, 128, 255));
+        JsonObject Model(bool shadows) => Obj("Custom_Model", "", 1, new JsonObject
+        {
+            ["CustomMesh"] = new JsonObject { ["MeshURL"] = "http://a/hill.obj", ["NormalURL"] = "http://a/bumps.png", ["CastShadows"] = shadows },
+        });
+        var rep = new Report();
+        var defs = new DefFactory(cfg, new AssetStore(cfg, rep), rep);
+        var pack = new PackOut(cfg.Output, "t", "T", "t", null);
+
+        var flat = defs.DefFor(new ModuleObj(Model(false)), pack)!.Def;
+
+        Assert.NotNull(flat.Normal);
+        Assert.True(pack.M.Assets.ContainsKey(flat.Normal!));
+        Assert.True(flat.Shadowless);
+        Assert.False(defs.DefFor(new ModuleObj(Model(true)), pack)!.Def.Shadowless);
+    }
+
     [Fact]
     public void A_picture_die_turns_up_the_side_a_module_turns_up_for_each_value_on_the_standard_picture_die()
     {
@@ -302,17 +360,19 @@ public sealed partial class ConverterTests
     }
 
     [Fact]
-    public void A_token_glued_over_a_backing_token_lies_on_it_instead_of_in_the_same_place()
+    public void A_token_glued_over_a_backing_token_is_one_piece_with_both_pictures_in_their_own_colours_and_both_heights()
     {
-        const double Thickness = 0.1, BackingBelow = -0.1, PieceScale = 0.25;
+        const double Thickness = 0.1, BackingBelow = -0.1, PieceScale = 0.25, BackingWider = 1.5;
         var cfg = TempConfig();
         const string Face = "http://a/line.png", White = "http://a/white.png";
-        LocalPicture(cfg, Face, 16, 4, (_, _) => SKColors.White);
-        LocalPicture(cfg, White, 16, 4, (_, _) => SKColors.White);
+        LocalPicture(cfg, Face, 64, 16, (_, _) => SKColors.White);
+        LocalPicture(cfg, White, 64, 16, (_, _) => SKColors.White);
         static JsonObject Token(string url) => new() { ["ImageURL"] = url, ["CustomToken"] = new JsonObject { ["Thickness"] = Thickness } };
-        var backing = Obj("Custom_Token", "Backing", 1, new JsonObject { ["CustomImage"] = Token(White) });
+        var backing = Obj("Custom_Token", "Backing", BackingWider, new JsonObject { ["CustomImage"] = Token(White) });
         backing["Transform"]!["posY"] = BackingBelow;
+        backing["ColorDiffuse"] = new JsonObject { ["r"] = 1.0, ["g"] = 1.0, ["b"] = 1.0 };
         var line = Obj("Custom_Token", "Line", PieceScale, new JsonObject { ["CustomImage"] = Token(Face), ["ChildObjects"] = new JsonArray(backing) });
+        line["ColorDiffuse"] = new JsonObject { ["r"] = 1.0, ["g"] = 0.0, ["b"] = 0.0 };
         var module = Module("glued", line);
         var main = typeof(Config).Assembly.EntryPoint!;
 
@@ -320,11 +380,61 @@ public sealed partial class ConverterTests
 
         Assert.Equal(0, code);
         var table = Json.Load<Scenario>(Path.Combine(Packages, "scenarios", "glued", "scenario.json"));
-        var top = table.UmpireBoard.Single(p => p.Label == "Line");
-        var under = table.UmpireBoard.Single(p => p.Label == "Backing");
-        Assert.Equal((0, 1), (under.Stack, top.Stack));
-        Assert.Equal(0.0, under.Y);
-        Assert.Equal(Thickness, top.Y, 4);
+        var pack = Json.Load<PackManifest>(Path.Combine(Packages, "tts.glued", "pack.json"));
+        var piece = Assert.Single(table.UmpireBoard);
+        var def = pack.Pieces.Single(d => d.Id == piece.Def);
+        using var bmp = SKBitmap.Decode(Path.Combine(Packages, "tts.glued", pack.Assets[def.Image!].File));
+        Assert.Equal((SKColors.Red, SKColors.White), (bmp.GetPixel(bmp.Width / 2, bmp.Height / 2), bmp.GetPixel(bmp.Width / 2, 2)));
+        Assert.Equal(2 * Thickness, def.Thickness, 3);
+        Assert.Equal((0.0, 0), (piece.Y, piece.Stack));
+        Assert.Empty(piece.Attached);
+    }
+
+    [Fact]
+    public void Each_state_of_a_token_shows_its_own_glued_children_even_a_child_with_states_of_its_own()
+    {
+        const double Thickness = 0.1;
+        var cfg = TempConfig();
+        const string Formed = "http://a/formed.png", Broken = "http://a/broken.png", Base = "http://a/base.png", Number = "http://a/number.png";
+        LocalPicture(cfg, Formed, 16, 4, (_, _) => SKColors.Red);
+        LocalPicture(cfg, Broken, 8, 8, (_, _) => SKColors.Black);
+        LocalPicture(cfg, Base, 16, 4, (_, _) => SKColors.White);
+        LocalPicture(cfg, Number, 8, 8, (_, _) => SKColors.Blue);
+        static JsonObject Token(string url) => new() { ["ImageURL"] = url, ["CustomToken"] = new JsonObject { ["Thickness"] = Thickness } };
+        static JsonObject Under(string nick, string url, JsonObject? extra = null)
+        {
+            var c = Obj("Custom_Token", nick, 1, extra ?? new JsonObject());
+            c["CustomImage"] = Token(url);
+            c["Transform"]!["posY"] = -Thickness;
+            c["ColorDiffuse"] = new JsonObject { ["r"] = 1.0, ["g"] = 1.0, ["b"] = 1.0 };
+            return c;
+        }
+        var counting = Under("", Number, new JsonObject { ["States"] = new JsonObject { ["2"] = Under("", Base) } });
+        (counting["Transform"]!["scaleX"], counting["Transform"]!["scaleZ"]) = (1.5, 1.5);
+        var broken = Obj("Custom_Token", "Broken", 1, new JsonObject { ["CustomImage"] = Token(Broken), ["ChildObjects"] = new JsonArray(counting) });
+        var unit = Obj("Custom_Token", "Unit", 1, new JsonObject
+        {
+            ["CustomImage"] = Token(Formed), ["ChildObjects"] = new JsonArray(Under("Base", Base)), ["States"] = new JsonObject { ["2"] = broken },
+        });
+        foreach (var o in new[] { unit, broken }) o["ColorDiffuse"] = new JsonObject { ["r"] = 1.0, ["g"] = 1.0, ["b"] = 1.0 };
+        var module = Module("states", unit);
+        var main = typeof(Config).Assembly.EntryPoint!;
+
+        var code = (int)main.Invoke(null, new object[] { new[] { "import", module, "--config", Path.Combine(_root, "converter.json"), "--out", Packages } })!;
+
+        Assert.Equal(0, code);
+        var table = Json.Load<Scenario>(Path.Combine(Packages, "scenarios", "states", "scenario.json"));
+        var pack = Json.Load<PackManifest>(Path.Combine(Packages, "tts.states", "pack.json"));
+        var piece = Assert.Single(table.UmpireBoard);
+        var def = pack.Pieces.Single(d => d.Id == piece.Def);
+        SKColor Edge(string sha)
+        {
+            using var bmp = SKBitmap.Decode(Path.Combine(Packages, "tts.states", pack.Assets[sha].File));
+            return bmp.GetPixel(1, bmp.Height / 2);
+        }
+        Assert.Equal(2, def.States.Count);
+        Assert.Equal((SKColors.Red, SKColors.Blue), (Edge(def.States[0].Image!), Edge(def.States[1].Image!)));
+        Assert.Empty(def.Attachments);
     }
 
     [Fact]
@@ -355,6 +465,22 @@ public sealed partial class ConverterTests
         Assert.Equal(Flat, Named("Cap").Y, 3);
         Assert.Equal(PostTall * Flat, Thick(Named("Post")), 3);
         Assert.Equal((0, 0, 1), (Named("Breastworks").Stack, Named("Post").Stack, Named("Cap").Stack));
+    }
+
+    [Fact]
+    public void A_module_that_names_only_a_stock_sky_gets_the_nearest_backdrop()
+    {
+        TempConfig();
+        var module = Module("field", Obj("BlockSquare", "Marker", 1));
+        var json = JsonNode.Parse(File.ReadAllText(module))!.AsObject();
+        json["Sky"] = "Sky_Field";
+        File.WriteAllText(module, json.ToJsonString());
+        var main = typeof(Config).Assembly.EntryPoint!;
+
+        var code = (int)main.Invoke(null, new object[] { new[] { "import", module, "--config", Path.Combine(_root, "converter.json"), "--out", Packages } })!;
+
+        Assert.Equal(0, code);
+        Assert.Equal("saxon-meadow", Json.Load<Scenario>(Path.Combine(Packages, "scenarios", "field", "scenario.json")).Lighting.Backdrop);
     }
 
     [Fact]

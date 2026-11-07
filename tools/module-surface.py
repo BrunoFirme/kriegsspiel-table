@@ -2,24 +2,28 @@ import argparse
 import json
 import os
 import re
+import subprocess
 import sys
 from collections import defaultdict
 
-USAGE = "python -I tools/module-surface.py [--workshop <dir>] [--saves <file>,...] [--gate] [--quiet]"
+USAGE = "python -I tools/module-surface.py [--workshop <dir>] [--saves <file>,...] [--gate] [--quiet] [--left]"
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 SURFACE = os.path.join(HERE, "surface")
 API = os.path.join(SURFACE, "module-api.json")
 DECISIONS = os.path.join(SURFACE, "decisions.json")
+AUDITED = os.path.join(SURFACE, "audited.json")
 LEDGER_MD = os.path.join(SURFACE, "ledger.md")
 LEDGER_JSON = os.path.join(SURFACE, "ledger.json")
 TRANSLATOR = os.path.join(ROOT, "src", "Server", "Scripting", "Translate", "ModuleTranslator.cs")
 COMPAT = os.path.join(ROOT, "src", "Server", "Scripting", "compat.lua")
 CONVERTER_DIR = os.path.join(ROOT, "tools", "Converter")
 CONVERTER_JSON = os.path.join(CONVERTER_DIR, "converter.json")
+WRITERS = {"ModuleExport.cs"}
 AREAS = ("types", "save", "object", "global", "namespaces", "events", "engine")
 STATUSES = ("native", "compat", "partial", "stub", "dropped", "planned", "unknown")
 UNDECIDED = ("planned", "unknown")
+OUT_OF_BOUNDS = ("dropped",)
 STDLIB = {"string", "math", "table", "os", "coroutine", "bit32", "io", "debug", "utf8", "json", "compat", "board", "game", "wait", "self"}
 SUB_STATES = {
     "Transform": "TransformState", "ColorDiffuse": "ColourState", "CustomImage": "CustomImageState", "CustomMesh": "CustomMeshState",
@@ -291,10 +295,11 @@ def split_sections(text):
 def converter_reads():
     keys, types = set(), set()
     for f in os.listdir(CONVERTER_DIR):
-        if not f.endswith(".cs"):
+        if not f.endswith(".cs") or f in WRITERS:
             continue
         text = open(os.path.join(CONVERTER_DIR, f), encoding="utf-8-sig").read()
         keys.update(KEY_RX.findall(text))
+        keys.update(QUOTED_RX.findall(text))
         types.update(QUOTED_RX.findall(text))
     cfg = load_json(CONVERTER_JSON, {})
     return keys, types, set(cfg.get("ignoreTypes", [])), set(cfg.get("containerTypes", []))
@@ -375,7 +380,7 @@ def all_rows(api, use, decided):
     return rows
 
 
-def build(api, use, decided, rules, reads, scanned):
+def build(api, use, decided, rules, reads, scanned, audited):
     ledger = {}
     for area in AREAS:
         entries = []
@@ -385,7 +390,9 @@ def build(api, use, decided, rules, reads, scanned):
             if area == "engine":
                 count, modules = scanned, scanned
             d = decision(row, decided.get(area, {})) or {}
-            entries.append({"row": row, "status": status, "where": where, "instead": d.get("instead", ""), "held_by": held, "count": count, "modules": modules})
+            proof = audited.get(area, {}).get(row, "")
+            entries.append({"row": row, "status": status, "where": where, "instead": d.get("instead", ""), "held_by": held, "count": count, "modules": modules,
+                            "audited": proof})
         entries.sort(key=lambda e: (-e["modules"], -e["count"], e["row"]))
         ledger[area] = entries
     return ledger
@@ -400,7 +407,8 @@ def coverage(ledger):
             by[e["status"]] += 1
         decided = sum(v for k, v in by.items() if k not in UNDECIDED)
         total_rows = len(ledger[area])
-        lines.append((area, len(used), decided, by["unknown"] + by["planned"], total_rows))
+        unaudited = sum(1 for e in used if e["status"] not in OUT_OF_BOUNDS + UNDECIDED and not e.get("audited"))
+        lines.append((area, len(used), decided, by["unknown"] + by["planned"], unaudited, total_rows))
     return lines
 
 
@@ -411,16 +419,32 @@ def write_markdown(ledger, modules_scanned, workshop):
            "Status: native (ours, checked), compat (through compat.lua, checked), partial (works for the cases met; gap named),",
            "stub (accepted and ignored), dropped (left out on purpose, named in the import report), planned (left out today,",
            "the plan says translate it), unknown (nobody has decided).", "",
-           "| area | rows used by the corpus | decided | planned or unknown | rows in all |", "|---|---|---|---|---|"]
-    for area, used, decided, unknown, total in coverage(ledger):
-        out.append(f"| {area} | {used} | {decided} | {unknown} | {total} |")
+           "Audited: every branch of the game's own implementation of the row was read and ours matches it, held by the named test;",
+           "a row in use that is not dropped must end audited.", "",
+           "| area | rows used by the corpus | decided | planned or unknown | in use, not audited | rows in all |", "|---|---|---|---|---|---|"]
+    for area, used, decided, unknown, unaudited, total in coverage(ledger):
+        out.append(f"| {area} | {used} | {decided} | {unknown} | {unaudited} | {total} |")
     for area in AREAS:
-        out += ["", f"## {area}", "", "| row | used (calls / modules) | status | where | held by |", "|---|---|---|---|---|"]
+        out += ["", f"## {area}", "", "| row | used (calls / modules) | status | where | held by | audited |", "|---|---|---|---|---|---|"]
         for e in ledger[area]:
             used = f"{e['count']} / {e['modules']}" if e["modules"] else "-"
-            out.append(f"| `{e['row']}` | {used} | {e['status']} | {e['where']} | {e['held_by']} |")
+            out.append(f"| `{e['row']}` | {used} | {e['status']} | {e['where']} | {e['held_by']} | {e.get('audited', '')} |")
     with open(LEDGER_MD, "w", encoding="utf-8", newline="\n") as w:
         w.write("\n".join(out) + "\n")
+
+
+def committed_ledger():
+    rel = os.path.relpath(LEDGER_JSON, ROOT).replace(os.sep, "/")
+    try:
+        shown = subprocess.run(["git", "-C", ROOT, "show", "HEAD:" + rel], capture_output=True, text=True, encoding="utf-8", check=False)
+    except OSError:
+        return load_json(LEDGER_JSON, {})
+    return json.loads(shown.stdout.lstrip("\ufeff")) if shown.returncode == 0 and shown.stdout.strip() else load_json(LEDGER_JSON, {})
+
+
+def unaudited_in_use(ledger):
+    return {(area, e["row"]) for area in AREAS for e in ledger.get(area, [])
+            if e["modules"] > 0 and e["status"] not in OUT_OF_BOUNDS + UNDECIDED and not e.get("audited")}
 
 
 def undecided_in_use(ledger):
@@ -437,7 +461,16 @@ def gate(ledger, previous):
             print(f"  {area}: {row}")
     if len(now) > len(before):
         print(f"surface gate: {len(now)} undecided rows in use, was {len(before)}")
-    return not new and len(now) <= len(before)
+    ok = not new and len(now) <= len(before)
+    was, left = unaudited_in_use(previous) if any("audited" in e for a in AREAS for e in previous.get(a, [])) else None, unaudited_in_use(ledger)
+    fresh = sorted(left - was) if was is not None else []
+    if fresh:
+        print("surface gate: rows in use that lost their audit or are new and unaudited:")
+        for area, row in fresh:
+            print(f"  {area}: {row}")
+    if was is not None and len(left) > len(was):
+        print(f"surface gate: {len(left)} rows in use not audited, was {len(was)}")
+    return ok and not fresh and (was is None or len(left) <= len(was))
 
 
 def main():
@@ -446,9 +479,11 @@ def main():
     p.add_argument("--saves")
     p.add_argument("--gate", action="store_true")
     p.add_argument("--quiet", action="store_true")
+    p.add_argument("--left", action="store_true")
     a = p.parse_args()
     api = Api(load_json(API, {"object": {}, "global": {}, "namespaces": {}, "events": [], "save": {}}))
     decided = load_json(DECISIONS, {})
+    audited = load_json(AUDITED, {})
     workshop = a.workshop or os.path.join(os.path.expanduser("~"), "OneDrive", "Documentos", "My Games", "Tabletop Simulator", "Mods", "Workshop")
     files = [os.path.join(workshop, f) for f in sorted(os.listdir(workshop))] if os.path.isdir(workshop) else []
     files += [s for s in (a.saves or "").split(",") if s]
@@ -460,17 +495,21 @@ def main():
     if scanned == 0:
         sys.exit(f"no module saves found under {workshop}\n{USAGE}")
     use.settle()
-    ledger = build(api, use, decided, translator_rules(), converter_reads(), scanned)
+    ledger = build(api, use, decided, translator_rules(), converter_reads(), scanned, audited)
     ledger["defaults"] = {row[1]: text for row, text in sorted(use.defaults.items())}
-    previous = load_json(LEDGER_JSON, {})
+    previous = committed_ledger()
     ok = gate(ledger, previous) if a.gate else True
     write_markdown(ledger, scanned, workshop)
     with open(LEDGER_JSON, "w", encoding="utf-8", newline="\n") as w:
         json.dump(ledger, w, indent=1)
         w.write("\n")
+    if a.left:
+        for area, row in sorted(unaudited_in_use(ledger)):
+            e = next(x for x in ledger[area] if x["row"] == row)
+            print(f"{area}\t{row}\t{e['status']}\t{e['count']}\t{e['modules']}")
     if not a.quiet:
-        for area, used, decided_n, unknown, total in coverage(ledger):
-            print(f"{area:11s} used {used:4d}  decided {decided_n:4d}  unknown {unknown:4d}  of {total}")
+        for area, used, decided_n, unknown, unaudited, total in coverage(ledger):
+            print(f"{area:11s} used {used:4d}  decided {decided_n:4d}  unknown {unknown:4d}  not audited {unaudited:4d}  of {total}")
     sys.exit(0 if ok else 1)
 
 

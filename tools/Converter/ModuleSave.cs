@@ -35,13 +35,15 @@ public sealed class ModuleObj
     public double PosY => D(T, "posY");
     public double PosZ => D(T, "posZ");
     const double TableScale = 6, UnderTheTable = -0.5, TerrainSpan = 40;
-    public static Func<string, (double ex, double ey, double ez)?>? MeshSize { get; set; }
+    static readonly AsyncLocal<Func<string, (double ex, double ey, double ez)?>?> _meshSize = new();
+    public static Func<string, (double ex, double ey, double ez)?>? MeshSize { get => _meshSize.Value; set => _meshSize.Value = value; }
     double Span => MeshUrl is { } u && MeshSize?.Invoke(u) is { } b ? Math.Max(Math.Abs(ScaleX) * b.ex, Math.Abs(ScaleZ) * b.ez) : 0;
     public bool IsTerrain => Name == "Custom_Model" && Locked && PosY >= UnderTheTable && MeshUrl != null && DiffuseUrl != null
                              && (Math.Abs(ScaleX) >= TableScale || Span >= TerrainSpan);
     public bool IsFurniture => ((Name == "Custom_Model" && Math.Abs(ScaleX) >= TableScale && !IsTerrain) || (Locked && PosY < UnderTheTable && Name is "Custom_Model" or "Custom_Tile" or "Custom_Token" or "Custom_Board"))
                                && Top == null;
-    public static Func<string, TableTop?>? MeshTop { get; set; }
+    static readonly AsyncLocal<Func<string, TableTop?>?> _meshTop = new();
+    public static Func<string, TableTop?>? MeshTop { get => _meshTop.Value; set => _meshTop.Value = value; }
     public TableTop? Top => Name == "Custom_Model" && Locked && DiffuseUrl != null && MeshUrl is { } u && ScaleX * ScaleZ > 0 && PosY < UnderTheTable
                             && MeshTop?.Invoke(u) is { } t && PosY + t.Top * ScaleY >= UnderTheTable ? t : null;
     public double RotX => D(T, "rotX");
@@ -68,6 +70,9 @@ public sealed class ModuleObj
     JsonObject? CM => J["CustomMesh"] as JsonObject;
     public string? MeshUrl => Blank(S(CM?["MeshURL"]));
     public string? DiffuseUrl => Blank(S(CM?["DiffuseURL"]));
+    public string? NormalUrl => Blank(S(CM?["NormalURL"]));
+    public bool CastsShadows => CM?["CastShadows"] is not JsonValue v || !v.TryGetValue<bool>(out var casts) || casts;
+    public int MeshType => (CM?["TypeIndex"] ?? (J["CustomAssetbundle"] as JsonObject)?["TypeIndex"]) is JsonValue v && v.TryGetValue<int>(out var i) ? i : 0;
     public string? Finish => KTable.Core.Model.Finishes.Of(CM?["MaterialIndex"] != null ? I(CM, "MaterialIndex") : J["MaterialIndex"] != null ? I(J, "MaterialIndex") : -1);
     public KTable.Core.Model.ShineDef? Shine => CM?["CustomShader"] is JsonObject sh
         ? new KTable.Core.Model.ShineDef
@@ -253,6 +258,7 @@ public sealed class ModuleSave
     public string Lua { get; init; } = "";
     public string LuaState { get; init; } = "";
     public string? SkyUrl { get; init; }
+    public string StockSky { get; init; } = "";
     public string Table { get; init; } = "";
     public string Notes { get; init; } = "";
     public List<(string Title, string Body)> Notebook { get; init; } = new();
@@ -276,6 +282,7 @@ public sealed class ModuleSave
             Lua = root["LuaScript"]?.GetValue<string>() ?? "",
             LuaState = root["LuaScriptState"]?.GetValue<string>() ?? "",
             SkyUrl = root["SkyURL"]?.GetValue<string>() is { } sky && !string.IsNullOrWhiteSpace(sky) ? sky.Trim() : null,
+            StockSky = root["Sky"] is JsonValue stock && stock.TryGetValue<string>(out var sk) ? sk : "",
             Table = root["Table"]?.GetValue<string>() ?? "",
             Notes = root["Note"] is JsonValue note && note.TryGetValue<string>(out var n) ? n : "",
             Notebook = (root["TabStates"] as JsonObject)?.Select(t => t.Value).OfType<JsonObject>()

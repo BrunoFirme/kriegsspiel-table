@@ -7,964 +7,967 @@ Status: native (ours, checked), compat (through compat.lua, checked), partial (w
 stub (accepted and ignored), dropped (left out on purpose, named in the import report), planned (left out today,
 the plan says translate it), unknown (nobody has decided).
 
-| area | rows used by the corpus | decided | planned or unknown | rows in all |
-|---|---|---|---|---|
-| types | 30 | 30 | 0 | 43 |
-| save | 150 | 150 | 0 | 302 |
-| object | 65 | 65 | 0 | 262 |
-| global | 14 | 14 | 0 | 55 |
-| namespaces | 23 | 23 | 0 | 180 |
-| events | 8 | 8 | 0 | 52 |
-| engine | 23 | 23 | 0 | 23 |
+Audited: every branch of the game's own implementation of the row was read and ours matches it, held by the named test;
+a row in use that is not dropped must end audited.
+
+| area | rows used by the corpus | decided | planned or unknown | in use, not audited | rows in all |
+|---|---|---|---|---|---|
+| types | 30 | 30 | 0 | 27 | 43 |
+| save | 150 | 150 | 0 | 84 | 302 |
+| object | 65 | 65 | 0 | 55 | 262 |
+| global | 14 | 14 | 0 | 14 | 55 |
+| namespaces | 23 | 23 | 0 | 21 | 180 |
+| events | 8 | 8 | 0 | 8 | 52 |
+| engine | 23 | 23 | 0 | 22 | 23 |
 
 ## types
 
-| row | used (calls / modules) | status | where | held by |
-|---|---|---|---|---|
-| `HandTrigger` | 494 / 55 | dropped | hands are seats here; no hand zones (decided 2026-11-06) |  |
-| `Custom_Model` | 4903 / 52 | native | converter |  |
-| `Custom_Token` | 25836 / 50 | native | converter |  |
-| `Custom_Tile` | 36769 / 49 | native | converter |  |
-| `Custom_Assetbundle` | 36541 / 49 | native | BundleBake / BundleEffects (models baked, effects mapped to Firme's Effects) | import-sweep: prairie-grove, suriagehara, zeke |
-| `Chinese_Checkers_Piece` | 46 / 46 | dropped | a stock piece; in every IKS module it is the Flex Table control |  |
-| `Custom_Board` | 22 / 22 | native | converter |  |
-| `Notecard` | 28 / 16 | native | converter |  |
-| `Custom_PDF` | 15 / 14 | native | a book: every page a state, turned from the bar on the piece and read in the Book window | BookTests |
-| `BlockSquare` | 665 / 12 | native | converter |  |
-| `BlockRectangle` | 333 / 11 | native | converter |  |
-| `3DText` | 109 / 11 | native | converter |  |
-| `Die_20` | 77 / 11 | native | the app's d20, showing the face it was saved on | DiceTests |
-| `Bag` | 17 / 11 | native | a box, chest or crate of Firme's Effects and Props, picked by its name, then by how much it holds; it keeps a coloured bag's colour and holds its contents stowed | BagBoxTests |
-| `Infinite_Bag` | 86 / 8 | dropped | infinite bags (decided 2026-11-06) |  |
-| `Custom_Model_Bag` | 48 / 8 | native | the bag's own model, holding its contents stowed | import-sweep: naval, scripted-war-game |
-| `Custom_Dice` | 35 / 7 | native | a picture die of every count: the d6 on the standard picture die, the others on dice built to the module template's layout (tools/make-template-dice.py), each side showing the value saved nearest to it | DiceTests |
-| `CardCustom` | 1144 / 6 | native | converter |  |
-| `Die_12` | 11 / 5 | native | the app's d12, showing the face it was saved on | DiceTests |
-| `Die_10` | 9 / 4 | native | the app's d10, showing the face it was saved on | DiceTests |
-| `Die_6_Rounded` | 7 / 4 | native | the app's d6, showing the face it was saved on | DiceTests |
-| `Die_6` | 27 / 3 | native | the app's d6, showing the face it was saved on | DiceTests |
-| `BlockTriangle` | 9 / 3 | native | a triangular prism lying on a side, 1.414 x 1 x 0.707 as in the tabletop's own prefab, tinted like the other blocks | TriangleBlockTests |
-| `Tileset_Tree` | 119 / 1 | native | a tree of Firme's Effects and Props at the stock tree's crown size (3.62 across, measured from the tabletop's prefab, never copied) | BagBoxTests |
-| `Card` | 82 / 1 | native | converter |  |
-| `Checker_white` | 17 / 1 | native | converter |  |
-| `Figurine_Custom` | 16 / 1 | native | a picture card standing in a round base, sized as the tabletop's prefab (card 1.96 high at its aspect, base 1.96 across, scaled 0.9146), the back picture behind it, the tint on the base | FigurineTests |
-| `Deck` | 15 / 1 | native | converter |  |
-| `PlayerPawn` | 7 / 1 | native | a round piece in the pawn's colour, as tall as a pawn | PawnTests |
-| `Die_8` | 2 / 1 | native | the app's d8, showing the face it was saved on | DiceTests |
-| `Calculator` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
-| `Counter` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
-| `Custom_Assetbundle_Infinite_Bag` | - | dropped | infinite bags (decided 2026-11-06) |  |
-| `Custom_Model_Infinite_Bag` | - | dropped | infinite bags (decided 2026-11-06) |  |
-| `Die_4` | - | native | the app's d4, showing the face it was saved on | DiceTests |
-| `Digital_Clock` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
-| `FogOfWarTrigger` | - | dropped | hidden zones (decided 2026-11-06) |  |
-| `Go_Game_Piece_Black` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
-| `Go_Game_Piece_White` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
-| `Quarter` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
-| `ScriptingTrigger` | - | dropped | scripting and layout zones (decided 2026-11-06) |  |
-| `Tablet` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
-| `Tileset_*` | - | dropped | the tabletop's own art is never extracted |  |
+| row | used (calls / modules) | status | where | held by | audited |
+|---|---|---|---|---|---|
+| `HandTrigger` | 494 / 55 | dropped | hands are seats here; no hand zones (decided 2026-11-06) |  |  |
+| `Custom_Model` | 4903 / 52 | native | converter |  |  |
+| `Custom_Token` | 25836 / 50 | native | converter |  |  |
+| `Custom_Tile` | 36769 / 49 | native | converter |  |  |
+| `Custom_Assetbundle` | 36541 / 49 | native | BundleBake / BundleEffects (models baked, effects mapped to Firme's Effects) | import-sweep: prairie-grove, suriagehara, zeke |  |
+| `Chinese_Checkers_Piece` | 46 / 46 | dropped | a stock piece; in every IKS module it is the Flex Table control |  |  |
+| `Custom_Board` | 22 / 22 | native | converter |  |  |
+| `Notecard` | 28 / 16 | native | converter |  |  |
+| `Custom_PDF` | 15 / 14 | native | a book: every page a state, turned from the bar on the piece and read in the Book window | BookTests |  |
+| `BlockSquare` | 665 / 12 | native | converter |  |  |
+| `BlockRectangle` | 333 / 11 | native | converter |  |  |
+| `3DText` | 109 / 11 | native | converter |  |  |
+| `Die_20` | 77 / 11 | native | the app's d20, showing the face it was saved on | DiceTests |  |
+| `Bag` | 17 / 11 | native | a box, chest or crate of Firme's Effects and Props, picked by its name, then by how much it holds; it keeps a coloured bag's colour and holds its contents stowed | BagBoxTests |  |
+| `Infinite_Bag` | 86 / 8 | dropped | infinite bags (decided 2026-11-06) |  |  |
+| `Custom_Model_Bag` | 48 / 8 | native | the bag's own model, holding its contents stowed | import-sweep: naval, scripted-war-game |  |
+| `Custom_Dice` | 35 / 7 | native | a picture die of every count: the d6 on the standard picture die, the others on dice built to the module template's layout (tools/make-template-dice.py), each side showing the value saved nearest to it | DiceTests |  |
+| `CardCustom` | 1144 / 6 | native | converter |  |  |
+| `Die_12` | 11 / 5 | native | the app's d12, showing the face it was saved on | DiceTests |  |
+| `Die_10` | 9 / 4 | native | the app's d10, showing the face it was saved on | DiceTests |  |
+| `Die_6_Rounded` | 7 / 4 | native | the app's d6, showing the face it was saved on | DiceTests |  |
+| `Die_6` | 27 / 3 | native | the app's d6, showing the face it was saved on | DiceTests |  |
+| `BlockTriangle` | 9 / 3 | native | a triangular prism lying on a side, 1.414 x 1 x 0.707 as in the tabletop's own prefab, tinted like the other blocks | TriangleBlockTests |  |
+| `Tileset_Tree` | 119 / 1 | native | a tree of Firme's Effects and Props at the stock tree's crown size (3.62 across, measured from the tabletop's prefab, never copied) | BagBoxTests |  |
+| `Card` | 82 / 1 | native | converter |  |  |
+| `Checker_white` | 17 / 1 | native | converter |  |  |
+| `Figurine_Custom` | 16 / 1 | native | a picture card standing in a round base, sized as the tabletop's prefab (card 1.96 high at its aspect, base 1.96 across, scaled 0.9146), the back picture behind it, the tint on the base | FigurineTests |  |
+| `Deck` | 15 / 1 | native | converter |  |  |
+| `PlayerPawn` | 7 / 1 | native | a round piece in the pawn's colour, as tall as a pawn | PawnTests |  |
+| `Die_8` | 2 / 1 | native | the app's d8, showing the face it was saved on | DiceTests |  |
+| `Calculator` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |  |
+| `Counter` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |  |
+| `Custom_Assetbundle_Infinite_Bag` | - | dropped | infinite bags (decided 2026-11-06) |  |  |
+| `Custom_Model_Infinite_Bag` | - | dropped | infinite bags (decided 2026-11-06) |  |  |
+| `Die_4` | - | native | the app's d4, showing the face it was saved on | DiceTests |  |
+| `Digital_Clock` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |  |
+| `FogOfWarTrigger` | - | dropped | hidden zones (decided 2026-11-06) |  |  |
+| `Go_Game_Piece_Black` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |  |
+| `Go_Game_Piece_White` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |  |
+| `Quarter` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |  |
+| `ScriptingTrigger` | - | dropped | scripting and layout zones (decided 2026-11-06) |  |  |
+| `Tablet` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |  |
+| `Tileset_*` | - | dropped | the tabletop's own art is never extracted |  |  |
 
 ## save
 
-| row | used (calls / modules) | status | where | held by |
-|---|---|---|---|---|
-| `ObjectState.ColorDiffuse` | 107489 / 55 | native | converter reads it |  |
-| `ObjectState.Transform` | 107489 / 55 | native | converter reads it |  |
-| `ObjectState.GUID` | 106189 / 55 | native | converter reads it |  |
-| `TransformState.posX` | 106189 / 55 | native | converter reads it |  |
-| `TransformState.posY` | 106189 / 55 | native | converter reads it |  |
-| `TransformState.posZ` | 106189 / 55 | native | converter reads it |  |
-| `TransformState.rotY` | 106188 / 55 | native | converter reads it |  |
-| `TransformState.scaleX` | 97221 / 55 | native | converter reads it |  |
-| `TransformState.scaleZ` | 96198 / 55 | native | converter reads it |  |
-| `ObjectState.Name` | 70720 / 55 | native | converter reads it |  |
-| `ColourState.g` | 40837 / 55 | native | converter reads it |  |
-| `ColourState.b` | 40277 / 55 | native | converter reads it |  |
-| `TransformState.scaleY` | 39852 / 55 | native | converter reads it |  |
-| `ColourState.r` | 34766 / 55 | native | converter reads it |  |
-| `ObjectState.Locked` | 16925 / 55 | native | converter reads it |  |
-| `ObjectState.Grid` | 4453 / 55 | dropped | snap to grid (grid, decided 2026-11-06) |  |
-| `ObjectState.FogColor` | 426 / 55 | dropped | hidden zones (decided 2026-11-06) |  |
-| `SaveState.ComponentTags` | 55 / 55 | dropped | tag labels of the tabletop's UI |  |
-| `SaveState.Grid` | 55 / 55 | dropped | grid (decided 2026-11-06) |  |
-| `SaveState.Hands` | 55 / 55 | dropped | hands are seats here (decided 2026-11-06) |  |
-| `SaveState.Lighting` | 55 / 55 | dropped | lighting (decided 2026-11-06) |  |
-| `SaveState.TabStates` | 55 / 55 | native | converter reads it |  |
-| `SaveState.Turns` | 55 / 55 | dropped | turns (decided 2026-11-06) |  |
-| `ObjectState.Nickname` | 50030 / 54 | native | converter reads it |  |
-| `SaveState.Date` | 54 / 54 | dropped | save metadata |  |
-| `SaveState.EpochTime` | 54 / 54 | dropped | save metadata |  |
-| `SaveState.SaveName` | 54 / 54 | native | converter reads it |  |
-| `TransformState.rotX` | 105737 / 53 | native | converter reads it |  |
-| `TransformState.rotZ` | 105326 / 53 | native | converter reads it |  |
-| `ObjectState.LuaScriptState` | 15203 / 52 | native | converter reads it |  |
-| `ObjectState.CustomMesh` | 4951 / 52 | native | converter reads it |  |
-| `CustomMeshState.MeshURL` | 3975 / 52 | native | converter reads it |  |
-| `CustomMeshState.TypeIndex` | 2825 / 52 | native | converter reads it |  |
-| `ObjectState.CustomImage` | 62678 / 51 | native | converter reads it |  |
-| `CustomImageState.ImageURL` | 56944 / 51 | native | converter reads it |  |
-| `ObjectState.LuaScript` | 11525 / 51 | native | converter reads it |  |
-| `CustomImageState.CustomToken` | 25836 / 50 | native | converter reads it |  |
-| `CustomMeshState.DiffuseURL` | 2836 / 50 | native | converter reads it |  |
-| `CustomImageState.CustomTile` | 36769 / 49 | native | converter reads it |  |
-| `ObjectState.CustomAssetbundle` | 36541 / 49 | native | converter reads it |  |
-| `CustomAssetbundleState.AssetbundleURL` | 28796 / 49 | native | converter reads it |  |
-| `CustomTokenState.MergeDistancePixels` | 14063 / 49 | native | converter reads it |  |
-| `CustomAssetbundleState.AssetbundleSecondaryURL` | 13038 / 49 | native | bundle_models.py loads it beside the main bundle: in the roster it holds only the materials and textures the main bundle's figures are painted with |  |
-| `CustomAssetbundleState.MaterialIndex` | 12341 / 49 | native | converter reads it |  |
-| `CustomMeshState.CustomShader` | 1101 / 49 | native | a model's shine: strength, sharpness and rim | WorthImportTests |
-| `CustomAssetbundleState.TypeIndex` | 626 / 49 | native | converter reads it |  |
-| `ObjectState.States` | 11316 / 48 | native | converter reads it |  |
-| `ObjectState.Tooltip` | 1361 / 48 | dropped | hiding a piece's name on hover (hidden information, decided 2026-11-06) |  |
-| `ObjectState.MaterialIndex` | 186 / 48 | native | the finish of a model (plastic, wood, metal, cardboard, glass): its sheen and its sound | WorthImportTests |
-| `ObjectState.GridProjection` | 79 / 47 | dropped | grid (decided 2026-11-06) |  |
-| `ObjectState.Description` | 17057 / 45 | native | converter reads it |  |
-| `ObjectState.Snap` | 3149 / 40 | dropped | snap points (grid, decided 2026-11-06) |  |
-| `ObjectState.ChildObjects` | 25956 / 39 | native | ModuleSave.cs Children: attachments and glued parts | import-sweep: triangles, richmond |
-| `GridState.xSize` | 39 / 39 | dropped | grid (decided 2026-11-06) |  |
-| `GridState.ySize` | 39 / 39 | dropped | grid (decided 2026-11-06) |  |
-| `CustomTileState.Thickness` | 13329 / 38 | native | converter reads it |  |
-| `CustomTokenState.Thickness` | 1686 / 37 | native | converter reads it |  |
-| `SaveState.GameMode` | 35 / 35 | dropped | save metadata |  |
-| `CustomImageState.ImageSecondaryURL` | 3542 / 33 | native | converter reads it |  |
-| `SaveState.PlayerCounts` | 32 / 32 | dropped | save metadata |  |
-| `SaveState.PlayingTime` | 32 / 32 | dropped | save metadata |  |
-| `SaveState.GameComplexity` | 30 / 30 | dropped | save metadata |  |
-| `SaveState.PlayArea` | 29 / 29 | dropped | the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06) |  |
-| `ObjectState.RotationValues` | 184 / 27 | native | converter reads it |  |
-| `TagsState.labels` | 27 / 27 | dropped | tag labels of the tabletop's UI |  |
-| `ObjectState.Sticky` | 1334 / 26 | native | the piece option Carries what rests on it; self.sticky and set_sticky in scripts | StickyTests |
-| `SaveState.VersionNumber` | 26 / 26 | dropped | save metadata |  |
-| `SaveState.GameType` | 25 / 25 | dropped | save metadata |  |
-| `SaveState.LuaScript` | 25 / 25 | native | converter reads it |  |
-| `ObjectState.AttachedVectorLines` | 114 / 22 | native | the piece's own lines, in its frame and local unit | DrawingTests |
-| `CustomImageState.WidthScale` | 22 / 22 | native | converter reads it |  |
-| `CustomMeshState.MaterialIndex` | 1480 / 21 | native | converter reads it |  |
-| `CustomAssetbundleState.LoopingEffectIndex` | 71 / 21 | native | every saved effect comes over running; Running stops and starts it | import-sweep |
-| `CustomTileState.Type` | 1743 / 20 | native | converter reads it |  |
-| `ObjectState.ContainedObjects` | 156 / 20 | native | ScenarioBuilder.StowContents: a bag's contents become its stowed pieces, decks as their cards | TablePiecesTests |
-| `CustomMeshState.ColliderURL` | 2969 / 19 | native | converter reads it |  |
-| `GridState.Opacity` | 18 / 18 | dropped | grid (decided 2026-11-06) |  |
-| `ObjectState.Bag` | 64 / 17 | native | the holder's take order: last in first out, first in first out or random; a take with no piece named follows it, as does Take the top one out or Draw one at random | BagOrderTests |
-| `ObjectState.Tags` | 17646 / 16 | native | converter reads it |  |
-| `SaveState.Sky` | 16 / 16 | native | converter reads it |  |
-| `SaveState.Note` | 15 / 15 | native | converter reads it |  |
-| `ObjectState.CustomPDF` | 15 / 14 | native | a book with every page | BookTests |
-| `GridState.PosOffset` | 14 / 14 | dropped | grid (decided 2026-11-06) |  |
-| `ObjectState.PhysicsMaterial` | 368 / 13 | dropped | engine physics |  |
-| `ObjectState.Rigidbody` | 368 / 13 | dropped | engine physics |  |
-| `PhysicsMaterialState.DynamicFriction` | 198 / 13 | dropped | engine physics |  |
-| `RigidbodyState.AngularDrag` | 198 / 13 | dropped | engine physics |  |
-| `RigidbodyState.Drag` | 198 / 13 | dropped | engine physics |  |
-| `LightingState.LightIntensity` | 13 / 13 | dropped | lighting (decided 2026-11-06) |  |
-| `ObjectState.Memo` | 5023 / 12 | native | converter reads it |  |
-| `CustomMeshState.Convex` | 710 / 12 | native | converter reads it |  |
-| `LightingState.AmbientIntensity` | 12 / 12 | dropped | lighting (decided 2026-11-06) |  |
-| `ObjectState.Text` | 109 / 11 | native | converter reads it |  |
-| `TextState.Text` | 105 / 11 | native | converter reads it |  |
-| `GridState.Lines` | 11 / 11 | dropped | grid (decided 2026-11-06) |  |
-| `CustomTileState.Stretch` | 569 / 10 | native | converter reads it |  |
-| `SaveState.Gravity` | 9 / 9 | dropped | engine physics |  |
-| `SaveState.MusicPlayer` | 9 / 9 | dropped | music and sound players (decided 2026-11-06) |  |
-| `SaveState.VectorLines` | 9 / 9 | native | strokes on the umpire's drawing board | DrawingTests |
-| `ObjectState.DragSelectable` | 335 / 8 | native | the piece option Taken by a selection box; self.box_selected and set_box_selected | ModuleOptionsTests |
-| `CustomPDFState.PDFUrl` | 9 / 8 | native | the book's pages | BookTests |
-| `MusicPlayerState.AudioLibrary` | 8 / 8 | dropped | music and sound players (decided 2026-11-06) |  |
-| `ObjectState.Autoraise` | 354 / 7 | dropped | with the engine's physics (decided 2026-11-06): a held piece rides above what it passes over and pushes nothing |  |
-| `CustomImageState.CustomDice` | 35 / 7 | native | converter reads it |  |
-| `LightingState.LightColor` | 7 / 7 | dropped | lighting (decided 2026-11-06) |  |
-| `SaveState.Table` | 7 / 7 | native | converter reads it |  |
-| `SaveState.Tags` | 7 / 7 | dropped | save metadata |  |
-| `ObjectState.CustomDeck` | 1241 / 6 | native | converter reads it |  |
-| `ObjectState.Hands` | 1226 / 6 | dropped | hands are seats here (decided 2026-11-06) |  |
-| `ObjectState.CardID` | 1196 / 6 | native | ModuleSave.cs CardId | import-sweep: naval |
-| `ObjectState.HideWhenFaceDown` | 1158 / 6 | dropped | hidden information (decided 2026-11-06) |  |
-| `CustomShaderState.SpecularIntensity` | 357 / 6 | native | the shine's strength | WorthImportTests |
-| `CustomShaderState.SpecularColor` | 310 / 6 | native | kept with the shine | WorthImportTests |
-| `PhysicsMaterialState.StaticFriction` | 184 / 6 | dropped | engine physics |  |
-| `RigidbodyState.Mass` | 45 / 6 | dropped | engine physics |  |
-| `TextState.fontSize` | 26 / 6 | native | converter reads it |  |
-| `CustomMeshState.CastShadows` | 341 / 5 | native | converter reads it |  |
-| `ObjectState.CustomUIAssets` | 35 / 5 | native | a piece's own named panel pictures, over the save's | PanelImportTests |
-| `CustomDiceState.Type` | 22 / 5 | native | converter reads it |  |
-| `RigidbodyState.UseGravity` | 14 / 5 | dropped | engine physics |  |
-| `LightingState.AmbientType` | 5 / 5 | dropped | lighting (decided 2026-11-06) |  |
-| `MusicPlayerState.CurrentAudioTitle` | 5 / 5 | dropped | music and sound players (decided 2026-11-06) |  |
-| `MusicPlayerState.CurrentAudioURL` | 5 / 5 | dropped | music and sound players (decided 2026-11-06) |  |
-| `SaveState.CameraStates` | 5 / 5 | dropped | the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06) |  |
-| `ObjectState.AttachedDecals` | 2590 / 4 | native | converter reads it |  |
-| `ObjectState.AttachedSnapPoints` | 87 / 4 | dropped | snap points (grid, decided 2026-11-06) |  |
-| `MusicPlayerState.PlaylistEntry` | 4 / 4 | dropped | music and sound players (decided 2026-11-06) |  |
-| `SaveState.LuaScriptState` | 4 / 4 | native | converter reads it |  |
-| `SaveState.SkyURL` | 4 / 4 | native | converter reads it |  |
-| `CustomMeshState.NormalURL` | 232 / 3 | native | converter reads it |  |
-| `CustomShaderState.FresnelStrength` | 216 / 3 | native | the shine's rim | WorthImportTests |
-| `CustomShaderState.SpecularSharpness` | 153 / 3 | native | the shine's sharpness | WorthImportTests |
-| `ColourState.a` | 22 / 3 | native | a tint's alpha: under 1 the piece is drawn see-through, its face, sides and model, as the tabletop switches to its transparent shader; the movable text tool's helper saved at 0 stays invisible under its words | TableTopTests |
-| `ObjectState.MeasureMovement` | 15 / 3 | native | the piece option Shows how far it is moved: a line and the distance from where it was picked up while it is held; self.measures_moves and set_measures_moves | ModuleOptionsTests |
-| `GridState.Type` | 3 / 3 | dropped | grid (decided 2026-11-06) |  |
-| `MusicPlayerState.RepeatSong` | 3 / 3 | dropped | music and sound players (decided 2026-11-06) |  |
-| `SaveState.CustomUIAssets` | 3 / 3 | native | the pictures panels name, kept in the extras pack and named in the scenario (uiPictures) | PanelImportTests |
-| `ObjectState.GMNotes` | 117 / 2 | native | converter reads it |  |
-| `CustomTileState.Stackable` | 29 / 2 | native | converter reads it |  |
-| `CustomPDFState.PDFPage` | 2 / 2 | native | the page it lies open at | BookTests |
-| `GridState.BothSnapping` | 2 / 2 | dropped | grid (decided 2026-11-06) |  |
-| `GridState.Offset` | 2 / 2 | dropped | grid (decided 2026-11-06) |  |
-| `TextState.colorstate` | 19 / 1 | native | converter reads it |  |
-| `ObjectState.DeckIDs` | 15 / 1 | native | ModuleSave.cs: a deck's cards by id | import-sweep: naval |
-| `GridState.Color` | 1 / 1 | dropped | grid (decided 2026-11-06) |  |
-| `LightingState.LutContribution` | 1 / 1 | dropped | lighting (decided 2026-11-06) |  |
-| `LightingState.ReflectionIntensity` | 1 / 1 | dropped | lighting (decided 2026-11-06) |  |
-| `ObjectState.IgnoreFoW` | 1 / 1 | dropped | hidden zones (decided 2026-11-06) |  |
-| `SaveState.DecalPallet` | 1 / 1 | native | the scenario's decals, offered in the Decals panel: name, picture and size | DecalPaletteTests, StampTests |
-| `SaveState.TableURL` | 1 / 1 | dropped | the table's cloth or picture: the table is the tabletop's abstraction, its look only; no script in the 55 saves touches it (decided 2026-11-06) |  |
-| `BagState.Order` | - | native | ModuleObj.TakeOrder: last in first out, first in first out or at random, as the module set it | BagOrderTests |
-| `CalculatorState.memory` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
-| `CalculatorState.value` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
-| `CameraState.AbsolutePosition` | - | dropped | the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06) |  |
-| `CameraState.Distance` | - | dropped | the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06) |  |
-| `CameraState.Position` | - | dropped | the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06) |  |
-| `CameraState.Rotation` | - | dropped | the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06) |  |
-| `CameraState.Zoomed` | - | dropped | the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06) |  |
-| `ClockState.Mode` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
-| `ClockState.Paused` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
-| `ClockState.SecondsPassed` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
-| `CounterState.value` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
-| `CustomAssetState.Name` | - | native | the name an image attribute holds | PanelImportTests |
-| `CustomAssetState.Type` | - | native | pictures (type 0) come over; asset bundles hold fonts, which the app's own type replaces | PanelImportTests |
-| `CustomAssetState.URL` | - | native | fetched into the extras pack | PanelImportTests |
-| `CustomDecalState.ImageURL` | - | native | converter reads it |  |
-| `CustomDecalState.Name` | - | native | converter reads it |  |
-| `CustomDecalState.Size` | - | native | a palette decal's height on the table; its width follows the picture | DecalPaletteTests |
-| `CustomDeckState.BackIsHidden` | - | dropped | deck and card logic (decided 2026-11-06) |  |
-| `CustomDeckState.BackURL` | - | native | converter reads it |  |
-| `CustomDeckState.FaceURL` | - | native | converter reads it |  |
-| `CustomDeckState.NumHeight` | - | native | ModuleSave card sheets: each card cut from its own cell | ConverterTests |
-| `CustomDeckState.NumWidth` | - | native | ModuleSave card sheets: each card cut from its own cell | ConverterTests |
-| `CustomDeckState.Type` | - | native | converter reads it |  |
-| `CustomDeckState.UniqueBack` | - | native | converter reads it |  |
-| `CustomFigurineState.MirroredBack` | - | native | the back picture mirrored | FigurineTests |
-| `CustomFigurineState.UseMinimalCollider` | - | dropped | the engine's physics colliders |  |
-| `CustomImageState.CustomFigurine` | - | native | Figurines.cs: the picture on a card in a round base | FigurineTests |
-| `CustomImageState.CustomJigsawPuzzle` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
-| `CustomImageState.ImageScalar` | - | native | converter reads it |  |
-| `CustomJigsawPuzzleState.ImageOnBoard` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
-| `CustomJigsawPuzzleState.NumPuzzlePieces` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
-| `CustomPDFState.PDFPageOffset` | - | native | the book's page offset (PieceDef.PageOffset) | BookNotesScriptTests |
-| `CustomPDFState.PDFPassword` | - | native | a protected PDF opens with the password the save holds | converter |
-| `CustomTokenState.Stackable` | - | native | converter reads it |  |
-| `CustomTokenState.StandUp` | - | native | converter reads it |  |
-| `DecalState.CustomDecal` | - | native | converter reads it |  |
-| `DecalState.OwnerSteamID` | - | dropped | who laid a decal |  |
-| `DecalState.Transform` | - | native | converter reads it |  |
-| `FogOfWarRevealerState.Active` | - | dropped | hidden zones (decided 2026-11-06) |  |
-| `FogOfWarRevealerState.Color` | - | dropped | hidden zones (decided 2026-11-06) |  |
-| `FogOfWarRevealerState.FoV` | - | dropped | hidden zones (decided 2026-11-06) |  |
-| `FogOfWarRevealerState.FoVOffset` | - | dropped | hidden zones (decided 2026-11-06) |  |
-| `FogOfWarRevealerState.Height` | - | dropped | hidden zones (decided 2026-11-06) |  |
-| `FogOfWarRevealerState.Range` | - | dropped | hidden zones (decided 2026-11-06) |  |
-| `FogOfWarRevealerState.ShowOutLine` | - | dropped | hidden zones (decided 2026-11-06) |  |
-| `FogOfWarState.Height` | - | dropped | hidden zones (decided 2026-11-06) |  |
-| `FogOfWarState.HideGmPointer` | - | dropped | hidden zones (decided 2026-11-06) |  |
-| `FogOfWarState.HideObjects` | - | dropped | hidden zones (decided 2026-11-06) |  |
-| `FogOfWarState.ReHideObjects` | - | dropped | hidden zones (decided 2026-11-06) |  |
-| `FogOfWarState.RevealedLocations` | - | dropped | hidden zones (decided 2026-11-06) |  |
-| `GridState.Snapping` | - | dropped | grid (decided 2026-11-06) |  |
-| `GridState.ThickLines` | - | dropped | grid (decided 2026-11-06) |  |
-| `HandTransformState.Color` | - | dropped | hands are seats here (decided 2026-11-06) |  |
-| `HandTransformState.Transform` | - | dropped | hands are seats here (decided 2026-11-06) |  |
-| `HandsState.DisableUnused` | - | dropped | hands are seats here (decided 2026-11-06) |  |
-| `HandsState.Enable` | - | dropped | hands are seats here (decided 2026-11-06) |  |
-| `HandsState.HandTransforms` | - | dropped | hands are seats here (decided 2026-11-06) |  |
-| `HandsState.Hiding` | - | dropped | hands are seats here (decided 2026-11-06) |  |
-| `JointHingeState.Limits` | - | dropped | engine physics (joints) |  |
-| `JointHingeState.Motor` | - | dropped | engine physics (joints) |  |
-| `JointHingeState.Spring` | - | dropped | engine physics (joints) |  |
-| `JointHingeState.UseLimits` | - | dropped | engine physics (joints) |  |
-| `JointHingeState.UseMotor` | - | dropped | engine physics (joints) |  |
-| `JointHingeState.UseSpring` | - | dropped | engine physics (joints) |  |
-| `JointSpringState.Damper` | - | dropped | engine physics (joints) |  |
-| `JointSpringState.MaxDistance` | - | dropped | engine physics (joints) |  |
-| `JointSpringState.MinDistance` | - | dropped | engine physics (joints) |  |
-| `JointSpringState.Spring` | - | dropped | engine physics (joints) |  |
-| `JointState.Anchor` | - | dropped | engine physics (joints) |  |
-| `JointState.Axis` | - | dropped | engine physics (joints) |  |
-| `JointState.BreakForce` | - | dropped | engine physics (joints) |  |
-| `JointState.BreakTorgue` | - | dropped | engine physics (joints) |  |
-| `JointState.ConnectedAnchor` | - | dropped | engine physics (joints) |  |
-| `JointState.ConnectedBodyGUID` | - | dropped | engine physics (joints) |  |
-| `JointState.EnableCollision` | - | dropped | engine physics (joints) |  |
-| `LayoutZoneState.GroupsInZone` | - | dropped | scripting and layout zones (decided 2026-11-06) |  |
-| `LayoutZoneState.Options` | - | dropped | scripting and layout zones (decided 2026-11-06) |  |
-| `LightingState.AmbientEquatorColor` | - | dropped | lighting (decided 2026-11-06) |  |
-| `LightingState.AmbientGroundColor` | - | dropped | lighting (decided 2026-11-06) |  |
-| `LightingState.AmbientSkyColor` | - | dropped | lighting (decided 2026-11-06) |  |
-| `LightingState.LutIndex` | - | dropped | lighting (decided 2026-11-06) |  |
-| `LightingState.LutURL` | - | dropped | lighting (decided 2026-11-06) |  |
-| `Mp3PlayerState.genre` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
-| `Mp3PlayerState.isPlaying` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
-| `Mp3PlayerState.loopOne` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
-| `Mp3PlayerState.menu` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
-| `Mp3PlayerState.menuTitle` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
-| `Mp3PlayerState.songTitle` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
-| `Mp3PlayerState.volume` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
-| `ObjectState.AltLookAngle` | - | planned | the Alt-zoom view: a decision for the user |  |
-| `ObjectState.AltSound` | - | planned | a piece's other sound: a decision for the user |  |
-| `ObjectState.AltZoomable` | - | planned | the Alt-zoom view: a decision for the user |  |
-| `ObjectState.Calculator` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
-| `ObjectState.Clock` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
-| `ObjectState.Counter` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
-| `ObjectState.FogHidePointers` | - | dropped | hidden zones (decided 2026-11-06) |  |
-| `ObjectState.FogOfWar` | - | dropped | hidden zones (decided 2026-11-06) |  |
-| `ObjectState.FogOfWarRevealer` | - | dropped | hidden zones (decided 2026-11-06) |  |
-| `ObjectState.FogReverseHiding` | - | dropped | hidden zones (decided 2026-11-06) |  |
-| `ObjectState.FogSeethrough` | - | dropped | hidden zones (decided 2026-11-06) |  |
-| `ObjectState.JointFixed` | - | dropped | engine physics (joints) |  |
-| `ObjectState.JointHinge` | - | dropped | engine physics (joints) |  |
-| `ObjectState.JointSpring` | - | dropped | engine physics (joints) |  |
-| `ObjectState.LayoutGroupSortIndex` | - | dropped | scripting and layout zones (decided 2026-11-06) |  |
-| `ObjectState.LayoutZone` | - | dropped | scripting and layout zones (decided 2026-11-06) |  |
-| `ObjectState.MeshIndex` | - | dropped | the tabletop's stock meshes are never extracted |  |
-| `ObjectState.Mp3Player` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
-| `ObjectState.Number` | - | native | a module's stack comes over as that many pieces laid one on another | WorthImportTests |
-| `ObjectState.RPGdead` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
-| `ObjectState.RPGmode` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
-| `ObjectState.SidewaysCard` | - | dropped | a card keeps its sheet's orientation |  |
-| `ObjectState.Tablet` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
-| `ObjectState.Value` | - | native | a piece's worth (self.worth); the menu adds up the worth of what is chosen | WorthImportTests |
-| `ObjectState.XmlUI` | - | native | ScenarioPanels: a piece's own panels, drawn on it | PanelImportTests |
-| `ObjectState.miscID` | - | dropped | the engine's own bookkeeping |  |
-| `ObjectState.vector` | - | dropped | the engine's own bookkeeping |  |
-| `PhysicsMaterialState.BounceCombine` | - | dropped | engine physics |  |
-| `PhysicsMaterialState.Bounciness` | - | dropped | engine physics |  |
-| `PhysicsMaterialState.FrictionCombine` | - | dropped | engine physics |  |
-| `RotationValueState.Rotation` | - | native | converter reads it |  |
-| `RotationValueState.Value` | - | native | converter reads it |  |
-| `SaveState.Decals` | - | native | decals stamped on the table, lying over the ground on the umpire layer; the Decals tool stamps and lifts them | DecalPaletteTests, StampToolTests |
-| `SaveState.ObjectStates` | - | native | converter reads it |  |
-| `SaveState.Rules` | - | native | the scenario's briefing | DrawingTests |
-| `SaveState.SnapPoints` | - | dropped | snap points (decided 2026-11-06 with the grid) |  |
-| `SaveState.XmlUI` | - | native | ScenarioPanels: the save's own panels become the scenario's | PanelImportTests |
-| `SnapPointState.Position` | - | dropped | snap points (grid, decided 2026-11-06) |  |
-| `SnapPointState.Rotation` | - | dropped | snap points (grid, decided 2026-11-06) |  |
-| `SnapPointState.Tags` | - | dropped | snap points (grid, decided 2026-11-06) |  |
-| `TabState.body` | - | native | converter reads it |  |
-| `TabState.color` | - | dropped | notebook tab colour |  |
-| `TabState.id` | - | dropped | notebook tab id |  |
-| `TabState.title` | - | native | converter reads it |  |
-| `TabState.visibleColor` | - | dropped | notebook tab colour |  |
-| `TabletState.PageURL` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
-| `TextState.OwnerSteamID` | - | dropped | who wrote a 3D text |  |
-| `TurnsState.DisableInteractions` | - | dropped | turns (decided 2026-11-06) |  |
-| `TurnsState.Enable` | - | dropped | turns (decided 2026-11-06) |  |
-| `TurnsState.PassTurns` | - | dropped | turns (decided 2026-11-06) |  |
-| `TurnsState.Reverse` | - | dropped | turns (decided 2026-11-06) |  |
-| `TurnsState.SkipEmpty` | - | dropped | turns (decided 2026-11-06) |  |
-| `TurnsState.TurnColor` | - | dropped | turns (decided 2026-11-06) |  |
-| `TurnsState.TurnOrder` | - | dropped | turns (decided 2026-11-06) |  |
-| `TurnsState.Type` | - | dropped | turns (decided 2026-11-06) |  |
-| `VectorLineState.OwnerSteamID` | - | native | lines on pieces and on the table | DrawingTests |
-| `VectorLineState.color` | - | native | lines on pieces and on the table | DrawingTests |
-| `VectorLineState.loop` | - | native | lines on pieces and on the table | DrawingTests |
-| `VectorLineState.points3` | - | native | lines on pieces and on the table | DrawingTests |
-| `VectorLineState.rotation` | - | native | lines on pieces and on the table | DrawingTests |
-| `VectorLineState.square` | - | native | lines on pieces and on the table | DrawingTests |
-| `VectorLineState.thickness` | - | native | lines on pieces and on the table | DrawingTests |
+| row | used (calls / modules) | status | where | held by | audited |
+|---|---|---|---|---|---|
+| `ObjectState.ColorDiffuse` | 107489 / 55 | native | converter reads it |  |  |
+| `ObjectState.Transform` | 107489 / 55 | native | converter reads it |  |  |
+| `ObjectState.GUID` | 106189 / 55 | native | converter reads it |  |  |
+| `TransformState.posX` | 106189 / 55 | native | converter reads it |  |  |
+| `TransformState.posY` | 106189 / 55 | native | converter reads it |  |  |
+| `TransformState.posZ` | 106189 / 55 | native | converter reads it |  |  |
+| `TransformState.rotY` | 106188 / 55 | native | converter reads it |  |  |
+| `TransformState.scaleX` | 97221 / 55 | native | converter reads it |  |  |
+| `TransformState.scaleZ` | 96198 / 55 | native | converter reads it |  |  |
+| `ObjectState.Name` | 70720 / 55 | native | converter reads it |  |  |
+| `ColourState.g` | 40837 / 55 | native | converter reads it |  |  |
+| `ColourState.b` | 40277 / 55 | native | converter reads it |  |  |
+| `TransformState.scaleY` | 39852 / 55 | native | converter reads it |  |  |
+| `ColourState.r` | 34766 / 55 | native | converter reads it |  |  |
+| `ObjectState.Locked` | 16925 / 55 | native | converter reads it |  |  |
+| `ObjectState.Grid` | 4453 / 55 | dropped | snap to grid (grid, decided 2026-11-06) |  |  |
+| `ObjectState.FogColor` | 426 / 55 | dropped | hidden zones (decided 2026-11-06) |  |  |
+| `SaveState.ComponentTags` | 55 / 55 | dropped | tag labels of the tabletop's UI |  |  |
+| `SaveState.Grid` | 55 / 55 | dropped | grid (decided 2026-11-06) |  |  |
+| `SaveState.Hands` | 55 / 55 | dropped | hands are seats here (decided 2026-11-06) |  |  |
+| `SaveState.Lighting` | 55 / 55 | dropped | lighting (decided 2026-11-06) |  |  |
+| `SaveState.TabStates` | 55 / 55 | native | converter reads it |  |  |
+| `SaveState.Turns` | 55 / 55 | dropped | turns (decided 2026-11-06) |  |  |
+| `ObjectState.Nickname` | 50030 / 54 | native | converter reads it |  |  |
+| `SaveState.Date` | 54 / 54 | dropped | save metadata |  |  |
+| `SaveState.EpochTime` | 54 / 54 | dropped | save metadata |  |  |
+| `SaveState.SaveName` | 54 / 54 | native | converter reads it |  |  |
+| `TransformState.rotX` | 105737 / 53 | native | converter reads it |  |  |
+| `TransformState.rotZ` | 105326 / 53 | native | converter reads it |  |  |
+| `ObjectState.LuaScriptState` | 15203 / 52 | native | converter reads it |  |  |
+| `ObjectState.CustomMesh` | 4951 / 52 | native | converter reads it |  |  |
+| `CustomMeshState.MeshURL` | 3975 / 52 | native | converter reads it |  |  |
+| `CustomMeshState.TypeIndex` | 2825 / 52 | partial | Dice and Coin models roll on their rotation values (the kind's faces); Bag by the object's name; Board only exempts from zones, fog and alt zoom, none here; Figurine held upright, and pieces here never tip; Chip stacking unused in the corpus | ConverterTests.A_model_made_a_die_rolls_on_its_saved_values_and_shows_the_one_facing_up_and_a_plain_model_does_not | ConverterTests.A_model_made_a_die_rolls_on_its_saved_values_and_shows_the_one_facing_up_and_a_plain_model_does_not |
+| `ObjectState.CustomImage` | 62678 / 51 | native | converter reads it |  |  |
+| `CustomImageState.ImageURL` | 56944 / 51 | native | converter reads it |  |  |
+| `ObjectState.LuaScript` | 11525 / 51 | native | converter reads it |  |  |
+| `CustomImageState.CustomToken` | 25836 / 50 | native | converter reads it |  |  |
+| `CustomMeshState.DiffuseURL` | 2836 / 50 | native | converter reads it |  |  |
+| `CustomImageState.CustomTile` | 36769 / 49 | native | converter reads it |  |  |
+| `ObjectState.CustomAssetbundle` | 36541 / 49 | native | converter reads it |  |  |
+| `CustomAssetbundleState.AssetbundleURL` | 28796 / 49 | native | converter reads it |  |  |
+| `CustomTokenState.MergeDistancePixels` | 14063 / 49 | partial | the token's outline traces its picture's alpha; the game's merging of outline points closer than this is not copied | converter |  |
+| `CustomAssetbundleState.AssetbundleSecondaryURL` | 13038 / 49 | native | bundle_models.py loads it beside the main bundle: in the roster it holds only the materials and textures the main bundle's figures are painted with |  |  |
+| `CustomAssetbundleState.MaterialIndex` | 12341 / 49 | native | converter reads it |  |  |
+| `CustomMeshState.CustomShader` | 1101 / 49 | native | a model's shine: strength, sharpness and rim | WorthImportTests |  |
+| `CustomAssetbundleState.TypeIndex` | 626 / 49 | partial | as CustomMeshState.TypeIndex; the corpus has Generic, Figurine and Board bundles only | converter | ConverterTests.A_model_made_a_die_rolls_on_its_saved_values_and_shows_the_one_facing_up_and_a_plain_model_does_not |
+| `ObjectState.States` | 11316 / 48 | native | converter reads it |  |  |
+| `ObjectState.Tooltip` | 1361 / 48 | dropped | hiding a piece's name on hover (hidden information, decided 2026-11-06) |  |  |
+| `ObjectState.MaterialIndex` | 186 / 48 | native | the finish of a model (plastic, wood, metal, cardboard, glass): its sheen and its sound | WorthImportTests |  |
+| `ObjectState.GridProjection` | 79 / 47 | dropped | grid (decided 2026-11-06) |  |  |
+| `ObjectState.Description` | 17057 / 45 | native | converter reads it |  |  |
+| `ObjectState.Snap` | 3149 / 40 | dropped | snap points (grid, decided 2026-11-06) |  |  |
+| `ObjectState.ChildObjects` | 25956 / 39 | native | ModuleSave.cs Children: attachments and glued parts | import-sweep: triangles, richmond | ConverterTests.Each_state_of_a_token_shows_its_own_glued_children_even_a_child_with_states_of_its_own |
+| `GridState.xSize` | 39 / 39 | dropped | grid (decided 2026-11-06) |  |  |
+| `GridState.ySize` | 39 / 39 | dropped | grid (decided 2026-11-06) |  |  |
+| `CustomTileState.Thickness` | 13329 / 38 | native | converter reads it |  |  |
+| `CustomTokenState.Thickness` | 1686 / 37 | native | converter reads it |  |  |
+| `SaveState.GameMode` | 35 / 35 | dropped | save metadata |  |  |
+| `CustomImageState.ImageSecondaryURL` | 3542 / 33 | native | converter reads it |  |  |
+| `SaveState.PlayerCounts` | 32 / 32 | dropped | save metadata |  |  |
+| `SaveState.PlayingTime` | 32 / 32 | dropped | save metadata |  |  |
+| `SaveState.GameComplexity` | 30 / 30 | dropped | save metadata |  |  |
+| `SaveState.PlayArea` | 29 / 29 | dropped | the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06) |  |  |
+| `ObjectState.RotationValues` | 184 / 27 | native | converter reads it |  |  |
+| `TagsState.labels` | 27 / 27 | dropped | tag labels of the tabletop's UI |  |  |
+| `ObjectState.Sticky` | 1334 / 26 | native | the piece option Carries what rests on it; self.sticky and set_sticky in scripts | StickyTests |  |
+| `SaveState.VersionNumber` | 26 / 26 | dropped | save metadata |  |  |
+| `SaveState.GameType` | 25 / 25 | dropped | save metadata |  |  |
+| `SaveState.LuaScript` | 25 / 25 | native | converter reads it |  |  |
+| `ObjectState.AttachedVectorLines` | 114 / 22 | native | the piece's own lines, in its frame and local unit | DrawingTests |  |
+| `CustomImageState.WidthScale` | 22 / 22 | native | converter reads it |  |  |
+| `CustomMeshState.MaterialIndex` | 1480 / 21 | native | converter reads it |  |  |
+| `CustomAssetbundleState.LoopingEffectIndex` | 71 / 21 | native | every saved effect comes over running; Running stops and starts it | import-sweep |  |
+| `CustomTileState.Type` | 1743 / 20 | native | converter reads it |  |  |
+| `ObjectState.ContainedObjects` | 156 / 20 | native | ScenarioBuilder.StowContents: a bag's contents become its stowed pieces, decks as their cards | TablePiecesTests |  |
+| `CustomMeshState.ColliderURL` | 2969 / 19 | dropped | pieces here never collide (decided 2026-11-07) |  |  |
+| `GridState.Opacity` | 18 / 18 | dropped | grid (decided 2026-11-06) |  |  |
+| `ObjectState.Bag` | 64 / 17 | native | the holder's take order: last in first out, first in first out or random; a take with no piece named follows it, as does Take the top one out or Draw one at random | BagOrderTests |  |
+| `ObjectState.Tags` | 17646 / 16 | native | converter reads it |  |  |
+| `SaveState.Sky` | 16 / 16 | native | a stock sky becomes the nearest backdrop (ScenarioBuilder.StockSkies) | ConverterTests.A_module_that_names_only_a_stock_sky_gets_the_nearest_backdrop | ConverterTests.A_module_that_names_only_a_stock_sky_gets_the_nearest_backdrop |
+| `SaveState.Note` | 15 / 15 | native | converter reads it |  |  |
+| `ObjectState.CustomPDF` | 15 / 14 | native | a book with every page | BookTests |  |
+| `GridState.PosOffset` | 14 / 14 | dropped | grid (decided 2026-11-06) |  |  |
+| `ObjectState.PhysicsMaterial` | 368 / 13 | dropped | engine physics |  |  |
+| `ObjectState.Rigidbody` | 368 / 13 | dropped | engine physics |  |  |
+| `PhysicsMaterialState.DynamicFriction` | 198 / 13 | dropped | engine physics |  |  |
+| `RigidbodyState.AngularDrag` | 198 / 13 | dropped | engine physics |  |  |
+| `RigidbodyState.Drag` | 198 / 13 | dropped | engine physics |  |  |
+| `LightingState.LightIntensity` | 13 / 13 | dropped | lighting (decided 2026-11-06) |  |  |
+| `ObjectState.Memo` | 5023 / 12 | native | converter reads it |  |  |
+| `CustomMeshState.Convex` | 710 / 12 | dropped | pieces here never collide (decided 2026-11-07) |  |  |
+| `LightingState.AmbientIntensity` | 12 / 12 | dropped | lighting (decided 2026-11-06) |  |  |
+| `ObjectState.Text` | 109 / 11 | native | converter reads it |  |  |
+| `TextState.Text` | 105 / 11 | native | converter reads it |  |  |
+| `GridState.Lines` | 11 / 11 | dropped | grid (decided 2026-11-06) |  |  |
+| `CustomTileState.Stretch` | 569 / 10 | native | converter reads it |  |  |
+| `SaveState.Gravity` | 9 / 9 | dropped | engine physics |  |  |
+| `SaveState.MusicPlayer` | 9 / 9 | dropped | music and sound players (decided 2026-11-06) |  |  |
+| `SaveState.VectorLines` | 9 / 9 | native | strokes on the umpire's drawing board | DrawingTests |  |
+| `ObjectState.DragSelectable` | 335 / 8 | native | the piece option Taken by a selection box; self.box_selected and set_box_selected | ModuleOptionsTests |  |
+| `CustomPDFState.PDFUrl` | 9 / 8 | native | the book's pages | BookTests |  |
+| `MusicPlayerState.AudioLibrary` | 8 / 8 | dropped | music and sound players (decided 2026-11-06) |  |  |
+| `ObjectState.Autoraise` | 354 / 7 | dropped | with the engine's physics (decided 2026-11-06): a held piece rides above what it passes over and pushes nothing |  |  |
+| `CustomImageState.CustomDice` | 35 / 7 | native | converter reads it |  |  |
+| `LightingState.LightColor` | 7 / 7 | dropped | lighting (decided 2026-11-06) |  |  |
+| `SaveState.Table` | 7 / 7 | native | converter reads it |  |  |
+| `SaveState.Tags` | 7 / 7 | dropped | save metadata |  |  |
+| `ObjectState.CustomDeck` | 1241 / 6 | native | converter reads it |  |  |
+| `ObjectState.Hands` | 1226 / 6 | dropped | hands are seats here (decided 2026-11-06) |  |  |
+| `ObjectState.CardID` | 1196 / 6 | native | ModuleSave.cs CardId | import-sweep: naval |  |
+| `ObjectState.HideWhenFaceDown` | 1158 / 6 | dropped | hidden information (decided 2026-11-06) |  |  |
+| `CustomShaderState.SpecularIntensity` | 357 / 6 | native | the shine's strength | WorthImportTests |  |
+| `CustomShaderState.SpecularColor` | 310 / 6 | native | kept with the shine | WorthImportTests |  |
+| `PhysicsMaterialState.StaticFriction` | 184 / 6 | dropped | engine physics |  |  |
+| `RigidbodyState.Mass` | 45 / 6 | dropped | engine physics |  |  |
+| `TextState.fontSize` | 26 / 6 | native | converter reads it |  |  |
+| `CustomMeshState.CastShadows` | 341 / 5 | native | the kind's Shadowless | ConverterTests.A_model_keeps_its_normal_map_and_whether_it_casts_a_shadow | ConverterTests.A_model_keeps_its_normal_map_and_whether_it_casts_a_shadow |
+| `ObjectState.CustomUIAssets` | 35 / 5 | native | a piece's own named panel pictures, over the save's | PanelImportTests |  |
+| `CustomDiceState.Type` | 22 / 5 | native | converter reads it |  |  |
+| `RigidbodyState.UseGravity` | 14 / 5 | dropped | engine physics |  |  |
+| `LightingState.AmbientType` | 5 / 5 | dropped | lighting (decided 2026-11-06) |  |  |
+| `MusicPlayerState.CurrentAudioTitle` | 5 / 5 | dropped | music and sound players (decided 2026-11-06) |  |  |
+| `MusicPlayerState.CurrentAudioURL` | 5 / 5 | dropped | music and sound players (decided 2026-11-06) |  |  |
+| `SaveState.CameraStates` | 5 / 5 | dropped | the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06) |  |  |
+| `ObjectState.AttachedDecals` | 2590 / 4 | native | converter reads it |  |  |
+| `ObjectState.AttachedSnapPoints` | 87 / 4 | dropped | snap points (grid, decided 2026-11-06) |  |  |
+| `MusicPlayerState.PlaylistEntry` | 4 / 4 | dropped | music and sound players (decided 2026-11-06) |  |  |
+| `SaveState.LuaScriptState` | 4 / 4 | native | converter reads it |  |  |
+| `SaveState.SkyURL` | 4 / 4 | native | converter reads it |  |  |
+| `CustomMeshState.NormalURL` | 232 / 3 | native | the kind's Normal (normal map on the model) | ConverterTests.A_model_keeps_its_normal_map_and_whether_it_casts_a_shadow | ConverterTests.A_model_keeps_its_normal_map_and_whether_it_casts_a_shadow |
+| `CustomShaderState.FresnelStrength` | 216 / 3 | native | the shine's rim | WorthImportTests |  |
+| `CustomShaderState.SpecularSharpness` | 153 / 3 | native | the shine's sharpness | WorthImportTests |  |
+| `ColourState.a` | 22 / 3 | native | a tint's alpha: under 1 the piece is drawn see-through, its face, sides and model, as the tabletop switches to its transparent shader; the movable text tool's helper saved at 0 stays invisible under its words | TableTopTests |  |
+| `ObjectState.MeasureMovement` | 15 / 3 | native | the piece option Shows how far it is moved: a line and the distance from where it was picked up while it is held; self.measures_moves and set_measures_moves | ModuleOptionsTests |  |
+| `GridState.Type` | 3 / 3 | dropped | grid (decided 2026-11-06) |  |  |
+| `MusicPlayerState.RepeatSong` | 3 / 3 | dropped | music and sound players (decided 2026-11-06) |  |  |
+| `SaveState.CustomUIAssets` | 3 / 3 | native | the pictures panels name, kept in the extras pack and named in the scenario (uiPictures) | PanelImportTests |  |
+| `ObjectState.GMNotes` | 117 / 2 | native | converter reads it |  |  |
+| `CustomTileState.Stackable` | 29 / 2 | native | a saved pile comes in as stacked copies; any piece piles on another here | converter |  |
+| `CustomPDFState.PDFPage` | 2 / 2 | native | the page it lies open at | BookTests |  |
+| `GridState.BothSnapping` | 2 / 2 | dropped | grid (decided 2026-11-06) |  |  |
+| `GridState.Offset` | 2 / 2 | dropped | grid (decided 2026-11-06) |  |  |
+| `TextState.colorstate` | 19 / 1 | native | converter reads it |  |  |
+| `ObjectState.DeckIDs` | 15 / 1 | native | ModuleSave.cs: a deck's cards by id | import-sweep: naval |  |
+| `GridState.Color` | 1 / 1 | dropped | grid (decided 2026-11-06) |  |  |
+| `LightingState.LutContribution` | 1 / 1 | dropped | lighting (decided 2026-11-06) |  |  |
+| `LightingState.ReflectionIntensity` | 1 / 1 | dropped | lighting (decided 2026-11-06) |  |  |
+| `ObjectState.IgnoreFoW` | 1 / 1 | dropped | hidden zones (decided 2026-11-06) |  |  |
+| `SaveState.DecalPallet` | 1 / 1 | native | the scenario's decals, offered in the Decals panel: name, picture and size | DecalPaletteTests, StampTests |  |
+| `SaveState.TableURL` | 1 / 1 | dropped | the table's cloth or picture: the table is the tabletop's abstraction, its look only; no script in the 55 saves touches it (decided 2026-11-06) |  |  |
+| `BagState.Order` | - | native | ModuleObj.TakeOrder: last in first out, first in first out or at random, as the module set it | BagOrderTests |  |
+| `CalculatorState.memory` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |  |
+| `CalculatorState.value` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |  |
+| `CameraState.AbsolutePosition` | - | dropped | the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06) |  |  |
+| `CameraState.Distance` | - | dropped | the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06) |  |  |
+| `CameraState.Position` | - | dropped | the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06) |  |  |
+| `CameraState.Rotation` | - | dropped | the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06) |  |  |
+| `CameraState.Zoomed` | - | dropped | the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06) |  |  |
+| `ClockState.Mode` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |  |
+| `ClockState.Paused` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |  |
+| `ClockState.SecondsPassed` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |  |
+| `CounterState.value` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |  |
+| `CustomAssetState.Name` | - | native | the name an image attribute holds | PanelImportTests |  |
+| `CustomAssetState.Type` | - | native | pictures (type 0) come over; asset bundles hold fonts, which the app's own type replaces | PanelImportTests |  |
+| `CustomAssetState.URL` | - | native | fetched into the extras pack | PanelImportTests |  |
+| `CustomDecalState.ImageURL` | - | native | converter reads it |  |  |
+| `CustomDecalState.Name` | - | native | converter reads it |  |  |
+| `CustomDecalState.Size` | - | native | a palette decal's height on the table; its width follows the picture | DecalPaletteTests |  |
+| `CustomDeckState.BackIsHidden` | - | dropped | deck and card logic (decided 2026-11-06) |  |  |
+| `CustomDeckState.BackURL` | - | native | converter reads it |  |  |
+| `CustomDeckState.FaceURL` | - | native | converter reads it |  |  |
+| `CustomDeckState.NumHeight` | - | native | ModuleSave card sheets: each card cut from its own cell | ConverterTests |  |
+| `CustomDeckState.NumWidth` | - | native | ModuleSave card sheets: each card cut from its own cell | ConverterTests |  |
+| `CustomDeckState.Type` | - | native | converter reads it |  |  |
+| `CustomDeckState.UniqueBack` | - | native | converter reads it |  |  |
+| `CustomFigurineState.MirroredBack` | - | native | the back picture mirrored | FigurineTests |  |
+| `CustomFigurineState.UseMinimalCollider` | - | dropped | the engine's physics colliders |  |  |
+| `CustomImageState.CustomFigurine` | - | native | Figurines.cs: the picture on a card in a round base | FigurineTests |  |
+| `CustomImageState.CustomJigsawPuzzle` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |  |
+| `CustomImageState.ImageScalar` | - | unknown |  |  |  |
+| `CustomJigsawPuzzleState.ImageOnBoard` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |  |
+| `CustomJigsawPuzzleState.NumPuzzlePieces` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |  |
+| `CustomPDFState.PDFPageOffset` | - | native | the book's page offset (PieceDef.PageOffset) | BookNotesScriptTests |  |
+| `CustomPDFState.PDFPassword` | - | native | a protected PDF opens with the password the save holds | converter |  |
+| `CustomTokenState.Stackable` | - | unknown |  |  |  |
+| `CustomTokenState.StandUp` | - | unknown |  |  |  |
+| `DecalState.CustomDecal` | - | native | converter reads it |  |  |
+| `DecalState.OwnerSteamID` | - | dropped | who laid a decal |  |  |
+| `DecalState.Transform` | - | native | converter reads it |  |  |
+| `FogOfWarRevealerState.Active` | - | dropped | hidden zones (decided 2026-11-06) |  |  |
+| `FogOfWarRevealerState.Color` | - | dropped | hidden zones (decided 2026-11-06) |  |  |
+| `FogOfWarRevealerState.FoV` | - | dropped | hidden zones (decided 2026-11-06) |  |  |
+| `FogOfWarRevealerState.FoVOffset` | - | dropped | hidden zones (decided 2026-11-06) |  |  |
+| `FogOfWarRevealerState.Height` | - | dropped | hidden zones (decided 2026-11-06) |  |  |
+| `FogOfWarRevealerState.Range` | - | dropped | hidden zones (decided 2026-11-06) |  |  |
+| `FogOfWarRevealerState.ShowOutLine` | - | dropped | hidden zones (decided 2026-11-06) |  |  |
+| `FogOfWarState.Height` | - | dropped | hidden zones (decided 2026-11-06) |  |  |
+| `FogOfWarState.HideGmPointer` | - | dropped | hidden zones (decided 2026-11-06) |  |  |
+| `FogOfWarState.HideObjects` | - | dropped | hidden zones (decided 2026-11-06) |  |  |
+| `FogOfWarState.ReHideObjects` | - | dropped | hidden zones (decided 2026-11-06) |  |  |
+| `FogOfWarState.RevealedLocations` | - | dropped | hidden zones (decided 2026-11-06) |  |  |
+| `GridState.Snapping` | - | dropped | grid (decided 2026-11-06) |  |  |
+| `GridState.ThickLines` | - | dropped | grid (decided 2026-11-06) |  |  |
+| `HandTransformState.Color` | - | dropped | hands are seats here (decided 2026-11-06) |  |  |
+| `HandTransformState.Transform` | - | dropped | hands are seats here (decided 2026-11-06) |  |  |
+| `HandsState.DisableUnused` | - | dropped | hands are seats here (decided 2026-11-06) |  |  |
+| `HandsState.Enable` | - | dropped | hands are seats here (decided 2026-11-06) |  |  |
+| `HandsState.HandTransforms` | - | dropped | hands are seats here (decided 2026-11-06) |  |  |
+| `HandsState.Hiding` | - | dropped | hands are seats here (decided 2026-11-06) |  |  |
+| `JointHingeState.Limits` | - | dropped | engine physics (joints) |  |  |
+| `JointHingeState.Motor` | - | dropped | engine physics (joints) |  |  |
+| `JointHingeState.Spring` | - | dropped | engine physics (joints) |  |  |
+| `JointHingeState.UseLimits` | - | dropped | engine physics (joints) |  |  |
+| `JointHingeState.UseMotor` | - | dropped | engine physics (joints) |  |  |
+| `JointHingeState.UseSpring` | - | dropped | engine physics (joints) |  |  |
+| `JointSpringState.Damper` | - | dropped | engine physics (joints) |  |  |
+| `JointSpringState.MaxDistance` | - | dropped | engine physics (joints) |  |  |
+| `JointSpringState.MinDistance` | - | dropped | engine physics (joints) |  |  |
+| `JointSpringState.Spring` | - | dropped | engine physics (joints) |  |  |
+| `JointState.Anchor` | - | dropped | engine physics (joints) |  |  |
+| `JointState.Axis` | - | dropped | engine physics (joints) |  |  |
+| `JointState.BreakForce` | - | dropped | engine physics (joints) |  |  |
+| `JointState.BreakTorgue` | - | dropped | engine physics (joints) |  |  |
+| `JointState.ConnectedAnchor` | - | dropped | engine physics (joints) |  |  |
+| `JointState.ConnectedBodyGUID` | - | dropped | engine physics (joints) |  |  |
+| `JointState.EnableCollision` | - | dropped | engine physics (joints) |  |  |
+| `LayoutZoneState.GroupsInZone` | - | dropped | scripting and layout zones (decided 2026-11-06) |  |  |
+| `LayoutZoneState.Options` | - | dropped | scripting and layout zones (decided 2026-11-06) |  |  |
+| `LightingState.AmbientEquatorColor` | - | dropped | lighting (decided 2026-11-06) |  |  |
+| `LightingState.AmbientGroundColor` | - | dropped | lighting (decided 2026-11-06) |  |  |
+| `LightingState.AmbientSkyColor` | - | dropped | lighting (decided 2026-11-06) |  |  |
+| `LightingState.LutIndex` | - | dropped | lighting (decided 2026-11-06) |  |  |
+| `LightingState.LutURL` | - | dropped | lighting (decided 2026-11-06) |  |  |
+| `Mp3PlayerState.genre` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |  |
+| `Mp3PlayerState.isPlaying` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |  |
+| `Mp3PlayerState.loopOne` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |  |
+| `Mp3PlayerState.menu` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |  |
+| `Mp3PlayerState.menuTitle` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |  |
+| `Mp3PlayerState.songTitle` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |  |
+| `Mp3PlayerState.volume` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |  |
+| `ObjectState.AltLookAngle` | - | planned | the Alt-zoom view: a decision for the user |  |  |
+| `ObjectState.AltSound` | - | planned | a piece's other sound: a decision for the user |  |  |
+| `ObjectState.AltZoomable` | - | planned | the Alt-zoom view: a decision for the user |  |  |
+| `ObjectState.Calculator` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |  |
+| `ObjectState.Clock` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |  |
+| `ObjectState.Counter` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |  |
+| `ObjectState.FogHidePointers` | - | dropped | hidden zones (decided 2026-11-06) |  |  |
+| `ObjectState.FogOfWar` | - | dropped | hidden zones (decided 2026-11-06) |  |  |
+| `ObjectState.FogOfWarRevealer` | - | dropped | hidden zones (decided 2026-11-06) |  |  |
+| `ObjectState.FogReverseHiding` | - | dropped | hidden zones (decided 2026-11-06) |  |  |
+| `ObjectState.FogSeethrough` | - | dropped | hidden zones (decided 2026-11-06) |  |  |
+| `ObjectState.JointFixed` | - | dropped | engine physics (joints) |  |  |
+| `ObjectState.JointHinge` | - | dropped | engine physics (joints) |  |  |
+| `ObjectState.JointSpring` | - | dropped | engine physics (joints) |  |  |
+| `ObjectState.LayoutGroupSortIndex` | - | dropped | scripting and layout zones (decided 2026-11-06) |  |  |
+| `ObjectState.LayoutZone` | - | dropped | scripting and layout zones (decided 2026-11-06) |  |  |
+| `ObjectState.MeshIndex` | - | dropped | the tabletop's stock meshes are never extracted |  |  |
+| `ObjectState.Mp3Player` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |  |
+| `ObjectState.Number` | - | native | a module's stack comes over as that many pieces laid one on another | WorthImportTests |  |
+| `ObjectState.RPGdead` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |  |
+| `ObjectState.RPGmode` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |  |
+| `ObjectState.SidewaysCard` | - | dropped | a card keeps its sheet's orientation |  |  |
+| `ObjectState.Tablet` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |  |
+| `ObjectState.Value` | - | native | a piece's worth (self.worth); the menu adds up the worth of what is chosen | WorthImportTests |  |
+| `ObjectState.XmlUI` | - | native | ScenarioPanels: a piece's own panels, drawn on it | PanelImportTests |  |
+| `ObjectState.miscID` | - | dropped | the engine's own bookkeeping |  |  |
+| `ObjectState.vector` | - | dropped | the engine's own bookkeeping |  |  |
+| `PhysicsMaterialState.BounceCombine` | - | dropped | engine physics |  |  |
+| `PhysicsMaterialState.Bounciness` | - | dropped | engine physics |  |  |
+| `PhysicsMaterialState.FrictionCombine` | - | dropped | engine physics |  |  |
+| `RotationValueState.Rotation` | - | native | converter reads it |  |  |
+| `RotationValueState.Value` | - | native | converter reads it |  |  |
+| `SaveState.Decals` | - | native | decals stamped on the table, lying over the ground on the umpire layer; the Decals tool stamps and lifts them | DecalPaletteTests, StampToolTests |  |
+| `SaveState.ObjectStates` | - | native | converter reads it |  |  |
+| `SaveState.Rules` | - | native | the scenario's briefing | DrawingTests |  |
+| `SaveState.SnapPoints` | - | dropped | snap points (decided 2026-11-06 with the grid) |  |  |
+| `SaveState.XmlUI` | - | native | ScenarioPanels: the save's own panels become the scenario's | PanelImportTests |  |
+| `SnapPointState.Position` | - | dropped | snap points (grid, decided 2026-11-06) |  |  |
+| `SnapPointState.Rotation` | - | dropped | snap points (grid, decided 2026-11-06) |  |  |
+| `SnapPointState.Tags` | - | dropped | snap points (grid, decided 2026-11-06) |  |  |
+| `TabState.body` | - | native | converter reads it |  |  |
+| `TabState.color` | - | dropped | notebook tab colour |  |  |
+| `TabState.id` | - | dropped | notebook tab id |  |  |
+| `TabState.title` | - | native | converter reads it |  |  |
+| `TabState.visibleColor` | - | dropped | notebook tab colour |  |  |
+| `TabletState.PageURL` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |  |
+| `TextState.OwnerSteamID` | - | dropped | who wrote a 3D text |  |  |
+| `TurnsState.DisableInteractions` | - | dropped | turns (decided 2026-11-06) |  |  |
+| `TurnsState.Enable` | - | dropped | turns (decided 2026-11-06) |  |  |
+| `TurnsState.PassTurns` | - | dropped | turns (decided 2026-11-06) |  |  |
+| `TurnsState.Reverse` | - | dropped | turns (decided 2026-11-06) |  |  |
+| `TurnsState.SkipEmpty` | - | dropped | turns (decided 2026-11-06) |  |  |
+| `TurnsState.TurnColor` | - | dropped | turns (decided 2026-11-06) |  |  |
+| `TurnsState.TurnOrder` | - | dropped | turns (decided 2026-11-06) |  |  |
+| `TurnsState.Type` | - | dropped | turns (decided 2026-11-06) |  |  |
+| `VectorLineState.OwnerSteamID` | - | native | lines on pieces and on the table | DrawingTests |  |
+| `VectorLineState.color` | - | native | lines on pieces and on the table | DrawingTests |  |
+| `VectorLineState.loop` | - | native | lines on pieces and on the table | DrawingTests |  |
+| `VectorLineState.points3` | - | native | lines on pieces and on the table | DrawingTests |  |
+| `VectorLineState.rotation` | - | native | lines on pieces and on the table | DrawingTests |  |
+| `VectorLineState.square` | - | native | lines on pieces and on the table | DrawingTests |  |
+| `VectorLineState.thickness` | - | native | lines on pieces and on the table | DrawingTests |  |
 
 ## object
 
-| row | used (calls / modules) | status | where | held by |
-|---|---|---|---|---|
-| `createButton` | 50776 / 52 | compat | ObjectCall |  |
-| `getPosition` | 2421 / 52 | compat | ObjectCall |  |
-| `editButton` | 46867 / 51 | compat | ObjectCall |  |
-| `getScale` | 15144 / 51 | compat | ObjectCall |  |
-| `clearButtons` | 6680 / 51 | compat | ObjectCall |  |
-| `createInput` | 20637 / 50 | compat | ObjectCall |  |
-| `setCustomObject` | 3484 / 50 | partial | a picture by a link built at run time is fetched and shown on the piece's face (self.set_face_picture); a model by such a link is not | ScriptingTests |
-| `reload` | 755 / 50 | native | ObjectCall |  |
-| `positionToWorld` | 1180 / 49 | compat | ObjectCall |  |
-| `setVar` | 181 / 49 | native | ObjectCall |  |
-| `editInput` | 38689 / 47 | compat | ObjectCall |  |
-| `getInputs` | 16053 / 47 | compat | ObjectCall |  |
-| `clearInputs` | 5365 / 47 | compat | ObjectCall |  |
-| `getButtons` | 3950 / 47 | compat | ObjectCall |  |
-| `setPosition` | 416 / 47 | compat | ObjectCall |  |
-| `setScale` | 231 / 47 | compat | ObjectCall |  |
-| `getCustomObject` | 92 / 46 | compat | ObjectCall |  |
-| `setName` | 5703 / 38 | native | ObjectCall |  |
-| `getRotation` | 5932 / 34 | compat | ObjectCall |  |
-| `addContextMenuItem` | 45750 / 33 | compat | ObjectCall |  |
-| `setDescription` | 4838 / 30 | native | ObjectCall |  |
-| `call` | 37963 / 28 | native | ObjectCall |  |
-| `getColorTint` | 2098 / 28 | compat | ObjectCall |  |
-| `clearContextMenu` | 7277 / 26 | native | ObjectCall |  |
-| `getGUID` | 1013 / 24 | compat | ObjectCall |  |
-| `setColorTint` | 1395 / 23 | native | ObjectCall |  |
-| `highlightOn` | 480 / 22 | compat | ObjectCall |  |
-| `setLock` | 204 / 20 | compat | ObjectCall |  |
-| `getName` | 679 / 19 | compat | ObjectCall |  |
-| `destruct` | 981 / 17 | native | ObjectCall |  |
-| `getVar` | 1991 / 15 | native | ObjectCall |  |
-| `positionToLocal` | 979 / 15 | compat | ObjectCall |  |
-| `setVectorLines` | 196 / 15 | compat | ObjectCall |  |
-| `getDescription` | 76 / 15 | compat | ObjectCall |  |
-| `removeFromPlayerSelection` | 1954 / 14 | compat | ObjectCall |  |
-| `interactable` | 1952 / 14 | compat | ObjectProps (get_prop/set_prop) |  |
-| `scale` | 1826 / 14 | compat | ObjectCall |  |
-| `locked` | 976 / 14 | compat | compat.get_prop / set_prop on the piece's lock | StowEventTests |
-| `removeInput` | 976 / 14 | compat | ObjectCall |  |
-| `getData` | 21 / 13 | compat | compat.get_data |  |
-| `getGMNotes` | 15 / 13 | compat | ObjectCall |  |
-| `getTransformUp` | 13029 / 12 | compat | ObjectCall |  |
-| `setDecals` | 4343 / 12 | compat | ObjectCall |  |
-| `hasTag` | 150 / 12 | compat | ObjectCall |  |
-| `split` | 26 / 12 | dropped | deck and card logic (decided 2026-11-06) |  |
-| `setGMNotes` | 12 / 12 | compat | ObjectCall |  |
-| `highlightOff` | 154 / 10 | compat | ObjectCall |  |
-| `setPositionSmooth` | 51 / 10 | compat | ObjectCall |  |
-| `takeObject` | 80 / 9 | compat | compat.take_object: unstow by guid or index at the position and rotation given, then the callback | StowScriptTests |
-| `getBounds` | 50 / 9 | compat | ObjectCall |  |
-| `getLock` | 50 / 9 | compat | ObjectCall |  |
-| `getObjects` | 50 / 9 | compat | compat.get_objects: the stowed list with guid, name and 0-based index | StowScriptTests |
-| `putObject` | 50 / 9 | compat | compat.put_object: stow | StowScriptTests |
-| `setRotationSmooth` | 50 / 9 | compat | ObjectCall |  |
-| `setLuaScript` | 3169 / 7 | native | ObjectCall |  |
-| `setState` | 180 / 3 | native | ObjectCall |  |
-| `isDestroyed` | 5 / 3 | compat | ObjectCall |  |
-| `guid` | 137 / 2 | compat | ObjectProps (get_prop/set_prop) |  |
-| `getTags` | 18 / 2 | native | ObjectCall |  |
-| `setRotation` | 2 / 2 | compat | ObjectCall |  |
-| `getLuaScript` | 19474 / 1 | compat | ObjectCall |  |
-| `getVectorLines` | 2 / 1 | compat | ObjectCall |  |
-| `getValue` | 1 / 1 | native | a die's sides are its own (PieceDef.Faces, a value and the way up each); self.faces / face / value, set_face / set_value / set_faces / roll; compat maps the module calls | DiceScriptTests |
-| `roll` | 1 / 1 | native | a die's sides are its own (PieceDef.Faces, a value and the way up each); self.faces / face / value, set_face / set_value / set_faces / roll; compat maps the module calls | DiceScriptTests |
-| `setSnapPoints` | 1 / 1 | compat | ObjectCall |  |
-| `AssetBundle.getLoopingEffectIndex` | - | compat | an effect piece answers as a bundle with one looping effect, its own; starting and stopping it is the piece option Running (self.effect_on) | BookNotesScriptTests |
-| `AssetBundle.getLoopingEffects` | - | compat | an effect piece answers as a bundle with one looping effect, its own; starting and stopping it is the piece option Running (self.effect_on) | BookNotesScriptTests |
-| `AssetBundle.getTriggerEffects` | - | partial | an effect piece has no one-shot effects of the bundle's: the list is empty | BookNotesScriptTests |
-| `AssetBundle.playLoopingEffect` | - | compat | an effect piece answers as a bundle with one looping effect, its own; starting and stopping it is the piece option Running (self.effect_on) | BookNotesScriptTests |
-| `AssetBundle.playTriggerEffect` | - | partial | an effect piece has no one-shot effects of the bundle's: nothing plays | BookNotesScriptTests |
-| `Book.clearHighlight` | - | partial | kept with the script; a highlight box is not drawn on the page | BookNotesScriptTests |
-| `Book.getPage` | - | compat | compat.book_page: the page it lies open at, from 0, or by its printed number | BookNotesScriptTests |
-| `Book.page_offset` | - | compat | the kind's page offset from the save; a script may set another | BookNotesScriptTests |
-| `Book.setHighlight` | - | partial | kept with the script; a highlight box is not drawn on the page | BookNotesScriptTests |
-| `Book.setPage` | - | compat | compat.set_book_page: turns it, by index or printed number | BookNotesScriptTests |
-| `Browser.pixel_width` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
-| `Browser.url` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
-| `Clock.getValue` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
-| `Clock.pauseStart` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
-| `Clock.paused` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
-| `Clock.setValue` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
-| `Clock.showCurrentTime` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
-| `Clock.startStopwatch` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
-| `Container.addData` | - | compat | holders: getObjects, putObject, takeObject, getQuantity through stow | StowScriptTests |
-| `Container.getCount` | - | compat | holders: getObjects, putObject, takeObject, getQuantity through stow | StowScriptTests |
-| `Container.getData` | - | compat | holders: getObjects, putObject, takeObject, getQuantity through stow | StowScriptTests |
-| `Container.getInfo` | - | compat | holders: getObjects, putObject, takeObject, getQuantity through stow | StowScriptTests |
-| `Container.putObject` | - | compat | holders: getObjects, putObject, takeObject, getQuantity through stow | StowScriptTests |
-| `Container.randomize` | - | compat | holders: getObjects, putObject, takeObject, getQuantity through stow | StowScriptTests |
-| `Container.removeData` | - | compat | holders: getObjects, putObject, takeObject, getQuantity through stow | StowScriptTests |
-| `Container.search` | - | compat | holders: getObjects, putObject, takeObject, getQuantity through stow | StowScriptTests |
-| `Container.setData` | - | compat | holders: getObjects, putObject, takeObject, getQuantity through stow | StowScriptTests |
-| `Container.takeObject` | - | compat | holders: getObjects, putObject, takeObject, getQuantity through stow | StowScriptTests |
-| `Counter.clear` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
-| `Counter.decrement` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
-| `Counter.getValue` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
-| `Counter.increment` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
-| `Counter.setValue` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
-| `LayoutZone.getOptions` | - | dropped | scripting and layout zones (decided 2026-11-06) |  |
-| `LayoutZone.layout` | - | dropped | scripting and layout zones (decided 2026-11-06) |  |
-| `LayoutZone.setOptions` | - | dropped | scripting and layout zones (decided 2026-11-06) |  |
-| `RPGFigurine.attack` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
-| `RPGFigurine.changeMode` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
-| `RPGFigurine.die` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
-| `RPGFigurine.onAttack` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
-| `RPGFigurine.onHit` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
-| `TextTool.getFontColor` | - | compat | a module's 3D text comes over as live lettering on the piece (self.lettering / set_lettering), drawn in its size and colour; compat.text_tool answers the calls | BookNotesScriptTests |
-| `TextTool.getFontSize` | - | compat | a module's 3D text comes over as live lettering on the piece (self.lettering / set_lettering), drawn in its size and colour; compat.text_tool answers the calls | BookNotesScriptTests |
-| `TextTool.getValue` | - | compat | a module's 3D text comes over as live lettering on the piece (self.lettering / set_lettering), drawn in its size and colour; compat.text_tool answers the calls | BookNotesScriptTests |
-| `TextTool.setFontColor` | - | compat | a module's 3D text comes over as live lettering on the piece (self.lettering / set_lettering), drawn in its size and colour; compat.text_tool answers the calls | BookNotesScriptTests |
-| `TextTool.setFontSize` | - | compat | a module's 3D text comes over as live lettering on the piece (self.lettering / set_lettering), drawn in its size and colour; compat.text_tool answers the calls | BookNotesScriptTests |
-| `TextTool.setValue` | - | compat | a module's 3D text comes over as live lettering on the piece (self.lettering / set_lettering), drawn in its size and colour; compat.text_tool answers the calls | BookNotesScriptTests |
-| `UI` | - | native | self.ui / obj.ui: the piece's own panels, the same calls as ui | PanelTests |
-| `Zone.getObjects` | - | dropped | scripting and layout zones (decided 2026-11-06) |  |
-| `addAttachment` | - | native | ObjectCall |  |
-| `addDecal` | - | compat | ObjectCall |  |
-| `addForce` | - | dropped | engine physics |  |
-| `addTag` | - | native | ObjectCall |  |
-| `addToPlayerSelection` | - | compat | ObjectCall |  |
-| `addTorque` | - | dropped | engine physics |  |
-| `alt_view_angle` | - | planned | the Alt-zoom view: a decision for the user |  |
-| `angular_drag` | - | dropped | engine physics |  |
-| `assetBundle` | - | compat | an effect piece answers as a bundle with one looping effect, its own; starting and stopping it is the piece option Running (self.effect_on) | BookNotesScriptTests |
-| `attachHider` | - | dropped | hidden information (decided 2026-11-06) |  |
-| `attachInvisibleHider` | - | dropped | hidden information (decided 2026-11-06) |  |
-| `auto_raise` | - | compat | ObjectProps (get_prop/set_prop) |  |
-| `book` | - | compat | obj.Book: the page calls above | BookNotesScriptTests |
-| `bounciness` | - | dropped | engine physics |  |
-| `browser` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
-| `childPairs` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |
-| `clock` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
-| `component` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |
-| `componentIndex` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |
-| `componentName` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |
-| `container` | - | dropped | deck and card logic (decided 2026-11-06) |  |
-| `counter` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
-| `cut` | - | dropped | deck and card logic (decided 2026-11-06) |  |
-| `deal` | - | dropped | deck and card logic (decided 2026-11-06) |  |
-| `dealToAll` | - | dropped | deck and card logic (decided 2026-11-06) |  |
-| `dealToColor` | - | dropped | deck and card logic (decided 2026-11-06) |  |
-| `dealToColorWithOffset` | - | dropped | deck and card logic (decided 2026-11-06) |  |
-| `destroy` | - | native | ObjectCall |  |
-| `drag` | - | dropped | engine physics |  |
-| `drag_selectable` | - | compat | ObjectProps (get_prop/set_prop) |  |
-| `drop` | - | dropped | the Player API (decided 2026-11-06) |  |
-| `dynamic_friction` | - | dropped | engine physics |  |
-| `flip` | - | compat | ObjectCall |  |
-| `getAngularVelocity` | - | dropped | engine physics (answers zero) |  |
-| `getAttachments` | - | compat | ObjectCall |  |
-| `getBoundsNormalized` | - | compat | compat.get_bounds |  |
-| `getChild` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |
-| `getChildren` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |
-| `getComponent` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |
-| `getComponentInChildren` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |
-| `getComponentVar` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |
-| `getComponentVars` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |
-| `getComponents` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |
-| `getComponentsInChildren` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |
-| `getDecals` | - | compat | ObjectCall |  |
-| `getFogOfWar` | - | dropped | hidden zones (decided 2026-11-06) |  |
-| `getFogOfWarReveal` | - | dropped | hidden zones (decided 2026-11-06; answers off) |  |
-| `getJSON` | - | compat | compat.get_json |  |
-| `getJoints` | - | dropped | engine physics (joints; answers none) |  |
-| `getLuaScriptState` | - | compat | script_state | ModuleHelpersTests |
-| `getMaterialValue` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |
-| `getMaterialVars` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |
-| `getMaterials` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |
-| `getMaterialsInChildren` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |
-| `getMemo` | - | native | ObjectCall |  |
-| `getNearestPointFromObject` | - | dropped | engine physics |  |
-| `getNearestPointFromPosition` | - | dropped | engine physics |  |
-| `getPositionSmooth` | - | compat | ObjectCall |  |
-| `getQuantity` | - | compat | compat.get_quantity: how many are stowed | StowScriptTests |
-| `getRotationSmooth` | - | compat | ObjectCall |  |
-| `getRotationValue` | - | native | a die's sides are its own (PieceDef.Faces, a value and the way up each); self.faces / face / value, set_face / set_value / set_faces / roll; compat maps the module calls | DiceScriptTests |
-| `getRotationValues` | - | native | a die's sides are its own (PieceDef.Faces, a value and the way up each); self.faces / face / value, set_face / set_value / set_faces / roll; compat maps the module calls | DiceScriptTests |
-| `getSelectingPlayers` | - | compat | compat.get_selecting_players |  |
-| `getSnapPoints` | - | compat | ObjectCall |  |
-| `getStateId` | - | native | ObjectCall |  |
-| `getStates` | - | compat | ObjectCall |  |
-| `getTable` | - | native | ObjectCall |  |
-| `getTransformForward` | - | compat | ObjectCall |  |
-| `getTransformRight` | - | compat | ObjectCall |  |
-| `getVelocity` | - | dropped | engine physics (answers zero) |  |
-| `getZones` | - | dropped | scripting and layout zones (decided 2026-11-06) |  |
-| `gizmo_selectable` | - | planned | whether the transform tool takes it: a decision for the user |  |
-| `grid_projection` | - | dropped | grid (decided 2026-11-06) |  |
-| `hasAnyTag` | - | compat | compat.has_any_tag | ModuleHelpersTests |
-| `hasMatchingTag` | - | compat | compat.has_matching_tag | ModuleHelpersTests |
-| `held_by_color` | - | compat | ObjectProps |  |
-| `held_flip_index` | - | compat | face down is 12, face up 0 | DiceScriptTests |
-| `held_position_offset` | - | planned | where the hand holds a piece: a decision for the user |  |
-| `held_reduce_force` | - | dropped | with the engine's physics (decided 2026-11-06) |  |
-| `held_rotation_offset` | - | planned | how the hand tilts a held piece: a decision for the user |  |
-| `held_spin_index` | - | compat | the piece's heading in 15° steps | DiceScriptTests |
-| `hide_when_face_down` | - | dropped | hidden information (decided 2026-11-06) |  |
-| `ignore_fog_of_war` | - | dropped | hidden zones (decided 2026-11-06) |  |
-| `isSmoothMoving` | - | stub | moves finish at once here (answers false) |  |
-| `is_face_down` | - | native | ObjectCall |  |
-| `jointTo` | - | dropped | engine physics (joints) |  |
-| `layoutZone` | - | dropped | scripting and layout zones (decided 2026-11-06) |  |
-| `loading_custom` | - | compat | ObjectCall |  |
-| `luaCollision` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |
-| `mass` | - | dropped | engine physics |  |
-| `material` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |
-| `materialIndex` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |
-| `max_typed_number` | - | compat | ObjectProps (get_prop/set_prop) |  |
-| `measure_movement` | - | native | the piece option Shows how far it is moved; self.measures_moves and set_measures_moves | MeasureTests |
-| `memo` | - | compat | ObjectProps (get_prop/set_prop) |  |
-| `name` | - | compat | ObjectProps (get_prop/set_prop) |  |
-| `pick_up_position` | - | compat | self.picked_up: where an umpire last picked it up | DiceScriptTests |
-| `pick_up_rotation` | - | compat | self.picked_up.rot | DiceScriptTests |
-| `rPGFigurine` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
-| `randomize` | - | native | a die rolls (logged as a roll), a piece of several looks takes one at random; bags and decks are not shuffled (deck logic dropped) | DiceScriptTests |
-| `registerCollisions` | - | dropped | engine physics (collisions) |  |
-| `remainder` | - | dropped | deck and card logic (decided 2026-11-06) |  |
-| `removeAttachment` | - | compat | ObjectCall |  |
-| `removeAttachments` | - | compat | ObjectCall |  |
-| `removeButton` | - | compat | ObjectCall |  |
-| `removeTag` | - | native | ObjectCall |  |
-| `rendererIndex` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |
-| `reset` | - | dropped | deck and card logic (decided 2026-11-06) |  |
-| `resting` | - | compat | ObjectCall |  |
-| `rotate` | - | compat | ObjectCall |  |
-| `script` | - | unknown |  |  |
-| `sendToHand` | - | dropped | hands are seats here (decided 2026-11-06) |  |
-| `setAngularVelocity` | - | dropped | engine physics |  |
-| `setComponentVar` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |
-| `setFogOfWar` | - | dropped | hidden zones (decided 2026-11-06) |  |
-| `setFogOfWarReveal` | - | dropped | hidden zones (decided 2026-11-06) |  |
-| `setHiddenFrom` | - | dropped | hidden information (decided 2026-11-06) |  |
-| `setInvisibleTo` | - | dropped | hidden information (decided 2026-11-06) |  |
-| `setLuaScriptState` | - | compat | script_state | ModuleHelpersTests |
-| `setMaterialValue` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |
-| `setMemo` | - | native | ObjectCall |  |
-| `setRotationValue` | - | native | a die's sides are its own (PieceDef.Faces, a value and the way up each); self.faces / face / value, set_face / set_value / set_faces / roll; compat maps the module calls | DiceScriptTests |
-| `setRotationValues` | - | native | a die's sides are its own (PieceDef.Faces, a value and the way up each); self.faces / face / value, set_face / set_value / set_faces / roll; compat maps the module calls | DiceScriptTests |
-| `setTable` | - | native | ObjectCall |  |
-| `setTags` | - | native | ObjectCall |  |
-| `setValue` | - | native | a die's sides are its own (PieceDef.Faces, a value and the way up each); self.faces / face / value, set_face / set_value / set_faces / roll; compat maps the module calls | DiceScriptTests |
-| `setVelocity` | - | dropped | engine physics |  |
-| `shuffle` | - | dropped | deck and card logic (decided 2026-11-06) |  |
-| `shuffleStates` | - | native | compat.shuffle_states: another of its looks at random | DiceScriptTests |
-| `spawning` | - | compat | ObjectCall |  |
-| `spread` | - | dropped | deck and card logic (decided 2026-11-06) |  |
-| `startLuaCoroutine` | - | unknown |  |  |
-| `static_friction` | - | dropped | engine physics |  |
-| `sticky` | - | compat | ObjectProps (get_prop/set_prop) |  |
-| `tag` | - | compat | ObjectProps (get_prop/set_prop) |  |
-| `textTool` | - | compat | a module's 3D text comes over as live lettering on the piece (self.lettering / set_lettering), drawn in its size and colour; compat.text_tool answers the calls | BookNotesScriptTests |
-| `tooltip` | - | compat | ObjectProps (get_prop/set_prop) |  |
-| `translate` | - | compat | ObjectCall |  |
-| `type` | - | compat | ObjectProps (get_prop/set_prop) |  |
-| `unregisterCollisions` | - | dropped | engine physics (collisions) |  |
-| `use_gravity` | - | dropped | engine physics |  |
-| `use_grid` | - | dropped | grid (decided 2026-11-06) |  |
-| `use_hands` | - | dropped | hands are seats here (decided 2026-11-06) |  |
-| `use_rotation_value_flip` | - | native | a die turned over always shows its other side | DiceScriptTests |
-| `use_snap_points` | - | dropped | snap points (decided 2026-11-06 with the grid) |  |
-| `value` | - | native | self.worth / set_worth | DiceScriptTests |
-| `value_flags` | - | native | self.worth_groups: which pieces it adds up with | DiceScriptTests |
-| `zone` | - | dropped | scripting and layout zones (decided 2026-11-06) |  |
+| row | used (calls / modules) | status | where | held by | audited |
+|---|---|---|---|---|---|
+| `createButton` | 50776 / 52 | compat | ObjectCall |  | ScriptingTests.A_module_input_inside_its_piece_is_not_drawn_but_still_listed_and_raising_it_above_the_piece_draws_it; ModuleDefaultsTests |
+| `getPosition` | 2421 / 52 | compat | ObjectCall |  |  |
+| `editButton` | 46867 / 51 | compat | ObjectCall |  | ScriptingTests.A_module_input_turned_over_on_top_is_locked_text_on_the_front_and_turning_it_back_unlocks_it |
+| `getScale` | 15144 / 51 | compat | ObjectCall |  |  |
+| `clearButtons` | 6680 / 51 | compat | ObjectCall |  | ScriptingTests.Removing_module_buttons_keeps_their_numbers_until_the_next_frame_so_a_loop_removes_them_all |
+| `createInput` | 20637 / 50 | compat | ObjectCall |  | ScriptingTests.A_module_input_inside_its_piece_is_not_drawn_but_still_listed_and_raising_it_above_the_piece_draws_it; ModuleDefaultsTests |
+| `setCustomObject` | 3484 / 50 | partial | a picture by a link built at run time is fetched and shown on the piece's face (self.set_face_picture); a model by such a link is not | ScriptingTests |  |
+| `reload` | 755 / 50 | native | ObjectCall |  |  |
+| `positionToWorld` | 1180 / 49 | compat | ObjectCall |  |  |
+| `setVar` | 181 / 49 | native | ObjectCall |  |  |
+| `editInput` | 38689 / 47 | compat | ObjectCall |  | ScriptingTests.A_module_input_inside_its_piece_is_not_drawn_but_still_listed_and_raising_it_above_the_piece_draws_it |
+| `getInputs` | 16053 / 47 | compat | ObjectCall |  | ScriptingTests.Module_handlers_named_at_run_time_get_module_arguments_and_getInputs_holds_what_was_typed |
+| `clearInputs` | 5365 / 47 | compat | ObjectCall |  | ScriptingTests.Removing_module_buttons_keeps_their_numbers_until_the_next_frame_so_a_loop_removes_them_all |
+| `getButtons` | 3950 / 47 | compat | ObjectCall |  | ScriptingTests.Removing_module_buttons_keeps_their_numbers_until_the_next_frame_so_a_loop_removes_them_all |
+| `setPosition` | 416 / 47 | compat | ObjectCall |  |  |
+| `setScale` | 231 / 47 | compat | ObjectCall |  |  |
+| `getCustomObject` | 92 / 46 | compat | ObjectCall |  |  |
+| `setName` | 5703 / 38 | native | ObjectCall |  |  |
+| `getRotation` | 5932 / 34 | compat | ObjectCall |  |  |
+| `addContextMenuItem` | 45750 / 33 | compat | ObjectCall |  |  |
+| `setDescription` | 4838 / 30 | native | ObjectCall |  |  |
+| `call` | 37963 / 28 | native | ObjectCall |  |  |
+| `getColorTint` | 2098 / 28 | compat | ObjectCall |  |  |
+| `clearContextMenu` | 7277 / 26 | native | ObjectCall |  |  |
+| `getGUID` | 1013 / 24 | compat | ObjectCall |  |  |
+| `setColorTint` | 1395 / 23 | native | ObjectCall |  |  |
+| `highlightOn` | 480 / 22 | compat | ObjectCall |  |  |
+| `setLock` | 204 / 20 | compat | ObjectCall |  |  |
+| `getName` | 679 / 19 | compat | ObjectCall |  |  |
+| `destruct` | 981 / 17 | native | ObjectCall |  |  |
+| `getVar` | 1991 / 15 | native | ObjectCall |  |  |
+| `positionToLocal` | 979 / 15 | compat | ObjectCall |  |  |
+| `setVectorLines` | 196 / 15 | compat | ObjectCall |  |  |
+| `getDescription` | 76 / 15 | compat | ObjectCall |  |  |
+| `removeFromPlayerSelection` | 1954 / 14 | compat | ObjectCall |  |  |
+| `interactable` | 1952 / 14 | compat | ObjectProps (get_prop/set_prop) |  |  |
+| `scale` | 1826 / 14 | compat | ObjectCall |  |  |
+| `locked` | 976 / 14 | compat | compat.get_prop / set_prop on the piece's lock | StowEventTests |  |
+| `removeInput` | 976 / 14 | compat | ObjectCall |  | ScriptingTests.Removing_module_buttons_keeps_their_numbers_until_the_next_frame_so_a_loop_removes_them_all |
+| `getData` | 21 / 13 | compat | compat.get_data |  |  |
+| `getGMNotes` | 15 / 13 | compat | ObjectCall |  |  |
+| `getTransformUp` | 13029 / 12 | compat | ObjectCall |  |  |
+| `setDecals` | 4343 / 12 | compat | ObjectCall |  |  |
+| `hasTag` | 150 / 12 | compat | ObjectCall |  |  |
+| `split` | 26 / 12 | dropped | deck and card logic (decided 2026-11-06) |  |  |
+| `setGMNotes` | 12 / 12 | compat | ObjectCall |  |  |
+| `highlightOff` | 154 / 10 | compat | ObjectCall |  |  |
+| `setPositionSmooth` | 51 / 10 | compat | ObjectCall |  |  |
+| `takeObject` | 80 / 9 | compat | compat.take_object: unstow by guid or index at the position and rotation given, then the callback | StowScriptTests |  |
+| `getBounds` | 50 / 9 | compat | ObjectCall |  |  |
+| `getLock` | 50 / 9 | compat | ObjectCall |  |  |
+| `getObjects` | 50 / 9 | compat | compat.get_objects: the stowed list with guid, name and 0-based index | StowScriptTests |  |
+| `putObject` | 50 / 9 | compat | compat.put_object: stow | StowScriptTests |  |
+| `setRotationSmooth` | 50 / 9 | compat | ObjectCall |  |  |
+| `setLuaScript` | 3169 / 7 | native | ObjectCall |  |  |
+| `setState` | 180 / 3 | native | ObjectCall |  |  |
+| `isDestroyed` | 5 / 3 | compat | ObjectCall |  |  |
+| `guid` | 137 / 2 | compat | ObjectProps (get_prop/set_prop) |  |  |
+| `getTags` | 18 / 2 | native | ObjectCall |  |  |
+| `setRotation` | 2 / 2 | compat | ObjectCall |  |  |
+| `getLuaScript` | 19474 / 1 | compat | ObjectCall |  |  |
+| `getVectorLines` | 2 / 1 | compat | ObjectCall |  |  |
+| `getValue` | 1 / 1 | native | a die's sides are its own (PieceDef.Faces, a value and the way up each); self.faces / face / value, set_face / set_value / set_faces / roll; compat maps the module calls | DiceScriptTests |  |
+| `roll` | 1 / 1 | native | a die's sides are its own (PieceDef.Faces, a value and the way up each); self.faces / face / value, set_face / set_value / set_faces / roll; compat maps the module calls | DiceScriptTests |  |
+| `setSnapPoints` | 1 / 1 | compat | ObjectCall |  |  |
+| `AssetBundle.getLoopingEffectIndex` | - | compat | an effect piece answers as a bundle with one looping effect, its own; starting and stopping it is the piece option Running (self.effect_on) | BookNotesScriptTests |  |
+| `AssetBundle.getLoopingEffects` | - | compat | an effect piece answers as a bundle with one looping effect, its own; starting and stopping it is the piece option Running (self.effect_on) | BookNotesScriptTests |  |
+| `AssetBundle.getTriggerEffects` | - | partial | an effect piece has no one-shot effects of the bundle's: the list is empty | BookNotesScriptTests |  |
+| `AssetBundle.playLoopingEffect` | - | compat | an effect piece answers as a bundle with one looping effect, its own; starting and stopping it is the piece option Running (self.effect_on) | BookNotesScriptTests |  |
+| `AssetBundle.playTriggerEffect` | - | partial | an effect piece has no one-shot effects of the bundle's: nothing plays | BookNotesScriptTests |  |
+| `Book.clearHighlight` | - | partial | kept with the script; a highlight box is not drawn on the page | BookNotesScriptTests |  |
+| `Book.getPage` | - | compat | compat.book_page: the page it lies open at, from 0, or by its printed number | BookNotesScriptTests |  |
+| `Book.page_offset` | - | compat | the kind's page offset from the save; a script may set another | BookNotesScriptTests |  |
+| `Book.setHighlight` | - | partial | kept with the script; a highlight box is not drawn on the page | BookNotesScriptTests |  |
+| `Book.setPage` | - | compat | compat.set_book_page: turns it, by index or printed number | BookNotesScriptTests |  |
+| `Browser.pixel_width` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |  |
+| `Browser.url` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |  |
+| `Clock.getValue` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |  |
+| `Clock.pauseStart` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |  |
+| `Clock.paused` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |  |
+| `Clock.setValue` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |  |
+| `Clock.showCurrentTime` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |  |
+| `Clock.startStopwatch` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |  |
+| `Container.addData` | - | compat | holders: getObjects, putObject, takeObject, getQuantity through stow | StowScriptTests |  |
+| `Container.getCount` | - | compat | holders: getObjects, putObject, takeObject, getQuantity through stow | StowScriptTests |  |
+| `Container.getData` | - | compat | holders: getObjects, putObject, takeObject, getQuantity through stow | StowScriptTests |  |
+| `Container.getInfo` | - | compat | holders: getObjects, putObject, takeObject, getQuantity through stow | StowScriptTests |  |
+| `Container.putObject` | - | compat | holders: getObjects, putObject, takeObject, getQuantity through stow | StowScriptTests |  |
+| `Container.randomize` | - | compat | holders: getObjects, putObject, takeObject, getQuantity through stow | StowScriptTests |  |
+| `Container.removeData` | - | compat | holders: getObjects, putObject, takeObject, getQuantity through stow | StowScriptTests |  |
+| `Container.search` | - | compat | holders: getObjects, putObject, takeObject, getQuantity through stow | StowScriptTests |  |
+| `Container.setData` | - | compat | holders: getObjects, putObject, takeObject, getQuantity through stow | StowScriptTests |  |
+| `Container.takeObject` | - | compat | holders: getObjects, putObject, takeObject, getQuantity through stow | StowScriptTests |  |
+| `Counter.clear` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |  |
+| `Counter.decrement` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |  |
+| `Counter.getValue` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |  |
+| `Counter.increment` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |  |
+| `Counter.setValue` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |  |
+| `LayoutZone.getOptions` | - | dropped | scripting and layout zones (decided 2026-11-06) |  |  |
+| `LayoutZone.layout` | - | dropped | scripting and layout zones (decided 2026-11-06) |  |  |
+| `LayoutZone.setOptions` | - | dropped | scripting and layout zones (decided 2026-11-06) |  |  |
+| `RPGFigurine.attack` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |  |
+| `RPGFigurine.changeMode` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |  |
+| `RPGFigurine.die` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |  |
+| `RPGFigurine.onAttack` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |  |
+| `RPGFigurine.onHit` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |  |
+| `TextTool.getFontColor` | - | compat | a module's 3D text comes over as live lettering on the piece (self.lettering / set_lettering), drawn in its size and colour; compat.text_tool answers the calls | BookNotesScriptTests |  |
+| `TextTool.getFontSize` | - | compat | a module's 3D text comes over as live lettering on the piece (self.lettering / set_lettering), drawn in its size and colour; compat.text_tool answers the calls | BookNotesScriptTests |  |
+| `TextTool.getValue` | - | compat | a module's 3D text comes over as live lettering on the piece (self.lettering / set_lettering), drawn in its size and colour; compat.text_tool answers the calls | BookNotesScriptTests |  |
+| `TextTool.setFontColor` | - | compat | a module's 3D text comes over as live lettering on the piece (self.lettering / set_lettering), drawn in its size and colour; compat.text_tool answers the calls | BookNotesScriptTests |  |
+| `TextTool.setFontSize` | - | compat | a module's 3D text comes over as live lettering on the piece (self.lettering / set_lettering), drawn in its size and colour; compat.text_tool answers the calls | BookNotesScriptTests |  |
+| `TextTool.setValue` | - | compat | a module's 3D text comes over as live lettering on the piece (self.lettering / set_lettering), drawn in its size and colour; compat.text_tool answers the calls | BookNotesScriptTests |  |
+| `UI` | - | native | self.ui / obj.ui: the piece's own panels, the same calls as ui | PanelTests |  |
+| `Zone.getObjects` | - | dropped | scripting and layout zones (decided 2026-11-06) |  |  |
+| `addAttachment` | - | native | ObjectCall |  |  |
+| `addDecal` | - | compat | ObjectCall |  |  |
+| `addForce` | - | dropped | engine physics |  |  |
+| `addTag` | - | native | ObjectCall |  |  |
+| `addToPlayerSelection` | - | compat | ObjectCall |  |  |
+| `addTorque` | - | dropped | engine physics |  |  |
+| `alt_view_angle` | - | planned | the Alt-zoom view: a decision for the user |  |  |
+| `angular_drag` | - | dropped | engine physics |  |  |
+| `assetBundle` | - | compat | an effect piece answers as a bundle with one looping effect, its own; starting and stopping it is the piece option Running (self.effect_on) | BookNotesScriptTests |  |
+| `attachHider` | - | dropped | hidden information (decided 2026-11-06) |  |  |
+| `attachInvisibleHider` | - | dropped | hidden information (decided 2026-11-06) |  |  |
+| `auto_raise` | - | compat | ObjectProps (get_prop/set_prop) |  |  |
+| `book` | - | compat | obj.Book: the page calls above | BookNotesScriptTests |  |
+| `bounciness` | - | dropped | engine physics |  |  |
+| `browser` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |  |
+| `childPairs` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |  |
+| `clock` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |  |
+| `component` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |  |
+| `componentIndex` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |  |
+| `componentName` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |  |
+| `container` | - | dropped | deck and card logic (decided 2026-11-06) |  |  |
+| `counter` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |  |
+| `cut` | - | dropped | deck and card logic (decided 2026-11-06) |  |  |
+| `deal` | - | dropped | deck and card logic (decided 2026-11-06) |  |  |
+| `dealToAll` | - | dropped | deck and card logic (decided 2026-11-06) |  |  |
+| `dealToColor` | - | dropped | deck and card logic (decided 2026-11-06) |  |  |
+| `dealToColorWithOffset` | - | dropped | deck and card logic (decided 2026-11-06) |  |  |
+| `destroy` | - | native | ObjectCall |  |  |
+| `drag` | - | dropped | engine physics |  |  |
+| `drag_selectable` | - | compat | ObjectProps (get_prop/set_prop) |  |  |
+| `drop` | - | dropped | the Player API (decided 2026-11-06) |  |  |
+| `dynamic_friction` | - | dropped | engine physics |  |  |
+| `flip` | - | compat | ObjectCall |  |  |
+| `getAngularVelocity` | - | dropped | engine physics (answers zero) |  |  |
+| `getAttachments` | - | compat | ObjectCall |  |  |
+| `getBoundsNormalized` | - | compat | compat.get_bounds |  |  |
+| `getChild` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |  |
+| `getChildren` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |  |
+| `getComponent` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |  |
+| `getComponentInChildren` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |  |
+| `getComponentVar` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |  |
+| `getComponentVars` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |  |
+| `getComponents` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |  |
+| `getComponentsInChildren` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |  |
+| `getDecals` | - | compat | ObjectCall |  |  |
+| `getFogOfWar` | - | dropped | hidden zones (decided 2026-11-06) |  |  |
+| `getFogOfWarReveal` | - | dropped | hidden zones (decided 2026-11-06; answers off) |  |  |
+| `getJSON` | - | compat | compat.get_json |  |  |
+| `getJoints` | - | dropped | engine physics (joints; answers none) |  |  |
+| `getLuaScriptState` | - | compat | script_state | ModuleHelpersTests |  |
+| `getMaterialValue` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |  |
+| `getMaterialVars` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |  |
+| `getMaterials` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |  |
+| `getMaterialsInChildren` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |  |
+| `getMemo` | - | native | ObjectCall |  |  |
+| `getNearestPointFromObject` | - | dropped | engine physics |  |  |
+| `getNearestPointFromPosition` | - | dropped | engine physics |  |  |
+| `getPositionSmooth` | - | compat | ObjectCall |  |  |
+| `getQuantity` | - | compat | compat.get_quantity: how many are stowed | StowScriptTests |  |
+| `getRotationSmooth` | - | compat | ObjectCall |  |  |
+| `getRotationValue` | - | native | a die's sides are its own (PieceDef.Faces, a value and the way up each); self.faces / face / value, set_face / set_value / set_faces / roll; compat maps the module calls | DiceScriptTests |  |
+| `getRotationValues` | - | native | a die's sides are its own (PieceDef.Faces, a value and the way up each); self.faces / face / value, set_face / set_value / set_faces / roll; compat maps the module calls | DiceScriptTests |  |
+| `getSelectingPlayers` | - | compat | compat.get_selecting_players |  |  |
+| `getSnapPoints` | - | compat | ObjectCall |  |  |
+| `getStateId` | - | native | ObjectCall |  |  |
+| `getStates` | - | compat | ObjectCall |  |  |
+| `getTable` | - | native | ObjectCall |  |  |
+| `getTransformForward` | - | compat | ObjectCall |  |  |
+| `getTransformRight` | - | compat | ObjectCall |  |  |
+| `getVelocity` | - | dropped | engine physics (answers zero) |  |  |
+| `getZones` | - | dropped | scripting and layout zones (decided 2026-11-06) |  |  |
+| `gizmo_selectable` | - | planned | whether the transform tool takes it: a decision for the user |  |  |
+| `grid_projection` | - | dropped | grid (decided 2026-11-06) |  |  |
+| `hasAnyTag` | - | compat | compat.has_any_tag | ModuleHelpersTests |  |
+| `hasMatchingTag` | - | compat | compat.has_matching_tag | ModuleHelpersTests |  |
+| `held_by_color` | - | compat | ObjectProps |  |  |
+| `held_flip_index` | - | compat | face down is 12, face up 0 | DiceScriptTests |  |
+| `held_position_offset` | - | planned | where the hand holds a piece: a decision for the user |  |  |
+| `held_reduce_force` | - | dropped | with the engine's physics (decided 2026-11-06) |  |  |
+| `held_rotation_offset` | - | planned | how the hand tilts a held piece: a decision for the user |  |  |
+| `held_spin_index` | - | compat | the piece's heading in 15° steps | DiceScriptTests |  |
+| `hide_when_face_down` | - | dropped | hidden information (decided 2026-11-06) |  |  |
+| `ignore_fog_of_war` | - | dropped | hidden zones (decided 2026-11-06) |  |  |
+| `isSmoothMoving` | - | stub | moves finish at once here (answers false) |  |  |
+| `is_face_down` | - | native | ObjectCall |  |  |
+| `jointTo` | - | dropped | engine physics (joints) |  |  |
+| `layoutZone` | - | dropped | scripting and layout zones (decided 2026-11-06) |  |  |
+| `loading_custom` | - | compat | ObjectCall |  |  |
+| `luaCollision` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |  |
+| `mass` | - | dropped | engine physics |  |  |
+| `material` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |  |
+| `materialIndex` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |  |
+| `max_typed_number` | - | compat | ObjectProps (get_prop/set_prop) |  |  |
+| `measure_movement` | - | native | the piece option Shows how far it is moved; self.measures_moves and set_measures_moves | MeasureTests |  |
+| `memo` | - | compat | ObjectProps (get_prop/set_prop) |  |  |
+| `name` | - | compat | ObjectProps (get_prop/set_prop) |  |  |
+| `pick_up_position` | - | compat | self.picked_up: where an umpire last picked it up | DiceScriptTests |  |
+| `pick_up_rotation` | - | compat | self.picked_up.rot | DiceScriptTests |  |
+| `rPGFigurine` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |  |
+| `randomize` | - | native | a die rolls (logged as a roll), a piece of several looks takes one at random; bags and decks are not shuffled (deck logic dropped) | DiceScriptTests |  |
+| `registerCollisions` | - | dropped | engine physics (collisions) |  |  |
+| `remainder` | - | dropped | deck and card logic (decided 2026-11-06) |  |  |
+| `removeAttachment` | - | compat | ObjectCall |  |  |
+| `removeAttachments` | - | compat | ObjectCall |  |  |
+| `removeButton` | - | compat | ObjectCall |  | ScriptingTests.Removing_module_buttons_keeps_their_numbers_until_the_next_frame_so_a_loop_removes_them_all |
+| `removeTag` | - | native | ObjectCall |  |  |
+| `rendererIndex` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |  |
+| `reset` | - | dropped | deck and card logic (decided 2026-11-06) |  |  |
+| `resting` | - | compat | ObjectCall |  |  |
+| `rotate` | - | compat | ObjectCall |  |  |
+| `script` | - | unknown |  |  |  |
+| `sendToHand` | - | dropped | hands are seats here (decided 2026-11-06) |  |  |
+| `setAngularVelocity` | - | dropped | engine physics |  |  |
+| `setComponentVar` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |  |
+| `setFogOfWar` | - | dropped | hidden zones (decided 2026-11-06) |  |  |
+| `setFogOfWarReveal` | - | dropped | hidden zones (decided 2026-11-06) |  |  |
+| `setHiddenFrom` | - | dropped | hidden information (decided 2026-11-06) |  |  |
+| `setInvisibleTo` | - | dropped | hidden information (decided 2026-11-06) |  |  |
+| `setLuaScriptState` | - | compat | script_state | ModuleHelpersTests |  |
+| `setMaterialValue` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |  |
+| `setMemo` | - | native | ObjectCall |  |  |
+| `setRotationValue` | - | native | a die's sides are its own (PieceDef.Faces, a value and the way up each); self.faces / face / value, set_face / set_value / set_faces / roll; compat maps the module calls | DiceScriptTests |  |
+| `setRotationValues` | - | native | a die's sides are its own (PieceDef.Faces, a value and the way up each); self.faces / face / value, set_face / set_value / set_faces / roll; compat maps the module calls | DiceScriptTests |  |
+| `setTable` | - | native | ObjectCall |  |  |
+| `setTags` | - | native | ObjectCall |  |  |
+| `setValue` | - | native | a die's sides are its own (PieceDef.Faces, a value and the way up each); self.faces / face / value, set_face / set_value / set_faces / roll; compat maps the module calls | DiceScriptTests |  |
+| `setVelocity` | - | dropped | engine physics |  |  |
+| `shuffle` | - | dropped | deck and card logic (decided 2026-11-06) |  |  |
+| `shuffleStates` | - | native | compat.shuffle_states: another of its looks at random | DiceScriptTests |  |
+| `spawning` | - | compat | ObjectCall |  |  |
+| `spread` | - | dropped | deck and card logic (decided 2026-11-06) |  |  |
+| `startLuaCoroutine` | - | unknown |  |  |  |
+| `static_friction` | - | dropped | engine physics |  |  |
+| `sticky` | - | compat | ObjectProps (get_prop/set_prop) |  |  |
+| `tag` | - | compat | ObjectProps (get_prop/set_prop) |  |  |
+| `textTool` | - | compat | a module's 3D text comes over as live lettering on the piece (self.lettering / set_lettering), drawn in its size and colour; compat.text_tool answers the calls | BookNotesScriptTests |  |
+| `tooltip` | - | compat | ObjectProps (get_prop/set_prop) |  |  |
+| `translate` | - | compat | ObjectCall |  |  |
+| `type` | - | compat | ObjectProps (get_prop/set_prop) |  |  |
+| `unregisterCollisions` | - | dropped | engine physics (collisions) |  |  |
+| `use_gravity` | - | dropped | engine physics |  |  |
+| `use_grid` | - | dropped | grid (decided 2026-11-06) |  |  |
+| `use_hands` | - | dropped | hands are seats here (decided 2026-11-06) |  |  |
+| `use_rotation_value_flip` | - | native | a die turned over always shows its other side | DiceScriptTests |  |
+| `use_snap_points` | - | dropped | snap points (decided 2026-11-06 with the grid) |  |  |
+| `value` | - | native | self.worth / set_worth | DiceScriptTests |  |
+| `value_flags` | - | native | self.worth_groups: which pieces it adds up with | DiceScriptTests |  |
+| `zone` | - | dropped | scripting and layout zones (decided 2026-11-06) |  |  |
 
 ## global
 
-| row | used (calls / modules) | status | where | held by |
-|---|---|---|---|---|
-| `getObjectFromGUID` | 1203 / 50 | native | GlobalFunctionCall |  |
-| `broadcastToAll` | 748 / 50 | native | GlobalFunctionCall |  |
-| `broadcastToColor` | 61397 / 30 | compat | GlobalFunctionCall |  |
-| `spawnObject` | 2866 / 18 | compat | GlobalFunctionCall |  |
-| `getObjects` | 1525 / 14 | native | GlobalFunctionCall |  |
-| `startLuaCoroutine` | 4345 / 13 | compat | GlobalFunctionCall |  |
-| `spawnObjectData` | 32 / 13 | compat | GlobalFunctionCall |  |
-| `getAllObjects` | 426 / 12 | native | GlobalFunctionCall |  |
-| `log` | 376 / 12 | compat | compat.log: the value, a table as JSON, with its label, on the script console | StowEventTests |
-| `printToColor` | 20 / 12 | compat | GlobalFunctionCall |  |
-| `addHotkey` | 20 / 4 | compat | GlobalFunctionCall |  |
-| `addContextMenuItem` | 2 / 2 | compat | GlobalFunctionCall |  |
-| `printToAll` | 2 / 2 | native | GlobalFunctionCall |  |
-| `stringColorToRGB` | 1 / 1 | compat | GlobalFunctionCall |  |
-| `addConsoleCommand` | - | dropped | console commands and other host controls (decided 2026-11-06) |  |
-| `allowAutomaticRewindSave` | - | dropped | console commands and other host controls (decided 2026-11-06) |  |
-| `chooseInHand` | - | dropped | hands are seats here (decided 2026-11-06) |  |
-| `chooseInHandOrCancel` | - | dropped | hands are seats here (decided 2026-11-06) |  |
-| `clearConsoleCommands` | - | dropped | console commands and other host controls (decided 2026-11-06) |  |
-| `clearContextMenu` | - | native | GlobalFunctionCall |  |
-| `clearHotkeys` | - | native | GlobalFunctionCall |  |
-| `clearPixelPaint` | - | compat | compat.erase_all: every stroke on the drawing board | ModuleHelpersTests |
-| `clearVectorPaint` | - | compat | compat.erase_all: every stroke on the drawing board | ModuleHelpersTests |
-| `colorToHex` | - | compat | compat.Color:toHex | ModuleHelpersTests |
-| `colorToPlayerName` | - | compat | compat.Color:toString |  |
-| `constructColor` | - | compat | compat.Color |  |
-| `constructVector` | - | compat | compat.Vector | ModuleVectorColorTests |
-| `copy` | - | dropped | the Player API (decided 2026-11-06) |  |
-| `copyLuaTable` | - | compat | compat.copy_table | ModuleHelpersTests |
-| `debugLog` | - | compat | compat.log |  |
-| `flipTable` | - | dropped | the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06) |  |
-| `getAllLuaScriptStates` | - | dropped | undocumented internal; no module calls it |  |
-| `getAllTags` | - | compat | compat.all_tags | ModuleHelpersTests |
-| `getColor` | - | dropped | undocumented internal; no module calls it |  |
-| `getGlobalTable` | - | compat | game.get_var |  |
-| `getGlobalVar` | - | compat | game.get_var |  |
-| `getObjectsWithAllTags` | - | compat | GlobalFunctionCall |  |
-| `getObjectsWithAnyTags` | - | compat | GlobalFunctionCall |  |
-| `getObjectsWithTag` | - | native | GlobalFunctionCall |  |
-| `getPlayer` | - | compat | compat.player |  |
-| `getPlayerHandPositionAndRotation` | - | dropped | hands are seats here (decided 2026-11-06) |  |
-| `getPointerPosition` | - | dropped | the Player API (decided 2026-11-06) |  |
-| `getPointerRotation` | - | dropped | the Player API (decided 2026-11-06) |  |
-| `getScriptState` | - | compat | script_state | ModuleHelpersTests |
-| `getSeatedPlayers` | - | compat | GlobalFunctionCall |  |
-| `group` | - | dropped | the Player API (decided 2026-11-06) |  |
-| `hexToColor` | - | compat | compat.Color.fromHex | ModuleHelpersTests |
-| `logFormat` | - | compat | compat.log |  |
-| `logStyle` | - | dropped | console commands and other host controls (decided 2026-11-06) |  |
-| `paste` | - | dropped | the Player API (decided 2026-11-06) |  |
-| `setGlobalTable` | - | compat | game.set_var |  |
-| `setUITheme` | - | dropped | the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06) |  |
-| `showHotkeyConfig` | - | dropped | console commands and other host controls (decided 2026-11-06) |  |
-| `spawnObjectJSON` | - | compat | GlobalFunctionCall |  |
-| `stringColorToHex` | - | compat | compat.Color.fromString:toHex |  |
+| row | used (calls / modules) | status | where | held by | audited |
+|---|---|---|---|---|---|
+| `getObjectFromGUID` | 1203 / 50 | native | GlobalFunctionCall |  |  |
+| `broadcastToAll` | 748 / 50 | native | GlobalFunctionCall |  |  |
+| `broadcastToColor` | 61397 / 30 | compat | GlobalFunctionCall |  |  |
+| `spawnObject` | 2866 / 18 | compat | GlobalFunctionCall |  |  |
+| `getObjects` | 1525 / 14 | native | GlobalFunctionCall |  |  |
+| `startLuaCoroutine` | 4345 / 13 | compat | GlobalFunctionCall |  |  |
+| `spawnObjectData` | 32 / 13 | compat | GlobalFunctionCall |  |  |
+| `getAllObjects` | 426 / 12 | native | GlobalFunctionCall |  |  |
+| `log` | 376 / 12 | compat | compat.log: the value, a table as JSON, with its label, on the script console | StowEventTests |  |
+| `printToColor` | 20 / 12 | compat | GlobalFunctionCall |  |  |
+| `addHotkey` | 20 / 4 | compat | GlobalFunctionCall |  |  |
+| `addContextMenuItem` | 2 / 2 | compat | GlobalFunctionCall |  |  |
+| `printToAll` | 2 / 2 | native | GlobalFunctionCall |  |  |
+| `stringColorToRGB` | 1 / 1 | compat | GlobalFunctionCall |  |  |
+| `addConsoleCommand` | - | dropped | console commands and other host controls (decided 2026-11-06) |  |  |
+| `allowAutomaticRewindSave` | - | dropped | console commands and other host controls (decided 2026-11-06) |  |  |
+| `chooseInHand` | - | dropped | hands are seats here (decided 2026-11-06) |  |  |
+| `chooseInHandOrCancel` | - | dropped | hands are seats here (decided 2026-11-06) |  |  |
+| `clearConsoleCommands` | - | dropped | console commands and other host controls (decided 2026-11-06) |  |  |
+| `clearContextMenu` | - | native | GlobalFunctionCall |  |  |
+| `clearHotkeys` | - | native | GlobalFunctionCall |  |  |
+| `clearPixelPaint` | - | compat | compat.erase_all: every stroke on the drawing board | ModuleHelpersTests |  |
+| `clearVectorPaint` | - | compat | compat.erase_all: every stroke on the drawing board | ModuleHelpersTests |  |
+| `colorToHex` | - | compat | compat.Color:toHex | ModuleHelpersTests |  |
+| `colorToPlayerName` | - | compat | compat.Color:toString |  |  |
+| `constructColor` | - | compat | compat.Color |  |  |
+| `constructVector` | - | compat | compat.Vector | ModuleVectorColorTests |  |
+| `copy` | - | dropped | the Player API (decided 2026-11-06) |  |  |
+| `copyLuaTable` | - | compat | compat.copy_table | ModuleHelpersTests |  |
+| `debugLog` | - | compat | compat.log |  |  |
+| `flipTable` | - | dropped | the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06) |  |  |
+| `getAllLuaScriptStates` | - | dropped | undocumented internal; no module calls it |  |  |
+| `getAllTags` | - | compat | compat.all_tags | ModuleHelpersTests |  |
+| `getColor` | - | dropped | undocumented internal; no module calls it |  |  |
+| `getGlobalTable` | - | compat | game.get_var |  |  |
+| `getGlobalVar` | - | compat | game.get_var |  |  |
+| `getObjectsWithAllTags` | - | compat | GlobalFunctionCall |  |  |
+| `getObjectsWithAnyTags` | - | compat | GlobalFunctionCall |  |  |
+| `getObjectsWithTag` | - | native | GlobalFunctionCall |  |  |
+| `getPlayer` | - | compat | compat.player |  |  |
+| `getPlayerHandPositionAndRotation` | - | dropped | hands are seats here (decided 2026-11-06) |  |  |
+| `getPointerPosition` | - | dropped | the Player API (decided 2026-11-06) |  |  |
+| `getPointerRotation` | - | dropped | the Player API (decided 2026-11-06) |  |  |
+| `getScriptState` | - | compat | script_state | ModuleHelpersTests |  |
+| `getSeatedPlayers` | - | compat | GlobalFunctionCall |  |  |
+| `group` | - | dropped | the Player API (decided 2026-11-06) |  |  |
+| `hexToColor` | - | compat | compat.Color.fromHex | ModuleHelpersTests |  |
+| `logFormat` | - | compat | compat.log |  |  |
+| `logStyle` | - | dropped | console commands and other host controls (decided 2026-11-06) |  |  |
+| `paste` | - | dropped | the Player API (decided 2026-11-06) |  |  |
+| `setGlobalTable` | - | compat | game.set_var |  |  |
+| `setUITheme` | - | dropped | the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06) |  |  |
+| `showHotkeyConfig` | - | dropped | console commands and other host controls (decided 2026-11-06) |  |  |
+| `spawnObjectJSON` | - | compat | GlobalFunctionCall |  |  |
+| `stringColorToHex` | - | compat | compat.Color.fromString:toHex |  |  |
 
 ## namespaces
 
-| row | used (calls / modules) | status | where | held by |
-|---|---|---|---|---|
-| `JSON.encode` | 12891 / 52 | native | json.encode / json.decode |  |
-| `JSON.decode` | 11910 / 51 | native | json.encode / json.decode |  |
-| `Wait.frames` | 13927 / 27 | compat | compat.wait_* |  |
-| `Wait.time` | 5718 / 15 | compat | compat.wait_* |  |
-| `UI.setAttribute` | 19435 / 14 | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) |
-| `Wait.stop` | 4219 / 13 | compat | compat.wait_* |  |
-| `UI.setXmlTable` | 141 / 4 | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) |
-| `Wait.condition` | 138 / 3 | compat | compat.wait_* |  |
-| `Player.getPlayers` | 3 / 3 | dropped | the Player API (decided 2026-11-06) |  |
-| `UI.hide` | 1781 / 2 | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) |
-| `UI.show` | 1370 / 2 | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) |
-| `Global.getVar` | 411 / 2 | native | game.get_var |  |
-| `Global.setVar` | 274 / 2 | native | game.set_var |  |
-| `UI.getXml` | 137 / 2 | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) |
-| `UI.getXmlTable` | 137 / 2 | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) |
-| `UI.setXml` | 137 / 2 | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) |
-| `Player.getColors` | 2 / 2 | dropped | the Player API (decided 2026-11-06) |  |
-| `UI.getAttribute` | 2 / 2 | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) |
-| `Global.getVectorLines` | 3 / 1 | compat | compat.global_vector_lines: the lines the script last set | BoardDrawingTests |
-| `Global.setVectorLines` | 3 / 1 | compat | compat.set_global_vector_lines: strokes on the umpire's drawing board through board.draw | BoardDrawingTests |
-| `Physics.cast` | 1 / 1 | compat | compat.cast |  |
-| `Timer.create` | 1 / 1 | compat | compat.Timer |  |
-| `Timer.destroy` | 1 / 1 | compat | compat.Timer |  |
-| `Backgrounds.getBackground` | - | dropped | the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06) |  |
-| `Backgrounds.getCustomURL` | - | dropped | the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06) |  |
-| `Backgrounds.setBackground` | - | dropped | the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06) |  |
-| `Backgrounds.setCustomURL` | - | dropped | the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06) |  |
-| `Global.call` | - | native | game.call |  |
-| `Global.getTable` | - | native | game.get_var |  |
-| `Global.setTable` | - | native | game.set_var |  |
-| `Grid.color` | - | dropped | grid (decided 2026-11-06) |  |
-| `Grid.offsetX` | - | dropped | grid (decided 2026-11-06) |  |
-| `Grid.offsetY` | - | dropped | grid (decided 2026-11-06) |  |
-| `Grid.opacity` | - | dropped | grid (decided 2026-11-06) |  |
-| `Grid.show_lines` | - | dropped | grid (decided 2026-11-06) |  |
-| `Grid.sizeX` | - | dropped | grid (decided 2026-11-06) |  |
-| `Grid.sizeY` | - | dropped | grid (decided 2026-11-06) |  |
-| `Grid.snapping` | - | dropped | grid (decided 2026-11-06) |  |
-| `Grid.thick_lines` | - | dropped | grid (decided 2026-11-06) |  |
-| `Grid.type` | - | dropped | grid (decided 2026-11-06) |  |
-| `Hands.disable_unused` | - | dropped | hands are seats here (decided 2026-11-06) |  |
-| `Hands.enable` | - | dropped | hands are seats here (decided 2026-11-06) |  |
-| `Hands.getHands` | - | dropped | hands are seats here (decided 2026-11-06) |  |
-| `Hands.hiding` | - | dropped | hands are seats here (decided 2026-11-06) |  |
-| `Info.complexity` | - | dropped | save metadata |  |
-| `Info.name` | - | dropped | save metadata |  |
-| `Info.number_of_players` | - | dropped | save metadata |  |
-| `Info.playing_time` | - | dropped | save metadata |  |
-| `Info.tags` | - | dropped | save metadata |  |
-| `Info.type` | - | dropped | save metadata |  |
-| `Lighting.ambient_intensity` | - | dropped | lighting (decided 2026-11-06) |  |
-| `Lighting.ambient_type` | - | dropped | lighting (decided 2026-11-06) |  |
-| `Lighting.apply` | - | dropped | lighting (decided 2026-11-06) |  |
-| `Lighting.getAmbientEquatorColor` | - | dropped | lighting (decided 2026-11-06) |  |
-| `Lighting.getAmbientGroundColor` | - | dropped | lighting (decided 2026-11-06) |  |
-| `Lighting.getAmbientSkyColor` | - | dropped | lighting (decided 2026-11-06) |  |
-| `Lighting.getLightColor` | - | dropped | lighting (decided 2026-11-06) |  |
-| `Lighting.light_intensity` | - | dropped | lighting (decided 2026-11-06) |  |
-| `Lighting.lut_contribution` | - | dropped | lighting (decided 2026-11-06) |  |
-| `Lighting.lut_index` | - | dropped | lighting (decided 2026-11-06) |  |
-| `Lighting.lut_url` | - | dropped | lighting (decided 2026-11-06) |  |
-| `Lighting.reflection_intensity` | - | dropped | lighting (decided 2026-11-06) |  |
-| `Lighting.setAmbientEquatorColor` | - | dropped | lighting (decided 2026-11-06) |  |
-| `Lighting.setAmbientGroundColor` | - | dropped | lighting (decided 2026-11-06) |  |
-| `Lighting.setAmbientSkyColor` | - | dropped | lighting (decided 2026-11-06) |  |
-| `Lighting.setLightColor` | - | dropped | lighting (decided 2026-11-06) |  |
-| `MusicPlayer.getCurrentAudioclip` | - | dropped | music and sound players (decided 2026-11-06) |  |
-| `MusicPlayer.getPlaylist` | - | dropped | music and sound players (decided 2026-11-06) |  |
-| `MusicPlayer.pause` | - | dropped | music and sound players (decided 2026-11-06) |  |
-| `MusicPlayer.play` | - | dropped | music and sound players (decided 2026-11-06) |  |
-| `MusicPlayer.player_status` | - | dropped | music and sound players (decided 2026-11-06) |  |
-| `MusicPlayer.playlistIndex` | - | dropped | music and sound players (decided 2026-11-06) |  |
-| `MusicPlayer.playlist_index` | - | dropped | music and sound players (decided 2026-11-06) |  |
-| `MusicPlayer.repeat_track` | - | dropped | music and sound players (decided 2026-11-06) |  |
-| `MusicPlayer.setCurrentAudioclip` | - | dropped | music and sound players (decided 2026-11-06) |  |
-| `MusicPlayer.setPlaylist` | - | dropped | music and sound players (decided 2026-11-06) |  |
-| `MusicPlayer.shuffle` | - | dropped | music and sound players (decided 2026-11-06) |  |
-| `MusicPlayer.skipBack` | - | dropped | music and sound players (decided 2026-11-06) |  |
-| `MusicPlayer.skipForward` | - | dropped | music and sound players (decided 2026-11-06) |  |
-| `Notes.addNotebookTab` | - | compat | the save's Notes and notebook tabs are note cards beside the map (tagged notes and notebook); the Notes calls read and write those cards | BookNotesScriptTests |
-| `Notes.editNotebookTab` | - | compat | the save's Notes and notebook tabs are note cards beside the map (tagged notes and notebook); the Notes calls read and write those cards | BookNotesScriptTests |
-| `Notes.getNotebookTabs` | - | compat | the save's Notes and notebook tabs are note cards beside the map (tagged notes and notebook); the Notes calls read and write those cards | BookNotesScriptTests |
-| `Notes.getNotes` | - | compat | the save's Notes and notebook tabs are note cards beside the map (tagged notes and notebook); the Notes calls read and write those cards | BookNotesScriptTests |
-| `Notes.removeNotebookTab` | - | compat | the save's Notes and notebook tabs are note cards beside the map (tagged notes and notebook); the Notes calls read and write those cards | BookNotesScriptTests |
-| `Notes.setNotes` | - | compat | the save's Notes and notebook tabs are note cards beside the map (tagged notes and notebook); the Notes calls read and write those cards | BookNotesScriptTests |
-| `Physics.getGravity` | - | dropped | engine physics |  |
-| `Physics.play_area` | - | dropped | engine physics |  |
-| `Physics.setGravity` | - | dropped | engine physics |  |
-| `Player.action` | - | dropped | the Player API (decided 2026-11-06) |  |
-| `Player.admin` | - | dropped | the Player API (decided 2026-11-06) |  |
-| `Player.attachCameraToObject` | - | dropped | the Player API (decided 2026-11-06) |  |
-| `Player.blind` | - | dropped | the Player API (decided 2026-11-06) |  |
-| `Player.blindfolded` | - | dropped | the Player API (decided 2026-11-06) |  |
-| `Player.broadcast` | - | dropped | the Player API (decided 2026-11-06) |  |
-| `Player.changeColor` | - | dropped | the Player API (decided 2026-11-06) |  |
-| `Player.changeTeam` | - | dropped | the Player API (decided 2026-11-06) |  |
-| `Player.clearSelectedObjects` | - | dropped | the Player API (decided 2026-11-06) |  |
-| `Player.color` | - | dropped | the Player API (decided 2026-11-06) |  |
-| `Player.copy` | - | dropped | the Player API (decided 2026-11-06) |  |
-| `Player.drawHandStash` | - | dropped | the Player API (decided 2026-11-06) |  |
-| `Player.getAvailableColors` | - | dropped | the Player API (decided 2026-11-06) |  |
-| `Player.getHandCount` | - | dropped | the Player API (decided 2026-11-06) |  |
-| `Player.getHandObjects` | - | dropped | the Player API (decided 2026-11-06) |  |
-| `Player.getHandPlayer` | - | dropped | the Player API (decided 2026-11-06) |  |
-| `Player.getHandTransform` | - | dropped | the Player API (decided 2026-11-06) |  |
-| `Player.getHoldingObjects` | - | dropped | the Player API (decided 2026-11-06) |  |
-| `Player.getHoverObject` | - | dropped | the Player API (decided 2026-11-06) |  |
-| `Player.getPlayer` | - | dropped | the Player API (decided 2026-11-06) |  |
-| `Player.getPlayerHand` | - | dropped | the Player API (decided 2026-11-06) |  |
-| `Player.getPointerPosition` | - | dropped | the Player API (decided 2026-11-06) |  |
-| `Player.getPointerRotation` | - | dropped | the Player API (decided 2026-11-06) |  |
-| `Player.getSelectedObjects` | - | dropped | the Player API (decided 2026-11-06) |  |
-| `Player.getSpectators` | - | dropped | the Player API (decided 2026-11-06) |  |
-| `Player.hand_choice_label` | - | dropped | the Player API (decided 2026-11-06) |  |
-| `Player.host` | - | dropped | the Player API (decided 2026-11-06) |  |
-| `Player.id` | - | dropped | the Player API (decided 2026-11-06) |  |
-| `Player.kick` | - | dropped | the Player API (decided 2026-11-06) |  |
-| `Player.lift_height` | - | dropped | the Player API (decided 2026-11-06) |  |
-| `Player.lookAt` | - | dropped | the Player API (decided 2026-11-06) |  |
-| `Player.mute` | - | dropped | the Player API (decided 2026-11-06) |  |
-| `Player.paste` | - | dropped | the Player API (decided 2026-11-06) |  |
-| `Player.pingTable` | - | dropped | the Player API (decided 2026-11-06) |  |
-| `Player.playerColor` | - | dropped | the Player API (decided 2026-11-06) |  |
-| `Player.print` | - | dropped | the Player API (decided 2026-11-06) |  |
-| `Player.promote` | - | dropped | the Player API (decided 2026-11-06) |  |
-| `Player.promoted` | - | dropped | the Player API (decided 2026-11-06) |  |
-| `Player.seated` | - | dropped | the Player API (decided 2026-11-06) |  |
-| `Player.setCameraMode` | - | dropped | the Player API (decided 2026-11-06) |  |
-| `Player.setHandStashLocation` | - | dropped | the Player API (decided 2026-11-06) |  |
-| `Player.setHandTransform` | - | dropped | the Player API (decided 2026-11-06) |  |
-| `Player.setUITheme` | - | dropped | the Player API (decided 2026-11-06) |  |
-| `Player.showColorDialog` | - | dropped | the Player API (decided 2026-11-06) |  |
-| `Player.showConfirmDialog` | - | dropped | the Player API (decided 2026-11-06) |  |
-| `Player.showInfoDialog` | - | dropped | the Player API (decided 2026-11-06) |  |
-| `Player.showInputDialog` | - | dropped | the Player API (decided 2026-11-06) |  |
-| `Player.showMemoDialog` | - | dropped | the Player API (decided 2026-11-06) |  |
-| `Player.showOptionsDialog` | - | dropped | the Player API (decided 2026-11-06) |  |
-| `Player.steam_id` | - | dropped | the Player API (decided 2026-11-06) |  |
-| `Player.steam_name` | - | dropped | the Player API (decided 2026-11-06) |  |
-| `Player.team` | - | dropped | the Player API (decided 2026-11-06) |  |
-| `Player.unblind` | - | dropped | the Player API (decided 2026-11-06) |  |
-| `Player.userDataDescriptor` | - | dropped | the Player API (decided 2026-11-06) |  |
-| `Tables.getCustomURL` | - | dropped | the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06) |  |
-| `Tables.getTable` | - | dropped | the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06) |  |
-| `Tables.getTableObject` | - | dropped | the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06) |  |
-| `Tables.setCustomURL` | - | dropped | the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06) |  |
-| `Tables.setTable` | - | dropped | the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06) |  |
-| `Time.delta_time` | - | compat | compat.Time: time from the clock, frames at 60 a second |  |
-| `Time.fixed_delta_time` | - | compat | compat.Time: time from the clock, frames at 60 a second |  |
-| `Time.fixed_time` | - | compat | compat.Time: time from the clock, frames at 60 a second |  |
-| `Time.frame_count` | - | compat | compat.Time: time from the clock, frames at 60 a second |  |
-| `Time.time` | - | compat | compat.Time: time from the clock, frames at 60 a second |  |
-| `Timer.timers` | - | compat | compat.Timer |  |
-| `Turns.disable_interactations` | - | dropped | turns (decided 2026-11-06) |  |
-| `Turns.enable` | - | dropped | turns (decided 2026-11-06) |  |
-| `Turns.endTurn` | - | dropped | turns (decided 2026-11-06) |  |
-| `Turns.getNextTurnColor` | - | dropped | turns (decided 2026-11-06) |  |
-| `Turns.getPreviousTurnColor` | - | dropped | turns (decided 2026-11-06) |  |
-| `Turns.getTurnOrder` | - | dropped | turns (decided 2026-11-06) |  |
-| `Turns.order` | - | dropped | turns (decided 2026-11-06) |  |
-| `Turns.pass_turns` | - | dropped | turns (decided 2026-11-06) |  |
-| `Turns.reverse_order` | - | dropped | turns (decided 2026-11-06) |  |
-| `Turns.skip_empty_hands` | - | dropped | turns (decided 2026-11-06) |  |
-| `Turns.turn_color` | - | dropped | turns (decided 2026-11-06) |  |
-| `Turns.type` | - | dropped | turns (decided 2026-11-06) |  |
-| `UI.assetType` | - | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) |
-| `UI.getAttributes` | - | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) |
-| `UI.getCustomAssets` | - | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) |
-| `UI.getValue` | - | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) |
-| `UI.loading` | - | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) |
-| `UI.setAttributes` | - | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) |
-| `UI.setClass` | - | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) |
-| `UI.setCustomAssets` | - | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) |
-| `UI.setValue` | - | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) |
-| `Wait.stopAll` | - | compat | compat.wait_stop_all | ModuleHelpersTests |
-| `WebRequest.custom` | - | dropped | web requests (decided 2026-11-06) |  |
-| `WebRequest.delete` | - | dropped | web requests (decided 2026-11-06) |  |
-| `WebRequest.head` | - | dropped | web requests (decided 2026-11-06) |  |
-| `WebRequest.post` | - | dropped | web requests (decided 2026-11-06) |  |
-| `WebRequest.put` | - | dropped | web requests (decided 2026-11-06) |  |
+| row | used (calls / modules) | status | where | held by | audited |
+|---|---|---|---|---|---|
+| `JSON.encode` | 12891 / 52 | native | json.encode / json.decode |  |  |
+| `JSON.decode` | 11910 / 51 | native | json.encode / json.decode |  |  |
+| `Wait.frames` | 13927 / 27 | compat | compat.wait_* |  |  |
+| `Wait.time` | 5718 / 15 | compat | compat.wait_* |  |  |
+| `UI.setAttribute` | 19435 / 14 | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) |  |
+| `Wait.stop` | 4219 / 13 | compat | compat.wait_* |  |  |
+| `UI.setXmlTable` | 141 / 4 | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) |  |
+| `Wait.condition` | 138 / 3 | compat | compat.wait_* |  |  |
+| `Player.getPlayers` | 3 / 3 | dropped | the Player API (decided 2026-11-06) |  |  |
+| `UI.hide` | 1781 / 2 | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) |  |
+| `UI.show` | 1370 / 2 | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) |  |
+| `Global.getVar` | 411 / 2 | native | game.get_var |  |  |
+| `Global.setVar` | 274 / 2 | native | game.set_var |  |  |
+| `UI.getXml` | 137 / 2 | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) |  |
+| `UI.getXmlTable` | 137 / 2 | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) |  |
+| `UI.setXml` | 137 / 2 | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) |  |
+| `Player.getColors` | 2 / 2 | dropped | the Player API (decided 2026-11-06) |  |  |
+| `UI.getAttribute` | 2 / 2 | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) |  |
+| `Global.getVectorLines` | 3 / 1 | compat | compat.global_vector_lines: the lines the script last set | BoardDrawingTests |  |
+| `Global.setVectorLines` | 3 / 1 | compat | compat.set_global_vector_lines: strokes on the umpire's drawing board through board.draw | BoardDrawingTests |  |
+| `Physics.cast` | 1 / 1 | compat | compat.cast |  |  |
+| `Timer.create` | 1 / 1 | compat | compat.Timer |  |  |
+| `Timer.destroy` | 1 / 1 | compat | compat.Timer |  |  |
+| `Backgrounds.getBackground` | - | dropped | the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06) |  |  |
+| `Backgrounds.getCustomURL` | - | dropped | the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06) |  |  |
+| `Backgrounds.setBackground` | - | dropped | the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06) |  |  |
+| `Backgrounds.setCustomURL` | - | dropped | the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06) |  |  |
+| `Global.call` | - | native | game.call |  |  |
+| `Global.getTable` | - | native | game.get_var |  |  |
+| `Global.setTable` | - | native | game.set_var |  |  |
+| `Grid.color` | - | dropped | grid (decided 2026-11-06) |  |  |
+| `Grid.offsetX` | - | dropped | grid (decided 2026-11-06) |  |  |
+| `Grid.offsetY` | - | dropped | grid (decided 2026-11-06) |  |  |
+| `Grid.opacity` | - | dropped | grid (decided 2026-11-06) |  |  |
+| `Grid.show_lines` | - | dropped | grid (decided 2026-11-06) |  |  |
+| `Grid.sizeX` | - | dropped | grid (decided 2026-11-06) |  |  |
+| `Grid.sizeY` | - | dropped | grid (decided 2026-11-06) |  |  |
+| `Grid.snapping` | - | dropped | grid (decided 2026-11-06) |  |  |
+| `Grid.thick_lines` | - | dropped | grid (decided 2026-11-06) |  |  |
+| `Grid.type` | - | dropped | grid (decided 2026-11-06) |  |  |
+| `Hands.disable_unused` | - | dropped | hands are seats here (decided 2026-11-06) |  |  |
+| `Hands.enable` | - | dropped | hands are seats here (decided 2026-11-06) |  |  |
+| `Hands.getHands` | - | dropped | hands are seats here (decided 2026-11-06) |  |  |
+| `Hands.hiding` | - | dropped | hands are seats here (decided 2026-11-06) |  |  |
+| `Info.complexity` | - | dropped | save metadata |  |  |
+| `Info.name` | - | dropped | save metadata |  |  |
+| `Info.number_of_players` | - | dropped | save metadata |  |  |
+| `Info.playing_time` | - | dropped | save metadata |  |  |
+| `Info.tags` | - | dropped | save metadata |  |  |
+| `Info.type` | - | dropped | save metadata |  |  |
+| `Lighting.ambient_intensity` | - | dropped | lighting (decided 2026-11-06) |  |  |
+| `Lighting.ambient_type` | - | dropped | lighting (decided 2026-11-06) |  |  |
+| `Lighting.apply` | - | dropped | lighting (decided 2026-11-06) |  |  |
+| `Lighting.getAmbientEquatorColor` | - | dropped | lighting (decided 2026-11-06) |  |  |
+| `Lighting.getAmbientGroundColor` | - | dropped | lighting (decided 2026-11-06) |  |  |
+| `Lighting.getAmbientSkyColor` | - | dropped | lighting (decided 2026-11-06) |  |  |
+| `Lighting.getLightColor` | - | dropped | lighting (decided 2026-11-06) |  |  |
+| `Lighting.light_intensity` | - | dropped | lighting (decided 2026-11-06) |  |  |
+| `Lighting.lut_contribution` | - | dropped | lighting (decided 2026-11-06) |  |  |
+| `Lighting.lut_index` | - | dropped | lighting (decided 2026-11-06) |  |  |
+| `Lighting.lut_url` | - | dropped | lighting (decided 2026-11-06) |  |  |
+| `Lighting.reflection_intensity` | - | dropped | lighting (decided 2026-11-06) |  |  |
+| `Lighting.setAmbientEquatorColor` | - | dropped | lighting (decided 2026-11-06) |  |  |
+| `Lighting.setAmbientGroundColor` | - | dropped | lighting (decided 2026-11-06) |  |  |
+| `Lighting.setAmbientSkyColor` | - | dropped | lighting (decided 2026-11-06) |  |  |
+| `Lighting.setLightColor` | - | dropped | lighting (decided 2026-11-06) |  |  |
+| `MusicPlayer.getCurrentAudioclip` | - | dropped | music and sound players (decided 2026-11-06) |  |  |
+| `MusicPlayer.getPlaylist` | - | dropped | music and sound players (decided 2026-11-06) |  |  |
+| `MusicPlayer.pause` | - | dropped | music and sound players (decided 2026-11-06) |  |  |
+| `MusicPlayer.play` | - | dropped | music and sound players (decided 2026-11-06) |  |  |
+| `MusicPlayer.player_status` | - | dropped | music and sound players (decided 2026-11-06) |  |  |
+| `MusicPlayer.playlistIndex` | - | dropped | music and sound players (decided 2026-11-06) |  |  |
+| `MusicPlayer.playlist_index` | - | dropped | music and sound players (decided 2026-11-06) |  |  |
+| `MusicPlayer.repeat_track` | - | dropped | music and sound players (decided 2026-11-06) |  |  |
+| `MusicPlayer.setCurrentAudioclip` | - | dropped | music and sound players (decided 2026-11-06) |  |  |
+| `MusicPlayer.setPlaylist` | - | dropped | music and sound players (decided 2026-11-06) |  |  |
+| `MusicPlayer.shuffle` | - | dropped | music and sound players (decided 2026-11-06) |  |  |
+| `MusicPlayer.skipBack` | - | dropped | music and sound players (decided 2026-11-06) |  |  |
+| `MusicPlayer.skipForward` | - | dropped | music and sound players (decided 2026-11-06) |  |  |
+| `Notes.addNotebookTab` | - | compat | the save's Notes and notebook tabs are note cards beside the map (tagged notes and notebook); the Notes calls read and write those cards | BookNotesScriptTests |  |
+| `Notes.editNotebookTab` | - | compat | the save's Notes and notebook tabs are note cards beside the map (tagged notes and notebook); the Notes calls read and write those cards | BookNotesScriptTests |  |
+| `Notes.getNotebookTabs` | - | compat | the save's Notes and notebook tabs are note cards beside the map (tagged notes and notebook); the Notes calls read and write those cards | BookNotesScriptTests |  |
+| `Notes.getNotes` | - | compat | the save's Notes and notebook tabs are note cards beside the map (tagged notes and notebook); the Notes calls read and write those cards | BookNotesScriptTests |  |
+| `Notes.removeNotebookTab` | - | compat | the save's Notes and notebook tabs are note cards beside the map (tagged notes and notebook); the Notes calls read and write those cards | BookNotesScriptTests |  |
+| `Notes.setNotes` | - | compat | the save's Notes and notebook tabs are note cards beside the map (tagged notes and notebook); the Notes calls read and write those cards | BookNotesScriptTests |  |
+| `Physics.getGravity` | - | dropped | engine physics |  |  |
+| `Physics.play_area` | - | dropped | engine physics |  |  |
+| `Physics.setGravity` | - | dropped | engine physics |  |  |
+| `Player.action` | - | dropped | the Player API (decided 2026-11-06) |  |  |
+| `Player.admin` | - | dropped | the Player API (decided 2026-11-06) |  |  |
+| `Player.attachCameraToObject` | - | dropped | the Player API (decided 2026-11-06) |  |  |
+| `Player.blind` | - | dropped | the Player API (decided 2026-11-06) |  |  |
+| `Player.blindfolded` | - | dropped | the Player API (decided 2026-11-06) |  |  |
+| `Player.broadcast` | - | dropped | the Player API (decided 2026-11-06) |  |  |
+| `Player.changeColor` | - | dropped | the Player API (decided 2026-11-06) |  |  |
+| `Player.changeTeam` | - | dropped | the Player API (decided 2026-11-06) |  |  |
+| `Player.clearSelectedObjects` | - | dropped | the Player API (decided 2026-11-06) |  |  |
+| `Player.color` | - | dropped | the Player API (decided 2026-11-06) |  |  |
+| `Player.copy` | - | dropped | the Player API (decided 2026-11-06) |  |  |
+| `Player.drawHandStash` | - | dropped | the Player API (decided 2026-11-06) |  |  |
+| `Player.getAvailableColors` | - | dropped | the Player API (decided 2026-11-06) |  |  |
+| `Player.getHandCount` | - | dropped | the Player API (decided 2026-11-06) |  |  |
+| `Player.getHandObjects` | - | dropped | the Player API (decided 2026-11-06) |  |  |
+| `Player.getHandPlayer` | - | dropped | the Player API (decided 2026-11-06) |  |  |
+| `Player.getHandTransform` | - | dropped | the Player API (decided 2026-11-06) |  |  |
+| `Player.getHoldingObjects` | - | dropped | the Player API (decided 2026-11-06) |  |  |
+| `Player.getHoverObject` | - | dropped | the Player API (decided 2026-11-06) |  |  |
+| `Player.getPlayer` | - | dropped | the Player API (decided 2026-11-06) |  |  |
+| `Player.getPlayerHand` | - | dropped | the Player API (decided 2026-11-06) |  |  |
+| `Player.getPointerPosition` | - | dropped | the Player API (decided 2026-11-06) |  |  |
+| `Player.getPointerRotation` | - | dropped | the Player API (decided 2026-11-06) |  |  |
+| `Player.getSelectedObjects` | - | dropped | the Player API (decided 2026-11-06) |  |  |
+| `Player.getSpectators` | - | dropped | the Player API (decided 2026-11-06) |  |  |
+| `Player.hand_choice_label` | - | dropped | the Player API (decided 2026-11-06) |  |  |
+| `Player.host` | - | dropped | the Player API (decided 2026-11-06) |  |  |
+| `Player.id` | - | dropped | the Player API (decided 2026-11-06) |  |  |
+| `Player.kick` | - | dropped | the Player API (decided 2026-11-06) |  |  |
+| `Player.lift_height` | - | dropped | the Player API (decided 2026-11-06) |  |  |
+| `Player.lookAt` | - | dropped | the Player API (decided 2026-11-06) |  |  |
+| `Player.mute` | - | dropped | the Player API (decided 2026-11-06) |  |  |
+| `Player.paste` | - | dropped | the Player API (decided 2026-11-06) |  |  |
+| `Player.pingTable` | - | dropped | the Player API (decided 2026-11-06) |  |  |
+| `Player.playerColor` | - | dropped | the Player API (decided 2026-11-06) |  |  |
+| `Player.print` | - | dropped | the Player API (decided 2026-11-06) |  |  |
+| `Player.promote` | - | dropped | the Player API (decided 2026-11-06) |  |  |
+| `Player.promoted` | - | dropped | the Player API (decided 2026-11-06) |  |  |
+| `Player.seated` | - | dropped | the Player API (decided 2026-11-06) |  |  |
+| `Player.setCameraMode` | - | dropped | the Player API (decided 2026-11-06) |  |  |
+| `Player.setHandStashLocation` | - | dropped | the Player API (decided 2026-11-06) |  |  |
+| `Player.setHandTransform` | - | dropped | the Player API (decided 2026-11-06) |  |  |
+| `Player.setUITheme` | - | dropped | the Player API (decided 2026-11-06) |  |  |
+| `Player.showColorDialog` | - | dropped | the Player API (decided 2026-11-06) |  |  |
+| `Player.showConfirmDialog` | - | dropped | the Player API (decided 2026-11-06) |  |  |
+| `Player.showInfoDialog` | - | dropped | the Player API (decided 2026-11-06) |  |  |
+| `Player.showInputDialog` | - | dropped | the Player API (decided 2026-11-06) |  |  |
+| `Player.showMemoDialog` | - | dropped | the Player API (decided 2026-11-06) |  |  |
+| `Player.showOptionsDialog` | - | dropped | the Player API (decided 2026-11-06) |  |  |
+| `Player.steam_id` | - | dropped | the Player API (decided 2026-11-06) |  |  |
+| `Player.steam_name` | - | dropped | the Player API (decided 2026-11-06) |  |  |
+| `Player.team` | - | dropped | the Player API (decided 2026-11-06) |  |  |
+| `Player.unblind` | - | dropped | the Player API (decided 2026-11-06) |  |  |
+| `Player.userDataDescriptor` | - | dropped | the Player API (decided 2026-11-06) |  |  |
+| `Tables.getCustomURL` | - | dropped | the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06) |  |  |
+| `Tables.getTable` | - | dropped | the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06) |  |  |
+| `Tables.getTableObject` | - | dropped | the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06) |  |  |
+| `Tables.setCustomURL` | - | dropped | the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06) |  |  |
+| `Tables.setTable` | - | dropped | the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06) |  |  |
+| `Time.delta_time` | - | compat | compat.Time: time from the clock, frames at 60 a second |  |  |
+| `Time.fixed_delta_time` | - | compat | compat.Time: time from the clock, frames at 60 a second |  |  |
+| `Time.fixed_time` | - | compat | compat.Time: time from the clock, frames at 60 a second |  |  |
+| `Time.frame_count` | - | compat | compat.Time: time from the clock, frames at 60 a second |  |  |
+| `Time.time` | - | compat | compat.Time: time from the clock, frames at 60 a second |  |  |
+| `Timer.timers` | - | compat | compat.Timer |  |  |
+| `Turns.disable_interactations` | - | dropped | turns (decided 2026-11-06) |  |  |
+| `Turns.enable` | - | dropped | turns (decided 2026-11-06) |  |  |
+| `Turns.endTurn` | - | dropped | turns (decided 2026-11-06) |  |  |
+| `Turns.getNextTurnColor` | - | dropped | turns (decided 2026-11-06) |  |  |
+| `Turns.getPreviousTurnColor` | - | dropped | turns (decided 2026-11-06) |  |  |
+| `Turns.getTurnOrder` | - | dropped | turns (decided 2026-11-06) |  |  |
+| `Turns.order` | - | dropped | turns (decided 2026-11-06) |  |  |
+| `Turns.pass_turns` | - | dropped | turns (decided 2026-11-06) |  |  |
+| `Turns.reverse_order` | - | dropped | turns (decided 2026-11-06) |  |  |
+| `Turns.skip_empty_hands` | - | dropped | turns (decided 2026-11-06) |  |  |
+| `Turns.turn_color` | - | dropped | turns (decided 2026-11-06) |  |  |
+| `Turns.type` | - | dropped | turns (decided 2026-11-06) |  |  |
+| `UI.assetType` | - | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) |  |
+| `UI.getAttributes` | - | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) |  |
+| `UI.getCustomAssets` | - | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) |  |
+| `UI.getValue` | - | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) |  |
+| `UI.loading` | - | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) |  |
+| `UI.setAttributes` | - | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) |  |
+| `UI.setClass` | - | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) |  |
+| `UI.setCustomAssets` | - | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) |  |
+| `UI.setValue` | - | native | ui.* and self.ui.*: panels drawn from the tags and attributes the tabletop's XML takes (Defaults and classes, rich text, validation, best fit, dragging, toggle groups, scroll views); a piece's panel answers clicks on the table | PanelTests (server and app) |  |
+| `Wait.stopAll` | - | compat | compat.wait_stop_all | ModuleHelpersTests |  |
+| `WebRequest.custom` | - | dropped | web requests (decided 2026-11-06) |  |  |
+| `WebRequest.delete` | - | dropped | web requests (decided 2026-11-06) |  |  |
+| `WebRequest.head` | - | dropped | web requests (decided 2026-11-06) |  |  |
+| `WebRequest.post` | - | dropped | web requests (decided 2026-11-06) |  |  |
+| `WebRequest.put` | - | dropped | web requests (decided 2026-11-06) |  |  |
 
 ## events
 
-| row | used (calls / modules) | status | where | held by |
-|---|---|---|---|---|
-| `onSave` | 4920 / 51 | native | EventRenames |  |
-| `onLoad` | 2275 / 28 | native | EventRenames |  |
-| `onObjectSpawn` | 1510 / 13 | native | EventRenames |  |
-| `onObjectDestroy` | 12 / 12 | native | EventRenames |  |
-| `onPlayerAction` | 12 / 12 | native | on_player_action(who, action, pieces) before an umpire's delete or flip; false refuses it with a message | PlayerActionTests |
-| `onChat` | 10 / 10 | native | EventRenames |  |
-| `onScriptingButtonDown` | 10 / 10 | native | EventRenames |  |
-| `onObjectPickUp` | 4 / 2 | native | EventRenames |  |
-| `onBlindfold` | - | dropped | the Player API (decided 2026-11-06) |  |
-| `onCollisionEnter` | - | dropped | engine physics (collisions) |  |
-| `onCollisionExit` | - | dropped | engine physics (collisions) |  |
-| `onCollisionStay` | - | dropped | engine physics (collisions) |  |
-| `onExternalMessage` | - | dropped | web requests (decided 2026-11-06) |  |
-| `onFilter` | - | dropped | layout zones |  |
-| `onFixedUpdate` | - | dropped | the physics tick |  |
-| `onGameRoundEnd` | - | dropped | game rounds |  |
-| `onGameRoundStart` | - | dropped | game rounds |  |
-| `onHandSelectModeEnd` | - | dropped | hands are seats here (decided 2026-11-06) |  |
-| `onHover` | - | dropped | no hover events here |  |
-| `onObjectCollisionEnter` | - | dropped | engine physics (collisions) |  |
-| `onObjectCollisionExit` | - | dropped | engine physics (collisions) |  |
-| `onObjectCollisionStay` | - | dropped | engine physics (collisions) |  |
-| `onObjectDrop` | - | native | EventRenames |  |
-| `onObjectEnterContainer` | - | native | on_stowed(holder, piece) after a stow | StowEventTests |
-| `onObjectEnterScriptingZone` | - | dropped | scripting and layout zones (decided 2026-11-06) |  |
-| `onObjectEnterZone` | - | dropped | scripting and layout zones (decided 2026-11-06) |  |
-| `onObjectFlick` | - | dropped | engine physics (flicking) |  |
-| `onObjectHover` | - | dropped | no hover events here |  |
-| `onObjectLeaveContainer` | - | native | on_unstowed(holder, piece) after an unstow, with on_spawn for the piece | StowEventTests |
-| `onObjectLeaveScriptingZone` | - | dropped | scripting and layout zones (decided 2026-11-06) |  |
-| `onObjectLeaveZone` | - | dropped | scripting and layout zones (decided 2026-11-06) |  |
-| `onObjectLoopingEffect` | - | native | on_effect(piece, index) when an umpire starts (0) or stops (-1) an effect | BookNotesScriptTests |
-| `onObjectPageChange` | - | native | on_page(piece) in the global script | BookNotesScriptTests |
-| `onObjectPeek` | - | dropped | peeking at a hidden piece |  |
-| `onObjectRandomize` | - | native | on_roll(piece, who) in the global script when an umpire rolls | DiceScriptTests |
-| `onObjectRotate` | - | native | EventRenames |  |
-| `onObjectSearchEnd` | - | dropped | a holder's contents are a card, not a search |  |
-| `onObjectSearchStart` | - | dropped | a holder's contents are a card, not a search |  |
-| `onObjectTriggerEffect` | - | partial | translated to on_effect; no one-shot effect raises it | BookNotesScriptTests |
-| `onPageChange` | - | native | on_page() in the book's own script | BookNotesScriptTests |
-| `onPlayerChangeColor` | - | dropped | the Player API (decided 2026-11-06) |  |
-| `onPlayerConnect` | - | dropped | the Player API (decided 2026-11-06) |  |
-| `onPlayerDisconnect` | - | dropped | the Player API (decided 2026-11-06) |  |
-| `onPlayerPing` | - | dropped | the Player API (decided 2026-11-06) |  |
-| `onPlayerTurnEnd` | - | compat | on_turn when the clock advances | ModuleHelpersTests |
-| `onPlayerTurnStart` | - | compat | on_turn when the clock advances | ModuleHelpersTests |
-| `onPlayersConnect` | - | dropped | the Player API (decided 2026-11-06) |  |
-| `onPlayersDisconnect` | - | dropped | the Player API (decided 2026-11-06) |  |
-| `onRandomize` | - | native | on_roll(who) in the die's own script | DiceScriptTests |
-| `onScriptingButtonUp` | - | native | EventRenames |  |
-| `onZoneGroupSort` | - | dropped | scripting and layout zones (decided 2026-11-06) |  |
-| `tryObjectEnterContainer` | - | native | try_stow(holder, piece) before a stow; false keeps the piece out | StowEventTests |
+| row | used (calls / modules) | status | where | held by | audited |
+|---|---|---|---|---|---|
+| `onSave` | 4920 / 51 | native | EventRenames |  |  |
+| `onLoad` | 2275 / 28 | native | EventRenames |  |  |
+| `onObjectSpawn` | 1510 / 13 | native | EventRenames |  |  |
+| `onObjectDestroy` | 12 / 12 | native | EventRenames |  |  |
+| `onPlayerAction` | 12 / 12 | native | on_player_action(who, action, pieces) before an umpire's delete or flip; false refuses it with a message | PlayerActionTests |  |
+| `onChat` | 10 / 10 | native | EventRenames |  |  |
+| `onScriptingButtonDown` | 10 / 10 | native | EventRenames |  |  |
+| `onObjectPickUp` | 4 / 2 | native | EventRenames |  |  |
+| `onBlindfold` | - | dropped | the Player API (decided 2026-11-06) |  |  |
+| `onCollisionEnter` | - | dropped | engine physics (collisions) |  |  |
+| `onCollisionExit` | - | dropped | engine physics (collisions) |  |  |
+| `onCollisionStay` | - | dropped | engine physics (collisions) |  |  |
+| `onExternalMessage` | - | dropped | web requests (decided 2026-11-06) |  |  |
+| `onFilter` | - | dropped | layout zones |  |  |
+| `onFixedUpdate` | - | dropped | the physics tick |  |  |
+| `onGameRoundEnd` | - | dropped | game rounds |  |  |
+| `onGameRoundStart` | - | dropped | game rounds |  |  |
+| `onHandSelectModeEnd` | - | dropped | hands are seats here (decided 2026-11-06) |  |  |
+| `onHover` | - | dropped | no hover events here |  |  |
+| `onObjectCollisionEnter` | - | dropped | engine physics (collisions) |  |  |
+| `onObjectCollisionExit` | - | dropped | engine physics (collisions) |  |  |
+| `onObjectCollisionStay` | - | dropped | engine physics (collisions) |  |  |
+| `onObjectDrop` | - | native | EventRenames |  |  |
+| `onObjectEnterContainer` | - | native | on_stowed(holder, piece) after a stow | StowEventTests |  |
+| `onObjectEnterScriptingZone` | - | dropped | scripting and layout zones (decided 2026-11-06) |  |  |
+| `onObjectEnterZone` | - | dropped | scripting and layout zones (decided 2026-11-06) |  |  |
+| `onObjectFlick` | - | dropped | engine physics (flicking) |  |  |
+| `onObjectHover` | - | dropped | no hover events here |  |  |
+| `onObjectLeaveContainer` | - | native | on_unstowed(holder, piece) after an unstow, with on_spawn for the piece | StowEventTests |  |
+| `onObjectLeaveScriptingZone` | - | dropped | scripting and layout zones (decided 2026-11-06) |  |  |
+| `onObjectLeaveZone` | - | dropped | scripting and layout zones (decided 2026-11-06) |  |  |
+| `onObjectLoopingEffect` | - | native | on_effect(piece, index) when an umpire starts (0) or stops (-1) an effect | BookNotesScriptTests |  |
+| `onObjectPageChange` | - | native | on_page(piece) in the global script | BookNotesScriptTests |  |
+| `onObjectPeek` | - | dropped | peeking at a hidden piece |  |  |
+| `onObjectRandomize` | - | native | on_roll(piece, who) in the global script when an umpire rolls | DiceScriptTests |  |
+| `onObjectRotate` | - | native | EventRenames |  |  |
+| `onObjectSearchEnd` | - | dropped | a holder's contents are a card, not a search |  |  |
+| `onObjectSearchStart` | - | dropped | a holder's contents are a card, not a search |  |  |
+| `onObjectTriggerEffect` | - | partial | translated to on_effect; no one-shot effect raises it | BookNotesScriptTests |  |
+| `onPageChange` | - | native | on_page() in the book's own script | BookNotesScriptTests |  |
+| `onPlayerChangeColor` | - | dropped | the Player API (decided 2026-11-06) |  |  |
+| `onPlayerConnect` | - | dropped | the Player API (decided 2026-11-06) |  |  |
+| `onPlayerDisconnect` | - | dropped | the Player API (decided 2026-11-06) |  |  |
+| `onPlayerPing` | - | dropped | the Player API (decided 2026-11-06) |  |  |
+| `onPlayerTurnEnd` | - | compat | on_turn when the clock advances | ModuleHelpersTests |  |
+| `onPlayerTurnStart` | - | compat | on_turn when the clock advances | ModuleHelpersTests |  |
+| `onPlayersConnect` | - | dropped | the Player API (decided 2026-11-06) |  |  |
+| `onPlayersDisconnect` | - | dropped | the Player API (decided 2026-11-06) |  |  |
+| `onRandomize` | - | native | on_roll(who) in the die's own script | DiceScriptTests |  |
+| `onScriptingButtonUp` | - | native | EventRenames |  |  |
+| `onZoneGroupSort` | - | dropped | scripting and layout zones (decided 2026-11-06) |  |  |
+| `tryObjectEnterContainer` | - | native | try_stow(holder, piece) before a stow; false keeps the piece out | StowEventTests |  |
 
 ## engine
 
-| row | used (calls / modules) | status | where | held by |
-|---|---|---|---|---|
-| `Lua table to vector, colour and params and back (positional and named)` | 55 / 55 | compat | compat.Vector / compat.Color / vec(): named, positional and mixed tables, names and hex | ModuleVectorColorTests |
-| `MoonSharp 2.0.0 on both sides: the Lua dialect matches` | 55 / 55 | native | Server.csproj |  |
-| `Wait.frames counts frames, Wait.time seconds, onUpdate per frame` | 55 / 55 | native | the host runs scripts every frame it draws, as the tabletop does: Wait.frames counts those frames and on_update runs on each | Net._Process ticks the scripts each frame (no test of its own) |
-| `a script call has no time limit in modules` | 55 / 55 | native | kept on purpose (2026-11-06): a call gets a second of its own time, the table work it asks for not counted; the tabletop freezes for good on a runaway loop, here the loop stops and its script and line are named | import-sweep: naval (the Midway bag's Place) |
-| `button and input defaults (width, height, font_size, colours, position, scale)` | 55 / 55 | compat | compat.module_defaults, from the tabletop's LuaUIState classes; a button or input with no handler is refused, as modules expect | ModuleDefaultsTests |
-| `click_function(obj, player_color, alt_click)` | 55 / 55 | compat | compat.create_button / module_handler | TranslatorTests.Handlers_get_the_piece_their_widget_is_on |
-| `context menu callback(player_color, menu_position, object)` | 55 / 55 | compat | compat.add_context_menu_item |  |
-| `getObjectFromGUID answers nil for a piece inside a bag` | 55 / 55 | native | a stowed piece is off the layer, so board.find does not see it | StowScriptTests |
-| `input_function(obj, player_color, text, selected)` | 55 / 55 | compat | compat.create_input / module_handler | TranslatorTests.A_name_typed_letter_by_letter_reaches_the_face |
-| `load order: global before objects; onLoad(script_state)` | 55 / 55 | native | as the tabletop: on a load every script's top-level code runs, the global's first, then on_load runs, the global's first, so the global on_load can call into any piece | BookNotesScriptTests |
-| `member names fold (exact, first letter up, snake to camel, both)` | 55 / 55 | native | ModuleTranslator.FoldMember before every object member lookup | TranslatorFoldTests |
-| `module Vector and Color classes with their methods` | 55 / 55 | compat | compat.Vector and compat.Color: every documented method, operator and named colour | ModuleVectorColorTests |
-| `player model: colours, Black as GM, promoted, seated, host` | 55 / 55 | dropped | with the Player API (decided 2026-11-06); compat.color_of still names umpires by seat colour |  |
-| `positionToWorld and positionToLocal: the module transform, local x along +X at rotation zero, in mesh units times scale for a model and the size rule for a flat` | 55 / 55 | compat | compat.position_to_world / position_to_local; a model def carries local_unit from the converter | ModuleLocalFrameTests |
-| `save quirk: a number written as a string, or NaN` | 55 / 55 | native | ModuleObj.D falls back to the default and the report says so | ConverterTests |
-| `save quirk: duplicate GUIDs inside bags` | 55 / 55 | native | a guid names the first piece found, as getObjectFromGUID answers in modules |  |
-| `save quirk: negative scale mirrors` | 55 / 55 | partial | the size is taken unsigned, so a mirrored piece comes over unmirrored and the report names it; mirroring its picture or model at conversion is a decision for the user | ConverterTests |
-| `save quirk: rotX/rotZ near 180 means face down; other tilts stand or lean` | 55 / 55 | partial | ModuleObj.Flipped reads face down; a piece standing on edge or leaning needs a tilt the table does not keep, a decision for the user |  |
-| `script safety cuts the self-copying block and keeps the rest` | 55 / 55 | native | ScriptSafety; over the roster only the German Team Planning Table is cut, 1,463 copies of the Object base code worm, and no other rule fires | ScriptSafetyTests; import-sweep |
-| `setState keeps the GUID` | 55 / 55 | native | a converted piece keeps its states' GUIDs and wears the one of the state it shows, as each state is its own object in the tabletop | BookNotesScriptTests |
-| `smooth moves end at once` | 55 / 55 | compat | compat.set_position |  |
-| `spawning and loading_custom flags` | 55 / 55 | compat | ObjectProps (get_prop) |  |
-| `widget indices are 0-based in editButton/editInput/removeButton` | 55 / 55 | compat | compat.edit_button |  |
+| row | used (calls / modules) | status | where | held by | audited |
+|---|---|---|---|---|---|
+| `Lua table to vector, colour and params and back (positional and named)` | 55 / 55 | compat | compat.Vector / compat.Color / vec(): named, positional and mixed tables, names and hex | ModuleVectorColorTests |  |
+| `MoonSharp 2.0.0 on both sides: the Lua dialect matches` | 55 / 55 | native | Server.csproj |  |  |
+| `Wait.frames counts frames, Wait.time seconds, onUpdate per frame` | 55 / 55 | native | the host runs scripts every frame it draws, as the tabletop does: Wait.frames counts those frames and on_update runs on each | Net._Process ticks the scripts each frame (no test of its own) |  |
+| `a script call has no time limit in modules` | 55 / 55 | native | kept on purpose (2026-11-06): a call gets a second of its own time, the table work it asks for not counted; the tabletop freezes for good on a runaway loop, here the loop stops and its script and line are named | import-sweep: naval (the Midway bag's Place) |  |
+| `button and input defaults (width, height, font_size, colours, position, scale)` | 55 / 55 | compat | compat.module_defaults, from the tabletop's LuaUIState classes; a button or input with no handler is refused, as modules expect | ModuleDefaultsTests |  |
+| `click_function(obj, player_color, alt_click)` | 55 / 55 | compat | compat.create_button / module_handler | TranslatorTests.Handlers_get_the_piece_their_widget_is_on |  |
+| `context menu callback(player_color, menu_position, object)` | 55 / 55 | compat | compat.add_context_menu_item |  |  |
+| `getObjectFromGUID answers nil for a piece inside a bag` | 55 / 55 | native | a stowed piece is off the layer, so board.find does not see it | StowScriptTests |  |
+| `input_function(obj, player_color, text, selected)` | 55 / 55 | compat | compat.create_input / module_handler | TranslatorTests.A_name_typed_letter_by_letter_reaches_the_face |  |
+| `load order: global before objects; onLoad(script_state)` | 55 / 55 | native | as the tabletop: on a load every script's top-level code runs, the global's first, then on_load runs, the global's first, so the global on_load can call into any piece | BookNotesScriptTests |  |
+| `member names fold (exact, first letter up, snake to camel, both)` | 55 / 55 | native | ModuleTranslator.FoldMember before every object member lookup | TranslatorFoldTests |  |
+| `module Vector and Color classes with their methods` | 55 / 55 | compat | compat.Vector and compat.Color: every documented method, operator and named colour | ModuleVectorColorTests |  |
+| `player model: colours, Black as GM, promoted, seated, host` | 55 / 55 | dropped | with the Player API (decided 2026-11-06); compat.color_of still names umpires by seat colour |  |  |
+| `positionToWorld and positionToLocal: the module transform, local x along +X at rotation zero, in mesh units times scale for a model and the size rule for a flat` | 55 / 55 | compat | compat.position_to_world / position_to_local; a model def carries local_unit from the converter | ModuleLocalFrameTests |  |
+| `save quirk: a number written as a string, or NaN` | 55 / 55 | native | ModuleObj.D falls back to the default and the report says so | ConverterTests |  |
+| `save quirk: duplicate GUIDs inside bags` | 55 / 55 | native | a guid names the first piece found, as getObjectFromGUID answers in modules |  |  |
+| `save quirk: negative scale mirrors` | 55 / 55 | partial | the size is taken unsigned, so a mirrored piece comes over unmirrored and the report names it; mirroring its picture or model at conversion is a decision for the user | ConverterTests |  |
+| `save quirk: rotX/rotZ near 180 means face down; other tilts stand or lean` | 55 / 55 | partial | ModuleObj.Flipped reads face down; a piece standing on edge or leaning needs a tilt the table does not keep, a decision for the user |  |  |
+| `script safety cuts the self-copying block and keeps the rest` | 55 / 55 | native | ScriptSafety; over the roster only the German Team Planning Table is cut, 1,463 copies of the Object base code worm, and no other rule fires | ScriptSafetyTests; import-sweep |  |
+| `setState keeps the GUID` | 55 / 55 | native | a converted piece keeps its states' GUIDs and wears the one of the state it shows, as each state is its own object in the tabletop | BookNotesScriptTests |  |
+| `smooth moves end at once` | 55 / 55 | compat | compat.set_position |  |  |
+| `spawning and loading_custom flags` | 55 / 55 | compat | ObjectProps (get_prop) |  |  |
+| `widget indices are 0-based in editButton/editInput/removeButton` | 55 / 55 | compat | compat.edit_button |  |  |

@@ -67,6 +67,7 @@ public sealed class PackBuilder
         def.Back = Re(def.Back, main.BackUrl, "image");
         def.Mesh = Re(def.Mesh, main.MeshUrl, "mesh");
         def.Texture = Re(def.Texture, main.DiffuseUrl, "image");
+        def.Normal = Re(def.Normal, main.NormalUrl, "image");
         for (int i = 0; i < def.States.Count; i++)
         {
             var src = i < states.Count ? states[i] : main;

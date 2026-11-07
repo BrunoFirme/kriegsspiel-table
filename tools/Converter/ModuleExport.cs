@@ -160,8 +160,8 @@ public sealed class ModuleExport
                 var o = Base("Custom_Model", nick, string.Join("\n", lines), Transform(p.Pos, y, p.RotDeg, p.Scale, p.Scale, p.Scale), p.TintOverride ?? def.Tint, false);
                 o["CustomMesh"] = new JsonObject
                 {
-                    ["MeshURL"] = UrlFor(pack, mesh), ["DiffuseURL"] = UrlFor(pack, st?.Texture ?? def.Texture), ["NormalURL"] = "", ["ColliderURL"] = "",
-                    ["Convex"] = true, ["MaterialIndex"] = 1, ["TypeIndex"] = 4, ["CastShadows"] = true,
+                    ["MeshURL"] = UrlFor(pack, mesh), ["DiffuseURL"] = UrlFor(pack, st?.Texture ?? def.Texture), ["NormalURL"] = UrlFor(pack, def.Normal), ["ColliderURL"] = "",
+                    ["Convex"] = true, ["MaterialIndex"] = 1, ["TypeIndex"] = 4, ["CastShadows"] = !def.Shadowless,
                 };
                 return o;
             }

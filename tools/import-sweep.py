@@ -1,19 +1,22 @@
 import argparse
 import concurrent.futures
+import glob
 import json
 import os
 import re
 import shutil
 import subprocess
 import sys
+import threading
 import time
 from collections import defaultdict
 
 USAGE = ("python -I tools/import-sweep.py [--base <rev>] [--base-exe <Converter.exe>] [--modules <id|name>,...] "
          "[--out <dir>] [--standard <packages dir>] [--jobs <n>] [--fresh-base] [--keep] [--diff-only]")
 JOBS = 4
+IMPORT_LIMIT, TIMED_OUT = 1800, 124
 BASES = os.path.join(os.environ.get("TEMP", "/tmp"), "ktable-sweep-bases")
-WORKSHOP = os.path.join(os.path.expanduser("~"), "OneDrive", "Documentos", "My Games", "Tabletop Simulator", "Mods", "Workshop")
+GAMES = [os.path.join(os.path.expanduser("~"), *inside, "My Games") for inside in ((), ("Documents",), ("OneDrive", "Documents"), ("OneDrive", "Documentos"))]
 STANDARD = "std.effects"
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
@@ -25,8 +28,12 @@ TOLD_SIZES = ("IMPORTED", "ALSO")
 SAME_PIECE = ("name", "kind", "image", "back", "mesh", "texture", "shape")
 
 
-def shell(args, cwd=None, show=False):
-    done = subprocess.run(args, cwd=cwd or ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace")
+def shell(args, cwd=None, show=False, limit=None):
+    try:
+        done = subprocess.run(args, cwd=cwd or ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=limit)
+    except subprocess.TimeoutExpired as late:
+        said = late.stdout.decode("utf-8", "replace") if isinstance(late.stdout, bytes) else (late.stdout or "")
+        return subprocess.CompletedProcess(args, TIMED_OUT, said, f"stopped after {limit} s without finishing")
     if done.returncode and show:
         sys.stderr.write(" ".join(str(a) for a in args) + "\n" + (done.stdout or "")[-3000:] + (done.stderr or "")[-3000:] + "\n")
     return done
@@ -110,13 +117,15 @@ def seed(standard, output):
 
 def side(name, source, out, exe, standard, output=None):
     cache, written, binaries = (os.path.join(out, f"{name}-{what}") for what in ("cache", "out", "bin"))
+    if output is None:
+        shutil.rmtree(written, ignore_errors=True)
     output = output or written
     os.makedirs(output, exist_ok=True)
     seed(standard, output)
     linked = own_cache(real_cache(), cache)
     built = exe or converter(source, binaries)
     return {"name": name, "exe": built, "config": config_at(source, cache, output, os.path.join(out, f"{name}.json")),
-            "output": output, "linked": linked}
+            "output": output, "linked": linked, "cache": cache}
 
 
 def told(text, heads):
@@ -125,7 +134,7 @@ def told(text, heads):
 
 def bring_in(place, module):
     began = time.time()
-    done = shell([place["exe"], "--config", place["config"], "import", module["id"]])
+    done = shell([place["exe"], "--config", place["config"], "import", module["id"]], limit=IMPORT_LIMIT)
     scenarios = []
     for line in told(done.stdout, TOLD_SIZES):
         found = re.search(r"scenario=(\S+)", line)
@@ -139,13 +148,28 @@ def scripts_clean(place, slug):
     scenario = os.path.join(place["output"], "scenarios", slug, "scenario.json")
     if not os.path.exists(scenario):
         return None
-    done = shell([place["exe"], "--config", place["config"], "check-scripts", place["output"], scenario])
+    done = shell([place["exe"], "--config", place["config"], "check-scripts", place["output"], scenario], limit=IMPORT_LIMIT)
     counted = [int(ERRORS_RX.search(line).group(1)) for line in (done.stdout or "").splitlines() if ERRORS_RX.search(line)]
     return max(counted) if counted else None
 
 
+SAVE_NAME_RX = re.compile(r'"SaveName"\s*:\s*"([^"]*)"')
+WRITING = defaultdict(threading.Lock)
+
+
+def save_name(place, module):
+    fetched = [os.path.join(cache, "workshop", module["id"] + ".json") for cache in (place.get("cache"), real_cache()) if cache]
+    path = module_file(module["id"]) or next((f for f in fetched if os.path.exists(f)), None)
+    if path is None:
+        return module["id"]
+    with open(path, encoding="utf-8", errors="replace") as f:
+        found = SAVE_NAME_RX.search(f.read(8192))
+    return found.group(1) if found else module["id"]
+
+
 def one_import(place, module):
-    brought = bring_in(place, module)
+    with WRITING[(place["name"], save_name(place, module))]:
+        brought = bring_in(place, module)
     brought["errors"] = {slug: scripts_clean(place, slug) for slug in brought["scenarios"]}
     print(f"  {place['name']:4} {module['name']} ({brought['seconds']} s)", flush=True)
     return brought
@@ -165,8 +189,15 @@ def sweep(modules, sides, jobs, kept_base=None):
     return runs
 
 
+def module_file(module_id):
+    found = [path for games in GAMES for path in glob.glob(os.path.join(games, "*", "Mods", "Workshop", module_id + ".json"))]
+    return found[0] if found else None
+
+
 def module_mark(module):
-    path = os.path.join(WORKSHOP, module["id"] + ".json")
+    path = module_file(module["id"])
+    if path is None:
+        return "steam"
     try:
         state = os.stat(path)
         return f"{state.st_size}:{int(state.st_mtime)}"
@@ -392,7 +423,9 @@ def summary(runs):
             errors = ", ".join(f"{slug} {count} script errors" for slug, count in (place.get("errors") or {}).items() if count)
             lines.append(f"  {which}: exit {place.get('code')} in {place.get('seconds')} s; " +
                          "; ".join(place.get("said") or ["nothing imported"]) + (f"; {errors}" if errors else ""))
-            if place.get("code") or not place.get("said") or errors:
+            known = (base.get("errors") or {}) if which == "new" else (place.get("errors") or {})
+            worse = any(count and count > (known.get(slug) or 0) for slug, count in (place.get("errors") or {}).items())
+            if place.get("code") or not place.get("said") or worse:
                 trouble = True
                 if place.get("tail"):
                     lines.append(f"      {short(place['tail'].splitlines()[-1] if place['tail'].splitlines() else '')}")
@@ -409,6 +442,7 @@ def clear(out, sides, keep):
 
 
 def main():
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     ap = argparse.ArgumentParser(usage=USAGE, description="Import the roster of modules at two builds of the converter and diff what they wrote.")
     ap.add_argument("--base", default="HEAD")
     ap.add_argument("--base-exe", default="")

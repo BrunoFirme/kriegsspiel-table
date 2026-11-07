@@ -196,7 +196,16 @@
   "CustomPDFState.PDFPageOffset": ["native", "the book's page offset (PieceDef.PageOffset)", "", "BookNotesScriptTests"],
   "CustomPDFState.PDFPassword": ["native", "a protected PDF opens with the password the save holds", "", "converter"],
   "CustomPDFState.PDFUrl": ["native", "the book's pages", "", "BookTests"],
-  "CustomPDFState.PDFPage": ["native", "the page it lies open at", "", "BookTests"]
+  "CustomPDFState.PDFPage": ["native", "the page it lies open at", "", "BookTests"],
+  "CustomMeshState.ColliderURL": ["dropped", "pieces here never collide (decided 2026-11-07)", "nothing is needed: pieces rest by their stacking"],
+  "CustomMeshState.Convex": ["dropped", "pieces here never collide (decided 2026-11-07)", "nothing is needed: pieces rest by their stacking"],
+  "CustomMeshState.TypeIndex": ["partial", "Dice and Coin models roll on their rotation values (the kind's faces); Bag by the object's name; Board only exempts from zones, fog and alt zoom, none here; Figurine held upright, and pieces here never tip; Chip stacking unused in the corpus", "", "ConverterTests.A_model_made_a_die_rolls_on_its_saved_values_and_shows_the_one_facing_up_and_a_plain_model_does_not"],
+  "CustomAssetbundleState.TypeIndex": ["partial", "as CustomMeshState.TypeIndex; the corpus has Generic, Figurine and Board bundles only", "", "converter"],
+  "CustomMeshState.CastShadows": ["native", "the kind's Shadowless", "", "ConverterTests.A_model_keeps_its_normal_map_and_whether_it_casts_a_shadow"],
+  "CustomMeshState.NormalURL": ["native", "the kind's Normal (normal map on the model)", "", "ConverterTests.A_model_keeps_its_normal_map_and_whether_it_casts_a_shadow"],
+  "CustomTileState.Stackable": ["native", "a saved pile comes in as stacked copies; any piece piles on another here", "", "converter"],
+  "CustomTokenState.MergeDistancePixels": ["partial", "the token's outline traces its picture's alpha; the game's merging of outline points closer than this is not copied", "", "converter"],
+  "SaveState.Sky": ["native", "a stock sky becomes the nearest backdrop (ScenarioBuilder.StockSkies)", "", "ConverterTests.A_module_that_names_only_a_stock_sky_gets_the_nearest_backdrop"]
  },
  "object": {
   "addForce": ["dropped", "engine physics", "move the piece instead"],

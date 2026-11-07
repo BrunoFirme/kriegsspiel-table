@@ -715,10 +715,11 @@ function compat.widget_spec(obj, t, kind, env)
   local em = kind ~= "input" and obj.shape == "alpha" and TOKEN_BUTTON_EM or BUTTON_EM
   local sx, sz = math.abs(vec(t.scale, "x", 1, 1)) * k, math.abs(vec(t.scale, "z", 3, 1)) * k
   local turned = math.abs(((rz % 360) + 360) % 360 - 180) < 90 or math.abs(((rx % 360) + 360) % 360 - 180) < 90
-  local on_top = vec(t.position, "y", 2, 0) > 0
+  local y = vec(t.position, "y", 2, 0)
+  local on_top = y > 0
   local back = turned and not on_top
   local s = {
-    face = back and "back" or "front", kind = turned and on_top and "label" or kind,
+    face = back and "back" or "front", kind = turned and on_top and "label" or kind, inside = not turned and y < 0,
     x = (back and -px or px) * ux, z = pz * uz, rot = ry,
     w = num(t.width, D.width) / 1000 * sx * ux, h = num(t.height, D.height) / 1000 * sz * uz,
     font = num(t.font_size, D.font_size) / 1000 * sx * uz * em,
@@ -740,7 +741,7 @@ function compat.widget_patch(obj, t, kind, full, env)
   local geo = t.position or t.rotation or t.scale or t.width or t.height or t.font_size
   if geo then
     local s = compat.widget_spec(obj, full or t, kind, env)
-    if t.position or t.rotation then p.x = s.x; p.z = s.z; p.face = s.face; p.kind = s.kind; p.rot = s.rot end
+    if t.position or t.rotation then p.x = s.x; p.z = s.z; p.face = s.face; p.kind = s.kind; p.rot = s.rot; p.inside = s.inside end
     if t.width or t.scale then p.w = s.w end
     if t.height or t.scale then p.h = s.h end
     if t.font_size or t.scale then p.font = s.font end
@@ -756,10 +757,16 @@ function compat.widget_patch(obj, t, kind, full, env)
   return p
 end
 
+local function drawn(obj, e, kind)
+  if e.spec.inside or e.gone then return nil end
+  if kind == "input" then return obj.input(e.spec) end
+  return obj.button(e.spec)
+end
+
 local function rebuild(obj, b)
   obj.clear_widgets()
-  for _, e in ipairs(b.buttons) do e.index = obj.button(e.spec) end
-  for _, e in ipairs(b.inputs) do e.index = obj.input(e.spec) end
+  for _, e in ipairs(b.buttons) do e.index = drawn(obj, e, "button") end
+  for _, e in ipairs(b.inputs) do e.index = drawn(obj, e, "input") end
 end
 
 local function refused(what, fn)
@@ -770,16 +777,18 @@ function compat.create_button(obj, t, env)
   if type(t) ~= "table" then return false end
   if t.click_function == nil or t.click_function == "" then return refused("createButton", "click_function") end
   local b = book(obj)
-  local spec = compat.widget_spec(obj, t, "button", env)
-  b.buttons[#b.buttons + 1] = { spec = spec, index = obj.button(spec), given = t }
+  local e = { spec = compat.widget_spec(obj, t, "button", env), given = t }
+  e.index = drawn(obj, e, "button")
+  b.buttons[#b.buttons + 1] = e
   return true
 end
 function compat.create_input(obj, t, env)
   if type(t) ~= "table" then return false end
   if t.input_function == nil or t.input_function == "" then return refused("createInput", "input_function") end
   local b = book(obj)
-  local spec = compat.widget_spec(obj, t, "input", env)
-  b.inputs[#b.inputs + 1] = { spec = spec, index = obj.input(spec), given = t }
+  local e = { spec = compat.widget_spec(obj, t, "input", env), given = t }
+  e.index = drawn(obj, e, "input")
+  b.inputs[#b.inputs + 1] = e
   return true
 end
 local function edit(obj, list, t, kind, env)
@@ -788,16 +797,35 @@ local function edit(obj, list, t, kind, env)
   local full = {}
   for k, v in pairs(e.given) do full[k] = v end
   for k, v in pairs(t) do full[k] = v end
+  local fn = kind == "input" and "input_function" or "click_function"
+  if full[fn] == nil or full[fn] == "" then return refused(kind == "input" and "editInput" or "editButton", fn) end
   local patch = compat.widget_patch(obj, t, kind, full, env)
+  local was = e.spec.inside
   for k, v in pairs(patch) do e.spec[k] = v end
   e.given = full
-  obj.edit(e.index, patch)
+  patch.inside = nil
+  if e.spec.inside ~= was then rebuild(obj, book(obj)) elseif e.index then obj.edit(e.index, patch) end
   return true
 end
 function compat.edit_button(obj, t, env) return edit(obj, book(obj).buttons, t, "button", env) end
 function compat.edit_input(obj, t, env) return edit(obj, book(obj).inputs, t, "input", env) end
-function compat.remove_button(obj, i) local b = book(obj); if b.buttons[num(i, 0) + 1] then table.remove(b.buttons, num(i, 0) + 1); rebuild(obj, b) end end
-function compat.remove_input(obj, i) local b = book(obj); if b.inputs[num(i, 0) + 1] then table.remove(b.inputs, num(i, 0) + 1); rebuild(obj, b) end end
+local function remove(obj, which, i, what)
+  local b = book(obj)
+  local e = b[which][num(i, 0) + 1]
+  if not e then
+    print(what .. ": Could not find matching " .. (which == "inputs" and "input" or "button") .. " index")
+    return false
+  end
+  if e.gone then return true end
+  e.gone = true
+  rebuild(obj, b)
+  wait.frames(1, function()
+    for k, x in ipairs(b[which]) do if x == e then table.remove(b[which], k); return end end
+  end)
+  return true
+end
+function compat.remove_button(obj, i) return remove(obj, "buttons", i, "removeButton") end
+function compat.remove_input(obj, i) return remove(obj, "inputs", i, "removeInput") end
 function compat.clear_buttons(obj) local b = book(obj); b.buttons = {}; rebuild(obj, b) end
 function compat.clear_inputs(obj) local b = book(obj); b.inputs = {}; rebuild(obj, b) end
 local function widget_list(list)
@@ -805,12 +833,17 @@ local function widget_list(list)
   for i, e in ipairs(list) do local c = {}; for k, v in pairs(e.given) do c[k] = v end; c.index = i - 1; t[#t + 1] = c end
   return t
 end
-function compat.get_buttons(obj) return widget_list(book(obj).buttons) end
+function compat.get_buttons(obj)
+  local b = book(obj)
+  if #b.buttons == 0 then return nil end
+  return widget_list(b.buttons)
+end
 function compat.get_inputs(obj)
+  if #book(obj).inputs == 0 then return nil end
   local t = widget_list(book(obj).inputs)
   local live = obj.widgets()
   for i, e in ipairs(book(obj).inputs) do
-    local w = live[e.index]
+    local w = e.index and live[e.index]
     if w and w.value ~= nil then t[i].value = w.value; e.given.value = w.value end
   end
   return t

@@ -311,7 +311,7 @@ public sealed partial class DefFactory
         var (states, self) = o.StateList();
         var b = states[0];
         double bs = Math.Abs(b.ScaleX) < NoScale ? 1 : Math.Abs(b.ScaleX);
-        double r = refScale is > NoScale ? refScale.Value : bs;
+        double r = refScale is > NoScale && !BakesChildren(o) ? refScale.Value : bs;
         double instScale = Math.Round(bs / r, 4);
         if (StandardDef(o, b, pack, bs, instScale) is { } standard) return standard;
         if (o.Name == TilesetTree) return null;
@@ -320,6 +320,7 @@ public sealed partial class DefFactory
         var script = ScriptInfo.Parse(b.SafeLua.Length > 0 ? b.SafeLua : o.SafeLua, o.LuaState);
         var def = BuildDef(b, pack, r, where, script, heightScale);
         if (def == null) return null;
+        if (RollsOnItsValues(b)) FillModelFaces(def, b);
         if (o.TransformNotANumber) _rep.Note($"{where}: the module gives this piece a position, turn or scale that is not a number; the usual value is taken instead");
         var lua = b.SafeLua.Length > 0 ? b.SafeLua : o.SafeLua;
         string scriptKey = "";
@@ -351,7 +352,7 @@ public sealed partial class DefFactory
             }
         }
 
-        bool baked = BakesChildren(o) && BakeStates(def, states, bs, r, pack);
+        bool baked = BakesChildren(o) && BakeStates(def, states, bs, r, heightScale, pack);
         for (int i = 0; i < def.States.Count && i < states.Count; i++)
         {
             var sd = def.States[i];
@@ -372,7 +373,9 @@ public sealed partial class DefFactory
             ? "|d" + Hash8(string.Join(";", def.States.Select(s => string.Join(",", (s.Decals ?? new()).Select(d => d.Picture)))))
             : "";
         var gluedKey = heightScale == 1 || IsModel(b) ? "" :string.Create(CultureInfo.InvariantCulture, $"|t{def.Thickness:0.###}");
-        var key = string.Create(CultureInfo.InvariantCulture, $"{VisualKey(o)}|{def.Size.W:0.###}x{def.Size.H:0.###}{scriptKey}{bakedKey}{decalKey}{gluedKey}");
+        var facesKey = !RollsOnItsValues(o) ? "" : "|f" + Hash8(string.Join(";", def.Faces.Select(f => string.Create(CultureInfo.InvariantCulture, $"{f.Value}@{f.Up[0]},{f.Up[1]},{f.Up[2]}"))));
+        var surfaceKey = (def.Shadowless ? "|ns" : "") + (def.Normal is { } normal ? "|n" + normal : "");
+        var key = string.Create(CultureInfo.InvariantCulture, $"{VisualKey(o)}|{def.Size.W:0.###}x{def.Size.H:0.###}{scriptKey}{bakedKey}{decalKey}{gluedKey}{facesKey}{surfaceKey}");
         int rich = def.States.Count * 100 + def.Counters.Count * 10 + def.TextLines.Count + def.Attachments.Count * 1000 + (def.Script != null ? 5000 : 0);
         if (pack.ByKey.TryGetValue(key, out var existing))
         {
@@ -398,7 +401,7 @@ public sealed partial class DefFactory
     }
 
     public static int Shown(ModuleObj o, PieceDef def, int self) =>
-        o.IsPictureDie ? FaceShown(o, def) : o.Name == "Custom_PDF" ? Math.Min(o.PdfPage, Math.Max(0, def.States.Count - 1)) : self;
+        o.IsPictureDie || RollsOnItsValues(o) ? FaceShown(o, def) : o.Name == "Custom_PDF" ? Math.Min(o.PdfPage, Math.Max(0, def.States.Count - 1)) : self;
 
     public TranslateResult Translate(string lua, PackOut pack, string where, bool isGlobal = false)
     {
@@ -457,6 +460,8 @@ public sealed partial class DefFactory
             def.Kind = "model";
             def.Mesh = ModelMesh(pack, b, where);
             def.Texture = Asset(pack, b.DiffuseUrl, "image", where);
+            def.Normal = Asset(pack, b.NormalUrl, "image", where);
+            def.Shadowless = !b.CastsShadows;
             def.Finish = b.Finish;
             def.Shine = b.Shine;
             if (def.Mesh == null) { def.Kind = "flat"; def.Image = def.Texture ?? Placeholder(pack); }

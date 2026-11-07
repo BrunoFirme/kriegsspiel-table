@@ -17,6 +17,6 @@
     { "id": "3357570231", "name": "Battle Lines: Scripted Kriegsspiel Pieces", "tests": "a script on nearly every object, infinite bags and a Custom_PDF; unchecked" },
     { "id": "3432894392", "name": "Blazertrail's Napoleonic Pieces", "tests": "288 tokens of which 90 carry states; unchecked" },
     { "id": "3479792399", "name": "1824 KS Pieces", "tests": "tiles over asset bundles, nothing else; unchecked" },
-    { "id": "3828471326", "name": "Argentorarum Umpires", "tests": "a Flex Table whose top carries the map picture: the table top laid as a sheet" }
+    { "id": "3828471326", "name": "Argentorarum Umpires", "tests": "a Flex Table whose top carries the map picture: the table top laid as a sheet; unit tokens whose states each glue their own base, one of them a token with states" }
   ]
 }

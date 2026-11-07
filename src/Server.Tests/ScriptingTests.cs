@@ -348,6 +348,71 @@ public class ScriptingTests
     }
 
     [Fact]
+    public void A_module_input_inside_its_piece_is_not_drawn_but_still_listed_and_raising_it_above_the_piece_draws_it()
+    {
+        using var t = new Table();
+        var tr = KTable.Server.Scripting.Translate.ModuleTranslator.Translate("""
+            function onLoad()
+              self.createInput({ input_function = "typed", function_owner = self, value = "Name", position = {0, -0.098, 0.5}, width = 400, height = 200 })
+              self.createButton({ click_function = "raise", function_owner = self, label = "R", position = {0, 0.2, 0}, width = 400, height = 200 })
+              self.setName(#self.getInputs() .. self.getInputs()[1].value)
+            end
+            function raise() self.editInput({ index = 0, position = {0, 0.2, 0.5} }) end
+            function typed(obj, color, value) end
+            """);
+        SetScript(t, tr.Script);
+        var p = t.Server.State.Find(U, P)!;
+        Assert.Equal(("button", "1Name"), (Assert.Single(p.Widgets).Kind, p.Label));
+        t.Server.Handle(Table.Host, new ClickWidget { Layer = U, Id = P, Index = 1 });
+        Assert.Equal(new[] { "button", "input" }, p.Widgets.Select(w => w.Kind));
+        Assert.Equal("Name", p.Widgets[1].Value);
+    }
+
+    [Fact]
+    public void Removing_module_buttons_keeps_their_numbers_until_the_next_frame_so_a_loop_removes_them_all()
+    {
+        using var t = new Table();
+        var tr = KTable.Server.Scripting.Translate.ModuleTranslator.Translate("""
+            function onLoad()
+              for i = 1, 3 do self.createButton({ click_function = "none", function_owner = self, label = "B" .. i, position = {0, 0.2, i}, width = 400, height = 200 }) end
+              local removed = ""
+              for i = 0, 2 do removed = removed .. tostring(self.removeButton(i)) end
+              self.setName(removed .. #self.getButtons() .. tostring(self.removeButton(7)))
+              Wait.frames(function() self.setName(tostring(self.getButtons()) .. tostring(self.getInputs())) end, 2)
+            end
+            function none() end
+            """);
+        SetScript(t, tr.Script);
+        var p = t.Server.State.Find(U, P)!;
+        Assert.Equal("truetruetrue3false", p.Label);
+        Assert.Empty(p.Widgets);
+        for (int frame = 0; frame < 3; frame++) t.Server.Scripts.Tick(0.1);
+        Assert.Equal("nilnil", p.Label);
+    }
+
+    [Fact]
+    public void Text_a_module_input_function_returns_replaces_what_was_typed()
+    {
+        using var t = new Table();
+        var tr = KTable.Server.Scripting.Translate.ModuleTranslator.Translate("""
+            function onLoad()
+              self.createInput({ input_function = "typed", function_owner = self, value = "1", position = {0, 0.2, 0}, width = 400, height = 200 })
+            end
+            function typed(obj, color, value, selected)
+              local n = tonumber(value)
+              if n == nil then return "0" end
+              if n > 9 then return "9" end
+            end
+            """);
+        SetScript(t, tr.Script);
+        var p = t.Server.State.Find(U, P)!;
+        t.Server.Handle(Table.Host, new EditWidget { Layer = U, Id = P, Index = 1, Value = "42" });
+        Assert.Equal("9", p.Widgets[0].Value);
+        t.Server.Handle(Table.Host, new EditWidget { Layer = U, Id = P, Index = 1, Value = "7" });
+        Assert.Equal("7", p.Widgets[0].Value);
+    }
+
+    [Fact]
     public void Module_handlers_named_at_run_time_get_module_arguments_and_getInputs_holds_what_was_typed()
     {
         using var t = new Table();
