@@ -261,6 +261,11 @@ public static partial class ApiDoc
     O("fast", "boolean", "true pulls it ten times as hard, as a module's fast smooth move does.");
     R("false when neither a point nor a heading is given.");
 
+    M("piece", "set_web_model{ mesh, texture }", "Fetches a model and its picture from web links and shows the piece as that model on every screen; a link that gives no model shows the picture flat, or a plain placeholder.", "setCustomObject");
+    P("mesh", "string", "A web link to an .obj model.");
+    O("texture", "string", "A web link to the picture wrapped on it.");
+    R("false when the mesh is not a web link; the model comes a moment later.");
+
     M("piece", "play_effect(index)", "Plays an effect once on every screen, one round of it, whether it is running or not; false for a piece that is not an effect.", "AssetBundle.playTriggerEffect");
     O("index", "number", "Which one-off it is, from 0, handed on to on_burst; 0 when left out.");
     See("self.set_effect_on");

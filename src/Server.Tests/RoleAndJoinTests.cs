@@ -34,6 +34,7 @@ public class RoleAndJoinTests
         yield return new GlidePiece { Layer = layer, Id = "p-000004", To = new Vec2(2, 3), Rot = 90 };
         yield return new ShowCast { Shape = "box", From = [0, 1, 0], To = [3, 1, 0], Size = [1, 1, 1], Seconds = 0.5 };
         yield return new ReportSelection { Selected = { "p-000004" } };
+        yield return new SetWebModel { Layer = layer, Id = "p-000004", Mesh = "models/" + new string('a', 64) + ".obj" };
         yield return new SetPieceOption { Layer = layer, Id = "p-000004", Name = PieceOptions.NoCollision, Value = true };
         yield return new FlipPiece { Layer = layer, Id = "p-000004", FaceDown = true };
         yield return new SetScale { Layer = layer, Id = "p-000004", Scale = 1.25 };
@@ -116,7 +117,7 @@ public class RoleAndJoinTests
     static bool RuntimeOnly(Command c) =>
         c is RestoreTurn or LoadSave or SetScriptState or SetGlobalScriptState or SetWidgets or SetMenuItems or SetUi or SetUiAttributes or SetUiPictures or ShowDialog
             or SetMemo or SetHotkeys
-            or SetGlobalMenuItems or SelectPiece or ShowContents or GlidePiece or ShowCast;
+            or SetGlobalMenuItems or SelectPiece or ShowContents or GlidePiece or ShowCast or SetWebModel;
 
     public static TheoryData<string, string> Cases()
     {

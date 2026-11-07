@@ -523,6 +523,7 @@ public class MalformedInputTests
     [InlineData("GlidePiece")]
     [InlineData("ShowCast")]
     [InlineData("ReportSelection")]
+    [InlineData("SetWebModel")]
     [InlineData("SetPieceOption")]
     [InlineData("SetPointerRule")]
     [InlineData("SetBriefing")]

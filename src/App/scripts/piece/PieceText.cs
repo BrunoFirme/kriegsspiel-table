@@ -8,7 +8,7 @@ public partial class PieceNode
     const float TextAboveFace = 0.004f, TextEmbolden = 0.6f;
     const int LargestTextPixels = 512;
 
-    string? _shownFacePicture;
+    string? _shownFacePicture, _shownWebMesh, _shownWebTexture;
     KTable.Core.Model.Lettering? _shownLettering;
 
     bool Spoken => Piece.Lettering != null && Def?.Kind != "model";
@@ -17,6 +17,7 @@ public partial class PieceNode
     {
         _shownLettering = Piece.Lettering;
         _shownFacePicture = Piece.FacePicture;
+        (_shownWebMesh, _shownWebTexture) = (Piece.WebMesh, Piece.WebTexture);
         if (!Spoken || Piece.Lettering is not { } lt) return;
         var font = new FontVariation { BaseFont = ThemeDB.FallbackFont, VariationEmbolden = TextEmbolden };
         AddChild(new Label3D
@@ -28,5 +29,6 @@ public partial class PieceNode
         });
     }
 
-    bool LooksChanged(PieceInstance p) => !ReferenceEquals(p.Lettering, _shownLettering) || p.FacePicture != _shownFacePicture;
+    bool LooksChanged(PieceInstance p) =>
+        !ReferenceEquals(p.Lettering, _shownLettering) || p.FacePicture != _shownFacePicture || p.WebMesh != _shownWebMesh || p.WebTexture != _shownWebTexture;
 }

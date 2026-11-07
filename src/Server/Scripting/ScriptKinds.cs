@@ -57,6 +57,7 @@ internal sealed partial class PieceHandles
         "show_contents" => Fn(a => ShowContents(id, p.HoldsPieces(def) || def?.Tags.Contains("bag") == true, Arg(a, 0), Arg(a, 1))),
         "play_effect" => Fn(a => PlayOnce(id, def, Arg(a, 0))),
         "show_glide" => Fn(a => ShowGlide(id, Arg(a, 0))),
+        "set_web_model" => Fn(a => WebModel(id, Arg(a, 0))),
         _ => null,
     };
 
@@ -132,6 +133,22 @@ internal sealed partial class PieceHandles
         if (v.Type != DataType.Table) return p;
         for (int i = 0; i < PointKeys.Length; i++) p[i] = (v.Table.Get(PointKeys[i]).CastToNumber() ?? v.Table.Get(i + 1).CastToNumber()) ?? 0;
         return p;
+    }
+
+    DynValue WebModel(string id, DynValue spec)
+    {
+        if (spec.Type != DataType.Table) return DynValue.False;
+        var mesh = spec.Table.Get("mesh").CastToString() ?? "";
+        var texture = spec.Table.Get("texture").CastToString() ?? "";
+        if (!ScriptHost.IsWebLink(mesh)) return DynValue.False;
+        host.FetchModelThen(mesh, model => host.FetchThen(texture, picture =>
+        {
+            if (host.Find(id) == null) return;
+            if (model != null) host.Emit(new SetWebModel { Layer = Layers.Umpire, Id = id, Mesh = model, Texture = picture });
+            else if (picture != null) host.Emit(new SetFacePicture { Layer = Layers.Umpire, Id = id, Picture = picture });
+            else host.Emit(new SetWebModel { Layer = Layers.Umpire, Id = id, Mesh = "" });
+        }));
+        return DynValue.True;
     }
 
     DynValue KindTable(PieceDef def)

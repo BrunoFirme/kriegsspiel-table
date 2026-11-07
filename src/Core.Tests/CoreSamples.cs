@@ -76,6 +76,7 @@ public static class CoreSamples
         yield return new GlidePiece { Layer = layer, Id = "p-000001", To = new Vec2(2, 3), Rot = 90, Fast = true };
         yield return new ShowCast { Shape = "sphere", From = [0, 1, 0], To = [0, 1, 5], Size = [2, 2, 2], Seconds = 0.5 };
         yield return new ReportSelection { Selected = { "p-000001" } };
+        yield return new SetWebModel { Layer = layer, Id = "p-000001", Mesh = "models/" + new string('b', 64) + ".obj", Texture = "pictures/" + new string('c', 64) + ".png" };
     }
 
     public static IEnumerable<Command> AllCommands()

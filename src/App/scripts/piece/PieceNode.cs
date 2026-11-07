@@ -132,6 +132,10 @@ public partial class PieceNode : Node3D
 
         if (IsEffect) { Shape = Def!.Effect != null ? "box" : "circle"; BuildEffect(); }
         else if (PrintingOnly) { if (Def?.Kind != "model") LoadTexture(); }
+        else if (Piece.WebMesh == "")
+            BuildPolygon();
+        else if (Piece.WebMesh is { Length: > 0 } web)
+            BuildMesh(KTable.Core.Protocol.UploadAsset.ReliefPackage, web, KTable.Core.Protocol.UploadAsset.ReliefPackage, Piece.WebTexture, null, w, h, tint);
         else if (shown?.Kind == "model" && CurrentMesh() is { } meshHash)
         {
             BuildModel(meshHash, w, h, tint);
@@ -264,7 +268,7 @@ public partial class PieceNode : Node3D
 
     (string? pkg, string? rel, int size) TexKey()
     {
-        if (Spoken) return (null, null, 0);
+        if (Spoken || Piece.WebMesh == "") return (null, null, 0);
         if (Piece.FacePicture is { } fp && !Piece.FaceDown && KTable.Client.PieceFiles.DecalFile(_s.View, _s.Store, fp, Piece.Def) is { } own)
             return (own.Package, own.Path, Assets.PieceTexSize(Mathf.Max(Footprint.X, Footprint.Y)));
         var pack = _s.Store.PackOfDef(PictureDefId);
@@ -436,6 +440,14 @@ public partial class PieceNode : Node3D
     {
         var pack = _s.Store.PackOfDef(PictureDefId)!;
         if (!pack.Assets.TryGetValue(meshHash, out var ma)) return;
+        var texHash = WornModel?.Texture ?? CurState?.Texture ?? Def!.Texture;
+        string? texFile = texHash != null && pack.Assets.TryGetValue(texHash, out var ta) ? ta.File : null;
+        string? normalFile = Def!.Normal != null && pack.Assets.TryGetValue(Def.Normal, out var na) ? na.File : null;
+        BuildMesh(pack.Id, ma.File, pack.Id, texFile, normalFile, w, h, tint);
+    }
+
+    void BuildMesh(string meshPack, string meshFile, string texPack, string? texFile, string? normalFile, float w, float h, Color tint)
+    {
         bool die = Def!.Tags.Contains("die");
         StandardMaterial3D Body(Color c) => die
             ? new StandardMaterial3D { AlbedoColor = c, Roughness = 0.32f, Metallic = 0f, MetallicSpecular = 0.6f, CullMode = BaseMaterial3D.CullModeEnum.Back,
@@ -452,18 +464,17 @@ public partial class PieceNode : Node3D
         var shadow = Def!.Shadowless ? GeometryInstance3D.ShadowCastingSetting.Off : GeometryInstance3D.ShadowCastingSetting.On;
         _model = new MeshInstance3D { RotationDegrees = new Vector3(0, 180, 0), CastShadow = shadow };
         AddChild(_model);
-        var texHash = WornModel?.Texture ?? CurState?.Texture ?? Def!.Texture;
-        if (texHash != null && pack.Assets.TryGetValue(texHash, out var ta))
+        if (texFile != null)
         {
-            var tex = _s.Assets.Texture(pack.Id, ta.File, t => { if (IsInstanceValid(this)) mat.AlbedoTexture = untinted.AlbedoTexture = t; }, maxSize: die ? 1024 : 2048);
+            var tex = _s.Assets.Texture(texPack, texFile, t => { if (IsInstanceValid(this)) mat.AlbedoTexture = untinted.AlbedoTexture = t; }, maxSize: die ? 1024 : 2048);
             if (tex != null) mat.AlbedoTexture = untinted.AlbedoTexture = tex;
         }
-        if (Def!.Normal != null && pack.Assets.TryGetValue(Def.Normal, out var na)) Bumps(pack.Id, na.File, mat, untinted);
+        if (normalFile != null) Bumps(meshPack, normalFile, mat, untinted);
         var model = _model;
-        _s.Assets.EnsureFile(pack.Id, ma.File, () =>
+        _s.Assets.EnsureFile(meshPack, meshFile, () =>
         {
             if (!IsInstanceValid(this)) return;
-            var mesh = ModelCache.Get(_s.Assets.Abs(pack.Id, ma.File));
+            var mesh = ModelCache.Get(_s.Assets.Abs(meshPack, meshFile));
             if (mesh == null) return;
             model.Mesh = mesh;
             for (int s = 0; s < mesh.GetSurfaceCount(); s++) model.SetSurfaceOverrideMaterial(s, s == 0 ? mat : untinted);

@@ -54,6 +54,10 @@
 ---@field rot? number The heading it turns to, in degrees; leave it out to keep its heading.
 ---@field fast? boolean true pulls it ten times as hard, as a module's fast smooth move does.
 
+---@class PieceSetwebmodelSpec
+---@field mesh string A web link to an .obj model.
+---@field texture? string A web link to the picture wrapped on it.
+
 ---@class PieceButtonSpec
 ---@field face? "front"|"back" The face it is drawn on. Default "front".
 ---@field x? number Centre, piece units right of the piece's centre. Default 0.
@@ -289,6 +293,10 @@ function Piece.set_lettering(changes) end
 ---Shows it gliding towards a point or a heading on every screen, pulled and slowed as a module's smooth move is; the piece itself stays where it is until set_pos or set_rot puts it there.
 ---@param spec PieceShowglideSpec
 function Piece.show_glide(spec) end
+
+---Fetches a model and its picture from web links and shows the piece as that model on every screen; a link that gives no model shows the picture flat, or a plain placeholder.
+---@param spec PieceSetwebmodelSpec
+function Piece.set_web_model(spec) end
 
 ---Plays an effect once on every screen, one round of it, whether it is running or not; false for a piece that is not an effect.
 ---@param index? number Which one-off it is, from 0, handed on to on_burst; 0 when left out.
