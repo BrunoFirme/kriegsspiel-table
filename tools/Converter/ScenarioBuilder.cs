@@ -650,7 +650,7 @@ public sealed partial class ScenarioBuilder
         double parentFloor = _defs.LocalFloor(o);
         foreach (var c in children)
         {
-            if (!_defs.Shows(c)) continue;
+            if (!_defs.Shows(c) || DefFactory.NotTranslated(c) is not null) continue;
             double lx = c.PosX * o.ScaleX, lz = c.PosZ * o.ScaleZ;
             double childAbsolute = Math.Abs(c.StateList().states[0].ScaleX) * absolute;
             var ci = Instance(c, Math.Abs(c.StateList().states[0].ScaleX) * refScale, extras, packDefs, layer, usedPacks, ref rekeyed, parent, parentHeight, childAbsolute);

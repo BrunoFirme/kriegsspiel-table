@@ -43,7 +43,7 @@ public sealed partial class ConverterTests
         var table = Json.Load<Scenario>(Path.Combine(Packages, "scenarios", "dice", "scenario.json"));
         PieceInstance Named(string label) => table.UmpireBoard.Single(p => p.Label == label);
         Assert.Contains("std.dice", table.Packs);
-        Assert.Equal(("std.dice.d6", 3, 1.0), (Named("Red die").Def, Named("Red die").Face, Named("Red die").Scale));
+        Assert.Equal(("std.dice.d6", 3, 1.0947), (Named("Red die").Def, Named("Red die").Face, Named("Red die").Scale));
         var pack = Json.Load<PackManifest>(Path.Combine(Packages, "tts.dice", "pack.json"));
         var d20 = pack.Pieces.Single(d => d.Id == Named("Big die").Def);
         Assert.Equal(("model", 1), (d20.Kind, Named("Big die").Face));

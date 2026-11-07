@@ -170,7 +170,7 @@ public sealed partial class DefFactory
             aspect = e.W / (double)e.H;
         }
         double ratio = o.ScaleX == 0 ? 1 : o.ScaleZ / o.ScaleX;
-        if (o.Name == "Custom_PDF") return new Size2(b.CustomTile * (PdfOf(o.PdfUrl, o.PdfPassword)?.Aspect ?? 1), b.CustomTile * ratio);
+        if (o.Name == "Custom_PDF") return new Size2(BookSpan * (PdfOf(o.PdfUrl, o.PdfPassword)?.Aspect ?? 1), BookSpan * ratio);
         if (IsModel(o))
         {
             var mb = MeshBounds(o.MeshUrl) ?? (1, 1, 1);
@@ -180,7 +180,7 @@ public sealed partial class DefFactory
         if (o.Name == Figurine) return FigurineSize(o, ratio);
         if (o.DieSides is var n and not (0 or PictureD6)) return new Size2(TemplateDie(n).Size[0], TemplateDie(n).Size[2] * ratio);
         if (o.Name == "Custom_Board") return Mul(new Size2(b.CustomBoard * (o.WidthScale > 0 ? o.WidthScale : aspect), b.CustomBoard * ratio), BoardGrowth);
-        return TypeSize(o.Name, aw, ah, aspect, ratio, stretched: o.TileType is 0 or 3 && o.TileStretch);
+        return TypeSize(o.Name, aw, ah, aspect, ratio, stretched: o.TileStretch);
     }
 
     public string Table { get; set; } = "";
@@ -247,7 +247,7 @@ public sealed partial class DefFactory
         return $"{b.Name}|{Entry(b.ImageUrl)?.Sha ?? b.ImageUrl}|{Entry(b.BackUrl)?.Sha ?? b.BackUrl}|{Entry(b.MeshUrl)?.Sha ?? b.MeshUrl}|{Entry(b.DiffuseUrl)?.Sha ?? b.DiffuseUrl}|{(b.Name.StartsWith("Block") ? Rgb(b.Color) : "")}{TableVisualKey(b)}{pdf}";
     }
 
-    public const double BookThickness = 0.1;
+    public const double BookThickness = 0.2, BookSpan = 4;
 
     public static double BaseScale(ModuleObj o) => Math.Round(Math.Abs(o.StateList().states[0].ScaleX), 4);
 
@@ -297,7 +297,7 @@ public sealed partial class DefFactory
             return new DefResult(model.Def, pack, instScale, 0, b, ScriptInfo.Parse("", "")) { FromPack = model.Pack };
         var script = ScriptInfo.Parse(b.SafeLua.Length > 0 ? b.SafeLua : o.SafeLua, o.LuaState);
         if (o.StockSides is { } sides && StandardDie(sides) is { } die)
-            return new DefResult(die, pack, Math.Round(bs, 4), FaceShown(o, die), b, script) { FromPack = StdDicePack };
+            return new DefResult(die, pack, Math.Round(bs, 4), FaceShown(o, die), b, script) { FromPack = StdDicePack, Fit = StockDieFit(o.Name, die) };
         if (Boxes.For(o) is { } box)
             return new DefResult(box, pack, Math.Round(bs, 4), 0, b, script) { FromPack = KTable.Client.Effects.EffectKinds.StandardPack };
         if (o.Name == TilesetTree) return TreeDef(o, b, pack, script);
@@ -363,6 +363,7 @@ public sealed partial class DefFactory
         foreach (var c in baked ? Enumerable.Empty<ModuleObj>() : o.Children)
         {
             if (!IsPiece(c)) { _rep.Skipped("child " + c.Name, where); continue; }
+            if (NotTranslated(c) is { } why) { _rep.Skipped(why, where); continue; }
             var cr = DefFor(c, pack, Math.Abs(c.StateList().states[0].ScaleX) * r, heightScale * Math.Abs(b.ScaleY));
             if (cr == null) continue;
             def.Attachments.Add(new AttachmentDef { Piece = cr.Def.Id, Offset = new Vec2(Math.Round(c.PosX * r, 4), Math.Round(c.PosZ * r * (b.ScaleZ / b.ScaleX), 4)) });

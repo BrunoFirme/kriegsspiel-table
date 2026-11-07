@@ -63,9 +63,18 @@ public sealed partial class DefFactory
         var pages = BookPages(sha, src, pack, where);
         if (pages.Count == 0) { def.Image = Placeholder(pack); return; }
         def.Image = pages[0];
-        def.States = pages.Select((p, i) => new PieceStateDef { Name = $"Page {i + 1}", Image = p }).ToList();
+        def.States = pages.Select((p, i) => new PieceStateDef { Name = $"Page {i + 1}", Image = p, Size = PageSize(def, pack, pages[0], p) }).ToList();
         def.PageOffset = o.PdfPageOffset;
         if (shape.Pages > pages.Count) _rep.Note($"{where}: the PDF has {shape.Pages} pages; the first {pages.Count} came over");
+    }
+
+    static Size2? PageSize(PieceDef def, PackOut pack, string first, string page)
+    {
+        const double SameShape = 0.01;
+        static double Aspect(AssetEntry a) => a.W > 0 && a.H > 0 ? a.W / (double)a.H : 1;
+        if (!pack.M.Assets.TryGetValue(first, out var f) || !pack.M.Assets.TryGetValue(page, out var p)) return null;
+        double k = Aspect(p) / Aspect(f);
+        return Math.Abs(k - 1) <= SameShape ? null : new Size2(Math.Round(def.Size.W * k, 4), def.Size.H);
     }
 
     List<string> BookPages(string sha, string src, PackOut pack, string where)

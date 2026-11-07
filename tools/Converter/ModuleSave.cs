@@ -11,7 +11,7 @@ public sealed class ModuleObj
     public string Name => S(J["Name"]) ?? "";
     public string Nickname => (S(J["Nickname"]) ?? "").Trim();
     public string Guid => S(J["GUID"]) ?? "";
-    public bool Locked => J["Locked"]?.GetValue<bool>() ?? false;
+    public bool Locked => ModuleValues.Flag(J["Locked"], false);
     public string Lua => S(J["LuaScript"]) ?? "";
     KTable.Core.ScriptSafety.Verdict? _verdict;
     public KTable.Core.ScriptSafety.Verdict Verdict => _verdict ??= KTable.Core.ScriptSafety.Inspect(Lua);
@@ -50,29 +50,41 @@ public sealed class ModuleObj
     public double RotY => D(T, "rotY");
     public double RotZ => D(T, "rotZ");
     public double ScaleX => D(T, "scaleX", 1);
-    public double ScaleY => D(T, "scaleY", 1);
+    public double ScaleY => HeightLocked ? 1 : D(T, "scaleY", 1);
     public double ScaleZ => D(T, "scaleZ", 1);
-    public bool TransformNotANumber => T is { } t && t.Any(f => NotANumber(f.Value));
+    public bool TransformNotANumber => T is { } t && t.Any(f => ModuleValues.NotANumber(f.Value));
+    public bool Garbage => T is { } t && TransformKeys.All(k => ModuleValues.Number(t[k], 0) == 0);
+    static readonly string[] TransformKeys = { "posX", "posY", "posZ", "scaleX", "scaleY", "scaleZ" };
     public bool Flipped => Near180(RotX) ^ Near180(RotZ);
     static bool Near180(double a) { a = ((a % 360) + 360) % 360; return Math.Abs(a - 180) < 30; }
 
     JsonObject? CI => J["CustomImage"] as JsonObject;
     public string? ImageUrl => Blank(S(CI?["ImageURL"]));
     public string? BackUrl => Blank(S(CI?["ImageSecondaryURL"]));
-    public bool MirroredBack => CI?["CustomFigurine"] is JsonObject fig && fig["MirroredBack"] is JsonValue m && m.TryGetValue<bool>(out var mirrored) && mirrored;
-    public int TileType => (CI?["CustomTile"] as JsonObject)?["Type"]?.GetValue<int>() ?? 0;
-    public bool TileStretch => (CI?["CustomTile"] as JsonObject)?["Stretch"]?.GetValue<bool>() ?? true;
-    public double WidthScale => CI?["WidthScale"] is JsonValue v && v.TryGetValue<double>(out var d) ? d : 0;
-    public double Thickness =>
-        (CI?["CustomTile"] as JsonObject)?["Thickness"]?.GetValue<double>()
-        ?? (CI?["CustomToken"] as JsonObject)?["Thickness"]?.GetValue<double>() ?? 0.2;
+    public bool MirroredBack => CI?["CustomFigurine"] is JsonObject fig && ModuleValues.Flag(fig["MirroredBack"], false);
+    JsonObject? Tile => CI?["CustomTile"] as JsonObject;
+    JsonObject? Token => CI?["CustomToken"] as JsonObject;
+    const double PrefabThickness = 0.2, PrefabMergeDistance = 15;
+    public int TileType => Tile is { } t ? ModuleValues.Whole(t["Type"], 0) : 0;
+    public bool TileStretch => Tile is not { } t || ModuleValues.Flag(t["Stretch"], false);
+    public double WidthScale => ModuleValues.Finite(CI?["WidthScale"], 0);
+    public double ImageScalar => CI is { } ci ? ModuleValues.Finite(ci["ImageScalar"], 1) : 1;
+    public double Thickness => Name switch
+    {
+        "Custom_Tile" => Tile is { } t ? ModuleValues.Finite(t["Thickness"], 0) : PrefabThickness,
+        "Custom_Token" => Token is { } k ? ModuleValues.Finite(k["Thickness"], 0) : PrefabThickness,
+        _ => PrefabThickness,
+    };
+    public double MergeDistance => Token is { } k ? ModuleValues.Finite(k["MergeDistancePixels"], 0) : PrefabMergeDistance;
+    public bool StandsUp => Token is { } k && ModuleValues.Flag(k["StandUp"], false);
+    public bool HeightLocked => Name is "Custom_Tile" or "Custom_PDF" or "Card" or "CardCustom" or "Deck" or "DeckCustom";
 
     JsonObject? CM => J["CustomMesh"] as JsonObject;
     public string? MeshUrl => Blank(S(CM?["MeshURL"]));
     public string? DiffuseUrl => Blank(S(CM?["DiffuseURL"]));
     public string? NormalUrl => Blank(S(CM?["NormalURL"]));
-    public bool CastsShadows => CM?["CastShadows"] is not JsonValue v || !v.TryGetValue<bool>(out var casts) || casts;
-    public int MeshType => (CM?["TypeIndex"] ?? (J["CustomAssetbundle"] as JsonObject)?["TypeIndex"]) is JsonValue v && v.TryGetValue<int>(out var i) ? i : 0;
+    public bool CastsShadows => CM is not { } m || ModuleValues.Flag(m["CastShadows"], true);
+    public int MeshType => ModuleValues.Whole(CM?["TypeIndex"] ?? (J["CustomAssetbundle"] as JsonObject)?["TypeIndex"], 0);
     public string? Finish => KTable.Core.Model.Finishes.Of(CM?["MaterialIndex"] != null ? I(CM, "MaterialIndex") : J["MaterialIndex"] != null ? I(J, "MaterialIndex") : -1);
     public KTable.Core.Model.ShineDef? Shine => CM?["CustomShader"] is JsonObject sh
         ? new KTable.Core.Model.ShineDef
@@ -87,7 +99,14 @@ public sealed class ModuleObj
     public int PdfPageOffset => J["CustomPDF"] is JsonObject pdf && pdf["PDFPageOffset"] != null ? I(pdf, "PDFPageOffset") : 0;
     public string? PdfPassword => J["CustomPDF"] is JsonObject pdf ? Blank(S(pdf["PDFPassword"])) : null;
 
-    public string? Color => J["ColorDiffuse"] is JsonObject c ? HexOf(c) + AlphaOf(c) : null;
+    public string? Color => J["ColorDiffuse"] is JsonObject c ? HexOf(c) + AlphaOf(c) : PrefabColours.GetValueOrDefault(Name);
+
+    static readonly Dictionary<string, string> PrefabColours = new(StringComparer.Ordinal)
+    {
+        ["BlockSquare"] = "#EC0000", ["BlockRectangle"] = "#0033D2", ["BlockTriangle"] = "#01C500", ["Bag"] = "#B45D00", ["PlayerPawn"] = "#DBDBDB",
+        ["Figurine_Custom"] = "#000000", ["Card"] = "#B6B6B6", ["CardCustom"] = "#B6B6B6", ["Deck"] = "#B6B6B6", ["Custom_Board"] = "#C9C9C9",
+        ["Die_4"] = "#264D71", ["Die_6_Rounded"] = "#0F0E0E", ["Die_8"] = "#901515", ["Die_10"] = "#136A2C", ["Die_12"] = "#D0821E", ["Die_20"] = "#841B9E",
+    };
 
     const double Opaque = 0.999;
 
@@ -114,7 +133,7 @@ public sealed class ModuleObj
             var c = l["color"] as JsonObject;
             if (c?["a"] != null && D(c, "a", 1) <= 0) continue;
             var colour = c is null ? "#FFFFFF" : HexOf(c) + AlphaOf(c);
-            lines.Add(new Line(points, colour, D(l, "thickness", DefaultThickness), l["loop"]?.GetValue<bool>() ?? false));
+            lines.Add(new Line(points, colour, D(l, "thickness", DefaultThickness), ModuleValues.Flag(l["loop"], false)));
         }
         return lines;
     }
@@ -126,7 +145,7 @@ public sealed class ModuleObj
     public bool Sticky => Flag("Sticky", true);
     public bool DragSelectable => Flag("DragSelectable", true);
     public bool MeasureMovement => Flag("MeasureMovement", false);
-    bool Flag(string key, bool unset) => J[key] is JsonValue v && v.TryGetValue<bool>(out var on) ? on : unset;
+    bool Flag(string key, bool unset) => ModuleValues.Flag(J[key], unset);
     public bool IsInfiniteBag => Name.Contains("Infinite", StringComparison.Ordinal);
     const int LastInFirstOut = 0, RandomOrder = 2;
     public string? TakeOrder => (J["Bag"] is JsonObject b && b["Order"] != null ? I(b, "Order") : LastInFirstOut) switch
@@ -137,7 +156,7 @@ public sealed class ModuleObj
     };
     public bool IsPictureDie => Name == "Custom_Dice" && DiceType >= 0 && DiceType < DiceTypeSides.Length;
     public int DieSides => IsPictureDie ? DiceTypeSides[DiceType] : 0;
-    public int DiceType => (CI?["CustomDice"] as JsonObject)?["Type"]?.GetValue<int>() ?? -1;
+    public int DiceType => CI?["CustomDice"] is JsonObject d ? ModuleValues.Whole(d["Type"], 0) : -1;
     static readonly int[] DiceTypeSides = { 4, 6, 8, 10, 12, 20 };
     public int? StockSides => Name switch
     {
@@ -147,7 +166,7 @@ public sealed class ModuleObj
 
     public sealed record CardSheet(string FaceUrl, string? BackUrl, int Across, int Down, bool UniqueBack, int Type);
 
-    public int CardId => J["CardID"]?.GetValue<int>() ?? 0;
+    public int CardId => ModuleValues.Whole(J["CardID"], 0);
 
     public Dictionary<int, CardSheet> CardSheets
     {
@@ -159,7 +178,7 @@ public sealed class ModuleObj
             {
                 if (!int.TryParse(k, out var id) || v is not JsonObject s || Blank(S(s["FaceURL"])) is not { } face) continue;
                 sheets[id] = new CardSheet(face, Blank(S(s["BackURL"])), Math.Max(1, I(s, "NumWidth")), Math.Max(1, I(s, "NumHeight")),
-                    s["UniqueBack"]?.GetValue<bool>() ?? false, I(s, "Type"));
+                    ModuleValues.Flag(s["UniqueBack"], false), I(s, "Type"));
             }
             return sheets;
         }
@@ -173,7 +192,7 @@ public sealed class ModuleObj
 
     public List<Face> RotationValues => (J["RotationValues"] as JsonArray)?.OfType<JsonObject>()
         .Select(r => (value: r["Value"], rot: r["Rotation"] as JsonObject))
-        .Select(r => new Face(r.value is JsonValue jv && jv.TryGetValue<string>(out var s) ? s : r.value?.ToJsonString() ?? "", D(r.rot, "x"), D(r.rot, "y"), D(r.rot, "z")))
+        .Select(r => new Face(ModuleValues.Text(r.value) ?? "", D(r.rot, "x"), D(r.rot, "y"), D(r.rot, "z")))
         .ToList() ?? new();
 
     public IEnumerable<ModuleObj> Contained => Arr("ContainedObjects");
@@ -231,23 +250,10 @@ public sealed class ModuleObj
         foreach (var c in Contained) foreach (var x in c.Walk()) yield return x;
     }
 
-    static string? S(JsonNode? n) => n is JsonValue v && v.TryGetValue<string>(out var s) ? s : null;
+    static string? S(JsonNode? n) => ModuleValues.Text(n);
     static string? Blank(string? s) => string.IsNullOrWhiteSpace(s) ? null : s.Trim();
-    static int I(JsonObject o, string k) => o[k] is JsonValue v && v.TryGetValue<int>(out var i) ? i : (int)Math.Round(D(o, k));
-    static double D(JsonObject? o, string k, double def = 0)
-    {
-        var n = o?[k];
-        if (n is JsonValue v)
-        {
-            if (v.TryGetValue<double>(out var d) && double.IsFinite(d)) return d;
-            if (v.TryGetValue<string>(out var s) && double.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out d) && double.IsFinite(d)) return d;
-        }
-        return def;
-    }
-
-    static bool NotANumber(JsonNode? n) =>
-        n is JsonValue v && v.TryGetValue<string>(out var s)
-        && double.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out var d) && !double.IsFinite(d);
+    static int I(JsonObject o, string k) => ModuleValues.Whole(o[k], 0);
+    static double D(JsonObject? o, string k, double def = 0) => ModuleValues.Finite(o?[k], def);
 }
 
 public sealed class ModuleSave
@@ -277,22 +283,22 @@ public sealed class ModuleSave
         return new ModuleSave
         {
             WorkshopId = stem.All(char.IsDigit) ? stem : "",
-            SaveName = root["SaveName"]?.GetValue<string>() ?? stem,
+            SaveName = ModuleValues.Text(root["SaveName"]) ?? stem,
             Objects = (root["ObjectStates"] as JsonArray)?.OfType<JsonObject>().Select(o => new ModuleObj(o)).ToList() ?? new(),
-            Lua = root["LuaScript"]?.GetValue<string>() ?? "",
-            LuaState = root["LuaScriptState"]?.GetValue<string>() ?? "",
-            SkyUrl = root["SkyURL"]?.GetValue<string>() is { } sky && !string.IsNullOrWhiteSpace(sky) ? sky.Trim() : null,
-            StockSky = root["Sky"] is JsonValue stock && stock.TryGetValue<string>(out var sk) ? sk : "",
-            Table = root["Table"]?.GetValue<string>() ?? "",
-            Notes = root["Note"] is JsonValue note && note.TryGetValue<string>(out var n) ? n : "",
+            Lua = ModuleValues.Text(root["LuaScript"]) ?? "",
+            LuaState = ModuleValues.Text(root["LuaScriptState"]) ?? "",
+            SkyUrl = ModuleValues.Text(root["SkyURL"]) is { } sky && !string.IsNullOrWhiteSpace(sky) ? sky.Trim() : null,
+            StockSky = ModuleValues.Text(root["Sky"]) ?? "",
+            Table = ModuleValues.Text(root["Table"]) ?? "",
+            Notes = ModuleValues.Text(root["Note"]) ?? "",
             Notebook = (root["TabStates"] as JsonObject)?.Select(t => t.Value).OfType<JsonObject>()
-                .Select(t => (Title: t["title"] is JsonValue tv && tv.TryGetValue<string>(out var ts) ? ts : "", Body: t["body"] is JsonValue bv && bv.TryGetValue<string>(out var bs) ? bs : ""))
+                .Select(t => (Title: ModuleValues.Text(t["title"]) ?? "", Body: ModuleValues.Text(t["body"]) ?? ""))
                 .Where(t => t.Body.Trim().Length > 0).ToList() ?? new(),
-            Rules = root["Rules"] is JsonValue rules && rules.TryGetValue<string>(out var rl) ? rl : "",
+            Rules = (root["TabStates"] as JsonObject)?.Count is > 0 ? "" : ModuleValues.Text(root["Rules"]) ?? "",
             VectorLines = ModuleObj.LinesOf(root["VectorLines"]),
             TableDecals = ModuleObj.DecalsOf(root["Decals"]),
             DecalPalette = ModuleObj.PaletteOf(root["DecalPallet"]),
-            XmlUi = root["XmlUI"] is JsonValue x && x.TryGetValue<string>(out var xml) ? xml : "",
+            XmlUi = ModuleValues.Text(root["XmlUI"]) ?? "",
             UiAssets = ModuleObj.UiAssetsOf(root["CustomUIAssets"]),
         };
     }

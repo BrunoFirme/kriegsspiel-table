@@ -511,8 +511,8 @@ def main():
             e = next(x for x in ledger[area] if x["row"] == row)
             print(f"{area}\t{row}\t{e['status']}\t{e['count']}\t{e['modules']}")
     if not a.quiet:
-        for area, used, decided_n, unknown, unaudited, total in coverage(ledger):
-            print(f"{area:11s} used {used:4d}  decided {decided_n:4d}  unknown {unknown:4d}  not audited {unaudited:4d}  of {total}")
+        for area, used, decided_n, unknown, left_n, total in coverage(ledger):
+            print(f"{area:11s} used {used:4d}  decided {decided_n:4d}  unknown {unknown:4d}  not audited {left_n:4d}  of {total}")
     sys.exit(0 if ok else 1)
 
 
