@@ -7,7 +7,10 @@ namespace KTable.Core.Panels;
 public static class PanelText
 {
     public const string Language = "en";
-    static readonly string[] Languages = { "en", "fr", "de", "es", "it", "pt", "ru", "pl", "nl", "tr", "ja", "ko", "zh" };
+    static readonly string[] Languages =
+    {
+        "en", "fr", "de", "pl", "ru", "zh-CN", "zh-TW", "tr", "it", "cs", "fi", "hu", "es", "es-US", "da", "ja", "ko", "pt-BR", "th", "sv", "nl", "vi", "ro", "uk", "nb", "el", "ar", "pt",
+    };
     static readonly Regex Escaped = new(@"\\[uU](?<Value>[a-zA-Z0-9]{4})");
     static readonly (string From, string To)[] Entities = { ("&lt;", "<"), ("&gt;", ">"), ("&amp;", "&"), ("&nbsp;", " "), ("<br/>", "\n"), ("<br />", "\n") };
 

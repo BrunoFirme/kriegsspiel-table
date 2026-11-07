@@ -142,7 +142,7 @@ public static class PanelOps
             if (PanelSelectors.Rule(layout, e.Tag, cls) is { } kept) reset.RemoveAll(a => kept.Attributes.ContainsKey(a));
         if (reset.Count == 0) return;
         var back = UiAttributes.Fresh();
-        foreach (var a in reset) back[a] = "";
+        foreach (var a in reset) back[a] = PanelResets.Of(e.Tag, a);
         Apply(e, back);
     }
 }

@@ -170,7 +170,7 @@ public sealed class PanelScene
     {
         var options = e.Options ?? new();
         if (local != null && int.TryParse(local, out var picked)) return Math.Clamp(picked, 0, Math.Max(0, options.Count - 1));
-        int sel = options.FindIndex(o => PanelValues.Bool(o.Attributes.GetValueOrDefault("selected")));
+        int sel = options.FindLastIndex(o => PanelValues.Bool(o.Attributes.GetValueOrDefault("selected")));
         if (sel < 0 && b.Extra.GetValueOrDefault("value") is { } v && int.TryParse(v, out var vi)) sel = vi;
         return Math.Clamp(sel < 0 ? 0 : sel, 0, Math.Max(0, options.Count - 1));
     }

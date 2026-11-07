@@ -200,7 +200,7 @@ public class PanelModelTests
     }
 
     [Fact]
-    public void A_new_class_brings_its_defaults_and_a_class_taken_away_gives_its_attributes_back()
+    public void A_new_class_brings_its_defaults_and_a_class_taken_away_gives_back_the_element_s_first_value_as_the_engine_writes_it()
     {
         const string Xml = "<Defaults><Text class=\"warn\" color=\"red\" fontSize=\"20\"/></Defaults><Text id=\"t\" fontSize=\"12\"/>";
         var data = PanelData.Parse(Xml)!;
@@ -209,15 +209,17 @@ public class PanelModelTests
         Assert.Equal("red", l.ById("t")!.Get("color"));
         Assert.Equal("12", l.ById("t")!.Get("fontSize"));
         PanelOps.Run(data, l, PanelOps.SetClass, "t", new Dictionary<string, string>(), "other");
-        Assert.Equal("", l.ById("t")!.Get("color"));
+        Assert.Equal("RGBA(0.196, 0.196, 0.196, 1.000)", l.ById("t")!.Get("color"));
         Assert.Equal("other", PanelData.ById(data, "t")!.Attributes["class"]);
     }
 
     [Fact]
-    public void Language_codes_pick_the_english_words_and_escapes_become_letters()
+    public void Language_codes_pick_the_english_words_else_the_first_language_in_the_game_s_own_list_and_escapes_become_letters()
     {
         Assert.Equal("Hello", PanelText.Localize("{fr}Bonjour{en}Hello"));
         Assert.Equal("Bonjour", PanelText.Localize("{fr}Bonjour"));
+        Assert.Equal("Hallo", PanelText.Localize("{pt-BR}Olá{de}Hallo"));
+        Assert.Equal("Olá", PanelText.Localize("{pt-BR}Olá{xx}No"));
         Assert.Equal("no codes {here}", PanelText.Localize("no codes {here}"));
         Assert.Equal("é", PanelText.Decode("\\u00e9"));
     }
