@@ -127,6 +127,9 @@
 ---@field note string|nil Its description, shown on hover; umpires only. nil when empty.
 ---@field state number Its state, from 1.
 ---@field states string[] The names of its kind's states, in order.
+---@field faces Face[] A die's sides in order: { value =, up = { x, y, z }, rotation = { x, y, z } }; empty for every other piece.
+---@field face number|nil The side of a die showing, from 1; nil for every other piece.
+---@field value number|string|nil The value of the side of a die showing; nil for every other piece.
 ---@field pos Point Where it stands, in map units: { x =, z = }.
 ---@field rot number Its heading in degrees.
 ---@field y number How high it sits above the table (stacked pieces).
@@ -166,6 +169,25 @@ function Piece.set_note(text) end
 ---Changes its state: a number from 1, or a state's name. What the scripts drew belongs to the state it was drawn on.
 ---@param n_or_name number|string A state number from 1, or a state's name (case does not matter).
 function Piece.set_state(n_or_name) end
+
+---Turns a die to show a side, from 1; false when it has no such side.
+---@param n number The side, from 1, in the order of self.faces.
+---@return boolean
+function Piece.set_face(n) end
+
+---Turns a die to the first side with this value; false when no side has it.
+---@param value number|string The value to show.
+---@return boolean
+function Piece.set_value(value) end
+
+---Gives this die sides of its own; nil gives it back its kind's.
+---@param list table|nil { value =, up = { x, y, z } } or { value =, rotation = { x, y, z } } for each side.
+---@return boolean
+function Piece.set_faces(list) end
+
+---Rolls a die, or turns a piece of several states to one at random; false for anything else.
+---@return boolean
+function Piece.roll() end
 
 ---Moves it, in map units; its heading stays. A place { x, z } or another piece works in place of x and z.
 ---@param x? number The new x in map units; nil keeps the current one.
@@ -610,8 +632,11 @@ function on_save() end
 function on_update() end
 
 ---An umpire let the piece go.
+function on_drop() end
+
+---An umpire rolled this die.
 ---@param who Who The umpire.
-function on_drop(who) end
+function on_roll(who) end
 
 ---An umpire picked the piece up.
 ---@param who Who The umpire.

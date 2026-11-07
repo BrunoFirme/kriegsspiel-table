@@ -72,8 +72,21 @@ sealed class MenuCards : HudPart
         }
     }
 
+    const int MostSidesListed = 20;
+
     void StateAndCounterRows(MenuCard menu, PieceNode one, PieceDef def)
     {
+        var faces = PieceInstance.FacesOf(def, one.Piece);
+        if (one.IsDie && faces.Count <= MostSidesListed)
+        {
+            menu.Separator("Side");
+            for (int i = 0; i < faces.Count; i++)
+            {
+                var fi = i;
+                menu.Check(faces[i].Value.Length > 0 ? faces[i].Value : $"#{i + 1}", one.Piece.ShownFace == i,
+                    () => S.Do(new TurnDie { Layer = one.Layer, Id = one.Piece.Id, Face = fi }), i < 9 ? (i + 1).ToString() : i == 9 ? "0" : "");
+            }
+        }
         if (def.States.Count > 1 && !BookWindow.Is(def))
         {
             menu.Separator("Look");

@@ -601,10 +601,10 @@ public class ScriptingTests
         Assert.DoesNotContain(Flat(t.Server.Log).OfType<SetState>(), s => s.Id == P);
         t.Server.Handle(Table.Host, new SpawnPiece { Layer = U, Def = "die6", Pos = new Vec2(5, 5), Id = "p-000090" });
         t.Server.Handle(Table.Ump3, new NumberTyped { Layer = U, Id = "p-000090", Number = 4 });
-        Assert.Equal(3, t.Server.State.Find(U, "p-000090")!.State);
+        Assert.Equal(3, t.Server.State.Find(U, "p-000090")!.ShownFace);
         Assert.Equal(Table.Ump3, t.Server.Log[^1].Actor);
         t.Server.Handle(Table.Ump3, new NumberTyped { Layer = U, Id = "p-000090", Number = 9 });
-        Assert.Equal(3, t.Server.State.Find(U, "p-000090")!.State);
+        Assert.Equal(3, t.Server.State.Find(U, "p-000090")!.ShownFace);
         t.Server.Handle(Table.Ump3, new Hotkey { Index = 1, Layer = U, Piece = P, Selected = new() { P, "p-000003" } });
         var res = t.Server.Handle(Table.Ump3, new NumberTyped { Layer = U, Id = P, Number = 2 });
         var sel = Assert.Single(Flat(t.Server.Log).OfType<SelectPiece>());

@@ -14,6 +14,7 @@ public static class StateMachine
             case MovePiece m: return ApplyMove(g, m, ref inverse);
             case DeletePiece d: return ApplyDelete(g, d, ref inverse);
             case SetState st: return ApplySetState(g, st, ref inverse);
+            case TurnDie or SetDieFaces: return ApplyDie(g, c, ref inverse);
             case SetCounter sc: return ApplySetCounter(g, sc, ref inverse);
             case SetText t: return ApplySetText(g, t, ref inverse);
             case SetLabel l: return ApplySetLabel(g, l, ref inverse);
@@ -91,9 +92,7 @@ public static class StateMachine
                 return g.Find(hp.Layer, hp.Id) == null ? "no such piece" : null;
             case Say:
                 return null;
-            case SetUi su: return ApplySetUi(g, su, ref inverse);
-            case SetUiAttributes sua: return ApplySetUiAttributes(g, sua, ref inverse);
-            case SetUiPictures sup: return ApplySetUiPictures(g, sup, ref inverse);
+            case SetUi or SetUiAttributes or SetUiPictures: return ApplyUi(g, c, ref inverse);
             case UiEvent ue: return ApplyUiEvent(g, ue);
             case ShowDialog or DialogResult:
                 return null;
@@ -198,6 +197,26 @@ public static class StateMachine
         if (p == null) return "no such piece";
         inverse = new SetState { Layer = st.Layer, Id = st.Id, State = p.State };
         p.State = Math.Max(0, st.State);
+        return null;
+    }
+
+    static string? ApplyTurnDie(GameState g, TurnDie td, ref Command? inverse)
+    {
+        var p = g.Find(td.Layer, td.Id);
+        if (p == null) return "no such piece";
+        if (td.Face < 0) return "no such face";
+        inverse = new TurnDie { Layer = td.Layer, Id = td.Id, Face = p.ShownFace };
+        p.Face = td.Face;
+        return null;
+    }
+
+    static string? ApplySetDieFaces(GameState g, SetDieFaces sdf, ref Command? inverse)
+    {
+        var p = g.Find(sdf.Layer, sdf.Id);
+        if (p == null) return "no such piece";
+        if (sdf.Faces != null && sdf.Faces.Any(f => f == null || f.Up is not { Length: 3 } || f.Up.Any(x => !double.IsFinite(x)))) return "a face without a direction";
+        inverse = new SetDieFaces { Layer = sdf.Layer, Id = sdf.Id, Faces = p.Faces?.Select(f => f.Clone()).ToList() };
+        p.Faces = sdf.Faces?.Select(f => f.Clone()).ToList();
         return null;
     }
 
@@ -594,6 +613,21 @@ public static class StateMachine
         return null;
     }
 
+    static string? ApplyDie(GameState g, Command c, ref Command? inverse) => c switch
+    {
+        TurnDie td => ApplyTurnDie(g, td, ref inverse),
+        SetDieFaces sdf => ApplySetDieFaces(g, sdf, ref inverse),
+        _ => "unknown command",
+    };
+
+    static string? ApplyUi(GameState g, Command c, ref Command? inverse) => c switch
+    {
+        SetUi su => ApplySetUi(g, su, ref inverse),
+        SetUiAttributes sua => ApplySetUiAttributes(g, sua, ref inverse),
+        SetUiPictures sup => ApplySetUiPictures(g, sup, ref inverse),
+        _ => "unknown command",
+    };
+
     static string? ApplyDecals(GameState g, Command c, ref Command? inverse) => c switch
     {
         StampDecal st => ApplyStampDecal(g, st, ref inverse),
@@ -702,7 +736,7 @@ public static class StateMachine
         if (g.Dice.Count > 500) g.Dice.RemoveAt(0);
         if (rd.Layer != null)
             for (int i = 0; i < rd.PieceIds.Count && i < rd.Results.Count; i++)
-                if (g.Find(rd.Layer, rd.PieceIds[i]) is { } die) die.State = Math.Max(0, rd.Results[i] - 1);
+                if (g.Find(rd.Layer, rd.PieceIds[i]) is { } die) die.Face = Math.Max(0, rd.Results[i] - 1);
         return null;
     }
 
@@ -821,12 +855,12 @@ public static class StateMachine
             case RollDice rd:
             {
                 var history = g.Dice.ToList();
-                var faces = rd.Layer == null ? new() : rd.PieceIds.Select(id => g.Find(rd.Layer, id)).Where(p => p != null).Select(p => (p!, p!.State)).ToList();
+                var faces = rd.Layer == null ? new() : rd.PieceIds.Select(id => g.Find(rd.Layer, id)).Where(p => p != null).Select(p => (p!, p!.Face)).ToList();
                 return () =>
                 {
                     g.Dice.Clear();
                     g.Dice.AddRange(history);
-                    foreach (var (p, s) in faces) p.State = s;
+                    foreach (var (p, f) in faces) p.Face = f;
                 };
             }
             default:

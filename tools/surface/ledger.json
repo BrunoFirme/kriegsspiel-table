@@ -3669,8 +3669,8 @@
   },
   {
    "row": "getValue",
-   "status": "compat",
-   "where": "compat.get_value: the look's name as a number where it is one",
+   "status": "native",
+   "where": "a die's sides are its own (PieceDef.Faces, a value and the way up each); self.faces / face / value, set_face / set_value / set_faces / roll; compat maps the module calls",
    "instead": "",
    "held_by": "DiceScriptTests",
    "count": 1,
@@ -3678,8 +3678,8 @@
   },
   {
    "row": "roll",
-   "status": "compat",
-   "where": "compat.roll: a random look of the piece",
+   "status": "native",
+   "where": "a die's sides are its own (PieceDef.Faces, a value and the way up each); self.faces / face / value, set_face / set_value / set_faces / roll; compat maps the module calls",
    "instead": "",
    "held_by": "DiceScriptTests",
    "count": 1,
@@ -4677,8 +4677,8 @@
   },
   {
    "row": "getRotationValue",
-   "status": "compat",
-   "where": "compat.get_value: the look's name as a number where it is one",
+   "status": "native",
+   "where": "a die's sides are its own (PieceDef.Faces, a value and the way up each); self.faces / face / value, set_face / set_value / set_faces / roll; compat maps the module calls",
    "instead": "",
    "held_by": "DiceScriptTests",
    "count": 0,
@@ -4686,8 +4686,8 @@
   },
   {
    "row": "getRotationValues",
-   "status": "compat",
-   "where": "compat.get_rotation_values: the looks, without rotations",
+   "status": "native",
+   "where": "a die's sides are its own (PieceDef.Faces, a value and the way up each); self.faces / face / value, set_face / set_value / set_faces / roll; compat maps the module calls",
    "instead": "",
    "held_by": "DiceScriptTests",
    "count": 0,
@@ -5028,10 +5028,10 @@
   },
   {
    "row": "randomize",
-   "status": "stub",
-   "where": "no module calls it; a die rolls through roll",
-   "instead": "roll",
-   "held_by": "",
+   "status": "native",
+   "where": "a die rolls (logged as a roll), a piece of several looks takes one at random; bags and decks are not shuffled (deck logic dropped)",
+   "instead": "",
+   "held_by": "DiceScriptTests",
    "count": 0,
    "modules": 0
   },
@@ -5226,8 +5226,8 @@
   },
   {
    "row": "setRotationValue",
-   "status": "compat",
-   "where": "compat.set_value: the look named so",
+   "status": "native",
+   "where": "a die's sides are its own (PieceDef.Faces, a value and the way up each); self.faces / face / value, set_face / set_value / set_faces / roll; compat maps the module calls",
    "instead": "",
    "held_by": "DiceScriptTests",
    "count": 0,
@@ -5235,10 +5235,10 @@
   },
   {
    "row": "setRotationValues",
-   "status": "dropped",
-   "where": "redefining a die's faces",
-   "instead": "make a die of your own in the piece studio",
-   "held_by": "",
+   "status": "native",
+   "where": "a die's sides are its own (PieceDef.Faces, a value and the way up each); self.faces / face / value, set_face / set_value / set_faces / roll; compat maps the module calls",
+   "instead": "",
+   "held_by": "DiceScriptTests",
    "count": 0,
    "modules": 0
   },
@@ -5262,8 +5262,8 @@
   },
   {
    "row": "setValue",
-   "status": "compat",
-   "where": "compat.set_value: the look named so",
+   "status": "native",
+   "where": "a die's sides are its own (PieceDef.Faces, a value and the way up each); self.faces / face / value, set_face / set_value / set_faces / roll; compat maps the module calls",
    "instead": "",
    "held_by": "DiceScriptTests",
    "count": 0,
@@ -5289,10 +5289,10 @@
   },
   {
    "row": "shuffleStates",
-   "status": "unknown",
-   "where": "",
+   "status": "native",
+   "where": "compat.shuffle_states: another of its looks at random",
    "instead": "",
-   "held_by": "",
+   "held_by": "DiceScriptTests",
    "count": 0,
    "modules": 0
   },
@@ -7896,10 +7896,10 @@
   },
   {
    "row": "onObjectRandomize",
-   "status": "stub",
-   "where": "no event when a die rolls; no module handles it",
-   "instead": "nothing is needed",
-   "held_by": "",
+   "status": "native",
+   "where": "on_roll(piece, who) in the global script when an umpire rolls",
+   "instead": "",
+   "held_by": "DiceScriptTests",
    "count": 0,
    "modules": 0
   },
@@ -8017,6 +8017,15 @@
    "where": "the Player API (decided 2026-11-06)",
    "instead": "seats and roles are the app's own; scripts reach umpires through game.umpires()",
    "held_by": "",
+   "count": 0,
+   "modules": 0
+  },
+  {
+   "row": "onRandomize",
+   "status": "native",
+   "where": "on_roll(who) in the die's own script",
+   "instead": "",
+   "held_by": "DiceScriptTests",
    "count": 0,
    "modules": 0
   },

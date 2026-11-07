@@ -62,7 +62,7 @@ public static class ModuleTranslator
 
     static readonly HashSet<string> EventNames = new(StringComparer.Ordinal)
     {
-        "onLoad","onload","onSave","onsave","onUpdate","onDrop","onPickUp","onPickup","onDestroy","onCollisionEnter","onCollisionExit","onCollisionStay","onObjectDrop","onObjectPickUp","onObjectPickup","onObjectSpawn","onObjectDestroy","onObjectEnterContainer","onObjectLeaveContainer","onObjectEnterScriptingZone","onObjectLeaveScriptingZone","onPlayerTurn","onPlayerChangeColor","onPlayerConnect","onPlayerDisconnect","onChat","onScriptingButtonDown","onScriptingButtonUp","onObjectStateChange","onObjectRandomize","onPlayerAction","onObjectNumberTyped","onObjectSearchStart","onObjectSearchEnd","onObjectRotate","onRotate","onObjectHover","onHover","onBlindfold","onFixedUpdate","onPlayerPing","onObjectLoopingEffect","onObjectTriggerEffect","onObjectPeek","onObjectFlick","onObjectCollisionEnter","onObjectCollisionExit","onObjectCollisionStay","onObjectPageChange","onPageChange","onZoneGroupSort","onFilter","onExternalMessage",
+        "onLoad","onload","onSave","onsave","onUpdate","onDrop","onPickUp","onPickup","onDestroy","onCollisionEnter","onCollisionExit","onCollisionStay","onObjectDrop","onObjectPickUp","onObjectPickup","onObjectSpawn","onObjectDestroy","onObjectEnterContainer","onObjectLeaveContainer","onObjectEnterScriptingZone","onObjectLeaveScriptingZone","onPlayerTurn","onPlayerChangeColor","onPlayerConnect","onPlayerDisconnect","onChat","onScriptingButtonDown","onScriptingButtonUp","onObjectStateChange","onObjectRandomize","onRandomize","onPlayerAction","onObjectNumberTyped","onObjectSearchStart","onObjectSearchEnd","onObjectRotate","onRotate","onObjectHover","onHover","onBlindfold","onFixedUpdate","onPlayerPing","onObjectLoopingEffect","onObjectTriggerEffect","onObjectPeek","onObjectFlick","onObjectCollisionEnter","onObjectCollisionExit","onObjectCollisionStay","onObjectPageChange","onPageChange","onZoneGroupSort","onFilter","onExternalMessage",
     };
 
     static readonly Dictionary<string, string> EventRenames = new(StringComparer.Ordinal)
@@ -72,14 +72,14 @@ public static class ModuleTranslator
         ["onObjectSpawn"] = "on_spawn", ["onObjectDestroy"] = "on_destroy", ["onObjectStateChange"] = "on_state", ["onPlayerTurn"] = "on_turn", ["onRotate"] = "on_rotate", ["onObjectRotate"] = "on_rotate",
         ["onPlayerTurnStart"] = "on_turn", ["onPlayerTurnEnd"] = "on_turn",
         ["onChat"] = "on_chat", ["onObjectNumberTyped"] = "on_number_typed", ["onScriptingButtonDown"] = "on_scripting_button_down", ["onScriptingButtonUp"] = "on_scripting_button_up",
-        ["onPlayerAction"] = "on_player_action", ["onObjectEnterContainer"] = "on_stowed", ["onObjectLeaveContainer"] = "on_unstowed", ["tryObjectEnterContainer"] = "try_stow",
+        ["onPlayerAction"] = "on_player_action", ["onObjectRandomize"] = "on_roll", ["onRandomize"] = "on_roll", ["onObjectEnterContainer"] = "on_stowed", ["onObjectLeaveContainer"] = "on_unstowed", ["tryObjectEnterContainer"] = "try_stow",
     };
 
     static readonly HashSet<string> Stubbed = new(StringComparer.Ordinal)
     {
         "setHiddenFrom", "setInvisibleTo", "attachHider", "attachInvisibleHider", "setFogOfWarReveal", "registerCollisions", "unregisterCollisions", "jointTo",
-        "addForce", "addTorque", "setVelocity", "setAngularVelocity", "drop", "cut", "deal", "shuffle", "shuffleStates", "randomize", "reset", "resetAttachments",
-        "split", "spread", "setRotationValues", "getComponent", "getComponents",
+        "addForce", "addTorque", "setVelocity", "setAngularVelocity", "drop", "cut", "deal", "shuffle", "reset", "resetAttachments",
+        "split", "spread", "getComponent", "getComponents",
     };
 
     static string LowerFirst(string s) => s.Length == 0 ? s : char.ToLowerInvariant(s[0]) + s[1..];
@@ -389,8 +389,12 @@ public static class ModuleTranslator
         ExpressionSyntax DieCall(string recv, string name, string value, SyntaxNode node) => name switch
         {
             "getRotationValues" => Compat($"compat.get_rotation_values({recv})", node),
-            "setRotationValue" or "setValue" => Compat($"compat.set_value({recv}, {value})", node),
-            "roll" => Compat($"compat.roll({recv})", node),
+            "setRotationValues" => Compat($"compat.set_rotation_values({recv}, {value})", node),
+            "getRotationValue" => Compat($"compat.get_rotation_value({recv})", node),
+            "setRotationValue" => Compat($"compat.set_rotation_value({recv}, {value})", node),
+            "setValue" => Compat($"compat.set_value({recv}, {value})", node),
+            "roll" or "randomize" => Compat($"compat.randomize({recv})", node),
+            "shuffleStates" => Compat($"compat.shuffle_states({recv})", node),
             _ => Compat($"compat.get_value({recv})", node),
         };
 
@@ -485,7 +489,8 @@ public static class ModuleTranslator
                 case var stubbed when Stubbed.Contains(stubbed):
                     return Todo(name, $"compat.todo({recv}, \"{name}\")", node);
                 case "getVelocity" or "getAngularVelocity": return Compat("compat.Vector(0, 0, 0)", node);
-                case "getRotationValue" or "getValue" or "getRotationValues" or "setRotationValue" or "setValue" or "roll": return DieCall(recv, name, A(0), node);
+                case "getRotationValue" or "getValue" or "getRotationValues" or "setRotationValues" or "setRotationValue" or "setValue" or "roll" or "randomize" or "shuffleStates":
+                    return DieCall(recv, name, A(0), node);
                 case "getJoints" or "getZones": return Compat("{}", node);
                 case "isSmoothMoving": return Compat("false", node);
                 case "getFogOfWarReveal": return Compat("{ reveal = false, color = \"\", range = 0 }", node);
@@ -692,6 +697,9 @@ public static class ModuleTranslator
                 case "onObjectLeaveContainer": return ("on_unstowed", "__holder, __piece", Bind(new[] { "__holder", "__piece" }));
                 case "tryObjectEnterContainer": return ("try_stow", "__holder, __piece", Bind(new[] { "__holder", "__piece" }));
                 case "onObjectNumberTyped": return ("on_number_typed", "__piece, __who, __n", Bind(new[] { "__piece", "compat.color_of(__who)", "__n" }));
+                case "onRandomize": return ("on_roll", "__who", Bind(new[] { "compat.color_of(__who)" }));
+                case "onObjectRandomize" when _ctx.IsGlobal: return ("on_roll", "__piece, __who", Bind(new[] { "__piece", "compat.color_of(__who)" }));
+                case "onObjectRandomize": return ("on_roll", "__who", Bind(new[] { "self", "compat.color_of(__who)" }));
                 case "onScriptingButtonDown": return ("on_scripting_button_down", "__index, __who", Bind(new[] { "__index", "compat.color_of(__who)" }));
                 case "onScriptingButtonUp": return ("on_scripting_button_up", "__index, __who", Bind(new[] { "__index", "compat.color_of(__who)" }));
             }

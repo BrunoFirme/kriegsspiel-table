@@ -200,6 +200,9 @@ Read from `self` or from any piece `board.find` or `board.pieces` hands back. Fi
 | [`self.note`](#selfnote) | Its description, shown on hover; umpires only. nil when empty. |
 | [`self.state`](#selfstate) | Its state, from 1. |
 | [`self.states`](#selfstates) | The names of its kind's states, in order. |
+| [`self.faces`](#selffaces) | A die's sides in order: { value =, up = { x, y, z }, rotation = { x, y, z } }; empty for every other piece. |
+| [`self.face`](#selfface) | The side of a die showing, from 1; nil for every other piece. |
+| [`self.value`](#selfvalue) | The value of the side of a die showing; nil for every other piece. |
 | [`self.pos`](#selfpos) | Where it stands, in map units: { x =, z = }. |
 | [`self.rot`](#selfrot) | Its heading in degrees. |
 | [`self.y`](#selfy) | How high it sits above the table (stacked pieces). |
@@ -327,6 +330,42 @@ end
 ```
 
 **Module call** `getStates`
+
+### `self.faces`
+
+```lua
+self.faces
+```
+
+A die's sides in order: { value =, up = { x, y, z }, rotation = { x, y, z } }; empty for every other piece.
+
+**Type** `Face[]`, read-only.
+
+**Module call** `getRotationValues`
+
+### `self.face`
+
+```lua
+self.face
+```
+
+The side of a die showing, from 1; nil for every other piece.
+
+**Type** `number?`, read-only.
+
+**Module call** `getValue`
+
+### `self.value`
+
+```lua
+self.value
+```
+
+The value of the side of a die showing; nil for every other piece.
+
+**Type** `number|string|nil`, read-only.
+
+**Module call** `getRotationValue`
 
 ### `self.pos`
 
@@ -646,6 +685,10 @@ Each call is a change every umpire sees, taken back with Ctrl+Z by the umpire wh
 | [`self.set_name`](#selfset_name) | Sets the label under the piece; nil takes it away. |
 | [`self.set_note`](#selfset_note) | Sets its description; nil takes it away. |
 | [`self.set_state`](#selfset_state) | Changes its state: a number from 1, or a state's name. What the scripts drew belongs to the state it was drawn on. |
+| [`self.set_face`](#selfset_face) | Turns a die to show a side, from 1; false when it has no such side. |
+| [`self.set_value`](#selfset_value) | Turns a die to the first side with this value; false when no side has it. |
+| [`self.set_faces`](#selfset_faces) | Gives this die sides of its own; nil gives it back its kind's. |
+| [`self.roll`](#selfroll) | Rolls a die, or turns a piece of several states to one at random; false for anything else. |
 | [`self.set_pos`](#selfset_pos) | Moves it, in map units; its heading stays. A place { x, z } or another piece works in place of x and z. |
 | [`self.set_rot`](#selfset_rot) | Turns it to a heading in degrees. |
 | [`self.move`](#selfmove) | Moves and turns it in one change. A place { x, z } or another piece works in place of x and z: move(place, rot). |
@@ -732,6 +775,70 @@ A name or number the kind does not have is an error.
 Widgets, menu rows and lines a script draws belong to the state they were drawn in; see the guide, States.
 
 **Module call** `setState` · **See also** [`self.state`](#selfstate), [`self.states`](#selfstates), [`on_state`](#on_state)
+
+### `self.set_face`
+
+```lua
+self.set_face(n)
+```
+
+Turns a die to show a side, from 1; false when it has no such side.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `n` | `number` | The side, from 1, in the order of self.faces. |
+
+**Returns** `boolean`.
+
+**Module call** `setValue` · **See also** [`self.face`](#selfface), [`self.set_value`](#selfset_value)
+
+### `self.set_value`
+
+```lua
+self.set_value(value)
+```
+
+Turns a die to the first side with this value; false when no side has it.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `value` | `number\|string` | The value to show. |
+
+**Returns** `boolean`.
+
+```lua
+self.set_value(6)
+```
+
+**Module call** `setRotationValue` · **See also** [`self.value`](#selfvalue), [`self.set_face`](#selfset_face)
+
+### `self.set_faces`
+
+```lua
+self.set_faces(list)
+```
+
+Gives this die sides of its own; nil gives it back its kind's.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `list` | `table?` | { value =, up = { x, y, z } } or { value =, rotation = { x, y, z } } for each side. |
+
+**Returns** `boolean`.
+
+**Module call** `setRotationValues` · **See also** [`self.faces`](#selffaces)
+
+### `self.roll`
+
+```lua
+self.roll()
+```
+
+Rolls a die, or turns a piece of several states to one at random; false for anything else.
+
+**Returns** `boolean`.
+
+**Module call** `randomize` · **See also** [`game.roll`](#gameroll), [`self.set_face`](#selfset_face)
 
 ### `self.set_pos`
 
@@ -2414,6 +2521,7 @@ Define any of these in a piece's script and the table calls it.
 | [`on_save`](#on_save) | The game is being saved, or an umpire's action has just run the script: return a string to keep. |
 | [`on_update`](#on_update) | Every frame on the host. Keep it short: it runs under the same time limit as any call. |
 | [`on_drop`](#on_drop) | An umpire let the piece go. |
+| [`on_roll`](#on_roll) | An umpire rolled this die. |
 | [`on_pick_up`](#on_pick_up) | An umpire picked the piece up. |
 | [`on_state`](#on_state) | Its state changed, by anyone. |
 | [`on_flip`](#on_flip) | It was turned over or back. |
@@ -2490,11 +2598,23 @@ An umpire let the piece go.
 
 An event: define this function and the table calls it.
 
+**Module call** `onDrop`
+
+### `on_roll`
+
+```lua
+on_roll(who)
+```
+
+An umpire rolled this die.
+
+An event: define this function and the table calls it.
+
 | Parameter | Type | Description |
 |---|---|---|
 | `who` | `Who` | The umpire. |
 
-**Module call** `onDrop` · **See also** [`on_pick_up`](#on_pick_up)
+**Module call** `onRandomize` · **See also** [`on_pick_up`](#on_pick_up)
 
 ### `on_pick_up`
 
@@ -2614,6 +2734,7 @@ The global script gets on_load, on_save, on_update and on_turn too, and these fo
 | [`on_spawn`](#on_spawn-global-script) | A piece came onto the table. |
 | [`on_destroy`](#on_destroy-global-script) | A piece is about to go. |
 | [`on_drop`](#on_drop-global-script) | An umpire let a piece go. |
+| [`on_roll`](#on_roll-global-script) | An umpire rolled a die, or turned a piece of several looks to one at random. |
 | [`on_rotate`](#on_rotate-global-script) | An umpire turned a piece in place. |
 | [`on_pick_up`](#on_pick_up-global-script) | An umpire picked a piece up. |
 | [`on_player_action`](#on_player_action-global-script) | An umpire is about to delete or flip pieces: return false to refuse it, with action "delete" or "flip" and the pieces it would touch. |
@@ -2667,6 +2788,18 @@ An umpire let a piece go.
 
 An event: define this function and the table calls it.
 
+**Module call** `onObjectDrop`
+
+### `on_roll` (global script)
+
+```lua
+on_roll(piece, who)
+```
+
+An umpire rolled a die, or turned a piece of several looks to one at random.
+
+An event: define this function and the table calls it.
+
 | Parameter | Type | Description |
 |---|---|---|
 | `piece` | `Piece` | The piece. |
@@ -2680,7 +2813,7 @@ function on_drop(piece, who)
 end
 ```
 
-**Module call** `onObjectDrop`
+**Module call** `onObjectRandomize`
 
 ### `on_rotate` (global script)
 
@@ -3014,11 +3147,14 @@ The converter rewrites a module's scripts into these calls by rule; this is the 
 | `getPlayers` | [`game.umpires`](#gameumpires) |
 | `getPosition` | [`self.pos`](#selfpos) |
 | `getRotation` | [`self.rot`](#selfrot) |
+| `getRotationValue` | [`self.value`](#selfvalue) |
+| `getRotationValues` | [`self.faces`](#selffaces) |
 | `getScale` | [`self.scale`](#selfscale) |
 | `getSelectedObjects` | [`game.selected`](#gameselected) |
 | `getStateId` | [`self.state`](#selfstate) |
 | `getStates` | [`self.states`](#selfstates) |
 | `getTags` | [`self.tags`](#selftags) |
+| `getValue` | [`self.face`](#selfface) |
 | `getVar` | [`self.get_var`](#selfget_var) |
 | `getVectorLines` | [`self.lines`](#selflines) |
 | `getZones` | [`board.zones`](#boardzones) |
@@ -3046,12 +3182,14 @@ The converter rewrites a module's scripts into these calls by rule; this is the 
 | `onObjectLeaveContainer` | [`on_unstowed`](#on_unstowed-global-script) |
 | `onObjectNumberTyped` | [`on_number_typed`](#on_number_typed-global-script) |
 | `onObjectPickUp` | [`on_pick_up`](#on_pick_up-global-script) |
+| `onObjectRandomize` | [`on_roll`](#on_roll-global-script) |
 | `onObjectRotate` | [`on_rotate`](#on_rotate-global-script) |
 | `onObjectSpawn` | [`on_spawn`](#on_spawn-global-script) |
 | `onObjectStateChange` | [`on_state`](#on_state) |
 | `onPickUp` | [`on_pick_up`](#on_pick_up) |
 | `onPlayerAction` | [`on_player_action`](#on_player_action-global-script) |
 | `onPlayerTurn` | [`on_turn`](#on_turn) |
+| `onRandomize` | [`on_roll`](#on_roll) |
 | `onRotate` | [`on_rotate`](#on_rotate) |
 | `onSave` | [`on_save`](#on_save) |
 | `onScriptingButtonDown` | [`on_scripting_button_down`](#on_scripting_button_down-global-script) |
@@ -3061,6 +3199,7 @@ The converter rewrites a module's scripts into these calls by rule; this is the 
 | `positionToWorld` | [`self.to_world`](#selfto_world) |
 | `print` | [`print`](#print) |
 | `putObject` | [`self.stow`](#selfstow) |
+| `randomize` | [`self.roll`](#selfroll) |
 | `reload` | [`self.reload`](#selfreload) |
 | `removeAttachment` | [`self.detach`](#selfdetach) |
 | `removeButton` | [`self.remove_widget`](#selfremove_widget) |
@@ -3078,9 +3217,12 @@ The converter rewrites a module's scripts into these calls by rule; this is the 
 | `setName` | [`self.set_name`](#selfset_name) |
 | `setPosition` | [`self.set_pos`](#selfset_pos) |
 | `setRotation` | [`self.set_rot`](#selfset_rot) |
+| `setRotationValue` | [`self.set_value`](#selfset_value) |
+| `setRotationValues` | [`self.set_faces`](#selfset_faces) |
 | `setScale` | [`self.set_scale`](#selfset_scale) |
 | `setState` | [`self.set_state`](#selfset_state) |
 | `setTags` | [`self.set_tags`](#selfset_tags) |
+| `setValue` | [`self.set_face`](#selfset_face) |
 | `setVar` | [`self.set_var`](#selfset_var) |
 | `setVectorLines` | [`self.set_lines`](#selfset_lines) |
 | `showInputDialog` | [`game.dialog`](#gamedialog) |

@@ -129,6 +129,7 @@ type Command abstract
   derived SetDecalPalette = SetDecalPalette
   derived SetDecals = SetDecals
   derived SetDef = SetDef
+  derived SetDieFaces = SetDieFaces
   derived SetGlobalMenuItems = SetGlobalMenuItems
   derived SetGlobalScript = SetGlobalScript
   derived SetGlobalScriptState = SetGlobalScriptState
@@ -164,6 +165,7 @@ type Command abstract
   derived SpawnPiece = SpawnPiece
   derived StampDecal = StampDecal
   derived Stow = Stow
+  derived TurnDie = TurnDie
   derived UiEvent = UiEvent
   derived Undo = Undo
   derived Unstow = Unstow
@@ -243,6 +245,9 @@ type Dictionary<string,List<PieceInstance>> map string to List<PieceInstance>
 type Dictionary<string,List<Stroke>> map string to List<Stroke>
 type Dictionary<string,int> map string to int
 type Dictionary<string,string> map string to string
+type DieFace object
+  up: double[]
+  value: string
 type Draw object
   actor: long
   at: long
@@ -410,6 +415,7 @@ type List<ConsoleLine> list of ConsoleLine
 type List<CounterDef> list of CounterDef
 type List<DecalDef> list of DecalDef
 type List<DiceRoll> list of DiceRoll
+type List<DieFace> list of DieFace
 type List<HotkeyDef> list of HotkeyDef
 type List<LineDef> list of LineDef
 type List<MenuItemDef> list of MenuItemDef
@@ -559,6 +565,7 @@ type PieceDef object
   back: string
   counters: List<CounterDef>
   effect: EffectDef
+  faces: List<DieFace>
   id: string
   image: string
   kind: string
@@ -585,7 +592,9 @@ type PieceInstance object
   decalsOnState: int?
   def: string
   drawnOnState: int
+  face: int
   faceDown: bool
+  faces: List<DieFace>
   guid: string
   id: string
   label: string
@@ -838,6 +847,14 @@ type SetDef object
   actor: long
   at: long
   def: string
+  id: string
+  layer: string
+  seq: long
+  undoOf: long
+type SetDieFaces object
+  actor: long
+  at: long
+  faces: List<DieFace>
   id: string
   layer: string
   seq: long
@@ -1159,6 +1176,14 @@ type TextLineDef object
   default: string
   name: string
   place: PrintPlace
+type TurnDie object
+  actor: long
+  at: long
+  face: int
+  id: string
+  layer: string
+  seq: long
+  undoOf: long
 type TurnInfo object
   endedAt: string
   gameTime: string

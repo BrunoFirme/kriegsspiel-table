@@ -76,6 +76,8 @@ public static class CoreSamples
         yield return new MovePiece { Layer = L, Id = "p-000001", Pos = new(3, 4), RotDeg = 45, Stack = 1 };
         yield return new DeletePiece { Layer = L, Id = "p-000001" };
         yield return new SetState { Layer = L, Id = "p-000001", State = 2 };
+        yield return new TurnDie { Layer = L, Id = "p-000001", Face = 4 };
+        yield return new SetDieFaces { Layer = L, Id = "p-000001", Faces = [new DieFace { Value = "Hit", Up = [0, 1, 0] }, new DieFace { Value = "Miss", Up = [0, -1, 0] }] };
         yield return new SetCounter { Layer = L, Id = "p-000001", Name = "str", Value = 3 };
         yield return new SetText { Layer = L, Id = "p-000001", Name = "name", Value = "2nd Bn" };
         yield return new SetLabel { Layer = L, Id = "p-000001", Value = "new" };

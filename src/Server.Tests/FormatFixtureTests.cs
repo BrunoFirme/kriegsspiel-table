@@ -147,7 +147,7 @@ public class FormatFixtureTests : IDisposable
         Assert.True(g.Layer(Layers.Umpire).Single(p => p.Id == "p-000002").FaceDown);
         Assert.Equal("marker", g.Layer(Layers.Umpire).Single(p => p.Id == "p-000002").Picture);
         Assert.True(g.Layer(Layers.Umpire).Single(p => p.Id == "p-000003").Locked);
-        Assert.Equal(3, g.Layer(Layers.Umpire).Single(p => p.Def == "die6").State);
+        Assert.Equal(3, g.Layer(Layers.Umpire).Single(p => p.Def == "die6").ShownFace);
 
         var sheet = Assert.Single(g.Sheets);
         Assert.Equal(0.8, sheet.Crop!.W);
@@ -209,7 +209,7 @@ public class FormatFixtureTests : IDisposable
         Assert.Equal("cannon", gun.Effect!.Kind);
         Assert.Equal("rolling", gun.Effect.Volley);
         Assert.Equal(new[] { 0.1, 0.2 }, gun.Effect.At);
-        Assert.Equal(6, store.Def("die6")!.States.Count);
+        Assert.Equal(6, store.Def("die6")!.Faces.Count);
     }
 
     [Fact]

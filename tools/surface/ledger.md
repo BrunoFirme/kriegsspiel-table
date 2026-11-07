@@ -14,7 +14,7 @@ the plan says translate it), unknown (nobody has decided).
 | object | 65 | 65 | 0 | 262 |
 | global | 14 | 14 | 0 | 55 |
 | namespaces | 23 | 23 | 0 | 180 |
-| events | 8 | 8 | 0 | 51 |
+| events | 8 | 8 | 0 | 52 |
 | engine | 23 | 23 | 0 | 23 |
 
 ## types
@@ -438,8 +438,8 @@ the plan says translate it), unknown (nobody has decided).
 | `setRotation` | 2 / 2 | compat | ObjectCall |  |
 | `getLuaScript` | 19474 / 1 | compat | ObjectCall |  |
 | `getVectorLines` | 2 / 1 | compat | ObjectCall |  |
-| `getValue` | 1 / 1 | compat | compat.get_value: the look's name as a number where it is one | DiceScriptTests |
-| `roll` | 1 / 1 | compat | compat.roll: a random look of the piece | DiceScriptTests |
+| `getValue` | 1 / 1 | native | a die's sides are its own (PieceDef.Faces, a value and the way up each); self.faces / face / value, set_face / set_value / set_faces / roll; compat maps the module calls | DiceScriptTests |
+| `roll` | 1 / 1 | native | a die's sides are its own (PieceDef.Faces, a value and the way up each); self.faces / face / value, set_face / set_value / set_faces / roll; compat maps the module calls | DiceScriptTests |
 | `setSnapPoints` | 1 / 1 | compat | ObjectCall |  |
 | `AssetBundle.getLoopingEffectIndex` | - | dropped | a bundle's own animations never come over |  |
 | `AssetBundle.getLoopingEffects` | - | dropped | a bundle's own animations never come over |  |
@@ -550,8 +550,8 @@ the plan says translate it), unknown (nobody has decided).
 | `getPositionSmooth` | - | compat | ObjectCall |  |
 | `getQuantity` | - | compat | compat.get_quantity: how many are stowed | StowScriptTests |
 | `getRotationSmooth` | - | compat | ObjectCall |  |
-| `getRotationValue` | - | compat | compat.get_value: the look's name as a number where it is one | DiceScriptTests |
-| `getRotationValues` | - | compat | compat.get_rotation_values: the looks, without rotations | DiceScriptTests |
+| `getRotationValue` | - | native | a die's sides are its own (PieceDef.Faces, a value and the way up each); self.faces / face / value, set_face / set_value / set_faces / roll; compat maps the module calls | DiceScriptTests |
+| `getRotationValues` | - | native | a die's sides are its own (PieceDef.Faces, a value and the way up each); self.faces / face / value, set_face / set_value / set_faces / roll; compat maps the module calls | DiceScriptTests |
 | `getSelectingPlayers` | - | compat | compat.get_selecting_players |  |
 | `getSnapPoints` | - | compat | ObjectCall |  |
 | `getStateId` | - | native | ObjectCall |  |
@@ -589,7 +589,7 @@ the plan says translate it), unknown (nobody has decided).
 | `pick_up_position` | - | dropped | where a piece was picked up |  |
 | `pick_up_rotation` | - | dropped | where a piece was picked up |  |
 | `rPGFigurine` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |
-| `randomize` | - | stub | no module calls it; a die rolls through roll |  |
+| `randomize` | - | native | a die rolls (logged as a roll), a piece of several looks takes one at random; bags and decks are not shuffled (deck logic dropped) | DiceScriptTests |
 | `registerCollisions` | - | dropped | engine physics (collisions) |  |
 | `remainder` | - | dropped | deck and card logic (decided 2026-11-06) |  |
 | `removeAttachment` | - | compat | ObjectCall |  |
@@ -611,14 +611,14 @@ the plan says translate it), unknown (nobody has decided).
 | `setLuaScriptState` | - | compat | script_state | ModuleHelpersTests |
 | `setMaterialValue` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |
 | `setMemo` | - | native | ObjectCall |  |
-| `setRotationValue` | - | compat | compat.set_value: the look named so | DiceScriptTests |
-| `setRotationValues` | - | dropped | redefining a die's faces |  |
+| `setRotationValue` | - | native | a die's sides are its own (PieceDef.Faces, a value and the way up each); self.faces / face / value, set_face / set_value / set_faces / roll; compat maps the module calls | DiceScriptTests |
+| `setRotationValues` | - | native | a die's sides are its own (PieceDef.Faces, a value and the way up each); self.faces / face / value, set_face / set_value / set_faces / roll; compat maps the module calls | DiceScriptTests |
 | `setTable` | - | native | ObjectCall |  |
 | `setTags` | - | native | ObjectCall |  |
-| `setValue` | - | compat | compat.set_value: the look named so | DiceScriptTests |
+| `setValue` | - | native | a die's sides are its own (PieceDef.Faces, a value and the way up each); self.faces / face / value, set_face / set_value / set_faces / roll; compat maps the module calls | DiceScriptTests |
 | `setVelocity` | - | dropped | engine physics |  |
 | `shuffle` | - | dropped | deck and card logic (decided 2026-11-06) |  |
-| `shuffleStates` | - | unknown |  |  |
+| `shuffleStates` | - | native | compat.shuffle_states: another of its looks at random | DiceScriptTests |
 | `spawning` | - | compat | ObjectCall |  |
 | `spread` | - | dropped | deck and card logic (decided 2026-11-06) |  |
 | `startLuaCoroutine` | - | unknown |  |  |
@@ -922,7 +922,7 @@ the plan says translate it), unknown (nobody has decided).
 | `onObjectLoopingEffect` | - | dropped | a bundle's own animations never come over |  |
 | `onObjectPageChange` | - | stub | a page turn is a state change; no module handles it |  |
 | `onObjectPeek` | - | dropped | peeking at a hidden piece |  |
-| `onObjectRandomize` | - | stub | no event when a die rolls; no module handles it |  |
+| `onObjectRandomize` | - | native | on_roll(piece, who) in the global script when an umpire rolls | DiceScriptTests |
 | `onObjectRotate` | - | native | EventRenames |  |
 | `onObjectSearchEnd` | - | dropped | a holder's contents are a card, not a search |  |
 | `onObjectSearchStart` | - | dropped | a holder's contents are a card, not a search |  |
@@ -936,6 +936,7 @@ the plan says translate it), unknown (nobody has decided).
 | `onPlayerTurnStart` | - | compat | on_turn when the clock advances | ModuleHelpersTests |
 | `onPlayersConnect` | - | dropped | the Player API (decided 2026-11-06) |  |
 | `onPlayersDisconnect` | - | dropped | the Player API (decided 2026-11-06) |  |
+| `onRandomize` | - | native | on_roll(who) in the die's own script | DiceScriptTests |
 | `onScriptingButtonUp` | - | native | EventRenames |  |
 | `onZoneGroupSort` | - | dropped | scripting and layout zones (decided 2026-11-06) |  |
 | `tryObjectEnterContainer` | - | native | try_stow(holder, piece) before a stow; false keeps the piece out | StowEventTests |

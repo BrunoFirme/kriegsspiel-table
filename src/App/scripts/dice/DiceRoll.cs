@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Godot;
+using KTable.Core.Model;
 using KTable.Core.Protocol;
 
 namespace KTable.App;
@@ -52,7 +53,7 @@ sealed class Dice
         foreach (var g in dice.Where(n => !n.Piece.PhysicalRoll).GroupBy(n => n.Layer))
         {
             var list = g.ToList();
-            _c.S.Do(new RollDice { Layer = g.Key, PieceIds = list.Select(n => n.Piece.Id).ToList(), Count = list.Count, Sides = list[0].Def!.States.Count,
+            _c.S.Do(new RollDice { Layer = g.Key, PieceIds = list.Select(n => n.Piece.Id).ToList(), Count = list.Count, Sides = PieceInstance.FacesOf(list[0].Def, list[0].Piece).Count,
                 Label = list.Count == 1 ? list[0].Def!.Name : $"{list.Count} dice" });
         }
 
@@ -148,7 +149,7 @@ sealed class Dice
         foreach (var n in dice)
             if (rest.TryGetValue(n, out var r))
             {
-                int face = n.Piece.PhysicalRoll ? n.FaceUp(r.b) : n.PendingState ?? n.Piece.State;
+                int face = n.Piece.PhysicalRoll ? n.FaceUp(r.b) : n.PendingState ?? n.Piece.ShownFace;
                 if (n.Piece.PhysicalRoll) real.Add((n, face));
                 var (rot, y) = n.SettleFromPhysics(face, r.b, r.c, (pos, rotDeg, top) => _hand.RestingY(n, pos, rotDeg, top));
                 cmds.Add(new MovePiece { Layer = n.Layer, Id = n.Piece.Id, Pos = Coords.FromWorld(r.c), RotDeg = rot, Stack = 0, Y = y });
@@ -160,12 +161,12 @@ sealed class Dice
             cmds.Insert(0, new RollDice
             {
                 Layer = g.Key, PieceIds = list.Select(x => x.n.Piece.Id).ToList(), Results = list.Select(x => x.face + 1).ToList(), Physical = true,
-                Count = list.Count, Sides = list[0].n.Def!.States.Count, Label = list.Count == 1 ? list[0].n.Def!.Name : $"{list.Count} dice",
+                Count = list.Count, Sides = PieceInstance.FacesOf(list[0].n.Def, list[0].n.Piece).Count, Label = list.Count == 1 ? list[0].n.Def!.Name : $"{list.Count} dice",
             });
         }
         _c.DoAll(cmds);
         foreach (var n in dice) n.EndRoll();
     }
 
-    public string Debug() => string.Join(" | ", _pieces.Nodes.Where(n => n.IsDie).Select(n => $"{n.Def!.Name}: centre {n.ModelWorldCenter.X:0.0},{n.ModelWorldCenter.Y:0.00},{n.ModelWorldCenter.Z:0.0} rolling={n.Rolling} face={n.Piece.State + 1}"));
+    public string Debug() => string.Join(" | ", _pieces.Nodes.Where(n => n.IsDie).Select(n => $"{n.Def!.Name}: centre {n.ModelWorldCenter.X:0.0},{n.ModelWorldCenter.Y:0.00},{n.ModelWorldCenter.Z:0.0} rolling={n.Rolling} face={n.Piece.ShownFace + 1}"));
 }

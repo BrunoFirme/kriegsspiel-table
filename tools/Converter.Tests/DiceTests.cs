@@ -43,13 +43,13 @@ public sealed partial class ConverterTests
         var table = Json.Load<Scenario>(Path.Combine(Packages, "scenarios", "dice", "scenario.json"));
         PieceInstance Named(string label) => table.UmpireBoard.Single(p => p.Label == label);
         Assert.Contains("std.dice", table.Packs);
-        Assert.Equal(("std.dice.d6", 3, 1.0), (Named("Red die").Def, Named("Red die").State, Named("Red die").Scale));
+        Assert.Equal(("std.dice.d6", 3, 1.0), (Named("Red die").Def, Named("Red die").Face, Named("Red die").Scale));
         var pack = Json.Load<PackManifest>(Path.Combine(Packages, "tts.dice", "pack.json"));
         var d20 = pack.Pieces.Single(d => d.Id == Named("Big die").Def);
-        Assert.Equal(("model", 1), (d20.Kind, Named("Big die").State));
-        Assert.Equal(20, d20.States.Count);
-        Assert.Equal(new[] { "1", "20" }, d20.States.Take(2).Select(s => s.Name));
-        Assert.All(d20.States.Skip(2), s => Assert.Contains(s.Name, new[] { "1", "20" }));
+        Assert.Equal(("model", 1), (d20.Kind, Named("Big die").Face));
+        Assert.Equal(20, d20.Faces.Count);
+        Assert.Equal(new[] { "1", "20" }, d20.Faces.Take(2).Select(s => s.Value));
+        Assert.All(d20.Faces.Skip(2), s => Assert.Contains(s.Value, new[] { "1", "20" }));
         Assert.Contains("d20", d20.Tags);
         Assert.NotNull(d20.Texture);
         Assert.Equal(DefFactory.TemplateLayout["d20"].Size[0] * 2, d20.Size.W * Named("Big die").Scale, 3);
@@ -58,12 +58,12 @@ public sealed partial class ConverterTests
     [Fact]
     public void A_die_s_face_is_read_from_the_rotation_it_was_saved_at()
     {
-        var die = new PieceDef { States = Enumerable.Range(1, 6).Select(i => new PieceStateDef { Name = i.ToString() }).ToList() };
+        var die = new PieceDef { Faces = Enumerable.Range(1, 6).Select(i => new DieFace { Value = i.ToString() }).ToList() };
         var o = new ModuleObj(Obj("Die_6", "", 1, new JsonObject { ["RotationValues"] = SixFaces() }));
         o.J["Transform"]!["rotX"] = 90.0;
         o.J["Transform"]!["rotZ"] = 0.0;
-        Assert.Equal(5, DefFactory.DieFace(o, die));
+        Assert.Equal(5, DefFactory.FaceShown(o, die));
         o.J["Transform"]!["rotX"] = -90.0;
-        Assert.Equal(0, DefFactory.DieFace(o, die));
+        Assert.Equal(0, DefFactory.FaceShown(o, die));
     }
 }

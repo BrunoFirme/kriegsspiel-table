@@ -276,7 +276,7 @@ public sealed partial class ScriptHost
     DynValue Handle(string id) => _handles.Handle(id);
 }
 
-internal sealed class PieceHandles(ScriptHost host)
+internal sealed partial class PieceHandles(ScriptHost host)
 {
     readonly Dictionary<string, DynValue> _handles = new();
 
@@ -315,7 +315,7 @@ internal sealed class PieceHandles(ScriptHost host)
             return DynValue.Nil;
         }
         var def = host.Server.Store?.Def(p.Def);
-        return Field(id, p, def, key) ?? Setter(id, p, def, key) ?? Drawing(id, key) ?? Scripted(id, p, key) ?? DynValue.Nil;
+        return Field(id, p, def, key) ?? DieField(p, def, key) ?? Setter(id, p, def, key) ?? DieSetter(id, p, def, key) ?? Drawing(id, key) ?? Scripted(id, p, key) ?? DynValue.Nil;
     }
 
     DynValue? Field(string id, PieceInstance p, PieceDef? def, string key)

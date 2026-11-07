@@ -150,6 +150,9 @@ public static partial class ApiDoc
               print(i, name, i == self.state and "(now)" or "")
             end
             """);
+        F("piece", "faces", "Face[]", "A die's sides in order: { value =, up = { x, y, z }, rotation = { x, y, z } }; empty for every other piece.", "getRotationValues");
+        F("piece", "face", "number?", "The side of a die showing, from 1; nil for every other piece.", "getValue");
+        F("piece", "value", "number|string|nil", "The value of the side of a die showing; nil for every other piece.", "getRotationValue");
         F("piece", "pos", "Point", "Where it stands, in map units: { x =, z = }.", "getPosition");
         Note("Each read gives a new table; changing it moves nothing. Use `set_pos` or `move`.");
         See("self.set_pos", "self.move", "board.distance");
@@ -232,6 +235,22 @@ public static partial class ApiDoc
     Note("A name or number the kind does not have is an error.");
     Note("Widgets, menu rows and lines a script draws belong to the state they were drawn in; see the guide, States.");
     See("self.state", "self.states", "on_state");
+
+    M("piece", "set_face(n)", "Turns a die to show a side, from 1; false when it has no such side.", "setValue", "boolean");
+    P("n", "number", "The side, from 1, in the order of self.faces.");
+    See("self.face", "self.set_value");
+
+    M("piece", "set_value(value)", "Turns a die to the first side with this value; false when no side has it.", "setRotationValue", "boolean");
+    P("value", "number|string", "The value to show.");
+    X("self.set_value(6)");
+    See("self.value", "self.set_face");
+
+    M("piece", "set_faces(list)", "Gives this die sides of its own; nil gives it back its kind's.", "setRotationValues", "boolean");
+    P("list", "table?", "{ value =, up = { x, y, z } } or { value =, rotation = { x, y, z } } for each side.");
+    See("self.faces");
+
+    M("piece", "roll()", "Rolls a die, or turns a piece of several states to one at random; false for anything else.", "randomize", "boolean");
+    See("game.roll", "self.set_face");
 
     M("piece", "set_pos(x, z)", "Moves it, in map units; its heading stays. A place { x, z } or another piece works in place of x and z.", "setPosition");
     O("x", "number", "The new x in map units; nil keeps the current one.");
@@ -885,6 +904,7 @@ public static partial class ApiDoc
         Note("Prefer `wait.seconds` or an event: a script that does its work every frame costs the host every frame.");
 
         E("event", "on_drop(who)", "An umpire let the piece go.", "onDrop");
+        E("event", "on_roll(who)", "An umpire rolled this die.", "onRandomize");
         P("who", "Who", "The umpire.");
         See("on_pick_up");
 
@@ -935,6 +955,7 @@ public static partial class ApiDoc
         P("piece", "Piece", "The piece; its fields still answer.");
 
         E("global event", "on_drop(piece, who)", "An umpire let a piece go.", "onObjectDrop");
+        E("global event", "on_roll(piece, who)", "An umpire rolled a die, or turned a piece of several looks to one at random.", "onObjectRandomize");
         P("piece", "Piece", "The piece.");
         P("who", "Who", "The umpire.");
         X("""

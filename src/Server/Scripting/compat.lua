@@ -506,26 +506,42 @@ function compat.get_objects(obj)
   return t
 end
 function compat.get_quantity(obj) return #(obj.stowed or {}) end
-function compat.roll(obj)
+function compat.randomize(obj) return obj.roll() end
+function compat.roll(obj) return obj.roll() end
+function compat.shuffle_states(obj)
   local n = #(obj.states or {})
-  if n > 1 then obj.set_state(math.random(n)) end
+  if n < 2 then return nil end
+  local pick = math.random(n - 1)
+  if pick >= obj.state then pick = pick + 1 end
+  obj.set_state(pick)
+  return obj
 end
 function compat.get_value(obj)
-  local s = obj.states
-  if type(s) ~= "table" or #s < 2 then return nil end
-  local name = s[obj.state]
-  return tonumber(name) or name
-end
-function compat.get_rotation_values(obj)
-  local t = {}
-  for _, name in ipairs(obj.states or {}) do t[#t + 1] = { value = tonumber(name) or name, rotation = compat.Vector(0, 0, 0) } end
-  return t
+  if obj.face ~= nil then return obj.face end
+  return nil
 end
 function compat.set_value(obj, v)
-  for i, name in ipairs(obj.states or {}) do
-    if name == tostring(v) or (tonumber(name) ~= nil and tonumber(name) == tonumber(v)) then obj.set_state(i) return true end
-  end
+  if obj.face ~= nil then return obj.set_face(tonumber(v) or 0) end
   return false
+end
+function compat.get_rotation_value(obj) return obj.value end
+function compat.set_rotation_value(obj, v) return obj.set_value(v) end
+function compat.get_rotation_values(obj)
+  local t = {}
+  for _, f in ipairs(obj.faces or {}) do
+    t[#t + 1] = { value = f.value, rotation = compat.Vector(f.rotation.x, f.rotation.y, f.rotation.z) }
+  end
+  return t
+end
+function compat.set_rotation_values(obj, list)
+  if type(list) ~= "table" then return false end
+  local faces = {}
+  for _, f in ipairs(list) do
+    if type(f) ~= "table" then return false end
+    local r = f.rotation or {}
+    faces[#faces + 1] = { value = f.value, rotation = { x = vec(r, "x", 1, 0), y = vec(r, "y", 2, 0), z = vec(r, "z", 3, 0) } }
+  end
+  return obj.set_faces(faces)
 end
 function compat.take_object(obj, params)
   params = type(params) == "table" and params or {}

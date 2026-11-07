@@ -60,10 +60,18 @@ sealed class PieceActions
         var hover = _hover.Node;
         IEnumerable<PieceNode> targets = hover != null && !_hand.Holding && !_selection.Ids.Contains(hover.Piece.Id) ? new[] { hover } : _selection.Nodes;
         if (S.View.Script != null) return NumberToScript(targets, n);
-        var able = targets.Where(t => t.Def != null && t.Def.States.Count > 1 && t.Def.States.Count >= n && S.CanTouch(t.Layer, t.Piece)).ToList();
-        if (able.Count == 0) return false;
-        var cmds = able.Where(t => t.Piece.State != n - 1).Select(t => (Command)new SetState { Layer = t.Layer, Id = t.Piece.Id, State = n - 1 }).ToList();
+        var dice = targets.Where(t => t.IsDie && PieceInstance.FacesOf(t.Def, t.Piece).Count >= n && S.CanTouch(t.Layer, t.Piece)).ToList();
+        var able = targets.Where(t => !t.IsDie && t.Def != null && t.Def.States.Count > 1 && t.Def.States.Count >= n && S.CanTouch(t.Layer, t.Piece)).ToList();
+        if (able.Count == 0 && dice.Count == 0) return false;
+        var cmds = able.Where(t => t.Piece.State != n - 1).Select(t => (Command)new SetState { Layer = t.Layer, Id = t.Piece.Id, State = n - 1 })
+            .Concat(dice.Where(t => t.Piece.ShownFace != n - 1).Select(t => (Command)new TurnDie { Layer = t.Layer, Id = t.Piece.Id, Face = n - 1 })).ToList();
         _c.DoAll(cmds);
+        if (able.Count == 0)
+        {
+            var value = PieceInstance.FacesOf(dice[0].Def, dice[0].Piece)[n - 1].Value;
+            _c.Say($"Side {n}{(value.Length > 0 && value != n.ToString() ? ": " + value : "")}{(dice.Count > 1 ? $" on {dice.Count} dice" : "")}");
+            return true;
+        }
         var name = able[0].Def!.States[n - 1].Name;
         _c.Say($"Look {n}{(name.Length > 0 ? ": " + name : "")}{(able.Count > 1 ? $" on {able.Count} pieces" : "")}");
         return true;

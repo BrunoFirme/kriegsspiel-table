@@ -157,25 +157,20 @@ public sealed partial class DefFactory
         {
             var up = UpOf(f);
             var face = die.Faces.MaxBy(n => Dot(n, up))!;
-            if (Dot(face, up) < FaceMatch || def.States.Any(s => s.Up!.SequenceEqual(face))) continue;
-            def.States.Add(new PieceStateDef { Name = f.Value.Length > 0 ? f.Value : (def.States.Count + 1).ToString(), Up = face });
+            if (Dot(face, up) < FaceMatch || def.Faces.Any(s => s.Up.SequenceEqual(face))) continue;
+            def.Faces.Add(new DieFace { Value = f.Value.Length > 0 ? f.Value : (def.Faces.Count + 1).ToString(), Up = face });
         }
-        var bare = die.Faces.Where(n => !def.States.Any(s => s.Up!.SequenceEqual(n))).ToList();
+        var bare = die.Faces.Where(n => !def.Faces.Any(s => s.Up.SequenceEqual(n))).ToList();
         if (bare.Count == 0) return;
         foreach (var n in bare)
         {
             var nearest = b.RotationValues.Count > 0 ? b.RotationValues.MaxBy(f => Dot(n, UpOf(f)))!.Value : "";
-            def.States.Add(new PieceStateDef { Name = nearest.Length > 0 ? nearest : (def.States.Count + 1).ToString(), Up = n });
+            def.Faces.Add(new DieFace { Value = nearest.Length > 0 ? nearest : (def.Faces.Count + 1).ToString(), Up = n });
         }
         if (b.RotationValues.Count > 0) _rep.Note($"{where}: {bare.Count} of its sides have no value of their own, so each shows the value saved nearest to it, as the module reads it.");
     }
 
-    public static double[] UpOf(ModuleObj.Face f)
-    {
-        static double R(double deg) => deg * Math.PI / 180;
-        double cx = Math.Cos(R(f.RotX)), sx = Math.Sin(R(f.RotX)), cz = Math.Cos(R(f.RotZ)), sz = Math.Sin(R(f.RotZ));
-        return new[] { -cx * sz, cx * cz, -sx };
-    }
+    public static double[] UpOf(ModuleObj.Face f) => DieTurns.UpOf(f.RotX, f.RotZ);
 
     sealed record PictureDie(string Mesh, string MeshFile, List<double[]> Faces, double[] Size);
 
@@ -226,20 +221,20 @@ public sealed partial class DefFactory
 
     PieceDef? StandardDie(int sides) => StdDice.Pieces.FirstOrDefault(p => p.Tags.Contains("d" + sides) && !p.Tags.Contains("picture"));
 
-    public static int DieFace(ModuleObj o, PieceDef die)
+    public static int FaceShown(ModuleObj o, PieceDef die)
     {
         var up = UpOf(new ModuleObj.Face("", o.RotX, o.RotY, o.RotZ));
         double Dot(double[] a) => a[0] * up[0] + a[1] * up[1] + a[2] * up[2];
         if (o.RotationValues.Count > 0)
         {
             var face = o.RotationValues.MaxBy(f => Dot(UpOf(f)))!;
-            int byName = die.States.FindIndex(s => string.Equals(s.Name, face.Value.Trim(), StringComparison.OrdinalIgnoreCase));
+            int byName = die.Faces.FindIndex(s => string.Equals(s.Value, face.Value.Trim(), StringComparison.OrdinalIgnoreCase));
             if (byName >= 0) return byName;
         }
         int byUp = 0;
         double best = double.NegativeInfinity;
-        for (int i = 0; i < die.States.Count; i++)
-            if (die.States[i].Up is { } su && Dot(su) > best) { best = Dot(su); byUp = i; }
+        for (int i = 0; i < die.Faces.Count; i++)
+            if (Dot(die.Faces[i].Up) > best) { best = Dot(die.Faces[i].Up); byUp = i; }
         return byUp;
     }
 
@@ -258,6 +253,6 @@ public sealed partial class DefFactory
             meshStream.CopyTo(into);
             Json.WriteAtomic(file, into.ToArray());
         }
-        return new PictureDie(die.Mesh!, file, die.States.Select(s => s.Up!).ToList(), [DieAcross, DieAcross, DieAcross]);
+        return new PictureDie(die.Mesh!, file, die.Faces.Select(s => s.Up).ToList(), [DieAcross, DieAcross, DieAcross]);
     }
 }

@@ -87,9 +87,9 @@ public sealed partial class ConverterTests
         Assert.Equal("model", def.Kind);
         Assert.Contains("die", def.Tags);
         Assert.True(pack.M.Assets.ContainsKey(def.Mesh!));
-        Assert.Equal(new[] { "1", "2", "3", "4", "5", "6" }, def.States.Select(s => s.Name));
+        Assert.Equal(new[] { "1", "2", "3", "4", "5", "6" }, def.Faces.Select(s => s.Value));
         Assert.Equal(new[] { (0, 0, 1), (0, 1, 0), (1, 0, 0), (-1, 0, 0), (0, -1, 0), (0, 0, -1) },
-            def.States.Select(s => ((int)Math.Round(s.Up![0]), (int)Math.Round(s.Up[1]), (int)Math.Round(s.Up[2]))));
+            def.Faces.Select(s => ((int)Math.Round(s.Up[0]), (int)Math.Round(s.Up[1]), (int)Math.Round(s.Up[2]))));
         Assert.Equal(Math.Round(DefFactory.DieAcross * 1.55, 4), def.Size.W);
         Assert.Null(DefFactory.NotTranslated(new ModuleObj(die)));
         die["CustomImage"]!["CustomDice"]!["Type"] = 5;

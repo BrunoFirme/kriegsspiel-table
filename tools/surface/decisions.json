@@ -226,7 +226,7 @@
   "getQuantity": ["compat", "compat.get_quantity: how many are stowed", "", "StowScriptTests"],
   "reset": ["dropped", "deck and card logic (decided 2026-11-06)", "cards come over as plain pieces; a stowed bag holds a deck's cards"],
   "shuffle": ["dropped", "deck and card logic (decided 2026-11-06)", "cards come over as plain pieces; a stowed bag holds a deck's cards"],
-  "randomize": ["stub", "no module calls it; a die rolls through roll", "roll"],
+  "randomize": ["native", "a die rolls (logged as a roll), a piece of several looks takes one at random; bags and decks are not shuffled (deck logic dropped)", "", "DiceScriptTests"],
   "Container.*": ["compat", "holders: getObjects, putObject, takeObject, getQuantity through stow", "", "StowScriptTests"],
   "cut": ["dropped", "deck and card logic (decided 2026-11-06)", "cards come over as plain pieces; a stowed bag holds a deck's cards"],
   "deal": ["dropped", "deck and card logic (decided 2026-11-06)", "cards come over as plain pieces; a stowed bag holds a deck's cards"],
@@ -236,13 +236,13 @@
   "sendToHand": ["dropped", "hands are seats here (decided 2026-11-06)", "sit players at their seats"],
   "split": ["dropped", "deck and card logic (decided 2026-11-06)", "cards come over as plain pieces; a stowed bag holds a deck's cards"],
   "spread": ["dropped", "deck and card logic (decided 2026-11-06)", "cards come over as plain pieces; a stowed bag holds a deck's cards"],
-  "roll": ["compat", "compat.roll: a random look of the piece", "", "DiceScriptTests"],
-  "getRotationValue": ["compat", "compat.get_value: the look's name as a number where it is one", "", "DiceScriptTests"],
-  "getRotationValues": ["compat", "compat.get_rotation_values: the looks, without rotations", "", "DiceScriptTests"],
-  "setRotationValue": ["compat", "compat.set_value: the look named so", "", "DiceScriptTests"],
-  "setRotationValues": ["dropped", "redefining a die's faces", "make a die of your own in the piece studio"],
-  "getValue": ["compat", "compat.get_value: the look's name as a number where it is one", "", "DiceScriptTests"],
-  "setValue": ["compat", "compat.set_value: the look named so", "", "DiceScriptTests"],
+  "roll": ["native", "a die's sides are its own (PieceDef.Faces, a value and the way up each); self.faces / face / value, set_face / set_value / set_faces / roll; compat maps the module calls", "", "DiceScriptTests"],
+  "getRotationValue": ["native", "a die's sides are its own (PieceDef.Faces, a value and the way up each); self.faces / face / value, set_face / set_value / set_faces / roll; compat maps the module calls", "", "DiceScriptTests"],
+  "getRotationValues": ["native", "a die's sides are its own (PieceDef.Faces, a value and the way up each); self.faces / face / value, set_face / set_value / set_faces / roll; compat maps the module calls", "", "DiceScriptTests"],
+  "setRotationValue": ["native", "a die's sides are its own (PieceDef.Faces, a value and the way up each); self.faces / face / value, set_face / set_value / set_faces / roll; compat maps the module calls", "", "DiceScriptTests"],
+  "setRotationValues": ["native", "a die's sides are its own (PieceDef.Faces, a value and the way up each); self.faces / face / value, set_face / set_value / set_faces / roll; compat maps the module calls", "", "DiceScriptTests"],
+  "getValue": ["native", "a die's sides are its own (PieceDef.Faces, a value and the way up each); self.faces / face / value, set_face / set_value / set_faces / roll; compat maps the module calls", "", "DiceScriptTests"],
+  "setValue": ["native", "a die's sides are its own (PieceDef.Faces, a value and the way up each); self.faces / face / value, set_face / set_value / set_faces / roll; compat maps the module calls", "", "DiceScriptTests"],
   "use_rotation_value_flip": ["dropped", "a die's face is read from its rotation values", "nothing is needed"],
   "getLuaScriptState": ["compat", "script_state", "", "ModuleHelpersTests"],
   "setLuaScriptState": ["compat", "script_state", "", "ModuleHelpersTests"],
@@ -332,7 +332,8 @@
   "remainder": ["dropped", "deck and card logic (decided 2026-11-06)", "cards come over as plain pieces; a stowed bag holds a deck's cards"],
   "rendererIndex": ["dropped", "the engine's materials and components (decided 2026-11-06)", "a look of the piece's own"],
   "zone": ["dropped", "scripting and layout zones (decided 2026-11-06)", "draw the zone at the table; scripts that ask a zone what is in it get nothing"],
-  "UI": ["native", "self.ui / obj.ui: the piece's own panels, the same calls as ui", "", "PanelTests"]
+  "UI": ["native", "self.ui / obj.ui: the piece's own panels, the same calls as ui", "", "PanelTests"],
+  "shuffleStates": ["native", "compat.shuffle_states: another of its looks at random", "", "DiceScriptTests"]
  },
  "global": {
   "logStyle": ["dropped", "console commands and other host controls (decided 2026-11-06)", "the app's own console and settings"],
@@ -518,7 +519,7 @@
   "onPlayerChangeColor": ["dropped", "the Player API (decided 2026-11-06)", "seats and roles are the app's own; scripts reach umpires through game.umpires()"],
   "onObjectHover": ["dropped", "no hover events here", "nothing is needed"],
   "onHover": ["dropped", "no hover events here", "nothing is needed"],
-  "onObjectRandomize": ["stub", "no event when a die rolls; no module handles it", "nothing is needed"],
+  "onObjectRandomize": ["native", "on_roll(piece, who) in the global script when an umpire rolls", "", "DiceScriptTests"],
   "onObjectSearchStart": ["dropped", "a holder's contents are a card, not a search", "nothing is needed"],
   "onObjectSearchEnd": ["dropped", "a holder's contents are a card, not a search", "nothing is needed"],
   "onObjectPageChange": ["stub", "a page turn is a state change; no module handles it", "on_state"],
@@ -541,7 +542,8 @@
   "onHandSelectModeEnd": ["dropped", "hands are seats here (decided 2026-11-06)", "sit players at their seats"],
   "onExternalMessage": ["dropped", "web requests (decided 2026-11-06)", "scripts stay inside the table"],
   "onZoneGroupSort": ["dropped", "scripting and layout zones (decided 2026-11-06)", "draw the zone at the table; scripts that ask a zone what is in it get nothing"],
-  "onFilter": ["dropped", "layout zones", "nothing is needed"]
+  "onFilter": ["dropped", "layout zones", "nothing is needed"],
+  "onRandomize": ["native", "on_roll(who) in the die's own script", "", "DiceScriptTests"]
  },
  "engine": {
   "member names fold (exact, first letter up, snake to camel, both)": ["native", "ModuleTranslator.FoldMember before every object member lookup", "", "TranslatorFoldTests"],

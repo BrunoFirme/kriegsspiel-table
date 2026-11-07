@@ -775,6 +775,15 @@ public sealed partial class ScriptHost
 
     static bool IsAction(Command c) => c is ClickWidget or EditWidget or PickMenuItem or UiEvent or DialogResult or Hotkey or PickGlobalMenuItem || (c is Batch b && b.Items.Any(IsAction));
 
+    void ReactToRoll(RollDice rd, DynValue who)
+    {
+        foreach (var id in rd.PieceIds.Where(id => Find(id) != null).ToList())
+        {
+            if (_pieces.TryGetValue(id, out var prd)) Call(prd, "on_roll", who);
+            if (_global != null) Call(_global, "on_roll", Handle(id), who);
+        }
+    }
+
     void ReactToMove(MovePiece m, DynValue who)
     {
         var old = _s.LastInverse is MovePiece inv && inv.Id == m.Id ? inv : null;
@@ -840,6 +849,9 @@ public sealed partial class ScriptHost
             case FlipPiece fp:
                 if (_pieces.TryGetValue(fp.Id, out var pfp)) Call(pfp, "on_flip", DynValue.NewBoolean(fp.FaceDown));
                 break;
+            case RollDice { Layer: not null } rd when actor != 0:
+                ReactToRoll(rd, who);
+                break;
             case AdvanceClock or SetClock:
             {
                 var turn = DynValue.NewNumber(_s.State.Clock.Turn);
@@ -892,8 +904,15 @@ public sealed partial class ScriptHost
             && Call(_global, "on_number_typed", Handle(nt.Id), who, DynValue.NewNumber(nt.Number)) is { Type: DataType.Boolean, Boolean: true };
         if (keep || Find(nt.Id) is not { } still) return;
         var ndef = _s.Store?.Def(still.Def);
-        if (ndef != null && nt.Number >= 1 && nt.Number <= ndef.States.Count && ndef.States.Count > 1 && still.State != nt.Number - 1)
-            try { Emit(new SetState { Layer = Layers.Umpire, Id = nt.Id, State = nt.Number - 1 }); } catch (ScriptRuntimeException e) { Error("", e.Message); }
+        var faces = PieceInstance.FacesOf(ndef, still);
+        try
+        {
+            if (faces.Count > 1 && nt.Number >= 1 && nt.Number <= faces.Count && still.ShownFace != nt.Number - 1)
+                Emit(new TurnDie { Layer = Layers.Umpire, Id = nt.Id, Face = nt.Number - 1 });
+            else if (faces.Count <= 1 && ndef != null && nt.Number >= 1 && nt.Number <= ndef.States.Count && ndef.States.Count > 1 && still.State != nt.Number - 1)
+                Emit(new SetState { Layer = Layers.Umpire, Id = nt.Id, State = nt.Number - 1 });
+        }
+        catch (ScriptRuntimeException e) { Error("", e.Message); }
     }
 
     void ReactToHotkey(Hotkey hk, long actor, DynValue who)

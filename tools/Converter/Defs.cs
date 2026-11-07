@@ -296,7 +296,7 @@ public sealed partial class DefFactory
             return new DefResult(model.Def, pack, instScale, 0, b, ScriptInfo.Parse("", "")) { FromPack = model.Pack };
         var script = ScriptInfo.Parse(b.SafeLua.Length > 0 ? b.SafeLua : o.SafeLua, o.LuaState);
         if (o.StockSides is { } sides && StandardDie(sides) is { } die)
-            return new DefResult(die, pack, Math.Round(bs, 4), DieFace(o, die), b, script) { FromPack = StdDicePack };
+            return new DefResult(die, pack, Math.Round(bs, 4), FaceShown(o, die), b, script) { FromPack = StdDicePack };
         if (Boxes.For(o) is { } box)
             return new DefResult(box, pack, Math.Round(bs, 4), 0, b, script) { FromPack = KTable.Client.Effects.EffectKinds.StandardPack };
         if (o.Name == TilesetTree) return TreeDef(o, b, pack, script);
@@ -397,7 +397,7 @@ public sealed partial class DefFactory
     }
 
     public static int Shown(ModuleObj o, PieceDef def, int self) =>
-        o.IsPictureDie ? DieFace(o, def) : o.Name == "Custom_PDF" ? Math.Min(o.PdfPage, Math.Max(0, def.States.Count - 1)) : self;
+        o.IsPictureDie ? FaceShown(o, def) : o.Name == "Custom_PDF" ? Math.Min(o.PdfPage, Math.Max(0, def.States.Count - 1)) : self;
 
     public TranslateResult Translate(string lua, PackOut pack, string where, bool isGlobal = false)
     {
