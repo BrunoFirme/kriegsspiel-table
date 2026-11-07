@@ -163,6 +163,29 @@ public class ModuleEventTests
     }
 
     [Fact]
+    public void A_helper_a_script_adds_to_a_standard_library_stays_in_that_script()
+    {
+        using var t = new Table();
+        Load(t, P, """
+            function string.shout(s) return s:upper() .. '!' end
+            function math.roundToNearest(n) return math.floor(n + 0.5) end
+            function onLoad()
+              local n = 0
+              for _ in pairs(string) do n = n + 1 end
+              self.setName(('a'):shout() .. string.shout('b') .. math.roundToNearest(2.6) .. '|' .. tostring(n > 10) .. string.format('%03d', 7))
+            end
+            """);
+        Load(t, Marker, """
+            function string.shout(s) return '?' .. s end
+            function onLoad() self.setName(('a'):shout() .. '|' .. tostring(math.roundToNearest)) end
+            """);
+        Load(t, "", "function onLoad() getObjectFromGUID('p-000002').setDescription(tostring(string.shout) .. ',' .. ('x'):upper() .. ',' .. tostring(math.roundToNearest)) end", global: true);
+        Assert.Equal("A!B!3|true007", t.Server.State.Find(U, P)!.Label);
+        Assert.Equal("?a|nil", t.Server.State.Find(U, Marker)!.Label);
+        Assert.Equal("nil,X,nil", t.Server.State.Find(U, P)!.Note);
+    }
+
+    [Fact]
     public void A_save_answer_that_is_not_text_clears_the_saved_state_and_nothing_keeps_it()
     {
         Assert.Equal("", Saved("function onSave() return 5 end"));

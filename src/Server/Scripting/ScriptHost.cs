@@ -79,7 +79,10 @@ public sealed partial class ScriptHost
         InstallApi();
         InstallUiApi();
         InstallCompat();
+        _libraries = new ScriptLibraries(_vm, () => _current?.Env);
     }
+
+    ScriptLibraries? _libraries;
 
     public const CoreModules Libraries = CoreModules.Preset_SoftSandbox & ~(CoreModules.LoadMethods | CoreModules.OS_System | CoreModules.IO | CoreModules.Debug | CoreModules.Dynamic);
 
@@ -417,6 +420,7 @@ public sealed partial class ScriptHost
         meta["__index"] = _vm.Globals;
         env.MetaTable = meta;
         env["_G"] = env;
+        _libraries?.Give(env);
         return env;
     }
 
