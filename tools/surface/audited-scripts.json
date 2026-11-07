@@ -70,7 +70,8 @@
   "setRotationValue": "DiceScriptTests.A_module_script_rolls_a_die_reads_its_value_and_sets_a_face",
   "getRotationValues": "DiceScriptTests.A_module_script_rolls_a_die_reads_its_value_and_sets_a_face",
   "setRotationValues": "DiceScriptTests.A_module_script_rolls_a_die_reads_its_value_and_sets_a_face",
-  "shuffleStates": "DiceScriptTests.Randomize_turns_a_piece_of_several_looks_to_another_and_rolls_a_die"
+  "shuffleStates": "DiceScriptTests.Randomize_turns_a_piece_of_several_looks_to_another_and_rolls_a_die",
+  "setLuaScript": "ScriptingTests.Set_script_is_allowed_only_from_an_action_or_on_a_spawned_piece (our script-safety rule, kept by decision 2026-11-07)"
  },
  "global": {
   "broadcastToAll": "ModuleObjectCallTests.Printing_to_a_seat_nobody_holds_is_an_error_and_seat_names_are_exact",
@@ -133,7 +134,9 @@
   "onObjectLoopingEffect": "BookNotesScriptTests.An_effect_a_module_script_or_an_umpire_stops_and_starts_answers_as_a_looping_effect",
   "onObjectPageChange": "BookNotesScriptTests.A_module_script_turns_a_book_by_its_printed_page_numbers_and_hears_the_page_turn",
   "onPageChange": "BookNotesScriptTests.A_module_script_turns_a_book_by_its_printed_page_numbers_and_hears_the_page_turn",
-  "onScriptingButtonUp": "ModuleEventTests.A_scripting_button_released_calls_the_up_function_with_the_index_and_the_colour"
+  "onScriptingButtonUp": "ModuleEventTests.A_scripting_button_released_calls_the_up_function_with_the_index_and_the_colour",
+  "onPlayerTurnStart": "ModuleHelpersTests.A_turn_start_handler_runs_when_the_clock_advances (clock turn for player turn, kept by decision 2026-11-07)",
+  "onPlayerTurnEnd": "ModuleHelpersTests.A_turn_start_handler_runs_when_the_clock_advances (clock turn for player turn, kept by decision 2026-11-07)"
  },
  "namespaces": {
   "JSON.encode": "ModuleObjectCallTests.Json_writes_sorted_keys_empty_tables_as_arrays_text_as_it_is_and_reads_past_trailing_text",
@@ -176,6 +179,8 @@
   "getObjectFromGUID answers nil for a piece inside a bag": "StowScriptTests.A_module_bag_script_puts_and_takes_through_the_same_calls",
   "load order: global before objects; onLoad(script_state)": "BookNotesScriptTests.On_a_load_every_script_is_read_before_any_on_load_so_the_global_one_can_call_into_a_piece",
   "setState keeps the GUID": "BookNotesScriptTests.A_piece_takes_the_guid_of_the_state_it_turns_to_as_each_state_is_its_own_object_in_the_tabletop",
-  "widget indices are 0-based in editButton/editInput/removeButton": "ScriptingTests.Removing_module_buttons_keeps_their_numbers_until_the_next_frame_so_a_loop_removes_them_all"
+  "widget indices are 0-based in editButton/editInput/removeButton": "ScriptingTests.Removing_module_buttons_keeps_their_numbers_until_the_next_frame_so_a_loop_removes_them_all",
+  "a script call has no time limit in modules": "ScriptingTests.A_runaway_script_is_stopped_and_switched_off (our time limit, kept by decision 2026-11-07)",
+  "script safety cuts the self-copying block and keeps the rest": "ScriptSafetyTests (our own rule, kept by decision 2026-11-07)"
  }
 }
