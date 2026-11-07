@@ -694,6 +694,36 @@ public class ModuleObjectCallTests
     }
 
     [Fact]
+    public void A_smooth_move_takes_the_tabletops_time_reads_its_target_meanwhile_and_lands_at_the_end()
+    {
+        using var t = new Table();
+        const string lua = """
+            function onLoad()
+              m = getObjectFromGUID('p-000003')
+              m.setPositionSmooth({ 6, 0, 0 })
+              local target = m.getPositionSmooth()
+              local turn = m.getRotationSmooth()
+              local short = getObjectFromGUID('p-000002')
+              short.translate({ 0.01, 0, 0 })
+              self.setName(tostring(m.isSmoothMoving()) .. '|' .. target.x .. '|' .. tostring(turn) .. '|' .. tostring(short.isSmoothMoving()))
+            end
+            function watch() return string.format('%s|%.2f', tostring(m.isSmoothMoving()), m.getPosition().x) end
+            """;
+        Assert.Equal("true|6|nil|false", Run(t, lua));
+        Assert.Equal(new Vec2(1, 0), t.Server.State.Find(U, Marker)!.Pos);
+        t.Server.Scripts.Tick(0.2);
+        var r = ModuleTranslator.Translate("function onLoad() self.setName(getObjectFromGUID('p-000002').call('watch')) end", Ctx());
+        t.Server.Scripts.Tick(0.4);
+        t.Server.Handle(Table.Host, new SetScript { Layer = U, Id = "p-000003", Text = r.Script });
+        var mid = t.Server.State.Find(U, Marker)!.Label!;
+        Assert.StartsWith("true|", mid);
+        var x = double.Parse(mid.Split('|')[1], System.Globalization.CultureInfo.InvariantCulture);
+        Assert.InRange(x, 1.5, 5.99);
+        for (int f = 1; f <= 10; f++) t.Server.Scripts.Tick(0.4 + f * 0.1);
+        Assert.Equal(new Vec2(6, 0), t.Server.State.Find(U, Marker)!.Pos);
+    }
+
+    [Fact]
     public void Time_reads_the_scripts_clock_and_frame_count()
     {
         using var t = new Table();

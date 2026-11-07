@@ -595,7 +595,7 @@
   "player model: colours, Black as GM, promoted, seated, host": ["dropped", "with the Player API (decided 2026-11-06); compat.color_of still names umpires by seat colour", "seats and roles are the app's own"],
   "Wait.frames counts frames, Wait.time seconds, onUpdate per frame": ["native", "the host runs scripts every frame it draws, as the tabletop does: Wait.frames counts those frames and on_update runs on each", "", "Net._Process ticks the scripts each frame (no test of its own)"],
   "a script call has no time limit in modules": ["native", "kept on purpose (2026-11-06): a call gets a second of its own time, the table work it asks for not counted; the tabletop freezes for good on a runaway loop, here the loop stops and its script and line are named", "", "import-sweep: naval (the Midway bag's Place)"],
-  "smooth moves end at once": ["compat", "compat.set_position", ""],
+  "smooth moves end at once": ["compat", "compat.glide: a smooth move follows the tabletop's pull and damping in 50 Hz steps; scripts see it moving and the piece lands at the end", "", "ModuleObjectCallTests"],
   "save quirk: a number written as a string, or NaN": ["native", "ModuleObj.D falls back to the default and the report says so", "", "ConverterTests"],
   "save quirk: negative scale mirrors": ["partial", "the size is taken unsigned, so a mirrored piece comes over unmirrored and the report names it; mirroring its picture or model at conversion is a decision for the user", "", "ConverterTests"],
   "save quirk: rotX/rotZ near 180 means face down; other tilts stand or lean": ["partial", "ModuleObj.Flipped reads face down; a piece standing on edge or leaning needs a tilt the table does not keep, a decision for the user", ""],

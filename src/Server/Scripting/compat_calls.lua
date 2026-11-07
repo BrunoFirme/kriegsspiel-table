@@ -362,32 +362,149 @@ end
 
 local function turn(deg) return ((deg % FULL_TURN) + FULL_TURN) % FULL_TURN end
 
-function compat.rotation(obj) return compat.Vector(0, turn(obj.rot or 0), obj.face_down and HALF_TURN or 0) end
+local STEP, PULL, FAST_PULL, DAMP, FAST_DAMP, TORQUE, SPIN_DAMP = 0.02, 10000, 100000, 20, 40, 0.045, 13
+local NEAR, NEAR_TURN, MOST_STEPS = 0.025, 1, 2000
+local gliding = {}
+
+local function heading_of(r)
+  local x = math.rad(r.x)
+  local heading = r.y
+  if math.cos(x) < 0 then heading = r.y + HALF_TURN end
+  return turn(heading)
+end
+local function down_of(r) return math.cos(math.rad(r.x)) * math.cos(math.rad(r.z)) < 0 end
+local function apart(a, b) local d = math.abs(turn(a) - turn(b)) return math.min(d, FULL_TURN - d) end
 
 local function lie(obj, r)
-  local x, y, z = math.rad(r.x), r.y, math.rad(r.z)
-  local down = math.cos(x) * math.cos(z) < 0
-  local heading = y
-  if math.cos(x) < 0 then heading = y + HALF_TURN end
+  local down = down_of(r)
   if down ~= (obj.face_down == true) then obj.flip(down) end
-  obj.set_rot(turn(heading))
+  obj.set_rot(heading_of(r))
 end
 
-function compat.set_rotation(obj, v) lie(obj, compat.vector_arg(v)) return true end
-function compat.rotate(obj, v)
-  local by = compat.vector_arg(v)
-  local now = compat.rotation(obj)
-  lie(obj, compat.Vector(now.x + by.x, now.y + by.y, now.z + by.z))
+function compat.position(obj)
+  local g = gliding[obj.id]
+  if g and g.at then return compat.Vector(g.at.x, obj.y or 0, g.at.z) end
+  local p = obj.pos
+  return compat.Vector(p.x, obj.y or 0, p.z)
+end
+function compat.rotation(obj)
+  local g = gliding[obj.id]
+  if g and g.heading then return compat.Vector(0, turn(g.heading), g.down and HALF_TURN or 0) end
+  return compat.Vector(0, turn(obj.rot or 0), obj.face_down and HALF_TURN or 0)
+end
+
+local function land(obj, g)
+  gliding[obj.id] = nil
+  if obj.exists == false then return end
+  if g.to then obj.set_pos(g.to.x, g.to.z) end
+  if g.turn_to then lie(obj, g.turn_to) end
+  for _, f in ipairs(g.after) do f() end
+end
+
+local function step(g)
+  if g.at then
+    local m = 1
+    local pull, damp = g.fast and FAST_PULL or PULL, g.fast and FAST_DAMP or DAMP
+    local keep = math.max(0, 1 - STEP * damp / ((m + 1) / 2))
+    for _, k in ipairs({ "x", "z" }) do
+      g.v[k] = (g.v[k] + (g.to[k] - g.at[k]) * STEP * pull * STEP / m) * keep
+      g.at[k] = g.at[k] + g.v[k] * STEP
+    end
+    if math.sqrt((g.to.x - g.at.x) ^ 2 + (g.to.z - g.at.z) ^ 2) < NEAR then g.at = nil end
+  end
+  if g.heading then
+    local left = apart(g.heading, g.goal)
+    local dir = turn(g.goal - g.heading) <= HALF_TURN and 1 or -1
+    g.spin = (g.spin + TORQUE * left) * (1 - SPIN_DAMP * STEP)
+    g.heading = g.heading + dir * math.deg(g.spin * STEP)
+    if apart(g.heading, g.goal) < NEAR_TURN then g.heading = nil end
+  end
+end
+
+local function run(obj, g)
+  local function frame()
+    if gliding[obj.id] ~= g then return end
+    if obj.exists == false or obj.pos.x ~= g.from.x or obj.pos.z ~= g.from.z then
+      gliding[obj.id] = nil
+      return
+    end
+    local due = math.min(MOST_STEPS, math.floor((wait.now() - g.started) / STEP + 1e-9))
+    while g.done < due and (g.at or g.heading) do
+      step(g)
+      g.done = g.done + 1
+    end
+    if g.at == nil and g.heading == nil then land(obj, g) else wait.frames(1, frame) end
+  end
+  wait.frames(1, frame)
+end
+
+function compat.glide(obj, to, turn_to, fast, after)
+  local here = obj.pos
+  local g = gliding[obj.id] or { v = { x = 0, z = 0 }, spin = 0, after = {}, done = 0, started = wait.now(), from = { x = here.x, z = here.z } }
+  g.fast = fast == true
+  if to and math.sqrt((to.x - here.x) ^ 2 + (to.z - here.z) ^ 2) > NEAR then
+    g.to = { x = to.x, z = to.z }
+    g.at = g.at or { x = here.x, z = here.z }
+  end
+  if turn_to then
+    local goal = heading_of(turn_to)
+    local from = g.heading or obj.rot or 0
+    if apart(from, goal) > NEAR_TURN or down_of(turn_to) ~= (obj.face_down == true) then
+      g.turn_to, g.goal, g.heading, g.down = turn_to, goal, from, obj.face_down == true
+    end
+  end
+  if after then g.after[#g.after + 1] = after end
+  if g.at == nil and g.heading == nil then
+    if after then wait.frames(1, after) end
+    return
+  end
+  local fresh = gliding[obj.id] ~= g
+  gliding[obj.id] = g
+  if fresh then run(obj, g) end
+end
+function compat.gliding(obj) return gliding[obj.id] ~= nil end
+function compat.smooth_target(obj)
+  local g = gliding[obj.id]
+  if g and g.at then return compat.Vector(g.to.x, obj.y or 0, g.to.z) end
+  return nil
+end
+function compat.smooth_turn_target(obj)
+  local g = gliding[obj.id]
+  if g and g.heading then return compat.Vector(0, g.goal, down_of(g.turn_to) and HALF_TURN or 0) end
+  return nil
+end
+local function stop_glide(obj) gliding[obj.id] = nil end
+
+function compat.set_rotation(obj, v)
+  local r = compat.vector_arg(v)
+  stop_glide(obj)
+  lie(obj, r)
   return true
 end
 function compat.set_position(obj, v)
   local p = compat.vector_arg(v)
+  stop_glide(obj)
   obj.set_pos(p.x, p.z)
+  return true
+end
+function compat.set_position_smooth(obj, v, collide, fast)
+  compat.glide(obj, compat.vector_arg(v), nil, fast)
+  return true
+end
+function compat.set_rotation_smooth(obj, v, collide, fast)
+  compat.glide(obj, nil, compat.vector_arg(v), fast)
+  return true
+end
+function compat.rotate(obj, v)
+  local by = compat.vector_arg(v)
+  local now = compat.rotation(obj)
+  compat.glide(obj, nil, compat.Vector(now.x + by.x, now.y + by.y, now.z + by.z), false)
   return true
 end
 function compat.translate(obj, v)
   local by = compat.vector_arg(v)
-  obj.set_pos(obj.pos.x + by.x, obj.pos.z + by.z)
+  local now = compat.position(obj)
+  compat.glide(obj, compat.Vector(now.x + by.x, now.y + by.y, now.z + by.z), nil, false)
   return true
 end
 
@@ -594,10 +711,16 @@ function compat.take_object(obj, params)
   rotation = rotation or compat.rotation(obj)
   local which = params.guid
   if which == nil and type(params.index) == "number" then which = math.floor(params.index) + 1 end
-  local p = obj.unstow(which, { x = position.x, z = position.z }, turn(rotation.y))
+  local smooth = params.smooth ~= false
+  local start = smooth and { x = here.x, z = here.z } or { x = position.x, z = position.z }
+  local p = obj.unstow(which, start, smooth and turn(obj.rot or 0) or heading_of(rotation))
   if p == nil then return nil end
-  if (math.cos(math.rad(rotation.x)) * math.cos(math.rad(rotation.z)) < 0) ~= (p.face_down == true) then p.flip() end
-  compat.after_spawn(obj, p, params)
+  if not smooth then
+    if down_of(rotation) ~= (p.face_down == true) then p.flip() end
+    compat.after_spawn(obj, p, params)
+    return p
+  end
+  compat.glide(p, position, rotation, false, function() compat.call_back(obj, p, params) end)
   return p
 end
 function compat.call_back(obj, p, params)

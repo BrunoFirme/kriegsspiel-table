@@ -480,10 +480,13 @@ public static class ModuleTranslator
                 case "setColorTint": return Compat($"compat.set_color_tint({recv}, {A(0)})", node);
                 case "getColorTint": return Compat($"compat.color_tint({recv})", node);
                 case "getPosition": return Compat($"compat.position({recv})", node);
-                case "getPositionSmooth" or "getRotationSmooth": return Compat($"compat.none({recv})", node);
-                case "setPosition" or "setPositionSmooth": return Compat($"compat.set_position({recv}, {A(0)})", node);
+                case "getPositionSmooth": return Compat($"compat.smooth_target({recv})", node);
+                case "getRotationSmooth": return Compat($"compat.smooth_turn_target({recv})", node);
+                case "setPosition": return Compat($"compat.set_position({recv}, {A(0)})", node);
+                case "setPositionSmooth": return Compat($"compat.set_position_smooth({recv}, {A(0)}, {A(1)}, {A(2)})", node);
                 case "getRotation": return Compat($"compat.rotation({recv})", node);
-                case "setRotation" or "setRotationSmooth": return Compat($"compat.set_rotation({recv}, {A(0)})", node);
+                case "setRotation": return Compat($"compat.set_rotation({recv}, {A(0)})", node);
+                case "setRotationSmooth": return Compat($"compat.set_rotation_smooth({recv}, {A(0)}, {A(1)}, {A(2)})", node);
                 case "getScale": return Compat($"compat.scale3({recv})", node);
                 case "setScale": return Compat($"compat.set_scale({recv}, {A(0)})", node);
                 case "scale": return Compat($"compat.scale_by({recv}, {A(0)})", node);
@@ -545,7 +548,7 @@ public static class ModuleTranslator
                 case "getRotationValue" or "getValue" or "getRotationValues" or "setRotationValues" or "setRotationValue" or "setValue" or "roll" or "randomize" or "shuffleStates":
                     return DieCall(recv, name, A(0), node);
                 case "getJoints" or "getZones": return Compat("{}", node);
-                case "isSmoothMoving": return Compat($"compat.no({recv})", node);
+                case "isSmoothMoving": return Compat($"compat.gliding({recv})", node);
                 case "getFogOfWarReveal": return Compat("{ reveal = false, color = \"\", range = 0 }", node);
             }
             return StateOrTagCall(recv, name, a, node);
