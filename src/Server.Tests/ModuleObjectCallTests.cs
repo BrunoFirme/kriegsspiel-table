@@ -429,6 +429,44 @@ public class ModuleObjectCallTests
     }
 
     [Fact]
+    public void Module_vectors_follow_the_tabletop_class_two_numbers_make_zero_equality_is_within_a_squared_thousandth_and_moves_change_the_vector()
+    {
+        const string lua = """
+            function onLoad()
+              local two = Vector(1, 2)
+              local near = Vector(0, 0, 0) == Vector(0.03, 0, 0)
+              local far = Vector(0, 0, 0) == Vector(0.04, 0, 0)
+              local m = Vector(0, 0, 0)
+              m:moveTowards(Vector(10, 0, 0), 3)
+              local p = Vector(2, 5, 0)
+              p:project(Vector(1, 0, 0))
+              local div = pcall(function() return Vector(1, 1, 1) / 2 end)
+              local h = Vector(0, 1, 0):heading('x')
+              self.setName(tostring(two) .. '|' .. tostring(near) .. tostring(far) .. '|' .. m.x .. '|' .. tostring(p) .. '|' .. tostring(div) .. '|' .. h .. '|' .. tostring(Vector(1.5, -2, 0.25)))
+            end
+            """;
+        Assert.Equal("Vector: { 0, 0, 0 }|truefalse|3|Vector: { 2, 0, 0 }|false|90|Vector: { 1.5, -2, 0.25 }", Run(lua));
+    }
+
+    [Fact]
+    public void Module_colours_follow_the_tabletop_class_named_channels_only_clamped_and_strict_about_names_and_hex()
+    {
+        const string lua = """
+            function onLoad()
+              local positional = Color({ 1, 0, 0 })
+              local clamped = Color(2, -1, 0.5)
+              local bad = pcall(Color.fromString, 'mauve')
+              local badHex = pcall(Color.fromHex, '#12345')
+              local half = Color(0.5, 0.5, 0.5):toHex()
+              local seeThrough = Color(0.856, 0.1, 0.094, 0.5):toString()
+              local upper = Color.RED:toString()
+              self.setName(positional.r .. ',' .. clamped.r .. clamped.g .. '|' .. tostring(bad) .. tostring(badHex) .. '|' .. half .. '|' .. tostring(seeThrough) .. '|' .. upper .. '|' .. tostring(Color.Red))
+            end
+            """;
+        Assert.Equal("0,10|falsefalse|7f7f7f|nil|Red|Color: Red { r = 0.856, g = 0.1, b = 0.094 }", Run(lua));
+    }
+
+    [Fact]
     public void Time_reads_the_scripts_clock_and_frame_count()
     {
         using var t = new Table();

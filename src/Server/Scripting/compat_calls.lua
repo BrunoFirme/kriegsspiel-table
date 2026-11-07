@@ -1,5 +1,292 @@
 local compat = compat
 
+local Vector = { __isVector = true, __version = "1.0.1" }
+local AXES = { "x", "y", "z" }
+function Vector.new(...)
+  local v = setmetatable({ x = 0, y = 0, z = 0 }, Vector)
+  local n = select("#", ...)
+  if n == 3 then
+    v.x, v.y, v.z = ...
+  elseif n == 1 and type(...) == "table" then
+    local src = ...
+    v.x = src.x or src[1] or v.x
+    v.y = src.y or src[2] or v.y
+    v.z = src.z or src[3] or v.z
+  end
+  return v
+end
+setmetatable(Vector, { __call = function(_, ...) return Vector.new(...) end })
+function Vector:__index(k)
+  k = AXES[k] or k
+  return rawget(self, k) or Vector[k]
+end
+function Vector:__newindex(k, v) return rawset(self, AXES[k] or k, v) end
+function Vector:setAt(k, v)
+  self[k] = v
+  return self
+end
+function Vector:set(x, y, z)
+  self.x = x or self.x
+  self.y = y or self.y
+  self.z = z or self.z
+  return self
+end
+function Vector:get() return self.x, self.y, self.z end
+function Vector:copy() return Vector(self) end
+function Vector:add(o)
+  self.x, self.y, self.z = self.x + o.x, self.y + o.y, self.z + o.z
+  return self
+end
+function Vector.__add(a, b) return a:copy():add(b) end
+function Vector:sub(o)
+  self.x, self.y, self.z = self.x - o.x, self.y - o.y, self.z - o.z
+  return self
+end
+function Vector.__sub(a, b) return a:copy():sub(b) end
+function Vector:dot(o) return self.x * o.x + self.y * o.y + self.z * o.z end
+function Vector:sqrMagnitude() return self:dot(self) end
+function Vector:magnitude() return math.sqrt(self:dot(self)) end
+function Vector:scale(...)
+  local sx, sy, sz
+  local n = select("#", ...)
+  if n == 1 then
+    local k = ...
+    if type(k) == "number" then sx, sy, sz = k, k, k else sx, sy, sz = k:get() end
+  elseif n == 3 then
+    sx, sy, sz = ...
+    sx, sy, sz = sx or 1, sy or 1, sz or 1
+  end
+  self.x, self.y, self.z = self.x * sx, self.y * sy, self.z * sz
+  return self
+end
+function Vector.__mul(a, b)
+  if type(a) == "number" then a, b = b, a end
+  return a:copy():scale(b)
+end
+function Vector:sqrDistance(o)
+  local dx, dy, dz = self.x - o.x, self.y - o.y, self.z - o.z
+  return dx * dx + dy * dy + dz * dz
+end
+function Vector:distance(o) return math.sqrt(self:sqrDistance(o)) end
+local VECTOR_MARGIN = 1e-3
+function Vector:equals(o, margin) return self:sqrDistance(o) <= (margin or VECTOR_MARGIN) end
+Vector.__eq = Vector.equals
+local function trimmed(s) return (s:gsub("%.0+([ ,])", "%1"):gsub("%.(%d-)0+([ ,])", ".%1%2")) end
+function Vector:string(prefix)
+  prefix = prefix and (prefix .. ": ") or ""
+  return trimmed(string.format("%s{ %f, %f, %f }", prefix, self.x, self.y, self.z))
+end
+function Vector:__tostring() return self:string("Vector") end
+function Vector:angle(o) return math.deg(math.acos(self:dot(o) / (self:magnitude() * o:magnitude()))) end
+function Vector:clamp(most)
+  local len = self:magnitude()
+  if len <= most then return self end
+  return self:scale(most / len)
+end
+function Vector:cross(o) return Vector(self.y * o.z - self.z * o.y, self.z * o.x - self.x * o.z, self.x * o.y - self.y * o.x) end
+function Vector.between(from, to) return to - from end
+function Vector:lerp(target, t) return self:between(target):scale(t):add(self) end
+function Vector:moveTowards(target, most) return self:add(self:between(target):clamp(most)) end
+function Vector:normalize()
+  local sq = self:sqrMagnitude()
+  if sq == 1 or sq == 0 then return self end
+  return self:scale(1 / math.sqrt(sq))
+end
+function Vector:normalized() return self:copy():normalize() end
+function Vector:project(o)
+  if o:sqrMagnitude() ~= 1 then o = o:normalized() end
+  local k = self:dot(o)
+  return self:set(o:get()):scale(k)
+end
+local function apply(m, v) return v:set(m[1]:dot(v), m[2]:dot(v), m[3]:dot(v)) end
+local function skew(v) return { Vector(0, -v.z, v.y), Vector(v.z, 0, -v.x), Vector(-v.y, v.x, 0) } end
+local function times(a, b)
+  local cols = { Vector(b[1].x, b[2].x, b[3].x), Vector(b[1].y, b[2].y, b[3].y), Vector(b[1].z, b[2].z, b[3].z) }
+  local out = { Vector(), Vector(), Vector() }
+  for r = 1, 3 do out[r]:set(a[r]:dot(cols[1]), a[r]:dot(cols[2]), a[r]:dot(cols[3])) end
+  return out
+end
+local OPPOSITE, SLERP_EDGE = 0.05, 0.0005
+local function turn_matrix(from, to)
+  local k = skew(from:cross(to))
+  local d = from:dot(to)
+  assert(math.abs(d + 1) > OPPOSITE, "Vectors too close to opposite of each other")
+  local k2 = times(k, k)
+  for _, row in ipairs(k2) do row:scale(1 / (1 + d)) end
+  local m = { Vector(1, 0, 0), Vector(0, 1, 0), Vector(0, 0, 1) }
+  for r = 1, 3 do m[r]:add(k[r]):add(k2[r]) end
+  return m
+end
+local function toward(x, y, z, w, t)
+  if w > SLERP_EDGE then
+    x, y, z, w = t * x, t * y, t * z, 1 + t * w - t
+    local n = math.sqrt(x * x + y * y + z * z + w * w)
+    return x / n, y / n, z / n, w / n
+  end
+  local th0 = math.acos(w)
+  local th = th0 * t
+  local s1 = math.sin(th) / math.sin(th0)
+  local s0 = math.cos(th) - w * s1
+  return x * s1, y * s1, z * s1, (w + s0) * s1
+end
+local function part_of(m, t)
+  local w = math.sqrt(1 + m[1].x + m[2].y + m[3].z) / 2
+  local x, y, z = (m[3].y - m[2].z) / (w * 4), (m[1].z - m[3].x) / (w * 4), (m[2].x - m[1].y) / (w * 4)
+  x, y, z, w = toward(x, y, z, w, t)
+  return { Vector(1 - 2 * y * y - 2 * z * z, 2 * x * y - 2 * z * w, 2 * x * z + 2 * y * w),
+    Vector(2 * x * y + 2 * z * w, 1 - 2 * x * x - 2 * z * z, 2 * y * z - 2 * x * w),
+    Vector(2 * x * z - 2 * y * w, 2 * y * z + 2 * x * w, 1 - 2 * x * x - 2 * y * y) }
+end
+function Vector:rotateTowardsUnit(unit, most)
+  local m = turn_matrix(self, unit)
+  if most then
+    local angle = math.deg(math.acos((m[1].x + m[2].y + m[3].z - 1) / 2))
+    if angle > most then m = part_of(m, most / angle) end
+  end
+  return apply(m, self)
+end
+function Vector:rotateTowards(target, most)
+  local len = self:magnitude()
+  return self:normalize():rotateTowardsUnit(target:normalized(), most):scale(len)
+end
+function Vector:reflect(n)
+  local x, y, z = n:normalized():get()
+  return apply({ Vector(1 - 2 * x * x, -2 * x * y, -2 * x * z), Vector(-2 * x * y, 1 - 2 * y * y, -2 * y * z), Vector(-2 * x * z, -2 * y * z, 1 - 2 * z * z) }, self)
+end
+function Vector:rotateOver(axis, angle)
+  angle = math.rad(angle)
+  local s, c = math.sin(angle), math.cos(angle)
+  local m
+  if axis == "x" then m = { Vector(1, 0, 0), Vector(0, c, -s), Vector(0, s, c) }
+  elseif axis == "y" then m = { Vector(c, 0, s), Vector(0, 1, 0), Vector(-s, 0, c) }
+  elseif axis == "z" then m = { Vector(c, -s, 0), Vector(s, c, 0), Vector(0, 0, 1) } end
+  return apply(m, self)
+end
+function Vector.max(a, b) return Vector(math.max(a.x, b.x), math.max(a.y, b.y), math.max(a.z, b.z)) end
+function Vector.min(a, b) return Vector(math.min(a.x, b.x), math.min(a.y, b.y), math.min(a.z, b.z)) end
+function Vector:inverse() return self:set(-1 * self.x, -1 * self.y, -1 * self.z) end
+local NEAR_AXIS, RIGHT_ANGLE = 10, 90
+function Vector:orthoNormalize(planar)
+  if not planar then
+    planar = Vector(1, 0, 0)
+    if self:angle(planar) < NEAR_AXIS then planar = Vector(0, 0, 1) end
+  elseif planar:sqrMagnitude() ~= 1 then
+    planar = planar:normalized()
+  end
+  local base = self:normalized()
+  local normal = base:cross(planar:normalized())
+  return base, normal, base:cross(normal)
+end
+function Vector:projectOnPlane(n)
+  local _, _, shadow = n:orthoNormalize(self)
+  if self:angle(shadow) > RIGHT_ANGLE then shadow:inverse() end
+  return self:project(shadow)
+end
+function Vector:heading(axis)
+  if not axis then return self:heading("x"), self:heading("y"), self:heading("z") end
+  local a, b
+  if axis == "x" then a, b = self.y, self.z elseif axis == "y" then a, b = self.x, self.z elseif axis == "z" then a, b = self.x, self.y end
+  return math.deg(math.atan2(a, b))
+end
+compat.Vector = Vector
+
+local Color = { __isColor = true, __version = "1.0.1" }
+local CHANNELS = { "r", "g", "b", "a" }
+local function clamp01(v) return math.min(1, math.max(0, v or 0)) end
+function Color.new(...)
+  local c = setmetatable({ r = 0, g = 0, b = 0, a = 1 }, Color)
+  local n = select("#", ...)
+  if n == 1 and type(...) == "table" then
+    local src = ...
+    c.r, c.g, c.b, c.a = clamp01(src.r or c.r), clamp01(src.g or c.g), clamp01(src.b or c.b), clamp01(src.a or c.a)
+  elseif n == 3 then
+    local r, g, b = ...
+    c.r, c.g, c.b = clamp01(r), clamp01(g), clamp01(b)
+  elseif n == 4 then
+    local r, g, b, a = ...
+    c.r, c.g, c.b, c.a = clamp01(r), clamp01(g), clamp01(b), clamp01(a)
+  end
+  return c
+end
+local function title(s) return s:sub(1, 1):upper() .. s:sub(2, -1):lower() end
+local SEAT_RGB = { white = { 1, 1, 1 }, brown = { 0.443, 0.231, 0.09 }, red = { 0.856, 0.1, 0.094 }, orange = { 0.956, 0.392, 0.113 },
+  yellow = { 0.905, 0.898, 0.172 }, green = { 0.192, 0.701, 0.168 }, teal = { 0.129, 0.694, 0.607 }, blue = { 0.118, 0.53, 1 },
+  purple = { 0.627, 0.125, 0.941 }, pink = { 0.96, 0.439, 0.807 }, grey = { 0.5, 0.5, 0.5 }, black = { 0.25, 0.25, 0.25 } }
+local seats = {}
+for name, c in pairs(SEAT_RGB) do seats[name] = Color.new(c[1], c[2], c[3]) end
+Color.list = {}
+for name in pairs(seats) do table.insert(Color.list, title(name)) end
+setmetatable(Color, {
+  __call = function(_, ...) return Color.new(...) end,
+  __index = function(_, name)
+    name = name:lower()
+    if seats[name] then return seats[name]:copy() end
+    return nil
+  end,
+})
+function Color.Add(name, c)
+  name = name:lower()
+  assert(not seats[name], "Color " .. name .. " already defined")
+  assert(c.__isColor, tostring(c) .. " is not a Color instance")
+  seats[name] = c
+  table.insert(Color.list, title(name))
+end
+function Color.fromString(s) return assert(seats[s:lower()], s .. " is not a valid color string"):copy() end
+function Color.fromHex(hex)
+  local r, g, b, a = hex:match("^#?(%x%x)(%x%x)(%x%x)(%x?%x?)$")
+  assert(r and g and b and (a:len() == 0 or a:len() == 2), tostring(hex) .. " is not a valid color hex string")
+  local alpha = 1
+  if a ~= "" then alpha = tonumber(a, 16) / 255 end
+  return Color(tonumber(r, 16) / 255, tonumber(g, 16) / 255, tonumber(b, 16) / 255, alpha)
+end
+function Color:get() return self.r, self.g, self.b, self.a end
+local function byte_of(v) return math.floor(v * 255) end
+function Color:toHex(alpha)
+  if alpha then return string.format("%02x%02x%02x%02x", byte_of(self.r), byte_of(self.g), byte_of(self.b), byte_of(self.a)) end
+  return string.format("%02x%02x%02x", byte_of(self.r), byte_of(self.g), byte_of(self.b))
+end
+function Color:toString(tolerance)
+  for name, c in pairs(seats) do
+    if self:equals(c, tolerance) then return title(name) end
+  end
+  return nil
+end
+function Color:__index(k)
+  k = CHANNELS[k] or k
+  return rawget(self, k) or Color[k]
+end
+function Color:__newindex(k, v) return rawset(self, CHANNELS[k] or k, v) end
+function Color:set(r, g, b, a)
+  self.r, self.g, self.b, self.a = clamp01(r or self.r), clamp01(g or self.g), clamp01(b or self.b), clamp01(a or self.a)
+end
+function Color:setAt(k, v)
+  self[k] = clamp01(v)
+  return self
+end
+local COLOR_MARGIN = 1e-2
+function Color:equals(o, margin)
+  local d = math.abs(self.r - o.r) + math.abs(self.g - o.g) + math.abs(self.b - o.b) + math.abs(self.a - o.a)
+  return d <= (margin or COLOR_MARGIN)
+end
+Color.__eq = Color.equals
+function Color:copy() return Color(self:get()) end
+function Color:dump(prefix)
+  local name = self:toString()
+  local form = self.a < 1 and "%s%s{ r = %f, g = %f, b = %f, a = %f }" or "%s%s{ r = %f, g = %f, b = %f }"
+  return trimmed(string.format(form, prefix and (prefix .. ": ") or "", name and (name .. " ") or "", self:get()))
+end
+function Color:__tostring() return self:dump("Color") end
+function Color:lerp(o, t)
+  local mid = self:copy()
+  mid.r, mid.g, mid.b, mid.a = mid.r + (o.r - self.r) * t, mid.g + (o.g - self.g) * t, mid.b + (o.b - self.b) * t, mid.a + (o.a - self.a) * t
+  return mid
+end
+compat.Color = Color
+function compat.hex_of(c)
+  local function byte(v) return math.floor(math.max(0, math.min(1, v)) * 255 + 0.5) end
+  return string.format("#%02x%02x%02x%02x", byte(c.r), byte(c.g), byte(c.b), byte(c.a))
+end
+
 local VECTOR_ERROR = "Error converting Table to Vector. (x, y, z or 1, 2, 3)"
 local COLOR_ERROR = "Error converting Table to Color. (r, g, b or 1, 2, 3)"
 local LABEL_ERROR = "Error converting String to Color. (White, Red, Blue, etc.)"
