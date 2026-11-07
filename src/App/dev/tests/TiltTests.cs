@@ -23,6 +23,31 @@ static class TiltTests
         var pack = new PackManifest { Id = "tilt", Name = "Tilt" };
         pack.Assets["prism"] = new AssetEntry { File = "assets/prism.obj", Kind = "mesh" };
         store.RegisterDef(pack, new PieceDef { Id = "tri", Name = "Triangle block", Kind = "model", Mesh = "prism", Size = new Size2(Across, 1), Thickness = Rise, Shape = "box" });
+        store.RegisterDef(pack, new PieceDef
+        {
+            Id = "d2", Name = "Two-sided die", Kind = "model", Mesh = "prism", Size = new Size2(Across, 1), Thickness = Rise,
+            Faces = new() { new DieFace { Value = "1", Up = [0, 1, 0] }, new DieFace { Value = "2", Up = [0, -1, 0] } },
+        });
+    }
+
+    const float Lean = 20;
+
+    [ScreenTest]
+    static async Task A_die_leaning_off_its_face_is_drawn_leaning_and_rests_its_neighbours_on_their_own_turn(TestRunner r)
+    {
+        var t = OfflineTable.Make(r, pieces: 0, prepare: Prism, arrange: g =>
+        {
+            OnItsSide(g);
+            g.Layers[U].Add(new PieceInstance { Id = "d1", Def = "d2", Pos = new Vec2(4, 0), Face = 0, TiltX = Lean });
+        });
+        await r.Frames(20);
+        var die = t.Node("d1");
+
+        float leans = Mathf.RadToDeg((die.ModelWorldBasis * Vector3.Up).AngleTo(Vector3.Up));
+        Check.That(die.IsDie && Mathf.IsEqualApprox(leans, Lean, 0.5f), $"the die's face leans as saved, and a roll starts its body from there: {leans}");
+        var side = t.Node("t1").RestBox.Basis * Vector3.Up;
+        Check.That(Mathf.Abs(side.Y) < 0.05f, $"a tilted piece stands in the dice's way on its own turn: {side}");
+        Check.Equal(0, t.Errors.Count, string.Join("; ", t.Errors));
     }
 
     static void OnItsSide(GameState g) => g.Layers[U].Add(new PieceInstance { Id = "t1", Def = "tri", Pos = new Vec2(-4, 0), TiltZ = 90 });

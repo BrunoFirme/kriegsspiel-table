@@ -806,7 +806,7 @@ public static partial class StateMachine
         if (g.Dice.Count > 500) g.Dice.RemoveAt(0);
         if (rd.Layer != null)
             for (int i = 0; i < rd.PieceIds.Count && i < rd.Results.Count; i++)
-                if (g.Find(rd.Layer, rd.PieceIds[i]) is { } die) die.Face = Math.Max(0, rd.Results[i] - 1);
+                if (g.Find(rd.Layer, rd.PieceIds[i]) is { } die) (die.Face, die.TiltX, die.TiltZ) = (Math.Max(0, rd.Results[i] - 1), 0, 0);
         return null;
     }
 
@@ -925,12 +925,12 @@ public static partial class StateMachine
             case RollDice rd:
             {
                 var history = g.Dice.ToList();
-                var faces = rd.Layer == null ? new() : rd.PieceIds.Select(id => g.Find(rd.Layer, id)).Where(p => p != null).Select(p => (p!, p!.Face)).ToList();
+                var faces = rd.Layer == null ? new() : rd.PieceIds.Select(id => g.Find(rd.Layer, id)).Where(p => p != null).Select(p => (p!, p!.Face, p!.TiltX, p!.TiltZ)).ToList();
                 return () =>
                 {
                     g.Dice.Clear();
                     g.Dice.AddRange(history);
-                    foreach (var (p, f) in faces) p.Face = f;
+                    foreach (var (p, f, tx, tz) in faces) (p.Face, p.TiltX, p.TiltZ) = (f, tx, tz);
                 };
             }
             default:

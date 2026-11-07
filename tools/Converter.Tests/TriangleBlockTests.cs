@@ -7,7 +7,7 @@ namespace KTable.Converter.Tests;
 public sealed partial class FidelityTests
 {
     [Fact]
-    public void A_triangle_block_comes_over_as_a_tinted_prism_alone_or_on_another_block()
+    public void A_triangle_block_comes_over_as_a_tinted_prism_alone_or_as_a_part_of_the_block_it_is_glued_to()
     {
         TempConfig();
         var ramp = Obj("BlockTriangle", "Ramp", 1, new JsonObject { ["ColorDiffuse"] = new JsonObject { ["r"] = 0.5, ["g"] = 0.4, ["b"] = 0.2 } });
@@ -26,7 +26,9 @@ public sealed partial class FidelityTests
         Assert.Equal(("model", 1.4142, 1.0, 0.707), (prism.Kind, prism.Size.W, prism.Size.H, prism.Thickness));
         var table = Json.Load<Scenario>(Path.Combine(Packages, "scenarios", "prism", "scenario.json"));
         var placed = table.UmpireBoard.Where(p => prisms.Any(d => d.Id == p.Def)).ToList();
-        Assert.Equal(2, placed.Count);
+        Assert.Single(placed);
+        var block = pack.Pieces.Single(d => d.Id == table.UmpireBoard.Single(p => p.Label == "Breastworks").Def);
+        Assert.Contains(block.Parts!, p => prisms.Any(d => d.Id == p.Def));
         Assert.Contains(placed, p => p.Label == "Ramp" && string.Equals(p.TintOverride ?? pack.Pieces.First(d => d.Id == p.Def).Tint, "#806633", StringComparison.OrdinalIgnoreCase));
     }
 }

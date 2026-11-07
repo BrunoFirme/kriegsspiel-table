@@ -120,7 +120,7 @@ public partial class PieceNode : Node3D
         float w = (float)(size.W * Piece.Scale), h = (float)(size.H * Piece.Scale);
         Footprint = new Vector2(w, h);
         BuiltScale = Piece.Scale;
-        _thickness = (float)Mathf.Clamp((shown?.Thickness ?? 0.2) * Piece.Scale, 0.02, 2);
+        _thickness = (float)Mathf.Clamp((ShownThickness(worn) ?? shown?.Thickness ?? 0.2) * Piece.Scale, 0.02, 2);
         Shape = worn?.Shape ?? CurState?.Shape ?? Def?.Shape ?? "box";
         if (Shape == "box" && shown?.Kind != "model" && !IsEffect && TexKey() is { pkg: not null } k && _s.Assets.Mask(k.pkg, k.rel!, k.size) is { } mk && mk.TransparentFraction > 0.01f)
             Shape = mk.TransparentFraction > CutoutFraction ? "alpha" : "rounded";
@@ -145,6 +145,7 @@ public partial class PieceNode : Node3D
 
         if (Lettered) _lettering.Add();
         BuildLiveText();
+        BuildParts();
         _shownFaceDown = Piece.FaceDown;
         Refresh(Piece);
     }
@@ -298,6 +299,7 @@ public partial class PieceNode : Node3D
 
     void Rest(Vec2 pos, double rotDeg, double y, int stack)
     {
+        if (IsPart) { Transform = PartRest(); return; }
         var (baseY, up) = RestAt(pos, rotDeg, y, stack);
         var euler = Pose(rotDeg);
         _tilt = TiltTo(up);
@@ -316,10 +318,11 @@ public partial class PieceNode : Node3D
 
     public void Resettle()
     {
+        if (IsPart) return;
         if (IsDie) { Position = Coords.ToWorld(Piece.Pos, BaseY(Piece)); return; }
         if (!_flipping && !Placed && !Held) Rest(Piece.Pos, Piece.RotDeg, Piece.Y, Piece.Stack);
     }
-    public float TopY => Piece.HasTilt ? TiltedTop : (Position + Up * (Piece.FaceDown ? 0 : _thickness)).Y;
+    public float TopY => PartsTop(Piece.HasTilt ? TiltedTop : (Position + Up * (Piece.FaceDown ? 0 : _thickness)).Y);
 
     public float TopAt(Vector3 world)
     {
@@ -723,6 +726,11 @@ public partial class PieceNode : Node3D
     public bool ContainsAt(Vec2 point, Vec2 at, double rotDeg)
     {
         var l = Coords.ToLocal(point, at, rotDeg);
+        return ContainsLocal(l) || PartsContain(l);
+    }
+
+    bool ContainsLocal(Vector2 l)
+    {
         if (Piece.HasTilt) return InsideTilted(l);
         if (!KTable.Client.Geometry.PieceShapes.Inside(Shape, Footprint.X, Footprint.Y, new System.Numerics.Vector2(l.X, l.Y))) return false;
         switch (Shape)

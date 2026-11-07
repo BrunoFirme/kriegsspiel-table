@@ -438,7 +438,7 @@ public sealed partial class ConverterTests
     }
 
     [Fact]
-    public void Blocks_glued_to_a_flattened_block_keep_module_heights_a_cap_on_its_top_and_a_post_standing_beside_it()
+    public void Blocks_glued_to_a_flattened_block_are_parts_of_it_at_module_heights_a_cap_on_its_top_and_a_post_standing_beside_it()
     {
         const double Wide = 0.053, Flat = 0.063, PostTall = 2.2, Thin = 0.05, CapAt = 1.0, PostAt = 0.6;
         TempConfig();
@@ -459,12 +459,13 @@ public sealed partial class ConverterTests
         Assert.Equal(0, code);
         var table = Json.Load<Scenario>(Path.Combine(Packages, "scenarios", "works", "scenario.json"));
         var pack = Json.Load<PackManifest>(Path.Combine(Packages, "tts.works", "pack.json"));
-        PieceInstance Named(string label) => table.UmpireBoard.Single(p => p.Label == label);
-        double Thick(PieceInstance p) => pack.Pieces.Single(d => d.Id == p.Def).Thickness;
-        Assert.Equal((0.0, 0.0), (Named("Breastworks").Y, Named("Post").Y));
-        Assert.Equal(Flat, Named("Cap").Y, 3);
-        Assert.Equal(PostTall * Flat, Thick(Named("Post")), 3);
-        Assert.Equal((0, 0, 1), (Named("Breastworks").Stack, Named("Post").Stack, Named("Cap").Stack));
+        var breastworks = Assert.Single(table.UmpireBoard);
+        var def = pack.Pieces.Single(d => d.Id == breastworks.Def);
+        PieceDef KindOf(PartDef p) => pack.Pieces.Single(d => d.Id == p.Def);
+        PartDef Part(string name) => def.Parts!.Single(p => KindOf(p).Name == name);
+        Assert.Equal((0.0, 0.0), (breastworks.Y, Part("Post").Y));
+        Assert.Equal(Flat, Part("Cap").Y, 3);
+        Assert.Equal(PostTall * Flat, KindOf(Part("Post")).Thickness, 3);
     }
 
     [Fact]

@@ -478,7 +478,7 @@ sealed partial class Carry : IHeldPieces
                 var sb = new StaticBody3D { PhysicsMaterialOverride = mat };
                 sb.AddChild(new CollisionShape3D { Shape = new BoxShape3D { Size = new Vector3(n.Footprint.X, n.Thickness, n.Footprint.Y) } });
                 world.AddChild(sb);
-                sb.GlobalTransform = new Transform3D(new Basis(Vector3.Up, n.Heading), n.SlabCentre);
+                sb.GlobalTransform = n.RestBox;
             }
         }
     }

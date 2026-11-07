@@ -109,7 +109,7 @@ sealed class Dice
             var sb = new StaticBody3D { PhysicsMaterialOverride = mat };
             sb.AddChild(new CollisionShape3D { Shape = new BoxShape3D { Size = new Vector3(n.Footprint.X, n.Thickness, n.Footprint.Y) } });
             world.AddChild(sb);
-            sb.GlobalTransform = new Transform3D(new Basis(Vector3.Up, n.Rotation.Y), n.Position + Vector3.Up * n.Thickness / 2);
+            sb.GlobalTransform = n.RestBox;
         }
         var bodies = new List<(PieceNode n, RigidBody3D b)>();
         var flat = new Vector3(throwVel.X, 0, throwVel.Z);

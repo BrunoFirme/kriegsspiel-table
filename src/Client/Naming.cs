@@ -40,7 +40,7 @@ public static class Naming
         var keep = defs.DistinctBy(d => d.Id).ToList();
         var ids = keep.Select(d => d.Id).ToHashSet();
         for (var i = 0; i < keep.Count; i++)
-            foreach (var part in keep[i].Attachments.Select(a => a.Piece).Concat(keep[i].Counters.Select(c => c.SpawnsMarker)).OfType<string>())
+            foreach (var part in keep[i].Attachments.Select(a => a.Piece).Concat(keep[i].AllParts.Select(p => p.Def)).Concat(keep[i].Counters.Select(c => c.SpawnsMarker)).OfType<string>())
                 if (ids.Add(part) && find(part) is { } extra) keep.Add(extra);
         return keep;
     }
@@ -53,5 +53,6 @@ public static class Naming
             foreach (var h in new[] { s.Image, s.Back, s.Texture, s.Mesh }) if (h != null) yield return h;
             foreach (var decal in s.Decals ?? []) yield return decal.Picture;
         }
+        foreach (var decal in d.AllParts.SelectMany(p => p.Decals ?? [])) yield return decal.Picture;
     }
 }

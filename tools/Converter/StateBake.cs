@@ -47,6 +47,9 @@ public sealed partial class DefFactory
             def.States[i].Image = baked[i].Sha;
             var sz = baked[i].Size;
             def.States[i].Size = Math.Abs(sz.W - def.Size.W) > 0.01 * def.Size.W || Math.Abs(sz.H - def.Size.H) > 0.01 * def.Size.H ? sz : null;
+            var (sl, sh) = BakedSpan(states[i]);
+            double thick = Math.Round(Math.Clamp((sh - sl) * Math.Abs(states[i].ScaleY) * heightScale, 0.02, 3), 3);
+            def.States[i].Thickness = Math.Abs(thick - def.Thickness) > 0.001 ? thick : null;
         }
         _baked.Add(def);
         return true;

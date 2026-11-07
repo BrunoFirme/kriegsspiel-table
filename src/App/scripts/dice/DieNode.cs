@@ -39,7 +39,7 @@ public partial class PieceNode
         if (faces.Count == 0) return Quaternion.Identity;
         var up = faces[Math.Clamp(state, 0, faces.Count - 1)].Up;
         if (up is not { Length: 3 }) return Quaternion.Identity;
-        return ArcTo(new Vector3((float)up[0], (float)up[1], (float)up[2]).Normalized(), Vector3.Up);
+        return new Quaternion(OwnTilt.Orthonormalized()) * ArcTo(new Vector3((float)up[0], (float)up[1], (float)up[2]).Normalized(), Vector3.Up);
     }
 
     public int FaceUp(Basis rest)
@@ -113,8 +113,12 @@ public partial class PieceNode
         _lastRot = p.RotDeg;
         _lastY = p.Y;
         Scale = Vector3.One;
-        Position = Coords.ToWorld(p.Pos, BaseY(p));
-        Rotation = new Vector3(0, Coords.Yaw(p.RotDeg), 0);
+        if (IsPart) Transform = PartRest();
+        else
+        {
+            Position = Coords.ToWorld(p.Pos, BaseY(p));
+            Rotation = new Vector3(0, Coords.Yaw(p.RotDeg), 0);
+        }
         _lettering.Layout(new());
     }
 

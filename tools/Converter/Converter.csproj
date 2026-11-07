@@ -20,7 +20,7 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="../../src/App/standard/std.dice/pack.json" LogicalName="std.dice/pack.json" />
-    <EmbeddedResource Include="../../src/App/standard/std.dice/assets/*.obj" LogicalName="std.dice/assets/%(Filename)%(Extension)" />
+    <EmbeddedResource Include="../../src/App/standard/std.dice/assets/*.obj;../../src/App/standard/std.dice/assets/*.png" LogicalName="std.dice/assets/%(Filename)%(Extension)" />
     <EmbeddedResource Include="Dice/*.*" LogicalName="dice/%(Filename)%(Extension)" />
   </ItemGroup>
   <ItemGroup>
