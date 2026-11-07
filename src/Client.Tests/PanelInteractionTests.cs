@@ -217,4 +217,12 @@ public class PanelInteractionTests
         Assert.Equal(Paint.White, i.Image!.Color);
         Assert.Equal(PanelPrefabs.ToolSprite, i.Image.Sprite);
     }
+
+    [Fact]
+    public void A_slider_value_is_written_with_seven_significant_digits_as_the_tabletop_s_runtime_writes_a_float()
+    {
+        Assert.Equal("0.3333333", PanelValues.FloatText(1f / 3));
+        Assert.Equal("7.5", PanelValues.FloatText(7.5f));
+        Assert.Equal("1E+07", PanelValues.FloatText(1e7f));
+    }
 }

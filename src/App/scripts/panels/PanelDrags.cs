@@ -160,7 +160,7 @@ sealed partial class PanelView
         float min = PanelValues.Float(owner.Extra.GetValueOrDefault("minvalue")), max = PanelValues.Float(owner.Extra.GetValueOrDefault("maxvalue") ?? "1");
         v = Mathf.Clamp(v, Mathf.Min(min, max), Mathf.Max(min, max));
         if (PanelValues.Bool(owner.Extra.GetValueOrDefault("wholenumbers"))) v = Mathf.Round(v);
-        var text = v.ToString(CultureInfo.InvariantCulture);
+        var text = PanelValues.FloatText(v);
         if ((_local.GetValueOrDefault(Key(owner)) ?? owner.Extra.GetValueOrDefault("value")) == text) return;
         _local[Key(owner)] = text;
         Fire(owner, "onValueChanged", text);
