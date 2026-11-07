@@ -348,7 +348,7 @@ public sealed partial class ConverterTests
 
         Assert.Equal(0, code);
         var table = Json.Load<Scenario>(Path.Combine(Packages, "scenarios", "works", "scenario.json"));
-        var pack = Json.Load<PackManifest>(Path.Combine(Packages, table.Packs.First(p => p.EndsWith(".extras")), "pack.json"));
+        var pack = Json.Load<PackManifest>(Path.Combine(Packages, "tts.works", "pack.json"));
         PieceInstance Named(string label) => table.UmpireBoard.Single(p => p.Label == label);
         double Thick(PieceInstance p) => pack.Pieces.Single(d => d.Id == p.Def).Thickness;
         Assert.Equal((0.0, 0.0), (Named("Breastworks").Y, Named("Post").Y));

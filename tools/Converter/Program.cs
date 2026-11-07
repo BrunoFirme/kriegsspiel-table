@@ -114,7 +114,7 @@ try
                 Clock = new ClockCfg(),
             };
             var scenario = await new ScenarioBuilder(cfg, assets, report, way).Build(save);
-            UsesPack(scenario, slug);
+            PackFold.Into(cfg.Output, packId, plan.Packs[1], scenario, slug);
             Progress.Stage("finish");
             var importReport = Path.Combine(cfg.Output, "scenarios", slug, "import-report.md");
             report.Write(importReport, "import " + packId);
@@ -122,12 +122,6 @@ try
             Console.WriteLine($"REPORT {importReport}");
             Console.WriteLine($"SIZES pack={plan.Packs.Sum(p => FolderBytes(Path.Combine(cfg.Output, p)))} scenario={plan.Scenarios.Sum(s => FolderBytes(Path.Combine(cfg.Output, "scenarios", s)))}");
 
-            void UsesPack(KTable.Core.Model.Scenario built, string dir)
-            {
-                if (built.Packs.Contains(packId)) return;
-                built.Packs.Insert(0, packId);
-                KTable.Core.Json.Save(Path.Combine(cfg.Output, "scenarios", dir, "scenario.json"), built);
-            }
             break;
         }
         case "export-save":

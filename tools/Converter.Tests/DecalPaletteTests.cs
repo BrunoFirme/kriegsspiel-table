@@ -33,8 +33,10 @@ public sealed partial class FidelityTests
         Assert.Equal(new[] { ("Guts", 0.5), ("Arrow", 2.0) }, table.DecalPalette.Select(p => (p.Name, p.Size)));
         var guts = Assert.Single(table.Decals["umpire"]);
         Assert.Equal((3.0, -4.0, 1.2, 0.5, 30.0, table.DecalPalette[0].Picture), (guts.X, guts.Z, guts.W, guts.H, guts.Rot, guts.Picture));
-        var extras = Json.Load<PackManifest>(Path.Combine(Packages, "tts.stamped.extras", "pack.json"));
-        Assert.True(table.DecalPalette.All(p => extras.Assets.ContainsKey(p.Picture)), "the palette's pictures are kept in the extras pack");
-        Assert.Contains("tts.stamped.extras", table.Packs);
+        var pack = Json.Load<PackManifest>(Path.Combine(Packages, "tts.stamped", "pack.json"));
+        Assert.True(table.DecalPalette.All(p => pack.Assets.ContainsKey(p.Picture)), "the palette's pictures are kept in the module's pack");
+        Assert.Contains("tts.stamped", table.Packs);
+        Assert.DoesNotContain(table.Packs, p => p.EndsWith(".extras"));
+        Assert.False(Directory.Exists(Path.Combine(Packages, "tts.stamped.extras")), "a module comes over as one pack");
     }
 }

@@ -36,7 +36,7 @@ public sealed partial class FidelityTests
         Assert.Equal("Orders", table.Ui[1].Find("title")!.Attributes["text"]);
         var brigade = Assert.Single(table.UmpireBoard);
         Assert.Equal(picture, Assert.Single(brigade.Ui).Find("badge")!.Attributes["image"]);
-        var extras = Json.Load<PackManifest>(Path.Combine(Packages, "tts.panelled.extras", "pack.json"));
-        Assert.True(extras.Assets.ContainsKey(picture), "the picture panels name is kept in the extras pack");
+        var pack = Json.Load<PackManifest>(Path.Combine(Packages, "tts.panelled", "pack.json"));
+        Assert.True(pack.Assets.ContainsKey(picture), "the picture panels name is kept in the module's pack");
     }
 }
