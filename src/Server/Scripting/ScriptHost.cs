@@ -793,6 +793,37 @@ public sealed partial class ScriptHost
         if (book) Call(_global, "on_page", Handle(st.Id));
     }
 
+    void ReactToPiece(Command c, long actor, DynValue who)
+    {
+        switch (c)
+        {
+            case HoldPiece { Held: true } h:
+                if (Find(h.Id) is { } held) PickedUp[h.Id] = (held.Pos, held.RotDeg, held.Y);
+                if (_pieces.TryGetValue(h.Id, out var ph)) Call(ph, "on_pick_up", who);
+                if (_global != null) Call(_global, "on_pick_up", Handle(h.Id), who);
+                break;
+            case SetState st:
+                ReactToState(st);
+                break;
+            case FlipPiece fp:
+                if (_pieces.TryGetValue(fp.Id, out var pfp)) Call(pfp, "on_flip", DynValue.NewBoolean(fp.FaceDown));
+                break;
+            case SetPieceOption { Name: PieceOptions.EffectOff } eo when actor != 0:
+                ReactToEffect(eo);
+                break;
+            case RollDice { Layer: not null } rd when actor != 0:
+                ReactToRoll(rd, who);
+                break;
+        }
+    }
+
+    void ReactToEffect(SetPieceOption eo)
+    {
+        var index = DynValue.NewNumber(eo.Value ? -1 : 0);
+        if (_pieces.TryGetValue(eo.Id, out var peo)) Call(peo, "on_effect", index);
+        if (_global != null) Call(_global, "on_effect", Handle(eo.Id), index);
+    }
+
     void ReactToRoll(RollDice rd, DynValue who)
     {
         foreach (var id in rd.PieceIds.Where(id => Find(id) != null).ToList())
@@ -857,19 +888,8 @@ public sealed partial class ScriptHost
             case MovePiece m:
                 ReactToMove(m, who);
                 break;
-            case HoldPiece { Held: true } h:
-                if (Find(h.Id) is { } held) PickedUp[h.Id] = (held.Pos, held.RotDeg, held.Y);
-                if (_pieces.TryGetValue(h.Id, out var ph)) Call(ph, "on_pick_up", who);
-                if (_global != null) Call(_global, "on_pick_up", Handle(h.Id), who);
-                break;
-            case SetState st:
-                ReactToState(st);
-                break;
-            case FlipPiece fp:
-                if (_pieces.TryGetValue(fp.Id, out var pfp)) Call(pfp, "on_flip", DynValue.NewBoolean(fp.FaceDown));
-                break;
-            case RollDice { Layer: not null } rd when actor != 0:
-                ReactToRoll(rd, who);
+            case HoldPiece or SetState or FlipPiece or SetPieceOption or RollDice:
+                ReactToPiece(c, actor, who);
                 break;
             case AdvanceClock or SetClock:
             {

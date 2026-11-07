@@ -203,6 +203,13 @@ static class WindowTests
         await r.Seconds(0.5);
         var fx = t.Node("fx1");
         Check.That(fx.IsEffect && fx.CarriesEffect, "the piece is an effect with emitters");
+        int running = fx.Emitters;
+        t.S.Do(new KTable.Core.Protocol.SetPieceOption { Layer = U, Id = "fx1", Name = KTable.Core.Protocol.PieceOptions.EffectOff, Value = true });
+        await r.Frames(3);
+        Check.That(running > 0 && t.Node("fx1").Emitters == 0, $"stopped, it sends nothing out ({running} before)");
+        t.S.Do(new KTable.Core.Protocol.SetPieceOption { Layer = U, Id = "fx1", Name = KTable.Core.Protocol.PieceOptions.EffectOff, Value = false });
+        await r.Frames(3);
+        Check.Equal(running, t.Node("fx1").Emitters, "started again, it runs as before");
         t.S.Do(new KTable.Core.Protocol.DeletePiece { Layer = U, Id = "fx1" });
         await r.Frames(2);
         Check.That(t.Table.Pieces.NodeOf(U, "fx1") == null, "it goes with the piece");

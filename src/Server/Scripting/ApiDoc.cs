@@ -156,6 +156,8 @@ public static partial class ApiDoc
         F("piece", "picked_up", "table?", "Where an umpire last picked the piece up: { x =, y =, z =, rot = }; nil until then.", "pick_up_position");
         F("piece", "face_picture", "string?", "A picture shown on the piece's face in place of its kind's, set by set_face_picture; nil for none.");
         F("piece", "page_offset", "number", "For a book, what its page numbers start from, as the module set it; 0 for every other piece.", "Book.page_offset");
+        F("piece", "effect_on", "boolean", "For an effect, whether it is running.");
+        F("piece", "kind_name", "string", "The name of its kind.");
         F("piece", "worth", "number", "What the piece counts for when pieces are added up; 0 for most.", "value");
         F("piece", "worth_groups", "number", "Which groups it adds up with, as bits; 0 adds up with any piece of worth.", "value_flags");
         F("piece", "pos", "Point", "Where it stands, in map units: { x =, z = }.", "getPosition");
@@ -239,6 +241,10 @@ public static partial class ApiDoc
     M("piece", "set_face_picture(link)", "Shows a picture on the piece's face in place of its kind's: a web link is fetched first; nil puts the kind's back.", "setCustomObject");
     P("link", "string?", "A web link to a picture, or a picture the table already holds.");
     See("self.face_picture");
+
+    M("piece", "set_effect_on(on)", "Starts or stops an effect.", "AssetBundle.playLoopingEffect");
+    P("on", "boolean", "true runs it; false stops it.");
+    See("self.effect_on");
 
     M("piece", "set_worth(worth, groups)", "Sets what the piece counts for, and optionally the groups it adds up with.", "value");
     P("worth", "number", "A whole number.");
@@ -932,6 +938,7 @@ public static partial class ApiDoc
 
         E("event", "on_state(old, new)", "Its state changed, by anyone.", "onObjectStateChange");
         E("event", "on_page()", "This book turned to another page.", "onPageChange");
+        E("event", "on_effect(index)", "An umpire started (0) or stopped (-1) this effect.", "onObjectLoopingEffect");
         P("old", "number", "The state it left, from 1.");
         P("new", "number", "The state it is in now, from 1.");
         X("""
@@ -976,6 +983,7 @@ public static partial class ApiDoc
         E("global event", "on_drop(piece, who)", "An umpire let a piece go.", "onObjectDrop");
         E("global event", "on_state(piece, old, new)", "A piece's state changed, by anyone.", "onObjectStateChange");
         E("global event", "on_page(piece)", "A book turned to another page.", "onObjectPageChange");
+        E("global event", "on_effect(piece, index)", "An umpire started (0) or stopped (-1) an effect.", "onObjectLoopingEffect");
         E("global event", "on_roll(piece, who)", "An umpire rolled a die, or turned a piece of several looks to one at random.", "onObjectRandomize");
         P("piece", "Piece", "The piece.");
         P("who", "Who", "The umpire.");

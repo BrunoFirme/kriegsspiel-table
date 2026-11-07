@@ -503,9 +503,9 @@ public partial class PieceNode : Node3D
     public void Refresh(PieceInstance p)
     {
         if (IsDie) { RefreshDie(p); return; }
-        bool rebuild = p.State != _shownState || p.Picture != _shownPicture || p.TintOverride != _shownTint || p.Def != _shownDef;
+        bool rebuild = p.State != _shownState || p.Picture != _shownPicture || p.TintOverride != _shownTint || p.Def != _shownDef || p.FacePicture != Piece.FacePicture;
         Piece = p;
-        if (rebuild) { Rebuild(); return; }
+        if (rebuild || EffectSwitched) { Rebuild(); return; }
         SyncWidgets();
         SyncLines();
         if (!Placed) Scale = Vector3.One;

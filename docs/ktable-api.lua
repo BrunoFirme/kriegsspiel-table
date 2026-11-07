@@ -133,6 +133,8 @@
 ---@field picked_up table|nil Where an umpire last picked the piece up: { x =, y =, z =, rot = }; nil until then.
 ---@field face_picture string|nil A picture shown on the piece's face in place of its kind's, set by set_face_picture; nil for none.
 ---@field page_offset number For a book, what its page numbers start from, as the module set it; 0 for every other piece.
+---@field effect_on boolean For an effect, whether it is running.
+---@field kind_name string The name of its kind.
 ---@field worth number What the piece counts for when pieces are added up; 0 for most.
 ---@field worth_groups number Which groups it adds up with, as bits; 0 adds up with any piece of worth.
 ---@field pos Point Where it stands, in map units: { x =, z = }.
@@ -236,6 +238,10 @@ function Piece.set_faces(list) end
 ---Shows a picture on the piece's face in place of its kind's: a web link is fetched first; nil puts the kind's back.
 ---@param link string|nil A web link to a picture, or a picture the table already holds.
 function Piece.set_face_picture(link) end
+
+---Starts or stops an effect.
+---@param on boolean true runs it; false stops it.
+function Piece.set_effect_on(on) end
 
 ---Sets what the piece counts for, and optionally the groups it adds up with.
 ---@param worth number A whole number.
@@ -660,9 +666,12 @@ function on_pick_up(who) end
 function on_state() end
 
 ---This book turned to another page.
+function on_page() end
+
+---An umpire started (0) or stopped (-1) this effect.
 ---@param old number The state it left, from 1.
 ---@param new number The state it is in now, from 1.
-function on_page(old, new) end
+function on_effect(old, new) end
 
 ---It was turned over or back.
 ---@param face_down boolean true when it is face down now.

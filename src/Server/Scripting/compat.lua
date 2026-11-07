@@ -551,6 +551,16 @@ function compat.book_highlight(obj, x1, y1, x2, y2)
   if x1 == nil then pbag(obj).highlight = nil else pbag(obj).highlight = { x1, y1, x2, y2 } end
   return true
 end
+compat.AssetBundle = {}
+function compat.bundle(obj)
+  return {
+    getLoopingEffects = function() return { { index = 0, name = obj.name or obj.kind_name } } end,
+    getTriggerEffects = function() return {} end,
+    getLoopingEffectIndex = function() if obj.effect_on then return 0 end return -1 end,
+    playLoopingEffect = function(i) obj.set_effect_on((tonumber(i) or 0) >= 0) end,
+    playTriggerEffect = function() return false end,
+  }
+end
 function compat.randomize(obj) return obj.roll() end
 function compat.roll(obj) return obj.roll() end
 function compat.shuffle_states(obj)

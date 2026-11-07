@@ -190,6 +190,9 @@ sealed class MenuCards : HudPart
         menu.Check("Taken by a selection box", allBoxed, () => SetOption(nodes, PieceOptions.NotBoxSelected, allBoxed));
         bool allMeasured = nodes.All(n => n.Piece.MeasuresMoves);
         menu.Check("Shows how far it is moved", allMeasured, () => SetOption(nodes, PieceOptions.MeasuresMoves, !allMeasured));
+        var effects = nodes.Where(n => n.IsEffect).ToList();
+        bool allRunning = effects.All(n => !n.Piece.EffectOff);
+        if (effects.Count > 0) menu.Check("Running", allRunning, () => SetOption(effects, PieceOptions.EffectOff, allRunning));
         var dice = nodes.Where(n => n.IsDie).ToList();
         if (dice.Count > 0)
         {

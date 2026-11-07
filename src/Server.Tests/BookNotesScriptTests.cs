@@ -68,4 +68,25 @@ public class BookNotesScriptTests
         var supply = Assert.Single(t.Server.State.Layer(U), p => p.Tags?.Contains("notebook") == true && p.Id != "p-000041");
         Assert.Equal(("Supply", "Two days"), (supply.Text[NoteCard.TitleLine], supply.Text[NoteCard.BodyLine]));
     }
+
+    [Fact]
+    public void An_effect_a_module_script_or_an_umpire_stops_and_starts_answers_as_a_looping_effect()
+    {
+        using var t = new Table();
+        t.Store.RegisterDef(new PackManifest { Id = "testpack" }, new PieceDef { Id = "smoke", Name = "Powder smoke", Tags = { "effect" }, Effect = new EffectDef() });
+        t.Server.Handle(Table.Host, new SpawnPiece { Layer = U, Def = "smoke", Id = "p-000050", Pos = new(1, 1) });
+        var global = ModuleTranslator.Translate("function onObjectLoopingEffect(obj, index) obj.setDescription('effect ' .. index) end", new TranslateContext { IsGlobal = true });
+        t.Server.Handle(Table.Lead, new SetGlobalScript { Text = global.Script });
+        var own = ModuleTranslator.Translate("""
+            function onLoad()
+              local list = self.AssetBundle.getLoopingEffects()
+              self.setName(#list .. ":" .. list[1].name .. ":" .. self.AssetBundle.getLoopingEffectIndex())
+            end
+            """, new TranslateContext());
+        t.Server.Handle(Table.Host, new SetScript { Layer = U, Id = "p-000050", Text = own.Script });
+        Assert.Equal("1:Powder smoke:0", t.Server.State.Find(U, "p-000050")!.Label);
+        t.Server.Handle(Table.Ump3, new SetPieceOption { Layer = U, Id = "p-000050", Name = PieceOptions.EffectOff, Value = true });
+        Assert.True(t.Server.State.Find(U, "p-000050")!.EffectOff);
+        Assert.Equal("effect -1", t.Server.State.Find(U, "p-000050")!.Note);
+    }
 }

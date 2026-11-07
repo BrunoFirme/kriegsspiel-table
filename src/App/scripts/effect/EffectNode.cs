@@ -18,6 +18,8 @@ public partial class PieceNode
 
     public bool CarriesEffect => IsEffect || _emitters.Count > 0;
 
+    public int Emitters => _emitters.Count;
+
     void BuildEffect()
     {
         if (IsEffect) _thickness = 0.02f;
@@ -31,6 +33,8 @@ public partial class PieceNode
         }
         float phase = (Piece.Id.Aggregate(17u, (h, c) => h * 31 + c) % 1000) / 1000f;
         _smokeAirBuilt = EffectFx.SmokeAirNow;
+        _builtEffectOff = Piece.EffectOff;
+        if (Piece.EffectOff) return;
         _emitters.AddRange(EffectFx.Build(this, e, Footprint.X, Footprint.Y, phase, own));
         SteerEffect();
     }
@@ -44,8 +48,10 @@ public partial class PieceNode
         return placed;
     }
 
-    bool _built;
+    bool _built, _builtEffectOff;
     SmokeAir _smokeAirBuilt;
+
+    bool EffectSwitched => IsEffect && _builtEffectOff != Piece.EffectOff;
 
     public void ShadeEffect() => EffectFx.Shade(_emitters);
 

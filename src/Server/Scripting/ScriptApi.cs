@@ -364,6 +364,7 @@ internal sealed partial class PieceHandles(ScriptHost host)
             case "sticky": return B(!p.NotSticky);
             case "box_selected": return B(!p.NotBoxSelected);
             case "measures_moves": return B(p.MeasuresMoves);
+            case "effect_on": return B(!p.EffectOff);
             case "tint": return p.TintOverride is { } ti ? S(ti) : def != null ? S(def.Tint) : DynValue.Nil;
             case "counters":
             {
@@ -501,6 +502,7 @@ internal sealed partial class PieceHandles(ScriptHost host)
             case "set_locked": return Fn(a => { host.Emit(new SetLocked { Layer = L, Id = id, Value = Arg(a, 0).IsNil() || Arg(a, 0).CastToBool() }); return DynValue.Nil; });
             case "set_box_selected": return Option(id, PieceOptions.NotBoxSelected, inverted: true);
             case "set_measures_moves": return Option(id, PieceOptions.MeasuresMoves, inverted: false);
+            case "set_effect_on": return Option(id, PieceOptions.EffectOff, inverted: true);
             case "set_sticky": return Fn(a =>
             {
                 host.Emit(new SetPieceOption { Layer = L, Id = id, Name = PieceOptions.NotSticky, Value = !(Arg(a, 0).IsNil() || Arg(a, 0).CastToBool()) });

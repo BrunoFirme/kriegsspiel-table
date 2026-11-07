@@ -141,7 +141,7 @@ the plan says translate it), unknown (nobody has decided).
 | `ObjectState.AttachedVectorLines` | 114 / 22 | native | the piece's own lines, in its frame and local unit | DrawingTests |
 | `CustomImageState.WidthScale` | 22 / 22 | native | converter reads it |  |
 | `CustomMeshState.MaterialIndex` | 1480 / 21 | native | converter reads it |  |
-| `CustomAssetbundleState.LoopingEffectIndex` | 71 / 21 | partial | BundleEffects: the effect family, not the index; read from the bundles 2026-11-06, every placed effect in the 55 saves runs the loop its family shows and none is saved on an Off loop |  |
+| `CustomAssetbundleState.LoopingEffectIndex` | 71 / 21 | native | every saved effect comes over running; Running stops and starts it | import-sweep |
 | `CustomTileState.Type` | 1743 / 20 | native | converter reads it |  |
 | `ObjectState.ContainedObjects` | 156 / 20 | native | ScenarioBuilder.StowContents: a bag's contents become its stowed pieces, decks as their cards | TablePiecesTests |
 | `CustomMeshState.ColliderURL` | 2969 / 19 | native | converter reads it |  |
@@ -441,11 +441,11 @@ the plan says translate it), unknown (nobody has decided).
 | `getValue` | 1 / 1 | native | a die's sides are its own (PieceDef.Faces, a value and the way up each); self.faces / face / value, set_face / set_value / set_faces / roll; compat maps the module calls | DiceScriptTests |
 | `roll` | 1 / 1 | native | a die's sides are its own (PieceDef.Faces, a value and the way up each); self.faces / face / value, set_face / set_value / set_faces / roll; compat maps the module calls | DiceScriptTests |
 | `setSnapPoints` | 1 / 1 | compat | ObjectCall |  |
-| `AssetBundle.getLoopingEffectIndex` | - | dropped | a bundle's own animations never come over |  |
-| `AssetBundle.getLoopingEffects` | - | dropped | a bundle's own animations never come over |  |
-| `AssetBundle.getTriggerEffects` | - | dropped | a bundle's own animations never come over |  |
-| `AssetBundle.playLoopingEffect` | - | dropped | a bundle's own animations never come over |  |
-| `AssetBundle.playTriggerEffect` | - | dropped | a bundle's own animations never come over |  |
+| `AssetBundle.getLoopingEffectIndex` | - | compat | an effect piece answers as a bundle with one looping effect, its own; starting and stopping it is the piece option Running (self.effect_on) | BookNotesScriptTests |
+| `AssetBundle.getLoopingEffects` | - | compat | an effect piece answers as a bundle with one looping effect, its own; starting and stopping it is the piece option Running (self.effect_on) | BookNotesScriptTests |
+| `AssetBundle.getTriggerEffects` | - | partial | an effect piece has no one-shot effects of the bundle's: the list is empty | BookNotesScriptTests |
+| `AssetBundle.playLoopingEffect` | - | compat | an effect piece answers as a bundle with one looping effect, its own; starting and stopping it is the piece option Running (self.effect_on) | BookNotesScriptTests |
+| `AssetBundle.playTriggerEffect` | - | partial | an effect piece has no one-shot effects of the bundle's: nothing plays | BookNotesScriptTests |
 | `Book.clearHighlight` | - | partial | kept with the script; a highlight box is not drawn on the page | BookNotesScriptTests |
 | `Book.getPage` | - | compat | compat.book_page: the page it lies open at, from 0, or by its printed number | BookNotesScriptTests |
 | `Book.page_offset` | - | compat | the kind's page offset from the save; a script may set another | BookNotesScriptTests |
@@ -498,7 +498,7 @@ the plan says translate it), unknown (nobody has decided).
 | `addTorque` | - | dropped | engine physics |  |
 | `alt_view_angle` | - | planned | the Alt-zoom view: a decision for the user |  |
 | `angular_drag` | - | dropped | engine physics |  |
-| `assetBundle` | - | unknown |  |  |
+| `assetBundle` | - | compat | an effect piece answers as a bundle with one looping effect, its own; starting and stopping it is the piece option Running (self.effect_on) | BookNotesScriptTests |
 | `attachHider` | - | dropped | hidden information (decided 2026-11-06) |  |
 | `attachInvisibleHider` | - | dropped | hidden information (decided 2026-11-06) |  |
 | `auto_raise` | - | compat | ObjectProps (get_prop/set_prop) |  |
@@ -919,14 +919,14 @@ the plan says translate it), unknown (nobody has decided).
 | `onObjectLeaveContainer` | - | native | on_unstowed(holder, piece) after an unstow, with on_spawn for the piece | StowEventTests |
 | `onObjectLeaveScriptingZone` | - | dropped | scripting and layout zones (decided 2026-11-06) |  |
 | `onObjectLeaveZone` | - | dropped | scripting and layout zones (decided 2026-11-06) |  |
-| `onObjectLoopingEffect` | - | dropped | a bundle's own animations never come over |  |
+| `onObjectLoopingEffect` | - | native | on_effect(piece, index) when an umpire starts (0) or stops (-1) an effect | BookNotesScriptTests |
 | `onObjectPageChange` | - | native | on_page(piece) in the global script | BookNotesScriptTests |
 | `onObjectPeek` | - | dropped | peeking at a hidden piece |  |
 | `onObjectRandomize` | - | native | on_roll(piece, who) in the global script when an umpire rolls | DiceScriptTests |
 | `onObjectRotate` | - | native | EventRenames |  |
 | `onObjectSearchEnd` | - | dropped | a holder's contents are a card, not a search |  |
 | `onObjectSearchStart` | - | dropped | a holder's contents are a card, not a search |  |
-| `onObjectTriggerEffect` | - | dropped | a bundle's own animations never come over |  |
+| `onObjectTriggerEffect` | - | partial | translated to on_effect; no one-shot effect raises it | BookNotesScriptTests |
 | `onPageChange` | - | native | on_page() in the book's own script | BookNotesScriptTests |
 | `onPlayerChangeColor` | - | dropped | the Player API (decided 2026-11-06) |  |
 | `onPlayerConnect` | - | dropped | the Player API (decided 2026-11-06) |  |

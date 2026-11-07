@@ -17,6 +17,7 @@ internal sealed partial class PieceHandles
             case "face": return faces.Count > 0 ? N(Math.Clamp(p.ShownFace, 0, faces.Count - 1) + 1) : DynValue.Nil;
             case "value": return faces.Count > 0 ? ValueOf(faces[Math.Clamp(p.ShownFace, 0, faces.Count - 1)].Value) : DynValue.Nil;
             case "worth": return N(p.Worth);
+            case "kind_name": return S(def?.Name ?? p.Def);
             case "page_offset": return N(def?.PageOffset ?? 0);
             case "face_picture": return p.FacePicture == null ? DynValue.Nil : S(p.FacePicture);
             case "picked_up":

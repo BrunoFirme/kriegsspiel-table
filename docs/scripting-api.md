@@ -206,6 +206,8 @@ Read from `self` or from any piece `board.find` or `board.pieces` hands back. Fi
 | [`self.picked_up`](#selfpicked_up) | Where an umpire last picked the piece up: { x =, y =, z =, rot = }; nil until then. |
 | [`self.face_picture`](#selfface_picture) | A picture shown on the piece's face in place of its kind's, set by set_face_picture; nil for none. |
 | [`self.page_offset`](#selfpage_offset) | For a book, what its page numbers start from, as the module set it; 0 for every other piece. |
+| [`self.effect_on`](#selfeffect_on) | For an effect, whether it is running. |
+| [`self.kind_name`](#selfkind_name) | The name of its kind. |
 | [`self.worth`](#selfworth) | What the piece counts for when pieces are added up; 0 for most. |
 | [`self.worth_groups`](#selfworth_groups) | Which groups it adds up with, as bits; 0 adds up with any piece of worth. |
 | [`self.pos`](#selfpos) | Where it stands, in map units: { x =, z = }. |
@@ -405,6 +407,26 @@ For a book, what its page numbers start from, as the module set it; 0 for every 
 **Type** `number`, read-only.
 
 **Module call** `Book.page_offset`
+
+### `self.effect_on`
+
+```lua
+self.effect_on
+```
+
+For an effect, whether it is running.
+
+**Type** `boolean`, read-only.
+
+### `self.kind_name`
+
+```lua
+self.kind_name
+```
+
+The name of its kind.
+
+**Type** `string`, read-only.
 
 ### `self.worth`
 
@@ -762,6 +784,7 @@ Each call is a change every umpire sees, taken back with Ctrl+Z by the umpire wh
 | [`self.set_value`](#selfset_value) | Turns a die to the first side with this value; false when no side has it. |
 | [`self.set_faces`](#selfset_faces) | Gives this die sides of its own; nil gives it back its kind's. |
 | [`self.set_face_picture`](#selfset_face_picture) | Shows a picture on the piece's face in place of its kind's: a web link is fetched first; nil puts the kind's back. |
+| [`self.set_effect_on`](#selfset_effect_on) | Starts or stops an effect. |
 | [`self.set_worth`](#selfset_worth) | Sets what the piece counts for, and optionally the groups it adds up with. |
 | [`self.roll`](#selfroll) | Rolls a die, or turns a piece of several states to one at random; false for anything else. |
 | [`self.set_counter`](#selfset_counter) | Sets one of its kind's counters (a whole number, kept to the counter's range). |
@@ -1068,6 +1091,20 @@ Shows a picture on the piece's face in place of its kind's: a web link is fetche
 | `link` | `string?` | A web link to a picture, or a picture the table already holds. |
 
 **Module call** `setCustomObject` · **See also** [`self.face_picture`](#selfface_picture)
+
+### `self.set_effect_on`
+
+```lua
+self.set_effect_on(on)
+```
+
+Starts or stops an effect.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `on` | `boolean` | true runs it; false stops it. |
+
+**Module call** `AssetBundle.playLoopingEffect` · **See also** [`self.effect_on`](#selfeffect_on)
 
 ### `self.set_worth`
 
@@ -2619,6 +2656,7 @@ Define any of these in a piece's script and the table calls it.
 | [`on_pick_up`](#on_pick_up) | An umpire picked the piece up. |
 | [`on_state`](#on_state) | Its state changed, by anyone. |
 | [`on_page`](#on_page) | This book turned to another page. |
+| [`on_effect`](#on_effect) | An umpire started (0) or stopped (-1) this effect. |
 | [`on_flip`](#on_flip) | It was turned over or back. |
 | [`on_rotate`](#on_rotate) | An umpire turned it in place. |
 | [`on_turn`](#on_turn) | The clock advanced. |
@@ -2749,6 +2787,18 @@ This book turned to another page.
 
 An event: define this function and the table calls it.
 
+**Module call** `onPageChange`
+
+### `on_effect`
+
+```lua
+on_effect(index)
+```
+
+An umpire started (0) or stopped (-1) this effect.
+
+An event: define this function and the table calls it.
+
 | Parameter | Type | Description |
 |---|---|---|
 | `old` | `number` | The state it left, from 1. |
@@ -2762,7 +2812,7 @@ end
 
 What the script draws here belongs to the new state.
 
-**Module call** `onPageChange` · **See also** [`self.set_state`](#selfset_state)
+**Module call** `onObjectLoopingEffect` · **See also** [`self.set_state`](#selfset_state)
 
 ### `on_flip`
 
@@ -2843,6 +2893,7 @@ The global script gets on_load, on_save, on_update and on_turn too, and these fo
 | [`on_drop`](#on_drop-global-script) | An umpire let a piece go. |
 | [`on_state`](#on_state-global-script) | A piece's state changed, by anyone. |
 | [`on_page`](#on_page-global-script) | A book turned to another page. |
+| [`on_effect`](#on_effect-global-script) | An umpire started (0) or stopped (-1) an effect. |
 | [`on_roll`](#on_roll-global-script) | An umpire rolled a die, or turned a piece of several looks to one at random. |
 | [`on_rotate`](#on_rotate-global-script) | An umpire turned a piece in place. |
 | [`on_pick_up`](#on_pick_up-global-script) | An umpire picked a piece up. |
@@ -2922,6 +2973,18 @@ A book turned to another page.
 An event: define this function and the table calls it.
 
 **Module call** `onObjectPageChange`
+
+### `on_effect` (global script)
+
+```lua
+on_effect(piece, index)
+```
+
+An umpire started (0) or stopped (-1) an effect.
+
+An event: define this function and the table calls it.
+
+**Module call** `onObjectLoopingEffect`
 
 ### `on_roll` (global script)
 
@@ -3250,6 +3313,7 @@ The converter rewrites a module's scripts into these calls by rule; this is the 
 | `addHotkey` | [`game.hotkey`](#gamehotkey) |
 | `addTag` | [`self.add_tag`](#selfadd_tag) |
 | `addToPlayerSelection` | [`game.select`](#gameselect) |
+| `AssetBundle.playLoopingEffect` | [`self.set_effect_on`](#selfset_effect_on) |
 | `Book.page_offset` | [`self.page_offset`](#selfpage_offset) |
 | `broadcastToAll` | [`game.say`](#gamesay) |
 | `call` | [`self.call`](#selfcall) |
@@ -3314,6 +3378,8 @@ The converter rewrites a module's scripts into these calls by rule; this is the 
 | `onObjectDrop` | [`on_drop`](#on_drop-global-script) |
 | `onObjectEnterContainer` | [`on_stowed`](#on_stowed-global-script) |
 | `onObjectLeaveContainer` | [`on_unstowed`](#on_unstowed-global-script) |
+| `onObjectLoopingEffect` | [`on_effect`](#on_effect) |
+| `onObjectLoopingEffect` | [`on_effect`](#on_effect-global-script) |
 | `onObjectNumberTyped` | [`on_number_typed`](#on_number_typed-global-script) |
 | `onObjectPageChange` | [`on_page`](#on_page-global-script) |
 | `onObjectPickUp` | [`on_pick_up`](#on_pick_up-global-script) |

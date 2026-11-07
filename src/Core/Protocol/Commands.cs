@@ -328,6 +328,7 @@ public static class PieceOptions
     public const string NotSticky = "not-sticky";
     public const string NotBoxSelected = "not-box-selected";
     public const string MeasuresMoves = "measures-moves";
+    public const string EffectOff = "effect-off";
 }
 
 public sealed class SetLocked : LayerCommand

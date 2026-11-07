@@ -597,6 +597,7 @@ type PieceInstance object
   decalsOnState: int?
   def: string
   drawnOnState: int
+  effectOff: bool
   face: int
   faceDown: bool
   facePicture: string
