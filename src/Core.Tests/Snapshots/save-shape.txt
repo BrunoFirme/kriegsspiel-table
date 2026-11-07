@@ -583,7 +583,9 @@ type PieceDef object
   kind: string
   localUnit: Size2?
   mesh: string
+  moduleObjectTag: string
   moduleTags: List<string>
+  moduleTop: double?
   moduleType: string
   name: string
   nameBox: FaceBox

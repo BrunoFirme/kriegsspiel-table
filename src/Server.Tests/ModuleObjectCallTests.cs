@@ -755,8 +755,8 @@ public class ModuleObjectCallTests
         using var t = new Table();
         t.Store.RegisterDef(new PackManifest { Id = "testpack" }, new PieceDef
         {
-            Id = "tok", Name = "Token", Tags = { "token" },
-            Source = new ModuleSource { Type = "Custom_Token", Top = 0.1, Tag = "Figurine", Links = new() { ["image"] = "https://example.test/a.png" } },
+            Id = "tok", Name = "Token", Tags = { "Infantry", "token" }, ModuleType = "Custom_Token", ModuleTop = 0.1, ModuleObjectTag = "Figurine", ModuleTags = ["Infantry"],
+            Sources = new() { ["ImageURL"] = "https://example.test/a.png" },
         });
         t.Server.Handle(Table.Host, new SpawnPiece { Layer = U, Def = "tok", Id = "p-000060", Pos = new(2, 2) });
         const string lua = """
@@ -769,7 +769,7 @@ public class ModuleObjectCallTests
               local spawned = spawnObject({ type = 'Custom_Token' })
               spawned.setCustomObject({ image = 'tok' })
               self.setName(self.name .. '|' .. own.name .. '|' .. c.image .. ',' .. c.thickness .. '|' .. d.Name .. ',' .. d.CustomImage.ImageURL)
-              self.setDescription(self.type .. ',' .. self.tag .. ',' .. tostring(c.stand_up) .. ',' .. spawned.type .. ',' .. ({ type = 'own' }).type)
+              self.setDescription(self.type .. ',' .. self.tag .. ',' .. tostring(c.stand_up) .. ',' .. spawned.type .. ',' .. ({ type = 'own' }).type .. ',' .. table.concat(self.getTags(), ' ') .. ',' .. tostring(self.hasTag('token')))
             end
             function x() end
             """;
@@ -781,7 +781,7 @@ public class ModuleObjectCallTests
         Assert.DoesNotContain(answers, o => o.Message is ErrorMessage);
         var p = t.Server.State.Find(U, "p-000060")!;
         Assert.Equal("Custom_Token|mine|https://example.test/a.png,0.2|Custom_Token,https://example.test/a.png", p.Label);
-        Assert.Equal("Figurine,Figurine,true,Figurine,own", p.Note);
+        Assert.Equal("Figurine,Figurine,true,Figurine,own,Infantry,false", p.Note);
         Assert.Single(p.Widgets);
         var spawned = t.Server.State.Layer(U).Last(q => q.Def == "tok");
         Assert.Empty(spawned.Tags ?? ["kind tags leaked"]);

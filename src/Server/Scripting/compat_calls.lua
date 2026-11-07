@@ -599,18 +599,31 @@ function compat.states(obj)
   return t
 end
 
-local function norm_tag(s) return tostring(s):lower():gsub(" ", "_") end
+local function norm_tag(s) return (tostring(s):lower():gsub(" ", "_")) end
 compat.norm_tag = norm_tag
+local KIND_TAGS = { tile = true, token = true, model = true, board = true, book = true, block = true, bag = true }
+local function own_tags(obj)
+  local src = type(obj) == "table" and obj.source or nil
+  if not src then return obj.tags or {} end
+  local carried = {}
+  for _, t in ipairs(src.tags or {}) do carried[norm_tag(t)] = true end
+  local out = {}
+  for _, t in ipairs(obj.tags or {}) do
+    if carried[norm_tag(t)] or not KIND_TAGS[t] then out[#out + 1] = t end
+  end
+  return out
+end
+function compat.tags(obj) return own_tags(obj) end
 function compat.has_tag(obj, tag)
   if tag == nil then return false end
   local want = norm_tag(tag)
-  for _, t in ipairs(obj.tags or {}) do if norm_tag(t) == want then return true end end
+  for _, t in ipairs(own_tags(obj)) do if norm_tag(t) == want then return true end end
   return false
 end
-function compat.has_any_tag(obj) return #(obj.tags or {}) > 0 end
+function compat.has_any_tag(obj) return #own_tags(obj) > 0 end
 function compat.has_matching_tag(obj, other)
   if type(other) ~= "table" then return false end
-  for _, t in ipairs(obj.tags or {}) do if compat.has_tag(other, t) then return true end end
+  for _, t in ipairs(own_tags(obj)) do if compat.has_tag(other, t) then return true end end
   return false
 end
 function compat.add_tag(obj, tag)
