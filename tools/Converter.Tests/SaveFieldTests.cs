@@ -252,12 +252,12 @@ public sealed class SaveFieldTests : ConverterHarness
     }
 
     [Fact]
-    public void A_piece_keeps_its_name_and_description_as_saved_its_script_state_without_a_script_and_one_tag_per_spelling_the_game_counts_as_one()
+    public void A_piece_keeps_its_name_description_and_gm_notes_as_saved_its_script_state_without_a_script_and_one_tag_per_spelling_the_game_counts_as_one()
     {
         TempConfig();
         var block = Obj("BlockSquare", " 1st Brigade ", 1, new JsonObject
         {
-            ["Description"] = "  Holds the ford ", ["LuaScriptState"] = "{\"n\":3}", ["Tags"] = new JsonArray("Red Army", "red_army", "Guard"),
+            ["Description"] = "  Holds the ford ", ["GMNotes"] = "mined", ["LuaScriptState"] = "{\"n\":3}", ["Tags"] = new JsonArray("Red Army", "red_army", "Guard"),
         });
         var module = Module("named", block);
         var main = typeof(Config).Assembly.EntryPoint!;
@@ -268,6 +268,7 @@ public sealed class SaveFieldTests : ConverterHarness
         var piece = Assert.Single(Json.Load<Scenario>(Path.Combine(Packages, "scenarios", "named", "scenario.json")).UmpireBoard);
         Assert.Equal((" 1st Brigade ", "  Holds the ford ", "{\"n\":3}"), (piece.Label, piece.Note, piece.ScriptState));
         Assert.Equal(new[] { "Red Army", "Guard" }, piece.Tags);
+        Assert.Equal("mined", piece.GmNotes);
     }
 
     [Fact]

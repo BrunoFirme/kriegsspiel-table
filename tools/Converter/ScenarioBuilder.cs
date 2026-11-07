@@ -552,6 +552,7 @@ public sealed partial class ScenarioBuilder
             Counters = counters, Text = text, Label = o.RawNickname.Length > 0 ? o.RawNickname : null, Scale = scale,
             Note = o.Description.Length > 0 ? o.Description : null,
             Guid = o.Guid.Length > 0 ? o.Guid : null,
+            GmNotes = o.GmNotes.Length > 0 && !o.GmNotes.StartsWith(KtMarker.Def, StringComparison.Ordinal) ? o.GmNotes : null,
             Tags = o.Tags, Memo = _defs.RewriteUrls(o.Memo, extras, $"{layer.Name} {o.Name} '{o.Nickname}' {o.Guid} memo"),
             Locked = parent == null && o.Locked, FaceDown = o.Flipped && def.Kind != "model" && def.Back != null, NotSticky = !o.Sticky,
             NotBoxSelected = !o.DragSelectable, MeasuresMoves = o.MeasureMovement,

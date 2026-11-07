@@ -614,6 +614,7 @@ type PieceInstance object
   faceDown: bool
   facePicture: string
   faces: List<DieFace>
+  gmNotes: string
   guid: string
   holds: bool?
   id: string

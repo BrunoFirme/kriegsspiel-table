@@ -324,6 +324,7 @@ internal sealed partial class PieceHandles(ScriptHost host)
         {
             case "guid": return S(p.Guid ?? p.Id);
             case "memo": return S(p.Memo);
+            case "gm_notes": return S(p.GmNotes ?? "");
             case "script_state": return S(p.ScriptState);
             case "def": return S(p.Def);
             case "pack": return host.Server.Store?.PackOfDef(p.Def)?.Id is { } pk ? S(pk) : DynValue.Nil;

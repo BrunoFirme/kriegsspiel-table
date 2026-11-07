@@ -406,7 +406,7 @@ function compat.get_lock(obj) return obj.locked == true end
 function compat.set_memo(obj, s) obj.set_memo(s) end
 function compat.get_memo(obj) return obj.memo end
 function compat.set_gm_notes(obj, s) pbag(obj).gm_notes = s end
-function compat.get_gm_notes(obj) return pbag(obj).gm_notes or "" end
+function compat.get_gm_notes(obj) return pbag(obj).gm_notes or obj.gm_notes or "" end
 function compat.set_interactable(obj, v) pbag(obj).interactable = v end
 function compat.highlight(obj, color, seconds) end
 function compat.highlight_off(obj) end
