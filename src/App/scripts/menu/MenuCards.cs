@@ -160,6 +160,8 @@ sealed class MenuCards : HudPart
                 });
         }
         HolderRows(menu, hit);
+        var effects = nodes.Where(n => n.IsEffect).ToList();
+        if (effects.Count > 0) menu.Item("Play once", () => effects.ForEach(n => S.Do(new PlayEffect { Layer = n.Layer, Id = n.Piece.Id })));
         if (S.IsUmpire && nodes[0].Layer == Layers.Umpire) menu.Item("POV capture from here", () => T.SetTool(Tool.Sighting), "V");
         menu.Separator("Options");
         var pieces = _pieces();
@@ -185,10 +187,8 @@ sealed class MenuCards : HudPart
         menu.Check("Taken by a selection box", allBoxed, () => SetOption(nodes, PieceOptions.NotBoxSelected, allBoxed));
         bool allMeasured = nodes.All(n => n.Piece.MeasuresMoves);
         menu.Check("Shows how far it is moved", allMeasured, () => SetOption(nodes, PieceOptions.MeasuresMoves, !allMeasured));
-        var effects = nodes.Where(n => n.IsEffect).ToList();
         bool allRunning = effects.All(n => !n.Piece.EffectOff);
         if (effects.Count > 0) menu.Check("Running", allRunning, () => SetOption(effects, PieceOptions.EffectOff, allRunning));
-        if (effects.Count > 0) menu.Item("Play once", () => effects.ForEach(n => S.Do(new PlayEffect { Layer = n.Layer, Id = n.Piece.Id })));
         var dice = nodes.Where(n => n.IsDie).ToList();
         if (dice.Count > 0)
         {
