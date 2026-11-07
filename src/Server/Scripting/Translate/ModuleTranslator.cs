@@ -318,8 +318,9 @@ public static class ModuleTranslator
                 case "JSON":
                     return name switch
                     {
-                        "encode" or "encode_pretty" => Direct($"json.encode({All()})", node),
-                        "decode" => Direct($"json.decode({All()})", node),
+                        "encode" => Direct($"json.encode({A(0)})", node),
+                        "encode_pretty" => Direct($"json.encode({A(0)}, true)", node),
+                        "decode" => Direct($"json.decode({A(0)})", node),
                         _ => Todo("JSON." + name, $"compat.todo(nil, \"JSON.{name}\")", node),
                     };
                 case "Wait":

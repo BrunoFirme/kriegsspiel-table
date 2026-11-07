@@ -639,13 +639,14 @@ function wait.delta() end
 ---@class KTJson
 json = {}
 
----A value as JSON. A table whose keys are 1..n is an array.
----@param value any A table, string, number, boolean or nil.
+---A value as JSON. A table whose keys are all positive numbers is an array up to its highest key, gaps as null; an empty table is []; other tables are objects with their keys in sorted order, number keys after the text ones.
+---@param value any A table, string, number, boolean or nil. A function, a table holding itself or a key that is neither text nor a number is an error.
+---@param pretty? boolean true: one key a line, indented by two spaces.
 ---@return string
-function json.encode(value) end
+function json.encode(value, pretty) end
 
----JSON as a value; an error when it does not parse.
----@param text string The JSON.
+---JSON as a value; an error when it does not parse. Text after the first value is ignored, and blank text is nil.
+---@param text string The JSON. Anything else is an error.
 ---@return any
 function json.decode(text) end
 

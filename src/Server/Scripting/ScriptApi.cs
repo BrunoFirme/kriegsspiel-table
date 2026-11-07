@@ -28,8 +28,9 @@ public sealed partial class ScriptHost
         });
 
         var json = T();
-        json.Table["encode"] = Fn(a => S(LuaJson.Encode(Arg(a, 0))));
-        json.Table["decode"] = Fn(a => LuaJson.Decode(_vm, Arg(a, 0).CastToString() ?? ""));
+        json.Table["encode"] = Fn(a => S(LuaJson.Encode(Arg(a, 0), Arg(a, 1).CastToBool())));
+        json.Table["decode"] = Fn(a => Arg(a, 0).Type == DataType.String ? LuaJson.Decode(_vm, Arg(a, 0).String)
+            : throw new ScriptRuntimeException("Expected string argument to JSON.decode(), got " + Arg(a, 0).Type.ToLuaTypeString()));
         g["json"] = json;
 
         var wait = T();

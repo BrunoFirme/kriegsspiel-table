@@ -413,6 +413,22 @@ public class ModuleObjectCallTests
     }
 
     [Fact]
+    public void Json_writes_sorted_keys_empty_tables_as_arrays_text_as_it_is_and_reads_past_trailing_text()
+    {
+        const string lua = """
+            function onLoad()
+              local a = JSON.encode({ b = 1, a = { 1, nil, 3 }, [2] = 'n', e = {}, s = 'é "q"', f = 0 / 0 })
+              local d = JSON.decode('{"x": [1, null, 3], "1": true} trailing')
+              local ok = pcall(JSON.encode, { f = function() end })
+              local p = JSON.encode_pretty({ k = { 1, 2 } })
+              local u = JSON.decode('"\\a\\u0041"')
+              self.setName(a .. '|' .. tostring(d.x[3]) .. tostring(d.x[2]) .. tostring(d['1']) .. tostring(d[1]) .. '|' .. tostring(ok) .. '|' .. p .. '|' .. u)
+            end
+            """;
+        Assert.Equal("{\"a\":[1,null,3],\"b\":1,\"e\":[],\"f\":null,\"s\":\"é \\\"q\\\"\",\"2\":\"n\"}|3niltruenil|false|{\n  \"k\": [ 1, 2 ]\n}|aA", Run(lua));
+    }
+
+    [Fact]
     public void Time_reads_the_scripts_clock_and_frame_count()
     {
         using var t = new Table();

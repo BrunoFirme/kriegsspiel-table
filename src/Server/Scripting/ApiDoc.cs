@@ -897,15 +897,17 @@ public static partial class ApiDoc
 
     static ApiSection JsonCalls() => Section("json", "JSON in and out; numbers are written the same on every PC.", () =>
     {
-        M("json", "encode(value)", "A value as JSON. A table whose keys are 1..n is an array.", "JSON.encode", "string");
-        P("value", "any", "A table, string, number, boolean or nil.");
+        M("json", "encode(value, pretty)", "A value as JSON. A table whose keys are all positive numbers is an array up to its highest key, gaps as null; an empty table is []; other tables are objects with their keys in sorted order, number keys after the text ones.", "JSON.encode", "string");
+        P("value", "any", "A table, string, number, boolean or nil. A function, a table holding itself or a key that is neither text nor a number is an error.");
+        O("pretty", "boolean", "true: one key a line, indented by two spaces.");
         X("""
             function on_save() return json.encode({ hits = hits, orders = orders }) end
             """);
+        Note("Text is written as it is, apart from quotes, backslashes and control characters; NaN is null.");
         See("json.decode", "on_save");
 
-        M("json", "decode(text)", "JSON as a value; an error when it does not parse.", "JSON.decode", "any");
-        P("text", "string", "The JSON.");
+        M("json", "decode(text)", "JSON as a value; an error when it does not parse. Text after the first value is ignored, and blank text is nil.", "JSON.decode", "any");
+        P("text", "string", "The JSON. Anything else is an error.");
         X("""
             function on_load(saved)
               local ok, data = pcall(json.decode, saved)

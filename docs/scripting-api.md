@@ -2678,26 +2678,29 @@ JSON in and out; numbers are written the same on every PC.
 
 | Name | What it does |
 |---|---|
-| [`json.encode`](#jsonencode) | A value as JSON. A table whose keys are 1..n is an array. |
-| [`json.decode`](#jsondecode) | JSON as a value; an error when it does not parse. |
+| [`json.encode`](#jsonencode) | A value as JSON. A table whose keys are all positive numbers is an array up to its highest key, gaps as null; an empty table is []; other tables are objects with their keys in sorted order, number keys after the text ones. |
+| [`json.decode`](#jsondecode) | JSON as a value; an error when it does not parse. Text after the first value is ignored, and blank text is nil. |
 
 ### `json.encode`
 
 ```lua
-json.encode(value)
+json.encode(value, pretty)
 ```
 
-A value as JSON. A table whose keys are 1..n is an array.
+A value as JSON. A table whose keys are all positive numbers is an array up to its highest key, gaps as null; an empty table is []; other tables are objects with their keys in sorted order, number keys after the text ones.
 
 | Parameter | Type | Description |
 |---|---|---|
-| `value` | `any` | A table, string, number, boolean or nil. |
+| `value` | `any` | A table, string, number, boolean or nil. A function, a table holding itself or a key that is neither text nor a number is an error. |
+| `pretty` | `boolean` | _Optional._ true: one key a line, indented by two spaces. |
 
 **Returns** `string`.
 
 ```lua
 function on_save() return json.encode({ hits = hits, orders = orders }) end
 ```
+
+Text is written as it is, apart from quotes, backslashes and control characters; NaN is null.
 
 **Module call** `JSON.encode` · **See also** [`json.decode`](#jsondecode), [`on_save`](#on_save)
 
@@ -2707,11 +2710,11 @@ function on_save() return json.encode({ hits = hits, orders = orders }) end
 json.decode(text)
 ```
 
-JSON as a value; an error when it does not parse.
+JSON as a value; an error when it does not parse. Text after the first value is ignored, and blank text is nil.
 
 | Parameter | Type | Description |
 |---|---|---|
-| `text` | `string` | The JSON. |
+| `text` | `string` | The JSON. Anything else is an error. |
 
 **Returns** `any`.
 
