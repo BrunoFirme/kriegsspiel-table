@@ -72,7 +72,7 @@ public static class ModuleTranslator
         ["onObjectSpawn"] = "on_spawn", ["onObjectDestroy"] = "on_destroy", ["onObjectStateChange"] = "on_state", ["onPlayerTurn"] = "on_turn", ["onRotate"] = "on_rotate", ["onObjectRotate"] = "on_rotate",
         ["onPlayerTurnStart"] = "on_turn", ["onPlayerTurnEnd"] = "on_turn",
         ["onChat"] = "on_chat", ["onObjectNumberTyped"] = "on_number_typed", ["onScriptingButtonDown"] = "on_scripting_button_down", ["onScriptingButtonUp"] = "on_scripting_button_up",
-        ["onPlayerAction"] = "on_player_action", ["onObjectRandomize"] = "on_roll", ["onRandomize"] = "on_roll", ["onPageChange"] = "on_page", ["onObjectPageChange"] = "on_page", ["onObjectLoopingEffect"] = "on_effect", ["onObjectTriggerEffect"] = "on_effect", ["onObjectEnterContainer"] = "on_stowed", ["onObjectLeaveContainer"] = "on_unstowed", ["tryObjectEnterContainer"] = "try_stow",
+        ["onPlayerAction"] = "on_player_action", ["onObjectRandomize"] = "on_roll", ["onRandomize"] = "on_roll", ["onPageChange"] = "on_page", ["onObjectPageChange"] = "on_page", ["onObjectLoopingEffect"] = "on_effect", ["onObjectTriggerEffect"] = "on_burst", ["onObjectEnterContainer"] = "on_stowed", ["onObjectLeaveContainer"] = "on_unstowed", ["tryObjectEnterContainer"] = "try_stow",
     };
 
     static readonly HashSet<string> EveryScriptEvents = new(StringComparer.Ordinal)
@@ -801,8 +801,10 @@ public static class ModuleTranslator
                 case "onObjectStateChange" when global: return ("on_state", "__piece, __old, __new", Bind(new[] { "__piece", "tostring(__old)" }));
                 case "onObjectStateChange": return ("on_state", "__old, __new", Bind(new[] { "self", "tostring(__old)" }));
                 case "onPageChange": return ("on_page", "", "");
-                case "onObjectLoopingEffect" or "onObjectTriggerEffect" when global: return ("on_effect", "__piece, __index", Bind(new[] { "__piece", "__index" }));
-                case "onObjectLoopingEffect" or "onObjectTriggerEffect": return ("on_effect", "__index", Bind(new[] { "self", "__index" }));
+                case "onObjectLoopingEffect" when global: return ("on_effect", "__piece, __index", Bind(new[] { "__piece", "__index" }));
+                case "onObjectLoopingEffect": return ("on_effect", "__index", Bind(new[] { "self", "__index" }));
+                case "onObjectTriggerEffect" when global: return ("on_burst", "__piece, __index", Bind(new[] { "__piece", "__index" }));
+                case "onObjectTriggerEffect": return ("on_burst", "__index", Bind(new[] { "self", "__index" }));
                 case "onObjectPageChange" when global: return ("on_page", "__piece", Bind(new[] { "__piece" }));
                 case "onObjectPageChange": return ("on_page", "", Bind(new[] { "self" }));
                 case "onPlayerTurn": return ("on_turn", "__turn", Bind(new[] { "compat.player(\"White\")", "nil" }));

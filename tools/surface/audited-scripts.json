@@ -215,7 +215,8 @@
   "onPageChange": "BookNotesScriptTests.A_module_script_turns_a_book_by_its_printed_page_numbers_and_hears_the_page_turn",
   "onScriptingButtonUp": "ModuleEventTests.A_scripting_button_released_calls_the_up_function_with_the_index_and_the_colour",
   "onPlayerTurnStart": "ModuleHelpersTests.A_turn_start_handler_runs_when_the_clock_advances (clock turn for player turn, kept by decision 2026-11-07)",
-  "onPlayerTurnEnd": "ModuleHelpersTests.A_turn_start_handler_runs_when_the_clock_advances (clock turn for player turn, kept by decision 2026-11-07)"
+  "onPlayerTurnEnd": "ModuleHelpersTests.A_turn_start_handler_runs_when_the_clock_advances (clock turn for player turn, kept by decision 2026-11-07)",
+  "onObjectTriggerEffect": "ModuleEventTests.A_trigger_effect_played_by_an_umpire_reaches_the_piece_and_every_script_with_its_index"
  },
  "namespaces": {
   "JSON.encode": "ModuleObjectCallTests.Json_writes_sorted_keys_empty_tables_as_arrays_text_as_it_is_and_reads_past_trailing_text",

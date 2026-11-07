@@ -30,6 +30,7 @@ public class RoleAndJoinTests
         yield return new SetLocked { Layer = layer, Id = "p-000004", Value = true };
         yield return new SetHighlight { Layer = layer, Id = "p-000004", Color = "#FF0000" };
         yield return new SetBookHighlight { Layer = layer, Id = "p-000004", Box = [0.1, 0.2, 0.5, 0.6] };
+        yield return new PlayEffect { Layer = layer, Id = "p-000004", Index = 1 };
         yield return new SetPieceOption { Layer = layer, Id = "p-000004", Name = PieceOptions.NoCollision, Value = true };
         yield return new FlipPiece { Layer = layer, Id = "p-000004", FaceDown = true };
         yield return new SetScale { Layer = layer, Id = "p-000004", Scale = 1.25 };

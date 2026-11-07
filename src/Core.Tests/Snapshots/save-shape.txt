@@ -110,6 +110,7 @@ type Command abstract
   derived NumberTyped = NumberTyped
   derived PickGlobalMenuItem = PickGlobalMenuItem
   derived PickMenuItem = PickMenuItem
+  derived PlayEffect = PlayEffect
   derived PublishSighting = PublishSighting
   derived RemoveBoard = RemoveBoard
   derived RemoveDecal = RemoveDecal
@@ -677,6 +678,14 @@ type PieceStateDef object
   size: Size2?
   texture: string
   up: double[]
+type PlayEffect object
+  actor: long
+  at: long
+  id: string
+  index: int
+  layer: string
+  seq: long
+  undoOf: long
 type PrintPlace object
   h: double
   side: string

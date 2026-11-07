@@ -187,6 +187,9 @@ sealed class ViewSync
             case SelectPiece sp:
                 if (sp.To == $"p:{s.Me.PeerId}" && (sp.Selected ? _picked.Add(sp.Id) : _picked.Remove(sp.Id))) _c.NotifySelectionChanged();
                 return true;
+            case PlayEffect pe:
+                if (pieces.TryGet(pe.Layer, pe.Id, out var fx)) fx.PlayOnce();
+                return true;
             case ShowContents sc:
                 if (sc.To == $"p:{s.Me.PeerId}" && pieces.TryGet(sc.Layer, sc.Id, out var holder)) _c.NotifyContentsAsked(holder, sc.Most);
                 return true;

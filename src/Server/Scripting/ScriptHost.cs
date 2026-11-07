@@ -823,6 +823,10 @@ public sealed partial class ScriptHost
             case SetPieceOption { Name: PieceOptions.EffectOff } eo when actor != 0:
                 ReactToEffect(eo);
                 break;
+            case PlayEffect pe when actor != 0:
+                if (_pieces.TryGetValue(pe.Id, out var ppe)) Call(ppe, "on_burst", DynValue.NewNumber(pe.Index));
+                _every.Tell("on_burst", Handle(pe.Id), DynValue.NewNumber(pe.Index));
+                break;
             case RollDice { Layer: not null } rd when actor != 0:
                 ReactToRoll(rd, who);
                 break;
@@ -900,7 +904,7 @@ public sealed partial class ScriptHost
             case MovePiece m:
                 ReactToMove(m, who);
                 break;
-            case HoldPiece or SetState or FlipPiece or SetPieceOption or RollDice:
+            case HoldPiece or SetState or FlipPiece or SetPieceOption or RollDice or PlayEffect:
                 ReactToPiece(c, actor, who);
                 break;
             case AdvanceClock or SetClock:

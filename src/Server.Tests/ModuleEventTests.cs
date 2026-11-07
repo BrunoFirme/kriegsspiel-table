@@ -133,6 +133,24 @@ public class ModuleEventTests
     }
 
     [Fact]
+    public void A_trigger_effect_played_by_an_umpire_reaches_the_piece_and_every_script_with_its_index()
+    {
+        using var t = new Table();
+        t.Store.RegisterDef(new PackManifest { Id = "testpack" }, new PieceDef { Id = "gun", Name = "Gun", Tags = { "effect" }, Effect = new EffectDef { Kind = "cannon" } });
+        t.Server.Handle(Table.Host, new SpawnPiece { Layer = U, Def = "gun", Id = "p-000070", Pos = new(3, 3) });
+        Load(t, "p-000070", """
+            function onObjectTriggerEffect(obj, index) if obj == self then self.setName('fired ' .. index) end end
+            function onLoad() self.setDescription(tostring(self.AssetBundle.playTriggerEffect(2))) end
+            """);
+        Load(t, P, "function onObjectTriggerEffect(obj, index) self.setName('heard ' .. obj.getGUID() .. ' ' .. index) end");
+        var gun = t.Server.State.Find(U, "p-000070")!;
+        Assert.Equal("true", gun.Note);
+        Assert.Contains(Flat(t.Server.Log).OfType<PlayEffect>(), pe => pe.Id == "p-000070" && pe.Index == 2);
+        t.Server.Handle(Table.Ump3, new PlayEffect { Layer = U, Id = "p-000070", Index = 1 });
+        Assert.Equal(("fired 1", "heard p-000070 1"), (t.Server.State.Find(U, "p-000070")!.Label, t.Server.State.Find(U, P)!.Label));
+    }
+
+    [Fact]
     public void A_save_answer_that_is_not_text_clears_the_saved_state_and_nothing_keeps_it()
     {
         Assert.Equal("", Saved("function onSave() return 5 end"));

@@ -519,6 +519,7 @@ public class MalformedInputTests
     [InlineData("SetLocked")]
     [InlineData("SetHighlight")]
     [InlineData("SetBookHighlight")]
+    [InlineData("PlayEffect")]
     [InlineData("SetPieceOption")]
     [InlineData("SetPointerRule")]
     [InlineData("SetBriefing")]

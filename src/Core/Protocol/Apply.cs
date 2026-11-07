@@ -88,6 +88,7 @@ public static class StateMachine
             case SelectPiece:
                 return null;
             case ShowContents sc: return Present(g, sc.Layer, sc.Id);
+            case PlayEffect pe: return Present(g, pe.Layer, pe.Id);
             case PickMenuItem pm: return Present(g, pm.Layer, pm.Id);
             case HoldPiece hp: return Present(g, hp.Layer, hp.Id);
             case Say:

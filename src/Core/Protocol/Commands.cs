@@ -26,6 +26,7 @@ namespace KTable.Core.Protocol;
 [JsonDerivedType(typeof(SetLocked), "SetLocked")]
 [JsonDerivedType(typeof(SetHighlight), "SetHighlight")]
 [JsonDerivedType(typeof(SetBookHighlight), "SetBookHighlight")]
+[JsonDerivedType(typeof(PlayEffect), "PlayEffect")]
 [JsonDerivedType(typeof(SetPieceOption), "SetPieceOption")]
 [JsonDerivedType(typeof(SetPointerRule), "SetPointerRule")]
 [JsonDerivedType(typeof(SetBriefing), "SetBriefing")]
@@ -366,6 +367,18 @@ public sealed class SetBookHighlight : LayerCommand
     public const int Corners = 4;
     public string Id { get; set; } = "";
     public double[]? Box { get; set; }
+    public override Sender SentBy() => Sender.Umpire;
+    public override bool OnUndoStack() => false;
+    public override Shown ShownToObservers() => Shown.Table;
+    public override IEnumerable<(string Layer, string Id)> ZonePieces() => [(Layer, Id)];
+    public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [];
+    public override IEnumerable<string> ScriptsToReload() => [];
+}
+
+public sealed class PlayEffect : LayerCommand
+{
+    public string Id { get; set; } = "";
+    public int Index { get; set; }
     public override Sender SentBy() => Sender.Umpire;
     public override bool OnUndoStack() => false;
     public override Shown ShownToObservers() => Shown.Table;

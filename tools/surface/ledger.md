@@ -17,7 +17,7 @@ every row that is not dropped must end audited, used by the corpus or not.
 | object | 65 | 65 | 0 | 1 | 260 |
 | global | 16 | 16 | 0 | 0 | 63 |
 | namespaces | 23 | 23 | 0 | 17 | 180 |
-| events | 8 | 8 | 0 | 1 | 52 |
+| events | 8 | 8 | 0 | 0 | 52 |
 | engine | 23 | 23 | 0 | 6 | 23 |
 
 ## types
@@ -446,9 +446,9 @@ every row that is not dropped must end audited, used by the corpus or not.
 | `setSnapPoints` | 1 / 1 | compat | ObjectCall |  | ModuleObjectCallTests.Snap_points_read_back_with_their_rotation_only_when_they_snap_rotation |
 | `AssetBundle.getLoopingEffectIndex` | - | compat | an effect piece answers as a bundle with one looping effect, its own; starting and stopping it is the piece option Running (self.effect_on) | BookNotesScriptTests | BookNotesScriptTests.An_effect_a_module_script_or_an_umpire_stops_and_starts_answers_as_a_looping_effect |
 | `AssetBundle.getLoopingEffects` | - | compat | an effect piece answers as a bundle with one looping effect, its own; starting and stopping it is the piece option Running (self.effect_on) | BookNotesScriptTests | BookNotesScriptTests.An_effect_a_module_script_or_an_umpire_stops_and_starts_answers_as_a_looping_effect |
-| `AssetBundle.getTriggerEffects` | - | partial | an effect piece has no one-shot effects of the bundle's: the list is empty | BookNotesScriptTests | BookNotesScriptTests.An_effect_a_module_script_or_an_umpire_stops_and_starts_answers_as_a_looping_effect |
+| `AssetBundle.getTriggerEffects` | - | compat | compat.bundle: the effect itself, played once, is its one-off | BookNotesScriptTests | BookNotesScriptTests.An_effect_a_module_script_or_an_umpire_stops_and_starts_answers_as_a_looping_effect |
 | `AssetBundle.playLoopingEffect` | - | compat | an effect piece answers as a bundle with one looping effect, its own; starting and stopping it is the piece option Running (self.effect_on) | BookNotesScriptTests | BookNotesScriptTests.An_effect_a_module_script_or_an_umpire_stops_and_starts_answers_as_a_looping_effect |
-| `AssetBundle.playTriggerEffect` | - | partial | an effect piece has no one-shot effects of the bundle's: nothing plays | BookNotesScriptTests | BookNotesScriptTests.An_effect_a_module_script_or_an_umpire_stops_and_starts_answers_as_a_looping_effect |
+| `AssetBundle.playTriggerEffect` | - | compat | compat.bundle: play_effect, one round of the effect on every screen | BookNotesScriptTests | BookNotesScriptTests.An_effect_a_module_script_or_an_umpire_stops_and_starts_answers_as_a_looping_effect |
 | `Book.clearHighlight` | - | compat | compat.book_highlight: set_book_highlight(nil) |  | ModuleObjectCallTests.A_books_highlight_box_marks_its_open_page_until_it_is_cleared_or_the_page_turns |
 | `Book.getPage` | - | compat | compat.book_page: the page it lies open at, from 0, or by its printed number | BookNotesScriptTests | BookNotesScriptTests.A_module_script_turns_a_book_by_its_printed_page_numbers_and_hears_the_page_turn |
 | `Book.page_offset` | - | compat | the kind's page offset from the save; a script may set another | BookNotesScriptTests | BookNotesScriptTests.A_module_script_turns_a_book_by_its_printed_page_numbers_and_hears_the_page_turn |
@@ -935,7 +935,7 @@ every row that is not dropped must end audited, used by the corpus or not.
 | `onObjectRotate` | - | native | EventRenames |  | ModuleEventTests.A_piece_script_hears_every_drop_and_turn_with_the_tabletops_arguments |
 | `onObjectSearchEnd` | - | dropped | a holder's contents are a card, not a search |  |  |
 | `onObjectSearchStart` | - | dropped | a holder's contents are a card, not a search |  |  |
-| `onObjectTriggerEffect` | - | partial | translated to on_effect; no one-shot effect raises it | BookNotesScriptTests |  |
+| `onObjectTriggerEffect` | - | native | on_burst: an umpire played an effect once | ModuleEventTests | ModuleEventTests.A_trigger_effect_played_by_an_umpire_reaches_the_piece_and_every_script_with_its_index |
 | `onPageChange` | - | native | on_page() in the book's own script | BookNotesScriptTests | BookNotesScriptTests.A_module_script_turns_a_book_by_its_printed_page_numbers_and_hears_the_page_turn |
 | `onPlayerChangeColor` | - | dropped | the Player API (decided 2026-11-06) |  |  |
 | `onPlayerConnect` | - | dropped | the Player API (decided 2026-11-06) |  |  |

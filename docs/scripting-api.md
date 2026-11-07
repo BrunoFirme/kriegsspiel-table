@@ -879,6 +879,7 @@ Each call is a change every umpire sees, taken back with Ctrl+Z by the umpire wh
 | [`self.set_faces`](#selfset_faces) | Gives this die sides of its own; nil gives it back its kind's. |
 | [`self.set_face_picture`](#selfset_face_picture) | Shows a picture on the piece's face in place of its kind's: a web link is fetched first; nil puts the kind's back. |
 | [`self.set_lettering`](#selfset_lettering) | Changes the text drawn on the piece: any of text, size and color; nil takes the lettering away. |
+| [`self.play_effect`](#selfplay_effect) | Plays an effect once on every screen, one round of it, whether it is running or not; false for a piece that is not an effect. |
 | [`self.set_effect_on`](#selfset_effect_on) | Starts or stops an effect. |
 | [`self.set_worth`](#selfset_worth) | Sets what the piece counts for, and optionally the groups it adds up with. |
 | [`self.roll`](#selfroll) | Rolls a die, or turns a piece of several states to one at random; false for anything else. |
@@ -1243,6 +1244,20 @@ Changes the text drawn on the piece: any of text, size and color; nil takes the 
 | `changes` | `table?` | { text =, size =, color = }, each optional. |
 
 **Module call** `TextTool.setValue` · **See also** [`self.lettering`](#selflettering)
+
+### `self.play_effect`
+
+```lua
+self.play_effect(index)
+```
+
+Plays an effect once on every screen, one round of it, whether it is running or not; false for a piece that is not an effect.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `index` | `number` | _Optional._ Which one-off it is, from 0, handed on to on_burst; 0 when left out. |
+
+**Module call** `AssetBundle.playTriggerEffect` · **See also** [`self.set_effect_on`](#selfset_effect_on)
 
 ### `self.set_effect_on`
 
@@ -2898,6 +2913,7 @@ Define any of these in a piece's script and the table calls it.
 | [`on_state`](#on_state) | Its state changed, by anyone. |
 | [`on_page`](#on_page) | This book turned to another page. |
 | [`on_effect`](#on_effect) | An umpire started (0) or stopped (-1) this effect. |
+| [`on_burst`](#on_burst) | An umpire played this effect once (Play once in its menu); index is the one-off asked for, 0 from the menu. |
 | [`on_flip`](#on_flip) | It was turned over or back. |
 | [`on_rotate`](#on_rotate) | An umpire turned it in place. |
 | [`on_turn`](#on_turn) | The clock advanced. |
@@ -3040,6 +3056,18 @@ An umpire started (0) or stopped (-1) this effect.
 
 An event: define this function and the table calls it.
 
+**Module call** `onObjectLoopingEffect`
+
+### `on_burst`
+
+```lua
+on_burst(index)
+```
+
+An umpire played this effect once (Play once in its menu); index is the one-off asked for, 0 from the menu.
+
+An event: define this function and the table calls it.
+
 | Parameter | Type | Description |
 |---|---|---|
 | `old` | `number` | The state it left, from 1. |
@@ -3053,7 +3081,7 @@ end
 
 What the script draws here belongs to the new state.
 
-**Module call** `onObjectLoopingEffect` · **See also** [`self.set_state`](#selfset_state)
+**Module call** `onObjectTriggerEffect` · **See also** [`self.set_state`](#selfset_state)
 
 ### `on_flip`
 
@@ -3135,6 +3163,7 @@ The global script gets on_load, on_save, on_update and on_turn too, and these fo
 | [`on_state`](#on_state-global-script) | A piece's state changed, by anyone. |
 | [`on_page`](#on_page-global-script) | A book turned to another page. |
 | [`on_effect`](#on_effect-global-script) | An umpire started (0) or stopped (-1) an effect. |
+| [`on_burst`](#on_burst-global-script) | An umpire played an effect once. |
 | [`on_roll`](#on_roll-global-script) | An umpire rolled a die, or turned a piece of several looks to one at random. |
 | [`on_rotate`](#on_rotate-global-script) | An umpire turned a piece in place. |
 | [`on_pick_up`](#on_pick_up-global-script) | An umpire picked a piece up. |
@@ -3226,6 +3255,18 @@ An umpire started (0) or stopped (-1) an effect.
 An event: define this function and the table calls it.
 
 **Module call** `onObjectLoopingEffect`
+
+### `on_burst` (global script)
+
+```lua
+on_burst(piece, index)
+```
+
+An umpire played an effect once.
+
+An event: define this function and the table calls it.
+
+**Module call** `onObjectTriggerEffect`
 
 ### `on_roll` (global script)
 
@@ -3555,6 +3596,7 @@ The converter rewrites a module's scripts into these calls by rule; this is the 
 | `addTag` | [`self.add_tag`](#selfadd_tag) |
 | `addToPlayerSelection` | [`game.select`](#gameselect) |
 | `AssetBundle.playLoopingEffect` | [`self.set_effect_on`](#selfset_effect_on) |
+| `AssetBundle.playTriggerEffect` | [`self.play_effect`](#selfplay_effect) |
 | `Book.page_offset` | [`self.page_offset`](#selfpage_offset) |
 | `Book.setHighlight` | [`self.book_highlight`](#selfbook_highlight) |
 | `Book.setHighlight` | [`self.set_book_highlight`](#selfset_book_highlight) |
@@ -3639,6 +3681,8 @@ The converter rewrites a module's scripts into these calls by rule; this is the 
 | `onObjectSpawn` | [`on_spawn`](#on_spawn-global-script) |
 | `onObjectStateChange` | [`on_state`](#on_state) |
 | `onObjectStateChange` | [`on_state`](#on_state-global-script) |
+| `onObjectTriggerEffect` | [`on_burst`](#on_burst) |
+| `onObjectTriggerEffect` | [`on_burst`](#on_burst-global-script) |
 | `onPageChange` | [`on_page`](#on_page) |
 | `onPickUp` | [`on_pick_up`](#on_pick_up) |
 | `onPlayerAction` | [`on_player_action`](#on_player_action-global-script) |

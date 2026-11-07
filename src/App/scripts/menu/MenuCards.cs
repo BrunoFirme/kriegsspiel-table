@@ -188,6 +188,7 @@ sealed class MenuCards : HudPart
         var effects = nodes.Where(n => n.IsEffect).ToList();
         bool allRunning = effects.All(n => !n.Piece.EffectOff);
         if (effects.Count > 0) menu.Check("Running", allRunning, () => SetOption(effects, PieceOptions.EffectOff, allRunning));
+        if (effects.Count > 0) menu.Item("Play once", () => effects.ForEach(n => S.Do(new PlayEffect { Layer = n.Layer, Id = n.Piece.Id })));
         var dice = nodes.Where(n => n.IsDie).ToList();
         if (dice.Count > 0)
         {

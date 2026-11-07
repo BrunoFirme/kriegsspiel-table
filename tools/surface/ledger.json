@@ -4126,8 +4126,8 @@
   },
   {
    "row": "AssetBundle.getTriggerEffects",
-   "status": "partial",
-   "where": "an effect piece has no one-shot effects of the bundle's: the list is empty",
+   "status": "compat",
+   "where": "compat.bundle: the effect itself, played once, is its one-off",
    "instead": "",
    "held_by": "BookNotesScriptTests",
    "count": 0,
@@ -4146,8 +4146,8 @@
   },
   {
    "row": "AssetBundle.playTriggerEffect",
-   "status": "partial",
-   "where": "an effect piece has no one-shot effects of the bundle's: nothing plays",
+   "status": "compat",
+   "where": "compat.bundle: play_effect, one round of the effect on every screen",
    "instead": "",
    "held_by": "BookNotesScriptTests",
    "count": 0,
@@ -8872,13 +8872,13 @@
   },
   {
    "row": "onObjectTriggerEffect",
-   "status": "partial",
-   "where": "translated to on_effect; no one-shot effect raises it",
+   "status": "native",
+   "where": "on_burst: an umpire played an effect once",
    "instead": "",
-   "held_by": "BookNotesScriptTests",
+   "held_by": "ModuleEventTests",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleEventTests.A_trigger_effect_played_by_an_umpire_reaches_the_piece_and_every_script_with_its_index"
   },
   {
    "row": "onPageChange",

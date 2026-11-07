@@ -55,6 +55,7 @@ internal sealed partial class PieceHandles
         "set_highlight" => Fn(a => Highlight(id, Arg(a, 0))),
         "set_book_highlight" => Fn(a => BookHighlight(id, Arg(a, 0))),
         "show_contents" => Fn(a => ShowContents(id, p.HoldsPieces(def) || def?.Tags.Contains("bag") == true, Arg(a, 0), Arg(a, 1))),
+        "play_effect" => Fn(a => PlayOnce(id, def, Arg(a, 0))),
         _ => null,
     };
 
@@ -86,6 +87,14 @@ internal sealed partial class PieceHandles
         if (!holds || peer < 0) return DynValue.False;
         var n = most.CastToNumber() is { } m && double.IsFinite(m) && m >= 0 ? (int)Math.Min(m, int.MaxValue) : -1;
         host.Emit(new ShowContents { Layer = Layers.Umpire, Id = id, To = $"p:{peer}", Most = n });
+        return DynValue.True;
+    }
+
+    DynValue PlayOnce(string id, PieceDef? def, DynValue index)
+    {
+        if (def?.Tags.Contains("effect") != true) return DynValue.False;
+        var n = index.CastToNumber() is { } v && double.IsFinite(v) ? (int)Math.Clamp(v, 0, int.MaxValue) : 0;
+        host.Emit(new PlayEffect { Layer = Layers.Umpire, Id = id, Index = n });
         return DynValue.True;
     }
 

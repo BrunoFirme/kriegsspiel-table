@@ -253,6 +253,10 @@ public static partial class ApiDoc
     P("changes", "table?", "{ text =, size =, color = }, each optional.");
     See("self.lettering");
 
+    M("piece", "play_effect(index)", "Plays an effect once on every screen, one round of it, whether it is running or not; false for a piece that is not an effect.", "AssetBundle.playTriggerEffect");
+    O("index", "number", "Which one-off it is, from 0, handed on to on_burst; 0 when left out.");
+    See("self.set_effect_on");
+
     M("piece", "set_effect_on(on)", "Starts or stops an effect.", "AssetBundle.playLoopingEffect");
     P("on", "boolean", "true runs it; false stops it.");
     See("self.effect_on");
@@ -987,6 +991,7 @@ public static partial class ApiDoc
         E("event", "on_state(old, new)", "Its state changed, by anyone.", "onObjectStateChange");
         E("event", "on_page()", "This book turned to another page.", "onPageChange");
         E("event", "on_effect(index)", "An umpire started (0) or stopped (-1) this effect.", "onObjectLoopingEffect");
+        E("event", "on_burst(index)", "An umpire played this effect once (Play once in its menu); index is the one-off asked for, 0 from the menu.", "onObjectTriggerEffect");
         P("old", "number", "The state it left, from 1.");
         P("new", "number", "The state it is in now, from 1.");
         X("""
@@ -1032,6 +1037,7 @@ public static partial class ApiDoc
         E("global event", "on_state(piece, old, new)", "A piece's state changed, by anyone.", "onObjectStateChange");
         E("global event", "on_page(piece)", "A book turned to another page.", "onObjectPageChange");
         E("global event", "on_effect(piece, index)", "An umpire started (0) or stopped (-1) an effect.", "onObjectLoopingEffect");
+        E("global event", "on_burst(piece, index)", "An umpire played an effect once.", "onObjectTriggerEffect");
         E("global event", "on_roll(piece, who)", "An umpire rolled a die, or turned a piece of several looks to one at random.", "onObjectRandomize");
         P("piece", "Piece", "The piece.");
         P("who", "Who", "The umpire.");

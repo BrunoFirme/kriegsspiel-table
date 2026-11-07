@@ -271,6 +271,10 @@ function Piece.set_face_picture(link) end
 ---@param changes table|nil { text =, size =, color = }, each optional.
 function Piece.set_lettering(changes) end
 
+---Plays an effect once on every screen, one round of it, whether it is running or not; false for a piece that is not an effect.
+---@param index? number Which one-off it is, from 0, handed on to on_burst; 0 when left out.
+function Piece.play_effect(index) end
+
 ---Starts or stops an effect.
 ---@param on boolean true runs it; false stops it.
 function Piece.set_effect_on(on) end
@@ -725,9 +729,12 @@ function on_state() end
 function on_page() end
 
 ---An umpire started (0) or stopped (-1) this effect.
+function on_effect() end
+
+---An umpire played this effect once (Play once in its menu); index is the one-off asked for, 0 from the menu.
 ---@param old number The state it left, from 1.
 ---@param new number The state it is in now, from 1.
-function on_effect(old, new) end
+function on_burst(old, new) end
 
 ---It was turned over or back.
 ---@param face_down boolean true when it is face down now.

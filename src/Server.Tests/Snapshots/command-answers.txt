@@ -27,6 +27,7 @@ MoveSheet table | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer 
 NumberTyped layer | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone Id | apply ok inverse:none | undo-reloads -
 PickGlobalMenuItem table | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone - | apply refused:no_such_menu_row | undo-reloads -
 PickMenuItem layer | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone Id | apply ok inverse:none | undo-reloads -
+PlayEffect layer | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone Id | apply ok inverse:none | undo-reloads -
 PublishSighting table | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone - | apply ok inverse:none | undo-reloads -
 RemoveBoard table | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone - | apply refused:no_such_board | undo-reloads -
 RemoveDecal layer | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone - | apply refused:no_such_decal | undo-reloads -

@@ -80,12 +80,12 @@ public class BookNotesScriptTests
         var own = ModuleTranslator.Translate("""
             function onLoad()
               local list = self.AssetBundle.getLoopingEffects()
-              local answers = tostring(self.AssetBundle.getTriggerEffects()) .. tostring(self.AssetBundle.playTriggerEffect(0)) .. tostring(self.AssetBundle.playLoopingEffect(0))
+              local answers = self.AssetBundle.getTriggerEffects()[1].name .. tostring(self.AssetBundle.playTriggerEffect(0)) .. tostring(self.AssetBundle.playLoopingEffect(0))
               self.setName(#list .. ":" .. list[1].name .. ":" .. self.AssetBundle.getLoopingEffectIndex() .. ":" .. answers)
             end
             """, new TranslateContext());
         t.Server.Handle(Table.Host, new SetScript { Layer = U, Id = "p-000050", Text = own.Script });
-        Assert.Equal("1:Powder smoke:0:niltruetrue", t.Server.State.Find(U, "p-000050")!.Label);
+        Assert.Equal("1:Powder smoke:0:Powder smoketruetrue", t.Server.State.Find(U, "p-000050")!.Label);
         t.Server.Handle(Table.Ump3, new SetPieceOption { Layer = U, Id = "p-000050", Name = PieceOptions.EffectOff, Value = true });
         Assert.True(t.Server.State.Find(U, "p-000050")!.EffectOff);
         Assert.Equal("effect -1", t.Server.State.Find(U, "p-000050")!.Note);
