@@ -2284,8 +2284,8 @@
   },
   {
    "row": "CustomTokenState.StandUp",
-   "status": "unknown",
-   "where": "",
+   "status": "native",
+   "where": "converter reads it",
    "instead": "",
    "held_by": "",
    "count": 0,
@@ -3622,7 +3622,7 @@
    "held_by": "",
    "count": 92,
    "modules": 46,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.A_converted_piece_answers_its_module_type_kind_links_and_covers_widgets_below_its_top"
   },
   {
    "row": "setName",
@@ -3852,7 +3852,7 @@
    "held_by": "",
    "count": 21,
    "modules": 13,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.A_converted_piece_answers_its_module_type_kind_links_and_covers_widgets_below_its_top"
   },
   {
    "row": "getGMNotes",
@@ -5072,7 +5072,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.A_converted_piece_answers_its_module_type_kind_links_and_covers_widgets_below_its_top"
   },
   {
    "row": "getJoints",
@@ -5332,7 +5332,7 @@
    "held_by": "ModuleHelpersTests",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Matching_tags_a_removed_attachment_the_global_menu_clear_and_an_outside_message_answer_as_the_tabletop_does"
   },
   {
    "row": "held_by_color",
@@ -5542,7 +5542,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.A_converted_piece_answers_its_module_type_kind_links_and_covers_widgets_below_its_top"
   },
   {
    "row": "pick_up_position",
@@ -5612,7 +5612,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Matching_tags_a_removed_attachment_the_global_menu_clear_and_an_outside_message_answer_as_the_tabletop_does"
   },
   {
    "row": "removeAttachments",
@@ -5922,7 +5922,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.A_converted_piece_answers_its_module_type_kind_links_and_covers_widgets_below_its_top"
   },
   {
    "row": "textTool",
@@ -5962,7 +5962,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.A_converted_piece_answers_its_module_type_kind_links_and_covers_widgets_below_its_top"
   },
   {
    "row": "unregisterCollisions",
@@ -6314,7 +6314,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Matching_tags_a_removed_attachment_the_global_menu_clear_and_an_outside_message_answer_as_the_tabletop_does"
   },
   {
    "row": "clearHotkeys",
@@ -6614,7 +6614,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Matching_tags_a_removed_attachment_the_global_menu_clear_and_an_outside_message_answer_as_the_tabletop_does"
   },
   {
    "row": "setGlobalScriptTable",
@@ -9040,7 +9040,7 @@
    "held_by": "Net._Process ticks the scripts each frame (no test of its own)",
    "count": 55,
    "modules": 55,
-   "audited": ""
+   "audited": "ModuleObjectCallTests.Matching_tags_a_removed_attachment_the_global_menu_clear_and_an_outside_message_answer_as_the_tabletop_does; ModuleObjectCallTests.In_a_frame_waits_on_frames_fire_before_waits_on_seconds_and_a_failing_condition_fires_its_function"
   },
   {
    "row": "a script call has no time limit in modules",

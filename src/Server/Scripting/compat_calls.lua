@@ -907,6 +907,83 @@ function compat.held_by_color(obj)
   return compat.color_of(who)
 end
 
+local function kind_type(obj)
+  local src = obj.source
+  if src then return src.type end
+  for _, t in ipairs(obj.tags or {}) do
+    if t == "model" then return "Custom_Model" end
+    if t == "token" then return "Custom_Token" end
+  end
+  return "Custom_Tile"
+end
+function compat.object_type(obj, member)
+  if not compat.is_piece(obj) then
+    if type(obj) == "table" then return obj[member or "name"] end
+    return nil
+  end
+  return kind_type(compat.piece_of(obj))
+end
+local MODEL_TYPES = { Custom_Model = true, Custom_Model_Bag = true, Custom_Model_Infinite_Bag = true }
+local MESH_TAGS = { "Generic", "Figurine", "Dice", "Coin", "Board", "Chip", "Bag", "Infinite" }
+local NAME_TAGS = {
+  Custom_Tile = "Tile", Custom_Token = "Tile", Custom_Board = "Board", Card = "Card", CardCustom = "Card", Deck = "Deck", DeckCustom = "Deck",
+  Bag = "Bag", Infinite_Bag = "Infinite", Custom_Dice = "Dice", Custom_Figurine = "Figurine", Notecard = "Notecard", ["3DText"] = "3D-Text",
+}
+local function kind_tag(obj)
+  local src = obj.source
+  if src and src.tag then return src.tag end
+  local t = kind_type(obj)
+  if NAME_TAGS[t] then return NAME_TAGS[t] end
+  if t:match("^Die_") then return "Dice" end
+  if t:match("^Figurine_") then return "Figurine" end
+  return "Generic"
+end
+function compat.object_tag(obj, member)
+  if not compat.is_piece(obj) then
+    if type(obj) == "table" then return obj[member or "type"] end
+    return nil
+  end
+  return kind_tag(compat.piece_of(obj))
+end
+local function mesh_index(obj)
+  local tag = kind_tag(obj)
+  for i, m in ipairs(MESH_TAGS) do
+    if m == tag then return i - 1 end
+  end
+  return 0
+end
+function compat.get_custom_object(obj)
+  local src = obj.source or {}
+  local links = src.links or {}
+  local t = kind_type(obj)
+  if MODEL_TYPES[t] then
+    return { mesh = links.mesh or obj.def, diffuse = links.diffuse or "", normal = links.normal or "", collider = "", convex = true, type = mesh_index(obj), material = 0,
+      cast_shadows = true, specular_intensity = 0.1, specular_color = compat.Color(1, 1, 1, 1), specular_sharpness = 3, fresnel_strength = 0.1 }
+  end
+  if t == "Custom_Assetbundle" then return { assetbundle = links.assetbundle or obj.def, assetbundle_secondary = "", type = mesh_index(obj), material = 0 } end
+  local c = { image = links.image or obj.def, image_bottom = links.image_secondary or "", image_secondary = links.image_secondary or "", image_scalar = 1 }
+  if t == "Custom_Token" then
+    c.thickness, c.merge_distance, c.stand_up, c.stackable = (src.top or 0.1) * 2, 15, src.tag == "Figurine", false
+  elseif t == "Custom_Tile" then
+    c.type, c.thickness, c.stackable = 0, (src.top or 0.1) * 2, false
+  end
+  return c
+end
+local get_data_before = compat.get_data
+function compat.get_data(obj, state)
+  local d = get_data_before(obj, state)
+  if type(d) ~= "table" or not compat.is_piece(obj) then return d end
+  local t = kind_type(compat.piece_of(obj))
+  d.Name = t
+  local c = compat.get_custom_object(compat.piece_of(obj))
+  if MODEL_TYPES[t] then
+    d.CustomMesh = { MeshURL = c.mesh, DiffuseURL = c.diffuse, NormalURL = c.normal, ColliderURL = "", Convex = true, MaterialIndex = 0, TypeIndex = c.type, CastShadows = true }
+  elseif t == "Custom_Token" or t == "Custom_Tile" then
+    d.CustomImage = { ImageURL = c.image, ImageSecondaryURL = c.image_secondary, ImageScalar = 1, WidthScale = 0 }
+  end
+  return d
+end
+
 function compat.none() return nil end
 function compat.no() return false end
 

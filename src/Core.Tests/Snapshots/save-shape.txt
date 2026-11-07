@@ -493,6 +493,11 @@ type Message abstract
   derived TurnList = TurnList
   derived TurnState = TurnState
   derived UploadAsset = UploadAsset
+type ModuleSource object
+  links: Dictionary<string,string>
+  tag: string
+  top: double?
+  type: string
 type MovePiece object
   actor: long
   at: long
@@ -594,6 +599,7 @@ type PieceDef object
   shape: string
   shine: ShineDef
   size: Size2
+  source: ModuleSource
   states: List<PieceStateDef>
   tags: List<string>
   textLines: List<TextLineDef>

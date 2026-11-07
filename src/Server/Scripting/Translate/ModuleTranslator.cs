@@ -607,6 +607,8 @@ public static class ModuleTranslator
             switch (name)
             {
                 case "is_face_down": return Direct($"{recv}.face_down", node);
+                case "name" when visited.Parent is not AssignmentStatementSyntax: return Compat($"compat.object_type({recv}, \"{visited.MemberName.Text}\")", node);
+                case "type" or "tag" when visited.Parent is not AssignmentStatementSyntax: return Compat($"compat.object_tag({recv}, \"{visited.MemberName.Text}\")", node);
                 case "held_by_color": return Compat($"compat.held_by_color({recv})", node);
                 case "resting": return Compat("true", node);
                 case "spawning" or "loading_custom": return Compat($"compat.get_prop({recv}, \"spawning\", false)", node);

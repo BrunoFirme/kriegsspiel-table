@@ -14,11 +14,11 @@ every row that is not dropped must end audited, used by the corpus or not.
 |---|---|---|---|---|---|
 | types | 30 | 30 | 0 | 28 | 43 |
 | save | 150 | 150 | 0 | 127 | 302 |
-| object | 65 | 65 | 0 | 17 | 260 |
-| global | 16 | 16 | 0 | 5 | 63 |
+| object | 65 | 65 | 0 | 9 | 260 |
+| global | 16 | 16 | 0 | 3 | 63 |
 | namespaces | 23 | 23 | 0 | 17 | 180 |
 | events | 8 | 8 | 0 | 1 | 52 |
-| engine | 23 | 23 | 0 | 7 | 23 |
+| engine | 23 | 23 | 0 | 6 | 23 |
 
 ## types
 
@@ -257,7 +257,7 @@ every row that is not dropped must end audited, used by the corpus or not.
 | `CustomPDFState.PDFPageOffset` | - | native | the book's page offset (PieceDef.PageOffset) | BookNotesScriptTests |  |
 | `CustomPDFState.PDFPassword` | - | native | a protected PDF opens with the password the save holds | converter |  |
 | `CustomTokenState.Stackable` | - | unknown |  |  |  |
-| `CustomTokenState.StandUp` | - | unknown |  |  |  |
+| `CustomTokenState.StandUp` | - | native | converter reads it |  |  |
 | `DecalState.CustomDecal` | - | native | converter reads it |  |  |
 | `DecalState.OwnerSteamID` | - | dropped | who laid a decal |  |  |
 | `DecalState.Transform` | - | native | converter reads it |  |  |
@@ -395,7 +395,7 @@ every row that is not dropped must end audited, used by the corpus or not.
 | `getButtons` | 3950 / 47 | compat | ObjectCall |  | ScriptingTests.Removing_module_buttons_keeps_their_numbers_until_the_next_frame_so_a_loop_removes_them_all |
 | `setPosition` | 416 / 47 | compat | ObjectCall |  | ModuleObjectCallTests.Object_setters_answer_true_as_module_code_checks; ModuleObjectCallTests.A_vector_argument_takes_x_y_z_names_first_then_three_numbers_then_two_and_otherwise_fails |
 | `setScale` | 231 / 47 | compat | ObjectCall |  | ModuleObjectCallTests.Object_setters_answer_true_as_module_code_checks; ModuleObjectCallTests.Scale_reads_one_local_unit_and_setting_it_back_keeps_the_piece_the_same_size |
-| `getCustomObject` | 92 / 46 | compat | ObjectCall |  |  |
+| `getCustomObject` | 92 / 46 | compat | ObjectCall |  | ModuleObjectCallTests.A_converted_piece_answers_its_module_type_kind_links_and_covers_widgets_below_its_top |
 | `setName` | 5703 / 38 | compat | ObjectCall |  | ModuleObjectCallTests.Object_setters_answer_true_as_module_code_checks |
 | `getRotation` | 5932 / 34 | compat | ObjectCall |  | ModuleObjectCallTests.Turning_over_by_x_or_z_lays_the_piece_face_down_and_rotation_reads_back_in_0_to_360 |
 | `addContextMenuItem` | 45750 / 33 | compat | ObjectCall |  | ModuleObjectCallTests.The_same_menu_function_under_the_same_label_is_one_row_and_a_missing_function_is_refused; ModuleObjectCallTests.A_menu_row_calls_its_function_with_the_colour_the_pieces_position_and_the_piece |
@@ -418,7 +418,7 @@ every row that is not dropped must end audited, used by the corpus or not.
 | `scale` | 1826 / 14 | compat | ObjectCall |  | ModuleObjectCallTests.Object_setters_answer_true_as_module_code_checks; ModuleObjectCallTests.Scale_reads_one_local_unit_and_setting_it_back_keeps_the_piece_the_same_size |
 | `locked` | 976 / 14 | compat | compat.get_prop / set_prop on the piece's lock | StowEventTests | StowEventTests.The_locked_property_reads_and_sets_the_lock |
 | `removeInput` | 976 / 14 | compat | ObjectCall |  | ScriptingTests.Removing_module_buttons_keeps_their_numbers_until_the_next_frame_so_a_loop_removes_them_all |
-| `getData` | 21 / 13 | compat | compat.get_data |  |  |
+| `getData` | 21 / 13 | compat | compat.get_data |  | ModuleObjectCallTests.A_converted_piece_answers_its_module_type_kind_links_and_covers_widgets_below_its_top |
 | `getGMNotes` | 15 / 13 | compat | ObjectCall |  | ModuleObjectCallTests.Plain_reads_and_small_calls_answer_as_the_tabletop_does |
 | `getTransformUp` | 13029 / 12 | compat | ObjectCall |  | ModuleObjectCallTests.Turning_over_by_x_or_z_lays_the_piece_face_down_and_rotation_reads_back_in_0_to_360 |
 | `setDecals` | 4343 / 12 | compat | ObjectCall |  | ModuleObjectCallTests.Decals_need_a_name_and_a_link_and_read_back_nil_until_set |
@@ -540,7 +540,7 @@ every row that is not dropped must end audited, used by the corpus or not.
 | `getDecals` | - | compat | ObjectCall |  | ModuleObjectCallTests.Decals_need_a_name_and_a_link_and_read_back_nil_until_set |
 | `getFogOfWar` | - | dropped | hidden zones (decided 2026-11-06) |  |  |
 | `getFogOfWarReveal` | - | dropped | hidden zones (decided 2026-11-06; answers off) |  |  |
-| `getJSON` | - | compat | compat.get_json |  |  |
+| `getJSON` | - | compat | compat.get_json |  | ModuleObjectCallTests.A_converted_piece_answers_its_module_type_kind_links_and_covers_widgets_below_its_top |
 | `getJoints` | - | dropped | engine physics (joints; answers none) |  |  |
 | `getMaterialValue` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |  |
 | `getMaterialVars` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |  |
@@ -566,7 +566,7 @@ every row that is not dropped must end audited, used by the corpus or not.
 | `gizmo_selectable` | - | dropped | no transform tool here (decided 2026-11-07) |  |  |
 | `grid_projection` | - | dropped | grid (decided 2026-11-06) |  |  |
 | `hasAnyTag` | - | compat | compat.has_any_tag | ModuleHelpersTests | ModuleHelpersTests.Tag_and_script_state_helpers_answer_as_modules_expect |
-| `hasMatchingTag` | - | compat | compat.has_matching_tag | ModuleHelpersTests |  |
+| `hasMatchingTag` | - | compat | compat.has_matching_tag | ModuleHelpersTests | ModuleObjectCallTests.Matching_tags_a_removed_attachment_the_global_menu_clear_and_an_outside_message_answer_as_the_tabletop_does |
 | `held_by_color` | - | compat | ObjectProps |  | ModuleEventTests.A_piece_carried_by_an_umpire_reads_their_colour_as_held_by_until_it_is_put_down |
 | `held_flip_index` | - | compat | face down is 12, face up 0 | DiceScriptTests | ModuleObjectCallTests.Plain_object_properties_start_at_the_tabletops_defaults_and_keep_what_a_script_sets |
 | `held_position_offset` | - | dropped | no hands here (decided 2026-11-07) |  |  |
@@ -587,14 +587,14 @@ every row that is not dropped must end audited, used by the corpus or not.
 | `max_typed_number` | - | compat | ObjectProps (get_prop/set_prop) |  | ModuleObjectCallTests.Plain_object_properties_start_at_the_tabletops_defaults_and_keep_what_a_script_sets |
 | `measure_movement` | - | native | the piece option Shows how far it is moved; self.measures_moves and set_measures_moves | MeasureTests | ModuleObjectCallTests.Plain_object_properties_start_at_the_tabletops_defaults_and_keep_what_a_script_sets |
 | `memo` | - | compat | ObjectProps (get_prop/set_prop) |  | ModuleObjectCallTests.Plain_object_properties_start_at_the_tabletops_defaults_and_keep_what_a_script_sets |
-| `name` | - | compat | ObjectProps (get_prop/set_prop) |  |  |
+| `name` | - | compat | ObjectProps (get_prop/set_prop) |  | ModuleObjectCallTests.A_converted_piece_answers_its_module_type_kind_links_and_covers_widgets_below_its_top |
 | `pick_up_position` | - | compat | self.picked_up: where an umpire last picked it up | DiceScriptTests | DiceScriptTests.A_module_script_reads_and_sets_worth_held_turns_the_pick_up_place_and_flips_a_die_to_its_other_side |
 | `pick_up_rotation` | - | compat | self.picked_up.rot | DiceScriptTests | DiceScriptTests.A_module_script_reads_and_sets_worth_held_turns_the_pick_up_place_and_flips_a_die_to_its_other_side |
 | `rPGFigurine` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |  |
 | `randomize` | - | native | a die rolls (logged as a roll), a piece of several looks takes one at random; bags and decks are not shuffled (deck logic dropped) | DiceScriptTests | DiceScriptTests.Randomize_turns_a_piece_of_several_looks_to_another_and_rolls_a_die |
 | `registerCollisions` | - | dropped | engine physics (collisions) |  |  |
 | `remainder` | - | dropped | deck and card logic (decided 2026-11-06) |  |  |
-| `removeAttachment` | - | compat | ObjectCall |  |  |
+| `removeAttachment` | - | compat | ObjectCall |  | ModuleObjectCallTests.Matching_tags_a_removed_attachment_the_global_menu_clear_and_an_outside_message_answer_as_the_tabletop_does |
 | `removeAttachments` | - | compat | ObjectCall |  | ModuleObjectCallTests.Attachments_answer_true_list_their_saved_fields_and_come_off_together_as_a_list |
 | `removeButton` | - | compat | ObjectCall |  | ScriptingTests.Removing_module_buttons_keeps_their_numbers_until_the_next_frame_so_a_loop_removes_them_all |
 | `removeTag` | - | compat | ObjectCall |  | ModuleObjectCallTests.Tags_match_without_case_and_with_spaces_as_underscores |
@@ -625,11 +625,11 @@ every row that is not dropped must end audited, used by the corpus or not.
 | `startLuaCoroutine` | - | compat | ObjectCall |  | ModuleObjectCallTests.A_coroutine_runs_to_its_first_yield_at_once_goes_on_each_frame_while_it_yields_zero_and_stops_on_any_other_number |
 | `static_friction` | - | dropped | engine physics |  |  |
 | `sticky` | - | compat | ObjectProps (get_prop/set_prop) |  | ModuleObjectCallTests.Plain_object_properties_start_at_the_tabletops_defaults_and_keep_what_a_script_sets |
-| `tag` | - | compat | ObjectProps (get_prop/set_prop) |  |  |
+| `tag` | - | compat | ObjectProps (get_prop/set_prop) |  | ModuleObjectCallTests.A_converted_piece_answers_its_module_type_kind_links_and_covers_widgets_below_its_top |
 | `textTool` | - | compat | a module's 3D text comes over as live lettering on the piece (self.lettering / set_lettering), drawn in its size and colour; compat.text_tool answers the calls | BookNotesScriptTests | BookNotesScriptTests.A_module_script_rewrites_3d_text_its_size_and_its_colour |
 | `tooltip` | - | compat | ObjectProps (get_prop/set_prop) |  | ModuleObjectCallTests.Plain_object_properties_start_at_the_tabletops_defaults_and_keep_what_a_script_sets |
 | `translate` | - | compat | ObjectCall |  | ModuleObjectCallTests.A_smooth_move_takes_the_tabletops_time_reads_its_target_meanwhile_and_lands_at_the_end |
-| `type` | - | compat | ObjectProps (get_prop/set_prop) |  |  |
+| `type` | - | compat | ObjectProps (get_prop/set_prop) |  | ModuleObjectCallTests.A_converted_piece_answers_its_module_type_kind_links_and_covers_widgets_below_its_top |
 | `unregisterCollisions` | - | dropped | engine physics (collisions) |  |  |
 | `use_gravity` | - | dropped | engine physics |  |  |
 | `use_grid` | - | dropped | grid (decided 2026-11-06) |  |  |
@@ -669,7 +669,7 @@ every row that is not dropped must end audited, used by the corpus or not.
 | `chooseInHandOrCancel` | - | dropped | hands are seats here (decided 2026-11-06) |  |  |
 | `clearChooseInHand` | - | dropped | hands are seats here (decided 2026-11-06) |  |  |
 | `clearConsoleCommands` | - | dropped | console commands and other host controls (decided 2026-11-06) |  |  |
-| `clearContextMenu` | - | compat | GlobalFunctionCall |  |  |
+| `clearContextMenu` | - | compat | GlobalFunctionCall |  | ModuleObjectCallTests.Matching_tags_a_removed_attachment_the_global_menu_clear_and_an_outside_message_answer_as_the_tabletop_does |
 | `clearHotkeys` | - | compat | GlobalFunctionCall |  | TranslatorTests.Module_hotkeys_and_the_global_context_menu_translate_and_run |
 | `clearPixelPaint` | - | compat | compat.erase_all: every stroke on the drawing board | ModuleHelpersTests | ModuleObjectCallTests.Plain_reads_and_small_calls_answer_as_the_tabletop_does |
 | `clearVectorPaint` | - | compat | compat.erase_all: every stroke on the drawing board | ModuleHelpersTests | ModuleHelpersTests.Clearing_the_paint_erases_every_stroke_and_stop_all_ends_every_wait |
@@ -699,7 +699,7 @@ every row that is not dropped must end audited, used by the corpus or not.
 | `logStyle` | - | dropped | console commands and other host controls (decided 2026-11-06) |  |  |
 | `paste` | - | dropped | the Player API (decided 2026-11-06) |  |  |
 | `removeNotebookTab` | - | compat | GlobalFunctionCall |  | BookNotesScriptTests.A_module_script_reads_and_writes_the_notes_and_notebook_tabs_on_the_note_cards |
-| `sendExternalMessage` | - | compat | GlobalFunctionCall |  |  |
+| `sendExternalMessage` | - | compat | GlobalFunctionCall |  | ModuleObjectCallTests.Matching_tags_a_removed_attachment_the_global_menu_clear_and_an_outside_message_answer_as_the_tabletop_does |
 | `setGlobalScriptTable` | - | compat | GlobalFunctionCall |  | ModuleObjectCallTests.The_tabletops_own_global_names_reach_the_global_script |
 | `setGlobalScriptVar` | - | compat | GlobalFunctionCall |  | ModuleObjectCallTests.The_tabletops_own_global_names_reach_the_global_script |
 | `setLookingForPlayers` | - | compat | GlobalFunctionCall |  | ModuleObjectCallTests.The_tabletops_own_global_names_reach_the_global_script |
@@ -956,7 +956,7 @@ every row that is not dropped must end audited, used by the corpus or not.
 |---|---|---|---|---|---|
 | `Lua table to vector, colour and params and back (positional and named)` | 55 / 55 | compat | compat.Vector / compat.Color / vec(): named, positional and mixed tables, names and hex | ModuleVectorColorTests | ModuleObjectCallTests.A_vector_argument_takes_x_y_z_names_first_then_three_numbers_then_two_and_otherwise_fails; ModuleObjectCallTests.A_colour_argument_takes_a_seat_name_exactly_or_r_g_b_and_alpha_defaults_to_one; ModuleObjectCallTests.A_piece_that_is_not_a_bag_counts_minus_one_lists_nothing_and_takes_nothing_in |
 | `MoonSharp 2.0.0 on both sides: the Lua dialect matches` | 55 / 55 | native | Server.csproj |  |  |
-| `Wait.frames counts frames, Wait.time seconds, onUpdate per frame` | 55 / 55 | native | the host runs scripts every frame it draws, as the tabletop does: Wait.frames counts those frames and on_update runs on each | Net._Process ticks the scripts each frame (no test of its own) |  |
+| `Wait.frames counts frames, Wait.time seconds, onUpdate per frame` | 55 / 55 | native | the host runs scripts every frame it draws, as the tabletop does: Wait.frames counts those frames and on_update runs on each | Net._Process ticks the scripts each frame (no test of its own) | ModuleObjectCallTests.Matching_tags_a_removed_attachment_the_global_menu_clear_and_an_outside_message_answer_as_the_tabletop_does; ModuleObjectCallTests.In_a_frame_waits_on_frames_fire_before_waits_on_seconds_and_a_failing_condition_fires_its_function |
 | `a script call has no time limit in modules` | 55 / 55 | native | kept on purpose (2026-11-06): a call gets a second of its own time, the table work it asks for not counted; the tabletop freezes for good on a runaway loop, here the loop stops and its script and line are named | import-sweep: naval (the Midway bag's Place) | ScriptingTests.A_runaway_script_is_stopped_and_switched_off (our time limit, kept by decision 2026-11-07) |
 | `button and input defaults (width, height, font_size, colours, position, scale)` | 55 / 55 | compat | compat.module_defaults, from the tabletop's LuaUIState classes; a button or input with no handler is refused, as modules expect | ModuleDefaultsTests |  |
 | `click_function(obj, player_color, alt_click)` | 55 / 55 | compat | compat.create_button / module_handler | TranslatorTests.Handlers_get_the_piece_their_widget_is_on | TranslatorTests.Handlers_get_the_piece_their_widget_is_on |

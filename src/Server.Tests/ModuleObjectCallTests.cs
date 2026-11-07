@@ -750,6 +750,44 @@ public class ModuleObjectCallTests
     }
 
     [Fact]
+    public void A_converted_piece_answers_its_module_type_kind_links_and_covers_widgets_below_its_top()
+    {
+        using var t = new Table();
+        t.Store.RegisterDef(new PackManifest { Id = "testpack" }, new PieceDef
+        {
+            Id = "tok", Name = "Token", Tags = { "token" },
+            Source = new ModuleSource { Type = "Custom_Token", Top = 0.1, Tag = "Figurine", Links = new() { ["image"] = "https://example.test/a.png" } },
+        });
+        t.Server.Handle(Table.Host, new SpawnPiece { Layer = U, Def = "tok", Id = "p-000060", Pos = new(2, 2) });
+        const string lua = """
+            function onLoad()
+              local c = self.getCustomObject()
+              local d = self.getData()
+              local own = { name = 'mine' }
+              self.createButton({ click_function = 'x', function_owner = self, position = {0, 0.05, 0}, width = 300, height = 100 })
+              self.createButton({ click_function = 'x', function_owner = self, position = {0, 0.15, 0}, width = 300, height = 100 })
+              local spawned = spawnObject({ type = 'Custom_Token' })
+              spawned.setCustomObject({ image = 'tok' })
+              self.setName(self.name .. '|' .. own.name .. '|' .. c.image .. ',' .. c.thickness .. '|' .. d.Name .. ',' .. d.CustomImage.ImageURL)
+              self.setDescription(self.type .. ',' .. self.tag .. ',' .. tostring(c.stand_up) .. ',' .. spawned.type .. ',' .. ({ type = 'own' }).type)
+            end
+            function x() end
+            """;
+        var saved = System.Globalization.CultureInfo.CurrentCulture;
+        System.Globalization.CultureInfo.CurrentCulture = System.Globalization.CultureInfo.InvariantCulture;
+        var r = ModuleTranslator.Translate(lua, Ctx());
+        var answers = t.Server.Handle(Table.Host, new SetScript { Layer = U, Id = "p-000060", Text = r.Script });
+        System.Globalization.CultureInfo.CurrentCulture = saved;
+        Assert.DoesNotContain(answers, o => o.Message is ErrorMessage);
+        var p = t.Server.State.Find(U, "p-000060")!;
+        Assert.Equal("Custom_Token|mine|https://example.test/a.png,0.2|Custom_Token,https://example.test/a.png", p.Label);
+        Assert.Equal("Figurine,Figurine,true,Figurine,own", p.Note);
+        Assert.Single(p.Widgets);
+        var spawned = t.Server.State.Layer(U).Last(q => q.Def == "tok");
+        Assert.Empty(spawned.Tags ?? ["kind tags leaked"]);
+    }
+
+    [Fact]
     public void Time_reads_the_scripts_clock_and_frame_count()
     {
         using var t = new Table();

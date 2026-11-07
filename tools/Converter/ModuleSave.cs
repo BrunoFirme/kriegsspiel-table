@@ -72,6 +72,7 @@ public sealed class ModuleObj
     public string? DiffuseUrl => Blank(S(CM?["DiffuseURL"]));
     public string? NormalUrl => Blank(S(CM?["NormalURL"]));
     public bool CastsShadows => CM?["CastShadows"] is not JsonValue v || !v.TryGetValue<bool>(out var casts) || casts;
+    public bool StandUp => (CI?["CustomToken"] as JsonObject)?["StandUp"] is JsonValue v && v.TryGetValue<bool>(out var up) && up;
     public int MeshType => (CM?["TypeIndex"] ?? (J["CustomAssetbundle"] as JsonObject)?["TypeIndex"]) is JsonValue v && v.TryGetValue<int>(out var i) ? i : 0;
     public string? Finish => KTable.Core.Model.Finishes.Of(CM?["MaterialIndex"] != null ? I(CM, "MaterialIndex") : J["MaterialIndex"] != null ? I(J, "MaterialIndex") : -1);
     public KTable.Core.Model.ShineDef? Shine => CM?["CustomShader"] is JsonObject sh

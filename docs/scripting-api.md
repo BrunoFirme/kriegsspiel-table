@@ -222,6 +222,7 @@ Read from `self` or from any piece `board.find` or `board.pieces` hands back. Fi
 | [`self.face_down`](#selfface_down) | Turned over. |
 | [`self.interactable`](#selfinteractable) | Whether hands can take it (set_interactable). |
 | [`self.held_by`](#selfheld_by) | The umpire carrying it now, or nil. |
+| [`self.source`](#selfsource) | For a kind converted from a module: { type =, links = { image =, mesh =, … }, top =, tag = } — the module object's type, its picture and model links, its top surface in its own units and the kind of object it was (Tile, Figurine, Board, Bag…); nil otherwise. |
 | [`self.highlight`](#selfhighlight) | The colour it is ringed in, or nil (set_highlight). |
 | [`self.holds`](#selfholds) | Whether it is a holder that other pieces can be stowed in: a piece holding some, one made a holder, or a kind tagged bag. |
 | [`self.locked`](#selflocked) | Pinned to the table: not dragged, turned or resized by hand. |
@@ -596,6 +597,18 @@ The umpire carrying it now, or nil.
 **Type** `Who`, read-only.
 
 **Module call** `held_by_color`
+
+### `self.source`
+
+```lua
+self.source
+```
+
+For a kind converted from a module: { type =, links = { image =, mesh =, … }, top =, tag = } — the module object's type, its picture and model links, its top surface in its own units and the kind of object it was (Tile, Figurine, Board, Bag…); nil otherwise.
+
+**Type** `table`, read-only.
+
+**Module call** `name`
 
 ### `self.highlight`
 
@@ -3534,6 +3547,7 @@ The converter rewrites a module's scripts into these calls by rule; this is the 
 | `measure_movement` | [`self.measures_moves`](#selfmeasures_moves) |
 | `measure_movement` | [`self.set_measures_moves`](#selfset_measures_moves) |
 | `memo` | [`self.memo`](#selfmemo) |
+| `name` | [`self.source`](#selfsource) |
 | `onChat` | [`on_chat`](#on_chat-global-script) |
 | `onDestroy` | [`on_destroy`](#on_destroy) |
 | `onDrop` | [`on_drop`](#on_drop) |

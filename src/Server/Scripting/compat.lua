@@ -209,6 +209,7 @@ local function is_piece(obj)
   return type(obj) == "table" and (rawget(obj, "__params") ~= nil or (type(obj.id) == "string" and type(obj.set_name) == "function"))
 end
 local function pbag(obj) local id = obj.id or obj; props[id] = props[id] or {}; return props[id] end
+compat.is_piece = is_piece
 function compat.set_prop(obj, k, v)
   if not is_piece(obj) then if type(obj) == "table" then obj[k] = v end return end
   if k == "memo" then obj.set_memo(v) return end
@@ -566,7 +567,7 @@ function compat.widget_spec(obj, t, kind, env)
   local on_top = y > 0
   local back = turned and not on_top
   local s = {
-    face = back and "back" or "front", kind = turned and on_top and "label" or kind, inside = not turned and y < 0,
+    face = back and "back" or "front", kind = turned and on_top and "label" or kind, inside = not turned and y < (obj.source and obj.source.top or 0),
     x = (back and -px or px) * ux, z = pz * uz, rot = ry,
     w = num(t.width, D.width) / 1000 * sx * ux, h = num(t.height, D.height) / 1000 * sz * uz,
     font = num(t.font_size, D.font_size) / 1000 * sx * uz * em,
@@ -741,7 +742,7 @@ local function bind(h, def)
   local p = rawget(h, "__params")
   local pos, rot = p.position or {}, p.rotation or {}
   local piece = board.spawn{ def = def, x = vec(pos, "x", 1, 0), z = vec(pos, "z", 3, 0), rot = vec(rot, "y", 2, 0), label = p.nickname, guid = p.guid,
-    state = p.state, tags = p.tags, memo = p.memo, script_state = p.script_state, note = p.description,
+    state = p.state, tags = p.tags or {}, memo = p.memo, script_state = p.script_state, note = p.description,
     script = type(p.script) == "string" and p.script ~= "" and p.script or nil }
   if p.gm_notes ~= nil then compat.set_gm_notes(piece, p.gm_notes) end
   rawset(h, "__piece", piece)

@@ -132,7 +132,13 @@
   "isSmoothMoving": "ModuleObjectCallTests.A_smooth_move_takes_the_tabletops_time_reads_its_target_meanwhile_and_lands_at_the_end",
   "held_by_color": "ModuleEventTests.A_piece_carried_by_an_umpire_reads_their_colour_as_held_by_until_it_is_put_down",
   "hasMatchingTag": "ModuleObjectCallTests.Matching_tags_a_removed_attachment_the_global_menu_clear_and_an_outside_message_answer_as_the_tabletop_does",
-  "removeAttachment": "ModuleObjectCallTests.Matching_tags_a_removed_attachment_the_global_menu_clear_and_an_outside_message_answer_as_the_tabletop_does"
+  "removeAttachment": "ModuleObjectCallTests.Matching_tags_a_removed_attachment_the_global_menu_clear_and_an_outside_message_answer_as_the_tabletop_does",
+  "name": "ModuleObjectCallTests.A_converted_piece_answers_its_module_type_kind_links_and_covers_widgets_below_its_top",
+  "getCustomObject": "ModuleObjectCallTests.A_converted_piece_answers_its_module_type_kind_links_and_covers_widgets_below_its_top",
+  "getData": "ModuleObjectCallTests.A_converted_piece_answers_its_module_type_kind_links_and_covers_widgets_below_its_top",
+  "getJSON": "ModuleObjectCallTests.A_converted_piece_answers_its_module_type_kind_links_and_covers_widgets_below_its_top",
+  "type": "ModuleObjectCallTests.A_converted_piece_answers_its_module_type_kind_links_and_covers_widgets_below_its_top",
+  "tag": "ModuleObjectCallTests.A_converted_piece_answers_its_module_type_kind_links_and_covers_widgets_below_its_top"
  },
  "global": {
   "broadcastToAll": "ModuleObjectCallTests.Printing_to_a_seat_nobody_holds_is_an_error_and_seat_names_are_exact",

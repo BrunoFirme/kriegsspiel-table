@@ -369,6 +369,7 @@ internal sealed partial class PieceHandles(ScriptHost host)
             case "box_selected": return B(!p.NotBoxSelected);
             case "measures_moves": return B(p.MeasuresMoves);
             case "interactable": return B(!p.NotInteractable);
+            case "source": return def?.Source is { } src ? SourceTable(src) : DynValue.Nil;
             case "held_by": return host.Every.HeldBy.TryGetValue(id, out var holder) ? holder : DynValue.Nil;
             case "highlight": return p.Highlight is { } hl ? S(hl) : DynValue.Nil;
             case "effect_on": return B(!p.EffectOff);
@@ -527,6 +528,18 @@ internal sealed partial class PieceHandles(ScriptHost host)
             case "delete": return Fn(_ => { host.Emit(new DeletePiece { Layer = L, Id = id }); return DynValue.Nil; });
             default: return null;
         }
+    }
+
+    DynValue SourceTable(ModuleSource src)
+    {
+        var t = T();
+        t.Table["type"] = S(src.Type);
+        if (src.Top is { } top) t.Table["top"] = N(top);
+        if (src.Tag is { } tag) t.Table["tag"] = S(tag);
+        var links = T();
+        foreach (var (k, v) in src.Links ?? new()) links.Table[k] = S(v);
+        t.Table["links"] = links;
+        return t;
     }
 
     DynValue Highlight(string id, DynValue color)
