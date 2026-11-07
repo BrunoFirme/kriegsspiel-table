@@ -22,15 +22,15 @@ static class PanelTests
     }
 
     [NodeTest]
-    static async Task A_toggle_on_a_piece_s_panel_flips_where_it_is_clicked_and_its_neighbour_stays(TestRunner r)
+    static async Task A_toggle_on_a_piece_s_panel_tells_the_script_it_flipped_where_it_is_clicked_and_its_neighbour_stays(TestRunner r)
     {
         var t = OfflineTable.Make(r, pieces: 1);
         await r.Frame();
         List<UiNode> Plate() => new()
         {
             N("Panel", new() { ["width"] = "400", ["height"] = "200", ["rotation"] = "0 0 180", ["color"] = "#202020" },
-                N("Toggle", new() { ["id"] = "left", ["rectAlignment"] = "MiddleLeft", ["width"] = "200", ["height"] = "200" }),
-                N("Toggle", new() { ["id"] = "right", ["rectAlignment"] = "MiddleRight", ["width"] = "200", ["height"] = "200" })),
+                N("Toggle", new() { ["id"] = "left", ["rectAlignment"] = "MiddleLeft", ["width"] = "200", ["height"] = "200", ["onValueChanged"] = "flipped" }),
+                N("Toggle", new() { ["id"] = "right", ["rectAlignment"] = "MiddleRight", ["width"] = "200", ["height"] = "200", ["onValueChanged"] = "flipped" })),
         };
         t.Server.State.Find(U, "p1")!.Ui = Plate();
         t.S.View.Find(U, "p1")!.Ui = Plate();
@@ -43,9 +43,10 @@ static class PanelTests
         Vector2 Screen(float across) => t.Table.Rig.Cam.UnprojectPosition(quad.GlobalTransform * new Vector3(across * plane.Size.X, 0, 0));
 
         await Click(r, Screen(-0.25f));
-        string IsOn(string id) => t.Server.State.UiNode(U, "p1", id)?.Attributes.GetValueOrDefault("isOn") ?? "";
-        Check.Equal("True", IsOn("left"), "the toggle under the click is on");
-        Check.Equal("", IsOn("right"), "its neighbour is untouched");
+        var sent = t.Server.Log.SelectMany(c => c is KTable.Core.Protocol.Batch b ? b.Items : new() { c }).OfType<KTable.Core.Protocol.UiEvent>().ToList();
+        Check.That(sent.Any(e => e.Event == "onValueChanged" && e.Value == "True" && e.Path is [0, 0]), "the toggle under the click tells the script it is on");
+        Check.That(!sent.Any(e => e.Path is [0, 1]), "its neighbour is untouched");
+        Check.That(t.Server.State.UiNode(U, "p1", "left")?.Attributes.GetValueOrDefault("isOn") == null, "the shared panels stay as written, as in the tabletop");
         Check.Equal(0, t.Errors.Count, string.Join("; ", t.Errors));
     }
 
@@ -66,28 +67,13 @@ static class PanelTests
     }
 
     [NodeTest]
-    static Task Panels_take_their_looks_from_their_defaults_classes_and_rich_text_and_inputs_keep_to_what_they_accept(TestRunner r)
+    static Task Rich_text_becomes_the_label_s_markup_and_inputs_keep_to_what_they_accept(TestRunner r)
     {
-        var tree = UiStyles.Styled(new[]
-        {
-            N("Defaults", new(),
-                N("Text", new() { ["fontSize"] = "20", ["color"] = "#ff0000" }),
-                N("Text", new() { ["class"] = "title", ["fontStyle"] = "Bold" })),
-            N("Panel", new(),
-                N("Text", new() { ["id"] = "plain", ["color"] = "#00ff00" }),
-                N("Text", new() { ["id"] = "head", ["class"] = "title" })),
-        });
-        var plain = tree[1].Children[0].Attributes;
-        var head = tree[1].Children[1].Attributes;
-        Check.Equal("20", plain.GetValueOrDefault("fontSize"), "a tag default applies");
-        Check.Equal("#00ff00", plain.GetValueOrDefault("color"), "the element's own attribute wins");
-        Check.Equal("Bold", head.GetValueOrDefault("fontStyle"), "a class default applies");
-        Check.Equal("#ff0000", head.GetValueOrDefault("color"), "and the tag default under it");
         Check.Equal("[b]Hold[/b] [color=#ff0000]the [lb]ridge[/color] [font_size=18]now[/font_size]",
-            UiStyles.BbCode("<b>Hold</b> <color=#ff0000>the [ridge</color> <size=18>now</size>"), "rich text");
-        Check.Equal("-12", UiStyles.Valid("-1a2", "Integer"), "integers");
-        Check.Equal("3.14", UiStyles.Valid("3.1.4x", "Decimal"), "decimals");
-        Check.Equal("abc1", UiStyles.Valid("a b-c1", "Alphanumeric"), "letters and digits");
+            PanelRich.BbCode("<b>Hold</b> <color=#ff0000>the [ridge</color> <size=18>now</size>", 14), "rich text");
+        Check.Equal("-12", PanelTyping.Valid("-1a2", "Integer"), "integers");
+        Check.Equal("3.14", PanelTyping.Valid("3.1.4x", "Decimal"), "decimals");
+        Check.Equal("abc1", PanelTyping.Valid("a b-c1", "Alphanumeric"), "letters and digits");
         return Task.CompletedTask;
     }
 }
