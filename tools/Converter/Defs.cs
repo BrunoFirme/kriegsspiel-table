@@ -207,26 +207,6 @@ public sealed partial class DefFactory
         };
     }
 
-    static ModuleSource SourceOf(ModuleObj b)
-    {
-        var links = new Dictionary<string, string>();
-        foreach (var (key, url) in new[] { ("image", b.ImageUrl), ("image_secondary", b.BackUrl), ("mesh", b.MeshUrl), ("diffuse", b.DiffuseUrl), ("normal", b.NormalUrl), ("assetbundle", b.BundleUrl) })
-            if (url != null) links[key] = url;
-        const double Half = 2;
-        const int Digits = 4;
-        double? top = b.Name is "Custom_Tile" or "Custom_Token" ? Math.Round(b.Thickness / Half, Digits) : null;
-        return new ModuleSource { Type = b.Name, Links = links.Count > 0 ? links : null, Top = top, Tag = TagOf(b) };
-    }
-
-    static readonly string[] MeshTags = ["Generic", "Figurine", "Dice", "Coin", "Board", "Chip", "Bag", "Infinite"];
-
-    static string? TagOf(ModuleObj b) => b.Name switch
-    {
-        "Custom_Token" => b.StandUp ? "Figurine" : "Tile",
-        "Custom_Model" or "Custom_Model_Bag" or "Custom_Model_Infinite_Bag" or "Custom_Assetbundle" => MeshTags[Math.Clamp(b.MeshType, 0, MeshTags.Length - 1)],
-        _ => null,
-    };
-
     public double BaseThickness(ModuleObj o) => o.Name switch
     {
         "Custom_Tile" or "Custom_Token" => o.Thickness,
@@ -466,7 +446,6 @@ public sealed partial class DefFactory
             LocalUnit = IsModel(b) ? new Size2(Math.Round(r, 4), Math.Round(r * (b.ScaleX == 0 ? 1 : Math.Abs(b.ScaleZ / b.ScaleX)), 4)) : null,
             Thickness = Math.Round(Math.Clamp(BaseThickness(b) * Math.Abs(b.ScaleY) * (IsModel(b) ? r / Math.Max(1e-6, Math.Abs(b.ScaleX)) : heightScale), 0.02, 3), 3),
             Tint = b.Color ?? "#FFFFFF",
-            Source = SourceOf(b),
             TintsPictures = b.Name == "Custom_Token" || b.Name.StartsWith("Block"),
             Shape = PackManifest.ShapeOf(b.Name, b.TileType),
             Tags = b.Tags.Concat(new[] { b.Name switch { "Custom_Tile" => "tile", "Custom_Token" => "token", "Custom_Model" or "Custom_Model_Bag" => "model", "Custom_Board" => "board", "Custom_PDF" => "book", _ => "block" } })

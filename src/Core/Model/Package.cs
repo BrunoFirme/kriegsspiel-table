@@ -205,7 +205,6 @@ public sealed class PieceDef : IJsonOnDeserialized
     public string? ScriptHash { get; set; }
     public string? ScriptState { get; set; }
     public EffectDef? Effect { get; set; }
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public ModuleSource? Source { get; set; }
 
     void IJsonOnDeserialized.OnDeserialized()
     {
@@ -221,14 +220,6 @@ public sealed class PieceDef : IJsonOnDeserialized
         foreach (var marker in Counters.Select(c => c.SpawnsMarker).OfType<string>().Distinct())
             if (!Attachments.Any(a => a.Piece == marker)) yield return new AttachmentDef { Piece = marker, Offset = new Vec2(Size.W * PackManifest.MarkerBeside, 0) };
     }
-}
-
-public sealed class ModuleSource
-{
-    public string Type { get; set; } = "";
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public Dictionary<string, string>? Links { get; set; }
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public double? Top { get; set; }
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? Tag { get; set; }
 }
 
 public sealed class EffectDef
