@@ -291,13 +291,13 @@
   "getSelectingPlayers": ["compat", "compat.get_selecting_players", ""],
   "getLuaScript": ["compat", "compat.get_script: the translated script the piece runs, not the module's source (decided 2026-11-07: the only module that reads it is a self-copying script)", ""],
   "locked": ["compat", "compat.get_prop / set_prop on the piece's lock", "", "StowEventTests"],
-  "gizmo_selectable": ["planned", "whether the transform tool takes it: a decision for the user", ""],
+  "gizmo_selectable": ["dropped", "the tabletop's transform gizmo (decided 2026-11-07)", "move and turn pieces by hand or with set_pos and set_rot"],
   "alt_view_angle": ["dropped", "no Alt-zoom view here (decided 2026-11-07)", "the camera and the piece reader"],
   "held_by_color": ["compat", "ObjectProps", ""],
   "held_flip_index": ["compat", "face down is 12, face up 0", "", "DiceScriptTests"],
   "held_spin_index": ["compat", "the piece's heading in 15° steps", "", "DiceScriptTests"],
-  "held_position_offset": ["planned", "where the hand holds a piece: a decision for the user", ""],
-  "held_rotation_offset": ["planned", "how the hand tilts a held piece: a decision for the user", ""],
+  "held_position_offset": ["dropped", "where the hand holds a piece (decided 2026-11-07)", "a carried piece follows the pointer as it is"],
+  "held_rotation_offset": ["dropped", "how the hand tilts a held piece (decided 2026-11-07)", "a carried piece keeps its heading; set_rot turns it"],
   "held_reduce_force": ["dropped", "with the engine's physics (decided 2026-11-06)", "nothing is needed"],
   "pick_up_position": ["compat", "self.picked_up: where an umpire last picked it up", "", "DiceScriptTests"],
   "pick_up_rotation": ["compat", "self.picked_up.rot", "", "DiceScriptTests"],
@@ -399,7 +399,7 @@
   "currentChooseInHand": ["dropped", "hands are seats here (decided 2026-11-06)", "sit players at their seats"],
   "allowRewindStore": ["dropped", "console commands and other host controls (decided 2026-11-06)", "the app's own console and settings"],
   "storeRewindState": ["dropped", "console commands and other host controls (decided 2026-11-06)", "the app's own console and settings"],
-  "inspect": ["planned", "reflection of the game's own C# classes from a script: a decision for the user", ""]
+  "inspect": ["dropped", "reflection of the tabletop's own classes from a script (decided 2026-11-07)", "the scripting reference lists every field and call a script can use"]
  },
  "namespaces": {
   "Grid.*": ["dropped", "grid (decided 2026-11-06)", "set the table's own grid"],

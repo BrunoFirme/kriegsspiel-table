@@ -14,8 +14,8 @@ every row that is not dropped must end audited, used by the corpus or not.
 |---|---|---|---|---|---|
 | types | 30 | 30 | 0 | 0 | 43 |
 | save | 150 | 150 | 0 | 0 | 302 |
-| object | 65 | 65 | 0 | 3 | 260 |
-| global | 16 | 16 | 0 | 1 | 63 |
+| object | 65 | 65 | 0 | 0 | 260 |
+| global | 16 | 16 | 0 | 0 | 63 |
 | namespaces | 23 | 23 | 0 | 0 | 180 |
 | events | 8 | 8 | 0 | 0 | 52 |
 | engine | 23 | 23 | 0 | 0 | 23 |
@@ -563,15 +563,15 @@ every row that is not dropped must end audited, used by the corpus or not.
 | `getTransformRight` | - | compat | ObjectCall |  | ModuleObjectCallTests.Turning_over_by_x_or_z_lays_the_piece_face_down_and_rotation_reads_back_in_0_to_360 |
 | `getVelocity` | - | dropped | engine physics (answers zero) |  |  |
 | `getZones` | - | dropped | scripting and layout zones (decided 2026-11-06) |  |  |
-| `gizmo_selectable` | - | planned | whether the transform tool takes it: a decision for the user |  |  |
+| `gizmo_selectable` | - | dropped | the tabletop's transform gizmo (decided 2026-11-07) |  |  |
 | `grid_projection` | - | dropped | grid (decided 2026-11-06) |  |  |
 | `hasAnyTag` | - | compat | compat.has_any_tag | ModuleHelpersTests | ModuleHelpersTests.Tag_and_script_state_helpers_answer_as_modules_expect |
 | `hasMatchingTag` | - | compat | compat.has_matching_tag | ModuleHelpersTests | ModuleObjectCallTests.Matching_tags_a_removed_attachment_the_global_menu_clear_and_an_outside_message_answer_as_the_tabletop_does |
 | `held_by_color` | - | compat | ObjectProps |  | ModuleEventTests.A_piece_carried_by_an_umpire_reads_their_colour_as_held_by_until_it_is_put_down |
 | `held_flip_index` | - | compat | face down is 12, face up 0 | DiceScriptTests | ModuleObjectCallTests.Plain_object_properties_start_at_the_tabletops_defaults_and_keep_what_a_script_sets |
-| `held_position_offset` | - | planned | where the hand holds a piece: a decision for the user |  |  |
+| `held_position_offset` | - | dropped | where the hand holds a piece (decided 2026-11-07) |  |  |
 | `held_reduce_force` | - | dropped | with the engine's physics (decided 2026-11-06) |  |  |
-| `held_rotation_offset` | - | planned | how the hand tilts a held piece: a decision for the user |  |  |
+| `held_rotation_offset` | - | dropped | how the hand tilts a held piece (decided 2026-11-07) |  |  |
 | `held_spin_index` | - | compat | the piece's heading in 15° steps | DiceScriptTests | ModuleObjectCallTests.Plain_object_properties_start_at_the_tabletops_defaults_and_keep_what_a_script_sets |
 | `hide_when_face_down` | - | dropped | hidden information (decided 2026-11-06) |  |  |
 | `ignore_fog_of_war` | - | dropped | hidden zones (decided 2026-11-06) |  |  |
@@ -694,7 +694,7 @@ every row that is not dropped must end audited, used by the corpus or not.
 | `getPointerRotation` | - | dropped | the Player API (decided 2026-11-06) |  |  |
 | `getSeatedPlayers` | - | compat | GlobalFunctionCall |  | ModuleObjectCallTests.Seated_players_leave_out_the_game_master_seat |
 | `group` | - | dropped | the Player API (decided 2026-11-06) |  |  |
-| `inspect` | - | planned | reflection of the game's own C# classes from a script: a decision for the user |  |  |
+| `inspect` | - | dropped | reflection of the tabletop's own classes from a script (decided 2026-11-07) |  |  |
 | `logString` | - | compat | GlobalFunctionCall |  | ModuleObjectCallTests.Log_writes_a_table_as_indented_key_lines_under_its_label_and_answers_true; ModuleObjectCallTests.The_tabletops_own_global_names_reach_the_global_script |
 | `logStyle` | - | dropped | console commands and other host controls (decided 2026-11-06) |  |  |
 | `paste` | - | dropped | the Player API (decided 2026-11-06) |  |  |
