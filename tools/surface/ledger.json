@@ -4082,7 +4082,7 @@
    "held_by": "DiceScriptTests",
    "count": 1,
    "modules": 1,
-   "audited": ""
+   "audited": "DiceScriptTests.A_module_script_rolls_a_die_reads_its_value_and_sets_a_face"
   },
   {
    "row": "roll",
@@ -4092,7 +4092,7 @@
    "held_by": "DiceScriptTests",
    "count": 1,
    "modules": 1,
-   "audited": ""
+   "audited": "DiceScriptTests.A_module_script_rolls_a_die_reads_its_value_and_sets_a_face"
   },
   {
    "row": "setSnapPoints",
@@ -5085,16 +5085,6 @@
    "audited": ""
   },
   {
-   "row": "getLuaScriptState",
-   "status": "compat",
-   "where": "script_state",
-   "instead": "",
-   "held_by": "ModuleHelpersTests",
-   "count": 0,
-   "modules": 0,
-   "audited": ""
-  },
-  {
    "row": "getMaterialValue",
    "status": "dropped",
    "where": "the engine's materials and components (decided 2026-11-06)",
@@ -5202,7 +5192,7 @@
    "held_by": "DiceScriptTests",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "DiceScriptTests.A_module_script_rolls_a_die_reads_its_value_and_sets_a_face"
   },
   {
    "row": "getRotationValues",
@@ -5212,7 +5202,7 @@
    "held_by": "DiceScriptTests",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "DiceScriptTests.A_module_script_rolls_a_die_reads_its_value_and_sets_a_face"
   },
   {
    "row": "getSelectingPlayers",
@@ -5592,7 +5582,7 @@
    "held_by": "DiceScriptTests",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "DiceScriptTests.Randomize_turns_a_piece_of_several_looks_to_another_and_rolls_a_die"
   },
   {
    "row": "registerCollisions",
@@ -5775,16 +5765,6 @@
    "audited": ""
   },
   {
-   "row": "setLuaScriptState",
-   "status": "compat",
-   "where": "script_state",
-   "instead": "",
-   "held_by": "ModuleHelpersTests",
-   "count": 0,
-   "modules": 0,
-   "audited": ""
-  },
-  {
    "row": "setMaterialValue",
    "status": "dropped",
    "where": "the engine's materials and components (decided 2026-11-06)",
@@ -5812,7 +5792,7 @@
    "held_by": "DiceScriptTests",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "DiceScriptTests.A_module_script_rolls_a_die_reads_its_value_and_sets_a_face"
   },
   {
    "row": "setRotationValues",
@@ -5822,7 +5802,7 @@
    "held_by": "DiceScriptTests",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "DiceScriptTests.A_module_script_rolls_a_die_reads_its_value_and_sets_a_face"
   },
   {
    "row": "setTable",
@@ -5852,7 +5832,7 @@
    "held_by": "DiceScriptTests",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "DiceScriptTests.A_module_script_rolls_a_die_reads_its_value_and_sets_a_face"
   },
   {
    "row": "setVelocity",
@@ -5882,7 +5862,7 @@
    "held_by": "DiceScriptTests",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "DiceScriptTests.Randomize_turns_a_piece_of_several_looks_to_another_and_rolls_a_die"
   },
   {
    "row": "spawning",
@@ -8738,7 +8718,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleEventTests.A_piece_script_hears_every_drop_and_turn_with_the_tabletops_arguments"
   },
   {
    "row": "onObjectEnterContainer",
@@ -8828,7 +8808,7 @@
    "held_by": "BookNotesScriptTests",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "BookNotesScriptTests.An_effect_a_module_script_or_an_umpire_stops_and_starts_answers_as_a_looping_effect"
   },
   {
    "row": "onObjectPageChange",
@@ -8838,7 +8818,7 @@
    "held_by": "BookNotesScriptTests",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "BookNotesScriptTests.A_module_script_turns_a_book_by_its_printed_page_numbers_and_hears_the_page_turn"
   },
   {
    "row": "onObjectPeek",
@@ -8858,7 +8838,7 @@
    "held_by": "DiceScriptTests",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "DiceScriptTests.A_roll_an_umpire_makes_reaches_the_die_s_script_and_the_global_one"
   },
   {
    "row": "onObjectRotate",
@@ -8868,7 +8848,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleEventTests.A_piece_script_hears_every_drop_and_turn_with_the_tabletops_arguments"
   },
   {
    "row": "onObjectSearchEnd",
@@ -8908,7 +8888,7 @@
    "held_by": "BookNotesScriptTests",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "BookNotesScriptTests.A_module_script_turns_a_book_by_its_printed_page_numbers_and_hears_the_page_turn"
   },
   {
    "row": "onPlayerChangeColor",
@@ -8998,7 +8978,7 @@
    "held_by": "DiceScriptTests",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "DiceScriptTests.A_roll_an_umpire_makes_reaches_the_die_s_script_and_the_global_one"
   },
   {
    "row": "onScriptingButtonUp",
@@ -9008,7 +8988,7 @@
    "held_by": "",
    "count": 0,
    "modules": 0,
-   "audited": ""
+   "audited": "ModuleEventTests.A_scripting_button_released_calls_the_up_function_with_the_index_and_the_colour"
   },
   {
    "row": "onZoneGroupSort",

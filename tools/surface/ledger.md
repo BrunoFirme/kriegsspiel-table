@@ -14,10 +14,10 @@ every row that is not dropped must end audited, used by the corpus or not.
 |---|---|---|---|---|---|
 | types | 30 | 30 | 0 | 28 | 43 |
 | save | 150 | 150 | 0 | 127 | 302 |
-| object | 65 | 65 | 0 | 92 | 262 |
+| object | 65 | 65 | 0 | 81 | 260 |
 | global | 16 | 16 | 0 | 6 | 63 |
 | namespaces | 23 | 23 | 0 | 18 | 180 |
-| events | 8 | 8 | 0 | 11 | 52 |
+| events | 8 | 8 | 0 | 3 | 52 |
 | engine | 23 | 23 | 0 | 11 | 23 |
 
 ## types
@@ -441,8 +441,8 @@ every row that is not dropped must end audited, used by the corpus or not.
 | `setRotation` | 2 / 2 | compat | ObjectCall |  | ModuleObjectCallTests.Object_setters_answer_true_as_module_code_checks; ModuleObjectCallTests.Turning_over_by_x_or_z_lays_the_piece_face_down_and_rotation_reads_back_in_0_to_360 |
 | `getLuaScript` | 19474 / 1 | compat | ObjectCall |  |  |
 | `getVectorLines` | 2 / 1 | compat | ObjectCall |  | ModuleObjectCallTests.Vector_lines_read_back_nil_until_set_and_then_as_given_with_vectors_and_colours |
-| `getValue` | 1 / 1 | native | a die's sides are its own (PieceDef.Faces, a value and the way up each); self.faces / face / value, set_face / set_value / set_faces / roll; compat maps the module calls | DiceScriptTests |  |
-| `roll` | 1 / 1 | native | a die's sides are its own (PieceDef.Faces, a value and the way up each); self.faces / face / value, set_face / set_value / set_faces / roll; compat maps the module calls | DiceScriptTests |  |
+| `getValue` | 1 / 1 | native | a die's sides are its own (PieceDef.Faces, a value and the way up each); self.faces / face / value, set_face / set_value / set_faces / roll; compat maps the module calls | DiceScriptTests | DiceScriptTests.A_module_script_rolls_a_die_reads_its_value_and_sets_a_face |
+| `roll` | 1 / 1 | native | a die's sides are its own (PieceDef.Faces, a value and the way up each); self.faces / face / value, set_face / set_value / set_faces / roll; compat maps the module calls | DiceScriptTests | DiceScriptTests.A_module_script_rolls_a_die_reads_its_value_and_sets_a_face |
 | `setSnapPoints` | 1 / 1 | compat | ObjectCall |  | ModuleObjectCallTests.Snap_points_read_back_with_their_rotation_only_when_they_snap_rotation |
 | `AssetBundle.getLoopingEffectIndex` | - | compat | an effect piece answers as a bundle with one looping effect, its own; starting and stopping it is the piece option Running (self.effect_on) | BookNotesScriptTests |  |
 | `AssetBundle.getLoopingEffects` | - | compat | an effect piece answers as a bundle with one looping effect, its own; starting and stopping it is the piece option Running (self.effect_on) | BookNotesScriptTests |  |
@@ -542,7 +542,6 @@ every row that is not dropped must end audited, used by the corpus or not.
 | `getFogOfWarReveal` | - | dropped | hidden zones (decided 2026-11-06; answers off) |  |  |
 | `getJSON` | - | compat | compat.get_json |  |  |
 | `getJoints` | - | dropped | engine physics (joints; answers none) |  |  |
-| `getLuaScriptState` | - | compat | script_state | ModuleHelpersTests |  |
 | `getMaterialValue` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |  |
 | `getMaterialVars` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |  |
 | `getMaterials` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |  |
@@ -553,8 +552,8 @@ every row that is not dropped must end audited, used by the corpus or not.
 | `getPositionSmooth` | - | compat | ObjectCall |  |  |
 | `getQuantity` | - | compat | compat.get_quantity: how many are stowed | StowScriptTests | ModuleObjectCallTests.A_piece_that_is_not_a_bag_counts_minus_one_lists_nothing_and_takes_nothing_in |
 | `getRotationSmooth` | - | compat | ObjectCall |  |  |
-| `getRotationValue` | - | native | a die's sides are its own (PieceDef.Faces, a value and the way up each); self.faces / face / value, set_face / set_value / set_faces / roll; compat maps the module calls | DiceScriptTests |  |
-| `getRotationValues` | - | native | a die's sides are its own (PieceDef.Faces, a value and the way up each); self.faces / face / value, set_face / set_value / set_faces / roll; compat maps the module calls | DiceScriptTests |  |
+| `getRotationValue` | - | native | a die's sides are its own (PieceDef.Faces, a value and the way up each); self.faces / face / value, set_face / set_value / set_faces / roll; compat maps the module calls | DiceScriptTests | DiceScriptTests.A_module_script_rolls_a_die_reads_its_value_and_sets_a_face |
+| `getRotationValues` | - | native | a die's sides are its own (PieceDef.Faces, a value and the way up each); self.faces / face / value, set_face / set_value / set_faces / roll; compat maps the module calls | DiceScriptTests | DiceScriptTests.A_module_script_rolls_a_die_reads_its_value_and_sets_a_face |
 | `getSelectingPlayers` | - | compat | compat.get_selecting_players |  |  |
 | `getSnapPoints` | - | compat | ObjectCall |  | ModuleObjectCallTests.Snap_points_read_back_with_their_rotation_only_when_they_snap_rotation |
 | `getStateId` | - | compat | ObjectCall |  | ModuleObjectCallTests.A_piece_without_states_has_state_id_minus_one_no_states_and_refuses_set_state |
@@ -592,7 +591,7 @@ every row that is not dropped must end audited, used by the corpus or not.
 | `pick_up_position` | - | compat | self.picked_up: where an umpire last picked it up | DiceScriptTests |  |
 | `pick_up_rotation` | - | compat | self.picked_up.rot | DiceScriptTests |  |
 | `rPGFigurine` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |  |
-| `randomize` | - | native | a die rolls (logged as a roll), a piece of several looks takes one at random; bags and decks are not shuffled (deck logic dropped) | DiceScriptTests |  |
+| `randomize` | - | native | a die rolls (logged as a roll), a piece of several looks takes one at random; bags and decks are not shuffled (deck logic dropped) | DiceScriptTests | DiceScriptTests.Randomize_turns_a_piece_of_several_looks_to_another_and_rolls_a_die |
 | `registerCollisions` | - | dropped | engine physics (collisions) |  |  |
 | `remainder` | - | dropped | deck and card logic (decided 2026-11-06) |  |  |
 | `removeAttachment` | - | compat | ObjectCall |  |  |
@@ -611,17 +610,16 @@ every row that is not dropped must end audited, used by the corpus or not.
 | `setFogOfWarReveal` | - | dropped | hidden zones (decided 2026-11-06) |  |  |
 | `setHiddenFrom` | - | dropped | hidden information (decided 2026-11-06) |  |  |
 | `setInvisibleTo` | - | dropped | hidden information (decided 2026-11-06) |  |  |
-| `setLuaScriptState` | - | compat | script_state | ModuleHelpersTests |  |
 | `setMaterialValue` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |  |
 | `setMemo` | - | compat | ObjectCall |  |  |
-| `setRotationValue` | - | native | a die's sides are its own (PieceDef.Faces, a value and the way up each); self.faces / face / value, set_face / set_value / set_faces / roll; compat maps the module calls | DiceScriptTests |  |
-| `setRotationValues` | - | native | a die's sides are its own (PieceDef.Faces, a value and the way up each); self.faces / face / value, set_face / set_value / set_faces / roll; compat maps the module calls | DiceScriptTests |  |
+| `setRotationValue` | - | native | a die's sides are its own (PieceDef.Faces, a value and the way up each); self.faces / face / value, set_face / set_value / set_faces / roll; compat maps the module calls | DiceScriptTests | DiceScriptTests.A_module_script_rolls_a_die_reads_its_value_and_sets_a_face |
+| `setRotationValues` | - | native | a die's sides are its own (PieceDef.Faces, a value and the way up each); self.faces / face / value, set_face / set_value / set_faces / roll; compat maps the module calls | DiceScriptTests | DiceScriptTests.A_module_script_rolls_a_die_reads_its_value_and_sets_a_face |
 | `setTable` | - | compat | ObjectCall |  | ModuleObjectCallTests.Object_setters_answer_true_as_module_code_checks |
 | `setTags` | - | compat | ObjectCall |  | ModuleObjectCallTests.Object_setters_answer_true_as_module_code_checks |
-| `setValue` | - | native | a die's sides are its own (PieceDef.Faces, a value and the way up each); self.faces / face / value, set_face / set_value / set_faces / roll; compat maps the module calls | DiceScriptTests |  |
+| `setValue` | - | native | a die's sides are its own (PieceDef.Faces, a value and the way up each); self.faces / face / value, set_face / set_value / set_faces / roll; compat maps the module calls | DiceScriptTests | DiceScriptTests.A_module_script_rolls_a_die_reads_its_value_and_sets_a_face |
 | `setVelocity` | - | dropped | engine physics |  |  |
 | `shuffle` | - | dropped | deck and card logic (decided 2026-11-06) |  |  |
-| `shuffleStates` | - | native | compat.shuffle_states: another of its looks at random | DiceScriptTests |  |
+| `shuffleStates` | - | native | compat.shuffle_states: another of its looks at random | DiceScriptTests | DiceScriptTests.Randomize_turns_a_piece_of_several_looks_to_another_and_rolls_a_die |
 | `spawning` | - | compat | ObjectCall |  | ModuleObjectCallTests.A_spawned_piece_is_spawning_until_the_next_frame_when_its_callback_runs |
 | `spread` | - | dropped | deck and card logic (decided 2026-11-06) |  |  |
 | `startLuaCoroutine` | - | compat | ObjectCall |  | ModuleObjectCallTests.A_coroutine_runs_to_its_first_yield_at_once_goes_on_each_frame_while_it_yields_zero_and_stops_on_any_other_number |
@@ -921,7 +919,7 @@ every row that is not dropped must end audited, used by the corpus or not.
 | `onObjectCollisionEnter` | - | dropped | engine physics (collisions) |  |  |
 | `onObjectCollisionExit` | - | dropped | engine physics (collisions) |  |  |
 | `onObjectCollisionStay` | - | dropped | engine physics (collisions) |  |  |
-| `onObjectDrop` | - | native | EventRenames |  |  |
+| `onObjectDrop` | - | native | EventRenames |  | ModuleEventTests.A_piece_script_hears_every_drop_and_turn_with_the_tabletops_arguments |
 | `onObjectEnterContainer` | - | native | on_stowed(holder, piece) after a stow | StowEventTests | StowEventTests.Putting_a_piece_in_and_taking_it_out_raise_the_bag_events_and_a_script_can_keep_one_out |
 | `onObjectEnterScriptingZone` | - | dropped | scripting and layout zones (decided 2026-11-06) |  |  |
 | `onObjectEnterZone` | - | dropped | scripting and layout zones (decided 2026-11-06) |  |  |
@@ -930,15 +928,15 @@ every row that is not dropped must end audited, used by the corpus or not.
 | `onObjectLeaveContainer` | - | native | on_unstowed(holder, piece) after an unstow, with on_spawn for the piece | StowEventTests | StowEventTests.Putting_a_piece_in_and_taking_it_out_raise_the_bag_events_and_a_script_can_keep_one_out |
 | `onObjectLeaveScriptingZone` | - | dropped | scripting and layout zones (decided 2026-11-06) |  |  |
 | `onObjectLeaveZone` | - | dropped | scripting and layout zones (decided 2026-11-06) |  |  |
-| `onObjectLoopingEffect` | - | native | on_effect(piece, index) when an umpire starts (0) or stops (-1) an effect | BookNotesScriptTests |  |
-| `onObjectPageChange` | - | native | on_page(piece) in the global script | BookNotesScriptTests |  |
+| `onObjectLoopingEffect` | - | native | on_effect(piece, index) when an umpire starts (0) or stops (-1) an effect | BookNotesScriptTests | BookNotesScriptTests.An_effect_a_module_script_or_an_umpire_stops_and_starts_answers_as_a_looping_effect |
+| `onObjectPageChange` | - | native | on_page(piece) in the global script | BookNotesScriptTests | BookNotesScriptTests.A_module_script_turns_a_book_by_its_printed_page_numbers_and_hears_the_page_turn |
 | `onObjectPeek` | - | dropped | peeking at a hidden piece |  |  |
-| `onObjectRandomize` | - | native | on_roll(piece, who) in the global script when an umpire rolls | DiceScriptTests |  |
-| `onObjectRotate` | - | native | EventRenames |  |  |
+| `onObjectRandomize` | - | native | on_roll(piece, who) in the global script when an umpire rolls | DiceScriptTests | DiceScriptTests.A_roll_an_umpire_makes_reaches_the_die_s_script_and_the_global_one |
+| `onObjectRotate` | - | native | EventRenames |  | ModuleEventTests.A_piece_script_hears_every_drop_and_turn_with_the_tabletops_arguments |
 | `onObjectSearchEnd` | - | dropped | a holder's contents are a card, not a search |  |  |
 | `onObjectSearchStart` | - | dropped | a holder's contents are a card, not a search |  |  |
 | `onObjectTriggerEffect` | - | partial | translated to on_effect; no one-shot effect raises it | BookNotesScriptTests |  |
-| `onPageChange` | - | native | on_page() in the book's own script | BookNotesScriptTests |  |
+| `onPageChange` | - | native | on_page() in the book's own script | BookNotesScriptTests | BookNotesScriptTests.A_module_script_turns_a_book_by_its_printed_page_numbers_and_hears_the_page_turn |
 | `onPlayerChangeColor` | - | dropped | the Player API (decided 2026-11-06) |  |  |
 | `onPlayerConnect` | - | dropped | the Player API (decided 2026-11-06) |  |  |
 | `onPlayerDisconnect` | - | dropped | the Player API (decided 2026-11-06) |  |  |
@@ -947,8 +945,8 @@ every row that is not dropped must end audited, used by the corpus or not.
 | `onPlayerTurnStart` | - | compat | on_turn when the clock advances | ModuleHelpersTests |  |
 | `onPlayersConnect` | - | dropped | the Player API (decided 2026-11-06) |  |  |
 | `onPlayersDisconnect` | - | dropped | the Player API (decided 2026-11-06) |  |  |
-| `onRandomize` | - | native | on_roll(who) in the die's own script | DiceScriptTests |  |
-| `onScriptingButtonUp` | - | native | EventRenames |  |  |
+| `onRandomize` | - | native | on_roll(who) in the die's own script | DiceScriptTests | DiceScriptTests.A_roll_an_umpire_makes_reaches_the_die_s_script_and_the_global_one |
+| `onScriptingButtonUp` | - | native | EventRenames |  | ModuleEventTests.A_scripting_button_released_calls_the_up_function_with_the_index_and_the_colour |
 | `onZoneGroupSort` | - | dropped | scripting and layout zones (decided 2026-11-06) |  |  |
 | `tryObjectEnterContainer` | - | native | try_stow(holder, piece) before a stow; false keeps the piece out | StowEventTests | ModuleEventTests.A_try_enter_function_that_answers_nothing_keeps_the_piece_out_and_true_lets_it_in |
 
