@@ -432,7 +432,25 @@ function compat.flip(obj)
   obj.set_face(best)
   return true
 end
+local set_custom_before = compat.set_custom_object
+function compat.set_custom_object(obj, c)
+  if type(c) ~= "table" then return false end
+  if getmetatable(obj) == getmetatable(compat.spawn_object({})) and compat.piece_of(obj) == nil then
+    set_custom_before(obj, c)
+    return true
+  end
+  local p = compat.piece_of(obj)
+  local waiting = compat.get_prop(p, "custom", nil) or {}
+  for k, v in pairs(c) do waiting[k] = v end
+  compat.set_prop(p, "custom", waiting)
+  return true
+end
 function compat.reload(obj)
+  local waiting = compat.get_prop(obj, "custom", nil)
+  if waiting ~= nil then
+    compat.set_prop(obj, "custom", nil)
+    set_custom_before(obj, waiting)
+  end
   obj.reload()
   return obj
 end
@@ -565,11 +583,16 @@ function compat.global_get_table(name) return compat.copy_lua_table(game.get_var
 function compat.global_set_table(name, t) game.set_var(name, compat.copy_lua_table(t)) return true end
 function compat.global_set_var(name, v) game.set_var(name, v) return true end
 
+function compat.holds(obj)
+  if obj.holds then return true end
+  for _, t in ipairs(obj.tags or {}) do if t == "bag" then return true end end
+  return false
+end
 function compat.take_object(obj, params)
   params = type(params) == "table" and params or {}
   local position = compat.optional_vector_arg(params.position)
   local rotation = compat.optional_vector_arg(params.rotation)
-  if not obj.holds then return nil end
+  if not compat.holds(obj) then return nil end
   local here = compat.position(obj)
   position = position or compat.Vector(here.x + TAKE_OFFSET, here.y, here.z)
   rotation = rotation or compat.rotation(obj)
@@ -596,14 +619,14 @@ function compat.call_back(obj, p, params)
 end
 function compat.after_spawn(obj, p, params) wait.frames(1, function() compat.call_back(obj, p, params) end) end
 function compat.put_object(obj, piece)
-  if not obj.holds then return nil end
+  if not compat.holds(obj) then return nil end
   local target = compat.piece_of(piece)
   if type(target) ~= "table" or target.id == nil then error(clr("LuaObject", piece), 0) end
   obj.stow(target)
   return obj
 end
 function compat.get_objects(obj)
-  if not obj.holds then
+  if not compat.holds(obj) then
     print("getObjects: Attempting to call getObjects() on an object that does not support getObjects()")
     return nil
   end
@@ -614,7 +637,7 @@ function compat.get_objects(obj)
   return t
 end
 function compat.get_quantity(obj)
-  if not obj.holds then return -1 end
+  if not compat.holds(obj) then return -1 end
   return #(obj.stowed or {})
 end
 
