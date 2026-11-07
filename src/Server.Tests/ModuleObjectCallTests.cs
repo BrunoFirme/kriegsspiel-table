@@ -467,6 +467,71 @@ public class ModuleObjectCallTests
     }
 
     [Fact]
+    public void A_coroutine_runs_to_its_first_yield_at_once_goes_on_each_frame_while_it_yields_zero_and_stops_on_any_other_number()
+    {
+        using var t = new Table();
+        const string lua = """
+            function count()
+              n = n + 1
+              coroutine.yield(0)
+              n = n + 1
+              coroutine.yield(1)
+              n = n + 100
+            end
+            function onLoad()
+              n = 0
+              local ok = startLuaCoroutine(self, 'count')
+              local missing = startLuaCoroutine(self, 'nothing')
+              self.setName(n .. tostring(ok) .. tostring(missing))
+            end
+            """;
+        Assert.Equal("1truetrue", Run(t, lua));
+        for (int f = 1; f <= 4; f++) t.Server.Scripts.Tick(f);
+        var r = ModuleTranslator.Translate("function onLoad() self.setName(tostring(getObjectFromGUID('p-000002').getVar('n'))) end", Ctx());
+        t.Server.Handle(Table.Host, new SetScript { Layer = U, Id = Marker, Text = r.Script });
+        Assert.Equal("2", t.Server.State.Find(U, Marker)!.Label);
+    }
+
+    [Fact]
+    public void A_spawned_piece_is_spawning_until_the_next_frame_when_its_callback_runs()
+    {
+        using var t = new Table();
+        const string lua = """
+            function onLoad()
+              local o = spawnObject({ type = 'Custom_Token', position = {3, 1, 4}, callback_function = function(obj) obj.setName('ready ' .. tostring(obj.spawning)) end })
+              o.setCustomObject({ image = 'http://example.com/a.png' })
+              self.setName(tostring(o.spawning))
+            end
+            """;
+        Assert.Equal("true", Run(t, lua));
+        Assert.DoesNotContain(t.Server.State.Layer(U), p => p.Label == "ready false");
+        t.Server.Scripts.Tick(1);
+        Assert.Contains(t.Server.State.Layer(U), p => p.Label == "ready false");
+    }
+
+    [Fact]
+    public void The_tabletops_own_global_names_reach_the_global_script()
+    {
+        using var t = new Table();
+        var g = ModuleTranslator.Translate("score = 3\nfunction double(p) return { v = p.v * 2 } end", new TranslateContext { IsGlobal = true });
+        t.Server.Handle(Table.Host, new SetGlobalScript { Text = g.Script });
+        const string lua = """
+            function onLoad()
+              local before = getGlobalScriptVar('score')
+              setGlobalScriptVar('score', 4)
+              setGlobalScriptTable('kept', { a = 1 })
+              local kept = getGlobalScriptTable('kept')
+              local d = callLuaFunctionInOtherScriptWithParams(Global, 'double', { v = 5 })
+              local c = color(1, 0, 0)
+              local v = vector(1, 2, 3)
+              local bad = pcall(color, 1, 0)
+              self.setName(before .. getGlobalScriptVar('score') .. kept.a .. d.v .. c.r .. v.z .. tostring(bad) .. tostring(setLookingForPlayers(true)) .. logString(true))
+            end
+            """;
+        Assert.Equal("3411013falsetruetrue", Run(t, lua));
+    }
+
+    [Fact]
     public void Time_reads_the_scripts_clock_and_frame_count()
     {
         using var t = new Table();

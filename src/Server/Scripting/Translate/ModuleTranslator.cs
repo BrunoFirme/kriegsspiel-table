@@ -414,9 +414,9 @@ public static class ModuleTranslator
                 case "debugLog": return Compat($"compat.debug_log({A(0)})", node);
                 case "stringColorToRGB": return Compat($"compat.string_color_to_rgb({A(0)})", node);
                 case "Vector": return Compat($"compat.Vector({All()})", node);
-                case "vector": return Compat($"compat.Vector({All()})", node);
+                case "vector": return Compat($"compat.construct_vector({All()})", node);
                 case "Color": return Compat($"compat.Color({All()})", node);
-                case "color": return Compat($"compat.Color({All()})", node);
+                case "color": return Compat($"compat.construct_color({All()})", node);
                 case "destroyObject": return Compat($"compat.destroy_object({A(0)})", node);
                 case "addHotkey": return Compat($"compat.add_hotkey(_ENV, {All()})", node);
                 case "clearHotkeys": return Compat("compat.clear_hotkeys()", node);
@@ -434,7 +434,8 @@ public static class ModuleTranslator
                     return Compat($"compat.Notes.{name}({All()})", node);
                 case "clearPixelPaint" or "clearVectorPaint": return Compat("compat.erase_all()", node);
                 case "getAllTags": return Compat("compat.all_tags()", node);
-                case "logStyle" or "sendExternalMessage" or "setLookingForPlayers" or "flipTable" or "group" or "paste" or "copy":
+                case "sendExternalMessage" or "setLookingForPlayers": return Compat($"compat.yes({All()})", node);
+                case "logStyle" or "flipTable" or "group" or "paste" or "copy":
                     return Todo(name, $"compat.todo(nil, \"{name}\")", node);
             }
             return null;
@@ -527,6 +528,7 @@ public static class ModuleTranslator
                 case "putObject": return Compat($"compat.put_object({recv}, {A(0)})", node);
                 case "getAttachments": return Compat($"compat.get_attachments({recv})", node);
                 case "addAttachment": return Direct($"{recv}.attach({A(0)})", node);
+                case "startLuaCoroutine": return Compat($"compat.start_coroutine({recv}, {A(0)})", node);
                 case "removeAttachment": return Compat($"compat.remove_attachment({recv}, {A(0)})", node);
                 case "removeAttachments": return Compat($"compat.remove_attachments({recv})", node);
                 case "isDestroyed": return Compat($"compat.is_destroyed({recv})", node);
@@ -602,7 +604,7 @@ public static class ModuleTranslator
                 case "is_face_down": return Direct($"{recv}.face_down", node);
                 case "held_by_color": return Compat("nil", node);
                 case "resting": return Compat("true", node);
-                case "spawning" or "loading_custom": return Compat("false", node);
+                case "spawning" or "loading_custom": return Compat($"compat.get_prop({recv}, \"spawning\", false)", node);
                 case "memo":
                     if (visited.Parent is AssignmentStatementSyntax) return visited;
                     return Direct($"{recv}.memo", node);

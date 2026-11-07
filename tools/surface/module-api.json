@@ -49,7 +49,11 @@
    "cs": "AddHotkey",
    "kind": "method"
   },
-  "allowAutomaticRewindSave": {
+  "addNotebookTab": {
+   "cs": "AddNotebookTab",
+   "kind": "method"
+  },
+  "allowRewindStore": {
    "cs": "AllowAutomaticRewindSave",
    "kind": "method"
   },
@@ -61,12 +65,24 @@
    "cs": "BroadcastToColor",
    "kind": "method"
   },
+  "callLuaFunctionInOtherScript": {
+   "cs": "CallLuaFunctionInOtherScript",
+   "kind": "method"
+  },
+  "callLuaFunctionInOtherScriptWithParams": {
+   "cs": "CallLuaFunctionInOtherScriptWithParams",
+   "kind": "method"
+  },
   "chooseInHand": {
    "cs": "ChooseInHand",
    "kind": "method"
   },
   "chooseInHandOrCancel": {
    "cs": "ChooseInHandOrCancel",
+   "kind": "method"
+  },
+  "clearChooseInHand": {
+   "cs": "clearChooseInHand",
    "kind": "method"
   },
   "clearConsoleCommands": {
@@ -89,40 +105,36 @@
    "cs": "ClearVectorPaint",
    "kind": "method"
   },
-  "colorToHex": {
-   "cs": "ColorToHex",
+  "color": {
+   "cs": "ConstructColor",
    "kind": "method"
   },
   "colorToPlayerName": {
    "cs": "ColorToPlayerName",
    "kind": "method"
   },
-  "constructColor": {
-   "cs": "ConstructColor",
-   "kind": "method"
-  },
-  "constructVector": {
-   "cs": "ConstructVector",
-   "kind": "method"
-  },
   "copy": {
    "cs": "Copy",
    "kind": "method"
   },
-  "copyLuaTable": {
-   "cs": "CopyLuaTable",
+  "currentChooseInHand": {
+   "cs": "currentChooseInHand",
    "kind": "method"
   },
   "debugLog": {
    "cs": "DebugLog",
    "kind": "method"
   },
-  "flipTable": {
-   "cs": "FlipTable",
+  "destroyObject": {
+   "cs": "DestroyObject",
    "kind": "method"
   },
-  "getAllLuaScriptStates": {
-   "cs": "GetAllLuaScriptStates",
+  "editNotebookTab": {
+   "cs": "EditNotebookTab",
+   "kind": "method"
+  },
+  "flipTable": {
+   "cs": "FlipTable",
    "kind": "method"
   },
   "getAllObjects": {
@@ -133,16 +145,20 @@
    "cs": "GetAllTags",
    "kind": "method"
   },
-  "getColor": {
-   "cs": "GetColor",
-   "kind": "method"
-  },
-  "getGlobalTable": {
+  "getGlobalScriptTable": {
    "cs": "GetGlobalTable",
    "kind": "method"
   },
-  "getGlobalVar": {
+  "getGlobalScriptVar": {
    "cs": "GetGlobalVar",
+   "kind": "method"
+  },
+  "getNotebookTabs": {
+   "cs": "GetNotebookTabs",
+   "kind": "method"
+  },
+  "getNotes": {
+   "cs": "GetNotes",
    "kind": "method"
   },
   "getObjectFromGUID": {
@@ -181,10 +197,6 @@
    "cs": "GetPointerRotation",
    "kind": "method"
   },
-  "getScriptState": {
-   "cs": "GetScriptState",
-   "kind": "method"
-  },
   "getSeatedPlayers": {
    "cs": "GetSeatedPlayers",
    "kind": "method"
@@ -193,15 +205,15 @@
    "cs": "Group",
    "kind": "method"
   },
-  "hexToColor": {
-   "cs": "HexToColor",
+  "inspect": {
+   "cs": "Inspect",
    "kind": "method"
   },
   "log": {
    "cs": "Log",
    "kind": "method"
   },
-  "logFormat": {
+  "logString": {
    "cs": "LogFormat",
    "kind": "method"
   },
@@ -221,12 +233,28 @@
    "cs": "PrintToColor",
    "kind": "method"
   },
-  "setGlobalTable": {
+  "removeNotebookTab": {
+   "cs": "RemoveNotebookTab",
+   "kind": "method"
+  },
+  "sendExternalMessage": {
+   "cs": "SendExternalCustomMessage",
+   "kind": "method"
+  },
+  "setGlobalScriptTable": {
    "cs": "SetGlobalTable",
    "kind": "method"
   },
-  "setUITheme": {
-   "cs": "SetUITheme",
+  "setGlobalScriptVar": {
+   "cs": "SetGlobalScriptVar",
+   "kind": "method"
+  },
+  "setLookingForPlayers": {
+   "cs": "SetLookingForPlayers",
+   "kind": "method"
+  },
+  "setNotes": {
+   "cs": "SetNotes",
    "kind": "method"
   },
   "showHotkeyConfig": {
@@ -249,12 +277,16 @@
    "cs": "StartLuaCoroutine",
    "kind": "method"
   },
-  "stringColorToHex": {
-   "cs": "StringColorToHex",
+  "storeRewindState": {
+   "cs": "StoreRewindState",
    "kind": "method"
   },
   "stringColorToRGB": {
    "cs": "StringColorToRGB",
+   "kind": "method"
+  },
+  "vector": {
+   "cs": "ConstructVector",
    "kind": "method"
   }
  },

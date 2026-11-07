@@ -14,8 +14,8 @@ every row that is not dropped must end audited, used by the corpus or not.
 |---|---|---|---|---|---|
 | types | 30 | 30 | 0 | 28 | 43 |
 | save | 150 | 150 | 0 | 127 | 302 |
-| object | 65 | 65 | 0 | 154 | 262 |
-| global | 14 | 14 | 0 | 38 | 55 |
+| object | 65 | 56 | 9 | 154 | 262 |
+| global | 16 | 16 | 0 | 57 | 77 |
 | namespaces | 23 | 23 | 0 | 46 | 180 |
 | events | 8 | 8 | 0 | 22 | 52 |
 | engine | 23 | 23 | 0 | 22 | 23 |
@@ -379,36 +379,36 @@ every row that is not dropped must end audited, used by the corpus or not.
 
 | row | used (calls / modules) | status | where | held by | audited |
 |---|---|---|---|---|---|
-| `createButton` | 50776 / 52 | compat | ObjectCall |  | ScriptingTests.A_module_input_inside_its_piece_is_not_drawn_but_still_listed_and_raising_it_above_the_piece_draws_it; ModuleDefaultsTests |
+| `createButton` | 50776 / 52 | unknown |  |  | ScriptingTests.A_module_input_inside_its_piece_is_not_drawn_but_still_listed_and_raising_it_above_the_piece_draws_it; ModuleDefaultsTests |
 | `getPosition` | 2421 / 52 | compat | ObjectCall |  |  |
-| `editButton` | 46867 / 51 | compat | ObjectCall |  | ScriptingTests.A_module_input_turned_over_on_top_is_locked_text_on_the_front_and_turning_it_back_unlocks_it |
+| `editButton` | 46867 / 51 | unknown |  |  | ScriptingTests.A_module_input_turned_over_on_top_is_locked_text_on_the_front_and_turning_it_back_unlocks_it |
 | `getScale` | 15144 / 51 | compat | ObjectCall |  |  |
-| `clearButtons` | 6680 / 51 | compat | ObjectCall |  | ScriptingTests.Removing_module_buttons_keeps_their_numbers_until_the_next_frame_so_a_loop_removes_them_all |
-| `createInput` | 20637 / 50 | compat | ObjectCall |  | ScriptingTests.A_module_input_inside_its_piece_is_not_drawn_but_still_listed_and_raising_it_above_the_piece_draws_it; ModuleDefaultsTests |
+| `clearButtons` | 6680 / 51 | unknown |  |  | ScriptingTests.Removing_module_buttons_keeps_their_numbers_until_the_next_frame_so_a_loop_removes_them_all |
+| `createInput` | 20637 / 50 | unknown |  |  | ScriptingTests.A_module_input_inside_its_piece_is_not_drawn_but_still_listed_and_raising_it_above_the_piece_draws_it; ModuleDefaultsTests |
 | `setCustomObject` | 3484 / 50 | partial | a picture by a link built at run time is fetched and shown on the piece's face (self.set_face_picture); a model by such a link is not | ScriptingTests |  |
-| `reload` | 755 / 50 | native | ObjectCall |  |  |
+| `reload` | 755 / 50 | compat | ObjectCall |  |  |
 | `positionToWorld` | 1180 / 49 | compat | ObjectCall |  |  |
-| `setVar` | 181 / 49 | native | ObjectCall |  |  |
-| `editInput` | 38689 / 47 | compat | ObjectCall |  | ScriptingTests.A_module_input_inside_its_piece_is_not_drawn_but_still_listed_and_raising_it_above_the_piece_draws_it |
-| `getInputs` | 16053 / 47 | compat | ObjectCall |  | ScriptingTests.Module_handlers_named_at_run_time_get_module_arguments_and_getInputs_holds_what_was_typed |
-| `clearInputs` | 5365 / 47 | compat | ObjectCall |  | ScriptingTests.Removing_module_buttons_keeps_their_numbers_until_the_next_frame_so_a_loop_removes_them_all |
-| `getButtons` | 3950 / 47 | compat | ObjectCall |  | ScriptingTests.Removing_module_buttons_keeps_their_numbers_until_the_next_frame_so_a_loop_removes_them_all |
+| `setVar` | 181 / 49 | compat | ObjectCall |  |  |
+| `editInput` | 38689 / 47 | unknown |  |  | ScriptingTests.A_module_input_inside_its_piece_is_not_drawn_but_still_listed_and_raising_it_above_the_piece_draws_it |
+| `getInputs` | 16053 / 47 | unknown |  |  | ScriptingTests.Module_handlers_named_at_run_time_get_module_arguments_and_getInputs_holds_what_was_typed |
+| `clearInputs` | 5365 / 47 | unknown |  |  | ScriptingTests.Removing_module_buttons_keeps_their_numbers_until_the_next_frame_so_a_loop_removes_them_all |
+| `getButtons` | 3950 / 47 | unknown |  |  | ScriptingTests.Removing_module_buttons_keeps_their_numbers_until_the_next_frame_so_a_loop_removes_them_all |
 | `setPosition` | 416 / 47 | compat | ObjectCall |  |  |
 | `setScale` | 231 / 47 | compat | ObjectCall |  |  |
 | `getCustomObject` | 92 / 46 | compat | ObjectCall |  |  |
-| `setName` | 5703 / 38 | native | ObjectCall |  |  |
+| `setName` | 5703 / 38 | compat | ObjectCall |  |  |
 | `getRotation` | 5932 / 34 | compat | ObjectCall |  |  |
 | `addContextMenuItem` | 45750 / 33 | compat | ObjectCall |  |  |
-| `setDescription` | 4838 / 30 | native | ObjectCall |  |  |
-| `call` | 37963 / 28 | native | ObjectCall |  |  |
+| `setDescription` | 4838 / 30 | compat | ObjectCall |  |  |
+| `call` | 37963 / 28 | compat | ObjectCall |  |  |
 | `getColorTint` | 2098 / 28 | compat | ObjectCall |  |  |
-| `clearContextMenu` | 7277 / 26 | native | ObjectCall |  |  |
+| `clearContextMenu` | 7277 / 26 | compat | ObjectCall |  |  |
 | `getGUID` | 1013 / 24 | compat | ObjectCall |  |  |
-| `setColorTint` | 1395 / 23 | native | ObjectCall |  |  |
+| `setColorTint` | 1395 / 23 | compat | ObjectCall |  |  |
 | `highlightOn` | 480 / 22 | compat | ObjectCall |  |  |
 | `setLock` | 204 / 20 | compat | ObjectCall |  |  |
 | `getName` | 679 / 19 | compat | ObjectCall |  |  |
-| `destruct` | 981 / 17 | native | ObjectCall |  |  |
+| `destruct` | 981 / 17 | compat | ObjectCall |  |  |
 | `getVar` | 1991 / 15 | native | ObjectCall |  |  |
 | `positionToLocal` | 979 / 15 | compat | ObjectCall |  |  |
 | `setVectorLines` | 196 / 15 | compat | ObjectCall |  |  |
@@ -417,7 +417,7 @@ every row that is not dropped must end audited, used by the corpus or not.
 | `interactable` | 1952 / 14 | compat | ObjectProps (get_prop/set_prop) |  |  |
 | `scale` | 1826 / 14 | compat | ObjectCall |  |  |
 | `locked` | 976 / 14 | compat | compat.get_prop / set_prop on the piece's lock | StowEventTests |  |
-| `removeInput` | 976 / 14 | compat | ObjectCall |  | ScriptingTests.Removing_module_buttons_keeps_their_numbers_until_the_next_frame_so_a_loop_removes_them_all |
+| `removeInput` | 976 / 14 | unknown |  |  | ScriptingTests.Removing_module_buttons_keeps_their_numbers_until_the_next_frame_so_a_loop_removes_them_all |
 | `getData` | 21 / 13 | compat | compat.get_data |  |  |
 | `getGMNotes` | 15 / 13 | compat | ObjectCall |  |  |
 | `getTransformUp` | 13029 / 12 | compat | ObjectCall |  |  |
@@ -433,11 +433,11 @@ every row that is not dropped must end audited, used by the corpus or not.
 | `getObjects` | 50 / 9 | compat | compat.get_objects: the stowed list with guid, name and 0-based index | StowScriptTests |  |
 | `putObject` | 50 / 9 | compat | compat.put_object: stow | StowScriptTests |  |
 | `setRotationSmooth` | 50 / 9 | compat | ObjectCall |  |  |
-| `setLuaScript` | 3169 / 7 | native | ObjectCall |  |  |
-| `setState` | 180 / 3 | native | ObjectCall |  |  |
+| `setLuaScript` | 3169 / 7 | compat | ObjectCall |  |  |
+| `setState` | 180 / 3 | compat | ObjectCall |  |  |
 | `isDestroyed` | 5 / 3 | compat | ObjectCall |  |  |
 | `guid` | 137 / 2 | compat | ObjectProps (get_prop/set_prop) |  |  |
-| `getTags` | 18 / 2 | native | ObjectCall |  |  |
+| `getTags` | 18 / 2 | compat | ObjectCall |  |  |
 | `setRotation` | 2 / 2 | compat | ObjectCall |  |  |
 | `getLuaScript` | 19474 / 1 | compat | ObjectCall |  |  |
 | `getVectorLines` | 2 / 1 | compat | ObjectCall |  |  |
@@ -496,7 +496,7 @@ every row that is not dropped must end audited, used by the corpus or not.
 | `addAttachment` | - | native | ObjectCall |  |  |
 | `addDecal` | - | compat | ObjectCall |  |  |
 | `addForce` | - | dropped | engine physics |  |  |
-| `addTag` | - | native | ObjectCall |  |  |
+| `addTag` | - | compat | ObjectCall |  |  |
 | `addToPlayerSelection` | - | compat | ObjectCall |  |  |
 | `addTorque` | - | dropped | engine physics |  |  |
 | `alt_view_angle` | - | planned | the Alt-zoom view: a decision for the user |  |  |
@@ -520,7 +520,7 @@ every row that is not dropped must end audited, used by the corpus or not.
 | `dealToAll` | - | dropped | deck and card logic (decided 2026-11-06) |  |  |
 | `dealToColor` | - | dropped | deck and card logic (decided 2026-11-06) |  |  |
 | `dealToColorWithOffset` | - | dropped | deck and card logic (decided 2026-11-06) |  |  |
-| `destroy` | - | native | ObjectCall |  |  |
+| `destroy` | - | compat | ObjectCall |  |  |
 | `drag` | - | dropped | engine physics |  |  |
 | `drag_selectable` | - | compat | ObjectProps (get_prop/set_prop) |  |  |
 | `drop` | - | dropped | the Player API (decided 2026-11-06) |  |  |
@@ -557,9 +557,9 @@ every row that is not dropped must end audited, used by the corpus or not.
 | `getRotationValues` | - | native | a die's sides are its own (PieceDef.Faces, a value and the way up each); self.faces / face / value, set_face / set_value / set_faces / roll; compat maps the module calls | DiceScriptTests |  |
 | `getSelectingPlayers` | - | compat | compat.get_selecting_players |  |  |
 | `getSnapPoints` | - | compat | ObjectCall |  |  |
-| `getStateId` | - | native | ObjectCall |  |  |
+| `getStateId` | - | compat | ObjectCall |  |  |
 | `getStates` | - | compat | ObjectCall |  |  |
-| `getTable` | - | native | ObjectCall |  |  |
+| `getTable` | - | compat | ObjectCall |  |  |
 | `getTransformForward` | - | compat | ObjectCall |  |  |
 | `getTransformRight` | - | compat | ObjectCall |  |  |
 | `getVelocity` | - | dropped | engine physics (answers zero) |  |  |
@@ -597,8 +597,8 @@ every row that is not dropped must end audited, used by the corpus or not.
 | `remainder` | - | dropped | deck and card logic (decided 2026-11-06) |  |  |
 | `removeAttachment` | - | compat | ObjectCall |  |  |
 | `removeAttachments` | - | compat | ObjectCall |  |  |
-| `removeButton` | - | compat | ObjectCall |  | ScriptingTests.Removing_module_buttons_keeps_their_numbers_until_the_next_frame_so_a_loop_removes_them_all |
-| `removeTag` | - | native | ObjectCall |  |  |
+| `removeButton` | - | unknown |  |  | ScriptingTests.Removing_module_buttons_keeps_their_numbers_until_the_next_frame_so_a_loop_removes_them_all |
+| `removeTag` | - | compat | ObjectCall |  |  |
 | `rendererIndex` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |  |
 | `reset` | - | dropped | deck and card logic (decided 2026-11-06) |  |  |
 | `resting` | - | compat | ObjectCall |  |  |
@@ -613,11 +613,11 @@ every row that is not dropped must end audited, used by the corpus or not.
 | `setInvisibleTo` | - | dropped | hidden information (decided 2026-11-06) |  |  |
 | `setLuaScriptState` | - | compat | script_state | ModuleHelpersTests |  |
 | `setMaterialValue` | - | dropped | the engine's materials and components (decided 2026-11-06) |  |  |
-| `setMemo` | - | native | ObjectCall |  |  |
+| `setMemo` | - | compat | ObjectCall |  |  |
 | `setRotationValue` | - | native | a die's sides are its own (PieceDef.Faces, a value and the way up each); self.faces / face / value, set_face / set_value / set_faces / roll; compat maps the module calls | DiceScriptTests |  |
 | `setRotationValues` | - | native | a die's sides are its own (PieceDef.Faces, a value and the way up each); self.faces / face / value, set_face / set_value / set_faces / roll; compat maps the module calls | DiceScriptTests |  |
-| `setTable` | - | native | ObjectCall |  |  |
-| `setTags` | - | native | ObjectCall |  |  |
+| `setTable` | - | compat | ObjectCall |  |  |
+| `setTags` | - | compat | ObjectCall |  |  |
 | `setValue` | - | native | a die's sides are its own (PieceDef.Faces, a value and the way up each); self.faces / face / value, set_face / set_value / set_faces / roll; compat maps the module calls | DiceScriptTests |  |
 | `setVelocity` | - | dropped | engine physics |  |  |
 | `shuffle` | - | dropped | deck and card logic (decided 2026-11-06) |  |  |
@@ -647,44 +647,57 @@ every row that is not dropped must end audited, used by the corpus or not.
 | row | used (calls / modules) | status | where | held by | audited |
 |---|---|---|---|---|---|
 | `getObjectFromGUID` | 1203 / 50 | native | GlobalFunctionCall |  |  |
-| `broadcastToAll` | 748 / 50 | native | GlobalFunctionCall |  |  |
+| `broadcastToAll` | 748 / 50 | compat | GlobalFunctionCall |  |  |
 | `broadcastToColor` | 61397 / 30 | compat | GlobalFunctionCall |  |  |
 | `spawnObject` | 2866 / 18 | compat | GlobalFunctionCall |  |  |
 | `getObjects` | 1525 / 14 | native | GlobalFunctionCall |  |  |
+| `destroyObject` | 20 / 14 | compat | GlobalFunctionCall |  |  |
 | `startLuaCoroutine` | 4345 / 13 | compat | GlobalFunctionCall |  |  |
 | `spawnObjectData` | 32 / 13 | compat | GlobalFunctionCall |  |  |
 | `getAllObjects` | 426 / 12 | native | GlobalFunctionCall |  |  |
 | `log` | 376 / 12 | compat | compat.log: the value, a table as JSON, with its label, on the script console | StowEventTests |  |
 | `printToColor` | 20 / 12 | compat | GlobalFunctionCall |  |  |
+| `vector` | 117 / 7 | compat | GlobalFunctionCall |  |  |
 | `addHotkey` | 20 / 4 | compat | GlobalFunctionCall |  |  |
 | `addContextMenuItem` | 2 / 2 | compat | GlobalFunctionCall |  |  |
-| `printToAll` | 2 / 2 | native | GlobalFunctionCall |  |  |
+| `printToAll` | 2 / 2 | compat | GlobalFunctionCall |  |  |
 | `stringColorToRGB` | 1 / 1 | compat | GlobalFunctionCall |  |  |
 | `addConsoleCommand` | - | dropped | console commands and other host controls (decided 2026-11-06) |  |  |
-| `allowAutomaticRewindSave` | - | dropped | console commands and other host controls (decided 2026-11-06) |  |  |
+| `addNotebookTab` | - | compat | GlobalFunctionCall |  |  |
+| `allowRewindStore` | - | dropped | console commands and other host controls (decided 2026-11-06) |  |  |
+| `callLuaFunctionInOtherScript` | - | compat | GlobalFunctionCall |  |  |
+| `callLuaFunctionInOtherScriptWithParams` | - | compat | GlobalFunctionCall |  |  |
 | `chooseInHand` | - | dropped | hands are seats here (decided 2026-11-06) |  |  |
 | `chooseInHandOrCancel` | - | dropped | hands are seats here (decided 2026-11-06) |  |  |
+| `clearChooseInHand` | - | dropped | hands are seats here (decided 2026-11-06) |  |  |
 | `clearConsoleCommands` | - | dropped | console commands and other host controls (decided 2026-11-06) |  |  |
-| `clearContextMenu` | - | native | GlobalFunctionCall |  |  |
-| `clearHotkeys` | - | native | GlobalFunctionCall |  |  |
+| `clearContextMenu` | - | compat | GlobalFunctionCall |  |  |
+| `clearHotkeys` | - | compat | GlobalFunctionCall |  |  |
 | `clearPixelPaint` | - | compat | compat.erase_all: every stroke on the drawing board | ModuleHelpersTests |  |
 | `clearVectorPaint` | - | compat | compat.erase_all: every stroke on the drawing board | ModuleHelpersTests |  |
+| `color` | - | compat | GlobalFunctionCall |  |  |
 | `colorToHex` | - | compat | compat.Color:toHex | ModuleHelpersTests |  |
 | `colorToPlayerName` | - | compat | compat.Color:toString |  |  |
 | `constructColor` | - | compat | compat.Color |  |  |
 | `constructVector` | - | compat | compat.Vector | ModuleVectorColorTests |  |
 | `copy` | - | dropped | the Player API (decided 2026-11-06) |  |  |
 | `copyLuaTable` | - | compat | compat.copy_table | ModuleHelpersTests |  |
+| `currentChooseInHand` | - | dropped | hands are seats here (decided 2026-11-06) |  |  |
 | `debugLog` | - | compat | compat.log |  |  |
+| `editNotebookTab` | - | compat | GlobalFunctionCall |  |  |
 | `flipTable` | - | dropped | the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06) |  |  |
 | `getAllLuaScriptStates` | - | dropped | undocumented internal; no module calls it |  |  |
 | `getAllTags` | - | compat | compat.all_tags | ModuleHelpersTests |  |
 | `getColor` | - | dropped | undocumented internal; no module calls it |  |  |
+| `getGlobalScriptTable` | - | compat | GlobalFunctionCall |  |  |
+| `getGlobalScriptVar` | - | native | GlobalFunctionCall |  |  |
 | `getGlobalTable` | - | compat | game.get_var |  |  |
 | `getGlobalVar` | - | compat | game.get_var |  |  |
+| `getNotebookTabs` | - | compat | GlobalFunctionCall |  |  |
+| `getNotes` | - | compat | GlobalFunctionCall |  |  |
 | `getObjectsWithAllTags` | - | compat | GlobalFunctionCall |  |  |
 | `getObjectsWithAnyTags` | - | compat | GlobalFunctionCall |  |  |
-| `getObjectsWithTag` | - | native | GlobalFunctionCall |  |  |
+| `getObjectsWithTag` | - | compat | GlobalFunctionCall |  |  |
 | `getPlayer` | - | compat | compat.player |  |  |
 | `getPlayerHandPositionAndRotation` | - | dropped | hands are seats here (decided 2026-11-06) |  |  |
 | `getPointerPosition` | - | dropped | the Player API (decided 2026-11-06) |  |  |
@@ -693,13 +706,22 @@ every row that is not dropped must end audited, used by the corpus or not.
 | `getSeatedPlayers` | - | compat | GlobalFunctionCall |  |  |
 | `group` | - | dropped | the Player API (decided 2026-11-06) |  |  |
 | `hexToColor` | - | compat | compat.Color.fromHex | ModuleHelpersTests |  |
+| `inspect` | - | unknown |  |  |  |
 | `logFormat` | - | compat | compat.log |  |  |
+| `logString` | - | compat | GlobalFunctionCall |  |  |
 | `logStyle` | - | dropped | console commands and other host controls (decided 2026-11-06) |  |  |
 | `paste` | - | dropped | the Player API (decided 2026-11-06) |  |  |
+| `removeNotebookTab` | - | compat | GlobalFunctionCall |  |  |
+| `sendExternalMessage` | - | stub | GlobalFunctionCall |  |  |
+| `setGlobalScriptTable` | - | compat | GlobalFunctionCall |  |  |
+| `setGlobalScriptVar` | - | compat | GlobalFunctionCall |  |  |
 | `setGlobalTable` | - | compat | game.set_var |  |  |
+| `setLookingForPlayers` | - | stub | GlobalFunctionCall |  |  |
+| `setNotes` | - | compat | GlobalFunctionCall |  |  |
 | `setUITheme` | - | dropped | the tabletop's room: backgrounds, tables, cameras and play area (decided 2026-11-06) |  |  |
 | `showHotkeyConfig` | - | dropped | console commands and other host controls (decided 2026-11-06) |  |  |
 | `spawnObjectJSON` | - | compat | GlobalFunctionCall |  |  |
+| `storeRewindState` | - | dropped | console commands and other host controls (decided 2026-11-06) |  |  |
 | `stringColorToHex` | - | compat | compat.Color.fromString:toHex |  |  |
 
 ## namespaces

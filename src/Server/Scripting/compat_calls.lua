@@ -282,6 +282,14 @@ function Color:lerp(o, t)
   return mid
 end
 compat.Color = Color
+function compat.construct_color(r, g, b, a)
+  if tonumber(r) == nil or tonumber(g) == nil or tonumber(b) == nil then error("Error in color: You must specify all of r, g, b.", 0) end
+  return setmetatable({ r = tonumber(r), g = tonumber(g), b = tonumber(b), a = tonumber(a) or 1 }, Color)
+end
+function compat.construct_vector(x, y, z)
+  if tonumber(x) == nil or tonumber(y) == nil or tonumber(z) == nil then error("Error in vector: You must specify all of x, y, z.", 0) end
+  return Vector(tonumber(x), tonumber(y), tonumber(z))
+end
 function compat.hex_of(c)
   local function byte(v) return math.floor(math.max(0, math.min(1, v)) * 255 + 0.5) end
   return string.format("#%02x%02x%02x%02x", byte(c.r), byte(c.g), byte(c.b), byte(c.a))
@@ -573,26 +581,20 @@ function compat.take_object(obj, params)
   compat.after_spawn(obj, p, params)
   return p
 end
-function compat.after_spawn(obj, p, params)
+function compat.call_back(obj, p, params)
   local cb = params.callback_function
   if cb ~= nil and type(cb) ~= "function" then
     print("Error converting Lua Table entry callback_function to Type MoonSharp.Interpreter.Closure. Value = " .. tostring(cb))
     cb = nil
   end
-  if cb ~= nil then
-    wait.frames(1, function() cb(p) end)
-    return
-  end
+  if cb ~= nil then return cb(p) end
   local name = params.callback
   if type(name) ~= "string" or name == "" then return end
-  local owner = params.callback_owner or obj
-  local extra = params.params
-  wait.frames(1, function()
-    local target = compat.piece_of(owner)
-    if target == compat.Global then target = game end
-    if extra ~= nil then target.call(name, p, extra) else target.call(name, p) end
-  end)
+  local target = compat.piece_of(params.callback_owner or obj)
+  if target == compat.Global or target == nil then target = game end
+  if params.params ~= nil then target.call(name, p, params.params) else target.call(name, p) end
 end
+function compat.after_spawn(obj, p, params) wait.frames(1, function() compat.call_back(obj, p, params) end) end
 function compat.put_object(obj, piece)
   if not obj.holds then return nil end
   local target = compat.piece_of(piece)
@@ -629,6 +631,33 @@ function compat.try_answer(...)
   if type(r) == "boolean" then return r end
   if type(r) == "number" then return r == r and r ~= 0 end
   return false
+end
+
+function compat.spawned(piece, p)
+  compat.set_prop(piece, "spawning", true)
+  wait.frames(1, function()
+    compat.set_prop(piece, "spawning", false)
+    compat.call_back(compat.Global, piece, p)
+  end)
+end
+
+function compat.start_coroutine(owner, name)
+  name = tostring(name)
+  local target = compat.piece_of(owner)
+  local f
+  if target == nil or target == compat.Global then f = game.get_var(name) else f = target.get_var(name) end
+  if type(f) ~= "function" then return true end
+  local co = coroutine.create(f)
+  local function step()
+    local ok, v = coroutine.resume(co)
+    if not ok then
+      print("startLuaCoroutine/" .. name .. ": " .. tostring(v))
+      return
+    end
+    if type(v) ~= "number" or v == 0 then wait.frames(1, step) end
+  end
+  step()
+  return true
 end
 
 function compat.none() return nil end

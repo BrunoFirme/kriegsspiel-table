@@ -740,7 +740,7 @@ local function bind(h, def)
     if type(f) == "function" then f(table.unpack(q[2])) end
   end
   rawset(h, "__queue", {})
-  if type(p.callback_function) == "function" then p.callback_function(piece) end
+  compat.spawned(piece, p)
   return piece
 end
 
@@ -782,7 +782,7 @@ function compat.spawn_object_data(d)
   local tr = data.Transform or {}
   return compat.spawn_object({
     position = d.position or { tr.posX, tr.posY, tr.posZ }, rotation = d.rotation or { tr.rotX, tr.rotY, tr.rotZ },
-    nickname = data.Nickname, guid = data.GUID, def = data.def, callback_function = d.callback_function,
+    nickname = data.Nickname, guid = data.GUID, def = data.def, callback_function = d.callback_function, callback = d.callback, callback_owner = d.callback_owner, params = d.params,
     state = data.State, tags = data.Tags, memo = data.Memo, script_state = data.LuaScriptState, script = data.LuaScript,
     description = data.Description, gm_notes = data.GMNotes,
   })

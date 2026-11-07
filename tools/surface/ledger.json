@@ -3456,8 +3456,8 @@
  "object": [
   {
    "row": "createButton",
-   "status": "compat",
-   "where": "ObjectCall",
+   "status": "unknown",
+   "where": "",
    "instead": "",
    "held_by": "",
    "count": 50776,
@@ -3476,8 +3476,8 @@
   },
   {
    "row": "editButton",
-   "status": "compat",
-   "where": "ObjectCall",
+   "status": "unknown",
+   "where": "",
    "instead": "",
    "held_by": "",
    "count": 46867,
@@ -3496,8 +3496,8 @@
   },
   {
    "row": "clearButtons",
-   "status": "compat",
-   "where": "ObjectCall",
+   "status": "unknown",
+   "where": "",
    "instead": "",
    "held_by": "",
    "count": 6680,
@@ -3506,8 +3506,8 @@
   },
   {
    "row": "createInput",
-   "status": "compat",
-   "where": "ObjectCall",
+   "status": "unknown",
+   "where": "",
    "instead": "",
    "held_by": "",
    "count": 20637,
@@ -3526,7 +3526,7 @@
   },
   {
    "row": "reload",
-   "status": "native",
+   "status": "compat",
    "where": "ObjectCall",
    "instead": "",
    "held_by": "",
@@ -3546,7 +3546,7 @@
   },
   {
    "row": "setVar",
-   "status": "native",
+   "status": "compat",
    "where": "ObjectCall",
    "instead": "",
    "held_by": "",
@@ -3556,8 +3556,8 @@
   },
   {
    "row": "editInput",
-   "status": "compat",
-   "where": "ObjectCall",
+   "status": "unknown",
+   "where": "",
    "instead": "",
    "held_by": "",
    "count": 38689,
@@ -3566,8 +3566,8 @@
   },
   {
    "row": "getInputs",
-   "status": "compat",
-   "where": "ObjectCall",
+   "status": "unknown",
+   "where": "",
    "instead": "",
    "held_by": "",
    "count": 16053,
@@ -3576,8 +3576,8 @@
   },
   {
    "row": "clearInputs",
-   "status": "compat",
-   "where": "ObjectCall",
+   "status": "unknown",
+   "where": "",
    "instead": "",
    "held_by": "",
    "count": 5365,
@@ -3586,8 +3586,8 @@
   },
   {
    "row": "getButtons",
-   "status": "compat",
-   "where": "ObjectCall",
+   "status": "unknown",
+   "where": "",
    "instead": "",
    "held_by": "",
    "count": 3950,
@@ -3626,7 +3626,7 @@
   },
   {
    "row": "setName",
-   "status": "native",
+   "status": "compat",
    "where": "ObjectCall",
    "instead": "",
    "held_by": "",
@@ -3656,7 +3656,7 @@
   },
   {
    "row": "setDescription",
-   "status": "native",
+   "status": "compat",
    "where": "ObjectCall",
    "instead": "",
    "held_by": "",
@@ -3666,7 +3666,7 @@
   },
   {
    "row": "call",
-   "status": "native",
+   "status": "compat",
    "where": "ObjectCall",
    "instead": "",
    "held_by": "",
@@ -3686,7 +3686,7 @@
   },
   {
    "row": "clearContextMenu",
-   "status": "native",
+   "status": "compat",
    "where": "ObjectCall",
    "instead": "",
    "held_by": "",
@@ -3706,7 +3706,7 @@
   },
   {
    "row": "setColorTint",
-   "status": "native",
+   "status": "compat",
    "where": "ObjectCall",
    "instead": "",
    "held_by": "",
@@ -3746,7 +3746,7 @@
   },
   {
    "row": "destruct",
-   "status": "native",
+   "status": "compat",
    "where": "ObjectCall",
    "instead": "",
    "held_by": "",
@@ -3836,8 +3836,8 @@
   },
   {
    "row": "removeInput",
-   "status": "compat",
-   "where": "ObjectCall",
+   "status": "unknown",
+   "where": "",
    "instead": "",
    "held_by": "",
    "count": 976,
@@ -3996,7 +3996,7 @@
   },
   {
    "row": "setLuaScript",
-   "status": "native",
+   "status": "compat",
    "where": "ObjectCall",
    "instead": "",
    "held_by": "",
@@ -4006,7 +4006,7 @@
   },
   {
    "row": "setState",
-   "status": "native",
+   "status": "compat",
    "where": "ObjectCall",
    "instead": "",
    "held_by": "",
@@ -4036,7 +4036,7 @@
   },
   {
    "row": "getTags",
-   "status": "native",
+   "status": "compat",
    "where": "ObjectCall",
    "instead": "",
    "held_by": "",
@@ -4626,7 +4626,7 @@
   },
   {
    "row": "addTag",
-   "status": "native",
+   "status": "compat",
    "where": "ObjectCall",
    "instead": "",
    "held_by": "",
@@ -4866,7 +4866,7 @@
   },
   {
    "row": "destroy",
-   "status": "native",
+   "status": "compat",
    "where": "ObjectCall",
    "instead": "",
    "held_by": "",
@@ -5236,7 +5236,7 @@
   },
   {
    "row": "getStateId",
-   "status": "native",
+   "status": "compat",
    "where": "ObjectCall",
    "instead": "",
    "held_by": "",
@@ -5256,7 +5256,7 @@
   },
   {
    "row": "getTable",
-   "status": "native",
+   "status": "compat",
    "where": "ObjectCall",
    "instead": "",
    "held_by": "",
@@ -5636,8 +5636,8 @@
   },
   {
    "row": "removeButton",
-   "status": "compat",
-   "where": "ObjectCall",
+   "status": "unknown",
+   "where": "",
    "instead": "",
    "held_by": "",
    "count": 0,
@@ -5646,7 +5646,7 @@
   },
   {
    "row": "removeTag",
-   "status": "native",
+   "status": "compat",
    "where": "ObjectCall",
    "instead": "",
    "held_by": "",
@@ -5796,7 +5796,7 @@
   },
   {
    "row": "setMemo",
-   "status": "native",
+   "status": "compat",
    "where": "ObjectCall",
    "instead": "",
    "held_by": "",
@@ -5826,7 +5826,7 @@
   },
   {
    "row": "setTable",
-   "status": "native",
+   "status": "compat",
    "where": "ObjectCall",
    "instead": "",
    "held_by": "",
@@ -5836,7 +5836,7 @@
   },
   {
    "row": "setTags",
-   "status": "native",
+   "status": "compat",
    "where": "ObjectCall",
    "instead": "",
    "held_by": "",
@@ -6088,7 +6088,7 @@
   },
   {
    "row": "broadcastToAll",
-   "status": "native",
+   "status": "compat",
    "where": "GlobalFunctionCall",
    "instead": "",
    "held_by": "",
@@ -6123,6 +6123,16 @@
    "instead": "",
    "held_by": "",
    "count": 1525,
+   "modules": 14,
+   "audited": ""
+  },
+  {
+   "row": "destroyObject",
+   "status": "compat",
+   "where": "GlobalFunctionCall",
+   "instead": "",
+   "held_by": "",
+   "count": 20,
    "modules": 14,
    "audited": ""
   },
@@ -6177,6 +6187,16 @@
    "audited": ""
   },
   {
+   "row": "vector",
+   "status": "compat",
+   "where": "GlobalFunctionCall",
+   "instead": "",
+   "held_by": "",
+   "count": 117,
+   "modules": 7,
+   "audited": ""
+  },
+  {
    "row": "addHotkey",
    "status": "compat",
    "where": "GlobalFunctionCall",
@@ -6198,7 +6218,7 @@
   },
   {
    "row": "printToAll",
-   "status": "native",
+   "status": "compat",
    "where": "GlobalFunctionCall",
    "instead": "",
    "held_by": "",
@@ -6227,10 +6247,40 @@
    "audited": ""
   },
   {
-   "row": "allowAutomaticRewindSave",
+   "row": "addNotebookTab",
+   "status": "compat",
+   "where": "GlobalFunctionCall",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0,
+   "audited": ""
+  },
+  {
+   "row": "allowRewindStore",
    "status": "dropped",
    "where": "console commands and other host controls (decided 2026-11-06)",
    "instead": "the app's own console and settings",
+   "held_by": "",
+   "count": 0,
+   "modules": 0,
+   "audited": ""
+  },
+  {
+   "row": "callLuaFunctionInOtherScript",
+   "status": "compat",
+   "where": "GlobalFunctionCall",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0,
+   "audited": ""
+  },
+  {
+   "row": "callLuaFunctionInOtherScriptWithParams",
+   "status": "compat",
+   "where": "GlobalFunctionCall",
+   "instead": "",
    "held_by": "",
    "count": 0,
    "modules": 0,
@@ -6257,6 +6307,16 @@
    "audited": ""
   },
   {
+   "row": "clearChooseInHand",
+   "status": "dropped",
+   "where": "hands are seats here (decided 2026-11-06)",
+   "instead": "sit players at their seats",
+   "held_by": "",
+   "count": 0,
+   "modules": 0,
+   "audited": ""
+  },
+  {
    "row": "clearConsoleCommands",
    "status": "dropped",
    "where": "console commands and other host controls (decided 2026-11-06)",
@@ -6268,7 +6328,7 @@
   },
   {
    "row": "clearContextMenu",
-   "status": "native",
+   "status": "compat",
    "where": "GlobalFunctionCall",
    "instead": "",
    "held_by": "",
@@ -6278,7 +6338,7 @@
   },
   {
    "row": "clearHotkeys",
-   "status": "native",
+   "status": "compat",
    "where": "GlobalFunctionCall",
    "instead": "",
    "held_by": "",
@@ -6302,6 +6362,16 @@
    "where": "compat.erase_all: every stroke on the drawing board",
    "instead": "",
    "held_by": "ModuleHelpersTests",
+   "count": 0,
+   "modules": 0,
+   "audited": ""
+  },
+  {
+   "row": "color",
+   "status": "compat",
+   "where": "GlobalFunctionCall",
+   "instead": "",
+   "held_by": "",
    "count": 0,
    "modules": 0,
    "audited": ""
@@ -6367,9 +6437,29 @@
    "audited": ""
   },
   {
+   "row": "currentChooseInHand",
+   "status": "dropped",
+   "where": "hands are seats here (decided 2026-11-06)",
+   "instead": "sit players at their seats",
+   "held_by": "",
+   "count": 0,
+   "modules": 0,
+   "audited": ""
+  },
+  {
    "row": "debugLog",
    "status": "compat",
    "where": "compat.log",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0,
+   "audited": ""
+  },
+  {
+   "row": "editNotebookTab",
+   "status": "compat",
+   "where": "GlobalFunctionCall",
    "instead": "",
    "held_by": "",
    "count": 0,
@@ -6417,6 +6507,26 @@
    "audited": ""
   },
   {
+   "row": "getGlobalScriptTable",
+   "status": "compat",
+   "where": "GlobalFunctionCall",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0,
+   "audited": ""
+  },
+  {
+   "row": "getGlobalScriptVar",
+   "status": "native",
+   "where": "GlobalFunctionCall",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0,
+   "audited": ""
+  },
+  {
    "row": "getGlobalTable",
    "status": "compat",
    "where": "game.get_var",
@@ -6430,6 +6540,26 @@
    "row": "getGlobalVar",
    "status": "compat",
    "where": "game.get_var",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0,
+   "audited": ""
+  },
+  {
+   "row": "getNotebookTabs",
+   "status": "compat",
+   "where": "GlobalFunctionCall",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0,
+   "audited": ""
+  },
+  {
+   "row": "getNotes",
+   "status": "compat",
+   "where": "GlobalFunctionCall",
    "instead": "",
    "held_by": "",
    "count": 0,
@@ -6458,7 +6588,7 @@
   },
   {
    "row": "getObjectsWithTag",
-   "status": "native",
+   "status": "compat",
    "where": "GlobalFunctionCall",
    "instead": "",
    "held_by": "",
@@ -6547,9 +6677,29 @@
    "audited": ""
   },
   {
+   "row": "inspect",
+   "status": "unknown",
+   "where": "",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0,
+   "audited": ""
+  },
+  {
    "row": "logFormat",
    "status": "compat",
    "where": "compat.log",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0,
+   "audited": ""
+  },
+  {
+   "row": "logString",
+   "status": "compat",
+   "where": "GlobalFunctionCall",
    "instead": "",
    "held_by": "",
    "count": 0,
@@ -6577,9 +6727,69 @@
    "audited": ""
   },
   {
+   "row": "removeNotebookTab",
+   "status": "compat",
+   "where": "GlobalFunctionCall",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0,
+   "audited": ""
+  },
+  {
+   "row": "sendExternalMessage",
+   "status": "stub",
+   "where": "GlobalFunctionCall",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0,
+   "audited": ""
+  },
+  {
+   "row": "setGlobalScriptTable",
+   "status": "compat",
+   "where": "GlobalFunctionCall",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0,
+   "audited": ""
+  },
+  {
+   "row": "setGlobalScriptVar",
+   "status": "compat",
+   "where": "GlobalFunctionCall",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0,
+   "audited": ""
+  },
+  {
    "row": "setGlobalTable",
    "status": "compat",
    "where": "game.set_var",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0,
+   "audited": ""
+  },
+  {
+   "row": "setLookingForPlayers",
+   "status": "stub",
+   "where": "GlobalFunctionCall",
+   "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0,
+   "audited": ""
+  },
+  {
+   "row": "setNotes",
+   "status": "compat",
+   "where": "GlobalFunctionCall",
    "instead": "",
    "held_by": "",
    "count": 0,
@@ -6611,6 +6821,16 @@
    "status": "compat",
    "where": "GlobalFunctionCall",
    "instead": "",
+   "held_by": "",
+   "count": 0,
+   "modules": 0,
+   "audited": ""
+  },
+  {
+   "row": "storeRewindState",
+   "status": "dropped",
+   "where": "console commands and other host controls (decided 2026-11-06)",
+   "instead": "the app's own console and settings",
    "held_by": "",
    "count": 0,
    "modules": 0,
