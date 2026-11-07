@@ -9,16 +9,17 @@ namespace KTable.App;
 
 public partial class HolderWindow : FloatPanel
 {
-    const float Beside = 16, SmallestPx = 10, DragFrom = 10, TakenOutApart = 1.5f, TakenOutFrom = 2;
-    static readonly Vector2 StartSize = new(300, 260);
+    const float Beside = 16, DragFrom = 10, TakenOutApart = 1.5f, TakenOutFrom = 2, StartWidth = 300;
+    const int RowsShown = 3;
     static readonly Dictionary<(string Layer, string Id), HolderWindow> Shown = new();
 
     readonly Session _s;
     readonly Table _t;
     readonly string _layer, _id;
     readonly ItemList _list;
+    readonly Control _tiles;
     readonly LineEdit _search;
-    readonly Label _empty;
+    readonly Label _empty, _dragHint;
     readonly Button _all;
     string _drawn = "\0";
     int _gen;
@@ -33,7 +34,7 @@ public partial class HolderWindow : FloatPanel
         _id = holder.Piece.Id;
         MouseFilter = MouseFilterEnum.Stop;
         Resizable = true;
-        CustomMinimumSize = StartSize;
+        CustomMinimumSize = new Vector2(StartWidth, 0);
         AddThemeStyleboxOverride("panel", Ui.Panel());
         Body.SizeFlagsVertical = SizeFlags.ExpandFill;
         _search = new LineEdit { PlaceholderText = "search name, tag…", ClearButtonEnabled = true, SizeFlagsHorizontal = SizeFlags.ExpandFill };
@@ -42,13 +43,15 @@ public partial class HolderWindow : FloatPanel
         _list = PieceTiles.List();
         _list.ItemActivated += i => TakeOut(Meta((int)i));
         WireDrag();
-        Body.AddChild(PieceTiles.Host(_list));
+        _tiles = PieceTiles.Host(_list);
+        Body.AddChild(_tiles);
         _empty = Ui.Hint("Empty · hold pieces over it on the table a moment, or drop them here");
         Body.AddChild(_empty);
         _all = Ui.Btn("Take all out", TakeAllOut, "Sets them out in a row beside it");
         _all.SizeFlagsHorizontal = SizeFlags.ShrinkBegin;
         Body.AddChild(_all);
-        Body.AddChild(Ui.Hint("Drag a piece out onto the table · double-click sets it beside"));
+        _dragHint = Ui.Hint("Drag a piece out onto the table · double-click sets it beside");
+        Body.AddChild(_dragHint);
         Grabbed = _ => _moving = true;
         Moved = (_, _) => { _moving = false; if (OnScreen() is { } a) _offset = Position - a.at; };
         Closed = QueueFree;
@@ -92,6 +95,7 @@ public partial class HolderWindow : FloatPanel
     {
         if (Holder == null) { QueueFree(); return; }
         Redraw(force: false);
+        FitRows();
         bool carrying = _t.Hand.Holding && GetGlobalRect().HasPoint(Pointer.Global(this));
         SelfModulate = carrying ? Ui.AccentInk : Colors.White;
         if (!_moving) Follow();
@@ -111,7 +115,7 @@ public partial class HolderWindow : FloatPanel
 
     void Follow()
     {
-        if (OnScreen() is not { } a || !GetViewportRect().HasPoint(a.at) || a.radius < SmallestPx) { QueueFree(); return; }
+        if (OnScreen() is not { } a || !GetViewportRect().HasPoint(a.at)) return;
         var size = Size;
         var right = new Vector2(a.at.X + a.radius + Beside, a.at.Y - size.Y / 2);
         var left = new Vector2(a.at.X - a.radius - Beside - size.X, right.Y);
@@ -142,9 +146,34 @@ public partial class HolderWindow : FloatPanel
             _list.SetItemTooltip(idx, d == null ? name : $"{name}\n{d.Name}\n{d.Size.W:0.##} × {d.Size.H:0.##} units · {PiecesPanel.ShapeWord(d)}");
             if (d != null) PieceTiles.Picture(_s, _list, idx, d, _s.Store.PackOfDef(p.Def), () => gen == _gen);
         }
-        _empty.Visible = top.Count == 0;
+        bool empty = top.Count == 0;
+        _empty.Visible = empty;
+        _search.Visible = _tiles.Visible = _dragHint.Visible = !empty;
         _all.Visible = top.Count > 1;
         _all.Disabled = !CanTake;
+    }
+
+    void FitRows()
+    {
+        if (!IsInstanceValid(this)) return;
+        float tall = 0;
+        if (_tiles.Visible && _list.ItemCount > 0 && _list.Size.X > 0)
+        {
+            float first = _list.GetItemRect(0).Position.Y, row = first, bottom = 0;
+            int rows = 1;
+            for (int i = 0; i < _list.ItemCount; i++)
+            {
+                var r = _list.GetItemRect(i);
+                if (r.Position.Y > row && ++rows > RowsShown) break;
+                row = r.Position.Y;
+                bottom = Mathf.Max(bottom, r.End.Y);
+            }
+            var box = _list.GetThemeStylebox("panel");
+            tall = bottom - first + (box?.GetMinimumSize().Y ?? 0) + _list.GetThemeConstant("v_separation");
+        }
+        if (Mathf.IsEqualApprox(_tiles.CustomMinimumSize.Y, tall)) return;
+        _tiles.CustomMinimumSize = new Vector2(0, tall);
+        ResetSize();
     }
 
     static List<PieceInstance> Loose(List<PieceInstance> stowed)
