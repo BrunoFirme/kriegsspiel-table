@@ -27,6 +27,7 @@ public partial class Hud : CanvasLayer
     internal StampPanel Stamps = null!;
     internal ReliefPanel? Relief;
     internal FormationPanel FormPanel = null!;
+    internal RangePanel Ranging = null!;
     internal LayersPanel Boards = null!;
     internal PovPanel Pov = null!;
     internal LogPanel LogPanel = null!;
@@ -150,11 +151,15 @@ public partial class Hud : CanvasLayer
             else ClosePanel("relief");
             if (T.Tool == Tool.Formation) OpenPanel("formation");
             else ClosePanel("formation");
+            if (T.Tool == Tool.Range) OpenPanel("range");
+            else ClosePanel("range");
+            Ranging.Rebuild();
             FormPanel.Rebuild();
             Strip.SyncToggles();
         });
         Hook<Action<string>>(h => T.Hint += h, h => T.Hint -= h, Say);
         Hook<Action>(h => T.Forms.Changed += h, h => T.Forms.Changed -= h, FormPanel.Rebuild);
+        Hook<Action>(h => T.Ranges.ReachChanged += h, h => T.Ranges.ReachChanged -= h, Ranging.Sync);
         Hook<Action<string, Command>>(h => T.ReliefShaped += h, h => T.ReliefShaped -= h, Map.Reliefs.Share);
         Hook<Action>(h => T.ReliefPicked += h, h => T.ReliefPicked -= h, () => Relief?.Rebuild());
         Hook<Action<Rect2?>>(h => T.ScreenRect += h, h => T.ScreenRect -= h, r => Rect.SetRect(r));

@@ -156,7 +156,7 @@ right-click it for its **Tint**. To turn a die by hand, point at it and press th
 
 ### Ranging
 
-Pick the rings and click a piece: the wheel sets the reach, and a piece with a **range** counter uses its own.
+Pick the rings and click a piece: type the reach in the **Ranging** panel or set it with the wheel, and a piece with a **range** counter uses its own.
 
 ### Calibrate
 

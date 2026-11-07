@@ -17,12 +17,21 @@ sealed class RangeRings
         _selection = selection;
     }
 
+    public const double LeastReach = 1, MostReach = 1_000_000;
+
     double? _standingReach;
+
+    public event Action? ReachChanged;
 
     public double RangeMetres
     {
         get => _standingReach ?? (Scaled ? 500 : 10);
-        set => _standingReach = value;
+        set
+        {
+            _standingReach = Math.Clamp(value, LeastReach, MostReach);
+            ReachChanged?.Invoke();
+            if (_c.Tool == Tool.Range) _c.Say(Hint());
+        }
     }
 
     bool Scaled => _c.S.View.Calibration.UnitsPerMeter is { } u && u > 0;
@@ -39,19 +48,22 @@ sealed class RangeRings
 
     double RangeToUnits(double reach) => _c.S.View.Calibration.UnitsPerMeter is { } upm && upm > 0 ? reach * upm : reach;
 
+    public const double ScaledStep = 1, UnscaledStep = 0.1;
+
+    public static double Shown(double reach, Calibration cal) => cal.UnitsPerMeter is { } u && u > 0 ? reach * cal.PerMetre : reach;
+
+    public static string Words(double reach, Calibration cal) => string.Format(System.Globalization.CultureInfo.InvariantCulture,
+        cal.UnitsPerMeter is { } u && u > 0 ? "{0:0} {1}" : "{0:0.0} {1}", Shown(reach, cal), cal.UnitName);
+
     public string Hint()
     {
         if (_selection.Ids.Count == 0) return "Ranging · click a piece to see how far it reaches.";
-        bool scale = _c.S.View.Calibration.UnitsPerMeter is { } u && u > 0;
-        var inv = System.Globalization.CultureInfo.InvariantCulture;
-        var reach = scale ? string.Format(inv, "{0:#,0} m", RangeMetres) : string.Format(inv, "{0:0.##} u", RangeMetres);
-        return $"Ranging · click a piece to measure from it · wheel over it = {reach} · a piece with a \"range\" counter uses its own · Esc to finish.";
+        return $"Ranging · click a piece to measure from it · wheel over it = {Words(RangeMetres, _c.S.View.Calibration)} · a piece with a \"range\" counter uses its own · Esc to finish.";
     }
 
     public void Wheel(float f)
     {
-        RangeMetres = Math.Clamp(RangeMetres * (f < 1 ? 1.1 : 1 / 1.1), 1, 1_000_000);
-        _c.Say(Hint());
+        RangeMetres = RangeMetres * (f < 1 ? 1.1 : 1 / 1.1);
     }
 
     readonly HashSet<string> _labels = new();
@@ -78,14 +90,14 @@ sealed class RangeRings
         int which = 0;
         foreach (var n in _selection.Nodes)
         {
-            double r = RangeToUnits(RangeOf(n));
+            double reach = RangeOf(n), r = RangeToUnits(reach);
             if (r <= 0.01) continue;
-            DrawRing(n, r, which, mat, faint, wash);
+            DrawRing(n, r, Words(reach, _c.S.View.Calibration), which, mat, faint, wash);
             which++;
         }
     }
 
-    void DrawRing(PieceNode n, double r, int which, StandardMaterial3D mat, StandardMaterial3D faint, StandardMaterial3D wash)
+    void DrawRing(PieceNode n, double r, string words, int which, StandardMaterial3D mat, StandardMaterial3D faint, StandardMaterial3D wash)
     {
         var overlay = _overlay;
         var mesh = overlay.Mesh;
@@ -117,7 +129,7 @@ sealed class RangeRings
             Seg(n.Piece.Pos + new Vec2(u.X * r, u.Z * r), n.Piece.Pos + new Vec2(u.X * (r + overlay.Px(6)), u.Z * (r + overlay.Px(6))));
         }
         _c.Labels.Set($"range:{n.Piece.Id}", Coords.ToWorld(edge, 0.3f),
-            Fmt.Distance(r, _c.S.View.Calibration), new Color(1f, 0.78f, 0.5f), 13, new Vector2(0, -12), centered: true);
+            words, new Color(1f, 0.78f, 0.5f), 13, new Vector2(0, -12), centered: true);
         _labels.Add(n.Piece.Id);
     }
 }

@@ -165,7 +165,12 @@ sealed class ToolStrip : HudPart
             case "gizmo": return ToolB(Tool.Transform, "gizmo", $"Turn / resize   ({Cfg.Keys.Label("gizmo")})", "A ring around the selection: drag the round knob to turn, the square knob to resize");
             case "ruler": return ToolB(Tool.Ruler, "ruler", $"Ruler   ({Cfg.Keys.Label("ruler")})", "Drag to measure, in whatever the scenario's Distances are set to");
             case "calibrate": return ToolB(Tool.Calibrate, "calibrate", "Calibrate", CalibrateDetail());
-            case "range": return ToolB(Tool.Range, "range", "Ranging", "Click a piece to see how far it reaches: the wheel sets the standing reach, and a piece carrying a \"range\" counter uses its own");
+            case "range":
+            {
+                var b = ToolB(Tool.Range, "range", "Ranging", "Click a piece to see how far it reaches: type the standing reach in its panel or set it with the wheel, and a piece carrying a \"range\" counter uses its own");
+                Buttons["range"] = b;
+                return b;
+            }
             case "sighting":
             {
                 var b = ToolB(Tool.Sighting, "sighting", $"POV capture   ({Cfg.Keys.Label("sighting")})", "The picture a piece would send home: from above, trace the edge of what it can see, or look out from its own eyes. The shot goes to the clipboard and the capture folder. The wheel sets its reach; Alt + wheel zooms in to trace");

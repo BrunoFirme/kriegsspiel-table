@@ -70,6 +70,7 @@ public partial class Hud
         Stamps = new StampPanel(Ctx, this);
         if (S.IsUmpire) Relief = new ReliefPanel(Ctx, this);
         FormPanel = new FormationPanel(Ctx, this);
+        Ranging = new RangePanel(Ctx, this);
         Boards = new LayersPanel(Ctx, MakePanel("boards", "Layers"), Paint, Strip);
         Pov = new PovPanel(Ctx, this, Captures);
         LogPanel = new LogPanel(Ctx, MakePanel("log", "Log"));
@@ -207,6 +208,7 @@ public partial class Hud
         if (key == "relief" && T != null && T.Tool == Tool.Relief) T.SetTool(Tool.Select);
         if (key == "decals" && T != null && T.Tool == Tool.Decal) T.SetTool(Tool.Select);
         if (key == "formation" && T != null && T.Tool == Tool.Formation) T.SetTool(Tool.Select);
+        if (key == "range" && T != null && T.Tool == Tool.Range) T.SetTool(Tool.Select);
         if (key == "pieces" && T != null && T.Tool == Tool.Place) T.SetTool(Tool.Select);
         if (key == "sighting" && T != null && T.Draft != null) T.CancelSighting();
         if (key == "log") { Cfg.LogOpen = false; Cfg.Save(); }
