@@ -79,7 +79,6 @@ class Api:
         for lua, m in api["object"].items():
             self.object_by_cs.setdefault(m["cs"] if "." not in lua else lua.split(".")[0] + "." + m["cs"], lua)
         self.ns_by_cs = {ns: {m["cs"]: lua for lua, m in members.items()} for ns, members in api["namespaces"].items()}
-        self.global_by_cs = {m["cs"]: lua for lua, m in api["global"].items()}
         self.events = set(api["events"])
         self.props = {lua for lua, m in api["object"].items() if m["kind"] == "property" and "." not in lua}
 
@@ -101,10 +100,7 @@ class Api:
         return None
 
     def global_member(self, name):
-        for f in folds(name):
-            if f in self.global_by_cs:
-                return self.global_by_cs[f]
-        return None
+        return name if name in self.api["global"] else None
 
 
 class Usage:
@@ -262,6 +258,10 @@ def translator_rules():
         for m in CASE_RX.finditer(body):
             for name in QUOTED_RX.findall(m.group(1)):
                 target[name] = (kinds[m.group(2)], section)
+        if section == "ObjectCall":
+            for m in ARROW_RX.finditer(body):
+                for name in QUOTED_RX.findall(m.group(1)):
+                    target.setdefault(name, (kinds[m.group(2)], section))
     for name in rules["props"]:
         rules["object"].setdefault(name, ("compat", "ObjectProps (get_prop/set_prop)"))
     ns_body = sections.get("GlobalObjectCall", "")
@@ -511,8 +511,8 @@ def main():
             e = next(x for x in ledger[area] if x["row"] == row)
             print(f"{area}\t{row}\t{e['status']}\t{e['count']}\t{e['modules']}")
     if not a.quiet:
-        for area, used, decided_n, unknown, open_rows, total in coverage(ledger):
-            print(f"{area:11s} used {used:4d}  decided {decided_n:4d}  unknown {unknown:4d}  not audited {open_rows:4d}  of {total}")
+        for area, used, decided_n, unknown, left_n, total in coverage(ledger):
+            print(f"{area:11s} used {used:4d}  decided {decided_n:4d}  unknown {unknown:4d}  not audited {left_n:4d}  of {total}")
     sys.exit(0 if ok else 1)
 
 

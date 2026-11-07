@@ -23,6 +23,7 @@ public partial class HolderWindow : FloatPanel
     readonly Button _all;
     string _drawn = "\0";
     int _gen;
+    int _most = -1;
     Vector2? _offset;
     bool _moving;
 
@@ -59,10 +60,16 @@ public partial class HolderWindow : FloatPanel
         Ui.SwallowWheel(this);
     }
 
-    public static void Open(Control root, Session s, Table t, PieceNode holder)
+    public static void Open(Control root, Session s, Table t, PieceNode holder, int most = -1)
     {
-        if (Shown.TryGetValue((holder.Layer, holder.Piece.Id), out var already) && IsInstanceValid(already)) { already.MoveToFront(); return; }
-        var w = new HolderWindow(s, t, holder);
+        if (Shown.TryGetValue((holder.Layer, holder.Piece.Id), out var already) && IsInstanceValid(already))
+        {
+            already._most = most;
+            already.Redraw(force: true);
+            already.MoveToFront();
+            return;
+        }
+        var w = new HolderWindow(s, t, holder) { _most = most };
         Shown[(holder.Layer, holder.Piece.Id)] = w;
         root.AddChild(w);
         w.Redraw(force: true);
@@ -127,6 +134,7 @@ public partial class HolderWindow : FloatPanel
     {
         var stowed = Holder?.Piece.Stowed ?? new List<PieceInstance>();
         var top = Loose(stowed);
+        if (_most >= 0 && top.Count > _most) top = top.Take(_most).ToList();
         var sig = _search.Text + "|" + string.Join(",", top.Select(p => p.Id + ":" + (p.Label ?? "")));
         if (!force && sig == _drawn) return;
         _drawn = sig;
@@ -222,6 +230,7 @@ public partial class HolderWindow : FloatPanel
     {
         if (!CanTake || Holder is not { } h || h.Piece.Stowed is not { Count: > 0 } stowed) return;
         var top = Loose(stowed);
+        if (_most >= 0 && top.Count > _most) top = top.Take(_most).ToList();
         _s.Do(TakingOut(_s, _layer, h.Piece,
             top.Select((p, i) => (Command)new Unstow { Layer = _layer, Holder = _id, Id = p.Id, Pos = new Vec2(h.Piece.Pos.X + TakenOutFrom + i * TakenOutApart, h.Piece.Pos.Z) }).ToList()));
     }

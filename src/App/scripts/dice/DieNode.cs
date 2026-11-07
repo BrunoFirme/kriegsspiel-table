@@ -223,7 +223,12 @@ public partial class PieceNode
 
     public override void _Process(double delta)
     {
-        if (!_spinning) { SetProcess(false); return; }
+        bool gliding = StepGlide(delta);
+        if (!_spinning)
+        {
+            if (!gliding) SetProcess(false);
+            return;
+        }
         _spinT += delta;
         float t = (float)_spinT;
         float hop = 0.55f * Mathf.Abs(Mathf.Sin(t * Mathf.Pi / 0.5f)) * Mathf.Exp(-t * 0.7f);

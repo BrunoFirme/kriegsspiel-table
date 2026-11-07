@@ -220,6 +220,12 @@ Read from `self` or from any piece `board.find` or `board.pieces` hands back. Fi
 | [`self.local_unit`](#selflocal_unit) | For a model that came from a module, what one unit of its script's local frame is in piece units: { x =, z = }; nil for every other piece. |
 | [`self.shape`](#selfshape) | Its outline at its state: "box", "rounded", "circle", "hex", or "alpha" for a token cut along its picture. |
 | [`self.face_down`](#selfface_down) | Turned over. |
+| [`self.interactable`](#selfinteractable) | Whether hands can take it (set_interactable). |
+| [`self.held_by`](#selfheld_by) | The umpire carrying it now, or nil. |
+| [`self.source`](#selfsource) | For a kind converted from a module: { type =, links = { image =, mesh =, … }, top =, tag =, tags = } — the module object's type, its picture and model links, its top surface in its own units, the kind of object it was (Tile, Figurine, Board, Bag…) and its own tags; for a piece of several states, `states` lists each state's { type, guid, description, gm_notes, memo, script_state, tags, script } as the module kept them; nil otherwise. |
+| [`self.highlight`](#selfhighlight) | The colour it is ringed in, or nil (set_highlight). |
+| [`self.book_highlight`](#selfbook_highlight) | For a book, the box marked on the page it is open at: { left =, bottom =, right =, top = }, each from 0 to 1 across the page from its lower left corner; nil for none. Turning the page clears it. |
+| [`self.holds`](#selfholds) | Whether it is a holder that other pieces can be stowed in: a piece holding some, one made a holder, or a kind tagged bag. |
 | [`self.locked`](#selflocked) | Pinned to the table: not dragged, turned or resized by hand. |
 | [`self.sticky`](#selfsticky) | Carries the pieces resting on it when it is moved; attached pieces go with it either way. |
 | [`self.box_selected`](#selfbox_selected) | Taken by a selection box dragged over it. |
@@ -568,7 +574,79 @@ Turned over.
 
 **Type** `boolean`, read-only.
 
-**Module call** `is_face_down` · **See also** [`self.flip`](#selfflip), [`on_flip`](#on_flip)
+**Module call** `is_face_down`
+
+### `self.interactable`
+
+```lua
+self.interactable
+```
+
+Whether hands can take it (set_interactable).
+
+**Type** `boolean`, read-only.
+
+**Module call** `interactable`
+
+### `self.held_by`
+
+```lua
+self.held_by
+```
+
+The umpire carrying it now, or nil.
+
+**Type** `Who`, read-only.
+
+**Module call** `held_by_color`
+
+### `self.source`
+
+```lua
+self.source
+```
+
+For a kind converted from a module: { type =, links = { image =, mesh =, … }, top =, tag =, tags = } — the module object's type, its picture and model links, its top surface in its own units, the kind of object it was (Tile, Figurine, Board, Bag…) and its own tags; for a piece of several states, `states` lists each state's { type, guid, description, gm_notes, memo, script_state, tags, script } as the module kept them; nil otherwise.
+
+**Type** `table`, read-only.
+
+**Module call** `name`
+
+### `self.highlight`
+
+```lua
+self.highlight
+```
+
+The colour it is ringed in, or nil (set_highlight).
+
+**Type** `string`, read-only.
+
+**Module call** `highlightOn`
+
+### `self.book_highlight`
+
+```lua
+self.book_highlight
+```
+
+For a book, the box marked on the page it is open at: { left =, bottom =, right =, top = }, each from 0 to 1 across the page from its lower left corner; nil for none. Turning the page clears it.
+
+**Type** `table`, read-only.
+
+**Module call** `Book.setHighlight`
+
+### `self.holds`
+
+```lua
+self.holds
+```
+
+Whether it is a holder that other pieces can be stowed in: a piece holding some, one made a holder, or a kind tagged bag.
+
+**Type** `boolean`, read-only.
+
+**Module call** `getQuantity` · **See also** [`self.flip`](#selfflip), [`on_flip`](#on_flip)
 
 ### `self.locked`
 
@@ -805,12 +883,17 @@ Each call is a change every umpire sees, taken back with Ctrl+Z by the umpire wh
 | [`self.set_locked`](#selfset_locked) | Pins it to the table, or lets it go. |
 | [`self.set_box_selected`](#selfset_box_selected) | Whether a selection box dragged over it takes it. |
 | [`self.set_measures_moves`](#selfset_measures_moves) | Whether it shows how far it is moved while it is held. |
+| [`self.set_interactable`](#selfset_interactable) | Whether hands can take it: off, it cannot be picked up, dragged, selected or opened, though its buttons still press. |
+| [`self.set_highlight`](#selfset_highlight) | Rings it in a colour on every screen; nil takes the ring away. |
+| [`self.set_book_highlight`](#selfset_book_highlight) | Marks a box on the page a book is open at, in its reader on every screen; nil clears it. Turning the page clears it too. |
 | [`self.set_sticky`](#selfset_sticky) | Whether it carries the pieces resting on it when it is moved. |
 | [`self.set_face`](#selfset_face) | Turns a die to show a side, from 1; false when it has no such side. |
 | [`self.set_value`](#selfset_value) | Turns a die to the first side with this value; false when no side has it. |
 | [`self.set_faces`](#selfset_faces) | Gives this die sides of its own; nil gives it back its kind's. |
 | [`self.set_face_picture`](#selfset_face_picture) | Shows a picture on the piece's face in place of its kind's: a web link is fetched first; nil puts the kind's back. |
 | [`self.set_lettering`](#selfset_lettering) | Changes the text drawn on the piece: any of text, size and color; nil takes the lettering away. |
+| [`self.show_glide`](#selfshow_glide) | Shows it gliding towards a point or a heading on every screen, pulled and slowed as a module's smooth move is; the piece itself stays where it is until set_pos or set_rot puts it there. |
+| [`self.play_effect`](#selfplay_effect) | Plays an effect once on every screen, one round of it, whether it is running or not; false for a piece that is not an effect. |
 | [`self.set_effect_on`](#selfset_effect_on) | Starts or stops an effect. |
 | [`self.set_worth`](#selfset_worth) | Sets what the piece counts for, and optionally the groups it adds up with. |
 | [`self.roll`](#selfroll) | Rolls a die, or turns a piece of several states to one at random; false for anything else. |
@@ -828,6 +911,7 @@ Each call is a change every umpire sees, taken back with Ctrl+Z by the umpire wh
 | [`self.attach`](#selfattach) | Puts another piece on this one, to ride with it. |
 | [`self.detach`](#selfdetach) | Takes this piece off the one it rides on. |
 | [`self.stowed`](#selfstowed) | The pieces it holds off the table, first in first: { id =, name =, guid =, def =, held = }, held being how many that piece holds in turn. |
+| [`self.show_contents`](#selfshow_contents) | Opens the window of what it holds on that umpire's screen, as if they had opened it; false when it holds nothing by its kind or the umpire is not here. |
 | [`self.stow`](#selfstow) | Takes another piece off the table into this one, with whatever rides on it; a piece this one rides on is refused. |
 | [`self.unstow`](#selfunstow) | Puts a held piece back on the table and returns it: which is its id, guid, its number in stowed, or nothing for the next by the holder's take order (first, last or random); place is { x =, z = } or a piece, else beside this one; rot turns it. |
 | [`self.delete`](#selfdelete) | Takes the piece off the table (on_destroy runs first). |
@@ -1039,6 +1123,48 @@ Whether it shows how far it is moved while it is held.
 
 **Module call** `measure_movement` · **See also** [`self.measures_moves`](#selfmeasures_moves)
 
+### `self.set_interactable`
+
+```lua
+self.set_interactable(on)
+```
+
+Whether hands can take it: off, it cannot be picked up, dragged, selected or opened, though its buttons still press.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `on` | `boolean` | _Optional._ true, or no argument, lets hands take it; false keeps them off. |
+
+**Module call** `interactable`
+
+### `self.set_highlight`
+
+```lua
+self.set_highlight(color)
+```
+
+Rings it in a colour on every screen; nil takes the ring away.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `color` | `Color` | _Optional._ The ring's colour, or nil. |
+
+**Module call** `highlightOn`
+
+### `self.set_book_highlight`
+
+```lua
+self.set_book_highlight(box)
+```
+
+Marks a box on the page a book is open at, in its reader on every screen; nil clears it. Turning the page clears it too.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `box` | `table` | _Optional._ { left =, bottom =, right =, top = }, each from 0 to 1 across the page from its lower left corner; nil clears the box. |
+
+**Module call** `Book.setHighlight`
+
 ### `self.set_sticky`
 
 ```lua
@@ -1132,6 +1258,39 @@ Changes the text drawn on the piece: any of text, size and color; nil takes the 
 | `changes` | `table?` | { text =, size =, color = }, each optional. |
 
 **Module call** `TextTool.setValue` · **See also** [`self.lettering`](#selflettering)
+
+### `self.show_glide`
+
+```lua
+self.show_glide{ x, z, rot, fast }
+```
+
+Shows it gliding towards a point or a heading on every screen, pulled and slowed as a module's smooth move is; the piece itself stays where it is until set_pos or set_rot puts it there.
+
+| Field | Type | Description |
+|---|---|---|
+| `x` | `number` | _Optional._ Where it glides to, with z; leave both out to only turn. |
+| `z` | `number` | _Optional._ Where it glides to, with x. |
+| `rot` | `number` | _Optional._ The heading it turns to, in degrees; leave it out to keep its heading. |
+| `fast` | `boolean` | _Optional._ true pulls it ten times as hard, as a module's fast smooth move does. |
+
+**Returns**: false when neither a point nor a heading is given.
+
+**Module call** `setPositionSmooth`
+
+### `self.play_effect`
+
+```lua
+self.play_effect(index)
+```
+
+Plays an effect once on every screen, one round of it, whether it is running or not; false for a piece that is not an effect.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `index` | `number` | _Optional._ Which one-off it is, from 0, handed on to on_burst; 0 when left out. |
+
+**Module call** `AssetBundle.playTriggerEffect` · **See also** [`self.set_effect_on`](#selfset_effect_on)
 
 ### `self.set_effect_on`
 
@@ -1376,6 +1535,23 @@ The pieces it holds off the table, first in first: { id =, name =, guid =, def =
 
 **Module call** `getObjects`
 
+### `self.show_contents`
+
+```lua
+self.show_contents(umpire, most)
+```
+
+Opens the window of what it holds on that umpire's screen, as if they had opened it; false when it holds nothing by its kind or the umpire is not here.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `umpire` | `Who` | Whose screen: an entry of game.umpires(). |
+| `most` | `number` | _Optional._ Show only the first this many; leave it out for all. |
+
+**Returns**: true when the window was sent.
+
+**Module call** `Container.search`
+
 ### `self.stow`
 
 ```lua
@@ -1500,7 +1676,7 @@ Widgets are drawn on a face in piece units: map units measured on the piece's ki
 | Name | What it does |
 |---|---|
 | [`self.button`](#selfbutton) | Draws a button and returns its index from 1. With no w and h it is a bare label that takes no clicks. on_click names a function called as fn(who, alt, index, piece). |
-| [`self.input`](#selfinput) | Draws an input box and returns its index. on_change names a function called as fn(who, value, index, piece) when the umpire has typed. |
+| [`self.input`](#selfinput) | Draws an input box and returns its index. on_change names a function called as fn(who, value, index, piece, typing) as the umpire types and when they leave the box. |
 | [`self.edit`](#selfedit) | Changes a widget: any of the fields button and input take. |
 | [`self.remove_widget`](#selfremove_widget) | Takes one widget away (the later ones move up). |
 | [`self.clear_widgets`](#selfclear_widgets) | Takes every widget away. |
@@ -1511,7 +1687,7 @@ Widgets are drawn on a face in piece units: map units measured on the piece's ki
 ### `self.button`
 
 ```lua
-self.button{ face, x, z, w, h, rot, label, font, color, text_color, tooltip, on_click, kind }
+self.button{ face, x, z, w, h, rot, label, font, color, text_color, hover_color, press_color, tooltip, on_click, kind }
 ```
 
 Draws a button and returns its index from 1. With no w and h it is a bare label that takes no clicks. on_click names a function called as fn(who, alt, index, piece).
@@ -1529,6 +1705,8 @@ Draws a button and returns its index from 1. With no w and h it is a bare label 
 | `color` | `Color` | _Optional._ The box's colour. |
 | `text_color` | `Color` | _Optional._ The text's colour. |
 | `tooltip` | `string` | _Optional._ Shown when the pointer rests on it. |
+| `hover_color` | `Color` | _Optional._ The box's colour under the pointer. Default: each of red, green and blue 0.2 nearer the middle grey. |
+| `press_color` | `Color` | _Optional._ The box's colour while pressed. Default: each 0.4 nearer the middle grey. |
 | `on_click` | `string` | _Optional._ The handler's name: called as fn(who, alt, index, piece); `alt` is true for a right-click. |
 | `kind` | `"button"\|"input"\|"label"` | _Optional._ "label" shows it but takes no clicks or typing: locked text. A module's button or input turned face down above the piece comes across this way. `edit` can change it. |
 
@@ -1553,10 +1731,10 @@ The handler is looked up in this script first, then in the global script. `"glob
 ### `self.input`
 
 ```lua
-self.input{ face, x, z, w, h, rot, value, placeholder, font, color, text_color, align, lines, tooltip, on_change, kind }
+self.input{ face, x, z, w, h, rot, value, placeholder, font, color, text_color, align, lines, tooltip, on_change, validation, tab, kind }
 ```
 
-Draws an input box and returns its index. on_change names a function called as fn(who, value, index, piece) when the umpire has typed.
+Draws an input box and returns its index. on_change names a function called as fn(who, value, index, piece, typing) as the umpire types and when they leave the box.
 
 | Field | Type | Description |
 |---|---|---|
@@ -1574,7 +1752,9 @@ Draws an input box and returns its index. on_change names a function called as f
 | `align` | `"left"\|"center"\|"right"` | _Optional._ Default "center". |
 | `lines` | `number` | _Optional._ Lines of text the box holds. Default 1. |
 | `tooltip` | `string` | _Optional._ Shown when the pointer rests on it. |
-| `on_change` | `string` | _Optional._ The handler's name: called as fn(who, value, index, piece) when the umpire finishes typing; text it returns replaces what was typed. |
+| `on_change` | `string` | _Optional._ The handler's name: called as fn(who, value, index, piece, typing) each time the text changes while the umpire types (typing true) and once more when they leave the box (typing false); text it returns replaces what was typed. |
+| `validation` | `"integer"\|"float"\|"alphanumeric"\|"username"\|"name"` | _Optional._ Keys the box takes: digits and a leading minus; also one point; letters and digits; lower-case letters and digits; or a name, capitalised by word. Default any. |
+| `tab` | `"next"\|"spaces"\|"none"` | _Optional._ What Tab does: go on to the piece's next input (the default), type four spaces, or nothing. |
 | `kind` | `"button"\|"input"\|"label"` | _Optional._ "label" shows its value but takes no typing: locked text. |
 
 **Returns** `number`: The widget's index, from 1.
@@ -1750,6 +1930,7 @@ The umpire board: every piece a script can reach is on it.
 |---|---|
 | [`board.find`](#boardfind) | The piece with that id or module GUID, or nil. |
 | [`board.pieces`](#boardpieces) | Every piece, or those that match { def =, tag =, name = }. |
+| [`board.kinds`](#boardkinds) | The kinds this game's packs hold, or those that match { link =, type =, tag = }: { id =, name =, tags =, source = }. |
 | [`board.spawn`](#boardspawn) | Puts a new piece of that kind on the board and returns it; its script starts at once. |
 | [`board.distance`](#boarddistance) | Metres between two pieces or two { x =, z = } points by the map's scale (map units when it has none). |
 | [`board.zones`](#boardzones) | The umpire zones: { id =, name =, owner =, contains = function(piece_or_point) }. |
@@ -1801,6 +1982,29 @@ end
 ```
 
 **Module call** `getObjects` · **See also** [`board.find`](#boardfind), [`self.tags`](#selftags)
+
+### `board.kinds`
+
+```lua
+board.kinds(filter)
+```
+
+The kinds this game's packs hold, or those that match { link =, type =, tag = }: { id =, name =, tags =, source = }.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `filter.link` | `string` | _Optional._ Only kinds made from this picture or model link (one of their source links). |
+| `filter.type` | `string` | _Optional._ Only kinds converted from this module object type, such as Custom_Token. |
+| `filter.tag` | `string` | _Optional._ Only kinds with this tag. |
+
+**Returns** `table[]`: A list; empty when nothing matches. `source` is the kind's module source, as a piece's `source` field gives it, or nil.
+
+```lua
+local found = board.kinds{ link = "https://example.test/infantry.png" }[1]
+if found then self.set_picture(found.id) end
+```
+
+**See also** [`board.spawn`](#boardspawn), [`self.source`](#selfsource)
 
 ### `board.spawn`
 
@@ -2543,7 +2747,7 @@ ui.assetType
 
 ## wait
 
-Timers are not saved: a script that must go on after a reload starts its timers again in on_load. A timer belongs to the script that made it and stops with it.
+Timers are not saved: a script that must go on after a reload starts its timers again in on_load. A timer belongs to the script that made it and stops with it. In a frame, the timers counting frames fire first, then those counting seconds, then the conditions, each kind in the order it was set.
 
 | Name | What it does |
 |---|---|
@@ -2551,6 +2755,9 @@ Timers are not saved: a script that must go on after a reload starts its timers 
 | [`wait.frames`](#waitframes) | Calls fn once, n frames from now; returns a handle. |
 | [`wait.condition`](#waitcondition) | Calls fn once predicate() is true, or on_timeout() if timeout_s comes first; returns a handle. |
 | [`wait.stop`](#waitstop) | Stops a timer before it fires. |
+| [`wait.now`](#waitnow) | The scripts' clock: seconds since the table started running scripts. |
+| [`wait.frame`](#waitframe) | How many frames the scripts have run since the table started. |
+| [`wait.delta`](#waitdelta) | Seconds between the last frame and the one before it. |
 
 ### `wait.seconds`
 
@@ -2632,7 +2839,45 @@ Stops a timer before it fires.
 |---|---|---|
 | `handle` | `number` | What `seconds`, `frames` or `condition` returned. A timer that has fired already is no error. |
 
+**Returns** `boolean`: true when a timer was waiting and is stopped now, false when there was none.
+
 **Module call** `Wait.stop`
+
+### `wait.now`
+
+```lua
+wait.now()
+```
+
+The scripts' clock: seconds since the table started running scripts.
+
+**Returns** `number`.
+
+**Module call** `Time.time`
+
+### `wait.frame`
+
+```lua
+wait.frame()
+```
+
+How many frames the scripts have run since the table started.
+
+**Returns** `number`.
+
+**Module call** `Time.frame_count`
+
+### `wait.delta`
+
+```lua
+wait.delta()
+```
+
+Seconds between the last frame and the one before it.
+
+**Returns** `number`.
+
+**Module call** `Time.delta_time`
 
 ## json
 
@@ -2640,26 +2885,29 @@ JSON in and out; numbers are written the same on every PC.
 
 | Name | What it does |
 |---|---|
-| [`json.encode`](#jsonencode) | A value as JSON. A table whose keys are 1..n is an array. |
-| [`json.decode`](#jsondecode) | JSON as a value; an error when it does not parse. |
+| [`json.encode`](#jsonencode) | A value as JSON. A table whose keys are all positive numbers is an array up to its highest key, gaps as null; an empty table is []; other tables are objects with their keys in sorted order, number keys after the text ones. |
+| [`json.decode`](#jsondecode) | JSON as a value; an error when it does not parse. Text after the first value is ignored, and blank text is nil. |
 
 ### `json.encode`
 
 ```lua
-json.encode(value)
+json.encode(value, pretty)
 ```
 
-A value as JSON. A table whose keys are 1..n is an array.
+A value as JSON. A table whose keys are all positive numbers is an array up to its highest key, gaps as null; an empty table is []; other tables are objects with their keys in sorted order, number keys after the text ones.
 
 | Parameter | Type | Description |
 |---|---|---|
-| `value` | `any` | A table, string, number, boolean or nil. |
+| `value` | `any` | A table, string, number, boolean or nil. A function, a table holding itself or a key that is neither text nor a number is an error. |
+| `pretty` | `boolean` | _Optional._ true: one key a line, indented by two spaces. |
 
 **Returns** `string`.
 
 ```lua
 function on_save() return json.encode({ hits = hits, orders = orders }) end
 ```
+
+Text is written as it is, apart from quotes, backslashes and control characters; NaN is null.
 
 **Module call** `JSON.encode` · **See also** [`json.decode`](#jsondecode), [`on_save`](#on_save)
 
@@ -2669,11 +2917,11 @@ function on_save() return json.encode({ hits = hits, orders = orders }) end
 json.decode(text)
 ```
 
-JSON as a value; an error when it does not parse.
+JSON as a value; an error when it does not parse. Text after the first value is ignored, and blank text is nil.
 
 | Parameter | Type | Description |
 |---|---|---|
-| `text` | `string` | The JSON. |
+| `text` | `string` | The JSON. Anything else is an error. |
 
 **Returns** `any`.
 
@@ -2701,6 +2949,7 @@ Define any of these in a piece's script and the table calls it.
 | [`on_state`](#on_state) | Its state changed, by anyone. |
 | [`on_page`](#on_page) | This book turned to another page. |
 | [`on_effect`](#on_effect) | An umpire started (0) or stopped (-1) this effect. |
+| [`on_burst`](#on_burst) | An umpire played this effect once (Play once in its menu); index is the one-off asked for, 0 from the menu. |
 | [`on_flip`](#on_flip) | It was turned over or back. |
 | [`on_rotate`](#on_rotate) | An umpire turned it in place. |
 | [`on_turn`](#on_turn) | The clock advanced. |
@@ -2843,6 +3092,18 @@ An umpire started (0) or stopped (-1) this effect.
 
 An event: define this function and the table calls it.
 
+**Module call** `onObjectLoopingEffect`
+
+### `on_burst`
+
+```lua
+on_burst(index)
+```
+
+An umpire played this effect once (Play once in its menu); index is the one-off asked for, 0 from the menu.
+
+An event: define this function and the table calls it.
+
 | Parameter | Type | Description |
 |---|---|---|
 | `old` | `number` | The state it left, from 1. |
@@ -2856,7 +3117,7 @@ end
 
 What the script draws here belongs to the new state.
 
-**Module call** `onObjectLoopingEffect` · **See also** [`self.set_state`](#selfset_state)
+**Module call** `onObjectTriggerEffect` · **See also** [`self.set_state`](#selfset_state)
 
 ### `on_flip`
 
@@ -2938,6 +3199,7 @@ The global script gets on_load, on_save, on_update and on_turn too, and these fo
 | [`on_state`](#on_state-global-script) | A piece's state changed, by anyone. |
 | [`on_page`](#on_page-global-script) | A book turned to another page. |
 | [`on_effect`](#on_effect-global-script) | An umpire started (0) or stopped (-1) an effect. |
+| [`on_burst`](#on_burst-global-script) | An umpire played an effect once. |
 | [`on_roll`](#on_roll-global-script) | An umpire rolled a die, or turned a piece of several looks to one at random. |
 | [`on_rotate`](#on_rotate-global-script) | An umpire turned a piece in place. |
 | [`on_pick_up`](#on_pick_up-global-script) | An umpire picked a piece up. |
@@ -3029,6 +3291,18 @@ An umpire started (0) or stopped (-1) an effect.
 An event: define this function and the table calls it.
 
 **Module call** `onObjectLoopingEffect`
+
+### `on_burst` (global script)
+
+```lua
+on_burst(piece, index)
+```
+
+An umpire played an effect once.
+
+An event: define this function and the table calls it.
+
+**Module call** `onObjectTriggerEffect`
 
 ### `on_roll` (global script)
 
@@ -3358,13 +3632,17 @@ The converter rewrites a module's scripts into these calls by rule; this is the 
 | `addTag` | [`self.add_tag`](#selfadd_tag) |
 | `addToPlayerSelection` | [`game.select`](#gameselect) |
 | `AssetBundle.playLoopingEffect` | [`self.set_effect_on`](#selfset_effect_on) |
+| `AssetBundle.playTriggerEffect` | [`self.play_effect`](#selfplay_effect) |
 | `Book.page_offset` | [`self.page_offset`](#selfpage_offset) |
+| `Book.setHighlight` | [`self.book_highlight`](#selfbook_highlight) |
+| `Book.setHighlight` | [`self.set_book_highlight`](#selfset_book_highlight) |
 | `broadcastToAll` | [`game.say`](#gamesay) |
 | `call` | [`self.call`](#selfcall) |
 | `clearButtons` | [`self.clear_widgets`](#selfclear_widgets) |
 | `clearContextMenu` | [`game.menu_clear`](#gamemenu_clear) |
 | `clearContextMenu` | [`self.menu_clear`](#selfmenu_clear) |
 | `clearHotkeys` | [`game.hotkeys_clear`](#gamehotkeys_clear) |
+| `Container.search` | [`self.show_contents`](#selfshow_contents) |
 | `createButton` | [`self.button`](#selfbutton) |
 | `createInput` | [`self.input`](#selfinput) |
 | `destruct` | [`self.delete`](#selfdelete) |
@@ -3389,6 +3667,7 @@ The converter rewrites a module's scripts into these calls by rule; this is the 
 | `getObjects` | [`self.stowed`](#selfstowed) |
 | `getPlayers` | [`game.umpires`](#gameumpires) |
 | `getPosition` | [`self.pos`](#selfpos) |
+| `getQuantity` | [`self.holds`](#selfholds) |
 | `getRotation` | [`self.rot`](#selfrot) |
 | `getRotationValue` | [`self.value`](#selfvalue) |
 | `getRotationValues` | [`self.faces`](#selffaces) |
@@ -3406,6 +3685,11 @@ The converter rewrites a module's scripts into these calls by rule; this is the 
 | `Global.getVectorLines` | [`board.strokes`](#boardstrokes) |
 | `Global.setVar` | [`game.set_var`](#gameset_var) |
 | `Global.setVectorLines` | [`board.draw`](#boarddraw) |
+| `held_by_color` | [`self.held_by`](#selfheld_by) |
+| `highlightOn` | [`self.highlight`](#selfhighlight) |
+| `highlightOn` | [`self.set_highlight`](#selfset_highlight) |
+| `interactable` | [`self.interactable`](#selfinteractable) |
+| `interactable` | [`self.set_interactable`](#selfset_interactable) |
 | `isDestroyed` | [`self.exists`](#selfexists) |
 | `is_face_down` | [`self.face_down`](#selfface_down) |
 | `JSON` | [`json`](#json) |
@@ -3415,6 +3699,7 @@ The converter rewrites a module's scripts into these calls by rule; this is the 
 | `measure_movement` | [`self.measures_moves`](#selfmeasures_moves) |
 | `measure_movement` | [`self.set_measures_moves`](#selfset_measures_moves) |
 | `memo` | [`self.memo`](#selfmemo) |
+| `name` | [`self.source`](#selfsource) |
 | `onChat` | [`on_chat`](#on_chat-global-script) |
 | `onDestroy` | [`on_destroy`](#on_destroy) |
 | `onDrop` | [`on_drop`](#on_drop) |
@@ -3433,6 +3718,8 @@ The converter rewrites a module's scripts into these calls by rule; this is the 
 | `onObjectSpawn` | [`on_spawn`](#on_spawn-global-script) |
 | `onObjectStateChange` | [`on_state`](#on_state) |
 | `onObjectStateChange` | [`on_state`](#on_state-global-script) |
+| `onObjectTriggerEffect` | [`on_burst`](#on_burst) |
+| `onObjectTriggerEffect` | [`on_burst`](#on_burst-global-script) |
 | `onPageChange` | [`on_page`](#on_page) |
 | `onPickUp` | [`on_pick_up`](#on_pick_up) |
 | `onPlayerAction` | [`on_player_action`](#on_player_action-global-script) |
@@ -3466,6 +3753,7 @@ The converter rewrites a module's scripts into these calls by rule; this is the 
 | `setMemo` | [`self.set_memo`](#selfset_memo) |
 | `setName` | [`self.set_name`](#selfset_name) |
 | `setPosition` | [`self.set_pos`](#selfset_pos) |
+| `setPositionSmooth` | [`self.show_glide`](#selfshow_glide) |
 | `setRotation` | [`self.set_rot`](#selfset_rot) |
 | `setRotationValue` | [`self.set_value`](#selfset_value) |
 | `setRotationValues` | [`self.set_faces`](#selfset_faces) |
@@ -3482,6 +3770,9 @@ The converter rewrites a module's scripts into these calls by rule; this is the 
 | `takeObject` | [`self.unstow`](#selfunstow) |
 | `TextTool.getValue` | [`self.lettering`](#selflettering) |
 | `TextTool.setValue` | [`self.set_lettering`](#selfset_lettering) |
+| `Time.delta_time` | [`wait.delta`](#waitdelta) |
+| `Time.frame_count` | [`wait.frame`](#waitframe) |
+| `Time.time` | [`wait.now`](#waitnow) |
 | `tryObjectEnterContainer` | [`try_stow`](#try_stow-global-script) |
 | `UI` | [`self.ui`](#selfui) |
 | `UI` | [`ui`](#ui) |

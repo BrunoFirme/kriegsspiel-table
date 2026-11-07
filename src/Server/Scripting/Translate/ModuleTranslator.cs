@@ -52,12 +52,12 @@ public static class ModuleTranslator
 
     static readonly HashSet<string> ObjectApi = new(StringComparer.Ordinal)
     {
-        "addAttachment","addContextMenuItem","addDecal","addForce","addTag","addTorque","addToPlayerSelection","attachHider","attachInvisibleHider","call","clearButtons","clearContextMenu","clearInputs","clone","createButton","createInput","cut","deal","destruct","destroy","drop","editButton","editInput","flip","getAngularVelocity","getAttachments","getBounds","getBoundsNormalized","getButtons","getColorTint","getComponent","getComponents","getCustomObject","getData","getDecals","getDescription","getFogOfWarReveal","getGMNotes","getGUID","getInputs","getJoints","getJSON","getLock","getLuaScript","getMemo","getName","getObjects","getPosition","getPositionSmooth","getQuantity","getRotation","getRotationSmooth","getRotationValue","getRotationValues","roll","getScale","getSelectingPlayers","getSnapPoints","getStateId","getStates","getTable","getTags","getTransformForward","getTransformRight","getTransformUp","getValue","getVar","getVectorLines","getVelocity","getZones","hasTag","highlightOff","highlightOn","isDestroyed","isSmoothMoving","jointTo","positionToLocal","positionToWorld","putObject","randomize","registerCollisions","reload","removeAttachment","removeAttachments","removeButton","removeFromPlayerSelection","removeInput","removeTag","reset","resetAttachments","rotate","scale","setAngularVelocity","setColorTint","setCustomObject","setDecals","setDescription","setFogOfWarReveal","setGMNotes","setHiddenFrom","setInvisibleTo","setLock","setLuaScript","setMemo","setName","setPosition","setPositionSmooth","setRotation","setRotationSmooth","setRotationValue","setRotationValues","setScale","setSnapPoints","setState","setTable","setTags","setValue","setVar","setVectorLines","setVelocity","shuffle","shuffleStates","split","spread","takeObject","translate","unregisterCollisions","getLuaScriptState","setLuaScriptState",
+        "addAttachment","addContextMenuItem","addDecal","addForce","addTag","addTorque","addToPlayerSelection","attachHider","attachInvisibleHider","call","clearButtons","clearContextMenu","clearInputs","clone","createButton","createInput","cut","deal","destruct","destroy","drop","editButton","editInput","flip","getAngularVelocity","getAttachments","getBounds","getBoundsNormalized","getButtons","getColorTint","getComponent","getComponents","getCustomObject","getData","getDecals","getDescription","getFogOfWarReveal","getGMNotes","getGUID","getInputs","getJoints","getJSON","getLock","getLuaScript","getMemo","getName","getObjects","getPosition","getPositionSmooth","getQuantity","getRotation","getRotationSmooth","getRotationValue","getRotationValues","roll","getScale","getSelectingPlayers","getSnapPoints","getStateId","getStates","getTable","getTags","getTransformForward","getTransformRight","getTransformUp","getValue","getVar","getVectorLines","getVelocity","getZones","hasTag","highlightOff","highlightOn","isDestroyed","isSmoothMoving","jointTo","positionToLocal","positionToWorld","putObject","randomize","registerCollisions","reload","removeAttachment","removeAttachments","removeButton","removeFromPlayerSelection","removeInput","removeTag","reset","resetAttachments","rotate","scale","setAngularVelocity","setColorTint","setCustomObject","setDecals","setDescription","setFogOfWarReveal","setGMNotes","setHiddenFrom","setInvisibleTo","setLock","setLuaScript","setMemo","setName","setPosition","setPositionSmooth","setRotation","setRotationSmooth","setRotationValue","setRotationValues","setScale","setSnapPoints","setState","setTable","setTags","setValue","setVar","setVectorLines","setVelocity","shuffle","shuffleStates","split","spread","takeObject","translate","unregisterCollisions",
     };
 
     static readonly HashSet<string> ObjectProps = new(StringComparer.Ordinal)
     {
-        "interactable","tooltip","sticky","grid_projection","use_gravity","use_grid","use_snap_points","use_hands","use_rotation_value_flip","auto_raise","bounciness","drag","drag_selectable","angular_drag","hide_when_face_down","ignore_fog_of_war","loading_custom","mass","max_typed_number","measure_movement","script_state","spawning","static_friction","dynamic_friction","value","value_flags","alt_view_angle","held_flip_index","held_spin_index","pick_up_position","pick_up_rotation","held_position_offset","held_reduce_force","held_rotation_offset","memo","AssetBundle","type","tag","name","guid","held_by_color","resting","is_face_down","locked",
+        "interactable","tooltip","sticky","grid_projection","use_gravity","use_grid","use_snap_points","use_hands","use_rotation_value_flip","auto_raise","bounciness","drag","drag_selectable","angular_drag","hide_when_face_down","ignore_fog_of_war","loading_custom","mass","max_typed_number","measure_movement","script_state","spawning","static_friction","dynamic_friction","value","value_flags","alt_view_angle","held_flip_index","held_spin_index","pick_up_position","pick_up_rotation","held_position_offset","held_reduce_force","held_rotation_offset","memo","AssetBundle","type","tag","name","guid","held_by_color","resting","is_face_down","locked","script",
     };
 
     static readonly HashSet<string> EventNames = new(StringComparer.Ordinal)
@@ -72,7 +72,13 @@ public static class ModuleTranslator
         ["onObjectSpawn"] = "on_spawn", ["onObjectDestroy"] = "on_destroy", ["onObjectStateChange"] = "on_state", ["onPlayerTurn"] = "on_turn", ["onRotate"] = "on_rotate", ["onObjectRotate"] = "on_rotate",
         ["onPlayerTurnStart"] = "on_turn", ["onPlayerTurnEnd"] = "on_turn",
         ["onChat"] = "on_chat", ["onObjectNumberTyped"] = "on_number_typed", ["onScriptingButtonDown"] = "on_scripting_button_down", ["onScriptingButtonUp"] = "on_scripting_button_up",
-        ["onPlayerAction"] = "on_player_action", ["onObjectRandomize"] = "on_roll", ["onRandomize"] = "on_roll", ["onPageChange"] = "on_page", ["onObjectPageChange"] = "on_page", ["onObjectLoopingEffect"] = "on_effect", ["onObjectTriggerEffect"] = "on_effect", ["onObjectEnterContainer"] = "on_stowed", ["onObjectLeaveContainer"] = "on_unstowed", ["tryObjectEnterContainer"] = "try_stow",
+        ["onPlayerAction"] = "on_player_action", ["onObjectRandomize"] = "on_roll", ["onRandomize"] = "on_roll", ["onPageChange"] = "on_page", ["onObjectPageChange"] = "on_page", ["onObjectLoopingEffect"] = "on_effect", ["onObjectTriggerEffect"] = "on_burst", ["onObjectEnterContainer"] = "on_stowed", ["onObjectLeaveContainer"] = "on_unstowed", ["tryObjectEnterContainer"] = "try_stow",
+    };
+
+    static readonly HashSet<string> EveryScriptEvents = new(StringComparer.Ordinal)
+    {
+        "onObjectSpawn", "onObjectDestroy", "onObjectPickUp", "onObjectPickup", "onObjectDrop", "onObjectRotate", "onObjectRandomize", "onObjectPageChange",
+        "onObjectLoopingEffect", "onObjectTriggerEffect", "onObjectEnterContainer", "onObjectLeaveContainer", "onObjectStateChange", "onChat", "onPlayerAction",
     };
 
     static readonly HashSet<string> Stubbed = new(StringComparer.Ordinal)
@@ -111,6 +117,7 @@ public static class ModuleTranslator
             return call;
         }
         readonly HashSet<SyntaxNode> _scriptLiterals = new();
+        readonly HashSet<string> _ownGlobals = new(StringComparer.Ordinal);
         readonly SyntaxNode _root;
 
         public Rewriter(TranslateResult res, TranslateContext ctx, SyntaxNode root)
@@ -132,10 +139,30 @@ public static class ModuleTranslator
                 var fn = (slash >= 0 ? v[(slash + 1)..] : v).Trim();
                 if (fn.Length > 0 && fn.All(ch => char.IsLetterOrDigit(ch) || ch == '_')) _uiHandlers.Add(fn);
             }
+            foreach (var n in root.DescendantNodes()) OwnGlobal(n);
             foreach (var call in root.DescendantNodes().OfType<FunctionCallExpressionSyntax>())
             {
                 if (call.Expression is not MemberAccessExpressionSyntax ma || ma.MemberName.Text != "setLuaScript") continue;
                 if (Args(call).FirstOrDefault() is { } arg && LiteralOf(arg, Scope(call)) is { } lit) _scriptLiterals.Add(lit);
+            }
+        }
+
+        void OwnGlobal(SyntaxNode n)
+        {
+            switch (n)
+            {
+                case FunctionDeclarationStatementSyntax { Name: SimpleFunctionNameSyntax f }:
+                    _ownGlobals.Add(f.ToString().Trim());
+                    break;
+                case LocalFunctionDeclarationStatementSyntax lf:
+                    _ownGlobals.Add(lf.Name.ToString().Trim());
+                    break;
+                case LocalVariableDeclarationStatementSyntax lv:
+                    foreach (var v in lv.Names) _ownGlobals.Add(v.IdentifierName.ToString().Trim());
+                    break;
+                case AssignmentStatementSyntax asg:
+                    foreach (var v in asg.Variables.OfType<IdentifierNameSyntax>()) _ownGlobals.Add(v.ToString().Trim());
+                    break;
             }
         }
 
@@ -260,6 +287,7 @@ public static class ModuleTranslator
             }
             if (recv.EndsWith(".AssetBundle")) return Compat($"compat.bundle({recv[..^12]}).{name}({All()})", node);
             if (recv.EndsWith(".TextTool")) return Compat($"compat.text_tool({recv[..^9]}).{name}({All()})", node);
+            if (recv.EndsWith(".Container")) return Compat($"compat.container({recv[..^10]}).{name}({All()})", node);
             if (recv.EndsWith(".Book"))
             {
                 var book = recv[..^5];
@@ -291,15 +319,16 @@ public static class ModuleTranslator
                 case "JSON":
                     return name switch
                     {
-                        "encode" or "encode_pretty" => Direct($"json.encode({All()})", node),
-                        "decode" => Direct($"json.decode({All()})", node),
+                        "encode" => Direct($"json.encode({A(0)})", node),
+                        "encode_pretty" => Direct($"json.encode({A(0)}, true)", node),
+                        "decode" => Direct($"json.decode({A(0)})", node),
                         _ => Todo("JSON." + name, $"compat.todo(nil, \"JSON.{name}\")", node),
                     };
                 case "Wait":
                     return name switch
                     {
                         "time" => Compat($"compat.wait_time({All()})", node),
-                        "frames" => Direct($"wait.frames({A(1)}, {A(0)})", node),
+                        "frames" => Compat($"compat.wait_frames({All()})", node),
                         "condition" => Compat($"compat.wait_condition({All()})", node),
                         "stop" => Compat($"compat.wait_stop({All()})", node),
                         "stopAll" => Compat("compat.wait_stop_all()", node),
@@ -308,9 +337,11 @@ public static class ModuleTranslator
                 case "Global":
                     return name switch
                     {
-                        "call" => Direct($"game.call({All()})", node),
-                        "getVar" or "getTable" => Direct($"game.get_var({All()})", node),
-                        "setVar" or "setTable" => Direct($"game.set_var({All()})", node),
+                        "call" => Compat($"compat.global_call({A(0)}, {A(1)})", node),
+                        "getVar" => Direct($"game.get_var({A(0)})", node),
+                        "getTable" => Compat($"compat.global_get_table({A(0)})", node),
+                        "setVar" => Compat($"compat.global_set_var({A(0)}, {A(1)})", node),
+                        "setTable" => Compat($"compat.global_set_table({A(0)}, {A(1)})", node),
                         "getVectorLines" => Compat("compat.global_vector_lines()", node),
                         "setVectorLines" => Compat($"compat.set_global_vector_lines({All()})", node),
                         _ => Todo("Global." + name, $"compat.todo(nil, \"Global.{name}\")", node),
@@ -344,6 +375,8 @@ public static class ModuleTranslator
                         "setCustomAssets" => Direct($"ui.set_pictures({All()})", node),
                         _ => Todo("UI." + name, $"compat.todo(nil, \"UI.{name}\")", node),
                     };
+                case "Timer" when name == "create":
+                    return Compat($"compat.timer_create(_ENV, {A(0)})", node);
                 case "Turns" or "Notes" or "Lighting" or "Grid" or "Hands" or "MusicPlayer" or "Backgrounds" or "Timer":
                     return Compat($"compat.{recv}.{name}({All()})", node);
                 case "Time" or "Info" or "Tables" or "WebRequest":
@@ -360,42 +393,51 @@ public static class ModuleTranslator
             string All() => ArgText(args);
             var name = id.ToString().Trim();
             if (EventRenames.TryGetValue(name, out var renamed)) return Direct($"{renamed}({All()})", node);
+            if (_ownGlobals.Contains(name)) return null;
             switch (name)
             {
-                case "getObjectFromGUID": return Direct($"board.find({All()})", node);
+                case "getObjectFromGUID": return Direct($"board.find({A(0)})", node);
                 case "getAllObjects" or "getObjects": return Direct("board.pieces()", node);
-                case "getObjectsWithTag": return Direct($"board.pieces{{ tag = {A(0)} }}", node);
-                case "getObjectsWithAnyTags": return Compat($"compat.pieces_with_any_tags({All()})", node);
-                case "getObjectsWithAllTags": return Compat($"compat.pieces_with_all_tags({All()})", node);
+                case "getObjectsWithTag": return Compat($"compat.pieces_with_tag({A(0)})", node);
+                case "getObjectsWithAnyTags": return Compat($"compat.pieces_with_any_tags({A(0)})", node);
+                case "getObjectsWithAllTags": return Compat($"compat.pieces_with_all_tags({A(0)})", node);
                 case "spawnObject": return Compat($"compat.spawn_object({All()})", node);
                 case "spawnObjectJSON": return Compat($"compat.spawn_object_json({All()})", node);
                 case "spawnObjectData": return Compat($"compat.spawn_object_data({All()})", node);
-                case "broadcastToAll" or "printToAll": return Direct($"game.say({A(0)}, {{ color = compat.color({A(1)}) }})", node);
-                case "broadcastToColor" or "printToColor": return Compat($"compat.broadcast_to_color({All()})", node);
+                case "broadcastToAll": return Compat($"compat.print_to_all({A(0)}, {A(1)}, true)", node);
+                case "printToAll": return Compat($"compat.print_to_all({A(0)}, {A(1)}, false)", node);
+                case "broadcastToColor": return Compat($"compat.print_to_color({A(0)}, {A(1)}, {A(2)}, \"BroadcastToColor\")", node);
+                case "printToColor": return Compat($"compat.print_to_color({A(0)}, {A(1)}, {A(2)}, \"printToColor\")", node);
                 case "startLuaCoroutine": return Compat($"compat.start_coroutine({All()})", node);
                 case "getSeatedPlayers": return Compat("compat.seated_players()", node);
                 case "logString": return Compat($"compat.log_string({All()})", node);
                 case "log": return Compat($"compat.log({All()})", node);
-                case "stringColorToRGB": return Compat($"compat.string_color_to_rgb({All()})", node);
-                case "Vector" or "constructVector": return Compat($"compat.Vector({All()})", node);
+                case "debugLog": return Compat($"compat.debug_log({A(0)})", node);
+                case "stringColorToRGB": return Compat($"compat.string_color_to_rgb({A(0)})", node);
+                case "Vector": return Compat($"compat.Vector({All()})", node);
+                case "vector": return Compat($"compat.construct_vector({All()})", node);
                 case "Color": return Compat($"compat.Color({All()})", node);
-                case "destroyObject": return Compat($"compat.piece_of({A(0)}).delete()", node);
+                case "color": return Compat($"compat.construct_color({All()})", node);
+                case "destroyObject": return Compat($"compat.destroy_object({A(0)})", node);
                 case "addHotkey": return Compat($"compat.add_hotkey(_ENV, {All()})", node);
-                case "clearHotkeys": return Direct("game.hotkeys_clear()", node);
+                case "clearHotkeys": return Compat("compat.clear_hotkeys()", node);
                 case "addContextMenuItem": return Compat($"compat.add_global_context_menu_item(_ENV, {All()})", node);
-                case "clearContextMenu": return Direct("game.menu_clear()", node);
-                case "copyLuaTable": return Compat($"compat.copy_table({All()})", node);
-                case "getGlobalVar" or "getGlobalTable": return Direct($"game.get_var({All()})", node);
-                case "setGlobalVar" or "setGlobalTable": return Direct($"game.set_var({All()})", node);
-                case "debugLog" or "logFormat": return Compat($"compat.log({All()})", node);
-                case "hexToColor": return Compat($"compat.Color.fromHex({All()})", node);
-                case "colorToHex": return Compat($"compat.Color({A(0)}):toHex({A(1)})", node);
-                case "stringColorToHex": return Compat($"compat.Color.fromString({A(0)}):toHex()", node);
-                case "colorToPlayerName": return Compat($"compat.Color({A(0)}):toString()", node);
-                case "constructColor": return Compat($"compat.Color({All()})", node);
-                case "clearPixelPaint" or "clearVectorPaint": return Compat("compat.erase_all()", node);
+                case "clearContextMenu": return Compat("compat.clear_global_context_menu()", node);
+                case "getGlobalScriptVar": return Direct($"game.get_var({A(0)})", node);
+                case "setGlobalScriptVar": return Compat($"compat.global_set_var({A(0)}, {A(1)})", node);
+                case "getGlobalScriptTable": return Compat($"compat.global_get_table({A(0)})", node);
+                case "setGlobalScriptTable": return Compat($"compat.global_set_table({A(0)}, {A(1)})", node);
+                case "callLuaFunctionInOtherScript": return Compat($"compat.call({A(0)}, {A(1)})", node);
+                case "callLuaFunctionInOtherScriptWithParams": return Compat($"compat.call({A(0)}, {A(1)}, {A(2)})", node);
+                case "getPlayer": return Compat($"compat.get_player({A(0)})", node);
+                case "colorToPlayerName": return Compat($"compat.color_to_player_name({A(0)})", node);
+                case "getNotes" or "setNotes" or "getNotebookTabs" or "editNotebookTab" or "addNotebookTab" or "removeNotebookTab":
+                    return Compat($"compat.Notes.{name}({All()})", node);
+                case "clearPixelPaint": return Compat("compat.clear_pixel_paint()", node);
+                case "clearVectorPaint": return Compat("compat.erase_all()", node);
                 case "getAllTags": return Compat("compat.all_tags()", node);
-                case "logStyle" or "sendExternalMessage" or "setLookingForPlayers" or "flipTable" or "group" or "paste" or "copy":
+                case "sendExternalMessage" or "setLookingForPlayers": return Compat($"compat.yes({All()})", node);
+                case "logStyle" or "flipTable" or "group" or "paste" or "copy":
                     return Todo(name, $"compat.todo(nil, \"{name}\")", node);
             }
             return null;
@@ -420,25 +462,31 @@ public static class ModuleTranslator
             string Rest() => a.Count == 0 ? "" : ", " + All();
             switch (name)
             {
-                case "setName": return Direct($"{recv}.set_name({All()})", node);
+                case "setName": return Compat($"compat.set_name({recv}, {A(0)})", node);
                 case "getName": return Compat($"compat.name({recv})", node);
-                case "setDescription": return Direct($"{recv}.set_note({All()})", node);
+                case "setDescription": return Compat($"compat.set_description({recv}, {A(0)})", node);
                 case "getDescription": return Compat($"compat.description({recv})", node);
                 case "getGUID": return Compat($"compat.guid({recv})", node);
-                case "getStateId": return Direct($"{recv}.state", node);
-                case "setState": return Direct($"{recv}.set_state({All()})", node);
+                case "getStateId": return Compat($"compat.state_id({recv})", node);
+                case "setState": return Compat($"compat.set_state({recv}, {A(0)})", node);
                 case "getStates": return Compat($"compat.states({recv})", node);
                 case "flip": return Compat($"compat.flip({recv})", node);
-                case "destruct" or "destroy": return Direct($"{recv}.delete()", node);
-                case "call": return Direct($"{recv}.call({All()})", node);
-                case "getVar" or "getTable": return Direct($"{recv}.get_var({All()})", node);
-                case "setVar" or "setTable": return Direct($"{recv}.set_var({All()})", node);
-                case "setColorTint": return Direct($"{recv}.set_tint(compat.color({A(0)}))", node);
+                case "destruct" or "destroy": return Compat($"compat.destroy({recv})", node);
+                case "call": return Compat($"compat.call({recv}, {A(0)}, {A(1)})", node);
+                case "getVar": return Direct($"{recv}.get_var({A(0)})", node);
+                case "getTable": return Compat($"compat.get_table({recv}, {A(0)})", node);
+                case "setVar": return Compat($"compat.set_var({recv}, {A(0)}, {A(1)})", node);
+                case "setTable": return Compat($"compat.set_table({recv}, {A(0)}, {A(1)})", node);
+                case "setColorTint": return Compat($"compat.set_color_tint({recv}, {A(0)})", node);
                 case "getColorTint": return Compat($"compat.color_tint({recv})", node);
-                case "getPosition" or "getPositionSmooth": return Compat($"compat.position({recv})", node);
-                case "setPosition" or "setPositionSmooth": return Compat($"compat.set_position({recv}, {A(0)})", node);
-                case "getRotation" or "getRotationSmooth": return Compat($"compat.rotation({recv})", node);
-                case "setRotation" or "setRotationSmooth": return Compat($"compat.set_rotation({recv}, {A(0)})", node);
+                case "getPosition": return Compat($"compat.position({recv})", node);
+                case "getPositionSmooth": return Compat($"compat.smooth_target({recv})", node);
+                case "getRotationSmooth": return Compat($"compat.smooth_turn_target({recv})", node);
+                case "setPosition": return Compat($"compat.set_position({recv}, {A(0)})", node);
+                case "setPositionSmooth": return Compat($"compat.set_position_smooth({recv}, {A(0)}, {A(1)}, {A(2)})", node);
+                case "getRotation": return Compat($"compat.rotation({recv})", node);
+                case "setRotation": return Compat($"compat.set_rotation({recv}, {A(0)})", node);
+                case "setRotationSmooth": return Compat($"compat.set_rotation_smooth({recv}, {A(0)}, {A(1)}, {A(2)})", node);
                 case "getScale": return Compat($"compat.scale3({recv})", node);
                 case "setScale": return Compat($"compat.set_scale({recv}, {A(0)})", node);
                 case "scale": return Compat($"compat.scale_by({recv}, {A(0)})", node);
@@ -449,30 +497,21 @@ public static class ModuleTranslator
                 case "getTransformForward": return Compat($"compat.transform_forward({recv})", node);
                 case "getTransformRight": return Compat($"compat.transform_right({recv})", node);
                 case "getTransformUp": return Compat($"compat.transform_up({recv})", node);
-                case "getBounds" or "getBoundsNormalized": return Compat($"compat.get_bounds({recv})", node);
-                case "createButton": return Compat(Widgets($"compat.create_button({recv}, {A(0)}, _G)"), node);
-                case "createInput": return Compat(Widgets($"compat.create_input({recv}, {A(0)}, _G)"), node);
-                case "editButton": return Compat(Widgets($"compat.edit_button({recv}, {A(0)}, _G)"), node);
-                case "editInput": return Compat(Widgets($"compat.edit_input({recv}, {A(0)}, _G)"), node);
-                case "removeButton": return Compat($"compat.remove_button({recv}, {A(0)})", node);
-                case "removeInput": return Compat($"compat.remove_input({recv}, {A(0)})", node);
-                case "clearButtons": return Compat($"compat.clear_buttons({recv})", node);
-                case "clearInputs": return Compat($"compat.clear_inputs({recv})", node);
-                case "getButtons": return Compat($"compat.get_buttons({recv})", node);
-                case "getInputs": return Compat($"compat.get_inputs({recv})", node);
+                case "getBounds": return Compat($"compat.get_bounds({recv})", node);
+                case "getBoundsNormalized": return Compat($"compat.get_bounds_normalized({recv})", node);
                 case "addContextMenuItem": return Compat($"compat.add_context_menu_item(_ENV, {recv}, {All()})", node);
-                case "clearContextMenu": return Direct($"{recv}.menu_clear()", node);
-                case "reload": return Direct($"{recv}.reload()", node);
-                case "setLuaScript": return Direct($"{recv}.set_script({All()})", node);
+                case "clearContextMenu": return Compat($"compat.clear_context_menu({recv})", node);
+                case "reload": return Compat($"compat.reload({recv})", node);
+                case "setLuaScript": return Compat($"compat.set_lua_script({recv}, {A(0)})", node);
                 case "getLuaScript": return Compat($"compat.get_script({recv})", node);
-                case "getTags": return Direct($"{recv}.tags", node);
+                case "getTags": return Compat($"compat.tags({recv})", node);
                 case "hasTag": return Compat($"compat.has_tag({recv}, {A(0)})", node);
-                case "addTag": return Direct($"{recv}.add_tag({A(0)})", node);
-                case "removeTag": return Direct($"{recv}.remove_tag({A(0)})", node);
-                case "setTags": return Direct($"{recv}.set_tags({A(0)})", node);
+                case "addTag": return Compat($"compat.add_tag({recv}, {A(0)})", node);
+                case "removeTag": return Compat($"compat.remove_tag({recv}, {A(0)})", node);
+                case "setTags": return Compat($"compat.set_tags({recv}, {A(0)})", node);
                 case "setLock": return Compat($"compat.set_lock({recv}, {A(0)})", node);
                 case "getLock": return Compat($"compat.get_lock({recv})", node);
-                case "setMemo": return Direct($"{recv}.set_memo({A(0)})", node);
+                case "setMemo": return Compat($"compat.set_memo({recv}, {A(0)})", node);
                 case "getMemo": return Direct($"{recv}.memo", node);
                 case "setGMNotes": return Compat($"compat.set_gm_notes({recv}, {A(0)})", node);
                 case "getGMNotes": return Compat($"compat.get_gm_notes({recv})", node);
@@ -493,7 +532,8 @@ public static class ModuleTranslator
                 case "takeObject": return Compat($"compat.take_object({recv}, {A(0)})", node);
                 case "putObject": return Compat($"compat.put_object({recv}, {A(0)})", node);
                 case "getAttachments": return Compat($"compat.get_attachments({recv})", node);
-                case "addAttachment": return Direct($"{recv}.attach({A(0)})", node);
+                case "addAttachment": return Compat($"compat.add_attachment({recv}, {A(0)})", node);
+                case "startLuaCoroutine": return Compat($"compat.start_coroutine({recv}, {A(0)})", node);
                 case "removeAttachment": return Compat($"compat.remove_attachment({recv}, {A(0)})", node);
                 case "removeAttachments": return Compat($"compat.remove_attachments({recv})", node);
                 case "isDestroyed": return Compat($"compat.is_destroyed({recv})", node);
@@ -501,16 +541,36 @@ public static class ModuleTranslator
                 case "addToPlayerSelection": return Compat($"compat.select({recv}, {A(0)}, true)", node);
                 case "removeFromPlayerSelection": return Compat($"compat.select({recv}, {A(0)}, false)", node);
                 case "clone": return Compat($"compat.clone({recv}{Rest()})", node);
+                case var widget when WidgetCall(recv, widget, a, node) is { } w: return w;
                 case var stubbed when Stubbed.Contains(stubbed):
                     return Todo(name, $"compat.todo({recv}, \"{name}\")", node);
                 case "getVelocity" or "getAngularVelocity": return Compat("compat.Vector(0, 0, 0)", node);
                 case "getRotationValue" or "getValue" or "getRotationValues" or "setRotationValues" or "setRotationValue" or "setValue" or "roll" or "randomize" or "shuffleStates":
                     return DieCall(recv, name, A(0), node);
                 case "getJoints" or "getZones": return Compat("{}", node);
-                case "isSmoothMoving": return Compat("false", node);
+                case "isSmoothMoving": return Compat($"compat.gliding({recv})", node);
                 case "getFogOfWarReveal": return Compat("{ reveal = false, color = \"\", range = 0 }", node);
             }
             return StateOrTagCall(recv, name, a, node);
+        }
+
+        ExpressionSyntax? WidgetCall(string recv, string name, List<string> a, SyntaxNode node)
+        {
+            string A(int i) => i < a.Count ? a[i] : "nil";
+            return name switch
+            {
+                "createButton" => Compat(Widgets($"compat.create_button({recv}, {A(0)}, _G)"), node),
+                "createInput" => Compat(Widgets($"compat.create_input({recv}, {A(0)}, _G)"), node),
+                "editButton" => Compat(Widgets($"compat.edit_button({recv}, {A(0)}, _G)"), node),
+                "editInput" => Compat(Widgets($"compat.edit_input({recv}, {A(0)}, _G)"), node),
+                "removeButton" => Compat($"compat.remove_button({recv}, {A(0)})", node),
+                "removeInput" => Compat($"compat.remove_input({recv}, {A(0)})", node),
+                "clearButtons" => Compat($"compat.clear_buttons({recv})", node),
+                "clearInputs" => Compat($"compat.clear_inputs({recv})", node),
+                "getButtons" => Compat($"compat.get_buttons({recv})", node),
+                "getInputs" => Compat($"compat.get_inputs({recv})", node),
+                _ => null,
+            };
         }
 
         ExpressionSyntax? StateOrTagCall(string recv, string name, List<string> a, SyntaxNode node)
@@ -518,9 +578,7 @@ public static class ModuleTranslator
             string A(int i) => i < a.Count ? a[i] : "nil";
             return name switch
             {
-                "getLuaScriptState" or "getScriptState" => Compat($"compat.get_prop({recv}, \"script_state\", \"\")", node),
-                "setLuaScriptState" => Compat($"compat.set_prop({recv}, \"script_state\", {A(0)})", node),
-                "hasAnyTag" => Compat($"compat.has_any_tag({recv}, {A(0)})", node),
+                "hasAnyTag" => Compat($"compat.has_any_tag({recv})", node),
                 "hasMatchingTag" => Compat($"compat.has_matching_tag({recv}, {A(0)})", node),
                 _ => null,
             };
@@ -542,29 +600,35 @@ public static class ModuleTranslator
                 case "UI" or "Global.UI": return Direct($"ui.{name}", node);
             }
             if (recv.EndsWith(".UI")) return Direct($"{recv[..^3]}.ui.{name}", node);
+            if (node.Parent is not MemberAccessExpressionSyntax && !InUi(recv) && Components.TryGetValue(name, out var component))
+                return Compat($"compat.{component}({recv})", node);
             if (recv.EndsWith(".Book") && name == "page_offset" && visited.Parent is not AssignmentStatementSyntax) return Compat($"compat.book_offset({recv[..^5]})", node);
             name = FoldMember(name);
             switch (name)
             {
                 case "is_face_down": return Direct($"{recv}.face_down", node);
-                case "held_by_color": return Compat("nil", node);
+                case "name" when visited.Parent is not AssignmentStatementSyntax: return Compat($"compat.object_type({recv}, \"{visited.MemberName.Text}\")", node);
+                case "type" or "tag" when visited.Parent is not AssignmentStatementSyntax: return Compat($"compat.object_tag({recv}, \"{visited.MemberName.Text}\")", node);
+                case "script" when visited.Parent is not AssignmentStatementSyntax: return Compat($"compat.script_of({recv}, \"{visited.MemberName.Text}\")", node);
+                case "held_by_color": return Compat($"compat.held_by_color({recv})", node);
                 case "resting": return Compat("true", node);
-                case "spawning" or "loading_custom": return Compat("false", node);
+                case "spawning" or "loading_custom": return Compat($"compat.get_prop({recv}, \"spawning\", false)", node);
                 case "memo":
                     if (visited.Parent is AssignmentStatementSyntax) return visited;
+                    if (visited.MemberName.Text != "memo") return Compat($"compat.get_prop({recv}, \"memo\", \"\", \"{visited.MemberName.Text}\")", node);
                     return Direct($"{recv}.memo", node);
                 case "interactable" or "tooltip" or "sticky" or "use_gravity" or "grid_projection" or "auto_raise" or "use_snap_points" or "use_grid" or "hide_when_face_down" or "locked"
                     or "drag_selectable" or "measure_movement" or "value" or "value_flags"
-                    or "held_spin_index" or "held_flip_index" or "pick_up_position" or "pick_up_rotation":
+                    or "held_spin_index" or "held_flip_index" or "pick_up_position" or "pick_up_rotation" or "max_typed_number" or "use_rotation_value_flip":
                     if (visited.Parent is AssignmentStatementSyntax) return visited;
-                    return Compat($"compat.get_prop({recv}, \"{name}\", {DefaultProp(name)})", node);
+                    return Compat($"compat.get_prop({recv}, \"{name}\", {DefaultProp(name)}, \"{visited.MemberName.Text}\")", node);
             }
             return visited;
         }
 
         static string DefaultProp(string name) => name switch
         {
-            "interactable" or "use_gravity" or "auto_raise" or "sticky" or "tooltip" or "drag_selectable" => "true", "memo" => "\"\"", "value" or "value_flags" => "0", _ => "false",
+            "interactable" or "use_gravity" or "auto_raise" or "sticky" or "tooltip" or "drag_selectable" => "true", "memo" => "\"\"", "value" or "value_flags" => "0", "max_typed_number" => "-1", _ => "false",
         };
 
         public override SyntaxNode? VisitAssignmentStatement(AssignmentStatementSyntax node)
@@ -581,7 +645,9 @@ public static class ModuleTranslator
             {
                 var value = (ExpressionSyntax)Visit(node.EqualsValues.Values[0])!;
                 _res.CompatCalls++;
-                var stmt = Stmt($"compat.set_prop({recv}, \"{FoldMember(ma.MemberName.Text)}\", {value.ToString().Trim()})", node);
+                var folded = FoldMember(ma.MemberName.Text);
+                var written = folded == ma.MemberName.Text ? "" : $", \"{ma.MemberName.Text}\"";
+                var stmt = Stmt($"compat.set_prop({recv}, \"{folded}\", {value.ToString().Trim()}{written})", node);
                 return stmt;
             }
             return base.VisitAssignmentStatement(node);
@@ -689,14 +755,35 @@ public static class ModuleTranslator
             if (visited.Name is not SimpleFunctionNameSyntax simple) return visited;
             var name = simple.ToString().Trim();
             var pars = visited.Parameters.Parameters.Select(p => p.ToString().Trim()).ToList();
-            var (newName, sig, prelude) = Signature(name, pars);
+            bool everyone = !_ctx.IsGlobal && EveryScriptEvents.Contains(name);
+            var (newName, sig, prelude) = Signature(name, pars, _ctx.IsGlobal || everyone);
             if (newName == null) return visited;
+            if (everyone) newName = KTable.Server.Scripting.EveryScript.ModulePrefix + newName;
             var body = visited.Body.ToFullString();
-            var text = $"function {newName}({sig})\n{(prelude.Length > 0 ? "  " + prelude + "\n" : "")}{body}end";
+            var head = prelude.Length > 0 ? "  " + prelude + "\n" : "";
+            if (Answered.TryGetValue(name, out var reader))
+            {
+                var inner = "__module_" + newName;
+                var wrapped = $"do\nfunction {inner}({sig})\n{head}{body}end\nfunction {newName}({sig}) return {reader}(({inner}({sig}))) end\nend";
+                return Keep(Stmt(wrapped, node), node);
+            }
+            var text = $"function {newName}({sig})\n{head}{body}end";
             return Keep(Stmt(text, node), node);
         }
 
-        (string? name, string sig, string prelude) Signature(string name, List<string> pars)
+        static bool InUi(string recv) => recv.Split('.')[0] is "UI" or "ui" || recv.Contains(".UI", StringComparison.Ordinal) || recv.Contains(".ui", StringComparison.Ordinal);
+
+        static readonly Dictionary<string, string> Components = new(StringComparer.Ordinal)
+        {
+            ["Container"] = "container", ["AssetBundle"] = "bundle", ["TextTool"] = "text_tool",
+        };
+
+        static readonly Dictionary<string, string> Answered = new(StringComparer.Ordinal)
+        {
+            ["onSave"] = "compat.save_answer", ["onsave"] = "compat.save_answer", ["tryObjectEnterContainer"] = "compat.try_answer",
+        };
+
+        (string? name, string sig, string prelude) Signature(string name, List<string> pars, bool global)
         {
             string Bind(IEnumerable<string> values) => Prelude(pars, values.ToList());
             switch (name)
@@ -711,17 +798,19 @@ public static class ModuleTranslator
                 case "onObjectPickUp" or "onObjectPickup": return ("on_pick_up", "__piece, __who", Bind(new[] { "compat.color_of(__who)", "__piece" }));
                 case "onObjectSpawn": return ("on_spawn", "__piece", Bind(new[] { "__piece" }));
                 case "onObjectDestroy": return ("on_destroy", "__piece", Bind(new[] { "__piece" }));
-                case "onObjectStateChange" when _ctx.IsGlobal: return ("on_state", "__piece, __old, __new", Bind(new[] { "__piece", "tostring(__old)" }));
+                case "onObjectStateChange" when global: return ("on_state", "__piece, __old, __new", Bind(new[] { "__piece", "tostring(__old)" }));
                 case "onObjectStateChange": return ("on_state", "__old, __new", Bind(new[] { "self", "tostring(__old)" }));
                 case "onPageChange": return ("on_page", "", "");
-                case "onObjectLoopingEffect" or "onObjectTriggerEffect" when _ctx.IsGlobal: return ("on_effect", "__piece, __index", Bind(new[] { "__piece", "__index" }));
-                case "onObjectLoopingEffect" or "onObjectTriggerEffect": return ("on_effect", "__index", Bind(new[] { "self", "__index" }));
-                case "onObjectPageChange" when _ctx.IsGlobal: return ("on_page", "__piece", Bind(new[] { "__piece" }));
+                case "onObjectLoopingEffect" when global: return ("on_effect", "__piece, __index", Bind(new[] { "__piece", "__index" }));
+                case "onObjectLoopingEffect": return ("on_effect", "__index", Bind(new[] { "self", "__index" }));
+                case "onObjectTriggerEffect" when global: return ("on_burst", "__piece, __index", Bind(new[] { "__piece", "__index" }));
+                case "onObjectTriggerEffect": return ("on_burst", "__index", Bind(new[] { "self", "__index" }));
+                case "onObjectPageChange" when global: return ("on_page", "__piece", Bind(new[] { "__piece" }));
                 case "onObjectPageChange": return ("on_page", "", Bind(new[] { "self" }));
                 case "onPlayerTurn": return ("on_turn", "__turn", Bind(new[] { "compat.player(\"White\")", "nil" }));
                 case "onPlayerTurnStart" or "onPlayerTurnEnd": return ("on_turn", "__turn", Bind(new[] { "\"White\"", "nil" }));
                 case "onRotate": return ("on_rotate", "__rot, __old, __who", Bind(new[] { "__rot", "self.face_down and 180 or 0", "compat.color_of(__who)", "__old", "self.face_down and 180 or 0" }));
-                case "onObjectRotate" when _ctx.IsGlobal:
+                case "onObjectRotate" when global:
                     return ("on_rotate", "__piece, __rot, __old, __who", Bind(new[] { "__piece", "__rot", "__piece.face_down and 180 or 0", "compat.color_of(__who)", "__old", "__piece.face_down and 180 or 0" }));
                 case "onObjectRotate": return ("on_rotate", "__rot, __old, __who", Bind(new[] { "self", "__rot", "self.face_down and 180 or 0", "compat.color_of(__who)", "__old", "self.face_down and 180 or 0" }));
                 case "onChat": return ("on_chat", "__text, __who", Bind(new[] { "__text", "compat.player(compat.color_of(__who))" }));
@@ -731,7 +820,7 @@ public static class ModuleTranslator
                 case "tryObjectEnterContainer": return ("try_stow", "__holder, __piece", Bind(new[] { "__holder", "__piece" }));
                 case "onObjectNumberTyped": return ("on_number_typed", "__piece, __who, __n", Bind(new[] { "__piece", "compat.color_of(__who)", "__n" }));
                 case "onRandomize": return ("on_roll", "__who", Bind(new[] { "compat.color_of(__who)" }));
-                case "onObjectRandomize" when _ctx.IsGlobal: return ("on_roll", "__piece, __who", Bind(new[] { "__piece", "compat.color_of(__who)" }));
+                case "onObjectRandomize" when global: return ("on_roll", "__piece, __who", Bind(new[] { "__piece", "compat.color_of(__who)" }));
                 case "onObjectRandomize": return ("on_roll", "__who", Bind(new[] { "self", "compat.color_of(__who)" }));
                 case "onScriptingButtonDown": return ("on_scripting_button_down", "__index, __who", Bind(new[] { "__index", "compat.color_of(__who)" }));
                 case "onScriptingButtonUp": return ("on_scripting_button_up", "__index, __who", Bind(new[] { "__index", "compat.color_of(__who)" }));
@@ -743,7 +832,7 @@ public static class ModuleTranslator
             }
             if (_uiHandlers.Contains(name)) return (name, "__who, __value, __id", Bind(new[] { "compat.player(compat.color_of(__who))", "__value", "__id" }));
             if (_clickHandlers.Contains(name)) return (name, "__who, __alt, __index, __piece", Bind(new[] { "__piece or self", "compat.color_of(__who)", "__alt" }));
-            if (_inputHandlers.Contains(name)) return (name, "__who, __value, __index, __piece", Bind(new[] { "__piece or self", "compat.color_of(__who)", "__value", "false" }));
+            if (_inputHandlers.Contains(name)) return (name, "__who, __value, __index, __piece, __typing", Bind(new[] { "__piece or self", "compat.color_of(__who)", "__value", "__typing == true" }));
             return (null, "", "");
         }
 

@@ -34,7 +34,7 @@ public partial class PieceNode
         float phase = (Piece.Id.Aggregate(17u, (h, c) => h * 31 + c) % 1000) / 1000f;
         _smokeAirBuilt = EffectFx.SmokeAirNow;
         _builtEffectOff = Piece.EffectOff;
-        if (Piece.EffectOff) return;
+        if (Piece.EffectOff && _onceGen == 0) return;
         _emitters.AddRange(EffectFx.Build(this, e, Footprint.X, Footprint.Y, phase, own));
         SteerEffect();
     }
@@ -46,6 +46,26 @@ public partial class PieceNode
         var placed = e.Clone();
         placed.At = at.Select((v, i) => v * (i % 2 == 0 ? kx : kz)).ToList();
         return placed;
+    }
+
+    const float OnceSeconds = 3f;
+    int _onceGen, _onceCount;
+
+    public bool PlayingOnce => _onceGen != 0;
+
+    public void PlayOnce()
+    {
+        if (!IsEffect || !IsInsideTree()) return;
+        int gen = ++_onceCount;
+        _onceGen = gen;
+        Rebuild();
+        float seconds = EffectSpec.Every > 0 ? (float)EffectSpec.Every : OnceSeconds;
+        GetTree().CreateTimer(seconds).Timeout += () =>
+        {
+            if (!IsInstanceValid(this) || _onceGen != gen) return;
+            _onceGen = 0;
+            Rebuild();
+        };
     }
 
     bool _built, _builtEffectOff;

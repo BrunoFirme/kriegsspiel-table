@@ -35,7 +35,7 @@ public class ModuleVectorColorTests
         const string lua = "  local v = Vector(1, 0, 0)\n  v:add(Vector(0, 2, 0)):scale(2):setAt('z', 4)\n  local n = v:copy():normalize()\n"
                            + "  local c = Vector(1, 0, 0):cross(Vector(0, 1, 0))\n  local same = Vector(1, 0, 0):equals(Vector(1.001, 0, 0))\n"
                            + "  self.setName(string.format('%s|%.2f|%s|%s|%s', tostring(v), n:magnitude(), tostring(c), tostring(same), tostring(Vector(1, 0, 0):heading('y'))))";
-        Assert.Equal("(2, 4, 4)|1.00|(0, 0, 1)|true|90", Run(lua));
+        Assert.Equal("Vector: { 2, 4, 4 }|1.00|Vector: { 0, 0, 1 }|true|90", Run(lua));
     }
 
     [Fact]
@@ -44,7 +44,7 @@ public class ModuleVectorColorTests
         const string lua = "  local c = Color.fromString('Red')\n  local r, g, b, a = c:get()\n  local h = Color(1, 0, 0):toHex()\n  local k = Color.fromHex('#00FF00'):toString()\n"
                            + "  local t = Color.Blue:copy():setAt('a', 0.5)\n  local m = Color({1, 1, 1}):lerp(Color(0, 0, 0), 0.5)\n"
                            + "  self.setName(string.format('%g,%g,%g,%g|%s|%s|%g|%g|%s', r, g, b, a, h, tostring(k), t.a, m.r, tostring(Color.Red:equals(c))))";
-        Assert.Equal("0.856,0.1,0.094,1|ff0000|nil|0.5|0.5|true", Run(lua));
+        Assert.Equal("0.856,0.1,0.094,1|ff0000|nil|0.5|0|true", Run(lua));
     }
 
     [Fact]

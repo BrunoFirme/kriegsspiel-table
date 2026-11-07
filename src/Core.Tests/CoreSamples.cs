@@ -68,9 +68,18 @@ public static class CoreSamples
         Assets = new() { ["h1"] = new AssetEntry { File = "img/h1.png", Kind = "image", W = 64, H = 32 } },
     };
 
+    static IEnumerable<Command> MarkCommands(string layer)
+    {
+        yield return new SetBookHighlight { Layer = layer, Id = "p-000001", Box = [0.1, 0.2, 0.5, 0.6] };
+        yield return new PlayEffect { Layer = layer, Id = "p-000001", Index = 1 };
+        yield return new ShowContents { Layer = layer, Id = "p-000001", To = "p:7", Most = 2 };
+        yield return new GlidePiece { Layer = layer, Id = "p-000001", To = new Vec2(2, 3), Rot = 90, Fast = true };
+    }
+
     public static IEnumerable<Command> AllCommands()
     {
         const string L = Layers.Umpire;
+        foreach (var mark in MarkCommands(L)) yield return mark;
         yield return new SpawnPiece { Layer = L, Def = "def-a", Pos = new(1, 2), RotDeg = 15, Id = "p-000100", Label = "x", Scale = 2, Guid = "a1b2c3", ScriptState = "{\"n\":1}" };
         yield return new RestorePiece { Layer = "scratch:red", Piece = Piece("p-000101") };
         yield return new MovePiece { Layer = L, Id = "p-000001", Pos = new(3, 4), RotDeg = 45, Stack = 1 };
@@ -89,6 +98,7 @@ public static class CoreSamples
         yield return new LoadSave { Name = "Turn 1", State = new GameState { ScenarioId = "s", Name = "loaded", Clock = new GameClock { Turn = 1 } } };
         yield return new SetTint { Layer = L, Id = "p-000001", Value = "#00FF00" };
         yield return new SetLocked { Layer = L, Id = "p-000001", Value = true };
+        yield return new SetHighlight { Layer = L, Id = "p-000001", Color = "#FF0000" };
         yield return new SetPieceOption { Layer = L, Id = "p-000001", Name = PieceOptions.NoCollision, Value = true };
         yield return new FlipPiece { Layer = L, Id = "p-000001", FaceDown = true };
         yield return new SetScale { Layer = L, Id = "p-000001", Scale = 1.5 };

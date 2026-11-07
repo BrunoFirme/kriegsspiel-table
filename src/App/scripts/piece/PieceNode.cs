@@ -81,6 +81,7 @@ public partial class PieceNode : Node3D
     {
         var n = new PieceNode { _s = s, Layer = layer, Piece = p, Ghost = ghost, _layerTint = layerTint ?? Colors.White, Lettered = lettered, PrintingOnly = printingOnly };
         n.Build();
+        n.SyncHighlight();
         return n;
     }
 
@@ -525,6 +526,7 @@ public partial class PieceNode : Node3D
         if (rebuild || EffectSwitched) { Rebuild(); return; }
         SyncWidgets();
         SyncLines();
+        SyncHighlight();
         if (!Placed) Scale = Vector3.One;
         if (!_flipping && !Placed) Rest(p.Pos, p.RotDeg, p.Y, p.Stack);
         var edge = SideColor();
@@ -582,7 +584,8 @@ public partial class PieceNode : Node3D
         bool selected = _sel != null, hovered = _hovered;
         _hovered = false;
         foreach (var c in GetChildren()) { RemoveChild(c); c.QueueFree(); }
-        _sel = _model = _body = _far = _addOn = null;
+        _sel = _model = _body = _far = _addOn = _lit = null;
+        _litColor = null;
         _selMat = null;
         _sideMat = null;
         _modelMat = null;
@@ -607,6 +610,7 @@ public partial class PieceNode : Node3D
         _built = false;
         Scale = Vector3.One;
         Build();
+        SyncHighlight();
         if (selected) SetSelected(true);
         if (hovered) SetHovered(true);
     }
@@ -623,36 +627,8 @@ public partial class PieceNode : Node3D
     {
         if (on && _sel == null)
         {
-            float pad = Mathf.Clamp(Footprint.Length() * 0.035f, 0.04f, 0.3f);
-            var c = new Color(1, 0.93f, 0.5f);
-            _selMat = new ShaderMaterial { Shader = OutlineShader };
-            _selMat.SetShaderParameter("color", c);
-            Mesh mesh;
-            if (Shape == "alpha" && Def?.Kind != "model")
-            {
-                mesh = new PlaneMesh { Size = Footprint * (1 + 2 * pad / Mathf.Max(0.01f, Mathf.Min(Footprint.X, Footprint.Y))) };
-                _selMat.SetShaderParameter("use_alpha", true);
-                if (_texPackage != null && _s.Assets.Texture(_texPackage, _texRel!, null, maxSize: _texSize) is { } t) _selMat.SetShaderParameter("tex", t);
-            }
-            else
-            {
-                bool model = Def?.Kind == "model";
-                var shape = model ? "box" : Shape;
-                float rim = Mathf.Clamp(Mathf.Min(Footprint.X, Footprint.Y) * 0.05f, 0.025f, 0.2f);
-                var inner = Outline(shape, Footprint.X, Footprint.Y);
-                var outer = Outline(shape, Footprint.X + rim * 2, Footprint.Y + rim * 2);
-                float y = model ? 0.006f : _thickness + 0.004f;
-                var st = new SurfaceTool();
-                st.Begin(Mesh.PrimitiveType.Triangles);
-                for (int i = 0; i < inner.Count; i++)
-                {
-                    int j = (i + 1) % inner.Count;
-                    Vector3 a0 = new(inner[i].X, y, inner[i].Y), a1 = new(outer[i].X, y, outer[i].Y), b0 = new(inner[j].X, y, inner[j].Y), b1 = new(outer[j].X, y, outer[j].Y);
-                    foreach (var v in new[] { a0, a1, b1, a0, b1, b0 }) st.AddVertex(v);
-                }
-                mesh = st.Commit();
-            }
-            bool halo = Shape == "alpha" && Def?.Kind != "model";
+            var (mesh, mat, halo) = Ring(new Color(1, 0.93f, 0.5f));
+            _selMat = mat;
             _sel =
                 new MeshInstance3D { Mesh = mesh, Position = new Vector3(0, halo ? -0.015f : 0, 0), MaterialOverride = _selMat, CastShadow = GeometryInstance3D.ShadowCastingSetting.Off,
                     Visible = Look.FlatSelection || IsEffect, Layers = Table.LiveOnlyLayer };
@@ -665,6 +641,35 @@ public partial class PieceNode : Node3D
             _selMat = null;
         }
         SetMaskLayer(on);
+    }
+
+    (Mesh mesh, ShaderMaterial mat, bool halo) Ring(Color c)
+    {
+        float pad = Mathf.Clamp(Footprint.Length() * 0.035f, 0.04f, 0.3f);
+        var mat = new ShaderMaterial { Shader = OutlineShader };
+        mat.SetShaderParameter("color", c);
+        bool halo = Shape == "alpha" && Def?.Kind != "model";
+        if (halo)
+        {
+            mat.SetShaderParameter("use_alpha", true);
+            if (_texPackage != null && _s.Assets.Texture(_texPackage, _texRel!, null, maxSize: _texSize) is { } t) mat.SetShaderParameter("tex", t);
+            return (new PlaneMesh { Size = Footprint * (1 + 2 * pad / Mathf.Max(0.01f, Mathf.Min(Footprint.X, Footprint.Y))) }, mat, true);
+        }
+        bool model = Def?.Kind == "model";
+        var shape = model ? "box" : Shape;
+        float rim = Mathf.Clamp(Mathf.Min(Footprint.X, Footprint.Y) * 0.05f, 0.025f, 0.2f);
+        var inner = Outline(shape, Footprint.X, Footprint.Y);
+        var outer = Outline(shape, Footprint.X + rim * 2, Footprint.Y + rim * 2);
+        float y = model ? 0.006f : _thickness + 0.004f;
+        var st = new SurfaceTool();
+        st.Begin(Mesh.PrimitiveType.Triangles);
+        for (int i = 0; i < inner.Count; i++)
+        {
+            int j = (i + 1) % inner.Count;
+            Vector3 a0 = new(inner[i].X, y, inner[i].Y), a1 = new(outer[i].X, y, outer[i].Y), b0 = new(inner[j].X, y, inner[j].Y), b1 = new(outer[j].X, y, outer[j].Y);
+            foreach (var v in new[] { a0, a1, b1, a0, b1, b0 }) st.AddVertex(v);
+        }
+        return (st.Commit(), mat, false);
     }
 
     public bool Ringed => _sel != null;

@@ -13,7 +13,7 @@ sealed class NameEditor
     PieceNode? _node;
     int _widget;
     bool? _noteBody;
-    string _buf = "", _orig = "";
+    string _buf = "", _orig = "", _sent = "";
     double _caretT;
     bool _caretOn = true;
 
@@ -55,6 +55,7 @@ sealed class NameEditor
         _widget = index;
         _orig = w.Value;
         _buf = _orig;
+        _sent = _orig;
         _caretT = 0;
         _caretOn = true;
         node.SetWidgetText(index, _buf + "|");
@@ -89,8 +90,7 @@ sealed class NameEditor
         if (wi > 0)
         {
             n.ClearWidgetText();
-            var v = commit ? _buf : _orig;
-            if (commit || v != _buf) _c.S.Do(new EditWidget { Layer = n.Layer, Id = n.Piece.Id, Index = wi, Value = v });
+            _c.S.Do(new EditWidget { Layer = n.Layer, Id = n.Piece.Id, Index = wi, Value = commit ? _buf : _orig });
             return;
         }
         var t = _buf.Trim();
@@ -119,22 +119,53 @@ sealed class NameEditor
                 var pasted = DisplayServer.ClipboardGet().Replace("\r", "");
                 _buf += _noteBody == true ? pasted : pasted.Replace('\n', ' ');
                 break;
+            case Godot.Key.Tab when _widget > 0 && _node != null && WidgetAt(_widget) is { } typed:
+                if (typed.Tab == "spaces") _buf += InputKeys.FourSpaces;
+                else if (typed.Tab is null or "next") { NextInput(); return; }
+                break;
             case Godot.Key.Backspace:
                 if (_buf.Length > 0) _buf = _buf[..^1];
                 break;
             default:
-                if (k.Unicode >= 32 && !k.CtrlPressed && !k.AltPressed) _buf += char.ConvertFromUtf32((int)k.Unicode);
+                if (k.Unicode >= 32 && !k.CtrlPressed && !k.AltPressed) _buf += Typed(char.ConvertFromUtf32((int)k.Unicode));
                 break;
         }
         _caretOn = true;
         _caretT = 0;
         if (_widget > 0 && _node != null)
         {
-            _c.S.Do(new EditWidget { Layer = _node.Layer, Id = _node.Piece.Id, Index = _widget, Value = _buf });
+            if (_buf != _sent) _c.S.Do(new EditWidget { Layer = _node.Layer, Id = _node.Piece.Id, Index = _widget, Value = _buf, Typing = true });
+            _sent = _buf;
             _node.SetWidgetText(_widget, _buf + "|");
         }
         else if (_noteBody is { } body) _node?.SetNoteText(body, _buf + "|");
         else _node?.SetTitleText(_buf + "|");
+    }
+
+    Widget? WidgetAt(int index) => _node != null && index >= 1 && index <= _node.Piece.Widgets.Count ? _node.Piece.Widgets[index - 1] : null;
+
+    string Typed(string text)
+    {
+        if (_widget == 0 || WidgetAt(_widget)?.Validation is not { } mode || text.Length != 1) return text;
+        char ch = InputKeys.Validate(mode, _buf, text[0]);
+        return ch == InputKeys.Refused ? "" : ch.ToString();
+    }
+
+    void NextInput()
+    {
+        var node = _node!;
+        var widgets = node.Piece.Widgets;
+        int from = _widget;
+        End(commit: true);
+        for (int step = 1; step <= widgets.Count; step++)
+        {
+            int i = (from - 1 + step) % widgets.Count;
+            if (widgets[i].Kind == "input" && widgets[i].Face == widgets[from - 1].Face)
+            {
+                BeginWidget(node, i + 1, widgets[i]);
+                return;
+            }
+        }
     }
 
     public void Tick(double delta)

@@ -101,6 +101,7 @@ type Command abstract
   derived EditWidget = EditWidget
   derived EraseStroke = EraseStroke
   derived FlipPiece = FlipPiece
+  derived GlidePiece = GlidePiece
   derived HoldPiece = HoldPiece
   derived Hotkey = Hotkey
   derived LoadSave = LoadSave
@@ -110,6 +111,7 @@ type Command abstract
   derived NumberTyped = NumberTyped
   derived PickGlobalMenuItem = PickGlobalMenuItem
   derived PickMenuItem = PickMenuItem
+  derived PlayEffect = PlayEffect
   derived PublishSighting = PublishSighting
   derived RemoveBoard = RemoveBoard
   derived RemoveDecal = RemoveDecal
@@ -122,6 +124,7 @@ type Command abstract
   derived RollDice = RollDice
   derived Say = Say
   derived SelectPiece = SelectPiece
+  derived SetBookHighlight = SetBookHighlight
   derived SetBriefing = SetBriefing
   derived SetCalibration = SetCalibration
   derived SetClock = SetClock
@@ -135,6 +138,7 @@ type Command abstract
   derived SetGlobalScript = SetGlobalScript
   derived SetGlobalScriptState = SetGlobalScriptState
   derived SetGrid = SetGrid
+  derived SetHighlight = SetHighlight
   derived SetHotkeys = SetHotkeys
   derived SetLabel = SetLabel
   derived SetLettering = SetLettering
@@ -164,6 +168,7 @@ type Command abstract
   derived SetWind = SetWind
   derived SetWorth = SetWorth
   derived SetZone = SetZone
+  derived ShowContents = ShowContents
   derived ShowDialog = ShowDialog
   derived SpawnPiece = SpawnPiece
   derived StampDecal = StampDecal
@@ -246,6 +251,7 @@ type Dictionary<string,JsonElement> map string to JsonElement
 type Dictionary<string,List<DecalDef>> map string to List<DecalDef>
 type Dictionary<string,List<PieceInstance>> map string to List<PieceInstance>
 type Dictionary<string,List<Stroke>> map string to List<Stroke>
+type Dictionary<string,List<int>> map string to List<int>
 type Dictionary<string,int> map string to int
 type Dictionary<string,string> map string to string
 type DieFace object
@@ -266,6 +272,7 @@ type EditWidget object
   index: int
   layer: string
   seq: long
+  typing: bool
   undoOf: long
   value: string
 type EffectDef object
@@ -337,6 +344,9 @@ type GameState object
   scriptState: string
   sheets: List<SheetDef>
   ui: List<UiNode>
+  uiAssets: List<UiAsset>
+  uiLayout: UiLayout
+  uiLinks: Dictionary<string,string>
   uiPictures: Dictionary<string,string>
   visionRadius: double
   wind: Wind
@@ -346,6 +356,16 @@ type GetSnapshot object
 type GetTurn object
   index: int
 type GetTurns object
+type GlidePiece object
+  actor: long
+  at: long
+  fast: bool
+  id: string
+  layer: string
+  rot: double?
+  seq: long
+  to: Vec2?
+  undoOf: long
 type GridDef object
   color: string
   kind: string
@@ -440,7 +460,10 @@ type List<Stroke> list of Stroke
 type List<TextLineDef> list of TextLineDef
 type List<TurnInfo> list of TurnInfo
 type List<TurnRecord> list of TurnRecord
+type List<UiAsset> list of UiAsset
+type List<UiElement> list of UiElement
 type List<UiNode> list of UiNode
+type List<UiRule> list of UiRule
 type List<Vec2> list of Vec2
 type List<Widget> list of Widget
 type List<Zone> list of Zone
@@ -493,6 +516,14 @@ type Message abstract
   derived TurnList = TurnList
   derived TurnState = TurnState
   derived UploadAsset = UploadAsset
+type ModuleStateData object
+  description: string
+  gmNotes: string
+  guid: string
+  memo: string
+  scriptState: string
+  tags: List<string>
+  type: string
 type MovePiece object
   actor: long
   at: long
@@ -583,7 +614,9 @@ type PieceDef object
   kind: string
   localUnit: Size2?
   mesh: string
+  moduleObjectTag: string
   moduleTags: List<string>
+  moduleTop: double?
   moduleType: string
   name: string
   nameBox: FaceBox
@@ -607,6 +640,7 @@ type PieceDef object
   tintsPictures: bool
 type PieceInstance object
   attached: List<string>
+  bookHighlight: double[]
   counters: Dictionary<string,int>
   decals: List<DecalDef>
   decalsOnState: int?
@@ -619,6 +653,7 @@ type PieceInstance object
   faces: List<DieFace>
   gmNotes: string
   guid: string
+  highlight: string
   holds: bool?
   id: string
   label: string
@@ -630,6 +665,7 @@ type PieceInstance object
   menuItems: List<MenuItemDef>
   noCollision: bool
   notBoxSelected: bool
+  notInteractable: bool
   notSticky: bool
   note: string
   physicalRoll: bool
@@ -650,6 +686,8 @@ type PieceInstance object
   tiltZ: double
   tintOverride: string
   ui: List<UiNode>
+  uiAssets: List<UiAsset>
+  uiLayout: UiLayout
   widgets: List<Widget>
   worth: int
   worthGroups: int
@@ -659,6 +697,7 @@ type PieceStateDef object
   decals: List<DecalDef>
   image: string
   mesh: string
+  module: ModuleStateData
   name: string
   outline: List<List<Vec2>>
   script: string
@@ -666,6 +705,14 @@ type PieceStateDef object
   size: Size2?
   texture: string
   up: double[]
+type PlayEffect object
+  actor: long
+  at: long
+  id: string
+  index: int
+  layer: string
+  seq: long
+  undoOf: long
 type PrintPlace object
   h: double
   side: string
@@ -800,6 +847,9 @@ type Scenario object
   scriptState: string
   sheets: List<SheetDef>
   ui: List<UiNode>
+  uiAssets: List<UiAsset>
+  uiLayout: UiLayout
+  uiLinks: Dictionary<string,string>
   uiPictures: Dictionary<string,string>
   umpireBoard: List<PieceInstance>
   visionRadius: double
@@ -827,6 +877,14 @@ type SelectPiece object
   selected: bool
   seq: long
   to: string
+  undoOf: long
+type SetBookHighlight object
+  actor: long
+  at: long
+  box: double[]
+  id: string
+  layer: string
+  seq: long
   undoOf: long
 type SetBriefing object
   actor: long
@@ -920,6 +978,14 @@ type SetGrid object
   actor: long
   at: long
   grid: GridDef
+  seq: long
+  undoOf: long
+type SetHighlight object
+  actor: long
+  at: long
+  color: string
+  id: string
+  layer: string
   seq: long
   undoOf: long
 type SetHotkeys object
@@ -1099,21 +1165,31 @@ type SetTint object
   value: string
 type SetUi object
   actor: long
+  assets: List<UiAsset>
   at: long
   layer: string
+  layout: UiLayout
   piece: string
   seq: long
   tree: List<UiNode>
   undoOf: long
+  xml: string
 type SetUiAttributes object
   actor: long
   at: long
   attributes: Dictionary<string,string>
+  data: UiNode
+  dataPath: List<int>
   id: string
+  ids: Dictionary<string,List<int>>
+  kind: string
   layer: string
+  live: UiElement
+  livePath: List<int>
   piece: string
   seq: long
   undoOf: long
+  value: string
 type SetUiPictures object
   actor: long
   at: long
@@ -1177,6 +1253,15 @@ type ShineDef object
   rim: double
   sharpness: double
   strength: double
+type ShowContents object
+  actor: long
+  at: long
+  id: string
+  layer: string
+  most: int
+  seq: long
+  to: string
+  undoOf: long
 type ShowDialog object
   actor: long
   at: long
@@ -1270,21 +1355,51 @@ type TurnState object
   index: int
   info: TurnInfo
   state: GameState
+type UiAsset object
+  name: string
+  type: int
+  url: string
+type UiElement object
+  active: string
+  attributes: Dictionary<string,string>
+  children: List<UiElement>
+  classes: List<string>
+  inner: string
+  options: List<UiNode>
+  own: List<string>
+  shown: string
+  tag: string
 type UiEvent object
   actor: long
   at: long
   event: string
   id: string
   layer: string
+  path: List<int>
   piece: string
   seq: long
   undoOf: long
   value: string
+type UiLayout object
+  broken: string
+  colors: Dictionary<string,string>
+  elements: List<UiElement>
+  ids: Dictionary<string,List<int>>
+  rules: List<UiRule>
+  seen: List<UiRule>
+  tooltip: Dictionary<string,string>
 type UiNode object
   attributes: Dictionary<string,string>
   children: List<UiNode>
   id: string read-only
   tag: string
+  value: string
+type UiRule object
+  attributes: Dictionary<string,string>
+  key: string
+  order: int
+  selector: string
+  type: string
 type Undo object
   actor: long
   at: long
@@ -1317,15 +1432,19 @@ type Widget object
   face: string
   font: double
   h: double
+  hoverColor: string
   kind: string
   label: string
   lines: int
   onChange: string
   onClick: string
   placeholder: string
+  pressColor: string
   rot: double
+  tab: string
   textColor: string
   tooltip: string
+  validation: string
   value: string
   w: double
   x: double

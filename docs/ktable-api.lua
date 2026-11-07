@@ -48,6 +48,12 @@
 ---@class GlobalPrintOptions
 ---@field ..? any The values to write; each is written as tostring would.
 
+---@class PieceShowglideSpec
+---@field x? number Where it glides to, with z; leave both out to only turn.
+---@field z? number Where it glides to, with x.
+---@field rot? number The heading it turns to, in degrees; leave it out to keep its heading.
+---@field fast? boolean true pulls it ten times as hard, as a module's fast smooth move does.
+
 ---@class PieceButtonSpec
 ---@field face? "front"|"back" The face it is drawn on. Default "front".
 ---@field x? number Centre, piece units right of the piece's centre. Default 0.
@@ -60,6 +66,8 @@
 ---@field color? Color The box's colour.
 ---@field text_color? Color The text's colour.
 ---@field tooltip? string Shown when the pointer rests on it.
+---@field hover_color? Color The box's colour under the pointer. Default: each of red, green and blue 0.2 nearer the middle grey.
+---@field press_color? Color The box's colour while pressed. Default: each 0.4 nearer the middle grey.
 ---@field on_click? string The handler's name: called as fn(who, alt, index, piece); alt is true for a right-click.
 ---@field kind? "button"|"input"|"label" "label" shows it but takes no clicks or typing: locked text. A module's button or input turned face down above the piece comes across this way. edit can change it.
 
@@ -78,7 +86,9 @@
 ---@field align? "left"|"center"|"right" Default "center".
 ---@field lines? number Lines of text the box holds. Default 1.
 ---@field tooltip? string Shown when the pointer rests on it.
----@field on_change? string The handler's name: called as fn(who, value, index, piece) when the umpire finishes typing; text it returns replaces what was typed.
+---@field on_change? string The handler's name: called as fn(who, value, index, piece, typing) each time the text changes while the umpire types (typing true) and once more when they leave the box (typing false); text it returns replaces what was typed.
+---@field validation? "integer"|"float"|"alphanumeric"|"username"|"name" Keys the box takes: digits and a leading minus; also one point; letters and digits; lower-case letters and digits; or a name, capitalised by word. Default any.
+---@field tab? "next"|"spaces"|"none" What Tab does: go on to the piece's next input (the default), type four spaces, or nothing.
 ---@field kind? "button"|"input"|"label" "label" shows its value but takes no typing: locked text.
 
 ---@class PieceCallOptions
@@ -88,6 +98,11 @@
 ---@field def? string Only pieces of this kind.
 ---@field tag? string Only pieces with this tag (their own, or their kind's).
 ---@field name? string Only pieces with this label; case does not matter.
+
+---@class BoardKindsOptions
+---@field link? string Only kinds made from this picture or model link (one of their source links).
+---@field type? string Only kinds converted from this module object type, such as Custom_Token.
+---@field tag? string Only kinds with this tag.
 
 ---@class BoardSpawnSpec
 ---@field def string The id of a piece definition in this game's packs.
@@ -147,6 +162,12 @@
 ---@field local_unit Size|nil For a model that came from a module, what one unit of its script's local frame is in piece units: { x =, z = }; nil for every other piece.
 ---@field shape string Its outline at its state: "box", "rounded", "circle", "hex", or "alpha" for a token cut along its picture.
 ---@field face_down boolean Turned over.
+---@field interactable boolean Whether hands can take it (set_interactable).
+---@field held_by Who The umpire carrying it now, or nil.
+---@field source table For a kind converted from a module: { type =, links = { image =, mesh =, … }, top =, tag =, tags = } — the module object's type, its picture and model links, its top surface in its own units, the kind of object it was (Tile, Figurine, Board, Bag…) and its own tags; for a piece of several states, states lists each state's { type, guid, description, gm_notes, memo, script_state, tags, script } as the module kept them; nil otherwise.
+---@field highlight string The colour it is ringed in, or nil (set_highlight).
+---@field book_highlight table For a book, the box marked on the page it is open at: { left =, bottom =, right =, top = }, each from 0 to 1 across the page from its lower left corner; nil for none. Turning the page clears it.
+---@field holds boolean Whether it is a holder that other pieces can be stowed in: a piece holding some, one made a holder, or a kind tagged bag.
 ---@field locked boolean Pinned to the table: not dragged, turned or resized by hand.
 ---@field sticky boolean Carries the pieces resting on it when it is moved; attached pieces go with it either way.
 ---@field box_selected boolean Taken by a selection box dragged over it.
@@ -218,6 +239,18 @@ function Piece.set_box_selected(on) end
 ---@param on? boolean true, or no argument, shows the distance; false hides it.
 function Piece.set_measures_moves(on) end
 
+---Whether hands can take it: off, it cannot be picked up, dragged, selected or opened, though its buttons still press.
+---@param on? boolean true, or no argument, lets hands take it; false keeps them off.
+function Piece.set_interactable(on) end
+
+---Rings it in a colour on every screen; nil takes the ring away.
+---@param color? Color The ring's colour, or nil.
+function Piece.set_highlight(color) end
+
+---Marks a box on the page a book is open at, in its reader on every screen; nil clears it. Turning the page clears it too.
+---@param box? table { left =, bottom =, right =, top = }, each from 0 to 1 across the page from its lower left corner; nil clears the box.
+function Piece.set_book_highlight(box) end
+
 ---Whether it carries the pieces resting on it when it is moved.
 ---@param on? boolean true, or no argument, carries them; false leaves them where they lie.
 function Piece.set_sticky(on) end
@@ -244,6 +277,14 @@ function Piece.set_face_picture(link) end
 ---Changes the text drawn on the piece: any of text, size and color; nil takes the lettering away.
 ---@param changes table|nil { text =, size =, color = }, each optional.
 function Piece.set_lettering(changes) end
+
+---Shows it gliding towards a point or a heading on every screen, pulled and slowed as a module's smooth move is; the piece itself stays where it is until set_pos or set_rot puts it there.
+---@param spec PieceShowglideSpec
+function Piece.show_glide(spec) end
+
+---Plays an effect once on every screen, one round of it, whether it is running or not; false for a piece that is not an effect.
+---@param index? number Which one-off it is, from 0, handed on to on_burst; 0 when left out.
+function Piece.play_effect(index) end
 
 ---Starts or stops an effect.
 ---@param on boolean true runs it; false stops it.
@@ -310,6 +351,11 @@ function Piece.attach(piece) end
 ---Takes this piece off the one it rides on.
 function Piece.detach() end
 
+---Opens the window of what it holds on that umpire's screen, as if they had opened it; false when it holds nothing by its kind or the umpire is not here.
+---@param umpire Who Whose screen: an entry of game.umpires().
+---@param most? number Show only the first this many; leave it out for all.
+function Piece.show_contents(umpire, most) end
+
 ---Takes another piece off the table into this one, with whatever rides on it; a piece this one rides on is refused.
 function Piece.stow() end
 
@@ -344,7 +390,7 @@ function Piece.to_local(x, z) end
 ---@return number # The widget's index, from 1, for edit and remove_widget.
 function Piece.button(spec) end
 
----Draws an input box and returns its index. on_change names a function called as fn(who, value, index, piece) when the umpire has typed.
+---Draws an input box and returns its index. on_change names a function called as fn(who, value, index, piece, typing) as the umpire types and when they leave the box.
 ---@param spec PieceInputSpec
 ---@return number # The widget's index, from 1.
 function Piece.input(spec) end
@@ -404,6 +450,11 @@ function board.find(id_or_guid) end
 ---@param filter? BoardPiecesOptions
 ---@return Piece[] # A list; empty when nothing matches. Every field given must match.
 function board.pieces(filter) end
+
+---The kinds this game's packs hold, or those that match { link =, type =, tag = }: { id =, name =, tags =, source = }.
+---@param filter? BoardKindsOptions
+---@return table[] # A list; empty when nothing matches. source is the kind's module source, as a piece's source field gives it, or nil.
+function board.kinds(filter) end
 
 ---Puts a new piece of that kind on the board and returns it; its script starts at once.
 ---@param spec BoardSpawnSpec
@@ -623,18 +674,32 @@ function wait.condition(predicate, fn, timeout_s, on_timeout) end
 
 ---Stops a timer before it fires.
 ---@param handle number What seconds, frames or condition returned. A timer that has fired already is no error.
+---@return boolean # true when a timer was waiting and is stopped now, false when there was none.
 function wait.stop(handle) end
+
+---The scripts' clock: seconds since the table started running scripts.
+---@return number
+function wait.now() end
+
+---How many frames the scripts have run since the table started.
+---@return number
+function wait.frame() end
+
+---Seconds between the last frame and the one before it.
+---@return number
+function wait.delta() end
 
 ---@class KTJson
 json = {}
 
----A value as JSON. A table whose keys are 1..n is an array.
----@param value any A table, string, number, boolean or nil.
+---A value as JSON. A table whose keys are all positive numbers is an array up to its highest key, gaps as null; an empty table is []; other tables are objects with their keys in sorted order, number keys after the text ones.
+---@param value any A table, string, number, boolean or nil. A function, a table holding itself or a key that is neither text nor a number is an error.
+---@param pretty? boolean true: one key a line, indented by two spaces.
 ---@return string
-function json.encode(value) end
+function json.encode(value, pretty) end
 
----JSON as a value; an error when it does not parse.
----@param text string The JSON.
+---JSON as a value; an error when it does not parse. Text after the first value is ignored, and blank text is nil.
+---@param text string The JSON. Anything else is an error.
 ---@return any
 function json.decode(text) end
 
@@ -677,9 +742,12 @@ function on_state() end
 function on_page() end
 
 ---An umpire started (0) or stopped (-1) this effect.
+function on_effect() end
+
+---An umpire played this effect once (Play once in its menu); index is the one-off asked for, 0 from the menu.
 ---@param old number The state it left, from 1.
 ---@param new number The state it is in now, from 1.
-function on_effect(old, new) end
+function on_burst(old, new) end
 
 ---It was turned over or back.
 ---@param face_down boolean true when it is face down now.

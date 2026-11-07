@@ -23,6 +23,8 @@ public static partial class StateMachine
             case LoadSave ls: return ApplyLoadSave(g, ls);
             case SetTint ti: return ApplySetTint(g, ti, ref inverse);
             case SetLocked lk: return ApplySetLocked(g, lk, ref inverse);
+            case SetHighlight hl: return ApplySetHighlight(g, hl, ref inverse);
+            case SetBookHighlight bh: return ApplySetBookHighlight(g, bh, ref inverse);
             case SetPieceOption po: return ApplySetPieceOption(g, po, ref inverse);
             case FlipPiece fp: return ApplyFlip(g, fp, ref inverse);
             case SetScale sz: return ApplySetScale(g, sz, ref inverse);
@@ -82,16 +84,14 @@ public static partial class StateMachine
                 return hk.Index >= 1 && hk.Index <= g.Hotkeys.Count ? null : "no such hotkey";
             case PickGlobalMenuItem pgm:
                 return pgm.Index >= 1 && pgm.Index <= g.MenuItems.Count ? null : "no such menu row";
-            case NumberTyped nt:
-                return g.Find(nt.Layer, nt.Id) == null ? "no such piece" : null;
-            case SelectPiece:
-                return null;
-            case PickMenuItem pm:
-                return g.Find(pm.Layer, pm.Id) == null ? "no such piece" : null;
-            case HoldPiece hp:
-                return g.Find(hp.Layer, hp.Id) == null ? "no such piece" : null;
-            case Say:
-                return null;
+            case NumberTyped nt: return Present(g, nt.Layer, nt.Id);
+            case SelectPiece: return null;
+            case ShowContents sc: return Present(g, sc.Layer, sc.Id);
+            case PlayEffect pe: return Present(g, pe.Layer, pe.Id);
+            case GlidePiece gp: return Present(g, gp.Layer, gp.Id);
+            case PickMenuItem pm: return Present(g, pm.Layer, pm.Id);
+            case HoldPiece hp: return Present(g, hp.Layer, hp.Id);
+            case Say: return null;
             case SetUi or SetUiAttributes or SetUiPictures: return ApplyUi(g, c, ref inverse);
             case UiEvent ue: return ApplyUiEvent(g, ue);
             case ShowDialog or DialogResult:
@@ -103,6 +103,8 @@ public static partial class StateMachine
                 return "unknown command";
         }
     }
+
+    static string? Present(GameState g, string layer, string id) => g.Find(layer, id) == null ? "no such piece" : null;
 
     static string? ApplySpawn(GameState g, SpawnPiece s, ref Command? inverse)
     {
@@ -196,6 +198,7 @@ public static partial class StateMachine
         var p = g.Find(st.Layer, st.Id);
         if (p == null) return "no such piece";
         inverse = new SetState { Layer = st.Layer, Id = st.Id, State = p.State };
+        if (Math.Max(0, st.State) != p.State) p.BookHighlight = null;
         p.State = Math.Max(0, st.State);
         if (p.StateGuids is { } guids && p.State < guids.Count && guids[p.State].Length > 0) p.Guid = guids[p.State];
         return null;
@@ -286,6 +289,25 @@ public static partial class StateMachine
         return null;
     }
 
+    static string? ApplySetHighlight(GameState g, SetHighlight hl, ref Command? inverse)
+    {
+        var p = g.Find(hl.Layer, hl.Id);
+        if (p == null) return "no such piece";
+        inverse = new SetHighlight { Layer = hl.Layer, Id = hl.Id, Color = p.Highlight };
+        p.Highlight = hl.Color;
+        return null;
+    }
+
+    static string? ApplySetBookHighlight(GameState g, SetBookHighlight bh, ref Command? inverse)
+    {
+        var p = g.Find(bh.Layer, bh.Id);
+        if (p == null) return "no such piece";
+        if (bh.Box is { } box && (box.Length != SetBookHighlight.Corners || box.Any(v => !double.IsFinite(v)))) return "a highlight box is four numbers: left, bottom, right, top";
+        inverse = new SetBookHighlight { Layer = bh.Layer, Id = bh.Id, Box = p.BookHighlight };
+        p.BookHighlight = bh.Box?.ToArray();
+        return null;
+    }
+
     static string? ApplySetLocked(GameState g, SetLocked lk, ref Command? inverse)
     {
         var p = g.Find(lk.Layer, lk.Id);
@@ -329,6 +351,10 @@ public static partial class StateMachine
             case PieceOptions.EffectOff:
                 was = p.EffectOff;
                 p.EffectOff = po.Value;
+                break;
+            case PieceOptions.NotInteractable:
+                was = p.NotInteractable;
+                p.NotInteractable = po.Value;
                 break;
             default: return "no such option: " + po.Name;
         }

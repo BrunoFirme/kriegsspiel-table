@@ -89,6 +89,18 @@ public sealed class PieceStateDef
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public double[]? Up { get; set; }
     public string? Script { get; set; }
     public List<DecalDef>? Decals { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public ModuleStateData? Module { get; set; }
+}
+
+public sealed class ModuleStateData
+{
+    public string Type { get; set; } = "";
+    public string Guid { get; set; } = "";
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? Description { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? GmNotes { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? Memo { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? ScriptState { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<string>? Tags { get; set; }
 }
 
 public sealed class CounterDef
@@ -186,6 +198,8 @@ public sealed class PieceDef : IJsonOnDeserialized
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? ModuleType { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<string>? ModuleTags { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public Dictionary<string, string>? Sources { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public double? ModuleTop { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? ModuleObjectTag { get; set; }
     public string? AddOnMesh { get; set; }
     public string? AddOnTexture { get; set; }
     public Size2 Size { get; set; } = new(1, 1);
@@ -399,6 +413,9 @@ public sealed class PieceInstance
     public bool NotSticky { get; set; }
     public bool NotBoxSelected { get; set; }
     public bool MeasuresMoves { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool NotInteractable { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? Highlight { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public double[]? BookHighlight { get; set; }
     public string Memo { get; set; } = "";
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? GmNotes { get; set; }
     public List<Widget> Widgets { get; set; } = new();
@@ -423,6 +440,7 @@ public sealed class PieceInstance
         Counters = new(Counters), Text = new(Text), Attached = new(Attached),
         TintOverride = TintOverride, Label = Label, Scale = Scale, Y = Y, FaceDown = FaceDown, TiltX = TiltX, TiltZ = TiltZ, Note = Note, Picture = Picture, Locked = Locked, Holds = Holds,
         NoCollision = NoCollision, PhysicalRoll = PhysicalRoll, NotSticky = NotSticky, NotBoxSelected = NotBoxSelected, MeasuresMoves = MeasuresMoves,
+        NotInteractable = NotInteractable, Highlight = Highlight, BookHighlight = BookHighlight?.ToArray(),
         Script = Script, ScriptState = ScriptState, Guid = Guid, Tags = Tags == null ? null : new(Tags), Memo = Memo, GmNotes = GmNotes,
         Widgets = Widgets.Select(w => w.Clone()).ToList(), DrawnOnState = DrawnOnState, MenuItems = MenuItems.Select(m => m.Clone()).ToList(),
         Lines = Lines.Select(l => l.Clone()).ToList(), Decals = Decals.Select(d => d.Clone()).ToList(), DecalsOnState = DecalsOnState,
@@ -557,6 +575,10 @@ public sealed class Widget
     public string? Tooltip { get; set; }
     public string? OnClick { get; set; }
     public string? OnChange { get; set; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)] public string? HoverColor { get; set; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)] public string? PressColor { get; set; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)] public string? Validation { get; set; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)] public string? Tab { get; set; }
     [System.Text.Json.Serialization.JsonIgnore] public bool Locked => Kind == "label";
     public Widget Clone() => (Widget)MemberwiseClone();
 }

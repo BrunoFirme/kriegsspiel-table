@@ -17,6 +17,7 @@ Draw layer | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same 
 EditWidget layer | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone Id | apply refused:no_such_widget | undo-reloads Id
 EraseStroke layer | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone - | apply refused:no_such_stroke | undo-reloads -
 FlipPiece layer | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone Id | apply ok inverse:FlipPiece | undo-reloads -
+GlidePiece layer | allowed O:n U:n L:n H:n | in-batch O:n U:n L:n H:n | observer same | zone Id | apply ok inverse:none | undo-reloads -
 HoldPiece layer | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone Id | apply ok inverse:none | undo-reloads -
 Hotkey table | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone - | apply refused:no_such_hotkey | undo-reloads -
 LoadSave table | allowed O:n U:n L:n H:n | in-batch O:n U:n L:n H:n | observer changed:{"type":"LoadSave","name":"","seq":0,"actor":0,"at":0,"undoOf":0} | zone - | apply refused:nothing_to_load | undo-reloads -
@@ -27,6 +28,7 @@ MoveSheet table | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer 
 NumberTyped layer | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone Id | apply ok inverse:none | undo-reloads -
 PickGlobalMenuItem table | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone - | apply refused:no_such_menu_row | undo-reloads -
 PickMenuItem layer | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone Id | apply ok inverse:none | undo-reloads -
+PlayEffect layer | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone Id | apply ok inverse:none | undo-reloads -
 PublishSighting table | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone - | apply ok inverse:none | undo-reloads -
 RemoveBoard table | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone - | apply refused:no_such_board | undo-reloads -
 RemoveDecal layer | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone - | apply refused:no_such_decal | undo-reloads -
@@ -45,6 +47,7 @@ Say(to=other) table | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | obser
 Say(to=umpires) table | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer drop | zone - | apply ok inverse:none | undo-reloads -
 SelectPiece table | allowed O:n U:n L:n H:n | in-batch O:n U:n L:n H:n | observer drop | zone - | apply ok inverse:none | undo-reloads -
 SelectPiece(to=me) table | allowed O:n U:n L:n H:n | in-batch O:n U:n L:n H:n | observer same | zone - | apply ok inverse:none | undo-reloads -
+SetBookHighlight layer | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone Id | apply ok inverse:SetBookHighlight | undo-reloads -
 SetBriefing table | allowed O:n U:n L:y H:y | in-batch O:n U:n L:y H:y | observer drop | zone - | apply ok inverse:SetBriefing | undo-reloads -
 SetCalibration table | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone - | apply ok inverse:SetCalibration | undo-reloads -
 SetClock table | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone - | apply ok inverse:SetClock | undo-reloads -
@@ -58,6 +61,7 @@ SetGlobalMenuItems table | allowed O:n U:n L:n H:n | in-batch O:n U:n L:n H:n | 
 SetGlobalScript table | allowed O:n U:n L:y H:y | in-batch O:n U:n L:y H:y | observer same | zone - | apply ok inverse:SetGlobalScript | undo-reloads (global script)
 SetGlobalScriptState table | allowed O:n U:n L:n H:n | in-batch O:n U:n L:n H:n | observer same | zone - | apply ok inverse:SetGlobalScriptState | undo-reloads (global script)
 SetGrid table | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone - | apply ok inverse:SetGrid | undo-reloads -
+SetHighlight layer | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone Id | apply ok inverse:SetHighlight | undo-reloads -
 SetHotkeys table | allowed O:n U:n L:n H:n | in-batch O:n U:n L:n H:n | observer same | zone - | apply ok inverse:SetHotkeys | undo-reloads -
 SetLabel layer | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone Id | apply ok inverse:SetLabel | undo-reloads Id
 SetLettering layer | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone Id | apply ok inverse:SetLettering | undo-reloads -
@@ -87,6 +91,7 @@ SetWidgets layer | allowed O:n U:n L:n H:n | in-batch O:n U:n L:n H:n | observer
 SetWind table | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone - | apply ok inverse:SetWind | undo-reloads -
 SetWorth layer | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone Id | apply ok inverse:SetWorth | undo-reloads -
 SetZone table | allowed O:n U:n L:y H:y | in-batch O:n U:n L:y H:y | observer drop | zone - | apply ok inverse:RemoveZone | undo-reloads -
+ShowContents table | allowed O:n U:n L:n H:n | in-batch O:n U:n L:n H:n | observer drop | zone - | apply refused:no_such_piece | undo-reloads -
 ShowDialog table | allowed O:n U:n L:n H:n | in-batch O:n U:n L:n H:n | observer drop | zone - | apply ok inverse:none | undo-reloads -
 ShowDialog(to=other) table | allowed O:n U:n L:n H:n | in-batch O:n U:n L:n H:n | observer drop | zone - | apply ok inverse:none | undo-reloads -
 SpawnPiece layer | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone Pos | apply ok inverse:DeletePiece | undo-reloads -

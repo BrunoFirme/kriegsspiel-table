@@ -24,6 +24,10 @@ namespace KTable.Core.Protocol;
 [JsonDerivedType(typeof(LoadSave), "LoadSave")]
 [JsonDerivedType(typeof(SetTint), "SetTint")]
 [JsonDerivedType(typeof(SetLocked), "SetLocked")]
+[JsonDerivedType(typeof(SetHighlight), "SetHighlight")]
+[JsonDerivedType(typeof(SetBookHighlight), "SetBookHighlight")]
+[JsonDerivedType(typeof(PlayEffect), "PlayEffect")]
+[JsonDerivedType(typeof(GlidePiece), "GlidePiece")]
 [JsonDerivedType(typeof(SetPieceOption), "SetPieceOption")]
 [JsonDerivedType(typeof(SetPointerRule), "SetPointerRule")]
 [JsonDerivedType(typeof(SetBriefing), "SetBriefing")]
@@ -77,6 +81,7 @@ namespace KTable.Core.Protocol;
 [JsonDerivedType(typeof(PickGlobalMenuItem), "PickGlobalMenuItem")]
 [JsonDerivedType(typeof(NumberTyped), "NumberTyped")]
 [JsonDerivedType(typeof(SelectPiece), "SelectPiece")]
+[JsonDerivedType(typeof(ShowContents), "ShowContents")]
 [JsonDerivedType(typeof(EditWidget), "EditWidget")]
 [JsonDerivedType(typeof(PickMenuItem), "PickMenuItem")]
 [JsonDerivedType(typeof(HoldPiece), "HoldPiece")]
@@ -343,6 +348,58 @@ public static class PieceOptions
     public const string NotBoxSelected = "not-box-selected";
     public const string MeasuresMoves = "measures-moves";
     public const string EffectOff = "effect-off";
+    public const string NotInteractable = "not-interactable";
+}
+
+public sealed class SetHighlight : LayerCommand
+{
+    public string Id { get; set; } = "";
+    public string? Color { get; set; }
+    public override Sender SentBy() => Sender.Umpire;
+    public override bool OnUndoStack() => false;
+    public override Shown ShownToObservers() => Shown.Table;
+    public override IEnumerable<(string Layer, string Id)> ZonePieces() => [(Layer, Id)];
+    public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [];
+    public override IEnumerable<string> ScriptsToReload() => [];
+}
+
+public sealed class SetBookHighlight : LayerCommand
+{
+    public const int Corners = 4;
+    public string Id { get; set; } = "";
+    public double[]? Box { get; set; }
+    public override Sender SentBy() => Sender.Umpire;
+    public override bool OnUndoStack() => false;
+    public override Shown ShownToObservers() => Shown.Table;
+    public override IEnumerable<(string Layer, string Id)> ZonePieces() => [(Layer, Id)];
+    public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [];
+    public override IEnumerable<string> ScriptsToReload() => [];
+}
+
+public sealed class PlayEffect : LayerCommand
+{
+    public string Id { get; set; } = "";
+    public int Index { get; set; }
+    public override Sender SentBy() => Sender.Umpire;
+    public override bool OnUndoStack() => false;
+    public override Shown ShownToObservers() => Shown.Table;
+    public override IEnumerable<(string Layer, string Id)> ZonePieces() => [(Layer, Id)];
+    public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [];
+    public override IEnumerable<string> ScriptsToReload() => [];
+}
+
+public sealed class GlidePiece : LayerCommand
+{
+    public string Id { get; set; } = "";
+    public Vec2? To { get; set; }
+    public double? Rot { get; set; }
+    public bool Fast { get; set; }
+    public override Sender SentBy() => Sender.Runtime;
+    public override bool OnUndoStack() => false;
+    public override Shown ShownToObservers() => Shown.Table;
+    public override IEnumerable<(string Layer, string Id)> ZonePieces() => [(Layer, Id)];
+    public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [];
+    public override IEnumerable<string> ScriptsToReload() => [];
 }
 
 public sealed class SetLocked : LayerCommand
@@ -983,6 +1040,19 @@ public sealed class NumberTyped : LayerCommand
     public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [];
     public override IEnumerable<string> ScriptsToReload() => [];
 }
+public sealed class ShowContents : Command
+{
+    public string Layer { get; set; } = "";
+    public string Id { get; set; } = "";
+    public string To { get; set; } = "";
+    public int Most { get; set; } = -1;
+    public override Sender SentBy() => Sender.Runtime;
+    public override bool OnUndoStack() => false;
+    public override Shown ShownToObservers() => Shown.Addressee;
+    public override IEnumerable<(string Layer, string Id)> ZonePieces() => [];
+    public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [];
+    public override IEnumerable<string> ScriptsToReload() => [];
+}
 public sealed class SelectPiece : Command
 {
     public string Layer { get; set; } = "";
@@ -1001,6 +1071,7 @@ public sealed class EditWidget : LayerCommand
     public string Id { get; set; } = "";
     public int Index { get; set; }
     public string Value { get; set; } = "";
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)] public bool Typing { get; set; }
     public override Sender SentBy() => Sender.Umpire;
     public override bool OnUndoStack() => false;
     public override Shown ShownToObservers() => Shown.Table;

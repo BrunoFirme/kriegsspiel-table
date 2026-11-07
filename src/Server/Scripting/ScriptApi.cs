@@ -28,8 +28,9 @@ public sealed partial class ScriptHost
         });
 
         var json = T();
-        json.Table["encode"] = Fn(a => S(LuaJson.Encode(Arg(a, 0))));
-        json.Table["decode"] = Fn(a => LuaJson.Decode(_vm, Arg(a, 0).CastToString() ?? ""));
+        json.Table["encode"] = Fn(a => S(LuaJson.Encode(Arg(a, 0), Arg(a, 1).CastToBool())));
+        json.Table["decode"] = Fn(a => Arg(a, 0).Type == DataType.String ? LuaJson.Decode(_vm, Arg(a, 0).String)
+            : throw new ScriptRuntimeException("Expected string argument to JSON.decode(), got " + Arg(a, 0).Type.ToLuaTypeString()));
         g["json"] = json;
 
         var wait = T();
@@ -41,15 +42,18 @@ public sealed partial class ScriptHost
         wait.Table["stop"] = Fn(a =>
         {
             var h = (int)(Arg(a, 0).CastToNumber() ?? 0);
-            _timers.RemoveWhere(t => t.Handle == h);
-            return DynValue.Nil;
+            return B(_timers.RemoveWhere(t => t.Handle == h) > 0);
         });
+        wait.Table["now"] = Fn(_ => N(_timers.Now));
+        wait.Table["frame"] = Fn(_ => N(_timers.Frame));
+        wait.Table["delta"] = Fn(_ => N(_timers.Delta));
         g["wait"] = wait;
 
         var board = T();
         board.Table["find"] = Fn(a => FindHandle(Arg(a, 0).CastToString() ?? ""));
         board.Table["pieces"] = Fn(a => Pieces(Arg(a, 0)));
         board.Table["spawn"] = Fn(a => Spawn(Arg(a, 0)));
+        board.Table["kinds"] = Fn(a => _handles.Kinds(Arg(a, 0)));
         board.Table["distance"] = Fn(a => Distance(Arg(a, 0), Arg(a, 1)));
         board.Table["zones"] = Fn(_ => Zones());
         board.Table["draw"] = Fn(a => _handles.DrawStroke(Arg(a, 0)));
@@ -315,7 +319,8 @@ internal sealed partial class PieceHandles(ScriptHost host)
             return DynValue.Nil;
         }
         var def = host.Server.Store?.Def(p.Def);
-        return Field(id, p, def, key) ?? DieField(p, def, key) ?? Setter(id, p, def, key) ?? DieSetter(id, p, def, key) ?? Drawing(id, key) ?? Scripted(id, p, key) ?? DynValue.Nil;
+        var found = Field(id, p, def, key) ?? DieField(p, def, key) ?? Setter(id, p, def, key) ?? MarkSetter(id, p, def, key);
+        return found ?? DieSetter(id, p, def, key) ?? Drawing(id, key) ?? Scripted(id, p, key) ?? DynValue.Nil;
     }
 
     DynValue? Field(string id, PieceInstance p, PieceDef? def, string key)
@@ -361,10 +366,16 @@ internal sealed partial class PieceHandles(ScriptHost host)
                 return S(sh ?? def?.Shape ?? "box");
             }
             case "face_down": return B(p.FaceDown);
+            case "holds": return B(p.HoldsPieces(def) || def?.Tags.Contains("bag") == true);
             case "locked": return B(p.Locked);
             case "sticky": return B(!p.NotSticky);
             case "box_selected": return B(!p.NotBoxSelected);
             case "measures_moves": return B(p.MeasuresMoves);
+            case "interactable": return B(!p.NotInteractable);
+            case "source": return def?.ModuleType != null ? SourceTable(def) : DynValue.Nil;
+            case "held_by": return host.Every.HeldBy.TryGetValue(id, out var holder) ? holder : DynValue.Nil;
+            case "highlight": return p.Highlight is { } hl ? S(hl) : DynValue.Nil;
+            case "book_highlight": return p.BookHighlight is { Length: SetBookHighlight.Corners } bx ? BoxTable(bx) : DynValue.Nil;
             case "effect_on": return B(!p.EffectOff);
             case "tint": return p.TintOverride is { } ti ? S(ti) : def != null ? S(def.Tint) : DynValue.Nil;
             case "counters":
@@ -503,6 +514,7 @@ internal sealed partial class PieceHandles(ScriptHost host)
             case "set_locked": return Fn(a => { host.Emit(new SetLocked { Layer = L, Id = id, Value = Arg(a, 0).IsNil() || Arg(a, 0).CastToBool() }); return DynValue.Nil; });
             case "set_box_selected": return Option(id, PieceOptions.NotBoxSelected, inverted: true);
             case "set_measures_moves": return Option(id, PieceOptions.MeasuresMoves, inverted: false);
+            case "set_interactable": return Option(id, PieceOptions.NotInteractable, inverted: true);
             case "set_effect_on": return Option(id, PieceOptions.EffectOff, inverted: true);
             case "set_sticky": return Fn(a =>
             {
@@ -519,6 +531,31 @@ internal sealed partial class PieceHandles(ScriptHost host)
             case "delete": return Fn(_ => { host.Emit(new DeletePiece { Layer = L, Id = id }); return DynValue.Nil; });
             default: return null;
         }
+    }
+
+    static readonly Dictionary<string, string> LinkNames = new(StringComparer.Ordinal)
+    {
+        ["ImageURL"] = "image", ["ImageSecondaryURL"] = "image_secondary", ["MeshURL"] = "mesh", ["DiffuseURL"] = "diffuse", ["NormalURL"] = "normal", ["AssetbundleURL"] = "assetbundle",
+    };
+
+    DynValue SourceTable(PieceDef def)
+    {
+        var t = T();
+        t.Table["type"] = S(def.ModuleType!);
+        if (def.ModuleTop is { } top) t.Table["top"] = N(top);
+        if (def.ModuleObjectTag is { } tag) t.Table["tag"] = S(tag);
+        t.Table["tags"] = ListTable((def.ModuleTags ?? new()).Select(tg => S(tg)));
+        var links = T();
+        foreach (var (k, v) in def.Sources ?? new()) links.Table[LinkNames.GetValueOrDefault(k, k)] = S(v);
+        t.Table["links"] = links;
+        if (def.States.Count > 1) t.Table["states"] = StateSources(def);
+        return t;
+    }
+
+    DynValue Highlight(string id, DynValue color)
+    {
+        host.Emit(new SetHighlight { Layer = Layers.Umpire, Id = id, Color = color.IsNil() ? null : ColorOf(color) });
+        return DynValue.Nil;
     }
 
     DynValue StowedList(PieceInstance holder)
@@ -838,6 +875,18 @@ internal sealed partial class PieceHandles(ScriptHost host)
                     break;
                 case "on_change":
                     w.OnChange = v.CastToString();
+                    break;
+                case "hover_color":
+                    w.HoverColor = ColorOf(v);
+                    break;
+                case "press_color":
+                    w.PressColor = ColorOf(v);
+                    break;
+                case "validation":
+                    w.Validation = v.CastToString() is "integer" or "float" or "alphanumeric" or "username" or "name" ? v.String : null;
+                    break;
+                case "tab":
+                    w.Tab = v.CastToString() is "next" or "spaces" or "none" ? v.String : null;
                     break;
                 case "kind" when v.CastToString() is "button" or "input" or "label":
                     w.Kind = v.String;

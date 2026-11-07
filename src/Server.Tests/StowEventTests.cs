@@ -23,7 +23,7 @@ public class StowEventTests
         Assert.Empty(r.Untranslated);
         var res = t.Server.Handle(Table.Host, new SetGlobalScript { Text = r.Script });
         Assert.DoesNotContain(res, o => o.Message is ErrorMessage);
-        Assert.Contains("table: {", string.Concat(t.Server.ConsoleOut().Select(o => Json.Serialize(o.Message))));
+        Assert.Contains("table\\n  a: 1", string.Concat(t.Server.ConsoleOut().Select(o => Json.Serialize(o.Message))));
         return t;
     }
 

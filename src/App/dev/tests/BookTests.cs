@@ -85,6 +85,33 @@ static class BookTests
     }
 
     [NodeTest]
+    static async Task A_highlight_box_is_drawn_on_the_open_page_and_turning_the_page_clears_it(TestRunner r)
+    {
+        var t = OfflineTable.Make(r, pieces: 1, packs: new[] { "books" }, prepare: store => WriteBook(store, 3));
+        t.S.Do(new SetDef { Layer = U, Id = "p1", Def = BookDef });
+        await r.Frames(2);
+        t.S.Do(new SetBookHighlight { Layer = U, Id = "p1", Box = [0.25, 0.5, 0.75, 1] });
+        BookWindow.Open(t.Table, t.S, t.Node("p1"));
+        await r.Frames(4);
+        var w = Reader(t.Table) ?? throw new TestFailure("no reading window opened");
+        var mark = Descendants(w).OfType<BookMark>().FirstOrDefault() ?? throw new TestFailure("no highlight layer in the reader");
+        var sheet = mark.Sheet!;
+        var page = BookMark.Shown(sheet.Size, sheet.Texture!.GetSize());
+        Check.That(mark.Drawn is { } d && Mathf.IsEqualApprox(d.Position.Y, page.Position.Y) && Mathf.IsEqualApprox(d.Size.X, page.Size.X / 2),
+            "the box covers the top half of the page's middle half");
+        (Named(w, "▶") ?? throw new TestFailure("no next-page button")).EmitSignal(BaseButton.SignalName.Pressed);
+        await r.Frames(2);
+        Check.That(mark.Drawn == null, "a page the piece is not open at shows no box");
+        t.S.Do(new SetState { Layer = U, Id = "p1", State = 1 });
+        await r.Frames(2);
+        Check.That(t.Node("p1").Piece.BookHighlight == null, "turning the piece's page clears its box");
+        var flat = BookMark.Shown(new Vector2(100, 50), new Vector2(0, 0));
+        Check.Equal(new Vector2(100, 50), flat.Size, "a picture with no size fills the reader");
+        w.QueueFree();
+        await r.Frames(2);
+    }
+
+    [NodeTest]
     static async Task A_book_carries_its_own_page_buttons_and_no_list_of_pages(TestRunner r)
     {
         var t = OfflineTable.Make(r, pieces: 1, packs: new[] { "books" }, prepare: store => WriteBook(store, 4));

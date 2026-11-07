@@ -23,6 +23,8 @@ local function units(obj)
   return w / math.sqrt(TOKEN_AREA * aspect), h / math.sqrt(TOKEN_AREA / aspect)
 end
 
+compat.local_units = units
+
 local PLAYER_COLORS = { "White", "Red", "Blue", "Green", "Yellow", "Orange", "Purple", "Pink", "Brown", "Teal", "Grey", "Black" }
 local function umpires() return game.umpires() end
 
@@ -127,165 +129,6 @@ compat.Global = {
   setTable = function(n, v) game.set_var(n, v) end,
 }
 
-local VectorMeta = {}
-local AXIS = { "x", "y", "z" }
-VectorMeta.__index = function(v, k) if AXIS[k] then return rawget(v, AXIS[k]) end return VectorMeta[k] end
-VectorMeta.__newindex = function(v, k, val) rawset(v, AXIS[k] or k, val) end
-local function newVector(x, y, z)
-  if type(x) == "table" then return setmetatable({ x = vec(x, "x", 1, 0), y = vec(x, "y", 2, 0), z = vec(x, "z", 3, 0) }, VectorMeta) end
-  return setmetatable({ x = num(x, 0), y = num(y, 0), z = num(z, 0) }, VectorMeta)
-end
-local function isVector(v) return type(v) == "table" and v.x ~= nil end
-compat.Vector = setmetatable({ new = newVector }, { __call = function(_, ...) return newVector(...) end, __index = VectorMeta })
-VectorMeta.__add = function(a, b) return newVector(a.x + b.x, a.y + b.y, a.z + b.z) end
-VectorMeta.__sub = function(a, b) return newVector(a.x - b.x, a.y - b.y, a.z - b.z) end
-VectorMeta.__mul = function(a, b)
-  if type(b) == "number" then return newVector(a.x * b, a.y * b, a.z * b) end
-  if type(a) == "number" then return newVector(a * b.x, a * b.y, a * b.z) end
-  return newVector(a.x * b.x, a.y * b.y, a.z * b.z)
-end
-VectorMeta.__div = function(a, b) return newVector(a.x / b, a.y / b, a.z / b) end
-VectorMeta.__unm = function(a) return newVector(-a.x, -a.y, -a.z) end
-VectorMeta.__eq = function(a, b) return isVector(a) and isVector(b) and a.x == b.x and a.y == b.y and a.z == b.z end
-VectorMeta.__tostring = function(a) return string.format("(%g, %g, %g)", a.x, a.y, a.z) end
-function VectorMeta:add(b) self.x = self.x + b.x; self.y = self.y + b.y; self.z = self.z + b.z; return self end
-function VectorMeta:sub(b) self.x = self.x - b.x; self.y = self.y - b.y; self.z = self.z - b.z; return self end
-function VectorMeta:scale(k)
-  if type(k) == "number" then self.x = self.x * k; self.y = self.y * k; self.z = self.z * k
-  else self.x = self.x * k.x; self.y = self.y * k.y; self.z = self.z * k.z end
-  return self
-end
-function VectorMeta:copy() return newVector(self.x, self.y, self.z) end
-function VectorMeta:get() return self.x, self.y, self.z end
-function VectorMeta:setAt(k, v) self[k] = num(v, 0); return self end
-function VectorMeta:set(x, y, z) self.x = num(x, self.x); self.y = num(y, self.y); self.z = num(z, self.z); return self end
-function VectorMeta:inverse() self.x = -self.x; self.y = -self.y; self.z = -self.z; return self end
-function VectorMeta:sqrMagnitude() return self.x * self.x + self.y * self.y + self.z * self.z end
-function VectorMeta:magnitude() return math.sqrt(self:sqrMagnitude()) end
-function VectorMeta:sqrDistance(b) return (self - b):sqrMagnitude() end
-function VectorMeta:distance(b) return (self - b):magnitude() end
-function VectorMeta:equals(b, margin) return isVector(b) and self:sqrDistance(b) <= num(margin, 0.01) ^ 2 end
-function VectorMeta:dot(b) return self.x * b.x + self.y * b.y + self.z * b.z end
-function VectorMeta:cross(b) return newVector(self.y * b.z - self.z * b.y, self.z * b.x - self.x * b.z, self.x * b.y - self.y * b.x) end
-function VectorMeta:normalize() local m = self:magnitude(); if m > 0 then self:scale(1 / m) end return self end
-function VectorMeta:normalized() return self:copy():normalize() end
-function VectorMeta:clamp(len) local m = self:magnitude(); if m > len and m > 0 then self:scale(len / m) end return self end
-function VectorMeta:lerp(b, t) return self + (b - self) * t end
-function VectorMeta:moveTowards(b, step)
-  local d = b - self
-  local m = d:magnitude()
-  if m <= step or m == 0 then return b:copy() end
-  return self + d * (step / m)
-end
-function VectorMeta:angle(b)
-  local m = self:magnitude() * b:magnitude()
-  if m == 0 then return 0 end
-  return math.deg(math.acos(math.max(-1, math.min(1, self:dot(b) / m))))
-end
-function VectorMeta:project(b) local d = b:sqrMagnitude(); if d == 0 then return newVector() end return b * (self:dot(b) / d) end
-function VectorMeta:projectOnPlane(n) return self - self:project(n) end
-function VectorMeta:reflect(n) local u = n:normalized(); return self - u * (2 * self:dot(u)) end
-function VectorMeta:orthoNormalize(b)
-  local a = self:normalized()
-  local c = (b - b:project(a)):normalized()
-  return a, c
-end
-function VectorMeta:string(prefix) return (prefix and prefix .. ": " or "") .. tostring(self) end
-local function headingOf(v, axis)
-  if axis == "x" then return math.deg(math.atan2(v.z, v.y)) end
-  if axis == "z" then return math.deg(math.atan2(v.y, v.x)) end
-  return math.deg(math.atan2(v.x, v.z))
-end
-function VectorMeta:heading(axis)
-  if axis then return headingOf(self, axis) end
-  return headingOf(self, "x"), headingOf(self, "y"), headingOf(self, "z")
-end
-function VectorMeta:rotateOver(axis, degrees)
-  local a = math.rad(num(degrees, 0))
-  local c, s = math.cos(a), math.sin(a)
-  local x, y, z = self.x, self.y, self.z
-  if axis == "x" then self.y, self.z = y * c - z * s, y * s + z * c
-  elseif axis == "z" then self.x, self.y = x * c - y * s, x * s + y * c
-  else self.x, self.z = x * c + z * s, z * c - x * s end
-  return self
-end
-function VectorMeta:rotateTowards(target, maxAngle)
-  local turn = self:angle(target)
-  if turn == 0 then return self end
-  local t = math.min(1, num(maxAngle, 0) / turn)
-  local m = self:magnitude()
-  local v = self:normalized():lerp(target:normalized(), t):normalize() * m
-  self.x, self.y, self.z = v.x, v.y, v.z
-  return self
-end
-function VectorMeta:rotateTowardsUnit(target, maxAngle) return self:rotateTowards(target, maxAngle) end
-function compat.Vector.between(a, b) return b - a end
-function compat.Vector.max(a, b) return newVector(math.max(a.x, b.x), math.max(a.y, b.y), math.max(a.z, b.z)) end
-function compat.Vector.min(a, b) return newVector(math.min(a.x, b.x), math.min(a.y, b.y), math.min(a.z, b.z)) end
-
-local NAMED_COLORS = { White = { 1, 1, 1 }, Red = { 0.856, 0.1, 0.094 }, Blue = { 0.118, 0.53, 1 }, Green = { 0.192, 0.701, 0.168 },
-  Yellow = { 0.905, 0.898, 0.172 }, Orange = { 0.956, 0.392, 0.113 }, Purple = { 0.627, 0.125, 0.941 }, Pink = { 0.96, 0.439, 0.807 },
-  Brown = { 0.443, 0.231, 0.09 }, Teal = { 0.129, 0.694, 0.607 }, Grey = { 0.5, 0.5, 0.5 }, Black = { 0.25, 0.25, 0.25 } }
-local ColorMeta = {}
-local CHANNEL = { "r", "g", "b", "a" }
-ColorMeta.__index = function(c, k) if CHANNEL[k] then return rawget(c, CHANNEL[k]) end return ColorMeta[k] end
-ColorMeta.__newindex = function(c, k, val) rawset(c, CHANNEL[k] or k, val) end
-ColorMeta.__tostring = function(c) return string.format("{ r = %g, g = %g, b = %g, a = %g }", c.r, c.g, c.b, c.a) end
-local function namedColor(name)
-  local c = NAMED_COLORS[tostring(name)] or NAMED_COLORS[tostring(name):sub(1, 1):upper() .. tostring(name):sub(2):lower()]
-  if not c then return nil end
-  return setmetatable({ r = c[1], g = c[2], b = c[3], a = 1 }, ColorMeta)
-end
-local function hexColor(s)
-  s = tostring(s or ""):gsub("^#", "")
-  if #s ~= 6 and #s ~= 8 then return nil end
-  local n = { }
-  for i = 1, #s / 2 do n[i] = tonumber(s:sub(2 * i - 1, 2 * i), 16) end
-  if n[1] == nil or n[2] == nil or n[3] == nil or (#s == 8 and n[4] == nil) then return nil end
-  return setmetatable({ r = n[1] / 255, g = n[2] / 255, b = n[3] / 255, a = (n[4] or 255) / 255 }, ColorMeta)
-end
-local function newColor(r, g, b, a)
-  if type(r) == "string" then return namedColor(r) or hexColor(r) or setmetatable({ r = 1, g = 1, b = 1, a = 1 }, ColorMeta) end
-  if type(r) == "table" then return setmetatable({ r = vec(r, "r", 1, 0), g = vec(r, "g", 2, 0), b = vec(r, "b", 3, 0), a = vec(r, "a", 4, 1) }, ColorMeta) end
-  return setmetatable({ r = num(r, 0), g = num(g, 0), b = num(b, 0), a = num(a, 1) }, ColorMeta)
-end
-compat.Color = setmetatable({ new = newColor, list = {} }, {
-  __call = function(_, ...) return newColor(...) end,
-  __index = function(_, k) return ColorMeta[k] or namedColor(k) end,
-})
-for name in pairs(NAMED_COLORS) do compat.Color.list[#compat.Color.list + 1] = name end
-table.sort(compat.Color.list)
-function compat.Color.fromString(name) return namedColor(name) or newColor(1, 1, 1, 1) end
-function compat.Color.fromHex(s) return hexColor(s) or newColor(1, 1, 1, 1) end
-function compat.Color.Add(name, c)
-  c = newColor(c)
-  NAMED_COLORS[tostring(name)] = { c.r, c.g, c.b }
-  compat.Color.list[#compat.Color.list + 1] = tostring(name)
-end
-function ColorMeta:copy() return newColor(self.r, self.g, self.b, self.a) end
-function ColorMeta:get() return self.r, self.g, self.b, self.a end
-function ColorMeta:setAt(k, v) self[k] = num(v, 0); return self end
-function ColorMeta:set(r, g, b, a) self.r = num(r, self.r); self.g = num(g, self.g); self.b = num(b, self.b); self.a = num(a, self.a); return self end
-function ColorMeta:equals(c, margin)
-  if type(c) ~= "table" then return false end
-  local m = num(margin, 0.01)
-  local o = newColor(c)
-  return math.abs(self.r - o.r) <= m and math.abs(self.g - o.g) <= m and math.abs(self.b - o.b) <= m and math.abs(self.a - o.a) <= m
-end
-function ColorMeta:lerp(c, t) local o = newColor(c); return newColor(self.r + (o.r - self.r) * t, self.g + (o.g - self.g) * t, self.b + (o.b - self.b) * t, self.a + (o.a - self.a) * t) end
-local function byte(v) return math.floor(math.max(0, math.min(1, v)) * 255 + 0.5) end
-function ColorMeta:toHex(withAlpha)
-  local s = string.format("%02x%02x%02x", byte(self.r), byte(self.g), byte(self.b))
-  if withAlpha then s = s .. string.format("%02x", byte(self.a)) end
-  return s
-end
-function ColorMeta:toString(tolerance)
-  for name, c in pairs(NAMED_COLORS) do
-    if self:equals({ c[1], c[2], c[3], self.a }, num(tolerance, 0.01)) then return name end
-  end
-  return nil
-end
-function ColorMeta:dump(prefix) return (prefix and prefix .. ": " or "") .. "Color: " .. tostring(self) end
 
 function compat.guid(obj) return obj.guid or obj.id end
 function compat.name(obj) return obj.name or "" end
@@ -366,12 +209,14 @@ local function is_piece(obj)
   return type(obj) == "table" and (rawget(obj, "__params") ~= nil or (type(obj.id) == "string" and type(obj.set_name) == "function"))
 end
 local function pbag(obj) local id = obj.id or obj; props[id] = props[id] or {}; return props[id] end
-function compat.set_prop(obj, k, v)
-  if not is_piece(obj) then if type(obj) == "table" then obj[k] = v end return end
+compat.is_piece = is_piece
+function compat.set_prop(obj, k, v, as_written)
+  if not is_piece(obj) then if type(obj) == "table" then obj[as_written or k] = v end return end
   if k == "memo" then obj.set_memo(v) return end
   if k == "script_state" then obj.set_script_state(v) return end
   if k == "locked" then obj.set_locked(v and true or false) return end
   if k == "sticky" then obj.set_sticky(v ~= false) return end
+  if k == "interactable" then obj.set_interactable(v ~= false) return end
   if k == "drag_selectable" then obj.set_box_selected(v ~= false) return end
   if k == "measure_movement" then obj.set_measures_moves(v == true) return end
   if k == "value" then obj.set_worth(tonumber(v) or 0) return end
@@ -380,12 +225,18 @@ function compat.set_prop(obj, k, v)
   if k == "value_flags" then obj.set_worth(obj.worth, tonumber(v) or 0) return end
   pbag(obj)[k] = v
 end
-function compat.get_prop(obj, k, d)
-  if not is_piece(obj) then if type(obj) == "table" and obj[k] ~= nil then return obj[k] end return d end
+function compat.get_prop(obj, k, d, as_written)
+  if not is_piece(obj) then
+    if type(obj) ~= "table" then return d end
+    if as_written then return obj[as_written] end
+    if obj[k] ~= nil then return obj[k] end
+    return d
+  end
   if k == "memo" then local m = obj.memo; if m == nil or m == "" then return d end return m end
   if k == "script_state" then local v = obj.script_state; if v == nil or v == "" then return d end return v end
   if k == "locked" then return obj.locked == true end
   if k == "sticky" then return obj.sticky ~= false end
+  if k == "interactable" then return obj.interactable ~= false end
   if k == "drag_selectable" then return obj.box_selected ~= false end
   if k == "measure_movement" then return obj.measures_moves == true end
   if k == "value" then return obj.worth end
@@ -548,17 +399,23 @@ function compat.set_book_page(obj, page, use_offset)
   return true
 end
 function compat.book_highlight(obj, x1, y1, x2, y2)
-  if x1 == nil then pbag(obj).highlight = nil else pbag(obj).highlight = { x1, y1, x2, y2 } end
+  local p = compat.piece_of(obj)
+  if type(p) ~= "table" or p.set_book_highlight == nil then return false end
+  local book = p.source ~= nil and p.source.type == "Custom_PDF"
+  for _, t in ipairs(p.tags or {}) do if t == "book" then book = true end end
+  if not book then return false end
+  if x1 == nil then p.set_book_highlight(nil) return true end
+  p.set_book_highlight({ left = tonumber(x1) or 0, bottom = tonumber(y1) or 0, right = tonumber(x2) or 0, top = tonumber(y2) or 0 })
   return true
 end
 compat.AssetBundle = {}
 function compat.bundle(obj)
   return {
     getLoopingEffects = function() return { { index = 0, name = obj.name or obj.kind_name } } end,
-    getTriggerEffects = function() return {} end,
+    getTriggerEffects = function() return { { index = 0, name = obj.name or obj.kind_name } } end,
     getLoopingEffectIndex = function() if obj.effect_on then return 0 end return -1 end,
-    playLoopingEffect = function(i) obj.set_effect_on((tonumber(i) or 0) >= 0) end,
-    playTriggerEffect = function() return false end,
+    playLoopingEffect = function(i) obj.set_effect_on((tonumber(i) or 0) >= 0) return true end,
+    playTriggerEffect = function(i) obj.play_effect(tonumber(i) or 0) return true end,
   }
 end
 function compat.randomize(obj) return obj.roll() end
@@ -589,7 +446,7 @@ function compat.text_tool(obj)
     getFontSize = function() return now().size end,
     setFontSize = function(n) obj.set_lettering({ size = tonumber(n) }) return true end,
     getFontColor = function() return compat.Color.fromHex(now().color) end,
-    setFontColor = function(c) obj.set_lettering({ color = "#" .. compat.Color.new(c):toHex(true) }) return true end,
+    setFontColor = function(c) obj.set_lettering({ color = compat.hex_of(compat.color_arg(c)) }) return true end,
   }
 end
 function compat.get_rotation_value(obj) return obj.value end
@@ -698,6 +555,8 @@ function compat.module_handler(fn)
 end
 
 local BUTTON_EM, TOKEN_BUTTON_EM, INPUT_SCALE = 0.87, 1.87, 2.2
+local VALIDATION = { [2] = "integer", [3] = "float", [4] = "alphanumeric", [5] = "username", [6] = "name" }
+local TABS = { [2] = "next", [3] = "spaces" }
 local ALIGN = { [2] = "left", [3] = "center", [4] = "right" }
 compat.module_defaults = {
   width = 100, height = 100, font_size = 100, alignment = 1,
@@ -719,15 +578,17 @@ function compat.widget_spec(obj, t, kind, env)
   local on_top = y > 0
   local back = turned and not on_top
   local s = {
-    face = back and "back" or "front", kind = turned and on_top and "label" or kind, inside = not turned and y < 0,
+    face = back and "back" or "front", kind = turned and on_top and "label" or kind, inside = not turned and y < (obj.source and obj.source.top or 0),
     x = (back and -px or px) * ux, z = pz * uz, rot = ry,
     w = num(t.width, D.width) / 1000 * sx * ux, h = num(t.height, D.height) / 1000 * sz * uz,
     font = num(t.font_size, D.font_size) / 1000 * sx * uz * em,
     color = compat.color(t.color) or D.color, text_color = compat.color(t.font_color) or D.font_color, tooltip = t.tooltip,
     align = ALIGN[num(t.alignment, D.alignment)] or "center",
+    hover_color = compat.color(t.hover_color), press_color = compat.color(t.press_color),
   }
   if kind == "input" then
     s.value = tostring(t.value or D.value); s.placeholder = tostring(t.label or "")
+    s.validation = VALIDATION[num(t.validation, D.validation)]; s.tab = TABS[num(t.tab, D.tab)] or "none"
     s.on_change = handler(t.input_function, t.function_owner, obj, env)
   else
     s.label = tostring(t.label or "")
@@ -751,6 +612,10 @@ function compat.widget_patch(obj, t, kind, full, env)
   if t.color ~= nil then p.color = compat.color(t.color) end
   if t.font_color ~= nil then p.text_color = compat.color(t.font_color) end
   if t.tooltip ~= nil then p.tooltip = t.tooltip end
+  if t.hover_color ~= nil then p.hover_color = compat.color(t.hover_color) end
+  if t.press_color ~= nil then p.press_color = compat.color(t.press_color) end
+  if t.validation ~= nil and kind == "input" then p.validation = VALIDATION[num(t.validation, 1)] or "any" end
+  if t.tab ~= nil and kind == "input" then p.tab = TABS[num(t.tab, 2)] or "none" end
   if t.alignment ~= nil then p.align = ALIGN[num(t.alignment, 3)] or "center" end
   if t.click_function ~= nil then p.on_click = handler(t.click_function, t.function_owner, obj, env) end
   if t.input_function ~= nil then p.on_change = handler(t.input_function, t.function_owner, obj, env) end
@@ -888,7 +753,7 @@ local function bind(h, def)
   local p = rawget(h, "__params")
   local pos, rot = p.position or {}, p.rotation or {}
   local piece = board.spawn{ def = def, x = vec(pos, "x", 1, 0), z = vec(pos, "z", 3, 0), rot = vec(rot, "y", 2, 0), label = p.nickname, guid = p.guid,
-    state = p.state, tags = p.tags, memo = p.memo, script_state = p.script_state, note = p.description,
+    state = p.state, tags = p.tags or {}, memo = p.memo, script_state = p.script_state, note = p.description,
     script = type(p.script) == "string" and p.script ~= "" and p.script or nil }
   if p.gm_notes ~= nil then compat.set_gm_notes(piece, p.gm_notes) end
   rawset(h, "__piece", piece)
@@ -897,7 +762,7 @@ local function bind(h, def)
     if type(f) == "function" then f(table.unpack(q[2])) end
   end
   rawset(h, "__queue", {})
-  if type(p.callback_function) == "function" then p.callback_function(piece) end
+  compat.spawned(piece, p)
   return piece
 end
 
@@ -908,9 +773,21 @@ function compat.spawn_object(p)
   return h
 end
 
+function compat.kind_for_link(link, other, other_key)
+  if type(link) ~= "string" or link == "" then return nil end
+  local found = board.kinds{ link = link }
+  for _, k in ipairs(found) do
+    local links = k.source and k.source.links or {}
+    if other == nil or other == "" or links[other_key] == other then return k.id end
+  end
+  return found[1] and found[1].id or nil
+end
 function compat.set_custom_object(obj, c)
   c = c or {}
   local def = c.def or c.image or c.diffuse
+  local known = c.def == nil and (c.mesh and compat.kind_for_link(c.mesh, c.diffuse, "diffuse") or c.assetbundle and compat.kind_for_link(c.assetbundle)
+    or compat.kind_for_link(c.image, c.image_secondary, "image_secondary"))
+  if known then def = known end
   if type(def) == "string" and def:find("^https?://") and c.mesh == nil then
     local p = compat.piece_of(obj)
     if p ~= nil then p.set_face_picture(def) return end
@@ -939,7 +816,7 @@ function compat.spawn_object_data(d)
   local tr = data.Transform or {}
   return compat.spawn_object({
     position = d.position or { tr.posX, tr.posY, tr.posZ }, rotation = d.rotation or { tr.rotX, tr.rotY, tr.rotZ },
-    nickname = data.Nickname, guid = data.GUID, def = data.def, callback_function = d.callback_function,
+    nickname = data.Nickname, guid = data.GUID, def = data.def, callback_function = d.callback_function, callback = d.callback, callback_owner = d.callback_owner, params = d.params,
     state = data.State, tags = data.Tags, memo = data.Memo, script_state = data.LuaScriptState, script = data.LuaScript,
     description = data.Description, gm_notes = data.GMNotes,
   })

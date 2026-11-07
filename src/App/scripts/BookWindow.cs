@@ -46,6 +46,9 @@ static class BookWindow
             SizeFlagsVertical = Control.SizeFlags.ExpandFill, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
         };
         box.AddChild(sheet);
+        var mark = new BookMark { Sheet = sheet, Box = () => GodotObject.IsInstanceValid(node) && node.Piece.State == page ? node.Piece.BookHighlight : null };
+        sheet.AddChild(mark);
+        mark.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
 
         var bar = new HBoxContainer();
         bar.AddThemeConstantOverride("separation", Ui.Gap.Group);

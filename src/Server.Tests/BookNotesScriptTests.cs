@@ -62,7 +62,7 @@ public class BookNotesScriptTests
         var res = t.Server.Handle(Table.Lead, new SetGlobalScript { Text = r.Script });
         Assert.DoesNotContain(res, o => o.Message is ErrorMessage);
         Assert.DoesNotContain(Flat(t.Server.Log).OfType<Say>(), s => s.Text.StartsWith("Script error"));
-        Assert.Contains(Flat(t.Server.Log).OfType<Say>(), s => s.Text == "Turn 1: rain|1|Orders|Hold the bridge|1");
+        Assert.Contains(Flat(t.Server.Log).OfType<Say>(), s => s.Text == "Turn 1: rain|1|Orders|Hold the bridge|2");
         Assert.Equal("Turn 2: fog", t.Server.State.Find(U, "p-000040")!.Text[NoteCard.BodyLine]);
         Assert.Equal("Cross the river", t.Server.State.Find(U, "p-000041")!.Text[NoteCard.BodyLine]);
         var supply = Assert.Single(t.Server.State.Layer(U), p => p.Tags?.Contains("notebook") == true && p.Id != "p-000041");
@@ -80,11 +80,12 @@ public class BookNotesScriptTests
         var own = ModuleTranslator.Translate("""
             function onLoad()
               local list = self.AssetBundle.getLoopingEffects()
-              self.setName(#list .. ":" .. list[1].name .. ":" .. self.AssetBundle.getLoopingEffectIndex())
+              local answers = self.AssetBundle.getTriggerEffects()[1].name .. tostring(self.AssetBundle.playTriggerEffect(0)) .. tostring(self.AssetBundle.playLoopingEffect(0))
+              self.setName(#list .. ":" .. list[1].name .. ":" .. self.AssetBundle.getLoopingEffectIndex() .. ":" .. answers)
             end
             """, new TranslateContext());
         t.Server.Handle(Table.Host, new SetScript { Layer = U, Id = "p-000050", Text = own.Script });
-        Assert.Equal("1:Powder smoke:0", t.Server.State.Find(U, "p-000050")!.Label);
+        Assert.Equal("1:Powder smoke:0:Powder smoketruetrue", t.Server.State.Find(U, "p-000050")!.Label);
         t.Server.Handle(Table.Ump3, new SetPieceOption { Layer = U, Id = "p-000050", Name = PieceOptions.EffectOff, Value = true });
         Assert.True(t.Server.State.Find(U, "p-000050")!.EffectOff);
         Assert.Equal("effect -1", t.Server.State.Find(U, "p-000050")!.Note);

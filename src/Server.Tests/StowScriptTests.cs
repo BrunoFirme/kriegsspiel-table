@@ -41,7 +41,9 @@ public class StowScriptTests
         const string lua = "function onLoad()\n  self.putObject(getObjectFromGUID('" + Marker + "'))\n  local n = self.getQuantity()\n  local list = self.getObjects()\n"
                            + "  local o = self.takeObject({ guid = list[1].guid, position = {x = 5, y = 1, z = 6}, rotation = {x = 0, y = 90, z = 0}, callback_function = function(obj) obj.setName('taken') end })\n"
                            + "  self.setName(n .. '/' .. self.getQuantity() .. '/' .. list[1].index)\nend\n";
+        t.Server.State.Find(U, P)!.Holds = true;
         Load(t, lua, translated: true);
+        t.Server.Scripts.Tick(1.0);
         var p = t.Server.State.Find(U, P)!;
         var m = t.Server.State.Find(U, Marker)!;
         Assert.Equal("1/0/0", p.Label);

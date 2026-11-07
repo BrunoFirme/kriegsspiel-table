@@ -175,6 +175,12 @@ public static partial class ApiDoc
         F("piece", "local_unit", "Size?", "For a model that came from a module, what one unit of its script's local frame is in piece units: { x =, z = }; nil for every other piece.");
         F("piece", "shape", "string", "Its outline at its state: \"box\", \"rounded\", \"circle\", \"hex\", or \"alpha\" for a token cut along its picture.");
         F("piece", "face_down", "boolean", "Turned over.", "is_face_down");
+        F("piece", "interactable", "boolean", "Whether hands can take it (set_interactable).", "interactable");
+        F("piece", "held_by", "Who", "The umpire carrying it now, or nil.", "held_by_color");
+        F("piece", "source", "table", "For a kind converted from a module: { type =, links = { image =, mesh =, … }, top =, tag =, tags = } — the module object's type, its picture and model links, its top surface in its own units, the kind of object it was (Tile, Figurine, Board, Bag…) and its own tags; for a piece of several states, `states` lists each state's { type, guid, description, gm_notes, memo, script_state, tags, script } as the module kept them; nil otherwise.", "name");
+        F("piece", "highlight", "string", "The colour it is ringed in, or nil (set_highlight).", "highlightOn");
+        F("piece", "book_highlight", "table", "For a book, the box marked on the page it is open at: { left =, bottom =, right =, top = }, each from 0 to 1 across the page from its lower left corner; nil for none. Turning the page clears it.", "Book.setHighlight");
+        F("piece", "holds", "boolean", "Whether it is a holder that other pieces can be stowed in: a piece holding some, one made a holder, or a kind tagged bag.", "getQuantity");
         See("self.flip", "on_flip");
         F("piece", "locked", "boolean", "Pinned to the table: not dragged, turned or resized by hand.", "getLock");
         See("self.set_locked");
@@ -247,6 +253,17 @@ public static partial class ApiDoc
     M("piece", "set_lettering(changes)", "Changes the text drawn on the piece: any of text, size and color; nil takes the lettering away.", "TextTool.setValue");
     P("changes", "table?", "{ text =, size =, color = }, each optional.");
     See("self.lettering");
+
+    M("piece", "show_glide{ x, z, rot, fast }", "Shows it gliding towards a point or a heading on every screen, pulled and slowed as a module's smooth move is; the piece itself stays where it is until set_pos or set_rot puts it there.", "setPositionSmooth");
+    O("x", "number", "Where it glides to, with z; leave both out to only turn.");
+    O("z", "number", "Where it glides to, with x.");
+    O("rot", "number", "The heading it turns to, in degrees; leave it out to keep its heading.");
+    O("fast", "boolean", "true pulls it ten times as hard, as a module's fast smooth move does.");
+    R("false when neither a point nor a heading is given.");
+
+    M("piece", "play_effect(index)", "Plays an effect once on every screen, one round of it, whether it is running or not; false for a piece that is not an effect.", "AssetBundle.playTriggerEffect");
+    O("index", "number", "Which one-off it is, from 0, handed on to on_burst; 0 when left out.");
+    See("self.set_effect_on");
 
     M("piece", "set_effect_on(on)", "Starts or stops an effect.", "AssetBundle.playLoopingEffect");
     P("on", "boolean", "true runs it; false stops it.");
@@ -333,6 +350,15 @@ public static partial class ApiDoc
     O("on", "boolean", "true, or no argument, shows the distance; false hides it.");
     See("self.measures_moves");
 
+    M("piece", "set_interactable(on)", "Whether hands can take it: off, it cannot be picked up, dragged, selected or opened, though its buttons still press.", "interactable");
+    O("on", "boolean", "true, or no argument, lets hands take it; false keeps them off.");
+
+    M("piece", "set_highlight(color)", "Rings it in a colour on every screen; nil takes the ring away.", "highlightOn");
+    O("color", "Color", "The ring's colour, or nil.");
+
+    M("piece", "set_book_highlight(box)", "Marks a box on the page a book is open at, in its reader on every screen; nil clears it. Turning the page clears it too.", "Book.setHighlight");
+    O("box", "table", "{ left =, bottom =, right =, top = }, each from 0 to 1 across the page from its lower left corner; nil clears the box.");
+
     M("piece", "set_sticky(on)", "Whether it carries the pieces resting on it when it is moved.", "sticky");
     O("on", "boolean", "true, or no argument, carries them; false leaves them where they lie.");
     See("self.sticky");
@@ -348,6 +374,10 @@ public static partial class ApiDoc
         See("self.attach");
 
         F("piece", "stowed", "list", "The pieces it holds off the table, first in first: { id =, name =, guid =, def =, held = }, held being how many that piece holds in turn.", "getObjects");
+        M("piece", "show_contents(umpire, most)", "Opens the window of what it holds on that umpire's screen, as if they had opened it; false when it holds nothing by its kind or the umpire is not here.", "Container.search");
+        P("umpire", "Who", "Whose screen: an entry of game.umpires().");
+        O("most", "number", "Show only the first this many; leave it out for all.");
+        R("true when the window was sent.");
         M("piece", "stow(piece)", "Takes another piece off the table into this one, with whatever rides on it; a piece this one rides on is refused.", "putObject");
         M("piece", "unstow(which, place, rot)", "Puts a held piece back on the table and returns it: which is its id, guid, its number in stowed, or nothing for the next by the holder's take order (first, last or random); place is { x =, z = } or a piece, else beside this one; rot turns it.", "takeObject");
         See("self.stowed", "self.stow", "self.unstow");
@@ -451,7 +481,7 @@ public static partial class ApiDoc
 
     static ApiSection PieceWidgets() => Section("A piece: widgets and its menu", "Widgets are drawn on a face in piece units: map units measured on the piece's kind before the table scales it, centre (0, 0), x right, z down the picture. A kind 1.2 wide and 0.6 high runs from x = -0.6 to 0.6 and z = -0.3 to 0.3. Colours are \"#RRGGBB[AA]\", a name or { r, g, b, a }.", () =>
     {
-        M("piece", "button{ face, x, z, w, h, rot, label, font, color, text_color, tooltip, on_click, kind }", "Draws a button and returns its index from 1. With no w and h it is a bare label that takes no clicks. on_click names a function called as fn(who, alt, index, piece).", "createButton", "number");
+        M("piece", "button{ face, x, z, w, h, rot, label, font, color, text_color, hover_color, press_color, tooltip, on_click, kind }", "Draws a button and returns its index from 1. With no w and h it is a bare label that takes no clicks. on_click names a function called as fn(who, alt, index, piece).", "createButton", "number");
         O("face", "\"front\"|\"back\"", "The face it is drawn on. Default \"front\".");
         O("x", "number", "Centre, piece units right of the piece's centre. Default 0.");
         O("z", "number", "Centre, piece units down the picture. Default 0.");
@@ -463,6 +493,8 @@ public static partial class ApiDoc
         O("color", "Color", "The box's colour.");
         O("text_color", "Color", "The text's colour.");
         O("tooltip", "string", "Shown when the pointer rests on it.");
+        O("hover_color", "Color", "The box's colour under the pointer. Default: each of red, green and blue 0.2 nearer the middle grey.");
+        O("press_color", "Color", "The box's colour while pressed. Default: each 0.4 nearer the middle grey.");
         O("on_click", "string", "The handler's name: called as fn(who, alt, index, piece); `alt` is true for a right-click.");
         O("kind", "\"button\"|\"input\"|\"label\"", "\"label\" shows it but takes no clicks or typing: locked text. A module's button or input turned face down above the piece comes across this way. `edit` can change it.");
         R("The widget's index, from 1, for `edit` and `remove_widget`.");
@@ -480,7 +512,7 @@ public static partial class ApiDoc
         Note("The handler is looked up in this script first, then in the global script. `\"global:fn\"` names the global script's; `\"<id or GUID>/fn\"` another piece's.");
         See("self.input", "self.edit", "self.clear_widgets");
 
-        M("piece", "input{ face, x, z, w, h, rot, value, placeholder, font, color, text_color, align, lines, tooltip, on_change, kind }", "Draws an input box and returns its index. on_change names a function called as fn(who, value, index, piece) when the umpire has typed.", "createInput", "number");
+        M("piece", "input{ face, x, z, w, h, rot, value, placeholder, font, color, text_color, align, lines, tooltip, on_change, validation, tab, kind }", "Draws an input box and returns its index. on_change names a function called as fn(who, value, index, piece, typing) as the umpire types and when they leave the box.", "createInput", "number");
         O("face", "\"front\"|\"back\"", "The face it is drawn on. Default \"front\".");
         O("x", "number", "Centre, piece units. Default 0.");
         O("z", "number", "Centre, piece units. Default 0.");
@@ -495,7 +527,9 @@ public static partial class ApiDoc
         O("align", "\"left\"|\"center\"|\"right\"", "Default \"center\".");
         O("lines", "number", "Lines of text the box holds. Default 1.");
         O("tooltip", "string", "Shown when the pointer rests on it.");
-        O("on_change", "string", "The handler's name: called as fn(who, value, index, piece) when the umpire finishes typing; text it returns replaces what was typed.");
+        O("on_change", "string", "The handler's name: called as fn(who, value, index, piece, typing) each time the text changes while the umpire types (typing true) and once more when they leave the box (typing false); text it returns replaces what was typed.");
+        O("validation", "\"integer\"|\"float\"|\"alphanumeric\"|\"username\"|\"name\"", "Keys the box takes: digits and a leading minus; also one point; letters and digits; lower-case letters and digits; or a name, capitalised by word. Default any.");
+        O("tab", "\"next\"|\"spaces\"|\"none\"", "What Tab does: go on to the piece's next input (the default), type four spaces, or nothing.");
         O("kind", "\"button\"|\"input\"|\"label\"", "\"label\" shows its value but takes no typing: locked text.");
         R("The widget's index, from 1.");
         X("""
@@ -584,6 +618,17 @@ public static partial class ApiDoc
             end
             """);
         See("board.find", "self.tags");
+
+        M("board", "kinds(filter)", "The kinds this game's packs hold, or those that match { link =, type =, tag = }: { id =, name =, tags =, source = }.", null, "table[]");
+        O("filter.link", "string", "Only kinds made from this picture or model link (one of their source links).");
+        O("filter.type", "string", "Only kinds converted from this module object type, such as Custom_Token.");
+        O("filter.tag", "string", "Only kinds with this tag.");
+        R("A list; empty when nothing matches. `source` is the kind's module source, as a piece's `source` field gives it, or nil.");
+        X("""
+            local found = board.kinds{ link = "https://example.test/infantry.png" }[1]
+            if found then self.set_picture(found.id) end
+            """);
+        See("board.spawn", "self.source");
 
         M("board", "spawn{ def, x, z, rot, label, state, scale, y, script, tags, memo, note, script_state, guid }", "Puts a new piece of that kind on the board and returns it; its script starts at once.", "spawnObject", "Piece");
         P("def", "string", "The id of a piece definition in this game's packs.");
@@ -856,7 +901,7 @@ public static partial class ApiDoc
         F("ui", "assetType", "table", "{ Image = 0, AssetBundle = 1 }, also as image and assetBundle, as module scripts name picture types.", "UI.assetType");
     });
 
-    static ApiSection Wait() => Section("wait", "Timers are not saved: a script that must go on after a reload starts its timers again in on_load. A timer belongs to the script that made it and stops with it.", () =>
+    static ApiSection Wait() => Section("wait", "Timers are not saved: a script that must go on after a reload starts its timers again in on_load. A timer belongs to the script that made it and stops with it. In a frame, the timers counting frames fire first, then those counting seconds, then the conditions, each kind in the order it was set.", () =>
     {
         M("wait", "seconds(s, fn)", "Calls fn once, s seconds from now; returns a handle.", "Wait.time", "number");
         P("s", "number", "Seconds from now.");
@@ -890,21 +935,30 @@ public static partial class ApiDoc
         Note("A predicate that errors is reported once and dropped.");
         See("wait.stop");
 
-        M("wait", "stop(handle)", "Stops a timer before it fires.", "Wait.stop");
+        M("wait", "stop(handle)", "Stops a timer before it fires.", "Wait.stop", "boolean");
         P("handle", "number", "What `seconds`, `frames` or `condition` returned. A timer that has fired already is no error.");
+        R("true when a timer was waiting and is stopped now, false when there was none.");
+
+        M("wait", "now()", "The scripts' clock: seconds since the table started running scripts.", "Time.time", "number");
+
+        M("wait", "frame()", "How many frames the scripts have run since the table started.", "Time.frame_count", "number");
+
+        M("wait", "delta()", "Seconds between the last frame and the one before it.", "Time.delta_time", "number");
     });
 
     static ApiSection JsonCalls() => Section("json", "JSON in and out; numbers are written the same on every PC.", () =>
     {
-        M("json", "encode(value)", "A value as JSON. A table whose keys are 1..n is an array.", "JSON.encode", "string");
-        P("value", "any", "A table, string, number, boolean or nil.");
+        M("json", "encode(value, pretty)", "A value as JSON. A table whose keys are all positive numbers is an array up to its highest key, gaps as null; an empty table is []; other tables are objects with their keys in sorted order, number keys after the text ones.", "JSON.encode", "string");
+        P("value", "any", "A table, string, number, boolean or nil. A function, a table holding itself or a key that is neither text nor a number is an error.");
+        O("pretty", "boolean", "true: one key a line, indented by two spaces.");
         X("""
             function on_save() return json.encode({ hits = hits, orders = orders }) end
             """);
+        Note("Text is written as it is, apart from quotes, backslashes and control characters; NaN is null.");
         See("json.decode", "on_save");
 
-        M("json", "decode(text)", "JSON as a value; an error when it does not parse.", "JSON.decode", "any");
-        P("text", "string", "The JSON.");
+        M("json", "decode(text)", "JSON as a value; an error when it does not parse. Text after the first value is ignored, and blank text is nil.", "JSON.decode", "any");
+        P("text", "string", "The JSON. Anything else is an error.");
         X("""
             function on_load(saved)
               local ok, data = pcall(json.decode, saved)
@@ -951,6 +1005,7 @@ public static partial class ApiDoc
         E("event", "on_state(old, new)", "Its state changed, by anyone.", "onObjectStateChange");
         E("event", "on_page()", "This book turned to another page.", "onPageChange");
         E("event", "on_effect(index)", "An umpire started (0) or stopped (-1) this effect.", "onObjectLoopingEffect");
+        E("event", "on_burst(index)", "An umpire played this effect once (Play once in its menu); index is the one-off asked for, 0 from the menu.", "onObjectTriggerEffect");
         P("old", "number", "The state it left, from 1.");
         P("new", "number", "The state it is in now, from 1.");
         X("""
@@ -996,6 +1051,7 @@ public static partial class ApiDoc
         E("global event", "on_state(piece, old, new)", "A piece's state changed, by anyone.", "onObjectStateChange");
         E("global event", "on_page(piece)", "A book turned to another page.", "onObjectPageChange");
         E("global event", "on_effect(piece, index)", "An umpire started (0) or stopped (-1) an effect.", "onObjectLoopingEffect");
+        E("global event", "on_burst(piece, index)", "An umpire played an effect once.", "onObjectTriggerEffect");
         E("global event", "on_roll(piece, who)", "An umpire rolled a die, or turned a piece of several looks to one at random.", "onObjectRandomize");
         P("piece", "Piece", "The piece.");
         P("who", "Who", "The umpire.");

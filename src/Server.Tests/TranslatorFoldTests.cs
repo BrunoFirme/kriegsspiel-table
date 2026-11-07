@@ -15,7 +15,7 @@ public class TranslatorFoldTests
         Assert.Contains("compat.scale_by(self, {x=1.1,y=1,z=1})", r.Script);
         Assert.Contains("compat.set_position(self, {1,2,3})", r.Script);
         Assert.Contains("compat.position(self)", r.Script);
-        Assert.Contains("compat.set_prop(self, \"interactable\", false)", r.Script);
+        Assert.Contains("compat.set_prop(self, \"interactable\", false, \"Interactable\")", r.Script);
         Assert.Contains("compat.get_prop(self, \"tooltip\"", r.Script);
     }
 
