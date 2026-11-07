@@ -106,7 +106,7 @@ sealed partial class PanelView
             case "Toggle" or "ToggleButton":
                 Flip(owner);
                 break;
-            case "Dropdown":
+            case "Dropdown" or PanelLists.Textless:
                 OpenList(owner);
                 break;
             case PanelAccordions.Header:
@@ -198,7 +198,7 @@ sealed partial class PanelView
     {
         if (owner.Select?.TargetGraphic is not { } target) return;
         var graphic = owner.Name == target ? owner : owner.Part(target);
-        if (graphic?.Image == null || !Nodes.TryGetValue(graphic, out var c) || !GodotObject.IsInstanceValid(c) || c.GetChildCount() == 0 || c.GetChild(0) is not Control old) return;
+        if (graphic?.Image == null || graphic.Mask || !Nodes.TryGetValue(graphic, out var c) || !GodotObject.IsInstanceValid(c) || c.GetChildCount() == 0 || c.GetChild(0) is not Control old) return;
         var fresh = Paint(graphic);
         c.AddChild(fresh);
         c.MoveChild(fresh, 0);

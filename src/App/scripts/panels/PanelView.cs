@@ -13,6 +13,8 @@ sealed record PanelHooks(PanelView.Sender Send, Func<string, Action<Texture2D>, 
     public Func<string, bool> Known { get; init; } = _ => false;
     public Func<string, Texture2D?> CursorPicture { get; init; } = _ => null;
     public SubViewport? Port { get; init; }
+    public Func<Vector2, Vector2?> PlatePixel { get; init; } = _ => null;
+    public Func<Vector2, Vector3?> PlateWorld { get; init; } = _ => null;
 }
 
 sealed partial class PanelView
@@ -34,6 +36,8 @@ sealed partial class PanelView
 
     public PanelScene? Scene => _scene;
 
+    public bool Live => _top != null && GodotObject.IsInstanceValid(_top) && _top.IsInsideTree();
+
     void Redraw() => _hooks.Redraw();
 
     public Control Show(PanelScene scene, PanelBox from)
@@ -42,6 +46,7 @@ sealed partial class PanelView
         Nodes.Clear();
         _hovered.Clear();
         _top = Node(from, null);
+        PanelFocus.Showing(this);
         Restore(scene);
         return _top;
     }
@@ -74,8 +79,13 @@ sealed partial class PanelView
 
     Control Node(PanelBox b, PanelBox? parent)
     {
-        var c = new Control { MouseFilter = Control.MouseFilterEnum.Ignore, ClipContents = b.Mask || b.RectMask };
+        var c = b.Mask && b.Image != null ? MaskShape(b) : new Control { MouseFilter = Control.MouseFilterEnum.Ignore, ClipContents = b.RectMask };
         Fit(c, b, parent);
+        if (b.Tag == "Canvas" && b.Extra.TryGetValue("sortingorder", out var order))
+        {
+            c.ZAsRelative = false;
+            c.ZIndex = (int)Math.Clamp(PanelValues.Int(order), RenderingServer.CanvasItemZMin, RenderingServer.CanvasItemZMax);
+        }
         if (parent != null)
         {
             c.RotationDegrees = -b.Rotation.Z;
@@ -83,7 +93,7 @@ sealed partial class PanelView
         }
         if (b.Opacity < 1) c.Modulate = Colors.White with { A = Math.Clamp(b.Opacity, 0, 1) };
         Nodes[b] = c;
-        if (b.Image != null && !(b.Mask && !b.ShowMaskGraphic)) c.AddChild(Paint(b));
+        if (b.Image != null && !b.Mask) c.AddChild(Paint(b));
         if (b.Text != null) c.AddChild(Words(b));
         if (Catches(b))
         {
@@ -95,6 +105,15 @@ sealed partial class PanelView
         }
         foreach (var child in b.Children) c.AddChild(Node(child, b));
         return c;
+    }
+
+    Control MaskShape(PanelBox b)
+    {
+        var shape = Paint(b);
+        shape.SetAnchorsPreset(Control.LayoutPreset.TopLeft);
+        shape.ClipContents = true;
+        shape.ClipChildren = b.ShowMaskGraphic ? CanvasItem.ClipChildrenMode.AndDraw : CanvasItem.ClipChildrenMode.Only;
+        return shape;
     }
 
     static bool Catches(PanelBox b) => (b.Image?.RaycastTarget ?? false) || (b.Text?.RaycastTarget ?? false);

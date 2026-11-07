@@ -3,7 +3,9 @@ namespace KTable.Client.Panels;
 public static class PanelLists
 {
     public const string Name = "Dropdown List", Item = "Item", Index = "index";
-    const float ItemHeight = 30, ListHeight = 150, Lift = 2, PortCut = 17, BarWidth = 20, Edge = 1, CheckSize = 20, Groove = 20;
+    const float ItemHeight = 30, TextlessItemHeight = 20, ContentHeight = 28, ListHeight = 150, Lift = 2, PortCut = 17, TextlessPortCut = 18, BarWidth = 20, CheckSize = 20,
+        Groove = 20, TextlessCheckAt = 10;
+    public const string Textless = "TextMeshProDropdown";
     static readonly Paint ItemShade = new(0.96078f, 0.96078f, 0.96078f, 1);
 
     public static PanelBox Open(PanelScene scene, PanelBox dropdown, int value)
@@ -11,23 +13,35 @@ public static class PanelLists
         var options = dropdown.Element?.Options ?? new();
         var ctx = scene.Context;
         string? Look(string key) => dropdown.Extra.GetValueOrDefault(key);
-        float itemHeight = Look("itemheight") is { } ih ? PanelValues.Float(ih) : ItemHeight;
+        bool textless = dropdown.Tag == Textless;
+        float itemHeight = Look("itemheight") is { } ih ? PanelValues.Float(ih) : textless ? TextlessItemHeight : ItemHeight;
+        float holder = Look("itemheight") is { } ch ? PanelValues.Float(ch) : ContentHeight;
+        float edge = (holder - itemHeight) / 2;
         float listHeight = Look("dropdownheight") is { } dh ? PanelValues.Float(dh) : ListHeight;
         var list = new PanelBox
         {
             Name = Name, Tag = "VerticalScrollView", AnchorMin = V2.Zero, AnchorMax = new V2(1, 0), Pivot = new V2(0.5f, 1), Position = new V2(0, Lift), SizeDelta = new V2(0, listHeight),
-            Image = new ImageProps { Color = Look("dropdownbackgroundcolor") is { } bc ? ctx.Color(bc) : Paint.White, Sprite = PanelPrefabs.ToolSprite, Type = PanelPrefabs.Sliced, RaycastTarget = true },
+            Image = new ImageProps
+            {
+                Color = Look("dropdownbackgroundcolor") is { } bc ? ctx.Color(bc) : Paint.White, Sprite = textless ? PanelPrefabs.UiSprite : PanelPrefabs.ToolSprite, Type = PanelPrefabs.Sliced,
+                RaycastTarget = true,
+            },
         };
         if (Look("dropdownbackgroundimage") is { } bi) list.Image.Sprite = PanelValues.IsNone(bi) ? null : bi;
         list.Extra["vertical"] = "true";
         list.Extra["horizontal"] = "false";
         if (Look("scrollsensitivity") is { } ss) list.Extra["scrollsensitivity"] = ss;
         dropdown.Add(list);
-        var port = list.Add(new PanelBox { Name = "Viewport", SizeDelta = new V2(-PortCut, 0), Pivot = new V2(0, 1), Mask = true, ShowMaskGraphic = false,
+        var port = list.Add(new PanelBox { Name = "Viewport", SizeDelta = new V2(textless ? -TextlessPortCut : -PortCut, 0), Pivot = new V2(0, 1), Mask = true, ShowMaskGraphic = false,
             Image = new ImageProps { Color = Paint.White, Sprite = PanelPrefabs.MaskSprite, Type = PanelPrefabs.Sliced, RaycastTarget = true } });
-        float contentHeight = itemHeight * options.Count - 2 * Edge;
+        float contentHeight = itemHeight * options.Count + 2 * edge;
         var content = port.Add(new PanelBox { Name = "Content", AnchorMin = new V2(0, 1), AnchorMax = V2.One, Pivot = new V2(0.5f, 1), SizeDelta = new V2(0, contentHeight) });
-        for (int i = 0; i < options.Count; i++) content.Add(Row(dropdown, i, i == value, options.Count, itemHeight, options[i].Value ?? ""));
+        for (int i = 0; i < options.Count; i++)
+        {
+            var row = content.Add(Row(dropdown, i, options.Count, itemHeight, edge));
+            if (textless) TextlessRow(row, i == value);
+            else LabelledRow(row, dropdown, i == value, options[i].Value ?? "");
+        }
         Style(list, dropdown, ctx);
         if (listHeight - contentHeight > 0) list.SizeDelta = list.SizeDelta with { Y = contentHeight };
         var bar = list.Add(Bar(dropdown, ctx));
@@ -44,17 +58,28 @@ public static class PanelLists
         return list;
     }
 
-    static PanelBox Row(PanelBox dropdown, int i, bool on, int count, float height, string text)
+    static PanelBox Row(PanelBox dropdown, int i, int count, float height, float edge)
     {
         var row = new PanelBox
         {
             Name = Item, Tag = Item, Element = dropdown.Element, AnchorMin = V2.Zero, AnchorMax = new V2(1, 0), SizeDelta = new V2(0, height),
-            Position = new V2(0, -Edge + height * (count - 1 - i) + height * 0.5f),
-            Group = new GroupProps { Kind = GroupKind.Horizontal, Padding = new Offsets(1, 0, 0, 0), ChildAlignment = Anchor.MiddleLeft, ExpandWidth = false, ExpandHeight = false },
-            Select = new SelectProps { TargetGraphic = "Item Background" },
+            Position = new V2(0, edge + height * (count - 1 - i) + height * 0.5f), Select = new SelectProps { TargetGraphic = "Item Background" },
         };
         row.Extra[Index] = i.ToString(System.Globalization.CultureInfo.InvariantCulture);
         row.Add(new PanelBox { Name = "Item Background", Image = new ImageProps { Color = ItemShade, RaycastTarget = true }, Layout = new LayoutProps { Ignore = true } });
+        return row;
+    }
+
+    static void TextlessRow(PanelBox row, bool on)
+    {
+        var check = row.Add(new PanelBox { Name = "Item Checkmark", AnchorMin = new V2(0, 0.5f), AnchorMax = new V2(0, 0.5f), Position = new V2(TextlessCheckAt, 0),
+            SizeDelta = new V2(CheckSize, CheckSize), Image = new ImageProps { Color = Paint.Black, Sprite = PanelPrefabs.Checkmark, RaycastTarget = true } });
+        if (!on) check.Opacity = 0;
+    }
+
+    static void LabelledRow(PanelBox row, PanelBox dropdown, bool on, string text)
+    {
+        row.Group = new GroupProps { Kind = GroupKind.Horizontal, Padding = new Offsets(1, 0, 0, 0), ChildAlignment = Anchor.MiddleLeft, ExpandWidth = false, ExpandHeight = false };
         var check = row.Add(new PanelBox { Name = "Item Checkmark", AnchorMin = new V2(0, 1), AnchorMax = new V2(0, 1), SizeDelta = new V2(CheckSize, CheckSize),
             Image = new ImageProps { Color = Paint.Black, Sprite = PanelPrefabs.Checkmark, PreserveAspect = true, RaycastTarget = true },
             Layout = new LayoutProps { PreferredWidth = CheckSize, PreferredHeight = CheckSize, FlexibleWidth = 0, FlexibleHeight = 0 } });
@@ -64,7 +89,6 @@ public static class PanelLists
         label.Alignment = Anchor.MiddleLeft;
         label.RaycastTarget = true;
         row.Add(new PanelBox { Name = "Item Label", AnchorMin = new V2(0, 1), AnchorMax = new V2(0, 1), Text = label, Layout = new LayoutProps { FlexibleWidth = 1 } });
-        return row;
     }
 
     static void Style(PanelBox list, PanelBox dropdown, PanelContext ctx)
@@ -77,7 +101,10 @@ public static class PanelLists
             {
                 if (Look("checkcolor") is { } cc) check.Color = ctx.Color(cc);
                 if (Look("checkimage") is { } ci) check.Sprite = PanelValues.IsNone(ci) ? null : ci;
+                if (Look("checkimagepreserveaspect") is { } cp && dropdown.Tag != Textless) check.PreserveAspect = PanelValues.Bool(cp);
             }
+            if (dropdown.Tag == Textless && Look("checksize") is { } size && row.Part("Item Checkmark") is { } mark)
+                mark.SizeDelta = new V2(PanelValues.Float(size), PanelValues.Float(size));
             if (Look("itemtextcolor") is { } tc && row.Part("Item Label")?.Text is { } t) t.Color = ctx.Color(tc);
         }
     }
@@ -89,6 +116,7 @@ public static class PanelLists
             Image = new ImageProps { Color = Look("scrollbarbackgroundcolor") is { } bc ? ctx.Color(bc) : Paint.White, Sprite = PanelPrefabs.Background, Type = PanelPrefabs.Sliced, RaycastTarget = true } };
         if (Look("scrollbarbackgroundimage") is { } bi) bar.Image.Sprite = PanelValues.IsNone(bi) ? null : bi;
         bar.Extra["visibility"] = "2";
+        if (Look("scrollbarwidth") is { } width) bar.SizeDelta = bar.SizeDelta with { X = PanelValues.Float(width) };
         var area = bar.Add(new PanelBox { Name = "Sliding Area", SizeDelta = new V2(-Groove, -Groove) });
         var handle = area.Add(new PanelBox { Name = "Handle", SizeDelta = new V2(Groove, Groove),
             Image = new ImageProps { Color = Paint.White, Sprite = PanelPrefabs.UiSprite, Type = PanelPrefabs.Sliced, RaycastTarget = true } });

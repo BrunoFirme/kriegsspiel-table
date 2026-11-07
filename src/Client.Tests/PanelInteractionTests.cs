@@ -225,4 +225,63 @@ public class PanelInteractionTests
         Assert.Equal("7.5", PanelValues.FloatText(7.5f));
         Assert.Equal("1E+07", PanelValues.FloatText(1e7f));
     }
+
+    [Fact]
+    public void A_slider_s_handle_background_and_fill_area_take_the_sizes_padding_and_mask_it_names()
+    {
+        var s = Scene("<Slider id=\"s\" width=\"200\" height=\"20\" handleWidth=\"30\" sliderBackgroundHeight=\"6\" fillPadding=\"5 7 2 3\" fillMaskImage=\"crest\"/>");
+        var b = s.ById("s")!;
+        Assert.Equal(30, b.Part("Handle")!.RectSize.X, 2);
+        Assert.Equal(6, b.Part("Background")!.RectSize.Y, 2);
+        var area = b.Part("Fill Area")!;
+        Assert.Equal(200 - 5 - 7, area.RectSize.X, 2);
+        Assert.Equal(10 - 2 - 3, area.RectSize.Y, 2);
+        Assert.True(area.Mask);
+        Assert.False(area.ShowMaskGraphic);
+        Assert.Equal("crest", area.Image!.Sprite);
+    }
+
+    [Fact]
+    public void Set_native_size_gives_a_picture_its_own_pixel_size_and_an_aspect_fitter_keeps_its_ratio()
+    {
+        var s = Scene("<Image id=\"n\" image=\"Sprites/Elements/Checkmark\" setNativeSize=\"true\"/>"
+            + "<Panel id=\"w\" width=\"200\" height=\"10\" aspectRatio=\"2\" aspectMode=\"WidthControlsHeight\"/>"
+            + "<Panel width=\"400\" height=\"100\"><Panel id=\"f\" aspectRatio=\"1:1\" aspectMode=\"FitInParent\"/></Panel>");
+        Assert.Equal((40f, 40f), (s.Screen(s.ById("n")!).W, s.Screen(s.ById("n")!).H));
+        Assert.Equal(100, s.Screen(s.ById("w")!).H, 2);
+        Assert.Equal((100f, 100f), (s.Screen(s.ById("f")!).W, s.Screen(s.ById("f")!).H));
+    }
+
+    [Fact]
+    public void A_scroll_view_s_mask_image_shapes_its_viewport()
+    {
+        var s = Scene("<VerticalScrollView id=\"v\" maskImage=\"crest\"><Panel height=\"100\"/></VerticalScrollView>");
+        var port = s.ById("v")!.Part("Viewport")!;
+        Assert.True(port.Mask);
+        Assert.Equal("crest", port.Image!.Sprite);
+    }
+
+    [Fact]
+    public void A_text_mesh_pro_dropdown_opens_its_own_template_twenty_high_rows_with_a_black_tick_and_no_words()
+    {
+        var s = Scene("<TextMeshProDropdown id=\"d\"><TMP_Option text=\"One\"/><TMP_Option text=\"Two\" selected=\"true\"/><TMP_Option text=\"Three\"/></TextMeshProDropdown>");
+        var d = s.ById("d")!;
+        Assert.Equal(new[] { "One", "Two", "Three" }, d.Element!.Options!.Select(o => o.Value));
+        Assert.Equal(1, PanelScene.DropdownIndex(d, d.Element, null));
+        var list = PanelLists.Open(s, d, 1);
+        var rows = list.Part("Content")!.Children;
+        Assert.Equal(3 * 20 + 8, list.RectSize.Y, 2);
+        Assert.All(rows, r => Assert.Equal(20, r.RectSize.Y, 2));
+        Assert.All(rows, r => Assert.Null(r.Part("Item Label")));
+        Assert.Equal(Paint.Black, rows[1].Part("Item Checkmark")!.Image!.Color);
+        Assert.Equal(1, rows[1].Part("Item Checkmark")!.Opacity);
+    }
+
+    [Fact]
+    public void A_dropdown_s_item_height_sets_its_rows_and_its_content_together()
+    {
+        var s = Scene(string.Format(Choices, " itemHeight=\"40\""));
+        var list = PanelLists.Open(s, s.ById("d")!, 0);
+        Assert.Equal(3 * 40, list.RectSize.Y, 2);
+    }
 }

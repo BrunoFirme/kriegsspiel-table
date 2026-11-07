@@ -16,7 +16,10 @@ sealed class PieceUi
     readonly List<Plate> _plates = new();
     readonly Dictionary<string, string> _local = new();
 
-    sealed record Plate(PanelView View, Vector2 Center, float Turn, Vector2 Size, Vector2 Pixels, float Fit, SubViewport Port);
+    sealed record Plate(PanelView View, Vector2 Center, float Turn, Vector2 Size, Vector2 Pixels, float Fit, SubViewport Port)
+    {
+        public float FaceY { get; set; }
+    }
     object? _built;
     bool _builtFaceDown;
     const int PlatePixels = 1024;
@@ -100,18 +103,43 @@ sealed class PieceUi
         _plates.Clear();
     }
 
+    Vector2? PixelOn(Func<PanelView?> view, Vector2 screen)
+    {
+        if (!GodotObject.IsInstanceValid(_piece) || _piece.FacePoint(screen) is not { } face) return null;
+        var at = Coords.ToLocal(face, _piece.Piece.Pos, _piece.Piece.RotDeg) / Mathf.Max(1e-6f, _piece.Scale.X);
+        foreach (var p in _plates.Where(p => p.View == view()))
+            if (OnPlate(p, at) is { } pixel) return pixel;
+        return null;
+    }
+
+    Vector3? WorldOf(Func<PanelView?> view, Vector2 pixel)
+    {
+        if (!GodotObject.IsInstanceValid(_piece) || !_piece.IsInsideTree() || _plates.FirstOrDefault(p => p.View == view()) is not { } p) return null;
+        var uv = pixel / (p.Pixels * p.Fit);
+        var onPlate = (uv - new Vector2(0.5f, 0.5f)) * p.Size;
+        float a = Mathf.DegToRad(p.Turn), c = Mathf.Cos(a), s = Mathf.Sin(a);
+        var d = new Vector2(onPlate.X * c + onPlate.Y * s, -onPlate.X * s + onPlate.Y * c);
+        var at = p.Center + d;
+        return _piece.ToGlobal(new Vector3(at.X, p.FaceY, at.Y));
+    }
+
+    static Vector2? OnPlate(Plate p, Vector2 at)
+    {
+        var d = at - p.Center;
+        float a = Mathf.DegToRad(p.Turn), c = Mathf.Cos(a), s = Mathf.Sin(a);
+        var onPlate = new Vector2(d.X * c - d.Y * s, d.X * s + d.Y * c);
+        var uv = new Vector2(onPlate.X / p.Size.X + 0.5f, onPlate.Y / p.Size.Y + 0.5f);
+        if (uv.X < 0 || uv.X > 1 || uv.Y < 0 || uv.Y > 1) return null;
+        return uv * p.Pixels * p.Fit;
+    }
+
     public (string Id, Control Control, Vector2 Pixel)? ControlAt(Vector2 local)
     {
         var at = local / Mathf.Max(1e-6f, _piece.Scale.X);
         for (int i = _plates.Count - 1; i >= 0; i--)
         {
             var p = _plates[i];
-            var d = at - p.Center;
-            float a = Mathf.DegToRad(p.Turn), c = Mathf.Cos(a), s = Mathf.Sin(a);
-            var onPlate = new Vector2(d.X * c - d.Y * s, d.X * s + d.Y * c);
-            var uv = new Vector2(onPlate.X / p.Size.X + 0.5f, onPlate.Y / p.Size.Y + 0.5f);
-            if (uv.X < 0 || uv.X > 1 || uv.Y < 0 || uv.Y > 1) continue;
-            var pixel = uv * p.Pixels * p.Fit;
+            if (OnPlate(p, at) is not { } pixel) continue;
             if (p.View.Hit(pixel) is { Path: not null } hit && p.View.Nodes.TryGetValue(hit, out var ctl)) return (i + ":" + PanelScene.Key(hit.Path), ctl, pixel);
             if (p.View.Hit(pixel) is { } part && p.View.Nodes.TryGetValue(part, out var pc)) return (i + ":" + part.Name, pc, pixel);
         }
@@ -150,11 +178,17 @@ sealed class PieceUi
         vp.AddChild(canvas);
         var s = _piece.Session;
         void Fresh() { if (GodotObject.IsInstanceValid(vp)) vp.RenderTargetUpdateMode = SubViewport.UpdateMode.Once; }
-        var view = new PanelView(PanelHost.Hooks(s, Send, (name, ready) => PanelPictures.Texture(s, name, t =>
+        PanelView? made = null;
+        var hooks = PanelHost.Hooks(s, Send, (name, ready) => PanelPictures.Texture(s, name, t =>
         {
             ready(t);
             Fresh();
-        }), _local, () => Callable.From(() => Sync(true)).CallDeferred(), _said, vp));
+        }), _local, () => Callable.From(() => Sync(true)).CallDeferred(), _said, vp) with
+        {
+            PlatePixel = screen => PixelOn(() => made, screen), PlateWorld = pixel => WorldOf(() => made, pixel),
+        };
+        var view = new PanelView(hooks);
+        made = view;
         canvas.AddChild(view.Show(scene, root));
         _piece.AddChild(vp);
         _nodes.Add(vp);
@@ -167,6 +201,7 @@ sealed class PieceUi
         };
         var quad = new MeshInstance3D { Mesh = new PlaneMesh { Size = new Vector2(pw, ph) }, MaterialOverride = mat, CastShadow = GeometryInstance3D.ShadowCastingSetting.Off };
         float faceY = (_piece.Def?.Kind == "model" && ModelTop > 0 ? ModelTop : _piece.Thickness) + Lift;
+        _plates[^1].FaceY = faceY;
         quad.Position = new Vector3(center.X * Thousandth, faceY, -center.Y * Thousandth);
         quad.RotationDegrees = new Vector3(0, turn, 0);
         _piece.AddChild(quad);

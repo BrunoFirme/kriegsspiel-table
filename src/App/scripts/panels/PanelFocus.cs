@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Godot;
 using KTable.Client.Panels;
 
@@ -13,6 +14,19 @@ static class PanelFocus
     static Action? _redraw;
 
     public static PanelView? View => _view;
+    static readonly List<WeakReference<PanelView>> Surfaces = new();
+
+    public static void Showing(PanelView view)
+    {
+        Surfaces.RemoveAll(w => !w.TryGetTarget(out var v) || !v.Live);
+        Surfaces.Add(new WeakReference<PanelView>(view));
+    }
+
+    public static IEnumerable<PanelView> Views()
+    {
+        foreach (var w in Surfaces.ToArray())
+            if (w.TryGetTarget(out var v) && v.Live) yield return v;
+    }
 
     public static void Take(PanelView view, Dictionary<string, string> local, Action redraw)
     {

@@ -96,6 +96,8 @@ public sealed class PanelBox
     public V2 RectMin, RectSize;
     public V2 PivotAt;
     public V2 Scrolled;
+    public int AspectMode;
+    public float AspectRatio = 1;
 
     public PanelBox Add(PanelBox child)
     {
