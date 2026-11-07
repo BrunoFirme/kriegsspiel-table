@@ -88,7 +88,22 @@
   "TextTool.setFontColor": "BookNotesScriptTests.A_module_script_rewrites_3d_text_its_size_and_its_colour",
   "TextTool.setFontSize": "BookNotesScriptTests.A_module_script_rewrites_3d_text_its_size_and_its_colour",
   "TextTool.setValue": "BookNotesScriptTests.A_module_script_rewrites_3d_text_its_size_and_its_colour",
-  "textTool": "BookNotesScriptTests.A_module_script_rewrites_3d_text_its_size_and_its_colour"
+  "textTool": "BookNotesScriptTests.A_module_script_rewrites_3d_text_its_size_and_its_colour",
+  "auto_raise": "ModuleObjectCallTests.Plain_object_properties_start_at_the_tabletops_defaults_and_keep_what_a_script_sets",
+  "tooltip": "ModuleObjectCallTests.Plain_object_properties_start_at_the_tabletops_defaults_and_keep_what_a_script_sets",
+  "sticky": "ModuleObjectCallTests.Plain_object_properties_start_at_the_tabletops_defaults_and_keep_what_a_script_sets",
+  "drag_selectable": "ModuleObjectCallTests.Plain_object_properties_start_at_the_tabletops_defaults_and_keep_what_a_script_sets",
+  "measure_movement": "ModuleObjectCallTests.Plain_object_properties_start_at_the_tabletops_defaults_and_keep_what_a_script_sets",
+  "max_typed_number": "ModuleObjectCallTests.Plain_object_properties_start_at_the_tabletops_defaults_and_keep_what_a_script_sets",
+  "value": "ModuleObjectCallTests.Plain_object_properties_start_at_the_tabletops_defaults_and_keep_what_a_script_sets",
+  "use_rotation_value_flip": "ModuleObjectCallTests.Plain_object_properties_start_at_the_tabletops_defaults_and_keep_what_a_script_sets",
+  "resting": "ModuleObjectCallTests.Plain_object_properties_start_at_the_tabletops_defaults_and_keep_what_a_script_sets",
+  "is_face_down": "ModuleObjectCallTests.Plain_object_properties_start_at_the_tabletops_defaults_and_keep_what_a_script_sets",
+  "held_flip_index": "ModuleObjectCallTests.Plain_object_properties_start_at_the_tabletops_defaults_and_keep_what_a_script_sets",
+  "held_spin_index": "ModuleObjectCallTests.Plain_object_properties_start_at_the_tabletops_defaults_and_keep_what_a_script_sets",
+  "memo": "ModuleObjectCallTests.Plain_object_properties_start_at_the_tabletops_defaults_and_keep_what_a_script_sets",
+  "getMemo": "ModuleObjectCallTests.Plain_object_properties_start_at_the_tabletops_defaults_and_keep_what_a_script_sets",
+  "setMemo": "ModuleObjectCallTests.Plain_object_properties_start_at_the_tabletops_defaults_and_keep_what_a_script_sets"
  },
  "global": {
   "broadcastToAll": "ModuleObjectCallTests.Printing_to_a_seat_nobody_holds_is_an_error_and_seat_names_are_exact",

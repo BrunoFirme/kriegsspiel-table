@@ -613,6 +613,29 @@ public class ModuleObjectCallTests
     }
 
     [Fact]
+    public void Plain_object_properties_start_at_the_tabletops_defaults_and_keep_what_a_script_sets()
+    {
+        const string lua = """
+            function onLoad()
+              local m = getObjectFromGUID('p-000003')
+              local a = { m.auto_raise, m.tooltip, m.sticky, m.drag_selectable, m.measure_movement, m.max_typed_number, m.value, m.use_rotation_value_flip,
+                m.resting, m.is_face_down, m.held_flip_index, m.held_spin_index, m.memo }
+              m.auto_raise = false
+              m.tooltip = false
+              m.max_typed_number = 9
+              m.memo = 'kept'
+              m.sticky = false
+              local b = { m.auto_raise, m.tooltip, m.max_typed_number, m.memo, m.sticky, m.getMemo(), m.setMemo('x') }
+              local out = {}
+              for i = 1, 13 do out[#out + 1] = tostring(a[i]) end
+              for i = 1, 7 do out[#out + 1] = tostring(b[i]) end
+              self.setName(table.concat(out, ','))
+            end
+            """;
+        Assert.Equal("true,true,true,true,false,-1,0,false,true,false,0,0,,false,false,9,kept,false,kept,true", Run(lua));
+    }
+
+    [Fact]
     public void Time_reads_the_scripts_clock_and_frame_count()
     {
         using var t = new Table();
