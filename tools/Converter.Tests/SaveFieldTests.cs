@@ -367,6 +367,16 @@ public sealed class SaveFieldTests : ConverterHarness
         Assert.Equal(flat.Image, standing.Texture);
     }
 
+    [Fact]
+    public void A_module_notecard_is_as_big_and_as_thick_as_the_games_notecard_at_its_scale()
+    {
+        var (defs, pack) = Factory();
+
+        var r = defs.DefFor(new ModuleObj(Obj("Notecard", "Orders", 2, new JsonObject { ["Description"] = "Hold the ford" })), pack)!;
+
+        Assert.Equal((6.9031 * 2, 4.1303 * 2, 0.06), (r.Def.Size.W * r.Scale, r.Def.Size.H * r.Scale, r.Def.Thickness));
+    }
+
     static byte[] TwoPagePdf(double w1, double h1, double w2, double h2)
     {
         var inv = System.Globalization.CultureInfo.InvariantCulture;

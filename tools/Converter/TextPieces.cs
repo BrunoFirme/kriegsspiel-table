@@ -19,7 +19,7 @@ public sealed partial class DefFactory
         double bs = o.Name == "3DText" || Math.Abs(o.ScaleX) < 1e-6 ? 1 : Math.Abs(o.ScaleX);
         double r = o.Name == "3DText" ? 1 : refScale ?? bs;
         double instScale = Math.Round(bs / r, 4);
-        if (o.Name == "Notecard") return new DefResult(NoteDef(pack, o.Nickname, o.Description, r), pack, instScale, 0, o, ScriptInfo.Parse("", ""));
+        if (o.Name == "Notecard") return new DefResult(NoteDef(pack, o.Nickname, o.Description, r, ModuleNotecard), pack, instScale, 0, o, ScriptInfo.Parse("", ""));
         string body = ModuleValues.Text(o.J["Text"]?["Text"]) ?? "";
         double fontSize = ModuleValues.Finite(o.J["Text"]?["fontSize"], DefaultFontSize);
         var colour = ColourOf(o.J["Text"]?["colorstate"] as JsonObject);
@@ -57,17 +57,20 @@ public sealed partial class DefFactory
 
     public static string Plain(string moduleText) => ModuleMarkup().Replace(moduleText, "");
 
-    public PieceDef NoteDef(PackOut pack, string title, string body, double scale)
+    public static readonly (Size2 Size, double Thickness) ModuleNotecard = (new Size2(6.9031, 4.1303), 0.06);
+
+    public PieceDef NoteDef(PackOut pack, string title, string body, double scale, (Size2 Size, double Thickness)? card = null)
     {
+        var (size, thick) = card ?? (new Size2(NoteCard.Width, NoteCard.Height), NoteCard.Thickness);
         title = Plain(title).Trim();
         body = Plain(body).Replace("\r", "").Trim('\n');
         var image = NotePicture(pack);
-        var key = string.Create(System.Globalization.CultureInfo.InvariantCulture, $"note|{title}|{body}|{scale:0.####}");
+        var key = string.Create(System.Globalization.CultureInfo.InvariantCulture, $"note|{title}|{body}|{scale:0.####}") + (card == null ? "" : "|module");
         if (pack.ByKey.TryGetValue(key, out var existing)) return existing;
         var def = new PieceDef
         {
-            Name = title.Length > 0 ? title : NoteCard.DefaultName, Kind = "flat", Image = image, Size = Mul(new Size2(NoteCard.Width, NoteCard.Height), scale),
-            Thickness = NoteCard.Thickness, Shape = "rounded", Tags = new() { NoteCard.Tag }, TextLines = NoteCard.TextLines(title, body),
+            Name = title.Length > 0 ? title : NoteCard.DefaultName, Kind = "flat", Image = image, Size = Mul(size, scale),
+            Thickness = thick, Shape = "rounded", Tags = new() { NoteCard.Tag }, TextLines = NoteCard.TextLines(title, body),
         };
         def.Id = $"{pack.Short}.{Slug(def.Name)}-{Hash8(key)}";
         pack.ByKey[key] = def;
