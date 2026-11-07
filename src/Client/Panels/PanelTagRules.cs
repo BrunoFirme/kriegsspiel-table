@@ -60,6 +60,9 @@ public static partial class PanelApply
             case "VerticalScrollView" or "HorizontalScrollView":
                 Scroll(b, attrs, ctx);
                 break;
+            case PanelLists.Textless:
+                TextlessDropdown(b, attrs, ctx);
+                break;
             case PanelAccordions.Accordion or PanelAccordions.Section or PanelAccordions.Icon:
                 foreach (var k in PanelAccordions.Looks) if (attrs.TryGetValue(k, out var v)) b.Extra[k] = v;
                 break;
@@ -216,6 +219,27 @@ public static partial class PanelApply
         if (attrs.TryGetValue("handlecolor", out var hc)) handle.Image!.Color = ctx.Color(hc);
         if (attrs.TryGetValue("handleimage", out var hi)) handle.Image!.Sprite = PanelValues.IsNone(hi) ? null : hi;
         if (attrs.TryGetValue("handlepreserveaspect", out var hp)) handle.Image!.PreserveAspect = PanelValues.Bool(hp);
+        SliderParts(b, attrs);
+    }
+
+    static void SliderParts(PanelBox b, IReadOnlyDictionary<string, string> attrs)
+    {
+        var area = b.Part("Fill Area")!;
+        foreach (var (key, part, axis) in new[] { ("handlewidth", "Handle", 0), ("handleheight", "Handle", 1), ("sliderbackgroundwidth", "Background", 0),
+                     ("sliderbackgroundheight", "Background", 1), ("sliderfillareawidth", "Fill Area", 0), ("sliderfillareaheight", "Fill Area", 1) })
+            if (attrs.TryGetValue(key, out var size) && b.Part(part) is { } box) PanelFits.SetSize(box, axis, PanelValues.Float(size));
+        if (attrs.TryGetValue("fillMaskImage", out var mask))
+        {
+            area.Mask = true;
+            area.ShowMaskGraphic = false;
+            area.Image ??= new ImageProps();
+            area.Image.Sprite = PanelValues.IsNone(mask) ? null : mask;
+        }
+        if (attrs.TryGetValue("fillPadding", out var pad))
+        {
+            var p = PanelValues.Padding(pad);
+            PanelFits.Offsets(area, new V2(p.Left, p.Bottom), new V2(-p.Right, -p.Top));
+        }
     }
 
     static void Progress(PanelBox b, IReadOnlyDictionary<string, string> attrs, PanelContext ctx)
@@ -231,9 +255,19 @@ public static partial class PanelApply
 
     static readonly string[] DropdownLooks =
     {
-        "dropdownheight", "itemheight", "checkcolor", "checkimage", "itemBackgroundColors", "itemTextColor", "scrollbarColors", "scrollbarImage", "scrollbarBackgroundColor",
+        "dropdownheight", "itemheight", "checkcolor", "checkimage", "checkimagepreserveaspect", "itemBackgroundColors", "itemTextColor", "scrollbarColors", "scrollbarImage", "scrollbarBackgroundColor",
         "scrollbarBackgroundImage", "dropdownBackgroundColor", "dropdownBackgroundImage", "scrollSensitivity",
     };
+
+    static void TextlessDropdown(PanelBox b, IReadOnlyDictionary<string, string> attrs, PanelContext ctx)
+    {
+        var arrow = b.Part("Arrow")!;
+        if (attrs.TryGetValue("arrowimage", out var ai)) arrow.Image!.Sprite = PanelValues.IsNone(ai) ? null : ai;
+        if (attrs.TryGetValue("arrowcolor", out var ac)) arrow.Image!.Color = ctx.Color(ac);
+        if (attrs.TryGetValue("arrowOffset", out var ao)) arrow.Position = PanelValues.Vector2(ao);
+        foreach (var k in DropdownLooks.Concat(new[] { "scrollbarWidth", "checkSize" }))
+            if (attrs.TryGetValue(k, out var v)) b.Extra[k] = v;
+    }
 
     static void Dropdown(PanelBox b, UiElement e, IReadOnlyDictionary<string, string> attrs, PanelContext ctx)
     {
@@ -257,6 +291,7 @@ public static partial class PanelApply
         }
         if (attrs.TryGetValue("verticalscrollbarwidth", out var vw) && b.Part("Scrollbar Vertical") is { } v) v.SizeDelta = v.SizeDelta with { X = PanelValues.Float(vw) };
         if (attrs.TryGetValue("horizontalscrollbarheight", out var hh) && b.Part("Scrollbar Horizontal") is { } hz) hz.SizeDelta = hz.SizeDelta with { Y = PanelValues.Float(hh) };
+        if (attrs.TryGetValue("maskimage", out var mi) && b.Part("Viewport")?.Image is { } port) port.Sprite = string.IsNullOrEmpty(mi) ? null : mi;
         if (attrs.TryGetValue("noscrollbars", out var none) && PanelValues.Bool(none))
             foreach (var bar in new[] { b.Part("Scrollbar Vertical"), b.Part("Scrollbar Horizontal") }) if (bar != null) bar.Active = false;
         foreach (var k in new[] { "horizontal", "vertical", "movementType", "scrollSensitivity", "scrollbarColors", "inertia", "decelerationRate", "elasticity" })

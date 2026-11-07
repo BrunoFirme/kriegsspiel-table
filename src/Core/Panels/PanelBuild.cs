@@ -153,7 +153,16 @@ public sealed partial class PanelBuild
         if (merged.ContainsKey("active") || merged.ContainsKey("visibility")) PanelOps.Activate(e);
         PanelTags.AfterApply(e, merged);
         if (e.Tag == PanelTags.AccordionSection) PanelOps.Expanded(_layout, path, PanelOps.Bool(e.Get("expanded")));
+        if (e.Tag == "TMP_Option" && at.Element is { Tag: "TextMeshProDropdown" } dropdown) Option(dropdown, merged);
         if (!PanelTags.Renders(e.Tag)) Unrender(at, path);
+    }
+
+    static void Option(UiElement dropdown, Dictionary<string, string> attrs)
+    {
+        dropdown.Options ??= new();
+        var option = UiAttributes.Fresh();
+        foreach (var (k, v) in attrs) option[k] = v;
+        dropdown.Options.Add(new UiNode { Tag = "Option", Attributes = option, Value = attrs.GetValueOrDefault("text") ?? "" });
     }
 
     void Unrender(Parent at, List<int> path)

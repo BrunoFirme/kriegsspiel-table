@@ -112,18 +112,24 @@ sealed partial class PanelView
 
     void DragElement(DragState d, Vector2 at, bool first)
     {
-        if (first) Fire(d.Box, "onBeginDrag", "");
+        if (first)
+        {
+            Fire(d.Box, "onBeginDrag", "");
+            if (Reorders(d.Box)) SectionBegin(d);
+        }
         var scale = d.Node.GetGlobalTransform().Scale;
         var to = d.Home + (at - d.From) / new Vector2(Mathf.Max(Micro, Mathf.Abs(scale.X)), Mathf.Max(Micro, Mathf.Abs(scale.Y)));
         bool inside = !d.Box.Extra.TryGetValue("restrictdraggingtoparentbounds", out var r) || PanelValues.Bool(r);
         if (inside && d.Node.GetParentControl() is { } parent)
             to = new Vector2(Mathf.Clamp(to.X, 0, Mathf.Max(0, parent.Size.X - d.Node.Size.X)), Mathf.Clamp(to.Y, 0, Mathf.Max(0, parent.Size.Y - d.Node.Size.Y)));
         d.Node.Position = to;
+        if (Reorders(d.Box)) SectionMove(d, at);
         Fire(d.Box, "onDrag", "");
     }
 
     void EndDrag(DragState d)
     {
+        if (Reorders(d.Box)) SectionEnd(d);
         bool home = !d.Box.Extra.TryGetValue("returntooriginalpositionwhenreleased", out var r) || PanelValues.Bool(r);
         if (home && GodotObject.IsInstanceValid(d.Node)) d.Node.Position = d.Home;
         Fire(d.Box, "onEndDrag", "");
@@ -160,7 +166,7 @@ sealed partial class PanelView
         float min = PanelValues.Float(owner.Extra.GetValueOrDefault("minvalue")), max = PanelValues.Float(owner.Extra.GetValueOrDefault("maxvalue") ?? "1");
         v = Mathf.Clamp(v, Mathf.Min(min, max), Mathf.Max(min, max));
         if (PanelValues.Bool(owner.Extra.GetValueOrDefault("wholenumbers"))) v = Mathf.Round(v);
-        var text = v.ToString(CultureInfo.InvariantCulture);
+        var text = PanelValues.FloatText(v);
         if ((_local.GetValueOrDefault(Key(owner)) ?? owner.Extra.GetValueOrDefault("value")) == text) return;
         _local[Key(owner)] = text;
         Fire(owner, "onValueChanged", text);
@@ -235,6 +241,7 @@ sealed partial class PanelView
         if (_motions.TryGetValue(view, out var m)) m.Offset = now;
         if (view.Path != null) _local[PanelScrolls.Key(view)] = PanelScrolls.Text(now);
         Refit(view);
+        Follow();
         if (_hooks.Port is { } port && GodotObject.IsInstanceValid(port)) port.RenderTargetUpdateMode = SubViewport.UpdateMode.Once;
     }
 

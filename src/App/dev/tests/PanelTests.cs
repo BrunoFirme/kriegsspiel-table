@@ -52,6 +52,88 @@ static class PanelTests
     }
 
     [NodeTest]
+    static async Task A_field_on_a_piece_s_panel_takes_typing_and_a_click_on_it_keeps_the_typing_going_while_a_click_elsewhere_ends_it(TestRunner r)
+    {
+        var t = OfflineTable.Make(r, pieces: 1);
+        await r.Frame();
+        List<UiNode> Plate() => new()
+        {
+            N("Panel", new() { ["width"] = "400", ["height"] = "200", ["rotation"] = "0 0 180", ["color"] = "#202020" },
+                N("InputField", new() { ["id"] = "f", ["width"] = "400", ["height"] = "200", ["onValueChanged"] = "typed", ["onEndEdit"] = "done" })),
+        };
+        t.Server.State.Find(U, "p1")!.Ui = Plate();
+        t.S.View.Find(U, "p1")!.Ui = Plate();
+        var ui = new ScriptUi();
+        r.AddChild(ui);
+        ui.Bind(t.S, null!);
+        var node = t.Node("p1");
+        node.SyncUi(force: true);
+        await r.Frames(4);
+        var quad = node.GetChildren().OfType<MeshInstance3D>().First(m => m.Mesh is PlaneMesh pm && pm.Size.IsEqualApprox(new Vector2(0.4f, 0.2f)));
+        var plane = (PlaneMesh)quad.Mesh;
+        Vector2 Screen(float across, float up) => t.Table.Rig.Cam.UnprojectPosition(quad.GlobalTransform * new Vector3(across * plane.Size.X, 0, -up * plane.Size.Y));
+        List<KTable.Core.Protocol.UiEvent> Sent() => t.Server.Log.SelectMany(c => c is KTable.Core.Protocol.Batch b ? b.Items : new() { c }).OfType<KTable.Core.Protocol.UiEvent>().ToList();
+        LineEdit? Editor() => node.FindChildren("*", "LineEdit", true, false).OfType<LineEdit>().FirstOrDefault(e => GodotObject.IsInstanceValid(e) && !e.IsQueuedForDeletion());
+        await Click(r, Screen(0, 0));
+        await r.Frames(2);
+        Check.That(Editor() != null, "a click on the field starts typing in the piece's panel itself");
+        foreach (var ch in "ab")
+        {
+            Input.ParseInputEvent(new InputEventKey { Pressed = true, Unicode = ch, Keycode = (Key)char.ToUpperInvariant(ch) });
+            Input.ParseInputEvent(new InputEventKey { Pressed = false, Unicode = ch, Keycode = (Key)char.ToUpperInvariant(ch) });
+            await r.Frame();
+        }
+        await r.Frames(2);
+        Check.That(Sent().Any(e => e.Event == "onValueChanged" && e.Value == "ab"), "keys reach the piece's field");
+        await Click(r, Screen(0.2f, 0.1f));
+        await r.Frames(2);
+        Check.That(!Sent().Any(e => e.Event == "onEndEdit"), "a second click on the same field keeps the typing going");
+        Check.That(Editor() != null, "and the caret stays");
+        await Click(r, new Vector2(2, 2));
+        await r.Frames(3);
+        Check.That(Sent().Any(e => e.Event == "onEndEdit" && e.Value == "ab"), "a click elsewhere ends it with the text");
+        Check.Equal(0, t.Errors.Count, string.Join("; ", t.Errors));
+        ui.QueueFree();
+    }
+
+    [NodeTest]
+    static async Task Tab_from_a_screen_field_reaches_a_button_on_a_piece_s_panel_and_enter_clicks_it_as_unity_searches_every_selectable(TestRunner r)
+    {
+        var t = OfflineTable.Make(r, pieces: 1);
+        await r.Frame();
+        List<UiNode> Plate() => new()
+        {
+            N("Panel", new() { ["width"] = "400", ["height"] = "200", ["rotation"] = "0 0 180" },
+                N("Button", new() { ["id"] = "fire", ["width"] = "400", ["height"] = "200", ["onClick"] = "fired" })),
+        };
+        t.Server.State.Find(U, "p1")!.Ui = Plate();
+        t.S.View.Find(U, "p1")!.Ui = Plate();
+        const string Xml = """<InputField id="name" width="300" height="40" rectAlignment="UpperCenter"/>""";
+        var layout = KTable.Core.Panels.PanelBuild.Of(Xml).Layout;
+        var data = KTable.Core.Panels.PanelData.Parse(Xml)!;
+        t.Server.State.Ui = data;
+        t.Server.State.UiLayout = layout;
+        t.S.View.Ui = data.Select(n => n.Clone()).ToList();
+        t.S.View.UiLayout = layout.Clone();
+        var ui = new ScriptUi();
+        r.AddChild(ui);
+        ui.Bind(t.S, null!);
+        t.Node("p1").SyncUi(force: true);
+        await r.Frames(4);
+        var field = ui.FindChildren("*", "Control", true, false).OfType<Control>().First(c => c.MouseFilter == Control.MouseFilterEnum.Stop && c.IsVisibleInTree());
+        await Click(r, Middle(field));
+        await r.Frames(2);
+        Input.ParseInputEvent(new InputEventKey { Pressed = true, Keycode = Key.Tab });
+        await r.Frames(3);
+        Input.ParseInputEvent(new InputEventKey { Pressed = true, Keycode = Key.Enter });
+        await r.Frames(3);
+        var sent = t.Server.Log.SelectMany(c => c is KTable.Core.Protocol.Batch b ? b.Items : new() { c }).OfType<KTable.Core.Protocol.UiEvent>().ToList();
+        Check.That(sent.Any(e => e.Piece == "p1" && e.Event == "onClick" && e.Path is [0, 0]), "Tab moves from the screen's field to the piece's button and Enter clicks it");
+        Check.Equal(0, t.Errors.Count, string.Join("; ", t.Errors));
+        ui.QueueFree();
+    }
+
+    [NodeTest]
     static async Task Lettering_on_a_piece_is_drawn_live_and_follows_a_change(TestRunner r)
     {
         var t = OfflineTable.Make(r, pieces: 1);
@@ -219,5 +301,66 @@ static class PanelTests
         const int Families = 16;
         Check.Equal(Families, shipped.Count(f => f.EndsWith("-OFL.txt") || f.EndsWith("-LICENSE.txt")), "each of the sixteen families ships its licence beside its files");
         return Task.CompletedTask;
+    }
+
+    [NodeTest]
+    static async Task A_canvas_with_a_higher_sorting_order_takes_the_click_over_one_written_after_it(TestRunner r)
+    {
+        var t = OfflineTable.Make(r, pieces: 0);
+        await r.Frame();
+        const string Xml = """
+            <Canvas id="high" sortingOrder="5" rectAlignment="MiddleCenter" width="400" height="300"><Button id="top" width="300" height="200" onClick="hit"/></Canvas>
+            <Canvas id="plain" rectAlignment="MiddleCenter" width="400" height="300"><Button id="under" width="300" height="200" onClick="hit"/></Canvas>
+            """;
+        var layout = KTable.Core.Panels.PanelBuild.Of(Xml).Layout;
+        var data = KTable.Core.Panels.PanelData.Parse(Xml)!;
+        t.Server.State.Ui = data;
+        t.Server.State.UiLayout = layout;
+        t.S.View.Ui = data.Select(n => n.Clone()).ToList();
+        t.S.View.UiLayout = layout.Clone();
+        var ui = new ScriptUi();
+        r.AddChild(ui);
+        ui.Bind(t.S, null!);
+        await r.Frames(3);
+        var button = ui.FindChildren("*", "Control", true, false).OfType<Control>()
+            .First(c => c.MouseFilter == Control.MouseFilterEnum.Stop && c.IsVisibleInTree() && c.Size.IsEqualApprox(new Vector2(300, 200)));
+        await Click(r, Middle(button));
+        var sent = t.Server.Log.SelectMany(c => c is KTable.Core.Protocol.Batch b ? b.Items : new() { c }).OfType<KTable.Core.Protocol.UiEvent>().Where(e => e.Event == "onClick").ToList();
+        Check.That(sent.Count == 1 && sent[0].Path is [0, 0], "the button on the sorted canvas takes the click, not the one written after it");
+        Check.Equal(0, t.Errors.Count, string.Join("; ", t.Errors));
+        ui.QueueFree();
+    }
+
+    [ScreenTest]
+    static async Task A_mask_cuts_its_children_all_or_nothing_at_its_picture_s_edge_as_a_stencil_does(TestRunner r)
+    {
+        const int Side = 128;
+        const string Xml = """<Mask id="m" width="128" height="128" image="Sprites/Elements/UISprite_XmlLayout" showMaskGraphic="false"><Image color="#FF0000"/></Mask>""";
+        var layout = KTable.Core.Panels.PanelBuild.Of(Xml).Layout;
+        var scene = KTable.Client.Panels.PanelScene.Build(layout, new KTable.Client.Panels.V2(Side, Side), new KTable.Client.Panels.PanelContext(layout.Colors, "Black", true, true),
+            new PanelMeter(_ => null));
+        var port = new SubViewport { Size = new Vector2I(Side, Side), TransparentBg = false, RenderTargetUpdateMode = SubViewport.UpdateMode.Always };
+        port.AddChild(new ColorRect { Color = Colors.Black, Size = new Vector2(Side, Side) });
+        var view = new PanelView(new PanelHooks((_, _, _) => { }, (_, _) => null, new Dictionary<string, string>(), () => { }));
+        port.AddChild(view.Show(scene, scene.Root));
+        r.AddChild(port);
+        await r.Frames(6);
+        var image = port.GetTexture().GetImage();
+        var inside = image.GetPixel(Side / 2, Side / 2);
+        const float Near = 0.02f;
+        static float Gap(Color a, Color b) => Mathf.Max(Mathf.Max(Mathf.Abs(a.R - b.R), Mathf.Abs(a.G - b.G)), Mathf.Abs(a.B - b.B));
+        int shown = 0, hidden = 0, between = 0;
+        for (int x = 0; x < Side; x++)
+            for (int y = 0; y < Side; y++)
+            {
+                var c = image.GetPixel(x, y);
+                if (Gap(c, inside) < Near) shown++;
+                else if (Gap(c, Colors.Black) < Near) hidden++;
+                else between++;
+            }
+        Check.That(inside.R > inside.G + 0.5f, $"the child shows red inside the mask ({inside})");
+        Check.That(shown > 0 && hidden > 0, $"the mask shows its child inside its picture and nothing past its rounded corners ({shown} shown, {hidden} hidden)");
+        Check.Equal(0, between, "no pixel is half masked");
+        port.QueueFree();
     }
 }

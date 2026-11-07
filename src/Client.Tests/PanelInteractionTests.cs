@@ -217,4 +217,102 @@ public class PanelInteractionTests
         Assert.Equal(Paint.White, i.Image!.Color);
         Assert.Equal(PanelPrefabs.ToolSprite, i.Image.Sprite);
     }
+
+    [Fact]
+    public void A_slider_value_is_written_with_seven_significant_digits_as_the_tabletop_s_runtime_writes_a_float()
+    {
+        Assert.Equal("0.3333333", PanelValues.FloatText(1f / 3));
+        Assert.Equal("7.5", PanelValues.FloatText(7.5f));
+        Assert.Equal("1E+07", PanelValues.FloatText(1e7f));
+    }
+
+    [Fact]
+    public void A_slider_s_handle_background_and_fill_area_take_the_sizes_padding_and_mask_it_names()
+    {
+        var s = Scene("<Slider id=\"s\" width=\"200\" height=\"20\" handleWidth=\"30\" sliderBackgroundHeight=\"6\" fillPadding=\"5 7 2 3\" fillMaskImage=\"crest\"/>");
+        var b = s.ById("s")!;
+        Assert.Equal(30, b.Part("Handle")!.RectSize.X, 2);
+        Assert.Equal(6, b.Part("Background")!.RectSize.Y, 2);
+        var area = b.Part("Fill Area")!;
+        Assert.Equal(200 - 5 - 7, area.RectSize.X, 2);
+        Assert.Equal(10 - 2 - 3, area.RectSize.Y, 2);
+        Assert.True(area.Mask);
+        Assert.False(area.ShowMaskGraphic);
+        Assert.Equal("crest", area.Image!.Sprite);
+    }
+
+    [Fact]
+    public void Set_native_size_gives_a_picture_its_own_pixel_size_and_an_aspect_fitter_keeps_its_ratio()
+    {
+        var s = Scene("<Image id=\"n\" image=\"Sprites/Elements/Checkmark\" setNativeSize=\"true\"/>"
+            + "<Panel id=\"w\" width=\"200\" height=\"10\" aspectRatio=\"2\" aspectMode=\"WidthControlsHeight\"/>"
+            + "<Panel width=\"400\" height=\"100\"><Panel id=\"f\" aspectRatio=\"1:1\" aspectMode=\"FitInParent\"/></Panel>");
+        Assert.Equal((40f, 40f), (s.Screen(s.ById("n")!).W, s.Screen(s.ById("n")!).H));
+        Assert.Equal(100, s.Screen(s.ById("w")!).H, 2);
+        Assert.Equal((100f, 100f), (s.Screen(s.ById("f")!).W, s.Screen(s.ById("f")!).H));
+    }
+
+    [Fact]
+    public void A_scroll_view_s_mask_image_shapes_its_viewport()
+    {
+        var s = Scene("<VerticalScrollView id=\"v\" maskImage=\"crest\"><Panel height=\"100\"/></VerticalScrollView>");
+        var port = s.ById("v")!.Part("Viewport")!;
+        Assert.True(port.Mask);
+        Assert.Equal("crest", port.Image!.Sprite);
+    }
+
+    [Fact]
+    public void A_text_mesh_pro_dropdown_opens_its_own_template_twenty_high_rows_with_a_black_tick_and_no_words()
+    {
+        var s = Scene("<TextMeshProDropdown id=\"d\"><TMP_Option text=\"One\"/><TMP_Option text=\"Two\" selected=\"true\"/><TMP_Option text=\"Three\"/></TextMeshProDropdown>");
+        var d = s.ById("d")!;
+        Assert.Equal(new[] { "One", "Two", "Three" }, d.Element!.Options!.Select(o => o.Value));
+        Assert.Equal(1, PanelScene.DropdownIndex(d, d.Element, null));
+        var list = PanelLists.Open(s, d, 1);
+        var rows = list.Part("Content")!.Children;
+        Assert.Equal(3 * 20 + 8, list.RectSize.Y, 2);
+        Assert.All(rows, r => Assert.Equal(20, r.RectSize.Y, 2));
+        Assert.All(rows, r => Assert.Null(r.Part("Item Label")));
+        Assert.Equal(Paint.Black, rows[1].Part("Item Checkmark")!.Image!.Color);
+        Assert.Equal(1, rows[1].Part("Item Checkmark")!.Opacity);
+    }
+
+    [Fact]
+    public void A_dropdown_s_item_height_sets_its_rows_and_its_content_together()
+    {
+        var s = Scene(string.Format(Choices, " itemHeight=\"40\""));
+        var list = PanelLists.Open(s, s.ById("d")!, 0);
+        Assert.Equal(3 * 40, list.RectSize.Y, 2);
+    }
+
+    const string Stack = "<Accordion id=\"a\" width=\"300\" height=\"400\" allowSectionReordering=\"true\">"
+        + "<AccordionSection id=\"s1\"><AccordionSectionHeader/><AccordionSectionContent/></AccordionSection>"
+        + "<AccordionSection id=\"s2\"><AccordionSectionHeader/><AccordionSectionContent/></AccordionSection>"
+        + "<AccordionSection id=\"s3\"><AccordionSectionHeader/><AccordionSectionContent/></AccordionSection></Accordion>";
+
+    [Fact]
+    public void A_reorderable_accordion_lets_its_sections_drag_and_places_the_gap_by_the_nearest_section_s_middle()
+    {
+        var s = Scene(Stack);
+        var sections = new[] { s.ById("s1")!, s.ById("s2")!, s.ById("s3")! };
+        Assert.All(sections, x => Assert.Equal("true", x.Extra["allowdragging"]));
+        Assert.Equal(2, PanelAccordions.Slot(sections, sections[0], sections[2].PivotAt.Y - 1));
+        Assert.Equal(1, PanelAccordions.Slot(sections, sections[0], sections[2].PivotAt.Y + 1));
+        Assert.Equal(0, PanelAccordions.Slot(sections, sections[2], sections[0].PivotAt.Y + 1));
+    }
+
+    [Fact]
+    public void A_section_dropped_after_the_others_lands_one_place_short_as_the_game_counts_it_and_the_order_holds_after_a_redraw()
+    {
+        var local = new Dictionary<string, string>();
+        var s = Scene(Stack, local);
+        var sections = new[] { s.ById("s1")!, s.ById("s2")!, s.ById("s3")! };
+        var order = PanelAccordions.Dropped(sections, sections[0], 2);
+        Assert.Equal(new[] { "s2", "s1", "s3" }, order.Select(x => x.Element!.Get("id")));
+        Assert.Equal(new[] { "s3", "s1", "s2" }, PanelAccordions.Dropped(sections, sections[2], 0).Select(x => x.Element!.Get("id")));
+        local[PanelAccordions.Order + PanelScene.Key(s.ById("a")!.Path!)] = string.Join(" ", order.Select(x => PanelScene.Key(x.Path!)));
+        var again = Scene(Stack, local);
+        Assert.Equal(new[] { "s2", "s1", "s3" }, again.ById("a")!.Children.Where(c => c.Tag == PanelAccordions.Section).Select(c => c.Element!.Get("id")));
+        Assert.True(again.Screen(again.ById("s2")!).Y < again.Screen(again.ById("s1")!).Y);
+    }
 }

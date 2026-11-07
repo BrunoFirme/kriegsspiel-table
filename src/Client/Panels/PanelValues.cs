@@ -51,6 +51,10 @@ public static class PanelValues
         ["green"] = new(0, 1, 0, 1), ["magenta"] = new(1, 0, 1, 1), ["red"] = new(1, 0, 0, 1), ["white"] = Paint.White, ["yellow"] = new(1, 0.92156863f, 0.015686275f, 1),
     };
 
+    public const string SingleFormat = "G7";
+
+    public static string FloatText(float f) => f.ToString(SingleFormat, Culture);
+
     public static bool IsNone(string? s) => string.IsNullOrEmpty(s) || s.Equals("none", StringComparison.OrdinalIgnoreCase) || (s.StartsWith('{') && s.EndsWith('}'));
 
     public static bool Bool(string? s) => s != null && (s.Equals("true", StringComparison.OrdinalIgnoreCase) || s == "1");

@@ -89,6 +89,23 @@ public class PanelTests
     }
 
     [Fact]
+    public void A_number_given_as_panel_text_is_written_with_fifteen_significant_digits_as_the_tabletop_s_runtime_writes_it()
+    {
+        using var t = Global("""
+            function on_load(s) ui.set('<Text id="a"/><Text id="b"/><Text id="c"/><Text id="d"/><Text id="e"/>') end
+            function on_chat(m)
+              ui.set_value("a", 0.1 + 0.2)
+              ui.set_value("b", 1 / 3)
+              ui.set_value("c", 1e15)
+              ui.set_value("d", 123456789012345678)
+              ui.set_value("e", 0.00001)
+            end
+            """);
+        t.Server.Handle(Table.Ump3, new Say { Text = "go" });
+        Assert.Equal(new[] { "0.3", "0.333333333333333", "1E+15", "1.23456789012346E+17", "1E-05" }, t.Server.State.Ui.Select(n => n.Value).ToArray());
+    }
+
+    [Fact]
     public void Attributes_read_the_live_element_with_its_defaults_and_values_read_the_written_panels()
     {
         using var t = Global("""

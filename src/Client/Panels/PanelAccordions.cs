@@ -10,7 +10,7 @@ public static class PanelAccordions
     const float HeaderHeight = 64, ContentHeight = 128, Gap = 8, IconSize = 8;
     const int Pad = 16;
     static readonly Paint Clear = new(1, 1, 1, 0), Grey = new(0.5f, 0.5f, 0.5f, 1), Unset = new(0, 0, 0, 0);
-    public static readonly string[] Looks = { "collapsible", "accordionAnimationDuration", "allowSectionReordering", "expanded", "contentHeight", "collapsedSprite", "collapsedColor", "expandedSprite", "expandedColor" };
+    public static readonly string[] Looks = { "collapsible", "accordionAnimationDuration", "allowSectionReordering", "expandSectionAfterReorder", "makeDraggedSectionTransparent", "expanded", "contentHeight", "collapsedSprite", "collapsedColor", "expandedSprite", "expandedColor" };
 
     public static PanelBox? Make(string tag) => tag switch
     {
@@ -60,8 +60,62 @@ public static class PanelAccordions
 
     public static float Height(PanelBox section) => section.Extra.TryGetValue("contentheight", out var h) ? PanelValues.Float(h) : ContentHeight;
 
+    public const string Order = "#order:", Placeholder = "AccordionSectionPlaceholder";
+
+    public static void Arrange(PanelBox accordion, IReadOnlyDictionary<string, string>? local)
+    {
+        bool reorders = PanelValues.Bool(accordion.Extra.GetValueOrDefault("allowsectionreordering"));
+        foreach (var section in accordion.Children.Where(c => c.Tag == Section))
+        {
+            section.Extra["allowdragging"] = reorders ? "true" : "false";
+            if (reorders) section.Extra["restrictdraggingtoparentbounds"] = "true";
+        }
+        if (accordion.Path == null || local == null || !local.TryGetValue(Order + PanelScene.Key(accordion.Path), out var order)) return;
+        var keys = order.Split(' ', StringSplitOptions.RemoveEmptyEntries).ToList();
+        var placed = accordion.Children.Where(c => c.Tag == Section && c.Path != null).OrderBy(c => keys.IndexOf(PanelScene.Key(c.Path!)) is var i && i < 0 ? int.MaxValue : i).ToList();
+        int at = 0;
+        for (int i = 0; i < accordion.Children.Count; i++)
+            if (accordion.Children[i].Tag == Section && accordion.Children[i].Path != null) accordion.Children[i] = placed[at++];
+    }
+
+    public static int Slot(IReadOnlyList<PanelBox> sections, PanelBox dragged, float pointerY)
+    {
+        PanelBox? nearest = null;
+        float gap = 0, best = float.MaxValue;
+        foreach (var s in sections.Where(s => s != dragged))
+        {
+            float d = pointerY - s.PivotAt.Y;
+            if (Math.Abs(d) >= best) continue;
+            gap = d;
+            best = Math.Abs(d);
+            nearest = s;
+        }
+        if (nearest == null) return 0;
+        int slot = sections.ToList().IndexOf(nearest);
+        if (sections.ToList().IndexOf(dragged) < slot) slot--;
+        if (gap < 0) slot++;
+        return slot;
+    }
+
+    public static List<PanelBox> Dropped(IReadOnlyList<PanelBox> sections, PanelBox dragged, int slot)
+    {
+        var order = sections.ToList();
+        int was = order.IndexOf(dragged);
+        int index = slot > was ? slot - 1 : slot;
+        order.RemoveAt(was);
+        order.Insert(Math.Clamp(index, 0, order.Count), dragged);
+        return order;
+    }
+
+    public static PanelBox MakePlaceholder(float height) => new()
+    {
+        Name = Placeholder, Tag = Placeholder, Image = new ImageProps { Color = Clear, Sprite = PanelPrefabs.ToolSprite, Type = PanelPrefabs.Sliced, RaycastTarget = true },
+        Layout = new LayoutProps { PreferredHeight = height, FlexibleHeight = 0 },
+    };
+
     public static void Settle(IEnumerable<PanelBox> elements, IReadOnlyDictionary<string, string>? local, PanelContext ctx)
     {
+        foreach (var accordion in elements.Where(e => e.Tag == Accordion)) Arrange(accordion, local);
         foreach (var section in elements.Where(e => e.Tag == Section && e.Path != null && OwnerOf(e) != null))
         {
             var header = section.Children.FirstOrDefault(c => c.Tag == Header && c.Element != null);

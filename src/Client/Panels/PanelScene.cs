@@ -49,6 +49,8 @@ public sealed class PanelScene
         }
         foreach (var group in scene.Elements.Where(b => b.Tag == "ToggleGroup")) GroupLooks(group, ctx);
         PanelAccordions.Settle(scene.Elements, local, ctx);
+        foreach (var (box, element) in made.Where(m => m.Box.Extra.ContainsKey("setnativesize") && m.Box.Image?.Sprite != null))
+            if (NativeSize(box.Image!.Sprite!, meter) is { } size) PanelApply.NativeSize(box, element, size);
         PanelLayout.Run(top, meter);
         foreach (var view in scene.Elements.Where(b => b.Tag is "VerticalScrollView" or "HorizontalScrollView"))
         {
@@ -87,6 +89,13 @@ public sealed class PanelScene
                 check.Color = Look("toggleSelectedColor") is { } c ? ctx.Color(c) : Paint.White;
             }
         }
+    }
+
+    static V2? NativeSize(string sprite, IPanelMeter meter)
+    {
+        var name = PanelPrefabs.Known.GetValueOrDefault(sprite) ?? sprite;
+        if (PanelPrefabs.Sprites.TryGetValue(name, out var builtin)) return new V2(builtin.W, builtin.H);
+        return meter.PictureSize(sprite);
     }
 
     public static IEnumerable<PanelBox> Toggles(PanelBox group)

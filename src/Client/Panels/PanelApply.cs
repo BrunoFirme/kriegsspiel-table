@@ -115,6 +115,15 @@ public static partial class PanelApply
                 case "transition":
                     if (b.Select != null && PanelValues.Enum<Transitions>(v) is { } tr) b.Select.Transition = (int)tr;
                     break;
+                case "aspectratio":
+                    b.AspectRatio = PanelFits.Ratio(v);
+                    break;
+                case "aspectmode":
+                    b.AspectMode = PanelValues.Enum<PanelFits.Mode>(v) is { } mode ? (int)mode : b.AspectMode;
+                    break;
+                case "setnativesize" or "sortingorder":
+                    b.Extra[k] = v;
+                    break;
                 case "placeholder" when b.Tag == "InputField":
                     if (b.Part("Placeholder")?.Text is { } ph) ph.Text = v;
                     break;
@@ -146,6 +155,16 @@ public static partial class PanelApply
     }
 
     static Anchor RectAlignment(string? s) => PanelValues.Enum<Anchor>(s) ?? Anchor.MiddleCenter;
+
+    public static void NativeSize(PanelBox b, UiElement e, V2 size)
+    {
+        var attrs = new Dictionary<string, string>(e.Attributes, StringComparer.OrdinalIgnoreCase)
+        {
+            ["width"] = PanelValues.FloatText(size.X), ["height"] = PanelValues.FloatText(size.Y),
+        };
+        Size(b, 0, attrs["width"], e, attrs);
+        Size(b, 1, attrs["height"], e, attrs);
+    }
 
     static void Size(PanelBox b, int axis, string value, UiElement e, IReadOnlyDictionary<string, string> attrs)
     {

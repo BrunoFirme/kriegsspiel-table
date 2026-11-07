@@ -184,6 +184,7 @@ public static class PanelLayout
 
     static void Control(PanelBox b, int axis, IPanelMeter meter, Dictionary<PanelBox, (float Min, float Pref, float Flex)> inputs)
     {
+        if (b.AspectMode != 0 && b.ActiveInHierarchy) PanelFits.Fit(b);
         int fit = axis == Horizontal ? b.FitWidth : b.FitHeight;
         if (fit != 0 && b.ActiveInHierarchy)
         {

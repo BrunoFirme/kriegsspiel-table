@@ -13,6 +13,8 @@ sealed record PanelHooks(PanelView.Sender Send, Func<string, Action<Texture2D>, 
     public Func<string, bool> Known { get; init; } = _ => false;
     public Func<string, Texture2D?> CursorPicture { get; init; } = _ => null;
     public SubViewport? Port { get; init; }
+    public Func<Vector2, Vector2?> PlatePixel { get; init; } = _ => null;
+    public Func<Vector2, Vector3?> PlateWorld { get; init; } = _ => null;
 }
 
 sealed partial class PanelView
@@ -34,6 +36,8 @@ sealed partial class PanelView
 
     public PanelScene? Scene => _scene;
 
+    public bool Live => _top != null && GodotObject.IsInstanceValid(_top) && _top.IsInsideTree();
+
     void Redraw() => _hooks.Redraw();
 
     public Control Show(PanelScene scene, PanelBox from)
@@ -42,6 +46,8 @@ sealed partial class PanelView
         Nodes.Clear();
         _hovered.Clear();
         _top = Node(from, null);
+        Lift(from);
+        PanelFocus.Showing(this);
         Restore(scene);
         return _top;
     }
@@ -74,7 +80,7 @@ sealed partial class PanelView
 
     Control Node(PanelBox b, PanelBox? parent)
     {
-        var c = new Control { MouseFilter = Control.MouseFilterEnum.Ignore, ClipContents = b.Mask || b.RectMask };
+        var c = b.Mask && b.Image != null ? MaskShape(b) : new Control { MouseFilter = Control.MouseFilterEnum.Ignore, ClipContents = b.RectMask };
         Fit(c, b, parent);
         if (parent != null)
         {
@@ -83,7 +89,7 @@ sealed partial class PanelView
         }
         if (b.Opacity < 1) c.Modulate = Colors.White with { A = Math.Clamp(b.Opacity, 0, 1) };
         Nodes[b] = c;
-        if (b.Image != null && !(b.Mask && !b.ShowMaskGraphic)) c.AddChild(Paint(b));
+        if (b.Image != null && !b.Mask) c.AddChild(Paint(b));
         if (b.Text != null) c.AddChild(Words(b));
         if (Catches(b))
         {
@@ -95,6 +101,21 @@ sealed partial class PanelView
         }
         foreach (var child in b.Children) c.AddChild(Node(child, b));
         return c;
+    }
+
+    bool _hardEdges;
+
+    Control MaskShape(PanelBox b)
+    {
+        _hardEdges = true;
+        var shape = Paint(b);
+        _hardEdges = false;
+        shape.SetAnchorsPreset(Control.LayoutPreset.TopLeft);
+        shape.ClipContents = true;
+        if (shape is Panel panel && panel.GetThemeStylebox("panel") is StyleBoxFlat box) box.AntiAliasing = false;
+        shape.ClipChildren = CanvasItem.ClipChildrenMode.Only;
+        if (b.ShowMaskGraphic) shape.AddChild(Paint(b));
+        return shape;
     }
 
     static bool Catches(PanelBox b) => (b.Image?.RaycastTarget ?? false) || (b.Text?.RaycastTarget ?? false);
@@ -127,9 +148,16 @@ sealed partial class PanelView
     {
         var tr = new TextureRect { ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize, SelfModulate = tint,
             StretchMode = keep ? TextureRect.StretchModeEnum.KeepAspectCentered : TextureRect.StretchModeEnum.Scale };
-        var tex = _hooks.Picture(sprite, t => { if (GodotObject.IsInstanceValid(tr)) tr.Texture = t; });
-        if (tex != null) tr.Texture = tex;
-        else if (!IsLink(sprite) && !_hooks.Known(sprite)) _hooks.Notice(string.Format(System.Globalization.CultureInfo.InvariantCulture, NoSprite, sprite));
+        bool hard = _hardEdges;
+        if (hard) tr.TextureFilter = CanvasItem.TextureFilterEnum.Nearest;
+        var tex = _hooks.Picture(sprite, t => { if (GodotObject.IsInstanceValid(tr)) tr.Texture = hard ? PanelStencil.Hard(t) : t; });
+        if (tex != null) tr.Texture = hard ? PanelStencil.Hard(tex) : tex;
+        else if (!IsLink(sprite) && !_hooks.Known(sprite))
+        {
+            _hooks.Notice(string.Format(System.Globalization.CultureInfo.InvariantCulture, NoSprite, sprite));
+            tr.QueueFree();
+            return new ColorRect { Color = tint };
+        }
         return tr;
     }
 

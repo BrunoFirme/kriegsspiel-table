@@ -51,8 +51,8 @@ sealed partial class PanelView
 
     public bool Holds(Vector2 screen)
     {
-        if (_hooks.Port != null) return false;
         if (_list != null) return true;
+        if (_hooks.Port != null) return _selected != null && _hooks.PlatePixel(screen) is { } pixel && Hit(pixel) is { } hit && Owner(hit) == _selected;
         return _selected != null && Nodes.TryGetValue(_selected, out var c) && GodotObject.IsInstanceValid(c) && c.GetGlobalRect().HasPoint(screen);
     }
 
@@ -63,8 +63,7 @@ sealed partial class PanelView
         if (_selected == null || !Alive(_selected) || !e.Pressed) return false;
         if (e.Keycode == Godot.Key.Tab)
         {
-            var next = Find(_selected, e.ShiftPressed ? new Vector2(0, -1) : new Vector2(0, 1), e.ShiftPressed ? "selectonup" : "selectondown");
-            if (next != null) Select(next);
+            SelectNext(Find(_selected, e.ShiftPressed ? new Vector2(0, -1) : new Vector2(0, 1), e.ShiftPressed ? "selectonup" : "selectondown"));
             return true;
         }
         if (_editor != null) return Typing(e);
@@ -93,7 +92,7 @@ sealed partial class PanelView
             case "Toggle" or "ToggleButton":
                 Flip(b);
                 break;
-            case "Dropdown":
+            case "Dropdown" or PanelLists.Textless:
                 OpenList(b);
                 break;
             case "InputField":
@@ -118,31 +117,53 @@ sealed partial class PanelView
         var key = dir.X < 0 ? "selectonleft" : dir.X > 0 ? "selectonright" : dir.Y < 0 ? "selectonup" : "selectondown";
         var next = Find(b, dir, key);
         if (b.Tag == "Slider" && next == null && Nudge(b, dir)) return;
-        if (next != null) Select(next);
+        SelectNext(next);
     }
 
-    PanelBox? Find(PanelBox from, Vector2 dir, string explicitKey)
+    const float GameUnitsPerOurs = 10;
+
+    Vector3 Unity(Vector2 pixel)
+    {
+        if (_hooks.PlateWorld(pixel) is { } w) return new Vector3(w.X, w.Y, -w.Z) * GameUnitsPerOurs;
+        float height = _top != null && GodotObject.IsInstanceValid(_top) && _top.IsInsideTree() ? _top.GetViewport().GetVisibleRect().Size.Y : 0;
+        return new Vector3(pixel.X, height - pixel.Y, 0);
+    }
+
+    bool Selectable(PanelBox b, Control c) =>
+        b.Select != null && b.Path != null && Interactable(b) && Navigation(b) != Way.None && GodotObject.IsInstanceValid(c) && c.IsVisibleInTree();
+
+    (PanelView View, PanelBox Box)? Find(PanelBox from, Vector2 dir, string explicitKey)
     {
         var way = Navigation(from);
-        if (way == Way.Explicit) return from.Extra.GetValueOrDefault(explicitKey) is { } id ? _scene?.ById(id) is { Select: not null } b && Alive(b) ? b : null : null;
+        if (way == Way.Explicit) return from.Extra.GetValueOrDefault(explicitKey) is { } id && _scene?.ById(id) is { Select: not null } b && Alive(b) ? (this, b) : null;
         bool along = dir.X != 0 ? (way & Way.Horizontal) != 0 : (way & Way.Vertical) != 0;
         if (!along || !Nodes.TryGetValue(from, out var fc)) return null;
         var rect = fc.GetGlobalRect();
-        var edge = rect.GetCenter() + rect.Size * dir * 0.5f;
-        PanelBox? best = null;
+        var center = Unity(rect.GetCenter());
+        var edge = Unity(rect.GetCenter() + rect.Size * dir * 0.5f);
+        var toward = (edge - center).Normalized();
+        (PanelView, PanelBox)? best = null;
         float score = float.NegativeInfinity;
-        foreach (var (b, c) in Nodes)
-        {
-            if (b == from || b.Select == null || b.Path == null || !Interactable(b) || Navigation(b) == Way.None || !GodotObject.IsInstanceValid(c) || !c.IsVisibleInTree()) continue;
-            var to = c.GetGlobalRect().GetCenter() - edge;
-            float dot = dir.Dot(to);
-            if (dot <= 0) continue;
-            float s = dot / Mathf.Max(1e-6f, to.LengthSquared());
-            if (s <= score) continue;
-            score = s;
-            best = b;
-        }
+        foreach (var view in PanelFocus.Views())
+            foreach (var (b, c) in view.Nodes)
+            {
+                if (b == from || !view.Selectable(b, c)) continue;
+                var to = view.Unity(c.GetGlobalRect().GetCenter()) - edge;
+                float dot = toward.Dot(to);
+                if (dot <= 0) continue;
+                float s = dot / Mathf.Max(1e-6f, to.LengthSquared());
+                if (s <= score) continue;
+                score = s;
+                best = (view, b);
+            }
         return best;
+    }
+
+    void SelectNext((PanelView View, PanelBox Box)? next)
+    {
+        if (next is not { } n) return;
+        if (n.View != this) Deselect();
+        n.View.Select(n.Box);
     }
 
     bool Nudge(PanelBox b, Vector2 dir)
