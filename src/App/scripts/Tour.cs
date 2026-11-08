@@ -68,7 +68,7 @@ static class Tour
         int i = cfg.Tour - first;
         if (i < 0 || i >= steps.Count) return;
         var step = steps[i];
-        bool last = i == steps.Count - 1;
+        bool last = first + i == Steps - 1, toTable = first + i == AtTableFrom - 1;
         void Go(int to)
         {
             cfg.Tour = to;
@@ -96,7 +96,7 @@ static class Tour
         skip.Flat = true;
         buttons.AddChild(skip);
         if (last && help != null) buttons.AddChild(Ui.Primary("Open Help", () => { Go(-1); help(); }));
-        else buttons.AddChild(Ui.Primary("Next", () => Go(cfg.Tour + 1)));
+        else buttons.AddChild(Ui.Primary(toTable ? "Continue at a table" : "Next", () => Go(cfg.Tour + 1)));
         box.AddChild(buttons);
 
         var target = step.Target();
