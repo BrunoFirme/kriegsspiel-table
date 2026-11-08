@@ -1,10 +1,12 @@
 import argparse
 import glob
+import hashlib
 import json
 import os
 import re
 import subprocess
 import sys
+import tempfile
 from collections import defaultdict
 
 USAGE = "python -I tools/module-surface.py [--workshop <dir>] [--saves <file>,...] [--gate] [--quiet] [--left]"
@@ -479,6 +481,90 @@ def gate(ledger, previous):
     return ok and not fresh and (was is None or len(left) <= len(was))
 
 
+def scan_version():
+    h = hashlib.sha1()
+    for path in (os.path.abspath(__file__), API):
+        try:
+            with open(path, "rb") as f:
+                h.update(f.read())
+        except OSError:
+            h.update(b"-")
+    return h.hexdigest()
+
+
+def cache_path(version):
+    return os.path.join(tempfile.gettempdir(), "ktable-surface-" + version[:12] + ".json")
+
+
+def load_scan_cache(version):
+    try:
+        with open(cache_path(version), encoding="utf-8") as f:
+            cache = json.load(f)
+    except (OSError, ValueError):
+        return {}
+    return cache.get("saves", {}) if cache.get("version") == version else {}
+
+
+def save_scan_cache(version, saves):
+    temp = cache_path(version) + f".{os.getpid()}.tmp"
+    try:
+        with open(temp, "w", encoding="utf-8") as f:
+            json.dump({"version": version, "saves": saves}, f)
+        os.replace(temp, cache_path(version))
+    except OSError as e:
+        print(f"surface: scan cache not kept ({e})")
+
+
+def usage_to_json(use):
+    key = json.dumps
+    return {
+        "count": {key(r): n for r, n in use.count.items()},
+        "modules": {key(r): sorted(m) for r, m in use.modules.items()},
+        "example": {key(r): e for r, e in use.example.items()},
+        "values": {key(r): {text: dict(by) for text, by in seen.items()} for r, seen in use.values.items()},
+    }
+
+
+def merge_usage(into, part):
+    row = lambda k: tuple(json.loads(k))
+    for k, n in part["count"].items():
+        into.count[row(k)] += n
+    for k, mods in part["modules"].items():
+        into.modules[row(k)].update(mods)
+    for k, e in part["example"].items():
+        into.example.setdefault(row(k), e)
+    for k, seen in part["values"].items():
+        for text, by in seen.items():
+            for module, n in by.items():
+                into.values[row(k)][text][module] += n
+
+
+def scan_saves(files, use, api, fresh):
+    version = scan_version()
+    old, new = ({}, {}) if fresh else (load_scan_cache(version), {})
+    scanned = 0
+    for path in files:
+        if not path.endswith(".json"):
+            continue
+        try:
+            st = os.stat(path)
+        except OSError:
+            continue
+        stamp = [st.st_size, st.st_mtime_ns]
+        hit = old.get(path)
+        if hit and hit["stamp"] == stamp:
+            part = hit["part"]
+        else:
+            one = Usage()
+            part = usage_to_json(one) if scan_save(path, one, api) else None
+        new[path] = {"stamp": stamp, "part": part}
+        if part is not None:
+            merge_usage(use, part)
+            scanned += 1
+    save_scan_cache(version, new)
+    return scanned
+
+
 def main():
     p = argparse.ArgumentParser(usage=USAGE)
     p.add_argument("--workshop")
@@ -486,6 +572,7 @@ def main():
     p.add_argument("--gate", action="store_true")
     p.add_argument("--quiet", action="store_true")
     p.add_argument("--left", action="store_true")
+    p.add_argument("--fresh", action="store_true")
     a = p.parse_args()
     api = Api(load_json(API, {"object": {}, "global": {}, "namespaces": {}, "events": [], "save": {}}))
     decided = load_json(DECISIONS, {})
@@ -497,7 +584,7 @@ def main():
     files = [os.path.join(workshop, f) for f in sorted(os.listdir(workshop))] if os.path.isdir(workshop) else []
     files += [s for s in (a.saves or "").split(",") if s]
     use = Usage()
-    scanned = sum(1 for f in files if f.endswith(".json") and scan_save(f, use, api))
+    scanned = scan_saves(files, use, api, a.fresh)
     if scanned == 0 and a.gate:
         print(f"surface gate: no module saves to scan under {workshop}; the committed ledger stands")
         sys.exit(0)

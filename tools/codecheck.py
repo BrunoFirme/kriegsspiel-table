@@ -1,4 +1,4 @@
-import ast, io, os, re, sys, tokenize
+import ast, hashlib, io, json, os, re, sys, tempfile, tokenize
 from collections import defaultdict
 
 USAGE = "python -I tools/codecheck.py [--report]"
@@ -479,16 +479,69 @@ def walk_files():
                 yield os.path.join(root, f)
 
 
+def tool_version():
+    return hashlib.sha1(open(os.path.abspath(__file__), "rb").read()).hexdigest()
+
+
+CACHE = os.path.join(tempfile.gettempdir(), "ktable-codecheck-" + tool_version()[:12] + ".json")
+
+
+def load_cache():
+    try:
+        with open(CACHE, encoding="utf-8") as f:
+            cache = json.load(f)
+    except (OSError, ValueError):
+        return {}
+    return cache.get("files", {}) if cache.get("tool") == tool_version() else {}
+
+
+def save_cache(files):
+    temp = CACHE + f".{os.getpid()}.tmp"
+    try:
+        with open(temp, "w", encoding="utf-8") as f:
+            json.dump({"tool": tool_version(), "files": files}, f)
+        os.replace(temp, CACHE)
+    except OSError as e:
+        print(f"codecheck: cache not kept ({e})")
+
+
+def file_findings(path):
+    found = {"classes": defaultdict(list), "methods": [], "comments": [], "density": [], "catches": [], "ui": []}
+    if path.endswith(".cs"):
+        scan(path, found["classes"], found["methods"], found["comments"], found["density"], found["catches"])
+        found["ui"] = list(ui_problems(relative(path), open(path, encoding="utf-8-sig").read()))
+    else:
+        scan_comments(path, found["comments"])
+    found["classes"] = dict(found["classes"])
+    return found
+
+
+def cached_findings(path, old, new):
+    rel = relative(path)
+    key = hashlib.sha1(open(path, "rb").read()).hexdigest()
+    hit = old.get(rel)
+    found = hit["found"] if hit and hit["key"] == key else json.loads(json.dumps(file_findings(path)))
+    new[rel] = {"key": key, "found": found}
+    return found
+
+
 def main():
     selftest()
     classes, methods, comments, density, catches, ui = defaultdict(list), [], [], [], [], []
+    old, new = ({}, {}) if "--fresh" in sys.argv else (load_cache(), {})
     for path in walk_files():
         name = os.path.basename(path)
-        if name.endswith(".cs"):
-            scan(path, classes, methods, comments, density, catches)
-            ui.extend(ui_problems(relative(path), open(path, encoding="utf-8-sig").read()))
-        elif finder_for(name):
-            scan_comments(path, comments)
+        if not name.endswith(".cs") and not finder_for(name):
+            continue
+        found = cached_findings(path, old, new)
+        for cls, parts in found["classes"].items():
+            classes[cls].extend(tuple(p) for p in parts)
+        methods.extend(tuple(m) for m in found["methods"])
+        comments.extend(found["comments"])
+        density.extend(found["density"])
+        catches.extend(found["catches"])
+        ui.extend(found["ui"])
+    save_cache(new)
     names = []
     for path in name_files():
         if path.endswith(NAME_CHECKED) or os.path.basename(path) in ROOT_FILES:

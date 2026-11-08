@@ -178,7 +178,7 @@ public class MalformedInputTests
         },
         ["everything from an observer"] = t =>
         {
-            foreach (var (type, _) in CommandAnswersSnapshotTests.Registered()) t.Server.Handle(Table.Obs, (Command)Activator.CreateInstance(type)!);
+            foreach (var (type, _) in CommandAnswersTests.Named()) t.Server.Handle(Table.Obs, (Command)Activator.CreateInstance(type)!);
         },
         ["a null knock"] = t => t.Server.Join(40, null!),
         ["a knock full of nulls"] = t => t.Server.Join(41, new JoinRequest { Name = null!, Password = null!, Token = null, Protocol = ProtocolVersion.Current }),
@@ -432,11 +432,11 @@ public class MalformedInputTests
         }
     }
 
-    public static IEnumerable<object[]> CommandTypes() => CommandAnswersSnapshotTests.Registered().Select(r => new object[] { r.name });
+    public static IEnumerable<object[]> CommandTypes() => CommandAnswersTests.Named().Select(r => new object[] { r.name });
 
     static void EveryVariant(string type, bool nulls)
     {
-        var cmdType = CommandAnswersSnapshotTests.Registered().Single(r => r.name == type).type;
+        var cmdType = CommandAnswersTests.Named().Single(r => r.name == type).type;
         using var t = new Table();
         t.Ok(Table.Lead, new SetZone { Zone = new Zone { Name = "SW", Owner = "Umpire Three", Polygon = { new(-5, -5), new(5, -5), new(5, 5), new(-5, 5) } } });
         var failed = new List<string>();
@@ -458,7 +458,7 @@ public class MalformedInputTests
     {
         var rows = typeof(MalformedInputTests).GetMethod(nameof(Every_command_with_nulls_in_it_never_throws_out_of_the_server))!
             .GetCustomAttributes<InlineDataAttribute>().Select(a => (string)a.GetData(null!).First()[0]).ToHashSet();
-        Assert.Equal(CommandAnswersSnapshotTests.Registered().Select(r => r.name).ToHashSet(), rows);
+        Assert.Equal(CommandAnswersTests.Named().Select(r => r.name).ToHashSet(), rows);
     }
 
     [Theory]

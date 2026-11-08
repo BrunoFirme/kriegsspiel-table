@@ -22,6 +22,11 @@ public class CommandAnswersTests
     public static IEnumerable<Type> Registered() =>
         typeof(Command).GetCustomAttributes<JsonDerivedTypeAttribute>().Select(a => a.DerivedType);
 
+    internal static List<(Type type, string name)> Named() =>
+        typeof(Command).GetCustomAttributes<JsonDerivedTypeAttribute>()
+            .Select(a => (a.DerivedType, (string)a.TypeDiscriminator!))
+            .OrderBy(x => x.Item2, StringComparer.Ordinal).ToList();
+
     static readonly PeerInfo Obs = new() { PeerId = 4, Name = "Watcher", Role = Role.Observer };
     static readonly PeerInfo Stranger = new() { PeerId = 5, Name = "Who", Role = (Role)99 };
     static readonly PeerInfo[] Everyone =
@@ -87,8 +92,7 @@ public class CommandAnswersTests
             var state = new GameState();
             foreach (var id in Names(cmd)) state.Layer(U).Add(new PieceInstance { Id = id, Def = "inf", Pos = id == outsideId ? Outside : Inside });
             state.Zones.Add(new Zone { Id = "z-1", Name = "SW", Owner = owner, Polygon = { new(0, 0), new(10, 0), new(10, 10), new(0, 10) } });
-            var srv = new GameServer(state);
-            return srv.ZoneDenies(new PeerInfo { PeerId = 3, Name = "Co", Role = Role.Umpire }, cmd) ?? "ok";
+            return GameServer.ZoneDenies(state, new PeerInfo { PeerId = 3, Name = "Co", Role = Role.Umpire }, cmd) ?? "ok";
         }
         var sb = new StringBuilder();
         sb.Append("all inside=").Append(Run(c, null));
@@ -116,6 +120,27 @@ public class CommandAnswersTests
         return got == null ? "nothing" : ReferenceEquals(got, c) ? "it" : "copy " + Json.Serialize<Command>(got);
     }
 
+    static string Applied(Command c)
+    {
+        if (c is SpawnPiece sp) sp.Id = "p-new";
+        if (c is RestorePiece rp) rp.Piece.Id = "p-new";
+        var state = new GameState();
+        foreach (var id in Names(c).Where(id => id != "p-new")) state.Layer(U).Add(new PieceInstance { Id = id, Def = "inf", Pos = Inside });
+        try
+        {
+            var err = StateMachine.Apply(state, c, out var inverse);
+            return err != null ? "refused: " + err : "ok, inverse " + InverseName(inverse);
+        }
+        catch (Exception e) { return "throws " + e.GetType().Name; }
+    }
+
+    static string InverseName(Command? c) => c switch
+    {
+        null => "none",
+        Batch b => "Batch(" + string.Join("+", b.Items.Select(InverseName)) + ")",
+        _ => c.GetType().Name,
+    };
+
     static string Allowed(Command c) => string.Join(" ", Everyone.Select(p => $"{p.Role}={(GameServer.Allowed(p, c) ? "yes" : "no")}"));
 
     static void Describe(StringBuilder sb, string title, Func<Command> make)
@@ -131,6 +156,7 @@ public class CommandAnswersTests
         sb.Append("  umpires:     ").AppendLine(string.Join(" ", Everyone.Where(p => Visibility.IsUmpire(p.Role)).Select(p => Seen(c, p))));
         sb.Append("  reloads:     ").AppendLine(string.Join(",", c.ScriptsToReload()));
         sb.Append("  undo stack:  ").AppendLine(c.OnUndoStack() ? "yes" : "no");
+        sb.Append("  applied:     ").AppendLine(Applied(make()));
     }
 
     static IEnumerable<(string, Func<Command>)> Variants()
