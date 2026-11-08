@@ -178,8 +178,9 @@ and undoes like a stroke.
 
 Pictures stamped on the table or on a piece: blood where a fight is, arrows, marks. The panel holds the
 scenario's decals; **Add a decal…** takes a picture file or a web link, and right-click takes one out. Pick a
-decal and click to stamp it: on a piece it rides with the piece, elsewhere it lies on the table. The wheel turns
-it, **Shift**+wheel sizes it, and clicking a stamped decal lifts it off. **Lift every stamp off** clears the
+decal and click to stamp it: on a piece it rides with the piece, elsewhere it lies on the table. The wheel
+zooms as usual, **Ctrl**+wheel sizes the decal, **Shift**+wheel turns it, and clicking a stamped decal lifts it
+off. **Lift every stamp off** clears the
 table and leaves the pieces' decals. A converted module brings its decals and those already stamped.
 
 ### Layers

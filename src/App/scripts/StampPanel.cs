@@ -9,34 +9,49 @@ namespace KTable.App;
 sealed class StampPanel : HudPart
 {
     public readonly FloatPanel Panel;
-    readonly VBoxContainer _box;
-    const int Columns = 3, Thumb = 44;
+    readonly ScrollContainer _scroll;
+    readonly HFlowContainer _thumbs;
+    readonly VBoxContainer _below;
+    const int Thumb = 96, Width = 330, Height = 420;
     const double NewSize = 1;
 
     public StampPanel(HudContext ctx, IHudShell shell) : base(ctx)
     {
         Panel = shell.MakePanel("decals", "Decals");
-        _box = Panel.Body;
+        Panel.Resizable = true;
+        Panel.CustomMinimumSize = shell.PanelSize("decals", Width, Height);
+        Panel.Body.SizeFlagsVertical = Control.SizeFlags.ExpandFill;
+        _scroll = new ScrollContainer
+        {
+            HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ExpandFill,
+        };
+        _thumbs = new HFlowContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+        _thumbs.AddThemeConstantOverride("h_separation", Ui.Gap.Tight);
+        _thumbs.AddThemeConstantOverride("v_separation", Ui.Gap.Tight);
+        _scroll.AddChild(_thumbs);
+        _below = new VBoxContainer();
+        _below.AddThemeConstantOverride("separation", Ui.Gap.Row);
+        Panel.Body.AddChild(_scroll);
+        Panel.Body.AddChild(_below);
     }
 
     public void Rebuild()
     {
-        if (_box == null || T == null) return;
-        foreach (var c in _box.GetChildren()) { _box.RemoveChild(c); c.QueueFree(); }
+        if (T == null) return;
+        foreach (var box in new Container[] { _thumbs, _below })
+            foreach (var c in box.GetChildren()) { box.RemoveChild(c); c.QueueFree(); }
         var palette = S.View.DecalPalette;
-        if (palette.Count == 0) _box.AddChild(Hint("Add a picture to stamp: blood, an arrow, a mark"));
-        else _box.AddChild(Entries(palette));
-        if (S.IsUmpire) _box.AddChild(Btn("Add a decal…", ChoosePicture, "A picture file or a web link; it joins the scenario's decals for every umpire"));
+        _scroll.Visible = palette.Count > 0;
+        if (palette.Count == 0) _below.AddChild(Hint("Add a picture to stamp: blood, an arrow, a mark"));
+        else Entries(palette);
+        if (S.IsUmpire) _below.AddChild(Btn("Add a decal…", ChoosePicture, "A picture file or a web link; it joins the scenario's decals for every umpire"));
         if (S.View.Decals.Values.Any(l => l.Count > 0) && S.IsUmpire)
-            _box.AddChild(Btn("Lift every stamp off", ConfirmClear, "Takes every decal stamped on the table off it; decals on pieces stay"));
-        Panel?.Fit();
+            _below.AddChild(Btn("Lift every stamp off", ConfirmClear, "Takes every decal stamped on the table off it; decals on pieces stay"));
+        Panel.Fit();
     }
 
-    GridContainer Entries(List<PaletteDecal> palette)
+    void Entries(List<PaletteDecal> palette)
     {
-        var grid = new GridContainer { Columns = Columns };
-        grid.AddThemeConstantOverride("h_separation", Ui.Gap.Tight);
-        grid.AddThemeConstantOverride("v_separation", Ui.Gap.Tight);
         foreach (var entry in palette)
         {
             var e = entry;
@@ -64,9 +79,8 @@ sealed class StampPanel : HudPart
             {
                 if (ev is InputEventMouseButton { ButtonIndex: MouseButton.Right, Pressed: true } && S.IsUmpire) Remove(e);
             };
-            grid.AddChild(b);
+            _thumbs.AddChild(b);
         }
-        return grid;
     }
 
     void Remove(PaletteDecal e)
