@@ -58,11 +58,14 @@ sealed class PieceGrid
         }
     }
 
-    public IEnumerable<PieceNode> Near(Vec2 p)
+    public IEnumerable<PieceNode> Near(Vec2 p) => Around(p, 0);
+
+    public IEnumerable<PieceNode> Around(Vec2 p, double radius)
     {
-        var (cx, cz) = CellAt(p.X, p.Z);
-        for (int x = cx - 1; x <= cx + 1; x++)
-            for (int z = cz - 1; z <= cz + 1; z++)
+        var (x0, z0) = CellAt(p.X - radius, p.Z - radius);
+        var (x1, z1) = CellAt(p.X + radius, p.Z + radius);
+        for (int x = x0 - 1; x <= x1 + 1; x++)
+            for (int z = z0 - 1; z <= z1 + 1; z++)
                 if (_grid.TryGetValue((x, z), out var l))
                     foreach (var n in Filed(l)) yield return n;
         foreach (var n in Filed(_loose)) yield return n;

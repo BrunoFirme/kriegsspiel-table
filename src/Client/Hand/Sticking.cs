@@ -25,14 +25,20 @@ public sealed class Sticking<T> where T : class, ITablePiece
         string to = "";
         var pieces = _layer(dropped.Count > 0 ? dropped[0].Layer : Layers.Umpire);
         var droppedIds = dropped.Select(d => d.Piece.Id).ToHashSet();
+        var droppedSet = dropped.ToHashSet();
+        var parentOf = new Dictionary<string, PieceInstance>();
+        foreach (var p in pieces)
+            foreach (var child in p.Attached) parentOf.TryAdd(child, p);
+        var movedTo = new Dictionary<T, MovePiece>();
+        foreach (var (mn, mm) in moved) movedTo.TryAdd(mn, mm);
         foreach (var n in dropped)
         {
-            var m = moved.FirstOrDefault(x => x.n == n).m;
+            var m = movedTo.GetValueOrDefault(n);
             var pos = m?.Pos ?? n.Piece.Pos;
             double y = Absolute(n, pos, m?.RotDeg ?? n.Piece.RotDeg, m?.Y ?? n.Piece.Y);
-            var parent = pieces.FirstOrDefault(p => p.Attached.Contains(n.Piece.Id));
+            var parent = parentOf.GetValueOrDefault(n.Piece.Id);
             if (parent != null && droppedIds.Contains(parent.Id)) continue;
-            var under = BaseUnder(n, pos, y, parent, dropped.ToHashSet(), moved, simulated);
+            var under = BaseUnder(n, pos, y, parent, droppedSet, movedTo, simulated);
             if (under != null && parent?.Id != under.Piece.Id)
             {
                 cmds.Add(new Attach { Layer = n.Layer, Parent = under.Piece.Id, Child = n.Piece.Id });
@@ -50,7 +56,7 @@ public sealed class Sticking<T> where T : class, ITablePiece
 
     double Absolute(T n, Vec2 pos, double rot, double stored) => _footing?.AbsoluteY(n, pos, rot, stored) ?? stored;
 
-    T? BaseUnder(T n, Vec2 pos, double y, PieceInstance? parent, HashSet<T> droppedSet, List<(T n, MovePiece m)> moved, HashSet<T> simulated)
+    T? BaseUnder(T n, Vec2 pos, double y, PieceInstance? parent, HashSet<T> droppedSet, Dictionary<T, MovePiece> movedTo, HashSet<T> simulated)
     {
         T? under = null;
         double underTop = 0;
@@ -61,7 +67,7 @@ public sealed class Sticking<T> where T : class, ITablePiece
             if ((droppedSet.Contains(o) || simulated.Contains(o)) && o.Piece.Id != parent?.Id) continue;
             if (o.Footprint.X * o.Footprint.Y <= n.Footprint.X * n.Footprint.Y * 1.05f) continue;
             if (n.Piece.Attached.Contains(o.Piece.Id)) continue;
-            var om = moved.FirstOrDefault(x => x.n == o).m;
+            var om = movedTo.GetValueOrDefault(o);
             var oPos = om?.Pos ?? o.Piece.Pos;
             var oRot = om?.RotDeg ?? o.Piece.RotDeg;
             double oTop = om != null ? Absolute(o, oPos, oRot, om.Y) + 0.03 + o.Thickness : o.TopY;

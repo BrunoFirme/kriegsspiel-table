@@ -26,7 +26,15 @@ sealed class FakePiece : ITablePiece
     public bool Placed { get; init; }
     public string CardTitle => "the " + Piece.Id;
 
-    public float? SurfaceAt(Vec2 p) => ContainsAt(new Vec2((float)p.X, (float)p.Z), Piece.Pos, Piece.RotDeg) ? TopY : null;
+    public bool Unbounded { get; init; }
+    public int Asked { get; private set; }
+    public float SurfaceReach => Unbounded ? float.PositiveInfinity : Footprint.Length() / 2;
+
+    public float? SurfaceAt(Vec2 p)
+    {
+        Asked++;
+        return ContainsAt(new Vec2((float)p.X, (float)p.Z), Piece.Pos, Piece.RotDeg) ? TopY : null;
+    }
 
     public bool ContainsAt(Vec2 point, Vec2 at, double rotDeg)
     {
