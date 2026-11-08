@@ -35,7 +35,7 @@ public class HandTests
     public void A_piece_let_go_of_rests_where_it_always_has(string layout, bool slide, string expected)
     {
         var (_, table, dropped, at, rot) = Rests().Single(r => r.name == layout);
-        var footing = new Footing<FakePiece>(_ => table, _ => false);
+        var footing = new Footing<FakePiece>((_, _) => table, _ => false);
         var (pos, y) = footing.Rest(dropped, at, rot, new HashSet<FakePiece> { dropped }, slide);
         Assert.Equal(expected, $"{R(pos.X)},{R(pos.Z)} y {R(y)}");
     }
@@ -58,7 +58,7 @@ public class HandTests
     public void The_height_under_a_point_is_the_top_of_the_highest_piece_there(string layout, string expected)
     {
         var (_, table, _, at, _) = Rests().Single(r => r.name == layout);
-        Assert.Equal(expected, R(new Footing<FakePiece>(_ => table, _ => false).SurfaceY(at, Layers.Umpire)));
+        Assert.Equal(expected, R(new Footing<FakePiece>((_, _) => table, _ => false).SurfaceY(at, Layers.Umpire)));
     }
 
     [Fact]
@@ -68,8 +68,8 @@ public class HandTests
         var ghost = new FakePiece("ghost", 0, 0, 6, 6, thickness: 0.3f);
         ghost.Piece.NoCollision = true;
         var dropped = new FakePiece("dropped", 0, 0, 1, 1);
-        Assert.Equal(0, new Footing<FakePiece>(_ => new[] { ghost }, _ => false).SurfaceY(new Vec2(0, 0), Layers.Umpire));
-        var footing = new Footing<FakePiece>(_ => new[] { block }, _ => false);
+        Assert.Equal(0, new Footing<FakePiece>((_, _) => new[] { ghost }, _ => false).SurfaceY(new Vec2(0, 0), Layers.Umpire));
+        var footing = new Footing<FakePiece>((_, _) => new[] { block }, _ => false);
         Assert.True(footing.Rest(dropped, new Vec2(0, 0), 0, new HashSet<FakePiece> { dropped }).y > 0.2);
         dropped.Piece.NoCollision = true;
         Assert.Equal((new Vec2(0, 0), 0.0), footing.Rest(dropped, new Vec2(0, 0), 0, new HashSet<FakePiece> { dropped }));
@@ -79,7 +79,7 @@ public class HandTests
     public void A_piece_in_the_hand_is_under_nothing()
     {
         var block = new FakePiece("base", 0, 0, 6, 6, thickness: 0.3f);
-        var footing = new Footing<FakePiece>(_ => new[] { block }, n => n == block);
+        var footing = new Footing<FakePiece>((_, _) => new[] { block }, n => n == block);
         Assert.Equal(0, footing.SurfaceY(new Vec2(0, 0), Layers.Umpire));
     }
 
@@ -93,7 +93,7 @@ public class HandTests
         var pinned = new FakePiece("pinned", 1, -1, 1, 1, y: 0.3);
         pinned.Piece.Locked = true;
         var held = new FakePiece("held", -1, -1, 1, 1, y: 0.3);
-        var footing = new Footing<FakePiece>(_ => Array.Empty<FakePiece>(), n => n == held);
+        var footing = new Footing<FakePiece>((_, _) => Array.Empty<FakePiece>(), n => n == held);
         var found = footing.RestingOn(under, new[] { under, on, floating, off, pinned, held }, _ => true);
         Assert.Equal(new[] { "on" }, found.Select(f => f.Piece.Id));
         Assert.Empty(footing.RestingOn(under, new[] { on }, _ => false));
@@ -117,7 +117,7 @@ public class HandTests
         blk.Piece.Attached.Add("old-mark");
         blk.Piece.Attached.Add("mk");
         var all = new List<FakePiece> { bigBlock, blk, mk, loose };
-        var footing = new Footing<FakePiece>(_ => all, _ => false);
+        var footing = new Footing<FakePiece>((_, _) => all, _ => false);
         var sticking = new Sticking<FakePiece>(_ => all, (l, id) => all.FirstOrDefault(n => n.Layer == l && n.Piece.Id == id), l => all.Where(n => n.Layer == l).Select(n => n.Piece).ToList());
         var hb = new HeldPiece<FakePiece> { Node = blk, Layer = blk.Layer, Id = "blk", Offset = new Vec2(0, 0), Rot = 200 };
         var hm = new HeldPiece<FakePiece> { Node = mk, Layer = mk.Layer, Id = "mk", Offset = new Vec2(0.2, 0), Rot = 210, Lift = 0.13f, Parent = hb };
@@ -141,7 +141,7 @@ public class HandTests
         var flag = new FakePiece("flag", 3, 0, 2, 1, y: 0.5, thickness: 0.02f);
         blk.Piece.Attached.Add("flag");
         var all = new List<FakePiece> { blk, flag };
-        var footing = new Footing<FakePiece>(_ => all, _ => false);
+        var footing = new Footing<FakePiece>((_, _) => all, _ => false);
         var sticking = new Sticking<FakePiece>(_ => all, (l, id) => all.FirstOrDefault(n => n.Piece.Id == id), _ => all.Select(n => n.Piece).ToList(), footing);
         var hb = new HeldPiece<FakePiece> { Node = blk, Layer = blk.Layer, Id = "blk", Rot = 180 };
         var hf = new HeldPiece<FakePiece> { Node = flag, Layer = flag.Layer, Id = "flag", Offset = new Vec2(3, 0), Rot = 180, Lift = 0.5f, Parent = hb };
@@ -173,7 +173,7 @@ public class HandTests
     {
         var bigBlock = new FakePiece("base", 0, 0, 4, 4, thickness: 0.4f);
         var a = new FakePiece("a", 9, 9, 2, 1);
-        var footing = new Footing<FakePiece>(_ => new[] { bigBlock, a }, _ => false);
+        var footing = new Footing<FakePiece>((_, _) => new[] { bigBlock, a }, _ => false);
         var held = new List<HeldPiece<FakePiece>> { new() { Node = a, Layer = a.Layer, Id = "a", Rot = 180 } };
         Assert.Equal("move a 3.0599999845027925,0 rot 180 y 0", Describe(new[] { new Landing<FakePiece>(footing, held, new Vec2(2.7, 0), 64).Move(held[0]) }));
         Assert.Equal("move a 2.7,0 rot 180 y 0.4000000059604645", Describe(new[] { new Landing<FakePiece>(footing, held, new Vec2(2.7, 0), 0).Move(held[0]) }));

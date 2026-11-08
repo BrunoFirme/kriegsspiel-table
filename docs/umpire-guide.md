@@ -132,7 +132,8 @@ The tool strip runs down the left. Point at any tool and press **F1** for its se
   view: drag one out onto the table, double-click to set it beside, **Take all out** for a row. Right-click →
   **Holds pieces** switches it on or off for any piece; the piece studio's **Holds pieces** sets where a kind starts,
   and the box, chest and crate of Firme's Effects and Props start on. A held piece keeps everything it had.
-- **Locked:** right-click → **Locked** pins a piece: it can be read and deleted, not moved.
+- **Locked:** right-click → **Locked** pins a piece: it can be read, not moved. A selection box leaves it out and the
+  Delete key leaves it be; right-click → **Delete** removes it.
 - **Tint:** right-click → **Tint** colours every selected piece: a swatch, **+** for any colour, **Reset** for the
   colour it was made with. Where it shows follows the module: a token's picture, a tile's sides; decals keep their colours.
 - **Effects** (smoke, fire, volleys, melee, mist) and props are pieces of **Firme's Effects and Props**; resized, an effect

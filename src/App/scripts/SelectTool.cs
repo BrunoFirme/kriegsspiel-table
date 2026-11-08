@@ -187,7 +187,7 @@ sealed class SelectTool
             {
                 var cam = _c.Rig.Cam;
                 var ids =
-                    _pieces.Nodes.Where(n => _c.LayerInteractive(n.Layer) && n.Piece is { NotBoxSelected: false, NotInteractable: false })
+                    _pieces.Nodes.Where(n => _c.LayerInteractive(n.Layer) && n.Piece is { NotBoxSelected: false, NotInteractable: false, Locked: false })
                     .Where(n => !cam.IsPositionBehind(n.GlobalPosition) && r.HasPoint(cam.UnprojectPosition(n.GlobalPosition)))
                     .Select(n => n.Piece.Id);
                 _selection.Set(ids, add: mb.ShiftPressed);

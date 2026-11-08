@@ -28,7 +28,7 @@ sealed partial class Carry : IHeldPieces
         _pieces = pieces;
         _selection = selection;
         _poses = poses;
-        _footing = new Footing<PieceNode>(p => _pieces.Grid.Near(p), n => _heldNodes.Contains(n), () => _c.S.Ground);
+        _footing = new Footing<PieceNode>(_pieces.Grid.Around, n => _heldNodes.Contains(n), () => _c.S.Ground);
         _sticking = new Sticking<PieceNode>(p => _pieces.Grid.Near(p), _pieces.NodeOf, l => _c.S.View.Layer(l), _footing);
     }
 
@@ -119,7 +119,7 @@ sealed partial class Carry : IHeldPieces
         if (moved)
         {
             TrailAdd(cursor);
-            _floor = _held.Select(h => SurfaceY(cursor + h.Offset, h.Node.Layer, h.Node)).DefaultIfEmpty(0).Max();
+            _floor = _held.GroupBy(h => h.Node.Layer).Select(g => _footing.HighestSurface(g.Select(h => cursor + h.Offset).ToList(), g.Key)).DefaultIfEmpty(0).Max();
         }
         PlaceHeld();
     }

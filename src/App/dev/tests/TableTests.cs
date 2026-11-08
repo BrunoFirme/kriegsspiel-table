@@ -107,6 +107,42 @@ static class TableTests
     }
 
     [NodeTest]
+    static async Task A_locked_piece_is_left_out_of_a_selection_box_and_only_the_menu_deletes_it(TestRunner r)
+    {
+        var t = OfflineTable.Make(r, pieces: 3);
+        await r.Frame();
+        t.S.Do(new SetLocked { Layer = U, Id = "p2", Value = true });
+        await r.Frame();
+        Vector2 Screen(Vec2 at) => t.Table.Rig.Cam.UnprojectPosition(Coords.ToWorld(at));
+        Vector2 from = Screen(new Vec2(-0.5, -2)), to = Screen(new Vec2(4.5, 2));
+        Input.ParseInputEvent(new InputEventMouseButton { ButtonIndex = MouseButton.Left, Pressed = true, Position = from, GlobalPosition = from });
+        await r.Frame();
+        Input.ParseInputEvent(new InputEventMouseMotion { Position = to, GlobalPosition = to, Relative = to - from, ButtonMask = MouseButtonMask.Left });
+        await r.Frame();
+        Input.ParseInputEvent(new InputEventMouseButton { ButtonIndex = MouseButton.Left, Pressed = false, Position = to, GlobalPosition = to });
+        await r.Frames(2);
+        Check.Equal("p1,p3", string.Join(",", t.Table.Selection.Ids.OrderBy(x => x)), "the box takes the free pieces and leaves the locked one");
+
+        void Key(Godot.Key key, bool ctrl = false) => t.Table.Keys.OnKey(new InputEventKey { Keycode = key, Pressed = true, CtrlPressed = ctrl });
+        t.Table.Selection.Set(new[] { "p1", "p2" });
+        Key(Godot.Key.X, ctrl: true);
+        await r.Frame();
+        Check.Equal(1, t.Table.Clipped, "Ctrl+X cuts only the free piece");
+        Check.That(t.S.View.Find(U, "p1") == null && t.S.View.Find(U, "p2") != null, "and the locked one stays on the table");
+
+        t.Table.Selection.Set(new[] { "p2", "p3" });
+        Key(Godot.Key.Delete);
+        await r.Frame();
+        Check.That(t.S.View.Find(U, "p3") == null && t.S.View.Find(U, "p2") != null, "the Delete key leaves the locked piece");
+
+        t.Table.Selection.Set(new[] { "p2" });
+        t.Table.DeleteSelection();
+        await r.Frame();
+        Check.That(t.S.View.Find(U, "p2") == null, "the menu's Delete removes it");
+        Check.Equal(0, t.Errors.Count, string.Join("; ", t.Errors));
+    }
+
+    [NodeTest]
     static async Task Copy_and_paste_makes_new_pieces_round_the_place_and_picks_them_out(TestRunner r)
     {
         var t = OfflineTable.Make(r, pieces: 3);

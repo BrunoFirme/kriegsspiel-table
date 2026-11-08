@@ -12,6 +12,7 @@ public partial class PieceNode : ITablePiece
     System.Numerics.Vector2 ITablePiece.Footprint => new(Footprint.X, Footprint.Y);
     bool ITablePiece.IsProp => Def?.Kind == "model";
     float? ITablePiece.SurfaceAt(Vec2 p) => SurfaceAt(Coords.ToWorld(p));
+    float ITablePiece.SurfaceReach => SurfaceReaches.Of(this, _model);
 
     public float? SurfaceAt(Vector3 world)
     {
@@ -38,6 +39,42 @@ public partial class PieceNode : ITablePiece
         var o = new Vector3[faces.Length];
         for (int i = 0; i < faces.Length; i++) o[i] = xf * faces[i];
         return o;
+    }
+}
+
+static class SurfaceReaches
+{
+    const float SteepModel = 1e-4f;
+
+    public static float Of(PieceNode n, MeshInstance3D? model)
+    {
+        if (n.IsEffect || n.Ghost) return 0;
+        if (n.Def?.Kind == "model" && !n.IsDie && model is { Mesh: { } mesh } && GodotObject.IsInstanceValid(model) && model.IsInsideTree() && MeshTops.Of(mesh) != null)
+            return OfModel(model, mesh.GetAabb(), n.Piece.Pos);
+        return Outline(n);
+    }
+
+    static float Outline(PieceNode n)
+    {
+        float reach = new Vector3(n.Footprint.X, n.Thickness, n.Footprint.Y).Length() / 2;
+        foreach (var p in n.Parts) reach = Mathf.Max(reach, p.Position.Length() + Outline(p));
+        return reach;
+    }
+
+    static float OfModel(MeshInstance3D model, Aabb box, Vec2 at)
+    {
+        var xf = model.GlobalTransform;
+        var inv = xf.AffineInverse().Basis;
+        var flat = new Transform2D(new Vector2(inv.X.X, inv.X.Z), new Vector2(inv.Z.X, inv.Z.Z), Vector2.Zero);
+        if (Mathf.Abs(flat.Determinant()) < SteepModel) return float.PositiveInfinity;
+        var back = flat.AffineInverse();
+        float cellX = box.Size.X / (HeightGrid.Cells - 1), cellZ = box.Size.Z / (HeightGrid.Cells - 1);
+        float far = 0;
+        foreach (var x in new[] { box.Position.X - cellX, box.End.X + cellX })
+            foreach (var z in new[] { box.Position.Z - cellZ, box.End.Z + cellZ })
+                far = Mathf.Max(far, (back * new Vector2(x, z)).Length());
+        var centre = Coords.ToWorld(at);
+        return new Vector2(xf.Origin.X - centre.X, xf.Origin.Z - centre.Z).Length() + far;
     }
 }
 

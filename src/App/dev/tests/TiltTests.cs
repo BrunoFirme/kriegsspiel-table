@@ -11,7 +11,7 @@ static class TiltTests
     const string U = Layers.Umpire;
     const float Across = 1.4142f, Rise = 0.7071f;
 
-    static void Prism(PackageStore store)
+    internal static void Prism(PackageStore store)
     {
         var dir = Path.Combine(store.Root, "tilt", "assets");
         Directory.CreateDirectory(dir);

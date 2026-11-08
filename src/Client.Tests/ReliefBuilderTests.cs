@@ -209,7 +209,7 @@ public class ReliefBuilderTests
     {
         var ground = Hill();
         var piece = new FakePiece("a", 10, 0, 4, 2);
-        var footing = new Footing<FakePiece>(_ => Array.Empty<FakePiece>(), _ => false, () => ground);
+        var footing = new Footing<FakePiece>((_, _) => Array.Empty<FakePiece>(), _ => false, () => ground);
         var (pos, y) = footing.Rest(piece, new Vec2(10, 0), 180, new HashSet<FakePiece> { piece });
         Assert.Equal(ground.Under(pos, 180, 4, 2), y, 4);
         Assert.Equal(0, footing.Stored(piece, pos, 180, y));
@@ -223,7 +223,7 @@ public class ReliefBuilderTests
         float top = (float)ground.Under(new Vec2(10, 0), 180, 6, 6);
         var block = new FakePiece("b", 10, 0, 6, 6, y: top, thickness: 0.5f);
         var small = new FakePiece("s", 10, 0, 1, 1);
-        var footing = new Footing<FakePiece>(_ => new[] { block }, _ => false, () => ground);
+        var footing = new Footing<FakePiece>((_, _) => new[] { block }, _ => false, () => ground);
         var (_, y) = footing.Rest(small, new Vec2(10, 0), 180, new HashSet<FakePiece> { small });
         Assert.Equal(block.TopY - 0.03, y, 3);
         Assert.Equal(y, footing.Stored(small, new Vec2(10, 0), 180, y));
