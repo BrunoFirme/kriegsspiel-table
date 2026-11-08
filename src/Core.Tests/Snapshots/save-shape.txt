@@ -996,7 +996,9 @@ type SetDef object
   def: string
   id: string
   layer: string
+  script: string
   seq: long
+  swapsScript: bool
   undoOf: long
 type SetDieFaces object
   actor: long
