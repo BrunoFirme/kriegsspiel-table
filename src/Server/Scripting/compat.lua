@@ -577,8 +577,9 @@ function compat.widget_spec(obj, t, kind, env)
   local y = vec(t.position, "y", 2, 0)
   local on_top = y > 0
   local back = turned and not on_top
+  local src = obj.source
   local s = {
-    face = back and "back" or "front", kind = turned and on_top and "label" or kind, inside = not turned and y < (obj.source and obj.source.top or 0),
+    face = back and "back" or "front", kind = turned and on_top and "label" or kind, y = src and src.rise and (src.origin or 0) + y * src.rise or nil,
     x = (back and -px or px) * ux, z = pz * uz, rot = ry,
     w = num(t.width, D.width) / 1000 * sx * ux, h = num(t.height, D.height) / 1000 * sz * uz,
     font = num(t.font_size, D.font_size) / 1000 * sx * uz * em,
@@ -602,7 +603,7 @@ function compat.widget_patch(obj, t, kind, full, env)
   local geo = t.position or t.rotation or t.scale or t.width or t.height or t.font_size
   if geo then
     local s = compat.widget_spec(obj, full or t, kind, env)
-    if t.position or t.rotation then p.x = s.x; p.z = s.z; p.face = s.face; p.kind = s.kind; p.rot = s.rot; p.inside = s.inside end
+    if t.position or t.rotation then p.x = s.x; p.z = s.z; p.face = s.face; p.kind = s.kind; p.rot = s.rot; p.y = s.y end
     if t.width or t.scale then p.w = s.w end
     if t.height or t.scale then p.h = s.h end
     if t.font_size or t.scale then p.font = s.font end
@@ -623,7 +624,7 @@ function compat.widget_patch(obj, t, kind, full, env)
 end
 
 local function drawn(obj, e, kind)
-  if e.spec.inside or e.gone then return nil end
+  if e.gone then return nil end
   if kind == "input" then return obj.input(e.spec) end
   return obj.button(e.spec)
 end
@@ -665,11 +666,9 @@ local function edit(obj, list, t, kind, env)
   local fn = kind == "input" and "input_function" or "click_function"
   if full[fn] == nil or full[fn] == "" then return refused(kind == "input" and "editInput" or "editButton", fn) end
   local patch = compat.widget_patch(obj, t, kind, full, env)
-  local was = e.spec.inside
   for k, v in pairs(patch) do e.spec[k] = v end
   e.given = full
-  patch.inside = nil
-  if e.spec.inside ~= was then rebuild(obj, book(obj)) elseif e.index then obj.edit(e.index, patch) end
+  if e.index then obj.edit(e.index, patch) end
   return true
 end
 function compat.edit_button(obj, t, env) return edit(obj, book(obj).buttons, t, "button", env) end

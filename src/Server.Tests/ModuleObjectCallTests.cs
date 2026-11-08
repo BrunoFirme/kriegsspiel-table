@@ -771,12 +771,12 @@ public class ModuleObjectCallTests
     }
 
     [Fact]
-    public void A_converted_piece_answers_its_module_type_kind_links_and_covers_widgets_below_its_top()
+    public void A_converted_piece_answers_its_module_type_kind_links_and_lifts_its_widgets_from_the_module_origin()
     {
         using var t = new Table();
         t.Store.RegisterDef(new PackManifest { Id = "testpack" }, new PieceDef
         {
-            Id = "tok", Name = "Token", Tags = { "Infantry", "token" }, ModuleType = "Custom_Token", ModuleTop = 0.1, ModuleObjectTag = "Figurine", ModuleTags = ["Infantry"],
+            Id = "tok", Name = "Token", Tags = { "Infantry", "token" }, ModuleType = "Custom_Token", ModuleTop = 0.1, ModuleOrigin = 0.1, ModuleRise = 2, ModuleObjectTag = "Figurine", ModuleTags = ["Infantry"],
             Sources = new() { ["ImageURL"] = "https://example.test/a.png" },
         });
         t.Server.Handle(Table.Host, new SpawnPiece { Layer = U, Def = "tok", Id = "p-000060", Pos = new(2, 2) });
@@ -803,7 +803,7 @@ public class ModuleObjectCallTests
         var p = t.Server.State.Find(U, "p-000060")!;
         Assert.Equal("Custom_Token|mine|https://example.test/a.png,0.2|Custom_Token,https://example.test/a.png", p.Label);
         Assert.Equal("Figurine,Figurine,true,Figurine,own,Infantry,false", p.Note);
-        Assert.Single(p.Widgets);
+        Assert.Equal(new double?[] { 0.2, 0.4 }, p.Widgets.Select(w => w.Y is { } y ? Math.Round(y, 6) : (double?)null));
         var spawned = t.Server.State.Layer(U).Last(q => q.Def == "tok");
         Assert.Empty(spawned.Tags ?? ["kind tags leaked"]);
     }

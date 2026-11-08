@@ -371,6 +371,14 @@ public sealed partial class DefFactory
         }
 
         bool baked = BakesChildren(o) && BakeStates(def, states, bs, r, heightScale, pack);
+        if (b.Name is "Custom_Token" or "Custom_Tile")
+        {
+            double rise = Math.Abs(b.ScaleY) * heightScale;
+            double low = baked ? BakedSpan(b).Low : b.Name == "Custom_Token" ? -BaseThickness(b) / 2 : 0;
+            def.ModuleRise = Math.Round(rise, 4);
+            def.ModuleOrigin = Math.Round(-low * rise, 4);
+            def.PlainBack = true;
+        }
         for (int i = 0; i < def.States.Count && i < states.Count; i++)
         {
             var sd = def.States[i];

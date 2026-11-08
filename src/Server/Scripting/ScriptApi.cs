@@ -544,6 +544,8 @@ internal sealed partial class PieceHandles(ScriptHost host)
         var t = T();
         t.Table["type"] = S(def.ModuleType!);
         if (def.ModuleTop is { } top) t.Table["top"] = N(top);
+        if (def.ModuleOrigin is { } origin) t.Table["origin"] = N(origin);
+        if (def.ModuleRise is { } rise) t.Table["rise"] = N(rise);
         if (def.ModuleObjectTag is { } tag) t.Table["tag"] = S(tag);
         t.Table["tags"] = ListTable((def.ModuleTags ?? new()).Select(tg => S(tg)));
         var links = T();
@@ -841,6 +843,9 @@ internal sealed partial class PieceHandles(ScriptHost host)
                 case "h":
                     w.H = Finite(v, "h", 0);
                     break;
+                case "y":
+                    w.Y = v.IsNil() ? null : Finite(v, "y", 0);
+                    break;
                 case "rot":
                     w.Rot = Finite(v, "rot", 0);
                     break;
@@ -906,6 +911,7 @@ internal sealed partial class PieceHandles(ScriptHost host)
         t.Table["w"] = N(w.W);
         t.Table["h"] = N(w.H);
         t.Table["rot"] = N(w.Rot);
+        if (w.Y is { } height) t.Table["y"] = N(height);
         t.Table["label"] = S(w.Label);
         t.Table["value"] = S(w.Value);
         t.Table["placeholder"] = S(w.Placeholder);

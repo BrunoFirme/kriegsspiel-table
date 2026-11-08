@@ -82,7 +82,7 @@ sealed class PieceBack
         _built = true;
         _key = Key();
         var def = _piece.Def;
-        if (def?.Kind == "model" || !_piece.Look.ShowFaceText) return;
+        if (def?.Kind == "model" || def?.PlainBack == true || !_piece.Look.ShowFaceText) return;
         if (_piece.Piece.Script != null || def?.Script != null) return;
         var rows = Rows();
         bool titled = Titled;

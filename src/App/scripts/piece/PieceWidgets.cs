@@ -70,8 +70,7 @@ sealed class PieceWidgets
         for (int i = 0; i < piece.Widgets.Count; i++)
         {
             var w = piece.Widgets[i];
-            if (w.Face != face) continue;
-            Draw(w, i + 1, back, faceY);
+            Draw(w, i + 1, w.Face == "back", faceY, clickable: w.Face == face);
         }
     }
 
@@ -123,7 +122,7 @@ sealed class PieceWidgets
         b.box.MaterialOverride = WidgetMat(look == Look.Hover ? b.hover : look == Look.Pressed ? b.press : b.color);
     }
 
-    void Draw(Widget w, int index, bool back, float faceY)
+    void Draw(Widget w, int index, bool back, float faceY, bool clickable)
     {
         float k = (float)Math.Max(1e-6, _piece.Piece.Scale);
         float x = (float)w.X * k, z = (float)w.Z * k, bw = (float)w.W * k, bh = (float)w.H * k;
@@ -132,7 +131,8 @@ sealed class PieceWidgets
         var boxColor = w.Color != null ? Coords.ParseColor(w.Color, WidgetBox) : input ? InputBox : WidgetBox;
         var textColor = w.TextColor != null ? Coords.ParseColor(w.TextColor, WidgetBoxText) : boxed ? WidgetBoxText : WidgetLabelText;
         float turn = Mathf.DegToRad((float)w.Rot);
-        MeshInstance3D? box = boxed ? Plane(x, z, bw, bh, turn, WidgetMat(boxColor), back, faceY, 0.002f) : null;
+        float? height = w.Y is { } y ? (float)y * k : null;
+        MeshInstance3D? box = boxed ? Plane(x, z, bw, bh, turn, WidgetMat(boxColor), back, faceY, 0.002f, height) : null;
         var hover = w.HoverColor != null ? Coords.ParseColor(w.HoverColor, boxColor) : Toward(boxColor, HoverStep);
         var press = w.PressColor != null ? Coords.ParseColor(w.PressColor, boxColor) : Toward(boxColor, PressStep);
         _boxes[index] = (box, boxColor, hover, press);
@@ -142,8 +142,8 @@ sealed class PieceWidgets
         float grow = Mathf.Max(0.01f, _piece.Look.FaceTextScale);
         float em = Mathf.Max(0.002f, (float)w.Font * k * grow);
         if ((input || label) && boxed && !typing) text = Fitting(text, em, bw * 0.94f);
-        Text(text, x, z, boxed ? bw * 0.94f : 0, em, color, w.Align, (float)w.Rot, back, faceY, 0.004f, besideFace: !boxed || boxColor.A < SeeThroughBox);
-        if (boxed && !w.Locked) _hits.Add(new Hit(new Vector2(x, z), new Vector2(bw, bh) / 2, turn, index));
+        Text(text, x, z, boxed ? bw * 0.94f : 0, em, color, w.Align, (float)w.Rot, back, faceY, 0.004f, height, besideFace: !boxed || boxColor.A < SeeThroughBox);
+        if (boxed && !w.Locked && clickable) _hits.Add(new Hit(new Vector2(x, z), new Vector2(bw, bh) / 2, turn, index));
     }
 
     static string Fitting(string text, float em, float width)
@@ -155,16 +155,22 @@ sealed class PieceWidgets
         return text[..n];
     }
 
-    public static Transform3D OnFace(float x, float z, float sw, float sh, float turn, bool back, float faceY, float above)
+    public static Transform3D OnFace(float x, float z, float sw, float sh, float turn, bool back, float faceY, float above, float? height = null)
     {
         var spin = back ? new Basis(Vector3.Right, Mathf.Pi) * new Basis(Vector3.Up, turn) : new Basis(Vector3.Up, -turn);
-        return new Transform3D(spin.Scaled(new Vector3(Mathf.Max(1e-5f, sw), 1, Mathf.Max(1e-5f, sh))), back ? PieceBack.Under(x, z, PieceBack.Below + above) : new Vector3(x, faceY + above, z));
+        return new Transform3D(spin.Scaled(new Vector3(Mathf.Max(1e-5f, sw), 1, Mathf.Max(1e-5f, sh))), At(x, z, back, faceY, above, height));
     }
 
-    MeshInstance3D Plane(float x, float z, float sw, float sh, float turn, Material m, bool back, float faceY, float above)
+    static Vector3 At(float x, float z, bool back, float faceY, float above, float? height)
+    {
+        var placed = back ? PieceBack.Under(x, z, PieceBack.Below + above) : new Vector3(x, faceY + above, z);
+        return height is { } h ? placed with { Y = h + (back ? -above : above) } : placed;
+    }
+
+    MeshInstance3D Plane(float x, float z, float sw, float sh, float turn, Material m, bool back, float faceY, float above, float? height)
     {
         var n = new MeshInstance3D { Mesh = UnitPlane, MaterialOverride = m, CastShadow = GeometryInstance3D.ShadowCastingSetting.Off, VisibilityRangeEnd = _piece.LetteringRange() };
-        n.Transform = OnFace(x, z, sw, sh, turn, back, faceY, above);
+        n.Transform = OnFace(x, z, sw, sh, turn, back, faceY, above, height);
         AddNode(n);
         return n;
     }
@@ -173,11 +179,12 @@ sealed class PieceWidgets
     const int PlatePriority = 2;
     static readonly Color DarkPlate = new(0.09f, 0.085f, 0.075f, 0.88f), LightPlate = new(0.96f, 0.94f, 0.89f, 0.9f);
 
-    void Text(string text, float x, float z, float boxW, float em, Color color, string align, float rot, bool back, float faceY, float above, bool besideFace = false)
+    void Text(string text, float x, float z, float boxW, float em, Color color, string align, float rot, bool back, float faceY, float above, float? height,
+        bool besideFace = false)
     {
         var l = new Label3D
         {
-            Text = text, FontSize = Fonts.FaceSize, OutlineSize = 0, Modulate = color, DoubleSided = false, VisibilityRangeEnd = _piece.LetteringRange(),
+            Text = text, FontSize = Fonts.FaceSize, OutlineSize = 0, Modulate = color, DoubleSided = true, VisibilityRangeEnd = _piece.LetteringRange(),
             HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center, RenderPriority = 3, Font = Fonts.Face, Layers = Table.TextLayer,
         };
         var font = l.Font ?? ThemeDB.FallbackFont;
@@ -197,8 +204,8 @@ sealed class PieceWidgets
             var face = _piece.Footprint / 2;
             if (Mathf.Abs(cx) + reachX > face.X || Mathf.Abs(z) + reachZ > face.Y) Plate(l, size + Vector2.One * em * PlatePad, color);
         }
-        if (back) { l.RotationDegrees = new Vector3(90, 180, rot); l.Position = PieceBack.Under(cx, z, PieceBack.Below + above); }
-        else { l.RotationDegrees = new Vector3(-90, -rot, 0); l.Position = new Vector3(cx, faceY + above, z); }
+        l.RotationDegrees = back ? new Vector3(90, 180, rot) : new Vector3(-90, -rot, 0);
+        l.Position = At(cx, z, back, faceY, above, height);
         AddNode(l);
     }
 

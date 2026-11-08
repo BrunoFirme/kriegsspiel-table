@@ -222,7 +222,7 @@ Read from `self` or from any piece `board.find` or `board.pieces` hands back. Fi
 | [`self.face_down`](#selfface_down) | Turned over. |
 | [`self.interactable`](#selfinteractable) | Whether hands can take it (set_interactable). |
 | [`self.held_by`](#selfheld_by) | The umpire carrying it now, or nil. |
-| [`self.source`](#selfsource) | For a kind converted from a module: { type =, links = { image =, mesh =, … }, top =, tag =, tags = } — the module object's type, its picture and model links, its top surface in its own units, the kind of object it was (Tile, Figurine, Board, Bag…) and its own tags; for a piece of several states, `states` lists each state's { type, guid, description, gm_notes, memo, script_state, tags, script } as the module kept them; nil otherwise. |
+| [`self.source`](#selfsource) | For a kind converted from a module: { type =, links = { image =, mesh =, … }, top =, origin =, rise =, tag =, tags = } — the module object's type, its picture and model links, its top surface in its own units, for a flat piece the height of its own origin above the base and the piece units one of its own units rises, the kind of object it was (Tile, Figurine, Board, Bag…) and its own tags; for a piece of several states, `states` lists each state's { type, guid, description, gm_notes, memo, script_state, tags, script } as the module kept them; nil otherwise. |
 | [`self.highlight`](#selfhighlight) | The colour it is ringed in, or nil (set_highlight). |
 | [`self.book_highlight`](#selfbook_highlight) | For a book, the box marked on the page it is open at: { left =, bottom =, right =, top = }, each from 0 to 1 across the page from its lower left corner; nil for none. Turning the page clears it. |
 | [`self.holds`](#selfholds) | Whether it is a holder that other pieces can be stowed in: a piece holding some, one made a holder, or a kind tagged bag. |
@@ -606,7 +606,7 @@ The umpire carrying it now, or nil.
 self.source
 ```
 
-For a kind converted from a module: { type =, links = { image =, mesh =, … }, top =, tag =, tags = } — the module object's type, its picture and model links, its top surface in its own units, the kind of object it was (Tile, Figurine, Board, Bag…) and its own tags; for a piece of several states, `states` lists each state's { type, guid, description, gm_notes, memo, script_state, tags, script } as the module kept them; nil otherwise.
+For a kind converted from a module: { type =, links = { image =, mesh =, … }, top =, origin =, rise =, tag =, tags = } — the module object's type, its picture and model links, its top surface in its own units, for a flat piece the height of its own origin above the base and the piece units one of its own units rises, the kind of object it was (Tile, Figurine, Board, Bag…) and its own tags; for a piece of several states, `states` lists each state's { type, guid, description, gm_notes, memo, script_state, tags, script } as the module kept them; nil otherwise.
 
 **Type** `table`, read-only.
 
@@ -1718,6 +1718,7 @@ Draws a button and returns its index from 1. With no w and h it is a bare label 
 | `w` | `number` | _Optional._ Width in piece units. Leave out `w` and `h` for a bare label. |
 | `h` | `number` | _Optional._ Height in piece units. The box is exactly what can be pressed. |
 | `rot` | `number` | _Optional._ Turn on the face, in degrees. Default 0. |
+| `y` | `number` | _Optional._ Its height in piece units above the piece's base, seen from either side; nil draws it on the face. A module's widget takes its height from the piece's `source` origin and rise. |
 | `label` | `string` | _Optional._ The text. |
 | `font` | `number` | _Optional._ Letter size in piece units; a longer label runs past its button. Default 0.05. |
 | `color` | `Color` | _Optional._ The box's colour. |
@@ -1762,6 +1763,7 @@ Draws an input box and returns its index. on_change names a function called as f
 | `w` | `number` | _Optional._ Width in piece units. |
 | `h` | `number` | _Optional._ Height in piece units. |
 | `rot` | `number` | _Optional._ Turn on the face, in degrees. |
+| `y` | `number` | _Optional._ Its height in piece units above the piece's base; nil draws it on the face. |
 | `value` | `string` | _Optional._ The text in the box. |
 | `placeholder` | `string` | _Optional._ Shown greyed while the box is empty. |
 | `font` | `number` | _Optional._ Letter size in piece units; the box shows as much of the text as fits. Default 0.05. |

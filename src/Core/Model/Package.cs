@@ -220,6 +220,9 @@ public sealed class PieceDef : IJsonOnDeserialized
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<string>? ModuleTags { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public Dictionary<string, string>? Sources { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public double? ModuleTop { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public double? ModuleOrigin { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public double? ModuleRise { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool PlainBack { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? ModuleObjectTag { get; set; }
     public string? AddOnMesh { get; set; }
     public string? AddOnTexture { get; set; }
@@ -584,6 +587,7 @@ public sealed class Widget
 {
     public string Kind { get; set; } = "button";
     public string Face { get; set; } = "front";
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public double? Y { get; set; }
     public double X { get; set; }
     public double Z { get; set; }
     public double W { get; set; }

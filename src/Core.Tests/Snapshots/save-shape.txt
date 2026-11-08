@@ -1,4 +1,4 @@
-format 26
+format 27
 type AccessChanged object
   access: GameAccess
 type AddBoard object
@@ -634,6 +634,8 @@ type PieceDef object
   localUnit: Size2?
   mesh: string
   moduleObjectTag: string
+  moduleOrigin: double?
+  moduleRise: double?
   moduleTags: List<string>
   moduleTop: double?
   moduleType: string
@@ -643,6 +645,7 @@ type PieceDef object
   outline: List<List<Vec2>>
   pageOffset: int
   parts: List<PartDef>
+  plainBack: bool
   script: string
   scriptHash: string
   scriptState: string
@@ -728,6 +731,7 @@ type PieceStateDef object
   size: Size2?
   texture: string
   thickness: double?
+  tint: string
   up: double[]
 type PlayEffect object
   actor: long
@@ -1498,6 +1502,7 @@ type Widget object
   value: string
   w: double
   x: double
+  y: double?
   z: double
 type Wind object
   from: double

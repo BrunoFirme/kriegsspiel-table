@@ -348,12 +348,15 @@ public class ScriptingTests
     }
 
     [Fact]
-    public void A_module_input_inside_its_piece_is_not_drawn_but_still_listed_and_raising_it_above_the_piece_draws_it()
+    public void A_module_input_sits_at_its_own_height_from_the_module_origin_even_below_the_piece_top_and_moves_with_its_position()
     {
+        const double Origin = 0.1, Rise = 2;
         using var t = new Table();
+        var def = t.Store.Def(t.Server.State.Find(U, P)!.Def)!;
+        (def.ModuleType, def.ModuleOrigin, def.ModuleRise) = ("Custom_Token", Origin, Rise);
         var tr = KTable.Server.Scripting.Translate.ModuleTranslator.Translate("""
             function onLoad()
-              self.createInput({ input_function = "typed", function_owner = self, value = "Name", position = {0, -0.098, 0.5}, width = 400, height = 200 })
+              self.createInput({ input_function = "typed", function_owner = self, value = "Name", position = {0, -0.04, 0.5}, width = 400, height = 200 })
               self.createButton({ click_function = "raise", function_owner = self, label = "R", position = {0, 0.2, 0}, width = 400, height = 200 })
               self.setName(#self.getInputs() .. self.getInputs()[1].value)
             end
@@ -362,10 +365,11 @@ public class ScriptingTests
             """);
         SetScript(t, tr.Script);
         var p = t.Server.State.Find(U, P)!;
-        Assert.Equal(("button", "1Name"), (Assert.Single(p.Widgets).Kind, p.Label));
-        t.Server.Handle(Table.Host, new ClickWidget { Layer = U, Id = P, Index = 1 });
-        Assert.Equal(new[] { "button", "input" }, p.Widgets.Select(w => w.Kind));
-        Assert.Equal("Name", p.Widgets[1].Value);
+        Assert.Equal("1Name", p.Label);
+        var input = p.Widgets.Single(w => w.Kind == "input");
+        Assert.Equal(Origin - 0.04 * Rise, input.Y!.Value, 6);
+        t.Server.Handle(Table.Host, new ClickWidget { Layer = U, Id = P, Index = p.Widgets.FindIndex(w => w.Kind == "button") + 1 });
+        Assert.Equal(Origin + 0.2 * Rise, p.Widgets.Single(w => w.Kind == "input").Y!.Value, 6);
     }
 
     [Fact]

@@ -460,6 +460,28 @@ public sealed partial class ConverterTests
     }
 
     [Fact]
+    public void A_flat_token_keeps_its_module_origin_half_its_thickness_up_and_shows_no_face_text_on_its_plain_back()
+    {
+        const double Thickness = 0.4;
+        var cfg = TempConfig();
+        const string Square = "http://a/plain.png";
+        LocalPicture(cfg, Square, 16, 16, (_, _) => SKColors.White);
+        var o = Obj("Custom_Token", "Plain", 0.5, new JsonObject { ["CustomImage"] = new JsonObject { ["ImageURL"] = Square, ["CustomToken"] = new JsonObject { ["Thickness"] = Thickness } } });
+        var module = Module("plain", o);
+        var main = typeof(Config).Assembly.EntryPoint!;
+
+        var code = (int)main.Invoke(null, new object[] { new[] { "import", module, "--config", Path.Combine(_root, "converter.json"), "--out", Packages } })!;
+
+        Assert.Equal(0, code);
+        var table = Json.Load<Scenario>(Path.Combine(Packages, "scenarios", "plain", "scenario.json"));
+        var pack = Json.Load<PackManifest>(Path.Combine(Packages, "tts.plain", "pack.json"));
+        var def = pack.Pieces.Single(d => d.Id == Assert.Single(table.UmpireBoard).Def);
+        Assert.True(def.PlainBack);
+        Assert.True(def.ModuleRise > 0);
+        Assert.Equal(def.ModuleRise!.Value * Thickness / 2, def.ModuleOrigin!.Value, 3);
+    }
+
+    [Fact]
     public void Two_glued_units_alike_but_for_their_colour_are_two_kinds_each_in_its_own_colour()
     {
         const double Thickness = 0.1;

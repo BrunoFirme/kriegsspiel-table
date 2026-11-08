@@ -177,7 +177,7 @@ public static partial class ApiDoc
         F("piece", "face_down", "boolean", "Turned over.", "is_face_down");
         F("piece", "interactable", "boolean", "Whether hands can take it (set_interactable).", "interactable");
         F("piece", "held_by", "Who", "The umpire carrying it now, or nil.", "held_by_color");
-        F("piece", "source", "table", "For a kind converted from a module: { type =, links = { image =, mesh =, … }, top =, tag =, tags = } — the module object's type, its picture and model links, its top surface in its own units, the kind of object it was (Tile, Figurine, Board, Bag…) and its own tags; for a piece of several states, `states` lists each state's { type, guid, description, gm_notes, memo, script_state, tags, script } as the module kept them; nil otherwise.", "name");
+        F("piece", "source", "table", "For a kind converted from a module: { type =, links = { image =, mesh =, … }, top =, origin =, rise =, tag =, tags = } — the module object's type, its picture and model links, its top surface in its own units, for a flat piece the height of its own origin above the base and the piece units one of its own units rises, the kind of object it was (Tile, Figurine, Board, Bag…) and its own tags; for a piece of several states, `states` lists each state's { type, guid, description, gm_notes, memo, script_state, tags, script } as the module kept them; nil otherwise.", "name");
         F("piece", "highlight", "string", "The colour it is ringed in, or nil (set_highlight).", "highlightOn");
         F("piece", "book_highlight", "table", "For a book, the box marked on the page it is open at: { left =, bottom =, right =, top = }, each from 0 to 1 across the page from its lower left corner; nil for none. Turning the page clears it.", "Book.setHighlight");
         F("piece", "holds", "boolean", "Whether it is a holder that other pieces can be stowed in: a piece holding some, one made a holder, or a kind tagged bag.", "getQuantity");
@@ -493,6 +493,7 @@ public static partial class ApiDoc
         O("w", "number", "Width in piece units. Leave out `w` and `h` for a bare label.");
         O("h", "number", "Height in piece units. The box is exactly what can be pressed.");
         O("rot", "number", "Turn on the face, in degrees. Default 0.");
+        O("y", "number", "Its height in piece units above the piece's base, seen from either side; nil draws it on the face. A module's widget takes its height from the piece's `source` origin and rise.");
         O("label", "string", "The text.");
         O("font", "number", "Letter size in piece units; a longer label runs past its button. Default 0.05.");
         O("color", "Color", "The box's colour.");
@@ -524,6 +525,7 @@ public static partial class ApiDoc
         O("w", "number", "Width in piece units.");
         O("h", "number", "Height in piece units.");
         O("rot", "number", "Turn on the face, in degrees.");
+        O("y", "number", "Its height in piece units above the piece's base; nil draws it on the face.");
         O("value", "string", "The text in the box.");
         O("placeholder", "string", "Shown greyed while the box is empty.");
         O("font", "number", "Letter size in piece units; the box shows as much of the text as fits. Default 0.05.");
