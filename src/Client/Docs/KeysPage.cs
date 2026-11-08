@@ -22,7 +22,7 @@ public static class KeysPage
             ($"{K("turnLeft")}  {K("turnRight")}", "turn 15° (Shift 1°)"),
             ($"{K("larger")}  {K("smaller")}", "larger, smaller"),
             (K("flip") + ", middle-click", "turn over"),
-            (K("delete"), "delete"),
+            (K("delete"), "delete; a locked piece only from its right-click menu"),
             ("Ctrl+1 … 9", "form the selection into that many rows"),
             ($"{K("cut")}  {K("copy")}  {K("paste")}", "cut, copy; paste at the pointer"),
             (K("selectAll"), "select all"),
@@ -30,7 +30,7 @@ public static class KeysPage
             ("1 … 9  0", "set the look of the piece under the pointer; a die, its side"),
             ("Wheel", "over a selected piece, turn 10° (Ctrl 2°, Shift ½°); elsewhere, zoom"),
             ("Shift / Ctrl+click", "add to the selection"),
-            ("Drag the table", "box-select"),
+            ("Drag the table", "box-select, leaving locked pieces out"),
             (K("roll"), "roll the dice under the pointer or selected"),
             ("Esc", "put down what is in hand; again, the menu"),
         });

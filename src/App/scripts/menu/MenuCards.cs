@@ -179,8 +179,12 @@ sealed class MenuCards : HudPart
         }
         bool allSticky = nodes.All(n => !n.Piece.NotSticky);
         menu.Check("Carries what rests on it", allSticky, () => SetOption(nodes, PieceOptions.NotSticky, allSticky));
-        bool allBoxed = nodes.All(n => !n.Piece.NotBoxSelected);
-        menu.Check("Taken by a selection box", allBoxed, () => SetOption(nodes, PieceOptions.NotBoxSelected, allBoxed));
+        var boxable = nodes.Where(n => !n.Piece.Locked).ToList();
+        if (boxable.Count > 0)
+        {
+            bool allBoxed = boxable.All(n => !n.Piece.NotBoxSelected);
+            menu.Check("Taken by a selection box", allBoxed, () => SetOption(boxable, PieceOptions.NotBoxSelected, allBoxed));
+        }
         bool allMeasured = nodes.All(n => n.Piece.MeasuresMoves);
         menu.Check("Shows how far it is moved", allMeasured, () => SetOption(nodes, PieceOptions.MeasuresMoves, !allMeasured));
         bool allRunning = effects.All(n => !n.Piece.EffectOff);

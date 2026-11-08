@@ -1141,7 +1141,7 @@ Pins it to the table, or lets it go.
 |---|---|---|
 | `on` | `boolean` | _Optional._ true, or no argument, pins it; false lets it go. |
 
-A locked piece can still be picked out, read and deleted, and an umpire can unlock it from its right-click menu.
+A locked piece can still be picked out and read; a selection box leaves it out and the Delete key leaves it be, so it is deleted from its right-click menu, where an umpire can also unlock it.
 
 **Module call** `setLock` · **See also** [`self.locked`](#selflocked)
 

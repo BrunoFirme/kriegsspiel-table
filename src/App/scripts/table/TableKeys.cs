@@ -103,14 +103,14 @@ sealed class TableKeys
         else if (km.Is(k, "scriptConsole")) PanelRequested?.Invoke("console");
         else if (km.Is(k, "scriptWindow")) PanelRequested?.Invoke("scripts");
         else if (km.Is(k, "saves")) PanelRequested?.Invoke("saves");
-        else if (km.Is(k, "cut")) { _clip.Copy(cut: true); _actions.Delete(); }
+        else if (km.Is(k, "cut")) CutUnlocked();
         else if (km.Is(k, "copy")) _clip.Copy();
         else if (km.Is(k, "paste")) { if (_c.Ground(Pointer.In(_c.Scene.GetViewport())) is { } at) _clip.Paste(at); }
         else if (km.Is(k, "selectAll")) _selection.Set(_pieces.Nodes.Where(n => _c.LayerInteractive(n.Layer)).Select(n => n.Piece.Id));
         else if (km.Is(k, "roll")) { if (!_dice.RollAtHand()) _poses.RotateSmooth(k.ShiftPressed ? -15 : 15); }
         else if (km.Is(k, "larger")) _poses.ScaleSmooth(1.1);
         else if (km.Is(k, "smaller")) _poses.ScaleSmooth(1 / 1.1);
-        else if (km.Is(k, "delete")) _actions.Delete();
+        else if (km.Is(k, "delete")) _actions.Delete(_actions.Unlocked());
         else if (km.Is(k, "mute"))
         {
             _c.Settings.SoundMuted = !_c.Settings.SoundMuted;
@@ -123,6 +123,13 @@ sealed class TableKeys
         else if (km.Is(k, "sighting")) { if (S.IsUmpire) _c.SetTool(Tool.Sighting); }
         else if (km.Is(k, "statePrev")) _actions.CycleState(-1);
         else if (km.Is(k, "stateNext")) _actions.CycleState(1);
+    }
+
+    void CutUnlocked()
+    {
+        var free = _actions.Unlocked();
+        _clip.Copy(free, cut: true);
+        _actions.Delete(free);
     }
 
     public void OnKeyUp(InputEventKey k) => ScriptHotkey(k, up: true);

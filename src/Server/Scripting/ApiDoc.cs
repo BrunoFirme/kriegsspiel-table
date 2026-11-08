@@ -352,7 +352,7 @@ public static partial class ApiDoc
 
     M("piece", "set_locked(on)", "Pins it to the table, or lets it go.", "setLock");
     O("on", "boolean", "true, or no argument, pins it; false lets it go.");
-    Note("A locked piece can still be picked out, read and deleted, and an umpire can unlock it from its right-click menu.");
+    Note("A locked piece can still be picked out and read; a selection box leaves it out and the Delete key leaves it be, so it is deleted from its right-click menu, where an umpire can also unlock it.");
     See("self.locked");
 
     M("piece", "set_box_selected(on)", "Whether a selection box dragged over it takes it.", "drag_selectable");

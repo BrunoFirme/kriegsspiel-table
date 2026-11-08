@@ -32,10 +32,22 @@ sealed class PieceActions
         _c.DoAll(cmds);
     }
 
-    public void Delete()
+    public void Delete() => Delete(_selection.Nodes);
+
+    public void Delete(IEnumerable<PieceNode> nodes) => _c.DoAll(nodes.Select(n => (Command)new DeletePiece { Layer = n.Layer, Id = n.Piece.Id }).ToList());
+
+    public List<PieceNode> Unlocked()
     {
-        var cmds = _selection.Nodes.Select(n => (Command)new DeletePiece { Layer = n.Layer, Id = n.Piece.Id }).ToList();
-        _c.DoAll(cmds);
+        var nodes = _selection.Nodes.ToList();
+        var free = nodes.Where(n => !n.Piece.Locked).ToList();
+        int kept = nodes.Count - free.Count;
+        if (kept == 1)
+        {
+            var piece = nodes.First(n => n.Piece.Locked).Piece;
+            _c.Say($"{(piece.Label is { Length: > 0 } nm ? nm : "That piece")} is locked and stays · right-click → Delete removes it.");
+        }
+        else if (kept > 1) _c.Say($"{kept} locked pieces stay · right-click → Delete removes them.");
+        return free;
     }
 
     public void CycleState(int dir)
