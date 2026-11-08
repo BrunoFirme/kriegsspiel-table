@@ -48,17 +48,22 @@ sealed class PieceClipboard
         {
             From = _c.S.View.Name,
             Center = new Vec2(nodes.Average(n => n.Piece.Pos.X), nodes.Average(n => n.Piece.Pos.Z)),
-            Packs = all.SelectMany(DefsOf).Select(_c.S.View.PackNamedBy).OfType<string>().Distinct().ToList(),
+            Packs = PacksOf(all),
             Pieces = all.Select(p => new ClippedPiece { Piece = p, Above = Above(p, layer) }).ToList(),
         });
         _c.Say($"{(cut ? "Cut" : "Copied")} {nodes.Count} piece{(nodes.Count > 1 ? "s" : "")} — Ctrl+V pastes at the pointer, here or in another scenario");
     }
 
-    static IEnumerable<string> DefsOf(PieceInstance p)
+    List<string> PacksOf(List<PieceInstance> pieces)
     {
-        yield return p.Def;
-        if (p.Picture is { Length: > 0 } pic) yield return pic;
+        var s = _c.S;
+        var defs = Naming.WithParts(pieces.Select(p => s.Def(p.Def)).OfType<PieceDef>(), s.Def);
+        var packs = defs.Select(d => PackOf(d.Id)).Concat(pieces.Select(p => PackOf(p.Def)));
+        var pictures = pieces.Where(p => p.Picture is { Length: > 0 }).Select(p => PieceFiles.DecalFile(s.View, s.Store, p.Picture!, p.Def)?.Package);
+        return packs.Concat(pictures).OfType<string>().Where(id => s.Store.Pack(id) != null).Distinct().ToList();
     }
+
+    string? PackOf(string def) => _c.S.Store.PackOfDef(def)?.Id ?? _c.S.View.PackNamedBy(def);
 
     double Above(PieceInstance p, string layer) => p.Y > 0 ? Math.Max(0, p.Y - _hand.SurfaceY(p.Pos, layer)) : 0;
 
@@ -95,7 +100,7 @@ sealed class PieceClipboard
     {
         var layer = Layers.Umpire;
         var away = clip.Packs.Where(p => !_c.S.View.Packs.Contains(p)).ToHashSet();
-        var taken = clip.Pieces.Where(cp => PackManifest.NamedBy(away, cp.Piece.Def) == null).ToList();
+        var taken = clip.Pieces.Where(cp => _c.S.Def(cp.Piece.Def) != null && (PackOf(cp.Piece.Def) is not { } pack || !away.Contains(pack))).ToList();
         if (taken.Count == 0)
         {
             _c.Say($"Nothing pasted: {Named(away)} {(away.Count > 1 ? "are" : "is")} not in the game");

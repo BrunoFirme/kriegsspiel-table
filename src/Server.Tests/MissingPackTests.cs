@@ -61,4 +61,26 @@ public class MissingPackTests : IDisposable
         Assert.Equal(3, srv.State.Packs.Count);
         Assert.Equal(3, srv.MissingPacks.Count);
     }
+
+    [Fact]
+    public void Pieces_whose_pack_the_game_does_not_name_bring_the_installed_pack_that_makes_them()
+    {
+        var store = Store();
+        Install(store, "tts.sleepwalkers-balkan", "sleepwalkers.1-kd");
+        Install(store, "tts.other", "other.gun");
+        var g = new GameState();
+        g.Layers[Layers.Umpire] = new() { new PieceInstance { Id = "p1", Def = "sleepwalkers.1-kd" } };
+
+        var srv = new GameServer(g, store);
+
+        Assert.Equal(new[] { "tts.sleepwalkers-balkan" }, srv.State.Packs);
+        Assert.Empty(srv.MissingPacks);
+        Assert.NotNull(store.Def("sleepwalkers.1-kd"));
+    }
+
+    static void Install(PackageStore store, string id, string def)
+    {
+        Directory.CreateDirectory(store.PackageDir(id));
+        Json.Save(Path.Combine(store.PackageDir(id), "pack.json"), new PackManifest { Id = id, Name = id, Pieces = { new PieceDef { Id = def, Name = def } } });
+    }
 }

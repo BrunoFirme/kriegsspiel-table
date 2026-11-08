@@ -183,6 +183,35 @@ static class TableTests
     }
 
     [NodeTest]
+    static async Task A_converted_module_s_pieces_bring_their_pack_and_are_still_drawn_after_the_game_reopens(TestRunner r)
+    {
+        const string Pack = "tts.sleepwalkers-balkan", Kind = "sleepwalkers.1-kd";
+        static void Install(KTable.Core.PackageStore store)
+        {
+            System.IO.Directory.CreateDirectory(store.PackageDir(Pack));
+            KTable.Core.Json.Save(System.IO.Path.Combine(store.PackageDir(Pack), "pack.json"), new PackManifest { Id = Pack, Name = "Sleepwalkers-Balkan", Pieces = { new PieceDef { Id = Kind, Name = "1.KD" } } });
+        }
+        var from = OfflineTable.Make(r, pieces: 0, packs: new[] { Pack }, prepare: Install);
+        await r.Frame();
+        from.S.Do(new SpawnPiece { Layer = U, Def = Kind, Id = "k1", Pos = new Vec2(0, 0) });
+        await r.Frames(3);
+        from.Table.Selection.Set(new[] { "k1" });
+        from.Table.Clip.Copy();
+        var into = OfflineTable.Make(r, pieces: 1, prepare: Install);
+        into.Table.Clip.BringPack = id => into.S.Do(new AddPack { Id = id });
+        await r.Frame();
+        into.Table.Clip.Paste(new Vec2(4, 4));
+        await r.Frames(3);
+        Check.That(into.S.View.Packs.Contains(Pack), "the module's pack came in with the paste though its kinds are not named after it");
+        var saved = KTable.Core.Json.Clone(into.Server.State);
+        var reopened = OfflineTable.Make(r, pieces: 0, prepare: Install, arrange: g => { g.Packs = saved.Packs; g.Layers = saved.Layers; });
+        await r.Frames(3);
+        var pasted = reopened.S.View.Layers[U].Single(p => p.Def == Kind);
+        Check.That(reopened.Table.Pieces.NodeOf(U, pasted.Id) is { Visible: true }, "the pasted piece is drawn after the game reopens");
+        Check.That(reopened.Errors.Count == 0 && into.Errors.Count == 0, "no command refused: " + string.Join("; ", into.Errors.Concat(reopened.Errors)));
+    }
+
+    [NodeTest]
     static async Task A_press_counts_on_a_piece_where_its_shape_is_as_it_lies_or_as_it_would_lie(TestRunner r)
     {
         var t = OfflineTable.Make(r, pieces: 1);
