@@ -1025,18 +1025,19 @@ public static partial class ApiDoc
         P("who", "Who", "The umpire.");
         See("on_drop");
 
-        E("event", "on_state(old, new)", "Its state changed, by anyone.", "onObjectStateChange");
+        E("event", "on_state(old, new, old_guid)", "Its state changed, by anyone.", "onStateChange");
         E("event", "on_page()", "This book turned to another page.", "onPageChange");
         E("event", "on_effect(index)", "An umpire or a script started (0) or stopped (-1) this effect.", "onObjectLoopingEffect");
         E("event", "on_burst(index)", "This effect was played once, from its menu (index 0) or by a script's play_effect (the index it gave).", "onObjectTriggerEffect");
         P("old", "number", "The state it left, from 1.");
         P("new", "number", "The state it is in now, from 1.");
+        P("old_guid", "string", "The module GUID of the state it left, for a piece converted from a module; its own GUID otherwise.");
         X("""
             function on_state(old, new)
               if new == 1 then draw_name() end
             end
             """);
-        Note("What the script draws here belongs to the new state.");
+        Note("What the script draws here belongs to the new state. A converted piece whose states are whole module objects changes as the module's game changes them: the leaving state's script saves (on_save) and ends (on_destroy), the arriving state wears its own name, notes, tags, lock and script, which loads (on_load), then on_spawn and on_state run.");
         See("self.set_state");
 
         E("event", "on_flip(face_down)", "It was turned over or back.");
@@ -1071,7 +1072,7 @@ public static partial class ApiDoc
         P("piece", "Piece", "The piece; its fields still answer.");
 
         E("global event", "on_drop(piece, who)", "An umpire let a piece go.", "onObjectDrop");
-        E("global event", "on_state(piece, old, new)", "A piece's state changed, by anyone.", "onObjectStateChange");
+        E("global event", "on_state(piece, old, new, old_guid)", "A piece's state changed, by anyone.", "onObjectStateChange");
         E("global event", "on_page(piece)", "A book turned to another page.", "onObjectPageChange");
         E("global event", "on_effect(piece, index)", "An umpire or a script started (0) or stopped (-1) an effect.", "onObjectLoopingEffect");
         E("global event", "on_burst(piece, index)", "An effect was played once, from its menu or by a script.", "onObjectTriggerEffect");

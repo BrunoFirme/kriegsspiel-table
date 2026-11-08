@@ -651,7 +651,8 @@ function compat.states(obj)
       local m = kept[i] or {}
       local tags = {}
       for k, tg in ipairs(m.tags or {}) do tags[k] = tg end
-      t[#t + 1] = { id = i, name = name ~= "" and name or (m.type or ""), nickname = name, description = m.description or "", gm_notes = m.gm_notes or "",
+      local nick = m.name or name
+      t[#t + 1] = { id = i, name = nick ~= "" and nick or (m.type or ""), nickname = nick, description = m.description or "", gm_notes = m.gm_notes or "",
         guid = m.guid or compat.guid(obj), lua_script = m.script or "", lua_script_state = m.script_state or "", memo = m.memo or "", tags = tags }
     end
   end
@@ -800,6 +801,7 @@ function compat.take_object(obj, params)
   local start = smooth and { x = here.x, z = here.z } or { x = position.x, z = position.z }
   local p = obj.unstow(which, start, smooth and turn(obj.rot or 0) or heading_of(rotation))
   if p == nil then return nil end
+  if which ~= nil then compat.set_prop(p, "locked", false) end
   if not smooth then
     lie(p, rotation)
     compat.after_spawn(obj, p, params)

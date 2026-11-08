@@ -55,6 +55,44 @@ public sealed class PieceArt
         return _outlineWalls[key] = OutlineWalls(outline, w, h, t);
     }
 
+    readonly Dictionary<(List<List<KTable.Core.Model.Vec2>> outline, float w, float h, float t), ArrayMesh?> _pictureWalls = new();
+
+    public ArrayMesh? PictureWalls(List<List<KTable.Core.Model.Vec2>> outline, float w, float h, float t)
+    {
+        var key = (outline, w, h, t);
+        if (_pictureWalls.TryGetValue(key, out var m)) return m;
+        return _pictureWalls[key] = PictureWallsOf(outline, w, h, t);
+    }
+
+    internal static ArrayMesh? PictureWallsOf(List<List<KTable.Core.Model.Vec2>> outline, float w, float h, float t)
+    {
+        const int Fewest = 3;
+        var st = new SurfaceTool();
+        st.Begin(Mesh.PrimitiveType.Triangles);
+        int quads = 0;
+        foreach (var loop in outline.Where(l => l.Count >= Fewest))
+        {
+            Vector3 P(KTable.Core.Model.Vec2 g, float y) => new(((float)g.X - 0.5f) * w, y, ((float)g.Z - 0.5f) * h);
+            double area = 0;
+            for (int i = 0; i < loop.Count; i++) area += loop[i].X * loop[(i + 1) % loop.Count].Z - loop[(i + 1) % loop.Count].X * loop[i].Z;
+            for (int i = 0; i < loop.Count; i++)
+            {
+                var (a, b) = (loop[i], loop[(i + 1) % loop.Count]);
+                var (ua, ub) = (new Vector2((float)a.X, (float)a.Z), new Vector2((float)b.X, (float)b.Z));
+                var along = P(b, 0) - P(a, 0);
+                var outward = (area > 0 ? new Vector3(along.Z, 0, -along.X) : new Vector3(-along.Z, 0, along.X)).Normalized();
+                st.SetNormal(outward);
+                foreach (var (v, uv) in new[] { (P(a, 0), ua), (P(b, 0), ub), (P(b, t), ub), (P(a, 0), ua), (P(b, t), ub), (P(a, t), ua) }) { st.SetUV(uv); st.AddVertex(v); }
+                foreach (var (v, uv) in new[] { (P(a, 0), ua), (P(b, t), ub), (P(b, 0), ub), (P(a, 0), ua), (P(a, t), ua), (P(b, t), ub) }) { st.SetUV(uv); st.AddVertex(v); }
+                quads++;
+            }
+        }
+        if (quads == 0) return null;
+        var mesh = new ArrayMesh();
+        st.Commit(mesh);
+        return mesh;
+    }
+
     internal static ArrayMesh? OutlineWalls(List<List<KTable.Core.Model.Vec2>> outline, float w, float h, float t)
     {
         const int Fewest = 3;

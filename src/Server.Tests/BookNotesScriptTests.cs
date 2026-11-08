@@ -118,7 +118,7 @@ public class BookNotesScriptTests
         t.Server.Handle(Table.Host, new SpawnPiece { Layer = U, Def = "flag", Id = "p-000060", Pos = new(1, 1) });
         var flag = t.Server.State.Find(U, "p-000060")!;
         flag.Guid = "aaa111";
-        flag.StateGuids = ["aaa111", "bbb222"];
+        flag.Looks = [new PieceLook { Guid = "aaa111" }, new PieceLook { Guid = "bbb222" }];
         t.Server.Handle(Table.Ump3, new SetState { Layer = U, Id = "p-000060", State = 1 });
         Assert.Equal("bbb222", t.Server.State.Find(U, "p-000060")!.Guid);
         t.Server.Handle(Table.Ump3, new Undo { TargetSeq = t.Server.Log[^1].Seq });

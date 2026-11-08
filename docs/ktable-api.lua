@@ -777,7 +777,8 @@ function on_effect() end
 ---This effect was played once, from its menu (index 0) or by a script's play_effect (the index it gave).
 ---@param old number The state it left, from 1.
 ---@param new number The state it is in now, from 1.
-function on_burst(old, new) end
+---@param old_guid string The module GUID of the state it left, for a piece converted from a module; its own GUID otherwise.
+function on_burst(old, new, old_guid) end
 
 ---It was turned over or back.
 ---@param face_down boolean true when it is face down now.

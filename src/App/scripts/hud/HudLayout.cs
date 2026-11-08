@@ -125,7 +125,7 @@ public partial class Hud
     {
         var p = n.Piece;
         return $"{p.Id}" + (p.Guid != null && p.Guid != p.Id ? $" · guid {p.Guid}" : "") + $" · {p.Def} · x {p.Pos.X:0.##}, z {p.Pos.Z:0.##} · {p.RotDeg:0.#}°"
-            + (p.State > 0 ? $" · state {p.State + 1}" : "") + ((p.Script ?? n.Def?.Script) != null ? " · scripted" : "");
+            + (p.State > 0 ? $" · state {p.State + 1}" : "") + (!string.IsNullOrWhiteSpace(n.Def?.ScriptFor(p) ?? p.Script) ? " · scripted" : "");
     }
 
     void WireTableRequests()

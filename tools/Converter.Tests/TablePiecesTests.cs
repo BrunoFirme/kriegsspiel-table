@@ -741,7 +741,7 @@ public sealed partial class ConverterTests
         var models = Path.Combine(cfg.ModsPath, "Models");
         Directory.CreateDirectory(models);
         var corners = from x in new[] { -18, 18 } from y in new[] { -0.1, 0.1 } from z in new[] { -4.5, 4.5 } select FormattableString.Invariant($"v {x} {y} {z}");
-        File.WriteAllLines(Path.Combine(models, AssetStore.Key(Box) + ".obj"), corners.Append("vn 0 1 0").Append("f 1 2 3"));
+        File.WriteAllLines(Path.Combine(models, AssetStore.Key(Box) + ".obj"), corners.Append("vn 0 1 0").Append("f 1 2 4 3").Append("f 5 6 8 7"));
         var rep = new Report();
         var assets = new AssetStore(cfg, rep);
         await assets.FetchAll(new[] { Box });
@@ -771,7 +771,7 @@ public sealed partial class ConverterTests
     }
 
     [Fact]
-    public async Task A_model_a_script_spawns_keeps_the_local_frame_a_placed_model_of_its_scale_has()
+    public async Task A_model_a_script_spawns_is_the_very_kind_the_same_model_placed_at_that_scale_comes_over_as()
     {
         var cfg = TempConfig();
         const string Gun = "http://a/gun.obj";
@@ -790,15 +790,14 @@ public sealed partial class ConverterTests
             ["CustomMesh"] = new JsonObject { ["MeshURL"] = Gun },
         })), pack)!.Def;
 
-        defs.Translate($$"""
+        var script = defs.Translate($$"""
             function spawnGun()
               local o = spawnObject({ type = 'Custom_Model', position = {0, 1, 0}, scale = {x = 0.6, y = 0.6, z = 0.6} })
               o.setCustomObject({ mesh = "{{Gun}}" })
             end
-            """, pack, "spawner");
+            """, pack, "spawner").Script;
 
-        var spawned = Assert.Single(pack.M.Pieces, d => d.Tags.Contains("marker"));
-        Assert.NotNull(spawned.LocalUnit);
-        Assert.Equal(placed.LocalUnit, spawned.LocalUnit);
+        Assert.Single(pack.M.Pieces);
+        Assert.Contains(placed.Id, script);
     }
 }

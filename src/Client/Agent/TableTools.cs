@@ -348,7 +348,7 @@ public sealed partial class TableTools
         string? text;
         string whose;
         if (id.Length == 0) { text = s.View.Script; whose = "the global script"; }
-        else if (Find(s, id) is { } p) { text = p.Script ?? s.Def(p.Def)?.Script; whose = p.Script != null ? $"{NameOf(s, p)}'s own script" : $"the script of every {s.Def(p.Def)?.Name ?? p.Def} (its kind's, from its pack)"; }
+        else if (Find(s, id) is { } p) { text = s.Def(p.Def)?.ScriptFor(p) ?? p.Script; whose = p.Script != null ? $"{NameOf(s, p)}'s own script" : $"the script of every {s.Def(p.Def)?.Name ?? p.Def} (its kind's, from its pack)"; }
         else return Task.FromResult(ToolResult.Fail($"No piece {id} on this table."));
         var sb = new StringBuilder();
         sb.Append(whose).Append(": ").Append(Status(s, id)).Append('\n');

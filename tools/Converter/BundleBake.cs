@@ -12,8 +12,8 @@ public sealed partial class BundleBake
     public const string PackId = "user.bundle-models";
     const string PackName = "Models from module asset bundles";
     const string Licence = "models read from the asset bundles of imported modules";
-    const string Tag = "bundle:";
-    const string ReadWith = "bundle-read:placed";
+    public const string Tag = "bundle:";
+    const string ReadWith = "bundle-read:own-atlas";
     const string BundleType = "Custom_Assetbundle";
     const int AtlasMost = 2048;
     const int Digits = 4;
@@ -59,14 +59,6 @@ public sealed partial class BundleBake
         if (read.Count == 0) return 0;
 
         Directory.CreateDirectory(assetsDir);
-        var textures = new List<(string Sha, Picture Picture)>();
-        foreach (var model in read)
-            foreach (var (sha, picture) in model.Textures)
-                if (!textures.Any(t => t.Sha == sha)) textures.Add((sha, picture));
-        var atlas = ModelAtlas.Pack(textures, AtlasMost);
-        var atlasSha = Convert.ToHexString(SHA256.HashData(atlas.Png)).ToLowerInvariant();
-        var atlasFile = Path.Combine(assetsDir, atlasSha + ".png");
-        if (!File.Exists(atlasFile)) Json.WriteAtomic(atlasFile, atlas.Png);
 
         var fresh = new HashSet<string>(read.Select(m => Tag + m.Sha), StringComparer.OrdinalIgnoreCase);
         var pieces = (had?.Pieces ?? new List<PieceDef>())
@@ -75,10 +67,21 @@ public sealed partial class BundleBake
         foreach (var piece in pieces)
             foreach (var sha in new[] { piece.Mesh, piece.Texture })
                 if (sha != null && had!.Assets.TryGetValue(sha, out var kept)) entries[sha] = kept;
-        entries[atlasSha] = new AssetEntry { File = $"assets/{atlasSha}.png", Kind = "image", W = atlas.Width, H = atlas.Height };
 
+        var atlases = new Dictionary<string, (Atlas Atlas, string Sha)>(StringComparer.Ordinal);
         foreach (var model in read)
         {
+            var set = string.Join(",", model.Textures.Select(t => t.Sha).Distinct().OrderBy(t => t, StringComparer.Ordinal));
+            if (!atlases.TryGetValue(set, out var own))
+            {
+                var made = ModelAtlas.Pack(model.Textures.DistinctBy(t => t.Sha).ToList(), AtlasMost);
+                var madeSha = Convert.ToHexString(SHA256.HashData(made.Png)).ToLowerInvariant();
+                var madeFile = Path.Combine(assetsDir, madeSha + ".png");
+                if (!File.Exists(madeFile)) Json.WriteAtomic(madeFile, made.Png);
+                entries[madeSha] = new AssetEntry { File = $"assets/{madeSha}.png", Kind = "image", W = made.Width, H = made.Height };
+                atlases[set] = own = (made, madeSha);
+            }
+            var (atlas, atlasSha) = own;
             var obj = ModelAtlas.Obj(model, atlas.Places, atlas.Width, atlas.Height);
             var bytes = new UTF8Encoding(false).GetBytes(obj);
             var meshSha = Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant();
@@ -90,11 +93,13 @@ public sealed partial class BundleBake
                 Id = $"{PackId}.{Slug(model.Name)}-{model.Sha[..8].ToLowerInvariant()}",
                 Name = Pretty(model.Name),
                 Kind = "model",
+                HeightScale = 1,
                 Mesh = meshSha,
                 Texture = atlasSha,
                 Size = new Size2(Math.Round(model.High[0] - model.Low[0], Digits), Math.Round(model.High[2] - model.Low[2], Digits)),
                 Shape = "box",
                 Thickness = Math.Round(model.High[1] - model.Low[1], Digits),
+                ModuleOrigin = Math.Round(-model.Low[1], Digits),
                 Tags = new List<string> { "model", Tag + model.Sha, ReadWith },
             });
         }
@@ -115,7 +120,7 @@ public sealed partial class BundleBake
             if (!keep.Contains(Path.GetFileNameWithoutExtension(file)))
                 BestEffort.DeleteFile(file);
 
-        Console.WriteLine($"  {read.Count} model(s) read from asset bundles into {PackId}, one {atlas.Width} x {atlas.Height} texture for them");
+        Console.WriteLine($"  {read.Count} model(s) read from asset bundles into {PackId}, with {atlases.Count} texture(s) of their own");
         return read.Count;
     }
 
@@ -139,6 +144,7 @@ public sealed partial class BundleBake
     List<BundleModel> ReadAll(List<(string Sha, string Url)> todo, Dictionary<string, string> shared)
     {
         var read = new List<BundleModel>();
+        using var reader = new BundleScene.Reader(shared);
         foreach (var (sha, url) in todo)
         {
             var file = OnThisPc(url);
@@ -147,7 +153,7 @@ public sealed partial class BundleBake
                 _rep.Note($"The asset bundle {sha[..12]} is not on this PC, so the model in it is not here.");
                 continue;
             }
-            var (model, lost, failed) = BundleScene.Read(file, sha, shared);
+            var (model, lost, failed) = reader.Read(file, sha);
             if (failed != null)
             {
                 _rep.Note($"The asset bundle {sha[..12]} could not be read, so the model in it is not here ({failed}).");

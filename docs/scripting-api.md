@@ -3152,14 +3152,14 @@ An event: define this function and the table calls it.
 ### `on_state`
 
 ```lua
-on_state(old, new)
+on_state(old, new, old_guid)
 ```
 
 Its state changed, by anyone.
 
 An event: define this function and the table calls it.
 
-**Module call** `onObjectStateChange`
+**Module call** `onStateChange`
 
 ### `on_page`
 
@@ -3199,6 +3199,7 @@ An event: define this function and the table calls it.
 |---|---|---|
 | `old` | `number` | The state it left, from 1. |
 | `new` | `number` | The state it is in now, from 1. |
+| `old_guid` | `string` | The module GUID of the state it left, for a piece converted from a module; its own GUID otherwise. |
 
 ```lua
 function on_state(old, new)
@@ -3206,7 +3207,7 @@ function on_state(old, new)
 end
 ```
 
-What the script draws here belongs to the new state.
+What the script draws here belongs to the new state. A converted piece whose states are whole module objects changes as the module's game changes them: the leaving state's script saves (on_save) and ends (on_destroy), the arriving state wears its own name, notes, tags, lock and script, which loads (on_load), then on_spawn and on_state run.
 
 **Module call** `onObjectTriggerEffect` · **See also** [`self.set_state`](#selfset_state)
 
@@ -3350,7 +3351,7 @@ An event: define this function and the table calls it.
 ### `on_state` (global script)
 
 ```lua
-on_state(piece, old, new)
+on_state(piece, old, new, old_guid)
 ```
 
 A piece's state changed, by anyone.
@@ -3807,7 +3808,6 @@ The converter rewrites a module's scripts into these calls by rule; this is the 
 | `onObjectRandomize` | [`on_roll`](#on_roll-global-script) |
 | `onObjectRotate` | [`on_rotate`](#on_rotate-global-script) |
 | `onObjectSpawn` | [`on_spawn`](#on_spawn-global-script) |
-| `onObjectStateChange` | [`on_state`](#on_state) |
 | `onObjectStateChange` | [`on_state`](#on_state-global-script) |
 | `onObjectTriggerEffect` | [`on_burst`](#on_burst) |
 | `onObjectTriggerEffect` | [`on_burst`](#on_burst-global-script) |
@@ -3820,6 +3820,7 @@ The converter rewrites a module's scripts into these calls by rule; this is the 
 | `onSave` | [`on_save`](#on_save) |
 | `onScriptingButtonDown` | [`on_scripting_button_down`](#on_scripting_button_down-global-script) |
 | `onScriptingButtonUp` | [`on_scripting_button_up`](#on_scripting_button_up-global-script) |
+| `onStateChange` | [`on_state`](#on_state) |
 | `onUpdate` | [`on_update`](#on_update) |
 | `Physics.cast` | [`board.show_cast`](#boardshow_cast) |
 | `pick_up_position` | [`self.picked_up`](#selfpicked_up) |

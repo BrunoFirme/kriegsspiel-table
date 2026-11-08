@@ -1,4 +1,4 @@
-format 28
+format 29
 type AccessChanged object
   access: GameAccess
 type AddBoard object
@@ -458,6 +458,7 @@ type List<PartDef> list of PartDef
 type List<PeerInfo> list of PeerInfo
 type List<PieceDef> list of PieceDef
 type List<PieceInstance> list of PieceInstance
+type List<PieceLook> list of PieceLook
 type List<PieceStateDef> list of PieceStateDef
 type List<ScriptInfo> list of ScriptInfo
 type List<SheetDef> list of SheetDef
@@ -628,6 +629,7 @@ type PieceDef object
   effect: EffectDef
   faces: List<DieFace>
   finish: string
+  heightScale: double?
   holds: bool
   id: string
   image: string
@@ -683,6 +685,7 @@ type PieceInstance object
   lettering: Lettering
   lines: List<LineDef>
   locked: bool
+  looks: List<PieceLook>
   measuresMoves: bool
   memo: string
   menuItems: List<MenuItemDef>
@@ -718,10 +721,30 @@ type PieceInstance object
   worth: int
   worthGroups: int
   y: double
+type PieceLook object
+  gmNotes: string
+  guid: string
+  label: string
+  lines: List<LineDef>
+  locked: bool
+  measuresMoves: bool
+  memo: string
+  notBoxSelected: bool
+  notSticky: bool
+  note: string
+  script: string
+  scriptState: string
+  tags: List<string>
+  tintOverride: string
+  ui: List<UiNode>
+  uiAssets: List<UiAsset>
+  uiLayout: UiLayout
+  worth: int
 type PieceStateDef object
   back: string
   decals: List<DecalDef>
   image: string
+  kind: string
   mesh: string
   module: ModuleStateData
   name: string
@@ -1169,10 +1192,9 @@ type SetState object
   at: long
   id: string
   layer: string
-  script: string
+  leaving: string
   seq: long
   state: int
-  stateScripts: List<string>
   undoOf: long
 type SetTags object
   actor: long

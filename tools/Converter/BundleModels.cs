@@ -21,7 +21,7 @@ public sealed partial class BundleModels
             var path = Path.Combine(dir, "pack.json");
             if (!File.Exists(path)) continue;
             var pack = BestEffort.Read<PackManifest?>(() => Json.Load<PackManifest>(path), fallback: null);
-            if (pack == null) continue;
+            if (pack == null || pack.Id.StartsWith(ImportPlan.ConvertedPrefix, StringComparison.Ordinal)) continue;
             foreach (var piece in pack.Pieces)
             {
                 if (piece.Kind != "model" || piece.Mesh == null) continue;

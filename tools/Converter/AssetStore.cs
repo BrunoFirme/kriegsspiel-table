@@ -74,6 +74,7 @@ public sealed partial class AssetStore
 
     [GeneratedRegex(@"ugc/(\d+)/([0-9A-Fa-f]+)")] private static partial Regex UgcRx();
     [GeneratedRegex(@"[^A-Za-z0-9]")] private static partial Regex NonAlnum();
+    [GeneratedRegex(@"\{([A-Za-z]{2}(?:-[A-Za-z]{2})?)\}([^{]*)")] private static partial Regex LanguagePart();
 
     static string KeyFromStem(string stem)
     {
@@ -82,7 +83,18 @@ public sealed partial class AssetStore
         return stem;
     }
 
-    public static string Key(string url) => KeyFromStem(NonAlnum().Replace(url.Trim(), ""));
+    public static string Key(string url) => KeyFromStem(NonAlnum().Replace(Canonical(url), ""));
+
+    const string CacheMark = "{verifycache}", UniqueMark = "{Unique}", OldPastebin = "://pastebin.com/raw.php?i=", NewPastebin = "://pastebin.com/raw/", Spoken = "en";
+
+    public static string Canonical(string url)
+    {
+        var u = url.Trim();
+        if (u.StartsWith(CacheMark, StringComparison.OrdinalIgnoreCase)) u = u[CacheMark.Length..].Trim();
+        if (u.StartsWith('{') && LanguagePart().Matches(u) is { Count: > 0 } parts)
+            u = (parts.FirstOrDefault(p => p.Groups[1].Value.Equals(Spoken, StringComparison.OrdinalIgnoreCase)) ?? parts[0]).Groups[2].Value.Trim();
+        return u.Replace(UniqueMark, "", StringComparison.Ordinal).Replace(OldPastebin, NewPastebin, StringComparison.OrdinalIgnoreCase);
+    }
 
     public static bool IsSteam(string url) => UgcRx().IsMatch(url) && (url.Contains("steamusercontent") || url.Contains("steamuserimages"));
 
@@ -90,7 +102,7 @@ public sealed partial class AssetStore
     {
         var m = UgcRx().Match(url);
         if (m.Success && IsSteam(url)) return $"{_cfg.SteamHost.TrimEnd('/')}/ugc/{m.Groups[1].Value}/{m.Groups[2].Value}/";
-        var u = url.Trim();
+        var u = Canonical(url);
         return NeedsScheme(u) ? "http://" + u : u;
     }
 
@@ -151,7 +163,7 @@ public sealed partial class AssetStore
         if (b.Length >= 12 && b[0] == 'R' && b[1] == 'I' && b[2] == 'F' && b[3] == 'F' && b[8] == 'W' && b[9] == 'E' && b[10] == 'B' && b[11] == 'P') return "webp";
         if (b.Length >= 5 && Encoding.ASCII.GetString(b[..5]) == "%PDF-") return "pdf";
         if (b.Length >= 7 && Encoding.ASCII.GetString(b[..7]) is "UnityFS" or "UnityWe" or "UnityRa") return "unity3d";
-        if (b.Length >= 5 && Encoding.ASCII.GetString(b[..5]) == "<!DOC" || b.Length >= 5 && Encoding.ASCII.GetString(b[..5]).StartsWith("<html", StringComparison.OrdinalIgnoreCase)) return "html";
+        if (b.Length >= 5 && Encoding.ASCII.GetString(b[..5]) is var start && (start.Equals("<!DOC", StringComparison.OrdinalIgnoreCase) || start.StartsWith("<html", StringComparison.OrdinalIgnoreCase))) return "html";
         var head = Encoding.ASCII.GetString(b[..Math.Min(b.Length, 4096)]);
         if (Regex.IsMatch(head, @"(^|\n)\s*(v|vt|vn|f|o|g|mtllib|usemtl)\s", RegexOptions.None)) return "obj";
         return "bin";
@@ -328,14 +340,17 @@ public sealed partial class AssetStore
         return e is { Status: "ok" } ? e : null;
     }
 
-    public static bool IsPicture(string? ext) => ext is "png" or "jpg" or "webp" or "gif" or "bmp";
+    public static bool IsPicture(string? ext) => ext is "png" or "jpg" or "webp";
+
+    static bool Unread(string? ext) => ext is "gif" or "bmp";
 
     public string? Gone(string? url, string kind)
     {
         if (string.IsNullOrWhiteSpace(url)) return null;
         var e = TryLocal(url);
         if (e == null) return null;
-        if (e.Status == "ok") return kind == "image" && !IsPicture(e.Ext) ? $"not a picture ({e.Ext})" : null;
+        if (e.Status == "ok")
+            return kind != "image" || IsPicture(e.Ext) ? null : Unread(e.Ext) ? $"a {e.Ext!.ToUpperInvariant()} picture, which the digital tabletop does not read either" : $"not a picture ({e.Ext})";
         if (e.Status == "dead") return e.Error ?? "dead";
         return e.Error is { } why && (why.StartsWith("HTTP 404") || why.StartsWith("HTTP 410") || why.EndsWith(WebPage)) ? why : null;
     }

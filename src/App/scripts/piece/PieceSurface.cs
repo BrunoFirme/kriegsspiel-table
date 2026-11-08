@@ -10,14 +10,14 @@ namespace KTable.App;
 public partial class PieceNode : ITablePiece
 {
     System.Numerics.Vector2 ITablePiece.Footprint => new(Footprint.X, Footprint.Y);
-    bool ITablePiece.IsProp => Def?.Kind == "model";
+    bool ITablePiece.IsProp => ShowsModel;
     float? ITablePiece.SurfaceAt(Vec2 p) => SurfaceAt(Coords.ToWorld(p));
     float ITablePiece.SurfaceReach => SurfaceReaches.Of(this, _model);
 
     public float? SurfaceAt(Vector3 world)
     {
         if (IsEffect || Ghost) return null;
-        if (Def?.Kind == "model" && !IsDie && _model is { Mesh: { } mesh } model && IsInstanceValid(model) && model.IsInsideTree())
+        if (ShowsModel && !IsDie && _model is { Mesh: { } mesh } model && IsInstanceValid(model) && model.IsInsideTree())
         {
             var grid = MeshTops.Of(mesh);
             if (grid != null)
@@ -49,7 +49,7 @@ static class SurfaceReaches
     public static float Of(PieceNode n, MeshInstance3D? model)
     {
         if (n.IsEffect || n.Ghost) return 0;
-        if (n.Def?.Kind == "model" && !n.IsDie && model is { Mesh: { } mesh } && GodotObject.IsInstanceValid(model) && model.IsInsideTree() && MeshTops.Of(mesh) != null)
+        if (n.ShowsModel && !n.IsDie && model is { Mesh: { } mesh } && GodotObject.IsInstanceValid(model) && model.IsInsideTree() && MeshTops.Of(mesh) != null)
             return OfModel(model, mesh.GetAabb(), n.Piece.Pos);
         return Outline(n);
     }

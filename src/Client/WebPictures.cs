@@ -1,6 +1,8 @@
+using System.Text;
 using System.Net.Http;
 using System.Security.Cryptography;
 using KTable.Core;
+using KTable.Core.Model;
 using KTable.Core.Protocol;
 
 namespace KTable.Client;
@@ -26,19 +28,21 @@ public sealed class WebPictures(string packagesRoot, HttpClient? http = null)
 
     public Task<string?> Fetch(string url) => FetchAs(url, UploadAsset.WebPictures, Keep);
 
-    public Task<string?> FetchModel(string url) => FetchAs(url, UploadAsset.WebModels, KeepModel);
+    public Task<string?> FetchModel(string url) => FetchAs(url, UploadAsset.WebModels, KeepModel, PlacedModel);
 
-    async Task<string?> FetchAs(string url, string folder, Func<byte[], string?> keep)
+    const string PlacedModel = "placed ";
+
+    async Task<string?> FetchAs(string url, string folder, Func<byte[], string?> keep, string memo = "")
     {
         if (!Uri.TryCreate(url, UriKind.Absolute, out var uri) || uri.Scheme is not ("http" or "https")) return null;
-        if (Known(url) is { } had && had.StartsWith(folder + "/", StringComparison.Ordinal) && File.Exists(PathOf(had))) return had;
+        if (Known(memo + url) is { } had && had.StartsWith(folder + "/", StringComparison.Ordinal) && File.Exists(PathOf(had))) return had;
         try
         {
             using var resp = await (http ?? Shared).GetAsync(uri, HttpCompletionOption.ResponseHeadersRead);
             if (!resp.IsSuccessStatusCode || resp.Content.Headers.ContentLength > MostBytes) return null;
             await using var s = await resp.Content.ReadAsStreamAsync();
             if (await ReadAtMost(s) is not { } bytes || keep(bytes) is not { } name) return null;
-            Remember(url, name);
+            Remember(memo + url, name);
             return name;
         }
         catch (Exception e) when (e is HttpRequestException or TaskCanceledException or IOException or UnauthorizedAccessException) { return null; }
@@ -58,11 +62,12 @@ public sealed class WebPictures(string packagesRoot, HttpClient? http = null)
     public string? KeepModel(byte[] bytes)
     {
         if (bytes.Length > ContentLimits.MaxModelBytes || !LooksLikeObj(bytes)) return null;
-        var name = $"{UploadAsset.WebModels}/{Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant()}.obj";
+        var placed = new UTF8Encoding(false).GetBytes(ModuleMeshes.Placed(Encoding.UTF8.GetString(bytes).Split(LineBreak), 1));
+        var name = $"{UploadAsset.WebModels}/{Convert.ToHexString(SHA256.HashData(placed)).ToLowerInvariant()}.obj";
         var file = PathOf(name);
         if (File.Exists(file)) return name;
         Directory.CreateDirectory(Path.GetDirectoryName(file)!);
-        Json.WriteAtomic(file, bytes);
+        Json.WriteAtomic(file, placed);
         return name;
     }
 

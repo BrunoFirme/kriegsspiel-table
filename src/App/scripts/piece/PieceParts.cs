@@ -20,6 +20,8 @@ public partial class PieceNode
 
     double? ShownThickness(PieceDef? worn) => worn == null ? CurState?.Thickness : null;
 
+    public float PartsBelow => IsPart || Piece.FaceDown || ShownParts is not { Count: > 0 } shown ? 0 : (float)(Mathf.Max(0, -shown.Min(p => p.Y)) * Piece.Scale);
+
     void BuildParts()
     {
         _parts.Clear();

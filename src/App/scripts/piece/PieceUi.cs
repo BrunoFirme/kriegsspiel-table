@@ -200,7 +200,7 @@ sealed class PieceUi
             CullMode = BaseMaterial3D.CullModeEnum.Back, RenderPriority = 2, TextureFilter = BaseMaterial3D.TextureFilterEnum.LinearWithMipmaps,
         };
         var quad = new MeshInstance3D { Mesh = new PlaneMesh { Size = new Vector2(pw, ph) }, MaterialOverride = mat, CastShadow = GeometryInstance3D.ShadowCastingSetting.Off };
-        float faceY = (_piece.Def?.Kind == "model" && ModelTop > 0 ? ModelTop : _piece.Thickness) + Lift;
+        float faceY = (_piece.ShowsModel && ModelTop > 0 ? ModelTop : _piece.Thickness) + Lift;
         _plates[^1].FaceY = faceY;
         quad.Position = new Vector3(center.X * Thousandth, faceY, -center.Y * Thousandth);
         quad.RotationDegrees = new Vector3(0, turn, 0);

@@ -45,7 +45,7 @@ public sealed class WebPicturesTests : IDisposable
     }
 
     [Fact]
-    public async Task A_model_link_is_kept_by_its_hash_only_when_it_is_a_model_and_a_picture_link_stays_a_picture()
+    public async Task A_model_link_is_kept_turned_as_the_game_reads_a_model_by_its_hash_only_when_it_is_a_model_and_a_picture_link_stays_a_picture()
     {
         var obj = System.Text.Encoding.UTF8.GetBytes(string.Join('\n', "# box", "v 0 0 0", "v 1 0 0", "v 0 1 0", "f 1 2 3", ""));
         var web = new Web(u => u.AbsolutePath switch
@@ -59,7 +59,8 @@ public sealed class WebPicturesTests : IDisposable
         var name = await store.FetchModel("https://example.com/gun.obj");
         Assert.NotNull(name);
         Assert.True(UploadAsset.IsWebModel(UploadAsset.ReliefPackage, name));
-        Assert.Equal(obj, File.ReadAllBytes(store.PathOf(name)));
+        Assert.Equal(KTable.Core.Model.ModuleMeshes.Placed(System.Text.Encoding.UTF8.GetString(obj).Split('\n'), 1), File.ReadAllText(store.PathOf(name)));
+        Assert.Contains("v -1 0 0", File.ReadAllText(store.PathOf(name)));
         Assert.Null(await store.FetchModel("https://example.com/page.html"));
         Assert.Null(await store.FetchModel("https://example.com/arms.png"));
         Assert.Null(await store.FetchModel("https://example.com/gone.obj"));

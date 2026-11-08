@@ -85,6 +85,7 @@ public sealed class PackManifest : IJsonOnDeserialized, IJsonOnSerializing
 public sealed class PieceStateDef
 {
     public string Name { get; set; } = "";
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? Kind { get; set; }
     public string? Shape { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? Tint { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<List<Vec2>>? Outline { get; set; }
@@ -238,6 +239,7 @@ public sealed class PieceDef : IJsonOnDeserialized
     public string Tint { get; set; } = "#FFFFFF";
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool TintsPictures { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool Shadowless { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public double? HeightScale { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool Holds { get; set; }
     public List<string> Tags { get; set; } = new();
     public List<PieceStateDef> States { get; set; } = new();
@@ -253,6 +255,8 @@ public sealed class PieceDef : IJsonOnDeserialized
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public FaceBox? NameBox { get; set; }
     public string? Script { get; set; }
     public string? ScriptHash { get; set; }
+
+    public string? ScriptFor(PieceInstance p) => p.Script ?? (p.Looks != null && p.State >= 0 && p.State < States.Count ? States[p.State].Script : null) ?? Script;
     public string? ScriptState { get; set; }
     public EffectDef? Effect { get; set; }
 
@@ -415,7 +419,7 @@ public sealed class GameClock
     }
 }
 
-public sealed class PieceInstance
+public sealed class PieceInstance : IJsonOnDeserialized
 {
     public string Id { get; set; } = "";
     public string Def { get; set; } = "";
@@ -427,8 +431,21 @@ public sealed class PieceInstance
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? FacePicture { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool EffectOff { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public Lettering? Lettering { get; set; }
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<string>? StateGuids { get; set; }
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<string>? StateScripts { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<PieceLook>? Looks { get; set; }
+    [JsonPropertyName("stateGuids"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<string>? FormerLookGuids { get => null; set => _formerGuids = value; }
+    [JsonPropertyName("stateScripts"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<string>? FormerLookScripts { get => null; set => _formerScripts = value; }
+    List<string>? _formerGuids, _formerScripts;
+
+    void IJsonOnDeserialized.OnDeserialized()
+    {
+        if (Looks != null || (_formerGuids ?? _formerScripts) is not { } any) return;
+        Looks = any.Select((_, i) => new PieceLook
+        {
+            Guid = _formerGuids?.ElementAtOrDefault(i) is { Length: > 0 } g ? g : null, ScriptState = _formerScripts?.ElementAtOrDefault(i) ?? "",
+            Label = Label, Note = Note, Memo = Memo, Tags = Tags?.ToList(), Locked = Locked,
+        }).ToList();
+        _formerGuids = _formerScripts = null;
+    }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public int Worth { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public int WorthGroups { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<DieFace>? Faces { get; set; }
@@ -480,8 +497,7 @@ public sealed class PieceInstance
     public PieceInstance Clone() => new()
     {
         Id = Id, Def = Def, Pos = Pos, RotDeg = RotDeg, Stack = Stack, State = State, Face = Face, Faces = Faces?.Select(f => f.Clone()).ToList(),
-        Worth = Worth, WorthGroups = WorthGroups, FacePicture = FacePicture, EffectOff = EffectOff, Lettering = Lettering?.Clone(), StateGuids = StateGuids?.ToList(),
-        StateScripts = StateScripts?.ToList(),
+        Worth = Worth, WorthGroups = WorthGroups, FacePicture = FacePicture, EffectOff = EffectOff, Lettering = Lettering?.Clone(), Looks = Looks?.Select(l => l.Clone()).ToList(),
         Counters = new(Counters), Text = new(Text), Attached = new(Attached),
         TintOverride = TintOverride, Label = Label, Scale = Scale, Y = Y, FaceDown = FaceDown, TiltX = TiltX, TiltZ = TiltZ, Note = Note, Picture = Picture, Locked = Locked, Holds = Holds,
         NoCollision = NoCollision, PhysicalRoll = PhysicalRoll, NotSticky = NotSticky, NotBoxSelected = NotBoxSelected, MeasuresMoves = MeasuresMoves,

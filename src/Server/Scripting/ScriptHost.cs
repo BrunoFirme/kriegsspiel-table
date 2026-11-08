@@ -18,20 +18,6 @@ public sealed partial class ScriptHost
     public const int MaxRepLength = 16 * 1024 * 1024;
     public const long MaxCallMemory = 256L * 1024 * 1024;
 
-    sealed class Reaction
-    {
-        public long Actor;
-        public bool Action;
-        public readonly List<Command> Items = new();
-        public readonly List<Command?> Inverses = new();
-        public readonly HashSet<string> Spawned = new();
-        public readonly HashSet<string> WidgetsDirty = new();
-        public readonly HashSet<string> MenusDirty = new();
-        public bool HotkeysDirty, GlobalMenuDirty;
-        public readonly HashSet<PieceScript> Ran = new();
-        public bool GlobalRan;
-    }
-
     readonly GameServer _s;
     readonly Script _vm;
     readonly Dictionary<string, PieceScript> _pieces = new();
@@ -46,7 +32,7 @@ public sealed partial class ScriptHost
     ScriptGuards _guards = null!;
     CompiledScripts? _compiledScripts;
     CompiledScripts Compiled => _compiledScripts ??= new CompiledScripts(_vm);
-    Reaction? _reaction;
+    ScriptReaction? _reaction;
     PieceScript? _current;
     int _depth;
 
@@ -339,7 +325,7 @@ public sealed partial class ScriptHost
         if (menu && _reaction != null) _reaction.GlobalMenuDirty = true;
     }
 
-    string? CodeFor(PieceInstance p) => p.Script ?? _s.Store?.Def(p.Def)?.Script;
+    string? CodeFor(PieceInstance p) => _s.Store?.Def(p.Def) is { } d ? d.ScriptFor(p) : p.Script;
 
     void LoadPiece(PieceInstance p)
     {
@@ -646,17 +632,31 @@ public sealed partial class ScriptHost
     List<Outgoing> Run(long actor, bool action, Action body)
     {
         if (_reaction != null) { body(); return new(); }
-        _reaction = new Reaction { Actor = actor, Action = action };
-        Reaction r;
+        _reaction = new ScriptReaction { Actor = actor, Action = action };
+        ScriptReaction r;
         try
         {
             Guard("", body);
+            Arrive();
             Guard("", Panels.Flush);
             Guard("", SaveReacted);
             FlushStaging();
         }
         finally { r = _reaction; _reaction = null; }
         return Close(r);
+    }
+
+    void Arrive()
+    {
+        var r = _reaction!;
+        while (r.Arriving.Count > 0)
+        {
+            var id = r.Arriving[0];
+            r.Arriving.RemoveAt(0);
+            if (Find(id) is not { } p) continue;
+            Guard(id, () => LoadPiece(p));
+            Guard("", () => _every.Tell("on_spawn", Handle(id)));
+        }
     }
 
     const int ReactionSaves = 8;
@@ -685,7 +685,7 @@ public sealed partial class ScriptHost
         }
     }
 
-    List<Outgoing> Close(Reaction r)
+    List<Outgoing> Close(ScriptReaction r)
     {
         if (r.Items.Count == 0) return new();
         if (r.Items.Count == 1) return _s.Commit(r.Items[0], r.Inverses[0]);
@@ -697,7 +697,7 @@ public sealed partial class ScriptHost
     internal void Emit(Command c)
     {
         var r = _reaction ?? throw new ScriptRuntimeException("not inside a script call");
-        if ((c is DeletePiece d && Find(d.Id) != null || c is SetState { Script: null }) && _depth < MaxDepth)
+        if ((c is DeletePiece d && Find(d.Id) != null || c is SetState { Leaving: null }) && _depth < MaxDepth)
         {
             _depth++;
             try { Before(c); } finally { _depth--; }
@@ -749,7 +749,7 @@ public sealed partial class ScriptHost
     {
         if (c is Stow sw) return HasGlobal(StowHook) ? Refusal(actor, res, StowHook, $"the game's script keeps {sw.Id} out of {sw.Holder}", Handle(sw.Holder), Handle(sw.Id)) : null;
         if (!_every.Listens(PlayerActionHook)) return null;
-        var (action, ids) = PlayerActionOf(c);
+        var (action, ids) = PlayerActions.Of(c);
         if (action == null || ids.Count == 0) return null;
         var targets = new Table(Vm);
         for (int i = 0; i < ids.Count; i++) targets[i + 1] = Handle(ids[i]);
@@ -766,15 +766,6 @@ public sealed partial class ScriptHost
         return refused;
     }
 
-    static (string? Action, List<string> Ids) PlayerActionOf(Command c) => c switch
-    {
-        DeletePiece d => ("delete", [d.Id]),
-        FlipPiece f => ("flip", [f.Id]),
-        Batch b when b.Items.Count > 0 && b.Items.All(i => i is DeletePiece) => ("delete", b.Items.Cast<DeletePiece>().Select(d => d.Id).ToList()),
-        Batch b when b.Items.Count > 0 && b.Items.All(i => i is FlipPiece) => ("flip", b.Items.Cast<FlipPiece>().Select(f => f.Id).ToList()),
-        _ => (null, []),
-    };
-
     void Before(Command c)
     {
         switch (c)
@@ -786,33 +777,46 @@ public sealed partial class ScriptHost
                 if (_pieces.TryGetValue(d.Id, out var ps)) Call(ps, "on_destroy");
                 _every.Tell("on_destroy", Handle(d.Id));
                 break;
-            case SetState { Script: null } st when Find(st.Id) is { } sp:
-                ModuleLooks.Swap(st, sp, _s.Store?.Def(sp.Def), CodeFor(sp), p => _pieces.TryGetValue(p.Id, out var ps) && Call(ps, "on_save") is { Type: DataType.String } v ? v.String : p.ScriptState);
+            case SetState { Leaving: null } st when Find(st.Id) is { Looks: { } looks } sp && st.State != sp.State && st.State >= 0 && st.State < looks.Count:
+                LeaveLook(st, sp);
                 break;
         }
     }
 
-    public List<Outgoing> AfterApplied(Command c, long actor, bool undo) => Run(actor, IsAction(c), () =>
+    public List<Outgoing> AfterApplied(Command c, long actor, bool undo) => Run(actor, PlayerActions.IsAction(c), () =>
     {
         if (undo) { ReloadTouched(c); return; }
         React(c, actor);
     });
 
-    static bool IsAction(Command c) => c is ClickWidget or EditWidget or PickMenuItem or UiEvent or DialogResult or Hotkey or PickGlobalMenuItem || (c is Batch b && b.Items.Any(IsAction));
-
     internal readonly Dictionary<string, (Vec2 Pos, double Rot, double Y)> PickedUp = new();
+
+    void LeaveLook(SetState st, PieceInstance p)
+    {
+        bool running = _pieces.TryGetValue(p.Id, out var ps);
+        st.Leaving = running && Call(ps!, "on_save") is { Type: DataType.String } v ? v.String : p.ScriptState;
+        if (running) Call(ps!, "on_destroy");
+        _every.Tell("on_destroy", Handle(p.Id));
+    }
 
     void ReactToState(SetState st)
     {
-        var (old, now) = (DynValue.NewNumber(OldState(st) + 1), DynValue.NewNumber(st.State + 1));
-        bool book = Find(st.Id) is { } p && _s.Store?.Def(p.Def)?.Tags.Contains("book") == true;
-        if (st.Script != null && Find(st.Id) is { } swapped) LoadPiece(swapped);
+        int from = _s.LastInverse is SetState inv && inv.Id == st.Id ? inv.State : st.State;
+        var (old, now) = (DynValue.NewNumber(from + 1), DynValue.NewNumber(st.State + 1));
+        var p = Find(st.Id);
+        bool book = p != null && _s.Store?.Def(p.Def)?.Tags.Contains("book") == true;
+        var oldGuid = DynValue.NewString(p?.Looks?.ElementAtOrDefault(from)?.Guid ?? p?.Guid ?? "");
+        if (p is { Looks: not null } && from != st.State)
+        {
+            LoadPiece(p);
+            _every.Tell("on_spawn", Handle(st.Id));
+        }
         if (_pieces.TryGetValue(st.Id, out var pst))
         {
-            Call(pst, "on_state", old, now);
+            Call(pst, "on_state", old, now, oldGuid);
             if (book) Call(pst, "on_page");
         }
-        _every.Tell("on_state", Handle(st.Id), old, now);
+        _every.Tell("on_state", Handle(st.Id), old, now, oldGuid);
         if (book) _every.Tell("on_page", Handle(st.Id));
     }
 
@@ -892,6 +896,8 @@ public sealed partial class ScriptHost
             case SetGlobalScript:
                 ReloadGlobal();
                 break;
+            case SetScript ss when _reaction?.Arriving.Contains(ss.Id) == true:
+                break;
             case SetScript ss:
                 if (Find(ss.Id) is { } p1) LoadPiece(p1);
                 else Unload(ss.Id, pieceGone: true);
@@ -900,7 +906,8 @@ public sealed partial class ScriptHost
                 LoadPiece(pd);
                 break;
             case SpawnPiece sp when sp.Id != null:
-                if (Find(sp.Id) is { } p2) { LoadPiece(p2); _every.Tell("on_spawn", Handle(sp.Id)); }
+                if (_depth > 0 && _reaction != null) _reaction.Arriving.Add(sp.Id);
+                else if (Find(sp.Id) is { } p2) { LoadPiece(p2); _every.Tell("on_spawn", Handle(sp.Id)); }
                 break;
             case RestorePiece rp:
                 if (Find(rp.Piece.Id) is { } p3) { LoadPiece(p3); _every.Tell("on_spawn", Handle(rp.Piece.Id)); }
@@ -1010,11 +1017,6 @@ public sealed partial class ScriptHost
             if (Find(id) is not { } p) { Unload(id, pieceGone: true); continue; }
             if (_pieces.ContainsKey(id) || !string.IsNullOrWhiteSpace(CodeFor(p))) LoadPiece(p);
         }
-    }
-
-    int OldState(SetState st)
-    {
-        return _s.LastInverse is SetState inv && inv.Id == st.Id ? inv.State : st.State;
     }
 
     internal PieceInstance? Find(string id) => _s.State.Find(Layers.Umpire, id);

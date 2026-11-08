@@ -25,6 +25,9 @@ public sealed class ModuleObj
 
     public bool IsStack => J[StackMark] != null;
 
+    public const string GluedMark = "glued";
+    public bool IsGlued => J[GluedMark] != null;
+
     public string Name => S(J["Name"]) ?? "";
     public string Nickname => RawNickname.Trim();
     public string RawNickname => S(J["Nickname"]) ?? "";
@@ -91,7 +94,7 @@ public sealed class ModuleObj
     public bool MirroredBack => CI?["CustomFigurine"] is JsonObject fig && ModuleValues.Flag(fig["MirroredBack"], false);
     JsonObject? Tile => CI?["CustomTile"] as JsonObject;
     JsonObject? Token => CI?["CustomToken"] as JsonObject;
-    const double PrefabThickness = 0.2, PrefabMergeDistance = 15;
+    public const double PrefabThickness = 0.2, PrefabMergeDistance = 15;
     public int TileType => Tile is { } t ? ModuleValues.Whole(t["Type"], 0) : 0;
     public bool TileStretch => Tile is not { } t || ModuleValues.Flag(t["Stretch"], false);
     public double WidthScale => ModuleValues.Finite(CI?["WidthScale"], 0);
@@ -104,7 +107,7 @@ public sealed class ModuleObj
     };
     public double MergeDistance => Token is { } k ? ModuleValues.Finite(k["MergeDistancePixels"], 0) : PrefabMergeDistance;
     public bool StandsUp => Token is { } k && ModuleValues.Flag(k["StandUp"], false);
-    public bool HeightLocked => Name is "Custom_Tile" or "Custom_PDF" or "Card" or "CardCustom" or "Deck" or "DeckCustom";
+    public bool HeightLocked => !IsGlued && Name is "Custom_Tile" or "Custom_PDF" or "Card" or "CardCustom" or "Deck" or "DeckCustom";
 
     JsonObject? CM => J["CustomMesh"] as JsonObject;
     public string? MeshUrl => Blank(S(CM?["MeshURL"]));

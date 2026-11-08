@@ -27,10 +27,11 @@ public sealed class GluedParts(DefFactory defs, Report rep, double tokenArea)
     {
         var parts = new List<PartDef>();
         double sx = Math.Abs(s.ScaleX) < DefFactory.NoScale ? 1 : Math.Abs(s.ScaleX), sy = Math.Abs(s.ScaleY), depth = Math.Abs(s.ScaleZ) / sx;
+        var frame = s.IsGlued ? PrefabRoots.Root.One : PrefabRoots.Of(s.Name);
         foreach (var glued in Family(s.Children))
         {
-            var c = Within(glued, m);
-            if (IsGluedEffect(defs, c)) continue;
+            var c = InFrame(Within(glued, m), frame, depth);
+            if (IsGluedEffect(defs, c)) { rep.Note($"{where}: the glued effect '{c.Nickname}' is left out; place one of Firme's effects on the piece instead"); continue; }
             if (!defs.Shows(c)) { rep.Skipped("glued " + c.Name, where); continue; }
             if (DefFactory.NotTranslated(c) is { } why) { rep.Skipped(why, where); continue; }
             var cr = defs.DefFor(c, pack, Math.Abs(c.StateList().states[0].ScaleX) * unit, heightScale * sy, glued: true);
@@ -81,6 +82,36 @@ public sealed class GluedParts(DefFactory defs, Report rep, double tokenArea)
         return new ModuleObj(j);
     }
 
+    static ModuleObj InFrame(ModuleObj c, PrefabRoots.Root parent, double depth)
+    {
+        if (c.J.DeepClone() is not JsonObject j) return c;
+        Glue(j, parent, depth);
+        if (j["States"] is JsonObject states)
+            foreach (var (_, look) in states)
+                if (look is JsonObject l) Glue(l, parent, depth);
+        return new ModuleObj(j);
+    }
+
+    static void Glue(JsonObject j, PrefabRoots.Root parent, double depth)
+    {
+        j[ModuleObj.GluedMark] = true;
+        if (j["Transform"] is not JsonObject t) return;
+        double N(string k, double fallback) => ModuleValues.Number(t[k], fallback);
+        var own = PrefabRoots.InSizesOf(ModuleValues.Text(j["Name"]) ?? "");
+        bool across = Across(N("rotY", 0));
+        var p = across ? parent.Across : parent;
+        double stretchX = across ? depth : 1, stretchZ = across ? 1 : depth;
+        (t["posX"], t["posY"], t["posZ"]) = (N("posX", 0) * parent.X, N("posY", 0) * parent.Y, N("posZ", 0) * parent.Z);
+        (t["scaleX"], t["scaleY"], t["scaleZ"]) = (N("scaleX", 1) * p.X * stretchX / own.X, N("scaleY", 1) * p.Y / own.Y, N("scaleZ", 1) * p.Z * stretchZ / own.Z);
+    }
+
+    static bool Across(double yaw)
+    {
+        const double Quarter = 90, Within = 30;
+        double a = ((yaw % 180) + 180) % 180;
+        return Math.Abs(a - Quarter) < Within;
+    }
+
     static ModuleObj Within(ModuleObj c, Mirror m)
     {
         if (!m.Any || c.J.DeepClone() is not JsonObject j || j["Transform"] is not JsonObject t) return c;
@@ -125,7 +156,9 @@ public sealed class GluedParts(DefFactory defs, Report rep, double tokenArea)
     public (double Low, double High) Span(ModuleObj o)
     {
         double low = defs.LocalFloor(o), high = low + defs.BaseThickness(o);
-        foreach (var c in o.Children.Where(c => !IsGluedEffect(defs, c) && defs.Shows(c)))
+        var frame = o.IsGlued ? PrefabRoots.Root.One : PrefabRoots.Of(o.Name);
+        double sx = Math.Abs(o.ScaleX) < DefFactory.NoScale ? 1 : Math.Abs(o.ScaleX);
+        foreach (var c in o.Children.Where(c => !IsGluedEffect(defs, c) && defs.Shows(c)).Select(c => InFrame(c, frame, Math.Abs(o.ScaleZ) / sx)))
         {
             var (cl, ch) = Span(c);
             double sy = Math.Abs(c.ScaleY);

@@ -509,7 +509,7 @@ function compat.select(obj, color, on)
 end
 function compat.clone(obj, p)
   p = p or {}
-  return compat.spawn_object_data({ data = compat.get_data(obj), position = p.position or compat.position(obj), rotation = p.rotation or compat.rotation(obj), callback_function = p.callback_function })
+  return compat.spawn_object_data({ data = compat.get_data(obj), position = p.position or compat.Vector(0, 3, 0), rotation = p.rotation or compat.rotation(obj), callback_function = p.callback_function })
 end
 
 local books = {}
@@ -768,10 +768,10 @@ local function bind(h, def)
   return piece
 end
 
-function compat.spawn_object(p)
+function compat.spawn_object(p, stock)
   p = p or {}
   local h = setmetatable({ __params = p, __queue = {} }, Pending)
-  if p.def then bind(h, p.def) end
+  if p.def or stock then bind(h, p.def or stock) end
   return h
 end
 

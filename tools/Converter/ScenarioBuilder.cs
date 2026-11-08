@@ -348,9 +348,10 @@ public sealed partial class ScenarioBuilder
 
     static void PruneExtras(PackOut extras, List<Layer> layers, Scenario scenario)
     {
-        var pieces = layers.SelectMany(l => l.Pieces).ToList();
-        var texts = pieces.SelectMany(p => new[] { p.Script, p.ScriptState, p.Memo }).Append(scenario.Script).Append(scenario.ScriptState)
-            .OfType<string>().Where(t => t.Length > 0).ToHashSet();
+        var pieces = layers.SelectMany(l => l.Pieces).SelectMany(p => p.AllStowed().Prepend(p)).ToList();
+        var looks = pieces.SelectMany(p => p.Looks ?? []).ToList();
+        var texts = pieces.SelectMany(p => new[] { p.Script, p.ScriptState, p.Memo }).Concat(looks.SelectMany(l => new[] { l.Script, l.ScriptState, l.Memo }))
+            .Append(scenario.Script).Append(scenario.ScriptState).OfType<string>().Where(t => t.Length > 0).ToHashSet();
         var referenced = pieces.Select(p => p.Def).ToHashSet();
         bool grew = true;
         while (grew)
@@ -370,6 +371,7 @@ public sealed partial class ScenarioBuilder
         usedAssets.UnionWith(pieces.SelectMany(p => p.Decals).Select(d => d.Picture));
         usedAssets.UnionWith(scenario.Decals.Values.SelectMany(l => l).Select(d => d.Picture).Concat(scenario.DecalPalette.Select(d => d.Picture)));
         usedAssets.UnionWith(PanelAssets(scenario, pieces));
+        usedAssets.UnionWith(looks.SelectMany(l => l.UiAssets ?? []).Select(a => a.Url));
         usedAssets.UnionWith(extras.M.Assets.Keys.Where(k => !usedAssets.Contains(k) && texts.Any(t => t.Contains(k, StringComparison.Ordinal))));
         foreach (var k in extras.M.Assets.Keys.Where(k => !usedAssets.Contains(k)).ToList()) extras.M.Assets.Remove(k);
         extras.Save();
@@ -564,7 +566,6 @@ public sealed partial class ScenarioBuilder
             UiLayout = uiLayout, UiAssets = uiAssets,
             Worth = o.Worth,
             Lettering = r.Lettering,
-            StateGuids = StateGuidsOf(o, def),
         };
         if (lua.Trim().Length > 0 || o.LuaState.Length > 0)
             inst.ScriptState = _defs.RewriteUrls(o.LuaState, extras, $"{layer.Name} {o.Name} '{o.Nickname}' {o.Guid} script state");
@@ -577,6 +578,7 @@ public sealed partial class ScenarioBuilder
             }
         }
         Dress(inst, o, def, r, extras, layer.Name);
+        inst.Looks = LooksOf(o, inst, def, extras, layer.Name, parent);
         layer.Pieces.Add(inst);
         layer.Y[inst] = o.PosY;
         var (low, high) = _defs.Glued.Span(o);
@@ -777,14 +779,6 @@ public sealed partial class ScenarioBuilder
         _rep.Counts[$"{_cfg.Scenario.Id}: notes laid beside the map"] = notes.Count.ToString();
     }
 
-    static List<string>? StateGuidsOf(ModuleObj o, PieceDef def)
-    {
-        var (states, _) = o.StateList();
-        if (states.Count < 2 || states.Count != def.States.Count) return null;
-        var guids = states.Select(s => s.Guid).ToList();
-        return guids.All(g => g.Length > 0) && guids.Distinct().Count() == guids.Count ? guids : null;
-    }
-
     void StackCopies(ModuleObj o, PieceInstance inst, Layer layer)
     {
         double each = _defs.BaseThickness(o) * Math.Abs(o.ScaleY);
@@ -793,7 +787,7 @@ public sealed partial class ScenarioBuilder
             var copy = inst.Clone();
             copy.Id = $"p-{_nextId++:D6}";
             copy.Guid = null;
-            copy.StateGuids = null;
+            foreach (var look in copy.Looks ?? []) look.Guid = null;
             copy.Script = null;
             copy.ScriptState = "";
             layer.Pieces.Add(copy);

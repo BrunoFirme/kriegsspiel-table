@@ -206,16 +206,10 @@ public static partial class StateMachine
     {
         var p = g.Find(st.Layer, st.Id);
         if (p == null) return "no such piece";
-        inverse = st.Script == null ? new SetState { Layer = st.Layer, Id = st.Id, State = p.State }
-            : new SetState { Layer = st.Layer, Id = st.Id, State = p.State, Script = p.ScriptState, StateScripts = p.StateScripts?.ToList() };
-        if (Math.Max(0, st.State) != p.State) p.BookHighlight = null;
-        p.State = Math.Max(0, st.State);
-        if (st.Script != null)
-        {
-            p.ScriptState = st.Script;
-            p.StateScripts = st.StateScripts?.ToList();
-        }
-        if (p.StateGuids is { } guids && p.State < guids.Count && guids[p.State].Length > 0) p.Guid = guids[p.State];
+        inverse = new SetState { Layer = st.Layer, Id = st.Id, State = p.State };
+        int to = Math.Max(0, st.State);
+        if (to != p.State) p.BookHighlight = null;
+        if (!PieceLook.Swap(p, to, st.Leaving)) p.State = to;
         return null;
     }
 

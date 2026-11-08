@@ -27,8 +27,6 @@ public sealed class PackOut
     public void Save() => Json.Save(Path.Combine(Dir, "pack.json"), M);
 }
 
-public sealed record SpawnSpec(string Type, double Scale, string ImageUrl, string Name);
-
 public sealed record DefResult(PieceDef Def, PackOut Pack, double Scale, int State, ModuleObj Base)
 {
     public string? FromPack { get; init; }
@@ -143,14 +141,11 @@ public sealed partial class DefFactory
         if (e == null || e.Ext != "obj") return null;
         if (_meshBounds.TryGetValue(e.Sha!, out var b)) return b;
         double minX = double.MaxValue, minY = double.MaxValue, minZ = double.MaxValue, maxX = double.MinValue, maxY = double.MinValue, maxZ = double.MinValue;
-        foreach (var line in File.ReadLines(_assets.FilePath(e)!))
+        var (verts, used) = MeshVertices(File.ReadLines(_assets.FilePath(e)!));
+        for (int i = 0; i < verts.Count; i++)
         {
-            if (line.Length < 2 || line[0] != 'v' || line[1] != ' ') continue;
-            var p = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-            if (p.Length < 4) continue;
-            if (!double.TryParse(p[1], NumberStyles.Float, CultureInfo.InvariantCulture, out var x) ||
-                !double.TryParse(p[2], NumberStyles.Float, CultureInfo.InvariantCulture, out var y) ||
-                !double.TryParse(p[3], NumberStyles.Float, CultureInfo.InvariantCulture, out var z)) continue;
+            if (used.Count > 0 && !used.Contains(i)) continue;
+            var (x, y, z) = verts[i];
             minX = Math.Min(minX, x);
             maxX = Math.Max(maxX, x);
             minY = Math.Min(minY, y);
@@ -166,10 +161,26 @@ public sealed partial class DefFactory
 
     readonly Dictionary<string, double> _meshFloor = new();
 
+    internal static (List<(double X, double Y, double Z)> Verts, HashSet<int> Used) MeshVertices(IEnumerable<string> lines)
+    {
+        var verts = new List<(double, double, double)>();
+        var used = new HashSet<int>();
+        static bool Num(string t, out double v) => double.TryParse(t, NumberStyles.Float, CultureInfo.InvariantCulture, out v);
+        foreach (var line in lines)
+        {
+            var p = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            if (p.Length >= 4 && p[0] == "v" && Num(p[1], out var x) && Num(p[2], out var y) && Num(p[3], out var z)) verts.Add((x, y, z));
+            else if (p.Length >= 4 && p[0] == "f")
+                foreach (var corner in p.Skip(1))
+                    if (int.TryParse(corner.Split('/')[0], out var at) && at != 0) used.Add(at > 0 ? at - 1 : verts.Count + at);
+        }
+        return (verts, used);
+    }
+
     public double LocalFloor(ModuleObj o) =>
-        IsModel(o) && MeshBounds(o.MeshUrl) != null && Entry(o.MeshUrl) is { Sha: { } sha }
-            ? _meshFloor[sha]
-            : -BaseThickness(o) / 2;
+        IsModel(o) && MeshBounds(o.MeshUrl) != null && Entry(o.MeshUrl) is { Sha: { } sha } ? _meshFloor[sha]
+        : ModelOfBundle(o) is { Def.ModuleOrigin: { } origin } ? -origin
+        : -BaseThickness(o) / 2;
 
     public double Bottom(ModuleObj o) => o.PosY + LocalFloor(o) * Math.Abs(o.ScaleY);
 
@@ -236,6 +247,7 @@ public sealed partial class DefFactory
         "Custom_Tile" or "Custom_Token" => o.Thickness,
         "Custom_PDF" => BookThickness,
         "Custom_Model" or "Custom_Model_Bag" => (MeshBounds(o.MeshUrl)?.ey ?? 0.2),
+        "Custom_Assetbundle" when ModelOfBundle(o) is { } figure => figure.Def.Thickness,
         "BlockSquare" or "BlockRectangle" => _cfg.BaseSizes.BlockSquare,
         TriangleBlock => TriangleRise * _cfg.BaseSizes.BlockSquare,
         "Card" or "CardCustom" => CardThickness,
@@ -271,6 +283,22 @@ public sealed partial class DefFactory
         var pdf = b.PdfUrl is { } url ? $"|pdf:{Entry(url)?.Sha ?? url}" : "";
         return $"{b.Name}|{Entry(b.ImageUrl)?.Sha ?? b.ImageUrl}|{Entry(b.BackUrl)?.Sha ?? b.BackUrl}|{Entry(b.MeshUrl)?.Sha ?? b.MeshUrl}|{Entry(b.DiffuseUrl)?.Sha ?? b.DiffuseUrl}|{(b.Name.StartsWith("Block") ? Rgb(b.Color) : "")}{TableVisualKey(b)}{pdf}";
     }
+
+    public PieceStateDef? OwnLook(ModuleObj s, PackOut pack, double baseScale, string where, double heightScale)
+    {
+        double k = Math.Abs(s.ScaleX) < NoScale ? 1 : Math.Abs(s.ScaleX) / baseScale;
+        if (!Shows(s) || BuildDef(s, pack, k, where, heightScale) is not { } d) return null;
+        return new PieceStateDef
+        {
+            Name = s.Nickname.Length > 0 ? s.Nickname : d.Name, Kind = d.Kind, Shape = d.Shape, Image = d.Image, Back = d.Back, Mesh = d.Mesh, Texture = d.Texture,
+            Outline = d.Outline, Size = d.Size, Thickness = d.Kind == "model" ? d.Thickness : Math.Round(d.Thickness / baseScale, 3), Tint = d.Tint,
+        };
+    }
+
+    string StretchKey(ModuleObj b) => IsModel(b) && Stretch(b) is var k && k != 1 ? string.Create(CultureInfo.InvariantCulture, $"|y{k:0.###}") : "";
+
+    string LooksKey(List<ModuleObj> states) => states.Count < 2 ? ""
+        : "|lk" + Hash8(string.Join(";", states.Select(s => string.Create(CultureInfo.InvariantCulture, $"{VisualKey(s)}|{Math.Abs(s.ScaleX):0.####}|{Hash8(s.SafeLua)}"))));
 
     public const double BookThickness = 0.2, BookSpan = 4;
 
@@ -340,7 +368,7 @@ public sealed partial class DefFactory
         double bs = Math.Abs(b.ScaleX) < NoScale ? 1 : Math.Abs(b.ScaleX);
         double r = refScale is > NoScale ? refScale.Value : bs;
         double instScale = Math.Round(bs / r, 4);
-        if (StandardDef(o, b, pack, bs, instScale) is { } standard) return Carried.Of(o, states, self, Shared.Of(o, standard, pack), pack, bs, heightScale);
+        if (StandardDef(o, b, pack, bs, instScale) is { } standard) return Carried.Of(o, states, self, Shared.Shaped(b, Shared.Of(o, standard, pack), pack), pack, bs, heightScale);
         if (o.Name == TilesetTree) return null;
         var where = $"{Context} {o.Name} '{o.Nickname}' {o.Guid}";
 
@@ -372,9 +400,13 @@ public sealed partial class DefFactory
                 var stShape = PackManifest.ShapeOf(s.Name, s.TileType);
                 if (stShape != def.Shape) sd.Shape = stShape;
                 if (IsModel(s)) { sd.Mesh = ModelMesh(pack, s, where); sd.Texture = Asset(pack, s.DiffuseUrl, "image", where); }
+                else if (s.Name.StartsWith("Block")) sd.Image = WhiteSquare(pack);
                 else { sd.Image = Asset(pack, s.ImageUrl, "image", where); sd.Back = s.Name == "Custom_Token" ? null : Asset(pack, s.BackUrl, "image", where); }
+                if (IsModel(s) != IsModel(b)) sd.Kind = IsModel(s) ? "model" : "flat";
+                double lookThick = Math.Round(Math.Clamp(BaseThickness(s) * Math.Abs(s.ScaleY) * (IsModel(s) ? r / bs : heightScale), 0.02, 3), 3);
+                if (Math.Abs(lookThick - def.Thickness) > 0.001) sd.Thickness = lookThick;
                 if (s.Name == "Custom_Token") sd.Outline = Outlines.Of(s.ImageUrl, s.MergeDistance);
-                if (s.Lua.Trim().Length > 0 && !ReferenceEquals(s, states[0])) { sd.Script = s.Lua; _rep.Note($"{where}: the state \"{sd.Name}\" carries a script of its own (kept, not run)"); }
+                sd.Script = glued || s.SafeLua.Trim().Length == 0 ? "" : Translate(s.SafeLua, pack, $"{where} state \"{sd.Name}\"").Script;
                 if (s.TransformNotANumber) _rep.Note($"{where}: the module scales the state \"{sd.Name}\" by something that is not a number; it takes the piece's own size");
                 if (Math.Abs(sz.W - def.Size.W) > 0.01 * def.Size.W || Math.Abs(sz.H - def.Size.H) > 0.01 * def.Size.H) sd.Size = sz;
                 def.States.Add(sd);
@@ -397,11 +429,11 @@ public sealed partial class DefFactory
         var decalKey = def.States.Any(s => s.Decals is { Count: > 0 })
             ? "|d" + Hash8(string.Join(";", def.States.Select(s => string.Join(",", (s.Decals ?? new()).Select(d => d.Picture)))))
             : "";
-        var gluedKey = heightScale == 1 || IsModel(b) ? "" :string.Create(CultureInfo.InvariantCulture, $"|t{def.Thickness:0.###}");
+        var gluedKey = (heightScale == 1 && !b.IsGlued) || IsModel(b) ? "" : string.Create(CultureInfo.InvariantCulture, $"|t{def.Thickness:0.###}");
         var facesKey = !RollsOnItsValues(o) ? "" : "|f" + Hash8(string.Join(";", def.Faces.Select(f => string.Create(CultureInfo.InvariantCulture, $"{f.Value}@{f.Up[0]},{f.Up[1]},{f.Up[2]}"))));
         var surfaceKey = (def.Shadowless ? "|ns" : "") + (def.Normal is { } normal ? "|n" + normal : "") + TokenOutlines.MergeKey(o) + (b.StandsUp ? "|up" : "");
         var lookTints = def.States.Any(s => s.Tint != null) ? "|lt" + Hash8(string.Join(",", def.States.Select(s => s.Tint ?? ""))) : "";
-        var key = string.Create(CultureInfo.InvariantCulture, $"{VisualKey(o)}|{def.Size.W:0.###}x{def.Size.H:0.###}{scriptKey}{decalKey}{gluedKey}{facesKey}{surfaceKey}{mirror.Key}{PartsKey(def)}{lookTints}");
+        var key = string.Create(CultureInfo.InvariantCulture, $"{VisualKey(o)}|{def.Size.W:0.###}x{def.Size.H:0.###}{scriptKey}{decalKey}{gluedKey}{facesKey}{surfaceKey}{mirror.Key}{PartsKey(def)}{lookTints}{LooksKey(states)}{StretchKey(b)}");
         int rich = def.States.Count * 100 + def.Counters.Count * 10 + def.TextLines.Count + (def.Parts?.Count ?? 0) * 1000 + (def.Script != null ? 5000 : 0);
         if (pack.ByKey.TryGetValue(key, out var existing))
         {
@@ -435,8 +467,7 @@ public sealed partial class DefFactory
         var tr = ModuleTranslator.Translate(lua, new TranslateContext
         {
             IsGlobal = isGlobal,
-            ResolveImage = (url, type, scale) => MarkerDef(pack, new SpawnSpec(type, scale, url, "Marker"), where)?.Id,
-            ResolveModel = (mesh, diffuse, sx, sy) => MarkerModelDef(pack, mesh, diffuse, sx, sy, where)?.Id,
+            ResolveLook = look => SpawnedKind(pack, look, where)?.Id,
             ResolveAsset = url => UiAsset(pack, url, where),
         });
         _rep.ScriptTranslated(tr, where);
@@ -485,6 +516,7 @@ public sealed partial class DefFactory
         else if (IsModel(b))
         {
             def.Kind = "model";
+            def.HeightScale = 1;
             def.Mesh = ModelMesh(pack, b, where);
             def.Texture = Asset(pack, b.DiffuseUrl, "image", where);
             def.Normal = Asset(pack, b.NormalUrl, "image", where);
@@ -512,59 +544,6 @@ public sealed partial class DefFactory
         if (def.Name == "Piece") def.Name = Describe(pack, def);
         ModuleSources.Fill(def, b);
         return def;
-    }
-
-    PieceDef? MarkerDef(PackOut pack, SpawnSpec sp, string where)
-    {
-        var img = Asset(pack, sp.ImageUrl, "image", where + " (spawned marker)");
-        if (img == null) return null;
-        var e = Entry(sp.ImageUrl);
-        double m = e is { W: > 0, H: > 0 } ? Math.Max(e.W, e.H) : 1;
-        double aw = e is { W: > 0 } ? e.W / m : 1, ah = e is { H: > 0 } ? e.H / m : 1;
-        double aspect = e is { W: > 0, H: > 0 } ? e.W / (double)e.H : 1;
-        var basis = TypeSize(sp.Type, aw, ah, aspect, 1, stretched: true);
-        var size = new Size2(Math.Round(basis.W * sp.Scale, 4), Math.Round(basis.H * sp.Scale, 4));
-        var key = string.Create(CultureInfo.InvariantCulture, $"{sp.Type}|{img}|||||{size.W:0.###}x{size.H:0.###}");
-        if (pack.ByKey.TryGetValue(key, out var d)) return d;
-        d = new PieceDef { Name = sp.Name, Image = img, Size = size, Thickness = 0.1, Shape = PackManifest.ShapeOf(sp.Type, 0), Tags = new() { "marker", sp.Type == "Custom_Token" ? "token" : "tile" } };
-        d.Id = $"{pack.Short}.{Slug(d.Name)}-{Hash8(key)}";
-        pack.ByKey[key] = d;
-        pack.M.Pieces.Add(d);
-        return d;
-    }
-
-    PieceDef? MarkerModelDef(PackOut pack, string meshUrl, string? diffuseUrl, double sx, double sy, string where)
-    {
-        var spawned = SpawnedModel(meshUrl, diffuseUrl, sx, sy);
-        var mesh = ModelMesh(pack, spawned, where + " (spawned model)");
-        if (mesh == null) return null;
-        var texture = Asset(pack, diffuseUrl, "image", where + " (spawned model)");
-        double r = Math.Abs(sx) < 1e-6 ? 1 : Math.Abs(sx);
-        var size = Mul(BaseSize(spawned), r);
-        var key = string.Create(CultureInfo.InvariantCulture, $"model|{mesh}|{texture}|{size.W:0.###}x{size.H:0.###}");
-        if (pack.ByKey.TryGetValue(key, out var d)) return d;
-        d = new PieceDef
-        {
-            Name = "Marker", Kind = "model", Mesh = mesh, Texture = texture, Size = size, LocalUnit = new Size2(Math.Round(r, 4), Math.Round(r, 4)),
-            Thickness = Math.Round(Math.Clamp(BaseThickness(spawned) * Stretch(spawned) * r, 0.02, 3), 3),
-            Shape = PackManifest.ShapeOf("Custom_Model", 0), Tags = new() { "marker", "model" },
-        };
-        d.Id = $"{pack.Short}.{Slug(d.Name)}-{Hash8(key)}";
-        pack.ByKey[key] = d;
-        pack.M.Pieces.Add(d);
-        return d;
-    }
-
-    static ModuleObj SpawnedModel(string meshUrl, string? diffuseUrl, double sx, double sy)
-    {
-        var mesh = new System.Text.Json.Nodes.JsonObject { ["MeshURL"] = meshUrl };
-        if (diffuseUrl != null) mesh["DiffuseURL"] = diffuseUrl;
-        return new ModuleObj(new System.Text.Json.Nodes.JsonObject
-        {
-            ["Name"] = "Custom_Model",
-            ["CustomMesh"] = mesh,
-            ["Transform"] = new System.Text.Json.Nodes.JsonObject { ["scaleX"] = sx, ["scaleY"] = sy, ["scaleZ"] = sx },
-        });
     }
 
     string? _whiteSha;

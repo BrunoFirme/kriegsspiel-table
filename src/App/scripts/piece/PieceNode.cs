@@ -83,6 +83,8 @@ public partial class PieceNode : Node3D
 
     PieceStateDef? CurState => Def != null && Piece.State >= 0 && Piece.State < Def.States.Count ? Def.States[Piece.State] : null;
 
+    public bool ShowsModel => (CurState?.Kind ?? Def?.Kind) == "model";
+
     PieceArt Art => _s.Art;
 
     readonly List<(MeshInstance3D node, int surface)> _edgeSlots = new();
@@ -111,6 +113,7 @@ public partial class PieceNode : Node3D
         Def = _s.Def(Piece.Def);
         var worn = WornModel;
         var shown = worn ?? Def;
+        var shownKind = worn?.Kind ?? CurState?.Kind ?? Def?.Kind;
         var size = shown?.Size ?? new Size2(1.5, 0.75);
         if (worn == null && CurState?.Size is { } ss) size = ss;
         float w = (float)(size.W * Piece.Scale), h = (float)(size.H * Piece.Scale);
@@ -118,7 +121,7 @@ public partial class PieceNode : Node3D
         BuiltScale = Piece.Scale;
         _thickness = (float)Mathf.Clamp((ShownThickness(worn) ?? shown?.Thickness ?? 0.2) * Piece.Scale, 0.02, 2);
         Shape = worn?.Shape ?? CurState?.Shape ?? Def?.Shape ?? "box";
-        if (Shape == "box" && shown?.Kind != "model" && !IsEffect && TexKey() is { pkg: not null } k && _s.Assets.Mask(k.pkg, k.rel!, k.size) is { } mk && mk.TransparentFraction > 0.01f)
+        if (Shape == "box" && shownKind != "model" && Def?.ModuleType == null && !IsEffect && TexKey() is { pkg: not null } k && _s.Assets.Mask(k.pkg, k.rel!, k.size) is { } mk && mk.TransparentFraction > 0.01f)
             Shape = mk.TransparentFraction > CutoutFraction ? "alpha" : "rounded";
         _shownState = Piece.State;
         _shownDef = Piece.Def;
@@ -127,12 +130,12 @@ public partial class PieceNode : Node3D
         var tint = Tint();
 
         if (IsEffect) { Shape = Def!.Effect != null ? "box" : "circle"; BuildEffect(); }
-        else if (PrintingOnly) { if (Def?.Kind != "model") LoadTexture(); }
+        else if (PrintingOnly) { if (shownKind != "model") LoadTexture(); }
         else if (Piece.WebMesh == "")
             BuildPolygon();
         else if (Piece.WebMesh is { Length: > 0 } web)
             BuildMesh(KTable.Core.Protocol.UploadAsset.ReliefPackage, web, KTable.Core.Protocol.UploadAsset.ReliefPackage, Piece.WebTexture, null, w, h, tint);
-        else if (shown?.Kind == "model" && CurrentMesh() is { } meshHash)
+        else if (shownKind == "model" && CurrentMesh() is { } meshHash)
         {
             BuildModel(meshHash, w, h, tint);
             if (Def?.Effect != null) BuildEffect();
@@ -306,6 +309,7 @@ public partial class PieceNode : Node3D
         var (baseY, up) = RestAt(pos, rotDeg, y, stack);
         var euler = Pose(rotDeg);
         _tilt = TiltTo(up);
+        baseY += PartsBelow;
         Transform = Piece.HasTilt ? TiltedRest(_tilt, pos, baseY) : new Transform3D(_tilt * Basis.FromEuler(euler), Coords.ToWorld(pos, baseY) + Up * LiftY);
     }
 
@@ -389,12 +393,12 @@ public partial class PieceNode : Node3D
         var mask = pkg == null ? null : _s.Assets.Mask(pkg, rel!, size);
         var outline = Piece.Picture != null || WornModel != null ? null : CurState?.Image != null ? CurState.Outline : Def?.Outline;
         _wallsPending = mask == null && outline == null;
-        var walls = outline != null ? Art.Walls(outline, Footprint.X, Footprint.Y, t) : mask != null ? Art.Walls($"{pkg}|{rel}|{size}", mask, Footprint.X, Footprint.Y, t) : null;
+        var walls = outline != null ? Art.PictureWalls(outline, Footprint.X, Footprint.Y, t) : mask != null ? Art.Walls($"{pkg}|{rel}|{size}", mask, Footprint.X, Footprint.Y, t) : null;
         if (walls != null)
         {
-            var node = new MeshInstance3D { Mesh = walls, VisibilityRangeEnd = BodyRange() };
+            var node = new MeshInstance3D { Mesh = walls, VisibilityRangeEnd = BodyRange(), MaterialOverride = outline != null ? faceMat : null };
             AddChild(node);
-            _edgeSlots.Add((node, -1));
+            if (outline == null) _edgeSlots.Add((node, -1));
         }
         PaintEdges(SideColor());
         bool same = SamePrintUnderside;
@@ -422,8 +426,8 @@ public partial class PieceNode : Node3D
     {
         _texLoaded = true;
         _selMat?.SetShaderParameter("tex", t);
-        if (Def?.Kind != "model" && _texPackage != null && _s.Assets.Mask(_texPackage, _texRel!, _texSize) is { } mk
-            && (Shape == "box" ? mk.TransparentFraction > 0.01f : Shape == "alpha" && _wallsPending))
+        if (!ShowsModel && _texPackage != null && _s.Assets.Mask(_texPackage, _texRel!, _texSize) is { } mk
+            && (Shape == "box" ? Def?.ModuleType == null && mk.TransparentFraction > 0.01f : Shape == "alpha" && _wallsPending))
             Callable.From(Rebuild).CallDeferred();
     }
 
@@ -482,7 +486,7 @@ public partial class PieceNode : Node3D
             if (!die && (mesh.SurfaceGetFormat(0) & Mesh.ArrayFormat.FormatColor) != 0) foreach (var m in new[] { mat, untinted }) { m.VertexColorUseAsAlbedo = true; m.VertexColorIsSrgb = true; }
             var aabb = mesh.GetAabb();
             float sx = aabb.Size.X > 0 ? w / aabb.Size.X : 1, sz = aabb.Size.Z > 0 ? h / aabb.Size.Z : 1;
-            float sy = (sx + sz) / 2;
+            float sy = Def?.HeightScale is { } upright && !die ? sx * (float)upright : (sx + sz) / 2;
             model.Scale = new Vector3(sx, sy, sz);
             _plates.ModelTop = aabb.Size.Y * sy;
             if (Piece.Ui.Count > 0) SyncUi(force: true);
@@ -606,7 +610,7 @@ public partial class PieceNode : Node3D
     public void Preview(Vec2 pos, double rotDeg, double scale, float? y = null)
     {
         _tilt = Basis.Identity;
-        Position = Coords.ToWorld(pos, (y ?? RestAt(pos, rotDeg, Piece.Y, Piece.Stack).y + 0.05f) + LiftY);
+        Position = Coords.ToWorld(pos, (y ?? RestAt(pos, rotDeg, Piece.Y, Piece.Stack).y + 0.05f) + LiftY + PartsBelow);
         Turn(PoseBasis(Pose(rotDeg)));
         Scale = Vector3.One * (float)(scale / Math.Max(1e-6, BuiltScale));
     }
@@ -636,14 +640,14 @@ public partial class PieceNode : Node3D
         float pad = Mathf.Clamp(Footprint.Length() * 0.035f, 0.04f, 0.3f);
         var mat = new ShaderMaterial { Shader = OutlineShader };
         mat.SetShaderParameter("color", c);
-        bool halo = Shape == "alpha" && Def?.Kind != "model";
+        bool halo = Shape == "alpha" && !ShowsModel;
         if (halo)
         {
             mat.SetShaderParameter("use_alpha", true);
             if (_texPackage != null && _s.Assets.Texture(_texPackage, _texRel!, null, maxSize: _texSize) is { } t) mat.SetShaderParameter("tex", t);
             return (new PlaneMesh { Size = Footprint * (1 + 2 * pad / Mathf.Max(0.01f, Mathf.Min(Footprint.X, Footprint.Y))) }, mat, true);
         }
-        bool model = Def?.Kind == "model";
+        bool model = ShowsModel;
         var shape = model ? "box" : Shape;
         float rim = Mathf.Clamp(Mathf.Min(Footprint.X, Footprint.Y) * 0.05f, 0.025f, 0.2f);
         var inner = Outline(shape, Footprint.X, Footprint.Y);

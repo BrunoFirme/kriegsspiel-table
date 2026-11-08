@@ -17,8 +17,11 @@ public sealed class TranslateResult
     public bool Parsed = true;
 }
 
+public sealed record SpawnLook(string Type, double X, double Y, double Z, IReadOnlyDictionary<string, string> Fields);
+
 public sealed class TranslateContext
 {
+    public Func<SpawnLook, string?>? ResolveLook;
     public Func<string, string, double, string?>? ResolveImage;
     public Func<string, string?, double, double, string?>? ResolveModel;
     public Func<string, string?>? ResolveAsset;
@@ -62,14 +65,14 @@ public static class ModuleTranslator
 
     static readonly HashSet<string> EventNames = new(StringComparer.Ordinal)
     {
-        "onLoad","onload","onSave","onsave","onUpdate","onDrop","onPickUp","onPickup","onDestroy","onCollisionEnter","onCollisionExit","onCollisionStay","onObjectDrop","onObjectPickUp","onObjectPickup","onObjectSpawn","onObjectDestroy","onObjectEnterContainer","onObjectLeaveContainer","onObjectEnterScriptingZone","onObjectLeaveScriptingZone","onPlayerTurn","onPlayerChangeColor","onPlayerConnect","onPlayerDisconnect","onChat","onScriptingButtonDown","onScriptingButtonUp","onObjectStateChange","onObjectRandomize","onRandomize","onPlayerAction","onObjectNumberTyped","onObjectSearchStart","onObjectSearchEnd","onObjectRotate","onRotate","onObjectHover","onHover","onBlindfold","onFixedUpdate","onPlayerPing","onObjectLoopingEffect","onObjectTriggerEffect","onObjectPeek","onObjectFlick","onObjectCollisionEnter","onObjectCollisionExit","onObjectCollisionStay","onObjectPageChange","onPageChange","onZoneGroupSort","onFilter","onExternalMessage",
+        "onLoad","onload","onSave","onsave","onStateChange","onUpdate","onDrop","onPickUp","onPickup","onDestroy","onCollisionEnter","onCollisionExit","onCollisionStay","onObjectDrop","onObjectPickUp","onObjectPickup","onObjectSpawn","onObjectDestroy","onObjectEnterContainer","onObjectLeaveContainer","onObjectEnterScriptingZone","onObjectLeaveScriptingZone","onPlayerTurn","onPlayerChangeColor","onPlayerConnect","onPlayerDisconnect","onChat","onScriptingButtonDown","onScriptingButtonUp","onObjectStateChange","onObjectRandomize","onRandomize","onPlayerAction","onObjectNumberTyped","onObjectSearchStart","onObjectSearchEnd","onObjectRotate","onRotate","onObjectHover","onHover","onBlindfold","onFixedUpdate","onPlayerPing","onObjectLoopingEffect","onObjectTriggerEffect","onObjectPeek","onObjectFlick","onObjectCollisionEnter","onObjectCollisionExit","onObjectCollisionStay","onObjectPageChange","onPageChange","onZoneGroupSort","onFilter","onExternalMessage",
     };
 
     static readonly Dictionary<string, string> EventRenames = new(StringComparer.Ordinal)
     {
         ["onLoad"] = "on_load", ["onload"] = "on_load", ["onSave"] = "on_save", ["onsave"] = "on_save", ["onUpdate"] = "on_update", ["onDestroy"] = "on_destroy",
         ["onDrop"] = "on_drop", ["onPickUp"] = "on_pick_up", ["onPickup"] = "on_pick_up", ["onObjectDrop"] = "on_drop", ["onObjectPickUp"] = "on_pick_up", ["onObjectPickup"] = "on_pick_up",
-        ["onObjectSpawn"] = "on_spawn", ["onObjectDestroy"] = "on_destroy", ["onObjectStateChange"] = "on_state", ["onPlayerTurn"] = "on_turn", ["onRotate"] = "on_rotate", ["onObjectRotate"] = "on_rotate",
+        ["onObjectSpawn"] = "on_spawn", ["onObjectDestroy"] = "on_destroy", ["onObjectStateChange"] = "on_state", ["onStateChange"] = "on_state", ["onPlayerTurn"] = "on_turn", ["onRotate"] = "on_rotate", ["onObjectRotate"] = "on_rotate",
         ["onPlayerTurnStart"] = "on_turn", ["onPlayerTurnEnd"] = "on_turn",
         ["onChat"] = "on_chat", ["onObjectNumberTyped"] = "on_number_typed", ["onScriptingButtonDown"] = "on_scripting_button_down", ["onScriptingButtonUp"] = "on_scripting_button_up",
         ["onPlayerAction"] = "on_player_action", ["onObjectRandomize"] = "on_roll", ["onRandomize"] = "on_roll", ["onPageChange"] = "on_page", ["onObjectPageChange"] = "on_page", ["onObjectLoopingEffect"] = "on_effect", ["onObjectTriggerEffect"] = "on_burst", ["onObjectEnterContainer"] = "on_stowed", ["onObjectLeaveContainer"] = "on_unstowed", ["tryObjectEnterContainer"] = "try_stow",
@@ -78,7 +81,7 @@ public static class ModuleTranslator
     static readonly HashSet<string> EveryScriptEvents = new(StringComparer.Ordinal)
     {
         "onObjectSpawn", "onObjectDestroy", "onObjectPickUp", "onObjectPickup", "onObjectDrop", "onObjectRotate", "onObjectRandomize", "onObjectPageChange",
-        "onObjectLoopingEffect", "onObjectTriggerEffect", "onObjectEnterContainer", "onObjectLeaveContainer", "onObjectStateChange", "onChat", "onPlayerAction",
+        "onObjectLoopingEffect", "onObjectTriggerEffect", "onObjectEnterContainer", "onObjectLeaveContainer", "onChat", "onPlayerAction",
     };
 
     static readonly HashSet<string> Stubbed = new(StringComparer.Ordinal)
@@ -194,39 +197,58 @@ public static class ModuleTranslator
         static TableConstructorExpressionSyntax? TableOf(ExpressionSyntax arg, SyntaxNode scope) =>
             arg as TableConstructorExpressionSyntax ?? AssignedBefore(arg, scope) as TableConstructorExpressionSyntax;
 
-        static (string type, double sx, double sy) SpawnShape(FunctionCallExpressionSyntax spawn)
+        static (string type, double sx, double sy, double sz) SpawnShape(FunctionCallExpressionSyntax spawn)
         {
             string type = "Custom_Token";
-            double sx = 1, sy = 1;
+            double sx = 1, sy = 1, sz = 1;
             if (Args(spawn).FirstOrDefault() is { } arg && TableOf(arg, Scope(spawn)) is { } t)
             {
                 foreach (var f in t.Fields.OfType<IdentifierKeyedTableFieldSyntax>())
                 {
                     if (f.Identifier.Text == "type" && f.Value is LiteralExpressionSyntax l) type = l.Token.ValueText;
-                    if (f.Identifier.Text == "scale" && f.Value is TableConstructorExpressionSyntax st) (sx, sy) = Axes(st);
+                    if (f.Identifier.Text == "scale" && f.Value is TableConstructorExpressionSyntax st) (sx, sy, sz) = Axes(st);
                 }
             }
-            return (type, sx, sy);
+            return (type, sx, sy, sz);
         }
 
-        static (double x, double y) Axes(TableConstructorExpressionSyntax t)
+        string? StockKind(SyntaxNode node)
         {
-            double x = 1, y = 1;
+            if (_ctx.ResolveLook is not { } look || node is not FunctionCallExpressionSyntax call) return null;
+            var (type, sx, sy, sz) = SpawnShape(call);
+            return type.StartsWith("Custom_", StringComparison.Ordinal) || type == "Figurine_Custom" ? null : look(new SpawnLook(type, sx, sy, sz, new Dictionary<string, string>()));
+        }
+
+        static readonly string[] AxisNames = ["x", "y", "z"];
+
+        static (double x, double y, double z) Axes(TableConstructorExpressionSyntax t)
+        {
+            var axes = new double[] { 1, 1, 1 };
             int loose = 0;
             foreach (var f in t.Fields)
             {
                 switch (f)
                 {
-                    case IdentifierKeyedTableFieldSyntax k when k.Identifier.Text is "x" or "y":
-                        if (Number(k.Value) is { } kv) { if (k.Identifier.Text == "x") x = kv; else y = kv; }
+                    case IdentifierKeyedTableFieldSyntax k when Array.IndexOf(AxisNames, k.Identifier.Text) is var at and >= 0:
+                        if (Number(k.Value) is { } kv) axes[at] = kv;
                         break;
                     case UnkeyedTableFieldSyntax u:
-                        if (Number(u.Value) is { } uv && loose < 2) { if (loose == 0) x = uv; else y = uv; }
+                        if (Number(u.Value) is { } uv && loose < AxisNames.Length) axes[loose] = uv;
                         loose++;
                         break;
                 }
             }
-            return (x, y);
+            return (axes[0], axes[1], axes[2]);
+        }
+
+        static Dictionary<string, string> Literals(IdentifierKeyedTableFieldSyntax field)
+        {
+            var found = new Dictionary<string, string>(StringComparer.Ordinal);
+            if (field.Parent is not TableConstructorExpressionSyntax t) return found;
+            foreach (var f in t.Fields.OfType<IdentifierKeyedTableFieldSyntax>())
+                if (f.Value is LiteralExpressionSyntax lit)
+                    found[f.Identifier.Text] = lit.IsKind(SyntaxKind.StringLiteralExpression) ? lit.Token.ValueText : lit.ToString().Trim();
+            return found;
         }
 
         static double? Number(ExpressionSyntax e) =>
@@ -401,7 +423,7 @@ public static class ModuleTranslator
                 case "getObjectsWithTag": return Compat($"compat.pieces_with_tag({A(0)})", node);
                 case "getObjectsWithAnyTags": return Compat($"compat.pieces_with_any_tags({A(0)})", node);
                 case "getObjectsWithAllTags": return Compat($"compat.pieces_with_all_tags({A(0)})", node);
-                case "spawnObject": return Compat($"compat.spawn_object({All()})", node);
+                case "spawnObject": return Compat(StockKind(node) is { } stock ? $"compat.spawn_object({A(0)}, \"{stock}\")" : $"compat.spawn_object({All()})", node);
                 case "spawnObjectJSON": return Compat($"compat.spawn_object_json({All()})", node);
                 case "spawnObjectData": return Compat($"compat.spawn_object_data({All()})", node);
                 case "broadcastToAll": return Compat($"compat.print_to_all({A(0)}, {A(1)}, true)", node);
@@ -683,7 +705,7 @@ public static class ModuleTranslator
         {
             var inner = Translate(lua, new TranslateContext
             {
-                ResolveImage = _ctx.ResolveImage, ResolveModel = _ctx.ResolveModel, ResolveAsset = _ctx.ResolveAsset, Depth = _ctx.Depth + 1,
+                ResolveLook = _ctx.ResolveLook, ResolveImage = _ctx.ResolveImage, ResolveModel = _ctx.ResolveModel, ResolveAsset = _ctx.ResolveAsset, Depth = _ctx.Depth + 1,
             });
             _res.CompatCalls += inner.CompatCalls;
             _res.DirectCalls += inner.DirectCalls;
@@ -702,21 +724,21 @@ public static class ModuleTranslator
         {
             var visited = (IdentifierKeyedTableFieldSyntax)base.VisitIdentifierKeyedTableField(node)!;
             var key = node.Identifier.Text;
-            if (key == "mesh" && Url(node) is { } meshUrl && _ctx.ResolveModel != null)
+            if (key == "mesh" && Url(node) is { } meshUrl && (_ctx.ResolveLook ?? (Delegate?)_ctx.ResolveModel) != null)
             {
-                var (_, sx, sy) = ModelShape(node);
-                var def = _ctx.ResolveModel(meshUrl, Sibling(node, "diffuse"), sx, sy);
+                var (_, sx, sy, sz) = ModelShape(node);
+                var def = _ctx.ResolveLook is { } look ? look(new SpawnLook("Custom_Model", sx, sy, sz, Literals(node))) : _ctx.ResolveModel!(meshUrl, Sibling(node, "diffuse"), sx, sy);
                 if (def != null)
                     return visited.WithValue(Keep(SyntaxFactory.ParseExpression("\"" + def + "\""), node.Value))
                         .WithIdentifier(SyntaxFactory.Identifier(visited.Identifier.LeadingTrivia, "def", visited.Identifier.TrailingTrivia));
                 _res.Untranslated.Add(new Untranslated(Line(node), "model", meshUrl));
                 return visited;
             }
-            if (key is "image" or "diffuse" && Url(node) is { } url && _ctx.ResolveImage != null)
+            if (key is "image" or "diffuse" && Url(node) is { } url && (_ctx.ResolveLook ?? (Delegate?)_ctx.ResolveImage) != null)
             {
                 if (Sibling(node, "mesh") != null) return visited;
-                var (type, scale, _) = ShapeFor(node);
-                var def = _ctx.ResolveImage(url, type, scale);
+                var (type, scale, sy, sz) = ShapeFor(node);
+                var def = _ctx.ResolveLook is { } look ? look(new SpawnLook(type, scale, sy, sz, Literals(node))) : _ctx.ResolveImage!(url, type, scale);
                 if (def != null)
                     return visited.WithValue(Keep(SyntaxFactory.ParseExpression("\"" + def + "\""), node.Value));
                 _res.Untranslated.Add(new Untranslated(Line(node), "picture", url));
@@ -733,15 +755,15 @@ public static class ModuleTranslator
                 ? t.Fields.OfType<IdentifierKeyedTableFieldSyntax>().Where(f => f.Identifier.Text == key).Select(Url).FirstOrDefault(u => u != null)
                 : null;
 
-        static (string type, double sx, double sy) ShapeFor(SyntaxNode node) =>
-            Spawn(Scope(node), model: false) is { } own ? SpawnShape(own) : ("Custom_Token", 1, 1);
+        static (string type, double sx, double sy, double sz) ShapeFor(SyntaxNode node) =>
+            Spawn(Scope(node), model: false) is { } own ? SpawnShape(own) : ("Custom_Token", 1, 1, 1);
 
-        (string type, double sx, double sy) ModelShape(SyntaxNode node)
+        (string type, double sx, double sy, double sz) ModelShape(SyntaxNode node)
         {
             var scope = Scope(node);
             if (Spawn(scope, model: true) is { } own) return SpawnShape(own);
             if (!ReferenceEquals(scope, _root) && Spawn(_root, model: true) is { } elsewhere) return SpawnShape(elsewhere);
-            return ("Custom_Model", 1, 1);
+            return ("Custom_Model", 1, 1, 1);
         }
 
         static FunctionCallExpressionSyntax? Spawn(SyntaxNode scope, bool model) =>
@@ -798,8 +820,10 @@ public static class ModuleTranslator
                 case "onObjectPickUp" or "onObjectPickup": return ("on_pick_up", "__piece, __who", Bind(new[] { "compat.color_of(__who)", "__piece" }));
                 case "onObjectSpawn": return ("on_spawn", "__piece", Bind(new[] { "__piece" }));
                 case "onObjectDestroy": return ("on_destroy", "__piece", Bind(new[] { "__piece" }));
-                case "onObjectStateChange" when global: return ("on_state", "__piece, __old, __new", Bind(new[] { "__piece", "tostring(__old)" }));
-                case "onObjectStateChange": return ("on_state", "__old, __new", Bind(new[] { "self", "tostring(__old)" }));
+                case "onObjectStateChange" when global: return ("on_state", "__piece, __old, __new, __old_guid", Bind(new[] { "__piece", "__old_guid" }));
+                case "onObjectStateChange": return (null, "", "");
+                case "onStateChange" when !global: return ("on_state", "__old, __new, __old_guid", Bind(new[] { "__old_guid" }));
+                case "onStateChange": return (null, "", "");
                 case "onPageChange": return ("on_page", "", "");
                 case "onObjectLoopingEffect" when global: return ("on_effect", "__piece, __index", Bind(new[] { "__piece", "__index" }));
                 case "onObjectLoopingEffect": return ("on_effect", "__index", Bind(new[] { "self", "__index" }));

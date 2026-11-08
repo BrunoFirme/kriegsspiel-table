@@ -24,29 +24,64 @@ public sealed class BundleScene
 
     public static (BundleModel? Model, int Lost, string? Failed) Read(string path, string sha, IReadOnlyDictionary<string, string>? shared = null)
     {
-        var manager = new AssetsManager();
-        try
+        using var reader = new Reader(shared);
+        return reader.Read(path, sha);
+    }
+
+    public sealed class Reader(IReadOnlyDictionary<string, string>? shared) : IDisposable
+    {
+        readonly AssetsManager _manager = new();
+        readonly HashSet<string> _sharedNames = new(StringComparer.OrdinalIgnoreCase);
+        readonly HashSet<string> _sharedPaths = new(StringComparer.OrdinalIgnoreCase);
+
+        public (BundleModel? Model, int Lost, string? Failed) Read(string path, string sha)
         {
-            var bundle = manager.LoadBundleFile(path, true);
-            var names = bundle.file.GetAllFileNames();
-            var loaded = new HashSet<string>(names, StringComparer.OrdinalIgnoreCase);
-            int lost = 0;
-            for (int index = 0; index < names.Count; index++)
+            try
             {
-                if (!bundle.file.IsAssetsFile(index)) continue;
-                var file = manager.LoadAssetsFileFromBundle(bundle, index, false);
-                if (shared != null) LoadNeeded(manager, file, shared, loaded);
-                var found = Scene(manager, bundle, file, sha);
-                lost += found.Lost;
-                if (found.Model != null) return (found.Model, lost, null);
+                var bundle = _manager.LoadBundleFile(path, true);
+                var names = bundle.file.GetAllFileNames();
+                var loaded = new HashSet<string>(names.Concat(_sharedNames), StringComparer.OrdinalIgnoreCase);
+                int lost = 0;
+                for (int index = 0; index < names.Count; index++)
+                {
+                    if (!bundle.file.IsAssetsFile(index)) continue;
+                    var file = _manager.LoadAssetsFileFromBundle(bundle, index, false);
+                    if (shared != null) LoadNeeded(file, loaded);
+                    var found = Scene(_manager, bundle, file, sha);
+                    lost += found.Lost;
+                    if (found.Model != null) return (found.Model, lost, null);
+                }
+                return (null, lost, null);
             }
-            return (null, lost, null);
+            catch (Exception e) when (OnlyThisBundle(e))
+            {
+                return (null, 0, $"{e.GetType().Name}: {e.Message}");
+            }
+            finally
+            {
+                if (!_sharedPaths.Contains(path)) BestEffort.Try(() => _manager.UnloadBundleFile(path));
+            }
         }
-        catch (Exception e) when (OnlyThisBundle(e))
+
+        void LoadNeeded(AssetsFileInstance file, HashSet<string> loaded)
         {
-            return (null, 0, $"{e.GetType().Name}: {e.Message}");
+            foreach (var external in file.file.Metadata.Externals)
+            {
+                var name = external.PathName;
+                if (!name.StartsWith(ArchiveScheme, StringComparison.Ordinal)) continue;
+                name = name[(name.LastIndexOf('/') + 1)..];
+                if (loaded.Contains(name) || !shared!.TryGetValue(name, out var path)) continue;
+                var bundle = _manager.LoadBundleFile(path, true);
+                _sharedPaths.Add(path);
+                var names = bundle.file.GetAllFileNames();
+                loaded.UnionWith(names);
+                _sharedNames.UnionWith(names);
+                for (int index = 0; index < names.Count; index++)
+                    if (bundle.file.IsAssetsFile(index)) LoadNeeded(_manager.LoadAssetsFileFromBundle(bundle, index, false), loaded);
+            }
         }
-        finally { BestEffort.Try(() => manager.UnloadAll(true)); }
+
+        public void Dispose() => BestEffort.Try(() => _manager.UnloadAll(true));
     }
 
     public static List<string> FilesIn(string path)
@@ -55,22 +90,6 @@ public sealed class BundleScene
         try { return manager.LoadBundleFile(path, false).file.GetAllFileNames(); }
         catch (Exception e) when (OnlyThisBundle(e)) { return new List<string>(); }
         finally { BestEffort.Try(() => manager.UnloadAll(true)); }
-    }
-
-    static void LoadNeeded(AssetsManager manager, AssetsFileInstance file, IReadOnlyDictionary<string, string> shared, HashSet<string> loaded)
-    {
-        foreach (var external in file.file.Metadata.Externals)
-        {
-            var name = external.PathName;
-            if (!name.StartsWith(ArchiveScheme, StringComparison.Ordinal)) continue;
-            name = name[(name.LastIndexOf('/') + 1)..];
-            if (loaded.Contains(name) || !shared.TryGetValue(name, out var path)) continue;
-            var bundle = manager.LoadBundleFile(path, true);
-            var names = bundle.file.GetAllFileNames();
-            loaded.UnionWith(names);
-            for (int index = 0; index < names.Count; index++)
-                if (bundle.file.IsAssetsFile(index)) LoadNeeded(manager, manager.LoadAssetsFileFromBundle(bundle, index, false), shared, loaded);
-        }
     }
 
     static (AssetsFileInstance File, AssetTypeValueField Field)? Follow(AssetsManager manager, AssetsFileInstance from, AssetTypeValueField? pointer)

@@ -23,6 +23,20 @@ public sealed class SharedMirror(string packagesRoot, string cache, PieceMirror 
         return Keep(r, pack, copy, key, "mirrored");
     }
 
+    public DefResult Shaped(ModuleObj b, DefResult r, PackOut pack)
+    {
+        const double Even = 0.01, Digits = 4;
+        if (r.FromPack == null || r.Def.Kind != "model" || !r.Def.Tags.Any(t => t.StartsWith(BundleBake.Tag, StringComparison.Ordinal)) || Math.Abs(b.ScaleX) < DefFactory.NoScale) return r;
+        double up = Math.Abs(b.ScaleY / b.ScaleX), deep = Math.Abs(b.ScaleZ / b.ScaleX);
+        if (Math.Abs(up - 1) < Even && Math.Abs(deep - 1) < Even) return r;
+        var copy = Json.Deserialize<PieceDef>(Json.Serialize(r.Def));
+        copy.Size = new Size2(copy.Size.W, Math.Round(copy.Size.H * deep, (int)Digits));
+        copy.Thickness = Math.Round(copy.Thickness * up, (int)Digits);
+        copy.HeightScale = Math.Round((copy.HeightScale ?? 1) * up, (int)Digits);
+        var from = r.Copied ? [] : new[] { r.FromPack };
+        return Own(r, pack, copy, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"shaped|{r.Def.Id}|{up:0.###}|{deep:0.###}"), "shaped", from);
+    }
+
     public DefResult Own(DefResult r, PackOut pack, PieceDef changed, string key, string why, IEnumerable<string> from)
     {
         if (pack.ByKey.TryGetValue(key, out var known)) return r with { Def = known, Copied = true };
@@ -37,6 +51,7 @@ public sealed class SharedMirror(string packagesRoot, string cache, PieceMirror 
     static DefResult Keep(DefResult r, PackOut pack, PieceDef copy, string key, string why)
     {
         copy.Id = $"{pack.Short}.{DefFactory.Slug(copy.Name)}-{why}-{DefFactory.Hash8(key)}";
+        copy.Tags.RemoveAll(t => t.StartsWith(BundleBake.Tag, StringComparison.Ordinal));
         pack.ByKey[key] = copy;
         pack.M.Pieces.Add(copy);
         return r with { Def = copy, Copied = true };

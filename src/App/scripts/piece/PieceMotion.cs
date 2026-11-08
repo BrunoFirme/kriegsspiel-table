@@ -12,7 +12,7 @@ public partial class PieceNode
 
     public MotionPose HandPose(Vec2 pos, double rotDeg, float y)
     {
-        var held = new Transform3D(PoseBasis(Pose(rotDeg)).Scaled(Scale), Coords.ToWorld(pos, y + LiftY));
+        var held = new Transform3D(PoseBasis(Pose(rotDeg)).Scaled(Scale), Coords.ToWorld(pos, y + LiftY + PartsBelow));
         if (IsDie && _model != null) held *= new Transform3D(new Basis(_modelRest) * Basis.FromScale(_model.Scale), _modelRestPos);
         return ToPose(held);
     }

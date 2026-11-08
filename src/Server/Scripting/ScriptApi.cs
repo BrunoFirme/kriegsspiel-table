@@ -227,18 +227,13 @@ public sealed partial class ScriptHost
             Tags = s.Get("tags").Type == DataType.Table ? Strings(s.Get("tags")) : null, Memo = s.Get("memo").CastToString(),
         };
         var taken = _s.State.Layer(Layers.Umpire).Select(p => p.Guid).OfType<string>().ToHashSet();
-        if (sp.Guid == null || taken.Contains(sp.Guid)) sp.Guid = FreshGuid(taken);
+        if (sp.Guid == null || taken.Contains(sp.Guid)) sp.Guid = PlayerActions.FreshGuid(taken);
         Emit(sp);
         var id = sp.Id!;
         if (s.Get("state").Type == DataType.Number) Emit(new SetState { Layer = Layers.Umpire, Id = id, State = (int)s.Get("state").Number - 1 });
         if (s.Get("script").Type == DataType.String && s.Get("script").String != (_s.Store?.Def(def)?.Script ?? "")) Emit(new SetScript { Layer = Layers.Umpire, Id = id, Text = s.Get("script").String });
         if (s.Get("note").Type == DataType.String) Emit(new SetNote { Layer = Layers.Umpire, Id = id, Value = s.Get("note").String });
         return Handle(id);
-    }
-
-    static string FreshGuid(HashSet<string> taken)
-    {
-        while (true) { var g = Repeatable.Shared.Next(0, 0x1000000).ToString("x6"); if (!taken.Contains(g)) return g; }
     }
 
     internal List<string> TagsOf(PieceInstance p) => p.Tags ?? _s.Store?.Def(p.Def)?.Tags ?? new();
@@ -376,7 +371,7 @@ internal sealed partial class PieceHandles(ScriptHost host)
             case "box_selected": return B(!p.NotBoxSelected);
             case "measures_moves": return B(p.MeasuresMoves);
             case "interactable": return B(!p.NotInteractable);
-            case "source": return def?.ModuleType != null ? SourceTable(def) : DynValue.Nil;
+            case "source": return def?.ModuleType != null ? SourceTable(def, p) : DynValue.Nil;
             case "held_by": return host.Every.HeldBy.TryGetValue(id, out var holder) ? holder : DynValue.Nil;
             case "highlight": return p.Highlight is { } hl ? S(hl) : DynValue.Nil;
             case "book_highlight": return p.BookHighlight is { Length: SetBookHighlight.Corners } bx ? BoxTable(bx) : DynValue.Nil;
@@ -397,7 +392,7 @@ internal sealed partial class PieceHandles(ScriptHost host)
             }
             case "attached": return ListTable(p.Attached.Select(a => Handle(a)));
             case "tags": return ListTable(host.TagsOf(p).Select(tg => S(tg)));
-            case "script": return (p.Script ?? def?.Script) is { } sc ? S(sc) : DynValue.Nil;
+            case "script": return (def?.ScriptFor(p) ?? p.Script) is { } sc ? S(sc) : DynValue.Nil;
             case "ui": return host.UiTableFor(id);
             case "lines": return ListTable(p.Lines.Select(ln => LineTable(ln)));
             case "decals": return ListTable(DecalDef.ShownOn(p, def).Select(d => DecalTable(d)));
@@ -543,7 +538,7 @@ internal sealed partial class PieceHandles(ScriptHost host)
         ["ImageURL"] = "image", ["ImageSecondaryURL"] = "image_secondary", ["MeshURL"] = "mesh", ["DiffuseURL"] = "diffuse", ["NormalURL"] = "normal", ["AssetbundleURL"] = "assetbundle",
     };
 
-    DynValue SourceTable(PieceDef def)
+    DynValue SourceTable(PieceDef def, PieceInstance? p = null)
     {
         var t = T();
         t.Table["type"] = S(def.ModuleType!);
@@ -555,7 +550,7 @@ internal sealed partial class PieceHandles(ScriptHost host)
         var links = T();
         foreach (var (k, v) in def.Sources ?? new()) links.Table[LinkNames.GetValueOrDefault(k, k)] = S(v);
         t.Table["links"] = links;
-        if (def.States.Count > 1) t.Table["states"] = StateSources(def);
+        if (def.States.Count > 1) t.Table["states"] = StateSources(def, p);
         return t;
     }
 

@@ -9,20 +9,21 @@ public sealed class CarriedLooks(DefFactory defs, Report rep)
     {
         var where = $"{defs.Context} {o.Name} '{o.Nickname}' {o.Guid}";
         var looks = states.Count > 1 ? states.Select(defs.ModelOfBundle).ToList() : null;
-        bool stated = looks != null && looks.All(l => l != null);
-        if (looks != null && !stated) rep.Note($"{where}: its other states are not all asset-bundle figures and are left out");
-        if (!stated && !states[0].Children.Any()) return r;
+        var own = looks?.Select((l, i) => l == null ? defs.OwnLook(states[i], pack, bs, where, heightScale) : null).ToList();
+        bool stated = looks != null && looks.Select((l, i) => l != null || own![i] != null).All(ok => ok);
+        if (looks != null && !stated) rep.Note($"{where}: some of its states cannot be shown and its other states are left out");
+        if (!stated && !states[self].Children.Any()) return r;
         var copy = Json.Deserialize<PieceDef>(Json.Serialize(r.Def));
         var from = new HashSet<string>(StringComparer.Ordinal);
         if (r.FromPack != null) from.Add(r.FromPack);
         if (stated)
         {
-            copy.States = states.Select((s, i) => BundleState(s, looks![i]!.Value, copy, Math.Abs(s.ScaleX) / bs, i)).ToList();
-            from.UnionWith(looks!.Select(l => l!.Value.Pack));
+            copy.States = states.Select((s, i) => looks![i] is { } look ? BundleState(s, look, copy, Math.Abs(s.ScaleX) / bs, i) : own![i]!).ToList();
+            from.UnionWith(looks!.OfType<(PieceDef Def, string Pack)>().Select(l => l.Pack));
             ModuleSources.Fill(copy, states[0]);
             ModuleSources.States(copy, states);
         }
-        defs.Glued.Fill(copy, stated ? states : [states[0]], bs, 1 / r.Fit, heightScale, pack, where, Mirror.Of(o));
+        defs.Glued.Fill(copy, stated ? states : [states[self]], bs, 1 / r.Fit, heightScale, pack, where, Mirror.Of(o));
         if (!stated && copy.Parts is not { Count: > 0 }) return r;
         var key = $"carried|{r.Def.Id}|{DefFactory.Hash8(Json.Serialize(new PieceDef { States = copy.States, Parts = copy.Parts }))}";
         return defs.Shared.Own(r, pack, copy, key, "glued", from) with { State = stated ? self : r.State };

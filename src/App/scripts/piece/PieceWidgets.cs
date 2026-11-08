@@ -69,7 +69,7 @@ sealed class PieceWidgets
         if (!_piece.ScriptDrawingShows) return;
         bool back = piece.FaceDown;
         var face = back ? "back" : "front";
-        float faceY = (_piece.Def?.Kind == "model" && _piece.ModelTop > 0 ? _piece.ModelTop : _piece.Thickness) + 0.006f;
+        float faceY = (_piece.ShowsModel && _piece.ModelTop > 0 ? _piece.ModelTop : _piece.Thickness) + 0.006f;
         for (int i = 0; i < piece.Widgets.Count; i++)
         {
             var w = piece.Widgets[i];

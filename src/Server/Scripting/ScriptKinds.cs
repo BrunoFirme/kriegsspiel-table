@@ -27,16 +27,27 @@ internal sealed partial class PieceHandles
         return t;
     }
 
-    DynValue StateSources(PieceDef def)
+    DynValue StateSources(PieceDef def, PieceInstance? p)
     {
         var t = T();
-        foreach (var st in def.States)
+        for (int i = 0; i < def.States.Count; i++)
         {
-            var m = st.Module;
+            var st = def.States[i];
             var e = T();
-            if (m != null)
+            if (st.Module is { } kept) e.Table["type"] = S(kept.Type);
+            var look = p?.Looks is { } looks && i < looks.Count ? i == p.State ? PieceLook.Of(p) : looks[i] : null;
+            if (look != null)
             {
-                e.Table["type"] = S(m.Type);
+                e.Table["name"] = S(look.Label ?? "");
+                e.Table["guid"] = S(look.Guid ?? "");
+                e.Table["description"] = S(look.Note ?? "");
+                e.Table["gm_notes"] = S(look.GmNotes ?? "");
+                e.Table["memo"] = S(look.Memo);
+                e.Table["script_state"] = S(look.ScriptState);
+                e.Table["tags"] = ListTable((look.Tags ?? new()).Select(tg => S(tg)));
+            }
+            else if (st.Module is { } m)
+            {
                 e.Table["guid"] = S(m.Guid);
                 e.Table["description"] = S(m.Description ?? "");
                 e.Table["gm_notes"] = S(m.GmNotes ?? "");
@@ -44,7 +55,7 @@ internal sealed partial class PieceHandles
                 e.Table["script_state"] = S(m.ScriptState ?? "");
                 e.Table["tags"] = ListTable((m.Tags ?? new()).Select(tg => S(tg)));
             }
-            e.Table["script"] = S(st.Script ?? "");
+            e.Table["script"] = S(look?.Script ?? st.Script ?? "");
             t.Table.Append(e);
         }
         return t;

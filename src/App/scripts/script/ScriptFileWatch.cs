@@ -62,7 +62,7 @@ public partial class ScriptFileWatch : Node
         }
         if (_s.View.Find(Layers.Umpire, key) is not { } piece) return;
         Link(parent, key, ScriptFiles.PieceFile(key, piece.Label ?? _s.Def(piece.Def)?.Name),
-            () => _s.View.Find(Layers.Umpire, key) is { } p ? p.Script ?? _s.Def(p.Def)?.Script : null,
+            () => _s.View.Find(Layers.Umpire, key) is { } p ? _s.Def(p.Def)?.ScriptFor(p) ?? p.Script : null,
             () => _s.View.Find(Layers.Umpire, key) != null,
             text => { _s.Do(new SetScript { Layer = Layers.Umpire, Id = key, Text = text }); _s.Request(new GetScripts()); });
     }

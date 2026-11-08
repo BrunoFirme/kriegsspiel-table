@@ -528,7 +528,7 @@ public partial class ScriptWindow : Window
     {
         if (key.Length == 0) return _s.View.Script;
         if (key.StartsWith("def:")) return _s.Def(key[4..])?.Script;
-        return _s.View.Find(Layers.Umpire, key) is { } p ? p.Script ?? _s.Def(p.Def)?.Script : null;
+        return _s.View.Find(Layers.Umpire, key) is { } p ? _s.Def(p.Def)?.ScriptFor(p) ?? p.Script : null;
     }
 
     bool Editable(string key) => key.Length == 0 ? _s.IsLead : !key.StartsWith("def:") && _s.IsUmpire && _s.View.Find(Layers.Umpire, key) != null;

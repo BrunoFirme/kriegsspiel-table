@@ -29,7 +29,7 @@ sealed class PieceDecals
         _builtFaceDown = piece.FaceDown;
         foreach (var n in _nodes) if (GodotObject.IsInstanceValid(n)) n.QueueFree();
         _nodes.Clear();
-        if (shown.Count == 0 || _piece.Def?.Kind == "model" || _piece.IsDie || _piece.IsEffect) return;
+        if (shown.Count == 0 || _piece.ShowsModel || _piece.IsDie || _piece.IsEffect) return;
         bool back = piece.FaceDown;
         var face = back ? "back" : "front";
         float k = (float)System.Math.Max(1e-6, piece.Scale);
