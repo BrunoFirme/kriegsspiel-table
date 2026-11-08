@@ -121,6 +121,7 @@ public sealed class ModuleObj
         }
         : null;
     public string? BundleUrl => Blank(S((J["CustomAssetbundle"] as JsonObject)?["AssetbundleURL"]));
+    public string? BundleSecondaryUrl => Blank(S((J["CustomAssetbundle"] as JsonObject)?["AssetbundleSecondaryURL"]));
     public int LoopingEffect => J["CustomAssetbundle"] is JsonObject ab ? ModuleValues.Whole(ab["LoopingEffectIndex"], 0) : 0;
     public string? PdfUrl => Blank(S((J["CustomPDF"] as JsonObject)?["PDFUrl"]));
     public int PdfPage => J["CustomPDF"] is JsonObject pdf && pdf["PDFPage"] != null ? Math.Max(0, I(pdf, "PDFPage")) : 0;
@@ -277,7 +278,7 @@ public sealed class ModuleObj
 
     public IEnumerable<string> Urls()
     {
-        foreach (var u in new[] { ImageUrl, BackUrl, MeshUrl, DiffuseUrl, BundleUrl, PdfUrl }) if (u != null) yield return u;
+        foreach (var u in new[] { ImageUrl, BackUrl, MeshUrl, DiffuseUrl, BundleUrl, BundleSecondaryUrl, PdfUrl }) if (u != null) yield return u;
         foreach (var d in Decals) yield return d.Url;
         foreach (var a in UiAssets) yield return a.Url;
         foreach (var s in CardSheets.Values)

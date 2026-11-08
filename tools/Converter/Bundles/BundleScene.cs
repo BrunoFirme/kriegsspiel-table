@@ -22,18 +22,20 @@ public sealed class BundleScene
     public static bool OnlyThisBundle(Exception e) =>
         e is not (OutOfMemoryException or StackOverflowException or OperationCanceledException);
 
-    public static (BundleModel? Model, int Lost, string? Failed) Read(string path, string sha)
+    public static (BundleModel? Model, int Lost, string? Failed) Read(string path, string sha, IReadOnlyDictionary<string, string>? shared = null)
     {
         var manager = new AssetsManager();
         try
         {
             var bundle = manager.LoadBundleFile(path, true);
             var names = bundle.file.GetAllFileNames();
+            var loaded = new HashSet<string>(names, StringComparer.OrdinalIgnoreCase);
             int lost = 0;
             for (int index = 0; index < names.Count; index++)
             {
                 if (!bundle.file.IsAssetsFile(index)) continue;
                 var file = manager.LoadAssetsFileFromBundle(bundle, index, false);
+                if (shared != null) LoadNeeded(manager, file, shared, loaded);
                 var found = Scene(manager, bundle, file, sha);
                 lost += found.Lost;
                 if (found.Model != null) return (found.Model, lost, null);
@@ -45,6 +47,39 @@ public sealed class BundleScene
             return (null, 0, $"{e.GetType().Name}: {e.Message}");
         }
         finally { BestEffort.Try(() => manager.UnloadAll(true)); }
+    }
+
+    public static List<string> FilesIn(string path)
+    {
+        var manager = new AssetsManager();
+        try { return manager.LoadBundleFile(path, false).file.GetAllFileNames(); }
+        catch (Exception e) when (OnlyThisBundle(e)) { return new List<string>(); }
+        finally { BestEffort.Try(() => manager.UnloadAll(true)); }
+    }
+
+    static void LoadNeeded(AssetsManager manager, AssetsFileInstance file, IReadOnlyDictionary<string, string> shared, HashSet<string> loaded)
+    {
+        foreach (var external in file.file.Metadata.Externals)
+        {
+            var name = external.PathName;
+            if (!name.StartsWith(ArchiveScheme, StringComparison.Ordinal)) continue;
+            name = name[(name.LastIndexOf('/') + 1)..];
+            if (loaded.Contains(name) || !shared.TryGetValue(name, out var path)) continue;
+            var bundle = manager.LoadBundleFile(path, true);
+            var names = bundle.file.GetAllFileNames();
+            loaded.UnionWith(names);
+            for (int index = 0; index < names.Count; index++)
+                if (bundle.file.IsAssetsFile(index)) LoadNeeded(manager, manager.LoadAssetsFileFromBundle(bundle, index, false), shared, loaded);
+        }
+    }
+
+    static (AssetsFileInstance File, AssetTypeValueField Field)? Follow(AssetsManager manager, AssetsFileInstance from, AssetTypeValueField? pointer)
+    {
+        if (pointer == null || pointer.IsDummy || pointer["m_PathID"].AsLong == 0) return null;
+        int fileId = pointer["m_FileID"].AsInt;
+        if (fileId != SameFile && (fileId > from.file.Metadata.Externals.Count || from.GetDependency(manager, fileId - 1) == null)) return null;
+        var found = manager.GetExtAsset(from, fileId, pointer["m_PathID"].AsLong);
+        return found.file == null || found.baseField == null ? null : (found.file, found.baseField);
     }
 
     static int Major(string version) =>
@@ -155,7 +190,7 @@ public sealed class BundleScene
                 {
                     if (mesh.SubMeshes[sub].Length == 0) continue;
                     var material = sub < materials.Count ? materials[sub] : materials.FirstOrDefault();
-                    parts.Add(new ModelPart(verts, mesh.Uvs, mesh.SubMeshes[sub], Texture(manager, file, bundle, material, textures)));
+                    parts.Add(new ModelPart(verts, mesh.Uvs, mesh.SubMeshes[sub], Texture(manager, file, material, textures)));
                 }
             }
             catch (Exception e) when (OnlyThisBundle(e))
@@ -244,22 +279,14 @@ public sealed class BundleScene
         return output;
     }
 
-    static string? Texture(AssetsManager manager, AssetsFileInstance file, BundleFileInstance bundle, AssetTypeValueField? material, List<(string Sha, Picture Picture)> into)
+    static string? Texture(AssetsManager manager, AssetsFileInstance file, AssetTypeValueField? material, List<(string Sha, Picture Picture)> into)
     {
-        if (material == null || Points(material) is not { } materialId) return null;
-        var info = file.file.GetAssetInfo(materialId);
-        if (info == null) return null;
-        var field = manager.GetBaseField(file, info);
-        if (field == null) return null;
-        foreach (var entry in field["m_SavedProperties"]["m_TexEnvs.Array"].Children)
+        if (Follow(manager, file, material) is not { } found) return null;
+        foreach (var entry in found.Field["m_SavedProperties"]["m_TexEnvs.Array"].Children)
         {
             if (entry["first"].AsString != MainTexture) continue;
-            if (Points(entry["second"]["m_Texture"]) is not { } textureId) return null;
-            var textureInfo = file.file.GetAssetInfo(textureId);
-            if (textureInfo == null) return null;
-            var textureField = manager.GetBaseField(file, textureInfo);
-            if (textureField == null) return null;
-            var picture = UnityTexture.Read(textureField, s => SideFile(bundle, s));
+            if (Follow(manager, found.File, entry["second"]["m_Texture"]) is not { } texture) return null;
+            var picture = UnityTexture.Read(texture.Field, s => SideFile(texture.File.parentBundle, s));
             if (picture == null) return null;
             var sha = Convert.ToHexString(SHA256.HashData(
                 picture.Rgba.Concat(Encoding.UTF8.GetBytes($"{picture.Width}x{picture.Height}")).ToArray())).ToLowerInvariant();

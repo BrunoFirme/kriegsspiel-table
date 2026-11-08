@@ -13,6 +13,7 @@ public sealed partial class BundleBake
     const string PackName = "Models from module asset bundles";
     const string Licence = "models read from the asset bundles of imported modules";
     const string Tag = "bundle:";
+    const string ReadWith = "bundle-read:shared-files";
     const string BundleType = "Custom_Assetbundle";
     const int AtlasMost = 2048;
     const int Digits = 4;
@@ -39,6 +40,8 @@ public sealed partial class BundleBake
             var found = sha.Value.ToUpperInvariant();
             if (!wanted.Any(w => w.Sha == found)) wanted.Add((found, url));
         }
+        var bundleLinks = save.Objects.SelectMany(o => o.Walk()).Where(o => o.Name == BundleType)
+            .SelectMany(o => new[] { o.BundleUrl, o.BundleSecondaryUrl }).OfType<string>().Distinct().ToList();
         if (wanted.Count == 0) return 0;
 
         var dir = Path.Combine(_cfg.Output, PackId);
@@ -46,12 +49,13 @@ public sealed partial class BundleBake
         var packPath = Path.Combine(dir, "pack.json");
         var had = File.Exists(packPath) ? BestEffort.Read<PackManifest?>(() => Json.Load<PackManifest>(packPath), fallback: null) : null;
         var already = new HashSet<string>(
-            (had?.Pieces ?? new List<PieceDef>()).SelectMany(p => p.Tags).Where(t => t.StartsWith(Tag, StringComparison.Ordinal)).Select(t => t[Tag.Length..]),
+            (had?.Pieces ?? new List<PieceDef>()).Where(p => p.Tags.Contains(ReadWith))
+                .SelectMany(p => p.Tags).Where(t => t.StartsWith(Tag, StringComparison.Ordinal)).Select(t => t[Tag.Length..]),
             StringComparer.OrdinalIgnoreCase);
         var todo = wanted.Where(w => !already.Contains(w.Sha)).ToList();
         if (todo.Count == 0) return 0;
 
-        var read = ReadAll(todo);
+        var read = ReadAll(todo, SharedFiles(bundleLinks));
         if (read.Count == 0) return 0;
 
         Directory.CreateDirectory(assetsDir);
@@ -91,7 +95,7 @@ public sealed partial class BundleBake
                 Size = new Size2(Math.Round(model.High[0] - model.Low[0], Digits), Math.Round(model.High[2] - model.Low[2], Digits)),
                 Shape = "box",
                 Thickness = Math.Round(model.High[1] - model.Low[1], Digits),
-                Tags = new List<string> { "model", Tag + model.Sha },
+                Tags = new List<string> { "model", Tag + model.Sha, ReadWith },
             });
         }
 
@@ -115,19 +119,35 @@ public sealed partial class BundleBake
         return read.Count;
     }
 
-    List<BundleModel> ReadAll(List<(string Sha, string Url)> todo)
+    Dictionary<string, string> SharedFiles(List<string> links)
+    {
+        var shared = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var link in links)
+            if (OnThisPc(link) is { } file)
+                foreach (var name in BundleScene.FilesIn(file))
+                    shared.TryAdd(name, file);
+        return shared;
+    }
+
+    string? OnThisPc(string url)
+    {
+        var entry = _assets.Get(url);
+        var file = entry == null ? null : _assets.FilePath(entry);
+        return file != null && File.Exists(file) ? file : null;
+    }
+
+    List<BundleModel> ReadAll(List<(string Sha, string Url)> todo, Dictionary<string, string> shared)
     {
         var read = new List<BundleModel>();
         foreach (var (sha, url) in todo)
         {
-            var entry = _assets.Get(url);
-            var file = entry == null ? null : _assets.FilePath(entry);
-            if (file == null || !File.Exists(file))
+            var file = OnThisPc(url);
+            if (file == null)
             {
                 _rep.Note($"The asset bundle {sha[..12]} is not on this PC, so the model in it is not here.");
                 continue;
             }
-            var (model, lost, failed) = BundleScene.Read(file, sha);
+            var (model, lost, failed) = BundleScene.Read(file, sha, shared);
             if (failed != null)
             {
                 _rep.Note($"The asset bundle {sha[..12]} could not be read, so the model in it is not here ({failed}).");

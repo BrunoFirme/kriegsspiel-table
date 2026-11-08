@@ -99,7 +99,7 @@ public static class ModelAtlas
     {
         var text = new StringBuilder();
         text.Append("o ").Append(model.Name).Append('\n');
-        int baseIndex = 1;
+        int baseVertex = 1, baseCorner = 1;
         foreach (var part in model.Parts)
         {
             var used = part.Triangles.Distinct().OrderBy(v => v).ToArray();
@@ -110,30 +110,38 @@ public static class ModelAtlas
                 text.Append("v ").Append(Six(-part.Verts[vertex * Axes])).Append(' ')
                     .Append(Six(part.Verts[vertex * Axes + 1])).Append(' ')
                     .Append(Six(part.Verts[vertex * Axes + 2])).Append('\n');
-            foreach (int vertex in used)
+            int triangles = part.Triangles.Length / 3;
+            for (int n = 0; n < triangles * 3; n += 3)
             {
-                double u = vertex * UvParts + 1 < part.Uvs.Length ? part.Uvs[vertex * UvParts] : 0;
-                double v = vertex * UvParts + 1 < part.Uvs.Length ? part.Uvs[vertex * UvParts + 1] : 0;
-                if (place != null)
+                var corners = new[] { part.Triangles[n], part.Triangles[n + 1], part.Triangles[n + 2] };
+                double tileU = Math.Floor(corners.Min(c => Uv(part, c, 0))), tileV = Math.Floor(corners.Min(c => Uv(part, c, 1)));
+                foreach (int corner in corners)
                 {
-                    u = (Fraction(u) * place.Width + place.X) / atlasWidth;
-                    v = (Fraction(v) * place.Height + place.Y) / atlasHeight;
+                    double u = Uv(part, corner, 0), v = Uv(part, corner, 1);
+                    if (place != null)
+                    {
+                        u = (Math.Clamp(u - tileU, 0, 1) * place.Width + place.X) / atlasWidth;
+                        v = (Math.Clamp(v - tileV, 0, 1) * place.Height + place.Y) / atlasHeight;
+                    }
+                    text.Append("vt ").Append(Six(u)).Append(' ').Append(Six(v)).Append('\n');
                 }
-                text.Append("vt ").Append(Six(u)).Append(' ').Append(Six(v)).Append('\n');
             }
-            for (int n = 0; n + 2 < part.Triangles.Length; n += 3)
+            for (int n = 0; n < triangles * 3; n += 3)
             {
-                int a = baseIndex + at[part.Triangles[n]], b = baseIndex + at[part.Triangles[n + 1]], c = baseIndex + at[part.Triangles[n + 2]];
-                text.Append("f ").Append(c).Append('/').Append(c).Append(' ')
-                    .Append(b).Append('/').Append(b).Append(' ')
-                    .Append(a).Append('/').Append(a).Append('\n');
+                int a = baseVertex + at[part.Triangles[n]], b = baseVertex + at[part.Triangles[n + 1]], c = baseVertex + at[part.Triangles[n + 2]];
+                int ta = baseCorner + n, tb = ta + 1, tc = ta + 2;
+                text.Append("f ").Append(c).Append('/').Append(tc).Append(' ')
+                    .Append(b).Append('/').Append(tb).Append(' ')
+                    .Append(a).Append('/').Append(ta).Append('\n');
             }
-            baseIndex += used.Length;
+            baseVertex += used.Length;
+            baseCorner += triangles * 3;
         }
         return text.ToString();
     }
 
-    static double Fraction(double v) => v - Math.Floor(v);
+    static double Uv(ModelPart part, int vertex, int axis) =>
+        vertex * UvParts + 1 < part.Uvs.Length ? part.Uvs[vertex * UvParts + axis] : 0;
 
     static string Six(double v) =>
         (v == 0 ? "0" : v.ToString("G6", CultureInfo.InvariantCulture)).Replace("E", "e", StringComparison.Ordinal);
