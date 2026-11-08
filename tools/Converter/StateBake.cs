@@ -23,8 +23,8 @@ public sealed partial class DefFactory
 
     public (double Low, double High) BakedSpan(ModuleObj s)
     {
-        var parts = Parts(s, 1);
-        return (parts.Min(p => p.Bottom), parts.Max(p => p.Top));
+        var heights = Parts(s, 1).SelectMany(p => p.Heights()).ToList();
+        return (heights.Min(), heights.Max());
     }
 
     bool BakeStates(PieceDef def, List<ModuleObj> states, double baseScale, double r, double heightScale, PackOut pack)
@@ -34,7 +34,7 @@ public sealed partial class DefFactory
         foreach (var s in states)
         {
             double k = Math.Abs(s.ScaleX) / baseScale * r;
-            if (Baked(s, k, pack, underside: false) is not { } b || Baked(s, k, pack, underside: true) is not { } under) return false;
+            if (Baked(s, k, pack, above: true) is not { } b || Baked(s, k, pack, above: false) is not { } under) return false;
             baked.Add(b);
             backs.Add(under.Sha);
         }
@@ -62,33 +62,35 @@ public sealed partial class DefFactory
     {
         var own = Mul(BaseSize(s), k);
         double th = BaseThickness(s);
-        var parts = new List<BakePart> { new(Entry(s.ImageUrl)!, BackOf(s), 0, 0, own.W, own.H, 0, -th / 2, th / 2, BakePaint.TintOf(s)) };
-        AddChildren(s, 0, 0, 0, 0, k, 1, parts);
+        var parts = new List<BakePart> { new(Entry(s.ImageUrl)!, BackOf(s), ModuleTurn.None, 0, 0, 0, own.W, own.H, -th / 2, th / 2, BakePaint.TintOf(s)) };
+        AddChildren(s, parts[0], k, 1, parts);
         return parts;
     }
 
-    void AddChildren(ModuleObj o, double x, double z, double y, double rot, double unit, double rise, List<BakePart> into)
+    void AddChildren(ModuleObj o, BakePart at, double unit, double rise, List<BakePart> into)
     {
         double depthRatio = o.ScaleX == 0 ? 1 : Math.Abs(o.ScaleZ / o.ScaleX);
-        double a = rot * Math.PI / 180, cos = Math.Cos(a), sin = Math.Sin(a);
         foreach (var c in o.Children)
         {
-            double dx = -c.PosX * unit, dz = c.PosZ * unit * depthRatio;
-            double cx = x + dx * cos - dz * sin, cz = z + dx * sin + dz * cos, cy = y + c.PosY * rise;
+            var (dx, dy, dz) = at.Turn.Apply(c.PosX * unit, c.PosY * rise, c.PosZ * unit * depthRatio);
             double cUnit = Math.Abs(c.ScaleX) * unit, cRise = Math.Abs(c.ScaleY) * rise;
             var size = Mul(BaseSize(c), cUnit);
-            double bottom = cy + LocalFloor(c) * cRise;
-            into.Add(new BakePart(Entry(c.ImageUrl)!, BackOf(c), cx, cz, size.W, size.H, rot + c.RotY, bottom, bottom + BaseThickness(c) * cRise, BakePaint.TintOf(c)));
-            AddChildren(c, cx, cz, cy, rot + c.RotY, cUnit, cRise, into);
+            double floor = LocalFloor(c) * cRise;
+            var part = new BakePart(Entry(c.ImageUrl)!, BackOf(c), at.Turn.Then(ModuleTurn.Of(c.RotX, c.RotY, c.RotZ)), at.X + dx, at.Y + dy, at.Z + dz,
+                size.W, size.H, floor, floor + BaseThickness(c) * cRise, BakePaint.TintOf(c));
+            into.Add(part);
+            AddChildren(c, part, cUnit, cRise, into);
         }
     }
 
     CacheEntry? BackOf(ModuleObj o) => o.BackUrl is { } url && Entry(url) is { W: > 0, H: > 0 } e && AssetStore.IsPicture(e.Ext) ? e : null;
 
-    (string Sha, Size2 Size)? Baked(ModuleObj s, double k, PackOut pack, bool underside)
+    (string Sha, Size2 Size)? Baked(ModuleObj s, double k, PackOut pack, bool above)
     {
-        var parts = Parts(s, k);
-        double halfW = parts.Max(p => Math.Abs(p.X) + BakePaint.Reach(p).x), halfH = parts.Max(p => Math.Abs(p.Z) + BakePaint.Reach(p).z);
+        var parts = Parts(s, k).Where(p => p.Seen).ToList();
+        if (parts.Count == 0) return null;
+        var corners = parts.SelectMany(p => p.Corners(above)).ToList();
+        double halfW = corners.Max(c => Math.Abs(c.X)), halfH = corners.Max(c => Math.Abs(c.Y));
         if (halfW <= 0 || halfH <= 0) return null;
         double ppu = Math.Min(parts[0].Picture.W / parts[0].W, MostBakedSide / (2 * Math.Max(halfW, halfH)));
         int w = Math.Max(1, (int)Math.Ceiling(2 * halfW * ppu)), h = Math.Max(1, (int)Math.Ceiling(2 * halfH * ppu));
@@ -96,14 +98,9 @@ public sealed partial class DefFactory
         using (var canvas = new SKCanvas(bmp))
         {
             canvas.Clear(SKColors.Transparent);
-            if (underside)
-            {
-                canvas.Translate(w, 0);
-                canvas.Scale(-1, 1);
-            }
-            var order = underside ? parts.OrderByDescending(p => p.Bottom).ThenByDescending(parts.IndexOf) : parts.OrderBy(p => p.Top).ThenBy(parts.IndexOf);
+            var order = above ? parts.OrderBy(p => p.FaceHeight(true)).ThenBy(parts.IndexOf) : parts.OrderByDescending(p => p.FaceHeight(false)).ThenByDescending(parts.IndexOf);
             foreach (var p in order)
-                if (!BakePaint.Draw(canvas, p, _assets.FilePath, w, h, ppu, underside)) return null;
+                if (!BakePaint.Draw(canvas, p, _assets.FilePath, w, h, ppu, above)) return null;
         }
         using var data = bmp.Encode(SKEncodedImageFormat.Png, 100);
         var e = _assets.Keep(data.ToArray());

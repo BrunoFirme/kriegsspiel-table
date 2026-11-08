@@ -424,6 +424,42 @@ public sealed partial class ConverterTests
     }
 
     [Fact]
+    public void A_token_glued_turned_over_carries_its_own_glued_token_to_the_mirrored_side_as_the_game_does()
+    {
+        const double Aside = 2, Further = 3;
+        var cfg = TempConfig();
+        const string Square = "http://a/square.png";
+        LocalPicture(cfg, Square, 16, 16, (_, _) => SKColors.White);
+        JsonObject Token(string name, double scale, double r, double g, double b)
+        {
+            var o = Obj("Custom_Token", name, scale, new JsonObject { ["CustomImage"] = new JsonObject { ["ImageURL"] = Square } });
+            (o["Transform"]!["posY"], o["Transform"]!["rotY"]) = (0.0, 0.0);
+            o["ColorDiffuse"] = new JsonObject { ["r"] = r, ["g"] = g, ["b"] = b };
+            return o;
+        }
+        var furthest = Token("", 1, 0.0, 0.0, 1.0);
+        furthest["Transform"]!["posX"] = Further;
+        var turned = Token("", 1, 1.0, 0.0, 0.0);
+        (turned["Transform"]!["posX"], turned["Transform"]!["rotZ"]) = (-Aside, 180.0);
+        turned["ChildObjects"] = new JsonArray(furthest);
+        var root = Token("Root", 0.2, 1.0, 1.0, 1.0);
+        root["Transform"]!["posY"] = 1.0;
+        root["ChildObjects"] = new JsonArray(turned);
+        var module = Module("mirrored", root);
+        var main = typeof(Config).Assembly.EntryPoint!;
+
+        var code = (int)main.Invoke(null, new object[] { new[] { "import", module, "--config", Path.Combine(_root, "converter.json"), "--out", Packages } })!;
+
+        Assert.Equal(0, code);
+        var table = Json.Load<Scenario>(Path.Combine(Packages, "scenarios", "mirrored", "scenario.json"));
+        var pack = Json.Load<PackManifest>(Path.Combine(Packages, "tts.mirrored", "pack.json"));
+        var def = pack.Pieces.Single(d => d.Id == Assert.Single(table.UmpireBoard).Def);
+        using var bmp = SKBitmap.Decode(Path.Combine(Packages, "tts.mirrored", pack.Assets[def.Image!].File));
+        Assert.Equal(SKColors.Blue, bmp.GetPixel(bmp.Width - 2, bmp.Height / 2));
+        Assert.Equal(SKColors.Transparent.Alpha, bmp.GetPixel(1, bmp.Height / 2).Alpha);
+    }
+
+    [Fact]
     public void Two_glued_units_alike_but_for_their_colour_are_two_kinds_each_in_its_own_colour()
     {
         const double Thickness = 0.1;

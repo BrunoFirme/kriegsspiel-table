@@ -1,8 +1,50 @@
+using KTable.Core.Model;
 using SkiaSharp;
 
 namespace KTable.Converter;
 
-sealed record BakePart(CacheEntry Picture, CacheEntry? Back, double X, double Z, double W, double H, double Rot, double Bottom, double Top, SKColor? Tint);
+sealed record BakePart(CacheEntry Picture, CacheEntry? Back, ModuleTurn Turn, double X, double Y, double Z, double W, double H, double Low, double High, SKColor? Tint)
+{
+    const double EdgeOn = 0.05;
+
+    public bool Seen => Math.Abs(Turn.UpY) >= EdgeOn;
+
+    bool TopFaces(bool above) => above == (Turn.UpY >= 0);
+
+    public double FaceHeight(bool above)
+    {
+        double local = TopFaces(above) ? High : Low;
+        return Y + Turn.Apply(0, local, 0).Y;
+    }
+
+    public IEnumerable<double> Heights()
+    {
+        foreach (var lx in new[] { -W / 2, W / 2 })
+            foreach (var ly in new[] { Low, High })
+                foreach (var lz in new[] { -H / 2, H / 2 })
+                    yield return Y + Turn.Apply(lx, ly, lz).Y;
+    }
+
+    public (CacheEntry Picture, SKMatrix Map) Face(bool above)
+    {
+        bool top = TopFaces(above);
+        bool ownBack = !top && Back != null;
+        var across = Turn.Apply(ownBack ? 1 : -1, 0, 0);
+        var deep = Turn.Apply(0, 0, 1);
+        var at = Turn.Apply(0, top ? High : Low, 0);
+        float sign = above ? -1 : 1;
+        var map = new SKMatrix((float)(sign * across.X), (float)(sign * deep.X), (float)(sign * (X + at.X)), (float)across.Z, (float)deep.Z, (float)(Z + at.Z), 0, 0, 1);
+        return (ownBack ? Back! : Picture, map);
+    }
+
+    public IEnumerable<SKPoint> Corners(bool above)
+    {
+        var map = Face(above).Map;
+        foreach (var ix in new[] { -W / 2, W / 2 })
+            foreach (var iy in new[] { -H / 2, H / 2 })
+                yield return map.MapPoint((float)ix, (float)iy);
+    }
+}
 
 static class BakePaint
 {
@@ -14,27 +56,20 @@ static class BakePaint
         return c == SKColors.White ? null : c;
     }
 
-    public static (double x, double z) Reach(BakePart p)
+    public static bool Draw(SKCanvas canvas, BakePart p, Func<CacheEntry, string?> fileOf, int w, int h, double ppu, bool above)
     {
-        double a = p.Rot * Math.PI / 180, cos = Math.Abs(Math.Cos(a)), sin = Math.Abs(Math.Sin(a));
-        return (cos * p.W / 2 + sin * p.H / 2, sin * p.W / 2 + cos * p.H / 2);
-    }
-
-    public static bool Draw(SKCanvas canvas, BakePart p, Func<CacheEntry, string?> fileOf, int w, int h, double ppu, bool underside)
-    {
-        bool ownBack = underside && p.Back != null;
-        using var img = SKBitmap.Decode(fileOf(ownBack ? p.Back! : p.Picture));
+        var (picture, map) = p.Face(above);
+        using var img = SKBitmap.Decode(fileOf(picture));
         if (img == null) return false;
         using var image = SKImage.FromBitmap(img);
         using var paint = new SKPaint { IsAntialias = true };
         if (p.Tint is { } tint) paint.ColorFilter = SKColorFilter.CreateBlendMode(tint, SKBlendMode.Modulate);
         canvas.Save();
-        canvas.Translate((float)(w / 2.0 + p.X * ppu), (float)(h / 2.0 + p.Z * ppu));
-        canvas.RotateDegrees((float)p.Rot);
-        if (ownBack)
-            canvas.Scale(-1, 1);
-        float pw = (float)(p.W * ppu), ph = (float)(p.H * ppu);
-        canvas.DrawImage(image, new SKRect(-pw / 2, -ph / 2, pw / 2, ph / 2), new SKSamplingOptions(SKFilterMode.Linear, SKMipmapMode.None), paint);
+        canvas.Translate((float)(w / 2.0), (float)(h / 2.0));
+        canvas.Scale((float)ppu);
+        canvas.Concat(in map);
+        float hw = (float)(p.W / 2), hh = (float)(p.H / 2);
+        canvas.DrawImage(image, new SKRect(-hw, -hh, hw, hh), new SKSamplingOptions(SKFilterMode.Linear, SKMipmapMode.None), paint);
         canvas.Restore();
         return true;
     }
