@@ -26,8 +26,19 @@ internal sealed class ModelPartView
     public bool FlipFront;
     public string Layer = ArtDoc.NewId();
     public byte[]? Saved;
+    public Transform3D Xf = Transform3D.Identity;
+    public MeshInstance3D? TwinNode;
+    public int Build, SavedBuild, Gen;
 
-    public void Repaint() { PaintDirty = true; Node.SetMeta("upload", true); }
+    public string StrokeKey => Build > 0 ? Part.Id + "#" + Build : Part.Id;
+    public Transform3D[] Places => TwinNode is { } t ? new[] { Xf, t.Transform } : new[] { Xf };
+
+    public void Repaint()
+    {
+        PaintDirty = true;
+        Gen++;
+        Node.SetMeta("upload", true);
+    }
 }
 
 internal sealed class ModelHistory
@@ -39,11 +50,12 @@ internal sealed class ModelHistory
     public long UndoStamp => _undoAt.Count > 0 ? _undoAt[^1] : 0;
     public long RedoStamp => _redoAt.Count > 0 ? _redoAt[^1] : 0;
 
-    public void BeginStroke(IEnumerable<ModelPartView> views) { _stroke.Clear(); foreach (var v in views) _stroke.Add((v.Part.Id, (byte[])v.Paint.Clone(), null)); }
+    public void BeginStroke(IEnumerable<ModelPartView> views) { _stroke.Clear(); foreach (var v in views) _stroke.Add((v.StrokeKey, (byte[])v.Paint.Clone(), null)); }
 
-    public bool EndStroke(IReadOnlyDictionary<string, ModelPartView> views)
+    public bool EndStroke(IEnumerable<ModelPartView> all)
     {
-        var changed = _stroke.Where(s => views.TryGetValue(s.part, out var v) && !s.before.AsSpan().SequenceEqual(v.Paint))
+        var views = all.GroupBy(v => v.StrokeKey).ToDictionary(g => g.Key, g => g.First());
+        var changed = _stroke.Where(s => views.TryGetValue(s.part, out var v) && v.Paint.Length == s.before.Length && !s.before.AsSpan().SequenceEqual(v.Paint))
             .Select(s => (s.part, s.before, (byte[]?)(byte[])views[s.part].Paint.Clone())).ToList();
         _stroke.Clear();
         if (changed.Count == 0) return false;

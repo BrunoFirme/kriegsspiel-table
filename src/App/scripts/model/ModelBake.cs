@@ -17,15 +17,15 @@ internal sealed class ModelBake
 
     public ModelBake(PackageStore store, PackManifest pack) { _store = store; _pack = pack; }
 
-    public static (Image atlas, int size, MeshData mesh) Pack(List<ModelPart> parts, Dictionary<string, ModelPartView> views)
+    public static (Image atlas, int size, MeshData mesh) Pack(List<ModelPartView> items)
     {
-        int total = (int)Math.Sqrt(parts.Sum(p => (double)views[p.Id].W * views[p.Id].H) * 1.2);
+        int total = (int)Math.Sqrt(items.Sum(v => (double)v.W * v.H) * 1.2);
         int S = Math.Clamp((int)Math.Pow(2, Math.Ceiling(Math.Log2(Math.Max(256, total)))), 256, 2048);
         Vector2[] at = Array.Empty<Vector2>();
         float k = 1;
         for (int i = 0; i < 30; i++)
         {
-            var sizes = parts.Select(p => new Vector2(Mathf.Floor(views[p.Id].W * k), Mathf.Floor(views[p.Id].H * k))).ToArray();
+            var sizes = items.Select(v => new Vector2(Mathf.Floor(v.W * k), Mathf.Floor(v.H * k))).ToArray();
             var res = Geometry2D.MakeAtlas(sizes);
             var size = res["size"].AsVector2I();
             if (size.X <= S && size.Y <= S) { at = res["points"].AsVector2Array(); break; }
@@ -34,24 +34,27 @@ internal sealed class ModelBake
         var atlas = Image.CreateEmpty(S, S, false, Image.Format.Rgba8);
         atlas.Fill(new Color(0.5f, 0.5f, 0.5f));
         var mesh = new MeshData { Tex = { null }, MatColor = { Colors.White } };
-        for (int i = 0; i < parts.Count; i++)
+        for (int i = 0; i < items.Count; i++)
         {
-            var v = views[parts[i].Id];
+            var v = items[i];
             int rw = Math.Max(1, (int)(v.W * k)), rh = Math.Max(1, (int)(v.H * k));
             var look = Composite(v);
             if (rw != v.W || rh != v.H) look.Resize(rw, rh, Image.Interpolation.Lanczos);
             var pos = new Vector2I((int)at[i].X, (int)at[i].Y);
             atlas.BlitRect(look, new Rect2I(0, 0, rw, rh), pos);
-            parts[i].Region = new[] { pos.X, pos.Y, rw, rh };
-            var pm =
-                new MeshData { V = v.Data.V.ToList(), N = v.Data.N.ToList(), UV = v.Data.UV.Select(uv => (new Vector2(pos.X, pos.Y) + uv * new Vector2(rw, rh)) / S).ToList(), C = v.Data.C.ToList(),
-                    Mat = Enumerable.Repeat(0, v.Data.Tris).ToList(), Tex = { null }, MatColor = { Colors.White } };
-            pm.Transform(parts[i].Xf());
-            mesh.V.AddRange(pm.V);
-            mesh.N.AddRange(pm.N);
-            mesh.UV.AddRange(pm.UV);
-            mesh.C.AddRange(pm.C);
-            mesh.Mat.AddRange(pm.Mat);
+            v.Part.Region = new[] { pos.X, pos.Y, rw, rh };
+            foreach (var xf in v.Places)
+            {
+                var uvs = v.Data.UV.Select(uv => (new Vector2(pos.X, pos.Y) + uv * new Vector2(rw, rh)) / S).ToList();
+                var pm = new MeshData { V = v.Data.V.ToList(), N = v.Data.N.ToList(), UV = uvs, C = v.Data.C.ToList(), Mat = Enumerable.Repeat(0, v.Data.Tris).ToList(), Tex = { null },
+                    MatColor = { Colors.White } };
+                pm.Transform(xf);
+                mesh.V.AddRange(pm.V);
+                mesh.N.AddRange(pm.N);
+                mesh.UV.AddRange(pm.UV);
+                mesh.C.AddRange(pm.C);
+                mesh.Mat.AddRange(pm.Mat);
+            }
         }
         return (atlas, S, mesh);
     }
@@ -92,7 +95,7 @@ internal sealed class ModelBake
         return Image.CreateFromData(w, h, false, Image.Format.Rgba8, d);
     }
 
-    static Image Composite(ModelPartView v)
+    internal static Image Composite(ModelPartView v)
     {
         var b = v.Base.GetData();
         var o = new byte[b.Length];
@@ -117,7 +120,7 @@ internal sealed class ModelBake
         tv.AddChild(cam);
         host.AddChild(tv);
         cam.MakeCurrent();
-        var aabbs = views.Where(v => v.Part.Visible && GodotObject.IsInstanceValid(v.Node)).Select(v => stand * (v.Node.Transform * v.Node.GetAabb())).ToList();
+        var aabbs = views.Where(v => GodotObject.IsInstanceValid(v.Node) && v.Node.Visible).Select(v => stand * (v.Node.Transform * v.Node.GetAabb())).ToList();
         var b = aabbs.Count > 0 ? aabbs.Aggregate((x, y) => x.Merge(y)) : new Aabb(Vector3.Zero, Vector3.One);
         var c = b.GetCenter();
         float d = b.Size.Length() * 1.9f;

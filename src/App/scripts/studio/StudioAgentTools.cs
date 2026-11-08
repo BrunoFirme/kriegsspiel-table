@@ -198,7 +198,7 @@ sealed partial class StudioTools
         return name + FormattableString.Invariant($", its own size {size.W:0.###} × {size.H:0.###} and outline {s.Framer.NameOf(d, i).ToLowerInvariant()}");
     }
 
-    static string Colour(string? hex, string fallback)
+    internal static string Colour(string? hex, string fallback)
     {
         if (hex == null) return fallback;
         var h = hex.Trim();
@@ -207,7 +207,7 @@ sealed partial class StudioTools
         return h.Length == 9 && h.Skip(1).All(Uri.IsHexDigit) ? h.ToLowerInvariant() : fallback;
     }
 
-    static bool IsColour(string? hex) => hex != null && Colour(hex, "") != "";
+    internal static bool IsColour(string? hex) => hex != null && Colour(hex, "") != "";
 
     static List<string>? Strings(JsonElement a, string name)
     {

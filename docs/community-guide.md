@@ -75,10 +75,18 @@ takes a web link.
   else it becomes a piece of its own. A layer keeps the shape it was added as: for another, add it and delete
   the old layer. Every layer, the block and each shape, lists its **Faces** to paint in 2D. A 3D piece's width
   on the table and its tint are under **On the table**.
+- A shape's **Place** is its centre. **Turned profile**, **Tube along a path** and **Outline with depth** take their
+  form from points: drag one, double-click a line to add one, right-click one to take it out.
+- **Join** sets how a shape meets the shapes above it in its list: **Add**, **Cut** or **Overlap** makes one solid,
+  and **Blend** rounds the join. Paint on a solid stays on it as its shapes move. **Mirrored twin** copies a shape
+  across the middle; the arrows change the order; a **group** carries its shapes with it.
+- **Sit on**, **Centre on** and **Measure to** place a shape against another; the move tool's **Snap** lands drags on
+  steps.
 - **Texture…** on an imported model lays on a texture made for it, as its maker drew it; **Picture…** on a shape
   stretches a picture over one face.
 - Tools: look round H, move V (drag the X, Y and Z arrows, or the shape itself), brush B, rubber E, fill G,
-  colour I, decal D; **F** turns the piece over. A shape chosen in 3D opens its faces in 2D.
+  colour I, decal D; **F** turns the piece over; 1, 3 and 7 look from the front, right and top (Shift: the other
+  side), 5 is the flat view. A shape chosen in 3D opens its faces in 2D.
 - Saved as one OBJ and one picture.
 
 **2D** (Alt+2) — a face laid flat, built of layers: pictures, paint, text and the unit plate (colours, label, unit

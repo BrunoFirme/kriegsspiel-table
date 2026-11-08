@@ -262,7 +262,7 @@ sealed class StudioSteps
                 await Frames(2);
                 break;
             case "mpart":
-                _s.Model?.AddParts(ModelImport.Primitive(arg), arg, arg);
+                _s.Model?.AddShape(arg, arg);
                 await Frames(3);
                 break;
             case "mfile":
@@ -290,7 +290,7 @@ sealed class StudioSteps
                 break;
             case "mbuild": if (_s.Model != null)
             {
-                _s.Model.AddParts(ModelImport.Primitive(arg), arg, arg);
+                _s.Model.AddShape(arg, arg);
                 await _s.Model.Bake();
                 await Wait(1.5);
             }

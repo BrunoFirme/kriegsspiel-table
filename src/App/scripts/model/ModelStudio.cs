@@ -16,7 +16,8 @@ namespace KTable.App;
 
 public sealed class ModelDoc
 {
-    public int Version { get; set; } = 1;
+    public const int CurrentVersion = 2;
+    public int Version { get; set; } = CurrentVersion;
     public float Scale { get; set; } = 1;
     public List<ModelPart> Parts { get; set; } = new();
     public string? Baked { get; set; }
@@ -40,11 +41,28 @@ public sealed class ModelPart
     public Dictionary<string, string[]>? FaceDocs { get; set; }
     public string? Groups { get; set; }
     public string? OwnLayout { get; set; }
+    public string? Parent { get; set; }
+    public string? Join { get; set; }
+    public float Blend { get; set; }
+    public bool Twin { get; set; }
+    public float[]? Pivot { get; set; }
+    public bool WorldScale { get; set; }
+    public ShapeSpec? Spec { get; set; }
+    public string? SolidMesh { get; set; }
+    public string? SolidPaint { get; set; }
+    public int[]? SolidRegion { get; set; }
+
+    [JsonIgnore] public bool IsGroup => Kind == ModelTree.GroupKind;
 
     public Transform3D Xf()
     {
-        var b = Basis.FromEuler(new Vector3(Mathf.DegToRad(Rot[0]), Mathf.DegToRad(Rot[1]), Mathf.DegToRad(Rot[2]))).Scaled(new Vector3(Scl[0], Scl[1], Scl[2]));
-        return new Transform3D(b, new Vector3(Pos[0], Pos[1], Pos[2]));
+        var turn = Basis.FromEuler(new Vector3(Mathf.DegToRad(Rot[0]), Mathf.DegToRad(Rot[1]), Mathf.DegToRad(Rot[2])));
+        var size = new Vector3(Scl[0], Scl[1], Scl[2]);
+        var at = new Vector3(Pos[0], Pos[1], Pos[2]);
+        if (WorldScale) return new Transform3D(turn.Scaled(size), at);
+        var b = turn * Basis.FromScale(size);
+        var pivot = Pivot is { Length: 3 } p ? new Vector3(p[0], p[1], p[2]) : Vector3.Zero;
+        return new Transform3D(b, at - b * pivot);
     }
 }
 
@@ -80,6 +98,8 @@ public partial class ModelStudio : Control
     readonly ModelHistory _history = new();
     ModelBake _baker = null!;
     ModelTools _tools = null!;
+    ModelSolids _solids = null!;
+    Image? _takeBack;
     Control? _overlay;
 
     internal ModelCamera Camera { get; private set; } = null!;
@@ -102,8 +122,12 @@ public partial class ModelStudio : Control
     internal Node3D Stand => _root;
     internal ModelHistory History => _history;
     internal ModelTools Tools => _tools;
+    internal ModelSolids Solids => _solids;
+    internal ModelEdits Edits { get; private set; } = null!;
+    internal IEnumerable<ModelPartView> Drawn => _views.Values.Where(v => v.Node.Visible && !IsGhost(v));
     internal bool DirtyMesh => _dirtyMesh;
     internal bool DirtyTex => _dirtyTex;
+    internal float SnapStep => P.ModelSnap;
 
     public string ToolTitle => Tool switch { "move" => "Place parts", "paint" => "Paint on the model", "erase" => "Rub out paint", "fill" => "Paint a whole part", "pick" => "Colour picker", "decal" => "Decal", _ => "Look around" };
 
@@ -115,6 +139,8 @@ public partial class ModelStudio : Control
         P = prefs;
         _baker = new ModelBake(store, pack);
         _tools = new ModelTools(this);
+        _solids = new ModelSolids(this);
+        Edits = new ModelEdits(this);
         Decal = new DecalTool(this);
         Panels = new ModelPanels(this);
         ShapeFaces = new ShapeFaceMap(this);
@@ -136,7 +162,7 @@ public partial class ModelStudio : Control
         _vp.AddChild(new DirectionalLight3D { RotationDegrees = new Vector3(-30, -150, 0), LightEnergy = 0.35f });
         _cam = new Camera3D { Fov = 40, Near = 0.01f, Far = 500 };
         _vp.AddChild(_cam);
-        Camera = new ModelCamera(_cam);
+        Camera = new ModelCamera(_cam) { Ortho = prefs.ModelOrtho };
         _grid = new MeshInstance3D { CastShadow = GeometryInstance3D.ShadowCastingSetting.Off, Layers = 2 };
         _vp.AddChild(_grid);
         BuildGrid(LeastGridHalf);
@@ -161,7 +187,7 @@ public partial class ModelStudio : Control
 
     void FitGrid()
     {
-        var aabbs = _views.Values.Where(v => v.Part.Visible).Select(v => _root.Transform * (v.Node.Transform * v.Node.GetAabb())).ToList();
+        var aabbs = Drawn.Select(v => _root.Transform * (v.Node.Transform * v.Node.GetAabb())).ToList();
         float reach = 0;
         foreach (var a in aabbs)
             reach = Mathf.Max(reach, Mathf.Max(Mathf.Max(Mathf.Abs(a.Position.X), Mathf.Abs(a.End.X)), Mathf.Max(Mathf.Abs(a.Position.Z), Mathf.Abs(a.End.Z))));
@@ -255,8 +281,10 @@ public partial class ModelStudio : Control
         ShowPrinting();
         _bake.Clear();
         _history.Clear();
-        foreach (var v in _views.Values) v.Node.QueueFree();
+        foreach (var v in _views.Values) Drop(v);
         _views.Clear();
+        _solids.Reset();
+        _takeBack = null;
         _selPart = null;
         _openedTex = d.Texture;
         _openedMesh = d.Mesh;
@@ -275,18 +303,13 @@ public partial class ModelStudio : Control
         }
         _doc = doc;
         _spotsScale = doc.Scale;
-        var unread = new List<string>();
-        foreach (var part in _doc.Parts)
-        {
-            try { MakeView(part); }
-            catch (Exception e) { unread.Add(part.Name); GD.PrintErr($"[studio] part {part.Name} of {d.Name}: {e.Message}"); }
-        }
+        var unread = MakeViews(d.Name);
         if (_doc.Baked != null && d.Texture != null && d.Texture != _doc.Baked) TakeBackTexture(d.Texture);
         if (unread.Count > 0) _studio.Say($"Could not read {string.Join(", ", unread)} of this model: left out of the view, kept in its document.");
         _selPart = _doc.Parts.FirstOrDefault(p => _views.ContainsKey(p.Id))?.Id;
         _dirtyMesh = _dirtyTex = false;
-        Frame();
         RefreshSelection();
+        Frame();
         return true;
     }
 
@@ -294,8 +317,10 @@ public partial class ModelStudio : Control
     {
         int gen = ++_openGen;
         if (!await Settle() || gen != _openGen) return false;
-        foreach (var v in _views.Values) v.Node.QueueFree();
+        foreach (var v in _views.Values) Drop(v);
         _views.Clear();
+        _solids.Reset();
+        _takeBack = null;
         _flat = false;
         _def = d;
         _turned = false;
@@ -325,12 +350,14 @@ public partial class ModelStudio : Control
         var doc = new ModelDoc();
         var b = m.Bounds();
         doc.Scale = (float)(d.Size.W / Math.Max(1e-4, b.Size.X));
-        m.Transform(new Transform3D(Basis.Identity, new Vector3(-b.GetCenter().X, -b.Position.Y, -b.GetCenter().Z)));
-        doc.Parts.Add(NewPart(m, d.Name, "mesh", TexSizeFor(m)));
+        m.Transform(new Transform3D(Basis.Identity, -b.GetCenter()));
+        var part = NewPart(m, d.Name, "mesh", TexSizeFor(m));
+        part.Pos = new[] { 0, b.Size.Y / 2, 0 };
+        doc.Parts.Add(part);
         return doc;
     }
 
-    static int TexSizeFor(MeshData m) => m.Tris > 20000 ? 2048 : m.Tris > 1500 ? 1024 : 512;
+    internal static int TexSizeFor(MeshData m) => m.Tris > 20000 ? 2048 : m.Tris > 1500 ? 1024 : 512;
 
     ModelPart NewPart(MeshData m, string name, string kind, int texSize)
     {
@@ -341,6 +368,8 @@ public partial class ModelStudio : Control
         var own = drawn == null ? null : SaveSrcText(ModelImport.ToObj(m.WithUV(drawn)), ".obj");
         return new ModelPart { Name = name, Kind = kind, Mesh = meshName, Tex = texName, Groups = ModelGroups.Encode(m.Mat, m.Tris), OwnLayout = own };
     }
+
+    internal ModelPart NewPartFor(MeshData m, string name, string kind) => NewPart(m, name, kind, 1024);
 
     internal string SaveSrcText(string text, string ext)
     {
@@ -374,15 +403,28 @@ public partial class ModelStudio : Control
             """,
     };
 
+    List<string> MakeViews(string of)
+    {
+        var unread = new List<string>();
+        foreach (var part in _doc.Parts.Where(p => !p.IsGroup))
+        {
+            try { MakeView(part); }
+            catch (Exception e) when (e is not OutOfMemoryException) { unread.Add(part.Name); GD.PrintErr($"[studio] part {part.Name} of {of}: {e.Message}"); }
+        }
+        ModelTree.Upgrade(_doc, p => _views.TryGetValue(p.Id, out var v) ? v.Data.Bounds() : null);
+        return unread;
+    }
+
     internal void MakeView(ModelPart part)
     {
+        if (part.IsGroup) return;
         var data = ModelImport.Obj(ArtStore.SrcPath(_store, _pack.Id, part.Mesh));
         if (part.Groups != null && ModelGroups.Decode(part.Groups, data.Tris) is { } mats) { data.Mat.Clear(); data.Mat.AddRange(mats); }
         var baseImg = ArtStore.LoadSrc(_store, _pack.Id, part.Tex) ?? Image.CreateEmpty(256, 256, false, Image.Format.Rgba8);
         AddView(part, data, baseImg, part.Kind == "block");
     }
 
-    ModelPartView AddView(ModelPart part, MeshData data, Image baseImg, bool cut = false)
+    internal ModelPartView AddView(ModelPart part, MeshData data, Image baseImg, bool cut = false)
     {
         int w = baseImg.GetWidth(), h = baseImg.GetHeight();
         var v = new ModelPartView { Part = part, Data = data, Base = baseImg, W = w, H = h, Paint = new byte[w * h * 4] };
@@ -407,7 +449,8 @@ public partial class ModelStudio : Control
         v.Mat.SetShaderParameter("paint_tex", v.PaintTex);
         v.Mat.SetShaderParameter("tint", Hex.To(part.Tint, Colors.White));
         v.Mat.SetShaderParameter("cut", cut ? 1f : 0f);
-        v.Node = new MeshInstance3D { Mesh = data.ToMesh(), MaterialOverride = v.Mat, Transform = part.Xf(), Visible = part.Visible };
+        v.Xf = IsPart(part.Id) ? ModelTree.WorldXf(_doc, part) : part.Xf();
+        v.Node = new MeshInstance3D { Mesh = data.ToMesh(), MaterialOverride = v.Mat, Transform = v.Xf, Visible = part.Visible };
         _root.AddChild(v.Node);
         int n = data.Tris;
         v.Centre = new Vector3[n];
@@ -427,9 +470,24 @@ public partial class ModelStudio : Control
     {
         if (PackEdit.LoadAsset(_store, _pack, sha) is not { } img) return;
         if (_doc.BakedSize > 0 && img.GetWidth() != _doc.BakedSize) img.Resize(_doc.BakedSize, _doc.BakedSize, Image.Interpolation.Bilinear);
-        foreach (var v in _views.Values)
+        _takeBack = _doc.Parts.Any(p => p.SolidRegion != null) ? img : null;
+        foreach (var v in _views.Values) TakeBack(v, img);
+        _dirtyTex = true;
+        _studio.Say("The model's picture had been painted in the 2D view: those strokes are now its paint here.");
+    }
+
+    internal void TakeBackInto(ModelPartView v)
+    {
+        if (_takeBack == null || v.Part.Region == null) return;
+        TakeBack(v, _takeBack);
+        if (!_doc.Parts.Any(p => p.SolidRegion != null && !_views.ContainsKey(ModelTree.SolidKey(p.Id)))) _takeBack = null;
+        _dirtyTex = true;
+    }
+
+    static void TakeBack(ModelPartView v, Image img)
+    {
         {
-            if (v.Part.Region is not { Length: 4 } r || r[2] <= 0 || r[3] <= 0) continue;
+            if (v.Part.Region is not { Length: 4 } r || r[2] <= 0 || r[3] <= 0) return;
             var cut = img.GetRegion(new Rect2I(r[0], r[1], r[2], r[3]));
             cut.Resize(v.W, v.H, Image.Interpolation.Bilinear);
             var d = cut.GetData();
@@ -442,8 +500,6 @@ public partial class ModelStudio : Control
             }
             v.Repaint();
         }
-        _dirtyTex = true;
-        _studio.Say("The model's picture had been painted in the 2D view: those strokes are now its paint here.");
     }
 
     public async Task<bool> Settle()
@@ -451,6 +507,7 @@ public partial class ModelStudio : Control
         for (int round = 0; round < 4; round++)
         {
             while (_bakeTask is { IsCompleted: false } running) await running;
+            if (_def != null && _solids.Pending) await _solids.Catch();
             if (!_dirtyMesh && !_dirtyTex) return true;
             if (_def == null || _views.Count == 0) { _dirtyMesh = _dirtyTex = false; return true; }
             var t = BakeNow();
@@ -489,8 +546,8 @@ public partial class ModelStudio : Control
         {
             _studio.SetSaved("saving…");
             await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
-            var parts = doc.Parts.Where(p => p.Visible && views.ContainsKey(p.Id)).ToList();
-            if (parts.Count == 0)
+            var items = views.Values.Where(v => v.Node.Visible && !IsGhost(v)).ToList();
+            if (items.Count == 0)
             {
                 _baker.KeepPaint(views.Values);
                 if (def.Mesh != null) KTable.Core.Json.WriteAtomic(DocPath(_store, _pack.Id, def.Mesh), JsonSerializer.Serialize(doc, Opts));
@@ -499,7 +556,8 @@ public partial class ModelStudio : Control
                 Problem = null;
                 return true;
             }
-            var (atlas, size, mesh) = ModelBake.Pack(parts, views);
+            var (atlas, size, mesh) = ModelBake.Pack(items);
+            _solids.Keep();
             var b = mesh.Bounds();
             mesh.Transform(new Transform3D(Basis.Identity, new Vector3(-b.GetCenter().X, -b.Position.Y, -b.GetCenter().Z)));
             var texSha = PackEdit.AddImage(_store, _pack, atlas);
@@ -562,6 +620,7 @@ public partial class ModelStudio : Control
     {
         if (mesh) _dirtyMesh = true;
         else _dirtyTex = true;
+        _solids.Touch();
         _bake.Arm(BakeDelay, BakeMaxDelay);
         _studio.SetSaved("editing…");
     }
@@ -575,6 +634,7 @@ public partial class ModelStudio : Control
                 v.PaintTex.Update(v.PaintImg);
                 v.Node.RemoveMeta("upload");
             }
+        _solids.Tick(delta);
         if (_bake.Tick(delta))
         {
             if (Input.IsMouseButtonPressed(MouseButton.Left)) _bake.In = 0.3;
@@ -585,12 +645,15 @@ public partial class ModelStudio : Control
 
     const float FlatModelSpan = 0.6f;
 
-    public void AddParts(MeshData m, string name, string kind)
+    public void AddParts(MeshData m, string name, string kind, ShapeSpec? spec = null)
     {
         Snapshot();
-        var part = NewPart(m, name, kind, kind == "mesh" ? TexSizeFor(m) : 1024);
         var pb = m.Bounds();
+        m.Transform(new Transform3D(Basis.Identity, -pb.GetCenter()));
+        var part = NewPart(m, name, kind, kind == "mesh" ? TexSizeFor(m) : 1024);
+        part.Spec = spec;
         float partSpan = Mathf.Max(1e-4f, Mathf.Max(pb.Size.X, Mathf.Max(pb.Size.Y, pb.Size.Z)));
+        var into = SelPart is { IsGroup: true } g ? g : null;
         if (_flat && kind == "base") kind = "box";
         if (_flat && kind == "mesh")
         {
@@ -598,20 +661,26 @@ public partial class ModelStudio : Control
             float s = span * FlatModelSpan / Mathf.Max(1e-4f, Mathf.Max(pb.Size.X, pb.Size.Z));
             float floor = Mathf.Clamp((float)(_def?.Thickness ?? 0), 0.02f, 2);
             part.Scl = new[] { s, s, s };
-            part.Pos = new[] { -pb.GetCenter().X * s, floor - pb.Position.Y * s, -pb.GetCenter().Z * s };
+            part.Pos = new[] { 0, floor + pb.Size.Y * s / 2, 0 };
         }
-        else if (_views.Count > 0)
+        else if (Drawn.Any())
         {
             float span = ModelSpan();
-            float top = _views.Values.Where(v => v.Part.Visible).Select(v => (v.Node.Transform * v.Node.GetAabb()).End.Y).DefaultIfEmpty(0).Max();
+            float top = Drawn.Select(v => (v.Node.Transform * v.Node.GetAabb()).End.Y).DefaultIfEmpty(0).Max();
             float s = kind switch { "base" => span * 1.15f, "mesh" => span * 0.8f, "flag" => span * 0.5f, _ => span * 0.35f } / partSpan;
             part.Scl = new[] { s, s, s };
-            part.Pos = kind switch { "base" => new[] { 0f, 0f, 0f }, "mesh" => new[] { span * 0.75f, 0f, 0f }, _ => new[] { 0f, top, 0f } };
+            float half = pb.Size.Y * s / 2;
+            part.Pos = kind switch { "base" => new[] { 0f, half, 0f }, "mesh" => new[] { span * 0.75f, half, 0f }, _ => new[] { 0f, top + half, 0f } };
             if (kind == "base")
-                foreach (var other in _doc.Parts) { other.Pos[1] += pb.Size.Y * s; if (_views.TryGetValue(other.Id, out var ov)) ov.Node.Transform = other.Xf(); }
+                foreach (var other in ModelTree.Children(_doc, null)) other.Pos[1] += pb.Size.Y * s;
         }
-        else _doc.Scale = 2f / Mathf.Max(1e-4f, Mathf.Max(pb.Size.X, pb.Size.Z));
+        else
+        {
+            _doc.Scale = 2f / Mathf.Max(1e-4f, Mathf.Max(pb.Size.X, pb.Size.Z));
+            part.Pos = new[] { 0, pb.Size.Y / 2, 0 };
+        }
         _doc.Parts.Add(part);
+        if (into != null) ModelTree.MoveInto(_doc, part, into);
         MakeView(part);
         _selPart = part.Id;
         RefreshSelection();
@@ -621,23 +690,44 @@ public partial class ModelStudio : Control
         _studio.RebuildModelStrip();
     }
 
-    float ModelSpan()
+    public void AddShape(string kind, string name)
     {
-        var aabbs = _views.Values.Where(v => v.Part.Visible).Select(v => v.Node.Transform * v.Node.GetAabb()).ToList();
-        if (aabbs.Count == 0) return 1;
-        var b = aabbs[0];
-        foreach (var a in aabbs) b = b.Merge(a);
-        return Mathf.Max(b.Size.X, Mathf.Max(b.Size.Y, b.Size.Z));
+        if (!ShapeMaker.IsSpec(kind)) { AddParts(ModelImport.Primitive(kind), name, kind); return; }
+        var spec = ShapeMaker.Default(kind);
+        AddParts(ShapeMaker.Make(spec), name, kind, spec);
     }
 
-    internal float FootprintWide()
+    internal Aabb? BoundsOf(ModelPart p)
     {
-        var aabbs = _views.Values.Where(v => v.Part.Visible).Select(v => v.Node.Transform * v.Node.GetAabb()).ToList();
-        if (aabbs.Count == 0) return 1;
-        var b = aabbs[0];
-        foreach (var a in aabbs) b = b.Merge(a);
-        return Mathf.Max(1e-4f, b.Size.X);
+        var items = p.IsGroup ? ModelTree.Descendants(_doc, p).Where(x => !x.IsGroup) : new[] { p };
+        Aabb? all = null;
+        foreach (var x in items)
+        {
+            if (!_views.TryGetValue(x.Id, out var v) || !ModelTree.Shown(_doc, x)) continue;
+            foreach (var xf in x.Twin ? new[] { ModelTree.WorldXf(_doc, x), ModelTree.TwinXf(_doc, x) } : new[] { ModelTree.WorldXf(_doc, x) })
+            {
+                var b = xf * v.Data.Bounds();
+                all = all is { } a ? a.Merge(b) : b;
+            }
+        }
+        return all;
     }
+
+    Aabb? DrawnBounds()
+    {
+        Aabb? all = null;
+        foreach (var v in Drawn)
+        {
+            var b = v.Node.Transform * v.Node.GetAabb();
+            all = all is { } a ? a.Merge(b) : b;
+            if (v.TwinNode is { Visible: true } t) all = all.Value.Merge(t.Transform * t.GetAabb());
+        }
+        return all;
+    }
+
+    float ModelSpan() => DrawnBounds() is { } b ? Mathf.Max(b.Size.X, Mathf.Max(b.Size.Y, b.Size.Z)) : 1;
+
+    internal float FootprintWide() => DrawnBounds() is { } b ? Mathf.Max(1e-4f, b.Size.X) : 1;
 
     internal void SetWidth(double width)
     {
@@ -648,27 +738,79 @@ public partial class ModelStudio : Control
         Changed(mesh: true);
     }
 
+    static readonly StandardMaterial3D Ghost = new()
+    {
+        Transparency = BaseMaterial3D.TransparencyEnum.Alpha, ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded, AlbedoColor = new Color(0.95f, 0.72f, 0.3f, 0.28f),
+        CullMode = BaseMaterial3D.CullModeEnum.Disabled, NoDepthTest = true,
+    };
+
     internal void RefreshSelection()
     {
+        _solids.Refresh();
         bool several = _flat ? _doc.Parts.Count > 0 : _doc.Parts.Count > 1;
+        var sel = SelPart;
+        var lit = sel == null ? new HashSet<string>() : (sel.IsGroup ? ModelTree.Descendants(_doc, sel) : new List<ModelPart> { sel }).Select(p => p.Id).ToHashSet();
         foreach (var v in _views.Values)
         {
-            v.Mat.SetShaderParameter("selected", several && v.Part.Id == _selPart && IsPart(v.Part.Id) ? 1f : 0f);
-            v.Node.Visible = v.Part.Visible;
-            v.Node.Transform = v.Part.Xf();
             v.Mat.SetShaderParameter("tint", Hex.To(v.Part.Tint, Colors.White));
+            if (!IsPart(v.Part.Id))
+            {
+                bool litSolid = ModelTree.IsSolidKey(v.Part.Id) && _solids.Chains.FirstOrDefault(c => c.Key == v.Part.Id) is { } ch && ch.Members.Any(m => m.Id == _selPart);
+                v.Mat.SetShaderParameter("selected", several && litSolid ? 1f : 0f);
+                continue;
+            }
+            var p = v.Part;
+            bool joined = _solids.IsConsumed(p.Id);
+            bool shown = ModelTree.Shown(_doc, p);
+            v.Xf = ModelTree.WorldXf(_doc, p);
+            v.Node.Transform = v.Xf;
+            bool ghost = joined && shown && lit.Contains(p.Id);
+            v.Node.Visible = shown && (!joined || ghost);
+            v.Node.MaterialOverride = ghost ? Ghost : v.Mat;
+            v.Node.CastShadow = ghost ? GeometryInstance3D.ShadowCastingSetting.Off : GeometryInstance3D.ShadowCastingSetting.On;
+            v.Node.Layers = ghost ? GhostLayer : 1u;
+            v.Mat.SetShaderParameter("selected", several && lit.Contains(p.Id) ? 1f : 0f);
+            Twin(v, shown && !joined && p.Twin);
         }
         _root.Scale = Vector3.One * _doc.Scale;
         FitGrid();
     }
 
-    internal void Frame() => Camera.Frame(_views.Values.Select(v => _root.Transform * (v.Node.Transform * v.Node.GetAabb())).ToList());
+    void Twin(ModelPartView v, bool on)
+    {
+        if (!on)
+        {
+            if (v.TwinNode != null) { v.TwinNode.QueueFree(); v.TwinNode = null; }
+            return;
+        }
+        if (v.TwinNode == null)
+        {
+            v.TwinNode = new MeshInstance3D { Mesh = v.Node.Mesh, MaterialOverride = v.Mat };
+            _root.AddChild(v.TwinNode);
+        }
+        v.TwinNode.Transform = ModelTree.TwinXf(_doc, v.Part);
+    }
+
+    const uint GhostLayer = 2;
+
+    internal bool IsGhost(ModelPartView v) => v.Node.MaterialOverride == Ghost;
+
+    internal void FrameOn(ModelPart p)
+    {
+        if (BoundsOf(p) is { } b) Camera.Frame(new List<Aabb> { _root.Transform * b });
+    }
+
+    internal void Frame() => Camera.Frame(DrawnBounds() is { } b ? new List<Aabb> { _root.Transform * b } : new List<Aabb>());
 
     internal void RemovePart(ModelPart p)
     {
         Snapshot();
-        _doc.Parts.Remove(p);
-        if (_views.Remove(p.Id, out var v)) v.Node.QueueFree();
+        var gone = p.IsGroup ? ModelTree.Descendants(_doc, p).Prepend(p).ToList() : new List<ModelPart> { p };
+        foreach (var x in gone)
+        {
+            _doc.Parts.Remove(x);
+            if (_views.Remove(x.Id, out var v)) Drop(v);
+        }
         _selPart = _doc.Parts.FirstOrDefault()?.Id ?? (_flat ? _views.Values.FirstOrDefault(x => x.Face != null)?.Part.Id : null);
         RefreshSelection();
         Changed(mesh: true);
@@ -676,11 +818,17 @@ public partial class ModelStudio : Control
         _studio.RebuildModelStrip();
     }
 
-    internal void BeginStroke() => _history.BeginStroke(_views.Values);
+    static void Drop(ModelPartView v)
+    {
+        v.Node.QueueFree();
+        v.TwinNode?.QueueFree();
+    }
+
+    internal void BeginStroke() => _history.BeginStroke(Drawn.Where(v => !IsGhost(v)));
 
     internal void EndStroke()
     {
-        if (!_history.EndStroke(_views)) return;
+        if (!_history.EndStroke(_views.Values)) return;
         P.Used(Ink);
         Changed(mesh: false);
     }
@@ -695,8 +843,9 @@ public partial class ModelStudio : Control
         if (_history.Take(undo) is not { } e) return;
         if (e is List<(string part, byte[] before, byte[]? after)> strokes)
         {
+            var byKey = _views.Values.GroupBy(v => v.StrokeKey).ToDictionary(g => g.Key, g => g.First());
             foreach (var (part, before, after) in strokes)
-                if (_views.TryGetValue(part, out var v)) { Array.Copy(undo ? before : after!, v.Paint, v.Paint.Length); v.Repaint(); }
+                if (byKey.TryGetValue(part, out var v) && v.Paint.Length == before.Length) { Array.Copy(undo ? before : after!, v.Paint, v.Paint.Length); v.Repaint(); }
             _history.Give(undo, strokes);
             Changed(mesh: false);
         }
@@ -704,16 +853,16 @@ public partial class ModelStudio : Control
         {
             _history.Give(undo, JsonSerializer.Serialize(_doc, Opts));
             var paints = _views.Where(kv => IsPart(kv.Key)).ToDictionary(kv => kv.Key, kv => kv.Value);
-            foreach (var v in paints.Values) { v.Node.QueueFree(); _views.Remove(v.Part.Id); }
+            foreach (var v in paints.Values) { Drop(v); _views.Remove(v.Part.Id); }
             if (_flat) d.Scale = 1;
             _doc = d;
-            foreach (var p in _doc.Parts)
+            foreach (var p in _doc.Parts.Where(x => !x.IsGroup))
             {
                 MakeView(p);
                 if (paints.TryGetValue(p.Id, out var old) && old.Part.Mesh == p.Mesh && old.Paint.Length == _views[p.Id].Paint.Length) { Array.Copy(old.Paint, _views[p.Id].Paint,
                     old.Paint.Length); _views[p.Id].Repaint(); }
             }
-            if (!_views.ContainsKey(_selPart ?? "")) _selPart = _doc.Parts.FirstOrDefault()?.Id ?? _views.Values.FirstOrDefault(x => x.Face != null)?.Part.Id;
+            if (!_views.ContainsKey(_selPart ?? "") && !IsPart(_selPart ?? "")) _selPart = _doc.Parts.FirstOrDefault()?.Id ?? _views.Values.FirstOrDefault(x => x.Face != null)?.Part.Id;
             RefreshSelection();
             Changed(mesh: true);
             _studio.RebuildModelPanels();
@@ -753,10 +902,33 @@ public partial class ModelStudio : Control
                 return true;
         }
         if (ctrl || k.Echo) return false;
+        if (!k.AltPressed && ViewKey(k.Keycode, k.ShiftPressed)) return true;
         var t = k.Keycode switch { Godot.Key.H => "orbit", Godot.Key.V => "move", Godot.Key.B => "paint", Godot.Key.E => "erase", Godot.Key.G => "fill", Godot.Key.I => "pick", Godot.Key.D => "decal", _ => null };
         if (t == null || (t == "move" && !CanMove)) return false;
         SetTool(t);
         return true;
+    }
+
+    internal bool ViewKey(Key key, bool opposite)
+    {
+        switch (key)
+        {
+            case Godot.Key.Key1 or Godot.Key.Kp1:
+                Camera.Face(opposite ? Mathf.Pi : 0, ModelCamera.Level);
+                return true;
+            case Godot.Key.Key3 or Godot.Key.Kp3:
+                Camera.Face(opposite ? -Mathf.Pi / 2 : Mathf.Pi / 2, ModelCamera.Level);
+                return true;
+            case Godot.Key.Key7 or Godot.Key.Kp7:
+                Camera.Face(opposite ? Mathf.Pi : 0, ModelCamera.Above);
+                return true;
+            case Godot.Key.Key5 or Godot.Key.Kp5:
+                Camera.Ortho = P.ModelOrtho = !Camera.Ortho;
+                Camera.Apply();
+                _studio.RebuildModelStrip();
+                return true;
+        }
+        return false;
     }
 
     internal bool CanMove => !_flat || _doc.Parts.Count > 0;
