@@ -7,6 +7,7 @@ public partial class PieceNode
 {
     const float TextAboveFace = 0.004f, TextEmbolden = 0.6f;
     const int LargestTextPixels = 512;
+    static readonly Vector3 ReadsUprightAtModuleTurnZero = new(-90, 180, 0);
 
     string? _shownFacePicture, _shownWebMesh, _shownWebTexture;
     KTable.Core.Model.Lettering? _shownLettering;
@@ -24,7 +25,7 @@ public partial class PieceNode
         {
             Text = lt.Text, Font = font, FontSize = Mathf.Clamp((int)Mathf.Round((float)lt.Size), 1, LargestTextPixels), OutlineSize = 0,
             Modulate = Coords.ParseColor(lt.Color, Colors.White) * _layerTint, PixelSize = (float)(lt.UnitsPerPixel * Piece.Scale),
-            RotationDegrees = new Vector3(-90, 0, 0), Position = new Vector3(0, _thickness + TextAboveFace, 0), DoubleSided = true,
+            RotationDegrees = ReadsUprightAtModuleTurnZero, Position = new Vector3(0, _thickness + TextAboveFace, 0), DoubleSided = true,
             HorizontalAlignment = HorizontalAlignment.Center, VisibilityRangeEnd = LetteringRange(),
         });
     }
