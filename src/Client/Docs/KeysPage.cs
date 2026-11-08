@@ -51,6 +51,7 @@ public static class KeysPage
             (K("capture"), "capture a region to the clipboard"),
             (K("captureAgain"), "capture the same region again"),
             (K("sighting"), "POV capture from the selected piece; wheel sets its reach"),
+            ("Ctrl+wheel  Shift+wheel", "with a decal picked: size it, turn it"),
             ("Alt+click", "pick out a map sheet"),
             ($"{K("undo")}  {K("redo")}", "undo, redo (umpire)"),
             (K("mute"), "sound on / off"),

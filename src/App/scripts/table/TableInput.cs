@@ -153,9 +153,9 @@ sealed class TableInput
             _forms.Turn(mb.ButtonIndex == MouseButton.WheelUp ? -10 : 10);
             return;
         }
-        if (_c.Tool == Tool.Decal && Decals.Armed != null && !mb.AltPressed)
+        if (_c.Tool == Tool.Decal && Decals.Armed != null && (mb.CtrlPressed || mb.ShiftPressed))
         {
-            Decals.Wheel(mb.ButtonIndex == MouseButton.WheelUp, mb.ShiftPressed);
+            Decals.Wheel(mb.ButtonIndex == MouseButton.WheelUp, mb.CtrlPressed);
             return;
         }
         if (_c.Tool == Tool.Range && WheelOnSelection(mb.Position))

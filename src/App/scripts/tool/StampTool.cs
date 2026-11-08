@@ -49,7 +49,7 @@ sealed class StampTool
 
     public string Hint() => Armed == null
         ? "Pick a decal in the panel · click a stamped decal to lift it off"
-        : $"Click to stamp {(Armed.Name.Length > 0 ? Armed.Name : "the decal")} on a piece or the table · the wheel turns it, Shift+wheel sizes it · click a stamped decal to lift it off";
+        : $"Click to stamp {(Armed.Name.Length > 0 ? Armed.Name : "the decal")} on a piece or the table · Ctrl+wheel sizes it, Shift+wheel turns it · click a stamped decal to lift it off";
 
     readonly Dictionary<string, float> _aspects = new();
 

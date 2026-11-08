@@ -83,10 +83,7 @@ internal sealed class TablePaper
         pm.AddItem("Paint this piece", 8);
         pm.AddItem("Turn over", 9);
         pm.AddSeparator();
-        pm.AddItem("Turn left 15°", 1);
-        pm.AddItem("Turn right 15°", 2);
-        pm.AddItem("Larger", 3);
-        pm.AddItem("Smaller", 4);
+        pm.AddItem("Turn around 180°", 1);
         pm.AddSeparator();
         pm.AddItem("Duplicate the piece", 5);
         pm.AddItem("Delete the piece", 6);
@@ -97,16 +94,7 @@ internal sealed class TablePaper
             switch (id)
             {
                 case 1:
-                    T.RotateSmooth(-15);
-                    break;
-                case 2:
-                    T.RotateSmooth(15);
-                    break;
-                case 3:
-                    T.ScaleSmooth(1.1);
-                    break;
-                case 4:
-                    T.ScaleSmooth(1 / 1.1);
+                    T.RotateSmooth(180);
                     break;
                 case 5:
                     _s.DuplicateSel();
