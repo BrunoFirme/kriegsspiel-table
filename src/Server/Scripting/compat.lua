@@ -756,6 +756,9 @@ local function bind(h, def)
     script = type(p.script) == "string" and p.script ~= "" and p.script or nil }
   if p.gm_notes ~= nil then compat.set_gm_notes(piece, p.gm_notes) end
   rawset(h, "__piece", piece)
+  if type(p.rotation) == "table" and compat.lie then
+    compat.lie(piece, compat.Vector(vec(rot, "x", 1, 0), vec(rot, "y", 2, 0), vec(rot, "z", 3, 0)))
+  end
   for _, q in ipairs(rawget(h, "__queue")) do
     local f = piece[q[1]]
     if type(f) == "function" then f(table.unpack(q[2])) end

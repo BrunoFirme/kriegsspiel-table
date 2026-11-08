@@ -100,6 +100,7 @@ ShowDialog(to=other) table | allowed O:n U:n L:n H:n | in-batch O:n U:n L:n H:n 
 SpawnPiece layer | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone Pos | apply ok inverse:DeletePiece | undo-reloads -
 StampDecal layer | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone - | apply refused:a_decal_needs_a_picture | undo-reloads -
 Stow layer | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone Id | apply refused:no_such_piece | undo-reloads Id
+TiltPiece layer | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone Id | apply ok inverse:TiltPiece | undo-reloads -
 TurnDie layer | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone Id | apply ok inverse:TurnDie | undo-reloads -
 UiEvent table | allowed O:n U:y L:y H:y | in-batch O:n U:y L:y H:y | observer same | zone - | apply ok inverse:none | undo-reloads -
 Undo table | allowed O:n U:y L:y H:y | in-batch O:n U:n L:n H:n | observer same | zone - | apply refused:undo_is_resolved_by_the_server | undo-reloads -

@@ -367,6 +367,9 @@ internal sealed partial class PieceHandles(ScriptHost host)
                 return S(sh ?? def?.Shape ?? "box");
             }
             case "face_down": return B(p.FaceDown);
+            case "tilt_x": return N(p.TiltX);
+            case "tilt_z": return N(p.TiltZ);
+            case "model": return B(def?.Kind == "model");
             case "holds": return B(p.HoldsPieces(def) || def?.Tags.Contains("bag") == true);
             case "locked": return B(p.Locked);
             case "sticky": return B(!p.NotSticky);
@@ -510,6 +513,7 @@ internal sealed partial class PieceHandles(ScriptHost host)
                 return DynValue.Nil;
             });
             case "set_scale": return Fn(a => { host.Emit(new SetScale { Layer = L, Id = id, Scale = Arg(a, 0).CastToNumber() ?? 1 }); return DynValue.Nil; });
+            case "set_tilt": return Fn(a => { host.Emit(new TiltPiece { Layer = L, Id = id, X = Number(Arg(a, 0), "set_tilt", 0), Z = Number(Arg(a, 1), "set_tilt", 0) }); return DynValue.Nil; });
             case "flip": return Fn(a => { host.Emit(new FlipPiece { Layer = L, Id = id, FaceDown = Arg(a, 0).IsNil() ? !p.FaceDown : Arg(a, 0).CastToBool() }); return DynValue.Nil; });
             case "set_tint": return Fn(a => { host.Emit(new SetTint { Layer = L, Id = id, Value = Arg(a, 0).IsNil() ? null : ColorOf(Arg(a, 0)) }); return DynValue.Nil; });
             case "set_locked": return Fn(a => { host.Emit(new SetLocked { Layer = L, Id = id, Value = Arg(a, 0).IsNil() || Arg(a, 0).CastToBool() }); return DynValue.Nil; });

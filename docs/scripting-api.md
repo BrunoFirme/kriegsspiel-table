@@ -220,6 +220,9 @@ Read from `self` or from any piece `board.find` or `board.pieces` hands back. Fi
 | [`self.local_unit`](#selflocal_unit) | For a model that came from a module, what one unit of its script's local frame is in piece units: { x =, z = }; nil for every other piece. |
 | [`self.shape`](#selfshape) | Its outline at its state: "box", "rounded", "circle", "hex", or "alpha" for a token cut along its picture. |
 | [`self.face_down`](#selfface_down) | Turned over. |
+| [`self.tilt_x`](#selftilt_x) | How far it leans about its own left-right axis, in degrees from -180 to 180, before its heading turns it; 0 for a piece lying flat. |
+| [`self.tilt_z`](#selftilt_z) | How far it leans about its own front-back axis, in degrees from -180 to 180; 0 for a piece lying flat. |
+| [`self.model`](#selfmodel) | true for a 3D model, false for a flat piece. |
 | [`self.interactable`](#selfinteractable) | Whether hands can take it (set_interactable). |
 | [`self.held_by`](#selfheld_by) | The umpire carrying it now, or nil. |
 | [`self.source`](#selfsource) | For a kind converted from a module: { type =, links = { image =, mesh =, … }, top =, origin =, rise =, tag =, tags = } — the module object's type, its picture and model links, its top surface in its own units, for a flat piece the height of its own origin above the base and the piece units one of its own units rises, the kind of object it was (Tile, Figurine, Board, Bag…) and its own tags; for a piece of several states, `states` lists each state's { type, guid, description, gm_notes, memo, script_state, tags, script } as the module kept them; nil otherwise. |
@@ -576,6 +579,36 @@ Turned over.
 
 **Module call** `is_face_down`
 
+### `self.tilt_x`
+
+```lua
+self.tilt_x
+```
+
+How far it leans about its own left-right axis, in degrees from -180 to 180, before its heading turns it; 0 for a piece lying flat.
+
+**Type** `number`, read-only.
+
+### `self.tilt_z`
+
+```lua
+self.tilt_z
+```
+
+How far it leans about its own front-back axis, in degrees from -180 to 180; 0 for a piece lying flat.
+
+**Type** `number`, read-only.
+
+### `self.model`
+
+```lua
+self.model
+```
+
+true for a 3D model, false for a flat piece.
+
+**Type** `boolean`, read-only.
+
 ### `self.interactable`
 
 ```lua
@@ -878,6 +911,7 @@ Each call is a change every umpire sees, taken back with Ctrl+Z by the umpire wh
 | [`self.set_rot`](#selfset_rot) | Turns it to a heading in degrees. |
 | [`self.move`](#selfmove) | Moves and turns it in one change. A place { x, z } or another piece works in place of x and z: move(place, rot). |
 | [`self.set_scale`](#selfset_scale) | Sets its size multiplier. |
+| [`self.set_tilt`](#selfset_tilt) | Leans it under its heading: z degrees about its front-back axis, then x about its left-right axis, as a module rotation turns an object; a face-down piece leans turned over. set_tilt(0, 0) lays it flat again. Undo takes it back. |
 | [`self.flip`](#selfflip) | Turns it over; with no argument, to the other side. |
 | [`self.set_tint`](#selfset_tint) | Tints its sides: "#RRGGBB", a name, or { r, g, b }. nil goes back to its kind's. |
 | [`self.set_locked`](#selfset_locked) | Pins it to the table, or lets it go. |
@@ -1047,6 +1081,21 @@ Sets its size multiplier.
 Widgets keep their place and their share of the face: they are drawn in piece units.
 
 **Module call** `setScale` · **See also** [`self.scale`](#selfscale), [`self.size`](#selfsize)
+
+### `self.set_tilt`
+
+```lua
+self.set_tilt(x, z)
+```
+
+Leans it under its heading: z degrees about its front-back axis, then x about its left-right axis, as a module rotation turns an object; a face-down piece leans turned over. set_tilt(0, 0) lays it flat again. Undo takes it back.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `x` | `number` | _Optional._ Degrees about its left-right axis. |
+| `z` | `number` | _Optional._ Degrees about its front-back axis. |
+
+**See also** [`self.tilt_x`](#selftilt_x), [`self.tilt_z`](#selftilt_z), [`self.flip`](#selfflip)
 
 ### `self.flip`
 

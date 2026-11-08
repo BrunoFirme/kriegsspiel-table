@@ -375,10 +375,62 @@ end
 local function down_of(r) return math.cos(math.rad(r.x)) * math.cos(math.rad(r.z)) < 0 end
 local function apart(a, b) local d = math.abs(turn(a) - turn(b)) return math.min(d, FULL_TURN - d) end
 
+local FLIP_WINDOW, TEXT_LIES_AT, SAME_TILT = 30, 90, 1e-3
+local function signed(a)
+  a = a % FULL_TURN
+  if a > HALF_TURN then a = a - FULL_TURN end
+  return a
+end
+local function near_half(a) return math.abs(signed(a - HALF_TURN)) < FLIP_WINDOW end
+local function is_text(obj) return obj.source ~= nil and obj.source.type == "3DText" end
+
+local function pose_of(obj, r)
+  if obj.face ~= nil then return heading_of(r), down_of(r), obj.tilt_x or 0, obj.tilt_z or 0 end
+  if is_text(obj) then return turn(r.y - r.z), false, signed(r.x - TEXT_LIES_AT), 0 end
+  if obj.model then return turn(r.y), false, signed(r.x), signed(r.z) end
+  local fx, fz = near_half(r.x), near_half(r.z)
+  return turn(fx and r.y + HALF_TURN or r.y), fx ~= fz, signed(fx and HALF_TURN - r.x or r.x), signed(fz and r.z - HALF_TURN or r.z)
+end
+
 local function lie(obj, r)
-  local down = down_of(r)
+  local heading, down, tx, tz = pose_of(obj, r)
   if down ~= (obj.face_down == true) then obj.flip(down) end
-  obj.set_rot(heading_of(r))
+  if math.abs(tx - (obj.tilt_x or 0)) > SAME_TILT or math.abs(tz - (obj.tilt_z or 0)) > SAME_TILT then obj.set_tilt(tx, tz) end
+  obj.set_rot(heading)
+end
+compat.lie = lie
+
+local function reported(obj, heading, down, tx, tz)
+  tx, tz = tx or obj.tilt_x or 0, tz or obj.tilt_z or 0
+  if is_text(obj) then return compat.Vector(turn(tx + TEXT_LIES_AT), turn(heading), 0) end
+  return compat.Vector(turn(tx), turn(heading), turn(down and tz + HALF_TURN or tz))
+end
+
+local function lean(obj, x, y, z)
+  if obj.face_down then x, y = -x, -y end
+  local a = math.rad(obj.tilt_z or 0)
+  local c, s = math.cos(a), math.sin(a)
+  x, y = x * c - y * s, x * s + y * c
+  a = math.rad(obj.tilt_x or 0)
+  c, s = math.cos(a), math.sin(a)
+  y, z = y * c - z * s, y * s + z * c
+  return x, y, z
+end
+local function unlean(obj, x, y, z)
+  local a = math.rad(obj.tilt_x or 0)
+  local c, s = math.cos(a), math.sin(a)
+  y, z = y * c + z * s, -y * s + z * c
+  a = math.rad(obj.tilt_z or 0)
+  c, s = math.cos(a), math.sin(a)
+  x, y = x * c + y * s, -x * s + y * c
+  if obj.face_down then x, y = -x, -y end
+  return x, y, z
+end
+local function turned(obj, x, y, z)
+  x, y, z = lean(obj, x, y, z)
+  local a = math.rad(obj.rot or 0)
+  local c, s = math.cos(a), math.sin(a)
+  return compat.Vector(x * c + z * s, y, -x * s + z * c)
 end
 
 function compat.position(obj)
@@ -389,8 +441,8 @@ function compat.position(obj)
 end
 function compat.rotation(obj)
   local g = gliding[obj.id]
-  if g and g.heading then return compat.Vector(0, turn(g.heading), g.down and HALF_TURN or 0) end
-  return compat.Vector(0, turn(obj.rot or 0), obj.face_down and HALF_TURN or 0)
+  if g and g.heading then return reported(obj, g.heading, g.down) end
+  return reported(obj, obj.rot or 0, obj.face_down == true)
 end
 
 local function land(obj, g)
@@ -447,9 +499,10 @@ function compat.glide(obj, to, turn_to, fast, after)
     g.at = g.at or { x = here.x, z = here.z }
   end
   if turn_to then
-    local goal = heading_of(turn_to)
+    local goal, down, tx, tz = pose_of(obj, turn_to)
     local from = g.heading or obj.rot or 0
-    if apart(from, goal) > NEAR_TURN or down_of(turn_to) ~= (obj.face_down == true) then
+    local leans = math.abs(tx - (obj.tilt_x or 0)) > SAME_TILT or math.abs(tz - (obj.tilt_z or 0)) > SAME_TILT
+    if apart(from, goal) > NEAR_TURN or down ~= (obj.face_down == true) or leans then
       g.turn_to, g.goal, g.heading, g.down = turn_to, goal, from, obj.face_down == true
     end
   end
@@ -471,7 +524,10 @@ function compat.smooth_target(obj)
 end
 function compat.smooth_turn_target(obj)
   local g = gliding[obj.id]
-  if g and g.heading then return compat.Vector(0, g.goal, down_of(g.turn_to) and HALF_TURN or 0) end
+  if g and g.heading then
+    local heading, down, tx, tz = pose_of(obj, g.turn_to)
+    return reported(obj, heading, down, tx, tz)
+  end
   return nil
 end
 local function stop_glide(obj) gliding[obj.id] = nil end
@@ -509,12 +565,9 @@ function compat.translate(obj, v)
   return true
 end
 
-function compat.transform_forward(obj) local a = math.rad(obj.rot or 0); return compat.Vector(math.sin(a), 0, math.cos(a)) end
-function compat.transform_right(obj)
-  local a, k = math.rad(obj.rot or 0), obj.face_down and -1 or 1
-  return compat.Vector(k * math.cos(a), 0, -k * math.sin(a))
-end
-function compat.transform_up(obj) return compat.Vector(0, obj.face_down and -1 or 1, 0) end
+function compat.transform_forward(obj) return turned(obj, 0, 0, 1) end
+function compat.transform_right(obj) return turned(obj, 1, 0, 0) end
+function compat.transform_up(obj) return turned(obj, 0, 1, 0) end
 
 function compat.yes() return true end
 function compat.set_name(obj, s) obj.set_name(s) return true end
@@ -748,7 +801,7 @@ function compat.take_object(obj, params)
   local p = obj.unstow(which, start, smooth and turn(obj.rot or 0) or heading_of(rotation))
   if p == nil then return nil end
   if not smooth then
-    if down_of(rotation) ~= (p.face_down == true) then p.flip() end
+    lie(p, rotation)
     compat.after_spawn(obj, p, params)
     return p
   end
@@ -1147,18 +1200,16 @@ end
 function compat.position_to_world(obj, v)
   local p = compat.vector_arg(v)
   local ux, uy, uz = axis_units(obj)
-  local x, y = p.x, p.y
-  if obj.face_down then x, y = -x, -y end
-  local w = obj.to_world(-x * ux, p.z * uz)
-  return compat.Vector(w.x, (obj.y or 0) + y * uy, w.z)
+  local x, y, z = lean(obj, p.x * ux, p.y * uy, p.z * uz)
+  local w = obj.to_world(-x, z)
+  return compat.Vector(w.x, (obj.y or 0) + y, w.z)
 end
 function compat.position_to_local(obj, v)
   local p = compat.vector_arg(v)
   local ux, uy, uz = axis_units(obj)
   local l = obj.to_local(p.x, p.z)
-  local x, y = -l.x / ux, (p.y - (obj.y or 0)) / uy
-  if obj.face_down then x, y = -x, -y end
-  return compat.Vector(x, y, l.z / uz)
+  local x, y, z = unlean(obj, -l.x, p.y - (obj.y or 0), l.z)
+  return compat.Vector(x / ux, y / uy, z / uz)
 end
 local THICK = 0.2
 function compat.get_bounds(obj)

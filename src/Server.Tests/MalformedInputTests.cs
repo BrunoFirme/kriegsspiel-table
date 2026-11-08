@@ -482,6 +482,7 @@ public class MalformedInputTests
     [InlineData("RemoveDecal")]
     [InlineData("SetDecalPalette")]
     [InlineData("FlipPiece")]
+    [InlineData("TiltPiece")]
     [InlineData("HoldPiece")]
     [InlineData("Hotkey")]
     [InlineData("LoadSave")]

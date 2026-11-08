@@ -175,6 +175,9 @@ public static partial class ApiDoc
         F("piece", "local_unit", "Size?", "For a model that came from a module, what one unit of its script's local frame is in piece units: { x =, z = }; nil for every other piece.");
         F("piece", "shape", "string", "Its outline at its state: \"box\", \"rounded\", \"circle\", \"hex\", or \"alpha\" for a token cut along its picture.");
         F("piece", "face_down", "boolean", "Turned over.", "is_face_down");
+        F("piece", "tilt_x", "number", "How far it leans about its own left-right axis, in degrees from -180 to 180, before its heading turns it; 0 for a piece lying flat.");
+        F("piece", "tilt_z", "number", "How far it leans about its own front-back axis, in degrees from -180 to 180; 0 for a piece lying flat.");
+        F("piece", "model", "boolean", "true for a 3D model, false for a flat piece.");
         F("piece", "interactable", "boolean", "Whether hands can take it (set_interactable).", "interactable");
         F("piece", "held_by", "Who", "The umpire carrying it now, or nil.", "held_by_color");
         F("piece", "source", "table", "For a kind converted from a module: { type =, links = { image =, mesh =, … }, top =, origin =, rise =, tag =, tags = } — the module object's type, its picture and model links, its top surface in its own units, for a flat piece the height of its own origin above the base and the piece units one of its own units rises, the kind of object it was (Tile, Figurine, Board, Bag…) and its own tags; for a piece of several states, `states` lists each state's { type, guid, description, gm_notes, memo, script_state, tags, script } as the module kept them; nil otherwise.", "name");
@@ -332,6 +335,11 @@ public static partial class ApiDoc
     P("k", "number", "The multiplier; 1 is the kind's own size.");
     Note("Widgets keep their place and their share of the face: they are drawn in piece units.");
     See("self.scale", "self.size");
+
+    M("piece", "set_tilt(x, z)", "Leans it under its heading: z degrees about its front-back axis, then x about its left-right axis, as a module rotation turns an object; a face-down piece leans turned over. set_tilt(0, 0) lays it flat again. Undo takes it back.", null);
+    O("x", "number", "Degrees about its left-right axis.");
+    O("z", "number", "Degrees about its front-back axis.");
+    See("self.tilt_x", "self.tilt_z", "self.flip");
 
     M("piece", "flip(face_down)", "Turns it over; with no argument, to the other side.", "flip");
     O("face_down", "boolean", "true for face down, false for face up. Left out, the piece turns to its other side.");

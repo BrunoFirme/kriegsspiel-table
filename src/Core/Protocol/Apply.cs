@@ -28,6 +28,7 @@ public static partial class StateMachine
             case SetWebModel wm: return ApplySetWebModel(g, wm, ref inverse);
             case SetPieceOption po: return ApplySetPieceOption(g, po, ref inverse);
             case FlipPiece fp: return ApplyFlip(g, fp, ref inverse);
+            case TiltPiece tp: return ApplyTilt(g, tp, ref inverse);
             case SetScale sz: return ApplySetScale(g, sz, ref inverse);
             case Attach or Detach or Stow or Unstow: return ApplyCarrying(g, c, ref inverse);
             case AddSheet ash: return ApplyAddSheet(g, ash, ref inverse);
@@ -387,6 +388,16 @@ public static partial class StateMachine
         if (p == null) return "no such piece";
         inverse = new FlipPiece { Layer = fp.Layer, Id = fp.Id, FaceDown = p.FaceDown };
         p.FaceDown = fp.FaceDown;
+        return null;
+    }
+
+    static string? ApplyTilt(GameState g, TiltPiece tp, ref Command? inverse)
+    {
+        var p = g.Find(tp.Layer, tp.Id);
+        if (p == null) return "no such piece";
+        if (!double.IsFinite(tp.X) || !double.IsFinite(tp.Z)) return "bad tilt";
+        inverse = new TiltPiece { Layer = tp.Layer, Id = tp.Id, X = p.TiltX, Z = p.TiltZ };
+        (p.TiltX, p.TiltZ) = (Tilt.Signed(tp.X), Tilt.Signed(tp.Z));
         return null;
     }
 

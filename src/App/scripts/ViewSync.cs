@@ -111,6 +111,7 @@ sealed class ViewSync
         SetPieceOption x => x.Id,
         KTable.Core.Protocol.SetScale x => x.Id,
         FlipPiece x => x.Id,
+        TiltPiece x => x.Id,
         SetPicture x => x.Id,
         SetScript x => x.Id,
         SetScriptState x => x.Id,

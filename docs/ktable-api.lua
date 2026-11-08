@@ -176,6 +176,9 @@
 ---@field local_unit Size|nil For a model that came from a module, what one unit of its script's local frame is in piece units: { x =, z = }; nil for every other piece.
 ---@field shape string Its outline at its state: "box", "rounded", "circle", "hex", or "alpha" for a token cut along its picture.
 ---@field face_down boolean Turned over.
+---@field tilt_x number How far it leans about its own left-right axis, in degrees from -180 to 180, before its heading turns it; 0 for a piece lying flat.
+---@field tilt_z number How far it leans about its own front-back axis, in degrees from -180 to 180; 0 for a piece lying flat.
+---@field model boolean true for a 3D model, false for a flat piece.
 ---@field interactable boolean Whether hands can take it (set_interactable).
 ---@field held_by Who The umpire carrying it now, or nil.
 ---@field source table For a kind converted from a module: { type =, links = { image =, mesh =, … }, top =, origin =, rise =, tag =, tags = } — the module object's type, its picture and model links, its top surface in its own units, for a flat piece the height of its own origin above the base and the piece units one of its own units rises, the kind of object it was (Tile, Figurine, Board, Bag…) and its own tags; for a piece of several states, states lists each state's { type, guid, description, gm_notes, memo, script_state, tags, script } as the module kept them; nil otherwise.
@@ -232,6 +235,11 @@ function Piece.move(x, z, rot) end
 ---Sets its size multiplier.
 ---@param k number The multiplier; 1 is the kind's own size.
 function Piece.set_scale(k) end
+
+---Leans it under its heading: z degrees about its front-back axis, then x about its left-right axis, as a module rotation turns an object; a face-down piece leans turned over. set_tilt(0, 0) lays it flat again. Undo takes it back.
+---@param x? number Degrees about its left-right axis.
+---@param z? number Degrees about its front-back axis.
+function Piece.set_tilt(x, z) end
 
 ---Turns it over; with no argument, to the other side.
 ---@param face_down? boolean true for face down, false for face up. Left out, the piece turns to its other side.

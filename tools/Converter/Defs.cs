@@ -219,6 +219,15 @@ public sealed partial class DefFactory
         };
     }
 
+    void SetFlatFrame(PieceDef def, ModuleObj b, bool baked, double heightScale)
+    {
+        double rise = Math.Abs(b.ScaleY) * heightScale;
+        double low = baked ? BakedSpan(b).Low : b.Name == "Custom_Token" ? -BaseThickness(b) / 2 : 0;
+        def.ModuleRise = Math.Round(rise, 4);
+        def.ModuleOrigin = Math.Round(-low * rise, 4);
+        def.PlainBack = true;
+    }
+
     public double BaseThickness(ModuleObj o) => o.Name switch
     {
         "Custom_Tile" or "Custom_Token" => o.Thickness,
@@ -371,14 +380,7 @@ public sealed partial class DefFactory
         }
 
         bool baked = BakesChildren(o) && BakeStates(def, states, bs, r, heightScale, pack);
-        if (b.Name is "Custom_Token" or "Custom_Tile")
-        {
-            double rise = Math.Abs(b.ScaleY) * heightScale;
-            double low = baked ? BakedSpan(b).Low : b.Name == "Custom_Token" ? -BaseThickness(b) / 2 : 0;
-            def.ModuleRise = Math.Round(rise, 4);
-            def.ModuleOrigin = Math.Round(-low * rise, 4);
-            def.PlainBack = true;
-        }
+        if (b.Name is "Custom_Token" or "Custom_Tile") SetFlatFrame(def, b, baked, heightScale);
         for (int i = 0; i < def.States.Count && i < states.Count; i++)
         {
             var sd = def.States[i];

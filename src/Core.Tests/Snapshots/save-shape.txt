@@ -176,6 +176,7 @@ type Command abstract
   derived SpawnPiece = SpawnPiece
   derived StampDecal = StampDecal
   derived Stow = Stow
+  derived TiltPiece = TiltPiece
   derived TurnDie = TurnDie
   derived UiEvent = UiEvent
   derived Undo = Undo
@@ -1379,6 +1380,15 @@ type TextLineDef object
   default: string
   name: string
   place: PrintPlace
+type TiltPiece object
+  actor: long
+  at: long
+  id: string
+  layer: string
+  seq: long
+  undoOf: long
+  x: double
+  z: double
 type TurnDie object
   actor: long
   at: long

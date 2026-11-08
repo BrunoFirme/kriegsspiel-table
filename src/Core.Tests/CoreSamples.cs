@@ -104,6 +104,7 @@ public static class CoreSamples
         yield return new SetHighlight { Layer = L, Id = "p-000001", Color = "#FF0000" };
         yield return new SetPieceOption { Layer = L, Id = "p-000001", Name = PieceOptions.NoCollision, Value = true };
         yield return new FlipPiece { Layer = L, Id = "p-000001", FaceDown = true };
+        yield return new TiltPiece { Layer = L, Id = "p-000001", X = 30, Z = -15 };
         yield return new SetScale { Layer = L, Id = "p-000001", Scale = 1.5 };
         yield return new SetZone { Zone = new Zone { Id = "z-000001", Name = "North", Owner = "Ump2", Polygon = { new(0, 0), new(10, 0), new(10, 10) } } };
         yield return new AddPack { Id = "user.my-pieces", Hash = "abc" };

@@ -46,6 +46,7 @@ namespace KTable.Core.Protocol;
 [JsonDerivedType(typeof(SetSheetRelief), "SetSheetRelief")]
 [JsonDerivedType(typeof(SetSheetPicture), "SetSheetPicture")]
 [JsonDerivedType(typeof(FlipPiece), "FlipPiece")]
+[JsonDerivedType(typeof(TiltPiece), "TiltPiece")]
 [JsonDerivedType(typeof(SetLighting), "SetLighting")]
 [JsonDerivedType(typeof(SetWind), "SetWind")]
 [JsonDerivedType(typeof(SetVisionRadius), "SetVisionRadius")]
@@ -490,6 +491,19 @@ public sealed class SetScale : LayerCommand
     public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [];
     public override IEnumerable<string> ScriptsToReload() => [];
 }
+public sealed class TiltPiece : LayerCommand
+{
+    public string Id { get; set; } = "";
+    public double X { get; set; }
+    public double Z { get; set; }
+    public override Sender SentBy() => Sender.Umpire;
+    public override bool OnUndoStack() => true;
+    public override Shown ShownToObservers() => Shown.Table;
+    public override IEnumerable<(string Layer, string Id)> ZonePieces() => [(Layer, Id)];
+    public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [];
+    public override IEnumerable<string> ScriptsToReload() => [];
+}
+
 public sealed class FlipPiece : LayerCommand
 {
     public string Id { get; set; } = "";

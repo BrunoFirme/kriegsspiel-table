@@ -37,6 +37,7 @@ public class RoleAndJoinTests
         yield return new SetWebModel { Layer = layer, Id = "p-000004", Mesh = "models/" + new string('a', 64) + ".obj" };
         yield return new SetPieceOption { Layer = layer, Id = "p-000004", Name = PieceOptions.NoCollision, Value = true };
         yield return new FlipPiece { Layer = layer, Id = "p-000004", FaceDown = true };
+        yield return new TiltPiece { Layer = layer, Id = "p-000004", X = 20, Z = 0 };
         yield return new SetScale { Layer = layer, Id = "p-000004", Scale = 1.25 };
         yield return new SetZone { Zone = new Zone { Name = "North", Owner = "u2", Polygon = { new(0, 0), new(10, 0), new(10, 10) } } };
         yield return new RemoveZone { Id = "z-000099" };
