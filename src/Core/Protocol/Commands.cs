@@ -1173,6 +1173,8 @@ public sealed class SetDef : LayerCommand
 {
     public string Id { get; set; } = "";
     public string Def { get; set; } = "";
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool SwapsScript { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? Script { get; set; }
     public override Sender SentBy() => Sender.Umpire;
     public override bool OnUndoStack() => true;
     public override Shown ShownToObservers() => Shown.Table;

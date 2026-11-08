@@ -15,9 +15,15 @@ public sealed class ModuleObj
             j["Name"] = single;
             j[StackMark] = true;
         }
+        if (ModuleValues.Text(j["Name"]) == BundleBag)
+        {
+            j["Name"] = "Custom_Assetbundle";
+            j[BagMark] = true;
+        }
     }
 
     const string StackMark = "stack";
+    const string BagMark = "bag", BundleBag = "Custom_Assetbundle_Bag";
     static readonly Dictionary<string, string> StackOf = new(StringComparer.Ordinal)
     {
         ["Custom_Tile_Stack"] = "Custom_Tile", ["Custom_Token_Stack"] = "Custom_Token", ["Custom_Model_Stack"] = "Custom_Model", ["Custom_Assetbundle_Stack"] = "Custom_Assetbundle",
@@ -25,7 +31,7 @@ public sealed class ModuleObj
 
     public bool IsStack => J[StackMark] != null;
 
-    public const string GluedMark = "glued";
+    public const string GluedMark = "glued";
     public bool IsGlued => J[GluedMark] != null;
 
     public string Name => S(J["Name"]) ?? "";
@@ -186,7 +192,7 @@ public sealed class ModuleObj
     public bool IsCard => Name is "Card" or "CardCustom";
     public bool IsDeck => Name is "Deck" or "DeckCustom";
     public bool IsChecker => Name is "Checker_white" or "Checker_red" or "Checker_black";
-    public bool IsBag => Name is "Bag" or "Custom_Model_Bag";
+    public bool IsBag => Name is "Bag" or "Custom_Model_Bag" || J[BagMark] != null;
     public bool Sticky => Flag("Sticky", true);
     public bool DragSelectable => Flag("DragSelectable", true);
     public bool MeasureMovement => Flag("MeasureMovement", false);

@@ -771,7 +771,7 @@ end
 function compat.spawn_object(p, stock)
   p = p or {}
   local h = setmetatable({ __params = p, __queue = {} }, Pending)
-  if p.def or stock then bind(h, p.def or stock) end
+  if p.def or stock then return bind(h, p.def or stock) end
   return h
 end
 
@@ -803,7 +803,9 @@ function compat.set_custom_object(obj, c)
     compat.todo(obj, "setCustomObject", def)
     return
   end
-  if getmetatable(obj) == Pending then bind(obj, def) else obj.set_picture(def) end
+  if getmetatable(obj) == Pending then bind(obj, def)
+  elseif known == nil then obj.set_def(def, true)
+  else obj.set_picture(def) end
 end
 
 function compat.piece_of(obj)

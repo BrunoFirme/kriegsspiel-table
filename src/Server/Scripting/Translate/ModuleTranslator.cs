@@ -22,6 +22,8 @@ public sealed record SpawnLook(string Type, double X, double Y, double Z, IReadO
 public sealed class TranslateContext
 {
     public Func<SpawnLook, string?>? ResolveLook;
+    public Func<System.Text.Json.Nodes.JsonObject, string?>? ResolveData;
+    public SpawnLook? Owner;
     public Func<string, string, double, string?>? ResolveImage;
     public Func<string, string?, double, double, string?>? ResolveModel;
     public Func<string, string?>? ResolveAsset;
@@ -65,7 +67,7 @@ public static class ModuleTranslator
 
     static readonly HashSet<string> EventNames = new(StringComparer.Ordinal)
     {
-        "onLoad","onload","onSave","onsave","onStateChange","onUpdate","onDrop","onPickUp","onPickup","onDestroy","onCollisionEnter","onCollisionExit","onCollisionStay","onObjectDrop","onObjectPickUp","onObjectPickup","onObjectSpawn","onObjectDestroy","onObjectEnterContainer","onObjectLeaveContainer","onObjectEnterScriptingZone","onObjectLeaveScriptingZone","onPlayerTurn","onPlayerChangeColor","onPlayerConnect","onPlayerDisconnect","onChat","onScriptingButtonDown","onScriptingButtonUp","onObjectStateChange","onObjectRandomize","onRandomize","onPlayerAction","onObjectNumberTyped","onObjectSearchStart","onObjectSearchEnd","onObjectRotate","onRotate","onObjectHover","onHover","onBlindfold","onFixedUpdate","onPlayerPing","onObjectLoopingEffect","onObjectTriggerEffect","onObjectPeek","onObjectFlick","onObjectCollisionEnter","onObjectCollisionExit","onObjectCollisionStay","onObjectPageChange","onPageChange","onZoneGroupSort","onFilter","onExternalMessage",
+        "onLoad","onload","onSave","onsave","onStateChange","onSpawn","onUpdate","onDrop","onPickUp","onPickup","onDestroy","onCollisionEnter","onCollisionExit","onCollisionStay","onObjectDrop","onObjectPickUp","onObjectPickup","onObjectSpawn","onObjectDestroy","onObjectEnterContainer","onObjectLeaveContainer","onObjectEnterScriptingZone","onObjectLeaveScriptingZone","onPlayerTurn","onPlayerChangeColor","onPlayerConnect","onPlayerDisconnect","onChat","onScriptingButtonDown","onScriptingButtonUp","onObjectStateChange","onObjectRandomize","onRandomize","onPlayerAction","onObjectNumberTyped","onObjectSearchStart","onObjectSearchEnd","onObjectRotate","onRotate","onObjectHover","onHover","onBlindfold","onFixedUpdate","onPlayerPing","onObjectLoopingEffect","onObjectTriggerEffect","onObjectPeek","onObjectFlick","onObjectCollisionEnter","onObjectCollisionExit","onObjectCollisionStay","onObjectPageChange","onPageChange","onZoneGroupSort","onFilter","onExternalMessage",
     };
 
     static readonly Dictionary<string, string> EventRenames = new(StringComparer.Ordinal)
@@ -80,7 +82,7 @@ public static class ModuleTranslator
 
     static readonly HashSet<string> EveryScriptEvents = new(StringComparer.Ordinal)
     {
-        "onObjectSpawn", "onObjectDestroy", "onObjectPickUp", "onObjectPickup", "onObjectDrop", "onObjectRotate", "onObjectRandomize", "onObjectPageChange",
+        "onObjectSpawn", "onSpawn", "onObjectDestroy", "onObjectPickUp", "onObjectPickup", "onObjectDrop", "onObjectRotate", "onObjectRandomize", "onObjectPageChange",
         "onObjectLoopingEffect", "onObjectTriggerEffect", "onObjectEnterContainer", "onObjectLeaveContainer", "onChat", "onPlayerAction",
     };
 
@@ -210,6 +212,13 @@ public static class ModuleTranslator
                 }
             }
             return (type, sx, sy, sz);
+        }
+
+        string? DataKind(SyntaxNode node)
+        {
+            if (_ctx.ResolveData is not { } build || node is not FunctionCallExpressionSyntax call || Args(call).FirstOrDefault() is not { } arg || TableOf(arg, Scope(call)) is not { } t) return null;
+            var data = t.Fields.OfType<IdentifierKeyedTableFieldSyntax>().FirstOrDefault(f => f.Identifier.Text == "data")?.Value;
+            return data is TableConstructorExpressionSyntax d && LuaLiterals.Json(d) is System.Text.Json.Nodes.JsonObject j ? build(j) : null;
         }
 
         string? StockKind(SyntaxNode node)
@@ -425,7 +434,7 @@ public static class ModuleTranslator
                 case "getObjectsWithAllTags": return Compat($"compat.pieces_with_all_tags({A(0)})", node);
                 case "spawnObject": return Compat(StockKind(node) is { } stock ? $"compat.spawn_object({A(0)}, \"{stock}\")" : $"compat.spawn_object({All()})", node);
                 case "spawnObjectJSON": return Compat($"compat.spawn_object_json({All()})", node);
-                case "spawnObjectData": return Compat($"compat.spawn_object_data({All()})", node);
+                case "spawnObjectData": return Compat(DataKind(node) is { } built ? $"compat.spawn_object_data({A(0)}, \"{built}\")" : $"compat.spawn_object_data({All()})", node);
                 case "broadcastToAll": return Compat($"compat.print_to_all({A(0)}, {A(1)}, true)", node);
                 case "printToAll": return Compat($"compat.print_to_all({A(0)}, {A(1)}, false)", node);
                 case "broadcastToColor": return Compat($"compat.print_to_color({A(0)}, {A(1)}, {A(2)}, \"BroadcastToColor\")", node);
@@ -705,7 +714,8 @@ public static class ModuleTranslator
         {
             var inner = Translate(lua, new TranslateContext
             {
-                ResolveLook = _ctx.ResolveLook, ResolveImage = _ctx.ResolveImage, ResolveModel = _ctx.ResolveModel, ResolveAsset = _ctx.ResolveAsset, Depth = _ctx.Depth + 1,
+                ResolveLook = _ctx.ResolveLook, ResolveData = _ctx.ResolveData, Owner = _ctx.Owner,
+                ResolveImage = _ctx.ResolveImage, ResolveModel = _ctx.ResolveModel, ResolveAsset = _ctx.ResolveAsset, Depth = _ctx.Depth + 1,
             });
             _res.CompatCalls += inner.CompatCalls;
             _res.DirectCalls += inner.DirectCalls;
@@ -755,15 +765,15 @@ public static class ModuleTranslator
                 ? t.Fields.OfType<IdentifierKeyedTableFieldSyntax>().Where(f => f.Identifier.Text == key).Select(Url).FirstOrDefault(u => u != null)
                 : null;
 
-        static (string type, double sx, double sy, double sz) ShapeFor(SyntaxNode node) =>
-            Spawn(Scope(node), model: false) is { } own ? SpawnShape(own) : ("Custom_Token", 1, 1, 1);
+        (string type, double sx, double sy, double sz) ShapeFor(SyntaxNode node) =>
+            Spawn(Scope(node), model: false) is { } own ? SpawnShape(own) : _ctx.Owner is { } o ? (o.Type, o.X, o.Y, o.Z) : ("Custom_Token", 1, 1, 1);
 
         (string type, double sx, double sy, double sz) ModelShape(SyntaxNode node)
         {
             var scope = Scope(node);
             if (Spawn(scope, model: true) is { } own) return SpawnShape(own);
             if (!ReferenceEquals(scope, _root) && Spawn(_root, model: true) is { } elsewhere) return SpawnShape(elsewhere);
-            return ("Custom_Model", 1, 1, 1);
+            return _ctx.Owner is { Type: "Custom_Model" or "Custom_Model_Bag" } o ? (o.Type, o.X, o.Y, o.Z) : ("Custom_Model", 1, 1, 1);
         }
 
         static FunctionCallExpressionSyntax? Spawn(SyntaxNode scope, bool model) =>
@@ -824,6 +834,7 @@ public static class ModuleTranslator
                 case "onObjectStateChange": return (null, "", "");
                 case "onStateChange" when !global: return ("on_state", "__old, __new, __old_guid", Bind(new[] { "__old_guid" }));
                 case "onStateChange": return (null, "", "");
+                case "onSpawn": return ("on_spawn", "__piece", "if __piece == nil or __piece.id ~= self.id then return end");
                 case "onPageChange": return ("on_page", "", "");
                 case "onObjectLoopingEffect" when global: return ("on_effect", "__piece, __index", Bind(new[] { "__piece", "__index" }));
                 case "onObjectLoopingEffect": return ("on_effect", "__index", Bind(new[] { "self", "__index" }));

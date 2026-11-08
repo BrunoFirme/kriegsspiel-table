@@ -947,8 +947,8 @@
 == SetDef
   sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
   in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
-  zone:        all inside=ok; Id-x outside=outside your umpire zone; Def-x outside=ok; on another layer, all outside=ok
-  zone, none of mine: all inside=no zone on the umpire board has been assigned to you; Id-x outside=no zone on the umpire board has been assigned to you; Def-x outside=no zone on the umpire board has been assigned to you; on another layer, all outside=ok
+  zone:        all inside=ok; Id-x outside=outside your umpire zone; Def-x outside=ok; Script-x outside=ok; on another layer, all outside=ok
+  zone, none of mine: all inside=no zone on the umpire board has been assigned to you; Id-x outside=no zone on the umpire board has been assigned to you; Def-x outside=no zone on the umpire board has been assigned to you; Script-x outside=no zone on the umpire board has been assigned to you; on another layer, all outside=ok
   observer:    it
   stranger:    nothing
   umpires:     it it it

@@ -100,8 +100,10 @@ public static class ModelAtlas
         var text = new StringBuilder();
         text.Append("o ").Append(model.Name).Append('\n');
         int baseVertex = 1, baseCorner = 1;
-        foreach (var part in model.Parts)
+        foreach (var (part, index) in model.Parts.Select((p, i) => (p, i)))
         {
+            text.Append(index == 0 ? "usemtl tinted\n" : "usemtl own\n");
+            var colour = index == 0 || part.Colour == null ? " 1 1 1" : $" {Six(part.Colour[0])} {Six(part.Colour[1])} {Six(part.Colour[2])}";
             var used = part.Triangles.Distinct().OrderBy(v => v).ToArray();
             var at = new Dictionary<int, int>(used.Length);
             for (int n = 0; n < used.Length; n++) at[used[n]] = n;
@@ -109,7 +111,7 @@ public static class ModelAtlas
             foreach (int vertex in used)
                 text.Append("v ").Append(Six(part.Verts[vertex * Axes])).Append(' ')
                     .Append(Six(part.Verts[vertex * Axes + 1])).Append(' ')
-                    .Append(Six(-part.Verts[vertex * Axes + 2])).Append('\n');
+                    .Append(Six(-part.Verts[vertex * Axes + 2])).Append(colour).Append('\n');
             int triangles = part.Triangles.Length / 3;
             for (int n = 0; n < triangles * 3; n += 3)
             {

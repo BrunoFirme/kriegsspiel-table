@@ -13,7 +13,7 @@ public sealed partial class BundleBake
     const string PackName = "Models from module asset bundles";
     const string Licence = "models read from the asset bundles of imported modules";
     public const string Tag = "bundle:";
-    const string ReadWith = "bundle-read:own-atlas";
+    const string ReadWith = "bundle-read:own-colours";
     const string BundleType = "Custom_Assetbundle";
     const int AtlasMost = 2048;
     const int Digits = 4;
@@ -36,8 +36,7 @@ public sealed partial class BundleBake
         {
             if (o.Name != BundleType || o.BundleUrl is not { } url || _cfg.IsTableWall(url)) continue;
             if (BundleEffects.IsEffect(o)) continue;
-            if (Sha().Match(url) is not { Success: true } sha) continue;
-            var found = sha.Value.ToUpperInvariant();
+            var found = BundleModels.IdOf(url);
             if (!wanted.Any(w => w.Sha == found)) wanted.Add((found, url));
         }
         var bundleLinks = save.Objects.SelectMany(o => o.Walk()).Where(o => o.Name == BundleType)

@@ -2274,8 +2274,8 @@
   },
   {
    "row": "CustomTokenState.Stackable",
-   "status": "unknown",
-   "where": "",
+   "status": "native",
+   "where": "converter reads it",
    "instead": "",
    "held_by": "",
    "count": 0,

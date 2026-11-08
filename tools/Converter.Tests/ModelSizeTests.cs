@@ -33,6 +33,22 @@ public sealed class ModelSizeTests : ConverterHarness
     }
 
     [Fact]
+    public async Task A_face_of_more_than_four_corners_is_left_out_as_the_game_leaves_it_out()
+    {
+        var (defs, pack) = await Ready("v -1 0 -1", "v 1 0 -1", "v 1 0 1", "v -1 0 1", "v 9 0 0", "v 9 1 0", "v 9 0 1", "v 9 1 1", "v 8 2 2", "f 1 2 3 4", "f 5 6 7 8 9");
+        var d = defs.DefFor(Ship(1, 1, 1), pack)!.Def;
+        Assert.Equal((2.0, 2.0), (d.Size.W, d.Size.H));
+        Assert.DoesNotContain(File.ReadLines(Path.Combine(pack.Dir, pack.M.Assets[d.Mesh!].File)), l => l.StartsWith("f 5", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task A_model_file_the_game_cannot_read_is_left_out_as_the_game_shows_none_of_it()
+    {
+        var (defs, pack) = await Ready("v -1 0 -1 1", "v 1 0 -1", "v 1 1 1", "f 1 2 3");
+        Assert.Null(defs.DefFor(Ship(1, 1, 1), pack));
+    }
+
+    [Fact]
     public async Task Two_copies_of_one_model_at_different_heights_are_two_kinds_each_with_its_own_stretched_model()
     {
         var (defs, pack) = await Ready("v -1 0 -1", "v 1 0 -1", "v 1 1 1", "v -1 1 1", "f 1 2 3 4");

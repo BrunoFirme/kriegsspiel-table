@@ -838,7 +838,9 @@ function compat.get_objects(obj)
   end
   local t = {}
   for i, s in ipairs(obj.stowed or {}) do
-    t[#t + 1] = { name = s.name, nickname = s.name, description = "", gm_notes = "", guid = s.guid, lua_script = "", lua_script_state = "", memo = "", tags = {}, index = i - 1 }
+    local tags = {}
+    for k, tg in ipairs(s.tags or {}) do tags[k] = tg end
+    t[#t + 1] = { name = s.name, nickname = s.name, description = s.note or "", gm_notes = s.gm_notes or "", guid = s.guid, lua_script = s.script or "", lua_script_state = s.script_state or "", memo = s.memo or "", tags = tags, index = i - 1 }
   end
   return t
 end
@@ -1086,11 +1088,11 @@ local function data_links(data)
   return compat.kind_for_link(mesh.MeshURL, mesh.DiffuseURL, "diffuse") or compat.kind_for_link(bundle.AssetbundleURL)
     or compat.kind_for_link(img.ImageURL, img.ImageSecondaryURL, "image_secondary"), img.ImageURL
 end
-function compat.spawn_object_data(d)
+function compat.spawn_object_data(d, built)
   d = type(d) == "table" and d or {}
   local data = type(d.data) == "table" and d.data or d
   local tr = data.Transform or {}
-  local def, picture = data.def, nil
+  local def, picture = data.def or built, nil
   if def == nil then def, picture = data_links(data) end
   local fallback = false
   if def == nil and type(data.Name) == "string" then
@@ -1100,7 +1102,7 @@ function compat.spawn_object_data(d)
   local h = compat.spawn_object({
     position = d.position or { tr.posX, tr.posY, tr.posZ }, rotation = d.rotation or { tr.rotX, tr.rotY, tr.rotZ },
     nickname = data.Nickname, guid = d.guid or data.GUID, def = def, callback_function = d.callback_function, callback = d.callback, callback_owner = d.callback_owner, params = d.params,
-    state = data.State, tags = data.Tags, memo = data.Memo, script_state = data.LuaScriptState, script = data.LuaScript,
+    state = data.State, tags = data.Tags, memo = data.Memo, script_state = data.LuaScriptState, script = (built == nil or data.def ~= nil) and data.LuaScript or nil,
     description = data.Description, gm_notes = data.GMNotes,
   })
   local piece = compat.piece_of(h)
@@ -1113,7 +1115,7 @@ function compat.spawn_object_data(d)
   if scale then compat.set_scale(piece, scale) end
   if type(data.ColorDiffuse) == "table" then compat.set_color_tint(piece, data.ColorDiffuse) end
   if data.Locked ~= nil then compat.set_lock(piece, data.Locked) end
-  return h
+  return piece
 end
 function compat.spawn_object_json(p)
   if type(p) ~= "table" or type(p.json) ~= "string" then return nil end

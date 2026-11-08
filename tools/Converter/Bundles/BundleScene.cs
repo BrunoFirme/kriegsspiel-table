@@ -6,13 +6,13 @@ using KTable.Core;
 
 namespace KTable.Converter.Bundles;
 
-public sealed record ModelPart(double[] Verts, double[] Uvs, int[] Triangles, string? Texture);
+public sealed record ModelPart(double[] Verts, double[] Uvs, int[] Triangles, string? Texture, double[]? Colour = null, int Rank = 0);
 
 public sealed record BundleModel(string Sha, string Name, List<ModelPart> Parts, double[] Low, double[] High, int Triangles, List<(string Sha, Picture Picture)> Textures, int Lost);
 
 public sealed class BundleScene
 {
-    const string MainTexture = "_MainTex";
+    const string MainTexture = "_MainTex", MainColour = "_Color";
     const string ArchiveScheme = "archive:/";
     const int SameFile = 0;
     const int Axes = 3;
@@ -172,17 +172,11 @@ public sealed class BundleScene
             return world[id];
         }
 
-        bool Shown(long id)
-        {
-            var t = transforms[id];
-            if (Points(t["m_GameObject"]) is { } owner && objects.TryGetValue(owner, out var go) && !go["m_IsActive"].AsBool) return false;
-            var up = Father(id);
-            return up == null || Shown(up.Value);
-        }
-
         var roots = order.Where(id => Father(id) == null).ToList();
         var origin = roots.Count > 0 ? WorldOf(roots[0]).Translation : (0d, 0d, 0d);
         string name = Named(roots, transforms, objects) ?? sha;
+
+        var rank = Ranks(roots, transforms);
 
         var parts = new List<ModelPart>();
         var textures = new List<(string Sha, Picture Picture)>();
@@ -194,7 +188,7 @@ public sealed class BundleScene
                 var renderer = manager.GetBaseField(file, info);
                 if (renderer == null || !renderer["m_Enabled"].AsBool) continue;
                 if (Points(renderer["m_GameObject"]) is not { } owner) continue;
-                if (!transformOf.TryGetValue(owner, out long here) || !Shown(here)) continue;
+                if (!transformOf.TryGetValue(owner, out long here) || !Shown(here, transforms, objects)) continue;
                 var pointer = skinned ? renderer["m_Mesh"] : meshOf.GetValueOrDefault(owner);
                 if (pointer == null || Points(pointer) is not { } meshId) continue;
                 var meshInfo = file.file.GetAssetInfo(meshId);
@@ -209,7 +203,8 @@ public sealed class BundleScene
                 {
                     if (mesh.SubMeshes[sub].Length == 0) continue;
                     var material = sub < materials.Count ? materials[sub] : materials.FirstOrDefault();
-                    parts.Add(new ModelPart(verts, mesh.Uvs, mesh.SubMeshes[sub], Texture(manager, file, material, textures)));
+                    var colour = Colour(manager, file, material);
+                    parts.Add(new ModelPart(verts, mesh.Uvs, mesh.SubMeshes[sub], Texture(manager, file, material, textures), colour, rank.GetValueOrDefault(here, int.MaxValue)));
                 }
             }
             catch (Exception e) when (OnlyThisBundle(e))
@@ -217,6 +212,7 @@ public sealed class BundleScene
         }
 
         if (parts.Count == 0) return (null, lost);
+        parts = parts.OrderBy(p => p.Rank).ToList();
         var (low, high) = Bounds(parts);
         return (new BundleModel(sha, name, parts, low, high, parts.Sum(p => p.Triangles.Length / Axes), textures, lost), lost);
     }
@@ -312,6 +308,37 @@ public sealed class BundleScene
             if (!into.Any(t => t.Sha == sha)) into.Add((sha, picture));
             return sha;
         }
+        return null;
+    }
+
+    static long? FatherOf(long id, Dictionary<long, AssetTypeValueField> transforms) =>
+        Points(transforms[id]["m_Father"]) is { } up && transforms.ContainsKey(up) ? up : null;
+
+    static bool Shown(long id, Dictionary<long, AssetTypeValueField> transforms, Dictionary<long, AssetTypeValueField> objects)
+    {
+        if (Points(transforms[id]["m_GameObject"]) is { } owner && objects.TryGetValue(owner, out var go) && !go["m_IsActive"].AsBool) return false;
+        return FatherOf(id, transforms) is not { } up || Shown(up, transforms, objects);
+    }
+
+    static Dictionary<long, int> Ranks(List<long> roots, Dictionary<long, AssetTypeValueField> transforms)
+    {
+        var rank = new Dictionary<long, int>();
+        void Visit(long id)
+        {
+            rank[id] = rank.Count;
+            foreach (var child in transforms[id]["m_Children.Array"].Children)
+                if (Points(child) is { } c && transforms.ContainsKey(c) && !rank.ContainsKey(c)) Visit(c);
+        }
+        foreach (var root in roots) Visit(root);
+        return rank;
+    }
+
+    static double[]? Colour(AssetsManager manager, AssetsFileInstance file, AssetTypeValueField? material)
+    {
+        if (Follow(manager, file, material) is not { } found) return null;
+        foreach (var entry in found.Field["m_SavedProperties"]["m_Colors.Array"].Children)
+            if (entry["first"].AsString == MainColour)
+                return [entry["second"]["r"].AsDouble, entry["second"]["g"].AsDouble, entry["second"]["b"].AsDouble];
         return null;
     }
 

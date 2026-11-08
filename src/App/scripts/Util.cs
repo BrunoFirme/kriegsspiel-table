@@ -142,8 +142,7 @@ public static class ObjLoader
         var untinted = new SurfaceTool();
         tinted.Begin(Mesh.PrimitiveType.Triangles);
         untinted.Begin(Mesh.PrimitiveType.Triangles);
-        bool hasN = false, hasUntinted = false;
-        string? firstMaterial = null, material = null;
+        bool hasN = false, hasUntinted = false, firstGroup = true, faced = false;
         var inv = CultureInfo.InvariantCulture;
         foreach (var raw in System.IO.File.ReadLines(path))
         {
@@ -162,14 +161,13 @@ public static class ObjLoader
                 case "vn":
                     vn.Add(new Vector3(float.Parse(p[1], inv), float.Parse(p[2], inv), float.Parse(p[3], inv)));
                     break;
-                case "usemtl":
-                    material = line[6..].Trim();
-                    firstMaterial ??= material;
+                case "usemtl" or "o" or "g":
+                    if (faced) firstGroup = false;
                     break;
                 case "f":
-                    bool first = material == null || material == firstMaterial;
-                    var st = first ? tinted : untinted;
-                    hasUntinted |= !first;
+                    faced = true;
+                    var st = firstGroup ? tinted : untinted;
+                    hasUntinted |= !firstGroup;
                     var idx = new List<(int v, int t, int n)>();
                     for (int i = 1; i < p.Length; i++)
                     {

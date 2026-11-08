@@ -361,7 +361,8 @@ function Piece.set_picture(def) end
 
 ---Becomes another kind of piece altogether.
 ---@param def string The id of a piece definition in this game's packs.
-function Piece.set_def(def) end
+---@param keep_script boolean Keeps the script it runs now as its own instead of taking the new kind's; optional.
+function Piece.set_def(def, keep_script) end
 
 ---Gives it a script of its own (nil: back to its kind's). Only from a click or menu handler, or on a piece the same call spawned.
 ---@param text? string|nil The Lua source. nil goes back to the kind's script.

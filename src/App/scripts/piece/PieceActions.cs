@@ -57,7 +57,9 @@ sealed class PieceActions
         {
             var count = n.Def?.States.Count ?? 0;
             if (count < 2) continue;
-            cmds.Add(new SetState { Layer = n.Layer, Id = n.Piece.Id, State = ((n.Piece.State + dir) % count + count) % count });
+            int to = n.Piece.Looks != null ? n.Piece.State + dir : ((n.Piece.State + dir) % count + count) % count;
+            if (to < 0 || to >= count) continue;
+            cmds.Add(new SetState { Layer = n.Layer, Id = n.Piece.Id, State = to });
         }
         _c.DoAll(cmds);
     }

@@ -469,7 +469,7 @@ internal sealed partial class PieceHandles(ScriptHost host)
             {
                 var d = Arg(a, 0).CastToString() ?? "";
                 if (host.Server.Store != null && host.Server.Store.Def(d) == null) throw new ScriptRuntimeException($"set_def: no piece definition '{d}' in this game's packs");
-                host.Emit(new SetDef { Layer = L, Id = id, Def = d });
+                host.Emit(new SetDef { Layer = L, Id = id, Def = d, SwapsScript = Arg(a, 1).CastToBool(), Script = Arg(a, 1).CastToBool() ? host.CodeFor(p) : null });
                 return DynValue.Nil;
             });
 
@@ -564,7 +564,7 @@ internal sealed partial class PieceHandles(ScriptHost host)
     {
         var list = T();
         int n = 0;
-        foreach (var s in holder.Stowed ?? [])
+        foreach (var s in holder.Loose())
         {
             var e = T();
             e.Table["id"] = S(s.Id);
@@ -572,6 +572,9 @@ internal sealed partial class PieceHandles(ScriptHost host)
             e.Table["guid"] = S(s.Guid ?? s.Id);
             e.Table["def"] = S(s.Def);
             e.Table["held"] = N(s.Stowed?.Count ?? 0);
+            (e.Table["note"], e.Table["gm_notes"], e.Table["memo"], e.Table["script_state"]) = (S(s.Note ?? ""), S(s.GmNotes ?? ""), S(s.Memo), S(s.ScriptState));
+            e.Table["tags"] = ListTable((s.Tags ?? []).Select(tg => S(tg)));
+            e.Table["script"] = S(host.CodeFor(s) ?? "");
             list.Table[++n] = e;
         }
         return list;
@@ -590,7 +593,7 @@ internal sealed partial class PieceHandles(ScriptHost host)
         var stowed = holder.Stowed ?? [];
         var target = which.Type switch
         {
-            DataType.Number => stowed.ElementAtOrDefault((int)which.Number - 1),
+            DataType.Number => holder.Loose().ElementAtOrDefault((int)which.Number - 1),
             DataType.String => stowed.FirstOrDefault(s => s.Id == which.String || s.Guid == which.String),
             DataType.Table => stowed.FirstOrDefault(s => s.Id == IdOf(which)),
             _ => holder.NextOut(Random.Shared),
@@ -662,7 +665,7 @@ internal sealed partial class PieceHandles(ScriptHost host)
         const string L = Layers.Umpire;
         switch (key)
         {
-            case "reload": return Fn(_ => { host.Emit(new SetScript { Layer = L, Id = id, Text = p.Script }); return DynValue.Nil; });
+            case "reload": return Fn(_ => { host.Respawn(id, () => host.Emit(new SetScript { Layer = L, Id = id, Text = p.Script })); return DynValue.Nil; });
             case "set_script": return Fn(a =>
             {
                 if (!host.MaySetScript(id)) throw new ScriptRuntimeException("set_script: only from a click or menu handler, or on a piece this call spawned");

@@ -435,9 +435,10 @@ public static partial class ApiDoc
     Note("A definition that is not in this game's packs is an error.");
     See("self.set_def");
 
-    M("piece", "set_def(def)", "Becomes another kind of piece altogether.");
+    M("piece", "set_def(def, keep_script)", "Becomes another kind of piece altogether.");
     P("def", "string", "The id of a piece definition in this game's packs.");
-    Note("The piece takes the new kind's picture, states, counters and script. A definition that is not in this game's packs is an error.");
+    P("keep_script", "boolean", "Keeps the script it runs now as its own instead of taking the new kind's; optional.");
+    Note("The piece takes the new kind's picture, states, counters and script, or keeps its own script with keep_script. A definition that is not in this game's packs is an error.");
     See("self.set_picture", "self.def");
 
     M("piece", "set_script(text)", "Gives it a script of its own (nil: back to its kind's). Only from a click or menu handler, or on a piece the same call spawned.", "setLuaScript");

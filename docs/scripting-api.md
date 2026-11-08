@@ -1525,7 +1525,7 @@ A definition that is not in this game's packs is an error.
 ### `self.set_def`
 
 ```lua
-self.set_def(def)
+self.set_def(def, keep_script)
 ```
 
 Becomes another kind of piece altogether.
@@ -1533,8 +1533,9 @@ Becomes another kind of piece altogether.
 | Parameter | Type | Description |
 |---|---|---|
 | `def` | `string` | The id of a piece definition in this game's packs. |
+| `keep_script` | `boolean` | Keeps the script it runs now as its own instead of taking the new kind's; optional. |
 
-The piece takes the new kind's picture, states, counters and script. A definition that is not in this game's packs is an error.
+The piece takes the new kind's picture, states, counters and script, or keeps its own script with keep_script. A definition that is not in this game's packs is an error.
 
 **See also** [`self.set_picture`](#selfset_picture), [`self.def`](#selfdef)
 

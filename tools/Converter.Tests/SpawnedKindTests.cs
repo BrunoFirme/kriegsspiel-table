@@ -65,6 +65,48 @@ public sealed class SpawnedKindTests : ConverterHarness
     }
 
     [Fact]
+    public async Task A_tile_swapping_its_own_picture_gets_a_tile_kind_at_its_own_scale()
+    {
+        var cfg = TempConfig();
+        LocalPicture(cfg, "http://a/front.png", 64, 32, (_, _) => SKColors.Red);
+        var rep = new Report();
+        var assets = new AssetStore(cfg, rep);
+        await assets.FetchAll(new[] { "http://a/front.png" });
+        var defs = new DefFactory(cfg, assets, rep);
+        var pack = new PackOut(cfg.Output, "t", "T", "t", null);
+        var owner = new ModuleObj(new System.Text.Json.Nodes.JsonObject
+        {
+            ["Name"] = "Custom_Tile",
+            ["Transform"] = new System.Text.Json.Nodes.JsonObject { ["scaleX"] = 0.5, ["scaleY"] = 1.0, ["scaleZ"] = 0.5 },
+        });
+        defs.Translate("function swap() self.setCustomObject({ image = 'http://a/front.png' }) self.reload() end", pack, "own", owner: owner);
+        var kind = Assert.Single(pack.M.Pieces);
+        Assert.Contains("tile", kind.Tags);
+        Assert.Equal((2.0, 1.0), (kind.Size.W, kind.Size.H));
+    }
+
+    [Fact]
+    public void An_object_a_script_spawns_from_written_out_data_is_built_whole_as_an_import_builds_it_glued_parts_and_all()
+    {
+        var cfg = TempConfig();
+        var rep = new Report();
+        var defs = new DefFactory(cfg, new AssetStore(cfg, rep), rep);
+        var pack = new PackOut(cfg.Output, "t", "T", "t", null);
+        var script = defs.Translate("""
+            function build()
+              spawnObjectData({ data = {
+                Name = 'BlockRectangle', Nickname = 'Wall', ColorDiffuse = { r = 0.5, g = 0.5, b = 0.5 },
+                Transform = { posX = 0, posY = 1, posZ = 0, rotX = 0, rotY = 0, rotZ = 0, scaleX = 1, scaleY = 1, scaleZ = 1 },
+                ChildObjects = { { Name = 'BlockSquare', Nickname = 'Gate', Transform = { posX = 0, posY = 1, posZ = -0.25, rotX = 0, rotY = 0, rotZ = 0, scaleX = 0.5, scaleY = 0.5, scaleZ = 0.5 } } },
+              } })
+            end
+            """, pack, "builder").Script;
+        var wall = pack.M.Pieces.Single(d => d.Name == "Wall");
+        Assert.Contains($"\"{wall.Id}\")", script);
+        Assert.Single(wall.Parts!);
+    }
+
+    [Fact]
     public async Task A_tile_a_script_spawns_with_a_secondary_picture_shows_it_on_its_back()
     {
         var tile = await Spawned("Custom_Tile", "{x = 0.5, y = 1, z = 0.5}", "image = 'http://a/front.png', image_secondary = 'http://a/back.png'");

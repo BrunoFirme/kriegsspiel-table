@@ -513,10 +513,11 @@ public sealed class PieceInstance : IJsonOnDeserialized
 
     public static List<DieFace> FacesOf(PieceDef? def, PieceInstance p) => p.Faces ?? def?.Faces ?? [];
 
+    public List<PieceInstance> Loose() => Stowed is { } all ? all.Where(s => !all.Any(o => o.Attached.Contains(s.Id))).ToList() : [];
+
     public PieceInstance? NextOut(Random rng)
     {
-        if (Stowed is not { Count: > 0 } all) return null;
-        var loose = all.Where(s => !all.Any(o => o.Attached.Contains(s.Id))).ToList();
+        var loose = Loose();
         if (loose.Count == 0) return null;
         return TakeOrder switch
         {

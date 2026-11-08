@@ -170,7 +170,7 @@ public sealed partial class DefFactory
         {
             var p = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
             if (p.Length >= 4 && p[0] == "v" && Num(p[1], out var x) && Num(p[2], out var y) && Num(p[3], out var z)) verts.Add((x, y, z));
-            else if (p.Length >= 4 && p[0] == "f")
+            else if (p.Length >= 4 && p[0] == "f" && KTable.Core.Model.ModuleMeshes.KeptFace(p))
                 foreach (var corner in p.Skip(1))
                     if (int.TryParse(corner.Split('/')[0], out var at) && at != 0) used.Add(at > 0 ? at - 1 : verts.Count + at);
         }
@@ -284,6 +284,10 @@ public sealed partial class DefFactory
         return $"{b.Name}|{Entry(b.ImageUrl)?.Sha ?? b.ImageUrl}|{Entry(b.BackUrl)?.Sha ?? b.BackUrl}|{Entry(b.MeshUrl)?.Sha ?? b.MeshUrl}|{Entry(b.DiffuseUrl)?.Sha ?? b.DiffuseUrl}|{(b.Name.StartsWith("Block") ? Rgb(b.Color) : "")}{TableVisualKey(b)}{pdf}";
     }
 
+    string? MeshRefusal(string? url) =>
+        Entry(url) is { Ext: "obj" } e && _assets.FilePath(e) is { } file && KTable.Core.Model.ModuleMeshes.Refusal(File.ReadLines(file)) is { } why
+            ? $"a model file the digital tabletop cannot read either ({why})" : null;
+
     public PieceStateDef? OwnLook(ModuleObj s, PackOut pack, double baseScale, string where, double heightScale)
     {
         double k = Math.Abs(s.ScaleX) < NoScale ? 1 : Math.Abs(s.ScaleX) / baseScale;
@@ -380,7 +384,7 @@ public sealed partial class DefFactory
         string scriptKey = "";
         if (lua.Trim().Length > 0)
         {
-            def.Script = Translate(lua, pack, where).Script;
+            def.Script = Translate(lua, pack, where, owner: b).Script;
             def.ScriptHash = Hash8(lua);
             def.ScriptState = o.LuaState.Trim().Length > 0 ? RewriteUrls(o.LuaState, pack, where) : null;
             def.Counters.Clear();
@@ -406,7 +410,7 @@ public sealed partial class DefFactory
                 double lookThick = Math.Round(Math.Clamp(BaseThickness(s) * Math.Abs(s.ScaleY) * (IsModel(s) ? r / bs : heightScale), 0.02, 3), 3);
                 if (Math.Abs(lookThick - def.Thickness) > 0.001) sd.Thickness = lookThick;
                 if (s.Name == "Custom_Token") sd.Outline = Outlines.Of(s.ImageUrl, s.MergeDistance);
-                sd.Script = glued || s.SafeLua.Trim().Length == 0 ? "" : Translate(s.SafeLua, pack, $"{where} state \"{sd.Name}\"").Script;
+                sd.Script = glued || s.SafeLua.Trim().Length == 0 ? "" : Translate(s.SafeLua, pack, $"{where} state \"{sd.Name}\"", owner: s).Script;
                 if (s.TransformNotANumber) _rep.Note($"{where}: the module scales the state \"{sd.Name}\" by something that is not a number; it takes the piece's own size");
                 if (Math.Abs(sz.W - def.Size.W) > 0.01 * def.Size.W || Math.Abs(sz.H - def.Size.H) > 0.01 * def.Size.H) sd.Size = sz;
                 def.States.Add(sd);
@@ -462,12 +466,14 @@ public sealed partial class DefFactory
     public static int Shown(ModuleObj o, PieceDef def, int self) =>
         o.IsPictureDie || RollsOnItsValues(o) ? FaceShown(o, def) : o.Name == "Custom_PDF" ? Math.Min(o.PdfPage, Math.Max(0, def.States.Count - 1)) : self;
 
-    public TranslateResult Translate(string lua, PackOut pack, string where, bool isGlobal = false)
+    public TranslateResult Translate(string lua, PackOut pack, string where, bool isGlobal = false, ModuleObj? owner = null)
     {
         var tr = ModuleTranslator.Translate(lua, new TranslateContext
         {
             IsGlobal = isGlobal,
+            Owner = owner == null ? null : new SpawnLook(owner.Name, Math.Abs(owner.ScaleX), Math.Abs(owner.ScaleY), Math.Abs(owner.ScaleZ), new Dictionary<string, string>()),
             ResolveLook = look => SpawnedKind(pack, look, where)?.Id,
+            ResolveData = data => DefFor(new ModuleObj(data), pack)?.Def.Id,
             ResolveAsset = url => UiAsset(pack, url, where),
         });
         _rep.ScriptTranslated(tr, where);
@@ -491,7 +497,7 @@ public sealed partial class DefFactory
     {
         var (lookUrl, lookKind) = IsModel(b) ? (b.MeshUrl, "mesh") : b.Name == "Custom_PDF" ? (b.PdfUrl, "pdf")
             : b.Name.StartsWith("Block") || b.IsChecker ? (null, "") : b.IsCard ? (b.Sheet?.FaceUrl, "image") : (b.ImageUrl, "image");
-        if (_assets.Gone(lookUrl, lookKind) is { } gone)
+        if ((_assets.Gone(lookUrl, lookKind) ?? (IsModel(b) ? MeshRefusal(b.MeshUrl) : null)) is { } gone)
         {
             _rep.LeftOut(Name(b) is var n && n != "Piece" ? n : FileName(lookUrl!), lookUrl!, gone, where, b.Guid);
             return null;

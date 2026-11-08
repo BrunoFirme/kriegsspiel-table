@@ -18,17 +18,17 @@ public sealed partial class ScriptHost
     public const int MaxRepLength = 16 * 1024 * 1024;
     public const long MaxCallMemory = 256L * 1024 * 1024;
 
-    readonly GameServer _s;
+    internal readonly GameServer _s;
     readonly Script _vm;
-    readonly Dictionary<string, PieceScript> _pieces = new();
-    PieceScript? _global;
+    internal readonly Dictionary<string, PieceScript> _pieces = new();
+    internal PieceScript? _global;
     readonly PieceHandles _handles;
     readonly EveryScript _every;
     internal EveryScript Every => _every;
     readonly PieceDrawing _drawing;
     readonly SaveRounds _saves;
     readonly TableControls _controls = new();
-    readonly ScriptTimers _timers = new();
+    internal readonly ScriptTimers _timers = new();
     ScriptGuards _guards = null!;
     CompiledScripts? _compiledScripts;
     CompiledScripts Compiled => _compiledScripts ??= new CompiledScripts(_vm);
@@ -36,7 +36,7 @@ public sealed partial class ScriptHost
     PieceScript? _current;
     int _depth;
 
-    readonly ScriptFeed _feed = new();
+    internal readonly ScriptFeed _feed = new();
     public List<string> Console => _feed.Text;
     public IReadOnlyList<ConsoleLine> Feed => _feed.Lines;
     public const int FeedKeep = ScriptFeed.Keep;
@@ -325,7 +325,7 @@ public sealed partial class ScriptHost
         if (menu && _reaction != null) _reaction.GlobalMenuDirty = true;
     }
 
-    string? CodeFor(PieceInstance p) => _s.Store?.Def(p.Def) is { } d ? d.ScriptFor(p) : p.Script;
+    internal string? CodeFor(PieceInstance p) => _s.Store?.Def(p.Def) is { } d ? d.ScriptFor(p) : p.Script;
 
     void LoadPiece(PieceInstance p)
     {
@@ -538,35 +538,7 @@ public sealed partial class ScriptHost
 
     internal string NameOf(string id) => Find(id) is { } p ? p.Label ?? _s.Store?.Def(p.Def)?.Name ?? id : id;
 
-    public List<ScriptInfo> Describe()
-    {
-        var timers = _timers.CountByOwner();
-        ScriptInfo Info(string id, PieceScript? ps)
-        {
-            var info = new ScriptInfo { Id = id, Status = ps == null ? "not loaded" : !ps.Enabled ? "stopped" : _feed.LastError(id, out _, out _) ? "error" : "running" };
-            if (_feed.LastError(id, out var message, out var line)) { info.LastError = message; info.ErrorLine = line; }
-            if (ps != null) info.Timers = timers.GetValueOrDefault(ps);
-            return info;
-        }
-        var list = new List<ScriptInfo>();
-        if (_s.State.Script != null || _global != null)
-        {
-            var g = Info("", _global);
-            g.Name = "Global script";
-            list.Add(g);
-        }
-        foreach (var p in _s.State.Layer(Layers.Umpire))
-        {
-            if (string.IsNullOrWhiteSpace(CodeFor(p))) continue;
-            var i = Info(p.Id, _pieces.GetValueOrDefault(p.Id));
-            i.Name = NameOf(p.Id);
-            i.Guid = p.Guid;
-            i.Def = p.Def;
-            i.Own = p.Script != null;
-            list.Add(i);
-        }
-        return list;
-    }
+    public List<ScriptInfo> Describe() => ScriptReport.Of(this);
 
     public List<Outgoing> RunSnippet(long actor, string target, string code)
     {
@@ -790,6 +762,14 @@ public sealed partial class ScriptHost
     });
 
     internal readonly Dictionary<string, (Vec2 Pos, double Rot, double Y)> PickedUp = new();
+
+    internal void Respawn(string id, Action reload)
+    {
+        if (_pieces.TryGetValue(id, out var ps)) Call(ps, "on_destroy");
+        _every.Tell("on_destroy", Handle(id));
+        reload();
+        _every.Tell("on_spawn", Handle(id));
+    }
 
     void LeaveLook(SetState st, PieceInstance p)
     {

@@ -112,6 +112,59 @@ public sealed class GluedFrameTests : ConverterHarness
     }
 
     [Fact]
+    public void A_bag_drawn_from_a_bundle_is_that_figure_holding_what_the_module_put_in_it()
+    {
+        TempConfig();
+        const string Chest = "8888888888888888888888888888888888888888";
+        Directory.CreateDirectory(Path.Combine(Packages, "user.figures"));
+        Json.Save(Path.Combine(Packages, "user.figures", "pack.json"), new PackManifest
+        {
+            Id = "user.figures", Name = "Figures",
+            Pieces = new() { new PieceDef { Id = "user.figures.chest", Name = "Chest", Kind = "model", Mesh = "m", Texture = "t", Size = new Size2(1, 1), Thickness = 1, HeightScale = 1, Tags = new() { "model", "bundle:" + Chest } } },
+        });
+        var chest = Placed("Custom_Assetbundle_Bag", "Supplies", 0, 1, 0, extra: new JsonObject
+        {
+            ["CustomAssetbundle"] = new JsonObject { ["AssetbundleURL"] = $"https://example.org/ugc/1/{Chest}/", ["TypeIndex"] = 6 },
+            ["ContainedObjects"] = new JsonArray(Placed("BlockSquare", "Ration", 0, 1, 0)),
+        });
+        var (table, _) = Import("chest", chest);
+        var bag = Assert.Single(table.UmpireBoard);
+        Assert.Equal("user.figures.chest", bag.Def);
+        Assert.Equal("Ration", Assert.Single(bag.Stowed!).Label);
+    }
+
+    [Fact]
+    public void A_glued_part_saved_with_no_position_and_no_size_stops_the_parts_after_it_as_the_game_stops_loading_them()
+    {
+        TempConfig();
+        var broken = Placed("BlockSquare", "Broken", 0, 0, 0, 0, 0, 0);
+        var stand = Placed("BlockSquare", "Stand", 0, 1, 0, extra: new JsonObject { ["ChildObjects"] = new JsonArray(Placed("BlockSquare", "First", 0, 1, 0, 0.5, 0.5, 0.5), broken, Placed("BlockSquare", "After", 0, 1, 0, 0.5, 0.5, 0.5)) });
+        var (table, pack) = Import("garbage", stand);
+        var def = pack.Pieces.Single(d => d.Id == Assert.Single(table.UmpireBoard).Def);
+        Assert.Single(def.Parts!);
+    }
+
+    [Fact]
+    public void A_stack_inside_a_bag_goes_into_the_bag_whole_none_of_its_copies_left_on_the_table()
+    {
+        TempConfig();
+        FidelityTestsBoxes(Packages);
+        var stack = Placed("Custom_Tile_Stack", "Supply", 0, 1, 0, extra: new JsonObject { ["Number"] = 3, ["CustomImage"] = new JsonObject { ["ImageURL"] = "http://a/t.png", ["CustomTile"] = new JsonObject { ["Thickness"] = 0.2 } } });
+        var sack = Placed("Bag", "Sack", 5, 1, 0, extra: new JsonObject { ["ContainedObjects"] = new JsonArray(stack) });
+        var (table, _) = Import("stackbag", sack);
+        var bag = Assert.Single(table.UmpireBoard);
+        Assert.Equal(3, bag.Stowed!.Count);
+    }
+
+    static void FidelityTestsBoxes(string packages)
+    {
+        var pack = new PackManifest { Id = KTable.Client.Effects.EffectKinds.StandardPack, Name = "Firme's Effects and Props" };
+        foreach (var (box, w, h, t) in new[] { (BagBoxes.Box, 1.0, 0.62, 0.48), (BagBoxes.Chest, 1.46, 0.96, 0.8), (BagBoxes.Crate, 1.91, 1.3, 1.04) })
+            pack.Pieces.Add(new PieceDef { Id = BagBoxes.IdOf(box), Name = box, Kind = "model", Size = new Size2(w, h), Thickness = t, Shape = "box", Tags = new() { "prop" } });
+        Json.Save(Path.Combine(packages, KTable.Client.Effects.EffectKinds.StandardPack, "pack.json"), pack);
+    }
+
+    [Fact]
     public void A_part_under_a_parent_stretched_in_depth_is_as_deep_as_the_stretch_makes_it()
     {
         TempConfig();

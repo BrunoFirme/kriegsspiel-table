@@ -1101,8 +1101,9 @@ public static partial class StateMachine
         var p = g.Find(sd.Layer, sd.Id);
         if (p == null) return "no such piece";
         if (string.IsNullOrEmpty(sd.Def)) return "no definition";
-        inverse = new SetDef { Layer = sd.Layer, Id = sd.Id, Def = p.Def };
+        inverse = new SetDef { Layer = sd.Layer, Id = sd.Id, Def = p.Def, SwapsScript = sd.SwapsScript, Script = sd.SwapsScript ? p.Script : null };
         p.Def = sd.Def;
+        if (sd.SwapsScript) p.Script = sd.Script;
         return null;
     }
 

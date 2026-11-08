@@ -256,7 +256,7 @@ every row that is not dropped must end audited, used by the corpus or not.
 | `CustomJigsawPuzzleState.NumPuzzlePieces` | - | dropped | the tabletop's stock gadgets (decided 2026-11-06) |  |  |
 | `CustomPDFState.PDFPageOffset` | - | native | the book's page offset (PieceDef.PageOffset) | BookNotesScriptTests | SaveFieldTests.A_pdf_book_keeps_its_page_offset_and_opens_with_its_password |
 | `CustomPDFState.PDFPassword` | - | native | a protected PDF opens with the password the save holds | converter | SaveFieldTests.A_pdf_book_keeps_its_page_offset_and_opens_with_its_password |
-| `CustomTokenState.Stackable` | - | unknown |  |  | SaveFieldTests.Only_a_stack_object_counts_its_saved_number_and_it_comes_in_as_its_own_kind_of_piece |
+| `CustomTokenState.Stackable` | - | native | converter reads it |  | SaveFieldTests.Only_a_stack_object_counts_its_saved_number_and_it_comes_in_as_its_own_kind_of_piece |
 | `CustomTokenState.StandUp` | - | native | converter reads it |  | SaveFieldTests.A_token_saved_standing_up_stands_on_its_edge_as_tall_as_its_picture_and_as_deep_as_its_thickness |
 | `DecalState.CustomDecal` | - | native | converter reads it |  | ConverterTests.An_object_s_decals_come_across_on_its_faces_in_piece_units_and_a_missing_picture_is_left_out |
 | `DecalState.OwnerSteamID` | - | dropped | who laid a decal |  |  |

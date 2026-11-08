@@ -30,6 +30,7 @@ public sealed class GluedParts(DefFactory defs, Report rep, double tokenArea)
         var frame = s.IsGlued ? PrefabRoots.Root.One : PrefabRoots.Of(s.Name);
         foreach (var glued in Family(s.Children))
         {
+            if (glued.Garbage) { rep.Note($"{where}: a glued {glued.Name} saved with no position and no size fails to load, and the parts glued after it with it, as in the digital tabletop"); break; }
             var c = InFrame(Within(glued, m), frame, depth);
             if (IsGluedEffect(defs, c)) { rep.Note($"{where}: the glued effect '{c.Nickname}' is left out; place one of Firme's effects on the piece instead"); continue; }
             if (!defs.Shows(c)) { rep.Skipped("glued " + c.Name, where); continue; }

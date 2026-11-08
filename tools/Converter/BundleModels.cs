@@ -34,12 +34,12 @@ public sealed partial class BundleModels
 
     public bool Any => _byBundle.Count > 0;
 
-    public (PieceDef Def, string Pack)? For(string? bundleUrl)
-    {
-        if (bundleUrl == null) return null;
-        var sha = Sha().Match(bundleUrl);
-        return sha.Success && _byBundle.TryGetValue(sha.Value, out var hit) ? hit : null;
-    }
+    public (PieceDef Def, string Pack)? For(string? bundleUrl) =>
+        bundleUrl != null && _byBundle.TryGetValue(IdOf(bundleUrl), out var hit) ? hit : null;
+
+    public static string IdOf(string bundleUrl) =>
+        Sha().Match(bundleUrl) is { Success: true } sha ? sha.Value.ToUpperInvariant()
+        : Convert.ToHexString(System.Security.Cryptography.SHA1.HashData(System.Text.Encoding.UTF8.GetBytes(AssetStore.Canonical(bundleUrl))));
 
     [GeneratedRegex("[0-9A-Fa-f]{40}")]
     private static partial Regex Sha();

@@ -573,7 +573,7 @@ public sealed partial class ScenarioBuilder
         {
             if (def.ScriptHash != DefFactory.Hash8(lua))
             {
-                var tr = _defs.Translate(lua, extras, $"{layer.Name} {o.Name} '{o.Nickname}' {o.Guid}");
+                var tr = _defs.Translate(lua, extras, $"{layer.Name} {o.Name} '{o.Nickname}' {o.Guid}", owner: o);
                 if (tr.Script != def.Script) inst.Script = tr.Script;
             }
         }
@@ -640,10 +640,11 @@ public sealed partial class ScenarioBuilder
             }
             if (!_defs.Shows(c)) { _rep.UnknownType(c.Name, where); continue; }
             var refScale = _common.TryGetValue(_defs.VisualKey(c), out var k) ? k : DefFactory.BaseScale(c);
+            int before = layer.Pieces.Count;
             var ci = Instance(c, refScale, extras, packDefs, layer, usedPacks, ref rekeyed, null, 1, Math.Abs(c.ScaleX));
             if (ci == null) continue;
             holder.Stowed ??= new();
-            foreach (var moved in CarriedBy(ci, layer).Prepend(ci))
+            foreach (var moved in layer.Pieces.Skip(before).Union(CarriedBy(ci, layer)).ToList())
             {
                 layer.Pieces.Remove(moved);
                 layer.Y.Remove(moved);

@@ -37,4 +37,15 @@ public sealed class BundleFigureTests : ConverterHarness
         });
         Assert.Equal("user.figures.grenadier", BundleModels.Load(Packages).For($"https://example.com/{Grenadier}/")?.Def.Id);
     }
+
+    [Fact]
+    public void A_bundle_whose_address_holds_no_hash_is_known_by_its_address_the_same_way_every_time()
+    {
+        const string Hashed = "https://steamusercontent-a.akamaihd.net/ugc/1/4D2C12454E8AF58A2D88385723381CBA57487548/";
+        Assert.Equal("4D2C12454E8AF58A2D88385723381CBA57487548", BundleModels.IdOf(Hashed));
+        var plain = BundleModels.IdOf("https://www.dropbox.com/s/abc/flame.unity3d?dl=1");
+        Assert.Matches("^[0-9A-F]{40}$", plain);
+        Assert.Equal(plain, BundleModels.IdOf(" https://www.dropbox.com/s/abc/flame.unity3d?dl=1 "));
+        Assert.NotEqual(plain, BundleModels.IdOf("https://www.dropbox.com/s/xyz/smoke.unity3d?dl=1"));
+    }
 }
