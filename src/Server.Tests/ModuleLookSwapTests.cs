@@ -114,4 +114,16 @@ public class ModuleLookSwapTests
         Assert.Equal(["a", "b"], p.Looks!.Select(l => l.ScriptState));
         Assert.DoesNotContain("stateGuids", Json.Serialize(p));
     }
+
+    [Fact]
+    public void A_tint_put_on_a_piece_stays_with_it_through_every_look_it_changes_to()
+    {
+        using var t = new Table();
+        Load(t, Looks(t, Lua(ColumnLua)));
+        t.Server.Handle(Table.Host, new SetTint { Layer = U, Id = P, Value = "#3355AA" });
+        t.Server.Handle(Table.Host, new SetState { Layer = U, Id = P, State = 1 });
+        Assert.Equal("#3355AA", t.Server.State.Find(U, P)!.TintOverride);
+        t.Server.Handle(Table.Host, new SetState { Layer = U, Id = P, State = 0 });
+        Assert.Equal("#3355AA", t.Server.State.Find(U, P)!.TintOverride);
+    }
 }

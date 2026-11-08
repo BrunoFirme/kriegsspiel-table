@@ -75,7 +75,7 @@ public sealed partial class FidelityTests
         var u = table.UmpireBoard.Single(p => p.Label == "Unit");
         var l = u.Looks![1];
         var lookKind = KindOf(u.Def).States[1];
-        Kept(look, l.Label, l.Note, l.Memo, l.Tags, l.Locked, l.ScriptState, l.Guid, l.TintOverride ?? lookKind.Tint ?? KindOf(u.Def).Tint, "as a look");
+        Kept(look, l.Label, l.Note, l.Memo, l.Tags, l.Locked, l.ScriptState, l.Guid, lookKind.Tint ?? KindOf(u.Def).Tint, "as a look");
 
         var held = Assert.Single(table.UmpireBoard.Single(p => p.Label == "Sack").Stowed!);
         Kept(bag, held.Label, held.Note, held.Memo, held.Tags, held.Locked, held.ScriptState, held.Guid, held.TintOverride ?? KindOf(held.Def).Tint, "in a bag");

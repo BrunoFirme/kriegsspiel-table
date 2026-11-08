@@ -735,7 +735,6 @@ type PieceLook object
   script: string
   scriptState: string
   tags: List<string>
-  tintOverride: string
   ui: List<UiNode>
   uiAssets: List<UiAsset>
   uiLayout: UiLayout

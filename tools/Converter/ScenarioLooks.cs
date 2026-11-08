@@ -15,8 +15,6 @@ public sealed partial class ScenarioBuilder
     {
         var where = $"{layerName} {s.Name} '{s.Nickname}' {s.Guid}";
         var panels = ObjectPanels(s, extras, where, out var uiLayout, out var uiAssets);
-        var colour = s.Name == DefFactory.Figurine ? null : s.Color;
-        var lookTint = def.States[i].Tint ?? def.Tint;
         return new PieceLook
         {
             Guid = s.Guid.Length > 0 ? s.Guid : null,
@@ -27,7 +25,6 @@ public sealed partial class ScenarioBuilder
             Tags = s.Tags,
             Locked = parent == null && s.Locked,
             ScriptState = s.LuaState.Length > 0 ? _defs.RewriteUrls(s.LuaState, extras, $"{where} script state") : "",
-            TintOverride = colour is { } c && !string.Equals(c, lookTint, StringComparison.OrdinalIgnoreCase) ? c : null,
             Worth = s.Worth,
             Lines = s.VectorLines.Count > 0 ? LinesOf(s, def) : null,
             Ui = panels.Count > 0 ? panels : null, UiLayout = uiLayout, UiAssets = uiAssets,
