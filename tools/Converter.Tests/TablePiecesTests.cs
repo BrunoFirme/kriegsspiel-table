@@ -482,6 +482,26 @@ public sealed partial class ConverterTests
     }
 
     [Fact]
+    public void A_token_with_no_back_picture_saved_turned_over_lies_face_down_as_the_game_shows_it()
+    {
+        var cfg = TempConfig();
+        const string Square = "http://a/backless.png";
+        LocalPicture(cfg, Square, 16, 16, (_, _) => SKColors.White);
+        var o = Obj("Custom_Token", "Turned", 0.5, new JsonObject { ["CustomImage"] = new JsonObject { ["ImageURL"] = Square } });
+        o["Transform"]!["rotZ"] = 180.0;
+        var module = Module("backless", o);
+        var main = typeof(Config).Assembly.EntryPoint!;
+
+        var code = (int)main.Invoke(null, new object[] { new[] { "import", module, "--config", Path.Combine(_root, "converter.json"), "--out", Packages } })!;
+
+        Assert.Equal(0, code);
+        var table = Json.Load<Scenario>(Path.Combine(Packages, "scenarios", "backless", "scenario.json"));
+        var piece = Assert.Single(table.UmpireBoard);
+        Assert.True(piece.FaceDown);
+        Assert.Null(Json.Load<PackManifest>(Path.Combine(Packages, "tts.backless", "pack.json")).Pieces.Single(d => d.Id == piece.Def).Back);
+    }
+
+    [Fact]
     public void Two_glued_units_alike_but_for_their_colour_are_two_kinds_each_in_its_own_colour()
     {
         const double Thickness = 0.1;

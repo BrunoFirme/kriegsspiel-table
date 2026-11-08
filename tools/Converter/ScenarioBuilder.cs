@@ -562,7 +562,7 @@ public sealed partial class ScenarioBuilder
             Guid = o.Guid.Length > 0 ? o.Guid : null,
             GmNotes = o.GmNotes.Length > 0 && !o.GmNotes.StartsWith(KtMarker.Def, StringComparison.Ordinal) ? o.GmNotes : null,
             Tags = o.Tags, Memo = _defs.RewriteUrls(o.Memo, extras, $"{layer.Name} {o.Name} '{o.Nickname}' {o.Guid} memo"),
-            Locked = parent == null && o.Locked, FaceDown = pose.Down && def.Kind != "model" && def.Back != null, NotSticky = !o.Sticky,
+            Locked = parent == null && o.Locked, FaceDown = pose.Down && def.Kind != "model", NotSticky = !o.Sticky,
             NotBoxSelected = !o.DragSelectable, MeasuresMoves = o.MeasureMovement,
             Ui = ObjectPanels(o, extras, $"{layer.Name} {o.Name} '{o.Nickname}' {o.Guid}", out var uiLayout, out var uiAssets),
             UiLayout = uiLayout, UiAssets = uiAssets,
