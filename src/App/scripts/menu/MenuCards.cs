@@ -35,6 +35,7 @@ sealed class MenuCards : HudPart
         menu.Head(Tally(hit, nodes) is { Length: > 0 } sum ? $"{head} · {sum}" : head);
         menu.Separator();
         if (nodes.Any(Table.IsDie)) menu.Item("Roll", () => T.RollDiceAtHand(), "R");
+        menu.Item("Turn around 180°", () => T.RotateSmooth(180));
         if (nodes.Any(n => !n.IsDie && !n.IsEffect && n.Def?.Kind != "model")) menu.Item("Turn over (show the back)", T.FlipSelection, Cfg.Keys.Label("flip"));
         if (one != null && !one.IsDie && !one.IsEffect) OnePieceRows(menu, one);
         if (one?.Def is { } def) StateAndCounterRows(menu, one, def);

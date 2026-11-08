@@ -97,13 +97,13 @@ static class WindowTests
         var card = Descendants(h.Hud.Ctx.Root).OfType<PopupPanel>().FirstOrDefault(p => p.Visible);
         Check.That(card != null, "the piece card is up");
         var rows = AllText(card!);
-        Check.That(rows.Contains("Properties") && rows.Contains("Turn left"), "piece rows: " + rows.Replace("\n", " | "));
+        Check.That(rows.Contains("Properties") && rows.Contains("Turn around 180°"), "piece rows: " + rows.Replace("\n", " | "));
         card!.Hide();
         h.Table.Selection.Set(Array.Empty<string>());
         h.Hud.Menus.Show(new Vector2(300, 300), null);
         await r.Frames(2);
         var table = Descendants(h.Hud.Ctx.Root).OfType<PopupPanel>().FirstOrDefault(p => p.Visible);
-        Check.That(table != null && !AllText(table).Contains("Turn left"), "the table card has no piece rows");
+        Check.That(table != null && !AllText(table).Contains("Turn around 180°"), "the table card has no piece rows");
     }
 
     [NodeTest]
