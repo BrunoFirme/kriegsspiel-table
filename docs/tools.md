@@ -15,8 +15,8 @@ into a temporary one, five minutes at most), the app's screen tests (the same ru
 for what needs one; the window shows for a moment), and `codecheck.py`. Without `-Quick` it also lists packages
 with known vulnerabilities (reported, not failed on).
 
-`-Lock <ref>` also runs the behaviour lock against that commit: the ref is checked out beside the repo for the run,
-and both the app and the converter are compared with it. The lock needs no hands: it never moves the pointer, never
+`-Lock <ref>` also runs the app's behaviour lock against that commit: the ref is checked out beside the repo for
+the run, and the app is compared with it. The converter is proved by its own tests, not by comparing builds. The lock needs no hands: it never moves the pointer, never
 types into other windows and leaves the clipboard alone (see below), so the PC stays usable while it runs.
 
 ## `tools/codecheck.py`: size and hygiene
@@ -126,30 +126,6 @@ packed turns by what they hold.
 
 Selectors: `"exact text"` (text, tooltip, placeholder, tab, list or tree row; falls back to contains), `~"part"`,
 `"text"#2` (the second, in reading order), `"text"+30,0` (an offset), `@x,y` or `@50%,50%` (a window point).
-
-## `tests/lock/converter_diff.py`: the converter's lock
-
-```
-python -I tests/lock/converter_diff.py --old <converter dir> --new <converter dir> [--quick] [--only <substring>]
-    [--invariant] [--cache <dir>] [--skip N] [--take N] [--keep]
-```
-
-A converter dir is a `dotnet publish tools/Converter -c Release -r win-x64 --self-contained false -o <dir>` (or a
-build output folder). Inputs are every module in `Mods\Workshop` and every save under `Saves`, read
-only; `--quick` takes the six smallest modules and the two smallest saves. Each build in turn gets the same empty work
-folder, a fresh copy of the download cache, and runs plan, import, export-save, export-pack-save and check-scripts; the
-two trees are then compared.
-
-- `KTABLE_REPEATABLE` fixes the seed and the clock. The culture is the machine's (or invariant for both with
-  `--invariant`): piece ids depend on it, so builds are never compared across cultures.
-- No network: every download goes to a local stub that answers 404, so an asset in neither cache is missing for both
-  builds the same way, without the minutes of retries a dead network costs.
-- JSON is compared as values, text by lines, tile images by decoded pixels, pictures drawn from text by pixels with a
-  small allowance (one run now and then draws a glyph's edge pixel a little lighter), everything else by SHA-256.
-  Lines whose order depends on threads (download progress) are compared as sets; the report's stamp and the download
-  index's "missing" entries, which depend on thread timing, are left out.
-- Exit code 1 when any input differs, 2 when the run could not be done. A difference's two files are kept in
-  `%TEMP%\ktable-lock\findings`.
 
 ## `tests/lock/app/make_seed.py`
 

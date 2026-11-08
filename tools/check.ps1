@@ -132,13 +132,6 @@ function Run-BehaviourLock($ref) {
     if ($LASTEXITCODE -ne 0) { $script:failed += "behaviour lock (no worktree of $ref)"; return }
     try {
         Step "behaviour lock: app" { python -I tests/lock/app_lock.py --old $base --new $repo --quick }
-        Step "publish the converters" {
-            dotnet publish (Join-Path $base "tools/Converter") -c Release -r win-x64 --self-contained false -o (Join-Path $work "conv-old") --nologo -v q
-            if ($LASTEXITCODE -eq 0) { dotnet publish tools/Converter -c Release -r win-x64 --self-contained false -o (Join-Path $work "conv-new") --nologo -v q }
-        }
-        if ($script:failed -notcontains "publish the converters") {
-            Step "behaviour lock: converter" { python -I tests/lock/converter_diff.py --old (Join-Path $work "conv-old") --new (Join-Path $work "conv-new") --quick }
-        }
     }
     finally {
         Set-Location $repo
