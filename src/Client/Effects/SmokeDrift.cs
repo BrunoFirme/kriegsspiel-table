@@ -14,8 +14,9 @@ public enum SmokeHeat { None, Cold, Hot }
 public static class SmokeDrift
 {
     public const double UncalibratedMetresPerUnit = 30;
-    public const float StillDrift = 0.03f;
+    public const float StillDrift = 0.15f;
     public const int MostEmitters = 24, MostParticles = 2400;
+    public const double EffectTimeScale = 10;
     public const double DefaultWindStrength = 1;
 
     static readonly double[] BeaufortMiddles = { 0.3, 2.4, 6.75, 9.4, 12.35, 17.2 };
@@ -40,7 +41,7 @@ public static class SmokeDrift
 
     public static double RiseShare(double metresPerSecond) => BuoyantRiseWind / (BuoyantRiseWind + Math.Max(metresPerSecond, 0));
 
-    public static float ScreenWind(SmokeAir air) => (float)(WindMetresPerSecond(air.WindStrength) * air.UnitsPerMetre);
+    public static float ScreenWind(SmokeAir air) => (float)(WindMetresPerSecond(air.WindStrength) * air.UnitsPerMetre * EffectTimeScale);
 
     public static double UnitsPerMetre(Calibration? c) => c?.UnitsPerMeter is { } u && u > 0 ? u : 1 / UncalibratedMetresPerUnit;
 
@@ -71,8 +72,6 @@ public static class SmokeDrift
     {
         double front = frontUnits / air.UnitsPerMetre;
         double reach = ReachMetres(kind, front, amount, air.WindStrength);
-        return Over((float)(reach * air.UnitsPerMetre), air);
+        return new Plume((float)(reach * air.UnitsPerMetre), (float)(GaussianWidth * Spreading(reach) * air.UnitsPerMetre));
     }
-
-    public static Plume Over(float reachUnits, SmokeAir air) => new(reachUnits, (float)(GaussianWidth * Spreading(reachUnits / air.UnitsPerMetre) * air.UnitsPerMetre));
 }
