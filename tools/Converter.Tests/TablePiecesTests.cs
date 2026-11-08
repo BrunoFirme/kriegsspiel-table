@@ -489,10 +489,9 @@ public sealed partial class ConverterTests
         LocalPicture(cfg, Square, 16, 16, (_, _) => SKColors.White);
         var o = Obj("Custom_Token", "Turned", 0.5, new JsonObject { ["CustomImage"] = new JsonObject { ["ImageURL"] = Square } });
         o["Transform"]!["rotZ"] = 180.0;
-        var module = Module("backless", o);
         var main = typeof(Config).Assembly.EntryPoint!;
 
-        var code = (int)main.Invoke(null, new object[] { new[] { "import", module, "--config", Path.Combine(_root, "converter.json"), "--out", Packages } })!;
+        var code = (int)main.Invoke(null, new object[] { new[] { "import", Module("backless", o), "--config", Path.Combine(_root, "converter.json"), "--out", Packages } })!;
 
         Assert.Equal(0, code);
         var table = Json.Load<Scenario>(Path.Combine(Packages, "scenarios", "backless", "scenario.json"));
