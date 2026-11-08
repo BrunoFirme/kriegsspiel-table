@@ -90,4 +90,43 @@ public class PolylineTests
         Assert.Equal(Dot(new Vec2(3, 1), u), Dot(sq - a, u), 9);
         Assert.Equal(a, Polyline.Squared(a, a));
     }
+
+    [Fact]
+    public void A_curve_passes_through_every_point_clicked_and_bends_between_them()
+    {
+        var knots = new List<Vec2> { new(0, 0), new(4, 3), new(8, 0) };
+        var curve = Polyline.Smooth(knots, closed: false);
+        foreach (var k in knots) Assert.Contains(curve, p => (p - k).Length < 1e-9);
+        Assert.Equal(knots[0], curve[0]);
+        Assert.Equal(knots[^1], curve[^1]);
+        Assert.True(curve.Count > 2 * knots.Count);
+        Assert.Contains(curve, p => p.X > 0.5 && p.X < 3.5 && p.Z > p.X * 0.75 + 1e-3);
+    }
+
+    [Fact]
+    public void Two_points_make_a_straight_curve_and_repeated_clicks_count_once()
+    {
+        var curve = Polyline.Smooth(new() { new(0, 0), new(0, 0), new(5, 0) }, closed: false);
+        Assert.Equal(new List<Vec2> { new(0, 0), new(5, 0) }, curve);
+    }
+
+    [Fact]
+    public void An_area_closes_back_on_its_first_point_and_holds_what_lies_inside()
+    {
+        var ring = Polyline.Smooth(new() { new(0, 0), new(6, 0), new(6, 6), new(0, 6) }, closed: true);
+        Assert.Equal(ring[0], ring[^1]);
+        Assert.True(Polyline.Inside(ring, new Vec2(3, 3)));
+        Assert.False(Polyline.Inside(ring, new Vec2(9, 3)));
+    }
+
+    [Fact]
+    public void A_curved_arrow_s_head_points_along_the_last_bend()
+    {
+        var curve = Polyline.Smooth(new() { new(0, 0), new(5, 5), new(10, 0) }, closed: false);
+        var head = Polyline.PathHead(curve)!;
+        Assert.Equal(3, head.Count);
+        Assert.Equal(curve[^1], head[1]);
+        Assert.True(head[0].X < 10 && head[2].X < 10);
+        Assert.True(head[0].Z > 0 || head[2].Z > 0);
+    }
 }

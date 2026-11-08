@@ -8,7 +8,17 @@ namespace KTable.App;
 
 sealed class DrawingLayer
 {
-    public const float StrokeLift = 0.025f;
+    public const float StrokeLift = 0.025f, FillLift = 0.02f;
+
+    const float AreaWash = 0.35f;
+
+    public static Color Washed(Color ink) => new(ink, ink.A * AreaWash);
+
+    public static StandardMaterial3D Ink(Color color) => new()
+    {
+        AlbedoColor = color, ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded,
+        Transparency = color.A < 1 ? BaseMaterial3D.TransparencyEnum.Alpha : BaseMaterial3D.TransparencyEnum.Disabled,
+    };
 
     readonly TableContext _c;
     readonly Dictionary<string, MeshInstance3D> _drawings = new();
@@ -55,12 +65,8 @@ sealed class DrawingLayer
             {
                 if (st.Text != null || st.Points.Count < 2 || !BoardShown(st.Board)) continue;
                 var color = Coords.ParseColor(st.Color, Colors.Black);
-                var mat = new StandardMaterial3D
-                {
-                    AlbedoColor = color, ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded,
-                    Transparency = color.A < 1 ? BaseMaterial3D.TransparencyEnum.Alpha : BaseMaterial3D.TransparencyEnum.Disabled,
-                };
-                Ribbon.Draw(im, mat, st.Points, st.Width, _c.SheetsTop + StrokeLift, _c.S.Ground, st.Round);
+                if (st.Fill) Ribbon.Fill(im, Ink(Washed(color)), st.Points, _c.SheetsTop + FillLift, _c.S.Ground);
+                Ribbon.Draw(im, Ink(color), st.Points, st.Width, _c.SheetsTop + StrokeLift, _c.S.Ground, st.Round);
             }
             var mi = new MeshInstance3D { Mesh = im, CastShadow = GeometryInstance3D.ShadowCastingSetting.Off };
             Root.AddChild(mi);

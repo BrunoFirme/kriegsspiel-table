@@ -1,5 +1,6 @@
 using System.Linq;
 using Godot;
+using KTable.Client;
 
 namespace KTable.App;
 
@@ -39,8 +40,10 @@ sealed class DrawPanel : HudPart
     {
         var kinds = new (string Key, string Icon, string Tip)[]
         {
-            ("free", "draw", "Freehand"), ("line", "shape-line", "Line"), ("rect", "shape-rect", "Rectangle"),
-            ("ellipse", "shape-ellipse", "Ellipse"), ("arrow", "shape-arrow", "Arrow"), ("erase", "erase", "Erase a drawing"),
+            ("free", "draw", "Freehand"), ("line", "shape-line", "Line"), ("arrow", "shape-arrow", "Arrow"),
+            (Polyline.Curve, "shape-curve", "Curve: click each bend"), (Polyline.CurvedArrow, "shape-curve-arrow", "Curved arrow: click each bend"),
+            (Polyline.Area, "shape-area", "Area: click round it, washed in the ink"),
+            ("rect", "shape-rect", "Rectangle"), ("ellipse", "shape-ellipse", "Ellipse"), ("erase", "erase", "Erase a drawing"),
             ("name", "", "Name: click, or drag a path, and type · Enter lays it, Esc drops it · double-click a name to retype it, drag to move it"),
         };
         bool locked = T.DrawingLocked;

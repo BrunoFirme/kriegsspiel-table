@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Godot;
+using KTable.Client;
 using KTable.Core.Model;
 using KTable.Core.Protocol;
 
@@ -85,6 +86,55 @@ sealed class TableDemo
         await After(2.0);
         foreach (var id in ids)
             if (S.View.Find(Layers.Umpire, id) is { } p) GD.Print($"[stretch] {id} at {p.Pos.X:0.00},{p.Pos.Z:0.00} turned {p.RotDeg:0.0}");
+    }
+
+    public void Curves() => Report(CurvesAsync());
+
+    static void Click(Vector2 at, bool twice = false)
+    {
+        Input.ParseInputEvent(new InputEventMouseButton { ButtonIndex = MouseButton.Left, Pressed = true, DoubleClick = twice, Position = at, GlobalPosition = at });
+        Input.ParseInputEvent(new InputEventMouseButton { ButtonIndex = MouseButton.Left, Pressed = false, Position = at, GlobalPosition = at });
+    }
+
+    async Task CurvesAsync()
+    {
+        await After(3.0);
+        var vp = T.GetViewport().GetVisibleRect().Size;
+        var runs = new (string Kind, string Ink, float See, Vector2[] Bends)[]
+        {
+            (Polyline.Area, "#2a6ebb", 1f, new[]
+            {
+                new Vector2(0.40f, 0.30f), new Vector2(0.52f, 0.26f), new Vector2(0.58f, 0.40f), new Vector2(0.50f, 0.50f), new Vector2(0.39f, 0.45f), new Vector2(0.40f, 0.30f),
+            }),
+            (Polyline.CurvedArrow, "#2a6ebb", 1f, new[] { new Vector2(0.62f, 0.90f), new Vector2(0.70f, 0.75f), new Vector2(0.64f, 0.58f), new Vector2(0.57f, 0.48f) }),
+            (Polyline.Curve, "#c0392b", 1f, new[] { new Vector2(0.62f, 0.62f), new Vector2(0.70f, 0.55f), new Vector2(0.80f, 0.60f), new Vector2(0.88f, 0.50f) }),
+        };
+        T.SetTool(Tool.Shape);
+        foreach (var r in runs)
+        {
+            T.ShapeKind = r.Kind;
+            T.PenColor = Coords.ParseColor(r.Ink, Colors.Black);
+            T.PenOpacity = r.See;
+            T.PenPixels = 4f;
+            for (int i = 0; i < r.Bends.Length; i++)
+            {
+                var at = r.Bends[i] * vp;
+                Move(at, at);
+                Click(at, twice: r.Kind != Polyline.Area && i == r.Bends.Length - 1);
+                await NextFrame();
+            }
+            await After(0.3);
+        }
+        T.ShapeKind = Polyline.Curve;
+        T.PenColor = Coords.ParseColor("#2e8b45", Colors.Black);
+        foreach (var b in new[] { new Vector2(0.62f, 0.25f), new Vector2(0.75f, 0.32f) }) { Click(b * vp); await NextFrame(); }
+        var hover = new Vector2(0.86f, 0.22f) * vp;
+        Input.WarpMouse(hover);
+        Move(hover, hover);
+        await After(1.0);
+        foreach (var (layer, strokes) in S.View.Drawings)
+            foreach (var st in strokes)
+                GD.Print($"[curves] {layer}: {st.Points.Count} points, ink {st.Color}, fill {st.Fill}");
     }
 
     public void Shapes() => Report(ShapesAsync());

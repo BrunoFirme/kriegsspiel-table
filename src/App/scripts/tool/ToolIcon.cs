@@ -45,6 +45,20 @@ public partial class ToolIcon : Control
 
     Vector2 P(float x, float y) => _mid + new Vector2(x - 10, y - 10) * _k;
     void Line(float x0, float y0, float x1, float y1, float width = -1) => DrawLine(P(x0, y0), P(x1, y1), _c, width < 0 ? _w : width * _k, antialiased: true);
+    const float AreaIconWash = 0.35f;
+    const int BendSteps = 16;
+
+    Vector2[] Bend(float x0, float y0, float x1, float y1, float x2, float y2, float x3, float y3)
+    {
+        var pts = new Vector2[BendSteps + 1];
+        for (int i = 0; i <= BendSteps; i++)
+        {
+            float t = i / (float)BendSteps, u = 1 - t;
+            pts[i] = P(u * u * u * x0 + 3 * u * u * t * x1 + 3 * u * t * t * x2 + t * t * t * x3, u * u * u * y0 + 3 * u * u * t * y1 + 3 * u * t * t * y2 + t * t * t * y3);
+        }
+        return pts;
+    }
+
     void Poly(params float[] xy)
     {
         var pts = new Vector2[xy.Length / 2 + 1];
@@ -233,6 +247,26 @@ public partial class ToolIcon : Control
                 Line(15.5f, 4.5f, 10.5f, 5.5f);
                 Line(15.5f, 4.5f, 14.5f, 9.5f);
                 break;
+            case "shape-curve":
+                DrawPolyline(Bend(3.5f, 15.5f, 3f, 2f, 17f, 18f, 16.5f, 4.5f), _c, _w, antialiased: true);
+                break;
+            case "shape-curve-arrow":
+                DrawPolyline(Bend(3.5f, 16.5f, 4f, 6f, 10f, 15f, 15.5f, 4.5f), _c, _w, antialiased: true);
+                Line(15.5f, 4.5f, 11f, 6f);
+                Line(15.5f, 4.5f, 15.5f, 9.2f);
+                break;
+            case "shape-area":
+            {
+                var ring = new Vector2[BendSteps * 2 + 1];
+                for (int i = 0; i < ring.Length; i++)
+                {
+                    float a = Mathf.Tau * i / (ring.Length - 1), r = 6.5f * (1 + 0.12f * Mathf.Sin(2 * a) + 0.07f * Mathf.Cos(3 * a));
+                    ring[i] = P(10 + r * Mathf.Cos(a), 10 + r * Mathf.Sin(a));
+                }
+                DrawColoredPolygon(ring[..^1], new Color(_c, _c.A * AreaIconWash));
+                DrawPolyline(ring, _c, _w, antialiased: true);
+                break;
+            }
         }
     }
 

@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Godot;
+using KTable.Client;
 using KTable.Core.Model;
 
 namespace KTable.App;
@@ -173,6 +175,72 @@ static class ToolTests
         var line = (t.S.View.Drawings.GetValueOrDefault(U) ?? new()).Single();
         Check.Equal(5, line.Points.Count, "corners and back to the start");
         Check.Equal(line.Points[0], line.Points[^1], "closed");
+    }
+
+    [NodeTest]
+    static async Task A_curve_is_clicked_bend_by_bend_and_laid_with_a_double_click(TestRunner r)
+    {
+        var t = OfflineTable.Make(r, pieces: 0);
+        await r.Frame();
+        t.Table.ShapeKind = Polyline.CurvedArrow;
+        t.Table.Pen.PressShape(new Vec2(0, 0));
+        t.Table.Pen.PressShape(new Vec2(40, 30));
+        t.Table.Pen.PressShape(new Vec2(80, 0));
+        Check.Equal(3, t.Table.Pen.Knots, "a bend for each click");
+        t.Table.Pen.PressShape(new Vec2(80, 0), twice: true);
+        await r.Frame();
+        var lines = t.S.View.Drawings.GetValueOrDefault(U) ?? new();
+        Check.Equal(2, lines.Count, "the curve and its head");
+        Check.That(lines[0].Points.Count > 6, "the curve is smooth, not three straight runs");
+        Check.That(lines[0].Points.Any(p => (p - new Vec2(40, 30)).Length < 1e-9), "it passes through the middle click");
+        Check.That(!t.Table.Pen.Shaping, "laid, nothing left in hand");
+        t.S.UndoLast();
+        await r.Frame();
+        Check.Equal(0, (t.S.View.Drawings.GetValueOrDefault(U) ?? new()).Count, "undo takes curve and head together");
+    }
+
+    [NodeTest]
+    static async Task An_area_closes_on_its_first_point_washed_in_the_ink_and_the_rubber_takes_it_from_inside(TestRunner r)
+    {
+        var t = OfflineTable.Make(r, pieces: 0);
+        await r.Frame();
+        t.Table.ShapeKind = Polyline.Area;
+        t.Table.Pen.PressShape(new Vec2(0, 0));
+        t.Table.Pen.MoveShape(new Vec2(10, 0));
+        t.Table.Pen.ReleaseShape();
+        t.Table.Pen.PressShape(new Vec2(10, 10));
+        t.Table.Pen.PressShape(new Vec2(0, 10));
+        t.Table.Pen.PressShape(new Vec2(0.01, 0.01));
+        await r.Frame();
+        var area = (t.S.View.Drawings.GetValueOrDefault(U) ?? new()).Single();
+        Check.That(area.Fill, "an area is filled");
+        Check.Equal(area.Points[0], area.Points[^1], "closed");
+        Check.That(t.Table.Drawings.DrawnSurfaces() >= 2, "the wash and its outline are drawn");
+        t.Table.Pen.PressErase(new Vec2(5, 5));
+        await r.Frame();
+        Check.Equal(0, (t.S.View.Drawings.GetValueOrDefault(U) ?? new()).Count, "rubbed out whole from its middle");
+    }
+
+    [NodeTest]
+    static async Task Backspace_takes_a_bend_back_and_escape_drops_the_curve(TestRunner r)
+    {
+        var t = OfflineTable.Make(r, pieces: 0);
+        await r.Frame();
+        t.Table.SetTool(Tool.Shape);
+        t.Table.ShapeKind = Polyline.Curve;
+        t.Table.Pen.PressShape(new Vec2(0, 0));
+        t.Table.Pen.PressShape(new Vec2(40, 30));
+        Check.That(t.Table.Pen.PathKey(new InputEventKey { Keycode = Key.Backspace, Pressed = true }), "Backspace is taken");
+        Check.Equal(1, t.Table.Pen.Knots, "one bend taken back");
+        t.Table.Pen.PressShape(new Vec2(60, 10));
+        Check.That(t.Table.Pen.PathKey(new InputEventKey { Keycode = Key.Enter, Pressed = true }), "Enter is taken");
+        await r.Frame();
+        Check.Equal(1, (t.S.View.Drawings.GetValueOrDefault(U) ?? new()).Count, "Enter lays it");
+        t.Table.Pen.PressShape(new Vec2(0, 50));
+        t.Table.Pen.PressShape(new Vec2(30, 50));
+        t.Table.Pen.Drop();
+        await r.Frame();
+        Check.Equal(1, (t.S.View.Drawings.GetValueOrDefault(U) ?? new()).Count, "a dropped curve lays nothing");
     }
 
     [NodeTest]

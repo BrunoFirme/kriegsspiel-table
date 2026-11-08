@@ -128,6 +128,7 @@ sealed class TableInput
     public bool ToolKey(InputEventKey k, KTable.Client.Prefs.Keymap km)
     {
         if (_c.Tool == Tool.Decal) return Decals.Key(k, km);
+        if (_c.Tool == Tool.Shape && _pen.PathKey(k)) return true;
         bool larger = km.Is(k, "larger"), smaller = km.Is(k, "smaller");
         if (!larger && !smaller) return false;
         if (_c.Tool == Tool.Sighting && _sighting.Draft != null) { _sighting.Reach(larger); return true; }
@@ -335,7 +336,7 @@ sealed class TableInput
                 _pen.PressDraw(g.Value);
                 break;
             case Tool.Shape:
-                _pen.PressShape(g.Value);
+                _pen.PressShape(g.Value, mb.DoubleClick);
                 break;
             case Tool.Erase:
                 _pen.PressErase(g.Value);

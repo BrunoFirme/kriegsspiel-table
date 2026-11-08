@@ -92,6 +92,77 @@ public static class Polyline
         }
     }
 
+    public const string Curve = "curve", CurvedArrow = "curvearrow", Area = "area";
+
+    public static bool IsPath(string kind) => kind is Curve or CurvedArrow or Area;
+
+    const int SmoothSteps = 12;
+    const double KnotGap = 1e-6;
+
+    public static List<Vec2> Smooth(List<Vec2> knots, bool closed)
+    {
+        var k = new List<Vec2>();
+        foreach (var p in knots) if (k.Count == 0 || (p - k[^1]).Length > KnotGap) k.Add(p);
+        if (closed && k.Count > 1 && (k[0] - k[^1]).Length <= KnotGap) k.RemoveAt(k.Count - 1);
+        if (k.Count < 3) return closed && k.Count == 2 ? new() { k[0], k[1], k[0] } : k;
+        int n = k.Count, spans = closed ? n : n - 1;
+        Vec2 At(int i) => closed ? k[((i % n) + n) % n] : i < 0 ? k[0] + (k[0] - k[1]) : i >= n ? k[n - 1] + (k[n - 1] - k[n - 2]) : k[i];
+        var res = new List<Vec2> { k[0] };
+        for (int s = 0; s < spans; s++)
+        {
+            Vec2 p0 = At(s - 1), p1 = At(s), p2 = At(s + 1), p3 = At(s + 2);
+            double t0 = 0, t1 = t0 + Knot(p0, p1), t2 = t1 + Knot(p1, p2), t3 = t2 + Knot(p2, p3);
+            for (int i = 1; i <= SmoothSteps; i++)
+            {
+                double t = t1 + (t2 - t1) * i / SmoothSteps;
+                var a1 = Lerp(p0, p1, t0, t1, t);
+                var a2 = Lerp(p1, p2, t1, t2, t);
+                var a3 = Lerp(p2, p3, t2, t3, t);
+                var b1 = Lerp(a1, a2, t0, t2, t);
+                var b2 = Lerp(a2, a3, t1, t3, t);
+                res.Add(Lerp(b1, b2, t1, t2, t));
+            }
+        }
+        return res;
+    }
+
+    static double Knot(Vec2 a, Vec2 b) => Math.Max(Math.Sqrt((b - a).Length), KnotGap);
+
+    static Vec2 Lerp(Vec2 a, Vec2 b, double ta, double tb, double t)
+    {
+        double f = (t - ta) / (tb - ta);
+        return new Vec2(a.X + (b.X - a.X) * f, a.Z + (b.Z - a.Z) * f);
+    }
+
+    public static double Length(List<Vec2> pts)
+    {
+        double len = 0;
+        for (int i = 1; i < pts.Count; i++) len += (pts[i] - pts[i - 1]).Length;
+        return len;
+    }
+
+    public static List<Vec2>? PathHead(List<Vec2> pts)
+    {
+        if (pts.Count < 2) return null;
+        var end = pts[^1];
+        var d = end - pts[^2];
+        for (int i = pts.Count - 3; i >= 0 && d.Length < 1e-6; i--) d = end - pts[i];
+        if (d.Length < 1e-6) return null;
+        double len = Length(pts);
+        return ShapeHead("arrow", new Vec2(end.X - d.X / d.Length * len, end.Z - d.Z / d.Length * len), end);
+    }
+
+    public static bool Inside(List<Vec2> ring, Vec2 p)
+    {
+        bool inside = false;
+        for (int i = 0, j = ring.Count - 1; i < ring.Count; j = i++)
+        {
+            Vec2 a = ring[i], b = ring[j];
+            if ((a.Z > p.Z) != (b.Z > p.Z) && p.X < (b.X - a.X) * (p.Z - a.Z) / (b.Z - a.Z) + a.X) inside = !inside;
+        }
+        return inside;
+    }
+
     public static List<Vec2>? ShapeHead(string kind, Vec2 a, Vec2 b)
     {
         if (kind != "arrow") return null;

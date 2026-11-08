@@ -387,7 +387,7 @@ public partial class Table : Node3D
         Tool.Ruler => "Drag to measure · map units until the map is calibrated",
         Tool.Calibrate => "Drag along the map's scale bar, then type what it measures",
         Tool.Draw => "Drag to draw on the layer picked in the panel",
-        Tool.Shape => "Drag the shape out, end to end or corner to corner, on the layer picked in the panel",
+        Tool.Shape => Polyline.IsPath(ShapeKind) ? PathHint() : "Drag the shape out, end to end or corner to corner, on the layer picked in the panel",
         Tool.Erase => "Drag over strokes to rub them out · only the layer picked in the panel",
         Tool.Letter => "Click, or drag a path, and type the name · Enter lays it, Esc drops it · double-click a name to retype it, drag to move it",
         Tool.Capture => $"Drag the region to capture · {_c.Settings.Keys.Label("captureAgain")} captures it again",
@@ -395,6 +395,10 @@ public partial class Table : Node3D
         Tool.Crop => "Drag the knobs to trim the sheet · Apply or Cancel in the Map page",
         _ => null,
     };
+
+    string PathHint() => ShapeKind == Polyline.Area
+        ? "Click round the area, or drag a side out · click the first point or press Enter to close · Backspace takes one back · the see-through slider sets how strong the wash is"
+        : "Click each bend, or drag a straight run · double-click or Enter ends it · Backspace takes one back";
 
     string ReliefLine() => !_c.Settings.ReliefMode.StartsWith("paint:", StringComparison.Ordinal)
         ? "Drag over a sheet to shape the ground · Shift+click goes straight on from the last stroke · = and − or Ctrl+wheel size the brush"

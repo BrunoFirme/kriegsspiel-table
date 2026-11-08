@@ -1,4 +1,4 @@
-format 29
+format 30
 type AccessChanged object
   access: GameAccess
 type AddBoard object
@@ -1396,6 +1396,7 @@ type Stow object
 type Stroke object
   board: string
   color: string
+  fill: bool
   id: string
   points: List<Vec2>
   round: bool

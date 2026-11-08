@@ -67,6 +67,7 @@ sealed partial class TableDemos
         if (_args.ContainsKey("demo-wheel")) _ = DemoWheel(table);
         if (_args.ContainsKey("demo-stack")) new TableDemo(table).Stack();
         if (_args.ContainsKey("demo-shapes")) new TableDemo(table).Shapes();
+        if (_args.ContainsKey("demo-curves")) new TableDemo(table).Curves();
         if (_args.TryGetValue("demo-stretch", out var dstr)) new TableDemo(table).Stretch(dstr);
         if (_args.TryGetValue("demo-select", out var dsel)) new TableDemo(table).Select(int.Parse(dsel));
         if (_args.ContainsKey("demo-boards")) new TableDemo(table).Boards();

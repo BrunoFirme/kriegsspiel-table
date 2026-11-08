@@ -64,6 +64,25 @@ static class Ribbon
         Cap(im, mat, W(m - 1), Dir(m - 2, m - 1), half);
     }
 
+    public static void Fill(ImmediateMesh im, StandardMaterial3D mat, List<Vec2> ring, float y, Ground? ground = null)
+    {
+        var g = ground ?? Ground.Flat;
+        var ps = ring.Count > 2 && (ring[0] - ring[^1]).Length < 1e-6 ? ring.GetRange(0, ring.Count - 1) : ring;
+        if (ps.Count < 3) return;
+        var flat = new Vector2[ps.Count];
+        for (int i = 0; i < ps.Count; i++) flat[i] = new Vector2((float)ps[i].X, (float)ps[i].Z);
+        var tris = Geometry2D.TriangulatePolygon(flat);
+        if (tris.Length < 3) return;
+        mat.CullMode = BaseMaterial3D.CullModeEnum.Disabled;
+        im.SurfaceBegin(Mesh.PrimitiveType.Triangles, mat);
+        foreach (int i in tris)
+        {
+            im.SurfaceSetNormal(Vector3.Up);
+            im.SurfaceAddVertex(Coords.ToWorld(ps[i], y + (float)g.At(ps[i])));
+        }
+        im.SurfaceEnd();
+    }
+
     public static int CapSteps(double width) => (int)(CapBase + Math.Sqrt(Math.Max(0, width)) * CapPerRoot);
 
     const double CapBase = 4, CapPerRoot = 7;

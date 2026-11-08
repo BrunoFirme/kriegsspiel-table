@@ -669,6 +669,7 @@ public sealed class Stroke
     public string Board { get; set; } = "";
     public string? Text { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool Round { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool Fill { get; set; }
 }
 
 public sealed class BoardDef

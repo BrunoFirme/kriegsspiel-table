@@ -31,19 +31,73 @@ sealed class PenTool
     Vec2 _across = new(1, 0);
     Vec2? _rubbedAt;
 
+    List<Vec2>? _knots;
+    string _knotsKind = "";
+    const double ClosePixels = 10, SamePixels = 3, LeastBend = 0.05;
+
     public bool Stroking => _stroke != null;
     public int? StrokePoints => _stroke?.Count;
-    public bool Shaping => _shapeA != null;
+    public bool Shaping => _shapeA != null || _knots != null;
     public Vec2? ShapeEnd => _shapeB;
+    public int Knots => _knots?.Count ?? 0;
 
     ToolOverlay Overlay => _overlay;
 
     public void PressDraw(Vec2 g) => _stroke = new() { g };
-    public void PressShape(Vec2 g)
+    public void PressShape(Vec2 g, bool twice = false)
     {
+        if (Polyline.IsPath(ShapeKind)) { PressPath(g, twice); return; }
         _shapeA = g;
         _shapeB = g;
         _across = ScreenAcross(_c.Rig.Cam);
+    }
+
+    void PressPath(Vec2 g, bool twice)
+    {
+        if (_knots != null && _knotsKind != ShapeKind) _knots = null;
+        if (_knots == null)
+        {
+            _knots = new() { g };
+            _knotsKind = ShapeKind;
+            return;
+        }
+        double perPixel = 1 / Math.Max(0.01, _c.Rig.PixelsPerUnit()), close = ClosePixels * perPixel;
+        if (ShapeKind == Polyline.Area && _knots.Count >= 3 && (g - _knots[0]).Length <= close) { FinishPath(); return; }
+        if ((g - _knots[^1]).Length > SamePixels * perPixel) _knots.Add(g);
+        if (twice) FinishPath();
+    }
+
+    public bool PathKey(InputEventKey k)
+    {
+        if (_knots == null || !k.Pressed) return false;
+        if (k.Keycode is Key.Enter or Key.KpEnter) { FinishPath(); return true; }
+        if (k.Keycode != Key.Backspace) return false;
+        _knots.RemoveAt(_knots.Count - 1);
+        if (_knots.Count == 0) _knots = null;
+        return true;
+    }
+
+    public void FinishPath()
+    {
+        var knots = _knots;
+        _knots = null;
+        if (knots == null || Polyline.Length(knots) < LeastBend) return;
+        bool area = _knotsKind == Polyline.Area;
+        if (knots.Count < (area ? 3 : 2)) return;
+        var body = Polyline.Smooth(knots, area);
+        var head = _knotsKind == Polyline.CurvedArrow ? Polyline.PathHead(body) : null;
+        _c.S.Do(head == null ? Laid(body, area) : new Batch { Items = new List<Command> { Laid(body), Laid(head) } });
+    }
+
+    Draw Laid(List<Vec2> pts, bool fill = false) =>
+        new() { Layer = Layers.Umpire, Stroke = new Stroke { Points = pts, Color = StrokeHex(), Width = PenWidth(), Board = _drawings.DrawBoard(), Fill = fill } };
+
+    List<Vec2>? PathInHand()
+    {
+        if (_knots == null || _c.Tool != Tool.Shape || _knotsKind != ShapeKind) return null;
+        var pts = _knots.ToList();
+        if (_c.Ground(Pointer.In(_c.Scene.GetViewport())) is { } at && (at - pts[^1]).Length > 1e-6) pts.Add(at);
+        return pts;
     }
 
     public static Vec2 ScreenAcross(Camera3D cam)
@@ -54,7 +108,12 @@ sealed class PenTool
     public void PressErase(Vec2 g) { _rubbedAt = null; RubAt(g); }
 
     public void MoveDraw(Vec2 g) { if (_stroke != null) _stroke.Add(g); }
-    public void MoveShape(Vec2 g) { if (_shapeA != null) _shapeB = g; }
+    public void MoveShape(Vec2 g)
+    {
+        if (_shapeA != null) _shapeB = g;
+        else if (_knots is { Count: 1 }) _knots.Add(g);
+        else if (_knots != null) _knots[^1] = g;
+    }
 
     public void ReleaseDraw()
     {
@@ -67,10 +126,9 @@ sealed class PenTool
     {
         if (_shapeA is { } sa && _shapeB is { } sb && (sb - sa).Length > 0.05)
         {
-            Draw One(List<Vec2> pts) => new() { Layer = Layers.Umpire, Stroke = new Stroke { Points = pts, Color = StrokeHex(), Width = PenWidth(), Board = _drawings.DrawBoard() } };
-            var body = One(Polyline.ShapePoints(ShapeKind, sa, sb, _across));
+            var body = Laid(Polyline.ShapePoints(ShapeKind, sa, sb, _across));
             var head = Polyline.ShapeHead(ShapeKind, sa, sb);
-            _c.S.Do(head == null ? body : new Batch { Items = new List<Command> { body, One(head) } });
+            _c.S.Do(head == null ? body : new Batch { Items = new List<Command> { body, Laid(head) } });
         }
         _shapeA = _shapeB = null;
     }
@@ -79,6 +137,7 @@ sealed class PenTool
     {
         _stroke = null;
         _shapeA = _shapeB = null;
+        _knots = null;
         _rubbedAt = null;
     }
 
@@ -91,6 +150,19 @@ sealed class PenTool
         {
             Ribbon.Draw(mesh, PenMaterial(), Polyline.ShapePoints(ShapeKind, pa, pb, _across), PenWidth(), _c.SheetsTop + PreviewLift);
             if (Polyline.ShapeHead(ShapeKind, pa, pb) is { } hd) Ribbon.Draw(mesh, PenMaterial(), hd, PenWidth(), _c.SheetsTop + PreviewLift);
+        }
+        if (PathInHand() is { Count: >= 2 } path)
+        {
+            bool area = _knotsKind == Polyline.Area;
+            var body = Polyline.Smooth(path, area && path.Count >= 3);
+            if (area && path.Count >= 3)
+            {
+                var wash = DrawingLayer.Ink(DrawingLayer.Washed(StrokeColor()));
+                wash.NoDepthTest = true;
+                Ribbon.Fill(mesh, wash, body, _c.SheetsTop + PreviewLift);
+            }
+            Ribbon.Draw(mesh, PenMaterial(), body, PenWidth(), _c.SheetsTop + PreviewLift);
+            if (_knotsKind == Polyline.CurvedArrow && Polyline.PathHead(body) is { } ph) Ribbon.Draw(mesh, PenMaterial(), ph, PenWidth(), _c.SheetsTop + PreviewLift);
         }
         DrawTip();
     }
@@ -140,9 +212,9 @@ sealed class PenTool
             if (!_c.S.CanEdit(layer) || !_c.LayerShown(layer)) continue;
             foreach (var st in strokes.ToList())
             {
-                if (!drawings.OnDrawBoard(st.Board) || !Polyline.Near(st.Points, p, r)) continue;
+                if (!drawings.OnDrawBoard(st.Board) || !(Polyline.Near(st.Points, p, r) || st.Fill && Polyline.Inside(st.Points, p))) continue;
                 cmds.Add(new EraseStroke { Layer = layer, StrokeId = st.Id });
-                if (st.Text != null) continue;
+                if (st.Text != null || st.Fill) continue;
                 foreach (var piece in Polyline.Cut(st.Points, p, r))
                     cmds.Add(new Draw { Layer = layer, Stroke = new Stroke { Points = piece, Color = st.Color, Width = st.Width, Board = st.Board, Round = st.Round } });
             }
