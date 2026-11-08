@@ -70,6 +70,7 @@ sealed class TableKeys
         if (!k.CtrlPressed && !k.AltPressed && PieceActions.StateKey(k.Keycode) is int stateNo && _actions.SetStateNumber(stateNo)) return;
         if (k.Keycode is Key.Left or Key.Right or Key.Up or Key.Down && _sheets.SelectedId != null && S.IsUmpire) { _sheets.Nudge(k); return; }
         if (_c.Tool == Tool.Formation && _forms.Key(k, _c.Settings.Keys)) return;
+        if (_router.ToolKey(k, _c.Settings.Keys)) return;
         Bound(k, _c.Settings.Keys);
     }
 

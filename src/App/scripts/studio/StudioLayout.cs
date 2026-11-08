@@ -258,7 +258,7 @@ public partial class PieceStudio
         }
         if (_view == "model") { if (_model != null && _model.Key(k)) Handled(); return; }
         if (_canvas.Key(k)) { Handled(); return; }
-        if (k.Echo && !(k.Keycode is Key.Bracketleft or Key.Bracketright)) return;
+        if (k.Echo && !(k.Keycode is Key.Equal or Key.Minus or Key.KpAdd or Key.KpSubtract)) return;
         if (PaintKey(k)) Handled();
     }
 
@@ -302,11 +302,11 @@ public partial class PieceStudio
             case Key.Delete or Key.Backspace when _canvas.Tool == "move" && _canvas.Sel != null:
                 LayerPanel.Delete();
                 break;
-            case Key.Bracketleft:
+            case Key.Minus or Key.KpSubtract:
                 _canvas.ChangeSize(1 / 1.15f);
                 RebuildToolPanel();
                 break;
-            case Key.Bracketright:
+            case Key.Equal or Key.KpAdd:
                 _canvas.ChangeSize(1.15f);
                 RebuildToolPanel();
                 break;

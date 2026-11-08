@@ -173,7 +173,7 @@ sealed class ToolStrip : HudPart
             }
             case "sighting":
             {
-                var b = ToolB(Tool.Sighting, "sighting", $"POV capture   ({Cfg.Keys.Label("sighting")})", "The picture a piece would send home: from above, trace the edge of what it can see, or look out from its own eyes. The shot goes to the clipboard and the capture folder. The wheel sets its reach; Alt + wheel zooms in to trace");
+                var b = ToolB(Tool.Sighting, "sighting", $"POV capture   ({Cfg.Keys.Label("sighting")})", "The picture a piece would send home: from above, trace the edge of what it can see, or look out from its own eyes. The shot goes to the clipboard and the capture folder. Ctrl + wheel or = − set its reach; the wheel zooms in to trace");
                 Buttons["sighting"] = b;
                 return b;
             }

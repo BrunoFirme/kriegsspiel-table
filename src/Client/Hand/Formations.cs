@@ -4,9 +4,12 @@ namespace KTable.Client.Hand;
 
 public enum FormationDepth { None, Ranks, Abreast }
 
-public sealed record FormationKind(string Id, string Name, string What, FormationDepth Depth, bool TakesFront)
+public enum FormationGroup { Lines, Columns, Shapes }
+
+public sealed record FormationKind(string Id, string Name, string What, FormationGroup Group, FormationDepth Depth, bool TakesFront)
 {
     public bool AlongLine { get; init; }
+    public bool Marches => Group == FormationGroup.Columns;
 }
 
 public readonly record struct Slot(double X, double Z, double Turn);
@@ -17,24 +20,29 @@ public static class Formations
 {
     public static readonly FormationKind[] All =
     {
-        new("line", "Line", "Side by side, facing the front, in as many ranks as you set", FormationDepth.Ranks, true),
-        new("stretch", "Stretch in a line", "Strung out evenly along a line you draw with a right-drag, straight, curved or round, the first piece at its start and the last at its end: pickets, outposts, a screen", FormationDepth.None, false) { AlongLine = true },
-        new("column", "Column", "One behind another, as many abreast as you set: a column of march or of attack", FormationDepth.Abreast, true),
-        new("block", "Block", "A dense mass about as deep as it is wide: phalanx, pike block, tercio, testudo", FormationDepth.None, true),
-        new("square", "Square", "A hollow square, every face looking out", FormationDepth.None, false),
-        new("ring", "Ring", "A ring looking out: orbis, schiltron, laager", FormationDepth.None, false),
-        new("wedge", "Wedge", "A filled triangle, its point at the front: cuneus, boar's snout, Panzerkeil", FormationDepth.None, false),
-        new("arrowhead", "Arrowhead", "Two arms meeting in a point at the front, open behind", FormationDepth.None, false),
-        new("vee", "Vee", "Two arms reaching forward, open in front", FormationDepth.None, false),
-        new("echelon-right", "Echelon right", "A slanting line, the right flank leading, each piece a step behind the one on its right", FormationDepth.None, false),
-        new("echelon-left", "Echelon left", "A slanting line, the left flank leading, each piece a step behind the one on its left", FormationDepth.None, false),
-        new("diamond", "Diamond", "Points to the front, the rear and both flanks", FormationDepth.None, false),
-        new("chequer", "Chequer", "Ranks with a piece's width between pieces, each rank covering the gaps of the one in front: quincunx, triplex acies", FormationDepth.Ranks, true),
-        new("crescent", "Crescent", "A line bowed out towards the front", FormationDepth.Ranks, true),
-        new("open", "Open order", "Loose and uneven, well spread out: skirmishers, dispersed troops", FormationDepth.Ranks, true),
+        new("line", "Line", "Side by side in as many ranks as you set, the front where you drag: hoplite and legion lines, two- and three-deep firing lines, line abreast", FormationGroup.Lines, FormationDepth.Ranks, true),
+        new("stretch", "Stretch in a line", "Strung out evenly along a line you draw with a right-drag, the first piece at its start and the last at its end; draw back over it to shorten it: pickets, outposts, a screen", FormationGroup.Lines, FormationDepth.None, false) { AlongLine = true },
+        new("chequer", "Chequer", "Ranks with a piece's width between pieces, each rank covering the gaps of the one in front: quincunx, triplex acies, battalions en échiquier", FormationGroup.Lines, FormationDepth.Ranks, true),
+        new("crescent", "Crescent", "A line bowed out towards the front, the centre leading", FormationGroup.Lines, FormationDepth.Ranks, true),
+        new("echelon-right", "Echelon right", "A slanting line, the right flank leading, each piece a step behind the one on its right: the oblique order, tanks in echelon", FormationGroup.Lines, FormationDepth.None, false),
+        new("echelon-left", "Echelon left", "A slanting line, the left flank leading, each piece a step behind the one on its left: the oblique order, tanks in echelon", FormationGroup.Lines, FormationDepth.None, false),
+        new("open", "Open order", "Loose and uneven, well spread out: velites, skirmishers, dispersed infantry", FormationGroup.Lines, FormationDepth.Ranks, true),
+        new("column", "Column", "One behind another, as many abreast as you set, the head where the drag ends: column of route, attack column, single file at one abreast, a phalanx or pike block when wide", FormationGroup.Columns, FormationDepth.Abreast, false),
+        new("staggered-column", "Staggered column", "One behind another, by turns left and right of the line of march: vehicles or files on both sides of a road", FormationGroup.Columns, FormationDepth.None, false),
+        new("herringbone", "Herringbone", "A halted column, by turns angled out to the left and the right: vehicles pulled off the road, covering both flanks", FormationGroup.Columns, FormationDepth.None, false),
+        new("square", "Square", "A hollow square, every face looking out: agmen quadratum, infantry square against cavalry", FormationGroup.Shapes, FormationDepth.None, false),
+        new("ring", "Ring", "A ring looking out: orbis, schiltron, wagon laager, all-round defence", FormationGroup.Shapes, FormationDepth.None, false),
+        new("wedge", "Wedge", "A filled triangle, its point at the front: cuneus, embolon, boar's snout, Panzerkeil", FormationGroup.Shapes, FormationDepth.None, false),
+        new("vee", "Vee", "Two arms reaching forward, open in front: to envelop, or to keep the point back", FormationGroup.Shapes, FormationDepth.None, false),
+        new("diamond", "Diamond", "Points to the front, the rear and both flanks: the cavalry rhomboid, a platoon's diamond", FormationGroup.Shapes, FormationDepth.None, false),
     };
 
-    static readonly Dictionary<string, (string Kind, int Depth)> Older = new() { ["two-lines"] = ("line", 2), ["grid"] = ("block", 0) };
+    public const int Mass = -1;
+
+    static readonly Dictionary<string, (string Kind, int Depth)> Older = new()
+    {
+        ["two-lines"] = ("line", 2), ["grid"] = ("column", Mass), ["block"] = ("column", Mass), ["arrowhead"] = ("wedge", 0),
+    };
 
     public static IEnumerable<string> Names => All.Select(k => k.Id).Concat(Older.Keys);
 
@@ -45,7 +53,8 @@ public static class Formations
 
     public const int MostRanks = 12;
     public const double DefaultGap = 0.1, MostGap = 3;
-    const double ChequerLines = 1.6, OpenAcross = 2.2, OpenDeep = 1.8, OpenJitter = 0.2, OpenTurn = 10, EchelonStep = 0.5, CrescentArc = 1.9;
+    const double ChequerLines = 1.6, OpenAcross = 2.2, OpenDeep = 1.8, OpenJitter = 0.2, OpenTurn = 10, EchelonStep = 0.5, CrescentArc = 1.9, HerringboneTurn = 45,
+        StaggerDeep = 1.5;
 
     public static int DefaultDepth(FormationKind kind, int n) => kind.Id switch
     {
@@ -57,19 +66,19 @@ public static class Formations
     public static List<Slot> Slots(FormationKind kind, int n, Pitch p, int depth = 0, int? front = null, double span = 0)
     {
         if (n <= 0) return new();
-        int d = Math.Clamp(depth > 0 ? depth : DefaultDepth(kind, n), 1, MostRanks);
-        int Wide(int fallback) => Math.Clamp(kind.TakesFront && front is > 0 ? front.Value : fallback, 1, n);
         double a = p.Across, b = p.Deep;
+        int d = depth == Mass ? Math.Clamp((int)Math.Round(Math.Sqrt(n * b / a)), 1, n) : Math.Clamp(depth > 0 ? depth : DefaultDepth(kind, n), 1, MostRanks);
+        int Wide(int fallback) => Math.Clamp(kind.TakesFront && front is > 0 ? front.Value : fallback, 1, n);
         var s = kind.Id switch
         {
             "line" => Grid(n, Wide(Ceil(n, d)), a, b),
             "stretch" => Stretch(n, a, span),
             "column" => Grid(n, Wide(d), a, b),
-            "block" => Grid(n, Wide(Math.Max(1, (int)Math.Round(Math.Sqrt(n * b / a)))), a, b),
+            "staggered-column" => Staggered(n, a, b * StaggerDeep, 0),
+            "herringbone" => Staggered(n, a, b * StaggerDeep, HerringboneTurn),
             "square" => Square(n, a, b),
             "ring" => Ring(n, a),
             "wedge" => Wedge(n, a, b),
-            "arrowhead" => Arms(n, a, Math.Max(b, 0.7 * a)),
             "vee" => Arms(n, a, -Math.Max(b, 0.7 * a)),
             "echelon-right" => Enumerable.Range(0, n).Select(j => new Slot((j - (n - 1) / 2.0) * a, (n - 1 - j) * b * EchelonStep, 0)).ToList(),
             "echelon-left" => Enumerable.Range(0, n).Select(j => new Slot((j - (n - 1) / 2.0) * a, j * b * EchelonStep, 0)).ToList(),
@@ -100,6 +109,8 @@ public static class Formations
         var d = to - from;
         return Angles.Norm360(Math.Atan2(d.Z, -d.X) * 180 / Math.PI);
     }
+
+    public static double FacingDown(Vec2 from, Vec2 to) => Angles.Norm360(FacingAlong(from, to) + 90);
 
     public static double? Facing(IEnumerable<double> rots)
     {
@@ -260,6 +271,70 @@ public static class Formations
         }).ToList();
     }
 
+    public const double SharpestBend = 60, Backwards = 90;
+
+    public static bool Extend(List<Vec2> path, Vec2 to, double pitch, double every)
+    {
+        if (path.Count == 0) { path.Add(to); return true; }
+        var step = to - path[^1];
+        if (step.Length <= Least) return false;
+        if (path.Count < 2)
+        {
+            if (step.Length < every) return false;
+            path.Add(to);
+            return true;
+        }
+        if (Math.Abs(Bend(Unit(path[^1] - path[^2]), step)) > Backwards * Math.PI / 180 && Nearest(path, to, step.Length + pitch) is var (cut, at, off) && off <= pitch)
+        {
+            path.RemoveRange(cut + 1, path.Count - cut - 1);
+            if ((at - path[^1]).Length > Least) path.Add(at);
+            return true;
+        }
+        if (step.Length < every) return false;
+        double chunk = pitch * SteerChunk, perLength = SharpestBend * Math.PI / 180 / pitch;
+        int chunks = (int)Math.Ceiling(step.Length / chunk);
+        for (int i = 0; i < chunks; i++)
+        {
+            var end = path[^1];
+            var left = to - end;
+            double len = Math.Min(left.Length, chunk);
+            if (len <= Least) break;
+            var heading = Unit(end - path[^2]);
+            double most = perLength * len, bend = Math.Clamp(Bend(heading, left), -most, most);
+            var way = new Vec2(heading.X * Math.Cos(bend) - heading.Z * Math.Sin(bend), heading.X * Math.Sin(bend) + heading.Z * Math.Cos(bend));
+            path.Add(end + Scaled(way, len));
+        }
+        return true;
+    }
+
+    const double SteerChunk = 0.25;
+
+    static double Bend(Vec2 heading, Vec2 step) => Math.Atan2(heading.X * step.Z - heading.Z * step.X, heading.X * step.X + heading.Z * step.Z);
+
+    static (int Cut, Vec2 At, double Off) Nearest(List<Vec2> path, Vec2 to, double reach)
+    {
+        double back = 0, best = double.MaxValue;
+        int cut = 0;
+        Vec2 at = path[^1];
+        for (int i = path.Count - 2; i >= 0 && back <= reach; i--)
+        {
+            var a = path[i];
+            var seg = path[i + 1] - a;
+            double len2 = seg.X * seg.X + seg.Z * seg.Z;
+            double t = len2 > 0 ? Math.Clamp(((to.X - a.X) * seg.X + (to.Z - a.Z) * seg.Z) / len2, 0, 1) : 0;
+            var near = Lerp(a, path[i + 1], t);
+            double d = (to - near).Length;
+            if (d < best)
+            {
+                best = d;
+                cut = i;
+                at = near;
+            }
+            back += Math.Sqrt(len2);
+        }
+        return (cut, at, best);
+    }
+
     static (double Step, double Len) Spread(List<Vec2> pts, int n, double spacing)
     {
         double len = Length(pts);
@@ -281,6 +356,9 @@ public static class Formations
     static Vec2 Scaled(Vec2 v, double k) => new(v.X * k, v.Z * k);
 
     static Vec2 Unit(Vec2 v) => v.Length > 0 ? Scaled(v, 1 / v.Length) : new Vec2(1, 0);
+
+    static List<Slot> Staggered(int n, double a, double b, double turn) =>
+        Enumerable.Range(0, n).Select(i => { int side = i % 2 == 0 ? -1 : 1; return new Slot(side * a / 2, i * b, side * turn); }).ToList();
 
     static List<Slot> Square(int n, double a, double b)
     {

@@ -12,7 +12,9 @@ public sealed partial class TableTools
 {
     public const int MaxPlaced = 200;
 
-    static readonly string FormationWords = string.Join(", ", Formations.All.Select(k => k.Id));
+    static readonly string FormationWords = string.Join("; ", Enum.GetValues<FormationGroup>().Select(g =>
+        g.ToString().ToLowerInvariant() + (g == FormationGroup.Columns ? ", facing their way of march" : "") + ": " + string.Join(", ", Formations.All.Where(k => k.Group == g).Select(k => k.Id))))
+        + "; block is a column about as deep as it is wide";
 
     static readonly Arg StretchLength = new("length", "number", "for stretch: map units from the first piece to the last (never closer than the spacing)");
 

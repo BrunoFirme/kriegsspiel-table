@@ -12,7 +12,9 @@ public static class KeysPage
         string K(string action) => keys.Label(action);
         var sb = new StringBuilder();
         sb.Append("# Keys and mouse\n\n");
-        sb.Append("Your bindings; **Settings → Keys** changes them.\n\n");
+        sb.Append("Your bindings; **Settings → Keys** changes them. The same keys mean the same everywhere: ")
+            .Append($"**{K("turnLeft")} {K("turnRight")}** turn (Shift by 1°), **{K("smaller")} {K("larger")}** or **Ctrl+wheel** size, ")
+            .Append($"**{K("statePrev")} {K("stateNext")}** step one less or one more, and the **wheel** zooms, but over selected pieces, where it turns them.\n\n");
 
         sb.Append("## At the table\n\n");
         Table(sb, "Pieces", new[]
@@ -48,10 +50,12 @@ public static class KeysPage
             (K("ruler"), "ruler"),
             (K("gizmo"), "turn / resize ring"),
             (K("formations"), "form the selected pieces up; the panel shows each formation's key"),
+            ($"{K("smaller")}  {K("larger")}  {K("statePrev")}  {K("stateNext")}", "in the formations tool: spacing, ranks or abreast"),
             (K("capture"), "capture a region to the clipboard"),
             (K("captureAgain"), "capture the same region again"),
-            (K("sighting"), "POV capture from the selected piece; wheel sets its reach"),
-            ("Ctrl+wheel  Shift+wheel", "with a decal picked: size it, turn it"),
+            (K("sighting"), $"POV capture from the selected piece; Ctrl+wheel or {K("smaller")} {K("larger")} set its reach"),
+            ($"{K("turnLeft")}  {K("turnRight")}  {K("smaller")}  {K("larger")}", "with a decal picked: turn it (Shift by 1°), size it; Ctrl+wheel sizes it too"),
+            ($"{K("smaller")}  {K("larger")}", "with the relief tool: brush size; Ctrl+wheel too"),
             ("Alt+click", "pick out a map sheet"),
             ($"{K("undo")}  {K("redo")}", "undo, redo (umpire)"),
             (K("mute"), "sound on / off"),
@@ -95,7 +99,7 @@ public static class KeysPage
         {
             ("V B E U T G I", "move, brush, rubber, shapes, text, fill, colour picker"),
             ("C O N M H", "crop, outline, place name, counters and text, measure, hand"),
-            ("[  ]", "smaller / larger brush"),
+            ("−  =", "smaller / larger brush"),
             ("X", "swap the two colours"),
             ("Alt+click", "take a colour off the picture"),
             ("Space-drag, middle-drag", "move the view"),
@@ -109,7 +113,8 @@ public static class KeysPage
         {
             ("H V B E G I D", "look round, move shapes, paint, rub out, paint a whole shape, colour picker, decal"),
             ("Drag, right-drag, middle-drag", "turn the model, slide, come closer"),
-            ("Ctrl+wheel  Shift+wheel", "brush or decal size, turn the decal"),
+            ("−  =", "brush or decal size; Ctrl+wheel too"),
+            ("Q  E", "with a decal picture held: turn it 15° (Shift 1°)"),
             ("Home", "frame the model"),
         });
         Table(sb, "Try it", new[] { ("As at the table", "drag, right-click, middle-click turns over, [ ] change the look") });

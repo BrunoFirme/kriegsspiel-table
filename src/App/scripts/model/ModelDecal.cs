@@ -315,15 +315,52 @@ internal sealed class DecalTool
         box.AddChild(mirror);
     }
 
+    const float TurnStep = 15, FineTurn = 1, Grow = 1.1f, SmallestPx = 16, LargestPx = 1200;
+
     public bool Wheel(InputEventMouseButton w)
     {
-        if (_m.Tool != "decal") return false;
-        bool up = w.ButtonIndex is MouseButton.WheelUp or MouseButton.WheelLeft;
-        if (w.CtrlPressed) Px = Mathf.Clamp(Px * (up ? 1.1f : 1 / 1.1f), 16, 1200);
-        else if (w.ShiftPressed || w.ButtonIndex is MouseButton.WheelLeft or MouseButton.WheelRight) Turn = Mathf.Wrap(Turn + (up ? 5 : -5), -180, 180);
-        else return false;
+        if (_m.Tool != "decal" || !w.CtrlPressed || w.ButtonIndex is not (MouseButton.WheelUp or MouseButton.WheelDown)) return false;
+        Size(w.ButtonIndex == MouseButton.WheelUp);
+        return true;
+    }
+
+    public bool Key(InputEventKey k)
+    {
+        if (_m.Tool != "decal" || !Holds || k.CtrlPressed || k.AltPressed) return false;
+        float step = k.ShiftPressed ? FineTurn : TurnStep;
+        switch (k.Keycode)
+        {
+            case Godot.Key.Q:
+                TurnBy(-step);
+                return true;
+            case Godot.Key.E:
+                TurnBy(step);
+                return true;
+            case Godot.Key.Equal or Godot.Key.KpAdd:
+                Size(true);
+                return true;
+            case Godot.Key.Minus or Godot.Key.KpSubtract:
+                Size(false);
+                return true;
+            default: return false;
+        }
+    }
+
+    void TurnBy(float deg)
+    {
+        Turn = Mathf.Wrap(Turn + deg, -180, 180);
+        Changed();
+    }
+
+    void Size(bool larger)
+    {
+        Px = Mathf.Clamp(Px * (larger ? Grow : 1 / Grow), SmallestPx, LargestPx);
+        Changed();
+    }
+
+    void Changed()
+    {
         _m.RedrawOverlay();
         _m.Studio.RebuildModelOptions();
-        return true;
     }
 }

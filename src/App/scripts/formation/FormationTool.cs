@@ -27,7 +27,7 @@ sealed class FormationTool
 
     Settings Cfg => _c.Settings;
 
-    public FormationKind Kind => Formations.Find(Cfg.Formation) ?? Formations.All[0];
+    public FormationKind Kind => Formations.Named(Cfg.Formation)?.Kind ?? Formations.All[0];
 
     public double Gap => Math.Clamp(Cfg.FormationGap, 0, Formations.MostGap);
 
@@ -54,8 +54,10 @@ sealed class FormationTool
 
     public string Hint() => Count < 2
         ? "Select the pieces to form up: click, Shift+click or drag a box · double-click a piece for all of its kind in view"
-        : (Kind.AlongLine ? "Right-drag the line to string them along, any shape" : "Right-drag where the front should stand")
-            + ", or pick a formation · Q/E turn · Ctrl + wheel spacing · Shift + wheel ranks · Alt + right-drag turns the view";
+        : (Kind.AlongLine ? "Right-drag the line to string them along, back over it to shorten it" : Kind.Marches ? "Right-drag the line of march, the head where it ends" : "Right-drag where the front should stand")
+            + $" · {Keys("turnLeft", "turnRight")} turn · {Keys("smaller", "larger")} spacing" + (Kind.Depth == FormationDepth.None ? "" : $" · {Keys("statePrev", "stateNext")} {(Kind.Depth == FormationDepth.Abreast ? "abreast" : "ranks")}");
+
+    string Keys(string less, string more) => Cfg.Keys.Label(less) + " " + Cfg.Keys.Label(more);
 
     Pitch PitchOf(List<PieceNode> units)
     {
@@ -127,7 +129,6 @@ sealed class FormationTool
         if (!kind.TakesFront) return kind.Name;
         int wide = front ?? (kind.Depth == FormationDepth.Abreast ? Depth(n) : (n + Depth(n) - 1) / Depth(n));
         wide = Math.Clamp(wide, 1, n);
-        if (kind.Id == "block" && front == null) return kind.Name;
         return $"{kind.Name} · {wide} wide, {(n + wide - 1) / wide} deep";
     }
 
@@ -222,13 +223,21 @@ sealed class FormationTool
         _from = _to = g;
         _drawn.Clear();
         _drawn.Add(g);
+        _across = PitchOf(Units()).Across;
         _ghost = null;
         return true;
     }
 
-    List<Vec2> Drawn() => _drawn.Count > 0 && (_to - _drawn[^1]).Length > Formations.Least ? _drawn.Append(_to).ToList() : _drawn.ToList();
+    double _across = 1;
 
-    (FormationKind kind, double facing, int? front, IReadOnlyList<Vec2>? path)? DragShape(List<PieceNode> units)
+    List<Vec2> Drawn()
+    {
+        var path = _drawn.ToList();
+        Formations.Extend(path, _to, _across, Formations.Least);
+        return path;
+    }
+
+    (FormationKind kind, Vec2 at, double facing, int? front, IReadOnlyList<Vec2>? path)? DragShape(List<PieceNode> units)
     {
         if (units.Count < 2) return null;
         var kind = Kind;
@@ -236,23 +245,23 @@ sealed class FormationTool
         if (kind.AlongLine)
         {
             var path = Drawn();
-            return Formations.Length(path) < across * LeastDrag ? null : (kind, Formations.FacingOf(path), null, path);
+            return Formations.Length(path) < across * LeastDrag ? null : (kind, _from, Formations.FacingOf(path), null, path);
         }
         double len = (_to - _from).Length;
         if (len < across * LeastDrag) return null;
+        if (kind.Marches) return (kind, _to, Formations.FacingDown(_from, _to), null, null);
         int? front = kind.TakesFront ? Math.Clamp((int)Math.Round(len / across), 1, units.Count) : null;
-        return (kind, Formations.FacingAlong(_from, _to), front, null);
+        return (kind, new Vec2((_from.X + _to.X) / 2, (_from.Z + _to.Z) / 2), Formations.FacingAlong(_from, _to), front, null);
     }
-
-    Vec2 Mid => new((_from.X + _to.X) / 2, (_from.Z + _to.Z) / 2);
 
     public void Drag(Vec2 g)
     {
         _to = g;
         var units = Units();
-        if (units.Count >= 2 && _drawn.Count > 0 && (g - _drawn[^1]).Length >= PitchOf(units).Across * DrawEvery) _drawn.Add(g);
-        if (DragShape(units) is not var (kind, facing, front, path)) { _ghost = null; return; }
-        _ghost = Plan(units, kind, Mid, facing, front, path, frontAt: true, null, out _).Select(t => (t.Pos, t.Rot, t.Node.Footprint)).ToList();
+        if (units.Count >= 2) _across = PitchOf(units).Across;
+        Formations.Extend(_drawn, g, _across, _across * DrawEvery);
+        if (DragShape(units) is not var (kind, at, facing, front, path)) { _ghost = null; return; }
+        _ghost = Plan(units, kind, at, facing, front, path, frontAt: true, null, out _).Select(t => (t.Pos, t.Rot, t.Node.Footprint)).ToList();
         _c.Say(path != null ? Strung(kind, units, path) : Describe(kind, units.Count, front));
     }
 
@@ -262,8 +271,8 @@ sealed class FormationTool
         Dragging = false;
         _ghost = null;
         var units = Units();
-        if (DragShape(units) is not var (kind, facing, front, path)) return;
-        Lay(units, kind, Mid, facing, front, path, frontAt: true, null);
+        if (DragShape(units) is not var (kind, at, facing, front, path)) return;
+        Lay(units, kind, at, facing, front, path, frontAt: true, null);
     }
 
     public void Cancel()
@@ -304,6 +313,11 @@ sealed class FormationTool
         if (Units().Count < 2) return false;
         if (km.Is(k, "turnLeft")) { Turn(k.ShiftPressed ? -1 : -15); return true; }
         if (km.Is(k, "turnRight")) { Turn(k.ShiftPressed ? 1 : 15); return true; }
+        if (km.Is(k, "larger")) { Space(1); return true; }
+        if (km.Is(k, "smaller")) { Space(-1); return true; }
+        if (Kind.Depth == FormationDepth.None) return false;
+        if (km.Is(k, "stateNext")) { Deepen(1); return true; }
+        if (km.Is(k, "statePrev")) { Deepen(-1); return true; }
         return false;
     }
 }

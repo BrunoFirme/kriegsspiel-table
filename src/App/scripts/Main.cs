@@ -14,6 +14,7 @@ namespace KTable.App;
 public partial class Main : Node
 {
     Settings _cfg = null!;
+    internal Settings Cfg => _cfg;
     Dictionary<string, string> _args = new();
     Net _net = null!;
     Session _session = null!;
@@ -74,6 +75,8 @@ public partial class Main : Node
         BestEffort.Try(UseAppIconForWindow);
         var args = _args = ParseArgs(OS.GetCmdlineUserArgs());
         bool devRun = DisplayServer.GetName() == "headless" || args.Keys.Any(k => k is "shot" or "shot-loading" or "lock" || k.StartsWith("demo", StringComparison.Ordinal));
+        if (args.ContainsKey("first-run-tour")) _cfg.Tour = 0;
+        else if (devRun) _cfg.Tour = Settings.TourOver;
         Sfx.Install(this, _cfg, quiet: devRun);
         if (!devRun) Graphics.ApplyDisplay(_cfg);
         if (args.TryGetValue("packages", out var pk)) System.Environment.SetEnvironmentVariable("KTABLE_PACKAGES", pk);
@@ -463,6 +466,7 @@ public partial class Main : Node
         _hud = hud;
         AddChild(hud);
         hud.Bind(_session, table, _net, _cfg);
+        if (Tour.Pending(_cfg)) Callable.From(() => { if (IsInstanceValid(hud) && hud.IsInsideTree()) Tour.AtTable(hud, _cfg); }).CallDeferred();
         _session.RoleChanged += () =>
         {
             _hud?.QueueFree();

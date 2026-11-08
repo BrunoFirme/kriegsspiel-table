@@ -125,15 +125,27 @@ sealed class TableInput
         return hit != null && _selection.Ids.Contains(hit.Piece.Id);
     }
 
+    public bool ToolKey(InputEventKey k, KTable.Client.Prefs.Keymap km)
+    {
+        if (_c.Tool == Tool.Decal) return Decals.Key(k, km);
+        bool larger = km.Is(k, "larger"), smaller = km.Is(k, "smaller");
+        if (!larger && !smaller) return false;
+        if (_c.Tool == Tool.Sighting && _sighting.Draft != null) { _sighting.Reach(larger); return true; }
+        if (_c.Tool == Tool.Relief) { _relief.Resize(larger); return true; }
+        return false;
+    }
+
     void OnWheel(InputEventMouseButton mb)
     {
         if (!mb.Pressed) return;
         Rig.StopGliding();
         const float NotchIn = 0.9f;
         float f = mb.ButtonIndex == MouseButton.WheelUp ? NotchIn : 1 / NotchIn;
+        bool up = mb.ButtonIndex == MouseButton.WheelUp;
         if (_c.Tool == Tool.Sighting && _sighting.Draft != null)
         {
-            _sighting.Wheel(f, mb.Position, mb.AltPressed);
+            if (mb.CtrlPressed) _sighting.Reach(!up);
+            else _sighting.Zoom(f, mb.Position);
             return;
         }
         if (_c.Tool == Tool.Relief && mb.CtrlPressed)
@@ -141,21 +153,9 @@ sealed class TableInput
             _relief.Resize(mb.ButtonIndex == MouseButton.WheelUp);
             return;
         }
-        if (_c.Tool == Tool.Formation && (mb.CtrlPressed || mb.ShiftPressed))
+        if (_c.Tool == Tool.Decal && Decals.Armed != null && mb.CtrlPressed)
         {
-            int notch = mb.ButtonIndex == MouseButton.WheelUp ? 1 : -1;
-            if (mb.CtrlPressed) _forms.Space(notch);
-            else _forms.Deepen(notch);
-            return;
-        }
-        if (_c.Tool == Tool.Formation && WheelOnSelection(mb.Position) && !mb.AltPressed && _forms.Count >= 2)
-        {
-            _forms.Turn(mb.ButtonIndex == MouseButton.WheelUp ? -10 : 10);
-            return;
-        }
-        if (_c.Tool == Tool.Decal && Decals.Armed != null && (mb.CtrlPressed || mb.ShiftPressed))
-        {
-            Decals.Wheel(mb.ButtonIndex == MouseButton.WheelUp, mb.CtrlPressed);
+            Decals.Size(up ? 1 : -1);
             return;
         }
         if (_c.Tool == Tool.Range && WheelOnSelection(mb.Position))
@@ -163,9 +163,8 @@ sealed class TableInput
             _ranges.Wheel(f);
             return;
         }
-        if (WheelOnSelection(mb.Position) && !mb.AltPressed)
+        if (_c.Tool is not (Tool.Formation or Tool.Decal) && WheelOnSelection(mb.Position) && !mb.AltPressed)
         {
-            bool up = mb.ButtonIndex == MouseButton.WheelUp;
             double step = (up ? -1 : 1) * (mb.ShiftPressed ? 0.5 : mb.CtrlPressed ? 2 : 10);
             if (_hand.Holding) _hand.Rotate(step);
             else _poses.RotateSmooth(step);

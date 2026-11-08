@@ -875,6 +875,7 @@ public partial class ModelStudio : Control
     public bool Key(InputEventKey k)
     {
         bool ctrl = k.CtrlPressed || k.MetaPressed;
+        if (Decal.Key(k)) return true;
         switch (k.Keycode)
         {
             case Godot.Key.Home:
@@ -883,12 +884,12 @@ public partial class ModelStudio : Control
             case Godot.Key.F when !ctrl && !k.Echo:
                 TurnOver();
                 return true;
-            case Godot.Key.Bracketleft:
+            case Godot.Key.Minus or Godot.Key.KpSubtract when !ctrl:
                 P.Brush = Mathf.Max(1, P.Brush / 1.15f);
                 _studio.RebuildModelOptions();
                 RedrawOverlay();
                 return true;
-            case Godot.Key.Bracketright:
+            case Godot.Key.Equal or Godot.Key.KpAdd when !ctrl:
                 P.Brush = Mathf.Min(400, P.Brush * 1.15f);
                 _studio.RebuildModelOptions();
                 RedrawOverlay();

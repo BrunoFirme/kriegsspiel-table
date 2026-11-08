@@ -81,6 +81,8 @@ The tool strip runs down the left. Point at any tool and press **F1** for its se
 
 - Drag a piece to carry it; it drops where you let go. Drag the empty table to box-select.
 - **Q / E** turn 15° (Shift 1°). The wheel over a selected piece turns it 10° (Ctrl 2°, Shift ½°).
+- The same keys mean the same in every tool: **Q / E** turn, **+ / −** or **Ctrl+wheel** size, **[ ]** step one
+  less or one more, and the wheel zooms, but over selected pieces, where it turns them.
 - **+ / −** resize, **Ctrl+1–9** form rows, **Ctrl+X / C / V** cut, copy and paste, **Delete**, **Ctrl+Z / Ctrl+Y** undo and redo.
 - What you copy waits on the clipboard until you copy again, so **Ctrl+V** pastes it into another scenario, or after the app
   is closed and opened. Pieces keep their counters, text, notes and scripts, and the packs they need come into that game
@@ -93,22 +95,30 @@ The tool strip runs down the left. Point at any tool and press **F1** for its se
 
 ### Formations
 
-**G** opens the Formations tool. With pieces selected, pick a formation from its panel or press its key: **R** line,
-**Shift+R** stretch in a line, **T** column, **B** block, **Shift+B** square, **C** ring, **Shift+C** crescent, **Y** wedge, **Shift+Y** arrowhead,
-**V** vee, **F** diamond, **Z** / **Shift+Z** echelon right / left, **X** chequer, **Shift+X** open order.
+**G** opens the Formations tool. With pieces selected, pick a formation from its panel or press its key. The panel
+groups them, and names what each was used for, from the phalanx to the tank platoon:
+
+- **Lines:** **R** line, **Shift+R** stretch in a line, **X** chequer, **Shift+C** crescent, **Z** / **Shift+Z**
+  echelon right / left, **Shift+X** open order.
+- **Columns:** **T** column (one abreast is single file, many abreast a block), **Shift+T** staggered column,
+  **H** herringbone.
+- **Shapes:** **Shift+B** square, **C** ring, **Y** wedge, **V** vee, **F** diamond.
+
 
 - The pieces march the shortest way to their places round where they stand; markers on them ride along. One undo.
 - Pick pieces as with Select: click one, **Shift+click** to add or take one out, drag a box on the empty table
   (**Shift** adds), click the empty table to let them all go. **Double-click** a piece for every piece of its kind in view.
 - **Right-drag** where the front should stand: the drag sets which way it faces, and how far you drag sets how many
-  stand in the front rank. A right-click alone still opens the menu; **Alt+right-drag** turns the view.
+  stand in the front rank. For a column the right-drag is its line of march instead: it faces along the drag, its
+  head where the drag ends. A right-click alone still opens the menu; **Alt+right-drag** turns the view.
 - In stretch in a line, the right-drag draws the line itself, straight, curved or in an S: the pieces are strung evenly
   along it, the first at its start and the last at its end, each facing across it the way a line drawn left to right
   faces the top. Never closer than the spacing: on a line too short for them, the last run on past its end, and the
-  status line says so. Draw it round on itself and they go evenly all the way round.
-- **Q / E** or the wheel over the pieces wheel the whole formation; a drawn stretch turns whole, keeping its shape.
-  **Ctrl+wheel** sets the spacing (0 is shoulder to shoulder), a drawn stretch keeping its line; **Shift+wheel** the
-  ranks of a line, or how many abreast in a column.
+  status line says so. Draw it round on itself and they go evenly all the way round. Draw back over it to shorten
+  it; the line bends at most 60° in a piece's width, so a sharp corner comes out rounded rather than folded.
+- **Q / E** wheel the whole formation (Shift 1°); a drawn stretch turns whole, keeping its shape. **+ / −** set the
+  spacing (0 is shoulder to shoulder), a drawn stretch keeping its line; **[ ]** the ranks of a line, or how many
+  abreast in a column. The wheel zooms, as everywhere.
 - Drag one of the pieces to carry the formation as it stands.
 
 ### Pieces
@@ -179,9 +189,9 @@ and undoes like a stroke.
 
 Pictures stamped on the table or on a piece: blood where a fight is, arrows, marks. The panel holds the
 scenario's decals; **Add a decal…** takes a picture file or a web link, and right-click takes one out. Pick a
-decal and click to stamp it: on a piece it rides with the piece, elsewhere it lies on the table. The wheel
-zooms as usual, **Ctrl**+wheel sizes the decal, **Shift**+wheel turns it, and clicking a stamped decal lifts it
-off. **Lift every stamp off** clears the
+decal and click to stamp it: on a piece it rides with the piece, elsewhere it lies on the table. **Q / E** turn
+it 15° (Shift 1°), **+ / −** or **Ctrl**+wheel size it, the status line shows its turn and size, the wheel zooms as
+usual, and clicking a stamped decal lifts it off. **Lift every stamp off** clears the
 table and leaves the pieces' decals. A converted module brings its decals and those already stamped.
 
 ### Layers
@@ -194,7 +204,7 @@ screenshot. Click a name to draw on it; the rubber works on that layer alone.
 A turn report as a picture, from one piece's point of view.
 
 1. Select the piece and press **V** (or right-click → POV capture from here).
-2. Set how far it sees (the wheel, or the Radius field).
+2. Set how far it sees (**Ctrl+wheel**, **+ / −**, or the Radius field); the wheel zooms in to trace.
 3. Drag to trace what blocks the view: walls, wood edges, ridges. What lies behind goes black.
 4. **Enter** or **Capture**. The picture goes to the clipboard and the capture folder, stamped with the
    scenario, the clock and the side.
@@ -202,7 +212,7 @@ A turn report as a picture, from one piece's point of view.
 **First person** in the panel looks out from the piece's front edge, the way it faces: drag to look around, or press **N E S W**
 to hold a direction (dragging lets go). **Wide** takes 90° across, so the four directions make the whole
 circle. **Eye** slides the viewpoint between the ground at the piece's feet and well over its head: drop it
-to look out from behind a crest. There is nothing to trace from the eye, and the wheel still sets the reach.
+to look out from behind a crest. There is nothing to trace from the eye; **Ctrl+wheel** or **+ / −** still set the reach.
 Lines traced in 2D still cut off what lies behind them. Each Capture is one picture.
 
 **Text → Hidden** leaves names, counters, notes and the studio's own lettering out of the picture, and off the
@@ -245,7 +255,7 @@ ground.
 - The **Relief** tool (the hill on the tool strip) raises, lowers, smooths and flattens, and paints grass, field,
   wood, marsh, water, road, earth, rock, sand, snow or town; ✕ rubs paint out. A road drawn across water is a
   bridge, a road through a town its street. On a sheet without relief, the first stroke gives it flat ground to
-  shape. **Ctrl+wheel** sizes the brush; each stroke is one undo.
+  shape. **+ / −** or **Ctrl+wheel** size the brush; each stroke is one undo.
 - The Relief tool needs the map's scale: calibrate first, or let **New blank ground…** set it. Painted ground is
   drawn at that scale, in the style's own hand: each stroke draws its own plots, hedges, farms, trees, streets and
   walls, afresh every time it is painted. Field and grass take **Plots** and **Buildings**, wood **Trees**, road

@@ -169,7 +169,7 @@ sealed class AppTools
         var store = new KTable.Core.PackageStore(KTable.Core.PackageStore.DefaultRoot);
         string dir;
         bool resume = !(a.Flag("from_start") ?? false);
-        if (a.Str("new_scenario") is { Length: > 0 } name) { dir = ScenarioFiles.CreateBlank(store, name.Trim(), "1812-07-22T06:00", 15); resume = false; }
+        if (a.Str("new_scenario") is { Length: > 0 } name) { dir = ScenarioFiles.CreateBlank(store, name.Trim(), "1812-07-22T06:00", 15, KTable.Client.Backdrops.NewLook(_a.Cfg.NewBackdrop, _a.Cfg.NewTableShade)); resume = false; }
         else if (a.Str("scenario") is { Length: > 0 } sc) { if (!store.ListScenarios().Any(x => x.id == sc)) return ToolResult.Fail($"No scenario {sc} (list_scenarios)."); dir = sc; }
         else return ToolResult.Fail("Give scenario (an id) or new_scenario (a name).");
         if (_a.Host(dir, resume) is { } why) return ToolResult.Fail(why);

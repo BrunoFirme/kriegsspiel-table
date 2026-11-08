@@ -97,6 +97,13 @@ sealed class TitleScreen
         if (Report.TellOfUnexpectedClose()) return;
         Select(0);
         Host.Show(store, scenarios);
+        Tour.AtTitle(root, _cfg, text => _nav.Find(b => b.Text == text));
+    }
+
+    public void TourAgain()
+    {
+        Tour.Restart(_cfg);
+        if (Root != null) Tour.AtTitle(Root, _cfg, text => _nav.Find(b => b.Text == text));
     }
 
     static TextureRect Backdrop(ImageTexture map)

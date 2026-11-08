@@ -20,13 +20,14 @@ public static class ScenarioFiles
         return dir;
     }
 
-    public static string CreateBlank(PackageStore store, string name, string gameTime, int minutesPerTurn)
+    public static string CreateBlank(PackageStore store, string name, string gameTime, int minutesPerTurn, Lighting? look = null)
     {
         var dir = FreeDir(store, name);
         var sc = new Scenario
         {
             Id = "local." + dir, Name = name.Trim().Length > 0 ? name.Trim() : "New scenario",
             Clock = new GameClock { Turn = 0, GameTime = gameTime, IncrementMinutes = Math.Max(1, minutesPerTurn) },
+            Lighting = look ?? new Lighting(),
         };
         sc.Drawings["umpire"] = new();
         Json.Save(Path.Combine(store.Root, "scenarios", dir, "scenario.json"), sc);

@@ -9,7 +9,7 @@ namespace KTable.App;
 
 sealed class StampTool
 {
-    public const double TurnStep = 15, Grow = 1.1, SmallestGrowth = 0.05, LargestGrowth = 40;
+    public const double TurnStep = 15, FineTurn = 1, Grow = 1.1, SmallestGrowth = 0.05, LargestGrowth = 40;
     const float PreviewAlpha = 0.75f;
     const double HalfTurn = 180;
 
@@ -41,15 +41,36 @@ sealed class StampTool
         if (_c.Tool == Tool.Decal) _c.Say(Hint());
     }
 
-    public void Wheel(bool up, bool size)
+    public void Size(int notches)
     {
-        if (size) Growth = Math.Clamp(Growth * (up ? Grow : 1 / Grow), SmallestGrowth, LargestGrowth);
-        else Turn = ((Turn + (up ? -TurnStep : TurnStep)) % 360 + 360) % 360;
+        Growth = Math.Clamp(Growth * Math.Pow(Grow, notches), SmallestGrowth, LargestGrowth);
+        _c.Say(Hint());
     }
 
-    public string Hint() => Armed == null
-        ? "Pick a decal in the panel · click a stamped decal to lift it off"
-        : $"Click to stamp {(Armed.Name.Length > 0 ? Armed.Name : "the decal")} on a piece or the table · Ctrl+wheel sizes it, Shift+wheel turns it · click a stamped decal to lift it off";
+    public void TurnBy(double deg)
+    {
+        Turn = Math.Round(((Turn + deg) % 360 + 360) % 360, 6);
+        _c.Say(Hint());
+    }
+
+    public bool Key(InputEventKey k, KTable.Client.Prefs.Keymap km)
+    {
+        if (Armed == null) return false;
+        if (km.Is(k, "turnLeft")) TurnBy(k.ShiftPressed ? -FineTurn : -TurnStep);
+        else if (km.Is(k, "turnRight")) TurnBy(k.ShiftPressed ? FineTurn : TurnStep);
+        else if (km.Is(k, "larger")) Size(1);
+        else if (km.Is(k, "smaller")) Size(-1);
+        else return false;
+        return true;
+    }
+
+    public string Hint()
+    {
+        if (Armed == null) return "Pick a decal in the panel · click a stamped decal to lift it off";
+        var keys = _c.Settings.Keys;
+        return $"Click to stamp {(Armed.Name.Length > 0 ? Armed.Name : "the decal")} on a piece or the table · turned {Turn:0.#}°, {Growth * 100:0}% · "
+            + $"{keys.Label("turnLeft")} {keys.Label("turnRight")} turn it, Shift by 1° · {keys.Label("smaller")} {keys.Label("larger")} or Ctrl+wheel size it · click a stamped decal to lift it off";
+    }
 
     readonly Dictionary<string, float> _aspects = new();
 

@@ -790,7 +790,8 @@ public class ModuleObjectCallTests
               local spawned = spawnObject({ type = 'Custom_Token' })
               spawned.setCustomObject({ image = 'tok' })
               self.setName(self.name .. '|' .. own.name .. '|' .. c.image .. ',' .. c.thickness .. '|' .. d.Name .. ',' .. d.CustomImage.ImageURL)
-              self.setDescription(self.type .. ',' .. self.tag .. ',' .. tostring(c.stand_up) .. ',' .. spawned.type .. ',' .. ({ type = 'own' }).type .. ',' .. table.concat(self.getTags(), ' ') .. ',' .. tostring(self.hasTag('token')))
+              self.setDescription(self.type .. ',' .. self.tag .. ',' .. tostring(c.stand_up) .. ',' .. spawned.type .. ',' .. ({ type = 'own' }).type .. ',' .. table.concat(self.getTags(),
+                  ' ') .. ',' .. tostring(self.hasTag('token')))
             end
             function x() end
             """;

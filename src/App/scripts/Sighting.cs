@@ -82,8 +82,10 @@ sealed class Sighting
     }
 
     public string Hint() => Draft is { FirstPerson: true }
-        ? "Drag to look around · N E S W in the panel hold a direction · wheel sets the reach · Enter captures"
-        : "Drag to trace what blocks the view · wheel sets the reach · Alt+wheel zooms in to trace · Enter captures";
+        ? $"Drag to look around · N E S W in the panel hold a direction · {ReachKeys} set the reach · Enter captures"
+        : $"Drag to trace what blocks the view · {ReachKeys} set the reach · the wheel zooms in to trace · Enter captures";
+
+    string ReachKeys => $"Ctrl+wheel or {_c.Settings.Keys.Label("smaller")} {_c.Settings.Keys.Label("larger")}";
 
     void ClearExtras()
     {
@@ -337,20 +339,21 @@ sealed class Sighting
         NotifyChanged();
     }
 
-    public void Wheel(float f, Vector2 at, bool alt)
+    public void Zoom(float f, Vector2 at)
     {
         var rig = _c.Rig;
-        if (alt && Looking || !alt && Recording) return;
-        if (alt)
-        {
-            rig.Zoom(f, at);
-            float shot = Mathf.Clamp(Framing * 1.1f, rig.MinDistance, rig.MaxDistance);
-            CloseUp = rig.ZoomGoal < shot - 0.01f;
-            if (!CloseUp) FrameOnDraft();
-            return;
-        }
+        if (Looking) return;
+        rig.Zoom(f, at);
+        float shot = Mathf.Clamp(Framing * 1.1f, rig.MinDistance, rig.MaxDistance);
+        CloseUp = rig.ZoomGoal < shot - 0.01f;
+        if (!CloseUp) FrameOnDraft();
+    }
+
+    public void Reach(bool farther)
+    {
+        if (Recording || Draft == null) return;
         CloseUp = false;
-        Draft!.Radius = Math.Clamp(Draft.Radius * (f < 1 ? 1 / 1.1 : 1.1), 1, 100_000);
+        Draft.Radius = Math.Clamp(Draft.Radius * (farther ? 1.1 : 1 / 1.1), 1, 100_000);
         Draft.Recompute(UmpirePiecesIn);
         ShowDraft();
         FrameOnDraft();

@@ -414,6 +414,23 @@ public class TableToolsTests
     }
 
     [Fact]
+    public async Task The_new_columns_and_the_old_names_form_up_and_the_tool_lists_them_by_group()
+    {
+        Assert.Contains("columns, facing their way of march: column, staggered-column, herringbone", _tools["form_up"].Description);
+        var r = await Call("place_pieces", new { kind = "user.t.bn", count = 4, x = 0.0, z = 0.0, formation = "herringbone", facing = 180.0 });
+        Assert.False(r.IsError, r.Text);
+        var placed = _s.View.Layer(Layers.Umpire).Where(p => p.Def == "user.t.bn").ToList();
+        Assert.Equal(new[] { 135.0, 225.0 }, placed.Select(p => Math.Round(p.RotDeg, 3)).Distinct().OrderBy(x => x));
+        var ids = placed.Select(p => p.Id).ToArray();
+        Assert.False((await Call("form_up", new { ids, formation = "block" })).IsError);
+        var block = ids.Select(id => _s.View.Find(Layers.Umpire, id)!).ToList();
+        Assert.Equal(4, block.Select(p => (Math.Round(p.Pos.X, 4), Math.Round(p.Pos.Z, 4))).Distinct().Count());
+        Assert.All(block, p => Assert.Equal(180, p.RotDeg, 3));
+        Assert.False((await Call("form_up", new { ids, formation = "arrowhead" })).IsError);
+        Assert.True((await Call("form_up", new { ids, formation = "phalanx-of-doom" })).IsError);
+    }
+
+    [Fact]
     public async Task Pieces_are_strung_along_a_drawn_path_and_formed_up_along_another()
     {
         var r = await Call("place_pieces", new { kind = "user.t.bn", count = 3, path = new[] { new[] { 0.0, 0.0 }, new[] { 4.0, 4.0 }, new[] { 8.0, 0.0 } } });

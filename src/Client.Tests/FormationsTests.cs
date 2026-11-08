@@ -186,8 +186,110 @@ public class FormationsTests
     public void The_old_names_still_form_up()
     {
         Assert.Equal(("line", 2), Formations.Named("two-lines") is var (k, d) ? (k.Id, d) : default);
-        Assert.Equal("block", Formations.Named("grid")?.Kind.Id);
+        Assert.Equal(("column", Formations.Mass), Formations.Named("block") is var (bk, bd) ? (bk.Id, bd) : default);
+        Assert.Equal("column", Formations.Named("grid")?.Kind.Id);
+        Assert.Equal("wedge", Formations.Named("arrowhead")?.Kind.Id);
         Assert.Null(Formations.Named("phalanx-of-doom"));
+    }
+
+    [Fact]
+    public void An_old_block_is_a_column_about_as_deep_as_it_is_wide()
+    {
+        var slots = Formations.Slots(K("column"), 16, new Pitch(1, 1), Formations.Mass);
+        Assert.Equal(4, slots.Select(s => Math.Round(s.X, 6)).Distinct().Count());
+        Assert.Equal(4, slots.Select(s => Math.Round(s.Z, 6)).Distinct().Count());
+    }
+
+    [Fact]
+    public void Every_formation_belongs_to_one_group_and_the_columns_march()
+    {
+        Assert.Equal(new[] { "column", "staggered-column", "herringbone" }, Formations.All.Where(k => k.Marches).Select(k => k.Id));
+        Assert.All(Formations.All, k => Assert.False(string.IsNullOrWhiteSpace(k.What)));
+        Assert.Equal(Formations.All.Length, Formations.All.Select(k => k.Id).Distinct().Count());
+    }
+
+    [Fact]
+    public void A_staggered_column_goes_by_turns_left_and_right_one_behind_another()
+    {
+        var slots = Formations.Slots(K("staggered-column"), 6, new Pitch(2, 1));
+        Assert.Equal(6, slots.Select(s => Math.Round(s.Z, 6)).Distinct().Count());
+        for (int i = 1; i < slots.Count; i++) Assert.True(Math.Sign(slots[i].X) == -Math.Sign(slots[i - 1].X), $"{i} on the other side");
+        Assert.All(slots, s => Assert.Equal(0, s.Turn));
+    }
+
+    [Fact]
+    public void A_herringbone_turns_each_piece_out_to_its_own_side()
+    {
+        var slots = Formations.Slots(K("herringbone"), 6, new Pitch(2, 1));
+        Assert.All(slots, s => Assert.Equal(45, Math.Abs(s.Turn), 6));
+        Assert.All(slots, s => Assert.True(Math.Sign(s.Turn) == Math.Sign(s.X), $"{s} turns out to the side it stands on"));
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(90)]
+    [InlineData(225)]
+    public void A_column_dragged_faces_along_the_drag(double deg)
+    {
+        var from = new Vec2(3, 4);
+        var to = new Vec2(from.X + 10 * Math.Cos(deg * Math.PI / 180), from.Z + 10 * Math.Sin(deg * Math.PI / 180));
+        var way = to - from;
+        Assert.True(Dot(Front(Formations.FacingDown(from, to)), way) / way.Length > 0.999);
+    }
+
+    static List<Vec2> Drawn(IEnumerable<Vec2> pointer, double pitch = 1)
+    {
+        var path = new List<Vec2>();
+        foreach (var p in pointer) Formations.Extend(path, p, pitch, pitch * 0.1);
+        return path;
+    }
+
+    static double SharpestTurnOverAPitch(List<Vec2> path, double pitch)
+    {
+        double worst = 0;
+        var cum = new List<double> { 0 };
+        for (int i = 1; i < path.Count; i++) cum.Add(cum[^1] + (path[i] - path[i - 1]).Length);
+        for (int i = 0; i + 1 < path.Count; i++)
+        {
+            int j = i;
+            while (j + 2 < path.Count && cum[j + 1] - cum[i] <= pitch) j++;
+            var a = path[i + 1] - path[i];
+            var b = path[j + 1] - path[j];
+            double turn = Math.Abs(Math.Atan2(a.X * b.Z - a.Z * b.X, Dot(a, b)) * 180 / Math.PI);
+            worst = Math.Max(worst, turn);
+        }
+        return worst;
+    }
+
+    [Fact]
+    public void Drawing_back_over_a_line_pulls_it_back_instead_of_folding_it()
+    {
+        var out_ = Enumerable.Range(0, 101).Select(i => new Vec2(i * 0.1, 0));
+        var back = Enumerable.Range(0, 41).Select(i => new Vec2(10 - i * 0.1, 0.05));
+        var path = Drawn(out_.Concat(back));
+        Assert.True(Math.Abs(Formations.Length(path) - 6) < 0.2, $"pulled back to 6 long: {Formations.Length(path)}");
+        Assert.All(path, p => Assert.True(p.X <= 10 + 1e-9 && p.X >= -1e-9));
+        Assert.True(Math.Abs(path[^1].X - 6) < 0.2, $"its end where the pointer stopped: {path[^1]}");
+        var again = Drawn(out_.Concat(back).Concat(Enumerable.Range(1, 20).Select(i => new Vec2(6 + i * 0.1, 0))));
+        Assert.True(Math.Abs(Formations.Length(again) - 8) < 0.2, "and drawn on again from there");
+    }
+
+    [Fact]
+    public void A_sharp_corner_is_rounded_so_the_line_never_bends_sideways_within_a_piece()
+    {
+        var corner = Enumerable.Range(0, 51).Select(i => new Vec2(i * 0.1, 0)).Concat(Enumerable.Range(1, 50).Select(i => new Vec2(5, i * 0.1)));
+        var path = Drawn(corner);
+        Assert.True(SharpestTurnOverAPitch(path, 1) < 90, $"no turn of a quarter or more within one piece: {SharpestTurnOverAPitch(path, 1)}");
+        Assert.True(path[^1].Z > 3, $"it still heads off the new way: {path[^1]}");
+    }
+
+    [Fact]
+    public void Gentle_curves_are_drawn_as_they_go_and_a_closing_ring_is_not_cut_at_its_start()
+    {
+        var ring = Arc(new Vec2(0, 0), 4, 0, 350, 700);
+        var path = Drawn(ring);
+        Assert.True(Math.Abs(Formations.Length(path) - Formations.Length(ring)) < 0.3, $"{Formations.Length(path)} of {Formations.Length(ring)}");
+        Assert.True((path[0] - ring[0]).Length < 1e-9);
     }
 
     [Theory]

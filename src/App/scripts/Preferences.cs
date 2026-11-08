@@ -43,6 +43,10 @@ static class Preferences
         Number("volume", "Sound", "table sound volume", 0, 1, c => c.SoundVolume, (c, v) => c.SoundVolume = v, PrefEffect.Sound),
         Flag("silent", "Sound", "no table sounds", c => c.SoundMuted, (c, on) => c.SoundMuted = on, PrefEffect.Sound),
         Flag("sound_in_background", "Sound", "heard while the window is behind others", c => c.SoundInBackground, (c, on) => c.SoundInBackground = on, PrefEffect.Sound),
+        new Pref("new_backdrop", "Table", "the backdrop a new blank scenario starts with; a sky also sets its light", "\"\" for the app's own, a colour as #rrggbb, or one of: " + string.Join(", ", KTable.Client.Backdrops.All.Select(b => b.Id)),
+            c => c.NewBackdrop, SetBackdrop, PrefEffect.Kept),
+        Number("new_table_surface", "Table", "the table surface a new blank scenario starts with: 0 squared paper, 0.5 grey, 1 black, 1.05 see-through", 0, (float)KTable.Core.Model.Lighting.SeeThrough,
+            c => (float)c.NewTableShade, (c, v) => c.NewTableShade = Math.Round(v, 2), PrefEffect.Kept),
         Flag("share_pointer", "Table", "the other umpires see this pointer", c => c.ShareCursor, (c, on) => c.ShareCursor = on, PrefEffect.Pointers),
         Flag("show_pointers", "Table", "show the other umpires' pointers", c => c.ShowCursors, (c, on) => c.ShowCursors = on, PrefEffect.Pointers),
         Flag("capture_to_clipboard", "Captures", "captures are copied to the clipboard", c => c.CaptureToClipboard, (c, on) => c.CaptureToClipboard = on, PrefEffect.Kept),
@@ -119,6 +123,14 @@ static class Preferences
         JsonValueKind.Number => v.GetDouble().ToString(System.Globalization.CultureInfo.InvariantCulture),
         _ => null,
     };
+
+    static string? SetBackdrop(Settings c, JsonElement v)
+    {
+        if (v.ValueKind != JsonValueKind.String || v.GetString() is not { } b) return "new_backdrop takes a backdrop's id, a colour as #rrggbb, or \"\"";
+        if (b.Length > 0 && !KTable.Client.Backdrops.IsColour(b) && KTable.Client.Backdrops.Find(b) == null) return $"no backdrop {b}: read_settings lists them";
+        c.NewBackdrop = b;
+        return null;
+    }
 
     static string? SetFolder(Settings c, JsonElement v)
     {

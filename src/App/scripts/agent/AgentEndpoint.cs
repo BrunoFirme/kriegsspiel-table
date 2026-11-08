@@ -60,6 +60,8 @@ public partial class AgentEndpoint : Node
 
     public AgentEndpoint(Settings cfg) { _cfg = cfg; Name = "Agent"; }
 
+    internal Settings Cfg => _cfg;
+
     public override void _EnterTree() => Current = this;
 
     public bool On => _server != null;

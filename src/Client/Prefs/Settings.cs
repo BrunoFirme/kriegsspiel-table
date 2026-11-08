@@ -108,6 +108,10 @@ public sealed class Settings
     public byte ReliefLevels(byte kind) => GroundKinds.Levels(ReliefDetail(kind, 0), ReliefDetail(kind, 1));
     public double FormationGap { get; set; } = KTable.Client.Hand.Formations.DefaultGap;
     public string Formation { get; set; } = "line";
+    public string NewBackdrop { get; set; } = "";
+    public double NewTableShade { get; set; }
+    public int Tour { get; set; } = TourOver;
+    public const int TourOver = -1;
 
     public static Func<string> FileAt { get; set; } = () => throw new InvalidOperationException("the settings file's place was never given");
 
@@ -117,12 +121,10 @@ public sealed class Settings
     {
         try
         {
-            if (System.IO.File.Exists(PathOf))
-            {
-                var s = System.Text.Json.JsonSerializer.Deserialize<Settings>(System.IO.File.ReadAllText(PathOf)) ?? new();
-                s.Freshen();
-                return s;
-            }
+            if (!System.IO.File.Exists(PathOf)) return new() { Tour = 0 };
+            var s = System.Text.Json.JsonSerializer.Deserialize<Settings>(System.IO.File.ReadAllText(PathOf)) ?? new();
+            s.Freshen();
+            return s;
         }
         catch (Exception e)
         {

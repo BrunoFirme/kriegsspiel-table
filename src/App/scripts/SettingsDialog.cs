@@ -75,6 +75,8 @@ sealed class SettingsDialog : HudPart
     void AddInterface()
     {
         _box.AddChild(Header("Size"));
+        _box.AddChild(Action(Ui.Btn("Show the tour again", () => { Tour.Restart(Cfg); if (Ctx.Node is Hud hud) Tour.AtTable(hud, Cfg); },
+            "The table's part of the first-run tour, ending in Help; the title screen shows the rest")));
         var size = AppSettings.SizeSlider(Cfg, () => Callable.From(Shell.Relayout).CallDeferred());
         _box.AddChild(Row("Interface size", size.Size, size.Shown));
         _box.AddChild(Option(size.Match));
@@ -124,7 +126,7 @@ sealed class SettingsDialog : HudPart
     void AddTable()
     {
         bool pointers = S.IsUmpire;
-        if (pointers) _box.AddChild(Header("Pieces"));
+        _box.AddChild(Header("Pieces"));
         var face = new CheckBox { Text = "Text on pieces", ButtonPressed = Cfg.FaceText, TooltipText = "The counters and text placed on pieces. Off: names show on hover only" };
         var nameS = new HSlider
         {
@@ -148,6 +150,8 @@ sealed class SettingsDialog : HudPart
         _box.AddChild(Option(face));
         _box.AddChild(nameRow);
         _box.AddChild(ReachRow());
+        _box.AddChild(Header("New scenarios"));
+        AppSettings.AddNewScenarios(_box, Cfg);
         if (!pointers) return;
 
         _box.AddChild(Header("Pointers"));

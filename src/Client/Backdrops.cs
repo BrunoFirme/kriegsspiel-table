@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using KTable.Core.Model;
 using KTable.Core.Protocol;
 
 namespace KTable.Client;
@@ -35,6 +36,12 @@ public static class Backdrops
     public static bool IsPicture(string backdrop) => UploadAsset.IsWebPicture(UploadAsset.ReliefPackage, backdrop);
 
     public static bool IsColour(string backdrop) => Colour.IsMatch(backdrop);
+
+    public static Lighting NewLook(string backdrop, double tableShade)
+    {
+        var look = new Lighting { Backdrop = IsColour(backdrop) || Find(backdrop) != null ? backdrop : None, TableShade = Math.Clamp(tableShade, 0, Lighting.SeeThrough) };
+        return Find(look.Backdrop) is { Light: { } name } && LightPresets.Named(name) is { } light ? LightPresets.Lit(look, light) : look;
+    }
 
     public static bool IsKnown(string backdrop) => backdrop.Length == 0 || IsColour(backdrop) || Find(backdrop) != null || IsPicture(backdrop);
 }

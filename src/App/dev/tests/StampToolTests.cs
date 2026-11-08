@@ -65,9 +65,22 @@ static class StampToolTests
 
         Wheel(true, false);
         Check.That(t.Table.Decals.Growth > 1, $"Ctrl+wheel sizes the decal: {t.Table.Decals.Growth}");
+        Check.Equal(near, t.Table.Rig.ZoomGoal, "and does not zoom");
         Wheel(false, true);
-        Check.That(t.Table.Decals.Turn != 0, $"Shift+wheel turns it: {t.Table.Decals.Turn}");
-        Check.Equal(near, t.Table.Rig.ZoomGoal, "neither zooms");
+        Check.That(t.Table.Decals.Turn == 0 && t.Table.Rig.ZoomGoal < near, $"Shift+wheel zooms, as the wheel does, and turns nothing: {t.Table.Decals.Turn}");
+
+        void Press(Godot.Key key, bool shift = false) => t.Table.Keys.OnKey(new Godot.InputEventKey { Keycode = key, Pressed = true, ShiftPressed = shift });
+        Press(Godot.Key.E);
+        Check.Equal(15.0, t.Table.Decals.Turn, "E turns it 15°");
+        Press(Godot.Key.Q, shift: true);
+        Check.Equal(14.0, t.Table.Decals.Turn, "Shift+Q takes 1° back");
+        Press(Godot.Key.Q);
+        Press(Godot.Key.Q);
+        Check.Equal(344.0, t.Table.Decals.Turn, "and round past north");
+        double grown = t.Table.Decals.Growth;
+        Press(Godot.Key.Minus);
+        Check.That(t.Table.Decals.Growth < grown, $"− makes it smaller: {t.Table.Decals.Growth}");
+        Check.That(t.Table.Decals.Shape(new Vec2(6, 5)).Rot == 344, "the stamp takes the turn");
         Check.Equal(0, t.Errors.Count, string.Join("; ", t.Errors));
     }
 }

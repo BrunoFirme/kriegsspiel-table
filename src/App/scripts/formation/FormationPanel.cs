@@ -22,72 +22,92 @@ sealed class FormationPanel : HudPart
         if (_box == null || T == null || !Panel.Visible) return;
         foreach (var c in _box.GetChildren()) { _box.RemoveChild(c); c.QueueFree(); }
         AddKinds();
-        AddSpacing();
-        AddDepth();
+        AddChosen();
+        AddSettings();
         Panel.Fit();
     }
 
+    const int GlyphsAcross = 4;
+    static readonly Vector2 GlyphSize = new(46, 42);
+
+    static string GroupName(FormationGroup g) => g switch { FormationGroup.Lines => "Lines", FormationGroup.Columns => "Columns", _ => "Shapes" };
+
     void AddKinds()
     {
-        var grid = new GridContainer { Columns = 4 };
-        grid.AddThemeConstantOverride("h_separation", Ui.Gap.Tight);
-        grid.AddThemeConstantOverride("v_separation", Ui.Gap.Tight);
+        var form = Ui.Form(Ui.PanelLabels);
         var current = T.Forms.Kind;
-        foreach (var kind in Formations.All)
+        foreach (var group in Enum.GetValues<FormationGroup>())
         {
-            var key = Cfg.Keys.Label("form:" + kind.Id);
-            var b = new Button
-            {
-                ToggleMode = true, ButtonPressed = kind == current, FocusMode = Control.FocusModeEnum.None,
-                TooltipText = $"{kind.Name}   ({key})\n{kind.What}", CustomMinimumSize = new Vector2(46, 42), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-            };
-            b.AddChild(new FormationGlyph { Kind = kind });
-            var tag =
-                new Label { Text = key, Modulate = Ui.Muted, MouseFilter = Control.MouseFilterEnum.Ignore, HorizontalAlignment = HorizontalAlignment.Right,
-                    VerticalAlignment = VerticalAlignment.Bottom };
-            tag.AddThemeFontSizeOverride("font_size", 10);
-            b.AddChild(tag);
-            tag.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
-            tag.OffsetRight = -3;
-            var k = kind;
-            b.Pressed += () => T.Forms.Form(k);
-            grid.AddChild(b);
+            form.AddChild(new Label { Text = GroupName(group), SizeFlagsVertical = Control.SizeFlags.ShrinkBegin });
+            var grid = new GridContainer { Columns = GlyphsAcross };
+            grid.AddThemeConstantOverride("h_separation", Ui.Gap.Tight);
+            grid.AddThemeConstantOverride("v_separation", Ui.Gap.Tight);
+            foreach (var kind in Formations.All.Where(k => k.Group == group)) grid.AddChild(Glyph(kind, kind == current));
+            form.AddChild(grid);
         }
-        _box.AddChild(grid);
+        Ui.AlignForm(form);
+        _box.AddChild(form);
     }
 
-    HBoxContainer Row(string label, string tip)
+    Button Glyph(FormationKind kind, bool chosen)
     {
-        var row = new HBoxContainer { TooltipText = tip };
-        row.AddThemeConstantOverride("separation", Ui.Gap.Tight);
-        row.AddChild(new Label { Text = label, CustomMinimumSize = new Vector2(62, 0), SizeFlagsVertical = Control.SizeFlags.ShrinkCenter });
-        _box.AddChild(row);
-        return row;
+        var key = Cfg.Keys.Label("form:" + kind.Id);
+        var b = new Button
+        {
+            ToggleMode = true, ButtonPressed = chosen, FocusMode = Control.FocusModeEnum.None,
+            TooltipText = $"{kind.Name}   ({key})", CustomMinimumSize = GlyphSize,
+        };
+        b.AddChild(new FormationGlyph { Kind = kind });
+        var tag =
+            new Label { Text = key, Modulate = Ui.Muted, MouseFilter = Control.MouseFilterEnum.Ignore, HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Bottom };
+        tag.AddThemeFontSizeOverride("font_size", 10);
+        b.AddChild(tag);
+        tag.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
+        tag.OffsetRight = -3;
+        b.Pressed += () => T.Forms.Form(kind);
+        return b;
+    }
+
+    void AddChosen()
+    {
+        var kind = T.Forms.Kind;
+        var name = new Label { Text = kind.Name };
+        name.AddThemeFontOverride("font", Ui.SansStrong());
+        var what = Ui.Hint(kind.What);
+        what.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
+        _box.AddChild(name);
+        _box.AddChild(what);
     }
 
     const double MostSpacingPercent = 300, SpacingStep = 5;
 
-    void AddSpacing()
+    void AddSettings()
     {
-        var row = Row("Spacing", "The room between pieces, as a share of a piece · Ctrl + wheel on the table");
-        var s =
-            new HSlider { MinValue = 0, MaxValue = MostSpacingPercent, Step = SpacingStep, Value = T.Forms.Gap * 100, CustomMinimumSize = new Vector2(90, 0),
-                SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter };
+        var keys = Cfg.Keys;
+        var form = Ui.Form(Ui.PanelLabels);
+        var s = new HSlider { MinValue = 0, MaxValue = MostSpacingPercent, Step = SpacingStep, Value = T.Forms.Gap * 100, CustomMinimumSize = new Vector2(90, 0),
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
+            TooltipText = $"The room between pieces, as a share of a piece · {keys.Label("smaller")} {keys.Label("larger")} on the table" };
         var shown = Ui.ValueBox(s, v => $"{v:0}%", 40);
         s.DragEnded += changed => { if (changed) T.Forms.SetGap(s.Value / 100); };
-        row.AddChild(s);
-        row.AddChild(shown);
-    }
-
-    void AddDepth()
-    {
+        var spacing = new HBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+        spacing.AddThemeConstantOverride("separation", Ui.Gap.Tight);
+        spacing.AddChild(s);
+        spacing.AddChild(shown);
+        form.AddChild(new Label { Text = "Spacing" });
+        form.AddChild(spacing);
         var kind = T.Forms.Kind;
-        if (kind.Depth == FormationDepth.None) return;
-        bool abreast = kind.Depth == FormationDepth.Abreast;
-        var row = Row(abreast ? "Abreast" : "Ranks", (abreast ? "How many side by side" : "How many ranks deep") + " · Shift + wheel on the table");
-        var spin = new SpinBox { MinValue = 1, MaxValue = Formations.MostRanks, Step = 1, Value = T.Forms.Depth(Math.Max(2, T.Forms.Count)), SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin };
-        spin.ValueChanged += v => { T.Forms.SetDepth((int)v); spin.GetLineEdit().ReleaseFocus(); };
-        row.AddChild(spin);
+        if (kind.Depth != FormationDepth.None)
+        {
+            bool abreast = kind.Depth == FormationDepth.Abreast;
+            var spin = new SpinBox { MinValue = 1, MaxValue = Formations.MostRanks, Step = 1, Value = T.Forms.Depth(Math.Max(2, T.Forms.Count)), SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin,
+                TooltipText = (abreast ? "How many side by side" : "How many ranks deep") + $" · {keys.Label("statePrev")} {keys.Label("stateNext")} on the table" };
+            spin.ValueChanged += v => { T.Forms.SetDepth((int)v); spin.GetLineEdit().ReleaseFocus(); };
+            form.AddChild(new Label { Text = abreast ? "Abreast" : "Ranks" });
+            form.AddChild(spin);
+        }
+        Ui.AlignForm(form);
+        _box.AddChild(form);
     }
 }
 
@@ -106,8 +126,8 @@ public partial class FormationGlyph : Control
 
     static (int n, int depth) Shown(string id) => id switch
     {
-        "line" => (6, 1), "stretch" => (5, 0), "column" => (8, 2), "block" => (9, 0), "square" => (12, 0), "ring" => (10, 0),
-        "wedge" => (10, 0), "arrowhead" or "vee" => (7, 0), "diamond" => (9, 0), "chequer" => (8, 2), "crescent" => (7, 1), "open" => (8, 2), _ => (6, 0),
+        "line" => (6, 1), "stretch" => (5, 0), "column" => (8, 2), "staggered-column" or "herringbone" => (6, 0), "square" => (12, 0), "ring" => (10, 0),
+        "wedge" => (10, 0), "vee" => (7, 0), "diamond" => (9, 0), "chequer" => (8, 2), "crescent" => (7, 1), "open" => (8, 2), _ => (6, 0),
     };
 
     public override void _Ready()

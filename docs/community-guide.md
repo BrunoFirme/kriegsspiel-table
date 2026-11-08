@@ -85,7 +85,7 @@ takes a web link.
 - **Texture…** on an imported model lays on a texture made for it, as its maker drew it; **Picture…** on a shape
   stretches a picture over one face.
 - Tools: look round H, move V (drag the X, Y and Z arrows, or the shape itself), brush B, rubber E, fill G,
-  colour I, decal D; **F** turns the piece over; 1, 3 and 7 look from the front, right and top (Shift: the other
+  colour I, decal D; **+ / −** or Ctrl+wheel size the brush or the decal, **Q / E** turn a decal (Shift 1°); **F** turns the piece over; 1, 3 and 7 look from the front, right and top (Shift: the other
   side), 5 is the flat view. A shape chosen in 3D opens its faces in 2D.
 - Saved as one OBJ and one picture.
 

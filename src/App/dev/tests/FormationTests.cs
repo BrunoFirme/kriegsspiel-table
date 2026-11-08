@@ -226,4 +226,48 @@ static class FormationTests
         await Settled(r, t);
         Check.That(said.Contains("the last 2 run on past its end"), "too short at the widest spacing, and it says so: " + said);
     }
+    [NodeTest]
+    static async Task Drawing_back_over_a_stretch_shortens_it_instead_of_folding_it(TestRunner r)
+    {
+        var t = OfflineTable.Make(r, pieces: 4);
+        await r.Frame();
+        t.Table.SetTool(Tool.Formation);
+        var four = Six.Take(4).ToArray();
+        t.Table.Selection.Set(four);
+        t.Table.Settings.Formation = "stretch";
+        double across = four.Select(id => t.Node(id).Footprint.X).Max() * (1 + t.Table.Forms.Gap);
+        Check.That(t.Table.Forms.Press(new Vec2(0, 5)), "the line is drawn from where the drag starts");
+        for (int i = 1; i <= 60; i++) t.Table.Forms.Drag(new Vec2(i * across * 0.25, 5));
+        for (int i = 1; i <= 20; i++) t.Table.Forms.Drag(new Vec2((15 - i * 0.25) * across, 5 + across * 0.02));
+        t.Table.Forms.Release();
+        await Settled(r, t);
+        var xs = four.Select(id => At(t, id).X).OrderBy(x => x).ToList();
+        Check.That(Math.Abs(xs[^1] - 10 * across) < across * 0.1, $"the last stands where the line was pulled back to, 10 widths out: {xs[^1] / across:0.00}");
+        Check.That(four.All(id => Math.Abs(At(t, id).Z - 5) < across * 0.05), "all on the one line, none folded back beside it");
+    }
+
+    [NodeTest]
+    static async Task In_the_formations_tool_the_wheel_zooms_over_the_pieces_and_the_keys_set_spacing_and_ranks(TestRunner r)
+    {
+        var t = OfflineTable.Make(r, pieces: 6);
+        await r.Frames(2);
+        t.Table.SetTool(Tool.Formation);
+        t.Table.Selection.Set(Six);
+        t.Table.Forms.Form(Formations.Find("line")!);
+        await Settled(r, t);
+        var over = Screen(t, At(t, "p3"));
+        float far = t.Table.Rig.ZoomGoal;
+        foreach (var ctrl in new[] { false, true })
+            t.Table.Router.OnMouseButton(new InputEventMouseButton { ButtonIndex = MouseButton.WheelUp, Pressed = true, Position = over, CtrlPressed = ctrl, ShiftPressed = ctrl });
+        await r.Frame();
+        Check.That(t.Table.Rig.ZoomGoal < far, $"the wheel zooms in, plain or with Ctrl and Shift: {far} → {t.Table.Rig.ZoomGoal}");
+        Check.That(Six.All(id => Math.Abs(t.S.View.Find(U, id)!.RotDeg - 0) < 1e-6 || Math.Abs(t.S.View.Find(U, id)!.RotDeg - 360) < 1e-6), "and turns nothing");
+        double gap = t.Table.Forms.Gap;
+        void Press(Key key) => t.Table.Keys.OnKey(new InputEventKey { Keycode = key, Pressed = true });
+        Press(Key.Equal);
+        Check.That(t.Table.Forms.Gap > gap, $"= spaces them wider: {gap} → {t.Table.Forms.Gap}");
+        Press(Key.Bracketright);
+        await Settled(r, t);
+        Check.Equal(2, Six.Select(id => Math.Round(At(t, id).Z, 4)).Distinct().Count(), "] puts them in two ranks");
+    }
 }

@@ -20,8 +20,8 @@ internal sealed class TopLine
     internal static readonly Dictionary<string, string> PaintHints = new()
     {
         ["move"] = "Drag a layer to move it · its corners resize it (Shift: freely) · the knob above turns it (Shift: 15°) · arrows nudge · Delete removes it",
-        ["brush"] = "Drag to paint · [ and ] change the size · Shift-click draws straight from the last stroke · Alt-click takes a colour · X swaps the two colours",
-        ["erase"] = "Drag to rub out — only the layer selected on the right · [ and ] change the size",
+        ["brush"] = "Drag to paint · = and − or Ctrl+wheel change the size · Shift-click draws straight from the last stroke · Alt-click takes a colour · X swaps the two colours",
+        ["erase"] = "Drag to rub out — only the layer selected on the right · = and − or Ctrl+wheel change the size",
         ["shape"] = "Drag out the shape · Shift keeps it square or straight · Alt draws it from the centre",
         ["text"] = "Click to put words down, click words to change them; type them in the tool panel",
         ["fill"] = "Click an area to flood it with the colour",

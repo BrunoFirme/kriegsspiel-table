@@ -118,6 +118,28 @@ static class AppSettings
         box.AddChild(Ui.UnderControls(c.Capped, Ui.DialogLabels));
     }
 
+    public static void AddNewScenarios(VBoxContainer box, Settings cfg)
+    {
+        var form = Ui.Form(Ui.DialogLabels);
+        var backdrop = new BackdropPick(cfg.NewBackdrop, own: false, editable: true);
+        backdrop.Pick.ItemSelected += i => { cfg.NewBackdrop = BackdropPick.Chosen(i)?.Id ?? backdrop.Hex; cfg.Save(); };
+        Ui.WhenPicked(backdrop.Colour, c => { cfg.NewBackdrop = "#" + c.ToHtml(false); cfg.Save(); });
+        form.AddChild(new Label { Text = "Backdrop" });
+        form.AddChild(backdrop.Row());
+        var surface = new HSlider { MinValue = 0, MaxValue = KTable.Core.Model.Lighting.SeeThrough, Step = 0.05, Value = cfg.NewTableShade, TooltipText = ScenarioDialog.SurfaceTip,
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, CustomMinimumSize = new Vector2(170, 0) };
+        surface.ValueChanged += v => cfg.NewTableShade = Math.Round(v, 2);
+        surface.DragEnded += _ => cfg.Save();
+        var row = new HBoxContainer();
+        row.AddThemeConstantOverride("separation", Ui.Gap.Group);
+        row.AddChild(surface);
+        row.AddChild(Ui.ValueBox(surface, ScenarioDialog.ShadeWord, 58));
+        form.AddChild(new Label { Text = "Surface" });
+        form.AddChild(row);
+        Ui.AlignForm(form);
+        box.AddChild(form);
+    }
+
     public static void OpenWindow(Node parent, Settings cfg)
     {
         var dlg = new AcceptDialog { Title = "Settings", OkButtonText = "Done" };
@@ -155,10 +177,15 @@ sealed class SettingsPage
         var access = new VBoxContainer();
         v.AddChild(access);
         AppSettings.AddSize(access, _cfg);
+        access.AddChild(Ui.UnderControls(Ui.Btn("Show the tour again", _t.TourAgain, "The first-run tour of the title screen and the table, ending in Help"), Ui.DialogLabels));
         v.AddChild(Ui.Header("Sound"));
         var sound = new VBoxContainer();
         v.AddChild(sound);
         AppSettings.AddSound(sound, _cfg);
+        v.AddChild(Ui.Header("New scenarios"));
+        var fresh = new VBoxContainer();
+        v.AddChild(fresh);
+        AppSettings.AddNewScenarios(fresh, _cfg);
         v.AddChild(Ui.Header("Inviting"));
         var inviting = new VBoxContainer();
         v.AddChild(inviting);

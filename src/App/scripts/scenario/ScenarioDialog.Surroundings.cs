@@ -11,35 +11,21 @@ namespace KTable.App;
 
 sealed partial class ScenarioDialog
 {
-    const string SolidBackdrop = "Solid colour", OwnBackdrop = "Your own picture";
-
     void AddSurroundings(Lighting now)
     {
-        int own = Backdrops.All.Count + 1;
-        var pick = new OptionButton { CustomMinimumSize = new Vector2(220, 0), Disabled = !S.IsUmpire };
-        pick.AddItem(SolidBackdrop);
-        foreach (var b in Backdrops.All) pick.AddItem(b.Name);
-        pick.AddItem(OwnBackdrop);
-        int Shown(string backdrop) => backdrop.Length == 0 || Backdrops.IsColour(backdrop) ? 0
-            : Backdrops.All.ToList().FindIndex(b => b.Id == backdrop) is var i and >= 0 ? i + 1 : own;
-        pick.Selected = Shown(now.Backdrop);
-        pick.TooltipText = "A sky also sets the light";
-        pick.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
-        var colour = new ColorPickerButton { Color = TableBackdrop.ColourOf(now.Backdrop), EditAlpha = false, CustomMinimumSize = new Vector2(44, 0), Disabled = !S.IsUmpire, TooltipText = "The colour" };
-        colour.Visible = pick.Selected == 0;
-        string Hex() => "#" + colour.Color.ToHtml(false);
-        colour.ColorChanged += _ => PreviewLook(l => l.Backdrop = Hex());
+        var backdrop = new BackdropPick(now.Backdrop, own: true, editable: S.IsUmpire);
+        var pick = backdrop.Pick;
+        var colour = backdrop.Colour;
+        colour.ColorChanged += _ => PreviewLook(l => l.Backdrop = backdrop.Hex);
         Ui.WhenPicked(colour, c => SendLook(l => l.Backdrop = "#" + c.ToHtml(false)));
-        var choose = Btn("Choose a picture…", () => ChooseBackdrop(() => pick.Selected = Shown(S.View.Lighting.Backdrop)),
+        var choose = Btn("Choose a picture…", () => ChooseBackdrop(() => pick.Selected = backdrop.Shown(S.View.Lighting.Backdrop)),
             "A panorama twice as wide as it is tall wraps all the way round; any picture or web link will do");
-        choose.Visible = pick.Selected == own;
+        choose.Visible = backdrop.IsOwn(pick.Selected);
         pick.ItemSelected += i =>
         {
-            colour.Visible = i == 0;
-            choose.Visible = i == own;
-            if (i == own) { ChooseBackdrop(() => pick.Selected = Shown(S.View.Lighting.Backdrop)); return; }
-            if (i == 0) { SendLook(l => l.Backdrop = Hex()); return; }
-            var chosen = Backdrops.All[(int)i - 1];
+            choose.Visible = backdrop.IsOwn(i);
+            if (backdrop.IsOwn(i)) { ChooseBackdrop(() => pick.Selected = backdrop.Shown(S.View.Lighting.Backdrop)); return; }
+            if (BackdropPick.Chosen(i) is not { } chosen) { SendLook(l => l.Backdrop = backdrop.Hex); return; }
             var look = Changed(l => l.Backdrop = chosen.Id);
             if (chosen.Light is { } name && LightPresets.Named(name) is { } light)
             {
@@ -52,19 +38,14 @@ sealed partial class ScenarioDialog
         };
         var form = Ui.Form(Ui.DialogLabels);
         form.AddChild(new Label { Text = "Backdrop" });
-        var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", Ui.Gap.Row);
-        row.AddChild(pick);
-        row.AddChild(colour);
-        row.AddChild(choose);
-        form.AddChild(row);
+        form.AddChild(backdrop.Row(choose));
         Ui.AlignForm(form);
         _box.AddChild(Header("Around the table"));
         _box.AddChild(form);
 
         var tableForm = Ui.Form(Ui.DialogLabels);
         var table = LightRow(tableForm, "Surface", 0, Lighting.SeeThrough, 0.05, now.TableShade, ShadeWord);
-        table.TooltipText = "The table around and under the map sheets: squared paper … grey … black … see-through, with no table under the sheets";
+        table.TooltipText = SurfaceTip;
         table.Editable = S.IsUmpire;
         Ui.AlignForm(tableForm);
         bool dragging = false;
@@ -129,7 +110,9 @@ sealed partial class ScenarioDialog
             : "Spaced in real heights and numbered once the scale is set and there is relief.";
     }
 
-    static string ShadeWord(double v) => Lighting.IsSeeThrough(v) ? "see-through" : v < 0.1 ? "paper" : v < 0.45 ? "dim paper" : v < 0.6 ? "grey" : v < 0.95 ? "dark" : "black";
+    public const string SurfaceTip = "The table around and under the map sheets: squared paper … grey … black … see-through, with no table under the sheets";
+
+    public static string ShadeWord(double v) => Lighting.IsSeeThrough(v) ? "see-through" : v < 0.1 ? "paper" : v < 0.45 ? "dim paper" : v < 0.6 ? "grey" : v < 0.95 ? "dark" : "black";
 
     Lighting Changed(Action<Lighting> change)
     {
