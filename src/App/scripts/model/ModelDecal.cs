@@ -109,7 +109,7 @@ internal sealed class DecalTool
         int y0 = Math.Max(0, (int)(at.Y - reach)), y1 = Math.Min((int)vpSize.Y - 1, (int)(at.Y + reach));
         if (x1 < x0 || y1 < y0) return 0;
         var box = new Rect2I(x0, y0, x1 - x0 + 1, y1 - y0 + 1);
-        var parts = _m.Views.Values.Where(v => v.Part.Visible).ToList();
+        var parts = _m.Drawn.ToList();
         var screen = new Dictionary<string, Seen>();
         var depth = Depth(parts, lens, box, screen);
         int painted = 0;
@@ -128,7 +128,7 @@ internal sealed class DecalTool
         Array.Fill(depth, float.MaxValue);
         foreach (var v in parts)
         {
-            var xf = _m.Stand.Transform * v.Part.Xf();
+            var xf = _m.Stand.Transform * v.Xf;
             int n = v.Data.V.Count;
             var s = new Vector2[n];
             var z = new float[n];

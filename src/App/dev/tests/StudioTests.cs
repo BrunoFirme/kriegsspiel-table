@@ -292,9 +292,10 @@ static class StudioTests
         for (int t = 0; t < v.Data.Tris; t++)
         {
             var at = (v.Data.V[t * 3] + v.Data.V[t * 3 + 1] + v.Data.V[t * 3 + 2]) / 3;
-            if (System.Math.Abs(at.X - 0.5f) < 0.15f) continue;
+            float middle = v.Data.Bounds().GetCenter().X;
+            if (System.Math.Abs(at.X - middle) < 0.15f) continue;
             var uv = (v.Data.UV[t * 3] + v.Data.UV[t * 3 + 1] + v.Data.UV[t * 3 + 2]) / 3;
-            Check.Equal(Opaque(at.X < 0.5f ? Godot.Colors.Green : Godot.Colors.Yellow), TexelAt(v, uv), $"the model at x {at.X:0.00}");
+            Check.Equal(Opaque(at.X < middle ? Godot.Colors.Green : Godot.Colors.Yellow), TexelAt(v, uv), $"the model at x {at.X:0.00}");
             seen++;
         }
         Check.That(seen >= 4, $"texels on both halves were looked at ({seen})");

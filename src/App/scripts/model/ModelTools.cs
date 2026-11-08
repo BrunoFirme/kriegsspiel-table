@@ -10,7 +10,7 @@ internal sealed class ModelCamera
     readonly Camera3D _cam;
     public float Yaw = Mathf.Pi - 0.6f, Pitch = -0.45f, Dist = 6;
     public Vector3 Target = new(0, 0.5f, 0);
-    public bool Spin;
+    public bool Spin, Ortho;
 
     const float LeastFar = 500, FarPerDistance = 50;
 
@@ -24,6 +24,18 @@ internal sealed class ModelCamera
         _cam.LookAt(Target, Vector3.Up);
         _cam.Near = Mathf.Max(0.001f, Dist * 0.01f);
         _cam.Far = Mathf.Max(LeastFar, Dist * FarPerDistance);
+        _cam.Projection = Ortho ? Camera3D.ProjectionType.Orthogonal : Camera3D.ProjectionType.Perspective;
+        if (Ortho) _cam.Size = 2 * Dist * Mathf.Tan(Mathf.DegToRad(_cam.Fov) / 2);
+    }
+
+    public const float Level = 0, Above = -1.5f;
+
+    public void Face(float yaw, float pitch)
+    {
+        Spin = false;
+        Yaw = yaw;
+        Pitch = pitch;
+        Apply();
     }
 
     public void Frame(List<Aabb> aabbs)
@@ -51,6 +63,7 @@ internal sealed class ModelTools
     public Vector2 Hover;
     Vector3 _moveFrom;
     float[]? _movePos;
+    List<(ModelPart part, float[] from)> _dragged = new();
     float _strokeLeft;
     int _axis = -1, _hoverAxis = -1;
     float _axisFrom, _axisScale;
@@ -120,6 +133,7 @@ internal sealed class ModelTools
             if (_moving)
             {
                 _moving = false;
+                _dragged.Clear();
                 _axis = -1;
                 _m.Changed(mesh: true);
                 _m.Studio.RebuildModelPanels();
@@ -160,26 +174,31 @@ internal sealed class ModelTools
                     _axisDir = g.axes[axis].Normalized();
                     _axisScale = Mathf.Max(1e-6f, _m.Stand.Basis[axis].Length());
                     _movePos = _m.SelPart!.Pos.ToArray();
+                    _dragged = new() { (_m.SelPart!, _m.SelPart!.Pos.ToArray()) };
                     _moving = true;
                     return;
                 }
-                if (hit == null || !_m.IsPart(hit.Value.part)) return;
-                _m.SelPartId = hit.Value.part;
+                if (hit == null || PartHit(hit.Value.part) is not { } picked) return;
+                _m.SelPartId = picked.Id;
                 _m.RefreshSelection();
                 _m.Studio.RebuildModelPanels();
                 _m.Snapshot();
                 _moving = true;
                 _moveFrom = hit.Value.world;
-                _movePos = _m.SelPart!.Pos.ToArray();
+                _movePos = picked.Pos.ToArray();
+                _dragged = (ModelTree.IsSolidKey(hit.Value.part) && _m.Solids.Chains.FirstOrDefault(c => c.Key == hit.Value.part) is { } chain ? chain.Members : new List<ModelPart> { picked })
+                    .Select(x => (x, x.Pos.ToArray())).ToList();
                 break;
         }
     }
 
+    ModelPart? PartHit(string id) => ModelTree.IsSolidKey(id) ? _m.Doc.Parts.FirstOrDefault(p => p.Id == ModelTree.HeadOf(id)) : _m.Doc.Parts.FirstOrDefault(p => p.Id == id);
+
     void PickPart(Vector2 at)
     {
-        if (Ray(at) is { } h)
+        if (Ray(at) is { } h && PartHit(h.part) is { } p)
         {
-            _m.SelPartId = h.part;
+            _m.SelPartId = p.Id;
             _m.RefreshSelection();
             _m.Studio.RebuildModelPanels();
         }
@@ -187,8 +206,8 @@ internal sealed class ModelTools
 
     (Vector3 centre, Vector3[] axes)? Gizmo()
     {
-        if (_m.Tool != "move" || _m.SelPart is not { } p || !_m.Views.TryGetValue(p.Id, out var v)) return null;
-        var centre = (_m.Stand.Transform * (v.Node.Transform * v.Node.GetAabb())).GetCenter();
+        if (_m.Tool != "move" || _m.SelPart is not { } p || _m.BoundsOf(p) is not { } box) return null;
+        var centre = (_m.Stand.Transform * box).GetCenter();
         float length = Camera.Dist * AxisLength;
         var b = _m.Stand.Basis;
         return (centre, new[] { b.X.Normalized() * length, b.Y.Normalized() * length, b.Z.Normalized() * length });
@@ -221,11 +240,24 @@ internal sealed class ModelTools
 
     void AxisMove(Vector2 at)
     {
-        if (_m.SelPart is not { } p || _movePos == null || AxisParam(at, _axisCentre, _axisDir) is not { } t) return;
-        var pos = (float[])_movePos.Clone();
-        pos[_axis] += (t - _axisFrom) / _axisScale;
-        p.Pos = pos;
-        _m.Views[p.Id].Node.Transform = p.Xf();
+        if (_movePos == null || AxisParam(at, _axisCentre, _axisDir) is not { } t) return;
+        var world = Vector3.Zero;
+        world[_axis] = (t - _axisFrom) / _axisScale;
+        Shift(world, _axis);
+    }
+
+    void Shift(Vector3 rootDelta, int axis = -1)
+    {
+        foreach (var (part, from) in _dragged)
+        {
+            var into = ModelTree.ParentXf(_m.Doc, part).Basis.Inverse() * rootDelta;
+            var pos = new[] { from[0] + into.X, from[1] + into.Y, from[2] + into.Z };
+            if (_m.SnapStep is > 0 and var step)
+                for (int i = 0; i < 3; i++)
+                    if (axis < 0 ? Mathf.Abs(into[i]) > 1e-6f : i == axis) pos[i] = Mathf.Snapped(pos[i], step);
+            part.Pos = pos;
+        }
+        _m.RefreshSelection();
     }
 
     public void DrawGizmo(Control o)
@@ -267,9 +299,7 @@ internal sealed class ModelTools
             if (plane.IntersectsRay(o, d) is not { } hit) return;
             now = hit;
         }
-        var delta = (now - _moveFrom) / _m.Doc.Scale;
-        p.Pos = new[] { _movePos[0] + delta.X, _movePos[1] + delta.Y, _movePos[2] + delta.Z };
-        _m.Views[p.Id].Node.Transform = p.Xf();
+        Shift((now - _moveFrom) / _m.Doc.Scale);
     }
 
     public (string part, int tri, Vector3 local, Vector3 world, float u, float v)? Ray(Vector2 at)
@@ -278,10 +308,10 @@ internal sealed class ModelTools
         var dir = _m.Cam.ProjectRayNormal(at);
         (string, int, Vector3, Vector3, float, float)? best = null;
         float bestT = float.MaxValue;
-        foreach (var v in _m.Views.Values)
+        foreach (var v in _m.Drawn)
+        foreach (var place in v.Places)
         {
-            if (!v.Part.Visible) continue;
-            var xf = (_m.Stand.Transform * v.Part.Xf());
+            var xf = _m.Stand.Transform * place;
             var inv = xf.AffineInverse();
             var lo = inv * o;
             var ld = (inv.Basis * dir);
@@ -335,20 +365,25 @@ internal sealed class ModelTools
         float R = Mathf.Max(1, _m.P.Brush / 2) * worldPerPx;
         bool erase = _m.Tool == "erase";
         var ink = _m.Ink;
-        foreach (var v in _m.Views.Values)
+        foreach (var v in _m.Drawn)
         {
-            if (!v.Part.Visible || v.Fixed) continue;
-            var xf = _m.Stand.Transform * v.Part.Xf();
-            var inv = xf.AffineInverse();
-            var centre = inv * hit.world;
-            float scale = (xf.Basis.Scale.X + xf.Basis.Scale.Y + xf.Basis.Scale.Z) / 3;
-            float r = R / Mathf.Max(1e-6f, scale);
-            var camLocal = inv * cam.GlobalPosition;
-            if (Dab(v, hit.tri, centre, r, camLocal, erase, ink)) v.Repaint();
+            if (v.Fixed) continue;
+            bool any = false;
+            foreach (var place in v.Places)
+            {
+                var xf = _m.Stand.Transform * place;
+                var inv = xf.AffineInverse();
+                var centre = inv * hit.world;
+                float scale = (xf.Basis.Scale.X + xf.Basis.Scale.Y + xf.Basis.Scale.Z) / 3;
+                float r = R / Mathf.Max(1e-6f, scale);
+                var camLocal = inv * cam.GlobalPosition;
+                any |= Dab(v, hit.part == v.Part.Id ? hit.tri : -1, centre, r, camLocal, erase, ink, _m.P.Soft);
+            }
+            if (any) v.Repaint();
         }
     }
 
-    static bool Dab(ModelPartView v, int hitTri, Vector3 centre, float r, Vector3 camLocal, bool erase, Color ink)
+    static bool Dab(ModelPartView v, int hitTri, Vector3 centre, float r, Vector3 camLocal, bool erase, Color ink, float soft)
     {
         var V = v.Data.V;
         var UV = v.Data.UV;
@@ -370,7 +405,8 @@ internal sealed class ModelTools
                 var p = a * w0 + b * w1 + c * w2;
                 float d = (p - centre).Length() / r;
                 if (d >= 1) return;
-                float f = d < 0.7f ? 1 : 1 - (d - 0.7f) / 0.3f;
+                float edge = Mathf.Clamp(soft, 0.02f, 1);
+                float f = d < 1 - edge ? 1 : 1 - (d - (1 - edge)) / edge;
                 float alpha = f * ink.A;
                 int o = (y * v.W + x) * 4;
                 if (erase)

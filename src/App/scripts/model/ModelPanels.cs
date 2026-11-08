@@ -8,13 +8,14 @@ using KTable.Core.Model;
 
 namespace KTable.App;
 
-internal sealed class ModelPanels
+internal sealed partial class ModelPanels
 {
     readonly ModelStudio _m;
 
     public ModelPanels(ModelStudio m) => _m = m;
 
-    internal static readonly (string name, string kind)[] AddableShapes = { ("A round base", "base"), ("Box", "box"), ("Cylinder", "cylinder"), ("Cone", "cone"), ("Sphere", "sphere"), ("Hex prism", "hex"), ("Wedge", "wedge"), ("Torus (a ring)", "torus"), ("Capsule", "capsule"), ("Flag (a thin plate)", "flag") };
+    internal static readonly (string name, string kind)[] AddableShapes = { ("A round base", "base"), ("Box", "box"), ("Cylinder", "cylinder"), ("Cone", "cone"), ("Sphere", "sphere"), ("Hex prism", "hex"), ("Wedge", "wedge"), ("Torus (a ring)", "torus"), ("Capsule", "capsule"), ("Flag (a thin plate)", "flag"),
+        ("Turned profile", ShapeMaker.Lathe), ("Tube along a path", ShapeMaker.Sweep), ("Outline with depth", ShapeMaker.Extrude) };
 
     public void BuildStrip(VBoxContainer box, Dictionary<string, Button> tools)
     {
@@ -48,12 +49,13 @@ internal sealed class ModelPanels
         Btn("undo", "Undo   (Ctrl+Z)", _m.Studio.Undo);
         Btn("redo", "Redo   (Ctrl+Y)", _m.Studio.Redo);
         Btn("frame", "Frame the model   (Home)", _m.Frame);
+        Btn("grid", "Flat view, no perspective   (5)\n1 front · 3 right · 7 top · Shift for the opposite side", () => _m.ViewKey(Godot.Key.Key5, false), true, _m.Camera.Ortho);
         Btn("play", "Turn slowly on its stand", () => _m.Camera.Spin = !_m.Camera.Spin, true, _m.Camera.Spin);
     }
 
     public string ToolHint => _m.Tool switch
     {
-        "move" => "Drag an arrow to move along X, Y or Z · drag a shape along the ground, Shift up and down · its numbers are in Layers on the right",
+        "move" => "Drag an arrow to move along X, Y or Z · drag a shape along the ground, Shift up and down · a joined shape moves whole · 1 3 7 front, right, top",
         "paint" => "Drag to paint on the model; the stroke runs round it and over its seams · [ ] or Ctrl+wheel: size · Alt-click takes a colour",
         "erase" => "Drag to take the paint off; the model's own picture shows again",
         "fill" => "Click a shape: all of it takes the colour (the rubber brings its picture back)",
@@ -84,6 +86,7 @@ internal sealed class ModelPanels
                 row.AddChild(s);
                 row.AddChild(l);
                 box.AddChild(row);
+                box.AddChild(SoftRow());
                 if (_m.Tool == "paint") studio.ModelColour();
                 break;
             }
@@ -94,8 +97,11 @@ internal sealed class ModelPanels
             case "decal":
                 _m.Decal.Options(studio, box);
                 break;
+            case "move":
+                SnapOptions(box);
+                break;
             default:
-                box.AddChild(new Label { Text = _m.Tool == "move" ? "Pick a part and drag it." : "Turn the model with the mouse.", Modulate = Ui.Muted });
+                box.AddChild(new Label { Text = "Turn the model with the mouse.", Modulate = Ui.Muted });
                 break;
         }
     }
@@ -112,10 +118,11 @@ internal sealed class ModelPanels
             _m.RefreshSelection();
             studio.RebuildModelPanels();
         }));
-        foreach (var p in _m.Doc.Parts) list.AddChild(PartRow(studio, p));
+        foreach (var p in ModelTree.Ordered(_m.Doc)) list.AddChild(PartRow(studio, p));
         box.AddChild(list);
         box.AddChild(AddMenu(studio));
         if (blockChosen && def != null) BlockDetails(studio, box, def);
+        else if (_m.SelPart is { IsGroup: true } g) GroupDetails(studio, box, g);
         else if (_m.SelPart is { } s) PartDetails(studio, box, s);
         if (!_m.Flat) ModelSize(studio, box);
     }
@@ -135,15 +142,19 @@ internal sealed class ModelPanels
         {
             if (id == ModelFileId) { studio.PickModelPart(); return; }
             var (name, kind) = shapes[id];
-            _m.AddParts(ModelImport.Primitive(kind), name, kind);
+            _m.AddShape(kind, name);
         };
         return add;
     }
 
-    static PanelContainer ShapeRow(bool on, Button? eye, string name, string what, Action choose)
+    const int Indent = 14;
+
+    static PanelContainer ShapeRow(bool on, Button? eye, string name, string what, Action choose, int depth = 0)
     {
         var panel = new PanelContainer { MouseFilter = Control.MouseFilterEnum.Stop, MouseDefaultCursorShape = Control.CursorShape.PointingHand };
-        panel.AddThemeStyleboxOverride("panel", Ui.Box(on ? new Color(1, 1, 1, 0.13f) : new Color(1, 1, 1, 0.03f), 3, 4, 3));
+        var style = Ui.Box(on ? new Color(1, 1, 1, 0.13f) : new Color(1, 1, 1, 0.03f), 3, 4, 3);
+        style.ContentMarginLeft += depth * Indent;
+        panel.AddThemeStyleboxOverride("panel", style);
         var row = new HBoxContainer();
         panel.AddChild(row);
         row.AddChild(eye ?? (Control)new Control { CustomMinimumSize = new Vector2(24, 24), MouseFilter = Control.MouseFilterEnum.Ignore });
@@ -274,19 +285,19 @@ internal sealed class ModelPanels
             _m.Changed(mesh: true);
             studio.RebuildModelPanels();
         };
-        var what = p.Kind == "mesh" ? $"model · {_m.Views.GetValueOrDefault(p.Id)?.Data.Tris ?? 0} tris" : AddableShapes.FirstOrDefault(x => x.kind == p.Kind).name?.ToLowerInvariant() ?? p.Kind;
-        return ShapeRow(on, eye, p.Name, what, () =>
+        return ShapeRow(on, eye, p.Name, What(p), () =>
         {
             _m.SelPartId = part.Id;
             _m.RefreshSelection();
             studio.RebuildModelPanels();
-        });
+        }, ModelTree.Depth(_m.Doc, p));
     }
 
     void PartDetails(PieceStudio studio, VBoxContainer box, ModelPart s)
     {
-        var ends = new HBoxContainer();
-        ends.AddChild(Icon("dup", "Duplicate this shape, paint and all", () => Duplicate(studio, s)));
+        var ends = Ends(s);
+        ends.AddChild(Icon("merge", "Put it in a new group", () => _m.Edits.Group(s)));
+        ends.AddChild(Icon("dup", "Duplicate this shape, paint and all", () => _m.Edits.Duplicate(s)));
         if (_m.Flat || _m.Doc.Parts.Count > 1) ends.AddChild(Icon("trash", "Remove this shape   (Delete; Ctrl+Z brings it back)", () => _m.RemovePart(s)));
         var g = Inspector.Group(box, s.Kind == "mesh" ? "Model" : "Shape", ends);
         var form = Ui.Form(Ui.PanelLabels);
@@ -304,29 +315,14 @@ internal sealed class ModelPanels
         rename.TextSubmitted += _ => Rename();
         rename.FocusExited += Rename;
         form.AddChild(rename);
+        GroupRow(form, s);
         Ui.AlignForm(form);
         g.AddChild(form);
+        JoinSection(box, s);
+        ShapeSection(box, s);
         ShapeFaces(studio, box, s);
         PartPlace(studio, box, s);
         PartLook(box, s);
-    }
-
-    void Duplicate(PieceStudio studio, ModelPart s)
-    {
-        _m.Snapshot();
-        var c = JsonSerializer.Deserialize<ModelPart>(JsonSerializer.Serialize(s, ModelStudio.Opts), ModelStudio.Opts)!;
-        c.Id = ArtDoc.NewId();
-        c.Name = s.Name + " copy";
-        c.Pos[0] += 0.3f / Math.Max(1e-4f, _m.Doc.Scale);
-        var src = _m.Views[s.Id];
-        _m.Doc.Parts.Add(c);
-        _m.MakeView(c);
-        Array.Copy(src.Paint, _m.Views[c.Id].Paint, src.Paint.Length);
-        _m.Views[c.Id].Repaint();
-        _m.SelPartId = c.Id;
-        _m.RefreshSelection();
-        _m.Changed(mesh: true);
-        studio.RebuildModelPanels();
     }
 
     void ShapeFaces(PieceStudio studio, VBoxContainer box, ModelPart p)
@@ -364,9 +360,10 @@ internal sealed class ModelPanels
             for (int i = 0; i < 3; i++)
             {
                 int ii = i;
+                var tip = label == "Place" ? $"Its centre along {Axes[i]}" : $"{label} along {Axes[i]}";
                 var sb =
                     new SpinBox { MinValue = scale ? 0.001 : -10000, MaxValue = 10000, Step = step, Value = Math.Round(arr[i] / step) * step + 0.0, AllowGreater = true, AllowLesser = !scale,
-                        Prefix = Axes[i], Suffix = suffix, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, CustomMinimumSize = new Vector2(0, 0), TooltipText = $"{label} along {Axes[i]}" };
+                        Prefix = Axes[i], Suffix = suffix, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, CustomMinimumSize = new Vector2(0, 0), TooltipText = tip };
                 sb.GetLineEdit().AddThemeConstantOverride("minimum_character_width", 3);
                 sb.ValueChanged += v =>
                 {
@@ -392,10 +389,9 @@ internal sealed class ModelPanels
         g.AddChild(Buttons(2,
             Ui.Btn(_m.Flat ? "On the block" : "On the ground", () =>
             {
+                if (_m.BoundsOf(s) is not { } a) return;
                 _m.Snapshot();
-                var v = _m.Views[s.Id];
-                var a = v.Node.Transform * v.Node.GetAabb();
-                s.Pos[1] += floor - a.Position.Y;
+                _m.Edits.Move(s, new Vector3(0, floor - a.Position.Y, 0));
                 Moved();
             }, _m.Flat ? "Its lowest point on the block's top" : "Its lowest point on the stand"),
             Ui.Btn("Mirror", () =>
@@ -416,6 +412,7 @@ internal sealed class ModelPanels
                 s.Rot[0] = (s.Rot[0] - 90) % 360;
                 Moved();
             }, "A quarter turn forwards: for models made lying down (STL is usually Z up)")));
+        Arrange(g, s);
     }
 
     void PartLook(VBoxContainer box, ModelPart s)

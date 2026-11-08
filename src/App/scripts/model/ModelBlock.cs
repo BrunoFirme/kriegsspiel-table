@@ -97,8 +97,10 @@ public partial class ModelStudio
         _def = d;
         _bake.Clear();
         _history.Clear();
-        foreach (var v in _views.Values) v.Node.QueueFree();
+        foreach (var v in _views.Values) Drop(v);
         _views.Clear();
+        _solids.Reset();
+        _takeBack = null;
         _dirtyMesh = _dirtyTex = false;
         _doc = (d.AddOnMesh != null ? LoadDoc(_store, _pack.Id, d.AddOnMesh) : null) ?? new ModelDoc();
         _doc.Scale = 1;
@@ -147,12 +149,7 @@ public partial class ModelStudio
             var ev = AddView(new ModelPart { Id = "edges", Name = "Edges", Kind = "edge" }, edges, edge);
             ev.Fixed = true;
         }
-        var unread = new List<string>();
-        foreach (var part in _doc.Parts)
-        {
-            try { MakeView(part); }
-            catch (Exception e) { unread.Add(part.Name); GD.PrintErr($"[studio] shape {part.Name} on {d.Name}: {e.Message}"); }
-        }
+        var unread = MakeViews(d.Name);
         if (unread.Count > 0) _studio.Say($"Could not read {string.Join(", ", unread)} on this piece: left out of the view, kept in its document.");
         if (!same || !_views.ContainsKey(_selPart ?? "")) _selPart = front?.Key;
         _openedSig = FlatSig(d);
@@ -186,7 +183,7 @@ public partial class ModelStudio
         if (def == null) return true;
         var views = _views.Values.Where(v => v.Face != null && !v.Fixed).ToList();
         var doc = _doc;
-        var addOns = _views.Values.Where(v => IsPart(v.Part.Id)).ToDictionary(v => v.Part.Id);
+        var addOns = _views.Values.Where(v => IsPart(v.Part.Id) || ModelTree.IsSolidKey(v.Part.Id)).ToDictionary(v => v.Part.Id);
         bool addOnsChanged = _dirtyMesh || addOns.Values.Any(v => v.PaintDirty);
         _dirtyMesh = _dirtyTex = false;
         _bake.Clear();
@@ -236,15 +233,16 @@ public partial class ModelStudio
         }
         else
         {
-            var parts = doc.Parts.Where(p => p.Visible && views.ContainsKey(p.Id)).ToList();
+            var items = views.Values.Where(v => v.Node.Visible && !IsGhost(v)).ToList();
             _baker.KeepPaint(views.Values);
-            if (parts.Count == 0)
+            if (items.Count == 0)
             {
                 if (oldMesh != null) KTable.Core.Json.WriteAtomic(DocPath(_store, _pack.Id, oldMesh), JsonSerializer.Serialize(doc, Opts));
                 _studio.Say("Every shape on the block is hidden: the piece on the table keeps them until one is shown.");
                 return;
             }
-            var (atlas, size, mesh) = ModelBake.Pack(parts, views);
+            var (atlas, size, mesh) = ModelBake.Pack(items);
+            _solids.Keep();
             var texSha = PackEdit.AddImage(_store, _pack, atlas);
             var meshSha = _baker.AddMesh(ModelImport.ToObj(mesh));
             doc.Baked = texSha;
