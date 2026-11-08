@@ -453,8 +453,7 @@ public partial class PieceStudio : CanvasLayer
         if (await SettleWork() is { } problem) { if (!_gone) Flash("The sides were not swapped: " + problem.Replace("\n", "; ")); return; }
         if (_gone || _sel != def) return;
         ++_faceGen;
-        bool boxy = def.Shape is "box" or "rounded";
-        Apply(x => PiecePrinting.SwapSides(x, PrintPlacer.BandOf(x, boxy), boxy), list: true, inspector: true, what: "front and back swapped");
+        Apply(PiecePrinting.SwapSides, list: true, inspector: true, what: "front and back swapped");
         RebuildFaceBar();
         if (_view == "paint") OpenFace(_faceKey);
     }
@@ -564,8 +563,7 @@ public partial class PieceStudio : CanvasLayer
         bool shapeFace = PieceFaces.IsShapeFace(f.Key);
         _canvas.PieceShape = _sel.Kind == "model" || shapeFace ? "alpha" : st?.Shape ?? _sel.Shape;
         _canvas.PieceUnits = PieceFaces.IsShapeFace(f.Key) && _model != null ? _model.ShapeFaces.FaceUnits(f.Key) : new Vector2((float)size.W, (float)size.H);
-        bool boxy = _canvas.PieceShape is "box" or "rounded";
-        _canvas.Prints = _sel.Kind == "model" || shapeFace ? new() : PrintPlacer.Boxes(_sel, f.Back ? PrintPlace.Back : PrintPlace.Front, boxy);
+        _canvas.Prints = _sel.Kind == "model" || shapeFace ? new() : PrintPlacer.Boxes(_sel, f.Back ? PrintPlace.Back : PrintPlace.Front);
         bool turned = _canvas.FaceSide != (f.Back ? "back" : "front");
         if (!PrintPlacer.IsItem(_sel, _canvas.Chosen) || turned && !_canvas.Prints.Any(p => p.Key == _canvas.Chosen)) _canvas.Chosen = _canvas.Prints.FirstOrDefault()?.Key;
         _canvas.FaceSide = f.Back ? "back" : "front";

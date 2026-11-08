@@ -325,7 +325,10 @@ static class TableTests
     [NodeTest]
     static async Task Hidden_text_leaves_the_text_layer_out_of_the_view_and_the_picture(TestRunner r)
     {
-        var t = OfflineTable.Make(r, pieces: 2);
+        var named = new PieceDef { Id = "named", Name = "Named block" };
+        named.TextLines.Add(new TextLineDef { Name = "Name", Default = "1st", Place = new PrintPlace { Side = PrintPlace.Front, X = 0.1, Y = 0.1, W = 0.8, H = 0.3 } });
+        var t = OfflineTable.Make(r, pieces: 2, prepare: store => store.RegisterDef(new PackManifest { Id = "named", Name = "Named" }, named),
+            arrange: g => g.Layers[Layers.Umpire][0].Def = "named");
         await r.Frame();
         var labels = t.Node("p1").FindChildren("*", nameof(Label3D), true, false).OfType<Label3D>().ToList();
         Check.That(labels.Count > 0 && labels.All(l => (l.Layers & Table.TextLayer) != 0 && (l.Layers & Table.WorldLayer) == 0), "a piece's text is on the text layer and nowhere else");

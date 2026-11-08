@@ -17,28 +17,11 @@ internal sealed class PrintPlacer
 
     static Control Wide(Control c) { c.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill; return c; }
 
-    static FaceBox Copy(FaceBox b) => new() { X = b.X, Y = b.Y, W = b.W, H = b.H };
-
     static FaceBox Rounded(FaceBox b) => new() { X = Math.Round(b.X, 4), Y = Math.Round(b.Y, 4), W = Math.Round(b.W, 4), H = Math.Round(b.H, 4) };
 
-    public static FaceBox BandOf(PieceDef d, bool boxy) => d.NameBox ?? PiecePrinting.Band(boxy);
-
-    public static string BandLabel(PieceDef d)
-    {
-        var names = d.TextLines.Where(t => t.Place == null).Select(t => t.Name).ToList();
-        return names.Count == 0 ? "Name" : string.Join(" · ", names);
-    }
-
-    public static List<StudioCanvas.PrintBox> Boxes(PieceDef d, string side, bool boxy)
+    public static List<StudioCanvas.PrintBox> Boxes(PieceDef d, string side)
     {
         var l = new List<StudioCanvas.PrintBox>();
-        if (side == PrintPlace.Front) l.Add(new("band", BandLabel(d), Copy(BandOf(d, boxy))));
-        else if (d.Script == null)
-        {
-            var card = PiecePrinting.CardCounters(d);
-            var rows = PiecePrinting.CardRows(d, boxy);
-            for (int i = 0; i < card.Count; i++) l.Add(new($"c{card[i]}", d.Counters[card[i]].Name, rows[i]));
-        }
         for (int i = 0; i < d.Counters.Count; i++)
             if (d.Counters[i].Place is { } p && p.Side == side) l.Add(new($"c{i}", d.Counters[i].Name, p.Box()));
         for (int i = 0; i < d.TextLines.Count; i++)
@@ -47,7 +30,7 @@ internal sealed class PrintPlacer
     }
 
     public static bool IsItem(PieceDef d, string? key) =>
-        key == "band" || key != null && (Index(key, 'c', d.Counters.Count) != null || Index(key, 't', d.TextLines.Count) != null);
+        key != null && (Index(key, 'c', d.Counters.Count) != null || Index(key, 't', d.TextLines.Count) != null);
 
     static int? Index(string key, char kind, int count) =>
         key.Length > 1 && key[0] == kind && int.TryParse(key.AsSpan(1), out var i) && i >= 0 && i < count ? i : null;
@@ -59,8 +42,7 @@ internal sealed class PrintPlacer
         var b = Rounded(box);
         _s.Apply(x =>
         {
-            if (key == "band") x.NameBox = b;
-            else if (Index(key, 'c', x.Counters.Count) is int ci) x.Counters[ci].Place = PrintPlace.On(side, b);
+            if (Index(key, 'c', x.Counters.Count) is int ci) x.Counters[ci].Place = PrintPlace.On(side, b);
             else if (Index(key, 't', x.TextLines.Count) is int ti) x.TextLines[ti].Place = PrintPlace.On(side, b);
         }, what: "where it prints");
         if (rebuild) _s.RebuildToolPanel();
@@ -68,9 +50,7 @@ internal sealed class PrintPlacer
 
     void Numbers(VBoxContainer body, PieceDef d, string key)
     {
-        bool boxy = d.Shape is "box" or "rounded";
-        (FaceBox box, string side)? now = key == "band" ? (BandOf(d, boxy), PrintPlace.Front)
-            : Index(key, 'c', d.Counters.Count) is int ci && d.Counters[ci].Place is { } cp ? (cp.Box(), cp.Side)
+        (FaceBox box, string side)? now = Index(key, 'c', d.Counters.Count) is int ci && d.Counters[ci].Place is { } cp ? (cp.Box(), cp.Side)
             : Index(key, 't', d.TextLines.Count) is int ti && d.TextLines[ti].Place is { } tp ? (tp.Box(), tp.Side)
             : null;
         if (now is not { } n) return;
@@ -95,7 +75,7 @@ internal sealed class PrintPlacer
 
     List<(string key, string label)> Items(PieceDef d)
     {
-        var l = new List<(string, string)> { ("band", "Name band") };
+        var l = new List<(string, string)>();
         for (int i = 0; i < d.Counters.Count; i++) l.Add(($"c{i}", d.Counters[i].Name));
         for (int i = 0; i < d.TextLines.Count; i++) l.Add(($"t{i}", d.TextLines[i].Name));
         return l;
@@ -106,6 +86,11 @@ internal sealed class PrintPlacer
         var d = _s.Sel;
         if (d == null || d.Kind == "model") return;
         var items = Items(d);
+        if (items.Count == 0)
+        {
+            body.AddChild(Ui.Hint("Add counters or text lines in the inspector to place them here."));
+            return;
+        }
         var chosen = items.FindIndex(i => i.key == Canvas.Chosen);
         var pick = new OptionButton { FitToLongestItem = false, ClipText = true, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, TooltipText = "What the boxes on the face are" };
         for (int i = 0; i < items.Count; i++) pick.AddItem(items[i].label, i);
@@ -117,14 +102,10 @@ internal sealed class PrintPlacer
             _s.RebuildToolPanel();
         };
         body.AddChild(Wide(pick));
-        var key = chosen >= 0 ? items[chosen].key : "band";
+        var key = items[Math.Max(0, chosen)].key;
         Numbers(body, d, key);
-        if (key == "band")
-        {
-            if (d.NameBox != null) body.AddChild(Wide(Ui.Btn("Built-in band", () => { _s.Apply(x => x.NameBox = null, what: "where it prints"); _s.RebuildToolPanel(); })));
-        }
-        else if (Index(key, 'c', d.Counters.Count) is int ci) CounterRows(body, d, ci);
-        else if (Index(key, 't', d.TextLines.Count) is int ti) SideChoice(body, d.TextLines[ti].Place, "With the name", false, ti, p => _s.Apply(x => x.TextLines[ti].Place = p));
+        if (Index(key, 'c', d.Counters.Count) is int ci) CounterRows(body, d, ci);
+        else if (Index(key, 't', d.TextLines.Count) is int ti) SideChoice(body, d.TextLines[ti].Place, ti, p => _s.Apply(x => x.TextLines[ti].Place = p));
         body.AddChild(new HSeparator());
         body.AddChild(Wide(Ui.Btn("Swap front and back", _s.SwapSides, "The front's picture and everything printed on it go to the back, and the back's to the front")));
     }
@@ -132,7 +113,7 @@ internal sealed class PrintPlacer
     void CounterRows(VBoxContainer body, PieceDef d, int ci)
     {
         var c = d.Counters[ci];
-        SideChoice(body, c.Place, "On the back's card", true, ci, p => _s.Apply(x => x.Counters[ci].Place = p));
+        SideChoice(body, c.Place, ci, p => _s.Apply(x => x.Counters[ci].Place = p));
         var row = new HBoxContainer();
         var name = new CheckBox { Text = "Name", ButtonPressed = c.ShowName };
         name.Toggled += on => _s.Apply(x => x.Counters[ci].ShowName = on);
@@ -143,10 +124,10 @@ internal sealed class PrintPlacer
         body.AddChild(row);
     }
 
-    void SideChoice(VBoxContainer body, PrintPlace? place, string unplaced, bool unplacedOnBack, int index, Action<PrintPlace?> set)
+    void SideChoice(VBoxContainer body, PrintPlace? place, int index, Action<PrintPlace?> set)
     {
         var ob = new OptionButton { FitToLongestItem = false, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-        ob.AddItem(unplaced, 0);
+        ob.AddItem("Not shown", 0);
         ob.AddItem("Front", 1);
         ob.AddItem("Back", 2);
         ob.Selected = place == null ? 0 : place.Side == PrintPlace.Back ? 2 : 1;
@@ -154,7 +135,7 @@ internal sealed class PrintPlacer
         {
             string? side = i == 1 ? PrintPlace.Front : i == 2 ? PrintPlace.Back : null;
             set(side == null ? null : place == null ? PiecePrinting.Fresh(side, index) : PrintPlace.On(side, place.Box()));
-            _s.ShowSide(side == null ? unplacedOnBack : side == PrintPlace.Back);
+            if (side != null) _s.ShowSide(side == PrintPlace.Back);
         };
         body.AddChild(Wide(ob));
     }

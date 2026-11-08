@@ -1,6 +1,4 @@
-using KTable.Core.Model;
-
-namespace KTable.Client.Studio;
+namespace KTable.Core.Model;
 
 public static class PiecePrinting
 {
@@ -36,9 +34,8 @@ public static class PiecePrinting
 
     static PrintPlace Rounded(PrintPlace p) => new() { Side = p.Side, X = Math.Round(p.X, 4), Y = Math.Round(p.Y, 4), W = Math.Round(p.W, 4), H = Math.Round(p.H, 4) };
 
-    public static void SwapSides(PieceDef d, FaceBox band, bool boxy)
+    public static void SwapSides(PieceDef d)
     {
-        PinDefaults(d, band, boxy);
         (d.Image, d.Back) = (d.Back, d.Image);
         foreach (var s in d.States) (s.Image, s.Back) = (s.Back, s.Image);
         foreach (var c in d.Counters) c.Place = c.Place?.Turned();

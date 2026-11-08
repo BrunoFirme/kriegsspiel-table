@@ -8,6 +8,5 @@ public sealed class PieceLook
     public bool ShowFaceText { get; set; } = true;
     public bool LabelPlates { get; set; }
     public float FaceTextScale { get; set; } = 1f;
-    public bool ShowFaceBoxes { get; set; }
     public bool FlatSelection { get; set; }
 }

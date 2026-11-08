@@ -137,6 +137,10 @@ def check(module, packages, scenario_id):
             shown = (states[state].get("module") or {}).get("guid")
             if shown and shown != guid:
                 found["state shown"].append(f"{guid} '{name}' ours shows the state saved as {shown}")
+        drawn = [c["name"] for c in d.get("counters") or []] + [x["name"] for x in d.get("textLines") or []]
+        drawn += [k for k, v in (p.get("text") or {}).items() if (v or "").strip()] + list((p.get("counters") or {}).keys())
+        if drawn and NOTE_TAG not in (d.get("tags") or []):
+            found["drawn by the app"].append(f"{guid} '{name}' carries the app's own {', '.join(drawn)}")
     return counted, found
 
 

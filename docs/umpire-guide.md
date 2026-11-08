@@ -114,7 +114,7 @@ The tool strip runs down the left. Point at any tool and press **F1** for its se
 ### Pieces
 
 - **Placing:** open the **Pieces** drawer and drag a piece onto the table (Shift keeps placing).
-- **Turning over:** middle-click or **F**. Counters show where the maker put them (else on the back), with − / + to click.
+- **Turning over:** middle-click or **F**. Counters show where the maker put them, with − / + to click.
 - **Renaming:** click the name on the back and type; Enter keeps it.
 - **Notes:** the **Note** in Firme's Effects and Props is an index card. Click its title or its lines and type:
   Enter starts a new line, Ctrl+Enter keeps it, Esc leaves it as it was; Ctrl+click picks it out instead. Imported
@@ -220,7 +220,7 @@ Nothing is sent: paste it into that side's channel.
 it. Captures show the ground only, no tools.
 
 Names too small in the picture? Raise **Settings → Captures → Resolution**, shrink the POV reach, or turn up
-**Settings → Table → Names on pieces**.
+**Settings → Table → Text size**.
 
 ### Map sheets
 

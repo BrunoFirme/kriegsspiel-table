@@ -204,7 +204,10 @@ public class FormatFixtureTests : IDisposable
         Assert.Equal(new Vec2(0.5, 0), gun.Attachments[0].Offset);
         Assert.Equal("-- kept", gun.States[0].Script);
         Assert.Equal(new[] { 0.0, 1, 0 }, gun.States[1].Up);
-        Assert.Equal(0.25, gun.NameBox!.H);
+        Assert.Null(gun.NameBox);
+        Assert.Equal((PrintPlace.Front, 0.25), (gun.TextLines[0].Place!.Side, gun.TextLines[0].Place!.H));
+        Assert.Null(gun.Counters[0].Place);
+        Assert.All(store.Def("inf")!.Counters, c => Assert.Equal(PrintPlace.Back, c.Place!.Side));
         Assert.Equal("0badf00d", gun.ScriptHash);
         Assert.Equal("cannon", gun.Effect!.Kind);
         Assert.Equal("rolling", gun.Effect.Volley);

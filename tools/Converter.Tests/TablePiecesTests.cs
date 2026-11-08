@@ -460,7 +460,7 @@ public sealed partial class ConverterTests
     }
 
     [Fact]
-    public void A_flat_token_keeps_its_module_origin_half_its_thickness_up_and_shows_no_face_text_on_its_plain_back()
+    public void A_flat_token_keeps_its_module_origin_half_its_thickness_up_and_carries_no_counters_or_text_of_the_app_s_own()
     {
         const double Thickness = 0.4;
         var cfg = TempConfig();
@@ -476,7 +476,7 @@ public sealed partial class ConverterTests
         var table = Json.Load<Scenario>(Path.Combine(Packages, "scenarios", "plain", "scenario.json"));
         var pack = Json.Load<PackManifest>(Path.Combine(Packages, "tts.plain", "pack.json"));
         var def = pack.Pieces.Single(d => d.Id == Assert.Single(table.UmpireBoard).Def);
-        Assert.True(def.PlainBack);
+        Assert.Equal((0, 0), (def.Counters.Count, def.TextLines.Count));
         Assert.True(def.ModuleRise > 0);
         Assert.Equal(def.ModuleRise!.Value * Thickness / 2, def.ModuleOrigin!.Value, 3);
     }

@@ -86,7 +86,7 @@ sealed class SelectTool
         var names = _names;
         if (names.Node != null)
         {
-            bool again = hit == names.Node && (hit.CardTitleAt(f) || (names.NotePart is { } part && hit.NotePartAt(f) == part));
+            bool again = hit == names.Node && names.NotePart is { } part && hit.NotePartAt(f) == part;
             names.End(commit: true);
             if (again) return true;
         }
@@ -100,7 +100,6 @@ sealed class SelectTool
     {
         if (S.CanTouch(hit.Layer, hit.Piece) && hit.WidgetAt(f) is { } wh) return "w" + wh.index;
         if (S.CanTouch(hit.Layer, hit.Piece) && hit.PanelAt(f) is { } panel) return "u:" + panel.Id;
-        if (hit.CardTitleAt(f)) return "title";
         if (S.CanTouch(hit.Layer, hit.Piece) && hit.NotePartAt(f) is { } part) return part ? "note body" : "note title";
         if (hit.CardButtonAt(f) is { } cb) return $"c:{cb.name}:{cb.value}";
         if (S.CanTouch(hit.Layer, hit.Piece) && hit.PageButtonAt(f) is { } page) return $"page:{page}";
@@ -119,7 +118,6 @@ sealed class SelectTool
             return;
         }
         if (S.CanTouch(hit.Layer, hit.Piece) && hit.PanelAt(f) is { } panel) { hit.PressPanel(panel); return; }
-        if (hit.CardTitleAt(f)) { _names.Begin(hit); return; }
         if (S.CanTouch(hit.Layer, hit.Piece) && hit.NotePartAt(f) is { } part) { _names.BeginNote(hit, part); return; }
         if (hit.CardButtonAt(f) is { } cb) { S.Do(new SetCounter { Layer = hit.Layer, Id = hit.Piece.Id, Name = cb.name, Value = cb.value }); return; }
         if (S.CanTouch(hit.Layer, hit.Piece) && hit.PageButtonAt(f) is { } page) S.Do(new SetState { Layer = hit.Layer, Id = hit.Piece.Id, State = page });

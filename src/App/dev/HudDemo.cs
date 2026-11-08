@@ -1121,7 +1121,6 @@ sealed class HudDemo : HudPart
             };
             return true;
         }
-        if (what == "nameedit") { new TableDemo(T).NameEdit("Hussars"); return true; }
         if (what == "mainmenu") { Hud.FindChildren("*", "MenuButton", true, false).OfType<MenuButton>().FirstOrDefault()?.ShowPopup(); return true; }
         if (what == "clock") { ClockDialog.Open(Ctx); return true; }
         if (what == "settings") { ((IHudShell)Hud).ShowSettings(); return true; }

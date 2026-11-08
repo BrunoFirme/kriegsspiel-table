@@ -6,6 +6,9 @@ namespace KTable.App;
 
 sealed class FaceInk
 {
+    public const float Below = 0.004f;
+    public static Vector3 Under(float x, float z, float below) => new(-x, -below, z);
+
     readonly PieceNode _piece;
     readonly List<Node3D> _nodes;
 
@@ -25,7 +28,7 @@ sealed class FaceInk
 
     void Put(Node3D n, bool back, float x, float z, float lift)
     {
-        n.Position = back ? PieceBack.Under(x, z, PieceBack.Below + lift) : new Vector3(x, FaceY + lift, z);
+        n.Position = back ? Under(x, z, Below + lift) : new Vector3(x, FaceY + lift, z);
         _piece.AddChild(n);
         _nodes.Add(n);
     }

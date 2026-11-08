@@ -222,7 +222,7 @@ internal sealed class PieceTab
     {
         var d = _d;
         var p = _i.Section(page, "Counters", open: d.Counters.Count > 0, count: Count(d.Counters.Count));
-        p.AddChild(Ui.Hint("Numbers on each piece: ammunition, morale, strength. They print on the back until placed with the Place tool (N)."));
+        p.AddChild(Ui.Hint("Numbers on each piece: ammunition, morale, strength. They print once placed with the Place tool (N)."));
         var cg = new GridContainer { Columns = 5 };
         cg.AddThemeConstantOverride("h_separation", Ui.Gap.Tight);
         if (d.Counters.Count > 0) foreach (var hdr in new[] { "Name", "Min", "Max", "Start", "" }) cg.AddChild(new Label { Text = hdr, Modulate = Ui.Muted });
@@ -255,7 +255,7 @@ internal sealed class PieceTab
     {
         var d = _d;
         var p = _i.Section(page, "Text lines", open: d.TextLines.Count > 0, count: Count(d.TextLines.Count));
-        p.AddChild(Ui.Hint("Text on each piece, on every look: unit, commander, formation. It prints in the name band until placed with the Place tool (N)."));
+        p.AddChild(Ui.Hint("Text on each piece, on every look: unit, commander, formation. It prints once placed with the Place tool (N)."));
         var tg = new GridContainer { Columns = 3 };
         tg.AddThemeConstantOverride("h_separation", Ui.Gap.Tight);
         for (int i = 0; i < d.TextLines.Count; i++)

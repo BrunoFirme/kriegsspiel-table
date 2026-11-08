@@ -45,7 +45,6 @@ sealed class TableDemo
         GD.Print($"[type] box {idx} now '{p.Widgets[idx - 1].Value}', face label '{p.Widgets[0].Label}'");
     }
 
-    public void NameEdit(string typed) { if (T.SelectedNodes.FirstOrDefault() is { } n) T.Names.BeginTyped(n, typed); }
 
     public void Ruler(Vec2 a, Vec2 b)
     {

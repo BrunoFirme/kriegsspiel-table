@@ -646,7 +646,6 @@ type PieceDef object
   outline: List<List<Vec2>>
   pageOffset: int
   parts: List<PartDef>
-  plainBack: bool
   script: string
   scriptHash: string
   scriptState: string

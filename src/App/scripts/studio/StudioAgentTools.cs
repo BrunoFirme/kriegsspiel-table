@@ -86,7 +86,7 @@ sealed partial class StudioTools
                 new Arg("behind", "string", "#rrggbb (default parchment)"), new Arg("off", "boolean", "true: take the frame off")),
             Frame);
         yield return new AgentTool("studio_set_counter",
-            "Adds or changes a counter (a number every piece of the kind carries): its range, start, and where it prints (side front or back, x, y, w, h as fractions of that face from the top left). Markers it puts down beside the piece: studio_set_markers.",
+            "Adds or changes a counter (a number every piece of the kind carries): its range, start, and where it prints (side front or back, x, y, w, h as fractions of that face from the top left). Without a side it is carried but not printed. Markers it puts down beside the piece: studio_set_markers.",
             Args.Schema(new Arg("id", "string", "the kind's id", true), new Arg("name", "string", "the counter", true), new Arg("new_name", "string", "rename it"),
                 new Arg("min", "number", "lowest"), new Arg("max", "number", "highest"), new Arg("default", "number", "start value"),
 
@@ -94,7 +94,7 @@ sealed partial class StudioTools
                 new Arg("show_name", "boolean", "print its name"), new Arg("show_buttons", "boolean", "print − and + on it")),
             SetCounter);
         yield return new AgentTool("studio_set_text_line",
-            "Adds or changes a text line (a named line of text every piece of the kind carries) and where it prints (side, x, y, w, h as fractions of that face). Text lines and counters print on every look; what a script draws stays on the look it was drawn on (redraw it from on_state), so names belong in text lines.",
+            "Adds or changes a text line (a named line of text every piece of the kind carries) and where it prints (side, x, y, w, h as fractions of that face); without a side it is carried but not printed. Text lines and counters print on every look; what a script draws stays on the look it was drawn on (redraw it from on_state), so names belong in text lines.",
             Args.Schema(new Arg("id", "string", "the kind's id", true), new Arg("name", "string", "the text line", true), new Arg("new_name", "string", "rename it"), new Arg("default", "string", "its starting text"),
                 new Arg("side", "string", "front or back"), new Arg("x", "number", "0–1"), new Arg("y", "number", "0–1"), new Arg("w", "number", "0–1"), new Arg("h", "number", "0–1")),
             SetTextLine);

@@ -39,7 +39,8 @@ public sealed class PackManifest : IJsonOnDeserialized, IJsonOnSerializing
     public static string? NamedBy(IEnumerable<string> packs, string def) =>
         packs.Where(p => def.StartsWith(p + ".", StringComparison.Ordinal)).OrderByDescending(p => p.Length).FirstOrDefault();
 
-    public const int CurrentFormat = 1;
+    public const int CurrentFormat = 2;
+    const int PrintsPlaced = 2;
     public int Format { get; set; } = CurrentFormat;
     public int ApiVersion { get; set; } = ScriptApi.Version;
     public string Id { get; set; } = "";
@@ -52,7 +53,12 @@ public sealed class PackManifest : IJsonOnDeserialized, IJsonOnSerializing
 
     public const double MarkerBeside = 0.8;
 
-    void IJsonOnDeserialized.OnDeserialized() => ContentVersions.Check("pack", Name is { Length: > 0 } ? Name : Id ?? "", Format, CurrentFormat, ApiVersion);
+    void IJsonOnDeserialized.OnDeserialized()
+    {
+        ContentVersions.Check("pack", Name is { Length: > 0 } ? Name : Id ?? "", Format, CurrentFormat, ApiVersion);
+        if (Format >= PrintsPlaced) return;
+        foreach (var d in Pieces) d.PlaceWhatPrintedByItself();
+    }
 
     public bool MoveCounterMarkers()
     {
@@ -222,7 +228,6 @@ public sealed class PieceDef : IJsonOnDeserialized
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public double? ModuleTop { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public double? ModuleOrigin { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public double? ModuleRise { get; set; }
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool PlainBack { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? ModuleObjectTag { get; set; }
     public string? AddOnMesh { get; set; }
     public string? AddOnTexture { get; set; }
@@ -245,7 +250,7 @@ public sealed class PieceDef : IJsonOnDeserialized
     public List<AttachmentDef> Attachments { get; set; } = new();
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<PartDef>? Parts { get; set; }
     [JsonIgnore] public IEnumerable<PartDef> AllParts => (Parts ?? []).Concat(States.SelectMany(s => s.Parts ?? []));
-    public FaceBox? NameBox { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public FaceBox? NameBox { get; set; }
     public string? Script { get; set; }
     public string? ScriptHash { get; set; }
     public string? ScriptState { get; set; }
@@ -257,6 +262,16 @@ public sealed class PieceDef : IJsonOnDeserialized
         if (!States.All(s => s.Up is { Length: 3 }) && !(Kind == "model" && Tags.Contains("die"))) return;
         Faces = States.Select(s => new DieFace { Value = s.Name, Up = s.Up is { Length: 3 } up ? up : [0, 1, 0] }).ToList();
         States = new();
+    }
+
+    public void PlaceWhatPrintedByItself()
+    {
+        if (!NoteCard.Is(this))
+        {
+            bool boxy = Shape is "box" or "rounded" && Kind != "model";
+            PiecePrinting.PinDefaults(this, NameBox ?? PiecePrinting.Band(boxy), boxy);
+        }
+        NameBox = null;
     }
 
     public IEnumerable<AttachmentDef> Markers()

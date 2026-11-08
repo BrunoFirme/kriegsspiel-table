@@ -18,8 +18,6 @@ public partial class PieceNode
 
     public string CardTitle => Piece.Text.GetValueOrDefault("Name") is { Length: > 0 } nm ? nm : Piece.Label is { Length: > 0 } lb ? lb : Def?.Name ?? Piece.Def;
 
-    public void SetTitleText(string text) => _back.SetTitleText(text);
-
     public float LiftY => Piece.FaceDown ? _thickness : 0;
     float _poseYaw, _flipA;
     Vector3 Pose(double rotDeg) => PoseFromYaw(Coords.Yaw(rotDeg));
@@ -43,11 +41,7 @@ public partial class PieceNode
 
     void SyncSide()
     {
-        if (Piece.FaceDown == _shownFaceDown)
-        {
-            if (Piece.FaceDown && !_flipping && _back.Stale) _back.Build();
-            return;
-        }
+        if (Piece.FaceDown == _shownFaceDown) return;
         _shownFaceDown = Piece.FaceDown;
         Sounds?.Flip(this);
         _ = FlipAnim(++_flipGen, Piece.FaceDown);
@@ -56,7 +50,6 @@ public partial class PieceNode
     async Task FlipAnim(int gen, bool toDown)
     {
         _flipping = true;
-        _back.Build();
         const double dur = 0.36;
         double t = 0;
         float depth = Footprint.X, th = _thickness, from = toDown ? 0 : Mathf.Pi;
@@ -80,14 +73,10 @@ public partial class PieceNode
         _flipA = Piece.FaceDown ? Mathf.Pi : 0;
         if (!Placed) Rest(Piece.Pos, Piece.RotDeg, Piece.Y, Piece.Stack);
         else Turn(PoseBasis(_poseYaw, _flipA));
-        if (!Piece.FaceDown) _back.Clear();
         SyncWidgets(force: true);
     }
 
     public void TakenInHand() => StopDieAnim();
-
-    public bool CardTitleAt(Vec2 point) =>
-        Piece.FaceDown && !_flipping && _back.TitleAt(Coords.ToLocal(point, Piece.Pos, Piece.RotDeg));
 
     public int? PageButtonAt(Vec2 point) =>
         _flipping || Piece.FaceDown ? null : _prints.PageAt(Coords.ToLocal(point, Piece.Pos, Piece.RotDeg));
@@ -96,8 +85,6 @@ public partial class PieceNode
     {
         if (_flipping) return null;
         var local = Coords.ToLocal(point, Piece.Pos, Piece.RotDeg);
-        if (_prints.ButtonAt(local, Piece.FaceDown) is { } placed) return placed;
-        if (!Piece.FaceDown || !_back.HasButtons) return null;
-        return _back.ButtonAt(local);
+        return _prints.ButtonAt(local, Piece.FaceDown);
     }
 }

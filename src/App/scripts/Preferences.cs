@@ -25,7 +25,7 @@ static class Preferences
         Number("sidebar_buttons", "Interface", "sidebar button size in pixels", Settings.StripSizeMin, Settings.StripSizeMax, c => c.StripSize, (c, v) => c.StripSize = MathF.Round(v), PrefEffect.Strip),
         Flag("top_line", "Interface", "the top bar says what just happened (off: only the log does)", c => c.TopLine, (c, on) => c.TopLine = on, PrefEffect.TopLine),
         Number("top_line_length", "Interface", "share of the top bar that line may take", Settings.TopLineWidthMin, 1, c => c.TopLineWidth, (c, v) => c.TopLineWidth = v, PrefEffect.TopLine),
-        Flag("names_on_pieces", "Table", "names on pieces and counters on their backs (off: on hover only)", c => c.FaceText, (c, on) => c.FaceText = on, PrefEffect.Lettering),
+        Flag("text_on_pieces", "Table", "the counters and text placed on pieces (off: names on hover only)", c => c.FaceText, (c, on) => c.FaceText = on, PrefEffect.Lettering),
         Number("name_size", "Table", "how big names print on pieces", Settings.FaceTextScaleMin, Settings.FaceTextScaleMax, c => c.FaceTextScale, (c, v) => c.FaceTextScale = v, PrefEffect.Lettering),
         Choice("smooth_edges", "Graphics", "multisampling samples on the 3D table", EdgeSteps, c => c.Antialias, (c, i) => c.Antialias = i, PrefEffect.Graphics),
         Flag("smooth_fine_lines", "Graphics", "also smooth cut-out pictures and thin lines (small lettering softens a little)", c => c.SmoothFineEdges, (c, on) => c.SmoothFineEdges = on, PrefEffect.Graphics),

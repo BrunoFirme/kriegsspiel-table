@@ -510,9 +510,7 @@ public sealed partial class ScenarioBuilder
             scale = baseScale = DefFactory.HiddenByScale;
             _hiddenByScale++;
         }
-        var (counters, text) = r.Script.Values(o.LuaState);
         var lua = o.SafeLua;
-        if (def.Script != null) { counters = new(); text = new(); }
 
         if (r.FromPack == null && MatchKey(def) is { } mk && packDefs.TryGetValue(mk, out var cands))
         {
@@ -522,7 +520,6 @@ public sealed partial class ScenarioBuilder
             {
                 if (c.def.States.Count != def.States.Count) continue;
                 if (c.def.ScriptHash != def.ScriptHash) continue;
-                if (!counters.Keys.All(k => c.def.Counters.Any(x => x.Name == k)) || !text.Keys.All(k => c.def.TextLines.Any(x => x.Name == k))) continue;
                 if (def.Counters.Count > c.def.Counters.Count || def.TextLines.Count > c.def.TextLines.Count) continue;
                 if (c.def.Size.W <= 0 || c.def.Size.H <= 0) continue;
                 double kx = def.Size.W / c.def.Size.W, kz = def.Size.H / c.def.Size.H;
@@ -547,7 +544,6 @@ public sealed partial class ScenarioBuilder
         usedPacks.Add(packId);
         const double ModuleScaleRoundingNoise = 0.002;
         if (Math.Abs(scale - 1) < ModuleScaleRoundingNoise) scale = 1;
-        if (def.Script != null) { counters = new(); text = new(); }
 
         bool rolls = def.Faces.Count > 1 || r.FromPack == DefFactory.StdDicePack;
         var pose = rolls ? PieceTilt.OfDie(o.Heading, o.Flipped, o.RotX, o.RotZ, ShownUp(r, o)) : PieceTilt.Of(o.RotX, o.RotY, o.RotZ, def.Kind == "model", o.Name == "3DText");
@@ -557,7 +553,7 @@ public sealed partial class ScenarioBuilder
             Pos = new Vec2(Math.Round(o.PosX, 4), Math.Round(o.PosZ, 4)), RotDeg = Facing(def, pose.Heading),
             State = def.Faces.Count > 1 ? 0 : Math.Min(r.State, Math.Max(0, def.States.Count - 1)),
             Face = def.Faces.Count > 1 ? Math.Clamp(r.State, 0, def.Faces.Count - 1) : -1,
-            Counters = counters, Text = text, Label = o.RawNickname.Length > 0 ? o.RawNickname : null, Scale = scale,
+            Label = o.RawNickname.Length > 0 ? o.RawNickname : null, Scale = scale,
             Note = o.Description.Length > 0 ? o.Description : null,
             Guid = o.Guid.Length > 0 ? o.Guid : null,
             GmNotes = o.GmNotes.Length > 0 && !o.GmNotes.StartsWith(KtMarker.Def, StringComparison.Ordinal) ? o.GmNotes : null,

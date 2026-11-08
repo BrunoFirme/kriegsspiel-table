@@ -54,8 +54,6 @@ public partial class PieceNode : Node3D
             """,
     };
 
-    readonly PieceLettering _lettering;
-    readonly PieceBack _back;
     readonly PieceWidgets _widgets;
     readonly PieceUi _plates;
     readonly PieceLines _lines;
@@ -65,8 +63,6 @@ public partial class PieceNode : Node3D
 
     public PieceNode()
     {
-        _lettering = new PieceLettering(this);
-        _back = new PieceBack(this);
         _widgets = new PieceWidgets(this);
         _plates = new PieceUi(this);
         _lines = new PieceLines(this);
@@ -147,7 +143,6 @@ public partial class PieceNode : Node3D
             BuildPolygon();
         if (!PrintingOnly && !IsEffect && Def is { Kind: not "model", AddOnMesh: { } addOn }) BuildAddOn(addOn, tint);
 
-        if (Lettered) _lettering.Add();
         BuildLiveText();
         BuildParts();
         _shownFaceDown = Piece.FaceDown;
@@ -158,7 +153,6 @@ public partial class PieceNode : Node3D
 
     public void LetterForPicture(bool on)
     {
-        _lettering.ForPicture(on);
         _widgets.ForPicture(on);
         _prints.ForPicture(on);
         _note.ForPicture(on);
@@ -168,19 +162,11 @@ public partial class PieceNode : Node3D
     {
         if (on == Lettered) return;
         Lettered = on;
-        if (on)
-        {
-            _lettering.Add();
-            _lettering.Relayout();
-            SyncWidgets(force: true);
-            if (_sel != null) SetMaskLayer(true);
-            if (_hovered) SetAuraLayer(SelectionAura.HoverLayer, true);
-        }
-        else
-        {
-            _lettering.Drop();
-            SyncWidgets(force: true);
-        }
+        SyncWidgets(force: true);
+        _prints.Sync();
+        if (!on) return;
+        if (_sel != null) SetMaskLayer(true);
+        if (_hovered) SetAuraLayer(SelectionAura.HoverLayer, true);
     }
 
     public float LetteringRange() =>
@@ -254,7 +240,7 @@ public partial class PieceNode : Node3D
         var o = cam.ProjectRayOrigin(screen);
         var d = cam.ProjectRayNormal(screen);
         var up = Up;
-        var face = Position + up * ((Piece.FaceDown ? 0 : _thickness) + (Piece.FaceDown ? PieceBack.Below : 0.006f));
+        var face = Position + up * ((Piece.FaceDown ? 0 : _thickness) + (Piece.FaceDown ? FaceInk.Below : 0.006f));
         float facing = d.Dot(up);
         if (Mathf.Abs(facing) < 1e-5f) return null;
         float t = (face - o).Dot(up) / facing;
@@ -423,7 +409,6 @@ public partial class PieceNode : Node3D
     {
         _texLoaded = true;
         _selMat?.SetShaderParameter("tex", t);
-        if (_lettering.Built) _lettering.Relayout();
         if (Def?.Kind != "model" && _texPackage != null && _s.Assets.Mask(_texPackage, _texRel!, _texSize) is { } mk
             && (Shape == "box" ? mk.TransparentFraction > 0.01f : Shape == "alpha" && _wallsPending))
             Callable.From(Rebuild).CallDeferred();
@@ -546,33 +531,11 @@ public partial class PieceNode : Node3D
         var edge = SideColor();
         if (_edgeSlots.Count > 0 && edge != _edgeColor) PaintEdges(edge);
 
-        var lines = new List<string>();
-        var placed = Def?.TextLines.Where(t => t.Place != null).Select(t => t.Name).ToHashSet() ?? new HashSet<string>();
-        void Line(string key, string v)
-        {
-            v = v.Trim();
-            if (placed.Contains(key) || v.Length == 0 || lines.Contains(v) || lines.Count >= 2) return;
-            lines.Add(v);
-        }
-        Line("Name", p.Text.GetValueOrDefault("Name") ?? Def?.TextLines.FirstOrDefault(t => t.Name == "Name")?.Default ?? "");
-        if (Def != null) foreach (var t in Def.TextLines) if (t.Name != "Name") Line(t.Name, TextOf(p, t));
-        foreach (var (k, v) in p.Text) if (k != "Name") Line(k, v);
-        if (!Look.ShowFaceText || NoteCard.Is(Def)) lines.Clear();
-        _lettering.Layout(lines);
         SyncSide();
     }
 
-    public static FaceBox DefaultNameBox(bool boxy) => KTable.Client.Studio.PiecePrinting.Band(boxy);
-
     public static string TextOf(PieceInstance p, TextLineDef t) => (p.Text.TryGetValue(t.Name, out var v) ? v : t.Default).Trim();
     internal bool Boxy => Shape is "box" or "rounded" && Def?.Kind != "model";
-
-    internal FaceBox? DetectedNameBox()
-    {
-        if (_texPackage == null) return null;
-        if (_s.Assets.Mask(_texPackage, _texRel!, _texSize)?.DarkBand is not { } b) return null;
-        return new FaceBox { X = 0.07, Y = b.y + b.h * 0.08, W = 0.86, H = b.h * 0.84 };
-    }
 
     public string HoverText()
     {
@@ -603,10 +566,8 @@ public partial class PieceNode : Node3D
         _selMat = null;
         _sideMat = null;
         _modelMat = null;
-        _lettering.Forget();
         _edgeSlots.Clear();
         _edgeColor = Colors.Transparent;
-        _back.Forget();
         _backMat = null;
         _flipGen++;
         _flipping = false;
@@ -707,11 +668,14 @@ public partial class PieceNode : Node3D
 
     bool _hovered;
 
+    public bool Hovered => _hovered;
+
     public void SetHovered(bool on)
     {
         if (on == _hovered) return;
         _hovered = on;
         SetAuraLayer(SelectionAura.HoverLayer, on);
+        _prints.Sync();
     }
 
     void SetAuraLayer(uint layer, bool on)

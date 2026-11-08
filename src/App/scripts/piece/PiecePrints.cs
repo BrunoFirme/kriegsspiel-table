@@ -75,7 +75,7 @@ sealed class PiecePrints
             parts.Add($"c{Place(c.Place!)}|{c.Name}|{p.Counters.GetValueOrDefault(c.Name, c.Default)}|{c.Min}|{c.Max}|{c.ShowName}|{c.ShowButtons}");
         foreach (var t in d.TextLines.Where(t => t.Place != null))
             parts.Add($"t{Place(t.Place!)}|{PieceNode.TextOf(p, t)}");
-        if (Book) parts.Add($"b{p.State}|{d.States.Count}|{p.FaceDown}");
+        if (Book) parts.Add($"b{p.State}|{d.States.Count}|{p.FaceDown}|{_piece.Hovered}");
         if (parts.Count == 0) return "";
         return $"{_piece.Footprint}|{_piece.Thickness}|{_piece.Look.FaceTextScale}\u001e" + string.Join("\u001f", parts);
     }
@@ -117,7 +117,7 @@ sealed class PiecePrints
     {
         var d = _piece.Def!;
         var p = _piece.Piece;
-        if (Book && !p.FaceDown) Pages();
+        if (Book && !p.FaceDown && _piece.Hovered) Pages();
         foreach (var c in d.Counters.Where(c => c.Place != null))
         {
             bool back = c.Place!.Side == PrintPlace.Back;

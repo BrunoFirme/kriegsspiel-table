@@ -27,7 +27,9 @@ public sealed class PackOut
     public void Save() => Json.Save(Path.Combine(Dir, "pack.json"), M);
 }
 
-public sealed record DefResult(PieceDef Def, PackOut Pack, double Scale, int State, ModuleObj Base, ScriptInfo Script)
+public sealed record SpawnSpec(string Type, double Scale, string ImageUrl, string Name);
+
+public sealed record DefResult(PieceDef Def, PackOut Pack, double Scale, int State, ModuleObj Base)
 {
     public string? FromPack { get; init; }
     public double Fit { get; init; } = 1;
@@ -225,7 +227,6 @@ public sealed partial class DefFactory
         double low = baked ? BakedSpan(b).Low : b.Name == "Custom_Token" ? -BaseThickness(b) / 2 : 0;
         def.ModuleRise = Math.Round(rise, 4);
         def.ModuleOrigin = Math.Round(-low * rise, 4);
-        def.PlainBack = true;
     }
 
     public double BaseThickness(ModuleObj o) => o.Name switch
@@ -291,7 +292,7 @@ public sealed partial class DefFactory
         return _firme.GetValueOrDefault($"{KTable.Client.Effects.EffectKinds.StandardPack}.{name}");
     }
 
-    DefResult? TreeDef(ModuleObj o, ModuleObj b, PackOut pack, ScriptInfo script)
+    DefResult? TreeDef(ModuleObj o, ModuleObj b, PackOut pack)
     {
         if (FirmeProp("tree") is not { Size.W: > 0 } tree)
         {
@@ -300,7 +301,7 @@ public sealed partial class DefFactory
             return null;
         }
         double fit = TreeCrownAcross / tree.Size.W;
-        return new DefResult(tree, pack, Math.Round(Math.Abs(o.ScaleX) * fit, 4), 0, b, script) { FromPack = KTable.Client.Effects.EffectKinds.StandardPack, Fit = fit };
+        return new DefResult(tree, pack, Math.Round(Math.Abs(o.ScaleX) * fit, 4), 0, b) { FromPack = KTable.Client.Effects.EffectKinds.StandardPack, Fit = fit };
     }
     BagBoxes? _boxes;
     BundleModels? _models;
@@ -315,16 +316,15 @@ public sealed partial class DefFactory
     DefResult? StandardDef(ModuleObj o, ModuleObj b, PackOut pack, double bs, double instScale)
     {
         if (ModelOfBundle(o) is { } model)
-            return new DefResult(model.Def, pack, instScale, 0, b, ScriptInfo.Parse("", "")) { FromPack = model.Pack };
-        var script = ScriptInfo.Parse(b.SafeLua.Length > 0 ? b.SafeLua : o.SafeLua, o.LuaState);
+            return new DefResult(model.Def, pack, instScale, 0, b) { FromPack = model.Pack };
         if (o.StockSides is { } sides && StandardDie(sides) is { } die)
-            return new DefResult(die, pack, Math.Round(bs, 4), FaceShown(o, die), b, script) { FromPack = StdDicePack, Fit = StockDieFit(o.Name, die) };
+            return new DefResult(die, pack, Math.Round(bs, 4), FaceShown(o, die), b) { FromPack = StdDicePack, Fit = StockDieFit(o.Name, die) };
         if (Boxes.For(o) is { } box)
         {
             double fit = box.Size.W > 0 ? Math.Round(BagAcross / box.Size.W, 4) : 1;
-            return new DefResult(box, pack, Math.Round(bs, 4), 0, b, script) { FromPack = KTable.Client.Effects.EffectKinds.StandardPack, Fit = fit };
+            return new DefResult(box, pack, Math.Round(bs, 4), 0, b) { FromPack = KTable.Client.Effects.EffectKinds.StandardPack, Fit = fit };
         }
-        if (o.Name == TilesetTree) return TreeDef(o, b, pack, script);
+        if (o.Name == TilesetTree) return TreeDef(o, b, pack);
         return null;
     }
 
@@ -341,8 +341,7 @@ public sealed partial class DefFactory
         if (o.Name == TilesetTree) return null;
         var where = $"{Context} {o.Name} '{o.Nickname}' {o.Guid}";
 
-        var script = ScriptInfo.Parse(b.SafeLua.Length > 0 ? b.SafeLua : o.SafeLua, o.LuaState);
-        var def = BuildDef(b, pack, r, where, script, heightScale);
+        var def = BuildDef(b, pack, r, where, heightScale);
         if (def == null) return null;
         if (RollsOnItsValues(b)) FillModelFaces(def, b);
         if (o.TransformNotANumber) _rep.Note($"{where}: the module gives this piece a position, turn or scale that is not a number; the usual value is taken instead");
@@ -417,13 +416,13 @@ public sealed partial class DefFactory
                 if (existing.Name == "Piece" && def.Name != "Piece") existing.Name = def.Name;
                 pack.Richness[existing.Id] = rich;
             }
-            return new DefResult(existing, pack, instScale, Shown(o, existing, self), b, script);
+            return new DefResult(existing, pack, instScale, Shown(o, existing, self), b);
         }
         def.Id = $"{pack.Short}.{Slug(def.Name)}-{Hash8(key)}";
         pack.ByKey[key] = def;
         pack.Richness[def.Id] = rich;
         pack.M.Pieces.Add(def);
-        return new DefResult(def, pack, instScale, Shown(o, def, self), b, script);
+        return new DefResult(def, pack, instScale, Shown(o, def, self), b);
     }
 
     public static int Shown(ModuleObj o, PieceDef def, int self) =>
@@ -455,7 +454,7 @@ public sealed partial class DefFactory
         return Asset(pack, url, "image", where);
     }
 
-    PieceDef? BuildDef(ModuleObj b, PackOut pack, double r, string where, ScriptInfo script, double heightScale)
+    PieceDef? BuildDef(ModuleObj b, PackOut pack, double r, string where, double heightScale)
     {
         var (lookUrl, lookKind) = IsModel(b) ? (b.MeshUrl, "mesh") : b.Name == "Custom_PDF" ? (b.PdfUrl, "pdf")
             : b.Name.StartsWith("Block") || b.IsChecker ? (null, "") : b.IsCard ? (b.Sheet?.FaceUrl, "image") : (b.ImageUrl, "image");
@@ -510,14 +509,6 @@ public sealed partial class DefFactory
         }
         if (def.Name == "Piece") def.Name = Describe(pack, def);
         ModuleSources.Fill(def, b);
-        def.Counters = script.Counters.Select(c => new CounterDef { Name = c.Name, Min = c.Min, Max = c.Max, Default = c.Default }).ToList();
-        def.TextLines = script.TextLines.Select(t => new TextLineDef { Name = t.Name, Default = t.Default }).ToList();
-        foreach (var (counter, sp) in script.Spawns)
-        {
-            var marker = MarkerDef(pack, sp, where);
-            var c = def.Counters.First(x => x.Name == counter);
-            c.SpawnsMarker = marker?.Id;
-        }
         return def;
     }
 

@@ -551,7 +551,6 @@ public partial class Main : Node
             catch (Exception e) { GD.PushError("[scripts] tick failed: " + e); }
         };
         table.AddChild(tick);
-        s.Art.Look.ShowFaceBoxes = true;
         var ed = new PieceStudio { Name = "Studio", ScriptsChanged = () => Deliver(server.Scripts.Load()) };
         AddChild(ed);
         _agent.Studio = ed;

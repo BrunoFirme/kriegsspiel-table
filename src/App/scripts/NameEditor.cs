@@ -19,19 +19,6 @@ sealed class NameEditor
 
     public PieceNode? Node => _node;
 
-    public void Begin(PieceNode n)
-    {
-        End(commit: true);
-        _node = n;
-        _widget = 0;
-        _orig = n.CardTitle;
-        _buf = _orig;
-        _caretT = 0;
-        _caretOn = true;
-        n.SetTitleText(_buf + "|");
-        _c.Say("Type the name · Enter keeps it · Esc leaves it as it was");
-    }
-
     public bool? NotePart => _node == null ? null : _noteBody;
 
     public void BeginNote(PieceNode n, bool body)
@@ -62,13 +49,6 @@ sealed class NameEditor
         _c.Say($"Type {(w.Placeholder.Length > 0 ? w.Placeholder.ToLowerInvariant() : "the value")} · click away to finish · Esc leaves it as it was");
     }
 
-    public void BeginTyped(PieceNode n, string typed)
-    {
-        Begin(n);
-        _buf = typed;
-        n.SetTitleText(_buf + "|");
-    }
-
     public void End(bool commit)
     {
         if (_node == null) return;
@@ -87,19 +67,8 @@ sealed class NameEditor
             if (commit && kept != _orig) _c.S.Do(new SetText { Layer = n.Layer, Id = n.Piece.Id, Name = body ? NoteCard.BodyLine : NoteCard.TitleLine, Value = kept });
             return;
         }
-        if (wi > 0)
-        {
-            n.ClearWidgetText();
-            _c.S.Do(new EditWidget { Layer = n.Layer, Id = n.Piece.Id, Index = wi, Value = commit ? _buf : _orig });
-            return;
-        }
-        var t = _buf.Trim();
-        if (commit && t != _orig)
-        {
-            bool nameLine = n.Def?.TextLines.Any(x => x.Name == "Name") == true || n.Piece.Text.ContainsKey("Name");
-            _c.S.Do(nameLine ? new SetText { Layer = n.Layer, Id = n.Piece.Id, Name = "Name", Value = t } : new SetLabel { Layer = n.Layer, Id = n.Piece.Id, Value = t });
-        }
-        else n.SetTitleText(_orig);
+        n.ClearWidgetText();
+        _c.S.Do(new EditWidget { Layer = n.Layer, Id = n.Piece.Id, Index = wi, Value = commit ? _buf : _orig });
     }
 
     public void Key(InputEventKey k)
@@ -141,7 +110,6 @@ sealed class NameEditor
             _node.SetWidgetText(_widget, _buf + "|");
         }
         else if (_noteBody is { } body) _node?.SetNoteText(body, _buf + "|");
-        else _node?.SetTitleText(_buf + "|");
     }
 
     Widget? WidgetAt(int index) => _node != null && index >= 1 && index <= _node.Piece.Widgets.Count ? _node.Piece.Widgets[index - 1] : null;
@@ -173,7 +141,7 @@ sealed class NameEditor
     public void Tick(double delta)
     {
         if (_node == null) return;
-        if (!GodotObject.IsInstanceValid(_node) || (_noteBody != null ? _node.Piece.FaceDown : _widget == 0 && !_node.Piece.FaceDown))
+        if (!GodotObject.IsInstanceValid(_node) || (_noteBody != null && _node.Piece.FaceDown))
         {
             if (_noteBody != null && GodotObject.IsInstanceValid(_node)) _node.ClearNoteText();
             _node = null;
@@ -189,6 +157,5 @@ sealed class NameEditor
         var caret = _buf + (_caretOn ? "|" : "");
         if (_widget > 0) _node.SetWidgetText(_widget, caret);
         else if (_noteBody is { } body) _node.SetNoteText(body, caret);
-        else _node.SetTitleText(caret);
     }
 }

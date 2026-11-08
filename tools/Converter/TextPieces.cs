@@ -19,7 +19,7 @@ public sealed partial class DefFactory
         double bs = o.Name == "3DText" || Math.Abs(o.ScaleX) < 1e-6 ? 1 : Math.Abs(o.ScaleX);
         double r = o.Name == "3DText" ? 1 : refScale ?? bs;
         double instScale = Math.Round(bs / r, 4);
-        if (o.Name == "Notecard") return new DefResult(NoteDef(pack, o.Nickname, o.Description, r, ModuleNotecard), pack, instScale, 0, o, ScriptInfo.Parse("", ""));
+        if (o.Name == "Notecard") return new DefResult(NoteDef(pack, o.Nickname, o.Description, r, ModuleNotecard), pack, instScale, 0, o);
         string body = ModuleValues.Text(o.J["Text"]?["Text"]) ?? "";
         double fontSize = ModuleValues.Finite(o.J["Text"]?["fontSize"], DefaultFontSize);
         var colour = ColourOf(o.J["Text"]?["colorstate"] as JsonObject);
@@ -40,7 +40,7 @@ public sealed partial class DefFactory
 
         var key = $"text|{sha}";
         var live = new Lettering { Text = body, Size = fontSize, Color = $"#{colour.Red:X2}{colour.Green:X2}{colour.Blue:X2}{colour.Alpha:X2}", UnitsPerPixel = TextUnitsPerFontSize * r };
-        if (pack.ByKey.TryGetValue(key, out var existing)) return new DefResult(existing, pack, instScale, 0, o, ScriptInfo.Parse("", "")) { Lettering = live };
+        if (pack.ByKey.TryGetValue(key, out var existing)) return new DefResult(existing, pack, instScale, 0, o) { Lettering = live };
         var name = body.Length > 24 ? body[..24].Trim() + "…" : body.Trim();
         var def = new PieceDef
         {
@@ -50,7 +50,7 @@ public sealed partial class DefFactory
         pack.ByKey[key] = def;
         pack.Richness[def.Id] = 0;
         pack.M.Pieces.Add(def);
-        return new DefResult(def, pack, instScale, 0, o, ScriptInfo.Parse("", "")) { Lettering = live };
+        return new DefResult(def, pack, instScale, 0, o) { Lettering = live };
     }
 
     [System.Text.RegularExpressions.GeneratedRegex(@"\[(/?(b|i|u|s|sub|sup)|[0-9A-Fa-f]{6}|-)\]")] private static partial System.Text.RegularExpressions.Regex ModuleMarkup();

@@ -112,12 +112,15 @@ static class BookTests
     }
 
     [NodeTest]
-    static async Task A_book_carries_its_own_page_buttons_and_no_list_of_pages(TestRunner r)
+    static async Task A_book_shows_its_own_page_buttons_while_the_pointer_is_on_it_and_no_list_of_pages(TestRunner r)
     {
         var t = OfflineTable.Make(r, pieces: 1, packs: new[] { "books" }, prepare: store => WriteBook(store, 4));
         t.S.Do(new SetDef { Layer = U, Id = "p1", Def = BookDef });
         await r.Frames(2);
         var node = t.Node("p1");
+        Check.That(node.PageButtonAt(node.Piece.Pos) == null && !node.Hovered, "away from the pointer the book shows only its page");
+        node.SetHovered(true);
+        await r.Frames(1);
         var w = node.Footprint.X;
         var h = node.Footprint.Y;
         float bs = Mathf.Min(h * 0.055f, w * 0.34f / 3), gap = bs * 0.35f, vw = bs * 2.4f;

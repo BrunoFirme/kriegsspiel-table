@@ -125,14 +125,14 @@ sealed class SettingsDialog : HudPart
     {
         bool pointers = S.IsUmpire;
         if (pointers) _box.AddChild(Header("Pieces"));
-        var face = new CheckBox { Text = "Names on pieces, counters on their backs", ButtonPressed = Cfg.FaceText, TooltipText = "Off: on hover only" };
+        var face = new CheckBox { Text = "Text on pieces", ButtonPressed = Cfg.FaceText, TooltipText = "The counters and text placed on pieces. Off: names show on hover only" };
         var nameS = new HSlider
         {
             MinValue = Settings.FaceTextScaleMin, MaxValue = Settings.FaceTextScaleMax, Step = 0.05, Value = Cfg.FaceTextScale,
-            TooltipText = "How big the names print on pieces, and the lettering an imported piece draws itself (bigger reads in captures; it may spill past the name band)",
+            TooltipText = "How big text prints on pieces, and the lettering an imported piece draws itself (bigger reads in captures; it may spill past its box)",
         };
         var nameL = Ui.ValueBox(nameS, v => $"{v:0.00}×");
-        var nameRow = Row("Name size", nameS, nameL);
+        var nameRow = Row("Text size", nameS, nameL);
         nameS.ValueChanged += v =>
         {
             Cfg.FaceTextScale = (float)v;

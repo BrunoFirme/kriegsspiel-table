@@ -90,8 +90,8 @@ symbol).
   measure M, hand H.
 - Grid, snap, symmetry and measures help you draw; none of them print.
 - **Outline** (O) offers the same outlines as the Block layer, or draw your own corner by corner.
-- **Place** (N) gives the name, each counter and each text line a box of its own, on either side; counters
-  keep their − and +. Unplaced, counters print on the back and text lines in the name band.
+- **Place** (N) gives each counter and each text line a box of its own, on either side; counters keep their
+  − and +. What is not placed is not printed.
 - **Swap front and back** trades the two sides, prints and all.
 
 **Try it** (Alt+3) — the pack's pieces on a real table with scripts running. An effect has **Try it** and

@@ -119,7 +119,6 @@ public partial class PieceNode
             Position = Coords.ToWorld(p.Pos, BaseY(p));
             Rotation = new Vector3(0, Coords.Yaw(p.RotDeg), 0);
         }
-        _lettering.Layout(new());
     }
 
     public int RollGen { get; private set; }
