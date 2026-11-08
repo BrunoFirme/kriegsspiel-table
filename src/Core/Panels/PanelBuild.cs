@@ -34,11 +34,24 @@ public sealed partial class PanelBuild
     void Run(string xml)
     {
         var settings = new XmlReaderSettings { IgnoreWhitespace = true, IgnoreComments = true, IgnoreProcessingInstructions = true, DtdProcessing = DtdProcessing.Prohibit };
+        RefuseDeepNesting(xml, settings);
         using var input = new StringReader(xml);
         using var reader = XmlReader.Create(input, settings);
         reader.ReadToFollowing(Root);
         var top = new Parent(null, Root, _layout.Elements, new List<int>());
         Children(reader, top, 1);
+    }
+
+    static void RefuseDeepNesting(string xml, XmlReaderSettings settings)
+    {
+        using var input = new StringReader(xml);
+        using var reader = XmlReader.Create(input, settings);
+        try
+        {
+            while (reader.Read())
+                if (reader.NodeType == XmlNodeType.Element && reader.Depth > MaxDepth) throw new PanelTooBig($"the panels nest deeper than {MaxDepth} levels");
+        }
+        catch (XmlException) { }
     }
 
     sealed record Parent(UiElement? Element, string Tag, List<UiElement> Into, List<int> Path)

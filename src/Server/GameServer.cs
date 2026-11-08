@@ -343,13 +343,15 @@ public sealed partial class GameServer
         },
     };
 
-    public string? ZoneDenies(PeerInfo peer, Command c)
+    public string? ZoneDenies(PeerInfo peer, Command c) => ZoneDenies(State, peer, c);
+
+    public static string? ZoneDenies(GameState state, PeerInfo peer, Command c)
     {
-        if (c == null || !ZoneRule.Binds(State, peer.Role)) return null;
-        bool In(string layer, Vec2 p) => ZoneRule.Allows(State, peer.Role, peer.Name, layer, p);
-        bool ok = c.ZonePieces().All(x => State.Find(x.Layer, x.Id) is not { } p || In(x.Layer, p.Pos))
+        if (c == null || !ZoneRule.Binds(state, peer.Role)) return null;
+        bool In(string layer, Vec2 p) => ZoneRule.Allows(state, peer.Role, peer.Name, layer, p);
+        bool ok = c.ZonePieces().All(x => state.Find(x.Layer, x.Id) is not { } p || In(x.Layer, p.Pos))
             && c.ZonePoints().All(x => In(x.Layer, x.Pos));
-        return ok ? null : ZoneRule.HasZone(State, peer.Name) ? "outside your umpire zone" : "no zone on the umpire board has been assigned to you";
+        return ok ? null : ZoneRule.HasZone(state, peer.Name) ? "outside your umpire zone" : "no zone on the umpire board has been assigned to you";
     }
 
     public List<Outgoing> Handle(long peerId, Command c)

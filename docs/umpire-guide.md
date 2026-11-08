@@ -148,8 +148,8 @@ The tool strip runs down the left. Point at any tool and press **F1** for its se
 The **Dice** button shows or hides the dice panel: tap d4 to d20 (twice for two), then **Roll**. The result stays in the
 panel for the next roll. Or drag dice from the standard pack and throw them, shake them in your hand before letting go,
 or press **R** to roll in place. The host decides every result and the Log shows it. Hover a die for its result;
-right-click it for its **Tint**. To turn a die by hand, point at it and press the side's number, or right-click →
-**Side**. Right-click several dice to see what they show and their total.
+right-click it for its **Tint**. To turn a die by hand, point at it and press the side's number.
+Right-click several dice to see what they show and their total.
 
 ### Ruler
 

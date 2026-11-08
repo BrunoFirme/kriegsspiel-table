@@ -7,6 +7,21 @@ public class PanelModelTests
 {
     static UiLayout Built(string xml) => PanelBuild.Of(xml).Layout;
 
+    static string Nested(int levels) => string.Concat(Enumerable.Repeat("<Panel>", levels)) + "<Text>deep</Text>" + string.Concat(Enumerable.Repeat("</Panel>", levels));
+
+    [Fact]
+    public void Panels_build_to_the_nesting_limit_and_are_refused_one_level_past_it()
+    {
+        Assert.Null(Built(Nested(PanelBuild.MaxDepth - 1)).Broken);
+        Assert.Contains("nest deeper", Built(Nested(PanelBuild.MaxDepth)).Broken);
+    }
+
+    [Fact]
+    public void Broken_xml_inside_deep_panels_is_reported_as_the_xml_fault()
+    {
+        Assert.DoesNotContain("nest deeper", Built("<Panel><Panel></Text></Panel>").Broken);
+    }
+
     [Fact]
     public void The_written_panels_put_each_element_on_its_own_lines_with_doubled_indents()
     {
