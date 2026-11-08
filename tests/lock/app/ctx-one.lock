@@ -5,22 +5,6 @@ settle
 checkpoint menu-red
 key Escape
 rclick world:-4,0.2,0
-click "Turn left 15°"
-settle
-rclick world:-4,0.2,0
-click "Turn right 15°"
-settle
-rclick world:-4,0.2,0
-click "Turn around 180°"
-settle
-rclick world:-4,0.2,0
-click "Larger"
-settle
-rclick world:-4,0.2,0
-click "Smaller"
-settle
-checkpoint turned-sized
-rclick world:-4,0.2,0
 click "Turn over (show the back)"
 settle
 checkpoint flipped
