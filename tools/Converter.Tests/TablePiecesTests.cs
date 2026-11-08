@@ -391,6 +391,103 @@ public sealed partial class ConverterTests
     }
 
     [Fact]
+    public void A_glued_stack_turned_over_lies_face_down_showing_its_lowest_token_as_the_game_shows_it_from_above()
+    {
+        const double Thickness = 0.2, GluedAbove = 0.2;
+        var cfg = TempConfig();
+        const string Square = "http://a/square.png";
+        LocalPicture(cfg, Square, 32, 32, (_, _) => SKColors.White);
+        static JsonObject Token() => new() { ["ImageURL"] = Square, ["CustomToken"] = new JsonObject { ["Thickness"] = Thickness } };
+        var glued = Obj("Custom_Token", "", 1, new JsonObject { ["CustomImage"] = Token() });
+        (glued["Transform"]!["posY"], glued["Transform"]!["rotY"]) = (GluedAbove, 0.0);
+        glued["ColorDiffuse"] = new JsonObject { ["r"] = 1.0, ["g"] = 0.0, ["b"] = 0.0 };
+        var piece = Obj("Custom_Token", "Square", 0.4, new JsonObject { ["CustomImage"] = Token(), ["ChildObjects"] = new JsonArray(glued) });
+        piece["Transform"]!["rotZ"] = 180.0;
+        piece["ColorDiffuse"] = new JsonObject { ["r"] = 1.0, ["g"] = 1.0, ["b"] = 0.0 };
+        var module = Module("turned", piece);
+        var main = typeof(Config).Assembly.EntryPoint!;
+
+        var code = (int)main.Invoke(null, new object[] { new[] { "import", module, "--config", Path.Combine(_root, "converter.json"), "--out", Packages } })!;
+
+        Assert.Equal(0, code);
+        var table = Json.Load<Scenario>(Path.Combine(Packages, "scenarios", "turned", "scenario.json"));
+        var pack = Json.Load<PackManifest>(Path.Combine(Packages, "tts.turned", "pack.json"));
+        var shown = Assert.Single(table.UmpireBoard);
+        var def = pack.Pieces.Single(d => d.Id == shown.Def);
+        SKColor Middle(string sha)
+        {
+            using var bmp = SKBitmap.Decode(Path.Combine(Packages, "tts.turned", pack.Assets[sha].File));
+            return bmp.GetPixel(bmp.Width / 2, bmp.Height / 2);
+        }
+        Assert.True(shown.FaceDown);
+        Assert.Equal((SKColors.Red, SKColors.Yellow), (Middle(def.Image!), Middle(def.Back!)));
+    }
+
+    [Fact]
+    public void Two_glued_units_alike_but_for_their_colour_are_two_kinds_each_in_its_own_colour()
+    {
+        const double Thickness = 0.1;
+        var cfg = TempConfig();
+        const string Bar = "http://a/bar.png";
+        LocalPicture(cfg, Bar, 64, 16, (_, _) => SKColors.White);
+        static JsonObject Token() => new() { ["ImageURL"] = Bar, ["CustomToken"] = new JsonObject { ["Thickness"] = Thickness } };
+        JsonObject Unit(string name, double r, double g, double b)
+        {
+            var basePart = Obj("Custom_Token", "", 1, new JsonObject { ["CustomImage"] = Token() });
+            basePart["Transform"]!["posY"] = -Thickness;
+            basePart["ColorDiffuse"] = new JsonObject { ["r"] = 1.0, ["g"] = 1.0, ["b"] = 1.0 };
+            var unit = Obj("Custom_Token", name, 0.2, new JsonObject { ["CustomImage"] = Token(), ["ChildObjects"] = new JsonArray(basePart) });
+            unit["ColorDiffuse"] = new JsonObject { ["r"] = r, ["g"] = g, ["b"] = b };
+            return unit;
+        }
+        var module = Module("twoarmies", Unit("Blue", 0.0, 0.0, 1.0), Unit("Red", 1.0, 0.0, 0.0));
+        var main = typeof(Config).Assembly.EntryPoint!;
+
+        var code = (int)main.Invoke(null, new object[] { new[] { "import", module, "--config", Path.Combine(_root, "converter.json"), "--out", Packages } })!;
+
+        Assert.Equal(0, code);
+        var table = Json.Load<Scenario>(Path.Combine(Packages, "scenarios", "twoarmies", "scenario.json"));
+        var pack = Json.Load<PackManifest>(Path.Combine(Packages, "tts.twoarmies", "pack.json"));
+        SKColor Middle(PieceInstance p)
+        {
+            var def = pack.Pieces.Single(d => d.Id == p.Def);
+            using var bmp = SKBitmap.Decode(Path.Combine(Packages, "tts.twoarmies", pack.Assets[def.Image!].File));
+            return bmp.GetPixel(bmp.Width / 2, bmp.Height / 2);
+        }
+        var (blue, red) = (table.UmpireBoard.Single(p => p.Label == "Blue"), table.UmpireBoard.Single(p => p.Label == "Red"));
+        Assert.NotEqual(blue.Def, red.Def);
+        Assert.Equal((SKColors.Blue, SKColors.Red), (Middle(blue), Middle(red)));
+    }
+
+    [Fact]
+    public void Each_look_of_a_counter_keeps_the_colour_its_state_was_saved_in()
+    {
+        var cfg = TempConfig();
+        const string Disc = "http://a/disc.png";
+        LocalPicture(cfg, Disc, 16, 16, (_, _) => SKColors.White);
+        JsonObject Look(string name, double r, double g, double b)
+        {
+            var o = Obj("Custom_Token", name, 0.3, new JsonObject { ["CustomImage"] = new JsonObject { ["ImageURL"] = Disc } });
+            o["ColorDiffuse"] = new JsonObject { ["r"] = r, ["g"] = g, ["b"] = b };
+            return o;
+        }
+        var counter = Look("Yellow", 1.0, 1.0, 0.0);
+        counter["States"] = new JsonObject { ["1"] = Look("Green", 0.0, 1.0, 0.0), ["3"] = Look("Red", 1.0, 0.0, 0.0) };
+        var module = Module("counter", counter);
+        var main = typeof(Config).Assembly.EntryPoint!;
+
+        var code = (int)main.Invoke(null, new object[] { new[] { "import", module, "--config", Path.Combine(_root, "converter.json"), "--out", Packages } })!;
+
+        Assert.Equal(0, code);
+        var table = Json.Load<Scenario>(Path.Combine(Packages, "scenarios", "counter", "scenario.json"));
+        var pack = Json.Load<PackManifest>(Path.Combine(Packages, "tts.counter", "pack.json"));
+        var piece = Assert.Single(table.UmpireBoard);
+        var def = pack.Pieces.Single(d => d.Id == piece.Def);
+        Assert.Equal(new[] { "#00FF00", "#FFFF00", "#FF0000" }, def.States.Select(s => s.Tint ?? def.Tint));
+        Assert.Equal((1, (string?)null), (piece.State, piece.TintOverride));
+    }
+
+    [Fact]
     public void Each_state_of_a_token_shows_its_own_glued_children_even_a_child_with_states_of_its_own()
     {
         const double Thickness = 0.1;

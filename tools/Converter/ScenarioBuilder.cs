@@ -598,7 +598,8 @@ public sealed partial class ScenarioBuilder
     void Dress(PieceInstance inst, ModuleObj o, PieceDef def, DefResult r, PackOut extras, string layerName)
     {
         var colour = r.FromPack == KTable.Client.Effects.EffectKinds.StandardPack && o.Name == "Bag" ? BagBoxes.Tint(o) : o.Name == DefFactory.Figurine ? null : o.Color;
-        if (colour is { } col && !string.Equals(col, def.Tint, StringComparison.OrdinalIgnoreCase)) inst.TintOverride = col;
+        var shownTint = inst.State >= 0 && inst.State < def.States.Count ? def.States[inst.State].Tint ?? def.Tint : def.Tint;
+        if (colour is { } col && !string.Equals(col, shownTint, StringComparison.OrdinalIgnoreCase)) inst.TintOverride = col;
         if (o.VectorLines.Count > 0) inst.Lines = LinesOf(o, def);
         if (!def.States.Any(s => s.Decals is { Count: > 0 }))
             inst.Decals = DecalsOf(o, def, _cfg.BaseSizes.CustomTokenArea, url => _defs.UiAsset(extras, url, $"{layerName} {o.Name} '{o.Nickname}' {o.Guid} decal"),
@@ -710,9 +711,12 @@ public sealed partial class ScenarioBuilder
     }
 
     static string? MatchKey(PieceDef d) => d.Kind == "model"
-        ? (d.Mesh == null ? null : $"model|{d.Mesh}|{d.Texture}")
+        ? (d.Mesh == null ? null : $"model|{d.Mesh}|{d.Texture}{LooksKey(d)}")
         : NoteCard.Is(d) ? $"note|{string.Join("|", d.TextLines.Select(t => t.Default))}"
-        : (d.Image == null || d.Tags.Contains("block") ? null : $"flat|{d.Image}|{d.Back}");
+        : (d.Image == null || d.Tags.Contains("block") ? null : $"flat|{d.Image}|{d.Back}{LooksKey(d)}");
+
+    static string LooksKey(PieceDef d) => d.States.Count == 0 && d.Parts is not { Count: > 0 } && d.Faces.Count == 0 ? ""
+        : "|" + DefFactory.Hash8(Json.Serialize(new PieceDef { States = d.States, Parts = d.Parts, Faces = d.Faces }));
 
     const double NoteTurn = 180;
 

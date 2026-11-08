@@ -263,7 +263,7 @@ public partial class PieceNode : Node3D
         return Coords.FromWorld(Position + new Vector3(level.X, 0, level.Z));
     }
 
-    Color Tint() => Spoken ? Colors.Transparent : Coords.ParseColor(Piece.TintOverride ?? Def?.Tint, Colors.White) * _layerTint;
+    Color Tint() => Spoken ? Colors.Transparent : Coords.ParseColor(Piece.TintOverride ?? CurState?.Tint ?? Def?.Tint, Colors.White) * _layerTint;
     Color SideColor() => (Tint() * 0.82f) with { A = Tint().A };
     Color PrintTint() => PieceArt.PictureTint(Def is { TintsPictures: true }, Spoken, Tint(), _layerTint);
 

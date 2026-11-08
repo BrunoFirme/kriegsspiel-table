@@ -80,6 +80,7 @@ public sealed class PieceStateDef
 {
     public string Name { get; set; } = "";
     public string? Shape { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? Tint { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<List<Vec2>>? Outline { get; set; }
     public string? Image { get; set; }
     public string? Back { get; set; }
