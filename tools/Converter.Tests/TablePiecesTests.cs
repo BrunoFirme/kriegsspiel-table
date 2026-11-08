@@ -360,7 +360,7 @@ public sealed partial class ConverterTests
     }
 
     [Fact]
-    public void A_token_glued_over_a_backing_token_is_one_piece_with_both_pictures_in_their_own_colours_and_both_heights()
+    public void A_token_glued_over_a_backing_token_is_one_piece_whose_backing_is_a_part_below_it_in_its_own_colour_and_size()
     {
         const double Thickness = 0.1, BackingBelow = -0.1, PieceScale = 0.25, BackingWider = 1.5;
         var cfg = TempConfig();
@@ -383,15 +383,18 @@ public sealed partial class ConverterTests
         var pack = Json.Load<PackManifest>(Path.Combine(Packages, "tts.glued", "pack.json"));
         var piece = Assert.Single(table.UmpireBoard);
         var def = pack.Pieces.Single(d => d.Id == piece.Def);
-        using var bmp = SKBitmap.Decode(Path.Combine(Packages, "tts.glued", pack.Assets[def.Image!].File));
-        Assert.Equal((SKColors.Red, SKColors.White), (bmp.GetPixel(bmp.Width / 2, bmp.Height / 2), bmp.GetPixel(bmp.Width / 2, 2)));
-        Assert.Equal(2 * Thickness, def.Thickness, 3);
+        var part = Assert.Single(def.Parts!);
+        var kind = pack.Pieces.Single(d => d.Id == part.Def);
+        Assert.Equal("#FF0000", piece.TintOverride ?? def.Tint);
+        Assert.Equal("#FFFFFF", part.Tint ?? kind.Tint);
+        Assert.True(part.Y < 0, $"the backing lies under the token: {part.Y}");
+        Assert.Equal(BackingWider * def.Size.W, kind.Size.W * part.Scale, 3);
         Assert.Equal((0.0, 0), (piece.Y, piece.Stack));
         Assert.Empty(piece.Attached);
     }
 
     [Fact]
-    public void A_glued_stack_turned_over_lies_face_down_showing_its_lowest_token_as_the_game_shows_it_from_above()
+    public void A_glued_stack_turned_over_lies_face_down_with_its_glued_token_turned_over_with_it()
     {
         const double Thickness = 0.2, GluedAbove = 0.2;
         var cfg = TempConfig();
@@ -414,19 +417,16 @@ public sealed partial class ConverterTests
         var pack = Json.Load<PackManifest>(Path.Combine(Packages, "tts.turned", "pack.json"));
         var shown = Assert.Single(table.UmpireBoard);
         var def = pack.Pieces.Single(d => d.Id == shown.Def);
-        SKColor Middle(string sha)
-        {
-            using var bmp = SKBitmap.Decode(Path.Combine(Packages, "tts.turned", pack.Assets[sha].File));
-            return bmp.GetPixel(bmp.Width / 2, bmp.Height / 2);
-        }
+        var part = Assert.Single(def.Parts!);
         Assert.True(shown.FaceDown);
-        Assert.Equal((SKColors.Red, SKColors.Yellow), (Middle(def.Image!), Middle(def.Back!)));
+        Assert.Equal("#FF0000", part.Tint ?? pack.Pieces.Single(d => d.Id == part.Def).Tint);
+        Assert.True(part.Y > 0, $"the glued token sits on the token's face: {part.Y}");
     }
 
     [Fact]
     public void A_token_glued_turned_over_carries_its_own_glued_token_to_the_mirrored_side_as_the_game_does()
     {
-        const double Aside = 2, Further = 3;
+        const double Aside = 2, Further = 3, RootScale = 0.2;
         var cfg = TempConfig();
         const string Square = "http://a/square.png";
         LocalPicture(cfg, Square, 16, 16, (_, _) => SKColors.White);
@@ -442,7 +442,7 @@ public sealed partial class ConverterTests
         var turned = Token("", 1, 1.0, 0.0, 0.0);
         (turned["Transform"]!["posX"], turned["Transform"]!["rotZ"]) = (-Aside, 180.0);
         turned["ChildObjects"] = new JsonArray(furthest);
-        var root = Token("Root", 0.2, 1.0, 1.0, 1.0);
+        var root = Token("Root", RootScale, 1.0, 1.0, 1.0);
         root["Transform"]!["posY"] = 1.0;
         root["ChildObjects"] = new JsonArray(turned);
         var module = Module("mirrored", root);
@@ -454,9 +454,10 @@ public sealed partial class ConverterTests
         var table = Json.Load<Scenario>(Path.Combine(Packages, "scenarios", "mirrored", "scenario.json"));
         var pack = Json.Load<PackManifest>(Path.Combine(Packages, "tts.mirrored", "pack.json"));
         var def = pack.Pieces.Single(d => d.Id == Assert.Single(table.UmpireBoard).Def);
-        using var bmp = SKBitmap.Decode(Path.Combine(Packages, "tts.mirrored", pack.Assets[def.Image!].File));
-        Assert.Equal(SKColors.Blue, bmp.GetPixel(bmp.Width - 2, bmp.Height / 2));
-        Assert.Equal(SKColors.Transparent.Alpha, bmp.GetPixel(1, bmp.Height / 2).Alpha);
+        PartDef Tinted(string colour) => def.Parts!.Single(p => (p.Tint ?? pack.Pieces.Single(d => d.Id == p.Def).Tint) == colour);
+        var (red, blue) = (Tinted("#FF0000"), Tinted("#0000FF"));
+        Assert.Equal((Aside * RootScale, true), (red.X, red.FaceDown));
+        Assert.Equal(((Aside + Further) * RootScale, true), (blue.X, blue.FaceDown));
     }
 
     [Fact]
@@ -501,7 +502,7 @@ public sealed partial class ConverterTests
     }
 
     [Fact]
-    public void Two_glued_units_alike_but_for_their_colour_are_two_kinds_each_in_its_own_colour()
+    public void Two_glued_units_alike_but_for_their_colour_keep_each_its_own_colour_over_the_same_white_base()
     {
         const double Thickness = 0.1;
         var cfg = TempConfig();
@@ -525,15 +526,15 @@ public sealed partial class ConverterTests
         Assert.Equal(0, code);
         var table = Json.Load<Scenario>(Path.Combine(Packages, "scenarios", "twoarmies", "scenario.json"));
         var pack = Json.Load<PackManifest>(Path.Combine(Packages, "tts.twoarmies", "pack.json"));
-        SKColor Middle(PieceInstance p)
+        string Shown(PieceInstance p) => p.TintOverride ?? pack.Pieces.Single(d => d.Id == p.Def).Tint;
+        string Base(PieceInstance p)
         {
-            var def = pack.Pieces.Single(d => d.Id == p.Def);
-            using var bmp = SKBitmap.Decode(Path.Combine(Packages, "tts.twoarmies", pack.Assets[def.Image!].File));
-            return bmp.GetPixel(bmp.Width / 2, bmp.Height / 2);
+            var part = Assert.Single(pack.Pieces.Single(d => d.Id == p.Def).Parts!);
+            return part.Tint ?? pack.Pieces.Single(d => d.Id == part.Def).Tint;
         }
         var (blue, red) = (table.UmpireBoard.Single(p => p.Label == "Blue"), table.UmpireBoard.Single(p => p.Label == "Red"));
-        Assert.NotEqual(blue.Def, red.Def);
-        Assert.Equal((SKColors.Blue, SKColors.Red), (Middle(blue), Middle(red)));
+        Assert.Equal(("#0000FF", "#FF0000"), (Shown(blue), Shown(red)));
+        Assert.Equal(("#FFFFFF", "#FFFFFF"), (Base(blue), Base(red)));
     }
 
     [Fact]
@@ -565,7 +566,7 @@ public sealed partial class ConverterTests
     }
 
     [Fact]
-    public void Each_state_of_a_token_shows_its_own_glued_children_even_a_child_with_states_of_its_own()
+    public void Each_state_of_a_token_carries_its_own_glued_children_even_a_child_with_states_of_its_own()
     {
         const double Thickness = 0.1;
         var cfg = TempConfig();
@@ -601,13 +602,12 @@ public sealed partial class ConverterTests
         var pack = Json.Load<PackManifest>(Path.Combine(Packages, "tts.states", "pack.json"));
         var piece = Assert.Single(table.UmpireBoard);
         var def = pack.Pieces.Single(d => d.Id == piece.Def);
-        SKColor Edge(string sha)
-        {
-            using var bmp = SKBitmap.Decode(Path.Combine(Packages, "tts.states", pack.Assets[sha].File));
-            return bmp.GetPixel(1, bmp.Height / 2);
-        }
+        PieceDef KindOf(PartDef p) => pack.Pieces.Single(d => d.Id == p.Def);
         Assert.Equal(2, def.States.Count);
-        Assert.Equal((SKColors.Red, SKColors.Blue), (Edge(def.States[0].Image!), Edge(def.States[1].Image!)));
+        var formedBase = KindOf(Assert.Single(def.States[0].Parts!));
+        var counter = KindOf(Assert.Single(def.States[1].Parts!));
+        Assert.Empty(formedBase.States);
+        Assert.Equal(2, counter.States.Count);
         Assert.Empty(def.Attachments);
     }
 
@@ -766,7 +766,7 @@ public sealed partial class ConverterTests
         Assert.Equal(0.63, stretched.Thickness, 3);
         Assert.Equal(0.63, DrawnHeight(stretched), 3);
         Assert.Equal(0.4, DrawnHeight(even), 3);
-        Assert.Equal(defs.Entry(Box)!.Sha, even.Mesh);
+        Assert.Equal("v 18 -0.1 4.5", File.ReadLines(Path.Combine(pack.Dir, pack.M.Assets[even.Mesh!].File)).First());
         Assert.Contains("vn 0 1 0", File.ReadAllText(Path.Combine(pack.Dir, pack.M.Assets[stretched.Mesh!].File)));
     }
 

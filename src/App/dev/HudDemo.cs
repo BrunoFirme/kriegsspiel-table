@@ -922,7 +922,7 @@ sealed class HudDemo : HudPart
                         for (int a = 0; a < 32; a++)
                         {
                             var s = c + new Vector2(Mathf.Cos(a * Mathf.Tau / 32), Mathf.Sin(a * Mathf.Tau / 32)) * r;
-                            if (n.FacePoint(s) is { } f && n.WidgetAt(f)?.index == want) return s;
+                            if (n.WidgetUnder(s)?.index == want) return s;
                         }
                     return null;
                 }

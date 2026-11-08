@@ -28,7 +28,10 @@ public static class ModuleSources
             _ => null,
         };
         def.ModuleObjectTag = ObjectTag(b);
-        var (states, _) = b.StateList();
+    }
+
+    public static void States(PieceDef def, List<ModuleObj> states)
+    {
         for (int i = 0; i < def.States.Count && i < states.Count; i++) def.States[i].Module = StateData(states[i]);
     }
 

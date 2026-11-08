@@ -697,7 +697,7 @@ public sealed partial class ScriptHost
     internal void Emit(Command c)
     {
         var r = _reaction ?? throw new ScriptRuntimeException("not inside a script call");
-        if (c is DeletePiece d && Find(d.Id) != null && _depth < MaxDepth)
+        if ((c is DeletePiece d && Find(d.Id) != null || c is SetState { Script: null }) && _depth < MaxDepth)
         {
             _depth++;
             try { Before(c); } finally { _depth--; }
@@ -786,6 +786,9 @@ public sealed partial class ScriptHost
                 if (_pieces.TryGetValue(d.Id, out var ps)) Call(ps, "on_destroy");
                 _every.Tell("on_destroy", Handle(d.Id));
                 break;
+            case SetState { Script: null } st when Find(st.Id) is { } sp:
+                ModuleLooks.Swap(st, sp, _s.Store?.Def(sp.Def), CodeFor(sp), p => _pieces.TryGetValue(p.Id, out var ps) && Call(ps, "on_save") is { Type: DataType.String } v ? v.String : p.ScriptState);
+                break;
         }
     }
 
@@ -803,6 +806,7 @@ public sealed partial class ScriptHost
     {
         var (old, now) = (DynValue.NewNumber(OldState(st) + 1), DynValue.NewNumber(st.State + 1));
         bool book = Find(st.Id) is { } p && _s.Store?.Def(p.Def)?.Tags.Contains("book") == true;
+        if (st.Script != null && Find(st.Id) is { } swapped) LoadPiece(swapped);
         if (_pieces.TryGetValue(st.Id, out var pst))
         {
             Call(pst, "on_state", old, now);

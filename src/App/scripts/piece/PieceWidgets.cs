@@ -9,11 +9,14 @@ sealed class PieceWidgets
 {
     readonly PieceNode _piece;
     readonly List<Node3D> _nodes = new();
-    readonly record struct Hit(Vector2 Centre, Vector2 Half, float Turn, int Index)
+    readonly record struct Hit(Vector2 Centre, Vector2 Half, float Turn, int Index, Vector3 Drawn)
     {
-        public bool Holds(Vector2 p)
+        public bool Holds(Vector2 p) => Within(p - Centre);
+
+        public bool Holds(Vector3 local) => Within(new Vector2(local.X - Drawn.X, local.Z - Drawn.Z));
+
+        bool Within(Vector2 d)
         {
-            var d = p - Centre;
             float c = Mathf.Cos(Turn), s = Mathf.Sin(Turn);
             return Mathf.Abs(d.X * c + d.Y * s) <= Half.X && Mathf.Abs(-d.X * s + d.Y * c) <= Half.Y;
         }
@@ -132,7 +135,7 @@ sealed class PieceWidgets
         var textColor = w.TextColor != null ? Coords.ParseColor(w.TextColor, WidgetBoxText) : boxed ? WidgetBoxText : WidgetLabelText;
         float turn = Mathf.DegToRad((float)w.Rot);
         float? height = w.Y is { } y ? (float)y * k : null;
-        MeshInstance3D? box = boxed ? Plane(x, z, bw, bh, turn, WidgetMat(boxColor), back, faceY, 0.002f, height) : null;
+        MeshInstance3D? box = boxed ? Plane(x, z, bw, bh, turn, WidgetMat(boxColor), back, faceY, BoxAbove, height) : null;
         var hover = w.HoverColor != null ? Coords.ParseColor(w.HoverColor, boxColor) : Toward(boxColor, HoverStep);
         var press = w.PressColor != null ? Coords.ParseColor(w.PressColor, boxColor) : Toward(boxColor, PressStep);
         _boxes[index] = (box, boxColor, hover, press);
@@ -143,7 +146,7 @@ sealed class PieceWidgets
         float em = Mathf.Max(0.002f, (float)w.Font * k * grow);
         if ((input || label) && boxed && !typing) text = Fitting(text, em, bw * 0.94f);
         Text(text, x, z, boxed ? bw * 0.94f : 0, em, color, w.Align, (float)w.Rot, back, faceY, 0.004f, height, besideFace: !boxed || boxColor.A < SeeThroughBox);
-        if (boxed && !w.Locked && clickable) _hits.Add(new Hit(new Vector2(x, z), new Vector2(bw, bh) / 2, turn, index));
+        if (boxed && !w.Locked && clickable) _hits.Add(new Hit(new Vector2(x, z), new Vector2(bw, bh) / 2, turn, index, At(x, z, back, faceY, BoxAbove, height)));
     }
 
     static string Fitting(string text, float em, float width)
@@ -175,7 +178,7 @@ sealed class PieceWidgets
         return n;
     }
 
-    const float SeeThroughBox = 0.35f, LightText = 0.5f, PlatePad = 0.3f, PlateBehind = 0.0005f;
+    const float SeeThroughBox = 0.35f, LightText = 0.5f, PlatePad = 0.3f, PlateBehind = 0.0005f, BoxAbove = 0.002f;
     const int PlatePriority = 2;
     static readonly Color DarkPlate = new(0.09f, 0.085f, 0.075f, 0.88f), LightPlate = new(0.96f, 0.94f, 0.89f, 0.9f);
 
@@ -235,5 +238,20 @@ sealed class PieceWidgets
         foreach (var hit in _hits)
             if (hit.Holds(local) && hit.Index >= 1 && hit.Index <= widgets.Count) return (hit.Index, widgets[hit.Index - 1]);
         return null;
+    }
+
+    public (int index, Widget widget, float t)? Along(Vector3 origin, Vector3 dir)
+    {
+        if (_hits.Count == 0 || Mathf.Abs(dir.Y) < 1e-6f) return null;
+        var widgets = _piece.Piece.Widgets;
+        (int index, Widget widget, float t)? best = null;
+        foreach (var hit in _hits)
+        {
+            if (hit.Index < 1 || hit.Index > widgets.Count) continue;
+            float t = (hit.Drawn.Y - origin.Y) / dir.Y;
+            if (t < 0 || (best is { } b && t >= b.t) || !hit.Holds(origin + dir * t)) continue;
+            best = (hit.Index, widgets[hit.Index - 1], t);
+        }
+        return best;
     }
 }

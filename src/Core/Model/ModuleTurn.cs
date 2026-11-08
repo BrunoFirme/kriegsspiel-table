@@ -2,7 +2,7 @@ namespace KTable.Core.Model;
 
 public readonly record struct ModuleTurn(double M00, double M01, double M02, double M10, double M11, double M12, double M20, double M21, double M22)
 {
-    const double Degree = Math.PI / 180;
+    const double Degree = Math.PI / 180, Gimbal = 0.999999;
 
     public static readonly ModuleTurn None = new(1, 0, 0, 0, 1, 0, 0, 0, 1);
 
@@ -28,4 +28,11 @@ public readonly record struct ModuleTurn(double M00, double M01, double M02, dou
         (M00 * x + M10 * y + M20 * z, M01 * x + M11 * y + M21 * z, M02 * x + M12 * y + M22 * z);
 
     public double UpY => M11;
+
+    public (double X, double Y, double Z) Euler()
+    {
+        double x = Math.Asin(Math.Clamp(-M12, -1, 1));
+        if (Math.Abs(M12) > Gimbal) return (x / Degree, Math.Atan2(-M20, M00) / Degree, 0);
+        return (x / Degree, Math.Atan2(M02, M22) / Degree, Math.Atan2(M10, M11) / Degree);
+    }
 }

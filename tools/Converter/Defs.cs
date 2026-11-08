@@ -96,7 +96,9 @@ public sealed partial class DefFactory
     PieceMirror? _mirrors;
     GluedParts? _glued;
     SharedMirror? _shared;
-    SharedMirror Shared => _shared ??= new SharedMirror(_cfg.Output, _cfg.Cache, _mirrors ??= new PieceMirror(_cfg.Cache));
+    internal SharedMirror Shared => _shared ??= new SharedMirror(_cfg.Output, _cfg.Cache, _mirrors ??= new PieceMirror(_cfg.Cache));
+    CarriedLooks? _carried;
+    CarriedLooks Carried => _carried ??= new CarriedLooks(this, _rep);
     public GluedParts Glued => _glued ??= new GluedParts(this, _rep, _cfg.BaseSizes.CustomTokenArea);
     static string PartsKey(PieceDef d) => d.Parts == null && d.States.All(s => s.Parts == null) ? "" : "|p" + Hash8(Json.Serialize(d.Parts) + string.Join(";", d.States.Select(s => Json.Serialize(s.Parts))));
     public string? FlippedPicture(PackOut pack, string? sha) => (_mirrors ??= new PieceMirror(_cfg.Cache)).Picture(pack, sha, new Mirror(true, false, false));
@@ -221,10 +223,10 @@ public sealed partial class DefFactory
         };
     }
 
-    void SetFlatFrame(PieceDef def, ModuleObj b, bool baked, double heightScale)
+    void SetFlatFrame(PieceDef def, ModuleObj b, double heightScale)
     {
         double rise = Math.Abs(b.ScaleY) * heightScale;
-        double low = baked ? BakedSpan(b).Low : b.Name == "Custom_Token" ? -BaseThickness(b) / 2 : 0;
+        double low = b.Name == "Custom_Token" ? -BaseThickness(b) / 2 : 0;
         def.ModuleRise = Math.Round(rise, 4);
         def.ModuleOrigin = Math.Round(-low * rise, 4);
     }
@@ -253,12 +255,13 @@ public sealed partial class DefFactory
     public (double X, double Z) LocalUnits(PieceDef def, ModuleObj o)
     {
         if (def.LocalUnit is { } lu) return (lu.W, lu.H);
+        var size = def.Size;
         if (def.Shape == "alpha" && o.ImageUrl != null && Entry(o.ImageUrl) is { W: > 0, H: > 0 } e)
         {
             double aspect = e.W / (double)e.H, area = _cfg.BaseSizes.CustomTokenArea;
-            return (def.Size.W / Math.Sqrt(area * aspect), def.Size.H / Math.Sqrt(area / aspect));
+            return (size.W / Math.Sqrt(area * aspect), size.H / Math.Sqrt(area / aspect));
         }
-        return (def.Size.H / 2, def.Size.H / 2);
+        return (size.H / 2, size.H / 2);
     }
 
     public string VisualKey(ModuleObj o)
@@ -335,9 +338,9 @@ public sealed partial class DefFactory
         var (states, self) = o.StateList();
         var b = states[0];
         double bs = Math.Abs(b.ScaleX) < NoScale ? 1 : Math.Abs(b.ScaleX);
-        double r = refScale is > NoScale && !BakesChildren(o) ? refScale.Value : bs;
+        double r = refScale is > NoScale ? refScale.Value : bs;
         double instScale = Math.Round(bs / r, 4);
-        if (StandardDef(o, b, pack, bs, instScale) is { } standard) return Shared.Of(o, standard, pack);
+        if (StandardDef(o, b, pack, bs, instScale) is { } standard) return Carried.Of(o, states, self, Shared.Of(o, standard, pack), pack, bs, heightScale);
         if (o.Name == TilesetTree) return null;
         var where = $"{Context} {o.Name} '{o.Nickname}' {o.Guid}";
 
@@ -369,7 +372,7 @@ public sealed partial class DefFactory
                 var stShape = PackManifest.ShapeOf(s.Name, s.TileType);
                 if (stShape != def.Shape) sd.Shape = stShape;
                 if (IsModel(s)) { sd.Mesh = ModelMesh(pack, s, where); sd.Texture = Asset(pack, s.DiffuseUrl, "image", where); }
-                else { sd.Image = Asset(pack, s.ImageUrl, "image", where); sd.Back = Asset(pack, s.BackUrl, "image", where); }
+                else { sd.Image = Asset(pack, s.ImageUrl, "image", where); sd.Back = s.Name == "Custom_Token" ? null : Asset(pack, s.BackUrl, "image", where); }
                 if (s.Name == "Custom_Token") sd.Outline = Outlines.Of(s.ImageUrl, s.MergeDistance);
                 if (s.Lua.Trim().Length > 0 && !ReferenceEquals(s, states[0])) { sd.Script = s.Lua; _rep.Note($"{where}: the state \"{sd.Name}\" carries a script of its own (kept, not run)"); }
                 if (s.TransformNotANumber) _rep.Note($"{where}: the module scales the state \"{sd.Name}\" by something that is not a number; it takes the piece's own size");
@@ -378,8 +381,8 @@ public sealed partial class DefFactory
             }
         }
 
-        bool baked = BakesChildren(o) && BakeStates(def, states, bs, r, heightScale, pack);
-        if (b.Name is "Custom_Token" or "Custom_Tile") SetFlatFrame(def, b, baked, heightScale);
+        ModuleSources.States(def, states);
+        if (b.Name is "Custom_Token" or "Custom_Tile") SetFlatFrame(def, b, heightScale);
         for (int i = 0; i < def.States.Count && i < states.Count; i++)
         {
             var sd = def.States[i];
@@ -387,11 +390,10 @@ public sealed partial class DefFactory
                 _cfg.BaseSizes.CustomTokenArea, url => UiAsset(pack, url, $"{where} state \"{sd.Name}\" decal"), sha => FlippedPicture(pack, sha));
             if (decals.Count > 0) sd.Decals = decals;
         }
-        if (!baked) Glued.Fill(def, states, bs, r, heightScale, pack, where, Mirror.Of(o));
+        Glued.Fill(def, states, bs, r, heightScale, pack, where, Mirror.Of(o));
 
         var mirror = Mirror.Of(o);
         (_mirrors ??= new PieceMirror(_cfg.Cache)).Apply(def, pack, mirror);
-        var bakedKey = baked ? "|" + string.Join(",", def.States.Select(s => s.Image).Prepend(def.Image)) : "";
         var decalKey = def.States.Any(s => s.Decals is { Count: > 0 })
             ? "|d" + Hash8(string.Join(";", def.States.Select(s => string.Join(",", (s.Decals ?? new()).Select(d => d.Picture)))))
             : "";
@@ -399,7 +401,7 @@ public sealed partial class DefFactory
         var facesKey = !RollsOnItsValues(o) ? "" : "|f" + Hash8(string.Join(";", def.Faces.Select(f => string.Create(CultureInfo.InvariantCulture, $"{f.Value}@{f.Up[0]},{f.Up[1]},{f.Up[2]}"))));
         var surfaceKey = (def.Shadowless ? "|ns" : "") + (def.Normal is { } normal ? "|n" + normal : "") + TokenOutlines.MergeKey(o) + (b.StandsUp ? "|up" : "");
         var lookTints = def.States.Any(s => s.Tint != null) ? "|lt" + Hash8(string.Join(",", def.States.Select(s => s.Tint ?? ""))) : "";
-        var key = string.Create(CultureInfo.InvariantCulture, $"{VisualKey(o)}|{def.Size.W:0.###}x{def.Size.H:0.###}{scriptKey}{bakedKey}{decalKey}{gluedKey}{facesKey}{surfaceKey}{mirror.Key}{PartsKey(def)}{lookTints}");
+        var key = string.Create(CultureInfo.InvariantCulture, $"{VisualKey(o)}|{def.Size.W:0.###}x{def.Size.H:0.###}{scriptKey}{decalKey}{gluedKey}{facesKey}{surfaceKey}{mirror.Key}{PartsKey(def)}{lookTints}");
         int rich = def.States.Count * 100 + def.Counters.Count * 10 + def.TextLines.Count + (def.Parts?.Count ?? 0) * 1000 + (def.Script != null ? 5000 : 0);
         if (pack.ByKey.TryGetValue(key, out var existing))
         {
@@ -502,7 +504,7 @@ public sealed partial class DefFactory
         else
         {
             def.Image = Asset(pack, b.ImageUrl, "image", where);
-            def.Back = Asset(pack, b.BackUrl, "image", where);
+            def.Back = b.Name == "Custom_Token" ? null : Asset(pack, b.BackUrl, "image", where);
             if (b.Name == "Custom_Token") def.Outline = Outlines.Of(b.ImageUrl, b.MergeDistance);
             def.Image ??= Placeholder(pack);
             if (b.Name == "Custom_Token" && b.StandsUp) StandUp(def, pack);

@@ -12,6 +12,21 @@ public sealed class ModuleTurnTests
         Assert.Equal(want.Z, got.Z, Digits);
     }
 
+    [Theory]
+    [InlineData(0, 0, 0)]
+    [InlineData(10, 200, -30)]
+    [InlineData(-45, 90, 180)]
+    [InlineData(89.9, 15, 0)]
+    public void A_turn_read_back_as_angles_turns_every_axis_as_the_original_did(double x, double y, double z)
+    {
+        var turn = ModuleTurn.Of(x, y, z);
+        var (ax, ay, az) = turn.Euler();
+        var again = ModuleTurn.Of(ax, ay, az);
+        Near(turn.Apply(1, 0, 0), again.Apply(1, 0, 0));
+        Near(turn.Apply(0, 1, 0), again.Apply(0, 1, 0));
+        Near(turn.Apply(0, 0, 1), again.Apply(0, 0, 1));
+    }
+
     [Fact]
     public void A_turn_about_the_vertical_axis_takes_forward_to_the_right_as_the_game_turns_it()
     {

@@ -183,7 +183,8 @@ sealed class PieceLayer
         foreach (var n in Grid.Near(ground))
         {
             if (interactiveOnly && !_c.LayerInteractive(n.Layer)) continue;
-            if (interactiveOnly && n.Piece.NotInteractable && n.WidgetAt(ground) == null) continue;
+            float? widget = n.WidgetAlong(ro, rd)?.t;
+            if (interactiveOnly && n.Piece.NotInteractable && widget == null) continue;
             float t;
             if (n.IsDie)
             {
@@ -191,7 +192,8 @@ sealed class PieceLayer
                 t = (c - ro).Dot(rd);
                 if (t < 0 || (c - (ro + rd * t)).Length() > n.Footprint.Length() * 0.55f) continue;
             }
-            else if (RayMeets(n, ro, rd) is { } hit) t = hit;
+            else if (RayMeets(n, ro, rd) is { } hit) t = widget is { } w ? Mathf.Min(hit, w) : hit;
+            else if (widget is { } w) t = w;
             else continue;
             if (best == null || (n.IsEffect == best.IsEffect ? t < bestT : !n.IsEffect)) { best = n; bestT = t; }
         }

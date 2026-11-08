@@ -1,4 +1,4 @@
-format 27
+format 28
 type AccessChanged object
   access: GameAccess
 type AddBoard object
@@ -701,6 +701,7 @@ type PieceInstance object
   stack: int
   state: int
   stateGuids: List<string>
+  stateScripts: List<string>
   stowed: List<PieceInstance>
   tags: List<string>
   takeOrder: string
@@ -1168,8 +1169,10 @@ type SetState object
   at: long
   id: string
   layer: string
+  script: string
   seq: long
   state: int
+  stateScripts: List<string>
   undoOf: long
 type SetTags object
   actor: long

@@ -19,20 +19,22 @@ public sealed partial class DefFactory
     string? ModelMesh(PackOut pack, ModuleObj m, string where)
     {
         double stretch = Stretch(m);
-        if (stretch == 1 || Entry(m.MeshUrl) is not { Ext: "obj" } e || _assets.FilePath(e) is not { } src)
+        if (Entry(m.MeshUrl) is not { Ext: "obj" } e || _assets.FilePath(e) is not { } src)
             return Asset(pack, m.MeshUrl, "mesh", where);
-        var file = Path.Combine(_cfg.Cache, "stretched", string.Create(CultureInfo.InvariantCulture, $"{e.Sha}-{stretch:0.####}.obj"));
+        var file = Path.Combine(_cfg.Cache, "placed", string.Create(CultureInfo.InvariantCulture, $"{e.Sha}-{stretch:0.####}.obj"));
         if (!File.Exists(file))
         {
             Directory.CreateDirectory(Path.GetDirectoryName(file)!);
-            Json.WriteAtomic(file, Stretched(File.ReadLines(src), stretch));
+            Json.WriteAtomic(file, Placed(File.ReadLines(src), stretch));
         }
         var sha = Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(file))).ToLowerInvariant();
         Put(pack, sha, "obj", file, "mesh", 0, 0);
         return sha;
     }
 
-    internal static string Stretched(IEnumerable<string> obj, double stretch)
+    static double Turned(double v) => v == 0 ? 0 : -v;
+
+    internal static string Placed(IEnumerable<string> obj, double stretch)
     {
         var inv = CultureInfo.InvariantCulture;
         var sb = new StringBuilder();
@@ -54,9 +56,9 @@ public sealed partial class DefFactory
                 double length = Math.Sqrt(x * x + y * y + z * z);
                 if (length > 0) (x, y, z) = (x / length, y / length, z / length);
             }
-            p[1] = x.ToString("R", inv);
+            p[1] = Turned(x).ToString("R", inv);
             p[2] = y.ToString("R", inv);
-            p[3] = z.ToString("R", inv);
+            p[3] = Turned(z).ToString("R", inv);
             sb.Append(string.Join(' ', p)).Append('\n');
         }
         return sb.ToString();

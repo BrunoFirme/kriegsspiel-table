@@ -3,6 +3,7 @@ using System.Text.Json.Nodes;
 using KTable.Converter.Bundles;
 using KTable.Core;
 using KTable.Core.Model;
+using SkiaSharp;
 
 namespace KTable.Converter.Tests;
 
@@ -444,7 +445,7 @@ public sealed partial class ConverterTests : ConverterHarness
     }
 
     [Fact]
-    public void A_models_face_is_turned_the_right_way_out_and_its_uvs_land_on_its_own_tile()
+    public void A_models_face_is_turned_the_right_way_out_half_round_as_the_table_draws_models_and_its_uvs_land_on_its_own_tile()
     {
         var part = new ModelPart(
             new double[] { 1, 2, 3, 4, 5, 6, 7, 8, 9 },
@@ -457,8 +458,8 @@ public sealed partial class ConverterTests : ConverterHarness
         var lines = ModelAtlas.Obj(model, places, 2048, 1280).Split('\n', StringSplitOptions.RemoveEmptyEntries);
 
         Assert.Equal("o Gunner", lines[0]);
-        Assert.Equal(-1, Number(lines[1], 1));
-        Assert.Equal(-4, Number(lines[2], 1));
+        Assert.Equal((1, -3), (Number(lines[1], 1), Number(lines[1], 3)));
+        Assert.Equal((4, -6), (Number(lines[2], 1), Number(lines[2], 3)));
         Assert.Equal((0.25 * 400 + 100) / 2048, Number(lines[4], 1), 5);
         Assert.Equal((0.5 * 800 + 200) / 1280, Number(lines[4], 2), 5);
         Assert.Equal("f 3/3 2/2 1/1", lines[7]);

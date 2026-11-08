@@ -90,15 +90,15 @@ sealed class SelectTool
             names.End(commit: true);
             if (again) return true;
         }
-        if (FaceItem(hit, f) is not { } what) return false;
+        if (FaceItem(hit, f, mb.Position) is not { } what) return false;
         if (what.StartsWith('w') && int.TryParse(what.AsSpan(1), out var wi)) hit.FlashWidget(wi);
         _onFace = (hit, what, g, mb.ShiftPressed || mb.CtrlPressed);
         return true;
     }
 
-    string? FaceItem(PieceNode hit, Vec2 f)
+    string? FaceItem(PieceNode hit, Vec2 f, Vector2 screen)
     {
-        if (S.CanTouch(hit.Layer, hit.Piece) && hit.WidgetAt(f) is { } wh) return "w" + wh.index;
+        if (S.CanTouch(hit.Layer, hit.Piece) && hit.WidgetUnder(screen) is { } wh) return "w" + wh.index;
         if (S.CanTouch(hit.Layer, hit.Piece) && hit.PanelAt(f) is { } panel) return "u:" + panel.Id;
         if (S.CanTouch(hit.Layer, hit.Piece) && hit.NotePartAt(f) is { } part) return part ? "note body" : "note title";
         if (hit.CardButtonAt(f) is { } cb) return $"c:{cb.name}:{cb.value}";
@@ -110,8 +110,8 @@ sealed class SelectTool
     {
         if (!GodotObject.IsInstanceValid(hit)) return;
         var f = hit.FacePoint(screen) ?? g;
-        if (FaceItem(hit, f) != what) return;
-        if (S.CanTouch(hit.Layer, hit.Piece) && hit.WidgetAt(f) is { } wh)
+        if (FaceItem(hit, f, screen) != what) return;
+        if (S.CanTouch(hit.Layer, hit.Piece) && hit.WidgetUnder(screen) is { } wh)
         {
             if (wh.widget.Kind == "input") { _names.BeginWidget(hit, wh.index, wh.widget); return; }
             _actions.PressWidget(hit, wh.index, wh.widget);

@@ -16,7 +16,7 @@ public sealed class PieceArt
     readonly Dictionary<(string shape, float w, float h, float t, bool sameUnderside), ArrayMesh> _slabs = new();
     readonly Dictionary<(Vector2 size, bool flip), PlaneMesh> _planes = new();
     readonly Dictionary<(string tex, float w, float h, float t), ArrayMesh?> _walls = new();
-    readonly Dictionary<(string pkg, string rel, int size, Color tint, bool scissor), StandardMaterial3D> _prints = new();
+    readonly Dictionary<(string pkg, string rel, int size, Color tint, bool scissor, bool oneSided), StandardMaterial3D> _prints = new();
     readonly Dictionary<Color, StandardMaterial3D> _edges = new();
 
     public int Meshes => _slabs.Count + _planes.Count + _walls.Count;
@@ -158,9 +158,9 @@ public sealed class PieceArt
         return mesh;
     }
 
-    public StandardMaterial3D Print(string? pkg, string? rel, int size, Color tint, bool scissor)
+    public StandardMaterial3D Print(string? pkg, string? rel, int size, Color tint, bool scissor, bool oneSided = false)
     {
-        var key = (pkg ?? "", rel ?? "", size, tint, scissor);
+        var key = (pkg ?? "", rel ?? "", size, tint, scissor, oneSided);
         if (_prints.TryGetValue(key, out var m)) return m;
         m = new StandardMaterial3D
         {
@@ -170,7 +170,7 @@ public sealed class PieceArt
             AlphaScissorThreshold = 0.5f,
             TextureFilter = BaseMaterial3D.TextureFilterEnum.LinearWithMipmapsAnisotropic,
             TextureRepeat = false,
-            CullMode = BaseMaterial3D.CullModeEnum.Disabled,
+            CullMode = oneSided ? BaseMaterial3D.CullModeEnum.Back : BaseMaterial3D.CullModeEnum.Disabled,
         };
         _prints[key] = m;
         if (pkg != null && rel != null)
@@ -196,7 +196,7 @@ public sealed class PieceArt
         foreach (var (key, m) in _prints) Dress(key, m);
     }
 
-    void Dress((string pkg, string rel, int size, Color tint, bool scissor) key, StandardMaterial3D m)
+    void Dress((string pkg, string rel, int size, Color tint, bool scissor, bool oneSided) key, StandardMaterial3D m)
     {
         if (key.pkg.Length == 0 || key.rel.Length == 0) return;
         var muted = TextMuted ? _muted!.Texture(key.pkg, key.rel, () => Dress(key, m)) : null;

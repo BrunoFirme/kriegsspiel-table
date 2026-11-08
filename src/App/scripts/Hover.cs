@@ -38,7 +38,7 @@ sealed class Hover
         }
         var g = _c.Ground(screen);
         var hit = g != null ? _pieces.Pick(g.Value, interactiveOnly: false, screen: screen) : null;
-        int wi = hit != null && g != null && _c.S.CanTouch(hit.Layer, hit.Piece) ? hit.WidgetAt(hit.FacePoint(screen) ?? g.Value)?.index ?? 0 : 0;
+        int wi = hit != null && g != null && _c.S.CanTouch(hit.Layer, hit.Piece) ? hit.WidgetUnder(screen)?.index ?? 0 : 0;
         if (hit != Node || wi != _widget)
         {
             if (Node != null && Node != hit) Leave(Node);

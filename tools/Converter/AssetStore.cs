@@ -161,7 +161,7 @@ public sealed partial class AssetStore
     {
         "ok" => false,
         "dead" => !(e.Error is { } why && (why.StartsWith("HTTP 404") || why.StartsWith("HTTP 410") || why.StartsWith("got an HTML page")
-                                           || why.StartsWith("local file path") || why.StartsWith("not a web address"))),
+                                           || why.StartsWith("local file path"))),
         _ => true,
     };
 

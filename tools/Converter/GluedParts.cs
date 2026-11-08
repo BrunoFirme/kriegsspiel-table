@@ -27,7 +27,7 @@ public sealed class GluedParts(DefFactory defs, Report rep, double tokenArea)
     {
         var parts = new List<PartDef>();
         double sx = Math.Abs(s.ScaleX) < DefFactory.NoScale ? 1 : Math.Abs(s.ScaleX), sy = Math.Abs(s.ScaleY), depth = Math.Abs(s.ScaleZ) / sx;
-        foreach (var glued in s.Children)
+        foreach (var glued in Family(s.Children))
         {
             var c = Within(glued, m);
             if (IsGluedEffect(defs, c)) continue;
@@ -40,6 +40,45 @@ public sealed class GluedParts(DefFactory defs, Report rep, double tokenArea)
             parts.Add(Part(c, cr, new Frame(unit, sx, sy, depth, defs.LocalFloor(s) * sy), m, pack, where));
         }
         return parts.Count > 0 ? parts : null;
+    }
+
+    static IEnumerable<ModuleObj> Family(IEnumerable<ModuleObj> children)
+    {
+        foreach (var c in children)
+        {
+            if (c.StateList().states.Count > 1 || !c.Children.Any())
+            {
+                yield return c;
+                continue;
+            }
+            yield return Bare(c);
+            foreach (var g in Family(c.Children)) yield return Through(c, g);
+        }
+    }
+
+    static ModuleObj Bare(ModuleObj c) => new(Copy(c.J, keepChildren: false));
+
+    static JsonObject Copy(JsonObject j, bool keepChildren)
+    {
+        var copy = new JsonObject();
+        foreach (var (k, v) in j)
+            if (keepChildren || k != "ChildObjects") copy[k] = v?.DeepClone();
+        return copy;
+    }
+
+    static ModuleObj Through(ModuleObj parent, ModuleObj child)
+    {
+        var turn = ModuleTurn.Of(parent.RotX, parent.RotY, parent.RotZ);
+        var (x, y, z) = turn.Apply(child.PosX * parent.ScaleX, child.PosY * parent.ScaleY, child.PosZ * parent.ScaleZ);
+        var (rx, ry, rz) = turn.Then(ModuleTurn.Of(child.RotX, child.RotY, child.RotZ)).Euler();
+        var j = Copy(child.J, keepChildren: child.StateList().states.Count > 1);
+        j["Transform"] = new JsonObject
+        {
+            ["posX"] = parent.PosX + x, ["posY"] = parent.PosY + y, ["posZ"] = parent.PosZ + z,
+            ["rotX"] = rx, ["rotY"] = ry, ["rotZ"] = rz,
+            ["scaleX"] = parent.ScaleX * child.ScaleX, ["scaleY"] = parent.ScaleY * child.ScaleY, ["scaleZ"] = parent.ScaleZ * child.ScaleZ,
+        };
+        return new ModuleObj(j);
     }
 
     static ModuleObj Within(ModuleObj c, Mirror m)
@@ -63,7 +102,7 @@ public sealed class GluedParts(DefFactory defs, Report rep, double tokenArea)
         {
             Def = d.Id, X = Math.Round(-c.PosX * unit * m.SignX, Digits), Z = Math.Round(c.PosZ * unit * f.Depth * m.SignZ, Digits),
             Y = Math.Round((bottom - f.Floor) * unit / f.Sx, Digits), Rot = Math.Round(m.X ^ m.Z ? -pose.Heading : pose.Heading, 3), TiltX = pose.X, TiltZ = pose.Z,
-            FaceDown = pose.Down && d.Kind != "model" && d.Back != null,
+            FaceDown = pose.Down && d.Kind != "model",
             Scale = cr.FromPack != null ? Math.Round(Math.Abs(c.ScaleX) * unit * cr.Fit, Digits) : 1,
             Tint = c.Color is { } col && !string.Equals(col, d.Tint, StringComparison.OrdinalIgnoreCase) ? col : null,
             State = rolls ? 0 : Math.Min(cr.State, Math.Max(0, d.States.Count - 1)), Face = rolls ? cr.State : -1,

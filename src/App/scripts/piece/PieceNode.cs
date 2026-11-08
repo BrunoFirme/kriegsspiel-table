@@ -225,6 +225,19 @@ public partial class PieceNode : Node3D
 
     public (int index, Widget widget)? WidgetAt(Vec2 point) => _flipping ? null : _widgets.At(Coords.ToLocal(point, Piece.Pos, Piece.RotDeg));
 
+    public (int index, Widget widget, float t)? WidgetAlong(Vector3 origin, Vector3 dir)
+    {
+        if (_flipping) return null;
+        var inv = GlobalTransform.AffineInverse();
+        return _widgets.Along(inv * origin, inv.Basis * dir);
+    }
+
+    public (int index, Widget widget)? WidgetUnder(Vector2 screen)
+    {
+        var cam = GetViewport()?.GetCamera3D();
+        return cam != null && WidgetAlong(cam.ProjectRayOrigin(screen), cam.ProjectRayNormal(screen)) is { } w ? (w.index, w.widget) : null;
+    }
+
     public bool? NotePartAt(Vec2 point) => _flipping ? null : _note.PartAt(Coords.ToLocal(point, Piece.Pos, Piece.RotDeg));
 
     public string NoteLine(bool body) => _note.Line(body);
@@ -385,8 +398,8 @@ public partial class PieceNode : Node3D
         }
         PaintEdges(SideColor());
         bool same = SamePrintUnderside;
-        AddChild(new MeshInstance3D { Mesh = Art.Plane(Footprint, flip: same), RotationDegrees = same ? Vector3.Zero : new Vector3(180, 0, 0), Position = new Vector3(0, 0, 0),
-            MaterialOverride = BackMat(scissor: true), CastShadow = GeometryInstance3D.ShadowCastingSetting.Off });
+        AddChild(new MeshInstance3D { Mesh = Art.Plane(Footprint, flip: same), RotationDegrees = same ? Vector3.Zero : new Vector3(0, 0, 180), Position = new Vector3(0, 0, 0),
+            MaterialOverride = BackMat(scissor: true, oneSided: true), CastShadow = GeometryInstance3D.ShadowCastingSetting.Off });
         LoadTexture();
     }
 

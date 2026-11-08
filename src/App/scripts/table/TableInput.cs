@@ -236,7 +236,7 @@ sealed class TableInput
         {
             var gg = _c.Ground(mb.Position);
             var hit = gg != null ? _pieces.Pick(gg.Value, screen: mb.Position) : null;
-            if (hit != null && gg != null && S.CanTouch(hit.Layer, hit.Piece) && hit.WidgetAt(hit.FacePoint(mb.Position) ?? gg.Value) is { widget.Kind: "button" } wa)
+            if (hit != null && gg != null && S.CanTouch(hit.Layer, hit.Piece) && hit.WidgetUnder(mb.Position) is { widget.Kind: "button" } wa)
             {
                 S.Do(new ClickWidget { Layer = hit.Layer, Id = hit.Piece.Id, Index = wa.index, Alt = true });
                 return;

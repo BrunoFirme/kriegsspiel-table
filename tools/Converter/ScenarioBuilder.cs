@@ -579,8 +579,7 @@ public sealed partial class ScenarioBuilder
         Dress(inst, o, def, r, extras, layer.Name);
         layer.Pieces.Add(inst);
         layer.Y[inst] = o.PosY;
-        bool baked = _defs.IsBaked(r.Def);
-        var (low, high) = baked ? _defs.BakedSpan(o) : _defs.Glued.Span(o);
+        var (low, high) = _defs.Glued.Span(o);
         layer.Bottom[inst] = o.PosY + low * Math.Abs(o.ScaleY);
         layer.Top[inst] = o.PosY + high * Math.Abs(o.ScaleY);
         if (pose.Tilted) Tilt(layer, inst, o, def, low, high);
@@ -675,7 +674,11 @@ public sealed partial class ScenarioBuilder
         double parentFloor = _defs.LocalFloor(o);
         foreach (var c in children)
         {
-            if (!_defs.Shows(c) || DefFactory.NotTranslated(c) is not null) continue;
+            if (!_defs.Shows(c) || DefFactory.NotTranslated(c) is not null)
+            {
+                _rep.Skipped(DefFactory.NotTranslated(c) ?? "glued " + c.Name, $"{layer.Name} {o.Name} '{o.Nickname}' {o.Guid}");
+                continue;
+            }
             double lx = c.PosX * o.ScaleX, lz = c.PosZ * o.ScaleZ;
             double childAbsolute = Math.Abs(c.StateList().states[0].ScaleX) * absolute;
             var ci = Instance(c, Math.Abs(c.StateList().states[0].ScaleX) * refScale, extras, packDefs, layer, usedPacks, ref rekeyed, parent, parentHeight, childAbsolute);

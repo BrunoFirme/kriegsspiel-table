@@ -107,9 +107,9 @@ public static class ModelAtlas
             for (int n = 0; n < used.Length; n++) at[used[n]] = n;
             var place = part.Texture != null && places.TryGetValue(part.Texture, out var found) ? found : null;
             foreach (int vertex in used)
-                text.Append("v ").Append(Six(-part.Verts[vertex * Axes])).Append(' ')
+                text.Append("v ").Append(Six(part.Verts[vertex * Axes])).Append(' ')
                     .Append(Six(part.Verts[vertex * Axes + 1])).Append(' ')
-                    .Append(Six(part.Verts[vertex * Axes + 2])).Append('\n');
+                    .Append(Six(-part.Verts[vertex * Axes + 2])).Append('\n');
             int triangles = part.Triangles.Length / 3;
             for (int n = 0; n < triangles * 3; n += 3)
             {

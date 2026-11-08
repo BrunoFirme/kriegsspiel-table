@@ -17,15 +17,36 @@ public sealed class SharedMirror(string packagesRoot, string cache, PieceMirror 
         if (pack.ByKey.TryGetValue(key, out var known)) return r with { Def = known, Copied = true };
         if (Manifest(from) is not { } source) return r;
         var copy = Json.Deserialize<PieceDef>(Json.Serialize(r.Def));
-        foreach (var sha in Naming.AssetsOf(copy).Distinct().ToList())
-            if (source.Assets.TryGetValue(sha, out var a) && AssetFile(from, a) is { } file)
-                DefFactory.Put(pack, sha, Path.GetExtension(a.File).TrimStart('.'), file, a.Kind, a.W, a.H);
+        CopyAssets(copy, from, source, pack);
         mirrors.Apply(copy, pack, m);
         foreach (var f in copy.Faces) f.Up = m.Up(f.Up);
-        copy.Id = $"{pack.Short}.{DefFactory.Slug(copy.Name)}-mirrored-{DefFactory.Hash8(key)}";
+        return Keep(r, pack, copy, key, "mirrored");
+    }
+
+    public DefResult Own(DefResult r, PackOut pack, PieceDef changed, string key, string why, IEnumerable<string> from)
+    {
+        if (pack.ByKey.TryGetValue(key, out var known)) return r with { Def = known, Copied = true };
+        foreach (var id in from)
+        {
+            if (Manifest(id) is not { } source) return r;
+            CopyAssets(changed, id, source, pack);
+        }
+        return Keep(r, pack, changed, key, why);
+    }
+
+    static DefResult Keep(DefResult r, PackOut pack, PieceDef copy, string key, string why)
+    {
+        copy.Id = $"{pack.Short}.{DefFactory.Slug(copy.Name)}-{why}-{DefFactory.Hash8(key)}";
         pack.ByKey[key] = copy;
         pack.M.Pieces.Add(copy);
         return r with { Def = copy, Copied = true };
+    }
+
+    void CopyAssets(PieceDef copy, string from, PackManifest source, PackOut pack)
+    {
+        foreach (var sha in Naming.AssetsOf(copy).Distinct().ToList())
+            if (source.Assets.TryGetValue(sha, out var a) && AssetFile(from, a) is { } file)
+                DefFactory.Put(pack, sha, Path.GetExtension(a.File).TrimStart('.'), file, a.Kind, a.W, a.H);
     }
 
     PackManifest? Manifest(string id)

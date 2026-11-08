@@ -9,7 +9,7 @@ namespace KTable.Converter;
 public sealed partial class DefFactory
 {
     public const string Figurine = "Figurine_Custom";
-    public const double FigurineBase = 1.789, FigurineBaseRise = 0.316, FigurineCard = 1.7926, FigurineCardFoot = 0.2495;
+    public const double FigurineBase = 1.789, FigurineBaseRise = 0.316, FigurineCard = 1.7926, FigurineCardFoot = 0.2495, FigurineBackBehind = 0.004;
     const int FigurineSegments = 24, BaseStripPx = 8;
     const string StandColour = "#000000";
 
@@ -128,7 +128,8 @@ public sealed partial class DefFactory
         }
         f.Add("usemtl card");
         Face((-hw, y0, 0, 0, low), (hw, y0, 0, frontShare, low), (hw, y1, 0, frontShare, 1), (-hw, y1, 0, 0, 1));
-        Face((hb, y0, 0, frontShare, low), (-hb, y0, 0, 1, low), (-hb, y1, 0, 1, 1), (hb, y1, 0, frontShare, 1));
+        double behind = -FigurineBackBehind * card.Scalar;
+        Face((hb, y0, behind, frontShare, low), (-hb, y0, behind, 1, low), (-hb, y1, behind, 1, 1), (hb, y1, behind, frontShare, 1));
         return string.Join('\n', v.Concat(vt).Concat(f)) + "\n";
     }
 }
