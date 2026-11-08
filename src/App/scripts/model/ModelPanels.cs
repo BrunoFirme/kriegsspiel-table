@@ -394,12 +394,12 @@ internal sealed partial class ModelPanels
                 _m.Edits.Move(s, new Vector3(0, floor - a.Position.Y, 0));
                 Moved();
             }, _m.Flat ? "Its lowest point on the block's top" : "Its lowest point on the stand"),
-            Ui.Btn("Flip", () =>
+            Ui.Btn("Mirror", () =>
             {
                 _m.Snapshot();
                 s.Scl[0] = -s.Scl[0];
                 Moved();
-            }, "Flip it left to right"),
+            }, "Mirror it left to right"),
             Ui.Btn("Turn 90°", () =>
             {
                 _m.Snapshot();
