@@ -45,10 +45,27 @@ function Copy-FilesBesideTheExe($dist) {
     Copy-Item (Join-Path $repo "THIRD-PARTY-NOTICES.md") $dist -Force
 }
 
-function Publish-SelfContainedConverter($dist) {
-    dotnet publish (Join-Path $repo "tools\Converter\Converter.csproj") -c Release -r win-x64 --self-contained true -o (Join-Path $dist "converter") --nologo -v q
-    if ($LASTEXITCODE -ne 0) { throw "converter publish failed" }
-    $convCfg = Join-Path $dist "converter\converter.json"
+function Publish-ConverterBesideTheGame($dist) {
+    $data = (Get-ChildItem $dist -Directory -Filter "data_*" | Select-Object -First 1).FullName
+    $published = Join-Path ([IO.Path]::GetTempPath()) ("ktable-converter-" + [Guid]::NewGuid().ToString("N").Substring(0, 8))
+    try {
+        dotnet publish (Join-Path $repo "tools\Converter\Converter.csproj") -c ExportRelease -r win-x64 --self-contained true -o $published --nologo -v q
+        if ($LASTEXITCODE -ne 0) { throw "converter publish failed" }
+        $differ = @()
+        foreach ($file in Get-ChildItem $published -Recurse -File) {
+            $relative = $file.FullName.Substring($published.Length + 1)
+            $target = Join-Path $data $relative
+            if (Test-Path $target) {
+                if ((Get-FileHash $file.FullName).Hash -ne (Get-FileHash $target).Hash) { $differ += $relative }
+                continue
+            }
+            New-Item -ItemType Directory -Force (Split-Path -Parent $target) | Out-Null
+            Copy-Item $file.FullName $target
+        }
+        if ($differ.Count -gt 0) { throw "the converter and the game need different copies of: $($differ -join ', ')" }
+    }
+    finally { Remove-Item $published -Recurse -Force -ErrorAction SilentlyContinue }
+    $convCfg = Join-Path $data "converter.json"
     $shipped = [IO.File]::ReadAllText($convCfg)
     if ($shipped -notmatch '"modsPath":\s*"[^"]*"') { throw "converter.json has no modsPath to empty" }
     $lookForThePlayersOwnModsFolder = $shipped -replace '"modsPath":\s*"[^"]*"', '"modsPath": ""'
@@ -67,7 +84,7 @@ function Write-Readme($dist, $stamp) {
 Kriegsspiel Table - $stamp
 
 Run KriegsspielTable.exe. Nothing to install: the game, the .NET runtime and the module
-converter are all in this folder. Keep the folder together (data_*, standard, backdrops, native, converter).
+converter are all in this folder. Keep the folder together (data_*, standard, backdrops, native).
 
 Your packs, scenarios and settings live in %LOCALAPPDATA%\KriegsspielTable, not here, so a new
 version can simply replace this folder.
@@ -127,7 +144,7 @@ Write-Host "Output : $dist"
 
 Export-Game $godot $dist
 Copy-FilesBesideTheExe $dist
-Publish-SelfContainedConverter $dist
+Publish-ConverterBesideTheGame $dist
 $commit = (git -C $repo rev-parse --short HEAD) 2>$null
 $version = Get-Version
 if (-not $VersionName) { $VersionName = $version }

@@ -11,4 +11,7 @@
     <Deterministic>true</Deterministic>
     <PathMap>$(MSBuildThisFileDirectory)=./</PathMap>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)' == 'ExportRelease'">
+    <Optimize Condition="'$(Optimize)' == ''">true</Optimize>
+  </PropertyGroup>
 </Project>

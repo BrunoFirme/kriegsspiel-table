@@ -23,8 +23,8 @@ public static class ConverterTool
     public static string? Find()
     {
         if (System.Environment.GetEnvironmentVariable("KTABLE_CONVERTER") is { Length: > 0 } env && File.Exists(env)) return env;
-        var exeDir = Path.GetDirectoryName(OS.GetExecutablePath()) ?? "";
-        var folders = new List<string> { Path.Combine(exeDir, "converter") };
+        if (File.Exists(Shipped)) return Shipped;
+        var folders = new List<string>();
         var projectDir = ProjectSettings.GlobalizePath("res://");
         for (var d = projectDir.Length > 0 ? new DirectoryInfo(projectDir) : null; d != null; d = d.Parent)
         {
@@ -45,6 +45,8 @@ public static class ConverterTool
     }
 
     internal static string ExeName => OperatingSystem.IsWindows() ? "Converter.exe" : "Converter";
+
+    internal static string Shipped => Path.Combine(Path.GetDirectoryName(typeof(ConverterTool).Assembly.Location) ?? "", ExeName);
 
     public static ConverterRun? Run(IEnumerable<string> args, Action<string> onLine, Action<int> onExit, string? writesTo = null, IDisposable? hold = null)
     {
