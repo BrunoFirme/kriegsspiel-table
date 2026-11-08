@@ -661,9 +661,9 @@ public sealed class BoardDef
 
 public sealed class Lighting
 {
-    public double SunEnergy { get; set; } = 0.35;
-    public double Ambient { get; set; } = 0.72;
-    public double Warmth { get; set; } = 0;
+    public double SunEnergy { get; set; } = 0.54;
+    public double Ambient { get; set; } = 0.9;
+    public double Warmth { get; set; } = 0.35;
     public bool Shadows { get; set; } = true;
     public bool FromClock { get; set; }
     public double TableShade { get; set; }

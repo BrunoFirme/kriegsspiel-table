@@ -40,7 +40,7 @@ sealed class TableStage
             Environment = new Godot.Environment
             {
                 BackgroundMode = Godot.Environment.BGMode.Color, BackgroundColor = TableBackdrop.Plain,
-                AmbientLightSource = Godot.Environment.AmbientSource.Color, AmbientLightColor = Colors.White, AmbientLightEnergy = 0.72f,
+                AmbientLightSource = Godot.Environment.AmbientSource.Color, AmbientLightColor = Colors.White,
             },
         };
         _c.Scene.AddChild(env);

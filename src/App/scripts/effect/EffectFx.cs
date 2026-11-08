@@ -284,9 +284,11 @@ public static class EffectFx
 
     public static Color ShadeNow { get; private set; } = Colors.White;
 
+    static readonly Lighting Usual = new();
+
     public static bool SetShade(Lighting l, Color tint)
     {
-        float k = Mathf.Clamp((float)((l.Ambient + l.SunEnergy * 0.7) / (0.72 + 0.35 * 0.7)), 0.1f, 1.15f);
+        float k = Mathf.Clamp((float)((l.Ambient + l.SunEnergy * 0.7) / (Usual.Ambient + Usual.SunEnergy * 0.7)), 0.1f, 1.15f);
         var c = new Color(tint.R * k, tint.G * k, tint.B * k);
         if (c.IsEqualApprox(ShadeNow)) return false;
         ShadeNow = c;

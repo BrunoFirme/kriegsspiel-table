@@ -3,6 +3,7 @@ using System.IO;
 using System.Threading.Tasks;
 using Godot;
 using KTable.Client;
+using KTable.Core.Model;
 using KTable.Core.Protocol;
 
 namespace KTable.App;
@@ -10,7 +11,8 @@ namespace KTable.App;
 sealed class TableBackdrop
 {
     public static readonly Color Plain = new(0.16f, 0.17f, 0.18f);
-    const float NeutralAmbient = 0.72f, DimmestSky = 0.2f, BrightestSky = 1.3f;
+    static readonly float NeutralAmbient = (float)new Lighting().Ambient;
+    const float DimmestSky = 0.2f, BrightestSky = 1.3f;
     const int ToneAcross = 16, ToneDown = 8;
     const float GroundShare = 1f / 3;
 

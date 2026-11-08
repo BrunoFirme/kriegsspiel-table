@@ -10,10 +10,10 @@ public static class LightPresets
     public static IReadOnlyList<(string Name, Lighting Light)> All => new (string, Lighting)[]
     {
         (CeilingLight, new Lighting()),
-        ("Warm lamp", new Lighting { Warmth = 0.6, SunEnergy = 0.4, Ambient = 0.7 }),
-        (CoolDaylight, new Lighting { Warmth = -0.6, SunEnergy = 0.4, Ambient = 0.72 }),
+        ("Warm lamp", new Lighting { Warmth = 0.7, SunEnergy = 0.6, Ambient = 0.85 }),
+        (CoolDaylight, new Lighting { Warmth = -0.6, SunEnergy = 0.6, Ambient = 0.9 }),
         (Sundown, new Lighting { Warmth = 0.85, SunEnergy = 0.3, Ambient = 0.5 }),
-        ("Overcast", new Lighting { Warmth = -0.2, SunEnergy = 0.15, Ambient = 0.9, Shadows = false }),
+        ("Overcast", new Lighting { Warmth = -0.2, SunEnergy = 0.2, Ambient = 1.1, Shadows = false }),
         ("Flat (no shading)", new Lighting { SunEnergy = 0, Ambient = 1.0, Shadows = false }),
         (MoonlitNight, new Lighting { Warmth = -0.85, SunEnergy = 0.12, Ambient = 0.3 }),
         ("Dark night", new Lighting { Warmth = -0.5, SunEnergy = 0, Ambient = 0.16, Shadows = false }),
