@@ -66,7 +66,7 @@ internal sealed class ScriptTab
         var d = _s.Sel!;
         var link = _s.FileWatch.Of(KindKey(d.Id));
         if (link != null) draft = null;
-        p.AddChild(Ui.Hint("Every piece of this kind runs this Lua at the table and in Try it. Counters, text lines, names, looks and markers need no script (Piece and Markers tabs): script only buttons of your own, numbers drawn on the face and panels. F1 on a word opens the reference."));
+        p.AddChild(Ui.Hint("Every piece of this kind runs this Lua at the table and in Try it: buttons, panels, what it draws on its face, how it reacts, whatever you write. F1 on a word opens the reference."));
         _script = new CodeEdit
         {
             Text = draft ?? d.Script ?? "", CustomMinimumSize = new Vector2(0, 320), SizeFlagsVertical = Control.SizeFlags.ExpandFill,

@@ -2,8 +2,8 @@
 
 ## Where to start
 
-1. **Pieces:** make them in the [piece studio](community-guide.md#the-piece-studio). Counters, text lines, looks
-   and markers need no script.
+1. **Pieces:** make them in the [piece studio](community-guide.md#the-piece-studio): counters, text lines, looks
+   and markers are set there, and a script can add anything else.
 2. **Digital tabletop modules:** [convert them](community-guide.md#convert-a-digital-tabletop-module); scripts come along.
 3. **Scripts:** for buttons of your own, panels and reactions. Start with the
    [scripting guide](scripting.md); look names up in the [API reference](scripting-api.md).

@@ -154,7 +154,7 @@ sealed class ReliefPanel : HudPart
             return s;
         }
         if (!Painting || Cfg.ReliefPaint is "brush" or "route")
-            Row("Size", 0.2, 400, 0.1, Cfg.ReliefBrush, x => $"{x:0.#} u", x => Cfg.ReliefBrush = (float)x, "The brush's radius in map units · = and − or Ctrl+wheel on the table", exp: true);
+            Row("Size", 0.2, 400, 0.1, Cfg.ReliefBrush, x => $"{x:0.#} u", x => Cfg.ReliefBrush = (float)x, "The brush's radius in map units · = and − or Ctrl+wheel size the brush on the table", exp: true);
         if (Painting)
             Row("Density", 0.05, 1, 0.05, Cfg.ReliefDensity, x => $"{x * 100:0}%", x => Cfg.ReliefDensity = (float)x, "How much of the ground takes it, in clumps: low for sparse wood or scattered rock; with ✕ it thins what is painted. Going over again adds no more");
         else

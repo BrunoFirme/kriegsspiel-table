@@ -5,13 +5,12 @@ clicks, drops and turns. They are Lua 5.2, with an API built for this table.
 
 Look names up in the [API reference](scripting-api.md); **F1** on a word in a script editor opens it there.
 
-## Studio first
+## Studio and scripts
 
-Counters, text lines, names, looks, markers and tags need no script: set them in the
-[piece studio](community-guide.md#the-piece-studio). They print the same everywhere and cannot break.
-
-Script only for: buttons and input boxes of your own, lines round a piece, screen panels, and pieces
-that react.
+Counters, text lines, names, looks, markers and tags can be set in the
+[piece studio](community-guide.md#the-piece-studio) without code, and a script reads and changes every one of
+them. Beyond that a script can do anything the API offers: buttons and input boxes of your own, lines round a
+piece, screen panels, pieces that react, whole rule systems.
 
 ## Quick start
 

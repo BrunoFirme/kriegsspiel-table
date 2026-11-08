@@ -77,7 +77,7 @@ static class Tour
             else Close();
         }
 
-        var card = new PanelContainer { CustomMinimumSize = new Vector2(CardWidth, 0), MouseFilter = Control.MouseFilterEnum.Stop };
+        var card = new PanelContainer { CustomMinimumSize = new Vector2(CardWidth, 0), MouseFilter = Control.MouseFilterEnum.Stop, Theme = Ui.Theme() };
         card.AddThemeStyleboxOverride("panel", Ui.Box(Ui.Raised, 6, 16, 14));
         var box = new VBoxContainer();
         box.AddThemeConstantOverride("separation", Ui.Gap.Row);
