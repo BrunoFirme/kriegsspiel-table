@@ -209,10 +209,9 @@ public partial class Hud : CanvasLayer
 
     public override void _UnhandledInput(InputEvent e)
     {
-        if (e is InputEventKey && T?.Typing == true) return;
         if (e is InputEventKey { Pressed: true, Echo: false, Keycode: Key.F1 }) HelpTags.Open(Ctx.Root, KTable.Client.Docs.KeysPage.File + "#at-the-table");
         if (e is InputEventKey { Pressed: true, Echo: false, Keycode: Key.F2 } && Strip.Btn2d != null) Callable.From(SyncViewButton).CallDeferred();
-        if (e is InputEventKey { Pressed: true, Echo: false } k && Cfg.Keys.Is(k, "labelPlates")) { SetLabelPlates(!Cfg.LabelPlates); GetViewport().SetInputAsHandled(); }
+        if (e is InputEventKey { Pressed: true, Echo: false } k && T?.Typing != true && Cfg.Keys.Is(k, "labelPlates")) { SetLabelPlates(!Cfg.LabelPlates); GetViewport().SetInputAsHandled(); }
     }
 
     public void SetLabelPlates(bool on)

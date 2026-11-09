@@ -83,7 +83,7 @@ sealed class NameEditor
         field.SelfModulate = Colors.Transparent;
         field.MouseFilter = Control.MouseFilterEnum.Ignore;
         field.GuiInput += OnKey;
-        field.FocusExited += () => Callable.From(() => { if (_node != null && !Focused) End(commit: true); }).CallDeferred();
+        field.FocusExited += () => Callable.From(() => { if (GodotObject.IsInstanceValid(field) && _node != null && !Focused) End(commit: true); }).CallDeferred();
         if (field is LineEdit line) line.TextChanged += _ => Changed();
         if (field is TextEdit area) area.TextChanged += Changed;
         _c.Scene.AddChild(field);
