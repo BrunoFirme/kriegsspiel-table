@@ -298,6 +298,14 @@ public sealed class SaveFieldTests : ConverterHarness
         Assert.Equal("Custom_Tile", new ModuleObj(stack.J).Name);
     }
 
+    [Fact]
+    public void A_stack_of_models_comes_in_as_that_many_models()
+    {
+        var stack = new ModuleObj(new JsonObject { ["Name"] = "Custom_Model_Stack", ["Number"] = 4, ["CustomMesh"] = new JsonObject { ["MeshURL"] = "http://a/m.obj" } });
+
+        Assert.Equal(("Custom_Model", 4, true), (stack.Name, stack.StackCount, stack.IsStack));
+    }
+
     static SKBitmap Picture(int w, int h, Func<int, int, byte> alpha)
     {
         var bmp = new SKBitmap(w, h, SKColorType.Rgba8888, SKAlphaType.Unpremul);
