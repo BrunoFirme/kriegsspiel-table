@@ -30,7 +30,10 @@ sealed partial class Carry : IHeldPieces
         _poses = poses;
         _footing = new Footing<PieceNode>(_pieces.Grid.Around, n => _heldNodes.Contains(n), () => _c.S.Ground);
         _sticking = new Sticking<PieceNode>(p => _pieces.Grid.Near(p), _pieces.NodeOf, l => _c.S.View.Layer(l), _footing);
+        Falls = new Falling<PieceNode>(_footing, _pieces.Grid.Around, _pieces.NodeOf, _c.LayerInteractive);
     }
+
+    public Falling<PieceNode> Falls { get; }
 
     Dice _dice = null!;
     public void Connect(Dice dice) => _dice = dice;

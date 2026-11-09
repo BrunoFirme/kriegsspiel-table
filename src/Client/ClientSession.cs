@@ -191,10 +191,12 @@ public class ClientSession
         Send(c);
     }
 
+    public Func<Command, Command>? Outgoing;
+
     public void Do(Command c)
     {
         if (Reviewing) { Error?.Invoke("You are looking at a past turn; press Back to now to change the table."); return; }
-        Sent(c);
+        Sent(Outgoing?.Invoke(c) ?? c);
     }
 
     public void UndoLast()

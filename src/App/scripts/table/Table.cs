@@ -216,6 +216,7 @@ public partial class Table : Node3D
         ApplyGraphics();
         S.Reset += Rebuild;
         S.Applied += Sync.OnApplied;
+        S.Outgoing = Hand.Falls.With;
         S.Error += _ => Sync.Refused = true;
         Rebuild();
         if (!Cam.Restore()) FrameAll();
