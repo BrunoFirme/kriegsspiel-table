@@ -35,6 +35,7 @@ public sealed partial class AssetTransfers
         _uploadQueue.Clear();
         _uploadPacer = null;
         _uploadedBy.Clear();
+        _packSenders.Clear();
         foreach (var key in _uploads.Keys.ToList()) DropUpload(key);
     }
 
@@ -131,9 +132,10 @@ public sealed partial class AssetTransfers
         _uploads.Remove(key);
         try
         {
-            if (u.Path == "pack.json") CheckUploadedPack(peer, u.Package, dir, tmp);
-            else if (FileHashes.Sha256(tmp) != Path.GetFileNameWithoutExtension(dst)) throw new InvalidDataException("hash mismatch");
+            var sent = u.Path == "pack.json" && TakesPack(peer, u.Package, dir, tmp);
+            if (u.Path != "pack.json" && FileHashes.Sha256(tmp) != Path.GetFileNameWithoutExtension(dst)) throw new InvalidDataException("hash mismatch");
             File.Move(tmp, dst, true);
+            if (sent) _packSenders[u.Package] = peer.Name;
             if (u.Package == UploadAsset.ReliefPackage) FileArrived(u.Package, u.Path);
         }
         catch (Exception e) when (e is InvalidDataException or IOException or UnauthorizedAccessException or System.Text.Json.JsonException)
@@ -157,15 +159,22 @@ public sealed partial class AssetTransfers
         return null;
     }
 
-    static void CheckUploadedPack(PeerInfo peer, string package, string dir, string tmp)
+    readonly Dictionary<string, string> _packSenders = new(StringComparer.Ordinal);
+
+    bool TakesPack(PeerInfo peer, string package, string dir, string tmp)
     {
         var pack = Json.Load<PackManifest>(tmp);
         if (pack.Id != package) throw new InvalidDataException("pack id does not match");
         if (pack.Assets.Values.Any(a => !UploadAsset.PathAllowed(package, a.File.Replace(Path.DirectorySeparatorChar, '/')))) throw new InvalidDataException("pack lists files it may not");
         var existing = Path.Combine(dir, "pack.json");
-        if (!File.Exists(existing) || FileHashes.Sha256(existing) == FileHashes.Sha256(tmp)) return;
+        if (!File.Exists(existing)) return true;
+        if (FileHashes.Sha256(existing) == FileHashes.Sha256(tmp)) return false;
+        if (_packSenders.TryGetValue(package, out var sender) && string.Equals(sender, peer.Name, StringComparison.OrdinalIgnoreCase)) return true;
         var owner = Json.Load<PackManifest>(existing).Source.Authors.FirstOrDefault() ?? "";
-        if (owner.Length == 0) throw new InvalidDataException($"{package} is already on this host and names no author, so it stays as it is");
-        if (!string.Equals(owner, peer.Name, StringComparison.OrdinalIgnoreCase)) throw new InvalidDataException($"{package} belongs to {owner}");
+        if (owner.Length == 0)
+            throw new InvalidDataException($"{package} is already on this host and names no author, so it stays as it is: the host can remove it in Packs, then you send it again");
+        if (!string.Equals(owner, peer.Name, StringComparison.OrdinalIgnoreCase))
+            throw new InvalidDataException($"{package} belongs to {owner}: join under that name to send a new version, or the host can remove it in Packs first");
+        return true;
     }
 }

@@ -112,7 +112,42 @@ public class HostFilesSafetyTests
         var path = HostPack();
         Upload(new PackManifest { Id = "user.mine", Name = "replaced" });
         Assert.Equal("the host's own", Json.Load<PackManifest>(path).Name);
+        Assert.Equal("upload of user.mine/pack.json refused: user.mine is already on this host and names no author, so it stays as it is: the host can remove it in Packs, then you send it again",
+            Assert.Single(Sent<ErrorMessage>()).Text);
+    }
+
+    [Fact]
+    public void An_umpire_who_sent_a_pack_with_no_author_sends_new_versions_of_it_at_the_same_sitting()
+    {
+        Host(Role.Umpire);
+        Upload(new PackManifest { Id = "user.mine", Name = "first" });
+        Upload(new PackManifest { Id = "user.mine", Name = "second" });
+        Upload(new PackManifest { Id = "user.mine", Name = "third", Source = new PackSource { Authors = ["Eve"] } });
+        Assert.Equal("third", Json.Load<PackManifest>(Path.Combine(_root, "user.mine", "pack.json")).Name);
+        Assert.Empty(Sent<ErrorMessage>());
+    }
+
+    [Fact]
+    public void Sending_back_the_host_s_own_piece_list_unchanged_gives_no_right_to_change_it()
+    {
+        Host(Role.Umpire);
+        var path = HostPack();
+        var bytes = File.ReadAllBytes(path);
+        _t.ReceiveUpload(2, new UploadAsset { Package = "user.mine", Path = "pack.json", Offset = 0, Total = bytes.Length, Data = bytes });
+        Upload(new PackManifest { Id = "user.mine", Name = "replaced" });
+        Assert.Equal("the host's own", Json.Load<PackManifest>(path).Name);
         Assert.Contains("names no author", Assert.Single(Sent<ErrorMessage>()).Text);
+    }
+
+    [Fact]
+    public void A_new_sitting_forgets_who_sent_which_pack()
+    {
+        Host(Role.Umpire);
+        Upload(new PackManifest { Id = "user.mine", Name = "first" });
+        _t.Reset();
+        Upload(new PackManifest { Id = "user.mine", Name = "second" });
+        Assert.Equal("first", Json.Load<PackManifest>(Path.Combine(_root, "user.mine", "pack.json")).Name);
+        Assert.Single(Sent<ErrorMessage>());
     }
 
     [Fact]
@@ -122,7 +157,8 @@ public class HostFilesSafetyTests
         var path = HostPack("Host");
         Upload(new PackManifest { Id = "user.mine", Name = "replaced" });
         Assert.Equal("the host's own", Json.Load<PackManifest>(path).Name);
-        Assert.Equal("upload of user.mine/pack.json refused: user.mine belongs to Host", Assert.Single(Sent<ErrorMessage>()).Text);
+        Assert.Equal("upload of user.mine/pack.json refused: user.mine belongs to Host: join under that name to send a new version, or the host can remove it in Packs first",
+            Assert.Single(Sent<ErrorMessage>()).Text);
     }
 
     [Fact]
