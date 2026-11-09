@@ -33,6 +33,21 @@ internal sealed class ModelPartView
     public string StrokeKey => Build > 0 ? Part.Id + "#" + Build : Part.Id;
     public Transform3D[] Places => TwinNode is { } t ? new[] { Xf, t.Transform } : new[] { Xf };
 
+    int[]? _margins;
+    object? _marginsOf;
+
+    public int[] Margins()
+    {
+        if (_margins == null || !ReferenceEquals(_marginsOf, Data.UV) || _margins.Length != W * H)
+        {
+            _margins = ModelBake.MarginMap(Data.UV, Data.Tris, W, H);
+            _marginsOf = Data.UV;
+        }
+        return _margins;
+    }
+
+    public byte[] Shown() => Part.Kind == "block" ? Paint : ModelBake.WithMargins(Paint, Margins());
+
     public void Repaint()
     {
         PaintDirty = true;

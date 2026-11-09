@@ -71,7 +71,7 @@ public partial class PieceStudio
         if (d == _sel && !Typing()) RebuildInspector();
     }
 
-    internal async Task NewModelPiece(string name, MeshData m, string kind, bool addFigure = false)
+    internal async Task NewModelPiece(string name, MeshData m, string kind, bool addFigure = false, float? scale = null)
     {
         if (await SettleWork() is { } problem) { Flash("No new model yet: " + problem); return; }
         if (_gone) return;
@@ -96,7 +96,7 @@ public partial class PieceStudio
         FaceBar.Pill.Visible = false;
         T.Visible = false;
         T.SetProcessUnhandledInput(false);
-        _model.AddParts(m, kind == "base" ? "Base" : name, kind);
+        _model.AddParts(m, kind == "base" ? "Base" : name, kind, scale: scale);
         if (addFigure) _model.AddParts(ModelImport.Primitive("box"), "Box", "box");
         Paper.Quiet = true;
         try { await _model.Bake(); }

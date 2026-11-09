@@ -95,18 +95,70 @@ internal sealed class ModelBake
         return Image.CreateFromData(w, h, false, Image.Format.Rgba8, d);
     }
 
+    const int MarginPasses = 4;
+
+    internal static byte[] PaintIntoMargins(byte[] paint, IReadOnlyList<Vector2> uv, int tris, int w, int h) => WithMargins(paint, MarginMap(uv, tris, w, h));
+
+    internal static int[] MarginMap(IReadOnlyList<Vector2> uv, int tris, int w, int h)
+    {
+        var map = new int[w * h];
+        Array.Fill(map, -1);
+        var seen = new bool[w * h];
+        var scale = new Vector2(w, h);
+        var clip = new Rect2I(0, 0, w - 1, h - 1);
+        for (int t = 0; t < tris; t++)
+            ModelImport.Raster(uv[t * 3] * scale, uv[t * 3 + 1] * scale, uv[t * 3 + 2] * scale, Math.Max(w, h), clip, (x, y, _, _, _) => seen[y * w + x] = true);
+        var edge = new List<int>();
+        for (int i = 0; i < seen.Length; i++) if (seen[i]) edge.Add(i);
+        for (int pass = 0; pass < MarginPasses && edge.Count > 0; pass++)
+        {
+            var next = new List<int>();
+            foreach (int i in edge)
+            {
+                int from = map[i] >= 0 ? map[i] : i, x = i % w, y = i / w;
+                for (int dy = -1; dy <= 1; dy++)
+                    for (int dx = -1; dx <= 1; dx++)
+                    {
+                        int nx = x + dx, ny = y + dy;
+                        if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+                        int n = ny * w + nx;
+                        if (seen[n]) continue;
+                        seen[n] = true;
+                        map[n] = from;
+                        next.Add(n);
+                    }
+            }
+            edge = next;
+        }
+        return map;
+    }
+
+    internal static byte[] WithMargins(byte[] paint, int[] map)
+    {
+        var px = (byte[])paint.Clone();
+        for (int i = 0; i < map.Length; i++)
+        {
+            int from = map[i];
+            if (from < 0) continue;
+            Buffer.BlockCopy(paint, from * 4, px, i * 4, 4);
+        }
+        return px;
+    }
+
     internal static Image Composite(ModelPartView v)
     {
         var b = v.Base.GetData();
         var o = new byte[b.Length];
         var t = Hex.To(v.Part.Tint, Colors.White);
+        bool block = v.Part.Kind == "block";
+        var paint = block ? v.Paint : WithMargins(v.Paint, v.Margins());
         for (int i = 0; i < b.Length; i += 4)
         {
-            float a = v.Paint[i + 3] / 255f;
-            o[i] = (byte)Math.Clamp((b[i] * (1 - a) + v.Paint[i]) * t.R, 0, 255);
-            o[i + 1] = (byte)Math.Clamp((b[i + 1] * (1 - a) + v.Paint[i + 1]) * t.G, 0, 255);
-            o[i + 2] = (byte)Math.Clamp((b[i + 2] * (1 - a) + v.Paint[i + 2]) * t.B, 0, 255);
-            o[i + 3] = v.Part.Kind == "block" ? Math.Max(b[i + 3], v.Paint[i + 3]) : (byte)255;
+            float a = paint[i + 3] / 255f;
+            o[i] = (byte)Math.Clamp((b[i] * (1 - a) + paint[i]) * t.R, 0, 255);
+            o[i + 1] = (byte)Math.Clamp((b[i + 1] * (1 - a) + paint[i + 1]) * t.G, 0, 255);
+            o[i + 2] = (byte)Math.Clamp((b[i + 2] * (1 - a) + paint[i + 2]) * t.B, 0, 255);
+            o[i + 3] = block ? Math.Max(b[i + 3], paint[i + 3]) : (byte)255;
         }
         return Image.CreateFromData(v.W, v.H, false, Image.Format.Rgba8, o);
     }

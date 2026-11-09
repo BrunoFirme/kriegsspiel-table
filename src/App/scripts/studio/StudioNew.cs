@@ -441,6 +441,7 @@ internal sealed class NewPieces
 
     internal async Task ImportModelsAsync(string[] files)
     {
+        var read = new List<(string File, MeshData Mesh)>();
         foreach (var f in files)
         {
             _s.Flash($"Reading {Path.GetFileName(f)}…");
@@ -448,9 +449,18 @@ internal sealed class NewPieces
             var m = ModelImport.Load(f, out var err);
             if (m == null) { _s.Flash($"Could not read {Path.GetFileName(f)}: {err}"); continue; }
             if (m.Tris > 400_000) { _s.Flash($"{Path.GetFileName(f)} has {m.Tris:#,0} triangles: too many for a piece on the table (bring it under 400,000 in a 3D program first)."); continue; }
-            await _s.NewModelPiece(Pretty(Path.GetFileNameWithoutExtension(f)), m, "mesh");
+            read.Add((f, m));
+        }
+        if (read.Count == 0) return;
+        var (scale, fitted, widest) = ModelStudio.ImportScale(read.Select(r => r.Mesh.Bounds()));
+        foreach (var (f, m) in read)
+        {
+            await _s.NewModelPiece(Pretty(Path.GetFileNameWithoutExtension(f)), m, "mesh", scale: scale);
             _s.Flash($"{Path.GetFileName(f)}: {m.Tris:#,0} triangles, {m.Tex.Count(t => t != null)} picture{(m.Tex.Count(t => t != null) == 1 ? "" : "s")} painted into one.");
         }
+        if (fitted)
+            _s.Flash(string.Format(System.Globalization.CultureInfo.InvariantCulture,
+                read.Count == 1 ? "Its own units make it {0:0.###} u wide: fitted to 2 u." : "Their own units make the widest {0:0.###} u: fitted to 2 u, the rest in proportion.", widest));
     }
 
     void NewModelFromShapes() => _ = _s.NewModelPiece("New model", ModelImport.Primitive("base"), "base", addFigure: true);

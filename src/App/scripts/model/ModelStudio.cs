@@ -440,7 +440,7 @@ public partial class ModelStudio : Control
                 v.Paint[i + 3] = (byte)a;
             }
         }
-        v.PaintImg = Image.CreateFromData(w, h, false, Image.Format.Rgba8, v.Paint);
+        v.PaintImg = Image.CreateFromData(w, h, false, Image.Format.Rgba8, v.Shown());
         v.PaintTex = ImageTexture.CreateFromImage(v.PaintImg);
         var baseCopy = (Image)baseImg.Duplicate();
         baseCopy.GenerateMipmaps();
@@ -631,7 +631,7 @@ public partial class ModelStudio : Control
         foreach (var v in _views.Values)
             if (v.PaintDirty && v.Node.HasMeta("upload"))
             {
-                v.PaintImg.SetData(v.W, v.H, false, Image.Format.Rgba8, v.Paint);
+                v.PaintImg.SetData(v.W, v.H, false, Image.Format.Rgba8, v.Shown());
                 v.PaintTex.Update(v.PaintImg);
                 v.Node.RemoveMeta("upload");
             }
@@ -646,7 +646,20 @@ public partial class ModelStudio : Control
 
     const float FlatModelSpan = 0.6f;
 
-    public void AddParts(MeshData m, string name, string kind, ShapeSpec? spec = null)
+    const float NewModelWidth = 2, FileUnitsLeast = 0.1f, FileUnitsMost = 20;
+
+    public static float ScaleFor(IEnumerable<Aabb> set) => NewModelWidth / Widest(set);
+
+    static float Widest(IEnumerable<Aabb> set) => Mathf.Max(1e-4f, set.Select(b => Mathf.Max(b.Size.X, b.Size.Z)).DefaultIfEmpty(0).Max());
+
+    public static (float Scale, bool Fitted, float Widest) ImportScale(IEnumerable<Aabb> set)
+    {
+        var all = set.ToList();
+        float widest = Widest(all);
+        return widest is >= FileUnitsLeast and <= FileUnitsMost ? (1, false, widest) : (ScaleFor(all), true, widest);
+    }
+
+    public void AddParts(MeshData m, string name, string kind, ShapeSpec? spec = null, float? scale = null)
     {
         Snapshot();
         var pb = m.Bounds();
@@ -677,7 +690,7 @@ public partial class ModelStudio : Control
         }
         else
         {
-            _doc.Scale = 2f / Mathf.Max(1e-4f, Mathf.Max(pb.Size.X, pb.Size.Z));
+            _doc.Scale = scale ?? ScaleFor(new[] { pb });
             part.Pos = new[] { 0, pb.Size.Y / 2, 0 };
         }
         _doc.Parts.Add(part);
