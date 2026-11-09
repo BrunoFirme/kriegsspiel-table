@@ -468,6 +468,8 @@ public static class EffectRecipe
             });
         }
 
+        const float CampReach = 7, CampFade = 1.4f, CampGlow = 1.1f, CampFlame = 0.2f;
+
         void Camp()
         {
             var rng = new Random(EffectKinds.Seed(phase));
@@ -475,7 +477,7 @@ public static class EffectRecipe
                 ? Enumerable.Range(0, at.Count / 2).Select(i => new Vector3((float)at[i * 2], 0, (float)at[i * 2 + 1])).ToArray()
                 : EffectKinds.Scatter(rng, Math.Clamp((int)Math.Round(6 * A), 1, 60), ex.X * 0.85f, ex.Z * 0.85f, 0);
             int fires = pts.Length;
-            float fs = 0.05f * s * P;
+            float fs = 0.05f * Mathf.Sqrt(w * h) * P;
             layers.Add(new EffectLayer
             {
                 Sprite = "flame", Points = pts, Amount = Math.Min(2400, (int)Math.Round(fires * 7 * Mathf.Max(1, e.At != null ? A : 1))), Fixed = true, Life = 0.8f, At = new Vector3(0, 0.02f, 0),
@@ -509,8 +511,9 @@ public static class EffectRecipe
                 for (int i = 0; i < Math.Min(4, fires); i++)
                     plan.Lights.Add(new EffectLightSpec
                     {
-                        Color = new Rgba(1, 0.6f, 0.28f), Range = Mathf.Max(1, 7 * fs), Attenuation = 1.4f,
-                        Position = pts[i * fires / Math.Min(4, fires)] + new Vector3(0, fs, 0), Base = 1.1f, Mode = 1, Phase = i * 1.7f, Speed = (float)Math.Clamp(e.Speed, 0.1, 5),
+                        Color = new Rgba(1, 0.6f, 0.28f), Range = CampReach * fs, Attenuation = CampFade,
+                        Position = pts[i * fires / Math.Min(4, fires)] + new Vector3(0, fs, 0), Base = CampGlow * Mathf.Pow(fs / CampFlame, CampFade), Mode = 1,
+                        Phase = i * 1.7f, Speed = (float)Math.Clamp(e.Speed, 0.1, 5),
                     });
         }
 

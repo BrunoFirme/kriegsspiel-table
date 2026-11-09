@@ -144,6 +144,20 @@ public class EffectRecipeTests
         Assert.Empty(Plan(new EffectDef { Kind = "camp", Light = false }).Lights);
     }
 
+    [Theory]
+    [InlineData(0.25f)]
+    [InlineData(2.5f)]
+    public void A_bivouac_s_flames_reach_and_glow_grow_and_shrink_with_the_bivouac(float k)
+    {
+        const float Fade = 1.4f;
+        var e = new EffectDef { Kind = "camp", Puff = 4.17, At = new List<double> { 0.2, 0.1 } };
+        var one = Plan(e, 1, 0.92f);
+        var sized = Plan(e, k, 0.92f * k);
+        Assert.Equal(k, sized.Layers[0].SMax / one.Layers[0].SMax, 3);
+        Assert.Equal(k, sized.Lights[0].Range / one.Lights[0].Range, 3);
+        Assert.Equal(MathF.Pow(k, Fade), sized.Lights[0].Base / one.Lights[0].Base, 3);
+    }
+
     [Fact]
     public void Burning_and_firing_effects_light_the_table_and_a_shell_pulses_at_each_shot()
     {
