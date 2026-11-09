@@ -12,8 +12,9 @@ sealed class NoteFace
     string? _built;
     bool? _editBody;
     string _editText = "";
+    bool _editSelected;
 
-    static readonly Color TitleInk = new(0.04f, 0.04f, 0.04f), BodyInk = new(0.12f, 0.12f, 0.12f);
+    static readonly Color TitleInk = new(0.04f, 0.04f, 0.04f), BodyInk = new(0.12f, 0.12f, 0.12f), SelectedInk = new(0.55f, 0.38f, 0.08f);
     const float TitleFill = 0.7f, BodyFill = 0.6f, BodyLift = 0.42f, FaceGap = 0.006f, InkLift = 0.002f;
 
     public NoteFace(PieceNode piece) => _piece = piece;
@@ -27,10 +28,11 @@ sealed class NoteFace
         return _piece.Piece.Text.TryGetValue(name, out var v) ? v : def?.Default ?? "";
     }
 
-    public void SetEditing(bool body, string text)
+    public void SetEditing(bool body, string text, bool selected)
     {
         _editBody = body;
         _editText = text;
+        _editSelected = selected;
         Sync(force: true);
     }
 
@@ -39,6 +41,7 @@ sealed class NoteFace
         if (_editBody == null) return;
         _editBody = null;
         _editText = "";
+        _editSelected = false;
         Sync(force: true);
     }
 
@@ -52,7 +55,7 @@ sealed class NoteFace
         }
         var title = _editBody == false ? _editText : Line(body: false);
         var body = _editBody == true ? _editText : Line(body: true);
-        var key = $"{title}\u001f{body}\u001f{_piece.Footprint}\u001f{_piece.Thickness}";
+        var key = $"{title}\u001f{body}\u001f{_piece.Footprint}\u001f{_piece.Thickness}\u001f{_editSelected}";
         if (!force && key == _built) return;
         _built = key;
         Clear();
@@ -60,12 +63,14 @@ sealed class NoteFace
         float Z(double frac) => -h / 2 + (float)frac * h;
         float left = -w / 2 + (float)NoteCard.SideMargin * w, width = w * (1 - 2 * (float)NoteCard.SideMargin);
         float titleH = (float)(NoteCard.TitleBottom - NoteCard.TitleTop) * h;
-        if (title.Length > 0) Text(title.Replace('\n', ' '), 0, Z((NoteCard.TitleTop + NoteCard.TitleBottom) / 2), width, titleH * TitleFill, TitleInk, centred: true, faceY);
+        if (title.Length > 0) Text(title.Replace('\n', ' '), 0, Z((NoteCard.TitleTop + NoteCard.TitleBottom) / 2), width, titleH * TitleFill, Ink(TitleInk, body: false), centred: true, faceY);
         float step = (float)NoteCard.RuleStep * h, em = step * BodyFill;
         var lines = Wrap(body, width, em);
         for (int i = 0; i < lines.Count && i < NoteCard.Lines; i++)
-            if (lines[i].Length > 0) Text(lines[i], left, Z(NoteCard.RuleAt(i)) - step * BodyLift, width, em, BodyInk, centred: false, faceY);
+            if (lines[i].Length > 0) Text(lines[i], left, Z(NoteCard.RuleAt(i)) - step * BodyLift, width, em, Ink(BodyInk, body: true), centred: false, faceY);
     }
+
+    Color Ink(Color plain, bool body) => _editSelected && _editBody == body ? SelectedInk : plain;
 
     static float Pixel(float em) => em / Mathf.Max(1, Fonts.Hand.GetHeight(Fonts.FaceSize));
 

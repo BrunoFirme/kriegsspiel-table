@@ -62,10 +62,10 @@ sealed class CameraControl
     const float KeySpeed = 0.8f, KeyEase = 9f, KeyStopped = 0.01f;
     Vector3 _keyVel;
 
-    public void TickKeys(double delta)
+    public void TickKeys(double delta, bool typing)
     {
         var move = Vector3.Zero;
-        if (!Table.AnyTextFocus())
+        if (!typing)
         {
             if (Input.IsKeyPressed(Key.W)) move += Vector3.Forward;
             if (Input.IsKeyPressed(Key.S)) move += Vector3.Back;

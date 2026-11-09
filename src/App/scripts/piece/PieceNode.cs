@@ -218,7 +218,7 @@ public partial class PieceNode : Node3D
 
     public void FlashWidget(int index) => _widgets.Flash(index);
 
-    public void SetWidgetText(int index, string text) { _widgets.SetEditText(index, text); SyncWidgets(force: true); }
+    public void SetWidgetText(int index, string text, bool selected) { _widgets.SetEditText(index, text, selected); SyncWidgets(force: true); }
     public void ClearWidgetText()
     {
         if (!_widgets.Editing) return;
@@ -245,7 +245,7 @@ public partial class PieceNode : Node3D
 
     public string NoteLine(bool body) => _note.Line(body);
 
-    public void SetNoteText(bool body, string text) => _note.SetEditing(body, text);
+    public void SetNoteText(bool body, string text, bool selected) => _note.SetEditing(body, text, selected);
 
     public void ClearNoteText() => _note.StopEditing();
 

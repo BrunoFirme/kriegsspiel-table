@@ -85,9 +85,8 @@ sealed class TableInput
     public void Handle(InputEvent e)
     {
         var names = _names;
-        if (names.Node != null && e is InputEventKey nk && nk.Pressed)
+        if (names.Node != null && e is InputEventKey { Pressed: true })
         {
-            names.Key(nk);
             _c.Scene.GetViewport().SetInputAsHandled();
             return;
         }

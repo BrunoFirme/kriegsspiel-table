@@ -33,6 +33,7 @@ sealed class PieceWidgets
 
     int _editWidget;
     string _editText = "";
+    bool _editSelected;
 
     public PieceWidgets(PieceNode piece) => _piece = piece;
 
@@ -141,7 +142,7 @@ sealed class PieceWidgets
         _boxes[index] = (box, boxColor, hover, press);
         bool typing = index == _editWidget;
         var text = typing ? _editText : input ? (w.Value.Length > 0 ? w.Value : w.Placeholder) : label && w.Value.Length > 0 ? w.Value : w.Label;
-        var color = !typing && input ? textColor with { A = textColor.A * UnfocusedText } : textColor;
+        var color = typing && _editSelected ? Ui.Accent : !typing && input ? textColor with { A = textColor.A * UnfocusedText } : textColor;
         float grow = Mathf.Max(0.01f, _piece.Look.FaceTextScale);
         float em = Mathf.Max(0.002f, (float)w.Font * k * grow);
         if ((input || label) && boxed && !typing) text = Fitting(text, em, bw * 0.94f);
@@ -225,11 +226,21 @@ sealed class PieceWidgets
             CastShadow = GeometryInstance3D.ShadowCastingSetting.Off });
     }
 
-    public void SetEditText(int index, string text) { _editWidget = index; _editText = text; }
+    public void SetEditText(int index, string text, bool selected)
+    {
+        _editWidget = index;
+        _editText = text;
+        _editSelected = selected;
+    }
 
     public bool Editing => _editWidget != 0;
 
-    public void ClearEditText() { _editWidget = 0; _editText = ""; }
+    public void ClearEditText()
+    {
+        _editWidget = 0;
+        _editText = "";
+        _editSelected = false;
+    }
 
     public (int index, Widget widget)? At(Vector2 local)
     {

@@ -329,13 +329,15 @@ public partial class Table : Node3D
         else Hover.Clear(mouse);
         Pointers.Tick(delta);
         Sheets.TickLoadingLabels();
-        Cam.TickKeys(delta);
+        Cam.TickKeys(delta, Typing);
         Stage.FollowView(Rig.Distance);
         FitTableNow(delta);
         Sheets.Tick();
         Contours.Tick(delta);
         Overlay.Redraw();
     }
+
+    internal bool Typing => Names.Node != null || AnyTextFocus();
 
     internal static bool AnyTextFocus()
     {
