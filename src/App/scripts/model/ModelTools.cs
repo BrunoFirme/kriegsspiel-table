@@ -102,6 +102,7 @@ internal sealed class ModelTools
                 break;
             case InputEventMouseMotion mm:
                 Hover = mm.Position;
+                DropLostButtons(mm);
                 if (_orbiting)
                 {
                     Camera.Yaw -= mm.Relative.X * 0.008f;
@@ -123,6 +124,13 @@ internal sealed class ModelTools
                 _m.RedrawOverlay();
                 break;
         }
+    }
+
+    void DropLostButtons(InputEventMouseMotion mm)
+    {
+        if (_orbiting && (mm.ButtonMask & (MouseButtonMask.Left | MouseButtonMask.Right)) == 0) _orbiting = false;
+        if (_panning && (mm.ButtonMask & MouseButtonMask.Middle) == 0) _panning = false;
+        if ((_painting || _moving) && (mm.ButtonMask & MouseButtonMask.Left) == 0) LeftButton(new InputEventMouseButton { ButtonIndex = MouseButton.Left, Pressed = false, Position = mm.Position });
     }
 
     void LeftButton(InputEventMouseButton mb)
@@ -148,6 +156,7 @@ internal sealed class ModelTools
             case "erase":
                 if (mb.AltPressed && hit != null) { PickAt(hit.Value); return; }
                 _m.BeginStroke();
+                _sight = null;
                 _painting = true;
                 _strokeLeft = 0;
                 if (hit != null) Stamp(hit.Value);
@@ -356,34 +365,48 @@ internal sealed class ModelTools
         _strokeLeft = len - (at - step);
     }
 
+    ModelSight? _sight;
+    const float SightPad = 2, SightEdge = 4;
+
     public void Stamp((string part, int tri, Vector3 local, Vector3 world, float u, float v) hit)
     {
         var vp = _m.Vp.Size;
         var cam = _m.Cam;
         float distCam = (cam.GlobalPosition - hit.world).Length();
         float worldPerPx = 2 * distCam * Mathf.Tan(Mathf.DegToRad(cam.Fov) / 2) / Mathf.Max(1, vp.Y);
-        float R = Mathf.Max(1, _m.P.Brush / 2) * worldPerPx;
+        float px = Mathf.Max(1, _m.P.Brush / 2);
+        float R = px * worldPerPx;
+        if (_sight == null || !_sight.Fits(cam, vp)) _sight = new ModelSight(vp, cam, _m.Stand.Transform, _m.Drawn);
+        var sight = _sight;
+        if (!sight.Eye.Project(hit.world, out var at, out _)) return;
+        float pad = px * SightPad + SightEdge;
+        int x0 = Math.Max(0, (int)(at.X - pad)), y0 = Math.Max(0, (int)(at.Y - pad));
+        int x1 = Math.Min(vp.X - 1, (int)(at.X + pad)), y1 = Math.Min(vp.Y - 1, (int)(at.Y + pad));
+        if (x1 < x0 || y1 < y0) return;
+        sight.Look(new Rect2I(x0, y0, x1 - x0 + 1, y1 - y0 + 1));
         bool erase = _m.Tool == "erase";
         var ink = _m.Ink;
         foreach (var v in _m.Drawn)
         {
             if (v.Fixed) continue;
             bool any = false;
-            foreach (var place in v.Places)
+            var places = v.Places;
+            for (int pi = 0; pi < places.Length; pi++)
             {
-                var xf = _m.Stand.Transform * place;
+                int slot = sight.Slot(v, pi);
+                if (slot < 0) continue;
+                var xf = _m.Stand.Transform * places[pi];
                 var inv = xf.AffineInverse();
                 var centre = inv * hit.world;
                 float scale = (xf.Basis.Scale.X + xf.Basis.Scale.Y + xf.Basis.Scale.Z) / 3;
                 float r = R / Mathf.Max(1e-6f, scale);
-                var camLocal = inv * cam.GlobalPosition;
-                any |= Dab(v, hit.part == v.Part.Id ? hit.tri : -1, centre, r, camLocal, erase, ink, _m.P.Soft);
+                any |= Dab(v, centre, r, (t, p) => sight.Sees(slot, t, xf * p), erase, ink, _m.P.Soft);
             }
             if (any) v.Repaint();
         }
     }
 
-    static bool Dab(ModelPartView v, int hitTri, Vector3 centre, float r, Vector3 camLocal, bool erase, Color ink, float soft)
+    static bool Dab(ModelPartView v, Vector3 centre, float r, Func<int, Vector3, bool> seen, bool erase, Color ink, float soft)
     {
         var V = v.Data.V;
         var UV = v.Data.UV;
@@ -394,8 +417,7 @@ internal sealed class ModelTools
             var a = V[t * 3];
             var b = V[t * 3 + 1];
             var c = V[t * 3 + 2];
-            var n = (c - a).Cross(b - a);
-            if (n.Dot(camLocal - a) < 0 && t != hitTri) continue;
+            int tri = t;
             var ta = UV[t * 3] * new Vector2(v.W, v.H);
             var tb = UV[t * 3 + 1] * new Vector2(v.W, v.H);
             var tc = UV[t * 3 + 2] * new Vector2(v.W, v.H);
@@ -404,7 +426,7 @@ internal sealed class ModelTools
                 if (x >= v.W || y >= v.H) return;
                 var p = a * w0 + b * w1 + c * w2;
                 float d = (p - centre).Length() / r;
-                if (d >= 1) return;
+                if (d >= 1 || !seen(tri, p)) return;
                 float edge = Mathf.Clamp(soft, 0.02f, 1);
                 float f = d < 1 - edge ? 1 : 1 - (d - (1 - edge)) / edge;
                 float alpha = f * ink.A;

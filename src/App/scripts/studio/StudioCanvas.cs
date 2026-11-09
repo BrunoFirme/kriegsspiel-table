@@ -354,6 +354,9 @@ public partial class StudioCanvas : Control
         var d = ToDoc(mm.Position);
         _hoverDoc = d;
         _hoverIn = true;
+        if (_drag == Drag.Pan && (mm.ButtonMask & (MouseButtonMask.Left | MouseButtonMask.Middle)) == 0) _drag = Drag.None;
+        else if (_drag != Drag.None && _drag != Drag.Pan && (mm.ButtonMask & MouseButtonMask.Left) == 0)
+            Release(d, new InputEventMouseButton { ButtonIndex = MouseButton.Left, Pressed = false, Position = mm.Position });
         if (_drag == Drag.Pan)
         {
             _pan += mm.Relative;

@@ -38,6 +38,7 @@ internal sealed class ToolPanel
         _panel.Closed = () =>
         {
             _panel.Visible = false;
+            Colours.ClosePicker();
             if (_s.View == "model") _s.Model?.SetTool("orbit");
             else if (_s.View == "paint") Canvas.SetTool("pan");
             Canvas.Refit();
@@ -57,7 +58,12 @@ internal sealed class ToolPanel
     {
         if (_panel == null) return;
         bool show = _s.Sel != null && ((_s.View == "paint" && Canvas.Tool != "pan") || (_s.View == "model" && _s.Model?.Tool is "paint" or "erase" or "fill" or "pick" or "decal"));
-        if (!show) { _panel.Visible = false; return; }
+        if (!show)
+        {
+            _panel.Visible = false;
+            Colours.ClosePicker();
+            return;
+        }
         _panel.Visible = true;
         var c = _s.Centre.GetGlobalRect();
         _panel.Ceiling = c.Position.Y;
@@ -564,6 +570,8 @@ internal sealed class ColourChooser
     readonly PieceStudio _s;
     readonly ToolPanel _panel;
     bool _editInk2;
+    FloatPanel? _picker;
+    bool _changed, _rebuildQueued;
 
     public ColourChooser(PieceStudio s, ToolPanel panel) { _s = s; _panel = panel; }
 
@@ -615,7 +623,9 @@ internal sealed class ColourChooser
 
     void OpenPicker(Control from)
     {
-        var pop = new PopupPanel();
+        ClosePicker();
+        var panel = new FloatPanel(_editInk2 ? "Fill" : "Colour") { MouseFilter = Control.MouseFilterEnum.Stop };
+        panel.AddThemeStyleboxOverride("panel", Ui.Panel(0.95f));
         var picker = new ColorPicker
         {
             Color = _editInk2 ? Canvas.Ink2 : Canvas.Ink, EditAlpha = true, PickerShape = ColorPicker.PickerShapeType.HsvWheel,
@@ -630,17 +640,30 @@ internal sealed class ColourChooser
             Prefs.Ink2 = Hex.Of(Canvas.Ink2);
             _s.Model?.InkChanged(Canvas.Ink);
             ApplyInkToText(c);
+            _changed = true;
+            if (_rebuildQueued) return;
+            _rebuildQueued = true;
+            Callable.From(() => { _rebuildQueued = false; _panel.Rebuild(); }).CallDeferred();
         };
-        pop.AddChild(picker);
-        pop.PopupHide += () =>
-        {
-            pop.QueueFree();
-            Prefs.Used(_editInk2 ? Canvas.Ink2 : Canvas.Ink);
-            _panel.Rebuild();
-        };
-        _s.Root.AddChild(pop);
+        panel.Body.AddChild(picker);
+        panel.Closed = ClosePicker;
+        Ui.SwallowWheel(panel);
+        _s.Root.AddChild(panel);
+        _picker = panel;
         var r = from.GetGlobalRect();
-        pop.Popup(new Rect2I((Vector2I)(r.Position + new Vector2(r.Size.X + 8, -10)).Round(), Vector2I.Zero));
+        panel.Position = r.Position + new Vector2(r.Size.X + 8, -10);
+        panel.Fit();
+    }
+
+    public void ClosePicker()
+    {
+        if (_picker == null) return;
+        if (GodotObject.IsInstanceValid(_picker)) _picker.QueueFree();
+        _picker = null;
+        if (!_changed) return;
+        _changed = false;
+        Prefs.Used(_editInk2 ? Canvas.Ink2 : Canvas.Ink);
+        _panel.Rebuild();
     }
 
     Button Chip(string hex, string tip)

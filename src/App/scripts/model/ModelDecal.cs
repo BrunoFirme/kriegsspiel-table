@@ -69,40 +69,10 @@ internal sealed class DecalTool
         _m.RedrawOverlay();
     }
 
-    readonly struct Lens
-    {
-        readonly Vector2 _size;
-        readonly Projection _proj;
-        readonly Transform3D _view;
-        readonly float _near;
-
-        public Lens(Vector2 size, Camera3D cam)
-        {
-            _size = size;
-            _proj = cam.GetCameraProjection();
-            _view = cam.GlobalTransform.AffineInverse();
-            _near = cam.Near;
-        }
-
-        public bool Project(Vector3 w, out Vector2 s, out float z)
-        {
-            var v = _view * w;
-            z = -v.Z;
-            s = default;
-            if (z <= _near * 0.5f) return false;
-            var c = _proj * new Vector4(v.X, v.Y, v.Z, 1);
-            s = new Vector2((c.X / c.W * 0.5f + 0.5f) * _size.X, (1 - (c.Y / c.W * 0.5f + 0.5f)) * _size.Y);
-            return true;
-        }
-    }
-
-    sealed record Seen(Vector2[] S, float[] Z, bool[] Ok, Vector3[] W);
-
     public int Project(Vector2 at)
     {
         if (_decal == null || _decalData == null) return 0;
         var vpSize = (Vector2)_m.Vp.Size;
-        var lens = new Lens(vpSize, _m.Cam);
         var (hx, hy) = Half();
         float reach = Mathf.Sqrt(hx * hx + hy * hy);
         int x0 = Math.Max(0, (int)(at.X - reach)), x1 = Math.Min((int)vpSize.X - 1, (int)(at.X + reach));
@@ -110,69 +80,28 @@ internal sealed class DecalTool
         if (x1 < x0 || y1 < y0) return 0;
         var box = new Rect2I(x0, y0, x1 - x0 + 1, y1 - y0 + 1);
         var parts = _m.Drawn.ToList();
-        var screen = new Dictionary<string, Seen>();
-        var depth = Depth(parts, lens, box, screen);
+        var sight = new ModelSight(vpSize, _m.Cam, _m.Stand.Transform, parts);
+        sight.Look(box);
         int painted = 0;
         foreach (var v in parts)
         {
             if (v.Fixed) continue;
-            if (PressOn(v, screen[v.Part.Id], lens, box, depth, at, ref painted)) v.Repaint();
+            if (PressOn(v, sight, sight.Slot(v, 0), box, at, ref painted)) v.Repaint();
         }
         return painted;
     }
 
-    float[] Depth(List<ModelPartView> parts, Lens lens, Rect2I box, Dictionary<string, Seen> screen)
+    bool PressOn(ModelPartView v, ModelSight sight, int slot, Rect2I box, Vector2 at, ref int painted)
     {
-        int x0 = box.Position.X, y0 = box.Position.Y, x1 = box.End.X - 1, y1 = box.End.Y - 1, rw = box.Size.X;
-        var depth = new float[box.Size.X * box.Size.Y];
-        Array.Fill(depth, float.MaxValue);
-        foreach (var v in parts)
-        {
-            var xf = _m.Stand.Transform * v.Xf;
-            int n = v.Data.V.Count;
-            var s = new Vector2[n];
-            var z = new float[n];
-            var ok = new bool[n];
-            var w = new Vector3[n];
-            for (int i = 0; i < n; i++) { w[i] = xf * v.Data.V[i]; ok[i] = lens.Project(w[i], out s[i], out z[i]); }
-            screen[v.Part.Id] = new Seen(s, z, ok, w);
-            for (int t = 0; t < v.Data.Tris; t++)
-            {
-                int a = t * 3, b = a + 1, c = a + 2;
-                if (!ok[a] || !ok[b] || !ok[c]) continue;
-                float bx0 = Mathf.Min(s[a].X, Mathf.Min(s[b].X, s[c].X)), bx1 = Mathf.Max(s[a].X, Mathf.Max(s[b].X, s[c].X));
-                float by0 = Mathf.Min(s[a].Y, Mathf.Min(s[b].Y, s[c].Y)), by1 = Mathf.Max(s[a].Y, Mathf.Max(s[b].Y, s[c].Y));
-                if (bx1 < x0 || bx0 > x1 + 1 || by1 < y0 || by0 > y1 + 1) continue;
-                float den = (s[b].Y - s[c].Y) * (s[a].X - s[c].X) + (s[c].X - s[b].X) * (s[a].Y - s[c].Y);
-                if (Mathf.Abs(den) < 1e-9f) continue;
-                int px0 = Math.Max(x0, (int)bx0), px1 = Math.Min(x1, (int)bx1), py0 = Math.Max(y0, (int)by0), py1 = Math.Min(y1, (int)by1);
-                for (int py = py0; py <= py1; py++)
-                    for (int px = px0; px <= px1; px++)
-                    {
-                        float qx = px + 0.5f, qy = py + 0.5f;
-                        float w0 = ((s[b].Y - s[c].Y) * (qx - s[c].X) + (s[c].X - s[b].X) * (qy - s[c].Y)) / den;
-                        float w1 = ((s[c].Y - s[a].Y) * (qx - s[c].X) + (s[a].X - s[c].X) * (qy - s[c].Y)) / den;
-                        float w2 = 1 - w0 - w1;
-                        if (w0 < -1e-4f || w1 < -1e-4f || w2 < -1e-4f) continue;
-                        float zz = 1 / (w0 / z[a] + w1 / z[b] + w2 / z[c]);
-                        int k = (py - y0) * rw + (px - x0);
-                        if (zz < depth[k]) depth[k] = zz;
-                    }
-            }
-        }
-        return depth;
-    }
-
-    bool PressOn(ModelPartView v, Seen seen, Lens lens, Rect2I box, float[] depth, Vector2 at, ref int painted)
-    {
-        int x0 = box.Position.X, y0 = box.Position.Y, x1 = box.End.X - 1, y1 = box.End.Y - 1, rw = box.Size.X;
+        int x0 = box.Position.X, y0 = box.Position.Y, x1 = box.End.X - 1, y1 = box.End.Y - 1;
         var (hx, hy) = Half();
         float rot = Mathf.DegToRad(Turn);
         float cr = Mathf.Cos(-rot), sr = Mathf.Sin(-rot);
-        float near = _m.Cam.Near;
         var camPos = _m.Cam.GlobalPosition;
         int dw = _decal!.GetWidth(), dh = _decal.GetHeight();
-        var (s, z, ok, w) = seen;
+        if (slot < 0) return false;
+        var (_, _, s, _, ok, w) = sight[slot];
+        var lens = sight.Eye;
         bool any = false;
         int count = painted;
         for (int t = 0; t < v.Data.Tris; t++)
@@ -203,8 +132,7 @@ internal sealed class DecalTool
                 if (u < 0 || u > 1 || vv < 0 || vv > 1) return;
                 int px = (int)sp.X, py = (int)sp.Y;
                 if (px < x0 || px > x1 || py < y0 || py > y1) return;
-                float zb = depth[(py - y0) * rw + (px - x0)];
-                if (zp > zb * 1.006f + near) return;
+                if (!sight.Sees(slot, t, sp, zp)) return;
                 if (Mirror) u = 1 - u;
                 var col = Sample(dw, dh, u, vv);
                 float alpha = col.A * Opacity * fade;
