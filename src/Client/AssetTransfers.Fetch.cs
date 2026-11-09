@@ -37,6 +37,12 @@ public sealed partial class AssetTransfers
 
     void Want(string pkg, string rel, bool urgent)
     {
+        if (PackagePaths.Inside(Session.Store.Root, pkg, rel) == null)
+        {
+            Log.Warning($"the host named a file outside this PC's game files ({pkg}/{rel}): it is not fetched");
+            FileMissing(pkg, rel);
+            return;
+        }
         var abs = Abs(pkg, rel);
         if (_copying.ContainsKey(abs)) return;
         if (_asked.TryGetValue(abs, out var asked))

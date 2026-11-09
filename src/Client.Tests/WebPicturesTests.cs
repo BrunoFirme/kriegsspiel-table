@@ -70,6 +70,57 @@ public sealed class WebPicturesTests : IDisposable
         Assert.True(UploadAsset.PathAllowed(UploadAsset.ReliefPackage, name));
     }
 
+    [Theory]
+    [InlineData("8.8.8.8", true)]
+    [InlineData("2606:4700:4700::1111", true)]
+    [InlineData("127.0.0.1", false)]
+    [InlineData("10.1.2.3", false)]
+    [InlineData("172.16.0.1", false)]
+    [InlineData("172.31.255.255", false)]
+    [InlineData("192.168.1.1", false)]
+    [InlineData("169.254.169.254", false)]
+    [InlineData("100.64.0.1", false)]
+    [InlineData("0.0.0.0", false)]
+    [InlineData("224.0.0.1", false)]
+    [InlineData("255.255.255.255", false)]
+    [InlineData("::1", false)]
+    [InlineData("::", false)]
+    [InlineData("fe80::1", false)]
+    [InlineData("fd00::1", false)]
+    [InlineData("::ffff:192.168.0.1", false)]
+    public void Only_addresses_on_the_public_web_are_reached_for_scripts(string address, bool reached) => Assert.Equal(reached, WebPictures.IsPublic(IPAddress.Parse(address)));
+
+    [Fact]
+    public async Task A_script_s_link_to_this_pc_is_never_fetched_though_the_person_s_own_link_is()
+    {
+        var listener = new System.Net.Sockets.TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        int served = 0;
+        var serving = Task.Run(async () =>
+        {
+            while (true)
+            {
+                using var client = await listener.AcceptTcpClientAsync();
+                served++;
+                var stream = client.GetStream();
+                var buffer = new byte[4096];
+                _ = await stream.ReadAsync(buffer);
+                var head = System.Text.Encoding.ASCII.GetBytes($"HTTP/1.1 200 OK\r\nContent-Length: {Png.Length}\r\nConnection: close\r\n\r\n");
+                await stream.WriteAsync(head.Concat(Png).ToArray());
+            }
+        });
+        var link = $"http://127.0.0.1:{((IPEndPoint)listener.LocalEndpoint).Port}/arms.png";
+        try
+        {
+            Assert.Null(await new WebPictures(_root, WebPictures.PublicWeb).Fetch(link));
+            Assert.Equal(0, served);
+            Assert.NotNull(await new WebPictures(_root, WebPictures.NewClient()).Fetch(link));
+            Assert.Equal(1, served);
+        }
+        finally { listener.Stop(); }
+        await Assert.ThrowsAnyAsync<Exception>(() => serving);
+    }
+
     public void Dispose()
     {
         try { Directory.Delete(_root, true); }

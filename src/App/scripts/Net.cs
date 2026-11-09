@@ -115,7 +115,7 @@ public partial class Net : Node
     {
         Server = server;
         server.AppVersion = AppVersion;
-        var web = new WebPictures(Session.Store.Root);
+        var web = new WebPictures(Session.Store.Root, WebPictures.PublicWeb);
         server.Scripts.FetchPicture = web.Fetch;
         server.Scripts.FetchModel = web.FetchModel;
         if (Session.Store.RepointLostTiles(server.State.Sheets) is var moved and > 0) GD.Print($"[sheets] {moved} map sheet(s) found their tiles in another folder");
@@ -398,9 +398,9 @@ public partial class Net : Node
     void Recv(byte[] data)
     {
         if (Server == null && Multiplayer.GetRemoteSenderId() != 1) return;
-        var stranger = Server != null && Server.Peer(Multiplayer.GetRemoteSenderId()) == null;
+        var most = Server == null ? Framing.MaxUnpacked : Framing.MostFrom(Server.Peer(Multiplayer.GetRemoteSenderId()));
         Message m;
-        try { m = Json.Deserialize<Message>(Framing.Unpack(data, stranger ? Framing.MaxFromStranger : Framing.MaxUnpacked)); }
+        try { m = Json.Deserialize<Message>(Framing.Unpack(data, most)); }
         catch (Exception e)
         {
             GD.PushError("bad message: " + e.Message);

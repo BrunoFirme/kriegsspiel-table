@@ -1,5 +1,7 @@
 using System.Text;
+using System.Net;
 using System.Net.Http;
+using System.Net.Sockets;
 using System.Security.Cryptography;
 using KTable.Core;
 using KTable.Core.Model;
@@ -19,11 +21,52 @@ public sealed class WebPictures(string packagesRoot, HttpClient? http = null)
 
     string Folder => Path.Combine(packagesRoot, UploadAsset.ReliefPackage, UploadAsset.WebPictures);
 
-    public static HttpClient NewClient()
+    public static readonly HttpClient PublicWeb = NewClient(publicOnly: true);
+
+    public static HttpClient NewClient(bool publicOnly = false)
     {
-        var c = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
+        var handler = new SocketsHttpHandler();
+        if (publicOnly)
+        {
+            handler.UseProxy = false;
+            handler.ConnectCallback = ConnectPublic;
+        }
+        var c = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(30) };
         c.DefaultRequestHeaders.UserAgent.ParseAdd("KriegsspielTable");
         return c;
+    }
+
+    static async ValueTask<Stream> ConnectPublic(SocketsHttpConnectionContext context, CancellationToken stop)
+    {
+        var host = context.DnsEndPoint.Host;
+        var addresses = (await Dns.GetHostAddressesAsync(host, stop)).Where(IsPublic).ToArray();
+        if (addresses.Length == 0) throw new HttpRequestException($"{host} is not on the public web");
+        var socket = new Socket(SocketType.Stream, ProtocolType.Tcp) { NoDelay = true };
+        try
+        {
+            await socket.ConnectAsync(addresses, context.DnsEndPoint.Port, stop);
+            return new NetworkStream(socket, ownsSocket: true);
+        }
+        catch (Exception e) when (e is SocketException or OperationCanceledException or ObjectDisposedException)
+        {
+            socket.Dispose();
+            throw;
+        }
+    }
+
+    public static bool IsPublic(IPAddress address)
+    {
+        if (address.IsIPv4MappedToIPv6) address = address.MapToIPv4();
+        if (IPAddress.IsLoopback(address)) return false;
+        if (address.AddressFamily == AddressFamily.InterNetwork)
+        {
+            var b = address.GetAddressBytes();
+            return !(b[0] is 0 or 10 or 127 || b[0] >= 224 || b[0] == 100 && b[1] is >= 64 and <= 127 || b[0] == 169 && b[1] == 254
+                || b[0] == 172 && b[1] is >= 16 and <= 31 || b[0] == 192 && b[1] == 168 || b[0] == 192 && b[1] == 0 && b[2] == 0 || b[0] == 198 && b[1] is 18 or 19);
+        }
+        if (address.AddressFamily != AddressFamily.InterNetworkV6) return false;
+        var v6 = address.GetAddressBytes();
+        return !(address.Equals(IPAddress.IPv6None) || address.IsIPv6LinkLocal || address.IsIPv6SiteLocal || address.IsIPv6Multicast || (v6[0] & 0xFE) == 0xFC);
     }
 
     public Task<string?> Fetch(string url) => FetchAs(url, UploadAsset.WebPictures, Keep);

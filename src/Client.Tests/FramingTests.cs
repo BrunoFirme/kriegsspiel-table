@@ -50,4 +50,12 @@ public class FramingTests
         Assert.Empty(Framing.Unpack(Array.Empty<byte>()));
         Assert.Equal(new byte[] { 0x1F }, Framing.Unpack(new byte[] { 0x1F }));
     }
+
+    [Fact]
+    public void Only_an_umpire_may_send_the_host_a_large_message()
+    {
+        Assert.Equal(Framing.MaxFromStranger, Framing.MostFrom(null));
+        Assert.Equal(Framing.MaxFromStranger, Framing.MostFrom(new KTable.Core.Model.PeerInfo { Role = KTable.Core.Model.Role.Observer }));
+        Assert.Equal(Framing.MaxUnpacked, Framing.MostFrom(new KTable.Core.Model.PeerInfo { Role = KTable.Core.Model.Role.Umpire }));
+    }
 }

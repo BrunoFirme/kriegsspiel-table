@@ -160,4 +160,16 @@ public class AssetWaitsTests
         waits.TextureDone("piece");
         Assert.Equal((2, false, false), (waits.BatchDone, waits.Busy, waits.Shows));
     }
+
+    [Fact]
+    public void A_file_refused_as_it_is_asked_for_lets_its_waiter_go_on_as_missing()
+    {
+        var waits = new AssetWaits<string>();
+        var abs = Path.Combine(_dir, "refused.png");
+        waits.RequestRemote = (_, _) => waits.FileMissing(abs);
+        int missing = 0;
+        waits.EnsureFile("p", "refused.png", abs, () => { }, () => missing++);
+        Assert.Equal(1, missing);
+        Assert.False(waits.Busy);
+    }
 }

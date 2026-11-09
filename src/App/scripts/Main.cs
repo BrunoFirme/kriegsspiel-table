@@ -323,8 +323,7 @@ public partial class Main : Node
         if (!_session.IsHost)
             foreach (var p in _session.View.Packs)
             {
-                var pj = Path.Combine(_session.Store.Root, p, "pack.json");
-                BestEffort.DeleteFile(pj);
+                if (PackagePaths.Inside(_session.Store.Root, p, "pack.json") is { } pj) BestEffort.DeleteFile(pj);
                 _session.Store.Forget(p);
             }
         var pending = _session.View.Packs.Where(p => !File.Exists(Path.Combine(_session.Store.Root, p, "pack.json"))).ToList();
@@ -420,7 +419,7 @@ public partial class Main : Node
         _session.PackAdded += (id, hash) =>
         {
             var store = _session.Store;
-            var pj = Path.Combine(store.PackageDir(id), "pack.json");
+            if (PackagePaths.Inside(store.Root, id, "pack.json") is not { } pj) return;
             if (!_session.IsHost && UserPacks.Hash(store, id) != hash) BestEffort.DeleteFile(pj);
             store.Forget(id);
             _session.Assets.EnsureFile(id, "pack.json", () =>

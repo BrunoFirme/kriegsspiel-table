@@ -829,7 +829,7 @@ public static partial class ApiDoc
         """);
     Note("A function that is not a function in the third place is an error.");
 
-    M("game", "fetch_picture(link, fn)", "Downloads a picture (PNG, JPEG, WebP or BMP, up to 16 MB) from the web on the host, for set_decals. fn(picture) gets its name, or nil when the link gave none.");
+    M("game", "fetch_picture(link, fn)", "Downloads a picture (PNG, JPEG, WebP or BMP, up to 16 MB) from the web on the host, for set_decals. fn(picture) gets its name, or nil when the link gave none. Links to the host PC or its local network give none.");
     P("link", "string", "An http or https link.");
     P("fn", "function", "Called as fn(picture) once the download ends.");
     X("""

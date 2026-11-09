@@ -2231,7 +2231,7 @@ The game around the table.
 | [`game.get_var`](#gameget_var) | Reads a global variable of the global script. |
 | [`game.set_var`](#gameset_var) | Writes a global variable of the global script. |
 | [`game.dialog`](#gamedialog) | Opens a window for one umpire (nil: everyone): kind memo, input, confirm, options, color or picture. fn(answer, who); the answer is nil when cancelled. |
-| [`game.fetch_picture`](#gamefetch_picture) | Downloads a picture (PNG, JPEG, WebP or BMP, up to 16 MB) from the web on the host, for set_decals. fn(picture) gets its name, or nil when the link gave none. |
+| [`game.fetch_picture`](#gamefetch_picture) | Downloads a picture (PNG, JPEG, WebP or BMP, up to 16 MB) from the web on the host, for set_decals. fn(picture) gets its name, or nil when the link gave none. Links to the host PC or its local network give none. |
 
 ### `game.turn`
 
@@ -2542,7 +2542,7 @@ A function that is not a function in the third place is an error.
 game.fetch_picture(link, fn)
 ```
 
-Downloads a picture (PNG, JPEG, WebP or BMP, up to 16 MB) from the web on the host, for set_decals. fn(picture) gets its name, or nil when the link gave none.
+Downloads a picture (PNG, JPEG, WebP or BMP, up to 16 MB) from the web on the host, for set_decals. fn(picture) gets its name, or nil when the link gave none. Links to the host PC or its local network give none.
 
 | Parameter | Type | Description |
 |---|---|---|

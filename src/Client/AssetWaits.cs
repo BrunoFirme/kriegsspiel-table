@@ -36,13 +36,14 @@ public sealed class AssetWaits<TTexture>
             onMissing?.Invoke();
             return;
         }
-        if (!_waitingFiles.TryGetValue(abs, out var l))
+        if (_waitingFiles.TryGetValue(abs, out var l))
         {
-            Started();
-            _waitingFiles[abs] = l = new();
-            RequestRemote(package, rel);
+            l.Add((onReady, onMissing));
+            return;
         }
-        l.Add((onReady, onMissing));
+        Started();
+        _waitingFiles[abs] = new() { (onReady, onMissing) };
+        RequestRemote(package, rel);
     }
 
     public void Prefetch(string package, string rel, string abs)

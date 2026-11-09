@@ -53,8 +53,10 @@ command (`ForPeer`). A new role is a new case there and nowhere else.
 
 Lua 5.2 through MoonSharp, on the host only. Each scripted piece has its own environment, plus one global
 script. A call gets a time budget, a nesting limit and a coroutine limit (`ScriptGuards`); a script that breaks a
-limit stops with an error in the console, and the game goes on. Scripts never get the network, files, processes
-or code from outside their own pack (`ScriptSafety` also judges every script that comes from outside). The API is
+limit stops with an error in the console, and the game goes on. Scripts never get files, processes or code from
+outside their own pack (`ScriptSafety` also judges every script that comes from outside), and reach the network
+only to fetch pictures and models from public web addresses (`WebPictures.PublicWeb`), never the host PC or its
+local network. The API is
 written once in `Scripting/ApiDoc.cs`; the reference in `docs/scripting-api.md` is generated from it and a test
 keeps the two in agreement.
 
@@ -79,7 +81,9 @@ the joiner looks in its own installed packs for a file of the same name (names a
 before use) and for a map with the same tile list. The host sends file pieces as raw bytes on their own channel,
 urgent ones first, each player in turn, and each player's pieces are acknowledged: `Pacer` keeps about a quarter
 of a second of them on the way, so a move never waits long behind a download. A piece that arrives damaged is
-thrown away and fetched once more.
+thrown away and fetched once more. A joiner fetches only files whose names stay inside its packages folder
+(`PackagePaths`), whatever the host names. The host takes uploads from umpires only, keeps a pack that is already
+there unless its first author sends it, and stops each umpire at 2 GB a sitting or when the disk runs low.
 
 **Steam** is behind a platform interface (`scripts/platform/`) and is in a build only with
 `-p:KTableSteam=true` (or `tools/export-windows.ps1 -Steam`). The ordinary build has no Steam code or library

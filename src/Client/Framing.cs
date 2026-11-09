@@ -1,4 +1,6 @@
 using System.IO.Compression;
+using KTable.Core;
+using KTable.Core.Model;
 
 namespace KTable.Client;
 
@@ -7,6 +9,8 @@ public static class Framing
     public const int PackAbove = 64 * 1024;
     public const long MaxUnpacked = 1L << 30;
     public const long MaxFromStranger = 64 * 1024;
+
+    public static long MostFrom(PeerInfo? sender) => sender != null && Visibility.IsUmpire(sender.Role) ? MaxUnpacked : MaxFromStranger;
 
     public static byte[] ForWire(byte[] json) => json.Length > PackAbove ? Pack(json) : json;
 

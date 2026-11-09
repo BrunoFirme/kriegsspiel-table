@@ -596,7 +596,7 @@ function game.set_var(name, value) end
 ---@return string # The dialog's token.
 function game.dialog(who, spec, fn) end
 
----Downloads a picture (PNG, JPEG, WebP or BMP, up to 16 MB) from the web on the host, for set_decals. fn(picture) gets its name, or nil when the link gave none.
+---Downloads a picture (PNG, JPEG, WebP or BMP, up to 16 MB) from the web on the host, for set_decals. fn(picture) gets its name, or nil when the link gave none. Links to the host PC or its local network give none.
 ---@param link string An http or https link.
 ---@param fn function Called as fn(picture) once the download ends.
 function game.fetch_picture(link, fn) end
