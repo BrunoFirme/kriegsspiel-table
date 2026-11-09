@@ -596,6 +596,7 @@ public partial class ModelStudio : Control
         def.Texture = texSha;
         def.Kind = "model";
         def.Size = new Size2(Math.Round(Math.Max(0.02, b.Size.X * doc.Scale), 4), Math.Round(Math.Max(0.02, b.Size.Z * doc.Scale), 4));
+        def.Thickness = Math.Round(Math.Max(0.02, b.Size.Y * doc.Scale), 4);
         if (def == _def) FollowScale(def, doc.Scale);
         foreach (var st in def.States)
         {
