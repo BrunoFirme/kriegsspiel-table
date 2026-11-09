@@ -5,7 +5,7 @@ namespace KTable.Converter;
 
 public static partial class ModuleFolders
 {
-    const string Game = "Tabletop Simulator";
+    const string Game = "Tabletop Simulator", GameAppId = "286160", FlatpakSteam = "com.valvesoftware.Steam";
 
     [GeneratedRegex("\"path\"\\s+\"((?:[^\"\\\\]|\\\\.)*)\"")] private static partial Regex LibraryPath();
 
@@ -19,11 +19,22 @@ public static partial class ModuleFolders
         yield return Path.Combine(home, "OneDrive", "Documentos", "My Games", Game);
         yield return Path.Combine(home, "Library", Game);
         yield return Path.Combine(home, ".local", "share", Game);
+        yield return Path.Combine(home, ".var", "app", FlatpakSteam, ".local", "share", Game);
+        foreach (var root in LinuxSteamRoots(home)) yield return ProtonHome(root);
     }
+
+    static IEnumerable<string> LinuxSteamRoots(string home) => new[]
+    {
+        Path.Combine(home, ".steam", "steam"), Path.Combine(home, ".local", "share", "Steam"), Path.Combine(home, ".var", "app", FlatpakSteam, ".local", "share", "Steam"),
+    };
+
+    public static string ProtonHome(string library) =>
+        Path.Combine(library, "steamapps", "compatdata", GameAppId, "pfx", "drive_c", "users", "steamuser", "Documents", "My Games", Game);
 
     public static IEnumerable<string> ModsFolders(string? steamRoot) =>
         HomeFolders().Select(h => Path.Combine(h, "Mods"))
-            .Concat(SteamLibraries(steamRoot).Select(l => Path.Combine(l, "steamapps", "common", Game, Game + "_Data", "Mods")));
+            .Concat(SteamLibraries(steamRoot).Select(l => Path.Combine(l, "steamapps", "common", Game, Game + "_Data", "Mods")))
+            .Concat(SteamLibraries(steamRoot).Select(l => Path.Combine(ProtonHome(l), "Mods")));
 
     public static IReadOnlyList<string> SteamLibraries(string? steamRoot)
     {
@@ -40,7 +51,7 @@ public static partial class ModuleFolders
             return fromRegistry.Replace('/', Path.DirectorySeparatorChar);
         var programs = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86);
         var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-        return new[] { Path.Combine(programs, "Steam"), Path.Combine(home, ".steam", "steam"), Path.Combine(home, "Library", "Application Support", "Steam") }
+        return new[] { Path.Combine(programs, "Steam"), Path.Combine(home, "Library", "Application Support", "Steam") }.Concat(LinuxSteamRoots(home))
             .FirstOrDefault(Directory.Exists);
     }
 

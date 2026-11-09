@@ -134,12 +134,13 @@ public sealed partial class AssetStore
         return e;
     }
 
-    static string? LocalPath(string url)
+    public static string? LocalPath(string url)
     {
         var u = url.Trim();
-        if (u.StartsWith("file:///", StringComparison.OrdinalIgnoreCase)) u = Uri.UnescapeDataString(u[8..]);
-        else if (u.StartsWith("file://", StringComparison.OrdinalIgnoreCase)) u = Uri.UnescapeDataString(u[7..]);
-        return u.Length > 2 && u[1] == ':' ? u.Replace('/', '\\') : null;
+        if (u.StartsWith("file://", StringComparison.OrdinalIgnoreCase)) u = Uri.UnescapeDataString(u[7..]);
+        if (u.Length > 3 && u[0] == '/' && char.IsAsciiLetter(u[1]) && u[2] == ':') u = u[1..];
+        if (u.Length > 2 && char.IsAsciiLetter(u[0]) && u[1] == ':') return OperatingSystem.IsWindows() ? u.Replace('/', '\\') : u;
+        return u.Length > 1 && u[0] == '/' && u[1] != '/' ? u : null;
     }
 
     static CacheEntry Describe(byte[] bytes, string url)
