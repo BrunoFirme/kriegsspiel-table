@@ -171,8 +171,12 @@ sealed class SettingsPage
 
     public void Show()
     {
-        var v = _t.NewPage("Settings", "");
+        var page = _t.NewPage("Settings", "");
+        var scroll = new ScrollContainer { SizeFlagsVertical = Control.SizeFlags.ExpandFill, HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled };
+        page.AddChild(scroll);
+        var v = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         v.AddThemeConstantOverride("separation", Ui.Gap.Block);
+        scroll.AddChild(v);
         v.AddChild(Ui.Header("Interface"));
         var access = new VBoxContainer();
         v.AddChild(access);
