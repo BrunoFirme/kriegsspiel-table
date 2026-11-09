@@ -11,6 +11,9 @@ namespace KTable.App;
 
 sealed class TitleScreen
 {
+    const string Wordmark = "res://brand/firmeware.png";
+    const float WordmarkHeight = 13;
+
     readonly Main _main;
     readonly Settings _cfg;
     readonly IPlatform _platform;
@@ -177,9 +180,13 @@ sealed class TitleScreen
             Status.Text += (Status.Text.Length > 0 ? "\n" : "") + $"A game in play has no scenario file and no save of it can be read: {string.Join(", ", lost)} (in {Main.Saves.LiveDir}).";
         if (OffersUpdates) UpdateOffer.Put(left, _main, _cfg);
         left.AddChild(new Control { CustomMinimumSize = new Vector2(0, 6) });
+        if (ResourceLoader.Load<Texture2D>(Wordmark) is { } mark)
+            left.AddChild(new TextureRect { Texture = mark, Modulate = Ui.Faint, ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize, StretchMode = TextureRect.StretchModeEnum.KeepAspect,
+                CustomMinimumSize = new Vector2(WordmarkHeight * mark.GetWidth() / mark.GetHeight(), WordmarkHeight), SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin, TooltipText = "by Firme" });
+        left.AddChild(new Control { CustomMinimumSize = new Vector2(0, 4) });
         var contactRow = new HBoxContainer();
         contactRow.AddThemeConstantOverride("separation", Ui.Gap.None);
-        var contact = new Label { Text = "by Firme  ·  Discord b.firme  ·  ", Modulate = Muted };
+        var contact = new Label { Text = "Discord b.firme  ·  ", Modulate = Muted };
         contact.AddThemeFontSizeOverride("font_size", 12);
         contactRow.AddChild(contact);
         var report = new LinkButton { Text = "Report a problem", Underline = LinkButton.UnderlineMode.OnHover, FocusMode = Control.FocusModeEnum.None, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter };
