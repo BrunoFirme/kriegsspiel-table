@@ -81,9 +81,10 @@ the joiner looks in its own installed packs for a file of the same name (names a
 before use) and for a map with the same tile list. The host sends file pieces as raw bytes on their own channel,
 urgent ones first, each player in turn, and each player's pieces are acknowledged: `Pacer` keeps about a quarter
 of a second of them on the way, so a move never waits long behind a download. A piece that arrives damaged is
-thrown away and fetched once more. A joiner fetches only files whose names stay inside its packages folder
-(`PackagePaths`), whatever the host names. The host takes uploads from umpires only, keeps a pack that is already
-there unless its first author sends it, and stops each umpire at 2 GB a sitting or when the disk runs low.
+thrown away and fetched once more. A joiner fetches only files whose names stay inside its packages folder and
+whose kind a game uses (`PackagePaths`), whatever the host names. The host takes uploads from umpires only, keeps a
+pack that is already there unless its first author or whoever sent it that sitting sends it, and stops each umpire at
+2 GB a sitting or when the disk runs low.
 
 **Steam** is behind a platform interface (`scripts/platform/`) and is in a build only with
 `-p:KTableSteam=true` (or `tools/export-windows.ps1 -Steam`). The ordinary build has no Steam code or library

@@ -5,6 +5,10 @@ public static class PackagePaths
     const int MostNameChars = 200;
     const int MostPathChars = 400;
     static readonly char[] NotInNames = ['/', '\\', ':', '*', '?', '"', '<', '>', '|'];
+    public static readonly IReadOnlySet<string> HostFileTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        { ".json", ".bin", ".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp", ".obj" };
+
+    public static bool IsHostFileType(string? rel) => rel != null && HostFileTypes.Contains(Path.GetExtension(rel));
 
     public static bool IsName(string? name) =>
         name is { Length: > 0 and <= MostNameChars } && name.Trim('.', ' ').Length > 0 && !name.Contains("..", StringComparison.Ordinal)

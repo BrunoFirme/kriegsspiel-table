@@ -33,12 +33,12 @@ public class HostFilesSafetyTests
     string Above => Path.GetFullPath(Path.Combine(_root, ".."));
 
     [Theory]
-    [InlineData("user.x", "../../escaped.cmd")]
-    [InlineData("user.x", "..\\..\\escaped.cmd")]
-    [InlineData("..", "escaped.cmd")]
-    [InlineData("../..", "escaped.cmd")]
-    [InlineData("user.x", "assets/../../../escaped.cmd")]
-    [InlineData("user.x", "C:escaped.cmd")]
+    [InlineData("user.x", "../../escaped.png")]
+    [InlineData("user.x", "..\\..\\escaped.png")]
+    [InlineData("..", "escaped.png")]
+    [InlineData("../..", "escaped.png")]
+    [InlineData("user.x", "assets/../../../escaped.png")]
+    [InlineData("user.x", "C:escaped.png")]
     [InlineData("user.x", "")]
     public void A_file_the_host_names_outside_this_pc_s_game_files_is_never_asked_for_or_written(string package, string rel)
     {
@@ -53,7 +53,7 @@ public class HostFilesSafetyTests
     [Fact]
     public void A_file_named_by_a_full_path_is_never_asked_for()
     {
-        var target = Path.Combine(Above, "escaped.cmd");
+        var target = Path.Combine(Above, "escaped.png");
         _t.QueueFetch("user.x", target);
         Assert.Empty(Sent<NeedAsset>());
         Assert.False(File.Exists(target));
@@ -65,6 +65,45 @@ public class HostFilesSafetyTests
         _t.QueueFetch("tts.Some_Module", "tiles\\map\\index.json");
         Assert.Equal("tiles\\map\\index.json", Assert.Single(Sent<NeedAsset>()).Path);
         Assert.Empty(_missing);
+    }
+
+    [Theory]
+    [InlineData("pack.json")]
+    [InlineData("relief/0a.bin")]
+    [InlineData("assets/0a.PNG")]
+    [InlineData("assets/0a.jpg")]
+    [InlineData("assets/0a.jpeg")]
+    [InlineData("assets/0a.webp")]
+    [InlineData("assets/0a.gif")]
+    [InlineData("assets/0a.bmp")]
+    [InlineData("assets/0a.obj")]
+    public void Every_kind_of_file_a_game_uses_is_fetched(string rel)
+    {
+        _t.Prefetch("tts.m", rel);
+        Assert.Equal(rel, Assert.Single(Sent<NeedAsset>()).Path);
+        Assert.Empty(_missing);
+    }
+
+    [Theory]
+    [InlineData("assets/run.exe")]
+    [InlineData("assets/run.cmd")]
+    [InlineData("assets/run.bat")]
+    [InlineData("assets/run.lnk")]
+    [InlineData("assets/run.dll")]
+    [InlineData("assets/run.ps1")]
+    [InlineData("assets/run.vbs")]
+    [InlineData("assets/run.js")]
+    [InlineData("assets/run.html")]
+    [InlineData("assets/run.png.exe")]
+    [InlineData("assets/run")]
+    public void Any_other_kind_of_file_the_host_names_is_never_asked_for_or_written(string rel)
+    {
+        _t.QueueFetch("tts.m", rel);
+        Assert.Empty(Sent<NeedAsset>());
+        Assert.Equal(new[] { "tts.m/" + rel }, _missing);
+        Assert.Contains("kind of file", Assert.Single(_warnings));
+        _t.ReceiveChunk(new AssetChunk { Package = "tts.m", Path = rel, Offset = 0, Total = 4, Data = "echo"u8.ToArray() });
+        Assert.False(Directory.Exists(Path.Combine(_root, "tts.m")));
     }
 
     GameServer Host(Role role, string name = "Eve")
