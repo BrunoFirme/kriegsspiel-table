@@ -78,35 +78,36 @@ sealed class CameraControl
         Rig.PanWorld(_keyVel.Rotated(Vector3.Up, Rig.Yaw + Mathf.Pi) * Rig.Distance * dt);
     }
 
+    const float LoneBoardSpan = 6, EmptyTableSpan = 60;
+
     public void FrameAll()
     {
         var view = _c.S.View;
-        var pts = view.Sheets.SelectMany(sh => new[] { Coords.ToWorld(sh.Pos) }).ToList();
-        if (pts.Count == 0) pts = view.Layers.Values.SelectMany(l => l).Select(p => Coords.ToWorld(p.Pos)).ToList();
-        if (pts.Count == 0) { Rig.Frame(Vector3.Zero, 60); return; }
-        var c = pts.Aggregate(Vector3.Zero, (a, b) => a + b) / pts.Count;
-        float size = view.Sheets.Count > 0 ? (float)view.Sheets.Max(s => Math.Max(s.Size.W, s.Size.H)) : 60;
-        if (view.Sheets.Count == 0)
+        var pts = new List<Vector3>();
+        if (view.Sheets.Count > 0)
+        {
+            var g = Rig.Terrain();
+            float top = g.Any ? Math.Max(0, (float)g.Highest) : 0;
+            foreach (var sh in view.Sheets)
+                foreach (var (dx, dz) in new[] { (-1, -1), (1, -1), (1, 1), (-1, 1) })
+                {
+                    var corner = Coords.ToWorld(sh.Pos + SheetGeometry.Offset(dx * sh.Size.W / 2, dz * sh.Size.H / 2, sh.RotDeg));
+                    pts.Add(corner);
+                    if (top > 0) pts.Add(corner + Vector3.Up * top);
+                }
+        }
+        else
         {
             var board = view.Layer(Layers.Umpire);
-            if (board.Count > 0)
-            {
-                double x0 = board.Min(p => p.Pos.X), x1 = board.Max(p => p.Pos.X);
-                double z0 = board.Min(p => p.Pos.Z), z1 = board.Max(p => p.Pos.Z);
-                size = (float)Math.Max(6, Math.Max(x1 - x0, z1 - z0));
-                c = Coords.ToWorld(new Vec2((x0 + x1) / 2, (z0 + z1) / 2));
-            }
+            var all = board.Count > 0 ? board : view.Layers.Values.SelectMany(l => l).ToList();
+            if (all.Count == 0) { Rig.Frame(Vector3.Zero, EmptyTableSpan); return; }
+            double x0 = all.Min(p => p.Pos.X), x1 = all.Max(p => p.Pos.X), z0 = all.Min(p => p.Pos.Z), z1 = all.Max(p => p.Pos.Z);
+            double cx = (x0 + x1) / 2, cz = (z0 + z1) / 2;
+            double hx = Math.Max(LoneBoardSpan, x1 - x0) / 2, hz = Math.Max(LoneBoardSpan, z1 - z0) / 2;
+            foreach (var (dx, dz) in new[] { (-1, -1), (1, -1), (1, 1), (-1, 1) })
+                pts.Add(Coords.ToWorld(new Vec2(cx + dx * hx, cz + dz * hz)));
         }
-        if (view.Sheets.Count > 1)
-        {
-            var minX = view.Sheets.Min(s => s.Pos.X - s.Size.W / 2);
-            var maxX = view.Sheets.Max(s => s.Pos.X + s.Size.W / 2);
-            var minZ = view.Sheets.Min(s => s.Pos.Z - s.Size.H / 2);
-            var maxZ = view.Sheets.Max(s => s.Pos.Z + s.Size.H / 2);
-            size = (float)Math.Max(maxX - minX, maxZ - minZ);
-            c = Coords.ToWorld(new Vec2((minX + maxX) / 2, (minZ + maxZ) / 2));
-        }
-        Rig.Frame(c, size);
+        Rig.Fit(pts);
     }
 
     public void FramePieces(IReadOnlyCollection<PieceInstance> pieces)

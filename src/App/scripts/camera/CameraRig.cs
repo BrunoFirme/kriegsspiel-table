@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using Godot;
 using KTable.Core.Model;
 
@@ -256,6 +258,108 @@ public partial class CameraRig : Node3D
         else Apply();
     }
 
+    Func<Rect2>? _clear;
+    List<Vector3>? _refit;
+
+    public Func<Rect2>? Clear
+    {
+        get => _clear;
+        set
+        {
+            _clear = value;
+            if (value == null || _refit is not { } pts) return;
+            _refit = null;
+            Fit(pts);
+        }
+    }
+
+    const float FitMargin = 0.04f, OrthoSpan = 0.9f;
+    const int FitPasses = 4;
+
+    public void Fit(IReadOnlyList<Vector3> pts)
+    {
+        if (pts.Count == 0 || Cam == null || Eye != null) return;
+        _refit = Clear == null ? pts.ToList() : null;
+        Still();
+        float x0 = pts.Min(p => p.X), x1 = pts.Max(p => p.X), z0 = pts.Min(p => p.Z), z1 = pts.Max(p => p.Z);
+        Target = new Vector3((x0 + x1) / 2, 0, (z0 + z1) / 2);
+        SettleNow();
+        var vp = GetViewport().GetVisibleRect().Size;
+        if (vp.X < 1 || vp.Y < 1) return;
+        var (l, r, b, t) = FreeBounds(vp);
+        float aspect = vp.X / vp.Y;
+        for (int pass = 0; pass <= FitPasses; pass++)
+        {
+            Apply();
+            Distance = Mathf.Clamp(Needed(pts, l, r, b, t, aspect), MinDistance, MaxDistance);
+            Apply();
+            if (pass == FitPasses) break;
+            float lo = float.MaxValue, hi = float.MinValue, bo = float.MaxValue, to = float.MinValue;
+            foreach (var p in pts)
+            {
+                var s = Cam.UnprojectPosition(p);
+                float nx = s.X / vp.X * 2 - 1, ny = 1 - s.Y / vp.Y * 2;
+                lo = Mathf.Min(lo, nx);
+                hi = Mathf.Max(hi, nx);
+                bo = Mathf.Min(bo, ny);
+                to = Mathf.Max(to, ny);
+            }
+            float dx = (lo + hi - l - r) / 2, dy = (bo + to - b - t) / 2;
+            if (Mathf.Abs(dx) < 0.005f && Mathf.Abs(dy) < 0.005f) break;
+            var (sx, sy) = Flat ? (Cam.Size / 2 * aspect, Cam.Size / 2) : (Mathf.Tan(Mathf.DegToRad(Cam.Fov) / 2) * aspect * Distance, Mathf.Tan(Mathf.DegToRad(Cam.Fov) / 2) * Distance);
+            var bx = Cam.GlobalBasis.X;
+            var by = Cam.GlobalBasis.Y;
+            float det = bx.X * by.Z - bx.Z * by.X;
+            if (Mathf.Abs(det) < 1e-4f) break;
+            float wantX = dx * sx, wantY = dy * sy;
+            Target += new Vector3((wantX * by.Z - bx.Z * wantY) / det, 0, (bx.X * wantY - wantX * by.X) / det);
+            SettleNow();
+        }
+    }
+
+    (float l, float r, float b, float t) FreeBounds(Vector2 vp)
+    {
+        var full = new Rect2(Vector2.Zero, vp);
+        var free = Clear?.Invoke() is { } c ? c.Intersection(full) : full;
+        if (free.Size.X < vp.X * 0.3f || free.Size.Y < vp.Y * 0.3f) free = full;
+        float l = free.Position.X / vp.X * 2 - 1, r = free.End.X / vp.X * 2 - 1;
+        float t = 1 - free.Position.Y / vp.Y * 2, b = 1 - free.End.Y / vp.Y * 2;
+        float mx = (r - l) * FitMargin, my = (t - b) * FitMargin;
+        l += mx;
+        r -= mx;
+        b += my;
+        t -= my;
+        if (l >= 0 || r <= 0 || b >= 0 || t <= 0) return (-1 + 2 * FitMargin, 1 - 2 * FitMargin, -1 + 2 * FitMargin, 1 - 2 * FitMargin);
+        return (l, r, b, t);
+    }
+
+    float Needed(IReadOnlyList<Vector3> pts, float l, float r, float b, float t, float aspect)
+    {
+        var bx = Cam.GlobalBasis.X;
+        var by = Cam.GlobalBasis.Y;
+        var fwd = -Cam.GlobalBasis.Z;
+        float need = 0;
+        if (Flat)
+        {
+            foreach (var p in pts)
+            {
+                var q = p - Target;
+                float x = q.Dot(bx), y = q.Dot(by);
+                need = Mathf.Max(need, Mathf.Max(Mathf.Max(x / (r * aspect), x / (l * aspect)), Mathf.Max(y / t, y / b)));
+            }
+            return need * 2 / OrthoSpan;
+        }
+        float tanV = Mathf.Tan(Mathf.DegToRad(Cam.Fov) / 2), tanH = tanV * aspect;
+        foreach (var p in pts)
+        {
+            var q = p - Target;
+            float x = q.Dot(bx), y = q.Dot(by), z = q.Dot(fwd);
+            need = Mathf.Max(need, Mathf.Max(Mathf.Max(x / (r * tanH), x / (l * tanH)), Mathf.Max(y / (t * tanV), y / (b * tanV))) - z);
+            need = Mathf.Max(need, Cam.Near * 2 - z);
+        }
+        return need;
+    }
+
     public void Frame(Vector3 center, float size)
     {
         Still();
@@ -281,7 +385,7 @@ public partial class CameraRig : Node3D
         var dir = new Vector3(Mathf.Sin(Yaw) * Mathf.Cos(pitch), Mathf.Sin(pitch), Mathf.Cos(Yaw) * Mathf.Cos(pitch));
         var pos = Target - dir * Distance;
         Project(TopDown ? Camera3D.ProjectionType.Orthogonal : Camera3D.ProjectionType.Perspective);
-        if (TopDown) Cam.Size = Distance * 0.9f;
+        if (TopDown) Cam.Size = Distance * OrthoSpan;
         _liftGoal = Terrain() is { Any: true } g && !TopDown ? Mathf.Max(0, (float)g.At(Coords.FromWorld(pos)) + AboveGround - pos.Y) : 0;
         if (_liftGoal > _lift) _lift = _liftGoal;
         pos.Y += _lift;

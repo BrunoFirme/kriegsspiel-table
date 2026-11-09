@@ -294,10 +294,20 @@ public partial class Hud
         Ui.Place(Drawer.Panel, Control.LayoutPreset.TopLeft, l: left, t: top, r: left + Cfg.LeftWidth, b: bottom);
         Ui.Place(Drawer.Grip, Control.LayoutPreset.TopLeft, l: left + Cfg.LeftWidth, t: top, r: left + Cfg.LeftWidth + 6, b: bottom);
         PlaceCompass(top);
+        if (T?.Rig is { } rig) rig.Clear = ClearArea;
         foreach (var p in Panels.Values) { p.Ceiling = top; if (p.Visible) p.Clamp(); }
         SyncStripToggles();
         Top.UpdatePointerInfo();
         Top.SyncTopLine();
+    }
+
+    Rect2 ClearArea()
+    {
+        var vp = GetViewport().GetVisibleRect().Size;
+        float top = (Top?.Panel?.Size.Y ?? 0) + Gap;
+        float left = Gap + Cfg.StripSize + 10 + Gap;
+        if (Cfg.LeftOpen) left += Cfg.LeftWidth + Gap;
+        return new Rect2(left, top, Math.Max(0, vp.X - left - Gap), Math.Max(0, vp.Y - top - Gap));
     }
 
     void PlaceCompass(float top)
