@@ -112,7 +112,7 @@ public class HostFilesSafetyTests
         var path = HostPack();
         Upload(new PackManifest { Id = "user.mine", Name = "replaced" });
         Assert.Equal("the host's own", Json.Load<PackManifest>(path).Name);
-        Assert.Equal("upload of user.mine/pack.json refused: user.mine is already on this host and names no author, so it stays as it is: the host can remove it in Packs, then you send it again",
+        Assert.Equal("upload of user.mine/pack.json refused: user.mine is already on this host and names no author, so it stays as it is: the host can remove it from this PC in Piece studio, then you send it again",
             Assert.Single(Sent<ErrorMessage>()).Text);
     }
 
@@ -157,7 +157,7 @@ public class HostFilesSafetyTests
         var path = HostPack("Host");
         Upload(new PackManifest { Id = "user.mine", Name = "replaced" });
         Assert.Equal("the host's own", Json.Load<PackManifest>(path).Name);
-        Assert.Equal("upload of user.mine/pack.json refused: user.mine belongs to Host: join under that name to send a new version, or the host can remove it in Packs first",
+        Assert.Equal("upload of user.mine/pack.json refused: user.mine belongs to Host: join as Host to send a new version, or the host can remove it from this PC in Piece studio first",
             Assert.Single(Sent<ErrorMessage>()).Text);
     }
 

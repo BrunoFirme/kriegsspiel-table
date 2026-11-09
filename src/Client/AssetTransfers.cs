@@ -172,9 +172,9 @@ public sealed partial class AssetTransfers
         if (_packSenders.TryGetValue(package, out var sender) && string.Equals(sender, peer.Name, StringComparison.OrdinalIgnoreCase)) return true;
         var owner = Json.Load<PackManifest>(existing).Source.Authors.FirstOrDefault() ?? "";
         if (owner.Length == 0)
-            throw new InvalidDataException($"{package} is already on this host and names no author, so it stays as it is: the host can remove it in Packs, then you send it again");
+            throw new InvalidDataException($"{package} is already on this host and names no author, so it stays as it is: the host can remove it from this PC in Piece studio, then you send it again");
         if (!string.Equals(owner, peer.Name, StringComparison.OrdinalIgnoreCase))
-            throw new InvalidDataException($"{package} belongs to {owner}: join under that name to send a new version, or the host can remove it in Packs first");
+            throw new InvalidDataException($"{package} belongs to {owner}: join as {owner} to send a new version, or the host can remove it from this PC in Piece studio first");
         return true;
     }
 }
