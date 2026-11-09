@@ -31,6 +31,24 @@ public partial class PieceNode : ITablePiece
         return Contains(Coords.FromWorld(world)) ? TopAt(world) : null;
     }
 
+    static readonly ConditionalWeakTable<Mesh, TriangleMesh> RayMeshes = new();
+
+    public (bool Known, float? At) ModelAlong(Vector3 ro, Vector3 rd)
+    {
+        if (!ShowsModel || IsDie || _model is not { Mesh: { } mesh } model || !IsInstanceValid(model) || !model.IsInsideTree()) return (false, null);
+        if (!RayMeshes.TryGetValue(mesh, out var tri))
+        {
+            if (mesh.GenerateTriangleMesh() is not { } made) return (false, null);
+            RayMeshes.AddOrUpdate(mesh, made);
+            tri = made;
+        }
+        var xf = model.GlobalTransform;
+        var inv = xf.AffineInverse();
+        var hit = tri.IntersectRay(inv * ro, inv.Basis * rd);
+        if (hit.Count == 0 || !hit.TryGetValue("position", out var at)) return (true, null);
+        return (true, (xf * at.AsVector3() - ro).Dot(rd));
+    }
+
     public Vector3[]? WorldFaces()
     {
         if (_model is not { Mesh: { } mesh } model || !IsInstanceValid(model) || !model.IsInsideTree()) return null;

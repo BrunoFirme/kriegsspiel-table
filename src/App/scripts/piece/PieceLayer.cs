@@ -192,13 +192,20 @@ sealed class PieceLayer
                 t = (c - ro).Dot(rd);
                 if (t < 0 || (c - (ro + rd * t)).Length() > n.Footprint.Length() * 0.55f) continue;
             }
-            else if (RayMeets(n, ro, rd) is { } hit) t = widget is { } w ? Mathf.Min(hit, w) : hit;
+            else if (RayMeets(n, ro, rd) is { } box && MeshOrBox(n, ro, rd, box) is { } hit) t = widget is { } w ? Mathf.Min(hit, w) : hit;
             else if (widget is { } w) t = w;
             else continue;
             if (best == null || (n.IsEffect == best.IsEffect ? t < bestT : !n.IsEffect)) { best = n; bestT = t; }
         }
         return best;
     }
+
+    static float? MeshOrBox(PieceNode n, Vector3 ro, Vector3 rd, float box) => n.ModelAlong(ro, rd) switch
+    {
+        { Known: false } => box,
+        { At: { } at } => at,
+        _ => null,
+    };
 
     static float? RayMeets(PieceNode n, Vector3 ro, Vector3 rd)
     {
