@@ -100,6 +100,8 @@ symbol).
 - **Outline** (O) offers the same outlines as the Block layer, or draw your own corner by corner.
 - **Place** (N) gives each counter and each text line a box of its own, on either side; counters keep their
   − and +. What is not placed is not printed.
+- **Text lines** print in the colour set beside each in the Piece tab; a new one on a block starts in the block's
+  label colour.
 - **Swap front and back** trades the two sides, prints and all.
 
 **Try it** (Alt+3) — the pack's pieces on a real table with scripts running. An effect has **Try it** and

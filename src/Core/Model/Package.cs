@@ -130,6 +130,7 @@ public sealed class TextLineDef
     public string Name { get; set; } = "";
     public string Default { get; set; } = "";
     public PrintPlace? Place { get; set; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)] public string? Color { get; set; }
 }
 
 public sealed class PrintPlace

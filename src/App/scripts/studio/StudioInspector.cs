@@ -251,12 +251,14 @@ internal sealed class PieceTab
         p.AddChild(Ui.Btn("Add a counter", () => Apply(x => x.Counters.Add(new CounterDef { Name = x.Counters.Count == 0 ? "Strength" : $"Counter {x.Counters.Count + 1}", Min = 0, Max = 9, Default = 9 }), "a new counter", inspector: true)));
     }
 
+    string? BlockInk() => _s.Canvas.Doc.Layers.FirstOrDefault(l => l.Block != null)?.Block?.LabelColor;
+
     void TextLinesSection(VBoxContainer page)
     {
         var d = _d;
         var p = _i.Section(page, "Text lines", open: d.TextLines.Count > 0, count: Count(d.TextLines.Count));
         p.AddChild(Ui.Hint("Text on each piece, on every look: unit, commander, formation. It prints once placed with the Place tool (N)."));
-        var tg = new GridContainer { Columns = 3 };
+        var tg = new GridContainer { Columns = 4 };
         tg.AddThemeConstantOverride("h_separation", Ui.Gap.Tight);
         for (int i = 0; i < d.TextLines.Count; i++)
         {
@@ -272,9 +274,12 @@ internal sealed class PieceTab
             td.TextSubmitted += _ => CommitTd();
             td.FocusExited += CommitTd;
             tg.AddChild(td);
+            var ink = new ColorPickerButton { Color = Hex.To(tl.Color, FaceInk.TextColor), EditAlpha = false, CustomMinimumSize = new Vector2(44, 24), TooltipText = "The colour it prints in" };
+            Ui.WhenPicked(ink, c => Apply(x => x.TextLines[ti].Color = Hex.Of(c), "a text line's colour"));
+            tg.AddChild(ink);
             tg.AddChild(Ui.Btn("✕", () => Apply(x => x.TextLines.RemoveAt(ti), "a text line taken away", inspector: true), "Take this text line away   (Ctrl+Z brings it back)"));
         }
         p.AddChild(tg);
-        p.AddChild(Ui.Btn("Add a text line", () => Apply(x => x.TextLines.Add(new TextLineDef { Name = x.TextLines.Count == 0 ? "Name" : $"Line {x.TextLines.Count + 1}" }), "a new text line", inspector: true)));
+        p.AddChild(Ui.Btn("Add a text line", () => Apply(x => x.TextLines.Add(new TextLineDef { Name = x.TextLines.Count == 0 ? "Name" : $"Line {x.TextLines.Count + 1}", Color = BlockInk() }), "a new text line", inspector: true)));
     }
 }

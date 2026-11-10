@@ -96,7 +96,7 @@ sealed partial class StudioTools
         yield return new AgentTool("studio_set_text_line",
             "Adds or changes a text line (a named line of text every piece of the kind carries) and where it prints (side, x, y, w, h as fractions of that face); without a side it is carried but not printed. Text lines and counters print on every look; what a script draws stays on the look it was drawn on (redraw it from on_state), so names belong in text lines.",
             Args.Schema(new Arg("id", "string", "the kind's id", true), new Arg("name", "string", "the text line", true), new Arg("new_name", "string", "rename it"), new Arg("default", "string", "its starting text"),
-                new Arg("side", "string", "front or back"), new Arg("x", "number", "0–1"), new Arg("y", "number", "0–1"), new Arg("w", "number", "0–1"), new Arg("h", "number", "0–1")),
+                new Arg("colour", "string", "#rrggbb, the ink it prints in; a new line on a block takes the block's label colour"), new Arg("side", "string", "front or back"), new Arg("x", "number", "0–1"), new Arg("y", "number", "0–1"), new Arg("w", "number", "0–1"), new Arg("h", "number", "0–1")),
             SetTextLine);
         yield return new AgentTool("studio_remove",
             "Takes a counter, a text line or a look (by number from 1) away from a kind.",
@@ -475,6 +475,8 @@ sealed partial class StudioTools
             if (t == null) x.TextLines.Add(it);
             if (!string.IsNullOrEmpty(newName)) it.Name = newName;
             if (a.Str("default") is { } def) it.Default = def;
+            if (a.Str("colour") is { } ink && IsColour(ink)) it.Color = Colour(ink, "");
+            else if (t == null) it.Color = BlockInk(s, d);
             it.Place = place;
         });
         return Task.FromResult(new ToolResult(JsonSerializer.Serialize(d.TextLines, Opts)));

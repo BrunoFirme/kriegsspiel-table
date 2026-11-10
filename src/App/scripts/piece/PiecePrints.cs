@@ -129,7 +129,8 @@ sealed class PiecePrints
             var text = PieceNode.TextOf(p, t);
             if (text.Length == 0) continue;
             var r = Box(t.Place!);
-            _ink.Text(t.Place!.Side == PrintPlace.Back, text, r.GetCenter().X, r.GetCenter().Y, r.Size.X * 0.94f, r.Size.Y * 0.9f * scale, FaceInk.TextColor, HorizontalAlignment.Center);
+            var ink = Hex.To(t.Color, FaceInk.TextColor);
+            _ink.Text(t.Place!.Side == PrintPlace.Back, text, r.GetCenter().X, r.GetCenter().Y, r.Size.X * 0.94f, r.Size.Y * 0.9f * scale, ink, HorizontalAlignment.Center);
         }
     }
 }

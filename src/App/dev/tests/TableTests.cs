@@ -388,6 +388,23 @@ static class TableTests
     }
 
     [NodeTest]
+    static async Task A_text_line_prints_in_its_own_colour_with_an_edge_that_stands_out_from_it(TestRunner r)
+    {
+        var inked = new PieceDef { Id = "inked", Name = "Inked block" };
+        inked.TextLines.Add(new TextLineDef { Name = "Unit", Default = "I/12", Color = "#1d1d1bff", Place = new PrintPlace { Side = PrintPlace.Front, X = 0.1, Y = 0.1, W = 0.8, H = 0.3 } });
+        inked.TextLines.Add(new TextLineDef { Name = "Note", Default = "reserve", Place = new PrintPlace { Side = PrintPlace.Front, X = 0.1, Y = 0.6, W = 0.8, H = 0.3 } });
+        var t = OfflineTable.Make(r, pieces: 1, prepare: store => store.RegisterDef(new PackManifest { Id = "inked", Name = "Inked" }, inked),
+            arrange: g => g.Layers[Layers.Umpire][0].Def = "inked");
+        await r.Frame();
+        var labels = t.Node("p1").FindChildren("*", nameof(Label3D), true, false).OfType<Label3D>().ToList();
+        var dark = labels.FirstOrDefault(l => l.Text == "I/12") ?? throw new TestFailure("the coloured line prints");
+        var plain = labels.FirstOrDefault(l => l.Text == "reserve") ?? throw new TestFailure("the plain line prints");
+        Check.That(dark.Modulate.IsEqualApprox(Hex.To("#1d1d1bff", Colors.White)), "a text line prints in its own colour");
+        Check.That(dark.OutlineModulate.Luminance > 0.5f, "dark ink gets a light edge");
+        Check.That(plain.Modulate.IsEqualApprox(FaceInk.TextColor) && plain.OutlineModulate.Luminance < 0.5f, "a line with no colour prints light with a dark edge, as before");
+    }
+
+    [NodeTest]
     static async Task Hidden_text_leaves_the_text_layer_out_of_the_view_and_the_picture(TestRunner r)
     {
         var named = new PieceDef { Id = "named", Name = "Named block" };

@@ -50,6 +50,9 @@ sealed partial class StudioTools
             ViewPiece);
     }
 
+    static string? BlockInk(PieceStudio s, PieceDef d) =>
+        PieceFaces.Of(d).FirstOrDefault(f => f.Key == "front") is { } front ? ArtStore.Load(s.Store, s.Pack.Id, front.Sha)?.Layers.FirstOrDefault(l => l.Block != null)?.Block?.LabelColor : null;
+
     static PieceFaces.Face? FaceOf(PieceDef d, JsonElement a) => PieceFaces.Of(d).FirstOrDefault(f => f.Key == (a.Str("face") ?? "front"));
 
     Task<ToolResult> ReadFace(JsonElement a) => On(s =>

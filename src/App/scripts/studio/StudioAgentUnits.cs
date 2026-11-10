@@ -16,7 +16,7 @@ sealed partial class StudioTools
     static readonly string UnitShape =
         "A unit: {name, label, fill, border, label_colour (#rrggbb), border_width (pixels), symbol (" + string.Join(", ", Symbols) + "), symbol_text, width, height, thickness (map units), tint (#rrggbb), outline, " +
         "counters: [{name, min, max, default, side (front or back), x, y, w, h (fractions of that face)}], " +
-        "text_lines: [{name, default, side, x, y, w, h}], first_look (the name of the look it is made in; default the unit's name), looks: [its other looks: a name, or {name, width, height, outline} for a look of its own size], " +
+        "text_lines: [{name, default, colour, side, x, y, w, h}], first_look (the name of the look it is made in; default the unit's name), looks: [its other looks: a name, or {name, width, height, outline} for a look of its own size], " +
         "markers: [{kind, x, z}] (kinds of this pack put down beside it), tags: [words], script (Lua)}. Text lines and counters print on every look; a script's drawing stays on the look it was drawn on.";
 
     IEnumerable<AgentTool> UnitTools()
@@ -29,7 +29,7 @@ sealed partial class StudioTools
                 new Arg("symbol", "string", string.Join(", ", Symbols)), new Arg("symbol_text", "string", "the text when symbol is text"),
                 new Arg("width", "number", "map units (default 2)"), new Arg("height", "number", "map units (default half the width)"), new Arg("thickness", "number", "map units"),
                 new Arg("tint", "string", "the side colour, #rrggbb"), new Arg("outline", "string", OutlineList),
-                new Arg("counters", "array", "[{name, min, max, default, side, x, y, w, h}]"), new Arg("text_lines", "array", "[{name, default, side, x, y, w, h}]"),
+                new Arg("counters", "array", "[{name, min, max, default, side, x, y, w, h}]"), new Arg("text_lines", "array", "[{name, default, colour, side, x, y, w, h}]"),
                 new Arg("first_look", "string", "the name of the look it is made in (default the unit's name)"),
                 new Arg("looks", "array", "its other looks: names, or {name, width, height, outline}"), new Arg("markers", "array", "[{kind, x, z}]"),
                 new Arg("tags", "array", "words to find it by"), new Arg("script", "string", "Lua, when it needs buttons or reactions of its own")),

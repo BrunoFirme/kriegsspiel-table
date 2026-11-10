@@ -41,11 +41,15 @@ sealed class FaceInk
         Put(n, back, x, z, lift);
     }
 
+    static Color Edge(Color ink) => ink.Luminance < DarkInk ? new Color(1, 1, 1, 0.55f) : new Color(0, 0, 0, 0.8f);
+
+    const float DarkInk = 0.5f;
+
     public Label3D Text(bool back, string text, float x, float z, float maxW, float lineH, Color color, HorizontalAlignment align)
     {
         var l = new Label3D
         {
-            Text = text, FontSize = 64, OutlineSize = 6, Modulate = color, OutlineModulate = new Color(0, 0, 0, 0.8f), RotationDegrees = back ? new Vector3(90, 180, 0)
+            Text = text, FontSize = 64, OutlineSize = 6, Modulate = color, OutlineModulate = Edge(color), RotationDegrees = back ? new Vector3(90, 180, 0)
                 : new Vector3(-90, 0, 0), DoubleSided = false, VisibilityRangeEnd = _piece.LetteringRange(),
             HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center, RenderPriority = 3, Font = Fonts.Face, Layers = Table.TextLayer,
         };
