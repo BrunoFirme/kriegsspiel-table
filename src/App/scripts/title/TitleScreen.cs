@@ -88,7 +88,7 @@ sealed class TitleScreen
         ScenarioCards.WaitForEarlyRead();
         var scenarios = store.ListScenarios().Select(sc => (sc.id, sc.path, s: ScenarioCards.Card(sc.path).s)).ToList();
         GD.Print($"[lobby] read {scenarios.Count} scenario file(s) in {scan.ElapsedMilliseconds} ms");
-        if (scenarios.FirstOrDefault(x => x.s?.Sheets.Count > 0) is var first && first.s != null && ScenarioCards.Thumb(store, first.s, 1400) is { } backdrop)
+        if (scenarios.Where(x => x.s?.Sheets.Count > 0).Select(x => ScenarioCards.Thumb(store, x.s!, 1400)).FirstOrDefault(t => t != null) is { } backdrop)
             root.AddChild(Backdrop(backdrop));
         var fade = new TextureRect { AnchorRight = 1, AnchorBottom = 1, StretchMode = TextureRect.StretchModeEnum.Scale, ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize };
         var grad =

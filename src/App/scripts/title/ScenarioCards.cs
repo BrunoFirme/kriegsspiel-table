@@ -26,7 +26,7 @@ static class ScenarioCards
                 {
                     const int CardWidth = 512, BackdropWidth = 1400;
                     ThumbImage(store, s, CardWidth);
-                    if (!backdrop) { backdrop = true; ThumbImage(store, s, BackdropWidth); }
+                    if (!backdrop) backdrop = ThumbImage(store, s, BackdropWidth) != null;
                 }
                 var live = Main.AutosavePath(id);
                 if (File.Exists(live)) Save(live);
@@ -66,14 +66,13 @@ static class ScenarioCards
         at = default;
         var sh = s.Sheets.FirstOrDefault();
         if (sh == null) return null;
-        var dir = store.TilesDir(sh);
-        var index = Path.Combine(dir, "index.json");
-        if (!File.Exists(index)) return null;
-        at = File.GetLastWriteTimeUtc(index);
-        return $"{dir}|{maxW}|{sh.RotDeg}";
+        var source = sh.HasPicture ? Path.Combine(store.TilesDir(sh), "index.json") : GroundCard.FileFor(sh);
+        if (!File.Exists(source)) return null;
+        at = File.GetLastWriteTimeUtc(source);
+        return $"{source}|{maxW}|{sh.RotDeg}";
     }
 
-    static Image? ThumbImage(PackageStore store, Scenario s, int maxW)
+    public static Image? ThumbImage(PackageStore store, Scenario s, int maxW)
     {
         var key = ThumbKey(store, s, maxW, out var at);
         if (key == null) return null;
@@ -90,21 +89,35 @@ static class ScenarioCards
         {
             var sh = s.Sheets.FirstOrDefault();
             if (sh == null) return null;
-            var dir = store.TilesDir(sh);
-            var idx = Json.Load<TileIndex>(Path.Combine(dir, "index.json"));
-            var lv = idx.Levels.FirstOrDefault(l => l.W <= maxW) ?? idx.Levels[^1];
-            var img = Image.CreateEmpty(lv.W, lv.H, false, Image.Format.Rgba8);
-            for (int y = 0; y < lv.Rows; y++)
-                for (int x = 0; x < lv.Cols; x++)
-                {
-                    var tile = Path.Combine(dir, lv.Level.ToString(), $"{x}_{y}.{idx.Ext}");
-                    if (!ContentLimits.PictureAllowed(tile) || Image.LoadFromFile(tile) is not { } t) continue;
-                    t.Convert(Image.Format.Rgba8);
-                    img.BlitRect(t, new Rect2I(0, 0, t.GetWidth(), t.GetHeight()), new Vector2I(x * idx.TileSize, y * idx.TileSize));
-                }
+            var img = sh.HasPicture ? StitchTiles(store.TilesDir(sh), maxW) : GroundPicture(GroundCard.FileFor(sh), maxW);
+            if (img == null) return null;
             if (Math.Abs(((sh.RotDeg % 360) + 360) % 360 - 180) < 45) { img.FlipX(); img.FlipY(); }
             return img;
         }
         catch (Exception e) { Diagnostics.Write(LogLevel.Warning, $"[cards] no thumbnail for {s.Id}: {e.Message}"); return null; }
+    }
+
+    static Image StitchTiles(string dir, int maxW)
+    {
+        var idx = Json.Load<TileIndex>(Path.Combine(dir, "index.json"));
+        var lv = idx.Levels.FirstOrDefault(l => l.W <= maxW) ?? idx.Levels[^1];
+        var img = Image.CreateEmpty(lv.W, lv.H, false, Image.Format.Rgba8);
+        for (int y = 0; y < lv.Rows; y++)
+            for (int x = 0; x < lv.Cols; x++)
+            {
+                var tile = Path.Combine(dir, lv.Level.ToString(), $"{x}_{y}.{idx.Ext}");
+                if (!ContentLimits.PictureAllowed(tile) || Image.LoadFromFile(tile) is not { } t) continue;
+                t.Convert(Image.Format.Rgba8);
+                img.BlitRect(t, new Rect2I(0, 0, t.GetWidth(), t.GetHeight()), new Vector2I(x * idx.TileSize, y * idx.TileSize));
+            }
+        return img;
+    }
+
+    static Image? GroundPicture(string file, int maxW)
+    {
+        if (!ContentLimits.PictureAllowed(file) || Image.LoadFromFile(file) is not { } img) return null;
+        if (img.GetWidth() > maxW) img.Resize(maxW, Math.Max(1, (int)Math.Round(img.GetHeight() * maxW / (double)img.GetWidth())), Image.Interpolation.Lanczos);
+        img.Convert(Image.Format.Rgba8);
+        return img;
     }
 }

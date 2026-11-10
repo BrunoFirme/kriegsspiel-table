@@ -17,6 +17,7 @@ public static class Caches
 
     public static string Root => Path.Combine(DataPaths.Local, "cache");
     public static string Display => Path.Combine(Root, "display");
+    public static string GroundCards => Path.Combine(Display, "ground");
     public static string FromHosts => Path.Combine(Root, "packages");
     public static string ModuleDownloads => Path.Combine(Root, "tts");
     public static string Relief => Path.Combine(Root, "relief");

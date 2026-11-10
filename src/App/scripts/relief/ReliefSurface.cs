@@ -327,7 +327,7 @@ public partial class ReliefSurface : Node3D
         _bake.SetShaderParameter("normal_step", (float)step);
         float high = 0;
         foreach (float v in grid.H) high = Math.Max(high, v);
-        _tiles = GroundTiles.For(this).Track(def.Id, this, _bake, World, (float)Ground.FullWidth(def), 0, high * scale, paintedOnly);
+        _tiles = GroundTiles.For(this).Track(def.Id, this, _bake, World, (float)Ground.FullWidth(def), 0, high * scale, paintedOnly, paintedOnly ? null : GroundCard.For(def));
         return _tiles.View;
     }
 

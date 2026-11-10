@@ -9,6 +9,7 @@ public partial class GroundTiles : Node
 {
     public const int TilePx = 256, GutterPx = 2, Slots = 16;
     const int AtlasPx = TilePx * Slots, BakesPerFrame = 8, MostLevel = 9, RetireFrames = 180, Budget = Slots * Slots - BakesPerFrame * 2, Relaxings = 4;
+    const int CardQuietFrames = 120;
     const float FinestTexelWorld = 0.004f, Sharpness = 1.1f;
     static GroundTiles? _shared;
     static Shader? _viewShader, _bakeShader;
@@ -23,6 +24,7 @@ public partial class GroundTiles : Node
     readonly (Sheet? Owner, Tile Tile, long Used)[] _slots = new (Sheet?, Tile, long)[Slots * Slots];
     readonly List<(ColorRect Quad, Sheet Sheet, Tile Tile, int Slot)> _baking = new();
     long _frame;
+    bool _carding;
 
     public static bool Enabled => DisplayServer.GetName() != "headless";
 
@@ -47,19 +49,24 @@ public partial class GroundTiles : Node
         public required Func<Vector2, float, Vector3> World { get; init; }
         public required float Low { get; init; }
         public required float High { get; init; }
+        public GroundCard.Spec? Card { get; init; }
         public readonly Dictionary<Tile, int> Baked = new();
         public readonly HashSet<Tile> Stale = new();
         public bool PagesDirty;
+        internal int Changes = 1, ChangesSeen, CardOf;
+        internal long QuietSince;
 
         public void StaleAll()
         {
             foreach (var t in Baked.Keys) Stale.Add(t);
+            Changes++;
         }
 
         public void StaleUv(Rect2 uv)
         {
             foreach (var t in Baked.Keys)
                 if (t.Uv.Intersects(uv, true)) Stale.Add(t);
+            Changes++;
         }
     }
 
@@ -86,7 +93,7 @@ public partial class GroundTiles : Node
 
     public override void _Ready() => AddChild(_atlas);
 
-    public Sheet Track(string key, Node3D owner, ShaderMaterial bake, Func<Vector2, float, Vector3> world, float sheetWidth, float low, float high, bool cut)
+    public Sheet Track(string key, Node3D owner, ShaderMaterial bake, Func<Vector2, float, Vector3> world, float sheetWidth, float low, float high, bool cut, GroundCard.Spec? card = null)
     {
         int levels = Math.Clamp((int)Math.Ceiling(Math.Log2(Math.Max(1, sheetWidth / FinestTexelWorld / (TilePx - 2 * GutterPx)))), 0, MostLevel);
         int side = 1 << levels;
@@ -100,7 +107,7 @@ public partial class GroundTiles : Node
         view.SetShaderParameter("atlas_slots", (float)Slots);
         view.SetShaderParameter("tile_px", (float)TilePx);
         view.SetShaderParameter("gutter_px", (float)GutterPx);
-        var sheet = new Sheet { Key = key, Owner = owner, Bake = bake, View = view, Levels = levels, Pages = pages, PagesTex = pagesTex, World = world, Low = low, High = high };
+        var sheet = new Sheet { Key = key, Owner = owner, Bake = bake, View = view, Levels = levels, Pages = pages, PagesTex = pagesTex, World = world, Low = low, High = high, Card = card };
         if (_retired.Remove(key, out var old) && old.Sheet.Levels == levels)
         {
             foreach (var (t, slot) in old.Sheet.Baked)
@@ -163,7 +170,32 @@ public partial class GroundTiles : Node
             Bake(wanted);
         }
         foreach (var s in _sheets)
+        {
             if (s.PagesDirty) Repage(s);
+            CardWhenQuiet(s);
+        }
+    }
+
+    void CardWhenQuiet(Sheet s)
+    {
+        if (s.Card is not { } card || _carding || !IsInstanceValid(s.Owner) || !s.Owner.IsVisibleInTree()) return;
+        if (s.Changes != s.ChangesSeen)
+        {
+            s.ChangesSeen = s.Changes;
+            s.QuietSince = _frame;
+            return;
+        }
+        if (s.CardOf == s.Changes || _frame - s.QuietSince < CardQuietFrames) return;
+        s.CardOf = s.Changes;
+        DrawCard(s.Bake, card);
+    }
+
+    async void DrawCard(ShaderMaterial bake, GroundCard.Spec card)
+    {
+        _carding = true;
+        try { await GroundCard.Draw(this, bake, card); }
+        catch (Exception e) { GD.PushWarning("the ground's card picture could not be drawn: " + e.Message); }
+        finally { _carding = false; }
     }
 
     void Need(Sheet s, Camera3D cam, Godot.Collections.Array<Plane> frustum, Tile t, float sharpness, List<(Sheet, Tile, float)> wanted)
