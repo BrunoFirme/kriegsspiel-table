@@ -1,6 +1,8 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Godot;
+using KTable.Client;
 using KTable.Core.Model;
 
 namespace KTable.App;
@@ -57,5 +59,24 @@ static class SightBlurTests
         t.Table.CancelSighting();
         Check.Equal(0.3, t.S.View.VisionSharp ?? 1, "the sharp ring kept with the scenario");
         Check.Equal(0, t.Errors.Count, string.Join("; ", t.Errors));
+    }
+
+    [NodeTest]
+    static async Task A_distance_typed_by_the_sharp_ring_s_slider_sets_where_the_blur_starts(TestRunner r)
+    {
+        var h = await HudTests.Host(r);
+        h.Table.SetSelection(new[] { "p1" });
+        h.Table.SetTool(Tool.Sighting);
+        await r.Frames(2);
+        var d = h.Table.Draft ?? throw new TestFailure("no POV capture began");
+        var sharp = h.Hud.Pov.Panel.FindChildren("*", nameof(HSlider), true, false).OfType<HSlider>().Single(x => x.TooltipText.StartsWith("Where the picture starts to blur"));
+        var box = sharp.GetParent().GetChildren().OfType<LineEdit>().Single();
+        Check.That(box.Editable, "the sharp ring's distance can be typed");
+        box.GrabFocus();
+        box.Text = (d.Radius / 2).ToString(System.Globalization.CultureInfo.InvariantCulture);
+        box.ReleaseFocus();
+        await r.Frames(1);
+        Check.That(Math.Abs(d.Sharp - 0.5) < SightingDraft.SharpStep, $"half the reach typed sets the ring half way, not at {d.Sharp}");
+        h.Table.CancelSighting();
     }
 }

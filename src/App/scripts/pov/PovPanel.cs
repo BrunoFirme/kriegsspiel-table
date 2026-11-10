@@ -116,75 +116,58 @@ sealed class PovPanel : HudPart
     void AddRadius(GridContainer grid, SightingDraft d)
     {
         var cal = S.View.Calibration;
-        bool scaled = cal.UnitsPerMeter is { } upm && upm > 0;
-        grid.AddChild(new Label { Text = "Radius" });
-        var rad = new SpinBox
+        bool scaled = cal.UnitsPerMeter is > 0;
+        var radius = new HSlider
         {
-            MinValue = scaled ? 1 : 0.5, MaxValue = scaled ? 200000 : 5000, Step = scaled ? 10 : 0.5,
-            Value = cal.FromTableUnits(d.Radius), Suffix = cal.UnitName, CustomMinimumSize = new Vector2(RadiusBoxWidth, 0),
+            MinValue = scaled ? 10 : 0.5, MaxValue = scaled ? MostRadiusMetres : MostRadiusUnits, Step = scaled ? 10 : 0.5, ExpEdit = true,
+            Value = cal.FromTableUnits(d.Radius), TooltipText = "How far the piece sees",
         };
-        var slide = new HSlider
+        SliderRow(grid, "Radius", radius, v => scaled ? $"{v:#,0} {cal.UnitName}" : $"{v:0.0} u");
+        radius.ValueChanged += v =>
         {
-            MinValue = rad.MinValue, MaxValue = rad.MaxValue, Step = rad.Step, ExpEdit = true, Value = rad.Value,
-            CustomMinimumSize = new Vector2(RadiusSlideWidth, 0), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
-            TooltipText = "How far the piece sees",
-        };
-        slide.ValueChanged += v => rad.Value = v;
-        var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", Ui.Gap.Group);
-        row.AddChild(rad);
-        row.AddChild(slide);
-        grid.AddChild(row);
-        grid.AddChild(new Label { Text = "", Visible = scaled });
-        var radRead = Ui.Readout(Fmt.Distance(d.Radius, cal), 0);
-        radRead.HorizontalAlignment = HorizontalAlignment.Left;
-        radRead.Visible = scaled;
-        rad.ValueChanged += v =>
-        {
-            slide.SetValueNoSignal(v);
             d.Radius = cal.ToTableUnits(v);
-            radRead.Text = Fmt.Distance(d.Radius, cal);
             d.Recompute(T);
             T.ShowDraft();
             _showSharp?.Invoke();
         };
-        grid.AddChild(radRead);
     }
 
-    const int SharpMarks = 9, RadiusBoxWidth = 88, RadiusSlideWidth = 110;
+    const double MostRadiusMetres = 50000, MostRadiusUnits = 2500;
     const float DetentGain = 0.16f;
+    const int ReachValueWidth = 64, SliderWidth = 150;
 
     void AddSharp(GridContainer grid, SightingDraft d)
     {
         var cal = S.View.Calibration;
-        grid.AddChild(new Label { Text = "Sharp to" });
-        var slider = new HSlider
+        string Distance(double tableUnits) => cal.UnitsPerMeter is > 0 ? $"{cal.FromTableUnits(tableUnits):#,0} {cal.UnitName}" : $"{tableUnits:0.0} u";
+        var sharp = new HSlider
         {
-            MinValue = 0, MaxValue = 1, Step = SightingDraft.SharpStep, Value = d.Sharp, TickCount = SharpMarks, TicksOnBorders = true,
-            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
+            MinValue = 0, MaxValue = 1, Step = SightingDraft.SharpStep, Value = d.Sharp,
             TooltipText = "Where the picture starts to blur toward its edge, as eyes lose detail with distance: all the way right keeps it sharp everywhere",
         };
-        grid.AddChild(slider);
-        grid.AddChild(new Label { Text = "" });
-        var read = Ui.Readout("", 0);
-        read.HorizontalAlignment = HorizontalAlignment.Left;
-        grid.AddChild(read);
-        var (strengthLabel, strength, gap, strengthRead) = AddBlur(grid, d);
+        var sharpBox = SliderRow(grid, "Sharp to", sharp, v => Distance(d.Radius * v));
+        var blur = new HSlider
+        {
+            MinValue = SightingDraft.LeastBlur, MaxValue = SightingDraft.MostBlur, Step = SightingDraft.BlurStep, Value = d.Blur,
+            TooltipText = "How far things smudge at the very edge: right for smudges, left for a light haze",
+        };
+        var blurLabel = new Label();
+        var blurBox = SliderRow(grid, "Edge blur", blur, v => Distance(d.Radius * v), blurLabel);
         void Show()
         {
-            read.Text = d.Sharp >= 1 ? "sharp everywhere" : Fmt.Distance(d.Radius * d.Sharp, cal);
-            strengthRead.Text = $"up to {Fmt.Distance(d.Radius * d.Blur, cal)} at the edge";
-            strengthLabel.Visible = strength.Visible = gap.Visible = strengthRead.Visible = d.Sharp < 1;
+            sharpBox.Text = Distance(d.Radius * d.Sharp);
+            blurBox.Text = Distance(d.Radius * d.Blur);
+            blurLabel.Visible = blur.GetParent<Control>().Visible = d.Sharp < 1;
         }
         Show();
         _showSharp = Show;
-        slider.ValueChanged += v =>
+        sharp.ValueChanged += v =>
         {
             T.SetSightingSharp(v);
             Show();
             Sfx.Current?.PlayFlat(Sound.Tick, DetentGain);
         };
-        strength.ValueChanged += v =>
+        blur.ValueChanged += v =>
         {
             T.SetSightingBlur(v);
             Show();
@@ -192,23 +175,21 @@ sealed class PovPanel : HudPart
         };
     }
 
-    (Label, HSlider, Label, Label) AddBlur(GridContainer grid, SightingDraft d)
+    static LineEdit SliderRow(GridContainer grid, string text, HSlider slider, Func<double, string> show, Label? label = null)
     {
-        var label = new Label { Text = "Blur" };
+        label ??= new Label();
+        label.Text = text;
         grid.AddChild(label);
-        var strength = new HSlider
-        {
-            MinValue = SightingDraft.LeastBlur, MaxValue = SightingDraft.MostBlur, Step = SightingDraft.BlurStep, Value = d.Blur,
-            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
-            TooltipText = "How strongly the far edge blurs: right for smudges, left for a light haze",
-        };
-        grid.AddChild(strength);
-        var gap = new Label { Text = "" };
-        grid.AddChild(gap);
-        var read = Ui.Readout("", 0);
-        read.HorizontalAlignment = HorizontalAlignment.Left;
-        grid.AddChild(read);
-        return (label, strength, gap, read);
+        var row = new HBoxContainer();
+        row.AddThemeConstantOverride("separation", Ui.Gap.Tight);
+        slider.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
+        slider.CustomMinimumSize = new Vector2(SliderWidth, 0);
+        slider.SizeFlagsVertical = Control.SizeFlags.ShrinkCenter;
+        var box = Ui.ValueBox(slider, show, ReachValueWidth);
+        row.AddChild(slider);
+        row.AddChild(box);
+        grid.AddChild(row);
+        return box;
     }
 
     const double EyeStep = 0.05;
@@ -216,19 +197,13 @@ sealed class PovPanel : HudPart
     void AddEye(GridContainer grid, SightingDraft d)
     {
         var cal = S.View.Calibration;
-        grid.AddChild(new Label { Text = "Eye" });
-        var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", Ui.Gap.Tight);
-        var slider =
-            new HSlider { MinValue = 0, MaxValue = T.SightingEyeHighest, Step = EyeStep, Value = Math.Min(d.EyeHeight, T.SightingEyeHighest),
-                CustomMinimumSize = new Vector2(80, 0), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
-                TooltipText = "How high the eye stands over the ground: down to look from behind a crest, up to see over it" };
-        string Height(double v) => cal.UnitsPerMeter is > 0 ? $"{cal.FromTableUnits(v):#,0} {cal.UnitName}" : $"{v:0.00} u";
-        var shown = Ui.ValueBox(slider, Height, 52);
+        var slider = new HSlider
+        {
+            MinValue = 0, MaxValue = T.SightingEyeHighest, Step = EyeStep, Value = Math.Min(d.EyeHeight, T.SightingEyeHighest),
+            TooltipText = "How high the eye stands over the ground: down to look from behind a crest, up to see over it",
+        };
+        SliderRow(grid, "Eye", slider, v => cal.UnitsPerMeter is > 0 ? $"{cal.FromTableUnits(v):#,0} {cal.UnitName}" : $"{v:0.00} u");
         slider.ValueChanged += v => T.SetSightingEye(v);
-        row.AddChild(slider);
-        row.AddChild(shown);
-        grid.AddChild(row);
     }
 
     void AddFormat(GridContainer grid, SightingDraft d) =>

@@ -133,7 +133,7 @@ sealed class MapPage : HudPart
             MinValue = LeastOpacity, MaxValue = 100, Step = OpacityStep, Value = sel.Seen * 100, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
             SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, TooltipText = "Lower it to see the table or another sheet through this one",
         };
-        var value = Ui.ValueBox(slider, v => $"{v:0} %", 44);
+        var value = Ui.ValueBox(slider, v => $"{v:0}%", 44);
         bool dragging = false;
         void Send()
         {

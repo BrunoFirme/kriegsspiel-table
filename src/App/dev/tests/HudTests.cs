@@ -181,7 +181,7 @@ static class HudTests
         var eyeSlider = h.Hud.Pov.Panel.FindChildren("*", nameof(HSlider), true, false).OfType<HSlider>().ToList();
         Check.That(eyeSlider.Count == 1 && eyeSlider[0].MaxValue > 0, "first person has one slider, for how high the eye stands");
         Check.That(!h.Hud.Pov.Panel.FindChildren("*", nameof(Button), true, false).OfType<Button>().Any(b => b.Text == "Clear"), "no tracing to undo or clear from the eye");
-        Check.That(h.Hud.Pov.Panel.FindChildren("*", nameof(SpinBox), true, false).Count == 0, "and no reach to type");
+        Check.That(!h.Hud.Pov.Panel.FindChildren("*", nameof(HSlider), true, false).OfType<HSlider>().Any(x => x.TooltipText == "How far the piece sees"), "and no reach to set");
         Named("Wide").EmitSignal(Button.SignalName.Pressed);
         await r.Frame();
         Check.That(h.Table.Draft!.Wide && Mathf.IsEqualApprox(h.Table.Rig.Cam.Fov, CameraRig.WideLens), "the wide lens");
@@ -197,7 +197,7 @@ static class HudTests
         Check.That(!h.Table.Draft!.FirstPerson && h.Table.Rig.Eye == null && h.Table.Rig.TopDown, "back to the map from above");
         Check.That(h.Hud.Pov.Panel.FindChildren("*", nameof(Button), true, false).OfType<Button>().Any(b => b.Text == "Round"), "the format row is back");
         var sliders = h.Hud.Pov.Panel.FindChildren("*", nameof(HSlider), true, false).OfType<HSlider>().ToList();
-        Check.That(h.Hud.Pov.Panel.FindChildren("*", nameof(SpinBox), true, false).Count == 1 && !sliders.Any(x => x.TooltipText.StartsWith("How high the eye")) && sliders.Any(x => x.TooltipText.Contains("blur")),
+        Check.That(sliders.Any(x => x.TooltipText == "How far the piece sees") && !sliders.Any(x => x.TooltipText.StartsWith("How high the eye")) && sliders.Any(x => x.TooltipText.Contains("blur")),
             "with the reach back, the eye slider gone and the sharp ring's slider in its place");
         h.Table.CancelSighting();
         await r.Frame();

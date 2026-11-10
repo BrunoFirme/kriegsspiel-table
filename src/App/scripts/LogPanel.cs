@@ -138,7 +138,7 @@ sealed class Transcript : HudPart
                 Log($"{Who(c)} laid a new picture on [b]{Fmt.Bb(SheetName(sp.Id))}[/b]");
                 break;
             case SetSheetOpacity so:
-                Log($"{Who(c)} set [b]{Fmt.Bb(SheetName(so.Id))}[/b] to {so.Opacity * 100:0} % opacity");
+                Log($"{Who(c)} set [b]{Fmt.Bb(SheetName(so.Id))}[/b] to {so.Opacity * 100:0}% opacity");
                 break;
             case SetLighting:
                 Log($"{Who(c)} changed the lighting");

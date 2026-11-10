@@ -214,7 +214,7 @@ A turn report as a picture, from one piece's point of view.
 1. Select the piece and press **V** (or right-click → POV capture from here).
 2. Set how far it sees (**Ctrl+wheel**, **+ / −**, or the Radius field); the wheel zooms in to trace. **Sharp to**
    pulls a ring in from the edge: past it the picture blurs, gently at first and hard at the edge, as distance takes
-   detail; **Blur** sets how strong it gets at the edge. All the way right is sharp everywhere. The reach, the ring
+   detail; **Edge blur** sets how strong it gets at the edge. All the way right is sharp everywhere. The reach, the ring
    and the blur are kept with the scenario.
 3. Drag to trace what blocks the view: walls, wood edges, ridges. What lies behind goes black.
 4. **Enter** or **Capture**. The picture goes to the clipboard and the capture folder, stamped with the
