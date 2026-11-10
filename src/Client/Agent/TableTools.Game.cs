@@ -44,7 +44,7 @@ public sealed partial class TableTools
             Args.Schema(new Arg("id", "string", "the piece's id", true), new Arg("locked", "boolean", "locked in place"), new Arg("tint", "string", "#rrggbb, or empty for its own"),
                 new Arg("scale", "number", "1 is its own size"), new Arg("face_down", "boolean", "turned over"), new Arg("holds", "boolean", "pieces dropped on it go inside"), new Arg("collides", "boolean", "other pieces push against it and rest on it (true for most)"),
                 new Arg("carries", "boolean", "what rests on it moves with it (true for most)"), new Arg("box_selected", "boolean", "a selection box takes it (true for most)"),
-                new Arg("shows_move", "boolean", "shows how far it is moved while it is dragged"), new Arg("running", "boolean", "an effect piece plays (smoke rises, fire burns)"),
+                new Arg("shows_move", "boolean", "shows how far it is moved while it is dragged"), new Arg("running", "boolean", "an effect piece plays (smoke rises, fire burns)"), new Arg("smoke", "number", "how thick an effect's smoke is, " + SmokeDensity.Range),
                 new Arg("thrown_for_real", "boolean", "a die shows the face it lands on, as thrown, instead of a fair random face"), new Arg("attach_to", "string", "a piece it rides on"), new Arg("detach", "boolean", "off what it rides on"),
                 new Arg("favourite", "boolean", "its kind among the favourites in the Pieces panel, on this PC")),
             SetOptions);
@@ -218,6 +218,13 @@ public sealed partial class TableTools
             if (!PieceKinds.IsEffect(s.Def(p.Def))) return ToolResult.Fail($"{NameOf(s, p)} is not an effect: only effects run.");
             s.Do(new SetPieceOption { Layer = Layers.Umpire, Id = id, Name = PieceOptions.EffectOff, Value = !running });
             done.Add(running ? "runs" : "stopped");
+        }
+        if (a.Num("smoke") is { } smoke)
+        {
+            if (s.Def(p.Def)?.Effect is not { } fx || !KTable.Client.Effects.EffectKinds.HasSmokeSetting(fx)) return ToolResult.Fail($"{NameOf(s, p)} makes no smoke.");
+            if (!SmokeDensity.Known(smoke)) return ToolResult.Fail("smoke runs " + SmokeDensity.Range + ".");
+            s.Do(new SetSmoke { Layer = Layers.Umpire, Id = id, Value = smoke == fx.Density ? null : smoke });
+            done.Add($"smoke {KTable.Client.Effects.EffectKinds.DensityText(smoke).ToLowerInvariant()}");
         }
         if (a.Flag("favourite") is { } favourite)
         {

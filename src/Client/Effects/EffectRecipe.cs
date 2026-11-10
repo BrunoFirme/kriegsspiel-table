@@ -100,7 +100,7 @@ public static class EffectRecipe
     sealed class Recipe
     {
         readonly EffectDef e;
-        readonly float w, h, phase, s, k, A, H, P, D, every, clarity;
+        readonly float w, h, phase, s, k, A, H, P, D, every, clarity, thicker, finer;
         readonly Plume plume;
         readonly double wind;
         readonly SmokeAir air;
@@ -114,6 +114,12 @@ public static class EffectRecipe
             this.e = e;
             this.phase = phase;
             this.c = c with { A = 1 };
+            float density = EffectKinds.HasSmokeSetting(e) ? (float)Math.Clamp(e.Density, SmokeDensity.VeryFine, SmokeDensity.VeryDense) : 0;
+            thicker = Mathf.Max(density, 0);
+            finer = Mathf.Max(-density, 0);
+            bool lingers = EffectKinds.Lingers(e.Kind);
+            float denser = (float)SmokeDensity.DenseAmount(e.Kind);
+            double amount = e.Amount * (lingers ? Notched(denser, denser * denser, thicker) : 1);
             clarity = Mathf.Clamp(c.A, 0, 1);
             layers = plan.Layers;
             w = Mathf.Max(w, 0.2f);
@@ -122,18 +128,42 @@ public static class EffectRecipe
             this.h = h;
             s = Mathf.Clamp(Mathf.Sqrt(w * h), 0.4f, 40f);
             k = Mathf.Clamp(Mathf.Max(w, h) / Mathf.Min(w, h), 1, 10);
-            A = (float)Math.Clamp(e.Amount, 0.05, 6);
+            A = (float)Math.Clamp(amount, 0.05, 6);
             H = (float)Math.Clamp(e.Height, 0.1, 6);
             P = (float)Math.Clamp(e.Puff, 0.1, 6);
-            D = (float)Math.Clamp(e.Wind, 0, 5);
+            D = (float)Math.Clamp(e.Wind * (lingers ? Mathf.Lerp(1, (float)SmokeDensity.DenseWind, Mathf.Min(thicker, 1)) : 1), 0, 5);
             every = (float)Math.Clamp(EffectKinds.Interval(e), 0.5, 120);
             ex = new Vector3(w / 2, 0, h / 2);
-            plume = e.Lingers && air is { } a && EffectKinds.Lingers(e.Kind) ? SmokeDrift.Of(e.Kind, w, e.Amount, a) : default;
+            var full = thicker > 0 && air is { } a && lingers ? SmokeDrift.Of(e.Kind, w, amount, a) : default;
+            plume = new Plume(full.Reach * Mathf.Min(thicker, 1), full.Spread * Mathf.Min(thicker, 1));
             this.air = air ?? new SmokeAir(SmokeDrift.DefaultWindStrength, 1 / SmokeDrift.UncalibratedMetresPerUnit);
             wind = SmokeDrift.WindMetresPerSecond(this.air.WindStrength);
         }
 
         const float BlastBrake = 0.12f, BlastPart = 0.15f, RideAfter = 0.08f;
+        const float FineClarity = 0.4f, FineAmount = 0.6f, FinePuff = 0.75f, DenseSmoke = 1.5f;
+        const float VeryFineClarity = 0.15f, VeryFineAmount = 0.35f, VeryFinePuff = 0.6f, VeryDensePuff = 1.15f;
+
+        static float Notched(float atOne, float atTwo, float t) => t <= 1 ? Mathf.Lerp(1, atOne, t) : Mathf.Lerp(atOne, atTwo, t - 1);
+
+        bool Smoky(EffectLayer l) => l.Sprite == "puff" && !l.Add && !l.Glow || e.Kind == "fog" && l.Sprite == "mist";
+
+        void Thin()
+        {
+            if (thicker == 0 && finer == 0) return;
+            float more = EffectKinds.Lingers(e.Kind) ? 1 : Notched(DenseSmoke, DenseSmoke * DenseSmoke, thicker);
+            float amount = Notched(FineAmount, VeryFineAmount, finer) * more;
+            float size = Notched(FinePuff, VeryFinePuff, finer) * Notched(1, VeryDensePuff, thicker), see = Notched(FineClarity, VeryFineClarity, finer);
+            var shots = plan.Projectiles?.Shots.SelectMany(s => s.Trail.Concat(s.Burst)) ?? Enumerable.Empty<EffectLayer>();
+            foreach (var l in layers.Concat(shots).Where(Smoky))
+            {
+                l.Amount = Math.Max(1, (int)Math.Round(l.Amount * amount));
+                l.SMin *= size;
+                l.SMax *= size;
+                l.Ramp = l.Ramp.Select(r => (r.at, r.c with { A = r.c.A * see })).ToArray();
+            }
+        }
+
         const int Linger = 2;
         const float MostWidening = 8;
 
@@ -268,6 +298,7 @@ public static class EffectRecipe
                     Smoke();
                     break;
             }
+            Thin();
         }
 
         void Musketry()

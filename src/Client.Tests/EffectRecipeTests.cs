@@ -102,7 +102,7 @@ public class EffectRecipeTests
     public void Each_gun_s_smoke_leaves_its_own_muzzle_with_its_flash(string volley, bool lingers)
     {
         var air = new SmokeAir(2, 1 / SmokeDrift.UncalibratedMetresPerUnit);
-        var e = new EffectDef { Kind = "cannon", Volley = volley, Every = 4, Lingers = lingers };
+        var e = new EffectDef { Kind = "cannon", Volley = volley, Every = 4, Density = lingers ? SmokeDensity.Dense : SmokeDensity.Standard };
         var plan = EffectRecipe.Plan(e, 4, 1, 0.3f, Grey, false, air);
         var flashes = plan.Layers.Where(l => l.Sprite == "muzzle").ToList();
         var smoke = plan.Layers.Where(l => l.Sprite == "puff").ToList();
@@ -329,7 +329,8 @@ public class EffectRecipeTests
         Assert.True(plume.Reach > 0);
         var usual = Plan(new EffectDef { Kind = kind, Volley = volley }, 6, 0.6f).Layers.Where(l => l.Sprite == "puff").ToList();
         var unticked = EffectRecipe.Plan(new EffectDef { Kind = kind, Volley = volley }, 6, 0.6f, 0.3f, Grey, false, air).Layers.Where(l => l.Sprite == "puff").ToList();
-        var lingering = EffectRecipe.Plan(new EffectDef { Kind = kind, Volley = volley, Lingers = true }, 6, 0.6f, 0.3f, Grey, false, air).Layers.Where(l => l.Sprite == "puff").ToList();
+        var oldDense = new EffectDef { Kind = kind, Volley = volley, Density = SmokeDensity.Dense, Amount = 1 / SmokeDensity.DenseAmount(kind), Wind = 1 / SmokeDensity.DenseWind };
+        var lingering = EffectRecipe.Plan(oldDense, 6, 0.6f, 0.3f, Grey, false, air).Layers.Where(l => l.Sprite == "puff").ToList();
         Assert.Equal(usual.Select(l => (l.Life, l.Amount, l.Cycles)), unticked.Select(l => (l.Life, l.Amount, l.Cycles)));
         Assert.All(usual, l => Assert.Equal(0, l.Reach));
         Assert.All(lingering, l => Assert.Equal(plume.Reach, l.Reach));

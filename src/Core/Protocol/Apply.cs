@@ -26,7 +26,7 @@ public static partial class StateMachine
             case SetHighlight hl: return ApplySetHighlight(g, hl, ref inverse);
             case SetBookHighlight bh: return ApplySetBookHighlight(g, bh, ref inverse);
             case SetWebModel wm: return ApplySetWebModel(g, wm, ref inverse);
-            case SetPieceOption po: return ApplySetPieceOption(g, po, ref inverse);
+            case SetPieceOption or SetSmoke: return ApplyPieceSetting(g, c, ref inverse);
             case FlipPiece fp: return ApplyFlip(g, fp, ref inverse);
             case TiltPiece tp: return ApplyTilt(g, tp, ref inverse);
             case SetScale sz: return ApplySetScale(g, sz, ref inverse);
@@ -335,6 +335,19 @@ public static partial class StateMachine
         if (p == null) return "no such piece";
         inverse = new SetLocked { Layer = lk.Layer, Id = lk.Id, Value = p.Locked };
         p.Locked = lk.Value;
+        return null;
+    }
+
+    static string? ApplyPieceSetting(GameState g, Command c, ref Command? inverse) =>
+        c is SetSmoke sm ? ApplySetSmoke(g, sm, ref inverse) : ApplySetPieceOption(g, (SetPieceOption)c, ref inverse);
+
+    static string? ApplySetSmoke(GameState g, SetSmoke sm, ref Command? inverse)
+    {
+        var p = g.Find(sm.Layer, sm.Id);
+        if (p == null) return "no such piece";
+        if (!SmokeDensity.Known(sm.Value)) return "smoke runs " + SmokeDensity.Range;
+        inverse = new SetSmoke { Layer = sm.Layer, Id = sm.Id, Value = p.Smoke };
+        p.Smoke = sm.Value;
         return null;
     }
 

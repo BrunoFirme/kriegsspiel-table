@@ -157,6 +157,7 @@ public static partial class ApiDoc
         F("piece", "face_picture", "string?", "A picture shown on the piece's face in place of its kind's, set by set_face_picture; nil for none.");
         F("piece", "page_offset", "number", "For a book, what its page numbers start from, as the module set it; 0 for every other piece.", "Book.page_offset");
         F("piece", "effect_on", "boolean", "For an effect, whether it is running.");
+        F("piece", "effect_smoke", "number?", "For an effect, how thick its smoke is: -2 very fine, -1 fine, 0 standard, 1 dense, 2 very dense, or anywhere between; nil for every other piece.");
         F("piece", "kind_name", "string", "The name of its kind.");
         F("piece", "lettering", "table?", "Text drawn on the piece in place of its picture, as 3D text from a module is: { text =, size =, color = }; nil for most pieces.", "TextTool.getValue");
         F("piece", "worth", "number", "What the piece counts for when pieces are added up; 0 for most.", "value");
@@ -276,6 +277,10 @@ public static partial class ApiDoc
     M("piece", "set_effect_on(on)", "Starts or stops an effect.", "AssetBundle.playLoopingEffect");
     P("on", "boolean", "true runs it; false stops it.");
     See("self.effect_on");
+
+    M("piece", "set_effect_smoke(thickness)", "Makes an effect's smoke finer or denser: fine leaves the pieces under it readable, dense hangs and drifts downwind as far as real powder smoke.");
+    O("thickness", "number", "From -2 (very fine) through -1 (fine), 0 (standard) and 1 (dense) to 2 (very dense); nil goes back to the smoke the piece was made with.");
+    See("self.effect_smoke");
 
     M("piece", "set_worth(worth, groups)", "Sets what the piece counts for, and optionally the groups it adds up with.", "value");
     P("worth", "number", "A whole number.");

@@ -49,6 +49,7 @@ public class RoleAndJoinTests
         yield return new ReportSelection { Selected = { "p-000004" } };
         yield return new SetWebModel { Layer = layer, Id = "p-000004", Mesh = "models/" + new string('a', 64) + ".obj" };
         yield return new SetPieceOption { Layer = layer, Id = "p-000004", Name = PieceOptions.NoCollision, Value = true };
+        yield return new SetSmoke { Layer = layer, Id = "p-000004", Value = 1 };
         yield return new FlipPiece { Layer = layer, Id = "p-000004", FaceDown = true };
         yield return new TiltPiece { Layer = layer, Id = "p-000004", X = 20, Z = 0 };
         yield return new SetScale { Layer = layer, Id = "p-000004", Scale = 1.25 };

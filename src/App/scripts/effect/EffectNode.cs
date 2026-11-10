@@ -15,6 +15,7 @@ public partial class PieceNode
     void ResetEffect() => _emitters.Clear();
 
     public EffectDef EffectSpec => Def?.Effect ?? EffectKinds.FromName(Def?.Name ?? "");
+    public EffectDef PlacedEffect => EffectKinds.WithDensity(EffectSpec, Piece.Smoke);
 
     public bool CarriesEffect => IsEffect || _emitters.Count > 0;
 
@@ -23,7 +24,7 @@ public partial class PieceNode
     void BuildEffect()
     {
         if (IsEffect) _thickness = 0.02f;
-        var e = SpotsAtSize(EffectSpec);
+        var e = SpotsAtSize(PlacedEffect);
         Texture2D? own = null;
         if (e.OwnPicture && Def?.Image is { } sha && _s.Store.PackOfDef(Piece.Def) is { } pack && pack.Assets.TryGetValue(sha, out var a))
         {
@@ -34,6 +35,7 @@ public partial class PieceNode
         float phase = (Piece.Id.Aggregate(17u, (h, c) => h * 31 + c) % 1000) / 1000f;
         _smokeAirBuilt = EffectFx.SmokeAirNow;
         _builtEffectOff = Piece.EffectOff;
+        _builtSmoke = Piece.Smoke;
         if (Piece.EffectOff && _onceGen == 0) return;
         _emitters.AddRange(EffectFx.Build(this, e, Footprint.X, Footprint.Y, phase, own));
         SteerEffect();
@@ -69,9 +71,10 @@ public partial class PieceNode
     }
 
     bool _built, _builtEffectOff;
+    double? _builtSmoke;
     SmokeAir _smokeAirBuilt;
 
-    bool EffectSwitched => IsEffect && _builtEffectOff != Piece.EffectOff;
+    bool EffectSwitched => IsEffect && _builtEffectOff != Piece.EffectOff || (IsEffect || Def?.Effect != null) && _builtSmoke != Piece.Smoke;
 
     public void ShadeEffect() => EffectFx.Shade(_emitters);
 

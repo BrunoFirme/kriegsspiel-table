@@ -45,6 +45,25 @@ public static class EffectKinds
     public static bool Smokes(string kind) => kind is "fire" or "cannon" or "burst" or "camp" or "rocket" or "barrage" or "broadside" or "oil" or "firearrows";
     public static bool Volleys(string kind) => kind is "powder" or "cannon" or "column" or "broadside" or "arrows" or "firearrows" or "stones" or "javelins" or "slingstones" or "rockfall";
     public static bool Lingers(string kind) => kind is "powder" or "cannon";
+    public static bool HasSmokeSetting(EffectDef e) => e.Kind is "powder" or "smoke" or "screen" or "fog" || Smokes(e.Kind) && e.Smoke;
+
+    public static EffectDef WithDensity(EffectDef def, double? smoke)
+    {
+        if (smoke is not { } density || !HasSmokeSetting(def) || density == def.Density) return def;
+        var e = def.Clone();
+        e.Density = density;
+        return e;
+    }
+
+    const double Stop = 0.005;
+    static readonly string[] NotchNames = { "Very fine", "Fine", "Standard", "Dense", "Very dense" };
+
+    public static string DensityText(double density)
+    {
+        int at = Array.FindIndex(SmokeDensity.Notches, n => Math.Abs(n - density) < Stop);
+        return at >= 0 ? NotchNames[at] : density.ToString("+0.00;-0.00", System.Globalization.CultureInfo.InvariantCulture);
+    }
+
     public static string Mode(EffectDef e) => e.Volley is "random" or "together" or "rolling" ? e.Volley : e.Kind == "powder" ? "random" : "together";
 
     public static double Interval(EffectDef e) => e.Every > 0.05 ? e.Every : e.Kind switch

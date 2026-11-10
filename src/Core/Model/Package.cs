@@ -287,7 +287,7 @@ public sealed class PieceDef : IJsonOnDeserialized
     }
 }
 
-public sealed class EffectDef
+public sealed class EffectDef : IJsonOnDeserialized
 {
     public string Kind { get; set; } = "smoke";
     public string? Volley { get; set; }
@@ -300,11 +300,24 @@ public sealed class EffectDef
     public string? Color { get; set; }
     public bool Light { get; set; } = true;
     public bool Smoke { get; set; } = true;
-    public bool Lingers { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public double Density { get; set; }
+    [JsonIgnore] public bool Lingers => Density > 0;
+    [JsonPropertyName("lingers"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool FormerLingers { get => false; set => _formerLingers = value; }
+    bool _formerLingers;
     public bool OwnPicture { get; set; }
     public List<double>? At { get; set; }
 
     public EffectDef Clone() => (EffectDef)MemberwiseClone();
+
+    void IJsonOnDeserialized.OnDeserialized()
+    {
+        if (!_formerLingers) return;
+        _formerLingers = false;
+        if (Density != 0) return;
+        Density = SmokeDensity.Dense;
+        Amount /= SmokeDensity.DenseAmount(Kind);
+        Wind /= SmokeDensity.DenseWind;
+    }
 }
 
 public sealed class SheetDef
@@ -434,6 +447,7 @@ public sealed class PieceInstance : IJsonOnDeserialized
     public int Face { get; set; } = -1;
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? FacePicture { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool EffectOff { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public double? Smoke { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public Lettering? Lettering { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<PieceLook>? Looks { get; set; }
     [JsonPropertyName("stateGuids"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<string>? FormerLookGuids { get => null; set => _formerGuids = value; }
@@ -442,6 +456,7 @@ public sealed class PieceInstance : IJsonOnDeserialized
 
     void IJsonOnDeserialized.OnDeserialized()
     {
+        if (SmokeDensity.Retired(Def) is (var def, { } smoke)) { Def = def; Smoke ??= smoke; }
         if (Looks != null || (_formerGuids ?? _formerScripts) is not { } any) return;
         Looks = any.Select((_, i) => new PieceLook
         {
@@ -502,7 +517,7 @@ public sealed class PieceInstance : IJsonOnDeserialized
     public PieceInstance Clone() => new()
     {
         Id = Id, Def = Def, Pos = Pos, RotDeg = RotDeg, Stack = Stack, State = State, Face = Face, Faces = Faces?.Select(f => f.Clone()).ToList(),
-        Worth = Worth, WorthGroups = WorthGroups, FacePicture = FacePicture, EffectOff = EffectOff, Lettering = Lettering?.Clone(), Looks = Looks?.Select(l => l.Clone()).ToList(),
+        Worth = Worth, WorthGroups = WorthGroups, FacePicture = FacePicture, EffectOff = EffectOff, Smoke = Smoke, Lettering = Lettering?.Clone(), Looks = Looks?.Select(l => l.Clone()).ToList(),
         Counters = new(Counters), Text = new(Text), Attached = new(Attached),
         TintOverride = TintOverride, Label = Label, Scale = Scale, Y = Y, FaceDown = FaceDown, TiltX = TiltX, TiltZ = TiltZ, Note = Note, Picture = Picture, Locked = Locked, Holds = Holds,
         NoCollision = NoCollision, PhysicalRoll = PhysicalRoll, NotSticky = NotSticky, NotBoxSelected = NotBoxSelected, MeasuresMoves = MeasuresMoves,

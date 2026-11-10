@@ -30,6 +30,24 @@ public class ScriptToolsTests
         Run(t, target, code).LastOrDefault(l => l.Kind is "result" or "error")?.Text ?? "";
 
     [Fact]
+    public void A_script_reads_and_sets_how_thick_an_effect_s_smoke_is()
+    {
+        using var t = new Table();
+        const string Fx = "p-000050";
+        t.Store.RegisterDef(new PackManifest { Id = "testpack" }, new PieceDef { Id = "volley", Name = "Musket volley", Tags = { "effect" }, Effect = new EffectDef { Kind = "powder", Density = SmokeDensity.Fine } });
+        t.Server.Handle(Table.Host, new SpawnPiece { Layer = U, Def = "volley", Id = Fx, Pos = new(1, 1) });
+        Assert.Equal("-1", Result(t, Fx, "return tostring(self.effect_smoke)"));
+        Result(t, Fx, "self.set_effect_smoke(1.5)");
+        Assert.Equal(1.5, t.Server.State.Find(U, Fx)!.Smoke);
+        Assert.Equal("1.5", Result(t, Fx, "return tostring(self.effect_smoke)"));
+        Result(t, Fx, "self.set_effect_smoke(9)");
+        Assert.Equal(SmokeDensity.VeryDense, t.Server.State.Find(U, Fx)!.Smoke);
+        Result(t, Fx, "self.set_effect_smoke()");
+        Assert.Null(t.Server.State.Find(U, Fx)!.Smoke);
+        Assert.Equal("nil", Result(t, P, "return tostring(self.effect_smoke)"));
+    }
+
+    [Fact]
     public void Every_function_the_runtime_installs_is_in_the_reference()
     {
         using var t = new Table();
@@ -65,7 +83,7 @@ public class ScriptToolsTests
     {
         using var t = new Table();
         t.Server.Handle(Table.Host, new SetScript { Layer = U, Id = P, Text = "function on_load() end" });
-        var mayBeNil = new HashSet<string> { "self.name", "self.note", "self.tint", "self.picture_size", "self.local_unit", "self.face", "self.value", "self.picked_up", "self.face_picture", "self.lettering", "self.highlight", "self.book_highlight", "self.held_by", "self.source", "self.ready", "game.calibration" };
+        var mayBeNil = new HashSet<string> { "self.name", "self.note", "self.tint", "self.picture_size", "self.local_unit", "self.face", "self.value", "self.picked_up", "self.face_picture", "self.lettering", "self.highlight", "self.book_highlight", "self.held_by", "self.effect_smoke", "self.source", "self.ready", "game.calibration" };
         var names = ApiDoc.All.Where(e => e.Group is "piece" or "board" or "game" or "ui" or "wait" or "json" && !mayBeNil.Contains(e.Qualified)).Select(e => e.Qualified).ToList();
         var missing = Result(t, P, "local out = {} " + string.Join(" ", names.Select(n => $"if {n} == nil then out[#out + 1] = \"{n}\" end")) + " return table.concat(out, \" \") .. \"|\"");
         Assert.Equal("|", missing);

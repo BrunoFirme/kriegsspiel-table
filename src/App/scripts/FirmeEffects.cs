@@ -20,15 +20,11 @@ public static class FirmeEffects
 
     public static readonly (string Name, string What, double W, double H, EffectDef Fx, string Era)[] Presets =
     {
-        ("Musket volley, standard smoke", "A battalion's line firing at will: lay it along the front rank", 6, 0.6, new EffectDef { Kind = "powder" }, N),
-        ("Musket volley, dense smoke", "A line firing at will, its smoke thick and hanging, drifting downwind as far as real powder smoke on the map's scale", 6, 0.6, new EffectDef { Kind = "powder", Lingers = true, Amount = 1.5, Wind = 1.4 }, N),
-        ("Battalion volley, standard smoke", "The whole line firing on the word of command, every few seconds", 6, 0.6, new EffectDef { Kind = "powder", Volley = "together" }, N),
-        ("Battalion volley, dense smoke", "Volleys on the word of command, the smoke banking up and carried off downwind as far as real powder smoke on the map's scale", 6, 0.6, new EffectDef { Kind = "powder", Volley = "together", Lingers = true, Amount = 1.5, Wind = 1.4 }, N),
-        ("Rolling fire, standard smoke", "Fire by platoons, rippling down the line from one flank to the other", 6, 0.6, new EffectDef { Kind = "powder", Volley = "rolling" }, N),
-        ("Rolling fire, dense smoke", "Fire by platoons down the line, every platoon's smoke hanging and drifting as far as real powder smoke on the map's scale", 6, 0.6, new EffectDef { Kind = "powder", Volley = "rolling", Lingers = true, Amount = 1.5, Wind = 1.4 }, N),
+        ("Musket volley", "A battalion's line firing at will: lay it along the front rank", 6, 0.6, new EffectDef { Kind = "powder" }, N),
+        ("Battalion volley", "The whole line firing on the word of command, every few seconds", 6, 0.6, new EffectDef { Kind = "powder", Volley = "together" }, N),
+        ("Rolling fire", "Fire by platoons, rippling down the line from one flank to the other", 6, 0.6, new EffectDef { Kind = "powder", Volley = "rolling" }, N),
         ("Skirmish fire", "Light troops in open order, a puff here and there", 5, 2, new EffectDef { Kind = "powder", Amount = 0.3, Puff = 0.6, Height = 0.8 }, N),
-        ("Battery firing, standard smoke", "A battery of guns firing in turn", 4, 1, new EffectDef { Kind = "cannon", Every = 4, Volley = "rolling" }, N),
-        ("Battery firing, dense smoke", "Guns firing in turn, their smoke rolling away downwind as far as real powder smoke on the map's scale", 4, 1, new EffectDef { Kind = "cannon", Every = 4, Volley = "rolling", Lingers = true, Amount = 1.4, Wind = 1.4 }, N),
+        ("Battery firing", "A battery of guns firing in turn", 4, 1, new EffectDef { Kind = "cannon", Every = 4, Volley = "rolling" }, N),
         ("Battery salvo", "Every gun of the battery at once", 4, 1, new EffectDef { Kind = "cannon", Every = 6 }, N),
         ("Gun firing", "A single piece of artillery", 1, 1, new EffectDef { Kind = "cannon", Every = 6, Amount = 0.8 }, N),
         ("Congreve rockets", "A rocket troop firing: erratic trails of sparks and smoke, bursts where they land", 2, 14, new EffectDef { Kind = "rocket" }, N),
@@ -91,11 +87,8 @@ public static class FirmeEffects
     };
 
     const string N = "napoleonic", M = "modern", A = "ancient", S = "naval", AnyTable = "";
-    static readonly string[] RealismTags = { "extra", "realism", "swense" };
-    const string StandardSmoke = ", standard smoke";
 
-    public static string IdOf(string presetName) =>
-        PackId + "." + PackEdit.Slug(presetName.EndsWith(StandardSmoke, StringComparison.Ordinal) ? presetName[..^StandardSmoke.Length] : presetName);
+    public static string IdOf(string presetName) => PackId + "." + PackEdit.Slug(presetName);
 
     public static readonly (string Name, string What, Func<PropMade> Make, string Era)[] PropList =
     {
@@ -131,8 +124,10 @@ public static class FirmeEffects
 
     const string MarkerWhat = "Marks a torpedo's run; a look for spent", NoteWhat = "A message form with a name and a note";
 
+    const string SmokeHint = " · right-click it on the table to make its smoke finer or denser";
+
     public static string What(PieceDef d) =>
-        Presets.FirstOrDefault(p => IdOf(p.Name) == d.Id).What
+        (Presets.FirstOrDefault(p => IdOf(p.Name) == d.Id) is { What: { } what } preset ? what + (EffectKinds.HasSmokeSetting(preset.Fx) ? SmokeHint : "") : null)
         ?? PropList.FirstOrDefault(p => PackId + "." + PackEdit.Slug(p.Name) == d.Id).What
         ?? (d.Tags.Contains("marker") ? MarkerWhat : d.Tags.Contains(NoteCard.Tag) ? NoteWhat : "");
 
@@ -147,7 +142,6 @@ public static class FirmeEffects
         {
             var d = Def(IdOf(name), name, w, h, fx);
             d.Tags.Add(era);
-            if (fx.Lingers) d.Tags.AddRange(RealismTags);
             pack.Pieces.Add(d);
         }
         string Add(byte[] bytes, string ext, string kind, int iw = 0, int ih = 0)

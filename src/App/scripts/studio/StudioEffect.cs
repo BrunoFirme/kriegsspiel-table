@@ -137,16 +137,11 @@ internal sealed class EffectTab
             smoke.Toggled += on => Set(x => x.Smoke = on, rebuild: true);
             sg.AddChild(smoke);
         }
-        if (EffectKinds.Lingers(e.Kind))
+        if (EffectKinds.HasSmokeSetting(e))
         {
-            sg.AddChild(new Label { Text = "" });
-            var lingers = new CheckBox
-            {
-                Text = "Dense smoke, drifting as far as real powder smoke", ButtonPressed = e.Lingers,
-                TooltipText = $"Carried downwind as far as powder smoke goes in the scenario's wind, on the map's scale (or {SmokeDrift.UncalibratedMetresPerUnit:0} m to a unit before the map is calibrated)",
-            };
-            lingers.Toggled += on => Set(x => x.Lingers = on, rebuild: true);
-            sg.AddChild(lingers);
+            var tip = $"{SmokeSlider.Tip} (or {SmokeDrift.UncalibratedMetresPerUnit:0} m to a unit before the map is calibrated); each placed piece can be changed from its right-click menu";
+            sg.AddChild(new Label { Text = "Smoke", TooltipText = tip, MouseFilter = Control.MouseFilterEnum.Pass });
+            sg.AddChild(SmokeSlider.Make(e.Density, v => Set(x => x.Density = v), whileDragging: true, tip));
         }
     }
 

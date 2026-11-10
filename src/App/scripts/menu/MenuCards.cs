@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Godot;
 using KTable.Client;
+using KTable.Client.Effects;
 using KTable.Core.Model;
 using KTable.Core.Protocol;
 
@@ -195,6 +196,8 @@ sealed class MenuCards : HudPart
         menu.Check("Shows how far it is moved", allMeasured, () => SetOption(nodes, PieceOptions.MeasuresMoves, !allMeasured));
         bool allRunning = effects.All(n => !n.Piece.EffectOff);
         if (effects.Count > 0) menu.Check("Running", allRunning, () => SetOption(effects, PieceOptions.EffectOff, allRunning));
+        var smoky = nodes.Where(n => (n.IsEffect || n.Def?.Effect != null) && EffectKinds.HasSmokeSetting(n.EffectSpec)).ToList();
+        if (smoky.Count > 0) menu.Add(SmokeRows(smoky, smoky.Contains(hit) ? hit : smoky[0]));
         var dice = nodes.Where(n => n.IsDie).ToList();
         if (dice.Count > 0)
         {
@@ -269,6 +272,30 @@ sealed class MenuCards : HudPart
             row.AddChild(b);
         }
         return row;
+    }
+
+    Control SmokeRows(List<PieceNode> nodes, PieceNode hit)
+    {
+        void Thicken(double value)
+        {
+            var cmds = nodes.Select(n => (Command)new SetSmoke { Layer = n.Layer, Id = n.Piece.Id, Value = value == n.EffectSpec.Density ? null : value }).ToList();
+            S.Do(cmds.Count == 1 ? cmds[0] : new Batch { Items = cmds });
+        }
+        var (slider, shown) = SmokeSlider.Parts(hit.PlacedEffect.Density, Thicken, whileDragging: false);
+        var rows = new VBoxContainer();
+        rows.AddThemeConstantOverride("separation", RowGap);
+        var head = new HBoxContainer();
+        head.AddThemeConstantOverride("separation", SwatchGap);
+        head.AddChild(new Control { CustomMinimumSize = new Vector2(CheckColumn, 0) });
+        head.AddChild(new Label { Text = "Smoke", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter });
+        head.AddChild(shown);
+        rows.AddChild(head);
+        var line = new HBoxContainer();
+        line.AddThemeConstantOverride("separation", SwatchGap);
+        line.AddChild(new Control { CustomMinimumSize = new Vector2(CheckColumn, 0) });
+        line.AddChild(slider);
+        rows.AddChild(line);
+        return rows;
     }
 
     Control TintRows(List<PieceNode> nodes, PieceNode hit, PopupPanel pop)

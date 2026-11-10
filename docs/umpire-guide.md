@@ -185,7 +185,9 @@ groups them, and names what each was used for, from the phalanx to the tank plat
   colour it was made with. Where it shows follows the module: a token's picture, a tile's sides; decals keep their colours.
 - **Effects** (smoke, fire, volleys, melee, mist) and props are pieces of **Firme's Effects and Props**; resized, an effect
   covers more ground. Right-click → **Running** stops or starts one, and **Play once** plays it through once on every
-  screen. To change one, copy it into a pack of your own in the piece studio (＋ New piece).
+  screen. Right-click → **Smoke** slides an effect's smoke from very fine, which leaves the pieces under it readable,
+  through fine, standard and dense to very dense; dense hangs and drifts downwind as far as real powder smoke goes in the
+  scenario's wind. To change one, copy it into a pack of your own in the piece studio (＋ New piece).
 - **Worth:** pieces a module gave a worth (chips, supply) add up at the head of the right-click menu when several are chosen.
 - **Scripts:** a piece's buttons, boxes and panels work with a click. Right-click → **Scripting…** opens its script;
   see the [scripting guide](scripting.md).

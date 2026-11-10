@@ -116,11 +116,11 @@ sealed partial class StudioTools
             Args.Schema(new Arg("id", "string", "the kind's id", true), new Arg("markers", "array", "[{kind, x, z}], empty for none", true)),
             SetMarkers);
         yield return new AgentTool("studio_set_effect",
-            "Changes an effect kind's settings: kind, amount, height, puff, speed, wind, every (seconds), colour, light, smoke, lingers, volley (together or rolling).",
+            "Changes an effect kind's settings: kind, amount, height, puff, speed, wind, every (seconds), colour, light, smoke, density, volley (together or rolling).",
             Args.Schema(new Arg("id", "string", "the kind's id", true), new Arg("kind", "string", string.Join(", ", EffectKinds.Kinds.Select(k => k.Id))),
                 new Arg("amount", "number", "how much"), new Arg("height", "number", "how high"), new Arg("puff", "number", "puff size"), new Arg("speed", "number", "speed"),
                 new Arg("wind", "number", "how much the wind carries it"), new Arg("every", "number", "seconds between shots"), new Arg("colour", "string", "#rrggbb"),
-                new Arg("light", "boolean", "flashes light"), new Arg("smoke", "boolean", "makes smoke"), new Arg("lingers", "boolean", "dense musketry or cannon smoke, drifting as far as real powder smoke on the map's scale"), new Arg("volley", "string", "together or rolling")),
+                new Arg("light", "boolean", "flashes light"), new Arg("smoke", "boolean", "makes smoke"), new Arg("density", "number", "how thick the smoke is, " + SmokeDensity.Range + "; dense hangs and drifts as far as real powder smoke on the map's scale"), new Arg("volley", "string", "together or rolling")),
             SetEffect);
         yield return new AgentTool("studio_write_script",
             "Sets a kind's script in the pack (every piece of that kind runs it) and runs it on the studio's table; the same safety check as the Script tab. Returns what it printed; fails when the script fails as it loads. An empty text removes it.",
@@ -562,7 +562,7 @@ sealed partial class StudioTools
             if (colour != null) fx.Color = colour.Length == 0 ? null : EffectKinds.Recolour(Colour(colour, "#ffffffff").ToUpperInvariant(), fx.Color);
             if (a.Flag("light") is { } li) fx.Light = li;
             if (a.Flag("smoke") is { } sm) fx.Smoke = sm;
-            if (a.Flag("lingers") is { } lg) fx.Lingers = lg;
+            if (a.Num("density") is { } dn) fx.Density = Math.Clamp(dn, SmokeDensity.VeryFine, SmokeDensity.VeryDense);
             if (volley != null) fx.Volley = volley.Length == 0 ? null : volley;
             x.Effect = fx;
             if (!x.Tags.Contains("effect")) x.Tags.Add("effect");

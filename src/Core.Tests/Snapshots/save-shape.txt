@@ -1,4 +1,4 @@
-format 34
+format 35
 type AccessChanged object
   access: GameAccess
 type AddBoard object
@@ -173,6 +173,7 @@ type Command abstract
   derived SetSheetOpacity = SetSheetOpacity
   derived SetSheetPicture = SetSheetPicture
   derived SetSheetRelief = SetSheetRelief
+  derived SetSmoke = SetSmoke
   derived SetState = SetState
   derived SetTags = SetTags
   derived SetText = SetText
@@ -306,6 +307,7 @@ type EffectDef object
   amount: double
   at: List<double>
   color: string
+  density: double
   every: double
   height: double
   kind: string
@@ -747,6 +749,7 @@ type PieceInstance object
   scale: double
   script: string
   scriptState: string
+  smoke: double?
   stack: int
   state: int
   stateGuids: List<string>
@@ -1323,6 +1326,15 @@ type SetSheetRelief object
   seq: long
   undoFrom: long
   undoOf: long
+type SetSmoke object
+  actor: long
+  at: long
+  id: string
+  layer: string
+  seq: long
+  undoFrom: long
+  undoOf: long
+  value: double?
 type SetState object
   actor: long
   at: long

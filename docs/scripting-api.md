@@ -207,6 +207,7 @@ Read from `self` or from any piece `board.find` or `board.pieces` hands back. Fi
 | [`self.face_picture`](#selfface_picture) | A picture shown on the piece's face in place of its kind's, set by set_face_picture; nil for none. |
 | [`self.page_offset`](#selfpage_offset) | For a book, what its page numbers start from, as the module set it; 0 for every other piece. |
 | [`self.effect_on`](#selfeffect_on) | For an effect, whether it is running. |
+| [`self.effect_smoke`](#selfeffect_smoke) | For an effect, how thick its smoke is: -2 very fine, -1 fine, 0 standard, 1 dense, 2 very dense, or anywhere between; nil for every other piece. |
 | [`self.kind_name`](#selfkind_name) | The name of its kind. |
 | [`self.lettering`](#selflettering) | Text drawn on the piece in place of its picture, as 3D text from a module is: { text =, size =, color = }; nil for most pieces. |
 | [`self.worth`](#selfworth) | What the piece counts for when pieces are added up; 0 for most. |
@@ -428,6 +429,16 @@ self.effect_on
 For an effect, whether it is running.
 
 **Type** `boolean`, read-only.
+
+### `self.effect_smoke`
+
+```lua
+self.effect_smoke
+```
+
+For an effect, how thick its smoke is: -2 very fine, -1 fine, 0 standard, 1 dense, 2 very dense, or anywhere between; nil for every other piece.
+
+**Type** `number?`, read-only.
 
 ### `self.kind_name`
 
@@ -930,6 +941,7 @@ Each call is a change every umpire sees. What a script changes in answer to an u
 | [`self.set_web_model`](#selfset_web_model) | Fetches a model and its picture from web links and shows the piece as that model on every screen; a link that gives no model shows the picture flat, or a plain placeholder. |
 | [`self.play_effect`](#selfplay_effect) | Plays an effect once on every screen, one round of it, whether it is running or not; false for a piece that is not an effect. |
 | [`self.set_effect_on`](#selfset_effect_on) | Starts or stops an effect. |
+| [`self.set_effect_smoke`](#selfset_effect_smoke) | Makes an effect's smoke finer or denser: fine leaves the pieces under it readable, dense hangs and drifts downwind as far as real powder smoke. |
 | [`self.set_worth`](#selfset_worth) | Sets what the piece counts for, and optionally the groups it adds up with. |
 | [`self.roll`](#selfroll) | Rolls a die, or turns a piece of several states to one at random; false for anything else. |
 | [`self.set_counter`](#selfset_counter) | Sets one of its kind's counters (a whole number, kept to the counter's range). |
@@ -1376,6 +1388,20 @@ Starts or stops an effect.
 | `on` | `boolean` | true runs it; false stops it. |
 
 **Module call** `AssetBundle.playLoopingEffect` · **See also** [`self.effect_on`](#selfeffect_on)
+
+### `self.set_effect_smoke`
+
+```lua
+self.set_effect_smoke(thickness)
+```
+
+Makes an effect's smoke finer or denser: fine leaves the pieces under it readable, dense hangs and drifts downwind as far as real powder smoke.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `thickness` | `number` | _Optional._ From -2 (very fine) through -1 (fine), 0 (standard) and 1 (dense) to 2 (very dense); nil goes back to the smoke the piece was made with. |
+
+**See also** [`self.effect_smoke`](#selfeffect_smoke)
 
 ### `self.set_worth`
 
