@@ -119,7 +119,7 @@ sealed class PovPanel : HudPart
         bool scaled = cal.UnitsPerMeter is > 0;
         var radius = new HSlider
         {
-            MinValue = scaled ? 10 : 0.5, MaxValue = scaled ? MostRadiusMetres : MostRadiusUnits, Step = scaled ? 10 : 0.5, ExpEdit = true,
+            MinValue = scaled ? 10 : 0.5, MaxValue = Math.Max(scaled ? MostRadiusMetres : MostRadiusUnits, cal.FromTableUnits(d.Radius)), Step = scaled ? 10 : 0.5, ExpEdit = true,
             Value = cal.FromTableUnits(d.Radius), TooltipText = "How far the piece sees",
         };
         SliderRow(grid, "Radius", radius, v => scaled ? $"{v:#,0} {cal.UnitName}" : $"{v:0.0} u");
