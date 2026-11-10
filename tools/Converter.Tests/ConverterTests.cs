@@ -430,7 +430,8 @@ public sealed partial class ConverterTests : ConverterHarness
             new double[] { 0, 0, 0 }, new double[] { 1, 1, 1 }, 1, new List<(string, Picture)>(), 0);
         var places = new Dictionary<string, AtlasPlace> { ["tex"] = new AtlasPlace(100, 200, 400, 800) };
 
-        var lines = ModelAtlas.Obj(model, places, 2048, 1280).Split('\n', StringSplitOptions.RemoveEmptyEntries).Where(l => !l.StartsWith("usemtl", StringComparison.Ordinal)).ToArray();
+        var lines = ModelAtlas.Obj(model, places, 2048, 1280).Split('\n', StringSplitOptions.RemoveEmptyEntries)
+            .Where(l => !l.StartsWith("usemtl", StringComparison.Ordinal) && !KTable.Core.Model.SurfaceDraw.Says(l.Split(' '))).ToArray();
 
         Assert.Equal("o Gunner", lines[0]);
         Assert.Equal((1, -3), (Number(lines[1], 1), Number(lines[1], 3)));

@@ -255,9 +255,24 @@ public sealed class PieceArt
         };
     }
 
-    const float Opaque = 0.999f;
+    const float Opaque = 0.999f, FullCut = 0.98f;
 
     public static bool SeeThrough(Color tint) => tint.A < Opaque;
+
+    public static StandardMaterial3D Drawn(StandardMaterial3D basis, KTable.Core.Model.SurfaceDraw draw)
+    {
+        var m = (StandardMaterial3D)basis.Duplicate();
+        m.CullMode = draw.OneSided ? BaseMaterial3D.CullModeEnum.Back : BaseMaterial3D.CullModeEnum.Disabled;
+        if (basis.Transparency == BaseMaterial3D.TransparencyEnum.Alpha) return m;
+        m.Transparency = draw.Alpha switch
+        {
+            KTable.Core.Model.SurfaceAlpha.Opaque => BaseMaterial3D.TransparencyEnum.Disabled,
+            KTable.Core.Model.SurfaceAlpha.Blend => BaseMaterial3D.TransparencyEnum.Alpha,
+            _ => BaseMaterial3D.TransparencyEnum.AlphaScissor,
+        };
+        m.AlphaScissorThreshold = Mathf.Min((float)draw.Cutoff, FullCut);
+        return m;
+    }
 
     public void Clear()
     {

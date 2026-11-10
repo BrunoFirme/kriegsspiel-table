@@ -21,7 +21,7 @@ public sealed partial class DefFactory
         double stretch = Stretch(m);
         if (Entry(m.MeshUrl) is not { Ext: "obj" } e || _assets.FilePath(e) is not { } src)
             return Asset(pack, m.MeshUrl, "mesh", where);
-        var file = Path.Combine(_cfg.Cache, "placed", string.Create(CultureInfo.InvariantCulture, $"{e.Sha}-{stretch:0.####}.obj"));
+        var file = Path.Combine(_cfg.Cache, "placed", string.Create(CultureInfo.InvariantCulture, $"{e.Sha}-{stretch:0.####}-lit.obj"));
         if (!File.Exists(file))
         {
             Directory.CreateDirectory(Path.GetDirectoryName(file)!);

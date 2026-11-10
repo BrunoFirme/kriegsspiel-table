@@ -766,7 +766,7 @@ public sealed partial class ConverterTests
         Assert.Equal(0.63, stretched.Thickness, 3);
         Assert.Equal(0.63, DrawnHeight(stretched), 3);
         Assert.Equal(0.4, DrawnHeight(even), 3);
-        Assert.Equal("v 18 -0.1 4.5", File.ReadLines(Path.Combine(pack.Dir, pack.M.Assets[even.Mesh!].File)).First());
+        Assert.Equal("v 18 -0.1 4.5", File.ReadLines(Path.Combine(pack.Dir, pack.M.Assets[even.Mesh!].File)).First(l => l.StartsWith("v ")));
         Assert.Contains("vn 0 1 0", File.ReadAllText(Path.Combine(pack.Dir, pack.M.Assets[stretched.Mesh!].File)));
     }
 

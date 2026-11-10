@@ -3,10 +3,12 @@ using System.Text;
 using AssetsTools.NET;
 using AssetsTools.NET.Extra;
 using KTable.Core;
+using KTable.Core.Model;
 
 namespace KTable.Converter.Bundles;
 
-public sealed record ModelPart(double[] Verts, double[] Uvs, int[] Triangles, string? Texture, double[]? Colour = null, int Rank = 0);
+public sealed record ModelPart(double[] Verts, double[] Uvs, int[] Triangles, string? Texture, double[]? Colour = null, int Rank = 0,
+                               double[]? Normals = null, SurfaceDraw? Draw = null);
 
 public sealed record BundleModel(string Sha, string Name, List<ModelPart> Parts, double[] Low, double[] High, int Triangles, List<(string Sha, Picture Picture)> Textures, int Lost);
 
@@ -92,7 +94,7 @@ public sealed class BundleScene
         finally { BestEffort.Try(() => manager.UnloadAll(true)); }
     }
 
-    static (AssetsFileInstance File, AssetTypeValueField Field)? Follow(AssetsManager manager, AssetsFileInstance from, AssetTypeValueField? pointer)
+    internal static (AssetsFileInstance File, AssetTypeValueField Field)? Follow(AssetsManager manager, AssetsFileInstance from, AssetTypeValueField? pointer)
     {
         if (pointer == null || pointer.IsDummy || pointer["m_PathID"].AsLong == 0) return null;
         int fileId = pointer["m_FileID"].AsInt;
@@ -197,14 +199,15 @@ public sealed class BundleScene
                 if (meshField == null) continue;
                 var mesh = UnityMesh.Read(meshField, major, s => SideFile(bundle, s));
                 if (mesh == null) { lost++; continue; }
-                var verts = Posed(renderer, skinned, mesh, WorldOf, here, transforms, origin);
+                var (verts, normals) = Posed(renderer, skinned, mesh, WorldOf, here, transforms, origin);
                 var materials = renderer["m_Materials.Array"].Children;
                 for (int sub = 0; sub < mesh.SubMeshes.Count; sub++)
                 {
                     if (mesh.SubMeshes[sub].Length == 0) continue;
                     var material = sub < materials.Count ? materials[sub] : materials.FirstOrDefault();
                     var colour = Colour(manager, file, material);
-                    parts.Add(new ModelPart(verts, mesh.Uvs, mesh.SubMeshes[sub], Texture(manager, file, material, textures), colour, rank.GetValueOrDefault(here, int.MaxValue)));
+                    parts.Add(new ModelPart(verts, mesh.Uvs, mesh.SubMeshes[sub], Texture(manager, file, material, textures), colour, rank.GetValueOrDefault(here, int.MaxValue),
+                                            normals, MaterialDraw.Of(manager, file, material)));
                 }
             }
             catch (Exception e) when (OnlyThisBundle(e))
@@ -247,11 +250,12 @@ public sealed class BundleScene
         return (low, high);
     }
 
-    static double[] Posed(AssetTypeValueField renderer, bool skinnedRenderer, UnityMesh mesh, Func<long, Mat4> worldOf, long here,
+    static (double[] Verts, double[]? Normals) Posed(AssetTypeValueField renderer, bool skinnedRenderer, UnityMesh mesh, Func<long, Mat4> worldOf, long here,
                           Dictionary<long, AssetTypeValueField> transforms, (double X, double Y, double Z) origin)
     {
         int count = mesh.VertexCount;
         var output = new double[count * Axes];
+        var facing = mesh.Normals is { } given && given.Length >= count * Axes ? new double[count * Axes] : null;
         var bones = skinnedRenderer
             ? renderer["m_Bones.Array"].Children.Select(Points).ToList()
             : new List<long?>();
@@ -265,14 +269,16 @@ public sealed class BundleScene
         for (int vertex = 0; vertex < count; vertex++)
         {
             double x = mesh.Positions[vertex * Axes], y = mesh.Positions[vertex * Axes + 1], z = mesh.Positions[vertex * Axes + 2];
-            (double X, double Y, double Z) moved;
+            double nx = facing == null ? 0 : mesh.Normals![vertex * Axes], ny = facing == null ? 0 : mesh.Normals![vertex * Axes + 1], nz = facing == null ? 0 : mesh.Normals![vertex * Axes + 2];
+            (double X, double Y, double Z) moved, turned;
             if (!skinned || vertex >= mesh.Skin.Length)
             {
                 moved = place.Apply(x, y, z);
+                turned = place.Facing(nx, ny, nz);
             }
             else
             {
-                double ax = 0, ay = 0, az = 0, total = 0;
+                double ax = 0, ay = 0, az = 0, bx = 0, by = 0, bz = 0, total = 0;
                 var influence = mesh.Skin[vertex];
                 for (int corner = 0; corner < Corners; corner++)
                 {
@@ -280,18 +286,29 @@ public sealed class BundleScene
                     int bone = influence.Bones[corner];
                     if (weight <= 0 || bone < 0 || bone >= skin.Count) continue;
                     var bent = skin[bone].Apply(x, y, z);
+                    var leaned = skin[bone].Facing(nx, ny, nz);
                     ax += weight * bent.X;
                     ay += weight * bent.Y;
                     az += weight * bent.Z;
+                    bx += weight * leaned.X;
+                    by += weight * leaned.Y;
+                    bz += weight * leaned.Z;
                     total += weight;
                 }
                 moved = total > 0 ? (ax / total, ay / total, az / total) : place.Apply(x, y, z);
+                turned = total > 0 ? (bx, by, bz) : place.Facing(nx, ny, nz);
             }
             output[vertex * Axes] = moved.X - origin.X;
             output[vertex * Axes + 1] = moved.Y - origin.Y;
             output[vertex * Axes + 2] = moved.Z - origin.Z;
+            if (facing == null) continue;
+            double length = Math.Sqrt(turned.X * turned.X + turned.Y * turned.Y + turned.Z * turned.Z);
+            if (length <= 0) length = 1;
+            facing[vertex * Axes] = turned.X / length;
+            facing[vertex * Axes + 1] = turned.Y / length;
+            facing[vertex * Axes + 2] = turned.Z / length;
         }
-        return output;
+        return (output, facing);
     }
 
     static string? Texture(AssetsManager manager, AssetsFileInstance file, AssetTypeValueField? material, List<(string Sha, Picture Picture)> into)

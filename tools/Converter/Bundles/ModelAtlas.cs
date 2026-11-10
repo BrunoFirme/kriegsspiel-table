@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text;
+using KTable.Core.Model;
 using SkiaSharp;
 
 namespace KTable.Converter.Bundles;
@@ -99,9 +100,10 @@ public static class ModelAtlas
     {
         var text = new StringBuilder();
         text.Append("o ").Append(model.Name).Append('\n');
-        int baseVertex = 1, baseCorner = 1;
+        int baseVertex = 1, baseCorner = 1, baseNormal = 1;
         foreach (var (part, index) in model.Parts.Select((p, i) => (p, i)))
         {
+            text.Append((part.Draw ?? Unmade).Statements());
             text.Append(index == 0 ? "usemtl tinted\n" : "usemtl own\n");
             var colour = index == 0 || part.Colour == null ? " 1 1 1" : $" {Six(part.Colour[0])} {Six(part.Colour[1])} {Six(part.Colour[2])}";
             var used = part.Triangles.Distinct().OrderBy(v => v).ToArray();
@@ -112,6 +114,12 @@ public static class ModelAtlas
                 text.Append("v ").Append(Six(part.Verts[vertex * Axes])).Append(' ')
                     .Append(Six(part.Verts[vertex * Axes + 1])).Append(' ')
                     .Append(Six(-part.Verts[vertex * Axes + 2])).Append(colour).Append('\n');
+            bool lit = part.Normals is { } normals && normals.Length >= part.Verts.Length;
+            if (lit)
+                foreach (int vertex in used)
+                    text.Append("vn ").Append(Six(part.Normals![vertex * Axes])).Append(' ')
+                        .Append(Six(part.Normals[vertex * Axes + 1])).Append(' ')
+                        .Append(Six(-part.Normals[vertex * Axes + 2])).Append('\n');
             int triangles = part.Triangles.Length / 3;
             for (int n = 0; n < triangles * 3; n += 3)
             {
@@ -132,15 +140,20 @@ public static class ModelAtlas
             {
                 int a = baseVertex + at[part.Triangles[n]], b = baseVertex + at[part.Triangles[n + 1]], c = baseVertex + at[part.Triangles[n + 2]];
                 int ta = baseCorner + n, tb = ta + 1, tc = ta + 2;
-                text.Append("f ").Append(c).Append('/').Append(tc).Append(' ')
-                    .Append(b).Append('/').Append(tb).Append(' ')
-                    .Append(a).Append('/').Append(ta).Append('\n');
+                text.Append("f ").Append(c).Append('/').Append(tc).Append(Lit(lit, c - baseVertex + baseNormal)).Append(' ')
+                    .Append(b).Append('/').Append(tb).Append(Lit(lit, b - baseVertex + baseNormal)).Append(' ')
+                    .Append(a).Append('/').Append(ta).Append(Lit(lit, a - baseVertex + baseNormal)).Append('\n');
             }
             baseVertex += used.Length;
+            if (lit) baseNormal += used.Length;
             baseCorner += triangles * 3;
         }
         return text.ToString();
     }
+
+    static readonly SurfaceDraw Unmade = MaterialDraw.Drawn(MaterialDraw.Standard, new Dictionary<string, double>());
+
+    static string Lit(bool lit, int normal) => lit ? $"/{normal}" : "";
 
     static double Uv(ModelPart part, int vertex, int axis) =>
         vertex * UvParts + 1 < part.Uvs.Length ? part.Uvs[vertex * UvParts + axis] : 0;

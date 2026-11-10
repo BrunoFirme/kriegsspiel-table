@@ -469,9 +469,10 @@ public partial class PieceNode : Node3D
         var shadow = Def!.Shadowless ? GeometryInstance3D.ShadowCastingSetting.Off : GeometryInstance3D.ShadowCastingSetting.On;
         _model = new MeshInstance3D { RotationDegrees = new Vector3(0, 180, 0), CastShadow = shadow };
         AddChild(_model);
+        var worn = new List<StandardMaterial3D> { mat, untinted };
         if (texFile != null)
         {
-            var tex = _s.Assets.Texture(texPack, texFile, t => { if (IsInstanceValid(this)) mat.AlbedoTexture = untinted.AlbedoTexture = t; }, maxSize: die ? 1024 : 2048);
+            var tex = _s.Assets.Texture(texPack, texFile, t => { if (IsInstanceValid(this)) foreach (var m in worn) m.AlbedoTexture = t; }, maxSize: die ? 1024 : 2048);
             if (tex != null) mat.AlbedoTexture = untinted.AlbedoTexture = tex;
         }
         if (normalFile != null) Bumps(meshPack, normalFile, mat, untinted);
@@ -482,8 +483,20 @@ public partial class PieceNode : Node3D
             var mesh = ModelCache.Get(_s.Assets.Abs(meshPack, meshFile));
             if (mesh == null) return;
             model.Mesh = mesh;
-            for (int s = 0; s < mesh.GetSurfaceCount(); s++) model.SetSurfaceOverrideMaterial(s, s == 0 ? mat : untinted);
-            if (!die && (mesh.SurfaceGetFormat(0) & Mesh.ArrayFormat.FormatColor) != 0) foreach (var m in new[] { mat, untinted }) { m.VertexColorUseAsAlbedo = true; m.VertexColorIsSrgb = true; }
+            var drawn = new Dictionary<(bool, SurfaceDraw), StandardMaterial3D>();
+            for (int s = 0; s < mesh.GetSurfaceCount(); s++)
+            {
+                var (tinted, draw) = die ? (s == 0, SurfaceDraw.Plain) : ObjLoader.Surface(mesh, s);
+                var basis = tinted ? mat : untinted;
+                if (draw != SurfaceDraw.Plain && !drawn.TryGetValue((tinted, draw), out var own))
+                {
+                    drawn[(tinted, draw)] = own = PieceArt.Drawn(basis, draw);
+                    worn.Add(own);
+                    if (normalFile != null) Bumps(meshPack, normalFile, own);
+                }
+                model.SetSurfaceOverrideMaterial(s, draw == SurfaceDraw.Plain ? basis : drawn[(tinted, draw)]);
+            }
+            if (!die && (mesh.SurfaceGetFormat(0) & Mesh.ArrayFormat.FormatColor) != 0) foreach (var m in worn) { m.VertexColorUseAsAlbedo = true; m.VertexColorIsSrgb = true; }
             var aabb = mesh.GetAabb();
             float sx = aabb.Size.X > 0 ? w / aabb.Size.X : 1, sz = aabb.Size.Z > 0 ? h / aabb.Size.Z : 1;
             float sy = Def?.HeightScale is { } upright && !die ? sx * (float)upright : (sx + sz) / 2;

@@ -49,6 +49,20 @@ public sealed class Mat4
         return Rows(r);
     }
 
+    public (double X, double Y, double Z) Facing(double x, double y, double z)
+    {
+        double C(int r0, int r1, int c0, int c1) => At(r0, c0) * At(r1, c1) - At(r0, c1) * At(r1, c0);
+        double[] co =
+        {
+            C(1, 2, 1, 2), -C(1, 2, 0, 2), C(1, 2, 0, 1),
+            -C(0, 2, 1, 2), C(0, 2, 0, 2), -C(0, 2, 0, 1),
+            C(0, 1, 1, 2), -C(0, 1, 0, 2), C(0, 1, 0, 1),
+        };
+        double det = At(0, 0) * co[0] + At(0, 1) * co[1] + At(0, 2) * co[2];
+        double sign = det < 0 ? -1 : 1;
+        return (sign * (co[0] * x + co[1] * y + co[2] * z), sign * (co[3] * x + co[4] * y + co[5] * z), sign * (co[6] * x + co[7] * y + co[8] * z));
+    }
+
     public (double X, double Y, double Z) Apply(double x, double y, double z) =>
         (At(0, 0) * x + At(0, 1) * y + At(0, 2) * z + At(0, 3),
          At(1, 0) * x + At(1, 1) * y + At(1, 2) * z + At(1, 3),

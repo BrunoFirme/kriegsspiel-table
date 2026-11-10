@@ -73,7 +73,7 @@ public sealed class WebPictures(string packagesRoot, HttpClient? http = null)
 
     public Task<string?> FetchModel(string url) => FetchAs(url, UploadAsset.WebModels, KeepModel, PlacedModel);
 
-    const string PlacedModel = "placed ";
+    const string PlacedModel = "placed lit ";
 
     async Task<string?> FetchAs(string url, string folder, Func<byte[], string?> keep, string memo = "")
     {

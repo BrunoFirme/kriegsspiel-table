@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using Godot;
 using KTable.Core.Model;
 
@@ -132,17 +133,35 @@ public static class ObjLoader
         }
     }
 
+    const string TintedSurface = "tinted", OwnSurface = "own";
+
+    public static (bool Tinted, SurfaceDraw Draw) Surface(ArrayMesh mesh, int surface)
+    {
+        var name = mesh.SurfaceGetName(surface);
+        int gap = name.IndexOf(' ');
+        return gap < 0 ? (surface == 0, SurfaceDraw.Plain) : (name[..gap] == TintedSurface, SurfaceDraw.Named(name[(gap + 1)..]));
+    }
+
+    sealed record Part(bool Tinted, SurfaceDraw Draw, SurfaceTool Tool);
+
     static ArrayMesh Read(string path)
     {
         var v = new List<Vector3>();
         var vt = new List<Vector2>();
         var vn = new List<Vector3>();
         var vc = new List<Color>();
-        var tinted = new SurfaceTool();
-        var untinted = new SurfaceTool();
-        tinted.Begin(Mesh.PrimitiveType.Triangles);
-        untinted.Begin(Mesh.PrimitiveType.Triangles);
-        bool hasN = false, hasUntinted = false, firstGroup = true, faced = false;
+        var parts = new List<Part>();
+        var draw = SurfaceDraw.Plain;
+        SurfaceTool Tool(bool tinted)
+        {
+            if (parts.Find(x => x.Tinted == tinted && x.Draw == draw) is { } had) return had.Tool;
+            var made = new SurfaceTool();
+            made.Begin(Mesh.PrimitiveType.Triangles);
+            parts.Add(new Part(tinted, draw, made));
+            return made;
+        }
+        var lit = new HashSet<SurfaceTool>();
+        bool firstGroup = true, faced = false;
         var inv = CultureInfo.InvariantCulture;
         foreach (var raw in System.IO.File.ReadLines(path))
         {
@@ -166,8 +185,7 @@ public static class ObjLoader
                     break;
                 case "f":
                     faced = true;
-                    var st = firstGroup ? tinted : untinted;
-                    hasUntinted |= !firstGroup;
+                    var st = Tool(firstGroup);
                     var idx = new List<(int v, int t, int n)>();
                     for (int i = 1; i < p.Length; i++)
                     {
@@ -179,15 +197,24 @@ public static class ObjLoader
                         foreach (var q in new[] { idx[0], idx[i + 1], idx[i] })
                         {
                             if (q.t >= 0 && q.t < vt.Count) st.SetUV(new Vector2(vt[q.t].X, 1 - vt[q.t].Y));
-                            if (q.n >= 0 && q.n < vn.Count) { st.SetNormal(vn[q.n]); hasN = true; }
+                            if (q.n >= 0 && q.n < vn.Count) { st.SetNormal(vn[q.n]); lit.Add(st); }
                             if (vc.Count == v.Count && q.v >= 0 && q.v < vc.Count) st.SetColor(vc[q.v]);
                             if (q.v >= 0 && q.v < v.Count) st.AddVertex(v[q.v]);
                         }
                     break;
+                default:
+                    if (SurfaceDraw.Says(p)) draw = draw.After(p);
+                    break;
             }
         }
-        if (!hasN) { tinted.GenerateNormals(); if (hasUntinted) untinted.GenerateNormals(); }
-        var mesh = tinted.Commit();
-        return hasUntinted ? untinted.Commit(mesh) : mesh;
+        if (parts.Count == 0) Tool(true);
+        ArrayMesh? mesh = null;
+        foreach (var part in parts.OrderBy(x => !x.Tinted))
+        {
+            if (!lit.Contains(part.Tool)) part.Tool.GenerateNormals();
+            mesh = mesh == null ? part.Tool.Commit() : part.Tool.Commit(mesh);
+            mesh.SurfaceSetName(mesh.GetSurfaceCount() - 1, $"{(part.Tinted ? TintedSurface : OwnSurface)} {part.Draw.Name}");
+        }
+        return mesh!;
     }
 }

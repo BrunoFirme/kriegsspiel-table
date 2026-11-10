@@ -9,6 +9,7 @@ public sealed class UnityMesh
     const int StreamAlignment = 16;
     const int DimensionMask = 0xF;
     const int PositionChannel = 0;
+    const int NormalChannel = 1;
     const int ColourChannel = 2;
     const int ColourFormat = 2;
     const int ColourDimension = 4;
@@ -27,6 +28,7 @@ public sealed class UnityMesh
     public int VertexCount { get; private init; }
     public double[] Positions { get; private init; } = Array.Empty<double>();
     public double[] Uvs { get; private init; } = Array.Empty<double>();
+    public double[]? Normals { get; private init; }
     public List<int[]> SubMeshes { get; private init; } = new();
     public BoneInfluence[] Skin { get; private init; } = Array.Empty<BoneInfluence>();
     public Mat4[] BindPose { get; private init; } = Array.Empty<Mat4>();
@@ -55,6 +57,7 @@ public sealed class UnityMesh
             VertexCount = count,
             Positions = positions,
             Uvs = uvs,
+            Normals = Channel(channels, NormalChannel, bytes, strides, offsets, count, unityMajor, 3),
             SubMeshes = Triangles(mesh),
             Skin = Influences(mesh),
             BindPose = Poses(mesh),
