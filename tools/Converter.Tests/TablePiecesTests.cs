@@ -200,6 +200,7 @@ public sealed partial class ConverterTests
         var table = Json.Load<Scenario>(Path.Combine(Packages, "scenarios", "bagged", "scenario.json"));
         Assert.Contains(KTable.Client.Effects.EffectKinds.StandardPack, table.Packs);
         Assert.DoesNotContain(table.UmpireBoard, p => p.Label == "Smoke");
+        Assert.Contains("place pieces from the Pieces panel", File.ReadAllText(Path.Combine(Packages, "scenarios", "bagged", "import-report.md")));
     }
 
     [Fact]

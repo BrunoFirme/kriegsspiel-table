@@ -150,7 +150,7 @@ sealed class ReleaseDemo
             new("orbit", "view turned with the right button", MouseButton.Right, () => true, () => vp * 0.5f, new Vector2(120, 0)),
         };
         if (_paletteItem != null)
-            gestures.Add(new("palette", "piece dragged out of the Pieces drawer", MouseButton.Left, () => { _openPieces?.Invoke(); return Pick(Tool.Select); }, _paletteItem, Vector2.Zero));
+            gestures.Add(new("palette", "piece dragged out of the Pieces panel", MouseButton.Left, () => { _openPieces?.Invoke(); return Pick(Tool.Select); }, _paletteItem, Vector2.Zero));
         return gestures;
     }
 

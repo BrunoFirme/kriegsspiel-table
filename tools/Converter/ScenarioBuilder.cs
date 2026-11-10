@@ -419,7 +419,7 @@ public sealed partial class ScenarioBuilder
             if (IsSheet(o) || o.Top != null) { if (name != "umpire") _rep.Skipped("map sheet duplicated in a side module", where); continue; }
             if (o.IsDeck) { l.Objects.AddRange(Pile(o).Where(c => DefFactory.NotTranslated(c) is null)); continue; }
             if (DefFactory.NotTranslated(o) is { } why) { _rep.Skipped(why, where); continue; }
-            if (o.IsInfiniteBag) { _rep.Skipped(o.Name + " (infinite bags are left out: place pieces from the Pieces drawer)", where); continue; }
+            if (o.IsInfiniteBag) { _rep.Skipped(o.Name + " (infinite bags are left out: place pieces from the Pieces panel)", where); continue; }
             if (o.Name == BundleType && !_cfg.IsTableWall(o.BundleUrl) && _defs.ModelOfBundle(o) == null) { l.Effects.Add(o); continue; }
             if (_cfg.IgnoreTypes.Contains(o.Name) && !_defs.Shows(o)) { _rep.Skipped(o.Name, where); continue; }
             if (o.IsFurniture) { _rep.Skipped("table furniture (custom table / surround / under the table)", where); continue; }
@@ -627,7 +627,7 @@ public sealed partial class ScenarioBuilder
             var where = $"{layer.Name} {bag.Name} '{bag.Nickname}' {bag.Guid} holds {c.Name} '{c.Nickname}' {c.Guid}";
             if (c.Verdict.Hostile) _rep.HostileScript(c.Verdict.Reasons, where, c.Guid);
             if (DefFactory.NotTranslated(c) is { } why) { _rep.Skipped(why, where); continue; }
-            if (c.IsInfiniteBag) { _rep.Skipped(c.Name + " (infinite bags are left out: place pieces from the Pieces drawer)", where); continue; }
+            if (c.IsInfiniteBag) { _rep.Skipped(c.Name + " (infinite bags are left out: place pieces from the Pieces panel)", where); continue; }
             if (c.Name == BundleType && _defs.ModelOfBundle(c) == null)
             {
                 if (EffectPiece(c, where, usedPacks) is { } fx)

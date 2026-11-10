@@ -102,6 +102,22 @@ static class AgentTableExtraTests
         Check.That(joinRefused && joinSaid.Contains("leave_game"), "joining waits for leave_game: " + joinSaid);
     }
 
+    [NodeTest]
+    static async Task The_agent_joins_without_a_password_and_only_the_host_s_agent_copies_the_table_as_a_scenario(TestRunner r)
+    {
+        var (h, agent) = await AgentRecordTests.Open(r);
+        var (keyRefused, keySaid) = await Ask(agent, "join_game", """{"address":"192.168.0.9:7777","password":"sesame"}""");
+        Check.That(keyRefused && keySaid.Contains("stays the person's"), "a password is not the agent's to give: " + keySaid);
+        var tools = (await agent.Handle("""{"jsonrpc":"2.0","id":1,"method":"tools/list"}"""))!;
+        var join = System.Text.Json.Nodes.JsonNode.Parse(tools)!["result"]!["tools"]!.AsArray().First(t => (string?)t!["name"] == "join_game")!;
+        Check.That(join["inputSchema"]!["properties"]!["password"] == null, "join_game takes no password");
+        var was = h.S.Me.Role;
+        h.S.Me.Role = Role.Umpire;
+        var (copyRefused, copySaid) = await Ask(agent, "save_scenario_copy", """{"name":"A copy"}""");
+        h.S.Me.Role = was;
+        Check.That(copyRefused && copySaid.Contains("Only the host"), "an umpire's agent makes no scenario of the table: " + copySaid);
+    }
+
     static void DicePack(KTable.Core.PackageStore store)
     {
         TiltTests.Prism(store);

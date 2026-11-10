@@ -59,7 +59,7 @@ sealed partial class AgentTableTools
                 new Arg("from", "string", "new_save: start (default) or a save's path"), new Arg("play", "boolean", "new_save: put it on the table now")),
             Saves);
         yield return new AgentTool("save_scenario_copy",
-            "Saves a copy of the table as it is now as a new scenario (map sheets, every piece, clock and scale), as Save a copy as a new scenario… does; the table's own scenario is left as it is.",
+            "Saves a copy of the table as it is now as a new scenario (map sheets, every piece, clock and scale), as Save a copy as a new scenario… does (host only); the table's own scenario is left as it is.",
             Args.Schema(new Arg("name", "string", "the new scenario's name", true)),
             SaveScenarioCopy);
     }
@@ -380,6 +380,7 @@ sealed partial class AgentTableTools
     async Task<ToolResult> SaveScenarioCopy(JsonElement a)
     {
         if (Table(out var why) is not var (s, _)) return why!;
+        if (!s.IsHost) return ToolResult.Fail("Only the host saves the table as a scenario.");
         var title = a.Str("name")?.Trim() is { Length: > 0 } n ? n : "";
         if (title.Length == 0) return ToolResult.Fail("name is needed.");
         var snapshot = s.Live.DeepClone();

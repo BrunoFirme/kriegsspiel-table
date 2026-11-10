@@ -65,9 +65,9 @@ sealed class AppTools
             Args.Schema(new Arg("scenario", "string", "a scenario's id (list_scenarios)"), new Arg("new_scenario", "string", "a name for a new blank scenario"),
                 new Arg("from_start", "boolean", "start the scenario over instead of carrying on")), HostGame);
         yield return new AgentTool("join_game",
-            "Joins a game someone else hosts, as Join a game does on the title screen: knocks at their table under this PC's name, and the host or a lead umpire lets this seat in and gives it a role. Works from the title screen.",
+            "Joins a game someone else hosts, as Join a game does on the title screen: knocks at their table under this PC's name, and the host or a lead umpire lets this seat in and gives it a role. A game with a password is joined by the person, since the password stays theirs; once let in, this PC comes back in without it. Works from the title screen.",
             Args.Schema(new Arg("address", "string", "the host's address, as their invitation gives it (an IP or a name, with :port if it has one)", true),
-                new Arg("port", "number", "the host's port, when the address has none"), new Arg("password", "string", "the game's password, if it has one")),
+                new Arg("port", "number", "the host's port, when the address has none")),
             JoinGame);
         yield return new AgentTool("leave_game",
             "Saves the game and leaves the table, back to the title screen (the others at the table are disconnected).",
@@ -212,9 +212,11 @@ sealed class AppTools
     }
 
     const double JoinWaitSeconds = 120;
+    const string PasswordStaysTheirs = "The password stays the person's: they join a game that has one from Join a game, and once let in this PC comes back in without it.";
 
     async Task<ToolResult> JoinGame(JsonElement a)
     {
+        if (a.Str("password") != null) return ToolResult.Fail(PasswordStaysTheirs);
         if (_a.TableSession() is { } now) return ToolResult.Fail($"A game is open ({now.View.Name}): leave_game first.");
         var address = a.Str("address")?.Trim() ?? "";
         int? port = a.Num("port") is { } p ? (int)p : null;
@@ -226,7 +228,7 @@ sealed class AppTools
         }
         if (address.Length == 0) return ToolResult.Fail("address is needed.");
         if (port is < 1 or > 65535) return ToolResult.Fail("port is 1 to 65535.");
-        if (_a.Join(address, port, a.Str("password")?.Trim() ?? "") is { } why) return ToolResult.Fail(why);
+        if (_a.Join(address, port, "") is { } why) return ToolResult.Fail(why);
         for (double t = 0; t < JoinWaitSeconds && _a.TableSession() == null && !_a.AtTitle(); t += Waits.Poll) await _a.Delay(Waits.Poll);
         if (_a.TableSession() is { } s)
         {

@@ -23,7 +23,7 @@ sealed class TrashPage
     public static int Count(bool packs) => TrashShelves.Entries(Saves, packs).Count;
 
     public static string Holds(bool packs) => packs ? $"Packs removed in the last {SaveStore.TrashDays} days, to restore or delete for good"
-        : $"Scenarios deleted, games started over and copies deleted in the last {SaveStore.TrashDays} days, to restore or delete for good";
+        : $"Scenarios, saves and mirrored games deleted in the last {SaveStore.TrashDays} days, to restore or delete for good";
 
     public void Show(bool packs)
     {
