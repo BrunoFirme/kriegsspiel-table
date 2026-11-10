@@ -76,7 +76,7 @@ The tool strip runs down the left. Point at any tool and press **F1** for its se
 | Wheel | zoom (over a selected piece it turns it) |
 | Home | frame the map |
 | F2 | flat map view and back |
-| Ctrl+1–9 | keep this view (with nothing picked or carried); also in the right-click menu |
+| Ctrl+1–9 | keep this view (unless carrying or with several picked); also in the right-click menu |
 | Shift+1–9 | go back to a kept view |
 
 Kept views are yours, for each scenario.
