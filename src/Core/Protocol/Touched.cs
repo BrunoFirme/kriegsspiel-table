@@ -1,4 +1,5 @@
-using System.Text.Json.Nodes;
+using System.Text;
+using System.Text.Json;
 
 namespace KTable.Core.Protocol;
 
@@ -9,44 +10,53 @@ public readonly record struct Reach(string[] Things, string[] SitsOn)
 
 public static class Touched
 {
-    const string One = "id", Many = "ids", OneSuffix = "Id", ManySuffix = "Ids", Child = "child", Piece = "piece";
-    static readonly HashSet<string> Places = new(StringComparer.Ordinal) { "holder", "parent", "board" };
-    static readonly HashSet<string> NotThings = new(StringComparer.Ordinal) { "scenarioId" };
+    enum Names { Nothing, Thing, Place }
 
-    public static Reach By(Command c)
+    public static Reach By(Command c) => By(c, Json.SerializeBytes(c));
+
+    public static Reach By(Command c, ReadOnlySpan<byte> json)
     {
         if (c is RestoreTurn or LoadSave) return new Reach([], []);
         var things = new HashSet<string>(StringComparer.Ordinal);
         var places = new HashSet<string>(StringComparer.Ordinal);
-        Walk(JsonNode.Parse(Json.Serialize(c)), things, places);
+        var lists = new Stack<Names>();
+        Names? named = null;
+        var reader = new Utf8JsonReader(json);
+        while (reader.Read())
+            switch (reader.TokenType)
+            {
+                case JsonTokenType.PropertyName:
+                    named = What(reader.ValueIsEscaped ? Encoding.UTF8.GetBytes(reader.GetString()!) : reader.ValueSpan);
+                    break;
+                case JsonTokenType.StartArray:
+                    lists.Push(named ?? Names.Nothing);
+                    named = null;
+                    break;
+                case JsonTokenType.StartObject:
+                    lists.Push(Names.Nothing);
+                    named = null;
+                    break;
+                case JsonTokenType.EndArray or JsonTokenType.EndObject:
+                    lists.Pop();
+                    break;
+                case JsonTokenType.String:
+                    var owner = named ?? (lists.Count > 0 ? lists.Peek() : Names.Nothing);
+                    if (owner != Names.Nothing && reader.GetString() is { Length: > 0 } s) (owner == Names.Thing ? things : places).Add(s);
+                    named = null;
+                    break;
+                default:
+                    named = null;
+                    break;
+            }
         if (things.Count == 0) things.Add("kind:" + c.GetType().Name);
         return new Reach(things.ToArray(), places.ToArray());
     }
 
-    static bool Names(string name) =>
-        !NotThings.Contains(name) && (name is One or Many or Child or Piece || name.EndsWith(OneSuffix, StringComparison.Ordinal) || name.EndsWith(ManySuffix, StringComparison.Ordinal));
-
-    static void Walk(JsonNode? node, HashSet<string> things, HashSet<string> places)
+    static Names What(ReadOnlySpan<byte> name)
     {
-        if (node is JsonArray list)
-        {
-            foreach (var item in list) Walk(item, things, places);
-            return;
-        }
-        if (node is not JsonObject o) return;
-        foreach (var (name, value) in o)
-        {
-            if (Names(name)) things.UnionWith(Strings(value));
-            else if (Places.Contains(name)) places.UnionWith(Strings(value));
-            Walk(value, things, places);
-        }
-    }
-
-    static IEnumerable<string> Strings(JsonNode? value)
-    {
-        if (value is JsonValue v && v.TryGetValue<string>(out var s) && s.Length > 0) yield return s;
-        if (value is not JsonArray list) yield break;
-        foreach (var item in list)
-            if (item is JsonValue iv && iv.TryGetValue<string>(out var each) && each.Length > 0) yield return each;
+        if (name.SequenceEqual("scenarioId"u8)) return Names.Nothing;
+        if (name.SequenceEqual("id"u8) || name.SequenceEqual("ids"u8) || name.SequenceEqual("child"u8) || name.SequenceEqual("piece"u8)
+            || name.EndsWith("Id"u8) || name.EndsWith("Ids"u8)) return Names.Thing;
+        return name.SequenceEqual("holder"u8) || name.SequenceEqual("parent"u8) || name.SequenceEqual("board"u8) ? Names.Place : Names.Nothing;
     }
 }

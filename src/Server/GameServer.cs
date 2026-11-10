@@ -591,8 +591,9 @@ public sealed partial class GameServer
     void Remember(Command c, Command? inverse, bool toSaveLog = true)
     {
         if (toSaveLog) Applied?.Invoke(c);
-        _log.Add(Json.Clone(c));
-        if (c.Actor != 0) _touches.Add(new Touch(c.Seq, c.Actor, Touched.By(c)));
+        var bytes = Json.SerializeBytes(c);
+        _log.Add(Json.Deserialize<Command>(bytes));
+        if (c.Actor != 0) _touches.Add(new Touch(c.Seq, c.Actor, Touched.By(c, bytes)));
         if (_log.Count > RememberCommands + RememberCommands / 10) _log.RemoveRange(0, _log.Count - RememberCommands);
         if (_touches.Count > RememberCommands + RememberCommands / 10) _touches.RemoveRange(0, _touches.Count - RememberCommands);
         if (inverse == null) return;

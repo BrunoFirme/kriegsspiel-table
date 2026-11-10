@@ -30,6 +30,20 @@ public class UndoStopsTests
     }
 
     [Fact]
+    public void The_stop_goes_by_the_change_as_it_was_made_when_its_sender_reuses_the_command_afterwards()
+    {
+        using var t = new Table();
+        var mine = Do(t, Table.Ump, Move(Foot, 10));
+        var theirs = Move(Foot, 20);
+        Do(t, Table.Ump3, theirs);
+        theirs.Id = Flag;
+
+        var why = t.Error(Table.Ump, new Undo { TargetSeq = mine });
+
+        Assert.Equal(Undo.StopsHere + "Umpire Three has changed the same thing since", why);
+    }
+
+    [Fact]
     public void What_others_did_to_other_pieces_or_said_stops_nothing()
     {
         using var t = new Table();
@@ -119,5 +133,9 @@ public class UndoStopsTests
         Assert.Equal([Flag], stowed.SitsOn);
         Assert.Equal(["kind:SetVisionRadius"], Touched.By(new SetVisionRadius { Radius = 3 }).Things);
         Assert.Empty(Touched.By(new LoadSave { State = new GameState { ScenarioId = "scn" } }).Things);
+        Assert.Equal(new[] { Foot, Flag }, Touched.By(new RollDice { PieceIds = { Foot, Flag, "" } }).Things.Order());
+        var nested = Touched.By(new Batch { Items = { new Stow { Layer = U, Holder = Flag, Id = Foot }, new Batch { Items = { Move("p-000009", 1) } } } });
+        Assert.Equal(new[] { Foot, "p-000009" }, nested.Things.Order());
+        Assert.Equal([Flag], nested.SitsOn);
     }
 }
