@@ -35,6 +35,7 @@ sealed class Captures : HudPart
 
     async Task Record(SightingDraft d)
     {
+        if (_taking) return;
         var folder = Cfg.CaptureToFolder ? Cfg.CaptureFolder : Path.Combine(Path.GetTempPath(), GifFolder);
         var file = Path.Combine(folder, $"{S.View.ScenarioId}_{S.View.Clock.Turn}_pov_{DateTime.Now:HHmmss}.gif");
         try { Directory.CreateDirectory(folder); }
@@ -43,7 +44,7 @@ sealed class Captures : HudPart
             Say($"could not write to {folder}: {e.Message}");
             return;
         }
-        var rec = new PovRecording(T.Sighting, d, HudNode, file + PartSuffix);
+        var rec = new PovRecording(T.Sighting, d, file + PartSuffix);
         rec.Ticked += () => RecordingTicked?.Invoke();
         Recording = rec;
         T.RefreshSightingPanel();
@@ -96,14 +97,22 @@ sealed class Captures : HudPart
         Say($"{made}: {string.Join(", ", msgs)} — Ctrl+V into Discord.");
     }
 
+    bool _taking;
+
     async Task Picture()
     {
         var d = T.Draft;
-        if (d == null) return;
-        int k = Math.Clamp(Cfg.CaptureScale, 1, 4);
-        var img = await T.RenderSighting(d, 620 * k);
-        if (img != null) Deliver(img, "sighting");
-        if (T.Draft == d) T.EndDraft();
+        if (d == null || _taking) return;
+        _taking = true;
+        try
+        {
+            int k = Math.Clamp(Cfg.CaptureScale, 1, 4);
+            var img = await T.RenderSighting(d, 620 * k);
+            if (T.Draft != d) return;
+            if (img != null) Deliver(img, "sighting");
+            T.EndDraft();
+        }
+        finally { _taking = false; }
     }
 
     void Deliver(Image img, string kind)

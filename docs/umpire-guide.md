@@ -236,6 +236,9 @@ A turn report as a picture, from one piece's point of view.
 4. **Enter** or **Capture**. The picture goes to the clipboard and the capture folder, stamped with the
    scenario, the clock and the side.
 
+The picture holds the pieces in sight at the moment it is taken, wherever they stood when the tool came out, and
+a GIF follows them as they move. Zones and other umpires' pointers are never in it.
+
 **First person** in the panel looks out from the piece's front edge, the way it faces: drag to look around, or press **N E S W**
 to hold a direction (dragging lets go). **Wide** takes 90° across, so the four directions make the whole
 circle. **Eye** slides the viewpoint between the ground at the piece's feet and well over its head: drop it
@@ -255,7 +258,7 @@ Nothing is sent: paste it into that side's channel.
 ### Capture
 
 **Ctrl+Shift+C** and drag a region: it goes to the clipboard and the capture folder. **Ctrl+Shift+X** repeats
-it. Captures show the ground only, no tools.
+it. Captures show the ground only, no tools, zones or pointers.
 
 Names too small in the picture? Raise **Settings → Captures → Resolution**, shrink the POV reach, or turn up
 **Settings → Table → Text size**.

@@ -414,9 +414,9 @@ static class TableTests
         await r.Frame();
         var labels = t.Node("p1").FindChildren("*", nameof(Label3D), true, false).OfType<Label3D>().ToList();
         Check.That(labels.Count > 0 && labels.All(l => (l.Layers & Table.TextLayer) != 0 && (l.Layers & Table.WorldLayer) == 0), "a piece's text is on the text layer and nowhere else");
-        t.Node("p1").HideFromPicture(true);
+        t.Table.Sighting.LeaveOut(t.Node("p1"), true);
         Check.That(labels.All(l => (l.Layers & Table.TextLayer) == 0 && (l.Layers & Table.OutOfPictureLayer) != 0), "hidden from the picture, the text goes with the piece");
-        t.Node("p1").HideFromPicture(false);
+        t.Table.Sighting.LeaveOut(t.Node("p1"), false);
         Check.That(labels.All(l => (l.Layers & Table.TextLayer) != 0 && (l.Layers & Table.WorldLayer) == 0), "and comes back to the text layer only");
         var cam = t.Table.Rig.Cam;
         Check.That((cam.CullMask & Table.TextLayer) != 0, "the table shows text");

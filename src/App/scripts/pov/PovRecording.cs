@@ -22,7 +22,6 @@ sealed class PovRecording
 
     readonly Sighting _sighting;
     readonly SightingDraft _draft;
-    readonly Node _host;
     readonly string _file;
     readonly BlockingCollection<(byte[] rgba, double at)> _frames = new(QueueDepth);
     long _bytes;
@@ -31,11 +30,10 @@ sealed class PovRecording
     volatile string? _failure;
     double _endAt;
 
-    public PovRecording(Sighting sighting, SightingDraft draft, Node host, string file)
+    public PovRecording(Sighting sighting, SightingDraft draft, string file)
     {
         _sighting = sighting;
         _draft = draft;
-        _host = host;
         _file = file;
     }
 
@@ -65,8 +63,7 @@ sealed class PovRecording
                     end = why;
                     break;
                 }
-                _sighting.FollowEye(shot, _draft);
-                await _host.ToSignal(RenderingServer.Singleton, RenderingServer.SignalName.FramePostDraw);
+                await _sighting.DrawFrame(shot, _draft);
                 Seconds = (Time.GetTicksMsec() - started) / MsPerSecond;
                 if (Seconds >= due) due = Grab(shot, due);
                 Ticked?.Invoke();

@@ -118,7 +118,7 @@ public partial class SheetNode : Node3D
             im.SurfaceAddVertex(new Vector3(lx + lsx * t, lift(lx, lz) + OutlineAbove, lz + lsz * t));
             im.SurfaceAddVertex(new Vector3(lx - lsx * t, lift(lx, lz) + OutlineAbove, lz - lsz * t));
             im.SurfaceEnd();
-            _outline = new MeshInstance3D { Mesh = im };
+            _outline = new MeshInstance3D { Mesh = im, Layers = Table.LiveOnlyLayer };
             AddChild(_outline);
         }
         else if (!on && _outline != null) { _outline.QueueFree(); _outline = null; }

@@ -73,6 +73,7 @@ public partial class PointerHand : Node3D
         index.Joints[^1].AddChild(_endOfIndex);
         _endOfIndex.Position = new Vector3(0, 0, -(Index.Joints[^1].Length + Index.Radius * Taper * Taper));
         foreach (var f in Others) _fingers.Add(MakeFinger(f, leather));
+        foreach (var part in FindChildren("*", nameof(VisualInstance3D), true, false)) ((VisualInstance3D)part).Layers = Table.LiveOnlyLayer;
         Pose();
     }
 

@@ -586,7 +586,6 @@ sealed class HudDemo : HudPart
                 }
                 Input.ParseInputEvent(new InputEventMouseButton { ButtonIndex = MouseButton.Left, Pressed = false, Position = b, GlobalPosition = b });
                 await Hud.ToSignal(Hud.GetTree().CreateTimer(0.6), Timer.SignalName.Timeout);
-                if (what.EndsWith(":all")) d.Included = S.View.Layer(KTable.Core.Model.Layers.Umpire).Select(x => x.Id).ToHashSet();
                 GD.Print($"[povshot] {d.Walls.Count} wall(s), the lit ground {d.Polygon.Count} points, {d.Included.Count} pieces in the picture of {S.View.Layer(KTable.Core.Model.Layers.Umpire).Count}");
                 var img = await T.RenderSighting(d, 900);
                 if (img == null) { GD.Print("[povshot] no picture"); return; }

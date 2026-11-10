@@ -12,7 +12,7 @@ sealed class PovPanel : HudPart
 
     readonly IHudShell Shell;
     readonly Captures _captures;
-    Label? _recordLine;
+    Label? _recordLine, _countLine;
     Action? _showSharp;
 
     const double BytesPerMegabyte = 1e6;
@@ -64,7 +64,7 @@ sealed class PovPanel : HudPart
         }
         Ui.AlignForm(reach);
         if (!d.FirstPerson && T.WallsTraced + T.WallsTakenBack > 0) AddTraced();
-        _box.AddChild(Hint(d.Included.Count == 1 ? "1 piece in the picture" : $"{d.Included.Count} pieces in the picture"));
+        AddCount();
         var take = d.Gif
             ? Ui.Primary("Record", () => _ = Shell.CaptureSighting(), "Records until Stop or Enter; the GIF goes to the clipboard as a file and to the capture folder")
             : Ui.Primary("Capture", () => _ = Shell.CaptureSighting(), "The picture goes to the clipboard and the capture folder");
@@ -77,11 +77,24 @@ sealed class PovPanel : HudPart
         _recordLine = Hint("");
         _box.AddChild(_recordLine);
         ShowRecording();
-        _box.AddChild(Hint($"{d.Included.Count} pieces in the picture"));
+        AddCount();
         _box.AddChild(Ui.Actions(
             Ui.Primary("Stop", () => _ = Shell.CaptureSighting(), "Ends the GIF and hands it over, as Enter does"),
             Btn("Cancel", T.CancelSighting, "Drops the GIF")));
         Panel.Fit();
+    }
+
+    void AddCount()
+    {
+        _countLine = Hint("");
+        _box.AddChild(_countLine);
+        ShowCount();
+    }
+
+    public void ShowCount()
+    {
+        if (T.Draft is not { } d || _countLine == null || !GodotObject.IsInstanceValid(_countLine)) return;
+        _countLine.Text = d.Included.Count == 1 ? "1 piece in the picture" : $"{d.Included.Count} pieces in the picture";
     }
 
     void ShowRecording()

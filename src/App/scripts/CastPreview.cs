@@ -16,7 +16,7 @@ public partial class CastPreview : MeshInstance3D
     {
         var from = At(c.From);
         var to = At(c.To);
-        var p = new CastPreview { From = from, To = to, Name = "CastPreview", CastShadow = ShadowCastingSetting.Off };
+        var p = new CastPreview { From = from, To = to, Name = "CastPreview", CastShadow = ShadowCastingSetting.Off, Layers = Table.LiveOnlyLayer };
         p.Mesh = c.Shape switch
         {
             "sphere" => new SphereMesh { Radius = (float)c.Size[0] / 2, Height = (float)c.Size[0] },

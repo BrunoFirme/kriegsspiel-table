@@ -118,6 +118,7 @@ sealed class Sighting
 
     public void Sync()
     {
+        _tableChanged = true;
         ClearExtras();
         TickShade();
         _outlineMesh.ClearSurfaces();
@@ -546,13 +547,36 @@ sealed class Sighting
         return false;
     }
 
+    bool _tableChanged;
+    SceneTree? _pictureTree;
+
+    public event Action? Recounted;
+
+    public void TableChanged() => _tableChanged = true;
+
+    public void FollowTable()
+    {
+        if (_pictureTree != null || !_tableChanged) return;
+        if (Draft is { } d) Recount(d);
+        _tableChanged = false;
+    }
+
+    void Recount(SightingDraft d)
+    {
+        _tableChanged = false;
+        if (_c.S.View.Find(Layers.Umpire, d.ObserverId) is { } watcher) d.Center = watcher.Pos;
+        var before = d.Included;
+        d.Recompute(UmpirePiecesIn);
+        if (d == Draft) ShowDraft();
+        if (!d.Included.SetEquals(before)) Recounted?.Invoke();
+    }
+
     public async System.Threading.Tasks.Task<Image?> Render(SightingDraft d, int px)
     {
         var shot = await OpenPicture(d, px);
         try
         {
-            await _c.Scene.ToSignal(RenderingServer.Singleton, RenderingServer.SignalName.FramePostDraw);
-            await _c.Scene.ToSignal(RenderingServer.Singleton, RenderingServer.SignalName.FramePostDraw);
+            await DrawFrame(shot, d);
             return shot.GetTexture().GetImage();
         }
         finally { ClosePicture(shot); }
@@ -561,36 +585,121 @@ sealed class Sighting
     public async System.Threading.Tasks.Task<SubViewport> OpenPicture(SightingDraft d, int px)
     {
         var shot = MakeShotViewport(d, px);
-        PrepareForPicture(d);
-        for (int i = 0; i < PictureWaitFrames; i++)
+        try
         {
-            await _c.Scene.ToSignal(_c.Scene.GetTree(), SceneTree.SignalName.ProcessFrame);
-            bool settling = i < AssetWaitFrames && _c.S.Assets.Busy;
-            if (i >= 2 && !settling && !_c.S.Art.FacesPending) break;
+            _pictureTree = _c.Scene.GetTree();
+            _pictureTree.NodeAdded += Entered;
+            if (!d.FirstPerson) _shotPlane.Position = new Vector3(0, PictureVeilHeight, 0);
+            SnapFocus(d);
+            TickShade();
+            Compose(d);
+            for (int i = 0; i < PictureWaitFrames; i++)
+            {
+                await _c.Scene.ToSignal(_pictureTree, SceneTree.SignalName.ProcessFrame);
+                bool settling = i < AssetWaitFrames && _c.S.Assets.Busy;
+                if (i >= 2 && !settling && !_c.S.Art.FacesPending) break;
+            }
+            return shot;
         }
-        return shot;
+        catch
+        {
+            ClosePicture(shot);
+            throw;
+        }
     }
 
-    public void FollowEye(SubViewport shot, SightingDraft d)
+    public async System.Threading.Tasks.Task DrawFrame(SubViewport shot, SightingDraft d)
     {
-        if (d.FirstPerson && shot.GetChildCount() > 0 && shot.GetChild(0) is Camera3D cam) cam.GlobalTransform = _c.Rig.Cam.GlobalTransform;
+        await _c.Scene.ToSignal(RenderingServer.Singleton, RenderingServer.SignalName.FramePreDraw);
+        if (_tableChanged) Compose(d);
+        Aim(shot, d);
+        await _c.Scene.ToSignal(RenderingServer.Singleton, RenderingServer.SignalName.FramePostDraw);
+    }
+
+    void Compose(SightingDraft d)
+    {
+        Recount(d);
+        _pieces.Lettering.Release();
+        _pieces.Lettering.Hold(d.Included.Select(id => _pieces.NodeOf(Layers.Umpire, id)).Where(n => n != null)!);
+        foreach (var n in _pieces.Nodes)
+        {
+            bool leftOut = n.Layer != Layers.Umpire || !d.Included.Contains(n.Piece.Id);
+            if (LeftOut(n) != leftOut) LeaveOut(n, leftOut);
+        }
+    }
+
+    readonly HashSet<PieceNode> _leftOut = new();
+
+    public bool LeftOut(PieceNode n) => _leftOut.Contains(n);
+
+    public void LeaveOut(PieceNode n, bool on)
+    {
+        if (on) _leftOut.Add(n);
+        else _leftOut.Remove(n);
+        foreach (var visual in n.FindChildren("*", nameof(VisualInstance3D), recursive: true, owned: false)) PutWithPiece((VisualInstance3D)visual, on);
+    }
+
+    static void PutWithPiece(VisualInstance3D visual, bool leftOut)
+    {
+        if ((visual.Layers & Table.LiveOnlyLayer) != 0) return;
+        uint shown = visual is Label3D ? Table.TextLayer : Table.WorldLayer;
+        visual.Layers = leftOut ? (visual.Layers & ~shown) | Table.OutOfPictureLayer : (visual.Layers | shown) & ~Table.OutOfPictureLayer;
+    }
+
+    void Entered(Node arrived)
+    {
+        if (!GodotObject.IsInstanceValid(_pieces.Root)) StopWatching();
+        else if (arrived is PieceNode) _tableChanged = true;
+        else if (arrived is VisualInstance3D visual && PieceOf(visual) is { } piece && LeftOut(piece)) PutWithPiece(visual, true);
+    }
+
+    void StopWatching()
+    {
+        if (_pictureTree != null) _pictureTree.NodeAdded -= Entered;
+        _pictureTree = null;
+    }
+
+    PieceNode? PieceOf(Node visual)
+    {
+        PieceNode? piece = null;
+        var up = visual.GetParent();
+        while (up != null && up != _pieces.Root)
+        {
+            if (up is PieceNode p) piece = p;
+            up = up.GetParent();
+        }
+        return up == null ? null : piece;
+    }
+
+    void Aim(SubViewport shot, SightingDraft d)
+    {
+        if (shot.GetChildCount() == 0 || shot.GetChild(0) is not Camera3D cam) return;
+        if (d.FirstPerson) cam.GlobalTransform = _c.Rig.Cam.GlobalTransform;
+        else
+        {
+            var centre = Coords.ToWorld(d.Center);
+            cam.GlobalPosition = centre + Vector3.Up * PictureCameraHeight;
+            cam.LookAt(centre, Vector3.Forward);
+        }
+        cam.ForceUpdateTransform();
     }
 
     public void ClosePicture(SubViewport shot)
     {
         shot.QueueFree();
+        StopWatching();
         _pieces.Lettering.Release();
         _shotPlane.Position = new Vector3(0, 0.021f, 0);
-        foreach (var n in _pieces.Nodes) n.HideFromPicture(false);
+        foreach (var n in _pieces.Nodes) LeaveOut(n, false);
+        _leftOut.Clear();
     }
 
     const int EyePictureWidth = 16, EyePictureHeight = 9;
-    const float PictureVeilHeight = 60;
+    const float PictureVeilHeight = 60, PictureCameraHeight = 120;
     const int AssetWaitFrames = 30, PictureWaitFrames = 600;
 
     SubViewport MakeShotViewport(SightingDraft d, int px)
     {
-        var centre = Coords.ToWorld(d.Center);
         var shot = new SubViewport
         {
             Size = d.FirstPerson ? new Vector2I(px * EyePictureWidth / EyePictureHeight, px) : new Vector2I(px, px), World3D = _c.Scene.GetViewport().FindWorld3D(),
@@ -603,20 +712,8 @@ sealed class Sighting
             : new Camera3D { Projection = Camera3D.ProjectionType.Orthogonal, Size = (float)(d.Radius * 2), Near = 0.05f, Far = 4000, CullMask = mask };
         shot.AddChild(cam);
         _c.Scene.AddChild(shot);
-        if (d.FirstPerson) { cam.GlobalTransform = live.GlobalTransform; return shot; }
-        cam.GlobalPosition = centre + Vector3.Up * 120;
-        cam.LookAt(centre, Vector3.Forward);
+        Aim(shot, d);
         return shot;
-    }
-
-    void PrepareForPicture(SightingDraft d)
-    {
-        _pieces.Lettering.Hold(d.Included.Select(id => _pieces.NodeOf(Layers.Umpire, id)).Where(n => n != null)!);
-        foreach (var n in _pieces.Nodes)
-            n.HideFromPicture(n.Layer != Layers.Umpire || !d.Included.Contains(n.Piece.Id));
-        if (!d.FirstPerson) _shotPlane.Position = new Vector3(0, PictureVeilHeight, 0);
-        SnapFocus(d);
-        TickShade();
     }
 }
 

@@ -55,7 +55,7 @@ sealed class ZoneLayer
                     foreach (var p in new[] { z.Polygon[0], z.Polygon[i], z.Polygon[i + 1] }) im.SurfaceAddVertex(Coords.ToWorld(p, FillAbove));
             im.SurfaceEnd();
             _overlay.RibbonPx(im, line, z.Polygon.Append(z.Polygon[0]).ToList(), 0.02f, 2f);
-            _root.AddChild(new MeshInstance3D { Mesh = im, CastShadow = GeometryInstance3D.ShadowCastingSetting.Off });
+            _root.AddChild(new MeshInstance3D { Mesh = im, CastShadow = GeometryInstance3D.ShadowCastingSetting.Off, Layers = Table.LiveOnlyLayer });
             var c = z.Polygon.Aggregate(Vector3.Zero, (a, p) => a + Coords.ToWorld(p)) / z.Polygon.Count;
             c.Y = (float)ground.At(Coords.FromWorld(c));
             _c.Labels.Set("zone:" + z.Id, c + Vector3.Up * 0.3f, $"{z.Name} — {z.Owner}", col.Lightened(0.3f), 13);

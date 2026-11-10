@@ -154,7 +154,7 @@ sealed partial class Carry
                 ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded, VertexColorUseAsAlbedo = true, Transparency = BaseMaterial3D.TransparencyEnum.Alpha,
                 NoDepthTest = true, CullMode = BaseMaterial3D.CullModeEnum.Disabled, RenderPriority = 10,
             };
-            _mesh = new MeshInstance3D { Mesh = _im, MaterialOverride = mat, CastShadow = GeometryInstance3D.ShadowCastingSetting.Off, Visible = false };
+            _mesh = new MeshInstance3D { Mesh = _im, MaterialOverride = mat, CastShadow = GeometryInstance3D.ShadowCastingSetting.Off, Visible = false, Layers = Table.LiveOnlyLayer };
             scene.AddChild(_mesh);
         }
 

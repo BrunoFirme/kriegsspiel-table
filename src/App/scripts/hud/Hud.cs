@@ -167,6 +167,7 @@ public partial class Hud : CanvasLayer
         Hook<Action<PieceNode, int>>(h => T.ContentsAsked += h, h => T.ContentsAsked -= h, (holder, most) => HolderWindow.Open(Root, S, T, holder, most));
         Hook<Action<double>>(h => T.CalibrationMeasured += h, h => T.CalibrationMeasured -= h, units => CalibrateDialog.Open(Ctx, units));
         Hook<Action>(h => T.SightingChanged += h, h => T.SightingChanged -= h, Pov.Rebuild);
+        Hook<Action>(h => T.SightingRecounted += h, h => T.SightingRecounted -= h, Pov.ShowCount);
         Hook<Action>(h => T.BoardsChanged += h, h => T.BoardsChanged -= h, () => { Boards.Rebuild(); Paint.Rebuild(); });
         Hook<Action>(h => T.PublishRequested += h, h => T.PublishRequested -= h, () => _ = CaptureSighting());
         Hook<Action>(h => T.CropChanged += h, h => T.CropChanged -= h, () => Map.OnCropChanged());

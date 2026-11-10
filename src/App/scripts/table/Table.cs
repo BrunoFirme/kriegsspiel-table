@@ -28,6 +28,7 @@ public partial class Table : Node3D
     public event Action<PieceNode, int>? ContentsAsked { add => _c.ContentsAsked += value; remove => _c.ContentsAsked -= value; }
     public event Action<double>? CalibrationMeasured { add => Router.CalibrationMeasured += value; remove => Router.CalibrationMeasured -= value; }
     public event Action? SightingChanged { add => Sighting.Changed += value; remove => Sighting.Changed -= value; }
+    public event Action? SightingRecounted { add => Sighting.Recounted += value; remove => Sighting.Recounted -= value; }
     public event Action? MenuRequested { add => Keys.MenuRequested += value; remove => Keys.MenuRequested -= value; }
     public event Action? PublishRequested { add => Keys.PublishRequested += value; remove => Keys.PublishRequested -= value; }
     public event Action<Rect2>? CaptureRequested
@@ -216,6 +217,7 @@ public partial class Table : Node3D
         ApplyGraphics();
         S.Reset += Rebuild;
         S.Applied += Sync.OnApplied;
+        S.Applied += _ => Sighting.TableChanged();
         S.Outgoing = Hand.Falls.With;
         S.Error += _ => Sync.Refused = true;
         Rebuild();
@@ -317,6 +319,7 @@ public partial class Table : Node3D
         _aura.Active = Selected.Count > 0;
         _hoverAura.Active = Hand.StowTarget != null || Hover.Node is { } hv && GodotObject.IsInstanceValid(hv) && !hv.Ringed;
         Sighting.TickFraming();
+        Sighting.FollowTable();
         if (S.Art.Look.FlatSelection != Rig.TopDown) { S.Art.Look.FlatSelection = Rig.TopDown; foreach (var n in SelectedNodes) n.RefreshSelectionLook(); }
         Pieces.Lettering.Tick();
         var mouse = Pointer.In(GetViewport());
