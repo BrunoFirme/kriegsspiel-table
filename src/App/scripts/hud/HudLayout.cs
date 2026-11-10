@@ -65,7 +65,7 @@ public partial class Hud
 
     void BuildToolPanels()
     {
-        Dice = new DicePanel(Ctx, this) { ShowTableDice = () => { OpenPanel("pieces"); Pieces.SelectPack("std.dice"); } };
+        Dice = new DicePanel(Ctx, this) { ShowTableDice = () => { OpenPanel("pieces"); Pieces.SelectPack(StandardPacks.Dice); } };
         Paint = new DrawPanel(Ctx, this);
         Stamps = new StampPanel(Ctx, this);
         if (S.IsUmpire) Relief = new ReliefPanel(Ctx, this);

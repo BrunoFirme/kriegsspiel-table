@@ -59,7 +59,7 @@ the pack's pieces and the chosen piece down the right. The top line says what th
 ### New pieces
 
 **＋ New piece** (Ctrl+N) makes a block, a tile, a token, pieces from pictures or the clipboard, a 3D model, a book from a PDF, or
-copies any effect, prop or marker of **Firme's Effects and Props** into the pack, to change like any piece of your own;
+copies any effect, prop or marker of **Firme's Effects and Props**, or one of the standard dice, into the pack, to change like any piece of your own;
 the originals stay as they are. Pictures and models dropped on the window become pieces too. Every picture chooser also
 takes a web link.
 

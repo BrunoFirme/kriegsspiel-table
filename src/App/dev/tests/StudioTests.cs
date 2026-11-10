@@ -123,6 +123,32 @@ static class StudioTests
         Check.That(h.Studio.Pack.Pieces.All(p => p.Id != vedette.Id), "and undoing the copy takes it away again");
     }
 
+    [NodeTest]
+    static async Task A_standard_die_copied_into_a_pack_is_its_own_to_resize_and_the_original_stays_as_shipped(TestRunner r)
+    {
+        var h = await Open(r);
+        StandardPacks.Ensure(h.Store);
+        var list = h.Studio.NewPieces.StandardList(h.Store.Pack(StandardPacks.Dice)!, _ => { });
+        r.AddChild(list);
+        await r.Frames(2);
+        var labels = list.FindChildren("*", nameof(Godot.Label), true, false).OfType<Godot.Label>().Select(l => l.Text).ToList();
+        Check.That(new[] { "d4", "d6", "d8", "d10", "d12", "d20", "hit die", "direction die" }.All(labels.Contains), "the dice are offered: " + string.Join(", ", labels));
+        Check.That(labels.Any(l => l.Contains("Aborted / missing")) && !labels.Contains("1 · 2 · 3 · 4 · 5 · 6"), "a picture die names its sides, a numbered one does not");
+        var found = StandardPacks.Piece(h.Store, StandardPacks.Dice + ".hit-die", h.PackId);
+        Check.That(found is { Def.Name: "hit die" }, "the duplicate tool finds a standard die by its id");
+        Check.That(StandardPacks.Piece(h.Store, StandardPacks.Dice + ".hit-die", StandardPacks.Dice) == null, "but not to copy into the dice pack itself");
+        var big = PackEdit.CopyInto(h.Store, found!.Value.Pack, found.Value.Def, h.Studio.Pack);
+        Check.That(!StandardPacks.IsStandard(big.Id) && big.Faces[5].Value == "Aborted / missing", "the die is copied into the pack with its sides");
+        big.Size = new Size2(1.2, 1.2);
+        big.Thickness = 1.2;
+        PackEdit.Save(h.Store, h.Studio.Pack);
+        var saved = h.OnDisk().Pieces.First(p => p.Id == big.Id);
+        Check.Equal((1.2, 1.2), (saved.Size.W, saved.Thickness), "the copy is twice the size in pack.json");
+        Check.That(File.Exists(h.Store.AssetPath(h.Studio.Pack, saved.Mesh)) && File.Exists(h.Store.AssetPath(h.Studio.Pack, saved.Texture)), "its shape and picture are in the pack");
+        var shipped = Json.Load<PackManifest>(Path.Combine(h.Store.Root, StandardPacks.Dice, "pack.json")).Pieces.First(p => p.Id == StandardPacks.Dice + ".hit-die");
+        Check.Equal((0.6, "hit die"), (shipped.Size.W, shipped.Name), "the standard die stays as shipped");
+    }
+
     static async Task Until(TestRunner r, System.Func<bool> done)
     {
         for (int i = 0; i < 120 && !done(); i++) await r.Frames(1);

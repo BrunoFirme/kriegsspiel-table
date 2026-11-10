@@ -57,9 +57,13 @@ sealed class StudioDemo
                 _s.NewPieces.ShowFirmePieces();
                 await Frames(3);
                 break;
+            case "dicemenu":
+                _s.NewPieces.ShowDice();
+                await Frames(3);
+                break;
             case "firme":
-                if (_s.Store.Pack(FirmeEffects.PackId)?.Pieces.FirstOrDefault(d => d.Id == FirmeEffects.PackId + "." + arg) is { } std) _s.NewPieces.CopyFirme(std);
-                else GD.PrintErr($"[studio] no {arg} in {FirmeEffects.PackName}");
+                if (StandardPacks.Piece(_s.Store, arg.StartsWith("std.") ? arg : FirmeEffects.PackId + "." + arg, _s.Pack.Id) is { } std) _s.NewPieces.CopyStandard(std.Pack, std.Def);
+                else GD.PrintErr($"[studio] no {arg} in the standard packs");
                 await Frames(3);
                 break;
             case "wait":

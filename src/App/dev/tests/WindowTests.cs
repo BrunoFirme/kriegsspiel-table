@@ -176,6 +176,41 @@ static class WindowTests
     }
 
     [NodeTest]
+    static async Task A_die_copied_into_a_pack_and_made_bigger_rolls_as_a_bigger_die(TestRunner r)
+    {
+        string mine = "";
+        void Prepare(KTable.Core.PackageStore store)
+        {
+            StandardPacks.Ensure(store);
+            mine = PackEdit.CreatePack(store, "My dice", "Tester");
+            var pack = store.Pack(mine)!;
+            var copy = PackEdit.CopyInto(store, store.Pack(StandardPacks.Dice)!, store.Def(StandardPacks.Dice + ".d6")!, pack);
+            copy.Size = new Size2(1.2, 1.2);
+            copy.Thickness = 1.2;
+            PackEdit.Save(store, pack);
+        }
+        var t = OfflineTable.Make(r, pieces: 0, packs: new[] { StandardPacks.Dice }, prepare: Prepare, arrange: g => g.Packs.Add(mine));
+        await r.Frame();
+        var copyId = t.S.Store.Pack(mine)!.Pieces[0].Id;
+        t.S.Do(new KTable.Core.Protocol.SpawnPiece { Layer = U, Def = StandardPacks.Dice + ".d6", Id = "small", Pos = new Vec2(-3, 0) });
+        t.S.Do(new KTable.Core.Protocol.SpawnPiece { Layer = U, Def = copyId, Id = "big", Pos = new Vec2(3, 0) });
+        await r.Frames(3);
+        var small = t.Node("small");
+        var big = t.Node("big");
+        Check.That(big.IsDie, "the copy is a die");
+        Check.That(Mathf.IsEqualApprox(big.Footprint.X, small.Footprint.X * 2, 0.05f), $"twice as wide as the standard d6: {big.Footprint.X} against {small.Footprint.X}");
+        t.Table.Selection.Set(new[] { "big" });
+        Check.That(t.Table.RollDiceAtHand(), "it rolls");
+        await r.Frames(2);
+        Check.That(big.Rolling, "it is in the air");
+        for (int i = 0; i < 20 && big.Rolling; i++) await r.Seconds(0.5);
+        int face = t.S.View.Find(U, "big")!.ShownFace;
+        Check.That(!big.Rolling && face is >= 0 and < 6, $"it comes to rest on one of its six faces ({face})");
+        Check.Equal(face, big.FaceUp(big.ModelWorldBasis), "the side drawn on top is the side it shows");
+        Check.That(t.Errors.Count == 0, "no command refused: " + string.Join("; ", t.Errors));
+    }
+
+    [NodeTest]
     static async Task A_die_turned_to_a_side_comes_to_rest_with_that_side_on_top(TestRunner r)
     {
         var t = OfflineTable.Make(r, pieces: 0, packs: new[] { "std.dice" }, prepare: StandardPacks.Ensure);

@@ -172,11 +172,10 @@ internal sealed class NewPieces
         Added(def);
     }
 
-    public PieceDef? CopyFirme(PieceDef src)
+    public PieceDef? CopyStandard(PackManifest from, PieceDef src)
     {
-        if (Store.Pack(FirmeEffects.PackId) is not { } firme) return null;
         PieceDef def;
-        try { def = PackEdit.CopyInto(Store, firme, src, Pack); }
+        try { def = PackEdit.CopyInto(Store, from, src, Pack); }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {
             _s.Flash("Not copied: " + e.Message);
@@ -226,23 +225,41 @@ internal sealed class NewPieces
             ("3d", "3D model", "glTF, GLB, FBX, OBJ, STL, PLY or Collada", () => NewPiece(8)),
             ("text-layer", "PDF book", "Every page of a PDF, read at the table", BookFromPdf),
             ("pick", "Clipboard", "The picture you just copied", () => NewPiece(7)));
-        box.AddChild(Ui.Header("From " + FirmeEffects.PackName));
-        var fx = new GridContainer { Columns = 5 };
-        fx.AddChild(Card(EffectFx.Icon(new EffectDef { Kind = "cannon" }), "Effects and props", "Smoke, fire, volleys, weather, camps, field works and markers, copied into this pack to change as you like",
+        box.AddChild(Ui.Header("From the standard packs"));
+        var std = new GridContainer { Columns = 5 };
+        std.AddThemeConstantOverride("h_separation", Ui.Gap.Row);
+        std.AddChild(Card(EffectFx.Icon(new EffectDef { Kind = "cannon" }), "Effects and props", "Smoke, fire, volleys, weather, camps, field works and markers, copied into this pack to change as you like",
             () => { chosen(); ShowFirmePieces(); }));
-        box.AddChild(fx);
+        std.AddChild(Card("dice", "Dice", "d4 to d20, the hit and direction dice, copied into this pack to resize, paint or tint", () => { chosen(); ShowDice(); }));
+        box.AddChild(std);
         return box;
     }
 
-    public void ShowFirmePieces()
+    public void ShowFirmePieces() => ShowStandard(FirmeEffects.PackId);
+
+    public void ShowDice() => ShowStandard(StandardPacks.Dice);
+
+    void ShowStandard(string packId)
     {
-        if (Store.Pack(FirmeEffects.PackId) is not { } firme) { _s.Flash(FirmeEffects.PackName + " is not installed."); return; }
-        var dlg = new AcceptDialog { Title = FirmeEffects.PackName, OkButtonText = Ui.CloseWord };
-        var scroll = new ScrollContainer { CustomMinimumSize = new Vector2(740, 460), HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled };
+        if (Store.Pack(packId) is not { } from) { _s.Flash(StandardPacks.NameOf(packId) + " is not installed."); return; }
+        var dlg = new AcceptDialog { Title = from.Name, OkButtonText = Ui.CloseWord };
+        var scroll = new ScrollContainer { CustomMinimumSize = new Vector2(740, packId == FirmeEffects.PackId ? 460 : 250), HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled };
+        scroll.AddChild(StandardList(from, src =>
+        {
+            dlg.Hide();
+            CopyStandard(from, src);
+        }));
+        dlg.AddChild(scroll);
+        Ui.Open(_s.Root, dlg);
+        Ui.FreeOnClose(dlg);
+    }
+
+    internal Control StandardList(PackManifest from, Action<PieceDef> picked)
+    {
         var col = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         col.AddThemeConstantOverride("separation", Ui.Gap.Row);
         var eras = new[] { ("ancient", "Bows, blades and siege engines"), ("napoleonic", "The age of the musket"), ("modern", "The World Wars and after"), ("naval", "At sea") };
-        void Group(string title, IEnumerable<PieceDef> pieces)
+        void Group(string? title, IEnumerable<PieceDef> pieces)
         {
             var grid = new GridContainer { Columns = 4 };
             grid.AddThemeConstantOverride("h_separation", Ui.Gap.Row);
@@ -250,26 +267,28 @@ internal sealed class NewPieces
             foreach (var d in pieces)
             {
                 var src = d;
-                grid.AddChild(FirmeCard(firme, d, () => { dlg.Hide(); CopyFirme(src); }));
+                grid.AddChild(StandardCard(from, d, () => picked(src)));
             }
             if (grid.GetChildCount() == 0) { grid.QueueFree(); return; }
-            col.AddChild(Ui.Header(title));
+            if (title != null) col.AddChild(Ui.Header(title));
             col.AddChild(grid);
         }
-        foreach (var (era, title) in eras) Group(title, firme.Pieces.Where(d => d.Tags.Contains(era)));
-        Group("Any table", firme.Pieces.Where(d => !eras.Any(e => d.Tags.Contains(e.Item1))));
-        scroll.AddChild(col);
-        dlg.AddChild(scroll);
-        Ui.Open(_s.Root, dlg);
-        Ui.FreeOnClose(dlg);
+        if (from.Id == FirmeEffects.PackId)
+        {
+            foreach (var (era, title) in eras) Group(title, from.Pieces.Where(d => d.Tags.Contains(era)));
+            Group("Any table", from.Pieces.Where(d => !eras.Any(e => d.Tags.Contains(e.Item1))));
+        }
+        else Group(null, from.Pieces);
+        return col;
     }
 
-    Control FirmeCard(PackManifest firme, PieceDef d, Action press)
+    Control StandardCard(PackManifest from, PieceDef d, Action press)
     {
-        if (EffectFx.IsEffect(d)) return Card(EffectFx.Icon(d.Effect ?? EffectKinds.FromName(d.Name)), d.Name, FirmeEffects.What(d), press);
-        return PackEdit.LoadAsset(Store, firme, d.Image) is { } img
-            ? Card(ImageTexture.CreateFromImage(img), d.Name, FirmeEffects.What(d), press)
-            : Card("image", d.Name, FirmeEffects.What(d), press);
+        var what = from.Id == StandardPacks.Dice ? StandardPacks.DieWhat(d) : FirmeEffects.What(d);
+        if (EffectFx.IsEffect(d)) return Card(EffectFx.Icon(d.Effect ?? EffectKinds.FromName(d.Name)), d.Name, what, press);
+        return PackEdit.LoadAsset(Store, from, d.Image) is { } img
+            ? Card(ImageTexture.CreateFromImage(img), d.Name, what, press)
+            : Card("image", d.Name, what, press);
     }
 
     static Control Card(Texture2D picture, string name, string what, Action press)
