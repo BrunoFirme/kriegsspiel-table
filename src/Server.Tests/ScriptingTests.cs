@@ -560,6 +560,18 @@ public class ScriptingTests
     }
 
     [Fact]
+    public void An_address_a_script_keeps_in_its_own_saved_state_does_not_count_as_written()
+    {
+        using var t = new Table();
+        var asked = new List<string>();
+        t.Server.Scripts.FetchPicture = link => { asked.Add(link); return Task.FromResult<string?>(null); };
+        t.Server.State.Find(U, P)!.ScriptState = "https://collector.example/p.png?at=12,40";
+        t.Server.State.ScriptState = "https://collector.example/p.png?at=12,40";
+        SetScript(t, "function on_load() game.fetch_picture('https://collector.example/p.png?at=' .. '12,40', function() end) end");
+        Assert.Empty(asked);
+    }
+
+    [Fact]
     public void A_picture_link_a_module_script_builds_while_it_runs_is_fetched_and_shown_on_the_piece()
     {
         using var t = new Table();

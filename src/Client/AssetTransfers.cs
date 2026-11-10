@@ -150,8 +150,9 @@ public sealed partial class AssetTransfers
     void KeepTheListReplaced(PeerInfo by, string package)
     {
         var root = Session.Store.Root;
-        var kept = SaveStore.ForRoot(root).KeepPieceList(root, package, Repeatable.UtcNow);
-        Log.Tell($"{by.Name} sent a newer piece list for the pack {package}. The list it replaced is in the trash for {SaveStore.TrashDays} days: {kept}");
+        var name = BestEffort.Read(() => Json.Load<PackManifest>(Path.Combine(root, package, "pack.json")).Name, fallback: "") is { Length: > 0 } named ? named : package;
+        SaveStore.ForRoot(root).KeepPieceList(root, package, Repeatable.UtcNow);
+        Log.Tell($"{by.Name} sent a newer piece list for the pack {name}. The list it replaced is in the trash for {SaveStore.TrashDays} days.");
     }
 
     public const long MaxUploadPerPeer = 2L * 1024 * 1024 * 1024;

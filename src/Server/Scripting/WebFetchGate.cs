@@ -19,16 +19,11 @@ sealed class WebFetchGate
     static IEnumerable<string> Written(GameState state, PackageStore? store)
     {
         if (state.Script is { } global) yield return global;
-        yield return state.ScriptState;
         foreach (var p in state.Layers.Values.SelectMany(l => l).SelectMany(p => p.AllStowed().Prepend(p)))
         {
             if (p.Script is { } own) yield return own;
-            yield return p.ScriptState;
             foreach (var look in p.Looks ?? [])
-            {
                 if (look.Script is { } worn) yield return worn;
-                yield return look.ScriptState;
-            }
         }
         foreach (var d in store?.AllDefs ?? [])
             if (d.Script is { } kind) yield return kind;

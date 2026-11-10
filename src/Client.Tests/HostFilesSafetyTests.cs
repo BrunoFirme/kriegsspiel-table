@@ -235,7 +235,7 @@ public class HostFilesSafetyTests
         Assert.Equal((TrashKind.PieceList, "user.mine"), (kept.Kind, kept.Id));
         Assert.True(TrashShelves.IsPackEntry(kept));
         Assert.Equal("the host's own", Json.Load<PackManifest>(Path.Combine(kept.Path, "pack.json")).Name);
-        Assert.Contains("Eve sent a newer piece list", Assert.Single(told));
+        Assert.Equal($"Eve sent a newer piece list for the pack the host's own. The list it replaced is in the trash for {SaveStore.TrashDays} days.", Assert.Single(told));
 
         saves.Restore(kept, _root, DateTime.UtcNow.AddSeconds(1));
 
