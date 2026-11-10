@@ -22,6 +22,7 @@ public partial class Main
         public volatile GameServer? Starting;
         public int Done, Total;
         public string? Held;
+        public SaveLock? Lock;
         public LoadingCard? Card;
         public LoadingCard.Progress Now() => Starting is { } s ? new(Stage, s.Scripts.LoadDone, s.Scripts.LoadTotal) : new(Stage, Done, Total);
     }
@@ -77,6 +78,8 @@ public partial class Main
     void EndOpening(Opening op)
     {
         if (op.Held != null) { InUse.Close(op.Held); op.Held = null; }
+        op.Lock?.Dispose();
+        op.Lock = null;
         DropCard(op);
         if (_openingNow == op) _openingNow = null;
     }
@@ -120,6 +123,12 @@ public partial class Main
         }
         bool fromSave = wanted.Kstable || (resume && saves.HasGame(wanted.Dir));
         if (!fromSave) wanted = wanted with { SavePath = saves.NewSavePath(wanted.Dir, saves.NextGameName(wanted.Dir)) };
+        try { op.Lock = SaveLock.Take(wanted.SavePath); }
+        catch (SaveInUseException e)
+        {
+            Fail("Cannot open: " + e.Message + ".");
+            return;
+        }
         var token = op.Token;
 
         var opened = await System.Threading.Tasks.Task.Run(() => Open(store, saves, pieceStore, what, wanted, fromSave, read, op, token), token);
@@ -231,6 +240,8 @@ public partial class Main
     void HostOpened(PackageStore store, SaveStore saves, GameServer server, string name, string savePath, System.Collections.Generic.List<Outgoing> started,
         Opening op)
     {
+        _net.Saves.Hold(op.Lock);
+        op.Lock = null;
         if (op.Held != null) { _net.HeldFolder = op.Held; op.Held = null; }
         else if (_session.ScenarioDir is { } held)
         {

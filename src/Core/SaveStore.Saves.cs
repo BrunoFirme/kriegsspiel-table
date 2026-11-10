@@ -175,7 +175,8 @@ public sealed partial class SaveStore
     static string FreeSaveFile(string folder, string name)
     {
         var path = Path.Combine(folder, name + Ext);
-        for (int n = 2; File.Exists(path) || Directory.Exists(path); n++) path = Path.Combine(folder, $"{name} ({n.ToString(CultureInfo.InvariantCulture)}){Ext}");
+        for (int n = 2; File.Exists(path) || Directory.Exists(path) || File.Exists(SaveLock.PathFor(path)); n++)
+            path = Path.Combine(folder, $"{name} ({n.ToString(CultureInfo.InvariantCulture)}){Ext}");
         return path;
     }
 
@@ -266,6 +267,13 @@ public sealed partial class SaveStore
     static void RefuseOnTable(string path, string? onTable)
     {
         if (onTable != null && (SamePath(path, onTable) || IsUnder(onTable, path))) throw new IOException("the game on the table now is saved in it");
+        RefuseTaken(path);
+    }
+
+    static void RefuseTaken(string path)
+    {
+        var saves = Directory.Exists(path) ? Directory.EnumerateFiles(path, "*" + Ext, SearchOption.AllDirectories) : [path];
+        if (saves.FirstOrDefault(SaveLock.IsTaken) is { } taken) throw SaveLock.InUse(taken);
     }
 
     public string TrashSaves(string scenarioDir, string path, DateTime nowUtc, string? onTable = null)

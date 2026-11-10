@@ -379,6 +379,7 @@ public sealed partial class SaveStore
     static void MoveSaveWithLogs(string from, string to)
     {
         MoveFile(from, to);
+        SaveLock.ClearStale(from);
         foreach (var (log, dst) in new[] { (SaveLog.PathFor(from), SaveLog.PathFor(to)), (SaveLog.OldPathFor(from), SaveLog.OldPathFor(to)) })
             if (File.Exists(log) && !File.Exists(dst)) MoveFile(log, dst);
     }

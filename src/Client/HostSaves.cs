@@ -16,6 +16,7 @@ public sealed class HostSaves
     readonly SaveWriter _writer;
     readonly SaveLogKeeper _logKeeper, _mirrorLog;
     readonly TurnSealer _mirrorSealer = new();
+    SaveLock? _lock, _mirrorLock;
     readonly ScriptSaves _scripts;
     readonly ScenarioWriteBack _writeBack;
     internal TimeSpan CloseWait = TimeSpan.FromMinutes(2);
@@ -69,8 +70,23 @@ public sealed class HostSaves
     GameServer? Server => _server();
     ClientSession Session => _session();
 
+    public void Hold(SaveLock? held)
+    {
+        if (!ReferenceEquals(_lock, held)) _lock?.Dispose();
+        _lock = held;
+    }
+
     public void BeginHosting(string savePath, int turnsNow)
     {
+        if (_lock == null || !SaveStore.SamePath(_lock.SavePath, savePath))
+        {
+            try { Hold(SaveLock.Take(savePath)); }
+            catch (SaveInUseException e)
+            {
+                Hold(null);
+                Log.Error("hosting without holding the save: " + e.Message);
+            }
+        }
         if (Server is { } server && (server.SaveId.Length == 0 || _store.IdTakenElsewhere(savePath, server.SaveId)))
             server.SaveId = _store.IdOf(savePath) is { } id && !_store.IdTakenElsewhere(savePath, id) ? id : SaveFile.NewId(Repeatable.UtcNow);
         _checkpoints = new Checkpointer(_store, savePath, turnsNow, Repeatable.UtcNow);
@@ -138,7 +154,12 @@ public sealed class HostSaves
             catch (Exception e) { why = e.Message; }
             _app.Post(() =>
             {
-                if (Server != server) { then("the table was left"); return; }
+                if (Server != server)
+                {
+                    loaded?.Lock?.Dispose();
+                    then("the table was left");
+                    return;
+                }
                 if (loaded == null)
                 {
                     server.Dirty = true;
@@ -156,16 +177,25 @@ public sealed class HostSaves
         }, TaskScheduler.Default);
     }
 
-    sealed record Loaded(string Path, GameState State, List<TurnRecord> Turns, byte[]? Picture, string Name, string? Created, string? Id, string? Report = null);
+    sealed record Loaded(string Path, GameState State, List<TurnRecord> Turns, byte[]? Picture, string Name, string? Created, string? Id, string? Report = null, SaveLock? Lock = null);
 
     Loaded Read(string scenarioDir, string onTable, LoadFrom from, TurnRecord? record, List<TurnRecord> before, PackageStore? packs, DateTime now)
     {
         if (from.File is { } file && from.TurnIndex == null && from.Start == null)
         {
-            var g = SaveLoader.Open(_store, file, packs, out var recovery);
-            var report = SaveReports.Of(g, recovery);
-            g.SaveTo(file);
-            return new Loaded(file, g.State, g.Turns.ToList(), PictureOf(file), from.Name, g.Created, g.SaveId, report);
+            var held = SaveLock.Take(file);
+            try
+            {
+                var g = SaveLoader.Open(_store, file, packs, out var recovery);
+                var report = SaveReports.Of(g, recovery);
+                g.SaveTo(file);
+                return new Loaded(file, g.State, g.Turns.ToList(), PictureOf(file), from.Name, g.Created, g.SaveId, report, held);
+            }
+            catch
+            {
+                held?.Dispose();
+                throw;
+            }
         }
         string source = onTable;
         if (from.File is { } branchFrom && from.TurnIndex is int ti)
@@ -195,7 +225,7 @@ public sealed class HostSaves
         else throw new ArgumentException("nothing to load");
         var folder = from.PlaceIn ?? (record != null ? Path.GetDirectoryName(source) : null);
         var target = _store.NewSavePath(scenarioDir, name, folder);
-        return new Loaded(target, state, turns, picture, from.Name, Repeatable.UtcNow.ToString("o"), SaveFile.NewId(now));
+        return new Loaded(target, state, turns, picture, from.Name, Repeatable.UtcNow.ToString("o"), SaveFile.NewId(now), Lock: SaveLock.Take(target));
     }
 
     static byte[]? PictureOf(string file)
@@ -211,6 +241,7 @@ public sealed class HostSaves
         OnDisk(() =>
         {
             var l = Read(scenarioDir, onTable, from, null, new(), packs, now);
+            using var held = l.Lock;
             var save = new SaveFile
             {
                 Id = l.Id ?? SaveFile.NewId(now), ScenarioId = l.State.ScenarioId, Created = l.Created ?? now.ToString("o"), Saved = now.ToString("o"),
@@ -224,6 +255,7 @@ public sealed class HostSaves
     void Switch(GameServer server, Loaded l)
     {
         _logKeeper.Close(server);
+        Hold(l.Lock);
         Session.SavePath = l.Path;
         server.Picture = l.Picture;
         _app.Dispatch(server.LoadSave(l.State, l.Turns, l.Name, l.Created, l.Id ?? ""));
@@ -267,6 +299,7 @@ public sealed class HostSaves
     {
         var copy = _writeBack.Stop();
         Unmirror();
+        Hold(null);
         MirrorPath = null;
         _checkpoints = null;
         if (HeldFolder is { } held)
@@ -300,6 +333,8 @@ public sealed class HostSaves
         if (_mirrored != null) _mirrored.Applied -= Mirrored;
         _mirrored = null;
         _mirrorLog.Close(null);
+        _mirrorLock?.Dispose();
+        _mirrorLock = null;
     }
 
     void FoldMirrorLog(string path)
@@ -342,6 +377,12 @@ public sealed class HostSaves
             var saves = _store;
             var path = saves.MirrorPath(Session.Live.ScenarioId.Length > 0 ? Session.Live.ScenarioId : Session.Live.Name);
             Unmirror();
+            try { _mirrorLock = SaveLock.Take(path); }
+            catch (SaveInUseException e)
+            {
+                Log.Tell($"This PC keeps no copy of this game: {e.Message}.");
+                return;
+            }
             FoldMirrorLog(path);
             if (File.Exists(path))
             {

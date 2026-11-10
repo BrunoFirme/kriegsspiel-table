@@ -82,6 +82,8 @@ public sealed partial class SaveStore
 
     public string TrashMirror(string mirrorPath, DateTime nowUtc)
     {
+        if (SaveLock.IsTaken(mirrorPath)) throw SaveLock.InUse(mirrorPath);
+        SaveLock.ClearStale(mirrorPath);
         var entry = NewTrashEntry(Path.GetFileNameWithoutExtension(mirrorPath) + MirrorSuffix, nowUtc);
         if (File.Exists(mirrorPath)) { Directory.CreateDirectory(entry); File.Move(mirrorPath, Path.Combine(entry, Path.GetFileName(mirrorPath)), true); }
         foreach (var log in LogsOf(mirrorPath)) { Directory.CreateDirectory(entry); File.Move(log, Path.Combine(entry, Path.GetFileName(log)), true); }
@@ -165,6 +167,7 @@ public sealed partial class SaveStore
 
     public string TrashScenario(string packagesRoot, string scenarioDir, DateTime nowUtc)
     {
+        RefuseTaken(SavesRoot(scenarioDir));
         var entry = NewTrashEntry(scenarioDir, nowUtc);
         MoveInto(Path.Combine(packagesRoot, "scenarios", scenarioDir), Path.Combine(entry, "scenario"));
         TrashGameInto(scenarioDir, entry);
@@ -234,6 +237,7 @@ public sealed partial class SaveStore
 
     public string TrashGame(string scenarioDir, DateTime nowUtc)
     {
+        RefuseTaken(SavesRoot(scenarioDir));
         var entry = NewGameEntry(scenarioDir, nowUtc);
         TrashGameInto(scenarioDir, entry);
         return entry;

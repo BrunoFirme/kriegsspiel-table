@@ -293,6 +293,38 @@ public class HostSavesTests
     }
 
     [Fact]
+    public void Hosting_holds_the_save_on_the_table_and_leaving_lets_it_go()
+    {
+        HostRun("Game 1", turns: 1);
+        var path = _session.SavePath!;
+        Assert.True(SaveLock.IsTaken(path));
+        _saves.CloseLog();
+        _saves.Stop();
+        Assert.False(SaveLock.IsTaken(path));
+    }
+
+    [Fact]
+    public void Loading_a_save_open_in_another_copy_is_refused_and_the_table_stays()
+    {
+        var server = HostRun("Game 1", turns: 2);
+        var onTable = _session.SavePath!;
+        server.Dirty = true;
+        _saves.SaveNow(closing: true);
+        var other = _store.NewSavePath("feud", "Other");
+        new GameServer(new GameState { ScenarioId = "feud", Name = "Feud" }, _session.Store).SaveTo(other);
+        using (SaveLock.Take(other))
+        {
+            Assert.Contains("open in another copy of the app", Load(new LoadFrom("Other", File: other)));
+            Assert.Equal(onTable, _session.SavePath);
+            Assert.Equal(2, server.State.Clock.Turn);
+            Assert.True(SaveLock.IsTaken(onTable));
+        }
+        Assert.Null(Load(new LoadFrom("Other", File: other)));
+        Assert.True(SaveLock.IsTaken(other));
+        Assert.False(SaveLock.IsTaken(onTable));
+    }
+
+    [Fact]
     public void A_save_copied_outside_the_app_gets_its_own_id_when_it_is_hosted()
     {
         var server = HostRun("Game 1", turns: 1);
