@@ -105,7 +105,7 @@ public partial class ExportDialog : ConfirmationDialog
             if (inPlay)
             {
                 box.AddChild(Row("Saves", savesPick = SavesPicker(saves, _id)));
-                box.AddChild(Ui.Hint("A game is in play here: as it stands now, the file shows whoever opens it every piece where it is, with its notes and the briefing."));
+                box.AddChild(Ui.Hint("This scenario has a game: as it stands now, the file shows whoever opens it every piece where it is, with its notes and the briefing."));
             }
         }
         else box.AddChild(new Label { Text = $"{_store.Pack(_id)?.Name ?? _id}: one file anyone can install (drop it on the window)." });

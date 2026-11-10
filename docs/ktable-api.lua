@@ -510,7 +510,7 @@ function board.spawn(spec) end
 function board.distance(a, b) end
 
 ---The umpire zones: { id =, name =, owner =, contains = function(piece_or_point) }.
----@return table
+---@return table # A list of zones. contains(piece_or_point) answers true when the piece or point lies inside.
 function board.zones() end
 
 ---Draws a line on the umpire's drawing board and returns its id: { points = { {x=,z=}, ... }, color =, width =, loop = }.
@@ -521,7 +521,7 @@ function board.draw() end
 function board.erase() end
 
 ---The lines on the umpire's drawing board: { id =, points =, color =, width = }.
----@return table[] # A list of zones. contains(piece_or_point) answers true when the piece or point lies inside.
+---@return table[]
 function board.strokes() end
 
 ---@class KTGame
@@ -767,7 +767,8 @@ function on_save() end
 function on_update() end
 
 ---An umpire let the piece go.
-function on_drop() end
+---@param who Who The umpire.
+function on_drop(who) end
 
 ---An umpire rolled this die.
 ---@param who Who The umpire.
@@ -777,9 +778,6 @@ function on_roll(who) end
 ---@param who Who The umpire.
 function on_pick_up(who) end
 
----Its state changed, by anyone.
-function on_state() end
-
 ---This book turned to another page.
 function on_page() end
 
@@ -787,10 +785,13 @@ function on_page() end
 function on_effect() end
 
 ---This effect was played once, from its menu (index 0) or by a script's play_effect (the index it gave).
+function on_burst() end
+
+---Its state changed, by anyone.
 ---@param old number The state it left, from 1.
 ---@param new number The state it is in now, from 1.
 ---@param old_guid string The module GUID of the state it left, for a piece converted from a module; its own GUID otherwise.
-function on_burst(old, new, old_guid) end
+function on_state(old, new, old_guid) end
 
 ---It was turned over or back.
 ---@param face_down boolean true when it is face down now.

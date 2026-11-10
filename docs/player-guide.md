@@ -5,9 +5,7 @@ run one yourself.
 
 ## Your own map
 
-Unpack the folder anywhere and run `KriegsspielTable.exe`.
-
-- **Scenarios** → **New blank scenario…** (or any scenario you have) → **Open**: that table is yours alone. Lay your
+- **Scenarios** → **New blank scenario…**, or **Open** on any scenario you have: that table is yours alone. Lay your
   map on it, place your blocks as the reports come in and move them as your orders go out. Nobody joins it unless you
   invite them.
 - Any installed scenario or pack opens the same way, to study the ground and the pieces.
@@ -23,7 +21,8 @@ The host can let you in as an **observer**:
 2. Wait at the door until the host or a lead lets you in; ✕ cancels. If they refuse or the host does not answer,
    you are back on the title screen with the reason. Next time you come straight back in, even at a new address.
 
-An observer sees the whole board and changes nothing; the umpires' zones, dice and pointers stay with them.
+An observer sees the whole board and changes nothing; the umpires' zones, pointers and dice-panel rolls stay with
+them.
 
 ## Running a game
 

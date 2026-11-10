@@ -16,9 +16,9 @@ live over the network or kept to yourself.
 ## First steps
 
 1. **Scenarios → New blank scenario** opens an empty table; **Settings → New scenarios** sets the backdrop and
-   surface it starts with. Or convert a digital tabletop module and host the scenario it makes.
-2. Add map sheets in the **Map** drawer, drag pieces from the **Pieces** drawer, then save from the menu.
-3. **Q / E** turn, **+ / −** size, **[ ]** step, the wheel zooms; right-click a piece or the table for the rest.
+   surface it starts with. Or convert a digital tabletop module and open the scenario it makes.
+2. Add map sheets in the **Map** drawer and drag pieces from the **Pieces** panel. The table saves itself.
+3. **Q / E** turn, **= / −** size, **[ ]** step, the wheel zooms; right-click a piece or the table for the rest.
 4. **Settings → Show the tour again** walks through the screens once more.
 
 **Finding things.** The box at the top left searches all of help. The box at the top right finds words on this

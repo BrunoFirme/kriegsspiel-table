@@ -12,9 +12,10 @@ public static class KeysPage
         string K(string action) => keys.Label(action);
         var sb = new StringBuilder();
         sb.Append("# Keys and mouse\n\n");
-        sb.Append("Your bindings; **Settings → Keys** changes them. The same keys mean the same everywhere: ")
-            .Append($"**{K("turnLeft")} {K("turnRight")}** turn (Shift by 1°), **{K("smaller")} {K("larger")}** or **Ctrl+wheel** size, ")
-            .Append($"**{K("statePrev")} {K("stateNext")}** step one less or one more, and the **wheel** zooms, but over selected pieces, where it turns them.\n\n");
+        sb.Append("Your bindings; **Settings → Keys** at the table changes them. The same keys mean the same everywhere: ")
+            .Append($"**{K("turnLeft")} {K("turnRight")}** turn (Shift by 1°), **{K("smaller")} {K("larger")}** size, ")
+            .Append($"**{K("statePrev")} {K("stateNext")}** step one less or one more, and the **wheel** zooms, except over selected pieces, where it turns them. ")
+            .Append("**Ctrl+wheel** sizes what a tool holds: the brush, a decal, the POV reach.\n\n");
 
         sb.Append("## At the table\n\n");
         Table(sb, "Pieces", new[]
@@ -25,12 +26,13 @@ public static class KeysPage
             ($"{K("larger")}  {K("smaller")}", "larger, smaller"),
             (K("flip") + ", middle-click", "turn over"),
             (K("delete"), "delete; a locked piece only from its right-click menu"),
-            ("Ctrl+1 … 9", "form the selection into that many rows"),
+            ("Ctrl+1 … 9", "while carrying or with several picked: form that many rows"),
+            (K("ready"), "release or recall a holder's ready piece"),
             ($"{K("cut")}  {K("copy")}  {K("paste")}", "cut, copy; paste at the pointer"),
             (K("selectAll"), "select all"),
             ($"{K("statePrev")}  {K("stateNext")}", "previous and next look"),
             ("1 … 9  0", "set the look of the piece under the pointer; a die, its side"),
-            ("Wheel", "over a selected piece, turn 10° (Ctrl 2°, Shift ½°); elsewhere, zoom"),
+            ("Wheel", "over a selected piece, turn 10° (Ctrl 2°, Shift ½°; with Alt, zoom); elsewhere, zoom"),
             ("Shift / Ctrl+click", "add to the selection"),
             ("Drag the table", "box-select, leaving locked pieces out"),
             (K("roll"), "roll the dice under the pointer or selected"),
@@ -43,7 +45,10 @@ public static class KeysPage
             ("Wheel", "zoom"),
             (K("map2d"), "flat map or 3D table"),
             (K("frame"), "frame the whole map"),
+            ("Ctrl+1 … 9", "keep this view, unless carrying or with several picked"),
+            ("Shift+1 … 9", "go back to a kept view"),
             (K("labelPlates"), "plates behind labels beside pieces"),
+            (K("fullscreen"), "window or full screen"),
         });
         Table(sb, "Tools", new[]
         {
@@ -75,7 +80,7 @@ public static class KeysPage
             ("Ctrl+click", "pick one more, or drop one"),
             ("Shift+click", "pick everything between"),
             ("Ctrl+A", "pick all"),
-            ("Delete", "delete what is picked"),
+            ("Delete, Backspace", "delete what is picked"),
         });
 
         Studio(sb);
@@ -98,7 +103,7 @@ public static class KeysPage
         Table(sb, "2D", new[]
         {
             ("V B E U T G I", "move, brush, rubber, shapes, text, fill, colour picker"),
-            ("C O N M H", "crop, outline, place name, counters and text, measure, hand"),
+            ("C O N M H", "crop, outline, place counters and text lines, measure, hand"),
             ("−  =", "smaller / larger brush"),
             ("X", "swap the two colours"),
             ("Alt+click", "take a colour off the picture"),
@@ -112,7 +117,8 @@ public static class KeysPage
         Table(sb, "3D", new[]
         {
             ("H V B E G I D", "look round, move shapes, paint, rub out, fill, colour picker, decal"),
-            ("Drag, right-drag, middle-drag", "turn the model, slide, come closer"),
+            ("Drag, middle-drag, wheel", "turn the model, slide it, come closer"),
+            ("1  3  7  5", "look from the front, the right, the top (Shift: the other side); the flat view"),
             ("−  =", "brush or decal size; Ctrl+wheel too"),
             ("Q  E", "with a decal picture held: turn it 15° (Shift 1°)"),
             ("Home", "frame the model"),

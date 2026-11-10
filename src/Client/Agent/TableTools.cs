@@ -147,7 +147,7 @@ public sealed partial class TableTools
         if (!CanChange(s, out why)) return why!;
         var kind = a.Str("kind") ?? "";
         if (s.Def(kind) is not { } def || s.Store.PackOfDef(kind) is not { } pack || !s.View.Packs.Contains(pack.Id))
-            return ToolResult.Fail($"No kind {kind} in this game's packs (list_kinds lists them; a pack is added from the Pieces drawer).");
+            return ToolResult.Fail($"No kind {kind} in this game's packs (list_kinds lists them; a pack is added from the Pieces panel).");
         if (a.Num("x") is not { } x || a.Num("z") is not { } z) return ToolResult.Fail("x and z are needed.");
         var before = s.View.Layer(Layers.Umpire).Select(p => p.Id).ToHashSet();
         s.Do(new SpawnPiece { Layer = Layers.Umpire, Def = kind, Pos = new Vec2(x, z), RotDeg = a.Num("turn") ?? 0, Label = a.Str("label") is { Length: > 0 } l ? l : null });

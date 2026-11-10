@@ -46,19 +46,19 @@ public sealed partial class TableTools
                 new Arg("carries", "boolean", "what rests on it moves with it (true for most)"), new Arg("box_selected", "boolean", "a selection box takes it (true for most)"),
                 new Arg("shows_move", "boolean", "shows how far it is moved while it is dragged"), new Arg("running", "boolean", "an effect piece plays (smoke rises, fire burns)"),
                 new Arg("thrown_for_real", "boolean", "a die shows the face it lands on, as thrown, instead of a fair random face"), new Arg("attach_to", "string", "a piece it rides on"), new Arg("detach", "boolean", "off what it rides on"),
-                new Arg("favourite", "boolean", "its kind among the favourites in the Pieces drawer, on this PC")),
+                new Arg("favourite", "boolean", "its kind among the favourites in the Pieces panel, on this PC")),
             SetOptions);
         yield return new AgentTool("end_turn",
-            "Ends the turn: the clock goes on by the turn's length, the turn is kept in the history and saved.",
+            "Ends the turn: the clock goes on by the turn's length, the turn is kept in the save on the table.",
             Args.Schema(), EndTurn);
         yield return new AgentTool("set_clock",
             "Sets the game clock: the turn number, the date and time (yyyy-mm-ddThh:mm) and how long each turn lasts, in minutes (60 an hour, 1440 a day).",
             Args.Schema(new Arg("turn", "number", "turn number"), new Arg("time", "string", "yyyy-mm-ddThh:mm"), new Arg("minutes_per_turn", "number", "minutes a turn lasts: 60 an hour, 1440 a day")), SetClockTool);
         yield return new AgentTool("roll_dice",
-            "Rolls dice for everyone to see in the log, and returns the results.",
+            "Rolls dice for everyone to see in the Log, and returns the results.",
             Args.Schema(new Arg("count", "number", "how many (default 1)"), new Arg("sides", "number", "sides (default 6)"), new Arg("label", "string", "what the roll is for")), RollDiceTool);
         yield return new AgentTool("say",
-            "Writes a line in the log everyone at the table reads.",
+            "Writes a line in the Log everyone at the table reads.",
             Args.Schema(new Arg("text", "string", "the line", true), new Arg("colour", "string", "#rrggbb")), SayTool);
         yield return new AgentTool("draw",
             "Draws a line on the map through points (map units), as the pen does, or with text writes a name on the map in the map style's hand: one point places it by what lies under it (beside a town, along a river, spread across a patch of ground, plain on bare paper), more points are its baseline; arrow adds a head at a line's end; shape draws the pen's shapes instead: a rectangle or an ellipse in the box between two points, a curve or a curved arrow bending through the points, " +
@@ -221,7 +221,7 @@ public sealed partial class TableTools
         }
         if (a.Flag("favourite") is { } favourite)
         {
-            if (_hooks.Favourite is not { } hearts) return ToolResult.Fail("Favourites are kept by the app's Pieces drawer.");
+            if (_hooks.Favourite is not { } hearts) return ToolResult.Fail("Favourites are kept by the app's Pieces panel.");
             hearts(p.Def, favourite);
             done.Add(favourite ? "its kind a favourite" : "its kind no longer a favourite");
         }
@@ -300,12 +300,12 @@ public sealed partial class TableTools
     async Task<ToolResult> SayTool(JsonElement a)
     {
         if (Open(out var why) is not { } s) return why!;
-        if (!s.IsUmpire) return ToolResult.Fail("Only umpires write in the log.");
+        if (!s.IsUmpire) return ToolResult.Fail("Only umpires write in the Log.");
         var text = a.Str("text")?.Trim() ?? "";
         if (text.Length == 0) return ToolResult.Fail("text is needed.");
         s.Do(new Say { Text = text, Color = a.Str("colour") });
         await Landed(s);
-        return new ToolResult("Written in the log.");
+        return new ToolResult("Written in the Log.");
     }
 
     async Task<ToolResult> DrawTool(JsonElement a)

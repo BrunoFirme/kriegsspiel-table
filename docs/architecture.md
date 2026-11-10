@@ -31,7 +31,8 @@ take the same path:
 
 The host saves the whole table in a background thread (written to a temporary file, flushed, then renamed),
 keeps a log of commands beside it between saves, and rolling copies of it. A save holds every ended turn, ten to a
-compressed block. A co-umpire keeps a mirror of the game they can host from, with the same log. Hosting a saved game first installs, from the files fetched while joined, the
+compressed block (`TurnBlock`). One copy of the app holds a save while it is hosted or mirrored (`SaveLock`): code
+that opens, renames, moves or deletes a save takes the lock first. A co-umpire keeps a mirror of the game they can host from, with the same log. Hosting a saved game first installs, from the files fetched while joined, the
 packs, map tiles, relief and web pictures it names that this PC lacks, each where the host kept it, never over a file
 and never into a pack already installed (`FetchedFiles`).
 
@@ -46,10 +47,13 @@ command (`ForPeer`). A new role is a new case there and nowhere else.
 2. Its answers: `SentBy`, `OnUndoStack`, `ShownToObservers`, `ZonePieces`, `ZonePoints`, `ScriptsToReload`. The
    compiler makes you answer each one.
 3. Its case in `StateMachine.Apply`, returning its inverse. A test fails for any registered command without one.
-4. Run the tests. The command-answer snapshots (`src/Server.Tests/Snapshots/`) show the new lines; review them
+4. Its field names. An undo is refused when another umpire has changed the same thing since, and `Touched.By`
+   reads what a command changes from its property names: `id`, `ids`, a name ending in `Id` or `Ids`, `child` and
+   `piece` are things; `holder`, `parent` and `board` are where a thing sits. A field named otherwise is not checked.
+5. Run the tests. The command-answer snapshots (`src/Server.Tests/Snapshots/`) show the new lines; review them
    and commit the updated files. If the command or any saved type changed shape, the saved-shape test fails
    until `SaveFile.CurrentFormat` is bumped and a fixture of the new format is added under
-   `src/Core.Tests/Fixtures/formats/`.
+   `src/Core.Tests/Fixtures/formats/` (`.gitignore` leaves `*.kstable` out: `git add -f` the fixture).
 
 ## Scripts
 
@@ -74,6 +78,11 @@ keeps the two in agreement.
 - `Hud` coordinates the interface parts: top bar, tool strip, panels, the drawer, menus and dialogs.
 - `PieceStudio` and `ModelStudio` are the piece studio (3D, 2D and Try it views), with the same pattern.
 - `Net` is the transport only. What it does with the game goes through `src/Client`.
+- `GroundTiles` draws painted ground from tiles baked into a cached atlas; the ground itself is planned in Core
+  (`Model/Ground*.cs`). It is off in headless runs, which keep the live shader.
+- `scripts/agent/` is the AI agent's endpoint (`AgentEndpoint`), a local MCP server (`src/Client/Agent/`) that is off
+  until the person connects an agent. Its tools act with that person's seat, through the same commands; where no tool
+  fits, `UiDriver` works the app's own controls, and `AgentFence.Mark` puts a control out of its reach.
 
 **Threads.** Godot nodes are touched on the main thread only. Work that takes time (decoding pictures, slicing
 maps, writing saves, reading title-screen cards) runs on a worker and hands its result back through a queue
@@ -119,6 +128,8 @@ scripted run never moves the person's cursor or touches their clipboard. The too
   below it. A change to the app brings tests for what it touches; when coverage rises, the floor rises with it.
 - No comments in any code: C#, Python, PowerShell, MSBuild files, shaders, Lua and the lock scripts. Names and
   structure say what the code does; a reason the code cannot show goes in these docs.
+- In the app's `scripts/`, text is dimmed, spaced and given its label width by the `Ui` components, never by hand
+  (`codecheck.py`; `dev/tests/UiRuleTests` checks the built screens).
 - Warnings are errors in every project (`Directory.Build.props`); nullable reference types are on everywhere.
 - Beyond the default analysers, `.editorconfig` makes these warnings: a ValueTask awaited once only (CA2012), a
   CancellationToken passed on (CA2016) and taken last (CA1068), a result not thrown away (CA1806), a rethrow that keeps

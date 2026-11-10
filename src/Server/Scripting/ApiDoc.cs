@@ -697,16 +697,16 @@ public static partial class ApiDoc
         See("game.calibration");
 
         M("board", "zones()", "The umpire zones: { id =, name =, owner =, contains = function(piece_or_point) }.", "getZones", "table");
-
-        M("board", "draw(stroke)", "Draws a line on the umpire's drawing board and returns its id: { points = { {x=,z=}, ... }, color =, width =, loop = }.", "Global.setVectorLines", "string");
-        M("board", "erase(id)", "Takes a drawn line off the board.", null);
-        M("board", "strokes()", "The lines on the umpire's drawing board: { id =, points =, color =, width = }.", "Global.getVectorLines", "table[]");
         R("A list of zones. `contains(piece_or_point)` answers true when the piece or point lies inside.");
         X("""
             for _, z in ipairs(board.zones()) do
               if z.contains(self) then print("in", z.name) end
             end
             """);
+
+        M("board", "draw(stroke)", "Draws a line on the umpire's drawing board and returns its id: { points = { {x=,z=}, ... }, color =, width =, loop = }.", "Global.setVectorLines", "string");
+        M("board", "erase(id)", "Takes a drawn line off the board.", null);
+        M("board", "strokes()", "The lines on the umpire's drawing board: { id =, points =, color =, width = }.", "Global.getVectorLines", "table[]");
     });
 
     static ApiSection Game() => Section("game", "The game around the table.", () =>
@@ -1014,7 +1014,7 @@ public static partial class ApiDoc
 
             function on_save() return tostring(hits) end
             """);
-        Note("Draw widgets and register hotkeys and menu rows here. `on_load` and `on_save` get ten seconds; other calls a tenth of one.");
+        Note("Draw widgets and register hotkeys and menu rows here. `on_load` and `on_save` get ten seconds; other calls one.");
         See("on_save", "self.reload");
 
         E("event", "on_save()", "The game is being saved, or an umpire's action has just run the script: return a string to keep.", "onSave");
@@ -1026,18 +1026,21 @@ public static partial class ApiDoc
         Note("Prefer `wait.seconds` or an event: a script that does its work every frame costs the host every frame.");
 
         E("event", "on_drop(who)", "An umpire let the piece go.", "onDrop");
-        E("event", "on_roll(who)", "An umpire rolled this die.", "onRandomize");
         P("who", "Who", "The umpire.");
         See("on_pick_up");
+
+        E("event", "on_roll(who)", "An umpire rolled this die.", "onRandomize");
+        P("who", "Who", "The umpire.");
 
         E("event", "on_pick_up(who)", "An umpire picked the piece up.", "onPickUp");
         P("who", "Who", "The umpire.");
         See("on_drop");
 
-        E("event", "on_state(old, new, old_guid)", "Its state changed, by anyone.", "onStateChange");
         E("event", "on_page()", "This book turned to another page.", "onPageChange");
         E("event", "on_effect(index)", "An umpire or a script started (0) or stopped (-1) this effect.", "onObjectLoopingEffect");
         E("event", "on_burst(index)", "This effect was played once, from its menu (index 0) or by a script's play_effect (the index it gave).", "onObjectTriggerEffect");
+
+        E("event", "on_state(old, new, old_guid)", "Its state changed, by anyone.", "onStateChange");
         P("old", "number", "The state it left, from 1.");
         P("new", "number", "The state it is in now, from 1.");
         P("old_guid", "string", "The module GUID of the state it left, for a piece converted from a module; its own GUID otherwise.");
@@ -1081,11 +1084,6 @@ public static partial class ApiDoc
         P("piece", "Piece", "The piece; its fields still answer.");
 
         E("global event", "on_drop(piece, who)", "An umpire let a piece go.", "onObjectDrop");
-        E("global event", "on_state(piece, old, new, old_guid)", "A piece's state changed, by anyone.", "onObjectStateChange");
-        E("global event", "on_page(piece)", "A book turned to another page.", "onObjectPageChange");
-        E("global event", "on_effect(piece, index)", "An umpire or a script started (0) or stopped (-1) an effect.", "onObjectLoopingEffect");
-        E("global event", "on_burst(piece, index)", "An effect was played once, from its menu or by a script.", "onObjectTriggerEffect");
-        E("global event", "on_roll(piece, who)", "An umpire rolled a die, or turned a piece of several looks to one at random.", "onObjectRandomize");
         P("piece", "Piece", "The piece.");
         P("who", "Who", "The umpire.");
         X("""
@@ -1095,6 +1093,14 @@ public static partial class ApiDoc
               end
             end
             """);
+
+        E("global event", "on_state(piece, old, new, old_guid)", "A piece's state changed, by anyone.", "onObjectStateChange");
+        E("global event", "on_page(piece)", "A book turned to another page.", "onObjectPageChange");
+        E("global event", "on_effect(piece, index)", "An umpire or a script started (0) or stopped (-1) an effect.", "onObjectLoopingEffect");
+        E("global event", "on_burst(piece, index)", "An effect was played once, from its menu or by a script.", "onObjectTriggerEffect");
+        E("global event", "on_roll(piece, who)", "An umpire rolled a die, or turned a piece of several looks to one at random.", "onObjectRandomize");
+        P("piece", "Piece", "The piece.");
+        P("who", "Who", "The umpire.");
 
         E("global event", "on_rotate(piece, rot, old_rot, who)", "An umpire turned a piece in place.", "onObjectRotate");
         P("piece", "Piece", "The piece.");
@@ -1326,7 +1332,7 @@ public static partial class ApiDoc
         sb.Append("**Units.** _Map units_ are the table's own (`pos`, `set_pos`, `spawn`). _Piece units_ are map units measured on the piece's kind before the table scales it, ");
         sb.Append("centre (0, 0), x to the right, z down the picture (widgets, lines, `to_world`): a kind 1.2 wide runs from x = -0.6 to 0.6, and a piece scaled up carries its widgets with it. ");
         sb.Append("_Metres_ come from the map's scale (`board.distance`, `game.calibration`).\n\n");
-        sb.Append("**Handler names.** `\"fn\"` is looked up in the drawing script, then the global script; `\"global:fn\"` forces the global script; ");
+        sb.Append("**Handler names.** `\"fn\"` is looked up in the script of the piece it is drawn on, then the global script; `\"global:fn\"` forces the global script; ");
         sb.Append("`\"<id or GUID>/fn\"` is that piece's.\n\n");
         sb.Append("**Errors** stop the current call and show in the console with the piece and line. The script stays loaded.\n\n");
     }

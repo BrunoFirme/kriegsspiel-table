@@ -13,3 +13,5 @@ GitHub, or an AI agent writing scripts. A release carries this folder beside the
 | [scripting.md](scripting.md) | How scripts work, with recipes. |
 | [scripting-api.md](scripting-api.md) | Every scripting call: parameters, returns, examples, module names. |
 | [ktable-api.lua](ktable-api.lua) | The API as typed Lua stubs, for VS Code and agents. |
+
+**Keys and mouse** (`keys.md` in the guides' links) is written by the app from your own bindings: read it in Help.

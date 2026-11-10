@@ -41,7 +41,7 @@ Calls use a dot, not a colon: `self.set_name("Guard")`. _Optional_ parameters ma
 
 **Units.** _Map units_ are the table's own (`pos`, `set_pos`, `spawn`). _Piece units_ are map units measured on the piece's kind before the table scales it, centre (0, 0), x to the right, z down the picture (widgets, lines, `to_world`): a kind 1.2 wide runs from x = -0.6 to 0.6, and a piece scaled up carries its widgets with it. _Metres_ come from the map's scale (`board.distance`, `game.calibration`).
 
-**Handler names.** `"fn"` is looked up in the drawing script, then the global script; `"global:fn"` forces the global script; `"<id or GUID>/fn"` is that piece's.
+**Handler names.** `"fn"` is looked up in the script of the piece it is drawn on, then the global script; `"global:fn"` forces the global script; `"<id or GUID>/fn"` is that piece's.
 
 **Errors** stop the current call and show in the console with the piece and line. The script stays loaded.
 
@@ -2213,7 +2213,13 @@ board.zones()
 
 The umpire zones: { id =, name =, owner =, contains = function(piece_or_point) }.
 
-**Returns** `table`.
+**Returns** `table`: A list of zones. `contains(piece_or_point)` answers true when the piece or point lies inside.
+
+```lua
+for _, z in ipairs(board.zones()) do
+  if z.contains(self) then print("in", z.name) end
+end
+```
 
 **Module call** `getZones`
 
@@ -2245,13 +2251,7 @@ board.strokes()
 
 The lines on the umpire's drawing board: { id =, points =, color =, width = }.
 
-**Returns** `table[]`: A list of zones. `contains(piece_or_point)` answers true when the piece or point lies inside.
-
-```lua
-for _, z in ipairs(board.zones()) do
-  if z.contains(self) then print("in", z.name) end
-end
-```
+**Returns** `table[]`.
 
 **Module call** `Global.getVectorLines`
 
@@ -3086,10 +3086,10 @@ Define any of these in a piece's script and the table calls it.
 | [`on_drop`](#on_drop) | An umpire let the piece go. |
 | [`on_roll`](#on_roll) | An umpire rolled this die. |
 | [`on_pick_up`](#on_pick_up) | An umpire picked the piece up. |
-| [`on_state`](#on_state) | Its state changed, by anyone. |
 | [`on_page`](#on_page) | This book turned to another page. |
 | [`on_effect`](#on_effect) | An umpire or a script started (0) or stopped (-1) this effect. |
 | [`on_burst`](#on_burst) | This effect was played once, from its menu (index 0) or by a script's play_effect (the index it gave). |
+| [`on_state`](#on_state) | Its state changed, by anyone. |
 | [`on_flip`](#on_flip) | It was turned over or back. |
 | [`on_rotate`](#on_rotate) | An umpire turned it in place. |
 | [`on_turn`](#on_turn) | The clock advanced. |
@@ -3120,7 +3120,7 @@ end
 function on_save() return tostring(hits) end
 ```
 
-Draw widgets and register hotkeys and menu rows here. `on_load` and `on_save` get ten seconds; other calls a tenth of one.
+Draw widgets and register hotkeys and menu rows here. `on_load` and `on_save` get ten seconds; other calls one.
 
 **Module call** `onLoad` · **See also** [`on_save`](#on_save), [`self.reload`](#selfreload)
 
@@ -3164,7 +3164,11 @@ An umpire let the piece go.
 
 An event: define this function and the table calls it.
 
-**Module call** `onDrop`
+| Parameter | Type | Description |
+|---|---|---|
+| `who` | `Who` | The umpire. |
+
+**Module call** `onDrop` · **See also** [`on_pick_up`](#on_pick_up)
 
 ### `on_roll`
 
@@ -3180,7 +3184,7 @@ An event: define this function and the table calls it.
 |---|---|---|
 | `who` | `Who` | The umpire. |
 
-**Module call** `onRandomize` · **See also** [`on_pick_up`](#on_pick_up)
+**Module call** `onRandomize`
 
 ### `on_pick_up`
 
@@ -3197,18 +3201,6 @@ An event: define this function and the table calls it.
 | `who` | `Who` | The umpire. |
 
 **Module call** `onPickUp` · **See also** [`on_drop`](#on_drop)
-
-### `on_state`
-
-```lua
-on_state(old, new, old_guid)
-```
-
-Its state changed, by anyone.
-
-An event: define this function and the table calls it.
-
-**Module call** `onStateChange`
 
 ### `on_page`
 
@@ -3244,6 +3236,18 @@ This effect was played once, from its menu (index 0) or by a script's play_effec
 
 An event: define this function and the table calls it.
 
+**Module call** `onObjectTriggerEffect`
+
+### `on_state`
+
+```lua
+on_state(old, new, old_guid)
+```
+
+Its state changed, by anyone.
+
+An event: define this function and the table calls it.
+
 | Parameter | Type | Description |
 |---|---|---|
 | `old` | `number` | The state it left, from 1. |
@@ -3258,7 +3262,7 @@ end
 
 What the script draws here belongs to the new state. A converted piece whose states are whole module objects changes as the module's game changes them: the leaving state's script saves (on_save) and ends (on_destroy), the arriving state wears its own name, notes, tags, lock and script, which loads (on_load), then on_spawn and on_state run.
 
-**Module call** `onObjectTriggerEffect` · **See also** [`self.set_state`](#selfset_state)
+**Module call** `onStateChange` · **See also** [`self.set_state`](#selfset_state)
 
 ### `on_flip`
 
@@ -3395,6 +3399,19 @@ An umpire let a piece go.
 
 An event: define this function and the table calls it.
 
+| Parameter | Type | Description |
+|---|---|---|
+| `piece` | `Piece` | The piece. |
+| `who` | `Who` | The umpire. |
+
+```lua
+function on_drop(piece, who)
+  for _, z in ipairs(board.zones()) do
+    if z.contains(piece) then game.say((piece.name or piece.id) .. " enters " .. z.name, { to = who }) end
+  end
+end
+```
+
 **Module call** `onObjectDrop`
 
 ### `on_state` (global script)
@@ -3459,14 +3476,6 @@ An event: define this function and the table calls it.
 |---|---|---|
 | `piece` | `Piece` | The piece. |
 | `who` | `Who` | The umpire. |
-
-```lua
-function on_drop(piece, who)
-  for _, z in ipairs(board.zones()) do
-    if z.contains(piece) then game.say((piece.name or piece.id) .. " enters " .. z.name, { to = who }) end
-  end
-end
-```
 
 **Module call** `onObjectRandomize`
 

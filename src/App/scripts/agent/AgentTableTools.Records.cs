@@ -48,7 +48,7 @@ sealed partial class AgentTableTools
         yield return new AgentTool("look_back",
             "Reads a kept turn or a save without loading it (host only): its clock, and what differs from the table now, piece by piece (added, gone, moved or turned, changed). " +
             "show puts the person's own table on it as History does, where nothing can be changed; now brings them back to the live table.",
-            Args.Schema(new Arg("turn", "number", "a kept turn's number (list_saves)"), new Arg("save", "string", "a save's name in this game's folder (list_saves)"),
+            Args.Schema(new Arg("turn", "number", "a kept turn's number (list_saves)"), new Arg("save", "string", "a save's name, as list_saves gives it"),
                 new Arg("show", "boolean", "also show it on the person's table, as History does"), new Arg("now", "boolean", "back to the live table, alone")),
             LookBack);
         yield return new AgentTool("saves",

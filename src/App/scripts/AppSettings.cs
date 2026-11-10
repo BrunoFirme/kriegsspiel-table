@@ -111,7 +111,7 @@ static class AppSettings
     {
         var pick = new OptionButton
         {
-            TooltipText = $"Borderless fills the screen as a window, quick to switch away from. Fullscreen takes the screen over. {cfg.Keys.Label("fullscreen")} switches between the window and the screen.",
+            TooltipText = $"Borderless fills the screen as a window; Fullscreen takes it over. {cfg.Keys.Label("fullscreen")} switches between the window and the screen.",
             CustomMinimumSize = new Vector2(160, 0),
         };
         foreach (var n in new[] { "Windowed", "Borderless", "Fullscreen" }) pick.AddItem(n);

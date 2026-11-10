@@ -131,7 +131,7 @@ sealed class SettingsDialog : HudPart
         var nameS = new HSlider
         {
             MinValue = Settings.FaceTextScaleMin, MaxValue = Settings.FaceTextScaleMax, Step = 0.05, Value = Cfg.FaceTextScale,
-            TooltipText = "How big text prints on pieces, and the lettering an imported piece draws itself (bigger reads in captures; it may spill past its box)",
+            TooltipText = "How big text prints on pieces and in an imported piece's own lettering; bigger may spill past its box",
         };
         var nameL = Ui.ValueBox(nameS, v => $"{v:0.00}×");
         var nameRow = Row("Text size", nameS, nameL);

@@ -25,9 +25,9 @@ internal sealed partial class ModelPanels
             ("move", "move", "Move shapes   (V)\nDrag an arrow to move the chosen shape along X, Y or Z, or drag a shape along the ground (Shift: up and down). Its numbers are in Layers."),
             ("paint", "brush", "Paint on the model   (B)\n= and − or Ctrl+wheel size the brush. Alt-click takes a colour off the model."),
             ("erase", "erase", "Rub out paint   (E)\nThe model's own picture shows again."),
-            ("fill", "fill", "Fill   (G)\nClick the model: the patch of that colour around the click takes the ink, over the seams. Shift-click paints the whole shape."),
+            ("fill", "fill", "Fill   (G)\nThe patch of that colour round the click takes the ink, over the seams."),
             ("pick", "pick", "Colour picker   (I)"),
-            ("decal", "image", "Decal   (D)\nA picture pressed onto the model where you hold it, like a transfer: over the seams, onto what is in front. Q and E turn it (Shift by 1°), = and − or Ctrl+wheel size it, Ctrl+V takes the clipboard's picture."),
+            ("decal", "image", "Decal   (D)\nA picture pressed onto the model like a transfer, over the seams. Ctrl+V takes the clipboard's picture."),
         })
         {
             if (key == "move" && !_m.CanMove) continue;

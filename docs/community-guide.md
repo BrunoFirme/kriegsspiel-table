@@ -4,7 +4,7 @@
 
 **Piece studio → Convert from…**, then pick a module or save from the list, **Browse…** to a
 `.json` (each one shows its module's picture), or paste a Steam Workshop link. The list holds the modules and saves on this PC, wherever the digital tabletop keeps them
-(Documents, or its folder in a Steam library).
+(Documents, its folder in a Steam library, or on Linux its own, Flatpak or Proton folder).
 
 You get:
 
@@ -20,10 +20,11 @@ You get:
 | Converts | Does not |
 |---|---|
 | Tiles, tokens, boards, 3D models | Physics, hands, hidden zones, grid, lighting, turns (listed in the report) |
-| Cards, and decks as piles | Infinite bags (place pieces from the Pieces drawer) |
+| Cards, and decks as piles | Infinite bags (place pieces from the Pieces panel) |
 | Checkers, and picture dice of 4, 6, 8, 10, 12 and 20 sides | |
+| Plain dice, as the app's standard dice where each stood, at its size and face | |
 | Bags, as boxes, chests and crates holding their contents | |
-| States (formation, shattered…) | The module's plain dice (use the app's) |
+| States (formation, shattered…) | |
 | IKS script counters and text | |
 | Notecards, Notes and Notebook pages, as note cards you can type into | |
 | PDFs, as books: every page comes over, and double-clicking one at the table opens it to read | Cards dealt by script (listed in the report) |
@@ -33,6 +34,7 @@ You get:
 | Mirrored and tilted pieces, as the module left them | |
 | Stacks of chips, tiles or tokens, as that many pieces | |
 | 3D text, as lettering on its piece | |
+| Asset-bundle figures, as 3D pieces in the module's own pack | |
 | Asset-bundle effects (smoke, fire, gun fire, mist, rain), as the closest of Firme's Effects | |
 | Lua scripts, translated, and XML panels, in the fonts they name | |
 | Decals, the module's own and those stamped on the table, and the pictures scripts set from web links | |
@@ -54,11 +56,12 @@ keep their Steam links; your own pictures load only on your PC.
 the pack's pieces and the chosen piece down the right. The top line says what the tool in hand does.
 [Keys and mouse](keys.md#piece-studio) lists the studio's keys.
 
-☰ → **Pack details…** sets the pack's name, who made it and a description, shown in the piece studio's list of packs.
+The pack's name is the field in the top line. ☰ → **Pack details…** sets who made it and a description, shown in
+the piece studio's list of packs.
 
 ### New pieces
 
-**＋ New piece** (Ctrl+N) makes a block, a tile, a token, pieces from pictures or the clipboard, a 3D model, a book from a PDF, or
+**＋ New piece** (Ctrl+N) makes a block, a tile, a token, a figure on a base, pieces from pictures or the clipboard, a 3D model, a book from a PDF, or
 copies any effect, prop or marker of **Firme's Effects and Props**, or one of the standard dice, into the pack, to change like any piece of your own;
 the originals stay as they are. Pictures and models dropped on the window become pieces too. Every picture chooser also
 takes a web link.
@@ -71,7 +74,7 @@ takes a web link.
   round, hex, shield, banner, along the picture and more, or **Frame…** for a border), its width, depth,
   thickness and side tint. A look can have its own size and outline.
 - **Add a shape or a model** builds onto it: a box, a cylinder, a flag… or a model file (glTF, GLB, FBX, OBJ,
-  STL, PLY), which sits centred on top. A model file dropped on the 3D view does the same; dropped anywhere
+  STL, PLY, Collada), which sits centred on top. A model file dropped on the 3D view does the same; dropped anywhere
   else it becomes a piece of its own. A layer keeps the shape it was added as: for another, add it and delete
   the old layer. Every layer, the block and each shape, lists its **Faces** to paint in 2D. A 3D piece's width
   on the table and its tint are under **On the table**.
@@ -85,8 +88,11 @@ takes a web link.
 - **Texture…** on an imported model lays on a texture made for it, as its maker drew it; **Picture…** on a shape
   stretches a picture over one face.
 - Tools: look round H, move V (drag the X, Y and Z arrows, or the shape itself), brush B, rubber E, fill G,
-  colour I, decal D; **+ / −** or Ctrl+wheel size the brush or the decal, **Q / E** turn a decal (Shift 1°); **F** turns the piece over; 1, 3 and 7 look from the front, right and top (Shift: the other
+  colour I, decal D; **= / −** or Ctrl+wheel size the brush or the decal, **Q / E** turn a decal (Shift 1°); **F** turns the piece over; 1, 3 and 7 look from the front, right and top (Shift: the other
   side), 5 is the flat view. A shape chosen in 3D opens its faces in 2D.
+- The brush paints hard edges unless **Soft edge** is raised. Fill takes the patch of the colour clicked, over the
+  seams: **Reach** lets in nearby shades, **Stop at bends** ends it at sharp edges such as a helmet's rim, and
+  **Shift-click** paints the whole shape.
 - Saved as one OBJ and one picture.
 
 **2D** (Alt+2) — a face laid flat, built of layers: pictures, paint, text and the unit plate (colours, label, unit
@@ -119,17 +125,24 @@ Looks that are still copies of look 1 follow it as you paint. Scripts draw the r
 [scripting guide](scripting.md).
 
 Every change saves at once and layers reopen as you left them; **Ctrl+Z** takes back the last one, stroke, shape
-or setting. In a game, your packs
-upload to the host when you place their pieces. Limits: pictures and models only, 25 MB a file, 300 MB a pack.
+or setting.
+
+In a game, an umpire's packs upload to the host when their pieces are placed. Limits: pictures and models only,
+25 MB a file, 300 MB a pack, 2 GB a person a sitting. A pack already on the host changes only when its author
+sends it, or whoever sent it earlier that sitting; otherwise the host removes it first (Piece studio → the pack's
+⋯ → **Remove from this PC…**).
 
 ## Share packs and scenarios
 
 A `.ktpack` file carries a pack or a scenario.
 
-- **A pack:** **Export…** beside it in the piece studio.
-- **A scenario:** **Export…** under its card. Carry **only the pieces it uses**, **whole packs**, or **no packs**.
+- **A pack:** its ⋯ in the piece studio → **Export…**.
+- **A scenario:** its card's ⋯ → **Export…**. Carry **only the pieces it uses**, **whole packs**, or **no packs**.
+  **Table** chooses what the file shows: the table as it stands now, the setup, or the map only. Once the scenario
+  has a game it starts on the setup, so a file handed to players does not show where the pieces are; **Saves** adds
+  the save on the table or every save, to [hand a game over](umpire-guide.md#play-by-post).
 
-To install, drop the file on the window or use **Install a shared file**. A trimmed pack never replaces a full
+To install, drop the file on the window or use **Install a .ktpack file…**. A trimmed pack never replaces a full
 one you have.
 
 ### On the Steam Workshop

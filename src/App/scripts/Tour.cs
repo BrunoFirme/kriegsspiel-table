@@ -28,10 +28,10 @@ static class Tour
         if (cfg.Tour < 0 || cfg.Tour >= AtTableFrom) return;
         var steps = new List<Step>
         {
-            new("Welcome", "A table for umpired Kriegsspiel: map, pieces, dice and turns, live over the network or by post. Seven short steps; skip them any time.", () => null),
-            new("Scenarios", "Host one to open its table. New blank scenario starts an empty one, and a converted module arrives here as a scenario.", () => nav("Scenarios")),
+            new("Welcome", "A table for umpired Kriegsspiel: map, pieces, dice and turns, live over the network or by post.", () => null),
+            new("Scenarios", "Open one to host its table. New blank scenario starts an empty one, and a converted module arrives here as a scenario.", () => nav("Scenarios")),
             new("Piece studio", "Pieces live in packs: make and change them here, or convert a digital tabletop module into a pack and a scenario.", () => nav("Piece studio")),
-            new("Help", "Every guide, searchable. F1 opens it from anywhere, at the section of the tool under the pointer. The tour goes on at your first table.", () => nav("Help")),
+            new("Help", "Every guide, searchable. F1 opens it from anywhere, at the section of the tool under the pointer.", () => nav("Help")),
         };
         Show(root, cfg, steps, 0, null);
     }

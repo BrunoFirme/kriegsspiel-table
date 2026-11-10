@@ -15,8 +15,8 @@
 |---|---|
 | Every script at the table | Menu → Scripting → Scripts… (Ctrl+Shift+L) |
 | Script console and Lua prompt | Menu → Scripting → Script console (`) |
-| Ids and GUIDs on hover | Settings → Tools for script makers |
-| A piece's id, kind and script | Right-click → Properties → For scripts |
+| Ids and GUIDs on hover | Menu → Scripting → Show piece ids on hover |
+| A piece's id, kind and script | Right-click → Properties… → Scripting |
 | Check a pack's scripts | Piece studio → the pack's ⋯ → Check its scripts… |
 | Check a scenario's scripts | Its card's ⋯, or Menu → Scripting at the table |
 | VS Code completion | API reference → **API file for VS Code…** |
@@ -51,8 +51,8 @@ foot of the Help sidebar). Paste what it writes into the **Script** tab.
 
 ### Edit a script as a file
 
-The button beside **Save and run** (studio Script tab, or the Scripts window) puts the script in
-`%LOCALAPPDATA%\KriegsspielTable\Scripts\`, with `ktable-api.lua` and `console.log`. Each save there runs in the app;
+**Edit as a file** (studio Script tab, or the Scripts window) puts the script in a folder for its pack or scenario
+under `%LOCALAPPDATA%\KriegsspielTable\Scripts\`, with `ktable-api.lua` and `console.log`. Each save there runs in the app;
 errors go to `console.log` as `file.lua:line`. **Stop** brings the script back into the app.
 
 ### Connect it
@@ -68,8 +68,9 @@ tries what scripts made (buttons, input boxes, panels and their windows) as a pl
 saves and who is at the table, measures distances and ranges, gives the invitation (the password stays yours), joins a
 game, and converts digital tabletop modules from the title screen. Asked, it selects pieces, throws dice, turns your
 view to a spot or changes this PC's settings. Where no tool fits, it uses the app's own buttons, fields and menus at the
-table and in the studio, as you do; installing, removing, exporting and converting packs and scenarios, and their trash,
-stay yours. It reads the guides and the app's log to find out why something went wrong. It should not umpire. It acts
-with your seat's rights, every change can be undone, and the Log names its changes "agent". Stop it from the **Agent**
-sign in the top bar or **Switch it off** in Settings; **Technical settings…** holds the details for setting it up by
-hand.
+table and in the studio, as you do. These stay yours: installing and removing packs; deleting, exporting and filing
+scenarios; their trash; converting back to a digital tabletop save; POV capture; the door, the people and the
+password; deleting saves for good; and its own connection. It reads the guides and the app's log to find out why
+something went wrong. It should not umpire. It acts with your seat's rights, every change can be undone, and the Log
+names its changes "agent". Stop it from the **Agent** sign in the top bar or **Switch off** in Settings;
+**Technical settings…** holds the details for setting it up by hand.

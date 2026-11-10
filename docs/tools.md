@@ -6,22 +6,29 @@ reasons behind what it does that the code cannot show. [architecture.md](archite
 ## `tools/check.ps1`: the gate
 
 ```
-powershell -ExecutionPolicy Bypass -File tools\check.ps1 [-Quick] [-Lock <git ref>]
+powershell -ExecutionPolicy Bypass -File tools\check.ps1 [-Changed <git ref>] [-Full] [-Lock <git ref>]
 ```
 
-Everything a change must pass: the solution, the app (twice, once with Steam built in so its code keeps compiling
-while it is switched off), every test, the app's node tests (headless, with every folder the app could write moved
-into a temporary one, five minutes at most), the app's screen tests (the same runner in a real 1280×720 window,
-for what needs one; the window shows for a moment), and `codecheck.py`. Without `-Quick` it also lists packages
-with known vulnerabilities (reported, not failed on).
+Everything a change must pass: the solution, the app, every test, the app's node tests (headless and under
+coverage, with every folder the app could write moved into a temporary one, five minutes at most), the app's screen
+tests (the same runner in a real 1280×720 window, for what needs one; the window shows for a moment), the coverage
+floor (`covcheck.py`: the app's line coverage may not fall under its `FLOOR`, which is raised and never lowered),
+`codecheck.py`, and the module surface gate (`module-surface.py`).
 
-`-Lock <ref>` also runs the app's behaviour lock against that commit: the ref is checked out beside the repo for
-the run, and the app is compared with it. The converter is proved by its own tests, not by comparing builds. The lock needs no hands: it never moves the pointer, never
+`-Changed <ref>` runs only the steps that the files changed since that commit touch, for the loop while working; a
+change outside every project runs them all. `-Full` adds what a release needs: the app built once more with Steam
+in, so its code keeps compiling while it is switched off, the installer guard, and a list of packages with known
+vulnerabilities (reported, not failed on).
+
+`-Lock <ref>` also runs the app's behaviour lock against that commit: the ref is checked out into a temporary
+folder for the run, and the app is compared with it. The converter is proved by its own tests, not by comparing builds. The lock needs no hands: it never moves the pointer, never
 types into other windows and leaves the clipboard alone (see below), so the PC stays usable while it runs.
 
 ## `tools/codecheck.py`: size and hygiene
 
-No class over 1,500 lines (partial classes counted together), no method over 100, and no comments in any code the
+No class over 1,500 lines (partial classes counted together), no method over 100, no line over 200 characters of
+code or with more than one statement or member (a one-line block holds two at most), no catch that neither names what
+it expects nor rethrows, no text dimmed, spaced or sized by hand in the UI (the `Ui` components do it), and no comments in any code the
 repository holds: C#, Python, PowerShell, MSBuild files, shaders, Lua, the lock scripts and `.editorconfig`. Names and
 structure say what the code does; reasons that cannot be said in code belong in these docs. Left out: test fixtures
 (they stand for other people's files), the generated `docs/ktable-api.lua`, and Godot's own `project.godot` header.
@@ -32,7 +39,8 @@ needs its name (its folders, the download cache, a value quoted from module data
 ## `tools/export-windows.ps1`: a release
 
 ```
-powershell -ExecutionPolicy Bypass -File tools\export-windows.ps1 [-Out <folder>] [-Zip] [-Steam]
+powershell -ExecutionPolicy Bypass -File tools\export-windows.ps1 [-Out <folder>] [-Zip] [-Installer]
+    [-VersionName <name>] [-Steam]
 ```
 
 Needs Godot .NET (`winget install GodotEngine.GodotEngine.Mono`), its export templates for the same version (Godot

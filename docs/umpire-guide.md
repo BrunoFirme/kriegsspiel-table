@@ -13,7 +13,8 @@ order the table's pieces panel lists them in.
 ### Scenarios
 
 A scenario is a map plus the pieces on it. **Scenarios → New blank scenario…** (the first card), then add map
-sheets in the **Map** drawer (PNG, JPG, TIFF, or a GIMP `.xcf`). Converting a module also makes one. Right-click a
+sheets in the **Map** drawer (PNG, JPG, WebP, BMP, TIFF, or a GIMP `.xcf`; only TIFF and `.xcf` go past 16,384
+pixels a side). Converting a module also makes one. Right-click a
 card to file, export or delete it. **Open** puts the table on your PC only: nobody joins until you invite them, so
 preparing a scenario and hosting it are the same step.
 
@@ -33,15 +34,19 @@ saves as tiles in folders, in `%LOCALAPPDATA%\KriegsspielTable\saves\<scenario>\
 - **Load** puts a save on the table for everyone and play goes on in it; the save that was on the table is written
   first and stays as it is. **Look** shows a save without loading it.
 - **Turns** lists a save's ended turns with their pictures: **Look** at one, or **Load** it as a new save beside it.
-- **Pick several** with Ctrl+click, Shift+click or Ctrl+A; Delete removes them. Title-screen lists work the same.
-- **Trash**, at the foot of the folders, keeps deleted saves thirty days.
-- **Co-umpires** keep the same saves. If your PC fails, they host from **Scenarios → Mirrored games**, with the packs
-  and map their PC fetched.
+- **Right-click** a save to rename or move it, or drag it onto a folder. The save on the table stays where it is
+  until another is loaded.
+- **Pick several** with Ctrl+click, Shift+click or Ctrl+A; Delete or Backspace removes them. Title-screen lists work
+  the same.
+- **Trash**, at the foot of the folders, keeps deleted saves thirty days, to **Restore**.
+- **Co-umpires** keep a copy of the game on the table. If your PC fails, they host from
+  **Scenarios → Mirrored games**, with the packs and map their PC fetched.
 
 ## Hosting and the door
 
-1. Pick the scenario, type a **Password** (or leave it empty for an open door), and **Host**.
-2. **Invite…** (Menu, or the connection at the top right) shows the password and your addresses. Send them to the people you want.
+1. **Open** the scenario; the button reads **Resume** once it has a game.
+2. **Invite…** (Menu, or the connection at the top right) shows your addresses and the **Password**: type one
+   there, or leave it empty for an open door. Send them to the people you want.
    - Same network: the LAN address.
    - Internet: your public address. The app asks your router to open the UDP port; if the dialog says it
      could not, forward the port yourself.
@@ -60,11 +65,11 @@ saves as tiles in folders, in `%LOCALAPPDATA%\KriegsspielTable\saves\<scenario>\
 | Role | Can |
 |---|---|
 | Host umpire | everything; the game runs on your PC |
-| Lead umpire | everything but making leads and loading saves: lets people in, sets roles, draws zones |
+| Lead umpire | everything but the saves and other leads' roles: lets people in, sets roles, draws zones |
 | Umpire | change the table; once zones exist, only pieces inside their own zone, in any way |
-| Observer | watch the whole board; never sees zones, dice or pointers; changes nothing |
+| Observer | watch the whole board; never sees zones, pointers or dice-panel rolls; changes nothing |
 
-Change the password in **Scenario properties** (the ⋯ after the scenario's name).
+A table seats 40, as many as 32 of them umpires.
 
 ## At the table
 
@@ -74,7 +79,8 @@ The tool strip runs down the left. Point at any tool and press **F1** for its se
   bring it back. Its key still works. Map, Pieces, Umpires, Select and Log always stay.
 - **Esc** puts down whatever is in hand; pressed again, it opens the menu.
 - The top line says what just happened (a roll, a measurement), then goes quiet.
-- Panels open beside their button. Drag them by the title bar, resize from the corner; they stay put.
+- Panels open beside their button and stay where you drag them by the title bar. Pieces, Log, Decals and a
+  holder's window resize from the corner.
 - Other umpires' pointers show as gloved hands in their colour, with their names; a hand closes over what it
   carries. **Share my pointer** (Settings → Table, or the connection at the top right) shows yours; Scenario properties
   can rule that **Umpires cannot hide their pointer**.
@@ -91,15 +97,21 @@ The tool strip runs down the left. Point at any tool and press **F1** for its se
 | Ctrl+1–9 | keep this view (unless carrying or with several picked); also in the right-click menu |
 | Shift+1–9 | go back to a kept view |
 
-Kept views are yours, for each scenario.
+Kept views are yours, for each scenario. Right-click one in the menu to forget it.
 
 ### Selecting and moving
 
 - Drag a piece to carry it; it drops where you let go. Drag the empty table to box-select.
-- **Q / E** turn 15° (Shift 1°). The wheel over a selected piece turns it 10° (Ctrl 2°, Shift ½°).
-- The same keys mean the same in every tool: **Q / E** turn, **+ / −** or **Ctrl+wheel** size, **[ ]** step one
-  less or one more, and the wheel zooms, but over selected pieces, where it turns them.
-- **+ / −** resize, **Ctrl+1–9** form rows while carrying or with several picked, **Ctrl+X / C / V** cut, copy and paste, **Delete**, **Ctrl+Z / Ctrl+Y** undo and redo. The host and lead umpires also undo what scripts did by themselves since their own last change.
+- **Q / E** turn 15° (Shift 1°) and **= / −** resize (1/50 to 50 times). The wheel over a selected piece turns it
+  10° (Ctrl 2°, Shift ½°); **Alt+wheel** zooms there.
+- The same keys mean the same in every tool: **Q / E** turn, **= / −** size, **[ ]** step one less or one more,
+  and the wheel zooms, except over selected pieces. **Ctrl+wheel** sizes what a tool holds: the brush, a decal, the
+  POV reach.
+- **Ctrl+1–9** form rows while carrying or with several picked, **Ctrl+A** selects all, **Ctrl+X / C / V** cut,
+  copy and paste, **Delete** deletes.
+- **Ctrl+Z / Ctrl+Y** undo and redo your own changes. If another umpire has changed the same thing since, the undo
+  is refused, says who, and stops there. The host and lead umpires also undo what scripts did by themselves since
+  their own last change.
 - What you copy waits on the clipboard until you copy again, so **Ctrl+V** pastes it into another scenario, or after the app
   is closed and opened. Pieces keep their counters, text, notes and scripts, and the packs they need come into that game
   with them; pieces whose pack is not on the PC are left out and the hint says which.
@@ -107,7 +119,8 @@ Kept views are yours, for each scenario.
 
 ### Turn and resize
 
-**T** puts a ring round the selection: the round knob turns it, the square knob resizes (1/50 to 50 times).
+**T** puts a ring round the selection: the round knob turns it, the square knob resizes. **Shift** snaps the turn
+to 15° and the size to tenths.
 
 ### Formations
 
@@ -120,7 +133,6 @@ groups them, and names what each was used for, from the phalanx to the tank plat
   **H** herringbone.
 - **Shapes:** **Shift+B** square, **C** ring, **Y** wedge, **V** vee, **F** diamond.
 
-
 - The pieces march the shortest way to their places round where they stand; markers on them ride along. One undo.
 - Pick pieces as with Select: click one, **Shift+click** to add or take one out, drag a box on the empty table
   (**Shift** adds), click the empty table to let them all go. **Double-click** a piece for every piece of its kind in view.
@@ -132,18 +144,18 @@ groups them, and names what each was used for, from the phalanx to the tank plat
   faces the top. Never closer than the spacing: on a line too short for them, the last run on past its end, and the
   status line says so. Draw it round on itself and they go evenly all the way round. Draw back over it to shorten
   it; the line bends at most 60° in a piece's width, so a sharp corner comes out rounded rather than folded.
-- **Q / E** wheel the whole formation (Shift 1°); a drawn stretch turns whole, keeping its shape. **+ / −** set the
+- **Q / E** wheel the whole formation (Shift 1°); a drawn stretch turns whole, keeping its shape. **= / −** set the
   spacing (0 is shoulder to shoulder), a drawn stretch keeping its line; **[ ]** the ranks of a line, or how many
   abreast in a column. The wheel over the pieces turns each in place, as everywhere; off them it zooms.
 - Drag one of the pieces to carry the formation as it stands.
 
 ### Pieces
 
-- **Placing:** open the **Pieces** drawer and drag a piece onto the table (Shift keeps placing).
+- **Placing:** open the **Pieces** panel and drag a piece onto the table (Shift keeps placing).
 - **Turning over:** middle-click or **F**. Counters show where the maker put them, with − / + to click.
-- **Renaming:** click the name on the back and type; Enter keeps it.
 - **Notes:** the **Note** in Firme's Effects and Props is a message form. Click its title or its lines and type:
-  Enter starts a new line, Ctrl+Enter keeps it, Esc leaves it as it was; Ctrl+click picks it out instead.
+  in the title Enter keeps it; in the lines Enter starts a new line and Ctrl+Enter keeps it; Esc leaves it as it
+  was. Ctrl+click picks the note out instead.
   A module's notecards, Notes and Notebook pages come in as these notes.
 - **Looks:** point at a piece and press **1–9** (0 is the tenth), or **[ ]** to step.
 - **Books:** a PDF brought in from a module, or made in the piece studio, is a book. Double-click it, or
@@ -152,7 +164,7 @@ groups them, and names what each was used for, from the phalanx to the tank plat
 - **Label and description:** at the foot of the right-click menu. Both show on hover to everyone, observers
   included, and are in the scenario file: not a hiding place.
 - **Markers:** drop a small piece on a larger one and it rides along. Drop it elsewhere to free it.
-- **Attached pieces:** in the **Pieces** drawer, **On the table** lists what rides on what. Drag rows onto another
+- **Attached pieces:** in the **Pieces** panel, **On the table** lists what rides on what. Drag rows onto another
   piece's row and they ride on it: moving it carries them and everything riding on them, however far away they
   stand, while one moved alone goes alone and stays attached. Drop rows between two rows to ride on what those
   ride on, or below the list to free them. With several picked, right-click → **Attach the others** does the same.
@@ -182,14 +194,16 @@ groups them, and names what each was used for, from the phalanx to the tank plat
 
 The **Dice** button shows or hides the dice panel: tap d4 to d20 (twice for two), then **Roll**. The result stays in the
 panel for the next roll. Or drag dice from the standard pack and throw them, shake them in your hand before letting go,
-or press **R** to roll in place. The host decides every result and the Log shows it. Hover a die for its result;
+or press **R** to roll in place. The host's PC decides every result and the Log shows it; a die set to **Thrown for
+real** in its right-click menu counts the face it lands on instead. Hover a die for its result;
 right-click it for its **Tint**. To turn a die by hand, point at it and press the side's number.
 Right-click several dice to see what they show and their total. For bigger dice or dice of your own, copy them into a
 pack of your own in the piece studio (＋ New piece, **Dice**).
 
 ### Ruler
 
-**M**, then drag. It reads map units, or metres once the map is calibrated, with ticks and the bearing.
+**M**, then drag. It reads map units, or metres once the map is calibrated, with ticks, the bearing and, over
+relief, the rise or fall.
 
 ### Ranging
 
@@ -198,12 +212,14 @@ Pick the rings and click a piece: type the reach in the **Ranging** panel or set
 ### Calibrate
 
 Drag along the map's scale bar and type what it measures. Distances then read in the scenario's unit
-(Scenario properties → **Distances**: metres, yards or paces).
+(Scenario properties → **Map** → **Distances**: metres, yards or paces).
 
 ### Draw
 
-Freehand, shapes (line, rectangle, ellipse, arrow), a name and a rubber that takes away only what it passes
-over. The panel holds the ink, the pen's width (in screen pixels) and the layer.
+Freehand, shapes (line, arrow, curve, curved arrow, area, rectangle, ellipse), a name and a rubber that takes away
+only what it passes over. The panel holds the ink, how see-through it is, the pen's width (in screen pixels) and
+the layer. A curve or an area is clicked bend by bend: double-click or **Enter** ends it, **Backspace** takes a
+point back, and an area is washed in the ink.
 
 **Name** writes on the map in the map style's hand: click, or drag a path, type the name and press **Enter**
 (**Esc** drops it). Where the click lands decides the hand: beside a town a place name, on a river a name along
@@ -215,36 +231,40 @@ and undoes like a stroke.
 
 Pictures stamped on the table or on a piece: blood where a fight is, arrows, marks. The panel holds the
 scenario's decals; **Add a decal…** takes a picture file or a web link, and right-click takes one out. Pick a
-decal and click to stamp it: on a piece it rides with the piece, elsewhere it lies on the table. **Q / E** turn
-it 15° (Shift 1°), **+ / −** or **Ctrl**+wheel size it, the status line shows its turn and size, the wheel zooms as
-usual, and clicking a stamped decal lifts it off. **Lift every stamp off** clears the
-table and leaves the pieces' decals. A converted module brings its decals and those already stamped.
+decal and click to stamp it: on a piece it rides with the piece, elsewhere it lies on the table; 3D models, dice
+and effects take none, so there it lands on the table. **Q / E** turn it 15° (Shift 1°), **= / −** or
+**Ctrl+wheel** size it, the status line shows its turn and size, and clicking a stamped decal lifts it off.
+**Lift every stamp off** clears the table and leaves the pieces' decals. A converted module brings its decals and
+those already stamped.
 
 ### Layers
 
 Drawings sit on layers, like tracing paper. The eye hides a layer **on your screen only**: handy before a
-screenshot. Click a name to draw on it; the rubber works on that layer alone.
+screenshot. Click a name to draw on it; the rubber works on that layer alone. **+** adds a layer, a double-click
+renames it, and **✕** removes it with its drawings.
 
 ### POV capture
 
 A turn report as a picture, from one piece's point of view.
 
 1. Select the piece and press **V** (or right-click → POV capture from here).
-2. Set how far it sees (**Ctrl+wheel**, **+ / −**, or the Radius field); the wheel zooms in to trace. **Sharp to**
+2. Set how far it sees (**Ctrl+wheel**, **= / −**, or the Radius field); the wheel zooms in to trace. **Sharp to**
    pulls a ring in from the edge: past it the picture blurs, gently at first and hard at the edge, as distance takes
-   detail; **Edge blur** sets how strong it gets at the edge. All the way right is sharp everywhere. The reach, the ring
-   and the blur are kept with the scenario.
-3. Drag to trace what blocks the view: walls, wood edges, ridges. What lies behind goes black.
-4. **Enter** or **Capture**. The picture goes to the clipboard and the capture folder, stamped with the
-   scenario, the clock and the side.
+   detail; all the way right is sharp everywhere. **Edge blur** sets how strong it gets at the edge. The reach, the
+   ring and the blur are kept with the scenario. **Format** makes the picture round or square.
+3. Drag to trace what blocks the view: walls, wood edges, ridges. What lies behind goes black. **Ctrl+Z** takes
+   back the last line, **Clear** all of them.
+4. **Enter** or **Capture**. The picture goes to the clipboard and the capture folder (**Settings → Captures**
+   chooses which), its file named for the scenario, the turn and the time.
 
 The picture holds the pieces in sight at the moment it is taken, wherever they stood when the tool came out, and
 a GIF follows them as they move. Zones and other umpires' pointers are never in it.
 
-**First person** in the panel looks out from the piece's front edge, the way it faces: drag to look around, or press **N E S W**
-to hold a direction (dragging lets go). **Wide** takes 90° across, so the four directions make the whole
-circle. **Eye** slides the viewpoint between the ground at the piece's feet and well over its head: drop it
-to look out from behind a crest. There is nothing to trace from the eye; **Ctrl+wheel** or **+ / −** still set the reach.
+**View → First person** looks out from the piece's front edge, the way it faces: drag to look around, or pick
+**N E S W** under **Facing** to hold a direction (dragging lets go). **Lens → Wide** takes 90° across, so the four
+directions make the whole circle. **Eye** slides the viewpoint between the ground at the piece's feet and well over
+its head: drop it to look out from behind a crest. There is nothing to trace from the eye; **Ctrl+wheel** or
+**= / −** still set the reach.
 Lines traced in 2D still cut off what lies behind them. Each Capture is one picture.
 
 **Text → Hidden** leaves names, counters, notes and the studio's own lettering out of the picture, and off the
@@ -260,9 +280,9 @@ Nothing is sent: paste it into that side's channel.
 ### Capture
 
 **Ctrl+Shift+C** and drag a region: it goes to the clipboard and the capture folder. **Ctrl+Shift+X** repeats
-it. Captures show the ground only, no tools, zones or pointers.
+it. Tools, zones and pointers are left out.
 
-Names too small in the picture? Raise **Settings → Captures → Resolution**, shrink the POV reach, or turn up
+Names too small in the picture? Keep **Settings → Captures → Resolution** at 4×, shrink the POV reach, or turn up
 **Settings → Table → Text size**.
 
 ### Map sheets
@@ -288,8 +308,9 @@ ground.
 - The **Relief** tool (the hill on the tool strip) raises, lowers, smooths and flattens, and paints grass, field,
   wood, marsh, water, road, earth, rock, sand, snow or town; ✕ rubs paint out. A road drawn across water is a
   bridge, a road through a town its street. On a sheet without relief, the first stroke gives it flat ground to
-  shape. **+ / −** or **Ctrl+wheel** size the brush; each stroke is one undo.
-- The Relief tool needs the map's scale: calibrate first, or let **New blank ground…** set it. Painted ground is
+  shape. **= / −** or **Ctrl+wheel** size the brush; each stroke is one undo.
+- The Relief tool needs the map's scale: calibrate first, let **New blank ground…** set it, or add a GeoTIFF,
+  `.asc` or `.hgt` with **Set the map's scale from the file** ticked. Painted ground is
   drawn at that scale, in the style's own hand: each stroke draws its own plots, hedges, farms, trees, streets and
   walls, afresh every time it is painted. Field and grass take **Plots** and **Buildings**, wood **Trees**, road
   **Road** (a track, a country road or a chaussée; a bridge keeps its road's), town **Houses** and **Walls** (none,
@@ -307,7 +328,7 @@ ground.
   **Density** below 100% lays the ground in clumps: sparse wood, scattered rock, broken
   marsh; with ✕ it thins a wood. **Shift+click** runs straight on from the last stroke, for roads, rivers and
   ridges. **Alt+click** picks up the ground under the cursor.
-- **Light & surroundings → Map** in the scenario's properties sets, for everyone, the style painted ground is drawn
+- **Map → Ground** in the scenario's properties sets, for everyone, the **Style** painted ground is drawn
   in (**Ancient**, **18th-century survey** or **Modern topographic**) and turns on **contour lines** over every
   relief: redrawn as the ground is shaped, stepping in round heights once the map's scale is calibrated, every fifth
   line numbered. **Snow line** whitens every ground above a height in metres, once the map's scale is set.
@@ -327,7 +348,7 @@ and the zones button beside it, which shows or hides the zones on your screen, a
 
 ### Views
 
-- **2D** (F2) reads the map flat from above.
+- **3D** (F2) switches between the table in three dimensions and the map read flat from above.
 - **Aa** (N) puts plates behind the labels pieces write beside themselves, so they read on a busy map; text on the
   piece itself is left alone.
 - **Frame** (Home) shows the whole map.
@@ -344,35 +365,36 @@ hours or days. Pick a past turn under **History** to look back (read only); pick
 
 ### The scenario
 
-The ⋯ after the scenario's name opens its properties: **Game** (password, pointers, clock, the global script),
-**Briefing**, **Map** (distances, grid), **Light & surroundings** and **Wind**.
+The scenario's name in the top bar, or **Menu → Scenario properties…**, opens its properties: **Game** (pointers,
+clock, the global script), **Briefing**, **Map** (distances, grid, ground), **Light & surroundings** and **Wind**.
 
 - **Briefing:** the situation you play from. Leads write it here and every umpire reads it here; **Read it…** opens it in a
   window of its own, with find. Observers never see it.
 - **Light & surroundings:** presets and sliders, or **Follow the game clock** for dawn, day and dusk; a backdrop past
   the table's edge (a room, a garden, a coast, open country, a sky by day, at sundown or at night, a solid colour or
   your own panorama; a sky sets its light); the table under the map, which grows to hold what is on it, from paper to
-  black or see-through, which leaves the sheets and pieces over the backdrop alone; and the map
-  style and contour lines of [painted ground](umpire-guide.md#relief).
+  black or see-through, which leaves the sheets and pieces over the backdrop alone.
 - **Grid:** squares or hexes over the table. Nothing snaps to it.
+- **Ground:** the style, contour lines, snow line and streams of [painted ground](umpire-guide.md#relief).
+- **Wind:** where it blows from and how strong. Smoke drifts with it.
 
 ## Play by post
 
 - Close the game any time; host it again to go on. The password and the people let in stay.
-- **To hand it over:** export the scenario and set **Saves** to **The save on the table** (or **Every save**). The
-  other umpire resumes where you left off.
+- **To hand it over:** leave the table, **Export…** the scenario from its card and set **Saves** to
+  **The save on the table** (or **Every save**). The other umpire resumes where you left off.
 - **A turn went wrong:** **History** → the turn → **Load the end of turn N…** (host). The table goes back for
-  everyone and play goes on in a new folder of saves; the old one stays whole.
+  everyone and play goes on in a new save beside the old one, which stays as it is.
 
 ## If something goes wrong
 
 | Problem | Do |
 |---|---|
-| Someone cannot connect | Check password, address and UDP port (the port: title screen **Settings → Inviting**). "LAN only" in the top line or in **Invite**: the router kept the port shut. |
+| Someone cannot connect | Check password, address and UDP port (the port: title screen **Settings → Inviting**). "LAN only" at the top right, or "not open" in **Invite**: the router kept the port shut. |
 | A piece is a grey square | Its picture is still coming from the host, or that PC lacks the pack. |
 | A co-umpire's table looks wrong | They leave and rejoin; the table is sent again. |
 | **NOT SAVED** in the top bar | The Log says why (disk full, folder gone). It clears once saving works. Disk full: **Settings → Storage** on the title screen clears what imports and joins downloaded. |
-| The card says the save is damaged | Host continues from the newest copy; the damaged file is kept beside it. |
+| The card says **Save damaged** | **Resume** continues from the newest copy; the damaged file is kept beside it. |
 | You deleted something | **Scenarios → Trash** or **Piece studio → Trash**: thirty days to **Restore**. |
 | The host's PC is gone | An umpire who was there: **Mirrored games** → **Host from the copy**. |
 | A panel is off screen | **Settings → Interface → Put the panels back**. |

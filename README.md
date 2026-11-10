@@ -43,7 +43,7 @@ Needs the .NET 10 SDK and Godot 4.7 with .NET (`winget install GodotEngine.Godot
 | `dotnet build src/App` | the app (Godot builds and runs it; open `src/App` in the Godot editor to run it there) |
 | `powershell -File tools\check.ps1` | everything a change must pass: both builds, every test, the app's node tests, the size and hygiene rules |
 | `powershell -File tools\export-windows.ps1 -Zip` | a release folder that runs without Godot or .NET installed |
-| `powershell -File tools\export-windows.ps1 -Installer -VersionName "0.3 beta"` | the same folder plus a Windows installer (needs Inno Setup 6: `winget install JRSoftware.InnoSetup`) |
+| `powershell -File tools\export-windows.ps1 -Installer -VersionName "0.9.3 beta"` | the same folder plus a Windows installer (needs Inno Setup 6: `winget install JRSoftware.InnoSetup`) |
 
 Steam (the Workshop) is left out of every build unless asked for: `-p:KTableSteam=true`, or `-Steam` on the
 export. Without it the app has no Steam code and needs no Steam client.
@@ -51,6 +51,7 @@ export. Without it the app has no Steam code and needs no Steam client.
 ## Finding your way
 
 - [`docs/architecture.md`](docs/architecture.md): how the code is put together, and how to add a command.
+- [`docs/tools.md`](docs/tools.md): the scripts under `tools/` and the behaviour lock.
 - [`docs/umpire-guide.md`](docs/umpire-guide.md), [`docs/player-guide.md`](docs/player-guide.md),
   [`docs/community-guide.md`](docs/community-guide.md): using it.
 - [`docs/scripting.md`](docs/scripting.md) and [`docs/scripting-api.md`](docs/scripting-api.md): piece scripts.

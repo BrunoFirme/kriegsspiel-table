@@ -156,7 +156,7 @@ sealed class PovPanel : HudPart
         var sharp = new HSlider
         {
             MinValue = 0, MaxValue = 1, Step = SightingDraft.SharpStep, Value = d.Sharp,
-            TooltipText = "Where the picture starts to blur toward its edge, as eyes lose detail with distance: all the way right keeps it sharp everywhere",
+            TooltipText = "Where the picture starts to blur towards its edge: all the way right keeps it sharp everywhere",
         };
         var sharpBox = SliderRow(grid, "Sharp to", sharp, v => Distance(d.Radius * v));
         var blur = new HSlider

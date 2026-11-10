@@ -76,7 +76,7 @@ sealed class AppTools
             "The packs installed on this PC: id, name, how many kinds, and whether the open game uses it.",
             Args.Schema(), _ => Task.FromResult(ListPacks()));
         yield return new AgentTool("add_pack",
-            "Brings an installed pack into the open game so its kinds can be placed (as the Pieces drawer does; the others at the table receive it).",
+            "Brings an installed pack into the open game so its kinds can be placed (as the Pieces panel does; the others at the table receive it).",
             Args.Schema(new Arg("id", "string", "the pack's id (list_packs)", true)), AddPack);
         yield return new AgentTool("check_scripts",
             "Runs every script of the open scenario (host only) or of the piece studio's pack on a copy away from this table: on_load, every button, three seconds of timers, hotkeys and menu rows, on_save. Returns the report.",

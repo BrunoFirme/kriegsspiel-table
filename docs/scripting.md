@@ -55,7 +55,7 @@ it is a plain label. Each click is one change; Ctrl+Z undoes it.
 |---|---|---|
 | Kind script | Piece studio → **Script** tab | every piece of that kind, each with its own `self` |
 | Piece script | Right-click a piece → **Scripting…** | that piece only, instead of its kind's |
-| Global script | Scenario properties → **Script** | the whole table; `self` is nil |
+| Global script | Scenario properties → **Game** → **Global script** | the whole table; `self` is nil |
 
 Scripts run on the host only. Their changes reach others like any umpire's change, so observers never see more
 than they should.
@@ -121,10 +121,10 @@ self.set_lines{ { points = { { x = 0, z = 0 }, { x = 0, z = -4 } }, color = "#d8
 | Handler | Called as |
 |---|---|
 | button `on_click` | `fn(who, alt, index, piece)`, `alt` true on right-click |
-| input `on_change` | `fn(who, value, index, piece)` |
+| input `on_change` | `fn(who, value, index, piece, typing)`, at each keystroke (`typing` true) and once on leaving the box |
 | piece menu row | `fn(who, piece)` |
 
-`"fn"` is looked up in the drawing script, then the global script. `"global:fn"` forces the global script;
+`"fn"` is looked up in the script of the piece it is drawn on, then the global script. `"global:fn"` forces the global script;
 `"<id>/fn"` another piece's.
 
 ## States
@@ -155,7 +155,8 @@ game.say("The bridge is down.", { color = "#e07050" })
 local r = game.roll(6, 2, "Morale")               -- server dice, shown in the Log
 ```
 
-- Fields are read-only; `set_` calls change them. One reaction is one undo step.
+- Fields are read-only; `set_` calls change them. One reaction is one undo step; what a script does by itself (a
+  timer, `on_update`, `on_load`) the host and lead umpires take back with Ctrl+Z.
 - A kept handle can outlive its piece: check `p.exists`.
 - Use `game.roll` for rolls umpires should see; `math.random` for the script's own choices.
 
@@ -191,6 +192,8 @@ function resupply(who) ui.set_attribute("supply", "percentage", 100) end
   Dropdown (Option), ProgressBar, Slider, Image.
 - Place with `rectAlignment` and `offsetXY`; size with `width`/`height`.
 - `self.ui` puts panels on the piece itself, with the same calls.
+- Panels set in a call are there from the next frame: `ui.set_attribute` on a new element in the same call answers
+  false.
 - Limits: 20 levels deep, 20,000 elements. The depth is a matter of taste: nothing good is drawn deeper.
 
 ## Other scripts and timers
@@ -267,15 +270,15 @@ end
 ### A turn clock for every umpire (global script)
 
 ```lua
+local function now() return "Turn " .. game.turn .. " · " .. game.time:sub(12, 16) end
+
 function on_load()
   ui.set([[<Panel rectAlignment="UpperCenter" offsetXY="0 -12" width="240" height="40" color="#151412e0">
-    <Text id="time" fontSize="18" color="#e9e5db"></Text>
+    <Text id="time" fontSize="18" color="#e9e5db">]] .. now() .. [[</Text>
   </Panel>]])
-  show()
 end
 
-function show() ui.set_attribute("time", "text", "Turn " .. game.turn .. " · " .. game.time:sub(12, 16)) end
-function on_turn() show() end
+function on_turn() ui.set_attribute("time", "text", now()) end
 ```
 
 ### Tell the mover when a piece enters a zone (global script)
@@ -309,13 +312,15 @@ end
 | Script console | Menu → Scripting → Script console (`) | prints and errors; the host and leads can run Lua |
 | Completion | any script editor | names after `self.`, `board.`…; hover for help; F1 for the reference |
 | Checks | a pack's or scenario's ⋯ → Check its scripts… | runs every script offline and lists errors |
-| Ids on hover | Settings → Tools for script makers | id, GUID and kind under the pointer |
+| Ids on hover | Menu → Scripting → Show piece ids on hover | id, GUID and kind under the pointer |
 | VS Code | API reference → **API file for VS Code…** | typed completion in VS Code |
-| Edit as a file | beside **Save and run** | the script as a `.lua` file for any editor; each save runs here, errors go to `console.log` |
+| Edit as a file | **Edit as a file**, in the Script tab and the Scripts window | the script as a `.lua` file for any editor; each save runs here, errors go to `console.log` ([where](makers.md#edit-a-script-as-a-file)) |
 
 ## When a script goes wrong
 
-- An **error** stops that call; the console shows the piece and line. The script stays loaded.
+- An **error** stops that call; the console and the umpires' Log show the piece and line. The script stays loaded.
+- An `on_update` that fails again within a second is switched off, with one Log line, until **Save and reload** in
+  the Scripts window.
 - A script that **overruns** its time or memory is switched off until reloaded.
 - Only that script stops; the table carries on.
 
@@ -325,15 +330,20 @@ Guard risky code with `pcall`.
 
 | Limit | Value |
 |---|---|
-| One call | 0.1 s |
+| One call | 1 s |
 | `on_load`, `on_save` | 10 s |
 | Memory per call | 256 MB |
 | Calls inside calls | 50 deep |
 | Coroutines per call | 64 |
+| Holders inside holders (`stow`) | 7 deep |
 
-A script cannot reach the network, files or other programs, nor load code from text (`load`, `require`, `io`,
-`debug`). Every script is checked on import, install and run. A pack from a stranger can draw on its pieces,
-never touch your PC.
+A script cannot reach files or other programs, nor load code from text (`load`, `require`, `io`, `debug`). Every
+script is checked on import, install and run. A pack from a stranger can draw on its pieces, never touch your PC.
+
+From the web a script fetches only pictures and models (`game.fetch_picture`, `self.set_web_model`, decals on web
+links), on the host and from public addresses only, never the host's PC or home network. The Log tells the umpires
+once which web host a script fetches from, and an address with `?` or `#` is fetched only as written in the script
+or typed by a person, not built while it runs.
 
 ## What converted module scripts become
 

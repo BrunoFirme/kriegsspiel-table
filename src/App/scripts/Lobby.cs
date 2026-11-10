@@ -57,7 +57,7 @@ public partial class Main
     internal void StartOver(PackageStore store, string dir, TurnRecord? setup, KTable.Server.GameServer? keep, Action<string> say)
     {
         CancelOpening();
-        if (InUse.BeingReplaced(InUse.Scenario(store.Root, dir)) is { } busy) { say($"The scenario {dir} is {busy} right now, so nothing was changed: start over once that has finished."); return; }
+        if (InUse.BeingReplaced(InUse.Scenario(store.Root, dir)) is { } busy) { say($"The scenario {dir} is {busy} right now, so nothing was changed: try again once that has finished."); return; }
         if (setup != null)
             try { ScenarioFiles.KeepSetup(store, dir, setup); }
             catch (Exception e) { say("Could not keep the setup, so nothing was changed: " + e.Message); return; }
