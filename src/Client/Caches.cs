@@ -26,7 +26,7 @@ public static class Caches
         new(CacheKind.ModuleDownloads, "Module files", "What converting modules downloaded. Converted packs keep their own copies.",
             "Converted packs keep their own copies. Converting a module again downloads it again, except what has gone from the web since.", ModuleDownloads),
         new(CacheKind.FromHosts, "Packs from hosts", "Packs and maps fetched to join other people's games",
-            "Joining a game fetches them again. A mirrored game takes from here, when you host it, the packs and maps this PC lacks: once cleared, they are gone for it.", FromHosts),
+            "Joining a game fetches them again. Hosting a mirrored game installs from here the packs and maps this PC lacks; once cleared, a mirror opens without them.", FromHosts),
         new(CacheKind.Display, "Display pictures", "Smaller copies of pictures, for drawing them on screen",
             "They are made again as the table draws them, a little slower the first time.", Display),
     ];

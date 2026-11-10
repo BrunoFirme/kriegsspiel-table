@@ -221,7 +221,8 @@ public partial class Main
         if (opened.Brought.Packs.Count > 0 || opened.Brought.MapFiles > 0) GD.Print($"[fetched] installed {opened.Brought.MapFiles} map file(s) and the pack(s) {string.Join(", ", opened.Brought.Packs)} from what this PC fetched while joined");
         if (opened.Brought.Packs.Count > 0)
         {
-            var packs = $"Installed from what this PC fetched while joined: {string.Join(", ", opened.Brought.Packs)}.";
+            var names = opened.Brought.Packs.Select(id => server.Store?.Pack(id)?.Name is { Length: > 0 } name ? name : id);
+            var packs = $"Installed from what this PC fetched while joined: {string.Join(", ", names)}.";
             _recoveryReport = _recoveryReport == null ? packs : _recoveryReport + " " + packs;
         }
         if (server.MissingPacks.Count > 0)
