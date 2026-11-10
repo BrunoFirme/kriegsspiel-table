@@ -24,9 +24,9 @@ public static partial class MarkdownView
     public const int CodeSize = 13;
     public const int Column = 760;
 
-    static Font? _mono, _italic;
+    static Font? _mono;
     public static Font Mono() => _mono ??= new SystemFont { FontNames = new[] { "Cascadia Mono", "Consolas", "DejaVu Sans Mono", "Noto Sans Mono" } };
-    static Font Italic() => _italic ??= new SystemFont { FontNames = new[] { "Segoe UI", "Inter", "Helvetica Neue", "Arial", "Noto Sans" }, FontItalic = true };
+    static Font Italic() => Ui.SansItalic();
 
     static string Hex(Color c) => "#" + c.ToHtml(c.A < 0.999f);
     static readonly string Link = Hex(Colors.White);

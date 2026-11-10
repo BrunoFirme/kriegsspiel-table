@@ -26,10 +26,17 @@ public static class Ui
 
     const float Rest = 0.06f, Hover = 0.10f, On = 0.15f;
 
-    public static Font Sans() => _sans ??= new SystemFont { FontNames = new[] { "Segoe UI", "Inter", "Helvetica Neue", "Arial", "Noto Sans" } };
-    public static Font SansStrong() => _sansStrong ??= new SystemFont { FontNames = new[] { "Segoe UI Semibold", "Segoe UI", "Inter", "Helvetica Neue", "Arial", "Noto Sans" }, FontWeight = 600 };
-    public static Font Serif() => _serif ??= new SystemFont { FontNames = new[] { "Georgia", "Cambria", "Book Antiqua", "Times New Roman", "Noto Serif" } };
-    static Font? _sans, _sansStrong, _serif;
+    const string UiFonts = "res://fonts/ui/";
+    static readonly string[] SystemSans = { "Segoe UI", "Helvetica Neue", "Arial", "Noto Sans" };
+    static readonly string[] SystemSerif = { "Georgia", "Cambria", "Times New Roman", "Noto Serif" };
+
+    public static Font Sans() => _sans ??= Bundled("Barlow-Regular.ttf", new SystemFont { FontNames = SystemSans });
+    public static Font SansStrong() => _sansStrong ??= Bundled("Barlow-SemiBold.ttf", new SystemFont { FontNames = SystemSans, FontWeight = 600 });
+    public static Font SansItalic() => _sansItalic ??= Bundled("Barlow-Italic.ttf", new SystemFont { FontNames = SystemSans, FontItalic = true });
+    public static Font Serif() => _serif ??= Bundled("OldStandard-Regular.ttf", new SystemFont { FontNames = SystemSerif });
+    static Font? _sans, _sansStrong, _sansItalic, _serif;
+
+    static Font Bundled(string file, SystemFont system) => ResourceLoader.Load<FontFile>(UiFonts + file) is { } face ? face : system;
 
     public static StyleBoxFlat Box(Color bg, int radius = 3, int mx = 8, int my = 3) => new()
     {
