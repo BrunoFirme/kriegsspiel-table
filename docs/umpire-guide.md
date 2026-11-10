@@ -359,7 +359,7 @@ The ⋯ after the scenario's name opens its properties: **Game** (password, poin
 ## Play by post
 
 - Close the game any time; host it again to go on. The password and the people let in stay.
-- **To hand it over:** export the scenario and set **Saves** to **The game in play** (or **Every save**). The
+- **To hand it over:** export the scenario and set **Saves** to **The save on the table** (or **Every save**). The
   other umpire resumes where you left off.
 - **A turn went wrong:** **History** → the turn → **Load the end of turn N…** (host). The table goes back for
   everyone and play goes on in a new folder of saves; the old one stays whole.

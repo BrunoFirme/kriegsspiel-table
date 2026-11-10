@@ -127,7 +127,7 @@ public partial class ExportDialog : ConfirmationDialog
                     var table = tablePick == null ? WorkshopContent.TableMode.AsItStands : (WorkshopContent.TableMode)tablePick.GetSelectedId();
                     var bytes = WorkshopContent.ExportFile(_store, _kind, _id, m, f, withSaves, table);
                     var held = table switch { WorkshopContent.TableMode.MapOnly => ": the map only", WorkshopContent.TableMode.Setup => ": the setup", _ => "" };
-                    Done?.Invoke($"Saved {Path.GetFileName(f)} ({Mb(bytes)}){held}{withSaves switch { SavesMode.InPlay => " with the game in play", SavesMode.All => " with every save", _ => "" }}.");
+                    Done?.Invoke($"Saved {Path.GetFileName(f)} ({Mb(bytes)}){held}{withSaves switch { SavesMode.InPlay => " with the save on the table", SavesMode.All => " with every save", _ => "" }}.");
                 }
                 catch (Exception e) { Done?.Invoke("Export failed: " + e.Message); }
             };
