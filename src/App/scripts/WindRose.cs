@@ -69,7 +69,7 @@ public partial class WindRose : Control
             float len = i % 4 == 0 ? 9 : i % 2 == 0 ? 6 : 3;
             DrawLine(c + dir * (r - len), c + dir * r, i % 4 == 0 ? ink : faint, 1.2f, true);
         }
-        var font = ThemeDB.FallbackFont;
+        var font = Ui.Sans();
         int fs = 12;
         foreach (var (letter, deg) in new[] { ("N", 0f), ("E", 90f), ("S", 180f), ("W", 270f) })
         {

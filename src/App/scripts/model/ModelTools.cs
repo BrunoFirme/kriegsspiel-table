@@ -285,7 +285,7 @@ internal sealed class ModelTools
             var side = new Vector2(-dir.Y, dir.X) * (ArrowHead / 2);
             o.DrawLine(c, tip, col, AxisWidth, true);
             o.DrawColoredPolygon(new[] { tip + dir * ArrowHead, tip + side, tip - side }, col);
-            o.DrawString(ThemeDB.FallbackFont, tip + dir * (ArrowHead + 6) + new Vector2(-4, 5), "XYZ"[i].ToString(), HorizontalAlignment.Left, -1, 13, col);
+            o.DrawString(Ui.Sans(), tip + dir * (ArrowHead + 6) + new Vector2(-4, 5), "XYZ"[i].ToString(), HorizontalAlignment.Left, -1, 13, col);
         }
         o.DrawCircle(c, 4, Colors.White);
     }

@@ -37,7 +37,20 @@ public static class Ui
     public static Font Serif() => _serif ??= Bundled("OldStandard-Regular.ttf", new SystemFont { FontNames = SystemSerif });
     static Font? _sans, _sansStrong, _sansItalic, _serif;
 
-    static Font Bundled(string file, SystemFont system) => ResourceLoader.Load<FontFile>(UiFonts + file) is { } face ? face : system;
+    static Font Bundled(string file, SystemFont system) => ResourceLoader.Load<FontFile>(UiFonts + file, null, ResourceLoader.CacheMode.Ignore) is { } face ? face : system;
+
+    public static Font TableSans() => _tableSans ??= ResourceLoader.Load<FontFile>(UiFonts + "Barlow-Regular.ttf") is { } face ? face : new SystemFont { FontNames = SystemSans };
+    static Font? _tableSans;
+
+    internal static void DrawFontsAt(float scale)
+    {
+        bool betweenPixels = !Mathf.IsEqualApprox(scale, Mathf.Round(scale));
+        foreach (var font in new[] { Sans(), SansStrong(), SansItalic(), Serif() })
+        {
+            if (font is FontFile face) face.MultichannelSignedDistanceField = betweenPixels;
+            if (font is SystemFont system) system.MultichannelSignedDistanceField = betweenPixels;
+        }
+    }
 
     public static StyleBoxFlat Box(Color bg, int radius = 3, int mx = 8, int my = 3) => new()
     {
@@ -70,7 +83,7 @@ public static class Ui
     {
         if (_installed) return;
         _installed = true;
-        ThemeDB.FallbackFont = Sans();
+        ThemeDB.FallbackFont = TableSans();
         ThemeDB.FallbackFontSize = 13;
         ThemeDB.GetDefaultTheme().MergeWith(Theme());
         if (Engine.GetMainLoop() is SceneTree tree) tree.NodeAdded += n => { if (n is Window { ForceNative: false } w) w.TransparentBg = true; };
@@ -727,6 +740,7 @@ public static class Ui
         if (Mathf.IsEqualApprox(_scaled.ContentScaleFactor, scale)) return;
         _scaled.ContentScaleFactor = scale;
         _scaled.OversamplingOverride = scale;
+        DrawFontsAt(scale);
     }
 
     public static void SwallowWheel(Control panel) =>
