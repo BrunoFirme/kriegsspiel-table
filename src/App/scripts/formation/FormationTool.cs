@@ -180,9 +180,12 @@ sealed class FormationTool
     string Relay(bool keepFront)
     {
         var units = Units();
-        if (units.Count < 2 || Mine(units) is not { } mine || Formations.Find(mine.Kind) is not { } kind) return "";
-        Lay(units, kind, Centre(units), mine.Facing, keepFront ? mine.Front : null, mine.Path, frontAt: false, mine);
-        return TooShort(units, mine.Path);
+        if (units.Count < 2 || _formed is not { } formed || !formed.Ids.SetEquals(units.Select(n => n.Piece.Id)) || Formations.Find(formed.Kind) is not { } kind) return "";
+        var mine = Mine(units);
+        double facing = mine?.Facing ?? Formations.Facing(units.Select(RotOf)) ?? units[0].Piece.RotDeg;
+        var path = mine?.Path ?? (kind.AlongLine ? Straight(units, facing) : null);
+        Lay(units, kind, Centre(units), facing, keepFront ? mine?.Front : null, path, frontAt: false, formed);
+        return TooShort(units, path);
     }
 
     List<(PieceNode Node, Vec2 Pos, double Rot)> Plan(List<PieceNode> units, FormationKind kind, Vec2 at, double facing, int? front, IReadOnlyList<Vec2>? path,

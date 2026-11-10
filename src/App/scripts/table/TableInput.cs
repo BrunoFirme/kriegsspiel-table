@@ -163,7 +163,7 @@ sealed class TableInput
             _ranges.Wheel(f);
             return;
         }
-        if (_c.Tool is not (Tool.Formation or Tool.Decal) && WheelOnSelection(mb.Position) && !mb.AltPressed)
+        if (_c.Tool != Tool.Decal && WheelOnSelection(mb.Position) && !mb.AltPressed)
         {
             double step = (up ? -1 : 1) * (mb.ShiftPressed ? 0.5 : mb.CtrlPressed ? 2 : 10);
             if (_hand.Holding) _hand.Rotate(step);

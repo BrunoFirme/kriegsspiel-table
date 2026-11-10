@@ -122,7 +122,7 @@ groups them, and names what each was used for, from the phalanx to the tank plat
   it; the line bends at most 60° in a piece's width, so a sharp corner comes out rounded rather than folded.
 - **Q / E** wheel the whole formation (Shift 1°); a drawn stretch turns whole, keeping its shape. **+ / −** set the
   spacing (0 is shoulder to shoulder), a drawn stretch keeping its line; **[ ]** the ranks of a line, or how many
-  abreast in a column. The wheel zooms, as everywhere.
+  abreast in a column. The wheel over the pieces turns each in place, as everywhere; off them it zooms.
 - Drag one of the pieces to carry the formation as it stands.
 
 ### Pieces

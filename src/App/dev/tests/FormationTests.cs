@@ -247,7 +247,7 @@ static class FormationTests
     }
 
     [NodeTest]
-    static async Task In_the_formations_tool_the_wheel_zooms_over_the_pieces_and_the_keys_set_spacing_and_ranks(TestRunner r)
+    static async Task In_the_formations_tool_the_wheel_over_the_pieces_turns_them_in_place_and_the_keys_set_spacing_and_ranks(TestRunner r)
     {
         var t = OfflineTable.Make(r, pieces: 6);
         await r.Frames(2);
@@ -255,13 +255,6 @@ static class FormationTests
         t.Table.Selection.Set(Six);
         t.Table.Forms.Form(Formations.Find("line")!);
         await Settled(r, t);
-        var over = Screen(t, At(t, "p3"));
-        float far = t.Table.Rig.ZoomGoal;
-        foreach (var ctrl in new[] { false, true })
-            t.Table.Router.OnMouseButton(new InputEventMouseButton { ButtonIndex = MouseButton.WheelUp, Pressed = true, Position = over, CtrlPressed = ctrl, ShiftPressed = ctrl });
-        await r.Frame();
-        Check.That(t.Table.Rig.ZoomGoal < far, $"the wheel zooms in, plain or with Ctrl and Shift: {far} → {t.Table.Rig.ZoomGoal}");
-        Check.That(Six.All(id => Math.Abs(t.S.View.Find(U, id)!.RotDeg - 0) < 1e-6 || Math.Abs(t.S.View.Find(U, id)!.RotDeg - 360) < 1e-6), "and turns nothing");
         double gap = t.Table.Forms.Gap;
         void Press(Key key) => t.Table.Keys.OnKey(new InputEventKey { Keycode = key, Pressed = true });
         Press(Key.Equal);
@@ -269,5 +262,22 @@ static class FormationTests
         Press(Key.Bracketright);
         await Settled(r, t);
         Check.Equal(2, Six.Select(id => Math.Round(At(t, id).Z, 4)).Distinct().Count(), "] puts them in two ranks");
+        var before = Six.ToDictionary(id => id, id => At(t, id));
+        var over = Screen(t, At(t, "p3"));
+        float far = t.Table.Rig.ZoomGoal;
+        void Wheel(bool alt) => t.Table.Router.OnMouseButton(new InputEventMouseButton { ButtonIndex = MouseButton.WheelDown, Pressed = true, Position = over, AltPressed = alt });
+        Wheel(alt: false);
+        t.Table.Poses.Flush();
+        await r.Frame();
+        Check.That(Six.All(id => Math.Abs(Mathf.Wrap((float)(t.S.View.Find(U, id)!.RotDeg - 10), -180, 180)) < 1e-3), "the wheel over the pieces turns each of them 10° a notch");
+        Check.That(Six.All(id => (At(t, id) - before[id]).Length < 1e-6), "in place, none moves");
+        Check.That(t.Table.Rig.ZoomGoal == far, "and the view does not zoom");
+        Wheel(alt: true);
+        await r.Frame();
+        Check.That(t.Table.Rig.ZoomGoal > far, $"Alt+wheel zooms instead: {far} → {t.Table.Rig.ZoomGoal}");
+        Press(Key.Bracketright);
+        await Settled(r, t);
+        var (_, back) = Formations.Axes(10);
+        Check.Equal(3, Six.Select(id => Math.Round(At(t, id).X * back.X + At(t, id).Z * back.Z, 3)).Distinct().Count(), "] after the turn still steps the ranks: three, facing as the pieces were turned");
     }
 }
