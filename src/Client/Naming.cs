@@ -1,3 +1,5 @@
+using System.Globalization;
+using System.Text;
 using KTable.Core;
 using KTable.Core.Model;
 
@@ -13,11 +15,26 @@ public static class Naming
         return slug.Length > max ? slug[..max].Trim('-') : slug;
     }
 
-    public static string ScenarioDir(string name) => Slug(name, "scenario", 60);
+    static readonly Dictionary<char, string> Spelled = new()
+    {
+        ['ß'] = "ss", ['æ'] = "ae", ['Æ'] = "ae", ['œ'] = "oe", ['Œ'] = "oe", ['ø'] = "o", ['Ø'] = "o",
+        ['ł'] = "l", ['Ł'] = "l", ['đ'] = "d", ['Đ'] = "d", ['ð'] = "d", ['Ð'] = "d", ['þ'] = "th", ['Þ'] = "th", ['ı'] = "i",
+    };
 
-    public static string UserPackId(string name) => PackManifest.UserPrefix + Slug(name, "my-pieces", 50);
+    public static string Plain(string name)
+    {
+        var plain = new StringBuilder(name.Length);
+        foreach (var c in name.Normalize(NormalizationForm.FormD))
+            if (Spelled.TryGetValue(c, out var spelled)) plain.Append(spelled);
+            else if (CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark) plain.Append(c);
+        return plain.ToString().Normalize(NormalizationForm.FormC);
+    }
 
-    public static string PieceSlug(string name) => Slug(name, "piece", 40);
+    public static string ScenarioDir(string name) => Slug(Plain(name), "scenario", 60);
+
+    public static string UserPackId(string name) => PackManifest.UserPrefix + Slug(Plain(name), "my-pieces", 50);
+
+    public static string PieceSlug(string name) => Slug(Plain(name), "piece", 40);
 
     public static string NewPieceId(PackManifest pack, string name)
     {

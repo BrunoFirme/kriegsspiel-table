@@ -9,7 +9,7 @@ public class NamingTests
     {
         Assert.Equal("the-feud-pogue-vs-boggs", Naming.ScenarioDir("  The Feud: Pogue vs. Boggs!  "));
         Assert.Equal("scenario", Naming.ScenarioDir("¡¿ — ?!"));
-        Assert.Equal("caf-r-sum", Naming.ScenarioDir("Café Résumé"));
+        Assert.Equal("cafe-resume", Naming.ScenarioDir("Café Résumé"));
         Assert.Equal(new string('a', 60), Naming.ScenarioDir(new string('a', 70)));
         Assert.Equal(new string('a', 59), Naming.ScenarioDir(new string('a', 59) + "-b"));
         Assert.Equal("user.my-pieces", Naming.UserPackId("***"));
@@ -17,6 +17,17 @@ public class NamingTests
         Assert.Equal(PackManifest.UserPrefix + new string('x', 50), Naming.UserPackId(new string('X', 51)));
         Assert.Equal("piece", Naming.PieceSlug(""));
         Assert.Equal(new string('z', 39), Naming.PieceSlug(new string('z', 39) + " z"));
+    }
+
+    [Fact]
+    public void Accented_and_joined_letters_become_their_plain_letters_in_ids()
+    {
+        Assert.Equal("koniggratz-1866", Naming.ScenarioDir("Königgrätz 1866"));
+        Assert.Equal("user.koniggratz-1866", Naming.UserPackId("Königgrätz 1866"));
+        Assert.Equal("grosse-strasse", Naming.PieceSlug("Große Straße"));
+        Assert.Equal("lodz-aero-oresund", Naming.ScenarioDir("Łódź, Ærø, Øresund"));
+        Assert.Equal("scenario", Naming.ScenarioDir("東京"));
+        Assert.Equal("caf-r-sum", Naming.Slug("Café Résumé", "x", 60));
     }
 
     [Fact]
