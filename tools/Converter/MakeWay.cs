@@ -8,7 +8,10 @@ public sealed class MakeWay
     readonly SaveStore _saves;
     readonly HashSet<string> _cleared = new(StringComparer.OrdinalIgnoreCase);
     readonly List<string> _packs = new();
+    readonly Dictionary<string, string> _trashedPacks = new(StringComparer.OrdinalIgnoreCase);
     InstallJournal? _journal;
+
+    public string? FormerPack(string id) => _trashedPacks.TryGetValue(id, out var entry) ? SaveStore.PackInTrashEntry(entry) : null;
 
     public MakeWay(Config cfg) { _root = cfg.Output; _saves = SaveStore.ForRoot(_root); }
 
@@ -30,6 +33,7 @@ public sealed class MakeWay
         }
         var entry = _journal.MakeWay(kind, id, Repeatable.UtcNow);
         if (entry == null) return null;
+        if (kind == "pack") _trashedPacks[id] = entry;
         rep.Note($"The {kind} {id} that was already here went to the trash first, whole ({Path.GetFileName(entry)}): restore it from there within {SaveStore.TrashDays} days if the new one is not what you wanted.");
         Console.WriteLine($"TRASHED {entry}");
         return entry;

@@ -62,6 +62,7 @@ public sealed partial class GameServer
         if (Store == null) return;
         Store.LoadPacks(state.Packs);
         BringPacksOfUnknownPieces(state);
+        foreach (var p in state.Layers.Values.SelectMany(l => l).SelectMany(p => p.AllStowed().Prepend(p))) p.Def = Store.CurrentId(p.Def);
         var unknownFrom = state.Layers.Values.SelectMany(l => l).Where(p => Store.Def(p.Def) == null).Select(p => state.PackNamedBy(p.Def)).ToHashSet();
         if (!unknownFrom.Contains(null)) state.Packs.RemoveAll(p => Store.Pack(p) == null && !unknownFrom.Contains(p));
         MissingPacks = state.Packs.Where(p => Store.Pack(p) == null).ToList();
@@ -74,7 +75,7 @@ public sealed partial class GameServer
         foreach (var id in Store!.ListPackIds().Where(id => !state.Packs.Contains(id)).OrderBy(id => id, StringComparer.Ordinal).ToList())
         {
             var manifest = BestEffort.Read(() => Json.Load<PackManifest>(Path.Combine(Store.PackageDir(id), "pack.json")), (PackManifest?)null);
-            if (manifest == null || !manifest.Pieces.Any(d => unknown.Contains(d.Id)) || Store.Pack(id) == null) continue;
+            if (manifest == null || !manifest.Pieces.Any(d => unknown.Contains(d.Id) || (d.Formerly ?? []).Any(unknown.Contains)) || Store.Pack(id) == null) continue;
             state.Packs.Add(id);
             unknown.RemoveWhere(d => Store.Def(d) != null);
             if (unknown.Count == 0) return;

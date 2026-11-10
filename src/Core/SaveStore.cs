@@ -449,6 +449,8 @@ public sealed partial class SaveStore
         return entry;
     }
 
+    public static string PackInTrashEntry(string entry) => Path.Combine(entry, "pack");
+
     internal string NewTrashEntry(string name, DateTime nowUtc)
     {
         var entry = Path.Combine(TrashDir, $"{Stamp(nowUtc)} {name}");

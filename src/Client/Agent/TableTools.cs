@@ -130,7 +130,8 @@ public sealed partial class TableTools
         foreach (var packId in s.View.Packs)
         {
             if (s.Store.Pack(packId) is not { } pack) continue;
-            kinds.AddRange(pack.Pieces.Where(d => filter.Length == 0 || d.Name.Contains(filter, StringComparison.OrdinalIgnoreCase) || d.Id.Contains(filter, StringComparison.OrdinalIgnoreCase))
+            kinds.AddRange(pack.Pieces.Where(d => !d.Retired)
+                .Where(d => filter.Length == 0 || d.Name.Contains(filter, StringComparison.OrdinalIgnoreCase) || d.Id.Contains(filter, StringComparison.OrdinalIgnoreCase))
                 .Select(d => (d, pack.Name)));
         }
         var (page, head) = Paging.Page(kinds, a, (int)Math.Clamp(a.Num("limit") ?? ListLimit, 1, ListMost), "kinds");

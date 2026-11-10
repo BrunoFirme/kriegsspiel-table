@@ -1,4 +1,4 @@
-format 35
+format 36
 type AccessChanged object
   access: GameAccess
 type AddBoard object
@@ -676,6 +676,7 @@ type PieceDef object
   effect: EffectDef
   faces: List<DieFace>
   finish: string
+  formerly: List<string>
   heightScale: double?
   holds: bool
   id: string
@@ -695,6 +696,7 @@ type PieceDef object
   outline: List<List<Vec2>>
   pageOffset: int
   parts: List<PartDef>
+  retired: bool
   script: string
   scriptHash: string
   scriptState: string
@@ -1341,6 +1343,7 @@ type SetState object
   id: string
   layer: string
   leaving: string
+  looks: List<PieceLook>
   seq: long
   state: int
   undoFrom: long

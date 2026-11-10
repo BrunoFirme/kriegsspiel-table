@@ -169,7 +169,7 @@ sealed class PiecesPanel : HudPart
         var q = Search.Text.Trim();
         var source = _packs.Where(p => packId == "" || p.Id == packId);
         var hearted = Cfg.Favourites.ToHashSet();
-        var defs = source.SelectMany(p => p.Pieces.Select(d => (d, p)))
+        var defs = source.SelectMany(p => p.Pieces.Where(d => !d.Retired).Select(d => (d, p)))
             .Where(x => !Cfg.FavouritesOnly || hearted.Contains(x.d.Id))
             .Where(x => q.Length == 0 || x.d.Name.Contains(q, StringComparison.OrdinalIgnoreCase) || x.d.Tags.Any(t => t.Contains(q, StringComparison.OrdinalIgnoreCase)) || x.p.Name.Contains(q,
                 StringComparison.OrdinalIgnoreCase))

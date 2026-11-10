@@ -256,6 +256,8 @@ public sealed class PieceDef : IJsonOnDeserialized
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public FaceBox? NameBox { get; set; }
     public string? Script { get; set; }
     public string? ScriptHash { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<string>? Formerly { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool Retired { get; set; }
 
     public string? ScriptFor(PieceInstance p) => p.Script ?? (p.Looks != null && p.State >= 0 && p.State < States.Count ? States[p.State].Script : null) ?? Script;
     public string? ScriptState { get; set; }

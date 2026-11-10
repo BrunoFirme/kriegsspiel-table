@@ -18,6 +18,7 @@ internal sealed class PieceList
     bool _sizedByHand;
     int _listGen;
     const int SearchFrom = 9, TileWidth = 74, TileHeight = 96, ListPad = 12, ListMax = 320;
+    const string RetiredNote = "Gone from the module at its last import: kept so pieces already placed still show, not offered in Pieces";
 
     public PieceList(PieceStudio s) => _s = s;
 
@@ -78,7 +79,8 @@ internal sealed class PieceList
         {
             int idx = _list.AddItem(d.Name, Ui.LoadingIcon);
             _list.SetItemMetadata(idx, d.Id);
-            _list.SetItemTooltip(idx, $"{d.Name}\n{d.Size.W:0.##} × {d.Size.H:0.##} u · {ShapeWord(d)}{(d.Script != null ? " · scripted" : "")}");
+            _list.SetItemTooltip(idx, $"{d.Name}\n{d.Size.W:0.##} × {d.Size.H:0.##} u · {ShapeWord(d)}{(d.Script != null ? " · scripted" : "")}{(d.Retired ? "\n" + RetiredNote : "")}");
+            if (d.Retired) _list.SetItemCustomFgColor(idx, Ui.Muted);
             if (sel == d) _list.Select(idx);
             if (d.Kind == "model" && d.Mesh != null && ModelThumb(d.Mesh) is { } mt) { _list.SetItemIcon(idx, mt); continue; }
             if (EffectFx.ListIcon(d) is { } fxIcon) { _list.SetItemIcon(idx, fxIcon); continue; }

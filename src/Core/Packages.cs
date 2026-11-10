@@ -63,8 +63,15 @@ public sealed class PackageStore
         _damaged.Remove(id);
         _packs[id] = p;
         foreach (var d in p.Pieces) _defs.TryAdd(d.Id, (d, p));
+        foreach (var d in p.Pieces)
+            foreach (var old in d.Formerly ?? []) _formerly.TryAdd(old, d.Id);
         return p;
     }
+
+    readonly Dictionary<string, string> _formerly = new();
+
+    public string CurrentId(string defId) =>
+        !_defs.ContainsKey(defId) && _formerly.TryGetValue(defId, out var now) && _defs.ContainsKey(now) ? now : defId;
 
     readonly Dictionary<string, string> _damaged = new();
 
@@ -77,14 +84,18 @@ public sealed class PackageStore
         _damaged.Remove(id);
         if (!_packs.Remove(id, out var p)) return;
         foreach (var d in p.Pieces)
+        {
             if (_defs.TryGetValue(d.Id, out var x) && x.pack == p) _defs.Remove(d.Id);
+            foreach (var old in d.Formerly ?? [])
+                if (_formerly.TryGetValue(old, out var now) && now == d.Id) _formerly.Remove(old);
+        }
     }
 
     public void RegisterDef(PackManifest pack, PieceDef def) => _defs[def.Id] = (def, pack);
     public void UnregisterDef(string defId) => _defs.Remove(defId);
 
-    public PieceDef? Def(string defId) => _defs.TryGetValue(defId, out var x) ? x.def : null;
-    public PackManifest? PackOfDef(string defId) => _defs.TryGetValue(defId, out var x) ? x.pack : null;
+    public PieceDef? Def(string defId) => _defs.TryGetValue(CurrentId(defId), out var x) ? x.def : null;
+    public PackManifest? PackOfDef(string defId) => _defs.TryGetValue(CurrentId(defId), out var x) ? x.pack : null;
 
     public string? AssetPath(PackManifest pack, string? hash)
     {

@@ -85,6 +85,7 @@ try
                 built.M.Source.Authors = shared.Authors;
                 if (shared.License.Length > 0) built.M.Source.License = shared.License;
                 built.Save();
+                FormerKinds.Carry(built.Dir, way.FormerPack(sid), report);
                 Progress.Stage("finish");
                 var pr = Path.Combine(cfg.Output, sid, "import-report.md");
                 report.Write(pr, "restore " + sid);
@@ -121,6 +122,7 @@ try
             };
             var scenario = await new ScenarioBuilder(cfg, assets, report, way).Build(save);
             PackFold.Into(cfg.Output, packId, plan.Packs[1], scenario, slug);
+            FormerKinds.Carry(Path.Combine(cfg.Output, packId), way.FormerPack(packId), report);
             Progress.Stage("finish");
             var importReport = Path.Combine(cfg.Output, "scenarios", slug, "import-report.md");
             report.Write(importReport, "import " + packId);
