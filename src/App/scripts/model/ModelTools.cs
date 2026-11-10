@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Godot;
+using KTable.Client.Studio;
 
 namespace KTable.App;
 
@@ -164,7 +165,8 @@ internal sealed class ModelTools
             case "fill":
                 if (hit == null || _m.Views[hit.Value.part].Fixed) return;
                 _m.BeginStroke();
-                FillPart(_m.Views[hit.Value.part]);
+                if (mb.ShiftPressed) FillPart(_m.Views[hit.Value.part]);
+                else FillRegion(_m.Views[hit.Value.part], hit.Value.tri, hit.Value.u, hit.Value.v);
                 _m.EndStroke();
                 break;
             case "pick":
@@ -386,6 +388,9 @@ internal sealed class ModelTools
         sight.Look(new Rect2I(x0, y0, x1 - x0 + 1, y1 - y0 + 1));
         bool erase = _m.Tool == "erase";
         var ink = _m.Ink;
+        var under = _m.Views.TryGetValue(hit.part, out var hv) && !hv.Fixed ? hv : null;
+        int at0 = under == null ? -1 : TexelIndex(under, hit.tri, hit.u, hit.v);
+        uint was = at0 < 0 ? 0 : BitConverter.ToUInt32(under!.Paint, at0);
         foreach (var v in _m.Drawn)
         {
             if (v.Fixed) continue;
@@ -400,10 +405,44 @@ internal sealed class ModelTools
                 var centre = inv * hit.world;
                 float scale = (xf.Basis.Scale.X + xf.Basis.Scale.Y + xf.Basis.Scale.Z) / 3;
                 float r = R / Mathf.Max(1e-6f, scale);
-                any |= Dab(v, centre, r, (t, p) => sight.Sees(slot, t, xf * p), erase, ink, _m.P.Soft);
+                any |= Dab(v, centre, r, (t, p) => sight.Sees(slot, t, xf * p), erase, ink, _m.P.ModelSoft);
             }
             if (any) v.Repaint();
         }
+        if (at0 < 0 || BitConverter.ToUInt32(under!.Paint, at0) != was) return;
+        Touch(under, at0, 1, erase, ink);
+        under.Repaint();
+    }
+
+    static (int x, int y) TexelAt(ModelPartView view, int tri, float u, float v)
+    {
+        var d = view.Data;
+        var uv = d.UV[tri * 3] * (1 - u - v) + d.UV[tri * 3 + 1] * u + d.UV[tri * 3 + 2] * v;
+        return (Math.Clamp((int)(uv.X * view.W), 0, view.W - 1), Math.Clamp((int)(uv.Y * view.H), 0, view.H - 1));
+    }
+
+    static int TexelIndex(ModelPartView view, int tri, float u, float v)
+    {
+        var (x, y) = TexelAt(view, tri, u, v);
+        return (y * view.W + x) * 4;
+    }
+
+    static void Touch(ModelPartView v, int o, float f, bool erase, Color ink)
+    {
+        if (erase)
+        {
+            float k = 1 - f;
+            v.Paint[o] = (byte)(v.Paint[o] * k);
+            v.Paint[o + 1] = (byte)(v.Paint[o + 1] * k);
+            v.Paint[o + 2] = (byte)(v.Paint[o + 2] * k);
+            v.Paint[o + 3] = (byte)(v.Paint[o + 3] * k);
+            return;
+        }
+        float alpha = f * ink.A, keep = 1 - alpha;
+        v.Paint[o] = (byte)Math.Min(255, ink.R * 255 * alpha + v.Paint[o] * keep);
+        v.Paint[o + 1] = (byte)Math.Min(255, ink.G * 255 * alpha + v.Paint[o + 1] * keep);
+        v.Paint[o + 2] = (byte)Math.Min(255, ink.B * 255 * alpha + v.Paint[o + 2] * keep);
+        v.Paint[o + 3] = (byte)Math.Min(255, 255 * alpha + v.Paint[o + 3] * keep);
     }
 
     static bool Dab(ModelPartView v, Vector3 centre, float r, Func<int, Vector3, bool> seen, bool erase, Color ink, float soft)
@@ -427,26 +466,9 @@ internal sealed class ModelTools
                 var p = a * w0 + b * w1 + c * w2;
                 float d = (p - centre).Length() / r;
                 if (d >= 1 || !seen(tri, p)) return;
-                float edge = Mathf.Clamp(soft, 0.02f, 1);
-                float f = d < 1 - edge ? 1 : 1 - (d - (1 - edge)) / edge;
-                float alpha = f * ink.A;
-                int o = (y * v.W + x) * 4;
-                if (erase)
-                {
-                    float k = 1 - f;
-                    v.Paint[o] = (byte)(v.Paint[o] * k);
-                    v.Paint[o + 1] = (byte)(v.Paint[o + 1] * k);
-                    v.Paint[o + 2] = (byte)(v.Paint[o + 2] * k);
-                    v.Paint[o + 3] = (byte)(v.Paint[o + 3] * k);
-                }
-                else
-                {
-                    float k = 1 - alpha;
-                    v.Paint[o] = (byte)Math.Min(255, ink.R * 255 * alpha + v.Paint[o] * k);
-                    v.Paint[o + 1] = (byte)Math.Min(255, ink.G * 255 * alpha + v.Paint[o + 1] * k);
-                    v.Paint[o + 2] = (byte)Math.Min(255, ink.B * 255 * alpha + v.Paint[o + 2] * k);
-                    v.Paint[o + 3] = (byte)Math.Min(255, 255 * alpha + v.Paint[o + 3] * k);
-                }
+                float edge = Mathf.Clamp(soft, 0, 1);
+                float f = d <= 1 - edge ? 1 : (1 - d) / edge;
+                Touch(v, (y * v.W + x) * 4, f, erase, ink);
                 any = true;
             });
         }
@@ -489,12 +511,16 @@ internal sealed class ModelTools
         v.Repaint();
     }
 
+    void FillRegion(ModelPartView v, int tri, float u, float w)
+    {
+        var (r, g, b, a) = UvPaint.Premultiplied(_m.Ink.R, _m.Ink.G, _m.Ink.B, _m.Ink.A);
+        if (UvRegion.Fill(v.Surface(), v.Paint, v.Base.GetData(), new RegionSeed(tri, u, w), _m.P.ModelFillMatch, _m.P.ModelFillBend, r, g, b, a) > 0) v.Repaint();
+    }
+
     void PickAt((string part, int tri, Vector3 local, Vector3 world, float u, float v) hit)
     {
         var view = _m.Views[hit.part];
-        var d = view.Data;
-        var uv = d.UV[hit.tri * 3] * (1 - hit.u - hit.v) + d.UV[hit.tri * 3 + 1] * hit.u + d.UV[hit.tri * 3 + 2] * hit.v;
-        int x = Math.Clamp((int)(uv.X * view.W), 0, view.W - 1), y = Math.Clamp((int)(uv.Y * view.H), 0, view.H - 1);
+        var (x, y) = TexelAt(view, hit.tri, hit.u, hit.v);
         var bc = view.Base.GetPixel(x, y);
         int o = (y * view.W + x) * 4;
         float a = view.Paint[o + 3] / 255f;

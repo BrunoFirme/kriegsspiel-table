@@ -25,7 +25,7 @@ internal sealed partial class ModelPanels
             ("move", "move", "Move shapes   (V)\nDrag an arrow to move the chosen shape along X, Y or Z, or drag a shape along the ground (Shift: up and down). Its numbers are in Layers."),
             ("paint", "brush", "Paint on the model   (B)\n= and − or Ctrl+wheel size the brush. Alt-click takes a colour off the model."),
             ("erase", "erase", "Rub out paint   (E)\nThe model's own picture shows again."),
-            ("fill", "fill", "Paint a whole shape   (G)\nClick a shape: all of it in the ink."),
+            ("fill", "fill", "Fill   (G)\nClick the model: the patch of that colour around the click takes the ink, over the seams. Shift-click paints the whole shape."),
             ("pick", "pick", "Colour picker   (I)"),
             ("decal", "image", "Decal   (D)\nA picture pressed onto the model where you hold it, like a transfer: over the seams, onto what is in front. Q and E turn it (Shift by 1°), = and − or Ctrl+wheel size it, Ctrl+V takes the clipboard's picture."),
         })
@@ -58,7 +58,7 @@ internal sealed partial class ModelPanels
         "move" => "Drag an arrow to move along X, Y or Z · drag a shape along the ground, Shift up and down · a joined shape moves whole · 1 3 7 front, right, top",
         "paint" => "Drag to paint on the model; the stroke runs round it and over its seams · = and − or Ctrl+wheel size the brush · Alt-click takes a colour",
         "erase" => "Drag to take the paint off; the model's own picture shows again",
-        "fill" => "Click a shape: all of it takes the colour (the rubber brings its picture back)",
+        "fill" => "Click to fill the patch of that colour, up to other colours and the bends past the angle · Shift-click paints the whole shape · the rubber brings its picture back",
         "pick" => "Click the model: that colour becomes the ink",
         "decal" => !_m.Decal.Holds ? "Choose a picture in the panel, then click the model to press it on like a transfer" : $"Click to press the picture on · turned {_m.Decal.Turn:0.#}° · Q and E turn it, Shift by 1° · = and − or Ctrl+wheel size it · Ctrl+Z takes it off",
         _ => "Drag to turn the model · middle-drag slides it · the wheel comes closer · click a shape to pick it · Home frames it · F turns it over",
@@ -86,11 +86,17 @@ internal sealed partial class ModelPanels
                 row.AddChild(s);
                 row.AddChild(l);
                 box.AddChild(row);
-                box.AddChild(SoftRow());
+                box.AddChild(SliderRow("Soft edge", 0, 1, 0.05, _m.P.ModelSoft, v => $"{v * 100:0}%", v => _m.P.ModelSoft = v));
                 if (_m.Tool == "paint") studio.ModelColour();
                 break;
             }
             case "fill":
+                box.AddChild(SliderRow("Tolerance", 0, 1, 0.01, _m.P.ModelFillMatch, v => $"{v * 100:0}%", v => _m.P.ModelFillMatch = v,
+                    "How far a colour may be from the one clicked and still fill"));
+                box.AddChild(SliderRow("Stop at bends", 5, 180, 5, _m.P.ModelFillBend, v => v >= 180 ? "never" : $"over {v:0}°", v => _m.P.ModelFillBend = v,
+                    "The fill stops where the surface turns more sharply than this, as at a helmet's rim or a belt's edge"));
+                studio.ModelColour();
+                break;
             case "pick":
                 studio.ModelColour();
                 break;

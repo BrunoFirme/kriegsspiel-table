@@ -58,9 +58,11 @@ sealed partial class StudioTools
             "Takes a part out of a kind's model.",
             Args.Schema(new Arg("id", "string", "the kind's id", true), new Arg("part", "string", "the part's id or name", true)), RemovePart);
         yield return new AgentTool("studio_model_paint",
-            "Paints a 3D kind's surface in a colour: a whole part, one of its materials (an imported model's own split: armour, trim…), or the region inside a box given as fractions of the part's size (x 0 left to 1 right, y 0 bottom to 1 top, z 0 back to 1 front), its edge softened by soft. A part joined into a solid paints the solid where the part is. Returns a picture.",
+            "Paints a 3D kind's surface in a colour: a whole part, one of its materials (an imported model's own split: armour, trim…), the region inside a box given as fractions of the part's size (x 0 left to 1 right, y 0 bottom to 1 top, z 0 back to 1 front), its edge softened by soft, or, given from, the patch of one colour around the surface nearest that point, as the Fill tool's click does. A part joined into a solid paints the solid where the part is. Returns a picture.",
             Args.Schema(new Arg("id", "string", "the kind's id", true), new Arg("colour", "string", "#rrggbb, or #rrggbbaa to let the model show through", true), new Arg("part", "string", "a part's id or name (default the first)"),
                 new Arg("material", "number", "a material's number from 0 (studio_model_parts gives how many)"), new Arg("box", "object", "{min: [x,y,z], max: [x,y,z]} as fractions of the part"), new Arg("soft", "number", "0–0.5: how far in from the box's edge the colour fades in"),
+                new Arg("from", "array", "[x,y,z] as fractions of the part: fill the patch of one colour around the surface nearest this point"), new Arg("tolerance", "number", "with from, 0–1: how far a colour may be from the one there and still fill (default 0.25)"),
+                new Arg("bend", "number", "with from, degrees: stop where the surface turns more sharply than this (default never)"),
                 new Arg("side", "string", "the side to show in the picture")),
             PaintModel);
         yield return new AgentTool("studio_model_decal",
@@ -345,15 +347,38 @@ sealed partial class StudioTools
         for (int i = 0; i < data.UV.Count; i++) { uv[i * 2] = data.UV[i].X; uv[i * 2 + 1] = data.UV[i].Y; }
         var c = Hex.To(Colour(a.Str("colour"), "#000000ff"), Colors.Black);
         var (r, g, bl, al) = UvPaint.Premultiplied(c.R, c.G, c.B, c.A);
+        var from = a.ValueKind == JsonValueKind.Object ? Floats(a, "from", 3) : null;
+        if (from != null && (a.Num("material") is not null || a.TryGetProperty("box", out _))) return ToolResult.Fail("from fills a patch by itself: leave out material and box.");
+        int seedTri = -1;
+        if (from != null)
+        {
+            if (Nearest(data, tris, region, from) is not { } found) return ToolResult.Fail($"{p.Name} has no surface to fill there.");
+            seedTri = found;
+        }
         m.BeginStroke();
         int n;
-        if (weight.Count == 0) n = UvPaint.Fill(v.Paint, v.W, v.H, uv, tris, r, g, bl, al);
+        if (from != null) n = UvRegion.Fill(v.Surface(), v.Paint, v.Base.GetData(), new RegionSeed(seedTri, 1 / 3f, 1 / 3f),
+            Mathf.Clamp((float)(a.Num("tolerance") ?? 0.25), 0, 1), Mathf.Clamp((float)(a.Num("bend") ?? 180), 0, 180), r, g, bl, al);
+        else if (weight.Count == 0) n = UvPaint.Fill(v.Paint, v.W, v.H, uv, tris, r, g, bl, al);
         else n = ModelAgentParts.SoftFill(v, uv, tris.ToList(), weight, c);
         v.Repaint();
         m.EndStroke();
         if (n == 0) return ToolResult.Fail("Nothing of the model was there to paint (the box or material held no surface).");
         return await Finish(s, m, FormattableString.Invariant($"Painted {n:#,0} texels of {p.Name}."), a);
     });
+
+    static int? Nearest(MeshData data, IEnumerable<int> tris, Aabb region, float[] at)
+    {
+        var point = region.Position + region.Size * new Vector3(at[0], at[1], at[2]);
+        int? best = null;
+        float bestD = float.MaxValue;
+        foreach (var t in tris)
+        {
+            float d = ((data.V[t * 3] + data.V[t * 3 + 1] + data.V[t * 3 + 2]) / 3 - point).LengthSquared();
+            if (d < bestD) { bestD = d; best = t; }
+        }
+        return best;
+    }
 
     Image? DecalPicture(PieceStudio s, JsonElement a, string? path, out string name)
     {

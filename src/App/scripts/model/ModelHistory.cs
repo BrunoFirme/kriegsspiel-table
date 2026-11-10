@@ -46,6 +46,28 @@ internal sealed class ModelPartView
         return _margins;
     }
 
+    UvSurface? _surface;
+    object? _surfaceOf;
+
+    public UvSurface Surface()
+    {
+        if (_surface == null || !ReferenceEquals(_surfaceOf, Data.UV) || _surface.W != W || _surface.H != H)
+        {
+            var pos = new float[Data.V.Count * 3];
+            for (int i = 0; i < Data.V.Count; i++)
+            {
+                pos[i * 3] = Data.V[i].X;
+                pos[i * 3 + 1] = Data.V[i].Y;
+                pos[i * 3 + 2] = Data.V[i].Z;
+            }
+            var uv = new float[Data.UV.Count * 2];
+            for (int i = 0; i < Data.UV.Count; i++) { uv[i * 2] = Data.UV[i].X; uv[i * 2 + 1] = Data.UV[i].Y; }
+            _surface = new UvSurface(pos, uv, W, H);
+            _surfaceOf = Data.UV;
+        }
+        return _surface;
+    }
+
     public byte[] Shown() => Part.Kind == "block" ? Paint : ModelBake.WithMargins(Paint, Margins());
 
     public void Repaint()

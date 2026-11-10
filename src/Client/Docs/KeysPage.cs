@@ -111,7 +111,7 @@ public static class KeysPage
         });
         Table(sb, "3D", new[]
         {
-            ("H V B E G I D", "look round, move shapes, paint, rub out, paint a whole shape, colour picker, decal"),
+            ("H V B E G I D", "look round, move shapes, paint, rub out, fill, colour picker, decal"),
             ("Drag, right-drag, middle-drag", "turn the model, slide, come closer"),
             ("−  =", "brush or decal size; Ctrl+wheel too"),
             ("Q  E", "with a decal picture held: turn it 15° (Shift 1°)"),

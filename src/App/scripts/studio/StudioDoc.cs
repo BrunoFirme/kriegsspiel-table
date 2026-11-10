@@ -181,7 +181,9 @@ public sealed class StudioPrefs
     public string Ink2 { get; set; } = "#f2f2f2ff";
     public List<string> Recent { get; set; } = new();
     public float Brush { get; set; } = 12;
-    public float Soft { get; set; } = 0.3f;
+    public float ModelSoft { get; set; }
+    public float ModelFillMatch { get; set; } = 0.25f;
+    public float ModelFillBend { get; set; } = 180;
     public float ModelSnap { get; set; }
     public bool ModelOrtho { get; set; }
     public float Eraser { get; set; } = 24;

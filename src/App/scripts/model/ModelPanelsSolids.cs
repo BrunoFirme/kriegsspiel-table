@@ -221,15 +221,17 @@ internal sealed partial class ModelPanels
         box.AddChild(form);
     }
 
-    HBoxContainer SoftRow()
+    static HBoxContainer SliderRow(string name, double min, double max, double step, float value, Func<double, string> shown, Action<float> set, string tip = "")
     {
-        var row = new HBoxContainer();
-        var lab = new Label { Text = "Soft edge", Modulate = Ui.Muted, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter };
+        var row = new HBoxContainer { TooltipText = tip };
+        var lab = new Label { Text = name, Modulate = Ui.Muted, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, MouseFilter = Control.MouseFilterEnum.Pass };
         lab.AddThemeFontSizeOverride("font_size", 12);
         row.AddChild(lab);
-        var s = new HSlider { MinValue = 0, MaxValue = 1, Step = 0.05, Value = _m.P.Soft, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter };
-        var l = Ui.ValueBox(s, v => $"{v * 100:0}%", 48);
-        s.ValueChanged += v => _m.P.Soft = (float)v;
+        var s =
+            new HSlider { MinValue = min, MaxValue = max, Step = step, Value = value, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
+                TooltipText = tip };
+        var l = Ui.ValueBox(s, shown, 64);
+        s.ValueChanged += v => set((float)v);
         row.AddChild(s);
         row.AddChild(l);
         return row;

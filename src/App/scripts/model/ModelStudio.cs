@@ -129,7 +129,7 @@ public partial class ModelStudio : Control
     internal bool DirtyTex => _dirtyTex;
     internal float SnapStep => P.ModelSnap;
 
-    public string ToolTitle => Tool switch { "move" => "Place parts", "paint" => "Paint on the model", "erase" => "Rub out paint", "fill" => "Paint a whole part", "pick" => "Colour picker", "decal" => "Decal", _ => "Look around" };
+    public string ToolTitle => Tool switch { "move" => "Place parts", "paint" => "Paint on the model", "erase" => "Rub out paint", "fill" => "Fill", "pick" => "Colour picker", "decal" => "Decal", _ => "Look around" };
 
     public void Setup(PieceStudio studio, PackageStore store, PackManifest pack, StudioPrefs prefs)
     {
