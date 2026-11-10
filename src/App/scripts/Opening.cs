@@ -98,7 +98,7 @@ public partial class Main
 
     sealed record Wanted(bool Kstable, string SavePath, string Dir, string ScenarioFile);
 
-    sealed record Opened(GameServer Server, System.Collections.Generic.List<Outgoing> Started, long ReadMs, long OpenMs, long ScriptsMs, string? Report, string? ScenarioDir);
+    sealed record Opened(GameServer Server, System.Collections.Generic.List<Outgoing> Started, long ReadMs, long OpenMs, long ScriptsMs, string? Report, string? ScenarioDir, Brought Brought);
 
     async System.Threading.Tasks.Task OpenAndHost(string what, string name, bool resume, string? password, Scenario? read, Opening op)
     {
@@ -168,8 +168,12 @@ public partial class Main
         string? report = null, scenarioDir = null;
         Recovery? recovery = null;
         GameServer server;
+        var brought = Brought.Nothing;
         if (wanted.Kstable)
         {
+            op.Stage = "Installing fetched files";
+            brought = FetchedFiles.ForSave(what, store, Caches.FromHosts);
+            token.ThrowIfCancellationRequested();
             server = SaveLoader.Open(saves, what, pieceStore, out recovery);
             token.ThrowIfCancellationRequested();
             var sid = server.State.ScenarioId;
@@ -192,7 +196,7 @@ public partial class Main
         var started = server.Scripts.Load();
         token.ThrowIfCancellationRequested();
         if (recovery != null) report = SaveReports.Describe(recovery);
-        return new Opened(server, started, readMs, openMs, clock.ElapsedMilliseconds - openMs, report, scenarioDir);
+        return new Opened(server, started, readMs, openMs, clock.ElapsedMilliseconds - openMs, report, scenarioDir, brought);
     }
 
     void Report(Opened opened)
@@ -213,6 +217,12 @@ public partial class Main
             var kept = SaveReports.Describe(keptAside);
             GD.Print("[saves] " + kept);
             _recoveryReport = _recoveryReport == null ? kept : _recoveryReport + " " + kept;
+        }
+        if (opened.Brought.Packs.Count > 0 || opened.Brought.MapFiles > 0) GD.Print($"[fetched] installed {opened.Brought.MapFiles} map file(s) and the pack(s) {string.Join(", ", opened.Brought.Packs)} from what this PC fetched while joined");
+        if (opened.Brought.Packs.Count > 0)
+        {
+            var packs = $"Installed from what this PC fetched while joined: {string.Join(", ", opened.Brought.Packs)}.";
+            _recoveryReport = _recoveryReport == null ? packs : _recoveryReport + " " + packs;
         }
         if (server.MissingPacks.Count > 0)
         {

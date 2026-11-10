@@ -11,6 +11,8 @@ public sealed class PackagePathsTests
     [InlineData("tts.Some_Module", "assets/0a1b.png")]
     [InlineData("sheets", "tiles\\map\\0\\0_0.jpg")]
     [InlineData("sheets", "relief/abc.bin")]
+    [InlineData("scenarios/kessel-valley", "tiles/map/index.json")]
+    [InlineData("scenarios/kessel-valley", "relief/abc.json")]
     public void A_file_inside_its_pack_s_folder_is_found_there(string package, string rel)
     {
         var abs = PackagePaths.Inside(Root, package, rel);
@@ -37,6 +39,13 @@ public sealed class PackagePathsTests
     [InlineData("user.x", "assets//a.png")]
     [InlineData("user.x", "assets/ ./a.png")]
     [InlineData("user.x", "")]
+    [InlineData("scenarios/", "pack.json")]
+    [InlineData("scenarios/..", "pack.json")]
+    [InlineData("scenarios/a/b", "pack.json")]
+    [InlineData("scenarios/a\\b", "pack.json")]
+    [InlineData("scenarios\\a", "pack.json")]
+    [InlineData("other/a", "pack.json")]
+    [InlineData("Scenarios/a", "pack.json")]
     public void A_name_that_leaves_its_pack_s_folder_is_refused(string package, string rel) => Assert.Null(PackagePaths.Inside(Root, package, rel));
 
     [Fact]

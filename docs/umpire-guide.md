@@ -33,7 +33,8 @@ saves as folders and tiles, in `Documents\KriegsspielTable\saves\<scenario>\`.
   **Look** shows a save without loading it.
 - **Pick several** with Ctrl+click, Shift+click or Ctrl+A; Delete removes them. Title-screen lists work the same.
 - **Trash**, at the foot of the folders, keeps deleted saves thirty days.
-- **Co-umpires** keep the same saves. If your PC fails, they host from **Scenarios → Mirrored games**.
+- **Co-umpires** keep the same saves. If your PC fails, they host from **Scenarios → Mirrored games**, with the packs
+  and map their PC fetched.
 
 ## Hosting and the door
 

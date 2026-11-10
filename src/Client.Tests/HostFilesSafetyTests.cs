@@ -68,6 +68,18 @@ public class HostFilesSafetyTests
     }
 
     [Theory]
+    [InlineData("tiles/map/index.json")]
+    [InlineData("tiles/map/0/0_0.jpg")]
+    [InlineData("relief/0a.json")]
+    public void A_map_kept_in_its_scenario_s_folder_is_asked_for(string rel)
+    {
+        _t.QueueFetch("scenarios/kessel-valley", rel);
+        var asked = Assert.Single(Sent<NeedAsset>());
+        Assert.Equal(("scenarios/kessel-valley", rel), (asked.Package, asked.Path));
+        Assert.Empty(_missing);
+    }
+
+    [Theory]
     [InlineData("pack.json")]
     [InlineData("relief/0a.bin")]
     [InlineData("assets/0a.PNG")]
