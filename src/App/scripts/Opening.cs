@@ -181,7 +181,8 @@ public partial class Main
             server = SaveLoader.Open(saves, what, pieceStore, out recovery);
             token.ThrowIfCancellationRequested();
             var sid = server.State.ScenarioId;
-            scenarioDir = store.ListScenarios().Where(s => ScenarioFiles.HasId(s.path, sid)).Select(s => s.id).FirstOrDefault();
+            var same = store.ListScenarios().Where(s => ScenarioFiles.HasId(s.path, sid)).Select(s => s.id).ToList();
+            scenarioDir = saves.ScenarioOf(what) is { } own && same.Contains(own) ? own : same.FirstOrDefault();
         }
         else if (fromSave) server = SaveLoader.Open(saves, wanted.SavePath, pieceStore, out recovery);
         else

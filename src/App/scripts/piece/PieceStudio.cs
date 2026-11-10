@@ -39,6 +39,8 @@ public partial class PieceStudio : CanvasLayer
 
     public Action? ScriptsChanged;
 
+    public bool BackToTable { get; init; }
+
     public readonly HashSet<string> MadeHere = new();
 
     PackSaver _packSaver = null!;
@@ -171,7 +173,7 @@ public partial class PieceStudio : CanvasLayer
         return tcs.Task;
     }
 
-    public void Bind(Session s, Table t, PackageStore store, string packId, Settings cfg, Action done)
+    public void Bind(Session s, Table t, PackageStore store, string packId, Settings cfg, Action done, string? kind = null)
     {
         S = s;
         T = t;
@@ -213,7 +215,7 @@ public partial class PieceStudio : CanvasLayer
         GetWindow().FilesDropped += _onDrop = NewPieces.Dropped;
         T.SetTool(Tool.Select);
         RebuildList();
-        var first = _pack.Pieces.OrderBy(d => d.Name, StringComparer.OrdinalIgnoreCase).FirstOrDefault();
+        var first = _pack.Pieces.FirstOrDefault(d => d.Id == kind) ?? _pack.Pieces.OrderBy(d => d.Name, StringComparer.OrdinalIgnoreCase).FirstOrDefault();
         _view = first != null && EffectFx.IsEffect(first) ? "table" : "model";
         if (first != null) Select(first, frame: true);
         SetView(_view);

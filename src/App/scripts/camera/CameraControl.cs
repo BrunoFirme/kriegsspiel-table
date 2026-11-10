@@ -177,6 +177,11 @@ sealed class CameraControl
         settings.Save();
     }
 
+    public void KeepNow()
+    {
+        if (_c.Settings is { } settings && Rig.Eye == null && ScenarioKey() is { } key) settings.CameraAt[key] = Snapshot();
+    }
+
     float[] Snapshot() => new[] { Rig.Target.X, Rig.Target.Z, Rig.Distance, Rig.Yaw, Rig.Pitch, Rig.TopDown ? 1f : 0f };
 
     string? ScenarioKey() => _c.S.View.ScenarioId is { Length: > 0 } id ? id : null;

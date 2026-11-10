@@ -184,6 +184,7 @@ public partial class Main : Node
         }
         catch (Exception e) { GD.PushError("save folders: " + e.Message); }
         StandardPacks.Ensure(new PackageStore(PackageStore.DefaultRoot));
+        if (StudioTrip.Take() is { } trip) { ThroughTheStudio(trip); return; }
         if (Dev.TakesOver()) return;
         if (args.TryGetValue("host", out var what)) { StartHost(what, args.GetValueOrDefault("name", "Umpire"), resume: args.ContainsKey("resume"), password: args.GetValueOrDefault("password")); return; }
         if (args.TryGetValue("join", out var addr)) { StartJoin(addr, _cfg.Port, args.GetValueOrDefault("name", "Guest"), args.GetValueOrDefault("password", ""), args.GetValueOrDefault("packages")); return; }
@@ -493,25 +494,26 @@ public partial class Main : Node
             hud.Log($"This PC keeps its own copy of the game as you play ({LogPanel.FolderLink(System.IO.Path.GetDirectoryName(_net.MirrorPath) ?? "", "open the folder")}). If the host's PC fails, Scenarios → Mirrored games continues it from here.");
     }
 
-    public void OpenEditor(string packId)
+    void ThroughTheStudio(StudioTrip trip) => OpenEditor(trip.Pack, trip.Kind, () => StartHost(trip.Save, trip.Name, resume: true));
+
+    public void OpenEditor(string packId, string? kind = null, Action? back = null)
     {
         CancelOpening();
         var store = new PackageStore(PackageStore.DefaultRoot);
         var held = InUse.Pack(store.Root, packId);
         if (InUse.TryOpen(held, "is open in the piece studio: press Done there first, then try again") is { } busy)
         {
-            if (Title.Root == null) BuildLobby();
-            Title.Status.Text = $"The pack {packId} is {busy} right now: open it in the piece studio once that has finished.";
+            Refuse($"The pack {packId} is {busy} right now: open it in the piece studio once that has finished.");
             return;
         }
-        Title.Close();
         var pack = store.Pack(packId);
         if (pack == null)
         {
             InUse.Close(held);
-            Fail($"No pack '{packId}'");
+            Refuse($"No pack '{packId}'");
             return;
         }
+        Title.Close();
         var s = new Session(new Assets(store));
         var g = new GameState { Name = pack.Name, Packs = store.ListPackIds().ToList() };
         g.Layers[KTable.Core.Model.Layers.Umpire] = new();
@@ -551,7 +553,7 @@ public partial class Main : Node
             catch (Exception e) { GD.PushError("[scripts] tick failed: " + e); }
         };
         table.AddChild(tick);
-        var ed = new PieceStudio { Name = "Studio", ScriptsChanged = () => Deliver(server.Scripts.Load()) };
+        var ed = new PieceStudio { Name = "Studio", ScriptsChanged = () => Deliver(server.Scripts.Load()), BackToTable = back != null };
         AddChild(ed);
         _agent.Studio = ed;
         ed.Bind(s, table, store, packId, _cfg, () =>
@@ -561,12 +563,25 @@ public partial class Main : Node
             table.QueueFree();
             ed.QueueFree();
             GetWindow().Title = "Kriegsspiel Table";
+            if (back != null) { back(); return; }
             BuildLobby();
             Title.Select(2);
             Title.Packs.Show();
-        });
+        }, kind);
         GetWindow().Title = $"Kriegsspiel Table — piece studio — {pack.Name}";
         Dev.StudioOpened(ed);
+
+        void Refuse(string why)
+        {
+            if (back != null)
+            {
+                Problems.Tell(why);
+                back();
+                return;
+            }
+            if (Title.Root == null) BuildLobby();
+            Title.Status.Text = why;
+        }
     }
 
     void Fail(string msg)
