@@ -267,7 +267,9 @@ internal sealed class NewPieces
             foreach (var d in pieces)
             {
                 var src = d;
-                grid.AddChild(StandardCard(from, d, () => picked(src)));
+                var card = StandardCard(from, d, () => picked(src));
+                card.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
+                grid.AddChild(card);
             }
             if (grid.GetChildCount() == 0) { grid.QueueFree(); return; }
             if (title != null) col.AddChild(Ui.Header(title));

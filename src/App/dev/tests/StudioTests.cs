@@ -130,7 +130,11 @@ static class StudioTests
         StandardPacks.Ensure(h.Store);
         var list = h.Studio.NewPieces.StandardList(h.Store.Pack(StandardPacks.Dice)!, _ => { });
         r.AddChild(list);
+        list.Size = new Godot.Vector2(740, 0);
         await r.Frames(2);
+        var cards = list.FindChildren("*", nameof(Godot.GridContainer), true, false).OfType<Godot.GridContainer>().First().GetChildren().OfType<Godot.Control>().ToList();
+        var right = cards.Max(c => c.Position.X + c.Size.X);
+        Check.That(Godot.Mathf.Abs(right - list.Size.X) < 1, $"the dice fill the dialog's width, no strip left empty: {right} of {list.Size.X}");
         var labels = list.FindChildren("*", nameof(Godot.Label), true, false).OfType<Godot.Label>().Select(l => l.Text).ToList();
         Check.That(new[] { "d4", "d6", "d8", "d10", "d12", "d20", "hit die", "direction die" }.All(labels.Contains), "the dice are offered: " + string.Join(", ", labels));
         Check.That(labels.Any(l => l.Contains("Aborted / missing")) && !labels.Contains("1 · 2 · 3 · 4 · 5 · 6"), "a picture die names its sides, a numbered one does not");
