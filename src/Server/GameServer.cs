@@ -24,8 +24,9 @@ public sealed partial class GameServer
     readonly Dictionary<long, PeerInfo> _waiting = new();
     readonly Dictionary<string, (int fails, long until)> _guesses = new();
     readonly List<Command> _log = new();
-    readonly Dictionary<long, Command> _inverses = new();
+    readonly Dictionary<long, Undoable> _inverses = new();
     readonly HashSet<long> _undone = new();
+    readonly Dictionary<long, Queue<long>> _undoableBy = new();
     readonly Random _rng = Repeatable.NewRandom();
     readonly Func<long> _clock;
     public Scripting.ScriptHost Scripts { get; }
@@ -379,20 +380,20 @@ public sealed partial class GameServer
         }
         var nextId = State.NextId;
         var seqBefore = State.LastSeq;
-        long? undoTarget;
+        List<long>? undoTargets;
         Command? inverse;
         TurnRecord? ending;
         try
         {
             if (MissingFields.Of(c) is { } missing) return Refuse(res, peerId, missing);
             if (Admission(peer, c) is { } refused) return Refuse(res, peerId, refused);
-            if (TakeBack(peer, ref c, out undoTarget) is { } noUndo) return Refuse(res, peerId, noUndo);
+            if (TakeBack(peer, ref c, out undoTargets) is { } noUndo) return Refuse(res, peerId, noUndo);
             if (Readiness(c) is { } notReady) return Refuse(res, peerId, notReady);
             if (Scripts.ScriptVeto(c, peerId, res) is { } vetoed) return Refuse(res, peerId, vetoed);
 
             c.Actor = peerId;
             c.At = _clock();
-            Prepare(c, peer, undoTarget != null);
+            Prepare(c, peer, undoTargets != null);
 
             if (c is Batch tb && Deletes(tb) && StateMachine.Apply(State.DeepClone(), Json.Clone(c), out _) is { } terr)
             {
@@ -420,10 +421,9 @@ public sealed partial class GameServer
         if (c is RestoreTurn restored)
         {
             Turns.RemoveRange(restored.Index, Turns.Count - restored.Index);
-            _inverses.Clear();
-            _undone.Clear();
+            ForgetUndo();
         }
-        if (undoTarget is long ut)
+        foreach (var ut in undoTargets ?? [])
         {
             _undone.Add(ut);
             if (Turns.Count > 0 && Turns[^1].LastSeq == ut - 1) Turns.RemoveAt(Turns.Count - 1);
@@ -434,7 +434,7 @@ public sealed partial class GameServer
         Dirty = true;
 
         res.AddRange(ToPeers(c));
-        try { res.AddRange(Scripts.AfterApplied(c, peerId, undoTarget != null)); }
+        try { res.AddRange(Scripts.AfterApplied(c, peerId, undoTargets != null)); }
         catch (Exception e) { res.Add(new(peerId, new ErrorMessage { Text = "a script failed after the change: " + e.Message })); }
         return res;
     }
@@ -466,18 +466,30 @@ public sealed partial class GameServer
         return null;
     }
 
-    string? TakeBack(PeerInfo peer, ref Command c, out long? undoTarget)
+    string? TakeBack(PeerInfo peer, ref Command c, out List<long>? undoTargets)
     {
-        undoTarget = null;
+        undoTargets = null;
         if (c is not Undo u) return null;
-        if (!_inverses.TryGetValue(u.TargetSeq, out var inv) || _undone.Contains(u.TargetSeq)) return "nothing to undo";
-        undoTarget = u.TargetSeq;
-        inv = Json.Clone(inv);
+        var targets = u.FromSeq > 0 ? ScriptStepsBetween(u.FromSeq, u.TargetSeq) : _inverses.ContainsKey(u.TargetSeq) && !_undone.Contains(u.TargetSeq) ? [u.TargetSeq] : [];
+        if (targets.Count == 0) return "nothing to undo";
+        foreach (var seq in targets)
+            if (_inverses[seq].By != peer.Name && !(_inverses[seq].By.Length == 0 && Visibility.IsLead(peer.Role)))
+                return "that change is not yours to take back";
+        var inverses = targets.Select(seq => Json.Clone(_inverses[seq].Inverse)).ToList();
+        Command inv = u.FromSeq == 0 ? inverses[0] : new Batch { Items = inverses, UndoFrom = u.FromSeq };
         inv.UndoOf = u.TargetSeq;
         if (ZoneDenies(peer, inv) is { } undoZone) return "that change cannot be taken back: " + undoZone;
+        undoTargets = targets;
         c = inv;
         return null;
     }
+
+    List<long> ScriptStepsBetween(long from, long to) =>
+        _undoableBy.TryGetValue(0, out var scripts)
+            ? scripts.Where(seq => seq >= from && seq <= to && !_undone.Contains(seq) && _inverses[seq].Step).Reverse().ToList()
+            : [];
+
+    readonly record struct Undoable(Command Inverse, string By, bool Step);
 
     string? Readiness(Command c)
     {
@@ -520,14 +532,22 @@ public sealed partial class GameServer
     {
         if (toSaveLog) Applied?.Invoke(c);
         _log.Add(Json.Clone(c));
-        if (inverse != null) _inverses[c.Seq] = inverse;
-        if (_log.Count > RememberCommands + RememberCommands / 10)
-        {
-            _log.RemoveRange(0, _log.Count - RememberCommands);
-            var oldest = _log[0].Seq;
-            foreach (var seq in _inverses.Keys.Where(k => k < oldest).ToList()) _inverses.Remove(seq);
-            _undone.RemoveWhere(k => k < oldest);
-        }
+        if (_log.Count > RememberCommands + RememberCommands / 10) _log.RemoveRange(0, _log.Count - RememberCommands);
+        if (inverse == null) return;
+        _inverses[c.Seq] = new Undoable(inverse, c.Actor == 0 ? "" : _peers.GetValueOrDefault(c.Actor)?.Name ?? $"#{c.Actor}", c.MakesUndoStep());
+        if (!_undoableBy.TryGetValue(c.Actor, out var mine)) _undoableBy[c.Actor] = mine = new();
+        mine.Enqueue(c.Seq);
+        if (mine.Count <= RememberCommands) return;
+        var oldest = mine.Dequeue();
+        _inverses.Remove(oldest);
+        _undone.Remove(oldest);
+    }
+
+    void ForgetUndo()
+    {
+        _inverses.Clear();
+        _undone.Clear();
+        _undoableBy.Clear();
     }
 
     internal (string? err, Command? inverse) ApplyEmitted(Command c, long actor)
@@ -693,8 +713,7 @@ public sealed partial class GameServer
         if (StateMachine.Apply(State, c, out _) is { } err) throw new InvalidDataException(err);
         Turns.Clear();
         Turns.AddRange(turns);
-        _inverses.Clear();
-        _undone.Clear();
+        ForgetUndo();
         State.LastSeq = c.Seq;
         Remember(c, null, toSaveLog: false);
         LastInverse = null;

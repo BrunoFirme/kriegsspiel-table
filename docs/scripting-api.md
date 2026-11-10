@@ -900,7 +900,7 @@ A handle kept in a variable outlives the piece. Check `exists` before using one 
 
 ## A piece: changes
 
-Each call is a change every umpire sees, taken back with Ctrl+Z by the umpire whose action ran the script. Everything one reaction changes is one step of undo.
+Each call is a change every umpire sees. What a script changes in answer to an umpire's action is one step of that umpire's undo. What scripts change by themselves (a timer, a wait, on_update, on_load) the host and lead umpires take back with Ctrl+Z, all of it between two of their own changes as one step.
 
 | Name | What it does |
 |---|---|
@@ -3082,7 +3082,7 @@ Define any of these in a piece's script and the table calls it.
 |---|---|
 | [`on_load`](#on_load) | The script starts: on hosting, resuming, a reload, a save loaded. saved is what on_save last returned, or "". |
 | [`on_save`](#on_save) | The game is being saved, or an umpire's action has just run the script: return a string to keep. |
-| [`on_update`](#on_update) | Every frame on the host. Keep it short: it runs under the same time limit as any call. |
+| [`on_update`](#on_update) | Every frame on the host. Keep it short: it runs under the same time limit as any call. If it fails again within a second, the script is off until Save and reload. |
 | [`on_drop`](#on_drop) | An umpire let the piece go. |
 | [`on_roll`](#on_roll) | An umpire rolled this die. |
 | [`on_pick_up`](#on_pick_up) | An umpire picked the piece up. |
@@ -3146,7 +3146,7 @@ It runs once a second while something changed, at every ended turn, on close, an
 on_update()
 ```
 
-Every frame on the host. Keep it short: it runs under the same time limit as any call.
+Every frame on the host. Keep it short: it runs under the same time limit as any call. If it fails again within a second, the script is off until Save and reload.
 
 An event: define this function and the table calls it.
 

@@ -74,6 +74,8 @@ public class ClientSession
     public readonly Stack<long> MyUndoable = new();
     public readonly Stack<long> MyRedoable = new();
     readonly HashSet<long> _redoing = new();
+    readonly Dictionary<long, long> _scriptFrom = new();
+    long _openScript;
 
     public readonly List<TurnRecord> MirrorTurns = new();
     public string Created { get; private set; } = "";
@@ -157,6 +159,8 @@ public class ClientSession
         }
         Dirty = true;
         if (c.Actor == Me.PeerId && c.OnUndoStack()) Track(c);
+        else if (c.Actor == 0 && IsLead && c.MakesUndoStep()) TrackScript(c);
+        if (c.UndoFrom > 0 && c.Actor != Me.PeerId) DropScriptSteps(c.UndoFrom, c.UndoOf);
         if (c is AddPack ap) PackAdded?.Invoke(ap.Id, ap.Hash);
         Applied?.Invoke(c);
         if (c is RestoreTurn or LoadSave)
@@ -202,7 +206,9 @@ public class ClientSession
     public void UndoLast()
     {
         if (!IsUmpire || MyUndoable.Count == 0) return;
-        Sent(new Undo { TargetSeq = MyUndoable.Pop() });
+        var seq = MyUndoable.Pop();
+        _openScript = 0;
+        Sent(_scriptFrom.Remove(seq, out var from) ? new Undo { TargetSeq = seq, FromSeq = from } : new Undo { TargetSeq = seq });
     }
 
     public void RedoLast()
@@ -215,6 +221,7 @@ public class ClientSession
 
     void Track(Command c)
     {
+        _openScript = 0;
         if (c.UndoOf == 0)
         {
             MyUndoable.Push(c.Seq);
@@ -225,11 +232,36 @@ public class ClientSession
         else MyRedoable.Push(c.Seq);
     }
 
+    void TrackScript(Command c)
+    {
+        var from = c.Seq;
+        if (_openScript != 0 && MyUndoable.TryPeek(out var top) && top == _openScript)
+        {
+            MyUndoable.Pop();
+            _scriptFrom.Remove(top, out from);
+        }
+        _scriptFrom[c.Seq] = from;
+        MyUndoable.Push(c.Seq);
+        _openScript = c.Seq;
+    }
+
+    void DropScriptSteps(long from, long to)
+    {
+        var kept = MyUndoable.Reverse().Where(seq => !(_scriptFrom.TryGetValue(seq, out var start) && start >= from && seq <= to)).ToList();
+        if (kept.Count == MyUndoable.Count) return;
+        foreach (var seq in MyUndoable.Except(kept)) _scriptFrom.Remove(seq);
+        MyUndoable.Clear();
+        foreach (var seq in kept) MyUndoable.Push(seq);
+        if (!MyUndoable.TryPeek(out var top) || top != _openScript) _openScript = 0;
+    }
+
     void ForgetUndo()
     {
         MyUndoable.Clear();
         MyRedoable.Clear();
         _redoing.Clear();
+        _scriptFrom.Clear();
+        _openScript = 0;
     }
 
     public PieceDef? Def(string id) => Store.Def(id);

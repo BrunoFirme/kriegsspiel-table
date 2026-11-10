@@ -11,5 +11,6 @@ internal sealed class PieceScript
     public bool HasUpdate;
     public bool Ran;
     public bool Faulted;
+    public double UpdateFailedAt = double.NegativeInfinity;
     public string Name => Id.Length == 0 ? "the global script" : Id;
 }

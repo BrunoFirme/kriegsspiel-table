@@ -245,7 +245,9 @@ public sealed partial class ScriptHost
         return Run(0, false, () =>
         {
             DeliverPictures();
-            foreach (var ps in updating) Guard(ps.Id, () => Call(ps, "on_update"));
+            _updatingAt = nowSeconds;
+            try { foreach (var ps in updating) Guard(ps.Id, () => Call(ps, "on_update")); }
+            finally { _updatingAt = double.NaN; }
             foreach (var t in due)
                 Guard(t.Owner.Id, () =>
                 {
@@ -270,6 +272,18 @@ public sealed partial class ScriptHost
                 Guard(owner.Id, () => { if (owner.Enabled && IsCurrent(owner)) WhileLoading(loadFrames, () => Resume(owner, co)); });
             Panels.Land();
         });
+    }
+
+    public const double FailsAgainSeconds = 1;
+
+    double _updatingAt = double.NaN;
+
+    bool FailsEveryFrame(PieceScript ps)
+    {
+        if (double.IsNaN(_updatingAt) || ps == _snippetPs) return false;
+        bool again = _updatingAt - ps.UpdateFailedAt <= FailsAgainSeconds;
+        ps.UpdateFailedAt = _updatingAt;
+        return again;
     }
 
     bool IsCurrent(PieceScript ps) => ps.Id.Length == 0 ? ps == _global : _pieces.TryGetValue(ps.Id, out var current) && current == ps;
@@ -499,7 +513,13 @@ public sealed partial class ScriptHost
         catch (InterpreterException e)
         {
             ps.Faulted = true;
-            Error(ps.Id, e.DecoratedMessage ?? e.Message, console: ps == _snippetPs);
+            var message = e.DecoratedMessage ?? e.Message;
+            if (FailsEveryFrame(ps))
+            {
+                ps.Enabled = false;
+                Error(ps.Id, $"{message}; it fails every frame, so the script is off until Save and reload in Scripting");
+            }
+            else Error(ps.Id, message, console: ps == _snippetPs);
             return null;
         }
         catch (Exception e)

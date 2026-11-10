@@ -109,8 +109,11 @@ public abstract class Command
     public long Actor { get; set; }
     public long At { get; set; }
     public long UndoOf { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public long UndoFrom { get; set; }
 
     public abstract Sender SentBy();
+
+    public bool MakesUndoStep() => this is Batch b ? b.Items.Any(i => i != null && i.MakesUndoStep()) : OnUndoStack() && SentBy() != Sender.Runtime;
 
     public abstract bool OnUndoStack();
 
@@ -974,6 +977,7 @@ public sealed class AddPack : Command
 public sealed class Undo : Command
 {
     public long TargetSeq { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public long FromSeq { get; set; }
     public override Sender SentBy() => Sender.UmpireAlone;
     public override bool OnUndoStack() => true;
     public override Shown ShownToObservers() => Shown.Table;

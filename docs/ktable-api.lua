@@ -763,7 +763,7 @@ function on_load(saved) end
 ---The game is being saved, or an umpire's action has just run the script: return a string to keep.
 function on_save() end
 
----Every frame on the host. Keep it short: it runs under the same time limit as any call.
+---Every frame on the host. Keep it short: it runs under the same time limit as any call. If it fails again within a second, the script is off until Save and reload.
 function on_update() end
 
 ---An umpire let the piece go.

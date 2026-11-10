@@ -1,4 +1,4 @@
-format 31
+format 32
 type AccessChanged object
   access: GameAccess
 type AddBoard object
@@ -8,6 +8,7 @@ type AddBoard object
   index: int?
   name: string
   seq: long
+  undoFrom: long
   undoOf: long
 type AddPack object
   actor: long
@@ -15,6 +16,7 @@ type AddPack object
   hash: string
   id: string
   seq: long
+  undoFrom: long
   undoOf: long
 type AddSheet object
   actor: long
@@ -22,6 +24,7 @@ type AddSheet object
   index: int?
   seq: long
   sheet: SheetDef
+  undoFrom: long
   undoOf: long
 type Admit object
   peerId: long
@@ -30,6 +33,7 @@ type AdvanceClock object
   actor: long
   at: long
   seq: long
+  undoFrom: long
   undoOf: long
 type Approved object
   name: string
@@ -53,6 +57,7 @@ type Attach object
   layer: string
   parent: string
   seq: long
+  undoFrom: long
   undoOf: long
 type AttachmentDef object
   offset: Vec2
@@ -62,6 +67,7 @@ type Batch object
   at: long
   items: List<Command>
   seq: long
+  undoFrom: long
   undoOf: long
 type BoardDef object
   id: string
@@ -83,6 +89,7 @@ type ClickWidget object
   index: int
   layer: string
   seq: long
+  undoFrom: long
   undoOf: long
 type Command abstract
   discriminator type unknown=FailSerialization
@@ -188,6 +195,7 @@ type Command abstract
   actor: long
   at: long
   seq: long
+  undoFrom: long
   undoOf: long
 type CommandMessage object
   command: Command
@@ -216,6 +224,7 @@ type CropSheet object
   pos: Vec2?
   seq: long
   size: Size2?
+  undoFrom: long
   undoOf: long
 type DecalDef object
   face: string
@@ -233,6 +242,7 @@ type DeletePiece object
   id: string
   layer: string
   seq: long
+  undoFrom: long
   undoOf: long
 type Detach object
   actor: long
@@ -240,12 +250,14 @@ type Detach object
   child: string
   layer: string
   seq: long
+  undoFrom: long
   undoOf: long
 type DialogResult object
   actor: long
   at: long
   seq: long
   token: string
+  undoFrom: long
   undoOf: long
   value: string
 type DiceRoll object
@@ -272,6 +284,7 @@ type Draw object
   layer: string
   seq: long
   stroke: Stroke
+  undoFrom: long
   undoOf: long
 type EditWidget object
   actor: long
@@ -281,6 +294,7 @@ type EditWidget object
   layer: string
   seq: long
   typing: bool
+  undoFrom: long
   undoOf: long
   value: string
 type EffectDef object
@@ -304,6 +318,7 @@ type EraseStroke object
   layer: string
   seq: long
   strokeId: string
+  undoFrom: long
   undoOf: long
 type ErrorMessage object
   text: string
@@ -319,6 +334,7 @@ type FlipPiece object
   id: string
   layer: string
   seq: long
+  undoFrom: long
   undoOf: long
 type GameAccess object
   approved: List<Approved>
@@ -375,6 +391,7 @@ type GlidePiece object
   rot: double?
   seq: long
   to: Vec2?
+  undoFrom: long
   undoOf: long
 type GridDef object
   color: string
@@ -388,6 +405,7 @@ type HoldPiece object
   id: string
   layer: string
   seq: long
+  undoFrom: long
   undoOf: long
 type Hotkey object
   actor: long
@@ -398,6 +416,7 @@ type Hotkey object
   pos: Vec2?
   selected: List<string>
   seq: long
+  undoFrom: long
   undoOf: long
   up: bool
 type HotkeyDef object
@@ -488,6 +507,7 @@ type LoadSave object
   name: string
   seq: long
   state: GameState
+  undoFrom: long
   undoOf: long
 type LockSheet object
   actor: long
@@ -495,6 +515,7 @@ type LockSheet object
   id: string
   locked: bool
   seq: long
+  undoFrom: long
   undoOf: long
 type MenuItemDef object
   label: string
@@ -545,6 +566,7 @@ type MovePiece object
   rotDeg: double
   seq: long
   stack: int
+  undoFrom: long
   undoOf: long
   y: double
 type MoveSheet object
@@ -555,6 +577,7 @@ type MoveSheet object
   rotDeg: double
   seq: long
   size: Size2?
+  undoFrom: long
   undoOf: long
   z: int
 type NeedAsset object
@@ -569,6 +592,7 @@ type NumberTyped object
   layer: string
   number: int
   seq: long
+  undoFrom: long
   undoOf: long
 type PackManifest object
   apiVersion: int
@@ -617,6 +641,7 @@ type PickGlobalMenuItem object
   index: int
   pos: Vec2?
   seq: long
+  undoFrom: long
   undoOf: long
 type PickMenuItem object
   actor: long
@@ -625,6 +650,7 @@ type PickMenuItem object
   index: int
   layer: string
   seq: long
+  undoFrom: long
   undoOf: long
 type PieceDef object
   addOnMesh: string
@@ -770,6 +796,7 @@ type PlayEffect object
   index: int
   layer: string
   seq: long
+  undoFrom: long
   undoOf: long
 type PrintPlace object
   h: double
@@ -782,6 +809,7 @@ type PublishSighting object
   at: long
   old: Dictionary<string,JsonElement> extension-data
   seq: long
+  undoFrom: long
   undoOf: long
 type ReadyPiece object
   id: string
@@ -793,6 +821,7 @@ type RecallReady object
   holder: string
   layer: string
   seq: long
+  undoFrom: long
   undoOf: long
 type Refuse object
   peerId: long
@@ -802,12 +831,14 @@ type ReleaseReady object
   holder: string
   layer: string
   seq: long
+  undoFrom: long
   undoOf: long
 type RemoveBoard object
   actor: long
   at: long
   id: string
   seq: long
+  undoFrom: long
   undoOf: long
 type RemoveDecal object
   actor: long
@@ -815,18 +846,21 @@ type RemoveDecal object
   decalId: string
   layer: string
   seq: long
+  undoFrom: long
   undoOf: long
 type RemoveSheet object
   actor: long
   at: long
   id: string
   seq: long
+  undoFrom: long
   undoOf: long
 type RemoveZone object
   actor: long
   at: long
   id: string
   seq: long
+  undoFrom: long
   undoOf: long
 type RenameBoard object
   actor: long
@@ -834,6 +868,7 @@ type RenameBoard object
   id: string
   name: string
   seq: long
+  undoFrom: long
   undoOf: long
 type RenameSheet object
   actor: long
@@ -841,12 +876,14 @@ type RenameSheet object
   id: string
   name: string
   seq: long
+  undoFrom: long
   undoOf: long
 type ReportSelection object
   actor: long
   at: long
   selected: List<string>
   seq: long
+  undoFrom: long
   undoOf: long
 type RestorePiece object
   actor: long
@@ -855,6 +892,7 @@ type RestorePiece object
   layer: string
   piece: PieceInstance
   seq: long
+  undoFrom: long
   undoOf: long
 type RestoreTurn object
   actor: long
@@ -862,6 +900,7 @@ type RestoreTurn object
   index: int
   seq: long
   state: GameState
+  undoFrom: long
   undoOf: long
 type Revoke object
   peerId: long
@@ -881,6 +920,7 @@ type RollDice object
   results: List<int>
   seq: long
   sides: int
+  undoFrom: long
   undoOf: long
 type RunLua object
   code: string
@@ -908,6 +948,7 @@ type Say object
   seq: long
   text: string
   to: string
+  undoFrom: long
   undoOf: long
 type Scenario object
   apiVersion: int
@@ -961,6 +1002,7 @@ type SelectPiece object
   selected: bool
   seq: long
   to: string
+  undoFrom: long
   undoOf: long
 type SetBookHighlight object
   actor: long
@@ -969,17 +1011,20 @@ type SetBookHighlight object
   id: string
   layer: string
   seq: long
+  undoFrom: long
   undoOf: long
 type SetBriefing object
   actor: long
   at: long
   seq: long
   text: string
+  undoFrom: long
   undoOf: long
 type SetCalibration object
   actor: long
   at: long
   seq: long
+  undoFrom: long
   undoOf: long
   units: string
   unitsPerMeter: double?
@@ -990,6 +1035,7 @@ type SetClock object
   incrementMinutes: int
   seq: long
   turn: int
+  undoFrom: long
   undoOf: long
 type SetCounter object
   actor: long
@@ -999,6 +1045,7 @@ type SetCounter object
   layer: string
   name: string
   seq: long
+  undoFrom: long
   undoOf: long
   value: int
 type SetDecalPalette object
@@ -1006,6 +1053,7 @@ type SetDecalPalette object
   at: long
   entries: List<PaletteDecal>
   seq: long
+  undoFrom: long
   undoOf: long
 type SetDecals object
   actor: long
@@ -1015,6 +1063,7 @@ type SetDecals object
   layer: string
   onState: int
   seq: long
+  undoFrom: long
   undoOf: long
 type SetDef object
   actor: long
@@ -1025,6 +1074,7 @@ type SetDef object
   script: string
   seq: long
   swapsScript: bool
+  undoFrom: long
   undoOf: long
 type SetDieFaces object
   actor: long
@@ -1033,6 +1083,7 @@ type SetDieFaces object
   id: string
   layer: string
   seq: long
+  undoFrom: long
   undoOf: long
 type SetFacePicture object
   actor: long
@@ -1041,30 +1092,35 @@ type SetFacePicture object
   layer: string
   picture: string
   seq: long
+  undoFrom: long
   undoOf: long
 type SetGlobalMenuItems object
   actor: long
   at: long
   items: List<MenuItemDef>
   seq: long
+  undoFrom: long
   undoOf: long
 type SetGlobalScript object
   actor: long
   at: long
   seq: long
   text: string
+  undoFrom: long
   undoOf: long
 type SetGlobalScriptState object
   actor: long
   at: long
   seq: long
   state: string
+  undoFrom: long
   undoOf: long
 type SetGrid object
   actor: long
   at: long
   grid: GridDef
   seq: long
+  undoFrom: long
   undoOf: long
 type SetHighlight object
   actor: long
@@ -1073,12 +1129,14 @@ type SetHighlight object
   id: string
   layer: string
   seq: long
+  undoFrom: long
   undoOf: long
 type SetHotkeys object
   actor: long
   at: long
   items: List<HotkeyDef>
   seq: long
+  undoFrom: long
   undoOf: long
 type SetLabel object
   actor: long
@@ -1086,6 +1144,7 @@ type SetLabel object
   id: string
   layer: string
   seq: long
+  undoFrom: long
   undoOf: long
   value: string
 type SetLettering object
@@ -1095,12 +1154,14 @@ type SetLettering object
   layer: string
   lettering: Lettering
   seq: long
+  undoFrom: long
   undoOf: long
 type SetLighting object
   actor: long
   at: long
   lighting: Lighting
   seq: long
+  undoFrom: long
   undoOf: long
 type SetLines object
   actor: long
@@ -1110,6 +1171,7 @@ type SetLines object
   lines: List<LineDef>
   onState: int
   seq: long
+  undoFrom: long
   undoOf: long
 type SetLocked object
   actor: long
@@ -1117,6 +1179,7 @@ type SetLocked object
   id: string
   layer: string
   seq: long
+  undoFrom: long
   undoOf: long
   value: bool
 type SetMemo object
@@ -1126,6 +1189,7 @@ type SetMemo object
   layer: string
   memo: string
   seq: long
+  undoFrom: long
   undoOf: long
 type SetMenuItems object
   actor: long
@@ -1135,6 +1199,7 @@ type SetMenuItems object
   layer: string
   onState: int
   seq: long
+  undoFrom: long
   undoOf: long
 type SetNote object
   actor: long
@@ -1142,6 +1207,7 @@ type SetNote object
   id: string
   layer: string
   seq: long
+  undoFrom: long
   undoOf: long
   value: string
 type SetPassword object
@@ -1153,6 +1219,7 @@ type SetPicture object
   layer: string
   picture: string
   seq: long
+  undoFrom: long
   undoOf: long
 type SetPieceOption object
   actor: long
@@ -1162,6 +1229,7 @@ type SetPieceOption object
   layer: string
   name: string
   seq: long
+  undoFrom: long
   undoOf: long
   value: bool
 type SetPointerRule object
@@ -1169,6 +1237,7 @@ type SetPointerRule object
   alwaysShown: bool
   at: long
   seq: long
+  undoFrom: long
   undoOf: long
 type SetReady object
   actor: long
@@ -1179,6 +1248,7 @@ type SetReady object
   ready: ReadyPiece
   seq: long
   slot: int
+  undoFrom: long
   undoOf: long
 type SetRole object
   peerId: long
@@ -1190,6 +1260,7 @@ type SetScale object
   layer: string
   scale: double
   seq: long
+  undoFrom: long
   undoOf: long
 type SetScript object
   actor: long
@@ -1198,6 +1269,7 @@ type SetScript object
   layer: string
   seq: long
   text: string
+  undoFrom: long
   undoOf: long
 type SetScriptState object
   actor: long
@@ -1206,6 +1278,7 @@ type SetScriptState object
   layer: string
   seq: long
   state: string
+  undoFrom: long
   undoOf: long
 type SetSheetOpacity object
   actor: long
@@ -1213,6 +1286,7 @@ type SetSheetOpacity object
   id: string
   opacity: double
   seq: long
+  undoFrom: long
   undoOf: long
 type SetSheetPicture object
   actor: long
@@ -1223,6 +1297,7 @@ type SetSheetPicture object
   package: string
   seq: long
   size: Size2?
+  undoFrom: long
   undoOf: long
 type SetSheetRelief object
   actor: long
@@ -1231,6 +1306,7 @@ type SetSheetRelief object
   id: string
   relief: string
   seq: long
+  undoFrom: long
   undoOf: long
 type SetState object
   actor: long
@@ -1240,6 +1316,7 @@ type SetState object
   leaving: string
   seq: long
   state: int
+  undoFrom: long
   undoOf: long
 type SetTags object
   actor: long
@@ -1248,6 +1325,7 @@ type SetTags object
   layer: string
   seq: long
   tags: List<string>
+  undoFrom: long
   undoOf: long
 type SetText object
   actor: long
@@ -1257,6 +1335,7 @@ type SetText object
   layer: string
   name: string
   seq: long
+  undoFrom: long
   undoOf: long
   value: string
 type SetTint object
@@ -1265,6 +1344,7 @@ type SetTint object
   id: string
   layer: string
   seq: long
+  undoFrom: long
   undoOf: long
   value: string
 type SetUi object
@@ -1276,6 +1356,7 @@ type SetUi object
   piece: string
   seq: long
   tree: List<UiNode>
+  undoFrom: long
   undoOf: long
   xml: string
 type SetUiAttributes object
@@ -1292,6 +1373,7 @@ type SetUiAttributes object
   livePath: List<int>
   piece: string
   seq: long
+  undoFrom: long
   undoOf: long
   value: string
 type SetUiPictures object
@@ -1299,6 +1381,7 @@ type SetUiPictures object
   at: long
   pictures: Dictionary<string,string>
   seq: long
+  undoFrom: long
   undoOf: long
 type SetVisionRadius object
   actor: long
@@ -1307,6 +1390,7 @@ type SetVisionRadius object
   radius: double
   seq: long
   sharp: double?
+  undoFrom: long
   undoOf: long
 type SetWebModel object
   actor: long
@@ -1316,6 +1400,7 @@ type SetWebModel object
   mesh: string
   seq: long
   texture: string
+  undoFrom: long
   undoOf: long
 type SetWidgets object
   actor: long
@@ -1324,12 +1409,14 @@ type SetWidgets object
   layer: string
   onState: int
   seq: long
+  undoFrom: long
   undoOf: long
   widgets: List<Widget>
 type SetWind object
   actor: long
   at: long
   seq: long
+  undoFrom: long
   undoOf: long
   wind: Wind
 type SetWorth object
@@ -1339,6 +1426,7 @@ type SetWorth object
   id: string
   layer: string
   seq: long
+  undoFrom: long
   undoOf: long
   worth: int
 type SetZone object
@@ -1346,6 +1434,7 @@ type SetZone object
   at: long
   index: int?
   seq: long
+  undoFrom: long
   undoOf: long
   zone: Zone
 type SheetDef object
@@ -1379,6 +1468,7 @@ type ShowCast object
   size: double[]
   to: double[]
   turn: double[]
+  undoFrom: long
   undoOf: long
 type ShowContents object
   actor: long
@@ -1388,6 +1478,7 @@ type ShowContents object
   most: int
   seq: long
   to: string
+  undoFrom: long
   undoOf: long
 type ShowDialog object
   actor: long
@@ -1399,6 +1490,7 @@ type ShowDialog object
   title: string
   to: string
   token: string
+  undoFrom: long
   undoOf: long
 type Size2 object
   h: double
@@ -1420,6 +1512,7 @@ type SpawnPiece object
   scriptState: string
   seq: long
   tags: List<string>
+  undoFrom: long
   undoOf: long
   y: double
 type StampDecal object
@@ -1429,6 +1522,7 @@ type StampDecal object
   index: int?
   layer: string
   seq: long
+  undoFrom: long
   undoOf: long
 type Stow object
   actor: long
@@ -1439,6 +1533,7 @@ type Stow object
   layer: string
   seq: long
   slot: int?
+  undoFrom: long
   undoOf: long
 type Stroke object
   board: string
@@ -1450,6 +1545,7 @@ type Stroke object
   text: string
   width: double
 type TextLineDef object
+  color: string
   default: string
   name: string
   place: PrintPlace
@@ -1459,6 +1555,7 @@ type TiltPiece object
   id: string
   layer: string
   seq: long
+  undoFrom: long
   undoOf: long
   x: double
   z: double
@@ -1469,6 +1566,7 @@ type TurnDie object
   id: string
   layer: string
   seq: long
+  undoFrom: long
   undoOf: long
 type TurnInfo object
   endedAt: string
@@ -1515,6 +1613,7 @@ type UiEvent object
   path: List<int>
   piece: string
   seq: long
+  undoFrom: long
   undoOf: long
   value: string
 type UiLayout object
@@ -1540,8 +1639,10 @@ type UiRule object
 type Undo object
   actor: long
   at: long
+  fromSeq: long
   seq: long
   targetSeq: long
+  undoFrom: long
   undoOf: long
 type Unstow object
   actor: long
@@ -1554,6 +1655,7 @@ type Unstow object
   pos: Vec2?
   rotDeg: double?
   seq: long
+  undoFrom: long
   undoOf: long
 type UploadAsset object
   offset: long

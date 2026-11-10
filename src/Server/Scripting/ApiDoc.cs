@@ -227,7 +227,7 @@ public static partial class ApiDoc
         Note("A handle kept in a variable outlives the piece. Check `exists` before using one kept across turns; a `set_` call on a piece that is gone is an error.");
     });
 
-    static ApiSection PieceChanges() => Section("A piece: changes", "Each call is a change every umpire sees, taken back with Ctrl+Z by the umpire whose action ran the script. Everything one reaction changes is one step of undo.", () =>
+    static ApiSection PieceChanges() => Section("A piece: changes", "Each call is a change every umpire sees. What a script changes in answer to an umpire's action is one step of that umpire's undo. What scripts change by themselves (a timer, a wait, on_update, on_load) the host and lead umpires take back with Ctrl+Z, all of it between two of their own changes as one step.", () =>
     {
         PieceLooks();
         PieceSides();
@@ -1022,7 +1022,7 @@ public static partial class ApiDoc
         Note("It runs once a second while something changed, at every ended turn, on close, and after each umpire action that ran the script, so Ctrl+Z takes the script's state back with the rest.");
         See("on_load", "json.encode");
 
-        E("event", "on_update()", "Every frame on the host. Keep it short: it runs under the same time limit as any call.", "onUpdate");
+        E("event", "on_update()", "Every frame on the host. Keep it short: it runs under the same time limit as any call. If it fails again within a second, the script is off until Save and reload.", "onUpdate");
         Note("Prefer `wait.seconds` or an event: a script that does its work every frame costs the host every frame.");
 
         E("event", "on_drop(who)", "An umpire let the piece go.", "onDrop");

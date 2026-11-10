@@ -194,4 +194,59 @@ public class ClientSessionTests
         Assert.Equal(ClientSession.ConsoleKeep, _s.ConsoleLines.Count);
         Assert.Equal(6, _s.ConsoleLines[0].Seq);
     }
+
+    [Fact]
+    public void A_lead_takes_back_what_scripts_did_between_their_own_changes_in_one_press()
+    {
+        JoinAs(Role.LeadUmpire);
+        _s.OnCommand(Spawn(1, 2, "a"));
+        _s.OnCommand(Spawn(2, 0, "b"));
+        _s.OnCommand(Spawn(3, 3, "c"));
+        _s.OnCommand(Spawn(4, 0, "d"));
+        Assert.Equal(new long[] { 4, 1 }, _s.MyUndoable);
+        _s.UndoLast();
+        var undo = Assert.IsType<Undo>(_sent[^1]);
+        Assert.Equal((4L, 2L), (undo.TargetSeq, undo.FromSeq));
+        _s.UndoLast();
+        Assert.Equal((1L, 0L), (((Undo)_sent[^1]).TargetSeq, ((Undo)_sent[^1]).FromSeq));
+    }
+
+    [Fact]
+    public void My_own_change_closes_the_scripts_stretch_and_a_new_one_starts_after_it()
+    {
+        JoinAs(Role.HostUmpire, peer: 1);
+        _s.OnCommand(Spawn(1, 0, "a"));
+        _s.OnCommand(Spawn(2, 1, "b"));
+        _s.OnCommand(Spawn(3, 0, "c"));
+        _s.OnCommand(Spawn(4, 0, "d"));
+        Assert.Equal(new long[] { 4, 2, 1 }, _s.MyUndoable);
+        _s.UndoLast();
+        Assert.Equal(3, ((Undo)_sent[^1]).FromSeq);
+    }
+
+    [Fact]
+    public void A_plain_umpire_and_a_scripts_redraw_add_nothing_to_undo()
+    {
+        JoinAs(Role.Umpire);
+        _s.OnCommand(Spawn(1, 0, "a"));
+        Assert.Empty(_s.MyUndoable);
+        _s.OnRoleChanged(new RoleChanged { Role = Role.LeadUmpire, View = new GameState() });
+        _s.OnCommand(Spawn(2, 0, "b"));
+        _s.OnCommand(new SetWidgets { Seq = 3, Actor = 0, Id = "b", Widgets = new() });
+        _s.OnCommand(new Say { Seq = 4, Actor = 0, Text = "hello" });
+        Assert.Equal(new long[] { 2 }, _s.MyUndoable);
+    }
+
+    [Fact]
+    public void A_stretch_another_lead_took_back_leaves_my_undo()
+    {
+        JoinAs(Role.LeadUmpire);
+        _s.OnCommand(Spawn(1, 2, "a"));
+        _s.OnCommand(Spawn(2, 0, "b"));
+        _s.OnCommand(Spawn(3, 0, "c"));
+        _s.OnCommand(new Batch { Seq = 4, Actor = 3, UndoOf = 3, UndoFrom = 2, Items = { new DeletePiece { Id = "c" }, new DeletePiece { Id = "b" } } });
+        Assert.Equal(new long[] { 1 }, _s.MyUndoable);
+        _s.OnCommand(Spawn(5, 0, "e"));
+        Assert.Equal(new long[] { 5, 1 }, _s.MyUndoable);
+    }
 }
