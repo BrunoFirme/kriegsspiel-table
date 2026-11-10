@@ -6,7 +6,8 @@ public static class NoteCard
     public const double Width = 7.0, Height = 4.3, Thickness = 0.05;
     public const int PixelsPerUnit = 200;
 
-    public const double BindingBottom = 0.056, Perforation = 0.072, TitleTop = 0.088, TitleBottom = 0.195, HeadRule = 0.2, FirstRule = 0.284, RuleStep = 0.072, BottomMargin = 0.035, SideMargin = 0.03;
+    public const double TitleTop = 0.035, TitleBottom = 0.14, HeadRule = 0.155, FirstRule = 0.265, RuleStep = 0.0745, BottomMargin = 0.035, SideMargin = 0.03;
+    public const double BindingBottom = 0.033, Perforation = 0.041;
 
     public static int Lines => (int)Math.Floor((1 - BottomMargin - FirstRule) / RuleStep) + 1;
 
@@ -34,7 +35,7 @@ public static class NoteCard
         var print = (r: (byte)39, g: (byte)34, b: (byte)29);
         var rule = (r: (byte)149, g: (byte)141, b: (byte)106);
         int inset = (int)(SideMargin * w);
-        double binding = BindingBottom * h, holesAt = Perforation * h, bandTop = TitleTop * h, head = HeadRule * h;
+        double binding = BindingBottom * h, holesAt = Perforation * h, head = HeadRule * h;
         static bool IsRule(int y, double at, int thick) => Math.Abs(y - at) < thick / 2.0 + 0.01;
         bool IsStitch(int x, int y) => IsRule(y, binding / 2, StitchThick) && x >= inset && x < w - inset && (x - inset) % (StitchDash + StitchGap) < StitchDash;
         bool IsHole(int x, int y)
@@ -55,7 +56,7 @@ public static class NoteCard
                 var c = y < binding ? IsStitch(x, y) ? thread : cloth
                     : IsHole(x, y) ? hole
                     : IsRule(y, head, HeadThick) || IsRule(y, head + HeadGap, HeadThin) ? print
-                    : y >= bandTop && y < head ? band
+                    : y < head ? band
                     : IsBodyRule(x, y) ? rule : paper;
                 int o = (y * w + x) * 4;
                 px[o] = c.r;

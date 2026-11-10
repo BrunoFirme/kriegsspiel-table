@@ -217,7 +217,7 @@ public static class FirmeEffects
         string.Join("|", Presets.Select(p => $"{p.Name};{p.W};{p.H};{p.Era};{Json.Serialize(p.Fx)}")) + "|" + string.Join("|", PropList.Select(p => p.Name + p.Era)))))[..16];
     static string? _stamp;
 
-    const int PropsVersion = 10;
+    const int PropsVersion = 11;
     const string WriteTag = "install";
 
     public static void Ensure(PackageStore store)
