@@ -28,6 +28,15 @@ settle
 checkpoint export-save-submenu
 dismiss
 click "Menu"
+click "View"
+settle
+checkpoint view-submenu
+click ~"Ruler"
+settle
+checkpoint view-ruler-hidden
+click ~"Ruler"
+dismiss
+click "Menu"
 click "Scripting"
 settle
 checkpoint scripting-submenu

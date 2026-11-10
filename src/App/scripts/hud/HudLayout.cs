@@ -15,11 +15,11 @@ public partial class Hud
 
     void MakeParts()
     {
-        Top = new TopBar(Ctx, this);
         Umpires = new UmpiresPage(Ctx);
         Map = new MapPage(Ctx);
         Drawer = new Drawer(Ctx, this, Umpires, Map);
         Strip = new ToolStrip(Ctx, this, Drawer);
+        Top = new TopBar(Ctx, this, Strip);
         Menus = new MenuCards(Ctx, Strip, () => Pieces);
         Captures = new Captures(Ctx, () => Rect);
         Transcript = new Transcript(Ctx);

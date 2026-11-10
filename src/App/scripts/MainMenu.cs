@@ -6,7 +6,8 @@ namespace KTable.App;
 sealed class MainMenu : HudPart
 {
     readonly IHudShell Shell;
-    public MainMenu(HudContext ctx, IHudShell shell) : base(ctx) { Shell = shell; }
+    readonly ToolStrip _strip;
+    public MainMenu(HudContext ctx, IHudShell shell, ToolStrip strip) : base(ctx) { Shell = shell; _strip = strip; }
 
     public MenuButton Build()
     {
@@ -30,6 +31,11 @@ sealed class MainMenu : HudPart
             pm.AddSubmenuNodeItem("Convert to a digital tabletop save", convert);
         }
         pm.AddSeparator();
+        var view = _strip.NewMenu();
+        view.Name = "view";
+        pm.AboutToPopup += () => _strip.FillMenu(view);
+        pm.AddChild(view);
+        pm.AddSubmenuNodeItem("View", view);
         pm.AddItem("Settings…", 30);
         var scripting = BuildScripting();
         pm.AddChild(scripting);

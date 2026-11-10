@@ -156,6 +156,103 @@ static class HudTests
         Check.That(!shell.Panels["boards"].Visible, "shut again");
     }
 
+    static PopupMenu ViewMenu(Rig h)
+    {
+        var menu = h.Hud.Top.MenuButton!.GetPopup();
+        menu.EmitSignal(Window.SignalName.AboutToPopup);
+        return menu.GetNode<PopupMenu>("view");
+    }
+
+    static int Row(PopupMenu menu, string name) => Enumerable.Range(0, menu.ItemCount).First(i => menu.GetItemText(i).StartsWith(name));
+
+    static void Pick(PopupMenu menu, string name) => menu.EmitSignal(PopupMenu.SignalName.IdPressed, (long)menu.GetItemId(Row(menu, name)));
+
+    static string OnTheStrip(Rig h) =>
+        string.Join(", ", h.Hud.Strip.Panel.FindChildren("*", nameof(Button), true, false).OfType<Button>().Select(b => b.TooltipText.Split('\n')[0]));
+
+    [NodeTest]
+    static async Task A_sidebar_button_unticked_under_View_leaves_the_strip_and_comes_back_in_its_place_when_ticked(TestRunner r)
+    {
+        var h = await Host(r);
+        var all = OnTheStrip(h);
+        float tall = h.Hud.Strip.Panel.Size.Y;
+        var view = ViewMenu(h);
+        int ruler = Row(view, "Ruler");
+        Check.Equal("Sidebar buttons", view.GetItemText(0), "the list's heading");
+        Check.That(view.IsItemChecked(ruler) && !view.IsItemDisabled(ruler), "the ruler starts ticked and can be unticked");
+        Pick(view, "Ruler");
+        await r.Frames(2);
+        Check.That(!h.Hud.Strip.ToolButtons.ContainsKey(Tool.Ruler) && !OnTheStrip(h).Contains("Ruler"), "the ruler's button is gone: " + OnTheStrip(h));
+        Check.That(!view.IsItemChecked(ruler), "its row is unticked");
+        Check.That(h.Hud.Strip.Panel.Size.Y < tall, "the strip is shorter by it");
+        Check.Equal("ruler", string.Join(",", h.Hud.Cfg.StripHidden), "hidden buttons in the settings");
+        Check.That(!ViewMenu(h).IsItemChecked(ruler), "still unticked when the menu opens again");
+        Pick(view, "Ruler");
+        await r.Frames(2);
+        Check.Equal(all, OnTheStrip(h), "the strip with the ruler back");
+        Check.Equal(tall, h.Hud.Strip.Panel.Size.Y, "the strip's height");
+        Check.That(view.IsItemChecked(ruler) && h.Hud.Cfg.StripHidden.Count == 0, "ticked again and nothing hidden");
+    }
+
+    [NodeTest]
+    static async Task Map_Pieces_Select_and_Log_stay_on_the_strip_ticked_and_greyed_under_View(TestRunner r)
+    {
+        var h = await Host(r);
+        var view = ViewMenu(h);
+        foreach (var name in new[] { "Map", "Pieces", "Select", "Log" })
+            Check.That(view.IsItemChecked(Row(view, name)) && view.IsItemDisabled(Row(view, name)), $"{name} is ticked and greyed");
+        h.Hud.Cfg.StripHidden.AddRange(ToolStrip.Catalog.Select(i => i.Key));
+        h.Hud.Strip.Rebuild();
+        await r.Frames(2);
+        Check.Equal("Map, Pieces, Select   (Esc), Log", OnTheStrip(h), "the strip with every button hidden that can be");
+        view = ViewMenu(h);
+        Check.That(view.IsItemChecked(Row(view, "Select")) && !view.IsItemChecked(Row(view, "Dice")), "the list shows what is on the strip");
+    }
+
+    [NodeTest]
+    static async Task What_a_hidden_button_did_goes_on_working_without_it(TestRunner r)
+    {
+        var h = await Host(r);
+        IHudShell shell = h.Hud;
+        foreach (var key in new[] { "text", "2d", "paint", "ruler" }) h.Hud.Strip.Show(ToolStrip.Catalog.First(i => i.Key == key), false);
+        await r.Frames(2);
+        bool flat = h.Table.Rig.TopDown;
+        h.Hud.SetLabelPlates(true);
+        h.Table.Rig.ToggleTopDown();
+        h.Table.SetTool(Tool.Draw);
+        await r.Frames(2);
+        Check.That(h.Hud.Cfg.LabelPlates, "the plates switch on");
+        Check.That(h.Table.Rig.TopDown != flat, "the view switches");
+        Check.That(shell.Panels["paint"].Visible, "the drawing panel opens");
+        h.Table.SetTool(Tool.Ruler);
+        await r.Frame();
+        Check.Equal(Tool.Ruler, h.Table.Tool, "the tool in hand");
+        h.Hud.Drawer.ShowPage("map");
+        await r.Frame();
+        Check.That(h.Hud.Drawer.Pages["map"].btn is { } map && GodotObject.IsInstanceValid(map) && map.ButtonPressed, "the Map button on the rebuilt strip lights with its page");
+    }
+
+    [NodeTest]
+    static async Task A_right_click_on_the_strip_opens_the_same_list_and_it_stays_up_while_buttons_are_unticked(TestRunner r)
+    {
+        var h = await Host(r);
+        var ruler = h.Hud.Strip.ToolButtons[Tool.Ruler];
+        ruler.EmitSignal(Control.SignalName.GuiInput, new InputEventMouseButton { ButtonIndex = MouseButton.Right, Pressed = true, GlobalPosition = ruler.GlobalPosition });
+        await r.Frame();
+        var menu = h.Hud.Root.GetChildren().OfType<PopupMenu>().Single();
+        var view = ViewMenu(h);
+        Check.Equal(string.Join("|", Enumerable.Range(0, view.ItemCount).Select(view.GetItemText)), string.Join("|", Enumerable.Range(0, menu.ItemCount).Select(menu.GetItemText)), "its rows");
+        Check.That(menu.Visible, "the list is up");
+        Pick(menu, "Ruler");
+        Pick(menu, "Dice");
+        await r.Frames(2);
+        Check.That(!OnTheStrip(h).Contains("Ruler") && !OnTheStrip(h).Contains("Dice"), "both buttons are gone: " + OnTheStrip(h));
+        Check.That(menu.Visible && !menu.IsItemChecked(Row(menu, "Dice")), "the list is still up, with them unticked");
+        menu.Hide();
+        await r.Frames(2);
+        Check.That(!GodotObject.IsInstanceValid(menu), "closed, the list is freed");
+    }
+
     [NodeTest]
     static async Task The_settings_open_from_the_menu_as_a_dialog_on_the_hud(TestRunner r)
     {

@@ -65,6 +65,7 @@ public sealed class Settings
     public Dictionary<string, float[]> PanelSize { get; set; } = new();
     public float StripSize { get; set; } = 30;
     public const float StripSizeMin = 24, StripSizeMax = 56;
+    public List<string> StripHidden { get; set; } = new();
     public bool TopLine { get; set; } = true;
     public float TopLineWidth { get; set; } = 1f;
     public const float TopLineWidthMin = 0.25f;

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using Godot;
 
 namespace KTable.App;
@@ -45,6 +46,11 @@ sealed class Drawer : HudPart
     }
 
     public void SetButton(string key, Button b) => Pages[key] = (b, Pages.TryGetValue(key, out var e) ? e.page : null);
+
+    public void ForgetButtons()
+    {
+        foreach (var (key, (_, page)) in Pages.ToList()) Pages[key] = (null, page);
+    }
 
     void AddPage(string key, Control page)
     {

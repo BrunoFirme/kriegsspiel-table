@@ -116,13 +116,10 @@ public static class Ui
             t.SetIcon("unchecked", type, Mark(false, false, 1f));
             t.SetIcon("radio_checked", type, Mark(true, true, 1f));
             t.SetIcon("radio_unchecked", type, Mark(false, true, 1f));
-            if (type == "CheckBox")
-            {
-                t.SetIcon("checked_disabled", type, Mark(true, false, 0.4f));
-                t.SetIcon("unchecked_disabled", type, Mark(false, false, 0.4f));
-                t.SetIcon("radio_checked_disabled", type, Mark(true, true, 0.4f));
-                t.SetIcon("radio_unchecked_disabled", type, Mark(false, true, 0.4f));
-            }
+            t.SetIcon("checked_disabled", type, Mark(true, false, 0.4f));
+            t.SetIcon("unchecked_disabled", type, Mark(false, false, 0.4f));
+            t.SetIcon("radio_checked_disabled", type, Mark(true, true, 0.4f));
+            t.SetIcon("radio_unchecked_disabled", type, Mark(false, true, 0.4f));
         }
     }
 

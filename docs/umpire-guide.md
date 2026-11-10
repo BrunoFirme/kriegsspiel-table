@@ -68,6 +68,8 @@ Change the password in **Scenario properties** (the ⋯ after the scenario's nam
 
 The tool strip runs down the left. Point at any tool and press **F1** for its section here.
 
+- **Menu → View**, or a right-click on the strip, lists its buttons: untick one to take it off the strip, tick it to
+  bring it back. Its key still works. Map, Pieces, Umpires, Select and Log always stay.
 - **Esc** puts down whatever is in hand; pressed again, it opens the menu.
 - The top line says what just happened (a roll, a measurement), then goes quiet.
 - Panels open beside their button. Drag them by the title bar, resize from the corner; they stay put.

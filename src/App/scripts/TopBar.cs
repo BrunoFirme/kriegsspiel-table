@@ -22,7 +22,8 @@ sealed class TopBar : HudPart
     ulong _turnEndedAt;
 
     readonly IHudShell Shell;
-    public TopBar(HudContext ctx, IHudShell shell) : base(ctx) { Shell = shell; }
+    readonly ToolStrip _strip;
+    public TopBar(HudContext ctx, IHudShell shell, ToolStrip strip) : base(ctx) { Shell = shell; _strip = strip; }
 
     public void Build(Control root)
     {
@@ -35,7 +36,7 @@ sealed class TopBar : HudPart
         var row = new HBoxContainer();
         row.AddThemeConstantOverride("separation", Ui.Gap.Group);
         Panel.AddChild(row);
-        row.AddChild(MenuButton = new MainMenu(Ctx, Shell).Build());
+        row.AddChild(MenuButton = new MainMenu(Ctx, Shell, _strip).Build());
         SaidGap = new Control { MouseFilter = Control.MouseFilterEnum.Ignore, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         Shell.Hook<Action>(h => T.MenuRequested += h, h => T.MenuRequested -= h, () => { if (GodotObject.IsInstanceValid(MenuButton)) MenuButton!.ShowPopup(); });
         row.AddChild(new VSeparator());
