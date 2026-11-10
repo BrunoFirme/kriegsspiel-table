@@ -115,6 +115,68 @@ public class ModuleLookSwapTests
         Assert.DoesNotContain("stateGuids", Json.Serialize(p));
     }
 
+    static GameState Placed(Table t, string? columnScript)
+    {
+        var def = t.Store.Pack("testpack")!.Pieces.Single(d => d.Id == "inf");
+        def.Script = Lua(LineLua);
+        def.States = new()
+        {
+            new PieceStateDef { Name = "Line", Script = Lua(LineLua), Module = new ModuleStateData { Type = "Custom_Token", Guid = "aaa111", ScriptState = "drilled" } },
+            new PieceStateDef { Name = "Column", Script = columnScript ?? "", Module = new ModuleStateData { Type = "Custom_Token", Guid = "bbb222", ScriptState = "marching" } },
+        };
+        var state = Json.Clone(t.Server.State);
+        var p = state.Find(U, P)!;
+        (p.Guid, p.Label, p.ScriptState, p.Script, p.Looks) = (null, "1st Bn", "fresh", null, null);
+        return state;
+    }
+
+    [Fact]
+    public void A_piece_placed_from_a_module_kind_takes_each_look_s_own_saved_script_state_and_keeps_the_one_it_left()
+    {
+        using var t = new Table();
+        var p = Load(t, Placed(t, Lua(ColumnLua)));
+        Assert.Equal("line fresh", p.Note);
+        Assert.Null(p.Looks);
+
+        t.Server.Handle(Table.Host, new SetState { Layer = U, Id = P, State = 1 });
+        p = t.Server.State.Find(U, P)!;
+        Assert.Equal("column marching", p.Note);
+        Assert.Equal(("1st Bn", null), (p.Label, p.Guid));
+        Assert.Equal("kept line fresh", p.Looks![0].ScriptState);
+
+        t.Server.Handle(Table.Host, new SetState { Layer = U, Id = P, State = 0 });
+        Assert.Equal("line kept line fresh", t.Server.State.Find(U, P)!.Note);
+    }
+
+    [Fact]
+    public void The_look_change_that_first_gives_a_placed_piece_its_looks_carries_them_so_every_pc_applies_the_same()
+    {
+        using var t = new Table();
+        Load(t, Placed(t, Lua(ColumnLua)));
+        var before = Json.Clone(t.Server.State);
+        t.Server.Handle(Table.Host, new SetState { Layer = U, Id = P, State = 1 });
+        var sent = t.Server.Log.OfType<SetState>().Last();
+        Assert.Equal(2, sent.Looks!.Count);
+        Assert.Null(StateMachine.Apply(before, Json.Clone(sent), out _));
+        Assert.Equal(Json.Serialize(t.Server.State.Find(U, P)!.Looks), Json.Serialize(before.Find(U, P)!.Looks));
+        Assert.Equal(1, before.Find(U, P)!.State);
+
+        t.Server.Handle(Table.Host, new SetState { Layer = U, Id = P, State = 0 });
+        Assert.Null(t.Server.Log.OfType<SetState>().Last().Looks);
+    }
+
+    [Fact]
+    public void A_kind_whose_looks_came_from_no_module_gives_its_pieces_no_looks()
+    {
+        using var t = new Table();
+        var state = Placed(t, Lua(ColumnLua));
+        foreach (var s in t.Store.Pack("testpack")!.Pieces.Single(d => d.Id == "inf").States) s.Module = null;
+        Load(t, state);
+        t.Server.Handle(Table.Host, new SetState { Layer = U, Id = P, State = 1 });
+        Assert.Null(t.Server.State.Find(U, P)!.Looks);
+        Assert.Equal(1, t.Server.State.Find(U, P)!.State);
+    }
+
     [Fact]
     public void A_tint_put_on_a_piece_stays_with_it_through_every_look_it_changes_to()
     {

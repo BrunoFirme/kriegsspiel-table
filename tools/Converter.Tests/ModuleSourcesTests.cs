@@ -36,7 +36,7 @@ public sealed class ModuleSourcesTests
             ["States"] = new JsonObject { ["2"] = new JsonObject { ["Name"] = "Custom_Tile", ["GUID"] = "bbb222", ["Memo"] = "m", ["LuaScriptState"] = "s", ["Tags"] = new JsonArray("B") } },
         };
         var def = new PieceDef { States = { new PieceStateDef { Name = "Front" }, new PieceStateDef { Name = "Back" } } };
-        ModuleSources.States(def, new ModuleObj(j).StateList().states);
+        ModuleSources.States(def, new ModuleObj(j).StateList().states, (text, _) => text, "test");
         Assert.Equal(("aaa111", "first", (string?)null), (def.States[0].Module!.Guid, def.States[0].Module!.Description, def.States[0].Module!.Memo));
         Assert.Equal(("bbb222", "m", "s"), (def.States[1].Module!.Guid, def.States[1].Module!.Memo, def.States[1].Module!.ScriptState));
         Assert.Equal(["B"], def.States[1].Module!.Tags!);

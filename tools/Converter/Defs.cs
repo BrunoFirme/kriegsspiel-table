@@ -419,7 +419,7 @@ public sealed partial class DefFactory
             }
         }
 
-        ModuleSources.States(def, states);
+        ModuleSources.States(def, states, (text, at) => RewriteUrls(text, pack, at), where);
         if (b.Name is "Custom_Token" or "Custom_Tile") SetFlatFrame(def, b, heightScale);
         for (int i = 0; i < def.States.Count && i < states.Count; i++)
         {

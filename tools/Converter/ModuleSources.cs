@@ -30,16 +30,16 @@ public static class ModuleSources
         def.ModuleObjectTag = ObjectTag(b);
     }
 
-    public static void States(PieceDef def, List<ModuleObj> states)
+    public static void States(PieceDef def, List<ModuleObj> states, Func<string, string, string> urls, string where)
     {
-        for (int i = 0; i < def.States.Count && i < states.Count; i++) def.States[i].Module = StateData(states[i]);
+        for (int i = 0; i < def.States.Count && i < states.Count; i++) def.States[i].Module = StateData(states[i], urls, $"{where} state {i + 1} script state");
     }
 
     static string? Text(string s) => s.Length > 0 ? s : null;
 
-    static ModuleStateData StateData(ModuleObj s) => new()
+    static ModuleStateData StateData(ModuleObj s, Func<string, string, string> urls, string where) => new()
     {
-        Type = s.Name, Guid = s.Guid, Description = Text(s.Description), GmNotes = Text(s.GmNotes), Memo = Text(s.Memo), ScriptState = Text(s.LuaState),
+        Type = s.Name, Guid = s.Guid, Description = Text(s.Description), GmNotes = Text(s.GmNotes), Memo = Text(s.Memo), ScriptState = Text(urls(s.LuaState, where)),
         Tags = s.Tags.Count > 0 ? s.Tags : null,
     };
 

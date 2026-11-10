@@ -682,6 +682,9 @@ public sealed partial class GameServer
                 if (string.IsNullOrEmpty(s.Id) || State.Find(s.Layer, s.Id) != null) s.Id = State.NewId();
                 if (s.ScriptState == null && Store?.Def(s.Def)?.ScriptState is { } st0) s.ScriptState = st0;
                 break;
+            case SetState ss when State.Find(ss.Layer, ss.Id) is { Looks: null } turning && ss.State != turning.State && Store?.Def(turning.Def) is { } kind:
+                ss.Looks = PieceLook.FromKind(turning, kind);
+                break;
             case RestorePiece r when string.IsNullOrEmpty(r.Piece.Id) || State.Find(r.Layer, r.Piece.Id) != null:
                 r.Piece.Id = State.NewId();
                 break;

@@ -212,6 +212,7 @@ public static partial class StateMachine
         inverse = new SetState { Layer = st.Layer, Id = st.Id, State = p.State };
         int to = Math.Max(0, st.State);
         if (to != p.State) p.BookHighlight = null;
+        if (p.Looks == null && st.Looks is { } looks && p.State < looks.Count) p.Looks = looks.Select(l => l.Clone()).ToList();
         if (!PieceLook.Swap(p, to, st.Leaving)) p.State = to;
         return null;
     }

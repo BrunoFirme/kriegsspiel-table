@@ -216,6 +216,7 @@ public sealed class SetState : LayerCommand
     public string Id { get; set; } = "";
     public int State { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? Leaving { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<PieceLook>? Looks { get; set; }
     public override Sender SentBy() => Sender.Umpire;
     public override bool OnUndoStack() => true;
     public override Shown ShownToObservers() => Shown.Table;

@@ -50,6 +50,26 @@ public sealed class LookTests : ConverterHarness
     }
 
     [Fact]
+    public void Pictures_named_by_address_in_each_look_s_saved_script_state_come_over_as_the_pack_s_own()
+    {
+        var cfg = TempConfig();
+        LocalPicture(cfg, "http://a/line-frame.png", 64, 8, (x, y) => x is 0 or 63 || y is 0 or 7 ? SkiaSharp.SKColors.White : SkiaSharp.SKColors.Transparent);
+        LocalPicture(cfg, "http://a/column-frame.png", 16, 24, (x, y) => x is 0 or 15 || y is 0 or 23 ? SkiaSharp.SKColors.White : SkiaSharp.SKColors.Transparent);
+        const string lua = "function onLoad(saved) self.setDescription(saved) end";
+        var line = Look("1st Bn in line", "aaa111", new JsonObject { ["LuaScript"] = lua, ["LuaScriptState"] = "{\"decals\":[{\"url\":\"http://a/line-frame.png\"}]}" });
+        var col = Look("1st Bn in column", "aaa111c", new JsonObject { ["LuaScript"] = lua, ["LuaScriptState"] = "{\"decals\":[{\"url\":\"http://a/column-frame.png\"}]}" });
+        line["States"] = new JsonObject { ["2"] = col };
+        var (table, pack) = Import("framed", line);
+
+        var def = pack.Pieces.Single(d => d.Id == Assert.Single(table.UmpireBoard).Def);
+        var states = new[] { def.ScriptState!, def.States[0].Module!.ScriptState!, def.States[1].Module!.ScriptState! };
+        Assert.All(states, s => Assert.DoesNotContain("http", s));
+        Assert.Equal(def.ScriptState, states[1]);
+        Assert.NotEqual(states[1], states[2]);
+        Assert.All(states, s => Assert.Contains(pack.Assets.Keys, k => s.Contains(k)));
+    }
+
+    [Fact]
     public void Each_look_s_kind_carries_its_own_translated_script_and_a_look_without_one_carries_none()
     {
         TempConfig();

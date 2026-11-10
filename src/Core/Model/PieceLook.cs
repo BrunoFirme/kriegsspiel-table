@@ -49,6 +49,19 @@ public sealed class PieceLook
         p.MenuItems = new();
     }
 
+    public static List<PieceLook>? FromKind(PieceInstance p, PieceDef def)
+    {
+        if (p.Looks != null || def.States.Count < 2 || p.State < 0 || p.State >= def.States.Count || !def.States.Any(s => s.Module != null)) return null;
+        return def.States.Select((s, i) =>
+        {
+            var look = Of(p);
+            if (i == p.State) return look;
+            (look.Lines, look.Ui, look.UiLayout, look.UiAssets) = (null, null, null, null);
+            look.ScriptState = s.Module?.ScriptState ?? "";
+            return look;
+        }).ToList();
+    }
+
     public static bool Swap(PieceInstance p, int to, string? leavingScriptState)
     {
         if (p.Looks is not { } looks || to < 0 || to >= looks.Count || p.State < 0 || p.State >= looks.Count || to == p.State) return false;

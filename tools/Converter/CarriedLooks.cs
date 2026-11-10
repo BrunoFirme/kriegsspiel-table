@@ -21,7 +21,7 @@ public sealed class CarriedLooks(DefFactory defs, Report rep)
             copy.States = states.Select((s, i) => looks![i] is { } look ? BundleState(s, look, copy, Math.Abs(s.ScaleX) / bs, i) : own![i]!).ToList();
             from.UnionWith(looks!.OfType<(PieceDef Def, string Pack)>().Select(l => l.Pack));
             ModuleSources.Fill(copy, states[0]);
-            ModuleSources.States(copy, states);
+            ModuleSources.States(copy, states, (text, at) => defs.RewriteUrls(text, pack, at), where);
         }
         defs.Glued.Fill(copy, stated ? states : [states[self]], bs, 1 / r.Fit, heightScale, pack, where, Mirror.Of(o));
         if (!stated && copy.Parts is not { Count: > 0 }) return r;

@@ -769,7 +769,7 @@ public sealed partial class ScriptHost
                 if (_pieces.TryGetValue(d.Id, out var ps)) Call(ps, "on_destroy");
                 _every.Tell("on_destroy", Handle(d.Id));
                 break;
-            case SetState { Leaving: null } st when Find(st.Id) is { Looks: { } looks } sp && st.State != sp.State && st.State >= 0 && st.State < looks.Count:
+            case SetState { Leaving: null } st when Find(st.Id) is { } sp && (sp.Looks ?? st.Looks) is { } looks && st.State != sp.State && st.State >= 0 && st.State < looks.Count:
                 LeaveLook(st, sp);
                 break;
         }
