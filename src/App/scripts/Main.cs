@@ -195,6 +195,7 @@ public partial class Main : Node
 
     internal void QuitApp()
     {
+        _cfg.Save();
         Assets.Quiesce();
         Diagnostics.Closing();
         GetTree().Quit();
@@ -220,7 +221,6 @@ public partial class Main : Node
         if (what != NotificationWMCloseRequest) return;
         if (GetNodeOrNull<PieceStudio>("Studio") is { } studio && IsInstanceValid(studio)) { _ = CloseFromStudio(studio); return; }
         _net.SaveNow(closing: true);
-        _cfg.Save();
         if (_net.LastSaveProblem is { } problem && !_quitAnyway) { AskBeforeQuitting(problem); return; }
         QuitApp();
     }
@@ -234,7 +234,6 @@ public partial class Main : Node
         string? problem;
         try { problem = await studio.FlushAllAsync(); }
         finally { _studioClosing = false; }
-        _cfg.Save();
         if (problem != null && !_quitAnyway) { AskBeforeQuitting(problem, "Your work in the piece studio"); return; }
         QuitApp();
     }

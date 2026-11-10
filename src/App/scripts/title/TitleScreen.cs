@@ -59,6 +59,15 @@ sealed class TitleScreen
     public const string NoName = "Unnamed";
     public string HostName => PlayerName.Text.Trim().Length > 0 ? PlayerName.Text.Trim() : NoName;
 
+    internal static LineEdit NameEdit(Settings cfg)
+    {
+        var edit = new LineEdit { Text = cfg.LastName, PlaceholderText = "your name", CustomMinimumSize = new Vector2(260, 0), SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin };
+        edit.TextChanged += t => cfg.LastName = t;
+        edit.TextSubmitted += _ => cfg.Save();
+        edit.FocusExited += cfg.Save;
+        return edit;
+    }
+
     public void Close()
     {
         Root?.QueueFree();
@@ -166,8 +175,7 @@ sealed class TitleScreen
         var who = new Label { Text = "YOUR NAME", Modulate = Muted };
         who.AddThemeFontSizeOverride("font_size", 11);
         left.AddChild(who);
-        PlayerName = new LineEdit { Text = _cfg.LastName, PlaceholderText = "your name", CustomMinimumSize = new Vector2(260, 0), SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin };
-        PlayerName.TextChanged += t => _cfg.LastName = t;
+        PlayerName = NameEdit(_cfg);
         left.AddChild(PlayerName);
         Status = new Label { AutowrapMode = TextServer.AutowrapMode.WordSmart, Modulate = Ui.AccentInk, CustomMinimumSize = new Vector2(320, 0) };
         left.AddChild(Status);
