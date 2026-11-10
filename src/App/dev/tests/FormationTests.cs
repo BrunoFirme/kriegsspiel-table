@@ -247,6 +247,39 @@ static class FormationTests
     }
 
     [NodeTest]
+    static async Task A_drawn_stretch_turned_in_place_with_the_wheel_keeps_its_line_when_spaced(TestRunner r)
+    {
+        var t = OfflineTable.Make(r, pieces: 4);
+        await r.Frame();
+        t.Table.SetTool(Tool.Formation);
+        var four = Six.Take(4).ToArray();
+        t.Table.Selection.Set(four);
+        t.Table.Settings.Formation = "stretch";
+        double across = four.Select(id => t.Node(id).Footprint.X).Max() * (1 + t.Table.Forms.Gap);
+        double radius = 4 * across;
+        Vec2 Arc(double deg) => new(radius * Math.Cos(deg * Math.PI / 180), radius * Math.Sin(deg * Math.PI / 180));
+        Check.That(t.Table.Forms.Press(Arc(0)), "the line is drawn from where the drag starts");
+        for (int i = 1; i <= 90; i++) t.Table.Forms.Drag(Arc(i));
+        t.Table.Forms.Release();
+        await Settled(r, t);
+        bool OnTheArc() => four.All(id => Math.Abs(At(t, id).Length - radius) < across * 0.1);
+        Check.That(OnTheArc(), "strung along the drawn quarter circle");
+        var facing = four.ToDictionary(id => id, id => t.S.View.Find(U, id)!.RotDeg);
+        t.Table.Rig.Frame(Coords.ToWorld(At(t, four[1])), (float)(radius * 2));
+        await r.Frame();
+        var over = Screen(t, At(t, four[1]));
+        t.Table.Router.OnMouseButton(new InputEventMouseButton { ButtonIndex = MouseButton.WheelDown, Pressed = true, Position = over });
+        t.Table.Poses.Flush();
+        await r.Frame();
+        Check.That(four.All(id => Math.Abs(Mathf.Wrap((float)(t.S.View.Find(U, id)!.RotDeg - facing[id] - 10), -180, 180)) < 1e-3), "the wheel over a piece turns each 10° in place");
+        double gap = t.Table.Forms.Gap;
+        t.Table.Keys.OnKey(new InputEventKey { Keycode = Key.Equal, Pressed = true });
+        Check.That(t.Table.Forms.Gap > gap, $"= spaces them wider: {gap} → {t.Table.Forms.Gap}");
+        await Settled(r, t);
+        Check.That(OnTheArc(), "turned in place and spaced wider, still on the drawn line, not a straight one: " + string.Join(", ", four.Select(id => $"{At(t, id).Length / across:0.00}")));
+    }
+
+    [NodeTest]
     static async Task In_the_formations_tool_the_wheel_over_the_pieces_turns_them_in_place_and_the_keys_set_spacing_and_ranks(TestRunner r)
     {
         var t = OfflineTable.Make(r, pieces: 6);

@@ -183,7 +183,8 @@ sealed class FormationTool
         if (units.Count < 2 || _formed is not { } formed || !formed.Ids.SetEquals(units.Select(n => n.Piece.Id)) || Formations.Find(formed.Kind) is not { } kind) return "";
         var mine = Mine(units);
         double facing = mine?.Facing ?? Formations.Facing(units.Select(RotOf)) ?? units[0].Piece.RotDeg;
-        var path = mine?.Path ?? (kind.AlongLine ? Straight(units, facing) : null);
+        bool turnedOnly = units.All(n => formed.Spots.TryGetValue(n, out var s) && (n.Piece.Pos - s.Pos).Length < SameSpot);
+        var path = mine?.Path ?? (kind.AlongLine ? (turnedOnly ? formed.Path : null) ?? Straight(units, facing) : null);
         Lay(units, kind, Centre(units), facing, keepFront ? mine?.Front : null, path, frontAt: false, formed);
         return TooShort(units, path);
     }
