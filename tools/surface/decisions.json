@@ -31,7 +31,8 @@
   "Digital_Clock": ["dropped", "the tabletop's stock gadgets (decided 2026-11-06)", "a counter on a piece, the game clock, or a piece of our own"],
   "Quarter": ["dropped", "the tabletop's stock gadgets (decided 2026-11-06)", "a counter on a piece, the game clock, or a piece of our own"],
   "Go_Game_Piece_White": ["dropped", "the tabletop's stock gadgets (decided 2026-11-06)", "a counter on a piece, the game clock, or a piece of our own"],
-  "Go_Game_Piece_Black": ["dropped", "the tabletop's stock gadgets (decided 2026-11-06)", "a counter on a piece, the game clock, or a piece of our own"]
+  "Go_Game_Piece_Black": ["dropped", "the tabletop's stock gadgets (decided 2026-11-06)", "a counter on a piece, the game clock, or a piece of our own"],
+  "reversi_chip": ["dropped", "the tabletop's stock gadgets (the reversi chip decided 2026-11-10)", "a counter on a piece, the game clock, or a piece of our own"]
  },
  "save": {
   "SaveState.EpochTime": ["dropped", "save metadata", "nothing is needed"],
