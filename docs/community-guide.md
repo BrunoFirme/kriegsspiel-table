@@ -17,6 +17,9 @@ You get:
   link is gone, or its server keeps answering with a web page instead of the picture) are left out and named there.
   A server that fails only once gets a stand-in picture, and the next conversion tries again.
 
+Converting a module again updates its pack in place: pieces already on your tables take their kind's new look, and
+a kind the module no longer has stays in the pack, left out of **Pieces**, so the pieces placed from it still show.
+
 | Converts | Does not |
 |---|---|
 | Tiles, tokens, boards, 3D models | Physics, hands, hidden zones, grid, lighting, turns (listed in the report) |

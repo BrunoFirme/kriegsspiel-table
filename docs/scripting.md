@@ -311,6 +311,7 @@ end
 | Scripts window | Menu → Scripting → Scripts… (Ctrl+Shift+L) | every script, its state, error line, console; Ctrl+S reloads |
 | Script console | Menu → Scripting → Script console (`) | prints and errors; the host and leads can run Lua |
 | Completion | any script editor | names after `self.`, `board.`…; hover for help; F1 for the reference |
+| Find | any script editor | Ctrl+F marks every match; Enter or F3 the next, Shift+Enter or Shift+F3 the one before, Esc back to the script |
 | Checks | a pack's or scenario's ⋯ → Check its scripts… | runs every script offline and lists errors |
 | Ids on hover | Menu → Scripting → Show piece ids on hover | id, GUID and kind under the pointer |
 | VS Code | API reference → **API file for VS Code…** | typed completion in VS Code |
