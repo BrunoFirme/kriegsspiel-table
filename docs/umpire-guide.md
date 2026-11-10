@@ -76,6 +76,10 @@ The tool strip runs down the left. Point at any tool and press **F1** for its se
 | Wheel | zoom (over a selected piece it turns it) |
 | Home | frame the map |
 | F2 | flat map view and back |
+| Ctrl+1–9 | keep this view (with nothing picked or carried); also in the right-click menu |
+| Shift+1–9 | go back to a kept view |
+
+Kept views are yours, for each scenario.
 
 ### Selecting and moving
 
@@ -83,7 +87,7 @@ The tool strip runs down the left. Point at any tool and press **F1** for its se
 - **Q / E** turn 15° (Shift 1°). The wheel over a selected piece turns it 10° (Ctrl 2°, Shift ½°).
 - The same keys mean the same in every tool: **Q / E** turn, **+ / −** or **Ctrl+wheel** size, **[ ]** step one
   less or one more, and the wheel zooms, but over selected pieces, where it turns them.
-- **+ / −** resize, **Ctrl+1–9** form rows, **Ctrl+X / C / V** cut, copy and paste, **Delete**, **Ctrl+Z / Ctrl+Y** undo and redo.
+- **+ / −** resize, **Ctrl+1–9** form rows while carrying or with several picked, **Ctrl+X / C / V** cut, copy and paste, **Delete**, **Ctrl+Z / Ctrl+Y** undo and redo.
 - What you copy waits on the clipboard until you copy again, so **Ctrl+V** pastes it into another scenario, or after the app
   is closed and opened. Pieces keep their counters, text, notes and scripts, and the packs they need come into that game
   with them; pieces whose pack is not on the PC are left out and the hint says which.

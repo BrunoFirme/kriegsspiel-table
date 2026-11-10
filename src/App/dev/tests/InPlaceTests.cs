@@ -77,6 +77,8 @@ static class InPlaceTests
         var dlg = r.GetTree().Root.FindChildren("*", "ConfirmationDialog", true, false).OfType<ConfirmationDialog>().Last();
         Check.Equal(before + 1, Windows(r), "windows open");
         Check.Equal(Vector2.Zero, dlg.GetThemeIcon("close").GetSize(), "size of the title bar's close button");
+        Check.That(dlg.Size.Y <= Mathf.Ceil(dlg.GetContentsMinimumSize().Y), $"a question with no text is as tall as its buttons need, not {dlg.Size.Y}");
+        Check.Equal(0f, dlg.GetThemeStylebox("panel").GetMargin(Side.Top), "padding above a question with no text");
         dlg.GetOkButton().EmitSignal(BaseButton.SignalName.Pressed);
         await r.Frames(2);
         Check.That(yes, "OK runs the action");

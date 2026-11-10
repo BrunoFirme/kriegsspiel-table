@@ -23,6 +23,7 @@ static class InPlace
 {
     const string SubKey = "in_place_sub";
     const float SheetWidth = 480;
+    const int BarePadding = 10;
     static readonly Color Scrim = new(0, 0, 0, 0.42f);
 
     public static Window? Owner(Node n) =>
@@ -42,7 +43,11 @@ static class InPlace
             dlg.GetLabel().AutowrapMode = TextServer.AutowrapMode.WordSmart;
             dlg.GetLabel().CustomMinimumSize = new Vector2(width, 0);
         }
-        else dlg.GetLabel().Visible = false;
+        else
+        {
+            dlg.GetLabel().Visible = false;
+            if (body == null) Bare(dlg);
+        }
         if (body != null) dlg.AddChild(body);
         if (focus is LineEdit le) dlg.RegisterTextEnter(le);
         int also = 0;
@@ -58,8 +63,25 @@ static class InPlace
         dlg.VisibilityChanged += () => { if (!dlg.Visible) Callable.From(q.Close).CallDeferred(); };
         Ui.Open(parent, dlg, body != null ? null : text != null ? new Vector2I(width + 28, 60) : new Vector2I(200, 20));
         Ui.FreeOnClose(dlg);
+        if (text == null && body == null) Callable.From(() => Fit(dlg)).CallDeferred();
         focus?.CallDeferred(Control.MethodName.GrabFocus);
         return q;
+    }
+
+    static void Bare(ConfirmationDialog dlg)
+    {
+        var panel = Ui.WindowFill(Ui.Raised, BarePadding, BarePadding);
+        panel.ContentMarginTop = 0;
+        dlg.AddThemeStyleboxOverride("panel", panel);
+        dlg.AddThemeConstantOverride("buttons_separation", 0);
+        dlg.MinSize = dlg.MinSize with { Y = 0 };
+    }
+
+    static void Fit(Window dlg)
+    {
+        if (!GodotObject.IsInstanceValid(dlg) || !dlg.Visible) return;
+        dlg.Size = dlg.Size with { Y = (int)Mathf.Ceil(dlg.GetContentsMinimumSize().Y) };
+        dlg.MoveToCenter();
     }
 
     static Question Sheet(Window owner, string title, string okText, Action onOk, string? text, Control? body, Control? focus)
