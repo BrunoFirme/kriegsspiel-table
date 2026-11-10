@@ -38,7 +38,7 @@ public sealed class Sticking<T> where T : class, ITablePiece
             double y = Absolute(n, pos, m?.RotDeg ?? n.Piece.RotDeg, m?.Y ?? n.Piece.Y);
             var parent = parentOf.GetValueOrDefault(n.Piece.Id);
             if (parent != null && (droppedIds.Contains(parent.Id) || LinkedFromAfar(n, parent))) continue;
-            var under = BaseUnder(n, pos, y, parent, droppedSet, movedTo, simulated);
+            var under = BaseUnder(n, pos, y, parent, parentOf, droppedSet, movedTo, simulated);
             if (under != null && parent?.Id != under.Piece.Id)
             {
                 cmds.Add(new Attach { Layer = n.Layer, Parent = under.Piece.Id, Child = n.Piece.Id });
@@ -57,12 +57,21 @@ public sealed class Sticking<T> where T : class, ITablePiece
     double Absolute(T n, Vec2 pos, double rot, double stored) => _footing?.AbsoluteY(n, pos, rot, stored) ?? stored;
 
     const double RestGap = 0.03, RestReach = 0.12;
+    const float SameSize = 0.95f;
+
+    static bool Carries(Dictionary<string, PieceInstance> parentOf, string carrier, string id)
+    {
+        var seen = new HashSet<string>();
+        for (var at = id; parentOf.TryGetValue(at, out var up) && seen.Add(at); at = up.Id)
+            if (up.Id == carrier) return true;
+        return false;
+    }
 
     bool LinkedFromAfar(T n, PieceInstance parent) =>
         _nodeOf(n.Layer, parent.Id) is { } p
         && !(p.ContainsAt(n.Piece.Pos, parent.Pos, parent.RotDeg) && Math.Abs(Absolute(n, n.Piece.Pos, n.Piece.RotDeg, n.Piece.Y) + RestGap - p.TopY) <= RestReach);
 
-    T? BaseUnder(T n, Vec2 pos, double y, PieceInstance? parent, HashSet<T> droppedSet, Dictionary<T, MovePiece> movedTo, HashSet<T> simulated)
+    T? BaseUnder(T n, Vec2 pos, double y, PieceInstance? parent, Dictionary<string, PieceInstance> parentOf, HashSet<T> droppedSet, Dictionary<T, MovePiece> movedTo, HashSet<T> simulated)
     {
         T? under = null;
         double underTop = 0;
@@ -71,8 +80,8 @@ public sealed class Sticking<T> where T : class, ITablePiece
         {
             if (o == n || o.Layer != n.Layer || o.IsDie || o.IsEffect) continue;
             if ((droppedSet.Contains(o) || simulated.Contains(o)) && o.Piece.Id != parent?.Id) continue;
-            if (o.Footprint.X * o.Footprint.Y <= n.Footprint.X * n.Footprint.Y * 1.05f) continue;
-            if (n.Piece.Attached.Contains(o.Piece.Id)) continue;
+            if (o.Footprint.X * o.Footprint.Y < n.Footprint.X * n.Footprint.Y * SameSize) continue;
+            if (Carries(parentOf, n.Piece.Id, o.Piece.Id)) continue;
             var om = movedTo.GetValueOrDefault(o);
             var oPos = om?.Pos ?? o.Piece.Pos;
             var oRot = om?.RotDeg ?? o.Piece.RotDeg;

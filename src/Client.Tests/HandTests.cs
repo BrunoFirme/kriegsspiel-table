@@ -154,6 +154,39 @@ public class HandTests
         Assert.Equal((0, 0), (stuck, freed));
     }
 
+    static (string cmds, int stuck) DropOn(List<FakePiece> all, FakePiece dropped)
+    {
+        var sticking = new Sticking<FakePiece>(_ => all, (l, id) => all.FirstOrDefault(n => n.Piece.Id == id), _ => all.Select(n => n.Piece).ToList());
+        var move = new MovePiece { Layer = dropped.Layer, Id = dropped.Piece.Id, Pos = dropped.Piece.Pos, RotDeg = dropped.Piece.RotDeg, Y = dropped.Piece.Y };
+        var (cmds, stuck, _, _) = sticking.Stickiness(new List<FakePiece> { dropped }, new List<(FakePiece, MovePiece)> { (dropped, move) }, new HashSet<FakePiece> { dropped });
+        return (Describe(cmds), stuck);
+    }
+
+    [Fact]
+    public void A_piece_set_down_on_one_its_own_size_that_already_rides_another_rides_it_three_deep()
+    {
+        var a = new FakePiece("a", 0, 0, 3.771f, 0.5729f);
+        var b = new FakePiece("b", 0, 0, 3.7708f, 0.5728f, y: 0.13);
+        var c = new FakePiece("c", 0, 0, 3.771f, 0.5729f, y: 0.26);
+        a.Piece.Attached.Add("b");
+        Assert.Equal(("attach c to b", 1), DropOn(new List<FakePiece> { a, b, c }, c));
+    }
+
+    [Fact]
+    public void A_piece_set_down_on_a_smaller_one_or_on_one_it_carries_rides_neither()
+    {
+        var small = new FakePiece("small", 0, 0, 1, 1);
+        var big = new FakePiece("big", 0, 0, 2, 1, y: 0.13);
+        Assert.Equal(("", 0), DropOn(new List<FakePiece> { small, big }, big));
+
+        var under = new FakePiece("under", 0, 0, 2, 1);
+        var over = new FakePiece("over", 0, 0, 2, 1, y: 0.13);
+        var top = new FakePiece("top", 0, 0, 2, 1, y: 0.26);
+        over.Piece.Attached.Add("under");
+        under.Piece.Attached.Add("top");
+        Assert.Equal(("", 0), DropOn(new List<FakePiece> { under, over, top }, over));
+    }
+
     [Fact]
     public void A_stuck_marker_dropped_on_the_bare_table_comes_loose()
     {
