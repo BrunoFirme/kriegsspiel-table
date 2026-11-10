@@ -77,8 +77,10 @@ public partial class FindBar : HBoxContainer
 
     public event Action? Changed;
     public event Action? Moved;
+    public event Action? Dismissed;
 
     public IReadOnlyList<string> Terms { get; private set; } = Array.Empty<string>();
+    public string Query => _field.Text;
     public int Current { get; private set; }
     public int Total { get; private set; }
 
@@ -100,7 +102,12 @@ public partial class FindBar : HBoxContainer
                 if (_debounce.TimeLeft > 0) { _debounce.Stop(); Apply(); } Step(k.ShiftPressed ? -1 : 1);
                 _field.AcceptEvent();
             }
-            else if (k.Keycode == Key.Escape) { Close(); _field.AcceptEvent(); }
+            else if (k.Keycode == Key.Escape)
+            {
+                Close();
+                Dismissed?.Invoke();
+                _field.AcceptEvent();
+            }
         };
     }
 
@@ -174,6 +181,71 @@ public partial class FindBar : HBoxContainer
         bar.Changed += () => Render(true);
         bar.Moved += () => Render(true);
         bar.SetMeta("render", Callable.From(() => Render(false)));
+        return bar;
+    }
+
+    public static Control WithFind(CodeEdit edit)
+    {
+        var box = new VBoxContainer { Name = edit.Name, SizeFlagsVertical = edit.SizeFlagsVertical, SizeFlagsHorizontal = edit.SizeFlagsHorizontal };
+        box.AddThemeConstantOverride("separation", Ui.Gap.Hair);
+        box.AddChild(ForCode(edit));
+        edit.SizeFlagsVertical = Control.SizeFlags.ExpandFill;
+        box.AddChild(edit);
+        return box;
+    }
+
+    public static FindBar ForCode(CodeEdit edit)
+    {
+        var bar = new FindBar { Visible = false };
+        bar._field.PlaceholderText = "Find  (Ctrl+F)";
+        edit.DeselectOnFocusLossEnabled = false;
+        edit.AddThemeColorOverride("search_result_color", new Color(Ui.Accent, 0.32f));
+        edit.AddThemeColorOverride("search_result_border_color", Colors.Transparent);
+        var hits = new List<Vector2I>();
+        void Count()
+        {
+            hits.Clear();
+            var q = bar.Query;
+            if (q.Length > 0)
+                for (int line = 0; line < edit.GetLineCount(); line++)
+                {
+                    var text = edit.GetLine(line);
+                    for (int at = text.IndexOf(q, StringComparison.OrdinalIgnoreCase); at >= 0; at = text.IndexOf(q, at + q.Length, StringComparison.OrdinalIgnoreCase))
+                        hits.Add(new Vector2I(at, line));
+                }
+            edit.SetSearchText(q);
+            edit.QueueRedraw();
+            bar.SetTotal(hits.Count);
+        }
+        void Show()
+        {
+            if (hits.Count == 0) return;
+            var hit = hits[bar.Current];
+            edit.Select(hit.Y, hit.X, hit.Y, hit.X + bar.Query.Length);
+            edit.CenterViewportToCaret();
+        }
+        bar.Changed += () =>
+        {
+            Count();
+            var from = edit.HasSelection() ? new Vector2I(edit.GetSelectionFromColumn(), edit.GetSelectionFromLine()) : new Vector2I(edit.GetCaretColumn(), edit.GetCaretLine());
+            int first = hits.FindIndex(h => h.Y > from.Y || h.Y == from.Y && h.X >= from.X);
+            bar.SetCurrent(Math.Max(0, first));
+            Show();
+        };
+        bar.Moved += Show;
+        bar.Dismissed += () => { bar.Visible = false; edit.GrabFocus(); };
+        void Recount() { if (bar.Visible && bar.Query.Length > 0) Count(); }
+        edit.TextChanged += Recount;
+        edit.TextSet += Recount;
+        edit.GuiInput += e =>
+        {
+            if (e is InputEventKey { Pressed: true, Echo: false, Keycode: Key.F, CtrlPressed: true })
+            {
+                bar.Open(edit.HasSelection() && edit.GetSelectionFromLine() == edit.GetSelectionToLine() ? edit.GetSelectedText() : null);
+                edit.AcceptEvent();
+            }
+            else if (bar.Handles(e)) edit.AcceptEvent();
+        };
         return bar;
     }
 

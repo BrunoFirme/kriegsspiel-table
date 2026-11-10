@@ -77,7 +77,7 @@ internal sealed class ScriptTab
         ScriptAssist.Attach(_script, _s.Root);
         if (draft == null) _scriptBase = _script.Text;
         _scriptFor = d.Id;
-        p.AddChild(_script);
+        p.AddChild(FindBar.WithFind(_script));
         var status = new Label { AutowrapMode = TextServer.AutowrapMode.WordSmart, CustomMinimumSize = new Vector2(200, 0) };
         status.AddThemeColorOverride("font_color", Ui.Danger);
         var tools = new HBoxContainer();

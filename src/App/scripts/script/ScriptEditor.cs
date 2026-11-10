@@ -21,7 +21,7 @@ public static class ScriptEditor
         };
         edit.AddThemeFontSizeOverride("font_size", 13);
         ScriptAssist.Attach(edit, parent);
-        box.AddChild(edit);
+        box.AddChild(FindBar.WithFind(edit));
         var status = new Label { Text = "", AutowrapMode = TextServer.AutowrapMode.WordSmart };
         status.AddThemeColorOverride("font_color", Ui.Danger);
         box.AddChild(status);

@@ -399,11 +399,11 @@ public partial class ScriptWindow : Window
         var tabs = new TabContainer { SizeFlagsVertical = Control.SizeFlags.ExpandFill };
         top.AddChild(tabs);
         SetUpEditor();
-        tabs.AddChild(_code);
+        tabs.AddChild(FindBar.WithFind(_code));
         _xml.Name = "Panels";
         _xml.GuttersDrawLineNumbers = true;
         _xml.AddThemeFontSizeOverride("font_size", 12);
-        tabs.AddChild(_xml);
+        tabs.AddChild(FindBar.WithFind(_xml));
         _state.Name = "Saved state";
         _state.AddThemeFontSizeOverride("font_size", 12);
         tabs.AddChild(_state);
