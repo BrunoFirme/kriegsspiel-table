@@ -233,6 +233,7 @@ public sealed partial class ConverterTests
         var orders = notes.Single(n => Line(n.d, NoteCard.TitleLine) == "Orders");
         Assert.Equal("Hold the ford\nuntil dusk", Line(orders.d, NoteCard.BodyLine));
         Assert.Equal(190.0, orders.p.RotDeg);
+        Assert.All(notes, n => Assert.Equal("box", n.d.Shape));
         var panel = notes.Single(n => Line(n.d, NoteCard.TitleLine) == "Notes");
         Assert.Equal("1  Turn\nInitiative\nNaval Movement", Line(panel.d, NoteCard.BodyLine));
         double mapRight = board["Transform"]!["scaleX"]!.GetValue<double>() * 16.8345 / 2;

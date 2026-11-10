@@ -15,7 +15,7 @@ static class NoteTests
     {
         var t = OfflineTable.Make(r, pieces: 1, prepare: store => store.RegisterDef(new PackManifest { Id = "notes", Name = "Notes" }, new PieceDef
         {
-            Id = NoteDef, Name = NoteCard.DefaultName, Size = new Size2(NoteCard.Width, NoteCard.Height), Shape = "rounded", Thickness = NoteCard.Thickness,
+            Id = NoteDef, Name = NoteCard.DefaultName, Size = new Size2(NoteCard.Width, NoteCard.Height), Shape = "box", Thickness = NoteCard.Thickness,
             Tags = new() { NoteCard.Tag }, TextLines = NoteCard.TextLines(title, body),
         }));
         t.S.Do(new SpawnPiece { Layer = Layers.Umpire, Def = NoteDef, Pos = new Vec2(4, 0), RotDeg = 180 });

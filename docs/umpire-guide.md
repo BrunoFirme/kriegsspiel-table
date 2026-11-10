@@ -135,9 +135,9 @@ groups them, and names what each was used for, from the phalanx to the tank plat
 - **Placing:** open the **Pieces** drawer and drag a piece onto the table (Shift keeps placing).
 - **Turning over:** middle-click or **F**. Counters show where the maker put them, with − / + to click.
 - **Renaming:** click the name on the back and type; Enter keeps it.
-- **Notes:** the **Note** in Firme's Effects and Props is an index card. Click its title or its lines and type:
-  Enter starts a new line, Ctrl+Enter keeps it, Esc leaves it as it was; Ctrl+click picks it out instead. Imported
-  A module's notecards, Notes and Notebook pages come in as these cards.
+- **Notes:** the **Note** in Firme's Effects and Props is a message form. Click its title or its lines and type:
+  Enter starts a new line, Ctrl+Enter keeps it, Esc leaves it as it was; Ctrl+click picks it out instead.
+  A module's notecards, Notes and Notebook pages come in as these notes.
 - **Looks:** point at a piece and press **1–9** (0 is the tenth), or **[ ]** to step.
 - **Books:** a PDF brought in from a module, or made in the piece studio, is a book. Double-click it, or
   right-click → **Read…**, to turn its pages in a window of your own; **Show on the table** turns the piece

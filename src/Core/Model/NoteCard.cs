@@ -6,7 +6,7 @@ public static class NoteCard
     public const double Width = 7.0, Height = 4.3, Thickness = 0.05;
     public const int PixelsPerUnit = 200;
 
-    public const double TitleTop = 0.035, TitleBottom = 0.14, RedRule = 0.155, FirstRule = 0.265, RuleStep = 0.0745, BottomMargin = 0.035, SideMargin = 0.03;
+    public const double BindingBottom = 0.056, Perforation = 0.072, TitleTop = 0.088, TitleBottom = 0.195, HeadRule = 0.2, FirstRule = 0.284, RuleStep = 0.072, BottomMargin = 0.035, SideMargin = 0.03;
 
     public static int Lines => (int)Math.Floor((1 - BottomMargin - FirstRule) / RuleStep) + 1;
 
@@ -24,29 +24,39 @@ public static class NoteCard
     {
         int w = (int)(Width * PixelsPerUnit), h = (int)(Height * PixelsPerUnit);
         var px = new byte[w * h * 4];
-        const int Corner = 18, Edge = 4, RuleThickness = 2, RedThickness = 3;
-        var paper = (r: (byte)251, g: (byte)250, b: (byte)244);
-        var edge = (r: (byte)176, g: (byte)176, b: (byte)168);
-        var blue = (r: (byte)120, g: (byte)150, b: (byte)215);
-        var red = (r: (byte)215, g: (byte)90, b: (byte)90);
-        int inset = (int)(SideMargin * w * 0.3);
-        bool IsRule(int y, double at, int thick) => Math.Abs(y - at * h) < thick / 2.0 + 0.01;
+        const int RuleThickness = 2, HeadThick = 5, HeadThin = 2, HeadGap = 9, StitchThick = 3, StitchDash = 14, StitchGap = 10, HoleStep = 24;
+        const double HoleRadius = 3.2;
+        var paper = (r: (byte)186, g: (byte)180, b: (byte)156);
+        var band = (r: (byte)175, g: (byte)171, b: (byte)143);
+        var cloth = (r: (byte)26, g: (byte)25, b: (byte)26);
+        var thread = (r: (byte)82, g: (byte)80, b: (byte)71);
+        var hole = (r: (byte)152, g: (byte)144, b: (byte)111);
+        var print = (r: (byte)39, g: (byte)34, b: (byte)29);
+        var rule = (r: (byte)149, g: (byte)141, b: (byte)106);
+        int inset = (int)(SideMargin * w);
+        double binding = BindingBottom * h, holesAt = Perforation * h, bandTop = TitleTop * h, head = HeadRule * h;
+        static bool IsRule(int y, double at, int thick) => Math.Abs(y - at) < thick / 2.0 + 0.01;
+        bool IsStitch(int x, int y) => IsRule(y, binding / 2, StitchThick) && x >= inset && x < w - inset && (x - inset) % (StitchDash + StitchGap) < StitchDash;
+        bool IsHole(int x, int y)
+        {
+            double nearest = Math.Floor((double)x / HoleStep) * HoleStep + HoleStep / 2.0, dx = x - nearest, dy = y - holesAt;
+            return dx * dx + dy * dy < HoleRadius * HoleRadius;
+        }
+        bool IsBodyRule(int x, int y)
+        {
+            if (x < inset || x >= w - inset) return false;
+            for (int i = 0; i < Lines; i++)
+                if (IsRule(y, RuleAt(i) * h, RuleThickness)) return true;
+            return false;
+        }
         for (int y = 0; y < h; y++)
             for (int x = 0; x < w; x++)
             {
-                double dx = Math.Max(0, Math.Max(Corner - x, x - (w - 1 - Corner))), dy = Math.Max(0, Math.Max(Corner - y, y - (h - 1 - Corner)));
-                double fromEdge = Corner - Math.Sqrt(dx * dx + dy * dy);
-                if (dx > 0 && dy > 0 && fromEdge < 0) continue;
-                int border = (int)Math.Min(Math.Min(x, w - 1 - x), Math.Min(y, h - 1 - y));
-                var c = paper;
-                if (border < Edge || (dx > 0 && dy > 0 && fromEdge < Edge)) c = edge;
-                else if (x >= inset && x < w - inset)
-                {
-                    if (IsRule(y, RedRule, RedThickness)) c = red;
-                    else
-                        for (int i = 0; i < Lines; i++)
-                            if (IsRule(y, RuleAt(i), RuleThickness)) { c = blue; break; }
-                }
+                var c = y < binding ? IsStitch(x, y) ? thread : cloth
+                    : IsHole(x, y) ? hole
+                    : IsRule(y, head, HeadThick) || IsRule(y, head + HeadGap, HeadThin) ? print
+                    : y >= bandTop && y < head ? band
+                    : IsBodyRule(x, y) ? rule : paper;
                 int o = (y * w + x) * 4;
                 px[o] = c.r;
                 px[o + 1] = c.g;

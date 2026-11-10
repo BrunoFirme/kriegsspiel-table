@@ -70,7 +70,7 @@ public sealed partial class DefFactory
         var def = new PieceDef
         {
             Name = title.Length > 0 ? title : NoteCard.DefaultName, Kind = "flat", Image = image, Size = Mul(size, scale),
-            Thickness = thick, Shape = "rounded", Tags = new() { NoteCard.Tag }, TextLines = NoteCard.TextLines(title, body),
+            Thickness = thick, Shape = "box", Tags = new() { NoteCard.Tag }, TextLines = NoteCard.TextLines(title, body),
         };
         def.Id = $"{pack.Short}.{Slug(def.Name)}-{Hash8(key)}";
         pack.ByKey[key] = def;

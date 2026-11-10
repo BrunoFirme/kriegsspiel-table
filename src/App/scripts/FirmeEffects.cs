@@ -129,7 +129,7 @@ public static class FirmeEffects
 
     static readonly HashSet<string> Holders = new() { "Box", "Chest", "Crate" };
 
-    const string MarkerWhat = "Marks a torpedo's run; a look for spent", NoteWhat = "A card with a name and a note";
+    const string MarkerWhat = "Marks a torpedo's run; a look for spent", NoteWhat = "A message form with a name and a note";
 
     public static string What(PieceDef d) =>
         Presets.FirstOrDefault(p => IdOf(p.Name) == d.Id).What
@@ -199,7 +199,7 @@ public static class FirmeEffects
         pack.Pieces.Add(new PieceDef
         {
             Id = PackId + "." + PackEdit.Slug(NoteCard.DefaultName), Name = NoteCard.DefaultName, Kind = "flat", Image = Add(card.SavePngToBuffer(), "png", "image", cw, ch),
-            Size = new Size2(NoteCard.Width, NoteCard.Height), Shape = "rounded", Thickness = NoteCard.Thickness, Tags = new() { NoteCard.Tag, "prop" },
+            Size = new Size2(NoteCard.Width, NoteCard.Height), Shape = "box", Thickness = NoteCard.Thickness, Tags = new() { NoteCard.Tag, "prop" },
             TextLines = NoteCard.TextLines(),
         });
         return pack;
@@ -217,7 +217,7 @@ public static class FirmeEffects
         string.Join("|", Presets.Select(p => $"{p.Name};{p.W};{p.H};{p.Era};{Json.Serialize(p.Fx)}")) + "|" + string.Join("|", PropList.Select(p => p.Name + p.Era)))))[..16];
     static string? _stamp;
 
-    const int PropsVersion = 9;
+    const int PropsVersion = 10;
     const string WriteTag = "install";
 
     public static void Ensure(PackageStore store)

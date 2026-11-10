@@ -14,7 +14,7 @@ sealed class NoteFace
     string _editText = "";
     bool _editSelected;
 
-    static readonly Color TitleInk = new(0.04f, 0.04f, 0.04f), BodyInk = new(0.12f, 0.12f, 0.12f), SelectedInk = new(0.55f, 0.38f, 0.08f);
+    static readonly Color TitleInk = new(0.10f, 0.10f, 0.11f), BodyInk = new(0.17f, 0.16f, 0.17f), SelectedInk = new(0.50f, 0.30f, 0.04f);
     const float TitleFill = 0.7f, BodyFill = 0.6f, BodyLift = 0.42f, FaceGap = 0.006f, InkLift = 0.002f;
 
     public NoteFace(PieceNode piece) => _piece = piece;
@@ -140,6 +140,6 @@ sealed class NoteFace
         float w = _piece.Footprint.X, h = _piece.Footprint.Y;
         if (Mathf.Abs(local.X) > w / 2 || Mathf.Abs(local.Y) > h / 2) return null;
         float frac = (local.Y + h / 2) / h;
-        return frac < NoteCard.RedRule ? false : true;
+        return frac < NoteCard.HeadRule ? false : true;
     }
 }
