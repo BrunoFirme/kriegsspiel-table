@@ -1,7 +1,7 @@
 shader_type spatial;
 render_mode unshaded, cull_disabled, depth_draw_never, depth_test_disabled, blend_mix, shadows_disabled;
 
-#include "res://shaders/sighting.gdshaderinc"
+#include "res://shaders/sighting_ground.gdshaderinc"
 
 void fragment() {
 	ALBEDO = shade.rgb;

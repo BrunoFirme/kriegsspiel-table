@@ -9,12 +9,6 @@ uniform vec4 dabs[96];
 uniform int dab_n = 0;
 uniform vec4 shade : source_color = vec4(0.0, 0.0, 0.0, 0.6);
 
-varying vec3 wpos;
-
-void vertex() {
-	wpos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
-}
-
 bool in_poly(vec2 p) {
 	bool c = false;
 	int j = poly_n - 1;

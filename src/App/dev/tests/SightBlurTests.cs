@@ -61,6 +61,58 @@ static class SightBlurTests
         Check.Equal(0, t.Errors.Count, string.Join("; ", t.Errors));
     }
 
+    const float SmokeSide = 1.2f, SmokeHeight = 0.5f;
+    const double PatchWindow = 1.5;
+
+    static double RedOverGreen(Image img, double atX)
+    {
+        double sum = 0;
+        int half = (int)(PatchWindow / Reach * img.GetWidth() / 2), cx = (int)((1 + atX / Reach) * img.GetWidth() / 2), cy = img.GetHeight() / 2, count = 0;
+        for (int y = cy - half; y <= cy + half; y++)
+            for (int x = Math.Max(0, cx - half); x <= Math.Min(img.GetWidth() - 1, cx + half); x++)
+            {
+                var c = img.GetPixel(x, y);
+                sum += c.R - c.G;
+                count++;
+            }
+        return sum / count;
+    }
+
+    static double Redness(Image img) => RedOverGreen(img, RingAt) - RedOverGreen(img, -RingAt);
+
+    [ScreenTest]
+    static async Task A_see_through_thing_in_the_blurred_edge_of_a_pov_picture_is_blurred_with_the_rest_and_not_wiped_out(TestRunner r)
+    {
+        var t = OfflineTable.Make(r, pieces: 1, arrange: g =>
+        {
+            g.VisionRadius = Reach;
+            g.Layer(Layers.Umpire)[0].Pos = new Vec2(0, 0);
+        });
+        await r.Frames(2);
+        t.Table.AddChild(new MeshInstance3D
+        {
+            Mesh = new PlaneMesh { Size = new Vector2(SmokeSide, SmokeSide) }, Position = new Vector3((float)RingAt, SmokeHeight, 0), Layers = Table.WorldLayer,
+            CastShadow = GeometryInstance3D.ShadowCastingSetting.Off,
+            MaterialOverride = new StandardMaterial3D
+            {
+                AlbedoColor = new Color(1, 0, 0, 0.9f), Transparency = BaseMaterial3D.TransparencyEnum.Alpha, ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded,
+            },
+        });
+        t.Table.SetSelection(new[] { "p1" });
+        t.Table.SetTool(Tool.Sighting);
+        await r.Frames(2);
+        var d = t.Table.Draft ?? throw new TestFailure("no POV capture began");
+        t.Table.SetSightingSharp(1);
+        var sharp = await t.Table.RenderSighting(d, Pixels) ?? throw new TestFailure("no sharp picture");
+        t.Table.SetSightingSharp(0.3);
+        var blurred = await t.Table.RenderSighting(d, Pixels) ?? throw new TestFailure("no blurred picture");
+        double redSharp = Redness(sharp), redBlurred = Redness(blurred);
+        Check.That(redSharp > 0.05, $"the see-through patch shows in the sharp picture: {redSharp:0.00}");
+        Check.That(redBlurred > redSharp * 0.5, $"the patch is still there when its ground blurs: {redBlurred:0.00} of {redSharp:0.00}");
+        t.Table.CancelSighting();
+        Check.Equal(0, t.Errors.Count, string.Join("; ", t.Errors));
+    }
+
     [NodeTest]
     static async Task A_distance_typed_by_the_sharp_ring_s_slider_sets_where_the_blur_starts(TestRunner r)
     {

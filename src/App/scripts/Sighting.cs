@@ -28,8 +28,11 @@ sealed class Sighting
     public void NotifyChanged() => Changed?.Invoke();
 
     public Node3D Root = null!;
-    ShaderMaterial _sightMat = null!, _shotMat = null!, _blurMat = null!;
-    MeshInstance3D _sightPlane = null!, _shotPlane = null!, _blurLive = null!, _blurShot = null!;
+    ShaderMaterial _sightMat = null!, _shotMat = null!;
+    MeshInstance3D _sightPlane = null!, _shotPlane = null!;
+    CanvasLayer _lensLayer = null!;
+    SightLens _liveLens = null!;
+    SightLens? _shotLens;
     double _shownSharp = 1;
     MeshInstance3D _outline = null!;
     ImmediateMesh _outlineMesh = null!;
@@ -50,21 +53,20 @@ sealed class Sighting
             new MeshInstance3D { Mesh = new PlaneMesh { Size = new Vector2(20000, 20000) }, MaterialOverride = _shotMat, Position = new Vector3(0, 0.021f, 0), Visible = false,
                 CastShadow = GeometryInstance3D.ShadowCastingSetting.Off, Layers = Table.PictureOnlyLayer };
         Root.AddChild(_shotPlane);
-        _blurMat = new ShaderMaterial { Shader = new Shader { Code = FileAccess.GetFileAsString("res://shaders/sighting_blur.gdshader") }, RenderPriority = (int)Material.RenderPriorityMax };
-        _blurMat.SetShaderParameter("bend", (float)SightingDraft.BlurBend);
-        _blurLive = BlurPlane(Table.LiveOnlyLayer);
-        _blurShot = BlurPlane(Table.PictureOnlyLayer);
+        _liveLens = new SightLens(_c.Rig.Cam, SightLens.NewGlass());
+        _liveLens.Glass.SetShaderParameter("bend", (float)SightingDraft.BlurBend);
+        _lensLayer = new CanvasLayer { Layer = UnderTheSelectionGlow };
+        _lensLayer.AddChild(_liveLens);
+        Root.AddChild(_lensLayer);
     }
 
-    MeshInstance3D BlurPlane(uint layer)
+    const int UnderTheSelectionGlow = -2;
+
+    IEnumerable<ShaderMaterial> Glasses => _shotLens is { } shot ? new[] { _liveLens.Glass, shot.Glass } : new[] { _liveLens.Glass };
+
+    void SetBlurring(string what, Variant value)
     {
-        var plane = new MeshInstance3D
-        {
-            Mesh = new PlaneMesh { Size = new Vector2(20000, 20000) }, MaterialOverride = _blurMat, Position = new Vector3(0, 0.022f, 0), Visible = false,
-            CastShadow = GeometryInstance3D.ShadowCastingSetting.Off, Layers = layer,
-        };
-        Root.AddChild(plane);
-        return plane;
+        foreach (var glass in Glasses) glass.SetShaderParameter(what, value);
     }
 
     public void BuildOutline()
@@ -77,10 +79,10 @@ sealed class Sighting
     public void TickShade()
     {
         _sightPlane.Visible = Draft is { FirstPerson: false } && _c.Rig.TopDown;
-        _shotPlane.Visible = Draft != null;
         bool blurs = Draft is { FirstPerson: false } && Math.Min(_shownSharp, Draft.Sharp) < 1;
-        _blurLive.Visible = blurs && _c.Rig.TopDown;
-        _blurShot.Visible = blurs;
+        _liveLens.Visible = blurs && _c.Rig.TopDown;
+        if (_shotLens is { } shot) shot.Visible = blurs;
+        _shotPlane.Visible = Draft != null && _shotLens is not { Visible: true };
     }
 
     const double FocusPull = 14, FocusSettled = 0.0005;
@@ -90,7 +92,7 @@ sealed class Sighting
         if (Draft is not { FirstPerson: false } d || Math.Abs(_shownSharp - d.Sharp) < FocusSettled) return;
         _shownSharp += (d.Sharp - _shownSharp) * (1 - Math.Exp(-delta * FocusPull));
         if (Math.Abs(_shownSharp - d.Sharp) < FocusSettled) _shownSharp = d.Sharp;
-        _blurMat.SetShaderParameter("sharp", (float)_shownSharp);
+        SetBlurring("sharp", (float)_shownSharp);
         RefreshLines();
     }
 
@@ -104,16 +106,16 @@ sealed class Sighting
     {
         if (Draft is not { } d) return;
         d.Blur = Math.Clamp(share, SightingDraft.LeastBlur, SightingDraft.MostBlur);
-        _blurMat.SetShaderParameter("most", (float)d.Blur);
+        SetBlurring("most", (float)d.Blur);
     }
 
     void SnapFocus(SightingDraft d)
     {
         _shownSharp = d.Sharp;
-        _blurMat.SetShaderParameter("sharp", (float)_shownSharp);
-        _blurMat.SetShaderParameter("reach", (float)d.Radius);
-        _blurMat.SetShaderParameter("square", d.Square ? 1 : 0);
-        _blurMat.SetShaderParameter("most", (float)d.Blur);
+        SetBlurring("sharp", (float)_shownSharp);
+        SetBlurring("reach", (float)d.Radius);
+        SetBlurring("square", d.Square ? 1 : 0);
+        SetBlurring("most", (float)d.Blur);
     }
 
     public void Sync()
@@ -142,7 +144,7 @@ sealed class Sighting
 
     void ClearExtras()
     {
-        foreach (var c in Root.GetChildren()) if (c != _sightPlane && c != _shotPlane && c != _blurLive && c != _blurShot && c != _outline) c.QueueFree();
+        foreach (var c in Root.GetChildren()) if (c != _sightPlane && c != _shotPlane && c != _lensLayer && c != _outline) c.QueueFree();
     }
 
     void SetShape(SightingShape shape, Color shade)
@@ -150,16 +152,17 @@ sealed class Sighting
         TickShade();
         if (Draft is { } draft)
         {
-            _blurMat.SetShaderParameter("reach", (float)draft.Radius);
-            _blurMat.SetShaderParameter("square", draft.Square ? 1 : 0);
+            SetBlurring("reach", (float)draft.Radius);
+            SetBlurring("square", draft.Square ? 1 : 0);
         }
         var c = Coords.ToWorld(shape.Center);
         var poly = shape.Polygon.Take(SightingDraft.MaxPoints).Select(p => { var w = Coords.ToWorld(p); return new Vector2(w.X, w.Z); }).ToArray();
         var polyArr = new Vector2[512];
         Array.Copy(poly, polyArr, poly.Length);
         SetOutline(Reach(shape));
-        foreach (var (mat, col) in new[] { (_sightMat, shade), (_shotMat, new Color(0.02f, 0.02f, 0.03f, 1f)), (_blurMat, shade) })
+        foreach (var (mat, col) in new[] { (_sightMat, shade), (_shotMat, Veil), (_liveLens.Glass, shade), (_shotLens?.Glass, Veil) })
         {
+            if (mat == null) continue;
             mat.SetShaderParameter("kind", shape.Kind == "circle" ? 0 : 1);
             mat.SetShaderParameter("center", new Vector2(c.X, c.Z));
             mat.SetShaderParameter("radius", (float)shape.Radius);
@@ -170,6 +173,8 @@ sealed class Sighting
             mat.SetShaderParameter("shade", col);
         }
     }
+
+    static readonly Color Veil = new(0.02f, 0.02f, 0.03f, 1f);
 
     const int RingPoints = 180;
 
@@ -613,6 +618,7 @@ sealed class Sighting
         await _c.Scene.ToSignal(RenderingServer.Singleton, RenderingServer.SignalName.FramePreDraw);
         if (_tableChanged) Compose(d);
         Aim(shot, d);
+        _shotLens?.Aim();
         await _c.Scene.ToSignal(RenderingServer.Singleton, RenderingServer.SignalName.FramePostDraw);
     }
 
@@ -687,6 +693,7 @@ sealed class Sighting
     public void ClosePicture(SubViewport shot)
     {
         shot.QueueFree();
+        _shotLens = null;
         StopWatching();
         _pieces.Lettering.Release();
         _shotPlane.Position = new Vector3(0, 0.021f, 0);
@@ -711,6 +718,12 @@ sealed class Sighting
             ? new Camera3D { Projection = Camera3D.ProjectionType.Perspective, Fov = Lens(d), KeepAspect = Camera3D.KeepAspectEnum.Width, Near = live.Near, Far = live.Far, CullMask = mask }
             : new Camera3D { Projection = Camera3D.ProjectionType.Orthogonal, Size = (float)(d.Radius * 2), Near = 0.05f, Far = 4000, CullMask = mask };
         shot.AddChild(cam);
+        if (!d.FirstPerson)
+        {
+            shot.AddChild(_shotLens = new SightLens(cam, (ShaderMaterial)_liveLens.Glass.Duplicate()));
+            _shotLens.Glass.SetShaderParameter("veil", 1f);
+            _shotLens.Glass.SetShaderParameter("shade", Veil);
+        }
         _c.Scene.AddChild(shot);
         Aim(shot, d);
         return shot;
