@@ -11,51 +11,56 @@ namespace KTable.App;
 
 static class PackCards
 {
-    const int W = 452, H = 260, Most = 6, Margin = 10, SmallestPicture = 64, Drawing = 2;
+    const int W = 452, H = 260, Most = 6, Margin = 10, SmallestPicture = 64, Drawing = 3;
 
     static readonly Dictionary<string, (DateTime at, ImageTexture tex)> _thumbs = new();
     static readonly Dictionary<string, List<Action<ImageTexture>>> _waiting = new();
 
     sealed record Shot(string? Picture, string? Mesh = null, string? MeshPicture = null, string? Thumb = null, string? Cached = null);
 
-    public static void Thumb(PackageStore store, PackManifest pack, Action<ImageTexture> show)
+    public static void Thumb(PackageStore store, PackManifest pack, Action<ImageTexture> show) => Draw(store, pack, Most, show);
+
+    public static void Cover(PackageStore store, PackManifest pack, Action<ImageTexture> show) => Draw(store, pack, 1, show);
+
+    static void Draw(PackageStore store, PackManifest pack, int most, Action<ImageTexture> show)
     {
         var manifest = Path.Combine(store.PackageDir(pack.Id), "pack.json");
         if (!File.Exists(manifest)) return;
         var at = File.GetLastWriteTimeUtc(manifest);
+        var key = $"{pack.Id}|{most}";
         lock (_thumbs)
         {
-            if (_thumbs.TryGetValue(pack.Id, out var had) && had.at == at) { show(had.tex); return; }
-            if (_waiting.TryGetValue(pack.Id, out var waiting)) { waiting.Add(show); return; }
-            _waiting[pack.Id] = new List<Action<ImageTexture>> { show };
+            if (_thumbs.TryGetValue(key, out var had) && had.at == at) { show(had.tex); return; }
+            if (_waiting.TryGetValue(key, out var waiting)) { waiting.Add(show); return; }
+            _waiting[key] = new List<Action<ImageTexture>> { show };
         }
-        var pictures = Pictures(store, pack);
+        var pictures = Pictures(store, pack, most);
         var id = pack.Id;
         System.Threading.Tasks.Task.Run(() =>
         {
             Image? img = null;
-            try { img = pictures.Count == 0 ? null : CachedMontage(id, at, pictures); }
+            try { img = pictures.Count == 0 ? null : CachedMontage(id, most, at, pictures); }
             catch (Exception e) { Diagnostics.Write(LogLevel.Warning, $"[cards] no picture for the pack {id}: {e.Message}"); }
-            Callable.From(() => Ready(id, at, img)).CallDeferred();
+            Callable.From(() => Ready(key, at, img)).CallDeferred();
         });
     }
 
-    static void Ready(string id, DateTime at, Image? img)
+    static void Ready(string key, DateTime at, Image? img)
     {
         List<Action<ImageTexture>>? waiting;
         ImageTexture? tex = img == null ? null : ImageTexture.CreateFromImage(img);
         lock (_thumbs)
         {
-            _waiting.Remove(id, out waiting);
-            if (tex != null) _thumbs[id] = (at, tex);
+            _waiting.Remove(key, out waiting);
+            if (tex != null) _thumbs[key] = (at, tex);
         }
         if (tex == null || waiting == null) return;
         foreach (var show in waiting) show(tex);
     }
 
-    static List<Shot> Pictures(PackageStore store, PackManifest pack) =>
+    static List<Shot> Pictures(PackageStore store, PackManifest pack, int most) =>
         pack.Pieces.Select(d => ShotOf(store, pack, d)).OfType<(string key, Shot shot)>()
-            .DistinctBy(x => x.key).Take(Most).Select(x => x.shot).ToList();
+            .DistinctBy(x => x.key).Take(most).Select(x => x.shot).ToList();
 
     static (string key, Shot shot)? ShotOf(PackageStore store, PackManifest pack, PieceDef d)
     {
@@ -69,15 +74,18 @@ static class PackCards
         return (h, new Shot(store.AssetPath(pack, h)));
     }
 
-    static Image? CachedMontage(string id, DateTime at, List<Shot> pictures)
+    static Image? CachedMontage(string id, int most, DateTime at, List<Shot> pictures)
     {
         var dir = Caches.Display;
         Directory.CreateDirectory(dir);
-        var file = Path.Combine(dir, $"pack-{id}-{Drawing}-{at.Ticks}.png");
+        var prefix = $"pack-{id}-";
+        var file = Path.Combine(dir, $"{prefix}{Drawing}-{most}-{at.Ticks}.png");
         if (File.Exists(file) && Image.LoadFromFile(file) is { } kept && !kept.IsEmpty()) return kept;
         var img = Montage(pictures);
         if (img == null) return null;
-        foreach (var old in Directory.EnumerateFiles(dir, $"pack-{id}-*.png")) BestEffort.Try(() => File.Delete(old));
+        var mine = new System.Text.RegularExpressions.Regex($@"^(\d+-{most}-\d+|\d+-\d+)\.png$");
+        foreach (var old in Directory.EnumerateFiles(dir, prefix + "*.png"))
+            if (mine.IsMatch(Path.GetFileName(old)[prefix.Length..])) BestEffort.Try(() => File.Delete(old));
         BestEffort.Try(() => img.SavePng(file));
         return img;
     }

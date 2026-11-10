@@ -31,6 +31,7 @@ static class NewBlankScenarioDialog
             var when = DateTime.TryParse(start.Text, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out var t) ? t.ToString("yyyy-MM-ddTHH:mm") : "1800-01-01T06:00";
             var dir = ScenarioFiles.CreateBlank(store, name.Text.Trim().Length > 0 ? name.Text.Trim() : "New scenario", when, step.Minutes,
                 KTable.Client.Backdrops.NewLook(main.Cfg.NewBackdrop, main.Cfg.NewTableShade));
+            main.Title.Shelf.FileNew(false, dir);
             main.DoHost(dir, resume: false);
         };
         Ui.Open(main, dlg, new Vector2I(520, 240));

@@ -34,11 +34,12 @@ public sealed class Settings
     public bool ShowCursors { get; set; } = true;
     public bool ShowZones { get; set; } = true;
     public float UiScale { get; set; } = 1f;
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public bool? UiScaleFollowsWindows { get; set; }
-    public const float UiScaleMin = 0.7f, UiScaleMax = 2f;
-    [System.Text.Json.Serialization.JsonIgnore]
-    public bool FollowsWindows { get => UiScaleFollowsWindows ?? UiScale == 1f; set => UiScaleFollowsWindows = value; }
-    public float UiScaleWith(float windowsScale) => FollowsWindows ? Math.Clamp(windowsScale, UiScaleMin, UiScaleMax) : UiScale;
+    public const float UiScaleMin = 0.7f, UiScaleMax = 1.5f, ReferenceHeight = 1080f, FittedMost = 3f, FittedStep = 0.05f;
+    public static float Fitted(float windowsScale, float windowHeight) =>
+        Math.Clamp(Math.Max(windowsScale, MathF.Round(windowHeight / ReferenceHeight / FittedStep) * FittedStep), 1f, FittedMost);
+    public float UiScaleFor(float windowsScale, float windowHeight) => Fitted(windowsScale, windowHeight) * UiScale;
     public int Antialias { get; set; } = 2;
     public bool SmoothFineEdges { get; set; }
     public int ShadowDetail { get; set; } = ShadowDetailDefault;
@@ -155,6 +156,8 @@ public sealed class Settings
         ReliefDensity = float.IsFinite(ReliefDensity) ? Math.Clamp(ReliefDensity, 0.05f, 1f) : 1f;
         if (Array.IndexOf(ReliefPaintings, ReliefPaint) < 0) ReliefPaint = "brush";
         if (Array.IndexOf(MapPictureMemoryChoices, MapPictureMemory) < 0) MapPictureMemory = 0;
+        if (UiScaleFollowsWindows != null) UiScale = 1f;
+        UiScaleFollowsWindows = null;
         UiScale = float.IsFinite(UiScale) ? Math.Clamp(UiScale, UiScaleMin, UiScaleMax) : 1f;
         if (AgentPort is < 1024 or > 65535) AgentPort = AgentPortDefault;
     }

@@ -54,25 +54,23 @@ static class AppSettings
         box.AddChild(Ui.UnderControls(mute, Ui.DialogLabels));
     }
 
-    public sealed record SizeControls(HSlider Size, LineEdit Shown, CheckBox Match, Label Capped);
+    public sealed record SizeControls(HSlider Size, LineEdit Shown, Label Capped);
 
     public static SizeControls SizeSlider(Settings cfg, Action? relaid = null)
     {
         var size = new HSlider { MinValue = Settings.UiScaleMin, MaxValue = Settings.UiScaleMax, Step = 0.05, Value = cfg.UiScale };
         var shown = Ui.ValueBox(size, v => Percent((float)v), 0);
-        var match = new CheckBox { Text = "Match Windows", ButtonPressed = cfg.FollowsWindows, TooltipText = "Windows' own display scale, screen by screen" };
         var capped = new Label { Visible = false, AutowrapMode = TextServer.AutowrapMode.WordSmart };
         capped.AddThemeColorOverride("font_color", Ui.Muted);
         Window? Root() => size.IsInsideTree() ? size.GetTree().Root : null;
         void Sync()
         {
             if (Root() is not { } root) return;
-            float wanted = Ui.WantedScale(root, cfg);
-            size.SetValueNoSignal(wanted);
-            shown.Text = Percent(wanted);
-            float fits = Ui.ScaleThatFits(root, wanted);
+            size.SetValueNoSignal(cfg.UiScale);
+            shown.Text = Percent(cfg.UiScale);
+            float wanted = Ui.WantedScale(root, cfg), fits = Ui.ScaleThatFits(root, wanted);
             capped.Visible = fits < wanted - 0.01f;
-            capped.Text = $"This window holds up to {Percent(fits)}; a larger window or screen allows more.";
+            capped.Text = $"This window holds up to {Percent(fits / Ui.Fitted(root))}; a larger window or screen allows more.";
         }
         void Use()
         {
@@ -84,22 +82,14 @@ static class AppSettings
         }
         void Chosen()
         {
-            if (Root() is not { } root || Mathf.IsEqualApprox(Ui.WantedScale(root, cfg), (float)size.Value)) return;
-            cfg.FollowsWindows = false;
+            if (Mathf.IsEqualApprox(cfg.UiScale, (float)size.Value)) return;
             cfg.UiScale = (float)size.Value;
-            match.SetPressedNoSignal(false);
             Use();
         }
         size.ValueChanged += _ => { if (!Input.IsMouseButtonPressed(MouseButton.Left)) Chosen(); };
         size.DragEnded += _ => Chosen();
-        match.Toggled += on =>
-        {
-            if (Root() is { } root && !on) cfg.UiScale = Ui.WantedScale(root, cfg);
-            cfg.FollowsWindows = on;
-            Use();
-        };
         size.TreeEntered += () => Callable.From(Sync).CallDeferred();
-        return new SizeControls(size, shown, match, capped);
+        return new SizeControls(size, shown, capped);
         static string Percent(float v) => $"{v * 100:0}%";
     }
 
@@ -114,7 +104,6 @@ static class AppSettings
         row.AddChild(c.Size);
         row.AddChild(c.Shown);
         box.AddChild(row);
-        box.AddChild(Ui.UnderControls(c.Match, Ui.DialogLabels));
         box.AddChild(Ui.UnderControls(c.Capped, Ui.DialogLabels));
     }
 

@@ -1,33 +1,36 @@
 settle
-click "Folders ▾"
-settle
-checkpoint folders-menu
-click "New folder…"
+click "New folder"
 settle
 checkpoint new-folder-prompt
 type "Campaign"
 key Enter
 settle
 checkpoint folder-made
-click "All"
-wait 30
 rclick "Lock table"
 click "Move to"
 click "Campaign"
 settle
 checkpoint moved
-click "Campaign"
+dclick "Campaign"
 settle
 checkpoint viewing-folder
-click "Folders ▾"
-click ~"Rename"
-clear
+click "New folder"
 type "Summer"
+key Enter
+settle
+checkpoint nested-folder
+rclick "Summer"
+click "Rename…"
+clear
+type "Autumn"
 click "OK"
 settle
 checkpoint renamed
-click "Folders ▾"
-click ~"Delete"
+drag "Lock table" "Autumn"
+settle
+checkpoint filed-deeper
+rclick "Autumn"
+click "Delete folder…"
 settle
 checkpoint delete-folder-ask
 click "Delete"

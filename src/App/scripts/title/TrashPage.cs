@@ -20,16 +20,10 @@ sealed class TrashPage
 
     static string? SetsGameAside(TrashEntry e) => TrashShelves.SetsGameAside(Saves, e);
 
-    public Control Link(bool packs)
-    {
-        int n = TrashShelves.Entries(Saves, packs).Count;
-        var b = new Button { Text = n == 0 ? "Trash (empty)" : $"Trash ({n})", Flat = true, FocusMode = Control.FocusModeEnum.None, SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin, Disabled = n == 0 };
-        b.TooltipText = packs ? $"Packs removed in the last {SaveStore.TrashDays} days, to restore or delete for good" : $"Scenarios deleted, games started over and copies deleted in the last {SaveStore.TrashDays} days, to restore or delete for good";
-        b.AddThemeColorOverride("font_color", Muted);
-        b.AddThemeColorOverride("font_hover_color", Ink);
-        b.Pressed += () => Show(packs);
-        return b;
-    }
+    public static int Count(bool packs) => TrashShelves.Entries(Saves, packs).Count;
+
+    public static string Holds(bool packs) => packs ? $"Packs removed in the last {SaveStore.TrashDays} days, to restore or delete for good"
+        : $"Scenarios deleted, games started over and copies deleted in the last {SaveStore.TrashDays} days, to restore or delete for good";
 
     public void Show(bool packs)
     {

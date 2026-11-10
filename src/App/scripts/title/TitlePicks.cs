@@ -71,6 +71,11 @@ sealed class TitlePicks
         return _pick.Count > 1;
     }
 
+    public void AskDelete(IReadOnlyList<string> keys)
+    {
+        if (keys.Count > 0) _deletes?.Invoke(keys);
+    }
+
     public bool DeleteKey(InputEventKey k)
     {
         if (k.Keycode is not (Key.Delete or Key.Backspace) || k.CtrlPressed || k.AltPressed || _deletes == null || _pick.Count == 0) return false;
@@ -104,16 +109,6 @@ sealed class TitlePicks
         pm.PopupHide += () => pm.QueueFree();
         parent.AddChild(pm);
         pm.Popup(new Rect2I((Vector2I)at.Round(), Vector2I.Zero));
-    }
-
-    public static PopupMenu FolderMenu(Library lib, Action<string> into)
-    {
-        var pm = new PopupMenu();
-        pm.AddItem("Unfiled", 0);
-        for (int i = 0; i < lib.Folders.Count; i++) pm.AddItem(lib.Folders[i], i + 1);
-        pm.IdPressed += id => into(id == 0 ? "" : lib.Folders[(int)id - 1]);
-        pm.PopupHide += () => pm.QueueFree();
-        return pm;
     }
 }
 

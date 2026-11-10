@@ -117,9 +117,12 @@ sealed class PiecesPanel : HudPart
 
     public void RebuildPacks()
     {
-        var ids = S.View.Packs.ToList();
-        if (S.IsUmpire) ids.AddRange(S.Store.ListPackIds().Where(i => !ids.Contains(i)));
-        ids.AddRange(UserPacks.LocalUserPacks(S.Store).Where(i => !ids.Contains(i)));
+        var installed = S.Store.ListPackIds().OrderBy(i => S.Store.Pack(i)?.Name ?? i, StringComparer.OrdinalIgnoreCase).ToList();
+        var order = KTable.Client.Library.Current.Ordered(pack: true, installed.Concat(S.View.Packs).Distinct());
+        int Rank(string id) => order.IndexOf(id) is var i and >= 0 ? i : int.MaxValue;
+        var ids = S.View.Packs.OrderBy(Rank).ToList();
+        if (S.IsUmpire) ids.AddRange(installed.Where(i => !ids.Contains(i)).OrderBy(Rank));
+        ids.AddRange(UserPacks.LocalUserPacks(S.Store).Where(i => !ids.Contains(i)).OrderBy(Rank));
         _packs = ids.Select(id => S.Store.Pack(id)).Where(p => p != null).Cast<PackManifest>().ToList();
         foreach (var id in ids)
             if (S.Store.Problem(id) is { } why && _damagedSaid.Add(id))

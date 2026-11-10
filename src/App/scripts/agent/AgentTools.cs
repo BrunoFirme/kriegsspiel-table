@@ -125,8 +125,9 @@ sealed class AppTools
     {
         var store = new KTable.Core.PackageStore(KTable.Core.PackageStore.DefaultRoot);
         var rows = new JsonArray();
-        foreach (var (id, path) in store.ListScenarios())
-            rows.Add(new JsonObject { ["id"] = id, ["name"] = KTable.Core.Json.PeekString(path, "name") ?? id });
+        var listed = store.ListScenarios().ToDictionary(x => x.id, x => x.path);
+        foreach (var id in KTable.Client.Library.Current.Ordered(pack: false, listed.Keys.OrderBy(i => i, StringComparer.OrdinalIgnoreCase)))
+            rows.Add(new JsonObject { ["id"] = id, ["name"] = KTable.Core.Json.PeekString(listed[id], "name") ?? id });
         return new ToolResult(rows.Count == 0 ? "No scenarios yet: host_game with new_scenario makes one." : rows.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
     }
 
@@ -185,7 +186,7 @@ sealed class AppTools
         var store = _a.Session?.Store ?? new KTable.Core.PackageStore(KTable.Core.PackageStore.DefaultRoot);
         var inGame = _a.InStudio ? new List<string>() : _a.TableSession()?.View.Packs ?? new List<string>();
         var rows = new JsonArray();
-        foreach (var id in store.ListPackIds().OrderBy(x => x, StringComparer.OrdinalIgnoreCase))
+        foreach (var id in KTable.Client.Library.Current.Ordered(pack: true, store.ListPackIds().OrderBy(x => x, StringComparer.OrdinalIgnoreCase)))
             if (store.Pack(id) is { } pack) rows.Add(new JsonObject
             {
                 ["id"] = id, ["name"] = pack.Name, ["kinds"] = pack.Pieces.Count, ["inGame"] = inGame.Contains(id),

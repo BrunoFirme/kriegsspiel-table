@@ -10,7 +10,7 @@ static class TitleStyle
     public static readonly Color Ink = Ui.Ink;
     public static readonly Color Muted = Ui.Muted;
     public static readonly Color Brass = Ui.Accent;
-    public static readonly Color Paper = new(Ui.Surface, 0.88f);
+    public static readonly Color Paper = Ui.Bar.Darkened(0.2f).Lerp(new Color(Ui.Surface, 1), 0.88f);
 
     public static Font Serif() => Ui.Serif();
     public static Font Sans() => Ui.Sans();
@@ -82,7 +82,7 @@ static class TitleStyle
     {
         var b = Ui.IconBtn("more", tip);
         b.Flat = true;
-        b.CustomMinimumSize = new Vector2(28, 28);
+        b.CustomMinimumSize = new Vector2(MoreWidth, MoreWidth);
         b.SizeFlagsVertical = Control.SizeFlags.ShrinkCenter;
         b.MouseFilter = Control.MouseFilterEnum.Stop;
         return b;
@@ -102,32 +102,35 @@ static class TitleStyle
         return (row, h);
     }
 
-    public static HFlowContainer Grid()
-    {
-        var grid = new HFlowContainer();
-        grid.AddThemeConstantOverride("h_separation", Ui.Gap.Block);
-        grid.AddThemeConstantOverride("v_separation", Ui.Gap.Block);
-        return grid;
-    }
+    public static CardGrid Grid() => new();
+
+    public const int CardWidth = 220, CardInset = 24, PlateWidth = CardWidth - CardInset, NameWidth = PlateWidth - MoreWidth - Ui.Gap.Tight;
+    const int MoreWidth = 28;
+    const float PlateAspect = 130f / 226f;
+    static readonly int PlateHeight = (int)MathF.Round(PlateWidth * PlateAspect);
 
     public static (PanelContainer card, VBoxContainer face, HBoxContainer nameRow) CardFace(Texture2D? thumb, string name, bool plate)
     {
-        var card = new PanelContainer { CustomMinimumSize = new Vector2(250, 0), MouseFilter = Control.MouseFilterEnum.Stop };
+        var card = new PanelContainer { CustomMinimumSize = new Vector2(CardWidth, 0), MouseFilter = Control.MouseFilterEnum.Stop };
         card.AddThemeStyleboxOverride("panel", CardStyle(false));
         var cv = new VBoxContainer();
         card.AddChild(cv);
-        if (thumb != null) cv.AddChild(new TextureRect { Texture = thumb, CustomMinimumSize = new Vector2(226, 130), ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
+        Control? shown = null;
+        if (thumb != null) cv.AddChild(shown = new TextureRect { Texture = thumb, CustomMinimumSize = new Vector2(PlateWidth, PlateHeight), ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
             StretchMode = TextureRect.StretchModeEnum.KeepAspectCovered });
         else if (plate)
         {
-            var blank = new Panel { CustomMinimumSize = new Vector2(226, 130), MouseFilter = Control.MouseFilterEnum.Ignore };
+            var blank = new Panel { CustomMinimumSize = new Vector2(PlateWidth, PlateHeight), MouseFilter = Control.MouseFilterEnum.Ignore };
+            shown = blank;
             blank.AddThemeStyleboxOverride("panel",
                 new StyleBoxFlat { BgColor = new Color(1, 1, 1, 0.03f), CornerRadiusTopLeft = 4, CornerRadiusTopRight = 4, CornerRadiusBottomLeft = 4, CornerRadiusBottomRight = 4 });
             cv.AddChild(blank);
         }
+        if (shown != null)
+            card.Resized += () => shown.CustomMinimumSize = new Vector2(PlateWidth, MathF.Round(Math.Max(PlateWidth, card.Size.X - CardInset) * PlateAspect));
         var nameRow = new HBoxContainer();
         nameRow.AddThemeConstantOverride("separation", Ui.Gap.Tight);
-        var label = new Label { Text = name, AutowrapMode = TextServer.AutowrapMode.WordSmart, CustomMinimumSize = new Vector2(196, 0), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+        var label = new Label { Text = name, AutowrapMode = TextServer.AutowrapMode.WordSmart, CustomMinimumSize = new Vector2(NameWidth, 0), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         label.AddThemeFontOverride("font", Serif());
         label.AddThemeFontSizeOverride("font_size", 18);
         nameRow.AddChild(label);
@@ -162,7 +165,7 @@ static class TitleStyle
 
     public static Label CardLine(string text, Color colour)
     {
-        var l = new Label { Text = text, Modulate = colour, AutowrapMode = TextServer.AutowrapMode.WordSmart, CustomMinimumSize = new Vector2(226, 0) };
+        var l = new Label { Text = text, Modulate = colour, AutowrapMode = TextServer.AutowrapMode.WordSmart, CustomMinimumSize = new Vector2(PlateWidth, 0) };
         l.AddThemeFontSizeOverride("font_size", 12);
         return l;
     }

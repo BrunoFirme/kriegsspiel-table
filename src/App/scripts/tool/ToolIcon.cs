@@ -300,6 +300,13 @@ public partial class ToolIcon : Control
             case "folder":
                 DrawPolyline(new[] { P(2.5f, 5f), P(7.5f, 5f), P(9f, 6.8f), P(17.5f, 6.8f), P(17.5f, 15.5f), P(2.5f, 15.5f), P(2.5f, 5f) }, _c, 1.3f * _k, antialiased: true);
                 break;
+            case "trash":
+                Line(3, 5.5f, 17, 5.5f);
+                DrawPolyline(new[] { P(8, 5.5f), P(8, 3.5f), P(12, 3.5f), P(12, 5.5f) }, _c, _w, antialiased: true);
+                DrawPolyline(new[] { P(4.8f, 5.5f), P(5.8f, 16.5f), P(14.2f, 16.5f), P(15.2f, 5.5f) }, _c, _w, antialiased: true);
+                Line(8.4f, 8.5f, 8.4f, 13.8f);
+                Line(11.6f, 8.5f, 11.6f, 13.8f);
+                break;
             case "log":
                 foreach (var (y, x1) in new[] { (5.5f, 17f), (8.5f, 17f), (11.5f, 15f), (14.5f, 11f) })
                     DrawLine(P(3, y), P(x1, y), _c, 1.5f * _k, antialiased: true);

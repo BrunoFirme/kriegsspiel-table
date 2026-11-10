@@ -22,7 +22,7 @@ public partial class Main : Node
     bool _started;
     Window.FilesDroppedEventHandler? _onDrop;
     static bool _recovered;
-    readonly Library _lib = Library.Load();
+    readonly Library _lib = Library.Current;
     TitleScreen? _title;
     IDevAids? _dev;
     Hud? _hud;

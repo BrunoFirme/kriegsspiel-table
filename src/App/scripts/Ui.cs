@@ -693,7 +693,12 @@ public static class Ui
     public static void ApplyScale(Window root, Settings cfg)
     {
         _scaleFrom = cfg;
-        if (_scaled != root) { _scaled = root; root.SizeChanged += Rescale; }
+        if (_scaled != root)
+        {
+            _scaled = root;
+            root.SizeChanged += Rescale;
+            root.GetTree().NodeAdded += OnScreen.Watch;
+        }
         Rescale();
     }
 
@@ -703,13 +708,15 @@ public static class Ui
         return dpi > 0 ? Mathf.Max(Mathf.Snapped(dpi / PlainDpi, WindowsScaleStep), 1f) : 1f;
     }
 
-    public static float WantedScale(Window root, Settings cfg) => cfg.UiScaleWith(WindowsScale(root));
+    public static float Fitted(Window root) => Settings.Fitted(WindowsScale(root), root.Size.Y);
+
+    public static float WantedScale(Window root, Settings cfg) => cfg.UiScaleFor(WindowsScale(root), root.Size.Y);
 
     public static float ScaleThatFits(Window root, float wanted)
     {
         var room = (Vector2)root.Size;
-        float fits = Mathf.Max(Mathf.Min(room.X / LeastRoom.X, room.Y / LeastRoom.Y), 1f);
-        return Mathf.Clamp(Mathf.Min(wanted, fits), Settings.UiScaleMin, Settings.UiScaleMax);
+        float fits = Mathf.Max(Mathf.Min(room.X / LeastRoom.X, room.Y / LeastRoom.Y), Settings.UiScaleMin);
+        return Mathf.Clamp(Mathf.Min(wanted, fits), Settings.UiScaleMin, Settings.FittedMost * Settings.UiScaleMax);
     }
 
     static void Rescale()
@@ -717,6 +724,8 @@ public static class Ui
         if (_scaled == null || !GodotObject.IsInstanceValid(_scaled)) return;
         if (_scaleFrom == null) return;
         float scale = ScaleThatFits(_scaled, WantedScale(_scaled, _scaleFrom));
+        var root = _scaled;
+        Callable.From(() => { if (GodotObject.IsInstanceValid(root)) OnScreen.FitAll(root); }).CallDeferred();
         if (Mathf.IsEqualApprox(_scaled.ContentScaleFactor, scale)) return;
         _scaled.ContentScaleFactor = scale;
         _scaled.OversamplingOverride = scale;

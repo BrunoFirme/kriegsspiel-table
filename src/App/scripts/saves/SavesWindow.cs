@@ -318,11 +318,8 @@ sealed partial class SavesWindow : Window
         plate.AddThemeStyleboxOverride("panel", Ui.Box(new Color(1, 1, 1, 0.03f), 3));
         plate.AddChild(picture);
         picture.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
-        if (e.Folder)
-        {
-            var icon = new ToolIcon { Kind = "folder", Color = Ui.Muted };
-            plate.AddChild(icon);
-        }
+        if (e.Folder && e.Trashed == null) ShowInside(e.Path, plate);
+        else if (e.Folder) plate.AddChild(new ToolIcon { Kind = "folder", Color = Ui.Muted });
         v.AddChild(plate);
         var name = new Label { Text = e.Name, ClipText = true, MouseFilter = Control.MouseFilterEnum.Ignore };
         name.AddThemeFontSizeOverride("font_size", 13);
@@ -380,22 +377,52 @@ sealed partial class SavesWindow : Window
         catch (Exception e) when (e is IOException or UnauthorizedAccessException) { return ""; }
     }
 
-    void ReadHead(Entry e, TextureRect picture, Label meta)
+    void ReadHead(Entry e, TextureRect picture, Label meta) => HeadOf(e.Path, head => { if (IsInstanceValid(picture)) ShowHead(e, head, picture, meta); });
+
+    void HeadOf(string path, Action<Json.SaveHeadline?> then)
     {
-        var at = File.GetLastWriteTimeUtc(e.Path);
-        if (_heads.TryGetValue(e.Path, out var known) && known.at == at) { ShowHead(e, known.head, picture, meta); return; }
+        var at = File.GetLastWriteTimeUtc(path);
+        if (_heads.TryGetValue(path, out var known) && known.at == at) { then(known.head); return; }
         Task.Run(() =>
         {
             Json.SaveHeadline? head = null;
-            try { head = Json.ReadSaveHeadline(e.Path); }
+            try { head = Json.ReadSaveHeadline(path); }
             catch (Exception ex) when (SaveStore.IsDamage(ex) || ex is IOException or UnauthorizedAccessException) { head = null; }
             Callable.From(() =>
             {
                 if (!IsInstanceValid(this)) return;
-                _heads[e.Path] = (at, head);
-                if (IsInstanceValid(picture)) ShowHead(e, head, picture, meta);
+                _heads[path] = (at, head);
+                then(head);
             }).CallDeferred();
         });
+    }
+
+    void ShowInside(string folder, Panel plate)
+    {
+        List<string> newest;
+        try
+        {
+            newest = Directory.EnumerateFiles(folder, "*" + SaveStore.Ext, SearchOption.AllDirectories)
+                .Where(f => !SaveStore.IsHidden(folder, System.IO.Path.GetDirectoryName(f) ?? folder))
+                .OrderByDescending(File.GetLastWriteTimeUtc).Take(Mosaic.Most).ToList();
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException) { newest = new(); }
+        if (newest.Count == 0)
+        {
+            plate.AddChild(new ToolIcon { Kind = "folder", Color = Ui.Muted });
+            return;
+        }
+        var mosaic = new Mosaic { Count = newest.Count };
+        mosaic.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
+        plate.AddChild(mosaic);
+        for (int i = 0; i < newest.Count; i++)
+        {
+            int cell = i;
+            HeadOf(newest[i], head =>
+            {
+                if (IsInstanceValid(mosaic)) mosaic.Set(cell, head?.Preview.Picture is { Length: > 0 } jpg ? Picture(jpg) : MapThumb());
+            });
+        }
     }
 
     void ShowHead(Entry e, Json.SaveHeadline? head, TextureRect picture, Label meta)

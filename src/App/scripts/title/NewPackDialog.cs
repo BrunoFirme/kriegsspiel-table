@@ -18,12 +18,14 @@ static class NewPackDialog
         dlg.Confirmed += () =>
         {
             var id = PackEdit.CreatePack(new PackageStore(PackageStore.DefaultRoot), name.Text, t.PlayerName.Text.Trim());
+            t.Shelf.FileNew(true, id);
             main.OpenEditor(id);
         };
         name.TextSubmitted += _ =>
         {
             dlg.Hide();
             var id = PackEdit.CreatePack(new PackageStore(PackageStore.DefaultRoot), name.Text, t.PlayerName.Text.Trim());
+            t.Shelf.FileNew(true, id);
             main.OpenEditor(id);
         };
         Ui.Open(main, dlg, new Vector2I(460, 170));

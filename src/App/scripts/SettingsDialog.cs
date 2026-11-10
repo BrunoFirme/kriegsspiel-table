@@ -79,7 +79,6 @@ sealed class SettingsDialog : HudPart
             "The table's part of the first-run tour, ending in Help; the title screen shows the rest")));
         var size = AppSettings.SizeSlider(Cfg, () => Callable.From(Shell.Relayout).CallDeferred());
         _box.AddChild(Row("Interface size", size.Size, size.Shown));
-        _box.AddChild(Option(size.Match));
         var cappedAt = Ui.UnderControls(size.Capped, Ui.DialogLabels);
         cappedAt.Visible = size.Capped.Visible;
         size.Capped.VisibilityChanged += () => cappedAt.Visible = size.Capped.Visible;

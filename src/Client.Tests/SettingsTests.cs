@@ -84,7 +84,7 @@ public class SettingsTests
         Assert.Equal(
             "{\"Keys\":{\"Keys\":{\"ruler\":\"R\"}},\"CaptureToClipboard\":true,\"CaptureToFolder\":true,\"CaptureFolder\":\"C\",\"CaptureScale\":4,"
             + "\"SightingSquare\":false,\"SightingFirstPerson\":false,\"SightingWide\":false,\"SightingHideText\":false,\"SightingGif\":false,\"LastName\":\"\",\"LastAddress\":\"127.0.0.1\",\"Port\":7777,\"ShareCursor\":true,\"FaceText\":true,\"LabelPlates\":false,"
-            + "\"LetteringReach\":250,\"ReduceFarDetail\":false,\"MakerTools\":false,\"AgentOn\":false,\"AgentPort\":7796,\"AgentToken\":\"\",\"FaceTextScale\":1,\"ShowCursors\":true,\"ShowZones\":true,\"UiScale\":1,\"UiScaleFollowsWindows\":null,\"Antialias\":2,\"SmoothFineEdges\":false,\"ShadowDetail\":1,\"ContactShade\":false,\"WindowMode\":0,\"VSync\":true,\"FrameLimit\":0,\"FarDetail\":1,\"RenderScale\":1,\"MapPictureMemory\":0,\"SoundVolume\":0.6,\"SoundMuted\":false,\"SoundInBackground\":false,"
+            + "\"LetteringReach\":250,\"ReduceFarDetail\":false,\"MakerTools\":false,\"AgentOn\":false,\"AgentPort\":7796,\"AgentToken\":\"\",\"FaceTextScale\":1,\"ShowCursors\":true,\"ShowZones\":true,\"UiScale\":1,\"Antialias\":2,\"SmoothFineEdges\":false,\"ShadowDetail\":1,\"ContactShade\":false,\"WindowMode\":0,\"VSync\":true,\"FrameLimit\":0,\"FarDetail\":1,\"RenderScale\":1,\"MapPictureMemory\":0,\"SoundVolume\":0.6,\"SoundMuted\":false,\"SoundInBackground\":false,"
             + "\"CameraAt\":{},\"CameraViews\":{},\"PanelPos\":{},\"PanelSize\":{},\"StripSize\":30,\"TopLine\":true,\"TopLineWidth\":1,\"PenInk\":\"#1a1a1a\",\"PenSize\":3,\"PenOpacity\":1,"
             + "\"ShapeKind\":\"line\",\"LeftWidth\":300,\"RightWidth\":320,\"LogHeight\":200,\"LeftOpen\":true,\"LeftPage\":\"pieces\","
             + "\"RightOpen\":true,\"LogOpen\":true,\"LogFontSize\":12,\"Favourites\":[],\"FavouritesOnly\":false,\"CompassShown\":true,\"CompassPos\":null,\"BlenderPath\":\"\",\"CheckUpdates\":true,\"ReliefBrush\":6,\"ReliefStrength\":0.35,\"ReliefMode\":\"raise\",\"ReliefDensity\":1,\"ReliefPaint\":\"brush\",\"ReliefDetails\":{},\"FormationGap\":0.1,\"Formation\":\"line\",\"NewBackdrop\":\"\",\"NewTableShade\":0,\"Tour\":0}",
@@ -142,23 +142,26 @@ public class SettingsTests
     }
 
     [Fact]
-    public void The_interface_size_follows_Windows_until_someone_chose_a_size_of_their_own()
+    public void The_interface_grows_with_the_screen_or_Windows_scale_and_the_chosen_size_rides_on_top()
     {
-        Assert.True(Settings.Load().FollowsWindows);
-        Assert.Equal(1.5f, Settings.Load().UiScaleWith(1.5f));
-        File.WriteAllText(_file, "{\"UiScale\":1}");
-        Assert.True(Settings.Load().FollowsWindows);
+        Assert.Equal(1f, Settings.Fitted(1f, 900));
+        Assert.Equal(1f, Settings.Fitted(1f, 1080));
+        Assert.Equal(1.35f, Settings.Fitted(1f, 1440), 3);
+        Assert.Equal(2f, Settings.Fitted(1f, 2160), 3);
+        Assert.Equal(1.5f, Settings.Fitted(1.5f, 900), 3);
+        Assert.Equal(Settings.FittedMost, Settings.Fitted(1f, 8000));
+        var s = Settings.Load();
+        Assert.Equal(1f, s.UiScale);
+        s.UiScale = 1.2f;
+        Assert.Equal(1.62f, s.UiScaleFor(1f, 1440), 3);
+        File.WriteAllText(_file, "{\"UiScale\":1.3,\"UiScaleFollowsWindows\":false}");
+        var before = Settings.Load();
+        Assert.Equal(1f, before.UiScale);
+        Assert.Null(before.UiScaleFollowsWindows);
+        before.Save();
+        Assert.DoesNotContain("UiScaleFollowsWindows", File.ReadAllText(_file));
         File.WriteAllText(_file, "{\"UiScale\":1.3}");
-        var chosen = Settings.Load();
-        Assert.False(chosen.FollowsWindows);
-        Assert.Equal(1.3f, chosen.UiScaleWith(1.5f));
-        chosen.UiScale = 1f;
-        chosen.FollowsWindows = false;
-        chosen.Save();
-        Assert.False(Settings.Load().FollowsWindows);
-        var back = Settings.Load();
-        back.FollowsWindows = true;
-        Assert.Equal(Settings.UiScaleMax, back.UiScaleWith(3f));
+        Assert.Equal(1.3f, Settings.Load().UiScale);
     }
 
     [Fact]

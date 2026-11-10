@@ -3,18 +3,28 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using KTable.Core;
 
 namespace KTable.Client;
 
 public sealed class Library
 {
-    public List<string> Folders { get; set; } = new();
-    public Dictionary<string, string> Scenarios { get; set; } = new();
-    public Dictionary<string, string> Packs { get; set; } = new();
+    public Shelf ScenarioShelf { get; set; } = new();
+    public Shelf PackShelf { get; set; } = new();
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public List<string>? Folders { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public Dictionary<string, string>? Scenarios { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public Dictionary<string, string>? Packs { get; set; }
 
     static string PathOf => Path.Combine(DataPaths.Local, "library.json");
     static readonly JsonSerializerOptions Opts = new() { WriteIndented = true };
+
+    static Library? _current;
+    public static Library Current => _current ??= Load();
 
     public static Library Load()
     {
@@ -22,9 +32,11 @@ public sealed class Library
         try
         {
             var lib = JsonSerializer.Deserialize<Library>(File.ReadAllText(PathOf), Opts) ?? throw new JsonException("the file is empty");
-            lib.Folders = (lib.Folders ?? new()).Where(f => !string.IsNullOrWhiteSpace(f)).ToList();
-            lib.Scenarios ??= new();
-            lib.Packs ??= new();
+            lib.ScenarioShelf ??= new();
+            lib.PackShelf ??= new();
+            lib.TakeOldFolders();
+            lib.ScenarioShelf.Mend();
+            lib.PackShelf.Mend();
             return lib;
         }
         catch (Exception e)
@@ -37,66 +49,69 @@ public sealed class Library
         }
     }
 
+    void TakeOldFolders()
+    {
+        if (Folders == null && Scenarios == null && Packs == null) return;
+        var folders = (Folders ?? new()).Where(f => !string.IsNullOrWhiteSpace(f)).Select(CleanName).Distinct().ToList();
+        var scenarios = Scenarios ?? new();
+        var packs = Packs ?? new();
+        void Into(Shelf shelf, Dictionary<string, string> filed, Dictionary<string, string> other)
+        {
+            foreach (var f in folders)
+                if ((filed.ContainsValue(f) || !other.ContainsValue(f)) && !shelf.Folders.Contains(f)) shelf.Folders.Add(f);
+            foreach (var (id, f) in filed)
+                if (folders.Contains(f)) shelf.Filed.TryAdd(id, f);
+        }
+        Into(ScenarioShelf, scenarios, packs);
+        Into(PackShelf, packs, scenarios);
+        Folders = null;
+        Scenarios = null;
+        Packs = null;
+    }
+
     public void Save()
     {
         try { KTable.Core.Json.WriteAtomic(PathOf, JsonSerializer.Serialize(this, Opts)); }
         catch (Exception e) { Problems.TellOnce("library", $"Your folders on the title screen could not be saved ({e.Message}): what you filed lasts until the app closes."); }
     }
 
-    public string FolderOf(bool pack, string id) => (pack ? Packs : Scenarios).TryGetValue(id, out var f) && Folders.Contains(f) ? f : "";
-
-    public void Move(bool pack, string id, string folder)
-    {
-        var map = pack ? Packs : Scenarios;
-        if (folder.Length == 0) map.Remove(id);
-        else map[id] = folder;
-        Save();
-    }
-
-    public void Forget(bool pack, string id) { (pack ? Packs : Scenarios).Remove(id); Save(); }
+    public Shelf Of(bool pack) => pack ? PackShelf : ScenarioShelf;
 
     public static string CleanName(string name) => name.Trim().Replace('/', '·').Replace('\\', '·');
 
-    public bool AddFolder(string name)
-    {
-        name = CleanName(name);
-        if (name.Length == 0 || Folders.Contains(name, StringComparer.OrdinalIgnoreCase)) return false;
-        Folders.Add(name);
-        Folders.Sort(StringComparer.OrdinalIgnoreCase);
-        Save();
-        return true;
-    }
+    public string FolderOf(bool pack, string id) => Of(pack).FolderOf(id);
 
-    public bool RenameFolder(string from, string to)
-    {
-        to = CleanName(to);
-        if (to.Length == 0 || !Folders.Contains(from) || (to != from && Folders.Contains(to, StringComparer.OrdinalIgnoreCase))) return false;
-        Folders[Folders.IndexOf(from)] = to;
-        foreach (var k in Scenarios.Where(kv => kv.Value == from).Select(kv => kv.Key).ToList()) Scenarios[k] = to;
-        foreach (var k in Packs.Where(kv => kv.Value == from).Select(kv => kv.Key).ToList()) Packs[k] = to;
-        Folders.Sort(StringComparer.OrdinalIgnoreCase);
-        Save();
-        return true;
-    }
+    public List<ShelfEntry> Arranged(bool pack, string folder, IReadOnlyList<string> present) => Of(pack).Arranged(folder, present);
 
-    public void RemoveFolder(string name)
+    public List<string> Ordered(bool pack, IEnumerable<string> ids) => Of(pack).Flattened(ids.ToList());
+
+    public string? AddFolder(bool pack, string parent, string name) => Saved(Of(pack).AddFolder(parent, name));
+
+    public bool RenameFolder(bool pack, string folder, string name) => Saved(Of(pack).RenameFolder(folder, name));
+
+    public void RemoveFolder(bool pack, string folder, IReadOnlyList<string> present)
     {
-        Folders.Remove(name);
-        foreach (var k in Scenarios.Where(kv => kv.Value == name).Select(kv => kv.Key).ToList()) Scenarios.Remove(k);
-        foreach (var k in Packs.Where(kv => kv.Value == name).Select(kv => kv.Key).ToList()) Packs.Remove(k);
+        Of(pack).RemoveFolder(folder, present);
         Save();
     }
 
-    public IEnumerable<(string folder, List<T> items)> Grouped<T>(IEnumerable<T> items, Func<T, string> idOf, bool pack, string view)
+    public void Drop(bool pack, string folder, IReadOnlyList<string> present, IReadOnlyList<string> keys, int slot)
     {
-        var list = items.ToList();
-        if (view.Length > 0) { yield return (view, list.Where(i => FolderOf(pack, idOf(i)) == view).ToList()); yield break; }
-        var unfiled = list.Where(i => FolderOf(pack, idOf(i)) == "").ToList();
-        if (unfiled.Count > 0 || Folders.Count == 0) yield return ("", unfiled);
-        foreach (var f in Folders)
-        {
-            var inF = list.Where(i => FolderOf(pack, idOf(i)) == f).ToList();
-            if (inF.Count > 0) yield return (f, inF);
-        }
+        Of(pack).Drop(folder, present, keys, slot);
+        Save();
+    }
+
+    public void MoveInto(bool pack, string folder, IReadOnlyList<string> present, IReadOnlyList<string> keys) => Drop(pack, folder, present, keys, int.MaxValue);
+
+    public void Forget(bool pack, string id)
+    {
+        Of(pack).Forget(id);
+        Save();
+    }
+
+    T Saved<T>(T result)
+    {
+        Save();
+        return result;
     }
 }

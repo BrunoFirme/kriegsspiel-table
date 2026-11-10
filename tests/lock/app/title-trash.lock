@@ -6,7 +6,7 @@ checkpoint delete-ask
 click "Delete"
 settle
 checkpoint deleted
-click ~"Trash ("
+dclick "Trash"
 settle
 checkpoint trash-page
 click "Restore"
@@ -14,11 +14,12 @@ settle
 checkpoint restored
 click "← Scenarios"
 settle
-rclick "Lock small"
-click "Delete…"
+drag "Lock small" "Trash"
+settle
+checkpoint dropped-on-trash-ask
 click "Delete"
 settle
-click ~"Trash ("
+dclick "Trash"
 wait 30
 click "Delete now"
 settle
@@ -37,7 +38,7 @@ checkpoint remove-pack-ask
 click "Remove"
 settle
 checkpoint removed-pack
-click ~"Trash ("
+dclick "Trash"
 settle
 checkpoint pack-trash
 click "Empty this trash"

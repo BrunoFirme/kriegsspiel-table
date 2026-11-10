@@ -20,22 +20,32 @@ sealed class ItemMenu
         _platform = platform;
     }
 
-    Library Lib => _t.Folders.Lib;
+    Library Lib => _t.Shelf.Lib;
+
+    const int NewFolderRow = 1999;
 
     public void Open(Vector2 at, PackageStore store, bool pack, string id, string name, Action refresh, bool readable = true)
     {
         var pm = new PopupMenu();
-        var move = new PopupMenu { Name = "move" };
-        var current = Lib.FolderOf(pack, id);
-        move.AddCheckItem("Unfiled", 1000);
-        move.SetItemChecked(0, current.Length == 0);
-        for (int i = 0; i < Lib.Folders.Count; i++) { move.AddCheckItem(Lib.Folders[i], 1001 + i); move.SetItemChecked(i + 1, Lib.Folders[i] == current); }
+        var present = _t.Shelf.Present(pack);
+        var here = _t.Shelf.At(pack);
+        var move = _t.Shelf.MoveMenu(pack, folder =>
+        {
+            Lib.MoveInto(pack, folder, present, new[] { id });
+            refresh();
+        }, leaveOut: Lib.FolderOf(pack, id));
+        move.Name = "move";
         move.AddSeparator();
-        move.AddItem("New folder…", 1999);
+        move.AddItem("New folder…", NewFolderRow);
         move.IdPressed += mid =>
         {
-            if (mid == 1999) TextPrompt.Open(_main, "New folder", "Name", "", n => { if (Lib.AddFolder(n)) { Lib.Move(pack, id, Library.CleanName(n)); refresh(); } });
-            else { Lib.Move(pack, id, mid == 1000 ? "" : Lib.Folders[(int)mid - 1001]); refresh(); }
+            if (mid != NewFolderRow) return;
+            TextPrompt.Open(_main, "New folder", "Name", "", n =>
+            {
+                if (Lib.AddFolder(pack, here, n) is not { } made) { _t.Status.Text = $"There is already a folder called {Library.CleanName(n)} here"; return; }
+                Lib.MoveInto(pack, made, present, new[] { id });
+                refresh();
+            });
         };
         pm.AddChild(move);
         pm.AddSubmenuNodeItem("Move to", move);

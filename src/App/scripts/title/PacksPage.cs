@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Godot;
+using KTable.Client;
 using KTable.Core;
 using KTable.Core.Model;
 using static KTable.App.TitleStyle;
@@ -36,53 +37,70 @@ sealed class PacksPage
 
     public void Show()
     {
-        var v = _t.NewPage("Piece studio", "");
-        v.AddChild(Actions());
-        v.AddChild(_t.Folders.Strip(() => { _t.Select(2); Show(); }));
+        void Again() { _t.Select(2); Show(); }
+        var v = _t.NewPage("Piece studio", "", wide: true);
+        var actions = Actions();
+        v.AddChild(actions);
         var store = new PackageStore(PackageStore.DefaultRoot);
         var page = new Cards();
-        PickActions(page, store);
+        var ids = store.ListPackIds().Where(id => !StandardPacks.IsStandard(id)).OrderBy(id => store.Pack(id)?.Name ?? id, StringComparer.OrdinalIgnoreCase).ToList();
+        var shelf = _t.Shelf;
+        var shelved = shelf.WithTrash(true, ids);
+        var entries = shelf.Lib.Arranged(true, shelf.At(true), shelved);
+        var shown = shelf.Begin(v, pack: true, shelved, entries, Again, page.Picks, id => store.Pack(id)?.Name ?? id);
+        actions.AddChild(shelf.NewFolderButton(shown));
+        if (shelf.Trail(shown) is { } trail) v.AddChild(trail);
+        PickActions(page, store, ids);
         v.AddChild(page.Picks.Bar);
 
-        var scroll = new ScrollContainer { SizeFlagsVertical = Control.SizeFlags.ExpandFill, HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled };
+        var scroll = new ScrollContainer { SizeFlagsVertical = Control.SizeFlags.ExpandFill, HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled,
+            VerticalScrollMode = ScrollContainer.ScrollMode.Reserve };
         v.AddChild(scroll);
         var col = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         col.AddThemeConstantOverride("separation", Ui.Gap.Block);
         scroll.AddChild(col);
 
-        var ids = store.ListPackIds().Where(id => !StandardPacks.IsStandard(id)).OrderBy(id => store.Pack(id)?.Name ?? id, StringComparer.OrdinalIgnoreCase).ToList();
-        bool newShown = false;
-        foreach (var (folder, items) in _t.Folders.Grouped(ids, id => id, pack: true))
+        var grid = Grid();
+        col.AddChild(grid);
+        var plus = NewPackCard();
+        shelf.Arrange(shown, plus, null);
+        grid.AddChild(plus);
+        foreach (var e in entries)
         {
-            if (items.Count == 0 && folder.Length == 0) continue;
-            if (folder.Length > 0 || _t.Folders.Lib.Folders.Count > 0) col.AddChild(Section(folder.Length > 0 ? folder : "Unfiled"));
-            if (items.Count == 0 && newShown) col.AddChild(new Label { Text = "Empty", Modulate = Muted });
-            var grid = Grid();
-            col.AddChild(grid);
-            if (!newShown)
+            if (e.Key == Shelf.TrashKey)
             {
-                grid.AddChild(NewPackCard());
-                newShown = true;
+                var bin = shelf.TrashTile(shown, () => _t.Trash.Show(packs: true), c =>
+                {
+                    page.Picks.Clear();
+                    Choose(page, c);
+                });
+                page.All.Add(bin);
+                grid.AddChild(bin);
+                continue;
             }
-            foreach (var id in items)
+            if (e.Folder)
             {
-                var pack = store.Pack(id);
-                var card = pack == null ? DamagedCard(page, store, id) : PackCard(page, store, id, pack);
-                page.All.Add(card);
-                grid.AddChild(card);
+                var tile = shelf.FolderTile(shown, e, (id, show) => { if (store.Pack(id) is { } inside) PackCards.Cover(store, inside, show); }, c =>
+                {
+                    page.Picks.Clear();
+                    Choose(page, c);
+                });
+                page.All.Add(tile);
+                grid.AddChild(tile);
+                continue;
             }
+            var pack = store.Pack(e.Key);
+            var card = pack == null ? DamagedCard(page, store, e.Key) : PackCard(page, store, e.Key, pack);
+            shelf.Arrange(shown, card, e.Key);
+            page.All.Add(card);
+            grid.AddChild(card);
         }
-        if (!newShown)
-        {
-            var grid = Grid();
-            col.AddChild(grid);
-            grid.AddChild(NewPackCard());
-        }
+        shelf.ArrangeEnd(shown, grid);
+        if (entries.Count == 0 && shown.Folder.Length > 0) grid.AddChild(new Label { Text = "Empty", Modulate = Muted, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter });
 
         var foot = new HBoxContainer();
         foot.AddThemeConstantOverride("separation", Ui.Gap.Tight);
         foot.AddChild(MakersLink());
-        foot.AddChild(_t.Trash.Link(packs: true));
         v.AddChild(foot);
     }
 
@@ -103,8 +121,9 @@ sealed class PacksPage
         });
         install.TooltipText = "A pack, or a scenario with its packs, shared as one file (you can also drop it on this window)";
         actions.AddChild(install);
-        var convert = new Button { Text = "Convert from…", FocusMode = Control.FocusModeEnum.None, CustomMinimumSize = new Vector2(0, 40), TooltipText = "A digital tabletop module or save (local, or a Workshop link) becomes a pack and a scenario" };
-        convert.AddThemeFontSizeOverride("font_size", 16);
+        var convert = new Button { Text = "Convert from…", FocusMode = Control.FocusModeEnum.None, CustomMinimumSize = new Vector2(0, ShelfView.ActionHeight),
+            TooltipText = "A digital tabletop module or save (local, or a Workshop link) becomes a pack and a scenario" };
+        convert.AddThemeFontSizeOverride("font_size", ShelfView.ActionFont);
         convert.Pressed += () =>
         {
             var dlg = new ImportDialog(PackageStore.DefaultRoot, (sc, pk) =>
@@ -120,17 +139,18 @@ sealed class PacksPage
         return actions;
     }
 
-    void PickActions(Cards page, PackageStore store)
+    void PickActions(Cards page, PackageStore store, IReadOnlyList<string> present)
     {
         page.Picks.Changed = () => { if (page.Picks.Count > 1) foreach (var row in page.Actions.Values) row.Visible = false; };
         page.Picks.Act(n => $"Move {n} to…", keys =>
         {
-            var pm = TitlePicks.FolderMenu(_t.Folders.Lib, folder =>
+            var pm = _t.Shelf.MoveMenu(true, folder =>
             {
-                foreach (var k in keys) _t.Folders.Lib.Move(true, k, folder);
+                _t.Shelf.Lib.MoveInto(true, folder, present, keys.ToList());
                 _t.Select(2);
                 Show();
             });
+            pm.PopupHide += () => pm.QueueFree();
             _main.AddChild(pm);
             pm.Popup(new Rect2I((Vector2I)_main.GetViewport().GetMousePosition().Round(), Vector2I.Zero));
         });
@@ -140,7 +160,7 @@ sealed class PacksPage
             var failed = new List<string>();
             foreach (var k in keys)
             {
-                try { Main.Saves.TrashPack(store.Root, k, Repeatable.UtcNow); _t.Folders.Lib.Forget(true, k); }
+                try { Main.Saves.TrashPack(store.Root, k, Repeatable.UtcNow); _t.Shelf.Lib.Forget(true, k); }
                 catch (Exception e) when (e is IOException or UnauthorizedAccessException) { failed.Add($"{k}: {e.Message}"); }
             }
             _main.RebuildLobby();

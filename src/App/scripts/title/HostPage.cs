@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Godot;
+using KTable.Client;
 using KTable.Core;
 using KTable.Core.Model;
 using static KTable.App.TitleStyle;
@@ -40,80 +41,104 @@ sealed class HostPage
 
     public void Show(PackageStore store, List<(string id, string path, Scenario? s)> scenarios)
     {
-        var v = _t.NewPage("Scenarios", "");
-        v.AddChild(_t.Folders.Strip(() => { _t.Select(0); Show(store, scenarios); }));
+        void Again() { _t.Select(0); Show(store, scenarios); }
+        var v = _t.NewPage("Scenarios", "", wide: true);
         var page = new Cards();
-        PickActions(page, store, scenarios);
+        var byId = scenarios.GroupBy(x => x.id).ToDictionary(g => g.Key, g => g.First());
+        var present = scenarios.OrderBy(x => x.s?.Name ?? x.id, StringComparer.CurrentCultureIgnoreCase).Select(x => x.id).Distinct().ToList();
+        var shelf = _t.Shelf;
+        var shelved = shelf.WithTrash(false, present);
+        var entries = shelf.Lib.Arranged(false, shelf.At(false), shelved);
+        var shown = shelf.Begin(v, pack: false, shelved, entries, Again, page.Picks, id => byId.TryGetValue(id, out var x) ? x.s?.Name ?? id : id);
+        var actions = new HBoxContainer();
+        actions.AddChild(shelf.NewFolderButton(shown));
+        v.AddChild(actions);
+        if (shelf.Trail(shown) is { } trail) v.AddChild(trail);
+        PickActions(page, store, scenarios, present);
         v.AddChild(page.Picks.Bar);
 
-        var scroll = new ScrollContainer { SizeFlagsVertical = Control.SizeFlags.ExpandFill, HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled };
+        var scroll = new ScrollContainer { SizeFlagsVertical = Control.SizeFlags.ExpandFill, HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled,
+            VerticalScrollMode = ScrollContainer.ScrollMode.Reserve };
         v.AddChild(scroll);
         var col = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         col.AddThemeConstantOverride("separation", Ui.Gap.Block);
         scroll.AddChild(col);
 
-        bool newShown = false;
-        foreach (var (folder, items) in _t.Folders.Grouped(scenarios, x => x.id, pack: false))
+        var grid = Grid();
+        col.AddChild(grid);
+        var plus = NewScenarioCard();
+        shelf.Arrange(shown, plus, null);
+        grid.AddChild(plus);
+        foreach (var e in entries)
         {
-            if (items.Count == 0 && folder.Length == 0) continue;
-            if (folder.Length > 0 || _t.Folders.Lib.Folders.Count > 0) col.AddChild(Section(folder.Length > 0 ? folder : "Unfiled"));
-            if (items.Count == 0 && newShown) col.AddChild(new Label { Text = "Empty", Modulate = Muted });
-            var grid = Grid();
-            col.AddChild(grid);
-            if (!newShown)
+            if (e.Key == Shelf.TrashKey)
             {
-                grid.AddChild(NewScenarioCard());
-                newShown = true;
+                var bin = shelf.TrashTile(shown, () => _t.Trash.Show(packs: false), c =>
+                {
+                    page.Picks.Clear();
+                    Choose(page, null, c);
+                });
+                page.All.Add(bin);
+                grid.AddChild(bin);
+                continue;
             }
-            foreach (var (id, path, s) in items)
+            if (e.Folder)
             {
-                var card = ScenarioCard(page, store, scenarios, id, path, s);
-                page.All.Add(card);
-                grid.AddChild(card);
+                var tile = shelf.FolderTile(shown, e, (id, show) =>
+                {
+                    if (byId.TryGetValue(id, out var x) && x.s != null && ScenarioCards.Thumb(store, x.s, 512) is { } tex) show(tex);
+                }, c =>
+                {
+                    page.Picks.Clear();
+                    Choose(page, null, c);
+                });
+                page.All.Add(tile);
+                grid.AddChild(tile);
+                continue;
             }
+            var (id, path, s) = byId[e.Key];
+            var card = ScenarioCard(page, store, scenarios, id, path, s);
+            shelf.Arrange(shown, card, id);
+            page.All.Add(card);
+            grid.AddChild(card);
         }
+        shelf.ArrangeEnd(shown, grid);
+        if (entries.Count == 0 && shown.Folder.Length > 0) grid.AddChild(new Label { Text = "Empty", Modulate = Muted, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter });
 
-        if (!newShown)
-        {
-            var grid = Grid();
-            col.AddChild(grid);
-            grid.AddChild(NewScenarioCard());
-        }
-
-        var mirrors = Main.Saves.Mirrors();
+        var mirrors = shown.Folder.Length == 0 ? Main.Saves.Mirrors() : new List<string>();
         if (mirrors.Count > 0)
         {
             var mirrorHead = Section("Mirrored games");
             mirrorHead.MouseFilter = Control.MouseFilterEnum.Pass;
             mirrorHead.TooltipText = "Games you joined as a co-umpire, kept on this PC. Hosting one keeps its password and lets back in the people already let in.";
             col.AddChild(mirrorHead);
-            var grid = Grid();
-            col.AddChild(grid);
+            var mirrored = Grid();
+            col.AddChild(mirrored);
             foreach (var mp in mirrors)
             {
                 var card = MirrorCard(page, store, scenarios, mp);
                 page.All.Add(card);
-                grid.AddChild(card);
+                mirrored.AddChild(card);
             }
         }
 
-        v.AddChild(_t.Trash.Link(packs: false));
     }
 
     static bool Gathering(InputEventMouseButton mb) => mb.CtrlPressed || mb.MetaPressed || mb.ShiftPressed;
 
-    void PickActions(Cards page, PackageStore store, List<(string id, string path, Scenario? s)> scenarios)
+    void PickActions(Cards page, PackageStore store, List<(string id, string path, Scenario? s)> scenarios, IReadOnlyList<string> present)
     {
         static bool IsMirror(string key) => key.EndsWith(SaveStore.Ext, StringComparison.OrdinalIgnoreCase);
         page.Picks.Changed = () => { if (page.Picks.Count > 1) foreach (var a in page.Actions.Values) a.row.Visible = false; };
         page.Picks.Act(n => $"Move {n} to…", keys =>
         {
-            var pm = TitlePicks.FolderMenu(_t.Folders.Lib, folder =>
+            var pm = _t.Shelf.MoveMenu(false, folder =>
             {
-                foreach (var k in keys.Where(k => !IsMirror(k))) _t.Folders.Lib.Move(false, k, folder);
+                _t.Shelf.Lib.MoveInto(false, folder, present, keys.Where(k => !IsMirror(k)).ToList());
                 _t.Select(0);
                 Show(store, scenarios);
             });
+            pm.PopupHide += () => pm.QueueFree();
             _main.AddChild(pm);
             pm.Popup(new Rect2I((Vector2I)_main.GetViewport().GetMousePosition().Round(), Vector2I.Zero));
         });
@@ -126,7 +151,7 @@ sealed class HostPage
                 try
                 {
                     if (IsMirror(k)) Main.Saves.TrashMirror(k, Repeatable.UtcNow);
-                    else { Main.Saves.TrashScenario(store.Root, k, Repeatable.UtcNow); _t.Folders.Lib.Forget(false, k); }
+                    else { Main.Saves.TrashScenario(store.Root, k, Repeatable.UtcNow); _t.Shelf.Lib.Forget(false, k); }
                 }
                 catch (Exception e) when (e is IOException or UnauthorizedAccessException) { failed.Add($"{Path.GetFileNameWithoutExtension(k)}: {e.Message}"); }
             }
@@ -141,7 +166,7 @@ sealed class HostPage
 
     const string OpensForYou = "Opens the table on this PC: yours alone, to plot or prepare, until you invite someone";
 
-    void Choose(Cards page, string target, PanelContainer? card)
+    void Choose(Cards page, string? target, PanelContainer? card)
     {
         page.Chosen = target;
         foreach (var c in page.All)
@@ -149,7 +174,7 @@ sealed class HostPage
             c.AddThemeStyleboxOverride("panel", CardStyle(c == card));
             if (page.Actions.TryGetValue(c, out var a)) a.row.Visible = c == card;
         }
-        if (card == null || !page.Actions.TryGetValue(card, out var act)) return;
+        if (card == null || target == null || !page.Actions.TryGetValue(card, out var act)) return;
         act.host.Disabled = page.Unreadable.Contains(target) && !page.InPlay.ContainsKey(target);
         act.host.Text = target.EndsWith(SaveStore.Ext) ? "Host from the copy" : page.InPlay.ContainsKey(target) ? "Resume" : "Open";
         act.over.Visible = page.InPlay.ContainsKey(target) && !target.EndsWith(SaveStore.Ext) && !page.Unreadable.Contains(target);

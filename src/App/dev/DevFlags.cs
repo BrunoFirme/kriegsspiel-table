@@ -209,6 +209,12 @@ sealed class DevFlags : IDevAids
 
     public void TitleShown(TitleScreen title)
     {
+        if (_args.Remove("shelf", out var folder))
+        {
+            bool packs = _args.GetValueOrDefault("page") == "packs";
+            title.Shelf.Go(packs, folder);
+            if (!packs) { Callable.From(_main.RebuildLobby).CallDeferred(); return; }
+        }
         if (title.HasWorkshop && _args.GetValueOrDefault("page") == "workshop") { title.Select(3); title.Workshop.Show(); }
         if (_args.GetValueOrDefault("page") == "packs") { title.Select(2); title.Packs.Show(); }
         if (_args.GetValueOrDefault("page") == "join") title.Select(1);

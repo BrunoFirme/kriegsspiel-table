@@ -19,9 +19,8 @@ static class Preferences
 
     public static readonly IReadOnlyList<Pref> All = new[]
     {
-        Number("interface_size", "Interface", "how big the interface draws; setting it stops following Windows' scale", Settings.UiScaleMin, Settings.UiScaleMax,
-            c => c.UiScale, (c, v) => { c.UiScale = v; c.FollowsWindows = false; }, PrefEffect.Scale),
-        Flag("interface_follows_windows", "Interface", "use Windows' own display scale, screen by screen", c => c.FollowsWindows, (c, on) => c.FollowsWindows = on, PrefEffect.Scale),
+        Number("interface_size", "Interface", "how big the interface draws, on top of the size fitted to the window and screen", Settings.UiScaleMin, Settings.UiScaleMax,
+            c => c.UiScale, (c, v) => c.UiScale = v, PrefEffect.Scale),
         Number("sidebar_buttons", "Interface", "sidebar button size in pixels", Settings.StripSizeMin, Settings.StripSizeMax, c => c.StripSize, (c, v) => c.StripSize = MathF.Round(v), PrefEffect.Strip),
         Flag("top_line", "Interface", "the top bar says what just happened (off: only the log does)", c => c.TopLine, (c, on) => c.TopLine = on, PrefEffect.TopLine),
         Number("top_line_length", "Interface", "share of the top bar that line may take", Settings.TopLineWidthMin, 1, c => c.TopLineWidth, (c, v) => c.TopLineWidth = v, PrefEffect.TopLine),

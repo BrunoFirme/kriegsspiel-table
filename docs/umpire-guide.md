@@ -7,7 +7,8 @@ Hosting puts the table on your PC for your co-umpires and anyone you let in to w
 ### Packs
 
 A pack is a set of pieces. **Piece studio** on the title screen installs a `.ktpack`, converts a digital
-tabletop module, or makes a new pack. The standard dice are always there.
+tabletop module, or makes a new pack. The standard dice are always there. The order you give packs there is the
+order the table's pieces panel lists them in.
 
 ### Scenarios
 
@@ -15,6 +16,10 @@ A scenario is a map plus the pieces on it. **Scenarios → New blank scenario…
 sheets in the **Map** drawer (PNG, JPG, TIFF, or a GIMP `.xcf`). Converting a module also makes one. Right-click a
 card to file, export or delete it. **Open** puts the table on your PC only: nobody joins until you invite them, so
 preparing a scenario and hosting it are the same step.
+
+Scenario and pack cards stay where you drag them. Drop one on a folder to file it, on the path above the cards to
+take it out, or on **Trash** to delete it; **New folder** makes a folder in the one shown, folders hold folders, and
+each shows the first four of what it holds. Trash keeps what you delete for thirty days; drag it wherever you like.
 
 ### Saves
 
@@ -357,5 +362,5 @@ The ⋯ after the scenario's name opens its properties: **Game** (password, poin
 | The host's PC is gone | An umpire who was there: **Mirrored games** → **Host from the copy**. |
 | A panel is off screen | **Settings → Interface → Put the panels back**. |
 | The table stutters on a big map | **Settings → Graphics**: lower Render scale, Smooth edges and Map pictures. |
-| Text and buttons are too small | **Settings → Interface → Interface size**; **Match Windows** follows Windows' own display scale. |
+| Text and buttons are too small | The interface grows with the window and the screen; **Settings → Interface → Interface size** sets it larger or smaller on top. |
 | Colours are hard to tell apart | Umpires' colours are chosen for colour-blind eyes. For maps and pieces, Windows has **Settings → Accessibility → Colour filters**. |

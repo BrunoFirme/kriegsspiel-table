@@ -13,6 +13,8 @@ sealed class TitleScreen
 {
     const string Wordmark = "res://brand/firmeware.png";
     const float WordmarkHeight = 13;
+    const int WindowEdge = 72, WindowTop = 64, WindowFoot = 48, MenuWidth = 360, MenuToPage = 56, PageInset = 40;
+    const int PageLeft = WindowEdge + MenuWidth + MenuToPage;
 
     readonly Main _main;
     readonly Settings _cfg;
@@ -20,7 +22,7 @@ sealed class TitleScreen
     readonly List<Button> _nav = new();
     Control _page = null!;
 
-    public readonly FolderView Folders;
+    public readonly ShelfView Shelf;
     public readonly ItemMenu Items;
     public readonly HostPage Host;
     public readonly JoinPage Join;
@@ -39,7 +41,7 @@ sealed class TitleScreen
         _main = main;
         _cfg = cfg;
         _platform = platform;
-        Folders = new FolderView(main, lib);
+        Shelf = new ShelfView(main, lib);
         Items = new ItemMenu(this, main, platform);
         Host = new HostPage(this, main);
         Join = new JoinPage(this, main, cfg);
@@ -87,7 +89,8 @@ sealed class TitleScreen
         root.AddChild(fade);
 
         var leftRoom =
-            new ScrollContainer { OffsetLeft = 72, OffsetTop = 64, OffsetRight = 72 + 360, AnchorBottom = 1, OffsetBottom = -48, HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled };
+            new ScrollContainer { OffsetLeft = WindowEdge, OffsetTop = WindowTop, OffsetRight = WindowEdge + MenuWidth, AnchorBottom = 1, OffsetBottom = -WindowFoot,
+                HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled };
         var left = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ExpandFill };
         left.AddThemeConstantOverride("separation", Ui.Gap.Tight);
         leftRoom.AddChild(left);
@@ -95,7 +98,7 @@ sealed class TitleScreen
         Menu(left, store, scenarios);
         Identity(left, rebuilt, lost);
 
-        _page = new MarginContainer { AnchorLeft = 0, AnchorRight = 1, AnchorBottom = 1, OffsetLeft = 72 + 360 + 56, OffsetTop = 64, OffsetRight = -72, OffsetBottom = -48 };
+        _page = new MarginContainer { AnchorLeft = 0, AnchorRight = 1, AnchorBottom = 1, OffsetLeft = PageLeft };
         root.AddChild(_page);
         if (Report.TellOfUnexpectedClose()) return;
         Select(0);
@@ -234,20 +237,24 @@ sealed class TitleScreen
         for (int k = 0; k < _nav.Count; k++) _nav[k].SetPressedNoSignal(k == i);
     }
 
-    public VBoxContainer NewPage(string heading, string sub)
+    public VBoxContainer NewPage(string heading, string sub, bool wide = false)
     {
         foreach (var c in _page.GetChildren()) c.QueueFree();
         var panel = new PanelContainer();
         panel.AddThemeStyleboxOverride("panel", new StyleBoxFlat
         {
-            BgColor = Paper, ContentMarginLeft = 36, ContentMarginRight = 36, ContentMarginTop = 30, ContentMarginBottom = 28,
-            CornerRadiusTopLeft = 10, CornerRadiusTopRight = 10, CornerRadiusBottomLeft = 10, CornerRadiusBottomRight = 10,
-
+            BgColor = Paper, ContentMarginLeft = PageInset, ContentMarginRight = PageInset, ContentMarginTop = WindowTop, ContentMarginBottom = WindowFoot,
         });
         _page.AddChild(panel);
         var v = new VBoxContainer();
         v.AddThemeConstantOverride("separation", Ui.Gap.Block);
-        panel.AddChild(v);
+        if (wide) panel.AddChild(v);
+        else
+        {
+            var column = new Measure();
+            panel.AddChild(column);
+            column.AddChild(v);
+        }
         var h = new Label { Text = heading };
         h.AddThemeFontOverride("font", Serif());
         h.AddThemeFontSizeOverride("font_size", 30);
