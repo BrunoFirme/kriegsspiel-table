@@ -36,9 +36,9 @@ public sealed class Settings
     public float UiScale { get; set; } = 1f;
     [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public bool? UiScaleFollowsWindows { get; set; }
-    public const float UiScaleMin = 0.7f, UiScaleMax = 1.5f, ReferenceHeight = 1080f, FittedMost = 3f, FittedStep = 0.05f;
+    public const float UiScaleMin = 0.7f, UiScaleMax = 1.5f, ReferenceHeight = 1080f, FittedMost = 3f, NextStepFrom = 0.75f;
     public static float Fitted(float windowsScale, float windowHeight) =>
-        Math.Clamp(Math.Max(windowsScale, MathF.Round(windowHeight / ReferenceHeight / FittedStep) * FittedStep), 1f, FittedMost);
+        Math.Clamp(Math.Max(windowsScale, MathF.Floor(windowHeight / ReferenceHeight + 1 - NextStepFrom)), 1f, FittedMost);
     public float UiScaleFor(float windowsScale, float windowHeight) => Fitted(windowsScale, windowHeight) * UiScale;
     public int Antialias { get; set; } = 2;
     public bool SmoothFineEdges { get; set; }

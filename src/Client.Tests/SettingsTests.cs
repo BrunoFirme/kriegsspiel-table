@@ -144,18 +144,23 @@ public class SettingsTests
     }
 
     [Fact]
-    public void The_interface_grows_with_the_screen_or_Windows_scale_and_the_chosen_size_rides_on_top()
+    public void The_interface_fits_the_screen_in_whole_steps_or_at_Windows_scale_and_the_chosen_size_rides_on_top()
     {
         Assert.Equal(1f, Settings.Fitted(1f, 900));
         Assert.Equal(1f, Settings.Fitted(1f, 1080));
-        Assert.Equal(1.35f, Settings.Fitted(1f, 1440), 3);
-        Assert.Equal(2f, Settings.Fitted(1f, 2160), 3);
+        Assert.Equal(1f, Settings.Fitted(1f, 1369));
+        Assert.Equal(1f, Settings.Fitted(1f, 1440));
+        Assert.Equal(1f, Settings.Fitted(1f, 1800));
+        Assert.Equal(2f, Settings.Fitted(1f, 2100));
+        Assert.Equal(2f, Settings.Fitted(1f, 2160));
+        Assert.Equal(2f, Settings.Fitted(1f, 2880));
         Assert.Equal(1.5f, Settings.Fitted(1.5f, 900), 3);
+        Assert.Equal(2f, Settings.Fitted(1.5f, 2160));
         Assert.Equal(Settings.FittedMost, Settings.Fitted(1f, 8000));
         var s = Settings.Load();
         Assert.Equal(1f, s.UiScale);
         s.UiScale = 1.2f;
-        Assert.Equal(1.62f, s.UiScaleFor(1f, 1440), 3);
+        Assert.Equal(1.2f, s.UiScaleFor(1f, 1440), 3);
         File.WriteAllText(_file, "{\"UiScale\":1.3,\"UiScaleFollowsWindows\":false}");
         var before = Settings.Load();
         Assert.Equal(1f, before.UiScale);

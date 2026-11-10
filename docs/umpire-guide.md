@@ -399,5 +399,5 @@ clock, the global script), **Briefing**, **Map** (distances, grid, ground), **Li
 | The host's PC is gone | An umpire who was there: **Mirrored games** → **Host from the copy**. |
 | A panel is off screen | **Settings → Interface → Put the panels back**. |
 | The table stutters on a big map | **Settings → Graphics**: lower Render scale, Smooth edges and Map pictures. |
-| Text and buttons are too small | The interface grows with the window and the screen; **Settings → Interface → Interface size** sets it larger or smaller on top. |
+| Text and buttons are too small | **Settings → Interface → Interface size** sets them larger or smaller. The interface is sharpest at 100%; it doubles by itself on a 4K screen and follows Windows' own display scale. |
 | Colours are hard to tell apart | Umpires' colours are chosen for colour-blind eyes. For maps and pieces, Windows has **Settings → Accessibility → Colour filters**. |
