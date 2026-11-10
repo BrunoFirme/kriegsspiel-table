@@ -20,7 +20,9 @@ public sealed class Library
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public Dictionary<string, string>? Packs { get; set; }
 
-    static string PathOf => Path.Combine(DataPaths.Local, "library.json");
+    const string ShelvesFile = "shelves.json", OldFile = "library.json";
+    static string PathOf => Path.Combine(DataPaths.Local, ShelvesFile);
+    static string OldPath => Path.Combine(DataPaths.Local, OldFile);
     static readonly JsonSerializerOptions Opts = new() { WriteIndented = true };
 
     static Library? _current;
@@ -28,10 +30,11 @@ public sealed class Library
 
     public static Library Load()
     {
-        if (!File.Exists(PathOf)) return new();
+        var from = File.Exists(PathOf) ? PathOf : File.Exists(OldPath) ? OldPath : null;
+        if (from == null) return new();
         try
         {
-            var lib = JsonSerializer.Deserialize<Library>(File.ReadAllText(PathOf), Opts) ?? throw new JsonException("the file is empty");
+            var lib = JsonSerializer.Deserialize<Library>(File.ReadAllText(from), Opts) ?? throw new JsonException("the file is empty");
             lib.ScenarioShelf ??= new();
             lib.PackShelf ??= new();
             lib.TakeOldFolders();
@@ -42,9 +45,9 @@ public sealed class Library
         catch (Exception e)
         {
             string kept;
-            try { File.Copy(PathOf, $"{PathOf}.bad-{DateTime.UtcNow:yyyyMMdd-HHmmss}", overwrite: true); kept = "a copy of it is kept beside it"; }
+            try { File.Copy(from, $"{from}.bad-{DateTime.UtcNow:yyyyMMdd-HHmmss}", overwrite: true); kept = "a copy of it is kept beside it"; }
             catch (Exception c) { kept = $"no copy of it could be kept ({c.Message})"; }
-            Problems.Tell($"Your folders on the title screen (library.json) could not be read ({e.Message}), so they start empty; {kept}.");
+            Problems.Tell($"Your folders on the title screen ({Path.GetFileName(from)}) could not be read ({e.Message}), so they start empty; {kept}.");
             return new();
         }
     }

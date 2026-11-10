@@ -13,9 +13,11 @@ public class LibraryTests
         TestFolders.New();
         Directory.CreateDirectory(DataPaths.Local);
         File.Delete(LibraryFile);
+        File.Delete(OldFile);
     }
 
-    static string LibraryFile => Path.Combine(DataPaths.Local, "library.json");
+    static string LibraryFile => Path.Combine(DataPaths.Local, "shelves.json");
+    static string OldFile => Path.Combine(DataPaths.Local, "library.json");
 
     static readonly string[] Four = { "a", "b", "c", "d" };
 
@@ -139,9 +141,10 @@ public class LibraryTests
     }
 
     [Fact]
-    public void Flat_folders_from_before_go_onto_each_shelf_that_used_them()
+    public void Flat_folders_from_before_go_onto_each_shelf_that_used_them_and_their_file_is_left_for_older_builds()
     {
-        File.WriteAllText(LibraryFile, "{\"Folders\":[\"A\",\"B\",\"C\",\" \"],\"Scenarios\":{\"s1\":\"A\",\"s2\":\"Gone\"},\"Packs\":{\"p1\":\"B\",\"p2\":\"A\"}}");
+        const string before = "{\"Folders\":[\"A\",\"B\",\"C\",\" \"],\"Scenarios\":{\"s1\":\"A\",\"s2\":\"Gone\"},\"Packs\":{\"p1\":\"B\",\"p2\":\"A\"}}";
+        File.WriteAllText(OldFile, before);
         var lib = Library.Load();
         Assert.Equal(new[] { "A", "C" }, lib.ScenarioShelf.Folders);
         Assert.Equal(new[] { "A", "B", "C" }, lib.PackShelf.Folders);
@@ -154,7 +157,20 @@ public class LibraryTests
         Assert.DoesNotContain("\"Folders\": [\n    \"A\",\n    \"B\"", text.Replace("\r\n", "\n"));
         Assert.StartsWith("{\n  \"ScenarioShelf\": {", text.Replace("\r\n", "\n"));
         Assert.DoesNotContain("\"Scenarios\"", text);
+        Assert.Equal(before, File.ReadAllText(OldFile));
+        File.WriteAllText(OldFile, "{\"Folders\":[\"Z\"],\"Scenarios\":{\"s1\":\"Z\"},\"Packs\":{}}");
+        Assert.Equal("A", Library.Load().FolderOf(false, "s1"));
         Assert.Equal("B", Library.Load().FolderOf(true, "p1"));
+    }
+
+    [Fact]
+    public void Shelves_saved_in_the_old_file_by_an_earlier_build_are_still_read()
+    {
+        File.WriteAllText(OldFile, "{\"ScenarioShelf\":{\"Folders\":[\"F\"],\"Filed\":{\"s1\":\"F\"},\"Order\":{\"\":[\"x\",\"/F\"]}},\"PackShelf\":{}}");
+        var lib = Library.Load();
+        Assert.Equal("F", lib.FolderOf(false, "s1"));
+        Assert.Equal("x,/F", Row(lib, "", new[] { "x", "s1" }));
+        Assert.False(File.Exists(LibraryFile));
     }
 
     [Fact]
@@ -188,14 +204,20 @@ public class LibraryTests
         try { Assert.Empty(Library.Load().ScenarioShelf.Folders); }
         finally { Problems.Told -= h; }
         var said = Assert.Single(told);
-        Assert.StartsWith("Your folders on the title screen (library.json) could not be read (", said);
+        Assert.StartsWith("Your folders on the title screen (shelves.json) could not be read (", said);
         Assert.EndsWith("), so they start empty; a copy of it is kept beside it.", said);
-        Assert.Single(Directory.GetFiles(DataPaths.Local, "library.json.bad-*"));
-        foreach (var f in Directory.GetFiles(DataPaths.Local, "library.json.bad-*")) File.Delete(f);
+        Assert.Single(Directory.GetFiles(DataPaths.Local, "shelves.json.bad-*"));
+        foreach (var f in Directory.GetFiles(DataPaths.Local, "shelves.json.bad-*")) File.Delete(f);
 
         File.WriteAllText(LibraryFile, "null");
         Assert.Empty(Library.Load().ScenarioShelf.Folders);
         Assert.Contains("(the file is empty)", Assert.Single(Problems.Take()));
+        foreach (var f in Directory.GetFiles(DataPaths.Local, "shelves.json.bad-*")) File.Delete(f);
+
+        File.Delete(LibraryFile);
+        File.WriteAllText(OldFile, "{ not json");
+        Assert.Empty(Library.Load().ScenarioShelf.Folders);
+        Assert.Contains("(library.json) could not be read", Assert.Single(Problems.Take()));
         foreach (var f in Directory.GetFiles(DataPaths.Local, "library.json.bad-*")) File.Delete(f);
     }
 

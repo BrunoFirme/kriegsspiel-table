@@ -19,7 +19,7 @@ preparing a scenario and hosting it are the same step.
 
 Scenario and pack cards stay where you drag them. Drop one on a folder to file it, on the path above the cards to
 take it out, or on **Trash** to delete it; **New folder** makes a folder in the one shown, folders hold folders, and
-each shows the first four of what it holds. Trash keeps what you delete for thirty days; drag it wherever you like.
+each shows the first four of what it holds. Trash keeps what you delete for thirty days, and its tile can sit wherever you drag it.
 
 ### Saves
 
