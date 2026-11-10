@@ -134,7 +134,7 @@ sealed class PacksPage
             _main.AddChild(pm);
             pm.Popup(new Rect2I((Vector2I)_main.GetViewport().GetMousePosition().Round(), Vector2I.Zero));
         });
-        page.Picks.Act(n => $"Remove {n}…", keys => Ui.Confirm(_main, $"Remove {keys.Count} packs", "Remove", () =>
+        page.Picks.Act(n => $"Remove {n}…", keys => Ui.Confirm(_main, keys.Count == 1 ? "Remove 1 pack" : $"Remove {keys.Count} packs", "Remove", () =>
         {
             _main.CancelOpening();
             var failed = new List<string>();
@@ -148,7 +148,7 @@ sealed class PacksPage
             Show();
             _t.Status.Text = failed.Count == 0 ? $"Removed {keys.Count}. They are in the trash for {SaveStore.TrashDays} days."
                 : $"Removed {keys.Count - failed.Count} of {keys.Count}; not removed: {string.Join("; ", failed)}";
-        }, $"They go to the trash for {SaveStore.TrashDays} days; scenarios that use them show them as missing."));
+        }, $"They go to the trash for {SaveStore.TrashDays} days; scenarios that use them show them as missing."), deletes: true);
     }
 
     PanelContainer NewPackCard() =>

@@ -53,7 +53,7 @@ sealed class TrashPage
         }
         var picks = new TitlePicks();
         picks.Act(n => $"Restore {n}", keys => RestoreMany(entries.Where(e => keys.Contains(e.Path)).ToList(), store, Refresh), primary: true);
-        picks.Act(n => $"Delete {n} for good", keys => PurgeMany(entries.Where(e => keys.Contains(e.Path)).ToList(), Refresh));
+        picks.Act(n => $"Delete {n} for good", keys => PurgeMany(entries.Where(e => keys.Contains(e.Path)).ToList(), Refresh), deletes: true);
         v.AddChild(picks.Bar);
         var scroll = new ScrollContainer { SizeFlagsVertical = Control.SizeFlags.ExpandFill, HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled };
         v.AddChild(scroll);

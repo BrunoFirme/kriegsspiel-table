@@ -636,6 +636,14 @@ public static class Ui
     public static Question Confirm(Node parent, string title, string okText, Action onOk, string? text = null, int width = 360) =>
         InPlace.Ask(parent, title, okText, onOk, text, width: width);
 
+    static readonly Texture2D NoIcon = new PlaceholderTexture2D { Size = Vector2.Zero };
+
+    public static void NoCloseButton(Window w)
+    {
+        w.AddThemeIconOverride("close", NoIcon);
+        w.AddThemeIconOverride("close_pressed", NoIcon);
+    }
+
     public static void FreeOnClose(Window w) =>
         w.VisibilityChanged += () => { if (GodotObject.IsInstanceValid(w) && !w.Visible) w.QueueFree(); };
 

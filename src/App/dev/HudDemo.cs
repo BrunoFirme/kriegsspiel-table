@@ -1087,6 +1087,14 @@ sealed class HudDemo : HudPart
 
     bool Dialogs(string what)
     {
+        if (what == "confirm") { Ui.Confirm(Hud, "Leave the table", "Leave", () => { }); return true; }
+        if (what == "views")
+        {
+            T.Cam.SaveView(2);
+            T.Cam.SaveView(5);
+            Hud.Menus.Show(Hud.GetViewport().GetVisibleRect().Size / 2, null);
+            return true;
+        }
         if (what == "props") { if (T.SelectedNodes.FirstOrDefault() is { } pn) PropertiesDialog.Open(Ctx, pn); return true; }
         if (what.StartsWith("mapturn:"))
         {

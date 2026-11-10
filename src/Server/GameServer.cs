@@ -15,7 +15,7 @@ public sealed partial class GameServer
     public bool Dirty { get; set; }
     public byte[]? Picture { get; set; }
 
-    public const int MaxUmpires = 8, MaxObservers = 32;
+    public const int MaxSeats = 40, MaxUmpires = 32;
     public const int MaxWaiting = 32;
     public string AppVersion { get; set; } = "";
 
@@ -207,7 +207,7 @@ public sealed partial class GameServer
                 if (!_peers.TryGetValue(sr.PeerId, out var target)) { res.Add(new(byId, new ErrorMessage { Text = "nobody is connected under that id" })); return res; }
                 if (May(by, target, sr.Role) is { } why) { res.Add(new(byId, new ErrorMessage { Text = why })); return res; }
                 if (target.Role == sr.Role) return res;
-                if (Visibility.IsUmpire(sr.Role) != Visibility.IsUmpire(target.Role) && Full(sr.Role) is { } full) { res.Add(new(byId, new ErrorMessage { Text = full })); return res; }
+                if (Visibility.IsUmpire(sr.Role) != Visibility.IsUmpire(target.Role) && Full(sr.Role, seated: true) is { } full) { res.Add(new(byId, new ErrorMessage { Text = full })); return res; }
                 target.Role = sr.Role;
                 if (_tokens.TryGetValue(target.PeerId, out var hash) && Access.FindHash(hash) is { } e) { e.Role = sr.Role; Dirty = true; }
                 res.Add(new(target.PeerId, new RoleChanged { Role = target.Role, View = Visibility.Filter(State, target) }));
@@ -255,9 +255,9 @@ public sealed partial class GameServer
         return null;
     }
 
-    string? Full(Role role) =>
+    string? Full(Role role, bool seated = false) =>
         Visibility.IsUmpire(role) && _peers.Values.Count(p => Visibility.IsUmpire(p.Role)) >= MaxUmpires ? $"umpire limit ({MaxUmpires}) reached"
-        : !Visibility.IsUmpire(role) && _peers.Values.Count(p => !Visibility.IsUmpire(p.Role)) >= MaxObservers ? $"observer limit ({MaxObservers}) reached"
+        : !seated && _peers.Count >= MaxSeats ? $"the table is full ({MaxSeats} seats)"
         : null;
 
     string UniqueName(string name, string? ownHash)

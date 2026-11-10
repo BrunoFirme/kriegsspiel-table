@@ -145,13 +145,47 @@ sealed class CameraControl
         return true;
     }
 
+    public const int ViewSlots = 9;
+
+    public bool KeepsViews => _c.Settings != null && ScenarioKey() != null;
+
+    public IReadOnlyDictionary<int, float[]> Views =>
+        _c.Settings != null && ScenarioKey() is { } key && _c.Settings.CameraViews.TryGetValue(key, out var v) ? v : new Dictionary<int, float[]>();
+
+    public bool SaveView(int slot)
+    {
+        if (_c.Settings is not { } settings || ScenarioKey() is not { } key || slot is < 1 or > ViewSlots || Rig.Eye != null) return false;
+        if (!settings.CameraViews.TryGetValue(key, out var views)) settings.CameraViews[key] = views = new();
+        views[slot] = Snapshot();
+        settings.Save();
+        _c.Say($"View {slot} saved");
+        return true;
+    }
+
+    public bool GoToView(int slot)
+    {
+        if (!Views.TryGetValue(slot, out var a) || a.Length < 6) return false;
+        if (Rig.Eye != null) Rig.LeaveEye();
+        Rig.Show(new CameraRig.View(new Vector3(a[0], 0, a[1]), a[2], a[3], a[4], a[5] > 0.5f));
+        return true;
+    }
+
+    public void ForgetView(int slot)
+    {
+        if (_c.Settings is not { } settings || ScenarioKey() is not { } key || !settings.CameraViews.TryGetValue(key, out var views) || !views.Remove(slot)) return;
+        if (views.Count == 0) settings.CameraViews.Remove(key);
+        settings.Save();
+    }
+
+    float[] Snapshot() => new[] { Rig.Target.X, Rig.Target.Z, Rig.Distance, Rig.Yaw, Rig.Pitch, Rig.TopDown ? 1f : 0f };
+
     string? ScenarioKey() => _c.S.View.ScenarioId is { Length: > 0 } id ? id : null;
 
     public void TickMemory(double delta)
     {
         var settings = _c.Settings;
         if (_c.S == null || settings == null || Rig.Eye != null || ScenarioKey() is not { } key) return;
-        var now = new[] { Rig.Target.X, Rig.Target.Z, Rig.Distance, Rig.Yaw, Rig.Pitch, Rig.TopDown ? 1f : 0f };
+        var now = Snapshot();
         if (_seen == null || !Same(_seen, now))
         {
             _seen = now;

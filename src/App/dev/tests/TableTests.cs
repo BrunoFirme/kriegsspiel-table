@@ -494,4 +494,31 @@ static class TableTests
         await r.Frame();
         Check.Equal(rig.Cam.Projection == Camera3D.ProjectionType.Orthogonal, rig.Flat, "putting the tool down leaves the two in step");
     }
+
+    [NodeTest]
+    static async Task Ctrl_and_a_number_keeps_a_view_of_the_scenario_unless_pieces_are_picked_and_shift_and_the_number_goes_back_to_it(TestRunner r)
+    {
+        var t = OfflineTable.Make(r, pieces: 2, arrange: g => g.ScenarioId = "views-" + System.Guid.NewGuid().ToString("N"));
+        await r.Frame();
+        var rig = t.Table.Rig;
+        void Press(Key key, bool ctrl) => t.Table.Keys.OnKey(new InputEventKey { Keycode = key, Pressed = true, ShiftPressed = !ctrl, CtrlPressed = ctrl });
+        var kept = new CameraRig.View(new Vector3(12, 0, -7), 40, 0.6f, -0.9f, false);
+        rig.Show(kept);
+        Press(Key.Key3, ctrl: true);
+        rig.Show(new CameraRig.View(new Vector3(-30, 0, 25), 90, 2.1f, -1.2f, true));
+        await r.Frame();
+        Press(Key.Key3, ctrl: false);
+        await r.Frame();
+        Check.That(!rig.TopDown && rig.Target.DistanceTo(kept.Target) < 0.01f && Mathf.IsEqualApprox(rig.Distance, kept.Distance) && Mathf.IsEqualApprox(rig.Yaw, kept.Yaw),
+            "Shift+3 goes back to the view Ctrl+3 kept");
+        Check.Equal("3", string.Join(",", t.Table.Cam.Views.Keys), "views kept");
+        t.Table.Selection.Set(new[] { "p1", "p2" });
+        Press(Key.Key4, ctrl: true);
+        Check.Equal("3", string.Join(",", t.Table.Cam.Views.Keys), "views kept after Ctrl+4 with two pieces picked, which forms rows");
+        t.Table.Selection.Set(System.Array.Empty<string>());
+        Check.That(!t.Table.Cam.GoToView(4), "an empty slot goes nowhere");
+        t.Table.Cam.ForgetView(3);
+        Check.Equal(0, t.Table.Cam.Views.Count, "views kept after forgetting it");
+        Check.Equal(0, t.Errors.Count, string.Join("; ", t.Errors));
+    }
 }

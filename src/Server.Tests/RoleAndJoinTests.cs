@@ -432,23 +432,28 @@ public class RoleAndJoinTests
     }
 
     [Fact]
-    public void Limits_eight_umpires_and_thirty_two_observers()
+    public void Seats_forty_in_any_mix_with_up_to_thirty_two_umpires()
     {
         using var t = new Table(join: false);
         t.HostJoins("H");
-        for (int i = 0; i < 7; i++) t.LetIn(100 + i, "u" + i, i == 0 ? Role.LeadUmpire : Role.Umpire);
+        for (int i = 0; i < 31; i++) t.LetIn(100 + i, "u" + i, i == 0 ? Role.LeadUmpire : Role.Umpire);
         t.Knock(200, "one too many");
-        Assert.Contains("umpire limit (8)", t.DoorError(Table.Host, new Admit { PeerId = 200, Role = Role.Umpire }));
+        Assert.Contains("umpire limit (32)", t.DoorError(Table.Host, new Admit { PeerId = 200, Role = Role.Umpire }));
         Assert.Single(t.Server.Waiting);
         t.Door(Table.Host, new Admit { PeerId = 200, Role = Role.Observer });
-        for (int i = 1; i < 32; i++) t.LetIn(300 + i, "o" + i, Role.Observer);
-        t.Knock(400, "too many");
-        Assert.Contains("observer limit (32)", t.DoorError(Table.Host, new Admit { PeerId = 400, Role = Role.Observer }));
         Assert.Contains("umpire limit", t.DoorError(Table.Host, new SetRole { PeerId = 200, Role = Role.Umpire }));
+        t.Door(Table.Host, new SetRole { PeerId = 110, Role = Role.Observer });
+        t.Door(Table.Host, new SetRole { PeerId = 200, Role = Role.Umpire });
+        for (int i = 1; i < 8; i++) t.LetIn(300 + i, "o" + i, Role.Observer);
+        Assert.Equal(GameServer.MaxSeats, t.Server.Peers.Count);
+        t.Knock(400, "too many");
+        Assert.Contains("the table is full (40 seats)", t.DoorError(Table.Host, new Admit { PeerId = 400, Role = Role.Observer }));
+        Assert.Contains("umpire limit", t.DoorError(Table.Host, new SetRole { PeerId = 301, Role = Role.Umpire }));
+        t.Door(Table.Host, new SetRole { PeerId = 200, Role = Role.Observer });
         var tok = t.Tokens[101];
         t.Server.Leave(101);
-        t.LetIn(500, "fills the seat", Role.Umpire);
-        Assert.Contains("umpire limit", Table.JoinResultOf(t.Knock(501, "", null, tok), 501, ok: false).Error);
+        t.LetIn(500, "fills the seat", Role.Observer);
+        Assert.Contains("the table is full", Table.JoinResultOf(t.Knock(501, "", null, tok), 501, ok: false).Error);
     }
 }
 

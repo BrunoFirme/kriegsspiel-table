@@ -57,6 +57,7 @@ public sealed class Settings
     public bool SoundMuted { get; set; }
     public bool SoundInBackground { get; set; }
     public Dictionary<string, float[]> CameraAt { get; set; } = new();
+    public Dictionary<string, Dictionary<int, float[]>> CameraViews { get; set; } = new();
     public Dictionary<string, float[]> PanelPos { get; set; } = new();
     public Dictionary<string, float[]> PanelSize { get; set; } = new();
     public float StripSize { get; set; } = 30;

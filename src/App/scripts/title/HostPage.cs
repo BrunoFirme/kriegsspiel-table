@@ -117,7 +117,7 @@ sealed class HostPage
             _main.AddChild(pm);
             pm.Popup(new Rect2I((Vector2I)_main.GetViewport().GetMousePosition().Round(), Vector2I.Zero));
         });
-        page.Picks.Act(n => $"Delete {n}…", keys => Ui.Confirm(_main, $"Delete {keys.Count} items", "Delete", () =>
+        page.Picks.Act(n => $"Delete {n}…", keys => Ui.Confirm(_main, keys.Count == 1 ? "Delete 1 item" : $"Delete {keys.Count} items", "Delete", () =>
         {
             _main.CancelOpening();
             var failed = new List<string>();
@@ -133,7 +133,7 @@ sealed class HostPage
             _main.RebuildLobby();
             _t.Status.Text = failed.Count == 0 ? $"Deleted {keys.Count}. They are in the trash for {SaveStore.TrashDays} days."
                 : $"Deleted {keys.Count - failed.Count} of {keys.Count}; not deleted: {string.Join("; ", failed)}";
-        }, $"They go to the trash with their saves, for {SaveStore.TrashDays} days."));
+        }, $"They go to the trash with their saves, for {SaveStore.TrashDays} days."), deletes: true);
     }
 
     PanelContainer NewScenarioCard() =>

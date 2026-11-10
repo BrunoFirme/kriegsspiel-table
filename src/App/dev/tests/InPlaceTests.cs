@@ -76,6 +76,7 @@ static class InPlaceTests
         await r.Frames(2);
         var dlg = r.GetTree().Root.FindChildren("*", "ConfirmationDialog", true, false).OfType<ConfirmationDialog>().Last();
         Check.Equal(before + 1, Windows(r), "windows open");
+        Check.Equal(Vector2.Zero, dlg.GetThemeIcon("close").GetSize(), "size of the title bar's close button");
         dlg.GetOkButton().EmitSignal(BaseButton.SignalName.Pressed);
         await r.Frames(2);
         Check.That(yes, "OK runs the action");

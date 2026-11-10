@@ -14,6 +14,7 @@ sealed class TitlePicks
     readonly HBoxContainer _bar = new() { Visible = false };
     readonly Label _count = new() { Modulate = Muted, VerticalAlignment = VerticalAlignment.Center };
     readonly List<(Button button, Func<int, string> text)> _actions = new();
+    Action<IReadOnlyList<string>>? _deletes;
 
     internal static TitlePicks? Latest { get; private set; }
 
@@ -22,6 +23,7 @@ sealed class TitlePicks
     public TitlePicks()
     {
         Latest = this;
+        _bar.AddChild(new PickKeys { Pressed = DeleteKey });
         _bar.AddThemeConstantOverride("separation", Ui.Gap.Group);
         _bar.AddChild(_count);
         var clear = new Button { Text = "Clear", Flat = true, FocusMode = Control.FocusModeEnum.None };
@@ -38,8 +40,9 @@ sealed class TitlePicks
 
     public Action? Changed { get; set; }
 
-    public void Act(Func<int, string> text, Action<IReadOnlyList<string>> run, bool primary = false)
+    public void Act(Func<int, string> text, Action<IReadOnlyList<string>> run, bool primary = false, bool deletes = false)
     {
+        if (deletes) _deletes = run;
         var b = primary ? Primary(text(2), () => run(Picked)) : new Button { Text = text(2), FocusMode = Control.FocusModeEnum.None };
         if (!primary) b.Pressed += () => run(Picked);
         _bar.AddChild(b);
@@ -66,6 +69,14 @@ sealed class TitlePicks
         _pick.PickForMenu(key);
         Paint();
         return _pick.Count > 1;
+    }
+
+    public bool DeleteKey(InputEventKey k)
+    {
+        if (k.Keycode is not (Key.Delete or Key.Backspace) || k.CtrlPressed || k.AltPressed || _deletes == null || _pick.Count == 0) return false;
+        if (_bar.GetParent() is not CanvasItem page || !page.IsVisibleInTree()) return false;
+        _deletes(Picked);
+        return true;
     }
 
     public void Clear()
@@ -103,5 +114,15 @@ sealed class TitlePicks
         pm.IdPressed += id => into(id == 0 ? "" : lib.Folders[(int)id - 1]);
         pm.PopupHide += () => pm.QueueFree();
         return pm;
+    }
+}
+
+sealed partial class PickKeys : Node
+{
+    public Func<InputEventKey, bool>? Pressed;
+
+    public override void _UnhandledKeyInput(InputEvent e)
+    {
+        if (e is InputEventKey { Pressed: true, Echo: false } k && Pressed?.Invoke(k) == true) GetViewport().SetInputAsHandled();
     }
 }

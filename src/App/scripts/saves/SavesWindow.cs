@@ -476,7 +476,7 @@ sealed partial class SavesWindow : Window
             Paint();
             SetInputAsHandled();
         }
-        else if (k.Keycode == Key.Delete && _pick.Count > 0)
+        else if (k.Keycode is Key.Delete or Key.Backspace && _pick.Count > 0)
         {
             if (_inTrash) Purge(PickedTrash());
             else Delete(PickedEntries().Where(x => x.Run == null).ToList());

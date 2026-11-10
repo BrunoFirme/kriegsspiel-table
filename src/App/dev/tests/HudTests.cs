@@ -230,4 +230,34 @@ static class HudTests
         card.Pop.QueueFree();
         await r.Frame();
     }
+
+    [NodeTest]
+    static async Task Delete_or_backspace_asks_to_delete_every_picked_card_and_nothing_when_none_is_picked(TestRunner r)
+    {
+        var page = new VBoxContainer();
+        r.AddChild(page);
+        var picks = new TitlePicks();
+        page.AddChild(picks.Bar);
+        System.Collections.Generic.IReadOnlyList<string>? asked = null;
+        picks.Act(n => $"Delete {n}…", keys => asked = keys.ToList(), deletes: true);
+        foreach (var key in new[] { "a", "b", "c" })
+        {
+            var box = new PanelContainer();
+            page.AddChild(box);
+            picks.Add(key, box);
+        }
+        await r.Frame();
+        static InputEventKey Press(Key key, bool ctrl = false) => new() { Keycode = key, Pressed = true, CtrlPressed = ctrl };
+        Check.That(!picks.DeleteKey(Press(Key.Delete)) && asked == null, "nothing picked, nothing asked");
+        picks.Click("a", new InputEventMouseButton { ButtonIndex = MouseButton.Left, Pressed = true });
+        picks.Click("c", new InputEventMouseButton { ButtonIndex = MouseButton.Left, Pressed = true, CtrlPressed = true });
+        Check.That(!picks.DeleteKey(Press(Key.Backspace, ctrl: true)), "Ctrl+Backspace is not a delete");
+        Check.That(picks.DeleteKey(Press(Key.Backspace)), "Backspace is taken");
+        Check.Equal("a,c", string.Join(",", asked ?? []), "cards asked about");
+        page.Visible = false;
+        asked = null;
+        Check.That(!picks.DeleteKey(Press(Key.Delete)) && asked == null, "a page out of sight deletes nothing");
+        page.QueueFree();
+        await r.Frame();
+    }
 }

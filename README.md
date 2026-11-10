@@ -1,7 +1,7 @@
 # Kriegsspiel Table
 
 A table for Kriegsspiel practitioners, umpires and players alike: the map, the blocks, dice, a ruler and a
-board shared live by up to eight umpires and thirty-two observers, or kept to yourself. It replaces a
+board shared live by up to forty people, as many as thirty-two of them umpires, or kept to yourself. It replaces a
 general-purpose digital tabletop with one built for Kriegsspiel.
 
 - **The table:** tiled map sheets from PNG, JPG, TIFF or GIMP files, pieces that rest, stack and carry what is

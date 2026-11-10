@@ -34,6 +34,7 @@ static class InPlace
     static Question Dialog(Node parent, string title, string okText, Action onOk, string? text, Control? body, Control? focus, int width)
     {
         var dlg = new ConfirmationDialog { Title = title, OkButtonText = okText };
+        Ui.NoCloseButton(dlg);
         var q = new Question();
         if (text != null)
         {

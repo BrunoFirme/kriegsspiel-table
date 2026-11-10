@@ -207,6 +207,11 @@ sealed class MenuCards : HudPart
         menu.Item("Capture a region", () => T.SetTool(Tool.Capture), "Ctrl+Shift+C");
         menu.Item(T.Rig.TopDown ? "3D table" : "Map view", () => { T.Rig.ToggleTopDown(); _strip.SyncViewButton(); }, "F2");
         menu.Item("Frame the map", T.FrameAll, "Home");
+        if (T.Cam.KeepsViews)
+        {
+            menu.Separator("Views");
+            menu.Add(ViewSlots(menu.Pop));
+        }
         if (S.IsUmpire && S.View.MenuItems.Count > 0)
         {
             menu.Separator("Script");
@@ -218,7 +223,34 @@ sealed class MenuCards : HudPart
         }
     }
 
-    const int Swatch = 22, CheckColumn = 18, SwatchGap = 4, RowGap = 2;
+    const int Swatch = 22, CheckColumn = 18, SwatchGap = 4, RowGap = 2, SlotGap = 3;
+
+    Control ViewSlots(PopupPanel pop)
+    {
+        var views = T.Cam.Views;
+        var row = new HBoxContainer();
+        row.AddThemeConstantOverride("separation", SlotGap);
+        for (int n = 1; n <= CameraControl.ViewSlots; n++)
+        {
+            var slot = n;
+            bool saved = views.ContainsKey(slot);
+            var b = new Button
+            {
+                Text = slot.ToString(), CustomMinimumSize = new Vector2(Swatch, Swatch), FocusMode = Control.FocusModeEnum.None,
+                TooltipText = saved ? $"Go to view {slot}   (Shift+{slot})\nRight-click forgets it" : $"Save this view as {slot}   (Ctrl+{slot})",
+            };
+            if (!saved) Ui.MakeQuiet(b);
+            b.Pressed += () =>
+            {
+                pop.Hide();
+                if (saved) T.Cam.GoToView(slot);
+                else T.Cam.SaveView(slot);
+            };
+            if (saved) b.GuiInput += e => { if (e is InputEventMouseButton { ButtonIndex: MouseButton.Right, Pressed: true }) { pop.Hide(); T.Cam.ForgetView(slot); } };
+            row.AddChild(b);
+        }
+        return row;
+    }
 
     Control TintRows(List<PieceNode> nodes, PieceNode hit, PopupPanel pop)
     {
