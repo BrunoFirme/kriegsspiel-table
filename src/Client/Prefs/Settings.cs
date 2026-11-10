@@ -7,7 +7,7 @@ public sealed class Settings
     public Keymap Keys { get; set; } = new();
     public bool CaptureToClipboard { get; set; } = true;
     public bool CaptureToFolder { get; set; } = true;
-    public string CaptureFolder { get; set; } = System.IO.Path.Combine(KTable.Core.DataPaths.Documents, "captures");
+    public string CaptureFolder { get; set; } = KTable.Core.DataPaths.Captures;
     public int CaptureScale { get; set; } = 4;
     public const int CaptureScaleMost = 4;
     public bool SightingSquare { get; set; }
@@ -144,9 +144,9 @@ public sealed class Settings
 
     void Freshen()
     {
-        var old = System.IO.Path.Combine(KTable.Core.DataPaths.LegacyDocuments, "captures");
-        var now = System.IO.Path.Combine(KTable.Core.DataPaths.Documents, "captures");
-        if (string.Equals(CaptureFolder.TrimEnd(System.IO.Path.DirectorySeparatorChar), old.TrimEnd(System.IO.Path.DirectorySeparatorChar), StringComparison.OrdinalIgnoreCase)) CaptureFolder = now;
+        static string Bare(string p) => p.TrimEnd(System.IO.Path.DirectorySeparatorChar);
+        foreach (var old in new[] { KTable.Core.DataPaths.LegacyDocuments, KTable.Core.DataPaths.Documents })
+            if (string.Equals(Bare(CaptureFolder), Bare(System.IO.Path.Combine(old, "captures")), StringComparison.OrdinalIgnoreCase)) CaptureFolder = KTable.Core.DataPaths.Captures;
         if (ReduceFarDetail) { LetteringReach = 32f; ReduceFarDetail = false; }
         LetteringReach = float.IsFinite(LetteringReach) ? Math.Clamp(LetteringReach, ReachMin, ReachOff) : ReachOff;
         LogFontSize = Math.Clamp(LogFontSize, LogFontMin, LogFontMax);

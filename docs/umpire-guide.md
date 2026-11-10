@@ -24,13 +24,15 @@ each shows the first four of what it holds. Trash keeps what you delete for thir
 ### Saves
 
 The table saves itself within a second. **Saves…** (Menu, Ctrl+S or a card's ⋯; host only) shows the scenario's
-saves as folders and tiles, in `Documents\KriegsspielTable\saves\<scenario>\`.
+saves as tiles in folders, in `%LOCALAPPDATA%\KriegsspielTable\saves\<scenario>\`.
 
-- **Plays:** each play is a folder (**Run 1**, **Run 2 · from Turn 6**) holding every ended turn. **New play…**
-  starts one from the scenario's start, the table now or a save; **New play** on a card does the same.
-- **Save** keeps the table under a name. **New folder** sorts your saves.
-- **Load** puts a save on the table for everyone; play goes on in a new folder and the old one stays whole.
-  **Look** shows a save without loading it.
+- **A save is a whole game:** the table and every turn it ended. The one on the table is marked and is written as
+  you play. **New save…** starts another from the scenario's start, the table now, or the save or turn chosen;
+  **New save** on a card starts one from the scenario's start.
+- **Save** keeps a copy of the table under a name. **New folder** sorts your saves.
+- **Load** puts a save on the table for everyone and play goes on in it; the save that was on the table is written
+  first and stays as it is. **Look** shows a save without loading it.
+- **Turns** lists a save's ended turns with their pictures: **Look** at one, or **Load** it as a new save beside it.
 - **Pick several** with Ctrl+click, Shift+click or Ctrl+A; Delete removes them. Title-screen lists work the same.
 - **Trash**, at the foot of the folders, keeps deleted saves thirty days.
 - **Co-umpires** keep the same saves. If your PC fails, they host from **Scenarios → Mirrored games**, with the packs

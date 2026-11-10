@@ -38,7 +38,7 @@ sealed class HudDemo : HudPart
     async void SavesDemo(bool stopAtDialog, bool stopAtTrash)
     {
         async System.Threading.Tasks.Task Wait(double s) => await Hud.ToSignal(Hud.GetTree().CreateTimer(s), SceneTreeTimer.SignalName.Timeout);
-        if (N.Saves.RunInPlay is not var (dir, run)) { GD.Print("[saves] this table is not one of a scenario's games"); return; }
+        if (N.Saves.SaveInPlay is not var (dir, onTable)) { GD.Print("[saves] this table is not one of a scenario's games"); return; }
         var store = KTable.Core.SaveStore.Default;
         for (int i = 0; i < 2; i++) { S.Do(new AdvanceClock()); await Wait(3); }
         var root = store.SavesRoot(dir);
@@ -46,7 +46,7 @@ sealed class HudDemo : HudPart
         string? saved = null;
         N.Saves.SaveAs(root, "Before the attack", true, (p, why) => saved = p ?? why);
         await Wait(2);
-        GD.Print($"[saves] run {run} in {store.RunFolderOf(dir, run)}; saved {saved}; folder {group}");
+        GD.Print($"[saves] on the table {onTable}; saved {saved}; folder {group}");
         foreach (var f in System.IO.Directory.GetFiles(root, "*" + KTable.Core.SaveStore.Ext, System.IO.SearchOption.AllDirectories)) GD.Print("[saves]   " + System.IO.Path.GetRelativePath(root, f));
         SavesWindow.Open(Ctx);
         await Wait(1);
@@ -81,17 +81,16 @@ sealed class HudDemo : HudPart
         Input.ParseInputEvent(new InputEventKey { Pressed = false, Keycode = Key.Enter, PhysicalKeycode = Key.Enter });
         await Wait(1.5);
         GD.Print("[saves] folders in Second group: " + string.Join(", ", System.IO.Directory.GetDirectories(group).Select(System.IO.Path.GetFileName)));
-        await Click(ButtonOf(w, "New play…"));
+        await Click(ButtonOf(w, "New save…"));
         await Wait(1);
         if (w.FindChildren("*", "ConfirmationDialog", true, false).OfType<ConfirmationDialog>().LastOrDefault() is { } dlg)
         {
-            GD.Print("[saves] new play offers: " + string.Join(" | ", dlg.FindChildren("*", "OptionButton", true, false).OfType<OptionButton>().SelectMany(o => Enumerable.Range(0, o.ItemCount).Select(o.GetItemText))));
+            GD.Print("[saves] new save offers: " + string.Join(" | ", dlg.FindChildren("*", "OptionButton", true, false).OfType<OptionButton>().SelectMany(o => Enumerable.Range(0, o.ItemCount).Select(o.GetItemText))));
             if (stopAtDialog) return;
             await Click(dlg.GetOkButton());
         }
         await Wait(2);
-        GD.Print("[saves] plays: " + string.Join(", ",
-            store.Runs(dir).Select(r => System.IO.Path.GetRelativePath(root, r.Folder) + (System.IO.File.Exists(store.LivePath(dir, r.Id)) ? " (latest)" : ""))) + "; showing " + System.IO.Path.GetFileName(w.ShownFolder));
+        GD.Print("[saves] saves: " + string.Join(", ", store.SaveFiles(dir).Select(f => System.IO.Path.GetRelativePath(root, f))) + "; showing " + System.IO.Path.GetFileName(w.ShownFolder));
         if (saved == null || !System.IO.File.Exists(saved)) return;
         store.TrashSaves(dir, saved, System.DateTime.UtcNow);
         w.QueueFree();
@@ -132,9 +131,8 @@ sealed class HudDemo : HudPart
     async void SavesManyDemo()
     {
         async System.Threading.Tasks.Task Wait(double s) => await Hud.ToSignal(Hud.GetTree().CreateTimer(s), SceneTreeTimer.SignalName.Timeout);
-        if (N.Saves.RunInPlay is not var (dir, run)) return;
-        var store = KTable.Core.SaveStore.Default;
-        var folder = store.EnsureRunFolder(dir, run, System.DateTime.UtcNow);
+        if (N.Saves.SaveInPlay is not var (dir, onTable)) return;
+        var folder = System.IO.Path.GetDirectoryName(onTable)!;
         foreach (var name in new[] { "Pick A", "Pick B", "Keep C" }) { N.Saves.SaveAs(folder, name, true, (_, _) => { }); await Wait(1); }
         SavesWindow.Open(Ctx);
         await Wait(1.5);
@@ -149,8 +147,8 @@ sealed class HudDemo : HudPart
             await ClickAt(w, dlg.GetOkButton().GetGlobalRect().GetCenter() + (Vector2)dlg.Position - (Vector2)w.Position);
         }
         await Wait(1.5);
-        GD.Print("[many] left in the play: " + string.Join(", ", System.IO.Directory.GetFiles(folder, "*.kstable").Select(System.IO.Path.GetFileNameWithoutExtension)));
-        GD.Print("[many] in the trash: " + store.SavesTrash(dir).Count);
+        GD.Print("[many] left in the folder: " + string.Join(", ", System.IO.Directory.GetFiles(folder, "*.kstable").Select(System.IO.Path.GetFileNameWithoutExtension)));
+        GD.Print("[many] in the trash: " + KTable.Core.SaveStore.Default.SavesTrash(dir).Count);
         if (w.TreeRowOf("Trash · 2") is not { } trashRow) { GD.Print("[many] no Trash · 2 row"); return; }
         await ClickAt(w, trashRow.GetCenter());
         await Wait(1);
@@ -188,7 +186,7 @@ sealed class HudDemo : HudPart
             Hud.GetTree().CreateTimer(1).Timeout += () =>
             {
                 var w = Hud.GetTree().Root.FindChildren("*", "Window", true, false).OfType<SavesWindow>().FirstOrDefault();
-                w?.FindChildren("*", "Button", true, false).OfType<Button>().FirstOrDefault(b => b.Text == "New play…")?.EmitSignal(BaseButton.SignalName.Pressed);
+                w?.FindChildren("*", "Button", true, false).OfType<Button>().FirstOrDefault(b => b.Text == "New save…")?.EmitSignal(BaseButton.SignalName.Pressed);
             };
             return true;
         }

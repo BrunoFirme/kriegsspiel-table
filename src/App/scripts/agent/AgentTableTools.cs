@@ -59,14 +59,14 @@ sealed partial class AgentTableTools
             "Lays what is on the clipboard on the table around x, z, each piece where it stood in relation to the others and as high above the ground as it was. One undoable change.",
             Args.Schema(new Arg("x", "number", "map units", true), new Arg("z", "number", "map units", true)), PastePieces);
         yield return new AgentTool("list_saves",
-            "The saves of the game being played: its turns kept so far and the saves made by hand in its folder (host only).",
+            "The scenario's saves, by path from its saves folder, the save on the table and the turns kept in it so far (host only).",
             Args.Schema(), ListSaves);
         yield return new AgentTool("save_game",
-            "Saves the table as it is now under a name, beside the game's turns (host only). A name already taken fails unless replace is true: then the old save goes to the trash and this one takes its name.",
+            "Saves a copy of the table as it is now under a name, beside the save on the table (host only). A name already taken fails unless replace is true: then the old save goes to the trash and this one takes its name.",
             Args.Schema(new Arg("name", "string", "the save's name", true), new Arg("replace", "boolean", "replace a save of the same name")), SaveGame);
         yield return new AgentTool("load_save",
-            "Puts the table back as a save or a kept turn left it, for everyone (host only); start_over goes back to the first turn kept.",
-            Args.Schema(new Arg("name", "string", "a save's name (list_saves)"), new Arg("turn", "number", "a kept turn's number"), new Arg("start_over", "boolean", "the first turn kept")),
+            "For everyone (host only): name puts that save on the table and play goes on in it; turn or start_over start a new save from a turn kept in the save on the table (start_over: the first).",
+            Args.Schema(new Arg("name", "string", "a save's path (list_saves)"), new Arg("turn", "number", "a kept turn's number"), new Arg("start_over", "boolean", "the first turn kept")),
             LoadSave);
         foreach (var t in ReliefTools()) yield return t;
         foreach (var t in MeasureTools()) yield return t;
@@ -308,24 +308,33 @@ sealed partial class AgentTableTools
         return ListSheets();
     }
 
-    (string dir, string run, string? folder)? Play(Session s, Hud hud, out ToolResult? why)
+    (string dir, string onTable, string root)? Play(Session s, Hud hud, out ToolResult? why)
     {
         why = null;
         if (!s.IsHost) { why = ToolResult.Fail("Only the host saves and loads."); return null; }
-        if (hud.N.Saves.RunInPlay is not var (dir, run)) { why = ToolResult.Fail("This table is not one of a scenario's games."); return null; }
-        return (dir, run, SaveStore.Default.RunFolderOf(dir, run));
+        if (hud.N.Saves.SaveInPlay is not var (dir, onTable)) { why = ToolResult.Fail("This table is not one of a scenario's games."); return null; }
+        return (dir, onTable, SaveStore.Default.SavesRoot(dir));
+    }
+
+    static string SaveName(string root, string file) => Path.ChangeExtension(Path.GetRelativePath(root, file), null).Replace(Path.DirectorySeparatorChar, '/');
+
+    static string? SaveAt(string root, string name)
+    {
+        var full = Path.GetFullPath(Path.Combine(root, name.Replace('/', Path.DirectorySeparatorChar) + SaveStore.Ext));
+        return full.StartsWith(Path.GetFullPath(root) + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase) && File.Exists(full) ? full : null;
     }
 
     async Task<ToolResult> ListSaves(JsonElement a)
     {
         if (Table(out var why) is not var (s, hud)) return why!;
-        if (Play(s, hud, out why) is not var (_, _, folder)) return why!;
+        if (Play(s, hud, out why) is not var (dir, onTable, root)) return why!;
         await _a.FreshTurns(s, hud);
         var o = new JsonObject
         {
+            ["on_table"] = SaveName(root, onTable),
             ["turns"] = new JsonArray(s.Turns.Select(t => (JsonNode?)new JsonObject { ["turn"] = t.Turn, ["time"] = t.GameTime, ["pieces"] = t.Pieces }).ToArray()),
-            ["saves"] = new JsonArray((folder != null && Directory.Exists(folder) ? Directory.EnumerateFiles(folder, "*" + SaveStore.Ext).OrderBy(File.GetLastWriteTimeUtc) : Enumerable.Empty<string>())
-                .Select(f => (JsonNode?)JsonValue.Create(Path.GetFileNameWithoutExtension(f))).ToArray()),
+            ["saves"] = new JsonArray(SaveStore.Default.SaveFiles(dir).OrderByDescending(File.GetLastWriteTimeUtc)
+                .Select(f => (JsonNode?)JsonValue.Create(SaveName(root, f))).ToArray()),
         };
         return new ToolResult(o.ToJsonString(Opts));
     }
@@ -333,8 +342,8 @@ sealed partial class AgentTableTools
     async Task<ToolResult> SaveGame(JsonElement a)
     {
         if (Table(out var why) is not var (s, hud)) return why!;
-        if (Play(s, hud, out why) is not var (_, _, folder)) return why!;
-        if (folder == null) return ToolResult.Fail("The game's folder could not be found.");
+        if (Play(s, hud, out why) is not var (_, onTable, _)) return why!;
+        var folder = Path.GetDirectoryName(onTable)!;
         var name = a.Str("name")?.Trim() ?? "";
         if (name.Length == 0) return ToolResult.Fail("name is needed.");
         var done = new TaskCompletionSource<(string? path, string? why)>();
@@ -351,7 +360,7 @@ sealed partial class AgentTableTools
     async Task<ToolResult> LoadSave(JsonElement a)
     {
         if (Table(out var why) is not var (s, hud)) return why!;
-        if (Play(s, hud, out why) is not var (_, _, folder)) return why!;
+        if (Play(s, hud, out why) is not var (_, _, root)) return why!;
         LoadFrom from;
         if (a.Flag("start_over") == true || a.Num("turn") is not null)
         {
@@ -362,8 +371,7 @@ sealed partial class AgentTableTools
         }
         else if (a.Str("name") is { Length: > 0 } name)
         {
-            var file = folder == null ? null : Path.Combine(folder, name + SaveStore.Ext);
-            if (file == null || !File.Exists(file)) return ToolResult.Fail($"No save {name} in this game's folder (list_saves).");
+            if (SaveAt(root, name) is not { } file) return ToolResult.Fail($"No save {name} among this scenario's saves (list_saves).");
             from = new LoadFrom(name, File: file);
         }
         else return ToolResult.Fail("Give name, turn or start_over.");

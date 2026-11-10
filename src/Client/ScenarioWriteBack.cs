@@ -61,8 +61,7 @@ sealed class ScenarioWriteBack
             var (file, sc) = _folders.PrepareTable(session.Store, server.State, server.State.Name, dir);
             folder = (file, sc);
             if (server.Turns.Count > 0 && !ReferenceEquals(server.Turns[0], _setupKept) && sc.Id.StartsWith("local.", StringComparison.Ordinal)
-                && session.SavePath != null && (_store.RunOf(session.SavePath) is var (ownDir, _) && string.Equals(ownDir, dir, StringComparison.OrdinalIgnoreCase)
-                    || SaveStore.SamePath(session.SavePath, _store.LegacyLivePath(dir))))
+                && session.SavePath != null && string.Equals(_store.ScenarioOf(session.SavePath), dir, StringComparison.OrdinalIgnoreCase))
                 setup = new SetupToKeep(session.Store, dir, server.Turns[0], sc.Id, sc.Name);
             return null;
         }

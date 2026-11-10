@@ -145,7 +145,7 @@ sealed class SaveWriter
             if (problem == null && !overtaken)
                 try
                 {
-                    if (!r.Mirror && r.SettlesLog) _generations.Settled(r.Path, r.LogGeneration, r.LiveLogIdle);
+                    if (r.SettlesLog) _generations.Settled(r.Path, r.LogGeneration, r.LiveLogIdle);
                     if (r.Changed) kept = r.Checkpoints?.AfterSave(r.Turns, r.LastTurn, r.ClockTurn, r.Now);
                     if (r.Closing) kept = r.Checkpoints?.OnClose(r.ClockTurn, r.Now) ?? kept;
                     if (r.MakesCurrent is var (scenarioDir, run)) { _store.SetCurrent(scenarioDir, run); madeCurrent = true; }

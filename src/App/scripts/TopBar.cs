@@ -160,9 +160,9 @@ sealed class TopBar : HudPart
         {
             pm.AddSeparator();
             pm.AddItem("Back to now", 1);
-            if (S.IsHost && N.Saves.RunInPlay != null && S.ReviewInfo is { IsTurn: true } rv) pm.AddItem($"Load the end of turn {rv.Turn}…", 2);
+            if (S.IsHost && N.Saves.SaveInPlay != null && S.ReviewInfo is { IsTurn: true } rv) pm.AddItem($"Load the end of turn {rv.Turn}…", 2);
         }
-        if (S.IsHost && N.Saves.RunInPlay != null)
+        if (S.IsHost && N.Saves.SaveInPlay != null)
         {
             pm.AddSeparator();
             pm.AddItem($"Saves…   ({Cfg.Keys.Label("saves")})", 3);

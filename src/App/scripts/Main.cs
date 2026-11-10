@@ -166,8 +166,8 @@ public partial class Main : Node
         {
             var saves = SaveStore.Default;
             if (pk == null) foreach (var line in saves.Migrate(Path.Combine(DataPaths.LegacyDocuments, "saves"), saves.HistoryDir)) GD.Print("[saves] moved " + line);
-            foreach (var line in saves.MigrateToRuns(DateTime.UtcNow)) GD.Print("[saves] " + line);
-            FillRunsSoon(saves);
+            foreach (var line in saves.ConvertToSaves(DateTime.UtcNow)) GD.Print("[saves] " + line);
+            if (pk == null) foreach (var line in SaveStore.MoveOutOfDocuments()) GD.Print("[data] " + line);
             var gone = saves.EmptyTrash(DateTime.UtcNow);
             if (gone > 0) GD.Print($"[saves] emptied {gone} trash entr{(gone == 1 ? "y" : "ies")} older than {SaveStore.TrashDays} days");
         }
@@ -439,26 +439,6 @@ public partial class Main : Node
     }
 
     bool _openSavesOnArrival;
-    static System.Threading.Tasks.Task? _filling;
-
-    internal static void FillRunsSoon(SaveStore saves)
-    {
-        if (_filling is { IsCompleted: false }) return;
-        _filling = System.Threading.Tasks.Task.Run(() =>
-        {
-            foreach (var (dir, run) in saves.RunsToFill())
-            {
-                if (Assets.Quitting) return;
-                try
-                {
-                    var n = saves.FillRun(dir, run);
-                    if (n > 0) GD.Print($"[saves] {n} turn save(s) written into {run.Folder}");
-                }
-                catch (Exception e) { GD.PushWarning($"[saves] the turn saves of {run.Folder} could not be written yet: {e.Message}"); }
-            }
-        });
-    }
-
     internal void HostAndOpenSaves(string scenarioDir)
     {
         _openSavesOnArrival = true;
@@ -492,10 +472,10 @@ public partial class Main : Node
     {
         if (_session.IsHost)
         {
-            var runFolder = _session.ScenarioDir != null && SaveStore.Default.RunOf(_session.SavePath!) is var (runDir, run) ? SaveStore.Default.RunFolderOf(runDir, run) : null;
-            hud.Log(runFolder != null
-                ? $"Saved as you play, every ended turn kept in {LogPanel.FolderLink(runFolder, System.IO.Path.GetFileName(runFolder))} · Saves… {_cfg.Keys.Label("saves")}"
-                : $"Saved as you play ({LogPanel.FolderLink(System.IO.Path.GetDirectoryName(_session.SavePath) ?? "", "open the folder")})");
+            var save = _session.SavePath;
+            hud.Log(save != null && SaveStore.Default.ScenarioOf(save) != null
+                ? $"Saved as you play, every ended turn kept, in {LogPanel.FolderLink(System.IO.Path.GetDirectoryName(save) ?? "", System.IO.Path.GetFileNameWithoutExtension(save))} · Saves… {_cfg.Keys.Label("saves")}"
+                : $"Saved as you play ({LogPanel.FolderLink(System.IO.Path.GetDirectoryName(save) ?? "", "open the folder")})");
             if (_recoveryReport != null) hud.Log($"[color=#ffd75e]{Fmt.Bb(_recoveryReport)}[/color]");
         }
         else if (_net.MirrorPath != null)

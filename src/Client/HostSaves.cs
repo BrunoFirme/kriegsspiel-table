@@ -14,7 +14,8 @@ public sealed class HostSaves
     readonly SaveStore _store;
     readonly SaveLogGenerations _generations = new();
     readonly SaveWriter _writer;
-    readonly SaveLogKeeper _logKeeper;
+    readonly SaveLogKeeper _logKeeper, _mirrorLog;
+    readonly TurnSealer _mirrorSealer = new();
     readonly ScriptSaves _scripts;
     readonly ScenarioWriteBack _writeBack;
     internal TimeSpan CloseWait = TimeSpan.FromMinutes(2);
@@ -33,13 +34,15 @@ public sealed class HostSaves
 
     double _autosaveTimer;
     Checkpointer? _checkpoints;
-    int _turnsSaved;
-    double _turnSavesRetryAt;
+    int _turnsPictured;
     double _turnEndedAt = -1;
     const double PictureWait = 2, PictureFreshFor = 120;
-    bool _turnSavesFailing;
     bool _wholeWanted;
-    (string ScenarioDir, string Run)? _pendingCurrent;
+    bool _mirrorWholeWanted;
+    long _mirrorSeq;
+    GameState? _mirrorLive;
+    ClientSession? _mirrored;
+    (string ScenarioDir, string Path)? _pendingCurrent;
     double _saveFailingSince = -1;
     bool _saveWarned;
 
@@ -52,6 +55,7 @@ public sealed class HostSaves
         _app = app;
         _writer = new SaveWriter(store, folders, _generations);
         _logKeeper = new SaveLogKeeper(_generations, () => Log, n => SaveNote?.Invoke(n), _writer.Enqueue);
+        _mirrorLog = new SaveLogKeeper(_generations, () => Log, n => SaveNote?.Invoke(n), _writer.Enqueue);
         _scripts = new ScriptSaves(server, () => _app.Dispatch, () => Log);
         _writeBack = new ScenarioWriteBack(session, server, folders, store, () => Log, n => SaveNote?.Invoke(n))
         {
@@ -64,14 +68,15 @@ public sealed class HostSaves
 
     public void BeginHosting(string savePath, int turnsNow)
     {
+        if (Server is { } server && (server.SaveId.Length == 0 || _store.IdTakenElsewhere(savePath, server.SaveId)))
+            server.SaveId = _store.IdOf(savePath) is { } id && !_store.IdTakenElsewhere(savePath, id) ? id : SaveFile.NewId(Repeatable.UtcNow);
         _checkpoints = new Checkpointer(_store, savePath, turnsNow, Repeatable.UtcNow);
-        _turnsSaved = turnsNow;
-        _turnSavesRetryAt = 0;
-        _pendingCurrent = _store.RunOf(savePath);
+        _turnsPictured = turnsNow;
+        _pendingCurrent = _store.ScenarioOf(savePath) is { } scenarioDir ? (scenarioDir, savePath) : null;
         _wholeWanted = _pendingCurrent != null;
     }
 
-    public (string ScenarioDir, string Run)? RunInPlay => Server != null && Session.SavePath is { } path ? _store.RunOf(path) : null;
+    public (string ScenarioDir, string Path)? SaveInPlay => Server != null && Session.SavePath is { } path && _store.ScenarioOf(path) is { } dir ? (dir, path) : null;
 
     public void OnDisk<T>(Func<T> work, Action<T?, string?> then)
     {
@@ -85,23 +90,28 @@ public sealed class HostSaves
 
     public void SaveAs(string folder, string name, bool replace, Action<string?, string?> then)
     {
-        if (Server is not { } server || RunInPlay is not var (scenarioDir, _)) { then(null, "this table is not one of a scenario's games"); return; }
+        if (Server is not { } server || SaveInPlay is not var (scenarioDir, onTable)) { then(null, "this table is not one of a scenario's games"); return; }
         _scripts.All();
         if (_app.PictureSince(Clock() - PictureFreshFor) is { } picture) server.Picture = picture;
         byte[] bytes;
-        try { bytes = Json.BigBytes(server.ToSave(copy: false)); }
-        catch (Exception e) { then(null, e.Message); return; }
         var now = Repeatable.UtcNow;
-        OnDisk(() => _store.SaveInto(scenarioDir, folder, name, Json.Packed(bytes), replace, now), then);
+        try
+        {
+            var copy = server.ToSave(copy: false);
+            copy.Id = SaveFile.NewId(now);
+            bytes = Json.BigBytes(copy);
+        }
+        catch (Exception e) { then(null, e.Message); return; }
+        OnDisk(() => _store.SaveInto(scenarioDir, folder, name, Json.Packed(bytes), replace, now, onTable), then);
     }
 
     public void Load(LoadFrom from, Action<string?> then)
     {
-        if (Server is not { } server || Session.SavePath is not { } path || _store.RunOf(path) is not var (scenarioDir, run)) { then("this table is not one of a scenario's games"); return; }
-        if (from.Run == run) { then(null); return; }
+        if (Server is not { } server || SaveInPlay is not var (scenarioDir, path)) { then("this table is not one of a scenario's games"); return; }
+        if (from.File is { } file && from.TurnIndex == null && from.Start == null && SaveStore.SamePath(file, path)) { then(null); return; }
         TurnRecord? record = null;
         List<TurnRecord> before = new();
-        if (from.TurnIndex is int ti)
+        if (from.File == null && from.TurnIndex is int ti)
         {
             if (ti < 0 || ti >= server.Turns.Count) { then("no such turn"); return; }
             record = server.Turns[ti];
@@ -120,7 +130,7 @@ public sealed class HostSaves
             try
             {
                 why = t.Status != TaskStatus.RanToCompletion ? t.Exception?.InnerException?.Message ?? "the write stopped" : t.Result.Problem;
-                if (why == null) loaded = Read(scenarioDir, from, record, before, packs, now);
+                if (why == null) loaded = Read(scenarioDir, path, from, record, before, packs, now);
             }
             catch (Exception e) { why = e.Message; }
             _app.Post(() =>
@@ -132,78 +142,92 @@ public sealed class HostSaves
                     then(why ?? "nothing could be read");
                     return;
                 }
-                try { Switch(server, scenarioDir, loaded); then(null); }
+                try { Switch(server, loaded); then(null); }
                 catch (Exception e) { Log.Error("loading a save failed: " + e); then(e.Message); }
             });
         }, TaskScheduler.Default);
     }
 
-    sealed record Loaded(string Run, GameState State, List<TurnRecord> Turns, byte[]? Picture, string Name);
+    sealed record Loaded(string Path, GameState State, List<TurnRecord> Turns, byte[]? Picture, string Name, string? Created, string? Id);
 
-    Loaded Read(string scenarioDir, LoadFrom from, TurnRecord? record, List<TurnRecord> before, PackageStore? packs, DateTime now)
+    Loaded Read(string scenarioDir, string onTable, LoadFrom from, TurnRecord? record, List<TurnRecord> before, PackageStore? packs, DateTime now)
     {
-        if (from.Run is { } other)
+        if (from.File is { } file && from.TurnIndex == null && from.Start == null)
         {
-            var live = _store.LivePath(scenarioDir, other);
-            var g = SaveLoader.Open(_store, live, packs, out _);
-            g.SaveTo(live);
-            return new Loaded(other, g.State, g.Turns.ToList(), null, from.Name);
+            var g = SaveLoader.Open(_store, file, packs, out _);
+            g.SaveTo(file);
+            return new Loaded(file, g.State, g.Turns.ToList(), PictureOf(file), from.Name, g.Created, g.SaveId);
+        }
+        string source = onTable;
+        if (from.File is { } branchFrom && from.TurnIndex is int ti)
+        {
+            var g = SaveLoader.Load(branchFrom, packs);
+            if (ti < 0 || ti >= g.Turns.Count) throw new InvalidDataException("that save has no such turn");
+            record = g.Turns[ti];
+            before = g.Turns.Take(ti).ToList();
+            source = branchFrom;
         }
         GameState state;
         List<TurnRecord> turns;
         byte[]? picture = null;
-        if (record != null) { state = record.Unpack(); turns = before; }
-        else if (from.Start is { } start) (state, turns) = start();
-        else
+        string name;
+        if (record != null)
         {
-            var g = SaveLoader.Load(from.File ?? throw new ArgumentException("nothing to load"), packs);
-            state = g.State;
-            turns = g.Turns.ToList();
-            try { picture = Json.ReadSaveHeadline(from.File)?.Preview.Picture; }
-            catch (Exception e) when (SaveStore.IsDamage(e) || e is IOException) { picture = null; }
+            state = record.Unpack();
+            turns = before;
+            picture = record.Picture;
+            name = from.SaveName ?? SaveNames.From(Path.GetFileNameWithoutExtension(source), SaveNames.Turn(record.Turn, record.GameTime));
         }
-        var run = _store.NewRunId(scenarioDir, now);
-        _store.MakeRun(scenarioDir, run, from.PlayName ?? SaveNames.RunFrom(_store.Runs(scenarioDir).Count + 1, from.Name), from.Name, now, placeIn: from.PlaceIn);
-        return new Loaded(run, state, turns, picture, from.Name);
+        else if (from.Start is { } start)
+        {
+            (state, turns) = start();
+            name = from.SaveName ?? _store.NextGameName(scenarioDir);
+        }
+        else throw new ArgumentException("nothing to load");
+        var folder = from.PlaceIn ?? (record != null ? Path.GetDirectoryName(source) : null);
+        var target = _store.NewSavePath(scenarioDir, name, folder);
+        return new Loaded(target, state, turns, picture, from.Name, Repeatable.UtcNow.ToString("o"), SaveFile.NewId(now));
     }
 
-    public void MakePlay(LoadFrom from, Action<string?, string?> then)
+    static byte[]? PictureOf(string file)
     {
-        if (Server is not { } server || RunInPlay is not var (scenarioDir, inPlay)) { then(null, "this table is not one of a scenario's games"); return; }
-        var (created, access, packs, now) = (server.Created, server.Access.Clone(), server.Store, Repeatable.UtcNow);
+        try { return Json.ReadSaveHeadline(file)?.Preview.Picture; }
+        catch (Exception e) when (SaveStore.IsFileTrouble(e)) { return null; }
+    }
+
+    public void MakeSave(LoadFrom from, Action<string?, string?> then)
+    {
+        if (Server is not { } server || SaveInPlay is not var (scenarioDir, onTable)) { then(null, "this table is not one of a scenario's games"); return; }
+        var (access, packs, now) = (server.Access.Clone(), server.Store, Repeatable.UtcNow);
         OnDisk(() =>
         {
-            var l = Read(scenarioDir, from, null, new(), packs, now);
+            var l = Read(scenarioDir, onTable, from, null, new(), packs, now);
             var save = new SaveFile
             {
-                ScenarioId = l.State.ScenarioId, Created = created, Saved = now.ToString("o"), Preview = SavePreview.Of(l.State, l.Picture),
-                Access = access, Snapshot = l.State, Turns = l.Turns,
-            };
-            Json.SaveBig(_store.LivePath(scenarioDir, l.Run), save);
-            if (_store.CurrentRun(scenarioDir) != inPlay) _store.SetCurrent(scenarioDir, inPlay);
-            return _store.RunFolderOf(scenarioDir, l.Run);
+                Id = l.Id ?? SaveFile.NewId(now), ScenarioId = l.State.ScenarioId, Created = l.Created ?? now.ToString("o"), Saved = now.ToString("o"),
+                Preview = SavePreview.Of(l.State, l.Picture), Access = access, Snapshot = l.State,
+            }.WithTurns(l.Turns);
+            Json.SaveBig(l.Path, save);
+            return l.Path;
         }, then);
     }
 
-    void Switch(GameServer server, string scenarioDir, Loaded l)
+    void Switch(GameServer server, Loaded l)
     {
         _logKeeper.Close(server);
-        var path = _store.LivePath(scenarioDir, l.Run);
-        Session.SavePath = path;
+        Session.SavePath = l.Path;
         server.Picture = l.Picture;
-        _app.Dispatch(server.LoadSave(l.State, l.Turns, l.Name));
-        BeginHosting(path, server.Turns.Count);
-        if (_logKeeper.Ensure(server, path)) _writeBack.Hosted();
+        _app.Dispatch(server.LoadSave(l.State, l.Turns, l.Name, l.Created, l.Id ?? ""));
+        BeginHosting(l.Path, server.Turns.Count);
+        if (_logKeeper.Ensure(server, l.Path)) _writeBack.Hosted();
         SaveNow();
     }
 
-    void KeepTurns(GameServer server, string path)
+    void KeepPictures(GameServer server)
     {
-        if (_store.RunOf(path) is not var (scenarioDir, run)) return;
         int count = server.Turns.Count;
-        if (count < _turnsSaved) _turnsSaved = count;
-        if (count == _turnsSaved) { _turnEndedAt = -1; return; }
-        if (Clock() < _turnSavesRetryAt) return;
+        if (count < _turnsPictured) _turnsPictured = count;
+        if (count == _turnsPictured) { _turnEndedAt = -1; return; }
         if (_turnEndedAt < 0)
         {
             _turnEndedAt = Clock();
@@ -213,45 +237,27 @@ public sealed class HostSaves
         var picture = _app.PictureSince(_turnEndedAt);
         if (picture == null && Clock() - _turnEndedAt < PictureWait) return;
         _turnEndedAt = -1;
-        if (picture != null) server.Picture = picture;
-        var turns = server.Turns.ToList();
-        int from = _turnsSaved;
-        var (scenarioId, created, access, now) = (server.State.ScenarioId, server.Created, server.Access.Clone(), Repeatable.UtcNow);
-        _turnsSaved = count;
-        OnDisk(() =>
+        _turnsPictured = count;
+        if (picture == null) return;
+        server.Picture = picture;
+        if (server.Turns[^1].Picture == null)
         {
-            for (int i = from; i < turns.Count; i++)
-            {
-                try { _store.WriteTurnSave(scenarioDir, run, SaveFile.OfTurn(scenarioId, created, access, turns, i, i == turns.Count - 1 ? picture : null), now); }
-                catch (Exception e) { return (failedAt: i, why: e.Message); }
-            }
-            return (failedAt: -1, why: (string?)null);
-        }, (r, why) =>
-        {
-            why ??= r.why;
-            if (why == null)
-            {
-                if (_turnSavesFailing) SaveNote?.Invoke("The saves of the turns are being written again.");
-                _turnSavesFailing = false;
-                return;
-            }
-            Log.Error("turn save failed: " + why);
-            if (Server == server && SaveStore.SamePath(Session.SavePath, path)) _turnsSaved = Math.Min(_turnsSaved, r.failedAt >= 0 ? r.failedAt : from);
-            _turnSavesRetryAt = Clock() + 5;
-            if (!_turnSavesFailing) SaveNote?.Invoke($"The save of a turn could not be written into the saves folder ({why}). The game itself is saved; the turn is tried again every few seconds.");
-            _turnSavesFailing = true;
-        });
+            server.Turns[^1].Picture = picture;
+            server.Dirty = true;
+        }
     }
 
     public void CloseLog()
     {
         _logKeeper.Close(Server);
+        _mirrorLog.Close(null);
         if (!_writer.WaitForLog(TimeSpan.FromSeconds(10))) Log.Error("the log beside the save was still being written ten seconds after the table was left");
     }
 
     public void Stop()
     {
         var copy = _writeBack.Stop();
+        Unmirror();
         MirrorPath = null;
         _checkpoints = null;
         if (HeldFolder is { } held)
@@ -265,15 +271,48 @@ public sealed class HostSaves
 
     public void TickMirror(double delta)
     {
+        _mirrorLog.Tick(delta);
         _autosaveTimer += delta;
-        if (_autosaveTimer >= Math.Max(1.0, _lastSaveCost * 20) && Session.Dirty) { _autosaveTimer = 0; SaveMirror(closing: false); }
+        if (_autosaveTimer < (_mirrorLog.Working ? 1.0 : Math.Max(1.0, _lastSaveCost * 20))) return;
+        _autosaveTimer = 0;
+        if (!ReferenceEquals(Session.Live, _mirrorLive)) _mirrorWholeWanted = true;
+        if (Session.Dirty && (_mirrorWholeWanted || _mirrorLog.WholeSaveDue(closing: false, Session.Live.Clock.Turn))) SaveMirror(closing: false);
+    }
+
+    void Mirrored(Command c)
+    {
+        if (c is LoadSave || c.Seq != _mirrorSeq + 1) _mirrorWholeWanted = true;
+        if (c is not LoadSave) _mirrorLog.Append(c);
+        _mirrorSeq = c.Seq;
+    }
+
+    void Unmirror()
+    {
+        if (_mirrored != null) _mirrored.Applied -= Mirrored;
+        _mirrored = null;
+        _mirrorLog.Close(null);
+    }
+
+    void FoldMirrorLog(string path)
+    {
+        if (!File.Exists(SaveLog.PathFor(path)) && !File.Exists(SaveLog.OldPathFor(path))) return;
+        try
+        {
+            SaveLoader.Open(_store, path, null, out _).SaveTo(path);
+            SaveLog.Clear(path);
+        }
+        catch (Exception e) when (SaveStore.IsFileTrouble(e) || e is SaveTooNewException or SaveHeldException)
+        {
+            var kept = SaveLog.SetAside(path, "unfolded", Repeatable.UtcNow);
+            Log.Tell($"The changes logged beside this PC's earlier copy of this game could not be added to it ({e.Message}): they are kept as {string.Join(", ", kept.Select(Path.GetFileName))}.");
+        }
     }
 
     public void Tick(double delta)
     {
         if (Server == null || Session.SavePath == null) return;
         if (_logKeeper.Ensure(Server, Session.SavePath)) _writeBack.Hosted();
-        KeepTurns(Server, Session.SavePath);
+        KeepPictures(Server);
         _logKeeper.Tick(delta);
         _autosaveTimer += delta;
         if (_autosaveTimer >= (_logKeeper.Working ? 1.0 : Math.Max(1.0, _lastSaveCost * 20)))
@@ -292,6 +331,8 @@ public sealed class HostSaves
             WaitForWrite();
             var saves = _store;
             var path = saves.MirrorPath(Session.Live.ScenarioId.Length > 0 ? Session.Live.ScenarioId : Session.Live.Name);
+            Unmirror();
+            FoldMirrorLog(path);
             if (File.Exists(path))
             {
                 SaveFile? old = null;
@@ -300,20 +341,30 @@ public sealed class HostSaves
                 if (old == null || old.Created != jr.Created) saves.Checkpoint(path, CheckpointKind.StartOver, old?.Snapshot.Clock.Turn ?? 0, Repeatable.UtcNow);
                 else if (Session.MirrorTurns.Count == 0)
                 {
-                    foreach (var r in old.Turns ?? new()) { r.Normalize(); if (r.Turn < Session.Live.Clock.Turn) Session.MirrorTurns.Add(r); }
+                    old.BindTurns();
+                    foreach (var r in old.Turns) if (r.Turn < Session.Live.Clock.Turn) Session.MirrorTurns.Add(r);
                 }
             }
             MirrorPath = path;
             _checkpoints = new Checkpointer(saves, path, Session.MirrorTurns.Count, Repeatable.UtcNow);
+            _mirrored = Session;
+            _mirrored.Applied += Mirrored;
+            _mirrorWholeWanted = true;
             Session.Dirty = true;
             SaveMirror(closing: false);
         }
-        catch (Exception e) { Log.Error("mirror: " + e.Message); MirrorPath = null; }
+        catch (Exception e)
+        {
+            Log.Error("mirror: " + e.Message);
+            Unmirror();
+            MirrorPath = null;
+        }
     }
 
     public void StopMirror()
     {
         SaveMirror(closing: true);
+        Unmirror();
         MirrorPath = null;
         _checkpoints = null;
     }
@@ -328,9 +379,23 @@ public sealed class HostSaves
             Path = MirrorPath, Mirror = true, Changed = Session.Dirty, Closing = closing, Now = Repeatable.UtcNow, Checkpoints = _checkpoints,
             Turns = Session.MirrorTurns.Count, LastTurn = Session.MirrorTurns.Count > 0 ? Session.MirrorTurns[^1].Turn : 0, ClockTurn = Session.Live.Clock.Turn,
         };
-        try { r = r with { Bytes = Json.BigBytes(Session.ToMirrorSave(_app.MirrorOf())) }; Session.Dirty = false; }
+        var live = Session.Live;
+        _mirrorLog.Ensure(MirrorPath, Session.Created, live.ScenarioId, live.Clock.Turn);
+        var (generation, liveLogIdle) = _mirrorLog.SetAside(MirrorPath, live.Clock.Turn);
+        r = r with { LogGeneration = generation, LiveLogIdle = liveLogIdle };
+        try
+        {
+            _mirrorSealer.Seal(Session.MirrorTurns);
+            r = r with { Bytes = Json.BigBytes(Session.ToMirrorSave(_app.MirrorOf())) };
+            _mirrorLog.TakenWhole(r.Bytes!.Length);
+            Session.Dirty = false;
+            _mirrorWholeWanted = false;
+            _mirrorLive = live;
+            _mirrorSeq = live.LastSeq;
+        }
         catch (Exception e)
         {
+            _mirrorWholeWanted = true;
             Log.Error("mirror save failed: " + e.Message);
             ReportSave($"this PC's copy of the game could not be written to {MirrorPath}: {e.Message}", closing);
             return;
@@ -418,7 +483,14 @@ public sealed class HostSaves
         if (o.Problem != null)
         {
             Log.Error("save failed: " + o.Problem);
-            if (r.Mirror) { if (SaveStore.SamePath(MirrorPath, r.Path)) Session.Dirty = true; }
+            if (r.Mirror)
+            {
+                if (SaveStore.SamePath(MirrorPath, r.Path))
+                {
+                    Session.Dirty = true;
+                    _mirrorWholeWanted = true;
+                }
+            }
             else if (Server != null && SaveStore.SamePath(Session.SavePath, r.Path)) Server.Dirty = true;
         }
         if (o.FolderProblem != null) Log.Error("scenario write-back failed: " + o.FolderProblem);
@@ -449,5 +521,5 @@ public sealed class HostSaves
     }
 }
 
-public sealed record LoadFrom(string Name, string? File = null, int? TurnIndex = null, string? Run = null,
-    Func<(GameState State, List<TurnRecord> Turns)>? Start = null, string? PlayName = null, string? PlaceIn = null);
+public sealed record LoadFrom(string Name, string? File = null, int? TurnIndex = null,
+    Func<(GameState State, List<TurnRecord> Turns)>? Start = null, string? SaveName = null, string? PlaceIn = null);

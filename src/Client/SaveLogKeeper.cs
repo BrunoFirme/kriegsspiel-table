@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using KTable.Core;
+using KTable.Core.Protocol;
 using KTable.Server;
 
 namespace KTable.Client;
@@ -11,7 +12,7 @@ sealed class SaveLogKeeper
     readonly Action<string> _note;
     readonly Action<Action>? _disk;
     SaveLog? _saveLog;
-    string? _path;
+    string? _path, _stamp;
     readonly Stopwatch _sinceWhole = new();
     int _wholeAtTurn = -1;
     long _lastWholeBytes;
@@ -34,16 +35,27 @@ sealed class SaveLogKeeper
 
     public bool Ensure(GameServer server, string path)
     {
-        if (_saveLog != null && SaveStore.SamePath(_path, path)) return false;
-        _saveLog?.Dispose();
-        _path = path;
-        _saveLog = new SaveLog(path, SaveLog.StampOf(server.Created, server.State.ScenarioId), _generations, _disk);
-        _failureTold = false;
-        server.Applied = c => _saveLog?.Append(c);
-        _sinceWhole.Restart();
-        _wholeAtTurn = server.State.Clock.Turn;
+        if (!Ensure(path, server.Created, server.State.ScenarioId, server.State.Clock.Turn)) return false;
+        server.Applied = Append;
         return true;
     }
+
+    public bool Ensure(string path, string created, string scenarioId, int turn)
+    {
+        var stamp = SaveLog.StampOf(created, scenarioId);
+        if (_saveLog != null && SaveStore.SamePath(_path, path) && _stamp == stamp) return false;
+        _saveLog?.Dispose();
+        _path = path;
+        _stamp = stamp;
+        _saveLog = new SaveLog(path, stamp, _generations, _disk);
+        _failureTold = false;
+        _lastWholeBytes = 0;
+        _sinceWhole.Restart();
+        _wholeAtTurn = turn;
+        return true;
+    }
+
+    public void Append(Command c) => _saveLog?.Append(c);
 
     public void Tick(double delta)
     {
@@ -78,7 +90,7 @@ sealed class SaveLogKeeper
         {
             _saveLog.Dispose();
             _saveLog = null;
-            _path = null;
+            _path = _stamp = null;
         }
         if (server != null) server.Applied = null;
     }

@@ -76,7 +76,7 @@ public sealed class ScriptFiles
     public IReadOnlyList<ScriptLink> Links => _links;
     public ScriptLink? Of(string key) => _links.FirstOrDefault(l => l.Key == key);
 
-    public static string Root => System.IO.Path.Combine(DataPaths.Documents, "Scripts");
+    public static string Root => DataPaths.Scripts;
     public static string PackFolder(string root, string packId) => System.IO.Path.Combine(root, "packs", Safe(Naming.Slug(packId, "pack", 60)));
     public static string ScenarioFolder(string root, string scenario) => System.IO.Path.Combine(root, "scenarios", Safe(Naming.Slug(scenario, "game", 60)));
 

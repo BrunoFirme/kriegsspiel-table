@@ -20,54 +20,36 @@ public static class SavesHandover
 
     public static string? Stage(PackageStore store, SaveStore saves, string scenarioDir, SavesMode mode, string dst)
     {
-        if (mode == SavesMode.None || saves.CurrentRun(scenarioDir) is not { } current) return null;
+        if (mode == SavesMode.None || saves.CurrentSave(scenarioDir) is not { } current) return null;
         var root = saves.SavesRoot(scenarioDir);
-        WriteWhole(store, saves, saves.LivePath(scenarioDir, current), Path.Combine(dst, WorkshopContent.GameFile));
-        if (mode == SavesMode.InPlay)
-        {
-            if (saves.RunFolderOf(scenarioDir, current) is { } folder) CopyTree(folder, Path.Combine(dst, SavesFolder, Path.GetRelativePath(root, folder)));
-            return current;
-        }
-        foreach (var run in saves.Runs(scenarioDir).Where(r => r.Id != current))
-        {
-            var live = saves.LivePath(scenarioDir, run.Id);
-            if (File.Exists(live) || saves.Checkpoints(live).Count > 0) WriteWhole(store, saves, live, Path.Combine(dst, RunsFolder, run.Id + SaveStore.Ext));
-        }
-        if (Directory.Exists(root)) CopyTree(root, Path.Combine(dst, SavesFolder));
-        return current;
+        WriteWhole(store, saves, current, Path.Combine(dst, WorkshopContent.GameFile));
+        if (mode == SavesMode.All)
+            foreach (var save in saves.SaveFiles(scenarioDir).Where(f => !SaveStore.SamePath(f, current)))
+                WriteWhole(store, saves, save, Path.Combine(dst, SavesFolder, Path.GetRelativePath(root, save)));
+        return Path.GetRelativePath(root, current);
     }
 
-    static void WriteWhole(PackageStore store, SaveStore saves, string live, string to)
+    static void WriteWhole(PackageStore store, SaveStore saves, string save, string to)
     {
-        var game = SaveLoader.Open(saves, live, store, out _);
+        var game = SaveLoader.Open(saves, save, store, out _);
         Directory.CreateDirectory(Path.GetDirectoryName(to)!);
         Json.SaveBig(to, game.ToSave(copy: false));
     }
 
-    static void CopyTree(string from, string to)
-    {
-        if (!Directory.Exists(from)) return;
-        foreach (var f in Directory.EnumerateFiles(from, "*", SearchOption.AllDirectories))
-        {
-            if (SaveStore.IsHidden(from, Path.GetDirectoryName(f)!)) continue;
-            var name = Path.GetFileName(f);
-            var rel = Path.GetRelativePath(from, Path.GetDirectoryName(f)!);
-            string target;
-            if (name == SaveStore.RunMarkFile) target = Path.Combine(to, rel, RunMarkInPack);
-            else if (name.EndsWith(SaveStore.Ext, StringComparison.OrdinalIgnoreCase)) target = Path.Combine(to, rel, name);
-            else continue;
-            Directory.CreateDirectory(Path.GetDirectoryName(target)!);
-            File.Copy(f, target, true);
-        }
-    }
-
-    public static string? Install(SaveStore saves, string scenarioDir, string folder, string? gameRun, DateTime nowUtc)
+    public static string? Install(SaveStore saves, string scenarioDir, string folder, string? gameAt, DateTime nowUtc)
     {
         var game = Path.Combine(folder, WorkshopContent.GameFile);
         var savesIn = Path.Combine(folder, SavesFolder);
         var runsIn = Path.Combine(folder, RunsFolder);
-        if (!Directory.Exists(savesIn) && !Directory.Exists(runsIn))
-            return File.Exists(game) ? saves.AddGame(scenarioDir, game, "Handed over", nowUtc) : null;
+        bool old = Directory.Exists(runsIn) || (Directory.Exists(savesIn) && Directory.EnumerateFiles(savesIn, RunMarkInPack, SearchOption.AllDirectories).Any())
+            || (gameAt is { Length: > 0 } && !gameAt.EndsWith(SaveStore.Ext, StringComparison.OrdinalIgnoreCase));
+        if (old) return InstallOld(saves, scenarioDir, game, savesIn, runsIn, gameAt, nowUtc);
+        saves.AddSaves(scenarioDir, savesIn);
+        return File.Exists(game) ? saves.AddGame(scenarioDir, game, "Handed over", gameAt) : saves.CurrentSave(scenarioDir);
+    }
+
+    static string? InstallOld(SaveStore saves, string scenarioDir, string game, string savesIn, string runsIn, string? gameRun, DateTime nowUtc)
+    {
         var staging = Path.Combine(Path.GetTempPath(), "ktable-saves-" + Guid.NewGuid().ToString("N")[..8]);
         try
         {
@@ -90,8 +72,9 @@ public static class SavesHandover
                 File.Copy(game, Path.Combine(liveTo, gameRun + SaveStore.Ext), true);
                 File.WriteAllText(Path.Combine(liveTo, SaveStore.CurrentFile), gameRun);
             }
-            saves.AddSaves(scenarioDir, savesTo, liveTo, nowUtc);
-            return saves.CurrentRun(scenarioDir);
+            else if (File.Exists(game) && !Directory.Exists(savesIn) && !Directory.Exists(runsIn)) return saves.AddGame(scenarioDir, game, "Handed over");
+            saves.AddLegacySaves(scenarioDir, savesTo, liveTo, nowUtc);
+            return saves.CurrentSave(scenarioDir);
         }
         finally { BestEffort.DeleteFolder(staging); }
     }

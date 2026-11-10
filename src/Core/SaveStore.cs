@@ -8,7 +8,7 @@ public sealed partial class SaveStore
     const int ErrorNotSameDevice = unchecked((int)0x80070011);
 
     public const string Ext = ".kstable";
-    public const int KeepTurns = 10, KeepTimed = 5, KeepStartOver = 3, TrashDays = 30;
+    public const int KeepTurns = 3, KeepTimed = 5, KeepMirrorTimed = 2, KeepStartOver = 3, TrashDays = 30;
     public static readonly TimeSpan TimedEvery = TimeSpan.FromMinutes(10);
     const string StampFormat = "yyyyMMdd-HHmmss";
 
@@ -62,7 +62,8 @@ public sealed partial class SaveStore
 
     public string CheckpointDir(string savePath)
     {
-        if (RunOf(savePath) is var (scenarioDir, run)) return Path.Combine(SavesRoot(scenarioDir), SafetyFolder, run);
+        if (ScenarioOf(savePath) is { } scenarioDir) return SafetyOf(scenarioDir, savePath);
+        if (IsMirror(savePath)) return Path.Combine(MirrorDir, SafetyFolder, Path.GetFileNameWithoutExtension(savePath));
         var full = Path.GetFullPath(savePath);
         var live = Path.GetFullPath(LiveDir).TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
         if (full.StartsWith(live, StringComparison.OrdinalIgnoreCase))
@@ -70,7 +71,9 @@ public sealed partial class SaveStore
         return Path.Combine(Path.GetDirectoryName(full)!, Path.GetFileNameWithoutExtension(full));
     }
 
-    public string MirrorDir => Path.Combine(LiveDir, "mirrors");
+    public string MirrorDir => Path.Combine(LiveDir, MirrorsFolder);
+
+    public bool IsMirror(string savePath) => SamePath(Path.GetDirectoryName(Path.GetFullPath(savePath)), MirrorDir);
 
     public string MirrorPath(string scenarioId) => Path.Combine(MirrorDir, Slug(scenarioId) + Ext);
 
@@ -81,8 +84,15 @@ public sealed partial class SaveStore
     {
         var entry = NewTrashEntry(Path.GetFileNameWithoutExtension(mirrorPath) + MirrorSuffix, nowUtc);
         if (File.Exists(mirrorPath)) { Directory.CreateDirectory(entry); File.Move(mirrorPath, Path.Combine(entry, Path.GetFileName(mirrorPath)), true); }
+        foreach (var log in LogsOf(mirrorPath)) { Directory.CreateDirectory(entry); File.Move(log, Path.Combine(entry, Path.GetFileName(log)), true); }
         MoveInto(CheckpointDir(mirrorPath), Path.Combine(entry, "checkpoints"));
         return entry;
+    }
+
+    static IEnumerable<string> LogsOf(string savePath)
+    {
+        var dir = Path.GetDirectoryName(savePath);
+        return dir != null && Directory.Exists(dir) ? Directory.GetFiles(dir, Path.GetFileName(savePath) + ".log*") : Array.Empty<string>();
     }
 
     static string Slug(string s)
@@ -96,9 +106,6 @@ public sealed partial class SaveStore
     {
         var dir = CheckpointDir(savePath);
         var list = new List<Checkpoint>();
-        if (RunOf(savePath) is var (scenarioDir, run) && RunFolderOf(scenarioDir, run) is { } folder)
-            foreach (var f in Directory.EnumerateFiles(folder, "*" + Ext))
-                list.Add(new Checkpoint(f, CheckpointKind.Saved, 0, File.GetLastWriteTimeUtc(f)));
         if (!Directory.Exists(dir)) return list.OrderByDescending(c => c.Stamp).ToList();
         foreach (var f in Directory.EnumerateFiles(dir, "*" + Ext))
         {
@@ -116,6 +123,7 @@ public sealed partial class SaveStore
     {
         var dir = CheckpointDir(savePath);
         Directory.CreateDirectory(dir);
+        if (ScenarioOf(savePath) is { } scenarioDir) WriteSafetyOwner(scenarioDir, dir, savePath);
         var dst = FreeName(Path.Combine(dir, $"{kind}-{Math.Clamp(turn, 0, 9999):D4}_{Stamp(nowUtc)}"), to => Json.CopyAtomic(savePath, to, overwrite: false));
         Prune(savePath);
         return dst;
@@ -137,7 +145,7 @@ public sealed partial class SaveStore
         var all = Checkpoints(savePath);
         void Keep(Func<Checkpoint, bool> of, int n) { foreach (var c in all.Where(of).Skip(n)) BestEffort.DeleteFile(c.Path); }
         Keep(c => c.Kind == CheckpointKind.Turn, KeepTurns);
-        Keep(c => c.Kind is CheckpointKind.Time or CheckpointKind.Close, KeepTimed);
+        Keep(c => c.Kind is CheckpointKind.Time or CheckpointKind.Close, IsMirror(savePath) ? KeepMirrorTimed : KeepTimed);
         Keep(c => c.Kind == CheckpointKind.StartOver, KeepStartOver);
     }
 
@@ -299,17 +307,18 @@ public sealed partial class SaveStore
             {
                 var note = RestoreGameFrom(e, e.Id, nowUtc);
                 Directory.Delete(e.Path, true);
-                return $"The saves of {e.Id} are back; Resume continues the game that was in play." + note;
+                return $"The saves of {e.Id} are back; Resume continues the game that was on the table." + note;
             }
             case TrashKind.Saves: return RestoreSaves(e, nowUtc);
             case TrashKind.Mirror:
             {
                 var path = Path.Combine(MirrorDir, e.Id + Ext);
                 string note = "";
-                if (File.Exists(path) || Directory.Exists(CheckpointDir(path))) note = $" The mirror that was there went to the trash: {TrashMirror(path, nowUtc)}";
+                if (File.Exists(path) || LogsOf(path).Any() || Directory.Exists(CheckpointDir(path))) note = $" The mirror that was there went to the trash: {TrashMirror(path, nowUtc)}";
                 Directory.CreateDirectory(MirrorDir);
                 var f = Path.Combine(e.Path, e.Id + Ext);
                 if (File.Exists(f)) File.Move(f, path, true);
+                foreach (var log in LogsOf(f)) File.Move(log, Path.Combine(MirrorDir, Path.GetFileName(log)), true);
                 MoveInto(Path.Combine(e.Path, "checkpoints"), CheckpointDir(path));
                 Directory.Delete(e.Path, true);
                 return $"The mirror of {e.Id} is back under Scenarios." + note;
@@ -359,12 +368,42 @@ public sealed partial class SaveStore
 
     public const string PackFilesListing = "_listed.json";
 
+    const string TrashedGame = "game";
+
     string RestoreGameFrom(TrashEntry e, string scenarioDir, DateTime nowUtc)
     {
-        var save = Path.Combine(e.Path, scenarioDir + Ext);
-        var cps = Path.Combine(e.Path, "checkpoints");
-        if (File.Exists(save) || Directory.Exists(cps)) AdoptLegacyGame(scenarioDir, save, cps, "Restored", nowUtc);
-        MergeSaves(scenarioDir, Path.Combine(e.Path, TrashedSaves), Path.Combine(e.Path, TrashedLive), takeCurrent: true, nowUtc);
+        var game = Path.Combine(e.Path, TrashedGame);
+        if (!Directory.Exists(game))
+        {
+            RestoreLegacyGame(e, scenarioDir, nowUtc);
+            return "";
+        }
+        var root = SavesRoot(scenarioDir);
+        var incoming = Path.Combine(game, CurrentFile);
+        string? current = File.Exists(incoming) ? File.ReadAllText(incoming).Trim() : null;
+        string? currentNow = null;
+        DateTime newest = DateTime.MinValue;
+        string? newestNow = null;
+        var safety = Path.Combine(game, SafetyFolder);
+        var moved = new List<(string Id, string To)>();
+        foreach (var f in Directory.EnumerateFiles(game, "*" + Ext, SearchOption.AllDirectories).Where(f => !IsHidden(game, f)).ToList())
+        {
+            var rel = Path.GetRelativePath(game, f);
+            var id = ReadIdOrNull(f) ?? OwnedIn(safety, rel);
+            var to = FreeSaveFile(Path.GetDirectoryName(Path.Combine(root, rel))!, Path.GetFileNameWithoutExtension(f));
+            var written = File.GetLastWriteTimeUtc(f);
+            MoveSaveWithLogs(f, to);
+            if (written > newest) (newest, newestNow) = (written, to);
+            if (id != null) moved.Add((id, to));
+            if (current != null && string.Equals(rel, current, StringComparison.OrdinalIgnoreCase)) currentNow = to;
+        }
+        BestEffort.DeleteFile(incoming);
+        var lines = MoveTree(game, root);
+        foreach (var (id, to) in moved)
+            if (Directory.Exists(Path.Combine(root, SafetyFolder, id))) WriteSafetyOwner(scenarioDir, Path.Combine(root, SafetyFolder, id), to);
+        if ((currentNow ?? newestNow) is { } onTable) SetCurrent(scenarioDir, onTable);
+        var stuck = lines.Where(l => l.Contains(": not moved")).ToList();
+        if (stuck.Count > 0) throw new IOException($"{stuck.Count} file(s) of these saves could not be put back and stay in the trash: " + string.Join("; ", stuck.Take(3)));
         return "";
     }
 
@@ -378,12 +417,8 @@ public sealed partial class SaveStore
 
     internal void TrashGameInto(string scenarioDir, string entry)
     {
-        var live = LegacyLivePath(scenarioDir);
-        if (File.Exists(live)) { Directory.CreateDirectory(entry); File.Move(live, Path.Combine(entry, Path.GetFileName(live)), true); }
-        foreach (var log in new[] { SaveLog.PathFor(live), SaveLog.OldPathFor(live) })
-            if (File.Exists(log)) { Directory.CreateDirectory(entry); File.Move(log, Path.Combine(entry, Path.GetFileName(log)), true); }
-        MoveInto(RunsLiveDir(scenarioDir), Path.Combine(entry, TrashedLive));
-        MoveInto(SavesRoot(scenarioDir), Path.Combine(entry, TrashedSaves));
+        ConvertScenario(scenarioDir, Repeatable.UtcNow);
+        MoveInto(SavesRoot(scenarioDir), Path.Combine(entry, TrashedGame));
     }
 
     public string TrashPack(string packagesRoot, string packId, DateTime nowUtc)
@@ -541,7 +576,7 @@ public sealed class Checkpointer
         _savePath = savePath;
         _turnsSeen = turnsNow;
         _lastTimed = nowUtc;
-        _copiesTurns = store.RunOf(savePath) == null;
+        _copiesTurns = store.ScenarioOf(savePath) == null;
     }
 
     public Checkpoint? AfterSave(int turns, int endedTurn, int currentTurn, DateTime nowUtc)

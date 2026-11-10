@@ -119,12 +119,7 @@ public partial class Main
             op.Held = folder;
         }
         bool fromSave = wanted.Kstable || (resume && saves.HasGame(wanted.Dir));
-        string? newRun = null;
-        if (!fromSave)
-        {
-            newRun = saves.NewRunId(wanted.Dir, Repeatable.UtcNow);
-            wanted = wanted with { SavePath = saves.LivePath(wanted.Dir, newRun) };
-        }
+        if (!fromSave) wanted = wanted with { SavePath = saves.NewSavePath(wanted.Dir, saves.NextGameName(wanted.Dir)) };
         var token = op.Token;
 
         var opened = await System.Threading.Tasks.Task.Run(() => Open(store, saves, pieceStore, what, wanted, fromSave, read, op, token), token);
@@ -144,7 +139,7 @@ public partial class Main
         }
         if (password != null && password.Trim() != server.Access.Password) { server.Access.Password = password.Trim(); server.Dirty = true; }
         _cfg.LastName = name;
-        HostOpened(store, saves, server, name, wanted.SavePath, opened.Started, newRun != null ? (wanted.Dir, newRun) : null, op);
+        HostOpened(store, saves, server, name, wanted.SavePath, opened.Started, op);
     }
 
     Wanted? Find(PackageStore store, SaveStore saves, string what)
@@ -233,7 +228,7 @@ public partial class Main
         }
     }
 
-    void HostOpened(PackageStore store, SaveStore saves, GameServer server, string name, string savePath, System.Collections.Generic.List<Outgoing> started, (string Dir, string Run)? newRun,
+    void HostOpened(PackageStore store, SaveStore saves, GameServer server, string name, string savePath, System.Collections.Generic.List<Outgoing> started,
         Opening op)
     {
         if (op.Held != null) { _net.HeldFolder = op.Held; op.Held = null; }
@@ -254,9 +249,6 @@ public partial class Main
             Fail(why);
             return;
         }
-        if (newRun is var (runDir, run))
-            try { GD.Print("[saves] this play is saved in " + saves.MakeRun(runDir, run, saves.NextRunName(runDir), null, Repeatable.UtcNow)); }
-            catch (Exception e) when (e is IOException or UnauthorizedAccessException) { GD.PushWarning("the folder for this play's saves could not be made yet: " + e.Message); }
         GD.Print(server.Access.Password.Length > 0 ? "[host] the game has a password" : "[host] open door: no password; everyone who knocks still waits for an umpire");
     }
 }

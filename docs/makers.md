@@ -52,7 +52,7 @@ foot of the Help sidebar). Paste what it writes into the **Script** tab.
 ### Edit a script as a file
 
 The button beside **Save and run** (studio Script tab, or the Scripts window) puts the script in
-`Documents\KriegsspielTable\Scripts\`, with `ktable-api.lua` and `console.log`. Each save there runs in the app;
+`%LOCALAPPDATA%\KriegsspielTable\Scripts\`, with `ktable-api.lua` and `console.log`. Each save there runs in the app;
 errors go to `console.log` as `file.lua:line`. **Stop** brings the script back into the app.
 
 ### Connect it

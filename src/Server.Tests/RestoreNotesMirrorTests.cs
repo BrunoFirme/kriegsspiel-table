@@ -156,7 +156,7 @@ public sealed class RestoreNotesMirrorTests
         var mirror = SaveFile.Mirror(view, t.Server.Access, t.Server.Created, turns, "Umpire One at 10.0.0.2");
         var path = saves.MirrorPath(t.Server.State.ScenarioId);
         Json.Save(path, mirror);
-        Assert.StartsWith(Path.Combine(saves.HistoryDir, "mirrors"), saves.CheckpointDir(path));
+        Assert.StartsWith(Path.Combine(saves.MirrorDir, SaveStore.SafetyFolder), saves.CheckpointDir(path));
         Assert.Single(saves.Mirrors());
 
         var back = SaveLoader.Load(path, t.Store);
@@ -237,19 +237,19 @@ public sealed class RestoreNotesMirrorTests
     }
 
     [Fact]
-    public void A_game_handed_over_in_a_scenario_file_becomes_the_game_in_play_beside_the_saves_already_there()
+    public void A_game_handed_over_in_a_scenario_file_becomes_the_save_on_the_table_beside_the_saves_already_there()
     {
         var root = TempRoot();
         var saves = Store(root);
         var handed = Path.Combine(root, "game.kstable");
         Json.Save(handed, new SaveFile { ScenarioId = "scn", Snapshot = new GameState { Clock = new GameClock { Turn = 9 } } });
-        var first = saves.AddGame("scn", handed, "Handed over", T0);
+        var first = saves.AddGame("scn", handed, "Handed over");
         Assert.Equal(9, Json.Load<SaveFile>(saves.LivePath("scn")).Snapshot.Clock.Turn);
-        var second = saves.AddGame("scn", handed, "Handed over", T0.AddMinutes(1));
+        var second = saves.AddGame("scn", handed, "Handed over");
         Assert.NotEqual(first, second);
-        Assert.Equal(second, saves.CurrentRun("scn"));
-        Assert.True(File.Exists(saves.LivePath("scn", first)));
-        Assert.Equal(new[] { "Handed over", "Handed over (2)" }, saves.Runs("scn").Select(r => Path.GetFileName(r.Folder)).OrderBy(n => n));
+        Assert.Equal(second, saves.CurrentSave("scn"));
+        Assert.True(File.Exists(first));
+        Assert.Equal(new[] { "Handed over", "Handed over (2)" }, saves.SaveFiles("scn").Select(Path.GetFileNameWithoutExtension).OrderBy(n => n));
         Assert.Empty(saves.TrashEntries());
     }
 

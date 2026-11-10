@@ -78,7 +78,7 @@ public class SettingsTests
     public void New_settings_are_written_with_these_defaults_in_this_order()
     {
         var s = new Settings();
-        Assert.Equal(Path.Combine(DataPaths.Documents, "captures"), s.CaptureFolder);
+        Assert.Equal(DataPaths.Captures, s.CaptureFolder);
         s.CaptureFolder = "C";
         s.Keys.Set("ruler", "R");
         Assert.Equal(
@@ -125,9 +125,11 @@ public class SettingsTests
         var legacy = Path.Combine(DataPaths.LegacyDocuments, "captures");
         File.WriteAllText(_file, System.Text.Json.JsonSerializer.Serialize(new { CaptureFolder = legacy.ToUpperInvariant() + Path.DirectorySeparatorChar, ReduceFarDetail = true }));
         var s = Settings.Load();
-        Assert.Equal(Path.Combine(DataPaths.Documents, "captures"), s.CaptureFolder);
+        Assert.Equal(DataPaths.Captures, s.CaptureFolder);
         Assert.False(s.ReduceFarDetail);
         Assert.Equal(32f, s.LetteringReach);
+        File.WriteAllText(_file, System.Text.Json.JsonSerializer.Serialize(new { CaptureFolder = Path.Combine(DataPaths.Documents, "captures") }));
+        Assert.Equal(DataPaths.Captures, Settings.Load().CaptureFolder);
 
         File.WriteAllText(_file, "{\"CaptureFolder\":\"D:\\\\mine\",\"LetteringReach\":3}");
         s = Settings.Load();

@@ -1,4 +1,4 @@
-format 33
+format 34
 type AccessChanged object
   access: GameAccess
 type AddBoard object
@@ -508,6 +508,7 @@ type List<UiRule> list of UiRule
 type List<Vec2> list of Vec2
 type List<Widget> list of Widget
 type List<Zone> list of Zone
+type List<byte[]> list of byte[]
 type List<double> list of double
 type List<int> list of int
 type List<string> list of string
@@ -942,11 +943,13 @@ type SaveFile object
   commands: List<Command>
   created: string
   format: int
+  id: string
   mirrorOf: string
   preview: SavePreview
   saved: string
   scenarioId: string
   snapshot: GameState
+  turnBlocks: List<byte[]>
   turns: List<TurnRecord>
 type SavePreview object
   gameTime: string
@@ -1591,10 +1594,13 @@ type TurnInfo object
 type TurnList object
   turns: List<TurnInfo>
 type TurnRecord object
+  at: int?
+  block: int?
   endedAt: string
   gameTime: string
   lastSeq: long
   packed: byte[]
+  picture: byte[]
   pieces: int
   state: GameState
   turn: int

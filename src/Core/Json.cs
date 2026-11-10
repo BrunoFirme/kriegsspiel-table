@@ -93,14 +93,31 @@ public static class Json
         return buf.AsSpan(0, n).ToArray();
     }
 
-    public sealed record SaveHeadline(string ScenarioId, string Saved, SavePreview Preview);
+    public sealed record SaveHeadline(string ScenarioId, string Saved, SavePreview Preview, string Id = "", int Format = 0);
+
+    public static string? ReadSaveId(string path)
+    {
+        var head = Head(path, 1 << 12);
+        var r = new Utf8JsonReader(WithoutBom(head), isFinalBlock: false, state: default);
+        if (!r.Read() || r.TokenType != JsonTokenType.StartObject) return null;
+        while (r.Read() && r.TokenType == JsonTokenType.PropertyName)
+        {
+            var name = r.GetString();
+            if (!r.Read()) return null;
+            if (name == "id") return r.TokenType == JsonTokenType.String && r.GetString() is { Length: > 0 } id ? id : null;
+            if (name is "preview" or "access" or "snapshot" or "turns") return null;
+            if (!r.TrySkip()) return null;
+        }
+        return null;
+    }
 
     public static SaveHeadline? ReadSaveHeadline(string path, int bytes = 1 << 18)
     {
         var head = Head(path, bytes);
         var r = new Utf8JsonReader(WithoutBom(head), isFinalBlock: false, state: default);
         if (!r.Read() || r.TokenType != JsonTokenType.StartObject) throw new JsonException("a save is an object");
-        string scenarioId = "", saved = "";
+        string scenarioId = "", saved = "", id = "";
+        int format = 0;
         while (r.Read() && r.TokenType == JsonTokenType.PropertyName)
         {
             var name = r.GetString();
@@ -110,10 +127,12 @@ public static class Json
                 var whole = r;
                 if (!whole.TrySkip()) return null;
                 var preview = (SavePreview?)JsonSerializer.Deserialize(ref r, typeof(SavePreview), Ctx);
-                return preview == null ? null : new(scenarioId, saved, preview);
+                return preview == null ? null : new(scenarioId, saved, preview, id, format);
             }
             if (name is "access" or "snapshot" or "commands" or "turns") return null;
-            if (name == "scenarioId" && r.TokenType == JsonTokenType.String) scenarioId = r.GetString() ?? "";
+            if (name == "format" && r.TokenType == JsonTokenType.Number && r.TryGetInt32(out var f)) format = f;
+            else if (name == "id" && r.TokenType == JsonTokenType.String) id = r.GetString() ?? "";
+            else if (name == "scenarioId" && r.TokenType == JsonTokenType.String) scenarioId = r.GetString() ?? "";
             else if (name == "saved" && r.TokenType == JsonTokenType.String) saved = r.GetString() ?? "";
             else if (!r.TrySkip()) return null;
         }

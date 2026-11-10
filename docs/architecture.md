@@ -30,8 +30,8 @@ take the same path:
 6. Every client applies what it receives with the same `StateMachine.Apply`, so all tables stay in step.
 
 The host saves the whole table in a background thread (written to a temporary file, flushed, then renamed),
-keeps a log of commands beside it between saves, and copies a checkpoint at every ended turn. A co-umpire keeps a
-mirror of the game they can host from. Hosting a saved game first installs, from the files fetched while joined, the
+keeps a log of commands beside it between saves, and rolling copies of it. A save holds every ended turn, ten to a
+compressed block. A co-umpire keeps a mirror of the game they can host from, with the same log. Hosting a saved game first installs, from the files fetched while joined, the
 packs, map tiles, relief and web pictures it names that this PC lacks, each where the host kept it, never over a file
 and never into a pack already installed (`FetchedFiles`).
 

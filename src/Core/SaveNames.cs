@@ -26,7 +26,7 @@ public static class SaveNames
 
     public static string Turn(int turn, string gameTime) => ShortTime(gameTime) is { Length: > 0 } when ? $"Turn {turn} · {when}" : $"Turn {turn}";
 
-    public static string Run(int number) => $"Run {number}";
+    public static string Game(int number) => $"Game {number}";
 
-    public static string RunFrom(int number, string source) => Clean($"Run {number} · from {source}");
+    public static string From(string save, string turn) => Clean($"{save} · from {turn}");
 }

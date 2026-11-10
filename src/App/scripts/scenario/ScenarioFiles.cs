@@ -166,7 +166,7 @@ public static class ScenarioFiles
     }
 
     public static TurnRecord? FirstTurn(KTable.Server.GameServer game) =>
-        game.Turns.Count > 0 && (game.Turns[0].Packed != null || game.Turns[0].State != null) ? game.Turns[0] : null;
+        game.Turns.Count > 0 && game.Turns[0].HasTable ? game.Turns[0] : null;
 
     public static void WriteFromGame(PackageStore store, string dir, KTable.Server.GameServer game)
     {

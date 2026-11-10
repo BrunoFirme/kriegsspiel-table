@@ -8,6 +8,9 @@ public static class DataPaths
     static string? UserOverride => Environment.GetEnvironmentVariable("KTABLE_USER_DIR") is { Length: > 0 } d ? d : null;
     public static string Local => UserOverride is { } o ? Path.Combine(o, "local", Name) : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), Name);
     public static string Documents => Path.Combine(DocumentsFolder, Name);
+    public static string Scripts => Path.Combine(Local, "Scripts");
+    public static string Captures => Path.Combine(Local, "captures");
+    public static string Exports => Path.Combine(Local, "exports");
     public static string LegacyDocuments => UserOverride is { } o ? Path.Combine(o, "profile", "Documents", Name) : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Documents", Name);
 
     static string DocumentsFolder =>

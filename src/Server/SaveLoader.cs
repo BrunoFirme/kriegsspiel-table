@@ -53,8 +53,8 @@ public static class SaveLoader
         bool saveHoldsUnreplayed = failed > 0;
         int notFollowingCount = 0;
         int replayed = 0;
-        var turns = save.Turns ?? new();
-        foreach (var t in turns) t.Normalize();
+        save.BindTurns();
+        var turns = save.Turns;
         var logged = SaveLog.Read(path, SaveLog.StampOf(save.Created, save.ScenarioId), out bool torn, out var unreadable);
         if (failed > 0) failed += logged.Count(c => c.Seq > inSave[^1].Seq);
         var following = failed > 0 ? new List<Command>() : SaveLog.FollowingOn(logged, state.LastSeq, out notFollowingCount);
@@ -76,6 +76,7 @@ public static class SaveLoader
         state.EnsureNextId();
         var srv = new GameServer(state, store, save.Access ?? new GameAccess(), created: save.Created)
         {
+            SaveId = save.Id ?? "",
             Loaded = new LoadReport
             {
                 ReplayedFromLog = replayed, LogTorn = torn, LogNotFollowing = notFollowingCount, LogUnreadable = unreadable,

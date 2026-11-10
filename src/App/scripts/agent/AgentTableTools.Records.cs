@@ -46,11 +46,11 @@ sealed partial class AgentTableTools
                 new Arg("show", "boolean", "also show it on the person's table, as History does"), new Arg("now", "boolean", "back to the live table, alone")),
             LookBack);
         yield return new AgentTool("saves",
-            "The Saves window's work, for the game on the table (host only). list: every folder, play and save under the scenario's saves, and the trash. new_play: a fresh play of the scenario, from its start, the table now, or a save (name, from, play to put it on the table). " +
-            "rename, delete (to the trash; never the play on the table), new_folder, move (into a folder) and restore (from the trash, by its name in list). Paths are relative to the saves, folders with /, a save without its extension.",
-            Args.Schema(new Arg("action", "string", "list, new_play, rename, delete, new_folder, move or restore", true), new Arg("path", "string", "the save or folder to act on"),
-                new Arg("name", "string", "rename's new name, new_folder's or new_play's name, restore's trash name"), new Arg("into", "string", "move's or new_folder's folder (the saves themselves if left out)"),
-                new Arg("from", "string", "new_play: start (default), now, or a save's path"), new Arg("play", "boolean", "new_play: put it on the table now")),
+            "The Saves window's work, for the game on the table (host only). list: every folder and save under the scenario's saves, the one on the table, and the trash. new_save: another game of the scenario, from its start, the table now, or a save (name, from, play to put it on the table). " +
+            "rename, delete (to the trash; never the save on the table), new_folder, move (into a folder) and restore (from the trash, by its name in list). Paths are relative to the saves, folders with /, a save without its extension.",
+            Args.Schema(new Arg("action", "string", "list, new_save, rename, delete, new_folder, move or restore", true), new Arg("path", "string", "the save or folder to act on"),
+                new Arg("name", "string", "rename's new name, new_folder's or new_save's name, restore's trash name"), new Arg("into", "string", "move's or new_folder's folder (the saves themselves if left out)"),
+                new Arg("from", "string", "new_save: start (default), now, or a save's path"), new Arg("play", "boolean", "new_save: put it on the table now")),
             Saves);
         yield return new AgentTool("save_scenario_copy",
             "Saves a copy of the table as it is now as a new scenario (map sheets, every piece, clock and scale), as Save a copy as a new scenario… does; the table's own scenario is left as it is.",
@@ -164,7 +164,7 @@ sealed partial class AgentTableTools
             s.Review(null, null);
             return new ToolResult("The person's table shows the live game again.");
         }
-        if (Play(s, hud, out why) is not var (_, _, folder)) return why!;
+        if (Play(s, hud, out why) is not var (_, _, root)) return why!;
         if (hud.N.Server is not { } server) return ToolResult.Fail("Only the host reads past turns.");
         GameState past;
         TurnInfo info;
@@ -178,8 +178,7 @@ sealed partial class AgentTableTools
         }
         else if (a.Str("save") is { Length: > 0 } name)
         {
-            var file = folder == null ? null : Path.Combine(folder, name + SaveStore.Ext);
-            if (file == null || !File.Exists(file)) return ToolResult.Fail($"No save {name} in this game's folder (list_saves).");
+            if (SaveAt(root, name) is not { } file) return ToolResult.Fail($"No save {name} among this scenario's saves (list_saves).");
             var store = s.Store;
             past = await Task.Run(() => KTable.Server.SaveLoader.Load(file, store).State);
             info = new TurnInfo { Index = -1, Turn = past.Clock.Turn, GameTime = past.Clock.GameTime, SaveName = name };
@@ -236,7 +235,7 @@ sealed partial class AgentTableTools
     async Task<ToolResult> Saves(JsonElement a)
     {
         if (Table(out var why) is not var (s, hud)) return why!;
-        if (Play(s, hud, out why) is not var (dir, run, _)) return why!;
+        if (Play(s, hud, out why) is not var (dir, onTable, _)) return why!;
         var store = SaveStore.Default;
         var root = store.SavesRoot(dir);
         string? Under(string? rel)
@@ -252,7 +251,7 @@ sealed partial class AgentTableTools
             return r.EndsWith(SaveStore.Ext) ? r[..^SaveStore.Ext.Length] : r;
         }
         var action = (a.Str("action") ?? "").Trim().ToLowerInvariant();
-        if (action == "list") return new ToolResult(SavesTree(store, dir, run, root, Rel).ToJsonString(Opts));
+        if (action == "list") return new ToolResult(SavesTree(store, dir, onTable, root, Rel).ToJsonString(Opts));
         string? into = a.Str("into") is { Length: > 0 } i ? Under(i) : root;
         try
         {
@@ -261,10 +260,10 @@ sealed partial class AgentTableTools
                 case "rename":
                     if (Under(a.Str("path")) is not { } renamed) return ToolResult.Fail("path is needed: a save or folder under the saves (list).");
                     if (a.Str("name")?.Trim() is not { Length: > 0 } to) return ToolResult.Fail("name is needed.");
-                    return Done("renamed to " + Rel(store.Rename(dir, renamed, to)));
+                    return Done("renamed to " + Rel(store.Rename(dir, renamed, to, onTable)));
                 case "delete":
                     if (Under(a.Str("path")) is not { } going || SaveStore.SamePath(going, root)) return ToolResult.Fail("path is needed: a save or folder under the saves (list).");
-                    store.TrashSaves(dir, going, Repeatable.UtcNow, run);
+                    store.TrashSaves(dir, going, Repeatable.UtcNow, onTable);
                     return Done($"{Rel(going)} went to the trash, kept {SaveStore.TrashDays} days");
                 case "new_folder":
                     if (into == null || !Directory.Exists(into)) return ToolResult.Fail("into is a folder under the saves (list).");
@@ -272,17 +271,17 @@ sealed partial class AgentTableTools
                 case "move":
                     if (Under(a.Str("path")) is not { } moving) return ToolResult.Fail("path is needed: a save or folder under the saves (list).");
                     if (into == null || !Directory.Exists(into)) return ToolResult.Fail("into is a folder under the saves (list).");
-                    return Done("moved to " + Rel(store.MoveSave(dir, moving, into)));
+                    return Done("moved to " + Rel(store.MoveSave(dir, moving, into, onTable)));
                 case "restore":
                     var trashName = a.Str("name")?.Trim() ?? "";
                     if (store.SavesTrash(dir).FirstOrDefault(x => string.Equals(x.Name, trashName, StringComparison.OrdinalIgnoreCase)) is not { } back)
                         return ToolResult.Fail("name is a trashed save's or folder's name (list shows the trash).");
                     store.Restore(back.Entry, s.Store.Root, Repeatable.UtcNow);
                     return Done($"{back.Name} is back where it was");
-                case "new_play":
-                    return await NewPlay(a, s, hud, dir, root, Under);
+                case "new_save":
+                    return await NewSave(a, s, hud, dir, root, Under);
                 default:
-                    return ToolResult.Fail("action is list, new_play, rename, delete, new_folder, move or restore.");
+                    return ToolResult.Fail("action is list, new_save, rename, delete, new_folder, move or restore.");
             }
         }
         catch (Exception e) when (SaveStore.IsFileTrouble(e)) { return ToolResult.Fail("Not done: " + e.Message); }
@@ -294,13 +293,11 @@ sealed partial class AgentTableTools
         }
     }
 
-    static JsonObject SavesTree(SaveStore store, string dir, string run, string root, Func<string, string> rel)
+    static JsonObject SavesTree(SaveStore store, string dir, string onTable, string root, Func<string, string> rel)
     {
-        var plays = store.Runs(dir).ToDictionary(r => Path.GetFullPath(r.Folder), r => r.Id, StringComparer.OrdinalIgnoreCase);
         JsonObject Folder(string path)
         {
             var o = new JsonObject { ["path"] = SaveStore.SamePath(path, root) ? "" : rel(path) };
-            if (plays.TryGetValue(Path.GetFullPath(path), out var id)) o["play"] = id == run ? "the play on the table now" : "a play";
             var saves = Directory.GetFiles(path, "*" + SaveStore.Ext).OrderByDescending(File.GetLastWriteTimeUtc);
             o["saves"] = new JsonArray(saves.Select(f => (JsonNode?)JsonValue.Create(Path.GetFileNameWithoutExtension(f))).ToArray());
             var folders = Directory.GetDirectories(path).Where(d => !Path.GetFileName(d).StartsWith('.')).OrderBy(d => d, StringComparer.CurrentCultureIgnoreCase);
@@ -309,28 +306,33 @@ sealed partial class AgentTableTools
         }
         Directory.CreateDirectory(root);
         var tree = Folder(root);
+        tree["on_table"] = rel(onTable);
         tree["trash"] = new JsonArray(store.SavesTrash(dir).Select(t => (JsonNode?)JsonValue.Create(t.Name + (t.Folder ? "/" : ""))).ToArray());
         return tree;
     }
 
-    async Task<ToolResult> NewPlay(JsonElement a, Session s, Hud hud, string dir, string root, Func<string?, string?> under)
+    async Task<ToolResult> NewSave(JsonElement a, Session s, Hud hud, string dir, string root, Func<string?, string?> under)
     {
-        if (hud.N.Server is not { } server) return ToolResult.Fail("Only the host makes plays.");
+        if (hud.N.Server is not { } server) return ToolResult.Fail("Only the host makes saves.");
         var store = SaveStore.Default;
-        var name = SaveNames.Clean(a.Str("name") ?? "", store.NextRunName(dir));
+        var name = SaveNames.Clean(a.Str("name") ?? "", store.NextGameName(dir));
         var from = (a.Str("from") ?? "start").Trim();
         LoadFrom source;
         if (string.Equals(from, "now", StringComparison.OrdinalIgnoreCase))
         {
             var (state, turns) = (server.State.DeepClone(), server.Turns.ToList());
-            source = new LoadFrom("the table", Start: () => (state, turns), PlayName: name);
+            source = new LoadFrom("the table", Start: () => (state, turns), SaveName: name);
         }
         else if (string.Equals(from, "start", StringComparison.OrdinalIgnoreCase))
         {
             var (packs, first) = (s.Store, server.Turns.FirstOrDefault());
-            source = new LoadFrom("the scenario's start", Start: () => SavesWindow.ScenarioStart(packs, dir, first), PlayName: name);
+            source = new LoadFrom("the scenario's start", Start: () => SavesWindow.ScenarioStart(packs, dir, first), SaveName: name);
         }
-        else if (under(from) is { } file && File.Exists(file)) source = new LoadFrom(Path.GetFileNameWithoutExtension(file), File: file, PlayName: name);
+        else if (under(from) is { } file && File.Exists(file))
+        {
+            var packs = s.Store;
+            source = new LoadFrom(Path.GetFileNameWithoutExtension(file), Start: () => { var g = KTable.Server.SaveLoader.Load(file, packs); return (g.State, g.Turns.ToList()); }, SaveName: name);
+        }
         else return ToolResult.Fail("from is start, now, or a save's path (list).");
         source = source with { PlaceIn = root };
         var done = new TaskCompletionSource<string?>();
@@ -339,11 +341,11 @@ sealed partial class AgentTableTools
             s.Review(null, null);
             hud.N.Saves.Load(source, problem => done.TrySetResult(problem));
         }
-        else hud.N.Saves.MakePlay(source, (_, problem) => done.TrySetResult(problem));
+        else hud.N.Saves.MakeSave(source, (_, problem) => done.TrySetResult(problem));
         var finished = await Task.WhenAny(done.Task, Task.Delay(TimeSpan.FromMinutes(PlayWaitMinutes)));
-        if (finished != done.Task) return ToolResult.Fail($"The play was not made in {PlayWaitMinutes} minutes.");
+        if (finished != done.Task) return ToolResult.Fail($"The save was not made in {PlayWaitMinutes} minutes.");
         if (await done.Task is { } problem) return ToolResult.Fail("Not made: " + problem);
-        _a.Log($"made the play {name}");
+        _a.Log($"made the save {name}");
         return new ToolResult(a.Flag("play") == true ? $"{name} is on the table, from {source.Name}." : $"Made {name}, from {source.Name}.");
     }
 

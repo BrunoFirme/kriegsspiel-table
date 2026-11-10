@@ -42,22 +42,20 @@ public partial class ExportDialog : ConfirmationDialog
     {
         var opt = new OptionButton { FitToLongestItem = false };
         opt.AddItem("None", (int)SavesMode.None);
-        string inPlay = "The game in play";
+        string inPlay = "The save on the table";
         try
         {
-            var live = saves.LivePath(scenarioDir);
-            var c = Json.Load<SaveFile>(live).Snapshot.Clock;
-            var folder = saves.CurrentRun(scenarioDir) is { } run ? saves.RunFolderOf(scenarioDir, run) : null;
-            inPlay += $" ({(folder != null ? Path.GetFileName(folder) + ", " : "")}turn {c.Turn}) and its saves";
+            if (saves.CurrentSave(scenarioDir) is { } live)
+                inPlay += $" ({Path.GetFileNameWithoutExtension(live)}{(Json.ReadSaveHeadline(live) is { } head ? $", turn {head.Preview.Turn}" : "")})";
         }
-        catch (Exception e) when (SaveStore.IsDamage(e) || e is IOException or UnauthorizedAccessException) { inPlay += " and its saves"; }
+        catch (Exception e) when (SaveStore.IsFileTrouble(e)) { BestEffort.Note(e); }
         opt.AddItem(inPlay, (int)SavesMode.InPlay);
         int files = 0;
         try { files = Directory.Exists(saves.SavesRoot(scenarioDir)) ? Directory.EnumerateFiles(saves.SavesRoot(scenarioDir), "*" + SaveStore.Ext,
             SearchOption.AllDirectories).Count(f => !SaveStore.IsHidden(saves.SavesRoot(scenarioDir), Path.GetDirectoryName(f)!)) : 0; }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException) { files = 0; }
         opt.AddItem($"Every save ({files} file{(files == 1 ? "" : "s")}, every folder)", (int)SavesMode.All);
-        opt.TooltipText = "Whoever installs the file gets these saves beside their own; the game in play becomes the one Resume opens.";
+        opt.TooltipText = "Whoever installs the file gets these saves beside their own; the save on the table becomes the one Resume opens.";
         opt.Selected = 0;
         return opt;
     }

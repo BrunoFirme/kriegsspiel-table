@@ -207,8 +207,8 @@ public static class WorkshopContent
             if (meta.Kind == "scenario")
             {
                 if (PutInPlace(store, folder, "scenario", meta.Id, skipPacks: true, null, journal)) meta.Trashed.Add($"the scenario '{scName}'");
-                if (SavesHandover.Install(saves, meta.Id, folder, meta.GameRun, Repeatable.UtcNow) is { } run)
-                    meta.InstalledGame = saves.RunFolderOf(meta.Id, run) is { } runFolder ? Path.GetFileName(runFolder) : "";
+                if (SavesHandover.Install(saves, meta.Id, folder, meta.GameRun, Repeatable.UtcNow) is { } installed)
+                    meta.InstalledGame = Path.GetFileNameWithoutExtension(installed);
             }
             if (journal.Finish() is { } warn) meta.Warnings.Add(warn);
             return meta;

@@ -19,10 +19,10 @@ sealed class MainMenu : HudPart
             pm.AddSeparator("This game");
             pm.AddItem("Invite…", 10);
             pm.AddItem("Scenario properties…", 20);
-            if (S.IsHost && N.Saves.RunInPlay != null)
+            if (S.IsHost && N.Saves.SaveInPlay != null)
             {
                 pm.AddItem($"Saves…   ({Cfg.Keys.Label("saves")})", 3);
-                pm.SetItemTooltip(pm.GetItemIndex(3), "This scenario's saves in folders: every ended turn, your own saves, a folder for each play of it");
+                pm.SetItemTooltip(pm.GetItemIndex(3), "This scenario's saves, each with every turn it ended, in folders you make");
             }
             if (S.IsHost) pm.AddItem("Save a copy as a new scenario…", 2);
             var convert = new PopupMenu { Name = "convert" };

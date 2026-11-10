@@ -136,7 +136,7 @@ public partial class Hud
         Hook<Action<string>>(h => T.PanelRequested += h, h => T.PanelRequested -= h, what =>
         {
             if (!S.IsUmpire) return;
-            if (what == "saves") { if (S.IsHost && N.Saves.RunInPlay != null) SavesWindow.Open(Ctx); }
+            if (what == "saves") { if (S.IsHost && N.Saves.SaveInPlay != null) SavesWindow.Open(Ctx); }
             else if (what == "scripts") ShowScriptWindow(null);
             else if (what == "console") { TogglePanel("console"); if (Panels.TryGetValue("console", out var cp) && cp.Visible) ScriptConsole?.FocusPrompt(); }
         });

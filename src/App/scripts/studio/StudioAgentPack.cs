@@ -40,7 +40,7 @@ sealed partial class StudioTools
             Args.Schema(), _ => TidyPack());
         yield return new AgentTool("studio_export_pack",
             "Saves the pack open in the studio as a .ktpack file to share or keep.",
-            Args.Schema(new Arg("path", "string", "where to write it (a folder or a full .ktpack path; default the Documents folder)")), ExportPack);
+            Args.Schema(new Arg("path", "string", "where to write it (a folder or a full .ktpack path; default the exports folder beside the packs)")), ExportPack);
     }
 
     Task<ToolResult> SetLook(JsonElement a) => Change(a, "changed a look", async (s, d) =>
@@ -107,7 +107,7 @@ sealed partial class StudioTools
         var given = a.Str("path");
         var file = given switch
         {
-            null or "" => Path.Combine(KTable.Core.DataPaths.Documents, s.Pack.Id + ".ktpack"),
+            null or "" => Path.Combine(KTable.Core.DataPaths.Exports, s.Pack.Id + ".ktpack"),
             _ when Directory.Exists(given) => Path.Combine(given, s.Pack.Id + ".ktpack"),
             _ => given.EndsWith(".ktpack", StringComparison.OrdinalIgnoreCase) ? given : given + ".ktpack",
         };

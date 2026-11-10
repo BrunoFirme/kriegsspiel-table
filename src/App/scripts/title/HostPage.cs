@@ -189,15 +189,15 @@ sealed class HostPage
         host.CustomMinimumSize = new Vector2(110, 34);
         host.AddThemeFontSizeOverride("font_size", 14);
         row.AddChild(host);
-        var over = new Button { Text = "New play", FocusMode = Control.FocusModeEnum.None, Visible = false, TooltipText = "Host the scenario from its start; the saved play stays where it is" };
+        var over = new Button { Text = "New save", FocusMode = Control.FocusModeEnum.None, Visible = false, TooltipText = "Host the scenario from its start in a new save; every save so far stays as it is" };
         over.AddThemeFontSizeOverride("font_size", 13);
         over.Pressed += () =>
         {
             if (!page.InPlay.ContainsKey(target)) return;
             var store0 = new PackageStore(PackageStore.DefaultRoot);
             var (setup, keep, back) = Main.StartOverPlan(store0, target);
-            Ui.Confirm(_main, "New play", "Start it", () => _main.StartOver(store0, target, setup, keep, m => _t.Status.Text = m),
-                $"The game starts again in a new folder of saves; every save made so far stays. {back}");
+            Ui.Confirm(_main, "New save", "Start it", () => _main.StartOver(store0, target, setup, keep, m => _t.Status.Text = m),
+                $"The game starts again in a new save; every save made so far stays. {back}");
         };
         row.AddChild(over);
         face.AddChild(row);

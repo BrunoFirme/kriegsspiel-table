@@ -33,10 +33,9 @@ public class HostSavesTests
         return why;
     }
 
-    GameServer HostRun(string run, int turns)
+    GameServer HostRun(string name, int turns)
     {
-        _store.MakeRun("feud", run, "Run 1", null, DateTime.UtcNow);
-        var server = Host(_store.LivePath("feud", run));
+        var server = Host(_store.NewSavePath("feud", name));
         server.State.ScenarioId = "feud";
         server.Handle(1, new SpawnPiece { Layer = Layers.Umpire, Def = "d", Pos = new Vec2(1, 1) });
         for (int i = 0; i < turns; i++) server.Handle(1, new AdvanceClock());
@@ -56,6 +55,7 @@ public class HostSavesTests
     }
     GameServer? _server;
     double _now;
+    byte[]? _picture;
     readonly HostSaves _saves;
     readonly SaveStore _store;
 
@@ -67,6 +67,7 @@ public class HostSavesTests
         {
             Dispatch = _ => { }, PostWriteBackDone = e => { lock (_posted) _posted.Add(e); }, Post = a => { lock (_mainThread) _mainThread.Enqueue(a); },
             Clock = () => _now,
+            PictureSince = _ => _picture,
             Log = new ClientLog { Error = _errors.Add },
             MirrorOf = () => "the host at 10.0.0.1",
         });
@@ -148,61 +149,67 @@ public class HostSavesTests
     }
 
     [Fact]
-    public void Loading_a_turn_writes_the_game_first_and_plays_on_in_a_new_folder_leaving_the_old_play_whole()
+    public void Loading_a_turn_writes_the_game_first_and_plays_on_in_a_new_save_beside_it_leaving_the_old_one_whole()
     {
-        var server = HostRun("r1", turns: 3);
+        var server = HostRun("Game 1", turns: 3);
         var old = _session.SavePath!;
+        var oldId = server.SaveId;
         Assert.Null(Load(new LoadFrom("Turn 1", TurnIndex: 1)));
-        Assert.Equal(3, Json.Load<SaveFile>(old).Turns.Count());
-        Assert.NotEqual(old, _session.SavePath);
-        var (dir, run) = _store.RunOf(_session.SavePath!)!.Value;
-        Assert.Equal("feud", dir);
-        Assert.Equal("Run 2 · from Turn 1", Path.GetFileName(_store.RunFolderOf(dir, run)));
+        Assert.Equal(3, Json.Load<SaveFile>(old).Turns.Count);
+        Assert.Equal(_store.SavesRoot("feud"), Path.GetDirectoryName(_session.SavePath));
+        Assert.StartsWith("Game 1 · from Turn 1", Path.GetFileName(_session.SavePath));
         Assert.Single(server.Turns);
         Assert.Equal(1, server.State.Clock.Turn);
+        Assert.NotEqual(oldId, server.SaveId);
         Assert.True(_saves.WaitForDisk());
         _saves.Harvest();
         Assert.Equal(1, Json.Load<SaveFile>(_session.SavePath!).Snapshot.Clock.Turn);
-        Assert.Equal(run, _store.CurrentRun("feud"));
+        Assert.Equal(_session.SavePath, _store.CurrentSave("feud"));
     }
 
     [Fact]
-    public void Loading_the_latest_of_another_play_carries_on_in_its_folder()
+    public void Loading_another_save_carries_on_in_it()
     {
-        var server = HostRun("r1", turns: 2);
+        var server = HostRun("Game 1", turns: 2);
+        var first = _session.SavePath!;
+        var (created, id) = (server.Created, server.SaveId);
         Assert.Null(Load(new LoadFrom("Turn 0", TurnIndex: 0)));
         Assert.True(_saves.WaitForDisk());
         _saves.Harvest();
-        Assert.Null(Load(new LoadFrom("Run 1", Run: "r1")));
-        Assert.Equal(_store.LivePath("feud", "r1"), _session.SavePath);
+        Assert.NotEqual(created, server.Created);
+        Assert.Null(Load(new LoadFrom("Game 1", File: first)));
+        Assert.Equal(first, _session.SavePath);
         Assert.Equal(2, server.Turns.Count);
         Assert.Equal(2, server.State.Clock.Turn);
+        Assert.Equal((created, id), (server.Created, server.SaveId));
         Assert.True(_saves.WaitForDisk());
         _saves.Harvest();
-        Assert.Equal("r1", _store.CurrentRun("feud"));
+        Assert.Equal(first, _store.CurrentSave("feud"));
     }
 
     [Fact]
-    public void Every_ended_turn_is_saved_into_the_play_s_folder_and_each_opens_with_the_turns_before_it()
+    public void Every_ended_turn_is_kept_inside_the_save_with_its_picture_and_no_turn_file_is_written()
     {
-        var server = HostRun("r1", turns: 0);
+        var server = HostRun("Game 1", turns: 0);
+        var path = _session.SavePath!;
+        _picture = new byte[] { 7, 7, 7 };
         server.Handle(1, new AdvanceClock());
+        TickUntil(() => server.Turns[0].Picture != null);
         server.Handle(1, new AdvanceClock());
-        var folder = _store.RunFolderOf("feud", "r1")!;
-        TickUntil(() => Directory.GetFiles(folder, "*" + SaveStore.Ext).Length == 2);
-        var saves = Directory.GetFiles(folder, "*" + SaveStore.Ext).Select(f => Json.Load<SaveFile>(f)).OrderBy(s => s.Snapshot.Clock.Turn).ToList();
-        Assert.Equal(new[] { 0, 1 }, saves.Select(s => s.Snapshot.Clock.Turn));
-        Assert.Equal(new[] { 0, 1 }, saves.Select(s => s.Turns.Count));
-        Assert.All(saves, s => Assert.Single(s.Snapshot.Layer(Layers.Umpire)));
-        Assert.True(Json.IsPacked(File.ReadAllBytes(Directory.GetFiles(folder, "*" + SaveStore.Ext)[0])));
-        server.Handle(1, new AdvanceClock());
-        TickUntil(() => Directory.GetFiles(folder, "*" + SaveStore.Ext).Length == 3);
+        server.Dirty = true;
+        _saves.SaveNow(closing: true);
+        var save = Json.Load<SaveFile>(path);
+        save.BindTurns();
+        Assert.Equal(new[] { 0, 1 }, save.Turns.Select(t => t.Turn));
+        Assert.Equal(new byte[] { 7, 7, 7 }, save.Turns[0].Picture);
+        Assert.All(save.Turns, t => Assert.Single(t.Unpack().Layer(Layers.Umpire)));
+        Assert.Equal(new[] { path }, _store.SaveFiles("feud"));
     }
 
     [Fact]
-    public void A_save_made_by_hand_goes_into_the_folder_chosen_and_a_name_taken_is_refused_unless_replaced()
+    public void A_copy_made_by_hand_goes_into_the_folder_chosen_with_its_own_id_and_a_name_taken_is_refused_unless_replaced()
     {
-        HostRun("r1", turns: 1);
+        var server = HostRun("Game 1", turns: 1);
         var root = _store.SavesRoot("feud");
         string? Save(bool replace)
         {
@@ -213,24 +220,27 @@ public class HostSavesTests
             return why;
         }
         Assert.Null(Save(false));
-        Assert.Single(Json.Load<SaveFile>(Path.Combine(root, "Before the attack" + SaveStore.Ext)).Turns);
+        var copy = Json.Load<SaveFile>(Path.Combine(root, "Before the attack" + SaveStore.Ext));
+        Assert.Single(copy.Turns);
+        Assert.NotEqual(server.SaveId, copy.Id);
         Assert.NotNull(Save(false));
         Assert.Null(Save(true));
         Assert.Contains(_store.TrashEntries(), e => e.Kind == TrashKind.Saves);
-        Assert.Single(Directory.GetFiles(root, "*" + SaveStore.Ext));
+        Assert.Single(Directory.GetFiles(root, "Before the attack*" + SaveStore.Ext));
     }
 
     [Fact]
-    public void A_new_play_is_made_beside_the_others_where_asked_and_the_table_stays_as_it_is()
+    public void A_new_save_is_made_where_asked_and_the_table_stays_as_it_is()
     {
-        var server = HostRun("r1", turns: 2);
+        var server = HostRun("Game 1", turns: 2);
+        var onTable = _session.SavePath!;
         server.Dirty = true;
         _saves.SaveNow(closing: true);
         var group = _store.MakeFolder("feud", _store.SavesRoot("feud"), "Second group");
         var start = new GameState { ScenarioId = "feud", Name = "Feud" };
         string? made = null, why = "never answered";
         bool answered = false;
-        _saves.MakePlay(new LoadFrom("the scenario's start", Start: () => (start, new List<TurnRecord>()), PlayName: "Group B", PlaceIn: group), (f, w) =>
+        _saves.MakeSave(new LoadFrom("the scenario's start", Start: () => (start, new List<TurnRecord>()), SaveName: "Group B", PlaceIn: group), (f, w) =>
         {
             made = f;
             why = w;
@@ -238,12 +248,27 @@ public class HostSavesTests
         });
         Assert.True(SpinWait.SpinUntil(() => { RunPosted(); return answered; }, 10000));
         Assert.Null(why);
-        Assert.Equal(Path.Combine(group, "Group B"), made);
-        var run = _store.Runs("feud").Single(r => r.Folder == made).Id;
-        Assert.Equal(0, Json.Load<SaveFile>(_store.LivePath("feud", run)).Snapshot.Clock.Turn);
+        Assert.Equal(Path.Combine(group, "Group B" + SaveStore.Ext), made);
+        Assert.Equal(0, Json.Load<SaveFile>(made!).Snapshot.Clock.Turn);
         Assert.Equal(2, server.State.Clock.Turn);
-        Assert.Equal("r1", _store.RunOf(_session.SavePath!)!.Value.Run);
-        Assert.Equal("r1", _store.CurrentRun("feud"));
+        Assert.Equal(onTable, _session.SavePath);
+        Assert.Equal(onTable, _store.CurrentSave("feud"));
+    }
+
+    [Fact]
+    public void A_save_copied_outside_the_app_gets_its_own_id_when_it_is_hosted()
+    {
+        var server = HostRun("Game 1", turns: 1);
+        server.Dirty = true;
+        _saves.SaveNow(closing: true);
+        var copy = Path.Combine(_store.SavesRoot("feud"), "Copy" + SaveStore.Ext);
+        File.Copy(_session.SavePath!, copy);
+        var again = new GameServer(new GameState { Name = "Feud" }, _session.Store) { SaveId = server.SaveId };
+        _server = again;
+        _session.SavePath = copy;
+        _saves.BeginHosting(copy, 0);
+        Assert.NotEqual(server.SaveId, again.SaveId);
+        Assert.NotEmpty(again.SaveId);
     }
 
     [Fact]
@@ -582,5 +607,114 @@ public class HostSavesTests
         var mirror = Json.Load<SaveFile>(path!);
         Assert.Equal("c1", mirror.Created);
         Assert.False(_session.Dirty);
+    }
+
+    string JoinAsCoUmpire(string created, string name)
+    {
+        _session.OnJoined(new JoinResult { Ok = true, PeerId = 2, Role = Role.Umpire, View = new GameState { Name = name, ScenarioId = name }, Created = created });
+        _saves.StartMirror(new JoinResult { Created = created });
+        Assert.True(_saves.WaitForDisk());
+        _saves.Harvest();
+        return _saves.MirrorPath!;
+    }
+
+    void HostSends(Command c, long skip = 0)
+    {
+        c.Seq = _session.Live.LastSeq + 1 + skip;
+        c.Actor = 1;
+        _session.OnCommand(c);
+    }
+
+    static SpawnPiece Spawn(int i) => new() { Layer = Layers.Umpire, Def = "d", Id = $"p-{i:000000}", Pos = new Vec2(i, 0) };
+
+    void MirrorTicks(int seconds)
+    {
+        for (int i = 0; i < seconds; i++)
+        {
+            _saves.TickMirror(1);
+            Assert.True(_saves.WaitForDisk());
+            Assert.True(_saves.WaitForLog());
+            _saves.Harvest();
+        }
+    }
+
+    static string MirrorName() => "Mirror log " + Guid.NewGuid().ToString("N");
+
+    [Fact]
+    public void A_mirror_logs_each_change_and_is_written_whole_only_at_the_turn_end()
+    {
+        var path = JoinAsCoUmpire("c1", MirrorName());
+        var first = File.ReadAllBytes(path);
+        for (int i = 0; i < 30; i++) { HostSends(Spawn(i)); MirrorTicks(1); }
+        Assert.Equal(first, File.ReadAllBytes(path));
+        var reopened = SaveLoader.Load(path);
+        Assert.Equal(30, reopened.State.Layer(Layers.Umpire).Count);
+        Assert.Equal(30, reopened.Loaded.ReplayedFromLog);
+        HostSends(new AdvanceClock());
+        MirrorTicks(1);
+        var whole = Json.Load<SaveFile>(path);
+        Assert.Equal(30, whole.Snapshot.Layer(Layers.Umpire).Count);
+        Assert.Single(whole.Turns!);
+        Assert.False(File.Exists(SaveLog.OldPathFor(path)));
+        Assert.Empty(_errors);
+    }
+
+    [Fact]
+    public void A_mirror_whose_table_was_fetched_again_is_written_whole_at_once()
+    {
+        var path = JoinAsCoUmpire("c1", MirrorName());
+        var fetched = new GameState { Name = _session.Live.Name, ScenarioId = _session.Live.ScenarioId, LastSeq = 40 };
+        fetched.Layer(Layers.Umpire).Add(new PieceInstance { Id = "p-000099", Def = "d" });
+        _session.SetView(fetched);
+        MirrorTicks(1);
+        var whole = Json.Load<SaveFile>(path);
+        Assert.Equal(40, whole.Snapshot.LastSeq);
+        Assert.Single(whole.Snapshot.Layer(Layers.Umpire));
+    }
+
+    [Fact]
+    public void A_mirror_that_missed_a_change_number_is_written_whole_at_once()
+    {
+        var path = JoinAsCoUmpire("c1", MirrorName());
+        HostSends(Spawn(0));
+        MirrorTicks(1);
+        HostSends(Spawn(1), skip: 4);
+        MirrorTicks(1);
+        var whole = Json.Load<SaveFile>(path);
+        Assert.Equal(2, whole.Snapshot.Layer(Layers.Umpire).Count);
+        Assert.Equal(6, whole.Snapshot.LastSeq);
+        Assert.Equal(2, SaveLoader.Load(path).State.Layer(Layers.Umpire).Count);
+    }
+
+    [Fact]
+    public void The_log_of_an_earlier_mirror_is_kept_in_its_copy_when_another_game_takes_its_place()
+    {
+        var name = MirrorName();
+        var path = JoinAsCoUmpire("c1", name);
+        for (int i = 0; i < 3; i++) { HostSends(Spawn(i)); MirrorTicks(1); }
+        _saves.CloseLog();
+        _saves.Stop();
+        JoinAsCoUmpire("c2", name);
+        var copy = _store.Checkpoints(path).First(c => c.Kind == CheckpointKind.StartOver);
+        var kept = Json.Load<SaveFile>(copy.Path);
+        Assert.Equal("c1", kept.Created);
+        Assert.Equal(3, kept.Snapshot.Layer(Layers.Umpire).Count);
+        Assert.Empty(Json.Load<SaveFile>(path).Snapshot.Layer(Layers.Umpire));
+    }
+
+    [Fact]
+    public void A_mirror_goes_to_the_trash_and_back_with_its_log()
+    {
+        var path = JoinAsCoUmpire("c1", MirrorName());
+        HostSends(Spawn(0));
+        MirrorTicks(1);
+        _saves.CloseLog();
+        _saves.Stop();
+        Assert.True(File.Exists(SaveLog.PathFor(path)));
+        _store.TrashMirror(path, DateTime.UtcNow);
+        Assert.False(File.Exists(path));
+        Assert.False(File.Exists(SaveLog.PathFor(path)));
+        _store.Restore(_store.TrashEntries().Single(e => e.Kind == TrashKind.Mirror), Path.Combine(_dir, "packages"), DateTime.UtcNow);
+        Assert.Single(SaveLoader.Load(path).State.Layer(Layers.Umpire));
     }
 }

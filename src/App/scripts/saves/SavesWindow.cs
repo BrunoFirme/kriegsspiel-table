@@ -24,7 +24,7 @@ sealed partial class SavesWindow : Window
     readonly HBoxContainer _path = new();
     readonly LineEdit _filter = new() { PlaceholderText = "Filter", ClearButtonEnabled = true, CustomMinimumSize = new Vector2(180, 0) };
     readonly LineEdit _name = new() { PlaceholderText = "Name", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-    readonly Button _save, _load, _look, _restore, _purge;
+    readonly Button _save, _load, _look, _turns, _restore, _purge;
     readonly Control[] _saveRow;
     readonly Label _status = new() { Modulate = Ui.Muted, ClipText = true, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
     readonly Dictionary<string, (DateTime at, Json.SaveHeadline? head)> _heads = new();
@@ -38,21 +38,24 @@ sealed partial class SavesWindow : Window
 
     static SavesWindow? _open;
 
-    sealed record Entry(string Path, string Name, bool Folder, string? Run = null, TrashedSave? Trashed = null);
+    sealed record Entry(string Path, string Name, bool Folder, TrashedSave? Trashed = null, int? Turn = null);
+
+    string? _turnsOf;
+    List<TurnRecord> _turnRecords = new();
 
     const string TrashKey = "trash:";
     bool _inTrash;
 
     public static void Open(HudContext c)
     {
-        if (!c.S.IsHost || c.N.Saves.RunInPlay is not var (dir, _)) return;
+        if (!c.S.IsHost || c.N.Saves.SaveInPlay is not var (dir, onTable)) return;
         if (_open != null && IsInstanceValid(_open)) { _open.GrabFocus(); return; }
         c.N.RequestPicture?.Invoke();
         var w = new SavesWindow(c, dir);
         _open = w;
         c.Root.AddChild(w);
         w.PopupCentered(new Vector2I(1040, 680));
-        w.Show(w.InPlayFolder() ?? w.Root);
+        w.Show(System.IO.Path.GetDirectoryName(onTable) ?? w.Root);
     }
 
     public static void LoadTurn(HudContext c, TurnInfo turn)
@@ -62,7 +65,7 @@ sealed partial class SavesWindow : Window
         {
             c.S.Review(null, null);
             c.N.Saves.Load(new LoadFrom(name, TurnIndex: turn.Index), why => Report(c, name, why));
-        }, LoadText(c, name), 420);
+        }, BranchText(c, name), 420);
     }
 
     SavesWindow(HudContext c, string scenarioDir)
@@ -98,10 +101,10 @@ sealed partial class SavesWindow : Window
         outer.AddChild(left);
         var make = new HBoxContainer();
         make.AddThemeConstantOverride("separation", Ui.Gap.Row);
-        var newPlay = Ui.Btn("New play…", NewPlay, "A new folder for another play of the scenario: from its start, the table now or the save chosen");
+        var newSave = Ui.Btn("New save…", NewSave, "Another game of the scenario: from its start, the table now, the save or the turn chosen");
         var newFolder = Ui.Btn("New folder", NewFolder, "A folder in the one shown, named in the list");
-        newPlay.SizeFlagsHorizontal = newFolder.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
-        make.AddChild(newPlay);
+        newSave.SizeFlagsHorizontal = newFolder.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
+        make.AddChild(newSave);
         make.AddChild(newFolder);
         left.AddChild(make);
         left.AddChild(_tree);
@@ -134,8 +137,10 @@ sealed partial class SavesWindow : Window
         bottom.AddChild(_save);
         bottom.AddChild(new VSeparator());
         _look = Ui.Btn("Look", () => { if (Chosen() is { } e) Look(e); }, "Show it on the table without loading it");
-        _load = Ui.Btn("Load", () => { if (Chosen() is { } e) Load(e); }, "The table becomes this save, for everyone at the table");
+        _turns = Ui.Btn("Turns", () => { if (Chosen() is { Folder: false, Trashed: null, Turn: null } e) ShowTurns(e.Path); }, "Every ended turn kept in this save");
+        _load = Ui.Btn("Load", () => { if (Chosen() is { } e) Load(e); }, "The table becomes this save, for everyone at the table, and play goes on in it");
         bottom.AddChild(_look);
+        bottom.AddChild(_turns);
         bottom.AddChild(_load);
         _restore = Ui.Primary("Restore", () => Restore(PickedTrash()), "Put it back where it was");
         _purge = Ui.Btn("Delete for good", () => Purge(PickedTrash()));
@@ -143,7 +148,7 @@ sealed partial class SavesWindow : Window
         bottom.AddChild(spacer);
         bottom.AddChild(_purge);
         bottom.AddChild(_restore);
-        _saveRow = new Control[] { _name, _save, bottom.GetChild<Control>(2), _look, _load };
+        _saveRow = new Control[] { _name, _save, bottom.GetChild<Control>(2), _look, _turns, _load };
         right.AddChild(bottom);
         right.AddChild(_status);
         _name.TextSubmitted += _ => SaveHere(false);
@@ -193,18 +198,22 @@ sealed partial class SavesWindow : Window
         return null;
     }
 
-    (string ScenarioDir, string Run)? InPlay => _c.N.Saves.RunInPlay;
+    string? OnTable => _c.N.Saves.SaveInPlay?.Path;
 
-    string? InPlayFolder() => InPlay is var (dir, run) ? _store.RunFolderOf(dir, run) : null;
+    bool IsOnTable(Entry e) => e.Turn == null && !e.Folder && e.Trashed == null && SaveStore.SamePath(e.Path, OnTable);
+
+    bool HoldsOnTable(string path) => OnTable is { } t && (SaveStore.SamePath(path, t) || Inside(t, path));
 
     void Show(string folder)
     {
+        _turnsOf = null;
         _inTrash = folder == TrashKey;
         if (!_inTrash) _folder = Directory.Exists(folder) ? folder : Root;
         else if (!Directory.Exists(_folder)) _folder = Root;
         folder = _folder;
         _pick.Clear();
         foreach (var c in _saveRow) c.Visible = !_inTrash;
+        _turns.Visible = !_inTrash;
         _restore.Visible = _purge.Visible = _inTrash;
         _name.PlaceholderText = $"Save the table in {(SaveStore.SamePath(folder, Root) ? "Saves" : System.IO.Path.GetFileName(folder))} as…";
         FillTree();
@@ -222,8 +231,7 @@ sealed partial class SavesWindow : Window
     void FillTreeNow()
     {
         _tree.Clear();
-        var runs = _store.Runs(_scenarioDir).ToDictionary(r => r.Folder, r => r.Id, StringComparer.OrdinalIgnoreCase);
-        var inPlay = InPlayFolder();
+        var holder = OnTable is { } t ? System.IO.Path.GetDirectoryName(t) : null;
         var hidden = _tree.CreateItem();
         var top = _tree.CreateItem(hidden);
         top.SetText(0, "Saves");
@@ -238,8 +246,11 @@ sealed partial class SavesWindow : Window
                 var item = _tree.CreateItem(parent);
                 item.SetText(0, System.IO.Path.GetFileName(d));
                 item.SetMetadata(0, d);
-                if (SaveStore.SamePath(d, inPlay)) item.SetCustomColor(0, Ui.AccentInk);
-                if (runs.ContainsKey(d)) item.SetTooltipText(0, SaveStore.SamePath(d, inPlay) ? "The game on the table now is saved here" : "A play of the scenario");
+                if (SaveStore.SamePath(d, holder))
+                {
+                    item.SetCustomColor(0, Ui.AccentInk);
+                    item.SetTooltipText(0, "The game on the table now is saved here");
+                }
                 Add(item, d);
                 if (!_inTrash && SaveStore.SamePath(d, _folder)) item.Select(0);
             }
@@ -271,14 +282,61 @@ sealed partial class SavesWindow : Window
             b.Pressed += () => Show(at);
             _path.AddChild(b);
         }
+        if (_turnsOf != null)
+        {
+            _path.AddChild(new Label { Text = "/", Modulate = Ui.Faint });
+            _path.AddChild(new Label { Text = System.IO.Path.GetFileNameWithoutExtension(_turnsOf) + " · turns" });
+        }
+    }
+
+    void ShowTurns(string save)
+    {
+        if (_busy) return;
+        if (SaveStore.SamePath(save, OnTable) && _c.N.Server is { } server)
+        {
+            OpenTurns(save, server.Turns.ToList());
+            return;
+        }
+        Busy(true, "Reading " + System.IO.Path.GetFileNameWithoutExtension(save) + "…");
+        Task.Run(() =>
+        {
+            List<TurnRecord>? turns = null;
+            string? why = null;
+            try
+            {
+                var file = Json.Load<SaveFile>(save);
+                file.BindTurns();
+                turns = file.Turns;
+            }
+            catch (Exception ex) when (SaveStore.IsFileTrouble(ex)) { why = ex.Message; }
+            Callable.From(() =>
+            {
+                if (!IsInstanceValid(this)) return;
+                Busy(false, why == null ? "" : $"{System.IO.Path.GetFileNameWithoutExtension(save)} could not be read: {why}");
+                if (turns != null) OpenTurns(save, turns);
+            }).CallDeferred();
+        });
+    }
+
+    void OpenTurns(string save, List<TurnRecord> turns)
+    {
+        _folder = System.IO.Path.GetDirectoryName(save) ?? Root;
+        _turnsOf = save;
+        _turnRecords = turns;
+        _pick.Clear();
+        _name.Visible = _save.Visible = false;
+        _turns.Visible = false;
+        FillPath();
+        FillTiles();
     }
 
     List<Entry> Entries()
     {
         if (_inTrash) return _store.SavesTrash(_scenarioDir).Select(t => new Entry(t.Entry.Path, t.Name, t.Folder, Trashed: t)).ToList();
+        if (_turnsOf is { } save)
+            return Enumerable.Range(0, _turnRecords.Count).Reverse()
+                .Select(i => new Entry($"{save}#{i}", SaveNames.Turn(_turnRecords[i].Turn, _turnRecords[i].GameTime), false, Turn: i)).ToList();
         var list = new List<Entry>();
-        if (_store.Runs(_scenarioDir).FirstOrDefault(r => SaveStore.SamePath(r.Folder, _folder)) is { } run && File.Exists(_store.LivePath(_scenarioDir, run.Id)))
-            list.Add(new Entry(_store.LivePath(_scenarioDir, run.Id), "Latest", false, run.Id));
         try
         {
             list.AddRange(Directory.GetDirectories(_folder).Where(d => !System.IO.Path.GetFileName(d).StartsWith('.'))
@@ -298,13 +356,13 @@ sealed partial class SavesWindow : Window
         var shown = Entries().Where(e => filter.Length == 0 || e.Name.Contains(filter, StringComparison.CurrentCultureIgnoreCase)).ToList();
         _pick.Show(shown.Select(e => e.Path));
         foreach (var e in shown) _tiles.AddChild(Tile(e));
-        if (shown.Count == 0) _tiles.AddChild(new Label { Text = filter.Length > 0 ? "Nothing matches" : "Empty", Modulate = Ui.Faint });
+        if (shown.Count == 0) _tiles.AddChild(new Label { Text = filter.Length > 0 ? "Nothing matches" : _turnsOf != null ? "No turn has ended yet" : "Empty", Modulate = Ui.Faint });
         Sync();
     }
 
     PanelContainer Tile(Entry e)
     {
-        var tile = new PanelContainer { CustomMinimumSize = new Vector2(TileWidth, 0), MouseFilter = Control.MouseFilterEnum.Stop, TooltipText = e.Folder ? "" : e.Path };
+        var tile = new PanelContainer { CustomMinimumSize = new Vector2(TileWidth, 0), MouseFilter = Control.MouseFilterEnum.Stop, TooltipText = e.Folder || e.Turn != null ? "" : e.Path };
         tile.AddThemeStyleboxOverride("panel", Ui.Card(6, 6));
         var v = new VBoxContainer();
         v.AddThemeConstantOverride("separation", Ui.Gap.Tight);
@@ -323,12 +381,17 @@ sealed partial class SavesWindow : Window
         v.AddChild(plate);
         var name = new Label { Text = e.Name, ClipText = true, MouseFilter = Control.MouseFilterEnum.Ignore };
         name.AddThemeFontSizeOverride("font_size", 13);
-        if (e.Run != null && e.Run == InPlay?.Run) name.Text = "Latest · on the table";
+        if (IsOnTable(e))
+        {
+            name.Text = e.Name + " · on the table";
+            name.Modulate = Ui.AccentInk;
+        }
         v.AddChild(name);
         var meta = new Label { Text = e.Trashed is { } gone ? Gone(gone) : e.Folder ? FolderLine(e.Path) : "", ClipText = true, Modulate = Ui.Muted, MouseFilter = Control.MouseFilterEnum.Ignore };
         meta.AddThemeFontSizeOverride("font_size", 11);
         v.AddChild(meta);
         if (e.Trashed is { Folder: false } trashedSave) ReadHead(e with { Path = trashedSave.Item }, picture, meta);
+        else if (e.Turn is int ti) ShowTurn(_turnRecords[ti], picture, meta);
         else if (!e.Folder && e.Trashed == null) ReadHead(e, picture, meta);
         tile.GuiInput += ev =>
         {
@@ -339,7 +402,8 @@ sealed partial class SavesWindow : Window
             {
                 _pick.PickForMenu(e.Path);
                 Paint();
-                if (_pick.Count > 1) ManyMenu(at);
+                if (e.Turn != null) TurnMenu(e, at);
+                else if (_pick.Count > 1) ManyMenu(at);
                 else if (e.Trashed is { } t) TrashMenu(new[] { t }, at);
                 else if (e.Folder) FolderMenu(e, at);
                 else SaveMenu(e, at);
@@ -356,7 +420,7 @@ sealed partial class SavesWindow : Window
             _pick.Click(e.Path, toggle: mb.CtrlPressed || mb.MetaPressed, range: mb.ShiftPressed);
             Paint();
         };
-        if (e.Run == null && e.Trashed == null)
+        if (e.Turn == null && e.Trashed == null && !IsOnTable(e))
             tile.SetDragForwarding(Callable.From((Vector2 _) =>
             {
                 var paths = _pick.Has(e.Path) ? _pick.Picked.ToList() : new List<string> { e.Path };
@@ -375,6 +439,14 @@ sealed partial class SavesWindow : Window
             return n switch { 0 => "Empty", 1 => "1 save", _ => $"{n} saves" };
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException) { return ""; }
+    }
+
+    void ShowTurn(TurnRecord t, TextureRect picture, Label meta)
+    {
+        var ended = DateTime.TryParse(t.EndedAt, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.RoundtripKind, out var at)
+            ? " · " + TitleStyle.Ago(at.ToLocalTime()) : "";
+        meta.Text = $"{t.Pieces} pieces{ended}";
+        picture.Texture = t.Picture is { Length: > 0 } jpg ? Picture(jpg) : MapThumb();
     }
 
     void ReadHead(Entry e, TextureRect picture, Label meta) => HeadOf(e.Path, head => { if (IsInstanceValid(picture)) ShowHead(e, head, picture, meta); });
@@ -458,7 +530,7 @@ sealed partial class SavesWindow : Window
     {
         foreach (var (p, t) in _tileOf)
             if (IsInstanceValid(t)) t.AddThemeStyleboxOverride("panel", _pick.Has(p) ? Ui.Box(SelectedFill, 4, 6, 6) : Ui.Card(6, 6));
-        if (Chosen() is { Folder: false, Trashed: null } e && e.Run == null) _name.Text = e.Name;
+        if (Chosen() is { Folder: false, Trashed: null, Turn: null } e && !IsOnTable(e)) _name.Text = e.Name;
         Sync();
     }
 
@@ -483,8 +555,9 @@ sealed partial class SavesWindow : Window
     {
         var e = Chosen();
         bool save = e is { Folder: false, Trashed: null };
-        _look.Disabled = _busy || !save || e!.Run == InPlay?.Run;
-        _load.Disabled = _busy || !save || e!.Run == InPlay?.Run;
+        _look.Disabled = _busy || !save || IsOnTable(e!);
+        _load.Disabled = _busy || !save || IsOnTable(e!);
+        _turns.Disabled = _busy || !save || e!.Turn != null;
         _save.Disabled = _busy || _name.Text.Trim().Length == 0;
         int trashed = _inTrash ? _pick.Count : 0;
         _restore.Disabled = _purge.Disabled = _busy || trashed == 0;
@@ -506,13 +579,14 @@ sealed partial class SavesWindow : Window
         else if (k.Keycode is Key.Delete or Key.Backspace && _pick.Count > 0)
         {
             if (_inTrash) Purge(PickedTrash());
-            else Delete(PickedEntries().Where(x => x.Run == null).ToList());
+            else if (_turnsOf == null) Delete(PickedEntries().Where(x => !IsOnTable(x)).ToList());
             SetInputAsHandled();
         }
     }
 
     void ManyMenu(Vector2 at)
     {
+        if (_turnsOf != null) return;
         var picked = PickedEntries();
         var pm = new PopupMenu();
         if (_inTrash)
@@ -520,7 +594,7 @@ sealed partial class SavesWindow : Window
             TrashMenu(PickedTrash(), at);
             return;
         }
-        var movable = picked.Where(x => x.Run == null).ToList();
+        var movable = picked.Where(x => !IsOnTable(x)).ToList();
         AddMoveTo(pm, movable);
         pm.AddSeparator();
         pm.AddItem($"Delete {Items(movable.Count)}…", 5);
@@ -577,12 +651,14 @@ sealed partial class SavesWindow : Window
         Sync();
     }
 
-    static string LoadText(HudContext c, string name)
-    {
-        var inPlay = c.N.Saves.RunInPlay is var (dir, run) ? SaveStore.Default.RunFolderOf(dir, run) : null;
-        var kept = inPlay != null ? System.IO.Path.GetFileName(inPlay) : "the game on the table";
-        return $"The table becomes {name} for everyone at the table. Play from there is saved in a new folder; {kept} stays as it is.";
-    }
+    static string OnTableName(HudContext c) =>
+        c.N.Saves.SaveInPlay is var (_, path) ? System.IO.Path.GetFileNameWithoutExtension(path) : "the game on the table";
+
+    static string LoadText(HudContext c, string name) =>
+        $"The table becomes {name} for everyone at the table, and play goes on in it. {OnTableName(c)} is saved first and stays as it is.";
+
+    static string BranchText(HudContext c, string name) =>
+        $"The table becomes {name} for everyone at the table, as a new save beside {OnTableName(c)}, which stays as it is.";
 
     static void Report(HudContext c, string name, string? why)
     {
@@ -592,16 +668,14 @@ sealed partial class SavesWindow : Window
 
     void Load(Entry e)
     {
-        if (e.Folder || _busy) return;
-        if (e.Run != null && e.Run == InPlay?.Run) return;
-        var name = e.Run != null && _store.RunFolderOf(_scenarioDir, e.Run) is { } runFolder ? System.IO.Path.GetFileName(runFolder) : e.Name;
-        var text = e.Run != null
-            ? $"The table becomes the latest of {name} for everyone at the table, and play goes on in that folder. The game on the table now stays where it is."
-            : LoadText(_c, name);
+        if (e.Folder || _busy || IsOnTable(e)) return;
+        var name = e.Turn != null && _turnsOf is { } save ? $"{System.IO.Path.GetFileNameWithoutExtension(save)} · {e.Name}" : e.Name;
+        var from = e.Turn is int ti && _turnsOf is { } of
+            ? (SaveStore.SamePath(of, OnTable) ? new LoadFrom(name, TurnIndex: ti) : new LoadFrom(name, File: of, TurnIndex: ti))
+            : new LoadFrom(name, File: e.Path);
         Ui.Confirm(this, "Load " + name, "Load", () =>
         {
             Busy(true, "Loading " + name + "…");
-            var from = e.Run != null ? new LoadFrom(name, Run: e.Run) : new LoadFrom(name, File: e.Path);
             _c.S.Review(null, null);
             _c.N.Saves.Load(from, why =>
             {
@@ -610,12 +684,24 @@ sealed partial class SavesWindow : Window
                 Busy(false, why == null ? null : "Not loaded: " + why);
                 if (why == null) QueueFree();
             });
-        }, text, 420);
+        }, e.Turn != null ? BranchText(_c, name) : LoadText(_c, name), 420);
     }
 
     void Look(Entry e)
     {
         if (e.Folder || _busy) return;
+        if (e.Turn is int turn && _turnsOf is { } save)
+        {
+            if (SaveStore.SamePath(save, OnTable)) _c.N.RequestTurn(turn);
+            else
+            {
+                var record = _turnRecords[turn];
+                var state = record.Unpack();
+                _c.S.Review(state, new TurnInfo { Index = -1, Turn = record.Turn, GameTime = record.GameTime, SaveName = $"{System.IO.Path.GetFileNameWithoutExtension(save)} · {e.Name}" });
+            }
+            QueueFree();
+            return;
+        }
         Busy(true, "Reading " + e.Name + "…");
         var packs = _c.S.Store;
         Task.Run(() =>
@@ -711,7 +797,8 @@ sealed partial class SavesWindow : Window
         Callable.From(() =>
         {
             if (!IsInstanceValid(this)) return;
-            OnDisk("Renaming…", () => _store.Rename(_scenarioDir, path, name), renamed => Show(SaveStore.SamePath(path, _folder) ? renamed : _folder));
+            var onTable = OnTable;
+            OnDisk("Renaming…", () => _store.Rename(_scenarioDir, path, name, onTable), renamed => Show(SaveStore.SamePath(path, _folder) ? renamed : _folder));
         }).CallDeferred();
     }
 
@@ -721,14 +808,20 @@ sealed partial class SavesWindow : Window
         RenameByPrompt(e);
     }
 
-    void RenameByPrompt(Entry e) =>
-        Prompt("Rename " + e.Name, "Rename", e.Name, name => OnDisk("Renaming…", () => _store.Rename(_scenarioDir, e.Path, name), p => { Show(e.Folder && SaveStore.SamePath(e.Path, _folder) ? p : _folder); }));
+    void RenameByPrompt(Entry e) => Prompt("Rename " + e.Name, "Rename", e.Name, name => RenameTo(e, name));
+
+    void RenameTo(Entry e, string name)
+    {
+        var onTable = OnTable;
+        OnDisk("Renaming…", () => _store.Rename(_scenarioDir, e.Path, name, onTable), p => Show(e.Folder && SaveStore.SamePath(e.Path, _folder) ? p : _folder));
+    }
 
     void Move(IReadOnlyList<string> paths, string into)
     {
         var moving = paths.Where(p => p.Length > 0 && !SaveStore.SamePath(System.IO.Path.GetDirectoryName(p), into) && !Inside(into, p)).ToList();
         if (moving.Count == 0) return;
-        OnDisk("Moving…", () => EachOf(moving, p => { _store.MoveSave(_scenarioDir, p, into); return ""; }), said => { if (moving.Count > 1) Tell(said); Show(_folder); });
+        var onTable = OnTable;
+        OnDisk("Moving…", () => EachOf(moving, p => { _store.MoveSave(_scenarioDir, p, into, onTable); return ""; }), said => { if (moving.Count > 1) Tell(said); Show(_folder); });
     }
 
     static bool Inside(string path, string folder) =>
@@ -738,19 +831,19 @@ sealed partial class SavesWindow : Window
 
     void Delete(IReadOnlyList<Entry> many)
     {
-        var inPlay = InPlay?.Run;
-        var held = many.Where(e => _store.RunsIn(_scenarioDir, e.Path).Any(r => r.Id == inPlay)).ToList();
+        var onTable = OnTable;
+        var held = many.Where(e => HoldsOnTable(e.Path)).ToList();
         var going = many.Except(held).ToList();
         if (going.Count == 0)
         {
-            if (held.Count > 0) Tell("The game on the table now is saved in that folder: load another save first.");
+            if (held.Count > 0) Tell("The game on the table now is saved there: load another save first.");
             return;
         }
         var title = going.Count == 1 ? going[0].Name : Items(going.Count);
         var what = going.Count > 1 ? $"{Items(going.Count)} go" : going[0].Folder ? $"{going[0].Name} and everything in it go" : $"{going[0].Name} goes";
         var kept = held.Count > 0 ? $" {held[0].Name} stays: the game on the table is saved in it." : "";
         Ui.Confirm(this, "Delete " + title, "Delete", () =>
-            OnDisk("Deleting…", () => EachOf(going, e => { _store.TrashSaves(_scenarioDir, e.Path, Repeatable.UtcNow, inPlay); return ""; }),
+            OnDisk("Deleting…", () => EachOf(going, e => { _store.TrashSaves(_scenarioDir, e.Path, Repeatable.UtcNow, onTable); return ""; }),
                 said => { if (going.Count > 1) Tell(said); Show(going.Any(e => Inside(_folder, e.Path)) ? Root : _folder); }),
             $"{what} to the trash, where {(going.Count > 1 || going[0].Folder ? "they stay" : "it stays")} {SaveStore.TrashDays} days.{kept}", 360);
     }
@@ -760,19 +853,20 @@ sealed partial class SavesWindow : Window
         var paths = Dragged(data);
         var into = _tree.GetItemAtPosition(at)?.GetMetadata(0).AsString();
         if (string.IsNullOrEmpty(into) || paths.Count == 0 || _inTrash) return null;
-        if (into == TrashKey) return paths.Any(p => _store.RunsIn(_scenarioDir, p).Any(r => r.Id == InPlay?.Run)) ? null : into;
+        if (into == TrashKey) return paths.Any(HoldsOnTable) ? null : into;
         return paths.All(p => Inside(into, p)) ? null : into;
     }
 
     void SaveMenu(Entry e, Vector2 at)
     {
         var pm = new PopupMenu();
-        bool inPlay = e.Run != null && e.Run == InPlay?.Run;
+        bool onTable = IsOnTable(e);
         pm.AddItem("Load", 1);
-        pm.SetItemDisabled(0, inPlay);
+        pm.SetItemDisabled(0, onTable);
         pm.AddItem("Look", 2);
-        pm.SetItemDisabled(1, inPlay);
-        if (e.Run == null)
+        pm.SetItemDisabled(1, onTable);
+        pm.AddItem("Turns", 6);
+        if (!onTable)
         {
             pm.AddSeparator();
             pm.AddItem("Rename…", 3);
@@ -796,7 +890,23 @@ sealed partial class SavesWindow : Window
                 case 5:
                     Delete(e);
                     break;
+                case 6:
+                    ShowTurns(e.Path);
+                    break;
             }
+        };
+        Pop(pm, at);
+    }
+
+    void TurnMenu(Entry e, Vector2 at)
+    {
+        var pm = new PopupMenu();
+        pm.AddItem("Look", 2);
+        pm.AddItem("Load as a new save", 1);
+        pm.IdPressed += id =>
+        {
+            if (id == 1) Load(e);
+            else Look(e);
         };
         Pop(pm, at);
     }
@@ -857,16 +967,16 @@ sealed partial class SavesWindow : Window
         InPlace.Ask(this, title, ok, () => { if (edit.Text.Trim().Length > 0) done(edit.Text.Trim()); }, null, edit, edit);
     }
 
-    void NewPlay()
+    void NewSave()
     {
         if (_c.N.Server is not { } server) return;
-        var chosen = Chosen() is { Folder: false, Run: null } save ? save : null;
+        var chosen = Chosen() is { Folder: false, Trashed: null } picked ? picked : null;
         var form = Ui.Form(Ui.DialogLabels);
-        var name = new LineEdit { Text = _store.NextRunName(_scenarioDir), CustomMinimumSize = new Vector2(280, 0), SelectAllOnFocus = true };
+        var name = new LineEdit { Text = _store.NextGameName(_scenarioDir), CustomMinimumSize = new Vector2(280, 0), SelectAllOnFocus = true };
         var from = new OptionButton { FitToLongestItem = false };
         from.AddItem("The scenario's start", 0);
         from.AddItem("The table now", 1);
-        if (chosen != null) { from.AddItem(chosen.Name, 2); from.Selected = 2; }
+        if (chosen != null) { from.AddItem(chosen.Turn != null && _turnsOf != null ? $"{System.IO.Path.GetFileNameWithoutExtension(_turnsOf)} · {chosen.Name}" : chosen.Name, 2); from.Selected = 2; }
         form.AddChild(new Label { Text = "Name" });
         form.AddChild(name);
         form.AddChild(new Label { Text = "Starts from" });
@@ -877,26 +987,30 @@ sealed partial class SavesWindow : Window
         box.AddThemeConstantOverride("separation", Ui.Gap.Group);
         box.AddChild(form);
         box.AddChild(play);
-        InPlace.Ask(this, "New play", "Create", () => CreatePlay(server, SaveNames.Clean(name.Text, _store.NextRunName(_scenarioDir)), from.GetSelectedId(), chosen, play.ButtonPressed), null, box, name);
+        InPlace.Ask(this, "New save", "Create", () => CreateSave(server, SaveNames.Clean(name.Text, _store.NextGameName(_scenarioDir)), from.GetSelectedId(), chosen, play.ButtonPressed), null, box, name);
     }
 
-    void CreatePlay(KTable.Server.GameServer server, string name, long startsFrom, Entry? chosen, bool play)
+    void CreateSave(KTable.Server.GameServer server, string name, long startsFrom, Entry? chosen, bool play)
     {
-        var shownIsPlay = _store.Runs(_scenarioDir).Any(r => SaveStore.SamePath(r.Folder, _folder));
-        var placeIn = shownIsPlay ? System.IO.Path.GetDirectoryName(_folder) : _folder;
         LoadFrom source;
-        if (startsFrom == 2 && chosen != null) source = new LoadFrom(chosen.Name, File: chosen.Path, PlayName: name);
+        if (startsFrom == 2 && chosen is { Turn: int turn } && _turnsOf is { } of)
+            source = SaveStore.SamePath(of, OnTable) ? new LoadFrom(chosen.Name, TurnIndex: turn, SaveName: name) : new LoadFrom(chosen.Name, File: of, TurnIndex: turn, SaveName: name);
+        else if (startsFrom == 2 && chosen != null)
+        {
+            var (path, packs) = (chosen.Path, _c.S.Store);
+            source = new LoadFrom(chosen.Name, Start: () => { var g = KTable.Server.SaveLoader.Load(path, packs); return (g.State, g.Turns.ToList()); }, SaveName: name);
+        }
         else if (startsFrom == 1)
         {
             var (state, turns) = (server.State.DeepClone(), server.Turns.ToList());
-            source = new LoadFrom("the table", Start: () => (state, turns), PlayName: name);
+            source = new LoadFrom("the table", Start: () => (state, turns), SaveName: name);
         }
         else
         {
             var (store, dir, first) = (_c.S.Store, _scenarioDir, server.Turns.FirstOrDefault());
-            source = new LoadFrom("the scenario's start", Start: () => ScenarioStart(store, dir, first), PlayName: name);
+            source = new LoadFrom("the scenario's start", Start: () => ScenarioStart(store, dir, first), SaveName: name);
         }
-        source = source with { PlaceIn = placeIn };
+        source = source with { PlaceIn = _folder };
         if (play)
         {
             Ui.Confirm(this, "Put " + name + " on the table", "Load", () =>
@@ -910,15 +1024,20 @@ sealed partial class SavesWindow : Window
                     Busy(false, why == null ? null : "Not loaded: " + why);
                     if (why == null) QueueFree();
                 });
-            }, LoadText(_c, name), 420);
+            }, BranchText(_c, name), 420);
             return;
         }
         Busy(true, "Making " + name + "…");
-        _c.N.Saves.MakePlay(source, (folder, why) =>
+        _c.N.Saves.MakeSave(source, (made, why) =>
         {
             if (!IsInstanceValid(this)) return;
             Busy(false, why != null ? "Not made: " + why : "");
-            if (folder != null) Show(folder);
+            if (made != null)
+            {
+                Show(System.IO.Path.GetDirectoryName(made) ?? Root);
+                _pick.Click(made, toggle: false, range: false);
+                Paint();
+            }
         });
     }
 

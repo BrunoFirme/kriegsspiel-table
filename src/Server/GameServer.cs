@@ -11,7 +11,9 @@ public sealed partial class GameServer
     public GameState State { get; private set; }
     public GameAccess Access { get; }
     public PackageStore? Store { get; }
-    public string Created { get; }
+    public string Created { get; private set; }
+    public string SaveId { get; set; } = "";
+    readonly TurnSealer _sealer = new();
     public bool Dirty { get; set; }
     public byte[]? Picture { get; set; }
 
@@ -460,7 +462,7 @@ public sealed partial class GameServer
             GiveBackIds(nextId, seqBefore);
             return Refuse(res, peerId, $"{c?.GetType().Name ?? "a command"} could not be applied: {e.Message}");
         }
-        if (ending != null) Turns.Add(ending);
+        if (ending != null) { Turns.Add(ending); _sealer.Seal(Turns); }
         if (c is RestoreTurn restored)
         {
             Turns.RemoveRange(restored.Index, Turns.Count - restored.Index);
@@ -636,7 +638,7 @@ public sealed partial class GameServer
             inverse = null;
         }
         if (err != null) { GiveBackIds(nextId, seqBefore); return (err, null); }
-        if (ending != null) Turns.Add(ending);
+        if (ending != null) { Turns.Add(ending); _sealer.Seal(Turns); }
         LastInverse = inverse;
         return (null, inverse);
     }
@@ -763,19 +765,33 @@ public sealed partial class GameServer
         return res;
     }
 
-    public SaveFile ToSave(bool copy = true) => new()
+    public SaveFile ToSave(bool copy = true)
     {
-        ScenarioId = State.ScenarioId, Created = Created, Saved = Repeatable.UtcNow.ToString("o"), Preview = SavePreview.Of(State, Picture),
-        Access = Access.Clone(), Snapshot = copy ? State.DeepClone() : State, Turns = Turns.ToList(),
-    };
+        _sealer.Seal(Turns);
+        return new SaveFile
+        {
+            Id = SaveId, ScenarioId = State.ScenarioId, Created = Created, Saved = Repeatable.UtcNow.ToString("o"), Preview = SavePreview.Of(State, Picture),
+            Access = Access.Clone(), Snapshot = copy ? State.DeepClone() : State,
+        }.WithTurns(Turns);
+    }
 
-    public List<Outgoing> LoadSave(GameState state, IEnumerable<TurnRecord> turns, string name)
+    public bool TurnsSealed(TimeSpan wait)
     {
+        bool done = _sealer.WaitForAll(wait);
+        _sealer.Seal(Turns);
+        return done;
+    }
+
+    public List<Outgoing> LoadSave(GameState state, IEnumerable<TurnRecord> turns, string name, string? created = null, string? saveId = null)
+    {
+        if (created != null) Created = created;
+        if (saveId != null) SaveId = saveId;
         OpenPacks(state);
         var c = new LoadSave { Name = name, State = state, Actor = 1, At = _clock(), Seq = State.LastSeq + 1 };
         if (StateMachine.Apply(State, c, out _) is { } err) throw new InvalidDataException(err);
         Turns.Clear();
         Turns.AddRange(turns);
+        _sealer.Seal(Turns);
         ForgetUndo();
         State.LastSeq = c.Seq;
         Remember(c, null, toSaveLog: false);

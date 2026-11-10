@@ -83,7 +83,7 @@ public sealed class SaveSafetyTests
         var handed = Path.Combine(root, "handed.kstable");
         File.WriteAllBytes(handed, new byte[] { 9, 8, 7 });
         File.SetLastWriteTimeUtc(handed, written);
-        store.AddGame("other", handed, "Handed over", T0);
+        store.AddGame("other", handed, "Handed over");
         Assert.Equal(new byte[] { 9, 8, 7 }, File.ReadAllBytes(store.LivePath("other")));
         Assert.Equal(written, File.GetLastWriteTimeUtc(store.LivePath("other")));
         Assert.False(File.Exists(store.LivePath("other") + ".tmp"));
@@ -353,9 +353,9 @@ public sealed class SaveSafetyTests
         var saves = Store(root);
         var handed = Path.Combine(root, "game.kstable");
         Json.Save(handed, new SaveFile { ScenarioId = "scn" });
-        var blocked = saves.LivePath("scn", saves.NewRunId("scn", T0));
+        var blocked = saves.NewSavePath("scn", "Handed over") + ".tmp";
         Directory.CreateDirectory(blocked);
-        Assert.ThrowsAny<Exception>(() => saves.AddGame("scn", handed, "Handed over", T0));
+        Assert.ThrowsAny<Exception>(() => saves.AddGame("scn", handed, "Handed over"));
         Assert.Empty(Directory.GetFiles(Path.GetDirectoryName(blocked)!));
     }
 
@@ -392,8 +392,8 @@ public sealed class SaveSafetyTests
         Assert.False(Directory.Exists(Path.Combine(packages, "mypack")));
         Assert.False(saves.HasGame("scn"));
         Assert.True(File.Exists(Path.Combine(e1, "scenario", "scenario.json")));
-        Assert.True(File.Exists(Path.Combine(e1, "live", SaveStore.MigratedRun + SaveStore.Ext)));
-        Assert.Single(Directory.GetFiles(Path.Combine(e1, "saves", SaveStore.SafetyFolder, SaveStore.MigratedRun)));
+        Assert.True(File.Exists(Path.Combine(e1, "game", Path.GetFileName(live))));
+        Assert.Single(Directory.GetFiles(Assert.Single(Directory.GetDirectories(Path.Combine(e1, "game", SaveStore.SafetyFolder))), "*" + SaveStore.Ext));
         Assert.True(File.Exists(Path.Combine(e2, "pack", "pack.json")));
 
         Assert.Equal(0, saves.EmptyTrash(T0.AddDays(29)));
@@ -402,21 +402,24 @@ public sealed class SaveSafetyTests
     }
 
     [Fact]
-    public void Trashing_a_scenario_s_game_takes_every_play_its_copies_and_its_saves_and_leaves_the_scenario()
+    public void Trashing_a_scenario_s_game_takes_every_save_its_copies_and_folders_and_comes_back_whole()
     {
         var saves = Store(TempRoot());
         var live = saves.LivePath("scn");
-        Json.Save(live, new SaveFile { ScenarioId = "scn" });
+        Json.Save(live, new SaveFile { ScenarioId = "scn", Id = "a1" });
+        saves.SetCurrent("scn", live);
         saves.Checkpoint(live, "time", 1, T0);
-        var other = saves.LivePath("scn", "second");
-        Json.Save(other, new SaveFile { ScenarioId = "scn" });
-        var folder = saves.MakeRun("scn", "second", "Run 2", null, T0);
-        Json.Save(Path.Combine(folder, "Kept" + SaveStore.Ext), new SaveFile { ScenarioId = "scn" });
+        var folder = saves.MakeFolder("scn", saves.SavesRoot("scn"), "Campaign");
+        Json.Save(Path.Combine(folder, "Kept" + SaveStore.Ext), new SaveFile { ScenarioId = "scn", Id = "b2" });
         var entry = saves.TrashGame("scn", T0);
         Assert.False(saves.HasGame("scn"));
-        Assert.Equal(2, Directory.GetFiles(Path.Combine(entry, "live"), "*" + SaveStore.Ext).Length);
-        Assert.True(File.Exists(Path.Combine(entry, "saves", "Run 2", "Kept" + SaveStore.Ext)));
-        Assert.Single(Directory.GetFiles(Path.Combine(entry, "saves", SaveStore.SafetyFolder, SaveStore.MigratedRun)));
+        Assert.True(File.Exists(Path.Combine(entry, "game", Path.GetFileName(live))));
+        Assert.True(File.Exists(Path.Combine(entry, "game", "Campaign", "Kept" + SaveStore.Ext)));
+        Assert.Single(Directory.GetFiles(Path.Combine(entry, "game", SaveStore.SafetyFolder, "a1"), "*" + SaveStore.Ext));
+        saves.PutGameBack(entry, "scn", T0);
+        Assert.Equal(live, saves.CurrentSave("scn"));
+        Assert.Single(saves.Checkpoints(live));
+        Assert.False(Directory.Exists(entry));
     }
 
     [Fact]
@@ -430,10 +433,12 @@ public sealed class SaveSafetyTests
         Json.Save(Path.Combine(saves.HistoryDir, "other.kstable"), new SaveFile { ScenarioId = "other" });
         var moved = saves.Migrate(old, saves.HistoryDir);
         Assert.Equal(3, moved.Count);
-        Assert.True(File.Exists(saves.LivePath("scn")));
-        Assert.True(File.Exists(saves.LivePath("other")));
-        Assert.Equal("startover", Assert.Single(saves.Checkpoints(saves.LivePath("scn"))).Kind);
+        Assert.True(File.Exists(saves.LegacyLivePath("scn")));
+        Assert.True(File.Exists(saves.LegacyLivePath("other")));
         Assert.Empty(Directory.GetFiles(old));
         Assert.Empty(saves.Migrate(old, saves.HistoryDir));
+        saves.ConvertToSaves(T0);
+        Assert.Equal("startover", Assert.Single(saves.Checkpoints(saves.LivePath("scn"))).Kind);
+        Assert.True(File.Exists(saves.LivePath("other")));
     }
 }

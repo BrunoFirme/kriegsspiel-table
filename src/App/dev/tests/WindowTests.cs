@@ -107,19 +107,17 @@ static class WindowTests
     }
 
     [NodeTest]
-    static async Task The_saves_window_lists_the_play_in_progress_and_saves_the_table_under_a_name(TestRunner r)
+    static async Task The_saves_window_lists_the_save_on_the_table_and_saves_a_copy_under_a_name(TestRunner r)
     {
         var h = await HudTests.Host(r);
         var store = SaveStore.Default;
-        var now = DateTime.UtcNow;
         var scenarioDir = "window-test-" + Guid.NewGuid().ToString("N")[..8];
-        var run = store.NewRunId(scenarioDir, now);
-        store.MakeRun(scenarioDir, run, "Play 1", null, now);
-        var live = store.LivePath(scenarioDir, run);
+        var campaign = store.MakeFolder(scenarioDir, store.SavesRoot(scenarioDir), "Campaign");
+        var live = store.NewSavePath(scenarioDir, "Game 1", campaign);
         KTable.Core.Json.SaveBig(live, h.Net.Server!.ToSave());
         h.S.SavePath = live;
         h.Net.Saves.BeginHosting(live, 0);
-        Check.That(h.Net.Saves.RunInPlay != null, "the table is a play of a scenario");
+        Check.That(h.Net.Saves.SaveInPlay != null, "the table is one of a scenario's saves");
         SavesWindow.Open(h.Hud.Ctx);
         await r.Frames(3);
         var win = h.Hud.Ctx.Root.GetChildren().OfType<Window>().FirstOrDefault(w => w.Title == "Saves");
@@ -127,13 +125,14 @@ static class WindowTests
         var tree = Descendants(win!).OfType<Tree>().First();
         var names = new List<string>();
         for (var item = tree.GetRoot(); item != null; item = item.GetNextVisible()) names.Add(item.GetText(0));
-        Check.That(names.Contains("Saves") && names.Contains("Play 1") && names.Any(n => n.StartsWith("Trash")), "the folders listed: " + string.Join(", ", names));
+        Check.That(names.Contains("Saves") && names.Contains("Campaign") && names.Any(n => n.StartsWith("Trash")), "the folders listed: " + string.Join(", ", names));
+        var labels = Descendants(win!).OfType<Label>().Select(l => l.Text).ToList();
+        Check.That(labels.Contains("Game 1 · on the table"), "the save on the table is marked: " + string.Join(", ", labels));
         var name = Descendants(win!).OfType<LineEdit>().First(e => e.PlaceholderText.StartsWith("Save the table"));
         name.Text = "Before the assault";
         name.EmitSignal(LineEdit.SignalName.TextSubmitted, name.Text);
         await r.Seconds(1.5);
-        var folder = store.RunFolderOf(scenarioDir, run)!;
-        Check.That(Directory.GetFiles(folder, "*" + SaveStore.Ext).Any(f => Path.GetFileName(f).StartsWith("Before the assault")), "the save is in the play's folder: " + string.Join(", ", Directory.GetFiles(folder)));
+        Check.That(Directory.GetFiles(campaign, "*" + SaveStore.Ext).Any(f => Path.GetFileName(f).StartsWith("Before the assault")), "the copy is beside the save on the table: " + string.Join(", ", Directory.GetFiles(campaign)));
         win!.QueueFree();
         await r.Frames(2);
     }
