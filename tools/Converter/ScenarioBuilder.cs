@@ -514,7 +514,7 @@ public sealed partial class ScenarioBuilder
         }
         var lua = o.SafeLua;
 
-        if (r.FromPack == null && MatchKey(def) is { } mk && packDefs.TryGetValue(mk, out var cands))
+        if ((r.FromPack == null || r.Figure) && MatchKey(def) is { } mk && packDefs.TryGetValue(mk, out var cands))
         {
             (PieceDef def, string pack)? best = null;
             double bestScale = 0, bestMiss = double.MaxValue;

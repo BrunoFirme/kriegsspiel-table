@@ -9,7 +9,8 @@ namespace KTable.Converter;
 
 public sealed partial class BundleBake
 {
-    public const string PackId = "user.bundle-models";
+    public const string PackId = "bundle-models";
+    public const string Shared = "user.bundle-models";
     const string PackName = "Models from module asset bundles";
     const string Licence = "models read from the asset bundles of imported modules";
     public const string Tag = "bundle:";
@@ -43,7 +44,7 @@ public sealed partial class BundleBake
             .SelectMany(o => new[] { o.BundleUrl, o.BundleSecondaryUrl }).OfType<string>().Distinct().ToList();
         if (wanted.Count == 0) return 0;
 
-        var dir = Path.Combine(_cfg.Output, PackId);
+        var dir = Dir(_cfg.Cache);
         var assetsDir = Path.Combine(dir, "assets");
         var packPath = Path.Combine(dir, "pack.json");
         var had = File.Exists(packPath) ? BestEffort.Read<PackManifest?>(() => Json.Load<PackManifest>(packPath), fallback: null) : null;
@@ -119,9 +120,13 @@ public sealed partial class BundleBake
             if (!keep.Contains(Path.GetFileNameWithoutExtension(file)))
                 BestEffort.DeleteFile(file);
 
-        Console.WriteLine($"  {read.Count} model(s) read from asset bundles into {PackId}, with {atlases.Count} texture(s) of their own");
+        Console.WriteLine($"  {read.Count} model(s) read from asset bundles, with {atlases.Count} texture(s) of their own");
         return read.Count;
     }
+
+    public static string Dir(string cache) => Path.Combine(cache, PackId);
+
+    public static bool Bakes(string pack) => pack is PackId or Shared;
 
     Dictionary<string, string> SharedFiles(List<string> links)
     {

@@ -127,7 +127,11 @@ public sealed class PackBuilder
         if (o.Name == "Custom_Assetbundle")
         {
             if (pack.M.Id.Contains("effects")) { EffectDef(o, pack); effects++; }
-            else if (_defs.ModelOfBundle(o) != null) _bundled++;
+            else if (_defs.ModelOfBundle(o) is { } figure)
+            {
+                _defs.Shared.Adopted(new DefResult(figure.Def, pack, 1, 0, o) { FromPack = figure.Pack }, pack);
+                _bundled++;
+            }
             else _rep.Skipped(o.Name, where);
             foreach (var c in o.Children.Where(_defs.Shows))
                 if (_defs.DefFor(c, pack, Math.Abs(c.StateList().states[0].ScaleX) * Math.Abs(o.ScaleX)) != null) objects++;

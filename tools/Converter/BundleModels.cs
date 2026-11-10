@@ -12,11 +12,12 @@ public sealed partial class BundleModels
 
     BundleModels(Dictionary<string, (PieceDef, string)> byBundle) => _byBundle = byBundle;
 
-    public static BundleModels Load(string packagesRoot)
+    public static BundleModels Load(string packagesRoot, string? baked = null)
     {
         var found = new Dictionary<string, (PieceDef, string)>(StringComparer.OrdinalIgnoreCase);
-        if (!Directory.Exists(packagesRoot)) return new BundleModels(found);
-        foreach (var dir in Directory.EnumerateDirectories(packagesRoot))
+        var dirs = Directory.Exists(packagesRoot) ? Directory.EnumerateDirectories(packagesRoot).ToList() : new List<string>();
+        var shared = dirs.Where(d => Path.GetFileName(d) == BundleBake.Shared).ToList();
+        foreach (var dir in dirs.Except(shared).Concat(baked == null ? [] : [baked]).Concat(shared))
         {
             var path = Path.Combine(dir, "pack.json");
             if (!File.Exists(path)) continue;

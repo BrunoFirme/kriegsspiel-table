@@ -37,6 +37,13 @@ public sealed class SharedMirror(string packagesRoot, string cache, PieceMirror 
         return Own(r, pack, copy, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"shaped|{r.Def.Id}|{up:0.###}|{deep:0.###}"), "shaped", from);
     }
 
+    public DefResult Adopted(DefResult r, PackOut pack)
+    {
+        if (r.Copied || r.FromPack is not { } from || !BundleBake.Bakes(from)) return r;
+        var copy = Json.Deserialize<PieceDef>(Json.Serialize(r.Def));
+        return Own(r, pack, copy, $"figure|{from}|{r.Def.Id}", "figure", [from]) with { Figure = true };
+    }
+
     public DefResult Own(DefResult r, PackOut pack, PieceDef changed, string key, string why, IEnumerable<string> from)
     {
         if (pack.ByKey.TryGetValue(key, out var known)) return r with { Def = known, Copied = true };
@@ -67,7 +74,7 @@ public sealed class SharedMirror(string packagesRoot, string cache, PieceMirror 
     PackManifest? Manifest(string id)
     {
         if (_packs.TryGetValue(id, out var known)) return known;
-        string? text = id == DefFactory.StdDicePack ? Embedded("pack.json") : BestEffort.Read<string?>(() => File.ReadAllText(Path.Combine(packagesRoot, id, "pack.json")), fallback: null);
+        string? text = id == DefFactory.StdDicePack ? Embedded("pack.json") : BestEffort.Read<string?>(() => File.ReadAllText(Path.Combine(Root(id), "pack.json")), fallback: null);
         return _packs[id] = text == null ? null : BestEffort.Read<PackManifest?>(() => Json.Deserialize<PackManifest>(text), fallback: null);
     }
 
@@ -75,7 +82,7 @@ public sealed class SharedMirror(string packagesRoot, string cache, PieceMirror 
     {
         if (id != DefFactory.StdDicePack)
         {
-            var path = Path.Combine(packagesRoot, id, a.File);
+            var path = Path.Combine(Root(id), a.File);
             return File.Exists(path) ? path : null;
         }
         var name = Path.GetFileName(a.File);
@@ -89,6 +96,8 @@ public sealed class SharedMirror(string packagesRoot, string cache, PieceMirror 
         Json.WriteAtomic(kept, bytes.ToArray());
         return kept;
     }
+
+    string Root(string id) => id == BundleBake.PackId ? BundleBake.Dir(cache) : Path.Combine(packagesRoot, id);
 
     static string? Embedded(string name)
     {

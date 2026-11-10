@@ -32,6 +32,7 @@ public sealed record DefResult(PieceDef Def, PackOut Pack, double Scale, int Sta
     public string? FromPack { get; init; }
     public double Fit { get; init; } = 1;
     public bool Copied { get; init; }
+    public bool Figure { get; init; }
     public Lettering? Lettering { get; init; }
 }
 
@@ -308,7 +309,7 @@ public sealed partial class DefFactory
 
     public static double BaseScale(ModuleObj o) => Math.Round(Math.Abs(o.StateList().states[0].ScaleX), 4);
 
-    public BundleModels Models => _models ??= BundleModels.Load(_cfg.Output);
+    public BundleModels Models => _models ??= BundleModels.Load(_cfg.Output, BundleBake.Dir(_cfg.Cache));
     public BagBoxes Boxes => _boxes ??= BagBoxes.Load(_cfg.Output);
 
     public const string TilesetTree = "Tileset_Tree";
@@ -372,7 +373,8 @@ public sealed partial class DefFactory
         double bs = Math.Abs(b.ScaleX) < NoScale ? 1 : Math.Abs(b.ScaleX);
         double r = refScale is > NoScale ? refScale.Value : bs;
         double instScale = Math.Round(bs / r, 4);
-        if (StandardDef(o, b, pack, bs, instScale) is { } standard) return Carried.Of(o, states, self, Shared.Shaped(b, Shared.Of(o, standard, pack), pack), pack, bs, heightScale);
+        if (StandardDef(o, b, pack, bs, instScale) is { } standard)
+            return Carried.Of(o, states, self, Shared.Adopted(Shared.Shaped(b, Shared.Of(o, standard, pack), pack), pack), pack, bs, heightScale);
         if (o.Name == TilesetTree) return null;
         var where = $"{Context} {o.Name} '{o.Nickname}' {o.Guid}";
 

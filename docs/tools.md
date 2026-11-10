@@ -183,8 +183,9 @@ python -I tools/bundle_models.py --module <a module.json> [--pack <id>] [--name 
 ```
 
 The reference reading of a module's Unity asset bundles, kept to check the converter's own against. **An import does
-this by itself** — `BundleBake` reads the bundles the module hangs on its pieces and writes the same pack, so nothing
-here has to be run to get the figures, and the shipped converter needs no Python. This script stays because it reads
+this by itself** — `BundleBake` reads the bundles the module hangs on its pieces into the converter's cache and copies
+each figure the module uses into the module's own pack, so nothing here has to be run to get the figures, and the
+shipped converter needs no Python. This script stays because it reads
 the bundles a second way: give both the same bundles and the models must come out the same, which is how a change to
 the reader is checked.
 
