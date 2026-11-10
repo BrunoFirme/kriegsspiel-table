@@ -13,7 +13,7 @@ public sealed class Keymap
         ("cut", "Cut", "Ctrl+X"), ("copy", "Copy", "Ctrl+C"), ("paste", "Paste at the pointer", "Ctrl+V"), ("selectAll", "Select all", "Ctrl+A"),
         ("statePrev", "Previous look", "BracketLeft"), ("stateNext", "Next look", "BracketRight"),
         ("scriptConsole", "Script console (umpire)", "QuoteLeft"), ("scriptWindow", "Scripts window (umpire)", "Ctrl+Shift+L"),
-        ("mute", "Sound on / off", "Ctrl+M"), ("saves", "Saves (host)", "Ctrl+S"),
+        ("mute", "Sound on / off", "Ctrl+M"), ("fullscreen", "Window / full screen", "F11"), ("saves", "Saves (host)", "Ctrl+S"),
         ("form:line", "Formations tool: line", "R"), ("form:stretch", "Formations tool: stretch in a line", "Shift+R"), ("form:chequer", "Formations tool: chequer", "X"),
         ("form:crescent", "Formations tool: crescent", "Shift+C"), ("form:echelon-right", "Formations tool: echelon right", "Z"), ("form:echelon-left", "Formations tool: echelon left", "Shift+Z"),
         ("form:open", "Formations tool: open order", "Shift+X"), ("form:column", "Formations tool: column", "T"), ("form:staggered-column", "Formations tool: staggered column", "Shift+T"),

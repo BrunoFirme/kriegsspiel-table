@@ -8,10 +8,39 @@ static class Graphics
     public static readonly float[] FarDetailBias = { 0f, -0.75f, -1f };
     public static readonly float[] RenderScales = { 1f, 1.25f, 1.5f, 2f };
 
+    static int _lastFull = Settings.Borderless;
+
     public static void ApplyDisplay(Settings cfg)
     {
+        ApplyWindow(cfg);
         DisplayServer.WindowSetVsyncMode(cfg.VSync ? DisplayServer.VSyncMode.Enabled : DisplayServer.VSyncMode.Disabled);
         Engine.MaxFps = cfg.FrameLimit;
+    }
+
+    public static DisplayServer.WindowMode ModeOf(Settings cfg) => cfg.WindowMode switch
+    {
+        Settings.Borderless => DisplayServer.WindowMode.Fullscreen,
+        Settings.Fullscreen => DisplayServer.WindowMode.ExclusiveFullscreen,
+        _ => DisplayServer.WindowMode.Windowed,
+    };
+
+    static bool FillsScreen(DisplayServer.WindowMode mode) => mode is DisplayServer.WindowMode.Fullscreen or DisplayServer.WindowMode.ExclusiveFullscreen;
+
+    public static void ApplyWindow(Settings cfg)
+    {
+        if (DisplayServer.GetName() == "headless") return;
+        if (cfg.WindowMode != Settings.Windowed) _lastFull = cfg.WindowMode;
+        var want = ModeOf(cfg);
+        var now = DisplayServer.WindowGetMode();
+        if (now == want || (!FillsScreen(want) && !FillsScreen(now))) return;
+        DisplayServer.WindowSetMode(want);
+    }
+
+    public static void ToggleFullScreen(Settings cfg)
+    {
+        cfg.WindowMode = cfg.WindowMode == Settings.Windowed ? _lastFull : Settings.Windowed;
+        cfg.Save();
+        ApplyWindow(cfg);
     }
 
     public static void ApplyEdges(Viewport view, Settings cfg)

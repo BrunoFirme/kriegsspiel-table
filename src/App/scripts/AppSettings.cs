@@ -118,6 +118,33 @@ static class AppSettings
         box.AddChild(Ui.UnderControls(c.Capped, Ui.DialogLabels));
     }
 
+    public static OptionButton WindowPick(Settings cfg)
+    {
+        var pick = new OptionButton
+        {
+            TooltipText = $"Borderless fills the screen as a window, quick to switch away from. Fullscreen takes the screen over. {cfg.Keys.Label("fullscreen")} switches between the window and the screen.",
+            CustomMinimumSize = new Vector2(160, 0),
+        };
+        foreach (var n in new[] { "Windowed", "Borderless", "Fullscreen" }) pick.AddItem(n);
+        pick.Selected = Math.Clamp(cfg.WindowMode, Settings.Windowed, Settings.Fullscreen);
+        pick.ItemSelected += i =>
+        {
+            cfg.WindowMode = (int)i;
+            cfg.Save();
+            Graphics.ApplyWindow(cfg);
+        };
+        return pick;
+    }
+
+    public static void AddWindow(VBoxContainer box, Settings cfg)
+    {
+        var row = new HBoxContainer();
+        row.AddThemeConstantOverride("separation", Ui.Gap.Group);
+        row.AddChild(Ui.RowLabel("Window", Ui.DialogLabels));
+        row.AddChild(WindowPick(cfg));
+        box.AddChild(row);
+    }
+
     public static void AddNewScenarios(VBoxContainer box, Settings cfg)
     {
         var form = Ui.Form(Ui.DialogLabels);
@@ -181,6 +208,7 @@ sealed class SettingsPage
         var access = new VBoxContainer();
         v.AddChild(access);
         AppSettings.AddSize(access, _cfg);
+        AppSettings.AddWindow(access, _cfg);
         access.AddChild(Ui.UnderControls(Ui.Btn("Show the tour again", _t.TourAgain, "The first-run tour of the title screen and the table, ending in Help"), Ui.DialogLabels));
         v.AddChild(Ui.Header("Sound"));
         var sound = new VBoxContainer();

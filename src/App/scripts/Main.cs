@@ -208,6 +208,13 @@ public partial class Main : Node
         return d;
     }
 
+    public override void _UnhandledKeyInput(InputEvent e)
+    {
+        if (e is not InputEventKey { Pressed: true, Echo: false } k || !_cfg.Keys.Is(k, "fullscreen")) return;
+        Graphics.ToggleFullScreen(_cfg);
+        GetViewport().SetInputAsHandled();
+    }
+
     public override void _Notification(int what)
     {
         if (what != NotificationWMCloseRequest) return;

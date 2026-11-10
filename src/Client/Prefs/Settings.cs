@@ -44,6 +44,8 @@ public sealed class Settings
     public int ShadowDetail { get; set; } = ShadowDetailDefault;
     public const int ShadowDetailDefault = 1, ShadowDetailMost = 2;
     public bool ContactShade { get; set; }
+    public int WindowMode { get; set; }
+    public const int Windowed = 0, Borderless = 1, Fullscreen = 2;
     public bool VSync { get; set; } = true;
     public int FrameLimit { get; set; }
     public const int FrameLimitMost = 1000;

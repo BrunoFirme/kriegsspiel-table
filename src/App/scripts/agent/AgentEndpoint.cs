@@ -237,7 +237,7 @@ public partial class AgentEndpoint : Node
         try
         {
             if (DisplayServer.GetName() != "headless" && DisplayServer.WindowGetMode() == DisplayServer.WindowMode.Minimized)
-                DisplayServer.WindowSetMode(DisplayServer.WindowMode.Windowed);
+                DisplayServer.WindowSetMode(Graphics.ModeOf(_cfg));
             answer.TrySetResult(await _mcp!.Handle(body));
         }
         catch (Exception e) { Diagnostics.Record("agent", e.Message); answer.TrySetResult(null); }
