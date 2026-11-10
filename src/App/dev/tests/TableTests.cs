@@ -513,9 +513,16 @@ static class TableTests
     }
 
     [NodeTest]
-    static async Task Ctrl_and_a_number_keeps_a_view_of_the_scenario_unless_pieces_are_picked_and_shift_and_the_number_goes_back_to_it(TestRunner r)
+    static async Task Ctrl_and_a_number_keeps_a_view_of_the_scenario_unless_pieces_are_picked_and_the_number_goes_back_to_it_unless_a_piece_takes_it(TestRunner r)
     {
-        var t = OfflineTable.Make(r, pieces: 2, arrange: g => g.ScenarioId = "views-" + System.Guid.NewGuid().ToString("N"));
+        var t = OfflineTable.Make(r, pieces: 2,
+            prepare: store => store.RegisterDef(new PackManifest { Id = "looks", Name = "Looks" },
+                new PieceDef { Id = "flagged", Name = "Flagged", States = new() { new() { Name = "Formed" }, new() { Name = "Routed" } } }),
+            arrange: g =>
+            {
+                g.ScenarioId = "views-" + System.Guid.NewGuid().ToString("N");
+                g.Layers[Layers.Umpire].Add(new PieceInstance { Id = "f1", Def = "flagged", Pos = new Vec2(-4, 0) });
+            });
         await r.Frame();
         var rig = t.Table.Rig;
         void Press(Key key, bool ctrl) => t.Table.Keys.OnKey(new InputEventKey { Keycode = key, Pressed = true, ShiftPressed = !ctrl, CtrlPressed = ctrl });
@@ -534,6 +541,20 @@ static class TableTests
         Check.Equal("3", string.Join(",", t.Table.Cam.Views.Keys), "views kept after Ctrl+4 with two pieces picked, which forms rows");
         t.Table.Selection.Set(System.Array.Empty<string>());
         Check.That(!t.Table.Cam.GoToView(4), "an empty slot goes nowhere");
+        rig.Show(new CameraRig.View(new Vector3(-30, 0, 25), 90, 2.1f, -1.2f, true));
+        t.Table.Keys.OnKey(new InputEventKey { Keycode = Key.Key3, Pressed = true });
+        await r.Frame();
+        Check.That(!rig.TopDown && rig.Target.DistanceTo(kept.Target) < 0.01f, "3 alone goes back to it too when no piece takes the number");
+        rig.Show(new CameraRig.View(new Vector3(-30, 0, 25), 90, 2.1f, -1.2f, true));
+        t.Table.Keys.OnKey(new InputEventKey { Keycode = Key.Kp3, Pressed = true });
+        await r.Frame();
+        Check.That(rig.TopDown, "the keypad's 3 leaves the view alone");
+        t.Table.Selection.Set(new[] { "f1" });
+        t.Table.Keys.OnKey(new InputEventKey { Keycode = Key.Key2, Pressed = true });
+        await r.Frame();
+        Check.Equal(1, t.S.View.Layer(Layers.Umpire).First(p => p.Id == "f1").State, "2 sets the picked piece's look");
+        Check.That(rig.TopDown, "and leaves the view alone");
+        t.Table.Selection.Set(System.Array.Empty<string>());
         t.Table.Cam.ForgetView(3);
         Check.Equal(0, t.Table.Cam.Views.Count, "views kept after forgetting it");
         Check.Equal(0, t.Errors.Count, string.Join("; ", t.Errors));

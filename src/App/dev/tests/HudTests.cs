@@ -185,7 +185,44 @@ static class HudTests
     {
         var menu = h.Hud.Top.MenuButton!.GetPopup();
         menu.EmitSignal(Window.SignalName.AboutToPopup);
-        return menu.GetNode<PopupMenu>("view");
+        return menu.GetNode<PopupMenu>("sidebar");
+    }
+
+    static PopupMenu ViewsMenu(Rig h)
+    {
+        var menu = h.Hud.Top.MenuButton!.GetPopup();
+        menu.EmitSignal(Window.SignalName.AboutToPopup);
+        return menu.GetNode<PopupMenu>("views");
+    }
+
+    static string Rows(PopupMenu menu) => string.Join(" | ", Enumerable.Range(0, menu.ItemCount).Select(menu.GetItemText).Where(t => t.Length > 0));
+
+    [NodeTest]
+    static async Task Menu_Views_keeps_lists_goes_to_and_forgets_the_scenarios_camera_views(TestRunner r)
+    {
+        var h = await Host(r);
+        var top = h.Hud.Top.MenuButton!.GetPopup();
+        ViewsMenu(h);
+        Check.That(top.IsItemDisabled(Row(top, "Views")), "greyed for a game with no scenario");
+        h.S.View.ScenarioId = "views-" + System.Guid.NewGuid().ToString("N");
+        var views = ViewsMenu(h);
+        Check.That(!top.IsItemDisabled(Row(top, "Views")), "open once the game has a scenario");
+        Check.Equal("Keep this view as", Rows(views), "nothing kept yet");
+        var rig = h.Table.Rig;
+        var kept = new CameraRig.View(new Vector3(12, 0, -7), 40, 0.6f, -0.9f, false);
+        rig.Show(kept);
+        Pick(views.GetNode<PopupMenu>("save"), "4");
+        rig.Show(new CameraRig.View(new Vector3(-30, 0, 25), 90, 2.1f, -1.2f, true));
+        await r.Frame();
+        views = ViewsMenu(h);
+        Check.Equal("View 4   (4) | Keep this view as | Forget", Rows(views), "the kept view listed");
+        Check.That(Rows(views.GetNode<PopupMenu>("save")).Contains("4, replacing it"), "keeping it again says it replaces it");
+        Pick(views, "View 4");
+        await r.Frame();
+        Check.That(!rig.TopDown && rig.Target.DistanceTo(kept.Target) < 0.01f && Mathf.IsEqualApprox(rig.Distance, kept.Distance), "View 4 goes back to it");
+        Pick(views.GetNode<PopupMenu>("forget"), "View 4");
+        Check.Equal(0, h.Table.Cam.Views.Count, "views kept after forgetting it");
+        Check.Equal("Keep this view as", Rows(ViewsMenu(h)), "and gone from the menu");
     }
 
     static int Row(PopupMenu menu, string name) => Enumerable.Range(0, menu.ItemCount).First(i => menu.GetItemText(i).StartsWith(name));
@@ -196,7 +233,7 @@ static class HudTests
         string.Join(", ", h.Hud.Strip.Panel.FindChildren("*", nameof(Button), true, false).OfType<Button>().Select(b => b.TooltipText.Split('\n')[0]));
 
     [NodeTest]
-    static async Task A_sidebar_button_unticked_under_View_leaves_the_strip_and_comes_back_in_its_place_when_ticked(TestRunner r)
+    static async Task A_sidebar_button_unticked_under_Sidebar_leaves_the_strip_and_comes_back_in_its_place_when_ticked(TestRunner r)
     {
         var h = await Host(r);
         var all = OnTheStrip(h);
@@ -220,7 +257,7 @@ static class HudTests
     }
 
     [NodeTest]
-    static async Task Map_Pieces_Select_and_Log_stay_on_the_strip_ticked_and_greyed_under_View(TestRunner r)
+    static async Task Map_Pieces_Select_and_Log_stay_on_the_strip_ticked_and_greyed_under_Sidebar(TestRunner r)
     {
         var h = await Host(r);
         var view = ViewMenu(h);

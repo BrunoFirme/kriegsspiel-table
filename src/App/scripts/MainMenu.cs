@@ -31,11 +31,19 @@ sealed class MainMenu : HudPart
             pm.AddSubmenuNodeItem("Convert to a digital tabletop save", convert);
         }
         pm.AddSeparator();
-        var view = _strip.NewMenu();
-        view.Name = "view";
-        pm.AboutToPopup += () => _strip.FillMenu(view);
-        pm.AddChild(view);
-        pm.AddSubmenuNodeItem("View", view);
+        var sidebar = _strip.NewMenu();
+        sidebar.Name = "sidebar";
+        pm.AboutToPopup += () => _strip.FillMenu(sidebar);
+        pm.AddChild(sidebar);
+        pm.AddSubmenuNodeItem("Sidebar", sidebar);
+        var views = BuildViews();
+        pm.AddChild(views);
+        pm.AddSubmenuNodeItem("Views", views, ViewsRow);
+        pm.AboutToPopup += () =>
+        {
+            FillViews(views);
+            pm.SetItemDisabled(pm.GetItemIndex(ViewsRow), !T.Cam.KeepsViews);
+        };
         pm.AddItem("Settings…", 30);
         var scripting = BuildScripting();
         pm.AddChild(scripting);
@@ -87,6 +95,42 @@ sealed class MainMenu : HudPart
             }
         };
         return menu;
+    }
+
+    const int ViewsRow = 35, SaveAs = 100, Forget = 200;
+
+    PopupMenu BuildViews()
+    {
+        var views = new PopupMenu { Name = "views" };
+        var save = new PopupMenu { Name = "save" };
+        var forget = new PopupMenu { Name = "forget" };
+        views.AddChild(save);
+        views.AddChild(forget);
+        views.IdPressed += id => T.Cam.GoToView((int)id);
+        save.IdPressed += id => T.Cam.SaveView((int)id - SaveAs);
+        forget.IdPressed += id => T.Cam.ForgetView((int)id - Forget);
+        FillViews(views);
+        return views;
+    }
+
+    void FillViews(PopupMenu views)
+    {
+        var save = views.GetNode<PopupMenu>("save");
+        var forget = views.GetNode<PopupMenu>("forget");
+        views.Clear();
+        save.Clear();
+        forget.Clear();
+        var kept = T.Cam.Views;
+        foreach (var slot in kept.Keys.Order())
+        {
+            views.AddItem($"View {slot}   ({slot})", slot);
+            forget.AddItem($"View {slot}", Forget + slot);
+        }
+        for (int slot = 1; slot <= CameraControl.ViewSlots; slot++)
+            save.AddItem(kept.ContainsKey(slot) ? $"{slot}, replacing it   (Ctrl+{slot})" : $"{slot}   (Ctrl+{slot})", SaveAs + slot);
+        if (kept.Count > 0) views.AddSeparator();
+        views.AddSubmenuNodeItem("Keep this view as", save);
+        if (kept.Count > 0) views.AddSubmenuNodeItem("Forget", forget);
     }
 
     PopupMenu BuildScripting()

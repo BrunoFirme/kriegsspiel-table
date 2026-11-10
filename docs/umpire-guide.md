@@ -75,7 +75,7 @@ A table seats 40, as many as 32 of them umpires.
 
 The tool strip runs down the left. Point at any tool and press **F1** for its section here.
 
-- **Menu → View**, or a right-click on the strip, lists its buttons: untick one to take it off the strip, tick it to
+- **Menu → Sidebar**, or a right-click on the strip, lists its buttons: untick one to take it off the strip, tick it to
   bring it back. Its key still works. Map, Pieces, Umpires, Select and Log always stay.
 - **Esc** puts down whatever is in hand; pressed again, it opens the menu.
 - The top line says what just happened (a roll, a measurement), then goes quiet.
@@ -94,10 +94,10 @@ The tool strip runs down the left. Point at any tool and press **F1** for its se
 | Wheel | zoom (over a selected piece it turns it) |
 | Home | frame the map |
 | F2 | flat map view and back |
-| Ctrl+1–9 | keep this view (unless carrying or with several picked); also in the right-click menu |
-| Shift+1–9 | go back to a kept view |
+| Ctrl+1–9 | keep this view (unless carrying or with several picked); also in the right-click menu and Menu → Views |
+| 1–9, Shift+1–9 | go back to a kept view; a number alone goes to a piece under the pointer or picked first |
 
-Kept views are yours, for each scenario. Right-click one in the menu to forget it.
+Kept views are yours, for each scenario. Forget one with Menu → Views → Forget, or a right-click on it in the right-click menu.
 
 ### Selecting and moving
 

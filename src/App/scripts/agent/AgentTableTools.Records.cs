@@ -38,7 +38,7 @@ sealed partial class AgentTableTools
             x => Task.FromResult(ReadBook(x)));
         yield return new AgentTool("set_view",
             "The person's own view: the map from straight above or the 3D table, plates behind the labels beside pieces, piece ids on hover, the sound, the compass, which buttons the sidebar shows, " +
-            $"and the saved camera views 1–{CameraControl.ViewSlots} of this scenario (save the view as it is, go to one, forget one), as Ctrl, Shift and the Views row do. " +
+            $"and the saved camera views 1–{CameraControl.ViewSlots} of this scenario (save the view as it is, go to one, forget one), as Ctrl, the number keys and Menu → Views do. " +
             "Change them only when the person asks; with nothing given, says how they stand.",
             Args.Schema(new Arg("map_view", "boolean", "the map from straight above (true) or the 3D table (false)"), new Arg("label_plates", "boolean", "plates behind the labels beside pieces"),
                 new Arg("piece_ids", "boolean", "piece ids, module GUIDs and kinds on hover"), new Arg("sound", "boolean", "sound on"), new Arg("compass", "boolean", "the compass shown"),
