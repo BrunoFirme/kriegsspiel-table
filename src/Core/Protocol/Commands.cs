@@ -976,6 +976,7 @@ public sealed class AddPack : Command
 }
 public sealed class Undo : Command
 {
+    public const string StopsHere = "your undo stops here: ";
     public long TargetSeq { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public long FromSeq { get; set; }
     public override Sender SentBy() => Sender.UmpireAlone;

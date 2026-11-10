@@ -524,6 +524,7 @@ public sealed partial class GameServer
         Command inv = u.FromSeq == 0 ? inverses[0] : new Batch { Items = inverses, UndoFrom = u.FromSeq };
         inv.UndoOf = u.TargetSeq;
         if (ZoneDenies(peer, inv) is { } undoZone) return "that change cannot be taken back: " + undoZone;
+        if (u.FromSeq == 0 && ChangedSince(peer, targets[0], Touched.By(inv)) is { } who) return $"{Undo.StopsHere}{who} has changed the same thing since";
         undoTargets = targets;
         c = inv;
         return null;
@@ -535,6 +536,18 @@ public sealed partial class GameServer
             : [];
 
     readonly record struct Undoable(Command Inverse, string By, bool Step);
+
+    readonly record struct Touch(long Seq, long Actor, string[] Things);
+
+    readonly List<Touch> _touches = new();
+
+    string? ChangedSince(PeerInfo peer, long seq, string[] things)
+    {
+        foreach (var t in _touches)
+            if (t.Seq > seq && t.Actor != 0 && t.Actor != peer.PeerId && Touched.Meet(t.Things, things))
+                return _peers.GetValueOrDefault(t.Actor)?.Name ?? "someone who has left";
+        return null;
+    }
 
     string? Readiness(Command c)
     {
@@ -577,7 +590,9 @@ public sealed partial class GameServer
     {
         if (toSaveLog) Applied?.Invoke(c);
         _log.Add(Json.Clone(c));
+        _touches.Add(new Touch(c.Seq, c.Actor, Touched.By(c)));
         if (_log.Count > RememberCommands + RememberCommands / 10) _log.RemoveRange(0, _log.Count - RememberCommands);
+        if (_touches.Count > RememberCommands + RememberCommands / 10) _touches.RemoveRange(0, _touches.Count - RememberCommands);
         if (inverse == null) return;
         _inverses[c.Seq] = new Undoable(inverse, c.Actor == 0 ? "" : _peers.GetValueOrDefault(c.Actor)?.Name ?? $"#{c.Actor}", c.MakesUndoStep());
         if (!_undoableBy.TryGetValue(c.Actor, out var mine)) _undoableBy[c.Actor] = mine = new();
@@ -594,6 +609,7 @@ public sealed partial class GameServer
         _inverses.Clear();
         _undone.Clear();
         _undoableBy.Clear();
+        _touches.Clear();
         _scriptsForgottenTo = 0;
     }
 

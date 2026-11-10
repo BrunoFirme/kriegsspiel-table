@@ -16,6 +16,26 @@ public class ClientSessionTests
     static SpawnPiece Spawn(long seq, long actor, string id, long undoOf = 0) => new() { Seq = seq, Actor = actor, Id = id, Def = "d", UndoOf = undoOf };
 
     [Fact]
+    public void An_undo_the_host_stops_stays_the_next_one_to_try_and_a_stopped_redo_likewise()
+    {
+        JoinAs(Role.Umpire);
+        _s.OnCommand(Spawn(1, 2, "a"));
+        _s.OnCommand(Spawn(2, 2, "b"));
+        _s.UndoLast();
+        _s.OnError(Undo.StopsHere + "Karl has changed the same thing since");
+        Assert.Equal(new long[] { 2, 1 }, _s.MyUndoable);
+        _s.UndoLast();
+        Assert.Equal(new long[] { 2, 2 }, _sent.OfType<Undo>().Select(u => u.TargetSeq));
+        _s.OnError("nothing to undo");
+        Assert.Equal(new long[] { 1 }, _s.MyUndoable);
+
+        _s.OnCommand(Spawn(3, 2, "c", undoOf: 1));
+        _s.RedoLast();
+        _s.OnError(Undo.StopsHere + "Karl has changed the same thing since");
+        Assert.Equal(new long[] { 3 }, _s.MyRedoable);
+    }
+
+    [Fact]
     public void Joining_sets_who_this_is_and_shows_the_table()
     {
         int resets = 0;

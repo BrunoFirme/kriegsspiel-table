@@ -184,8 +184,17 @@ public class ClientSession
     public void OnError(string e)
     {
         Answered();
+        if (e.StartsWith(Undo.StopsHere, StringComparison.Ordinal) && _asked is var (seq, from, redo))
+        {
+            (redo ? MyRedoable : MyUndoable).Push(seq);
+            if (from > 0) _scriptFrom[seq] = from;
+            if (redo) _redoing.Remove(seq);
+        }
+        _asked = null;
         Error?.Invoke(e);
     }
+
+    (long Seq, long From, bool Redo)? _asked;
 
     public void Answered()
     {
@@ -211,7 +220,9 @@ public class ClientSession
         if (!IsUmpire || MyUndoable.Count == 0) return;
         var seq = MyUndoable.Pop();
         _openScript = 0;
-        Sent(_scriptFrom.Remove(seq, out var from) ? new Undo { TargetSeq = seq, FromSeq = from } : new Undo { TargetSeq = seq });
+        _scriptFrom.Remove(seq, out var from);
+        _asked = (seq, from, false);
+        Sent(from > 0 ? new Undo { TargetSeq = seq, FromSeq = from } : new Undo { TargetSeq = seq });
     }
 
     public void RedoLast()
@@ -219,6 +230,7 @@ public class ClientSession
         if (!IsUmpire || MyRedoable.Count == 0) return;
         var seq = MyRedoable.Pop();
         _redoing.Add(seq);
+        _asked = (seq, 0, true);
         Sent(new Undo { TargetSeq = seq });
     }
 
