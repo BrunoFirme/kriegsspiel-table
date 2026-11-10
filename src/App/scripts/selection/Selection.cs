@@ -19,7 +19,7 @@ sealed class Selection
 
     public event Action? Picked;
 
-    public IEnumerable<PieceNode> Nodes => _pieces.Nodes.Where(n => Ids.Contains(n.Piece.Id) && _c.LayerInteractive(n.Layer));
+    public IEnumerable<PieceNode> Nodes => Ids.Count == 0 ? [] : _pieces.Nodes.Where(n => Ids.Contains(n.Piece.Id) && _c.LayerInteractive(n.Layer));
 
     public IEnumerable<PieceNode> Movable => Nodes.Where(n => !n.Piece.Locked && _c.S.CanTouch(n.Layer, n.Piece));
 

@@ -42,9 +42,10 @@ sealed class Gizmo : IKnobDrag
 
     public void Draw()
     {
+        if (_c.Tool != Tool.Transform || _selectTool.BoxSelecting) return;
         var nodes = _selection.Nodes.ToList();
         var sheet = nodes.Count == 0 ? Sheet : null;
-        if (_c.Tool != Tool.Transform || (nodes.Count == 0 && sheet == null) || _selectTool.BoxSelecting) return;
+        if (nodes.Count == 0 && sheet == null) return;
         Measure(nodes, sheet);
         var mesh = _overlay.Mesh;
         var mat =
