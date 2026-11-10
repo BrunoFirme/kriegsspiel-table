@@ -25,7 +25,10 @@ static class ReadyPieceTableTests
         var w = root.GetChildren().OfType<HolderWindow>().Single();
         var list = w.FindChildren("*", nameof(ItemList), true, false).OfType<ItemList>().Single();
         Check.Equal("p2", list.GetItemMetadata(0).AsString(), "the first held piece before any is ready");
-        w.ChooseReady("p3", HolderWindow.ReadyChoice);
+        var tile = list.GetItemRect(1).GetCenter();
+        list.EmitSignal(Control.SignalName.GuiInput, new InputEventMouseButton { ButtonIndex = MouseButton.Right, Pressed = true, Position = tile, GlobalPosition = tile });
+        Check.That(w.Menu is { } menu && menu.ItemCount == 1 && menu.GetItemText(0) == "Ready piece", "a right-click on a held tile offers to make it the ready piece");
+        w.Menu!.EmitSignal(PopupMenu.SignalName.IdPressed, (long)HolderWindow.ReadyChoice);
         await r.Frames(2);
         Check.Equal("p3", list.GetItemMetadata(0).AsString(), "the ready piece is listed first");
         Check.That(list.GetItemText(0).Contains("Ready"), "the ready piece is marked: " + list.GetItemText(0));

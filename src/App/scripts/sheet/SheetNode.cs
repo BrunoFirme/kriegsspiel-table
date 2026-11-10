@@ -71,6 +71,7 @@ public partial class SheetNode : Node3D
         _mat.AlbedoColor = _mat.AlbedoColor with { A = faded ? (float)opacity : 1 };
         _mat.Transparency = faded ? BaseMaterial3D.TransparencyEnum.Alpha
             : Picture?.HasAlpha == true ? BaseMaterial3D.TransparencyEnum.AlphaScissor : BaseMaterial3D.TransparencyEnum.Disabled;
+        _mat.DepthDrawMode = faded ? BaseMaterial3D.DepthDrawModeEnum.Always : BaseMaterial3D.DepthDrawModeEnum.OpaqueOnly;
     }
 
     public float Opacity => _mat?.AlbedoColor.A ?? 1;

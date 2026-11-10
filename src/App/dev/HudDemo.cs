@@ -461,12 +461,13 @@ sealed class HudDemo : HudPart
     bool ReadyAndFaded(string what)
     {
         const string U = Layers.Umpire;
-        if (what is "ready" or "ready:out")
+        if (what is "ready" or "ready:out" or "ready:menu")
         {
             var pb = S.View.Layer(U);
-            if (pb.Count < 3) { GD.Print("[ready] needs three pieces"); return true; }
-            string holder = pb[0].Id, item = pb[1].Id, other = pb[2].Id;
-            S.Do(new Batch { Items = new()
+            var full = pb.FirstOrDefault(x => x.Ready != null && x.Stowed is { Count: >= 2 });
+            if (full == null && pb.Count < 3) { GD.Print("[ready] needs three pieces"); return true; }
+            string holder = full?.Id ?? pb[0].Id, item = full?.Ready!.Id ?? pb[1].Id, other = full == null ? pb[2].Id : "";
+            if (full == null) S.Do(new Batch { Items = new()
             {
                 new SetPieceOption { Layer = U, Id = holder, Name = PieceOptions.Holds, Value = true },
                 new Stow { Layer = U, Holder = holder, Id = other }, new Stow { Layer = U, Holder = holder, Id = item },
@@ -479,13 +480,31 @@ sealed class HudDemo : HudPart
                 if (what == "ready:out") S.Do(new ReleaseReady { Layer = U, Holder = holder });
                 await Hud.ToSignal(Hud.GetTree().CreateTimer(0.4), Timer.SignalName.Timeout);
                 if (T.NodeOf(U, holder) is { } n) HolderWindow.Open(Ctx.Root, S, T, n);
+                if (what == "ready:menu")
+                {
+                    await Hud.ToSignal(Hud.GetTree().CreateTimer(0.4), Timer.SignalName.Timeout);
+                    var list = Ctx.Root.FindChildren("*", nameof(ItemList), true, false).OfType<ItemList>().First(l => l.IsVisibleInTree() && l.ItemCount > 1);
+                    var at = list.GetGlobalTransformWithCanvas() * list.GetItemRect(1).GetCenter();
+                    Input.ParseInputEvent(new InputEventMouseMotion { Position = at, GlobalPosition = at });
+                    Input.ParseInputEvent(new InputEventMouseButton { ButtonIndex = MouseButton.Right, Pressed = true, Position = at, GlobalPosition = at });
+                    Input.ParseInputEvent(new InputEventMouseButton { ButtonIndex = MouseButton.Right, Pressed = false, Position = at, GlobalPosition = at });
+                }
                 GD.Print($"[ready] {holder} holds {S.View.Find(U, holder)?.Stowed?.Count ?? 0}, its ready piece {item} is {(S.View.Find(U, item) != null ? "out" : "in")}");
             })).CallDeferred();
             return true;
         }
         if (!what.StartsWith("faded:")) return false;
-        var file = what["faded:".Length..];
+        bool onRelief = what.StartsWith("faded:relief:");
+        var file = what[(onRelief ? "faded:relief:" : "faded:").Length..];
         var (package, sha, w, h) = SheetImporter.Import(file, S.Store.Root);
+        if (onRelief && S.View.Sheets.FirstOrDefault(x => x.Relief != null) is { } ground)
+        {
+            S.Do(new SetSheetPicture { Id = ground.Id, Image = sha, Package = package });
+            S.Do(new SetSheetOpacity { Id = ground.Id, Opacity = 0.5 });
+            T.Rig.Show(new CameraRig.View(Coords.ToWorld(ground.Pos), (float)(ground.Size.W * 0.7), 0.5f, -0.35f, false));
+            GD.Print($"[faded] the relief sheet {ground.Name} carries a picture at 0.5 opacity");
+            return true;
+        }
         var first = S.View.Sheets.FirstOrDefault();
         var sheet = new SheetDef
         {

@@ -569,7 +569,8 @@ internal sealed partial class PieceHandles(ScriptHost host)
             "set_ready" => Fn(a =>
             {
                 var which = Arg(a, 0).IsNil() ? null : IdOf(Arg(a, 0));
-                host.Emit(which == null ? new SetReady { Layer = L, Holder = id } : new SetReady { Layer = L, Holder = id, Ready = new ReadyPiece { Id = which }, Move = which });
+                var held = which != null && p.Stowed?.Any(s => s.Id == which) == true;
+                host.Emit(which == null ? new SetReady { Layer = L, Holder = id } : new SetReady { Layer = L, Holder = id, Ready = new ReadyPiece { Id = which }, Move = held ? which : null });
                 return DynValue.Nil;
             }),
             "release" => Fn(_ => Ready(id, p, Readiness.In, new ReleaseReady { Layer = L, Holder = id })),

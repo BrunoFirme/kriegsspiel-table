@@ -49,6 +49,8 @@ public class StowScriptTests
         Assert.Equal("false true", Lua(t, "return tostring(self.release()) .. ' ' .. tostring(self.recall())"));
         Assert.Null(t.Server.State.Find(U, Marker));
         Assert.Equal("nil false", Lua(t, "self.set_ready(nil) return tostring(self.ready) .. ' ' .. tostring(self.release())"));
+        Assert.Equal("true", Lua(t, $"self.unstow('{Marker}') self.set_ready({m}) return tostring(self.recall())"));
+        Assert.Null(t.Server.State.Find(U, Marker));
     }
 
     [Fact]

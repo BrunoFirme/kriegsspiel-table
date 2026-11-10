@@ -570,11 +570,11 @@ public static partial class StateMachine
     {
         if (sv.Radius <= 0) return "radius must be positive";
         if (sv.Sharp is { } sh && !(sh >= 0 && sh <= 1)) return "sharp share out of range";
-        if (sv.Blur is { } bl && !(bl > 0 && bl <= MostVisionBlur)) return "blur out of range";
+        if (sv.Blur is { } bl && !(bl >= 0 && bl <= MostVisionBlur)) return "blur out of range";
         inverse = new SetVisionRadius { Radius = g.VisionRadius, Sharp = sv.Sharp == null ? null : g.VisionSharp ?? 1, Blur = sv.Blur == null ? null : g.VisionBlur ?? 0 };
         g.VisionRadius = sv.Radius;
         if (sv.Sharp is { } kept) g.VisionSharp = kept >= 1 ? null : kept;
-        if (sv.Blur is { } blur) g.VisionBlur = blur;
+        if (sv.Blur is { } blur) g.VisionBlur = blur > 0 ? blur : null;
         return null;
     }
 

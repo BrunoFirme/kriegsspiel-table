@@ -43,7 +43,6 @@ public partial class HolderWindow : FloatPanel
         Body.AddChild(_search);
         _list = PieceTiles.List();
         _list.ItemActivated += i => TakeOut(Meta((int)i));
-        _list.ItemClicked += (i, _, button) => { if (button == (long)MouseButton.Right) ReadyMenu(Meta((int)i)); };
         WireDrag();
         _tiles = PieceTiles.Host(_list);
         Body.AddChild(_tiles);
@@ -166,7 +165,7 @@ public partial class HolderWindow : FloatPanel
             int idx = _list.AddItem($"{name}\n{sub}", Ui.LoadingIcon);
             _list.SetItemMetadata(idx, isOut ? OutMark + p.Id : p.Id);
             var tip = d == null ? name : $"{name}\n{d.Name}\n{d.Size.W:0.##} × {d.Size.H:0.##} units · {PiecesPanel.ShapeWord(d)}";
-            _list.SetItemTooltip(idx, isOut ? $"{tip}\nDouble-click or {outKey} recalls it" : isReady ? $"{tip}\n{outKey} on the holder releases it" : $"{tip}\nRight-click to make it the ready piece");
+            _list.SetItemTooltip(idx, isOut ? $"{tip}\nDouble-click or {outKey} recalls it" : isReady ? $"{tip}\n{outKey} on the holder releases it" : _s.IsUmpire ? $"{tip}\nRight-click to make it the ready piece" : tip);
             if (isReady) _list.SetItemCustomFgColor(idx, Ui.AccentInk);
             if (d != null) PieceTiles.Picture(_s, _list, idx, d, _s.Store.PackOfDef(p.Def), () => gen == _gen);
         }
@@ -215,6 +214,9 @@ public partial class HolderWindow : FloatPanel
         {
             switch (e)
             {
+                case InputEventMouseButton { ButtonIndex: MouseButton.Right, Pressed: true } rb:
+                    if (_list.GetItemAtPosition(rb.Position, true) is var at and >= 0) { _list.AcceptEvent(); ReadyMenu(Meta(at), _list.GetGlobalTransformWithCanvas() * rb.Position); }
+                    break;
                 case InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true } mb:
                     press = mb.Position;
                     item = _list.GetItemAtPosition(mb.Position, true);
@@ -236,7 +238,7 @@ public partial class HolderWindow : FloatPanel
         };
     }
 
-    void ReadyMenu(string meta)
+    void ReadyMenu(string meta, Vector2 at)
     {
         if (meta.Length == 0 || !CanTake || !_s.IsUmpire || Holder is not { } h) return;
         var pm = new PopupMenu();
@@ -248,12 +250,14 @@ public partial class HolderWindow : FloatPanel
             pm.SetItemTooltip(0, "The one piece the holder releases and recalls with " + _t.Settings.Keys.Label("ready"));
         }
         pm.IdPressed += choice => ChooseReady(meta, choice);
+        Menu = pm;
         pm.PopupHide += () => pm.QueueFree();
         AddChild(pm);
-        pm.Popup(new Rect2I((Vector2I)Pointer.Global(this).Round(), Vector2I.Zero));
+        pm.Popup(new Rect2I((Vector2I)at.Round(), Vector2I.Zero));
     }
 
     internal const int RecallChoice = 0, ReadyChoice = 1;
+    internal PopupMenu? Menu { get; private set; }
 
     internal void ChooseReady(string meta, long choice)
     {

@@ -229,6 +229,18 @@ public class ReliefTests : IDisposable
     }
 
     [Fact]
+    public void The_first_change_to_the_reach_its_ring_and_blur_undoes_back_to_the_defaults()
+    {
+        var g = Table();
+        Assert.Null(StateMachine.Apply(g, new SetVisionRadius { Radius = 25, Sharp = 0.4, Blur = 0.2 }, out var inverse));
+        Assert.Equal((25.0, 0.4, 0.2), (g.VisionRadius, g.VisionSharp, g.VisionBlur));
+        Assert.Null(StateMachine.Apply(g, inverse!, out _));
+        Assert.Null(g.VisionSharp);
+        Assert.Null(g.VisionBlur);
+        Assert.NotNull(StateMachine.Apply(g, new SetVisionRadius { Radius = 25, Blur = -0.1 }, out _));
+    }
+
+    [Fact]
     public void A_sheet_fades_saves_its_opacity_only_when_faded_and_undo_brings_it_back()
     {
         var g = Table();
