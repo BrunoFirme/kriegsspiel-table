@@ -31,10 +31,10 @@ static class ModelPictures
         }
         var baked = ModelBake.ThumbPath(assets.Store, pack.Id, d.Mesh);
         var cached = Cached(d.Mesh, d.Texture);
-        void Start(string? paintFile) => System.Threading.Tasks.Task.Run(() =>
+        void Start(string? paintFile) => System.Threading.Tasks.Task.Run(async () =>
         {
             Image? img = null;
-            Turns.Wait();
+            await Turns.WaitAsync();
             try
             {
                 img = Draw(assets.Abs(pack.Id, mesh.File), paintFile, baked, cached);
