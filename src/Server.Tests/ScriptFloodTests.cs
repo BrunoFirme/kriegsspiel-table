@@ -137,4 +137,18 @@ public class ScriptFloodTests
         t.Ok(Table.Host, new Undo { TargetSeq = onLoad.Seq });
         Assert.NotNull(t.Server.State.Find(U, Marker));
     }
+
+    [Fact]
+    public void A_stretch_of_script_changes_longer_than_undo_keeps_is_refused_whole()
+    {
+        using var t = new Table();
+        SetScript(t, "function on_update() self.set_counter('str', self.counters.str == 8 and 7 or 8) end");
+        var from = t.Server.State.LastSeq + 1;
+        for (int i = 1; i <= GameServer.RememberCommands + 2; i++) t.Server.Scripts.Tick(i * Frame);
+        var str = t.Server.State.Find(U, P)!.Counters["str"];
+        var why = t.Error(Table.Lead, new Undo { TargetSeq = t.Server.State.LastSeq, FromSeq = from });
+        Assert.Contains("too many to take back", why);
+        Assert.Equal(str, t.Server.State.Find(U, P)!.Counters["str"]);
+        t.Ok(Table.Lead, new Undo { TargetSeq = t.Server.State.LastSeq, FromSeq = from + 2 });
+    }
 }

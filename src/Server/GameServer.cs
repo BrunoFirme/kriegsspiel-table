@@ -27,6 +27,7 @@ public sealed partial class GameServer
     readonly Dictionary<long, Undoable> _inverses = new();
     readonly HashSet<long> _undone = new();
     readonly Dictionary<long, Queue<long>> _undoableBy = new();
+    long _scriptsForgottenTo;
     readonly Random _rng = Repeatable.NewRandom();
     readonly Func<long> _clock;
     public Scripting.ScriptHost Scripts { get; }
@@ -470,6 +471,8 @@ public sealed partial class GameServer
     {
         undoTargets = null;
         if (c is not Undo u) return null;
+        if (u.FromSeq > 0 && u.FromSeq <= _scriptsForgottenTo)
+            return $"the scripts made more than {RememberCommands:N0} changes since then, too many to take back";
         var targets = u.FromSeq > 0 ? ScriptStepsBetween(u.FromSeq, u.TargetSeq) : _inverses.ContainsKey(u.TargetSeq) && !_undone.Contains(u.TargetSeq) ? [u.TargetSeq] : [];
         if (targets.Count == 0) return "nothing to undo";
         foreach (var seq in targets)
@@ -539,6 +542,7 @@ public sealed partial class GameServer
         mine.Enqueue(c.Seq);
         if (mine.Count <= RememberCommands) return;
         var oldest = mine.Dequeue();
+        if (c.Actor == 0) _scriptsForgottenTo = oldest;
         _inverses.Remove(oldest);
         _undone.Remove(oldest);
     }
@@ -548,6 +552,7 @@ public sealed partial class GameServer
         _inverses.Clear();
         _undone.Clear();
         _undoableBy.Clear();
+        _scriptsForgottenTo = 0;
     }
 
     internal (string? err, Command? inverse) ApplyEmitted(Command c, long actor)
