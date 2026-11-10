@@ -82,11 +82,13 @@ internal sealed class PieceList
             if (sel == d) _list.Select(idx);
             if (d.Kind == "model" && d.Mesh != null && ModelThumb(d.Mesh) is { } mt) { _list.SetItemIcon(idx, mt); continue; }
             if (EffectFx.ListIcon(d) is { } fxIcon) { _list.SetItemIcon(idx, fxIcon); continue; }
-            var img = d.Image ?? d.Texture ?? d.States.Select(st => st.Image ?? st.Texture).FirstOrDefault(h => h != null);
-            if (img == null || !Pack.Assets.TryGetValue(img, out var a)) continue;
             int i2 = idx;
-            var tex = _s.S.Assets.Texture(Pack.Id, a.File, t => { if (gen == _listGen && i2 < _list.ItemCount) _list.SetItemIcon(i2, t); }, mipmaps: false, maxSize: 128);
-            if (tex != null) _list.SetItemIcon(idx, tex);
+            void Icon(Texture2D t)
+            {
+                if (gen == _listGen && i2 < _list.ItemCount) _list.SetItemIcon(i2, t);
+            }
+            if (d.Kind == "model") ModelPictures.Show(_s.S.Assets, Pack, d, Icon, () => Flat(d, Icon));
+            else Flat(d, Icon);
         }
         _count.Text = Pack.Pieces.Count.ToString();
         _search.Visible = Pack.Pieces.Count >= SearchFrom || q.Length > 0;
@@ -99,6 +101,13 @@ internal sealed class PieceList
         int columns = Math.Max(1, (int)((_list.Size.X > 0 ? _list.Size.X : 340) / (TileWidth + 6)));
         int rows = Math.Max(1, (_list.ItemCount + columns - 1) / columns);
         _split.SplitOffsets = new[] { Math.Min(ListMax, rows * TileHeight + ListPad) };
+    }
+
+    void Flat(PieceDef d, Action<Texture2D> icon)
+    {
+        var img = d.Image ?? d.Texture ?? d.States.Select(st => st.Image ?? st.Texture).FirstOrDefault(h => h != null);
+        if (img == null || !Pack.Assets.TryGetValue(img, out var a)) return;
+        if (_s.S.Assets.Texture(Pack.Id, a.File, icon, mipmaps: false, maxSize: 128) is { } tex) icon(tex);
     }
 
     public void ForgetThumb(string meshSha) => _thumbs.Remove(meshSha);

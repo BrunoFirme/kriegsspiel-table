@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using Godot;
 using KTable.Client;
-using KTable.Client.Studio;
 using KTable.Core;
 using KTable.Core.Model;
 
@@ -12,12 +11,12 @@ namespace KTable.App;
 
 static class PackCards
 {
-    const int W = 452, H = 260, Most = 6, Margin = 10, SmallestPicture = 64, MeshPictureMost = 1024, Drawing = 2;
+    const int W = 452, H = 260, Most = 6, Margin = 10, SmallestPicture = 64, Drawing = 2;
 
     static readonly Dictionary<string, (DateTime at, ImageTexture tex)> _thumbs = new();
     static readonly Dictionary<string, List<Action<ImageTexture>>> _waiting = new();
 
-    sealed record Shot(string? Picture, string? Mesh = null, string? MeshPicture = null, string? Thumb = null);
+    sealed record Shot(string? Picture, string? Mesh = null, string? MeshPicture = null, string? Thumb = null, string? Cached = null);
 
     public static void Thumb(PackageStore store, PackManifest pack, Action<ImageTexture> show)
     {
@@ -63,7 +62,7 @@ static class PackCards
         if (d.Kind == "model")
         {
             if (d.Mesh == null || store.AssetPath(pack, d.Mesh) is not { } mesh) return null;
-            return (d.Mesh, new Shot(null, mesh, store.AssetPath(pack, d.Texture), ModelBake.ThumbPath(store, pack.Id, d.Mesh)));
+            return (d.Mesh, new Shot(null, mesh, store.AssetPath(pack, d.Texture), ModelBake.ThumbPath(store, pack.Id, d.Mesh), ModelPictures.Cached(d.Mesh, d.Texture)));
         }
         var h = d.Image ?? d.Texture ?? d.States.Select(st => st.Image ?? st.Texture).FirstOrDefault(x => x != null);
         if (h == null || !pack.Assets.TryGetValue(h, out var a) || Math.Max(a.W, a.H) <= SmallestPicture) return null;
@@ -102,31 +101,6 @@ static class PackCards
         return drawn ? img : null;
     }
 
-    static Image? Load(Shot shot)
-    {
-        if (shot.Mesh == null) return shot.Picture == null ? null : Picture(shot.Picture);
-        if (shot.Thumb != null && File.Exists(shot.Thumb) && Picture(shot.Thumb) is { } baked) return baked;
-        try
-        {
-            var picture = shot.MeshPicture != null && Picture(shot.MeshPicture, MeshPictureMost) is { } t
-                ? new ModelPicture(t.GetData(), t.GetWidth(), t.GetHeight()) : null;
-            return ModelThumb.Render(ModelFiles.Obj(shot.Mesh), picture) is { } rgba
-                ? Image.CreateFromData(ModelThumb.Out, ModelThumb.Out, false, Image.Format.Rgba8, rgba) : null;
-        }
-        catch (Exception e) when (e is IOException or InvalidDataException) { Diagnostics.Write(LogLevel.Warning, $"[cards] no picture for the model {Path.GetFileName(shot.Mesh)}: {e.Message}"); }
-        return null;
-    }
-
-    static Image? Picture(string path, int most = 0)
-    {
-        if (!ContentLimits.PictureAllowed(path) || Image.LoadFromFile(path) is not { } p || p.IsEmpty()) return null;
-        if (p.IsCompressed()) p.Decompress();
-        p.Convert(Image.Format.Rgba8);
-        if (most > 0 && Math.Max(p.GetWidth(), p.GetHeight()) > most)
-        {
-            float k = most / (float)Math.Max(p.GetWidth(), p.GetHeight());
-            p.Resize(Math.Max(1, (int)(p.GetWidth() * k)), Math.Max(1, (int)(p.GetHeight() * k)), Image.Interpolation.Bilinear);
-        }
-        return p;
-    }
+    static Image? Load(Shot shot) => shot.Mesh != null ? ModelPictures.Draw(shot.Mesh, shot.MeshPicture, shot.Thumb, shot.Cached)
+        : shot.Picture == null ? null : ModelPictures.Picture(shot.Picture);
 }

@@ -36,10 +36,20 @@ static class PieceTiles
     public static void Picture(Session s, ItemList list, int idx, PieceDef d, PackManifest? p, Func<bool> current)
     {
         if (EffectFx.ListIcon(d) is { } fxIcon) { list.SetItemIcon(idx, fxIcon); return; }
+        if (p == null) return;
+        void Icon(Texture2D t)
+        {
+            if (current() && idx < list.ItemCount) list.SetItemIcon(idx, t);
+        }
+        if (d.Kind == "model") ModelPictures.Show(s.Assets, p, d, Icon, () => Flat(s, d, p, Icon));
+        else Flat(s, d, p, Icon);
+    }
+
+    static void Flat(Session s, PieceDef d, PackManifest p, Action<Texture2D> icon)
+    {
         var img = d.Image ?? d.Texture ?? d.States.Select(st => st.Image ?? st.Texture).FirstOrDefault(h => h != null);
-        if (p == null || img == null || !p.Assets.TryGetValue(img, out var a)) return;
-        var tex = s.Assets.Texture(p.Id, a.File, t => { if (current() && idx < list.ItemCount) list.SetItemIcon(idx, t); }, mipmaps: false, maxSize: ThumbMost);
-        if (tex != null) list.SetItemIcon(idx, tex);
+        if (img == null || !p.Assets.TryGetValue(img, out var a)) return;
+        if (s.Assets.Texture(p.Id, a.File, icon, mipmaps: false, maxSize: ThumbMost) is { } tex) icon(tex);
     }
 
     public static Vector2 Centre(ItemList list, int i)
