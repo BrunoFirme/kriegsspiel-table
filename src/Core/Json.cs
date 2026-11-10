@@ -95,7 +95,7 @@ public static class Json
 
     public sealed record SaveHeadline(string ScenarioId, string Saved, SavePreview Preview, string Id = "", int Format = 0);
 
-    public static int? ReadSaveFormat(string path)
+    public static int? ReadFormat(string path)
     {
         var head = Head(path, 1 << 10);
         var r = new Utf8JsonReader(WithoutBom(head), isFinalBlock: false, state: default);

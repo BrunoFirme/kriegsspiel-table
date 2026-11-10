@@ -87,8 +87,14 @@ public partial class Main
         var op = BeginOpening(Json.PeekString(path, "name") ?? dir);
         try
         {
-            var sc = await System.Threading.Tasks.Task.Run(() => File.Exists(path) ? ScenarioFiles.TryLoad(path) : null);
+            var (sc, refused) = await System.Threading.Tasks.Task.Run(() => File.Exists(path) ? ScenarioRead.ToHost(path) : (null, null));
             if (GivenUp(op)) { EndOpening(op); return; }
+            if (refused != null)
+            {
+                EndOpening(op);
+                Fail($"Cannot open {dir}: its scenario file {refused}. Nothing was changed.");
+                return;
+            }
             if (sc == null && resume && File.Exists(path)) KeepDamagedScenario(store, dir);
             if (sc != null && WorkshopContent.MissingPacks(store, sc) is { Count: > 0 } missing)
             {

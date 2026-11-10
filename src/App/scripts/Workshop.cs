@@ -185,8 +185,8 @@ public static class WorkshopContent
         if (meta.Kind == "pack") { if (PlanPack(store, folder, meta.Id, carried: false) is { } p) packs.Add(p); }
         else
         {
+            KTable.Server.SaveLoader.CheckHandedOver(folder, GameFile);
             meta.Id = ScenarioFolderFor(store, meta.Id, Json.Load<Scenario>(Path.Combine(folder, "scenario.json")).Id);
-            if (File.Exists(game)) Json.Load<SaveFile>(game);
             var packsDir = Path.Combine(folder, "packs");
             if (Directory.Exists(packsDir))
                 foreach (var d in Directory.GetDirectories(packsDir))

@@ -328,6 +328,39 @@ public class HostSavesTests
         Assert.Null(why);
     }
 
+    void Step(double seconds)
+    {
+        _now += seconds;
+        _saves.Tick(seconds);
+        Assert.True(_saves.WaitForDisk());
+        _saves.Harvest();
+    }
+
+    [Fact]
+    public void A_whole_save_that_failed_is_tried_again_ten_seconds_later_while_the_log_still_works()
+    {
+        var path = Path.Combine(_dir, "live", "game.kstable");
+        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        var server = Host(path);
+        server.Dirty = true;
+        Step(1.1);
+        Step(1.1);
+        Assert.True(File.Exists(path));
+        File.Delete(path);
+        Directory.CreateDirectory(path);
+        server.Handle(1, new AdvanceClock());
+        Step(1.1);
+        Assert.Contains(_errors, e => e.StartsWith("save failed:"));
+        Assert.True(_saves.SaveLogState.EndsWith("bytes"), _saves.SaveLogState);
+        Directory.Delete(path);
+        for (int i = 0; i < 8; i++) Step(1);
+        Assert.False(File.Exists(path));
+        Step(1);
+        Step(1);
+        Assert.True(File.Exists(path));
+        Assert.Equal(1, Json.Load<SaveFile>(path).Snapshot.Clock.Turn);
+    }
+
     [Fact]
     public void The_first_tick_opens_the_log_and_writes_the_whole_table()
     {

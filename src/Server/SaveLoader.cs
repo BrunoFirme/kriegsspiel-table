@@ -34,8 +34,21 @@ public static class SaveLoader
 
     static int? FormatOf(string path)
     {
-        try { return Json.ReadSaveFormat(path); }
+        try { return Json.ReadFormat(path); }
         catch (Exception e) when (SaveStore.IsDamage(e) || e is ArgumentException) { return null; }
+    }
+
+    public static void CheckHandedOver(string folder, string gameFile)
+    {
+        var scenario = Path.Combine(folder, "scenario.json");
+        if (File.Exists(scenario) && FormatOf(scenario) is int sf && sf > Scenario.CurrentFormat)
+            throw new SaveTooNewException($"its scenario was made by a newer version of the app (scenario format {sf}; this version reads up to {Scenario.CurrentFormat}): update the app to install it");
+        var game = Path.Combine(folder, gameFile);
+        var saves = Directory.GetFiles(folder, "*" + SaveStore.Ext, SearchOption.AllDirectories);
+        foreach (var f in saves)
+            if (FormatOf(f) is int format && format > SaveFile.CurrentFormat)
+                throw new SaveTooNewException($"it carries a game written by a newer version of the app (save format {format}; this version reads up to {SaveFile.CurrentFormat}): update the app to install it");
+        if (File.Exists(game)) Json.Load<SaveFile>(game);
     }
 
     public static GameServer Load(string path, PackageStore? store = null)

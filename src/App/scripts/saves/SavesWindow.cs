@@ -24,7 +24,8 @@ sealed partial class SavesWindow : Window
     readonly HBoxContainer _path = new();
     readonly LineEdit _filter = new() { PlaceholderText = "Filter", ClearButtonEnabled = true, CustomMinimumSize = new Vector2(180, 0) };
     readonly LineEdit _name = new() { PlaceholderText = "Name", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-    readonly Button _save, _load, _look, _turns, _restore, _purge;
+    readonly Button _save, _load, _look, _turns, _restore, _purge, _newFolder;
+    readonly VSeparator _saveSplit = new();
     readonly Control[] _saveRow;
     readonly Label _status = new() { Modulate = Ui.Muted, ClipText = true, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
     readonly Dictionary<string, (DateTime at, Json.SaveHeadline? head)> _heads = new();
@@ -102,7 +103,7 @@ sealed partial class SavesWindow : Window
         var make = new HBoxContainer();
         make.AddThemeConstantOverride("separation", Ui.Gap.Row);
         var newSave = Ui.Btn("New save…", NewSave, "Another game of the scenario: from its start, or from the save or the turn chosen");
-        var newFolder = Ui.Btn("New folder", NewFolder, "A folder in the one shown, named in the list");
+        var newFolder = _newFolder = Ui.Btn("New folder", NewFolder, "A folder in the one shown, named in the list");
         newSave.SizeFlagsHorizontal = newFolder.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
         make.AddChild(newSave);
         make.AddChild(newFolder);
@@ -135,7 +136,7 @@ sealed partial class SavesWindow : Window
         bottom.AddChild(_name);
         _save = Ui.Primary("Save", () => SaveHere(false), "Save the table into this folder under that name");
         bottom.AddChild(_save);
-        bottom.AddChild(new VSeparator());
+        bottom.AddChild(_saveSplit);
         _look = Ui.Btn("Look", () => { if (Chosen() is { } e) Look(e); }, "Show it on the table without loading it");
         _turns = Ui.Btn("Turns", () => { if (Chosen() is { Folder: false, Trashed: null, Turn: null } e) ShowTurns(e.Path); }, "Every ended turn kept in this save");
         _load = Ui.Btn("Load", () => { if (Chosen() is { } e) Load(e); }, "The table becomes this save, for everyone at the table, and play goes on in it");
@@ -148,7 +149,7 @@ sealed partial class SavesWindow : Window
         bottom.AddChild(spacer);
         bottom.AddChild(_purge);
         bottom.AddChild(_restore);
-        _saveRow = new Control[] { _name, _save, bottom.GetChild<Control>(2), _look, _turns, _load };
+        _saveRow = new Control[] { _name, _save, _saveSplit, _look, _turns, _load };
         right.AddChild(bottom);
         right.AddChild(_status);
         _name.TextSubmitted += _ => SaveHere(false);
@@ -207,6 +208,7 @@ sealed partial class SavesWindow : Window
     void Show(string folder)
     {
         _turnsOf = null;
+        _newFolder.Disabled = false;
         _inTrash = folder == TrashKey;
         if (!_inTrash) _folder = Directory.Exists(folder) ? folder : Root;
         else if (!Directory.Exists(_folder)) _folder = Root;
@@ -285,7 +287,7 @@ sealed partial class SavesWindow : Window
         if (_turnsOf != null)
         {
             _path.AddChild(new Label { Text = "/", Modulate = Ui.Faint });
-            _path.AddChild(new Label { Text = System.IO.Path.GetFileNameWithoutExtension(_turnsOf) + " · turns" });
+            _path.AddChild(Ui.Bare(new Button { Text = System.IO.Path.GetFileNameWithoutExtension(_turnsOf) + " · turns", FocusMode = Control.FocusModeEnum.None }));
         }
     }
 
@@ -324,8 +326,9 @@ sealed partial class SavesWindow : Window
         _turnsOf = save;
         _turnRecords = turns;
         _pick.Clear();
-        _name.Visible = _save.Visible = false;
+        _name.Visible = _save.Visible = _saveSplit.Visible = false;
         _turns.Visible = false;
+        _newFolder.Disabled = true;
         FillPath();
         FillTiles();
     }

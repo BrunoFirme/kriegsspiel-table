@@ -356,6 +356,27 @@ public sealed class SavesTests
     }
 
     [Fact]
+    public void A_handed_over_game_the_app_cannot_open_is_refused_before_anything_is_installed()
+    {
+        string Item(string scenario, string? game, string? save)
+        {
+            var dir = Path.Combine(TempRoot(), "item");
+            Directory.CreateDirectory(Path.Combine(dir, "saves"));
+            File.WriteAllText(Path.Combine(dir, "scenario.json"), scenario);
+            if (game != null) File.WriteAllText(Path.Combine(dir, "game.kstable"), game);
+            if (save != null) File.WriteAllText(Path.Combine(dir, "saves", "Day 2.kstable"), save);
+            return dir;
+        }
+        var scenario = Json.Serialize(new Scenario { Id = "scn", Name = "Feud" });
+        var game = Json.Serialize(PlayedTurns(1).ToSave());
+        SaveLoader.CheckHandedOver(Item(scenario, game, game), "game.kstable");
+        Assert.Throws<SaveTooNewException>(() => SaveLoader.CheckHandedOver(Item(scenario, FromTheFuture, null), "game.kstable"));
+        Assert.Throws<SaveTooNewException>(() => SaveLoader.CheckHandedOver(Item(scenario, game, FromTheFuture), "game.kstable"));
+        Assert.Contains("scenario format 9", Assert.Throws<SaveTooNewException>(() => SaveLoader.CheckHandedOver(Item("{\"format\":9,\"name\":\"x\"}", null, null), "game.kstable")).Message);
+        Assert.ThrowsAny<System.Text.Json.JsonException>(() => SaveLoader.CheckHandedOver(Item(scenario, "{ damaged", null), "game.kstable"));
+    }
+
+    [Fact]
     public void A_name_from_the_umpire_becomes_a_file_name_windows_takes()
     {
         Assert.Equal("Turn 6 - 06h30", SaveNames.Clean("Turn 6 : 06h30"));

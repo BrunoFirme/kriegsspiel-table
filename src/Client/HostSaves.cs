@@ -45,6 +45,8 @@ public sealed class HostSaves
     ClientSession? _mirrored;
     (string ScenarioDir, string Path)? _pendingCurrent;
     double _saveFailingSince = -1;
+    double _retryWholeAt = -1;
+    const double RetryWholeAfter = 10;
     bool _saveWarned;
 
     public HostSaves(Func<ClientSession> session, Func<GameServer?> server, IScenarioFolders folders, SaveStore store, SaveServices app)
@@ -326,7 +328,8 @@ public sealed class HostSaves
         {
             _autosaveTimer = 0;
             _scripts.Round();
-            if (Server.Dirty && (_wholeWanted || _logKeeper.WholeSaveDue(closing: false, Server.State.Clock.Turn))) SaveNow();
+            bool retry = _retryWholeAt >= 0 && Clock() >= _retryWholeAt;
+            if (Server.Dirty && (_wholeWanted || retry || _logKeeper.WholeSaveDue(closing: false, Server.State.Clock.Turn))) SaveNow();
         }
         else _scripts.Backlog();
     }
@@ -425,6 +428,7 @@ public sealed class HostSaves
             MakesCurrent = _pendingCurrent,
         };
         _wholeWanted = false;
+        _retryWholeAt = -1;
         string? problem = _writeBack.Prepare(closing, out var folder, out var setup);
         var (generation, liveLogIdle) = _logKeeper.SetAside(r.Path, Server.State.Clock.Turn);
         r = r with { Folder = folder, Setup = setup, LogGeneration = generation, LiveLogIdle = liveLogIdle };
@@ -503,7 +507,11 @@ public sealed class HostSaves
         if (o.FolderProblem != null) Log.Error("scenario write-back failed: " + o.FolderProblem);
         if (o.SetupKept) _writeBack.SetupKept(r.Setup!);
         if (o.MadeCurrent && _pendingCurrent == r.MakesCurrent) _pendingCurrent = null;
-        if (o.Problem != null && !r.Mirror && SaveStore.SamePath(Session.SavePath, r.Path)) _wholeWanted = _pendingCurrent != null;
+        if (o.Problem != null && !r.Mirror && SaveStore.SamePath(Session.SavePath, r.Path))
+        {
+            _wholeWanted = _pendingCurrent != null;
+            _retryWholeAt = Clock() + RetryWholeAfter;
+        }
         Note(o.Kept);
         ReportSave(o.Problem ?? o.FolderProblem, r.Closing);
     }
