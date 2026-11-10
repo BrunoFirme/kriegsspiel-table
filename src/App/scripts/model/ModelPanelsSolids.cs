@@ -224,7 +224,8 @@ internal sealed partial class ModelPanels
     static HBoxContainer SliderRow(string name, double min, double max, double step, float value, Func<double, string> shown, Action<float> set, string tip = "")
     {
         var row = new HBoxContainer { TooltipText = tip };
-        var lab = new Label { Text = name, Modulate = Ui.Muted, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, MouseFilter = Control.MouseFilterEnum.Pass };
+        var lab = Ui.RowLabel(name, Ui.PanelLabels);
+        lab.MouseFilter = Control.MouseFilterEnum.Pass;
         lab.AddThemeFontSizeOverride("font_size", 12);
         row.AddChild(lab);
         var s =

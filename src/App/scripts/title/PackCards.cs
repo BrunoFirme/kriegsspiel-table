@@ -12,7 +12,7 @@ namespace KTable.App;
 
 static class PackCards
 {
-    const int W = 452, H = 260, Most = 6, Margin = 10, SmallestPicture = 64, MeshPictureMost = 1024;
+    const int W = 452, H = 260, Most = 6, Margin = 10, SmallestPicture = 64, MeshPictureMost = 1024, Drawing = 2;
 
     static readonly Dictionary<string, (DateTime at, ImageTexture tex)> _thumbs = new();
     static readonly Dictionary<string, List<Action<ImageTexture>>> _waiting = new();
@@ -74,7 +74,7 @@ static class PackCards
     {
         var dir = Caches.Display;
         Directory.CreateDirectory(dir);
-        var file = Path.Combine(dir, $"pack-{id}-{at.Ticks}.png");
+        var file = Path.Combine(dir, $"pack-{id}-{Drawing}-{at.Ticks}.png");
         if (File.Exists(file) && Image.LoadFromFile(file) is { } kept && !kept.IsEmpty()) return kept;
         var img = Montage(pictures);
         if (img == null) return null;

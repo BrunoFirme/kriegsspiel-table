@@ -58,7 +58,7 @@ internal sealed partial class ModelPanels
         "move" => "Drag an arrow to move along X, Y or Z · drag a shape along the ground, Shift up and down · a joined shape moves whole · 1 3 7 front, right, top",
         "paint" => "Drag to paint on the model; the stroke runs round it and over its seams · = and − or Ctrl+wheel size the brush · Alt-click takes a colour",
         "erase" => "Drag to take the paint off; the model's own picture shows again",
-        "fill" => "Click to fill the patch of that colour, up to other colours and the bends past the angle · Shift-click paints the whole shape · the rubber brings its picture back",
+        "fill" => "Click to fill the patch of that colour, up to other colours and bends sharper than Stop at bends · Shift-click paints the whole shape",
         "pick" => "Click the model: that colour becomes the ink",
         "decal" => !_m.Decal.Holds ? "Choose a picture in the panel, then click the model to press it on like a transfer" : $"Click to press the picture on · turned {_m.Decal.Turn:0.#}° · Q and E turn it, Shift by 1° · = and − or Ctrl+wheel size it · Ctrl+Z takes it off",
         _ => "Drag to turn the model · middle-drag slides it · the wheel comes closer · click a shape to pick it · Home frames it · F turns it over",
@@ -71,28 +71,18 @@ internal sealed partial class ModelPanels
             case "paint":
             case "erase":
             {
-                var row = new HBoxContainer();
-                var lab = new Label { Text = "Size", Modulate = Ui.Muted, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter };
-                lab.AddThemeFontSizeOverride("font_size", 12);
-                row.AddChild(lab);
-                var s =
-                    new HSlider { MinValue = 1, MaxValue = 300, Step = 1, Value = _m.P.Brush, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter };
-                var l = Ui.ValueBox(s, v => $"{v:0} px", 48);
-                s.ValueChanged += v =>
+                box.AddChild(SliderRow("Size", 1, 300, 1, _m.P.Brush, v => $"{v:0} px", v =>
                 {
-                    _m.P.Brush = (float)v;
+                    _m.P.Brush = v;
                     _m.RedrawOverlay();
-                };
-                row.AddChild(s);
-                row.AddChild(l);
-                box.AddChild(row);
+                }));
                 box.AddChild(SliderRow("Soft edge", 0, 1, 0.05, _m.P.ModelSoft, v => $"{v * 100:0}%", v => _m.P.ModelSoft = v));
                 if (_m.Tool == "paint") studio.ModelColour();
                 break;
             }
             case "fill":
-                box.AddChild(SliderRow("Tolerance", 0, 1, 0.01, _m.P.ModelFillMatch, v => $"{v * 100:0}%", v => _m.P.ModelFillMatch = v,
-                    "How far a colour may be from the one clicked and still fill"));
+                box.AddChild(SliderRow("Reach", 0, 1, 0.01, _m.P.ModelFillMatch, v => $"{v * 100:0}%", v => _m.P.ModelFillMatch = v,
+                    "How different a colour may be from the one clicked and still be filled"));
                 box.AddChild(SliderRow("Stop at bends", 5, 180, 5, _m.P.ModelFillBend, v => v >= 180 ? "never" : $"over {v:0}°", v => _m.P.ModelFillBend = v,
                     "The fill stops where the surface turns more sharply than this, as at a helmet's rim or a belt's edge"));
                 studio.ModelColour();
