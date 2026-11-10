@@ -38,11 +38,11 @@ sealed partial class Carry
         _ring.Show(_stowInto, (float)StowFill, StowArmed);
     }
 
-    PieceNode? HolderUnder(Vec2 cursor)
+    internal PieceNode? HolderUnder(Vec2 cursor)
     {
         if (_held.Count == 0 || Marching) return null;
         var layer = _held[0].Layer;
-        if (_held.Any(h => h.Layer != layer || h.Node.IsEffect)) return null;
+        if (_held.Any(h => h.Layer != layer)) return null;
         var s = _c.S;
         PieceNode? best = null;
         foreach (var n in _pieces.Grid.Near(cursor))
