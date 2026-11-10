@@ -256,6 +256,43 @@ public class HostSavesTests
     }
 
     [Fact]
+    public void Loading_a_damaged_save_carries_on_from_its_copy_and_says_so()
+    {
+        var server = HostRun("Game 1", turns: 1);
+        server.Dirty = true;
+        _saves.SaveNow(closing: true);
+        var other = _store.NewSavePath("feud", "Other");
+        var game = new GameServer(new GameState { ScenarioId = "feud", Name = "Feud", Clock = new GameClock { Turn = 7 } }, _session.Store) { SaveId = "20261110-120000-other" };
+        game.SaveTo(other);
+        _store.Checkpoint(other, CheckpointKind.Time, 7, DateTime.UtcNow);
+        File.WriteAllText(other, "{ damaged");
+        var told = new List<string>();
+        _saves.SaveRecovered += told.Add;
+
+        Assert.Null(Load(new LoadFrom("Other", File: other)));
+
+        Assert.Equal(other, _session.SavePath);
+        Assert.Equal(7, server.State.Clock.Turn);
+        var said = Assert.Single(told);
+        Assert.StartsWith("Other: The save could not be read", said);
+        Assert.Contains("Continuing from the checkpoint", said);
+    }
+
+    [Fact]
+    public void Loading_a_save_from_a_newer_version_is_refused_and_the_table_stays()
+    {
+        var server = HostRun("Game 1", turns: 2);
+        var onTable = _session.SavePath!;
+        var newer = Path.Combine(_store.SavesRoot("feud"), "Newer" + SaveStore.Ext);
+        Directory.CreateDirectory(_store.SavesRoot("feud"));
+        File.WriteAllText(newer, "{\"format\":99,\"scenarioId\":\"feud\",\"snapshot\":{\"layers\":{\"umpire\":[{\"id\":\"p\",\"kind\":\"not-a-kind\"}]}}}");
+        var why = Load(new LoadFrom("Newer", File: newer));
+        Assert.Contains("newer version of the app", why);
+        Assert.Equal(onTable, _session.SavePath);
+        Assert.Equal(2, server.State.Clock.Turn);
+    }
+
+    [Fact]
     public void A_save_copied_outside_the_app_gets_its_own_id_when_it_is_hosted()
     {
         var server = HostRun("Game 1", turns: 1);

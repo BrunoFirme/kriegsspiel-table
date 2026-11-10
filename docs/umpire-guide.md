@@ -27,7 +27,7 @@ The table saves itself within a second. **Saves…** (Menu, Ctrl+S or a card's �
 saves as tiles in folders, in `%LOCALAPPDATA%\KriegsspielTable\saves\<scenario>\`.
 
 - **A save is a whole game:** the table and every turn it ended. The one on the table is marked and is written as
-  you play. **New save…** starts another from the scenario's start, the table now, or the save or turn chosen;
+  you play. **New save…** starts another from the scenario's start, or from the save or turn chosen;
   **New save** on a card starts one from the scenario's start.
 - **Save** keeps a copy of the table under a name. **New folder** sorts your saves.
 - **Load** puts a save on the table for everyone and play goes on in it; the save that was on the table is written

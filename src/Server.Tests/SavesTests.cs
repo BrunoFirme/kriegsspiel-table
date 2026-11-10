@@ -323,6 +323,38 @@ public sealed class SavesTests
         Assert.True(back.Turns[4].HasTable);
     }
 
+    const string FromTheFuture = "{\"format\":99,\"id\":\"x\",\"scenarioId\":\"scn\",\"snapshot\":{\"layers\":{\"umpire\":[{\"id\":\"p\",\"kind\":\"not-a-kind\"}]}},\"commands\":[{\"$type\":\"FutureCommand\",\"seq\":1}]}";
+
+    [Fact]
+    public void A_save_from_a_newer_version_is_refused_before_anything_in_it_is_read()
+    {
+        var root = TempRoot();
+        var plain = Path.Combine(root, "plain" + SaveStore.Ext);
+        File.WriteAllText(plain, FromTheFuture);
+        var packed = Path.Combine(root, "packed" + SaveStore.Ext);
+        File.WriteAllBytes(packed, Json.Packed(System.Text.Encoding.UTF8.GetBytes(FromTheFuture)));
+        Assert.Contains("save format 99", Assert.Throws<SaveTooNewException>(() => SaveLoader.Load(plain)).Message);
+        Assert.Contains("save format 99", Assert.Throws<SaveTooNewException>(() => SaveLoader.Load(packed)).Message);
+    }
+
+    [Fact]
+    public void A_newer_safety_copy_stops_the_fallback_instead_of_an_older_copy_taking_the_save_s_place()
+    {
+        var saves = Store(TempRoot());
+        var save = saves.NewSavePath("scn", "Game 1");
+        PlayedTurns(1).SaveTo(save);
+        var older = saves.Checkpoint(save, CheckpointKind.Time, 1, T0);
+        var newer = saves.Checkpoint(save, CheckpointKind.Time, 5, T0.AddHours(1));
+        File.WriteAllText(newer, FromTheFuture);
+        File.WriteAllText(save, "{ damaged");
+
+        var e = Assert.Throws<SaveTooNewException>(() => SaveLoader.Open(saves, save, null, out _));
+        Assert.Contains("newer version", e.Message);
+        Assert.Equal("{ damaged", File.ReadAllText(save));
+        Assert.True(File.Exists(older));
+        Assert.Equal(FromTheFuture, File.ReadAllText(newer));
+    }
+
     [Fact]
     public void A_name_from_the_umpire_becomes_a_file_name_windows_takes()
     {

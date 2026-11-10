@@ -25,6 +25,7 @@ public partial class Net : Node
     public event Action<string>? TurnedAway;
     public event Action<string?>? SaveProblem { add => _saves.SaveProblem += value; remove => _saves.SaveProblem -= value; }
     public event Action<string>? SaveNote { add => _saves.SaveNote += value; remove => _saves.SaveNote -= value; }
+    public event Action<string>? SaveRecovered { add => _saves.SaveRecovered += value; remove => _saves.SaveRecovered -= value; }
     public string? LastSaveProblem => _saves.LastSaveProblem;
     public string? SaveWarning => _saves.Warning;
     public string? MirrorPath => _saves.MirrorPath;

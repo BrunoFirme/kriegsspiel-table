@@ -16,6 +16,16 @@ public static class SaveReports
             + (k.Files.Count > 0 ? " What it does not hold is kept: " + string.Join(", ", k.Files.Select(Path.GetFileName)) + "." : "");
     }
 
+    public static string? Of(GameServer opened, Recovery? recovery)
+    {
+        var said = new List<string>();
+        if (recovery != null) said.Add(Describe(recovery));
+        if (opened.Loaded.LogTorn)
+            said.Add($"The game was carried forward by {opened.Loaded.ReplayedFromLog} change(s) played after the last whole save was written, and the last of them was cut short by the way the app ended and could not be read.");
+        if (opened.Loaded.KeptAside is { } kept) said.Add(Describe(kept));
+        return said.Count == 0 ? null : string.Join(" ", said);
+    }
+
     public static string Describe(Recovery r) =>
         (r.LiveError != null ? $"The save could not be read ({r.LiveError}); it was kept as {Path.GetFileName(r.LiveKeptAs ?? "")}." : "The save file was missing.")
         + $" Continuing from the checkpoint taken at the {r.From.Describe()}: {Path.GetFileName(r.From.Path)}."

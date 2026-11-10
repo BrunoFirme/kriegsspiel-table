@@ -35,7 +35,7 @@ sealed class HudDemo : HudPart
         else Hud.Menus.Show(centre, what == "menu" ? T.SelectedNodes.FirstOrDefault() : null);
     }
 
-    async void SavesDemo(bool stopAtDialog, bool stopAtTrash)
+    async void SavesDemo(string stop)
     {
         async System.Threading.Tasks.Task Wait(double s) => await Hud.ToSignal(Hud.GetTree().CreateTimer(s), SceneTreeTimer.SignalName.Timeout);
         if (N.Saves.SaveInPlay is not var (dir, onTable)) { GD.Print("[saves] this table is not one of a scenario's games"); return; }
@@ -53,6 +53,14 @@ sealed class HudDemo : HudPart
         var w = Hud.GetTree().Root.FindChildren("*", "Window", true, false).OfType<SavesWindow>().FirstOrDefault();
         if (w == null) { GD.Print("[saves] the window did not open"); return; }
         GD.Print("[saves] showing " + System.IO.Path.GetFileName(w.ShownFolder));
+        if (stop == "root") return;
+        if (stop == "turns")
+        {
+            w.ShowTurns(onTable);
+            await Wait(1);
+            GD.Print("[saves] turns of " + System.IO.Path.GetFileNameWithoutExtension(onTable));
+            return;
+        }
         if (w.TreeRowOf("Second group") is not { } row) { GD.Print("[saves] no Second group row"); return; }
         var at = row.GetCenter();
         foreach (var down in new[] { true, false })
@@ -83,11 +91,11 @@ sealed class HudDemo : HudPart
         GD.Print("[saves] folders in Second group: " + string.Join(", ", System.IO.Directory.GetDirectories(group).Select(System.IO.Path.GetFileName)));
         await Click(ButtonOf(w, "New save…"));
         await Wait(1);
-        if (w.FindChildren("*", "ConfirmationDialog", true, false).OfType<ConfirmationDialog>().LastOrDefault() is { } dlg)
+        if (w.GetChildren(true).OfType<SheetScrim>().LastOrDefault() is { } sheet)
         {
-            GD.Print("[saves] new save offers: " + string.Join(" | ", dlg.FindChildren("*", "OptionButton", true, false).OfType<OptionButton>().SelectMany(o => Enumerable.Range(0, o.ItemCount).Select(o.GetItemText))));
-            if (stopAtDialog) return;
-            await Click(dlg.GetOkButton());
+            GD.Print("[saves] new save offers: " + string.Join(" | ", sheet.FindChildren("*", "OptionButton", true, false).OfType<OptionButton>().SelectMany(o => Enumerable.Range(0, o.ItemCount).Select(o.GetItemText))));
+            if (stop == "dialog") return;
+            await Click(ButtonOf(sheet, "Create"));
         }
         await Wait(2);
         GD.Print("[saves] saves: " + string.Join(", ", store.SaveFiles(dir).Select(f => System.IO.Path.GetRelativePath(root, f))) + "; showing " + System.IO.Path.GetFileName(w.ShownFolder));
@@ -103,7 +111,7 @@ sealed class HudDemo : HudPart
         await Wait(1);
         var tile = w.FindChildren("*", "Label", true, false).OfType<Label>().FirstOrDefault(l => l.Text == "Before the attack")?.GetParent()?.GetParent() as Control;
         GD.Print("[saves] in the trash: " + (tile != null ? "Before the attack" : "nothing"));
-        if (tile == null || stopAtTrash) return;
+        if (tile == null || stop == "trash") return;
         await ClickAt(w, tile.GetGlobalRect().GetCenter());
         await Wait(0.5);
         await Click(ButtonOf(w, "Restore"));
@@ -1228,7 +1236,7 @@ sealed class HudDemo : HudPart
         if (what == "history") { Hud.FindChildren("*", "Button", true, false).OfType<Button>().FirstOrDefault(b => b.Text == "History")?.EmitSignal(BaseButton.SignalName.Pressed); return true; }
         if (what == "connection") { Hud.Top.People!.Open(); return true; }
         if (what == "savecopy") { ((IHudShell)Hud).ShowSaveCopy(); return true; }
-        if (what is "saves" or "saves:dialog" or "saves:trash") { SavesDemo(what == "saves:dialog", what == "saves:trash"); return true; }
+        if (what is "saves" or "saves:dialog" or "saves:trash" or "saves:root" or "saves:turns") { SavesDemo(what.Length > 6 ? what[6..] : ""); return true; }
         if (what == "saves:many") { SavesManyDemo(); return true; }
         if (what.StartsWith("open:")) { Hud.OpenPanel(what["open:".Length..]); return true; }
         if (what.StartsWith("widget:"))

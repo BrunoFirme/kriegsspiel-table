@@ -95,6 +95,21 @@ public static class Json
 
     public sealed record SaveHeadline(string ScenarioId, string Saved, SavePreview Preview, string Id = "", int Format = 0);
 
+    public static int? ReadSaveFormat(string path)
+    {
+        var head = Head(path, 1 << 10);
+        var r = new Utf8JsonReader(WithoutBom(head), isFinalBlock: false, state: default);
+        if (!r.Read() || r.TokenType != JsonTokenType.StartObject) return null;
+        while (r.Read() && r.TokenType == JsonTokenType.PropertyName)
+        {
+            var name = r.GetString();
+            if (!r.Read()) return null;
+            if (name == "format") return r.TokenType == JsonTokenType.Number && r.TryGetInt32(out var f) ? f : null;
+            if (!r.TrySkip()) return null;
+        }
+        return null;
+    }
+
     public static string? ReadSaveId(string path)
     {
         var head = Head(path, 1 << 12);

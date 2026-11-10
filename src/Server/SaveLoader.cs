@@ -29,11 +29,20 @@ public sealed record Recovery(string? LiveError, string? LiveKeptAs, Checkpoint 
 
 public static class SaveLoader
 {
+    static SaveTooNewException TooNew(int format) =>
+        new($"this save was written by a newer version of the app (save format {format}; this version reads up to {SaveFile.CurrentFormat}): update the app");
+
+    static int? FormatOf(string path)
+    {
+        try { return Json.ReadSaveFormat(path); }
+        catch (Exception e) when (SaveStore.IsDamage(e) || e is ArgumentException) { return null; }
+    }
+
     public static GameServer Load(string path, PackageStore? store = null)
     {
+        if (FormatOf(path) is int written && written > SaveFile.CurrentFormat) throw TooNew(written);
         var save = Json.Load<SaveFile>(path);
-        if (save.Format > SaveFile.CurrentFormat)
-            throw new SaveTooNewException($"this save was written by a newer version of the app (save format {save.Format}; this version reads up to {SaveFile.CurrentFormat}): update the app");
+        if (save.Format > SaveFile.CurrentFormat) throw TooNew(save.Format);
         if (string.IsNullOrEmpty(save.ScenarioId) || save.Snapshot == null || save.Snapshot.Layers == null)
             throw new InvalidDataException("not a Kriegsspiel Table save");
         var state = save.Snapshot;
@@ -151,6 +160,11 @@ public static class SaveLoader
         {
             GameServer srv;
             try { srv = Load(cp.Path, store); }
+            catch (SaveTooNewException e)
+            {
+                throw new SaveTooNewException($"The save could not be read ({liveError?.Message ?? "it is missing"}), and its newest copy, {Path.GetFileName(cp.Path)}, was written by a newer version of the app: "
+                    + "update the app to carry on from it. Nothing was changed: an older copy was not put in its place. (" + e.Message + ")");
+            }
             catch (Exception e) when (SaveStore.IsDamage(e) || SaveStore.IsUnreachable(e)) { failed.Add($"{Path.GetFileName(cp.Path)}: {e.Message}"); continue; }
             string? kept;
             try { kept = liveError != null ? SaveStore.SetAside(savePath, "unreadable", Repeatable.UtcNow) : null; }

@@ -111,6 +111,7 @@ public partial class Hud : CanvasLayer
         });
         Top.ShowSaveProblem(N.SaveWarning);
         Hook<Action<string>>(h => N.SaveNote += h, h => N.SaveNote -= h, n => Log($"[color=#a09c94]{Fmt.Bb(n)}[/color]"));
+        Hook<Action<string>>(h => N.SaveRecovered += h, h => N.SaveRecovered -= h, n => Log($"[color=#ffd75e]{Fmt.Bb(n)}[/color]"));
         foreach (var p in Problems.Take()) Log($"[color=#ffd75e]{Fmt.Bb(p)}[/color]");
         Hook<Action<string>>(h => Problems.Told += h, h => Problems.Told -= h, p => Callable.From(() => { if (IsInstanceValid(this)) Log($"[color=#ffd75e]{Fmt.Bb(p)}[/color]"); }).CallDeferred());
         HookTable();

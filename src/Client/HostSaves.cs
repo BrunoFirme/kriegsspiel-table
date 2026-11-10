@@ -27,6 +27,7 @@ public sealed class HostSaves
 
     public event Action<string?>? SaveProblem;
     public event Action<string>? SaveNote;
+    public event Action<string>? SaveRecovered;
     public string? LastSaveProblem { get; private set; }
     public string? Warning => _saveWarned ? LastSaveProblem : null;
     public string? MirrorPath { get; private set; }
@@ -142,21 +143,27 @@ public sealed class HostSaves
                     then(why ?? "nothing could be read");
                     return;
                 }
-                try { Switch(server, loaded); then(null); }
+                try
+                {
+                    Switch(server, loaded);
+                    if (loaded.Report is { } report) SaveRecovered?.Invoke($"{Path.GetFileNameWithoutExtension(loaded.Path)}: {report}");
+                    then(null);
+                }
                 catch (Exception e) { Log.Error("loading a save failed: " + e); then(e.Message); }
             });
         }, TaskScheduler.Default);
     }
 
-    sealed record Loaded(string Path, GameState State, List<TurnRecord> Turns, byte[]? Picture, string Name, string? Created, string? Id);
+    sealed record Loaded(string Path, GameState State, List<TurnRecord> Turns, byte[]? Picture, string Name, string? Created, string? Id, string? Report = null);
 
     Loaded Read(string scenarioDir, string onTable, LoadFrom from, TurnRecord? record, List<TurnRecord> before, PackageStore? packs, DateTime now)
     {
         if (from.File is { } file && from.TurnIndex == null && from.Start == null)
         {
-            var g = SaveLoader.Open(_store, file, packs, out _);
+            var g = SaveLoader.Open(_store, file, packs, out var recovery);
+            var report = SaveReports.Of(g, recovery);
             g.SaveTo(file);
-            return new Loaded(file, g.State, g.Turns.ToList(), PictureOf(file), from.Name, g.Created, g.SaveId);
+            return new Loaded(file, g.State, g.Turns.ToList(), PictureOf(file), from.Name, g.Created, g.SaveId, report);
         }
         string source = onTable;
         if (from.File is { } branchFrom && from.TurnIndex is int ti)

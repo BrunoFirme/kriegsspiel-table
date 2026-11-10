@@ -52,11 +52,11 @@ sealed partial class AgentTableTools
                 new Arg("show", "boolean", "also show it on the person's table, as History does"), new Arg("now", "boolean", "back to the live table, alone")),
             LookBack);
         yield return new AgentTool("saves",
-            "The Saves window's work, for the game on the table (host only). list: every folder and save under the scenario's saves, the one on the table, and the trash. new_save: another game of the scenario, from its start, the table now, or a save (name, from, play to put it on the table). " +
+            "The Saves window's work, for the game on the table (host only). list: every folder and save under the scenario's saves, the one on the table, and the trash. new_save: another game of the scenario, from its start or a save (name, from, play to put it on the table); save_game copies the table now. " +
             "rename, delete (to the trash; never the save on the table), new_folder, move (into a folder) and restore (from the trash, by its name in list). Paths are relative to the saves, folders with /, a save without its extension.",
             Args.Schema(new Arg("action", "string", "list, new_save, rename, delete, new_folder, move or restore", true), new Arg("path", "string", "the save or folder to act on"),
                 new Arg("name", "string", "rename's new name, new_folder's or new_save's name, restore's trash name"), new Arg("into", "string", "move's or new_folder's folder (the saves themselves if left out)"),
-                new Arg("from", "string", "new_save: start (default), now, or a save's path"), new Arg("play", "boolean", "new_save: put it on the table now")),
+                new Arg("from", "string", "new_save: start (default) or a save's path"), new Arg("play", "boolean", "new_save: put it on the table now")),
             Saves);
         yield return new AgentTool("save_scenario_copy",
             "Saves a copy of the table as it is now as a new scenario (map sheets, every piece, clock and scale), as Save a copy as a new scenario… does; the table's own scenario is left as it is.",
@@ -351,12 +351,7 @@ sealed partial class AgentTableTools
         var name = SaveNames.Clean(a.Str("name") ?? "", store.NextGameName(dir));
         var from = (a.Str("from") ?? "start").Trim();
         LoadFrom source;
-        if (string.Equals(from, "now", StringComparison.OrdinalIgnoreCase))
-        {
-            var (state, turns) = (server.State.DeepClone(), server.Turns.ToList());
-            source = new LoadFrom("the table", Start: () => (state, turns), SaveName: name);
-        }
-        else if (string.Equals(from, "start", StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(from, "start", StringComparison.OrdinalIgnoreCase))
         {
             var (packs, first) = (s.Store, server.Turns.FirstOrDefault());
             source = new LoadFrom("the scenario's start", Start: () => SavesWindow.ScenarioStart(packs, dir, first), SaveName: name);
@@ -366,7 +361,7 @@ sealed partial class AgentTableTools
             var packs = s.Store;
             source = new LoadFrom(Path.GetFileNameWithoutExtension(file), Start: () => { var g = KTable.Server.SaveLoader.Load(file, packs); return (g.State, g.Turns.ToList()); }, SaveName: name);
         }
-        else return ToolResult.Fail("from is start, now, or a save's path (list).");
+        else return ToolResult.Fail("from is start or a save's path (list).");
         source = source with { PlaceIn = root };
         var done = new TaskCompletionSource<string?>();
         if (a.Flag("play") == true)

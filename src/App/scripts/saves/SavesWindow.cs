@@ -101,7 +101,7 @@ sealed partial class SavesWindow : Window
         outer.AddChild(left);
         var make = new HBoxContainer();
         make.AddThemeConstantOverride("separation", Ui.Gap.Row);
-        var newSave = Ui.Btn("New save…", NewSave, "Another game of the scenario: from its start, the table now, the save or the turn chosen");
+        var newSave = Ui.Btn("New save…", NewSave, "Another game of the scenario: from its start, or from the save or the turn chosen");
         var newFolder = Ui.Btn("New folder", NewFolder, "A folder in the one shown, named in the list");
         newSave.SizeFlagsHorizontal = newFolder.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
         make.AddChild(newSave);
@@ -289,7 +289,7 @@ sealed partial class SavesWindow : Window
         }
     }
 
-    void ShowTurns(string save)
+    internal void ShowTurns(string save)
     {
         if (_busy) return;
         if (SaveStore.SamePath(save, OnTable) && _c.N.Server is { } server)
@@ -976,7 +976,6 @@ sealed partial class SavesWindow : Window
         var name = new LineEdit { Text = _store.NextGameName(_scenarioDir), CustomMinimumSize = new Vector2(280, 0), SelectAllOnFocus = true };
         var from = new OptionButton { FitToLongestItem = false };
         from.AddItem("The scenario's start", 0);
-        from.AddItem("The table now", 1);
         if (chosen != null) { from.AddItem(chosen.Turn != null && _turnsOf != null ? $"{System.IO.Path.GetFileNameWithoutExtension(_turnsOf)} · {chosen.Name}" : chosen.Name, 2); from.Selected = 2; }
         form.AddChild(new Label { Text = "Name" });
         form.AddChild(name);
@@ -1000,11 +999,6 @@ sealed partial class SavesWindow : Window
         {
             var (path, packs) = (chosen.Path, _c.S.Store);
             source = new LoadFrom(chosen.Name, Start: () => { var g = KTable.Server.SaveLoader.Load(path, packs); return (g.State, g.Turns.ToList()); }, SaveName: name);
-        }
-        else if (startsFrom == 1)
-        {
-            var (state, turns) = (server.State.DeepClone(), server.Turns.ToList());
-            source = new LoadFrom("the table", Start: () => (state, turns), SaveName: name);
         }
         else
         {
