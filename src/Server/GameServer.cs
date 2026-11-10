@@ -22,6 +22,8 @@ public sealed partial class GameServer
     readonly Dictionary<long, PeerInfo> _peers = new();
     readonly Dictionary<long, string> _tokens = new();
     readonly Dictionary<long, PeerInfo> _waiting = new();
+    readonly Dictionary<long, string> _waitingKeys = new();
+    readonly Dictionary<long, string> _nonces = new();
     readonly Dictionary<string, (int fails, long until)> _guesses = new();
     readonly List<Command> _log = new();
     readonly Dictionary<long, Undoable> _inverses = new();
@@ -45,6 +47,7 @@ public sealed partial class GameServer
         State.EnsureBoard();
         Store = store;
         Access = access ?? new GameAccess();
+        Access.GiveColorSlots();
         _clock = clock ?? (() => new DateTimeOffset(Repeatable.UtcNow).ToUnixTimeMilliseconds());
         Scripts = new Scripting.ScriptHost(this);
         Created = created ?? Repeatable.UtcNow.ToString("o");
@@ -91,7 +94,9 @@ public sealed partial class GameServer
             return out_;
         }
         if (OtherApp(req) is { } other) { out_.Add(new(peerId, new JoinResult { Ok = false, Error = other })); return out_; }
-        if (Access.Find(req.Token) is { } known)
+        if (Unproven(peerId, req) is { } ask) { out_.Add(new(peerId, ask)); return out_; }
+        var key = string.IsNullOrEmpty(req.Key) ? null : req.Key;
+        if ((Access.Find(req.Token) ?? Access.FindKey(key)) is { } known)
         {
             foreach (var (oldId, hash) in _tokens.Where(t => t.Value == known.TokenHash).ToList())
             {
@@ -100,7 +105,10 @@ public sealed partial class GameServer
                 out_.Add(new(oldId, new JoinResult { Ok = false, Error = "you connected from elsewhere" }));
             }
             if (Full(known.Role) is { } full) { out_.Add(new(peerId, new JoinResult { Ok = false, Error = full })); return out_; }
+            bool newKey = key != null && known.Key != key;
+            if (newKey) { Access.GiveKey(known, key); Dirty = true; }
             Seat(peerId, new PeerInfo { PeerId = peerId, Name = known.Name, Role = known.Role }, known.TokenHash, out_, token: null);
+            if (newKey) out_.AddRange(AccessToUmpires());
             return out_;
         }
         if (Access.Password.Length > 0)
@@ -121,10 +129,26 @@ public sealed partial class GameServer
             return out_;
         }
         _waiting[peerId] = new PeerInfo { PeerId = peerId, Name = name, Role = Role.Observer };
+        if (key != null) _waitingKeys[peerId] = key;
+        else _waitingKeys.Remove(peerId);
         out_.Add(new(peerId, new JoinResult { Ok = false, Waiting = true, PeerId = peerId }));
         foreach (var lead in Leads()) out_.Add(new(lead.PeerId, new Knock { PeerId = peerId, Name = name }));
         out_.AddRange(BroadcastPeers());
         return out_;
+    }
+
+    Message? Unproven(long peerId, JoinRequest req)
+    {
+        if (string.IsNullOrEmpty(req.Key)) return null;
+        if (req.Key.Length > JoinKey.MaxPublicLength) return new JoinResult { Ok = false, Error = "this PC's key could not be read" };
+        bool asked = _nonces.Remove(peerId, out var nonce);
+        if (string.IsNullOrEmpty(req.Proof))
+        {
+            var fresh = JoinKey.NewNonce();
+            _nonces[peerId] = fresh;
+            return new Challenge { Nonce = fresh };
+        }
+        return asked && JoinKey.Proves(req.Key, nonce!, req.Proof) ? null : new JoinResult { Ok = false, Error = "this PC could not prove its key: knock again" };
     }
 
     string? OtherApp(JoinRequest req)
@@ -167,39 +191,11 @@ public sealed partial class GameServer
         switch (m)
         {
             case Admit a:
-            {
-                if (!_waiting.Remove(a.PeerId, out var w)) { res.Add(new(byId, new ErrorMessage { Text = "nobody is waiting under that id" })); return res; }
-                if (!Enum.IsDefined(a.Role))
-                {
-                    _waiting[a.PeerId] = w;
-                    res.Add(new(byId, new ErrorMessage { Text = "no such role" }));
-                    return res;
-                }
-                var role = a.Role;
-                if (role == Role.HostUmpire) role = Role.LeadUmpire;
-                if (role == Role.LeadUmpire && !host)
-                {
-                    _waiting[a.PeerId] = w;
-                    res.Add(new(byId, new ErrorMessage { Text = "only the host makes lead umpires" }));
-                    return res;
-                }
-                if (Full(role) is { } full)
-                {
-                    _waiting[a.PeerId] = w;
-                    res.Add(new(byId, new ErrorMessage { Text = full }));
-                    return res;
-                }
-                var token = GameAccess.NewToken();
-                var entry = new Approved { TokenHash = GameAccess.Hash(token), Name = UniqueName(w.Name, null), Role = role };
-                Access.Approved.Add(entry);
-                Dirty = true;
-                Seat(a.PeerId, new PeerInfo { PeerId = a.PeerId, Name = entry.Name, Role = role }, entry.TokenHash, res, token);
-                res.AddRange(AccessToUmpires());
-                return res;
-            }
+                return Admitted(by, a, res);
             case Refuse r:
             {
                 if (!_waiting.Remove(r.PeerId)) { res.Add(new(byId, new ErrorMessage { Text = "nobody is waiting under that id" })); return res; }
+                _waitingKeys.Remove(r.PeerId);
                 res.Add(new(r.PeerId, new JoinResult { Ok = false, Error = "not let in" }));
                 res.AddRange(BroadcastPeers());
                 return res;
@@ -229,6 +225,16 @@ public sealed partial class GameServer
                 res.AddRange(AccessToUmpires());
                 return res;
             }
+            case Forget f:
+            {
+                if (Access.FindHash(f.TokenHash ?? "") is not { } gone) return Refuse(res, byId, "nobody on the list of people let in goes by that");
+                if (_tokens.ContainsValue(gone.TokenHash)) return Refuse(res, byId, $"{gone.Name} is at the table now: put them out from there");
+                if (gone.Role == Role.LeadUmpire && !host) return Refuse(res, byId, "only the host forgets a lead umpire");
+                Access.Approved.Remove(gone);
+                Dirty = true;
+                res.AddRange(AccessToUmpires());
+                return res;
+            }
             case SetPassword { Password: null }:
                 res.Add(new(byId, new ErrorMessage { Text = "the new password is missing (an empty one opens the door to anyone)" }));
                 return res;
@@ -241,6 +247,40 @@ public sealed partial class GameServer
                 res.Add(new(byId, new ErrorMessage { Text = $"{m.GetType().Name} is not a door message" }));
                 return res;
         }
+    }
+
+    List<Outgoing> Admitted(PeerInfo by, Admit a, List<Outgoing> res)
+    {
+        if (!_waiting.TryGetValue(a.PeerId, out var w)) return Refuse(res, by.PeerId, "nobody is waiting under that id");
+        var back = string.IsNullOrEmpty(a.Returning) ? null : Access.FindHash(a.Returning);
+        if (AdmitDenied(by, a, back) is { } why) return Refuse(res, by.PeerId, why);
+        var role = back?.Role ?? (a.Role == Role.HostUmpire ? Role.LeadUmpire : a.Role);
+        if (Full(role) is { } full) return Refuse(res, by.PeerId, full);
+        _waiting.Remove(a.PeerId);
+        _waitingKeys.Remove(a.PeerId, out var key);
+        var token = GameAccess.NewToken();
+        var entry = back ?? new Approved { Name = UniqueName(w.Name, null), Role = role };
+        entry.TokenHash = GameAccess.Hash(token);
+        if (back == null) Access.Approved.Add(entry);
+        Access.GiveColorSlots();
+        Access.GiveKey(entry, key);
+        Dirty = true;
+        Seat(a.PeerId, new PeerInfo { PeerId = a.PeerId, Name = entry.Name, Role = role }, entry.TokenHash, res, token);
+        res.AddRange(AccessToUmpires());
+        return res;
+    }
+
+    string? AdmitDenied(PeerInfo by, Admit a, Approved? back)
+    {
+        bool host = by.Role == Role.HostUmpire;
+        if (!string.IsNullOrEmpty(a.Returning))
+        {
+            if (back == null) return "that person is no longer on the list of people let in";
+            if (_tokens.ContainsValue(back.TokenHash)) return $"{back.Name} is at the table now";
+            return back.Role == Role.LeadUmpire && !host ? "only the host lets a lead umpire back in" : null;
+        }
+        if (!Enum.IsDefined(a.Role)) return "no such role";
+        return (a.Role is Role.LeadUmpire or Role.HostUmpire) && !host ? "only the host makes lead umpires" : null;
     }
 
     static string? May(PeerInfo by, PeerInfo target, Role to)
@@ -279,7 +319,7 @@ public sealed partial class GameServer
         bool ump = Visibility.IsUmpire(peer.Role);
         out_.Add(new(peerId, new JoinResult
         {
-            Ok = true, PeerId = peerId, Role = peer.Role, Token = token,
+            Ok = true, PeerId = peerId, Role = peer.Role, Name = peer.Name, Token = token,
             View = Visibility.Filter(State, peer),
             Access = ump ? Access.Clone() : null,
             Created = ump ? Created : null,
@@ -332,6 +372,8 @@ public sealed partial class GameServer
         _peers.Remove(peerId);
         _tokens.Remove(peerId);
         _waiting.Remove(peerId);
+        _waitingKeys.Remove(peerId);
+        _nonces.Remove(peerId);
         ForgetCarrier(peerId);
         return BroadcastPeers();
     }

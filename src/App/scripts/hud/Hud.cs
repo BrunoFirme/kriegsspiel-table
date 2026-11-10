@@ -95,6 +95,7 @@ public partial class Hud : CanvasLayer
         Hook<Action>(h => S.AccessChanged += h, h => S.AccessChanged -= h, () =>
         {
             Top.UpdateDoor();
+            Top.UpdateKnocks();
             Umpires.Rebuild();
             T.SyncZones();
             Top.UpdatePointerInfo();

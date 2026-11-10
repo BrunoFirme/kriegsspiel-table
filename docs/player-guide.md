@@ -21,7 +21,7 @@ The host can let you in as an **observer**:
 
 1. **Join a game**, then type the address, port, password and your name.
 2. Wait at the door until the host or a lead lets you in; ✕ cancels. If they refuse or the host does not answer,
-   you are back on the title screen with the reason. Next time you come straight back in.
+   you are back on the title screen with the reason. Next time you come straight back in, even at a new address.
 
 An observer sees the whole board and changes nothing; the umpires' zones, dice and pointers stay with them.
 

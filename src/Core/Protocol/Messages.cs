@@ -23,6 +23,8 @@ namespace KTable.Core.Protocol;
 [JsonDerivedType(typeof(Refuse), "Refuse")]
 [JsonDerivedType(typeof(SetRole), "SetRole")]
 [JsonDerivedType(typeof(Revoke), "Revoke")]
+[JsonDerivedType(typeof(Forget), "Forget")]
+[JsonDerivedType(typeof(Challenge), "Challenge")]
 [JsonDerivedType(typeof(SetPassword), "SetPassword")]
 [JsonDerivedType(typeof(RoleChanged), "RoleChanged")]
 [JsonDerivedType(typeof(AccessChanged), "AccessChanged")]
@@ -50,7 +52,7 @@ public sealed class TurnState : Message
 
 public static class ProtocolVersion
 {
-    public const int Current = 8;
+    public const int Current = 9;
 }
 
 public sealed class JoinRequest : Message
@@ -60,6 +62,13 @@ public sealed class JoinRequest : Message
     public string? Token { get; set; }
     public string? AppVersion { get; set; }
     public int Protocol { get; set; }
+    public string? Key { get; set; }
+    public string? Proof { get; set; }
+}
+
+public sealed class Challenge : Message
+{
+    public string Nonce { get; set; } = "";
 }
 
 public sealed class JoinResult : Message
@@ -69,6 +78,7 @@ public sealed class JoinResult : Message
     public bool Waiting { get; set; }
     public long PeerId { get; set; }
     public Role Role { get; set; }
+    public string Name { get; set; } = "";
     public GameState? View { get; set; }
     public string? Token { get; set; }
     public GameAccess? Access { get; set; }
@@ -84,6 +94,7 @@ public sealed class Admit : Message
 {
     public long PeerId { get; set; }
     public Role Role { get; set; } = Role.Observer;
+    public string? Returning { get; set; }
 }
 public sealed class Refuse : Message { public long PeerId { get; set; } }
 public sealed class SetRole : Message
@@ -92,6 +103,10 @@ public sealed class SetRole : Message
     public Role Role { get; set; }
 }
 public sealed class Revoke : Message { public long PeerId { get; set; } }
+public sealed class Forget : Message
+{
+    public string TokenHash { get; set; } = "";
+}
 public sealed class SetPassword : Message
 {
     public string Password { get; set; } = "";

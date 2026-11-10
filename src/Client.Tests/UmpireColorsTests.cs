@@ -12,11 +12,15 @@ public class UmpireColorsTests
 
     static readonly GameAccess Access = new()
     {
-        Approved = { new Approved { Name = "Pogue", Role = Role.Umpire }, new Approved { Name = "Watcher", Role = Role.Observer }, new Approved { Name = "Boggs", Role = Role.Umpire } },
+        Approved =
+        {
+            new Approved { Name = "Pogue", Role = Role.Umpire, ColorSlot = 1 }, new Approved { Name = "Watcher", Role = Role.Observer, ColorSlot = 2 },
+            new Approved { Name = "Boggs", Role = Role.Umpire, ColorSlot = 3 },
+        },
     };
 
     [Fact]
-    public void The_host_is_first_and_everyone_else_follows_the_order_they_were_let_in()
+    public void The_host_is_first_and_everyone_else_keeps_the_slot_given_when_let_in()
     {
         Assert.Equal(UmpireColors.HostSlot, UmpireColors.Slot("Host", Peers, Access));
         Assert.Equal(1, UmpireColors.Slot("Pogue", Peers, Access));

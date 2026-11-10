@@ -93,7 +93,7 @@ public class ClientSession
 
     public void OnJoined(JoinResult r)
     {
-        Me = new PeerInfo { PeerId = r.PeerId, Role = r.Role, Name = Me.Name };
+        Me = new PeerInfo { PeerId = r.PeerId, Role = r.Role, Name = string.IsNullOrWhiteSpace(r.Name) ? Me.Name : r.Name };
         Access = r.Access;
         if (r.Token != null) Token = r.Token;
         Created = r.Created ?? Repeatable.UtcNow.ToString("o");
@@ -170,6 +170,9 @@ public class ClientSession
             Reset?.Invoke();
         }
     }
+
+    public IEnumerable<Approved> Away() =>
+        (Access?.Approved ?? new()).Where(a => !Peers.Any(p => string.Equals(p.Name, a.Name, StringComparison.OrdinalIgnoreCase)));
 
     public void OnPeers(PeerList p)
     {

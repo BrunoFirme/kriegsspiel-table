@@ -93,6 +93,7 @@ public partial class Hud
             Relayout();
         };
         Root.AddChild(Compass);
+        if (Top.Knocks is { } knocks) Root.MoveChild(knocks, -1);
         _scriptUi = new ScriptUi { Name = "ScriptUi" };
         Root.AddChild(_scriptUi);
         _scriptUi.Bind(S, N);

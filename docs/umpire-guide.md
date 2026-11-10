@@ -46,10 +46,12 @@ saves as folders and tiles, in `Documents\KriegsspielTable\saves\<scenario>\`.
    - Big game? **Export…** each pack listed there and post it first: people who install it download almost nothing
      from you when they join.
 3. People who knock appear as a card under the top bar. Pick **Lead**, **Umpire**, **Observer** or **Refuse**.
-   Their PC remembers the answer next time.
+   Their PC remembers the answer next time, also when your address changes or a co-umpire hosts the mirror. On a
+   new PC, **Returning as** lets someone back in as who they were: same name, role and zones.
 4. Once others are in, the connection at the top right also shows each umpire in their colour and how many watch.
    Click it for the list: the host and leads change roles, put people out and answer the door from there. Your
-   own dot is faded while the others can't see your pointer.
+   own dot is faded while the others can't see your pointer. Leads also see everyone let in who is **Away**;
+   **Forget…** ends that person's way back in, so they knock like anyone new.
 
 ### Roles
 

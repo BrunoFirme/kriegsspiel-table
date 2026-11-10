@@ -157,14 +157,16 @@ sealed partial class TableDemos
 
     async System.Threading.Tasks.Task DemoPointers(Table table, Hud hud)
     {
-        table.S.OnAccess(new GameAccess { Approved = { new Approved { Name = "Pogue", Role = Role.Umpire }, new Approved { Name = "Boggs", Role = Role.Umpire },
-            new Approved { Name = "Lead umpire", Role = Role.LeadUmpire } } });
+        var access = new GameAccess { Approved = { new Approved { Name = "Pogue", Role = Role.Umpire }, new Approved { Name = "Boggs", Role = Role.Umpire },
+            new Approved { Name = "Lead umpire", Role = Role.LeadUmpire }, new Approved { Name = "Karl", Role = Role.Umpire }, new Approved { Name = "Anna", Role = Role.Observer } } };
+        access.GiveColorSlots();
+        table.S.OnAccess(access);
         var people = new KTable.Core.Protocol.PeerList
         {
             Peers =
                 [table.S.Me, new() { PeerId = 2, Name = "Pogue", Role = Role.Umpire }, new() { PeerId = 3, Name = "Boggs", Role = Role.Umpire }, new() { PeerId = 4, Name = "Lead umpire",
                     Role = Role.LeadUmpire }, new() { PeerId = 5, Name = "Watcher", Role = Role.Observer }],
-            Waiting = [new() { PeerId = 6, Name = "Newcomer" }],
+            Waiting = [new() { PeerId = 6, Name = "Karl" }],
         };
         table.S.Do(new KTable.Core.Protocol.SetZone { Zone = new Zone { Name = "West", Owner = "Pogue", Polygon = { new(-8, -3), new(-1, -3), new(-1, 6), new(-8, 6) } } });
         var carried = table.S.View.Layer(Layers.Umpire).Where(p => table.Pieces.NodeOf(Layers.Umpire, p.Id) is { Footprint.X: > 1 }).OrderBy(p => (p.Pos - new Vec2(2, -2)).Length)

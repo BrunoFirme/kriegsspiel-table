@@ -27,10 +27,31 @@ public sealed class GameAccess
 
     public Approved? FindHash(string hash) => Approved.FirstOrDefault(a => a.TokenHash == hash);
 
+    public Approved? FindKey(string? key) => string.IsNullOrEmpty(key) ? null : Approved.FirstOrDefault(a => a.Key == key);
+
+    public void GiveKey(Approved entry, string? key)
+    {
+        if (string.IsNullOrEmpty(key)) return;
+        foreach (var other in Approved.Where(a => a.Key == key)) other.Key = null;
+        entry.Key = key;
+    }
+
+    public void GiveColorSlots()
+    {
+        var taken = Approved.Where(a => a.ColorSlot > 0).Select(a => a.ColorSlot).ToHashSet();
+        int next = 1;
+        foreach (var a in Approved.Where(a => a.ColorSlot <= 0))
+        {
+            while (taken.Contains(next)) next++;
+            a.ColorSlot = next;
+            taken.Add(next);
+        }
+    }
+
     public GameAccess Clone() => new()
     {
         Password = Password,
-        Approved = Approved.Select(a => new Approved { TokenHash = a.TokenHash, Name = a.Name, Role = a.Role }).ToList(),
+        Approved = Approved.Select(a => new Approved { TokenHash = a.TokenHash, Name = a.Name, Role = a.Role, Key = a.Key, ColorSlot = a.ColorSlot }).ToList(),
     };
 }
 
@@ -39,4 +60,6 @@ public sealed class Approved
     public string TokenHash { get; set; } = "";
     public string Name { get; set; } = "";
     public Role Role { get; set; } = Role.Observer;
+    public string? Key { get; set; }
+    public int ColorSlot { get; set; }
 }

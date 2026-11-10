@@ -266,7 +266,7 @@ public partial class Net : Node
         Multiplayer.ConnectedToServer += _onConnected = () =>
         {
             SetStatus(_token != null ? "connected, coming back in…" : "connected, knocking…");
-            SendRaw(1, new JoinRequest { Name = _name, Password = _password, Token = _token, AppVersion = AppVersion, Protocol = ProtocolVersion.Current });
+            SendRaw(1, Introduce());
         };
         Multiplayer.ConnectionFailed += _onFailed = () =>
         {
@@ -289,6 +289,11 @@ public partial class Net : Node
         SetStatus($"connecting to {address}:{port}…");
         return Error.Ok;
     }
+
+    JoinRequest Introduce(string? proof = null) => new()
+    {
+        Name = _name, Password = _password, Token = _token, AppVersion = AppVersion, Protocol = ProtocolVersion.Current, Key = Joins.Key.Public, Proof = proof,
+    };
 
     LocalCopies? InstalledCopies()
     {
@@ -424,7 +429,7 @@ public partial class Net : Node
                 case JoinRequest j:
                     Dispatch(Server.Join(from, j, _peer?.GetPeer((int)from)?.GetRemoteAddress()));
                     break;
-                case Admit or Refuse or SetRole or Revoke or SetPassword:
+                case Admit or Refuse or SetRole or Revoke or Forget or SetPassword:
                     Dispatch(Server.Control(from, m));
                     break;
                 case CommandMessage cm:
@@ -496,6 +501,9 @@ public partial class Net : Node
                 SetStatus(Server != null ? Status : $"joined as {Fmt.Role(jr.Role)}");
                 if (Server == null && Session.IsUmpire) _saves.StartMirror(jr);
                 Joined?.Invoke();
+                break;
+            case Challenge ch:
+                SendRaw(1, Introduce(Joins.Key.Sign(ch.Nonce)));
                 break;
             case Knock k:
                 Session.OnKnock(k);
@@ -726,6 +734,23 @@ public partial class Net : Node
 public static class Joins
 {
     static string FilePath => System.IO.Path.Combine(OS.GetUserDataDir(), "joins.txt");
+    static string KeyPath => System.IO.Path.Combine(OS.GetUserDataDir(), "join-key");
+    static JoinKey? _key;
+
+    public static JoinKey Key => _key ??= KeptKey();
+
+    static JoinKey KeptKey()
+    {
+        var kept = BestEffort.Read(() => File.Exists(KeyPath) ? JoinKey.From(File.ReadAllBytes(KeyPath)) : null, (JoinKey?)null);
+        if (kept != null) return kept;
+        var made = JoinKey.New();
+        try { Json.WriteAtomic(KeyPath, made.Private()); }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            Problems.TellOnce("join-key-write", $"This PC could not keep its key for tables ({e.Message}): a table that moves to a new address will not know you until an umpire says who you are.");
+        }
+        return made;
+    }
 
     static Dictionary<string, string> Load()
     {

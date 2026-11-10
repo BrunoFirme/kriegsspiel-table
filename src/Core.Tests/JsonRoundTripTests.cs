@@ -105,16 +105,19 @@ public class JsonRoundTripTests
 
     public static IEnumerable<object[]> AllMessages()
     {
-        yield return new object[] { new JoinRequest { Name = "Ann", Password = "abc", Token = "ABCD2345ABCD2345", AppVersion = "1.4.0", Protocol = ProtocolVersion.Current } };
+        yield return new object[] { new JoinRequest { Name = "Ann", Password = "abc", Token = "ABCD2345ABCD2345", AppVersion = "1.4.0", Protocol = ProtocolVersion.Current, Key = "MFkw", Proof = "MEUC" } };
+        yield return new object[] { new Challenge { Nonce = "bm9uY2U=" } };
         yield return new object[] { new JoinResult
         {
-            Ok = true, Error = "", PeerId = 7, Role = Role.LeadUmpire, View = CoreSamples.State(), Token = "ABCD2345ABCD2345",
+            Ok = true, Error = "", PeerId = 7, Role = Role.LeadUmpire, Name = "Ann (2)", View = CoreSamples.State(), Token = "ABCD2345ABCD2345",
             Access = Access(), Created = "2026-10-29T10:00:00Z",
         } };
         yield return new object[] { new JoinResult { Ok = false, Waiting = true, PeerId = 7 } };
         yield return new object[] { new JoinResult { Ok = false, Error = "wrong password" } };
         yield return new object[] { new Knock { PeerId = 7, Name = "Ann" } };
         yield return new object[] { new Admit { PeerId = 7, Role = Role.Umpire } };
+        yield return new object[] { new Admit { PeerId = 7, Returning = new string('a', 64) } };
+        yield return new object[] { new Forget { TokenHash = new string('a', 64) } };
         yield return new object[] { new Refuse { PeerId = 7 } };
         yield return new object[] { new SetRole { PeerId = 7, Role = Role.Observer } };
         yield return new object[] { new Revoke { PeerId = 7 } };
@@ -145,7 +148,7 @@ public class JsonRoundTripTests
     static GameAccess Access() => new()
     {
         Password = "abc",
-        Approved = new() { new Approved { TokenHash = new string('a', 64), Name = "Ann", Role = Role.Umpire }, new Approved { TokenHash = new string('b', 64), Name = "Bob", Role = Role.Observer } },
+        Approved = new() { new Approved { TokenHash = new string('a', 64), Name = "Ann", Role = Role.Umpire }, new Approved { TokenHash = new string('b', 64), Name = "Bob", Role = Role.Observer, Key = "MFkwEwYHKoZIzj0CAQ" } },
     };
 
     [Fact]

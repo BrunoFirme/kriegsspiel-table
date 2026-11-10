@@ -75,8 +75,9 @@ sealed class PeopleList : HudPart
         Modulate = hue ?? Colors.Transparent, MouseFilter = Control.MouseFilterEnum.Ignore, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
     };
 
-    IEnumerable<PeerInfo> Seated() =>
-        S.Peers.OrderBy(p => p.Role switch { Role.HostUmpire => 0, Role.LeadUmpire => 1, Role.Umpire => 2, _ => 3 }).ThenBy(p => p.Name);
+    static int RoleRank(Role r) => r switch { Role.HostUmpire => 0, Role.LeadUmpire => 1, Role.Umpire => 2, _ => 3 };
+
+    IEnumerable<PeerInfo> Seated() => S.Peers.OrderBy(p => RoleRank(p.Role)).ThenBy(p => p.Name);
 
     Color Hue(PeerInfo p)
     {
@@ -159,8 +160,14 @@ sealed class PeopleList : HudPart
         {
             _list.AddChild(Header("At the table"));
             foreach (var p in Seated()) _list.AddChild(Row(p));
-            _list.AddChild(new HSeparator());
         }
+        var away = S.IsLead ? S.Away().OrderBy(a => RoleRank(a.Role)).ThenBy(a => a.Name).ToList() : new();
+        if (away.Count > 0)
+        {
+            _list.AddChild(Header("Away"));
+            foreach (var a in away) _list.AddChild(AwayRow(a));
+        }
+        if (Others || away.Count > 0) _list.AddChild(new HSeparator());
         _list.AddChild(Btn("Invite…", () => { _pop!.Hide(); InviteDialog.Open(Ctx); }, "The address and code others join with"));
         if (OtherUmpires)
         {
@@ -199,6 +206,28 @@ sealed class PeopleList : HudPart
         return row;
     }
 
+    Control AwayRow(Approved a)
+    {
+        var row = new HBoxContainer();
+        row.AddThemeConstantOverride("separation", Ui.Gap.Group);
+        row.AddChild(Dot(Visibility.IsUmpire(a.Role) ? UmpireHue.Of(S, a.Name) ?? UmpireHue.Unassigned : null));
+        row.AddChild(new Label { Text = a.Name, Modulate = Ui.Muted, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, ClipText = true,
+            TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis });
+        var role = new Label { Text = RoleWord(a.Role), Modulate = Ui.Muted };
+        role.AddThemeFontSizeOverride("font_size", 12);
+        row.AddChild(role);
+        if (S.IsHost || a.Role != Role.LeadUmpire)
+        {
+            var mb = new MenuButton { Text = "⋯", Flat = true, FocusMode = Control.FocusModeEnum.None };
+            mb.GetPopup().AddItem("Forget…", 1);
+            var hash = a.TokenHash;
+            mb.GetPopup().IdPressed += _ => Ui.Confirm(HudNode, $"Forget {a.Name}", "Forget", () => N.Door(new Forget { TokenHash = hash }),
+                "Their way back in ends: from any PC they knock at the door like someone new.");
+            row.AddChild(mb);
+        }
+        return row;
+    }
+
     static string RoleWord(Role r) => r switch { Role.HostUmpire => "host", Role.LeadUmpire => "lead umpire", Role.Umpire => "umpire", _ => "observer" };
 
     public static IEnumerable<Button> AdmitButtons(Session S, Net N, PeerInfo w)
@@ -207,7 +236,24 @@ sealed class PeopleList : HudPart
         if (S.IsHost) yield return Btn("Lead", () => N.Door(new Admit { PeerId = id, Role = Role.LeadUmpire }), "Let them in as a lead umpire: they also let people in, set roles and draw zones");
         yield return Ui.Primary("Umpire", () => N.Door(new Admit { PeerId = id, Role = Role.Umpire }), "Let them in as an umpire: they change the table");
         yield return Btn("Observer", () => N.Door(new Admit { PeerId = id, Role = Role.Observer }), "Let them in to watch");
+        if (S.IsLead && Returning(S, N, w) is { } back) yield return back;
         yield return Btn("Refuse", () => N.Door(new Refuse { PeerId = id }), "Turn them away");
+    }
+
+    static MenuButton? Returning(Session S, Net N, PeerInfo w)
+    {
+        bool Matches(string name) => string.Equals(name, w.Name, System.StringComparison.OrdinalIgnoreCase)
+            || name.StartsWith(w.Name + " (", System.StringComparison.OrdinalIgnoreCase);
+        var away = S.Away().Where(a => S.IsHost || a.Role != Role.LeadUmpire)
+            .OrderBy(a => !Matches(a.Name)).ThenBy(a => a.Name, System.StringComparer.CurrentCultureIgnoreCase).ToList();
+        if (away.Count == 0) return null;
+        var mb = new MenuButton { Text = "Returning as ▾", FocusMode = Control.FocusModeEnum.None, Flat = false,
+            TooltipText = "Someone let in before: they come back with that name, role and zones" };
+        var pm = mb.GetPopup();
+        for (int i = 0; i < away.Count; i++) pm.AddItem($"{away[i].Name} · {RoleWord(away[i].Role)}", i);
+        var id = w.PeerId;
+        pm.IdPressed += i => N.Door(new Admit { PeerId = id, Returning = away[(int)i].TokenHash });
+        return mb;
     }
 
     MenuButton? PeerActions(PeerInfo p)
