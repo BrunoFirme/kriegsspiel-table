@@ -104,7 +104,7 @@ sealed class UpdateOffer
         _fetching = stop;
         foreach (var c in _row.GetChildren()) c.QueueFree();
         int totalMb = (int)Math.Ceiling(setup.Size / BytesPerMb);
-        _row.AddChild(new LoadingCard(found.Name, TitleStyle.Serif(),
+        _row.AddChild(new LoadingCard(found.Name,
             () => new LoadingCard.Progress("Downloading MB", (int)(Interlocked.Read(ref _got) / BytesPerMb), totalMb), stop.Cancel));
         Task.Run(async () =>
         {

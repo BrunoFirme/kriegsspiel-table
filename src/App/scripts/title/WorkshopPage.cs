@@ -87,8 +87,7 @@ sealed class WorkshopPage
             var h = new HBoxContainer();
             row.AddChild(h);
             var nm = new Label { Text = name, ClipText = true, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-            nm.AddThemeFontOverride("font", Serif());
-            h.AddChild(nm);
+            h.AddChild(ItemName(nm));
             var pub = _platform.PublishedId(k, id);
             h.AddChild(new Label { Text = (k == "pack" ? "pack" : "scenario") + (pub != null ? " · on the Workshop" : ""), Modulate = Muted });
             var b = new Button { Text = pub == null ? "Publish…" : "Update…", Disabled = !_platform.Available || damaged, FocusMode = Control.FocusModeEnum.None };
@@ -126,9 +125,7 @@ sealed class WorkshopPage
             Callable.From(() => http.Request(e.PreviewUrl)).CallDeferred();
         }
         var t = new Label { Text = e.Title, AutowrapMode = TextServer.AutowrapMode.WordSmart, CustomMinimumSize = new Vector2(206, 0) };
-        t.AddThemeFontOverride("font", Serif());
-        t.AddThemeFontSizeOverride("font_size", 17);
-        cv.AddChild(t);
+        cv.AddChild(ItemName(t));
         cv.AddChild(new Label { Text = $"{e.Meta?.Kind ?? e.Tags} · {e.Subscriptions} subscribers", Modulate = Muted });
         var row = new HBoxContainer();
         var sub = new Button { Text = e.Subscribed ? "Unsubscribe" : "Subscribe", FocusMode = Control.FocusModeEnum.None };

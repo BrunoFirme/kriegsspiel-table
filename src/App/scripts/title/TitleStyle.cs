@@ -16,6 +16,15 @@ static class TitleStyle
     public static Font Sans() => Ui.Sans();
     public static Font SansMedium() => Ui.SansStrong();
 
+    public const int NameSize = 15;
+
+    public static Label ItemName(Label l, int size = NameSize)
+    {
+        l.AddThemeFontOverride("font", SansMedium());
+        l.AddThemeFontSizeOverride("font_size", size);
+        return l;
+    }
+
     static void CheckBoxesAsTheAppDraws(Theme t)
     {
         var app = Ui.Theme();
@@ -83,7 +92,7 @@ static class TitleStyle
         var b = Ui.IconBtn("more", tip);
         b.Flat = true;
         b.CustomMinimumSize = new Vector2(MoreWidth, MoreWidth);
-        b.SizeFlagsVertical = Control.SizeFlags.ShrinkCenter;
+        b.SizeFlagsVertical = Control.SizeFlags.ShrinkBegin;
         b.MouseFilter = Control.MouseFilterEnum.Stop;
         return b;
     }
@@ -96,16 +105,15 @@ static class TitleStyle
         h.AddThemeConstantOverride("separation", Ui.Gap.Group);
         row.AddChild(h);
         var nm = new Label { Text = name, ClipText = true, CustomMinimumSize = new Vector2(260, 0), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsStretchRatio = 1.4f };
-        nm.AddThemeFontOverride("font", Serif());
-        nm.AddThemeFontSizeOverride("font_size", 16);
-        h.AddChild(nm);
+        h.AddChild(ItemName(nm));
         return (row, h);
     }
 
     public static CardGrid Grid() => new();
 
     public const int CardWidth = 220, CardInset = 24, PlateWidth = CardWidth - CardInset, NameWidth = PlateWidth - MoreWidth - Ui.Gap.Tight;
-    const int MoreWidth = 28;
+    public const int MoreWidth = 28;
+    const int NameLines = 2;
     const float PlateAspect = 130f / 226f;
     static readonly int PlateHeight = (int)MathF.Round(PlateWidth * PlateAspect);
 
@@ -114,6 +122,7 @@ static class TitleStyle
         var card = new PanelContainer { CustomMinimumSize = new Vector2(CardWidth, 0), MouseFilter = Control.MouseFilterEnum.Stop };
         card.AddThemeStyleboxOverride("panel", CardStyle(false));
         var cv = new VBoxContainer();
+        cv.AddThemeConstantOverride("separation", Ui.Gap.Tight);
         card.AddChild(cv);
         Control? shown = null;
         if (thumb != null) cv.AddChild(shown = new TextureRect { Texture = thumb, CustomMinimumSize = new Vector2(PlateWidth, PlateHeight), ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
@@ -128,12 +137,13 @@ static class TitleStyle
         }
         if (shown != null)
             card.Resized += () => shown.CustomMinimumSize = new Vector2(PlateWidth, MathF.Round(Math.Max(PlateWidth, card.Size.X - CardInset) * PlateAspect));
+        if (shown != null) cv.AddChild(new Control { CustomMinimumSize = new Vector2(0, Ui.Gap.Tight), MouseFilter = Control.MouseFilterEnum.Ignore });
         var nameRow = new HBoxContainer();
         nameRow.AddThemeConstantOverride("separation", Ui.Gap.Tight);
-        var label = new Label { Text = name, AutowrapMode = TextServer.AutowrapMode.WordSmart, CustomMinimumSize = new Vector2(NameWidth, 0), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-        label.AddThemeFontOverride("font", Serif());
-        label.AddThemeFontSizeOverride("font_size", 18);
-        nameRow.AddChild(label);
+        var label = new Label { Text = name, AutowrapMode = TextServer.AutowrapMode.WordSmart, MaxLinesVisible = NameLines, TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis,
+            VerticalAlignment = VerticalAlignment.Center, CustomMinimumSize = new Vector2(NameWidth, MoreWidth), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+        nameRow.AddChild(ItemName(label));
+        label.Resized += () => label.TooltipText = label.GetLineCount() > NameLines ? name : "";
         return (card, cv, nameRow);
     }
 

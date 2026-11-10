@@ -45,7 +45,7 @@ public partial class Main
     void ShowCard(Opening op)
     {
         DropCard(op);
-        op.Card = new LoadingCard(op.Title, TitleStyle.Serif(), op.Now, CancelOpening);
+        op.Card = new LoadingCard(op.Title, op.Now, CancelOpening);
         if (_loadSlot != null && IsInstanceValid(_loadSlot) && Title.Root != null) { _loadSlot.AddChild(op.Card); return; }
         _loadAlone = new CanvasLayer { Layer = 100 };
         var ground = new ColorRect { Color = Ui.Bar.Darkened(0.2f), MouseFilter = Control.MouseFilterEnum.Ignore };

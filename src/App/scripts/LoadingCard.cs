@@ -15,7 +15,7 @@ public partial class LoadingCard : PanelContainer
     string _countStage = "";
     double _countStart, _countFrom;
 
-    public LoadingCard(string title, Font titleFont, Func<Progress> poll, Action cancel)
+    public LoadingCard(string title, Func<Progress> poll, Action cancel)
     {
         _poll = poll;
         CustomMinimumSize = new Vector2(260, 0);
@@ -34,9 +34,7 @@ public partial class LoadingCard : PanelContainer
         var name =
             new Label { Text = title, ClipText = true, TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis, SizeFlagsHorizontal = SizeFlags.ExpandFill, TooltipText = title,
                 MouseFilter = MouseFilterEnum.Pass };
-        name.AddThemeFontOverride("font", titleFont);
-        name.AddThemeFontSizeOverride("font_size", 16);
-        head.AddChild(name);
+        head.AddChild(TitleStyle.ItemName(name));
         var x = new Button { Text = "✕", Flat = true, FocusMode = FocusModeEnum.None, TooltipText = "Cancel", CustomMinimumSize = new Vector2(26, 0) };
         x.AddThemeFontSizeOverride("font_size", 12);
         x.AddThemeColorOverride("font_color", Ui.Faint);

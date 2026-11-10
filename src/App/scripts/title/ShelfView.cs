@@ -144,8 +144,8 @@ sealed class ShelfView
                 }
             }
         }
-        if (nameRow.GetChild(0) is Label label) label.CustomMinimumSize = new Vector2(NameWidth - FolderGlyph - Ui.Gap.Tight, 0);
-        nameRow.AddChild(new ToolIcon { Kind = "folder", Color = Muted, CustomMinimumSize = new Vector2(FolderGlyph, FolderGlyph), SizeFlagsVertical = Control.SizeFlags.ShrinkCenter });
+        if (nameRow.GetChild(0) is Label label) label.CustomMinimumSize = new Vector2(NameWidth - FolderGlyph - Ui.Gap.Tight, MoreWidth);
+        nameRow.AddChild(new ToolIcon { Kind = "folder", Color = Muted, CustomMinimumSize = new Vector2(FolderGlyph, MoreWidth), SizeFlagsVertical = Control.SizeFlags.ShrinkBegin });
         nameRow.MoveChild(nameRow.GetChild(nameRow.GetChildCount() - 1), 0);
         var more = MoreBtn("Open, rename, delete (also on right-click)");
         more.Pressed += () => FolderMenu(s, e, more.GetGlobalRect().Position + MenuBelow);
