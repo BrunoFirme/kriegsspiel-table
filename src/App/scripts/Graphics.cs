@@ -10,6 +10,8 @@ static class Graphics
 
     static int _lastFull = Settings.Borderless;
 
+    public static event System.Action? WindowChosen;
+
     public static void ApplyDisplay(Settings cfg)
     {
         ApplyWindow(cfg);
@@ -28,6 +30,7 @@ static class Graphics
 
     public static void ApplyWindow(Settings cfg)
     {
+        WindowChosen?.Invoke();
         if (DisplayServer.GetName() == "headless") return;
         if (cfg.WindowMode != Settings.Windowed) _lastFull = cfg.WindowMode;
         var want = ModeOf(cfg);

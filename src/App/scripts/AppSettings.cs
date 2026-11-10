@@ -126,7 +126,10 @@ static class AppSettings
             CustomMinimumSize = new Vector2(160, 0),
         };
         foreach (var n in new[] { "Windowed", "Borderless", "Fullscreen" }) pick.AddItem(n);
-        pick.Selected = Math.Clamp(cfg.WindowMode, Settings.Windowed, Settings.Fullscreen);
+        void Sync() => pick.Selected = Math.Clamp(cfg.WindowMode, Settings.Windowed, Settings.Fullscreen);
+        Sync();
+        pick.TreeEntered += () => { Sync(); Graphics.WindowChosen += Sync; };
+        pick.TreeExiting += () => Graphics.WindowChosen -= Sync;
         pick.ItemSelected += i =>
         {
             cfg.WindowMode = (int)i;
