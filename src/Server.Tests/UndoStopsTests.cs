@@ -79,12 +79,45 @@ public class UndoStopsTests
     }
 
     [Fact]
-    public void A_change_names_the_things_it_touches()
+    public void Undoing_an_erase_is_not_stopped_by_someone_drawing_elsewhere_on_the_same_board()
     {
-        Assert.Equal([Foot], Touched.By(Move(Foot, 1)));
-        Assert.Equal(new[] { Foot, Flag }, Touched.By(new Batch { Items = { Move(Foot, 1), Move(Flag, 2) } }).Order());
-        Assert.Equal(new[] { "b-000009", "d-000004" }, Touched.By(new Draw { Layer = U, Stroke = new Stroke { Id = "d-000004", Board = "b-000009" } }).Order());
-        Assert.Equal(["kind:SetVisionRadius"], Touched.By(new SetVisionRadius { Radius = 3 }));
-        Assert.Empty(Touched.By(new LoadSave { State = new GameState { ScenarioId = "scn" } }));
+        using var t = new Table();
+        Do(t, Table.Ump, new Draw { Layer = U, Stroke = new Stroke { Points = { new(0, 0), new(1, 1) } } });
+        var mine = t.Server.State.DrawLayer(U)[^1].Id;
+        int drawn = t.Server.State.DrawLayer(U).Count;
+        var erased = Do(t, Table.Ump, new EraseStroke { Layer = U, StrokeId = mine });
+        Do(t, Table.Ump3, new Draw { Layer = U, Stroke = new Stroke { Points = { new(5, 5), new(6, 6) } } });
+
+        t.Ok(Table.Ump, new Undo { TargetSeq = erased });
+
+        Assert.Equal(drawn + 1, t.Server.State.DrawLayer(U).Count);
+        Assert.Contains(t.Server.State.DrawLayer(U), s => s.Id == mine);
+    }
+
+    [Fact]
+    public void A_new_drawing_board_cannot_be_taken_back_once_someone_else_has_drawn_on_it()
+    {
+        using var t = new Table();
+        var added = Do(t, Table.Ump, new AddBoard { Name = "Plans" });
+        var board = t.Server.State.Boards[^1].Id;
+        Do(t, Table.Ump3, new Draw { Layer = U, Stroke = new Stroke { Board = board, Points = { new(5, 5), new(6, 6) } } });
+
+        Assert.StartsWith(Undo.StopsHere, t.Error(Table.Ump, new Undo { TargetSeq = added }));
+        Assert.Contains(t.Server.State.Boards, b => b.Id == board);
+    }
+
+    [Fact]
+    public void A_change_names_the_things_it_touches_and_where_they_sit()
+    {
+        Assert.Equal([Foot], Touched.By(Move(Foot, 1)).Things);
+        Assert.Equal(new[] { Foot, Flag }, Touched.By(new Batch { Items = { Move(Foot, 1), Move(Flag, 2) } }).Things.Order());
+        var drawn = Touched.By(new Draw { Layer = U, Stroke = new Stroke { Id = "d-000004", Board = "b-000009" } });
+        Assert.Equal(["d-000004"], drawn.Things);
+        Assert.Equal(["b-000009"], drawn.SitsOn);
+        var stowed = Touched.By(new Stow { Layer = U, Holder = Flag, Id = Foot });
+        Assert.Equal([Foot], stowed.Things);
+        Assert.Equal([Flag], stowed.SitsOn);
+        Assert.Equal(["kind:SetVisionRadius"], Touched.By(new SetVisionRadius { Radius = 3 }).Things);
+        Assert.Empty(Touched.By(new LoadSave { State = new GameState { ScenarioId = "scn" } }).Things);
     }
 }

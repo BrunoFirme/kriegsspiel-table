@@ -537,14 +537,14 @@ public sealed partial class GameServer
 
     readonly record struct Undoable(Command Inverse, string By, bool Step);
 
-    readonly record struct Touch(long Seq, long Actor, string[] Things);
+    readonly record struct Touch(long Seq, long Actor, Reach Reach);
 
     readonly List<Touch> _touches = new();
 
-    string? ChangedSince(PeerInfo peer, long seq, string[] things)
+    string? ChangedSince(PeerInfo peer, long seq, Reach undone)
     {
         foreach (var t in _touches)
-            if (t.Seq > seq && t.Actor != 0 && t.Actor != peer.PeerId && Touched.Meet(t.Things, things))
+            if (t.Seq > seq && t.Actor != peer.PeerId && t.Reach.Changes(undone))
                 return _peers.GetValueOrDefault(t.Actor)?.Name ?? "someone who has left";
         return null;
     }
@@ -590,7 +590,7 @@ public sealed partial class GameServer
     {
         if (toSaveLog) Applied?.Invoke(c);
         _log.Add(Json.Clone(c));
-        _touches.Add(new Touch(c.Seq, c.Actor, Touched.By(c)));
+        if (c.Actor != 0) _touches.Add(new Touch(c.Seq, c.Actor, Touched.By(c)));
         if (_log.Count > RememberCommands + RememberCommands / 10) _log.RemoveRange(0, _log.Count - RememberCommands);
         if (_touches.Count > RememberCommands + RememberCommands / 10) _touches.RemoveRange(0, _touches.Count - RememberCommands);
         if (inverse == null) return;

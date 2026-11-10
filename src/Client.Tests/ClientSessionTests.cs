@@ -36,6 +36,24 @@ public class ClientSessionTests
     }
 
     [Fact]
+    public void A_second_undo_pressed_before_the_host_answers_the_first_waits_so_a_stop_is_never_skipped()
+    {
+        JoinAs(Role.Umpire);
+        _s.OnCommand(Spawn(1, 2, "a"));
+        _s.OnCommand(Spawn(2, 2, "b"));
+        _s.UndoLast();
+        _s.UndoLast();
+        Assert.Equal(2, Assert.IsType<Undo>(Assert.Single(_sent)).TargetSeq);
+        _s.OnError(Undo.StopsHere + "Karl has changed the same thing since");
+        Assert.Equal(new long[] { 2, 1 }, _s.MyUndoable);
+
+        _s.UndoLast();
+        _s.OnCommand(new DeletePiece { Seq = 3, Actor = 2, Layer = Layers.Umpire, Id = "b", UndoOf = 2 });
+        _s.UndoLast();
+        Assert.Equal(new long[] { 2, 2, 1 }, _sent.OfType<Undo>().Select(u => u.TargetSeq));
+    }
+
+    [Fact]
     public void Joining_sets_who_this_is_and_shows_the_table()
     {
         int resets = 0;
@@ -227,6 +245,7 @@ public class ClientSessionTests
         _s.UndoLast();
         var undo = Assert.IsType<Undo>(_sent[^1]);
         Assert.Equal((4L, 2L), (undo.TargetSeq, undo.FromSeq));
+        _s.OnCommand(new Batch { Seq = 5, Actor = 2, UndoOf = 4, UndoFrom = 2 });
         _s.UndoLast();
         Assert.Equal((1L, 0L), (((Undo)_sent[^1]).TargetSeq, ((Undo)_sent[^1]).FromSeq));
     }

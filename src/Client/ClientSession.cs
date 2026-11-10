@@ -121,6 +121,7 @@ public class ClientSession
     {
         Live = v;
         Unanswered = 0;
+        _asked = null;
         Dirty = true;
         Store.LoadPacks(v.Packs);
         if (_review == null) Reset?.Invoke();
@@ -137,7 +138,11 @@ public class ClientSession
 
     public void OnCommand(Command c)
     {
-        if (c.Actor == Me.PeerId) Answered();
+        if (c.Actor == Me.PeerId)
+        {
+            Answered();
+            AnsweredByACommand(c);
+        }
         if (Mirroring && SaveFile.EndsTurn(Live, c)) MirrorTurns.Add(SaveFile.RecordOf(Live, Repeatable.UtcNow));
         var err = StateMachine.Apply(Live, c, out _);
         if (c.Seq > Live.LastSeq) Live.LastSeq = c.Seq;
@@ -184,17 +189,24 @@ public class ClientSession
     public void OnError(string e)
     {
         Answered();
-        if (e.StartsWith(Undo.StopsHere, StringComparison.Ordinal) && _asked is var (seq, from, redo))
+        bool stopped = e.StartsWith(Undo.StopsHere, StringComparison.Ordinal);
+        if (stopped && _asked is var (seq, from, redo))
         {
             (redo ? MyRedoable : MyUndoable).Push(seq);
             if (from > 0) _scriptFrom[seq] = from;
             if (redo) _redoing.Remove(seq);
         }
-        _asked = null;
+        if (stopped || --_askedIn <= 0) _asked = null;
         Error?.Invoke(e);
     }
 
     (long Seq, long From, bool Redo)? _asked;
+    int _askedIn;
+
+    void AnsweredByACommand(Command c)
+    {
+        if (_asked is var (seq, _, _) && (c.UndoOf == seq || --_askedIn <= 0)) _asked = null;
+    }
 
     public void Answered()
     {
@@ -217,21 +229,23 @@ public class ClientSession
 
     public void UndoLast()
     {
-        if (!IsUmpire || MyUndoable.Count == 0) return;
+        if (!IsUmpire || MyUndoable.Count == 0 || _asked != null) return;
         var seq = MyUndoable.Pop();
         _openScript = 0;
         _scriptFrom.Remove(seq, out var from);
         _asked = (seq, from, false);
         Sent(from > 0 ? new Undo { TargetSeq = seq, FromSeq = from } : new Undo { TargetSeq = seq });
+        _askedIn = Unanswered;
     }
 
     public void RedoLast()
     {
-        if (!IsUmpire || MyRedoable.Count == 0) return;
+        if (!IsUmpire || MyRedoable.Count == 0 || _asked != null) return;
         var seq = MyRedoable.Pop();
         _redoing.Add(seq);
         _asked = (seq, 0, true);
         Sent(new Undo { TargetSeq = seq });
+        _askedIn = Unanswered;
     }
 
     void Track(Command c)
