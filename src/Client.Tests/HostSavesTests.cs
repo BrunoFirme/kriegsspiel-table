@@ -293,6 +293,19 @@ public class HostSavesTests
     }
 
     [Fact]
+    public void Loading_the_save_already_on_the_table_is_refused_plainly_and_it_stays_held()
+    {
+        var server = HostRun("Game 1", turns: 2);
+        var onTable = _session.SavePath!;
+        server.Dirty = true;
+        _saves.SaveNow(closing: true);
+        Assert.Equal("Game 1 is already on the table", Load(new LoadFrom("Game 1", File: onTable)));
+        Assert.Equal(onTable, _session.SavePath);
+        Assert.Equal(2, server.State.Clock.Turn);
+        Assert.True(SaveLock.IsTaken(onTable));
+    }
+
+    [Fact]
     public void Hosting_holds_the_save_on_the_table_and_leaving_lets_it_go()
     {
         HostRun("Game 1", turns: 1);

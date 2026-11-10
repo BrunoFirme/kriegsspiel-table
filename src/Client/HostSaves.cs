@@ -127,7 +127,11 @@ public sealed class HostSaves
     public void Load(LoadFrom from, Action<string?> then)
     {
         if (Server is not { } server || SaveInPlay is not var (scenarioDir, path)) { then("this table is not one of a scenario's games"); return; }
-        if (from.File is { } file && from.TurnIndex == null && from.Start == null && SaveStore.SamePath(file, path)) { then(null); return; }
+        if (from.File is { } file && from.TurnIndex == null && from.Start == null && SaveStore.SamePath(file, path))
+        {
+            then($"{Path.GetFileNameWithoutExtension(file)} is already on the table");
+            return;
+        }
         TurnRecord? record = null;
         List<TurnRecord> before = new();
         if (from.File == null && from.TurnIndex is int ti)
