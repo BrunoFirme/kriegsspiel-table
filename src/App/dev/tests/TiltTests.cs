@@ -6,7 +6,7 @@ using KTable.Core.Model;
 
 namespace KTable.App;
 
-static class TiltTests
+static partial class TiltTests
 {
     const string U = Layers.Umpire;
     const float Across = 1.4142f, Rise = 0.7071f;
@@ -48,6 +48,35 @@ static class TiltTests
         var side = t.Node("t1").RestBox.Basis * Vector3.Up;
         Check.That(Mathf.Abs(side.Y) < 0.05f, $"a tilted piece stands in the dice's way on its own turn: {side}");
         Check.Equal(0, t.Errors.Count, string.Join("; ", t.Errors));
+    }
+
+    sealed partial class OffTableReads : Logger
+    {
+        public int Seen;
+
+        public override void _LogError(string function, string file, int line, string code, string rationale, bool editorNotify, int errorType,
+            Godot.Collections.Array<ScriptBacktrace> scriptBacktraces)
+        {
+            if (code.Contains("is_inside_tree")) System.Threading.Interlocked.Increment(ref Seen);
+        }
+    }
+
+    [NodeTest]
+    static async Task A_rolled_die_opens_showing_the_face_it_was_rolled_to_without_tumbling(TestRunner r)
+    {
+        var reads = new OffTableReads();
+        OS.AddLogger(reads);
+        try
+        {
+            var t = OfflineTable.Make(r, pieces: 0, prepare: Prism, arrange: g => g.Layers[U].Add(new PieceInstance { Id = "d1", Def = "d2", Pos = new Vec2(4, 0), State = 0, Face = 1 }));
+            await r.Frames(10);
+            var die = t.Node("d1");
+            Check.Equal(0, reads.Seen, "nothing read off the table while it was built");
+            Check.That(!die.IsProcessing(), "the die is not tumbling");
+            Check.Equal(1, die.FaceUp(die.ModelWorldBasis), "face 2 is up");
+            Check.Equal(0, t.Errors.Count, string.Join("; ", t.Errors));
+        }
+        finally { OS.RemoveLogger(reads); }
     }
 
     static void OnItsSide(GameState g) => g.Layers[U].Add(new PieceInstance { Id = "t1", Def = "tri", Pos = new Vec2(-4, 0), TiltZ = 90 });

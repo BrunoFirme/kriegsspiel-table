@@ -492,7 +492,7 @@ public partial class PieceNode : Node3D
                 var verts = Enumerable.Range(0, mesh.GetSurfaceCount()).SelectMany(s => mesh.SurfaceGetArrays(s)[(int)Mesh.ArrayType.Vertex].AsVector3Array());
                 _hull = verts.Select(vv => vv * model.Scale).ToArray();
                 _meshReady = true;
-                ApplyFace(Piece.State);
+                ApplyFace(Piece.ShownFace);
             }
             else
             {
