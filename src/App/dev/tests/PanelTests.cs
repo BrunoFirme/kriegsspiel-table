@@ -294,6 +294,9 @@ static class PanelTests
         Check.That(PanelFonts.Find("Fonts/Crete_Round/CreteRound-Italic") is FontFile { ResourcePath: var italic } && italic.EndsWith("CreteRound-Italic.ttf"), "the game's Fonts/ prefix and an italic file");
         var bold = PanelFonts.Find("Montserrat/Montserrat-Bold") as FontVariation;
         Check.That(bold != null && bold.VariationOpentype.Count == 1, "a weight of a variable family is a variation of its file");
+        float Wide(string name) => PanelFonts.Find(name)!.GetStringSize("Kriegsspiel", fontSize: 32).X;
+        Check.That(Wide("Montserrat/Montserrat-Bold") > Wide("Montserrat/Montserrat-Regular") + 4, "the bold weight draws bolder than the regular one");
+        Check.That(Wide("IBM_Plex_Sans/IBMPlexSans-Thin") < Wide("IBM_Plex_Sans/IBMPlexSans-Black") - 4, "and a thin weight lighter than a black one");
         var thinItalic = PanelFonts.Find("IBM_Plex_Sans/IBMPlexSans-ThinItalic") as FontVariation;
         Check.That(thinItalic?.BaseFont is FontFile { ResourcePath: var slanted } && slanted.Contains("Italic"), "an italic weight comes from the italic file");
         Check.That(PanelFonts.Find("Fonts/Arial") == null, "fonts the game does not ship openly stay on system fonts");

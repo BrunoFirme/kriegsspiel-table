@@ -59,7 +59,7 @@ static class PanelFonts
         var file = slanted && files.Slanted != null ? files.Slanted : files.Upright;
         if (File(file) is not FontFile face) return null;
         if (!file.Contains('[')) return face;
-        var axes = new Godot.Collections.Dictionary { ["wght"] = weight };
+        var axes = new Godot.Collections.Dictionary { [TextServerManager.GetPrimaryInterface().NameToTag("wght")] = weight };
         return new FontVariation { BaseFont = face, VariationOpentype = axes };
     }
 
