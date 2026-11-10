@@ -14,6 +14,18 @@ public static class Fonts
 
     public const int FaceSize = 192;
 
+    static Font? _widget;
+
+    public static Font Widget => _widget ??= ResourceLoader.Load<FontFile>(WidgetFile) is { } face ? WithFallback(face) : Face;
+
+    const string WidgetFile = "res://fonts/table/Amaranth-Regular.ttf";
+
+    static Font WithFallback(FontFile face)
+    {
+        face.Fallbacks = new Godot.Collections.Array<Font> { Face };
+        return face;
+    }
+
     static Font Make()
     {
         var main = new SystemFont { FontNames = new[] { "Arial", "Liberation Sans", "Noto Sans", "DejaVu Sans" } };

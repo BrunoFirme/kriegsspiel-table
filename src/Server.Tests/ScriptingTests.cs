@@ -298,7 +298,7 @@ public class ScriptingTests
     }
 
     [Fact]
-    public void A_module_input_is_drawn_as_a_button_scaled_up_and_its_decals_mirror_its_buttons_in_x()
+    public void A_module_input_is_sized_as_a_button_is_and_its_decals_mirror_its_buttons_in_x()
     {
         using var t = new Table();
         var tr = KTable.Server.Scripting.Translate.ModuleTranslator.Translate("""
@@ -311,9 +311,9 @@ public class ScriptingTests
         SetScript(t, tr.Script);
         var p = t.Server.State.Find(U, P)!;
         var (b, i) = (p.Widgets[0], p.Widgets[1]);
-        Assert.Equal(2.2 * b.W, i.W, 6);
-        Assert.Equal(2.2 * b.Font, i.Font, 6);
-        Assert.Equal(0.87 * b.W / 2, b.Font, 6);
+        Assert.Equal(b.W, i.W, 6);
+        Assert.Equal(b.Font, i.Font, 6);
+        Assert.Equal(66.0 / 133 * b.W, b.Font, 6);
         Assert.Equal(b.X, i.X, 6);
         Assert.Equal(-b.X, Assert.Single(p.Decals).X, 6);
     }
@@ -434,8 +434,8 @@ public class ScriptingTests
             """);
         SetScript(t, tr.Script);
         var p = t.Server.State.Find(U, P)!;
-        Assert.Equal(2.2 * p.Widgets[1].W, p.Widgets[0].W, 6);
-        Assert.Equal(2.2 * p.Widgets[1].H, p.Widgets[0].H, 6);
+        Assert.Equal(p.Widgets[1].W, p.Widgets[0].W, 6);
+        Assert.Equal(p.Widgets[1].H, p.Widgets[0].H, 6);
         t.Server.Handle(Table.Host, new EditWidget { Layer = U, Id = P, Index = 1, Value = "typed" });
         Assert.Equal("typed/Black/false", p.Label);
         t.Server.Handle(Table.Host, new ClickWidget { Layer = U, Id = P, Index = 2 });

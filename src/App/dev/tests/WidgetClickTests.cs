@@ -44,4 +44,32 @@ static class WidgetClickTests
         Check.That(t.Table.Pieces.Pick(node.Piece.Pos, screen: past) == node, "pointing past the edge at the button picks its piece");
         t.Table.QueueFree();
     }
+
+    const string Lettered = """
+        function on_load()
+          self.button{ x = 0, z = 0, w = 0, h = 0, font = 0.2, label = "button", on_click = "pressed" }
+          self.input{ x = 0, z = 0, w = 1.5, h = 0.3, font = 0.2, value = "box", on_change = "typed" }
+        end
+        function pressed() end
+        function typed() end
+        """;
+
+    [NodeTest]
+    static async Task A_button_s_letters_sit_a_tenth_of_their_size_above_its_anchor_as_the_game_centres_them_and_a_box_s_do_not(TestRunner r)
+    {
+        var t = OfflineTable.Make(r, pieces: 1);
+        await r.Frames(2);
+        var node = t.Table.Pieces.Nodes.First();
+        t.S.Do(new SetScript { Layer = Layers.Umpire, Id = node.Piece.Id, Text = Lettered });
+        await r.Frames(3);
+        var labels = node.GetChildren().OfType<Label3D>().ToList();
+        var button = labels.FirstOrDefault(l => l.Text == "button") ?? throw new TestFailure("the button is lettered");
+        var box = labels.FirstOrDefault(l => l.Text == "box") ?? throw new TestFailure("the box is lettered");
+        Check.That(button.Font == Fonts.Widget && box.Font == Fonts.Widget, "buttons and boxes letter in the widget typeface");
+        float em = button.PixelSize * Fonts.FaceSize;
+        var lift = button.Basis.Y * em * PieceWidgets.ButtonBaselineLift;
+        Check.That((button.Position - box.Position).IsEqualApprox(lift), $"the button's letters rise {PieceWidgets.ButtonBaselineLift} of their size along their own up, the box's stay on the anchor");
+        Check.That(lift.Length() > 0.01f, "the rise is there to see");
+        t.Table.QueueFree();
+    }
 }

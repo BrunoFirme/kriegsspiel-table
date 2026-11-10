@@ -69,7 +69,7 @@ public class TranslatorTests
         Assert.Equal("#000000", p.Widgets[ammo - 1].Color);
         Assert.Equal("#FFFFFF", p.Widgets[ammo - 1].TextColor);
         Assert.Equal(-0.5, p.Widgets[ammo - 1].X, 3);
-        Assert.Equal(0.2, p.Widgets[ammo - 1].W, 3);
+        Assert.Equal(53 * 0.00624 * 2.5 * 0.5, p.Widgets[ammo - 1].W, 6);
         var minus = WidgetIndex(p, w => w.OnClick == "ammoDown");
         t.Server.Handle(Table.Ump3, new ClickWidget { Layer = U, Id = P, Index = minus });
         Assert.Equal("8", p.Widgets[ammo - 1].Label);
@@ -120,7 +120,7 @@ public class TranslatorTests
         }
         Assert.All(geometry, g => Assert.Equal(geometry[0], g));
         Assert.Equal(-0.5, geometry[0].x, 3);
-        Assert.Equal(0.2, geometry[0].w, 3);
+        Assert.Equal(53 * 0.00624 * 2.5 * 0.5, geometry[0].w, 6);
     }
 
     [Fact]
@@ -424,9 +424,9 @@ public class TranslatorTests
     }
 
     [Theory]
-    [InlineData("alpha", 0.1924284, 1.87)]
-    [InlineData("box", 0.36, 0.87)]
-    public void A_module_button_is_placed_and_lettered_by_the_piece_shape_whatever_its_own_tags(string shape, double unit, double em)
+    [InlineData("alpha", 0.1924284)]
+    [InlineData("box", 0.36)]
+    public void A_module_button_is_placed_and_lettered_by_the_piece_shape_whatever_its_own_tags(string shape, double unit)
     {
         using var t = new Table();
         var def = t.Store.Def("marker")!;
@@ -443,7 +443,63 @@ public class TranslatorTests
         t.Server.Handle(Table.Host, new SetScript { Layer = U, Id = "p-000003", Text = r.Script });
         Assert.Empty(Errors(t));
         Assert.Equal(-0.93 * unit, o.Widgets.Single().Z, 4);
-        Assert.Equal(0.165 * unit * em, o.Widgets.Single().Font, 4);
+        Assert.Equal(55 * 0.00624 * unit, o.Widgets.Single().Font, 4);
+    }
+
+    [Fact]
+    public void A_module_tile_letters_its_band_and_its_title_at_the_size_the_game_prints_them()
+    {
+        using var t = new Table();
+        var def = t.Store.Def("marker")!;
+        def.Shape = "box";
+        def.Size = new Size2(2.245, 1.3466);
+        var o = t.Server.State.Find(U, "p-000003")!;
+        var r = ModuleTranslator.Translate("""
+            function onLoad()
+              self.createButton({ click_function = "none", function_owner = self, label = "Irregulars", position = {0, 0.26, -0.72}, width = 0, height = 0, font_size = 220 })
+              self.createButton({ click_function = "none", function_owner = self, label = "Irregulars", position = {0, 0.25, -1.4}, width = 0, height = 0, font_size = 400 })
+              self.createButton({ click_function = "none", function_owner = self, label = "3", position = {0.6, 0, 0}, rotation = {0, 0, 180}, scale = {2.5, 2.5, 2.5}, width = 160, height = 160, font_size = 160 })
+            end
+            function none() end
+            """, Ctx());
+        t.Server.Handle(Table.Host, new SetScript { Layer = U, Id = "p-000003", Text = r.Script });
+        Assert.Empty(Errors(t));
+        var (band, title, count) = (o.Widgets[0], o.Widgets[1], o.Widgets[2]);
+        double unit = 1.3466 / 2;
+        Assert.Equal(0.228, band.Font / def.Size.H, 3);
+        Assert.Equal(0.415, title.Font / def.Size.H, 3);
+        Assert.Equal(-0.72 * unit, band.Z, 4);
+        Assert.True(title.Z < -def.Size.H / 2);
+        Assert.Equal(53 * 0.00624 * 2.5 * unit, count.W, 4);
+        Assert.Equal(count.W, count.H, 6);
+        Assert.Equal(count.W, count.Font, 6);
+    }
+
+    [Fact]
+    public void A_module_widget_counts_its_sizes_in_whole_steps_of_three_and_letters_grow_with_its_height_scale()
+    {
+        using var t = new Table();
+        var def = t.Store.Def("marker")!;
+        def.Shape = "box";
+        def.Size = new Size2(2, 2);
+        var o = t.Server.State.Find(U, "p-000003")!;
+        var r = ModuleTranslator.Translate("""
+            function onLoad()
+              self.createButton({ click_function = "none", function_owner = self, label = "a", width = 2, height = 101, font_size = 100 })
+              self.createButton({ click_function = "none", function_owner = self, label = "b", scale = {3, 1, 1}, width = 99, height = 99, font_size = 100 })
+              self.createButton({ click_function = "none", function_owner = self, label = "c", scale = {1, 1, 3}, width = 99, height = 99, font_size = 100 })
+            end
+            function none() end
+            """, Ctx());
+        t.Server.Handle(Table.Host, new SetScript { Layer = U, Id = "p-000003", Text = r.Script });
+        Assert.Empty(Errors(t));
+        var (a, b, c) = (o.Widgets[0], o.Widgets[1], o.Widgets[2]);
+        Assert.Equal(0, a.W);
+        Assert.Equal(33 * 0.00624, a.H, 6);
+        Assert.Equal(33 * 0.00624, a.Font, 6);
+        Assert.Equal(3 * c.W, b.W, 6);
+        Assert.Equal(a.Font, b.Font, 6);
+        Assert.Equal(3 * a.Font, c.Font, 6);
     }
 
     [Fact]

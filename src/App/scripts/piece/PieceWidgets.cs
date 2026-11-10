@@ -146,14 +146,15 @@ sealed class PieceWidgets
         float grow = Mathf.Max(0.01f, _piece.Look.FaceTextScale);
         float em = Mathf.Max(0.002f, (float)w.Font * k * grow);
         if ((input || label) && boxed && !typing) text = Fitting(text, em, bw * 0.94f);
-        Text(text, x, z, boxed ? bw * 0.94f : 0, em, color, w.Align, (float)w.Rot, back, faceY, 0.004f, height, besideFace: !boxed || boxColor.A < SeeThroughBox);
+        Text(text, x, z, boxed ? bw * 0.94f : 0, em, color, w.Align, (float)w.Rot, back, faceY, 0.004f, height, besideFace: !boxed || boxColor.A < SeeThroughBox,
+            lift: input ? 0 : em * ButtonBaselineLift);
         if (boxed && !w.Locked && clickable) _hits.Add(new Hit(new Vector2(x, z), new Vector2(bw, bh) / 2, turn, index, At(x, z, back, faceY, BoxAbove, height)));
     }
 
     static string Fitting(string text, float em, float width)
     {
         float pixel = em / Fonts.FaceSize;
-        float Wide(string s) => Fonts.Face.GetStringSize(s, HorizontalAlignment.Left, -1, Fonts.FaceSize).X * pixel;
+        float Wide(string s) => Fonts.Widget.GetStringSize(s, HorizontalAlignment.Left, -1, Fonts.FaceSize).X * pixel;
         int n = text.Length;
         while (n > 0 && Wide(text[..n]) > width) n--;
         return text[..n];
@@ -179,17 +180,19 @@ sealed class PieceWidgets
         return n;
     }
 
+    public const float ButtonBaselineLift = 0.102f;
+
     const float SeeThroughBox = 0.35f, LightText = 0.5f, PlatePad = 0.3f, PlateBehind = 0.0005f, BoxAbove = 0.002f;
     const int PlatePriority = 2;
     static readonly Color DarkPlate = new(0.09f, 0.085f, 0.075f, 0.88f), LightPlate = new(0.96f, 0.94f, 0.89f, 0.9f);
 
     void Text(string text, float x, float z, float boxW, float em, Color color, string align, float rot, bool back, float faceY, float above, float? height,
-        bool besideFace = false)
+        bool besideFace = false, float lift = 0)
     {
         var l = new Label3D
         {
             Text = text, FontSize = Fonts.FaceSize, OutlineSize = 0, Modulate = color, DoubleSided = true, VisibilityRangeEnd = _piece.LetteringRange(),
-            HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center, RenderPriority = 3, Font = Fonts.Face, Layers = Table.TextLayer,
+            HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center, RenderPriority = 3, Font = Fonts.Widget, Layers = Table.TextLayer,
         };
         var font = l.Font ?? ThemeDB.FallbackFont;
         var px = font.GetStringSize(text.Length > 0 ? text : " ", HorizontalAlignment.Left, -1, Fonts.FaceSize);
@@ -209,7 +212,7 @@ sealed class PieceWidgets
             if (Mathf.Abs(cx) + reachX > face.X || Mathf.Abs(z) + reachZ > face.Y) Plate(l, size + Vector2.One * em * PlatePad, color);
         }
         l.RotationDegrees = back ? new Vector3(90, 180, rot) : new Vector3(-90, -rot, 0);
-        l.Position = At(cx, z, back, faceY, above, height);
+        l.Position = At(cx, z, back, faceY, above, height) + l.Basis.Y * lift;
         AddNode(l);
     }
 

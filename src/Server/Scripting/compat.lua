@@ -554,7 +554,8 @@ function compat.module_handler(fn)
   end
 end
 
-local BUTTON_EM, TOKEN_BUTTON_EM, INPUT_SCALE = 0.87, 1.87, 2.2
+local WIDGET_STEP, WIDGET_PIXEL = 3, 0.00624
+local function widget_size(v) local n = v / WIDGET_STEP; return (n < 0 and math.ceil(n) or math.floor(n)) * WIDGET_PIXEL end
 local VALIDATION = { [2] = "integer", [3] = "float", [4] = "alphanumeric", [5] = "username", [6] = "name" }
 local TABS = { [2] = "next", [3] = "spaces" }
 local ALIGN = { [2] = "left", [3] = "center", [4] = "right" }
@@ -570,9 +571,7 @@ function compat.widget_spec(obj, t, kind, env)
   local ux, uz = units(obj)
   local px, pz = vec(t.position, "x", 1, 0), vec(t.position, "z", 3, 0)
   local rx, ry, rz = vec(t.rotation, "x", 1, 0), vec(t.rotation, "y", 2, 0), vec(t.rotation, "z", 3, 0)
-  local k = kind == "input" and INPUT_SCALE or 1
-  local em = kind ~= "input" and obj.shape == "alpha" and TOKEN_BUTTON_EM or BUTTON_EM
-  local sx, sz = math.abs(vec(t.scale, "x", 1, 1)) * k, math.abs(vec(t.scale, "z", 3, 1)) * k
+  local sx, sz = math.abs(vec(t.scale, "x", 1, 1)), math.abs(vec(t.scale, "z", 3, 1))
   local turned = math.abs(((rz % 360) + 360) % 360 - 180) < 90 or math.abs(((rx % 360) + 360) % 360 - 180) < 90
   local y = vec(t.position, "y", 2, 0)
   local on_top = y > 0
@@ -581,8 +580,8 @@ function compat.widget_spec(obj, t, kind, env)
   local s = {
     face = back and "back" or "front", kind = turned and on_top and "label" or kind, y = src and src.rise and (src.origin or 0) + y * src.rise or nil,
     x = (back and -px or px) * ux, z = pz * uz, rot = ry,
-    w = num(t.width, D.width) / 1000 * sx * ux, h = num(t.height, D.height) / 1000 * sz * uz,
-    font = num(t.font_size, D.font_size) / 1000 * sx * uz * em,
+    w = widget_size(num(t.width, D.width)) * sx * ux, h = widget_size(num(t.height, D.height)) * sz * uz,
+    font = widget_size(num(t.font_size, D.font_size)) * sz * uz,
     color = compat.color(t.color) or D.color, text_color = compat.color(t.font_color) or D.font_color, tooltip = t.tooltip,
     align = ALIGN[num(t.alignment, D.alignment)] or "center",
     hover_color = compat.color(t.hover_color), press_color = compat.color(t.press_color),
