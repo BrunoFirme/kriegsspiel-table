@@ -81,6 +81,29 @@ static class PieceNestTests
     }
 
     [NodeTest]
+    static async Task A_second_row_dragged_onto_a_row_after_the_first_drag_ended_still_nests_under_it(TestRunner r)
+    {
+        var h = await HudTests.Host(r, pieces: 3);
+        IHudShell shell = h.Hud;
+        shell.TogglePanel("pieces");
+        h.Hud.Pieces.ShowIndex();
+        await r.Frames(3);
+        var index = h.Hud.Pieces.Index;
+        Vector2 OnRow(string id) => index.Rows.GetItemAreaRect(index.ItemOf(U, id)!).GetCenter();
+
+        Check.That(index.CanDrop(OnRow("p1"), PieceIndex.DragData(new[] { (U, "p2") })), "the first drag can drop onto p1");
+        index.Drop(OnRow("p1"), PieceIndex.DragData(new[] { (U, "p2") }));
+        index.Rows.Notification((int)Control.NotificationDragEnd);
+        await r.Frames(3);
+        Check.That(Under(index, "p2", "p1"), "p2 under p1");
+
+        Check.That(index.CanDrop(OnRow("p1"), PieceIndex.DragData(new[] { (U, "p3") })), "after a drag has ended, a row can still be dropped onto p1");
+        index.Drop(OnRow("p1"), PieceIndex.DragData(new[] { (U, "p3") }));
+        await r.Frames(3);
+        Check.That(Under(index, "p3", "p1"), "p3 under p1 as well");
+    }
+
+    [NodeTest]
     static async Task Rows_dragged_onto_a_row_nest_under_it_and_ride_with_it_down_the_whole_branch(TestRunner r)
     {
         var h = await HudTests.Host(r, pieces: 3);

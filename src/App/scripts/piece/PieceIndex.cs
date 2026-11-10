@@ -13,6 +13,7 @@ sealed class PieceIndex : HudPart
     const int MostRows = 1000;
     const string Missing = "⚠ ";
     const char Apart = '\n', LayerFromId = '\t';
+    const int DropModes = (int)(Tree.DropModeFlagsEnum.OnItem | Tree.DropModeFlagsEnum.Inbetween);
 
     sealed record Row(string Layer, PieceInstance Piece, string Name, string Kind, string Pack, bool PackMissing, string Find);
 
@@ -42,7 +43,7 @@ sealed class PieceIndex : HudPart
         _tree = new Tree
         {
             HideRoot = true, SelectMode = Tree.SelectModeEnum.Multi, Columns = 1, SizeFlagsVertical = Control.SizeFlags.ExpandFill,
-            CustomMinimumSize = new Vector2(0, 80), DropModeFlags = (int)(Tree.DropModeFlagsEnum.OnItem | Tree.DropModeFlagsEnum.Inbetween),
+            CustomMinimumSize = new Vector2(0, 80), DropModeFlags = DropModes,
         };
         _tree.AddThemeFontSizeOverride("font_size", 12);
         _tree.AddThemeStyleboxOverride("cursor", new StyleBoxEmpty());
@@ -52,8 +53,7 @@ sealed class PieceIndex : HudPart
         _tree.ItemActivated += () => Locate(Picked());
         _tree.MultiSelected += (_, _, _) => { SyncButtons(); PushSoon(); };
         _tree.ItemCollapsed += Folded;
-        _tree.SetDragForwarding(Callable.From<Vector2, Variant>(DragFrom), Callable.From<Vector2, Variant, bool>((at, data) => DropAt(at, data).Count > 0),
-            Callable.From<Vector2, Variant>((at, data) => Nest(DropAt(at, data))));
+        _tree.SetDragForwarding(Callable.From<Vector2, Variant>(DragFrom), Callable.From<Vector2, Variant, bool>(CanDrop), Callable.From<Vector2, Variant>(Drop));
         Root.AddChild(_tree);
         _nestHint = Hint("Drag a row onto another piece to attach it there: moving that piece carries it. Drag it below the list to free it.");
         _nestHint.CustomMinimumSize = new Vector2(240, 0);
@@ -270,8 +270,18 @@ sealed class PieceIndex : HudPart
         rows = rows.Where(r => S.CanTouch(r.Layer, r.Piece)).ToList();
         if (rows.Count == 0) return new Variant();
         _tree.SetDragPreview(new Label { Text = rows.Count == 1 ? rows[0].Name : $"{rows.Count} pieces" });
-        return string.Join(Apart, rows.Select(r => $"{r.Layer}{LayerFromId}{r.Piece.Id}"));
+        return DragData(rows.Select(r => (r.Layer, r.Piece.Id)));
     }
+
+    internal static string DragData(IEnumerable<(string Layer, string Id)> pieces) => string.Join(Apart, pieces.Select(p => $"{p.Layer}{LayerFromId}{p.Id}"));
+
+    internal bool CanDrop(Vector2 at, Variant data)
+    {
+        _tree.DropModeFlags = DropModes;
+        return DropAt(at, data).Count > 0;
+    }
+
+    internal void Drop(Vector2 at, Variant data) => Nest(DropAt(at, data));
 
     static List<(string Layer, string Id)> Dragged(Variant data) =>
         data.VariantType != Variant.Type.String ? new()
