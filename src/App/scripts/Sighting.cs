@@ -28,8 +28,9 @@ sealed class Sighting
     public void NotifyChanged() => Changed?.Invoke();
 
     public Node3D Root = null!;
-    ShaderMaterial _sightMat = null!, _shotMat = null!;
-    MeshInstance3D _sightPlane = null!, _shotPlane = null!;
+    ShaderMaterial _sightMat = null!, _shotMat = null!, _blurMat = null!;
+    MeshInstance3D _sightPlane = null!, _shotPlane = null!, _blurLive = null!, _blurShot = null!;
+    double _shownSharp = 1;
     MeshInstance3D _outline = null!;
     ImmediateMesh _outlineMesh = null!;
 
@@ -49,6 +50,21 @@ sealed class Sighting
             new MeshInstance3D { Mesh = new PlaneMesh { Size = new Vector2(20000, 20000) }, MaterialOverride = _shotMat, Position = new Vector3(0, 0.021f, 0), Visible = false,
                 CastShadow = GeometryInstance3D.ShadowCastingSetting.Off, Layers = Table.PictureOnlyLayer };
         Root.AddChild(_shotPlane);
+        _blurMat = new ShaderMaterial { Shader = new Shader { Code = FileAccess.GetFileAsString("res://shaders/sighting_blur.gdshader") }, RenderPriority = (int)Material.RenderPriorityMax };
+        _blurMat.SetShaderParameter("bend", (float)SightingDraft.BlurBend);
+        _blurLive = BlurPlane(Table.LiveOnlyLayer);
+        _blurShot = BlurPlane(Table.PictureOnlyLayer);
+    }
+
+    MeshInstance3D BlurPlane(uint layer)
+    {
+        var plane = new MeshInstance3D
+        {
+            Mesh = new PlaneMesh { Size = new Vector2(20000, 20000) }, MaterialOverride = _blurMat, Position = new Vector3(0, 0.022f, 0), Visible = false,
+            CastShadow = GeometryInstance3D.ShadowCastingSetting.Off, Layers = layer,
+        };
+        Root.AddChild(plane);
+        return plane;
     }
 
     public void BuildOutline()
@@ -62,6 +78,42 @@ sealed class Sighting
     {
         _sightPlane.Visible = Draft is { FirstPerson: false } && _c.Rig.TopDown;
         _shotPlane.Visible = Draft != null;
+        bool blurs = Draft is { FirstPerson: false } && Math.Min(_shownSharp, Draft.Sharp) < 1;
+        _blurLive.Visible = blurs && _c.Rig.TopDown;
+        _blurShot.Visible = blurs;
+    }
+
+    const double FocusPull = 14, FocusSettled = 0.0005;
+
+    public void TickBlur(double delta)
+    {
+        if (Draft is not { FirstPerson: false } d || Math.Abs(_shownSharp - d.Sharp) < FocusSettled) return;
+        _shownSharp += (d.Sharp - _shownSharp) * (1 - Math.Exp(-delta * FocusPull));
+        if (Math.Abs(_shownSharp - d.Sharp) < FocusSettled) _shownSharp = d.Sharp;
+        _blurMat.SetShaderParameter("sharp", (float)_shownSharp);
+        RefreshLines();
+    }
+
+    public void SetSharp(double share)
+    {
+        if (Draft is not { } d) return;
+        d.Sharp = Math.Clamp(share, 0, 1);
+    }
+
+    public void SetBlur(double share)
+    {
+        if (Draft is not { } d) return;
+        d.Blur = Math.Clamp(share, SightingDraft.LeastBlur, SightingDraft.MostBlur);
+        _blurMat.SetShaderParameter("most", (float)d.Blur);
+    }
+
+    void SnapFocus(SightingDraft d)
+    {
+        _shownSharp = d.Sharp;
+        _blurMat.SetShaderParameter("sharp", (float)_shownSharp);
+        _blurMat.SetShaderParameter("reach", (float)d.Radius);
+        _blurMat.SetShaderParameter("square", d.Square ? 1 : 0);
+        _blurMat.SetShaderParameter("most", (float)d.Blur);
     }
 
     public void Sync()
@@ -89,18 +141,23 @@ sealed class Sighting
 
     void ClearExtras()
     {
-        foreach (var c in Root.GetChildren()) if (c != _sightPlane && c != _shotPlane && c != _outline) c.QueueFree();
+        foreach (var c in Root.GetChildren()) if (c != _sightPlane && c != _shotPlane && c != _blurLive && c != _blurShot && c != _outline) c.QueueFree();
     }
 
     void SetShape(SightingShape shape, Color shade)
     {
         TickShade();
+        if (Draft is { } draft)
+        {
+            _blurMat.SetShaderParameter("reach", (float)draft.Radius);
+            _blurMat.SetShaderParameter("square", draft.Square ? 1 : 0);
+        }
         var c = Coords.ToWorld(shape.Center);
         var poly = shape.Polygon.Take(SightingDraft.MaxPoints).Select(p => { var w = Coords.ToWorld(p); return new Vector2(w.X, w.Z); }).ToArray();
         var polyArr = new Vector2[512];
         Array.Copy(poly, polyArr, poly.Length);
         SetOutline(Reach(shape));
-        foreach (var (mat, col) in new[] { (_sightMat, shade), (_shotMat, new Color(0.02f, 0.02f, 0.03f, 1f)) })
+        foreach (var (mat, col) in new[] { (_sightMat, shade), (_shotMat, new Color(0.02f, 0.02f, 0.03f, 1f)), (_blurMat, shade) })
         {
             mat.SetShaderParameter("kind", shape.Kind == "circle" ? 0 : 1);
             mat.SetShaderParameter("center", new Vector2(c.X, c.Z));
@@ -137,9 +194,35 @@ sealed class Sighting
             overlay.RibbonPx(_outlineMesh, mat, pts.Append(pts[0]).ToList(), 0.05f, 2f);
         }
         if (Draft == null) return;
+        if (Draft is { FirstPerson: false } && _shownSharp < 1) FocusRing(Draft, _shownSharp);
         var wallMat = new StandardMaterial3D { AlbedoColor = new Color(0.95f, 0.3f, 0.2f), ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded, NoDepthTest = true };
         foreach (var w in Draft.Walls.Append(_wall!).Where(x => x is { Count: >= 2 }))
             overlay.RibbonPx(_outlineMesh, wallMat, w, 0.07f, 4.5f);
+    }
+
+    const int FocusTicks = 48, LongTickEvery = 6;
+    const double FocusTickShare = 0.01, FocusLongTickShare = 0.022, FocusTurn = Math.PI * 1.5;
+    const float FocusLinePx = 1f;
+    static readonly Color FocusInk = new(0.93f, 0.9f, 0.82f, 0.45f);
+
+    void FocusRing(SightingDraft d, double sharp)
+    {
+        double at = d.Radius * sharp;
+        if (at <= 0) return;
+        var mat = new StandardMaterial3D { AlbedoColor = FocusInk, ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded, NoDepthTest = true, Transparency = BaseMaterial3D.TransparencyEnum.Alpha };
+        Vec2 OnRing(double ang, double reach)
+        {
+            double c = Math.Cos(ang), s = Math.Sin(ang), scale = d.Square ? reach / Math.Max(1e-9, Math.Max(Math.Abs(c), Math.Abs(s))) : reach;
+            return new Vec2(d.Center.X + c * scale, d.Center.Z + s * scale);
+        }
+        var ring = Enumerable.Range(0, RingPoints).Select(i => OnRing(i * Math.Tau / RingPoints, at)).ToList();
+        _overlay.RibbonPx(_outlineMesh, mat, ring.Append(ring[0]).ToList(), 0.05f, FocusLinePx);
+        double phase = sharp * FocusTurn;
+        for (int i = 0; i < FocusTicks; i++)
+        {
+            double ang = phase + i * Math.Tau / FocusTicks, len = d.Radius * (i % LongTickEvery == 0 ? FocusLongTickShare : FocusTickShare);
+            _overlay.SegPx(_outlineMesh, mat, OnRing(ang, at), OnRing(ang, Math.Min(d.Radius, at + len)), 0.05f, FocusLinePx);
+        }
     }
 
     void RefreshLines()
@@ -220,8 +303,10 @@ sealed class Sighting
         {
             ObserverId = obs.Piece.Id, Center = obs.Piece.Pos, Radius = radius ?? (_c.S.View.VisionRadius > 0 ? _c.S.View.VisionRadius : 40),
             Square = _c.Settings.SightingSquare, FirstPerson = _c.Settings.SightingFirstPerson, Wide = _c.Settings.SightingWide, HideText = _c.Settings.SightingHideText, Gif = _c.Settings.SightingGif,
-            EyeHeight = EyeOnTopOf(obs.Piece.Id),
+            EyeHeight = EyeOnTopOf(obs.Piece.Id), Sharp = _c.S.View.VisionSharp ?? 1,
+            Blur = _c.S.View.VisionBlur is { } kept ? Math.Clamp(kept, SightingDraft.LeastBlur, SightingDraft.MostBlur) : SightingDraft.BlurAtEdge,
         };
+        SnapFocus(Draft);
         Draft.Recompute(UmpirePiecesIn);
         ShowDraft();
         FrameOnDraft();
@@ -362,7 +447,10 @@ sealed class Sighting
 
     void KeepRadius()
     {
-        if (Draft != null && Math.Abs(Draft.Radius - _c.S.View.VisionRadius) > 1e-6) _c.S.Do(new SetVisionRadius { Radius = Draft.Radius });
+        if (Draft is not { } d) return;
+        var v = _c.S.View;
+        bool same = Math.Abs(d.Radius - v.VisionRadius) < 1e-6 && Math.Abs(d.Sharp - (v.VisionSharp ?? 1)) < 1e-6 && Math.Abs(d.Blur - (v.VisionBlur ?? SightingDraft.BlurAtEdge)) < 1e-6;
+        if (!same) _c.S.Do(new SetVisionRadius { Radius = d.Radius, Sharp = d.Sharp, Blur = d.Blur });
     }
 
     public void Cancel()
@@ -527,6 +615,8 @@ sealed class Sighting
         foreach (var n in _pieces.Nodes)
             n.HideFromPicture(n.Layer != Layers.Umpire || !d.Included.Contains(n.Piece.Id));
         if (!d.FirstPerson) _shotPlane.Position = new Vector3(0, PictureVeilHeight, 0);
+        SnapFocus(d);
+        TickShade();
     }
 }
 

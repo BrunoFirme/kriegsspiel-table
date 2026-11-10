@@ -43,6 +43,7 @@ public partial class HolderWindow : FloatPanel
         Body.AddChild(_search);
         _list = PieceTiles.List();
         _list.ItemActivated += i => TakeOut(Meta((int)i));
+        _list.ItemClicked += (i, _, button) => { if (button == (long)MouseButton.Right) ReadyMenu(Meta((int)i)); };
         WireDrag();
         _tiles = PieceTiles.Host(_list);
         Body.AddChild(_tiles);
@@ -90,13 +91,17 @@ public partial class HolderWindow : FloatPanel
         return unstows.Count == 1 ? unstows[0] : new Batch { Items = unstows };
     }
 
-    static string NameOf(PieceInstance p, Session s) => p.Label is { Length: > 0 } lb ? lb : s.Store.Def(p.Def)?.Name ?? p.Def;
+    internal static string NameOf(PieceInstance p, Session s) => p.Label is { Length: > 0 } lb ? lb : s.Store.Def(p.Def)?.Name ?? p.Def;
 
     PieceNode? Holder => IsInstanceValid(_t) && _t.IsInsideTree() && _t.NodeOf(_layer, _id) is { } n && IsInstanceValid(n) ? n : null;
 
     bool CanTake => Holder is { } h && _s.CanTouch(_layer, h.Piece);
 
     string Meta(int i) => i >= 0 && i < _list.ItemCount ? _list.GetItemMetadata(i).AsString() : "";
+
+    const string OutMark = "out:";
+
+    Readiness ReadyState(PieceInstance h) => ReadyPiece.Of(h, id => _s.View.Find(_layer, id));
 
     public override void _Process(double delta)
     {
@@ -132,26 +137,37 @@ public partial class HolderWindow : FloatPanel
 
     void Redraw(bool force)
     {
-        var stowed = Holder?.Piece.Stowed ?? new List<PieceInstance>();
+        var holder = Holder?.Piece;
+        var stowed = holder?.Stowed ?? new List<PieceInstance>();
         var top = Loose(stowed);
         if (_most >= 0 && top.Count > _most) top = top.Take(_most).ToList();
-        var sig = _search.Text + "|" + string.Join(",", top.Select(p => p.Id + ":" + (p.Label ?? "")));
+        var ready = holder?.Ready?.Id;
+        var state = holder == null ? Readiness.None : ReadyState(holder);
+        var released = state == Readiness.Out ? _s.View.Find(_layer, ready!) : null;
+        if (state == Readiness.In && top.FirstOrDefault(p => p.Id == ready) is { } first) top = top.Where(p => p != first).Prepend(first).ToList();
+        var shown = released == null ? top : top.Prepend(released).ToList();
+        var sig = _search.Text + "|" + state + ready + "|" + string.Join(",", shown.Select(p => p.Id + ":" + (p.Label ?? "")));
         if (!force && sig == _drawn) return;
         _drawn = sig;
         int gen = ++_gen;
         SetTitle($"{(Holder is { } h ? NameOf(h.Piece, _s) : "")} · {top.Count}");
         _list.Clear();
         var q = _search.Text.Trim();
-        foreach (var p in top)
+        var outKey = _t.Settings.Keys.Label("ready");
+        foreach (var p in shown)
         {
             var d = _s.Store.Def(p.Def);
             var name = p.Label is { Length: > 0 } lb ? lb : d?.Name ?? p.Def;
             if (q.Length > 0 && !name.Contains(q, StringComparison.OrdinalIgnoreCase) && !(d?.Tags.Any(t => t.Contains(q, StringComparison.OrdinalIgnoreCase)) ?? false)) continue;
             int inside = p.AllStowed().Count();
-            var sub = (d == null ? "missing kind" : PiecesPanel.ShapeWord(d)) + (inside > 0 ? $" · holds {inside}" : "");
+            bool isOut = p == released, isReady = p.Id == ready;
+            var sub = isOut ? "Ready · out" : isReady ? "Ready"
+                : (d == null ? "missing kind" : PiecesPanel.ShapeWord(d)) + (inside > 0 ? $" · holds {inside}" : "");
             int idx = _list.AddItem($"{name}\n{sub}", Ui.LoadingIcon);
-            _list.SetItemMetadata(idx, p.Id);
-            _list.SetItemTooltip(idx, d == null ? name : $"{name}\n{d.Name}\n{d.Size.W:0.##} × {d.Size.H:0.##} units · {PiecesPanel.ShapeWord(d)}");
+            _list.SetItemMetadata(idx, isOut ? OutMark + p.Id : p.Id);
+            var tip = d == null ? name : $"{name}\n{d.Name}\n{d.Size.W:0.##} × {d.Size.H:0.##} units · {PiecesPanel.ShapeWord(d)}";
+            _list.SetItemTooltip(idx, isOut ? $"{tip}\nDouble-click or {outKey} recalls it" : isReady ? $"{tip}\n{outKey} on the holder releases it" : $"{tip}\nRight-click to make it the ready piece");
+            if (isReady) _list.SetItemCustomFgColor(idx, Ui.AccentInk);
             if (d != null) PieceTiles.Picture(_s, _list, idx, d, _s.Store.PackOfDef(p.Def), () => gen == _gen);
         }
         bool empty = top.Count == 0;
@@ -205,7 +221,7 @@ public partial class HolderWindow : FloatPanel
                     dragging = false;
                     break;
                 case InputEventMouseMotion mm when item >= 0 && !dragging && (mm.ButtonMask & MouseButtonMask.Left) != 0:
-                    if ((mm.Position - press).Length() > DragFrom && CanTake && Meta(item) is { Length: > 0 } id)
+                    if ((mm.Position - press).Length() > DragFrom && CanTake && Meta(item) is { Length: > 0 } id && !id.StartsWith(OutMark))
                     {
                         dragging = true;
                         _t.BeginTakeOut(_layer, _id, id, at => IsInstanceValid(this) && GetGlobalRect().HasPoint(at));
@@ -220,8 +236,36 @@ public partial class HolderWindow : FloatPanel
         };
     }
 
+    void ReadyMenu(string meta)
+    {
+        if (meta.Length == 0 || !CanTake || !_s.IsUmpire || Holder is not { } h) return;
+        var pm = new PopupMenu();
+        if (meta.StartsWith(OutMark)) pm.AddItem("Recall", RecallChoice);
+        else
+        {
+            pm.AddCheckItem("Ready piece", ReadyChoice);
+            pm.SetItemChecked(0, h.Piece.Ready?.Id == meta);
+            pm.SetItemTooltip(0, "The one piece the holder releases and recalls with " + _t.Settings.Keys.Label("ready"));
+        }
+        pm.IdPressed += choice => ChooseReady(meta, choice);
+        pm.PopupHide += () => pm.QueueFree();
+        AddChild(pm);
+        pm.Popup(new Rect2I((Vector2I)Pointer.Global(this).Round(), Vector2I.Zero));
+    }
+
+    internal const int RecallChoice = 0, ReadyChoice = 1;
+
+    internal void ChooseReady(string meta, long choice)
+    {
+        if (Holder is not { } now || !CanTake || !_s.IsUmpire) return;
+        if (choice == RecallChoice) _s.Do(new RecallReady { Layer = _layer, Holder = _id });
+        else if (now.Piece.Ready?.Id == meta) _s.Do(new SetReady { Layer = _layer, Holder = _id });
+        else _s.Do(new SetReady { Layer = _layer, Holder = _id, Ready = new ReadyPiece { Id = meta }, Move = meta });
+    }
+
     void TakeOut(string id)
     {
+        if (id.StartsWith(OutMark)) { ChooseReady(id, RecallChoice); return; }
         if (id.Length == 0 || !CanTake || Holder is not { } h) return;
         _s.Do(TakingOut(_s, _layer, h.Piece, new List<Command> { new Unstow { Layer = _layer, Holder = _id, Id = id } }));
     }

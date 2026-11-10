@@ -74,7 +74,7 @@ static class UiRuleTests
     [NodeTest]
     static async Task Every_drawer_page_and_panel_names_each_section_once_and_lines_its_labels_up_in_one_column(TestRunner r)
     {
-        var h = await HudTests.Host(r, sheets: 1);
+        var h = await HudTests.Host(r, sheets: 1, pictured: true);
         IHudShell shell = h.Hud;
         var problems = new List<string>();
         h.Table.SelectSheet(h.S.View.Sheets[0].Id);

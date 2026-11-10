@@ -8,6 +8,19 @@ public class RoleAndJoinTests
 {
     const string U = Layers.Umpire;
 
+    static IEnumerable<Command> SheetCommands()
+    {
+        yield return new AddSheet { Sheet = new SheetDef { Name = "new" } };
+        yield return new MoveSheet { Id = "s-000001", Pos = new(1, 1) };
+        yield return new LockSheet { Id = "s-000001", Locked = false };
+        yield return new RenameSheet { Id = "s-000001", Name = "renamed" };
+        yield return new RemoveSheet { Id = "s-000001" };
+        yield return new CropSheet { Id = "s-000001", Crop = new FaceBox { X = 0.1, Y = 0.1, W = 0.8, H = 0.8 } };
+        yield return new SetSheetRelief { Id = "s-000001", Relief = new string('e', 64), Height = 2 };
+        yield return new SetSheetPicture { Id = "s-000001", Image = "other", Package = "sheets" };
+        yield return new SetSheetOpacity { Id = "s-000001", Opacity = 0.5 };
+    }
+
     static IEnumerable<Command> AllCommands(string layer)
     {
         yield return new SpawnPiece { Layer = layer, Def = "inf", Pos = new(9, 9) };
@@ -46,19 +59,15 @@ public class RoleAndJoinTests
         yield return new Detach { Layer = layer, Child = "p-000002" };
         yield return new Stow { Layer = layer, Holder = "p-000004", Id = "p-000002" };
         yield return new Unstow { Layer = layer, Holder = "p-000004", Id = "p-000002", Pos = new(1, 1) };
+        yield return new SetReady { Layer = layer, Holder = "p-000004", Ready = new ReadyPiece { Id = "p-000002" } };
+        yield return new ReleaseReady { Layer = layer, Holder = "p-000004" };
+        yield return new RecallReady { Layer = layer, Holder = "p-000004" };
         yield return new Draw { Layer = layer, Stroke = new Stroke { Points = { new(0, 0) } } };
         yield return new EraseStroke { Layer = layer, StrokeId = "d-000005" };
         yield return new StampDecal { Layer = layer, Decal = new DecalDef { Picture = "blood", W = 1, H = 1 } };
         yield return new RemoveDecal { Layer = layer, DecalId = "dc-000005" };
         yield return new SetDecalPalette { Entries = new() { new PaletteDecal { Name = "Guts", Picture = "guts", Size = 0.5 } } };
-        yield return new AddSheet { Sheet = new SheetDef { Name = "new" } };
-        yield return new MoveSheet { Id = "s-000001", Pos = new(1, 1) };
-        yield return new LockSheet { Id = "s-000001", Locked = false };
-        yield return new RenameSheet { Id = "s-000001", Name = "renamed" };
-        yield return new RemoveSheet { Id = "s-000001" };
-        yield return new CropSheet { Id = "s-000001", Crop = new FaceBox { X = 0.1, Y = 0.1, W = 0.8, H = 0.8 } };
-        yield return new SetSheetRelief { Id = "s-000001", Relief = new string('e', 64), Height = 2 };
-        yield return new SetSheetPicture { Id = "s-000001", Image = "other", Package = "sheets" };
+        foreach (var sheet in SheetCommands()) yield return sheet;
         yield return new SetLighting { Lighting = new Lighting { Warmth = 0.5 } };
         yield return new SetWind { Wind = new Wind { From = 90, Strength = 2 } };
         yield return new SetVisionRadius { Radius = 30 };

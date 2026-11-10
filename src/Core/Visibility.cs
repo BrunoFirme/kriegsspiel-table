@@ -31,7 +31,7 @@ public static class Visibility
         Grid = Json.Clone(g.Grid),
         Calibration = new() { UnitsPerMeter = g.Calibration.UnitsPerMeter },
         Clock = new() { Turn = g.Clock.Turn, GameTime = g.Clock.GameTime, IncrementMinutes = g.Clock.IncrementMinutes },
-        Lighting = Json.Clone(g.Lighting), Wind = g.Wind.Clone(), VisionRadius = g.VisionRadius,
+        Lighting = Json.Clone(g.Lighting), Wind = g.Wind.Clone(), VisionRadius = g.VisionRadius, VisionSharp = g.VisionSharp, VisionBlur = g.VisionBlur,
         NextId = g.NextId, LastSeq = g.LastSeq,
     };
 

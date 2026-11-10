@@ -82,6 +82,11 @@ public sealed partial class TableTools
             "Takes a held piece out of the piece holding it and puts it on the table, beside the holder or at x, z; read_piece on the holder lists what it holds under stowed.",
             Args.Schema(new Arg("holder", "string", "the holding piece's id", true), new Arg("id", "string", "the held piece's id or name; leave out for the first held"),
                 new Arg("x", "number", "map units"), new Arg("z", "number", "map units"), new Arg("turn", "number", "degrees")), UnstowPiece);
+        yield return new AgentTool("ready_piece",
+            "A holder's ready piece is the one held piece it releases onto the table and recalls with one key, smoke or dust for instance: it comes out where it stood when last recalled, turned and moved with the holder, and beside it the first time. " +
+            "mark makes a held piece the ready one (first among what it holds), clear takes the mark off, release and recall do what the key does. One undoable change.",
+            Args.Schema(new Arg("holder", "string", "the holding piece's id", true), new Arg("action", "string", "mark, clear, release or recall", true),
+                new Arg("id", "string", "for mark: the held piece's id or name")), ReadyTool);
         yield return new AgentTool("delete_piece",
             "Takes a piece off the table. Undoable.",
             Args.Schema(new Arg("id", "string", "the piece's id", true)), DeletePiece);
@@ -262,6 +267,50 @@ public sealed partial class TableTools
         var p = s.View.Find(Layers.Umpire, target.Id);
         _log($"took {NameOf(s, target)} ({target.Id}) out of {NameOf(s, h)}");
         return new ToolResult(p == null ? $"{NameOf(s, target)} did not come out." : $"{NameOf(s, target)} ({target.Id}) is on the table at {Math.Round(p.Pos.X, 2)}, {Math.Round(p.Pos.Z, 2)}.");
+    }
+
+    async Task<ToolResult> ReadyTool(JsonElement a)
+    {
+        if (Open(out var why) is not { } s) return why!;
+        if (!CanChange(s, out why)) return why!;
+        var holder = a.Str("holder") ?? "";
+        if (s.View.Find(Layers.Umpire, holder) is not { } h) return ToolResult.Fail($"No piece {holder} on this table.");
+        var state = ReadyPiece.Of(h, id => s.View.Find(Layers.Umpire, id));
+        Command? c;
+        switch (a.Str("action")?.Trim().ToLowerInvariant())
+        {
+            case "mark":
+                var which = a.Str("id")?.Trim() ?? "";
+                var held = h.Stowed ?? [];
+                var target = held.FirstOrDefault(p => p.Id == which) ?? held.FirstOrDefault(p => string.Equals(NameOf(s, p), which, StringComparison.OrdinalIgnoreCase));
+                if (target == null) return ToolResult.Fail($"{NameOf(s, h)} holds no {which}; stow_pieces puts it in first.");
+                c = new SetReady { Layer = Layers.Umpire, Holder = holder, Ready = new ReadyPiece { Id = target.Id }, Move = target.Id };
+                break;
+            case "clear":
+                c = new SetReady { Layer = Layers.Umpire, Holder = holder };
+                break;
+            case "release":
+                if (state != Readiness.In) return ToolResult.Fail(state == Readiness.Out ? "Its ready piece is already out." : $"{NameOf(s, h)} has no ready piece held: mark one.");
+                c = new ReleaseReady { Layer = Layers.Umpire, Holder = holder };
+                break;
+            case "recall":
+                if (state != Readiness.Out) return ToolResult.Fail(state == Readiness.In ? "Its ready piece is already held." : $"{NameOf(s, h)} has no ready piece out.");
+                c = new RecallReady { Layer = Layers.Umpire, Holder = holder };
+                break;
+            default:
+                return ToolResult.Fail("action is mark, clear, release or recall.");
+        }
+        s.Do(c);
+        await Landed(s);
+        var now = s.View.Find(Layers.Umpire, holder);
+        var after = now == null ? Readiness.None : ReadyPiece.Of(now, id => s.View.Find(Layers.Umpire, id));
+        _log($"{a.Str("action")} the ready piece of {NameOf(s, h)} ({holder})");
+        return new ToolResult(after switch
+        {
+            Readiness.In => $"{NameOf(s, h)} holds its ready piece {now!.Ready!.Id}.",
+            Readiness.Out when s.View.Find(Layers.Umpire, now!.Ready!.Id) is { } p => $"Its ready piece {p.Id} is on the table at {Math.Round(p.Pos.X, 2)}, {Math.Round(p.Pos.Z, 2)}.",
+            _ => $"{NameOf(s, h)} has no ready piece.",
+        });
     }
 
     async Task<ToolResult> Undo(JsonElement a)

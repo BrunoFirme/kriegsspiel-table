@@ -106,6 +106,18 @@ sealed class SheetLayer
         else GroundMoved();
     }
 
+    public void Fade(string id, double opacity)
+    {
+        if (_sheets.TryGetValue(id, out var n)) n.Fade(opacity);
+    }
+
+    public void Faded(string id)
+    {
+        if (_c.S.View.Sheets.FirstOrDefault(s => s.Id == id) is not { } sh || !_sheets.TryGetValue(id, out var n)) return;
+        n.UpdateDef(sh);
+        n.Fade(sh.Seen);
+    }
+
     public void Remove(string id)
     {
         if (_sheets.Remove(id, out var rn)) rn.QueueFree();

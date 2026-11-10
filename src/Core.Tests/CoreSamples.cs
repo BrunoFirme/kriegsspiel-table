@@ -79,6 +79,19 @@ public static class CoreSamples
         yield return new SetWebModel { Layer = layer, Id = "p-000001", Mesh = "models/" + new string('b', 64) + ".obj", Texture = "pictures/" + new string('c', 64) + ".png" };
     }
 
+    static IEnumerable<Command> SheetCommands()
+    {
+        yield return new AddSheet { Sheet = Sheet("s-000200") };
+        yield return new MoveSheet { Id = "s-000001", Pos = new(7, 8), RotDeg = 180, Z = 3 };
+        yield return new LockSheet { Id = "s-000001", Locked = true };
+        yield return new RenameSheet { Id = "s-000001", Name = "North sheet" };
+        yield return new RemoveSheet { Id = "s-000001" };
+        yield return new CropSheet { Id = "s-000001", Crop = new FaceBox { X = 0.1, Y = 0.05, W = 0.8, H = 0.9 } };
+        yield return new SetSheetRelief { Id = "s-000001", Relief = new string('d', 64), Height = 1.5 };
+        yield return new SetSheetPicture { Id = "s-000001", Image = "pic2", Package = "sheets", Size = new(20, 10) };
+        yield return new SetSheetOpacity { Id = "s-000001", Opacity = 0.4 };
+    }
+
     public static IEnumerable<Command> AllCommands()
     {
         const string L = Layers.Umpire;
@@ -113,14 +126,10 @@ public static class CoreSamples
         yield return new Detach { Layer = L, Child = "p-000002" };
         yield return new Stow { Layer = L, Holder = "p-000001", Id = "p-000002", Slot = 0 };
         yield return new Unstow { Layer = L, Holder = "p-000001", Id = "p-000002", Pos = new Vec2(3, 4), RotDeg = 90, Index = 1 };
-        yield return new AddSheet { Sheet = Sheet("s-000200") };
-        yield return new MoveSheet { Id = "s-000001", Pos = new(7, 8), RotDeg = 180, Z = 3 };
-        yield return new LockSheet { Id = "s-000001", Locked = true };
-        yield return new RenameSheet { Id = "s-000001", Name = "North sheet" };
-        yield return new RemoveSheet { Id = "s-000001" };
-        yield return new CropSheet { Id = "s-000001", Crop = new FaceBox { X = 0.1, Y = 0.05, W = 0.8, H = 0.9 } };
-        yield return new SetSheetRelief { Id = "s-000001", Relief = new string('d', 64), Height = 1.5 };
-        yield return new SetSheetPicture { Id = "s-000001", Image = "pic2", Package = "sheets", Size = new(20, 10) };
+        yield return new SetReady { Layer = L, Holder = "p-000001", Ready = new ReadyPiece { Id = "p-000002", Offset = new Vec2(0, 3), Turn = 90 }, Move = "p-000002" };
+        yield return new ReleaseReady { Layer = L, Holder = "p-000001" };
+        yield return new RecallReady { Layer = L, Holder = "p-000001" };
+        foreach (var sheet in SheetCommands()) yield return sheet;
         yield return new SetLighting { Lighting = new Lighting { Warmth = 0.4, SunEnergy = 0.6, Ambient = 0.5, Shadows = false } };
         yield return new SetWind { Wind = new Wind { From = 225, Strength = 3.5 } };
         yield return new SetVisionRadius { Radius = 30 };

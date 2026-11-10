@@ -114,10 +114,38 @@ sealed class MapPage : HudPart
         wd.ValueChanged += v => S.Do(new MoveSheet { Id = sel.Id, Pos = sel.Pos, RotDeg = sel.RotDeg, Z = sel.Z, Size = new Size2(v, v * aspect) });
         void Push() => S.Do(new MoveSheet { Id = sel.Id, Pos = new Vec2(x.Value, z.Value), RotDeg = r.Value, Z = (int)zo.Value });
         foreach (var sb in new[] { x, z, r, zo }) sb.ValueChanged += _ => Push();
+        if (sel.HasPicture) AddOpacity(grid, sel);
         Ui.AlignForm(grid);
         _box.AddChild(grid);
         var ground = S.View.Calibration.UnitsPerMeter is { } upm && upm > 0 ? " · " + S.View.Calibration.DescribeSize(sel.Size.W, sel.Size.H) : "";
         _box.AddChild(Hint($"{sel.Size.W:0.#} × {sel.Size.H:0.#} u{ground}"));
+    }
+
+    const double LeastOpacity = 5, OpacityStep = 5;
+
+    void AddOpacity(GridContainer grid, SheetDef sel)
+    {
+        grid.AddChild(new Label { Text = "Opacity" });
+        var row = new HBoxContainer();
+        row.AddThemeConstantOverride("separation", Ui.Gap.Group);
+        var slider = new HSlider
+        {
+            MinValue = LeastOpacity, MaxValue = 100, Step = OpacityStep, Value = sel.Seen * 100, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+            SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, TooltipText = "Lower it to see the table or another sheet through this one",
+        };
+        var value = Ui.ValueBox(slider, v => $"{v:0} %", 44);
+        bool dragging = false;
+        void Send()
+        {
+            var now = S.View.Sheets.FirstOrDefault(s => s.Id == sel.Id)?.Seen;
+            if (now is { } was && !Mathf.IsEqualApprox(was, slider.Value / 100)) S.Do(new SetSheetOpacity { Id = sel.Id, Opacity = slider.Value / 100 });
+        }
+        slider.DragStarted += () => dragging = true;
+        slider.ValueChanged += v => { T.Sheets.Fade(sel.Id, v / 100); if (!dragging) Send(); };
+        slider.DragEnded += _ => { dragging = false; Send(); };
+        row.AddChild(slider);
+        row.AddChild(value);
+        grid.AddChild(row);
     }
 
     void AddTurn(SheetDef sel)

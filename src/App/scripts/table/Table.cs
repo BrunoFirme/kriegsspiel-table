@@ -311,6 +311,7 @@ public partial class Table : Node3D
         Clip.Tick(delta);
         Names.Tick(delta);
         Palette.Tick(Input.IsMouseButtonPressed(MouseButton.Left), Pointer.In(GetViewport()));
+        Sighting.TickBlur(delta);
         Sighting.TickShade();
         Cam.TickMemory(delta);
         _aura.Active = Selected.Count > 0;
@@ -543,6 +544,8 @@ public partial class Table : Node3D
     public void SetSightingFirstPerson(bool on) => Sighting.SetFirstPerson(on);
     public void SetSightingWide(bool on) => Sighting.SetWide(on);
     public void SetSightingEye(double height) => Sighting.SetEyeHeight(height);
+    public void SetSightingSharp(double share) => Sighting.SetSharp(share);
+    public void SetSightingBlur(double share) => Sighting.SetBlur(share);
     public double SightingEyeHighest => Sighting.EyeHighest;
     public void SetSightingHideText(bool on) => Sighting.SetHideText(on);
     public void FaceSighting(string cardinal) => Sighting.Face(cardinal);

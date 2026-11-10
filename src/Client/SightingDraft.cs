@@ -11,12 +11,24 @@ public sealed class SightingDraft
     public bool FirstPerson;
     public bool Wide;
     public double EyeHeight;
+    public double Sharp = 1;
+    public double Blur = BlurAtEdge;
     public bool HideText;
     public bool Gif;
     public string? Facing;
     public List<List<Vec2>> Walls = new();
     public List<Vec2> Polygon = new();
     public HashSet<string> Included = new();
+
+    public const double BlurAtEdge = 0.12, LeastBlur = 0.02, MostBlur = 0.3, BlurStep = 0.01, BlurBend = 1.8, SharpStep = 0.025;
+
+    public double Away(Vec2 p) => Square ? Math.Max(Math.Abs(p.X - Center.X), Math.Abs(p.Z - Center.Z)) : (p - Center).Length;
+
+    public double BlurAt(Vec2 p)
+    {
+        double start = Sharp * Radius, t = Math.Clamp((Away(p) - start) / Math.Max(Radius - start, 1e-4), 0, 1);
+        return t <= 0 ? 0 : Blur * Radius * Math.Pow(t, BlurBend);
+    }
 
     public Vec2 Clip(Vec2 p)
     {

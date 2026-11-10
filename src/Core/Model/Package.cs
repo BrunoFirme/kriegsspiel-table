@@ -322,9 +322,12 @@ public sealed class SheetDef
     public string? Url { get; set; }
     public string? Relief { get; set; }
     public double Height { get; set; } = 1;
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public double? Opacity { get; set; }
 
     [System.Text.Json.Serialization.JsonIgnore]
     public bool HasPicture => Image.Length > 0;
+    [System.Text.Json.Serialization.JsonIgnore]
+    public double Seen => Opacity ?? 1;
 }
 
 public sealed class Calibration
@@ -490,6 +493,7 @@ public sealed class PieceInstance : IJsonOnDeserialized
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<KTable.Core.Panels.UiAsset>? UiAssets { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<PieceInstance>? Stowed { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public bool? Holds { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public ReadyPiece? Ready { get; set; }
 
     public bool HoldsPieces(PieceDef? def) => Holds ?? (def?.Holds == true || Stowed is { Count: > 0 });
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? TakeOrder { get; set; }
@@ -506,7 +510,7 @@ public sealed class PieceInstance : IJsonOnDeserialized
         Widgets = Widgets.Select(w => w.Clone()).ToList(), DrawnOnState = DrawnOnState, MenuItems = MenuItems.Select(m => m.Clone()).ToList(),
         Lines = Lines.Select(l => l.Clone()).ToList(), Decals = Decals.Select(d => d.Clone()).ToList(), DecalsOnState = DecalsOnState,
         Ui = Ui.Select(n => n.Clone()).ToList(), UiLayout = UiLayout?.Clone(), UiAssets = UiAssets?.Select(a => a.Clone()).ToList(),
-        Stowed = Stowed?.Select(s => s.Clone()).ToList(), TakeOrder = TakeOrder,
+        Stowed = Stowed?.Select(s => s.Clone()).ToList(), TakeOrder = TakeOrder, Ready = Ready?.Clone(),
     };
 
     [JsonIgnore] public int ShownFace => Face >= 0 ? Face : State;
@@ -731,6 +735,8 @@ public sealed class Scenario : IJsonOnDeserialized, IJsonOnSerializing
     public Lighting Lighting { get; set; } = new();
     public Wind Wind { get; set; } = new();
     public double VisionRadius { get; set; } = 40;
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public double? VisionSharp { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public double? VisionBlur { get; set; }
     public bool PointersAlwaysShown { get; set; }
     public string? Briefing { get; set; }
     public List<BoardDef> Boards { get; set; } = new();

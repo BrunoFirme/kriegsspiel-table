@@ -31,6 +31,7 @@ public static partial class StateMachine
             case TiltPiece tp: return ApplyTilt(g, tp, ref inverse);
             case SetScale sz: return ApplySetScale(g, sz, ref inverse);
             case Attach or Detach or Stow or Unstow: return ApplyCarrying(g, c, ref inverse);
+            case SetReady or ReleaseReady or RecallReady: return ApplyReadyCommand(g, c, ref inverse);
             case AddSheet ash: return ApplyAddSheet(g, ash, ref inverse);
             case MoveSheet ms: return ApplyMoveSheet(g, ms, ref inverse);
             case SetVisionRadius sv: return ApplySetVisionRadius(g, sv, ref inverse);
@@ -46,6 +47,7 @@ public static partial class StateMachine
             case SetWind sw: return ApplySetWind(g, sw, ref inverse);
             case CropSheet cs: return ApplyCropSheet(g, cs, ref inverse);
             case SetSheetRelief sr: return ApplySetSheetRelief(g, sr, ref inverse);
+            case SetSheetOpacity so: return ApplySetSheetOpacity(g, so, ref inverse);
             case SetSheetPicture sp: return ApplySetSheetPicture(g, sp, ref inverse);
             case LockSheet ls: return ApplyLockSheet(g, ls, ref inverse);
             case RenameSheet rs: return ApplyRenameSheet(g, rs, ref inverse);
@@ -562,11 +564,17 @@ public static partial class StateMachine
         return null;
     }
 
+    public const double MostVisionBlur = 0.5;
+
     static string? ApplySetVisionRadius(GameState g, SetVisionRadius sv, ref Command? inverse)
     {
         if (sv.Radius <= 0) return "radius must be positive";
-        inverse = new SetVisionRadius { Radius = g.VisionRadius };
+        if (sv.Sharp is { } sh && !(sh >= 0 && sh <= 1)) return "sharp share out of range";
+        if (sv.Blur is { } bl && !(bl > 0 && bl <= MostVisionBlur)) return "blur out of range";
+        inverse = new SetVisionRadius { Radius = g.VisionRadius, Sharp = sv.Sharp == null ? null : g.VisionSharp ?? 1, Blur = sv.Blur == null ? null : g.VisionBlur ?? 0 };
         g.VisionRadius = sv.Radius;
+        if (sv.Sharp is { } kept) g.VisionSharp = kept >= 1 ? null : kept;
+        if (sv.Blur is { } blur) g.VisionBlur = blur;
         return null;
     }
 
@@ -614,6 +622,16 @@ public static partial class StateMachine
         inverse = new SetSheetRelief { Id = s.Id, Relief = s.Relief, Height = s.Height };
         s.Relief = sr.Relief is { Length: > 0 } ? sr.Relief : null;
         s.Height = sr.Height;
+        return null;
+    }
+
+    static string? ApplySetSheetOpacity(GameState g, SetSheetOpacity so, ref Command? inverse)
+    {
+        var s = g.Sheets.FirstOrDefault(x => x.Id == so.Id);
+        if (s == null) return "no such sheet";
+        if (!double.IsFinite(so.Opacity) || so.Opacity < 0 || so.Opacity > 1) return "opacity out of range";
+        inverse = new SetSheetOpacity { Id = s.Id, Opacity = s.Seen };
+        s.Opacity = so.Opacity >= 1 ? null : so.Opacity;
         return null;
     }
 

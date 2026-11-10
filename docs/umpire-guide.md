@@ -146,6 +146,10 @@ groups them, and names what each was used for, from the phalanx to the tank plat
   view: drag one out onto the table, double-click to set it beside, **Take all out** for a row. Right-click →
   **Holds pieces** switches it on or off for any piece; the piece studio's **Holds pieces** sets where a kind starts,
   and the box, chest and crate of Firme's Effects and Props start on. A held piece keeps everything it had.
+- **Ready piece:** one held piece can be its holder's ready piece, smoke or dust for instance: right-click it in the
+  holder's window → **Ready piece**. It is listed first. **B** on the holder releases it onto the table; **B** on the
+  holder or on the piece recalls it. Recalled, it remembers where it stood, so it comes out there again, moved and
+  turned with the holder. Also in the right-click menu.
 - **Locked:** right-click → **Locked** pins a piece: it can be read, not moved. A selection box leaves it out and the
   Delete key leaves it be; right-click → **Delete** removes it.
 - **Tint:** right-click → **Tint** colours every selected piece: a swatch, **+** for any colour, **Reset** for the
@@ -208,7 +212,10 @@ screenshot. Click a name to draw on it; the rubber works on that layer alone.
 A turn report as a picture, from one piece's point of view.
 
 1. Select the piece and press **V** (or right-click → POV capture from here).
-2. Set how far it sees (**Ctrl+wheel**, **+ / −**, or the Radius field); the wheel zooms in to trace.
+2. Set how far it sees (**Ctrl+wheel**, **+ / −**, or the Radius field); the wheel zooms in to trace. **Sharp to**
+   pulls a ring in from the edge: past it the picture blurs, gently at first and hard at the edge, as distance takes
+   detail; **Blur** sets how strong it gets at the edge. All the way right is sharp everywhere. The reach, the ring
+   and the blur are kept with the scenario.
 3. Drag to trace what blocks the view: walls, wood edges, ridges. What lies behind goes black.
 4. **Enter** or **Capture**. The picture goes to the clipboard and the capture folder, stamped with the
    scenario, the clock and the side.
@@ -240,7 +247,8 @@ Names too small in the picture? Raise **Settings → Captures → Resolution**, 
 ### Map sheets
 
 In the **Map** drawer: add sheets (files or web links), pick one (or Alt+click it), unlock to drag, nudge with the arrow keys, turn
-or resize with **T**. **Crop…** trims borders; the sheet keeps its scale. **Left 90°**, **180°** and **Right 90°** turn the
+or resize with **T**. **Opacity** lets what lies under a sheet show through it, to line an old map up over another.
+**Crop…** trims borders; the sheet keeps its scale. **Left 90°**, **180°** and **Right 90°** turn the
 sheet, every sheet joined to it and the pieces on them as one, about the map's middle.
 
 ### Relief

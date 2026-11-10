@@ -10,6 +10,9 @@ namespace KTable.Core.Protocol;
 [JsonDerivedType(typeof(DeletePiece), "DeletePiece")]
 [JsonDerivedType(typeof(Stow), "Stow")]
 [JsonDerivedType(typeof(Unstow), "Unstow")]
+[JsonDerivedType(typeof(SetReady), "SetReady")]
+[JsonDerivedType(typeof(ReleaseReady), "ReleaseReady")]
+[JsonDerivedType(typeof(RecallReady), "RecallReady")]
 [JsonDerivedType(typeof(SetState), "SetState")]
 [JsonDerivedType(typeof(TurnDie), "TurnDie")]
 [JsonDerivedType(typeof(SetWorth), "SetWorth")]
@@ -44,6 +47,7 @@ namespace KTable.Core.Protocol;
 [JsonDerivedType(typeof(RemoveSheet), "RemoveSheet")]
 [JsonDerivedType(typeof(CropSheet), "CropSheet")]
 [JsonDerivedType(typeof(SetSheetRelief), "SetSheetRelief")]
+[JsonDerivedType(typeof(SetSheetOpacity), "SetSheetOpacity")]
 [JsonDerivedType(typeof(SetSheetPicture), "SetSheetPicture")]
 [JsonDerivedType(typeof(FlipPiece), "FlipPiece")]
 [JsonDerivedType(typeof(TiltPiece), "TiltPiece")]
@@ -568,6 +572,42 @@ public sealed class Unstow : LayerCommand
     public override IEnumerable<string> ScriptsToReload() => [Id];
 }
 
+public sealed class SetReady : LayerCommand
+{
+    public string Holder { get; set; } = "";
+    public ReadyPiece? Ready { get; set; }
+    public string? Move { get; set; }
+    public int Slot { get; set; }
+    public override Sender SentBy() => Sender.Umpire;
+    public override bool OnUndoStack() => true;
+    public override Shown ShownToObservers() => Shown.Table;
+    public override IEnumerable<(string Layer, string Id)> ZonePieces() => [(Layer, Holder)];
+    public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [];
+    public override IEnumerable<string> ScriptsToReload() => [];
+}
+
+public sealed class ReleaseReady : LayerCommand
+{
+    public string Holder { get; set; } = "";
+    public override Sender SentBy() => Sender.Umpire;
+    public override bool OnUndoStack() => true;
+    public override Shown ShownToObservers() => Shown.Table;
+    public override IEnumerable<(string Layer, string Id)> ZonePieces() => [(Layer, Holder)];
+    public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [];
+    public override IEnumerable<string> ScriptsToReload() => [];
+}
+
+public sealed class RecallReady : LayerCommand
+{
+    public string Holder { get; set; } = "";
+    public override Sender SentBy() => Sender.Umpire;
+    public override bool OnUndoStack() => true;
+    public override Shown ShownToObservers() => Shown.Table;
+    public override IEnumerable<(string Layer, string Id)> ZonePieces() => [(Layer, Holder)];
+    public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [];
+    public override IEnumerable<string> ScriptsToReload() => [];
+}
+
 public sealed class AddSheet : Command
 {
     public SheetDef Sheet { get; set; } = new();
@@ -651,6 +691,18 @@ public sealed class SetSheetRelief : Command
     public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [];
     public override IEnumerable<string> ScriptsToReload() => [];
 }
+public sealed class SetSheetOpacity : Command
+{
+    public string Id { get; set; } = "";
+    public double Opacity { get; set; } = 1;
+    public override Sender SentBy() => Sender.Umpire;
+    public override bool OnUndoStack() => true;
+    public override Shown ShownToObservers() => Shown.Table;
+    public override IEnumerable<(string Layer, string Id)> ZonePieces() => [];
+    public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [];
+    public override IEnumerable<string> ScriptsToReload() => [];
+}
+
 public sealed class SetSheetPicture : Command
 {
     public string Id { get; set; } = "";
@@ -814,6 +866,8 @@ public sealed class SetWind : Command
 public sealed class SetVisionRadius : Command
 {
     public double Radius { get; set; } = 40;
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public double? Sharp { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public double? Blur { get; set; }
     public override Sender SentBy() => Sender.Umpire;
     public override bool OnUndoStack() => true;
     public override Shown ShownToObservers() => Shown.Table;

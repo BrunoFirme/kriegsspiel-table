@@ -43,12 +43,13 @@ sealed partial class AgentTableTools
                 new Arg("grid", "number", "map units between grid lines (chosen to suit the size if left out)"), new Arg("pixels", "number", $"the picture's width and height ({MapView.MinPixels}–{MapView.MaxPixels}, {MapView.DefaultPixels} if left out)")),
             ViewMap);
         yield return new AgentTool("set_map_sheet",
-            "Places, sizes (width; the height follows the picture), turns, layers, crops, renames, locks or removes a map sheet; adds, replaces or removes its relief, sets the relief's height × (0 flat, 1 the model's own proportions), and lays a new picture on it.",
+            "Places, sizes (width; the height follows the picture), turns, layers, crops, renames, locks or removes a map sheet; adds, replaces or removes its relief, sets the relief's height × (0 flat, 1 the model's own proportions), lays a new picture on it and fades its picture to see through it.",
             Args.Schema(new Arg("id", "string", "the sheet's id (list_map_sheets)", true), new Arg("x", "number", "centre, map units"), new Arg("z", "number", "centre, map units"),
                 new Arg("width", "number", "map units"), new Arg("turn", "number", "degrees"), new Arg("layer", "number", "stacking order: higher lies on top"), new Arg("name", "string", "new name"), new Arg("locked", "boolean", "locked"), new Arg("remove", "boolean", "take it off the table"),
                 new Arg("height", "number", $"relief height × (0–{StateMachine.MostHeight})"), new Arg("relief", "string", "full path of a 3D terrain or heightmap file, stretched over this sheet"),
                 new Arg("remove_relief", "boolean", "take the relief off (a sheet keeps a picture or a relief)"), new Arg("picture", "string", "full path or web link of a picture to lay on this sheet"),
-                new Arg("crop", "array", "[x, y, w, h]: the part of the picture shown, as fractions 0–1 of the whole; [0, 0, 1, 1] shows it whole. The map keeps its scale")),
+                new Arg("crop", "array", "[x, y, w, h]: the part of the picture shown, as fractions 0–1 of the whole; [0, 0, 1, 1] shows it whole. The map keeps its scale"),
+                new Arg("opacity", "number", "the picture's opacity, 0.05–1: lower shows the table or another sheet through it")),
             SetSheet);
         yield return new AgentTool("copy_pieces",
             "Copies pieces onto the clipboard as they stand, with their counters, text lines, look, own name, note, tags, scale, script and whatever is attached to them. " +
@@ -240,7 +241,7 @@ sealed partial class AgentTableTools
         {
             ["id"] = x.Id, ["name"] = x.Name, ["x"] = Math.Round(x.Pos.X, 3), ["z"] = Math.Round(x.Pos.Z, 3),
             ["width"] = Math.Round(x.Size.W, 3), ["height"] = Math.Round(x.Size.H, 3), ["turn"] = Math.Round(x.RotDeg, 1), ["locked"] = x.Locked,
-            ["layer"] = x.Z, ["picture"] = x.HasPicture, ["relief"] = x.Relief is { Length: > 0 },
+            ["layer"] = x.Z, ["picture"] = x.HasPicture, ["opacity"] = x.Opacity is { } o ? Math.Round(o, 2) : null, ["relief"] = x.Relief is { Length: > 0 },
             ["relief_height"] = x.Relief is { Length: > 0 } ? Math.Round(x.Height, 3) : null,
             ["highest"] = s.Relief.Grid(x) is { } g ? Math.Round(g.Highest * Ground.FullWidth(x) * x.Height, 3) : null,
             ["painted"] = s.Relief.Grid(x)?.Painted == true,
@@ -248,6 +249,8 @@ sealed partial class AgentTableTools
         }).ToArray());
         return new ToolResult(rows.Count == 0 ? "No map sheets yet: add_map_sheets." : rows.ToJsonString(Opts));
     }
+
+    const double LeastOpacity = 0.05;
 
     async Task<ToolResult> SetSheet(JsonElement a)
     {
@@ -276,6 +279,11 @@ sealed partial class AgentTableTools
             var now = s.View.Sheets.First(x => x.Id == id);
             if (now.Relief is not { Length: > 0 }) return ToolResult.Fail("This sheet has no relief: add one with relief.");
             s.Do(new SetSheetRelief { Id = id, Relief = now.Relief, Height = Math.Clamp(hx, 0, StateMachine.MostHeight) });
+        }
+        if (a.Num("opacity") is { } fade)
+        {
+            if (!s.View.Sheets.First(x => x.Id == id).HasPicture) return ToolResult.Fail("This sheet has no picture to fade.");
+            s.Do(new SetSheetOpacity { Id = id, Opacity = Math.Clamp(fade, LeastOpacity, 1) });
         }
         if (a.Flag("locked") == false && sh.Locked) s.Do(new LockSheet { Id = id, Locked = false });
         if (a.ValueKind == JsonValueKind.Object && a.TryGetProperty("crop", out var crop))

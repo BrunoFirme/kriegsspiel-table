@@ -394,6 +394,14 @@ public static partial class ApiDoc
         M("piece", "stow(piece)", "Takes another piece off the table into this one, with whatever rides on it; a piece this one rides on is refused.", "putObject");
         M("piece", "unstow(which, place, rot)", "Puts a held piece back on the table and returns it: which is its id, guid, its number in stowed, or nothing for the next by the holder's take order (first, last or random); place is { x =, z = } or a piece, else beside this one; rot turns it.", "takeObject");
         See("self.stowed", "self.stow", "self.unstow");
+        F("piece", "ready", "piece", "Its ready piece, the one held piece it releases and recalls with one key, held or out on the table; nil for none.");
+        M("piece", "set_ready(piece)", "Makes a piece it holds its ready piece, first among what it holds; nil takes the mark off.");
+        P("piece", "piece", "A piece it holds, or nil.");
+        M("piece", "release()", "Puts its ready piece on the table where it stood when last recalled, turned and moved with this one; beside this one the first time. False when it is not held.");
+        R("true when it went out.");
+        M("piece", "recall()", "Takes its ready piece back from the table into this one and remembers where it stood. False when it is not out.");
+        R("true when it came back.");
+        See("self.ready", "self.set_ready", "self.release", "self.recall");
     }
 
     static void PieceData()

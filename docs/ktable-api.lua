@@ -203,6 +203,7 @@
 ---@field decals Decal[] The pictures on its faces: the ones its look carries, or those set_decals put there.
 ---@field exists boolean False once the piece is gone (its other fields are nil then).
 ---@field stowed list The pieces it holds off the table, first in first: { id =, name =, guid =, def =, held = }, held being how many that piece holds in turn.
+---@field ready piece Its ready piece, the one held piece it releases and recalls with one key, held or out on the table; nil for none.
 local Piece = {}
 
 ---Sets the label under the piece; nil takes it away.
@@ -388,6 +389,16 @@ function Piece.stow() end
 
 ---Puts a held piece back on the table and returns it: which is its id, guid, its number in stowed, or nothing for the next by the holder's take order (first, last or random); place is { x =, z = } or a piece, else beside this one; rot turns it.
 function Piece.unstow() end
+
+---Makes a piece it holds its ready piece, first among what it holds; nil takes the mark off.
+---@param piece piece A piece it holds, or nil.
+function Piece.set_ready(piece) end
+
+---Puts its ready piece on the table where it stood when last recalled, turned and moved with this one; beside this one the first time. False when it is not held.
+function Piece.release() end
+
+---Takes its ready piece back from the table into this one and remembers where it stood. False when it is not out.
+function Piece.recall() end
 
 ---Takes the piece off the table (on_destroy runs first).
 function Piece.delete() end

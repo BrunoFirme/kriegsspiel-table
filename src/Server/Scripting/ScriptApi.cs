@@ -310,12 +310,12 @@ internal sealed partial class PieceHandles(ScriptHost host)
         p ??= host.FindStowed(id);
         if (p == null)
         {
-            if (key.StartsWith("set_") || key is "delete" or "button" or "input" or "edit" or "flip" or "move" or "attach" or "detach" or "stow" or "unstow" or "call")
+            if (key.StartsWith("set_") || key is "delete" or "button" or "input" or "edit" or "flip" or "move" or "attach" or "detach" or "stow" or "unstow" or "release" or "recall" or "call")
                 return Fn(_ => throw new ScriptRuntimeException($"piece {id} is gone"));
             return DynValue.Nil;
         }
         var def = host.Server.Store?.Def(p.Def);
-        var found = Field(id, p, def, key) ?? DieField(p, def, key) ?? Setter(id, p, def, key) ?? MarkSetter(id, p, def, key);
+        var found = Field(id, p, def, key) ?? DieField(p, def, key) ?? Setter(id, p, def, key) ?? MarkSetter(id, p, def, key) ?? ReadySetter(id, p, key);
         return found ?? DieSetter(id, p, def, key) ?? Drawing(id, key) ?? Scripted(id, p, key) ?? DynValue.Nil;
     }
 
@@ -348,6 +348,7 @@ internal sealed partial class PieceHandles(ScriptHost host)
             }
             case "picture_size": return PictureSize(p, def);
             case "stowed": return StowedList(p);
+            case "ready": return p.Ready is { } r && ReadyPiece.Of(p, x => host.Find(x)) is Readiness.In or Readiness.Out ? Handle(r.Id) : DynValue.Nil;
             case "local_unit":
             {
                 if (def?.LocalUnit is not { } lu) return DynValue.Nil;
@@ -558,6 +559,30 @@ internal sealed partial class PieceHandles(ScriptHost host)
     {
         host.Emit(new SetHighlight { Layer = Layers.Umpire, Id = id, Color = color.IsNil() ? null : ColorOf(color) });
         return DynValue.Nil;
+    }
+
+    DynValue? ReadySetter(string id, PieceInstance p, string key)
+    {
+        const string L = Layers.Umpire;
+        return key switch
+        {
+            "set_ready" => Fn(a =>
+            {
+                var which = Arg(a, 0).IsNil() ? null : IdOf(Arg(a, 0));
+                host.Emit(which == null ? new SetReady { Layer = L, Holder = id } : new SetReady { Layer = L, Holder = id, Ready = new ReadyPiece { Id = which }, Move = which });
+                return DynValue.Nil;
+            }),
+            "release" => Fn(_ => Ready(id, p, Readiness.In, new ReleaseReady { Layer = L, Holder = id })),
+            "recall" => Fn(_ => Ready(id, p, Readiness.Out, new RecallReady { Layer = L, Holder = id })),
+            _ => null,
+        };
+    }
+
+    DynValue Ready(string id, PieceInstance holder, Readiness needed, Command c)
+    {
+        if (ReadyPiece.Of(holder, x => host.Find(x)) != needed) return B(false);
+        host.Emit(c);
+        return B(true);
     }
 
     DynValue StowedList(PieceInstance holder)

@@ -1,4 +1,4 @@
-format 30
+format 31
 type AccessChanged object
   access: GameAccess
 type AddBoard object
@@ -113,6 +113,8 @@ type Command abstract
   derived PickMenuItem = PickMenuItem
   derived PlayEffect = PlayEffect
   derived PublishSighting = PublishSighting
+  derived RecallReady = RecallReady
+  derived ReleaseReady = ReleaseReady
   derived RemoveBoard = RemoveBoard
   derived RemoveDecal = RemoveDecal
   derived RemoveSheet = RemoveSheet
@@ -152,9 +154,11 @@ type Command abstract
   derived SetPicture = SetPicture
   derived SetPieceOption = SetPieceOption
   derived SetPointerRule = SetPointerRule
+  derived SetReady = SetReady
   derived SetScale = SetScale
   derived SetScript = SetScript
   derived SetScriptState = SetScriptState
+  derived SetSheetOpacity = SetSheetOpacity
   derived SetSheetPicture = SetSheetPicture
   derived SetSheetRelief = SetSheetRelief
   derived SetState = SetState
@@ -352,7 +356,9 @@ type GameState object
   uiLayout: UiLayout
   uiLinks: Dictionary<string,string>
   uiPictures: Dictionary<string,string>
+  visionBlur: double?
   visionRadius: double
+  visionSharp: double?
   wind: Wind
   zones: List<Zone>
 type GetScripts object
@@ -697,6 +703,7 @@ type PieceInstance object
   physicalRoll: bool
   picture: string
   pos: Vec2
+  ready: ReadyPiece
   rotDeg: double
   scale: double
   script: string
@@ -776,8 +783,26 @@ type PublishSighting object
   old: Dictionary<string,JsonElement> extension-data
   seq: long
   undoOf: long
+type ReadyPiece object
+  id: string
+  offset: Vec2?
+  turn: double
+type RecallReady object
+  actor: long
+  at: long
+  holder: string
+  layer: string
+  seq: long
+  undoOf: long
 type Refuse object
   peerId: long
+type ReleaseReady object
+  actor: long
+  at: long
+  holder: string
+  layer: string
+  seq: long
+  undoOf: long
 type RemoveBoard object
   actor: long
   at: long
@@ -909,7 +934,9 @@ type Scenario object
   uiLinks: Dictionary<string,string>
   uiPictures: Dictionary<string,string>
   umpireBoard: List<PieceInstance>
+  visionBlur: double?
   visionRadius: double
+  visionSharp: double?
   wind: Wind
 type ScriptConsole object
   backlog: bool
@@ -1143,6 +1170,16 @@ type SetPointerRule object
   at: long
   seq: long
   undoOf: long
+type SetReady object
+  actor: long
+  at: long
+  holder: string
+  layer: string
+  move: string
+  ready: ReadyPiece
+  seq: long
+  slot: int
+  undoOf: long
 type SetRole object
   peerId: long
   role: Role
@@ -1169,6 +1206,13 @@ type SetScriptState object
   layer: string
   seq: long
   state: string
+  undoOf: long
+type SetSheetOpacity object
+  actor: long
+  at: long
+  id: string
+  opacity: double
+  seq: long
   undoOf: long
 type SetSheetPicture object
   actor: long
@@ -1259,8 +1303,10 @@ type SetUiPictures object
 type SetVisionRadius object
   actor: long
   at: long
+  blur: double?
   radius: double
   seq: long
+  sharp: double?
   undoOf: long
 type SetWebModel object
   actor: long
@@ -1310,6 +1356,7 @@ type SheetDef object
   kind: string
   locked: bool
   name: string
+  opacity: double?
   package: string
   pos: Vec2
   relief: string

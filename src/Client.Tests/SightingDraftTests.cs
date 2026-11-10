@@ -59,4 +59,30 @@ public class SightingDraftTests
         var square = Draft(square: true).Shape();
         Assert.Equal(("polygon", 4, 0.0), (square.Kind, square.Polygon!.Count, square.Radius));
     }
+
+    [Fact]
+    public void Inside_the_sharp_ring_nothing_blurs_and_the_blur_grows_ever_faster_to_its_most_at_the_edge()
+    {
+        var d = Draft();
+        d.Sharp = 0.5;
+        Assert.Equal(0, d.BlurAt(new Vec2(4, 0)));
+        Assert.Equal(0, d.BlurAt(new Vec2(5, 0)));
+        Assert.Equal(SightingDraft.BlurAtEdge * 10, d.BlurAt(new Vec2(10, 0)), 9);
+        var steps = Enumerable.Range(0, 11).Select(i => d.BlurAt(new Vec2(5 + i * 0.5, 0))).ToList();
+        for (int i = 1; i < steps.Count; i++) Assert.True(steps[i] > steps[i - 1]);
+        Assert.True(steps[10] - steps[9] > 3 * (steps[2] - steps[1]), "the blur is gentle near the ring and hard near the edge");
+        d.Blur = SightingDraft.MostBlur;
+        Assert.Equal(SightingDraft.MostBlur * 10, d.BlurAt(new Vec2(10, 0)), 9);
+        d.Sharp = 1;
+        Assert.Equal(0, d.BlurAt(new Vec2(9.99, 0)));
+    }
+
+    [Fact]
+    public void A_square_picture_measures_the_blur_as_a_square_does()
+    {
+        var d = Draft(square: true);
+        d.Sharp = 0.5;
+        Assert.Equal(d.BlurAt(new Vec2(8, 0)), d.BlurAt(new Vec2(8, 8)), 9);
+        Assert.Equal(0, d.BlurAt(new Vec2(4, 4)));
+    }
 }

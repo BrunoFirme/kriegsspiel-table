@@ -39,6 +39,7 @@ public partial class SheetNode : Node3D
             TextureRepeat = false,
             AlbedoColor = Unpictured,
         };
+        n.Fade(def.Seen);
         var tilesRel = Path.Combine("tiles", def.Image);
         assets.EnsureFile(def.Package, Path.Combine(tilesRel, "index.json"), () => n.OnIndex(tilesRel));
         return n;
@@ -60,8 +61,20 @@ public partial class SheetNode : Node3D
         if (_mat == null || Picture?.Texture is not { } tex) return;
         _mat.AlbedoTexture = tex;
         _mat.AlbedoColor = Colors.White;
-        _mat.Transparency = Picture.HasAlpha ? BaseMaterial3D.TransparencyEnum.AlphaScissor : BaseMaterial3D.TransparencyEnum.Disabled;
+        Fade(Def.Seen);
     }
+
+    public void Fade(double opacity)
+    {
+        if (_mat == null) return;
+        bool faded = opacity < 1;
+        _mat.AlbedoColor = _mat.AlbedoColor with { A = faded ? (float)opacity : 1 };
+        _mat.Transparency = faded ? BaseMaterial3D.TransparencyEnum.Alpha
+            : Picture?.HasAlpha == true ? BaseMaterial3D.TransparencyEnum.AlphaScissor : BaseMaterial3D.TransparencyEnum.Disabled;
+    }
+
+    public float Opacity => _mat?.AlbedoColor.A ?? 1;
+    public bool SeenThrough => _mat?.Transparency == BaseMaterial3D.TransparencyEnum.Alpha;
 
     public override void _ExitTree() => Picture?.Drop();
 

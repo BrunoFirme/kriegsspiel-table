@@ -122,6 +122,23 @@ sealed class MenuCards : HudPart
             });
     }
 
+    void ReadyRows(MenuCard menu, PieceNode hit)
+    {
+        if (!S.IsUmpire || !S.CanTouch(hit.Layer, hit.Piece)) return;
+        var key = Cfg.Keys.Label("ready");
+        var view = S.View;
+        if (hit.Piece.Ready is { } r)
+        {
+            var state = ReadyPiece.Of(hit.Piece, id => view.Find(hit.Layer, id));
+            var held = hit.Piece.Stowed?.FirstOrDefault(p => p.Id == r.Id) ?? view.Find(hit.Layer, r.Id);
+            var name = held == null ? "the ready piece" : HolderWindow.NameOf(held, S);
+            if (state == Readiness.In) menu.Item($"Release {name}", () => S.Do(new ReleaseReady { Layer = hit.Layer, Holder = hit.Piece.Id }), key);
+            else if (state == Readiness.Out) menu.Item($"Recall {name}", () => S.Do(new RecallReady { Layer = hit.Layer, Holder = hit.Piece.Id }), key);
+        }
+        else if (KTable.Client.ReadyKey.HolderOf(view, hit.Layer, hit.Piece.Id) is { } owner)
+            menu.Item($"Recall into {HolderWindow.NameOf(owner, S)}", () => S.Do(new RecallReady { Layer = hit.Layer, Holder = owner.Id }), key);
+    }
+
     void SelectionRows(MenuCard menu, PieceNode hit, List<PieceNode> nodes)
     {
         if (nodes.Count > 1)
@@ -143,6 +160,7 @@ sealed class MenuCards : HudPart
                 });
         }
         HolderRows(menu, hit);
+        ReadyRows(menu, hit);
         var effects = nodes.Where(n => n.IsEffect).ToList();
         if (effects.Count > 0) menu.Item("Play once", () => effects.ForEach(n => S.Do(new PlayEffect { Layer = n.Layer, Id = n.Piece.Id })));
         if (S.IsUmpire && nodes[0].Layer == Layers.Umpire) menu.Item("POV capture from here", () => T.SetTool(Tool.Sighting), "V");

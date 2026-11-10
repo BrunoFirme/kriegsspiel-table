@@ -16,7 +16,7 @@ sealed class HudDemo : HudPart
     {
         var centre = Hud.GetViewport().GetVisibleRect().Size / 2;
         if (Pages(what) || CompassDrag(what) || Hearts(what) || Scripts(what) || View(what) || PovPictures(what) || PovTool(what) || PovFormat(what) || PovEye(what) || PovGif(what)
-            || DrawingPanels(what) || PanelMoves(what) || Hands(what) || PieceMoves(what) || Lettering(what) || Dialogs(what)) return;
+            || DrawingPanels(what) || PanelMoves(what) || Hands(what) || PieceMoves(what) || Lettering(what) || Dialogs(what) || ReadyAndFaded(what) || PovBlur(what)) return;
         if (what == "dice") Hud.OpenPanel("dice");
         else if (what == "dice:roll")
         {
@@ -458,6 +458,80 @@ sealed class HudDemo : HudPart
         return false;
     }
 
+    bool ReadyAndFaded(string what)
+    {
+        const string U = Layers.Umpire;
+        if (what is "ready" or "ready:out")
+        {
+            var pb = S.View.Layer(U);
+            if (pb.Count < 3) { GD.Print("[ready] needs three pieces"); return true; }
+            string holder = pb[0].Id, item = pb[1].Id, other = pb[2].Id;
+            S.Do(new Batch { Items = new()
+            {
+                new SetPieceOption { Layer = U, Id = holder, Name = PieceOptions.Holds, Value = true },
+                new Stow { Layer = U, Holder = holder, Id = other }, new Stow { Layer = U, Holder = holder, Id = item },
+                new SetReady { Layer = U, Holder = holder, Ready = new ReadyPiece { Id = item }, Move = item },
+            } });
+            Callable.From((Action)(async () =>
+            {
+                await Hud.ToSignal(Hud.GetTree().CreateTimer(0.5), Timer.SignalName.Timeout);
+                T.SetSelection(new[] { holder });
+                if (what == "ready:out") S.Do(new ReleaseReady { Layer = U, Holder = holder });
+                await Hud.ToSignal(Hud.GetTree().CreateTimer(0.4), Timer.SignalName.Timeout);
+                if (T.NodeOf(U, holder) is { } n) HolderWindow.Open(Ctx.Root, S, T, n);
+                GD.Print($"[ready] {holder} holds {S.View.Find(U, holder)?.Stowed?.Count ?? 0}, its ready piece {item} is {(S.View.Find(U, item) != null ? "out" : "in")}");
+            })).CallDeferred();
+            return true;
+        }
+        if (!what.StartsWith("faded:")) return false;
+        var file = what["faded:".Length..];
+        var (package, sha, w, h) = SheetImporter.Import(file, S.Store.Root);
+        var first = S.View.Sheets.FirstOrDefault();
+        var sheet = new SheetDef
+        {
+            Name = "Old survey", Image = sha, Package = package, Pos = first?.Pos ?? new Vec2(0, 0),
+            Size = new Size2(first?.Size.W ?? 40, (first?.Size.W ?? 40) * h / Math.Max(1, w)), Z = S.View.Sheets.Count, Locked = true, RotDeg = first?.RotDeg ?? 0,
+        };
+        S.Do(new AddSheet { Sheet = sheet });
+        Callable.From((Action)(async () =>
+        {
+            await Hud.ToSignal(Hud.GetTree().CreateTimer(0.6), Timer.SignalName.Timeout);
+            var added = S.View.Sheets.LastOrDefault(x => x.Name == "Old survey");
+            if (added == null) { GD.Print("[faded] no sheet"); return; }
+            S.Do(new SetSheetOpacity { Id = added.Id, Opacity = 0.45 });
+            T.SelectSheet(added.Id);
+            Hud.Drawer.ShowPage("map");
+            Hud.Map.Rebuild();
+            T.FrameAll();
+            GD.Print($"[faded] {added.Name} at {S.View.Sheets.First(x => x.Id == added.Id).Seen:0.00} opacity");
+        })).CallDeferred();
+        return true;
+    }
+
+    bool PovBlur(string what)
+    {
+        if (!what.StartsWith("povblur")) return false;
+        var invariant = System.Globalization.CultureInfo.InvariantCulture;
+        var share = what.Split(':') is { Length: > 1 } parts && double.TryParse(parts[1], System.Globalization.NumberStyles.Float, invariant, out var v) ? v : 0.5;
+        var pb = S.View.Layer(Layers.Umpire);
+        if (pb.Count == 0) { GD.Print("[povblur] no pieces"); return true; }
+        T.SetSelection(new[] { pb[pb.Count / 2].Id });
+        T.SetTool(Tool.Sighting);
+        Callable.From((Action)(async () =>
+        {
+            await Hud.ToSignal(Hud.GetTree().CreateTimer(0.8), Timer.SignalName.Timeout);
+            if (T.Draft is not { } d) { GD.Print("[povblur] no draft"); return; }
+            T.SetSightingSharp(share);
+            T.RefreshSightingPanel();
+            await Hud.ToSignal(Hud.GetTree().CreateTimer(1.0), Timer.SignalName.Timeout);
+            var img = await T.RenderSighting(d, 900);
+            if (img == null) { GD.Print("[povblur] no picture"); return; }
+            var path = ProjectSettings.GlobalizePath("user://povblur.png");
+            GD.Print($"[povblur] sharp to {share:0.00} of the reach, {img.GetWidth()}x{img.GetHeight()} written to {path}: {img.SavePng(path)}");
+        })).CallDeferred();
+        return true;
+    }
+
     bool PovPictures(string what)
     {
         if (what.StartsWith("povshot"))
@@ -512,7 +586,7 @@ sealed class HudDemo : HudPart
                 if (T.Draft is not { } d) { GD.Print("[povclip] no draft"); return; }
                 if (square) { d.Square = true; d.Recompute(T); }
                 var mid = T.Rig.Cam.UnprojectPosition(KTable.App.Coords.ToWorld(d.Center, 0));
-                var edge = T.Rig.Cam.UnprojectPosition(KTable.App.Coords.ToWorld(new KTable.Core.Model.Vec2(d.Center.X + d.Radius, d.Center.Z), 0));
+                var edge = T.Rig.Cam.UnprojectPosition(KTable.App.Coords.ToWorld(new Vec2(d.Center.X + d.Radius, d.Center.Z), 0));
                 float px = Math.Max(20f, Math.Abs(edge.X - mid.X));
                 var a = mid + new Vector2(-px * 2.2f, -px * 0.35f);
                 var b = mid + new Vector2(px * 2.2f, px * 0.35f);
@@ -730,7 +804,7 @@ sealed class HudDemo : HudPart
                     T.ShowDraft();
                     await Hud.ToSignal(Hud.GetTree(), SceneTree.SignalName.ProcessFrame);
                     var sh = d.Shape();
-                    var corner = new KTable.Core.Model.Vec2(d.Center.X + d.Radius * 0.98, d.Center.Z + d.Radius * 0.98);
+                    var corner = new Vec2(d.Center.X + d.Radius * 0.98, d.Center.Z + d.Radius * 0.98);
                     GD.Print($"[povfmt] {(square ? "square" : "round")}: the shape is a {sh.Kind} of {sh.Polygon.Count} points, radius {sh.Radius:0.##}; {d.Included.Count} pieces in it; the far corner of the box is {(sh.Contains(corner) ? "in" : "out")}");
                 }
             })).CallDeferred();

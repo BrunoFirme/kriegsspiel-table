@@ -229,6 +229,22 @@ public class ReliefTests : IDisposable
     }
 
     [Fact]
+    public void A_sheet_fades_saves_its_opacity_only_when_faded_and_undo_brings_it_back()
+    {
+        var g = Table();
+        Assert.Null(StateMachine.Apply(g, new SetSheetOpacity { Id = "s1", Opacity = 0.35 }, out var inverse));
+        Assert.Equal(0.35, g.Sheets[0].Seen);
+        Assert.Contains("\"opacity\"", Json.Serialize(g.Sheets[0]), StringComparison.OrdinalIgnoreCase);
+        Assert.Null(StateMachine.Apply(g, inverse!, out _));
+        Assert.Null(g.Sheets[0].Opacity);
+        Assert.Equal(1, g.Sheets[0].Seen);
+        Assert.DoesNotContain("\"opacity\"", Json.Serialize(g.Sheets[0]), StringComparison.OrdinalIgnoreCase);
+        foreach (var bad in new[] { -0.1, 1.5, double.NaN })
+            Assert.NotNull(StateMachine.Apply(g, new SetSheetOpacity { Id = "s1", Opacity = bad }, out _));
+        Assert.NotNull(StateMachine.Apply(g, new SetSheetOpacity { Id = "nope", Opacity = 0.5 }, out _));
+    }
+
+    [Fact]
     public void A_sheet_keeps_a_picture_or_a_relief()
     {
         var g = Table();

@@ -13,6 +13,7 @@ sealed class PovPanel : HudPart
     readonly IHudShell Shell;
     readonly Captures _captures;
     Label? _recordLine;
+    Action? _showSharp;
 
     const double BytesPerMegabyte = 1e6;
 
@@ -40,25 +41,30 @@ sealed class PovPanel : HudPart
             BuildRecording(d);
             return;
         }
-        var grid = Ui.Form(Ui.PanelLabels);
-        _box.AddChild(grid);
-        AddView(grid, d);
+        var picture = Ui.Form(Ui.PanelLabels);
+        _box.AddChild(picture);
+        AddView(picture, d);
+        if (d.FirstPerson) AddLens(picture, d);
+        else AddFormat(picture, d);
+        AddShot(picture, d);
+        AddText(picture, d);
+        Ui.AlignForm(picture);
+        _box.AddChild(Header("Reach"));
+        var reach = Ui.Form(Ui.PanelLabels);
+        _box.AddChild(reach);
         if (d.FirstPerson)
         {
-            AddFacing(grid, d);
-            AddLens(grid, d);
-            AddEye(grid, d);
+            AddFacing(reach, d);
+            AddEye(reach, d);
         }
         else
         {
-            AddRadius(grid, d);
-            AddFormat(grid, d);
+            AddRadius(reach, d);
+            AddSharp(reach, d);
         }
-        AddText(grid, d);
-        AddShot(grid, d);
-        Ui.AlignForm(grid);
-        if (!d.FirstPerson) AddTraced();
-        _box.AddChild(Hint($"{d.Included.Count} pieces in the picture"));
+        Ui.AlignForm(reach);
+        if (!d.FirstPerson && T.WallsTraced + T.WallsTakenBack > 0) AddTraced();
+        _box.AddChild(Hint(d.Included.Count == 1 ? "1 piece in the picture" : $"{d.Included.Count} pieces in the picture"));
         var take = d.Gif
             ? Ui.Primary("Record", () => _ = Shell.CaptureSighting(), "Records until Stop or Enter; the GIF goes to the clipboard as a file and to the capture folder")
             : Ui.Primary("Capture", () => _ = Shell.CaptureSighting(), "The picture goes to the clipboard and the capture folder");
@@ -115,21 +121,94 @@ sealed class PovPanel : HudPart
         var rad = new SpinBox
         {
             MinValue = scaled ? 1 : 0.5, MaxValue = scaled ? 200000 : 5000, Step = scaled ? 10 : 0.5,
-            Value = cal.FromTableUnits(d.Radius), Suffix = cal.UnitName, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+            Value = cal.FromTableUnits(d.Radius), Suffix = cal.UnitName, CustomMinimumSize = new Vector2(RadiusBoxWidth, 0),
         };
-        grid.AddChild(rad);
+        var slide = new HSlider
+        {
+            MinValue = rad.MinValue, MaxValue = rad.MaxValue, Step = rad.Step, ExpEdit = true, Value = rad.Value,
+            CustomMinimumSize = new Vector2(RadiusSlideWidth, 0), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
+            TooltipText = "How far the piece sees",
+        };
+        slide.ValueChanged += v => rad.Value = v;
+        var row = new HBoxContainer();
+        row.AddThemeConstantOverride("separation", Ui.Gap.Group);
+        row.AddChild(rad);
+        row.AddChild(slide);
+        grid.AddChild(row);
         grid.AddChild(new Label { Text = "", Visible = scaled });
         var radRead = Ui.Readout(Fmt.Distance(d.Radius, cal), 0);
         radRead.HorizontalAlignment = HorizontalAlignment.Left;
         radRead.Visible = scaled;
         rad.ValueChanged += v =>
         {
+            slide.SetValueNoSignal(v);
             d.Radius = cal.ToTableUnits(v);
             radRead.Text = Fmt.Distance(d.Radius, cal);
             d.Recompute(T);
             T.ShowDraft();
+            _showSharp?.Invoke();
         };
         grid.AddChild(radRead);
+    }
+
+    const int SharpMarks = 9, RadiusBoxWidth = 88, RadiusSlideWidth = 110;
+    const float DetentGain = 0.16f;
+
+    void AddSharp(GridContainer grid, SightingDraft d)
+    {
+        var cal = S.View.Calibration;
+        grid.AddChild(new Label { Text = "Sharp to" });
+        var slider = new HSlider
+        {
+            MinValue = 0, MaxValue = 1, Step = SightingDraft.SharpStep, Value = d.Sharp, TickCount = SharpMarks, TicksOnBorders = true,
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
+            TooltipText = "Where the picture starts to blur toward its edge, as eyes lose detail with distance: all the way right keeps it sharp everywhere",
+        };
+        grid.AddChild(slider);
+        grid.AddChild(new Label { Text = "" });
+        var read = Ui.Readout("", 0);
+        read.HorizontalAlignment = HorizontalAlignment.Left;
+        grid.AddChild(read);
+        var (strengthLabel, strength, gap, strengthRead) = AddBlur(grid, d);
+        void Show()
+        {
+            read.Text = d.Sharp >= 1 ? "sharp everywhere" : Fmt.Distance(d.Radius * d.Sharp, cal);
+            strengthRead.Text = $"up to {Fmt.Distance(d.Radius * d.Blur, cal)} at the edge";
+            strengthLabel.Visible = strength.Visible = gap.Visible = strengthRead.Visible = d.Sharp < 1;
+        }
+        Show();
+        _showSharp = Show;
+        slider.ValueChanged += v =>
+        {
+            T.SetSightingSharp(v);
+            Show();
+            Sfx.Current?.PlayFlat(Sound.Tick, DetentGain);
+        };
+        strength.ValueChanged += v =>
+        {
+            T.SetSightingBlur(v);
+            Show();
+            Sfx.Current?.PlayFlat(Sound.Tick, DetentGain);
+        };
+    }
+
+    (Label, HSlider, Label, Label) AddBlur(GridContainer grid, SightingDraft d)
+    {
+        var label = new Label { Text = "Blur" };
+        grid.AddChild(label);
+        var strength = new HSlider
+        {
+            MinValue = SightingDraft.LeastBlur, MaxValue = SightingDraft.MostBlur, Step = SightingDraft.BlurStep, Value = d.Blur,
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
+            TooltipText = "How strongly the far edge blurs: right for smudges, left for a light haze",
+        };
+        grid.AddChild(strength);
+        var gap = new Label { Text = "" };
+        grid.AddChild(gap);
+        var read = Ui.Readout("", 0);
+        read.HorizontalAlignment = HorizontalAlignment.Left;
+        grid.AddChild(read);
+        return (label, strength, gap, read);
     }
 
     const double EyeStep = 0.05;

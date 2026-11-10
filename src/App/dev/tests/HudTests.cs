@@ -14,7 +14,7 @@ static class HudTests
 {
     internal sealed record Rig(Hud Hud, Table Table, Session S, Net Net);
 
-    internal static async Task<Rig> Host(TestRunner r, int pieces = 2, int sheets = 0, string[]? packs = null)
+    internal static async Task<Rig> Host(TestRunner r, int pieces = 2, int sheets = 0, string[]? packs = null, bool pictured = false)
     {
         var root = Path.Combine(Path.GetTempPath(), "ktable-nodetest-" + System.Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(root);
@@ -22,7 +22,7 @@ static class HudTests
         store.RegisterDef(new PackManifest { Id = "test", Name = "Test" }, new PieceDef { Id = "x", Name = "Block" });
         var g = new GameState { Name = "Hud test", Packs = packs?.ToList() ?? new() };
         g.Layers[Layers.Umpire] = Enumerable.Range(1, pieces).Select(i => new PieceInstance { Id = "p" + i, Def = "x", Pos = new Vec2(i, 0) }).ToList();
-        for (int i = 0; i < sheets; i++) g.Sheets.Add(new SheetDef { Id = "s" + i });
+        for (int i = 0; i < sheets; i++) g.Sheets.Add(new SheetDef { Id = "s" + i, Image = pictured ? "pic" : "", Package = pictured ? "test" : "" });
         var s = new Session(new Assets(store));
         var net = new Net { Name = "Net" };
         r.AddChild(net);
@@ -196,8 +196,9 @@ static class HudTests
         await r.Frame();
         Check.That(!h.Table.Draft!.FirstPerson && h.Table.Rig.Eye == null && h.Table.Rig.TopDown, "back to the map from above");
         Check.That(h.Hud.Pov.Panel.FindChildren("*", nameof(Button), true, false).OfType<Button>().Any(b => b.Text == "Round"), "the format row is back");
-        Check.That(h.Hud.Pov.Panel.FindChildren("*", nameof(SpinBox), true, false).Count == 1 && h.Hud.Pov.Panel.FindChildren("*", nameof(HSlider), true, false).Count == 0,
-            "with the reach back and the eye slider gone");
+        var sliders = h.Hud.Pov.Panel.FindChildren("*", nameof(HSlider), true, false).OfType<HSlider>().ToList();
+        Check.That(h.Hud.Pov.Panel.FindChildren("*", nameof(SpinBox), true, false).Count == 1 && !sliders.Any(x => x.TooltipText.StartsWith("How high the eye")) && sliders.Any(x => x.TooltipText.Contains("blur")),
+            "with the reach back, the eye slider gone and the sharp ring's slider in its place");
         h.Table.CancelSighting();
         await r.Frame();
         Check.That(h.Table.Draft == null && (h.Table.Rig.Cam.CullMask & Table.TextLayer) != 0, "the tool is down and text is back");

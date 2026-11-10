@@ -248,6 +248,10 @@ sealed class ViewSync
                 _sheets.Recut(sp.Id);
                 _c.NotifySelectionChanged();
                 return;
+            case SetSheetOpacity so:
+                _sheets.Faded(so.Id);
+                _c.NotifySelectionChanged();
+                return;
             case SetSheetRelief sr:
                 s.Relief.Draft(sr.Id, null);
                 _sheets.Recut(sr.Id);

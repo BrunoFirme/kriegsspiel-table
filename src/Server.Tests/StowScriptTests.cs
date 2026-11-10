@@ -34,6 +34,23 @@ public class StowScriptTests
         Assert.Equal("0", p.Label);
     }
 
+    static string Lua(Table t, string code) =>
+        t.Server.Request(Table.Host, new RunLua { Target = P, Code = code })
+            .Where(o => o.Message is ScriptConsole).SelectMany(o => ((ScriptConsole)o.Message).Lines).LastOrDefault(l => l.Kind is "result" or "error")?.Text ?? "";
+
+    [Fact]
+    public void A_script_marks_a_ready_piece_and_releases_and_recalls_it()
+    {
+        using var t = new Table();
+        var m = "board.find('" + Marker + "')";
+        Assert.Equal("true", Lua(t, $"local m = {m} self.stow(m) self.set_ready(m) return tostring(self.ready ~= nil)"));
+        Assert.Equal(Marker + " false true", Lua(t, "return self.ready.id .. ' ' .. tostring(self.recall()) .. ' ' .. tostring(self.release())"));
+        Assert.NotNull(t.Server.State.Find(U, Marker));
+        Assert.Equal("false true", Lua(t, "return tostring(self.release()) .. ' ' .. tostring(self.recall())"));
+        Assert.Null(t.Server.State.Find(U, Marker));
+        Assert.Equal("nil false", Lua(t, "self.set_ready(nil) return tostring(self.ready) .. ' ' .. tostring(self.release())"));
+    }
+
     [Fact]
     public void A_module_bag_script_puts_and_takes_through_the_same_calls()
     {

@@ -74,6 +74,15 @@ sealed class TableKeys
         Bound(k, _c.Settings.Keys);
     }
 
+    void ReleaseOrRecall()
+    {
+        if (!S.IsUmpire) return;
+        var sent = false;
+        foreach (var layer in _selection.Nodes.GroupBy(n => n.Layer))
+            if (KTable.Client.ReadyKey.For(S.View, layer.Key, layer.Select(n => n.Piece.Id)) is { } c) { S.Do(c); sent = true; }
+        if (!sent && _selection.Ids.Count > 0) _c.Say("No ready piece here: mark one in the holder's window");
+    }
+
     void NumberWithModifier(int n, bool ctrl)
     {
         if (ctrl && (_hand.Holding || _selection.Ids.Count > 1)) _hand.FormRows(n);
@@ -104,6 +113,7 @@ sealed class TableKeys
         else if (km.Is(k, "gizmo")) _c.SetTool(_c.Tool == Tool.Transform ? Tool.Select : Tool.Transform);
         else if (km.Is(k, "formations")) _c.SetTool(_c.Tool == Tool.Formation ? Tool.Select : Tool.Formation);
         else if (km.Is(k, "flip")) _actions.Flip(_selection.Nodes.ToList());
+        else if (km.Is(k, "ready")) ReleaseOrRecall();
         else if (km.Is(k, "turnLeft")) { if (_hand.Holding) _hand.Rotate(k.ShiftPressed ? -1 : -15); else _poses.RotateSmooth(k.ShiftPressed ? -1 : -15); }
         else if (km.Is(k, "turnRight")) { if (_hand.Holding) _hand.Rotate(k.ShiftPressed ? 1 : 15); else _poses.RotateSmooth(k.ShiftPressed ? 1 : 15); }
         else if (km.Is(k, "capture")) _c.SetTool(Tool.Capture);

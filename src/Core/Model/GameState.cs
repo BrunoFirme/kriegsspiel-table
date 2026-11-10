@@ -29,6 +29,8 @@ public sealed class GameState
     public Lighting Lighting { get; set; } = new();
     public Wind Wind { get; set; } = new();
     public double VisionRadius { get; set; } = 40;
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public double? VisionSharp { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public double? VisionBlur { get; set; }
     public bool PointersAlwaysShown { get; set; }
     public string? Briefing { get; set; }
     public Dictionary<string, List<PieceInstance>> Layers { get; set; } = new();
@@ -77,7 +79,7 @@ public sealed class GameState
             Calibration = new Calibration { UnitsPerMeter = Calibration.UnitsPerMeter },
             Clock = new GameClock { Turn = Clock.Turn, GameTime = Clock.GameTime, IncrementMinutes = Clock.IncrementMinutes },
             Lighting = Json.Clone(Lighting), Wind = Wind.Clone(),
-            VisionRadius = VisionRadius, PointersAlwaysShown = PointersAlwaysShown, Briefing = Briefing,
+            VisionRadius = VisionRadius, VisionSharp = VisionSharp, VisionBlur = VisionBlur, PointersAlwaysShown = PointersAlwaysShown, Briefing = Briefing,
             UmpireBoard = Layer(Model.Layers.Umpire).Select(p => p.Clone()).ToList(),
             Script = Script, ScriptState = ScriptState,
         };
@@ -100,7 +102,7 @@ public sealed class GameState
             ScenarioId = s.Id, Name = s.Name, Packs = new(s.Packs),
             Sheets = s.Sheets.Select(Json.Clone).ToList(), Grid = Json.Clone(s.Grid ?? new GridDef()), Calibration = new() { UnitsPerMeter = s.Calibration.UnitsPerMeter },
             Lighting = Json.Clone(s.Lighting ?? new Lighting()), Wind = (s.Wind ?? new Wind()).Clone(),
-            VisionRadius = s.VisionRadius > 0 ? s.VisionRadius : 40, PointersAlwaysShown = s.PointersAlwaysShown, Briefing = s.Briefing,
+            VisionRadius = s.VisionRadius > 0 ? s.VisionRadius : 40, VisionSharp = s.VisionSharp, VisionBlur = s.VisionBlur, PointersAlwaysShown = s.PointersAlwaysShown, Briefing = s.Briefing,
             Clock = new() { Turn = s.Clock.Turn, GameTime = s.Clock.GameTime, IncrementMinutes = s.Clock.IncrementMinutes },
             Script = s.Script, ScriptState = s.ScriptState ?? "",
         };
@@ -163,6 +165,8 @@ public sealed class GameState
         Lighting = s.Lighting;
         Wind = s.Wind ?? new Wind();
         VisionRadius = s.VisionRadius;
+        VisionSharp = s.VisionSharp;
+        VisionBlur = s.VisionBlur;
         PointersAlwaysShown = s.PointersAlwaysShown;
         Briefing = s.Briefing;
         Layers = s.Layers;

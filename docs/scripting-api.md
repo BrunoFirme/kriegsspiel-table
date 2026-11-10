@@ -949,6 +949,10 @@ Each call is a change every umpire sees, taken back with Ctrl+Z by the umpire wh
 | [`self.show_contents`](#selfshow_contents) | Opens the window of what it holds on that umpire's screen, as if they had opened it; false when it holds nothing by its kind or the umpire is not here. |
 | [`self.stow`](#selfstow) | Takes another piece off the table into this one, with whatever rides on it; a piece this one rides on is refused. |
 | [`self.unstow`](#selfunstow) | Puts a held piece back on the table and returns it: which is its id, guid, its number in stowed, or nothing for the next by the holder's take order (first, last or random); place is { x =, z = } or a piece, else beside this one; rot turns it. |
+| [`self.ready`](#selfready) | Its ready piece, the one held piece it releases and recalls with one key, held or out on the table; nil for none. |
+| [`self.set_ready`](#selfset_ready) | Makes a piece it holds its ready piece, first among what it holds; nil takes the mark off. |
+| [`self.release`](#selfrelease) | Puts its ready piece on the table where it stood when last recalled, turned and moved with this one; beside this one the first time. False when it is not held. |
+| [`self.recall`](#selfrecall) | Takes its ready piece back from the table into this one and remembers where it stood. False when it is not out. |
 | [`self.delete`](#selfdelete) | Takes the piece off the table (on_destroy runs first). |
 | [`self.set_lines`](#selfset_lines) | Draws lines round the piece that move and turn with it: { { points = { {x=, z=}, … }, color =, width =, loop = }, … } in piece units; width in map units. |
 | [`self.set_decals`](#selfset_decals) | Puts pictures on the piece's faces that move, turn and flip with it: { { picture =, x =, z =, w =, h =, rot =, face =, name = }, … } in piece units. |
@@ -1639,6 +1643,50 @@ self.unstow(which, place, rot)
 Puts a held piece back on the table and returns it: which is its id, guid, its number in stowed, or nothing for the next by the holder's take order (first, last or random); place is { x =, z = } or a piece, else beside this one; rot turns it.
 
 **Module call** `takeObject` · **See also** [`self.stowed`](#selfstowed), [`self.stow`](#selfstow), [`self.unstow`](#selfunstow)
+
+### `self.ready`
+
+```lua
+self.ready
+```
+
+Its ready piece, the one held piece it releases and recalls with one key, held or out on the table; nil for none.
+
+**Type** `piece`, read-only.
+
+### `self.set_ready`
+
+```lua
+self.set_ready(piece)
+```
+
+Makes a piece it holds its ready piece, first among what it holds; nil takes the mark off.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `piece` | `piece` | A piece it holds, or nil. |
+
+### `self.release`
+
+```lua
+self.release()
+```
+
+Puts its ready piece on the table where it stood when last recalled, turned and moved with this one; beside this one the first time. False when it is not held.
+
+**Returns**: true when it went out.
+
+### `self.recall`
+
+```lua
+self.recall()
+```
+
+Takes its ready piece back from the table into this one and remembers where it stood. False when it is not out.
+
+**Returns**: true when it came back.
+
+**See also** [`self.ready`](#selfready), [`self.set_ready`](#selfset_ready), [`self.release`](#selfrelease), [`self.recall`](#selfrecall)
 
 ### `self.delete`
 

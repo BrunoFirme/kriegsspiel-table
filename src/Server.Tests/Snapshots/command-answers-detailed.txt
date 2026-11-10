@@ -64,6 +64,39 @@
   reloads:     Id-x
   undo stack:  yes
   applied:     refused: nothing stowed there
+== SetReady
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; Holder-x outside=outside your umpire zone; Move-x outside=ok; on another layer, all outside=ok
+  zone, none of mine: all inside=no zone on the umpire board has been assigned to you; Holder-x outside=no zone on the umpire board has been assigned to you; Move-x outside=no zone on the umpire board has been assigned to you; on another layer, all outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+  applied:     refused: not held there
+== ReleaseReady
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; Holder-x outside=outside your umpire zone; on another layer, all outside=ok
+  zone, none of mine: all inside=no zone on the umpire board has been assigned to you; Holder-x outside=no zone on the umpire board has been assigned to you; on another layer, all outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+  applied:     refused: nothing ready there
+== RecallReady
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; Holder-x outside=outside your umpire zone; on another layer, all outside=ok
+  zone, none of mine: all inside=no zone on the umpire board has been assigned to you; Holder-x outside=no zone on the umpire board has been assigned to you; on another layer, all outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+  applied:     refused: nothing ready there
 == SetState
   sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
   in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
@@ -432,6 +465,17 @@
   in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
   zone:        all inside=ok; Id-x outside=ok; Relief-x outside=ok
   zone, none of mine: all inside=ok; Id-x outside=ok; Relief-x outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+  applied:     refused: no such sheet
+== SetSheetOpacity
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; Id-x outside=ok
+  zone, none of mine: all inside=ok; Id-x outside=ok
   observer:    it
   stranger:    nothing
   umpires:     it it it
@@ -1109,6 +1153,39 @@
   reloads:     
   undo stack:  yes
   applied:     refused: nothing stowed there
+== SetReady (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok;  outside=outside your umpire zone; on another layer, all outside=ok
+  zone, none of mine: all inside=no zone on the umpire board has been assigned to you;  outside=no zone on the umpire board has been assigned to you; on another layer, all outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+  applied:     ok, inverse SetReady
+== ReleaseReady (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok;  outside=outside your umpire zone; on another layer, all outside=ok
+  zone, none of mine: all inside=no zone on the umpire board has been assigned to you;  outside=no zone on the umpire board has been assigned to you; on another layer, all outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+  applied:     refused: nothing ready there
+== RecallReady (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok;  outside=outside your umpire zone; on another layer, all outside=ok
+  zone, none of mine: all inside=no zone on the umpire board has been assigned to you;  outside=no zone on the umpire board has been assigned to you; on another layer, all outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+  applied:     refused: nothing ready there
 == SetState (empty)
   sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
   in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
@@ -1473,6 +1550,17 @@
   undo stack:  yes
   applied:     refused: no such sheet
 == SetSheetRelief (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok;  outside=ok
+  zone, none of mine: all inside=ok;  outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+  applied:     refused: no such sheet
+== SetSheetOpacity (empty)
   sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
   in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
   zone:        all inside=ok;  outside=ok

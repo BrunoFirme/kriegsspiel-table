@@ -283,6 +283,24 @@ public class TableToolsTests
     }
 
     [Fact]
+    public async Task A_held_piece_marked_ready_is_released_and_recalled()
+    {
+        Assert.False((await Call("stow_pieces", new { holder = "p-1", ids = new[] { "p-2" } })).IsError);
+        Assert.True((await Call("ready_piece", new { holder = "p-1", action = "release" })).IsError);
+        var mark = await Call("ready_piece", new { holder = "p-1", action = "mark", id = "p-2" });
+        Assert.False(mark.IsError, mark.Text);
+        Assert.Contains("holds its ready piece p-2", mark.Text);
+        var release = await Call("ready_piece", new { holder = "p-1", action = "release" });
+        Assert.Contains("is on the table", release.Text);
+        Assert.NotNull(_s.View.Find(Layers.Umpire, "p-2"));
+        Assert.True((await Call("ready_piece", new { holder = "p-1", action = "release" })).IsError);
+        Assert.Contains("holds its ready piece", (await Call("ready_piece", new { holder = "p-1", action = "recall" })).Text);
+        Assert.Null(_s.View.Find(Layers.Umpire, "p-2"));
+        Assert.Contains("no ready piece", (await Call("ready_piece", new { holder = "p-1", action = "clear" })).Text);
+        Assert.True((await Call("ready_piece", new { holder = "p-1", action = "shout" })).IsError);
+    }
+
+    [Fact]
     public async Task Pieces_are_put_into_another_and_taken_out_again()
     {
         var put = await Call("stow_pieces", new { holder = "p-1", ids = new[] { "p-2", "p-9" } });
