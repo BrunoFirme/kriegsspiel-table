@@ -127,12 +127,14 @@ public static partial class StateMachine
             if (p.Id == s.Id) return "duplicate id";
             if ((p.Pos - s.Pos).Length < 0.01) stack++;
         }
-        layer.Add(new PieceInstance
+        var piece = new PieceInstance
         {
-            Id = s.Id, Def = s.Def, Pos = s.Pos, RotDeg = s.RotDeg, Label = s.Label, Scale = s.Scale, Y = Math.Max(0, s.Y),
+            Id = s.Id, Pos = s.Pos, RotDeg = s.RotDeg, Label = s.Label, Scale = s.Scale, Y = Math.Max(0, s.Y),
             Stack = stack, Guid = s.Guid, ScriptState = s.ScriptState ?? "",
             Tags = CleanTags(s.Tags), Memo = s.Memo ?? "",
-        });
+        };
+        piece.TakeDef(s.Def);
+        layer.Add(piece);
         BumpId(g, s.Id);
         inverse = new DeletePiece { Layer = s.Layer, Id = s.Id };
         return null;
@@ -1135,7 +1137,9 @@ public static partial class StateMachine
         if (p == null) return "no such piece";
         if (string.IsNullOrEmpty(sd.Def)) return "no definition";
         inverse = new SetDef { Layer = sd.Layer, Id = sd.Id, Def = p.Def, SwapsScript = sd.SwapsScript, Script = sd.SwapsScript ? p.Script : null };
-        p.Def = sd.Def;
+        var smokeWas = p.Smoke;
+        p.TakeDef(sd.Def);
+        if (p.Smoke != smokeWas) inverse = new Batch { Items = { inverse, new SetSmoke { Layer = sd.Layer, Id = sd.Id, Value = smokeWas } } };
         if (sd.SwapsScript) p.Script = sd.Script;
         return null;
     }

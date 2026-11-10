@@ -50,6 +50,24 @@ public class SmokeDensityTests
     }
 
     [Fact]
+    public void A_spawn_or_a_change_of_kind_naming_an_old_dense_piece_takes_the_plain_piece_set_dense()
+    {
+        var g = CoreSamples.State();
+        Assert.Null(StateMachine.Apply(g, new SpawnPiece { Layer = U, Id = "p-000901", Def = "std.effects.musket-volley-dense-smoke" }, out var unspawn));
+        Assert.Equal(("std.effects.musket-volley", (double?)SmokeDensity.Dense), (g.Find(U, "p-000901")!.Def, g.Find(U, "p-000901")!.Smoke));
+        Assert.Null(StateMachine.Apply(g, unspawn!, out _));
+        Assert.Null(g.Find(U, "p-000901"));
+        Assert.Null(StateMachine.Apply(g, new SpawnPiece { Layer = U, Id = "p-000902", Def = "std.effects.musket-volley" }, out _));
+        Assert.Null(g.Find(U, "p-000902")!.Smoke);
+
+        var was = g.Find(U, "p-000001")!.Def;
+        Assert.Null(StateMachine.Apply(g, new SetDef { Layer = U, Id = "p-000001", Def = "std.effects.rolling-fire-dense-smoke" }, out var back));
+        Assert.Equal(("std.effects.rolling-fire", (double?)SmokeDensity.Dense), (g.Find(U, "p-000001")!.Def, g.Find(U, "p-000001")!.Smoke));
+        Assert.Null(StateMachine.Apply(g, back!, out _));
+        Assert.Equal((was, (double?)null), (g.Find(U, "p-000001")!.Def, g.Find(U, "p-000001")!.Smoke));
+    }
+
+    [Fact]
     public void Smoke_is_set_on_one_piece_and_undone_back_to_how_it_was_made()
     {
         var g = CoreSamples.State();

@@ -456,7 +456,7 @@ public sealed class PieceInstance : IJsonOnDeserialized
 
     void IJsonOnDeserialized.OnDeserialized()
     {
-        if (SmokeDensity.Retired(Def) is (var def, { } smoke)) { Def = def; Smoke ??= smoke; }
+        TakeDef(Def);
         if (Looks != null || (_formerGuids ?? _formerScripts) is not { } any) return;
         Looks = any.Select((_, i) => new PieceLook
         {
@@ -513,6 +513,13 @@ public sealed class PieceInstance : IJsonOnDeserialized
 
     public bool HoldsPieces(PieceDef? def) => Holds ?? (def?.Holds == true || Stowed is { Count: > 0 });
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? TakeOrder { get; set; }
+
+    public void TakeDef(string def)
+    {
+        var (kind, smoke) = SmokeDensity.Retired(def);
+        Def = kind;
+        Smoke ??= smoke;
+    }
 
     public PieceInstance Clone() => new()
     {
