@@ -155,34 +155,33 @@ public static partial class StateMachine
         if (p == null) return "no such piece";
         var back = new MovePiece { Layer = m.Layer, Id = m.Id, Pos = p.Pos, RotDeg = p.RotDeg, Stack = p.Stack, Y = p.Y };
         inverse = back;
-        var delta = m.Pos - p.Pos;
+        var from = p.Pos;
         double drot = m.RotDeg - p.RotDeg;
         double dy = Math.Max(0, m.Y) - p.Y;
         p.Pos = m.Pos;
         p.RotDeg = Norm(m.RotDeg);
         p.Stack = m.Stack;
         p.Y = Math.Max(0, m.Y);
-        foreach (var cid in p.Attached ?? [])
+        var rad = -drot * Math.PI / 180.0;
+        double cos = Math.Cos(rad), sin = Math.Sin(rad);
+        foreach (var ch in Carried(g, m.Layer, p))
         {
-            var ch = cid == null ? null : g.Find(m.Layer, cid);
-            if (ch == null) continue;
-            var off = ch.Pos - (p.Pos - delta);
-            var rad = -drot * Math.PI / 180.0;
-            var rot = new Vec2(off.X * Math.Cos(rad) - off.Z * Math.Sin(rad), off.X * Math.Sin(rad) + off.Z * Math.Cos(rad));
-            if (ch.Y + dy < 0)
-            {
-                var undo = inverse as Batch ?? new Batch { Items = new() { back } };
-                var own = (ch.Attached ?? []).Where(id => id != null && g.Find(m.Layer, id) != null).ToList();
-                foreach (var id in own) undo.Items.Add(new Detach { Layer = m.Layer, Child = id });
-                undo.Items.Add(new MovePiece { Layer = m.Layer, Id = ch.Id, Pos = ch.Pos, RotDeg = ch.RotDeg, Stack = ch.Stack, Y = ch.Y });
-                foreach (var id in own) undo.Items.Add(new Attach { Layer = m.Layer, Parent = ch.Id, Child = id });
-                inverse = undo;
-            }
-            ch.Pos = p.Pos + rot;
+            var off = ch.Pos - from;
+            if (ch.Y + dy < 0) inverse = KeepingHeight(g, m.Layer, ch, inverse as Batch ?? new Batch { Items = new() { back } });
+            ch.Pos = p.Pos + new Vec2(off.X * cos - off.Z * sin, off.X * sin + off.Z * cos);
             ch.RotDeg = Norm(ch.RotDeg + drot);
             ch.Y = Math.Max(0, ch.Y + dy);
         }
         return null;
+    }
+
+    static Batch KeepingHeight(GameState g, string layer, PieceInstance sunk, Batch undo)
+    {
+        var own = (sunk.Attached ?? []).Where(id => id != null && g.Find(layer, id) != null).ToList();
+        foreach (var id in own) undo.Items.Add(new Detach { Layer = layer, Child = id });
+        undo.Items.Add(new MovePiece { Layer = layer, Id = sunk.Id, Pos = sunk.Pos, RotDeg = sunk.RotDeg, Stack = sunk.Stack, Y = sunk.Y });
+        foreach (var id in own) undo.Items.Add(new Attach { Layer = layer, Parent = sunk.Id, Child = id });
+        return undo;
     }
 
     static string? ApplyDelete(GameState g, DeletePiece d, ref Command? inverse)
@@ -464,11 +463,13 @@ public static partial class StateMachine
     static List<PieceInstance> Carried(GameState g, string layer, PieceInstance carrier)
     {
         var found = new List<PieceInstance>();
+        if (carrier.Attached is not { Count: > 0 }) return found;
+        var seen = new HashSet<string> { carrier.Id };
         var todo = new Stack<PieceInstance>();
         todo.Push(carrier);
         while (todo.Count > 0)
             foreach (var cid in todo.Pop().Attached ?? [])
-                if (g.Find(layer, cid) is { } next && !found.Contains(next)) { found.Add(next); todo.Push(next); }
+                if (cid != null && seen.Add(cid) && g.Find(layer, cid) is { } next) { found.Add(next); todo.Push(next); }
         return found;
     }
 

@@ -48,8 +48,8 @@ public sealed class Landing<T> where T : class, ITablePiece
 
     public static List<Command> ParentsFirst(List<(T n, MovePiece m)> moved, IEnumerable<PieceInstance> layer)
     {
-        var children = layer.SelectMany(p => p.Attached).ToHashSet();
-        return moved.OrderBy(x => children.Contains(x.n.Piece.Id) ? 1 : 0).Select(x => (Command)x.m).ToList();
+        var parents = PieceTree.Parents(layer);
+        return moved.OrderBy(x => PieceTree.Depth(parents, x.n.Piece.Id)).Select(x => (Command)x.m).ToList();
     }
 }
 

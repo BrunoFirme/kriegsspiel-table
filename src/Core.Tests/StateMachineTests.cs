@@ -248,6 +248,57 @@ public class StateMachineTests
     }
 
     [Fact]
+    public void A_move_carries_everything_attached_below_it_however_deep_and_undo_puts_it_all_back()
+    {
+        var g = new GameState();
+        g.Layer(U).Add(new PieceInstance { Id = "brigade", Pos = new(0, 0), Attached = { "battalion" } });
+        g.Layer(U).Add(new PieceInstance { Id = "battalion", Pos = new(2, 0), Attached = { "company" } });
+        g.Layer(U).Add(new PieceInstance { Id = "company", Pos = new(3, 0), RotDeg = 5 });
+        g.Layer(U).Add(new PieceInstance { Id = "loose", Pos = new(4, 0) });
+        var before = Json.Serialize(g);
+        Assert.Null(StateMachine.Apply(g, new MovePiece { Layer = U, Id = "brigade", Pos = new(10, 10), RotDeg = 90 }, out var inv));
+        var company = g.Find(U, "company")!;
+        Assert.Equal((10.0, 7.0, 95.0), (Math.Round(company.Pos.X, 9), Math.Round(company.Pos.Z, 9), Math.Round(company.RotDeg, 9)));
+        Assert.Equal(new Vec2(10, 10), g.Find(U, "brigade")!.Pos);
+        Assert.Equal(new Vec2(4, 0), g.Find(U, "loose")!.Pos);
+        Assert.Null(StateMachine.Apply(g, new MovePiece { Layer = U, Id = "battalion", Pos = new(0, 0), RotDeg = 90 }, out _));
+        Assert.Equal(new Vec2(10, 10), g.Find(U, "brigade")!.Pos);
+        Assert.Equal(1, (company.Pos - g.Find(U, "battalion")!.Pos).Length, 9);
+        Assert.Null(StateMachine.Apply(g, new MovePiece { Layer = U, Id = "battalion", Pos = new(10, 8), RotDeg = 90 }, out _));
+        Assert.Null(StateMachine.Apply(g, inv!, out _));
+        var back = Json.Deserialize<GameState>(before)!;
+        foreach (var p in back.Layer(U))
+        {
+            var now = g.Find(U, p.Id)!;
+            Assert.Equal((p.Pos.X, p.Pos.Z, p.RotDeg), (Math.Round(now.Pos.X, 9), Math.Round(now.Pos.Z, 9), Math.Round(now.RotDeg, 9)));
+        }
+    }
+
+    [Fact]
+    public void A_loop_of_attachments_from_an_old_save_moves_each_piece_once()
+    {
+        var g = new GameState();
+        g.Layer(U).Add(new PieceInstance { Id = "a", Pos = new(0, 0), Attached = { "b" } });
+        g.Layer(U).Add(new PieceInstance { Id = "b", Pos = new(1, 0), Attached = { "a", "b" } });
+        Assert.Null(StateMachine.Apply(g, new MovePiece { Layer = U, Id = "a", Pos = new(5, 0) }, out _));
+        Assert.Equal((new Vec2(5, 0), new Vec2(6, 0)), (g.Find(U, "a")!.Pos, g.Find(U, "b")!.Pos));
+    }
+
+    [Fact]
+    public void A_grandchild_pressed_below_the_table_by_its_grandparent_s_move_comes_back_to_its_height_on_undo()
+    {
+        var g = new GameState();
+        g.Layer(U).Add(new PieceInstance { Id = "a", Y = 1, Attached = { "b" } });
+        g.Layer(U).Add(new PieceInstance { Id = "b", Y = 1.2, Attached = { "c" } });
+        g.Layer(U).Add(new PieceInstance { Id = "c", Y = 0.5 });
+        Assert.Null(StateMachine.Apply(g, new MovePiece { Layer = U, Id = "a", Pos = new(3, 0), Y = 0 }, out var inv));
+        Assert.Equal((0.0, 0.2, 0.0), (g.Find(U, "a")!.Y, Math.Round(g.Find(U, "b")!.Y, 9), g.Find(U, "c")!.Y));
+        Assert.Null(StateMachine.Apply(g, inv!, out _));
+        Assert.Equal((1.0, 1.2, 0.5), (g.Find(U, "a")!.Y, Math.Round(g.Find(U, "b")!.Y, 9), Math.Round(g.Find(U, "c")!.Y, 9)));
+        Assert.Equal(new[] { "c" }, g.Find(U, "b")!.Attached);
+    }
+
+    [Fact]
     public void Markers_in_other_layers_do_not_move()
     {
         var g = new GameState();

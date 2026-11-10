@@ -148,6 +148,10 @@ groups them, and names what each was used for, from the phalanx to the tank plat
 - **Label and description:** at the foot of the right-click menu. Both show on hover to everyone, observers
   included, and are in the scenario file: not a hiding place.
 - **Markers:** drop a small piece on a larger one and it rides along. Drop it elsewhere to free it.
+- **Attached pieces:** in the **Pieces** drawer, **On the table** lists what rides on what. Drag rows onto another
+  piece's row and they ride on it: moving it carries them and everything riding on them, however far away they
+  stand, while one moved alone goes alone and stays attached. Drop rows between two rows to ride on what those
+  ride on, or below the list to free them. With several picked, right-click → **Attach the others** does the same.
 - **Holding:** a piece that holds pieces keeps them off the table, as a bag does. Hold pieces over it a moment: a
   ring fills round it and they sink towards it; let go then and they go in, or move off first to keep them out. Pieces
   dropped on its window go in too. Right-click → **Open** shows what it holds beside the piece, until it leaves the

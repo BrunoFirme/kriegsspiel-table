@@ -37,7 +37,7 @@ public sealed class Sticking<T> where T : class, ITablePiece
             var pos = m?.Pos ?? n.Piece.Pos;
             double y = Absolute(n, pos, m?.RotDeg ?? n.Piece.RotDeg, m?.Y ?? n.Piece.Y);
             var parent = parentOf.GetValueOrDefault(n.Piece.Id);
-            if (parent != null && droppedIds.Contains(parent.Id)) continue;
+            if (parent != null && (droppedIds.Contains(parent.Id) || LinkedFromAfar(n, parent))) continue;
             var under = BaseUnder(n, pos, y, parent, droppedSet, movedTo, simulated);
             if (under != null && parent?.Id != under.Piece.Id)
             {
@@ -56,6 +56,12 @@ public sealed class Sticking<T> where T : class, ITablePiece
 
     double Absolute(T n, Vec2 pos, double rot, double stored) => _footing?.AbsoluteY(n, pos, rot, stored) ?? stored;
 
+    const double RestGap = 0.03, RestReach = 0.12;
+
+    bool LinkedFromAfar(T n, PieceInstance parent) =>
+        _nodeOf(n.Layer, parent.Id) is { } p
+        && !(p.ContainsAt(n.Piece.Pos, parent.Pos, parent.RotDeg) && Math.Abs(Absolute(n, n.Piece.Pos, n.Piece.RotDeg, n.Piece.Y) + RestGap - p.TopY) <= RestReach);
+
     T? BaseUnder(T n, Vec2 pos, double y, PieceInstance? parent, HashSet<T> droppedSet, Dictionary<T, MovePiece> movedTo, HashSet<T> simulated)
     {
         T? under = null;
@@ -70,9 +76,9 @@ public sealed class Sticking<T> where T : class, ITablePiece
             var om = movedTo.GetValueOrDefault(o);
             var oPos = om?.Pos ?? o.Piece.Pos;
             var oRot = om?.RotDeg ?? o.Piece.RotDeg;
-            double oTop = om != null ? Absolute(o, oPos, oRot, om.Y) + 0.03 + o.Thickness : o.TopY;
+            double oTop = om != null ? Absolute(o, oPos, oRot, om.Y) + RestGap + o.Thickness : o.TopY;
             if (!o.ContainsAt(pos, oPos, oRot)) continue;
-            if (Math.Abs(y + 0.03 - oTop) > 0.12) continue;
+            if (Math.Abs(y + RestGap - oTop) > RestReach) continue;
             if (under == null || oTop > underTop) { under = o; underTop = oTop; }
         }
         return under;
