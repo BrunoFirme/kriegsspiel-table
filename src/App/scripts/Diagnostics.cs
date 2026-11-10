@@ -34,6 +34,10 @@ public static class Diagnostics
 
     public static EndedRun? ClosedUnexpectedly { get; private set; }
 
+    public static string LogPath => _logPath;
+
+    public static string EngineLogPath => Path.Combine(OS.GetUserDataDir(), EngineLogs, CurrentEngineLog);
+
     public static void Install()
     {
         if (_installed) return;

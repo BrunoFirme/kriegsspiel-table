@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Godot;
+using KTable.Client;
 using KTable.Core.Model;
 using KTable.Core.Protocol;
 
@@ -9,7 +10,7 @@ namespace KTable.App;
 
 public partial class HolderWindow : FloatPanel
 {
-    const float Beside = 16, DragFrom = 10, TakenOutApart = 1.5f, TakenOutFrom = 2, StartWidth = 300;
+    const float Beside = 16, DragFrom = 10, StartWidth = 300;
     const int RowsShown = 3;
     static readonly Dictionary<(string Layer, string Id), HolderWindow> Shown = new();
 
@@ -83,13 +84,6 @@ public partial class HolderWindow : FloatPanel
         return null;
     }
 
-    public static Command TakingOut(Session s, string layer, PieceInstance holder, List<Command> unstows)
-    {
-        if (holder.Holds == null && s.Store.Def(holder.Def)?.Holds != true)
-            unstows.Add(new SetPieceOption { Layer = layer, Id = holder.Id, Name = PieceOptions.Holds, Value = true });
-        return unstows.Count == 1 ? unstows[0] : new Batch { Items = unstows };
-    }
-
     internal static string NameOf(PieceInstance p, Session s) => p.Label is { Length: > 0 } lb ? lb : s.Store.Def(p.Def)?.Name ?? p.Def;
 
     PieceNode? Holder => IsInstanceValid(_t) && _t.IsInsideTree() && _t.NodeOf(_layer, _id) is { } n && IsInstanceValid(n) ? n : null;
@@ -137,8 +131,7 @@ public partial class HolderWindow : FloatPanel
     void Redraw(bool force)
     {
         var holder = Holder?.Piece;
-        var stowed = holder?.Stowed ?? new List<PieceInstance>();
-        var top = Loose(stowed);
+        var top = holder?.Loose() ?? new List<PieceInstance>();
         if (_most >= 0 && top.Count > _most) top = top.Take(_most).ToList();
         var ready = holder?.Ready?.Id;
         var state = holder == null ? Readiness.None : ReadyState(holder);
@@ -197,12 +190,6 @@ public partial class HolderWindow : FloatPanel
         if (Mathf.IsEqualApprox(_tiles.CustomMinimumSize.Y, tall)) return;
         _tiles.CustomMinimumSize = new Vector2(0, tall);
         ResetSize();
-    }
-
-    static List<PieceInstance> Loose(List<PieceInstance> stowed)
-    {
-        var riding = stowed.SelectMany(p => p.Attached).ToHashSet();
-        return stowed.Where(p => !riding.Contains(p.Id)).ToList();
     }
 
     void WireDrag()
@@ -271,15 +258,12 @@ public partial class HolderWindow : FloatPanel
     {
         if (id.StartsWith(OutMark)) { ChooseReady(id, RecallChoice); return; }
         if (id.Length == 0 || !CanTake || Holder is not { } h) return;
-        _s.Do(TakingOut(_s, _layer, h.Piece, new List<Command> { new Unstow { Layer = _layer, Holder = _id, Id = id } }));
+        _s.Do(KTable.Client.TakeOut.Taking(_s, _layer, h.Piece, new List<Command> { new Unstow { Layer = _layer, Holder = _id, Id = id } }));
     }
 
     void TakeAllOut()
     {
-        if (!CanTake || Holder is not { } h || h.Piece.Stowed is not { Count: > 0 } stowed) return;
-        var top = Loose(stowed);
-        if (_most >= 0 && top.Count > _most) top = top.Take(_most).ToList();
-        _s.Do(TakingOut(_s, _layer, h.Piece,
-            top.Select((p, i) => (Command)new Unstow { Layer = _layer, Holder = _id, Id = p.Id, Pos = new Vec2(h.Piece.Pos.X + TakenOutFrom + i * TakenOutApart, h.Piece.Pos.Z) }).ToList()));
+        if (!CanTake || Holder is not { } h || KTable.Client.TakeOut.All(_s, _layer, h.Piece, _most) is not { } taken) return;
+        _s.Do(taken);
     }
 }

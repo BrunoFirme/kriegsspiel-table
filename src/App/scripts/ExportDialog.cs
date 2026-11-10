@@ -16,6 +16,7 @@ public partial class ExportDialog : ConfirmationDialog
 
     public ExportDialog(PackageStore store, string kind, string id)
     {
+        AgentFence.Mark(this);
         _store = store;
         _kind = kind;
         _id = id;

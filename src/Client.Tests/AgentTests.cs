@@ -218,7 +218,7 @@ public sealed class McpServerTests : IDisposable
     }
 }
 
-public class TableToolsTests
+public partial class TableToolsTests
 {
     readonly ClientSession _s;
     readonly GameServer _server;
@@ -235,7 +235,11 @@ public class TableToolsTests
             Id = "user.t", Name = "T",
             Pieces =
                 { new PieceDef { Id = "user.t.bn", Name = "Battalion", Size = new Size2(2, 1), Counters = { new CounterDef { Name = "Strength", Max = 12, Default = 10 } }, TextLines = { new TextLineDef { Name = "Commander" } },
-                    States = { new PieceStateDef { Name = "Formed" }, new PieceStateDef { Name = "Disordered" } } } },
+                    States = { new PieceStateDef { Name = "Formed" }, new PieceStateDef { Name = "Disordered" } } },
+                  new PieceDef { Id = "user.t.gun", Name = "Battery", Size = new Size2(1, 1), Attachments = { new AttachmentDef { Piece = "user.t.limber", Offset = new Vec2(0, 2) } } },
+                  new PieceDef { Id = "user.t.limber", Name = "Limber", Size = new Size2(1, 1) },
+                  new PieceDef { Id = "user.t.smoke", Name = "Smoke", Tags = { "effect" } },
+                  new PieceDef { Id = "user.t.orders", Name = "Orders", Tags = { "book" }, States = { new PieceStateDef { Name = "1" }, new PieceStateDef { Name = "2" } } } },
         }));
         var store = new PackageStore(root);
         var g = new GameState { Name = "Test", Packs = { "user.t" } };
@@ -271,6 +275,10 @@ public class TableToolsTests
     }
 
     async Task<ToolResult> Call(string tool, object args) => await _tools[tool].Run(JsonSerializer.SerializeToElement(args));
+
+    double _now;
+
+    void Frame() => Deliver(_server.Scripts.Tick(_now += 0.02));
 
     [Fact]
     public async Task Pieces_are_listed_and_filtered()

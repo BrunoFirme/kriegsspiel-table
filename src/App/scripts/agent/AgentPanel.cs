@@ -16,6 +16,7 @@ static class AgentPanel
 
     public static void Simple(VBoxContainer box, AgentEndpoint a, Settings cfg)
     {
+        AgentFence.Mark(box);
         box.AddThemeConstantOverride("separation", Ui.Gap.Group);
         var state = new Label { AutowrapMode = TextServer.AutowrapMode.WordSmart, CustomMinimumSize = new Vector2(420, 0) };
         box.AddChild(state);
@@ -100,6 +101,6 @@ static class AgentPanel
 
     public static void Show(VBoxContainer page, AgentEndpoint a, Settings cfg)
     {
-        Build(InPlace.SubPage(page, "Technical settings", "AI agent"), a, cfg);
+        Build(AgentFence.Mark(InPlace.SubPage(page, "Technical settings", "AI agent")), a, cfg);
     }
 }

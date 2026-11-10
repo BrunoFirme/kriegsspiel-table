@@ -16,14 +16,15 @@ namespace KTable.App;
 
 sealed partial class AgentTableTools
 {
-    const int LogShown = 60, LogMost = 1000, ChangesShown = 100, BookSide = 1568;
+    const int LogShown = 60, LogMost = 1000, ChangesShown = 100, BookSide = 1568, BookLeast = 512, BookMost = 4096;
     const double Moved = 0.01, Turned = 0.5, CopyWaitMinutes = 5, PlayWaitMinutes = 3;
 
     IEnumerable<AgentTool> RecordTools()
     {
         yield return new AgentTool("read_log",
-            "The Log as everyone at the table reads it: chat, rolls, turns, who came and went, what changed. Each line has its number; pass since (the last number you read) for only what is new.",
-            Args.Schema(new Arg("since", "number", "only lines after this number"), new Arg("limit", "number", $"at most this many of the newest (1–{LogMost}, {LogShown} if left out)")),
+            "The Log as everyone at the table reads it: chat, rolls, turns, who came and went, what changed. Each line has its number; pass since (the last number you read) for only what is new, or before to read further back.",
+            Args.Schema(new Arg("since", "number", "only lines after this number"), new Arg("before", "number", "only lines before this number"),
+                new Arg("limit", "number", $"at most this many of the newest (1–{LogMost}, {LogShown} if left out)")),
             x => Task.FromResult(ReadLog(x)));
         yield return new AgentTool("drawing_layers",
             "The drawing layers, as the Layers panel shows them: list them; add one; rename or remove one (removing takes its drawings with it, and the last layer is cleared instead); " +
@@ -32,12 +33,17 @@ sealed partial class AgentTableTools
             DrawingLayers);
         yield return new AgentTool("read_book",
             "A page of a book piece (one whose looks are pages, as Read… opens it), as a picture, with how many pages it has.",
-            Args.Schema(new Arg("id", "string", "the book piece's id", true), new Arg("page", "number", "page number from 1 (its page on the table if left out)")),
+            Args.Schema(new Arg("id", "string", "the book piece's id", true), new Arg("page", "number", "page number from 1 (its page on the table if left out)"),
+                new Arg("pixels", "number", $"the picture's longest side, {BookLeast}–{BookMost} ({BookSide} if left out; never more than the page has)")),
             x => Task.FromResult(ReadBook(x)));
         yield return new AgentTool("set_view",
-            "The person's own view: the map from straight above or the 3D table, plates behind the labels beside pieces, piece ids on hover, and the sound. Change them only when the person asks; with nothing given, says how they stand.",
+            "The person's own view: the map from straight above or the 3D table, plates behind the labels beside pieces, piece ids on hover, the sound, the compass, which buttons the sidebar shows, " +
+            $"and the saved camera views 1–{CameraControl.ViewSlots} of this scenario (save the view as it is, go to one, forget one), as Ctrl, Shift and the Views row do. " +
+            "Change them only when the person asks; with nothing given, says how they stand.",
             Args.Schema(new Arg("map_view", "boolean", "the map from straight above (true) or the 3D table (false)"), new Arg("label_plates", "boolean", "plates behind the labels beside pieces"),
-                new Arg("piece_ids", "boolean", "piece ids, module GUIDs and kinds on hover"), new Arg("sound", "boolean", "sound on")),
+                new Arg("piece_ids", "boolean", "piece ids, module GUIDs and kinds on hover"), new Arg("sound", "boolean", "sound on"), new Arg("compass", "boolean", "the compass shown"),
+                new Arg("sidebar", "object", "sidebar button name to shown (true) or hidden (false), e.g. {\"Decals\": false}; Map, Pieces, Umpires, Select and Log always stay"),
+                new Arg("save_view", "number", "keep the view as it is now under this number"), new Arg("go_to_view", "number", "turn the view to a saved one"), new Arg("forget_view", "number", "forget a saved view")),
             x => Task.FromResult(SetView(x)));
         yield return new AgentTool("look_back",
             "Reads a kept turn or a save without loading it (host only): its clock, and what differs from the table now, piece by piece (added, gone, moved or turned, changed). " +
@@ -63,9 +69,9 @@ sealed partial class AgentTableTools
         if (Table(out var why) is not var (_, hud)) return why!;
         var lines = hud.LogPanel.Text.GetParsedText().Split('\n').Select(l => l.TrimEnd()).Where(l => l.Length > 0).ToList();
         long first = hud.LogPanel.Written - lines.Count + 1;
-        long since = (long)(a.Num("since") ?? 0);
+        long since = (long)(a.Num("since") ?? 0), before = (long)(a.Num("before") ?? long.MaxValue);
         int limit = Math.Clamp((int)(a.Num("limit") ?? LogShown), 1, LogMost);
-        var numbered = lines.Select((l, i) => (n: first + i, l)).Where(x => x.n > since).ToList();
+        var numbered = lines.Select((l, i) => (n: first + i, l)).Where(x => x.n > since && x.n < before).ToList();
         var shown = numbered.Skip(Math.Max(0, numbered.Count - limit)).ToList();
         if (shown.Count == 0) return new ToolResult($"Nothing new in the Log (last line {hud.LogPanel.Written}).");
         var skipped = numbered.Count - shown.Count;
@@ -133,8 +139,8 @@ sealed partial class AgentTableTools
         var img = Image.LoadFromFile(file);
         if (img == null || img.IsEmpty()) return ToolResult.Fail("This page's picture could not be read.");
         if (img.IsCompressed()) img.Decompress();
-        int side = Math.Max(img.GetWidth(), img.GetHeight());
-        if (side > BookSide) img.Resize(img.GetWidth() * BookSide / side, img.GetHeight() * BookSide / side, Image.Interpolation.Lanczos);
+        int side = Math.Max(img.GetWidth(), img.GetHeight()), most = (int)Math.Clamp(a.Num("pixels") ?? BookSide, BookLeast, BookMost);
+        if (side > most) img.Resize(img.GetWidth() * most / side, img.GetHeight() * most / side, Image.Interpolation.Lanczos);
         return new ToolResult($"{PieceName(s, p)} · page {page} of {pages.Count}.", false, new[] { img.SavePngToBuffer() });
     }
 
@@ -152,8 +158,35 @@ sealed partial class AgentTableTools
             cfg.Save();
             Sfx.Current?.Apply();
         }
-        var now = new JsonObject { ["map_view"] = t.Rig.TopDown, ["label_plates"] = cfg.LabelPlates, ["piece_ids"] = cfg.MakerTools, ["sound"] = !cfg.SoundMuted };
-        return new ToolResult(now.ToJsonString(Opts));
+        if (a.Flag("compass") is { } compass && compass != cfg.CompassShown) hud.Strip.SetCompass(compass);
+        var problems = new List<string>();
+        if (a.ValueKind == JsonValueKind.Object && a.TryGetProperty("sidebar", out var bar) && bar.ValueKind == JsonValueKind.Object)
+            foreach (var b in bar.EnumerateObject())
+            {
+                bool Named(StripItem i) => string.Equals(i.Name, b.Name, StringComparison.OrdinalIgnoreCase) || string.Equals(i.Key, b.Name, StringComparison.OrdinalIgnoreCase);
+                var item = ToolStrip.Catalog.FirstOrDefault(i => hud.Strip.Allowed(i) && Named(i));
+                if (item == null) problems.Add($"no sidebar button {b.Name}");
+                else if (item.Fixed) problems.Add($"{item.Name} always stays");
+                else if (b.Value.ValueKind is JsonValueKind.True or JsonValueKind.False && b.Value.GetBoolean() != hud.Strip.Shown(item)) hud.Strip.Show(item, b.Value.GetBoolean());
+            }
+        bool Slot(string name, out int slot)
+        {
+            slot = (int)(a.Num(name) ?? 0);
+            if (a.Num(name) == null) return false;
+            if (slot is >= 1 and <= CameraControl.ViewSlots && t.Cam.KeepsViews) return true;
+            problems.Add(t.Cam.KeepsViews ? $"{name} is 1 to {CameraControl.ViewSlots}" : "views are kept for a scenario's game only");
+            return false;
+        }
+        if (Slot("save_view", out var save) && !t.Cam.SaveView(save)) problems.Add("the view could not be saved while looking through a piece's eyes");
+        if (Slot("go_to_view", out var go) && !t.Cam.GoToView(go)) problems.Add($"no view {go} saved");
+        if (Slot("forget_view", out var forget)) t.Cam.ForgetView(forget);
+        var now = new JsonObject
+        {
+            ["map_view"] = t.Rig.TopDown, ["label_plates"] = cfg.LabelPlates, ["piece_ids"] = cfg.MakerTools, ["sound"] = !cfg.SoundMuted, ["compass"] = cfg.CompassShown,
+            ["sidebar_hidden"] = new JsonArray(ToolStrip.Catalog.Where(i => !i.Fixed && hud.Strip.Allowed(i) && !hud.Strip.Shown(i)).Select(i => (JsonNode?)JsonValue.Create(i.Name)).ToArray()),
+            ["saved_views"] = new JsonArray(t.Cam.Views.Keys.Order().Select(k => (JsonNode?)JsonValue.Create(k)).ToArray()),
+        };
+        return new ToolResult((problems.Count > 0 ? "Not done: " + string.Join("; ", problems) + ".\n" : "") + now.ToJsonString(Opts), problems.Count > 0);
     }
 
     async Task<ToolResult> LookBack(JsonElement a)

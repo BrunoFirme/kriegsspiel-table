@@ -99,6 +99,17 @@ public partial class Main : Node
                 DoHost(dir, resume);
                 return null;
             },
+            Join = (address, port, password) =>
+            {
+                if (!AgentAtTitle()) return "Close what is open first (close_studio or leave_game).";
+                if (port is { } p && p != _cfg.Port)
+                {
+                    _cfg.Port = p;
+                    _cfg.Save();
+                }
+                StartJoin(address, _cfg.Port, _cfg.LastName is { Length: > 0 } name ? name : JoinPage.Guest, password, null);
+                return null;
+            },
             CloseStudio = () =>
             {
                 if (_agent.Studio is not { } st || !IsInstanceValid(st) || st.Gone) return "The piece studio is not open.";

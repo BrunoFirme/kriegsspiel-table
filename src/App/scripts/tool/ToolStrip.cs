@@ -62,6 +62,16 @@ sealed class ToolStrip : HudPart
         Callable.From(Shell.Relayout).CallDeferred();
     }
 
+    public void SetCompass(bool on)
+    {
+        Cfg.CompassShown = on;
+        Cfg.Save();
+        Shell.Relayout();
+        if (Buttons.TryGetValue("compass", out var b) && GodotObject.IsInstanceValid(b)) b.SetPressedNoSignal(on);
+    }
+
+    public bool Allowed(StripItem item) => StripAllowed(item.Key);
+
     public void FillMenu(PopupMenu menu)
     {
         menu.Clear();
@@ -235,7 +245,7 @@ sealed class ToolStrip : HudPart
             }
             case "sighting":
             {
-                var b = ToolB(Tool.Sighting, "sighting", title, "The picture a piece would send home: from above, trace the edge of what it can see, or look out from its own eyes. The shot goes to the clipboard and the capture folder. Ctrl + wheel or = − set its reach; the wheel zooms in to trace");
+                var b = AgentFence.Mark(ToolB(Tool.Sighting, "sighting", title, "The picture a piece would send home: from above, trace the edge of what it can see, or look out from its own eyes. The shot goes to the clipboard and the capture folder. Ctrl + wheel or = − set its reach; the wheel zooms in to trace"));
                 Buttons["sighting"] = b;
                 return b;
             }
@@ -277,12 +287,7 @@ sealed class ToolStrip : HudPart
                 var b = Icon("compass", title, "Shows where north is; click it to turn the view north-up, drag it to move it, right-click it to put it back");
                 b.ToggleMode = true;
                 b.ButtonPressed = Cfg.CompassShown;
-                b.Toggled += on =>
-                {
-                    Cfg.CompassShown = on;
-                    Cfg.Save();
-                    Shell.Relayout();
-                };
+                b.Toggled += SetCompass;
                 Buttons["compass"] = b;
                 return b;
             }

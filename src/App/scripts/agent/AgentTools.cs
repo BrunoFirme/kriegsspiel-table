@@ -27,14 +27,25 @@ sealed class AppTools
         yield return new AgentTool("status",
             "What is open (the title screen, a game, or the piece studio and its pack), this seat's role, and the folder where scripts can also be edited as files.",
             Args.Schema(), _ => Task.FromResult(Status()));
+        yield return new AgentTool("how_to",
+            "How the work is done here, by topic: which tools do it and in what order. Call it before the first step of a kind of work. No topic: every topic; find: the topics that mention a word or a tool.",
+            Args.Schema(new Arg("topic", "string", "start, units, studio, figures, table, map, scripts, records, settings, app or help"), new Arg("find", "string", "a word or a tool's name")),
+            a => Task.FromResult(new ToolResult(AgentGuide.HowTo(a.Str("topic"), a.Str("find")))));
         yield return new AgentTool("api_reference",
-            "The scripting API reference: every call, field and event, with parameters, returns and examples. Pass find to get only the sections that mention a word (on_load, self.button, game.say…).",
-            Args.Schema(new Arg("find", "string", "a word; only the sections that contain it")), a => Task.FromResult(Reference(a.Str("find"))));
+            "The scripting API reference: every call, field and event, with parameters, returns and examples. Pass find to get only the sections that mention a word (on_load, self.button, game.say…), " +
+            "contents for the list of its sections, or offset to read it page by page.",
+            Args.Schema(new Arg("find", "string", "a word; only the sections that contain it"), new Arg("contents", "boolean", "only the headings"),
+                new Arg("offset", "number", "the character to start from: the next page starts where the last one ended")),
+            a => Task.FromResult(Reference(a.Str("find"), a.Flag("contents") == true, (int)Math.Max(0, a.Num("offset") ?? 0))));
         yield return new AgentTool("snapshot",
-            "A picture of the app's window: the table, or the piece studio. At the table, focus (a piece) or x and z (a map point) aim the camera, distance sets how much of the table it takes in, angle how high it looks from (90 straight down, about 10 from table height) and heading which way it looks. The view of the person at this PC goes back as it was after the picture.",
+            "A picture of the app's window: the table, or the piece studio. At the table, focus (a piece) or x and z (a map point) aim the camera, distance sets how much of the table it takes in, angle how high it looks from (90 straight down, about 10 from table height) and heading which way it looks. The view of the person at this PC goes back as it was after the picture. " +
+            "pixels makes it larger or smaller, region zooms into part of the window, table_only leaves the app's panels and buttons out.",
             Args.Schema(new Arg("focus", "string", "a piece's id at the table"), new Arg("x", "number", "a map point to look at, with z"), new Arg("z", "number", "a map point to look at, with x"),
                 new Arg("distance", "number", "map units across the view (default: three times the piece's size, or as the view is)"),
-                new Arg("angle", "number", $"degrees above the table, {MinAngle}–90 (default as the view is)"), new Arg("heading", "number", "compass degrees it looks toward: 0 north, 90 east (default as the view is)")), Snapshot);
+                new Arg("angle", "number", $"degrees above the table, {MinAngle}–90 (default as the view is)"), new Arg("heading", "number", "compass degrees it looks toward: 0 north, 90 east (default as the view is)"),
+                new Arg("pixels", "number", $"the picture's width, {AgentEndpoint.ShotLeast}–{AgentEndpoint.ShotMost} ({AgentEndpoint.ShotUsual} if left out; never wider than the window)"),
+                new Arg("region", "array", "[left, top, right, bottom] as fractions 0–1 of the window: only that part, at full sharpness"),
+                new Arg("table_only", "boolean", "the table alone, without the app's panels and buttons")), Snapshot);
         yield return new AgentTool("show_view",
             "Turns the view of the person at this PC to a piece or a map point, aimed as snapshot aims, and leaves it there. Use it when the person asks to be shown something.",
             Args.Schema(new Arg("focus", "string", "a piece's id at the table"), new Arg("x", "number", "a map point to look at, with z"), new Arg("z", "number", "a map point to look at, with x"),
@@ -53,6 +64,11 @@ sealed class AppTools
             "Hosts a game: a scenario (carrying on where it was left), or a new blank one. Works from the title screen.",
             Args.Schema(new Arg("scenario", "string", "a scenario's id (list_scenarios)"), new Arg("new_scenario", "string", "a name for a new blank scenario"),
                 new Arg("from_start", "boolean", "start the scenario over instead of carrying on")), HostGame);
+        yield return new AgentTool("join_game",
+            "Joins a game someone else hosts, as Join a game does on the title screen: knocks at their table under this PC's name, and the host or a lead umpire lets this seat in and gives it a role. Works from the title screen.",
+            Args.Schema(new Arg("address", "string", "the host's address, as their invitation gives it (an IP or a name, with :port if it has one)", true),
+                new Arg("port", "number", "the host's port, when the address has none"), new Arg("password", "string", "the game's password, if it has one")),
+            JoinGame);
         yield return new AgentTool("leave_game",
             "Saves the game and leaves the table, back to the title screen (the others at the table are disconnected).",
             Args.Schema(), _ => Task.FromResult(_a.LeaveGame() is { } why ? ToolResult.Fail(why) : new ToolResult("Leaving: the game is saved and the app goes back to the title screen in a moment. Call status before the next step.")));
@@ -72,15 +88,29 @@ sealed class AppTools
 
     async Task<ToolResult> Snapshot(JsonElement a)
     {
+        var region = a.ValueKind == JsonValueKind.Object && a.TryGetProperty("region", out var r) && r.ValueKind == JsonValueKind.Array
+            ? r.EnumerateArray().Where(v => v.ValueKind == JsonValueKind.Number).Select(v => v.GetDouble()).ToArray() : null;
+        if (region != null && (region.Length != 4 || region.Any(v => v is < 0 or > 1) || region[2] <= region[0] || region[3] <= region[1]))
+            return ToolResult.Fail("region is [left, top, right, bottom], fractions 0–1 of the window, right of left and below top.");
+        var pixels = (int)Math.Clamp(a.Num("pixels") ?? AgentEndpoint.ShotUsual, AgentEndpoint.ShotLeast, AgentEndpoint.ShotMost);
+        Task<ToolResult> Shot() => ShotOf(pixels, region);
         if (_a.InStudio || _a.TableHud() is not { } hud || _a.TableSession() is not { } s) return await Shot();
+        bool bare = a.Flag("table_only") == true && hud.Visible;
         var rig = hud.T.Rig;
         var before = rig.Now;
         if (Aim(a, s, before, out var why) is not { } view) return why!;
-        if (view == before) return await Shot();
-        rig.Show(view);
-        await _a.Drawn(AgentEndpoint.SettleFrames);
-        try { return await Shot(); }
-        finally { rig.Show(before); }
+        if (view != before) rig.Show(view);
+        if (bare) hud.Visible = false;
+        try
+        {
+            if (view != before || bare) await _a.Drawn(AgentEndpoint.SettleFrames);
+            return await Shot();
+        }
+        finally
+        {
+            if (bare) hud.Visible = true;
+            if (view != before) rig.Show(before);
+        }
     }
 
     Task<ToolResult> ShowView(JsonElement a)
@@ -115,9 +145,9 @@ sealed class AppTools
         return view;
     }
 
-    async Task<ToolResult> Shot()
+    async Task<ToolResult> ShotOf(int pixels, double[]? region)
     {
-        var shot = await _a.Snapshot();
+        var shot = await _a.Snapshot(pixels, region);
         return shot == null ? ToolResult.Fail("No picture: the window is not drawing (minimised, or a run without a screen).") : new ToolResult("The window now.", false, new[] { shot });
     }
 
@@ -181,6 +211,31 @@ sealed class AppTools
         return new ToolResult($"Hosting {s.View.Name} ({dir}), turn {s.View.Clock.Turn}, {s.View.Layers.Values.Sum(l => l.Count)} pieces. Packs in it: {string.Join(", ", s.View.Packs)}.");
     }
 
+    const double JoinWaitSeconds = 120;
+
+    async Task<ToolResult> JoinGame(JsonElement a)
+    {
+        if (_a.TableSession() is { } now) return ToolResult.Fail($"A game is open ({now.View.Name}): leave_game first.");
+        var address = a.Str("address")?.Trim() ?? "";
+        int? port = a.Num("port") is { } p ? (int)p : null;
+        var colon = address.LastIndexOf(':');
+        if (colon > 0 && !address.Contains(']') && address.IndexOf(':') == colon && int.TryParse(address[(colon + 1)..], out var given))
+        {
+            port = given;
+            address = address[..colon];
+        }
+        if (address.Length == 0) return ToolResult.Fail("address is needed.");
+        if (port is < 1 or > 65535) return ToolResult.Fail("port is 1 to 65535.");
+        if (_a.Join(address, port, a.Str("password")?.Trim() ?? "") is { } why) return ToolResult.Fail(why);
+        for (double t = 0; t < JoinWaitSeconds && _a.TableSession() == null && !_a.AtTitle(); t += Waits.Poll) await _a.Delay(Waits.Poll);
+        if (_a.TableSession() is { } s)
+        {
+            _a.Log($"joined {s.View.Name}");
+            return new ToolResult($"At the table of {s.View.Name} as {s.Me.Role}: turn {s.View.Clock.Turn}, {s.View.Layers.Values.Sum(l => l.Count)} pieces.");
+        }
+        return _a.AtTitle() ? ToolResult.Fail("Not let in: the title screen says why.") : new ToolResult("Still knocking: the host or a lead umpire has not let this seat in yet. Call status to see when it is at the table.");
+    }
+
     ToolResult ListPacks()
     {
         var store = _a.Session?.Store ?? new KTable.Core.PackageStore(KTable.Core.PackageStore.DefaultRoot);
@@ -240,10 +295,11 @@ sealed class AppTools
         return new ToolResult(o.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
     }
 
-    static ToolResult Reference(string? find)
+    static ToolResult Reference(string? find, bool contents, int offset)
     {
         var md = ApiDoc.Markdown();
-        if (string.IsNullOrWhiteSpace(find)) return new ToolResult(Cap(md));
+        if (contents) return new ToolResult(Cap(string.Join("\n", md.Split('\n').Where(l => l.StartsWith('#'))), 0));
+        if (string.IsNullOrWhiteSpace(find)) return new ToolResult(Cap(md, offset));
         var sections = new List<string>();
         var current = new StringBuilder();
         foreach (var line in md.Split('\n'))
@@ -254,10 +310,19 @@ sealed class AppTools
         if (current.Length > 0) sections.Add(current.ToString());
         var hits = sections.Where(s => s.Contains(find.Trim(), StringComparison.OrdinalIgnoreCase)).ToList();
         if (hits.Count == 0) return new ToolResult($"Nothing in the reference mentions \"{find}\". Leave find out for the whole reference.");
-        return new ToolResult(Cap(string.Join("\n", hits)));
+        return new ToolResult(Cap(string.Join("\n", hits), offset));
     }
 
-    static string Cap(string s) => s.Length <= ReferenceLimit ? s : s[..ReferenceLimit] + "\n… (cut: pass find to narrow it)";
+    static string Cap(string s, int offset)
+    {
+        if (offset >= s.Length) return $"The text ends at {s.Length} characters.";
+        int end = Math.Min(s.Length, offset + ReferenceLimit);
+        var page = s[offset..end];
+        if (offset == 0 && end == s.Length) return page;
+        return $"characters {offset}–{end} of {s.Length}" + (end < s.Length ? $" (offset {end} for the next page)" : "") + "\n" + page;
+    }
+
+    static string Cut(string s) => s.Length <= ReferenceLimit ? s : s[..ReferenceLimit] + "\n… (cut)";
 
     async Task<ToolResult> Check()
     {
@@ -279,8 +344,8 @@ sealed class AppTools
         var finished = await Task.WhenAny(done.Task, Task.Delay(TimeSpan.FromMinutes(3)));
         string text;
         lock (lines) text = lines.ToString();
-        if (finished != done.Task) return ToolResult.Fail("The check was still running after three minutes:\n" + Cap(text));
+        if (finished != done.Task) return ToolResult.Fail("The check was still running after three minutes:\n" + Cut(text));
         var code = await done.Task;
-        return new ToolResult((code == 0 ? "Done.\n" : $"Finished with problems (exit {code}).\n") + Cap(text), code != 0);
+        return new ToolResult((code == 0 ? "Done.\n" : $"Finished with problems (exit {code}).\n") + Cut(text), code != 0);
     }
 }

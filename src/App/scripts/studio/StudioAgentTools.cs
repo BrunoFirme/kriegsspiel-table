@@ -74,11 +74,12 @@ sealed partial class StudioTools
                 new Arg("width", "number", "map units"), new Arg("height", "number", "map units")),
             NewEffect);
         yield return new AgentTool("studio_set_piece",
-            "Changes a kind as its Block layer and Piece tab do: name, size, thickness, tint (a block's side colour, a model's colour), outline, tags, or name box (where its name prints: fractions of the face, x and y from the top left). " +
+            "Changes a kind as its Block layer and Piece tab do: name, size, thickness, tint (a block's side colour, a model's colour), outline, tags, name box (where its name prints: fractions of the face, x and y from the top left), " +
+            "or whether it holds pieces (pieces held over it a moment go inside, as into a bag; each piece at the table can still be switched). " +
             "Give width or height alone to keep the proportions, both to change them (the faces stretch with the piece); a model's width is how wide it stands on the table. One look's own size and outline: studio_set_look.",
             Args.Schema(new Arg("id", "string", "the kind's id", true), new Arg("name", "string", "new name"), new Arg("width", "number", "map units"), new Arg("height", "number", "map units"),
                 new Arg("thickness", "number", "map units"), new Arg("tint", "string", "#rrggbb"), new Arg("outline", "string", OutlineList), new Arg("tags", "array", "the whole list of tags"),
-                new Arg("name_box", "object", "{x, y, w, h} as fractions of the face, or null for the usual place")),
+                new Arg("name_box", "object", "{x, y, w, h} as fractions of the face, or null for the usual place"), new Arg("holds", "boolean", "every piece of the kind holds pieces")),
             SetPiece);
         yield return new AgentTool("studio_frame",
             "Frames a flat kind as the studio's Frame… does: a border along its outline and a colour behind its pictures where they are see-through, on every face that has a picture. off takes the frame away.",
@@ -186,6 +187,7 @@ sealed partial class StudioTools
         ["markers"] = new JsonArray(d.Attachments.Select(m => (JsonNode?)JsonValue.Create(FormattableString.Invariant($"{s.Pack.Pieces.FirstOrDefault(p => p.Id == m.Piece)?.Name ?? m.Piece} at x {m.Offset.X:0.##}, z {m.Offset.Z:0.##}"))).ToArray()),
         ["faces"] = new JsonArray(PieceFaces.Of(d).Select(f => (JsonNode?)JsonValue.Create(f.Key)).ToArray()),
         ["effect"] = d.Effect?.Kind, ["script"] = d.Script is { Length: > 0 }, ["tags"] = new JsonArray(d.Tags.Select(t => (JsonNode?)JsonValue.Create(t)).ToArray()),
+        ["holds"] = d.Holds ? true : null,
     };
 
     static string LookLine(PieceStudio s, PieceDef d, int i)
@@ -381,6 +383,7 @@ sealed partial class StudioTools
             if (tint != null) x.Tint = Colour(tint, "#ffffffff")[..7].ToUpperInvariant();
             if (tags != null) x.Tags = tags.Select(t => t.Trim()).Where(t => t.Length > 0).Distinct().ToList();
             if (box) x.NameBox = nameBox;
+            if (a.Flag("holds") is { } holds) x.Holds = holds;
         });
         if (d.Kind == "model" && (w is > 0 || h is > 0))
         {

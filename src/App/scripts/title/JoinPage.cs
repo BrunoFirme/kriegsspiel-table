@@ -16,7 +16,9 @@ sealed class JoinPage
         _cfg = cfg;
     }
 
-    string GuestName => _t.PlayerName.Text.Trim().Length > 0 ? _t.PlayerName.Text.Trim() : "Guest";
+    public const string Guest = "Guest";
+
+    string GuestName => _t.PlayerName.Text.Trim().Length > 0 ? _t.PlayerName.Text.Trim() : Guest;
 
     public void Show()
     {

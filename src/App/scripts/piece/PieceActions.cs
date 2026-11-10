@@ -77,9 +77,7 @@ sealed class PieceActions
         var dice = targets.Where(t => t.IsDie && PieceInstance.FacesOf(t.Def, t.Piece).Count >= n && S.CanTouch(t.Layer, t.Piece)).ToList();
         var able = targets.Where(t => !t.IsDie && t.Def != null && t.Def.States.Count > 1 && t.Def.States.Count >= n && S.CanTouch(t.Layer, t.Piece)).ToList();
         if (able.Count == 0 && dice.Count == 0) return false;
-        var cmds = able.Where(t => t.Piece.State != n - 1).Select(t => (Command)new SetState { Layer = t.Layer, Id = t.Piece.Id, State = n - 1 })
-            .Concat(dice.Where(t => t.Piece.ShownFace != n - 1).Select(t => (Command)new TurnDie { Layer = t.Layer, Id = t.Piece.Id, Face = n - 1 })).ToList();
-        _c.DoAll(cmds);
+        _c.DoAll(KTable.Client.NumberKey.Commands(S, targets.Select(t => (t.Layer, t.Piece)), n));
         if (able.Count == 0)
         {
             var value = PieceInstance.FacesOf(dice[0].Def, dice[0].Piece)[n - 1].Value;
@@ -94,8 +92,8 @@ sealed class PieceActions
     bool NumberToScript(IEnumerable<PieceNode> targets, int n)
     {
         var editable = targets.Where(t => S.CanTouch(t.Layer, t.Piece)).ToList();
-        if (editable.Count == 0) return false;
-        var typed = editable.Select(t => (Command)new NumberTyped { Layer = t.Layer, Id = t.Piece.Id, Number = n }).ToList();
+        var typed = KTable.Client.NumberKey.Commands(S, editable.Select(t => (t.Layer, t.Piece)), n);
+        if (typed.Count == 0) return false;
         if (typed.Count == 1) S.Do(typed[0]);
         else S.Do(new Batch { Items = typed });
         var ab = editable.Where(t => t.Def != null && t.Def.States.Count > 1 && t.Def.States.Count >= n).ToList();

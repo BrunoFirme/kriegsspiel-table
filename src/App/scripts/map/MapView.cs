@@ -8,7 +8,7 @@ namespace KTable.App;
 
 static class MapView
 {
-    public const int DefaultPixels = 1024, MinPixels = 256, MaxPixels = 2048;
+    public const int DefaultPixels = 1024, MinPixels = 256, MaxPixels = 4096;
     public const double MinSize = 0.5, MaxSize = 50000;
     const int TargetLines = 8, LabelSize = 15, LabelPad = 3, CornerX = 64, CornerY = 26;
     const float CameraHeight = 4000;

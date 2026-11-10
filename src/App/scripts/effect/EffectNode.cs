@@ -8,7 +8,7 @@ namespace KTable.App;
 
 public partial class PieceNode
 {
-    public bool IsEffect => Def is { Kind: not "model" } d && d.Tags.Contains("effect");
+    public bool IsEffect => KTable.Client.PieceKinds.IsEffect(Def);
 
     readonly List<EffectFx.Emitter> _emitters = new();
 

@@ -120,6 +120,7 @@ public class ClientSession
     public void SetView(GameState v)
     {
         Live = v;
+        OpenDialogs.Clear();
         Unanswered = 0;
         _asked = null;
         Dirty = true;
@@ -167,6 +168,7 @@ public class ClientSession
         else if (c.Actor == 0 && IsLead && c.MakesUndoStep()) TrackScript(c);
         if (c.UndoFrom > 0 && c.Actor != Me.PeerId) DropScriptSteps(c.UndoFrom, c.UndoOf);
         if (c is AddPack ap) PackAdded?.Invoke(ap.Id, ap.Hash);
+        KeepDialogs(c);
         Applied?.Invoke(c);
         if (c is RestoreTurn or LoadSave)
         {
@@ -174,6 +176,21 @@ public class ClientSession
             ReviewInfo = null;
             Reset?.Invoke();
         }
+    }
+
+    public readonly List<ShowDialog> OpenDialogs = new();
+
+    public bool ForMe(ShowDialog d) => IsUmpire && (d.To == null || d.To == $"p:{Me.PeerId}");
+
+    void KeepDialogs(Command c)
+    {
+        if (c is Batch b)
+        {
+            foreach (var one in b.Items) KeepDialogs(one);
+            return;
+        }
+        if (c is ShowDialog sd && ForMe(sd)) OpenDialogs.Add(sd);
+        else if (c is DialogResult dr) OpenDialogs.RemoveAll(d => d.Token == dr.Token);
     }
 
     public IEnumerable<Approved> Away() =>

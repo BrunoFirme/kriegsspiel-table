@@ -25,7 +25,7 @@ sealed class MainMenu : HudPart
                 pm.SetItemTooltip(pm.GetItemIndex(3), "This scenario's saves, each with every turn it ended, in folders you make");
             }
             if (S.IsHost) pm.AddItem("Save a copy as a new scenario…", 2);
-            var convert = new PopupMenu { Name = "convert" };
+            var convert = AgentFence.Mark(new PopupMenu { Name = "convert" });
             Shell.FillModuleMenu(convert);
             pm.AddChild(convert);
             pm.AddSubmenuNodeItem("Convert to a digital tabletop save", convert);

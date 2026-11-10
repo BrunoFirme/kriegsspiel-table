@@ -172,7 +172,7 @@ sealed partial class ScenarioDialog
         else N.ShareThen(new[] { name }, c);
     }
 
-    static string? KeepBackdrop(string root, string path)
+    internal static string? KeepBackdrop(string root, string path)
     {
         const int Widest = 8192;
         const float Quality = 0.86f;

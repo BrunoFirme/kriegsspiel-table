@@ -5,6 +5,8 @@ namespace KTable.App;
 
 public sealed class Question
 {
+    public Godot.Node? Shown { get; internal set; }
+
     internal Action<string>? OnCancelText;
     internal Action<string, Action>? OnAlso;
 
@@ -36,7 +38,7 @@ static class InPlace
     {
         var dlg = new ConfirmationDialog { Title = title, OkButtonText = okText };
         Ui.NoCloseButton(dlg);
-        var q = new Question();
+        var q = new Question { Shown = dlg };
         if (text != null)
         {
             dlg.DialogText = text;
@@ -86,8 +88,8 @@ static class InPlace
 
     static Question Sheet(Window owner, string title, string okText, Action onOk, string? text, Control? body, Control? focus)
     {
-        var q = new Question();
         var scrim = new SheetScrim { Color = Scrim, MouseFilter = Control.MouseFilterEnum.Stop };
+        var q = new Question { Shown = scrim };
         scrim.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
         var sheet = new PanelContainer();
         sheet.AddThemeStyleboxOverride("panel", Ui.WindowFill(Ui.Raised, 18, 14));

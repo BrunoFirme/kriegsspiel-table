@@ -429,7 +429,7 @@ public static class EffectFx
 
     static readonly Dictionary<string, ImageTexture> Icons = new();
 
-    public static bool IsEffect(PieceDef d) => d.Kind != "model" && d.Tags.Contains("effect");
+    public static bool IsEffect(PieceDef d) => KTable.Client.PieceKinds.IsEffect(d);
 
     public static Texture2D? ListIcon(PieceDef d) =>
         !IsEffect(d) || d.Effect is { OwnPicture: true } && d.Image != null ? null : Icon(d.Effect ?? EffectKinds.FromName(d.Name));

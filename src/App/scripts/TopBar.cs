@@ -54,7 +54,7 @@ sealed class TopBar : HudPart
         BuildClockAndTurns(row);
         BuildRightEnd(row);
         Panel.Resized += Shell.Relayout;
-        Knocks = new VBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
+        Knocks = AgentFence.Mark(new VBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore });
         Knocks.AddThemeConstantOverride("separation", Ui.Gap.Row);
         Knocks.SetAnchorsPreset(Control.LayoutPreset.TopWide);
         Knocks.OffsetLeft = 360;

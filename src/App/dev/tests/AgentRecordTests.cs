@@ -8,15 +8,15 @@ static class AgentRecordTests
 {
     static string Call(string tool, string args) => $$$"""{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"{{{tool}}}","arguments":{{{args}}}}}""";
 
-    static async Task<(bool error, string text)> Ask(AgentEndpoint agent, string tool, string args)
+    internal static async Task<(bool error, string text)> Ask(AgentEndpoint agent, string tool, string args)
     {
         var res = JsonNode.Parse((await agent.Handle(Call(tool, args)))!)!["result"]!;
         return ((bool)res["isError"]!, (string?)res["content"]![0]!["text"] ?? "");
     }
 
-    static async Task<(HudTests.Rig h, AgentEndpoint agent)> Open(TestRunner r)
+    internal static async Task<(HudTests.Rig h, AgentEndpoint agent)> Open(TestRunner r, string[]? packs = null, System.Action<KTable.Core.PackageStore>? prepare = null)
     {
-        var h = await HudTests.Host(r);
+        var h = await HudTests.Host(r, packs: packs, prepare: prepare);
         var agent = new AgentEndpoint(new Settings()) { TableSession = () => h.S, TableHud = () => h.Hud };
         r.AddChild(agent);
         return (h, agent);

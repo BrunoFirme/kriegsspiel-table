@@ -179,6 +179,7 @@ public partial class Hud : CanvasLayer
         Top.Update();
         if (Touches(c, x => x is SetUi { Piece: null } or SetUiAttributes { Piece: null } or SetUiPictures)) _scriptUi?.Applied(c);
         foreach (var sd in Flatten(c).OfType<ShowDialog>()) _scriptUi?.ShowDialog(sd);
+        foreach (var dr in Flatten(c).OfType<DialogResult>()) _scriptUi?.Answered(dr.Token);
         if (Touches(c, x => x is AddSheet or RemoveSheet or MoveSheet or LockSheet or RenameSheet or CropSheet or SetSheetRelief or SetSheetPicture or SetSheetOpacity)) Map.Rebuild();
         if (Touches(c, x => x is SetLighting)) Relief?.Rebuild();
         foreach (var one in Flatten(c))

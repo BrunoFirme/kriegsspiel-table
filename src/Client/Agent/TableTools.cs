@@ -11,10 +11,10 @@ namespace KTable.Client.Agent;
 
 public sealed partial class TableTools
 {
-    public const int ListLimit = 300;
+    public const int ListLimit = 300, ListMost = 5000;
     public const int ConsoleLimit = 200;
 
-    static readonly JsonSerializerOptions Json = new()
+    internal static readonly JsonSerializerOptions Json = new()
     {
         WriteIndented = true,
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
@@ -26,11 +26,15 @@ public sealed partial class TableTools
     readonly Func<double, Task> _delay;
     readonly Action<string> _log;
 
-    readonly Func<Vec2, string, List<Vec2>>? _placeName;
+    readonly TableHooks _hooks;
 
-    public TableTools(Func<ClientSession?> session, Func<bool> inStudio, Func<double, Task> delay, Action<string> log, Func<Vec2, string, List<Vec2>>? placeName = null)
+    internal TableHooks Hooks => _hooks;
+
+    internal void Log(string what) => _log(what);
+
+    public TableTools(Func<ClientSession?> session, Func<bool> inStudio, Func<double, Task> delay, Action<string> log, TableHooks? hooks = null)
     {
-        _placeName = placeName;
+        _hooks = hooks ?? new TableHooks();
         _session = session;
         _inStudio = inStudio;
         _delay = delay;
@@ -40,8 +44,9 @@ public sealed partial class TableTools
     public IEnumerable<AgentTool> Tools()
     {
         yield return new AgentTool("list_pieces",
-            "The pieces on the open table (or the piece studio's table): id, name, kind, place, and whether each runs a script. Filter by a word in the name, kind or id.",
-            Args.Schema(new Arg("filter", "string", "a word the name, kind or id contains"), new Arg("limit", "number", $"at most this many (default {ListLimit})")), ListPieces);
+            "The pieces on the open table (or the piece studio's table): id, name, kind, place, tags, and whether each runs a script or holds others. Filter by a word in the name, kind or id, by a tag, or by an area of the map; a page at a time.",
+            Args.Schema(new Arg("filter", "string", "a word the name, kind or id contains"), new Arg("tag", "string", "only pieces with this tag"),
+                new Arg("within", "array", "[x0, z0, x1, z1]: only pieces inside this box, map units"), new Arg("limit", "number", $"at most this many (default {ListLimit}, at most {ListMost})"), Paging.Offset), ListPieces);
         yield return new AgentTool("read_piece",
             "One piece in full: its kind, place, counters, text, state, tags, memo, widgets and panels, and its script's source.",
             Args.Schema(new Arg("id", "string", "the piece's id", true)), ReadPiece);
@@ -55,11 +60,12 @@ public sealed partial class TableTools
             "Runs Lua inside a script, as the script console's prompt does (the host and lead umpires only); returns what it printed and returned. Changes it makes are undoable.",
             Args.Schema(new Arg("code", "string", "the Lua to run", true), new Arg("id", "string", "run it in this piece's script; leave out for the global script")), RunLua);
         yield return new AgentTool("read_console",
-            "The script console: prints, errors with their piece and line, typed Lua and its results. Pass since (the last seq you saw) to read only what is new.",
-            Args.Schema(new Arg("since", "number", "only lines after this seq"), new Arg("errors_only", "boolean", "errors only"), new Arg("limit", "number", $"at most this many of the newest (default {ConsoleLimit})")), ReadConsole);
+            "The script console: prints, errors with their piece and line, typed Lua and its results. Pass since (the last seq you saw) to read only what is new, or before to read further back.",
+            Args.Schema(new Arg("since", "number", "only lines after this seq"), new Arg("before", "number", "only lines before this seq"), new Arg("errors_only", "boolean", "errors only"),
+                new Arg("limit", "number", $"at most this many of the newest (default {ConsoleLimit})")), ReadConsole);
         yield return new AgentTool("list_kinds",
-            "The kinds of piece the game's packs offer (what place_piece can put down): id, name, pack, size.",
-            Args.Schema(new Arg("filter", "string", "a word the name or id contains")), ListKinds);
+            "The kinds of piece the game's packs offer (what place_piece can put down): id, name, pack, size, looks; a page at a time.",
+            Args.Schema(new Arg("filter", "string", "a word the name or id contains"), new Arg("limit", "number", $"at most this many (default {ListLimit})"), Paging.Offset), ListKinds);
         yield return new AgentTool("place_piece",
             "Puts a piece of a kind on the table at x, z (map units; list_pieces shows where others are). One undoable change.",
             Args.Schema(new Arg("kind", "string", "the kind's id (list_kinds)", true), new Arg("x", "number", "map units", true), new Arg("z", "number", "map units", true),
@@ -74,13 +80,16 @@ public sealed partial class TableTools
                 new Arg("tags", "array", "its own tags, replacing those it has; [] clears them (scripts read them)"),
                 new Arg("kind", "string", "another kind's id (list_kinds) to turn it into, keeping its place"), new Arg("state", "number", "look number from 1"),
                 new Arg("side", "number", "for a die, the side to show, from 1"),
-                new Arg("counters", "object", "counter name to a whole number"), new Arg("text", "object", "text line name to its text")), SetValues);
+                new Arg("counters", "object", "counter name to a whole number"), new Arg("text", "object", "text line name to its text"),
+                new Arg("book_highlight", "array", "for a book: [left, bottom, right, top] of a box on its open page, each 0–1 from the page's lower left, marked in its reader on every screen; [] clears it")), SetValues);
         yield return new AgentTool("stow_pieces",
             "Puts pieces away inside another piece, off the table, as a bag holds them; unstow_piece brings one back. One undoable change.",
             Args.Schema(new Arg("holder", "string", "the id of the piece that will hold them", true), new Arg("ids", "array", "the ids of the pieces to put in", true)), StowPieces);
         yield return new AgentTool("unstow_piece",
-            "Takes a held piece out of the piece holding it and puts it on the table, beside the holder or at x, z; read_piece on the holder lists what it holds under stowed.",
-            Args.Schema(new Arg("holder", "string", "the holding piece's id", true), new Arg("id", "string", "the held piece's id or name; leave out for the first held"),
+            "Takes a held piece out of the piece holding it and puts it on the table, beside the holder or at x, z; read_piece on the holder lists what it holds under stowed. " +
+            "Without an id it takes the next one as the holder gives them out: the top one, or one drawn at random from a bag. all takes every one out, set in a row beside it, as Take all out does.",
+            Args.Schema(new Arg("holder", "string", "the holding piece's id", true), new Arg("id", "string", "the held piece's id or name; leave out for the next one out"),
+                new Arg("all", "boolean", "take every held piece out"),
                 new Arg("x", "number", "map units"), new Arg("z", "number", "map units"), new Arg("turn", "number", "degrees")), UnstowPiece);
         yield return new AgentTool("ready_piece",
             "A holder's ready piece is the one held piece it releases onto the table and recalls with one key, smoke or dust for instance: it comes out where it stood when last recalled, turned and moved with the holder, and beside it the first time. " +
@@ -98,9 +107,13 @@ public sealed partial class TableTools
             Args.Schema(), Redo);
         foreach (var t in GameTools()) yield return t;
         foreach (var t in DrawingTools()) yield return t;
+        foreach (var t in new PlayerTools(this).Tools()) yield return t;
+        foreach (var t in PieceTools()) yield return t;
+        foreach (var t in ScenarioTools()) yield return t;
+        foreach (var t in WatchTools()) yield return t;
     }
 
-    bool CanChange(ClientSession s, out ToolResult? why)
+    internal bool CanChange(ClientSession s, out ToolResult? why)
     {
         why = null;
         if (_inStudio()) { why = ToolResult.Fail("This is the piece studio's table: change kinds with the studio_ tools."); return false; }
@@ -113,18 +126,19 @@ public sealed partial class TableTools
     {
         if (Open(out var why) is not { } s) return Task.FromResult(why!);
         var filter = a.Str("filter")?.Trim() ?? "";
-        var rows = new JsonArray();
+        var kinds = new List<(PieceDef Def, string Pack)>();
         foreach (var packId in s.View.Packs)
         {
             if (s.Store.Pack(packId) is not { } pack) continue;
-            foreach (var d in pack.Pieces)
-            {
-                if (filter.Length > 0 && !d.Name.Contains(filter, StringComparison.OrdinalIgnoreCase) && !d.Id.Contains(filter, StringComparison.OrdinalIgnoreCase)) continue;
-                rows.Add(new JsonObject { ["id"] = d.Id, ["name"] = d.Name, ["pack"] = pack.Name, ["w"] = d.Size.W, ["h"] = d.Size.H, ["looks"] = Math.Max(1, d.States.Count) });
-                if (rows.Count >= ListLimit) break;
-            }
+            kinds.AddRange(pack.Pieces.Where(d => filter.Length == 0 || d.Name.Contains(filter, StringComparison.OrdinalIgnoreCase) || d.Id.Contains(filter, StringComparison.OrdinalIgnoreCase))
+                .Select(d => (d, pack.Name)));
         }
-        return Task.FromResult(new ToolResult($"{rows.Count} kinds\n" + rows.ToJsonString(Json)));
+        var (page, head) = Paging.Page(kinds, a, (int)Math.Clamp(a.Num("limit") ?? ListLimit, 1, ListMost), "kinds");
+        var rows = new JsonArray(page.Select(k => (JsonNode?)new JsonObject
+        {
+            ["id"] = k.Def.Id, ["name"] = k.Def.Name, ["pack"] = k.Pack, ["w"] = k.Def.Size.W, ["h"] = k.Def.Size.H, ["looks"] = Math.Max(1, k.Def.States.Count),
+        }).ToArray());
+        return Task.FromResult(new ToolResult(head + "\n" + rows.ToJsonString(Json)));
     }
 
     async Task<ToolResult> PlacePiece(JsonElement a)
@@ -210,12 +224,19 @@ public sealed partial class TableTools
                 s.Do(new SetText { Layer = Layers.Umpire, Id = id, Name = tdef?.Name ?? t.Name, Value = t.Value.ValueKind == JsonValueKind.String ? t.Value.GetString() ?? "" : t.Value.GetRawText() });
                 sent.Add($"{tdef?.Name ?? t.Name}");
             }
-        if (sent.Count == 0) return ToolResult.Fail(problems.Count > 0 ? string.Join("; ", problems) : "Nothing to set: give label, note, kind, state, side, counters or text.");
+        if (a.ValueKind == JsonValueKind.Object && a.TryGetProperty("book_highlight", out var hl))
+        {
+            var box = hl.ValueKind == JsonValueKind.Array ? hl.EnumerateArray().Where(v => v.ValueKind == JsonValueKind.Number).Select(v => v.GetDouble()).ToArray() : null;
+            if (!PieceKinds.IsBook(def)) problems.Add("only a book takes a highlight");
+            else if (box is not ({ Length: 0 } or { Length: SetBookHighlight.Corners }) || box.Any(v => v is < 0 or > 1)) problems.Add("book_highlight is [left, bottom, right, top], each 0 to 1, or [] to clear it");
+            else { s.Do(new SetBookHighlight { Layer = Layers.Umpire, Id = id, Box = box.Length == 0 ? null : box }); sent.Add("book highlight"); }
+        }
+        if (sent.Count == 0) return ToolResult.Fail(problems.Count > 0 ? string.Join("; ", problems) : "Nothing to set: give label, note, kind, state, side, counters, text or book_highlight.");
         await Landed(s);
         _log($"set {string.Join(", ", sent)} on {NameOf(s, p)}");
         var now = s.View.Find(Layers.Umpire, id);
         int? shown = now != null && PieceInstance.FacesOf(def, now).Count > 1 ? now.ShownFace + 1 : null;
-        var report = now == null ? "" : "\n" + JsonSerializer.Serialize(new { now.Label, now.Note, Kind = now.Def, State = now.State + 1, Side = shown, now.Counters, now.Text }, Json);
+        var report = now == null ? "" : "\n" + JsonSerializer.Serialize(new { now.Label, now.Note, Kind = now.Def, State = now.State + 1, Side = shown, now.Counters, now.Text, now.BookHighlight }, Json);
         return new ToolResult($"Set {string.Join(", ", sent)}." + (problems.Count > 0 ? " Not set: " + string.Join("; ", problems) + "." : "") + report, problems.Count > 0);
     }
 
@@ -256,6 +277,15 @@ public sealed partial class TableTools
         var holder = a.Str("holder") ?? "";
         if (s.View.Find(Layers.Umpire, holder) is not { } h) return ToolResult.Fail($"No piece {holder} on this table.");
         if (h.Stowed is not { Count: > 0 } held) return ToolResult.Fail($"{NameOf(s, h)} holds nothing.");
+        if (a.Flag("all") == true)
+        {
+            var going = h.Loose().Select(p => p.Id).ToList();
+            if (TakeOut.All(s, Layers.Umpire, h) is not { } taken) return ToolResult.Fail($"{NameOf(s, h)} holds nothing it can give out.");
+            s.Do(taken);
+            await Until(() => going.All(g => s.View.Find(Layers.Umpire, g) != null), 3);
+            _log($"took {going.Count} piece{(going.Count == 1 ? "" : "s")} out of {NameOf(s, h)}");
+            return new ToolResult($"{going.Count} piece{(going.Count == 1 ? "" : "s")} out beside {NameOf(s, h)}: {string.Join(", ", going)}.");
+        }
         var which = a.Str("id")?.Trim() ?? "";
         var target = which.Length == 0 ? h.NextOut(Random.Shared) : held.FirstOrDefault(p => p.Id == which)
             ?? held.FirstOrDefault(p => string.Equals(NameOf(s, p), which, StringComparison.OrdinalIgnoreCase));
@@ -335,7 +365,7 @@ public sealed partial class TableTools
         return new ToolResult("Redone.");
     }
 
-    ClientSession? Open(out ToolResult? why)
+    internal ClientSession? Open(out ToolResult? why)
     {
         why = null;
         var s = _session();
@@ -344,33 +374,35 @@ public sealed partial class TableTools
         return s;
     }
 
-    static string NameOf(ClientSession s, PieceInstance p) => p.Label ?? s.Def(p.Def)?.Name ?? p.Def;
+    internal static string NameOf(ClientSession s, PieceInstance p) => p.Label ?? s.Def(p.Def)?.Name ?? p.Def;
 
     Task<ToolResult> ListPieces(JsonElement a)
     {
         if (Open(out var why) is not { } s) return Task.FromResult(why!);
         var filter = a.Str("filter")?.Trim() ?? "";
-        int limit = (int)Math.Clamp(a.Num("limit") ?? ListLimit, 1, 5000);
-        var rows = new JsonArray();
-        int total = 0;
-        foreach (var (layer, pieces) in s.View.Layers)
-            foreach (var p in pieces)
-            {
-                var name = NameOf(s, p);
-                if (filter.Length > 0 && !name.Contains(filter, StringComparison.OrdinalIgnoreCase) && !p.Def.Contains(filter, StringComparison.OrdinalIgnoreCase) && !p.Id.Contains(filter,
-                    StringComparison.OrdinalIgnoreCase)) continue;
-                if (++total > limit) continue;
-                rows.Add(new JsonObject
-                {
-                    ["id"] = p.Id, ["name"] = name, ["kind"] = p.Def, ["layer"] = layer,
-                    ["x"] = Math.Round(p.Pos.X, 3), ["z"] = Math.Round(p.Pos.Z, 3), ["turn"] = Math.Round(p.RotDeg, 1),
-                    ["script"] = p.Script != null ? "own" : s.Def(p.Def)?.Script is { Length: > 0 } ? "kind" : null,
-                    ["holds"] = p.Stowed is { Count: > 0 } held ? held.Count : null,
-                });
-            }
-        var head = total > limit ? $"{limit} of {total} pieces (raise limit or filter for the rest)" : $"{total} pieces";
+        var tag = a.Str("tag")?.Trim() ?? "";
+        var box = a.ValueKind == JsonValueKind.Object && a.TryGetProperty("within", out var w) && w.ValueKind == JsonValueKind.Array
+            ? w.EnumerateArray().Where(v => v.ValueKind == JsonValueKind.Number).Select(v => v.GetDouble()).ToArray() : null;
+        if (box is { Length: not 4 }) return Task.FromResult(ToolResult.Fail("within is [x0, z0, x1, z1] in map units."));
+        bool Inside(PieceInstance p) => box == null
+            || p.Pos.X >= Math.Min(box[0], box[2]) && p.Pos.X <= Math.Max(box[0], box[2]) && p.Pos.Z >= Math.Min(box[1], box[3]) && p.Pos.Z <= Math.Max(box[1], box[3]);
+        bool Has(string text) => text.Contains(filter, StringComparison.OrdinalIgnoreCase);
+        bool Named(PieceInstance p, string name) => filter.Length == 0 || Has(name) || Has(p.Def) || Has(p.Id);
+        bool Tagged(PieceInstance p) => tag.Length == 0 || PieceTags(s, p).Contains(tag, StringComparer.OrdinalIgnoreCase);
+        var found = s.View.Layers.SelectMany(kv => kv.Value.Select(p => (Layer: kv.Key, Piece: p))).Where(x => Named(x.Piece, NameOf(s, x.Piece)) && Tagged(x.Piece) && Inside(x.Piece)).ToList();
+        var (page, head) = Paging.Page(found, a, (int)Math.Clamp(a.Num("limit") ?? ListLimit, 1, ListMost), "pieces");
+        var rows = new JsonArray(page.Select(x => (JsonNode?)new JsonObject
+        {
+            ["id"] = x.Piece.Id, ["name"] = NameOf(s, x.Piece), ["kind"] = x.Piece.Def, ["layer"] = x.Layer,
+            ["x"] = Math.Round(x.Piece.Pos.X, 3), ["z"] = Math.Round(x.Piece.Pos.Z, 3), ["turn"] = Math.Round(x.Piece.RotDeg, 1),
+            ["tags"] = PieceTags(s, x.Piece) is { Count: > 0 } tags ? string.Join(", ", tags) : null,
+            ["script"] = x.Piece.Script != null ? "own" : s.Def(x.Piece.Def)?.Script is { Length: > 0 } ? "kind" : null,
+            ["holds"] = x.Piece.Stowed is { Count: > 0 } held ? held.Count : null,
+        }).ToArray());
         return Task.FromResult(new ToolResult(head + "\n" + rows.ToJsonString(Json)));
     }
+
+    static List<string> PieceTags(ClientSession s, PieceInstance p) => p.Tags ?? s.Def(p.Def)?.Tags ?? new List<string>();
 
     Task<ToolResult> ReadPiece(JsonElement a)
     {
@@ -486,19 +518,19 @@ public sealed partial class TableTools
     {
         if (Open(out var why) is not { } s) return Task.FromResult(why!);
         if (!s.IsUmpire) return Task.FromResult(ToolResult.Fail("Only umpires read the script console."));
-        long since = (long)(a.Num("since") ?? 0);
+        long since = (long)(a.Num("since") ?? 0), before = (long)(a.Num("before") ?? long.MaxValue);
         bool errors = a.Flag("errors_only") ?? false;
         int limit = (int)Math.Clamp(a.Num("limit") ?? ConsoleLimit, 1, ClientSession.ConsoleKeep);
-        var lines = s.ConsoleLines.Where(l => l.Seq > since && (!errors || l.Kind == "error")).TakeLast(limit).ToList();
+        var lines = s.ConsoleLines.Where(l => l.Seq > since && l.Seq < before && (!errors || l.Kind == "error")).TakeLast(limit).ToList();
         var last = s.ConsoleLines.Count > 0 ? s.ConsoleLines[^1].Seq : 0;
         var sb = new StringBuilder($"last seq {last}; {lines.Count} line{(lines.Count == 1 ? "" : "s")}\n");
         foreach (var l in lines) sb.Append(Format(l)).Append('\n');
         return Task.FromResult(new ToolResult(sb.ToString().TrimEnd()));
     }
 
-    static long LastSeq(ClientSession s) => s.ConsoleLines.Count > 0 ? s.ConsoleLines[^1].Seq : 0;
+    internal static long LastSeq(ClientSession s) => s.ConsoleLines.Count > 0 ? s.ConsoleLines[^1].Seq : 0;
 
-    static string Since(ClientSession s, long seq, int limit)
+    internal static string Since(ClientSession s, long seq, int limit)
     {
         var lines = s.ConsoleLines.Where(l => l.Seq > seq).TakeLast(limit).ToList();
         return lines.Count == 0 ? "" : "\nConsole:\n" + string.Join("\n", lines.Select(Format));
@@ -511,14 +543,14 @@ public sealed partial class TableTools
         return $"[{l.Seq.ToString(CultureInfo.InvariantCulture)}] {where}: {kind}{l.Text}";
     }
 
-    static PieceInstance? Find(ClientSession s, string id)
+    internal static PieceInstance? Find(ClientSession s, string id)
     {
         if (id.Length == 0) return null;
         foreach (var layer in s.View.Layers.Keys) if (s.View.Find(layer, id) is { } p) return p;
         return null;
     }
 
-    Task<bool> Until(Func<bool> done, double seconds) => Waits.Until(done, seconds, _delay);
+    internal Task<bool> Until(Func<bool> done, double seconds) => Waits.Until(done, seconds, _delay);
 
-    Task<bool> Landed(ClientSession s) => Waits.Landed(s, _delay);
+    internal Task<bool> Landed(ClientSession s) => Waits.Landed(s, _delay);
 }

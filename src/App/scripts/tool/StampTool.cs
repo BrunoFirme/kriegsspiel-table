@@ -83,11 +83,18 @@ sealed class StampTool
         return _aspects[picture] = tex.GetWidth() / (float)tex.GetHeight();
     }
 
-    public DecalDef Shape(Vec2 at)
+    public bool Sized(string picture)
     {
-        var a = Armed!;
-        double h = a.Size * Growth;
-        return new DecalDef { Picture = a.Picture, Name = a.Name, X = Math.Round(at.X, 4), Z = Math.Round(at.Z, 4), H = Math.Round(h, 4), W = Math.Round(h * Aspect(a.Picture), 4), Rot = Turn };
+        Aspect(picture);
+        return _aspects.ContainsKey(picture);
+    }
+
+    public DecalDef Shape(Vec2 at) => ShapeOf(Armed!, at, Growth, Turn);
+
+    public DecalDef ShapeOf(PaletteDecal a, Vec2 at, double growth, double turn)
+    {
+        double h = a.Size * growth;
+        return new DecalDef { Picture = a.Picture, Name = a.Name, X = Math.Round(at.X, 4), Z = Math.Round(at.Z, 4), H = Math.Round(h, 4), W = Math.Round(h * Aspect(a.Picture), 4), Rot = turn };
     }
 
     StandardMaterial3D? _previewMat;
@@ -138,18 +145,19 @@ sealed class StampTool
         _c.S.Do(new StampDecal { Layer = Layers.Umpire, Decal = Shape(at) });
     }
 
-    static bool Stampable(PieceNode n) => n.Def?.Kind != "model" && !n.IsDie && !n.IsEffect && n.Piece.Decals.Count < DecalDef.MostOnAPiece;
+    public static bool Stampable(PieceNode n) => n.Def?.Kind != "model" && !n.IsDie && !n.IsEffect && n.Piece.Decals.Count < DecalDef.MostOnAPiece;
 
-    DecalDef Local(PieceNode n, Vec2 at)
+    DecalDef Local(PieceNode n, Vec2 at) => OnPieceAt(n, Shape(at), Turn);
+
+    public static DecalDef OnPieceAt(PieceNode n, DecalDef d, double turn)
     {
-        var d = Shape(at);
         double k = Math.Max(1e-6, n.Piece.Scale);
-        var local = Coords.ToLocal(at, n.Piece.Pos, n.Piece.RotDeg);
+        var local = Coords.ToLocal(new Vec2(d.X, d.Z), n.Piece.Pos, n.Piece.RotDeg);
         d.X = Math.Round(local.X / k, 4);
         d.Z = Math.Round(local.Y / k, 4);
         d.W = Math.Round(d.W / k, 4);
         d.H = Math.Round(d.H / k, 4);
-        d.Rot = ((Turn + HalfTurn - n.Piece.RotDeg) % 360 + 360) % 360;
+        d.Rot = ((turn + HalfTurn - n.Piece.RotDeg) % 360 + 360) % 360;
         d.Face = n.Piece.FaceDown ? "back" : "front";
         return d;
     }

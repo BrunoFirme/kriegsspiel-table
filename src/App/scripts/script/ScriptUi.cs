@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Godot;
 using KTable.Client.Panels;
 using KTable.Core.Panels;
@@ -87,10 +88,14 @@ public partial class ScriptUi : Control
         _s.Do(new UiEvent { Path = path, Event = ev, Value = value });
     }
 
+    public void Answered(string token)
+    {
+        if (_dialogs.Remove(token, out var shown) && IsInstanceValid(shown)) shown.QueueFree();
+    }
+
     public void ShowDialog(ShowDialog d)
     {
-        if (d.To != null && d.To != $"p:{_s.Me.PeerId}") return;
-        if (!_s.IsUmpire) return;
+        if (!_s.ForMe(d)) return;
         if (d.Kind == "picture") { AskPicture(d); return; }
         var dlg = new AcceptDialog { Title = d.Title.Length > 0 ? d.Title : "Script", OkButtonText = "OK" };
         var box = new VBoxContainer { CustomMinimumSize = new Vector2(420, 0) };
@@ -118,7 +123,7 @@ public partial class ScriptUi : Control
             {
                 box.AddChild(Ui.Hint(d.Text.Length > 0 && d.Kind == "options" ? d.Text : ""));
                 var ob = new OptionButton();
-                var opts = d.Kind == "color" ? new List<string> { "White", "Red", "Blue", "Green", "Yellow", "Orange", "Purple", "Pink", "Brown", "Teal", "Grey", "Black" } : d.Options;
+                var opts = d.Kind == "color" ? KTable.Client.ScriptDialogs.Colours.ToList() : d.Options;
                 foreach (var o in opts) ob.AddItem(o);
                 var pre = opts.IndexOf(d.Text);
                 if (pre >= 0) ob.Selected = pre;
@@ -128,7 +133,7 @@ public partial class ScriptUi : Control
             }
             default:
                 box.AddChild(Ui.Hint(d.Text));
-                value = () => "True";
+                value = () => KTable.Client.ScriptDialogs.Yes;
                 dlg.OkButtonText = "Yes";
                 break;
         }
@@ -181,6 +186,8 @@ public partial class ScriptUi : Control
         fd.FileSelected += Answer;
         fd.Canceled += () => Answer(null);
         fd.CloseRequested += () => Answer(null);
+        _dialogs[d.Token] = fd;
+        fd.TreeExiting += () => { if (_dialogs.GetValueOrDefault(d.Token) == fd) _dialogs.Remove(d.Token); };
         AddChild(fd);
         fd.PopupCentered();
         Ui.FreeOnClose(fd);

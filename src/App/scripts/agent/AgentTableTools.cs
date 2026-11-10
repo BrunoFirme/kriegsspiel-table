@@ -49,7 +49,8 @@ sealed partial class AgentTableTools
                 new Arg("height", "number", $"relief height × (0–{StateMachine.MostHeight})"), new Arg("relief", "string", "full path of a 3D terrain or heightmap file, stretched over this sheet"),
                 new Arg("remove_relief", "boolean", "take the relief off (a sheet keeps a picture or a relief)"), new Arg("picture", "string", "full path or web link of a picture to lay on this sheet"),
                 new Arg("crop", "array", "[x, y, w, h]: the part of the picture shown, as fractions 0–1 of the whole; [0, 0, 1, 1] shows it whole. The map keeps its scale"),
-                new Arg("opacity", "number", "the picture's opacity, 0.05–1: lower shows the table or another sheet through it")),
+                new Arg("opacity", "number", "the picture's opacity, 0.05–1: lower shows the table or another sheet through it"),
+                new Arg("turn_with_pieces", "number", "-90, 90 or 180: turns this sheet, every sheet joined to it and the pieces standing on them as one, about the middle of the map, as the Map page's turn buttons do")),
             SetSheet);
         yield return new AgentTool("copy_pieces",
             "Copies pieces onto the clipboard as they stand, with their counters, text lines, look, own name, note, tags, scale, script and whatever is attached to them. " +
@@ -71,6 +72,8 @@ sealed partial class AgentTableTools
         foreach (var t in ReliefTools()) yield return t;
         foreach (var t in MeasureTools()) yield return t;
         foreach (var t in RecordTools()) yield return t;
+        foreach (var t in TableExtraTools()) yield return t;
+        foreach (var t in SightTools()) yield return t;
     }
 
     (Session s, Hud hud)? Table(out ToolResult? why)
@@ -197,7 +200,7 @@ sealed partial class AgentTableTools
                 rows.Add(new JsonObject { ["id"] = p.Id, ["name"] = p.Label ?? s.Def(p.Def)?.Name ?? p.Def, ["layer"] = layer, ["x"] = Math.Round(p.Pos.X, 2), ["z"] = Math.Round(p.Pos.Z, 2), ["turn"] = Math.Round(p.RotDeg, 1) });
             }
         if (total == 0) return "No pieces in this area.";
-        var head = total > PiecesListed ? $"{PiecesListed} of the {total} pieces in this area (list_pieces for all):" : $"The {total} pieces in this area:";
+        var head = total > PiecesListed ? $"{PiecesListed} of the {total} pieces in this area (list_pieces with within lists them all):" : $"The {total} pieces in this area:";
         return head + "\n" + rows.ToJsonString();
     }
 
@@ -258,6 +261,15 @@ sealed partial class AgentTableTools
         if (!CanChange(s, out why)) return why!;
         var id = a.Str("id") ?? "";
         if (s.View.Sheets.FirstOrDefault(x => x.Id == id) is not { } sh) return ToolResult.Fail($"No map sheet {id} (list_map_sheets).");
+        if (a.Num("turn_with_pieces") is { } quarter)
+        {
+            if (quarter is not (-90 or 90 or 180)) return ToolResult.Fail("turn_with_pieces is -90, 90 or 180.");
+            var joined = MapTurn.Joined(s.View.Sheets, id);
+            s.Do(MapTurn.Turned(joined, s.View.Layer(Layers.Umpire), Layers.Umpire, quarter));
+            await _a.Landed(s);
+            _a.Log($"turned the map sheet {sh.Name} with its pieces");
+            return ListSheets();
+        }
         if (a.Flag("remove") == true)
         {
             s.Do(new RemoveSheet { Id = id });

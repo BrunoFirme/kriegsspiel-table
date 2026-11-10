@@ -46,7 +46,7 @@ static class AgentConnect
         a.TurnOn();
         bool copied = a.On;
         if (copied) AppClipboard.SetText(a.Note);
-        var box = InPlace.SubPage(page, PageTitle, Back);
+        var box = AgentFence.Mark(InPlace.SubPage(page, PageTitle, Back));
         box.AddThemeConstantOverride("separation", Ui.Gap.Section);
 
         var (pasteHead, pasteBody) = Step(box, 1, "Paste the note into your agent's chat");

@@ -38,26 +38,15 @@ public sealed partial class TableTools
                 new Arg("gap", "number", "space between pieces as a share of their size: 0 touching, 0.1 close (the default), 1 a piece's width apart"),
                 new Arg("ranks", "number", "ranks for line, chequer, crescent and open order; how many abreast for column"), StretchLength, StretchPath),
             FormUp);
-        yield return new AgentTool("press_button",
-            "Presses a button a piece's script drew on it, as a player clicking it does (so it tests what people see). By its label or its number from list_buttons.",
-            Args.Schema(new Arg("id", "string", "the piece's id", true), new Arg("label", "string", "the button's label"), new Arg("number", "number", "its number from list_buttons (from 1)"), new Arg("alt", "boolean", "a right-click")),
-            PressButton);
-        yield return new AgentTool("list_buttons",
-            "The buttons, input boxes and menu rows a piece's script gave it, and the table's own script menu rows and hotkeys.",
-            Args.Schema(new Arg("id", "string", "a piece's id; leave out for the table's")), ListButtons);
-        yield return new AgentTool("pick_menu_row",
-            "Picks a row a script added to a piece's right-click menu, or (no id) to the table's menu, by its label.",
-            Args.Schema(new Arg("id", "string", "the piece's id; leave out for the table's menu"), new Arg("label", "string", "the row's label", true), new Arg("x", "number", "for the table's menu: where it was opened"), new Arg("z", "number", "map units")),
-            PickRow);
-        yield return new AgentTool("press_hotkey",
-            "Presses a hotkey a script registered, by its label, with these pieces selected.",
-            Args.Schema(new Arg("label", "string", "the hotkey's label", true), new Arg("selected", "array", "piece ids to have selected"), new Arg("id", "string", "the piece under the pointer")),
-            PressHotkey);
         yield return new AgentTool("set_piece_options",
-            "Locks or unlocks a piece, sets its side tint, its size (scale), turns it face down or up, lets pieces be dropped into it (holds), sets whether it collides with other pieces and whether a die lands on its real face, or attaches it to another piece (it then moves with it).",
+            "Locks or unlocks a piece, sets its side tint, its size (scale), turns it face down or up, lets pieces be dropped into it (holds), sets whether it collides with other pieces, carries what rests on it, is taken by a selection box, " +
+            "shows how far it is moved, whether a die lands on its real face and whether an effect runs, attaches it to another piece (it then moves with it), or marks its kind a favourite in the Pieces drawer, as the right-click Options do.",
             Args.Schema(new Arg("id", "string", "the piece's id", true), new Arg("locked", "boolean", "locked in place"), new Arg("tint", "string", "#rrggbb, or empty for its own"),
                 new Arg("scale", "number", "1 is its own size"), new Arg("face_down", "boolean", "turned over"), new Arg("holds", "boolean", "pieces dropped on it go inside"), new Arg("collides", "boolean", "other pieces push against it and rest on it (true for most)"),
-                new Arg("thrown_for_real", "boolean", "a die shows the face it lands on, as thrown, instead of a fair random face"), new Arg("attach_to", "string", "a piece it rides on"), new Arg("detach", "boolean", "off what it rides on")),
+                new Arg("carries", "boolean", "what rests on it moves with it (true for most)"), new Arg("box_selected", "boolean", "a selection box takes it (true for most)"),
+                new Arg("shows_move", "boolean", "shows how far it is moved while it is dragged"), new Arg("running", "boolean", "an effect piece plays (smoke rises, fire burns)"),
+                new Arg("thrown_for_real", "boolean", "a die shows the face it lands on, as thrown, instead of a fair random face"), new Arg("attach_to", "string", "a piece it rides on"), new Arg("detach", "boolean", "off what it rides on"),
+                new Arg("favourite", "boolean", "its kind among the favourites in the Pieces drawer, on this PC")),
             SetOptions);
         yield return new AgentTool("end_turn",
             "Ends the turn: the clock goes on by the turn's length, the turn is kept in the history and saved.",
@@ -72,8 +61,10 @@ public sealed partial class TableTools
             "Writes a line in the log everyone at the table reads.",
             Args.Schema(new Arg("text", "string", "the line", true), new Arg("colour", "string", "#rrggbb")), SayTool);
         yield return new AgentTool("draw",
-            "Draws a line on the map through points (map units), as the pen does, or with text writes a name on the map in the map style's hand: one point places it by what lies under it (beside a town, along a river, spread across a patch of ground, plain on bare paper), more points are its baseline; arrow adds a head at a line's end; board puts it on a drawing layer of that name, made if missing. Undoable.",
+            "Draws a line on the map through points (map units), as the pen does, or with text writes a name on the map in the map style's hand: one point places it by what lies under it (beside a town, along a river, spread across a patch of ground, plain on bare paper), more points are its baseline; arrow adds a head at a line's end; shape draws the pen's shapes instead: a rectangle or an ellipse in the box between two points, a curve or a curved arrow bending through the points, " +
+            "or an area washed in the colour round three or more; opacity makes the ink see-through; board puts it on a drawing layer of that name, made if missing. Undoable.",
             Args.Schema(new Arg("points", "array", "[[x, z], [x, z], …]", true), new Arg("colour", "string", "#rrggbb"), new Arg("width", "number", "map units (default 0.3)"), new Arg("text", "string", "a name to write instead of a line"), new Arg("arrow", "boolean", "a head at the end"),
+                new Arg("shape", "string", string.Join(", ", DrawShapes) + " (line if left out)"), new Arg("opacity", "number", $"{LeastInk}–1, how much the ink hides what is under it (1 if left out)"),
                 new Arg("board", "string", "the drawing layer's name (list_drawings shows them); left out, the default layer")),
             DrawTool);
         yield return new AgentTool("set_zone",
@@ -87,10 +78,12 @@ public sealed partial class TableTools
                 new Arg("divisions", "number", $"lines inside each square cell, 1 for plain cells (1–{GridDivisionsMost})")),
             SetGridTool);
         yield return new AgentTool("set_light",
-            "Sets the table's light (sun and ambient 0–1, warmth −1 to 1, shadows, or following the game clock's hour), the table under the map (0 squared paper, 0.5 grey, 1 black, 1.05 see-through: no table drawn), the backdrop seen around the table, the map style painted ground is drawn in, contour lines over the relief, a snow line (metres; above it every ground takes snow), streams from the relief, and the wind (from, in degrees; strength 0 calm to 5 a gale), for everyone at the table.",
-            Args.Schema(new Arg("sun", "number", "0–1"), new Arg("ambient", "number", "0–1"), new Arg("warmth", "number", "−1 to 1"), new Arg("shadows", "boolean", "shadows"), new Arg("from_clock", "boolean", "follows the clock's hour"),
+            "Sets the table's light (a preset, sun and ambient 0–1, warmth −1 to 1, shadows, or following the game clock's hour), the table under the map (0 squared paper, 0.5 grey, 1 black, 1.05 see-through: no table drawn), the backdrop seen around the table (a sky, a colour or a picture of your own), the map style painted ground is drawn in, contour lines over the relief, a snow line (metres; above it every ground takes snow), streams from the relief, and the wind (from, in degrees; strength 0 calm to 5 a gale), for everyone at the table.",
+            Args.Schema(new Arg("preset", "string", "the light as one of the presets, before sun, ambient and warmth are applied: " + string.Join(", ", LightPresets.All.Select(p => p.Name))),
+                new Arg("sun", "number", "0–1"), new Arg("ambient", "number", "0–1"), new Arg("warmth", "number", "−1 to 1"), new Arg("shadows", "boolean", "shadows"), new Arg("from_clock", "boolean", "follows the clock's hour"),
                 new Arg("table_shade", "number", "the table under the map: 0 squared paper, 0.5 grey, 1 black, 1.05 see-through (no table drawn)"),
-                new Arg("backdrop", "string", "around the table: none, a solid #rrggbb colour, or one of " + string.Join(", ", Backdrops.All.Select(b => b.Id)) + "; a sky brings its own light unless sun, ambient or warmth are given"),
+                new Arg("backdrop", "string", "around the table: none, a solid #rrggbb colour, a picture's full path or web link (a panorama twice as wide as tall wraps all the way round), or one of " +
+                    string.Join(", ", Backdrops.All.Select(b => b.Id)) + "; a sky brings its own light unless the light is given too"),
                 new Arg("map_style", "string", "painted ground drawn as an ancient, survey (18th century) or modern map"),
                 new Arg("contours", "boolean", "contour lines over every relief, spaced to fit its highest ground and redrawn as it changes"),
                 new Arg("snow_line", "number", "metres above which every ground takes snow, 0 for none; needs the map's scale"),
@@ -130,7 +123,7 @@ public sealed partial class TableTools
         return path is { Count: >= 2 } && Formations.Length(path) > Formations.Least ? null : ToolResult.Fail("path is two or more [x, z] points, not all on one spot.");
     }
 
-    static List<string> List(JsonElement a, string name) =>
+    internal static List<string> List(JsonElement a, string name) =>
         a.ValueKind == JsonValueKind.Object && a.TryGetProperty(name, out var v) && v.ValueKind == JsonValueKind.Array
             ? v.EnumerateArray().Where(x => x.ValueKind == JsonValueKind.String).Select(x => x.GetString()!).ToList() : new();
 
@@ -198,84 +191,6 @@ public sealed partial class TableTools
         return new ToolResult($"Placed {made.Count} of {kinds.Count} in {formation}.\n" + rows.ToJsonString(Json), made.Count < kinds.Count);
     }
 
-    Task<ToolResult> ListButtons(JsonElement a)
-    {
-        if (Open(out var why) is not { } s) return Task.FromResult(why!);
-        var id = a.Str("id") ?? "";
-        var o = new JsonObject();
-        if (id.Length > 0)
-        {
-            if (Find(s, id) is not { } p) return Task.FromResult(ToolResult.Fail($"No piece {id} on this table."));
-            o["widgets"] =
-                new JsonArray(p.Widgets.Select((w, i) => (JsonNode?)new JsonObject { ["number"] = i + 1, ["kind"] = w.Kind, ["label"] = w.Label, ["face"] = w.Face, ["value"] = w.Kind == "input" ? w.Value : null, ["presses"] = w.OnClick != null
-                    || w.OnChange != null }).ToArray());
-            o["menuRows"] = new JsonArray(p.MenuItems.Select(m => (JsonNode?)JsonValue.Create(m.Label)).ToArray());
-        }
-        else
-        {
-            o["menuRows"] = new JsonArray(s.View.MenuItems.Select(m => (JsonNode?)JsonValue.Create(m.Label)).ToArray());
-            o["hotkeys"] = new JsonArray(s.View.Hotkeys.Select(h => (JsonNode?)JsonValue.Create(h.Label)).ToArray());
-        }
-        return Task.FromResult(new ToolResult(o.ToJsonString(Json)));
-    }
-
-    async Task<ToolResult> Pressed(ClientSession s, long seq, string what)
-    {
-        await Landed(s);
-        _log(what);
-        var fresh = s.ConsoleLines.Where(l => l.Seq > seq).ToList();
-        return new ToolResult(char.ToUpperInvariant(what[0]) + what[1..] + "." + Since(s, seq, 60), fresh.Any(l => l.Kind == "error"));
-    }
-
-    async Task<ToolResult> PressButton(JsonElement a)
-    {
-        if (Open(out var why) is not { } s) return why!;
-        if (!CanChange(s, out why)) return why!;
-        var id = a.Str("id") ?? "";
-        if (Find(s, id) is not { } p) return ToolResult.Fail($"No piece {id} on this table.");
-        int index = a.Num("number") is { } n ? (int)n - 1 : a.Str("label") is { Length: > 0 } label
-? p.Widgets.FindIndex(w => w.OnClick != null && w.Label.Equals(label, StringComparison.OrdinalIgnoreCase)) is var exact and >= 0 ? exact
-                : p.Widgets.FindIndex(w => w.OnClick != null && w.Label.Contains(label, StringComparison.OrdinalIgnoreCase))
-            : -1;
-        if (index < 0 || index >= p.Widgets.Count) return ToolResult.Fail($"{NameOf(s, p)} has no such button: list_buttons shows them.");
-        long seq = LastSeq(s);
-        s.Do(new ClickWidget { Layer = Layers.Umpire, Id = id, Index = index + 1, Alt = a.Flag("alt") ?? false });
-        return await Pressed(s, seq, $"pressed {p.Widgets[index].Label} on {NameOf(s, p)}");
-    }
-
-    async Task<ToolResult> PickRow(JsonElement a)
-    {
-        if (Open(out var why) is not { } s) return why!;
-        if (!CanChange(s, out why)) return why!;
-        var label = a.Str("label") ?? "";
-        long seq = LastSeq(s);
-        if (a.Str("id") is { Length: > 0 } id)
-        {
-            if (Find(s, id) is not { } p) return ToolResult.Fail($"No piece {id} on this table.");
-            int i = p.MenuItems.FindIndex(m => m.Label.Equals(label, StringComparison.OrdinalIgnoreCase));
-            if (i < 0) return ToolResult.Fail($"{NameOf(s, p)}'s menu has no row {label}: list_buttons shows them.");
-            s.Do(new PickMenuItem { Layer = Layers.Umpire, Id = id, Index = i + 1 });
-            return await Pressed(s, seq, $"picked {label} on {NameOf(s, p)}");
-        }
-        int g = s.View.MenuItems.FindIndex(m => m.Label.Equals(label, StringComparison.OrdinalIgnoreCase));
-        if (g < 0) return ToolResult.Fail($"The table's menu has no row {label}: list_buttons shows them.");
-        s.Do(new PickGlobalMenuItem { Index = g + 1, Pos = a.Num("x") is { } x && a.Num("z") is { } z ? new Vec2(x, z) : null });
-        return await Pressed(s, seq, $"picked {label} on the table's menu");
-    }
-
-    async Task<ToolResult> PressHotkey(JsonElement a)
-    {
-        if (Open(out var why) is not { } s) return why!;
-        if (!CanChange(s, out why)) return why!;
-        var label = a.Str("label") ?? "";
-        int i = s.View.Hotkeys.FindIndex(h => h.Label.Equals(label, StringComparison.OrdinalIgnoreCase));
-        if (i < 0) return ToolResult.Fail($"No hotkey {label}: list_buttons shows them.");
-        long seq = LastSeq(s);
-        var under = a.Str("id") is { Length: > 0 } id ? Find(s, id) : null;
-        s.Do(new Hotkey { Index = i + 1, Layer = under == null ? null : Layers.Umpire, Piece = under?.Id, Pos = under?.Pos, Selected = List(a, "selected") });
-        return await Pressed(s, seq, $"pressed the hotkey {label}");
-    }
-
     async Task<ToolResult> SetOptions(JsonElement a)
     {
         if (Open(out var why) is not { } s) return why!;
@@ -295,6 +210,21 @@ public sealed partial class TableTools
         if (a.Flag("collides") is { } collides) { s.Do(new SetPieceOption { Layer = Layers.Umpire, Id = id, Name = PieceOptions.NoCollision, Value = !collides }); done.Add(collides ? "collides" : "passes through pieces"); }
         if (a.Flag("thrown_for_real") is { } real) { s.Do(new SetPieceOption { Layer = Layers.Umpire, Id = id, Name = PieceOptions.PhysicalRoll, Value = real }); done.Add(real ? "lands on its real face" : "rolls a fair face"); }
         if (a.Flag("holds") is { } holds) { s.Do(new SetPieceOption { Layer = Layers.Umpire, Id = id, Name = PieceOptions.Holds, Value = holds }); done.Add(holds ? "holds pieces" : "holds no more pieces"); }
+        if (a.Flag("carries") is { } carries) { s.Do(new SetPieceOption { Layer = Layers.Umpire, Id = id, Name = PieceOptions.NotSticky, Value = !carries }); done.Add(carries ? "carries what rests on it" : "leaves what rests on it"); }
+        if (a.Flag("box_selected") is { } boxed) { s.Do(new SetPieceOption { Layer = Layers.Umpire, Id = id, Name = PieceOptions.NotBoxSelected, Value = !boxed }); done.Add(boxed ? "taken by a selection box" : "left out of selection boxes"); }
+        if (a.Flag("shows_move") is { } shows) { s.Do(new SetPieceOption { Layer = Layers.Umpire, Id = id, Name = PieceOptions.MeasuresMoves, Value = shows }); done.Add(shows ? "shows how far it is moved" : "does not show how far it is moved"); }
+        if (a.Flag("running") is { } running)
+        {
+            if (!PieceKinds.IsEffect(s.Def(p.Def))) return ToolResult.Fail($"{NameOf(s, p)} is not an effect: only effects run.");
+            s.Do(new SetPieceOption { Layer = Layers.Umpire, Id = id, Name = PieceOptions.EffectOff, Value = !running });
+            done.Add(running ? "runs" : "stopped");
+        }
+        if (a.Flag("favourite") is { } favourite)
+        {
+            if (_hooks.Favourite is not { } hearts) return ToolResult.Fail("Favourites are kept by the app's Pieces drawer.");
+            hearts(p.Def, favourite);
+            done.Add(favourite ? "its kind a favourite" : "its kind no longer a favourite");
+        }
         if (a.Str("attach_to") is { Length: > 0 } parent)
         {
             if (Find(s, parent) == null || parent == id) return ToolResult.Fail($"No other piece {parent} to attach to.");
@@ -313,7 +243,12 @@ public sealed partial class TableTools
         var said = $"{NameOf(s, p)}: {string.Join(", ", done)}.";
         if (now == null) return new ToolResult(said);
         var holdsNow = now.HoldsPieces(s.Store.Def(now.Def));
-        var shown = new { now.Locked, Tint = now.TintOverride, now.Scale, now.FaceDown, Collides = !now.NoCollision, ThrownForReal = now.PhysicalRoll, Holds = holdsNow, now.Attached };
+        var shown = new
+        {
+            now.Locked, Tint = now.TintOverride, now.Scale, now.FaceDown, Collides = !now.NoCollision, Carries = !now.NotSticky, BoxSelected = !now.NotBoxSelected, ShowsMove = now.MeasuresMoves,
+            Running = PieceKinds.IsEffect(s.Def(now.Def)) ? !now.EffectOff : (bool?)null, ThrownForReal = now.PhysicalRoll, Holds = holdsNow, now.Attached,
+            Favourite = _hooks.Favourite?.Invoke(now.Def, null),
+        };
         return new ToolResult(said + "\n" + JsonSerializer.Serialize(shown, Json));
     }
 
@@ -380,7 +315,16 @@ public sealed partial class TableTools
         var pts = Points(a, "points");
         var text = a.Str("text")?.Trim() ?? "";
         if (pts is not { Count: >= 1 } || pts.Count > 2000 || text.Length == 0 && pts.Count < 2) return ToolResult.Fail("points is [[x, z], …], 2 to 2000 of them, or one or more with text.");
+        var shape = (a.Str("shape") ?? "line").Trim().ToLowerInvariant();
+        if (!DrawShapes.Contains(shape)) return ToolResult.Fail("shape is " + string.Join(", ", DrawShapes) + ".");
+        if (text.Length == 0 && Shaped(shape, pts) is { } badShape) return badShape;
         var colour = a.Str("colour") ?? "#C0392B";
+        if (a.Num("opacity") is { } opacity)
+        {
+            if (!Backdrops.IsColour(colour) || colour.Length != HexColour.Length) return ToolResult.Fail("opacity goes with a #rrggbb colour.");
+            var alpha = (int)Math.Round(Math.Clamp(opacity, LeastInk, 1) * 255);
+            if (alpha < 255) colour += alpha.ToString("x2", CultureInfo.InvariantCulture);
+        }
         double width = Math.Clamp(a.Num("width") ?? 0.3, 0.02, 20);
         var board = "";
         if (a.Str("board")?.Trim() is { Length: > 0 } named)
@@ -391,30 +335,56 @@ public sealed partial class TableTools
             board = found.Id;
         }
         var before = s.View.DrawLayer(Layers.Umpire).Select(x => x.Id).ToHashSet();
-        int made = 1;
-        var placed = pts.Count == 1 ? _placeName?.Invoke(pts[0], text) ?? pts : pts;
-        var stroke = text.Length > 0 ? new Stroke { Points = placed, Text = text, Width = 0, Color = "", Board = board } : new Stroke { Points = pts, Width = width, Color = colour, Board = board };
-        s.Do(new Draw { Layer = Layers.Umpire, Stroke = stroke });
-        if (text.Length == 0 && a.Flag("arrow") == true)
-        {
-            var tip = pts[^1];
-            var from = pts[^2];
-            double dx = tip.X - from.X, dz = tip.Z - from.Z, len = Math.Sqrt(dx * dx + dz * dz);
-            if (len > 1e-6)
-            {
-                dx /= len;
-                dz /= len;
-                double head = Math.Max(width * 4, 0.6);
-                Vec2 Wing(double side) => new(tip.X - dx * head + -dz * head * 0.6 * side, tip.Z - dz * head + dx * head * 0.6 * side);
-                s.Do(new Draw { Layer = Layers.Umpire, Stroke = new Stroke { Points = new List<Vec2> { Wing(1), tip, Wing(-1) }, Width = width, Color = colour, Board = board } });
-                made++;
-            }
-        }
+        var placed = pts.Count == 1 ? _hooks.PlaceName?.Invoke(pts[0], text) ?? pts : pts;
+        var strokes = text.Length > 0 ? new List<Stroke> { new() { Points = placed, Text = text, Width = 0, Color = "", Board = board } }
+            : ShapeStrokes(shape, pts, a.Flag("arrow") == true, new Stroke { Width = width, Color = colour, Board = board });
+        foreach (var st in strokes) s.Do(new Draw { Layer = Layers.Umpire, Stroke = st });
+        int made = strokes.Count;
         await Until(() => s.View.DrawLayer(Layers.Umpire).Count(x => !before.Contains(x.Id)) >= made, 3);
         var ids = s.View.DrawLayer(Layers.Umpire).Where(x => !before.Contains(x.Id)).Select(x => x.Id).ToList();
         _log("drew on the map");
-        var did = text.Length > 0 ? $"Wrote {text}" : $"Drew a line of {pts.Count} points{(made > 1 ? " with an arrowhead" : "")}";
+        var did = text.Length > 0 ? $"Wrote {text}" : shape == "line" ? $"Drew a line of {pts.Count} points{(made > 1 ? " with an arrowhead" : "")}" : $"Drew a {shape.Replace('_', ' ')}";
         return new ToolResult($"{did} ({string.Join(", ", ids)}; erase_drawings takes them).");
+    }
+
+    static readonly string[] DrawShapes = { "line", "rectangle", "ellipse", "curve", "curved_arrow", "area" };
+    const double LeastInk = 0.05, ArrowWing = 0.6, ArrowLength = 4, LeastArrow = 0.6;
+    const string HexColour = "#rrggbb";
+
+    static ToolResult? Shaped(string shape, List<Vec2> pts) => shape switch
+    {
+        "rectangle" or "ellipse" when pts.Count != 2 => ToolResult.Fail($"A {shape} takes two points: opposite corners of its box."),
+        "area" when pts.Count < 3 => ToolResult.Fail("An area takes three or more points round it."),
+        "curve" or "curved_arrow" when pts.Count < 2 => ToolResult.Fail("A curve takes two or more points it bends through."),
+        _ => null,
+    };
+
+    static List<Stroke> ShapeStrokes(string shape, List<Vec2> pts, bool arrow, Stroke ink)
+    {
+        Stroke Line(List<Vec2> p, bool fill = false) => new() { Points = p, Width = ink.Width, Color = ink.Color, Board = ink.Board, Fill = fill };
+        switch (shape)
+        {
+            case "rectangle":
+                return new() { Line(Polyline.ShapePoints("rect", pts[0], pts[1])) };
+            case "ellipse":
+                return new() { Line(Polyline.ShapePoints("ellipse", pts[0], pts[1])) };
+            case "area":
+                return new() { Line(Polyline.Smooth(pts, true), fill: true) };
+            case "curve" or "curved_arrow":
+                var body = Polyline.Smooth(pts, false);
+                return shape == "curved_arrow" && Polyline.PathHead(body) is { } head ? new() { Line(body), Line(head) } : new() { Line(body) };
+        }
+        var lines = new List<Stroke> { Line(pts) };
+        var tip = pts[^1];
+        var from = pts[^2];
+        double dx = tip.X - from.X, dz = tip.Z - from.Z, len = Math.Sqrt(dx * dx + dz * dz);
+        if (!arrow || len <= 1e-6) return lines;
+        dx /= len;
+        dz /= len;
+        double size = Math.Max(ink.Width * ArrowLength, LeastArrow);
+        Vec2 Wing(double side) => new(tip.X - dx * size + -dz * size * ArrowWing * side, tip.Z - dz * size + dx * size * ArrowWing * side);
+        lines.Add(Line(new List<Vec2> { Wing(1), tip, Wing(-1) }));
+        return lines;
     }
 
     async Task<ToolResult> SetZoneTool(JsonElement a)
@@ -469,28 +439,45 @@ public sealed partial class TableTools
         if (Open(out var why) is not { } s) return why!;
         if (!CanChange(s, out why)) return why!;
         var done = new List<string>();
-        var backdrop = a.Str("backdrop")?.Trim().ToLowerInvariant() is { } asked ? asked == "none" ? Backdrops.None : asked : null;
+        var files = new List<string>();
+        var given = a.Str("backdrop")?.Trim();
+        var backdrop = given?.ToLowerInvariant() is { } asked ? asked == "none" ? Backdrops.None : asked : null;
         if (backdrop != null && backdrop.Length > 0 && Backdrops.Find(backdrop) == null && !Backdrops.IsColour(backdrop))
-            return ToolResult.Fail($"No backdrop {backdrop}: none, a #rrggbb colour, or one of {string.Join(", ", Backdrops.All.Select(b => b.Id))}.");
+        {
+            if (!LooksLikeFile(given!)) return ToolResult.Fail($"No backdrop {backdrop}: none, a #rrggbb colour, a picture's file or web link, or one of {string.Join(", ", Backdrops.All.Select(b => b.Id))}.");
+            if (_hooks.KeepPicture is not { } keep) return ToolResult.Fail("A backdrop picture is chosen in the app's Scenario properties.");
+            if (await keep(given!, true) is not { } kept) return ToolResult.Fail($"{given} could not be used as a backdrop.");
+            backdrop = kept;
+            files.Add(kept);
+        }
+        Lighting? preset = null;
+        if (a.Str("preset") is { Length: > 0 } presetName)
+        {
+            preset = LightPresets.All.FirstOrDefault(p => string.Equals(p.Name, presetName.Trim(), StringComparison.OrdinalIgnoreCase)).Light;
+            if (preset == null) return ToolResult.Fail("preset is one of " + string.Join(", ", LightPresets.All.Select(p => p.Name)) + ".");
+        }
         var style = a.Str("map_style")?.Trim().ToLowerInvariant() is { } named ? named == "survey" ? MapStyles.Survey : named : null;
         if (style != null && MapStyles.Of(style) != style) return ToolResult.Fail("map_style is ancient, survey or modern.");
         var snow = a.Num("snow_line");
         var streams = a.Flag("streams");
         if ((snow != null || streams == true) && s.View.Calibration.UnitsPerMeter is not > 0) return ToolResult.Fail(GroundKinds.NeedsScale + " (set_map_scale).");
-        bool lightGiven = a.Num("sun") != null || a.Num("ambient") != null || a.Num("warmth") != null || a.Flag("shadows") != null;
+        bool lightGiven = a.Num("sun") != null || a.Num("ambient") != null || a.Num("warmth") != null || a.Flag("shadows") != null || preset != null;
         bool lookGiven = a.Flag("from_clock") != null || a.Num("table_shade") != null || a.Str("backdrop") != null || style != null || a.Flag("contours") != null || snow != null || streams != null;
         if (lightGiven || lookGiven)
         {
             var l = s.View.Lighting;
-            if (!lightGiven && backdrop != null && Backdrops.Find(backdrop)?.Light is { } suggested && LightPresets.Named(suggested) is { } preset)
-                l = LightPresets.Lit(l, preset);
-            s.Do(new SetLighting { Lighting = new Lighting
+            if (preset != null) l = LightPresets.Lit(l, preset);
+            else if (!lightGiven && backdrop != null && Backdrops.Find(backdrop)?.Light is { } suggested && LightPresets.Named(suggested) is { } skyLight)
+                l = LightPresets.Lit(l, skyLight);
+            var lit = new SetLighting { Lighting = new Lighting
             {
                 SunEnergy = Math.Clamp(a.Num("sun") ?? l.SunEnergy, 0, 1), Ambient = Math.Clamp(a.Num("ambient") ?? l.Ambient, 0, 1), Warmth = Math.Clamp(a.Num("warmth") ?? l.Warmth, -1, 1),
                 Shadows = a.Flag("shadows") ?? l.Shadows, FromClock = a.Flag("from_clock") ?? l.FromClock,
                 TableShade = Math.Clamp(a.Num("table_shade") ?? l.TableShade, 0, Lighting.SeeThrough), Backdrop = backdrop ?? l.Backdrop, MapStyle = style ?? l.MapStyle,
                 Contours = a.Flag("contours") ?? l.Contours, SnowLine = Math.Max(0, snow ?? l.SnowLine), Streams = streams ?? l.Streams,
-            } });
+            } };
+            if (files.Count > 0 && _hooks.SendWithFiles is { } send) send(files, lit);
+            else s.Do(lit);
             done.Add("light");
         }
         if (a.Num("wind_from") != null || a.Num("wind_strength") != null)
@@ -504,6 +491,8 @@ public sealed partial class TableTools
         _log("set the " + string.Join(" and ", done));
         return new ToolResult($"Set the {string.Join(" and ", done)}: wind {Wind.Words(s.View.Wind.Strength)} from {Wind.Point(s.View.Wind.From)}.");
     }
+
+    static bool LooksLikeFile(string s) => s.Contains('/') || s.Contains('\\') || Path.HasExtension(s);
 
     Task<ToolResult> ReadBriefing(JsonElement a)
     {

@@ -131,7 +131,7 @@ sealed class PeopleList : HudPart
         if (!Opens) return;
         if (_pop == null || !GodotObject.IsInstanceValid(_pop))
         {
-            _pop = new PopupPanel();
+            _pop = AgentFence.Mark(new PopupPanel());
             _list = new VBoxContainer { CustomMinimumSize = new Vector2(ListWidth, 0) };
             _list.AddThemeConstantOverride("separation", Ui.Gap.Row);
             _pop.AddChild(_list);

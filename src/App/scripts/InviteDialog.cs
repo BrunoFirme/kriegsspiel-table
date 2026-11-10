@@ -17,11 +17,8 @@ sealed class InviteDialog : HudPart
         var box = new VBoxContainer { CustomMinimumSize = new Vector2(480, 0) };
         box.AddThemeConstantOverride("separation", Ui.Gap.Group);
         box.AddChild(Header("Where they connect"));
-        var lan = Net.LanAddresses();
-        var port = Cfg.Port.ToString(System.Globalization.CultureInfo.InvariantCulture);
-        string? lanAt = lan.Count > 0 ? $"{lan[0]}  port {port}" : null;
+        var (lanAt, netAt, port) = Where(N, Cfg);
         box.AddChild(Fact("Your network", lanAt ?? $"port {port} (UDP)", lanAt != null ? Copy(lanAt) : null));
-        string? netAt = N.UpnpStatus == "ok" && N.ExternalAddress != null ? $"{N.ExternalAddress}  port {port}" : null;
         box.AddChild(Fact("Internet", N.UpnpStatus switch
         {
             "ok" => netAt ?? $"port {port}",
@@ -38,15 +35,20 @@ sealed class InviteDialog : HudPart
         box.AddChild(Hint("Whoever knocks waits until you or a lead let them in, from the card under the top bar or the people at the top right; once in, their PC comes straight back next time."));
         if (S.IsHost) AddPacks(box, dlg);
         dlg.AddChild(box);
-        dlg.Confirmed += () =>
-        {
-            var at = netAt ?? lanAt ?? $"port {port}";
-            var pw = pwField.Text.Trim() is { Length: > 0 } p ? p : "none";
-            AppClipboard.SetText($"Kriegsspiel Table · {S.View.Name}\nJoin a game → {at} · password: {pw}");
-        };
+        dlg.Confirmed += () => AppClipboard.SetText(Invitation(S.View.Name, netAt ?? lanAt ?? $"port {port}", pwField.Text.Trim()));
         Ui.Open(HudNode, dlg, new Vector2I(520, 80));
         Ui.FreeOnClose(dlg);
     }
+
+    internal static (string? Lan, string? Internet, string Port) Where(Net n, Settings cfg)
+    {
+        var lan = Net.LanAddresses();
+        var port = cfg.Port.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        return (lan.Count > 0 ? $"{lan[0]}  port {port}" : null, n.UpnpStatus == "ok" && n.ExternalAddress != null ? $"{n.ExternalAddress}  port {port}" : null, port);
+    }
+
+    internal static string Invitation(string game, string at, string password) =>
+        $"Kriegsspiel Table · {game}\nJoin a game → {at} · password: {(password.Length > 0 ? password : "none")}";
 
     void AddPacks(VBoxContainer box, AcceptDialog dlg)
     {

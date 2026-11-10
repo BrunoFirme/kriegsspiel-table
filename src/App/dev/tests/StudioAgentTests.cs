@@ -97,6 +97,9 @@ static class StudioAgentTests
         await b.Ok("studio_make_block", """{"name":"Fusiliers"}""");
         var id = b.IdOf("Fusiliers");
         await b.Ok("studio_set_piece", $$"""{"id":"{{id}}","width":3,"tint":"#112233","tags":["line","french"]}""");
+        var holding = await b.Ok("studio_set_piece", $$"""{"id":"{{id}}","holds":true}""");
+        Check.That(holding.Contains("\"holds\": true"), "the kind holds pieces: " + holding);
+        Check.That(!(await b.Ok("studio_set_piece", $$"""{"id":"{{id}}","holds":false}""")).Contains("\"holds\": true"), "and holds none again");
         await b.Ok("studio_set_text_line", $$"""{"id":"{{id}}","name":"Regiment","default":"1st"}""");
         await b.Ok("studio_add_look", $$"""{"id":"{{id}}","name":"Shattered"}""");
         await b.Ok("studio_rename_look", $$"""{"id":"{{id}}","look":2,"name":"Broken"}""");

@@ -10,7 +10,7 @@ static class BookWindow
 {
     const int PageTexSize = 2048;
 
-    public static bool Is(PieceDef? def) => def is { } d && d.Tags.Contains("book") && d.States.Count > 1;
+    public static bool Is(PieceDef? def) => KTable.Client.PieceKinds.IsBook(def);
 
     static readonly Dictionary<string, Window> Open_ = new();
 

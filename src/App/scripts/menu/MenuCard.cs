@@ -54,10 +54,11 @@ sealed class MenuCard
         return b;
     }
 
-    public void Item(string text, Action action, string accel = "")
+    public Button Item(string text, Action action, string accel = "")
     {
         var b = Row(text, accel, null);
         b.Pressed += () => { Pop.Hide(); action(); };
+        return b;
     }
     public void Check(string text, bool on, Action action, string accel = "")
     {

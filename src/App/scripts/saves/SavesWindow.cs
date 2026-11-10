@@ -143,7 +143,7 @@ sealed partial class SavesWindow : Window
         bottom.AddChild(_turns);
         bottom.AddChild(_load);
         _restore = Ui.Primary("Restore", () => Restore(PickedTrash()), "Put it back where it was");
-        _purge = Ui.Btn("Delete for good", () => Purge(PickedTrash()));
+        _purge = AgentFence.Mark(Ui.Btn("Delete for good", () => Purge(PickedTrash())));
         var spacer = new Control { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         bottom.AddChild(spacer);
         bottom.AddChild(_purge);
@@ -615,9 +615,10 @@ sealed partial class SavesWindow : Window
     {
         if (many.Count == 0) return;
         var title = many.Count == 1 ? many[0].Name : Items(many.Count);
-        Ui.Confirm(this, "Delete " + title + " for good", "Delete", () =>
+        var asked = Ui.Confirm(this, "Delete " + title + " for good", "Delete", () =>
             OnDisk("Deleting…", () => EachOf(many, t => { _store.DeleteTrashEntry(t.Entry); return ""; }), said => { Tell(said); Show(TrashKey); }),
             many.Count == 1 ? "It cannot be brought back." : "They cannot be brought back.", 320);
+        if (asked.Shown != null) AgentFence.Mark(asked.Shown);
     }
 
     static string EachOf<T>(IReadOnlyList<T> many, Func<T, string> one)
@@ -635,7 +636,7 @@ sealed partial class SavesWindow : Window
 
     void TrashMenu(IReadOnlyList<TrashedSave> many, Vector2 at)
     {
-        var pm = new PopupMenu();
+        var pm = AgentFence.Mark(new PopupMenu());
         pm.AddItem(many.Count > 1 ? $"Restore {many.Count}" : "Restore", 1);
         pm.AddItem(many.Count > 1 ? $"Delete {many.Count} for good…" : "Delete for good…", 2);
         pm.IdPressed += id => { if (id == 1) Restore(many); else Purge(many); };

@@ -179,6 +179,8 @@ sealed class UmpirePointers
 
     public IEnumerable<long> Peers() => _cursors.Keys;
 
+    public IEnumerable<(string Name, Vec2 At, double Idle, bool Carrying)> Seen() => _cursors.Select(kv => (kv.Value.Name, kv.Value.Target, kv.Value.Age, _carrying(kv.Key)));
+
     public void Forget(long peer)
     {
         if (_cursors.Remove(peer, out var c)) { c.Hand.QueueFree(); _c.Labels.Remove("cursor:" + peer); }

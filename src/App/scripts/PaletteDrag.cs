@@ -56,7 +56,7 @@ sealed class PaletteDrag
             {
                 if (_c.S.View.Find(f.Layer, f.Holder) is not { } holder) { End(drop: true); return; }
                 _made = _def;
-                _c.S.Do(HolderWindow.TakingOut(_c.S, f.Layer, holder, new() { new Unstow { Layer = f.Layer, Holder = f.Holder, Id = _def, Pos = g } }));
+                _c.S.Do(KTable.Client.TakeOut.Taking(_c.S, f.Layer, holder, new() { new Unstow { Layer = f.Layer, Holder = f.Holder, Id = _def, Pos = g } }));
             }
             else
             {

@@ -13,8 +13,8 @@ public sealed partial class TableTools
     IEnumerable<AgentTool> DrawingTools()
     {
         yield return new AgentTool("list_drawings",
-            "The lines and names drawn on the map, by the pen or by draw: id, layer, colour, width, text for a name, where each starts and ends. With near, only those passing within radius of that point.",
-            Args.Schema(new Arg("near", "array", "[x, z] map units"), new Arg("radius", "number", $"map units (default {ListRadius})")), ListDrawings);
+            "The lines and names drawn on the map, by the pen or by draw: id, layer, colour, width, text for a name, where each starts and ends. With near, only those passing within radius of that point. A page at a time.",
+            Args.Schema(new Arg("near", "array", "[x, z] map units"), new Arg("radius", "number", $"map units (default {ListRadius})"), Paging.Offset), ListDrawings);
         yield return new AgentTool("erase_drawings",
             "Erases drawn lines, as the pen's eraser does: by id (list_drawings, or what draw answered), or every line passing within radius of near. Each is undoable.",
             Args.Schema(new Arg("ids", "array", "the lines' ids"), new Arg("near", "array", "[x, z] map units"), new Arg("radius", "number", $"map units (default {EraseRadius})")), EraseDrawings);
@@ -34,21 +34,16 @@ public sealed partial class TableTools
         if (Open(out var why) is not { } s) return Task.FromResult(why!);
         var near = Near(a);
         var radius = a.Num("radius") ?? ListRadius;
-        var rows = new JsonArray();
-        int total = 0;
-        foreach (var (layer, strokes) in s.View.Drawings)
-            foreach (var st in strokes)
-            {
-                if (st.Points.Count == 0 || near is { } n && Distance(st, n) > radius) continue;
-                if (++total > DrawingsListed) continue;
-                rows.Add(new JsonObject
-                {
-                    ["id"] = st.Id, ["layer"] = layer, ["colour"] = st.Color, ["width"] = Math.Round(st.Width, 3), ["points"] = st.Points.Count,
-                    ["from"] = At(st.Points[0]), ["to"] = At(st.Points[^1]), ["board"] = st.Board.Length > 0 ? st.Board : null, ["text"] = st.Text,
-                });
-            }
-        if (total == 0) return Task.FromResult(new ToolResult(near == null ? "Nothing is drawn on the map." : "No drawn line passes there."));
-        var head = total > DrawingsListed ? $"{DrawingsListed} of {total} lines (give near for the rest)" : $"{total} lines";
+        var found = s.View.Drawings.SelectMany(kv => kv.Value.Select(st => (Layer: kv.Key, Stroke: st)))
+            .Where(x => x.Stroke.Points.Count > 0 && !(near is { } n && Distance(x.Stroke, n) > radius)).ToList();
+        if (found.Count == 0) return Task.FromResult(new ToolResult(near == null ? "Nothing is drawn on the map." : "No drawn line passes there."));
+        var (page, head) = Paging.Page(found, a, DrawingsListed, "lines");
+        var rows = new JsonArray(page.Select(x => (JsonNode?)new JsonObject
+        {
+            ["id"] = x.Stroke.Id, ["layer"] = x.Layer, ["colour"] = x.Stroke.Color, ["width"] = Math.Round(x.Stroke.Width, 3), ["points"] = x.Stroke.Points.Count,
+            ["from"] = At(x.Stroke.Points[0]), ["to"] = At(x.Stroke.Points[^1]), ["board"] = x.Stroke.Board.Length > 0 ? x.Stroke.Board : null, ["text"] = x.Stroke.Text,
+            ["filled"] = x.Stroke.Fill ? true : null,
+        }).ToArray());
         return Task.FromResult(new ToolResult(head + "\n" + rows.ToJsonString(Json)));
     }
 
