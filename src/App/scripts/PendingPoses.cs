@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using KTable.Core.Model;
 using KTable.Core.Protocol;
 
@@ -63,8 +64,13 @@ sealed class PendingPoses
     public void RotateSmooth(double deg)
     {
         if (_hand.Holding) { _hand.Rotate(deg); return; }
-        foreach (var n in _selection.Movable) { var c = Current(n); Set(n, c.pos, c.rot + deg, c.scale); }
-        _c.Sound.Turn(_selection.Movable);
+        Turn(_selection.Movable.ToList(), deg);
+    }
+
+    public void Turn(IReadOnlyCollection<PieceNode> nodes, double deg)
+    {
+        foreach (var n in nodes) { var c = Current(n); Set(n, c.pos, c.rot + deg, c.scale); }
+        _c.Sound.Turn(nodes);
         _c.Say("The wheel turns 10° a notch · Ctrl 2° · Shift ½° · Alt+wheel zooms · drag the ring knobs");
     }
 

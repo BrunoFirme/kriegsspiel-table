@@ -32,7 +32,7 @@ public static class KeysPage
             (K("selectAll"), "select all"),
             ($"{K("statePrev")}  {K("stateNext")}", "previous and next look"),
             ("1 … 9  0", "set the look of the piece under the pointer; a die, its side"),
-            ("Wheel", "over a selected piece, turn 10° (Ctrl 2°, Shift ½°; with Alt, zoom); elsewhere, zoom"),
+            ("Wheel", "over a selected piece, turn 10° (Ctrl 2°, Shift ½°; with Alt, zoom); elsewhere, zoom. Settings → Table lets it turn any piece under the pointer"),
             ("Shift / Ctrl+click", "add to the selection"),
             ("Drag the table", "box-select, leaving locked pieces out"),
             (K("roll"), "roll the dice under the pointer or selected"),

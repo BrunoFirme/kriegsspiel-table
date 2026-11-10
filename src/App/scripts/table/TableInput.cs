@@ -163,14 +163,27 @@ sealed class TableInput
             _ranges.Wheel(f);
             return;
         }
+        double step = (up ? -1 : 1) * (mb.ShiftPressed ? 0.5 : mb.CtrlPressed ? 2 : 10);
         if (_c.Tool != Tool.Decal && WheelOnSelection(mb.Position) && !mb.AltPressed)
         {
-            double step = (up ? -1 : 1) * (mb.ShiftPressed ? 0.5 : mb.CtrlPressed ? 2 : 10);
             if (_hand.Holding) _hand.Rotate(step);
             else _poses.RotateSmooth(step);
             return;
         }
+        if (!mb.AltPressed && TurnableUnderPointer(mb.Position) is { } under)
+        {
+            _poses.Turn(new[] { under }, step);
+            return;
+        }
         Rig.Zoom(f, mb.Position);
+    }
+
+    PieceNode? TurnableUnderPointer(Vector2 screen)
+    {
+        if (!_c.Settings.WheelTurnsHovered || _hand.Holding || _c.Tool is not (Tool.Select or Tool.Transform)) return null;
+        var g = _c.Ground(screen);
+        var hit = g != null ? _pieces.Pick(g.Value, screen: screen) : null;
+        return hit != null && !hit.Piece.Locked && S.CanTouch(hit.Layer, hit.Piece) ? hit : null;
     }
 
     public void OnMouseButton(InputEventMouseButton mb)

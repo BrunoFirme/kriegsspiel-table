@@ -150,6 +150,9 @@ sealed class SettingsDialog : HudPart
         _box.AddChild(Option(face));
         _box.AddChild(nameRow);
         _box.AddChild(ReachRow());
+        var wheel = new CheckBox { Text = "Wheel turns the piece under the pointer", ButtonPressed = Cfg.WheelTurnsHovered, TooltipText = "No need to select it first. Off: the wheel turns selected pieces and zooms over the rest" };
+        wheel.Toggled += on => Cfg.WheelTurnsHovered = on;
+        _box.AddChild(Option(wheel));
         _box.AddChild(Header("New scenarios"));
         AppSettings.AddNewScenarios(_box, Cfg);
         if (!pointers) return;

@@ -103,7 +103,8 @@ Kept views are yours, for each scenario. Forget one with Menu → Views → Forg
 
 - Drag a piece to carry it; it drops where you let go. Drag the empty table to box-select.
 - **Q / E** turn 15° (Shift 1°) and **= / −** resize (1/50 to 50 times). The wheel over a selected piece turns it
-  10° (Ctrl 2°, Shift ½°); **Alt+wheel** zooms there.
+  10° (Ctrl 2°, Shift ½°); **Alt+wheel** zooms there. With **Wheel turns the piece under the pointer** on
+  (Settings → Table), it turns any piece you may move without selecting it first.
 - The same keys mean the same in every tool: **Q / E** turn, **= / −** size, **[ ]** step one less or one more,
   and the wheel zooms, except over selected pieces. **Ctrl+wheel** sizes what a tool holds: the brush, a decal, the
   POV reach.
