@@ -480,9 +480,10 @@ public static partial class StateMachine
         var p = g.Find(s.Layer, s.Id);
         if (holder == null || p == null || s.Holder == s.Id) return "no such piece";
         if (Carries(g, s.Layer, p, s.Holder)) return "a piece cannot hold one it rides on";
+        var carried = Carried(g, s.Layer, p);
+        if (1 + carried.Append(p).Max(x => x.HolderLevels()) > PieceInstance.MostHolderLevels) return $"pieces are held {PieceInstance.MostHolderLevels} holders deep and no deeper";
         int at = layer.IndexOf(p);
         var previous = layer.FirstOrDefault(o => o.Attached?.Contains(s.Id) == true);
-        var carried = Carried(g, s.Layer, p);
         foreach (var o in layer) o.Attached?.Remove(s.Id);
         layer.Remove(p);
         foreach (var c in carried) layer.Remove(c);

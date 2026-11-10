@@ -105,11 +105,11 @@ public partial class Hud : CanvasLayer
         Hook<Action<string>>(h => N.StatusChanged += h, h => N.StatusChanged -= h, st => Top.SetStatus(st));
         Hook<Action<string?>>(h => N.SaveProblem += h, h => N.SaveProblem -= h, p =>
         {
-            Top.SaveWarn.Visible = p != null;
-            Top.SaveWarn.TooltipText = p ?? "";
+            Top.ShowSaveProblem(p);
             if (p != null) Log($"[color=#ff7060]Not saved: {Fmt.Bb(p)}. The game goes on in memory; free the disk or fix the folder before you close the table.[/color]");
             else Log("Saving works again.");
         });
+        Top.ShowSaveProblem(N.SaveWarning);
         Hook<Action<string>>(h => N.SaveNote += h, h => N.SaveNote -= h, n => Log($"[color=#a09c94]{Fmt.Bb(n)}[/color]"));
         foreach (var p in Problems.Take()) Log($"[color=#ffd75e]{Fmt.Bb(p)}[/color]");
         Hook<Action<string>>(h => Problems.Told += h, h => Problems.Told -= h, p => Callable.From(() => { if (IsInstanceValid(this)) Log($"[color=#ffd75e]{Fmt.Bb(p)}[/color]"); }).CallDeferred());

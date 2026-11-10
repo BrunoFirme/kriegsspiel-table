@@ -43,7 +43,7 @@ public static class WorkshopContent
 {
     public const string MetaFile = "ktable-item.json";
     public const string GameFile = "game.kstable";
-    static readonly HashSet<string> Allowed = new(StringComparer.OrdinalIgnoreCase) { ".json", ".png", ".jpg", ".jpeg", ".webp", ".obj", ".gif", ".bmp", SaveStore.Ext };
+    static readonly HashSet<string> Allowed = new(PackagePaths.HostFileTypes, StringComparer.OrdinalIgnoreCase) { SaveStore.Ext };
 
     public enum PackMode
     {
@@ -52,7 +52,35 @@ public static class WorkshopContent
         Whole,
     }
 
-    public static string Stage(PackageStore store, string kind, string id, PackMode packs = PackMode.None, SavesMode saves = SavesMode.None)
+    public enum TableMode
+    {
+        AsItStands,
+        Setup,
+        MapOnly,
+    }
+
+    static Scenario Staged(string dst, TableMode table)
+    {
+        var file = Path.Combine(dst, "scenario.json");
+        var start = Path.Combine(dst, ScenarioFiles.StartFile);
+        if (table == TableMode.Setup)
+        {
+            if (!File.Exists(start)) throw new FileNotFoundException("this scenario has no setup kept to export");
+            File.Copy(start, file, true);
+        }
+        var sc = Json.Load<Scenario>(file);
+        if (table != TableMode.MapOnly) return sc;
+        BestEffort.DeleteFile(start);
+        var map = new Scenario
+        {
+            Id = sc.Id, Name = sc.Name, Sheets = sc.Sheets, Grid = sc.Grid, Calibration = sc.Calibration, Clock = sc.Clock, Lighting = sc.Lighting, Wind = sc.Wind,
+            VisionRadius = sc.VisionRadius, VisionSharp = sc.VisionSharp, VisionBlur = sc.VisionBlur,
+        };
+        Json.SaveBig(file, map);
+        return map;
+    }
+
+    public static string Stage(PackageStore store, string kind, string id, PackMode packs = PackMode.None, SavesMode saves = SavesMode.None, TableMode table = TableMode.AsItStands)
     {
         var src = kind == "pack" ? store.PackageDir(id) : Path.Combine(store.Root, "scenarios", id);
         var manifest = kind == "pack" ? "pack.json" : "scenario.json";
@@ -64,7 +92,7 @@ public static class WorkshopContent
         if (kind == "pack") meta.Name = Json.Load<PackManifest>(Path.Combine(src, manifest)).Name;
         else
         {
-            var sc = Json.Load<Scenario>(Path.Combine(src, manifest));
+            var sc = Staged(dst, table);
             meta.Name = sc.Name;
             meta.Packs = sc.Packs.ToList();
             meta.GameRun = SavesHandover.Stage(store, SaveStore.ForRoot(store.Root), id, saves, dst);
@@ -153,19 +181,18 @@ public static class WorkshopContent
         meta.InstalledPacks.Clear();
         SweepStaging(store);
         var packs = new List<PackStep>();
-        var scDir = Path.Combine(store.Root, "scenarios", meta.Id);
-        var scName = NameIn(Path.Combine(scDir, "scenario.json"), meta.Id);
         var game = Path.Combine(folder, GameFile);
         if (meta.Kind == "pack") { if (PlanPack(store, folder, meta.Id, carried: false) is { } p) packs.Add(p); }
         else
         {
-            Json.Load<Scenario>(Path.Combine(folder, "scenario.json"));
+            meta.Id = ScenarioFolderFor(store, meta.Id, Json.Load<Scenario>(Path.Combine(folder, "scenario.json")).Id);
             if (File.Exists(game)) Json.Load<SaveFile>(game);
             var packsDir = Path.Combine(folder, "packs");
             if (Directory.Exists(packsDir))
                 foreach (var d in Directory.GetDirectories(packsDir))
                     if (Path.GetFileName(d) is { } pid && SafePackId(pid) && PlanPack(store, d, pid, carried: true) is { } p) packs.Add(p);
         }
+        var scName = NameIn(Path.Combine(store.Root, "scenarios", meta.Id, "scenario.json"), meta.Id);
         var folders = packs.Select(p => (InUse.Pack(store.Root, p.Id), $"the pack '{(p.Existing?.Name is { Length: > 0 } n ? n : p.Id)}'")).ToList();
         if (meta.Kind == "scenario") folders.Add((InUse.Scenario(store.Root, meta.Id), $"the scenario '{scName}'"));
         using var hold = InUse.Claim(folders, "being installed");
@@ -193,6 +220,26 @@ public static class WorkshopContent
             throw;
         }
         finally { foreach (var p in packs) store.Forget(p.Id); }
+    }
+
+    static string? ScenarioIdIn(PackageStore store, string dir) =>
+        Path.Combine(store.Root, "scenarios", dir, "scenario.json") is var file && File.Exists(file) ? Json.PeekString(file, "id") ?? "" : null;
+
+    internal static string ScenarioFolderFor(PackageStore store, string dir, string scenarioId)
+    {
+        bool Free(string d) => ScenarioIdIn(store, d) is not { } there || there == scenarioId;
+        if (Free(dir)) return dir;
+        for (int n = 2; ; n++)
+            if (Free($"{dir}-{n}")) return $"{dir}-{n}";
+    }
+
+    public static string? ScenarioItWouldReplace(PackageStore store, string file)
+    {
+        using var zip = ZipFile.OpenRead(file);
+        if (zip.GetEntry(MetaFile) is not { } metaEntry || zip.GetEntry("scenario.json") is not { } scenarioEntry) return null;
+        if (JsonSerializer.Deserialize<WorkshopItemMeta>(ContentLimits.Read(metaEntry), Opts) is not { Kind: "scenario" } meta || !SafeId(meta.Id)) return null;
+        var dir = ScenarioFolderFor(store, meta.Id, Json.Deserialize<Scenario>(ContentLimits.Read(scenarioEntry)).Id);
+        return ScenarioIdIn(store, dir) == null ? null : NameIn(Path.Combine(store.Root, "scenarios", dir, "scenario.json"), dir);
     }
 
     sealed record PackStep(string Id, string Folder, PackManifest Incoming, PackManifest? Existing, bool Carried);
@@ -320,9 +367,9 @@ public static class WorkshopContent
         }
     }
 
-    public static long ExportFile(PackageStore store, string kind, string id, PackMode packs, string file, SavesMode saves = SavesMode.None)
+    public static long ExportFile(PackageStore store, string kind, string id, PackMode packs, string file, SavesMode saves = SavesMode.None, TableMode table = TableMode.AsItStands)
     {
-        var staged = Stage(store, kind, id, packs, saves);
+        var staged = Stage(store, kind, id, packs, saves, table);
         var tmp = $"{file}.{Guid.NewGuid().ToString("N")[..8]}.part";
         try
         {

@@ -223,6 +223,37 @@ public class HostFilesSafetyTests
     }
 
     [Fact]
+    public void The_piece_list_an_upload_replaces_goes_to_the_trash_and_comes_back_from_it()
+    {
+        Host(Role.Umpire, "Eve");
+        var path = HostPack("Eve");
+        var told = new List<string>();
+        _t.Log.Tell = told.Add;
+        Upload(new PackManifest { Id = "user.mine", Name = "newer", Source = new PackSource { Authors = ["Eve"] } });
+        var saves = SaveStore.ForRoot(_root);
+        var kept = Assert.Single(saves.TrashEntries());
+        Assert.Equal((TrashKind.PieceList, "user.mine"), (kept.Kind, kept.Id));
+        Assert.True(TrashShelves.IsPackEntry(kept));
+        Assert.Equal("the host's own", Json.Load<PackManifest>(Path.Combine(kept.Path, "pack.json")).Name);
+        Assert.Contains("Eve sent a newer piece list", Assert.Single(told));
+
+        saves.Restore(kept, _root, DateTime.UtcNow.AddSeconds(1));
+
+        Assert.Equal("the host's own", Json.Load<PackManifest>(path).Name);
+        var swapped = Assert.Single(saves.TrashEntries());
+        Assert.Equal("newer", Json.Load<PackManifest>(Path.Combine(swapped.Path, "pack.json")).Name);
+    }
+
+    [Fact]
+    public void A_pack_new_to_the_host_and_the_same_list_sent_again_leave_nothing_in_the_trash()
+    {
+        Host(Role.Umpire, "Eve");
+        Upload(new PackManifest { Id = "user.mine", Name = "first", Source = new PackSource { Authors = ["Eve"] } });
+        Upload(new PackManifest { Id = "user.mine", Name = "first", Source = new PackSource { Authors = ["Eve"] } });
+        Assert.Empty(SaveStore.ForRoot(_root).TrashEntries());
+    }
+
+    [Fact]
     public void The_same_piece_list_again_is_taken_whoever_wrote_it()
     {
         Host(Role.Umpire);

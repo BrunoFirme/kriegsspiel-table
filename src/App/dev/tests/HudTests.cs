@@ -51,6 +51,30 @@ static class HudTests
     }
 
     [NodeTest]
+    static async Task A_save_that_fails_fills_the_middle_of_the_top_bar_with_the_warning_until_saving_works_again(TestRunner r)
+    {
+        var h = await Host(r);
+        var top = h.Hud.Top;
+        string why = "the game could not be written to " + new string('x', 400) + ": the disk is full";
+        top.ShowSaveProblem(why);
+        await r.Frames(2);
+        Check.That(top.SaveWarn.Visible, "shown");
+        Check.Equal(why, top.SaveWarn.TooltipText, "the whole reason on hover");
+        var labels = top.SaveWarn.FindChildren("*", "Label", true, false).Cast<Label>().ToList();
+        Check.Equal("NOT SAVED", labels[0].Text, "its two words");
+        Check.Equal(why, labels[1].Text, "the reason beside them");
+        var bar = top.Panel.GetGlobalRect();
+        var at = top.SaveWarn.GetGlobalRect();
+        Check.That(bar.Encloses(at), $"inside the top bar, however long the reason: {at} in {bar}");
+        Check.That(labels[0].Size.X >= labels[0].GetMinimumSize().X, $"its two words whole in a narrow window: {labels[0].Size.X} of {labels[0].GetMinimumSize().X}");
+        Check.That(!top.Said!.Visible && !top.SaidGap.Visible, "the passing line makes way for it");
+        top.SayLine("outside your umpire zone");
+        Check.That(h.Hud.LogPanel.Text.GetParsedText().Contains("outside your umpire zone"), "what the top line would have said goes to the Log meanwhile");
+        top.ShowSaveProblem(null);
+        Check.That(!top.SaveWarn.Visible && top.SaidGap.Visible, "gone once saving works");
+    }
+
+    [NodeTest]
     static async Task An_empty_table_points_the_umpire_at_the_map_page(TestRunner r)
     {
         var h = await Host(r, sheets: 0);

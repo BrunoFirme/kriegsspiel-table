@@ -191,7 +191,7 @@ function resupply(who) ui.set_attribute("supply", "percentage", 100) end
   Dropdown (Option), ProgressBar, Slider, Image.
 - Place with `rectAlignment` and `offsetXY`; size with `width`/`height`.
 - `self.ui` puts panels on the piece itself, with the same calls.
-- Limits: 24 levels deep, 20,000 elements.
+- Limits: 20 levels deep, 20,000 elements. The depth is a matter of taste: nothing good is drawn deeper.
 
 ## Other scripts and timers
 

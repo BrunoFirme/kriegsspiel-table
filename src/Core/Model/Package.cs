@@ -540,6 +540,10 @@ public sealed class PieceInstance : IJsonOnDeserialized
             foreach (var deeper in s.AllStowed()) yield return deeper;
         }
     }
+
+    public const int MostHolderLevels = 7;
+
+    public int HolderLevels() => Stowed is { Count: > 0 } held ? 1 + held.Max(h => h.HolderLevels()) : 0;
 }
 
 public static class TakeOrders

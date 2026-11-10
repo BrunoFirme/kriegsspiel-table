@@ -14,6 +14,7 @@ internal sealed partial class PanelQueue
 
     public void React(UiEvent e, DynValue who)
     {
+        host.Web.NoteTyped(e.Value);
         var layout = e.Piece == null ? State.UiLayout : State.Find(e.Layer ?? Layers.Umpire, e.Piece)?.UiLayout;
         if (layout == null) return;
         var element = e.Path is { Count: > 0 } path ? layout.At(path) : layout.ById(e.Id ?? "");

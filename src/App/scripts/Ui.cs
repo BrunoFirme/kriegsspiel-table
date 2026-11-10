@@ -14,6 +14,7 @@ public static class Ui
     public static readonly Color AccentInk = new(0.867f, 0.733f, 0.427f);
     public static readonly Color OnAccent = new(0.11f, 0.09f, 0.055f);
     public static readonly Color Danger = new(0.898f, 0.404f, 0.353f);
+    public static readonly Color Alarm = new(0.725f, 0.141f, 0.118f);
     public static readonly Color Good = new(0.549f, 0.776f, 0.431f);
 
     public static readonly Color Bar = new(0.071f, 0.067f, 0.059f);

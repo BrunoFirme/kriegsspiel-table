@@ -12,9 +12,12 @@ sealed class HudDemo : HudPart
     readonly Hud Hud;
     public HudDemo(Hud hud) : base(hud.Ctx) { Hud = hud; }
 
+    const string DiskFull = @"the game could not be written to C:\Users\umpire\AppData\Local\KriegsspielTable\saves\lobositz\20261110-190000.kstable: There is not enough space on the disk";
+
     public void Run(string what)
     {
         var centre = Hud.GetViewport().GetVisibleRect().Size / 2;
+        if (what == "notsaved") { Hud.Top.ShowSaveProblem(DiskFull); return; }
         if (Pages(what) || CompassDrag(what) || Hearts(what) || Scripts(what) || View(what) || PovPictures(what) || PovTool(what) || PovFormat(what) || PovEye(what) || PovGif(what)
             || DrawingPanels(what) || PanelMoves(what) || Hands(what) || PieceMoves(what) || Lettering(what) || Dialogs(what) || ReadyAndFaded(what) || PovBlur(what)) return;
         if (what == "dice") Hud.OpenPanel("dice");

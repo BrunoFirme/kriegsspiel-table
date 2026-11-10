@@ -304,7 +304,7 @@ public class PanelTests
 
     [Theory]
     [InlineData("local t = { tag = 'Panel' } t.children = { t } ui.set({ t })", "nests deeper")]
-    [InlineData("local a = { tag = 'Panel' } for i = 1, 22 do a = { tag = 'Panel', children = { a, a } } end ui.set({ a })", "elements")]
+    [InlineData("local a = { tag = 'Panel' } for i = 1, 19 do a = { tag = 'Panel', children = { a, a } } end ui.set({ a })", "elements")]
     public void A_panel_table_without_end_is_refused_not_walked_for_ever(string lua, string why)
     {
         using var t = Global("function on_load(s) " + lua + " end");

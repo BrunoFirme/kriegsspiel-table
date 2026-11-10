@@ -33,6 +33,7 @@ public sealed partial class ScriptHost
     {
         if (!_dialogs.Remove(r.Token, out var d)) return;
         if (!d.owner.Enabled || !IsCurrent(d.owner)) return;
+        Web.NoteTyped(r.Value);
         if (d.kind == "picture" && r.Value != null && IsWebLink(r.Value)) { Fetch(d.owner, d.fn, r.Value, who); return; }
         Invoke(d.owner, d.fn, r.Value == null ? DynValue.Nil : DynValue.NewString(r.Value), who);
     }

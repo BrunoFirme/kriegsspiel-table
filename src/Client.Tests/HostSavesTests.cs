@@ -133,15 +133,18 @@ public class HostSavesTests
         _saves.SaveNow();
         Assert.True(SpinWait.SpinUntil(() => { _saves.Harvest(); return _saves.LastSaveProblem != null; }, 10000));
         Assert.Empty(_problems);
+        Assert.Null(_saves.Warning);
         _now = 110;
         _saves.SaveNow();
         Assert.True(SpinWait.SpinUntil(() => { _saves.Harvest(); return _problems.Count > 0; }, 10000));
         Assert.Single(_problems);
+        Assert.Equal(_problems[0], _saves.Warning);
         var good = Path.Combine(_dir, "game.json");
         _session.SavePath = good;
         _saves.SaveNow(closing: true);
         Assert.Equal(new string?[] { _problems[0], null }, _problems);
         Assert.Null(_saves.LastSaveProblem);
+        Assert.Null(_saves.Warning);
     }
 
     [Fact]

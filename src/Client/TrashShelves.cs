@@ -4,7 +4,7 @@ namespace KTable.Client;
 
 public static class TrashShelves
 {
-    public static bool IsPackEntry(TrashEntry e) => e.Kind is TrashKind.Pack or TrashKind.PackFiles;
+    public static bool IsPackEntry(TrashEntry e) => e.Kind is TrashKind.Pack or TrashKind.PackFiles or TrashKind.PieceList;
 
     public static List<TrashEntry> Entries(SaveStore saves, bool packs) => saves.TrashEntries().Where(e => IsPackEntry(e) == packs).ToList();
 

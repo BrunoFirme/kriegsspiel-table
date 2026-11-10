@@ -62,12 +62,37 @@ public partial class ExportDialog : ConfirmationDialog
         return opt;
     }
 
+    static OptionButton TablePicker(PackageStore store, Scenario sc, string scenarioDir, bool inPlay)
+    {
+        var opt = new OptionButton { FitToLongestItem = false };
+        int pieces = sc.UmpireBoard.Count;
+        opt.AddItem($"As it stands now ({pieces} piece{(pieces == 1 ? "" : "s")}, turn {sc.Clock.Turn})", (int)WorkshopContent.TableMode.AsItStands);
+        bool setup = ScenarioFiles.StartPath(store, scenarioDir) != null;
+        if (setup) opt.AddItem(sc.Id.StartsWith("local.") ? "The setup, as the first turn ended" : "The scenario's start", (int)WorkshopContent.TableMode.Setup);
+        opt.AddItem("The map only: no pieces, drawings, briefing or scripts", (int)WorkshopContent.TableMode.MapOnly);
+        opt.Selected = opt.GetItemIndex((int)(!inPlay ? WorkshopContent.TableMode.AsItStands : setup ? WorkshopContent.TableMode.Setup : WorkshopContent.TableMode.MapOnly));
+        return opt;
+    }
+
+    static HBoxContainer Row(string label, OptionButton pick)
+    {
+        var row = new HBoxContainer();
+        row.AddThemeConstantOverride("separation", Ui.Gap.Group);
+        row.AddChild(new Label { Text = label, CustomMinimumSize = new Vector2(LabelColumn, 0) });
+        pick.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
+        row.AddChild(pick);
+        return row;
+    }
+
+    const int LabelColumn = 48;
+
     public override void _Ready()
     {
         var box = new VBoxContainer { CustomMinimumSize = new Vector2(520, 0) };
         AddChild(box);
         OptionButton? mode = null;
         OptionButton? savesPick = null;
+        OptionButton? tablePick = null;
         if (_kind == "scenario")
         {
             var sc = Json.Load<Scenario>(Path.Combine(_store.Root, "scenarios", _id, "scenario.json"));
@@ -76,15 +101,12 @@ public partial class ExportDialog : ConfirmationDialog
             box.AddChild(mode);
             box.AddChild(Ui.Hint("Whoever opens the file gets the scenario and every pack inside it. A trimmed pack never replaces a full one they already have."));
             var saves = SaveStore.Default;
-            if (saves.HasGame(_id))
+            bool inPlay = saves.HasGame(_id);
+            box.AddChild(Row("Table", tablePick = TablePicker(_store, sc, _id, inPlay)));
+            if (inPlay)
             {
-                savesPick = SavesPicker(saves, _id);
-                var row = new HBoxContainer();
-                row.AddThemeConstantOverride("separation", Ui.Gap.Group);
-                row.AddChild(new Label { Text = "Saves" });
-                savesPick.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
-                row.AddChild(savesPick);
-                box.AddChild(row);
+                box.AddChild(Row("Saves", savesPick = SavesPicker(saves, _id)));
+                box.AddChild(Ui.Hint("A game is in play here: as it stands now, the file shows whoever opens it every piece where it is, with its notes and the briefing."));
             }
         }
         else box.AddChild(new Label { Text = $"{_store.Pack(_id)?.Name ?? _id}: one file anyone can install (drop it on the window)." });
@@ -104,8 +126,10 @@ public partial class ExportDialog : ConfirmationDialog
                 {
                     var m = mode == null ? WorkshopContent.PackMode.None : (WorkshopContent.PackMode)mode.GetSelectedId();
                     var withSaves = savesPick == null ? SavesMode.None : (SavesMode)savesPick.GetSelectedId();
-                    var bytes = WorkshopContent.ExportFile(_store, _kind, _id, m, f, withSaves);
-                    Done?.Invoke($"Saved {Path.GetFileName(f)} ({Mb(bytes)}){withSaves switch { SavesMode.InPlay => " with the game in play", SavesMode.All => " with every save", _ => "" }}.");
+                    var table = tablePick == null ? WorkshopContent.TableMode.AsItStands : (WorkshopContent.TableMode)tablePick.GetSelectedId();
+                    var bytes = WorkshopContent.ExportFile(_store, _kind, _id, m, f, withSaves, table);
+                    var held = table switch { WorkshopContent.TableMode.MapOnly => ": the map only", WorkshopContent.TableMode.Setup => ": the setup", _ => "" };
+                    Done?.Invoke($"Saved {Path.GetFileName(f)} ({Mb(bytes)}){held}{withSaves switch { SavesMode.InPlay => " with the game in play", SavesMode.All => " with every save", _ => "" }}.");
                 }
                 catch (Exception e) { Done?.Invoke("Export failed: " + e.Message); }
             };

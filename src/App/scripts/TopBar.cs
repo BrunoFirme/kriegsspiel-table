@@ -16,7 +16,9 @@ sealed class TopBar : HudPart
     public Label? Said;
     public Control SaidGap = null!;
     ulong _saidAt;
-    public Label SaveWarn = null!;
+    public PanelContainer SaveWarn = null!;
+    Label _saveWhy = null!;
+    const int SaveWarnSize = 15, SaveWhySize = 13, SaveWarnPadding = 12;
     public VBoxContainer? Knocks;
     public PeopleList? People;
     ulong _turnEndedAt;
@@ -60,6 +62,41 @@ sealed class TopBar : HudPart
         Knocks.OffsetTop = 40;
         Knocks.OffsetBottom = 40;
         root.AddChild(Knocks);
+    }
+
+    PanelContainer BuildSaveWarn()
+    {
+        SaveWarn = new PanelContainer
+        {
+            Visible = false, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, MouseFilter = Control.MouseFilterEnum.Stop,
+        };
+        SaveWarn.AddThemeStyleboxOverride("panel", Ui.Box(Ui.Alarm, 3, SaveWarnPadding, 2));
+        var row = new HBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
+        row.AddThemeConstantOverride("separation", Ui.Gap.Group);
+        var head = new Label { Text = "NOT SAVED", MaxLinesVisible = 1, MouseFilter = Control.MouseFilterEnum.Ignore };
+        head.AddThemeFontOverride("font", Ui.SansStrong());
+        head.AddThemeFontSizeOverride("font_size", SaveWarnSize);
+        head.AddThemeColorOverride("font_color", Colors.White);
+        row.AddChild(head);
+        _saveWhy = new Label
+        {
+            MaxLinesVisible = 1, ClipText = true, TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis,
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, MouseFilter = Control.MouseFilterEnum.Ignore,
+        };
+        _saveWhy.AddThemeFontSizeOverride("font_size", SaveWhySize);
+        _saveWhy.AddThemeColorOverride("font_color", Colors.White);
+        row.AddChild(_saveWhy);
+        SaveWarn.AddChild(row);
+        return SaveWarn;
+    }
+
+    public void ShowSaveProblem(string? problem)
+    {
+        SaveWarn.Visible = problem != null;
+        SaveWarn.TooltipText = problem ?? "";
+        _saveWhy.Text = problem ?? "";
+        SaidGap.Visible = problem == null;
+        SyncTopLine();
     }
 
     Button BuildScenarioButton()
@@ -159,10 +196,7 @@ sealed class TopBar : HudPart
         Said.AddThemeFontSizeOverride("font_size", 12);
         row.AddChild(Said);
         row.AddChild(SaidGap);
-        SaveWarn = new Label { Text = "NOT SAVED", Visible = false, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, MouseFilter = Control.MouseFilterEnum.Stop, MaxLinesVisible = 1 };
-        SaveWarn.AddThemeFontSizeOverride("font_size", 12);
-        SaveWarn.AddThemeColorOverride("font_color", Ui.Danger);
-        row.AddChild(SaveWarn);
+        row.AddChild(BuildSaveWarn());
         People = new PeopleList(Ctx);
         if (AgentEndpoint.Current is { } agent) row.AddChild(AgentPill.Make(agent, () => { DialogPages.LastPage["settings"] = "AI agent"; Shell.ShowSettings(); }));
         row.AddChild(People.Pill());
@@ -225,7 +259,7 @@ sealed class TopBar : HudPart
     {
         if (MenuButton == null || Said == null) return;
         MenuButton.CustomMinimumSize = new Vector2(Cfg.StripSize + 4, 0);
-        Said.Visible = Cfg.TopLine;
+        Said.Visible = Cfg.TopLine && !SaveWarn.Visible;
         if (!Cfg.TopLine) Said.Text = "";
         float p = Mathf.Clamp(Cfg.TopLineWidth, 0.25f, 1f);
         Said.SizeFlagsStretchRatio = p;
@@ -234,7 +268,7 @@ sealed class TopBar : HudPart
 
     public void SayLine(string text)
     {
-        if (!Cfg.TopLine)
+        if (!Cfg.TopLine || SaveWarn.Visible)
         {
             if (text.Length > 0) Log($"[color=#8a8f98]{Fmt.Bb(text)}[/color]");
             return;

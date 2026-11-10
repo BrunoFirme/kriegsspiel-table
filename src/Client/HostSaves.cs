@@ -27,6 +27,7 @@ public sealed class HostSaves
     public event Action<string?>? SaveProblem;
     public event Action<string>? SaveNote;
     public string? LastSaveProblem { get; private set; }
+    public string? Warning => _saveWarned ? LastSaveProblem : null;
     public string? MirrorPath { get; private set; }
     public string? HeldFolder { get; set; }
 

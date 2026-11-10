@@ -33,7 +33,8 @@ public sealed partial class SaveStore
         e is UnauthorizedAccessException || e is IOException && (e.HResult & 0xFFFF) is 0x20 or 0x21;
     static readonly Regex CheckpointName = new($@"^(?<kind>{string.Join("|", CheckpointKind.Named)})-(?<turn>\d{{4}})_(?<stamp>\d{{8}}-\d{{6}})(?:-(?<n>\d+))?\.kstable$", RegexOptions.IgnoreCase);
     static readonly Regex TrashName = new(@"^(?<stamp>\d{8}-\d{6}) (?<name>.+?)(?: \((?<n>\d+)\))?$");
-    const string GameSuffix = " (game)", MirrorSuffix = " (mirror)";
+    const string GameSuffix = " (game)", MirrorSuffix = " (mirror)", PieceListSuffix = " (piece list)";
+    const string PackManifestFile = "pack.json";
 
     public string LiveDir { get; }
     public string HistoryDir { get; }
@@ -248,6 +249,7 @@ public sealed partial class SaveStore
             else if (name.EndsWith(GameSuffix)) { kind = TrashKind.Game; id = name[..^GameSuffix.Length]; }
             else if (name.EndsWith(SavesSuffix)) { kind = TrashKind.Saves; id = name[..^SavesSuffix.Length]; }
             else if (name.EndsWith(MirrorSuffix)) { kind = TrashKind.Mirror; id = name[..^MirrorSuffix.Length]; }
+            else if (name.EndsWith(PieceListSuffix)) { kind = TrashKind.PieceList; id = name[..^PieceListSuffix.Length]; }
             else { kind = TrashKind.Other; id = name; }
             list.Add(new TrashEntry(d, kind, id, stamp));
         }
@@ -313,6 +315,15 @@ public sealed partial class SaveStore
                 return $"The mirror of {e.Id} is back under Scenarios." + note;
             }
             case TrashKind.PackFiles: return RestorePackFiles(e, packagesRoot);
+            case TrashKind.PieceList:
+            {
+                var manifest = Path.Combine(packagesRoot, e.Id, PackManifestFile);
+                if (!File.Exists(manifest)) throw new IOException($"the pack {e.Id} is not installed here; restore or install it first");
+                KeepPieceList(packagesRoot, e.Id, nowUtc);
+                File.Move(Path.Combine(e.Path, PackManifestFile), manifest, true);
+                Directory.Delete(e.Path, true);
+                return $"The pack {e.Id} has the piece list it had before. The list this replaced is in the trash.";
+            }
             default: throw new IOException("this entry is not one the app put there");
         }
     }
@@ -379,6 +390,14 @@ public sealed partial class SaveStore
     {
         var entry = NewTrashEntry(packId, nowUtc);
         MoveInto(Path.Combine(packagesRoot, packId), Path.Combine(entry, "pack"));
+        return entry;
+    }
+
+    public string KeepPieceList(string packagesRoot, string packId, DateTime nowUtc)
+    {
+        var entry = NewTrashEntry(packId + PieceListSuffix, nowUtc);
+        Directory.CreateDirectory(entry);
+        Json.CopyAtomic(Path.Combine(packagesRoot, packId, PackManifestFile), Path.Combine(entry, PackManifestFile), overwrite: false);
         return entry;
     }
 
@@ -472,7 +491,7 @@ public static class CheckpointKind
 
 public static class TrashKind
 {
-    public const string Scenario = "scenario", Pack = "pack", Game = "game", Mirror = "mirror", PackFiles = "pack files", Saves = "saves", Other = "other";
+    public const string Scenario = "scenario", Pack = "pack", Game = "game", Mirror = "mirror", PackFiles = "pack files", PieceList = "piece list", Saves = "saves", Other = "other";
 }
 
 public sealed record Checkpoint(string Path, string Kind, int Turn, DateTime Stamp)
@@ -499,6 +518,7 @@ public sealed record TrashEntry(string Path, string Kind, string Id, DateTime St
         TrashKind.Saves => Id,
         TrashKind.Mirror => $"mirror of {Id}",
         TrashKind.PackFiles => $"pictures cleared out of {Id}",
+        TrashKind.PieceList => $"piece list of {Id}, as it was before a newer one came",
         _ => Id,
     };
 

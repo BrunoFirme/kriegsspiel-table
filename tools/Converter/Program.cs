@@ -66,7 +66,7 @@ try
             if (cmd == "import") Progress.Stage("read");
             var save = ModuleSave.Load(cfg, file);
             foreach (var u in Surface.NotExact(save)) report.NotExact(u.Row, u.Count);
-            var plan = ImportPlan.Of(save, name, slugArg, id => PackOwner(cfg.Output, id), workshopId => PackOfModule(cfg.Output, workshopId));
+            var plan = ImportPlan.Of(save, name, slugArg, id => PackOwner(cfg.Output, id), workshopId => PackOfModule(cfg.Output, workshopId), dir => ScenarioIn(cfg.Output, dir));
             if (cmd == "plan")
             {
                 foreach (var p in plan.Packs) Console.WriteLine($"PLAN pack {p}");
@@ -101,6 +101,12 @@ try
             if (plan.Taken is { } held)
             {
                 var said = $"The pack {held} here came from another module, so this one is {packId} and its scenario {slug}";
+                Console.WriteLine("  " + said);
+                report.Note(said);
+            }
+            if (plan.TakenFolder is { } folder)
+            {
+                var said = $"The scenario folder {folder} here holds another scenario, which stays as it is: this one is {slug} and its pack {packId}";
                 Console.WriteLine("  " + said);
                 report.Note(said);
             }
@@ -260,6 +266,12 @@ static string? PackOfModule(string root, string workshopId)
         .Where(id => id.StartsWith(ImportPlan.ConvertedPrefix, StringComparison.Ordinal) && !id.EndsWith(".extras", StringComparison.Ordinal))
         .OrderBy(id => id, StringComparer.Ordinal)
         .FirstOrDefault(id => PackOwner(root, id) == workshopId);
+}
+
+static string? ScenarioIn(string root, string dir)
+{
+    var path = Path.Combine(root, "scenarios", dir, "scenario.json");
+    return File.Exists(path) ? KTable.Core.Json.PeekString(path, "id") ?? "" : null;
 }
 
 static string? PackOwner(string root, string packId)

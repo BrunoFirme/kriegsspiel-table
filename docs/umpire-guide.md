@@ -159,7 +159,8 @@ groups them, and names what each was used for, from the phalanx to the tank plat
   dropped on its window go in too. Right-click → **Open** shows what it holds beside the piece, until it leaves the
   view: drag one out onto the table, double-click to set it beside, **Take all out** for a row. Right-click →
   **Holds pieces** switches it on or off for any piece; the piece studio's **Holds pieces** sets where a kind starts,
-  and the box, chest and crate of Firme's Effects and Props start on. A held piece keeps everything it had.
+  and the box, chest and crate of Firme's Effects and Props start on. A held piece keeps everything it had. A holder
+  goes inside a holder seven deep and no deeper, as a matter of taste: nothing good is kept further down.
 - **Ready piece:** one held piece can be its holder's ready piece, smoke or dust for instance: right-click it in the
   holder's window → **Ready piece**. It is listed first. **B** on the holder releases it onto the table; **B** on the
   holder or on the piece recalls it. Recalled, it remembers where it stood, so it comes out there again, moved and

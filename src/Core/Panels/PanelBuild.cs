@@ -11,7 +11,7 @@ public sealed partial class PanelBuild
         + "<Color name=\"black\" color=\"#191919\"/>\t<Button onClickSound=\"Defaults/Sounds/ClickUI\" audioVolume=\"0.3\"/><InputField onClickSound=\"Defaults/Sounds/ClickUI\" audioVolume=\"0.3\"/>"
         + "<Toggle onClickSound=\"Defaults/Sounds/ClickUI\" audioVolume=\"0.3\"/><ToggleButton onClickSound=\"Defaults/Sounds/ClickUI\" audioVolume=\"0.3\"/>"
         + "<Slider onClickSound=\"Defaults/Sounds/ClickUI\" audioVolume=\"0.3\"/><Dropdown onClickSound=\"Defaults/Sounds/ClickUI\" audioVolume=\"0.3\"/></Defaults>";
-    public const int MaxDepth = 64, MaxElements = 20_000;
+    public const int MaxDepth = 20, MaxElements = 20_000;
     const string Root = "XmlLayout";
 
     readonly UiLayout _layout = new();

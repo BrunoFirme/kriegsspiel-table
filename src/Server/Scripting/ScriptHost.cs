@@ -941,6 +941,7 @@ public sealed partial class ScriptHost
                     Call(pcw, cfn, who, DynValue.NewBoolean(cw.Alt), DynValue.NewNumber(cw.Index), Handle(cw.Id));
                 break;
             case EditWidget ew:
+                Web.NoteTyped(ew.Value);
                 if (Find(ew.Id) is { } pe && ew.Index >= 1 && ew.Index <= pe.Widgets.Count)
                 {
                     var staged = Staging(ew.Id);

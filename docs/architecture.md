@@ -58,7 +58,9 @@ script. A call gets a time budget, a nesting limit and a coroutine limit (`Scrip
 limit stops with an error in the console, and the game goes on. Scripts never get files, processes or code from
 outside their own pack (`ScriptSafety` also judges every script that comes from outside), and reach the network
 only to fetch pictures and models from public web addresses (`WebPictures.PublicWeb`), never the host PC or its
-local network. The API is
+local network. The umpires are told once in the Log which web address scripts fetch from, and an address a
+script builds while it runs may carry no query or fragment unless it is written in a script or a person typed
+it (`WebFetchGate`): a pack cannot quietly send the table out in one. The API is
 written once in `Scripting/ApiDoc.cs`; the reference in `docs/scripting-api.md` is generated from it and a test
 keeps the two in agreement.
 
@@ -121,6 +123,14 @@ scripted run never moves the person's cursor or touches their clipboard. The too
   CancellationToken passed on (CA2016) and taken last (CA1068), a result not thrown away (CA1806), a rethrow that keeps
   its origin (CA2200). Dispose-before-scope (CA2000) stays off: Godot objects are IDisposable and the scene tree or
   reference counting owns them. Unused usings are pointed out in the editor only.
+
+## Nesting
+
+A holder goes inside a holder 7 deep (`PieceInstance.MostHolderLevels`) and panels nest 20 levels
+(`PanelBuild.MaxDepth`). The numbers are taste: nothing good is built deeper, and the deepest unit panels in the
+modules read so far are 11 levels. What they buy is that the whole table always fits the 64 levels the JSON writer
+allows, so a table can never reach a shape that cannot be saved, copied or sent. `NestingLimitTests` builds the
+deepest table the two limits allow and saves it; raise either number and that test says whether it still holds.
 
 ## Repeatable runs
 

@@ -128,12 +128,14 @@ public sealed partial class AssetTransfers
         fs.Write(u.Data);
         if (fs.Position < u.Total) return;
         var tmp = fs.Name;
+        fs.Flush(flushToDisk: true);
         fs.Dispose();
         _uploads.Remove(key);
         try
         {
             var sent = u.Path == "pack.json" && TakesPack(peer, u.Package, dir, tmp);
             if (u.Path != "pack.json" && FileHashes.Sha256(tmp) != Path.GetFileNameWithoutExtension(dst)) throw new InvalidDataException("hash mismatch");
+            if (sent && File.Exists(dst)) KeepTheListReplaced(peer, u.Package);
             File.Move(tmp, dst, true);
             if (sent) _packSenders[u.Package] = peer.Name;
             if (u.Package == UploadAsset.ReliefPackage) FileArrived(u.Package, u.Path);
@@ -143,6 +145,13 @@ public sealed partial class AssetTransfers
             BestEffort.DeleteFile(tmp);
             Send(from, new ErrorMessage { Text = $"upload of {u.Package}/{u.Path} refused: {e.Message}" });
         }
+    }
+
+    void KeepTheListReplaced(PeerInfo by, string package)
+    {
+        var root = Session.Store.Root;
+        var kept = SaveStore.ForRoot(root).KeepPieceList(root, package, Repeatable.UtcNow);
+        Log.Tell($"{by.Name} sent a newer piece list for the pack {package}. The list it replaced is in the trash for {SaveStore.TrashDays} days: {kept}");
     }
 
     public const long MaxUploadPerPeer = 2L * 1024 * 1024 * 1024;

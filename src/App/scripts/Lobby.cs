@@ -124,6 +124,14 @@ public partial class Main
 
     internal void InstallFile(string f)
     {
+        var replaced = BestEffort.Read(() => WorkshopContent.ScenarioItWouldReplace(new PackageStore(PackageStore.DefaultRoot), f), fallback: (string?)null);
+        if (replaced == null) { InstallAskingAboutPacks(f); return; }
+        Ui.Confirm(this, $"Replace the scenario \"{replaced}\"?", "Replace", () => InstallAskingAboutPacks(f),
+            $"{Path.GetFileName(f)} holds the same scenario. The one here goes to the trash for {SaveStore.TrashDays} days; its saves stay.");
+    }
+
+    void InstallAskingAboutPacks(string f)
+    {
         var worked = new List<(string id, string name, PackChange change)>();
         worked = BestEffort.Read(() => ImportDialog.WorkedOn(PackageStore.DefaultRoot, WorkshopContent.PacksItWouldPutInPlace(new PackageStore(PackageStore.DefaultRoot), f)), fallback: worked);
         if (worked.Count > 0)

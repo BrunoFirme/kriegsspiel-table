@@ -1,12 +1,13 @@
 namespace KTable.Converter;
 
-public sealed record ImportPlan(bool Restore, string Name, IReadOnlyList<string> Packs, string? Scenario, string? Taken = null)
+public sealed record ImportPlan(bool Restore, string Name, IReadOnlyList<string> Packs, string? Scenario, string? Taken = null, string? TakenFolder = null)
 {
     const int MostOfTheSameName = 99;
 
     public const string ConvertedPrefix = "tts.";
 
-    public static ImportPlan Of(ModuleSave save, string? name, string? slugArg, Func<string, string?>? packOwner = null, Func<string, string?>? packOfModule = null)
+    public static ImportPlan Of(ModuleSave save, string? name, string? slugArg, Func<string, string?>? packOwner = null, Func<string, string?>? packOfModule = null,
+        Func<string, string?>? scenarioIn = null)
     {
         if (KtMarker.Find(save) is { } shared)
         {
@@ -23,8 +24,17 @@ public sealed record ImportPlan(bool Restore, string Name, IReadOnlyList<string>
             taken = ConvertedPrefix + slug;
             slug = $"{slug}-{mark}";
         }
+        string? takenFolder = null;
+        if (slugArg == null && mine == null && scenarioIn != null && !Free(slug))
+        {
+            takenFolder = slug;
+            slug = Enumerable.Range(2, MostOfTheSameName - 1).Select(n => $"{takenFolder}-{n}").FirstOrDefault(Free) ?? $"{takenFolder}-{DefFactory.Slug(Guid.NewGuid().ToString("N")[..8])}";
+        }
         var packId = ConvertedPrefix + slug;
-        return new ImportPlan(false, name, new[] { packId, packId + ".extras" }, slug, taken);
+        return new ImportPlan(false, name, new[] { packId, packId + ".extras" }, slug, taken, takenFolder);
+
+        bool Free(string dir) =>
+            (scenarioIn!(dir) is not { } there || there == ConvertedPrefix + dir) && (packOwner?.Invoke(ConvertedPrefix + dir) is not { } owner || owner == save.WorkshopId);
     }
 
     static string? MarkFor(Func<string, string?> packOwner, string packId, string mine)
