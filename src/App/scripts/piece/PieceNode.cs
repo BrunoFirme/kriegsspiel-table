@@ -37,23 +37,6 @@ public partial class PieceNode : Node3D
     Vector3 _modelRestPos;
     const float CutoutFraction = 0.2f;
 
-    static Shader? _outlineShader;
-    static Shader OutlineShader => _outlineShader ??= new Shader
-    {
-        Code = """
-            shader_type spatial;
-            render_mode unshaded, cull_disabled, shadows_disabled;
-            uniform sampler2D tex : source_color, filter_linear_mipmap;
-            uniform vec4 color : source_color = vec4(1.0, 0.85, 0.1, 1.0);
-            uniform bool use_alpha = false;
-            void fragment() {
-                ALBEDO = color.rgb;
-                ALPHA = use_alpha ? texture(tex, UV).a : 1.0;
-                ALPHA_SCISSOR_THRESHOLD = 0.5;
-            }
-            """,
-    };
-
     readonly PieceWidgets _widgets;
     readonly PieceUi _plates;
     readonly PieceLines _lines;
@@ -651,30 +634,10 @@ public partial class PieceNode : Node3D
     (Mesh mesh, ShaderMaterial mat, bool halo) Ring(Color c)
     {
         float pad = Mathf.Clamp(Footprint.Length() * 0.035f, 0.04f, 0.3f);
-        var mat = new ShaderMaterial { Shader = OutlineShader };
-        mat.SetShaderParameter("color", c);
-        bool halo = Shape == "alpha" && !ShowsModel;
-        if (halo)
-        {
-            mat.SetShaderParameter("use_alpha", true);
-            if (_texPackage != null && _s.Assets.Texture(_texPackage, _texRel!, null, maxSize: _texSize) is { } t) mat.SetShaderParameter("tex", t);
-            return (new PlaneMesh { Size = Footprint * (1 + 2 * pad / Mathf.Max(0.01f, Mathf.Min(Footprint.X, Footprint.Y))) }, mat, true);
-        }
-        bool model = ShowsModel;
-        var shape = model ? "box" : Shape;
-        float rim = Mathf.Clamp(Mathf.Min(Footprint.X, Footprint.Y) * 0.05f, 0.025f, 0.2f);
-        var inner = Outline(shape, Footprint.X, Footprint.Y);
-        var outer = Outline(shape, Footprint.X + rim * 2, Footprint.Y + rim * 2);
-        float y = model ? 0.006f : _thickness + 0.004f;
-        var st = new SurfaceTool();
-        st.Begin(Mesh.PrimitiveType.Triangles);
-        for (int i = 0; i < inner.Count; i++)
-        {
-            int j = (i + 1) % inner.Count;
-            Vector3 a0 = new(inner[i].X, y, inner[i].Y), a1 = new(outer[i].X, y, outer[i].Y), b0 = new(inner[j].X, y, inner[j].Y), b1 = new(outer[j].X, y, outer[j].Y);
-            foreach (var v in new[] { a0, a1, b1, a0, b1, b0 }) st.AddVertex(v);
-        }
-        return (st.Commit(), mat, false);
+        var mat = SelectionRing.Material(c);
+        if (Shape == "alpha" && !ShowsModel)
+            return (SelectionRing.Halo(mat, Footprint, pad, _texPackage != null ? _s.Assets.Texture(_texPackage, _texRel!, null, maxSize: _texSize) : null), mat, true);
+        return (SelectionRing.Bands(ShowsModel ? "box" : Shape, Footprint, ShowsModel ? 0.006f : _thickness + 0.004f), mat, false);
     }
 
     public bool Ringed => _sel != null;

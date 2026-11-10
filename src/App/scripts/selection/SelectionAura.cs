@@ -11,6 +11,12 @@ public partial class SelectionAura : Node
     public bool Active { get; set; }
     public Color Color = new(1f, 0.88f, 0.2f, 1f);
 
+    public static readonly Color Casing = new(0.08f, 0.07f, 0.06f, 0.9f);
+    static readonly Color LightCasing = new(0.96f, 0.94f, 0.88f, 0.9f);
+    const float DarkColour = 0.3f;
+
+    public static Color CasingFor(Color c) => c.Luminance < DarkColour ? LightCasing : Casing;
+
     readonly Camera3D _main;
     readonly uint _mask;
     SubViewport _vp = null!;
@@ -29,19 +35,28 @@ public partial class SelectionAura : Node
         shader_type canvas_item;
         uniform sampler2D mask : filter_nearest;
         uniform vec4 color : source_color = vec4(1.0, 0.88, 0.2, 1.0);
+        uniform vec4 casing : source_color = vec4(0.08, 0.07, 0.06, 0.9);
         uniform float width = 1.5;     // outline thickness in pixels
+        uniform float casing_width = 1.0;
         void fragment() {
             vec2 px = 1.0 / vec2(textureSize(mask, 0));
             float inside = texture(mask, UV).a;
             float near = 0.0;
+            float cased = 0.0;
             for (int i = 0; i < 16; i++) {
                 float a = 6.2831853 * float(i) / 16.0;
                 vec2 d = vec2(cos(a), sin(a)) * px;
-                for (float r = 1.0; r <= width; r += 1.0) near = max(near, texture(mask, UV + d * r).a);
+                for (float r = 1.0; r <= width + casing_width; r += 1.0) {
+                    float m = texture(mask, UV + d * r).a;
+                    cased = max(cased, m);
+                    if (r <= width) near = max(near, m);
+                }
             }
             // outside the piece, within `width` pixels of it: the line. Hard edges, no falloff.
-            float edge = step(0.5, near) * (1.0 - step(0.5, inside));
-            COLOR = vec4(color.rgb, color.a * edge);
+            float outside = 1.0 - step(0.5, inside);
+            float line = step(0.5, near) * outside;
+            float edge = step(0.5, cased) * outside;
+            COLOR = vec4(mix(casing.rgb, color.rgb, line), mix(casing.a, color.a, line) * edge);
         }
         """;
 
@@ -60,6 +75,7 @@ public partial class SelectionAura : Node
         AddChild(layer);
         _mat = new ShaderMaterial { Shader = new Shader { Code = Code } };
         _mat.SetShaderParameter("color", Color);
+        _mat.SetShaderParameter("casing", CasingFor(Color));
         _rect = new ColorRect { Material = _mat, MouseFilter = Control.MouseFilterEnum.Ignore, Visible = false };
         _rect.SetAnchorsPreset(Control.LayoutPreset.FullRect);
         layer.AddChild(_rect);
