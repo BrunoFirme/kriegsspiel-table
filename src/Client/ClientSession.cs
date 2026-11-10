@@ -164,7 +164,7 @@ public class ClientSession
             ForgetUndo();
         }
         Dirty = true;
-        if (c.Actor == Me.PeerId && c.OnUndoStack()) Track(c);
+        if (c.Actor == Me.PeerId && c.MakesUndoStep()) Track(c);
         else if (c.Actor == 0 && IsLead && c.MakesUndoStep()) TrackScript(c);
         if (c.UndoFrom > 0 && c.Actor != Me.PeerId) DropScriptSteps(c.UndoFrom, c.UndoOf);
         if (c is AddPack ap) PackAdded?.Invoke(ap.Id, ap.Hash);

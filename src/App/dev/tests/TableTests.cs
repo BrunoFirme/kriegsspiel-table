@@ -59,6 +59,44 @@ static class TableTests
     }
 
     [NodeTest]
+    static async Task Ctrl_z_and_ctrl_y_reach_past_a_pasted_or_cut_piece_whose_script_draws_a_button(TestRunner r)
+    {
+        var t = OfflineTable.Make(r, pieces: 3);
+        await r.Frame();
+        void Press(Key key) => t.Table.Keys.OnKey(new InputEventKey { Keycode = key, CtrlPressed = true, Pressed = true });
+        t.S.Do(new MovePiece { Layer = U, Id = "p2", Pos = new Vec2(5, 2) });
+        t.S.Do(new SetScript { Layer = U, Id = "p1", Text = "function on_load() self.button({ label = 'go', x = 0, z = 0, on_click = 'go' }) end\nfunction go() end" });
+        await r.Frame();
+        t.Table.Selection.Set(new[] { "p1" });
+        Press(Key.C);
+        t.Table.Clip.Paste(new Vec2(9, 9));
+        await r.Frame();
+        Check.Equal(4, t.S.View.Layers[U].Count, "pasted");
+        Press(Key.Z);
+        await r.Frame();
+        Check.Equal(3, t.S.View.Layers[U].Count, "Ctrl+Z takes the pasted piece back");
+        Press(Key.Y);
+        await r.Frame();
+        Check.Equal(4, t.S.View.Layers[U].Count, "Ctrl+Y puts it back");
+        Press(Key.Z);
+        await r.Frame();
+        t.Table.Selection.Set(new[] { "p1" });
+        Press(Key.X);
+        await r.Frame();
+        Check.That(t.S.View.Find(U, "p1") == null, "cut");
+        Press(Key.Z);
+        await r.Frame();
+        Check.That(t.S.View.Find(U, "p1") != null, "Ctrl+Z puts the cut piece back");
+        Press(Key.Z);
+        await r.Frame();
+        Check.That(t.S.View.Find(U, "p1")!.Script == null, "the next Ctrl+Z takes back the script");
+        Press(Key.Z);
+        await r.Frame();
+        Check.Equal(new Vec2(2, 0), t.Node("p2").Piece.Pos, "and the one before it the move");
+        Check.That(t.Errors.Count == 0, "no command refused: " + string.Join("; ", t.Errors));
+    }
+
+    [NodeTest]
     static async Task Holding_ctrl_z_or_ctrl_y_keeps_rolling_through_the_steps(TestRunner r)
     {
         var t = OfflineTable.Make(r, pieces: 2);

@@ -36,6 +36,19 @@ public class ClientSessionTests
     }
 
     [Fact]
+    public void A_script_redrawing_its_buttons_after_a_change_is_no_undo_step_and_leaves_what_redo_puts_back()
+    {
+        JoinAs(Role.Umpire);
+        _s.OnCommand(Spawn(1, 2, "a"));
+        _s.OnCommand(Spawn(2, 2, "b"));
+        _s.UndoLast();
+        _s.OnCommand(new DeletePiece { Seq = 3, Actor = 2, Layer = Layers.Umpire, Id = "b", UndoOf = 2 });
+        _s.OnCommand(new Batch { Seq = 4, Actor = 2, Items = { new SetHotkeys { Items = { new HotkeyDef { Label = "go" } } }, new SetGlobalMenuItems() } });
+        Assert.Equal(new long[] { 1 }, _s.MyUndoable);
+        Assert.Equal(new long[] { 3 }, _s.MyRedoable);
+    }
+
+    [Fact]
     public void A_second_undo_pressed_before_the_host_answers_the_first_waits_so_a_stop_is_never_skipped()
     {
         JoinAs(Role.Umpire);
