@@ -76,7 +76,7 @@ sealed class InviteDialog : HudPart
     {
         var S = c.S;
         var N = c.N;
-        var r = new HBoxContainer();
+        var r = AgentFence.Mark(new HBoxContainer());
         r.AddThemeConstantOverride("separation", Ui.Gap.Group);
         r.AddChild(Ui.RowLabel("Password", Ui.DialogLabels));
         var field = new LineEdit { Text = S.Access?.Password ?? "", Editable = S.IsLead, PlaceholderText = S.IsLead ? "none: the door is open" : "", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };

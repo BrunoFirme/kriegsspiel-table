@@ -13,7 +13,8 @@ namespace KTable.App;
 
 sealed partial class AgentTableTools
 {
-    const double RollWaitSeconds = 10, PasswordWaitSeconds = 3, DecalSize = 1, LeastGrowth = 0.05, MostGrowth = 40;
+    const double RollWaitSeconds = 10, DecalSize = 1, LeastGrowth = 0.05, MostGrowth = 40;
+    const string PasswordWithheld = "the host gives it";
     const int DecalsListed = 200;
     static readonly string[] DecalActions = { "list", "add", "remove", "stamp", "lift" };
 
@@ -40,9 +41,9 @@ sealed partial class AgentTableTools
                 new Arg("number", "number", "lift: a piece's stamp, from 1 as list shows"), new Arg("all", "boolean", "lift: every stamp on the table (those on pieces stay)")),
             Decals);
         yield return new AgentTool("joining",
-            "How people join this table, as Invite… and the Joining page show it: where they connect (this network and the internet), the password, whether umpires' pointers are always shown, " +
-            "and the invitation to paste where the group meets. password and pointers_always_shown change them (host and lead umpires).",
-            Args.Schema(new Arg("password", "string", "the new password; empty opens the door to anyone"), new Arg("pointers_always_shown", "boolean", "every umpire's pointer is shown, none can hide it")),
+            "How people join this table, as Invite… and the Joining page show it: where they connect (this network and the internet), whether the table has a password (never the password itself, " +
+            "which stays with the people), whether umpires' pointers are always shown, and the invitation to paste where the group meets. pointers_always_shown changes that rule (host and lead umpires).",
+            Args.Schema(new Arg("pointers_always_shown", "boolean", "every umpire's pointer is shown, none can hide it")),
             Joining);
     }
 
@@ -205,17 +206,6 @@ sealed partial class AgentTableTools
     {
         if (Table(out var why) is not var (s, hud)) return why!;
         var problems = new List<string>();
-        if (a.Str("password") is { } password)
-        {
-            if (!s.IsLead) problems.Add("only the host and the lead umpires set the password");
-            else if (password.Trim() != (s.Access?.Password ?? ""))
-            {
-                var wanted = password.Trim();
-                hud.N.Door(new SetPassword { Password = wanted });
-                for (double t = 0; t < PasswordWaitSeconds && (s.Access?.Password ?? "") != wanted; t += Waits.Poll) await _a.Delay(Waits.Poll);
-                _a.Log(wanted.Length == 0 ? "opened the door: no password" : "set the password");
-            }
-        }
         if (a.Flag("pointers_always_shown") is { } always && always != s.View.PointersAlwaysShown)
         {
             if (!s.IsLead) problems.Add("only the host and the lead umpires set the pointer rule");
@@ -227,12 +217,12 @@ sealed partial class AgentTableTools
             }
         }
         var (lan, internet, port) = InviteDialog.Where(hud.N, _a.Cfg);
-        var pw = s.Access?.Password ?? "";
+        bool locked = s.Access?.Password is { Length: > 0 };
         var o = new JsonObject
         {
             ["your_network"] = lan, ["internet"] = internet ?? (hud.N.UpnpStatus == "trying" ? "asking the router to open the port" : $"port {port} not open on the router"),
-            ["port"] = port, ["password"] = s.Access == null ? null : pw.Length > 0 ? pw : "none: the door is open", ["pointers_always_shown"] = s.View.PointersAlwaysShown,
-            ["invitation"] = s.Access == null ? null : InviteDialog.Invitation(s.View.Name, internet ?? lan ?? $"port {port}", pw),
+            ["port"] = port, ["password"] = s.Access == null ? null : locked ? "set" : "none: the door is open", ["pointers_always_shown"] = s.View.PointersAlwaysShown,
+            ["invitation"] = s.Access == null ? null : InviteDialog.Invitation(s.View.Name, internet ?? lan ?? $"port {port}", locked ? PasswordWithheld : ""),
         };
         return new ToolResult((problems.Count > 0 ? "Not done: " + string.Join("; ", problems) + ".\n" : "") + o.ToJsonString(Opts), problems.Count > 0);
     }

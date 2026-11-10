@@ -47,7 +47,7 @@ static class AgentGuide
                     "read_panels and use_panel (a script's panels), answer_dialog (the windows game.dialog opens). A kind's script for every game its pack goes to: studio_write_script."),
         ("records", "read_log reads the Log everyone reads; look_back reads a kept turn or a save against the table now; list_saves, save_game, load_save; saves does the Saves window's work " +
                     "(saves, folders, renames, the trash); save_scenario_copy makes a new scenario of the table; read_book reads a book piece's pages; read_briefing; " +
-                    "read_scenario says how the scenario is set; list_people who is at the table; joining gives the invitation and sets the password."),
+                    "read_scenario says how the scenario is set; list_people who is at the table; joining gives the invitation; the password stays with the people."),
         ("settings", "This PC's settings (graphics, sound, interface size, captures…): read_settings, and set_settings only when the person asks."),
         ("app", "ui_read lists every control the person can see in the app's windows (buttons, toggles, fields, choices, lists, tabs, menu rows) with a ref; " +
                 "ui_act clicks, sets, opens or closes one by its ref, presses keys and types. " +

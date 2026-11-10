@@ -88,6 +88,26 @@ static class AgentUiTests
     }
 
     [NodeTest]
+    static async Task The_password_field_is_neither_listed_nor_typed_into(TestRunner r)
+    {
+        var (h, agent) = await AgentRecordTests.Open(r);
+        h.Net.Door(new KTable.Core.Protocol.SetPassword { Password = "fox" });
+        var owner = new Window { Title = "Joining test" };
+        h.Hud.AddChild(owner);
+        var row = (Container)InviteDialog.PasswordRow(h.Hud.Ctx, owner);
+        owner.AddChild(row);
+        owner.Popup();
+        await r.Frames(2);
+        var (_, read) = await Ask(agent, "ui_read", "{}");
+        Check.That(!read.Contains("fox") && !read.Contains("Copy the password"), "no password control is listed: " + read);
+        row.GetChild<LineEdit>(1).GrabFocus();
+        await r.Frames(1);
+        var (refused, why) = await Ask(agent, "ui_act", """{"text":"wolf"}""");
+        Check.That(refused && why.Contains("out of the agent's reach"), "typing into the password is refused: " + why);
+        Check.Equal("fox", h.S.Access?.Password ?? "", "and the password stays");
+    }
+
+    [NodeTest]
     static async Task The_agent_reads_the_guides_the_app_s_log_and_the_diagnostics(TestRunner r)
     {
         var (_, agent) = await AgentRecordTests.Open(r);

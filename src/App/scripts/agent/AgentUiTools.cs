@@ -101,7 +101,7 @@ sealed class AgentUiTools
     string? FocusFenced()
     {
         foreach (var w in new[] { Root }.Concat(Root.GetChildren(true).SelectMany(Windows)))
-            if ((w == Root || w.HasFocus()) && (AgentFence.Fenced(w.GuiGetFocusOwner()) || w != Root && AgentFence.Fenced(w)))
+            if (AgentFence.Fenced(w.GuiGetFocusOwner()) || w != Root && w.HasFocus() && AgentFence.Fenced(w))
                 return "What has the focus is out of the agent's reach.";
         return null;
     }

@@ -55,15 +55,15 @@ static class AgentTableExtraTests
     }
 
     [NodeTest]
-    static async Task The_agent_sets_the_password_and_the_pointer_rule_and_gives_the_invitation(TestRunner r)
+    static async Task The_agent_gives_the_invitation_and_sets_the_pointer_rule_but_never_touches_the_password(TestRunner r)
     {
         var (h, agent) = await AgentRecordTests.Open(r);
-        var (error, said) = await Ask(agent, "joining", """{"password":"fox","pointers_always_shown":true}""");
-        Check.That(!error && h.S.Access?.Password == "fox", "the password is set: " + said);
-        Check.That(h.S.View.PointersAlwaysShown, "every umpire's pointer is shown");
-        Check.That(said.Contains("password: fox"), "the invitation carries it: " + said);
-        await Ask(agent, "joining", """{"password":""}""");
-        Check.Equal("", h.S.Access?.Password ?? "", "an empty password opens the door");
+        h.Net.Door(new KTable.Core.Protocol.SetPassword { Password = "fox" });
+        await r.Frames(2);
+        var (error, said) = await Ask(agent, "joining", """{"password":"wolf","pointers_always_shown":true}""");
+        Check.That(!error && h.S.View.PointersAlwaysShown, "every umpire's pointer is shown: " + said);
+        Check.Equal("fox", h.S.Access?.Password ?? "", "the password stays as the people set it");
+        Check.That(!said.Contains("fox") && said.Contains("\"password\": \"set\"") && said.Contains("password: the host gives it"), "it says a password is set, never what it is: " + said);
     }
 
     [NodeTest]
