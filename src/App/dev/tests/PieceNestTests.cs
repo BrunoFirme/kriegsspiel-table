@@ -1,4 +1,6 @@
+using System.Linq;
 using System.Threading.Tasks;
+using Godot;
 using KTable.Core.Model;
 using KTable.Core.Protocol;
 
@@ -9,6 +11,74 @@ static class PieceNestTests
     const string U = Layers.Umpire;
 
     static bool Under(PieceIndex index, string child, string parent) => index.ItemOf(U, child)?.GetParent() is { } up && up == index.ItemOf(U, parent);
+
+    static string Ticked(PieceIndex index)
+    {
+        var ids = new System.Collections.Generic.List<string>();
+        for (var item = index.Rows.GetNextSelected(null); item != null; item = index.Rows.GetNextSelected(item))
+            foreach (var id in new[] { "p1", "p2", "p3" }) if (item == index.ItemOf(U, id)) ids.Add(id);
+        return string.Join(",", ids.Order());
+    }
+
+    static string OnTable(HudTests.Rig h) => string.Join(",", h.Table.Selected.Order());
+
+    [NodeTest]
+    static async Task What_is_selected_on_the_table_is_ticked_under_On_the_table_and_a_row_picked_there_is_selected_on_the_table(TestRunner r)
+    {
+        var h = await HudTests.Host(r, pieces: 3);
+        IHudShell shell = h.Hud;
+        shell.TogglePanel("pieces");
+        h.Hud.Pieces.ShowIndex();
+        await r.Frames(3);
+        var index = h.Hud.Pieces.Index;
+        Check.That(index.Root.IsVisibleInTree(), "the list is open");
+
+        h.Table.SetSelection(new[] { "p1", "p3" });
+        await r.Frames(2);
+        Check.Equal("p1,p3", Ticked(index), "rows ticked for the table's selection");
+
+        index.Rows.DeselectAll();
+        index.ItemOf(U, "p2")!.Select(0);
+        index.Rows.EmitSignal(Tree.SignalName.MultiSelected, index.ItemOf(U, "p2")!, 0, true);
+        await r.Frames(2);
+        Check.Equal("p2", OnTable(h), "the picked row is the table's selection");
+        Check.Equal("p2", Ticked(index), "and the list still shows it");
+
+        h.Table.SetSelection(System.Array.Empty<string>());
+        await r.Frames(2);
+        Check.Equal("", Ticked(index), "nothing selected, nothing ticked");
+
+        shell.TogglePanel("pieces");
+        await r.Frames(2);
+        h.Table.SetSelection(new[] { "p3" });
+        shell.TogglePanel("pieces");
+        h.Hud.Pieces.ShowIndex();
+        await r.Frames(3);
+        Check.Equal("p3", Ticked(index), "a selection made while the list was shut shows when it opens");
+    }
+
+    [NodeTest]
+    static async Task Picking_a_row_keeps_selected_the_pieces_the_search_leaves_out_of_the_list(TestRunner r)
+    {
+        var h = await HudTests.Host(r, pieces: 3);
+        IHudShell shell = h.Hud;
+        shell.TogglePanel("pieces");
+        h.Hud.Pieces.ShowIndex();
+        await r.Frames(3);
+        var index = h.Hud.Pieces.Index;
+        h.S.Do(new SetLabel { Layer = U, Id = "p1", Value = "Hussars" });
+        h.S.Do(new SetLabel { Layer = U, Id = "p2", Value = "Grenadiers" });
+        await r.Frames(3);
+        h.Table.SetSelection(new[] { "p1" });
+        var search = index.Root.GetChild<LineEdit>(0);
+        search.Text = "Grenadiers";
+        search.EmitSignal(LineEdit.SignalName.TextChanged, search.Text);
+        await r.Frames(2);
+        index.ItemOf(U, "p2")!.Select(0);
+        index.Rows.EmitSignal(Tree.SignalName.MultiSelected, index.ItemOf(U, "p2")!, 0, true);
+        await r.Frames(2);
+        Check.Equal("p1,p2", OnTable(h), "the hidden hussars stay selected beside the picked grenadiers");
+    }
 
     [NodeTest]
     static async Task Rows_dragged_onto_a_row_nest_under_it_and_ride_with_it_down_the_whole_branch(TestRunner r)

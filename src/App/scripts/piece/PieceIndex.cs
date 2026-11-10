@@ -25,7 +25,7 @@ sealed class PieceIndex : HudPart
     readonly List<Row> _shown = new();
     readonly HashSet<(string, string)> _folded = new();
     bool _stale = true;
-    bool _filling;
+    bool _filling, _following, _pushing, _pushQueued;
 
     public PieceIndex(HudContext ctx) : base(ctx)
     {
@@ -50,7 +50,7 @@ sealed class PieceIndex : HudPart
         _tree.AddThemeConstantOverride("draw_guides", 0);
         _tree.AddThemeConstantOverride("draw_relationship_lines", 0);
         _tree.ItemActivated += () => Locate(Picked());
-        _tree.MultiSelected += (_, _, _) => SyncButtons();
+        _tree.MultiSelected += (_, _, _) => { SyncButtons(); PushSoon(); };
         _tree.ItemCollapsed += Folded;
         _tree.SetDragForwarding(Callable.From<Vector2, Variant>(DragFrom), Callable.From<Vector2, Variant, bool>((at, data) => DropAt(at, data).Count > 0),
             Callable.From<Vector2, Variant>((at, data) => Nest(DropAt(at, data))));
@@ -71,8 +71,16 @@ sealed class PieceIndex : HudPart
         Root.AddChild(actions);
         S.Applied += MarkStale;
         S.Reset += MarkStale;
-        Root.TreeExiting += () => { S.Applied -= MarkStale; S.Reset -= MarkStale; };
+        T.SelectionChanged += FollowTable;
+        Root.TreeExiting += Unhook;
         Root.VisibilityChanged += () => { if (Root.IsVisibleInTree() && _stale) Rebuild(); };
+    }
+
+    void Unhook()
+    {
+        S.Applied -= MarkStale;
+        S.Reset -= MarkStale;
+        T.SelectionChanged -= FollowTable;
     }
 
     internal Tree Rows => _tree;
@@ -117,7 +125,7 @@ sealed class PieceIndex : HudPart
         var kept = matched.ToHashSet();
         foreach (var (layer, id) in matched)
             for (var at = id; parents[layer].TryGetValue(at, out var up) && kept.Add((layer, up.Id)); at = up.Id) { }
-        var picked = Picked().Select(r => (r.Layer, r.Piece.Id)).ToHashSet();
+        var picked = OnTable();
         _filling = true;
         try { Fill(all.Where(r => kept.Contains((r.Layer, r.Piece.Id))).ToList(), parents, matched, picked); }
         finally { _filling = false; }
@@ -182,6 +190,50 @@ sealed class PieceIndex : HudPart
         for (var item = _tree.GetNextSelected(null); item != null; item = _tree.GetNextSelected(item))
             if (RowOf(item) is { } r) rows.Add(r);
         return rows;
+    }
+
+    HashSet<(string, string)> OnTable() => T.SelectedNodes.Select(n => (n.Layer, n.Piece.Id)).ToHashSet();
+
+    void FollowTable()
+    {
+        if (_pushing || _stale) return;
+        if (!Root.IsVisibleInTree()) { _stale = true; return; }
+        var on = OnTable();
+        TreeItem? first = null;
+        _following = true;
+        try
+        {
+            for (var item = _tree.GetRoot()?.GetFirstChild(); item != null; item = item.GetNextInTree())
+            {
+                if (RowOf(item) is not { } r) continue;
+                bool want = on.Contains((r.Layer, r.Piece.Id));
+                if (want == item.IsSelected(0)) continue;
+                if (want) { item.Select(0); first ??= item; }
+                else item.Deselect(0);
+            }
+        }
+        finally { _following = false; }
+        if (first != null) _tree.ScrollToItem(first);
+        SyncButtons();
+    }
+
+    void PushSoon()
+    {
+        if (_following || _filling || _pushQueued) return;
+        _pushQueued = true;
+        Callable.From(PushToTable).CallDeferred();
+    }
+
+    void PushToTable()
+    {
+        _pushQueued = false;
+        if (!GodotObject.IsInstanceValid(Root)) return;
+        var listed = _shown.Select(r => r.Piece.Id).ToHashSet();
+        var ids = T.Selected.Where(id => !listed.Contains(id)).Concat(Picked().Select(r => r.Piece.Id)).ToHashSet();
+        if (ids.SetEquals(T.Selected)) return;
+        _pushing = true;
+        try { T.SetSelection(ids); }
+        finally { _pushing = false; }
     }
 
     void SyncButtons() => _delete.Disabled = _tree.GetNextSelected(null) == null;
