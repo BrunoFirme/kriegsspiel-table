@@ -70,7 +70,7 @@ static class AppSettings
             shown.Text = Percent(cfg.UiScale);
             float wanted = Ui.WantedScale(root, cfg), fits = Ui.ScaleThatFits(root, wanted);
             capped.Visible = fits < wanted - 0.01f;
-            capped.Text = $"This window holds up to {Percent(fits / Ui.Fitted(root))}; a larger window or screen allows more.";
+            capped.Text = $"This window holds up to {Percent(fits / Ui.Fitted(root))}";
         }
         void Use()
         {

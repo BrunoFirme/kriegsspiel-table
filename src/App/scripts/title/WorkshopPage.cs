@@ -22,7 +22,7 @@ sealed class WorkshopPage
     public void Show()
     {
         var v = _t.NewPage("Steam Workshop", _platform.Available
-            ? "Packs and scenarios made by the community. Subscribing installs them; Steam keeps them up to date."
+            ? ""
             : (_platform.Status ?? "") + " The Workshop opens up in the Steam release of Kriegsspiel Table.", wide: true);
         var guide = new Button { Text = "Sharing packs and scenarios", Flat = true, FocusMode = Control.FocusModeEnum.None, SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin };
         guide.AddThemeColorOverride("font_color", Muted);

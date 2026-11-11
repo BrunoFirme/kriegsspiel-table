@@ -22,7 +22,6 @@ sealed class SaveCopyDialog : HudPart
         box.AddChild(new Label { Text = "Name of the copy" });
         var name = new LineEdit { Text = S.View.Name + " copy" };
         box.AddChild(name);
-        box.AddChild(Hint("A second scenario from the table as it is now: map sheets, every piece, clock and scale. The table's own scenario saves itself as you work."));
         dlg.AddChild(box);
         dlg.Confirmed += () => Save(name.Text);
         Ui.Open(HudNode, dlg, new Vector2I(500, 230));

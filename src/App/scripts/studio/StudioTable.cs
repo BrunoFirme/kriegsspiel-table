@@ -136,7 +136,6 @@ internal sealed class TablePaper
         }
         packs.ItemSelected += _ => Fill();
         if (ids.Count > 0) { packs.Selected = 0; Fill(); }
-        box.AddChild(Ui.Hint("Placed next to the camera target for size comparison; it is not part of this pack."));
         dlg.AddChild(box);
         dlg.Confirmed += () =>
         {

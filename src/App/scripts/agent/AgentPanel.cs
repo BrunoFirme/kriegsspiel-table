@@ -51,7 +51,7 @@ static class AgentPanel
         box.AddChild(on);
         var state = new Label { AutowrapMode = TextServer.AutowrapMode.WordSmart, CustomMinimumSize = new Vector2(440, 0) };
         box.AddChild(state);
-        box.AddChild(Ui.Hint("An MCP server on this PC only. The helper speaks stdio and finds or opens the app by itself; the address speaks Streamable HTTP with the key in an Authorization header. The agent acts with your seat's rights and the log names its changes agent. It stays on until switched off, restarts included."));
+        box.AddChild(Ui.Hint("This PC only · your seat's rights · stays on across restarts"));
 
         var helper = new LineEdit { Editable = false, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         var helperRow = Row(box, "Helper (stdio)");

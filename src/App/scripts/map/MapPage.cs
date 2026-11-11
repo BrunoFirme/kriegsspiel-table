@@ -186,7 +186,6 @@ sealed class MapPage : HudPart
         foreach (var sb in new[] { left, top, right, bottom }) sb.ValueChanged += _ => PushCrop();
         Ui.AlignForm(cg);
         _box.AddChild(cg);
-        _box.AddChild(Hint("Or drag the knobs on the table"));
         var row = new HBoxContainer();
         row.AddChild(Ui.Primary("Apply", T.ApplyCrop, "Keep only the part inside the frame"));
         row.AddChild(Btn("Cancel", T.CancelCrop));

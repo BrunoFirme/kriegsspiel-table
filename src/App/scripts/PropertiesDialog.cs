@@ -140,7 +140,7 @@ sealed class PropertiesDialog : HudPart
         var p = _p;
         var layer = _layer;
         _box.AddChild(Header("Attached pieces"));
-        if (p.Attached.Count == 0) _box.AddChild(Hint("None. Drag rows onto this piece under Pieces → On the table, or pick several and right-click this one → Attach the others."));
+        if (p.Attached.Count == 0) _box.AddChild(Hint("None"));
         foreach (var cid in p.Attached)
         {
             var ch = T.Find(layer, cid);

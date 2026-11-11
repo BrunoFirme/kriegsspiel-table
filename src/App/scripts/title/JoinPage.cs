@@ -36,7 +36,6 @@ sealed class JoinPage
         g.AddChild(Caps("Port"));
         var port = new LineEdit { Text = _cfg.Port.ToString(), CustomMinimumSize = new Vector2(100, 0), SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin };
         g.AddChild(port);
-        v.AddChild(new Label { Text = "You knock; the host or a lead umpire lets you in and gives you a role. Once let in, this PC comes straight back in later.", Modulate = Muted, AutowrapMode = TextServer.AutowrapMode.WordSmart, CustomMinimumSize = new Vector2(440, 0) });
         v.AddChild(new Control { CustomMinimumSize = new Vector2(0, 8) });
         v.AddChild(Primary("Join", () =>
         {

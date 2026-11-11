@@ -27,7 +27,7 @@ sealed class UmpiresPage : HudPart
         if (!S.IsUmpire)
         {
             _box.AddChild(Header("Watching"));
-            _box.AddChild(Hint("You see the umpire board as it is. The umpires' zones, dice and pointers stay with them."));
+            _box.AddChild(Hint("The umpire board is read-only"));
             return;
         }
         AddZones();

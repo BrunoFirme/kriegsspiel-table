@@ -27,7 +27,6 @@ internal sealed class MarkerPlacer
     public void BuildTab(VBoxContainer p)
     {
         var d = _s.Sel!;
-        p.AddChild(Ui.Hint("Pieces put down beside this one from its right-click menu: smoke, a vedette, a flag. The place turns with the piece."));
         if (Active) p.AddChild(Ui.Primary("Done placing", () => { End(); _s.RebuildInspector(); }, "Takes the markers off the paper; their places are kept"));
         else if (d.Attachments.Count > 0) p.AddChild(Ui.Btn("Place them by hand on the table…", Begin, "Puts the piece's markers on the paper beside it: drag them where they belong"));
         for (int i = 0; i < d.Attachments.Count; i++)
@@ -54,7 +53,7 @@ internal sealed class MarkerPlacer
             if (Active) { End(); Begin(); }
         };
         if (addM.ItemCount > 0) p.AddChild(addM);
-        else p.AddChild(Ui.Hint("The pack has no other piece to use as a marker yet."));
+        else p.AddChild(Ui.Hint("No other piece in the pack"));
     }
 
     public void Begin()

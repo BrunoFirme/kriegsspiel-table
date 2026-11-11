@@ -30,7 +30,7 @@ internal sealed class TopLine
         ["outline"] = "The piece is cut along this line on the table · click to add corners, drag them, right-click to remove one — or pick an outline in the panel",
         ["measure"] = "Drag to measure · drag an end to move it · right-click a line to remove it",
         ["place"] = "Drag a box to where it prints on this side · drag a corner to size it",
-        ["pan"] = "Drag to move the view · the wheel zooms",
+        ["pan"] = "Drag to move the view · the wheel zooms · Ctrl+right-click copies a script widget position",
     };
 
     public PanelContainer Panel { get; private set; } = null!;

@@ -32,7 +32,6 @@ sealed class InviteDialog : HudPart
         var pwRow = PasswordRow(Ctx, dlg);
         box.AddChild(pwRow);
         var pwField = pwRow.GetChild<LineEdit>(1);
-        box.AddChild(Hint("Whoever knocks waits until you or a lead let them in, from the card under the top bar or the people at the top right; once in, their PC comes straight back next time."));
         if (S.IsHost) AddPacks(box, dlg);
         dlg.AddChild(box);
         dlg.Confirmed += () => AppClipboard.SetText(Invitation(S.View.Name, netAt ?? lanAt ?? $"port {port}", pwField.Text.Trim()));
@@ -57,7 +56,6 @@ sealed class InviteDialog : HudPart
         box.AddChild(Header("Packs"));
         foreach (var pack in packs)
             box.AddChild(Fact(pack.Name, $"{pack.Pieces.Count} piece{(pack.Pieces.Count == 1 ? "" : "s")}", Btn("Export…", () => { dlg.Hide(); ExportPack(pack.Id); }, "Save this pack as a .ktpack file to post before the game")));
-        box.AddChild(Hint("Posted before a big game, they spare your upload: whoever installs them first downloads almost nothing from you at the door."));
     }
 
     void ExportPack(string id)

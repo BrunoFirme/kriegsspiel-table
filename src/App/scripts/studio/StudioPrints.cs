@@ -88,7 +88,7 @@ internal sealed class PrintPlacer
         var items = Items(d);
         if (items.Count == 0)
         {
-            body.AddChild(Ui.Hint("Add counters or text lines in the inspector to place them here."));
+            body.AddChild(Ui.Hint("No counters or text lines"));
             return;
         }
         var chosen = items.FindIndex(i => i.key == Canvas.Chosen);

@@ -257,7 +257,7 @@ sealed partial class ScenarioDialog : HudPart
             bool on = byClock.ButtonPressed;
             manual.Visible = !on;
             clockHint.Visible = on;
-            clockHint.Text = $"{Fmt.Clock(S.View.Clock)}: {DayLight.Describe(S.View.Clock)}. The light moves on as turns end; the light set by hand comes back when this is off.";
+            clockHint.Text = $"{Fmt.Clock(S.View.Clock)}: {DayLight.Describe(S.View.Clock)}";
         }
         byClock.Toggled += _ =>
         {
@@ -286,7 +286,7 @@ sealed partial class ScenarioDialog : HudPart
 
     void AddBriefing()
     {
-        _box.AddChild(Hint("The situation the umpires play from: what has happened, where things stand, what each side intends. Every umpire reads it here; observers do not see it. # starts a heading, - a list."));
+        _box.AddChild(Hint("Observers do not see it · # heading · - list"));
         var text = new TextEdit
         {
             Text = S.View.Briefing ?? "", Editable = S.IsLead, WrapMode = TextEdit.LineWrappingMode.Boundary,
@@ -349,8 +349,8 @@ sealed partial class ScenarioDialog : HudPart
         {
             var w = ReadWind();
             rose.Strength = w.Strength;
-            windSays.Text = w.Strength < 0.25 ? "Calm: smoke rises straight up."
-                : $"{char.ToUpperInvariant(Wind.Words(w.Strength)[0])}{Wind.Words(w.Strength)[1..]} from the {Wind.Point(w.From)}: smoke drifts {Wind.Point(w.From + 180)}.";
+            windSays.Text = w.Strength < 0.25 ? "Calm"
+                : $"{char.ToUpperInvariant(Wind.Words(w.Strength)[0])}{Wind.Words(w.Strength)[1..]} from the {Wind.Point(w.From)}";
             T.ApplyWind(w);
         }
         void SendWind() { if (windSync) return; S.Do(new SetWind { Wind = ReadWind() }); }

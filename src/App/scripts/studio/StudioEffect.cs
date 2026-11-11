@@ -25,7 +25,7 @@ internal sealed class EffectTab
         Sliders(sg, e);
         LookRows(sg, e);
         Ui.AlignForm(sg);
-        p.AddChild(Ui.Hint("The size of the piece is the ground it covers: a volley is a long thin piece along the line (Piece → Size)."));
+        p.AddChild(Ui.Hint("Its size is the ground it covers (Piece → Size)"));
         ParticleSection(page, e);
         StartFromSection(page);
     }
@@ -162,7 +162,6 @@ internal sealed class EffectTab
         pr.AddChild(Ui.Btn("Paint it…", () => { Set(x => x.OwnPicture = true); _s.PaintFace("front"); }, "Paint the particle in the Picture view   (Alt+2)"));
         pr.AddChild(Ui.Btn("From a file…", () => _s.PickFiles(ImageFiles.Filter, f => { if (f.Length > 0) ParticleFromFile(f[0]); }, "A particle picture"), "A picture with a see-through background, about 128 px"));
         p.AddChild(pr);
-        p.AddChild(Ui.Hint("Its own picture keeps its colours; the kind gives the motion and the fading."));
     }
 
     void StartFromSection(VBoxContainer page)
@@ -185,7 +184,6 @@ internal sealed class EffectTab
             }, list: true, inspector: true);
         };
         p.AddChild(start);
-        p.AddChild(Ui.Hint("Takes that effect's settings and size; the name stays."));
     }
 
     void ParticleFromFile(string path)

@@ -243,7 +243,6 @@ internal sealed class PieceFramer
         g.AddChild(fill);
         Ui.AlignForm(g);
         box.AddChild(g);
-        box.AddChild(Ui.Hint("The frame runs along the piece's outline, on every face that has a picture."));
         if (Framed(d)) box.AddChild(Ui.Btn("Take the frame off", () => { dlg.Hide(); _ = Unframe(d); }));
         dlg.Confirmed += () => _ = Frame(d, col.Color, (float)w.Value, fill.Color);
         Ui.Open(_s.Root, dlg);

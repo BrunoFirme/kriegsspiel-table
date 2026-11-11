@@ -26,6 +26,19 @@ HAND_DIMMED_RX = re.compile(r"\bModulate\s*=\s*new\s+Color\(\s*1f?\s*,\s*1f?\s*,
 HAND_GAP_RX = re.compile(r'(?:AddThemeConstantOverride|SetConstant)\(\s*"(?:h_|v_)?separation"\s*,\s*\d')
 HAND_LABEL_WIDTH_RX = re.compile(r"\bUi\.(?:Form\(\s*\d|RowLabel\([^,]+,\s*\d)")
 UI_FOLDER, UI_HOME = "src/App/", "src/App/scripts/Ui.cs"
+UI_TEXT_FOLDER = "src/App/scripts/"
+HINT_TEXT_RX = re.compile(r'(?:\bUi\.|(?<![.\w]))(?:Hint|Small)\(\s*\$?"((?:[^"\\]|\\.)*)"')
+MUTED_TEXT_RX = re.compile(r'\bText\s*=\s*\$?"((?:[^"\\]|\\.)*)"[^\n]*\bModulate\s*=\s*(?:Ui\.)?Muted\b')
+MOST_HINT_WORDS = 10
+KEPT_HINTS = {
+    "src/App/scripts/ExportDialog.cs": ["This scenario has a game"],
+    "src/App/scripts/ZoneDialog.cs": ["Once any zone exists"],
+    "src/App/scripts/InviteDialog.cs": ["Your router did not open the port"],
+    "src/App/scripts/script/ScriptTools.cs": ["Red: its last call failed"],
+    "src/App/scripts/title/ReportPage.cs": ["Paste it into the issue", "An updated driver for the card"],
+    "src/App/scripts/agent/AgentNotice.cs": ["AI art and machine-made filler"],
+    "src/App/scripts/studio/StudioMenu.cs": ["A face of a piece two units wide"],
+}
 NAME_RX = re.compile(r"TTS|Tts|(?<![A-Za-z_])tts(?!\.)|(?i:tabletop ?simulator|berserk games)")
 NAME_ROOTS, NAME_ROOT_FILES = ["docs"], ["README.md", "CONTRIBUTING.md", "THIRD-PARTY-NOTICES.md"]
 NAME_CHECKED = (".cs", ".py", ".ps1", ".lua", ".json", ".md", ".lock", ".inc", ".tscn", ".tres", ".gdshader", ".gdshaderinc",
@@ -369,6 +382,22 @@ def ui_problems(rel, code):
             yield f"{rel}:{ln} (spacing by hand: a Ui.Gap step)"
         if HAND_LABEL_WIDTH_RX.search(line):
             yield f"{rel}:{ln} (label width by hand: Ui.DialogLabels, Ui.PanelLabels or a named constant)"
+        if rel.startswith(UI_TEXT_FOLDER):
+            for text in explaining_texts(rel, line):
+                yield f"{rel}:{ln} (explanation in the UI body: say it on the top bar or in a tooltip: {text[:60]})"
+
+
+def hint_words(text):
+    return len(re.findall(r"[A-Za-z']+", re.sub(r"\{[^}]*\}", "", text)))
+
+
+def explaining_texts(rel, line):
+    kept = KEPT_HINTS.get(rel, [])
+    for rx in (HINT_TEXT_RX, MUTED_TEXT_RX):
+        for m in rx.finditer(line):
+            text = m.group(1)
+            if hint_words(text) > MOST_HINT_WORDS and not any(text.startswith(k) for k in kept):
+                yield text
 
 
 def name_problems(rel, text):
@@ -448,6 +477,11 @@ def selftest():
     assert list(ui_problems("src/App/scripts/X.cs", "var g = Ui.Form(84);")) != []
     assert list(ui_problems("src/App/scripts/X.cs", 'r.AddChild(Ui.RowLabel("Tint", 44));')) != []
     assert list(ui_problems("src/App/scripts/X.cs", "var g = Ui.Form(Ui.PanelLabels);")) == []
+    assert list(ui_problems("src/App/scripts/X.cs", 'box.AddChild(new Label { Text = "Turn the model with the mouse, then drag it to where you want it.", Modulate = Ui.Muted });')) != []
+    assert list(ui_problems("src/App/scripts/X.cs", 'p.AddChild(Ui.Hint("Every piece of this kind runs this Lua at the table and in Try it"));')) != []
+    assert list(ui_problems("src/App/scripts/X.cs", 'p.AddChild(Hint($"{n} pieces · {m} held · the umpire board is read-only"));')) == []
+    assert list(ui_problems("src/App/scripts/X.cs", 'p.AddChild(Ui.Hint("No layers"));')) == []
+    assert list(ui_problems("src/App/scripts/ZoneDialog.cs", 'box.AddChild(Hint("Once any zone exists, umpires can only change umpire-board pieces inside their own zones."));')) == []
     assert list(name_problems("docs/x.md", "Convert to TTS")) != []
     assert list(name_problems("src/X.cs", "var ttsRot = 1;")) != []
     assert list(name_problems("src/X.cs", "class TtsSave")) != []

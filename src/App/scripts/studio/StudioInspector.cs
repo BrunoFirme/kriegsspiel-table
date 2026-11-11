@@ -38,7 +38,7 @@ internal sealed class Inspector
         if (sel == null)
         {
             var none = Page("Piece");
-            none.AddChild(Ui.Hint("No piece yet: ＋ New piece makes one."));
+            none.AddChild(Ui.Hint("No piece yet"));
             return;
         }
         if (view is "paint" or "model") { _s.LayerPanel.Body = Page(firstName); _s.RebuildLayers(); }
@@ -199,7 +199,6 @@ internal sealed class PieceTab
     {
         var d = _d;
         var p = _i.Section(page, "Looks", count: Count(d.States.Count));
-        p.AddChild(Ui.Hint("Switched at the table with [ ] or the number keys. Look 1 is how the piece starts; a copy of it changes with it."));
         for (int i = 0; i < d.States.Count; i++)
         {
             var st = d.States[i];
@@ -222,7 +221,6 @@ internal sealed class PieceTab
     {
         var d = _d;
         var p = _i.Section(page, "Counters", open: d.Counters.Count > 0, count: Count(d.Counters.Count));
-        p.AddChild(Ui.Hint("Numbers on each piece: ammunition, morale, strength. They print once placed with the Place tool (N)."));
         var cg = new GridContainer { Columns = 5 };
         cg.AddThemeConstantOverride("h_separation", Ui.Gap.Tight);
         if (d.Counters.Count > 0) foreach (var hdr in new[] { "Name", "Min", "Max", "Start", "" }) cg.AddChild(new Label { Text = hdr, Modulate = Ui.Muted });
@@ -257,7 +255,6 @@ internal sealed class PieceTab
     {
         var d = _d;
         var p = _i.Section(page, "Text lines", open: d.TextLines.Count > 0, count: Count(d.TextLines.Count));
-        p.AddChild(Ui.Hint("Text on each piece, on every look: unit, commander, formation. It prints once placed with the Place tool (N)."));
         var tg = new GridContainer { Columns = 4 };
         tg.AddThemeConstantOverride("h_separation", Ui.Gap.Tight);
         for (int i = 0; i < d.TextLines.Count; i++)

@@ -225,6 +225,7 @@ public partial class Hud
         {
             if (key == "log") { Cfg.LogOpen = true; Cfg.Save(); }
             OpenPanel(key);
+            if (key == "pieces") Say(Pieces.Line);
         }
     }
 

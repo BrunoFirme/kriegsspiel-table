@@ -42,7 +42,7 @@ static class BriefingWindow
         var text = new RichTextLabel { BbcodeEnabled = true, SelectionEnabled = true, SizeFlagsVertical = Control.SizeFlags.ExpandFill, ScrollActive = true };
         text.AddThemeFontSizeOverride("normal_font_size", 14);
         string bb = "";
-        void Fill() => text.Text = bb = s.View.Briefing is { Length: > 0 } b ? ToBb(b) : "[color=#9a968c]No briefing yet. A lead umpire writes it in Scenario properties → Briefing.[/color]";
+        void Fill() => text.Text = bb = s.View.Briefing is { Length: > 0 } b ? ToBb(b) : "[color=#9a968c]No briefing yet[/color]";
         var find = FindBar.ForLabel(text, () => bb);
         box.AddChild(find);
         box.AddChild(text);

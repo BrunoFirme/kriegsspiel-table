@@ -34,7 +34,7 @@ internal sealed class StudioLayersPanel
         var list = new VBoxContainer();
         list.AddThemeConstantOverride("separation", Ui.Gap.Hair);
         for (int i = doc.Layers.Count - 1; i >= 0; i--) list.AddChild(LayerRow(doc.Layers[i]));
-        if (doc.Layers.Count == 0) list.AddChild(Ui.Hint("No layers: add one below."));
+        if (doc.Layers.Count == 0) list.AddChild(Ui.Hint("No layers"));
         _body.AddChild(list);
 
         var add = new HBoxContainer();
@@ -249,7 +249,7 @@ internal sealed class StudioLayersPanel
                     Canvas.Commit("Uncrop");
                 }));
                 into.AddChild(row2);
-                into.AddChild(Ui.Hint($"{l.SrcW} × {l.SrcH} px picture" + (l.Crop is { } c ? $", cropped to {c[2]:0} × {c[3]:0}" : "") + ". Crop it with the Crop tool (C); paint on it, or rub parts of it out, with the layer selected."));
+                into.AddChild(Ui.Hint($"{l.SrcW} × {l.SrcH} px picture" + (l.Crop is { } c ? $", cropped to {c[2]:0} × {c[3]:0}" : "")));
                 break;
             }
             case "block" when l.Block is { } b:

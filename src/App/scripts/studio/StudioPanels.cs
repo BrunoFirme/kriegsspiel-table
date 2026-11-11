@@ -414,7 +414,7 @@ internal sealed class ToolPanel
 
     void TransformRows()
     {
-        if (Canvas.Sel is not { } l) { _body.AddChild(Small("Click a layer on the picture.")); return; }
+        if (Canvas.Sel is not { } l) { _body.AddChild(Small("No layer picked")); return; }
         var g = new GridContainer { Columns = 4 };
         g.AddThemeConstantOverride("h_separation", Ui.Gap.Tight);
         void Num(string label, double v, double min, double max, double step, string tip, Action<double> set)

@@ -42,7 +42,7 @@ sealed class StampPanel : HudPart
             foreach (var c in box.GetChildren()) { box.RemoveChild(c); c.QueueFree(); }
         var palette = S.View.DecalPalette;
         _scroll.Visible = palette.Count > 0;
-        if (palette.Count == 0) _below.AddChild(Hint("Add a picture to stamp: blood, an arrow, a mark"));
+        if (palette.Count == 0) _below.AddChild(Hint("No decals"));
         else Entries(palette);
         if (S.IsUmpire) _below.AddChild(Btn("Add a decal…", ChoosePicture, "A picture file or a web link; it joins the scenario's decals for every umpire"));
         if (S.View.Decals.Values.Any(l => l.Count > 0) && S.IsUmpire)

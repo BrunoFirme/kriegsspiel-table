@@ -66,7 +66,6 @@ internal sealed class ScriptTab
         var d = _s.Sel!;
         var link = _s.FileWatch.Of(KindKey(d.Id));
         if (link != null) draft = null;
-        p.AddChild(Ui.Hint("Every piece of this kind runs this Lua at the table and in Try it: buttons, panels, what it draws on its face, how it reacts, whatever you write. F1 on a word opens the reference."));
         _script = new CodeEdit
         {
             Text = draft ?? d.Script ?? "", CustomMinimumSize = new Vector2(0, 320), SizeFlagsVertical = Control.SizeFlags.ExpandFill,
@@ -107,7 +106,6 @@ internal sealed class ScriptTab
         _log = new ScriptConsoleView(_s.S, prompt: true, fontSize: 11) { CustomMinimumSize = new Vector2(0, 150), Target = () => _s.Paper.Instance(_s.Sel)?.Id ?? "" };
         p.AddChild(_log);
         foreach (var (after, text, color) in _logLines) _log.AddLocal(text, color, after);
-        p.AddChild(Ui.Hint("Widget positions are piece units (centre 0, x right, z down the picture): in the 2D view the status line reads them under the pointer, and Ctrl+right-click copies them."));
     }
 
     static string KindKey(string defId) => "def:" + defId;

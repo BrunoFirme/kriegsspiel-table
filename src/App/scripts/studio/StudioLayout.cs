@@ -191,7 +191,6 @@ public partial class PieceStudio
         var h = new Label { Text = "This pack has no pieces yet", HorizontalAlignment = HorizontalAlignment.Center };
         h.AddThemeFontSizeOverride("font_size", 18);
         box.AddChild(h);
-        box.AddChild(new Label { Text = "Make the first one — or drop pictures or 3D models onto the window.", Modulate = Ui.Muted, HorizontalAlignment = HorizontalAlignment.Center });
         box.AddChild(NewPieces.Cards(() => { }));
         return p;
     }

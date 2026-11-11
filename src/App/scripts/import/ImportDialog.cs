@@ -41,7 +41,6 @@ public partial class ImportDialog : AcceptDialog
         var root = new VBoxContainer();
         root.AddThemeConstantOverride("separation", Ui.Gap.Row);
         AddChild(root);
-        root.AddChild(Ui.Hint("A module or save becomes a pack (every piece, bags holding their contents) and a scenario (its table laid out; big locked boards become map sheets). Scripts are translated; the report beside the scenario lists what did not convert and what is not taken from the module exactly."));
 
         var cols = new HBoxContainer { SizeFlagsVertical = Control.SizeFlags.ExpandFill };
         root.AddChild(cols);

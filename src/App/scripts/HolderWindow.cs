@@ -20,7 +20,7 @@ public partial class HolderWindow : FloatPanel
     readonly ItemList _list;
     readonly Control _tiles;
     readonly LineEdit _search;
-    readonly Label _empty, _dragHint;
+    readonly Label _empty;
     readonly Button _all;
     string _drawn = "\0";
     int _gen;
@@ -47,13 +47,11 @@ public partial class HolderWindow : FloatPanel
         WireDrag();
         _tiles = PieceTiles.Host(_list);
         Body.AddChild(_tiles);
-        _empty = Ui.Hint("Empty · hold pieces over it on the table a moment, or drop them here");
+        _empty = Ui.Hint("Empty");
         Body.AddChild(_empty);
         _all = Ui.Btn("Take all out", TakeAllOut, "Sets them out in a row beside it");
         _all.SizeFlagsHorizontal = SizeFlags.ShrinkBegin;
         Body.AddChild(_all);
-        _dragHint = Ui.Hint("Drag a piece out onto the table · double-click sets it beside");
-        Body.AddChild(_dragHint);
         Grabbed = _ => _moving = true;
         Moved = (_, _) => { _moving = false; if (OnScreen() is { } a) _offset = Position - a.at; };
         Closed = QueueFree;
@@ -75,7 +73,10 @@ public partial class HolderWindow : FloatPanel
         root.AddChild(w);
         w.Redraw(force: true);
         w.Follow();
+        t.Say(Line);
     }
+
+    const string Line = "Drag a piece out onto the table · double-click sets it beside · hold pieces over the holder a moment, or drop them here, to put them in";
 
     public static (string Layer, string Holder)? Under(Vector2 screen)
     {
@@ -164,7 +165,7 @@ public partial class HolderWindow : FloatPanel
         }
         bool empty = top.Count == 0;
         _empty.Visible = empty;
-        _search.Visible = _tiles.Visible = _dragHint.Visible = !empty;
+        _search.Visible = _tiles.Visible = !empty;
         _all.Visible = top.Count > 1;
         _all.Disabled = !CanTake;
     }

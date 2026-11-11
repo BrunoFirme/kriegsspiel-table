@@ -98,7 +98,6 @@ public partial class ExportDialog : ConfirmationDialog
             box.AddChild(new Label { Text = $"{sc.Name} uses {sc.Packs.Count} pack{(sc.Packs.Count == 1 ? "" : "s")}. Include them in the file?" });
             mode = PackModePicker(_store, _id, workshop: false);
             box.AddChild(mode);
-            box.AddChild(Ui.Hint("Whoever opens the file gets the scenario and every pack inside it. A trimmed pack never replaces a full one they already have."));
             var saves = SaveStore.Default;
             bool inPlay = saves.HasGame(_id);
             box.AddChild(Row("Table", tablePick = TablePicker(_store, sc, _id, inPlay)));
@@ -108,7 +107,7 @@ public partial class ExportDialog : ConfirmationDialog
                 box.AddChild(Ui.Hint("This scenario has a game: as it stands now, the file shows whoever opens it every piece where it is, with its notes and the briefing."));
             }
         }
-        else box.AddChild(new Label { Text = $"{_store.Pack(_id)?.Name ?? _id}: one file anyone can install (drop it on the window)." });
+        else box.AddChild(new Label { Text = _store.Pack(_id)?.Name ?? _id });
 
         Confirmed += () =>
         {

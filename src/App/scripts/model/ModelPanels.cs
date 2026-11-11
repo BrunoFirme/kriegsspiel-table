@@ -97,9 +97,6 @@ internal sealed partial class ModelPanels
             case "move":
                 SnapOptions(box);
                 break;
-            default:
-                box.AddChild(new Label { Text = "Turn the model with the mouse.", Modulate = Ui.Muted });
-                break;
         }
     }
 

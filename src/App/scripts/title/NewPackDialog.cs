@@ -13,7 +13,6 @@ static class NewPackDialog
         box.AddChild(new Label { Text = "Name of the pack" });
         var name = new LineEdit { Text = $"{(t.PlayerName.Text.Trim().Length > 0 ? t.PlayerName.Text.Trim() : "My")} pieces" };
         box.AddChild(name);
-        box.AddChild(new Label { Text = "Your packs upload to the host automatically when you place one of their pieces in a game.", Modulate = Muted, AutowrapMode = TextServer.AutowrapMode.WordSmart });
         dlg.AddChild(box);
         dlg.Confirmed += () =>
         {

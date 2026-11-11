@@ -436,7 +436,7 @@ public partial class Table : Node3D
 
     internal static double Norm360(double d) => KTable.Client.Hand.Angles.Norm360(d);
 
-    void Say(string hint) => _c.Say(hint);
+    internal void Say(string hint) => _c.Say(hint);
 
     public PieceNode? NodeOf(string layer, string id) => Pieces.NodeOf(layer, id);
     public PieceInstance? Find(string layer, string id) => S.View.Find(layer, id);

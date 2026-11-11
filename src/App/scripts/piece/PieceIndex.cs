@@ -23,7 +23,8 @@ sealed class PieceIndex : HudPart
     readonly LineEdit _search;
     readonly OptionButton _types;
     readonly Tree _tree;
-    readonly Label _count, _warning, _nestHint;
+    readonly Label _count, _warning;
+    public bool Nests { get; private set; }
     readonly Button _selectMissing;
     readonly Button _delete;
     readonly List<Row> _shown = new();
@@ -63,9 +64,6 @@ sealed class PieceIndex : HudPart
         _tree.ItemCollapsed += Folded;
         _tree.SetDragForwarding(Callable.From<Vector2, Variant>(DragFrom), Callable.From<Vector2, Variant, bool>(CanDrop), Callable.From<Vector2, Variant>(Drop));
         Root.AddChild(_tree);
-        _nestHint = Hint("Drag a row onto another piece to attach it there: moving that piece carries it. Drag it below the list to free it.");
-        _nestHint.CustomMinimumSize = new Vector2(240, 0);
-        Root.AddChild(_nestHint);
         _count = new Label { Modulate = Ui.Muted };
         _count.AddThemeFontSizeOverride("font_size", 11);
         var show = Btn("Show", () => Locate(Picked()), "Selects them on the table and brings the camera to them · double-click a row does the same");
@@ -144,9 +142,9 @@ sealed class PieceIndex : HudPart
         var missing = all.Where(r => r.PackMissing).ToList();
         _warning.Visible = _selectMissing.Visible = missing.Count > 0;
         if (missing.Count > 0)
-            _warning.Text = $"{missing.Count} piece{(missing.Count == 1 ? "" : "s")} from {string.Join(", ", missing.Select(r => r.Pack).Distinct())} {(missing.Count == 1 ? "is" : "are")} not drawn: the pack is not installed here. Install it, or delete them here and the game stops asking for it.";
+            _warning.Text = $"{missing.Count} piece{(missing.Count == 1 ? "" : "s")} not drawn: {(missing.Count == 1 ? "its pack is" : "their packs are")} not installed here";
         _count.Text = matches.Count < all.Count ? $"{matches.Count} of {all.Count}" : $"{all.Count} piece{(all.Count == 1 ? "" : "s")}";
-        _nestHint.Visible = S.IsUmpire && all.Count > 1;
+        Nests = S.IsUmpire && all.Count > 1;
         SyncButtons();
     }
 

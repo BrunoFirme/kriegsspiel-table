@@ -49,9 +49,6 @@ sealed class PiecesPanel : HudPart
         packs.AddChild(searchRow);
         BuildList();
         packs.AddChild(PieceTiles.Host(List));
-        var dragHint = Hint("Drag a piece onto the table, or click it and then the table · Shift keeps placing");
-        dragHint.CustomMinimumSize = new Vector2(240, 0);
-        packs.AddChild(dragHint);
         Panel = shell.MakePanel("pieces", "Pieces");
         Panel.Resizable = true;
         Panel.CustomMinimumSize = shell.PanelSize("pieces", 320, 420);
@@ -67,8 +64,14 @@ sealed class PiecesPanel : HudPart
         {
             Cfg.PiecesTab = (int)tab;
             Cfg.Save();
+            Say(Line);
         };
     }
+
+    const string PlaceLine = "Drag a piece onto the table, or click it and then the table · Shift keeps placing";
+    const string AttachLine = "Drag a row onto another piece to attach it · drag it below the list to free it";
+
+    public string Line => Tabs.CurrentTab != Index.Root.GetIndex() ? PlaceLine : Index.Nests ? AttachLine : "";
 
     public readonly TabContainer Tabs;
     public readonly PieceIndex Index;

@@ -394,7 +394,7 @@ sealed class SettingsDialog : HudPart
     void AddKeys()
     {
         var head = new HBoxContainer();
-        var hint = Hint("Click a key, then press the new one. Esc, Ctrl+1–9 and the arrow keys are fixed.");
+        var hint = Hint("Esc, Ctrl+1–9 and the arrow keys are fixed");
         hint.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
         head.AddChild(hint);
         var kg = Ui.Form(KeyLabels);
