@@ -17,6 +17,16 @@ sealed class PieceIndex : HudPart
 
     const string Every = "", Grouped = "grouped";
 
+    const string UnnamedPack = "a pack not installed here";
+
+    static string MissingPacks(List<Row> missing)
+    {
+        var named = missing.Select(r => r.Pack).Where(n => n != UnnamedPack).Distinct().ToList();
+        if (named.Count == 0) return missing.Count == 1 ? "its pack is" : "their packs are";
+        if (missing.Any(r => r.Pack == UnnamedPack)) named.Add("an unnamed pack");
+        return string.Join(", ", named);
+    }
+
     sealed record Row(string Layer, PieceInstance Piece, string Name, string Kind, string Pack, bool PackMissing, PieceType Type, string Find);
 
     public readonly VBoxContainer Root = new() { Name = "On the table" };
@@ -111,7 +121,7 @@ sealed class PieceIndex : HudPart
                 var def = S.Def(p.Def);
                 var pack = S.PackOfDef(p.Def);
                 var packId = pack?.Id ?? S.View.PackNamedBy(p.Def);
-                var packName = pack?.Name ?? packId ?? "a pack not installed here";
+                var packName = pack?.Name ?? packId ?? UnnamedPack;
                 var kind = def?.Name ?? (packId != null ? p.Def[(packId.Length + 1)..] : p.Def);
                 var name = p.Label is { Length: > 0 } label ? label : kind;
                 var words = new[] { name, kind, p.Def, packName, packId ?? "", p.Note ?? "", p.Memo }
@@ -142,7 +152,7 @@ sealed class PieceIndex : HudPart
         var missing = all.Where(r => r.PackMissing).ToList();
         _warning.Visible = _selectMissing.Visible = missing.Count > 0;
         if (missing.Count > 0)
-            _warning.Text = $"{missing.Count} piece{(missing.Count == 1 ? "" : "s")} not drawn: {(missing.Count == 1 ? "its pack is" : "their packs are")} not installed here";
+            _warning.Text = $"{missing.Count} piece{(missing.Count == 1 ? "" : "s")} not drawn: {MissingPacks(missing)} not installed here";
         _count.Text = matches.Count < all.Count ? $"{matches.Count} of {all.Count}" : $"{all.Count} piece{(all.Count == 1 ? "" : "s")}";
         Nests = S.IsUmpire && all.Count > 1;
         SyncButtons();
