@@ -27,7 +27,7 @@ sealed class Captures : HudPart
         null => Task.CompletedTask,
         { Gif: false } => Picture(),
         _ when Recording is { } r => Stopping(r),
-        var d => Gif(new PovFrames(T.Sighting, d), "pov", rec =>
+        var d => _povRun = Gif(new PovFrames(T.Sighting, d), "pov", rec =>
         {
             Recording = rec;
             if (rec != null) rec.Ticked += () => RecordingTicked?.Invoke();
@@ -47,13 +47,23 @@ sealed class Captures : HudPart
     {
         if (RegionRecording != null) return Task.CompletedTask;
         _rect().SetRect(null);
-        return Gif(new RegionFrames(T, HudNode, r), S.IsUmpire ? "umpire" : "observer", rec =>
+        return _regionRun = Gif(new RegionFrames(T, HudNode, r), S.IsUmpire ? "umpire" : "observer", rec =>
         {
             RegionRecording = rec;
             _rect().SetRecording(rec == null ? null : r);
             if (rec != null) rec.Ticked += () => RegionTicked?.Invoke();
             RegionChanged?.Invoke();
         }, () => { });
+    }
+
+    Task? _povRun, _regionRun;
+
+    public async Task StopRecordings()
+    {
+        StopRegion();
+        Recording?.Stop();
+        foreach (var run in new[] { _povRun, _regionRun })
+            if (run != null) await run;
     }
 
     public bool StopRegion()

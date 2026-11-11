@@ -247,4 +247,21 @@ static class StudioInPlaceTests
         Check.That(h.Table.Rig.Cam.GlobalTransform.Origin.DistanceTo(before.Origin) < 0.01f, "the view is as it was");
         Check.That(h.Net.PictureHeld?.Invoke() == false, "and a turn's picture can be taken");
     }
+
+    [ScreenTest]
+    static async Task A_gif_being_recorded_ends_and_is_kept_before_the_studio_covers_the_table(TestRunner r)
+    {
+        var h = await Host(r);
+        h.Cfg.CaptureGif = true;
+        h.Cfg.CaptureToClipboard = false;
+        h.Cfg.CaptureToFolder = true;
+        h.Cfg.CaptureFolder = Path.Combine(h.Root, "captures");
+        var run = h.Hud.Captures.Capture(new Rect2(20, 20, 200, 120));
+        for (int i = 0; i < 30 && h.Hud.Captures.RegionRecording == null; i++) await r.Frames(1);
+        Check.That(h.Hud.Captures.RegionRecording != null, "a GIF is recording");
+        await r.Frames(5);
+        await h.Hud.Captures.StopRecordings();
+        Check.That(run.IsCompleted && h.Hud.Captures.RegionRecording == null, "stopping waits until the recording has ended");
+        Check.That(Directory.Exists(h.Cfg.CaptureFolder) && Directory.GetFiles(h.Cfg.CaptureFolder, "*.gif").Length == 1, "and the GIF is kept");
+    }
 }

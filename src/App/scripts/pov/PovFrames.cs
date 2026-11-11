@@ -27,7 +27,7 @@ sealed class PovFrames : IGifFrames
         return _shot.Size;
     }
 
-    public Task Draw() => _sighting.DrawFrame(_shot!, _draft);
+    public Task Draw(bool grabbing) => _sighting.DrawFrame(_shot!, _draft);
 
     public Image Grab() => _shot!.GetTexture().GetImage();
 

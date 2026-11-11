@@ -11,7 +11,7 @@ namespace KTable.App;
 interface IGifFrames
 {
     Task<Vector2I> Open();
-    Task Draw();
+    Task Draw(bool grabbing);
     Image Grab();
     void Close();
     bool Gone { get; }
@@ -68,9 +68,10 @@ sealed class GifRecording
                     end = why;
                     break;
                 }
-                await _source.Draw();
+                bool grabbing = (Time.GetTicksMsec() - started) / MsPerSecond >= due;
+                await _source.Draw(grabbing);
                 Seconds = (Time.GetTicksMsec() - started) / MsPerSecond;
-                if (Seconds >= due) due = Grab(due);
+                if (grabbing) due = Grab(due);
                 Ticked?.Invoke();
             }
         }

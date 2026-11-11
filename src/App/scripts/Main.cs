@@ -516,17 +516,21 @@ public partial class Main : Node
     internal void EditInPlace(string packId, string kind, string layer, string pieceId)
     {
         if (GetNodeOrNull<Table>("Table") is not { } live || _hud is not { } hud || GetNodeOrNull<PieceStudio>("Studio") != null) return;
-        AfterDraft(hud, packId, draft =>
+        AfterDraft(hud, packId, draft => _ = OpenInPlace(hud, live, packId, kind, layer, pieceId, draft));
+    }
+
+    async System.Threading.Tasks.Task OpenInPlace(Hud hud, Table live, string packId, string kind, string layer, string pieceId, StudioDraft? draft)
+    {
+        await hud.Captures.StopRecordings();
+        if (!IsInstanceValid(hud) || !IsInstanceValid(live) || GetNodeOrNull<PieceStudio>("Studio") != null) return;
+        HideHud(hud, true);
+        live.Rest(true, pause: true);
+        OpenStudio(packId, kind, () =>
         {
-            HideHud(hud, true);
-            live.Rest(true, pause: true);
-            OpenStudio(packId, kind, () =>
-            {
-                live.Rest(false, pause: true);
-                HideHud(hud, false);
-                ShowWindowTitle();
-            }, new StudioInPlace(_session, live, _net, kind, layer, pieceId, draft), draft);
-        });
+            live.Rest(false, pause: true);
+            HideHud(hud, false);
+            ShowWindowTitle();
+        }, new StudioInPlace(_session, live, _net, kind, layer, pieceId, draft), draft);
     }
 
     internal void OpenEditor(string packId, string? kind = null) => AfterDraft(Title.Root ?? (Node)this, packId, draft =>

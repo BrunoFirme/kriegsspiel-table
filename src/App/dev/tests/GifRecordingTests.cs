@@ -16,7 +16,7 @@ static class GifRecordingTests
 
         public Task<Vector2I> Open() => Task.FromResult(new Vector2I(16, 8));
 
-        public async Task Draw()
+        public async Task Draw(bool grabbing)
         {
             _drawn++;
             await _r.Frames(1);
