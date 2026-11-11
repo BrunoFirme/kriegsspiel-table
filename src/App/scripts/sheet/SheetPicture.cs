@@ -16,6 +16,8 @@ sealed class SheetPicture
     public static int Composed;
     public static bool Packs { get; private set; } = true;
     const double PackedBytesPerPixel = 0.5, PackedAlphaBytesPerPixel = 1, LooseBytesPerPixel = 4;
+    const int MostTextureSide = 16384;
+    const long MostImagePixels = 1L << 28;
     double _bytesPerPixel;
 
     readonly Assets _assets;
@@ -41,17 +43,27 @@ sealed class SheetPicture
     }
 
     public int Coarsest => Index.Levels.Count - 1;
+    public int Finest => FinestOf(Index);
+
+    public static int FinestOf(TileIndex index)
+    {
+        int level = 0;
+        while (level < index.Levels.Count - 1 && !OneTextureHolds(index.Levels[level])) level++;
+        return level;
+    }
+
+    static bool OneTextureHolds(TileLevel lv) => lv.W <= MostTextureSide && lv.H <= MostTextureSide && (long)lv.W * lv.H <= MostImagePixels;
     public bool Done => Level == Target;
     public long Bytes => Level < 0 ? 0 : Size(Index.Levels[Level], _bytesPerPixel);
 
     public static long BytesAt(TileIndex index, int level, bool alpha) =>
-        Size(index.Levels[Math.Clamp(level, 0, index.Levels.Count - 1)], !Packs ? LooseBytesPerPixel : alpha ? PackedAlphaBytesPerPixel : PackedBytesPerPixel);
+        Size(index.Levels[Math.Clamp(level, FinestOf(index), index.Levels.Count - 1)], !Packs ? LooseBytesPerPixel : alpha ? PackedAlphaBytesPerPixel : PackedBytesPerPixel);
 
     static long Size(TileLevel lv, double bytesPerPixel) => (long)((double)lv.W * lv.H * bytesPerPixel * MipmapsShare);
 
     public void Want(int level)
     {
-        Target = Math.Clamp(level, 0, Coarsest);
+        Target = Math.Clamp(level, Finest, Coarsest);
         Next();
     }
 
