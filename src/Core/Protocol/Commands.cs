@@ -938,6 +938,7 @@ public sealed class SetCalibration : Command
 {
     public double? UnitsPerMeter { get; set; }
     public string? Units { get; set; }
+    public double? North { get; set; }
     public override Sender SentBy() => Sender.Umpire;
     public override bool OnUndoStack() => true;
     public override Shown ShownToObservers() => Shown.Table;

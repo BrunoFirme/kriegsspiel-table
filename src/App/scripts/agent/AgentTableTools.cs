@@ -38,7 +38,7 @@ sealed partial class AgentTableTools
             "The map sheets on the table: id, name, centre, size, turn, locked, layer, whether it has a picture and a relief, the relief's height ×, and its highest point in map units.",
             Args.Schema(), _ => Task.FromResult(ListSheets()));
         yield return new AgentTool("view_map",
-            "A picture of the table from straight above, north up, with a labelled grid in map units: the coordinates place_piece and place_pieces take. Without x, z and size it shows every map sheet. The view of the person at this PC does not move. Also lists the pieces in the area.",
+            "A picture of the table from straight above, the top of the map up, with a labelled grid in map units: the coordinates place_piece and place_pieces take. Without x, z and size it shows every map sheet. The view of the person at this PC does not move. Also lists the pieces in the area.",
             Args.Schema(new Arg("x", "number", "centre, map units"), new Arg("z", "number", "centre, map units"), new Arg("size", "number", "map units across"),
                 new Arg("grid", "number", "map units between grid lines (chosen to suit the size if left out)"), new Arg("pixels", "number", $"the picture's width and height ({MapView.MinPixels}–{MapView.MaxPixels}, {MapView.DefaultPixels} if left out)")),
             ViewMap);
@@ -178,11 +178,11 @@ sealed partial class AgentTableTools
         var size = Math.Clamp(a.Num("size") ?? Math.Max(max.X - min.X, max.Z - min.Z) * 1.05, MapView.MinSize, MapView.MaxSize);
         var step = a.Num("grid") is { } g && g > 0 ? Math.Max(g, size / 100) : MapView.Step(size);
         var pixels = (int)Math.Clamp(a.Num("pixels") ?? MapView.DefaultPixels, MapView.MinPixels, MapView.MaxPixels);
-        var shot = await MapView.Render(hud, hud.T, centre, size, step, pixels);
+        var shot = await MapView.Render(hud, hud.T, centre, size, step, pixels, s.View.Calibration.North);
         if (shot == null) return ToolResult.Fail("No picture: the window is not drawing (minimised?).");
         var metres = s.View.Calibration.UnitsPerMeter is { } upm && upm > 0 ? $" (about {MapView.Num(step / upm)} m)" : " (no map scale set yet: set_map_scale)";
         var head = FormattableString.Invariant($"x {MapView.Num(centre.X - size / 2)} to {MapView.Num(centre.X + size / 2)}, z {MapView.Num(centre.Z - size / 2)} to {MapView.Num(centre.Z + size / 2)}; ") +
-                   $"a grid line every {MapView.Num(step)} map units{metres}. North is up: x grows to the right, z grows upward.";
+                   $"a grid line every {MapView.Num(step)} map units{metres}. {MapView.NorthWords(s.View.Calibration.North)}: x grows to the right, z grows upward.";
         return new ToolResult(head + "\n" + PiecesIn(s, centre, size), false, new[] { shot });
     }
 

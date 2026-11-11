@@ -97,8 +97,9 @@ public sealed partial class TableTools
             "Writes the scenario's briefing (host and lead umpires): the situation, what has happened, where things stand, each side's orders. Markdown: # headings, - lists. It is kept with the scenario and its saves, and observers do not see it. Empty clears it.",
             Args.Schema(new Arg("text", "string", "the whole briefing", true)), SetBriefingTool);
         yield return new AgentTool("set_map_scale",
-            "Sets how long a map unit is, in metres (the ruler and ranges use it), and the units distances are read in (m, yd or pace).",
-            Args.Schema(new Arg("metres_per_unit", "number", "metres one map unit stands for"), new Arg("units", "string", "m, yd or pace")), SetScale);
+            "Sets how long a map unit is, in metres (the ruler and ranges use it), the units distances are read in (m, yd or pace), and where north is.",
+            Args.Schema(new Arg("metres_per_unit", "number", "metres one map unit stands for"), new Arg("units", "string", "m, yd or pace"),
+                new Arg("north", "number", "degrees clockwise from the top of the map to north (0 when north is the top)")), SetScale);
     }
 
     static Vec2? Point(JsonElement e) =>
@@ -533,9 +534,12 @@ public sealed partial class TableTools
         if (units != null && !UnitNames.Contains(units)) return ToolResult.Fail("units is one of " + string.Join(", ", UnitNames));
         double? perMetre = s.View.Calibration.UnitsPerMeter;
         if (a.Num("metres_per_unit") is { } m) { if (m <= 0) return ToolResult.Fail("metres_per_unit is above 0."); perMetre = 1 / m; }
-        s.Do(new SetCalibration { UnitsPerMeter = perMetre, Units = units ?? s.View.Calibration.Units });
+        var north = a.Num("north");
+        if (north is { } n && !double.IsFinite(n)) return ToolResult.Fail("north is a number of degrees.");
+        s.Do(new SetCalibration { UnitsPerMeter = perMetre, Units = units ?? s.View.Calibration.Units, North = north });
         await Landed(s);
         _log("set the map scale");
-        return new ToolResult(FormattableString.Invariant($"One map unit is {(s.View.Calibration.UnitsPerMeter is { } u ? 1 / u : double.NaN):0.###} m; distances read in {s.View.Calibration.Units}."));
+        var scale = s.View.Calibration.UnitsPerMeter is { } u ? FormattableString.Invariant($"One map unit is {1 / u:0.###} m") : "The map has no scale yet";
+        return new ToolResult(FormattableString.Invariant($"{scale}; distances read in {s.View.Calibration.Units}; north is {s.View.Calibration.North:0}° clockwise from the top of the map."));
     }
 }

@@ -26,6 +26,7 @@ sealed partial class ScenarioDialog : HudPart
         AddBriefing();
         _box = pages.Add("Map");
         AddDistances();
+        AddNorth();
         AddGrid();
         AddGround();
         _box = _lookBox = pages.Add("Light & surroundings");
@@ -92,6 +93,28 @@ sealed partial class ScenarioDialog : HudPart
             scaleLine.Text = ScaleLine(new Calibration { UnitsPerMeter = S.View.Calibration.UnitsPerMeter, Units = units[(int)i].Item1 });
         };
     }
+
+    void AddNorth()
+    {
+        _box.AddChild(Header("North"));
+        var form = Ui.Form(Ui.DialogLabels);
+        form.AddChild(new Label { Text = "From the top" });
+        var turn = new SpinBox { MinValue = 0, MaxValue = 359, Step = 1, Value = S.View.Calibration.North, Suffix = "°", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+            TooltipText = "Degrees clockwise from the top of the map to north; the compass, bearings, the wind and sightings follow it" };
+        form.AddChild(turn);
+        Ui.AlignForm(form);
+        _box.AddChild(form);
+        var says = Hint(NorthLine(S.View.Calibration.North));
+        _box.AddChild(says);
+        turn.ValueChanged += v =>
+        {
+            S.Do(new SetCalibration { UnitsPerMeter = S.View.Calibration.UnitsPerMeter, North = v });
+            says.Text = NorthLine(v);
+        };
+    }
+
+    static string NorthLine(double north) => north == 0 ? "North is the top of the map."
+        : FormattableString.Invariant($"The top of the map faces {Wind.Point(Calibration.Turned(-north))} ({Calibration.Turned(-north):000}°).");
 
     void AddGrid()
     {
@@ -298,7 +321,7 @@ sealed partial class ScenarioDialog : HudPart
         var wcol = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, Alignment = BoxContainer.AlignmentMode.Center };
         var wf = Ui.Form(Ui.DialogLabels);
         wf.AddChild(new Label { Text = "From" });
-        var fromBox = new SpinBox { MinValue = 0, MaxValue = 360, Step = 1, Value = w0.From, Suffix = "°", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, TooltipText = "0 north (the top of the map), 90 east, 180 south, 270 west" };
+        var fromBox = new SpinBox { MinValue = 0, MaxValue = 360, Step = 1, Value = w0.From, Suffix = "°", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, TooltipText = "0 north, 90 east, 180 south, 270 west" };
         wf.AddChild(fromBox);
         wf.AddChild(new Label { Text = "Strength" });
         var strRow = new HBoxContainer();

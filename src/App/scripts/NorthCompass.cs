@@ -6,6 +6,7 @@ namespace KTable.App;
 public partial class NorthCompass : Control
 {
     public CameraRig? Rig;
+    public Func<double>? North;
     public event Action? Pressed;
     public Func<Vector2, Vector2>? Snap;
     public event Action<Vector2>? Dropped;
@@ -34,13 +35,13 @@ public partial class NorthCompass : Control
         MouseExited += () => { _hover = false; QueueRedraw(); };
     }
 
-    public static float NorthOnScreen(float yaw) => Mathf.Wrap(yaw - Mathf.Pi, -Mathf.Pi, Mathf.Pi);
+    public static float NorthOnScreen(float yaw, double northDeg) => Mathf.Wrap(yaw - Mathf.Pi + Mathf.DegToRad((float)northDeg), -Mathf.Pi, Mathf.Pi);
 
     public override void _Process(double delta)
     {
         if (_pressed && !Input.IsMouseButtonPressed(MouseButton.Left) && !InDemo) Release(false);
         if (Rig == null || !IsVisibleInTree()) return;
-        float a = NorthOnScreen(Rig.Yaw);
+        float a = NorthOnScreen(Rig.Yaw, North?.Invoke() ?? 0);
         if (Mathf.IsEqualApprox(a, _shown)) return;
         _shown = a;
         QueueRedraw();

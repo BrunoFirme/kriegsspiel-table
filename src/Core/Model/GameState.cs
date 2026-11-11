@@ -76,7 +76,7 @@ public sealed class GameState
         {
             Id = id, Name = name, Packs = Packs.ToList(),
             Sheets = Sheets.Select(Json.Clone).ToList(), Grid = Json.Clone(Grid),
-            Calibration = new Calibration { UnitsPerMeter = Calibration.UnitsPerMeter },
+            Calibration = Calibration.Clone(),
             Clock = new GameClock { Turn = Clock.Turn, GameTime = Clock.GameTime, IncrementMinutes = Clock.IncrementMinutes },
             Lighting = Json.Clone(Lighting), Wind = Wind.Clone(),
             VisionRadius = VisionRadius, VisionSharp = VisionSharp, VisionBlur = VisionBlur, PointersAlwaysShown = PointersAlwaysShown, Briefing = Briefing,
@@ -100,7 +100,7 @@ public sealed class GameState
         var g = new GameState
         {
             ScenarioId = s.Id, Name = s.Name, Packs = new(s.Packs),
-            Sheets = s.Sheets.Select(Json.Clone).ToList(), Grid = Json.Clone(s.Grid ?? new GridDef()), Calibration = new() { UnitsPerMeter = s.Calibration.UnitsPerMeter },
+            Sheets = s.Sheets.Select(Json.Clone).ToList(), Grid = Json.Clone(s.Grid ?? new GridDef()), Calibration = s.Calibration.Clone(),
             Lighting = Json.Clone(s.Lighting ?? new Lighting()), Wind = (s.Wind ?? new Wind()).Clone(),
             VisionRadius = s.VisionRadius > 0 ? s.VisionRadius : 40, VisionSharp = s.VisionSharp, VisionBlur = s.VisionBlur, PointersAlwaysShown = s.PointersAlwaysShown, Briefing = s.Briefing,
             Clock = new() { Turn = s.Clock.Turn, GameTime = s.Clock.GameTime, IncrementMinutes = s.Clock.IncrementMinutes },

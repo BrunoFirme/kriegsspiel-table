@@ -350,6 +350,13 @@ public sealed class Calibration
 {
     public double? UnitsPerMeter { get; set; }
     public string Units { get; set; } = "m";
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public double North { get; set; }
+
+    public Calibration Clone() => (Calibration)MemberwiseClone();
+
+    public double CompassBearing(double mapBearing) => Turned(mapBearing - North);
+    public double MapBearing(double compassBearing) => Turned(compassBearing + North);
+    public static double Turned(double deg) => (deg % 360 + 360) % 360;
 
     public const double PacesPerMetre = 1.0 / 0.762;
     public const double YardsPerMetre = 1.0 / 0.9144;

@@ -410,7 +410,7 @@ sealed class Sighting
         NotifyChanged();
     }
 
-    static readonly (string cardinal, float yaw)[] Cardinals = { ("N", Mathf.Pi), ("E", Mathf.Pi / 2), ("S", 0), ("W", -Mathf.Pi / 2) };
+    static readonly (string cardinal, double bearing)[] Cardinals = { ("N", 0), ("E", 90), ("S", 180), ("W", 270) };
 
     public static IEnumerable<string> CardinalNames => Cardinals.Select(c => c.cardinal);
 
@@ -419,7 +419,7 @@ sealed class Sighting
         int i = Array.FindIndex(Cardinals, c => c.cardinal == cardinal);
         if (Draft is not { FirstPerson: true } d || i < 0) return;
         d.Facing = cardinal;
-        _c.Rig.Face(Cardinals[i].yaw, CameraRig.EyeTiltRadians);
+        _c.Rig.Face(CameraRig.YawLooking(_c.S.View.Calibration.MapBearing(Cardinals[i].bearing)), CameraRig.EyeTiltRadians);
         NotifyChanged();
     }
 

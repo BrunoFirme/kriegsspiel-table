@@ -1,4 +1,4 @@
-format 36
+format 37
 type AccessChanged object
   access: GameAccess
 type AddBoard object
@@ -76,6 +76,7 @@ type BoardDef object
   id: string
   name: string
 type Calibration object
+  north: double
   perMetre: double read-only
   unitName: string read-only
   units: string
@@ -1043,6 +1044,7 @@ type SetBriefing object
 type SetCalibration object
   actor: long
   at: long
+  north: double?
   seq: long
   undoFrom: long
   undoOf: long

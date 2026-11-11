@@ -141,7 +141,7 @@ sealed class AppTools
             var deg = Math.Clamp(angle, MinAngle, 90);
             view = deg >= 89.5 ? view with { TopDown = true } : view with { TopDown = false, Pitch = -(float)(deg * Math.PI / 180) };
         }
-        if (a.Num("heading") is { } heading) view = view with { Yaw = (float)(Math.PI - heading * Math.PI / 180) };
+        if (a.Num("heading") is { } heading) view = view with { Yaw = CameraRig.YawLooking(s.View.Calibration.MapBearing(heading)) };
         return view;
     }
 

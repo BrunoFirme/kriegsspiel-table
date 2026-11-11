@@ -2290,6 +2290,7 @@ The game around the table.
 | [`game.turn`](#gameturn) | The turn number. |
 | [`game.time`](#gametime) | The game time, as "1812-07-22T06:00". |
 | [`game.calibration`](#gamecalibration) | Map units per metre, or nil before the map has a scale. |
+| [`game.north`](#gamenorth) | Degrees clockwise from the top of the map to north: 0 when north is the top. |
 | [`game.advance_clock`](#gameadvance_clock) | Ends the turn, as Next turn does. |
 | [`game.umpires`](#gameumpires) | The umpires at the table: { { id =, name =, role = "host"\|"lead"\|"umpire" }, … }. |
 | [`game.say`](#gamesay) | A line in the Log: to nil = everyone at the table, an umpire's table = that umpire, "u:" = the umpires. |
@@ -2338,6 +2339,16 @@ game.calibration
 Map units per metre, or nil before the map has a scale.
 
 **Type** `number?`, read-only.
+
+### `game.north`
+
+```lua
+game.north
+```
+
+Degrees clockwise from the top of the map to north: 0 when north is the top.
+
+**Type** `number`, read-only.
 
 **See also** [`board.distance`](#boarddistance)
 

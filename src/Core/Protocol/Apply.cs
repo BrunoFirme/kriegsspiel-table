@@ -911,9 +911,11 @@ public static partial class StateMachine
 
     static string? ApplySetCalibration(GameState g, SetCalibration cal, ref Command? inverse)
     {
-        inverse = new SetCalibration { UnitsPerMeter = g.Calibration.UnitsPerMeter, Units = g.Calibration.Units };
+        if (cal.North is { } north && !double.IsFinite(north)) return "north must be a number";
+        inverse = new SetCalibration { UnitsPerMeter = g.Calibration.UnitsPerMeter, Units = g.Calibration.Units, North = g.Calibration.North };
         g.Calibration.UnitsPerMeter = cal.UnitsPerMeter;
         if (cal.Units != null) g.Calibration.Units = cal.Units;
+        if (cal.North is { } turned) g.Calibration.North = Calibration.Turned(turned);
         return null;
     }
 

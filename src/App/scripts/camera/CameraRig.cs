@@ -164,7 +164,9 @@ public partial class CameraRig : Node3D
 
     public float YawGoal => _yawTo ?? Yaw;
 
-    public void FaceNorth() => Turn(Mathf.Pi);
+    public static float YawLooking(double mapBearingDeg) => Mathf.Pi - Mathf.DegToRad((float)mapBearingDeg);
+
+    public void FaceNorth(double northDeg) => Turn(YawLooking(northDeg));
 
     public void Turn(float yaw)
     {

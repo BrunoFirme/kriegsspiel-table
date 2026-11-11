@@ -35,7 +35,7 @@ public sealed partial class TableTools
         {
             ["name"] = v.Name,
             ["clock"] = new JsonObject { ["turn"] = v.Clock.Turn, ["time"] = v.Clock.GameTime, ["minutes_per_turn"] = v.Clock.IncrementMinutes },
-            ["scale"] = new JsonObject { ["metres_per_unit"] = v.Calibration.UnitsPerMeter is { } u && u > 0 ? Math.Round(1 / u, 4) : null, ["units"] = v.Calibration.Units },
+            ["scale"] = new JsonObject { ["metres_per_unit"] = v.Calibration.UnitsPerMeter is { } u && u > 0 ? Math.Round(1 / u, 4) : null, ["units"] = v.Calibration.Units, ["north"] = v.Calibration.North },
             ["grid"] = new JsonObject { ["kind"] = v.Grid.Kind, ["cell"] = v.Grid.Pitch, ["divisions"] = v.Grid.Subdivisions },
             ["light"] = new JsonObject
             {

@@ -533,6 +533,7 @@ function board.strokes() end
 ---@field turn number The turn number.
 ---@field time string The game time, as "1812-07-22T06:00".
 ---@field calibration number|nil Map units per metre, or nil before the map has a scale.
+---@field north number Degrees clockwise from the top of the map to north: 0 when north is the top.
 game = {}
 
 ---Ends the turn, as Next turn does.

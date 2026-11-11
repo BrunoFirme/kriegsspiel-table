@@ -165,7 +165,7 @@ sealed class Transcript : HudPart
                 Log($"Pack [b]{Fmt.Bb(S.Store.Pack(ap.Id)?.Name ?? ap.Id)}[/b] is now in the game");
                 break;
             case SetCalibration sc when c.Actor != S.Me.PeerId:
-                Log($"{Who(c)} set the map scale");
+                Log(sc.North is { } north ? FormattableString.Invariant($"{Who(c)} turned north to {north:0}° from the top of the map") : $"{Who(c)} set the map scale");
                 break;
             case SpawnPiece sp when c.Actor != S.Me.PeerId:
                 Log($"{Who(c)} placed [b]{Fmt.Bb(S.Def(sp.Def)?.Name ?? sp.Def)}[/b]");

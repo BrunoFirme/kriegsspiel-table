@@ -726,6 +726,7 @@ public static partial class ApiDoc
     See("on_turn", "game.advance_clock");
     F("game", "time", "string", "The game time, as \"1812-07-22T06:00\".");
     F("game", "calibration", "number?", "Map units per metre, or nil before the map has a scale.");
+    F("game", "north", "number", "Degrees clockwise from the top of the map to north: 0 when north is the top.");
     See("board.distance");
 
     M("game", "advance_clock()", "Ends the turn, as Next turn does.");

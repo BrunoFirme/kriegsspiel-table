@@ -32,7 +32,9 @@ static class MapView
         return new Vector2((float)((at.X - (centre.X - size / 2)) * k), (float)((centre.Z + size / 2 - at.Z) * k));
     }
 
-    public static async Task<byte[]?> Render(Node host, Node3D table, Vec2 centre, double size, double step, int pixels)
+    public static string NorthWords(double north) => north == 0 ? "North is up" : FormattableString.Invariant($"North is {north:0}° clockwise from up");
+
+    public static async Task<byte[]?> Render(Node host, Node3D table, Vec2 centre, double size, double step, int pixels, double north)
     {
         var vp = new SubViewport
         {
@@ -46,7 +48,7 @@ static class MapView
         };
         vp.AddChild(cam);
         var grid = new Control { Size = new Vector2(pixels, pixels), MouseFilter = Control.MouseFilterEnum.Ignore };
-        grid.Draw += () => DrawGrid(grid, centre, size, step, pixels);
+        grid.Draw += () => DrawGrid(grid, centre, size, step, pixels, north);
         vp.AddChild(grid);
         host.AddChild(vp);
         try
@@ -66,7 +68,7 @@ static class MapView
         }
     }
 
-    static void DrawGrid(Control g, Vec2 centre, double size, double step, int pixels)
+    static void DrawGrid(Control g, Vec2 centre, double size, double step, int pixels, double north)
     {
         var font = ThemeDB.FallbackFont;
         double left = centre.X - size / 2, bottom = centre.Z - size / 2;
@@ -82,7 +84,8 @@ static class MapView
             g.DrawLine(new Vector2(0, py), new Vector2(pixels, py), Line, 1);
             if (py > CornerY) Label(g, font, "z " + Num(z), new Vector2(LabelPad, py + LabelPad));
         }
-        Label(g, font, "north is up", new Vector2(pixels - 110, pixels - LabelSize - 3 * LabelPad));
+        var northWords = NorthWords(north).ToLowerInvariant();
+        Label(g, font, northWords, new Vector2(pixels - font.GetStringSize(northWords, HorizontalAlignment.Left, -1, LabelSize).X - 4 * LabelPad, pixels - LabelSize - 3 * LabelPad));
     }
 
     static void Label(Control g, Font font, string text, Vector2 at)

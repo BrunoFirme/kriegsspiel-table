@@ -17,7 +17,7 @@ sealed partial class AgentTableTools
     {
         yield return new AgentTool("measure",
             "Measures as the ruler does: the straight distance from stop to stop and in all, in the map's scale (metres, paces or yards; map units when it has none), " +
-            "with each leg's bearing (0° north, the top of the map; 90° east) and how far the ground rises or falls. A stop is a point or a piece, measured from its centre.",
+            "with each leg's compass bearing (0° north, 90° east, north as the scenario sets it) and how far the ground rises or falls. A stop is a point or a piece, measured from its centre.",
             Args.Schema(new Arg("stops", "array", "two or more stops in order: [x, z] in map units, or a piece's id", true)),
             x => Task.FromResult(Measure(x)));
         yield return new AgentTool("in_range",
@@ -64,7 +64,7 @@ sealed partial class AgentTableTools
             legs.Add(new JsonObject
             {
                 ["from"] = from.id ?? Point(from.at), ["to"] = to.id ?? Point(to.at),
-                ["distance"] = cal.Describe(len), ["map_units"] = Math.Round(len, 3), ["bearing"] = Math.Round(Bearing(from.at, to.at), 1),
+                ["distance"] = cal.Describe(len), ["map_units"] = Math.Round(len, 3), ["bearing"] = Math.Round(Bearing(cal, from.at, to.at), 1),
                 ["rise"] = Math.Abs(rise) < MinRise ? "level" : (rise > 0 ? "up " : "down ") + cal.Describe(Math.Abs(rise)),
             });
         }
@@ -101,7 +101,7 @@ sealed partial class AgentTableTools
         var rows = new JsonArray(near.Take(limit).Select(x => (JsonNode?)new JsonObject
         {
             ["id"] = x.p.Id, ["name"] = PieceName(s, x.p), ["distance"] = cal.Describe(x.d), ["map_units"] = Math.Round(x.d, 3),
-            ["bearing"] = Math.Round(Bearing(from.Pos, x.p.Pos), 1),
+            ["bearing"] = Math.Round(Bearing(cal, from.Pos, x.p.Pos), 1),
         }).ToArray());
         var result = new JsonObject
         {
@@ -122,7 +122,7 @@ sealed partial class AgentTableTools
 
     static string PieceName(Session s, PieceInstance p) => p.Label is { Length: > 0 } l ? l : s.Store.Def(p.Def)?.Name ?? p.Def;
 
-    static double Bearing(Vec2 from, Vec2 to) => KTable.App.Table.Norm360(Math.Atan2(to.X - from.X, to.Z - from.Z) * 180 / Math.PI);
+    static double Bearing(Calibration cal, Vec2 from, Vec2 to) => cal.CompassBearing(Math.Atan2(to.X - from.X, to.Z - from.Z) * 180 / Math.PI);
 
     static JsonNode Point(Vec2 p) => new JsonArray(Math.Round(p.X, 3), Math.Round(p.Z, 3));
 

@@ -250,13 +250,15 @@ public static class EffectFx
 
     static Wind _wind = new();
     static Calibration? _scale;
+    static double _north;
 
     public static SmokeAir SmokeAirNow { get; private set; } = SmokeAir.Of(new Wind(), null);
 
     public static bool SetScale(Calibration c)
     {
         _scale = c;
-        return SteerAir();
+        _north = c.North;
+        return Retune();
     }
 
     static bool SteerAir()
@@ -278,7 +280,7 @@ public static class EffectFx
 
     static Vector3 Heading(Wind w)
     {
-        double to = (w.From + 180) * Math.PI / 180;
+        double to = (w.From + 180 + _north) * Math.PI / 180;
         return new Vector3((float)Math.Sin(to), 0, -(float)Math.Cos(to));
     }
 
@@ -302,9 +304,14 @@ public static class EffectFx
 
     public static bool SetWind(Wind w)
     {
-        var v = Pull(w);
-        var heading = Heading(w);
         _wind = w.Clone();
+        return Retune();
+    }
+
+    static bool Retune()
+    {
+        var v = Pull(_wind);
+        var heading = Heading(_wind);
         bool changed = SteerAir() | !v.IsEqualApprox(WindNow) | !heading.IsEqualApprox(WindHeading);
         WindNow = v;
         WindHeading = heading;

@@ -59,7 +59,7 @@ sealed partial class TableDemos
             table.Rig.Apply();
         }
         if (_args.TryGetValue("demo-north", out var dno))
-            Tree.CreateTimer(double.Parse(dno, inv)).Timeout += () => table.Rig.FaceNorth();
+            Tree.CreateTimer(double.Parse(dno, inv)).Timeout += () => table.Rig.FaceNorth(Session.View.Calibration.North);
     }
 
     async System.Threading.Tasks.Task DemoTransform(Table t)

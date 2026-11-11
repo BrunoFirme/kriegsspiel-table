@@ -69,7 +69,7 @@ public sealed partial class ScriptHost
     {
         var game = T();
         var gmeta = new Table(_vm);
-        gmeta["__index"] = DynValue.NewCallback((_, a) => GameField(Arg(a, 1).CastToString() ?? ""));
+        gmeta["__index"] = DynValue.NewCallback((_, a) => GameFields.Of(_s.State, Arg(a, 1).CastToString() ?? ""));
         game.Table.MetaTable = gmeta;
         game.Table["advance_clock"] = Fn(_ => { Emit(new AdvanceClock()); return DynValue.Nil; });
         game.Table["hotkey"] = Fn(a =>
@@ -145,18 +145,6 @@ public sealed partial class ScriptHost
             return t;
         });
         g["game"] = game;
-    }
-
-    DynValue GameField(string key)
-    {
-        var st = _s.State;
-        switch (key)
-        {
-            case "turn": return N(st.Clock.Turn);
-            case "time": return S(st.Clock.GameTime);
-            case "calibration": return st.Calibration.UnitsPerMeter is { } u ? N(u) : DynValue.Nil;
-            default: return DynValue.Nil;
-        }
     }
 
     string? SayTarget(DynValue opts)

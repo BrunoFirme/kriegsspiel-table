@@ -83,7 +83,8 @@ public partial class Hud
     {
         Drawer.BuildGrip(Root);
         Compass = new NorthCompass();
-        Compass.Pressed += () => T?.Rig.FaceNorth();
+        Compass.North = () => S.View.Calibration.North;
+        Compass.Pressed += () => T?.Rig.FaceNorth(S.View.Calibration.North);
         Compass.Snap = at => SnapAt(Compass, Compass.Size, at);
         Compass.Dropped += at => { Cfg.CompassPos = new[] { at.X, at.Y }; Cfg.Save(); };
         Compass.ResetAsked += () =>

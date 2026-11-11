@@ -361,7 +361,7 @@ and the zones button beside it, which shows or hides the zones on your screen, a
 - **Aa** (N) puts plates behind the labels pieces write beside themselves, so they read on a busy map; text on the
   piece itself is left alone.
 - **Frame** (Home) shows the whole map.
-- The **compass** shows north; click it to turn north-up.
+- The **compass** shows north, as the scenario sets it; click it to turn north-up.
 
 ### Log
 
@@ -375,7 +375,7 @@ hours or days. Pick a past turn under **History** to look back (read only); pick
 ### The scenario
 
 The scenario's name in the top bar, or **Menu → Scenario properties…**, opens its properties: **Game** (pointers,
-clock, the global script), **Briefing**, **Map** (distances, grid, ground), **Light & surroundings** and **Wind**.
+clock, the global script), **Briefing**, **Map** (distances, north, grid, ground), **Light & surroundings** and **Wind**.
 
 - **Briefing:** the situation you play from. Leads write it here and every umpire reads it here; **Read it…** opens it in a
   window of its own, with find. Observers never see it.
@@ -383,6 +383,8 @@ clock, the global script), **Briefing**, **Map** (distances, grid, ground), **Li
   the table's edge (a room, a garden, a coast, open country, a sky by day, at sundown or at night, a solid colour or
   your own panorama; a sky sets its light); the table under the map, which grows to hold what is on it, from paper to
   black or see-through, which leaves the sheets and pieces over the backdrop alone.
+- **North:** degrees clockwise from the top of the map, for a map drawn turned. The compass, bearings, the wind
+  and the sighting buttons follow it.
 - **Grid:** squares or hexes over the table. Nothing snaps to it.
 - **Ground:** the style, contour lines, snow line and streams of [painted ground](umpire-guide.md#relief).
 - **Wind:** where it blows from and how strong. Smoke drifts with it.
