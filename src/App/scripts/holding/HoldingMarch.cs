@@ -32,6 +32,7 @@ sealed partial class Carry
             var from = nodes.Select(n => Drawn(n).pos).ToList();
             Take(new Vec2(from.Average(p => p.X), from.Average(p => p.Z)), nodes);
             if (!Holding) return;
+            Go();
             _lift = MarchLift;
         }
         var aim = to.ToDictionary(t => t.Node, t => (t.Pos, t.Rot));

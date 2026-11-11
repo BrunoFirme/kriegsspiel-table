@@ -54,6 +54,7 @@ sealed class SelectTool
         if (hit != null)
         {
             PressPiece(mb, g, hit);
+            if (!_hand.Holding && _dragOrigin.ContainsKey(hit.Piece.Id)) _hand.Lift(g);
             return;
         }
         if (S.IsUmpire && _sheets.Selected is { } sn && !sn.Def.Locked && sn.ContainsWorld(Coords.ToWorld(g)))
@@ -160,7 +161,7 @@ sealed class SelectTool
             return;
         }
         if (_dragOrigin.Count == 0) return;
-        if (!_hand.Holding) _hand.Start(Coords.FromWorld(_dragStartWorld));
+        _hand.Start(Coords.FromWorld(_dragStartWorld));
         var d0 = (g.Value - Coords.FromWorld(_dragStartWorld)).Length;
         _c.Say($"Moving: {Fmt.Distance(d0, S.View.Calibration)}");
     }
@@ -196,6 +197,7 @@ sealed class SelectTool
         }
         if (!Dragging)
         {
+            if (_hand.Holding) _hand.Drop();
             if (narrowTo != null && !mb.ShiftPressed && !mb.CtrlPressed && _selection.Ids.Contains(narrowTo)) _selection.Set(new[] { narrowTo });
             return;
         }

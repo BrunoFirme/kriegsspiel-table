@@ -154,6 +154,27 @@ public class HandTests
         Assert.Equal((0, 0), (stuck, freed));
     }
 
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(true, false)]
+    [InlineData(false, true)]
+    [InlineData(true, true)]
+    public void A_marker_carried_in_one_selection_with_the_flag_under_it_lands_on_top_of_the_flag(bool markerFirst, bool stuck)
+    {
+        var flag = new FakePiece("flag", 0, 0, 2, 1) { Placed = true };
+        var disc = new FakePiece("disc", 0.3, 0, 0.4f, 0.4f, y: 0.13, thickness: 0.02f) { Placed = true };
+        if (stuck) flag.Piece.Attached.Add("disc");
+        var all = new List<FakePiece> { flag, disc };
+        var hf = new HeldPiece<FakePiece> { Node = flag, Layer = flag.Layer, Id = "flag", Rot = 180 };
+        var hd = new HeldPiece<FakePiece> { Node = disc, Layer = disc.Layer, Id = "disc", Offset = new Vec2(0.3, 0), Rot = 180 };
+        var held = markerFirst ? new List<HeldPiece<FakePiece>> { hd, hf } : new List<HeldPiece<FakePiece>> { hf, hd };
+        var footing = new Footing<FakePiece>((_, _) => all, _ => true);
+        Riders.Seat(held, footing);
+        var landing = new Landing<FakePiece>(footing, held, new Vec2(5, 5), 64);
+        Assert.Equal("move flag 5,5 rot 180 y 0\nmove disc 5.3,5 rot 180 y 0.12999999523162842", Describe(new[] { landing.Move(hf), landing.Move(hd) }));
+        Assert.Equal((hf, (HeldPiece<FakePiece>?)null), (hd.Parent, hf.Parent));
+    }
+
     static (string cmds, int stuck) DropOn(List<FakePiece> all, FakePiece dropped)
     {
         var sticking = new Sticking<FakePiece>(_ => all, (l, id) => all.FirstOrDefault(n => n.Piece.Id == id), _ => all.Select(n => n.Piece).ToList());

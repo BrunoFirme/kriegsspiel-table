@@ -57,7 +57,7 @@ sealed partial class Carry : IHeldPieces
     void Snap()
     {
         var grid = _c.S.View.Grid;
-        _snapping = !Marching && GridSnap.Snaps(grid);
+        _snapping = !Marching && !_still && GridSnap.Snaps(grid);
         var lead = _snapping ? _held.Where(h => h.Parent == null).MinBy(h => h.Offset.Length) : null;
         _snap = lead == null ? default : GridSnap.Nearest(grid!, _cursor + lead.Offset) - (_cursor + lead.Offset);
     }
@@ -65,7 +65,25 @@ sealed partial class Carry : IHeldPieces
     public IReadOnlyList<CarriedPiece> Shared() =>
         _held.Where(h => GodotObject.IsInstanceValid(h.Node)).Select(h => new CarriedPiece(h.Layer, h.Id, (float)h.Offset.X, (float)h.Offset.Z, (float)h.Rot, h.Lift)).ToList();
 
-    public void Start(Vec2 grab) => Take(grab, _selection.Movable.ToList());
+    public void Lift(Vec2 grab) => Take(grab, _selection.Movable.ToList());
+
+    public void Start(Vec2 grab)
+    {
+        if (!Holding) Take(grab, _selection.Movable.ToList());
+        Go();
+    }
+
+    bool _still;
+
+    void Go()
+    {
+        if (!_still) return;
+        _still = false;
+        var s = _c.S;
+        foreach (var h in _held.ToList())
+            if (_held.Contains(h) && GodotObject.IsInstanceValid(h.Node) && s.CanTouch(h.Layer, h.Node.Piece) && (s.View.Script != null || h.Node.Piece.Script != null || h.Node.Def?.Script != null))
+                s.Do(new HoldPiece { Layer = h.Layer, Id = h.Id, Held = true });
+    }
 
     void Take(Vec2 grab, List<PieceNode> nodes)
     {
@@ -75,6 +93,7 @@ sealed partial class Carry : IHeldPieces
         _trail.Clear();
         StopShake();
         _floor = -1;
+        _still = true;
         foreach (var n in nodes)
         {
             var c = Drawn(n);
@@ -83,12 +102,9 @@ sealed partial class Carry : IHeldPieces
             _held.Add(new Held { Node = n, Layer = n.Layer, Id = n.Piece.Id, Offset = c.pos - grab, Rot = c.rot });
             _heldNodes.Add(n);
         }
+        Riders.Seat(_held, _footing);
         TakeRiders(grab);
         _c.Sound.Lift(_heldNodes);
-        var s = _c.S;
-        foreach (var h in _held.ToList())
-            if (_held.Contains(h) && s.CanTouch(h.Layer, h.Node.Piece) && (s.View.Script != null || h.Node.Piece.Script != null || h.Node.Def?.Script != null))
-                s.Do(new HoldPiece { Layer = h.Layer, Id = h.Id, Held = true });
         _poses.Flush();
         _cursor = grab;
         Move(grab);
@@ -180,7 +196,7 @@ sealed partial class Carry : IHeldPieces
         var m = Pointer.In(_c.Scene.GetViewport());
         bool down = _fromDrawer != null ? Input.IsMouseButtonPressed(MouseButton.Left) : _press.LeftDown;
         bool over = _fromDrawer != null ? _fromDrawer(m) : overUi;
-        if (down && !over) ShakeAt(Time.GetTicksMsec() / 1000.0, new System.Numerics.Vector2(m.X, m.Y));
+        if (down && !over && !_still) ShakeAt(Time.GetTicksMsec() / 1000.0, new System.Numerics.Vector2(m.X, m.Y));
         if (down && !over && _c.Ground(m) is { } g)
         {
             WatchStow(g);
@@ -214,6 +230,27 @@ sealed partial class Carry : IHeldPieces
         _floor = -1;
         StopShake();
         _c.DoAll(cmds);
+    }
+
+    void SetDownInPlace()
+    {
+        var landed = new List<(PieceNode n, bool onPiece, double after)>();
+        float drop = 0;
+        foreach (var n in _held.Select(h => h.Node).Where(GodotObject.IsInstanceValid))
+        {
+            var hung = n.Position;
+            n.Held = false;
+            if (n.IsDie) n.TakeFace(n.Piece.State);
+            n.Refresh(n.Piece);
+            drop = Mathf.Max(drop, hung.Y - n.Position.Y);
+            landed.Add((n, n.Piece.Y > 0.01, Fall(n, hung, n.Quaternion)));
+        }
+        _held.Clear();
+        _heldNodes.Clear();
+        _floor = -1;
+        _still = false;
+        StopShake();
+        if (landed.Count > 0) _c.Sound.LandMany(landed, drop / LiftHeight);
     }
 
     void ReturnHome()
@@ -257,6 +294,7 @@ sealed partial class Carry : IHeldPieces
 
     public void Rotate(double deg)
     {
+        Go();
         FinishClump();
         Formation.Turn(_held, deg);
         _c.Sound.Turn(_heldNodes);
@@ -282,6 +320,7 @@ sealed partial class Carry : IHeldPieces
 
     void FormHeldRows(int rows)
     {
+        Go();
         FinishClump();
         Formation.FormHeld(_held, rows);
         _floor = -1;
@@ -386,6 +425,11 @@ sealed partial class Carry : IHeldPieces
     {
         Rehome();
         EndMarch();
+        if (_still)
+        {
+            SetDownInPlace();
+            return;
+        }
         if (HolderWindow.Under(Pointer.In(_c.Scene.GetViewport())) is { } w && PutInto(w.Layer, w.Holder)) return;
         if (DropIntoHolder()) return;
         if (_held.Any(h => !_c.S.CanTouch(h.Layer, Hand + h.Offset)))

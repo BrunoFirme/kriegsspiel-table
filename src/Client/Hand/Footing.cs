@@ -128,18 +128,14 @@ public sealed class Footing<T> where T : class, ITablePiece
         return (pos, On(pos, at0));
     }
 
-    public List<T> RestingOn(T under, IEnumerable<T> near, Func<string, bool> interactive)
+    public List<T> RestingOn(T under, IEnumerable<T> near, Func<string, bool> interactive) =>
+        near.Where(n => !_inHand(n) && !n.Placed && interactive(n.Layer) && RestsOn(n, under)).ToList();
+
+    public bool RestsOn(T n, T under)
     {
-        var found = new List<T>();
-        foreach (var n in near)
-        {
-            if (n == under || n.Layer != under.Layer || _inHand(n) || n.Piece.Locked || n.IsDie || n.Placed) continue;
-            if (!interactive(n.Layer) || n.Piece.Y <= 0) continue;
-            double underY = AbsoluteY(under, under.Piece.Pos, under.Piece.RotDeg, under.Piece.Y);
-            if (n.Piece.Y <= underY + 0.005) continue;
-            if (under.SurfaceAt(n.Piece.Pos) is not { } top) continue;
-            if (Math.Abs(n.Piece.Y + Sink - top) < 0.07) found.Add(n);
-        }
-        return found;
+        if (n == under || n.Layer != under.Layer || n.Piece.Locked || n.IsDie || n.Piece.Y <= 0) return false;
+        double underY = AbsoluteY(under, under.Piece.Pos, under.Piece.RotDeg, under.Piece.Y);
+        if (n.Piece.Y <= underY + 0.005) return false;
+        return under.SurfaceAt(n.Piece.Pos) is { } top && Math.Abs(n.Piece.Y + Sink - top) < 0.07;
     }
 }
