@@ -131,17 +131,13 @@ sealed class ShelfView
         if (cv.GetChild(0) is Panel plate)
         {
             var inside = shelf.Inside(e.Path, s.Present, Mosaic.Most);
-            if (inside.Count == 0) plate.AddChild(new ToolIcon { Kind = "folder", Color = Muted });
-            else
+            var mosaic = new Mosaic { Count = inside.Count, Fit = s.Pack };
+            mosaic.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
+            plate.AddChild(mosaic);
+            for (int i = 0; i < inside.Count; i++)
             {
-                var mosaic = new Mosaic { Count = inside.Count, Fit = s.Pack };
-                mosaic.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
-                plate.AddChild(mosaic);
-                for (int i = 0; i < inside.Count; i++)
-                {
-                    int cell = i;
-                    picture(inside[i], tex => { if (GodotObject.IsInstanceValid(mosaic)) mosaic.Set(cell, tex); });
-                }
+                int cell = i;
+                picture(inside[i], tex => { if (GodotObject.IsInstanceValid(mosaic)) mosaic.Set(cell, tex); });
             }
         }
         if (nameRow.GetChild(0) is Label label) label.CustomMinimumSize = new Vector2(NameWidth - FolderGlyph - Ui.Gap.Tight, MoreWidth);

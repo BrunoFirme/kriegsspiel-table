@@ -482,11 +482,6 @@ sealed partial class SavesWindow : Window
                 .OrderByDescending(File.GetLastWriteTimeUtc).Take(Mosaic.Most).ToList();
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException) { newest = new(); }
-        if (newest.Count == 0)
-        {
-            plate.AddChild(new ToolIcon { Kind = "folder", Color = Ui.Muted });
-            return;
-        }
         var mosaic = new Mosaic { Count = newest.Count };
         mosaic.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
         plate.AddChild(mosaic);

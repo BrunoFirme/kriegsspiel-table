@@ -39,20 +39,25 @@ static class ShelfTests
     }
 
     [NodeTest]
-    static async Task A_mosaic_lays_one_to_four_pictures_without_overlap(TestRunner r)
+    static async Task A_folder_holds_one_to_four_pictures_side_by_side_their_tops_above_its_front(TestRunner r)
     {
         var size = new Vector2(226, 130);
+        var folder = Mosaic.Shape(size);
+        var plate = new Rect2(Vector2.Zero, size);
+        Check.That(new[] { folder.Tab, folder.Back, folder.Papers, folder.Front }.All(plate.Encloses), "the folder stays on the plate");
+        Check.That(folder.Tab.Position.Y < folder.Back.Position.Y && folder.Tab.Size.X < folder.Back.Size.X / 2, "a tab stands up at the top left");
+        Check.That(folder.Back.Encloses(folder.Papers), "the pictures stand inside the folder");
+        Check.That(folder.Papers.Position.Y < folder.Front.Position.Y && folder.Front.End.Y >= folder.Papers.End.Y, "the front hides their lower part and leaves their tops showing");
         for (int n = 1; n <= Mosaic.Most; n++)
         {
-            var cells = Mosaic.Cells(n, size);
+            var cells = Mosaic.Cells(n, folder.Papers);
             Check.Equal(n, cells.Length, $"{n} cells for {n} pictures");
             for (int i = 0; i < cells.Length; i++)
                 for (int j = i + 1; j < cells.Length; j++)
                     Check.That(!cells[i].Intersects(cells[j]), $"cells {i} and {j} of {n} do not overlap");
-            Check.That(cells.All(c => new Rect2(Vector2.Zero, size).Encloses(c)), $"all {n} stay on the plate");
+            Check.That(cells.All(c => folder.Papers.Encloses(c) && c.Position.Y < folder.Front.Position.Y), $"all {n} show their tops above the front");
         }
-        Check.Equal(130f, Mosaic.Cells(3, size)[0].Size.Y, "with three, the first stands the full height beside two");
-        Check.That(Mosaic.Cells(0, size).Length == 0, "none for none");
+        Check.That(Mosaic.Cells(0, folder.Papers).Length == 0, "none for none");
         await r.Frame();
     }
 
@@ -138,7 +143,7 @@ static class ShelfTests
         Check.That(Enumerable.Range(0, Mosaic.Most).All(i => mosaic[i] == picture), "each cell got its picture");
         Check.Equal("5 packs", Line(full), "it counts what it holds");
         var empty = Tile("Empty");
-        Check.That(!empty.FindChildren("*", "", true, false).OfType<Mosaic>().Any(), "an empty folder has no mosaic");
+        Check.Equal(0, empty.FindChildren("*", "", true, false).OfType<Mosaic>().Single().Count, "an empty folder is drawn as the folder with nothing in it");
         Check.Equal("Empty", Line(empty), "and says so");
         Check.Equal("1 folder", Line(Tile("Nest")), "a folder of folders counts them");
         host.QueueFree();
