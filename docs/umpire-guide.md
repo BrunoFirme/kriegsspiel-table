@@ -142,12 +142,13 @@ groups them, and names what each was used for, from the phalanx to the tank plat
   head where the drag ends. A right-click alone still opens the menu; **Alt+right-drag** turns the view.
 - In stretch in a line, the right-drag draws the line itself, straight, curved or in an S: the pieces are strung evenly
   along it, the first at its start and the last at its end, each facing across it the way a line drawn left to right
-  faces the top. Never closer than the spacing: on a line too short for them, the last run on past its end, and the
+  faces the top. Never closer than the interval: on a line too short for them, the last run on past its end, and the
   status line says so. Draw it round on itself and they go evenly all the way round. Draw back over it to shorten
   it; the line bends at most 60° in a piece's width, so a sharp corner comes out rounded rather than folded.
 - **Q / E** wheel the whole formation (Shift 1°); a drawn stretch turns whole, keeping its shape. **= / −** set the
-  spacing (0 is shoulder to shoulder), a drawn stretch keeping its line; **[ ]** the ranks of a line, or how many
-  abreast in a column. The wheel over the pieces turns each in place, as everywhere; off them it zooms.
+  interval between pieces side by side (0 is shoulder to shoulder), a drawn stretch keeping its line, and
+  **Shift+= / Shift+−** the distance between ranks; both are counted in a piece's width, so 100% is full interval or
+  full distance. The panel has a slider for each. **[ ]** the ranks of a line, or how many abreast in a column. The wheel over the pieces turns each in place, as everywhere; off them it zooms.
 - Drag one of the pieces to carry the formation as it stands.
 
 ### Pieces
@@ -214,7 +215,9 @@ pack of your own in the piece studio (＋ New piece, **Dice**).
 ### Ruler
 
 **M**, then drag. It reads map units, or metres once the map is calibrated, with ticks, the bearing and, over
-relief, the rise or fall.
+relief, the rise or fall. The pin beside the reading keeps that line on the table through any tool, while you
+measure others, until you click its pin again. Pinned lines are yours alone, kept on this PC
+for this table.
 
 ### Ranging
 

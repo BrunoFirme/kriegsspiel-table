@@ -88,6 +88,7 @@ public sealed class Settings
     public Dictionary<string, string> DrawLayer { get; set; } = new();
     public Dictionary<string, HashSet<string>> HiddenLayers { get; set; } = new();
     public Dictionary<string, string> Decal { get; set; } = new();
+    public Dictionary<string, List<double[]>> RulerPins { get; set; } = new();
     public double DecalTurn { get; set; }
     public double DecalGrowth { get; set; } = 1;
     public Dictionary<string, int> FormationRanks { get; set; } = new();
@@ -136,6 +137,7 @@ public sealed class Settings
 
     public byte ReliefLevels(byte kind) => GroundKinds.Levels(ReliefDetail(kind, 0), ReliefDetail(kind, 1));
     public double FormationGap { get; set; } = KTable.Client.Hand.Formations.DefaultGap;
+    public double? FormationDistance { get; set; }
     public string Formation { get; set; } = "line";
     public string NewBackdrop { get; set; } = "";
     public double NewTableShade { get; set; }
@@ -204,6 +206,9 @@ public sealed class Settings
         KeepNewest(DrawLayer);
         KeepNewest(HiddenLayers);
         KeepNewest(Decal);
+        foreach (var (scenario, pins) in RulerPins.ToList())
+            if (pins.RemoveAll(p => p is not { Length: 4 } || !p.All(double.IsFinite)) >= 0 && pins.Count == 0) RulerPins.Remove(scenario);
+        KeepNewest(RulerPins);
         if (UiScaleFollowsWindows != null) UiScale = 1f;
         UiScaleFollowsWindows = null;
         UiScale = float.IsFinite(UiScale) ? Math.Clamp(UiScale, UiScaleMin, UiScaleMax) : 1f;

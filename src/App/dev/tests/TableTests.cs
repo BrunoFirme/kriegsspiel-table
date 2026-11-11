@@ -285,6 +285,55 @@ static class TableTests
     }
 
     [NodeTest]
+    static async Task A_piece_redrawn_after_its_kind_changes_still_takes_a_click(TestRunner r)
+    {
+        var t = OfflineTable.Make(r, pieces: 1);
+        await r.Frame();
+        var before = t.Node("p1");
+        t.Table.RebuildPiecesOf(before.Piece.Def);
+        await r.Frames(2);
+        var after = t.Node("p1");
+        Check.That(after != before, "a new node draws it");
+        var screen = t.Table.Rig.Cam.UnprojectPosition(Coords.ToWorld(after.Piece.Pos, after.Thickness));
+        Check.Equal("p1", (t.Table.Ground(screen) is { } g ? t.Table.Pieces.Pick(g, screen: screen) : null)?.Piece.Id, "a click on it");
+        Check.Equal("p1", t.Table.Pieces.Pick(after.Piece.Pos)?.Piece.Id, "a pick at its middle");
+    }
+
+    [NodeTest]
+    static async Task A_pinned_ruler_line_stays_through_every_tool_until_its_pin_is_clicked_again(TestRunner r)
+    {
+        var t = OfflineTable.Make(r, pieces: 1);
+        await r.Frame();
+        var ruler = t.Table.Ruler;
+        void Measure(Vec2 to)
+        {
+            t.Table.SetTool(Tool.Ruler);
+            ruler.A = new Vec2(0, 0);
+            ruler.B = to;
+        }
+        Measure(new Vec2(4, 0));
+        await r.Frames(2);
+        var pins = t.Table.Labels.GetChildren().OfType<Button>().ToList();
+        Check.That(pins.Count == 1 && pins[0].Visible, "a pin beside the reading");
+        pins[0].EmitSignal(BaseButton.SignalName.Pressed);
+        Check.That(ruler.Pinned.Count == 1 && ruler.A == null, "pinned, the line leaves the ruler for the table");
+        Check.Equal("0,0,4,0", string.Join(",", t.Table.Settings.RulerPins[t.S.View.ScenarioId].Single()), "kept on this PC for this table");
+        Measure(new Vec2(0, 3));
+        t.Table.SetTool(Tool.Transform);
+        t.Table.SetTool(Tool.Ruler);
+        t.Table.SetTool(Tool.Select);
+        await r.Frames(2);
+        Check.That(ruler.Pinned.Count == 1 && ruler.A == null, "other tools and the ruler again leave the pinned line alone and take the loose one");
+        Check.That(t.Table.Labels.TextOf("ruler-pinned-0") != null, "its reading stays");
+        pins = t.Table.Labels.GetChildren().OfType<Button>().ToList();
+        Check.That(pins[0].Visible, "and its pin");
+        pins[0].EmitSignal(BaseButton.SignalName.Pressed);
+        await r.Frames(2);
+        Check.That(ruler.Pinned.Count == 0 && t.Table.Labels.TextOf("ruler-pinned-0") == null && pins.All(p => !p.Visible), "its pin clicked again, it goes");
+        Check.That(!t.Table.Settings.RulerPins.ContainsKey(t.S.View.ScenarioId), "and is forgotten");
+    }
+
+    [NodeTest]
     static async Task A_deleted_piece_s_node_goes_and_comes_back_with_undo(TestRunner r)
     {
         var t = OfflineTable.Make(r, pieces: 2);

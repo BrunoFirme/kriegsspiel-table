@@ -88,7 +88,12 @@ sealed class PieceLayer
                 return;
             }
         }
-        var node = PieceNode.Create(s, layer, p, ghost, Colors.White, lettered: false);
+        Add(layer, p, ghost, lettered: false);
+    }
+
+    void Add(string layer, PieceInstance p, bool ghost, bool lettered)
+    {
+        var node = PieceNode.Create(_c.S, layer, p, ghost, Colors.White, lettered);
         node.Seating = Seat;
         node.Sounds = _c.Sound;
         if (_c.S.Ground.Any) node.Resettle();
@@ -112,14 +117,7 @@ sealed class PieceLayer
             var p = _c.S.View.Find(key.layer, key.id);
             old.QueueFree();
             _pieces.Remove(key);
-            if (p == null) continue;
-            var node = PieceNode.Create(_c.S, key.layer, p, old.Ghost, Colors.White, lettered: old.Lettered);
-            node.Seating = Seat;
-            node.Sounds = _c.Sound;
-            if (_c.S.Ground.Any) node.Resettle();
-            Root.AddChild(node);
-            _pieces[key] = node;
-            if (_picked.Contains(p.Id) && _c.LayerInteractive(key.layer)) node.SetSelected(true);
+            if (p != null) Add(key.layer, p, old.Ghost, old.Lettered);
         }
         Resynced?.Invoke();
     }

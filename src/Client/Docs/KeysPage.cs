@@ -55,7 +55,7 @@ public static class KeysPage
             (K("ruler"), "ruler"),
             (K("gizmo"), "turn / resize ring"),
             (K("formations"), "form the selected pieces up; the panel shows each formation's key"),
-            ($"{K("smaller")}  {K("larger")}  {K("statePrev")}  {K("stateNext")}", "in the formations tool: spacing, ranks or abreast"),
+            ($"{K("smaller")}  {K("larger")}  {K("statePrev")}  {K("stateNext")}", "in the formations tool: interval (with Shift, distance), ranks or abreast"),
             (K("capture"), "capture a region to the clipboard"),
             (K("captureAgain"), "capture the same region again"),
             (K("sighting"), $"POV capture from the selected piece; Ctrl+wheel or {K("smaller")} {K("larger")} set its reach"),

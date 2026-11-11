@@ -25,8 +25,7 @@ sealed class ToolOverlay
     public void Redraw()
     {
         Mesh.ClearSurfaces();
-        _c.Labels.Remove("ruler");
-        _c.Labels.Remove("ruler-bearing");
+        _c.Labels.RemoveWhere(RulerTool.IsLabel);
         Drawing?.Invoke();
     }
 

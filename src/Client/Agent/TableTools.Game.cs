@@ -35,7 +35,8 @@ public sealed partial class TableTools
             "Forms pieces already on the table up into a formation (" + FormationWords + "), each going to the nearest place in it. Round their own centre and facing unless x, z or facing are given. Markers attached to a piece go with it. One undoable change.",
             Args.Schema(new Arg("ids", "array", "the pieces' ids", true), new Arg("formation", "string", FormationWords, true),
                 new Arg("x", "number", "where the formation's centre goes, map units"), new Arg("z", "number", "map units"), new Arg("facing", "number", "the way the pieces face, as their turn in degrees (180 faces the map's top)"),
-                new Arg("gap", "number", "space between pieces as a share of their size: 0 touching, 0.1 close (the default), 1 a piece's width apart"),
+                new Arg("gap", "number", "interval: space between pieces side by side as a share of a piece's width: 0 touching, 0.1 close (the default), 1 a piece's width apart"),
+                new Arg("distance", "number", "space between ranks as a share of a piece's width: 0 closed up, 1 full distance (defaults to gap)"),
                 new Arg("ranks", "number", "ranks for line, chequer, crescent and open order; how many abreast for column"), StretchLength, StretchPath),
             FormUp);
         yield return new AgentTool("set_piece_options",
@@ -147,7 +148,8 @@ public sealed partial class TableTools
         var units = found.Where(p => !found.Any(o => o != p && o.Attached.Contains(p.Id))).ToList();
         double gap = Math.Clamp(a.Num("gap") ?? Formations.DefaultGap, 0, Formations.MostGap);
         var sizes = units.Select(p => s.Def(p.Def) is { } d ? (W: d.Size.W * p.Scale, H: d.Size.H * p.Scale) : (W: 1.0, H: 1.0)).ToList();
-        var pitch = new Pitch(sizes.Max(z => z.W) * (1 + gap), sizes.Max(z => z.H) * (1 + gap));
+        double distance = Math.Clamp(a.Num("distance") ?? gap, 0, Formations.MostGap);
+        var pitch = Formations.PitchOf(sizes.Max(z => z.W), sizes.Max(z => z.H), gap, distance);
         var at = new Vec2(a.Num("x") ?? units.Average(p => p.Pos.X), a.Num("z") ?? units.Average(p => p.Pos.Z));
         double facing = path != null ? Formations.FacingOf(path) : a.Num("facing") ?? Formations.Facing(units.Select(p => p.RotDeg)) ?? units[0].RotDeg;
         int depth = a.Num("ranks") is { } r ? (int)Math.Clamp(r, 1, Formations.MostRanks) : namedDepth;

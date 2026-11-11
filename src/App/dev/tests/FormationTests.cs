@@ -141,6 +141,36 @@ static class FormationTests
         Check.Equal(3, ps.Count(p => Math.Abs(p.Z - 10) < 1e-4), "the front rank on the dragged line");
     }
 
+    [NodeTest]
+    static async Task Interval_spaces_the_files_and_distance_the_ranks_and_shift_moves_only_the_distance(TestRunner r)
+    {
+        var t = OfflineTable.Make(r, pieces: 6);
+        await r.Frame();
+        t.Table.SetTool(Tool.Formation);
+        t.Table.Selection.Set(Six);
+        var forms = t.Table.Forms;
+        forms.Form(Formations.Find("line")!);
+        forms.SetDepth(2);
+        forms.SetGap(0);
+        forms.SetDistance(1);
+        await Settled(r, t);
+        double w = t.Node("p1").Footprint.X, h = t.Node("p1").Footprint.Y;
+        void Spaced(double files, double ranks, string when)
+        {
+            var ps = Six.Select(id => At(t, id)).ToList();
+            var rows = ps.GroupBy(p => Math.Round(p.Z, 3)).OrderBy(g => g.Key).ToList();
+            Check.Equal(2, rows.Count, "two ranks " + when);
+            Check.That(Math.Abs(rows[1].Key - rows[0].Key - ranks) < 1e-3, $"ranks {ranks:0.###} apart {when}: {rows[1].Key - rows[0].Key:0.###}");
+            var xs = rows[0].Select(p => p.X).OrderBy(x => x).ToList();
+            Check.That(xs.Zip(xs.Skip(1), (a, b) => b - a).All(d => Math.Abs(d - files) < 1e-3), $"files {files:0.###} apart {when}: " + string.Join(" ", xs));
+        }
+        Spaced(w, h + w, "at no interval and full distance");
+        Check.That(forms.Key(new InputEventKey { Keycode = Key.Equal, PhysicalKeycode = Key.Equal, Pressed = true, ShiftPressed = true }, t.Table.Settings.Keys), "Shift+= is taken");
+        await Settled(r, t);
+        Check.That(Math.Abs(forms.Distance - 1.25) < 1e-9 && forms.Gap == 0, $"only the distance grew: {forms.Gap} {forms.Distance}");
+        Spaced(w, h + 1.25 * w, "after Shift+=");
+    }
+
     static Vec2 OnCircle(Vec2 centre, double radius, double deg) =>
         new(centre.X + radius * Math.Cos(deg * Math.PI / 180), centre.Z + radius * Math.Sin(deg * Math.PI / 180));
 

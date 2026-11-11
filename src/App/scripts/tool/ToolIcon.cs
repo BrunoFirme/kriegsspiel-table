@@ -226,6 +226,10 @@ public partial class ToolIcon : Control
             case "eye":
                 Eye();
                 break;
+            case "pin":
+                DrawColoredPolygon(new[] { P(6.5f, 2.5f), P(13.5f, 2.5f), P(13.5f, 4.5f), P(12.2f, 4.5f), P(12.8f, 10f), P(15f, 12.2f), P(5f, 12.2f), P(7.2f, 10f), P(7.8f, 4.5f), P(6.5f, 4.5f) }, _c);
+                Line(10f, 12.2f, 10f, 18f, 1.4f);
+                break;
             case "eye-off":
                 Eye();
                 Line(4f, 16f, 16f, 4f, 1.8f);

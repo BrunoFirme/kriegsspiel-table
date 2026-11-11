@@ -48,6 +48,8 @@ public partial class ScreenLabels : CanvasLayer
 
     public string? TextOf(string key) => _entries.TryGetValue(key, out var e) ? e.Label.Text : null;
 
+    public Rect2? RectOf(string key) => _entries.TryGetValue(key, out var e) && e.Label.Visible ? new Rect2(e.Label.Position, e.Label.Size) : null;
+
     public void Remove(string key)
     {
         if (_entries.Remove(key, out var e)) e.Label.QueueFree();

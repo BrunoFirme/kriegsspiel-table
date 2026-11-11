@@ -31,6 +31,8 @@ sealed class FormationTool
 
     public double Gap => Math.Clamp(Cfg.FormationGap, 0, Formations.MostGap);
 
+    public double Distance => Math.Clamp(Cfg.FormationDistance ?? Cfg.FormationGap, 0, Formations.MostGap);
+
     int KeptDepth => Cfg.FormationRanks.GetValueOrDefault(Kind.Id);
 
     public int Depth(int n) => KeptDepth > 0 ? KeptDepth : Formations.DefaultDepth(Kind, n);
@@ -55,15 +57,11 @@ sealed class FormationTool
     public string Hint() => Count < 2
         ? "Select the pieces to form up: click, Shift+click or drag a box · double-click a piece for all of its kind in view"
         : (Kind.AlongLine ? "Right-drag the line to string them along, back over it to shorten it" : Kind.Marches ? "Right-drag the line of march, the head where it ends" : "Right-drag where the front should stand")
-            + $" · {Keys("turnLeft", "turnRight")} turn · {Keys("smaller", "larger")} spacing" + (Kind.Depth == FormationDepth.None ? "" : $" · {Keys("statePrev", "stateNext")} {(Kind.Depth == FormationDepth.Abreast ? "abreast" : "ranks")}");
+            + $" · {Keys("turnLeft", "turnRight")} turn · {Keys("smaller", "larger")} interval" + (Kind.HasDistance ? ", with Shift distance" : "") + (Kind.Depth == FormationDepth.None ? "" : $" · {Keys("statePrev", "stateNext")} {(Kind.Depth == FormationDepth.Abreast ? "abreast" : "ranks")}");
 
     string Keys(string less, string more) => Cfg.Keys.Label(less) + " " + Cfg.Keys.Label(more);
 
-    Pitch PitchOf(List<PieceNode> units)
-    {
-        double g = 1 + Gap;
-        return new(units.Max(n => n.Footprint.X) * g, units.Max(n => n.Footprint.Y) * g);
-    }
+    Pitch PitchOf(List<PieceNode> units) => Formations.PitchOf(units.Max(n => n.Footprint.X), units.Max(n => n.Footprint.Y), Gap, Distance);
 
     Formed? Mine(List<PieceNode> units)
     {
@@ -146,17 +144,33 @@ sealed class FormationTool
         _hand.March(targets);
     }
 
-    public void Space(int notches)
+    public void Space(int notches, bool distance = false)
     {
-        double step = Gap < GapFineBelow || Gap == GapFineBelow && notches < 0 ? GapFine : GapCoarse;
-        SetGap(Gap + notches * step);
+        double now = distance ? Distance : Gap;
+        double next = now + notches * (now < GapFineBelow || now == GapFineBelow && notches < 0 ? GapFine : GapCoarse);
+        if (distance) SetDistance(next);
+        else SetGap(next);
     }
+
+    static double Kept(double gap) => Math.Round(Math.Clamp(gap, 0, Formations.MostGap), 2);
 
     public void SetGap(double gap)
     {
-        Cfg.FormationGap = Math.Round(Math.Clamp(gap, 0, Formations.MostGap), 2);
+        Cfg.FormationDistance ??= Cfg.FormationGap;
+        Cfg.FormationGap = Kept(gap);
+        Spaced($"Interval {Gap * 100:0}%");
+    }
+
+    public void SetDistance(double distance)
+    {
+        Cfg.FormationDistance = Kept(distance);
+        Spaced($"Distance {Distance * 100:0}%");
+    }
+
+    void Spaced(string what)
+    {
         Cfg.Save();
-        _c.Say($"Spacing {Gap * 100:0}% of a piece" + Relay(keepFront: true));
+        _c.Say(what + " of a piece's width" + Relay(keepFront: true));
         Changed?.Invoke();
     }
 
@@ -317,8 +331,9 @@ sealed class FormationTool
         if (Units().Count < 2) return false;
         if (km.Is(k, "turnLeft")) { Turn(k.ShiftPressed ? -1 : -15); return true; }
         if (km.Is(k, "turnRight")) { Turn(k.ShiftPressed ? 1 : 15); return true; }
-        if (km.Is(k, "larger")) { Space(1); return true; }
-        if (km.Is(k, "smaller")) { Space(-1); return true; }
+        bool distance = k.ShiftPressed && Kind.HasDistance;
+        if (km.Is(k, "larger")) { Space(1, distance); return true; }
+        if (km.Is(k, "smaller")) { Space(-1, distance); return true; }
         if (Kind.Depth == FormationDepth.None) return false;
         if (km.Is(k, "stateNext")) { Deepen(1); return true; }
         if (km.Is(k, "statePrev")) { Deepen(-1); return true; }

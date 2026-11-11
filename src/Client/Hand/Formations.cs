@@ -9,6 +9,8 @@ public enum FormationGroup { Lines, Columns, Shapes }
 public sealed record FormationKind(string Id, string Name, string What, FormationGroup Group, FormationDepth Depth, bool TakesFront)
 {
     public bool AlongLine { get; init; }
+    public bool OneDeep { get; init; }
+    public bool HasDistance => !AlongLine && !OneDeep;
     public bool Marches => Group == FormationGroup.Columns;
 }
 
@@ -31,7 +33,7 @@ public static class Formations
         new("staggered-column", "Staggered column", "One behind another, by turns left and right of the line of march: vehicles or files on both sides of a road", FormationGroup.Columns, FormationDepth.None, false),
         new("herringbone", "Herringbone", "A halted column, by turns angled out to the left and the right: vehicles pulled off the road, covering both flanks", FormationGroup.Columns, FormationDepth.None, false),
         new("square", "Square", "A hollow square, every face looking out: agmen quadratum, infantry square against cavalry", FormationGroup.Shapes, FormationDepth.None, false),
-        new("ring", "Ring", "A ring looking out: orbis, schiltron, wagon laager, all-round defence", FormationGroup.Shapes, FormationDepth.None, false),
+        new("ring", "Ring", "A ring looking out: orbis, schiltron, wagon laager, all-round defence", FormationGroup.Shapes, FormationDepth.None, false) { OneDeep = true },
         new("wedge", "Wedge", "A filled triangle, its point at the front: cuneus, embolon, boar's snout, Panzerkeil", FormationGroup.Shapes, FormationDepth.None, false),
         new("vee", "Vee", "Two arms reaching forward, open in front: to envelop, or to keep the point back", FormationGroup.Shapes, FormationDepth.None, false),
         new("diamond", "Diamond", "Points to the front, the rear and both flanks: the cavalry rhomboid, a platoon's diamond", FormationGroup.Shapes, FormationDepth.None, false),
@@ -55,6 +57,8 @@ public static class Formations
     public const double DefaultGap = 0.1, MostGap = 3;
     const double ChequerLines = 1.6, OpenAcross = 2.2, OpenDeep = 1.8, OpenJitter = 0.2, OpenTurn = 10, EchelonStep = 0.5, CrescentArc = 1.9, HerringboneTurn = 45,
         StaggerDeep = 1.5;
+
+    public static Pitch PitchOf(double width, double depth, double interval, double distance) => new(width * (1 + interval), depth + width * distance);
 
     public static int DefaultDepth(FormationKind kind, int n) => kind.Id switch
     {

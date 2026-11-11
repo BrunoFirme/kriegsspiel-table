@@ -85,18 +85,11 @@ sealed class FormationPanel : HudPart
     {
         var keys = Cfg.Keys;
         var form = Ui.Form(Ui.PanelLabels);
-        var s = new HSlider { MinValue = 0, MaxValue = MostSpacingPercent, Step = SpacingStep, Value = T.Forms.Gap * 100, CustomMinimumSize = new Vector2(90, 0),
-            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
-            TooltipText = $"The room between pieces, as a share of a piece · {keys.Label("smaller")} {keys.Label("larger")} on the table" };
-        var shown = Ui.ValueBox(s, v => $"{v:0}%", 40);
-        s.DragEnded += changed => { if (changed) T.Forms.SetGap(s.Value / 100); };
-        var spacing = new HBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-        spacing.AddThemeConstantOverride("separation", Ui.Gap.Tight);
-        spacing.AddChild(s);
-        spacing.AddChild(shown);
-        form.AddChild(new Label { Text = "Spacing" });
-        form.AddChild(spacing);
         var kind = T.Forms.Kind;
+        var spacingKeys = $"{keys.Label("smaller")} {keys.Label("larger")}";
+        AddSpacing(form, "Interval", T.Forms.Gap, $"Room between pieces side by side, as a share of a piece's width · {spacingKeys} on the table", T.Forms.SetGap);
+        if (kind.HasDistance)
+            AddSpacing(form, "Distance", T.Forms.Distance, $"Room between ranks, as a share of a piece's width: 100% is full distance · Shift {spacingKeys} on the table", T.Forms.SetDistance);
         if (kind.Depth != FormationDepth.None)
         {
             bool abreast = kind.Depth == FormationDepth.Abreast;
@@ -108,6 +101,20 @@ sealed class FormationPanel : HudPart
         }
         Ui.AlignForm(form);
         _box.AddChild(form);
+    }
+
+    static void AddSpacing(GridContainer form, string name, double now, string tip, Action<double> set)
+    {
+        var s = new HSlider { MinValue = 0, MaxValue = MostSpacingPercent, Step = SpacingStep, Value = now * 100, CustomMinimumSize = new Vector2(90, 0),
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, TooltipText = tip };
+        var shown = Ui.ValueBox(s, v => $"{v:0}%", 40);
+        s.DragEnded += changed => { if (changed) set(s.Value / 100); };
+        var row = new HBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+        row.AddThemeConstantOverride("separation", Ui.Gap.Tight);
+        row.AddChild(s);
+        row.AddChild(shown);
+        form.AddChild(new Label { Text = name });
+        form.AddChild(row);
     }
 }
 
