@@ -134,9 +134,12 @@ sealed partial class ScenarioDialog : HudPart
         gridForm.AddChild(subs);
         Ui.AlignForm(gridForm);
         _box.AddChild(gridForm);
+        var snap = new CheckBox { Text = "Pieces snap to the cells", ButtonPressed = g0.Snap, TooltipText = "A piece set down lands on the centre of the nearest cell, the smaller cells when squares are divided; a group keeps its shape" };
+        _box.AddChild(snap);
         var gridHint = Hint("");
         _box.AddChild(gridHint);
-        GridDef ReadGrid() => new() { Kind = kinds[kindPick.Selected < 0 ? 0 : kindPick.Selected].Item1, Pitch = pitch.Value, Subdivisions = (int)subs.Value, Color = g0.Color };
+        GridDef ReadGrid() =>
+            new() { Kind = kinds[kindPick.Selected < 0 ? 0 : kindPick.Selected].Item1, Pitch = pitch.Value, Subdivisions = (int)subs.Value, Color = g0.Color, Snap = snap.ButtonPressed };
         void ShowGrid()
         {
             var gd = ReadGrid();
@@ -144,17 +147,19 @@ sealed partial class ScenarioDialog : HudPart
             bool canDivide = gd.Kind == "square";
             pitch.Visible = on;
             subs.Visible = canDivide;
+            snap.Visible = on;
             foreach (var c in gridForm.GetChildren())
                 if (c is Label l) l.Visible = l.Text switch { "Across" => on, "Divide by" => canDivide, _ => true };
             gridHint.Visible = on;
             gridHint.Text = !on ? ""
-                : gd.Kind == "hex" ? $"One hex is {Fmt.Distance(gd.Pitch, S.View.Calibration)} across the flats. Nothing snaps to it."
-                : $"One cell is {Fmt.Distance(gd.Pitch, S.View.Calibration)}{(gd.Subdivisions > 1 ? $", divided into {gd.Subdivisions}" : "")}. Nothing snaps to it.";
+                : gd.Kind == "hex" ? $"One hex is {Fmt.Distance(gd.Pitch, S.View.Calibration)} across the flats."
+                : $"One cell is {Fmt.Distance(gd.Pitch, S.View.Calibration)}{(gd.Subdivisions > 1 ? $", divided into {gd.Subdivisions}" : "")}.";
         }
         void SendGrid() { S.Do(new SetGrid { Grid = ReadGrid() }); ShowGrid(); }
         kindPick.ItemSelected += _ => SendGrid();
         pitch.ValueChanged += _ => SendGrid();
         subs.ValueChanged += _ => SendGrid();
+        snap.Toggled += _ => SendGrid();
         ShowGrid();
     }
 

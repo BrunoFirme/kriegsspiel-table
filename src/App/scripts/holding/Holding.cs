@@ -48,7 +48,19 @@ sealed partial class Carry : IHeldPieces
     public int Count => _held.Count;
     public IEnumerable<string> HeldIds => _held.Select(h => h.Id);
     public bool Has(PieceNode n) => _heldNodes.Contains(n);
-    public HandAt At => new((float)_cursor.X, (float)_cursor.Z, Math.Max(0, _floor) + _lift);
+    public HandAt At => new((float)Hand.X, (float)Hand.Z, Math.Max(0, _floor) + _lift);
+
+    Vec2 _snap;
+    bool _snapping;
+    Vec2 Hand => _cursor + _snap;
+
+    void Snap()
+    {
+        var grid = _c.S.View.Grid;
+        _snapping = !Marching && GridSnap.Snaps(grid);
+        var lead = _snapping ? _held.Where(h => h.Parent == null).MinBy(h => h.Offset.Length) : null;
+        _snap = lead == null ? default : GridSnap.Nearest(grid!, _cursor + lead.Offset) - (_cursor + lead.Offset);
+    }
 
     public IReadOnlyList<CarriedPiece> Shared() =>
         _held.Where(h => GodotObject.IsInstanceValid(h.Node)).Select(h => new CarriedPiece(h.Layer, h.Id, (float)h.Offset.X, (float)h.Offset.Z, (float)h.Rot, h.Lift)).ToList();
@@ -119,10 +131,11 @@ sealed partial class Carry : IHeldPieces
     {
         bool moved = _floor < 0 || (cursor - _cursor).Length > 1e-9;
         _cursor = cursor;
+        Snap();
         if (moved)
         {
             TrailAdd(cursor);
-            _floor = _held.GroupBy(h => h.Node.Layer).Select(g => _footing.HighestSurface(g.Select(h => cursor + h.Offset).ToList(), g.Key)).DefaultIfEmpty(0).Max();
+            _floor = _held.GroupBy(h => h.Node.Layer).Select(g => _footing.HighestSurface(g.Select(h => Hand + h.Offset).ToList(), g.Key)).DefaultIfEmpty(0).Max();
         }
         PlaceHeld();
     }
@@ -138,7 +151,7 @@ sealed partial class Carry : IHeldPieces
         var cal = _c.S.View.Calibration;
         foreach (var h in _held.Where(h => h.Parent == null && GodotObject.IsInstanceValid(h.Node) && h.Node.Piece.MeasuresMoves))
         {
-            Vec2 from = h.Node.Piece.Pos, to = _cursor + h.Offset;
+            Vec2 from = h.Node.Piece.Pos, to = Hand + h.Offset;
             const float Above = 0.3f;
             overlay.SegPx(overlay.Mesh, mat, from, to, Above);
             var mid = new Vec2((from.X + to.X) / 2, (from.Z + to.Z) / 2);
@@ -155,7 +168,7 @@ sealed partial class Carry : IHeldPieces
         foreach (var h in _held)
             if (GodotObject.IsInstanceValid(h.Node))
             {
-                var (pos, scale, y) = Pulled(_cursor + h.Offset, h.Node.Piece.Scale, Math.Max(0, _floor) + _lift + h.Lift);
+                var (pos, scale, y) = Pulled(Hand + h.Offset, h.Node.Piece.Scale, Math.Max(0, _floor) + _lift + h.Lift);
                 h.Node.Preview(pos, h.Rot, scale, y);
             }
     }
@@ -287,7 +300,7 @@ sealed partial class Carry : IHeldPieces
     void SettleDrop(List<Held> held)
     {
         var clock = System.Diagnostics.Stopwatch.StartNew();
-        var landing = new Landing<PieceNode>(_footing, held, _cursor, SlideAtMost);
+        var landing = new Landing<PieceNode>(_footing, held, Hand, _snapping ? 0 : SlideAtMost);
         var moved = new List<(PieceNode n, MovePiece m)>();
         var landed = new List<(PieceNode n, bool onPiece, double after)>();
         float drop = 0;
@@ -375,7 +388,7 @@ sealed partial class Carry : IHeldPieces
         EndMarch();
         if (HolderWindow.Under(Pointer.In(_c.Scene.GetViewport())) is { } w && PutInto(w.Layer, w.Holder)) return;
         if (DropIntoHolder()) return;
-        if (_held.Any(h => !_c.S.CanTouch(h.Layer, _cursor + h.Offset)))
+        if (_held.Any(h => !_c.S.CanTouch(h.Layer, Hand + h.Offset)))
         {
             ReturnHome();
             _c.Say("Outside your zone");
@@ -394,7 +407,7 @@ sealed partial class Carry : IHeldPieces
         if (passing.Count > 0) { SettleDrop(passing); held = held.Where(h => !h.Node.Piece.NoCollision).ToList(); }
         if (held.Count == 0) return;
         var flick = ThrowVelocity();
-        if (held.Count > SimulateAtMost || new Vector3(flick.X, 0, flick.Z).Length() < FlingFrom) { SettleDrop(held); return; }
+        if (_snapping || held.Count > SimulateAtMost || new Vector3(flick.X, 0, flick.Z).Length() < FlingFrom) { SettleDrop(held); return; }
         await Throw(held);
     }
 

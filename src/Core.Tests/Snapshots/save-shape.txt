@@ -407,6 +407,7 @@ type GridDef object
   color: string
   kind: string
   pitch: double
+  snap: bool
   subdivisions: int
 type HoldPiece object
   actor: long

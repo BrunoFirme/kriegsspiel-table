@@ -541,6 +541,9 @@ public partial class TableToolsTests
         Assert.True((await Call("set_grid", new { kind = "octagon" })).IsError);
         Assert.True((await Call("set_grid", new { kind = "hex", cell = 0.0 })).IsError);
         Assert.Equal("square", _s.View.Grid!.Kind);
+        Assert.False((await Call("set_grid", new { kind = "hex", snap = true })).IsError);
+        Assert.False((await Call("set_grid", new { kind = "square" })).IsError);
+        Assert.True(_s.View.Grid!.Snap);
         await Call("set_zone", new { name = "North", owner = "Ann", polygon = new[] { new[] { 0.0, 0.0 }, new[] { 10.0, 0.0 }, new[] { 10.0, 10.0 } } });
         Assert.False((await Call("set_zone", new { name = "north", remove = true })).IsError);
         Assert.Empty(_s.View.Zones);

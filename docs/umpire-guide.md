@@ -385,7 +385,7 @@ clock, the global script), **Briefing**, **Map** (distances, north, grid, ground
   black or see-through, which leaves the sheets and pieces over the backdrop alone.
 - **North:** degrees clockwise from the top of the map, for a map drawn turned. The compass, bearings, the wind
   and the sighting buttons follow it.
-- **Grid:** squares or hexes over the table. Nothing snaps to it.
+- **Grid:** squares or hexes over the table. With **Pieces snap to the cells** ticked, a piece set down by hand lands on the centre of the nearest cell (the smaller cells when squares are divided); a group keeps its shape.
 - **Ground:** the style, contour lines, snow line and streams of [painted ground](umpire-guide.md#relief).
 - **Wind:** where it blows from and how strong. Smoke drifts with it.
 

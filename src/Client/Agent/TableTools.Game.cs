@@ -73,9 +73,10 @@ public sealed partial class TableTools
                 new Arg("remove", "boolean", "remove the zone of this name")),
             SetZoneTool);
         yield return new AgentTool("set_grid",
-            "Lays a grid over the table, as the scenario's Grid page does (undoable): square or hex cells, a cell's size across in map units (a hex across its flats), and lighter lines inside square cells. Nothing snaps to it.",
+            "Lays a grid over the table, as the scenario's Grid page does (undoable): square or hex cells, a cell's size across in map units (a hex across its flats), lighter lines inside square cells, and whether pieces set down by hand snap to the cells' centres.",
             Args.Schema(new Arg("kind", "string", "none, square or hex", true), new Arg("cell", "number", $"map units across one cell ({GridCellMin}–{GridCellMax}; as it is if left out)"),
-                new Arg("divisions", "number", $"lines inside each square cell, 1 for plain cells (1–{GridDivisionsMost})")),
+                new Arg("divisions", "number", $"lines inside each square cell, 1 for plain cells (1–{GridDivisionsMost})"),
+                new Arg("snap", "boolean", "pieces set down by hand land on the nearest cell's centre, the smaller cells when divided (as it is if left out)")),
             SetGridTool);
         yield return new AgentTool("set_light",
             "Sets the table's light (a preset, sun and ambient 0–1, warmth −1 to 1, shadows, or following the game clock's hour), the table under the map (0 squared paper, 0.5 grey, 1 black, 1.05 see-through: no table drawn), the backdrop seen around the table (a sky, a colour or a picture of your own), the map style painted ground is drawn in, contour lines over the relief, a snow line (metres; above it every ground takes snow), streams from the relief, and the wind (from, in degrees; strength 0 calm to 5 a gale), for everyone at the table.",
@@ -436,10 +437,12 @@ public sealed partial class TableTools
         if (!double.IsFinite(cell) || cell < GridCellMin || cell > GridCellMax) return ToolResult.Fail($"cell is {GridCellMin} to {GridCellMax} map units.");
         var divisions = (int)Math.Round(a.Num("divisions") ?? was.Subdivisions);
         if (divisions < 1 || divisions > GridDivisionsMost) return ToolResult.Fail($"divisions is 1 to {GridDivisionsMost}.");
-        s.Do(new SetGrid { Grid = new GridDef { Kind = kind, Pitch = cell, Subdivisions = divisions, Color = was.Color } });
+        var snap = a.Flag("snap") ?? was.Snap;
+        s.Do(new SetGrid { Grid = new GridDef { Kind = kind, Pitch = cell, Subdivisions = divisions, Color = was.Color, Snap = snap } });
         await Landed(s);
         _log(kind == "none" ? "took the grid off" : $"laid a {kind} grid");
-        return new ToolResult(kind == "none" ? "No grid." : $"A {kind} grid, {cell:0.##} map units a cell{(kind == "square" && divisions > 1 ? $", divided into {divisions}" : "")}.");
+        return new ToolResult(kind == "none" ? "No grid."
+            : $"A {kind} grid, {cell:0.##} map units a cell{(kind == "square" && divisions > 1 ? $", divided into {divisions}" : "")}{(snap ? "; pieces snap to it" : "")}.");
     }
 
     async Task<ToolResult> SetLight(JsonElement a)
