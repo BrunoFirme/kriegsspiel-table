@@ -159,5 +159,66 @@ public class ReadyPieceTests
         Assert.DoesNotContain("\"ready\"", Json.Serialize(CoreSamples.Piece("p-000200")), StringComparison.OrdinalIgnoreCase);
     }
 
+    [Fact]
+    public void Copying_a_holder_takes_its_released_ready_piece_and_what_rides_on_it()
+    {
+        var g = Table();
+        Ok(g, MarkSmoke);
+        Ok(g, new ReleaseReady { Layer = U, Holder = Battery });
+        Ok(g, new Unstow { Layer = U, Holder = Battery, Id = Flag });
+        Ok(g, new Attach { Layer = U, Parent = Smoke, Child = Flag });
+        var copied = PieceCopy.WithContents([Holder(g), g.Find(U, Smoke)!], id => g.Find(U, id));
+        Assert.Equal([Battery, Smoke, Flag], copied.Select(p => p.Id));
+        Assert.NotSame(Holder(g), copied[0]);
+    }
+
+    [Fact]
+    public void A_pasted_holder_holds_its_own_pieces_and_both_ready_pieces_come_out()
+    {
+        const string Outer = "p-000001";
+        var g = Table();
+        Ok(g, new Stow { Layer = U, Holder = Outer, Id = Battery });
+        var outer = g.Find(U, Outer)!;
+        Ok(g, new SetReady { Layer = U, Holder = Outer, Ready = new ReadyPiece { Id = Battery } });
+        outer.Stowed![0].Ready = new ReadyPiece { Id = Smoke, Turn = 15 };
+        outer.Stowed[0].Stowed![0].Attached.Add(Smoke);
+        int n = 0;
+        var copy = outer.Clone();
+        copy.Id = "x-copy";
+        PieceCopy.FreshHeld(copy, () => $"x-{++n}");
+        var battery = copy.Stowed!.Single();
+        Assert.Equal("x-1", battery.Id);
+        Assert.Equal("x-1", copy.Ready!.Id);
+        Assert.Equal(["x-2", "x-3"], battery.Stowed!.Select(s => s.Id));
+        Assert.Equal("x-3", battery.Ready!.Id);
+        Assert.Equal(15, battery.Ready.Turn);
+        Assert.Equal(["x-3"], battery.Stowed![0].Attached);
+        Assert.Equal(Battery, outer.Stowed[0].Id);
+        Assert.Equal(Smoke, outer.Stowed[0].Ready!.Id);
+
+        Ok(g, new RestorePiece { Layer = U, Piece = copy });
+        Ok(g, new ReleaseReady { Layer = U, Holder = Outer });
+        Ok(g, new ReleaseReady { Layer = U, Holder = "x-copy" });
+        Ok(g, new ReleaseReady { Layer = U, Holder = Battery });
+        Ok(g, new ReleaseReady { Layer = U, Holder = "x-1" });
+        Assert.NotNull(g.Find(U, Smoke));
+        Assert.NotNull(g.Find(U, "x-3"));
+    }
+
+    [Fact]
+    public void A_held_holder_copied_drops_a_ready_piece_it_had_let_out()
+    {
+        const string Outer = "p-000001";
+        var g = Table();
+        Ok(g, MarkSmoke);
+        Ok(g, new ReleaseReady { Layer = U, Holder = Battery });
+        Ok(g, new Stow { Layer = U, Holder = Outer, Id = Battery });
+        var copy = g.Find(U, Outer)!.Clone();
+        int n = 0;
+        PieceCopy.FreshHeld(copy, () => $"x-{++n}");
+        Assert.Null(copy.Stowed![0].Ready);
+        Assert.Equal(Smoke, g.Find(U, Outer)!.Stowed![0].Ready!.Id);
+    }
+
     static double Distance(Vec2 a, Vec2 b) => Math.Sqrt((a.X - b.X) * (a.X - b.X) + (a.Z - b.Z) * (a.Z - b.Z));
 }

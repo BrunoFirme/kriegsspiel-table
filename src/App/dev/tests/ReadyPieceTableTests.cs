@@ -57,4 +57,30 @@ static class ReadyPieceTableTests
         w.QueueFree();
         root.QueueFree();
     }
+
+    [NodeTest]
+    static async Task A_copied_holder_brings_its_ready_piece_from_the_table_and_holds_its_own_pieces(TestRunner r)
+    {
+        var h = await HudTests.Host(r, pieces: 3);
+        h.S.Do(new Stow { Layer = U, Holder = "p1", Id = "p2" });
+        h.S.Do(new Stow { Layer = U, Holder = "p1", Id = "p3" });
+        h.S.Do(new SetReady { Layer = U, Holder = "p1", Ready = new ReadyPiece { Id = "p3" }, Move = "p3" });
+        h.S.Do(new ReleaseReady { Layer = U, Holder = "p1" });
+        await r.Frames(3);
+        Check.That(h.S.View.Find(U, "p3") != null, "the ready piece is out before the copy");
+        h.Table.Clip.Copy([h.Table.NodeOf(U, "p1")!], cut: false);
+        var before = h.S.View.Layer(U).Select(p => p.Id).ToHashSet();
+        h.Table.Clip.Paste(new Vec2(20, 20));
+        await r.Frames(3);
+        var made = h.S.View.Layer(U).Where(p => !before.Contains(p.Id)).ToList();
+        Check.Equal(2, made.Count, "pieces pasted: the holder and its ready piece");
+        var holder = made.Single(p => p.Ready != null);
+        var ready = made.Single(p => p.Ready == null);
+        Check.Equal(ready.Id, holder.Ready!.Id, "the pasted holder's ready piece is the pasted copy");
+        Check.That(holder.Stowed is [{ Id: not "p2" }], "the pasted holder holds a copy of its piece under its own id");
+        h.S.Do(new RecallReady { Layer = U, Holder = holder.Id });
+        await r.Frames(3);
+        Check.That(h.S.View.Find(U, ready.Id) == null, "the copy's ready piece goes back into the copy");
+        Check.That(h.S.View.Find(U, "p3") != null, "the first holder's ready piece stays out");
+    }
 }

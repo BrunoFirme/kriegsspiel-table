@@ -35,15 +35,8 @@ sealed class PieceClipboard
     public void Copy(List<PieceNode> nodes, bool cut)
     {
         if (nodes.Count == 0) return;
-        var ids = nodes.Select(n => n.Piece.Id).ToHashSet();
         var layer = nodes[0].Layer;
-        var all = new List<PieceInstance>();
-        foreach (var n in nodes.Where(n => n.Layer == layer))
-        {
-            all.Add(n.Piece.Clone());
-            foreach (var cid in n.Piece.Attached)
-                if (!ids.Contains(cid) && _c.S.View.Find(layer, cid) is { } ch) { all.Add(ch.Clone()); ids.Add(cid); }
-        }
+        var all = PieceCopy.WithContents(nodes.Where(n => n.Layer == layer).Select(n => n.Piece), id => _c.S.View.Find(layer, id));
         Clippings.Hold(new Clipping
         {
             From = _c.S.View.Name,
@@ -106,12 +99,14 @@ sealed class PieceClipboard
             _c.Say($"Nothing pasted: {Named(away)} {(away.Count > 1 ? "are" : "is")} not in the game");
             return;
         }
-        var map = taken.ToDictionary(cp => cp.Piece.Id, _ => "x-c" + Guid.NewGuid().ToString("N")[..10]);
+        static string NewId() => "x-c" + Guid.NewGuid().ToString("N")[..10];
+        var map = taken.ToDictionary(cp => cp.Piece.Id, _ => NewId());
         var cmds = new List<Command>();
         foreach (var cp in taken)
         {
             var c = cp.Piece.Clone();
             c.Id = map[cp.Piece.Id];
+            PieceCopy.FreshHeld(c, NewId);
             c.Pos = at + (cp.Piece.Pos - clip.Center);
             c.Attached = new();
             c.Ready = c.Ready is not { } ready ? null
