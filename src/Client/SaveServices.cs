@@ -13,4 +13,5 @@ public sealed record SaveServices
     public Func<bool> Quitting { get; init; } = () => false;
     public Action RequestPicture { get; init; } = () => { };
     public Func<double, byte[]?> PictureSince { get; init; } = _ => null;
+    public Func<bool> PictureHeld { get; init; } = () => false;
 }

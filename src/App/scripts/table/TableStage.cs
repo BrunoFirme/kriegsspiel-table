@@ -24,6 +24,15 @@ sealed class TableStage
 
     public void ShowFlat(bool flat) => _backdrop?.ShowFlat(flat);
 
+    public void Rest(bool resting)
+    {
+        if (_env is not { } env) return;
+        if (!resting && !env.IsInsideTree()) _c.Scene.AddChild(env);
+        if (!resting || !env.IsInsideTree()) return;
+        _c.Scene.RemoveChild(env);
+        _c.Scene.TreeExiting += () => { if (GodotObject.IsInstanceValid(env) && !env.IsInsideTree()) env.Free(); };
+    }
+
     public void BuildLightAndSurface()
     {
         var ceilingLightNearlyStraightDown = new Vector3(-88, 35, 0);

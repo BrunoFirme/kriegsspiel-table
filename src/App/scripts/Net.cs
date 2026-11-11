@@ -33,6 +33,7 @@ public partial class Net : Node
     internal HostSaves Saves => _saves;
     internal Action? RequestPicture;
     internal Func<double, byte[]?>? PictureSince;
+    internal Func<bool>? PictureHeld;
     string _address = "";
 
     ENetMultiplayerPeer? _peer;
@@ -73,6 +74,7 @@ public partial class Net : Node
             Dispatch = Dispatch, Clock = () => Time.GetTicksMsec() / 1000.0, Quitting = () => Assets.Quitting, Log = log,
             PostWriteBackDone = error => CallDeferred(nameof(WriteBackDone), error), Post = a => Callable.From(a).CallDeferred(),
             RequestPicture = () => RequestPicture?.Invoke(), PictureSince = t => PictureSince?.Invoke(t),
+            PictureHeld = () => PictureHeld?.Invoke() ?? false,
             MirrorOf = () => $"{Session.Peers.FirstOrDefault(p => p.PeerId == 1)?.Name ?? "the host"} at {_address}",
         });
         _transfers = new AssetTransfers(() => Session, () => Server)
@@ -700,6 +702,11 @@ public partial class Net : Node
             _transfers.Upload(packId, "pack.json");
         }
         Session.Do(new AddPack { Id = packId, Hash = hash });
+    }
+
+    public void RestartScriptsOf(IReadOnlySet<string> kinds)
+    {
+        if (Server != null && kinds.Count > 0) Dispatch(Server.Scripts.ReloadKinds(kinds));
     }
 
     readonly Queue<Command> _afterUploads = new();

@@ -86,6 +86,12 @@ public sealed partial class ScriptHost
 
     public List<Outgoing> Load() => Run(0, false, LoadAll);
 
+    public List<Outgoing> ReloadKinds(IReadOnlySet<string> kinds) => Run(0, false, () =>
+    {
+        foreach (var p in _s.State.Layer(Layers.Umpire).Where(p => kinds.Contains(p.Def)).ToList())
+            if (Find(p.Id) is { } still) Guard(still.Id, () => LoadPiece(still));
+    });
+
     void LoadAll()
     {
         UnloadAll();

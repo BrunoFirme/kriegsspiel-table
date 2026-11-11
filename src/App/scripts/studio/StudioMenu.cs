@@ -30,7 +30,7 @@ internal sealed class StudioMenu
             pm.SetItemChecked(pm.ItemCount - 1, prefs.Rulers);
         }
         pm.AddSeparator("Tidy up");
-        pm.AddItem("Remove pictures nothing uses any more", 5);
+        if (_s.InPlace == null) pm.AddItem("Remove pictures nothing uses any more", 5);
         pm.AddItem("Lay the pieces out again on the table", 6);
         pm.AddSeparator();
         pm.AddItem("Settings…", 13);

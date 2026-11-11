@@ -110,8 +110,8 @@ sealed class PieceIndex : HudPart
         foreach (var (layer, pieces) in S.View.Layers)
             foreach (var p in pieces)
             {
-                var def = S.Store.Def(p.Def);
-                var pack = S.Store.PackOfDef(p.Def);
+                var def = S.Def(p.Def);
+                var pack = S.PackOfDef(p.Def);
                 var packId = pack?.Id ?? S.View.PackNamedBy(p.Def);
                 var packName = pack?.Name ?? packId ?? "a pack not installed here";
                 var kind = def?.Name ?? (packId != null ? p.Def[(packId.Length + 1)..] : p.Def);

@@ -18,9 +18,24 @@ sealed class TablePicture : HudPart
 
     public byte[]? Since(double t) => _takenAt >= t ? _latest : null;
 
+    void TakeOnWaking()
+    {
+        T.Woke -= TakeOnWaking;
+        _afterRest = false;
+        Take();
+    }
+
+    bool _afterRest;
+
     public async void Take()
     {
         if (_taking || !GodotObject.IsInstanceValid(HudNode)) return;
+        if (T.Resting)
+        {
+            if (!_afterRest) T.Woke += TakeOnWaking;
+            _afterRest = true;
+            return;
+        }
         _taking = true;
         SubViewport? vp = null;
         try

@@ -195,9 +195,10 @@ groups them, and names what each was used for, from the phalanx to the tank plat
 - **Scripts:** a piece's buttons, boxes and panels work with a click. Right-click → **Scripting…** opens its script;
   see the [scripting guide](scripting.md).
 - **Changing a kind:** at a table you host, right-click a piece of a pack of your own → **Edit in the piece studio…**.
-  The game is saved and the studio opens on that kind; **Done** hosts the same save again, at the view you left, with
-  every piece of that kind changed. Anyone seated is dropped meanwhile and joins again. A standard piece is copied
-  into a pack of your own first (＋ New piece).
+  The studio opens over the table on that kind, and the game goes on for everyone else. **Scenario** (Alt+4) shows
+  your table with your changes on it; only you see them. **Confirm** sends them to everyone at the table; **Discard**,
+  or leaving without confirming, puts the pieces back as they were. A standard piece is copied into a pack of your own
+  first (＋ New piece).
 
 ### Dice
 

@@ -187,7 +187,6 @@ public partial class Main : Node
         }
         catch (Exception e) { GD.PushError("save folders: " + e.Message); }
         StandardPacks.Ensure(new PackageStore(PackageStore.DefaultRoot));
-        if (StudioTrip.Take() is { } trip) { ThroughTheStudio(trip); return; }
         if (Dev.TakesOver()) return;
         if (args.TryGetValue("host", out var what)) { StartHost(what, args.GetValueOrDefault("name", "Umpire"), resume: args.ContainsKey("resume"), password: args.GetValueOrDefault("password")); return; }
         if (args.TryGetValue("join", out var addr)) { StartJoin(addr, _cfg.Port, args.GetValueOrDefault("name", "Guest"), args.GetValueOrDefault("password", ""), args.GetValueOrDefault("packages")); return; }
@@ -240,7 +239,17 @@ public partial class Main : Node
     public override void _Notification(int what)
     {
         if (what != NotificationWMCloseRequest) return;
-        if (GetNodeOrNull<PieceStudio>("Studio") is { } studio && IsInstanceValid(studio)) { _ = CloseFromStudio(studio); return; }
+        if (GetNodeOrNull<PieceStudio>("Studio") is { } studio && IsInstanceValid(studio))
+        {
+            if (studio.InPlace != null) _ = studio.LeaveForQuit(SaveAndQuit);
+            else _ = CloseFromStudio(studio);
+            return;
+        }
+        SaveAndQuit();
+    }
+
+    void SaveAndQuit()
+    {
         _net.SaveNow(closing: true);
         if (_net.LastSaveProblem is { } problem && !_quitAnyway) { AskBeforeQuitting(problem); return; }
         QuitApp();
@@ -448,12 +457,12 @@ public partial class Main : Node
             var store = _session.Store;
             if (PackagePaths.Inside(store.Root, id, "pack.json") is not { } pj) return;
             if (!_session.IsHost && UserPacks.Hash(store, id) != hash) BestEffort.DeleteFile(pj);
+            var was = store.Pack(id) is { } known ? KTable.Core.Json.Clone(known) : null;
             store.Forget(id);
             _session.Assets.EnsureFile(id, "pack.json", () =>
             {
                 store.Forget(id);
-                store.Pack(id);
-                table.Rebuild();
+                StudioInPlace.RedrawChanged(table, _session, was, store.Pack(id));
                 _hud?.RefreshPacks();
             });
         };
@@ -503,9 +512,27 @@ public partial class Main : Node
             hud.Log($"This PC keeps its own copy of the game as you play ({LogPanel.FolderLink(System.IO.Path.GetDirectoryName(_net.MirrorPath) ?? "", "open the folder")}). If the host's PC fails, Scenarios → Mirrored games continues it from here.");
     }
 
-    void ThroughTheStudio(StudioTrip trip) => OpenEditor(trip.Pack, trip.Kind, () => StartHost(trip.Save, trip.Name, resume: true));
+    internal void EditInPlace(string packId, string kind)
+    {
+        if (GetNodeOrNull<Table>("Table") is not { } live || _hud is not { } hud || GetNodeOrNull<PieceStudio>("Studio") != null) return;
+        HideHud(hud, true);
+        live.Rest(true, pause: true);
+        OpenEditor(packId, kind, () =>
+        {
+            live.Rest(false, pause: true);
+            HideHud(hud, false);
+            ShowWindowTitle();
+        }, new StudioInPlace(_session, live, _net));
+    }
 
-    public void OpenEditor(string packId, string? kind = null, Action? back = null)
+    static void HideHud(Hud hud, bool hidden)
+    {
+        if (!IsInstanceValid(hud)) return;
+        hud.Visible = !hidden;
+        hud.ProcessMode = hidden ? ProcessModeEnum.Disabled : ProcessModeEnum.Inherit;
+    }
+
+    internal void OpenEditor(string packId, string? kind = null, Action? back = null, StudioInPlace? place = null)
     {
         CancelOpening();
         var store = new PackageStore(PackageStore.DefaultRoot);
@@ -552,7 +579,7 @@ public partial class Main : Node
         s.Request = m => Deliver(server.Request(1, m));
         s.SetName("Editor");
         Deliver(server.Join(1, new KTable.Core.Protocol.JoinRequest { Name = "Editor" }));
-        var table = new Table { Name = "Table" };
+        var table = new Table { Name = place == null ? "Table" : "StudioTable" };
         AddChild(table);
         table.Bind(s, _cfg);
         var tick = new Timer { WaitTime = 0.05, Autostart = true };
@@ -562,7 +589,7 @@ public partial class Main : Node
             catch (Exception e) { GD.PushError("[scripts] tick failed: " + e); }
         };
         table.AddChild(tick);
-        var ed = new PieceStudio { Name = "Studio", ScriptsChanged = () => Deliver(server.Scripts.Load()), BackToTable = back != null };
+        var ed = new PieceStudio { Name = "Studio", ScriptsChanged = () => Deliver(server.Scripts.Load()), InPlace = place };
         AddChild(ed);
         _agent.Studio = ed;
         ed.Bind(s, table, store, packId, _cfg, () =>

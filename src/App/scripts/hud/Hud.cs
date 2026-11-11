@@ -64,7 +64,13 @@ public partial class Hud : CanvasLayer
         var picture = new TablePicture(Ctx);
         n.RequestPicture = picture.Take;
         n.PictureSince = picture.Since;
-        _unhook.Add(() => { n.RequestPicture = null; n.PictureSince = null; });
+        n.PictureHeld = () => T.Resting;
+        _unhook.Add(() =>
+        {
+            n.RequestPicture = null;
+            n.PictureSince = null;
+            n.PictureHeld = null;
+        });
         Build();
         Hook<Action>(h => S.Reset += h, h => S.Reset -= h, () =>
         {

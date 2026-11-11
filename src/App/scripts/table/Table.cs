@@ -512,6 +512,29 @@ public partial class Table : Node3D
         ReliefSurface.ShowScale(c);
         Contours.Due();
     }
+
+    public bool Resting { get; private set; }
+
+    List<CanvasLayer> _restingLayers = new();
+
+    public void Rest(bool resting, bool pause = false)
+    {
+        if (Resting == resting) return;
+        Resting = resting;
+        Visible = !resting;
+        if (pause) ProcessMode = resting ? ProcessModeEnum.Disabled : ProcessModeEnum.Inherit;
+        if (resting) _restingLayers = FindChildren("*", nameof(CanvasLayer), true, false).OfType<CanvasLayer>().Where(l => l.Visible).ToList();
+        foreach (var layer in _restingLayers.Where(IsInstanceValid)) layer.Visible = !resting;
+        if (!resting) _restingLayers = new();
+        Stage.Rest(resting);
+        if (resting) { Rig.Cam.ClearCurrent(false); return; }
+        Rig.Cam.MakeCurrent();
+        ApplyLighting(LightNow());
+        ApplyScale(S.View.Calibration);
+        Woke?.Invoke();
+    }
+
+    public event Action? Woke;
     public void SetStandIn(bool on, float shade = 0) => Stage.SetStandIn(on, shade);
 
     public string Board { get => Drawings.Board; set => Drawings.Board = value; }

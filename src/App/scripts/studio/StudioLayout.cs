@@ -15,7 +15,7 @@ public partial class PieceStudio
         _root = new Control { MouseFilter = Control.MouseFilterEnum.Ignore, Theme = Ui.Theme() };
         _root.SetAnchorsPreset(Control.LayoutPreset.FullRect);
         AddChild(_root);
-        Top.Build(Menu.Show, () => _ = Leave()).Resized += Relayout;
+        Top.Build(Menu.Show, AskLeave).Resized += Relayout;
         Strip.Build();
         BuildCentre();
         BuildRight();
@@ -213,10 +213,10 @@ public partial class PieceStudio
     public override void _UnhandledInput(InputEvent e)
     {
         if (e is not InputEventKey { Pressed: true } k) return;
-        if (k.AltPressed && k.Keycode is Key.Key1 or Key.Key2 or Key.Key3)
+        if (k.AltPressed && k.Keycode is Key.Key1 or Key.Key2 or Key.Key3 or Key.Key4)
         {
             var order = ViewKeys();
-            int i = k.Keycode == Key.Key1 ? 0 : k.Keycode == Key.Key2 ? 1 : 2;
+            int i = (int)(k.Keycode - Key.Key1);
             if (i < order.Count) SetView(order[i].key);
             Handled();
             return;
@@ -224,7 +224,7 @@ public partial class PieceStudio
         if ((k.CtrlPressed || k.MetaPressed) && k.Keycode is Key.Z or Key.Y)
         {
             bool redo = k.Keycode == Key.Y || k.ShiftPressed;
-            if (_view != "table" || (redo ? CanRedo : CanUndo))
+            if (!OnATable || (redo ? CanRedo : CanUndo))
             {
                 if (redo) Redo();
                 else Undo();
@@ -250,6 +250,7 @@ public partial class PieceStudio
             Handled();
             return;
         }
+        if (_view == "scenario") return;
         if (_view == "table")
         {
             if (k.Keycode == Key.Home) { Paper.FrameAll(); Handled(); }
@@ -340,9 +341,16 @@ public partial class PieceStudio
         if (typing != null && IsInstanceValid(typing) && typing.IsVisibleInTree() && GetViewport().GuiGetFocusOwner() == null) typing.GrabFocus();
     }
 
-    List<(string key, string text, string tip)> ViewKeys() => _sel != null && EffectFx.IsEffect(_sel)
-        ? new() { ("table", "Try it", "The effect working on the table   (Alt+1)"), ("paint", "Picture", "Paint a particle of its own (Effect → Particle: its own picture)   (Alt+2)") }
-        : new() { ("model", "3D", "Build the piece from shapes and paint on it   (Alt+1)"), ("paint", "2D", _sel?.Kind == "model" ? "The model's texture laid out flat   (Alt+2)" : "A face laid flat: layers, text, rulers, symmetry   (Alt+2)"), ("table", "Try it", "On the table as in a game, scripts running   (Alt+3)") };
+    bool OnATable => _view is "table" or "scenario";
+
+    List<(string key, string text, string tip)> ViewKeys()
+    {
+        var keys = _sel != null && EffectFx.IsEffect(_sel)
+            ? new List<(string key, string text, string tip)> { ("table", "Try it", "The effect working on the table   (Alt+1)"), ("paint", "Picture", "Paint a particle of its own (Effect → Particle: its own picture)   (Alt+2)") }
+            : new() { ("model", "3D", "Build the piece from shapes and paint on it   (Alt+1)"), ("paint", "2D", _sel?.Kind == "model" ? "The model's texture laid out flat   (Alt+2)" : "A face laid flat: layers, text, rulers, symmetry   (Alt+2)"), ("table", "Try it", "On the table as in a game, scripts running   (Alt+3)") };
+        if (InPlace != null) keys.Add(("scenario", "Scenario", $"Your table, with your changes showing only to you   (Alt+{keys.Count + 1})"));
+        return keys;
+    }
 
     internal void SetView(string v) => _ = SetViewAsync(v);
 
@@ -414,7 +422,8 @@ public partial class PieceStudio
         else if (_model != null) _model.Visible = false;
         T.SetProcessUnhandledInput(v == "table");
         bool wasTable = T.Visible;
-        T.Visible = v == "table";
+        if (InPlace != null) InPlace.Showing(v == "scenario", v == "table");
+        else T.Visible = v == "table";
         if (v == "table" && !wasTable && Paper.Instance(_sel) is { } shown && !Markers.Active)
             T.Rig.Frame(Coords.ToWorld(shown.Pos), (float)Math.Max(6, Math.Max(_sel!.Size.W, _sel.Size.H) * 4));
         _tip.Visible = false;
@@ -434,6 +443,7 @@ public partial class PieceStudio
         var hint = _sel == null ? "Make a piece to begin: ＋ New piece, or drop pictures or 3D models on the window"
             : _view switch
             {
+                "scenario" => "Your scenario as it stands, with your changes showing only to you · Confirm sends them to everyone",
                 "table" => Markers.Active ? "Drag the markers where they belong beside the piece; their places are kept as you go" : "Try the pieces as in a game: drag them, right-click for their menu, middle-click turns one over · scripts run",
                 "model" => _model?.Panels.ToolHint ?? "",
                 _ => _canvas.Tool == "shape" && _prefs.ShapeKind == "poly" ? "Click each corner · click the first one, double-click or press Enter to close · Backspace takes one back" : TopLine.PaintHints.GetValueOrDefault(_canvas.Tool, ""),

@@ -280,7 +280,7 @@ public sealed class HostSaves
             return;
         }
         var picture = _app.PictureSince(_turnEndedAt);
-        if (picture == null && Clock() - _turnEndedAt < PictureWait) return;
+        if (picture == null && (Clock() - _turnEndedAt < PictureWait || _app.PictureHeld())) return;
         _turnEndedAt = -1;
         _turnsPictured = count;
         if (picture == null) return;

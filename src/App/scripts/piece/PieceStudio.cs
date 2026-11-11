@@ -39,7 +39,7 @@ public partial class PieceStudio : CanvasLayer
 
     public Action? ScriptsChanged;
 
-    public bool BackToTable { get; init; }
+    internal StudioInPlace? InPlace { get; init; }
 
     public readonly HashSet<string> MadeHere = new();
 
@@ -182,7 +182,7 @@ public partial class PieceStudio : CanvasLayer
         _done = done;
         Layer = 2;
         _pack = store.Pack(packId) ?? throw new InvalidOperationException("pack not found: " + packId);
-        _packSaver = new PackSaver(store, _pack, msg => { if (!_gone) { Flash("Could not save pack.json: " + msg); Top.Saved = "NOT SAVED"; } });
+        _packSaver = new PackSaver(store, _pack, msg => { if (!_gone) { Flash("Could not save pack.json: " + msg); Top.Saved = "NOT SAVED"; } }, InPlace == null ? null : InPlace.Show);
         if (_pack.MoveCounterMarkers()) SavePack();
         FileWatch = new ScriptFileWatch(s, ScriptFileWatch.PackFolder(_pack.Id), $"{_pack.Name} ({_pack.Id})");
         AddChild(FileWatch);
@@ -216,8 +216,9 @@ public partial class PieceStudio : CanvasLayer
         T.SetTool(Tool.Select);
         RebuildList();
         var first = _pack.Pieces.FirstOrDefault(d => d.Id == kind) ?? _pack.Pieces.OrderBy(d => d.Name, StringComparer.OrdinalIgnoreCase).FirstOrDefault();
-        _view = first != null && EffectFx.IsEffect(first) ? "table" : "model";
-        if (first != null) Select(first, frame: true);
+        _view = InPlace != null ? "scenario" : first != null && EffectFx.IsEffect(first) ? "table" : "model";
+        if (first != null) Select(first, frame: InPlace == null);
+        InPlace?.Begin(this);
         SetView(_view);
     }
 
@@ -349,10 +350,66 @@ public partial class PieceStudio : CanvasLayer
     {
         var d = which ?? _sel;
         if (d == null) return;
-        Ui.Confirm(_root, $"Delete \"{d.Name}\"", "Delete", () => DeleteNow(d));
+        var placed = InPlace?.OnTable(d.Id) ?? 0;
+        Ui.Confirm(_root, $"Delete \"{d.Name}\"", "Delete", () => DeleteNow(d), placed > 0 ? $"{placed} placed on the table stop showing when you confirm." : null);
     }
 
-    internal void AskLeave() => _ = Leave();
+    internal void AskLeave() => _ = InPlace != null ? LeaveInPlace(confirm: true) : Leave();
+
+    internal void AskConfirm() => _ = LeaveInPlace(confirm: true);
+
+    internal void AskDiscard() => _ = LeaveInPlace(confirm: false);
+
+    async Task LeaveInPlace(bool confirm)
+    {
+        if (_leaving || InPlace is not { } place) return;
+        _leaving = true;
+        try
+        {
+            var problem = await FlushAll(leaving: true);
+            if (_gone) return;
+            if (confirm)
+            {
+                if (problem != null && !await Ask("Not everything is kept", problem + "\n\nWhat was not kept is not sent.", "Confirm anyway", "Stay")) return;
+                if (_gone) return;
+                if (place.Confirm(_store, _pack) is { } why) { Flash("Not sent: " + why); return; }
+            }
+            else
+            {
+                if (place.Changed(_pack) && !await Ask($"Discard the changes to {_pack.Name}?", "The pieces go back to how they were.", "Discard", "Stay")) return;
+                if (_gone) return;
+                place.Discard(_store, _pack);
+            }
+            _done();
+        }
+        finally { _leaving = false; }
+    }
+
+    internal async Task LeaveForQuit(Action quit)
+    {
+        if (_leaving || InPlace is not { } place) return;
+        if (place.Ended) { quit(); return; }
+        _leaving = true;
+        try
+        {
+            await FlushAll(leaving: true);
+            if (_gone) return;
+            if (!place.Changed(_pack))
+            {
+                place.Discard(_store, _pack);
+                quit();
+                return;
+            }
+            var q = Ui.Confirm(_root, "Your changes are not confirmed", "Confirm", () =>
+            {
+                if (place.Confirm(_store, _pack) is { } why) Flash("Not sent: " + why);
+                else quit();
+            }, "Confirm sends them to everyone at the table; Discard puts the pieces back as they were.", 420);
+            q.Also("Discard", () => { place.Discard(_store, _pack); quit(); });
+            q.CancelButtonText = "Stay";
+        }
+        finally { _leaving = false; }
+    }
 
     internal void DeleteNow(PieceDef d)
     {

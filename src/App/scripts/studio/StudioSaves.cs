@@ -12,15 +12,17 @@ internal sealed class PackSaver
     readonly PackageStore _store;
     readonly PackManifest _pack;
     readonly Action<string> _failed;
+    readonly Action<PackManifest>? _draft;
     readonly Debounce _due = new();
 
     public string? Problem { get; private set; }
 
-    public PackSaver(PackageStore store, PackManifest pack, Action<string> failed)
+    public PackSaver(PackageStore store, PackManifest pack, Action<string> failed, Action<PackManifest>? draft = null)
     {
         _store = store;
         _pack = pack;
         _failed = failed;
+        _draft = draft;
     }
 
     public bool Pending => _due.Pending;
@@ -37,7 +39,8 @@ internal sealed class PackSaver
         _due.Clear();
         try
         {
-            Json.SaveBig(PackEdit.ManifestPath(_store, _pack.Id), _pack);
+            if (_draft != null) _draft(_pack);
+            else Json.SaveBig(PackEdit.ManifestPath(_store, _pack.Id), _pack);
             Problem = null;
             return true;
         }

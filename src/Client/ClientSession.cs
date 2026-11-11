@@ -310,7 +310,15 @@ public class ClientSession
         _openScript = 0;
     }
 
-    public PieceDef? Def(string id) => Store.Def(id);
+    PackManifest? _draft;
+
+    public PieceDef? Def(string id) => DraftDef(id) ?? Store.Def(id);
+
+    public PackManifest? PackOfDef(string id) => DraftDef(id) != null ? _draft : Store.PackOfDef(id);
+
+    PieceDef? DraftDef(string id) => _draft?.Pieces.Find(d => d.Id == id);
+
+    public void ShowDraft(PackManifest? draft) => _draft = draft;
 
     public IEnumerable<string> VisibleLayers => View.Layers.Keys;
 

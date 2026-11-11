@@ -75,7 +75,12 @@ internal sealed class TopLine
         _saved.AddThemeFontSizeOverride("font_size", 11);
         row.AddChild(_saved);
         if (AgentEndpoint.Current is { } agent) row.AddChild(AgentPill.Make(agent, () => { DialogPages.LastPage["app-settings"] = "AI agent"; AppSettings.OpenWindow(_s.Root, _s.Cfg); }));
-        row.AddChild(Ui.Primary("Done", done, _s.BackToTable ? "Save everything and go back to the table" : "Save everything and go back to the list of packs"));
+        if (_s.InPlace != null)
+        {
+            row.AddChild(Ui.Btn("Discard", _s.AskDiscard, "Close the studio: your pieces go back to how they were"));
+            row.AddChild(Ui.Primary("Confirm", _s.AskConfirm, "Keep your changes and send them to everyone at the table"));
+        }
+        else row.AddChild(Ui.Primary("Done", done, "Save everything and go back to the list of packs"));
         return Panel;
     }
 
@@ -228,26 +233,32 @@ internal sealed class StudioToolStrip
         RefreshUndo();
     }
 
+    Table Shown => _s.View == "scenario" && _s.InPlace is { } place ? place.Table : _s.T;
+
     void TableTools()
     {
-        var T = _s.T;
+        var T = Shown;
         var sel = StripBtn("select", "Select   (Esc)", () => T.SetTool(Tool.Select), true, true);
         _toolBtns["select"] = Ui.Marked(sel);
         _toolBtns["ruler"] = Ui.Marked(StripBtn("ruler", "Ruler   (M)", () => T.SetTool(T.Tool == Tool.Ruler ? Tool.Select : Tool.Ruler), true));
         _box.AddChild(new HSeparator());
         var b3 = StripBtn("3d", "3D view   (F2)", () => { T.Rig.ToggleTopDown(); }, true, !T.Rig.TopDown);
         b3.Pressed += () => b3.SetPressedNoSignal(!T.Rig.TopDown);
-        StripBtn("frame", "Frame all pieces   (Home)", _s.Paper.FrameAll);
-        StripBtn("pieces", "Compare sizes\nSet down a piece from another pack beside these, not part of this pack", _s.Paper.AskReference);
+        if (_s.View != "scenario")
+        {
+            StripBtn("frame", "Frame all pieces   (Home)", _s.Paper.FrameAll);
+            StripBtn("pieces", "Compare sizes\nSet down a piece from another pack beside these, not part of this pack", _s.Paper.AskReference);
+        }
         T.ToolChanged -= SyncTableTools;
         T.ToolChanged += SyncTableTools;
     }
 
     void SyncTableTools()
     {
-        if (_s.View != "table") return;
-        if (_toolBtns.TryGetValue("select", out var s) && GodotObject.IsInstanceValid(s)) s.SetPressedNoSignal(_s.T.Tool == Tool.Select);
-        if (_toolBtns.TryGetValue("ruler", out var r) && GodotObject.IsInstanceValid(r)) r.SetPressedNoSignal(_s.T.Tool == Tool.Ruler);
+        if (_s.View is not ("table" or "scenario")) return;
+        var t = Shown;
+        if (_toolBtns.TryGetValue("select", out var s) && GodotObject.IsInstanceValid(s)) s.SetPressedNoSignal(t.Tool == Tool.Select);
+        if (_toolBtns.TryGetValue("ruler", out var r) && GodotObject.IsInstanceValid(r)) r.SetPressedNoSignal(t.Tool == Tool.Ruler);
     }
 
     public void SyncToggles()

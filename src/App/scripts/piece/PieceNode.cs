@@ -257,7 +257,7 @@ public partial class PieceNode : Node3D
         if (Spoken || Piece.WebMesh == "") return (null, null, 0);
         if (Piece.FacePicture is { } fp && !Piece.FaceDown && KTable.Client.PieceFiles.DecalFile(_s.View, _s.Store, fp, Piece.Def) is { } own)
             return (own.Package, own.Path, Assets.PieceTexSize(Mathf.Max(Footprint.X, Footprint.Y)));
-        var pack = _s.Store.PackOfDef(PictureDefId);
+        var pack = _s.PackOfDef(PictureDefId);
         var img = CurrentImage();
         if (pack == null || img == null || !pack.Assets.TryGetValue(img, out var a)) return (null, null, 0);
         return (pack.Id, a.File, Assets.PieceTexSize(Mathf.Max(Footprint.X, Footprint.Y)));
@@ -426,7 +426,7 @@ public partial class PieceNode : Node3D
 
     void BuildModel(string meshHash, float w, float h, Color tint)
     {
-        var pack = _s.Store.PackOfDef(PictureDefId)!;
+        var pack = _s.PackOfDef(PictureDefId)!;
         if (!pack.Assets.TryGetValue(meshHash, out var ma)) return;
         var texHash = WornModel?.Texture ?? CurState?.Texture ?? Def!.Texture;
         string? texFile = texHash != null && pack.Assets.TryGetValue(texHash, out var ta) ? ta.File : null;
@@ -506,7 +506,7 @@ public partial class PieceNode : Node3D
 
     void BuildAddOn(string meshHash, Color tint)
     {
-        if (_s.Store.PackOfDef(Piece.Def) is not { } pack || !pack.Assets.TryGetValue(meshHash, out var ma)) return;
+        if (_s.PackOfDef(Piece.Def) is not { } pack || !pack.Assets.TryGetValue(meshHash, out var ma)) return;
         var mat = new StandardMaterial3D { AlbedoColor = tint, CullMode = BaseMaterial3D.CullModeEnum.Disabled, Transparency = BaseMaterial3D.TransparencyEnum.AlphaScissor };
         var node = _addOn = new MeshInstance3D { MaterialOverride = mat, Scale = Vector3.One * (float)Piece.Scale, VisibilityRangeEnd = BodyRange() };
         AddChild(node);
