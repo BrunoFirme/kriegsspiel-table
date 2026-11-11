@@ -63,7 +63,7 @@ sealed class PovPanel : HudPart
             AddSharp(reach, d);
         }
         Ui.AlignForm(reach);
-        if (!d.FirstPerson && T.WallsTraced + T.WallsTakenBack > 0) AddTraced();
+        if (!d.FirstPerson && T.StrokesDrawn + T.StrokesTakenBack > 0) AddTraced();
         AddCount();
         var take = d.Gif
             ? Ui.Primary("Record", () => _ = Shell.CaptureSighting(), "Records until Stop or Enter; the GIF goes to the clipboard as a file and to the capture folder")
@@ -158,18 +158,19 @@ sealed class PovPanel : HudPart
             MinValue = 0, MaxValue = 1, Step = SightingDraft.SharpStep, Value = d.Sharp,
             TooltipText = "Where the picture starts to blur towards its edge: all the way right keeps it sharp everywhere",
         };
-        var sharpBox = SliderRow(grid, "Sharp to", sharp, v => Distance(d.Radius * v));
+        double SharpDistance(double v) => d.Edged ? d.BlurReach * (1 - v) : d.Radius * v;
+        var sharpBox = SliderRow(grid, d.Edged ? "Blur in" : "Sharp to", sharp, v => Distance(SharpDistance(v)));
         var blur = new HSlider
         {
             MinValue = SightingDraft.LeastBlur, MaxValue = SightingDraft.MostBlur, Step = SightingDraft.BlurStep, ExpEdit = true, Value = d.Blur,
             TooltipText = "How far things smudge at the very edge: right for smudges, left for a light haze",
         };
         var blurLabel = new Label();
-        var blurBox = SliderRow(grid, "Edge blur", blur, v => Distance(d.Radius * v), blurLabel);
+        var blurBox = SliderRow(grid, "Edge blur", blur, v => Distance(d.BlurReach * v), blurLabel);
         void Show()
         {
-            sharpBox.Text = Distance(d.Radius * d.Sharp);
-            blurBox.Text = Distance(d.Radius * d.Blur);
+            sharpBox.Text = Distance(SharpDistance(d.Sharp));
+            blurBox.Text = Distance(d.BlurReach * d.Blur);
             blurLabel.Visible = blur.GetParent<Control>().Visible = d.Sharp < 1;
         }
         Show();
@@ -221,16 +222,10 @@ sealed class PovPanel : HudPart
     }
 
     void AddFormat(GridContainer grid, SightingDraft d) =>
-        AddChoice(grid, "Format", d.Square, square => Keep(() => Cfg.SightingSquare = square, () => SetSquare(d, square)),
+        AddChoice(grid, "Format", (int)d.Format, i => Keep(() => Cfg.SightingFormat = SightingDraft.NameOf((SightingFormat)i), () => T.SetSightingFormat((SightingFormat)i)),
             ("Round", "A circle around the piece: what it can see, as far as it can see"),
-            ("Square", "A square around the piece, reaching as far at its edge: the shape a screenshot is"));
-
-    void SetSquare(SightingDraft d, bool square)
-    {
-        d.Square = square;
-        d.Recompute(T);
-        T.ShowDraft();
-    }
+            ("Square", "A square around the piece, reaching as far at its edge: the shape a screenshot is"),
+            ("Drawn", "Your own outline, drawn by hand inside the square: the picture is cut to it, no lines traced"));
 
     void AddFacing(GridContainer grid, SightingDraft d)
     {
@@ -268,22 +263,26 @@ sealed class PovPanel : HudPart
             ("Shown", "Names, counters, notes and faces as the table shows them"),
             ("Hidden", "No names, counters, notes or studio lettering in the picture; words in imported pictures stay"));
 
-    internal static void AddChoice(GridContainer grid, string label, bool second, Action<bool> pick, (string text, string tip) first, (string text, string tip) other)
+    internal static void AddChoice(GridContainer grid, string label, bool second, Action<bool> pick, (string text, string tip) first, (string text, string tip) other) =>
+        AddChoice(grid, label, second ? 1 : 0, i => pick(i == 1), first, other);
+
+    static void AddChoice(GridContainer grid, string label, int on, Action<int> pick, params (string text, string tip)[] options)
     {
         grid.AddChild(new Label { Text = label });
         var row = new HBoxContainer();
         row.AddThemeConstantOverride("separation", Ui.Gap.Hair);
-        Button? a = null, b = null;
-        void Pick(bool wantOther)
+        var buttons = new Button[options.Length];
+        void Pick(int want)
         {
-            a!.SetPressedNoSignal(!wantOther);
-            b!.SetPressedNoSignal(wantOther);
-            pick(wantOther);
+            for (int i = 0; i < buttons.Length; i++) buttons[i].SetPressedNoSignal(i == want);
+            pick(want);
         }
-        a = Choice(first.text, first.tip, !second, () => Pick(false));
-        b = Choice(other.text, other.tip, second, () => Pick(true));
-        row.AddChild(a);
-        row.AddChild(b);
+        for (int i = 0; i < options.Length; i++)
+        {
+            int index = i;
+            buttons[i] = Choice(options[i].text, options[i].tip, i == on, () => Pick(index));
+            row.AddChild(buttons[i]);
+        }
         grid.AddChild(row);
     }
 
@@ -298,22 +297,27 @@ sealed class PovPanel : HudPart
     {
         var traced = new HBoxContainer();
         traced.AddThemeConstantOverride("separation", Ui.Gap.Tight);
-        var undoW = Ui.IconBtn("undo", $"Undo the last line traced   ({Cfg.Keys.Label("undo")})", "Takes back the last thing you traced");
-        var redoW = Ui.IconBtn("redo", $"Put it back   ({Cfg.Keys.Label("redo")})", "Traces the last line you took back again");
+        bool drawn = T.Draft is { Drawn: true };
+        var undoW = Ui.IconBtn("undo", drawn ? $"Back to the outline before   ({Cfg.Keys.Label("undo")})" : $"Undo the last line traced   ({Cfg.Keys.Label("undo")})",
+            drawn ? "Takes back the last outline you drew" : "Takes back the last thing you traced");
+        var redoW = Ui.IconBtn("redo", $"Put it back   ({Cfg.Keys.Label("redo")})", drawn ? "Draws the last outline you took back again" : "Traces the last line you took back again");
         undoW.CustomMinimumSize = redoW.CustomMinimumSize = new Vector2(28, 24);
-        undoW.Disabled = T.WallsTraced == 0;
-        redoW.Disabled = T.WallsTakenBack == 0;
-        undoW.Pressed += T.UndoWall;
-        redoW.Pressed += T.RedoWall;
+        undoW.Disabled = T.StrokesDrawn == 0;
+        redoW.Disabled = T.StrokesTakenBack == 0;
+        undoW.Pressed += T.UndoStroke;
+        redoW.Pressed += T.RedoStroke;
         traced.AddChild(undoW);
         traced.AddChild(redoW);
+        var counted = TracedCount(drawn ? "outline" : "line") + (drawn ? " drawn" : " in the way");
         var tracedCount =
-            new Label { Text = T.WallsTraced == 1 ? "1 line in the way" : $"{T.WallsTraced} lines in the way", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, Modulate = Ui.Muted };
+            new Label { Text = counted, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter, Modulate = Ui.Muted };
         tracedCount.AddThemeFontSizeOverride("font_size", 12);
         traced.AddChild(tracedCount);
         var clearW = Btn("Clear", T.ClearOutline, "Back to the whole picture; the arrow puts it back");
-        clearW.Disabled = T.WallsTraced == 0;
+        clearW.Disabled = T.StrokesDrawn == 0;
         traced.AddChild(clearW);
         _box.AddChild(traced);
     }
+
+    string TracedCount(string thing) => T.StrokesDrawn == 1 ? $"1 {thing}" : $"{T.StrokesDrawn} {thing}s";
 }

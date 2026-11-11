@@ -267,9 +267,13 @@ A turn report as a picture, from one piece's point of view.
 2. Set how far it sees (**Ctrl+wheel**, **= / −**, or the Radius field); the wheel zooms in to trace. **Sharp to**
    pulls a ring in from the edge: past it the picture blurs, gently at first and hard at the edge, as distance takes
    detail; all the way right is sharp everywhere. **Edge blur** sets how strong it gets at the edge. The reach, the
-   ring and the blur are kept with the scenario. **Format** makes the picture round or square.
+   ring and the blur are kept with the scenario. **Format** makes the picture round, square or drawn.
 3. Drag to trace what blocks the view: walls, wood edges, ridges. What lies behind goes black. **Ctrl+Z** takes
    back the last line, **Clear** all of them.
+   In **Drawn**, nothing is traced: drag round what the piece sees, as with a freehand snip, and the stroke closes
+   into the picture's outline. The picture is cut to that outline and drawn finer the smaller it is; a new stroke
+   replaces it, **Ctrl+Z** goes back to the one before. **Blur in** sets how far in from the drawn edge the picture
+   blurs. Lines traced in Round or Square wait there until you switch back.
 4. **Enter** or **Capture**. The picture goes to the clipboard and the capture folder (**Settings → Captures**
    chooses which), its file named for the scenario, the turn and the time.
 

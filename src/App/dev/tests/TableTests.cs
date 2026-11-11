@@ -385,7 +385,7 @@ static class TableTests
         for (int i = -2; i <= 3; i++) t.Table.Sighting.Move(new Vec2(1.5, i));
         t.Table.Sighting.Release();
         Check.Equal("p1", string.Join(",", d.Included.OrderBy(x => x)), "what is behind the wall left out");
-        t.Table.Sighting.UndoWall();
+        t.Table.Sighting.UndoStroke();
         Check.Equal(3, t.Table.Draft!.Included.Count, "the wall taken back");
         t.Table.Sighting.Cancel();
         Check.That(t.Table.Draft == null, "nothing left when the tool is put down");
@@ -406,6 +406,41 @@ static class TableTests
     }
 
     [NodeTest]
+    static async Task An_outline_drawn_by_hand_in_the_pov_tool_is_the_picture_with_no_line_traced(TestRunner r)
+    {
+        var t = OfflineTable.Make(r, pieces: 3);
+        await r.Frame();
+        t.Table.Selection.Set(new[] { "p1" });
+        Check.That(t.Table.Sighting.Begin(10), "the tool begins on the picked piece");
+        t.Table.Sighting.Press(new Vec2(1.5, -3));
+        for (int i = -2; i <= 3; i++) t.Table.Sighting.Move(new Vec2(1.5, i));
+        t.Table.Sighting.Release();
+        t.Table.SetSightingFormat(SightingFormat.Drawn);
+        var d = t.Table.Draft!;
+        Check.That(d is { Drawn: true, Square: true, Edged: false } && t.Table.Sighting.StrokesDrawn == 0, "drawn starts on the whole square, the traced wall set aside");
+        Check.Equal(3, d.Included.Count, "all in the square before anything is drawn");
+        Vec2[] loop = { new(0.5, -0.5), new(1.5, -0.5), new(2.5, -0.5), new(2.5, 0.5), new(1.5, 0.5), new(0.5, 0.5) };
+        t.Table.Sighting.Press(loop[0]);
+        foreach (var p in loop.Skip(1)) t.Table.Sighting.Move(p);
+        t.Table.Sighting.Release();
+        Check.That(d.Edged, "the stroke closes into the outline");
+        Check.Equal("p1,p2", string.Join(",", d.Included.OrderBy(x => x)), "only what the outline takes in is in the picture");
+        t.Table.Sighting.Press(new Vec2(-1, -1));
+        t.Table.Sighting.Move(new Vec2(-0.5, -1));
+        t.Table.Sighting.Release();
+        Check.Equal(1, t.Table.Sighting.StrokesDrawn, "a click draws no outline");
+        t.Table.Sighting.UndoStroke();
+        Check.Equal(3, d.Included.Count, "undo goes back to the whole square");
+        t.Table.Sighting.RedoStroke();
+        Check.Equal(2, d.Included.Count, "redo puts the outline back");
+        t.Table.SetSightingFormat(SightingFormat.Round);
+        Check.Equal("p1", string.Join(",", d.Included.OrderBy(x => x)), "back to round, the traced wall cuts again");
+        t.Table.SetSightingFormat(SightingFormat.Drawn);
+        Check.Equal(2, d.Included.Count, "and back to drawn, the outline is still there");
+        t.Table.Sighting.Cancel();
+    }
+
+    [NodeTest]
     static async Task The_reach_is_outlined_round_or_square_before_a_line_is_traced(TestRunner r)
     {
         var t = OfflineTable.Make(r, pieces: 2);
@@ -414,7 +449,7 @@ static class TableTests
         t.Table.SetTool(Tool.Sighting);
         Check.That(t.Table.Draft is { Square: false, Walls.Count: 0 }, "a round reach with nothing traced yet");
         Check.That(t.Table.Sighting.OutlineParts > 0, "the round reach is drawn as a line");
-        t.Table.Draft!.Square = true;
+        t.Table.Draft!.Format = SightingFormat.Square;
         t.Table.Draft.Recompute(t.Table);
         t.Table.ShowDraft();
         await r.Frame();

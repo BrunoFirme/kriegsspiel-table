@@ -4,7 +4,7 @@ namespace KTable.Client.Tests;
 
 public class SightingDraftTests
 {
-    static SightingDraft Draft(bool square = false) => new() { Center = new Vec2(0, 0), Radius = 10, Square = square };
+    static SightingDraft Draft(bool square = false) => new() { Center = new Vec2(0, 0), Radius = 10, Format = square ? SightingFormat.Square : SightingFormat.Round };
 
     [Fact]
     public void A_point_traced_outside_the_picture_stops_at_its_edge()
@@ -87,5 +87,109 @@ public class SightingDraftTests
         d.Sharp = 0.5;
         Assert.Equal(d.BlurAt(new Vec2(8, 0)), d.BlurAt(new Vec2(8, 8)), 9);
         Assert.Equal(0, d.BlurAt(new Vec2(4, 4)));
+    }
+
+    static SightingDraft Drawn() => new() { Center = new Vec2(0, 0), Radius = 10, Format = SightingFormat.Drawn };
+
+    static List<Vec2> Loop(double x0, double z0, double x1, double z1, int perSide = 8)
+    {
+        var corners = new[] { new Vec2(x0, z0), new Vec2(x1, z0), new Vec2(x1, z1), new Vec2(x0, z1) };
+        var loop = new List<Vec2>();
+        for (int c = 0; c < 4; c++)
+        {
+            Vec2 a = corners[c], b = corners[(c + 1) % 4];
+            for (int i = 0; i < perSide; i++) loop.Add(new Vec2(a.X + (b.X - a.X) * i / perSide, a.Z + (b.Z - a.Z) * i / perSide));
+        }
+        return loop;
+    }
+
+    [Fact]
+    public void A_drawn_outline_is_the_picture_and_what_lies_outside_it_is_left_out()
+    {
+        var d = Drawn();
+        Assert.True(d.AddOutline(Loop(3, 3, 7, 7), 0.01));
+        var pieces = new[]
+        {
+            new PieceInstance { Id = "inside", Pos = new Vec2(5, 5) },
+            new PieceInstance { Id = "observer", Pos = new Vec2(0, 0) },
+            new PieceInstance { Id = "beyond", Pos = new Vec2(-5, -5) },
+        };
+        d.Recompute(shape => pieces.Where(p => shape.Contains(p.Pos)));
+        Assert.Equal(new[] { "inside" }, d.Included.Order());
+        Assert.True(d.Edged);
+        Assert.Equal(("polygon", 0.0), (d.Shape().Kind, d.Shape().Radius));
+    }
+
+    [Fact]
+    public void A_small_loop_drawn_far_zoomed_out_still_closes()
+    {
+        var d = Drawn();
+        Assert.True(d.AddOutline(Loop(1, 1, 3, 2), 300));
+        Assert.InRange(d.Outlines[^1].Count, 4, SightingDraft.MaxPoints);
+    }
+
+    [Fact]
+    public void A_drawn_outline_stops_at_the_square_frame()
+    {
+        var d = Drawn();
+        Assert.True(d.AddOutline(Loop(0, -2, 25, 2), 0.01));
+        d.Recompute(_ => Enumerable.Empty<PieceInstance>());
+        Assert.Equal(10, d.Polygon.Max(p => p.X), 9);
+    }
+
+    [Fact]
+    public void A_click_or_a_straight_stroke_draws_no_outline()
+    {
+        var d = Drawn();
+        Assert.False(d.AddOutline(new List<Vec2> { new(1, 1), new(1.001, 1) }, 0.01));
+        Assert.False(d.AddOutline(new List<Vec2> { new(0, 0), new(2, 0), new(4, 0), new(6, 0) }, 0.01));
+        Assert.Empty(d.Outlines);
+        d.Recompute(_ => Enumerable.Empty<PieceInstance>());
+        Assert.False(d.Edged);
+        Assert.Equal(("polygon", 4), (d.Shape().Kind, d.Shape().Polygon.Count));
+    }
+
+    [Fact]
+    public void However_long_the_stroke_the_outline_fits_the_shader()
+    {
+        var d = Drawn();
+        var rng = new Random(1866);
+        var wobbly = Enumerable.Range(0, 6000).Select(i =>
+        {
+            double a = i * Math.Tau / 6000, r = 6 + rng.NextDouble() * 2;
+            return new Vec2(Math.Cos(a) * r, Math.Sin(a) * r);
+        }).ToList();
+        Assert.True(d.AddOutline(wobbly, 1e-6));
+        Assert.InRange(d.Outlines[^1].Count, 3, SightingDraft.MaxPoints);
+    }
+
+    [Fact]
+    public void Outlines_and_traced_walls_are_kept_apart_when_the_format_changes()
+    {
+        var d = Draft();
+        d.Walls.Add(new List<Vec2> { new(5, -2), new(5, 2) });
+        d.Format = SightingFormat.Drawn;
+        Assert.Empty(d.Strokes);
+        Assert.True(d.AddOutline(Loop(-2, -2, 2, 2), 0.01));
+        d.Format = SightingFormat.Round;
+        Assert.Single(d.Strokes);
+        Assert.Same(d.Walls, d.Strokes);
+        d.Format = SightingFormat.Drawn;
+        Assert.Same(d.Outlines, d.Strokes);
+    }
+
+    [Fact]
+    public void A_drawn_picture_blurs_in_from_its_own_edge()
+    {
+        var d = Drawn();
+        Assert.True(d.AddOutline(Loop(-4, -4, 4, 4), 0.01));
+        d.Recompute(_ => Enumerable.Empty<PieceInstance>());
+        Assert.Equal(4, d.Depth, 1);
+        Assert.Equal(d.Depth, d.BlurReach);
+        d.Sharp = 0.5;
+        Assert.Equal(0, d.BlurAt(new Vec2(0, 0)));
+        Assert.True(d.BlurAt(new Vec2(3.9, 0)) > 0);
+        Assert.Equal(d.BlurAt(new Vec2(3.9, 0)), d.BlurAt(new Vec2(0, -3.9)), 6);
+        Assert.True(d.BlurAt(new Vec2(3.9, 0)) > d.BlurAt(new Vec2(3, 0)));
     }
 }

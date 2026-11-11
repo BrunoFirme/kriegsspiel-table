@@ -618,7 +618,7 @@ sealed class HudDemo : HudPart
             {
                 await Hud.ToSignal(Hud.GetTree().CreateTimer(0.8), Timer.SignalName.Timeout);
                 if (T.Draft is not { } d) { GD.Print("[povclip] no draft"); return; }
-                if (square) { d.Square = true; d.Recompute(T); }
+                if (square) { d.Format = SightingFormat.Square; d.Recompute(T); }
                 var mid = T.Rig.Cam.UnprojectPosition(KTable.App.Coords.ToWorld(d.Center, 0));
                 var edge = T.Rig.Cam.UnprojectPosition(KTable.App.Coords.ToWorld(new Vec2(d.Center.X + d.Radius, d.Center.Z), 0));
                 float px = Math.Max(20f, Math.Abs(edge.X - mid.X));
@@ -819,6 +819,50 @@ sealed class HudDemo : HudPart
 
     bool PovFormat(string what)
     {
+        if (what.StartsWith("povdrawn"))
+        {
+            int pn = what.Contains(':') ? int.Parse(what.Split(':')[1]) : 0;
+            var board = S.View.Layer(KTable.Core.Model.Layers.Umpire);
+            if (board.Count <= pn) { GD.Print("[povdrawn] no such piece"); return true; }
+            T.SetSelection(new[] { board[pn].Id });
+            T.SetTool(Tool.Sighting);
+            Callable.From((Action)(async () =>
+            {
+                await Hud.ToSignal(Hud.GetTree().CreateTimer(0.8), Timer.SignalName.Timeout);
+                if (T.Draft is not { } d) { GD.Print("[povdrawn] no draft"); return; }
+                T.SetSightingFormat(SightingFormat.Drawn);
+                await Hud.ToSignal(Hud.GetTree().CreateTimer(0.4), Timer.SignalName.Timeout);
+                var mid = T.Rig.Cam.UnprojectPosition(KTable.App.Coords.ToWorld(d.Center, 0));
+                var edge = T.Rig.Cam.UnprojectPosition(KTable.App.Coords.ToWorld(new Vec2(d.Center.X + d.Radius, d.Center.Z), 0));
+                float px = Math.Max(20f, Math.Abs(edge.X - mid.X));
+                var around = mid + new Vector2(px * 0.25f, -px * 0.2f);
+                const int Steps = 60;
+                Vector2 At(int i)
+                {
+                    float a = i * Mathf.Tau / Steps, wobble = 1 + 0.12f * Mathf.Sin(a * 5);
+                    return around + new Vector2(Mathf.Cos(a) * px * 0.6f, Mathf.Sin(a) * px * 0.38f) * wobble;
+                }
+                var start = At(0);
+                Input.ParseInputEvent(new InputEventMouseButton { ButtonIndex = MouseButton.Left, Pressed = true, Position = start, GlobalPosition = start });
+                await Hud.ToSignal(Hud.GetTree(), SceneTree.SignalName.ProcessFrame);
+                for (int i = 1; i <= Steps; i++)
+                {
+                    var at = At(i);
+                    Input.ParseInputEvent(new InputEventMouseMotion { Position = at, GlobalPosition = at, Relative = at - At(i - 1) });
+                    await Hud.ToSignal(Hud.GetTree(), SceneTree.SignalName.ProcessFrame);
+                }
+                Input.ParseInputEvent(new InputEventMouseButton { ButtonIndex = MouseButton.Left, Pressed = false, Position = start, GlobalPosition = start });
+                await Hud.ToSignal(Hud.GetTree().CreateTimer(0.4), Timer.SignalName.Timeout);
+                if (what.EndsWith(":blur")) T.SetSightingSharp(0.55);
+                await Hud.ToSignal(Hud.GetTree().CreateTimer(0.6), Timer.SignalName.Timeout);
+                GD.Print($"[povdrawn] {d.Outlines.Count} outline(s), {d.Polygon.Count} points, depth {d.Depth:0.##}, {d.Included.Count} pieces in the picture of {board.Count}");
+                var img = await T.RenderSighting(d, 620);
+                if (img == null) { GD.Print("[povdrawn] no picture"); return; }
+                var path = ProjectSettings.GlobalizePath("user://povdrawn.png");
+                GD.Print($"[povdrawn] picture {img.GetWidth()}x{img.GetHeight()} written to {path}: {img.SavePng(path)}");
+            })).CallDeferred();
+            return true;
+        }
         if (what.StartsWith("povfmt"))
         {
             int pn = what.Contains(':') ? int.Parse(what.Split(':')[1]) : 0;
@@ -833,7 +877,7 @@ sealed class HudDemo : HudPart
                 if (d == null) { GD.Print("[povfmt] no draft"); return; }
                 foreach (var square in new[] { false, true })
                 {
-                    d.Square = square;
+                    d.Format = square ? SightingFormat.Square : SightingFormat.Round;
                     d.Recompute(T);
                     T.ShowDraft();
                     await Hud.ToSignal(Hud.GetTree(), SceneTree.SignalName.ProcessFrame);

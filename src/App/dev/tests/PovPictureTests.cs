@@ -97,6 +97,27 @@ static class PovPictureTests
         CheckAllBack(t, live);
     }
 
+    [NodeTest]
+    static async Task A_drawn_pov_picture_is_cut_to_its_outline_and_drawn_finer(TestRunner r)
+    {
+        var (t, d, live) = await SightingFromP1(r);
+        t.Table.SetSightingFormat(SightingFormat.Drawn);
+        Check.That(d.AddOutline(new List<Vec2> { new(0, -1), new(2, -1), new(4, -1), new(4, 1), new(2, 1), new(0, 1) }, 0.01), "the outline is taken");
+        d.Recompute(t.Table);
+        int side = t.Table.Sighting.PictureSide(d, Pixels);
+        Check.Equal(Pixels * 4, side, "a small outline is drawn at four times the size, the most it zooms in");
+        var shot = await t.Table.Sighting.OpenPicture(d, side);
+        try
+        {
+            var cut = t.Table.Sighting.PictureCut(shot, d);
+            Check.That(cut.Size.X < side && cut.Size.Y < cut.Size.X, $"the picture is cut to the outline, wider than tall: {cut.Size} of {side}");
+            Check.That(Math.Abs(cut.Size.X - side * 4 / 20) <= 6 && Math.Abs(cut.Size.Y - side * 2 / 20) <= 6, $"the cut is the outline's own size: {cut.Size}");
+            Check.Equal("p1,p2,p3", InSight(d), "the pieces inside the outline are in the picture");
+        }
+        finally { t.Table.Sighting.ClosePicture(shot); }
+        CheckAllBack(t, live);
+    }
+
     [ScreenTest]
     static async Task A_pov_picture_kept_open_follows_the_table_frame_by_frame(TestRunner r)
     {

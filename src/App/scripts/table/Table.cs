@@ -609,6 +609,7 @@ public partial class Table : Node3D
     public void RefreshSightingPanel() => Sighting.NotifyChanged();
     public void SetSightingFirstPerson(bool on) => Sighting.SetFirstPerson(on);
     public void SetSightingLens(double degrees) => Sighting.SetLens(degrees);
+    public void SetSightingFormat(SightingFormat format) => Sighting.SetFormat(format);
     public void SetSightingEye(double height) => Sighting.SetEyeHeight(height);
     public void SetSightingSharp(double share) => Sighting.SetSharp(share);
     public void SetSightingBlur(double share) => Sighting.SetBlur(share);
@@ -616,10 +617,10 @@ public partial class Table : Node3D
     public void SetSightingHideText(bool on) => Sighting.SetHideText(on);
     public void FaceSighting(string cardinal) => Sighting.Face(cardinal);
     public void ClearOutline() => Sighting.ClearOutline();
-    public int WallsTraced => Sighting.WallsTraced;
-    public int WallsTakenBack => Sighting.WallsTakenBack;
-    public void UndoWall() => Sighting.UndoWall();
-    public void RedoWall() => Sighting.RedoWall();
+    public int StrokesDrawn => Sighting.StrokesDrawn;
+    public int StrokesTakenBack => Sighting.StrokesTakenBack;
+    public void UndoStroke() => Sighting.UndoStroke();
+    public void RedoStroke() => Sighting.RedoStroke();
     public IEnumerable<PieceInstance> UmpirePiecesIn(SightingShape shape) => Sighting.UmpirePiecesIn(shape);
     public System.Threading.Tasks.Task<Image?> RenderSighting(SightingDraft d, int px) => Sighting.Render(d, px);
 

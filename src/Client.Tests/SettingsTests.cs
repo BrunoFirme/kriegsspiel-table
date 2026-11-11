@@ -161,6 +161,21 @@ public class SettingsTests
     }
 
     [Fact]
+    public void A_square_format_kept_by_an_older_version_opens_square_and_an_unknown_format_opens_round()
+    {
+        File.WriteAllText(_file, "{\"SightingSquare\":true}");
+        var s = Settings.Load();
+        Assert.Equal("square", s.SightingFormat);
+        Assert.Null(s.SightingSquare);
+        File.WriteAllText(_file, "{\"SightingSquare\":false}");
+        Assert.Equal("round", Settings.Load().SightingFormat);
+        File.WriteAllText(_file, "{\"SightingFormat\":\"hexagon\"}");
+        Assert.Equal("round", Settings.Load().SightingFormat);
+        File.WriteAllText(_file, "{\"SightingFormat\":\"drawn\"}");
+        Assert.Equal(SightingFormat.Drawn, SightingDraft.FormatNamed(Settings.Load().SightingFormat));
+    }
+
+    [Fact]
     public void New_settings_are_written_with_these_defaults_in_this_order()
     {
         var s = new Settings();
@@ -169,7 +184,7 @@ public class SettingsTests
         s.Keys.Set("ruler", "R");
         Assert.Equal(
             "{\"Keys\":{\"Keys\":{\"ruler\":\"R\"}},\"CaptureToClipboard\":true,\"CaptureToFolder\":true,\"CaptureFolder\":\"C\",\"CaptureScale\":4,"
-            + "\"SightingSquare\":false,\"SightingFirstPerson\":false,\"SightingLens\":60,\"SightingFacing\":null,\"SightingEyeShare\":1,\"SightingHideText\":false,\"SightingGif\":false,\"CaptureGif\":false,\"LastName\":\"\",\"LastAddress\":\"127.0.0.1\",\"Port\":7777,\"ShareCursor\":true,\"FaceText\":true,\"LabelPlates\":false,\"WheelTurnsHovered\":false,"
+            + "\"SightingFormat\":\"round\",\"SightingFirstPerson\":false,\"SightingLens\":60,\"SightingFacing\":null,\"SightingEyeShare\":1,\"SightingHideText\":false,\"SightingGif\":false,\"CaptureGif\":false,\"LastName\":\"\",\"LastAddress\":\"127.0.0.1\",\"Port\":7777,\"ShareCursor\":true,\"FaceText\":true,\"LabelPlates\":false,\"WheelTurnsHovered\":false,"
             + "\"LetteringReach\":250,\"ReduceFarDetail\":false,\"MakerTools\":false,\"AgentOn\":false,\"AgentPort\":7796,\"AgentToken\":\"\",\"FaceTextScale\":1,\"ShowCursors\":true,\"ShowZones\":true,\"UiScale\":1,\"Antialias\":2,\"SmoothFineEdges\":false,\"ShadowDetail\":1,\"ContactShade\":false,\"WindowMode\":0,\"VSync\":true,\"FrameLimit\":0,\"RestWhenIdle\":true,\"Renderer\":\"vulkan\",\"FarDetail\":1,\"RenderScale\":1,\"MapPictureMemory\":0,\"SoundVolume\":0.6,\"SoundMuted\":false,\"SoundInBackground\":false,"
             + "\"CameraAt\":{},\"CameraViews\":{},\"PanelPos\":{},\"PanelSize\":{},\"StripSize\":30,\"StripHidden\":[],\"TopLine\":true,\"TopLineWidth\":1,\"PenInk\":\"#1a1a1a\",\"PenSize\":3,\"PenOpacity\":1,"
             + "\"DrawMode\":\"free\",\"DrawLayer\":{},\"HiddenLayers\":{},\"Decal\":{},\"RulerPins\":{},\"DecalTurn\":0,\"DecalGrowth\":1,\"FormationRanks\":{},\"RangeMetres\":null,\"RangeUnits\":null,\"DiceHand\":{},\"PiecesPack\":null,\"PiecesTab\":0,"

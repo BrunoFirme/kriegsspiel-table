@@ -113,10 +113,14 @@ sealed class Sighting
     {
         _shownSharp = d.Sharp;
         SetBlurring("sharp", (float)_shownSharp);
-        SetBlurring("reach", (float)d.Radius);
-        SetBlurring("square", d.Square ? 1 : 0);
+        SetBlurring("reach", (float)d.BlurReach);
+        SetBlurring("square", BlurFrom(d));
         SetBlurring("most", (float)d.Blur);
     }
+
+    const int BlurFromCentre = 0, BlurFromSquare = 1, BlurFromEdge = 2;
+
+    static int BlurFrom(SightingDraft d) => d.Edged ? BlurFromEdge : d.Square ? BlurFromSquare : BlurFromCentre;
 
     public void Sync()
     {
@@ -136,9 +140,12 @@ sealed class Sighting
         _c.S.Art.MuteText(hide, _c.Scene);
     }
 
-    public string Hint() => Draft is { FirstPerson: true }
-        ? $"Drag to look around · N E S W in the panel hold a direction · {ReachKeys} set the reach · Enter captures"
-        : $"Drag to trace what blocks the view · {ReachKeys} set the reach · the wheel zooms in to trace · Enter captures";
+    public string Hint() => Draft switch
+    {
+        { FirstPerson: true } => $"Drag to look around · N E S W in the panel hold a direction · {ReachKeys} set the reach · Enter captures",
+        { Drawn: true } => $"Drag round what the piece sees · {ReachKeys} set the frame · the wheel zooms in to draw · Enter captures",
+        _ => $"Drag to trace what blocks the view · {ReachKeys} set the reach · the wheel zooms in to trace · Enter captures",
+    };
 
     string ReachKeys => $"Ctrl+wheel or {_c.Settings.Keys.Label("smaller")} {_c.Settings.Keys.Label("larger")}";
 
@@ -152,8 +159,8 @@ sealed class Sighting
         TickShade();
         if (Draft is { } draft)
         {
-            SetBlurring("reach", (float)draft.Radius);
-            SetBlurring("square", draft.Square ? 1 : 0);
+            SetBlurring("reach", (float)draft.BlurReach);
+            SetBlurring("square", BlurFrom(draft));
         }
         var c = Coords.ToWorld(shape.Center);
         var poly = shape.Polygon.Take(SightingDraft.MaxPoints).Select(p => { var w = Coords.ToWorld(p); return new Vector2(w.X, w.Z); }).ToArray();
@@ -194,13 +201,15 @@ sealed class Sighting
     {
         var overlay = _overlay;
         _outlineMesh.ClearSurfaces();
-        if (pts is { Count: >= 2 })
-        {
-            var mat = new StandardMaterial3D { AlbedoColor = new Color(1, 0.85f, 0.25f), ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded, NoDepthTest = true };
-            overlay.RibbonPx(_outlineMesh, mat, pts.Append(pts[0]).ToList(), 0.05f, 2f);
-        }
+        var mat = new StandardMaterial3D { AlbedoColor = new Color(1, 0.85f, 0.25f), ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded, NoDepthTest = true };
+        if (pts is { Count: >= 2 }) overlay.RibbonPx(_outlineMesh, mat, pts.Append(pts[0]).ToList(), 0.05f, 2f);
         if (Draft == null) return;
-        if (Draft is { FirstPerson: false } && _shownSharp < 1) FocusRing(Draft, _shownSharp);
+        if (Draft is { FirstPerson: false, Edged: false } && _shownSharp < 1) FocusRing(Draft, _shownSharp);
+        if (Draft.Drawn)
+        {
+            if (_wall is { Count: >= 2 }) overlay.RibbonPx(_outlineMesh, mat, _wall, 0.07f, 2f);
+            return;
+        }
         var wallMat = new StandardMaterial3D { AlbedoColor = new Color(0.95f, 0.3f, 0.2f), ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded, NoDepthTest = true };
         foreach (var w in Draft.Walls.Append(_wall!).Where(x => x is { Count: >= 2 }))
             overlay.RibbonPx(_outlineMesh, wallMat, w, 0.07f, 4.5f);
@@ -272,8 +281,27 @@ sealed class Sighting
     {
         if (Draft == null || !_drawing) return;
         _drawing = false;
-        if (_wall is { Count: >= 2 }) { Draft.Walls.Add(Polyline.Thin(_wall, Math.Max(Draft.Radius / 2000, 3.0 / Math.Max(0.01, _c.Rig.PixelsPerUnit())))); _wallRedo.Clear(); }
+        if (_wall is { Count: >= 2 } && AddStroke(Draft, _wall)) _strokeRedo.Clear();
         _wall = null;
+        Redraw();
+    }
+
+    bool AddStroke(SightingDraft d, List<Vec2> stroke)
+    {
+        double tolerance = Math.Max(d.Radius / 2000, 3.0 / Math.Max(0.01, _c.Rig.PixelsPerUnit()));
+        if (d.Drawn) return d.AddOutline(stroke, tolerance);
+        d.Walls.Add(Polyline.Thin(stroke, tolerance));
+        return true;
+    }
+
+    public void SetFormat(SightingFormat format)
+    {
+        if (Draft is not { } d || d.Format == format) return;
+        d.Format = format;
+        _strokeRedo.Clear();
+        _wall = null;
+        _drawing = false;
+        _c.Say(Hint());
         Redraw();
     }
 
@@ -295,7 +323,7 @@ sealed class Sighting
         if (_selection.Ids.Count != 1) return;
         var obs = _selection.Nodes.FirstOrDefault();
         if (obs == null || obs.Piece.Id == Draft.ObserverId) return;
-        if (Draft.Walls.Count > 0) return;
+        if (Draft.Walls.Count + Draft.Outlines.Count > 0) return;
         var was = Draft;
         Draft = null;
         Begin(was.Radius, was);
@@ -310,7 +338,7 @@ sealed class Sighting
         Draft = new SightingDraft
         {
             ObserverId = obs.Piece.Id, Center = obs.Piece.Pos, Radius = radius ?? (_c.S.View.VisionRadius > 0 ? _c.S.View.VisionRadius : 40),
-            Square = _c.Settings.SightingSquare, FirstPerson = _c.Settings.SightingFirstPerson, Lens = SightingDraft.FitLens(_c.Settings.SightingLens),
+            Format = SightingDraft.FormatNamed(_c.Settings.SightingFormat), FirstPerson = _c.Settings.SightingFirstPerson, Lens = SightingDraft.FitLens(_c.Settings.SightingLens),
             HideText = _c.Settings.SightingHideText, Gif = _c.Settings.SightingGif,
             EyeHeight = EyeOnTopOf(obs.Piece.Id) * _c.Settings.SightingEyeShare, Sharp = was?.Sharp ?? _c.S.View.VisionSharp ?? 1,
             Blur = was?.Blur ?? (_c.S.View.VisionBlur is { } kept ? Math.Clamp(kept, SightingDraft.LeastBlur, SightingDraft.MostBlur) : SightingDraft.BlurAtEdge),
@@ -481,7 +509,7 @@ sealed class Sighting
         KeepRadius();
         Draft = null;
         _drawing = false;
-        _wallRedo.Clear();
+        _strokeRedo.Clear();
         _pieces.ShowRings();
         _c.Rig.LeaveEye();
         Sync();
@@ -496,7 +524,7 @@ sealed class Sighting
         _c.Say($"POV capture taken: {Draft.Included.Count} pieces in the picture — Ctrl+V into Discord.");
         _pieces.ShowRings();
         Draft = null;
-        _wallRedo.Clear();
+        _strokeRedo.Clear();
         _c.Rig.LeaveEye();
         Sync();
         NotifyChanged();
@@ -506,9 +534,10 @@ sealed class Sighting
     public void ClearOutline()
     {
         if (Draft == null) return;
-        _wallRedo.Clear();
-        for (int i = Draft.Walls.Count - 1; i >= 0; i--) _wallRedo.Add(Draft.Walls[i]);
-        Draft.Walls.Clear();
+        _strokeRedo.Clear();
+        var strokes = Draft.Strokes;
+        for (int i = strokes.Count - 1; i >= 0; i--) _strokeRedo.Add(strokes[i]);
+        strokes.Clear();
         Draft.Polygon.Clear();
         _wall = null;
         _drawing = false;
@@ -518,23 +547,23 @@ sealed class Sighting
     public int OutlineParts => _outlineMesh.GetSurfaceCount();
     public bool ShadeShown => _sightPlane.Visible;
 
-    readonly List<List<Vec2>> _wallRedo = new();
-    public int WallsTraced => Draft?.Walls.Count ?? 0;
-    public int WallsTakenBack => _wallRedo.Count;
+    readonly List<List<Vec2>> _strokeRedo = new();
+    public int StrokesDrawn => Draft?.Strokes.Count ?? 0;
+    public int StrokesTakenBack => _strokeRedo.Count;
 
-    public void UndoWall()
+    public void UndoStroke()
     {
-        if (Draft == null || Draft.Walls.Count == 0) return;
-        _wallRedo.Add(Draft.Walls[^1]);
-        Draft.Walls.RemoveAt(Draft.Walls.Count - 1);
+        if (Draft is not { Strokes: { Count: > 0 } strokes }) return;
+        _strokeRedo.Add(strokes[^1]);
+        strokes.RemoveAt(strokes.Count - 1);
         Redraw();
     }
 
-    public void RedoWall()
+    public void RedoStroke()
     {
-        if (Draft == null || _wallRedo.Count == 0) return;
-        Draft.Walls.Add(_wallRedo[^1]);
-        _wallRedo.RemoveAt(_wallRedo.Count - 1);
+        if (Draft == null || _strokeRedo.Count == 0) return;
+        Draft.Strokes.Add(_strokeRedo[^1]);
+        _strokeRedo.RemoveAt(_strokeRedo.Count - 1);
         Redraw();
     }
 
@@ -596,13 +625,37 @@ sealed class Sighting
 
     public async System.Threading.Tasks.Task<Image?> Render(SightingDraft d, int px)
     {
-        var shot = await OpenPicture(d, px);
+        var shot = await OpenPicture(d, PictureSide(d, px));
         try
         {
             await DrawFrame(shot, d);
-            return shot.GetTexture().GetImage();
+            return shot.GetTexture().GetImage().GetRegion(PictureCut(shot, d));
         }
         finally { ClosePicture(shot); }
+    }
+
+    const int MostPictureSide = 4096, MostZoomIn = 4, CutMarginPx = 2;
+
+    static bool Cuts(SightingDraft d) => d is { Edged: true, FirstPerson: false };
+
+    public int PictureSide(SightingDraft d, int px)
+    {
+        if (!Cuts(d)) return px;
+        double across = Math.Max(d.Polygon.Max(v => v.X) - d.Polygon.Min(v => v.X), d.Polygon.Max(v => v.Z) - d.Polygon.Min(v => v.Z));
+        double zoom = Math.Clamp(2 * d.Radius / Math.Max(across, 1e-6), 1, MostZoomIn);
+        return Math.Min((int)(px * zoom), Math.Max(px, MostPictureSide));
+    }
+
+    public Rect2I PictureCut(SubViewport shot, SightingDraft d)
+    {
+        var whole = new Rect2I(Vector2I.Zero, shot.Size);
+        if (!Cuts(d) || shot.GetChildCount() == 0 || shot.GetChild(0) is not Camera3D cam) return whole;
+        Aim(shot, d);
+        var seen = d.Polygon.Select(p => cam.UnprojectPosition(Coords.ToWorld(p))).ToList();
+        var lo = new Vector2I(Mathf.FloorToInt(seen.Min(s => s.X)) - CutMarginPx, Mathf.FloorToInt(seen.Min(s => s.Y)) - CutMarginPx);
+        var hi = new Vector2I(Mathf.CeilToInt(seen.Max(s => s.X)) + CutMarginPx, Mathf.CeilToInt(seen.Max(s => s.Y)) + CutMarginPx);
+        var cut = new Rect2I(lo, hi - lo).Intersection(whole);
+        return cut.Size is { X: >= 2, Y: >= 2 } ? cut : whole;
     }
 
     public async System.Threading.Tasks.Task<SubViewport> OpenPicture(SightingDraft d, int px)

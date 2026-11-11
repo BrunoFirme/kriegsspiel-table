@@ -21,7 +21,24 @@ uniform vec3 far_down;
 const vec2 TAPS[8] = vec2[](vec2(1.0, 0.0), vec2(0.707, 0.707), vec2(0.0, 1.0), vec2(-0.707, 0.707),
 	vec2(-1.0, 0.0), vec2(-0.707, -0.707), vec2(0.0, -1.0), vec2(0.707, -0.707));
 
+const int FROM_EDGE = 2;
+
+float to_edge(vec2 p) {
+	float best = 1e30;
+	int j = poly_n - 1;
+	for (int i = 0; i < 512; i++) {
+		if (i >= poly_n) break;
+		vec2 a = poly[j];
+		vec2 ab = poly[i] - a;
+		float t = clamp(dot(p - a, ab) / max(dot(ab, ab), 1e-12), 0.0, 1.0);
+		best = min(best, distance(p, a + ab * t));
+		j = i;
+	}
+	return best;
+}
+
 float away(vec2 p) {
+	if (square == FROM_EDGE) return max(reach - to_edge(p), 0.0);
 	vec2 d = abs(p - center);
 	return square == 1 ? max(d.x, d.y) : length(p - center);
 }

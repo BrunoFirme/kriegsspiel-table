@@ -138,8 +138,8 @@ sealed class TableKeys
             Sfx.Current?.Apply();
             _c.Say(_c.Settings.SoundMuted ? "Sound off" : "Sound on");
         }
-        else if (km.Is(k, "undo")) { if (_c.Tool == Tool.Sighting && _sighting.Draft != null) _sighting.UndoWall(); else S.UndoLast(); }
-        else if (km.Is(k, "redo")) { if (_c.Tool == Tool.Sighting && _sighting.Draft != null) _sighting.RedoWall(); else S.RedoLast(); }
+        else if (km.Is(k, "undo")) { if (_c.Tool == Tool.Sighting && _sighting.Draft != null) _sighting.UndoStroke(); else S.UndoLast(); }
+        else if (km.Is(k, "redo")) { if (_c.Tool == Tool.Sighting && _sighting.Draft != null) _sighting.RedoStroke(); else S.RedoLast(); }
         else if (km.Is(k, "sighting")) { if (S.IsUmpire) _c.SetTool(Tool.Sighting); }
         else if (km.Is(k, "statePrev")) _actions.CycleState(-1);
         else if (km.Is(k, "stateNext")) _actions.CycleState(1);

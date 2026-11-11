@@ -2,12 +2,16 @@ using KTable.Core.Model;
 
 namespace KTable.Client;
 
+public enum SightingFormat { Round, Square, Drawn }
+
 public sealed class SightingDraft
 {
     public string ObserverId = "";
     public Vec2 Center;
     public double Radius = 40;
-    public bool Square;
+    public SightingFormat Format;
+    public bool Square => Format != SightingFormat.Round;
+    public bool Drawn => Format == SightingFormat.Drawn;
     public bool FirstPerson;
     public double Lens = NormalLens;
     public double EyeHeight;
@@ -17,8 +21,23 @@ public sealed class SightingDraft
     public bool Gif;
     public string? Facing;
     public List<List<Vec2>> Walls = new();
+    public List<List<Vec2>> Outlines = new();
+    public List<List<Vec2>> Strokes => Drawn ? Outlines : Walls;
     public List<Vec2> Polygon = new();
     public HashSet<string> Included = new();
+    public double Depth;
+
+    public bool Edged => Drawn && Polygon.Count >= 3;
+    public double BlurReach => Edged ? Depth : Radius;
+
+    public static SightingFormat FormatNamed(string name) => name switch
+    {
+        "square" => SightingFormat.Square,
+        "drawn" => SightingFormat.Drawn,
+        _ => SightingFormat.Round,
+    };
+
+    public static string NameOf(SightingFormat format) => format.ToString().ToLowerInvariant();
 
     public const double EyeHighestShare = 3;
     public const double NarrowestLens = 20, NormalLens = 60, WholeCircleLens = 90, WidestLens = 120, LensStep = 1;
@@ -28,12 +47,58 @@ public sealed class SightingDraft
 
     public static double BlurShare(double t) => (Math.Pow(2, BlurDoublings * t) - 1) / (Math.Pow(2, BlurDoublings) - 1);
 
-    public double Away(Vec2 p) => Square ? Math.Max(Math.Abs(p.X - Center.X), Math.Abs(p.Z - Center.Z)) : (p - Center).Length;
+    public double Away(Vec2 p) =>
+        Edged ? Math.Max(Depth - EdgeDistance(Polygon, p), 0)
+        : Square ? Math.Max(Math.Abs(p.X - Center.X), Math.Abs(p.Z - Center.Z))
+        : (p - Center).Length;
 
     public double BlurAt(Vec2 p)
     {
-        double start = Sharp * Radius, t = Math.Clamp((Away(p) - start) / Math.Max(Radius - start, 1e-4), 0, 1);
-        return t <= 0 ? 0 : Blur * Radius * BlurShare(t);
+        double reach = BlurReach, start = Sharp * reach, t = Math.Clamp((Away(p) - start) / Math.Max(reach - start, 1e-4), 0, 1);
+        return t <= 0 ? 0 : Blur * reach * BlurShare(t);
+    }
+
+    public static double EdgeDistance(List<Vec2> ring, Vec2 p)
+    {
+        double best = double.MaxValue;
+        for (int i = 0, j = ring.Count - 1; i < ring.Count; j = i++) best = Math.Min(best, Polyline.ToSegment(p, ring[j], ring[i]));
+        return best;
+    }
+
+    const int DepthSamples = 32;
+
+    public static double DepthOf(List<Vec2> ring)
+    {
+        double loX = ring.Min(v => v.X), hiX = ring.Max(v => v.X), loZ = ring.Min(v => v.Z), hiZ = ring.Max(v => v.Z), deepest = 0;
+        for (int i = 0; i <= DepthSamples; i++)
+            for (int j = 0; j <= DepthSamples; j++)
+            {
+                var p = new Vec2(loX + (hiX - loX) * i / DepthSamples, loZ + (hiZ - loZ) * j / DepthSamples);
+                if (Polyline.Inside(ring, p)) deepest = Math.Max(deepest, EdgeDistance(ring, p));
+            }
+        return deepest;
+    }
+
+    public static double Area(List<Vec2> ring)
+    {
+        double twice = 0;
+        for (int i = 0, j = ring.Count - 1; i < ring.Count; j = i++) twice += ring[j].X * ring[i].Z - ring[i].X * ring[j].Z;
+        return Math.Abs(twice) / 2;
+    }
+
+    const double MostThinningShare = 0.02;
+
+    public bool AddOutline(List<Vec2> stroke, double tolerance)
+    {
+        if (stroke.Count < 3) return false;
+        var clipped = stroke.Select(Clip).ToList();
+        double across = Math.Max(clipped.Max(v => v.X) - clipped.Min(v => v.X), clipped.Max(v => v.Z) - clipped.Min(v => v.Z));
+        tolerance = Math.Min(tolerance, across * MostThinningShare);
+        var ring = Polyline.Thin(clipped, tolerance);
+        if (ring.Count > MaxPoints) ring = ring.Where((_, i) => i % (ring.Count / MaxPoints + 1) == 0).ToList();
+        if (ring.Count < 3 || Area(ring) <= tolerance * tolerance) return false;
+        Outlines.Add(ring);
+        return true;
     }
 
     public Vec2 Clip(Vec2 p)
@@ -67,9 +132,12 @@ public sealed class SightingDraft
 
     public void Recompute(Func<SightingShape, IEnumerable<PieceInstance>> piecesIn)
     {
-        Polygon = Visible();
+        Polygon = Drawn ? DrawnRing() : Visible();
+        Depth = Edged ? DepthOf(Polygon) : 0;
         Included = piecesIn(Shape()).Select(p => p.Id).ToHashSet();
     }
+
+    List<Vec2> DrawnRing() => Outlines.Count == 0 ? new() : Outlines[^1].Select(Clip).ToList();
 
     public const int MaxPoints = 480;
 

@@ -10,7 +10,10 @@ public sealed class Settings
     public string CaptureFolder { get; set; } = KTable.Core.DataPaths.Captures;
     public int CaptureScale { get; set; } = 4;
     public const int CaptureScaleMost = 4;
-    public bool SightingSquare { get; set; }
+    public string SightingFormat { get; set; } = SightingFormats[0];
+    public static readonly string[] SightingFormats = { "round", "square", "drawn" };
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public bool? SightingSquare { get; set; }
     public bool SightingFirstPerson { get; set; }
     public double SightingLens { get; set; } = SightingDraft.NormalLens;
     [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
@@ -194,6 +197,9 @@ public sealed class Settings
         if (Array.IndexOf(Renderers, Renderer) < 0) Renderer = Vulkan;
         if (SightingWide == true) SightingLens = SightingDraft.WholeCircleLens;
         SightingWide = null;
+        if (SightingSquare == true) SightingFormat = "square";
+        SightingSquare = null;
+        if (Array.IndexOf(SightingFormats, SightingFormat) < 0) SightingFormat = SightingFormats[0];
         SightingLens = SightingDraft.FitLens(SightingLens);
         SightingEyeShare = double.IsFinite(SightingEyeShare) ? Math.Clamp(SightingEyeShare, 0, SightingDraft.EyeHighestShare) : 1;
         if (SightingFacing is not (null or "N" or "E" or "S" or "W")) SightingFacing = null;
