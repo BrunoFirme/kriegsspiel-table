@@ -48,13 +48,22 @@ public static class ReliefImport
     public static string? Blender(Settings cfg)
     {
         if (cfg.BlenderPath is { Length: > 0 } set && File.Exists(set)) return set;
-        var pf = System.Environment.GetFolderPath(System.Environment.SpecialFolder.ProgramFiles);
+        if (!OperatingSystem.IsWindows()) return BlenderOnUnix();
+        var pf =System.Environment.GetFolderPath(System.Environment.SpecialFolder.ProgramFiles);
         var foundation = Path.Combine(pf, "Blender Foundation");
         if (Directory.Exists(foundation))
             foreach (var d in Directory.GetDirectories(foundation).OrderByDescending(d => d, StringComparer.OrdinalIgnoreCase))
                 if (File.Exists(Path.Combine(d, "blender.exe"))) return Path.Combine(d, "blender.exe");
         var steam = Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.ProgramFilesX86), "Steam", "steamapps", "common", "Blender", "blender.exe");
         return File.Exists(steam) ? steam : null;
+    }
+
+    static string? BlenderOnUnix()
+    {
+        var home = System.Environment.GetFolderPath(System.Environment.SpecialFolder.UserProfile);
+        var onPath = (System.Environment.GetEnvironmentVariable("PATH") ?? "").Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries);
+        var steam = new[] { Path.Combine(home, ".local", "share", "Steam", "steamapps", "common", "Blender"), Path.Combine(home, ".steam", "steam", "steamapps", "common", "Blender") };
+        return onPath.Concat(steam).Select(d => Path.Combine(d, "blender")).FirstOrDefault(File.Exists);
     }
 
     public static string FromBlend(string path, Settings cfg)

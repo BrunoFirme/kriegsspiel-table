@@ -40,12 +40,12 @@ needs its name (its folders, the download cache, a value quoted from module data
 
 ```
 powershell -ExecutionPolicy Bypass -File tools\export-windows.ps1 [-Out <folder>] [-Zip] [-Installer]
-    [-VersionName <name>] [-Steam]
+    [-VersionName <name>] [-Steam] [-Linux]
 ```
 
 Needs Godot .NET (`winget install GodotEngine.GodotEngine.Mono`), its export templates for the same version (Godot
 editor → Editor → Manage Export Templates, or the `.tpz` unpacked into `%APPDATA%\Godot\export_templates\<version>.mono\`)
-and the .NET SDK. The preset is `src\App\export_presets.cfg` ("Windows Desktop").
+and the .NET SDK. The presets are in `src\App\export_presets.cfg` ("Windows Desktop", "Linux").
 
 - The engine leaves `standard\` (it has a `.gdignore`) and the native Steam libraries out of the `.pck`, so they are
   copied next to the exe, where an exported build looks for them.
@@ -53,6 +53,10 @@ and the .NET SDK. The preset is `src\App\export_presets.cfg` ("Windows Desktop")
 - The converter is published self-contained, so players need no .NET either, and its `modsPath` is emptied so it
   looks for the player's own modules folder.
 - Steam is left out unless `-Steam` is given: the build then has no Steamworks code and no Valve libraries.
+- `-Linux` exports the Linux x86_64 build from Windows into `build\linux64\` (Godot's `linux_release.x86_64`
+  template), publishes the converter for `linux-x64`, and adds `tools\linux\install.sh`; with `-Zip`,
+  `tools\linux\pack.py` packs it as a `.tar.gz` that keeps the run bits Windows cannot store. `install.sh` copies
+  the folder to `~/.local/opt/kriegsspiel-table` and adds a menu entry; `--uninstall` removes only the program.
 
 ## `tools/net-test.ps1` and `tools/NetRelay`: playing over a bad connection on one PC
 

@@ -12,12 +12,13 @@ general-purpose digital tabletop with one built for Kriegsspiel.
 - **Pieces of your own:** a piece studio for faces, counters, text and 3D models; packs share as `.ktpack` files.
 
 The app is an early beta and is played by one group so far. Windows is the platform it is built and
-tested on.
+tested on; a Linux build (x86_64) comes with each release from 0.9.3 on, so far untested by its maker.
 
 ## Getting it
 
 - **Free, from [Releases](https://github.com/BrunoFirme/kriegsspiel-table/releases), for good.** The installer or
-  the zip: the whole game, updating itself from here. The source stays here too.
+  the zip: the whole game, updating itself from here. On Linux, the `.tar.gz`: unpack it and run `./install.sh`
+  for a menu entry, or run `./KriegsspielTable.x86_64` from the folder. The source stays here too.
 - **On Steam, coming soon: US$10 / €10, at most R$20 in Brazil.** The same game, plus what Steam adds:
   - **Workshop:** publish packs and scenarios; subscribed ones install themselves.
   - **Steam Cloud:** hosted games and settings follow you to another PC.
@@ -44,6 +45,7 @@ Needs the .NET 10 SDK and Godot 4.7 with .NET (`winget install GodotEngine.Godot
 | `powershell -File tools\check.ps1` | everything a change must pass: both builds, every test, the app's node tests, the size and hygiene rules |
 | `powershell -File tools\export-windows.ps1 -Zip` | a release folder that runs without Godot or .NET installed |
 | `powershell -File tools\export-windows.ps1 -Installer -VersionName "0.9.3 beta"` | the same folder plus a Windows installer (needs Inno Setup 6: `winget install JRSoftware.InnoSetup`) |
+| `powershell -File tools\export-windows.ps1 -Linux -Zip -VersionName "0.9.3 beta"` | the Linux folder and its `.tar.gz`, with `install.sh` (needs Godot's Linux export templates and Python) |
 
 Steam (the Workshop) is left out of every build unless asked for: `-p:KTableSteam=true`, or `-Steam` on the
 export. Without it the app has no Steam code and needs no Steam client.
