@@ -46,6 +46,7 @@ sealed class PovPanel : HudPart
         AddView(picture, d);
         if (!d.FirstPerson) AddFormat(picture, d);
         AddShot(picture, d);
+        if (d.Gif) AddGifSize(picture, Cfg);
         AddText(picture, d);
         Ui.AlignForm(picture);
         _box.AddChild(Header(d.FirstPerson ? "Eye" : "Reach"));
@@ -100,13 +101,22 @@ sealed class PovPanel : HudPart
     void ShowRecording()
     {
         if (_captures.Recording is not { } r || _recordLine == null || !GodotObject.IsInstanceValid(_recordLine)) return;
-        _recordLine.Text = $"Recording {r.Seconds:0.0} s · {r.Bytes / BytesPerMegabyte:0.0} of {GifRecording.StopAtBytes / BytesPerMegabyte:0} MB";
+        _recordLine.Text = $"Recording {r.Seconds:0.0} s · {r.Bytes / BytesPerMegabyte:0.0} of {GifRecording.MostBytes / BytesPerMegabyte:0} MB";
     }
 
     void AddShot(GridContainer grid, SightingDraft d) =>
         AddChoice(grid, "Shot", d.Gif, on => Keep(() => Cfg.SightingGif = on, () => SetGif(d, on)),
             ("Picture", "One still picture"),
-            ("GIF", $"A moving picture, {GifRecording.FramesPerSecond} frames a second, up to {GifRecording.MostSeconds:0} s or {GifRecording.StopAtBytes / BytesPerMegabyte:0} MB"));
+            ("GIF", $"A moving picture, {GifRecording.FramesPerSecond} frames a second, up to {GifRecording.MostSeconds:0} s or {GifRecording.MostBytes / BytesPerMegabyte:0} MB"));
+
+    internal static void AddGifSize(GridContainer grid, KTable.Client.Prefs.Settings cfg) =>
+        AddChoice(grid, "Size", cfg.GifLarge, on =>
+            {
+                cfg.GifLarge = on;
+                cfg.Save();
+            },
+            ("Normal", $"Lasts longest before the {GifRecording.MostBytes / BytesPerMegabyte:0} MB stop"),
+            ("Large", $"{GifRecording.LargeTimes}× wider and taller; reaches the {GifRecording.MostBytes / BytesPerMegabyte:0} MB stop sooner"));
 
     void SetGif(SightingDraft d, bool on)
     {

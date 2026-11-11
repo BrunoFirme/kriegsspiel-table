@@ -27,7 +27,7 @@ sealed class Captures : HudPart
         null => Task.CompletedTask,
         { Gif: false } => Picture(),
         _ when Recording is { } r => Stopping(r),
-        var d => _povRun = Gif(new PovFrames(T.Sighting, d), "pov", rec =>
+        var d => _povRun = Gif(new PovFrames(T.Sighting, d, Cfg.GifLarge), "pov", rec =>
         {
             Recording = rec;
             if (rec != null) rec.Ticked += () => RecordingTicked?.Invoke();
@@ -47,7 +47,7 @@ sealed class Captures : HudPart
     {
         if (RegionRecording != null) return Task.CompletedTask;
         _rect().SetRect(null);
-        return _regionRun = Gif(new RegionFrames(T, HudNode, r), S.IsUmpire ? "umpire" : "observer", rec =>
+        return _regionRun = Gif(new RegionFrames(T, HudNode, r, Cfg.GifLarge), S.IsUmpire ? "umpire" : "observer", rec =>
         {
             RegionRecording = rec;
             _rect().SetRecording(rec == null ? null : r);
@@ -128,7 +128,7 @@ sealed class Captures : HudPart
         var cut = end switch
         {
             GifRecording.End.LongestTime => $", stopped at {GifRecording.MostSeconds:0} s",
-            GifRecording.End.LargestFile => $", stopped at {GifRecording.StopAtBytes / BytesPerMegabyte:0} MB",
+            GifRecording.End.LargestFile => $", stopped at {GifRecording.MostBytes / BytesPerMegabyte:0} MB",
             _ => "",
         };
         var made = $"GIF {rec.Seconds:0.0} s, {rec.Frames} frames, {rec.Bytes / BytesPerMegabyte:0.0} MB{cut}";

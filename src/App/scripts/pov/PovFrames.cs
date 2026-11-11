@@ -10,19 +10,22 @@ sealed class PovFrames : IGifFrames
 
     readonly Sighting _sighting;
     readonly SightingDraft _draft;
+    readonly int _times;
     SubViewport? _shot;
 
-    public PovFrames(Sighting sighting, SightingDraft draft)
+    public PovFrames(Sighting sighting, SightingDraft draft, bool large)
     {
         _sighting = sighting;
         _draft = draft;
+        _times = large ? GifRecording.LargeTimes : 1;
     }
 
     public bool Gone => _sighting.Draft != _draft;
 
     public async Task<Vector2I> Open()
     {
-        _shot = await _sighting.OpenPicture(_draft, _draft.FirstPerson ? EyeHeight : _sighting.PictureSide(_draft, AboveSide));
+        _shot = await _sighting.OpenPicture(_draft, _draft.FirstPerson ? EyeHeight * _times : _sighting.PictureSide(_draft, AboveSide * _times));
+        GifRecording.Sharpen(_shot);
         _cut = _sighting.PictureCut(_shot, _draft);
         _sighting.Recording = true;
         return _cut.Size;

@@ -21,7 +21,10 @@ sealed class GifRecording
 {
     public const int FramesPerSecond = 10;
     public const double MostSeconds = 60;
-    public const long StopAtBytes = 9_000_000;
+    public const long MostBytes = 20_000_000;
+    public const int LargeTimes = 2;
+    const float Supersample = 2f;
+    const int MostSampledSide = 4096;
     const int QueueDepth = 4, AbandonAfterMs = 30_000;
     const double MsPerSecond = 1000, FrameSeconds = 1.0 / FramesPerSecond;
 
@@ -32,7 +35,7 @@ sealed class GifRecording
     readonly BlockingCollection<(byte[] rgba, double at)> _frames = new(QueueDepth);
     long _bytes;
     int _written;
-    volatile bool _stop, _drop;
+    volatile bool _stop, _drop, _full;
     volatile string? _failure;
     double _endAt;
 
@@ -51,6 +54,12 @@ sealed class GifRecording
     public void Stop() => _stop = true;
 
     public void Drop() => _drop = true;
+
+    public static void Sharpen(SubViewport vp)
+    {
+        vp.Scaling3DMode = Viewport.Scaling3DModeEnum.Bilinear;
+        vp.Scaling3DScale = Mathf.Clamp(MostSampledSide / (float)Math.Max(1, Math.Max(vp.Size.X, vp.Size.Y)), 1f, Supersample);
+    }
 
     public async Task<End> Run()
     {
@@ -90,8 +99,8 @@ sealed class GifRecording
         if (_failure != null) return End.Failed;
         if (_source.Gone || _drop) return End.Dropped;
         if (_stop) return End.Stopped;
-        if (Seconds >= MostSeconds) return End.LongestTime;
-        return Bytes >= StopAtBytes ? End.LargestFile : null;
+        if (_full) return End.LargestFile;
+        return Seconds >= MostSeconds ? End.LongestTime : null;
     }
 
     double Grab(double due)
@@ -113,7 +122,8 @@ sealed class GifRecording
         try
         {
             using var file = new FileStream(_file, FileMode.Create, System.IO.FileAccess.Write, FileShare.Read);
-            var gif = new GifWriter(file, width, height);
+            var gif = new GifWriter(file, width, height, MostBytes);
+            double? until = null;
             while (!_frames.IsCompleted)
             {
                 if (!_frames.TryTake(out var frame, AbandonAfterMs))
@@ -122,11 +132,16 @@ sealed class GifRecording
                     _failure = "no picture came for " + AbandonAfterMs / 1000 + " s";
                     return false;
                 }
-                gif.Add(frame.rgba, frame.at);
+                if (!gif.Add(frame.rgba, frame.at))
+                {
+                    until = frame.at;
+                    _full = true;
+                    break;
+                }
                 Volatile.Write(ref _written, gif.Frames);
-                Interlocked.Exchange(ref _bytes, file.Position);
+                Interlocked.Exchange(ref _bytes, gif.Bytes);
             }
-            gif.Finish(_endAt);
+            gif.Finish(until ?? _endAt);
             file.Flush(flushToDisk: true);
             Interlocked.Exchange(ref _bytes, file.Position);
             return true;

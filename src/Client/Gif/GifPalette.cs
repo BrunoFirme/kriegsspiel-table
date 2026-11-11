@@ -4,7 +4,7 @@ public sealed class GifPalette
 {
     public const int Size = 256;
     public const byte Clear = Size - 1;
-    const int KeyBits = 5, KeyLevels = 1 << KeyBits, Keys = KeyLevels * KeyLevels * KeyLevels, DropBits = 8 - KeyBits;
+    const int KeyBits = 6, KeyLevels = 1 << KeyBits, Keys = KeyLevels * KeyLevels * KeyLevels, DropBits = 8 - KeyBits;
     const int DitherSpread = 12, DitherCells = 16;
     const int RedWeight = 3, GreenWeight = 4, BlueWeight = 2;
 

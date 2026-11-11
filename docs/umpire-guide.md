@@ -292,8 +292,9 @@ table while the tool is out. Words baked into imported pictures stay.
 
 **Shot → GIF** records a moving picture instead. **Record** or **Enter** starts it, **Stop** or **Enter** ends it,
 **Cancel** drops it. From above it is 720 × 720, from the eye 768 × 432, 10 frames a second, and it stops by
-itself at 60 s or 9 MB, under Discord's upload limit. It goes to the capture folder, and to the clipboard as a
-file: Ctrl+V in Discord uploads it. While it records the reach stays as it was.
+itself at 60 s or 20 MB, Discord's upload limit. **Size → Large** doubles both sides for a sharper, shorter GIF.
+It goes to the capture folder, and to the clipboard as a file: Ctrl+V in Discord uploads it. While it records
+the reach stays as it was.
 
 Nothing is sent: paste it into that side's channel.
 
@@ -304,7 +305,8 @@ it. Tools, zones and pointers are left out.
 
 For a moving picture, choose **Shot → GIF** in the Capture panel, then drag the region: it records, 10 frames a
 second, while you keep playing (move pieces, roll dice, turn the view). **Stop** in the panel or **Enter** ends it
-and hands it over like a picture; **Cancel** drops it. It stops by itself at 60 s or 9 MB.
+and hands it over like a picture; **Cancel** drops it. It stops by itself at 60 s or 20 MB; **Size → Large**
+records at twice the size, for a shorter GIF.
 
 Names too small in the picture? Keep **Settings → Captures → Resolution** at 4×, shrink the POV reach, or turn up
 **Settings → Table → Text size**.

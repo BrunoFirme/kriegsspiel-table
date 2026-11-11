@@ -85,6 +85,45 @@ public class GifWriterTests
     }
 
     [Fact]
+    public void A_gif_never_grows_past_its_byte_budget_and_stays_whole_when_a_frame_is_refused()
+    {
+        const int W = 48, H = 48, Budget = 9_000;
+        var rng = new Random(3);
+        using var ms = new MemoryStream();
+        var gif = new GifWriter(ms, W, H, Budget);
+        int kept = 0;
+        double at = 0;
+        for (; kept < 40; kept++, at += 0.1)
+        {
+            var noise = new byte[W * H * 4];
+            rng.NextBytes(noise);
+            if (!gif.Add(noise, at)) break;
+            Assert.InRange(gif.Bytes, 0, Budget);
+        }
+        Assert.InRange(kept, 1, 39);
+        gif.Finish(at);
+        Assert.InRange(ms.Length, 0, Budget);
+        Assert.Equal(gif.Bytes, ms.Length);
+        var read = Read(ms.ToArray());
+        Assert.Equal(gif.Frames, read.Frames.Count);
+    }
+
+    [Fact]
+    public void A_smooth_sky_reads_back_with_little_error()
+    {
+        const int W = 256, H = 64, MostMeanError = 3;
+        var sky = new byte[W * H * 4];
+        for (int y = 0; y < H; y++)
+            for (int x = 0; x < W; x++) Paint(sky, W, x, y, ((byte)(90 + x * 40 / W), (byte)(140 + y * 30 / H), (byte)(200 + x * 30 / W)));
+        var shown = Read(Write(W, H, (sky, 0.0))).Frames[0].Rgba;
+        long error = 0;
+        for (int i = 0; i < sky.Length; i++)
+            if (i % 4 != 3) error += Math.Abs(sky[i] - shown[i]);
+        double mean = error / (W * H * 3.0);
+        Assert.True(mean <= MostMeanError, $"mean error {mean:0.00}");
+    }
+
+    [Fact]
     public void A_frame_of_the_wrong_size_is_refused()
     {
         var gif = new GifWriter(new MemoryStream(), 10, 10);

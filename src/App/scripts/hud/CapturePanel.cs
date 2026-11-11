@@ -43,7 +43,8 @@ sealed class CapturePanel : HudPart
         grid.AddThemeConstantOverride("h_separation", Ui.Gap.Group);
         PovPanel.AddChoice(grid, "Shot", Cfg.CaptureGif, Pick,
             ("Picture", "One still picture"),
-            ("GIF", $"A moving picture, {GifRecording.FramesPerSecond} frames a second, up to {GifRecording.MostSeconds:0} s or {GifRecording.StopAtBytes / BytesPerMegabyte:0} MB"));
+            ("GIF", $"A moving picture, {GifRecording.FramesPerSecond} frames a second, up to {GifRecording.MostSeconds:0} s or {GifRecording.MostBytes / BytesPerMegabyte:0} MB"));
+        if (Cfg.CaptureGif) PovPanel.AddGifSize(grid, Cfg);
         Ui.AlignForm(grid);
         _box.AddChild(grid);
         Panel.Fit();
@@ -54,6 +55,7 @@ sealed class CapturePanel : HudPart
         Cfg.CaptureGif = gif;
         Cfg.Save();
         T.RefreshHint();
+        Rebuild();
     }
 
     void BuildRecording()
@@ -70,6 +72,6 @@ sealed class CapturePanel : HudPart
     void ShowRecording()
     {
         if (_captures.RegionRecording is not { } r || _recordLine == null || !GodotObject.IsInstanceValid(_recordLine)) return;
-        _recordLine.Text = $"Recording {r.Seconds:0.0} s · {r.Bytes / BytesPerMegabyte:0.0} of {GifRecording.StopAtBytes / BytesPerMegabyte:0} MB";
+        _recordLine.Text = $"Recording {r.Seconds:0.0} s · {r.Bytes / BytesPerMegabyte:0.0} of {GifRecording.MostBytes / BytesPerMegabyte:0} MB";
     }
 }

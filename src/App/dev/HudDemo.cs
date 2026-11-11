@@ -796,6 +796,7 @@ sealed class HudDemo : HudPart
             await Hud.ToSignal(Hud.GetTree().CreateTimer(0.4), Timer.SignalName.Timeout);
             if (T.Draft is not { } d) { GD.Print("[povgif] no draft"); return; }
             d.Gif = true;
+            Cfg.GifLarge = what.Contains("large");
             bool eye = what.Contains("eye");
             if (eye) T.SetSightingFirstPerson(true);
             await Hud.ToSignal(Hud.GetTree().CreateTimer(1.5), Timer.SignalName.Timeout);

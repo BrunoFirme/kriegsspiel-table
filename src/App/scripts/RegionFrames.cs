@@ -11,15 +11,17 @@ sealed class RegionFrames : IGifFrames
     readonly Table _table;
     readonly Node _host;
     readonly Rect2 _rect;
+    readonly int _times;
     SubViewport? _vp;
     Camera3D? _cam;
     Rect2 _cut;
 
-    public RegionFrames(Table table, Node host, Rect2 rect)
+    public RegionFrames(Table table, Node host, Rect2 rect, bool large)
     {
         _table = table;
         _host = host;
         _rect = rect;
+        _times = large ? GifRecording.LargeTimes : 1;
     }
 
     public bool Gone => !GodotObject.IsInstanceValid(_table) || !_table.IsInsideTree() || !GodotObject.IsInstanceValid(_host);
@@ -28,13 +30,14 @@ sealed class RegionFrames : IGifFrames
     {
         var window = _table.GetViewport().GetVisibleRect().Size;
         _cut = _rect.Intersection(new Rect2(Vector2.Zero, window));
-        float k = Mathf.Min(1f, LongestSide / Mathf.Max(1f, Mathf.Max(_cut.Size.X, _cut.Size.Y)));
+        float k = Mathf.Min(_times, LongestSide * _times / Mathf.Max(1f, Mathf.Max(_cut.Size.X, _cut.Size.Y)));
         var size = new Vector2I(Math.Max(2, (int)(_cut.Size.X * k)), Math.Max(2, (int)(_cut.Size.Y * k)));
         _vp = new SubViewport
         {
             Size = size, World3D = _table.GetViewport().FindWorld3D(),
             RenderTargetUpdateMode = SubViewport.UpdateMode.Disabled, Msaa3D = Viewport.Msaa.Msaa2X, TransparentBg = false,
         };
+        GifRecording.Sharpen(_vp);
         _cam = new Camera3D { CullMask = Table.WorldLayer | Table.TextLayer, KeepAspect = Camera3D.KeepAspectEnum.Height };
         _vp.AddChild(_cam);
         _host.AddChild(_vp);
