@@ -94,8 +94,8 @@ sealed partial class Carry
     {
         var held = _held.Where(h => GodotObject.IsInstanceValid(h.Node)).ToList();
         var riding = held.SelectMany(h => h.Node.Piece.Attached).ToHashSet();
-        var cmds = held.Where(h => !riding.Contains(h.Id))
-            .Select(h => (Command)new Stow { Layer = into.Layer, Holder = into.Piece.Id, Id = h.Id }).ToList();
+        var cmds = KTable.Client.ReadyKey.Stowing(_c.S.View, into.Layer, into.Piece, held.Where(h => !riding.Contains(h.Id))
+            .Select(h => (Command)new Stow { Layer = into.Layer, Holder = into.Piece.Id, Id = h.Id }).ToList());
         var nodes = held.Select(h => h.Node).ToList();
         var name = into.Piece.Label is { Length: > 0 } lb ? lb : into.Def?.Name ?? "the holder";
         _held.Clear();

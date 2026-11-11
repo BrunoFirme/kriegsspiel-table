@@ -136,7 +136,7 @@ sealed class MenuCards : HudPart
         if (!S.IsUmpire || !S.CanTouch(hit.Layer, hit.Piece)) return;
         var key = Cfg.Keys.Label("ready");
         var view = S.View;
-        if (hit.Piece.Ready is { } r)
+        if (hit.Piece.ReadyNow is { } r)
         {
             var state = ReadyPiece.Of(hit.Piece, id => view.Find(hit.Layer, id));
             var held = hit.Piece.Stowed?.FirstOrDefault(p => p.Id == r.Id) ?? view.Find(hit.Layer, r.Id);
@@ -165,7 +165,8 @@ sealed class MenuCards : HudPart
                 {
                     var others = nodes.Where(n => n != hit && n.Layer == hit.Layer).ToList();
                     if (others.Count == 0) return;
-                    S.Do(new Batch { Items = others.Select(n => (Command)new Stow { Layer = hit.Layer, Holder = hit.Piece.Id, Id = n.Piece.Id }).ToList() });
+                    var stows = others.Select(n => (Command)new Stow { Layer = hit.Layer, Holder = hit.Piece.Id, Id = n.Piece.Id }).ToList();
+                    S.Do(new Batch { Items = KTable.Client.ReadyKey.Stowing(S.View, hit.Layer, hit.Piece, stows) });
                 });
         }
         HolderRows(menu, hit);

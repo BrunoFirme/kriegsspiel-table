@@ -294,6 +294,8 @@ public partial class TableToolsTests
     public async Task A_held_piece_marked_ready_is_released_and_recalled()
     {
         Assert.False((await Call("stow_pieces", new { holder = "p-1", ids = new[] { "p-2" } })).IsError);
+        Assert.Equal("p-2", _s.View.Find(Layers.Umpire, "p-1")!.Ready?.Id);
+        Assert.Contains("no ready piece", (await Call("ready_piece", new { holder = "p-1", action = "clear" })).Text);
         Assert.True((await Call("ready_piece", new { holder = "p-1", action = "release" })).IsError);
         var mark = await Call("ready_piece", new { holder = "p-1", action = "mark", id = "p-2" });
         Assert.False(mark.IsError, mark.Text);

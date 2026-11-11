@@ -1,4 +1,4 @@
-format 37
+format 38
 type AccessChanged object
   access: GameAccess
 type AddBoard object
@@ -749,6 +749,7 @@ type PieceInstance object
   picture: string
   pos: Vec2
   ready: ReadyPiece
+  readyIn: SortedDictionary<int,ReadyPiece>
   rotDeg: double
   scale: double
   script: string
@@ -835,6 +836,7 @@ type ReadyPiece object
   id: string
   offset: Vec2?
   turn: double
+  wasOut: bool
 type RecallReady object
   actor: long
   at: long
@@ -1265,6 +1267,7 @@ type SetPointerRule object
 type SetReady object
   actor: long
   at: long
+  forState: int?
   holder: string
   layer: string
   move: string
@@ -1530,6 +1533,7 @@ type Size2 object
   w: double
 type Snapshot object
   view: GameState
+type SortedDictionary<int,ReadyPiece> map int to ReadyPiece
 type SpawnPiece object
   actor: long
   at: long

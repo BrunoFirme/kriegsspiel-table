@@ -45,9 +45,10 @@ public static class PieceTree
         var parents = Parents(view.Layer(layer));
         if (into != null && view.Find(layer, into) == null) return new();
         var cmds = new List<Command>();
+        var readyOut = ReadyPiece.OutHolders(view.Layer(layer));
         foreach (var id in Tops(parents, dragged))
         {
-            if (view.Find(layer, id) == null || id == into) continue;
+            if (view.Find(layer, id) == null || id == into || readyOut.ContainsKey(id)) continue;
             var now = parents.GetValueOrDefault(id)?.Id;
             if (now == into) continue;
             if (into == null) cmds.Add(new Detach { Layer = layer, Child = id });

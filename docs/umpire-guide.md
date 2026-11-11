@@ -179,10 +179,15 @@ groups them, and names what each was used for, from the phalanx to the tank plat
   **Holds pieces** switches it on or off for any piece; the piece studio's **Holds pieces** sets where a kind starts,
   and the box, chest and crate of Firme's Effects and Props start on. A held piece keeps everything it had. A holder
   goes inside a holder seven deep and no deeper, as a matter of taste: nothing good is kept further down.
-- **Ready piece:** one held piece can be its holder's ready piece, smoke or dust for instance: right-click it in the
-  holder's window → **Ready piece**. It is listed first. **B** on the holder releases it onto the table; **B** on the
-  holder or on the piece recalls it. Out on the table it rides its holder, moving and turning with it; Formations
-  leave it be, and a selection box takes it only with its holder. Recalled, it remembers where it stood, so it
+- **Ready piece:** one held piece can be its holder's ready piece, smoke or dust for instance. The first piece put
+  into an empty holder becomes it; right-click another in the holder's window → **Ready piece** to change it. It is
+  listed first. **B** with the pointer over the holder (or with it selected) releases it onto the table; dragging it
+  out of the holder's window does too. **B** over the holder or the piece recalls it. Out on the table it is attached
+  to its holder until recalled, moving and turning with it; Formations leave it be, and a selection box takes it only
+  with its holder. A holder with looks can have a ready piece for each: right-click a held piece → **Ready in look n**,
+  or **Not ready** to clear it from every look; a look without its own takes the plain ready piece. Turning the
+  holder to another look puts the old look's ready piece away and brings the new look's out where it stood, if it
+  was out when that look was left. Recalled, it remembers where it stood, so it
   comes out there again, moved and turned with the holder. Also in the right-click menu.
 - **Locked:** right-click → **Locked** pins a piece: it can be read, not moved. A selection box leaves it out and the
   Delete key leaves it be; right-click → **Delete** removes it.

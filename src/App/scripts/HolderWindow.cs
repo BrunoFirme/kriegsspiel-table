@@ -134,12 +134,13 @@ public partial class HolderWindow : FloatPanel
         var holder = Holder?.Piece;
         var top = holder?.Loose() ?? new List<PieceInstance>();
         if (_most >= 0 && top.Count > _most) top = top.Take(_most).ToList();
-        var ready = holder?.Ready?.Id;
+        var ready = holder?.ReadyNow?.Id;
         var state = holder == null ? Readiness.None : ReadyState(holder);
         var released = state == Readiness.Out ? _s.View.Find(_layer, ready!) : null;
         if (state == Readiness.In && top.FirstOrDefault(p => p.Id == ready) is { } first) top = top.Where(p => p != first).Prepend(first).ToList();
         var shown = released == null ? top : top.Prepend(released).ToList();
-        var sig = _search.Text + "|" + state + ready + "|" + string.Join(",", shown.Select(p => p.Id + ":" + (p.Label ?? "")));
+        var looks = holder?.ReadyIn is { } byLook ? string.Join(",", byLook.Select(e => e.Key + "=" + e.Value.Id)) + "|" + holder.Ready?.Id : "";
+        var sig = _search.Text + "|" + state + ready + "|" + looks + "|" + string.Join(",", shown.Select(p => p.Id + ":" + (p.Label ?? "")));
         if (!force && sig == _drawn) return;
         _drawn = sig;
         int gen = ++_gen;
@@ -155,6 +156,7 @@ public partial class HolderWindow : FloatPanel
             int inside = p.AllStowed().Count();
             bool isOut = p == released, isReady = p.Id == ready;
             var sub = isOut ? "Ready · out" : isReady ? "Ready"
+                : holder != null && ReadyElsewhere(holder, p.Id) is { } where ? "Ready · " + where
                 : (d == null ? "missing kind" : PiecesPanel.ShapeWord(d)) + (inside > 0 ? $" · holds {inside}" : "");
             int idx = _list.AddItem($"{name}\n{sub}", Ui.LoadingIcon);
             _list.SetItemMetadata(idx, isOut ? OutMark + p.Id : p.Id);
@@ -226,6 +228,13 @@ public partial class HolderWindow : FloatPanel
         };
     }
 
+    static string? ReadyElsewhere(PieceInstance holder, string id)
+    {
+        var looks = holder.ReadyIn?.Where(e => e.Value.Id == id).Select(e => (e.Key + 1).ToString()).ToList() ?? [];
+        if (looks.Count > 0) return (looks.Count == 1 ? "look " : "looks ") + string.Join(", ", looks);
+        return holder.Ready?.Id == id ? "other looks" : null;
+    }
+
     void ReadyMenu(string meta, Vector2 at)
     {
         if (meta.Length == 0 || !CanTake || !_s.IsUmpire || Holder is not { } h) return;
@@ -236,6 +245,13 @@ public partial class HolderWindow : FloatPanel
             pm.AddCheckItem("Ready piece", ReadyChoice);
             pm.SetItemChecked(0, h.Piece.Ready?.Id == meta);
             pm.SetItemTooltip(0, "The one piece the holder releases and recalls with " + _t.Settings.Keys.Label("ready"));
+            var states = h.Def?.States ?? [];
+            for (int i = 0; states.Count > 1 && i < states.Count; i++)
+            {
+                pm.AddCheckItem($"Ready in look {i + 1}" + (states[i].Name is { Length: > 0 } nm ? $": {nm}" : ""), LookChoice + i);
+                pm.SetItemChecked(pm.ItemCount - 1, h.Piece.ReadyIn?.GetValueOrDefault(i)?.Id == meta);
+            }
+            if (ReadyPiece.All(h.Piece).Any(r => r.Id == meta)) pm.AddItem("Not ready", NotReadyChoice);
         }
         pm.IdPressed += choice => ChooseReady(meta, choice);
         Menu = pm;
@@ -244,15 +260,28 @@ public partial class HolderWindow : FloatPanel
         pm.Popup(new Rect2I((Vector2I)at.Round(), Vector2I.Zero));
     }
 
-    internal const int RecallChoice = 0, ReadyChoice = 1;
+    internal const int RecallChoice = 0, ReadyChoice = 1, NotReadyChoice = 2, LookChoice = 100;
     internal PopupMenu? Menu { get; private set; }
 
     internal void ChooseReady(string meta, long choice)
     {
         if (Holder is not { } now || !CanTake || !_s.IsUmpire) return;
         if (choice == RecallChoice) _s.Do(new RecallReady { Layer = _layer, Holder = _id });
+        else if (choice == NotReadyChoice) _s.Do(NotReady(now.Piece, meta));
+        else if (choice >= LookChoice) _s.Do(new SetReady
+        {
+            Layer = _layer, Holder = _id, ForState = (int)(choice - LookChoice),
+            Ready = now.Piece.ReadyIn?.GetValueOrDefault((int)(choice - LookChoice))?.Id == meta ? null : new ReadyPiece { Id = meta },
+        });
         else if (now.Piece.Ready?.Id == meta) _s.Do(new SetReady { Layer = _layer, Holder = _id });
         else _s.Do(new SetReady { Layer = _layer, Holder = _id, Ready = new ReadyPiece { Id = meta }, Move = meta });
+    }
+
+    Batch NotReady(PieceInstance holder, string id)
+    {
+        var looks = holder.ReadyIn?.Where(e => e.Value.Id == id).Select(e => (Command)new SetReady { Layer = _layer, Holder = _id, ForState = e.Key }) ?? [];
+        var plain = holder.Ready?.Id == id ? [new SetReady { Layer = _layer, Holder = _id }] : Array.Empty<Command>();
+        return new Batch { Items = plain.Concat(looks).ToList() };
     }
 
     void TakeOut(string id)

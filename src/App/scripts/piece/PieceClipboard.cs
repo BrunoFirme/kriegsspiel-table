@@ -109,10 +109,9 @@ sealed class PieceClipboard
             PieceCopy.FreshHeld(c, NewId);
             c.Pos = at + (cp.Piece.Pos - clip.Center);
             c.Attached = new();
-            c.Ready = c.Ready is not { } ready ? null
-                : c.Stowed?.Any(x => x.Id == ready.Id) == true ? ready
-                : map.TryGetValue(ready.Id, out var copied) ? new ReadyPiece { Id = copied, Offset = ready.Offset, Turn = ready.Turn }
-                : null;
+            ReadyPiece.Rename(c, ready => c.Stowed?.Any(x => x.Id == ready.Id) == true ? ready
+                : map.TryGetValue(ready.Id, out var copied) ? ready.Renamed(copied)
+                : null);
             c.Stack = 0;
             c.Y = _hand.StoredAt(c.Pos, _hand.SurfaceY(c.Pos, layer) + cp.Above);
             cmds.Add(new RestorePiece { Layer = layer, Piece = c });

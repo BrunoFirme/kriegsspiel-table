@@ -93,9 +93,11 @@ public sealed partial class TableTools
                 new Arg("x", "number", "map units"), new Arg("z", "number", "map units"), new Arg("turn", "number", "degrees")), UnstowPiece);
         yield return new AgentTool("ready_piece",
             "A holder's ready piece is the one held piece it releases onto the table and recalls with one key, smoke or dust for instance: it comes out where it stood when last recalled, turned and moved with the holder, and beside it the first time. " +
-            "mark makes a held piece the ready one (first among what it holds), clear takes the mark off, release and recall do what the key does. One undoable change.",
+            "mark makes a held piece the ready one (first among what it holds), clear takes the mark off, release and recall do what the key does. " +
+            "With look, mark and clear set the ready piece of that one look; turning the holder to another look puts the old look's ready piece away and brings that look's out where it stood, if it was out when the look was left. One undoable change.",
             Args.Schema(new Arg("holder", "string", "the holding piece's id", true), new Arg("action", "string", "mark, clear, release or recall", true),
-                new Arg("id", "string", "for mark: the held piece's id or name")), ReadyTool);
+                new Arg("id", "string", "for mark: the held piece's id or name"),
+                new Arg("look", "number", "for mark and clear: the look 1, 2, … it is ready in; leave out for every look without its own")), ReadyTool);
         yield return new AgentTool("delete_piece",
             "Takes a piece off the table. Undoable.",
             Args.Schema(new Arg("id", "string", "the piece's id", true)), DeletePiece);
@@ -263,7 +265,7 @@ public sealed partial class TableTools
         var ids = given.Where(id => id.Length > 0 && id != holder).ToList();
         var found = ids.Where(id => s.View.Find(Layers.Umpire, id) != null).ToList();
         if (found.Count == 0) return ToolResult.Fail("ids names no piece on this table.");
-        s.Do(new Batch { Items = found.Select(id => (Command)new Stow { Layer = Layers.Umpire, Holder = holder, Id = id }).ToList() });
+        s.Do(new Batch { Items = ReadyKey.Stowing(s.View, Layers.Umpire, h, found.Select(id => (Command)new Stow { Layer = Layers.Umpire, Holder = holder, Id = id }).ToList()) });
         await Until(() => found.All(id => s.View.Find(Layers.Umpire, id) == null), 3);
         var lost = ids.Except(found).ToList();
         _log($"put {found.Count} piece{(found.Count > 1 ? "s" : "")} into {NameOf(s, h)} ({holder})");
@@ -307,6 +309,8 @@ public sealed partial class TableTools
         var holder = a.Str("holder") ?? "";
         if (s.View.Find(Layers.Umpire, holder) is not { } h) return ToolResult.Fail($"No piece {holder} on this table.");
         var state = ReadyPiece.Of(h, id => s.View.Find(Layers.Umpire, id));
+        int? look = a.Num("look") is { } n ? (int)n - 1 : null;
+        if (look is < 0) return ToolResult.Fail("look counts from 1.");
         Command? c;
         switch (a.Str("action")?.Trim().ToLowerInvariant())
         {
@@ -315,10 +319,10 @@ public sealed partial class TableTools
                 var held = h.Stowed ?? [];
                 var target = held.FirstOrDefault(p => p.Id == which) ?? held.FirstOrDefault(p => string.Equals(NameOf(s, p), which, StringComparison.OrdinalIgnoreCase));
                 if (target == null) return ToolResult.Fail($"{NameOf(s, h)} holds no {which}; stow_pieces puts it in first.");
-                c = new SetReady { Layer = Layers.Umpire, Holder = holder, Ready = new ReadyPiece { Id = target.Id }, Move = target.Id };
+                c = new SetReady { Layer = Layers.Umpire, Holder = holder, ForState = look, Ready = new ReadyPiece { Id = target.Id }, Move = look == null ? target.Id : null };
                 break;
             case "clear":
-                c = new SetReady { Layer = Layers.Umpire, Holder = holder };
+                c = new SetReady { Layer = Layers.Umpire, Holder = holder, ForState = look };
                 break;
             case "release":
                 if (state != Readiness.In) return ToolResult.Fail(state == Readiness.Out ? "Its ready piece is already out." : $"{NameOf(s, h)} has no ready piece held: mark one.");
@@ -338,8 +342,8 @@ public sealed partial class TableTools
         _log($"{a.Str("action")} the ready piece of {NameOf(s, h)} ({holder})");
         return new ToolResult(after switch
         {
-            Readiness.In => $"{NameOf(s, h)} holds its ready piece {now!.Ready!.Id}.",
-            Readiness.Out when s.View.Find(Layers.Umpire, now!.Ready!.Id) is { } p => $"Its ready piece {p.Id} is on the table at {Math.Round(p.Pos.X, 2)}, {Math.Round(p.Pos.Z, 2)}.",
+            Readiness.In => $"{NameOf(s, h)} holds its ready piece {now!.ReadyNow!.Id}.",
+            Readiness.Out when s.View.Find(Layers.Umpire, now!.ReadyNow!.Id) is { } p => $"Its ready piece {p.Id} is on the table at {Math.Round(p.Pos.X, 2)}, {Math.Round(p.Pos.Z, 2)}.",
             _ => $"{NameOf(s, h)} has no ready piece.",
         });
     }

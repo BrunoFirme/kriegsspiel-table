@@ -535,6 +535,9 @@ public sealed class PieceInstance : IJsonOnDeserialized
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<PieceInstance>? Stowed { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public bool? Holds { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public ReadyPiece? Ready { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public SortedDictionary<int, ReadyPiece>? ReadyIn { get; set; }
+    [JsonIgnore] public ReadyPiece? ReadyNow => ReadyFor(State);
+    public ReadyPiece? ReadyFor(int state) => ReadyIn?.GetValueOrDefault(state) ?? Ready;
 
     public bool HoldsPieces(PieceDef? def) => Holds ?? (def?.Holds == true || Stowed is { Count: > 0 });
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? TakeOrder { get; set; }
@@ -559,6 +562,7 @@ public sealed class PieceInstance : IJsonOnDeserialized
         Lines = Lines.Select(l => l.Clone()).ToList(), Decals = Decals.Select(d => d.Clone()).ToList(), DecalsOnState = DecalsOnState,
         Ui = Ui.Select(n => n.Clone()).ToList(), UiLayout = UiLayout?.Clone(), UiAssets = UiAssets?.Select(a => a.Clone()).ToList(),
         Stowed = Stowed?.Select(s => s.Clone()).ToList(), TakeOrder = TakeOrder, Ready = Ready?.Clone(),
+        ReadyIn = ReadyIn == null ? null : new(ReadyIn.ToDictionary(r => r.Key, r => r.Value.Clone())),
     };
 
     [JsonIgnore] public int ShownFace => Face >= 0 ? Face : State;

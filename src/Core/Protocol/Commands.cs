@@ -593,6 +593,7 @@ public sealed class SetReady : LayerCommand
 {
     public string Holder { get; set; } = "";
     public ReadyPiece? Ready { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public int? ForState { get; set; }
     public string? Move { get; set; }
     public int Slot { get; set; }
     public override Sender SentBy() => Sender.Umpire;

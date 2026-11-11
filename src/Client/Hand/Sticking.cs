@@ -29,10 +29,12 @@ public sealed class Sticking<T> where T : class, ITablePiece
         var parentOf = new Dictionary<string, PieceInstance>();
         foreach (var p in pieces)
             foreach (var child in p.Attached) parentOf.TryAdd(child, p);
+        var readyOut = ReadyPiece.OutHolders(pieces);
         var movedTo = new Dictionary<T, MovePiece>();
         foreach (var (mn, mm) in moved) movedTo.TryAdd(mn, mm);
         foreach (var n in dropped)
         {
+            if (readyOut.ContainsKey(n.Piece.Id)) continue;
             var m = movedTo.GetValueOrDefault(n);
             var pos = m?.Pos ?? n.Piece.Pos;
             double y = Absolute(n, pos, m?.RotDeg ?? n.Piece.RotDeg, m?.Y ?? n.Piece.Y);

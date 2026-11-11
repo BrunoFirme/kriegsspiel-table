@@ -147,7 +147,7 @@ sealed class PropertiesDialog : HudPart
             var row = new HBoxContainer();
             row.AddChild(new Label { Text = ch != null ? (S.Def(ch.Def)?.Name ?? ch.Def) : cid, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, ClipText = true });
             var c2 = cid;
-            row.AddChild(Btn("Detach", () => S.Do(new Detach { Layer = layer, Child = c2 })));
+            if (p.ReadyNow?.Id != cid) row.AddChild(Btn("Detach", () => S.Do(new Detach { Layer = layer, Child = c2 })));
             _box.AddChild(row);
         }
     }

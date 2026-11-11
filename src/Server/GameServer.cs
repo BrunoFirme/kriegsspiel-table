@@ -47,6 +47,7 @@ public sealed partial class GameServer
     {
         State = state;
         State.EnsureBoard();
+        StateMachine.HookReadyPieces(State);
         Store = store;
         Access = access ?? new GameAccess();
         Access.GiveColorSlots();

@@ -267,5 +267,135 @@ public class ReadyPieceTests
         Assert.Equal(Smoke, g.Find(U, Outer)!.Stowed![0].Ready!.Id);
     }
 
+    [Fact]
+    public void Taken_out_by_hand_the_ready_piece_rides_its_holder_and_put_back_it_is_unhooked()
+    {
+        var g = Table();
+        Ok(g, MarkSmoke);
+        var back = Ok(g, new Unstow { Layer = U, Holder = Battery, Id = Smoke, Pos = new Vec2(30, 30) });
+        Assert.Contains(Smoke, Holder(g).Attached);
+        Assert.Equal(Readiness.Out, State(g));
+        Ok(g, new MovePiece { Layer = U, Id = Battery, Pos = new Vec2(20, 10), RotDeg = 0 });
+        Assert.Equal(40, g.Find(U, Smoke)!.Pos.X, 6);
+        Ok(g, back!);
+        Assert.DoesNotContain(Smoke, Holder(g).Attached);
+        Assert.Equal(Readiness.In, State(g));
+        Ok(g, new Unstow { Layer = U, Holder = Battery, Id = Flag, Pos = new Vec2(-5, -5) });
+        Assert.DoesNotContain(Flag, Holder(g).Attached);
+    }
+
+    [Fact]
+    public void An_out_ready_piece_cannot_be_detached_or_put_on_another_piece_but_others_still_ride_on_it()
+    {
+        const string Cart = "p-000104";
+        var g = Table();
+        g.Layer(U).Add(CoreSamples.Piece(Cart, x: 30, z: 30));
+        Ok(g, MarkSmoke);
+        Ok(g, new ReleaseReady { Layer = U, Holder = Battery });
+        Assert.NotNull(StateMachine.Apply(g, new Detach { Layer = U, Child = Smoke }, out _));
+        Assert.NotNull(StateMachine.Apply(g, new Attach { Layer = U, Parent = Cart, Child = Smoke }, out _));
+        Assert.NotNull(StateMachine.Apply(g, new Batch { Items = [new MovePiece { Layer = U, Id = Cart, Pos = new Vec2(31, 30) }, new Detach { Layer = U, Child = Smoke }] }, out _));
+        Assert.Equal(30, g.Find(U, Cart)!.Pos.X, 6);
+        Assert.Contains(Smoke, Holder(g).Attached);
+        Ok(g, new Attach { Layer = U, Parent = Battery, Child = Smoke });
+        Ok(g, new Attach { Layer = U, Parent = Smoke, Child = Cart });
+        Ok(g, new RecallReady { Layer = U, Holder = Battery });
+        Assert.Null(g.Find(U, Cart));
+    }
+
+    [Fact]
+    public void Opening_a_game_hooks_a_ready_piece_an_older_version_left_loose_on_its_holder()
+    {
+        var g = Table();
+        Ok(g, MarkSmoke);
+        Ok(g, new ReleaseReady { Layer = U, Holder = Battery });
+        Holder(g).Attached.Remove(Smoke);
+        StateMachine.HookReadyPieces(g);
+        Assert.Contains(Smoke, Holder(g).Attached);
+        Assert.Single(g.Layer(U), p => p.Attached.Contains(Smoke));
+    }
+
+    static Command Look(int n) => new SetState { Layer = U, Id = Battery, State = n };
+
+    static void At(GameState g, string id, double x, double z)
+    {
+        var p = g.Find(U, id);
+        Assert.NotNull(p);
+        Assert.Equal(x, p!.Pos.X, 6);
+        Assert.Equal(z, p.Pos.Z, 6);
+        Assert.Contains(id, Holder(g).Attached);
+    }
+
+    [Fact]
+    public void Each_look_brings_out_its_own_ready_piece_where_it_stood_when_that_look_was_left()
+    {
+        var g = Table();
+        Holder(g).State = 0;
+        Ok(g, new SetReady { Layer = U, Holder = Battery, ForState = 0, Ready = new ReadyPiece { Id = Smoke } });
+        Ok(g, new SetReady { Layer = U, Holder = Battery, ForState = 1, Ready = new ReadyPiece { Id = Flag } });
+        Ok(g, new ReleaseReady { Layer = U, Holder = Battery });
+        Ok(g, new MovePiece { Layer = U, Id = Smoke, Pos = new Vec2(14, 10) });
+        Ok(g, Look(1));
+        Assert.Null(g.Find(U, Smoke));
+        Assert.Null(g.Find(U, Flag));
+        Ok(g, new ReleaseReady { Layer = U, Holder = Battery });
+        Ok(g, new MovePiece { Layer = U, Id = Flag, Pos = new Vec2(10, 13), RotDeg = 45 });
+        var undo = Ok(g, Look(0));
+        At(g, Smoke, 14, 10);
+        Assert.Null(g.Find(U, Flag));
+        Ok(g, new MovePiece { Layer = U, Id = Battery, Pos = new Vec2(0, 0), RotDeg = 90 });
+        Ok(g, Look(1));
+        Assert.Null(g.Find(U, Smoke));
+        var flag = ReadyPiece.Turned(new Vec2(0, 3), 90);
+        At(g, Flag, flag.X, flag.Z);
+        Assert.Equal(135, g.Find(U, Flag)!.RotDeg, 6);
+        Ok(g, Look(0));
+        Ok(g, new MovePiece { Layer = U, Id = Battery, Pos = new Vec2(10, 10), RotDeg = 0 });
+        Ok(g, Look(1));
+        Ok(g, undo!);
+        At(g, Flag, 10, 13);
+    }
+
+    [Fact]
+    public void Looks_without_their_own_ready_piece_share_the_plain_one_and_a_held_one_stays_held()
+    {
+        var g = Table();
+        Holder(g).State = 0;
+        Ok(g, MarkSmoke);
+        Ok(g, new SetReady { Layer = U, Holder = Battery, ForState = 2, Ready = new ReadyPiece { Id = Flag } });
+        Ok(g, new ReleaseReady { Layer = U, Holder = Battery });
+        Ok(g, Look(1));
+        At(g, Smoke, 12, 10);
+        Ok(g, Look(2));
+        Assert.Null(g.Find(U, Smoke));
+        Assert.Null(g.Find(U, Flag));
+        Ok(g, Look(0));
+        At(g, Smoke, 12, 10);
+        Ok(g, new RecallReady { Layer = U, Holder = Battery });
+        Ok(g, Look(2));
+        Ok(g, Look(1));
+        Assert.Null(g.Find(U, Smoke));
+    }
+
+    [Fact]
+    public void A_look_s_ready_mark_is_set_and_cleared_on_its_own_and_undone()
+    {
+        var g = Table();
+        Assert.NotNull(StateMachine.Apply(g, new SetReady { Layer = U, Holder = Battery, ForState = -1, Ready = new ReadyPiece { Id = Smoke } }, out _));
+        var unmark = Ok(g, new SetReady { Layer = U, Holder = Battery, ForState = 3, Ready = new ReadyPiece { Id = Smoke } });
+        Assert.Null(Holder(g).Ready);
+        Assert.Equal(Smoke, Holder(g).ReadyFor(3)!.Id);
+        Assert.Null(Holder(g).ReadyNow);
+        var restore = Ok(g, new SetReady { Layer = U, Holder = Battery, ForState = 3 });
+        Assert.Null(Holder(g).ReadyIn);
+        Ok(g, restore!);
+        Assert.Equal(Smoke, Holder(g).ReadyIn![3].Id);
+        Ok(g, unmark!);
+        Assert.Null(Holder(g).ReadyIn);
+        var copy = Holder(g).Clone();
+        copy.ReadyIn = new() { [1] = new ReadyPiece { Id = Flag, WasOut = true } };
+        Assert.True(Json.Clone(copy).ReadyIn![1].WasOut);
+    }
+
     static double Distance(Vec2 a, Vec2 b) => Math.Sqrt((a.X - b.X) * (a.X - b.X) + (a.Z - b.Z) * (a.Z - b.Z));
 }

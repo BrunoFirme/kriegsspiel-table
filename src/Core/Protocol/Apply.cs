@@ -179,7 +179,7 @@ public static partial class StateMachine
 
     static Batch KeepingHeight(GameState g, string layer, PieceInstance sunk, Batch undo)
     {
-        var own = (sunk.Attached ?? []).Where(id => id != null && g.Find(layer, id) != null).ToList();
+        var own = (sunk.Attached ?? []).Where(id => id != null && id != sunk.ReadyNow?.Id && g.Find(layer, id) != null).ToList();
         foreach (var id in own) undo.Items.Add(new Detach { Layer = layer, Child = id });
         undo.Items.Add(new MovePiece { Layer = layer, Id = sunk.Id, Pos = sunk.Pos, RotDeg = sunk.RotDeg, Stack = sunk.Stack, Y = sunk.Y });
         foreach (var id in own) undo.Items.Add(new Attach { Layer = layer, Parent = sunk.Id, Child = id });
@@ -213,7 +213,9 @@ public static partial class StateMachine
         int to = Math.Max(0, st.State);
         if (to != p.State) p.BookHighlight = null;
         if (p.Looks == null && st.Looks is { } looks && p.State < looks.Count) p.Looks = looks.Select(l => l.Clone()).ToList();
+        var entering = LeavingLook(g, st.Layer, p, to);
         if (!PieceLook.Swap(p, to, st.Leaving)) p.State = to;
+        entering();
         return null;
     }
 
@@ -434,6 +436,7 @@ public static partial class StateMachine
         var child = g.Find(a.Layer, a.Child);
         if (parent == null || child == null || a.Parent == a.Child) return "no such piece";
         if (Carries(g, a.Layer, child, a.Parent)) return "a piece cannot ride on one it carries";
+        if (ReadyHolderOf(g, a.Layer, a.Child) is { } rides && rides.Id != a.Parent) return RidesItsHolder;
         var previous = g.Layer(a.Layer).FirstOrDefault(p => p.Attached?.Contains(a.Child) == true);
         foreach (var p in g.Layer(a.Layer)) p.Attached?.Remove(a.Child);
         (parent.Attached ??= new()).Add(a.Child);
@@ -460,6 +463,7 @@ public static partial class StateMachine
     {
         var parent = g.Layer(dt.Layer).FirstOrDefault(p => p.Attached?.Contains(dt.Child) == true);
         if (parent == null) return "not attached";
+        if (ReadyHolderOf(g, dt.Layer, dt.Child)?.Id == parent.Id) return RidesItsHolder;
         parent.Attached!.Remove(dt.Child);
         inverse = new Attach { Layer = dt.Layer, Parent = parent.Id, Child = dt.Child };
         return null;
@@ -541,6 +545,7 @@ public static partial class StateMachine
             layer.Add(c);
             BumpId(g, c.Id);
         }
+        HookReady(g, u.Layer, holder, p);
         inverse = new Stow { Layer = u.Layer, Holder = u.Holder, Id = p.Id, Slot = slot, Guid = p.Guid != heldGuid ? heldGuid : null };
         return null;
     }

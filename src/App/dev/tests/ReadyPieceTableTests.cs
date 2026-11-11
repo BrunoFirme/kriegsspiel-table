@@ -59,6 +59,89 @@ static class ReadyPieceTableTests
     }
 
     [NodeTest]
+    static async Task The_first_piece_put_in_is_ready_and_B_over_the_holder_lets_it_out_attached_and_takes_it_back(TestRunner r)
+    {
+        var h = await HudTests.Host(r, pieces: 3);
+        h.S.Do(new Batch { Items = KTable.Client.ReadyKey.Stowing(h.S.View, U, h.S.View.Find(U, "p1")!, [new Stow { Layer = U, Holder = "p1", Id = "p3" }]) });
+        await r.Frames(2);
+        Check.Equal("p3", h.S.View.Find(U, "p1")!.Ready?.Id, "the first piece put into an empty holder is its ready piece");
+        h.Table.Selection.Set(System.Array.Empty<string>());
+        var over = h.Table.Rig.Cam.UnprojectPosition(Coords.ToWorld(new Vec2(1, 0)));
+        h.Table.Hover.Update(over, 0);
+        Check.Equal("p1", h.Table.HoveredNode?.Piece.Id, "the pointer is over the holder");
+        void PressB() => h.Table.Keys.OnKey(new InputEventKey { Keycode = Key.B, Pressed = true });
+        PressB();
+        await r.Frames(3);
+        Check.That(h.S.View.Find(U, "p3") != null, "B over the holder releases its ready piece with nothing selected");
+        Check.That(h.S.View.Find(U, "p1")!.Attached.Contains("p3"), "it comes out attached to its holder");
+        h.Table.Hover.Update(over, 0);
+        PressB();
+        await r.Frames(3);
+        Check.That(h.S.View.Find(U, "p3") == null, "B over the holder again recalls it");
+    }
+
+    [NodeTest]
+    static async Task Held_pieces_are_made_ready_for_a_look_from_their_menu_and_the_number_keys_swap_them(TestRunner r)
+    {
+        var h = await HudTests.Host(r, pieces: 3);
+        var def = h.S.Store.Def("x")!;
+        def.States.Add(new PieceStateDef { Name = "Line" });
+        def.States.Add(new PieceStateDef { Name = "Column" });
+        h.S.Do(new Stow { Layer = U, Holder = "p1", Id = "p2" });
+        h.S.Do(new Stow { Layer = U, Holder = "p1", Id = "p3" });
+        await r.Frames(2);
+        var root = new Control { Name = "Screen" };
+        r.AddChild(root);
+        HolderWindow.Open(root, h.S, h.Table, h.Table.NodeOf(U, "p1")!);
+        await r.Frames(2);
+        var w = root.GetChildren().OfType<HolderWindow>().Single();
+        var list = w.FindChildren("*", nameof(ItemList), true, false).OfType<ItemList>().Single();
+        int Row(string id) => Enumerable.Range(0, list.ItemCount).First(i => list.GetItemMetadata(i).AsString() == id);
+        void RightClick(string id)
+        {
+            var tile = list.GetItemRect(Row(id)).GetCenter();
+            list.EmitSignal(Control.SignalName.GuiInput, new InputEventMouseButton { ButtonIndex = MouseButton.Right, Pressed = true, Position = tile, GlobalPosition = tile });
+        }
+        RightClick("p3");
+        var texts = Enumerable.Range(0, w.Menu!.ItemCount).Select(i => w.Menu.GetItemText(i)).ToList();
+        Check.That(texts.SequenceEqual(new[] { "Ready piece", "Ready in look 1: Line", "Ready in look 2: Column" }), "a held piece's menu offers each look: " + string.Join(" | ", texts));
+        w.Menu.EmitSignal(PopupMenu.SignalName.IdPressed, (long)HolderWindow.LookChoice + 1);
+        await r.Frames(2);
+        RightClick("p2");
+        w.Menu!.EmitSignal(PopupMenu.SignalName.IdPressed, (long)HolderWindow.LookChoice);
+        await r.Frames(2);
+        Check.Equal("p2", h.S.View.Find(U, "p1")!.ReadyFor(0)?.Id, "ready in look 1");
+        Check.Equal("p3", h.S.View.Find(U, "p1")!.ReadyFor(1)?.Id, "ready in look 2");
+
+        var over = h.Table.Rig.Cam.UnprojectPosition(Coords.ToWorld(new Vec2(1, 0)));
+        async Task Press(Key key)
+        {
+            h.Table.Hover.Update(over, 0);
+            h.Table.Keys.OnKey(new InputEventKey { Keycode = key, Pressed = true });
+            await r.Frames(3);
+        }
+        await Press(Key.B);
+        Check.That(h.S.View.Find(U, "p2") != null, "B brings out look 1's ready piece");
+        await Press(Key.Key2);
+        Check.Equal(1, h.S.View.Find(U, "p1")!.State, "the holder is in look 2");
+        Check.That(h.S.View.Find(U, "p2") == null && h.S.View.Find(U, "p3") == null, "look 1's piece goes back in and look 2's, never out, stays in");
+        await Press(Key.B);
+        await Press(Key.Key1);
+        Check.That(h.S.View.Find(U, "p2") != null && h.S.View.Find(U, "p3") == null, "back in look 1 its piece comes out again and look 2's goes in");
+        Check.That(h.S.View.Find(U, "p1")!.Attached.Contains("p2"), "it rides the holder");
+        await Press(Key.Key2);
+        Check.That(h.S.View.Find(U, "p3") != null && h.S.View.Find(U, "p2") == null, "look 2's piece comes out as it was left");
+
+        RightClick("p2");
+        Check.That(w.Menu!.GetItemText(w.Menu.ItemCount - 1) == "Not ready", "a ready piece's menu offers to clear it");
+        w.Menu.EmitSignal(PopupMenu.SignalName.IdPressed, (long)HolderWindow.NotReadyChoice);
+        await r.Frames(2);
+        Check.That(h.S.View.Find(U, "p1")!.ReadyIn?.Values.All(x => x.Id != "p2") ?? true, "Not ready clears it from every look");
+        w.QueueFree();
+        root.QueueFree();
+    }
+
+    [NodeTest]
     static async Task A_copied_holder_brings_its_ready_piece_from_the_table_and_holds_its_own_pieces(TestRunner r)
     {
         var h = await HudTests.Host(r, pieces: 3);

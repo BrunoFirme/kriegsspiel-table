@@ -341,7 +341,7 @@ internal sealed partial class PieceHandles(ScriptHost host)
             }
             case "picture_size": return PictureSize(p, def);
             case "stowed": return StowedList(p);
-            case "ready": return p.Ready is { } r && ReadyPiece.Of(p, x => host.Find(x)) is Readiness.In or Readiness.Out ? Handle(r.Id) : DynValue.Nil;
+            case "ready": return p.ReadyNow is { } r && ReadyPiece.Of(p, x => host.Find(x)) is Readiness.In or Readiness.Out ? Handle(r.Id) : DynValue.Nil;
             case "local_unit":
             {
                 if (def?.LocalUnit is not { } lu) return DynValue.Nil;
