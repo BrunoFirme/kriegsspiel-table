@@ -97,24 +97,24 @@ sealed partial class ScenarioDialog : HudPart
     void AddNorth()
     {
         _box.AddChild(Header("North"));
-        var form = Ui.Form(Ui.DialogLabels);
-        form.AddChild(new Label { Text = "From the top" });
-        var turn = new SpinBox { MinValue = 0, MaxValue = 359, Step = 1, Value = S.View.Calibration.North, Suffix = "°", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-            TooltipText = "Degrees clockwise from the top of the map to north; the compass, bearings, the wind and sightings follow it" };
-        form.AddChild(turn);
-        Ui.AlignForm(form);
-        _box.AddChild(form);
-        var says = Hint(NorthLine(S.View.Calibration.North));
-        _box.AddChild(says);
-        turn.ValueChanged += v =>
+        var row = new HBoxContainer();
+        row.AddThemeConstantOverride("separation", Ui.Gap.Block);
+        var dial = new NorthDial(Cfg.Keys) { North = S.View.Calibration.North };
+        row.AddChild(dial);
+        var col = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, Alignment = BoxContainer.AlignmentMode.Center };
+        var says = Hint(NorthLine(dial.North));
+        col.AddChild(says);
+        row.AddChild(col);
+        _box.AddChild(row);
+        dial.Turned += (deg, final) =>
         {
-            S.Do(new SetCalibration { UnitsPerMeter = S.View.Calibration.UnitsPerMeter, North = v });
-            says.Text = NorthLine(v);
+            says.Text = NorthLine(deg);
+            if (final && deg != S.View.Calibration.North) S.Do(new SetCalibration { UnitsPerMeter = S.View.Calibration.UnitsPerMeter, North = deg });
         };
     }
 
     static string NorthLine(double north) => north == 0 ? "North is the top of the map."
-        : FormattableString.Invariant($"The top of the map faces {Wind.Point(Calibration.Turned(-north))} ({Calibration.Turned(-north):000}°).");
+        : FormattableString.Invariant($"North is {north:0}° clockwise from the top of the map, so the top faces {Wind.Point(Calibration.Turned(-north))} ({Calibration.Turned(-north):000}°).");
 
     void AddGrid()
     {

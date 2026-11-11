@@ -384,8 +384,8 @@ clock, the global script), **Briefing**, **Map** (distances, north, grid, ground
   the table's edge (a room, a garden, a coast, open country, a sky by day, at sundown or at night, a solid colour or
   your own panorama; a sky sets its light); the table under the map, which grows to hold what is on it, from paper to
   black or see-through, which leaves the sheets and pieces over the backdrop alone.
-- **North:** degrees clockwise from the top of the map, for a map drawn turned. The compass, bearings, the wind
-  and the sighting buttons follow it.
+- **North:** for a map drawn turned, drag the rose until its N points where north is on the map, or turn it with
+  Q and E (Shift: 1°). The compass, bearings, the wind and the sighting buttons follow it.
 - **Grid:** squares or hexes over the table. With **Pieces snap to the cells** ticked, a piece set down by hand lands on the centre of the nearest cell (the smaller cells when squares are divided); a group keeps its shape.
 - **Ground:** the style, contour lines, snow line and streams of [painted ground](umpire-guide.md#relief).
 - **Wind:** where it blows from and how strong. Smoke drifts with it.

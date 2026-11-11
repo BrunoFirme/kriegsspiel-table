@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Godot;
 using KTable.Core.Model;
@@ -60,5 +62,43 @@ static class NorthSettingTests
             EffectFx.SetScale(new Calibration());
             EffectFx.SetWind(new Wind());
         }
+    }
+
+    static IEnumerable<Node> Descendants(Node n) => n.GetChildren().SelectMany(c => Descendants(c).Prepend(c));
+
+    static InputEventKey Press(Key key, bool shift = false) => new() { Keycode = key, Pressed = true, ShiftPressed = shift };
+
+    [NodeTest]
+    static async Task The_north_dial_turns_by_dragging_and_by_the_turn_keys_and_sends_north_when_let_go(TestRunner r)
+    {
+        var h = await HudTests.Host(r);
+        ScenarioDialog.Open(h.Hud.Ctx);
+        await r.Frames(2);
+        var dial = Descendants(h.Hud).OfType<NorthDial>().Single();
+        var says = Descendants(dial.GetParent()).OfType<Label>().Single();
+        Check.Equal(0.0, dial.North, "the dial starts at the scenario's north");
+        Check.Equal("North is the top of the map.", says.Text, "and says so");
+
+        var middle = dial.Size / 2;
+        var calls = new List<(double deg, bool final)>();
+        dial.Turned += (deg, final) => calls.Add((deg, final));
+        dial._GuiInput(new InputEventMouseButton { ButtonIndex = MouseButton.Left, Pressed = true, Position = middle + new Vector2(50, 2) });
+        dial._GuiInput(new InputEventMouseMotion { Position = middle + new Vector2(30, -31) });
+        Check.Equal(45.0, dial.North, "dragging snaps to 5°");
+        Check.That(calls.All(c => !c.final) && h.S.View.Calibration.North == 0, "nothing is sent while the rose is held");
+        dial._GuiInput(new InputEventMouseButton { ButtonIndex = MouseButton.Left, Pressed = false, Position = middle + new Vector2(30, -31) });
+        for (int i = 0; i < 30 && h.S.View.Calibration.North != 45; i++) await r.Frame();
+        Check.Equal(45.0, h.S.View.Calibration.North, "letting go sends it");
+        Check.That(says.Text.StartsWith("North is 45° clockwise from the top of the map, so the top faces NW (315°)"), "the line names it: " + says.Text);
+
+        dial._GuiInput(Press(Key.Q));
+        Check.Equal(30.0, dial.North, "the turn-left key turns it 15°");
+        dial._GuiInput(Press(Key.E, shift: true));
+        Check.Equal(31.0, dial.North, "Shift with the turn-right key turns it 1°");
+        for (int i = 0; i < 30 && h.S.View.Calibration.North != 31; i++) await r.Frame();
+        Check.Equal(31.0, h.S.View.Calibration.North, "each key press is sent");
+        dial.North = 0;
+        dial._GuiInput(Press(Key.Q));
+        Check.Equal(345.0, dial.North, "turning past north goes round");
     }
 }
