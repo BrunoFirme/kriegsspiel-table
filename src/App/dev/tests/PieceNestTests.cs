@@ -70,7 +70,7 @@ static class PieceNestTests
         h.S.Do(new SetLabel { Layer = U, Id = "p2", Value = "Grenadiers" });
         await r.Frames(3);
         h.Table.SetSelection(new[] { "p1" });
-        var search = index.Root.GetChild<LineEdit>(0);
+        var search = index.Search;
         search.Text = "Grenadiers";
         search.EmitSignal(LineEdit.SignalName.TextChanged, search.Text);
         await r.Frames(2);

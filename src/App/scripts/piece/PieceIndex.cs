@@ -15,22 +15,30 @@ sealed class PieceIndex : HudPart
     const char Apart = '\n', LayerFromId = '\t';
     const int DropModes = (int)(Tree.DropModeFlagsEnum.OnItem | Tree.DropModeFlagsEnum.Inbetween);
 
-    sealed record Row(string Layer, PieceInstance Piece, string Name, string Kind, string Pack, bool PackMissing, string Find);
+    const string Every = "", Grouped = "grouped";
+
+    sealed record Row(string Layer, PieceInstance Piece, string Name, string Kind, string Pack, bool PackMissing, PieceType Type, string Find);
 
     public readonly VBoxContainer Root = new() { Name = "On the table" };
     readonly LineEdit _search;
+    readonly OptionButton _types;
     readonly Tree _tree;
     readonly Label _count, _warning, _nestHint;
     readonly Button _selectMissing;
     readonly Button _delete;
     readonly List<Row> _shown = new();
     readonly HashSet<(string, string)> _folded = new();
+    readonly HashSet<PieceType> _foldedTypes = new();
+    string _showing = Every;
     bool _stale = true;
     bool _filling, _following, _pushing, _pushQueued;
 
     public PieceIndex(HudContext ctx) : base(ctx)
     {
         Root.AddThemeConstantOverride("separation", Ui.Gap.Tight);
+        _types = new OptionButton { ClipText = true, FitToLongestItem = false, Visible = false };
+        _types.ItemSelected += i => { _showing = _types.GetItemMetadata((int)i).AsString(); Rebuild(); };
+        Root.AddChild(_types);
         _search = new LineEdit { PlaceholderText = "search name, kind, pack, tag, text, counter…", ClearButtonEnabled = true, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         _search.TextChanged += _ => Rebuild();
         Root.AddChild(_search);
@@ -84,6 +92,8 @@ sealed class PieceIndex : HudPart
     }
 
     internal Tree Rows => _tree;
+    internal LineEdit Search => _search;
+    internal OptionButton Types => _types;
 
     void MarkStale(Command _) => MarkStale();
 
@@ -109,7 +119,7 @@ sealed class PieceIndex : HudPart
                 var words = new[] { name, kind, p.Def, packName, packId ?? "", p.Note ?? "", p.Memo }
                     .Concat(p.Tags ?? new List<string>()).Concat(def?.Tags ?? new List<string>())
                     .Concat(p.Text.Values).Concat(p.Counters.Select(c => $"{c.Key} {c.Value}"));
-                rows.Add(new Row(layer, p, name, kind, packName, def == null, string.Join('\n', words)));
+                rows.Add(new Row(layer, p, name, kind, packName, def == null, PieceKinds.TypeOf(def, p), string.Join('\n', words)));
             }
         return rows.OrderByDescending(r => r.PackMissing).ThenBy(r => r.Name, StringComparer.OrdinalIgnoreCase).ThenBy(r => r.Piece.Id, StringComparer.Ordinal).ToList();
     }
@@ -118,8 +128,10 @@ sealed class PieceIndex : HudPart
     {
         _stale = false;
         var all = AllRows();
+        FillTypes(all);
+        var only = Enum.TryParse<PieceType>(_showing, out var t) ? t : (PieceType?)null;
         var q = _search.Text.Trim();
-        var matches = (q.Length == 0 ? all : all.Where(r => r.Find.Contains(q, StringComparison.OrdinalIgnoreCase))).Take(MostRows).ToList();
+        var matches = all.Where(r => only == null || r.Type == only).Where(r => q.Length == 0 || r.Find.Contains(q, StringComparison.OrdinalIgnoreCase)).Take(MostRows).ToList();
         var parents = S.View.Layers.ToDictionary(kv => kv.Key, kv => PieceTree.Parents(kv.Value));
         var matched = matches.Select(r => (r.Layer, r.Piece.Id)).ToHashSet();
         var kept = matched.ToHashSet();
@@ -138,6 +150,30 @@ sealed class PieceIndex : HudPart
         SyncButtons();
     }
 
+    void FillTypes(List<Row> all)
+    {
+        var counts = all.GroupBy(r => r.Type).OrderBy(g => g.Key).Select(g => (g.Key, g.Count())).ToList();
+        if (counts.Count < 2 || (!counts.Any(c => c.Key.ToString() == _showing) && _showing != Grouped)) _showing = Every;
+        _types.Visible = counts.Count > 1;
+        _types.Clear();
+        void Add(string text, string id)
+        {
+            _types.AddItem(text);
+            _types.SetItemMetadata(_types.ItemCount - 1, id);
+            if (id == _showing) _types.Selected = _types.ItemCount - 1;
+        }
+        Add($"Every type ({all.Count})", Every);
+        Add("Grouped by type", Grouped);
+        _types.AddSeparator();
+        foreach (var (type, n) in counts) Add($"{Plural(type)} ({n})", type.ToString());
+    }
+
+    static string Plural(PieceType t) => t switch
+    {
+        PieceType.Prop => "Props", PieceType.Marker => "Markers", PieceType.NoteCard => "Note cards", PieceType.Book => "Books", PieceType.Die => "Dice", PieceType.Effect => "Effects",
+        _ => "Pieces",
+    };
+
     void Fill(List<Row> rows, Dictionary<string, Dictionary<string, PieceInstance>> parents, HashSet<(string, string)> matched, HashSet<(string, string)> picked)
     {
         _tree.Clear();
@@ -145,7 +181,7 @@ sealed class PieceIndex : HudPart
         var top = _tree.CreateItem();
         var listed = rows.Select(r => (r.Layer, r.Piece.Id)).ToHashSet();
         var under = rows.ToLookup(r => parents[r.Layer].TryGetValue(r.Piece.Id, out var up) && listed.Contains((r.Layer, up.Id)) ? (r.Layer, up.Id) : default);
-        void Add(TreeItem parent, Row r)
+        int Add(TreeItem parent, Row r)
         {
             var key = (r.Layer, r.Piece.Id);
             var item = _tree.CreateItem(parent);
@@ -160,15 +196,35 @@ sealed class PieceIndex : HudPart
             if (r.PackMissing) item.SetCustomColor(0, TitleStyle.Warning);
             else if (!matched.Contains(key)) item.SetCustomColor(0, Ui.Muted);
             if (picked.Contains(key)) item.Select(0);
-            foreach (var child in under[key]) Add(item, child);
+            var n = 1 + under[key].Sum(child => Add(item, child));
             item.Collapsed = _folded.Contains(key) && item.GetChildCount() > 0;
+            return n;
         }
-        foreach (var r in under[default]) Add(top, r);
+        if (_showing != Grouped)
+        {
+            foreach (var r in under[default]) Add(top, r);
+            return;
+        }
+        foreach (var group in under[default].GroupBy(r => r.Type).OrderBy(g => g.Key))
+        {
+            var heading = _tree.CreateItem(top);
+            heading.SetSelectable(0, false);
+            heading.SetMetadata(0, group.Key.ToString());
+            heading.SetText(0, $"{Plural(group.Key)}  ·  {group.Sum(r => Add(heading, r))}");
+            heading.Collapsed = _foldedTypes.Contains(group.Key);
+        }
     }
 
     void Folded(TreeItem item)
     {
-        if (_filling || RowOf(item) is not { } r) return;
+        if (_filling) return;
+        if (item.GetMetadata(0).VariantType == Variant.Type.String && Enum.TryParse<PieceType>(item.GetMetadata(0).AsString(), out var type))
+        {
+            if (item.Collapsed) _foldedTypes.Add(type);
+            else _foldedTypes.Remove(type);
+            return;
+        }
+        if (RowOf(item) is not { } r) return;
         var key = (r.Layer, r.Piece.Id);
         if (item.Collapsed) _folded.Add(key);
         else _folded.Remove(key);
@@ -290,6 +346,7 @@ sealed class PieceIndex : HudPart
     List<Command> DropAt(Vector2 at, Variant data)
     {
         var item = _tree.GetItemAtPosition(at);
+        if (item != null && RowOf(item) == null) return new();
         return NestCommands(Dragged(data), RowOf(item), item != null && _tree.GetDropSectionAtPosition(at) != 0);
     }
 

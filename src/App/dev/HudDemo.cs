@@ -172,10 +172,16 @@ sealed class HudDemo : HudPart
     {
         if (what is "pieces" or "map" or "layers" or "board") { Hud.Drawer.ShowPage(what); return true; }
         if (what == "resetpanels") { Hud.PutPanelsBack(); return true; }
-        if (what == "pieceindex")
+        if (what.Split(':')[0] == "pieceindex")
         {
             Hud.Drawer.ShowPage("pieces");
             Hud.Pieces.ShowIndex();
+            var types = Hud.Pieces.Index.Types;
+            if (what.Contains(':') && Enumerable.Range(0, types.ItemCount).FirstOrDefault(i => types.GetItemMetadata(i).AsString() == what.Split(':')[1], -1) is var at and >= 0)
+            {
+                types.Select(at);
+                types.EmitSignal(OptionButton.SignalName.ItemSelected, at);
+            }
             return true;
         }
         if (what == "pen") { T.SetTool(Tool.Draw); return true; }
