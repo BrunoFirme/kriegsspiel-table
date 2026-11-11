@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using KTable.Core.Model;
 
 namespace KTable.App;
 
@@ -43,5 +44,15 @@ sealed class Selection
         else Set(new[] { hit.Piece.Id }, add: true);
     }
 
-    public void SelectAllEditable() => Set(_pieces.Nodes.Where(n => _c.LayerInteractive(n.Layer)).Select(n => n.Piece.Id));
+    public void SetGroup(IEnumerable<string> ids, bool add = false)
+    {
+        var picked = ids.ToList();
+        var alongside = picked.Concat(add ? Ids : []).ToHashSet();
+        var readyOut = ReadyOut();
+        Set(picked.Where(id => !readyOut.TryGetValue(id, out var holder) || alongside.Contains(holder)), add);
+    }
+
+    public Dictionary<string, string> ReadyOut() => ReadyPiece.OutHolders(_pieces.Nodes.Select(n => n.Piece));
+
+    public void SelectAllEditable() => SetGroup(_pieces.Nodes.Where(n => _c.LayerInteractive(n.Layer)).Select(n => n.Piece.Id));
 }

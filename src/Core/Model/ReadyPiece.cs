@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json.Serialization;
 
@@ -21,6 +22,14 @@ public sealed class ReadyPiece
         : holder.Stowed?.Any(s => s.Id == r.Id) == true ? Readiness.In
         : onTable(r.Id) != null ? Readiness.Out
         : Readiness.Gone;
+
+    public static Dictionary<string, string> OutHolders(IEnumerable<PieceInstance> pieces)
+    {
+        var holderOf = new Dictionary<string, string>();
+        foreach (var h in pieces)
+            if (h.Ready is { } r && h.Stowed?.Any(s => s.Id == r.Id) != true) holderOf.TryAdd(r.Id, h.Id);
+        return holderOf;
+    }
 
     public static Vec2 Turned(Vec2 v, double deg)
     {

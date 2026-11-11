@@ -126,7 +126,7 @@ sealed class TableKeys
         else if (km.Is(k, "cut")) CutUnlocked();
         else if (km.Is(k, "copy")) _clip.Copy();
         else if (km.Is(k, "paste")) { if (_c.Ground(Pointer.In(_c.Scene.GetViewport())) is { } at) _clip.Paste(at); }
-        else if (km.Is(k, "selectAll")) _selection.Set(_pieces.Nodes.Where(n => _c.LayerInteractive(n.Layer)).Select(n => n.Piece.Id));
+        else if (km.Is(k, "selectAll")) _selection.SelectAllEditable();
         else if (km.Is(k, "roll")) { if (!_dice.RollAtHand()) _poses.RotateSmooth(k.ShiftPressed ? -15 : 15); }
         else if (km.Is(k, "larger")) _poses.ScaleSmooth(1.1);
         else if (km.Is(k, "smaller")) _poses.ScaleSmooth(1 / 1.1);

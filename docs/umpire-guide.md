@@ -181,8 +181,9 @@ groups them, and names what each was used for, from the phalanx to the tank plat
   goes inside a holder seven deep and no deeper, as a matter of taste: nothing good is kept further down.
 - **Ready piece:** one held piece can be its holder's ready piece, smoke or dust for instance: right-click it in the
   holder's window → **Ready piece**. It is listed first. **B** on the holder releases it onto the table; **B** on the
-  holder or on the piece recalls it. Recalled, it remembers where it stood, so it comes out there again, moved and
-  turned with the holder. Also in the right-click menu.
+  holder or on the piece recalls it. Out on the table it rides its holder, moving and turning with it; Formations
+  leave it be, and a selection box takes it only with its holder. Recalled, it remembers where it stood, so it
+  comes out there again, moved and turned with the holder. Also in the right-click menu.
 - **Locked:** right-click → **Locked** pins a piece: it can be read, not moved. A selection box leaves it out and the
   Delete key leaves it be; right-click → **Delete** removes it.
 - **Tint:** right-click → **Tint** colours every selected piece: a swatch, **+** for any colour, **Reset** for the

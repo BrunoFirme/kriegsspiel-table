@@ -160,6 +160,53 @@ public class ReadyPieceTests
     }
 
     [Fact]
+    public void Released_it_rides_its_holder_through_moves_and_turns_and_comes_back_to_the_same_spot()
+    {
+        var g = Table();
+        Ok(g, MarkSmoke);
+        Ok(g, new ReleaseReady { Layer = U, Holder = Battery });
+        Assert.Contains(Smoke, Holder(g).Attached);
+        Ok(g, new MovePiece { Layer = U, Id = Battery, Pos = new Vec2(-20, 5), RotDeg = 90 });
+        var smoke = g.Find(U, Smoke)!;
+        var expected = new Vec2(-20, 5) + ReadyPiece.Turned(new Vec2(ReadyPiece.Beside, 0), 90);
+        Assert.Equal(expected.X, smoke.Pos.X, 6);
+        Assert.Equal(expected.Z, smoke.Pos.Z, 6);
+        Assert.Equal(90, smoke.RotDeg, 6);
+        Ok(g, new RecallReady { Layer = U, Holder = Battery });
+        Assert.DoesNotContain(Smoke, Holder(g).Attached);
+        Assert.Equal(ReadyPiece.Beside, Holder(g).Ready!.Offset!.Value.X, 6);
+        Assert.Equal(0, Holder(g).Ready!.Offset!.Value.Z, 6);
+        Assert.Equal(0, Holder(g).Ready!.Turn, 6);
+    }
+
+    [Fact]
+    public void Undoing_a_release_unhooks_it_and_undoing_a_recall_hooks_it_on_again()
+    {
+        var g = Table();
+        Ok(g, MarkSmoke);
+        var unrelease = Ok(g, new ReleaseReady { Layer = U, Holder = Battery });
+        Ok(g, unrelease!);
+        Assert.DoesNotContain(Smoke, Holder(g).Attached);
+        Assert.Equal(Readiness.In, State(g));
+        Ok(g, new ReleaseReady { Layer = U, Holder = Battery });
+        var unrecall = Ok(g, new RecallReady { Layer = U, Holder = Battery });
+        Ok(g, unrecall!);
+        Assert.Equal(Readiness.Out, State(g));
+        Assert.Contains(Smoke, Holder(g).Attached);
+    }
+
+    [Fact]
+    public void Only_ready_pieces_out_on_the_table_are_named_with_their_holders()
+    {
+        var g = Table();
+        Ok(g, MarkSmoke);
+        Assert.Empty(ReadyPiece.OutHolders(g.Layer(U)));
+        Ok(g, new ReleaseReady { Layer = U, Holder = Battery });
+        Assert.Equal(Battery, Assert.Single(ReadyPiece.OutHolders(g.Layer(U))).Value);
+        Assert.True(ReadyPiece.OutHolders(g.Layer(U)).ContainsKey(Smoke));
+    }
+
+    [Fact]
     public void Copying_a_holder_takes_its_released_ready_piece_and_what_rides_on_it()
     {
         var g = Table();

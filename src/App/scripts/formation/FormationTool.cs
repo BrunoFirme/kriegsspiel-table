@@ -46,7 +46,8 @@ sealed class FormationTool
 
     public List<PieceNode> Units()
     {
-        var all = _selection.Movable.Where(n => !n.IsDie).ToList();
+        var readyOut = _selection.ReadyOut();
+        var all = _selection.Movable.Where(n => !n.IsDie && !readyOut.ContainsKey(n.Piece.Id)).ToList();
         bool Rides(PieceNode n) => all.Any(o => o != n && (o.Piece.Attached.Contains(n.Piece.Id)
             || n.Piece.Y > RideAbove && n.RestY > o.RestY + RideAbove && o.ContainsAt(n.Piece.Pos, o.Piece.Pos, o.Piece.RotDeg)));
         return all.Where(n => !Rides(n)).ToList();

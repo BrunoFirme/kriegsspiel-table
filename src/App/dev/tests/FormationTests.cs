@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Godot;
 using KTable.Client.Hand;
 using KTable.Core.Model;
+using KTable.Core.Protocol;
 
 namespace KTable.App;
 
@@ -99,6 +100,40 @@ static class FormationTests
         t.S.UndoLast();
         await r.Frame();
         for (int i = 0; i < 6; i++) Check.Equal(new Vec2(i + 1, 0), At(t, Six[i]), Six[i] + " back");
+    }
+
+    [NodeTest]
+    static async Task A_ready_piece_out_rides_its_holder_into_formation_and_groups_take_it_only_with_its_holder(TestRunner r)
+    {
+        var t = OfflineTable.Make(r, pieces: 6);
+        await r.Frame();
+        var beside = new Vec2(0, 1.5);
+        t.S.Do(new Stow { Layer = U, Holder = "p1", Id = "p6" });
+        t.S.Do(new SetReady { Layer = U, Holder = "p1", Ready = new ReadyPiece { Id = "p6", Offset = beside }, Move = "p6" });
+        t.S.Do(new ReleaseReady { Layer = U, Holder = "p1" });
+        await r.Frames(3);
+        t.Table.SetTool(Tool.Formation);
+        string Picked() => string.Join(",", t.Table.Selection.Ids.OrderBy(x => x));
+        string Units() => string.Join(",", t.Table.Forms.Units().Select(n => n.Piece.Id).OrderBy(x => x));
+        t.Table.Selection.SetGroup(new[] { "p6", "p2", "p3" });
+        Check.Equal("p2,p3", Picked(), "a group without the holder leaves its ready piece out");
+        t.Table.Selection.Set(new[] { "p6", "p2", "p3" });
+        Check.Equal("p2,p3", Units(), "picked by hand, the ready piece is still not formed up");
+        t.Table.Selection.SelectAllEditable();
+        Check.Equal("p1,p2,p3,p4,p5,p6", Picked(), "with its holder in the group it comes too");
+        Check.Equal("p1,p2,p3,p4,p5", Units(), "only the holders and the rest form up");
+        t.Table.Forms.Form(Formations.Find("column")!);
+        await Settled(r, t);
+        var holder = t.S.View.Find(U, "p1")!;
+        var ready = t.S.View.Find(U, "p6")!;
+        Check.That(At(t, "p1") != new Vec2(1, 0), "the holder moved into the column");
+        var local = ReadyPiece.Turned(ready.Pos - holder.Pos, -holder.RotDeg);
+        Check.That((local - beside).Length < 1e-3, "the ready piece kept its place beside its holder: " + local);
+        Check.That(Math.Abs(Mathf.Wrap((float)(ready.RotDeg - holder.RotDeg), -180, 180)) < 0.5, "and its facing");
+        t.S.Do(new RecallReady { Layer = U, Holder = "p1" });
+        await r.Frames(3);
+        var kept = t.S.View.Find(U, "p1")!.Ready!.Offset!.Value;
+        Check.That((kept - beside).Length < 1e-3, "recalled, it keeps the same spot for next time: " + kept);
     }
 
     [NodeTest]

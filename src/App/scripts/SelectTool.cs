@@ -77,7 +77,7 @@ sealed class SelectTool
     {
         var cam = _c.Rig.Cam;
         var seen = cam.GetViewport().GetVisibleRect();
-        _selection.Set(_pieces.Nodes.Where(n => n.Layer == like.Layer && n.Piece.Def == like.Piece.Def && _c.LayerInteractive(n.Layer)
+        _selection.SetGroup(_pieces.Nodes.Where(n => n.Layer == like.Layer && n.Piece.Def == like.Piece.Def && _c.LayerInteractive(n.Layer)
             && !cam.IsPositionBehind(n.GlobalPosition) && seen.HasPoint(cam.UnprojectPosition(n.GlobalPosition))).Select(n => n.Piece.Id), add);
     }
 
@@ -191,7 +191,7 @@ sealed class SelectTool
                     _pieces.Nodes.Where(n => _c.LayerInteractive(n.Layer) && n.Piece is { NotBoxSelected: false, NotInteractable: false, Locked: false })
                     .Where(n => !cam.IsPositionBehind(n.GlobalPosition) && r.HasPoint(cam.UnprojectPosition(n.GlobalPosition)))
                     .Select(n => n.Piece.Id);
-                _selection.Set(ids, add: mb.ShiftPressed);
+                _selection.SetGroup(ids, add: mb.ShiftPressed);
             }
             return;
         }

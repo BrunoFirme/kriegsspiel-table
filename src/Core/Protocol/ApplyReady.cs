@@ -40,7 +40,10 @@ public static partial class StateMachine
         var state = ReadyPiece.Of(holder, id => g.Find(r.Layer, id));
         if (state != Readiness.In) return state == Readiness.Out ? "the ready piece is out" : "the ready piece is gone";
         var (pos, rot) = ready.OutBeside(holder);
-        return ApplyUnstow(g, new Unstow { Layer = r.Layer, Holder = r.Holder, Id = ready.Id, Pos = pos, RotDeg = rot }, ref inverse);
+        var err = ApplyUnstow(g, new Unstow { Layer = r.Layer, Holder = r.Holder, Id = ready.Id, Pos = pos, RotDeg = rot }, ref inverse);
+        if (err != null || g.Find(r.Layer, ready.Id) is not { } piece || Carries(g, r.Layer, piece, holder.Id)) return err;
+        (holder.Attached ??= new()).Add(ready.Id);
+        return null;
     }
 
     static string? ApplyRecall(GameState g, RecallReady r, ref Command? inverse)
