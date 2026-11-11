@@ -533,11 +533,11 @@ public partial class Table : Node3D
 
     public void Rest(bool resting, bool pause = false)
     {
+        SetProcessUnhandledInput(!resting);
+        if (pause) ProcessMode = resting ? ProcessModeEnum.Disabled : ProcessModeEnum.Inherit;
         if (Resting == resting) return;
         Resting = resting;
         Visible = !resting;
-        SetProcessUnhandledInput(!resting);
-        if (pause) ProcessMode = resting ? ProcessModeEnum.Disabled : ProcessModeEnum.Inherit;
         if (resting) _restingLayers = FindChildren("*", nameof(CanvasLayer), true, false).OfType<CanvasLayer>().Where(l => l.Visible).ToList();
         foreach (var layer in _restingLayers.Where(IsInstanceValid)) layer.Visible = !resting;
         if (!resting) _restingLayers = new();
@@ -550,6 +550,22 @@ public partial class Table : Node3D
     }
 
     public event Action? Woke;
+
+    public bool Lent { get; private set; }
+
+    List<CanvasLayer> _lentLayers = new();
+
+    public void Lend(bool lent)
+    {
+        if (Lent == lent) return;
+        Lent = lent;
+        if (lent) _lentLayers = FindChildren("*", nameof(CanvasLayer), true, false).OfType<CanvasLayer>().Where(l => l.Visible).ToList();
+        foreach (var layer in _lentLayers.Where(IsInstanceValid)) layer.Visible = !lent;
+        if (lent) return;
+        _lentLayers = new();
+        if (!Resting) Woke?.Invoke();
+    }
+
     public void SetStandIn(bool on, float shade = 0) => Stage.SetStandIn(on, shade);
 
     public string Board { get => Drawings.Board; set => Drawings.Board = value; }

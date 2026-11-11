@@ -196,9 +196,10 @@ groups them, and names what each was used for, from the phalanx to the tank plat
 - **Scripts:** a piece's buttons, boxes and panels work with a click. Right-click → **Scripting…** opens its script;
   see the [scripting guide](scripting.md).
 - **Changing a kind:** at a table you host, right-click a piece of a pack of your own → **Edit in the piece studio…**.
-  The studio opens in 3D on that kind alone, with your scenario behind it (the last button on the left switches to the
-  studio's plain background), and the game goes on for everyone else. Your pieces of that kind change as you work;
-  only you see them. **Confirm** sends the changes to everyone at the table; **Discard**, or leaving without
+  The studio opens in 3D on that piece where it stands on the table, among its neighbours, with its look, size and
+  facing; turning the view turns the table with it. The last button on the left switches to the studio's plain
+  background and back. Only that kind can be changed, and the game goes on for everyone else. Your pieces of that kind
+  change as you work; only you see them. **Confirm** sends the changes to everyone at the table; **Discard**, or leaving without
   confirming, puts the pieces back as they were. A standard piece is copied into a pack of your own first
   (＋ New piece).
 

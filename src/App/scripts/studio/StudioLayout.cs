@@ -200,6 +200,7 @@ public partial class PieceStudio
         _packSaver.Tick(delta);
         Faces.Tick(delta, Input.IsMouseButtonPressed(MouseButton.Left));
         if (Markers.Active) Markers.Watch(delta);
+        InPlace?.Follow();
         Top.Tick();
     }
 

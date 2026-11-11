@@ -736,7 +736,7 @@ public partial class ModelStudio : Control
         return all;
     }
 
-    Aabb? DrawnBounds()
+    internal Aabb? DrawnBounds()
     {
         Aabb? all = null;
         foreach (var v in Drawn)

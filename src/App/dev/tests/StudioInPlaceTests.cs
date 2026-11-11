@@ -70,7 +70,7 @@ static class StudioInPlaceTests
         r.AddChild(table);
         table.Bind(s, h.Cfg);
         h.Table.Rest(true, pause: true);
-        var place = new StudioInPlace(h.S, h.Table, h.Net, h.Hussars, restored);
+        var place = new StudioInPlace(h.S, h.Table, h.Net, h.Hussars, U, "p1", restored);
         bool back = false;
         var ed = new PieceStudio { Name = "Studio", InPlace = place };
         r.AddChild(ed);
@@ -168,11 +168,10 @@ static class StudioInPlaceTests
     {
         var h = await Host(r);
         var st = await Open(r, h);
-        Check.That(h.Net.PictureHeld?.Invoke() == false, "with the scenario behind the piece the table is there to picture");
+        Check.That(h.Net.PictureHeld?.Invoke() == true, "a turn's picture waits while the editor has the table's camera");
         st.Place.ToggleBackdrop();
-        Check.That(h.Net.PictureHeld?.Invoke() == true, "a turn's picture waits while the editor's plain background covers the table");
+        Check.That(h.Net.PictureHeld?.Invoke() == true, "and while the editor's plain background covers the table");
         st.Place.ToggleBackdrop();
-        Check.That(h.Net.PictureHeld?.Invoke() == false, "and is taken once the scenario shows again");
         await st.Ed.SetViewAsync("table");
         Check.That(h.Net.PictureHeld?.Invoke() == true, "Try it covers the table too");
         bool quit = false;
@@ -226,5 +225,26 @@ static class StudioInPlaceTests
         st.Ed.NewPieces.NewPiece(0);
         await r.Frames(3);
         Check.Equal(kinds, st.Ed.Pack.Pieces.Count, "nothing is added, copied or deleted");
+    }
+    [NodeTest]
+    static async Task The_piece_is_edited_where_it_stands_and_the_table_s_camera_comes_back_working(TestRunner r)
+    {
+        var h = await Host(r);
+        var before = h.Table.Rig.Cam.GlobalTransform;
+        var st = await Open(r, h);
+        for (int i = 0; i < 30 && h.Table.Pieces.NodeOf(U, "p1") is { Visible: true }; i++) await r.Frames(1);
+        var node = h.Table.Pieces.NodeOf(U, "p1")!;
+        Check.That(!node.Visible, "the editor draws the piece in its place");
+        var cam = h.Table.Rig.Cam;
+        Check.That(cam.GlobalPosition.DistanceTo(node.GlobalPosition) < before.Origin.DistanceTo(node.GlobalPosition), "the camera comes to the piece");
+        Check.That(h.Table.Lent && !h.Table.IsProcessingUnhandledInput(), "the table takes no input while the editor has its camera");
+        st.Ed.AskDiscard();
+        for (int i = 0; i < 60 && !st.Back(); i++) await r.Frames(1);
+        h.Table.Rest(false, pause: true);
+        await r.Frames(2);
+        Check.That(h.Table.IsProcessingUnhandledInput() && h.Table.ProcessMode == Node.ProcessModeEnum.Inherit, "the camera takes input again after the studio closes");
+        Check.That(!h.Table.Lent && h.Table.Pieces.NodeOf(U, "p1") is { Visible: true }, "the piece shows again");
+        Check.That(h.Table.Rig.Cam.GlobalTransform.Origin.DistanceTo(before.Origin) < 0.01f, "the view is as it was");
+        Check.That(h.Net.PictureHeld?.Invoke() == false, "and a turn's picture can be taken");
     }
 }

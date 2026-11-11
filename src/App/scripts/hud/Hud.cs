@@ -64,7 +64,7 @@ public partial class Hud : CanvasLayer
         var picture = new TablePicture(Ctx);
         n.RequestPicture = picture.Take;
         n.PictureSince = picture.Since;
-        n.PictureHeld = () => T.Resting;
+        n.PictureHeld = () => T.Resting || T.Lent;
         _unhook.Add(() =>
         {
             n.RequestPicture = null;

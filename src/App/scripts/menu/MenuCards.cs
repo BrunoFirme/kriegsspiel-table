@@ -74,7 +74,7 @@ sealed class MenuCards : HudPart
 
     void StudioRow(MenuCard menu, PieceNode one)
     {
-        if (one.Def is { } kind && StudioInPlace.PackToEdit(S, kind) is { } pack) menu.Item("Edit in the piece studio…", () => StudioInPlace.Open(Ctx, pack, kind.Id));
+        if (one.Def is { } kind && StudioInPlace.PackToEdit(S, kind) is { } pack) menu.Item("Edit in the piece studio…", () => StudioInPlace.Open(Ctx, pack, kind.Id, one.Layer, one.Piece.Id));
     }
 
     static string Tally(PieceNode hit, List<PieceNode> nodes)

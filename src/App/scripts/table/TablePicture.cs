@@ -30,7 +30,7 @@ sealed class TablePicture : HudPart
     public async void Take()
     {
         if (_taking || !GodotObject.IsInstanceValid(HudNode)) return;
-        if (T.Resting)
+        if (T.Resting || T.Lent)
         {
             if (!_afterRest) T.Woke += TakeOnWaking;
             _afterRest = true;

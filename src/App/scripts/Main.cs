@@ -513,7 +513,7 @@ public partial class Main : Node
             hud.Log($"This PC keeps its own copy of the game as you play ({LogPanel.FolderLink(System.IO.Path.GetDirectoryName(_net.MirrorPath) ?? "", "open the folder")}). If the host's PC fails, Scenarios → Mirrored games continues it from here.");
     }
 
-    internal void EditInPlace(string packId, string kind)
+    internal void EditInPlace(string packId, string kind, string layer, string pieceId)
     {
         if (GetNodeOrNull<Table>("Table") is not { } live || _hud is not { } hud || GetNodeOrNull<PieceStudio>("Studio") != null) return;
         AfterDraft(hud, packId, draft =>
@@ -525,7 +525,7 @@ public partial class Main : Node
                 live.Rest(false, pause: true);
                 HideHud(hud, false);
                 ShowWindowTitle();
-            }, new StudioInPlace(_session, live, _net, kind, draft), draft);
+            }, new StudioInPlace(_session, live, _net, kind, layer, pieceId, draft), draft);
         });
     }
 
