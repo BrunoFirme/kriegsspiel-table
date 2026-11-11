@@ -17,7 +17,10 @@ sealed class UpdateOffer
     internal const string ExportedBuild = "template";
     const double BytesPerMb = 1024 * 1024;
     static readonly string Folder = Path.Combine(Path.GetTempPath(), "KriegsspielTable-update");
-    static readonly Lazy<bool> CanReplaceItself = new(() => File.Exists(Path.Combine(ExeDir, Uninstaller)) && Writable(ExeDir));
+    static readonly Lazy<bool> CanReplaceItself = new(() => (OnLinux ? LinuxUpdate.InstalledAt(ExeDir, Home) : File.Exists(Path.Combine(ExeDir, Uninstaller))) && Writable(ExeDir));
+    static bool OnLinux => OperatingSystem.IsLinux();
+    static Download Kind => OnLinux ? Download.LinuxArchive : Download.WindowsSetup;
+    static string Home => System.Environment.GetFolderPath(System.Environment.SpecialFolder.UserProfile);
     static Task<Release?>? _asked;
     static string? _downloaded;
 
@@ -61,7 +64,7 @@ sealed class UpdateOffer
         try
         {
             using var http = Releases.NewClient(UserAgent);
-            var found = await Releases.Check(http, Running, CancellationToken.None);
+            var found = await Releases.Check(http, Running, Kind, CancellationToken.None);
             GD.Print(found is { } r ? $"[update] {r.Name} is out" : $"[update] {Running.ToString(3)} is the newest version");
             return found;
         }
@@ -114,9 +117,10 @@ sealed class UpdateOffer
                 using var http = Releases.NewClient(UserAgent);
                 file = await Releases.Fetch(http, setup, Folder, n => Interlocked.Exchange(ref _got, n), stop.Token);
                 GD.Print($"[update] {setup.Name} downloaded and checked");
+                if (OnLinux) file = LinuxUpdate.Unpack(file, Path.Combine(Folder, Unpacked));
             }
             catch (OperationCanceledException) when (stop.IsCancellationRequested) { GD.Print("[update] download cancelled"); }
-            catch (Exception e) when (e is HttpRequestException or IOException or UnauthorizedAccessException or TimeoutException or OperationCanceledException)
+            catch (Exception e) when (e is HttpRequestException or IOException or UnauthorizedAccessException or TimeoutException or OperationCanceledException or InvalidDataException)
             {
                 why = e.Message;
                 GD.PrintErr($"[update] downloading {setup.Name}: {e.Message}");
@@ -164,9 +168,7 @@ sealed class UpdateOffer
             Show();
             return;
         }
-        var start = new ProcessStartInfo(file) { UseShellExecute = false };
-        foreach (var arg in new[] { "/SILENT", "/NORESTART", "/RELAUNCH=1", $"/DIR={ExeDir}" }) start.ArgumentList.Add(arg);
-        try { using var _ = Process.Start(start); }
+        try { using var _ = Process.Start(Installer(file)); }
         catch (Exception e) when (e is System.ComponentModel.Win32Exception or IOException or InvalidOperationException)
         {
             GD.PrintErr($"[update] starting {file}: {e.Message}");
@@ -177,5 +179,15 @@ sealed class UpdateOffer
         }
         GD.Print("[update] installer started, closing for it");
         _main.QuitApp();
+    }
+
+    const string Unpacked = "unpacked", InstallLog = "install.log";
+
+    static ProcessStartInfo Installer(string file)
+    {
+        if (OnLinux) return LinuxUpdate.AfterExit(System.Environment.ProcessId, file, Path.Combine(Folder, InstallLog), OS.GetExecutablePath());
+        var start = new ProcessStartInfo(file) { UseShellExecute = false };
+        foreach (var arg in new[] { "/SILENT", "/NORESTART", "/RELAUNCH=1", $"/DIR={ExeDir}" }) start.ArgumentList.Add(arg);
+        return start;
     }
 }

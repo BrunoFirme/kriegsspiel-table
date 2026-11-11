@@ -11,6 +11,8 @@ public sealed record SetupFile(string Name, Uri Url, string Sha256, long Size);
 
 public sealed record Release(Version Number, string Name, string Page, SetupFile? Setup);
 
+public enum Download { WindowsSetup, LinuxArchive }
+
 public static partial class Releases
 {
     public const string Repo = "BrunoFirme/kriegsspiel-table";
@@ -28,6 +30,9 @@ public static partial class Releases
 
     [GeneratedRegex(@"^v?(\d{1,6})\.(\d{1,6})\.(\d{1,6})(?:-[0-9A-Za-z.]+)?$")] private static partial Regex TagPattern();
     [GeneratedRegex(@"^[A-Za-z0-9._-]+-setup\.exe$")] private static partial Regex SetupNamePattern();
+    [GeneratedRegex(@"^[A-Za-z0-9._-]+-linux-x86_64\.tar\.gz$")] private static partial Regex LinuxNamePattern();
+
+    static Regex NamePattern(Download kind) => kind == Download.LinuxArchive ? LinuxNamePattern() : SetupNamePattern();
 
     public static Version? NumberOf(string tag)
     {
@@ -37,17 +42,17 @@ public static partial class Releases
         return new Version(Part(1), Part(2), Part(3));
     }
 
-    public static Release? NewestAfter(string feedJson, Version running)
+    public static Release? NewestAfter(string feedJson, Version running, Download kind = Download.WindowsSetup)
     {
         using var doc = JsonDocument.Parse(feedJson);
         if (doc.RootElement.ValueKind != JsonValueKind.Array) return null;
         Release? best = null;
         foreach (var r in doc.RootElement.EnumerateArray())
-            if (Read(r) is { } found && found.Number > running && (best == null || found.Number > best.Number)) best = found;
+            if (Read(r, kind) is { } found && found.Number > running && (best == null || found.Number > best.Number)) best = found;
         return best;
     }
 
-    static Release? Read(JsonElement r)
+    static Release? Read(JsonElement r, Download kind)
     {
         if (r.ValueKind != JsonValueKind.Object || Bool(r, "draft")) return null;
         if (NumberOf(Text(r, "tag_name")) is not { } number) return null;
@@ -56,10 +61,10 @@ public static partial class Releases
         var name = Text(r, "name");
         name = name.StartsWith(AppTitle, StringComparison.OrdinalIgnoreCase) ? name[AppTitle.Length..].Trim() : name.Trim();
         if (name.Length == 0) name = number.ToString(3);
-        return new Release(number, name, page, SetupOf(r));
+        return new Release(number, name, page, SetupOf(r, NamePattern(kind)));
     }
 
-    static SetupFile? SetupOf(JsonElement r)
+    static SetupFile? SetupOf(JsonElement r, Regex named)
     {
         if (!r.TryGetProperty("assets", out var assets) || assets.ValueKind != JsonValueKind.Array) return null;
         foreach (var a in assets.EnumerateArray())
@@ -69,7 +74,7 @@ public static partial class Releases
             var url = Text(a, "browser_download_url");
             var digest = Text(a, "digest");
             long size = a.TryGetProperty("size", out var s) && s.TryGetInt64(out var n) ? n : 0;
-            if (!SetupNamePattern().IsMatch(name) || !url.StartsWith(DownloadsAt, StringComparison.Ordinal)) continue;
+            if (!named.IsMatch(name) || !url.StartsWith(DownloadsAt, StringComparison.Ordinal)) continue;
             if (!digest.StartsWith(DigestPrefix, StringComparison.Ordinal) || size is <= 0 or > SetupMaxBytes) continue;
             var hex = digest[DigestPrefix.Length..];
             if (hex.Length != SHA256.HashSizeInBytes * 2 || !hex.All(char.IsAsciiHexDigit)) continue;
@@ -89,13 +94,13 @@ public static partial class Releases
         return http;
     }
 
-    public static async Task<Release?> Check(HttpClient http, Version running, CancellationToken stop)
+    public static async Task<Release?> Check(HttpClient http, Version running, Download kind, CancellationToken stop)
     {
         using var ask = new HttpRequestMessage(HttpMethod.Get, Feed);
         ask.Headers.Accept.ParseAdd("application/vnd.github+json");
         using var answer = await http.SendAsync(ask, stop).ConfigureAwait(false);
         answer.EnsureSuccessStatusCode();
-        return NewestAfter(await answer.Content.ReadAsStringAsync(stop).ConfigureAwait(false), running);
+        return NewestAfter(await answer.Content.ReadAsStringAsync(stop).ConfigureAwait(false), running, kind);
     }
 
     public static async Task<string> Fetch(HttpClient http, SetupFile setup, string folder, Action<long> got, CancellationToken stop)

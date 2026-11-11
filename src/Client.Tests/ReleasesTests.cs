@@ -61,6 +61,24 @@ public class ReleasesTests
     }
 
     [Fact]
+    public void A_linux_copy_is_offered_the_linux_archive_and_a_windows_copy_the_setup_from_the_same_release()
+    {
+        var feed = Feed(Entry("v0.9.4-beta", "Kriegsspiel Table 0.9.4 beta", false,
+            Asset("KriegsspielTable-0.9.4-beta-setup.exe", 1000, "sha256:" + new string('a', 64)),
+            Asset("KriegsspielTable-0.9.4-beta-win64.zip", 2000, "sha256:" + new string('b', 64)),
+            Asset("KriegsspielTable-0.9.4-beta-linux-x86_64.tar.gz", 3000, "sha256:" + new string('c', 64))));
+        Assert.Equal("KriegsspielTable-0.9.4-beta-setup.exe", Releases.NewestAfter(feed, new Version(0, 9, 3))?.Setup?.Name);
+        var linux = Releases.NewestAfter(feed, new Version(0, 9, 3), Download.LinuxArchive);
+        Assert.Equal("KriegsspielTable-0.9.4-beta-linux-x86_64.tar.gz", linux?.Setup?.Name);
+        Assert.Equal(3000, linux?.Setup?.Size);
+
+        var windowsOnly = Feed(Entry("v0.9.4-beta", "Kriegsspiel Table 0.9.4 beta", false, Asset("KriegsspielTable-0.9.4-beta-setup.exe", 1000, "sha256:" + new string('a', 64))));
+        var noArchive = Releases.NewestAfter(windowsOnly, new Version(0, 9, 3), Download.LinuxArchive);
+        Assert.NotNull(noArchive);
+        Assert.Null(noArchive.Setup);
+    }
+
+    [Fact]
     public void A_setup_without_a_sound_checksum_size_name_or_home_is_not_offered_for_install()
     {
         var good = "sha256:" + new string('c', 64);
