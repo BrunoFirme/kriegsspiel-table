@@ -13,34 +13,60 @@ static class SheetPartsTests
     static byte Low(int v) => (byte)(v & 255);
     static byte High(int v) => (byte)(v >> 8);
 
+    static bool Never() => false;
+
+    static (TileLevel Level, string[] Paths, string Dir) Tiles(int w, int h)
+    {
+        var dir = Path.Combine(Path.GetTempPath(), "ktable-sheet-parts", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(dir);
+        var lv = new TileLevel { W = w, H = h, Cols = (w + TileSide - 1) / TileSide, Rows = (h + TileSide - 1) / TileSide };
+        var paths = new string[lv.Cols * lv.Rows];
+        for (int row = 0; row < lv.Rows; row++)
+            for (int c = 0; c < lv.Cols; c++)
+            {
+                int tw = Math.Min(TileSide, w - c * TileSide), th = Math.Min(TileSide, h - row * TileSide);
+                var px = new byte[tw * th * Channels];
+                for (int y = 0; y < th; y++)
+                    for (int x = 0; x < tw; x++)
+                    {
+                        int i = (y * tw + x) * Channels, sx = c * TileSide + x;
+                        (px[i], px[i + 1], px[i + 2], px[i + 3]) = (Low(sx), High(sx), Low(row * TileSide + y), 255);
+                    }
+                var path = paths[row * lv.Cols + c] = Path.Combine(dir, $"{c}_{row}.png");
+                using var tile = Image.CreateFromData(tw, th, false, Image.Format.Rgba8, px);
+                tile.SavePng(path);
+            }
+        return (lv, paths, dir);
+    }
+
+    [NodeTest]
+    static Task A_picture_build_stops_at_the_next_tile_row_once_it_is_no_longer_wanted(TestRunner r)
+    {
+        var (lv, paths, dir) = Tiles(8300, 3 * TileSide);
+        var parts = SheetPicture.PartsOf(lv);
+        int asked = 0;
+        var made = SheetPicture.Stitch(lv, TileSide, paths, () => asked++ >= 2);
+        Check.That(made == null, "a build stopped part-way hands over nothing");
+        Check.Equal(3, asked, "the build stops at the second tile row of the first part instead of running on");
+        var whole = SheetPicture.Stitch(lv, TileSide, paths, Never);
+        Check.That(whole != null && whole.Imgs.Length == parts.Count, "the same picture builds whole when nothing stops it");
+        whole!.Dispose();
+        Check.That(SheetPicture.Stitch(lv, TileSide, paths, () => true) == null, "a build no longer wanted at the start reads nothing");
+        KTable.Core.BestEffort.Try(() => Directory.Delete(dir, true));
+        return Task.CompletedTask;
+    }
+
     [NodeTest]
     static Task Each_part_holds_its_own_pixels_and_its_neighbours_edge(TestRunner r)
     {
         const int w = 8300, h = 40;
-        var dir = Path.Combine(Path.GetTempPath(), "ktable-sheet-parts", Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(dir);
-        var lv = new TileLevel { W = w, H = h, Cols = (w + TileSide - 1) / TileSide, Rows = 1 };
-        var paths = new string[lv.Cols];
-        for (int c = 0; c < lv.Cols; c++)
-        {
-            int tw = Math.Min(TileSide, w - c * TileSide);
-            var px = new byte[tw * h * Channels];
-            for (int y = 0; y < h; y++)
-                for (int x = 0; x < tw; x++)
-                {
-                    int i = (y * tw + x) * Channels, sx = c * TileSide + x;
-                    (px[i], px[i + 1], px[i + 2], px[i + 3]) = (Low(sx), High(sx), (byte)y, 255);
-                }
-            paths[c] = Path.Combine(dir, $"{c}_0.png");
-            using var tile = Image.CreateFromData(tw, h, false, Image.Format.Rgba8, px);
-            tile.SavePng(paths[c]);
-        }
+        var (lv, paths, dir) = Tiles(w, h);
         var parts = SheetPicture.PartsOf(lv);
         Check.Equal(2, parts.Count, "an 8300 px wide picture is two parts");
         Check.That(parts.Gutter > 0, "parts of a split picture overlap their neighbours");
         for (int p = 0; p < parts.Count; p++)
         {
-            var made = SheetPicture.Part(lv, TileSide, paths, parts, p, false, true);
+            var made = SheetPicture.Part(lv, TileSide, paths, parts, p, false, true, Never);
             Check.That(made != null, $"part {p} is built");
             using var img = made!.Value.Img;
             Check.Equal(parts.TextureW, img.GetWidth(), $"part {p} width");

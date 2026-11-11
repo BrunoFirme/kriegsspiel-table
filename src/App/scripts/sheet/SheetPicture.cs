@@ -32,7 +32,7 @@ sealed class SheetPicture
     public int TilesTotal { get; private set; }
     public event Action? Changed;
     int _building = -1;
-    bool _dropped;
+    volatile bool _dropped;
 
     public readonly record struct Parts(int Across, int Down, int W, int H, int Gutter)
     {
@@ -130,7 +130,7 @@ sealed class SheetPicture
             await Slots.WaitAsync();
             Stitched? made = null;
             var clock = System.Diagnostics.Stopwatch.StartNew();
-            try { if (!Assets.Quitting && !_dropped) made = Stitch(lv, ts, paths); }
+            try { made = Stitch(lv, ts, paths, () => Assets.Quitting || _dropped); }
             catch (Exception e) when (Unreadable(e)) { made = null; }
             finally { Slots.Release(); }
             double ms = clock.Elapsed.TotalMilliseconds;
@@ -142,21 +142,21 @@ sealed class SheetPicture
     static bool Unreadable(Exception e) =>
         e is IOException or InvalidOperationException or UnauthorizedAccessException || e is AggregateException all && all.InnerExceptions.All(Unreadable);
 
-    sealed record Stitched(Image[] Imgs, Parts Parts, bool Alpha, bool Packed)
+    internal sealed record Stitched(Image[] Imgs, Parts Parts, bool Alpha, bool Packed)
     {
         public void Dispose() { foreach (var img in Imgs) img.Dispose(); }
     }
 
     internal readonly record struct Made(Image Img, bool Alpha, bool Packed);
 
-    static Stitched? Stitch(TileLevel lv, int ts, string[] paths)
+    internal static Stitched? Stitch(TileLevel lv, int ts, string[] paths, Func<bool> stopped)
     {
         var parts = PartsOf(lv);
         var imgs = new Image[parts.Count];
         bool alpha = false, loose = false;
         for (int i = 0; i < imgs.Length; i++)
         {
-            if (Part(lv, ts, paths, parts, i, alpha, loose) is not { } got)
+            if (stopped() || Part(lv, ts, paths, parts, i, alpha, loose, stopped) is not { } got)
             {
                 foreach (var img in imgs.AsSpan(0, i)) img.Dispose();
                 return null;
@@ -175,7 +175,7 @@ sealed class SheetPicture
         return new Stitched(imgs, parts, alpha, !loose);
     }
 
-    internal static Made? Part(TileLevel lv, int ts, string[] paths, Parts parts, int index, bool alpha, bool loose)
+    internal static Made? Part(TileLevel lv, int ts, string[] paths, Parts parts, int index, bool alpha, bool loose, Func<bool> stopped)
     {
         int originX = index % parts.Across * parts.W - parts.Gutter, originY = index / parts.Across * parts.H - parts.Gutter;
         int x0 = Math.Max(0, originX), y0 = Math.Max(0, originY);
@@ -185,6 +185,7 @@ sealed class SheetPicture
         var row = new Image?[lastX - firstX + 1];
         for (int ty = y0 / ts; ty <= (y1 - 1) / ts; ty++)
         {
+            if (stopped()) { img.Dispose(); return null; }
             int rowAt = ty;
             Parallel.For(0, row.Length, i => row[i] = Tile(paths[rowAt * lv.Cols + firstX + i]));
             bool whole = Array.TrueForAll(row, t => t != null);
@@ -203,6 +204,7 @@ sealed class SheetPicture
         }
         StretchEdges(img, new Rect2I(x0 - originX, y0 - originY, x1 - x0, y1 - y0));
         img.GenerateMipmaps();
+        if (stopped()) { img.Dispose(); return null; }
         bool hasAlpha = alpha || img.DetectAlpha() != Image.AlphaMode.None;
         if (loose) return new Made(img, hasAlpha, false);
         if (BlockCompress.Compress(img, hasAlpha) is not { } packed) return new Made(img, hasAlpha, false);
