@@ -51,6 +51,7 @@ internal sealed partial class ModelPanels
         Btn("frame", "Frame the model   (Home)", _m.Frame);
         Btn("grid", "Flat view, no perspective   (5)\n1 front · 3 right · 7 top · Shift for the opposite side", () => _m.ViewKey(Godot.Key.Key5, false), true, _m.Camera.Ortho);
         Btn("play", "Turn slowly on its stand", () => _m.Camera.Spin = !_m.Camera.Spin, true, _m.Camera.Spin);
+        if (_m.Studio.InPlace is { } place) Btn("backdrop", "The scenario behind the piece\nOff: the editor's plain background", place.ToggleBackdrop, true, place.Backdrop);
     }
 
     public string ToolHint => _m.Tool switch

@@ -19,9 +19,9 @@ internal sealed class StudioMenu
         var prefs = _s.Prefs;
         var pm = new PopupMenu();
         pm.AddSeparator("Pack");
-        pm.AddItem("New piece…", 1);
+        if (_s.InPlace == null) pm.AddItem("New piece…", 1);
         pm.SetItemAccelerator(pm.GetItemIndex(1), (Key)KeyModifierMask.MaskCtrl | Key.N);
-        pm.AddItem("Pack details…", 15);
+        if (_s.InPlace == null) pm.AddItem("Pack details…", 15);
         if (_s.View == "paint" && _s.Faces.CanvasOpen)
         {
             pm.AddSeparator("Picture");

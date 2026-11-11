@@ -136,6 +136,10 @@ public partial class StudioIcon : ToolIcon
         var c = _c;
         switch (Kind)
         {
+            case "backdrop":
+                Poly(true, 2.5f, 4, 17.5f, 4, 17.5f, 16, 2.5f, 16);
+                Poly(false, 2.5f, 13, 7, 8.5f, 10.5f, 12, 13.5f, 9, 17.5f, 13);
+                break;
             case "image":
                 Poly(true, 2.5f, 4, 17.5f, 4, 17.5f, 16, 2.5f, 16);
                 Fill(3.5f, 15, 8.5f, 8.5f, 12, 12.5f, 13.8f, 10.5f, 16.5f, 15);

@@ -14,7 +14,7 @@ static class StudioInPlaceTests
 {
     const string U = Layers.Umpire;
 
-    sealed record Hosted(Hud Hud, Table Table, Session S, Net Net, Settings Cfg, string Root, string Pack, string Hussars);
+    sealed record Hosted(Hud Hud, Table Table, Session S, Net Net, Settings Cfg, string Root, string Pack, string Hussars, string Uhlans);
 
     static async Task<Hosted> Host(TestRunner r)
     {
@@ -25,6 +25,7 @@ static class StudioInPlaceTests
         var pack = maker.Pack(packId)!;
         var sha = PackEdit.AddImage(maker, pack, Image.CreateEmpty(8, 8, false, Image.Format.Rgba8));
         var hussars = PackEdit.NewDef(maker, pack, "Hussars", sha, 8, 8, 1.0, "box").Id;
+        var uhlans = PackEdit.NewDef(maker, pack, "Uhlans", sha, 8, 8, 1.0, "box").Id;
         PackEdit.Save(maker, pack);
         var store = new PackageStore(root);
         store.RegisterDef(new PackManifest { Id = "std.blocks", Name = "Blocks" }, new PieceDef { Id = "std.blocks.block", Name = "Block" });
@@ -43,7 +44,7 @@ static class StudioInPlaceTests
         r.AddChild(hud);
         hud.Bind(s, table, net, cfg);
         await r.Frames(2);
-        return new Hosted(hud, table, s, net, cfg, root, packId, hussars);
+        return new Hosted(hud, table, s, net, cfg, root, packId, hussars, uhlans);
     }
 
     sealed record Studio(PieceStudio Ed, StudioInPlace Place, PackageStore Store, System.Func<bool> Back);
@@ -69,7 +70,7 @@ static class StudioInPlaceTests
         r.AddChild(table);
         table.Bind(s, h.Cfg);
         h.Table.Rest(true, pause: true);
-        var place = new StudioInPlace(h.S, h.Table, h.Net, restored);
+        var place = new StudioInPlace(h.S, h.Table, h.Net, h.Hussars, restored);
         bool back = false;
         var ed = new PieceStudio { Name = "Studio", InPlace = place };
         r.AddChild(ed);
@@ -122,7 +123,8 @@ static class StudioInPlaceTests
         var h = await Host(r);
         var st = await Open(r, h);
         Check.Equal(h.Hussars, st.Ed.Sel?.Id, "the kind right-clicked at the table is the one shown");
-        Check.Equal("scenario", st.Ed.View, "the studio opens on the scenario");
+        Check.Equal("model", st.Ed.View, "the studio opens in 3D");
+        Check.That(!h.Table.Resting, "with the scenario behind the piece");
         var buttons = st.Ed.Root.FindChildren("*", nameof(Button), true, false).OfType<Button>().Select(b => b.Text).ToList();
         Check.That(buttons.Contains("Confirm") && buttons.Contains("Discard") && !buttons.Contains("Done"), "Confirm and Discard replace Done: " + string.Join(", ", buttons));
         var manifest = PackEdit.ManifestPath(st.Store, h.Pack);
@@ -166,11 +168,13 @@ static class StudioInPlaceTests
     {
         var h = await Host(r);
         var st = await Open(r, h);
-        Check.That(h.Net.PictureHeld?.Invoke() == false, "on the scenario view the table is there to picture");
-        await st.Ed.SetViewAsync("model");
-        Check.That(h.Net.PictureHeld?.Invoke() == true, "a turn's picture waits while the 3D view covers the table");
-        await st.Ed.SetViewAsync("scenario");
-        Check.That(h.Net.PictureHeld?.Invoke() == false, "and is taken once the table shows again");
+        Check.That(h.Net.PictureHeld?.Invoke() == false, "with the scenario behind the piece the table is there to picture");
+        st.Place.ToggleBackdrop();
+        Check.That(h.Net.PictureHeld?.Invoke() == true, "a turn's picture waits while the editor's plain background covers the table");
+        st.Place.ToggleBackdrop();
+        Check.That(h.Net.PictureHeld?.Invoke() == false, "and is taken once the scenario shows again");
+        await st.Ed.SetViewAsync("table");
+        Check.That(h.Net.PictureHeld?.Invoke() == true, "Try it covers the table too");
         bool quit = false;
         int sent = 0;
         void Count(Command c) { if (c is AddPack) sent++; }
@@ -203,5 +207,24 @@ static class StudioInPlaceTests
         for (int i = 0; i < 60 && !again.Back(); i++) await r.Frames(1);
         Check.That(File.ReadAllText(manifest).Contains("Hussars of the Reserve"), "Confirm lands it in the pack");
         Check.That(StudioDraft.Find(h.Pack) == null, "and the draft is gone");
+    }
+    [NodeTest]
+    static async Task In_place_only_the_kind_right_clicked_can_be_edited(TestRunner r)
+    {
+        var h = await Host(r);
+        var st = await Open(r, h);
+        var uhlans = st.Ed.Pack.Pieces.Single(d => d.Id == h.Uhlans);
+        st.Ed.Select(uhlans, frame: false);
+        await r.Frames(3);
+        Check.Equal(h.Hussars, st.Ed.Sel?.Id, "another kind of the pack cannot be picked");
+        Check.Equal(h.Hussars, string.Join(",", st.Ed.Kinds.Select(d => d.Id)), "the studio works on that kind alone");
+        var shown = st.Ed.Root.FindChildren("*", nameof(Button), true, false).OfType<Button>().Where(b => b.IsVisibleInTree()).Select(b => b.Text).ToList();
+        Check.That(!shown.Contains("＋ New piece"), "no new pieces: " + string.Join(", ", shown));
+        int kinds = st.Ed.Pack.Pieces.Count;
+        st.Ed.DeleteSel();
+        await st.Ed.DuplicateSelAsync();
+        st.Ed.NewPieces.NewPiece(0);
+        await r.Frames(3);
+        Check.Equal(kinds, st.Ed.Pack.Pieces.Count, "nothing is added, copied or deleted");
     }
 }

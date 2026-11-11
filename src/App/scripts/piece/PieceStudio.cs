@@ -41,6 +41,8 @@ public partial class PieceStudio : CanvasLayer
 
     internal StudioInPlace? InPlace { get; init; }
 
+    internal IEnumerable<PieceDef> Kinds => InPlace is { } place ? _pack.Pieces.Where(d => d.Id == place.Kind) : _pack.Pieces;
+
     public readonly HashSet<string> MadeHere = new();
 
     PackSaver _packSaver = null!;
@@ -216,8 +218,8 @@ public partial class PieceStudio : CanvasLayer
         T.SetTool(Tool.Select);
         RebuildList();
         var first = _pack.Pieces.FirstOrDefault(d => d.Id == kind) ?? _pack.Pieces.OrderBy(d => d.Name, StringComparer.OrdinalIgnoreCase).FirstOrDefault();
-        _view = InPlace != null ? "scenario" : first != null && EffectFx.IsEffect(first) ? "table" : "model";
-        if (first != null) Select(first, frame: InPlace == null);
+        _view = first != null && EffectFx.IsEffect(first) ? "table" : "model";
+        if (first != null) Select(first, frame: true);
         InPlace?.Begin(this);
         SetView(_view);
     }
@@ -251,6 +253,7 @@ public partial class PieceStudio : CanvasLayer
 
     async Task SelectAsync(PieceDef d, bool frame)
     {
+        if (InPlace is { } place && d.Id != place.Kind) return;
         if (_sel == d)
         {
             ++_selGen;
@@ -336,7 +339,7 @@ public partial class PieceStudio : CanvasLayer
     internal async Task DuplicateSelAsync(PieceDef? which = null)
     {
         var src = which ?? _sel;
-        if (src == null) return;
+        if (src == null || InPlace != null) return;
         if (await SettleWork() is { } problem) { Flash("Not duplicated: " + problem.Replace("\n", "; ")); return; }
         if (_gone || !_pack.Pieces.Contains(src)) return;
         var copy = PackEdit.Duplicate(_store, _pack, src);
@@ -349,9 +352,8 @@ public partial class PieceStudio : CanvasLayer
     internal void DeleteSel(PieceDef? which = null)
     {
         var d = which ?? _sel;
-        if (d == null) return;
-        var placed = InPlace?.OnTable(d.Id) ?? 0;
-        Ui.Confirm(_root, $"Delete \"{d.Name}\"", "Delete", () => DeleteNow(d), placed > 0 ? $"{placed} placed on the table stop showing when you confirm." : null);
+        if (d == null || InPlace != null) return;
+        Ui.Confirm(_root, $"Delete \"{d.Name}\"", "Delete", () => DeleteNow(d));
     }
 
     internal void AskLeave() => _ = InPlace != null ? LeaveInPlace(confirm: true) : Leave();

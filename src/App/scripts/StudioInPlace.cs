@@ -22,17 +22,20 @@ sealed class StudioInPlace
     string _was = "";
     Dictionary<string, string> _kindsWere = new(), _kindsShown = new();
 
-    internal StudioInPlace(Session live, Table table, Net net, StudioDraft? restored = null)
+    internal StudioInPlace(Session live, Table table, Net net, string kind, StudioDraft? restored = null)
     {
         _live = live;
         _table = table;
         _net = net;
+        Kind = kind;
         _sinceUtc = restored?.Since ?? DateTime.UtcNow;
     }
 
     internal bool Ended { get; private set; }
 
-    internal Table Table => _table;
+    internal string Kind { get; }
+
+    internal bool Backdrop { get; private set; } = true;
 
     internal static string? PackToEdit(Session s, PieceDef kind) =>
         s.IsHost && s.Store.PackOfDef(kind.Id) is { } pack && !StandardPacks.IsStandard(pack.Id) ? pack.Id : null;
@@ -49,21 +52,28 @@ sealed class StudioInPlace
         _kindsShown = new(_kindsWere);
         if (Changed(studio.Pack)) Show(studio.Pack);
         _live.Knocked += Knocked;
-        _table.SelectionChanged += Picked;
-        studio.TreeExiting += () =>
-        {
-            _live.Knocked -= Knocked;
-            _table.SelectionChanged -= Picked;
-        };
+        studio.TreeExiting += () => _live.Knocked -= Knocked;
     }
 
-    internal void Showing(bool scenario, bool tryIt)
+    internal void Showing(string view)
     {
         if (_studio is not { } studio) return;
-        if (!scenario) _table.Rest(true, pause: true);
+        bool behind = view == "model" && Backdrop, tryIt = view == "table";
+        if (!behind) _table.Rest(true, pause: true);
         if (!tryIt) studio.T.Rest(true);
-        if (scenario) _table.Rest(false, pause: true);
+        if (behind)
+        {
+            _table.Rest(false, pause: true);
+            _table.SetProcessUnhandledInput(false);
+        }
         if (tryIt) studio.T.Rest(false);
+        studio.Model?.Backdrop(behind);
+    }
+
+    internal void ToggleBackdrop()
+    {
+        Backdrop = !Backdrop;
+        if (_studio is { } studio) Showing(studio.View);
     }
 
     internal void Show(PackManifest draft)
@@ -80,8 +90,6 @@ sealed class StudioInPlace
     }
 
     internal string Status(PackManifest draft) => Changed(draft) ? "not confirmed" : "";
-
-    internal int OnTable(string kind) => _live.View.Layers.Values.Sum(l => l.Count(p => p.Def == kind));
 
     internal bool Changed(PackManifest draft) => !Ended && Json.Serialize(draft) != _was;
 
@@ -142,13 +150,6 @@ sealed class StudioInPlace
     void Knocked(Knock k)
     {
         if (_studio is { } s && GodotObject.IsInstanceValid(s)) s.Flash($"{k.Name} is at the door: Confirm or Discard to let them in", 10);
-    }
-
-    void Picked()
-    {
-        if (_studio is not { } s || !GodotObject.IsInstanceValid(s) || s.View != "scenario") return;
-        if (_table.SelectedNodes.Select(n => n.Piece.Def).Distinct().ToList() is not [var def]) return;
-        if (s.Pack.Pieces.Find(d => d.Id == def) is { } kind && kind != s.Sel) s.Select(kind, frame: false);
     }
 
     static Dictionary<string, string> Kinds(PackManifest p)

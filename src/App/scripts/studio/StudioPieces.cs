@@ -41,6 +41,7 @@ internal sealed class PieceList
         var split = _split = new VSplitContainer { SizeFlagsVertical = Control.SizeFlags.ExpandFill, SplitOffsets = new[] { TileHeight + ListPad } };
         split.Dragged += _ => _sizedByHand = true;
         col.AddChild(split);
+        head.Visible = _search.Visible = _s.InPlace == null;
         _list = new ItemList
         {
             IconMode = ItemList.IconModeEnum.Top, MaxColumns = 0,
@@ -51,6 +52,7 @@ internal sealed class PieceList
         _list.AddThemeFontSizeOverride("font_size", 11);
         _list.ItemSelected += i => { if (DefAt((int)i) is { } d) _s.Select(d, frame: true); };
         _list.ItemClicked += (i, at, button) => { if (button == (long)MouseButton.Right && DefAt((int)i) is { } d) ShowMenu(_list.GetGlobalTransform() * at, d); };
+        _list.Visible = _s.InPlace == null;
         split.AddChild(_list);
         return split;
     }

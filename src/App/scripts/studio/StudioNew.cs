@@ -23,6 +23,7 @@ internal sealed class NewPieces
 
     public void NewPiece(int kind)
     {
+        if (_s.InPlace != null) return;
         switch (kind)
         {
             case 1:
@@ -68,7 +69,7 @@ internal sealed class NewPieces
         var models = files.Where(ModelImport.IsModel).ToArray();
         if (models.Length > 0 && _s.View == "model" && _s.Model is { } m && _s.Sel is { } sel && m.Holds(sel) && !EffectFx.IsEffect(sel)
             && m.GetGlobalRect().HasPoint(Pointer.Global(m))) AddModelFiles(models);
-        else if (models.Length > 0) ImportModels(models);
+        else if (models.Length > 0 && _s.InPlace == null) ImportModels(models);
         if (pics.Length == 0) return;
         var canvas = _s.Canvas;
         if (_s.View == "paint" && _s.Faces.CanvasOpen && canvas.GetGlobalRect().HasPoint(Pointer.Global(canvas)))
@@ -77,7 +78,7 @@ internal sealed class NewPieces
             foreach (var f in pics) _s.LayerPanel.AddFromFile(f, at);
             canvas.Commit("Pictures");
         }
-        else AddImageFiles(pics);
+        else if (_s.InPlace == null) AddImageFiles(pics);
     }
 
     public async void AddImageFiles(string[] files)
@@ -338,6 +339,7 @@ internal sealed class NewPieces
 
     public void Show()
     {
+        if (_s.InPlace != null) return;
         var dlg = new AcceptDialog { Title = "New piece", OkButtonText = Ui.CloseWord };
         dlg.AddChild(Cards(() => dlg.Hide()));
         Ui.Open(_s.Root, dlg);

@@ -151,7 +151,7 @@ public partial class ModelStudio : Control
         AddChild(_vc);
         _vp = new SubViewport { OwnWorld3D = true, Msaa3D = Viewport.Msaa.Msaa4X, HandleInputLocally = false };
         _vc.AddChild(_vp);
-        var env = new Godot.Environment
+        var env = _env = new Godot.Environment
         {
             BackgroundMode = Godot.Environment.BGMode.Color, BackgroundColor = Ui.Raised,
             AmbientLightSource = Godot.Environment.AmbientSource.Color, AmbientLightColor = new Color(0.85f, 0.85f, 0.88f), AmbientLightEnergy = 0.55f,
@@ -171,6 +171,15 @@ public partial class ModelStudio : Control
         _vc.GuiInput += _tools.OnInput;
         MakeOverlay();
         Camera.Apply();
+    }
+
+    Godot.Environment _env = null!;
+
+    internal void Backdrop(bool on)
+    {
+        _vp.TransparentBg = on;
+        _env.BackgroundMode = on ? Godot.Environment.BGMode.ClearColor : Godot.Environment.BGMode.Color;
+        _grid.Visible = !on;
     }
 
     const float LeastGridHalf = 10, GridMargin = 1.25f;

@@ -34,9 +34,9 @@ internal sealed class TablePaper
             if (del.Count > 0) S.Do(new Batch { Items = del });
             _inst.Clear();
         }
-        var defs = Pack.Pieces.Where(d => !_inst.ContainsKey(d.Id)).OrderBy(d => d.Name, StringComparer.OrdinalIgnoreCase).ToList();
+        var defs = _s.Kinds.Where(d => !_inst.ContainsKey(d.Id)).OrderBy(d => d.Name, StringComparer.OrdinalIgnoreCase).ToList();
         if (defs.Count == 0) return;
-        double total = Pack.Pieces.Sum(d => (d.Size.W + 0.6) * (d.Size.H + 0.6));
+        double total = _s.Kinds.Sum(d => (d.Size.W + 0.6) * (d.Size.H + 0.6));
         double rowW = Math.Max(12, Math.Sqrt(total) * 1.35);
         double x = 0, z = 0, rowH = 0;
         if (_inst.Count > 0 && S.View.Layer(Layers.Umpire).Count > 0) z = S.View.Layer(Layers.Umpire).Min(p => p.Pos.Z - (S.Def(p.Def)?.Size.H ?? 1)) - 1;

@@ -536,6 +536,7 @@ public partial class Table : Node3D
         if (Resting == resting) return;
         Resting = resting;
         Visible = !resting;
+        SetProcessUnhandledInput(!resting);
         if (pause) ProcessMode = resting ? ProcessModeEnum.Disabled : ProcessModeEnum.Inherit;
         if (resting) _restingLayers = FindChildren("*", nameof(CanvasLayer), true, false).OfType<CanvasLayer>().Where(l => l.Visible).ToList();
         foreach (var layer in _restingLayers.Where(IsInstanceValid)) layer.Visible = !resting;

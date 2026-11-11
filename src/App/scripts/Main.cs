@@ -524,7 +524,7 @@ public partial class Main : Node
                 live.Rest(false, pause: true);
                 HideHud(hud, false);
                 ShowWindowTitle();
-            }, new StudioInPlace(_session, live, _net, draft), draft);
+            }, new StudioInPlace(_session, live, _net, kind, draft), draft);
         });
     }
 
