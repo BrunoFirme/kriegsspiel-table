@@ -55,7 +55,7 @@ sealed class FormationPanel : HudPart
         var b = new Button
         {
             ToggleMode = true, ButtonPressed = chosen, FocusMode = Control.FocusModeEnum.None,
-            TooltipText = $"{kind.Name}   ({key})", CustomMinimumSize = GlyphSize,
+            TooltipText = $"{kind.Name}   ({key})\n{kind.What}", CustomMinimumSize = GlyphSize,
         };
         b.AddChild(new FormationGlyph { Kind = kind });
         var tag =
@@ -73,10 +73,7 @@ sealed class FormationPanel : HudPart
         var kind = T.Forms.Kind;
         var name = new Label { Text = kind.Name };
         name.AddThemeFontOverride("font", Ui.SansStrong());
-        var what = Ui.Hint(kind.What);
-        what.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
         _box.AddChild(name);
-        _box.AddChild(what);
     }
 
     const double MostSpacingPercent = 300, SpacingStep = 5;
