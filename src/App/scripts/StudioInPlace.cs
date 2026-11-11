@@ -16,17 +16,18 @@ sealed class StudioInPlace
     readonly Session _live;
     readonly Table _table;
     readonly Net _net;
-    readonly DateTime _openedUtc = DateTime.UtcNow;
+    readonly DateTime _sinceUtc;
     PieceStudio? _studio;
     PackManifest _real = new();
     string _was = "";
     Dictionary<string, string> _kindsWere = new(), _kindsShown = new();
 
-    internal StudioInPlace(Session live, Table table, Net net)
+    internal StudioInPlace(Session live, Table table, Net net, StudioDraft? restored = null)
     {
         _live = live;
         _table = table;
         _net = net;
+        _sinceUtc = restored?.Since ?? DateTime.UtcNow;
     }
 
     internal bool Ended { get; private set; }
@@ -41,10 +42,12 @@ sealed class StudioInPlace
     internal void Begin(PieceStudio studio)
     {
         _studio = studio;
-        _real = Json.Clone(studio.Pack);
-        _was = Json.Serialize(studio.Pack);
-        _kindsWere = Kinds(studio.Pack);
+        _real = BestEffort.Read(() => Json.Load<PackManifest>(PackEdit.ManifestPath(studio.Store, studio.Pack.Id)), Json.Clone(studio.Pack));
+        _real.MoveCounterMarkers();
+        _was = Json.Serialize(_real);
+        _kindsWere = Kinds(_real);
         _kindsShown = new(_kindsWere);
+        if (Changed(studio.Pack)) Show(studio.Pack);
         _live.Knocked += Knocked;
         _table.SelectionChanged += Picked;
         studio.TreeExiting += () =>
@@ -70,7 +73,13 @@ sealed class StudioInPlace
         _live.ShowDraft(Json.Clone(draft));
         Redraw(Differing(_kindsShown, now));
         _kindsShown = now;
+        bool changed = Changed(draft);
+        if (changed) StudioDraft.Keep(draft.Id, _sinceUtc, draft);
+        else StudioDraft.Drop(draft.Id);
+        _studio?.SetSaved(Status(draft));
     }
+
+    internal string Status(PackManifest draft) => Changed(draft) ? "not confirmed" : "";
 
     internal int OnTable(string kind) => _live.View.Layers.Values.Sum(l => l.Count(p => p.Def == kind));
 
@@ -89,6 +98,7 @@ sealed class StudioInPlace
         try { Json.SaveBig(PackEdit.ManifestPath(store, draft.Id), draft); }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException) { return e.Message; }
         End();
+        StudioDraft.Drop(draft.Id);
         _net.SharePack(draft.Id);
         _net.RestartScriptsOf(restart);
         Redraw(changed);
@@ -98,12 +108,8 @@ sealed class StudioInPlace
     internal void Discard(PackageStore store, PackManifest draft)
     {
         if (Ended) return;
-        foreach (var (sha, asset) in draft.Assets)
-        {
-            if (_real.Assets.ContainsKey(sha)) continue;
-            DropIfNew(Path.Combine(store.PackageDir(draft.Id), asset.File));
-            DropIfNew(ArtStore.DocPath(store, draft.Id, sha));
-        }
+        StudioDraft.DropFiles(store, _real, draft, _sinceUtc);
+        StudioDraft.Drop(draft.Id);
         var shown = _kindsShown;
         End();
         Redraw(Differing(_kindsWere, shown));
@@ -131,11 +137,6 @@ sealed class StudioInPlace
         bool undrawn = s.View.Layers.Any(l => l.Value.Any(p => kinds.Contains(p.Def) && table.Pieces.NodeOf(l.Key, p.Id) == null));
         if (was == null || now == null || undrawn) { table.Rebuild(); return; }
         Redraw(table, s, Differing(Kinds(was), Kinds(now)));
-    }
-
-    void DropIfNew(string path)
-    {
-        if (File.Exists(path) && File.GetCreationTimeUtc(path) >= _openedUtc.AddSeconds(-1)) BestEffort.DeleteFile(path);
     }
 
     void Knocked(Knock k)

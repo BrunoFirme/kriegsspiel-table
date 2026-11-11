@@ -515,14 +515,55 @@ public partial class Main : Node
     internal void EditInPlace(string packId, string kind)
     {
         if (GetNodeOrNull<Table>("Table") is not { } live || _hud is not { } hud || GetNodeOrNull<PieceStudio>("Studio") != null) return;
-        HideHud(hud, true);
-        live.Rest(true, pause: true);
-        OpenEditor(packId, kind, () =>
+        AfterDraft(hud, packId, draft =>
         {
-            live.Rest(false, pause: true);
-            HideHud(hud, false);
-            ShowWindowTitle();
-        }, new StudioInPlace(_session, live, _net));
+            HideHud(hud, true);
+            live.Rest(true, pause: true);
+            OpenStudio(packId, kind, () =>
+            {
+                live.Rest(false, pause: true);
+                HideHud(hud, false);
+                ShowWindowTitle();
+            }, new StudioInPlace(_session, live, _net, draft), draft);
+        });
+    }
+
+    internal void OpenEditor(string packId, string? kind = null) => AfterDraft(Title.Root ?? (Node)this, packId, draft =>
+    {
+        if (draft != null && LandDraft(packId, draft) is { } why)
+        {
+            Fail($"The unconfirmed changes to {draft.Pack.Name} could not be kept: {why}");
+            return;
+        }
+        OpenStudio(packId, kind);
+    });
+
+    static void AfterDraft(Node parent, string packId, Action<StudioDraft?> go)
+    {
+        if (StudioDraft.Find(packId) is not { } draft)
+        {
+            go(null);
+            return;
+        }
+        var when = StudioDraft.WrittenAt(packId);
+        var q = Ui.Confirm(parent, "Unconfirmed changes", "Restore", () => go(draft),
+            $"The piece studio closed at {when:HH:mm} on {when:d MMM} before the changes to {draft.Pack.Name} were confirmed.", 420);
+        q.Also("Discard", () =>
+        {
+            var store = new PackageStore(PackageStore.DefaultRoot);
+            if (store.Pack(packId) is { } real) StudioDraft.DropFiles(store, real, draft.Pack, draft.Since);
+            StudioDraft.Drop(packId);
+            go(null);
+        });
+        q.CancelButtonText = "Not now";
+    }
+
+    static string? LandDraft(string packId, StudioDraft draft)
+    {
+        try { KTable.Core.Json.SaveBig(PackEdit.ManifestPath(new PackageStore(PackageStore.DefaultRoot), packId), draft.Pack); }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException) { return e.Message; }
+        StudioDraft.Drop(packId);
+        return null;
     }
 
     static void HideHud(Hud hud, bool hidden)
@@ -532,10 +573,11 @@ public partial class Main : Node
         hud.ProcessMode = hidden ? ProcessModeEnum.Disabled : ProcessModeEnum.Inherit;
     }
 
-    internal void OpenEditor(string packId, string? kind = null, Action? back = null, StudioInPlace? place = null)
+    void OpenStudio(string packId, string? kind = null, Action? back = null, StudioInPlace? place = null, StudioDraft? restored = null)
     {
         CancelOpening();
         var store = new PackageStore(PackageStore.DefaultRoot);
+        if (restored != null) store.Adopt(packId, restored.Pack);
         var held = InUse.Pack(store.Root, packId);
         if (InUse.TryOpen(held, "is open in the piece studio: press Done there first, then try again") is { } busy)
         {

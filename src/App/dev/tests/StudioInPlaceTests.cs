@@ -48,9 +48,10 @@ static class StudioInPlaceTests
 
     sealed record Studio(PieceStudio Ed, StudioInPlace Place, PackageStore Store, System.Func<bool> Back);
 
-    static async Task<Studio> Open(TestRunner r, Hosted h)
+    static async Task<Studio> Open(TestRunner r, Hosted h, StudioDraft? restored = null)
     {
         var store = new PackageStore(h.Root);
+        if (restored != null) store.Adopt(h.Pack, restored.Pack);
         var s = new Session(new Assets(store));
         var g = new GameState { Name = "Test pieces", Packs = store.ListPackIds().ToList() };
         g.Layers[U] = new();
@@ -68,7 +69,7 @@ static class StudioInPlaceTests
         r.AddChild(table);
         table.Bind(s, h.Cfg);
         h.Table.Rest(true, pause: true);
-        var place = new StudioInPlace(h.S, h.Table, h.Net);
+        var place = new StudioInPlace(h.S, h.Table, h.Net, restored);
         bool back = false;
         var ed = new PieceStudio { Name = "Studio", InPlace = place };
         r.AddChild(ed);
@@ -178,5 +179,29 @@ static class StudioInPlaceTests
         h.S.Applied -= Count;
         Check.That(quit && st.Place.Ended, "quitting with nothing changed goes straight on");
         Check.Equal(0, sent, "an untouched pack is not sent");
+    }
+    [NodeTest]
+    static async Task Unconfirmed_changes_outlive_a_studio_closed_without_Confirm_and_come_back_to_be_confirmed(TestRunner r)
+    {
+        var h = await Host(r);
+        var st = await Open(r, h);
+        var manifest = PackEdit.ManifestPath(st.Store, h.Pack);
+        await Rename(r, st, h.Hussars, "Hussars of the Reserve");
+        var labels = st.Ed.Root.FindChildren("*", nameof(Label), true, false).OfType<Label>().Select(l => l.Text).ToList();
+        Check.That(labels.Contains("not confirmed") && !labels.Contains("saved"), "the top bar says the change is not confirmed, never saved");
+        st.Ed.T.QueueFree();
+        st.Ed.QueueFree();
+        await r.Frames(2);
+        h.S.ShowDraft(null);
+        var kept = StudioDraft.Find(h.Pack);
+        Check.That(kept?.Pack.Pieces.Any(d => d.Name == "Hussars of the Reserve") == true, "the draft outlives the studio");
+        Check.That(!File.ReadAllText(manifest).Contains("Hussars of the Reserve"), "the pack itself is untouched");
+        var again = await Open(r, h, kept);
+        Check.Equal("Hussars of the Reserve", again.Ed.Sel?.Name, "the studio opens on the draft");
+        Check.Equal("Hussars of the Reserve", h.S.Def(h.Hussars)?.Name, "the table shows it again, to the host alone");
+        again.Ed.AskConfirm();
+        for (int i = 0; i < 60 && !again.Back(); i++) await r.Frames(1);
+        Check.That(File.ReadAllText(manifest).Contains("Hussars of the Reserve"), "Confirm lands it in the pack");
+        Check.That(StudioDraft.Find(h.Pack) == null, "and the draft is gone");
     }
 }

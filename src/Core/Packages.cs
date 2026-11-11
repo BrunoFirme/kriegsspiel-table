@@ -61,6 +61,17 @@ public sealed class PackageStore
             return null;
         }
         _damaged.Remove(id);
+        return Hold(id, p);
+    }
+
+    public PackManifest Adopt(string id, PackManifest p)
+    {
+        Forget(id);
+        return Hold(id, p);
+    }
+
+    PackManifest Hold(string id, PackManifest p)
+    {
         _packs[id] = p;
         foreach (var d in p.Pieces) _defs.TryAdd(d.Id, (d, p));
         foreach (var d in p.Pieces)

@@ -42,7 +42,10 @@ public partial class PieceStudio
     public void PaintIn2D(string key) => PaintFace(key);
 
     public void Say(string text) { if (!_gone) Flash(text); }
-    public void SetSaved(string text) { if (!_gone) Top.Saved = text; }
+    public void SetSaved(string text)
+    {
+        if (!_gone) Top.Saved = text == "saved" && InPlace is { } place ? place.Status(_pack) : text;
+    }
     public void PickInk(Color c)
     {
         _canvas.Ink = c;
