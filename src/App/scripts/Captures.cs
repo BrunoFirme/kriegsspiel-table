@@ -13,56 +13,85 @@ sealed class Captures : HudPart
     readonly Func<RectOverlay> _rect;
     public Captures(HudContext ctx, Func<RectOverlay> rect) : base(ctx) { _rect = rect; }
 
-    const string GifFolder = "ktable-pov-gifs", PartSuffix = ".part";
+    const string GifFolder = "ktable-gifs", PartSuffix = ".part";
     const double BytesPerMegabyte = 1e6;
 
-    public PovRecording? Recording { get; private set; }
+    public GifRecording? Recording { get; private set; }
     public event Action? RecordingTicked;
+
+    public GifRecording? RegionRecording { get; private set; }
+    public event Action? RegionChanged, RegionTicked;
 
     public Task Sighting() => T.Draft switch
     {
         null => Task.CompletedTask,
         { Gif: false } => Picture(),
         _ when Recording is { } r => Stopping(r),
-        var d => Record(d),
+        var d => Gif(new PovFrames(T.Sighting, d), "pov", rec =>
+        {
+            Recording = rec;
+            if (rec != null) rec.Ticked += () => RecordingTicked?.Invoke();
+            T.RefreshSightingPanel();
+        }, () => { if (T.Draft == d) T.EndDraft(); }),
     };
 
-    static Task Stopping(PovRecording r)
+    static Task Stopping(GifRecording r)
     {
         r.Stop();
         return Task.CompletedTask;
     }
 
-    async Task Record(SightingDraft d)
+    public Task Capture(Rect2 r) => Cfg.CaptureGif ? RecordRegion(r) : Region(r);
+
+    Task RecordRegion(Rect2 r)
+    {
+        if (RegionRecording != null) return Task.CompletedTask;
+        _rect().SetRect(null);
+        return Gif(new RegionFrames(T, HudNode, r), S.IsUmpire ? "umpire" : "observer", rec =>
+        {
+            RegionRecording = rec;
+            _rect().SetRecording(rec == null ? null : r);
+            if (rec != null) rec.Ticked += () => RegionTicked?.Invoke();
+            RegionChanged?.Invoke();
+        }, () => { });
+    }
+
+    public bool StopRegion()
+    {
+        if (RegionRecording is not { } r) return false;
+        r.Stop();
+        return true;
+    }
+
+    public void CancelRegion() => RegionRecording?.Drop();
+
+    async Task Gif(IGifFrames frames, string kind, Action<GifRecording?> holds, Action kept)
     {
         if (_taking) return;
         var folder = Cfg.CaptureToFolder ? Cfg.CaptureFolder : Path.Combine(Path.GetTempPath(), GifFolder);
-        var file = Path.Combine(folder, $"{S.View.ScenarioId}_{S.View.Clock.Turn}_pov_{DateTime.Now:HHmmss}.gif");
+        var file = Path.Combine(folder, $"{S.View.ScenarioId}_{S.View.Clock.Turn}_{kind}_{DateTime.Now:HHmmss}.gif");
         try { Directory.CreateDirectory(folder); }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {
             Say($"could not write to {folder}: {e.Message}");
             return;
         }
-        var rec = new PovRecording(T.Sighting, d, file + PartSuffix);
-        rec.Ticked += () => RecordingTicked?.Invoke();
-        Recording = rec;
-        T.RefreshSightingPanel();
-        bool kept = false;
+        var rec = new GifRecording(frames, file + PartSuffix);
+        holds(rec);
+        bool done = false;
         try
         {
             var end = await rec.Run();
-            Recording = null;
-            if (end == PovRecording.End.Dropped) { Say("GIF dropped"); return; }
-            if (end == PovRecording.End.Failed || rec.Frames == 0)
+            holds(null);
+            if (end == GifRecording.End.Dropped) { Say("GIF dropped"); return; }
+            if (end == GifRecording.End.Failed || rec.Frames == 0)
             {
                 Say("GIF not made: " + (rec.Failure ?? "no picture came"));
-                T.RefreshSightingPanel();
                 return;
             }
             File.Move(file + PartSuffix, file, overwrite: true);
-            kept = true;
-            if (T.Draft == d) T.EndDraft();
+            done = true;
+            kept();
             DeliverGif(file, rec, end);
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
@@ -71,12 +100,12 @@ sealed class Captures : HudPart
         }
         finally
         {
-            Recording = null;
-            if (!kept) BestEffort.DeleteFile(file + PartSuffix);
+            holds(null);
+            if (!done) BestEffort.DeleteFile(file + PartSuffix);
         }
     }
 
-    void DeliverGif(string file, PovRecording rec, PovRecording.End end)
+    void DeliverGif(string file, GifRecording rec, GifRecording.End end)
     {
         var msgs = new List<string>();
         if (Cfg.CaptureToClipboard)
@@ -88,8 +117,8 @@ sealed class Captures : HudPart
         if (Cfg.CaptureToFolder) msgs.Add("saved " + Path.GetFileName(file));
         var cut = end switch
         {
-            PovRecording.End.LongestTime => $", stopped at {PovRecording.MostSeconds:0} s",
-            PovRecording.End.LargestFile => $", stopped at {PovRecording.StopAtBytes / BytesPerMegabyte:0} MB",
+            GifRecording.End.LongestTime => $", stopped at {GifRecording.MostSeconds:0} s",
+            GifRecording.End.LargestFile => $", stopped at {GifRecording.StopAtBytes / BytesPerMegabyte:0} MB",
             _ => "",
         };
         var made = $"GIF {rec.Seconds:0.0} s, {rec.Frames} frames, {rec.Bytes / BytesPerMegabyte:0.0} MB{cut}";

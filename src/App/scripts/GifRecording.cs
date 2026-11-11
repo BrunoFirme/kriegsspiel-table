@@ -4,36 +4,41 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Godot;
-using KTable.Client;
 using KTable.Client.Gif;
 
 namespace KTable.App;
 
-sealed class PovRecording
+interface IGifFrames
+{
+    Task<Vector2I> Open();
+    Task Draw();
+    Image Grab();
+    void Close();
+    bool Gone { get; }
+}
+
+sealed class GifRecording
 {
     public const int FramesPerSecond = 10;
     public const double MostSeconds = 60;
     public const long StopAtBytes = 9_000_000;
-    public const int EyeHeight = 432, AboveSide = 720;
     const int QueueDepth = 4, AbandonAfterMs = 30_000;
     const double MsPerSecond = 1000, FrameSeconds = 1.0 / FramesPerSecond;
 
     public enum End { Stopped, LongestTime, LargestFile, Dropped, Failed }
 
-    readonly Sighting _sighting;
-    readonly SightingDraft _draft;
+    readonly IGifFrames _source;
     readonly string _file;
     readonly BlockingCollection<(byte[] rgba, double at)> _frames = new(QueueDepth);
     long _bytes;
     int _written;
-    volatile bool _stop;
+    volatile bool _stop, _drop;
     volatile string? _failure;
     double _endAt;
 
-    public PovRecording(Sighting sighting, SightingDraft draft, string file)
+    public GifRecording(IGifFrames source, string file)
     {
-        _sighting = sighting;
-        _draft = draft;
+        _source = source;
         _file = file;
     }
 
@@ -45,11 +50,11 @@ sealed class PovRecording
 
     public void Stop() => _stop = true;
 
+    public void Drop() => _drop = true;
+
     public async Task<End> Run()
     {
-        var shot = await _sighting.OpenPicture(_draft, _draft.FirstPerson ? EyeHeight : AboveSide);
-        _sighting.Recording = true;
-        var size = shot.Size;
+        var size = await _source.Open();
         var worker = Task.Run(() => Encode(size.X, size.Y));
         ulong started = Time.GetTicksMsec();
         double due = 0;
@@ -63,9 +68,9 @@ sealed class PovRecording
                     end = why;
                     break;
                 }
-                await _sighting.DrawFrame(shot, _draft);
+                await _source.Draw();
                 Seconds = (Time.GetTicksMsec() - started) / MsPerSecond;
-                if (Seconds >= due) due = Grab(shot, due);
+                if (Seconds >= due) due = Grab(due);
                 Ticked?.Invoke();
             }
         }
@@ -73,8 +78,7 @@ sealed class PovRecording
         {
             _endAt = Seconds;
             _frames.CompleteAdding();
-            _sighting.Recording = false;
-            _sighting.ClosePicture(shot);
+            _source.Close();
         }
         await worker;
         return _failure != null ? End.Failed : end;
@@ -83,15 +87,15 @@ sealed class PovRecording
     End? Reason()
     {
         if (_failure != null) return End.Failed;
-        if (_sighting.Draft != _draft) return End.Dropped;
+        if (_source.Gone || _drop) return End.Dropped;
         if (_stop) return End.Stopped;
         if (Seconds >= MostSeconds) return End.LongestTime;
         return Bytes >= StopAtBytes ? End.LargestFile : null;
     }
 
-    double Grab(SubViewport shot, double due)
+    double Grab(double due)
     {
-        var img = shot.GetTexture().GetImage();
+        var img = _source.Grab();
         if (img.GetFormat() != Image.Format.Rgba8) img.Convert(Image.Format.Rgba8);
         _frames.TryAdd((img.GetData(), Seconds));
         double next = due + FrameSeconds;

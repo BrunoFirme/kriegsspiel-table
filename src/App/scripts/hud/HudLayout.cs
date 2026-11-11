@@ -73,6 +73,7 @@ public partial class Hud
         Ranging = new RangePanel(Ctx, this);
         Boards = new LayersPanel(Ctx, MakePanel("boards", "Layers"), Paint, Strip);
         Pov = new PovPanel(Ctx, this, Captures);
+        Capture = new CapturePanel(Ctx, this, Captures);
         LogPanel = new LogPanel(Ctx, MakePanel("log", "Log"));
         if (S.IsUmpire) ScriptConsole = new ConsolePanel(Ctx, MakePanel("console", "Script console"));
         Paint.Rebuild();

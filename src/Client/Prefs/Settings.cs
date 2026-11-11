@@ -19,6 +19,7 @@ public sealed class Settings
     public double SightingEyeShare { get; set; } = 1;
     public bool SightingHideText { get; set; }
     public bool SightingGif { get; set; }
+    public bool CaptureGif { get; set; }
     public string LastName { get; set; } = "";
     public string LastAddress { get; set; } = "127.0.0.1";
     public int Port { get; set; } = 7777;

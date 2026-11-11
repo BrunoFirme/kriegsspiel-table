@@ -100,13 +100,13 @@ sealed class PovPanel : HudPart
     void ShowRecording()
     {
         if (_captures.Recording is not { } r || _recordLine == null || !GodotObject.IsInstanceValid(_recordLine)) return;
-        _recordLine.Text = $"Recording {r.Seconds:0.0} s · {r.Bytes / BytesPerMegabyte:0.0} of {PovRecording.StopAtBytes / BytesPerMegabyte:0} MB";
+        _recordLine.Text = $"Recording {r.Seconds:0.0} s · {r.Bytes / BytesPerMegabyte:0.0} of {GifRecording.StopAtBytes / BytesPerMegabyte:0} MB";
     }
 
     void AddShot(GridContainer grid, SightingDraft d) =>
         AddChoice(grid, "Shot", d.Gif, on => Keep(() => Cfg.SightingGif = on, () => SetGif(d, on)),
             ("Picture", "One still picture"),
-            ("GIF", $"A moving picture, {PovRecording.FramesPerSecond} frames a second, up to {PovRecording.MostSeconds:0} s or {PovRecording.StopAtBytes / BytesPerMegabyte:0} MB"));
+            ("GIF", $"A moving picture, {GifRecording.FramesPerSecond} frames a second, up to {GifRecording.MostSeconds:0} s or {GifRecording.StopAtBytes / BytesPerMegabyte:0} MB"));
 
     void SetGif(SightingDraft d, bool on)
     {
@@ -268,7 +268,7 @@ sealed class PovPanel : HudPart
             ("Shown", "Names, counters, notes and faces as the table shows them"),
             ("Hidden", "No names, counters, notes or studio lettering in the picture; words in imported pictures stay"));
 
-    static void AddChoice(GridContainer grid, string label, bool second, Action<bool> pick, (string text, string tip) first, (string text, string tip) other)
+    internal static void AddChoice(GridContainer grid, string label, bool second, Action<bool> pick, (string text, string tip) first, (string text, string tip) other)
     {
         grid.AddChild(new Label { Text = label });
         var row = new HBoxContainer();

@@ -36,6 +36,7 @@ public partial class Table : Node3D
         add { Router.CaptureRequested += value; Keys.CaptureRequested += value; }
         remove { Router.CaptureRequested -= value; Keys.CaptureRequested -= value; }
     }
+    public Func<bool>? StopRecording { get => Keys.StopRecording; set => Keys.StopRecording = value; }
     public event Action<string>? PanelRequested { add => Keys.PanelRequested += value; remove => Keys.PanelRequested -= value; }
     public event Action<Vector2, PieceNode?>? ContextMenu { add => Router.ContextMenu += value; remove => Router.ContextMenu -= value; }
     public event Action? BoardsChanged;
@@ -384,6 +385,11 @@ public partial class Table : Node3D
         else if (ToolLine(was) != null) Say("");
     }
 
+    public void RefreshHint()
+    {
+        if (ToolLine(Tool) is { } line) Say(line);
+    }
+
     static readonly Tool[] DrawModeTools = { Tool.Draw, Tool.Shape, Tool.Erase, Tool.Letter };
 
     public Tool DrawMode => DrawModeTools[Math.Max(0, Array.IndexOf(Settings.DrawModes, _c.Settings.DrawMode))];
@@ -411,7 +417,9 @@ public partial class Table : Node3D
         Tool.Shape => Polyline.IsPath(ShapeKind) ? PathHint() : "Drag the shape out, end to end or corner to corner, on the layer picked in the panel",
         Tool.Erase => "Drag over strokes to rub them out · only the layer picked in the panel",
         Tool.Letter => "Click, or drag a path, and type the name · Enter lays it, Esc drops it · double-click a name to retype it, drag to move it",
-        Tool.Capture => $"Drag the region to capture · {_c.Settings.Keys.Label("captureAgain")} captures it again",
+        Tool.Capture => _c.Settings.CaptureGif
+            ? $"Drag the region to record a GIF · Enter or Stop ends it · {_c.Settings.Keys.Label("captureAgain")} records it again"
+            : $"Drag the region to capture · {_c.Settings.Keys.Label("captureAgain")} captures it again",
         Tool.Zone => "Drag a rectangle on the board to give it to an umpire",
         Tool.Crop => "Drag the knobs to trim the sheet · Apply or Cancel in the Map page",
         _ => null,

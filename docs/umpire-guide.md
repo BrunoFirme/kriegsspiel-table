@@ -297,6 +297,10 @@ Nothing is sent: paste it into that side's channel.
 **Ctrl+Shift+C** and drag a region: it goes to the clipboard and the capture folder. **Ctrl+Shift+X** repeats
 it. Tools, zones and pointers are left out.
 
+For a moving picture, choose **Shot → GIF** in the Capture panel, then drag the region: it records, 10 frames a
+second, while you keep playing (move pieces, roll dice, turn the view). **Stop** in the panel or **Enter** ends it
+and hands it over like a picture; **Cancel** drops it. It stops by itself at 60 s or 9 MB.
+
 Names too small in the picture? Keep **Settings → Captures → Resolution** at 4×, shrink the POV reach, or turn up
 **Settings → Table → Text size**.
 

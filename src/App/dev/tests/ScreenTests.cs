@@ -246,7 +246,7 @@ static class ScreenTests
             var bytes = File.ReadAllBytes(made[0]);
             int w = bytes[6] | bytes[7] << 8, ht = bytes[8] | bytes[9] << 8;
             Check.That(System.Text.Encoding.ASCII.GetString(bytes, 0, 6) == "GIF89a" && bytes[^1] == 0x3B, "a whole GIF file");
-            Check.That(w == PovRecording.AboveSide && ht == PovRecording.AboveSide, $"square from above: {w}×{ht}");
+            Check.That(w == PovFrames.AboveSide && ht == PovFrames.AboveSide, $"square from above: {w}×{ht}");
         }
         finally { await Tidy(r, h, folder); }
     }
@@ -267,7 +267,7 @@ static class ScreenTests
             Check.That(made.Length == 1, "one GIF: " + string.Join(", ", made.Select(Path.GetFileName)));
             var bytes = File.ReadAllBytes(made[0]);
             int w = bytes[6] | bytes[7] << 8, ht = bytes[8] | bytes[9] << 8;
-            Check.That(ht == PovRecording.EyeHeight && w == PovRecording.EyeHeight * 16 / 9, $"16:9 from the eye: {w}×{ht}");
+            Check.That(ht == PovFrames.EyeHeight && w == PovFrames.EyeHeight * 16 / 9, $"16:9 from the eye: {w}×{ht}");
             File.Delete(made[0]);
             h.Table.Selection.Set(new[] { "p1" });
             h.Table.SetTool(Tool.Sighting);

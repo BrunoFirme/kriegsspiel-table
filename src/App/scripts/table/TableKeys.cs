@@ -49,6 +49,7 @@ sealed class TableKeys
     public event Action? MenuRequested;
     public event Action? PublishRequested;
     public event Action<Rect2>? CaptureRequested;
+    public Func<bool>? StopRecording;
     public event Action<string>? PanelRequested;
 
     bool RequestPublish()
@@ -65,6 +66,7 @@ sealed class TableKeys
         if (Table.AnyTextFocus()) return;
         if (k.Keycode == Key.Escape) { Escape(); return; }
         if (ScriptHotkey(k, up: false)) return;
+        if (k.Keycode is Key.Enter or Key.KpEnter && StopRecording?.Invoke() == true) return;
         if (k.Keycode is Key.Enter or Key.KpEnter && _c.Tool == Tool.Sighting && _sighting.Draft != null) { if (!RequestPublish()) _sighting.End(); return; }
         if (k.Keycode is >= Key.Key1 and <= Key.Key9 && !k.AltPressed && k.CtrlPressed != k.ShiftPressed) { NumberWithModifier((int)(k.Keycode - Key.Key1) + 1, k.CtrlPressed); return; }
         if (!k.CtrlPressed && !k.AltPressed && PieceActions.StateKey(k.Keycode) is int stateNo && _actions.SetStateNumber(stateNo)) return;

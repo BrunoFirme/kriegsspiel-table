@@ -30,6 +30,7 @@ public partial class Hud : CanvasLayer
     internal RangePanel Ranging = null!;
     internal LayersPanel Boards = null!;
     internal PovPanel Pov = null!;
+    internal CapturePanel Capture = null!;
     internal LogPanel LogPanel = null!;
     internal ConsolePanel? ScriptConsole;
     internal ScriptFileWatch FileWatch = null!;
@@ -148,6 +149,7 @@ public partial class Hud : CanvasLayer
         {
             Strip.SyncToolButtons();
             Pov.Rebuild();
+            Capture.Rebuild();
             Paint.Rebuild();
             Stamps.Rebuild();
             Relief?.Rebuild();
@@ -178,7 +180,8 @@ public partial class Hud : CanvasLayer
         Hook<Action>(h => T.BoardsChanged += h, h => T.BoardsChanged -= h, () => { Boards.Rebuild(); Paint.Rebuild(); });
         Hook<Action>(h => T.PublishRequested += h, h => T.PublishRequested -= h, () => _ = CaptureSighting());
         Hook<Action>(h => T.CropChanged += h, h => T.CropChanged -= h, () => Map.OnCropChanged());
-        Hook<Action<Rect2>>(h => T.CaptureRequested += h, h => T.CaptureRequested -= h, r => _ = Captures.Region(r));
+        Hook<Action<Rect2>>(h => T.CaptureRequested += h, h => T.CaptureRequested -= h, r => _ = Captures.Capture(r));
+        T.StopRecording = Captures.StopRegion;
     }
 
     void Applied(Command c)
@@ -250,15 +253,23 @@ public partial class Hud : CanvasLayer
 
     public Task CaptureSighting() => Captures.Sighting();
 
-    public Task CaptureRect(Rect2 r) => Captures.Region(r);
+    public Task CaptureRect(Rect2 r) => Captures.Capture(r);
 }
 
 public partial class RectOverlay : Control
 {
-    Rect2? _r;
+    Rect2? _r, _recording;
     public void SetRect(Rect2? r) { _r = r; QueueRedraw(); }
+
+    public void SetRecording(Rect2? r)
+    {
+        _recording = r;
+        QueueRedraw();
+    }
+
     public override void _Draw()
     {
+        if (_recording is { } rec) DrawRect(rec.Grow(2), Ui.Danger, false, 2f);
         if (_r is not { } r) return;
         DrawRect(r, new Color(Ui.Accent, 0.12f));
         DrawRect(r, new Color(Ui.AccentInk, 0.9f), false, 1.5f);
