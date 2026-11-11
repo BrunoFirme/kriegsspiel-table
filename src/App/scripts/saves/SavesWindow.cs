@@ -376,11 +376,16 @@ sealed partial class SavesWindow : Window
             StretchMode = TextureRect.StretchModeEnum.KeepAspectCovered, MouseFilter = Control.MouseFilterEnum.Ignore,
         };
         var plate = new Panel { CustomMinimumSize = new Vector2(TileWidth - 12, PictureHeight), MouseFilter = Control.MouseFilterEnum.Ignore };
-        plate.AddThemeStyleboxOverride("panel", Ui.Box(new Color(1, 1, 1, 0.03f), 3));
+        plate.AddThemeStyleboxOverride("panel", e.Folder ? new StyleBoxEmpty() : Ui.Box(new Color(1, 1, 1, 0.03f), 3));
         plate.AddChild(picture);
         picture.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
         if (e.Folder && e.Trashed == null) ShowInside(e.Path, plate);
-        else if (e.Folder) plate.AddChild(new ToolIcon { Kind = "folder", Color = Ui.Muted });
+        else if (e.Folder)
+        {
+            var empty = new Mosaic();
+            empty.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
+            plate.AddChild(empty);
+        }
         v.AddChild(plate);
         var name = new Label { Text = e.Name, ClipText = true, MouseFilter = Control.MouseFilterEnum.Ignore };
         name.AddThemeFontSizeOverride("font_size", 13);

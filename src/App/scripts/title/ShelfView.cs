@@ -130,6 +130,7 @@ sealed class ShelfView
         var shelf = Lib.Of(s.Pack);
         if (cv.GetChild(0) is Panel plate)
         {
+            plate.AddThemeStyleboxOverride("panel", new StyleBoxEmpty());
             var inside = shelf.Inside(e.Path, s.Present, Mosaic.Most);
             var mosaic = new Mosaic { Count = inside.Count, Fit = s.Pack };
             mosaic.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
