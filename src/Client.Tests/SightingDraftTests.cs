@@ -71,6 +71,9 @@ public class SightingDraftTests
         var steps = Enumerable.Range(0, 11).Select(i => d.BlurAt(new Vec2(5 + i * 0.5, 0))).ToList();
         for (int i = 1; i < steps.Count; i++) Assert.True(steps[i] > steps[i - 1]);
         Assert.True(steps[10] - steps[9] > 3 * (steps[2] - steps[1]), "the blur is gentle near the ring and hard near the edge");
+        Assert.True(steps[5] < steps[10] * 0.15, $"half way out the blur is still light, not {steps[5] / steps[10]:0.00} of the edge's");
+        for (int i = 2; i < steps.Count; i++)
+            Assert.InRange(steps[i] / steps[i - 1], 1.25, 3.5);
         d.Blur = SightingDraft.MostBlur;
         Assert.Equal(SightingDraft.MostBlur * 10, d.BlurAt(new Vec2(10, 0)), 9);
         d.Sharp = 1;

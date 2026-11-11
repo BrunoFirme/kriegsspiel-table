@@ -161,7 +161,7 @@ sealed class PovPanel : HudPart
         var sharpBox = SliderRow(grid, "Sharp to", sharp, v => Distance(d.Radius * v));
         var blur = new HSlider
         {
-            MinValue = SightingDraft.LeastBlur, MaxValue = SightingDraft.MostBlur, Step = SightingDraft.BlurStep, Value = d.Blur,
+            MinValue = SightingDraft.LeastBlur, MaxValue = SightingDraft.MostBlur, Step = SightingDraft.BlurStep, ExpEdit = true, Value = d.Blur,
             TooltipText = "How far things smudge at the very edge: right for smudges, left for a light haze",
         };
         var blurLabel = new Label();

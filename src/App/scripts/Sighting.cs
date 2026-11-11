@@ -54,7 +54,7 @@ sealed class Sighting
                 CastShadow = GeometryInstance3D.ShadowCastingSetting.Off, Layers = Table.PictureOnlyLayer };
         Root.AddChild(_shotPlane);
         _liveLens = new SightLens(_c.Rig.Cam, SightLens.NewGlass());
-        _liveLens.Glass.SetShaderParameter("bend", (float)SightingDraft.BlurBend);
+        _liveLens.Glass.SetShaderParameter("doublings", (float)SightingDraft.BlurDoublings);
         _lensLayer = new CanvasLayer { Layer = UnderTheSelectionGlow };
         _lensLayer.AddChild(_liveLens);
         Root.AddChild(_lensLayer);

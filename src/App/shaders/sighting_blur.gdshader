@@ -7,7 +7,7 @@ uniform sampler2D screen_tex : hint_screen_texture, filter_linear_mipmap;
 uniform float reach = 10.0;
 uniform float sharp = 1.0;
 uniform float most = 0.12;
-uniform float bend = 1.8;
+uniform float doublings = 6.0;
 uniform int square = 0;
 uniform float ground = 0.0;
 uniform float veil = 0.0;
@@ -39,7 +39,7 @@ void fragment() {
 		float start = sharp * reach;
 		float t = clamp((away(under) - start) / max(reach - start, 1e-4), 0.0, 1.0);
 		if (t <= 0.0) discard;
-		float blur = most * reach * pow(t, bend);
+		float blur = most * reach * (exp2(doublings * t) - 1.0) / (exp2(doublings) - 1.0);
 		float px = blur / per_pixel;
 		float lod = log2(max(px * 0.5, 1.0));
 		vec2 spread = px * 0.5 * SCREEN_PIXEL_SIZE;

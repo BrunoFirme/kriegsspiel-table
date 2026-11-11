@@ -24,14 +24,16 @@ public sealed class SightingDraft
     public const double NarrowestLens = 20, NormalLens = 60, WholeCircleLens = 90, WidestLens = 120, LensStep = 1;
     public static double FitLens(double degrees) => double.IsFinite(degrees) ? Math.Clamp(degrees, NarrowestLens, WidestLens) : NormalLens;
 
-    public const double BlurAtEdge = 0.12, LeastBlur = 0.02, MostBlur = 0.3, BlurStep = 0.01, BlurBend = 1.8, SharpStep = 0.025;
+    public const double BlurAtEdge = 0.12, LeastBlur = 0.002, MostBlur = 0.3, BlurStep = 0.001, BlurDoublings = 6, SharpStep = 0.025;
+
+    public static double BlurShare(double t) => (Math.Pow(2, BlurDoublings * t) - 1) / (Math.Pow(2, BlurDoublings) - 1);
 
     public double Away(Vec2 p) => Square ? Math.Max(Math.Abs(p.X - Center.X), Math.Abs(p.Z - Center.Z)) : (p - Center).Length;
 
     public double BlurAt(Vec2 p)
     {
         double start = Sharp * Radius, t = Math.Clamp((Away(p) - start) / Math.Max(Radius - start, 1e-4), 0, 1);
-        return t <= 0 ? 0 : Blur * Radius * Math.Pow(t, BlurBend);
+        return t <= 0 ? 0 : Blur * Radius * BlurShare(t);
     }
 
     public Vec2 Clip(Vec2 p)
