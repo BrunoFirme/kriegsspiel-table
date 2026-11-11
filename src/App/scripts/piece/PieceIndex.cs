@@ -210,7 +210,7 @@ sealed class PieceIndex : HudPart
             var heading = _tree.CreateItem(top);
             heading.SetSelectable(0, false);
             heading.SetMetadata(0, group.Key.ToString());
-            heading.SetText(0, $"{Plural(group.Key)}  ·  {group.Sum(r => Add(heading, r))}");
+            Ui.HeadStyle(heading, $"{Plural(group.Key)}  ·  {group.Sum(r => Add(heading, r))}");
             heading.Collapsed = _foldedTypes.Contains(group.Key);
         }
     }

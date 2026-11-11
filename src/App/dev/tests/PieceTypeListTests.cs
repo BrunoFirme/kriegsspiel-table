@@ -51,8 +51,9 @@ static class PieceTypeListTests
         await r.Frames(2);
         var props = index.ItemOf(U, "p3")?.GetParent();
         var pieces = index.ItemOf(U, "p1")?.GetParent();
-        Check.Equal("Props  ·  2", props?.GetText(0), "the tree heads its branch under Props");
-        Check.Equal("Pieces  ·  1", pieces?.GetText(0), "the lone piece is under Pieces");
+        Check.Equal("PROPS  ·  2", props?.GetText(0), "the tree heads its branch under Props");
+        Check.Equal("PIECES  ·  1", pieces?.GetText(0), "the lone piece is under Pieces");
+        Check.That(props!.GetCustomColor(0) == Ui.Muted && props.GetCustomFontSize(0) < index.Rows.GetThemeFontSize("font_size"), "a heading is drawn as a section head, small and muted");
         Check.That(index.ItemOf(U, "p2")?.GetParent() == index.ItemOf(U, "p3"), "the piece riding on the tree stays under it");
         Check.That(!props!.IsSelectable(0), "a heading is not a piece to pick");
         Check.That(!index.CanDrop(index.Rows.GetItemAreaRect(pieces!).GetCenter(), PieceIndex.DragData(new[] { (U, "p2") })), "a row dropped on a heading does nothing");

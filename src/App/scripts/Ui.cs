@@ -365,11 +365,21 @@ public static class Ui
         return l;
     }
 
+    const int HeadSize = 11;
+
     public static void HeadStyle(Label l)
     {
         l.AddThemeColorOverride("font_color", Muted);
         l.AddThemeFontOverride("font", SansStrong());
-        l.AddThemeFontSizeOverride("font_size", 11);
+        l.AddThemeFontSizeOverride("font_size", HeadSize);
+    }
+
+    public static void HeadStyle(TreeItem item, string text)
+    {
+        item.SetText(0, Spaced(text));
+        item.SetCustomColor(0, Muted);
+        item.SetCustomFont(0, SansStrong());
+        item.SetCustomFontSize(0, HeadSize);
     }
 
     public static GridContainer Form(int labelWidth = 72, int columns = 2)
