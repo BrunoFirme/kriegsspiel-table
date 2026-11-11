@@ -51,6 +51,12 @@ public sealed class Settings
     public bool VSync { get; set; } = true;
     public int FrameLimit { get; set; }
     public const int FrameLimitMost = 1000;
+    public bool RestWhenIdle { get; set; } = true;
+    public const int RestingFrames = 30;
+    public int FramesAtMost(bool resting) => resting && RestWhenIdle && FrameLimit is 0 or > RestingFrames ? RestingFrames : FrameLimit;
+    public string Renderer { get; set; } = Vulkan;
+    public const string Vulkan = "vulkan", Direct3D12 = "d3d12";
+    public static readonly string[] Renderers = { Vulkan, Direct3D12 };
     public int FarDetail { get; set; } = FarDetailDefault;
     public const int FarDetailDefault = 1, FarDetailMost = 2;
     public float RenderScale { get; set; } = 1f;
@@ -158,6 +164,7 @@ public sealed class Settings
         ReliefDensity = float.IsFinite(ReliefDensity) ? Math.Clamp(ReliefDensity, 0.05f, 1f) : 1f;
         if (Array.IndexOf(ReliefPaintings, ReliefPaint) < 0) ReliefPaint = "brush";
         if (Array.IndexOf(MapPictureMemoryChoices, MapPictureMemory) < 0) MapPictureMemory = 0;
+        if (Array.IndexOf(Renderers, Renderer) < 0) Renderer = Vulkan;
         if (UiScaleFollowsWindows != null) UiScale = 1f;
         UiScaleFollowsWindows = null;
         UiScale = float.IsFinite(UiScale) ? Math.Clamp(UiScale, UiScaleMin, UiScaleMax) : 1f;

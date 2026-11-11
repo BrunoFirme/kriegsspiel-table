@@ -282,6 +282,41 @@ sealed class SettingsDialog : HudPart
             Graphics.ApplyDisplay(Cfg);
         };
         _box.AddChild(Row("Frame limit", limitPick, null, fill: false));
+        var rest = new CheckBox { Text = "Rest when left alone", ButtonPressed = Cfg.RestWhenIdle,
+            TooltipText = $"At most {Settings.RestingFrames} frames a second while the window is behind others or untouched for two minutes: a laptop stays cooler" };
+        rest.Toggled += on =>
+        {
+            Cfg.RestWhenIdle = on;
+            Cfg.Save();
+            Graphics.ApplyDisplay(Cfg);
+        };
+        _box.AddChild(Option(rest));
+        if (Graphics.CanChooseRenderer) AddRenderer();
+    }
+
+    void AddRenderer()
+    {
+        _box.AddChild(Header("Card"));
+        var pick = new OptionButton { TooltipText = "Try the other one if the graphics driver stops or the table draws wrongly", CustomMinimumSize = new Vector2(160, 0) };
+        foreach (var r in Settings.Renderers) pick.AddItem(Graphics.RendererName(r));
+        pick.Selected = Math.Max(0, Array.IndexOf(Settings.Renderers, Cfg.Renderer));
+        var note = Hint("");
+        var noteRow = Ui.UnderControls(note, Ui.DialogLabels);
+        void Tell()
+        {
+            note.Text = Graphics.RendererNote(Cfg.Renderer);
+            noteRow.Visible = note.Text.Length > 0;
+        }
+        pick.ItemSelected += i =>
+        {
+            Cfg.Renderer = Settings.Renderers[i];
+            Cfg.Save();
+            Graphics.ApplyDisplay(Cfg);
+            Tell();
+        };
+        _box.AddChild(Row("Draw through", pick, null, fill: false));
+        _box.AddChild(noteRow);
+        Tell();
     }
 
     void AddSound()

@@ -75,6 +75,31 @@ public class SettingsTests
     }
 
     [Fact]
+    public void Resting_caps_frames_at_thirty_unless_the_limit_is_lower_or_rest_is_off()
+    {
+        var s = new Settings();
+        Assert.Equal(0, s.FramesAtMost(resting: false));
+        Assert.Equal(Settings.RestingFrames, s.FramesAtMost(resting: true));
+        s.FrameLimit = 144;
+        Assert.Equal(144, s.FramesAtMost(resting: false));
+        Assert.Equal(Settings.RestingFrames, s.FramesAtMost(resting: true));
+        s.FrameLimit = 20;
+        Assert.Equal(20, s.FramesAtMost(resting: true));
+        s.FrameLimit = 144;
+        s.RestWhenIdle = false;
+        Assert.Equal(144, s.FramesAtMost(resting: true));
+    }
+
+    [Fact]
+    public void An_unknown_renderer_in_the_file_reads_as_vulkan()
+    {
+        File.WriteAllText(_file, "{\"Renderer\":\"metal\"}");
+        Assert.Equal(Settings.Vulkan, Settings.Load().Renderer);
+        File.WriteAllText(_file, "{\"Renderer\":\"d3d12\"}");
+        Assert.Equal(Settings.Direct3D12, Settings.Load().Renderer);
+    }
+
+    [Fact]
     public void New_settings_are_written_with_these_defaults_in_this_order()
     {
         var s = new Settings();
@@ -84,7 +109,7 @@ public class SettingsTests
         Assert.Equal(
             "{\"Keys\":{\"Keys\":{\"ruler\":\"R\"}},\"CaptureToClipboard\":true,\"CaptureToFolder\":true,\"CaptureFolder\":\"C\",\"CaptureScale\":4,"
             + "\"SightingSquare\":false,\"SightingFirstPerson\":false,\"SightingWide\":false,\"SightingHideText\":false,\"SightingGif\":false,\"LastName\":\"\",\"LastAddress\":\"127.0.0.1\",\"Port\":7777,\"ShareCursor\":true,\"FaceText\":true,\"LabelPlates\":false,\"WheelTurnsHovered\":false,"
-            + "\"LetteringReach\":250,\"ReduceFarDetail\":false,\"MakerTools\":false,\"AgentOn\":false,\"AgentPort\":7796,\"AgentToken\":\"\",\"FaceTextScale\":1,\"ShowCursors\":true,\"ShowZones\":true,\"UiScale\":1,\"Antialias\":2,\"SmoothFineEdges\":false,\"ShadowDetail\":1,\"ContactShade\":false,\"WindowMode\":0,\"VSync\":true,\"FrameLimit\":0,\"FarDetail\":1,\"RenderScale\":1,\"MapPictureMemory\":0,\"SoundVolume\":0.6,\"SoundMuted\":false,\"SoundInBackground\":false,"
+            + "\"LetteringReach\":250,\"ReduceFarDetail\":false,\"MakerTools\":false,\"AgentOn\":false,\"AgentPort\":7796,\"AgentToken\":\"\",\"FaceTextScale\":1,\"ShowCursors\":true,\"ShowZones\":true,\"UiScale\":1,\"Antialias\":2,\"SmoothFineEdges\":false,\"ShadowDetail\":1,\"ContactShade\":false,\"WindowMode\":0,\"VSync\":true,\"FrameLimit\":0,\"RestWhenIdle\":true,\"Renderer\":\"vulkan\",\"FarDetail\":1,\"RenderScale\":1,\"MapPictureMemory\":0,\"SoundVolume\":0.6,\"SoundMuted\":false,\"SoundInBackground\":false,"
             + "\"CameraAt\":{},\"CameraViews\":{},\"PanelPos\":{},\"PanelSize\":{},\"StripSize\":30,\"StripHidden\":[],\"TopLine\":true,\"TopLineWidth\":1,\"PenInk\":\"#1a1a1a\",\"PenSize\":3,\"PenOpacity\":1,"
             + "\"ShapeKind\":\"line\",\"LeftWidth\":300,\"RightWidth\":320,\"LogHeight\":200,\"LeftOpen\":true,\"LeftPage\":\"pieces\","
             + "\"RightOpen\":true,\"LogOpen\":true,\"LogFontSize\":12,\"Favourites\":[],\"FavouritesOnly\":false,\"CompassShown\":true,\"CompassPos\":null,\"BlenderPath\":\"\",\"CheckUpdates\":true,\"ReliefBrush\":6,\"ReliefStrength\":0.35,\"ReliefMode\":\"raise\",\"ReliefDensity\":1,\"ReliefPaint\":\"brush\",\"ReliefDetails\":{},\"FormationGap\":0.1,\"Formation\":\"line\",\"NewBackdrop\":\"\",\"NewTableShade\":0,\"Tour\":0}",

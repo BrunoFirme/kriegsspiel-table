@@ -10,6 +10,11 @@ public sealed class LastRun(string dir)
     const string Prefix = "running-", Suffix = ".txt";
     const string StampFormat = "yyyy-MM-dd HH:mm:ss";
 
+    static readonly string[] GraphicsLostMarks =
+        { "device was lost", "VK_ERROR_DEVICE_LOST", "DXGI_ERROR_DEVICE_REMOVED", "DXGI_ERROR_DEVICE_HUNG", "DXGI_ERROR_DEVICE_RESET", "887A0005", "887A0006", "887A0007" };
+
+    public static bool GraphicsLost(IEnumerable<string> lines) => lines.Any(l => GraphicsLostMarks.Any(m => l.Contains(m, StringComparison.OrdinalIgnoreCase)));
+
     string MarkOf(int pid) => Path.Combine(dir, $"{Prefix}{pid.ToString(CultureInfo.InvariantCulture)}{Suffix}");
 
     public void Begin(int pid, DateTime started)

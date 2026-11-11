@@ -78,7 +78,11 @@ public partial class Main : Node
         if (args.ContainsKey("first-run-tour")) _cfg.Tour = 0;
         else if (devRun) _cfg.Tour = Settings.TourOver;
         Sfx.Install(this, _cfg, quiet: devRun);
-        if (!devRun) Graphics.ApplyDisplay(_cfg);
+        if (!devRun)
+        {
+            Graphics.ApplyDisplay(_cfg);
+            FramePace.Install(this, _cfg);
+        }
         if (args.TryGetValue("packages", out var pk)) System.Environment.SetEnvironmentVariable("KTABLE_PACKAGES", pk);
         _net = new Net { Name = "Net" };
         AddChild(_net);
@@ -202,6 +206,12 @@ public partial class Main : Node
             if (said.Count > 0) _pendingNotice = said.Count == 1 ? said[0] : $"{said.Count} conversions or installs were cut off half way when the app last closed and have been undone: {string.Join(" ", said)}";
         }
         catch (Exception e) { GD.PushError("undoing a cut-off install: " + e.Message); }
+    }
+
+    internal void RestartApp()
+    {
+        OS.SetRestartOnExit(true, OS.GetCmdlineArgs());
+        QuitApp();
     }
 
     internal void QuitApp()

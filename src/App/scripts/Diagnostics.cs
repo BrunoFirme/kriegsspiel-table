@@ -34,6 +34,8 @@ public static class Diagnostics
 
     public static EndedRun? ClosedUnexpectedly { get; private set; }
 
+    public static bool GraphicsStopped { get; private set; }
+
     public static string LogPath => _logPath;
 
     public static string EngineLogPath => Path.Combine(OS.GetUserDataDir(), EngineLogs, CurrentEngineLog);
@@ -63,6 +65,7 @@ public static class Diagnostics
         {
             _runs = new LastRun(OS.GetUserDataDir());
             ClosedUnexpectedly = _runs.EndedUnexpectedly(StillRunning).LastOrDefault();
+            GraphicsStopped = ClosedUnexpectedly is { } run && LastRun.GraphicsLost(RunLog(run));
             using var me = System.Diagnostics.Process.GetCurrentProcess();
             _runs.Begin(me.Id, me.StartTime);
         }
@@ -157,11 +160,13 @@ public static class Diagnostics
         return b.ToString();
     }
 
+    static List<string> RunLog(EndedRun run) => BestEffort.Read(() => LastRun.LogSince(File.ReadLines(_logPath), run.Started, KeepRunLines), new List<string>());
+
     static void LastRunLog(StringBuilder b, EndedRun run)
     {
         b.AppendLine();
         b.AppendLine($"The run started {run.Started:yyyy-MM-dd HH:mm:ss} closed unexpectedly. Its log:");
-        var lines = BestEffort.Read(() => LastRun.LogSince(File.ReadLines(_logPath), run.Started, KeepRunLines), new List<string>());
+        var lines = RunLog(run);
         foreach (var l in lines) b.AppendLine("  " + l);
         if (lines.Count == 0) b.AppendLine("  (nothing was written)");
         var engine = BestEffort.Read(() => new DirectoryInfo(Path.Combine(OS.GetUserDataDir(), EngineLogs)).EnumerateFiles("godot*.log")

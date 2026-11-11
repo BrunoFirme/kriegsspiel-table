@@ -8,7 +8,21 @@ static class Graphics
     public static readonly float[] FarDetailBias = { 0f, -0.75f, -1f };
     public static readonly float[] RenderScales = { 1f, 1.25f, 1.5f, 2f };
 
+    const string NextStart = "user://graphics.cfg", RendererSection = "rendering", RendererKey = "rendering_device/driver.windows";
+
     static int _lastFull = Settings.Borderless;
+
+    static readonly string AskedAtStart = RendererForNextStart();
+
+    public static bool Resting { get; set; }
+
+    public static bool CanChooseRenderer => OS.GetName() == "Windows";
+
+    public static string RendererNow => RenderingServer.GetCurrentRenderingDriverName();
+
+    public static string RendererName(string renderer) => renderer == Settings.Direct3D12 ? "Direct3D 12" : "Vulkan";
+
+    public static string OtherRenderer(string renderer) => renderer == Settings.Direct3D12 ? Settings.Vulkan : Settings.Direct3D12;
 
     public static event System.Action? WindowChosen;
 
@@ -16,7 +30,32 @@ static class Graphics
     {
         ApplyWindow(cfg);
         DisplayServer.WindowSetVsyncMode(cfg.VSync ? DisplayServer.VSyncMode.Enabled : DisplayServer.VSyncMode.Disabled);
-        Engine.MaxFps = cfg.FrameLimit;
+        ApplyFrames(cfg);
+        KeepRendererForNextStart(cfg);
+    }
+
+    public static void ApplyFrames(Settings cfg) => Engine.MaxFps = cfg.FramesAtMost(Resting);
+
+    public static string RendererNote(string chosen) =>
+        chosen == RendererNow ? ""
+        : chosen == AskedAtStart ? $"{RendererName(chosen)} did not start on this card: drawing through {RendererName(RendererNow)}."
+        : "From the next start.";
+
+    static string RendererForNextStart()
+    {
+        var file = new ConfigFile();
+        file.Load(NextStart);
+        return (string)file.GetValue(RendererSection, RendererKey, Settings.Vulkan);
+    }
+
+    static void KeepRendererForNextStart(Settings cfg)
+    {
+        if (RendererForNextStart() == cfg.Renderer) return;
+        var file = new ConfigFile();
+        file.Load(NextStart);
+        file.SetValue(RendererSection, RendererKey, cfg.Renderer);
+        try { KTable.Core.Json.WriteAtomic(ProjectSettings.GlobalizePath(NextStart), file.EncodeToText()); }
+        catch (System.Exception e) when (e is System.IO.IOException or System.UnauthorizedAccessException) { GD.PrintErr("[graphics] the renderer for the next start could not be kept: " + e.Message); }
     }
 
     public static DisplayServer.WindowMode ModeOf(Settings cfg) => cfg.WindowMode switch

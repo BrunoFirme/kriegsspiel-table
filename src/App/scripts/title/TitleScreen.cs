@@ -49,7 +49,7 @@ sealed class TitleScreen
         Trash = new TrashPage(this, main);
         Workshop = new WorkshopPage(this, main, platform);
         SettingsPage = new SettingsPage(this, main, cfg);
-        Report = new ReportPage(this);
+        Report = new ReportPage(this, main, cfg);
     }
 
     public bool HasWorkshop => _platform.HasWorkshop;

@@ -48,4 +48,14 @@ public class LastRunTests
         Assert.Equal(lines[4..], LastRun.LogSince(lines, Started, keep: 2));
         Assert.Empty(LastRun.LogSince(lines, Started.AddMinutes(1), keep: 10));
     }
+
+    [Fact]
+    public void A_run_lost_its_graphics_when_its_log_names_a_lost_or_removed_device()
+    {
+        Assert.True(LastRun.GraphicsLost(new[] { "2026-11-10 22:20:53 ERROR Vulkan device was lost. This could be due to a driver issue" }));
+        Assert.True(LastRun.GraphicsLost(new[] { "INFO  [drop] 1 set down", "ERROR Present failed with error 0x887a0005." }));
+        Assert.True(LastRun.GraphicsLost(new[] { "ERROR DXGI_ERROR_DEVICE_HUNG" }));
+        Assert.False(LastRun.GraphicsLost(new[] { "2026-11-10 22:20:53 ERROR System.NullReferenceException", "   at Some.Frame()" }));
+        Assert.False(LastRun.GraphicsLost(Array.Empty<string>()));
+    }
 }
