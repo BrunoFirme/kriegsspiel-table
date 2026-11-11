@@ -16,7 +16,7 @@ public partial class SheetNode : Node3D
     public Func<SheetNode, Vector3[], bool>? Covered;
     internal SheetPicture? Picture { get; private set; }
     public event Action? IndexKnown;
-    StandardMaterial3D? _mat;
+    ShaderMaterial? _mat;
     MeshInstance3D? _outline;
     bool _selected;
     static readonly Color Unpictured = new(0.82f, 0.78f, 0.68f);
@@ -32,13 +32,8 @@ public partial class SheetNode : Node3D
         n._surface = new ReliefSurface();
         n.AddChild(n._surface);
         if (!def.HasPicture) return n;
-        n._mat = new StandardMaterial3D
-        {
-            Roughness = 1f, Metallic = 0f, SpecularMode = BaseMaterial3D.SpecularModeEnum.Disabled,
-            TextureFilter = BaseMaterial3D.TextureFilterEnum.LinearWithMipmapsAnisotropic,
-            TextureRepeat = false,
-            AlbedoColor = Unpictured,
-        };
+        n._mat = new ShaderMaterial { Shader = Shading(Look.Solid) };
+        n._mat.SetShaderParameter(TintParameter, Unpictured);
         n.Fade(def.Seen);
         var tilesRel = Path.Combine("tiles", def.Image);
         assets.EnsureFile(def.Package, Path.Combine(tilesRel, "index.json"), () => n.OnIndex(tilesRel));
@@ -59,8 +54,13 @@ public partial class SheetNode : Node3D
     void ShowPicture()
     {
         if (_mat == null || Picture?.Texture is not { } tex) return;
-        _mat.AlbedoTexture = tex;
-        _mat.AlbedoColor = Colors.White;
+        _mat.SetShaderParameter(PartsParameter, tex);
+        _mat.SetShaderParameter(AcrossParameter, new Vector2I(Picture.Shape.Across, Picture.Shape.Down));
+        _mat.SetShaderParameter(SpanParameter, Picture.Shape.Span(Picture.Shown));
+        _mat.SetShaderParameter(ShareParameter, Picture.Shape.Share);
+        _mat.SetShaderParameter(InsetParameter, Picture.Shape.Inset);
+        _mat.SetShaderParameter(PicturedParameter, true);
+        _mat.SetShaderParameter(TintParameter, Colors.White);
         Fade(Def.Seen);
     }
 
@@ -68,14 +68,30 @@ public partial class SheetNode : Node3D
     {
         if (_mat == null) return;
         bool faded = opacity < 1;
-        _mat.AlbedoColor = _mat.AlbedoColor with { A = faded ? (float)opacity : 1 };
-        _mat.Transparency = faded ? BaseMaterial3D.TransparencyEnum.Alpha
-            : Picture?.HasAlpha == true ? BaseMaterial3D.TransparencyEnum.AlphaScissor : BaseMaterial3D.TransparencyEnum.Disabled;
-        _mat.DepthDrawMode = faded ? BaseMaterial3D.DepthDrawModeEnum.Always : BaseMaterial3D.DepthDrawModeEnum.OpaqueOnly;
+        var tint = _mat.GetShaderParameter(TintParameter).AsColor();
+        _mat.SetShaderParameter(TintParameter, tint with { A = faded ? (float)opacity : 1 });
+        _look = faded ? Look.SeenThrough : Picture?.HasAlpha == true ? Look.CutOut : Look.Solid;
+        _mat.Shader = Shading(_look);
     }
 
-    public float Opacity => _mat?.AlbedoColor.A ?? 1;
-    public bool SeenThrough => _mat?.Transparency == BaseMaterial3D.TransparencyEnum.Alpha;
+    public float Opacity => _mat?.GetShaderParameter(TintParameter).AsColor().A ?? 1;
+    public bool SeenThrough => _mat != null && _look == Look.SeenThrough;
+
+    enum Look { Solid, CutOut, SeenThrough }
+
+    const string ShaderPath = "res://shaders/sheet.gdshader", ShaderHead = "shader_type spatial;";
+    const string PartsParameter = "parts", AcrossParameter = "parts_across", SpanParameter = "span", ShareParameter = "share", InsetParameter = "inset", TintParameter = "tint", PicturedParameter = "pictured";
+    static readonly System.Collections.Generic.Dictionary<Look, Shader> Shaders = new();
+    Look _look;
+
+    static Shader Shading(Look look)
+    {
+        if (Shaders.TryGetValue(look, out var made)) return made;
+        var code = Godot.FileAccess.GetFileAsString(ShaderPath);
+        string? define = look switch { Look.CutOut => "CUT_OUT", Look.SeenThrough => "SEEN_THROUGH", _ => null };
+        if (define != null) code = code.Replace(ShaderHead, $"{ShaderHead}\n#define {define}");
+        return Shaders[look] = new Shader { Code = code };
+    }
 
     public override void _ExitTree() => Picture?.Drop();
 

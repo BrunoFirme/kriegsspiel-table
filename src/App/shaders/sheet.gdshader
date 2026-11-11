@@ -1,0 +1,34 @@
+shader_type spatial;
+#ifdef SEEN_THROUGH
+render_mode specular_disabled, depth_draw_always;
+#else
+render_mode specular_disabled;
+#endif
+
+uniform sampler2DArray parts : source_color, filter_linear_mipmap_anisotropic, repeat_disable;
+uniform ivec2 parts_across = ivec2(1);
+uniform vec2 span = vec2(1.0);
+uniform vec2 share = vec2(1.0);
+uniform vec2 inset = vec2(0.0);
+uniform vec4 tint : source_color = vec4(1.0);
+uniform bool pictured = false;
+
+void fragment() {
+	vec4 colour = tint;
+	if (pictured) {
+		vec2 at = UV * span;
+		vec2 cell = min(floor(max(at, vec2(0.0))), vec2(parts_across - 1));
+		float layer = cell.y * float(parts_across.x) + cell.x;
+		colour *= textureGrad(parts, vec3((at - cell) * share + inset, layer), dFdx(at) * share, dFdy(at) * share);
+	}
+	ALBEDO = colour.rgb;
+	ROUGHNESS = 1.0;
+	METALLIC = 0.0;
+#ifdef CUT_OUT
+	ALPHA = colour.a;
+	ALPHA_SCISSOR_THRESHOLD = 0.5;
+#endif
+#ifdef SEEN_THROUGH
+	ALPHA = colour.a;
+#endif
+}

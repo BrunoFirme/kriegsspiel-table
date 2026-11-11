@@ -1,11 +1,16 @@
 using System;
+using System.Threading.Tasks;
 using Godot;
+using Rgb = System.Numerics.Vector3;
 
 namespace KTable.App;
 
 static class BlockCompress
 {
     const int Side = 4, Pixels = Side * Side, Channels = 4, ColourBlockBytes = 8, AlphaBlockBytes = 8;
+    const int AxisSteps = 4, RefineRounds = 2;
+    const float Flat = 1e-3f, Most = 255;
+    static readonly float[] NearWeight = { 1, 0, 2 / 3f, 1 / 3f };
 
     public static Image? Compress(Image rgba, bool alpha)
     {
@@ -25,17 +30,21 @@ static class BlockCompress
             long room = (level + 1 < levels ? shaped.GetMipmapOffset(level + 1) : dst.Length) - at;
             long need = (long)((lw + Side - 1) / Side) * ((lh + Side - 1) / Side) * blockBytes;
             if (need > room || from + (long)lw * lh * Channels > src.Length) return null;
-            EncodeLevel(src.AsSpan((int)from, lw * lh * Channels), lw, lh, dst.AsSpan((int)at, (int)need), alpha);
+            EncodeLevel(src, (int)from, lw, lh, dst, (int)at, alpha);
         }
         var packed = Image.CreateFromData(w, h, true, format, dst);
         return packed == null || packed.IsEmpty() ? null : packed;
     }
 
-    static void EncodeLevel(ReadOnlySpan<byte> px, int w, int h, Span<byte> dst, bool alpha)
+    static void EncodeLevel(byte[] src, int from, int w, int h, byte[] dst, int at, bool alpha)
     {
-        Span<byte> block = stackalloc byte[Pixels * Channels];
-        int across = (w + Side - 1) / Side, down = (h + Side - 1) / Side, o = 0;
-        for (int by = 0; by < down; by++)
+        int across = (w + Side - 1) / Side, down = (h + Side - 1) / Side;
+        int blockBytes = alpha ? AlphaBlockBytes + ColourBlockBytes : ColourBlockBytes;
+        Parallel.For(0, down, by =>
+        {
+            var px = src.AsSpan(from, w * h * Channels);
+            Span<byte> block = stackalloc byte[Pixels * Channels];
+            int o = at + by * across * blockBytes;
             for (int bx = 0; bx < across; bx++)
             {
                 bool whole = bx * Side + Side <= w && by * Side + Side <= h;
@@ -49,57 +58,127 @@ static class BlockCompress
                         px.Slice((sy * w + sx) * Channels, Channels).CopyTo(block.Slice((y * Side + x) * Channels, Channels));
                     }
                 }
-                if (alpha) { AlphaBlock(block, dst.Slice(o, AlphaBlockBytes)); o += AlphaBlockBytes; }
-                ColourBlock(block, dst.Slice(o, ColourBlockBytes));
+                if (alpha) { AlphaBlock(block, dst.AsSpan(o, AlphaBlockBytes)); o += AlphaBlockBytes; }
+                ColourBlock(block, dst.AsSpan(o, ColourBlockBytes));
                 o += ColourBlockBytes;
             }
+        });
     }
 
     static void ColourBlock(ReadOnlySpan<byte> block, Span<byte> dst)
     {
-        int minR = 255, minG = 255, minB = 255, maxR = 0, maxG = 0, maxB = 0;
-        for (int i = 0; i < Pixels; i++)
+        Span<Rgb> px = stackalloc Rgb[Pixels];
+        for (int i = 0; i < Pixels; i++) px[i] = new Rgb(block[i * Channels], block[i * Channels + 1], block[i * Channels + 2]);
+        Span<byte> picks = stackalloc byte[Pixels], trial = stackalloc byte[Pixels];
+        var (a, b) = Ends(px);
+        var (c0, c1, error) = Fit(px, a, b, picks);
+        for (int round = 0; round < RefineRounds && error > 0; round++)
         {
-            int r = block[i * Channels], g = block[i * Channels + 1], b = block[i * Channels + 2];
-            minR = Math.Min(minR, r);
-            maxR = Math.Max(maxR, r);
-            minG = Math.Min(minG, g);
-            maxG = Math.Max(maxG, g);
-            minB = Math.Min(minB, b);
-            maxB = Math.Max(maxB, b);
+            if (!Refit(px, picks, c0, c1, out a, out b)) break;
+            var (n0, n1, nextError) = Fit(px, a, b, trial);
+            if (nextError >= error) break;
+            (c0, c1, error) = (n0, n1, nextError);
+            trial.CopyTo(picks);
         }
-        int dr = maxR - minR, dg = maxG - minG, db = maxB - minB;
-        int lo = int.MaxValue, hi = int.MinValue, loAt = 0, hiAt = 0;
-        for (int i = 0; i < Pixels; i++)
-        {
-            int d = block[i * Channels] * dr + block[i * Channels + 1] * dg + block[i * Channels + 2] * db;
-            if (d < lo) { lo = d; loAt = i; }
-            if (d > hi) { hi = d; hiAt = i; }
-        }
-        ushort c0 = To565(block.Slice(hiAt * Channels)), c1 = To565(block.Slice(loAt * Channels));
-        if (c0 < c1) (c0, c1) = (c1, c0);
         dst[0] = (byte)c0;
         dst[1] = (byte)(c0 >> 8);
         dst[2] = (byte)c1;
         dst[3] = (byte)(c1 >> 8);
-        if (c0 == c1) { dst[4] = dst[5] = dst[6] = dst[7] = 0; return; }
-        Span<int> far = stackalloc int[3], near = stackalloc int[3];
-        From565(c0, far);
-        From565(c1, near);
-        int ar = far[0] - near[0], ag = far[1] - near[1], ab = far[2] - near[2];
-        int span = ar * ar + ag * ag + ab * ab;
         for (int y = 0; y < Side; y++)
         {
             int row = 0;
-            for (int x = 0; x < Side; x++)
-            {
-                int i = (y * Side + x) * Channels;
-                int along = (block[i] - near[0]) * ar + (block[i + 1] - near[1]) * ag + (block[i + 2] - near[2]) * ab;
-                int index = along * 6 < span ? 1 : along * 2 < span ? 3 : along * 6 < 5 * span ? 2 : 0;
-                row |= index << (2 * x);
-            }
+            for (int x = 0; x < Side; x++) row |= picks[y * Side + x] << (2 * x);
             dst[4 + y] = (byte)row;
         }
+    }
+
+    static (Rgb A, Rgb B) Ends(ReadOnlySpan<Rgb> px)
+    {
+        var mean = Rgb.Zero;
+        var lo = new Rgb(Most);
+        var hi = Rgb.Zero;
+        foreach (var p in px)
+        {
+            mean += p;
+            lo = Rgb.Min(lo, p);
+            hi = Rgb.Max(hi, p);
+        }
+        mean /= Pixels;
+        Rgb own = Rgb.Zero, shared = Rgb.Zero;
+        foreach (var p in px)
+        {
+            var d = p - mean;
+            own += d * d;
+            shared += new Rgb(d.X * d.Y, d.X * d.Z, d.Y * d.Z);
+        }
+        var axis = hi - lo;
+        for (int i = 0; i < AxisSteps; i++)
+        {
+            var next = new Rgb(
+                own.X * axis.X + shared.X * axis.Y + shared.Y * axis.Z,
+                shared.X * axis.X + own.Y * axis.Y + shared.Z * axis.Z,
+                shared.Y * axis.X + shared.Z * axis.Y + own.Z * axis.Z);
+            float size = Math.Max(Math.Abs(next.X), Math.Max(Math.Abs(next.Y), Math.Abs(next.Z)));
+            if (size < Flat) break;
+            axis = next / size;
+        }
+        if (axis.LengthSquared() < Flat) return (mean, mean);
+        int far = 0, near = 0;
+        float most = float.MinValue, least = float.MaxValue;
+        for (int i = 0; i < Pixels; i++)
+        {
+            float t = Rgb.Dot(px[i] - mean, axis);
+            if (t > most) { most = t; far = i; }
+            if (t < least) { least = t; near = i; }
+        }
+        return (px[far], px[near]);
+    }
+
+    static (ushort C0, ushort C1, float Error) Fit(ReadOnlySpan<Rgb> px, Rgb a, Rgb b, Span<byte> picks)
+    {
+        ushort c0 = To565(a), c1 = To565(b);
+        if (c0 < c1) (c0, c1) = (c1, c0);
+        Span<Rgb> colours = stackalloc Rgb[4];
+        colours[0] = From565(c0);
+        colours[1] = From565(c1);
+        colours[2] = (2 * colours[0] + colours[1]) / 3;
+        colours[3] = (colours[0] + 2 * colours[1]) / 3;
+        int choices = c0 == c1 ? 1 : 4;
+        float error = 0;
+        for (int i = 0; i < Pixels; i++)
+        {
+            int best = 0;
+            float bestError = float.MaxValue;
+            for (int k = 0; k < choices; k++)
+            {
+                float e = Rgb.DistanceSquared(px[i], colours[k]);
+                if (e < bestError) { bestError = e; best = k; }
+            }
+            picks[i] = (byte)best;
+            error += bestError;
+        }
+        return (c0, c1, error);
+    }
+
+    static bool Refit(ReadOnlySpan<Rgb> px, ReadOnlySpan<byte> picks, ushort c0, ushort c1, out Rgb a, out Rgb b)
+    {
+        a = b = Rgb.Zero;
+        if (c0 == c1) return false;
+        var weights = Rgb.Zero;
+        Rgb ap = Rgb.Zero, bp = Rgb.Zero;
+        for (int i = 0; i < Pixels; i++)
+        {
+            float w = NearWeight[picks[i]], v = 1 - w;
+            weights += new Rgb(w * w, w * v, v * v);
+            ap += w * px[i];
+            bp += v * px[i];
+        }
+        float aa = weights.X, ab = weights.Y, bb = weights.Z;
+        float det = aa * bb - ab * ab;
+        if (Math.Abs(det) < Flat) return false;
+        a = Rgb.Clamp((bb * ap - ab * bp) / det, Rgb.Zero, new Rgb(Most));
+        b = Rgb.Clamp((aa * bp - ab * ap) / det, Rgb.Zero, new Rgb(Most));
+        return true;
     }
 
     static void AlphaBlock(ReadOnlySpan<byte> block, Span<byte> dst)
@@ -125,13 +204,13 @@ static class BlockCompress
         for (int j = 0; j < 6; j++) dst[2 + j] = (byte)(bits >> (8 * j));
     }
 
-    static ushort To565(ReadOnlySpan<byte> rgb) => (ushort)((rgb[0] >> 3) << 11 | (rgb[1] >> 2) << 5 | (rgb[2] >> 3));
+    static ushort To565(Rgb c) => (ushort)(Level(c.X, 31) << 11 | Level(c.Y, 63) << 5 | Level(c.Z, 31));
 
-    static void From565(ushort c, Span<int> rgb)
+    static int Level(float v, int top) => Math.Clamp((int)MathF.Round(v * top / Most), 0, top);
+
+    static Rgb From565(ushort c)
     {
         int r = c >> 11, g = (c >> 5) & 63, b = c & 31;
-        rgb[0] = (r << 3) | (r >> 2);
-        rgb[1] = (g << 2) | (g >> 4);
-        rgb[2] = (b << 3) | (b >> 2);
+        return new Rgb((r << 3) | (r >> 2), (g << 2) | (g >> 4), (b << 3) | (b >> 2));
     }
 }
