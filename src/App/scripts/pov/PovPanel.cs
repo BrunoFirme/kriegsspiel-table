@@ -44,8 +44,7 @@ sealed class PovPanel : HudPart
         var picture = Ui.Form(Ui.PanelLabels);
         _box.AddChild(picture);
         AddView(picture, d);
-        if (d.FirstPerson) AddLens(picture, d);
-        else AddFormat(picture, d);
+        if (!d.FirstPerson) AddFormat(picture, d);
         AddShot(picture, d);
         AddText(picture, d);
         Ui.AlignForm(picture);
@@ -56,6 +55,7 @@ sealed class PovPanel : HudPart
         {
             AddFacing(reach, d);
             AddEye(reach, d);
+            AddLens(reach, d);
         }
         else
         {
@@ -217,6 +217,7 @@ sealed class PovPanel : HudPart
         };
         SliderRow(grid, "Eye", slider, v => cal.UnitsPerMeter is > 0 ? $"{cal.FromTableUnits(v):#,0} {cal.UnitName}" : $"{v:0.00} u");
         slider.ValueChanged += v => T.SetSightingEye(v);
+        slider.DragEnded += _ => Cfg.Save();
     }
 
     void AddFormat(GridContainer grid, SightingDraft d) =>
@@ -246,10 +247,21 @@ sealed class PovPanel : HudPart
 
     static string Compass(string cardinal) => cardinal switch { "N" => "north", "E" => "east", "S" => "south", _ => "west" };
 
-    void AddLens(GridContainer grid, SightingDraft d) =>
-        AddChoice(grid, "Lens", d.Wide, on => Keep(() => Cfg.SightingWide = on, () => T.SetSightingWide(on)),
-            ("Normal", $"{CameraRig.NormalLens:0}° across: a steady look ahead"),
-            ("Wide", $"{CameraRig.WideLens:0}° across: the four directions make the whole circle"));
+    void AddLens(GridContainer grid, SightingDraft d)
+    {
+        var slider = new HSlider
+        {
+            MinValue = SightingDraft.NarrowestLens, MaxValue = SightingDraft.WidestLens, Step = SightingDraft.LensStep, Value = d.Lens,
+            TooltipText = $"How much the picture takes in across: {SightingDraft.NormalLens:0}° is a steady look ahead, {SightingDraft.WholeCircleLens:0}° lets the four directions make the whole circle",
+        };
+        SliderRow(grid, "Lens", slider, v => $"{v:0}°");
+        slider.ValueChanged += v =>
+        {
+            Cfg.SightingLens = v;
+            T.SetSightingLens(v);
+        };
+        slider.DragEnded += _ => Cfg.Save();
+    }
 
     void AddText(GridContainer grid, SightingDraft d) =>
         AddChoice(grid, "Text", d.HideText, on => Keep(() => Cfg.SightingHideText = on, () => T.SetSightingHideText(on)),

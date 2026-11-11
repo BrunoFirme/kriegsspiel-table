@@ -31,9 +31,9 @@ sealed class FormationTool
 
     public double Gap => Math.Clamp(Cfg.FormationGap, 0, Formations.MostGap);
 
-    int _depth;
+    int KeptDepth => Cfg.FormationRanks.GetValueOrDefault(Kind.Id);
 
-    public int Depth(int n) => _depth > 0 ? _depth : Formations.DefaultDepth(Kind, n);
+    public int Depth(int n) => KeptDepth > 0 ? KeptDepth : Formations.DefaultDepth(Kind, n);
 
     const float RideAbove = 0.005f;
     const double SameSpot = 1e-3, SameTurn = 0.5, LeastDrag = 0.4, DrawEvery = 0.1, GapFine = 0.05, GapCoarse = 0.25, GapFineBelow = 0.5;
@@ -96,7 +96,6 @@ sealed class FormationTool
         {
             Cfg.Formation = kind.Id;
             Cfg.Save();
-            _depth = 0;
         }
         var units = Units();
         if (!Enough(units)) { Changed?.Invoke(); return; }
@@ -170,7 +169,8 @@ sealed class FormationTool
 
     public void SetDepth(int depth)
     {
-        _depth = Math.Clamp(depth, 1, Formations.MostRanks);
+        Cfg.FormationRanks[Kind.Id] = Math.Clamp(depth, 1, Formations.MostRanks);
+        Cfg.Save();
         Relay(keepFront: false);
         var units = Units();
         if (units.Count >= 2) _c.Say(Describe(Kind, units.Count, null));
@@ -194,7 +194,7 @@ sealed class FormationTool
     {
         var places = kind.AlongLine && path != null
             ? Formations.Along(path, units.Count, PitchOf(units).Across)
-            : Formations.Place(Formations.Slots(kind, units.Count, PitchOf(units), _depth, front), at, facing, frontAt);
+            : Formations.Place(Formations.Slots(kind, units.Count, PitchOf(units), KeptDepth, front), at, facing, frontAt);
         if (before is { } b && b.Kind == kind.Id && b.Order.Count == units.Count && units.All(b.Order.ContainsKey)) order = b.Order;
         else
         {

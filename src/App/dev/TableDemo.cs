@@ -300,13 +300,13 @@ sealed class TableDemo
         S.Do(new Draw { Layer = Layers.Umpire, Stroke = new Stroke { Points = new() { new Vec2(-4, 2), new Vec2(4, 2) }, Color = "#2a6ebb", Width = 0.1, Board = second } });
         await After(0.6);
         Say("a line on each of two layers");
-        T.HiddenBoards.Add(first);
+        T.ShowBoard(first, false);
         T.RefreshDrawings();
         await After(0.4);
         Say("the first layer hidden");
         GD.Print("[boards] nothing was sent for the hiding: it is a setting of this screen, not a command.");
 
-        T.HiddenBoards.Remove(first);
+        T.ShowBoard(first, true);
         T.RefreshDrawings();
         T.SetTool(Tool.Erase);
         async Task Click(Vec2 at, string what)

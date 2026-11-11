@@ -172,7 +172,7 @@ public partial class Hud
     internal void OpenPanel(string key)
     {
         if (!Panels.TryGetValue(key, out var p)) return;
-        if (key == "paint" && T != null && T.Tool is not (Tool.Draw or Tool.Shape or Tool.Erase or Tool.Letter)) T.SetTool(Tool.Draw);
+        if (key == "paint" && T != null && T.Tool is not (Tool.Draw or Tool.Shape or Tool.Erase or Tool.Letter)) T.SetTool(T.DrawMode);
         if (key == "relief" && T != null && T.Tool != Tool.Relief) T.SetTool(Tool.Relief);
         if (key == "decals" && T != null && T.Tool != Tool.Decal) T.SetTool(Tool.Decal);
         if (key == "formation" && T != null && T.Tool != Tool.Formation) T.SetTool(Tool.Formation);

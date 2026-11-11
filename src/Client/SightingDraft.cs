@@ -9,7 +9,7 @@ public sealed class SightingDraft
     public double Radius = 40;
     public bool Square;
     public bool FirstPerson;
-    public bool Wide;
+    public double Lens = NormalLens;
     public double EyeHeight;
     public double Sharp = 1;
     public double Blur = BlurAtEdge;
@@ -19,6 +19,10 @@ public sealed class SightingDraft
     public List<List<Vec2>> Walls = new();
     public List<Vec2> Polygon = new();
     public HashSet<string> Included = new();
+
+    public const double EyeHighestShare = 3;
+    public const double NarrowestLens = 20, NormalLens = 60, WholeCircleLens = 90, WidestLens = 120, LensStep = 1;
+    public static double FitLens(double degrees) => double.IsFinite(degrees) ? Math.Clamp(degrees, NarrowestLens, WidestLens) : NormalLens;
 
     public const double BlurAtEdge = 0.12, LeastBlur = 0.02, MostBlur = 0.3, BlurStep = 0.01, BlurBend = 1.8, SharpStep = 0.025;
 

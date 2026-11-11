@@ -2,6 +2,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Godot;
+using KTable.Client;
 using KTable.Client.Prefs;
 using KTable.Core;
 using KTable.Core.Model;
@@ -326,6 +327,18 @@ static class HudTests
     }
 
     [NodeTest]
+    static async Task The_draw_panel_opens_on_the_pen_mode_last_used(TestRunner r)
+    {
+        var h = await Host(r);
+        h.Table.SetTool(Tool.Erase);
+        h.Table.SetTool(Tool.Select);
+        ((IHudShell)h.Hud).OpenPanel("paint");
+        await r.Frame();
+        Check.Equal(Tool.Erase, h.Table.Tool, "the eraser is back in hand");
+        Check.Equal("erase", h.Hud.Cfg.DrawMode, "and kept for the next start");
+    }
+
+    [NodeTest]
     static async Task The_pov_panel_switches_view_lens_text_and_facing(TestRunner r)
     {
         var h = await Host(r);
@@ -337,17 +350,24 @@ static class HudTests
         Named("First person").EmitSignal(Button.SignalName.Pressed);
         await r.Frame();
         Check.That(h.Table.Draft!.FirstPerson && h.Table.Rig.Eye != null, "first person: the eye is on the piece");
-        var eyeSlider = h.Hud.Pov.Panel.FindChildren("*", nameof(HSlider), true, false).OfType<HSlider>().ToList();
-        Check.That(eyeSlider.Count == 1 && eyeSlider[0].MaxValue > 0, "first person has one slider, for how high the eye stands");
+        var eyeSliders = h.Hud.Pov.Panel.FindChildren("*", nameof(HSlider), true, false).OfType<HSlider>().ToList();
+        Check.That(eyeSliders.Count == 2 && eyeSliders.All(x => x.MaxValue > 0), "first person has two sliders, the lens and how high the eye stands");
         Check.That(!h.Hud.Pov.Panel.FindChildren("*", nameof(Button), true, false).OfType<Button>().Any(b => b.Text == "Clear"), "no tracing to undo or clear from the eye");
         Check.That(!h.Hud.Pov.Panel.FindChildren("*", nameof(HSlider), true, false).OfType<HSlider>().Any(x => x.TooltipText == "How far the piece sees"), "and no reach to set");
-        Named("Wide").EmitSignal(Button.SignalName.Pressed);
+        var lens = eyeSliders.Single(x => x.MaxValue == SightingDraft.WidestLens);
+        Check.That(Mathf.IsEqualApprox((float)lens.Value, (float)SightingDraft.NormalLens), "the lens opens at its normal width");
+        lens.Value = 75;
         await r.Frame();
-        Check.That(h.Table.Draft!.Wide && Mathf.IsEqualApprox(h.Table.Rig.Cam.Fov, CameraRig.WideLens), "the wide lens");
+        Check.That(Mathf.IsEqualApprox(h.Table.Rig.Cam.Fov, 75f) && h.Hud.Cfg.SightingLens == 75, "the lens slider sets the eye's width and is kept");
         Named("E").EmitSignal(Button.SignalName.Pressed);
         await r.Frame();
         Check.Equal("E", h.Table.Draft!.Facing, "east held");
         Check.That(Named("E").ButtonPressed && !Named("N").ButtonPressed, "the held direction is the lit one");
+        h.Table.CancelSighting();
+        await r.Frame();
+        h.Table.SetTool(Tool.Sighting);
+        await r.Frames(2);
+        Check.That(h.Table.Draft is { FirstPerson: true, Facing: "E" } && Mathf.IsEqualApprox(h.Table.Rig.Cam.Fov, 75f), "taken out again, it looks east through the same lens");
         Named("Hidden").EmitSignal(Button.SignalName.Pressed);
         await r.Frame();
         Check.That(h.Table.Draft!.HideText && (h.Table.Rig.Cam.CullMask & Table.TextLayer) == 0, "text hidden");

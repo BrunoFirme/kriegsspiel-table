@@ -100,6 +100,48 @@ public class SettingsTests
     }
 
     [Fact]
+    public void A_wide_lens_kept_by_an_older_version_opens_at_ninety_degrees_and_a_lens_out_of_reach_is_brought_in()
+    {
+        File.WriteAllText(_file, "{\"SightingWide\":true}");
+        var s = Settings.Load();
+        Assert.Equal(SightingDraft.WholeCircleLens, s.SightingLens);
+        Assert.Null(s.SightingWide);
+        File.WriteAllText(_file, "{\"SightingLens\":500}");
+        Assert.Equal(SightingDraft.WidestLens, Settings.Load().SightingLens);
+        File.WriteAllText(_file, "{\"SightingLens\":45}");
+        Assert.Equal(45, Settings.Load().SightingLens);
+    }
+
+    [Fact]
+    public void Tool_settings_kept_from_last_time_come_back_and_broken_ones_fall_back()
+    {
+        var s = Settings.Load();
+        s.SightingFacing = "E";
+        s.SightingEyeShare = 2;
+        s.DrawMode = "erase";
+        s.DrawLayer["sc"] = "b2";
+        s.HiddenLayers["sc"] = new() { "b1" };
+        s.Decal["sc"] = "pic.png";
+        s.DecalTurn = 45;
+        s.DecalGrowth = 2;
+        s.FormationRanks["column"] = 4;
+        s.RangeMetres = 800;
+        s.DiceHand[6] = 3;
+        s.PiecesPack = "";
+        s.PiecesTab = 1;
+        s.Save();
+        var back = Settings.Load();
+        Assert.Equal(("E", 2.0, "erase", "b2", "pic.png", 45.0, 2.0, 4, 800.0, 3, "", 1),
+            (back.SightingFacing, back.SightingEyeShare, back.DrawMode, back.DrawLayer["sc"], back.Decal["sc"],
+                back.DecalTurn, back.DecalGrowth, back.FormationRanks["column"], back.RangeMetres, back.DiceHand[6], back.PiecesPack, back.PiecesTab));
+        Assert.Contains("b1", back.HiddenLayers["sc"]);
+        File.WriteAllText(_file, "{\"SightingFacing\":\"NE\",\"SightingEyeShare\":99,\"DrawMode\":\"spray\",\"DecalTurn\":-90,\"DecalGrowth\":0,\"RangeMetres\":-5,\"DiceHand\":{\"6\":0}}");
+        var broken = Settings.Load();
+        Assert.Equal(((string?)null, SightingDraft.EyeHighestShare, "free", 270.0, 1.0, (double?)null, 0),
+            (broken.SightingFacing, broken.SightingEyeShare, broken.DrawMode, broken.DecalTurn, broken.DecalGrowth, broken.RangeMetres, broken.DiceHand.Count));
+    }
+
+    [Fact]
     public void New_settings_are_written_with_these_defaults_in_this_order()
     {
         var s = new Settings();
@@ -108,9 +150,10 @@ public class SettingsTests
         s.Keys.Set("ruler", "R");
         Assert.Equal(
             "{\"Keys\":{\"Keys\":{\"ruler\":\"R\"}},\"CaptureToClipboard\":true,\"CaptureToFolder\":true,\"CaptureFolder\":\"C\",\"CaptureScale\":4,"
-            + "\"SightingSquare\":false,\"SightingFirstPerson\":false,\"SightingWide\":false,\"SightingHideText\":false,\"SightingGif\":false,\"LastName\":\"\",\"LastAddress\":\"127.0.0.1\",\"Port\":7777,\"ShareCursor\":true,\"FaceText\":true,\"LabelPlates\":false,\"WheelTurnsHovered\":false,"
+            + "\"SightingSquare\":false,\"SightingFirstPerson\":false,\"SightingLens\":60,\"SightingFacing\":null,\"SightingEyeShare\":1,\"SightingHideText\":false,\"SightingGif\":false,\"LastName\":\"\",\"LastAddress\":\"127.0.0.1\",\"Port\":7777,\"ShareCursor\":true,\"FaceText\":true,\"LabelPlates\":false,\"WheelTurnsHovered\":false,"
             + "\"LetteringReach\":250,\"ReduceFarDetail\":false,\"MakerTools\":false,\"AgentOn\":false,\"AgentPort\":7796,\"AgentToken\":\"\",\"FaceTextScale\":1,\"ShowCursors\":true,\"ShowZones\":true,\"UiScale\":1,\"Antialias\":2,\"SmoothFineEdges\":false,\"ShadowDetail\":1,\"ContactShade\":false,\"WindowMode\":0,\"VSync\":true,\"FrameLimit\":0,\"RestWhenIdle\":true,\"Renderer\":\"vulkan\",\"FarDetail\":1,\"RenderScale\":1,\"MapPictureMemory\":0,\"SoundVolume\":0.6,\"SoundMuted\":false,\"SoundInBackground\":false,"
             + "\"CameraAt\":{},\"CameraViews\":{},\"PanelPos\":{},\"PanelSize\":{},\"StripSize\":30,\"StripHidden\":[],\"TopLine\":true,\"TopLineWidth\":1,\"PenInk\":\"#1a1a1a\",\"PenSize\":3,\"PenOpacity\":1,"
+            + "\"DrawMode\":\"free\",\"DrawLayer\":{},\"HiddenLayers\":{},\"Decal\":{},\"DecalTurn\":0,\"DecalGrowth\":1,\"FormationRanks\":{},\"RangeMetres\":null,\"RangeUnits\":null,\"DiceHand\":{},\"PiecesPack\":null,\"PiecesTab\":0,"
             + "\"ShapeKind\":\"line\",\"LeftWidth\":300,\"RightWidth\":320,\"LogHeight\":200,\"LeftOpen\":true,\"LeftPage\":\"pieces\","
             + "\"RightOpen\":true,\"LogOpen\":true,\"LogFontSize\":12,\"Favourites\":[],\"FavouritesOnly\":false,\"CompassShown\":true,\"CompassPos\":null,\"BlenderPath\":\"\",\"CheckUpdates\":true,\"ReliefBrush\":6,\"ReliefStrength\":0.35,\"ReliefMode\":\"raise\",\"ReliefDensity\":1,\"ReliefPaint\":\"brush\",\"ReliefDetails\":{},\"FormationGap\":0.1,\"Formation\":\"line\",\"NewBackdrop\":\"\",\"NewTableShade\":0,\"Tour\":0}",
             System.Text.Json.JsonSerializer.Serialize(s));

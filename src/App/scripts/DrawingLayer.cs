@@ -33,8 +33,32 @@ sealed class DrawingLayer
         _lettering = lettering;
     }
 
-    public string Board = "";
-    public readonly HashSet<string> HiddenBoards = new();
+    string Scenario => _c.S.View.ScenarioId;
+
+    public string Board
+    {
+        get => _c.Settings.DrawLayer.GetValueOrDefault(Scenario, "");
+        set
+        {
+            if (Board == value) return;
+            if (value.Length > 0) _c.Settings.DrawLayer[Scenario] = value;
+            else _c.Settings.DrawLayer.Remove(Scenario);
+            _c.Settings.Save();
+        }
+    }
+
+    static readonly HashSet<string> NoneHidden = new();
+
+    public IReadOnlySet<string> HiddenBoards => _c.Settings.HiddenLayers.GetValueOrDefault(Scenario) ?? NoneHidden;
+
+    public void ShowBoard(string id, bool shown)
+    {
+        var hidden = _c.Settings.HiddenLayers;
+        if (!hidden.TryGetValue(Scenario, out var set)) hidden[Scenario] = set = new();
+        if (!(shown ? set.Remove(id) : set.Add(id))) return;
+        if (set.Count == 0) hidden.Remove(Scenario);
+        _c.Settings.Save();
+    }
 
     public string BoardName(string id) => _c.S.View.Boards.FirstOrDefault(b => b.Id == id)?.Name ?? "That layer";
 

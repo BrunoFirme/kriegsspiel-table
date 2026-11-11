@@ -27,29 +27,39 @@ sealed class StampTool
     }
 
     public PaletteDecal? Armed { get; private set; }
-    public double Turn { get; private set; }
-    public double Growth { get; private set; } = 1;
+    public double Turn => _c.Settings.DecalTurn;
+    public double Growth => Math.Clamp(_c.Settings.DecalGrowth, SmallestGrowth, LargestGrowth);
 
     public event Action? Changed;
 
     public void Arm(PaletteDecal? decal)
     {
         Armed = decal;
-        Turn = 0;
-        Growth = 1;
+        var scenario = _c.S.View.ScenarioId;
+        if (decal != null) _c.Settings.Decal[scenario] = decal.Picture;
+        else _c.Settings.Decal.Remove(scenario);
+        _c.Settings.Save();
         Changed?.Invoke();
         if (_c.Tool == Tool.Decal) _c.Say(Hint());
     }
 
+    public void ArmAsBefore()
+    {
+        if (Armed != null || !_c.Settings.Decal.TryGetValue(_c.S.View.ScenarioId, out var picture)) return;
+        if (_c.S.View.DecalPalette.FirstOrDefault(d => d.Picture == picture) is { } decal) Arm(decal);
+    }
+
     public void Size(int notches)
     {
-        Growth = Math.Clamp(Growth * Math.Pow(Grow, notches), SmallestGrowth, LargestGrowth);
+        _c.Settings.DecalGrowth = Math.Clamp(Growth * Math.Pow(Grow, notches), SmallestGrowth, LargestGrowth);
+        _c.Settings.Save();
         _c.Say(Hint());
     }
 
     public void TurnBy(double deg)
     {
-        Turn = Math.Round(((Turn + deg) % 360 + 360) % 360, 6);
+        _c.Settings.DecalTurn = Math.Round(((Turn + deg) % 360 + 360) % 360, 6);
+        _c.Settings.Save();
         _c.Say(Hint());
     }
 

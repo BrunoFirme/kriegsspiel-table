@@ -374,12 +374,26 @@ public partial class Table : Node3D
         if (Tool == Tool.Relief && t != Tool.Relief) Relief.Cancel();
         var was = Tool;
         _c.Tool = t;
+        KeepDrawMode(t);
+        if (t == Tool.Decal) Decals.ArmAsBefore();
         _c.PlaceDef = placeDef;
         if (t != Tool.Ruler && t != Tool.Calibrate) Ruler.Clear();
         if (t != Tool.Range) Ranges.ClearReadings();
         ToolChanged?.Invoke();
         if (ToolLine(t) is { } line) Say(line);
         else if (ToolLine(was) != null) Say("");
+    }
+
+    static readonly Tool[] DrawModeTools = { Tool.Draw, Tool.Shape, Tool.Erase, Tool.Letter };
+
+    public Tool DrawMode => DrawModeTools[Math.Max(0, Array.IndexOf(Settings.DrawModes, _c.Settings.DrawMode))];
+
+    void KeepDrawMode(Tool t)
+    {
+        int i = Array.IndexOf(DrawModeTools, t);
+        if (i < 0 || _c.Settings.DrawMode == Settings.DrawModes[i]) return;
+        _c.Settings.DrawMode = Settings.DrawModes[i];
+        _c.Settings.Save();
     }
 
     string? ToolLine(Tool t) => t switch
@@ -538,7 +552,8 @@ public partial class Table : Node3D
     public void SetStandIn(bool on, float shade = 0) => Stage.SetStandIn(on, shade);
 
     public string Board { get => Drawings.Board; set => Drawings.Board = value; }
-    public HashSet<string> HiddenBoards => Drawings.HiddenBoards;
+    public IReadOnlySet<string> HiddenBoards => Drawings.HiddenBoards;
+    public void ShowBoard(string id, bool shown) => Drawings.ShowBoard(id, shown);
     public string BoardName(string id) => Drawings.BoardName(id);
     public string DrawBoard() => Drawings.DrawBoard();
     public bool BoardShown(string board) => Drawings.BoardShown(board);
@@ -568,7 +583,7 @@ public partial class Table : Node3D
     public void EndDraft() => Sighting.End();
     public void RefreshSightingPanel() => Sighting.NotifyChanged();
     public void SetSightingFirstPerson(bool on) => Sighting.SetFirstPerson(on);
-    public void SetSightingWide(bool on) => Sighting.SetWide(on);
+    public void SetSightingLens(double degrees) => Sighting.SetLens(degrees);
     public void SetSightingEye(double height) => Sighting.SetEyeHeight(height);
     public void SetSightingSharp(double share) => Sighting.SetSharp(share);
     public void SetSightingBlur(double share) => Sighting.SetBlur(share);

@@ -12,7 +12,11 @@ public sealed class Settings
     public const int CaptureScaleMost = 4;
     public bool SightingSquare { get; set; }
     public bool SightingFirstPerson { get; set; }
-    public bool SightingWide { get; set; }
+    public double SightingLens { get; set; } = SightingDraft.NormalLens;
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public bool? SightingWide { get; set; }
+    public string? SightingFacing { get; set; }
+    public double SightingEyeShare { get; set; } = 1;
     public bool SightingHideText { get; set; }
     public bool SightingGif { get; set; }
     public string LastName { get; set; } = "";
@@ -79,6 +83,19 @@ public sealed class Settings
     public string PenInk { get; set; } = "#1a1a1a";
     public float PenSize { get; set; } = 3f;
     public float PenOpacity { get; set; } = 1f;
+    public string DrawMode { get; set; } = DrawModes[0];
+    public static readonly string[] DrawModes = { "free", "shape", "erase", "name" };
+    public Dictionary<string, string> DrawLayer { get; set; } = new();
+    public Dictionary<string, HashSet<string>> HiddenLayers { get; set; } = new();
+    public Dictionary<string, string> Decal { get; set; } = new();
+    public double DecalTurn { get; set; }
+    public double DecalGrowth { get; set; } = 1;
+    public Dictionary<string, int> FormationRanks { get; set; } = new();
+    public double? RangeMetres { get; set; }
+    public double? RangeUnits { get; set; }
+    public Dictionary<int, int> DiceHand { get; set; } = new();
+    public string? PiecesPack { get; set; }
+    public int PiecesTab { get; set; }
     public string ShapeKind { get; set; } = "line";
     public float LeftWidth { get; set; } = 300;
     public float RightWidth { get; set; } = 320;
@@ -165,6 +182,17 @@ public sealed class Settings
         if (Array.IndexOf(ReliefPaintings, ReliefPaint) < 0) ReliefPaint = "brush";
         if (Array.IndexOf(MapPictureMemoryChoices, MapPictureMemory) < 0) MapPictureMemory = 0;
         if (Array.IndexOf(Renderers, Renderer) < 0) Renderer = Vulkan;
+        if (SightingWide == true) SightingLens = SightingDraft.WholeCircleLens;
+        SightingWide = null;
+        SightingLens = SightingDraft.FitLens(SightingLens);
+        SightingEyeShare = double.IsFinite(SightingEyeShare) ? Math.Clamp(SightingEyeShare, 0, SightingDraft.EyeHighestShare) : 1;
+        if (SightingFacing is not (null or "N" or "E" or "S" or "W")) SightingFacing = null;
+        if (Array.IndexOf(DrawModes, DrawMode) < 0) DrawMode = DrawModes[0];
+        DecalTurn = double.IsFinite(DecalTurn) ? (DecalTurn % 360 + 360) % 360 : 0;
+        DecalGrowth = double.IsFinite(DecalGrowth) && DecalGrowth > 0 ? DecalGrowth : 1;
+        if (RangeMetres is { } m && !(double.IsFinite(m) && m > 0)) RangeMetres = null;
+        if (RangeUnits is { } u && !(double.IsFinite(u) && u > 0)) RangeUnits = null;
+        foreach (var sides in DiceHand.Keys.ToList()) if (DiceHand[sides] <= 0) DiceHand.Remove(sides);
         if (UiScaleFollowsWindows != null) UiScale = 1f;
         UiScaleFollowsWindows = null;
         UiScale = float.IsFinite(UiScale) ? Math.Clamp(UiScale, UiScaleMin, UiScaleMax) : 1f;

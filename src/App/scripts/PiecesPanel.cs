@@ -24,7 +24,12 @@ sealed class PiecesPanel : HudPart
         var packs = new VBoxContainer { Name = "Packs" };
         packs.AddThemeConstantOverride("separation", Ui.Gap.Tight);
         PackPick = new OptionButton { ClipText = true, FitToLongestItem = false };
-        PackPick.ItemSelected += _ => RebuildList();
+        PackPick.ItemSelected += i =>
+        {
+            Cfg.PiecesPack = PackPick.GetItemMetadata((int)i).AsString();
+            Cfg.Save();
+            RebuildList();
+        };
         packs.AddChild(PackPick);
         Search = new LineEdit { PlaceholderText = "search name, tag, colour…", ClearButtonEnabled = true, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         Search.TextChanged += _ => RebuildList();
@@ -57,6 +62,12 @@ sealed class PiecesPanel : HudPart
         Tabs.AddChild(packs);
         Tabs.AddChild(Index.Root);
         Panel.Body.AddChild(Tabs);
+        Tabs.CurrentTab = Math.Clamp(Cfg.PiecesTab, 0, Tabs.GetTabCount() - 1);
+        Tabs.TabChanged += tab =>
+        {
+            Cfg.PiecesTab = (int)tab;
+            Cfg.Save();
+        };
     }
 
     public readonly TabContainer Tabs;
@@ -127,7 +138,7 @@ sealed class PiecesPanel : HudPart
         foreach (var id in ids)
             if (S.Store.Problem(id) is { } why && _damagedSaid.Add(id))
                 Log($"[color=#ff7060]The pack {Fmt.Bb(id)} cannot be read ({Fmt.Bb(why)}); its pieces are not shown.{(S.IsHost ? " Remove it under Piece studio on the title screen, or install it again." : "")}[/color]");
-        var prev = PackPick.Selected > 0 ? PackPick.GetItemMetadata(PackPick.Selected).AsString() : null;
+        var prev = PackPick.Selected >= 0 ? PackPick.GetItemMetadata(PackPick.Selected).AsString() : Cfg.PiecesPack;
         PackPick.Clear();
         PackPick.AddItem($"All packs ({_packs.Sum(p => p.Pieces.Count)})");
         PackPick.SetItemMetadata(0, "");
@@ -137,7 +148,7 @@ sealed class PiecesPanel : HudPart
             PackPick.SetItemMetadata(i + 1, _packs[i].Id);
             if (_packs[i].Id == prev) PackPick.Selected = i + 1;
         }
-        if (prev == null) PackPick.Selected = _packs.Count > 1 ? 1 : 0;
+        if (prev == null || (prev.Length > 0 && PackPick.Selected <= 0)) PackPick.Selected = _packs.Count > 1 ? 1 : 0;
         RebuildList();
     }
 

@@ -94,8 +94,7 @@ sealed partial class AgentTableTools
         if (action is "hide" or "show" or "pick")
         {
             if (Named(a.Str("layer")) is not { } b) return ToolResult.Fail("layer is needed: a layer's name or id (list).");
-            if (action == "hide") t.HiddenBoards.Add(b.Id);
-            else if (action == "show") t.HiddenBoards.Remove(b.Id);
+            if (action is "hide" or "show") t.ShowBoard(b.Id, action == "show");
             else t.Board = b.Id;
             t.RefreshDrawings();
             hud.Strip.SyncPenLock();

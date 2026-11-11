@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using KTable.Core.Model;
 using KTable.Core.Protocol;
+using KTable.Client;
 using KTable.Client.Studio;
 
 namespace KTable.App;
@@ -395,10 +396,10 @@ static class TableTests
             "the eye stands on the piece's front edge, above its top");
         var look = Coords.FromWorld(-rig.Cam.GlobalBasis.Z);
         Check.That(look.X * front.X + look.Z * front.Z > 0.95, "it looks out of the piece's front");
-        Check.That(!rig.TopDown && rig.Cam.Projection == Camera3D.ProjectionType.Perspective && Mathf.IsEqualApprox(rig.Cam.Fov, CameraRig.NormalLens), "a perspective view through the normal lens");
+        Check.That(!rig.TopDown && rig.Cam.Projection == Camera3D.ProjectionType.Perspective && Mathf.IsEqualApprox(rig.Cam.Fov, (float)SightingDraft.NormalLens), "a perspective view through the normal lens");
         Check.That(rig.Cam.GlobalPosition.IsEqualApprox(rig.Eye!.Value), "the camera is at the eye");
-        t.Table.Sighting.SetWide(true);
-        Check.That(Mathf.IsEqualApprox(rig.Cam.Fov, CameraRig.WideLens), "the wide lens widens the view");
+        t.Table.Sighting.SetLens(SightingDraft.WholeCircleLens);
+        Check.That(Mathf.IsEqualApprox(rig.Cam.Fov, (float)SightingDraft.WholeCircleLens), "a wider lens widens the view");
         t.Table.Sighting.Face("E");
         Check.Equal("E", t.Table.Draft!.Facing, "east is held");
         Check.That(Mathf.IsEqualApprox(Mathf.Wrap(rig.YawGoal, -Mathf.Pi, Mathf.Pi), Mathf.Pi / 2), "the view turns to look along +X");

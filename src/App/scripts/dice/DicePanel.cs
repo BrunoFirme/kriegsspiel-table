@@ -35,16 +35,22 @@ sealed class DicePanel : HudPart
     void Build(VBoxContainer box)
     {
         box.CustomMinimumSize = new Vector2(176, 0);
-        var pool = new Dictionary<int, int>();
-        var line = new Label { HorizontalAlignment = HorizontalAlignment.Center, Text = "—", CustomMinimumSize = new Vector2(0, 22) };
+        var pool = Cfg.DiceHand;
+        var line = new Label { HorizontalAlignment = HorizontalAlignment.Center, Text = Spell(), CustomMinimumSize = new Vector2(0, 22) };
         string Spell() => pool.Count == 0 ? "—" : string.Join(" + ", pool.Where(e => e.Value > 0).OrderBy(e => e.Key).Select(e => $"{e.Value}d{e.Key}"));
         var faces = new GridContainer { Columns = 3 };
         faces.AddThemeConstantOverride("h_separation", Ui.Gap.Tight);
         faces.AddThemeConstantOverride("v_separation", Ui.Gap.Tight);
+        void AddDie(int sides)
+        {
+            pool[sides] = pool.GetValueOrDefault(sides) + 1;
+            Cfg.Save();
+            line.Text = Spell();
+        }
         foreach (var sides in new[] { 4, 6, 8, 10, 12, 20 })
         {
             int n = sides;
-            var b = Btn($"d{n}", () => { pool[n] = pool.GetValueOrDefault(n) + 1; line.Text = Spell(); }, $"add a d{n} · click again for another");
+            var b = Btn($"d{n}", () => AddDie(n), $"add a d{n} · click again for another");
             b.CustomMinimumSize = new Vector2(52, 30);
             faces.AddChild(b);
         }
@@ -64,6 +70,7 @@ sealed class DicePanel : HudPart
         var clear = Btn("Clear", () =>
         {
             pool.Clear();
+            Cfg.Save();
             line.Text = Spell();
             _results.Visible = false;
             Panel.Fit();

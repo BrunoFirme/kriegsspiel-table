@@ -17,7 +17,7 @@ public partial class CameraRig : Node3D
     public bool TopDown { get; private set; }
     public float MinDistance = 1.5f, MaxDistance = 2500;
 
-    public const float TableFov = 50, NormalLens = 60, WideLens = 90;
+    public const float TableFov = 50;
     public const float EyeTiltRadians = -0.12f;
     const float EyeLowestRadians = -1.3f, EyeHighestRadians = 1.3f;
     public Vector3? Eye { get; private set; }

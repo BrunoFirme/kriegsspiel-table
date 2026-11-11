@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Godot;
+using KTable.Client;
 using KTable.Core.Model;
 using KTable.Core.Protocol;
 
@@ -762,7 +763,7 @@ sealed class HudDemo : HudPart
             await Hud.ToSignal(Hud.GetTree().CreateTimer(0.4), Timer.SignalName.Timeout);
             if (T.Draft is not { } d) { GD.Print("[poveye] no draft"); return; }
             T.SetSightingFirstPerson(true);
-            if (what.Contains("wide")) T.SetSightingWide(true);
+            if (what.Contains("wide")) T.SetSightingLens(SightingDraft.WholeCircleLens);
             if (what.Contains("notext")) T.SetSightingHideText(true);
             if (parts.Skip(2).FirstOrDefault(p => p is "N" or "E" or "S" or "W") is { } facing) T.FaceSighting(facing);
             await Hud.ToSignal(Hud.GetTree().CreateTimer(0.8), Timer.SignalName.Timeout);
@@ -909,7 +910,7 @@ sealed class HudDemo : HudPart
                 T.SetTool(Tool.Draw);
                 await Hud.ToSignal(Hud.GetTree(), SceneTree.SignalName.ProcessFrame);
                 Say("pen in hand, the layer shown");
-                T.HiddenBoards.Add(T.DrawBoard());
+                T.ShowBoard(T.DrawBoard(), false);
                 T.RefreshDrawings();
                 Hud.Paint.Rebuild();
                 Hud.Strip.SyncPenLock();
@@ -919,7 +920,7 @@ sealed class HudDemo : HudPart
                 await Hud.ToSignal(Hud.GetTree(), SceneTree.SignalName.ProcessFrame);
                 Say("after trying to take the pen again");
                 if (what.EndsWith(":stay")) return;
-                T.HiddenBoards.Clear();
+                foreach (var hidden in T.HiddenBoards.ToList()) T.ShowBoard(hidden, true);
                 T.RefreshDrawings();
                 Hud.Paint.Rebuild();
                 Hud.Strip.SyncPenLock();

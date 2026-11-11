@@ -296,26 +296,30 @@ sealed class Sighting
         var obs = _selection.Nodes.FirstOrDefault();
         if (obs == null || obs.Piece.Id == Draft.ObserverId) return;
         if (Draft.Walls.Count > 0) return;
-        double radius = Draft.Radius;
+        var was = Draft;
         Draft = null;
-        Begin(radius);
+        Begin(was.Radius, was);
     }
 
-    public bool Begin(double? radius = null)
+    public bool Begin(double? radius = null) => Begin(radius, null);
+
+    bool Begin(double? radius, SightingDraft? was)
     {
         var obs = _selection.Nodes.FirstOrDefault();
         if (obs == null) { _c.Say("Pick the piece whose point of view it is, then press the tool again."); return false; }
         Draft = new SightingDraft
         {
             ObserverId = obs.Piece.Id, Center = obs.Piece.Pos, Radius = radius ?? (_c.S.View.VisionRadius > 0 ? _c.S.View.VisionRadius : 40),
-            Square = _c.Settings.SightingSquare, FirstPerson = _c.Settings.SightingFirstPerson, Wide = _c.Settings.SightingWide, HideText = _c.Settings.SightingHideText, Gif = _c.Settings.SightingGif,
-            EyeHeight = EyeOnTopOf(obs.Piece.Id), Sharp = _c.S.View.VisionSharp ?? 1,
-            Blur = _c.S.View.VisionBlur is { } kept ? Math.Clamp(kept, SightingDraft.LeastBlur, SightingDraft.MostBlur) : SightingDraft.BlurAtEdge,
+            Square = _c.Settings.SightingSquare, FirstPerson = _c.Settings.SightingFirstPerson, Lens = SightingDraft.FitLens(_c.Settings.SightingLens),
+            HideText = _c.Settings.SightingHideText, Gif = _c.Settings.SightingGif,
+            EyeHeight = EyeOnTopOf(obs.Piece.Id) * _c.Settings.SightingEyeShare, Sharp = was?.Sharp ?? _c.S.View.VisionSharp ?? 1,
+            Blur = was?.Blur ?? (_c.S.View.VisionBlur is { } kept ? Math.Clamp(kept, SightingDraft.LeastBlur, SightingDraft.MostBlur) : SightingDraft.BlurAtEdge),
         };
         SnapFocus(Draft);
         Draft.Recompute(UmpirePiecesIn);
         ShowDraft();
         FrameOnDraft();
+        FaceAsBefore();
         NotifyChanged();
         return true;
     }
@@ -327,7 +331,6 @@ sealed class Sighting
     float Framing => Draft is { } d ? (float)(d.Radius * (d.Square ? 2 * 1.42 : 2) * 1.12) : 0;
 
     const float EyeOverTopShare = 0.25f, EyeOverTopLeast = 0.2f, EyeOverTopMost = 3f;
-    const double EyeHighestShare = 3;
 
     double EyeOnTopOf(string observerId)
     {
@@ -337,12 +340,13 @@ sealed class Sighting
         return node.Thickness + over;
     }
 
-    public double EyeHighest => Draft is { } d ? EyeOnTopOf(d.ObserverId) * EyeHighestShare : 0;
+    public double EyeHighest => Draft is { } d ? EyeOnTopOf(d.ObserverId) * SightingDraft.EyeHighestShare : 0;
 
     public void SetEyeHeight(double height)
     {
         if (Draft is not { } d) return;
         d.EyeHeight = Math.Clamp(height, 0, EyeHighest);
+        _c.Settings.SightingEyeShare = d.EyeHeight / EyeOnTopOf(d.ObserverId);
         FrameOnDraft();
     }
 
@@ -357,7 +361,7 @@ sealed class Sighting
 
     float? FrontYaw(SightingDraft d) => _pieces.NodeOf(Layers.Umpire, d.ObserverId) is { } node ? Coords.Yaw(node.Piece.RotDeg) + Mathf.Pi : null;
 
-    static float Lens(SightingDraft d) => d.Wide ? CameraRig.WideLens : CameraRig.NormalLens;
+    static float Lens(SightingDraft d) => (float)d.Lens;
 
     public void FrameOnDraft()
     {
@@ -390,14 +394,15 @@ sealed class Sighting
         d.Facing = null;
         CloseUp = false;
         FrameOnDraft();
+        FaceAsBefore();
         _c.Say(Hint());
         NotifyChanged();
     }
 
-    public void SetWide(bool on)
+    public void SetLens(double degrees)
     {
-        if (Draft is not { } d || d.Wide == on) return;
-        d.Wide = on;
+        if (Draft is not { } d || Math.Abs(d.Lens - SightingDraft.FitLens(degrees)) < 1e-6) return;
+        d.Lens = SightingDraft.FitLens(degrees);
         FrameOnDraft();
         NotifyChanged();
     }
@@ -419,6 +424,11 @@ sealed class Sighting
         int i = Array.FindIndex(Cardinals, c => c.cardinal == cardinal);
         if (Draft is not { FirstPerson: true } d || i < 0) return;
         d.Facing = cardinal;
+        if (_c.Settings.SightingFacing != cardinal)
+        {
+            _c.Settings.SightingFacing = cardinal;
+            _c.Settings.Save();
+        }
         _c.Rig.Face(CameraRig.YawLooking(_c.S.View.Calibration.MapBearing(Cardinals[i].bearing)), CameraRig.EyeTiltRadians);
         NotifyChanged();
     }
@@ -427,7 +437,14 @@ sealed class Sighting
     {
         if (Draft is not { Facing: not null } d) return;
         d.Facing = null;
+        _c.Settings.SightingFacing = null;
+        _c.Settings.Save();
         NotifyChanged();
+    }
+
+    void FaceAsBefore()
+    {
+        if (_c.Settings.SightingFacing is { } cardinal) Face(cardinal);
     }
 
     public void Zoom(float f, Vector2 at)

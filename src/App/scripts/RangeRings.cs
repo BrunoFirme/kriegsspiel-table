@@ -19,16 +19,16 @@ sealed class RangeRings
 
     public const double LeastReach = 1, MostReach = 1_000_000;
 
-    double? _standingReach;
-
     public event Action? ReachChanged;
 
     public double RangeMetres
     {
-        get => _standingReach ?? (Scaled ? 500 : 10);
+        get => Math.Clamp((Scaled ? _c.Settings.RangeMetres : _c.Settings.RangeUnits) ?? (Scaled ? 500 : 10), LeastReach, MostReach);
         set
         {
-            _standingReach = Math.Clamp(value, LeastReach, MostReach);
+            if (Scaled) _c.Settings.RangeMetres = Math.Clamp(value, LeastReach, MostReach);
+            else _c.Settings.RangeUnits = Math.Clamp(value, LeastReach, MostReach);
+            _c.Settings.Save();
             ReachChanged?.Invoke();
             if (_c.Tool == Tool.Range) _c.Say(Hint());
         }

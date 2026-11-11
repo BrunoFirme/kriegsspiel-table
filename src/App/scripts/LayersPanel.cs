@@ -44,7 +44,7 @@ sealed class LayersPanel : HudPart
         eye.AddChild(new ToolIcon { Kind = shown ? "eye" : "eye-off", Color = shown ? Ui.Ink : Ui.Muted });
         eye.Pressed += () =>
         {
-            if (!T.HiddenBoards.Add(id)) T.HiddenBoards.Remove(id);
+            T.ShowBoard(id, !shown);
             T.RefreshDrawings();
             Rebuild();
             _paint.Rebuild();
