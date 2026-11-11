@@ -74,4 +74,14 @@ public sealed class DataMoveTests : IDisposable
         Assert.Equal("t2", Read(To, Path.Combine("feud", "Run 1", "Turn 2.kstable")));
         Assert.False(Directory.Exists(From));
     }
+
+    [Fact]
+    public void The_scripts_and_captures_left_in_documents_are_moved_to_the_app_s_own_data_folder()
+    {
+        var moves = SaveStore.FromDocuments.ToDictionary(m => Path.GetFileName(m.From), m => m.To);
+        Assert.Equal(new[] { "Scripts", "captures" }, moves.Keys.Order(StringComparer.Ordinal));
+        Assert.Equal(DataPaths.Scripts, moves["Scripts"]);
+        Assert.Equal(DataPaths.Captures, moves["captures"]);
+        Assert.All(SaveStore.FromDocuments, m => Assert.StartsWith(DataPaths.Documents, m.From));
+    }
 }

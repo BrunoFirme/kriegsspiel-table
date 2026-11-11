@@ -2,6 +2,20 @@ namespace KTable.Core;
 
 public sealed partial class SaveStore
 {
+    public static IReadOnlyList<(string From, string To)> FromDocuments =>
+    [
+        (Path.Combine(DataPaths.Documents, "Scripts"), DataPaths.Scripts),
+        (Path.Combine(DataPaths.Documents, "captures"), DataPaths.Captures),
+    ];
+
+    public static List<string> MoveOutOfDocuments()
+    {
+        var lines = new List<string>();
+        foreach (var (from, to) in FromDocuments) lines.AddRange(MoveTree(from, to));
+        RemoveIfEmpty(DataPaths.Documents);
+        return lines;
+    }
+
     public static List<string> MoveTree(string from, string to)
     {
         var lines = new List<string>();

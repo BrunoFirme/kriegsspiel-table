@@ -182,6 +182,7 @@ public partial class Main : Node
             var saves = SaveStore.Default;
             if (pk == null) foreach (var line in saves.Migrate(Path.Combine(DataPaths.LegacyDocuments, "saves"), saves.HistoryDir)) GD.Print("[saves] moved " + line);
             foreach (var line in saves.ConvertToSaves(DateTime.UtcNow)) GD.Print("[saves] " + line);
+            if (pk == null) foreach (var line in SaveStore.MoveOutOfDocuments()) GD.Print("[data] " + line);
             var gone = saves.EmptyTrash(DateTime.UtcNow);
             if (gone > 0) GD.Print($"[saves] emptied {gone} trash entr{(gone == 1 ? "y" : "ies")} older than {SaveStore.TrashDays} days");
         }
