@@ -166,6 +166,13 @@ public sealed class Settings
         return new();
     }
 
+    public const int KeptScenarios = 40;
+
+    static void KeepNewest<T>(Dictionary<string, T> byScenario)
+    {
+        foreach (var old in byScenario.Keys.Take(Math.Max(0, byScenario.Count - KeptScenarios)).ToList()) byScenario.Remove(old);
+    }
+
     void Freshen()
     {
         static string Bare(string p) => p.TrimEnd(System.IO.Path.DirectorySeparatorChar);
@@ -193,6 +200,10 @@ public sealed class Settings
         if (RangeMetres is { } m && !(double.IsFinite(m) && m > 0)) RangeMetres = null;
         if (RangeUnits is { } u && !(double.IsFinite(u) && u > 0)) RangeUnits = null;
         foreach (var sides in DiceHand.Keys.ToList()) if (DiceHand[sides] <= 0) DiceHand.Remove(sides);
+        foreach (var kind in FormationRanks.Keys.ToList()) if (KTable.Client.Hand.Formations.Find(kind) == null) FormationRanks.Remove(kind);
+        KeepNewest(DrawLayer);
+        KeepNewest(HiddenLayers);
+        KeepNewest(Decal);
         if (UiScaleFollowsWindows != null) UiScale = 1f;
         UiScaleFollowsWindows = null;
         UiScale = float.IsFinite(UiScale) ? Math.Clamp(UiScale, UiScaleMin, UiScaleMax) : 1f;

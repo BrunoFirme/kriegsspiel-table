@@ -271,9 +271,9 @@ The picture holds the pieces in sight at the moment it is taken, wherever they s
 a GIF follows them as they move. Zones and other umpires' pointers are never in it.
 
 **View → First person** looks out from the piece's front edge, the way it faces: drag to look around, or pick
-**N E S W** under **Facing** to hold a direction (dragging lets go). **Lens** sets how many degrees the picture takes in
-across, 20° to 120°; at 90° the four directions make the whole circle. **Eye** slides the viewpoint between the ground at the piece's feet and well over
-its head: drop it to look out from behind a crest. There is nothing to trace from the eye; **Ctrl+wheel** or
+**N E S W** under **Eye → Facing** to hold a direction (dragging lets go). **Lens** sets how many degrees the picture
+takes in across, 20° to 120°; at 90° the four directions make the whole circle. **Height** slides the viewpoint between
+the ground at the piece's feet and well over its head: drop it to look out from behind a crest. There is nothing to trace from the eye; **Ctrl+wheel** or
 **= / −** still set the reach.
 Lines traced in 2D still cut off what lies behind them. Each Capture is one picture.
 

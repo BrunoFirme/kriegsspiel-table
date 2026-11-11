@@ -142,6 +142,25 @@ public class SettingsTests
     }
 
     [Fact]
+    public void Tool_memory_holds_the_newest_scenarios_and_only_formations_that_exist()
+    {
+        var s = Settings.Load();
+        for (int i = 0; i < Settings.KeptScenarios + 5; i++)
+        {
+            s.DrawLayer[$"sc{i}"] = "b";
+            s.HiddenLayers[$"sc{i}"] = new() { "b" };
+            s.Decal[$"sc{i}"] = "p.png";
+        }
+        s.FormationRanks["column"] = 3;
+        s.FormationRanks["gone-kind"] = 3;
+        s.Save();
+        var back = Settings.Load();
+        Assert.Equal((Settings.KeptScenarios, Settings.KeptScenarios, Settings.KeptScenarios), (back.DrawLayer.Count, back.HiddenLayers.Count, back.Decal.Count));
+        Assert.True(back.DrawLayer.ContainsKey($"sc{Settings.KeptScenarios + 4}") && !back.DrawLayer.ContainsKey("sc0"));
+        Assert.Equal(new[] { "column" }, back.FormationRanks.Keys);
+    }
+
+    [Fact]
     public void New_settings_are_written_with_these_defaults_in_this_order()
     {
         var s = new Settings();

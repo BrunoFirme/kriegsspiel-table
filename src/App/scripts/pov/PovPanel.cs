@@ -48,7 +48,7 @@ sealed class PovPanel : HudPart
         AddShot(picture, d);
         AddText(picture, d);
         Ui.AlignForm(picture);
-        _box.AddChild(Header("Reach"));
+        _box.AddChild(Header(d.FirstPerson ? "Eye" : "Reach"));
         var reach = Ui.Form(Ui.PanelLabels);
         _box.AddChild(reach);
         if (d.FirstPerson)
@@ -215,7 +215,7 @@ sealed class PovPanel : HudPart
             MinValue = 0, MaxValue = T.SightingEyeHighest, Step = EyeStep, Value = Math.Min(d.EyeHeight, T.SightingEyeHighest),
             TooltipText = "How high the eye stands over the ground: down to look from behind a crest, up to see over it",
         };
-        SliderRow(grid, "Eye", slider, v => cal.UnitsPerMeter is > 0 ? $"{cal.FromTableUnits(v):#,0} {cal.UnitName}" : $"{v:0.00} u");
+        SliderRow(grid, "Height", slider, v => cal.UnitsPerMeter is > 0 ? $"{cal.FromTableUnits(v):#,0} {cal.UnitName}" : $"{v:0.00} u");
         slider.ValueChanged += v => T.SetSightingEye(v);
         slider.DragEnded += _ => Cfg.Save();
     }
