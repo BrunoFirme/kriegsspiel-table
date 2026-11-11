@@ -123,7 +123,7 @@ sealed class MainMenu : HudPart
         var kept = T.Cam.Views;
         foreach (var slot in kept.Keys.Order())
         {
-            views.AddItem($"View {slot}   ({slot})", slot);
+            views.AddItem($"View {slot}   (Shift+{slot})", slot);
             forget.AddItem($"View {slot}", Forget + slot);
         }
         for (int slot = 1; slot <= CameraControl.ViewSlots; slot++)

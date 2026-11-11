@@ -266,7 +266,7 @@ sealed class MenuCards : HudPart
             var b = new Button
             {
                 Text = slot.ToString(), CustomMinimumSize = new Vector2(Swatch, Swatch), FocusMode = Control.FocusModeEnum.None,
-                TooltipText = saved ? $"Go to view {slot}   ({slot})\nRight-click forgets it" : $"Keep this view as {slot}   (Ctrl+{slot})",
+                TooltipText = saved ? $"Go to view {slot}   (Shift+{slot})\nRight-click forgets it" : $"Keep this view as {slot}   (Ctrl+{slot})",
             };
             if (!saved) Ui.MakeQuiet(b);
             b.Pressed += () =>

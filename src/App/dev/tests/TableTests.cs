@@ -583,7 +583,7 @@ static class TableTests
         rig.Show(new CameraRig.View(new Vector3(-30, 0, 25), 90, 2.1f, -1.2f, true));
         t.Table.Keys.OnKey(new InputEventKey { Keycode = Key.Key3, Pressed = true });
         await r.Frame();
-        Check.That(!rig.TopDown && rig.Target.DistanceTo(kept.Target) < 0.01f, "3 alone goes back to it too when no piece takes the number");
+        Check.That(rig.TopDown, "3 alone leaves the view alone even when no piece takes the number");
         rig.Show(new CameraRig.View(new Vector3(-30, 0, 25), 90, 2.1f, -1.2f, true));
         t.Table.Keys.OnKey(new InputEventKey { Keycode = Key.Kp3, Pressed = true });
         await r.Frame();

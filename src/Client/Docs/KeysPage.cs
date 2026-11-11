@@ -46,7 +46,7 @@ public static class KeysPage
             (K("map2d"), "flat map or 3D table"),
             (K("frame"), "frame the whole map"),
             ("Ctrl+1 … 9", "keep this view, unless carrying or with several picked"),
-            ("1 … 9, Shift+1 … 9", "go back to a kept view; alone, only when no piece under the pointer or picked takes the number"),
+            ("Shift+1 … 9", "go back to a kept view"),
             (K("labelPlates"), "plates behind labels beside pieces"),
             (K("fullscreen"), "window or full screen"),
         });

@@ -216,7 +216,7 @@ static class HudTests
         rig.Show(new CameraRig.View(new Vector3(-30, 0, 25), 90, 2.1f, -1.2f, true));
         await r.Frame();
         views = ViewsMenu(h);
-        Check.Equal("View 4   (4) | Keep this view as | Forget", Rows(views), "the kept view listed");
+        Check.Equal("View 4   (Shift+4) | Keep this view as | Forget", Rows(views), "the kept view listed");
         Check.That(Rows(views.GetNode<PopupMenu>("save")).Contains("4, replacing it"), "keeping it again says it replaces it");
         Pick(views, "View 4");
         await r.Frame();

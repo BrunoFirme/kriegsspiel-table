@@ -95,7 +95,7 @@ The tool strip runs down the left. Point at any tool and press **F1** for its se
 | Home | frame the map |
 | F2 | flat map view and back |
 | Ctrl+1–9 | keep this view (unless carrying or with several picked); also in the right-click menu and Menu → Views |
-| 1–9, Shift+1–9 | go back to a kept view; a number alone goes to a piece under the pointer or picked first |
+| Shift+1–9 | go back to a kept view; 1–9 alone only change a piece's look |
 
 Kept views are yours, for each scenario. Forget one with Menu → Views → Forget, or a right-click on it in the right-click menu.
 
