@@ -18,6 +18,7 @@ sealed class FakePiece : ITablePiece
     public string Layer { get; init; } = Layers.Umpire;
     public PieceInstance Piece { get; }
     public System.Numerics.Vector2 Footprint { get; }
+    public System.Numerics.Vector2 GroundCentre { get; init; }
     public float Thickness { get; }
     public float TopY => (float)(Piece.Y + 0.03) + Thickness;
     public bool IsDie { get; init; }
@@ -28,7 +29,7 @@ sealed class FakePiece : ITablePiece
 
     public bool Unbounded { get; init; }
     public int Asked { get; private set; }
-    public float SurfaceReach => Unbounded ? float.PositiveInfinity : Footprint.Length() / 2;
+    public float SurfaceReach => Unbounded ? float.PositiveInfinity : GroundCentre.Length() + Footprint.Length() / 2;
 
     public float? SurfaceAt(Vec2 p)
     {
@@ -38,7 +39,8 @@ sealed class FakePiece : ITablePiece
 
     public bool ContainsAt(Vec2 point, Vec2 at, double rotDeg)
     {
-        double rad = rotDeg * Math.PI / 180, dx = point.X - at.X, dz = point.Z - at.Z;
+        var middle = this.MiddleAt(at, rotDeg);
+        double rad = rotDeg * Math.PI / 180, dx = point.X - middle.X, dz = point.Z - middle.Z;
         double lx = dx * -Math.Cos(rad) + dz * Math.Sin(rad), lz = dx * -Math.Sin(rad) + dz * -Math.Cos(rad);
         return Math.Abs(lx) <= Footprint.X / 2 && Math.Abs(lz) <= Footprint.Y / 2;
     }

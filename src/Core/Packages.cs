@@ -106,6 +106,31 @@ public sealed class PackageStore
     public string? AssetPathForDef(string defId, string? hash) =>
         PackOfDef(defId) is { } p ? AssetPath(p, hash) : null;
 
+    readonly System.Collections.Concurrent.ConcurrentDictionary<string, (double X, double Z)> _middles = new();
+
+    public (double X, double Z) MeshMiddle(string path) =>
+        _middles.TryGetValue(path, out var m) ? m : File.Exists(path) ? _middles[path] = ModuleMeshes.Middle(File.ReadLines(path)) : (0, 0);
+
+    public (double X, double Z) MiddleOf(PieceInstance p)
+    {
+        if (Def(p.Def) is not { } def) return (0, 0);
+        var worn = p.Picture is { Length: > 0 } pic && Def(pic) is { Kind: "model", Mesh.Length: > 0 } w && !ReferenceEquals(w, def) ? w : null;
+        var state = p.State >= 0 && p.State < def.States.Count ? def.States[p.State] : null;
+        if ((worn?.Kind ?? state?.Kind ?? def.Kind) != "model") return (0, 0);
+        var path = AssetPathForDef((worn ?? def).Id, worn?.Mesh ?? state?.Mesh ?? def.Mesh);
+        if (path == null) return (0, 0);
+        var share = MeshMiddle(path);
+        var size = worn?.Size ?? state?.Size ?? def.Size;
+        return (share.X * size.W * p.Scale, share.Z * size.H * p.Scale);
+    }
+
+    public Vec2 MiddleOnMap(PieceInstance p)
+    {
+        var (mx, mz) = MiddleOf(p);
+        var (x, z) = p.Lying(mx, mz);
+        return p.Pos + Vec2.OnPiece(x, z, p.RotDeg);
+    }
+
     public string TilesDir(SheetDef s) => Path.Combine(PackageDir(s.Package), "tiles", s.Image);
 
     public bool HasTiles(SheetDef s) => File.Exists(Path.Combine(TilesDir(s), "index.json"));

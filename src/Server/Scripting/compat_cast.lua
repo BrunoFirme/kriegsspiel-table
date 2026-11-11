@@ -30,9 +30,9 @@ end
 local function piece_box(p)
   local s = p.size
   local o, ax, az = p.to_world(0, 0), p.to_world(1, 0), p.to_world(0, 1)
-  local c = compat.position(p)
+  local c, m = compat.position(p), p.middle
   return {
-    center = v3(c.x, c.y, c.z),
+    center = v3(c.x + m.x - p.pos.x, c.y, c.z + m.z - p.pos.z),
     axes = { unit(v3(ax.x - o.x, 0, ax.z - o.z)) or v3(1, 0, 0), v3(0, 1, 0), unit(v3(az.x - o.x, 0, az.z - o.z)) or v3(0, 0, 1) },
     half = { s.w / 2, THICK * (p.scale or 1) / 2, s.h / 2 },
   }

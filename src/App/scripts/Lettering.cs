@@ -87,7 +87,7 @@ sealed class Lettering
         for (int i = 0; i < planeCount; i++) _frustum[i] = fr[i];
         bool InView(PieceNode n, Vector3 c)
         {
-            float margin = n.Footprint.Length() * 0.5f * (float)Math.Max(1, n.Piece.Scale) + 2f;
+            float margin = (n.FootprintCentre.Length() + n.Footprint.Length() * 0.5f) * (float)Math.Max(1, n.Piece.Scale) + 2f;
             for (int i = 0; i < planeCount; i++) if (_frustum[i].DistanceTo(c) > margin) return false;
             return true;
         }

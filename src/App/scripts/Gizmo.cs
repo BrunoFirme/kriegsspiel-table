@@ -93,7 +93,7 @@ sealed class Gizmo : IKnobDrag
         if (Held != Handle.None) return;
         static Vector3 Flat(PieceNode n) => n.Position with { Y = 0 };
         var c = nodes.Aggregate(Vector3.Zero, (a, n) => a + Flat(n)) / nodes.Count;
-        float r = nodes.Max(n => (Flat(n) - c).Length() + n.Footprint.Length() / 2 * n.Scale.X);
+        float r = nodes.Max(n => (Flat(n) - c).Length() + (n.FootprintCentre.Length() + n.Footprint.Length() / 2) * n.Scale.X);
         _center = c with { Y = 0 };
         _radius = Mathf.Max(r * 1.15f, 18f / Mathf.Max(0.01f, Rig.PixelsPerUnit()));
     }

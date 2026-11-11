@@ -8,6 +8,12 @@ public record struct Vec2(double X, double Z)
     public static Vec2 operator -(Vec2 a, Vec2 b) => new(a.X - b.X, a.Z - b.Z);
     [System.Text.Json.Serialization.JsonIgnore]
     public double Length => Math.Sqrt(X * X + Z * Z);
+
+    public static Vec2 OnPiece(double x, double z, double rotDeg)
+    {
+        double rad = rotDeg * Math.PI / 180, cos = Math.Cos(rad), sin = Math.Sin(rad);
+        return new Vec2(-x * cos + z * sin, x * sin + z * cos);
+    }
 }
 
 public record struct Size2(double W, double H);
@@ -488,6 +494,16 @@ public sealed class PieceInstance : IJsonOnDeserialized
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public double TiltX { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public double TiltZ { get; set; }
     [JsonIgnore] public bool HasTilt => TiltX != 0 || TiltZ != 0;
+
+    public (double X, double Z) Lying(double x, double z)
+    {
+        double y = 0;
+        if (FaceDown) (x, y) = (-x, -y);
+        double rz = TiltZ * Math.PI / 180, rx = TiltX * Math.PI / 180;
+        (x, y) = (x * Math.Cos(rz) + y * Math.Sin(rz), -x * Math.Sin(rz) + y * Math.Cos(rz));
+        return (x, y * Math.Sin(rx) + z * Math.Cos(rx));
+    }
+
     public string? Note { get; set; }
     public string? Picture { get; set; }
     public string? Script { get; set; }

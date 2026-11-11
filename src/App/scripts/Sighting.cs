@@ -351,7 +351,7 @@ sealed class Sighting
         var node = _pieces.NodeOf(Layers.Umpire, d.ObserverId);
         float up = (float)d.EyeHeight;
         if (node == null) return Coords.ToWorld(d.Center, up);
-        var frontEdge = new Vector3(0, 0, -node.Footprint.Y / 2).Rotated(Vector3.Up, Coords.Yaw(node.Piece.RotDeg));
+        var frontEdge = new Vector3(node.GroundCentre.X, 0, node.GroundCentre.Y - node.Footprint.Y / 2).Rotated(Vector3.Up, Coords.Yaw(node.Piece.RotDeg));
         return node.GlobalPosition + frontEdge + Vector3.Up * up;
     }
 
@@ -539,14 +539,15 @@ sealed class Sighting
     static bool Reaches(PieceNode n, SightingShape shape, Vec2 lo, Vec2 hi)
     {
         var half = n.Footprint / 2;
-        double reach = half.Length(), x = n.Piece.Pos.X, z = n.Piece.Pos.Z;
+        var middle = n.MiddleAt(n.Piece.Pos, n.Piece.RotDeg);
+        double reach = half.Length(), x = middle.X, z = middle.Z;
         if (x + reach < lo.X || x - reach > hi.X || z + reach < lo.Z || z - reach > hi.Z) return false;
         if (shape.Kind != "circle" && shape.Polygon.Any(v => n.Contains(v) && shape.Contains(v))) return true;
         for (int i = 0; i < FootprintSamples; i++)
             for (int j = 0; j < FootprintSamples; j++)
             {
                 var local = new Vector2(half.X * (2f * i / (FootprintSamples - 1) - 1), half.Y * (2f * j / (FootprintSamples - 1) - 1));
-                var p = Coords.FromLocal(local, n.Piece.Pos, n.Piece.RotDeg);
+                var p = Coords.FromLocal(local, middle, n.Piece.RotDeg);
                 if (shape.Contains(p) && n.Contains(p)) return true;
             }
         return false;

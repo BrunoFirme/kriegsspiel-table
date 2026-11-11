@@ -198,11 +198,11 @@ sealed class FormationTool
         if (before is { } b && b.Kind == kind.Id && b.Order.Count == units.Count && units.All(b.Order.ContainsKey)) order = b.Order;
         else
         {
-            var m = Formations.Match(units.Select(Where).ToList(), places.Select(p => p.Pos).ToList());
+            var m = Formations.Match(units.Select(n => n.MiddleAt(Where(n), RotOf(n))).ToList(), places.Select(p => p.Pos).ToList());
             order = units.Select((n, i) => (n, m[i])).ToDictionary(x => x.n, x => x.Item2);
         }
         var o = order;
-        return units.Select(n => (n, places[o[n]].Pos, places[o[n]].Rot)).ToList();
+        return units.Select(n => (n, places[o[n]].Pos - n.CentreOffset(places[o[n]].Rot), places[o[n]].Rot)).ToList();
     }
 
     void Lay(List<PieceNode> units, FormationKind kind, Vec2 at, double facing, int? front, IReadOnlyList<Vec2>? path, bool frontAt, Formed? before)
@@ -265,7 +265,7 @@ sealed class FormationTool
         if (units.Count >= 2) _across = PitchOf(units).Across;
         Formations.Extend(_drawn, g, _across, _across * DrawEvery);
         if (DragShape(units) is not var (kind, at, facing, front, path)) { _ghost = null; return; }
-        _ghost = Plan(units, kind, at, facing, front, path, frontAt: true, null, out _).Select(t => (t.Pos, t.Rot, t.Node.Footprint)).ToList();
+        _ghost = Plan(units, kind, at, facing, front, path, frontAt: true, null, out _).Select(t => (t.Node.MiddleAt(t.Pos, t.Rot), t.Rot, t.Node.Footprint)).ToList();
         _c.Say(path != null ? Strung(kind, units, path) : Describe(kind, units.Count, front));
     }
 

@@ -117,7 +117,7 @@ sealed partial class Carry : IHeldPieces
     List<PieceNode> RestingOn(PieceNode under)
     {
         float reach = Mathf.Max(under.Footprint.X, under.Footprint.Y) * 0.75f + 1;
-        return _footing.RestingOn(under, _pieces.Grid.NearAny(new[] { under.Position with { Y = 0 } }, reach), _c.LayerInteractive);
+        return _footing.RestingOn(under, _pieces.Grid.NearAny(new[] { under.MiddlePosition with { Y = 0 } }, reach), _c.LayerInteractive);
     }
 
     (Vec2 pos, double rot) Drawn(PieceNode n)
@@ -372,7 +372,7 @@ sealed partial class Carry : IHeldPieces
             ContactMonitor = true, MaxContactsReported = 16,
             Freeze = frozen, FreezeMode = RigidBody3D.FreezeModeEnum.Static,
         };
-        rb.AddChild(new CollisionShape3D { Shape = new BoxShape3D { Size = new Vector3(n.Footprint.X * 0.98f, Mathf.Max(0.02f, n.Thickness), n.Footprint.Y * 0.98f) } });
+        rb.AddChild(new CollisionShape3D { Shape = new BoxShape3D { Size = new Vector3(n.Footprint.X * 0.98f, Mathf.Max(0.02f, n.Thickness), n.Footprint.Y * 0.98f) }, Position = n.HeadingShift });
         return rb;
     }
 
@@ -492,7 +492,7 @@ sealed partial class Carry : IHeldPieces
             else
             {
                 var sb = new StaticBody3D { PhysicsMaterialOverride = mat };
-                sb.AddChild(new CollisionShape3D { Shape = new BoxShape3D { Size = new Vector3(n.Footprint.X, n.Thickness, n.Footprint.Y) } });
+                sb.AddChild(new CollisionShape3D { Shape = new BoxShape3D { Size = new Vector3(n.Footprint.X, n.Thickness, n.Footprint.Y) }, Position = n.RestBoxShift });
                 world.AddChild(sb);
                 sb.GlobalTransform = n.RestBox;
             }

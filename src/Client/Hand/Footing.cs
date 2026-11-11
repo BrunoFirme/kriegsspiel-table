@@ -25,7 +25,7 @@ public sealed class Footing<T> where T : class, ITablePiece
 
     public float GroundAt(Vec2 p) => (float)_ground().At(p);
 
-    public float GroundUnder(T n, Vec2 pos, double rot) => (float)_ground().Under(pos, rot, n.Footprint.X, n.Footprint.Y);
+    public float GroundUnder(T n, Vec2 pos, double rot) => (float)_ground().Under(n.MiddleAt(pos, rot), rot, n.Footprint.X, n.Footprint.Y);
 
     public double Stored(T n, Vec2 pos, double rot, double y, HashSet<T>? skip = null) => OnGround(n, pos, rot, skip) ? 0 : y;
 
@@ -35,11 +35,12 @@ public sealed class Footing<T> where T : class, ITablePiece
         var rad = rot * Math.PI / 180;
         var along = new Vec2(-Math.Cos(rad), Math.Sin(rad));
         var back = new Vec2(-Math.Sin(rad), -Math.Cos(rad));
-        var under = Supports(pos, ProbeRadius(w, d), n.Layer, n, skip);
+        var middle = n.MiddleAt(pos, rot);
+        var under = Supports(middle, ProbeRadius(w, d), n.Layer, n, skip);
         for (int i = -2; i <= 2; i++)
             for (int j = -2; j <= 2; j++)
             {
-                var q = pos + new Vec2(along.X * i * w * 0.255 + back.X * j * d * 0.255, along.Z * i * w * 0.255 + back.Z * j * d * 0.255);
+                var q = middle + new Vec2(along.X * i * w * 0.255 + back.X * j * d * 0.255, along.Z * i * w * 0.255 + back.Z * j * d * 0.255);
                 if (PiecesTop(q, under) > GroundAt(q) + Settle) return false;
             }
         return true;
@@ -94,14 +95,15 @@ public sealed class Footing<T> where T : class, ITablePiece
         var along = new Vec2(-Math.Cos(rad), Math.Sin(rad));
         var back = new Vec2(-Math.Sin(rad), -Math.Cos(rad));
         float size = Mathf.Max(w, d);
-        var under = Supports(pos, ProbeRadius(w, d) + (slide && !n.IsProp ? size * SlideReach : 0), n.Layer, n, moving);
+        var under = Supports(n.MiddleAt(pos, rot), ProbeRadius(w, d) + (slide && !n.IsProp ? size * SlideReach : 0), n.Layer, n, moving);
         (float middle, float all, float middleTop, float allTop) Probe(Vec2 at)
         {
             float mid = 0, all = 0, midTop = float.MinValue, allTop = float.MinValue;
+            var from = n.MiddleAt(at, rot);
             for (int i = -2; i <= 2; i++)
                 for (int j = -2; j <= 2; j++)
                 {
-                    var q = at + new Vec2(along.X * i * w * 0.255 + back.X * j * d * 0.255, along.Z * i * w * 0.255 + back.Z * j * d * 0.255);
+                    var q = from + new Vec2(along.X * i * w * 0.255 + back.X * j * d * 0.255, along.Z * i * w * 0.255 + back.Z * j * d * 0.255);
                     float t = PiecesTop(q, under);
                     float rel = Mathf.Max(0, t - GroundAt(q));
                     all = Mathf.Max(all, rel);

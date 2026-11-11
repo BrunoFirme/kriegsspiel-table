@@ -107,7 +107,7 @@ sealed class Dice
             if (set.Contains(n) || n.Layer != dice[0].Layer || n.Rolling || n.Piece.NoCollision) continue;
             if (!centers.Any(c => (c - n.Position with { Y = 0 }).Length() < 30)) continue;
             var sb = new StaticBody3D { PhysicsMaterialOverride = mat };
-            sb.AddChild(new CollisionShape3D { Shape = new BoxShape3D { Size = new Vector3(n.Footprint.X, n.Thickness, n.Footprint.Y) } });
+            sb.AddChild(new CollisionShape3D { Shape = new BoxShape3D { Size = new Vector3(n.Footprint.X, n.Thickness, n.Footprint.Y) }, Position = n.RestBoxShift });
             world.AddChild(sb);
             sb.GlobalTransform = n.RestBox;
         }

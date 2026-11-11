@@ -68,7 +68,7 @@ public static class Formation
             var key = Cell(best.At);
             if (!grid.TryGetValue(key, out var list)) grid[key] = list = new();
             list.Add(best);
-            h.Offset = best.At;
+            h.Offset = best.At - h.Node.CentreOffset(rot);
             h.Rot = rot;
             h.Lift = 0;
         }
@@ -132,7 +132,7 @@ public static class Formation
             int r = k / cols, c = k % cols;
             int inRow = Math.Min(cols, items.Count - r * cols);
             double x = (c - (inRow - 1) / 2.0) * w, z = (r - (rows - 1) / 2.0) * d;
-            result[order[k]] = center + new Vec2(along.X * x + back.X * z, along.Z * x + back.Z * z);
+            result[order[k]] = center + new Vec2(along.X * x + back.X * z, along.Z * x + back.Z * z) - items[order[k]].node.CentreOffset(rotDeg);
         }
         return result.ToList();
     }

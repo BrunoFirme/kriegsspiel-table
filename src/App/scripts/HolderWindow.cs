@@ -110,7 +110,7 @@ public partial class HolderWindow : FloatPanel
     {
         if (Holder is not { } h) return null;
         var cam = _t.Rig.Cam;
-        var centre = new Vector3(h.Position.X, h.TopY, h.Position.Z);
+        var centre = h.MiddlePosition with { Y = h.TopY };
         if (cam.IsPositionBehind(centre)) return null;
         var at = cam.UnprojectPosition(centre);
         float reach = Mathf.Max(h.Footprint.X, h.Footprint.Y) * 0.5f * (float)h.Piece.Scale;

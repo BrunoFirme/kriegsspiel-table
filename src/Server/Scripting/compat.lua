@@ -485,10 +485,6 @@ function compat.put_object(obj, piece)
   if is_piece(piece) then obj.stow(piece) end
   return obj
 end
-function compat.get_bounds(obj)
-  local s = obj.size
-  return { center = compat.position(obj), size = compat.Vector(s.w, 0.2, s.h), offset = compat.Vector(0, 0, 0) }
-end
 function compat.get_attachments(obj)
   local t = {}
   for i, a in ipairs(obj.attached or {}) do t[#t + 1] = { guid = compat.guid(a), name = compat.name(a), index = i - 1 } end

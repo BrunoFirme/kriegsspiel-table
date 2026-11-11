@@ -14,6 +14,8 @@ public partial class PieceNode : Node3D
     public bool Ghost { get; private set; }
     public bool PrintingOnly { get; private set; }
     public Vector2 Footprint { get; private set; } = Vector2.One;
+    public Vector2 FootprintCentre { get; private set; }
+    public Vector2 GroundCentre => Piece.Lying(FootprintCentre.X, FootprintCentre.Y) is var (x, z) ? new Vector2((float)x, (float)z) : default;
     public string Shape { get; private set; } = "box";
     public double BuiltScale { get; private set; } = 1;
     internal (int x, int z)? Cell;
@@ -101,6 +103,7 @@ public partial class PieceNode : Node3D
         if (worn == null && CurState?.Size is { } ss) size = ss;
         float w = (float)(size.W * Piece.Scale), h = (float)(size.H * Piece.Scale);
         Footprint = new Vector2(w, h);
+        FootprintCentre = Vector2.Zero;
         BuiltScale = Piece.Scale;
         _thickness = (float)Mathf.Clamp((ShownThickness(worn) ?? shown?.Thickness ?? 0.2) * Piece.Scale, 0.02, 2);
         Shape = worn?.Shape ?? CurState?.Shape ?? Def?.Shape ?? "box";
@@ -302,7 +305,7 @@ public partial class PieceNode : Node3D
         return new Quaternion((TiltTo(up) * PoseBasis(Coords.Yaw(rotDeg), Piece.FaceDown ? Mathf.Pi : 0)).Orthonormalized());
     }
 
-    float GroundUnder(Vec2 pos, double rotDeg) => _s.Ground is { Any: true } g ? (float)g.Under(pos, rotDeg, Footprint.X, Footprint.Y) : 0;
+    float GroundUnder(Vec2 pos, double rotDeg) => _s.Ground is { Any: true } g ? (float)g.Under(MiddleAt(pos, rotDeg), rotDeg, Footprint.X, Footprint.Y) : 0;
 
     public float RestY => BaseY(Piece) - 0.03f;
 
@@ -500,8 +503,18 @@ public partial class PieceNode : Node3D
                 _thickness = aabb.Size.Y * sy;
                 _modelRest = model.Quaternion;
                 _modelRestPos = model.Position;
+                var (mx, mz) = _s.Store.MeshMiddle(_s.Assets.Abs(meshPack, meshFile));
+                CentreOn(new Vector2((float)mx * w, (float)mz * h));
             }
         });
+    }
+
+    void CentreOn(Vector2 centre)
+    {
+        if (centre.IsEqualApprox(FootprintCentre)) return;
+        FootprintCentre = centre;
+        if (_sel != null) _sel.Position = _sel.Position with { X = centre.X, Z = centre.Y };
+        if (IsInsideTree() && _s.Ground is { Any: true }) Resettle();
     }
 
     void BuildAddOn(string meshHash, Color tint)
@@ -617,8 +630,9 @@ public partial class PieceNode : Node3D
         {
             var (mesh, mat, halo) = Ring(new Color(1, 0.93f, 0.5f));
             _selMat = mat;
+            var at = new Vector3(FootprintCentre.X, halo ? -0.015f : 0, FootprintCentre.Y);
             _sel =
-                new MeshInstance3D { Mesh = mesh, Position = new Vector3(0, halo ? -0.015f : 0, 0), MaterialOverride = _selMat, CastShadow = GeometryInstance3D.ShadowCastingSetting.Off,
+                new MeshInstance3D { Mesh = mesh, Position = at, MaterialOverride = _selMat, CastShadow = GeometryInstance3D.ShadowCastingSetting.Off,
                     Visible = Look.FlatSelection || IsEffect, Layers = Table.LiveOnlyLayer };
             AddChild(_sel);
         }
@@ -675,6 +689,7 @@ public partial class PieceNode : Node3D
         var drawn = vi.GetAabb();
         if (drawn.Size.X <= 0) return false;
         var box = vi.Transform * drawn;
+        box.Position -= new Vector3(FootprintCentre.X, 0, FootprintCentre.Y);
         var half = Footprint / 2;
         return box.Position.X >= -half.X && box.End.X <= half.X && box.Position.Z >= -half.Y && box.End.Z <= half.Y;
     }
@@ -689,6 +704,7 @@ public partial class PieceNode : Node3D
 
     bool ContainsLocal(Vector2 l)
     {
+        l -= GroundCentre;
         if (Piece.HasTilt) return InsideTilted(l);
         if (!KTable.Client.Geometry.PieceShapes.Inside(Shape, Footprint.X, Footprint.Y, new System.Numerics.Vector2(l.X, l.Y))) return false;
         switch (Shape)

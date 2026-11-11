@@ -10,6 +10,9 @@ namespace KTable.App;
 public partial class PieceNode : ITablePiece
 {
     System.Numerics.Vector2 ITablePiece.Footprint => new(Footprint.X, Footprint.Y);
+    System.Numerics.Vector2 ITablePiece.GroundCentre => new(GroundCentre.X, GroundCentre.Y);
+    public Vec2 MiddleAt(Vec2 pos, double rotDeg) => TablePieces.MiddleAt(this, pos, rotDeg);
+    public Vec2 CentreOffset(double rotDeg) => TablePieces.CentreOffset(this, rotDeg);
     bool ITablePiece.IsProp => ShowsModel;
     float? ITablePiece.SurfaceAt(Vec2 p) => SurfaceAt(Coords.ToWorld(p));
     float ITablePiece.SurfaceReach => SurfaceReaches.Of(this, _model);
@@ -74,7 +77,7 @@ static class SurfaceReaches
 
     static float Outline(PieceNode n)
     {
-        float reach = new Vector3(n.Footprint.X, n.Thickness, n.Footprint.Y).Length() / 2;
+        float reach = n.FootprintCentre.Length() + new Vector3(n.Footprint.X, n.Thickness, n.Footprint.Y).Length() / 2;
         foreach (var p in n.Parts) reach = Mathf.Max(reach, p.Position.Length() + Outline(p));
         return reach;
     }

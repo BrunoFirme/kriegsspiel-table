@@ -173,6 +173,7 @@
 ---@field y number How high it sits above the table (stacked pieces).
 ---@field scale number Its size multiplier on the table.
 ---@field size Size Its size on the map at its state and scale: { w =, h = }.
+---@field middle Point The middle of its footprint, in map units: { x =, z = }. The same as pos, except for a model drawn off its own centre.
 ---@field picture_size Size|nil Its picture's width and height in pixels at its state, or nil without a picture.
 ---@field local_unit Size|nil For a model that came from a module, what one unit of its script's local frame is in piece units: { x =, z = }; nil for every other piece.
 ---@field shape string Its outline at its state: "box", "rounded", "circle", "hex", or "alpha" for a token cut along its picture.

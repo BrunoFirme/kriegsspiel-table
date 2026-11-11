@@ -162,7 +162,7 @@ sealed partial class Carry
         {
             float pulse = armed ? 1 + 0.06f * Mathf.Sin((float)(Time.GetTicksMsec() / 1000.0) * 12) : 1;
             float r = (Mathf.Max(into.Footprint.X, into.Footprint.Y) * 0.5f * (float)into.Piece.Scale + Gap) * pulse;
-            _mesh.Position = new Vector3(into.Position.X, into.TopY + Above, into.Position.Z);
+            _mesh.Position = into.MiddlePosition with { Y = into.TopY + Above };
             _mesh.Visible = true;
             float w = Mathf.Max(Width, r * WidthPerRadius);
             _im.ClearSurfaces();

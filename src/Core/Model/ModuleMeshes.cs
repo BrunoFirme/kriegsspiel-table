@@ -37,6 +37,24 @@ public static class ModuleMeshes
         return null;
     }
 
+    public static (double X, double Z) Middle(IEnumerable<string> obj)
+    {
+        var points = new List<(double X, double Z)>();
+        var used = new HashSet<int>();
+        foreach (var line in obj)
+        {
+            var p = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            if (p.Length >= 4 && p[0] == "v" && Three(p, out var v)) points.Add((v.X, v.Z));
+            else if (p.Length >= 4 && p[0] == "f")
+                foreach (var corner in p.Skip(1))
+                    if (Index(corner.Split('/')[0], points.Count) is var at and >= 0) used.Add(at);
+        }
+        var drawn = used.Count > 0 ? used.Where(i => i < points.Count).Select(i => points[i]).ToList() : points;
+        if (drawn.Count == 0) return (0, 0);
+        static double Share(double lo, double hi) => hi > lo ? -(lo + hi) / 2 / (hi - lo) : 0;
+        return (Share(drawn.Min(q => q.X), drawn.Max(q => q.X)), Share(drawn.Min(q => q.Z), drawn.Max(q => q.Z)));
+    }
+
     readonly record struct Corner(int V, int T, int N);
 
     sealed class Shape

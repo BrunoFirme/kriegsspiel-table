@@ -217,6 +217,7 @@ Read from `self` or from any piece `board.find` or `board.pieces` hands back. Fi
 | [`self.y`](#selfy) | How high it sits above the table (stacked pieces). |
 | [`self.scale`](#selfscale) | Its size multiplier on the table. |
 | [`self.size`](#selfsize) | Its size on the map at its state and scale: { w =, h = }. |
+| [`self.middle`](#selfmiddle) | The middle of its footprint, in map units: { x =, z = }. The same as `pos`, except for a model drawn off its own centre. |
 | [`self.picture_size`](#selfpicture_size) | Its picture's width and height in pixels at its state, or nil without a picture. |
 | [`self.local_unit`](#selflocal_unit) | For a model that came from a module, what one unit of its script's local frame is in piece units: { x =, z = }; nil for every other piece. |
 | [`self.shape`](#selfshape) | Its outline at its state: "box", "rounded", "circle", "hex", or "alpha" for a token cut along its picture. |
@@ -545,6 +546,18 @@ Its size on the map at its state and scale: { w =, h = }.
 **Type** `Size`, read-only.
 
 A state with a size of its own gives that size; otherwise the kind's. Both are multiplied by `scale`.
+
+**Module call** `getBounds`
+
+### `self.middle`
+
+```lua
+self.middle
+```
+
+The middle of its footprint, in map units: { x =, z = }. The same as `pos`, except for a model drawn off its own centre.
+
+**Type** `Point`, read-only.
 
 **Module call** `getBounds`
 
@@ -3838,6 +3851,7 @@ The converter rewrites a module's scripts into these calls by rule; this is the 
 | `editButton` | [`self.edit`](#selfedit) |
 | `flip` | [`self.flip`](#selfflip) |
 | `getAttachments` | [`self.attached`](#selfattached) |
+| `getBounds` | [`self.middle`](#selfmiddle) |
 | `getBounds` | [`self.size`](#selfsize) |
 | `getButtons` | [`self.widgets`](#selfwidgets) |
 | `getColorTint` | [`self.tint`](#selftint) |

@@ -1216,16 +1216,24 @@ function compat.position_to_local(obj, v)
   return compat.Vector(x / ux, y / uy, z / uz)
 end
 local THICK = 0.2
+local function bounds(obj, size, dx, dz)
+  local at = compat.position(obj)
+  return { center = compat.Vector(at.x + dx, at.y, at.z + dz), size = size, offset = compat.Vector(dx, 0, dz) }
+end
 function compat.get_bounds(obj)
   local s = obj.size
   local a = math.rad(obj.rot or 0)
   local c, si = math.abs(math.cos(a)), math.abs(math.sin(a))
-  local t = THICK * (obj.scale or 1)
-  return { center = compat.position(obj), size = compat.Vector(s.w * c + s.h * si, t, s.w * si + s.h * c), offset = compat.Vector(0, 0, 0) }
+  local m = obj.middle
+  return bounds(obj, compat.Vector(s.w * c + s.h * si, THICK * (obj.scale or 1), s.w * si + s.h * c), m.x - obj.pos.x, m.z - obj.pos.z)
 end
 function compat.get_bounds_normalized(obj)
   local s = obj.size
-  return { center = compat.position(obj), size = compat.Vector(s.w, THICK * (obj.scale or 1), s.h), offset = compat.Vector(0, 0, 0) }
+  local a = math.rad(obj.rot or 0)
+  local c, si = math.cos(a), math.sin(a)
+  local m = obj.middle
+  local dx, dz = m.x - obj.pos.x, m.z - obj.pos.z
+  return bounds(obj, compat.Vector(s.w, THICK * (obj.scale or 1), s.h), dx * c - dz * si, dx * si + dz * c)
 end
 
 function compat.get_vector_lines(obj)

@@ -334,6 +334,11 @@ internal sealed partial class PieceHandles(ScriptHost host)
                 t.Table["h"] = N(sz.H * p.Scale);
                 return t;
             }
+            case "middle":
+            {
+                var m = host.Server.Store?.MiddleOnMap(p) ?? p.Pos;
+                return XzTable(m.X, m.Z);
+            }
             case "picture_size": return PictureSize(p, def);
             case "stowed": return StowedList(p);
             case "ready": return p.Ready is { } r && ReadyPiece.Of(p, x => host.Find(x)) is Readiness.In or Readiness.Out ? Handle(r.Id) : DynValue.Nil;

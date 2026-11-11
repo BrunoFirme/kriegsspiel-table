@@ -138,7 +138,7 @@ sealed class PieceLayer
         if (!ground.Any || n.IsDie || n.IsEffect || n.Ghost || stack > 0) return null;
         if (y <= 0)
         {
-            var seat = ground.SeatOn(pos, rotDeg, n.Footprint.X, n.Footprint.Y);
+            var seat = ground.SeatOn(n.MiddleAt(pos, rotDeg), rotDeg, n.Footprint.X, n.Footprint.Y);
             return ((float)seat.Y + Gap, new Vector3((float)seat.UpX, (float)seat.UpY, (float)-seat.UpZ));
         }
         var world = Coords.ToWorld(pos);
@@ -211,7 +211,8 @@ sealed class PieceLayer
     {
         var inv = n.GlobalTransform.AffineInverse();
         Vector3 o = inv * ro, d = inv.Basis * rd;
-        Vector3 lo = new(-n.Footprint.X / 2, 0, -n.Footprint.Y / 2), hi = new(n.Footprint.X / 2, Mathf.Max(0.02f, n.Thickness), n.Footprint.Y / 2);
+        var mid = new Vector3(n.FootprintCentre.X, 0, n.FootprintCentre.Y);
+        Vector3 lo = mid + new Vector3(-n.Footprint.X / 2, 0, -n.Footprint.Y / 2), hi = mid + new Vector3(n.Footprint.X / 2, Mathf.Max(0.02f, n.Thickness), n.Footprint.Y / 2);
         float near = float.MinValue, far = float.MaxValue;
         for (int a = 0; a < 3; a++)
         {
