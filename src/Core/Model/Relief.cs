@@ -42,7 +42,7 @@ public static class GroundKinds
 
     public static string Name(byte kind) => kind < All.Count ? All[kind].Name : "none";
 
-    public static IEnumerable<byte> Brushes => Enumerable.Range(1, All.Count - 1).Select(i => (byte)i).Where(k => k != Bridge);
+    public static IEnumerable<byte> Brushes => Enumerable.Range(1, All.Count - 1).Select(i => (byte)i).Where(k => k is not (Road or Bridge or Town));
 
     public static byte Laid(byte under, byte brush) => brush switch
     {
@@ -65,7 +65,6 @@ public static class GroundKinds
 
     public static IReadOnlyList<GroundParameter> Parameters(byte kind) => Name(kind) switch
     {
-        "field" or "grass" => [Plots, Buildings],
         "wood" => [Trees],
         "town" => [Houses, Walls],
         "road" or "bridge" => [RoadClass],

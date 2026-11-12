@@ -261,7 +261,7 @@ sealed class ToolStrip : HudPart
             case "paint": return PanelToggle("paint", "draw", title, "The pen, the shapes and the rubber");
             case "decals": return PanelToggle("decals", "decal", title, "Stamp pictures on the table or a piece: blood where a fight is, arrows, marks · click a stamp to lift it off");
             case "formation": return PanelToggle("formation", "formation", title, "Form the selected pieces up: line, column, square, wedge and more · right-drag across the table to set the front");
-            case "relief": return PanelToggle("relief", "relief", title, "Raise, lower, smooth and flatten the ground, and paint grass, fields, woods, marsh, water and roads on it");
+            case "relief": return PanelToggle("relief", "relief", title, "Raise, lower, smooth and flatten the ground, and paint grass, fields, woods, marsh and water on it");
             case "build": return PanelToggle("build", "build", title, "Lay settlements, forts, buildings, roads, streams and country details on the map");
             case "boards": return PanelToggle("boards", "stack", title, "The sheets of tracing paper the drawings are on: draw on one, hide it for a screenshot");
             case "dice": return PanelToggle("dice", "dice", title, "Pick the dice and roll; every umpire sees the result");

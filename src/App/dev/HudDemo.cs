@@ -186,6 +186,12 @@ sealed class HudDemo : HudPart
             return true;
         }
         if (what == "pen") { T.SetTool(Tool.Draw); return true; }
+        if (what.StartsWith("build"))
+        {
+            if (what.Contains(':')) T.Settings.Build.Mode = what[(what.IndexOf(':') + 1)..];
+            T.SetTool(Tool.Build);
+            return true;
+        }
         if (what == "agentpill" && AgentEndpoint.Current is { } agent)
         {
             agent.Log("made the kind Fusiliers (2nd Brigade)");

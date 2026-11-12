@@ -39,8 +39,9 @@ static class AgentGuide
                   "measure and in_range measure as the ruler and the range rings do. end_turn, set_clock, roll_dice, say, set_zone, set_briefing, undo and redo. " +
                   "On the person's own screen, when asked: select_pieces, show_view, set_view. read_pointers says where the umpires point; wait_for waits for what happens next."),
         ("map", "add_map_sheets (pictures, 3D terrain and heightmaps) and set_map_sheet (place, size, turn, crop, relief, its height, a new picture, turned with its pieces). " +
-                "set_map_scale before ground work: shape_ground raises, lowers, smooths and flattens, and paints ground types by stroke, fill or shape, sparse at a density, each with its own details " +
-                "(plots and buildings, trees, road class, houses and walls; a road over water is a bridge, through a town its street); ground_at reads it back. " +
+                "set_map_scale before ground work: shape_ground raises, lowers, smooths and flattens, and paints ground types by stroke, fill or shape, sparse at a density " +
+                "(wood takes trees); ground_at reads it back. What people made is built on top: build_road (tracks, roads, chaussées, streams and rivers through waypoints, finding their way), " +
+                "build_place (a settlement from hamlet to walled city, a fort, a single building), build_details (plot boundaries and farms along a stroke); list_built and remove_built. " +
                 "set_light (a preset, the light, the backdrop round the table, the table's shade, the map style, contours, a snow line, streams, the wind), set_grid, " +
                 "draw (lines, arrows, names on the map, rectangles, ellipses, curves and washed areas, on a named drawing layer if asked), list_drawings, erase_drawings, drawing_layers."),
         ("scripts", "write_script gives a piece its own script or sets the global script; run_lua runs Lua inside one; read_script and read_console read them; check_scripts runs every script on a copy. " +

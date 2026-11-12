@@ -79,7 +79,7 @@ sealed class ReliefPanel : HudPart
             var name = GroundKinds.Name(kind);
             var mode = "paint:" + name;
             var col = Color.FromHtml(GroundKinds.Color(kind, S.View.Lighting.MapStyle));
-            var b = Ui.Swatch(col, new Vector2(30, 24), kind == GroundKinds.Road ? "Road; across water, a bridge" : kind == GroundKinds.Town ? "Town; a road through it is its street" : Title(name), Cfg.ReliefMode == mode);
+            var b = Ui.Swatch(col, new Vector2(30, 24), Title(name), Cfg.ReliefMode == mode);
             b.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
             b.Pressed += () =>
             {

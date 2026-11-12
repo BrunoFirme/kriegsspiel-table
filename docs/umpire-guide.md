@@ -348,24 +348,21 @@ ground.
 - The selected sheet's **Relief** group: **Height ×** (0 flat, 1 true proportions), **Add / Replace / Remove
   relief…** and **Picture…**.
 - The **Relief** tool (the hill on the tool strip) raises, lowers, smooths and flattens, and paints grass, field,
-  wood, marsh, water, road, earth, rock, sand, snow or town; ✕ rubs paint out. A road drawn across water is a
-  bridge, a road through a town its street. On a sheet without relief, the first stroke gives it flat ground to
-  shape. **= / −** or **Ctrl+wheel** size the brush; each stroke is one undo.
+  wood, marsh, water, earth, rock, sand or snow; ✕ rubs paint out. The paint follows the brush and shows at once.
+  On a sheet without relief, the first stroke gives it flat ground to shape. **= / −** or **Ctrl+wheel** size the
+  brush; each stroke is one undo. Roads, towns and everything else people made are laid with **Build**.
 - The Relief tool needs the map's scale: calibrate first, let **New blank ground…** set it, or add a GeoTIFF,
   `.asc` or `.hgt` with **Set the map's scale from the file** ticked. Painted ground is
-  drawn at that scale, in the style's own hand: each stroke draws its own plots, hedges, farms, trees, streets and
-  walls, afresh every time it is painted. Field and grass take **Plots** and **Buildings**, wood **Trees**, road
-  **Road** (a track, a country road or a chaussée; a bridge keeps its road's), town **Houses** and **Walls** (none,
-  a wall with towers, a bastioned fort); the rows show under Density for the ground in hand. Town is the one brush
-  for village, town and city: its size says which.
+  drawn at that scale, in the style's own hand, with its own natural signs, afresh every time it is painted. Wood
+  takes **Trees**, open wood to closed forest; the row shows under Density when wood is in hand. Roads, towns, plots
+  and farms painted in an earlier version stay as they were painted.
 - Painting: **Fill** colours the whole patch clicked, up to other ground types (a bare sheet whole), so a map starts
   with one click of grass; on its own kind it lays the patch afresh. The **rectangle** and **ellipse** beside it paint a field, a wood or a pond in one drag
   (**Shift** for a square or a circle, lined up with the view); the **polygon** paints the shape of its corners,
   clicked in turn and closed on the first or with a double-click (**Esc** drops it). Each shape is one undo.
   **Route** lays ground that finds its own way: click the waypoints, then the last again or double-click, and
-  between them the ground takes the easiest path over the relief at the brush's width, as a road would: cheap
-  along roads and into towns, dear through wood, marsh and rock, over narrow water as a bridge and round wide
-  water. With the water swatch the first click is a spring: a river runs down by the steepest descent, widening
+  between them the ground takes the easiest path over the relief at the brush's width: dear through wood, marsh
+  and rock, round wide water. With the water swatch the first click is a spring: a river runs down by the steepest descent, widening
   as it goes, until it meets water, the sheet's edge, or a hollow, where it ends in a pond. One route, one undo.
   **Density** below 100% lays the ground in clumps: sparse wood, scattered rock, broken
   marsh; with ✕ it thins a wood. **Shift+click** runs straight on from the last stroke, for roads, rivers and
@@ -380,6 +377,32 @@ ground.
   shows its current wherever the relief falls: strokes and an arrow pointed downhill, ticks across the flow
   where it drops two in a hundred, a step mark where it drops five metres in a stride.
 - Pieces lean with the slope under them and follow the ground when it changes.
+- The table's light dims and shades painted ground but never tints it: a style keeps its colours under any light.
+
+### Build
+
+Roads, settlements, forts, buildings and the details of the country are built, not painted. Each is a thing laid
+on the map over the ground, drawn in the map style's hand, generated once and kept as laid. The **Build** tool
+(the houses on the tool strip) needs the map's scale, as Relief does.
+
+- **Places → Settlement**: drag from its middle outward; a ghost of the plan follows, and letting go lays it. It
+  takes the road that crosses it as its main street or lays a spine of its own, grows lanes, fronts them with
+  houses, and keeps a square, a well and a church. **Houses** runs from scattered houses with gardens to packed
+  streets; **Walls** from none, through a wall with towers and gates, to a bastioned trace with moat, ravelins
+  and glacis; **Grown** or **Grid** sets the plan. The drag's size says hamlet, village, town or city.
+- **Places → Fort**: a star of four to eight **Bastions**, or a plain redoubt, with **Outworks** from none to
+  ravelins; the drag sets its size and the way it faces. **Places → Building**: a click stands a house, church,
+  farm, barn, mill or public building; a drag gives its length and facing.
+- **Roads**: pick Track, Road, Chaussée, Stream or River and click the waypoints, then the last again or
+  double-click; **Esc** drops it. With **Finds its way** the line takes the easiest path over the relief between
+  waypoints, and a stream or river runs downhill from the first click. A road bridges the water it crosses; a
+  track fords a narrow stream.
+- **Details**: drag the brush over the country and it settles what it passes, plot boundaries by **Plots** and
+  farmsteads by **Buildings**, each farm joined to the nearest road by a track. **= / −** or **Ctrl+wheel** size
+  the brush.
+- **Pick**: click a built thing to pick it, click it again for one part of it. A drag moves what is picked,
+  **Delete** removes it, and **Again** lays the whole thing afresh another way; a part moved by hand stays.
+- Nothing is built on water, marsh or a slope over thirty degrees. Each laying, move and removal is one undo.
 
 ### Umpires and zones
 

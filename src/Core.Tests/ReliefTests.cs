@@ -371,7 +371,7 @@ public class ReliefTests : IDisposable
         Assert.Equal(5 * 40, Count(g, GroundKinds.Bridge));
         Assert.Equal(GroundKinds.Road, GroundKinds.BrushOf(GroundKinds.Bridge));
         Assert.DoesNotContain(GroundKinds.Bridge, GroundKinds.Brushes);
-        Assert.Contains(GroundKinds.Road, GroundKinds.Brushes);
+        Assert.DoesNotContain(GroundKinds.Road, GroundKinds.Brushes);
     }
 
     [Fact]
@@ -562,7 +562,7 @@ public class ReliefTests : IDisposable
         Assert.Equal(GroundKinds.Levels(100, 0), r.Detail[3 * 8 + 3]);
         Assert.Equal(3, r.Salt[3 * 8 + 3]);
         Assert.Equal(GroundKinds.Town, r.Kind[1 * 8 + 3]);
-        Assert.Contains(GroundKinds.Town, GroundKinds.Brushes);
+        Assert.DoesNotContain(GroundKinds.Town, GroundKinds.Brushes);
         Assert.Equal(new[] { "Houses", "Walls" }, GroundKinds.Parameters(GroundKinds.Town).Select(p => p.Name));
         var g = new ReliefGrid(64, 64);
         for (int y = 20; y < 30; y++)
@@ -747,12 +747,13 @@ public class ReliefTests : IDisposable
     public void Each_kind_names_its_own_parameters_and_their_levels_fit_a_byte()
     {
         byte field = GroundKinds.Of("field")!.Value, wood = GroundKinds.Of("wood")!.Value;
-        Assert.Equal(new[] { "Plots", "Buildings" }, GroundKinds.Parameters(field).Select(p => p.Name));
+        Assert.Empty(GroundKinds.Parameters(field));
         Assert.Equal(new[] { "Trees" }, GroundKinds.Parameters(wood).Select(p => p.Name));
         Assert.Equal(new[] { "Road" }, GroundKinds.Parameters(GroundKinds.Road).Select(p => p.Name));
         Assert.Equal(new[] { "Road" }, GroundKinds.Parameters(GroundKinds.Bridge).Select(p => p.Name));
         Assert.Empty(GroundKinds.Parameters(GroundKinds.Water));
-        Assert.NotNull(GroundKinds.Parameter(field, "plots"));
+        Assert.Null(GroundKinds.Parameter(field, "plots"));
+        Assert.NotNull(GroundKinds.Parameter(wood, "trees"));
         Assert.Null(GroundKinds.Parameter(wood, "plots"));
         Assert.Null(GroundKinds.Parameter(GroundKinds.Road, "trees"));
         Assert.Equal((100, 0), GroundKinds.LevelsOf(GroundKinds.Levels(100, 0)));

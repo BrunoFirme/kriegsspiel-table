@@ -201,6 +201,7 @@ public sealed class Settings
         RenderScale = float.IsFinite(RenderScale) ? Math.Clamp(RenderScale, RenderScaleMin, RenderScaleMax) : RenderScaleMin;
         ReliefDensity = float.IsFinite(ReliefDensity) ? Math.Clamp(ReliefDensity, 0.05f, 1f) : 1f;
         if (Array.IndexOf(ReliefPaintings, ReliefPaint) < 0) ReliefPaint = "brush";
+        if (ReliefMode is "paint:road" or "paint:bridge" or "paint:town") ReliefMode = "raise";
         Build ??= new();
         Build.Normalise();
         if (Array.IndexOf(MapPictureMemoryChoices, MapPictureMemory) < 0) MapPictureMemory = 0;

@@ -19,7 +19,7 @@ sealed partial class AgentTableTools
 
     public AgentTableTools(AgentEndpoint a) { _a = a; }
 
-    static readonly JsonSerializerOptions Opts = new() { WriteIndented = true };
+    internal static readonly JsonSerializerOptions Opts = new() { WriteIndented = true };
 
     public IEnumerable<AgentTool> Tools()
     {
@@ -70,20 +70,21 @@ sealed partial class AgentTableTools
             Args.Schema(new Arg("name", "string", "a save's path (list_saves)"), new Arg("turn", "number", "a kept turn's number"), new Arg("start_over", "boolean", "the first turn kept")),
             LoadSave);
         foreach (var t in ReliefTools()) yield return t;
+        foreach (var t in new AgentBuiltTools(this, _a).Tools()) yield return t;
         foreach (var t in MeasureTools()) yield return t;
         foreach (var t in RecordTools()) yield return t;
         foreach (var t in TableExtraTools()) yield return t;
         foreach (var t in SightTools()) yield return t;
     }
 
-    (Session s, Hud hud)? Table(out ToolResult? why)
+    internal (Session s, Hud hud)? Table(out ToolResult? why)
     {
         why = null;
         if (_a.InStudio || _a.TableSession() is not { } s || _a.TableHud() is not { } hud) { why = ToolResult.Fail("No game is open: host_game first."); return null; }
         return (s, hud);
     }
 
-    static bool CanChange(Session s, out ToolResult? why)
+    internal static bool CanChange(Session s, out ToolResult? why)
     {
         why = null;
         if (!s.CanEdit(Layers.Umpire)) { why = ToolResult.Fail("Only umpires change the table, and not while a past turn is shown."); return false; }

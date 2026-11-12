@@ -15,34 +15,32 @@ namespace KTable.App;
 
 sealed partial class AgentTableTools
 {
-    const int MostPoints = 2000;
+    internal const int MostPoints = 2000;
     const double ReliefWaitSeconds = 600, ShapeWaitSeconds = 20;
 
     static string KindNames => string.Join(", ", GroundKinds.Brushes.Select(GroundKinds.Name));
     static readonly string[] ParameterNames = ["plots", "buildings", "trees", "houses", "walls", "road"];
-    const string NeedsScaleWords = "Set the map's scale first (set_map_scale).";
+    internal const string NeedsScaleWords = "Set the map's scale first (set_map_scale).";
 
     IEnumerable<AgentTool> ReliefTools()
     {
         yield return new AgentTool("shape_ground",
-            "Shapes the relief of the map along a stroke, as the Relief tool does: raise, lower, smooth or flatten the ground, or paint a ground type on it (" + KindNames + "; none rubs paint out; road across water lays a bridge). " +
-            "The stroke goes to the top sheet with a relief under its first point, or to the top sheet there, which then gets a flat relief. Paint with density below 1 lays the type in clumps (sparse wood, scattered rock; with none it thins paint), fill paints the whole patch of like ground around the first point, or a bare sheet whole, shape paints a rectangle, ellipse or polygon whole (a square field, a round pond), and route lays the points as waypoints: the ground finds its way between them over the relief as a road does (along roads, round rock and marsh, over narrow water as a bridge), and water runs down from the first point as a river, widening, ending in water or a pond. " +
-            "Each stroke of paint draws its own details, afresh every time it is painted: field and grass take plots (big open strips, or small plots bounded by hedges, fences and walls) and buildings (none, lone farms, or hamlets), wood takes trees (open wood, or closed forest), town takes houses (scattered houses with gardens, or packed streets) and walls (none, a wall with towers, or a bastioned fort), road takes road (a track, a country road, or a chaussée; a bridge keeps its road's); town is the one brush for village, town and city, its size says which, and a road painted through it is its street. The map needs a scale (set_map_scale) before its ground is shaped. One call is one step that undo takes back. Pieces standing on the ground follow it.",
+            "Shapes the relief of the map along a stroke, as the Relief tool does: raise, lower, smooth or flatten the ground, or paint a ground type on it (" + KindNames + "; none rubs paint out). " +
+            "The stroke goes to the top sheet with a relief under its first point, or to the top sheet there, which then gets a flat relief. Paint with density below 1 lays the type in clumps (sparse wood, scattered rock; with none it thins paint), fill paints the whole patch of like ground around the first point, or a bare sheet whole, shape paints a rectangle, ellipse or polygon whole (a square field, a round pond), and route lays the points as waypoints: the ground finds its way between them over the relief, round rock and marsh, and water runs down from the first point as a river, widening, ending in water or a pond. " +
+            "Each stroke of paint draws its own natural signs, afresh every time it is painted; wood takes trees (open wood, or closed forest). Roads, settlements, forts, buildings, plot boundaries and farms are not painted: " +
+            "build_road, build_place and build_details lay them. The map needs a scale (set_map_scale) before its ground is shaped. One call is one step that undo takes back. Pieces standing on the ground follow it.",
             Args.Schema(new Arg("points", "array", "[[x, z], …] in map units: one point is a single dab, more draw a stroke through them", true),
                 new Arg("mode", "string", "raise, lower, smooth, flatten or paint", true), new Arg("radius", "number", "brush radius, map units", true),
                 new Arg("strength", "number", "0–1 (0.35 if left out); for raise and lower, how much one pass adds"), new Arg("kind", "string", "ground type for paint"),
                 new Arg("density", "number", "for paint, 0–1 of the ground that takes it (1 if left out)"),
-                new Arg("plots", "number", "field or grass: 0–1, open strips to small bounded plots (0.5 if left out)"), new Arg("buildings", "number", "field or grass: 0–1, none to hamlets (0.25 if left out)"),
                 new Arg("trees", "number", "wood: 0–1, open wood to closed forest (0.75 if left out)"),
-                new Arg("houses", "number", "town: 0–1, scattered houses to packed streets (0.5 if left out)"), new Arg("walls", "number", "town: 0–1, none, a wall with towers, a bastioned fort (0 if left out)"),
-                new Arg("road", "number", "road: 0–1, a track, a country road, a chaussée (0.5 if left out)"),
                 new Arg("fill", "boolean", "for paint: fill the patch around the first point instead of brushing, radius then unused"),
                 new Arg("shape", "string", "for paint, instead of brushing (radius then unused): rect or ellipse between two opposite corners, lined up with the map; polygon through its corners, three or more"),
                 new Arg("route", "boolean", "for paint: the points are waypoints and the ground finds its way between them over the relief at the radius; water runs down from the first point as a river"),
                 new Arg("passes", "number", "go over the stroke this many times (1–20, 1 if left out)"), new Arg("sheet", "string", "a sheet's id to shape instead (list_map_sheets)")),
             ShapeGround);
         yield return new AgentTool("ground_at",
-            "The ground at points: its height above the table in map units, the ground type painted there with its plots, buildings, trees, houses, walls or road where it has them, whether the slope there draws as rock, and the sheet whose relief it is.",
+            "The ground at points: its height above the table in map units, the ground type painted there with its trees where it is wood, whether the slope there draws as rock, and the sheet whose relief it is.",
             Args.Schema(new Arg("points", "array", "[[x, z], …] in map units", true)), x => Task.FromResult(GroundAt(x)));
     }
 
@@ -62,7 +60,7 @@ sealed partial class AgentTableTools
         return null;
     }
 
-    static List<Vec2>? Points(JsonElement a)
+    internal static List<Vec2>? Points(JsonElement a)
     {
         if (a.ValueKind != JsonValueKind.Object || !a.TryGetProperty("points", out var p) || p.ValueKind != JsonValueKind.Array) return null;
         var o = new List<Vec2>();
@@ -112,6 +110,7 @@ sealed partial class AgentTableTools
         if (mode == "paint")
         {
             var kind = (a.Str("kind") ?? "").Trim().ToLowerInvariant();
+            if (GroundKinds.Of(kind) is GroundKinds.Road or GroundKinds.Town) return ToolResult.Fail(AgentBuiltTools.NotPainted);
             if (GroundKinds.Of(kind) is null or GroundKinds.Bridge) return ToolResult.Fail("kind is one of " + KindNames + " or none.");
             if (Levels(a, GroundKinds.Of(kind)!.Value, out detail) is { } refused) return refused;
             mode = "paint:" + kind;
