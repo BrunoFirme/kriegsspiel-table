@@ -610,6 +610,8 @@ public partial class Table : Node3D
     public void CancelSighting() => Sighting.Cancel();
     public void EndDraft() => Sighting.End();
     public void RefreshSightingPanel() => Sighting.NotifyChanged();
+    public KTable.Client.Prefs.CaptureProfile CaptureProfile() => Sighting.Profile();
+    public void TakeCaptureProfile(KTable.Client.Prefs.CaptureProfile p) => Sighting.Take(p);
     public void SetSightingFirstPerson(bool on) => Sighting.SetFirstPerson(on);
     public void SetSightingLens(double degrees) => Sighting.SetLens(degrees);
     public void SetSightingFormat(SightingFormat format) => Sighting.SetFormat(format);

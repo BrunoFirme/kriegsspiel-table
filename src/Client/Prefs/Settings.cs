@@ -24,6 +24,7 @@ public sealed class Settings
     public bool SightingGif { get; set; }
     public bool CaptureGif { get; set; }
     public bool GifLarge { get; set; }
+    public Dictionary<string, List<CaptureProfile>> CaptureProfiles { get; set; } = new();
     public string LastName { get; set; } = "";
     public string LastAddress { get; set; } = "127.0.0.1";
     public int Port { get; set; } = 7777;
@@ -207,6 +208,7 @@ public sealed class Settings
         SightingLens = SightingDraft.FitLens(SightingLens);
         SightingEyeShare = double.IsFinite(SightingEyeShare) ? Math.Clamp(SightingEyeShare, 0, SightingDraft.EyeHighestShare) : 1;
         if (SightingFacing is not (null or "N" or "E" or "S" or "W")) SightingFacing = null;
+        KTable.Client.Prefs.CaptureProfiles.Fit(CaptureProfiles ??= new());
         if (Array.IndexOf(DrawModes, DrawMode) < 0) DrawMode = DrawModes[0];
         DecalTurn = double.IsFinite(DecalTurn) ? (DecalTurn % 360 + 360) % 360 : 0;
         DecalGrowth = double.IsFinite(DecalGrowth) && DecalGrowth > 0 ? DecalGrowth : 1;

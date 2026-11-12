@@ -15,14 +15,14 @@ static class HudTests
 {
     internal sealed record Rig(Hud Hud, Table Table, Session S, Net Net);
 
-    internal static async Task<Rig> Host(TestRunner r, int pieces = 2, int sheets = 0, string[]? packs = null, bool pictured = false, System.Action<PackageStore>? prepare = null)
+    internal static async Task<Rig> Host(TestRunner r, int pieces = 2, int sheets = 0, string[]? packs = null, bool pictured = false, System.Action<PackageStore>? prepare = null, string scenario = "")
     {
         var root = Path.Combine(Path.GetTempPath(), "ktable-nodetest-" + System.Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(root);
         var store = new PackageStore(root);
         prepare?.Invoke(store);
         store.RegisterDef(new PackManifest { Id = "test", Name = "Test" }, new PieceDef { Id = "x", Name = "Block" });
-        var g = new GameState { Name = "Hud test", Packs = packs?.ToList() ?? new() };
+        var g = new GameState { Name = "Hud test", ScenarioId = scenario, Packs = packs?.ToList() ?? new() };
         g.Layers[Layers.Umpire] = Enumerable.Range(1, pieces).Select(i => new PieceInstance { Id = "p" + i, Def = "x", Pos = new Vec2(i, 0) }).ToList();
         for (int i = 0; i < sheets; i++) g.Sheets.Add(new SheetDef { Id = "s" + i, Image = pictured ? "pic" : "", Package = pictured ? "test" : "" });
         var s = new Session(new Assets(store));

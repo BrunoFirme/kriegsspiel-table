@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Godot;
 using KTable.Client;
+using KTable.Client.Prefs;
 using KTable.Core.Model;
 using KTable.Core.Protocol;
 
@@ -335,13 +336,14 @@ sealed class Sighting
     {
         var obs = _selection.Nodes.FirstOrDefault();
         if (obs == null) { _c.Say("Pick the piece whose point of view it is, then press the tool again."); return false; }
+        var next = NextVision;
+        _pending = null;
         Draft = new SightingDraft
         {
-            ObserverId = obs.Piece.Id, Center = obs.Piece.Pos, Radius = radius ?? (_c.S.View.VisionRadius > 0 ? _c.S.View.VisionRadius : 40),
+            ObserverId = obs.Piece.Id, Center = obs.Piece.Pos, Radius = radius ?? next.Radius,
             Format = SightingDraft.FormatNamed(_c.Settings.SightingFormat), FirstPerson = _c.Settings.SightingFirstPerson, Lens = SightingDraft.FitLens(_c.Settings.SightingLens),
             HideText = _c.Settings.SightingHideText, Gif = _c.Settings.SightingGif,
-            EyeHeight = EyeOnTopOf(obs.Piece.Id) * _c.Settings.SightingEyeShare, Sharp = was?.Sharp ?? _c.S.View.VisionSharp ?? 1,
-            Blur = was?.Blur ?? (_c.S.View.VisionBlur is { } kept ? Math.Clamp(kept, SightingDraft.LeastBlur, SightingDraft.MostBlur) : SightingDraft.BlurAtEdge),
+            EyeHeight = EyeOnTopOf(obs.Piece.Id) * _c.Settings.SightingEyeShare, Sharp = was?.Sharp ?? next.Sharp, Blur = was?.Blur ?? next.Blur,
         };
         SnapFocus(Draft);
         Draft.Recompute(UmpirePiecesIn);
@@ -350,6 +352,70 @@ sealed class Sighting
         FaceAsBefore();
         NotifyChanged();
         return true;
+    }
+
+    public readonly record struct Vision(double Radius, double Sharp, double Blur);
+
+    Vision? _pending;
+
+    const double FirstRadius = 40;
+
+    Vision NextVision
+    {
+        get
+        {
+            if (_pending is { } pending) return pending;
+            var v = _c.S.View;
+            return new Vision(v.VisionRadius > 0 ? v.VisionRadius : FirstRadius, v.VisionSharp ?? 1,
+                v.VisionBlur is { } kept ? Math.Clamp(kept, SightingDraft.LeastBlur, SightingDraft.MostBlur) : SightingDraft.BlurAtEdge);
+        }
+    }
+
+    public CaptureProfile Profile()
+    {
+        var cfg = _c.Settings;
+        var vision = Draft is { } d ? new Vision(d.Radius, d.Sharp, d.Blur) : NextVision;
+        return new CaptureProfile
+        {
+            SightingGif = Draft?.Gif ?? cfg.SightingGif, GifLarge = cfg.GifLarge,
+            FirstPerson = Draft?.FirstPerson ?? cfg.SightingFirstPerson, Format = Draft is { } f ? SightingDraft.NameOf(f.Format) : cfg.SightingFormat,
+            HideText = Draft?.HideText ?? cfg.SightingHideText, Lens = Draft?.Lens ?? cfg.SightingLens, EyeShare = cfg.SightingEyeShare,
+            Radius = vision.Radius, Sharp = vision.Sharp, Blur = vision.Blur,
+        };
+    }
+
+    public void Take(CaptureProfile p)
+    {
+        var cfg = _c.Settings;
+        cfg.SightingGif = p.SightingGif;
+        cfg.GifLarge = p.GifLarge;
+        cfg.SightingFirstPerson = p.FirstPerson;
+        cfg.SightingFormat = p.Format;
+        cfg.SightingHideText = p.HideText;
+        cfg.SightingLens = p.Lens;
+        cfg.SightingEyeShare = p.EyeShare;
+        cfg.Save();
+        if (Draft is not { } d || Recording)
+        {
+            if (Draft == null) _pending = new Vision(p.Radius, p.Sharp, p.Blur);
+            NotifyChanged();
+            return;
+        }
+        d.Gif = p.SightingGif;
+        SetFormat(SightingDraft.FormatNamed(p.Format));
+        SetFirstPerson(p.FirstPerson);
+        SetHideText(p.HideText);
+        SetLens(p.Lens);
+        d.Radius = p.Radius;
+        d.Sharp = Math.Clamp(p.Sharp, 0, 1);
+        d.Blur = Math.Clamp(p.Blur, SightingDraft.LeastBlur, SightingDraft.MostBlur);
+        d.EyeHeight = Math.Clamp(EyeOnTopOf(d.ObserverId) * p.EyeShare, 0, EyeHighest);
+        CloseUp = false;
+        d.Recompute(UmpirePiecesIn);
+        SnapFocus(d);
+        ShowDraft();
+        FrameOnDraft();
+        NotifyChanged();
     }
 
     public bool CloseUp { get; private set; }

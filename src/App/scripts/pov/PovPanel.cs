@@ -12,6 +12,7 @@ sealed class PovPanel : HudPart
 
     readonly IHudShell Shell;
     readonly Captures _captures;
+    readonly ProfileTabs _profiles;
     Label? _recordLine, _countLine;
     Action? _showSharp;
 
@@ -23,12 +24,14 @@ sealed class PovPanel : HudPart
         _captures = captures;
         Panel = AgentFence.Mark(shell.MakePanel("sighting", "POV capture"));
         _box = Panel.Body;
+        _profiles = new ProfileTabs(ctx, Panel, Rebuild);
         captures.RecordingTicked += ShowRecording;
     }
 
     public void Rebuild()
     {
         foreach (var c in _box.GetChildren()) { _box.RemoveChild(c); c.QueueFree(); }
+        _profiles.Rebuild(T.Draft != null && _captures.Recording == null);
         if (T.Draft != null) { Build(); Shell.OpenPanel("sighting"); }
         else Shell.ClosePanel("sighting");
     }
@@ -46,7 +49,7 @@ sealed class PovPanel : HudPart
         AddView(picture, d);
         if (!d.FirstPerson) AddFormat(picture, d);
         AddShot(picture, d);
-        if (d.Gif) AddGifSize(picture, Cfg);
+        if (d.Gif) AddGifSize(picture, Cfg, _profiles.Sync);
         AddText(picture, d);
         Ui.AlignForm(picture);
         _box.AddChild(Header(d.FirstPerson ? "Eye" : "Reach"));
@@ -109,11 +112,12 @@ sealed class PovPanel : HudPart
             ("Picture", "One still picture"),
             ("GIF", $"A moving picture, {GifRecording.FramesPerSecond} frames a second, up to {GifRecording.MostSeconds:0} s or {GifRecording.MostBytes / BytesPerMegabyte:0} MB"));
 
-    internal static void AddGifSize(GridContainer grid, KTable.Client.Prefs.Settings cfg) =>
+    internal static void AddGifSize(GridContainer grid, KTable.Client.Prefs.Settings cfg, Action? changed = null) =>
         AddChoice(grid, "Size", cfg.GifLarge, on =>
             {
                 cfg.GifLarge = on;
                 cfg.Save();
+                changed?.Invoke();
             },
             ("Normal", $"Lasts longest before the {GifRecording.MostBytes / BytesPerMegabyte:0} MB stop"),
             ("Large", $"{GifRecording.LargeTimes}× wider and taller; reaches the {GifRecording.MostBytes / BytesPerMegabyte:0} MB stop sooner"));
@@ -152,6 +156,7 @@ sealed class PovPanel : HudPart
             d.Recompute(T);
             T.ShowDraft();
             _showSharp?.Invoke();
+            _profiles.Sync();
         };
     }
 
@@ -189,12 +194,14 @@ sealed class PovPanel : HudPart
         {
             T.SetSightingSharp(v);
             Show();
+            _profiles.Sync();
             Sfx.Current?.PlayFlat(Sound.Tick, DetentGain);
         };
         blur.ValueChanged += v =>
         {
             T.SetSightingBlur(v);
             Show();
+            _profiles.Sync();
             Sfx.Current?.PlayFlat(Sound.Tick, DetentGain);
         };
     }
@@ -227,7 +234,11 @@ sealed class PovPanel : HudPart
             TooltipText = "How high the eye stands over the ground: down to look from behind a crest, up to see over it",
         };
         SliderRow(grid, "Height", slider, v => cal.UnitsPerMeter is > 0 ? $"{cal.FromTableUnits(v):#,0} {cal.UnitName}" : $"{v:0.00} u");
-        slider.ValueChanged += v => T.SetSightingEye(v);
+        slider.ValueChanged += v =>
+        {
+            T.SetSightingEye(v);
+            _profiles.Sync();
+        };
         slider.DragEnded += _ => Cfg.Save();
     }
 
@@ -264,6 +275,7 @@ sealed class PovPanel : HudPart
         {
             Cfg.SightingLens = v;
             T.SetSightingLens(v);
+            _profiles.Sync();
         };
         slider.DragEnded += _ => Cfg.Save();
     }

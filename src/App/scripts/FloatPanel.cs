@@ -41,6 +41,27 @@ public partial class FloatPanel : PanelContainer
         box.AddChild(Body);
         _bar.GuiInput += BarInput;
         GuiInput += PanelInput;
+        ItemRectChanged += PlaceCrown;
+    }
+
+    Control? _crown;
+
+    public void Crown(Control strip)
+    {
+        _crown = strip;
+        strip.TopLevel = true;
+        AddChild(strip);
+        strip.ItemRectChanged += PlaceCrown;
+        strip.VisibilityChanged += () => Callable.From(() => { if (IsInstanceValid(this)) Clamp(); }).CallDeferred();
+    }
+
+    float Headroom => _crown is { Visible: true } c ? c.Size.Y : 0;
+
+    void PlaceCrown()
+    {
+        if (_crown is not { } c || !IsInstanceValid(c)) return;
+        var at = GlobalPosition - new Vector2(0, c.Size.Y);
+        if ((c.GlobalPosition - at).LengthSquared() > 0.01f) c.GlobalPosition = at;
     }
 
     public void SetTitle(string t) => _title.Text = Spaced(t);
@@ -72,7 +93,7 @@ public partial class FloatPanel : PanelContainer
     void Trim()
     {
         var vp = GetViewportRect().Size;
-        float room = vp.Y - Ceiling - 8;
+        float room = vp.Y - Ceiling - Headroom - 8;
         if (Size.Y <= room && Size.X <= vp.X - 8) return;
         CustomMinimumSize = new Vector2(Math.Min(Size.X, vp.X - 8), Math.Min(Size.Y, room));
         Size = CustomMinimumSize;
@@ -84,9 +105,10 @@ public partial class FloatPanel : PanelContainer
     {
         var vp = GetViewportRect().Size;
         var s = Size;
+        float top = Ceiling + Headroom;
         Position = new Vector2(
             Mathf.Clamp(Position.X, 0, Math.Max(0, vp.X - Math.Min(s.X, vp.X))),
-            Mathf.Clamp(Position.Y, Ceiling, Math.Max(Ceiling, vp.Y - Math.Min(s.Y, vp.Y))));
+            Mathf.Clamp(Position.Y, top, Math.Max(top, vp.Y - Math.Min(s.Y, vp.Y))));
     }
 
     public override void _Input(InputEvent e)

@@ -316,6 +316,14 @@ records at twice the size, for a shorter GIF.
 Names too small in the picture? Keep **Settings → Captures → Resolution** at 4×, shrink the POV reach, or turn up
 **Settings → Table → Text size**.
 
+### POV profiles
+
+Tabs above the POV capture panel keep sets of its settings for this scenario, such as one for player reports
+and one for the after-action report. **+** keeps the settings in use as a new profile and asks its name; a
+tab puts them all back: view, format, shot, GIF size, text, lens, eye height, reach, sharp ring and edge blur. The
+tab whose settings are in use is lit. Right-click a tab to save the settings in use over it, rename it or delete it;
+double-click renames too. Up to six per scenario, kept on this PC.
+
 ### Map sheets
 
 In the **Map** drawer: add sheets (files or web links), pick one (or Alt+click it), unlock to drag, nudge with the arrow keys, turn

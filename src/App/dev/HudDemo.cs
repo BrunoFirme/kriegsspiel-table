@@ -19,7 +19,7 @@ sealed class HudDemo : HudPart
     {
         var centre = Hud.GetViewport().GetVisibleRect().Size / 2;
         if (what == "notsaved") { Hud.Top.ShowSaveProblem(DiskFull); return; }
-        if (Pages(what) || CompassDrag(what) || Hearts(what) || Scripts(what) || View(what) || PovPictures(what) || PovTool(what) || PovFormat(what) || PovEye(what) || PovGif(what)
+        if (Pages(what) || CompassDrag(what) || Hearts(what) || Scripts(what) || View(what) || PovPictures(what) || PovTool(what) || PovFormat(what) || Profiles(what) || PovEye(what) || PovGif(what)
             || DrawingPanels(what) || PanelMoves(what) || Hands(what) || PieceMoves(what) || Lettering(what) || Dialogs(what) || ReadyAndFaded(what) || PovBlur(what)) return;
         if (what == "dice") Hud.OpenPanel("dice");
         else if (what == "dice:roll")
@@ -814,6 +814,35 @@ sealed class HudDemo : HudPart
             await run;
             GD.Print("[povgif] the top line says: " + Hud.Top.Said!.Text);
             foreach (var f in System.IO.Directory.GetFiles(Cfg.CaptureFolder)) GD.Print($"[povgif] {f}: {new System.IO.FileInfo(f).Length} bytes");
+        })).CallDeferred();
+        return true;
+    }
+
+    bool Profiles(string what)
+    {
+        if (!what.StartsWith("profiles")) return false;
+        var board = S.View.Layer(KTable.Core.Model.Layers.Umpire);
+        if (board.Count == 0) { GD.Print("[profiles] no piece"); return true; }
+        T.SetSelection(new[] { board[0].Id });
+        T.SetTool(Tool.Sighting);
+        Callable.From((Action)(async () =>
+        {
+            await Hud.ToSignal(Hud.GetTree().CreateTimer(0.8), Timer.SignalName.Timeout);
+            if (T.Draft == null) { GD.Print("[profiles] no draft"); return; }
+            var sc = S.View.ScenarioId;
+            T.SetSightingFormat(SightingFormat.Square);
+            KTable.Client.Prefs.CaptureProfiles.Add(Cfg, sc, T.CaptureProfile());
+            KTable.Client.Prefs.CaptureProfiles.Rename(Cfg, sc, 0, "Player reports");
+            var aar = T.CaptureProfile();
+            aar.SightingGif = aar.GifLarge = true;
+            aar.Format = "round";
+            aar.Radius *= 3;
+            KTable.Client.Prefs.CaptureProfiles.Add(Cfg, sc, aar);
+            KTable.Client.Prefs.CaptureProfiles.Rename(Cfg, sc, 1, "AAR");
+            Cfg.Save();
+            T.TakeCaptureProfile(KTable.Client.Prefs.CaptureProfiles.Of(Cfg, sc)[0]);
+            await Hud.ToSignal(Hud.GetTree().CreateTimer(0.6), Timer.SignalName.Timeout);
+            GD.Print($"[profiles] {string.Join(", ", KTable.Client.Prefs.CaptureProfiles.Of(Cfg, sc).Select(p => p.Name))} kept for {sc}");
         })).CallDeferred();
         return true;
     }
