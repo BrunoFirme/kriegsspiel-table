@@ -17,9 +17,9 @@ function Step($name, [scriptblock]$body) {
 
 . (Join-Path $PSScriptRoot "godot-runs.ps1")
 
-function Wait-WithExitCode($process, $ms) {
+function Wait-WithExitCode($process, $ms, $what) {
     $holdingTheHandleKeepsTheExitCode = $process.Handle
-    if (-not $process.WaitForExit($ms)) { $process.Kill(); Write-Host "   the node tests did not finish in $($ms / 60000) minutes"; return 1 }
+    if (-not $process.WaitForExit($ms)) { $process.Kill(); Write-Host "   $what did not finish in $($ms / 60000) minutes"; return 1 }
     $process.ExitCode
 }
 
@@ -154,20 +154,20 @@ function Import-AppAssets($godot, $app) {
 
 $coverageDir = Join-Path ([IO.Path]::GetTempPath()) ("ktable-coverage-" + [Guid]::NewGuid().ToString("N").Substring(0, 8))
 New-Item -ItemType Directory -Force $coverageDir | Out-Null
+$coverageFile = Join-Path $coverageDir "app.xml"
+$coverageSession = "ktable-" + [Guid]::NewGuid().ToString("N").Substring(0, 8)
+$script:coverageServer = $false
 
 $app = Join-Path $repo "src\App"
 
 function Start-AppTests($godot, $kind, [string[]]$godotArgs) {
     $run = Join-Path ([IO.Path]::GetTempPath()) ("ktable-$kind-tests-" + [Guid]::NewGuid().ToString("N").Substring(0, 8))
-    $tests = [pscustomobject]@{
-        Kind = $kind; Run = $run; Out = (Join-Path $run "out.txt"); Err = (Join-Path $run "err.txt")
-        Cobertura = (Join-Path $coverageDir "$kind.xml"); Process = $null
-    }
+    $tests = [pscustomobject]@{ Kind = $kind; Run = $run; Out = (Join-Path $run "out.txt"); Err = (Join-Path $run "err.txt"); Process = $null }
     $env:KTABLE_TESTS = $Only
     try {
         With-UserFoldersIn $run {
-            $collect = @("dotnet-coverage", "collect", "--output", "`"$($tests.Cobertura)`"", "--output-format", "cobertura", "--include-files", "**\KriegsspielTable.dll", "--", "`"$($godot.FullName)`"")
-            $tests.Process = Start-Process "dotnet" -ArgumentList ($collect + $godotArgs + @("--path", "`"$app`"", "res://dev/tests/TestRunner.tscn")) -NoNewWindow -PassThru `
+            $connect = @("dotnet-coverage", "connect", "--nologo", $coverageSession, "`"$($godot.FullName)`"")
+            $tests.Process = Start-Process "dotnet" -ArgumentList ($connect + $godotArgs + @("--path", "`"$app`"", "res://dev/tests/TestRunner.tscn")) -NoNewWindow -PassThru `
                 -RedirectStandardOutput $tests.Out -RedirectStandardError $tests.Err
             $holdingTheHandleKeepsTheExitCode = $tests.Process.Handle
         }
@@ -178,29 +178,38 @@ function Start-AppTests($godot, $kind, [string[]]$godotArgs) {
 
 function Start-AllAppTests {
     $godot = Find-GodotConsole
-    if (-not $godot) { return @() }
+    if (-not $godot) { Write-Host "   Godot .NET not found (winget install GodotEngine.GodotEngine.Mono)"; return @() }
     Import-AppAssets $godot $app
+    $server = @("dotnet-coverage", "collect", "--server-mode", "--background", "--nologo", "--session-id", $coverageSession, "--output", "`"$coverageFile`"")
+    $launcher = Start-Process "dotnet" -ArgumentList ($server + @("--output-format", "cobertura", "--include-files", "**\KriegsspielTable.dll")) -NoNewWindow -PassThru `
+        -RedirectStandardOutput (Join-Path $coverageDir "server.txt") -RedirectStandardError (Join-Path $coverageDir "server-err.txt")
+    if ((Wait-WithExitCode $launcher 60000 "the coverage server") -ne 0) { Write-Host "   the coverage server did not start (dotnet tool restore?)"; return @() }
+    $script:coverageServer = $true
     @((Start-AppTests $godot "node" @("--headless")), (Start-AppTests $godot "screen" @("--resolution", "1280x720", "--position", "40,40")))
+}
+
+function Stop-Coverage {
+    if (-not $script:coverageServer) { return }
+    dotnet dotnet-coverage shutdown --nologo $coverageSession | Out-Null
+    $script:coverageServer = $false
 }
 
 function Finish-AppTests($kind) {
     $tests = $appRuns | Where-Object { $_.Kind -eq $kind }
-    if (-not $tests) { Write-Host "   Godot .NET not found (winget install GodotEngine.GodotEngine.Mono)"; $global:LASTEXITCODE = 1; return }
+    if (-not $tests) { Write-Host "   the app tests did not start"; $global:LASTEXITCODE = 1; return }
     try {
-        $global:LASTEXITCODE = Wait-WithExitCode $tests.Process $nodeTestsMs
+        $global:LASTEXITCODE = Wait-WithExitCode $tests.Process $nodeTestsMs "the $kind tests"
         $lines = Get-Content $tests.Out, $tests.Err -ErrorAction SilentlyContinue
         $lines | Where-Object { $_ -match "^(FAIL|$kind tests)" } | ForEach-Object { "   $_" }
         $lines | Where-Object { $_ -match "^$kind tests: (\d+) passed, (\d+) failed" } | ForEach-Object { $script:testsRun += [int]$Matches[1] + [int]$Matches[2] }
         if (-not ($lines -match "^$kind tests: \d+ passed, 0 failed")) { $global:LASTEXITCODE = 1 }
-        if (-not (Test-Path $tests.Cobertura)) { Write-Host "   no coverage was collected (dotnet tool restore?)"; $global:LASTEXITCODE = 1 }
     }
     finally { Remove-Item -Recurse -Force $tests.Run -ErrorAction SilentlyContinue }
 }
 
 function Check-CoverageFloor {
-    $files = Get-ChildItem $coverageDir -Filter "*.xml" | ForEach-Object { $_.FullName }
-    if ($files.Count -eq 0) { Write-Host "   no coverage files"; $global:LASTEXITCODE = 1; return }
-    python -I tools/covcheck.py @files
+    if (-not (Test-Path $coverageFile)) { Write-Host "   no coverage was collected (dotnet tool restore?)"; $global:LASTEXITCODE = 1; return }
+    python -I tools/covcheck.py $coverageFile
 }
 
 function Report-VulnerablePackages {
@@ -240,6 +249,7 @@ elseif ($testsToRun.Count -gt 0) { Step "tests ($($testsToRun -join ', ')) but t
 if ($runApp) {
     Step "app node tests (headless, under coverage)" { Finish-AppTests "node" }
     Step "app screen tests" { Finish-AppTests "screen" }
+    Stop-Coverage
     if (-not $quickRun) { Step "app coverage floor" { Check-CoverageFloor } }
 }
 if ($onlyNames.Count -gt 0 -and $script:testsRun -eq 0 -and $failed.Count -eq 0) { Write-Host "   no test is named like $Only"; $failed += "no test named $Only" }

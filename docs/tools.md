@@ -15,7 +15,8 @@ coverage, with every folder the app could write moved into a temporary one, five
 tests (the same runner in a real 1280×720 window, for what needs one; the window shows for a moment), the coverage
 floor (`covcheck.py`: the app's line coverage may not fall under its `FLOOR`, which is raised and never lowered),
 `codecheck.py`, and the module surface gate (`module-surface.py`). The node and screen tests run side by side and
-alongside the .NET tests; tests that measure wall-clock time (`Trait("Category", "Timing")`) run after them, alone,
+alongside the .NET tests, both connected to one `dotnet-coverage` server (two separate collections at once leave one
+of them empty); tests that measure wall-clock time (`Trait("Category", "Timing")`) run after them, alone,
 because load from the others makes them fail.
 
 `-Changed <ref>` runs only the steps that the files changed since that commit touch; a change outside every project
