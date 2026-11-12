@@ -134,7 +134,7 @@ sealed class RulerTool
         var mid = new Vec2((a.X + b.X) / 2, (a.Z + b.Z) / 2);
         var ground = _c.S.Ground;
         _c.Labels.Set(key, Coords.ToWorld(mid, y + (float)ground.At(mid)), cal ? $"{len:0.00} u" : Fmt.Distance(len, c),
-            cal ? new Color(0.6f, 0.95f, 1f) : new Color(1f, 0.95f, 0.85f), 14, new Vector2(0, -16), centered: true);
+            cal ? new Color(0.6f, 0.95f, 1f) : new Color(1f, 0.95f, 0.85f), 15, new Vector2(0, -18), centered: true, plate: true);
         if (!cal && len > 1e-6)
         {
             double bearing = c.CompassBearing(Mathf.RadToDeg((float)Math.Atan2(b.X - a.X, b.Z - a.Z)));
@@ -142,7 +142,7 @@ sealed class RulerTool
             var heading = string.Format(System.Globalization.CultureInfo.InvariantCulture, "{0:000}°", bearing);
             if (Math.Abs(rise) >= MinRise) heading += $" · {(rise > 0 ? "up" : "down")} {Fmt.Distance(Math.Abs(rise), c)}";
             _c.Labels.Set(key + BearingSuffix, Coords.ToWorld(b, y + (float)ground.At(b)), heading,
-                new Color(1f, 0.82f, 0.6f), 12, new Vector2(14, -14), centered: false);
+                new Color(1f, 0.82f, 0.6f), 13, new Vector2(14, -14), centered: false, plate: true);
         }
     }
 }

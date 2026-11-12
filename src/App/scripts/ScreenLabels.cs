@@ -27,13 +27,20 @@ public partial class ScreenLabels : CanvasLayer
         AddChild(_root);
     }
 
-    public void Set(string key, Vector3 world, string text, Color color, int fontSize = 13, Vector2 offset = default, bool centered = true)
+    static readonly Color PlateFill = new(Ui.Bar, 0.86f);
+    const int PlateRadius = 3, PlateMarginX = 6, PlateMarginY = 1;
+
+    public void Set(string key, Vector3 world, string text, Color color, int fontSize = 13, Vector2 offset = default, bool centered = true, bool plate = false)
     {
         if (!_entries.TryGetValue(key, out var e))
         {
             var l = new Label { MouseFilter = Control.MouseFilterEnum.Ignore };
-            l.AddThemeConstantOverride("outline_size", 5);
-            l.AddThemeColorOverride("font_outline_color", new Color(0, 0, 0, 0.85f));
+            if (plate) l.AddThemeStyleboxOverride("normal", Ui.Box(PlateFill, PlateRadius, PlateMarginX, PlateMarginY));
+            else
+            {
+                l.AddThemeConstantOverride("outline_size", 5);
+                l.AddThemeColorOverride("font_outline_color", new Color(0, 0, 0, 0.85f));
+            }
             _root.AddChild(l);
             _entries[key] = e = new Entry { Label = l };
         }

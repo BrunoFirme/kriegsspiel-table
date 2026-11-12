@@ -129,7 +129,7 @@ sealed class RangeRings
             Seg(n.Piece.Pos + new Vec2(u.X * r, u.Z * r), n.Piece.Pos + new Vec2(u.X * (r + overlay.Px(6)), u.Z * (r + overlay.Px(6))));
         }
         _c.Labels.Set($"range:{n.Piece.Id}", Coords.ToWorld(edge, 0.3f),
-            words, new Color(1f, 0.78f, 0.5f), 13, new Vector2(0, -12), centered: true);
+            words, new Color(1f, 0.78f, 0.5f), 13, new Vector2(0, -12), centered: true, plate: true);
         _labels.Add(n.Piece.Id);
     }
 }
