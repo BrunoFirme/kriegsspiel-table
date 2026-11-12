@@ -326,6 +326,8 @@ def decision(row, decided):
         head = row.split(".")[0] + ".*" if "." in row else None
         d = decided.get(head) if head else None
     if d is None:
+        d = next((v for k, v in decided.items() if k.endswith("*") and not k.endswith(".*") and row.startswith(k[:-1])), None)
+    if d is None:
         return None
     if isinstance(d, list):
         d = dict(zip(("status", "where", "instead", "held_by"), d))
