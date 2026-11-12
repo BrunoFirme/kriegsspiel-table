@@ -954,7 +954,7 @@ Each call is a change every umpire sees. What a script changes in answer to an u
 | [`self.set_web_model`](#selfset_web_model) | Fetches a model and its picture from web links and shows the piece as that model on every screen; a link that gives no model shows the picture flat, or a plain placeholder. |
 | [`self.play_effect`](#selfplay_effect) | Plays an effect once on every screen, one round of it, whether it is running or not; false for a piece that is not an effect. |
 | [`self.set_effect_on`](#selfset_effect_on) | Starts or stops an effect. |
-| [`self.set_effect_smoke`](#selfset_effect_smoke) | Makes an effect's smoke finer or denser: fine leaves the pieces under it readable, dense hangs and drifts downwind as far as real powder smoke. |
+| [`self.set_effect_smoke`](#selfset_effect_smoke) | Makes an effect's smoke finer or denser: fine leaves the pieces under it readable, dense hangs and trails downwind, at most as far as real powder smoke. |
 | [`self.set_worth`](#selfset_worth) | Sets what the piece counts for, and optionally the groups it adds up with. |
 | [`self.roll`](#selfroll) | Rolls a die, or turns a piece of several states to one at random; false for anything else. |
 | [`self.set_counter`](#selfset_counter) | Sets one of its kind's counters (a whole number, kept to the counter's range). |
@@ -1408,7 +1408,7 @@ Starts or stops an effect.
 self.set_effect_smoke(thickness)
 ```
 
-Makes an effect's smoke finer or denser: fine leaves the pieces under it readable, dense hangs and drifts downwind as far as real powder smoke.
+Makes an effect's smoke finer or denser: fine leaves the pieces under it readable, dense hangs and trails downwind, at most as far as real powder smoke.
 
 | Parameter | Type | Description |
 |---|---|---|

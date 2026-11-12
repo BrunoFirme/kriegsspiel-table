@@ -23,7 +23,6 @@ public static class EffectFx
         public Aabb Seen;
         public StandardMaterial3D? Lit;
         public double Speed = 1;
-        public float Reach;
         public SmokeHeat Heat;
         public float Rise;
     }
@@ -203,7 +202,7 @@ public static class EffectFx
         bool glows = l.Add || l.Glow || l.Sprite is "flame" or "flash" or "muzzle" or "spark";
         if (!glows) mat.AlbedoColor = ShadeNow;
         host.AddChild(em);
-        var made = new Emitter { Node = em, Lift = pm.Gravity, Drift = l.Drift, Lit = glows ? null : mat, Reach = l.Reach, Heat = l.Heat, Rise = l.Rise };
+        var made = new Emitter { Node = em, Lift = pm.Gravity, Drift = l.Drift, Lit = glows ? null : mat, Heat = l.Heat, Rise = l.Rise };
         if (l.Brake > 0)
         {
             made.Brake = l.Brake;
@@ -215,9 +214,7 @@ public static class EffectFx
         return made;
     }
 
-    static float RideSpeed(Emitter m) => Mathf.Max(StillDrift, Mathf.Max(
-        SmokeDrift.ScreenWind(SmokeAirNow) * m.Drift,
-        m.Reach / Mathf.Max((float)m.Node.Lifetime * (1 - m.Brake), MinDriftSeconds)));
+    static float RideSpeed(Emitter m) => SmokeDrift.Ride(SmokeAirNow, m.Drift);
 
     static float DriftSpeed(Emitter m) => m.Heat == SmokeHeat.None
         ? StillDrift + WindNow.Length() * m.Drift * WindCarrySeconds
@@ -234,7 +231,7 @@ public static class EffectFx
         m.Node.VisibilityAabb = m.Seen.Grow(reach);
     }
 
-    const float WindCarrySeconds = 1.5f, StillDrift = SmokeDrift.StillDrift, BrakeEase = 0.08f, MinDriftSeconds = 0.5f, CatchUpSeconds = 1;
+    const float WindCarrySeconds = 1.5f, StillDrift = SmokeDrift.StillDrift, BrakeEase = 0.08f, CatchUpSeconds = 1;
 
     static CurveTexture StepTex(float at, float before, float after)
     {

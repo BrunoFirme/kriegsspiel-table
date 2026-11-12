@@ -52,7 +52,7 @@ public class SmokeDensityRecipeTests
     [InlineData("powder", null)]
     [InlineData("powder", "rolling")]
     [InlineData("cannon", "rolling")]
-    public void Dense_smoke_drifts_as_far_as_real_powder_smoke_and_very_dense_is_thicker_over_the_same_ground(string kind, string? volley)
+    public void Dense_smoke_trails_downwind_no_further_than_real_powder_smoke_and_very_dense_is_thicker(string kind, string? volley)
     {
         var standard = Smoke(Plan(kind, SmokeDensity.Standard, volley), kind);
         var half = Smoke(Plan(kind, 0.5, volley), kind);
@@ -60,9 +60,10 @@ public class SmokeDensityRecipeTests
         var very = Smoke(Plan(kind, SmokeDensity.VeryDense, volley), kind);
         float reach = SmokeDrift.Of(kind, 6, SmokeDensity.DenseAmount(kind), Air).Reach;
         Assert.All(standard, l => Assert.Equal(0, l.Reach));
-        Assert.All(dense, l => Assert.Equal(reach, l.Reach, 3));
-        Assert.All(half, l => Assert.InRange(l.Reach, 0.01f, reach - 0.01f));
-        Assert.All(very, l => Assert.True(l.Reach >= reach - 0.001f));
+        Assert.All(dense, l => Assert.InRange(l.Reach, 0.01f, reach + 0.001f));
+        Assert.All(half, l => Assert.InRange(l.Reach, 0.01f, reach / 2 + 0.001f));
+        Assert.All(very, l => Assert.True(l.Reach > 0));
+        Assert.All(dense.Concat(half).Concat(very), l => Assert.True(l.Reach <= SmokeDrift.Ride(Air, l.Drift) * l.Life * (1 - l.Brake) * 1.001f, $"{l.Reach} in {l.Life} s"));
         Assert.True(very.Max(l => l.SMax) > dense.Max(l => l.SMax));
         Assert.True(very.Max(l => l.Amount / l.Life) > dense.Max(l => l.Amount / l.Life));
     }

@@ -120,7 +120,7 @@ sealed partial class StudioTools
             Args.Schema(new Arg("id", "string", "the kind's id", true), new Arg("kind", "string", string.Join(", ", EffectKinds.Kinds.Select(k => k.Id))),
                 new Arg("amount", "number", "how much"), new Arg("height", "number", "how high"), new Arg("puff", "number", "puff size"), new Arg("speed", "number", "speed"),
                 new Arg("wind", "number", "how much the wind carries it"), new Arg("every", "number", "seconds between shots"), new Arg("colour", "string", "#rrggbb"),
-                new Arg("light", "boolean", "flashes light"), new Arg("smoke", "boolean", "makes smoke"), new Arg("density", "number", "how thick the smoke is, " + SmokeDensity.Range + "; dense hangs and drifts as far as real powder smoke on the map's scale"), new Arg("volley", "string", "together or rolling")),
+                new Arg("light", "boolean", "flashes light"), new Arg("smoke", "boolean", "makes smoke"), new Arg("density", "number", "how thick the smoke is, " + SmokeDensity.Range + "; dense hangs and trails downwind, at most as far as real powder smoke on the map's scale"), new Arg("volley", "string", "together or rolling")),
             SetEffect);
         yield return new AgentTool("studio_write_script",
             "Sets a kind's script in the pack (every piece of that kind runs it) and runs it on the studio's table; the same safety check as the Script tab. Returns what it printed; fails when the script fails as it loads. An empty text removes it.",

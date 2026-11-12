@@ -318,11 +318,11 @@ public class EffectRecipeTests
     }
 
     [Theory]
-    [InlineData("powder", null, true)]
-    [InlineData("powder", "together", true)]
-    [InlineData("powder", "rolling", false)]
-    [InlineData("cannon", "rolling", false)]
-    public void Lingering_smoke_lives_long_enough_to_carry_as_far_as_the_map_s_scale_says(string kind, string? volley, bool oneLine)
+    [InlineData("powder", null)]
+    [InlineData("powder", "together")]
+    [InlineData("powder", "rolling")]
+    [InlineData("cannon", "rolling")]
+    public void Lingering_smoke_lives_longer_and_trails_no_further_than_the_wind_carries_it(string kind, string? volley)
     {
         var air = new SmokeAir(1, 1 / SmokeDrift.UncalibratedMetresPerUnit);
         var plume = SmokeDrift.Of(kind, 6, 1, air);
@@ -333,11 +333,59 @@ public class EffectRecipeTests
         var lingering = EffectRecipe.Plan(oldDense, 6, 0.6f, 0.3f, Grey, false, air).Layers.Where(l => l.Sprite == "puff").ToList();
         Assert.Equal(usual.Select(l => (l.Life, l.Amount, l.Cycles)), unticked.Select(l => (l.Life, l.Amount, l.Cycles)));
         Assert.All(usual, l => Assert.Equal(0, l.Reach));
-        Assert.All(lingering, l => Assert.Equal(plume.Reach, l.Reach));
+        Assert.All(lingering, l => Assert.InRange(l.Reach, 0.01f, plume.Reach + 0.001f));
         Assert.True(lingering.Max(l => l.Life) > usual.Max(l => l.Life));
         Assert.All(lingering, l => Assert.InRange(l.Cycles, 2, SmokeDrift.MostEmitters));
         Assert.True(lingering.Count(l => l.Fixed) <= SmokeDrift.MostEmitters + 8);
-        if (oneLine) Assert.All(lingering, l => Assert.True(l.Reach / (l.Life * (1 - l.Brake)) <= SmokeDrift.ScreenWind(air) * 1.25f, $"{l.Life} s, {l.Cycles} turns"));
+        Assert.All(lingering, l => Assert.True(l.Reach / (l.Life * (1 - l.Brake)) <= SmokeDrift.Ride(air, 1) * 1.001f, $"{l.Life} s, {l.Cycles} turns"));
+        Assert.All(lingering, l => Assert.InRange(l.Life, 0, SmokeDrift.MostSeconds));
+        Assert.InRange(lingering.Sum(l => l.Amount), 1, SmokeDrift.MostParticles);
+    }
+
+    [Theory]
+    [InlineData("powder", null)]
+    [InlineData("powder", "rolling")]
+    [InlineData("cannon", null)]
+    [InlineData("cannon", "rolling")]
+    public void Dense_smoke_never_outruns_the_wind_at_any_strength(string kind, string? volley)
+    {
+        foreach (double strength in new[] { 0, 0.5, 1, 2, 2.5, 3, 4, 5 })
+        {
+            var air = new SmokeAir(strength, 1 / 50.0);
+            var very = new EffectDef { Kind = kind, Volley = volley, Density = SmokeDensity.VeryDense };
+            var dense = EffectRecipe.Plan(very, 6, 0.6f, 0.3f, Grey, false, air).Layers.Where(l => l.Heat == SmokeHeat.Cold).ToList();
+            Assert.NotEmpty(dense);
+            Assert.All(dense, l => Assert.True(l.Reach <= SmokeDrift.Ride(air, l.Drift) * l.Life * (1 - l.Brake) * 1.001f, $"wind {strength}: {l.Reach} in {l.Life} s"));
+        }
+    }
+
+    [Theory]
+    [InlineData(10)]
+    [InlineData(30)]
+    [InlineData(50)]
+    [InlineData(200)]
+    public void Every_step_of_the_wind_slider_carries_smoke_at_its_own_pace(double metresPerUnit)
+    {
+        var paces = Enumerable.Range(0, 21).Select(i => SmokeDrift.Ride(new SmokeAir(i * 0.25, 1 / metresPerUnit), 1)).ToList();
+        Assert.All(paces.Zip(paces.Skip(1)), p => Assert.True(p.Second > p.First * 1.03f, $"{p.First} then {p.Second}"));
+        Assert.True(paces[0] < paces[4] * 0.6f, $"calm {paces[0]}, a light breeze {paces[4]}");
+    }
+
+    [Fact]
+    public void Smoke_creeps_in_calm_air_and_under_an_effect_s_own_wind_of_nothing()
+    {
+        Assert.InRange(SmokeDrift.Ride(new SmokeAir(0, 1 / 50.0), 1), 0.01f, 0.06f);
+        Assert.Equal(SmokeDrift.StillDrift, SmokeDrift.Ride(new SmokeAir(5, 1 / 50.0), 0));
+        var plan = EffectRecipe.Plan(new EffectDef { Kind = "powder", Volley = "rolling", Density = SmokeDensity.Dense, Wind = 0 }, 6, 0.6f, 0.3f, Grey, false, new SmokeAir(2, 1 / 50.0));
+        Assert.All(plan.Layers.Where(l => l.Heat == SmokeHeat.Cold), l => Assert.InRange(l.Life, 1, SmokeDrift.MostSeconds));
+    }
+
+    [Fact]
+    public void Smoke_rides_three_times_the_wind_s_real_speed_on_the_map_s_scale()
+    {
+        Assert.Equal(SmokeDrift.WindMetresPerSecond(2.5) * 3 / 50, SmokeDrift.ScreenWind(new SmokeAir(2.5, 1 / 50.0)), 4);
+        Assert.InRange(SmokeDrift.ScreenWind(new SmokeAir(2.5, 1 / 50.0)), 0.4f, 0.6f);
+        Assert.InRange(SmokeDrift.ScreenWind(new SmokeAir(5, 1 / 50.0)), 0.9f, 1.2f);
     }
 
     [Fact]

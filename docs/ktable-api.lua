@@ -319,7 +319,7 @@ function Piece.play_effect(index) end
 ---@param on boolean true runs it; false stops it.
 function Piece.set_effect_on(on) end
 
----Makes an effect's smoke finer or denser: fine leaves the pieces under it readable, dense hangs and drifts downwind as far as real powder smoke.
+---Makes an effect's smoke finer or denser: fine leaves the pieces under it readable, dense hangs and trails downwind, at most as far as real powder smoke.
 ---@param thickness? number From -2 (very fine) through -1 (fine), 0 (standard) and 1 (dense) to 2 (very dense); nil goes back to the smoke the piece was made with.
 function Piece.set_effect_smoke(thickness) end
 

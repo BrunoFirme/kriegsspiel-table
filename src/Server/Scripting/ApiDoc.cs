@@ -279,7 +279,7 @@ public static partial class ApiDoc
     P("on", "boolean", "true runs it; false stops it.");
     See("self.effect_on");
 
-    M("piece", "set_effect_smoke(thickness)", "Makes an effect's smoke finer or denser: fine leaves the pieces under it readable, dense hangs and drifts downwind as far as real powder smoke.");
+    M("piece", "set_effect_smoke(thickness)", "Makes an effect's smoke finer or denser: fine leaves the pieces under it readable, dense hangs and trails downwind, at most as far as real powder smoke.");
     O("thickness", "number", "From -2 (very fine) through -1 (fine), 0 (standard) and 1 (dense) to 2 (very dense); nil goes back to the smoke the piece was made with.");
     See("self.effect_smoke");
 
