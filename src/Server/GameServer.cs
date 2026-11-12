@@ -726,6 +726,9 @@ public sealed partial class GameServer
             case Draw dr when !isUndo || string.IsNullOrEmpty(dr.Stroke.Id):
                 dr.Stroke.Id = State.NewId("d");
                 break;
+            case LayBuilt lb when !isUndo || string.IsNullOrEmpty(lb.Thing.Id):
+                lb.Thing.Id = State.NewId("w");
+                break;
             case AddSheet a when string.IsNullOrEmpty(a.Sheet.Id):
                 a.Sheet.Id = State.NewId("s");
                 break;

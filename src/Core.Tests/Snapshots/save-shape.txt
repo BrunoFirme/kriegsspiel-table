@@ -1,4 +1,4 @@
-format 40
+format 41
 type AccessChanged object
   access: GameAccess
 type AddBoard object
@@ -75,6 +75,20 @@ type Batch object
 type BoardDef object
   id: string
   name: string
+type BuiltPart object
+  at: List<int>
+  class: string
+  kept: bool
+  kind: string
+  turn: int
+type BuiltThing object
+  id: string
+  kind: string
+  outline: List<int>
+  parts: List<BuiltPart>
+  seed: int
+  settings: Dictionary<string,double>
+  sheet: string
 type Calibration object
   north: double
   perMetre: double read-only
@@ -117,6 +131,7 @@ type Command abstract
   derived GlidePiece = GlidePiece
   derived HoldPiece = HoldPiece
   derived Hotkey = Hotkey
+  derived LayBuilt = LayBuilt
   derived LoadSave = LoadSave
   derived LockSheet = LockSheet
   derived MovePiece = MovePiece
@@ -129,6 +144,7 @@ type Command abstract
   derived RecallReady = RecallReady
   derived ReleaseReady = ReleaseReady
   derived RemoveBoard = RemoveBoard
+  derived RemoveBuilt = RemoveBuilt
   derived RemoveDecal = RemoveDecal
   derived RemoveSheet = RemoveSheet
   derived RemoveZone = RemoveZone
@@ -143,6 +159,7 @@ type Command abstract
   derived SetAltitude = SetAltitude
   derived SetBookHighlight = SetBookHighlight
   derived SetBriefing = SetBriefing
+  derived SetBuilt = SetBuilt
   derived SetCalibration = SetCalibration
   derived SetClock = SetClock
   derived SetCounter = SetCounter
@@ -280,6 +297,7 @@ type Dictionary<string,List<DecalDef>> map string to List<DecalDef>
 type Dictionary<string,List<PieceInstance>> map string to List<PieceInstance>
 type Dictionary<string,List<Stroke>> map string to List<Stroke>
 type Dictionary<string,List<int>> map string to List<int>
+type Dictionary<string,double> map string to double
 type Dictionary<string,int> map string to int
 type Dictionary<string,string> map string to string
 type DieFace object
@@ -357,6 +375,7 @@ type GameClock object
 type GameState object
   boards: List<BoardDef>
   briefing: string
+  built: List<BuiltThing>
   calibration: Calibration
   clock: GameClock
   decalPalette: List<PaletteDecal>
@@ -457,6 +476,14 @@ type JsonElement value
 type Knock object
   name: string
   peerId: long
+type LayBuilt object
+  actor: long
+  at: long
+  index: int?
+  seq: long
+  thing: BuiltThing
+  undoFrom: long
+  undoOf: long
 type Lettering object
   color: string
   size: double
@@ -485,6 +512,8 @@ type LineDef object
 type List<Approved> list of Approved
 type List<AttachmentDef> list of AttachmentDef
 type List<BoardDef> list of BoardDef
+type List<BuiltPart> list of BuiltPart
+type List<BuiltThing> list of BuiltThing
 type List<Command> list of Command
 type List<ConsoleLine> list of ConsoleLine
 type List<CounterDef> list of CounterDef
@@ -867,6 +896,13 @@ type RemoveBoard object
   seq: long
   undoFrom: long
   undoOf: long
+type RemoveBuilt object
+  actor: long
+  at: long
+  id: string
+  seq: long
+  undoFrom: long
+  undoOf: long
 type RemoveDecal object
   actor: long
   at: long
@@ -983,6 +1019,7 @@ type Scenario object
   apiVersion: int
   boards: List<BoardDef>
   briefing: string
+  built: List<BuiltThing>
   calibration: Calibration
   clock: GameClock
   decalPalette: List<PaletteDecal>
@@ -1056,6 +1093,13 @@ type SetBriefing object
   at: long
   seq: long
   text: string
+  undoFrom: long
+  undoOf: long
+type SetBuilt object
+  actor: long
+  at: long
+  seq: long
+  thing: BuiltThing
   undoFrom: long
   undoOf: long
 type SetCalibration object

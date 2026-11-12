@@ -38,6 +38,7 @@ public sealed class GameState
     public Dictionary<string, List<DecalDef>> Decals { get; set; } = new();
     public List<PaletteDecal> DecalPalette { get; set; } = new();
     public List<BoardDef> Boards { get; set; } = new();
+    public List<BuiltThing> Built { get; set; } = new();
     public List<DiceRoll> Dice { get; set; } = new();
     public long NextId { get; set; } = 1;
     public long LastSeq { get; set; }
@@ -87,6 +88,7 @@ public sealed class GameState
         s.Decals["umpire"] = DecalLayer(Model.Layers.Umpire).Select(d => d.Clone()).ToList();
         s.DecalPalette = DecalPalette.Select(d => d.Clone()).ToList();
         s.Boards = Boards.Select(b => b.Clone()).ToList();
+        s.Built = Built.Select(b => b.Clone()).ToList();
         s.Ui = Ui.Select(n => n.Clone()).ToList();
         s.UiPictures = new(UiPictures);
         s.UiLayout = UiLayout?.Clone();
@@ -111,6 +113,7 @@ public sealed class GameState
         g.Decals[Model.Layers.Umpire] = s.Decals.TryGetValue("umpire", out var d) ? d.Select(x => x.Clone()).ToList() : new();
         g.DecalPalette = s.DecalPalette.Select(x => x.Clone()).ToList();
         g.Boards = s.Boards.Select(b => b.Clone()).ToList();
+        g.Built = (s.Built ?? new()).Select(b => b.Clone()).ToList();
         g.Ui = (s.Ui ?? new()).Select(n => n.Clone()).ToList();
         g.UiPictures = new(s.UiPictures ?? new());
         g.UiLayout = s.UiLayout?.Clone();
@@ -140,7 +143,8 @@ public sealed class GameState
             .Concat(Decals.Values.SelectMany(x => x).Select(d => d.Id))
             .Concat(Sheets.Select(s => s.Id))
             .Concat(Zones.Select(z => z.Id))
-            .Concat(Boards.Select(b => b.Id));
+            .Concat(Boards.Select(b => b.Id))
+            .Concat(Built.Select(b => b.Id));
         foreach (var id in ids)
         {
             if (id == null) continue;
@@ -176,6 +180,7 @@ public sealed class GameState
         Dice = s.Dice;
         Zones = s.Zones;
         Boards = s.Boards;
+        Built = s.Built ?? new();
         Script = s.Script;
         ScriptState = s.ScriptState;
         Ui = s.Ui;

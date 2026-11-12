@@ -61,6 +61,9 @@ namespace KTable.Core.Protocol;
 [JsonDerivedType(typeof(RemoveBoard), "RemoveBoard")]
 [JsonDerivedType(typeof(Draw), "Draw")]
 [JsonDerivedType(typeof(EraseStroke), "EraseStroke")]
+[JsonDerivedType(typeof(LayBuilt), "LayBuilt")]
+[JsonDerivedType(typeof(SetBuilt), "SetBuilt")]
+[JsonDerivedType(typeof(RemoveBuilt), "RemoveBuilt")]
 [JsonDerivedType(typeof(StampDecal), "StampDecal")]
 [JsonDerivedType(typeof(RemoveDecal), "RemoveDecal")]
 [JsonDerivedType(typeof(SetDecalPalette), "SetDecalPalette")]
@@ -764,6 +767,37 @@ public sealed class Draw : LayerCommand
 public sealed class EraseStroke : LayerCommand
 {
     public string StrokeId { get; set; } = "";
+    public override Sender SentBy() => Sender.Umpire;
+    public override bool OnUndoStack() => true;
+    public override Shown ShownToObservers() => Shown.Table;
+    public override IEnumerable<(string Layer, string Id)> ZonePieces() => [];
+    public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [];
+    public override IEnumerable<string> ScriptsToReload() => [];
+}
+public sealed class LayBuilt : Command
+{
+    public BuiltThing Thing { get; set; } = new();
+    public int? Index { get; set; }
+    public override Sender SentBy() => Sender.Umpire;
+    public override bool OnUndoStack() => true;
+    public override Shown ShownToObservers() => Shown.Table;
+    public override IEnumerable<(string Layer, string Id)> ZonePieces() => [];
+    public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [];
+    public override IEnumerable<string> ScriptsToReload() => [];
+}
+public sealed class SetBuilt : Command
+{
+    public BuiltThing Thing { get; set; } = new();
+    public override Sender SentBy() => Sender.Umpire;
+    public override bool OnUndoStack() => true;
+    public override Shown ShownToObservers() => Shown.Table;
+    public override IEnumerable<(string Layer, string Id)> ZonePieces() => [];
+    public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [];
+    public override IEnumerable<string> ScriptsToReload() => [];
+}
+public sealed class RemoveBuilt : Command
+{
+    public string Id { get; set; } = "";
     public override Sender SentBy() => Sender.Umpire;
     public override bool OnUndoStack() => true;
     public override Shown ShownToObservers() => Shown.Table;

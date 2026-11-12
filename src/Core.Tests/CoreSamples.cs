@@ -25,6 +25,17 @@ public static class CoreSamples
         RotDeg = 90, Size = new Size2(20, 30), Locked = false, Z = 2, Kind = "reference",
     };
 
+    public static BuiltThing Built(string id, string sheet) => new()
+    {
+        Id = id, Sheet = sheet, Kind = BuiltKinds.Settlement, Seed = 7, Settings = { ["houses"] = 0.5 }, Outline = { 1000, 1000, 3000, 1000 },
+        Parts =
+        {
+            new BuiltPart { Kind = PartKinds.Block, Class = "house", At = { 1000, 1000, 2200, 1000, 2200, 1800, 1000, 1800 }, Kept = true },
+            new BuiltPart { Kind = PartKinds.Line, Class = "lane", At = { 0, 0, 1000, 1000 } },
+            new BuiltPart { Kind = PartKinds.Sign, Class = "well", At = { 500, 500 }, Turn = 450 },
+        },
+    };
+
     public static Stroke Stroke(string id) => new()
     {
         Id = id, Points = new() { new Vec2(0, 0), new Vec2(1, 2), new Vec2(3.25, -4) }, Width = 0.5, Color = "#123456",
@@ -142,6 +153,9 @@ public static class CoreSamples
         yield return new RemoveBoard { Id = "b-000001" };
         yield return new Draw { Layer = "scratch:red", Stroke = Stroke("d-000300") };
         yield return new EraseStroke { Layer = L, StrokeId = "d-000004" };
+        yield return new LayBuilt { Thing = Built("w-000310", "s-000001"), Index = 0 };
+        yield return new SetBuilt { Thing = Built("w-000310", "s-000001") };
+        yield return new RemoveBuilt { Id = "w-000310" };
         yield return new StampDecal { Layer = L, Decal = new DecalDef { Id = "dc-000001", Picture = "blood", Name = "Blood", X = 1, Z = 2, W = 1.5, H = 1, Rot = 30 } };
         yield return new RemoveDecal { Layer = L, DecalId = "dc-000001" };
         yield return new SetDecalPalette { Entries = new() { new PaletteDecal { Name = "Guts", Picture = "guts", Size = 0.5 } } };

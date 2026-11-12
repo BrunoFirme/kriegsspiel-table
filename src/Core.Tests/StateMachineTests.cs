@@ -92,6 +92,7 @@ public class StateMachineTests
         g.Find(U, "p-000001")!.Attached.Add("p-000002");
         g.Layer(U).Add(CoreSamples.Piece("p-000006", "def-c", -3, 2));
         g.Sheets.Add(CoreSamples.Sheet("s-000007"));
+        g.Built.Add(CoreSamples.Built("w-000008", "s-000007"));
         g.NextId = 20;
         return g;
     }
@@ -134,6 +135,9 @@ public class StateMachineTests
         yield return C("vision", new SetVisionRadius { Radius = 25 });
         yield return C("draw", new Draw { Layer = U, Stroke = CoreSamples.Stroke("") });
         yield return C("erase", new EraseStroke { Layer = U, StrokeId = "d-000004" });
+        yield return C("lay-built", new LayBuilt { Thing = CoreSamples.Built("", "s-000007") });
+        yield return C("set-built", new SetBuilt { Thing = BuiltGeometry.Moved(CoreSamples.Built("w-000008", "s-000007"), 250, -125) });
+        yield return C("remove-built", new RemoveBuilt { Id = "w-000008" });
         yield return C("clock", new SetClock { Turn = 9, GameTime = "1809-05-22T06:00", IncrementMinutes = 60 });
         yield return C("advance", new AdvanceClock());
         yield return C("calibration", new SetCalibration { UnitsPerMeter = null });

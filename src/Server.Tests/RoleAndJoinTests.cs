@@ -66,6 +66,9 @@ public class RoleAndJoinTests
         yield return new RecallReady { Layer = layer, Holder = "p-000004" };
         yield return new Draw { Layer = layer, Stroke = new Stroke { Points = { new(0, 0) } } };
         yield return new EraseStroke { Layer = layer, StrokeId = "d-000005" };
+        yield return new LayBuilt { Thing = new BuiltThing { Sheet = "s-000001" } };
+        yield return new SetBuilt { Thing = new BuiltThing { Id = "w-000001", Sheet = "s-000001" } };
+        yield return new RemoveBuilt { Id = "w-000001" };
         yield return new StampDecal { Layer = layer, Decal = new DecalDef { Picture = "blood", W = 1, H = 1 } };
         yield return new RemoveDecal { Layer = layer, DecalId = "dc-000005" };
         yield return new SetDecalPalette { Entries = new() { new PaletteDecal { Name = "Guts", Picture = "guts", Size = 0.5 } } };

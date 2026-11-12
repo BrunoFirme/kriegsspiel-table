@@ -54,6 +54,9 @@ public static partial class StateMachine
             case RemoveSheet rs: return ApplyRemoveSheet(g, rs, ref inverse);
             case Draw dr: return ApplyDraw(g, dr, ref inverse);
             case EraseStroke er: return ApplyEraseStroke(g, er, ref inverse);
+            case LayBuilt lb: return ApplyLayBuilt(g, lb, ref inverse);
+            case SetBuilt sb: return ApplySetBuilt(g, sb, ref inverse);
+            case RemoveBuilt rb: return ApplyRemoveBuilt(g, rb, ref inverse);
             case StampDecal or RemoveDecal or SetDecalPalette: return ApplyDecals(g, c, ref inverse);
             case AddBoard ab: return ApplyAddBoard(g, ab, ref inverse);
             case RenameBoard nb: return ApplyRenameBoard(g, nb, ref inverse);
@@ -736,6 +739,36 @@ public static partial class StateMachine
         PutBack(g.DrawLayer(dr.Layer), Json.Clone(dr.Stroke), dr.Index);
         BumpId(g, dr.Stroke.Id);
         inverse = new EraseStroke { Layer = dr.Layer, StrokeId = dr.Stroke.Id };
+        return null;
+    }
+
+    static string? ApplyLayBuilt(GameState g, LayBuilt lb, ref Command? inverse)
+    {
+        if (g.Sheets.All(s => s.Id != lb.Thing.Sheet)) return "no such sheet";
+        if (string.IsNullOrEmpty(lb.Thing.Id)) lb.Thing.Id = g.NewId("w");
+        if (g.Built.Any(b => b.Id == lb.Thing.Id)) return "already laid";
+        PutBack(g.Built, lb.Thing.Clone(), lb.Index);
+        BumpId(g, lb.Thing.Id);
+        inverse = new RemoveBuilt { Id = lb.Thing.Id };
+        return null;
+    }
+
+    static string? ApplySetBuilt(GameState g, SetBuilt sb, ref Command? inverse)
+    {
+        int at = g.Built.FindIndex(b => b.Id == sb.Thing.Id);
+        if (at < 0) return "no such built thing";
+        if (g.Sheets.All(s => s.Id != sb.Thing.Sheet)) return "no such sheet";
+        inverse = new SetBuilt { Thing = g.Built[at] };
+        g.Built[at] = sb.Thing.Clone();
+        return null;
+    }
+
+    static string? ApplyRemoveBuilt(GameState g, RemoveBuilt rb, ref Command? inverse)
+    {
+        int at = g.Built.FindIndex(b => b.Id == rb.Id);
+        if (at < 0) return "no such built thing";
+        inverse = new LayBuilt { Thing = g.Built[at], Index = at };
+        g.Built.RemoveAt(at);
         return null;
     }
 
