@@ -103,6 +103,13 @@ static class SunPlaceTests
         await r.Frames(2);
         Check.That(LightPresets.Same(h.S.View.Lighting, LightPresets.Named(LightPresets.AfternoonSun)!), "the afternoon preset puts the sun low in the west");
         Check.Equal(270.0, rose.From, "and the rose shows it");
+        Check.That(!rose.Moon, "as a sun");
+
+        int moonlit = Enumerable.Range(0, pick.ItemCount).First(i => pick.GetItemText(i) == LightPresets.MoonlitNight);
+        pick.Select(moonlit);
+        pick.EmitSignal(OptionButton.SignalName.ItemSelected, moonlit);
+        await r.Frames(2);
+        Check.That(rose.Moon, "a moonlit night draws a moon on the rose");
     }
 
     [NodeTest]

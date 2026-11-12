@@ -19,7 +19,16 @@ public partial class SunRose : CompassRose
     }
     bool _shining = true;
 
-    const float Side = 112, Disc = 6, RayFrom = 9, RayTo = 13;
+    public bool Moon
+    {
+        get => _moon;
+        set { _moon = value; QueueRedraw(); }
+    }
+    bool _moon;
+
+    const float Side = 112, Disc = 6, RayFrom = 9, RayTo = 13, MoonRadius = 8, MoonBite = 0.9f;
+    const int MoonSteps = 14;
+    static readonly Vector2 BiteToward = new Vector2(0.6f, -0.8f);
     const double PointNotch = 45, PointPull = 8;
 
     public SunRose() : base(Side, "Click or drag towards where the light comes from (Shift: single degrees)")
@@ -34,11 +43,27 @@ public partial class SunRose : CompassRose
         var at = c + Toward(From) * r * (1 - Mathf.Clamp(up, 0, 1)) * 0.9f;
         var colour = _shining ? Ui.Accent : Faint;
         if (at.DistanceTo(c) > Disc) DrawLine(at, c, Faint, 1.2f, true);
+        if (_moon) { DrawColoredPolygon(Crescent(at), colour); return; }
         DrawCircle(at, Disc, colour);
         for (int i = 0; i < 8; i++)
         {
             var dir = Toward(i * 45);
             DrawLine(at + dir * RayFrom, at + dir * RayTo, colour, 1.5f, true);
         }
+    }
+
+    static Vector2[] Crescent(Vector2 at)
+    {
+        float bite = MoonRadius * MoonBite, horn = Mathf.Acos(bite / (2 * MoonRadius));
+        var u = BiteToward;
+        var v = new Vector2(-u.Y, u.X);
+        Vector2 On(Vector2 centre, float a) => centre + (u * Mathf.Cos(a) + v * Mathf.Sin(a)) * MoonRadius;
+        var points = new Vector2[MoonSteps * 2 + 2];
+        for (int i = 0; i <= MoonSteps; i++)
+        {
+            points[i] = On(at, Mathf.Lerp(horn, Mathf.Tau - horn, i / (float)MoonSteps));
+            points[MoonSteps + 1 + i] = On(at + u * bite, Mathf.Lerp(Mathf.Pi + horn, Mathf.Pi - horn, i / (float)MoonSteps));
+        }
+        return points;
     }
 }

@@ -73,6 +73,15 @@ public class SunLightTests
     }
 
     [Fact]
+    public void A_dim_cold_light_is_moonlight_and_named_as_the_moon_and_dim_daylight_is_still_the_sun()
+    {
+        Assert.True(DayLight.Moonlit(LightPresets.Named(LightPresets.MoonlitNight)!));
+        foreach (var day in new[] { "Overcast", LightPresets.CoolDaylight, LightPresets.CeilingLight, LightPresets.MorningSun, LightPresets.Sundown, "Dark night" })
+            Assert.False(DayLight.Moonlit(LightPresets.Named(day)!), day);
+        Assert.Equal("moon W 30°", DayLight.SunWords(new Lighting { SunEnergy = 0.12, Warmth = -0.85, SunFrom = 270, SunHeight = 30 }));
+    }
+
+    [Fact]
     public void Morning_and_afternoon_presets_put_the_sun_low_in_the_east_and_west()
     {
         var morning = LightPresets.Named(LightPresets.MorningSun)!;

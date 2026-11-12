@@ -1,5 +1,6 @@
 using System;
 using Godot;
+using KTable.Client;
 using KTable.Core.Model;
 
 namespace KTable.App;
@@ -20,7 +21,7 @@ sealed partial class ScenarioDialog
             form.AddChild(new Label { Text = "From" });
             var row = new HBoxContainer();
             row.AddThemeConstantOverride("separation", Ui.Gap.Block);
-            _rose = new SunRose { From = l.SunFrom, Height = l.SunHeight, Shining = l.SunEnergy > SunLit };
+            _rose = new SunRose { From = l.SunFrom, Height = l.SunHeight, Shining = l.SunEnergy > SunLit, Moon = DayLight.Moonlit(l) };
             row.AddChild(_rose);
             _box = new SpinBox { MinValue = 0, MaxValue = 360, Step = 1, Value = Math.Round(l.SunFrom), Suffix = "°", SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
                 TooltipText = "0 north, 90 east, 180 south, 270 west" };
@@ -63,6 +64,7 @@ sealed partial class ScenarioDialog
         {
             _rose.Height = l.SunHeight;
             _rose.Shining = l.SunEnergy > SunLit;
+            _rose.Moon = DayLight.Moonlit(l);
         }
     }
 }

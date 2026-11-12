@@ -83,7 +83,15 @@ public static class DayLight
         return (-h, Calibration.Turned(HalfTurn - f - north));
     }
 
-    public static string SunWords(Lighting l) => l.SunEnergy < Lit ? ""
-        : l.SunHeight >= Lighting.Overhead ? "sun overhead"
-        : string.Create(CultureInfo.InvariantCulture, $"sun {Wind.Point(l.SunFrom)} {l.SunHeight:0}°");
+    const double MoonAtMost = 0.25, MoonCold = -0.55;
+
+    public static bool Moonlit(Lighting l) => l.SunEnergy is >= Lit and <= MoonAtMost && l.Warmth <= MoonCold;
+
+    public static string SunWords(Lighting l)
+    {
+        if (l.SunEnergy < Lit) return "";
+        var body = Moonlit(l) ? "moon" : "sun";
+        return l.SunHeight >= Lighting.Overhead ? $"{body} overhead"
+            : string.Create(CultureInfo.InvariantCulture, $"{body} {Wind.Point(l.SunFrom)} {l.SunHeight:0}°");
+    }
 }
