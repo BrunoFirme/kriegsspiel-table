@@ -30,13 +30,14 @@ public partial class PieceNode
     }
     public Vector3 SlabCentre => Position - Vector3.Up * LiftY + Vector3.Up * _thickness / 2;
 
-    StandardMaterial3D BackMat(bool scissor, bool oneSided = false)
+    StandardMaterial3D BackMat(bool scissor, bool oneSided = false) => _backMat ??= BackPrint(scissor, oneSided);
+
+    StandardMaterial3D BackPrint(bool scissor, bool oneSided)
     {
-        if (_backMat != null) return _backMat;
         if (CurrentBack() is { } back && _s.PackOfDef(Piece.Def) is { } pack && pack.Assets.TryGetValue(back, out var a))
-            return _backMat = Art.Print(pack.Id, a.File, _texSize > 0 ? _texSize : 512, PrintTint(), scissor, oneSided);
+            return Art.Print(pack.Id, a.File, _texSize > 0 ? _texSize : 512, PrintTint(), scissor, oneSided);
         var (pkg, rel, size) = TexKey();
-        return _backMat = Art.Print(pkg, rel, size, PrintTint(), scissor, oneSided);
+        return Art.Print(pkg, rel, size, PrintTint(), scissor, oneSided);
     }
 
     void SyncSide()

@@ -539,8 +539,11 @@ public partial class Table : Node3D
 
     List<CanvasLayer> _restingLayers = new();
 
+    public override void _ExitTree() => Hover.Release();
+
     public void Rest(bool resting, bool pause = false)
     {
+        if (resting) Hover.Clear(Vector2.Zero);
         SetProcessUnhandledInput(!resting);
         if (pause) ProcessMode = resting ? ProcessModeEnum.Disabled : ProcessModeEnum.Inherit;
         if (Resting == resting) return;

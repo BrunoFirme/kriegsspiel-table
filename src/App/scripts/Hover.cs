@@ -47,6 +47,7 @@ sealed class Hover
             _time = 0;
             hit?.SetWidgetHover(wi);
             hit?.SetHovered(true);
+            Point(hit, wi);
             Changed?.Invoke(null, screen);
             return;
         }
@@ -55,6 +56,7 @@ sealed class Hover
         {
             Node = null;
             _widget = 0;
+            Point(null, 0);
             Changed?.Invoke(null, screen);
             return;
         }
@@ -75,10 +77,27 @@ sealed class Hover
         Changed?.Invoke(null, screen);
     }
 
-    static void Leave(PieceNode n)
+    void Leave(PieceNode n)
     {
+        Point(null, 0);
         if (!GodotObject.IsInstanceValid(n)) return;
         n.SetWidgetHover(0);
         n.SetHovered(false);
+    }
+
+    Input.CursorShape _shape = Input.CursorShape.Arrow;
+
+    public Input.CursorShape Pointer => _shape;
+
+    public void Release() => Point(null, 0);
+
+    void Point(PieceNode? n, int widget)
+    {
+        var shape = n != null && widget > 0 && widget <= n.Piece.Widgets.Count
+            ? n.Piece.Widgets[widget - 1].Kind == "input" ? Input.CursorShape.Ibeam : Input.CursorShape.PointingHand
+            : Input.CursorShape.Arrow;
+        if (shape == _shape) return;
+        _shape = shape;
+        Input.SetDefaultCursorShape(shape);
     }
 }

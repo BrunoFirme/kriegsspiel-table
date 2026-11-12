@@ -72,4 +72,40 @@ static class WidgetClickTests
         Check.That(lift.Length() > 0.01f, "the rise is there to see");
         t.Table.QueueFree();
     }
+
+    const string Pointing = """
+        function on_load()
+          self.button{ x = 0, z = 0, w = 0.6, h = 0.3, label = "count", on_click = "pressed" }
+          self.input{ x = 1.2, z = 0, w = 0.8, h = 0.3, value = "name", on_change = "typed" }
+        end
+        function pressed() end
+        function typed() end
+        """;
+
+    [NodeTest]
+    static async Task The_pointer_turns_to_a_hand_over_a_button_and_a_text_cursor_over_a_box_and_back_to_an_arrow_off_them(TestRunner r)
+    {
+        var t = OfflineTable.Make(r, pieces: 1);
+        await r.Frames(2);
+        var node = t.Table.Pieces.Nodes.First();
+        t.S.Do(new SetScript { Layer = Layers.Umpire, Id = node.Piece.Id, Text = Pointing });
+        var rig = t.Table.Rig;
+        rig.Target = node.GlobalPosition;
+        rig.Distance = 12;
+        rig.Apply();
+        await r.Frames(3);
+        Vector2 Seen(float x) => rig.Cam.UnprojectPosition(node.GlobalTransform * new Vector3(x, 0, 0) with { Y = node.TopY + Lift });
+        var hover = t.Table.Hover;
+
+        hover.Update(Seen(0), 0);
+        Check.Equal(Input.CursorShape.PointingHand, hover.Pointer, "over a button the pointer is a hand");
+        hover.Update(Seen(Beside), 0);
+        Check.Equal(Input.CursorShape.Ibeam, hover.Pointer, "over a box it is a text cursor");
+        hover.Update(rig.Cam.UnprojectPosition(node.GlobalPosition + new Vector3(0, 0, 4)), 0);
+        Check.Equal(Input.CursorShape.Arrow, hover.Pointer, "off the piece it is an arrow again");
+        hover.Update(Seen(0), 0);
+        hover.Clear(Seen(0));
+        Check.Equal(Input.CursorShape.Arrow, hover.Pointer, "when the hover ends over a panel it is an arrow again");
+        t.Table.QueueFree();
+    }
 }

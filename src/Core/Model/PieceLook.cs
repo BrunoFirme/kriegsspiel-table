@@ -49,9 +49,13 @@ public sealed class PieceLook
         p.MenuItems = new();
     }
 
+    static bool ModuleLooks(PieceDef? def) => def is { States.Count: > 1 } && def.States.Any(s => s.Module != null);
+
+    public static bool Whole(PieceInstance p, PieceDef? def) => p.Looks != null || ModuleLooks(def);
+
     public static List<PieceLook>? FromKind(PieceInstance p, PieceDef def)
     {
-        if (p.Looks != null || def.States.Count < 2 || p.State < 0 || p.State >= def.States.Count || !def.States.Any(s => s.Module != null)) return null;
+        if (p.Looks != null || !ModuleLooks(def) || p.State < 0 || p.State >= def.States.Count) return null;
         return def.States.Select((s, i) =>
         {
             var look = Of(p);

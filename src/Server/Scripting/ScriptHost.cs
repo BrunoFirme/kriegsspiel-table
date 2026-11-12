@@ -714,15 +714,17 @@ public sealed partial class ScriptHost
         _guards.Deadline += _guards.Elapsed - started;
     }
 
+    int DrawnOn(string id) => _drawing.IsFromLoad(id) && !(Find(id) is { } p && PieceLook.Whole(p, _s.Store?.Def(p.Def))) ? 0 : -1;
+
     void FlushStaging()
     {
         var r = _reaction!;
         foreach (var id in r.WidgetsDirty.ToList())
             if (_drawing.TryWidgets(id, out var ws) && _s.State.Find(Layers.Umpire, id) != null)
-                Guard(id, () => Emit(new SetWidgets { Layer = Layers.Umpire, Id = id, Widgets = ws.Select(w => w.Clone()).ToList(), OnState = _drawing.IsFromLoad(id) ? 0 : -1 }));
+                Guard(id, () => Emit(new SetWidgets { Layer = Layers.Umpire, Id = id, Widgets = ws.Select(w => w.Clone()).ToList(), OnState = DrawnOn(id) }));
         foreach (var id in r.MenusDirty.ToList())
             if (_drawing.TryMenus(id, out var ms) && _s.State.Find(Layers.Umpire, id) != null)
-                Guard(id, () => Emit(new SetMenuItems { Layer = Layers.Umpire, Id = id, Items = ms.Select(m => m.Clone()).ToList(), OnState = _drawing.IsFromLoad(id) ? 0 : -1 }));
+                Guard(id, () => Emit(new SetMenuItems { Layer = Layers.Umpire, Id = id, Items = ms.Select(m => m.Clone()).ToList(), OnState = DrawnOn(id) }));
         r.WidgetsDirty.Clear();
         r.MenusDirty.Clear();
         _drawing.ClearFromLoad();

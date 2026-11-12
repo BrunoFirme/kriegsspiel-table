@@ -188,4 +188,33 @@ public class ModuleLookSwapTests
         t.Server.Handle(Table.Host, new SetState { Layer = U, Id = P, State = 0 });
         Assert.Equal("#3355AA", t.Server.State.Find(U, P)!.TintOverride);
     }
+
+    const string CountLua = "function onLoad(saved)\n  self.createButton({ label = saved, click_function = 'add', function_owner = self, width = 200, height = 200, font_size = 250 })\nend\n"
+                            + "function add() end\n";
+
+    [Fact]
+    public void The_button_each_look_s_own_script_draws_as_it_loads_shows_in_that_look_with_that_look_s_count()
+    {
+        using var t = new Table();
+        var def = t.Store.Pack("testpack")!.Pieces.Single(d => d.Id == "inf");
+        def.Script = Lua(CountLua);
+        def.States = new()
+        {
+            new PieceStateDef { Name = "5%", Script = Lua(CountLua), Module = new ModuleStateData { Type = "Custom_Token", Guid = "aaa111", ScriptState = "[5]" } },
+            new PieceStateDef { Name = "10%", Script = Lua(CountLua), Module = new ModuleStateData { Type = "Custom_Token", Guid = "bbb222", ScriptState = "[10]" } },
+        };
+        var state = Json.Clone(t.Server.State);
+        var placed = state.Find(U, P)!;
+        (placed.Guid, placed.ScriptState, placed.Script, placed.Looks) = (null, "[5]", null, null);
+        var p = Load(t, state);
+        Assert.Equal(("[5]", 0), (Assert.Single(p.Widgets).Label, p.DrawnOnState));
+
+        t.Server.Handle(Table.Host, new SetState { Layer = U, Id = P, State = 1 });
+        p = t.Server.State.Find(U, P)!;
+        Assert.Equal(("[10]", 1), (Assert.Single(p.Widgets).Label, p.DrawnOnState));
+
+        t.Server.Handle(Table.Host, new SetState { Layer = U, Id = P, State = 0 });
+        p = t.Server.State.Find(U, P)!;
+        Assert.Equal(("[5]", 0), (Assert.Single(p.Widgets).Label, p.DrawnOnState));
+    }
 }

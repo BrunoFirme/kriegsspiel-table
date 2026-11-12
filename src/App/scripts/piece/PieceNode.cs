@@ -169,15 +169,24 @@ public partial class PieceNode : Node3D
 
     MeshInstance3D? _far;
 
-    void AddFarQuad(Material face)
+    void AddFarQuads()
     {
-        _far = new MeshInstance3D
+        var (pkg, rel, size) = TexKey();
+        _far = FarQuad(Art.Plane(Footprint), Art.Print(pkg, rel, size, PrintTint(), scissor: true, oneSided: true), new Vector3(0, _thickness, 0), Vector3.Zero);
+        bool same = SamePrintUnderside;
+        FarQuad(Art.Plane(Footprint, flip: same), BackPrint(scissor: true, oneSided: true), Vector3.Zero, same ? Vector3.Zero : new Vector3(0, 0, 180));
+    }
+
+    MeshInstance3D FarQuad(Mesh plane, Material print, Vector3 at, Vector3 turn)
+    {
+        var quad = new MeshInstance3D
         {
-            Mesh = Art.Plane(Footprint), Position = new Vector3(0, _thickness, 0),
-            MaterialOverride = face, CastShadow = GeometryInstance3D.ShadowCastingSetting.Off,
+            Mesh = plane, Position = at, RotationDegrees = turn,
+            MaterialOverride = print, CastShadow = GeometryInstance3D.ShadowCastingSetting.Off,
             VisibilityRangeBegin = BodyRange(),
         };
-        AddChild(_far);
+        AddChild(quad);
+        return quad;
     }
 
     public bool ScriptDrawingShows => Piece.State == Piece.DrawnOnState;
@@ -361,7 +370,7 @@ public partial class PieceNode : Node3D
         AddChild(_body);
         _edgeSlots.Add((_body, 1));
         PaintEdges(SideColor());
-        AddFarQuad(face);
+        AddFarQuads();
         LoadTexture();
     }
 
@@ -374,7 +383,7 @@ public partial class PieceNode : Node3D
             Mesh = Art.Plane(Footprint), Position = new Vector3(0, t, 0),
             MaterialOverride = faceMat, VisibilityRangeEnd = BodyRange(),
         });
-        AddFarQuad(faceMat);
+        AddFarQuads();
         var (pkg, rel, size) = TexKey();
         var mask = pkg == null ? null : _s.Assets.Mask(pkg, rel!, size);
         var outline = Piece.Picture != null || WornModel != null ? null : CurState?.Image != null ? CurState.Outline : Def?.Outline;
