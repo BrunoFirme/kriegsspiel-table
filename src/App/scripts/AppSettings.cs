@@ -109,32 +109,32 @@ static class AppSettings
 
     public static void AddTint(VBoxContainer box, Settings cfg)
     {
-        const int ChipWidth = 34, ChipHeight = 28, OwnWidth = 44;
+        var chip = new Vector2(34, 28);
         var row = new HBoxContainer();
         row.AddThemeConstantOverride("separation", Ui.Gap.Group);
         row.AddChild(Ui.RowLabel("Tint", Ui.DialogLabels));
         var chips = new HBoxContainer { SizeFlagsVertical = Control.SizeFlags.ShrinkCenter };
         chips.AddThemeConstantOverride("separation", Ui.Gap.Tight);
         row.AddChild(chips);
-        var own = new ColorPickerButton
-        {
-            EditAlpha = false, CustomMinimumSize = new Vector2(OwnWidth, ChipHeight), SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
-            TooltipText = "Any colour: the interface takes its hue and strength, never its brightness",
-        };
-        row.AddChild(own);
+        var ownSlot = new HBoxContainer { SizeFlagsVertical = Control.SizeFlags.ShrinkCenter };
+        row.AddChild(ownSlot);
         box.AddChild(row);
         var next = Ui.UnderControls(Ui.Hint("From the next start."), Ui.DialogLabels);
         box.AddChild(next);
         void Show()
         {
             foreach (var old in chips.GetChildren()) old.QueueFree();
+            foreach (var old in ownSlot.GetChildren()) old.QueueFree();
             foreach (var (name, tint) in InterfaceTint.Presets)
             {
-                var chip = Ui.Swatch(Ui.Chip(tint), new Vector2(ChipWidth, ChipHeight), name, cfg.Tint == tint);
-                chip.Pressed += () => Choose(tint);
-                chips.AddChild(chip);
+                var preset = Ui.Swatch(Ui.Chip(tint), chip, name, cfg.Tint == tint);
+                preset.Pressed += () => Choose(tint);
+                chips.AddChild(preset);
             }
-            own.Color = Ui.Chip(cfg.Tint);
+            var own = Ui.SwatchPicker(Ui.Chip(cfg.Tint), chip, "Any colour: the interface takes its hue and strength, never its brightness",
+                InterfaceTint.Named(cfg.Tint) == null);
+            Ui.WhenPicked(own, c => Choose("#" + c.ToHtml(false)));
+            ownSlot.AddChild(own);
             next.Visible = cfg.Tint != Ui.TintInUse;
         }
         void Choose(string tint)
@@ -143,7 +143,6 @@ static class AppSettings
             cfg.Save();
             Show();
         }
-        Ui.WhenPicked(own, c => Choose("#" + c.ToHtml(false)));
         Show();
     }
 

@@ -29,6 +29,17 @@ static class TintRowTests
         await r.Frame();
         Check.Equal(InterfaceTint.Charcoal, cfg.Tint, "charcoal kept");
         Check.That(!Next().IsVisibleInTree(), "back to the tint in use");
+        ColorPickerButton Own() => box.FindChildren("*", "ColorPickerButton", true, false).OfType<ColorPickerButton>().Single(b => !b.IsQueuedForDeletion());
+        StyleBoxFlat Face(Control c) => (StyleBoxFlat)c.GetThemeStylebox("normal");
+        Check.Equal(Chips()[0].CustomMinimumSize, Own().CustomMinimumSize, "the picker is a chip's size");
+        Check.Equal(Own().Color, Face(Own()).BgColor, "the picker's chip carries its colour as the presets do");
+        Own().Color = new Color("#336699");
+        Own().EmitSignal(ColorPickerButton.SignalName.PopupClosed);
+        await r.Frame();
+        await r.Frame();
+        Check.Equal("#336699", cfg.Tint, "a picked colour kept");
+        Check.Equal(Ui.AccentInk, Face(Own()).BorderColor, "the picker is lit for a tint of its own");
+        Check.That(Chips().All(b => Face(b).BorderColor != Ui.AccentInk), "no preset lit");
         box.QueueFree();
         await r.Frame();
     }

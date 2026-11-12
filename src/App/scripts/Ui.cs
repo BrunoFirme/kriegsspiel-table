@@ -615,11 +615,37 @@ public static class Ui
     public static Button Swatch(Color colour, Vector2 size, string tip, bool chosen = false)
     {
         var b = new Button { CustomMinimumSize = size, TooltipText = tip, FocusMode = Control.FocusModeEnum.None };
-        var rest = SwatchBox(colour, chosen ? AccentInk : LineStrong, chosen ? 2 : 1);
-        var hover = SwatchBox(colour, chosen ? AccentInk : White(0.40f), chosen ? 2 : 1);
+        PaintSwatch(b, colour, chosen, Vector2.Zero);
+        return b;
+    }
+
+    public static ColorPickerButton SwatchPicker(Color colour, Vector2 size, string tip, bool chosen = false)
+    {
+        var b = new ColorPickerButton
+        {
+            Color = colour, EditAlpha = false, CustomMinimumSize = size, TooltipText = tip, FocusMode = Control.FocusModeEnum.None,
+            SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
+        };
+        var ownSwatchHidden = size / 2;
+        PaintSwatch(b, colour, chosen, ownSwatchHidden);
+        b.ColorChanged += c => PaintSwatch(b, c, chosen, ownSwatchHidden);
+        return b;
+    }
+
+    static void PaintSwatch(Control b, Color colour, bool chosen, Vector2 inset)
+    {
+        StyleBoxFlat Face(Color edge)
+        {
+            var box = SwatchBox(colour, edge, chosen ? 2 : 1);
+            if (inset == Vector2.Zero) return box;
+            box.ContentMarginLeft = box.ContentMarginRight = inset.X;
+            box.ContentMarginTop = box.ContentMarginBottom = inset.Y;
+            return box;
+        }
+        var rest = Face(chosen ? AccentInk : LineStrong);
+        var hover = Face(chosen ? AccentInk : White(0.40f));
         foreach (var st in new[] { "normal", "pressed", "focus", "disabled" }) b.AddThemeStyleboxOverride(st, rest);
         foreach (var st in new[] { "hover", "hover_pressed" }) b.AddThemeStyleboxOverride(st, hover);
-        return b;
     }
 
     static StyleBoxFlat SwatchBox(Color colour, Color edge, int width, int radius = 3)
