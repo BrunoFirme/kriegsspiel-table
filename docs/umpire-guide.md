@@ -121,7 +121,7 @@ Kept views are yours, for each scenario. Forget one with Menu → Views → Forg
 ### Turn and resize
 
 **T** puts a ring round the selection: the round knob turns it, the square knob resizes. **Shift** snaps the turn
-to 15° and the size to tenths. Its window takes exact numbers: where the selection stands (**X**, **Z**, the middle
+to 15° and the size to tenths. Its window takes exact numbers: where the selection stands (**X**, **Y**, the middle
 of several pieces), its **Turn** and its **Size**. A map sheet's numbers are in the Map panel.
 
 ### Formations

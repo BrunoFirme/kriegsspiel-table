@@ -42,13 +42,15 @@ sealed partial class Carry : IHeldPieces
     readonly HashSet<PieceNode> _heldNodes = new();
     Vec2 _cursor;
     float _floor = -1;
-    public const float LiftHeight = 2.4f;
+    public const float LiftHeight = Settings.LiftUsual;
+
+    float LiftSet => Math.Clamp(_c.Settings.LiftHeight, Settings.LiftLeast, Settings.LiftMost);
 
     public bool Holding => _held.Count > 0;
     public int Count => _held.Count;
     public IEnumerable<string> HeldIds => _held.Select(h => h.Id);
     public bool Has(PieceNode n) => _heldNodes.Contains(n);
-    public HandAt At => new((float)Hand.X, (float)Hand.Z, Math.Max(0, _floor) + _lift);
+    public HandAt At => new((float)Hand.X, (float)Hand.Z, Math.Max(0, _floor) + Raised);
 
     Vec2 _snap;
     bool _snapping;
@@ -184,7 +186,7 @@ sealed partial class Carry : IHeldPieces
         foreach (var h in _held)
             if (GodotObject.IsInstanceValid(h.Node))
             {
-                var (pos, scale, y) = Pulled(Hand + h.Offset, h.Node.Piece.Scale, Math.Max(0, _floor) + Math.Max(_lift + h.Lift, (float)h.Node.Piece.Aloft));
+                var (pos, scale, y) = Pulled(Hand + h.Offset, h.Node.Piece.Scale, Math.Max(0, _floor) + Math.Max(Raised + h.Lift, (float)h.Node.Piece.Aloft));
                 h.Node.Preview(pos, h.Rot, scale, y);
             }
     }

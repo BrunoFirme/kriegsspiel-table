@@ -154,6 +154,12 @@ sealed class SettingsDialog : HudPart
         var wheel = new CheckBox { Text = "Wheel turns the piece under the pointer", ButtonPressed = Cfg.WheelTurnsHovered, TooltipText = "No need to select it first. Off: the wheel turns selected pieces and zooms over the rest" };
         wheel.Toggled += on => Cfg.WheelTurnsHovered = on;
         _box.AddChild(Option(wheel));
+        var carrier = new CheckBox { Text = "Pointing at a piece lights the piece it rides on", ButtonPressed = Cfg.HoverLightsCarrier, TooltipText = "A piece attached to another shows its carrier's outline with its own" };
+        carrier.Toggled += on => Cfg.HoverLightsCarrier = on;
+        _box.AddChild(Option(carrier));
+        var lift = new HSlider { MinValue = Settings.LiftLeast, MaxValue = Settings.LiftMost, Step = 0.1, Value = Cfg.LiftHeight, TooltipText = "How high a piece rises off the table while you hold it" };
+        lift.ValueChanged += v => Cfg.LiftHeight = (float)v;
+        _box.AddChild(Row("Lift", lift, Ui.ValueBox(lift, v => $"{v:0.0} u")));
         _box.AddChild(Header("New scenarios"));
         AppSettings.AddNewScenarios(_box, Cfg);
         if (!pointers) return;

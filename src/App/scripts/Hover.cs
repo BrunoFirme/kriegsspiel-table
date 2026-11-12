@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Godot;
 
 namespace KTable.App;
@@ -47,6 +48,7 @@ sealed class Hover
             _time = 0;
             hit?.SetWidgetHover(wi);
             hit?.SetHovered(true);
+            LightCarrier(hit);
             Point(hit, wi);
             Changed?.Invoke(null, screen);
             return;
@@ -77,9 +79,22 @@ sealed class Hover
         Changed?.Invoke(null, screen);
     }
 
+    PieceNode? _carrier;
+
+    void LightCarrier(PieceNode? rider)
+    {
+        var carrier = rider != null && _c.Settings.HoverLightsCarrier
+            ? _pieces.Nodes.FirstOrDefault(n => n != rider && n.Layer == rider.Layer && n.Piece.Attached.Contains(rider.Piece.Id)) : null;
+        if (carrier == _carrier) return;
+        if (_carrier != null && GodotObject.IsInstanceValid(_carrier) && _carrier != Node) _carrier.SetHovered(false);
+        _carrier = carrier;
+        carrier?.SetHovered(true);
+    }
+
     void Leave(PieceNode n)
     {
         Point(null, 0);
+        LightCarrier(null);
         if (!GodotObject.IsInstanceValid(n)) return;
         n.SetWidgetHover(0);
         n.SetHovered(false);

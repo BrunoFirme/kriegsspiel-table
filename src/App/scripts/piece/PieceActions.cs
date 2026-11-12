@@ -69,10 +69,14 @@ sealed class PieceActions
         : key is >= Key.Kp0 and <= Key.Kp9 ? (key == Key.Kp0 ? 10 : (int)(key - Key.Kp0))
         : null;
 
+    IEnumerable<PieceNode> UnderThePointerOrSelected() =>
+        _hover.Node is { } hover && !_hand.Holding && !_selection.Ids.Contains(hover.Piece.Id) ? new[] { hover } : _selection.Nodes;
+
+    public void FlipAtThePointer() => Flip(UnderThePointerOrSelected().ToList());
+
     public bool SetStateNumber(int n)
     {
-        var hover = _hover.Node;
-        IEnumerable<PieceNode> targets = hover != null && !_hand.Holding && !_selection.Ids.Contains(hover.Piece.Id) ? new[] { hover } : _selection.Nodes;
+        var targets = UnderThePointerOrSelected();
         if (targets.Any(t => KTable.Client.NumberKey.ToScript(S, t.Layer, t.Piece))) return NumberToScript(targets, n);
         var dice = targets.Where(t => t.IsDie && PieceInstance.FacesOf(t.Def, t.Piece).Count >= n && S.CanTouch(t.Layer, t.Piece)).ToList();
         var able = targets.Where(t => !t.IsDie && t.Def != null && t.Def.States.Count > 1 && t.Def.States.Count >= n && S.CanTouch(t.Layer, t.Piece)).ToList();

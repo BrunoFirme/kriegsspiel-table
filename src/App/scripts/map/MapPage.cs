@@ -119,7 +119,7 @@ sealed class MapPage : HudPart
             return sb;
         }
         var x = Num("X", sel.Pos.X, 0.01);
-        var z = Num("Z", sel.Pos.Z, 0.01);
+        var z = Num("Y", sel.Pos.Z, 0.01);
         var r = Num("Turn", sel.RotDeg, 0.5, "°");
         var zo = Num("Layer", sel.Z, 1);
         var wd = Num("Width", sel.Size.W, 0.1, " u");

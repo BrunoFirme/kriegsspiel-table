@@ -13,7 +13,9 @@ sealed partial class Carry
     const double MarchSeconds = 0.32, MarchSettles = 0.28;
     const float MarchLift = 0.5f;
 
-    float _lift = LiftHeight;
+    float? _marchLift;
+
+    float Raised => _marchLift ?? LiftSet;
     Dictionary<Held, (Vec2 from, double fromRot, Vec2 to, double toRot)>? _legs;
     Dictionary<Held, (Vec2 rel, double parentRot, double rot)>? _riding;
     double _marchStart, _landAt;
@@ -33,7 +35,7 @@ sealed partial class Carry
             Take(new Vec2(from.Average(p => p.X), from.Average(p => p.Z)), nodes);
             if (!Holding) return;
             Go();
-            _lift = MarchLift;
+            _marchLift = MarchLift;
         }
         var aim = to.ToDictionary(t => t.Node, t => (t.Pos, t.Rot));
         _legs = new();
@@ -78,6 +80,6 @@ sealed partial class Carry
     {
         _legs = null;
         _riding = null;
-        _lift = LiftHeight;
+        _marchLift = null;
     }
 }

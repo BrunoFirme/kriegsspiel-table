@@ -35,7 +35,7 @@ sealed class GizmoPanel : HudPart
         var form = Ui.Form(Ui.PanelLabels);
         _x = Field(form, "X", now.Centre.X, -Farthest, Farthest, PlaceStep, v => T.MoveSelectionTo(new Vec2(v, _z!.Value)));
         _x.Suffix = "u";
-        _z = Field(form, "Z", now.Centre.Z, -Farthest, Farthest, PlaceStep, v => T.MoveSelectionTo(new Vec2(_x.Value, v)));
+        _z = Field(form, "Y", now.Centre.Z, -Farthest, Farthest, PlaceStep, v => T.MoveSelectionTo(new Vec2(_x.Value, v)));
         _z.Suffix = "u";
         _turn = Field(form, "Turn", Table.Norm360(now.Rot), 0, FullTurn, TurnStep, v => T.SetSelectionTransform(v, null));
         _turn.Suffix = "°";

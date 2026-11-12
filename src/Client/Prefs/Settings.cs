@@ -32,6 +32,9 @@ public sealed class Settings
     public bool FaceText { get; set; } = true;
     public bool LabelPlates { get; set; }
     public bool WheelTurnsHovered { get; set; }
+    public bool HoverLightsCarrier { get; set; }
+    public float LiftHeight { get; set; } = LiftUsual;
+    public const float LiftUsual = 2.4f, LiftLeast = 0.2f, LiftMost = 8f;
     public float LetteringReach { get; set; } = ReachOff;
     public const float ReachMin = 12f, ReachOff = 250f;
     public bool ReduceFarDetail { get; set; }
