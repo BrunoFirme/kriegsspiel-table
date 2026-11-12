@@ -24,6 +24,7 @@ sealed class FakePiece : ITablePiece
     public bool IsDie { get; init; }
     public bool IsEffect { get; init; }
     public bool IsProp { get; }
+    public bool FollowsGround { get; init; }
     public bool Placed { get; init; }
     public string CardTitle => "the " + Piece.Id;
 

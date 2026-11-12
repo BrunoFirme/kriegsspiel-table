@@ -66,4 +66,20 @@ public class CrowdedLandingTests
             Assert.Equal(points.Max(p => everyPiece.SurfaceY(p, Layers.Umpire)), withinReach.HighestSurface(points, Layers.Umpire));
         }
     }
+
+    [Fact]
+    public void A_crater_set_down_over_a_trench_lies_on_the_ground_but_a_block_set_down_on_it_stands_on_its_bank()
+    {
+        var trench = new FakePiece("trench", 0, 0, 3, 1.5f, thickness: 0.2f, prop: true) { FollowsGround = true };
+        var footing = new Footing<FakePiece>((_, _) => new[] { trench }, _ => false);
+        var crater = new FakePiece("crater", 0, 0, 0.9f, 0.9f, prop: true) { FollowsGround = true };
+        var block = new FakePiece("block", 0, 0, 0.9f, 0.9f);
+
+        var (_, craterY) = footing.Rest(crater, new Vec2(0.4, 0.1), 180, new HashSet<FakePiece> { crater });
+        var (_, blockY) = footing.Rest(block, new Vec2(0.4, 0.1), 180, new HashSet<FakePiece> { block });
+
+        Assert.Equal(0, craterY);
+        Assert.True(footing.OnGround(crater, new Vec2(0.4, 0.1), 180));
+        Assert.True(blockY > 0.1, $"the block stands on the trench's bank, at {blockY}");
+    }
 }

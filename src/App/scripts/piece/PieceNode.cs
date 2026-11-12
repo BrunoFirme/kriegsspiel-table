@@ -54,9 +54,15 @@ public partial class PieceNode : Node3D
         _decals = new PieceDecals(this);
         _prints = new PiecePrints(this);
         _note = new NoteFace(this);
+        Fit = new GroundFit(this);
     }
 
     internal Session Session => _s;
+    internal MeshInstance3D? Model => _model;
+    internal MeshInstance3D? SelectionMesh => _sel;
+    public GroundFit Fit { get; }
+    public bool FollowsGround => Def is { FollowsGround: true } && ShowsModel && !IsDie && !IsPart && !Ghost;
+    public bool LiesDown => FollowsGround && !Piece.FaceDown && !Piece.HasTilt;
 
     public static PieceNode Create(Session s, string layer, PieceInstance p, bool ghost = false, Color? layerTint = null, bool lettered = true, bool printingOnly = false)
     {
@@ -285,32 +291,33 @@ public partial class PieceNode : Node3D
         return 0.03f + (y > 0 ? Math.Max((float)y, ground) : ground + stack * (_thickness + 0.01f));
     }
 
-    public float LandingY(Vec2 pos, double rotDeg, double storedY) => RestAt(pos, rotDeg, storedY, 0).y;
+    public float LandingY(Vec2 pos, double rotDeg, double storedY) => RestAt(pos, rotDeg, storedY, 0).Y;
 
     Basis _tilt = Basis.Identity;
     public Vector3 Up => _tilt * Vector3.Up;
     public bool Tilted => _tilt != Basis.Identity;
     public float Heading => IsDie ? Rotation.Y : _poseYaw;
-    public Func<PieceNode, Vec2, double, double, int, (float y, Vector3 up)?>? Seating;
+    public Func<PieceNode, Vec2, double, double, int, Resting?>? Seating;
 
-    (float y, Vector3 up) RestAt(Vec2 pos, double rotDeg, double y, int stack) =>
-        Seating?.Invoke(this, pos, rotDeg, y, stack) ?? (BaseAt(pos, rotDeg, y, stack), Vector3.Up);
+    Resting RestAt(Vec2 pos, double rotDeg, double y, int stack) =>
+        Seating?.Invoke(this, pos, rotDeg, y, stack) ?? new Resting(BaseAt(pos, rotDeg, y, stack), Vector3.Up);
 
     static Basis TiltTo(Vector3 up) => up.IsEqualApprox(Vector3.Up) ? Basis.Identity : new Basis(ArcTo(Vector3.Up, up.Normalized()));
 
     void Rest(Vec2 pos, double rotDeg, double y, int stack)
     {
         if (IsPart) { Transform = PartRest(); return; }
-        var (baseY, up) = RestAt(pos, rotDeg, y, stack);
+        var (baseY, up, onGround) = RestAt(pos, rotDeg, y, stack);
         var euler = Pose(rotDeg);
         _tilt = TiltTo(up);
         baseY += PartsBelow;
         Transform = Piece.HasTilt ? TiltedRest(_tilt, pos, baseY) : new Transform3D(_tilt * Basis.FromEuler(euler), Coords.ToWorld(pos, baseY) + Up * LiftY);
+        Fit.Fit(onGround);
     }
 
     public Quaternion RestingTurn(Vec2 pos, double rotDeg, double storedY)
     {
-        var (_, up) = RestAt(pos, rotDeg, storedY, 0);
+        var up = RestAt(pos, rotDeg, storedY, 0).Up;
         return new Quaternion((TiltTo(up) * PoseBasis(Coords.Yaw(rotDeg), Piece.FaceDown ? Mathf.Pi : 0)).Orthonormalized());
     }
 
@@ -322,7 +329,9 @@ public partial class PieceNode : Node3D
     {
         if (IsPart) return;
         if (IsDie) { Position = Coords.ToWorld(Piece.Pos, BaseY(Piece)); return; }
-        if (!_flipping && !Placed && !Held) Rest(Piece.Pos, Piece.RotDeg, Piece.Y, Piece.Stack);
+        if (_flipping || Placed || Held) return;
+        Fit.Stale();
+        Rest(Piece.Pos, Piece.RotDeg, Piece.Y, Piece.Stack);
     }
     public float TopY => PartsTop(Piece.HasTilt ? TiltedTop : (Position + Up * (Piece.FaceDown ? 0 : _thickness)).Y);
 
@@ -514,6 +523,7 @@ public partial class PieceNode : Node3D
                 _modelRestPos = model.Position;
                 var (mx, mz) = _s.Store.MeshMiddle(_s.Assets.Abs(meshPack, meshFile));
                 CentreOn(new Vector2((float)mx * w, (float)mz * h));
+                if (FollowsGround && IsInsideTree()) Resettle();
             }
         });
     }
@@ -612,6 +622,7 @@ public partial class PieceNode : Node3D
         _lines.Forget();
         _prints.Forget();
         _decals.Forget();
+        Fit.Forget();
         _hull = null;
         _meshReady = false;
         _spinning = false;
@@ -628,7 +639,7 @@ public partial class PieceNode : Node3D
     public void Preview(Vec2 pos, double rotDeg, double scale, float? y = null)
     {
         _tilt = Basis.Identity;
-        Position = Coords.ToWorld(pos, (y ?? RestAt(pos, rotDeg, Piece.Y, Piece.Stack).y + 0.05f) + LiftY + PartsBelow);
+        Position = Coords.ToWorld(pos, (y ?? RestAt(pos, rotDeg, Piece.Y, Piece.Stack).Y + 0.05f) + LiftY + PartsBelow);
         Turn(PoseBasis(Pose(rotDeg)));
         Scale = Vector3.One * (float)(scale / Math.Max(1e-6, BuiltScale));
     }
@@ -639,7 +650,7 @@ public partial class PieceNode : Node3D
         {
             var (mesh, mat, halo) = Ring(new Color(1, 0.93f, 0.5f));
             _selMat = mat;
-            var at = new Vector3(FootprintCentre.X, halo ? -0.015f : 0, FootprintCentre.Y);
+            var at = new Vector3(FootprintCentre.X, halo ? -0.015f : Fit.High, FootprintCentre.Y);
             _sel =
                 new MeshInstance3D { Mesh = mesh, Position = at, MaterialOverride = _selMat, CastShadow = GeometryInstance3D.ShadowCastingSetting.Off,
                     Visible = Look.FlatSelection || IsEffect, Layers = Table.LiveOnlyLayer };

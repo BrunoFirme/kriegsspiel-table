@@ -251,6 +251,8 @@ public sealed class PropMaker
         return made;
     }
 
+    const float CraterRim = 0.12f, CraterDepth = 0.45f;
+
     public PropMade Crater(float radius, int seed)
     {
         var m = new PropMesh(_noise);
@@ -258,22 +260,29 @@ public sealed class PropMaker
         var rng = new Random(seed);
         const int rings = 26, segs = 48;
         const float outer = 1.35f;
-        float rim = radius * 0.22f;
-        Vector3 At(int ri, int si)
+        float rim = radius * CraterRim, dug = radius * CraterDepth;
+        Vector3 At(int ri, int si, bool dugOut)
         {
             float rr = ri / (float)rings * outer, a = si * Mathf.Tau / segs;
             float wob = 1 + 0.16f * noise.GetNoise2D(Mathf.Cos(a) * 2, Mathf.Sin(a) * 2) + 0.05f * noise.GetNoise2D(rr * 9, a * 3);
             float y = rr < 1 ? rim * Mathf.Pow(rr, 2.0f) : rim * Mathf.Pow(Mathf.Clamp(1 - (rr - 1) / (outer - 1), 0, 1), 1.6f);
-            return new Vector3(Mathf.Cos(a) * rr * radius, Mathf.Max(0.004f, y * wob), Mathf.Sin(a) * rr * radius);
+            float hollow = dugOut && rr < 1 ? dug * (1 - rr * rr) : 0;
+            return new Vector3(Mathf.Cos(a) * rr * radius, Mathf.Max(0.004f, y * wob) - hollow, Mathf.Sin(a) * rr * radius);
         }
         Vector2 T(Vector3 p) => CraterUv(0.5f + p.X / (radius * outer * 2), 0.5f + p.Z / (radius * outer * 2));
         var grid = new Vector3[rings + 1, segs + 1];
-        for (int ri = 0; ri <= rings; ri++) for (int si = 0; si <= segs; si++) grid[ri, si] = At(ri, si % segs);
+        var shape = new Vector3[rings + 1, segs + 1];
+        for (int ri = 0; ri <= rings; ri++)
+            for (int si = 0; si <= segs; si++)
+            {
+                grid[ri, si] = At(ri, si % segs, dugOut: false);
+                shape[ri, si] = At(ri, si % segs, dugOut: true);
+            }
         var nrm = new Vector3[rings + 1, segs + 1];
         for (int ri = 0; ri < rings; ri++)
             for (int si = 0; si < segs; si++)
             {
-                var n = (grid[ri, si + 1] - grid[ri, si]).Cross(grid[ri + 1, si] - grid[ri, si]);
+                var n = (shape[ri, si + 1] - shape[ri, si]).Cross(shape[ri + 1, si] - shape[ri, si]);
                 if (n.Y < 0) n = -n;
                 nrm[ri, si] += n;
                 nrm[ri + 1, si] += n;

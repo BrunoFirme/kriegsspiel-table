@@ -7,9 +7,9 @@ namespace KTable.App;
 
 public partial class PieceNode
 {
-    bool _shownFaceDown, _flipping;
-    public bool Held;
+    bool _shownFaceDown, _flipping, _held;
     int _settling;
+    public bool Held { get => _held; set => _held = Fit.Lifted(value); }
     public void BeginSettle() => _settling++;
     public void EndSettle() { if (_settling > 0) _settling--; }
     public bool Placed => Held || _settling > 0;
@@ -66,7 +66,7 @@ public partial class PieceNode
             if (Placed) { Turn(PoseBasis(_poseYaw, _flipA)); continue; }
             float s = Mathf.Abs(Mathf.Sin(a));
             float lift = depth / 2 * s + th * (1 - Mathf.Cos(a)) / 2 + Mathf.Min(0.35f, depth * 0.15f) * s;
-            var (baseY, up) = RestAt(p.Pos, p.RotDeg, p.Y, p.Stack);
+            var (baseY, up, _) = RestAt(p.Pos, p.RotDeg, p.Y, p.Stack);
             _tilt = TiltTo(up);
             Transform = p.HasTilt ? TiltedRest(_tilt, p.Pos, baseY) : new Transform3D(_tilt * Basis.FromEuler(new Vector3(0, _poseYaw, _flipA)), Coords.ToWorld(p.Pos, baseY) + Up * lift);
         }

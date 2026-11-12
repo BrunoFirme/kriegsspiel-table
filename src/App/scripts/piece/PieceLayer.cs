@@ -96,7 +96,7 @@ sealed class PieceLayer
         var node = PieceNode.Create(_c.S, layer, p, ghost, Colors.White, lettered);
         node.Seating = Seat;
         node.Sounds = _c.Sound;
-        if (_c.S.Ground.Any) node.Resettle();
+        if (_c.S.Ground.Any || node.FollowsGround) node.Resettle();
         Root.AddChild(node);
         _pieces[(layer, p.Id)] = node;
         Grid.Index(node);
@@ -130,27 +130,35 @@ sealed class PieceLayer
 
     const float Gap = 0.03f, SupportAbove = 0.12f, SupportBelowPerSize = 0.35f;
 
-    (float y, Vector3 up)? Seat(PieceNode n, Vec2 pos, double rotDeg, double y, int stack)
+    Resting? Seat(PieceNode n, Vec2 pos, double rotDeg, double y, int stack)
     {
         var ground = _c.S.Ground;
-        if (!ground.Any || n.IsDie || n.IsEffect || n.Ghost || stack > 0) return null;
+        bool lies = n.LiesDown && stack == 0;
+        if ((!ground.Any && !lies) || n.IsDie || n.IsEffect || n.Ghost || stack > 0) return null;
+        var (under, top) = y > 0 ? Under(n, pos, y) : (null, 0);
+        if (lies && under == null) return new Resting((float)ground.DrawnAt(n.MiddleAt(pos, rotDeg)) + GroundFit.Clearance, Vector3.Up, OnGround: true);
         if (y <= 0)
         {
             var seat = ground.SeatOn(n.MiddleAt(pos, rotDeg), rotDeg, n.Footprint.X, n.Footprint.Y);
-            return ((float)seat.Y + Gap, new Vector3((float)seat.UpX, (float)seat.UpY, (float)-seat.UpZ));
+            return new Resting((float)seat.Y + Gap, new Vector3((float)seat.UpX, (float)seat.UpY, (float)-seat.UpZ));
         }
+        return under is { Tilted: true } ? new Resting(top, under.Up) : null;
+    }
+
+    (PieceNode? Piece, float Top) Under(PieceNode n, Vec2 pos, double y)
+    {
         var world = Coords.ToWorld(pos);
         float want = (float)y + Gap, reach = Mathf.Max(n.Footprint.X, n.Footprint.Y) * SupportBelowPerSize + SupportAbove;
         PieceNode? under = null;
         float top = float.MinValue;
         foreach (var o in Grid.Near(pos))
         {
-            if (o == n || o.Layer != n.Layer || o.IsDie || o.IsEffect || o.Piece.NoCollision || o.Placed) continue;
+            if (o == n || o.Layer != n.Layer || o.IsDie || o.IsEffect || o.Piece.NoCollision || o.Placed || (n.FollowsGround && o.FollowsGround)) continue;
             if (o.SurfaceAt(world) is not { } t || t > want + SupportAbove || t < want - reach || t <= top) continue;
             top = t;
             under = o;
         }
-        return under is { Tilted: true } ? (top, under.Up) : null;
+        return (under, top);
     }
 
     public void RefreshFaceText() { foreach (var n in _pieces.Values) { n.Refresh(n.Piece); n.SyncWidgets(force: true); } }
@@ -210,7 +218,8 @@ sealed class PieceLayer
         var inv = n.GlobalTransform.AffineInverse();
         Vector3 o = inv * ro, d = inv.Basis * rd;
         var mid = new Vector3(n.FootprintCentre.X, 0, n.FootprintCentre.Y);
-        Vector3 lo = mid + new Vector3(-n.Footprint.X / 2, 0, -n.Footprint.Y / 2), hi = mid + new Vector3(n.Footprint.X / 2, Mathf.Max(0.02f, n.Thickness), n.Footprint.Y / 2);
+        var lo = mid + new Vector3(-n.Footprint.X / 2, n.Fit.Low, -n.Footprint.Y / 2);
+        var hi = mid + new Vector3(n.Footprint.X / 2, Mathf.Max(0.02f, n.Thickness) + n.Fit.High, n.Footprint.Y / 2);
         float near = float.MinValue, far = float.MaxValue;
         for (int a = 0; a < 3; a++)
         {

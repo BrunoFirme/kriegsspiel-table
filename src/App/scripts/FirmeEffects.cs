@@ -121,6 +121,7 @@ public static class FirmeEffects
     };
 
     static readonly HashSet<string> Holders = new() { "Box", "Chest", "Crate" };
+    static readonly HashSet<string> KeepTheirShape = new() { "Box", "Chest", "Crate", "Tree" };
 
     const string MarkerWhat = "Marks a torpedo's run; a look for spent", NoteWhat = "A message form with a name and a note";
 
@@ -165,7 +166,7 @@ public static class FirmeEffects
                 Mesh = Add(Encoding.UTF8.GetBytes(made.Mesh.Obj()), "obj", "mesh"), Texture = atlasSha,
                 Image = Add(thumb.SavePngToBuffer(), "png", "image", thumb.GetWidth(), thumb.GetHeight()),
                 Size = new Size2(Math.Round(b.Size.X, 3), Math.Round(b.Size.Z, 3)), Shape = "box", Thickness = Math.Round(b.Size.Y, 3),
-                Tags = new[] { "prop", era }.Where(t => t.Length > 0).ToList(), Holds = Holders.Contains(name),
+                Tags = new[] { "prop", era, KeepTheirShape.Contains(name) ? "" : PieceDef.GroundTag }.Where(t => t.Length > 0).ToList(), Holds = Holders.Contains(name),
             };
             if (made.Fires.Count > 0)
             {
@@ -211,7 +212,7 @@ public static class FirmeEffects
         string.Join("|", Presets.Select(p => $"{p.Name};{p.W};{p.H};{p.Era};{Json.Serialize(p.Fx)}")) + "|" + string.Join("|", PropList.Select(p => p.Name + p.Era)))))[..16];
     static string? _stamp;
 
-    const int PropsVersion = 11;
+    const int PropsVersion = 12;
     const string WriteTag = "install";
 
     public static void Ensure(PackageStore store)

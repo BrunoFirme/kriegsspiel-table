@@ -9,7 +9,6 @@ namespace KTable.App;
 public partial class ReliefSurface : Node3D
 {
     public const uint GroundLayer = 1u << 6;
-    const int MostVertsAcross = 384;
     const int BlockCells = 48;
     const float PaintAbove = 0.003f;
     const float SeamProbe = 0.01f;
@@ -132,10 +131,8 @@ public partial class ReliefSurface : Node3D
         var c = def.Crop ?? SheetGeometry.Whole;
         float W = (float)def.Size.W, H = (float)def.Size.H;
         float x0 = -W / 2, x1 = W / 2, z0 = -H / 2, z1 = H / 2;
-        int cellsX = Math.Max(1, (int)Math.Ceiling(c.W * (grid.Cols - 1))), cellsZ = Math.Max(1, (int)Math.Ceiling(c.H * (grid.Rows - 1)));
-        int step = Math.Max(1, (int)Math.Ceiling(Math.Max(cellsX, cellsZ) / (double)MostVertsAcross));
-        int nx = Math.Max(1, cellsX / step), nz = Math.Max(1, cellsZ / step);
-        var h = GroundMesh.WeldedHeights(ground, sheetXf, W / 2, H / 2);
+        var (nx, nz, step) = Ground.LatticeOf(def, grid);
+        var h = GroundMesh.WeldedHeights(ground, def);
         _cellWorld = (float)(Ground.FullWidth(def) / Math.Max(1, grid.Cols - 1));
         float scale = (float)(Ground.FullWidth(def) * (def.Relief is { Length: > 0 } ? def.Height : 1));
         int blur = Math.Max(step, (int)Math.Round(ContourBlurUnits / _cellWorld));
@@ -294,7 +291,7 @@ public partial class ReliefSurface : Node3D
         UploadHeights(grid.Cols, grid.Rows);
         _tiles?.StaleUv(UvOf(softened.Grow(2), grid));
         float W = (float)def.Size.W, H = (float)def.Size.H;
-        var h = GroundMesh.WeldedHeights(ground, sheetXf, W / 2, H / 2);
+        var h = GroundMesh.WeldedHeights(ground, def);
         var local = LocalRect(built, box);
         foreach (var b in _blocks)
             if (b.Box.Intersects(local)) Shape(b, h);

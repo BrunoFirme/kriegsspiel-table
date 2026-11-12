@@ -57,13 +57,15 @@ public sealed class Footing<T> where T : class, ITablePiece
         var found = new List<Support>();
         foreach (var n in _around(at, radius))
         {
-            if (n.Layer != layer || n == except || n.Piece.NoCollision) continue;
+            if (n.Layer != layer || n == except || n.Piece.NoCollision || BothFollowGround(except, n)) continue;
             double reach = n.SurfaceReach + Margin, dx = n.Piece.Pos.X - at.X, dz = n.Piece.Pos.Z - at.Z, within = reach + radius;
             if (dx * dx + dz * dz > within * within || _inHand(n) || n.IsDie || (skip != null && skip.Contains(n))) continue;
             found.Add(new Support(n, n.Piece.Pos.X, n.Piece.Pos.Z, reach));
         }
         return found;
     }
+
+    static bool BothFollowGround(T? a, T b) => a is { FollowsGround: true } && b.FollowsGround;
 
     static float PiecesTop(Vec2 p, List<Support> under)
     {
@@ -133,7 +135,7 @@ public sealed class Footing<T> where T : class, ITablePiece
 
     public bool RestsOn(T n, T under)
     {
-        if (n == under || n.Layer != under.Layer || n.Piece.Locked || n.IsDie || n.Piece.Y <= 0) return false;
+        if (n == under || n.Layer != under.Layer || n.Piece.Locked || n.IsDie || n.Piece.Y <= 0 || BothFollowGround(n, under)) return false;
         double underY = AbsoluteY(under, under.Piece.Pos, under.Piece.RotDeg, under.Piece.Y);
         if (n.Piece.Y <= underY + 0.005) return false;
         return under.SurfaceAt(n.Piece.Pos) is { } top && Math.Abs(n.Piece.Y + Sink - top) < 0.07;

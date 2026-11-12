@@ -14,6 +14,7 @@ public interface ITablePiece
     bool IsDie { get; }
     bool IsEffect { get; }
     bool IsProp { get; }
+    bool FollowsGround { get; }
     bool Placed { get; }
     string CardTitle { get; }
     float? SurfaceAt(Vec2 p);

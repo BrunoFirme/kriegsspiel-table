@@ -149,6 +149,31 @@ public class ReliefTests : IDisposable
         }
     }
 
+    [Theory, InlineData(180), InlineData(90), InlineData(33)]
+    public void The_drawn_ground_meets_the_relief_at_every_corner_of_its_mesh_and_runs_flat_between_them(double rot)
+    {
+        var bumps = new ReliefGrid(41, 21);
+        var rng = new Random(1809);
+        for (int i = 0; i < bumps.H.Length; i++) bumps.H[i] = (float)rng.NextDouble() * 0.02f;
+        var sheet = Sheet("s1", x: 3, z: -2, w: 40, h: 20, rot: rot);
+        var ground = new Ground(new[] { sheet }, _ => bumps);
+        var (nx, nz, _) = Ground.LatticeOf(sheet, bumps);
+        Vec2 Corner(double i, double j) => Ground.FromLocal(sheet, (i / nx - 0.5) * sheet.Size.W, (j / nz - 0.5) * sheet.Size.H);
+        for (int j = 1; j < nz - 1; j += 3)
+            for (int i = 1; i < nx - 1; i += 3)
+            {
+                Assert.Equal(ground.At(Corner(i, j)), ground.DrawnAt(Corner(i, j)), 5);
+                double a = ground.DrawnAt(Corner(i, j)), b = ground.DrawnAt(Corner(i + 1, j)), c = ground.DrawnAt(Corner(i, j + 1));
+                Assert.Equal((b + c) / 2, ground.DrawnAt(Corner(i + 0.5, j + 0.5)), 5);
+                Assert.Equal(a + (b - a) * 0.25 + (c - a) * 0.25, ground.DrawnAt(Corner(i + 0.25, j + 0.25)), 5);
+                var inside = Corner(i + 0.2, j + 0.3);
+                var under = ground.DrawnUnder(inside);
+                const double Step = 1e-4;
+                Assert.Equal((ground.DrawnAt(inside + new Vec2(Step, 0)) - ground.DrawnAt(inside - new Vec2(Step, 0))) / (2 * Step), under.SlopeX, 4);
+                Assert.Equal((ground.DrawnAt(inside + new Vec2(0, Step)) - ground.DrawnAt(inside - new Vec2(0, Step))) / (2 * Step), under.SlopeZ, 4);
+            }
+    }
+
     [Fact]
     public void A_piece_on_a_steep_or_bumpy_spot_leans_no_more_than_the_most_and_never_sinks()
     {

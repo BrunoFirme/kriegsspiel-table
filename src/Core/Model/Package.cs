@@ -246,6 +246,8 @@ public sealed class PieceDef : IJsonOnDeserialized
     public string Tint { get; set; } = "#FFFFFF";
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool TintsPictures { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool Shadowless { get; set; }
+    public const string GroundTag = "ground";
+    [JsonIgnore] public bool FollowsGround => Tags.Contains(GroundTag);
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public double? HeightScale { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool Holds { get; set; }
     public List<string> Tags { get; set; } = new();

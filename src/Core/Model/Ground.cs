@@ -10,6 +10,8 @@ public sealed class Ground
     readonly List<(SheetDef sheet, ReliefGrid grid, double scale, double cos, double sin)> _reliefs = new();
     readonly Dictionary<(long, long), List<int>> _areas = new();
     readonly double _area = 1;
+    readonly Lattice[] _lattices = [];
+    readonly float[]?[] _drawn = [];
 
     public Ground(IEnumerable<SheetDef> sheets, Func<SheetDef, ReliefGrid?> grid)
     {
@@ -21,6 +23,8 @@ public sealed class Ground
             }
         Highest = _reliefs.Count == 0 ? 0 : _reliefs.Max(r => r.grid.Highest * r.scale);
         if (_reliefs.Count == 0) return;
+        _lattices = _reliefs.Select(r => LatticeOf(r.sheet, r.grid)).ToArray();
+        _drawn = new float[]?[_reliefs.Count];
         _area = Math.Max(1, _reliefs.Average(r => Math.Max(r.sheet.Size.W, r.sheet.Size.H)));
         for (int i = 0; i < _reliefs.Count; i++)
         {
@@ -50,27 +54,38 @@ public sealed class Ground
         foreach (var i in list) yield return _reliefs[i];
     }
 
-    bool Lookup(Vec2 p, out ReliefGrid grid, out double scale, out double u, out double v)
+    bool Find(Vec2 p, out int index, out double lx, out double lz)
     {
-        grid = null!;
-        scale = 0;
-        u = v = 0;
+        index = -1;
+        lx = lz = 0;
         if (!_areas.TryGetValue(AreaOf(p), out var list)) return false;
         foreach (var i in list)
         {
             var r = _reliefs[i];
             var s = r.sheet;
             double wx = p.X - s.Pos.X, wz = -(p.Z - s.Pos.Z);
-            double lx = wx * r.cos + wz * r.sin, lz = -wx * r.sin + wz * r.cos;
+            lx = wx * r.cos + wz * r.sin;
+            lz = -wx * r.sin + wz * r.cos;
             if (Math.Abs(lx) > s.Size.W / 2 || Math.Abs(lz) > s.Size.H / 2) continue;
-            var c = s.Crop ?? SheetGeometry.Whole;
-            u = c.X + (lx / s.Size.W + 0.5) * c.W;
-            v = c.Y + (lz / s.Size.H + 0.5) * c.H;
-            grid = r.grid;
-            scale = r.scale;
+            index = i;
             return true;
         }
         return false;
+    }
+
+    bool Lookup(Vec2 p, out ReliefGrid grid, out double scale, out double u, out double v)
+    {
+        grid = null!;
+        scale = 0;
+        u = v = 0;
+        if (!Find(p, out int i, out double lx, out double lz)) return false;
+        var r = _reliefs[i];
+        var c = r.sheet.Crop ?? SheetGeometry.Whole;
+        u = c.X + (lx / r.sheet.Size.W + 0.5) * c.W;
+        v = c.Y + (lz / r.sheet.Size.H + 0.5) * c.H;
+        grid = r.grid;
+        scale = r.scale;
+        return true;
     }
 
     public bool Any => _reliefs.Count > 0;
@@ -103,7 +118,11 @@ public sealed class Ground
     public static Vec2 FromUv(SheetDef s, double u, double v)
     {
         var c = s.Crop ?? SheetGeometry.Whole;
-        double lx = ((u - c.X) / c.W - 0.5) * s.Size.W, lz = ((v - c.Y) / c.H - 0.5) * s.Size.H;
+        return FromLocal(s, ((u - c.X) / c.W - 0.5) * s.Size.W, ((v - c.Y) / c.H - 0.5) * s.Size.H);
+    }
+
+    public static Vec2 FromLocal(SheetDef s, double lx, double lz)
+    {
         double a = (180 - s.RotDeg) * Math.PI / 180;
         double cs = Math.Cos(a), sn = Math.Sin(a);
         double wx = lx * cs + lz * sn, wz = -lx * sn + lz * cs;
@@ -118,6 +137,87 @@ public sealed class Ground
     }
 
     public double At(Vec2 p) => Lookup(p, out var grid, out var scale, out var u, out var v) ? grid.HeightAt(u, v) * scale : 0;
+
+    public const int MostVertsAcross = 384;
+    const double SeamReach = 0.01, EdgeTolerance = 1e-4;
+
+    public readonly record struct Lattice(int Nx, int Nz, int Step);
+
+    public static Lattice LatticeOf(SheetDef s, ReliefGrid grid)
+    {
+        var c = s.Crop ?? SheetGeometry.Whole;
+        int cellsX = Math.Max(1, (int)Math.Ceiling(c.W * (grid.Cols - 1))), cellsZ = Math.Max(1, (int)Math.Ceiling(c.H * (grid.Rows - 1)));
+        int step = Math.Max(1, (int)Math.Ceiling(Math.Max(cellsX, cellsZ) / (double)MostVertsAcross));
+        return new Lattice(Math.Max(1, cellsX / step), Math.Max(1, cellsZ / step), step);
+    }
+
+    public double WeldedAt(SheetDef s, double lx, double lz)
+    {
+        double halfW = s.Size.W / 2, halfH = s.Size.H / 2;
+        int ox = Math.Abs(Math.Abs(lx) - halfW) < EdgeTolerance ? Math.Sign(lx) : 0, oz = Math.Abs(Math.Abs(lz) - halfH) < EdgeTolerance ? Math.Sign(lz) : 0;
+        if (ox == 0 && oz == 0) return At(FromLocal(s, lx, lz));
+        double sum = 0;
+        int n = 0;
+        foreach (var (sx, sz) in Around(ox, oz))
+        {
+            double px = lx + sx * SeamReach, pz = lz + sz * SeamReach;
+            var q = FromLocal(s, px, pz);
+            bool inside = Math.Abs(px) <= halfW && Math.Abs(pz) <= halfH;
+            if (!inside && ReliefAt(q) == null) continue;
+            sum += At(q);
+            n++;
+        }
+        return n == 0 ? At(FromLocal(s, lx, lz)) : sum / n;
+    }
+
+    static (int, int)[] Around(int ox, int oz) =>
+        ox != 0 && oz != 0 ? [(ox, oz), (-ox, oz), (ox, -oz), (-ox, -oz)] : [(ox, oz), (-ox, -oz)];
+
+    public readonly record struct Drawn(double Height, double SlopeX, double SlopeZ);
+
+    public double DrawnAt(Vec2 p) => DrawnUnder(p).Height;
+
+    public Drawn DrawnUnder(Vec2 p)
+    {
+        if (!Find(p, out int k, out double lx, out double lz)) return default;
+        var r = _reliefs[k];
+        var (nx, nz, _) = _lattices[k];
+        double fx = (lx / r.sheet.Size.W + 0.5) * nx, fz = (lz / r.sheet.Size.H + 0.5) * nz;
+        int i = Math.Clamp((int)fx, 0, nx - 1), j = Math.Clamp((int)fz, 0, nz - 1);
+        double tx = fx - i, tz = fz - j;
+        double b = Vertex(k, i + 1, j), c = Vertex(k, i, j + 1), height, alongX, alongZ;
+        if (tx + tz <= 1)
+        {
+            double a = Vertex(k, i, j);
+            (alongX, alongZ) = (b - a, c - a);
+            height = a + alongX * tx + alongZ * tz;
+        }
+        else
+        {
+            double d = Vertex(k, i + 1, j + 1);
+            (alongX, alongZ) = (d - c, d - b);
+            height = d - alongX * (1 - tx) - alongZ * (1 - tz);
+        }
+        double slopeLx = alongX * nx / r.sheet.Size.W, slopeLz = alongZ * nz / r.sheet.Size.H;
+        return new Drawn(height, slopeLx * r.cos - slopeLz * r.sin, -(slopeLx * r.sin + slopeLz * r.cos));
+    }
+
+    float Vertex(int k, int i, int j)
+    {
+        var (nx, nz, _) = _lattices[k];
+        var heights = _drawn[k] ??= Unknown((nx + 1) * (nz + 1));
+        int at = j * (nx + 1) + i;
+        if (!float.IsNaN(heights[at])) return heights[at];
+        var s = _reliefs[k].sheet;
+        return heights[at] = (float)WeldedAt(s, (i / (double)nx - 0.5) * s.Size.W, (j / (double)nz - 0.5) * s.Size.H);
+    }
+
+    static float[] Unknown(int count)
+    {
+        var heights = new float[count];
+        Array.Fill(heights, float.NaN);
+        return heights;
+    }
 
     public byte KindAt(Vec2 p)
     {
