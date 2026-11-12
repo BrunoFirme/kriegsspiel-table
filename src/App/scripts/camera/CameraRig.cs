@@ -96,8 +96,7 @@ public partial class CameraRig : Node3D
         var a = PlaneAt(from, Target.Y);
         var b = PlaneAt(to, Target.Y);
         if (a == null || b == null) return;
-        Target += a.Value - b.Value;
-        Settle();
+        MoveTarget(Target + a.Value - b.Value);
         Apply();
     }
 
@@ -105,9 +104,23 @@ public partial class CameraRig : Node3D
     {
         if (Eye != null) return;
         _zoomAnchor = null;
-        Target += d;
-        Settle();
+        MoveTarget(Target + d);
         Apply();
+    }
+
+    public Func<SheetLeash?> Leash = () => null;
+
+    bool MoveTarget(Vector3 to)
+    {
+        var held = to;
+        if (Leash() is { } leash)
+        {
+            var at = leash.Hold(Coords.FromWorld(Target), Coords.FromWorld(to), Distance);
+            held = new Vector3((float)at.X, to.Y, (float)-at.Z);
+        }
+        Target = held;
+        Settle();
+        return held.IsEqualApprox(to);
     }
 
     public Func<Ground> Terrain = () => Ground.Flat;
@@ -187,10 +200,9 @@ public partial class CameraRig : Node3D
         if (!Gliding) { if (eased) Apply(); return; }
         if (_glide != Vector3.Zero)
         {
-            Target += _glide * dt;
-            Settle();
+            bool free = MoveTarget(Target + _glide * dt);
             _glide *= Mathf.Exp(-dt * GlideDamping);
-            if (_glide.Length() < 0.004f * Distance) _glide = Vector3.Zero;
+            if (!free || _glide.Length() < 0.004f * Distance) _glide = Vector3.Zero;
         }
         if (_yawTo is float to)
         {
@@ -232,8 +244,7 @@ public partial class CameraRig : Node3D
     void KeepAnchorUnderCursor()
     {
         if (_zoomAnchor is not { } anchor || PlaneAt(_zoomCursor, anchor.Y) is not { } after) return;
-        Target += anchor - after;
-        Settle();
+        if (!MoveTarget(Target + anchor - after)) _zoomAnchor = null;
     }
 
     public void Centre(Vector3 at)

@@ -180,7 +180,7 @@ public partial class Table : Node3D
 
     public override void _Ready()
     {
-        _c.Rig = new CameraRig { Terrain = () => _c.S?.Ground ?? KTable.Core.Model.Ground.Flat };
+        _c.Rig = new CameraRig { Terrain = () => _c.S?.Ground ?? KTable.Core.Model.Ground.Flat, Leash = () => _c.S?.View.Sheets is { } sheets ? KTable.Core.Model.SheetLeash.Of(sheets) : null };
         AddChild(Rig);
         _aura = new SelectionAura(Rig.Cam);
         AddChild(_aura);
