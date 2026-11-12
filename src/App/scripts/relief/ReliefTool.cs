@@ -110,7 +110,9 @@ sealed class ReliefTool
 
     void Pick(Vec2 g)
     {
-        Cfg.ReliefMode = "paint:" + GroundKinds.Name(GroundKinds.BrushOf(_c.S.Ground.KindAt(g)));
+        byte kind = _c.S.Ground.KindAt(g);
+        if (kind != GroundKinds.None && !GroundKinds.Brushes.Contains(kind)) return;
+        Cfg.ReliefMode = "paint:" + GroundKinds.Name(kind);
         Cfg.Save();
         Picked?.Invoke();
     }

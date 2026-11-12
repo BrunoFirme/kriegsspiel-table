@@ -571,32 +571,20 @@ public class ReliefTests : IDisposable
         for (int y = 20; y < 30; y++)
             for (int x = 20; x < 30; x++) g.Kind[y * 64 + x] = x == 24 ? GroundKinds.Road : GroundKinds.Town;
         g.Kind[5 * 64 + 5] = GroundKinds.Water;
-        var fields = GroundEdges.Fields(g);
+        var fields = GroundEdges.Derive(g.Cols, g.Rows, g.Kind);
         int At(int x, int y, int channel) => fields[(y * 64 + x) * GroundEdges.Channels + channel];
-        Assert.Equal(0, At(25, 25, 1) / GroundEdges.FieldStepsPerCell);
-        Assert.True(At(35, 25, 1) > At(31, 25, 1), "the town field grows away from the town");
-        Assert.True(At(63, 63, 1) > At(35, 25, 1) && At(63, 63, 1) < GroundEdges.Far, "the far corner is far but not off the field");
-        Assert.True(At(10, 5, 2) > At(6, 5, 2) && At(6, 5, 2) > 0, "the water field grows away from the water");
+        Assert.True(At(10, 5, 1) > At(6, 5, 1) && At(6, 5, 1) > 0, "the water field grows away from the water");
         Assert.Equal(GroundEdges.Distances(g)[25 * 64 + 25], At(25, 25, 0));
-        Assert.True(At(25, 25, 3) > At(21, 25, 3) && At(24, 25, 3) > At(21, 25, 3), "the town's depth grows inward and a road through it is no edge");
-        Assert.Equal(GroundEdges.TownStepsPerCell / 2, At(10, 10, 3));
     }
 
     [Fact]
-    public void A_road_band_knows_its_width_and_the_ground_its_distance_to_the_road_and_a_bridge_is_no_edge_of_it()
+    public void A_bridge_is_no_edge_of_its_road()
     {
         var g = new ReliefGrid(64, 64);
         for (int y = 0; y < 64; y++)
             for (int x = 20; x < 23; x++) g.Kind[y * 64 + x] = y is 30 or 31 ? GroundKinds.Bridge : GroundKinds.Road;
-        var roads = GroundEdges.Roads(g);
         var edges = GroundEdges.Distances(g);
-        int At(int x, int y) => roads[y * 64 + x];
-        Assert.Equal(At(21, 10), At(21, 30));
-        Assert.Equal(At(21, 10), At(20, 10));
-        Assert.Equal(1.0, At(21, 10) / (double)GroundEdges.StepsPerCell - 0.5, 3);
         Assert.Equal(edges[10 * 64 + 21], edges[30 * 64 + 21]);
-        Assert.True(At(30, 10) > At(24, 10) && At(24, 10) > 0, "the ground's distance to the road grows away from it");
-        Assert.True(At(63, 63) > At(30, 10), "the far corner is farther still");
     }
 
     [Fact]
@@ -656,29 +644,6 @@ public class ReliefTests : IDisposable
     }
 
     [Fact]
-    public void The_road_and_field_passes_share_one_derivation_and_absent_kinds_cost_no_pass()
-    {
-        const int n = 48;
-        var g = new ReliefGrid(n, n);
-        Array.Fill(g.Kind, GroundKinds.Of("grass")!.Value);
-        for (int y = 20; y < 23; y++)
-            for (int x = 0; x < n; x++) g.Kind[y * n + x] = GroundKinds.Road;
-        for (int y = 30; y < 40; y++)
-            for (int x = 30; x < 40; x++) g.Kind[y * n + x] = GroundKinds.Town;
-        var (roads, fields) = GroundEdges.Derive(n, n, g.Kind);
-        Assert.Equal(GroundEdges.Roads(g), roads);
-        Assert.Equal(GroundEdges.Fields(g), fields);
-        Assert.Equal(GroundEdges.Distances(g)[5 * n + 5], fields[(5 * n + 5) * GroundEdges.Channels]);
-        var plain = new byte[n * n];
-        Array.Fill(plain, GroundKinds.Of("grass")!.Value);
-        var (noRoads, noFields) = GroundEdges.Derive(n, n, plain);
-        Assert.All(noRoads, r => Assert.Equal(GroundEdges.Far, r));
-        Assert.All(Enumerable.Range(0, n * n), i => Assert.Equal(GroundEdges.Far, noFields[i * GroundEdges.Channels + 1]));
-        Assert.All(Enumerable.Range(0, n * n), i => Assert.Equal(GroundEdges.Far, noFields[i * GroundEdges.Channels + 2]));
-        Assert.All(Enumerable.Range(0, n * n), i => Assert.Equal((byte)Math.Round(0.5 * GroundEdges.TownStepsPerCell), noFields[i * GroundEdges.Channels + 3]));
-    }
-
-    [Fact]
     public void Streams_gather_down_a_valley_and_a_pit_drains_out()
     {
         const int n = 64;
@@ -691,18 +656,10 @@ public class ReliefTests : IDisposable
         Array.Fill(kinds, GroundKinds.Of("grass")!.Value);
         for (int y = 0; y < n; y++)
             for (int x = 0; x < 3; x++) kinds[y * n + x] = GroundKinds.Water;
-        for (int y = 0; y < n; y++)
-            for (int x = 20; x < 23; x++) kinds[y * n + x] = GroundKinds.Road;
-        for (int y = 31; y < 34; y++)
-            for (int x = 40; x < 52; x++) kinds[y * n + x] = GroundKinds.Road;
         var flow = GroundStreams.Flow(n, n, h, kinds, 50, 1000);
         var (order, direction, node) = (flow.Order, flow.Direction, flow.Node);
         Assert.Equal(0, order[32 * n + 1]);
         Assert.Equal(GroundStreams.Still, flow.Current[32 * n + 1]);
-        Assert.True(flow.Culvert[32 * n + 21], "the valley's brook crossing the road is a culvert");
-        Assert.All(Enumerable.Range(40, 12), x => Assert.False(flow.Culvert[32 * n + x], "a brook running along a road is no culvert"));
-        Assert.All(Enumerable.Range(0, n * n).Where(i => kinds[i] != GroundKinds.Road), i => Assert.False(flow.Culvert[i]));
-        Assert.Equal(1, (int)GroundStreams.Packed(4, (0, 0), true) >> 15 & 1);
         Assert.Equal(GroundStreams.NoFlow, direction[32 * n + 1]);
         Assert.Equal(4, direction[32 * n + 3]);
         Assert.All(node, p => Assert.True(Math.Abs(p.x) <= 0.45f && Math.Abs(p.y) <= 0.45f, "a stream node stays in its cell"));
@@ -817,21 +774,19 @@ public class ReliefTests : IDisposable
     public void Edges_derived_in_a_window_match_the_whole_grid_around_the_box()
     {
         var g = Country();
-        var (roads, fields) = GroundEdges.Derive(g.Cols, g.Rows, g.Kind);
+        var fields = GroundEdges.Derive(g.Cols, g.Rows, g.Kind);
         var box = new CellBox(70, 50, 95, 70);
         var changed = (byte[])g.Kind.Clone();
         for (int y = box.Y0; y <= box.Y1; y++)
-            for (int x = box.X0; x <= box.X1; x++) changed[y * g.Cols + x] = GroundKinds.Town;
-        var (wholeRoads, wholeFields) = GroundEdges.Derive(g.Cols, g.Rows, changed);
-        var windowRoads = (byte[])roads.Clone();
+            for (int x = box.X0; x <= box.X1; x++) changed[y * g.Cols + x] = GroundKinds.Water;
+        var wholeFields = GroundEdges.Derive(g.Cols, g.Rows, changed);
         var windowFields = (byte[])fields.Clone();
-        GroundEdges.Derive(g.Cols, g.Rows, changed, box, windowRoads, windowFields);
+        GroundEdges.Derive(g.Cols, g.Rows, changed, box, windowFields);
         var touched = box.Grow(GroundEdges.Reach).Clip(g.Cols, g.Rows);
         for (int y = touched.Y0; y <= touched.Y1; y++)
             for (int x = touched.X0; x <= touched.X1; x++)
             {
                 int i = y * g.Cols + x;
-                Assert.Equal(wholeRoads[i], windowRoads[i]);
                 for (int ch = 0; ch < GroundEdges.Channels; ch++) Assert.Equal(wholeFields[i * GroundEdges.Channels + ch], windowFields[i * GroundEdges.Channels + ch]);
             }
     }

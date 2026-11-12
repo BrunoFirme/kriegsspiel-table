@@ -333,7 +333,7 @@ static class ToolTests
         Check.Equal(GroundKinds.None, t.S.Ground.KindAt(new Vec2(0, 8)), "undo takes the polygon back");
         Check.Equal(GroundKinds.Of("field")!.Value, t.S.Ground.KindAt(new Vec2(0, -5)), "and leaves the rectangle");
 
-        cfg.ReliefMode = "paint:road";
+        cfg.ReliefMode = "paint:earth";
         cfg.ReliefPaint = "route";
         t.Table.Rig.Frame(Coords.ToWorld(new Vec2(0, 0)), 40);
         await r.Frame();
@@ -347,8 +347,8 @@ static class ToolTests
         relief.Release();
         for (int i = 0; i < ShapeWaitFrames && shared < 3; i++) await r.Frame();
         Check.Equal(3, shared, "the route shared as one change");
-        Check.Equal(GroundKinds.Road, t.S.Ground.KindAt(new Vec2(-15, -15)), "road at the route's start");
-        Check.Equal(GroundKinds.Road, t.S.Ground.KindAt(new Vec2(15, -15)), "road at its end");
+        Check.Equal(GroundKinds.Of("earth")!.Value, t.S.Ground.KindAt(new Vec2(-15, -15)), "earth at the route's start");
+        Check.Equal(GroundKinds.Of("earth")!.Value, t.S.Ground.KindAt(new Vec2(15, -15)), "earth at its end");
         t.S.UndoLast();
         await r.Frames(3);
         Check.Equal(GroundKinds.None, t.S.Ground.KindAt(new Vec2(15, -15)), "undo takes the route back");

@@ -1,6 +1,6 @@
 namespace KTable.Core.Model;
 
-public sealed record GroundFlow(byte[] Order, byte[] Direction, (float x, float y)[] Node, byte[] Heading, byte[] Current, bool[] Culvert);
+public sealed record GroundFlow(byte[] Order, byte[] Direction, (float x, float y)[] Node, byte[] Heading, byte[] Current);
 
 public static class GroundStreams
 {
@@ -9,10 +9,9 @@ public static class GroundStreams
     public const int Headings = 32;
     public const double StreamKm2 = 0.15, BrookKm2 = 1, RiverKm2 = 10;
     const double FloorSlope = 0.002, RapidsSlope = 0.02, RiverHalfWidthMetres = 50, FallMetres = 5;
-    const double CrossingCosine = 0.866, RoadAxisClarity = 0.2;
-    const int MaxReach = 8, RoadReach = 4, CrossingRun = 3;
+    const int MaxReach = 8;
     const float Lift = 1e-6f, NodeReach = 0.45f, NodePull = 0.4f;
-    const int NodeSteps = 31, NodeShift = 4, NodeBits = 5, CurrentBit = 1 << 14, CulvertBit = 1 << 15;
+    const int NodeSteps = 31, NodeShift = 4, NodeBits = 5, CurrentBit = 1 << 14;
     static readonly (int dx, int dy)[] Eight = [(1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1), (0, -1), (1, -1)];
 
     public static GroundFlow Flow(int cols, int rows, float[] heights, byte[]? kinds, double cellMetres, double metresPerHeightUnit)
@@ -62,18 +61,18 @@ public static class GroundStreams
             order[i] = o;
         }
         var (heading, current) = Currents(cols, rows, heights, kinds, cellMetres, metresPerHeightUnit);
-        return new GroundFlow(order, direction, Nodes(cols, direction, order, area), heading, current, Culverts(cols, rows, kinds, order, direction));
+        return new GroundFlow(order, direction, Nodes(cols, direction, order, area), heading, current);
     }
 
-    public static float Packed(byte direction, (float x, float y) node, bool culvert = false)
+    public static float Packed(byte direction, (float x, float y) node)
     {
         int qx = Quantised(node.x), qy = Quantised(node.y);
-        return direction | qx << NodeShift | qy << (NodeShift + NodeBits) | (culvert ? CulvertBit : 0);
+        return direction | qx << NodeShift | qy << (NodeShift + NodeBits);
     }
 
     public static float PackedCurrent(byte heading, byte current) => NoFlow | heading << NodeShift | current << (NodeShift + NodeBits) | CurrentBit;
 
-    public static float Packed(GroundFlow f, int i) => f.Current[i] > Still ? PackedCurrent(f.Heading[i], f.Current[i]) : Packed(f.Direction[i], f.Node[i], f.Culvert[i]);
+    public static float Packed(GroundFlow f, int i) => f.Current[i] > Still ? PackedCurrent(f.Heading[i], f.Current[i]) : Packed(f.Direction[i], f.Node[i]);
 
     static int Quantised(float offset) => (int)Math.Round((Math.Clamp(offset, -NodeReach, NodeReach) / NodeReach * 0.5 + 0.5) * NodeSteps);
 
@@ -115,13 +114,6 @@ public static class GroundStreams
         return (Math.Cos(angle), Math.Sin(angle));
     }
 
-    static double Clarity(int x, int y, int reach, Func<int, int, bool> within)
-    {
-        var (sxx, sxy, syy) = Tensor(x, y, reach, within);
-        double sum = sxx + syy;
-        return sum > 0 ? Math.Sqrt((sxx - syy) * (sxx - syy) + 4 * sxy * sxy) / sum : 0;
-    }
-
     static (double xx, double xy, double yy) Tensor(int x, int y, int reach, Func<int, int, bool> within)
     {
         double sxx = 0, sxy = 0, syy = 0;
@@ -155,34 +147,6 @@ public static class GroundStreams
             steps = t;
         }
         return (h, steps);
-    }
-
-    static bool[] Culverts(int cols, int rows, byte[]? kinds, byte[] order, byte[] direction)
-    {
-        var culvert = new bool[order.Length];
-        if (kinds == null) return culvert;
-        bool Road(int x, int y) => x >= 0 && y >= 0 && x < cols && y < rows && kinds[y * cols + x] is GroundKinds.Road or GroundKinds.Bridge;
-        for (int y = 0; y < rows; y++)
-            for (int x = 0; x < cols; x++)
-            {
-                int i = y * cols + x;
-                if (order[i] == 0 || direction[i] == NoFlow || !Road(x, y)) continue;
-                if (Clarity(x, y, RoadReach, Road) < RoadAxisClarity) { culvert[i] = true; continue; }
-                var (rx, ry) = Axis(x, y, RoadReach, Road);
-                double sx = 0, sy = 0;
-                int j = i;
-                for (int step = 0; step < CrossingRun && direction[j] != NoFlow; step++)
-                {
-                    var (dx, dy) = Eight[direction[j]];
-                    double len = dx != 0 && dy != 0 ? 1.41421356 : 1;
-                    sx += dx / len;
-                    sy += dy / len;
-                    j = Downstream(j, direction[j], cols);
-                }
-                double run = Math.Sqrt(sx * sx + sy * sy);
-                culvert[i] = run > 0 && Math.Abs(sx * rx + sy * ry) / run < CrossingCosine;
-            }
-        return culvert;
     }
 
     static (float x, float y)[] Nodes(int cols, byte[] direction, byte[] order, int[] area)

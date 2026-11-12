@@ -140,8 +140,8 @@ public partial class Table : Node3D
         Zones = new ZoneLayer(_c, Overlay);
         Relief = new ReliefTool(_c, Overlay, Sheets);
         Build = new BuildTool(_c, Overlay, Sheets);
-        var converter = new PaintConverter(_c, Relief);
-        Sheets.GroundChanged += _ => converter.Look();
+        _converter = new PaintConverter(_c, Relief);
+        Sheets.GroundChanged += _ => _converter.Look();
         Forms = new FormationTool(_c, Overlay, Selection, Hand);
         Pointers = new UmpirePointers(_c, p => Hand.SurfaceY(p, Layers.Umpire), Motion.Carrying, name => UmpireHue.Of(_c.S, name) ?? UmpireHue.Unassigned);
         SelectTool = new SelectTool(_c, press, Sheets, Pieces, Selection, Hand, Names, Actions);
@@ -535,11 +535,14 @@ public partial class Table : Node3D
     public static Color LightTint(float warmth) => TableStage.LightTint(warmth);
     public void ApplyGrid() => Stage.ApplyGrid();
     public void ApplyWind(Wind w) => Stage.ApplyWind(w);
+    PaintConverter _converter = null!;
+
     public void ApplyScale(Calibration c)
     {
         Stage.ApplyScale(c);
         ReliefSurface.ShowScale(c);
         Contours.Due();
+        _converter.Look();
     }
 
     public bool Resting { get; private set; }

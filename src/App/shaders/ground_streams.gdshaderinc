@@ -1,11 +1,10 @@
-void stream_of(vec2 cell, out float direction, out float order, out vec2 node, out bool culvert) {
+void stream_of(vec2 cell, out float direction, out float order, out vec2 node) {
 	ivec2 c = clamp(ivec2(cell), ivec2(0), ivec2(cells) - 1);
 	vec4 t = texelFetch(heights, c, 0);
 	int code = int(round(t.b));
 	direction = float(code & 15);
 	order = round(t.a);
 	node = direction < float(NO_FLOW) ? (vec2(float((code >> 4) & 31), float((code >> 9) & 31)) / 31.0 - 0.5) * 0.9 : vec2(0.0);
-	culvert = (code & CULVERT_BIT) != 0;
 }
 
 void current_of(vec2 cell, out vec2 heading, out float state) {
@@ -150,32 +149,24 @@ float stream_width(int style, float order) {
 	return order >= 2.0 ? one * 1.8 : one;
 }
 
-float streams(int style, vec2 p, vec2 uv, mat2 from_uv, float fw, float mid, float road_w, out float order_here, out float culvert) {
+float streams(int style, vec2 p, vec2 uv, mat2 from_uv, float fw) {
 	vec2 c0 = floor(clamp(uv, vec2(0.0), vec2(1.0)) * cells);
-	float dir_here;
-	vec2 node_here;
-	bool culvert_here;
-	stream_of(c0, dir_here, order_here, node_here, culvert_here);
-	float tick_w = style == MODERN ? M1 * 0.5 : W1 * 0.8;
 	float m = 0.0;
-	culvert = 0.0;
 	for (int j = -1; j <= 1; j++) {
 		for (int i = -1; i <= 1; i++) {
 			vec2 c = c0 + vec2(float(i), float(j));
 			float dir, order, dir_next, order_next;
 			vec2 node, node_next;
-			bool cul, cul_next;
-			stream_of(c, dir, order, node, cul);
+			stream_of(c, dir, order, node);
 			if (order < 0.5 || dir >= float(NO_FLOW)) continue;
 			vec2 next = c + flow_step(dir);
-			stream_of(next, dir_next, order_next, node_next, cul_next);
+			stream_of(next, dir_next, order_next, node_next);
 			vec2 a = p + from_uv * ((c + 0.5 + node) / cells - uv);
 			vec2 b = p + from_uv * ((next + 0.5 + node_next) / cells - uv);
 			float d = segment(p, a, b);
 			float w = stream_width(style, order);
 			if (order >= 3.0) m = max(m, ink(abs(d - w * 1.6), w * 0.6, fw));
 			else m = max(m, ink(d, w, fw));
-			if ((cul || cul_next) && road_w >= 0.0) culvert = max(culvert, ink(abs(abs(mid) - road_w - CULVERT_GAP), tick_w, fw) * (1.0 - smoothstep(CULVERT_REACH - fw, CULVERT_REACH + fw, d)));
 		}
 	}
 	return m;

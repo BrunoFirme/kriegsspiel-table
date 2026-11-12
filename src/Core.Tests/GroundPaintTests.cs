@@ -50,23 +50,21 @@ public class GroundPaintTests
     {
         var g = new ReliefGrid(16, 16);
         Assert.All(GroundEdges.Distances(g), v => Assert.Equal(GroundEdges.Far, v));
-        Assert.All(GroundEdges.Roads(g), v => Assert.Equal(GroundEdges.Far, v));
     }
 
     [Fact]
-    public void Off_a_road_each_cell_holds_its_distance_to_the_road_and_the_fields_say_where_town_and_water_are()
+    public void Beside_its_distance_to_a_boundary_each_cell_holds_its_distance_to_water()
     {
         const int side = 40;
         var kinds = Kinds(side, side, Field);
-        Square(kinds, side, 0, 20, side, 22, GroundKinds.Road);
-        Square(kinds, side, 30, 0, 34, 4, GroundKinds.Town);
-        var (roads, fields) = GroundEdges.Derive(side, side, kinds);
-        Assert.Equal((int)Math.Round(3.5 * GroundEdges.RoadStepsPerCell), roads[17 * side + 5]);
-        Assert.True(roads[21 * side + 5] > 0, "a road cell holds how wide the road is");
+        Square(kinds, side, 30, 0, 34, 4, GroundKinds.Water);
+        var fields = GroundEdges.Derive(side, side, kinds);
         int c = GroundEdges.Channels;
         Assert.Equal((int)Math.Round(2.5 * GroundEdges.FieldStepsPerCell), fields[(2 * side + 28) * c + 1]);
-        Assert.Equal(GroundEdges.Far, fields[(30 * side + 5) * c + 2]);
-        Assert.Equal((int)Math.Round(0.5 * GroundEdges.TownStepsPerCell), fields[(30 * side + 5) * c + 3]);
+        Assert.Equal(GroundEdges.FieldStepsPerCell / 2, fields[(2 * side + 31) * c + 1]);
+        Assert.Equal(GroundEdges.StepsPerCell / 2, fields[(2 * side + 30) * c]);
+        var dry = GroundEdges.Derive(side, side, Kinds(side, side, Field));
+        Assert.All(Enumerable.Range(0, side * side), i => Assert.Equal(GroundEdges.Far, dry[i * c + 1]));
     }
 
     [Fact]
@@ -81,20 +79,18 @@ public class GroundPaintTests
             int x = rng.Next(side - 12), y = rng.Next(side - 12);
             Square(kinds, side, x, y, x + rng.Next(2, 12), y + rng.Next(2, 12), palette[rng.Next(palette.Length)]);
         }
-        var (roads, fields) = GroundEdges.Derive(side, side, kinds);
+        var fields = GroundEdges.Derive(side, side, kinds);
         var box = new CellBox(140, 140, 160, 160);
-        var partRoads = new byte[roads.Length];
         var partFields = new byte[fields.Length];
-        GroundEdges.Derive(side, side, kinds, box, partRoads, partFields);
+        GroundEdges.Derive(side, side, kinds, box, partFields);
         var inner = box.Grow(GroundEdges.Reach).Clip(side, side);
         for (int y = inner.Y0; y <= inner.Y1; y++)
             for (int x = inner.X0; x <= inner.X1; x++)
             {
                 int i = y * side + x;
-                Assert.Equal(roads[i], partRoads[i]);
                 for (int ch = 0; ch < GroundEdges.Channels; ch++) Assert.Equal(fields[i * GroundEdges.Channels + ch], partFields[i * GroundEdges.Channels + ch]);
             }
-        Assert.Equal(0, partRoads[0]);
+        Assert.Equal(0, partFields[0]);
     }
 
     [Theory]
