@@ -28,12 +28,14 @@ public static class GroundCard
         return new Spec(FileFor(sheet), new Rect2((float)crop.X, (float)crop.Y, (float)crop.W, (float)crop.H), new Vector2I(Width, Math.Clamp((int)Math.Round(Width * aspect), 1, Width * 4)));
     }
 
-    public static async Task Draw(Node host, ShaderMaterial bake, Spec card)
+    public static async Task Draw(Node host, ShaderMaterial bake, Spec card, BuiltPainter? built = null)
     {
         var vp = new SubViewport { Size = card.Size, Disable3D = true, TransparentBg = false, RenderTargetUpdateMode = SubViewport.UpdateMode.Once };
         var mat = (ShaderMaterial)bake.Duplicate();
         mat.SetShaderParameter("uv_rect", new Vector4(card.Uv.Position.X, card.Uv.Position.Y, card.Uv.Size.X, card.Uv.Size.Y));
-        vp.AddChild(new ColorRect { Size = card.Size, Material = mat });
+        var quad = new ColorRect { Size = card.Size, Material = mat, ClipContents = true };
+        if (built?.Layer(card.Uv, card.Size.X, GroundTiles.Style) is { } layer) quad.AddChild(layer);
+        vp.AddChild(quad);
         host.AddChild(vp);
         try
         {

@@ -232,6 +232,9 @@ sealed class ViewSync
         var s = _c.S;
         switch (c)
         {
+            case LayBuilt or SetBuilt or RemoveBuilt:
+                _sheets.BuiltChanged();
+                return;
             case AddSheet a:
                 _sheets.Arrived(a.Sheet.Id);
                 _c.NotifySelectionChanged();

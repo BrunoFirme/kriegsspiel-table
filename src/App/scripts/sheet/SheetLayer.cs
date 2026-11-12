@@ -78,12 +78,19 @@ sealed class SheetLayer
     public void Add(SheetDef sh)
     {
         var n = SheetNode.Create(sh, _c.S.Assets, _c.S.Relief);
+        string id = sh.Id;
+        n.BuiltHere = () => _c.S.View.Built.Where(b => b.Sheet == id).ToList();
         n.IndexKnown += () => _planDue = true;
         _planDue = true;
         Root.AddChild(n);
         _sheets[sh.Id] = n;
         n.SetSelected(sh.Id == SelectedId);
         GroundMoved();
+    }
+
+    public void BuiltChanged()
+    {
+        foreach (var n in _sheets.Values) n.Rebuilt();
     }
 
     public void Arrived(string id)

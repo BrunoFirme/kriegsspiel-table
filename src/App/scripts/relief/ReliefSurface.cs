@@ -88,6 +88,7 @@ public partial class ReliefSurface : Node3D
 
     public static void ShowStyle(string? style)
     {
+        GroundTiles.Style = MapStyles.Index(style);
         RenderingServer.GlobalShaderParameterSet(StyleParameter, MapStyles.Index(style));
         GroundTiles.StaleEverything();
     }
@@ -133,9 +134,23 @@ public partial class ReliefSurface : Node3D
         return p;
     }
 
-    public void Build(SheetDef def, ReliefGrid grid, Ground ground, Transform3D sheetXf, Func<Vector3[], bool>? covered, Material? picture)
+    readonly BuiltPainter _painter = new();
+
+    public bool Rebuilt(SheetDef def, ReliefGrid grid, IReadOnlyList<BuiltThing> built)
+    {
+        if (!GroundTiles.Enabled || !IsInsideTree()) return true;
+        bool had = _painter.Any;
+        if (_painter.Set(built, Ground.FullWidth(def), BuiltGeometry.FullHeight(def)) is not { } changed) return true;
+        if (_tiles == null || had != _painter.Any) return false;
+        _tiles.StaleUv(changed, urgent: true);
+        GroundTiles.For(this).Hurry();
+        return true;
+    }
+
+    public void Build(SheetDef def, ReliefGrid grid, Ground ground, Transform3D sheetXf, Func<Vector3[], bool>? covered, Material? picture, IReadOnlyList<BuiltThing>? built = null)
     {
         Clear();
+        bool builtRedrawn = _painter.Set(built ?? [], Ground.FullWidth(def), BuiltGeometry.FullHeight(def)) != null;
         float level = -sheetXf.Origin.Y;
         var c = def.Crop ?? SheetGeometry.Whole;
         float W = (float)def.Size.W, H = (float)def.Size.H;
@@ -147,7 +162,7 @@ public partial class ReliefSurface : Node3D
         int blur = Math.Max(step, (int)Math.Round(ContourBlurUnits / _cellWorld));
         var builtFor = new BuiltFor(def.Id, def.Size.W, def.Size.H, c.X, c.Y, c.W, c.H, grid.Cols, grid.Rows, nx, nz, scale, blur);
         bool kindsRedrawn = UpdateKinds(grid), heightsRedrawn = UpdateHeights(grid, scale, blur);
-        _redrawn = kindsRedrawn || heightsRedrawn || builtFor != _lastBuiltFor || sheetXf != _lastXf;
+        _redrawn = kindsRedrawn || heightsRedrawn || builtRedrawn || builtFor != _lastBuiltFor || sheetXf != _lastXf;
         _lastBuiltFor = builtFor;
         _lastXf = sheetXf;
         UpdateNetwork(def.Id, grid);
@@ -156,7 +171,7 @@ public partial class ReliefSurface : Node3D
         bool drawsGround = picture == null && !def.HasPicture;
         bool tiled = GroundTiles.Enabled && IsInsideTree();
         _base = picture ?? (!drawsGround ? null : tiled ? Tiled(def, grid, sheetXf, level, scale, step, cells, false) : Material(false, cells));
-        if (grid.Painted || (_contours && def.Relief is { Length: > 0 }))
+        if (grid.Painted || (_painter.Any && tiled) || (_contours && def.Relief is { Length: > 0 }))
             _paint = tiled && !drawsGround ? Tiled(def, grid, sheetXf, level, scale, step, cells, true) : Material(true, cells);
         for (int bz = 0; bz < nz; bz += BlockCells)
             for (int bx = 0; bx < nx; bx += BlockCells)
@@ -338,7 +353,7 @@ public partial class ReliefSurface : Node3D
         _bake.SetShaderParameter("normal_step", (float)step);
         float high = 0;
         foreach (float v in grid.H) high = Math.Max(high, v);
-        _tiles = GroundTiles.For(this).Track(def.Id, this, _bake, World, (float)Ground.FullWidth(def), 0, high * scale, paintedOnly, _redrawn, paintedOnly ? null : GroundCard.For(def));
+        _tiles = GroundTiles.For(this).Track(def.Id, this, _bake, World, (float)Ground.FullWidth(def), 0, high * scale, paintedOnly, _redrawn, _painter, paintedOnly ? null : GroundCard.For(def));
         return _tiles.View;
     }
 

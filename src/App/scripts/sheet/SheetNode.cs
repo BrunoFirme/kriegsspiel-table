@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using Godot;
 using Json = KTable.Core.Json;
@@ -173,8 +174,15 @@ public partial class SheetNode : Node3D
         var grid = _relief.Grid(Def);
         if (where is { } box && grid != null && _surface.Patch(Def, grid, _relief.Ground, Transform, box)) { Patched++; return; }
         Built++;
-        _surface.Build(Def, grid ?? Bare, _relief.Ground, Transform, Covered == null ? null : corners => Covered(this, corners), _mat);
+        _surface.Build(Def, grid ?? Bare, _relief.Ground, Transform, Covered == null ? null : corners => Covered(this, corners), _mat, BuiltHere?.Invoke());
         RefreshOutline();
+    }
+
+    public Func<IReadOnlyList<BuiltThing>>? BuiltHere { get; set; }
+
+    public void Rebuilt()
+    {
+        if (!_surface.Rebuilt(Def, _relief.Grid(Def) ?? Bare, BuiltHere?.Invoke() ?? [])) Reground();
     }
 
     static readonly ReliefGrid Bare = new(2, 2);

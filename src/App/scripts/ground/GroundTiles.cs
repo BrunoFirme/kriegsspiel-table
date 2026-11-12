@@ -28,6 +28,8 @@ public partial class GroundTiles : Node
 
     public static bool Enabled => DisplayServer.GetName() != "headless";
 
+    public static int Style { get; set; }
+
     public static Shader ViewShader => _viewShader ??= new Shader { Code = FileAccess.GetFileAsString("res://shaders/ground_view.gdshader") };
 
     public static Shader BakeShader => _bakeShader ??= new Shader { Code = FileAccess.GetFileAsString("res://shaders/ground_bake.gdshader") };
@@ -50,6 +52,7 @@ public partial class GroundTiles : Node
         public required float Low { get; init; }
         public required float High { get; init; }
         public GroundCard.Spec? Card { get; init; }
+        public BuiltPainter? Built { get; init; }
         public readonly Dictionary<Tile, int> Baked = new();
         public readonly HashSet<Tile> Stale = new();
         public readonly HashSet<Tile> Urgent = new();
@@ -99,7 +102,7 @@ public partial class GroundTiles : Node
     public override void _Ready() => AddChild(_atlas);
 
     public Sheet Track(string key, Node3D owner, ShaderMaterial bake, Func<Vector2, float, Vector3> world, float sheetWidth, float low, float high, bool cut, bool redrawn,
-        GroundCard.Spec? card = null)
+        BuiltPainter? built = null, GroundCard.Spec? card = null)
     {
         int levels = Math.Clamp((int)Math.Ceiling(Math.Log2(Math.Max(1, sheetWidth / FinestTexelWorld / (TilePx - 2 * GutterPx)))), 0, MostLevel);
         int side = 1 << levels;
@@ -113,7 +116,7 @@ public partial class GroundTiles : Node
         view.SetShaderParameter("atlas_slots", (float)Slots);
         view.SetShaderParameter("tile_px", (float)TilePx);
         view.SetShaderParameter("gutter_px", (float)GutterPx);
-        var sheet = new Sheet { Key = key, Owner = owner, Bake = bake, View = view, Levels = levels, Pages = pages, PagesTex = pagesTex, World = world, Low = low, High = high, Card = card };
+        var sheet = new Sheet { Key = key, Owner = owner, Bake = bake, View = view, Levels = levels, Pages = pages, PagesTex = pagesTex, World = world, Low = low, High = high, Card = card, Built = built };
         if (_retired.Remove(key, out var old) && old.Sheet.Levels == levels)
         {
             foreach (var (t, slot) in old.Sheet.Baked)
@@ -201,13 +204,13 @@ public partial class GroundTiles : Node
         }
         if (s.CardOf == s.Changes || _frame - s.QuietSince < CardQuietFrames) return;
         s.CardOf = s.Changes;
-        DrawCard(s.Bake, card);
+        DrawCard(s.Bake, card, s.Built);
     }
 
-    async void DrawCard(ShaderMaterial bake, GroundCard.Spec card)
+    async void DrawCard(ShaderMaterial bake, GroundCard.Spec card, BuiltPainter? built)
     {
         _carding = true;
-        try { await GroundCard.Draw(this, bake, card); }
+        try { await GroundCard.Draw(this, bake, card, built); }
         catch (Exception e) { GD.PushWarning("the ground's card picture could not be drawn: " + e.Message); }
         finally { _carding = false; }
     }
@@ -270,8 +273,10 @@ public partial class GroundTiles : Node
             var mat = (ShaderMaterial)s.Bake.Duplicate();
             var uv = t.Uv;
             float g = uv.Size.X * GutterPx / (TilePx - 2 * GutterPx);
-            mat.SetShaderParameter("uv_rect", new Vector4(uv.Position.X - g, uv.Position.Y - g, uv.Size.X + 2 * g, uv.Size.Y + 2 * g));
-            var quad = new ColorRect { Position = new Vector2(slot % Slots * TilePx, slot / Slots * TilePx), Size = new Vector2(TilePx, TilePx), Material = mat };
+            var drawn = new Rect2(uv.Position.X - g, uv.Position.Y - g, uv.Size.X + 2 * g, uv.Size.Y + 2 * g);
+            mat.SetShaderParameter("uv_rect", new Vector4(drawn.Position.X, drawn.Position.Y, drawn.Size.X, drawn.Size.Y));
+            var quad = new ColorRect { Position = new Vector2(slot % Slots * TilePx, slot / Slots * TilePx), Size = new Vector2(TilePx, TilePx), Material = mat, ClipContents = true };
+            if (s.Built?.Layer(drawn, TilePx, Style) is { } built) quad.AddChild(built);
             _atlas.AddChild(quad);
             _baking.Add((quad, s, t, slot));
         }
