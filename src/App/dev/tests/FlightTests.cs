@@ -23,7 +23,13 @@ static class FlightTests
         await r.Frames(3);
         Check.That(Mathf.Abs(n.Position.Y - grounded - (float)PieceInstance.DefaultAltitude) < Near, $"it flies {PieceInstance.DefaultAltitude} up: {grounded} to {n.Position.Y}");
         var mark = n.GetChildren().OfType<LandingMark>().SingleOrDefault() ?? throw new TestFailure("the flying piece has no mark on the ground");
-        Check.That(mark.DrawsLine, "a line runs down from it to the ground");
+        Check.That(!mark.DrawsLine, "no line runs down from it while it is not picked");
+        t.Table.Selection.Set(new[] { "p1" });
+        await r.Frames(3);
+        Check.That(mark.DrawsLine, "picked, a line runs down from it to the ground");
+        const uint Lit = SelectionAura.MaskLayer | SelectionAura.HoverLayer;
+        Check.That(mark.GetChildren().OfType<VisualInstance3D>().Append(mark).All(v => (v.Layers & Lit) == 0), "the line and the mark on the ground are not lit with the piece");
+        Check.That(n.FindChildren("*", "VisualInstance3D", true, false).OfType<VisualInstance3D>().Any(v => (v.Layers & SelectionAura.MaskLayer) != 0), "the piece itself is lit");
 
         t.S.Do(new SetAltitude { Layer = U, Id = "p1", Value = 10 });
         await r.Frames(3);

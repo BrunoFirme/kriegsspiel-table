@@ -702,7 +702,7 @@ public partial class PieceNode : Node3D
         if (IsEffect) on = false;
         foreach (var child in FindChildren("*", "VisualInstance3D", recursive: true, owned: false))
             if (child is VisualInstance3D vi && vi != _sel)
-                vi.Layers = on && !InsideOutline(vi) ? vi.Layers | layer : vi.Layers & ~layer;
+                vi.Layers = on && !InsideOutline(vi) && !LandingMark.Drawn(vi) ? vi.Layers | layer : vi.Layers & ~layer;
     }
 
     bool InsideOutline(VisualInstance3D vi)

@@ -24,6 +24,8 @@ public partial class LandingMark : Decal
     internal Rect2 Area => _area;
     internal bool DrawsLine => _line is { Visible: true };
 
+    internal static bool Drawn(VisualInstance3D vi) => vi is LandingMark || vi.GetParent() is LandingMark;
+
     public static void Under(PieceNode piece)
     {
         if (piece.IsDie || piece.GetChildren().OfType<LandingMark>().Any()) return;
@@ -62,7 +64,7 @@ public partial class LandingMark : Decal
 
     void AimLine(Vector3 under, float aloft)
     {
-        if (aloft <= 0 || _piece.Held)
+        if (aloft <= 0 || _piece.Held || !_piece.Ringed)
         {
             if (_line != null) _line.Visible = false;
             return;
