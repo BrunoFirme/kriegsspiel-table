@@ -25,8 +25,13 @@ sealed class MapLettering
     const double PlaceGap = 0.3, SpaceShare = 0.3;
     static readonly string[] Serifs = { "Georgia", "Times New Roman", "Liberation Serif", "DejaVu Serif" };
     static readonly string[] Titling = { "Perpetua Titling MT", "Cambria", "Georgia", "Liberation Serif" };
-    static readonly Color[] Ink = { new(0.42f, 0.27f, 0.17f), new(0.3f, 0.2f, 0.12f), new(0.1f, 0.1f, 0.1f) };
-    public static readonly Color[] Paper = { new(0.87f, 0.82f, 0.7f, 0.55f), new(0.83f, 0.72f, 0.5f, 0.55f), new(0.95f, 0.945f, 0.9f, 0.7f) };
+    static readonly Color[] Ink = { new(0.2f, 0.17f, 0.13f), new(0.3f, 0.2f, 0.12f), new(0.1f, 0.1f, 0.1f), new(0.15f, 0.14f, 0.13f) };
+    public static readonly Color[] Paper =
+    {
+        new(0.937f, 0.918f, 0.878f, 0.55f), new(0.839f, 0.745f, 0.588f, 0.55f), new(0.95f, 0.945f, 0.9f, 0.7f), new(0.945f, 0.937f, 0.855f, 0.6f),
+    };
+
+    internal static int Styles => Math.Min(Ink.Length, Paper.Length);
     static readonly Color ModernBlue = new(0.2f, 0.33f, 0.44f);
     const float BackSlant = -0.35f, AreaTracking = 0.35f, ModernAreaTracking = 0.5f, AncientTracking = 0.25f, ItalicTracking = 0.04f, Tracking = 0.02f;
 

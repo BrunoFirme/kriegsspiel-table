@@ -15,7 +15,7 @@ sealed class ContourLines
     const double LabelEveryCells = 26, LabelApartCells = 7;
     const float TextPerExtent = 1 / 160f, ReachPerText = 4f;
     const int FontPixels = 96;
-    static readonly Color[] Ink = { new(0.42f, 0.27f, 0.17f), new(0.36f, 0.22f, 0.12f), new(0.6f, 0.33f, 0.13f) };
+    static readonly Color[] Ink = { new(0.3f, 0.24f, 0.18f), new(0.36f, 0.22f, 0.12f), new(0.5f, 0.32f, 0.2f), new(0.2f, 0.19f, 0.18f) };
     static readonly string[] Serifs = { "Georgia", "Times New Roman", "Liberation Serif", "DejaVu Serif" };
     static readonly string[] Sans = { "Arial", "Liberation Sans", "Noto Sans", "DejaVu Sans" };
     static readonly Font[] Faces =
@@ -23,7 +23,10 @@ sealed class ContourLines
         new SystemFont { FontNames = Serifs, FontItalic = true },
         new SystemFont { FontNames = Serifs },
         new SystemFont { FontNames = Sans, FontWeight = 600 },
+        new SystemFont { FontNames = Serifs, FontItalic = true },
     };
+
+    internal static int Styles => Math.Min(Ink.Length, Faces.Length);
 
     readonly TableContext _c;
     readonly SheetLayer _sheets;

@@ -91,7 +91,7 @@ public sealed partial class TableTools
                 new Arg("table_shade", "number", "the table under the map: 0 squared paper, 0.5 grey, 1 black, 1.05 see-through (no table drawn)"),
                 new Arg("backdrop", "string", "around the table: none, a solid #rrggbb colour, a picture's full path or web link (a panorama twice as wide as tall wraps all the way round), or one of " +
                     string.Join(", ", Backdrops.All.Select(b => b.Id)) + "; a sky brings its own light unless the light is given too"),
-                new Arg("map_style", "string", "painted ground drawn as an ancient, survey (18th century) or modern map"),
+                new Arg("map_style", "string", "painted ground drawn as an ancient, survey (18th century), modern or staff (one ink) map"),
                 new Arg("contours", "boolean", "contour lines over every relief, spaced to fit its highest ground and redrawn as it changes"),
                 new Arg("snow_line", "number", "metres above which every ground takes snow, 0 for none; needs the map's scale"),
                 new Arg("streams", "boolean", "brooks and rivers where the relief gathers water; needs the map's scale"),
@@ -484,7 +484,7 @@ public sealed partial class TableTools
             if (preset == null) return ToolResult.Fail("preset is one of " + string.Join(", ", LightPresets.All.Select(p => p.Name)) + ".");
         }
         var style = a.Str("map_style")?.Trim().ToLowerInvariant() is { } named ? named == "survey" ? MapStyles.Survey : named : null;
-        if (style != null && MapStyles.Of(style) != style) return ToolResult.Fail("map_style is ancient, survey or modern.");
+        if (style != null && MapStyles.Of(style) != style) return ToolResult.Fail("map_style is ancient, survey, modern or staff.");
         var snow = a.Num("snow_line");
         var streams = a.Flag("streams");
         if ((snow != null || streams == true) && s.View.Calibration.UnitsPerMeter is not > 0) return ToolResult.Fail(GroundKinds.NeedsScale + " (set_map_scale).");

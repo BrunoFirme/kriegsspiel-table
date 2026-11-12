@@ -4,7 +4,7 @@ uniform sampler2D heights : filter_linear, repeat_disable;
 uniform sampler2D network : filter_nearest, repeat_disable;
 uniform sampler2D road_axes : filter_nearest, repeat_disable;
 uniform sampler2D farm_sites : filter_nearest, repeat_disable;
-uniform vec4 palette[39];
+uniform vec4 palette[52];
 uniform bool painted_only = false;
 uniform vec2 cells = vec2(64.0, 64.0);
 uniform float cell_world = 0.2;
@@ -82,6 +82,11 @@ const float SEAMLESS = 1.0;
 const int SURVEY = 0;
 const int ANCIENT = 1;
 const int MODERN = 2;
+const int STAFF = 3;
+const vec3 STAFF_PAPER = vec3(0.945, 0.937, 0.855);
+const float STAFF_WASH_FROM = 0.5;
+const float STAFF_WASH_FULL = 0.78;
+const float STAFF_WASH_LIFT = 0.55;
 const float EDGE_HAND = 0.2;
 const float EDGE_FALL = 1.0;
 const float ENCLOSED_FROM = 0.45;
@@ -252,6 +257,12 @@ const float CROWN_SHADE_SHIFT = 0.22;
 #include "res://shaders/ground_modern.gdshaderinc"
 #include "res://shaders/ground_network.gdshaderinc"
 
+vec3 one_ink(vec3 c) {
+	float tone = clamp(dot(c, LUMA) / dot(SURVEY_PAPER, LUMA), 0.0, 1.0);
+	tone = mix(tone, 1.0, STAFF_WASH_LIFT * smoothstep(STAFF_WASH_FROM, STAFF_WASH_FULL, tone));
+	return STAFF_PAPER * tone;
+}
+
 vec3 snow_cap(int style, vec3 sheet, vec2 p, float fw, int k) {
 	vec3 white = plain(style, palette[style * KINDS + SNOW].rgb, sheet, p, SEAMLESS);
 	vec3 blue = style == MODERN ? MODERN_BLUE : style == ANCIENT ? ANCIENT_INK : SURVEY_BLUE;
@@ -345,7 +356,8 @@ vec3 ground_colour(vec2 uv, vec3 at, vec3 n, out float bump, out int kind, out b
 	mat2 from_screen = abs(determinant(dp)) > 1e-14 ? inverse(dp) : mat2(0.0);
 	mat2 to_uv = du * from_screen;
 	mat2 from_uv = abs(determinant(to_uv)) > 1e-14 ? inverse(to_uv) : mat2(0.0);
-	int style = clamp(ground_style, SURVEY, MODERN);
+	bool staff = ground_style == STAFF;
+	int style = staff ? SURVEY : clamp(ground_style, SURVEY, MODERN);
 	float h = smooth_height(uv);
 	vec3 own_texel = texel_of(floor(clamp(uv, vec2(0.0), vec2(1.0)) * cells));
 	float own = own_texel.g;
@@ -453,6 +465,7 @@ vec3 ground_colour(vec2 uv, vec3 at, vec3 n, out float bump, out int kind, out b
 		float snow = smoothstep(snow_line - band, snow_line + band, h + (noise(p * 0.7) - 0.5) * band * 2.0);
 		if (snow > 0.001) c = mix(c, snow_cap(style, sheet, p, fw, k), snow * (1.0 - 0.5 * cover) * (1.0 - 0.6 * rockness));
 	}
+	if (staff) c = one_ink(c);
 	c = mix(c, contour_ink(style, k, c), lines);
 	if (!painted_only) c = neatline(style, c, uv, fw);
 	return c;

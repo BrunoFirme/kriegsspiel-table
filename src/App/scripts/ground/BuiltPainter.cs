@@ -231,7 +231,13 @@ public sealed class BuiltHand
         Water = C("#9DB5AC"), WaterLine = C("#5F8F88"), Garden = C("#C4C4A0"), Yard = C("#D6BE96"), Quarter = C("#D0B48C"), Hedge = C("#1E1B18"), RoadsAsLines = true,
     };
 
-    public static BuiltHand Of(int style) => style == 1 ? Ancient : style == 2 ? Modern : Survey;
+    static readonly BuiltHand Staff = new()
+    {
+        Ink = C("#262422"), Signal = C("#262422"), Paper = C("#F1EFDA"), Masonry = C("#262422"), Church = C("#262422"), Road = C("#F1EFDA"), MainRoad = C("#F1EFDA"),
+        Water = C("#ECEBDA"), WaterLine = C("#3A3836"), Garden = C("#E6E4D2"), Yard = C("#F1EFDA"), Quarter = C("#DCDACC"), Hedge = C("#262422"),
+    };
+
+    public static BuiltHand Of(int style) => style == 1 ? Ancient : style == 2 ? Modern : style == 3 ? Staff : Survey;
 
     static readonly string[] LineOrder =
         ["moat", "ditch", "stream", "river", "hedge", "fence", "palisade", "track", "lane", "street", "road", "chaussee", "glacis", "rampart", "wall"];

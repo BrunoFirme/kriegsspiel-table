@@ -94,6 +94,9 @@ public static class GroundKinds
     static readonly string[] Modern =
         ["#00000000", "#F3EFE0", "#F3EFE0", "#CFD9C4", "#E6EBE4", "#D6E0EA", "#F3EFE0", "#EFE4D2", "#E9E6DC", "#F0E6D2", "#FBFAF6", "#F3EFE0", "#D9D8D0"];
 
+    static readonly string[] Staff =
+        ["#00000000", "#EDEBD8", "#F1EFDA", "#D6D4C6", "#E4E3D2", "#E6E8E2", "#F1EFDA", "#E9E5D0", "#DAD8CC", "#EEEAD4", "#FAF9F2", "#F1EFDA", "#D5D3C8"];
+
     public static string Color(byte kind, string? style)
     {
         if (kind >= All.Count) return All[None].Color;
@@ -101,6 +104,7 @@ public static class GroundKinds
         {
             MapStyles.Ancient => Ancient[kind],
             MapStyles.Modern => Modern[kind],
+            MapStyles.Staff => Staff[kind],
             _ => All[kind].Color,
         };
     }
@@ -110,16 +114,17 @@ public sealed record GroundParameter(string Name, string Tip, int Default);
 
 public static class MapStyles
 {
-    public const string Survey = "", Ancient = "ancient", Modern = "modern";
+    public const string Survey = "", Ancient = "ancient", Modern = "modern", Staff = "staff";
 
     public static readonly IReadOnlyList<(string Id, string Name)> All =
     [
         (Ancient, "Ancient"),
         (Survey, "18th-century survey"),
         (Modern, "Modern topographic"),
+        (Staff, "Staff sheet, one ink"),
     ];
 
-    public static readonly IReadOnlyList<string> ShaderOrder = [Survey, Ancient, Modern];
+    public static readonly IReadOnlyList<string> ShaderOrder = [Survey, Ancient, Modern, Staff];
 
     public static string Of(string? style) => All.Any(s => s.Id == style?.Trim().ToLowerInvariant()) ? style!.Trim().ToLowerInvariant() : Survey;
 

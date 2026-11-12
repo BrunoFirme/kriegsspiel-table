@@ -368,7 +368,7 @@ ground.
   marsh; with ✕ it thins a wood. **Shift+click** runs straight on from the last stroke, for roads, rivers and
   ridges. **Alt+click** picks up the ground under the cursor.
 - **Map → Ground** in the scenario's properties sets, for everyone, the **Style** painted ground is drawn
-  in (**Ancient**, **18th-century survey** or **Modern topographic**) and turns on **contour lines** over every
+  in (**Ancient**, **18th-century survey**, **Modern topographic** or the one-ink **Staff sheet**) and turns on **contour lines** over every
   relief: redrawn as the ground is shaped, stepping in round heights once the map's scale is calibrated, every fifth
   line numbered. **Snow line** whitens every ground above a height in metres, once the map's scale is set.
   **Streams** draws brooks where the relief gathers water, heavier the more it gathers, over every ground but

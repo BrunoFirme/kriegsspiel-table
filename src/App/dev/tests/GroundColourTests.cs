@@ -24,6 +24,16 @@ static class GroundColourTests
         return shot.GetPixel(shot.GetWidth() / 2, shot.GetHeight() / 2);
     }
 
+    [NodeTest]
+    static async Task Every_map_style_has_its_lettering_and_its_built_hand(TestRunner r)
+    {
+        Check.Equal(MapStyles.ShaderOrder.Count, MapLettering.Styles, "names on the map have an ink and a paper for every style");
+        Check.Equal(MapStyles.ShaderOrder.Count, ContourLines.Styles, "contour numbers have an ink and a face for every style");
+        Check.Equal(MapStyles.ShaderOrder.Count * GroundKinds.All.Count, ReliefSurface.Palette().Length, "the shader's palette holds every style's kinds");
+        Check.That(BuiltHand.Of(MapStyles.Index(MapStyles.Staff)) != BuiltHand.Of(MapStyles.Index(MapStyles.Survey)), "the staff sheet has a built hand of its own");
+        await r.Frame();
+    }
+
     [ScreenTest]
     static async Task Bare_ground_shows_its_paper_s_own_colour_whatever_the_colour_of_the_light(TestRunner r)
     {
