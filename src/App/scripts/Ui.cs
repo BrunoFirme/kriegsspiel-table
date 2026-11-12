@@ -10,9 +10,9 @@ public static class Ui
     public static readonly Color Muted = new(0.914f, 0.898f, 0.859f, 0.62f);
     public static readonly Color Faint = new(0.914f, 0.898f, 0.859f, 0.40f);
 
-    public static readonly Color Accent = new(0.788f, 0.635f, 0.298f);
-    public static readonly Color AccentInk = new(0.867f, 0.733f, 0.427f);
-    public static readonly Color OnAccent = new(0.11f, 0.09f, 0.055f);
+    public static Color Accent { get; private set; } = Of(InterfaceTint.Accent);
+    public static Color AccentInk { get; private set; } = Of(InterfaceTint.AccentInk);
+    public static Color OnAccent { get; private set; } = Of(InterfaceTint.OnAccent);
     public static readonly Color Danger = new(0.898f, 0.404f, 0.353f);
     public static readonly Color Alarm = new(0.725f, 0.141f, 0.118f);
     public static readonly Color Good = new(0.549f, 0.776f, 0.431f);
@@ -90,7 +90,14 @@ public static class Ui
         Surface = Of(InterfaceTint.Tinted(InterfaceTint.Surface, TintInUse));
         Raised = Of(InterfaceTint.Tinted(InterfaceTint.Raised, TintInUse));
         Overlay = Of(InterfaceTint.Tinted(InterfaceTint.Overlay, TintInUse));
+        Accent = Hued(InterfaceTint.Accent);
+        AccentInk = Hued(InterfaceTint.AccentInk);
+        OnAccent = Hued(InterfaceTint.OnAccent);
     }
+
+    public static Color Hued(Color own) => Of(InterfaceTint.Hued(new Rgb(own.R, own.G, own.B), TintInUse), own.A);
+
+    static Color Hued(Rgb own) => Of(InterfaceTint.Hued(own, TintInUse));
 
     public static Theme Theme() => _theme ??= MakeTheme();
     static Theme? _theme;

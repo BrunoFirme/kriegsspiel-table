@@ -39,6 +39,31 @@ public class InterfaceTintTests
     }
 
     [Fact]
+    public void Brass_stays_brass_under_charcoal_or_a_grey_tint()
+    {
+        foreach (var tint in new[] { InterfaceTint.Charcoal, "#808080", "#7f7d7a" })
+            foreach (var own in new[] { InterfaceTint.Accent, InterfaceTint.AccentInk, InterfaceTint.OnAccent })
+                Assert.Equal(own, InterfaceTint.Hued(own, tint));
+    }
+
+    [Fact]
+    public void Brass_takes_the_tint_hue_and_keeps_its_brightness_so_button_text_reads_the_same()
+    {
+        const float LeastButtonContrast = 4.5f;
+        foreach (var tint in InterfaceTint.Presets.Select(p => p.Tint).Concat(Picks).Append("#225d4f"))
+        {
+            var accent = InterfaceTint.Hued(InterfaceTint.Accent, tint);
+            foreach (var own in new[] { InterfaceTint.Accent, InterfaceTint.AccentInk, InterfaceTint.OnAccent })
+                Assert.InRange(InterfaceTint.Hued(own, tint).Luminance, own.Luminance * 0.995f, own.Luminance * 1.005f);
+            Assert.True(Contrast(accent, InterfaceTint.Hued(InterfaceTint.OnAccent, tint)) >= LeastButtonContrast, tint);
+            Assert.True(Contrast(InterfaceTint.Hued(InterfaceTint.AccentInk, tint), InterfaceTint.Tinted(InterfaceTint.Surface, tint)) >= LeastButtonContrast, tint);
+        }
+        var (hue, _) = InterfaceTint.Hued(InterfaceTint.Accent, "#225d4f").HueAndStrength();
+        var (tintHue, _) = Rgb.FromHex("#225d4f")!.Value.HueAndStrength();
+        Assert.InRange(hue, tintHue - 1, tintHue + 1);
+    }
+
+    [Fact]
     public void Walnut_turns_the_panels_brown()
     {
         var (hue, strength) = InterfaceTint.Tinted(InterfaceTint.Surface, InterfaceTint.Presets.First(p => p.Name == "Walnut").Tint).HueAndStrength();

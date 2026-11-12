@@ -215,9 +215,10 @@ public partial class ModelStudio : Control
         var im = new ImmediateMesh();
         var mat = new StandardMaterial3D { ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded, VertexColorUseAsAlbedo = true, Transparency = BaseMaterial3D.TransparencyEnum.Alpha };
         im.SurfaceBegin(Mesh.PrimitiveType.Lines, mat);
+        var axis = Ui.Hued(new Color(0.8f, 0.64f, 0.3f, 0.7f));
         for (int i = -n; i <= n; i++)
         {
-            var c = i == 0 ? new Color(0.8f, 0.64f, 0.3f, 0.7f) : new Color(1, 1, 1, i % 5 == 0 ? 0.22f : 0.09f);
+            var c = i == 0 ? axis : new Color(1, 1, 1, i % 5 == 0 ? 0.22f : 0.09f);
             float x = i * step;
             for (int k = 0; k < 2; k++)
             {

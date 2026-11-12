@@ -10,7 +10,7 @@ static class Tour
 
     public const int AtTableFrom = 4, Steps = 7;
     const float CardWidth = 340, Beside = 16, Edge = 12;
-    static readonly Color MarkFill = new(Ui.Accent, 0.22f);
+    static Color MarkFill => new(Ui.Accent, 0.22f);
 
     static PanelContainer? _card;
     static ColorRect? _mark;

@@ -301,7 +301,8 @@ sealed class FormationTool
     }
 
     static readonly StandardMaterial3D GhostInk = Ink(new Color(0.96f, 0.94f, 0.86f, 0.9f));
-    static readonly StandardMaterial3D FrontInk = Ink(Ui.AccentInk);
+    static StandardMaterial3D? _frontInk;
+    static StandardMaterial3D FrontInk => _frontInk ??= Ink(Ui.AccentInk);
 
     static StandardMaterial3D Ink(Color c) => new()
     {

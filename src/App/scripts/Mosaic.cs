@@ -9,7 +9,10 @@ sealed partial class Mosaic : Control
     const float Gap = 3, Margin = 0.03f, TabWidth = 0.40f, TabSlant = 0.07f, TabTop = 0.02f, BackTop = 0.14f;
     const float PapersTop = 0.21f, PapersBottom = 0.92f, FrontTop = 0.58f, PaperInset = 0.07f, PaperEdge = 2;
     const int Round = 5, CornerSteps = 4;
-    static readonly Color Back = new(0.439f, 0.361f, 0.235f), Front = new(0.588f, 0.486f, 0.322f), Paper = new(0.871f, 0.847f, 0.784f);
+    static readonly Color ManilaBack = new(0.439f, 0.361f, 0.235f), ManilaFront = new(0.588f, 0.486f, 0.322f), Paper = new(0.871f, 0.847f, 0.784f);
+    static Color? _back, _front;
+    static Color Back => _back ??= Ui.Hued(ManilaBack);
+    static Color Front => _front ??= Ui.Hued(ManilaFront);
 
     readonly Texture2D?[] _cells = new Texture2D?[Most];
     int _count;

@@ -14,7 +14,7 @@ namespace KTable.App;
 sealed partial class SavesWindow : Window
 {
     const int TileWidth = 196, PictureHeight = 110;
-    static readonly Color SelectedFill = new(Ui.Accent, 0.22f);
+    static Color SelectedFill => new(Ui.Accent, 0.22f);
 
     readonly HudContext _c;
     readonly SaveStore _store;

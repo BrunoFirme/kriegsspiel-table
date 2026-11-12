@@ -52,6 +52,11 @@ public static class InterfaceTint
     public static readonly Rgb Raised = new(0.137f, 0.129f, 0.118f);
     public static readonly Rgb Overlay = new(0.196f, 0.188f, 0.173f);
 
+    public static readonly Rgb Accent = new(0.788f, 0.635f, 0.298f);
+    public static readonly Rgb AccentInk = new(0.867f, 0.733f, 0.427f);
+    public static readonly Rgb OnAccent = new(0.11f, 0.09f, 0.055f);
+    public const float LeastHueStrength = 0.12f;
+
     public static readonly IReadOnlyList<(string Name, string Tint)> Presets = new[]
     {
         ("Charcoal", Charcoal),
@@ -69,6 +74,29 @@ public static class InterfaceTint
         if (Rgb.FromHex(tint) is not { } picked) return own;
         var (hue, strength) = picked.HueAndStrength();
         return AtLuminance(hue, MathF.Min(strength, MostStrength), own.Luminance);
+    }
+
+    public static Rgb Hued(Rgb own, string tint)
+    {
+        if (Rgb.FromHex(tint) is not { } picked) return own;
+        var (hue, strength) = picked.HueAndStrength();
+        if (strength < LeastHueStrength) return own;
+        float luminance = own.Luminance;
+        return AtLuminance(hue, StrongestReaching(hue, own.HueAndStrength().Strength, luminance), luminance);
+    }
+
+    static float StrongestReaching(float hue, float strength, float luminance)
+    {
+        const int Halvings = 24;
+        if (Rgb.FromHsv(hue, strength, 1).Luminance >= luminance) return strength;
+        float low = 0, high = strength;
+        for (int i = 0; i < Halvings; i++)
+        {
+            float mid = (low + high) / 2;
+            if (Rgb.FromHsv(hue, mid, 1).Luminance >= luminance) low = mid;
+            else high = mid;
+        }
+        return low;
     }
 
     public static Rgb Chip(string tint)

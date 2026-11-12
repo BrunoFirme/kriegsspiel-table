@@ -9,9 +9,9 @@ namespace KTable.App;
 
 public static class TextFind
 {
-    static readonly string HitBg = "#" + new Color(Ui.Accent, 0.32f).ToHtml(true);
-    static readonly string CurrentBg = "#" + Ui.AccentInk.ToHtml(false);
-    static readonly string CurrentInk = "#" + Ui.OnAccent.ToHtml(false);
+    static string HitBg => "#" + new Color(Ui.Accent, 0.32f).ToHtml(true);
+    static string CurrentBg => "#" + Ui.AccentInk.ToHtml(false);
+    static string CurrentInk => "#" + Ui.OnAccent.ToHtml(false);
 
     public static string Mark(string bbcode, IReadOnlyList<string> terms, int current, ref int index, List<int> paragraphs)
     {

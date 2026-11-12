@@ -334,7 +334,7 @@ sealed partial class ShelfMarker : Control
 {
     const float Bar = 3;
     const ulong Stale = 2;
-    static readonly Color IntoFill = new(Ui.Accent, 0.22f);
+    static Color IntoFill => new(Ui.Accent, 0.22f);
 
     bool _into;
     ulong _seen;
