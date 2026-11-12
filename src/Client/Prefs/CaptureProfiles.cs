@@ -17,7 +17,7 @@ public sealed class CaptureProfile
     const double Close = 1e-6;
 
     public bool SameAs(CaptureProfile o) =>
-        SightingGif == o.SightingGif && GifLarge == o.GifLarge && FirstPerson == o.FirstPerson
+        SightingGif == o.SightingGif && FirstPerson == o.FirstPerson
         && Format == o.Format && HideText == o.HideText && Near(Lens, o.Lens) && Near(EyeShare, o.EyeShare)
         && Near(Radius, o.Radius) && Near(Sharp, o.Sharp) && Near(Blur, o.Blur);
 

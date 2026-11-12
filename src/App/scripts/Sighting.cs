@@ -337,7 +337,6 @@ sealed class Sighting
         var obs = _selection.Nodes.FirstOrDefault();
         if (obs == null) { _c.Say("Pick the piece whose point of view it is, then press the tool again."); return false; }
         var next = NextVision;
-        _pending = null;
         Draft = new SightingDraft
         {
             ObserverId = obs.Piece.Id, Center = obs.Piece.Pos, Radius = radius ?? next.Radius,
@@ -356,15 +355,12 @@ sealed class Sighting
 
     public readonly record struct Vision(double Radius, double Sharp, double Blur);
 
-    Vision? _pending;
-
     const double FirstRadius = 40;
 
     Vision NextVision
     {
         get
         {
-            if (_pending is { } pending) return pending;
             var v = _c.S.View;
             return new Vision(v.VisionRadius > 0 ? v.VisionRadius : FirstRadius, v.VisionSharp ?? 1,
                 v.VisionBlur is { } kept ? Math.Clamp(kept, SightingDraft.LeastBlur, SightingDraft.MostBlur) : SightingDraft.BlurAtEdge);
@@ -397,7 +393,6 @@ sealed class Sighting
         cfg.Save();
         if (Draft is not { } d || Recording)
         {
-            if (Draft == null) _pending = new Vision(p.Radius, p.Sharp, p.Blur);
             NotifyChanged();
             return;
         }

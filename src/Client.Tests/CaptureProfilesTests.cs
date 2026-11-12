@@ -31,6 +31,9 @@ public class CaptureProfilesTests
         var nudged = Reports();
         nudged.Radius = 121;
         Assert.Equal(-1, CaptureProfiles.Lit(feud, nudged));
+        var otherSize = Aar();
+        otherSize.GifLarge = false;
+        Assert.Equal(1, CaptureProfiles.Lit(feud, otherSize));
         Assert.True(CaptureProfiles.Keep(s, "feud", 0, nudged));
         Assert.Equal(("Profile 1", 0), (CaptureProfiles.Of(s, "feud")[0].Name, CaptureProfiles.Lit(CaptureProfiles.Of(s, "feud"), nudged)));
     }

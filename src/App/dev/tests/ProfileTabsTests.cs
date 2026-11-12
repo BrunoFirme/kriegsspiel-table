@@ -79,8 +79,13 @@ static class ProfileTabsTests
         var capture = h.Hud.Capture.Panel;
         Check.That(capture.Visible && !capture.FindChildren("*", nameof(Button), true, false).OfType<Button>().Any(b => b.Text is "+" or "Reports" or "AAR"),
             "the Capture tool's panel has no profiles");
+        Named(capture, "GIF").EmitSignal(BaseButton.SignalName.Pressed);
+        await r.Frames(2);
+        Named(capture, "Large").EmitSignal(BaseButton.SignalName.Pressed);
+        await r.Frame();
+        Check.That(h.Hud.Cfg.GifLarge, "the Capture tool's GIF size is set to Large");
         h.Table.SetTool(Tool.Sighting);
         await r.Frames(2);
-        Check.Equal("AAR", Lit(pov), "taken out again, the POV opens on the profile last used");
+        Check.Equal("AAR", Lit(pov), "taken out again, the POV opens on the profile last used, lit though the Capture tool's GIF size changed");
     }
 }
