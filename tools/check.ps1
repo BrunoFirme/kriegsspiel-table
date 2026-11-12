@@ -8,8 +8,6 @@ $timingTests = "Category=Timing"
 $onlyNames = @(if ($Only) { $Only.Split(",") | ForEach-Object { $_.Trim() } | Where-Object { $_ } })
 $quickRun = $Quick -or $onlyNames.Count -gt 0
 $stamping = -not ($quickRun -or $Lock)
-$levelNames = @{ 1 = "changed"; 2 = "all"; 3 = "full" }
-$level = if ($Full) { 3 } elseif ($Changed) { 1 } else { 2 }
 
 function Step($name, [scriptblock]$body) {
     Write-Host "== $name"
@@ -68,6 +66,9 @@ $appTests = $runAll -or (Touches (Project-Dirs $appProject))
 $runApp = if ($quickRun) { $onlyNames.Count -gt 0 } else { $appTests }
 $surfaceGate = $runAll -or [bool]($changedFiles -match $surfaceInputs)
 $installerGuard = $Full -or [bool]($changedFiles -match '^tools/installer')
+$level = if ($Full) { 3 } elseif ($runAll) { 2 } else { 1 }
+$needs = @($testsToRun) + @(if ($appTests) { "App" }) + @(if ($surfaceGate) { "surface" }) + @(if ($installerGuard) { "installer" })
+$covers = switch ($level) { 3 { "full" } 2 { "all" } default { if ($needs.Count -gt 0) { $needs -join "+" } else { "none" } } }
 
 function Tree-Hash {
     $index = Join-Path ([IO.Path]::GetTempPath()) ("ktable-tree-" + [Guid]::NewGuid().ToString("N").Substring(0, 8))
@@ -90,10 +91,17 @@ function Tree-Hash {
 $stamps = Join-Path (git rev-parse --path-format=absolute --git-common-dir) "ktable-checks"
 $tree = if ($stamping) { Tree-Hash } else { $null }
 
+function Stamp-Covers($rank, $covered) {
+    if ($rank -ge 2) { return $rank -ge $level }
+    if ($level -gt 1) { return $false }
+    $had = @($covered.Split("+"))
+    -not @($needs | Where-Object { $had -notcontains $_ })
+}
+
 function Passed-Before {
-    foreach ($l in $level..3) {
-        $stamp = Join-Path $stamps "$tree.$($levelNames[$l])"
-        if (Test-Path $stamp) { return (Get-Content -Raw $stamp).Trim() }
+    foreach ($stamp in @(Get-ChildItem $stamps -Filter "$tree-*.stamp" -ErrorAction SilentlyContinue)) {
+        $rank, $covered = $stamp.BaseName.Substring($tree.Length + 1).Split("-", 2)
+        if (Stamp-Covers ([int]$rank) $covered) { return (Get-Content -Raw $stamp.FullName).Trim() }
     }
     $null
 }
@@ -101,8 +109,9 @@ function Passed-Before {
 function Write-Stamp {
     if ((Tree-Hash) -ne $tree) { Write-Host "   files changed while the check ran, so this tree is not stamped"; return }
     New-Item -ItemType Directory -Force $stamps | Out-Null
-    $what = "$($levelNames[$level]) on $(git rev-parse --short HEAD)$(if ($Changed) { " since $Changed" }), $(Get-Date -Format 'yyyy-MM-dd HH:mm')"
-    Set-Content -Path (Join-Path $stamps "$tree.$($levelNames[$level])") -Value $what
+    $base = if ($Changed) { " since $(git rev-parse --short $Changed)" } else { "" }
+    $what = "$covers on $(git rev-parse --short HEAD)$base, $(Get-Date -Format 'yyyy-MM-dd HH:mm')"
+    Set-Content -Path (Join-Path $stamps "$tree-$level-$covers.stamp") -Value $what
     Write-Host "   tree $($tree.Substring(0, 12)) stamped: $what"
 }
 

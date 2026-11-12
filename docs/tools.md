@@ -23,9 +23,11 @@ runs them all. `-Full` adds what a release needs: the app built once more with S
 while it is switched off, the installer guard, and a list of packages with known vulnerabilities (reported, not
 failed on).
 
-A run that passes stamps the tree it ran on (every file, committed or not) under `.git/ktable-checks`, shared by all
-worktrees. A later run on the same tree stops at once with "this tree already passed", if the stamp is of the same
-kind or wider: `-Full` covers everything, a run without `-Changed` covers `-Changed`. `-Again` runs it anyway.
+A run that passes stamps the tree it ran on under `.git/ktable-checks`, shared by all worktrees. The tree is every
+tracked file and every untracked one that `.gitignore` does not name, committed or not. The stamp records what the
+run covered: `full`, `all` (every step but the release ones), or the test projects, `App`, `surface` and `installer`
+that a `-Changed` run reached. A later run on the same tree stops at once with "this tree already passed" when a stamp
+covers everything it would run: a `-Changed` run from an older base reaches more and runs. `-Again` runs it anyway.
 
 `-Quick` is the loop while working: the builds, the .NET tests the change reaches, codecheck, no app tests, no
 coverage floor and no stamp. `-Only <names>` (comma separated, implies `-Quick`) runs only the tests whose class or
