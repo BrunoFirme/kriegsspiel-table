@@ -44,6 +44,8 @@ sealed class ReliefTool
     public event Action<string, Command>? Shaped;
     public event Action? Picked;
 
+    public void Share(string sha, Command c) => Shaped?.Invoke(sha, c);
+
     Settings Cfg => _c.Settings;
 
     public static Brush BrushOf(string mode, double strength, double density = 1, byte salt = 0, byte detail = 0) => mode switch

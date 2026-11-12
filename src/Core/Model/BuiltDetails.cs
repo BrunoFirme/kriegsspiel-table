@@ -31,9 +31,21 @@ public static class BuiltDetails
         };
         if (stroke.Count == 0) return thing;
         double x0 = stroke.Min(s => s.X) - radius, x1 = stroke.Max(s => s.X) + radius, y0 = stroke.Min(s => s.Y) - radius, y1 = stroke.Max(s => s.Y) + radius;
-        if (plots > NoPlotsBelow) Boundaries(site, thing.Parts, stroke, radius, seed, plots, (x0, y0, x1, y1));
-        if (buildings > 0) Farms(site, thing.Parts, stroke, radius, seed, buildings, (x0, y0, x1, y1));
+        Settle(site, thing.Parts, p => Passed(stroke, radius, p), (x0, y0, x1, y1), seed, plots, buildings);
         return thing;
+    }
+
+    public static BuiltThing Over(BuiltSite site, string sheet, Func<Spot, bool> passed, (double X0, double Y0, double X1, double Y1) box, int seed, double plots, double buildings)
+    {
+        var thing = new BuiltThing { Sheet = sheet, Kind = BuiltKinds.Details, Seed = seed, Settings = { [Plots] = plots, [Buildings] = buildings } };
+        Settle(site, thing.Parts, passed, box, seed, plots, buildings);
+        return thing;
+    }
+
+    static void Settle(BuiltSite site, List<BuiltPart> parts, Func<Spot, bool> passed, (double X0, double Y0, double X1, double Y1) box, int seed, double plots, double buildings)
+    {
+        if (plots > NoPlotsBelow) Boundaries(site, parts, passed, seed, plots, box);
+        if (buildings > 0) Farms(site, parts, passed, seed, buildings, box);
     }
 
     static Spot Corner(int seed, double cell, int ix, int iy, double wander)
@@ -42,7 +54,7 @@ public static class BuiltDetails
         return new Spot((ix + dice.Between(-wander, wander)) * cell, (iy + dice.Between(-wander, wander)) * cell);
     }
 
-    static void Boundaries(BuiltSite site, List<BuiltPart> parts, IReadOnlyList<Spot> stroke, double radius, int seed, double plots, (double X0, double Y0, double X1, double Y1) box)
+    static void Boundaries(BuiltSite site, List<BuiltPart> parts, Func<Spot, bool> passed, int seed, double plots, (double X0, double Y0, double X1, double Y1) box)
     {
         double cell = site.M(Lerp(PlotOpenM, PlotSmallM, plots)), share = Lerp(EdgesOpen, EdgesSmall, plots);
         for (int iy = (int)Math.Floor(box.Y0 / cell); iy <= (int)Math.Ceiling(box.Y1 / cell); iy++)
@@ -54,13 +66,13 @@ public static class BuiltDetails
                 {
                     double pick = dice.Next();
                     var mid = here + (next - here) * 0.5;
-                    if (!dice.Chance(share) || !Passed(stroke, radius, here) || !Passed(stroke, radius, next) || !Farmland(site, mid) || !Farmland(site, here) || !Farmland(site, next)) continue;
+                    if (!dice.Chance(share) || !passed(here) || !passed(next) || !Farmland(site, mid) || !Farmland(site, here) || !Farmland(site, next)) continue;
                     parts.Add(BuiltSite.Line(pick < HedgeShare ? "hedge" : pick < FenceShare ? "fence" : "ditch", [here, next]));
                 }
             }
     }
 
-    static void Farms(BuiltSite site, List<BuiltPart> parts, IReadOnlyList<Spot> stroke, double radius, int seed, double buildings, (double X0, double Y0, double X1, double Y1) box)
+    static void Farms(BuiltSite site, List<BuiltPart> parts, Func<Spot, bool> passed, int seed, double buildings, (double X0, double Y0, double X1, double Y1) box)
     {
         double cell = site.M(Lerp(FarmsApartFewM, FarmsApartManyM, buildings)), share = Lerp(FarmsFew, FarmsMany, buildings);
         var roads = site.RoadSegments().ToList();
@@ -69,7 +81,7 @@ public static class BuiltDetails
             {
                 var dice = new Dice(seed + 2, unchecked(ix * CellA ^ iy * CellB));
                 var at = new Spot((ix + 0.5 + dice.Between(-FarmWander, FarmWander)) * cell, (iy + 0.5 + dice.Between(-FarmWander, FarmWander)) * cell);
-                if (!dice.Chance(share) || !Passed(stroke, radius, at) || !Farmland(site, at)) continue;
+                if (!dice.Chance(share) || !passed(at) || !Farmland(site, at)) continue;
                 var (to, reach) = Nearest(roads, at);
                 var front = reach < site.M(LaneReachM) ? (to - at).Unit.Left : Spot.Toward(dice.Between(0, Math.PI));
                 Farm(site, parts, dice, at, front);

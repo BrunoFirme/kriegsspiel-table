@@ -140,6 +140,8 @@ public partial class Table : Node3D
         Zones = new ZoneLayer(_c, Overlay);
         Relief = new ReliefTool(_c, Overlay, Sheets);
         Build = new BuildTool(_c, Overlay, Sheets);
+        var converter = new PaintConverter(_c, Relief);
+        Sheets.GroundChanged += _ => converter.Look();
         Forms = new FormationTool(_c, Overlay, Selection, Hand);
         Pointers = new UmpirePointers(_c, p => Hand.SurfaceY(p, Layers.Umpire), Motion.Carrying, name => UmpireHue.Of(_c.S, name) ?? UmpireHue.Unassigned);
         SelectTool = new SelectTool(_c, press, Sheets, Pieces, Selection, Hand, Names, Actions);

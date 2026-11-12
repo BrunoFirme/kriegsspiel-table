@@ -41,6 +41,8 @@ public sealed class ReliefCache
 
     public void Remember(string sha, ReliefGrid g) { _grids[sha] = g; _failed.Remove(sha); }
 
+    public bool Drafting => _drafts.Count > 0;
+
     public void Draft(string sheetId, ReliefGrid? g, Rect2? where = null)
     {
         if (g == null) _drafts.Remove(sheetId);

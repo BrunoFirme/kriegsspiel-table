@@ -59,6 +59,9 @@ public sealed class BuiltSite
     public double HeightUnit { get; init; } = 1;
     public IReadOnlyList<BuiltThing> Others { get; init; } = [];
 
+    public BuiltSite With(ReliefGrid? grid, IReadOnlyList<BuiltThing> others) =>
+        new() { Width = Width, Height = Height, UnitsPerMetre = UnitsPerMetre, Grid = grid, HeightUnit = HeightUnit, Others = others };
+
     public double M(double metres) => metres * UnitsPerMetre;
 
     public bool Inside(Spot p) => p.X >= 0 && p.Y >= 0 && p.X <= Width && p.Y <= Height;

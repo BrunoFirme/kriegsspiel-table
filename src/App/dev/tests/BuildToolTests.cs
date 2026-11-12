@@ -123,6 +123,39 @@ static class BuildToolTests
     }
 
     [NodeTest]
+    static async Task A_host_s_table_turns_painted_roads_and_towns_into_built_things_in_one_undo_step(TestRunner r)
+    {
+        var t = OfflineTable.Make(r, pieces: 0);
+        await r.Frame();
+        t.Table.ReliefShaped += (_, c) => t.S.Do(c);
+        var old = ReliefGrid.Flat(Side, Side);
+        System.Array.Fill(old.Kind, (byte)1);
+        for (int x = old.Cols / 8; x < old.Cols * 7 / 8; x++)
+            for (int y = old.Rows / 2 - 1; y <= old.Rows / 2 + 1; y++) old.Kind[y * old.Cols + x] = GroundKinds.Road;
+        for (int y = 0; y < old.Rows; y++)
+            for (int x = 0; x < old.Cols; x++)
+                if ((x - old.Cols / 3) * (x - old.Cols / 3) + (y - old.Rows / 4) * (y - old.Rows / 4) < 40 * 40) old.Kind[y * old.Cols + x] = GroundKinds.Town;
+        var (sha, _) = ReliefImport.Save(old, t.S.Store.Root);
+        t.S.Relief.Remember(sha, old);
+        t.S.Do(new SetCalibration { UnitsPerMeter = 0.02 });
+        t.S.Do(new AddSheet { Sheet = new SheetDef { Id = "g", Name = "Ground", Image = "", Package = UploadAsset.ReliefPackage, Size = new Size2(Side, Side), Relief = sha, Height = 1 } });
+        for (int i = 0; i < 240 && t.S.View.Built.Count == 0; i++) await r.Frame();
+        Check.That(t.S.View.Built.Any(b => b.Kind == BuiltKinds.Road), "the painted road is a built road");
+        Check.That(t.S.View.Built.Any(b => b.Kind == BuiltKinds.Settlement && Houses(b) > 5), "the painted town is a built settlement");
+        var sheet = t.S.View.Sheets.Single();
+        Check.That(sheet.Relief != sha, "the sheet has taken the cleaned ground");
+        await r.Frames(20);
+        var now = t.S.Relief.Grid(sheet);
+        Check.That(now != null && !now.Kind.Any(k => k is GroundKinds.Road or GroundKinds.Town), "with no painted road or town left in it");
+        int built = t.S.View.Built.Count;
+        await r.Frames(20);
+        Check.Equal(built, t.S.View.Built.Count, "the cleaned ground is not converted again");
+        t.S.UndoLast();
+        await r.Frames(4);
+        Check.That(t.S.View.Built.Count == 0 && t.S.View.Sheets.Single().Relief == sha, "one undo gives the painted ground back");
+    }
+
+    [NodeTest]
     static async Task Nothing_is_built_before_the_map_has_a_scale(TestRunner r)
     {
         var t = OfflineTable.Make(r, pieces: 0);

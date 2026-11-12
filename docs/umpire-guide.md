@@ -355,7 +355,8 @@ ground.
   `.asc` or `.hgt` with **Set the map's scale from the file** ticked. Painted ground is
   drawn at that scale, in the style's own hand, with its own natural signs, afresh every time it is painted. Wood
   takes **Trees**, open wood to closed forest; the row shows under Density when wood is in hand. Roads, towns, plots
-  and farms painted in an earlier version stay as they were painted.
+  and farms painted in an earlier version become built things when the host opens the map: the same roads and
+  places, drawn afresh. One undo gives the painted ground back.
 - Painting: **Fill** colours the whole patch clicked, up to other ground types (a bare sheet whole), so a map starts
   with one click of grass; on its own kind it lays the patch afresh. The **rectangle** and **ellipse** beside it paint a field, a wood or a pond in one drag
   (**Shift** for a square or a circle, lined up with the view); the **polygon** paints the shape of its corners,
