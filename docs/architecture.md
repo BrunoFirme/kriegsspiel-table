@@ -79,7 +79,15 @@ keeps the two in agreement.
 - `PieceStudio` and `ModelStudio` are the piece studio (3D, 2D and Try it views), with the same pattern.
 - `Net` is the transport only. What it does with the game goes through `src/Client`.
 - `GroundTiles` draws painted ground from tiles baked into a cached atlas; the ground itself is planned in Core
-  (`Model/Ground*.cs`). It is off in headless runs, which keep the live shader.
+  (`Model/Ground*.cs`). It is off in headless runs, which keep the live shader. The view shader picks the tile
+  level per pixel and blends two levels; a stroke marks only the tiles it touched and bakes them in its own
+  frame (`Hurry`). Painted ground divides the table light's tint and overshoot out (`GroundLight`, the
+  `ground_gain` shader global), so a palette colour reaches the screen as written.
+- Built things (`Model/Built*.cs`, `Settlements`, `Forts`) are records on a sheet in `GameState.Built`: a kind,
+  a seed, settings, the outline the user gave and the parts as laid (blocks, lines, areas, signs) in thousandths
+  of a map unit from the full sheet's corner. Generators are pure functions of a `BuiltSite` (ground, scale, the
+  other built things) and run once; `LayBuilt`, `SetBuilt` and `RemoveBuilt` carry the result. `BuiltPainter`
+  draws the parts into the ground tiles after the ground, in the map style's hand (`BuiltHand`).
 - `scripts/agent/` is the AI agent's endpoint (`AgentEndpoint`), a local MCP server (`src/Client/Agent/`) that is off
   until the person connects an agent. Its tools act with that person's seat, through the same commands; where no tool
   fits, `UiDriver` works the app's own controls, and `AgentFence.Mark` puts a control out of its reach.
