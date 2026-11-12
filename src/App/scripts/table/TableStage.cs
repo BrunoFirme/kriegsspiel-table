@@ -39,8 +39,8 @@ sealed class TableStage
         {
             ShadowEnabled = true, DirectionalShadowMode = DirectionalLight3D.ShadowMode.Parallel4Splits, DirectionalShadowMaxDistance = ShadowReachNear,
             DirectionalShadowFadeStart = 0.9f, DirectionalShadowBlendSplits = true,
-            DirectionalShadowSplit1 = 0.12f, DirectionalShadowSplit2 = 0.36f, DirectionalShadowSplit3 = 0.7f,
-            ShadowBias = 0.02f, ShadowNormalBias = 0.5f, LightAngularDistance = 0f, ShadowBlur = 0.6f,
+            DirectionalShadowSplit1 = 0.3f, DirectionalShadowSplit2 = 0.5f, DirectionalShadowSplit3 = 0.75f,
+            ShadowBias = 0.02f, ShadowNormalBias = 2.0f, LightAngularDistance = 0f, ShadowBlur = 0.8f,
         };
         _c.Scene.AddChild(_sun);
         var env = _env = new WorldEnvironment
@@ -89,7 +89,7 @@ sealed class TableStage
         _c.Scene.AddChild(_gridPlane);
     }
 
-    const float ShadowReachNear = 260, ShadowReachLeast = 24, ShadowReachPerDistance = 3, ShadowReachStep = 0.05f;
+    const float ShadowReachNear = 260, ShadowReachLeast = 8, ShadowReachPerDistance = 3, ShadowReachStep = 0.05f, ShadowPastGround = 1.15f;
     bool _shadowsReachFar;
 
     public void ApplyGraphics(Settings cfg)
@@ -99,10 +99,10 @@ sealed class TableStage
         if (_env?.Environment is { } e) e.SsaoEnabled = cfg.ContactShade;
     }
 
-    public void FollowView(float distance)
+    public void FollowView(float distance, float farthestGround)
     {
         if (_sun == null) return;
-        float reach = Mathf.Max(ShadowReachLeast, distance * ShadowReachPerDistance);
+        float reach = Mathf.Max(ShadowReachLeast, Mathf.Min(distance * ShadowReachPerDistance, farthestGround * ShadowPastGround));
         if (!_shadowsReachFar) reach = Mathf.Min(reach, ShadowReachNear);
         if (Mathf.Abs(reach - _sun.DirectionalShadowMaxDistance) > reach * ShadowReachStep) _sun.DirectionalShadowMaxDistance = reach;
     }

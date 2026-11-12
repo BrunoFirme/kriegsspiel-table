@@ -336,7 +336,7 @@ public partial class Table : Node3D
         Pointers.Tick(delta);
         Sheets.TickLoadingLabels();
         Cam.TickKeys(delta, Typing);
-        Stage.FollowView(Rig.Distance);
+        Stage.FollowView(Rig.Distance, Rig.FarthestGroundDepth());
         FitTableNow(delta);
         Sheets.Tick();
         Contours.Tick(delta);

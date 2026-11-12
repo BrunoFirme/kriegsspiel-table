@@ -105,9 +105,9 @@ static class Graphics
         const bool SixteenBit = true;
         var (side, softness) = cfg.ShadowDetail switch
         {
-            <= 0 => (2048, RenderingServer.ShadowQuality.SoftVeryLow),
-            1 => (4096, RenderingServer.ShadowQuality.SoftLow),
-            _ => (8192, RenderingServer.ShadowQuality.SoftMedium),
+            <= 0 => (2048, RenderingServer.ShadowQuality.SoftLow),
+            1 => (4096, RenderingServer.ShadowQuality.SoftMedium),
+            _ => (8192, RenderingServer.ShadowQuality.SoftHigh),
         };
         RenderingServer.DirectionalShadowAtlasSetSize(side, SixteenBit);
         RenderingServer.DirectionalSoftShadowFilterSetQuality(softness);

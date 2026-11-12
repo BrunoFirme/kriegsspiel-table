@@ -455,6 +455,15 @@ public partial class CameraRig : Node3D
         return across / (2f * d * Mathf.Tan(Mathf.DegToRad(Cam.Fov) / 2f));
     }
 
+    public float FarthestGroundDepth()
+    {
+        if (TopDown) return Distance + _lift;
+        float halfFov = Mathf.DegToRad(Cam.Fov) / 2, topRay = -Pitch - halfFov;
+        if (Eye != null || topRay <= 0) return float.PositiveInfinity;
+        float height = Distance * Mathf.Sin(-Pitch) + _lift;
+        return height / Mathf.Sin(topRay) * Mathf.Cos(halfFov);
+    }
+
     const float EyeGlanceUnits = 20f;
 
     public float PixelsPerUnit()
