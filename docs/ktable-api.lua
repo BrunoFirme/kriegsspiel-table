@@ -175,7 +175,7 @@
 ---@field size Size Its size on the map at its state and scale: { w =, h = }.
 ---@field middle Point The middle of its footprint, in map units: { x =, z = }. The same as pos, except for a model drawn off its own centre.
 ---@field picture_size Size|nil Its picture's width and height in pixels at its state, or nil without a picture.
----@field local_unit Size|nil For a model that came from a module, what one unit of its script's local frame is in piece units: { x =, z = }; nil for every other piece.
+---@field local_unit Size What one unit of its module object's own frame is in piece units: { x =, z = }; a model's from its module, a tile's half its depth, a cut-out token's from its picture.
 ---@field shape string Its outline at its state: "box", "rounded", "circle", "hex", or "alpha" for a token cut along its picture.
 ---@field face_down boolean Turned over.
 ---@field tilt_x number How far it leans about its own left-right axis, in degrees from -180 to 180, before its heading turns it; 0 for a piece lying flat.

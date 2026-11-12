@@ -219,7 +219,7 @@ Read from `self` or from any piece `board.find` or `board.pieces` hands back. Fi
 | [`self.size`](#selfsize) | Its size on the map at its state and scale: { w =, h = }. |
 | [`self.middle`](#selfmiddle) | The middle of its footprint, in map units: { x =, z = }. The same as `pos`, except for a model drawn off its own centre. |
 | [`self.picture_size`](#selfpicture_size) | Its picture's width and height in pixels at its state, or nil without a picture. |
-| [`self.local_unit`](#selflocal_unit) | For a model that came from a module, what one unit of its script's local frame is in piece units: { x =, z = }; nil for every other piece. |
+| [`self.local_unit`](#selflocal_unit) | What one unit of its module object's own frame is in piece units: { x =, z = }; a model's from its module, a tile's half its depth, a cut-out token's from its picture. |
 | [`self.shape`](#selfshape) | Its outline at its state: "box", "rounded", "circle", "hex", or "alpha" for a token cut along its picture. |
 | [`self.face_down`](#selfface_down) | Turned over. |
 | [`self.tilt_x`](#selftilt_x) | How far it leans about its own left-right axis, in degrees from -180 to 180, before its heading turns it; 0 for a piece lying flat. |
@@ -577,9 +577,9 @@ Its picture's width and height in pixels at its state, or nil without a picture.
 self.local_unit
 ```
 
-For a model that came from a module, what one unit of its script's local frame is in piece units: { x =, z = }; nil for every other piece.
+What one unit of its module object's own frame is in piece units: { x =, z = }; a model's from its module, a tile's half its depth, a cut-out token's from its picture.
 
-**Type** `Size?`, read-only.
+**Type** `Size`, read-only.
 
 ### `self.shape`
 

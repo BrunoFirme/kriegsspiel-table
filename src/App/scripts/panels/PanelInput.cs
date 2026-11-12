@@ -249,8 +249,8 @@ sealed partial class PanelView
         PanelBox? best = null;
         foreach (var (b, c) in Nodes)
         {
-            if (!Catches(b) || !GodotObject.IsInstanceValid(c) || !c.IsVisibleInTree()) continue;
-            if (c.GetGlobalRect().HasPoint(pixel)) best = b;
+            if (!Catches(b) || !_hooks.Shows(b) || !GodotObject.IsInstanceValid(c) || !c.IsVisibleInTree()) continue;
+            if (c.GetGlobalRect().Abs().HasPoint(pixel)) best = b;
         }
         return best;
     }

@@ -7,20 +7,10 @@ local function vec(v, k, i, d)
   if x == nil then x = v[i] end
   return num(x, d)
 end
-local TOKEN_AREA = 14
 local function units(obj)
   local lu = obj.local_unit
   if type(lu) == "table" then return num(lu.x, 1), num(lu.z, 1) end
-  local s = obj.size
-  if not s then return 0.5, 0.5 end
-  local k = obj.scale
-  if type(k) ~= "number" or k <= 0 then k = 1 end
-  local w, h = s.w / k, s.h / k
-  if obj.shape ~= "alpha" then return h / 2, h / 2 end
-  local px = obj.picture_size
-  if not px or px.w <= 0 or px.h <= 0 then local u = math.sqrt(w * h / TOKEN_AREA); return u, u end
-  local aspect = px.w / px.h
-  return w / math.sqrt(TOKEN_AREA * aspect), h / math.sqrt(TOKEN_AREA / aspect)
+  return 0.5, 0.5
 end
 
 compat.local_units = units

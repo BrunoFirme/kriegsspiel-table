@@ -16,7 +16,7 @@ sealed class PieceUi
     readonly List<Plate> _plates = new();
     readonly Dictionary<string, string> _local = new();
 
-    sealed record Plate(PanelView View, Vector2 Center, float Turn, Vector2 Size, Vector2 Pixels, float Fit, SubViewport Port)
+    sealed record Plate(PanelView View, Vector2 Center, float Turn, Vector2 Size, Vector2 Pixels, float Fit, SubViewport Port, bool Under, Func<PanelBox, bool> Shows)
     {
         public float FaceY { get; set; }
     }
@@ -68,7 +68,7 @@ sealed class PieceUi
     {
         foreach (var p in _plates)
         {
-            if (p.View.Scene?.At(m.Path) is not { } box || !p.View.Nodes.TryGetValue(box, out var node)) continue;
+            if (p.View.Scene?.At(m.Path) is not { } box || !p.Shows(box) || !p.View.Nodes.TryGetValue(box, out var node)) continue;
             p.View.Announce(m);
             p.Port.RenderTargetUpdateMode = SubViewport.UpdateMode.Always;
             var key = PanelScene.Key(m.Path);
@@ -96,14 +96,28 @@ sealed class PieceUi
         _builtFaceDown = piece.FaceDown;
         Clear();
         var layout = piece.UiLayout ?? (piece.Ui.Count > 0 ? PanelState.Legacy(piece.Ui) : null);
-        if (layout == null || layout.Elements.Count == 0 || piece.FaceDown || _piece.IsDie || _piece.IsEffect) return;
+        if (layout == null || layout.Elements.Count == 0 || _piece.IsDie || _piece.IsEffect) return;
         var s = _piece.Session;
         var (color, host, admin) = PanelSeats.Of(s.Me, s.Peers);
         layout = PanelClasses.Apply(layout, _local);
         var scene = PanelScene.Build(layout, new V2(PanelScene.PieceCanvas, PanelScene.PieceCanvas), new PanelContext(layout.Colors, color, host, admin), PanelPictures.Meter(s), _local, _hiding);
         var top = scene.Root.Children[0];
-        foreach (var root in top.Children.Where(r => r.Active && r.Element != null)) DrawPlate(scene, root);
+        var bottom = PanelSides.Bottom(_piece.Def);
+        foreach (var root in top.Children.Where(r => r.Active && r.Element != null))
+        {
+            if (bottom is not { } low)
+            {
+                DrawPlate(scene, root, false, _ => true);
+                continue;
+            }
+            DrawPlate(scene, root, false, b => !PanelSides.Under(b, low));
+            if (PanelSides.AnyUnder(root, low)) DrawPlate(scene, root, true, b => PanelSides.Under(b, low));
+        }
     }
+
+    bool FacesUp(Plate p) => p.Under == _piece.Piece.FaceDown;
+
+    static Vector2 Seen(Plate p, Vector2 at) => p.Under ? new Vector2(-at.X, at.Y) : at;
 
     void Clear()
     {
@@ -124,7 +138,7 @@ sealed class PieceUi
         if (!GodotObject.IsInstanceValid(_piece) || _piece.FacePoint(screen) is not { } face) return null;
         var at = Coords.ToLocal(face, _piece.Piece.Pos, _piece.Piece.RotDeg) / Mathf.Max(1e-6f, _piece.Scale.X);
         foreach (var p in _plates.Where(p => p.View == view()))
-            if (OnPlate(p, at) is { } pixel) return pixel;
+            if (OnPlate(p, Seen(p, at)) is { } pixel) return pixel;
         return null;
     }
 
@@ -155,7 +169,7 @@ sealed class PieceUi
         for (int i = _plates.Count - 1; i >= 0; i--)
         {
             var p = _plates[i];
-            if (OnPlate(p, at) is not { } pixel) continue;
+            if (!FacesUp(p) || OnPlate(p, Seen(p, at)) is not { } pixel) continue;
             if (p.View.Hit(pixel) is { Path: not null } hit && p.View.Nodes.TryGetValue(hit, out var ctl)) return (i + ":" + PanelScene.Key(hit.Path), ctl, pixel);
             if (p.View.Hit(pixel) is { } part && p.View.Nodes.TryGetValue(part, out var pc)) return (i + ":" + part.Name, pc, pixel);
         }
@@ -178,10 +192,18 @@ sealed class PieceUi
         s.Do(new UiEvent { Layer = _piece.Layer, Piece = _piece.Piece.Id, Path = path, Event = ev, Value = value });
     }
 
-    void DrawPlate(PanelScene scene, PanelBox root)
+    Vector2 PerPanelUnit()
     {
+        if (_piece.Def is not { ModuleType: not null } def) return new Vector2(Thousandth, Thousandth);
+        var u = PieceUnits.Of(_piece.Session.Store, _piece.Piece, def);
+        return new Vector2((float)(u.W * PanelSides.ObjectUnitsPerPanelUnit), (float)(u.H * PanelSides.ObjectUnitsPerPanelUnit));
+    }
+
+    void DrawPlate(PanelScene scene, PanelBox root, bool under, Func<PanelBox, bool> shows)
+    {
+        var k = PerPanelUnit();
         float w = Mathf.Max(1, root.RectSize.X), h = Mathf.Max(1, root.RectSize.Y);
-        float pw = w * Thousandth * Math.Abs(root.Scale.X), ph = h * Thousandth * Math.Abs(root.Scale.Y);
+        float pw = w * k.X * Math.Abs(root.Scale.X), ph = h * k.Y * Math.Abs(root.Scale.Y);
         if (pw < Thousandth || ph < Thousandth) return;
         var center = root.PivotAt + root.RectMin + root.RectSize * 0.5f;
         float f = Mathf.Min(1, PlatePixels / Mathf.Max(w, h));
@@ -201,7 +223,7 @@ sealed class PieceUi
             Fresh();
         }), _local, SyncSoon, _said, vp) with
         {
-            PlatePixel = screen => PixelOn(() => made, screen), PlateWorld = pixel => WorldOf(() => made, pixel),
+            PlatePixel = screen => PixelOn(() => made, screen), PlateWorld = pixel => WorldOf(() => made, pixel), Shows = shows,
         };
         var view = new PanelView(hooks);
         made = view;
@@ -209,16 +231,16 @@ sealed class PieceUi
         _piece.AddChild(vp);
         _nodes.Add(vp);
         float turn = -(root.Rotation.Z - Upright);
-        _plates.Add(new Plate(view, new Vector2(center.X * Thousandth, -center.Y * Thousandth), turn, new Vector2(pw, ph), new Vector2(w, h), f, vp));
+        _plates.Add(new Plate(view, new Vector2(center.X * k.X, -center.Y * k.Y), turn, new Vector2(pw, ph), new Vector2(w, h), f, vp, under, shows));
         var mat = new StandardMaterial3D
         {
             AlbedoTexture = vp.GetTexture(), ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded, Transparency = BaseMaterial3D.TransparencyEnum.Alpha,
             CullMode = BaseMaterial3D.CullModeEnum.Back, RenderPriority = 2, TextureFilter = BaseMaterial3D.TextureFilterEnum.LinearWithMipmaps,
         };
-        var quad = new MeshInstance3D { Mesh = new PlaneMesh { Size = new Vector2(pw, ph) }, MaterialOverride = mat, CastShadow = GeometryInstance3D.ShadowCastingSetting.Off };
-        float faceY = (_piece.ShowsModel && ModelTop > 0 ? ModelTop : _piece.Thickness) + Lift;
+        var quad = new MeshInstance3D { Mesh = new PlaneMesh { Size = new Vector2(pw, ph), FlipFaces = under }, MaterialOverride = mat, CastShadow = GeometryInstance3D.ShadowCastingSetting.Off };
+        float faceY = under ? -Lift : (_piece.ShowsModel && ModelTop > 0 ? ModelTop : _piece.Thickness) + Lift;
         _plates[^1].FaceY = faceY;
-        quad.Position = new Vector3(center.X * Thousandth, faceY, -center.Y * Thousandth);
+        quad.Position = new Vector3(center.X * k.X, faceY, -center.Y * k.Y);
         quad.RotationDegrees = new Vector3(0, turn, 0);
         _piece.AddChild(quad);
         _nodes.Add(quad);

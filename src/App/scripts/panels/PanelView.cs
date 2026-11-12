@@ -15,6 +15,7 @@ sealed record PanelHooks(PanelView.Sender Send, Func<string, Action<Texture2D>, 
     public SubViewport? Port { get; init; }
     public Func<Vector2, Vector2?> PlatePixel { get; init; } = _ => null;
     public Func<Vector2, Vector3?> PlateWorld { get; init; } = _ => null;
+    public Func<PanelBox, bool> Shows { get; init; } = _ => true;
 }
 
 sealed partial class PanelView
@@ -26,6 +27,7 @@ sealed partial class PanelView
     public readonly Dictionary<PanelBox, Control> Nodes = new();
     PanelScene? _scene;
     Control? _top;
+    PanelBox? _from;
     readonly List<PanelBox> _hovered = new();
 
     public PanelView(PanelHooks hooks)
@@ -43,6 +45,7 @@ sealed partial class PanelView
     public Control Show(PanelScene scene, PanelBox from)
     {
         _scene = scene;
+        _from = from;
         Nodes.Clear();
         _hovered.Clear();
         _top = Node(from, null);
@@ -80,7 +83,8 @@ sealed partial class PanelView
 
     Control Node(PanelBox b, PanelBox? parent)
     {
-        var c = b.Mask && b.Image != null ? MaskShape(b) : new Control { MouseFilter = Control.MouseFilterEnum.Ignore, ClipContents = b.RectMask };
+        bool shown = _hooks.Shows(b);
+        var c = b.Mask && b.Image != null && shown ? MaskShape(b) : new Control { MouseFilter = Control.MouseFilterEnum.Ignore, ClipContents = b.RectMask };
         Fit(c, b, parent);
         if (parent != null)
         {
@@ -89,9 +93,9 @@ sealed partial class PanelView
         }
         if (b.Opacity < 1) c.Modulate = Colors.White with { A = Math.Clamp(b.Opacity, 0, 1) };
         Nodes[b] = c;
-        if (b.Image != null && !b.Mask) c.AddChild(Paint(b));
-        if (b.Text != null) c.AddChild(Words(b));
-        if (Catches(b))
+        if (b.Image != null && !b.Mask && shown) c.AddChild(Paint(b));
+        if (b.Text != null && shown) c.AddChild(Words(b));
+        if (Catches(b) && shown)
         {
             c.MouseFilter = Control.MouseFilterEnum.Stop;
             c.GuiInput += e => Input(b, e);
@@ -237,9 +241,18 @@ sealed partial class PanelView
         return key != null && owner.Extra.TryGetValue(key, out var s) && !PanelValues.IsNone(s) ? s : null;
     }
 
+    bool Mirrored(PanelBox b)
+    {
+        bool mirrored = false;
+        for (var at = b; at != null && at != _from; at = at.Parent)
+            if (at.Scale.X * Mathf.Cos(Mathf.DegToRad(at.Rotation.Y)) * at.Scale.Y * Mathf.Cos(Mathf.DegToRad(at.Rotation.X)) < 0) mirrored = !mirrored;
+        return mirrored;
+    }
+
     Control Words(PanelBox b)
     {
         var t = b.Text!;
+        bool clips = !Mirrored(b);
         var text = t.Text;
         int size = Math.Max(1, t.BestFit ? BestFit(b) : t.Size);
         var across = ((int)t.Alignment % 3) switch { 0 => HorizontalAlignment.Left, 2 => HorizontalAlignment.Right, _ => HorizontalAlignment.Center };
@@ -249,6 +262,7 @@ sealed partial class PanelView
         if (PanelRich.IsRich(text, t.Rich))
         {
             var r = new RichTextLabel { BbcodeEnabled = true, Text = PanelRich.BbCode(text, size), ScrollActive = false, AutowrapMode = wrap, HorizontalAlignment = across, VerticalAlignment = down };
+            r.ClipContents = clips;
             r.AddThemeColorOverride("default_color", ToColor(t.Color));
             foreach (var key in new[] { "normal_font_size", "bold_font_size", "italics_font_size", "bold_italics_font_size" }) r.AddThemeFontSizeOverride(key, size);
             r.AddThemeFontOverride("normal_font", PanelMeter.FontOf(t));
@@ -257,10 +271,11 @@ sealed partial class PanelView
         }
         else
         {
-            var l = new Label { Text = text, AutowrapMode = wrap, HorizontalAlignment = across, VerticalAlignment = down, ClipText = !t.VerticalOverflow && !t.Overflow };
+            var l = new Label { Text = text, AutowrapMode = wrap, HorizontalAlignment = across, VerticalAlignment = down, ClipText = clips && !t.VerticalOverflow && !t.Overflow };
             l.AddThemeColorOverride("font_color", ToColor(t.Color));
             l.AddThemeFontSizeOverride("font_size", size);
             l.AddThemeFontOverride("font", PanelMeter.FontOf(t));
+            if (!clips && !t.VerticalOverflow && !t.Overflow) l.MaxLinesVisible = Math.Max(1, (int)(b.RectSize.Y / Math.Max(1, PanelMeter.FontOf(t).GetHeight(size))));
             Effects(l, b, size);
             words = l;
         }

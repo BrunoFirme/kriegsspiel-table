@@ -344,7 +344,7 @@ internal sealed partial class PieceHandles(ScriptHost host)
             case "ready": return p.ReadyNow is { } r && ReadyPiece.Of(p, x => host.Find(x)) is Readiness.In or Readiness.Out ? Handle(r.Id) : DynValue.Nil;
             case "local_unit":
             {
-                if (def?.LocalUnit is not { } lu) return DynValue.Nil;
+                var lu = PieceUnits.Of(host.Server.Store, p, def);
                 var t = T();
                 t.Table["x"] = N(lu.W);
                 t.Table["z"] = N(lu.H);
@@ -399,11 +399,7 @@ internal sealed partial class PieceHandles(ScriptHost host)
 
     DynValue PictureSize(PieceInstance p, PieceDef? def)
     {
-        var store = host.Server.Store;
-        var shown = p.Picture is { } other ? store?.Def(other) : def;
-        if (shown == null || store?.PackOfDef(shown.Id) is not { } pack) return DynValue.Nil;
-        var picture = (p.State > 0 && p.State < shown.States.Count ? shown.States[p.State].Image : null) ?? shown.Image;
-        if (picture == null || !pack.Assets.TryGetValue(picture, out var a) || a.W <= 0 || a.H <= 0) return DynValue.Nil;
+        if (PieceUnits.PictureSize(host.Server.Store, p, def) is not { } a) return DynValue.Nil;
         var t = T();
         t.Table["w"] = N(a.W);
         t.Table["h"] = N(a.H);

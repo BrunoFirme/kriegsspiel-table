@@ -53,7 +53,7 @@ sealed partial class PanelView
     {
         if (_list != null) return true;
         if (_hooks.Port != null) return _selected != null && _hooks.PlatePixel(screen) is { } pixel && Hit(pixel) is { } hit && Owner(hit) == _selected;
-        return _selected != null && Nodes.TryGetValue(_selected, out var c) && GodotObject.IsInstanceValid(c) && c.GetGlobalRect().HasPoint(screen);
+        return _selected != null && Nodes.TryGetValue(_selected, out var c) && GodotObject.IsInstanceValid(c) && c.GetGlobalRect().Abs().HasPoint(screen);
     }
 
     bool Alive(PanelBox b) => Nodes.TryGetValue(b, out var c) && GodotObject.IsInstanceValid(c) && c.IsVisibleInTree();
@@ -138,7 +138,7 @@ sealed partial class PanelView
         if (way == Way.Explicit) return from.Extra.GetValueOrDefault(explicitKey) is { } id && _scene?.ById(id) is { Select: not null } b && Alive(b) ? (this, b) : null;
         bool along = dir.X != 0 ? (way & Way.Horizontal) != 0 : (way & Way.Vertical) != 0;
         if (!along || !Nodes.TryGetValue(from, out var fc)) return null;
-        var rect = fc.GetGlobalRect();
+        var rect = fc.GetGlobalRect().Abs();
         var center = Unity(rect.GetCenter());
         var edge = Unity(rect.GetCenter() + rect.Size * dir * 0.5f);
         var toward = (edge - center).Normalized();
