@@ -203,10 +203,11 @@ public sealed class BundleScene
                 var materials = renderer["m_Materials.Array"].Children;
                 for (int sub = 0; sub < mesh.SubMeshes.Count; sub++)
                 {
-                    if (mesh.SubMeshes[sub].Length == 0) continue;
+                    var triangles = Drawn(mesh.SubMeshes[sub], verts, mesh.Uvs);
+                    if (triangles.Length == 0) continue;
                     var material = sub < materials.Count ? materials[sub] : materials.FirstOrDefault();
                     var colour = Colour(manager, file, material);
-                    parts.Add(new ModelPart(verts, mesh.Uvs, mesh.SubMeshes[sub], Texture(manager, file, material, textures), colour, rank.GetValueOrDefault(here, int.MaxValue),
+                    parts.Add(new ModelPart(verts, mesh.Uvs, triangles, Texture(manager, file, material, textures), colour, rank.GetValueOrDefault(here, int.MaxValue),
                                             normals, MaterialDraw.Of(manager, file, material)));
                 }
             }
@@ -217,6 +218,7 @@ public sealed class BundleScene
         if (parts.Count == 0) return (null, lost);
         parts = parts.OrderBy(p => p.Rank).ToList();
         var (low, high) = Bounds(parts);
+        if (!Measurable(low, high)) return (null, lost + 1);
         return (new BundleModel(sha, name, parts, low, high, parts.Sum(p => p.Triangles.Length / Axes), textures, lost), lost);
     }
 
@@ -229,6 +231,22 @@ public sealed class BundleScene
         }
         return null;
     }
+
+    public static int[] Drawn(int[] triangles, double[] verts, double[] uvs)
+    {
+        bool Sound(int vertex) =>
+            vertex >= 0
+            && Enumerable.Range(0, Axes).All(axis => vertex * Axes + axis < verts.Length && double.IsFinite(verts[vertex * Axes + axis]))
+            && Enumerable.Range(0, UvParts).All(part => vertex * UvParts + part >= uvs.Length || double.IsFinite(uvs[vertex * UvParts + part]));
+        var kept = new List<int>(triangles.Length);
+        for (int n = 0; n + 2 < triangles.Length; n += Axes)
+            if (Sound(triangles[n]) && Sound(triangles[n + 1]) && Sound(triangles[n + 2]))
+                kept.AddRange(triangles.AsSpan(n, Axes));
+        return kept.Count == triangles.Length ? triangles : kept.ToArray();
+    }
+
+    public static bool Measurable(double[] low, double[] high) =>
+        low.Length == high.Length && low.Zip(high).All(span => double.IsFinite(span.First) && double.IsFinite(span.Second) && double.IsFinite(span.Second - span.First));
 
     static (double[] Low, double[] High) Bounds(List<ModelPart> parts)
     {

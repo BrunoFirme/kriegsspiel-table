@@ -395,6 +395,27 @@ public sealed partial class ConverterTests : ConverterHarness
         Assert.False(BundleScene.OnlyThisBundle(new OperationCanceledException()));
     }
 
+    [Fact]
+    public void Triangles_on_vertices_that_are_not_numbers_are_left_out_so_the_model_still_has_a_size()
+    {
+        var verts = new double[] { 0, 0, 0, 1, 0, 0, 0, 1, 0, double.NaN, double.NaN, double.NaN, 1, 1, double.PositiveInfinity };
+        var uvs = new double[] { 0, 0, 1, 0, 0, 1, 1, 1, double.NaN, 0 };
+        var triangles = new[] { 0, 1, 2, 1, 3, 2, 2, 1, 4, 0, 1, 7 };
+
+        Assert.Equal(new[] { 0, 1, 2 }, BundleScene.Drawn(triangles, verts, uvs));
+        var whole = new[] { 0, 1, 2 };
+        Assert.Same(whole, BundleScene.Drawn(whole, verts, uvs));
+        Assert.Equal(new[] { 0, 1, 2 }, BundleScene.Drawn(whole, verts, Array.Empty<double>()));
+        Assert.Empty(BundleScene.Drawn(new[] { 3, 4, 0 }, verts, uvs));
+        var badUv = new double[] { 0, 0, double.NaN, 0, 0, 1 };
+        Assert.Empty(BundleScene.Drawn(whole, verts, badUv));
+
+        Assert.True(BundleScene.Measurable(new double[] { -1, 0, -2 }, new double[] { 1, 3, 2 }));
+        Assert.False(BundleScene.Measurable(new[] { double.NaN, 0, 0 }, new double[] { 1, 1, 1 }));
+        Assert.False(BundleScene.Measurable(new[] { double.MaxValue, 0, 0 }, new[] { double.MinValue, 1, 1 }));
+        Assert.False(BundleScene.Measurable(new[] { -double.MaxValue, 0, 0 }, new[] { double.MaxValue, 1, 1 }));
+    }
+
     sealed class BundleOfItsOwnException : Exception
     {
     }
