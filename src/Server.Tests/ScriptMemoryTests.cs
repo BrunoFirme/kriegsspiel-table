@@ -6,7 +6,7 @@ using Xunit;
 
 namespace KTable.Server.Tests;
 
-[Collection(HeavyTests.Name)]
+[Collection(HeavyTests.Name), Trait("Category", "Timing")]
 public class ScriptMemoryTests
 {
     const string P = "p-000002";

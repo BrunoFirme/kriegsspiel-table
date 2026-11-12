@@ -103,7 +103,7 @@ public class ShakeTests
         Assert.Contains(held, h => Math.Abs(h.Rot - 180) > 10);
     }
 
-    [Fact]
+    [Fact, Trait("Category", "Timing")]
     public void A_crowd_of_six_hundred_is_clumped_at_once()
     {
         var held = Line(600);

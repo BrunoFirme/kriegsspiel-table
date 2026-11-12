@@ -6,19 +6,31 @@ reasons behind what it does that the code cannot show. [architecture.md](archite
 ## `tools/check.ps1`: the gate
 
 ```
-powershell -ExecutionPolicy Bypass -File tools\check.ps1 [-Changed <git ref>] [-Full] [-Lock <git ref>]
+powershell -ExecutionPolicy Bypass -File tools\check.ps1 [-Changed <git ref>] [-Full] [-Lock <git ref>] [-Again]
+powershell -ExecutionPolicy Bypass -File tools\check.ps1 -Quick [-Only <test names>] [-Changed <git ref>]
 ```
 
 Everything a change must pass: the solution, the app, every test, the app's node tests (headless and under
 coverage, with every folder the app could write moved into a temporary one, five minutes at most), the app's screen
 tests (the same runner in a real 1280×720 window, for what needs one; the window shows for a moment), the coverage
 floor (`covcheck.py`: the app's line coverage may not fall under its `FLOOR`, which is raised and never lowered),
-`codecheck.py`, and the module surface gate (`module-surface.py`).
+`codecheck.py`, and the module surface gate (`module-surface.py`). The node and screen tests run side by side and
+alongside the .NET tests; tests that measure wall-clock time (`Trait("Category", "Timing")`) run after them, alone,
+because load from the others makes them fail.
 
-`-Changed <ref>` runs only the steps that the files changed since that commit touch, for the loop while working; a
-change outside every project runs them all. `-Full` adds what a release needs: the app built once more with Steam
-in, so its code keeps compiling while it is switched off, the installer guard, and a list of packages with known
-vulnerabilities (reported, not failed on).
+`-Changed <ref>` runs only the steps that the files changed since that commit touch; a change outside every project
+runs them all. `-Full` adds what a release needs: the app built once more with Steam in, so its code keeps compiling
+while it is switched off, the installer guard, and a list of packages with known vulnerabilities (reported, not
+failed on).
+
+A run that passes stamps the tree it ran on (every file, committed or not) under `.git/ktable-checks`, shared by all
+worktrees. A later run on the same tree stops at once with "this tree already passed", if the stamp is of the same
+kind or wider: `-Full` covers everything, a run without `-Changed` covers `-Changed`. `-Again` runs it anyway.
+
+`-Quick` is the loop while working: the builds, the .NET tests the change reaches, codecheck, no app tests, no
+coverage floor and no stamp. `-Only <names>` (comma separated, implies `-Quick`) runs only the tests whose class or
+method name contains one of the names, in the .NET tests and in the app's node and screen tests
+(`KTABLE_TESTS` tells the app's runner), e.g. `-Only HudTests,Formation`; names that match no test fail the run.
 
 `-Lock <ref>` also runs the app's behaviour lock against that commit: the ref is checked out into a temporary
 folder for the run, and the app is compared with it. The converter is proved by its own tests, not by comparing builds. The lock needs no hands: it never moves the pointer, never

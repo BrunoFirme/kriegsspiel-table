@@ -869,7 +869,7 @@ public class ScriptingTests
         Assert.Equal("nil nil nil 255 31 -5 35 12 false true", t.Server.State.Find(U, P)!.Text["name"]);
     }
 
-    [Theory]
+    [Theory, Trait("Category", "Timing")]
     [InlineData("table.sort({ 3, 1, 2 }, function(a, b) while true do end end)")]
     [InlineData("string.gsub('abc', '%w', function(c) while true do end end)")]
     [InlineData("coroutine.wrap(function() while true do end end)()")]
@@ -953,7 +953,7 @@ public class ScriptingTests
         Assert.Contains(Errors(t), e => e.Contains("p-000003") && e.Contains("(3,"));
     }
 
-    [Fact]
+    [Fact, Trait("Category", "Timing")]
     public void One_compiled_chunk_serves_every_piece_with_the_same_script()
     {
         using var t = new Table();

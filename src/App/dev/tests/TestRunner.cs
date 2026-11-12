@@ -34,11 +34,13 @@ public partial class TestRunner : Node
         int passed = 0, failed = 0;
         bool screen = DisplayServer.GetName() != "headless";
         var kind = screen ? "screen tests" : "node tests";
+        var only = (System.Environment.GetEnvironmentVariable("KTABLE_TESTS") ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
         try
         {
             var tests = typeof(TestRunner).Assembly.GetTypes()
                 .SelectMany(t => t.GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic))
                 .Where(m => screen ? m.GetCustomAttribute<ScreenTestAttribute>() != null : m.GetCustomAttribute<NodeTestAttribute>() != null)
+                .Where(m => only.Length == 0 || only.Any(o => $"{m.DeclaringType!.Name}.{m.Name}".Contains(o, StringComparison.Ordinal)))
                 .OrderBy(m => m.DeclaringType!.Name, StringComparer.Ordinal).ThenBy(m => m.Name, StringComparer.Ordinal)
                 .ToList();
             foreach (var m in tests)
@@ -62,7 +64,7 @@ public partial class TestRunner : Node
         }
         catch (Exception e) { failed++; GD.PrintErr("FAIL the runner itself: " + e); }
         GD.Print($"{kind}: {passed} passed, {failed} failed");
-        GetTree().Quit(failed == 0 && passed > 0 ? 0 : 1);
+        GetTree().Quit(failed == 0 && (passed > 0 || only.Length > 0) ? 0 : 1);
     }
 
     public async Task Frame() => await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);

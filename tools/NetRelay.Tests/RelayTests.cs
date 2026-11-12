@@ -68,7 +68,7 @@ public sealed class RelayTests : IDisposable
         Assert.Equal(2, _relay.Lanes[0].Clients);
     }
 
-    [Fact]
+    [Fact, Trait("Category", "Timing")]
     public async Task PingDelaysTheRoundTrip()
     {
         using var client = Client();
