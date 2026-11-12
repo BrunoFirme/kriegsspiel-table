@@ -14,12 +14,13 @@ public readonly record struct CellBox(int X0, int Y0, int X1, int Y1)
 }
 
 public sealed record Brush(BrushMode Mode, double Radius, double Strength, byte Kind = GroundKinds.None, double? Level = null, double Density = 1, byte Salt = 0, byte Detail = 0,
-    double? Rise = null, double? Limit = null);
+    double? Rise = null, double? Limit = null, double Hardness = 0);
 
 public static class ReliefBrush
 {
     public const double RisePerRadius = 0.15;
     const double PaintEdge = 0.85;
+    const double SmoothReach = 0.25, HardestBrush = 0.95;
     const double EdgeNudge = 1e-6;
 
     public static CellBox Dab(ReliefGrid g, double u, double v, double radiusCells, Brush b)
@@ -31,13 +32,14 @@ public static class ReliefBrush
         if (x1 < x0 || y1 < y0) return CellBox.None;
         float rise = (float)(b.Rise ?? Math.Clamp(b.Strength, 0, 1) * RisePerRadius * r / Math.Max(1, g.Cols - 1));
         float level = (float)(b.Level ?? g.HeightAt(u, v));
-        var before = b.Mode == BrushMode.Smooth ? Window.Of(g, x0, y0, x1, y1) : null;
+        int reach = Math.Max(1, (int)Math.Round(r * SmoothReach));
+        var before = b.Mode == BrushMode.Smooth ? Window.Of(g, x0, y0, x1, y1, reach) : null;
         for (int y = y0; y <= y1; y++)
             for (int x = x0; x <= x1; x++)
             {
                 double d = Math.Sqrt((x - cx) * (x - cx) + (y - cy) * (y - cy)) / r;
                 if (d > 1) continue;
-                float fall = (float)Falloff(d);
+                float fall = (float)Falloff(d, b.Hardness);
                 int i = y * g.Cols + x;
                 switch (b.Mode)
                 {
@@ -153,36 +155,43 @@ public static class ReliefBrush
         return g.Kind[i] != kind || g.Salt[i] != salt || g.Detail[i] != detail;
     }
 
-    static double Falloff(double d) { double t = 1 - d; return t * t * (3 - 2 * t); }
+    public static double Falloff(double d, double hardness = 0)
+    {
+        double hard = Math.Clamp(hardness, 0, HardestBrush);
+        if (d <= hard) return 1;
+        double t = 1 - (d - hard) / (1 - hard);
+        return t * t * (3 - 2 * t);
+    }
 
     sealed class Window
     {
-        int _x0, _y0, _w, _h;
-        float[] _v = Array.Empty<float>();
+        int _x0, _y0, _w, _h, _reach;
+        double[] _sums = Array.Empty<double>();
 
-        public static Window Of(ReliefGrid g, int x0, int y0, int x1, int y1)
+        public static Window Of(ReliefGrid g, int x0, int y0, int x1, int y1, int reach)
         {
-            var w = new Window { _x0 = Math.Max(0, x0 - 1), _y0 = Math.Max(0, y0 - 1) };
-            w._w = Math.Min(g.Cols - 1, x1 + 1) - w._x0 + 1;
-            w._h = Math.Min(g.Rows - 1, y1 + 1) - w._y0 + 1;
-            w._v = new float[w._w * w._h];
-            for (int y = 0; y < w._h; y++) Array.Copy(g.H, (w._y0 + y) * g.Cols + w._x0, w._v, y * w._w, w._w);
+            var w = new Window { _x0 = Math.Max(0, x0 - reach), _y0 = Math.Max(0, y0 - reach), _reach = reach };
+            w._w = Math.Min(g.Cols - 1, x1 + reach) - w._x0 + 1;
+            w._h = Math.Min(g.Rows - 1, y1 + reach) - w._y0 + 1;
+            w._sums = new double[(w._w + 1) * (w._h + 1)];
+            for (int y = 0; y < w._h; y++)
+            {
+                double row = 0;
+                for (int x = 0; x < w._w; x++)
+                {
+                    row += g.H[(w._y0 + y) * g.Cols + w._x0 + x];
+                    w._sums[(y + 1) * (w._w + 1) + x + 1] = w._sums[y * (w._w + 1) + x + 1] + row;
+                }
+            }
             return w;
         }
 
         public float Mean(int x, int y)
         {
-            float sum = 0;
-            int n = 0;
-            for (int dy = -1; dy <= 1; dy++)
-                for (int dx = -1; dx <= 1; dx++)
-                {
-                    int nx = x + dx - _x0, ny = y + dy - _y0;
-                    if (nx < 0 || ny < 0 || nx >= _w || ny >= _h) continue;
-                    sum += _v[ny * _w + nx];
-                    n++;
-                }
-            return sum / n;
+            int ax = Math.Max(0, x - _reach - _x0), ay = Math.Max(0, y - _reach - _y0), bx = Math.Min(_w, x + _reach + 1 - _x0), by = Math.Min(_h, y + _reach + 1 - _y0);
+            int across = _w + 1;
+            double sum = _sums[by * across + bx] - _sums[ay * across + bx] - _sums[by * across + ax] + _sums[ay * across + ax];
+            return (float)(sum / ((bx - ax) * (by - ay)));
         }
     }
 

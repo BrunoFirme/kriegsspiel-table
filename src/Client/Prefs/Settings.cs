@@ -124,12 +124,14 @@ public sealed class Settings
     public List<string> RecentFolders { get; set; } = new();
     public const int RecentFoldersMost = 20;
     public bool CheckUpdates { get; set; } = true;
-    public const float SlowestReliefRate = 0.5f, FastestReliefRate = 200, HighestReliefLimit = 3000;
+    public const float SlowestReliefRate = 0.5f, FastestReliefRate = 200, HighestReliefLimit = 3000, HardestRelief = 0.9f;
     public float ReliefBrush { get; set; } = 6;
     public float ReliefStrength { get; set; } = 0.35f;
     public float ReliefRate { get; set; } = 10;
     public float ReliefUpTo { get; set; }
     public float ReliefDownTo { get; set; }
+    public float ReliefLevel { get; set; }
+    public float ReliefHardness { get; set; }
     public string ReliefMode { get; set; } = "raise";
     public float ReliefDensity { get; set; } = 1;
     public string ReliefPaint { get; set; } = "brush";
@@ -207,6 +209,8 @@ public sealed class Settings
         ReliefRate = float.IsFinite(ReliefRate) ? Math.Clamp(ReliefRate, SlowestReliefRate, FastestReliefRate) : 10;
         ReliefUpTo = float.IsFinite(ReliefUpTo) ? Math.Clamp(ReliefUpTo, 0, HighestReliefLimit) : 0;
         ReliefDownTo = float.IsFinite(ReliefDownTo) ? Math.Clamp(ReliefDownTo, 0, HighestReliefLimit) : 0;
+        ReliefLevel = float.IsFinite(ReliefLevel) ? Math.Clamp(ReliefLevel, 0, HighestReliefLimit) : 0;
+        ReliefHardness = float.IsFinite(ReliefHardness) ? Math.Clamp(ReliefHardness, 0, HardestRelief) : 0;
         if (Array.IndexOf(ReliefPaintings, ReliefPaint) < 0) ReliefPaint = "brush";
         if (ReliefMode is "paint:road" or "paint:bridge" or "paint:town") ReliefMode = "raise";
         Build ??= new();

@@ -520,6 +520,8 @@ sealed class TableInput
 
     void PressTerrain(InputEventMouseButton mb, Vec2 g)
     {
+        bool shapes = _c.Tool == Tool.Relief && !_c.Settings.ReliefMode.StartsWith("paint:", StringComparison.Ordinal);
+        if (mb.AltPressed && shapes) { _relief.Press(g, false, true); return; }
         bool built = mb.AltPressed ? _build.Holds(g) : _c.Tool == Tool.Build;
         bool painted = GroundKinds.Brushes.Contains(_c.S.Ground.KindAt(g));
         if (mb.AltPressed && !built && !painted && _c.Tool == Tool.Build) return;

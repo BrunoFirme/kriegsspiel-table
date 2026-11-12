@@ -54,11 +54,13 @@ sealed class ReliefTool
 
     Settings Cfg => _c.Settings;
 
+    public const string LevelMode = "level";
+
     public static Brush BrushOf(string mode, double strength, double density = 1, byte salt = 0, byte detail = 0) => mode switch
     {
         "lower" => new Brush(BrushMode.Lower, 0, strength),
         "smooth" => new Brush(BrushMode.Smooth, 0, strength),
-        "flatten" => new Brush(BrushMode.Flatten, 0, strength),
+        "flatten" or LevelMode => new Brush(BrushMode.Flatten, 0, strength),
         _ when mode.StartsWith("paint:", StringComparison.Ordinal) => new Brush(BrushMode.Paint, 0, strength, GroundKinds.Of(mode[6..]) ?? GroundKinds.None, Density: density, Salt: salt, Detail: detail),
         _ => new Brush(BrushMode.Raise, 0, strength),
     };
@@ -120,14 +122,16 @@ sealed class ReliefTool
         _raised = true;
     }
 
+    double PerMetre => (_c.S.View.Calibration.UnitsPerMeter ?? 0) / (Ground.FullWidth(_sheet!) * Math.Max(HeightUnit(_sheet!), 1e-6));
+
     void Spread(Vec2 from, Vec2 to, double seconds)
     {
         if (_sheet == null || _draft == null || Ground.Uv(_sheet, to) is not var (u1, v1) || Ground.Uv(_sheet, from) is not var (u0, v0)) return;
-        double perMetre = (_c.S.View.Calibration.UnitsPerMeter ?? 0) / (Ground.FullWidth(_sheet) * Math.Max(HeightUnit(_sheet), 1e-6));
+        double perMetre = PerMetre;
         bool lowers = Cfg.ReliefMode == "lower" != Input.IsKeyPressed(Key.Ctrl);
         float stop = lowers ? Cfg.ReliefDownTo : Cfg.ReliefUpTo;
         var brush = new Brush(lowers ? BrushMode.Lower : BrushMode.Raise, 0, 1, Rise: Cfg.ReliefRate * seconds * perMetre / ReliefBrush.Dabs(_draft, (u0, v0), (u1, v1), Radius),
-            Limit: stop > 0 ? stop * perMetre : null);
+            Limit: stop > 0 ? stop * perMetre : null, Hardness: Cfg.ReliefHardness);
         _last = to;
         Shown(ReliefBrush.Stroke(_draft, new List<(double, double)> { (u0, v0), (u1, v1) }, Radius, brush));
     }
@@ -165,6 +169,15 @@ sealed class ReliefTool
 
     void Pick(Vec2 g)
     {
+        if (!Painting)
+        {
+            if (_c.S.View.Calibration.UnitsPerMeter is not > 0 and var _) return;
+            Cfg.ReliefLevel = (float)Math.Round(_c.S.Ground.At(g) / _c.S.View.Calibration.UnitsPerMeter!.Value, 1);
+            Cfg.ReliefMode = LevelMode;
+            Cfg.Save();
+            Picked?.Invoke();
+            return;
+        }
         byte kind = _c.S.Ground.KindAt(g);
         if (kind != GroundKinds.None && !GroundKinds.Brushes.Contains(kind)) return;
         Cfg.ReliefMode = "paint:" + GroundKinds.Name(kind);
@@ -259,7 +272,9 @@ sealed class ReliefTool
         double cell = Ground.FullWidth(_sheet) / Math.Max(1, _draft.Cols - 1);
         double radius = Math.Clamp(Cfg.ReliefBrush, SmallestBrush, LargestBrush) / cell;
         var brush = Current;
-        if (brush.Mode == BrushMode.Flatten) { _level ??= _draft.HeightAt(u0, v0); brush = brush with { Level = _level }; }
+        if (!Painting) brush = brush with { Hardness = Cfg.ReliefHardness };
+        if (Cfg.ReliefMode == LevelMode) brush = brush with { Level = Cfg.ReliefLevel * PerMetre, Strength = 1 };
+        else if (brush.Mode == BrushMode.Flatten) { _level ??= _draft.HeightAt(u0, v0); brush = brush with { Level = _level }; }
         Shown(ReliefBrush.Stroke(_draft, new List<(double, double)> { (u0, v0), (u1, v1) }, radius, brush));
     }
 
@@ -359,7 +374,8 @@ sealed class ReliefTool
         if (_draft == null && _end is { } e && Input.IsKeyPressed(Key.Shift) && ReliefAt(at)?.Id == e.Sheet)
             _overlay.SegPx(_overlay.Mesh, mat, e.At, at, 0.05f, 2f);
         _overlay.RibbonPx(_overlay.Mesh, mat, Ring(at, Math.Clamp(Cfg.ReliefBrush, SmallestBrush, LargestBrush)), 0.05f, 2f);
-        if (!Painting) _overlay.RibbonPx(_overlay.Mesh, mat, Ring(at, Math.Clamp(Cfg.ReliefBrush, SmallestBrush, LargestBrush) * HalfStrengthAt), 0.05f, 1f);
+        float half = Cfg.ReliefHardness + (1 - Cfg.ReliefHardness) * HalfStrengthAt;
+        if (!Painting) _overlay.RibbonPx(_overlay.Mesh, mat, Ring(at, Math.Clamp(Cfg.ReliefBrush, SmallestBrush, LargestBrush) * half), 0.05f, 1f);
     }
 
     static List<Vec2> Ring(Vec2 c, double r)

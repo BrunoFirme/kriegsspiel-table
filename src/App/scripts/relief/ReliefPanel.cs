@@ -26,6 +26,7 @@ sealed class ReliefPanel : HudPart
         ("lower", "Lower", "Drag to dig the ground down, never below the table"),
         ("smooth", "Smooth", "Drag to soften slopes and bumps"),
         ("flatten", "Flatten", "Drag to bring the ground to the height where the stroke began"),
+        (ReliefTool.LevelMode, "Set height", "Drag to lay the ground at an exact height · Alt+click takes the height there"),
     };
 
     public void Rebuild()
@@ -97,7 +98,7 @@ sealed class ReliefPanel : HudPart
 
     void AddShape()
     {
-        var grid = new GridContainer { Columns = 2 };
+        var grid = new GridContainer { Columns = 3 };
         grid.AddThemeConstantOverride("h_separation", Ui.Gap.Tight);
         grid.AddThemeConstantOverride("v_separation", Ui.Gap.Tight);
         foreach (var (key, text, tip) in Shapes) grid.AddChild(Choice(text, key, tip));
@@ -197,8 +198,11 @@ sealed class ReliefPanel : HudPart
         if (Painting)
             Row("Density", 0.05, 1, 0.05, Cfg.ReliefDensity, x => $"{x * 100:0}%", x => Cfg.ReliefDensity = (float)x, "How much of the ground takes it, in clumps: low for sparse wood or scattered rock; with ✕ it thins what is painted. Going over again adds no more");
         else if (Cfg.ReliefMode is "raise" or "lower") AddRate(Row);
+        else if (Cfg.ReliefMode == ReliefTool.LevelMode)
+            Row("Height", 0, Settings.HighestReliefLimit, 1, Cfg.ReliefLevel, x => $"{x:0.#} m", x => Cfg.ReliefLevel = (float)x, "The height laid, in metres · Alt+click on the map takes one");
         else
             Row("Strength", 0.05, 1, 0.05, Cfg.ReliefStrength, x => $"{x * 100:0}%", x => Cfg.ReliefStrength = (float)x, "How much one pass smooths or flattens");
+        if (!Painting) Row("Hardness", 0, Settings.HardestRelief, 0.05, Cfg.ReliefHardness, x => $"{x * 100:0}%", x => Cfg.ReliefHardness = (float)x, "A soft bell, or flat across with a short edge");
         if (!Painting || GroundKinds.Of(Cfg.ReliefMode[6..]) is not { } kind) return;
         var parameters = GroundKinds.Parameters(kind);
         for (int i = 0; i < parameters.Count; i++)

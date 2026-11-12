@@ -51,4 +51,37 @@ public class ReliefRateTests
         Assert.Equal(0f, Centre(Held(6, BrushMode.Lower, from: 0.015f, ticks: 10)), 6);
         Assert.Equal(0.01f, Centre(Held(6, BrushMode.Lower, limit: 0.02, from: 0.01f, ticks: 3)), 6);
     }
+
+    [Fact]
+    public void A_hard_brush_is_full_across_its_middle_and_a_soft_one_falls_away_at_once()
+    {
+        Assert.Equal(1, ReliefBrush.Falloff(0.6, 0.7), 6);
+        Assert.True(ReliefBrush.Falloff(0.6) < 0.5);
+        Assert.Equal(0, ReliefBrush.Falloff(1, 0.7), 6);
+    }
+
+    [Fact]
+    public void Set_height_lays_its_level_exactly_under_the_hard_part_of_the_brush()
+    {
+        var g = new ReliefGrid(Side, Side);
+        Array.Fill(g.H, 0.03f);
+        ReliefBrush.Dab(g, 0.5, 0.5, 8, new Brush(BrushMode.Flatten, 0, 1, Level: 0.012, Hardness: 0.5));
+        Assert.Equal(0.012f, Centre(g), 6);
+        Assert.Equal(0.012f, g.H[Side / 2 * Side + Side / 2 + 3], 6);
+        Assert.Equal(0.03f, g.H[0], 6);
+    }
+
+    [Fact]
+    public void A_wide_smooth_reaches_as_far_as_a_quarter_of_its_brush()
+    {
+        var g = new ReliefGrid(Side, Side);
+        for (int y = 0; y < Side; y++)
+            for (int x = Side / 2; x < Side; x++) g.H[y * Side + x] = 0.02f;
+        float Beside(ReliefGrid of) => of.H[Side / 2 * Side + Side / 2 + 2];
+        var narrow = g.Copy();
+        ReliefBrush.Dab(narrow, 0.5, 0.5, 3, new Brush(BrushMode.Smooth, 0, 1));
+        ReliefBrush.Dab(g, 0.5, 0.5, 16, new Brush(BrushMode.Smooth, 0, 1));
+        Assert.Equal(0.02f, Beside(narrow), 6);
+        Assert.True(Beside(g) < 0.019f, $"two cells past the step the wide brush has rounded it: {Beside(g)}");
+    }
 }
