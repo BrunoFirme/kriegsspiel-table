@@ -182,6 +182,8 @@ public static partial class StateMachine
         var own = (sunk.Attached ?? []).Where(id => id != null && id != sunk.ReadyNow?.Id && g.Find(layer, id) != null).ToList();
         foreach (var id in own) undo.Items.Add(new Detach { Layer = layer, Child = id });
         undo.Items.Add(new MovePiece { Layer = layer, Id = sunk.Id, Pos = sunk.Pos, RotDeg = sunk.RotDeg, Stack = sunk.Stack, Y = sunk.Y });
+        if (sunk.ReadyNow is { } r && sunk.Attached?.Contains(r.Id) == true && g.Find(layer, r.Id) is { } ready)
+            undo.Items.Add(new MovePiece { Layer = layer, Id = ready.Id, Pos = ready.Pos, RotDeg = ready.RotDeg, Stack = ready.Stack, Y = ready.Y });
         foreach (var id in own) undo.Items.Add(new Attach { Layer = layer, Parent = sunk.Id, Child = id });
         return undo;
     }

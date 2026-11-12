@@ -397,5 +397,50 @@ public class ReadyPieceTests
         Assert.True(Json.Clone(copy).ReadyIn![1].WasOut);
     }
 
+    [Fact]
+    public void Undoing_a_move_that_pressed_a_carried_holder_down_puts_its_out_ready_piece_back_where_it_was()
+    {
+        const string Cart = "p-000104";
+        var g = Table();
+        g.Layer(U).Add(CoreSamples.Piece(Cart, x: 10, z: 10));
+        var cart = g.Find(U, Cart)!;
+        cart.Y = 2;
+        Ok(g, MarkSmoke);
+        Ok(g, new ReleaseReady { Layer = U, Holder = Battery });
+        Holder(g).Y = 1;
+        g.Find(U, Smoke)!.Y = 3;
+        var smokeAt = g.Find(U, Smoke)!.Pos;
+        Ok(g, new Attach { Layer = U, Parent = Cart, Child = Battery });
+        var undo = Ok(g, new MovePiece { Layer = U, Id = Cart, Pos = cart.Pos, RotDeg = cart.RotDeg, Y = 0 });
+        Assert.Equal(0, Holder(g).Y, 6);
+        Assert.Equal(1, g.Find(U, Smoke)!.Y, 6);
+        Ok(g, undo!);
+        Assert.Equal(2, g.Find(U, Cart)!.Y, 6);
+        Assert.Equal(1, Holder(g).Y, 6);
+        Assert.Equal(3, g.Find(U, Smoke)!.Y, 6);
+        At(g, Smoke, smokeAt.X, smokeAt.Z);
+    }
+
+    [Fact]
+    public void One_piece_ready_in_two_looks_comes_out_at_each_look_s_own_spot()
+    {
+        var g = Table();
+        Holder(g).State = 0;
+        Ok(g, new SetReady { Layer = U, Holder = Battery, ForState = 0, Ready = new ReadyPiece { Id = Smoke } });
+        Ok(g, new SetReady { Layer = U, Holder = Battery, ForState = 1, Ready = new ReadyPiece { Id = Smoke } });
+        Ok(g, new ReleaseReady { Layer = U, Holder = Battery });
+        Ok(g, Look(1));
+        Ok(g, new ReleaseReady { Layer = U, Holder = Battery });
+        Ok(g, new MovePiece { Layer = U, Id = Smoke, Pos = new Vec2(10, 14) });
+        Ok(g, Look(0));
+        At(g, Smoke, 12, 10);
+        Ok(g, Look(1));
+        At(g, Smoke, 10, 14);
+        var undo = Ok(g, Look(0));
+        At(g, Smoke, 12, 10);
+        Ok(g, undo!);
+        At(g, Smoke, 10, 14);
+    }
+
     static double Distance(Vec2 a, Vec2 b) => Math.Sqrt((a.X - b.X) * (a.X - b.X) + (a.Z - b.Z) * (a.Z - b.Z));
 }
