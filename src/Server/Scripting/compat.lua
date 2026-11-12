@@ -540,11 +540,12 @@ function compat.module_handler(fn)
   end
 end
 
-local WIDGET_STEP, WIDGET_PIXEL = 3, 0.00624
+local WIDGET_STEP, WIDGET_PIXEL, INPUT_MARGIN = 3, 0.00624, 4
 local function widget_size(v) local n = v / WIDGET_STEP; return (n < 0 and math.ceil(n) or math.floor(n)) * WIDGET_PIXEL end
 local VALIDATION = { [2] = "integer", [3] = "float", [4] = "alphanumeric", [5] = "username", [6] = "name" }
 local TABS = { [2] = "next", [3] = "spaces" }
 local ALIGN = { [2] = "left", [3] = "center", [4] = "right" }
+local INPUT_ALIGN = { [1] = "left", [2] = "left", [3] = "center", [4] = "right" }
 compat.module_defaults = {
   width = 100, height = 100, font_size = 100, alignment = 1,
   color = { 1, 1, 1, 1 }, font_color = { 0, 0, 0, 1 },
@@ -574,6 +575,7 @@ function compat.widget_spec(obj, t, kind, env)
   }
   if kind == "input" then
     s.value = tostring(t.value or D.value); s.placeholder = tostring(t.label or "")
+    s.pad = INPUT_MARGIN * WIDGET_PIXEL * sz * uz; s.align = INPUT_ALIGN[num(t.alignment, D.alignment)] or "center"
     s.validation = VALIDATION[num(t.validation, D.validation)]; s.tab = TABS[num(t.tab, D.tab)] or "none"
     s.on_change = handler(t.input_function, t.function_owner, obj, env)
   else
@@ -591,6 +593,7 @@ function compat.widget_patch(obj, t, kind, full, env)
     if t.position or t.rotation then p.x = s.x; p.z = s.z; p.face = s.face; p.kind = s.kind; p.rot = s.rot; p.y = s.y end
     if t.width or t.scale then p.w = s.w end
     if t.height or t.scale then p.h = s.h end
+    if t.scale then p.pad = s.pad end
     if t.font_size or t.scale then p.font = s.font end
   end
   if t.label ~= nil then if kind == "input" then p.placeholder = tostring(t.label) else p.label = tostring(t.label) end end
@@ -602,7 +605,7 @@ function compat.widget_patch(obj, t, kind, full, env)
   if t.press_color ~= nil then p.press_color = compat.color(t.press_color) end
   if t.validation ~= nil and kind == "input" then p.validation = VALIDATION[num(t.validation, 1)] or "any" end
   if t.tab ~= nil and kind == "input" then p.tab = TABS[num(t.tab, 2)] or "none" end
-  if t.alignment ~= nil then p.align = ALIGN[num(t.alignment, 3)] or "center" end
+  if t.alignment ~= nil then p.align = (kind == "input" and INPUT_ALIGN or ALIGN)[num(t.alignment, 3)] or "center" end
   if t.click_function ~= nil then p.on_click = handler(t.click_function, t.function_owner, obj, env) end
   if t.input_function ~= nil then p.on_change = handler(t.input_function, t.function_owner, obj, env) end
   return p

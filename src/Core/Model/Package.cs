@@ -521,6 +521,7 @@ public sealed class PieceInstance : IJsonOnDeserialized
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool NotInteractable { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool Flies { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public double Altitude { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public int LinesToARule { get; set; }
     public const double DefaultAltitude = 3, LeastAltitude = 0.5, MostAltitude = 40;
     [JsonIgnore] public double FlightAltitude => Altitude > 0 ? Altitude : DefaultAltitude;
     [JsonIgnore] public double Aloft => Flies ? FlightAltitude : 0;
@@ -564,7 +565,8 @@ public sealed class PieceInstance : IJsonOnDeserialized
         Counters = new(Counters), Text = new(Text), Attached = new(Attached),
         TintOverride = TintOverride, Label = Label, Scale = Scale, Y = Y, FaceDown = FaceDown, TiltX = TiltX, TiltZ = TiltZ, Note = Note, Picture = Picture, Locked = Locked, Holds = Holds,
         NoCollision = NoCollision, PhysicalRoll = PhysicalRoll, NotSticky = NotSticky, NotBoxSelected = NotBoxSelected, MeasuresMoves = MeasuresMoves,
-        NotInteractable = NotInteractable, Flies = Flies, Altitude = Altitude, Highlight = Highlight, BookHighlight = BookHighlight?.ToArray(), WebMesh = WebMesh, WebTexture = WebTexture,
+        NotInteractable = NotInteractable, Flies = Flies, Altitude = Altitude, LinesToARule = LinesToARule, Highlight = Highlight, BookHighlight = BookHighlight?.ToArray(),
+        WebMesh = WebMesh, WebTexture = WebTexture,
         Script = Script, ScriptState = ScriptState, Guid = Guid, Tags = Tags == null ? null : new(Tags), Memo = Memo, GmNotes = GmNotes,
         Widgets = Widgets.Select(w => w.Clone()).ToList(), DrawnOnState = DrawnOnState, MenuItems = MenuItems.Select(m => m.Clone()).ToList(),
         Lines = Lines.Select(l => l.Clone()).ToList(), Decals = Decals.Select(d => d.Clone()).ToList(), DecalsOnState = DecalsOnState,
@@ -703,6 +705,7 @@ public sealed class Widget
     public string? TextColor { get; set; }
     public string Align { get; set; } = "center";
     public int Lines { get; set; } = 1;
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public double? Pad { get; set; }
     public string? Tooltip { get; set; }
     public string? OnClick { get; set; }
     public string? OnChange { get; set; }

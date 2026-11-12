@@ -4,7 +4,7 @@ public static class NoteCard
 {
     public const string Tag = "note", TitleLine = "Name", BodyLine = "Note", DefaultName = "Note";
     public const double Width = 7.0, Height = 4.3, Thickness = 0.05;
-    public const int PixelsPerUnit = 200;
+    public const int PixelsPerUnit = 200, MostLinesToARule = 2;
 
     public const double TitleTop = 0.035, TitleBottom = 0.14, HeadRule = 0.155, FirstRule = 0.265, RuleStep = 0.0745, BottomMargin = 0.035, SideMargin = 0.03;
     public const double BindingBottom = 0.033, Perforation = 0.041;

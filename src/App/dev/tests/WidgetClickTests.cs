@@ -67,9 +67,43 @@ static class WidgetClickTests
         var box = labels.FirstOrDefault(l => l.Text == "box") ?? throw new TestFailure("the box is lettered");
         Check.That(button.Font == Fonts.Widget && box.Font == Fonts.Widget, "buttons and boxes letter in the widget typeface");
         float em = button.PixelSize * Fonts.FaceSize;
-        var lift = button.Basis.Y * em * PieceWidgets.ButtonBaselineLift;
-        Check.That((button.Position - box.Position).IsEqualApprox(lift), $"the button's letters rise {PieceWidgets.ButtonBaselineLift} of their size along their own up, the box's stay on the anchor");
+        var lift = button.Basis.Y * em * PieceWidgets.BracketLift;
+        Check.That((button.Position - box.Position).IsEqualApprox(lift), $"the button's letters rise {PieceWidgets.BracketLift} of their size along their own up, the box's stay on the anchor");
         Check.That(lift.Length() > 0.01f, "the rise is there to see");
+        t.Table.QueueFree();
+    }
+
+    const string Hung = """
+        function on_load()
+          self.input{ x = 0, z = 0, w = 1.5, h = 0.6, font = 0.2, value = "middle", on_change = "typed" }
+          self.input{ x = 0, z = 0, w = 1.5, h = 0.6, font = 0.2, pad = 0.05, value = "hung", on_change = "typed" }
+          self.input{ x = 0, z = 0, w = 1.5, h = 0.6, font = 0.2, pad = 0.05, align = "left", value = "two\nlines", on_change = "typed" }
+        end
+        function typed() end
+        """;
+
+    [NodeTest]
+    static async Task A_box_with_a_pad_hangs_its_text_from_its_top_edge_as_the_game_s_boxes_do_lines_a_letter_size_apart(TestRunner r)
+    {
+        const float Tall = 0.6f, Wide = 1.5f, Pad = 0.05f, Close = 0.002f;
+        var t = OfflineTable.Make(r, pieces: 1);
+        await r.Frames(2);
+        var node = t.Table.Pieces.Nodes.First();
+        t.S.Do(new SetScript { Layer = Layers.Umpire, Id = node.Piece.Id, Text = Hung });
+        await r.Frames(3);
+        var labels = node.GetChildren().OfType<Label3D>().ToList();
+        Label3D Lettered(string text) => labels.FirstOrDefault(l => l.Text == text) ?? throw new TestFailure($"the box says {text}");
+        var (middle, hung, two) = (Lettered("middle"), Lettered("hung"), Lettered("two\nlines"));
+        float em = hung.PixelSize * Fonts.FaceSize;
+        float Risen(Label3D l) => (l.Position - middle.Position).Dot(l.Basis.Y.Normalized());
+        float one = Tall / 2 - Pad - em / 2 + em * PieceWidgets.BracketLift;
+        Check.That(Mathf.Abs(Risen(hung) - one) < Close, $"one line hangs its top a pad under the box's top edge: risen {Risen(hung):0.###}, wanted {one:0.###}");
+        Check.That(Mathf.Abs(Risen(two) - (one - em / 2)) < Close, $"two lines hang from the same edge: risen {Risen(two):0.###}, wanted {one - em / 2:0.###}");
+        var (ascent, descent) = Fonts.OwnLine(Fonts.Widget, Fonts.FaceSize);
+        Check.That(Mathf.Abs(two.LineSpacing - (Fonts.FaceSize - ascent - descent)) < 0.01f, "its lines stand a letter size apart");
+        float across = (two.Position - middle.Position).Dot(two.Basis.X.Normalized());
+        Check.That(two.HorizontalAlignment == HorizontalAlignment.Left && Mathf.Abs(across - (-Wide / 2 + Pad)) < Close,
+            $"text set to the left starts each line a pad in from the left edge: {across:0.###}");
         t.Table.QueueFree();
     }
 

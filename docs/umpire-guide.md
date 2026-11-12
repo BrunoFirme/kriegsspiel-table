@@ -158,6 +158,10 @@ groups them, and names what each was used for, from the phalanx to the tank plat
 - **Notes:** the **Note** in Firme's Effects and Props is a message form. Click its title or its lines and type:
   in the title Enter keeps it; in the lines Enter starts a new line and Ctrl+Enter keeps it; Esc leaves it as it
   was. Ctrl+click picks the note out instead.
+  A short note is written a line to a rule, a longer one two lines to a rule; right-click → **Writing** sets it
+  yourself: **Large** is a line to a rule, **Small** two, **Auto** as large as fits. Notes take the digital tabletop's
+  formatting codes: `[b]`, `[i]`, `[u]`, `[s]`, `[sub]`, `[sup]`, and a colour such as `[ff0000]` until `[-]`.
+  Point at a note to read all of it.
   A module's notecards, Notes and Notebook pages come in as these notes.
 - **Looks:** point at a piece and press **1–9** (0 is the tenth), or **[ ]** to step.
 - **Books:** a PDF brought in from a module, or made in the piece studio, is a book. Double-click it, or

@@ -541,7 +541,7 @@ public static partial class ApiDoc
         Note("The handler is looked up in this script first, then in the global script. `\"global:fn\"` names the global script's; `\"<id or GUID>/fn\"` another piece's.");
         See("self.input", "self.edit", "self.clear_widgets");
 
-        M("piece", "input{ face, x, z, w, h, rot, value, placeholder, font, color, text_color, align, lines, tooltip, on_change, validation, tab, kind }", "Draws an input box and returns its index. on_change names a function called as fn(who, value, index, piece, typing) as the umpire types and when they leave the box.", "createInput", "number");
+        M("piece", "input{ face, x, z, w, h, rot, value, placeholder, font, color, text_color, align, lines, pad, tooltip, on_change, validation, tab, kind }", "Draws an input box and returns its index. on_change names a function called as fn(who, value, index, piece, typing) as the umpire types and when they leave the box.", "createInput", "number");
         O("face", "\"front\"|\"back\"", "The face it is drawn on. Default \"front\".");
         O("x", "number", "Centre, piece units. Default 0.");
         O("z", "number", "Centre, piece units. Default 0.");
@@ -556,6 +556,7 @@ public static partial class ApiDoc
         O("text_color", "Color", "The text's colour.");
         O("align", "\"left\"|\"center\"|\"right\"", "Default \"center\".");
         O("lines", "number", "Lines of text the box holds. Default 1.");
+        O("pad", "number", "With it the text hangs from the top of the box, this far in from the top and the sides, in piece units; nil sets the text in the middle of the box.");
         O("tooltip", "string", "Shown when the pointer rests on it.");
         O("on_change", "string", "The handler's name: called as fn(who, value, index, piece, typing) each time the text changes while the umpire types (typing true) and once more when they leave the box (typing false); text it returns replaces what was typed.");
         O("validation", "\"integer\"|\"float\"|\"alphanumeric\"|\"username\"|\"name\"", "Keys the box takes: digits and a leading minus; also one point; letters and digits; lower-case letters and digits; or a name, capitalised by word. Default any.");

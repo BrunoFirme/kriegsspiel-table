@@ -535,6 +535,7 @@ public class MalformedInputTests
     [InlineData("SetPieceOption")]
     [InlineData("SetSmoke")]
     [InlineData("SetAltitude")]
+    [InlineData("SetNoteWriting")]
     [InlineData("SetPointerRule")]
     [InlineData("SetBriefing")]
     [InlineData("SetMemo")]

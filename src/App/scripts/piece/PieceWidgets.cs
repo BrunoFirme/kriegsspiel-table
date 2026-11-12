@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Godot;
 using KTable.Core.Model;
 
@@ -145,9 +146,12 @@ sealed class PieceWidgets
         var color = typing && _editSelected ? Ui.Accent : !typing && input ? textColor with { A = textColor.A * UnfocusedText } : textColor;
         float grow = Mathf.Max(0.01f, _piece.Look.FaceTextScale);
         float em = Mathf.Max(0.002f, (float)w.Font * k * grow);
-        if ((input || label) && boxed && !typing) text = Fitting(text, em, bw * 0.94f);
-        Text(text, x, z, boxed ? bw * 0.94f : 0, em, color, w.Align, (float)w.Rot, back, faceY, 0.004f, height, besideFace: !boxed || boxColor.A < SeeThroughBox,
-            lift: input ? 0 : em * ButtonBaselineLift);
+        float? pad = boxed && w.Pad is { } inset ? (float)inset * k : null;
+        float room = !boxed ? 0 : pad is { } margin ? Mathf.Max(0, bw - 2 * margin) : bw * 0.94f;
+        if ((input || label) && boxed && !typing) text = Fitting(text, em, room);
+        float hung = pad is { } top ? bh / 2 - top - em * (text.Count(c => c == '\n') + 1) / 2 : 0;
+        Text(text, x, z, room, em, color, w.Align, (float)w.Rot, back, faceY, 0.004f, height, besideFace: !boxed || boxColor.A < SeeThroughBox,
+            lift: hung + (input && pad == null ? 0 : em * BracketLift));
         if (boxed && !w.Locked && clickable) _hits.Add(new Hit(new Vector2(x, z), new Vector2(bw, bh) / 2, turn, index, At(x, z, back, faceY, BoxAbove, height)));
     }
 
@@ -180,7 +184,7 @@ sealed class PieceWidgets
         return n;
     }
 
-    public const float ButtonBaselineLift = 0.102f;
+    public const float BracketLift = 0.102f;
 
     const float SeeThroughBox = 0.35f, LightText = 0.5f, PlatePad = 0.3f, PlateBehind = 0.0005f, BoxAbove = 0.002f;
     const int PlatePriority = 2;
@@ -193,13 +197,13 @@ sealed class PieceWidgets
         {
             Text = text, FontSize = Fonts.FaceSize, OutlineSize = 0, Modulate = color, DoubleSided = true, VisibilityRangeEnd = _piece.LetteringRange(),
             HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center, RenderPriority = 3, Font = Fonts.Widget, Layers = Table.TextLayer,
+            LineSpacing = LineSqueeze(),
         };
         var font = l.Font ?? ThemeDB.FallbackFont;
-        var px = font.GetStringSize(text.Length > 0 ? text : " ", HorizontalAlignment.Left, -1, Fonts.FaceSize);
         float pixel = em / Fonts.FaceSize;
         l.PixelSize = Mathf.Max(0.00002f, pixel);
-        float wUnits = px.X * pixel;
-        float along = boxW > 0 && align == "left" ? -boxW / 2 + wUnits / 2 : boxW > 0 && align == "right" ? boxW / 2 - wUnits / 2 : 0;
+        float along = boxW > 0 && align == "left" ? -boxW / 2 : boxW > 0 && align == "right" ? boxW / 2 : 0;
+        if (along != 0) l.HorizontalAlignment = along < 0 ? HorizontalAlignment.Left : HorizontalAlignment.Right;
         float turn = Mathf.DegToRad(rot);
         float cx = x + along * Mathf.Cos(turn);
         z += along * Mathf.Sin(turn);
@@ -217,6 +221,15 @@ sealed class PieceWidgets
     }
 
     void AddNode(Node3D n) { _piece.AddChild(n); _nodes.Add(n); }
+
+    static float? _lineSqueeze;
+
+    static float LineSqueeze()
+    {
+        if (_lineSqueeze is { } known) return known;
+        var (ascent, descent) = Fonts.OwnLine(Fonts.Widget, Fonts.FaceSize);
+        return (_lineSqueeze = Fonts.FaceSize - ascent - descent).Value;
+    }
 
     static void Plate(Label3D l, Vector2 size, Color text)
     {

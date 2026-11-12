@@ -5,9 +5,7 @@ namespace KTable.App;
 
 public partial class PieceNode
 {
-    const float TextAboveFace = 0.004f, TextEmbolden = 0.6f;
-    const int LargestTextPixels = 512;
-    static readonly Vector3 ReadsUprightAtModuleTurnZero = new(-90, 180, 0);
+    const float TextAboveFace = 0.004f;
 
     string? _shownFacePicture, _shownWebMesh, _shownWebTexture;
     KTable.Core.Model.Lettering? _shownLettering;
@@ -20,14 +18,10 @@ public partial class PieceNode
         _shownFacePicture = Piece.FacePicture;
         (_shownWebMesh, _shownWebTexture) = (Piece.WebMesh, Piece.WebTexture);
         if (!Spoken || Piece.Lettering is not { } lt) return;
-        var font = new FontVariation { BaseFont = ThemeDB.FallbackFont, VariationEmbolden = TextEmbolden };
-        AddChild(new Label3D
-        {
-            Text = lt.Text, Font = font, FontSize = Mathf.Clamp((int)Mathf.Round((float)lt.Size), 1, LargestTextPixels), OutlineSize = 0,
-            Modulate = Coords.ParseColor(lt.Color, Colors.White) * _layerTint, PixelSize = (float)(lt.UnitsPerPixel * Piece.Scale),
-            RotationDegrees = ReadsUprightAtModuleTurnZero, Position = new Vector3(0, _thickness + TextAboveFace, 0), DoubleSided = true,
-            HorizontalAlignment = HorizontalAlignment.Center, VisibilityRangeEnd = LetteringRange(),
-        });
+        var label = ModuleText.Label(lt, Piece.Scale, _layerTint);
+        label.Position = new Vector3(0, _thickness + TextAboveFace, 0);
+        label.VisibilityRangeEnd = LetteringRange();
+        AddChild(label);
     }
 
     bool LooksChanged(PieceInstance p) =>

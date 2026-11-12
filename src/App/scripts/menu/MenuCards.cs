@@ -34,6 +34,7 @@ sealed class MenuCards : HudPart
     {
         var one = nodes.Count == 1 ? nodes[0] : null;
         var head = one != null ? (one.Piece.Label is { Length: > 0 } lb ? lb : one.Def?.Name ?? one.Piece.Def) : $"{nodes.Count} pieces";
+        if (one != null && NoteCard.Is(one.Def)) head = NoteFace.Told(head);
         menu.Head(Tally(hit, nodes) is { Length: > 0 } sum ? $"{head} · {sum}" : head);
         menu.Separator();
         if (nodes.Any(Table.IsDie)) menu.Item("Roll", () => T.RollDiceAtHand(), "R");
@@ -219,6 +220,8 @@ sealed class MenuCards : HudPart
             bool allReal = dice.All(n => n.Piece.PhysicalRoll);
             menu.Check("Thrown for real (the face it lands on)", allReal, () => SetOption(dice, PieceOptions.PhysicalRoll, !allReal));
         }
+        var notes = nodes.Where(n => NoteCard.Is(n.Def)).ToList();
+        if (notes.Count > 0) menu.Add(WritingRow(notes, notes.Contains(hit) ? hit : notes[0], menu.Pop));
         var tintable = nodes.Where(n => !n.IsEffect && S.CanTouch(n.Layer, n.Piece)).ToList();
         if (tintable.Count > 0) menu.Add(TintRows(tintable, hit, menu.Pop));
         menu.Separator();
@@ -284,6 +287,32 @@ sealed class MenuCards : HudPart
                 else T.Cam.SaveView(slot);
             };
             if (saved) b.GuiInput += e => { if (e is InputEventMouseButton { ButtonIndex: MouseButton.Right, Pressed: true }) { pop.Hide(); T.Cam.ForgetView(slot); } };
+            row.AddChild(b);
+        }
+        return row;
+    }
+
+    static readonly (string Name, int LinesToARule, string Tip)[] Writings =
+    {
+        ("Auto", 0, "As large as the note's lines allow"), ("Large", 1, "A line to a rule"), ("Small", 2, "Two lines to a rule"),
+    };
+
+    Control WritingRow(List<PieceNode> notes, PieceNode hit, PopupPanel pop)
+    {
+        var row = new HBoxContainer();
+        row.AddThemeConstantOverride("separation", SwatchGap);
+        row.AddChild(new Control { CustomMinimumSize = new Vector2(CheckColumn, 0) });
+        row.AddChild(new Label { Text = "Writing", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter });
+        foreach (var (name, linesToARule, tip) in Writings)
+        {
+            var b = new Button { Text = name, TooltipText = tip, FocusMode = Control.FocusModeEnum.None };
+            if (hit.Piece.LinesToARule != linesToARule) Ui.MakeQuiet(b);
+            b.Pressed += () =>
+            {
+                pop.Hide();
+                var cmds = notes.Select(n => (Command)new SetNoteWriting { Layer = n.Layer, Id = n.Piece.Id, LinesToARule = linesToARule }).ToList();
+                S.Do(cmds.Count == 1 ? cmds[0] : new Batch { Items = cmds });
+            };
             row.AddChild(b);
         }
         return row;

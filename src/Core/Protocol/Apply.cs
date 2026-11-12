@@ -26,7 +26,7 @@ public static partial class StateMachine
             case SetHighlight hl: return ApplySetHighlight(g, hl, ref inverse);
             case SetBookHighlight bh: return ApplySetBookHighlight(g, bh, ref inverse);
             case SetWebModel wm: return ApplySetWebModel(g, wm, ref inverse);
-            case SetPieceOption or SetSmoke or SetAltitude: return ApplyPieceSetting(g, c, ref inverse);
+            case SetPieceOption or SetSmoke or SetAltitude or SetNoteWriting: return ApplyPieceSetting(g, c, ref inverse);
             case FlipPiece fp: return ApplyFlip(g, fp, ref inverse);
             case TiltPiece tp: return ApplyTilt(g, tp, ref inverse);
             case SetScale sz: return ApplySetScale(g, sz, ref inverse);
@@ -349,8 +349,19 @@ public static partial class StateMachine
         {
             SetSmoke sm => ApplySetSmoke(g, sm, ref inverse),
             SetAltitude sa => ApplySetAltitude(g, sa, ref inverse),
+            SetNoteWriting nw => ApplySetNoteWriting(g, nw, ref inverse),
             _ => ApplySetPieceOption(g, (SetPieceOption)c, ref inverse),
         };
+
+    static string? ApplySetNoteWriting(GameState g, SetNoteWriting nw, ref Command? inverse)
+    {
+        var p = g.Find(nw.Layer, nw.Id);
+        if (p == null) return "no such piece";
+        if (nw.LinesToARule < 0 || nw.LinesToARule > NoteCard.MostLinesToARule) return $"a note is written 1 to {NoteCard.MostLinesToARule} lines to a rule, or 0 for as large as fits";
+        inverse = new SetNoteWriting { Layer = nw.Layer, Id = nw.Id, LinesToARule = p.LinesToARule };
+        p.LinesToARule = nw.LinesToARule;
+        return null;
+    }
 
     static string? ApplySetAltitude(GameState g, SetAltitude sa, ref Command? inverse)
     {

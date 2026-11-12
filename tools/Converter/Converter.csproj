@@ -22,6 +22,7 @@
     <EmbeddedResource Include="../../src/App/standard/std.dice/pack.json" LogicalName="std.dice/pack.json" />
     <EmbeddedResource Include="../../src/App/standard/std.dice/assets/*.obj;../../src/App/standard/std.dice/assets/*.png" LogicalName="std.dice/assets/%(Filename)%(Extension)" />
     <EmbeddedResource Include="Dice/*.*" LogicalName="dice/%(Filename)%(Extension)" />
+    <EmbeddedResource Include="../../src/App/fonts/table/Amaranth-Regular.ttf" LogicalName="table/Amaranth-Regular.ttf" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="AssetsTools.NET" Version="3.0.5" />

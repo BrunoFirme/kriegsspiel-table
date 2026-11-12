@@ -136,6 +136,7 @@ public static class CoreSamples
         yield return new SetPieceOption { Layer = L, Id = "p-000001", Name = PieceOptions.NoCollision, Value = true };
         yield return new SetSmoke { Layer = L, Id = "p-000001", Value = -0.5 };
         yield return new SetAltitude { Layer = L, Id = "p-000001", Value = 6 };
+        yield return new SetNoteWriting { Layer = L, Id = "p-000001", LinesToARule = 2 };
         yield return new FlipPiece { Layer = L, Id = "p-000001", FaceDown = true };
         yield return new TiltPiece { Layer = L, Id = "p-000001", X = 30, Z = -15 };
         yield return new SetScale { Layer = L, Id = "p-000001", Scale = 1.5 };

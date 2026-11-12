@@ -182,6 +182,7 @@ type Command abstract
   derived SetMemo = SetMemo
   derived SetMenuItems = SetMenuItems
   derived SetNote = SetNote
+  derived SetNoteWriting = SetNoteWriting
   derived SetPicture = SetPicture
   derived SetPieceOption = SetPieceOption
   derived SetPointerRule = SetPointerRule
@@ -769,6 +770,7 @@ type PieceInstance object
   label: string
   lettering: Lettering
   lines: List<LineDef>
+  linesToARule: int
   locked: bool
   looks: List<PieceLook>
   measuresMoves: bool
@@ -1293,6 +1295,15 @@ type SetNote object
   undoFrom: long
   undoOf: long
   value: string
+type SetNoteWriting object
+  actor: long
+  at: long
+  id: string
+  layer: string
+  linesToARule: int
+  seq: long
+  undoFrom: long
+  undoOf: long
 type SetPassword object
   password: string
 type SetPicture object
@@ -1775,6 +1786,7 @@ type Widget object
   lines: int
   onChange: string
   onClick: string
+  pad: double?
   placeholder: string
   pressColor: string
   rot: double

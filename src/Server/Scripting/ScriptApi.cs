@@ -897,6 +897,9 @@ internal sealed partial class PieceHandles(ScriptHost host)
                 case "lines":
                     w.Lines = Math.Max(1, (int)(v.CastToNumber() ?? 1));
                     break;
+                case "pad":
+                    w.Pad = v.IsNil() ? null : Math.Max(0, Finite(v, "pad", 0));
+                    break;
                 case "tooltip":
                     w.Tooltip = v.CastToString();
                     break;
@@ -944,6 +947,7 @@ internal sealed partial class PieceHandles(ScriptHost host)
         if (w.TextColor != null) t.Table["text_color"] = S(w.TextColor);
         t.Table["align"] = S(w.Align);
         t.Table["lines"] = N(w.Lines);
+        if (w.Pad is { } pad) t.Table["pad"] = N(pad);
         if (w.Tooltip != null) t.Table["tooltip"] = S(w.Tooltip);
         if (w.OnClick != null) t.Table["on_click"] = S(w.OnClick);
         if (w.OnChange != null) t.Table["on_change"] = S(w.OnChange);

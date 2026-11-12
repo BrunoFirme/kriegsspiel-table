@@ -91,6 +91,7 @@
 ---@field text_color? Color The text's colour.
 ---@field align? "left"|"center"|"right" Default "center".
 ---@field lines? number Lines of text the box holds. Default 1.
+---@field pad? number With it the text hangs from the top of the box, this far in from the top and the sides, in piece units; nil sets the text in the middle of the box.
 ---@field tooltip? string Shown when the pointer rests on it.
 ---@field on_change? string The handler's name: called as fn(who, value, index, piece, typing) each time the text changes while the umpire types (typing true) and once more when they leave the box (typing false); text it returns replaces what was typed.
 ---@field validation? "integer"|"float"|"alphanumeric"|"username"|"name" Keys the box takes: digits and a leading minus; also one point; letters and digits; lower-case letters and digits; or a name, capitalised by word. Default any.

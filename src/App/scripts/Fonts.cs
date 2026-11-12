@@ -14,6 +14,13 @@ public static class Fonts
 
     public const int FaceSize = 192;
 
+    public static (float Ascent, float Descent) OwnLine(Font font, int size)
+    {
+        var shaper = TextServerManager.GetPrimaryInterface();
+        var face = font.GetRids()[0];
+        return ((float)shaper.FontGetAscent(face, size), (float)shaper.FontGetDescent(face, size));
+    }
+
     static Font? _widget;
 
     public static Font Widget => _widget ??= ResourceLoader.Load<FontFile>(WidgetFile) is { } face ? WithFallback(face) : Face;

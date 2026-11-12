@@ -581,12 +581,13 @@ public sealed partial class ScenarioBuilder
         const double ModuleScaleRoundingNoise = 0.002;
         if (Math.Abs(scale - 1) < ModuleScaleRoundingNoise) scale = 1;
 
+        var at = o.Name == "3DText" ? DefFactory.TextMiddle(o) : (X: o.PosX, Y: o.PosY, Z: o.PosZ);
         bool rolls = def.Faces.Count > 1 || r.FromPack == DefFactory.StdDicePack;
         var pose = rolls ? PieceTilt.OfDie(o.Heading, o.Flipped, o.RotX, o.RotZ, ShownUp(r, o)) : PieceTilt.Of(o.RotX, o.RotY, o.RotZ, def.Kind == "model", o.Name == "3DText");
         var inst = new PieceInstance
         {
             Id = $"p-{_nextId++:D6}", Def = def.Id, TiltX = pose.X, TiltZ = pose.Z,
-            Pos = new Vec2(Math.Round(o.PosX, 4), Math.Round(o.PosZ, 4)), RotDeg = Facing(def, pose.Heading),
+            Pos = new Vec2(Math.Round(at.X, 4), Math.Round(at.Z, 4)), RotDeg = Facing(def, pose.Heading),
             State = def.Faces.Count > 1 ? 0 : Math.Min(r.State, Math.Max(0, def.States.Count - 1)),
             Face = def.Faces.Count > 1 ? Math.Clamp(r.State, 0, def.Faces.Count - 1) : -1,
             Label = o.RawNickname.Length > 0 ? o.RawNickname : null, Scale = scale,
@@ -614,11 +615,11 @@ public sealed partial class ScenarioBuilder
         Dress(inst, o, def, r, extras, layer.Name);
         inst.Looks = LooksOf(o, inst, def, extras, layer.Name, parent);
         layer.Pieces.Add(inst);
-        layer.Y[inst] = o.PosY;
+        layer.Y[inst] = at.Y;
         var (low, high) = _defs.Glued.Span(o);
-        layer.Bottom[inst] = o.PosY + low * Math.Abs(o.ScaleY);
-        layer.Top[inst] = o.PosY + high * Math.Abs(o.ScaleY);
-        if (pose.Tilted) Tilt(layer, inst, o, def, low, high);
+        layer.Bottom[inst] = at.Y + low * Math.Abs(o.ScaleY);
+        layer.Top[inst] = at.Y + high * Math.Abs(o.ScaleY);
+        if (pose.Tilted) Tilt(layer, inst, o, at.Y, def, low, high);
         StackCopies(o, inst, layer);
         if (o.IsBag) StowContents(o, inst, extras, packDefs, layer, usedPacks, ref rekeyed);
 
@@ -637,12 +638,12 @@ public sealed partial class ScenarioBuilder
                 sha => _defs.FlippedPicture(extras, sha));
     }
 
-    static void Tilt(Layer layer, PieceInstance inst, ModuleObj o, PieceDef def, double low, double high)
+    static void Tilt(Layer layer, PieceInstance inst, ModuleObj o, double y, PieceDef def, double low, double high)
     {
         double sy = Math.Abs(o.ScaleY);
         var (bottom, top) = PieceTilt.Span(def.Size.W * inst.Scale, def.Size.H * inst.Scale, low * sy, high * sy, o.RotX, o.RotZ);
-        layer.Bottom[inst] = o.PosY + bottom;
-        layer.Top[inst] = o.PosY + top;
+        layer.Bottom[inst] = y + bottom;
+        layer.Top[inst] = y + top;
         layer.Rise[inst] = top - bottom;
     }
 
@@ -804,7 +805,7 @@ public sealed partial class ScenarioBuilder
             var inst = new PieceInstance
             {
                 Id = $"p-{_nextId++:D6}", Def = def.Id, RotDeg = NoteTurn, Tags = [tag],
-                Text = new() { [NoteCard.TitleLine] = DefFactory.Plain(title).Trim(), [NoteCard.BodyLine] = DefFactory.Plain(body).Replace("\r", "").Trim('\n') },
+                Text = new() { [NoteCard.TitleLine] = title.Trim(), [NoteCard.BodyLine] = body.Replace("\r", "").Trim('\n') },
                 Pos = new Vec2(Math.Round(right + Gap + def.Size.W / 2, 4), Math.Round(z + def.Size.H / 2, 4)),
             };
             z += def.Size.H + Gap;

@@ -1887,7 +1887,7 @@ The handler is looked up in this script first, then in the global script. `"glob
 ### `self.input`
 
 ```lua
-self.input{ face, x, z, w, h, rot, value, placeholder, font, color, text_color, align, lines, tooltip, on_change, validation, tab, kind }
+self.input{ face, x, z, w, h, rot, value, placeholder, font, color, text_color, align, lines, pad, tooltip, on_change, validation, tab, kind }
 ```
 
 Draws an input box and returns its index. on_change names a function called as fn(who, value, index, piece, typing) as the umpire types and when they leave the box.
@@ -1908,6 +1908,7 @@ Draws an input box and returns its index. on_change names a function called as f
 | `text_color` | `Color` | _Optional._ The text's colour. |
 | `align` | `"left"\|"center"\|"right"` | _Optional._ Default "center". |
 | `lines` | `number` | _Optional._ Lines of text the box holds. Default 1. |
+| `pad` | `number` | _Optional._ With it the text hangs from the top of the box, this far in from the top and the sides, in piece units; nil sets the text in the middle of the box. |
 | `tooltip` | `string` | _Optional._ Shown when the pointer rests on it. |
 | `on_change` | `string` | _Optional._ The handler's name: called as fn(who, value, index, piece, typing) each time the text changes while the umpire types (typing true) and once more when they leave the box (typing false); text it returns replaces what was typed. |
 | `validation` | `"integer"\|"float"\|"alphanumeric"\|"username"\|"name"` | _Optional._ Keys the box takes: digits and a leading minus; also one point; letters and digits; lower-case letters and digits; or a name, capitalised by word. Default any. |

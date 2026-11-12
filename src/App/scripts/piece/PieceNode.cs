@@ -589,16 +589,18 @@ public partial class PieceNode : Node3D
         var parts = new List<string>();
         var title = Piece.Label is { Length: > 0 } lb ? lb : Def?.Name ?? Piece.Def;
         if (IsDie && Def is { States.Count: > 0 } die) title += ": " + die.States[Math.Clamp(Piece.State, 0, die.States.Count - 1)].Name;
+        if (NoteCard.Is(Def)) title = NoteFace.Told(title);
         parts.Add(title);
-        if (Piece.Text.GetValueOrDefault("Name") is { Length: > 0 } nm && nm != title) parts.Add(nm);
-        foreach (var (k, v) in Piece.Text) if (k != "Name" && v.Length > 0) parts.Add($"{k}: {v}");
+        if (NoteCard.Is(Def)) parts.AddRange(new[] { _note.Line(body: false), _note.Line(body: true) }.Select(NoteFace.Told).Where(l => l.Length > 0 && l != title));
+        else if (Piece.Text.GetValueOrDefault("Name") is { Length: > 0 } nm && nm != title) parts.Add(nm);
+        foreach (var (k, v) in Piece.Text) if (!NoteCard.Is(Def) && k != "Name" && v.Length > 0) parts.Add($"{k}: {v}");
         if (Def != null) foreach (var c in Def.Counters) parts.Add($"{c.Name} {Piece.Counters.GetValueOrDefault(c.Name, c.Default)}");
         if (Def != null && Def.States.Count > 1 && Def.States[Math.Clamp(Piece.State, 0, Def.States.Count - 1)].Name is { Length: > 0 } st
             && !double.TryParse(st, out _)
             && !System.Text.RegularExpressions.Regex.IsMatch(st.Trim(), @"^state\s*\d+$", System.Text.RegularExpressions.RegexOptions.IgnoreCase)
             && !string.Equals(st, title, StringComparison.OrdinalIgnoreCase))
             parts.Add(st);
-        if (Piece.Note is { Length: > 0 } note) parts.Add(note.Trim());
+        if (Piece.Note is { Length: > 0 } note && NoteFace.Told(note) is { Length: > 0 } said && !parts.Contains(said)) parts.Add(said);
         if (Piece.Stowed is { Count: > 0 } held) parts.Add($"holds {held.Count}");
         return string.Join("\n", parts);
     }

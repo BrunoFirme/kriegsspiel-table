@@ -542,6 +542,51 @@ public class TranslatorTests
     }
 
     [Fact]
+    public void A_module_input_hangs_its_text_four_of_its_pixels_inside_its_box_and_sets_it_left_unless_told()
+    {
+        using var t = new Table();
+        var def = t.Store.Def("marker")!;
+        def.Shape = "box";
+        def.Size = new Size2(2, 2);
+        var o = t.Server.State.Find(U, "p-000003")!;
+        var r = ModuleTranslator.Translate("""
+            function onLoad()
+              self.createInput({ input_function = "none", function_owner = self, label = "Unit", width = 600, height = 110, font_size = 85, scale = {1.5, 1.5, 1.5}, alignment = 3 })
+              self.createInput({ input_function = "none", function_owner = self, label = "Text" })
+              self.createButton({ click_function = "none", function_owner = self, label = "9" })
+              self.editInput({ index = 1, scale = {2, 2, 2}, alignment = 4 })
+            end
+            function none() end
+            """, Ctx());
+        t.Server.Handle(Table.Host, new SetScript { Layer = U, Id = "p-000003", Text = r.Script });
+        Assert.Empty(Errors(t));
+        var (name, text, count) = (o.Widgets[0], o.Widgets[1], o.Widgets[2]);
+        Assert.Equal(4 * 0.00624 * 1.5, name.Pad!.Value, 6);
+        Assert.Equal("center", name.Align);
+        Assert.Equal(4 * 0.00624 * 2, text.Pad!.Value, 6);
+        Assert.Equal("right", text.Align);
+        Assert.Null(count.Pad);
+        Assert.Equal("center", count.Align);
+    }
+
+    [Fact]
+    public void A_module_input_given_no_alignment_sets_its_text_to_the_left_where_a_button_centres_it()
+    {
+        using var t = new Table();
+        var o = t.Server.State.Find(U, "p-000003")!;
+        var r = ModuleTranslator.Translate("""
+            function onLoad()
+              self.createInput({ input_function = "none", function_owner = self, label = "Text" })
+              self.createButton({ click_function = "none", function_owner = self, label = "9" })
+            end
+            function none() end
+            """, Ctx());
+        t.Server.Handle(Table.Host, new SetScript { Layer = U, Id = "p-000003", Text = r.Script });
+        Assert.Empty(Errors(t));
+        Assert.Equal(("left", "center"), (o.Widgets[0].Align, o.Widgets[1].Align));
+    }
+
+    [Fact]
     public void Handlers_get_the_piece_their_widget_is_on()
     {
         using var t = new Table();
