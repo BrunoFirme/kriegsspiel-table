@@ -207,22 +207,56 @@ public sealed partial class ScenarioBuilder
         var boards = master.Objects.Where(IsSheet).OrderBy(b => b.PosY).ToList();
         var terrain = master.Objects.Where(o => o.IsTerrain).SelectMany(WithAttachedTerrain).ToList();
         var boardSet = tops.Concat(boards).Concat(terrain).ToHashSet();
-        if (boardSet.Count > 0) Progress.Stage("maps", boardSet.Count);
+        int maps = tops.Count + terrain.Count + boards.Sum(b => SheetLooks(b).Count);
+        if (maps > 0) Progress.Stage("maps", maps);
         foreach (var t in tops) AddTableTop(scenario, t, pkgRel, pkgDir, oldScenario);
-        foreach (var b in boards)
-        {
-            var e = _defs.Entry(b.ImageUrl);
-            if (e == null) { _rep.Missing(b.ImageUrl ?? "", _assets.Why(b.ImageUrl ?? "") ?? "unresolved", $"{sc.Id} map sheet"); continue; }
-            var size = _defs.BaseSize(b);
-            var sheet = NewSheet(scenario, b, pkgRel, e);
-            sheet.Pos = new Vec2(Math.Round(b.PosX, 4), Math.Round(b.PosZ, 4));
-            sheet.RotDeg = Norm(b.RotY);
-            sheet.Size = new Size2(Math.Round(size.W * Math.Abs(b.ScaleX), 4), Math.Round(size.H * Math.Abs(b.ScaleX), 4));
-            sheet.Url = b.ImageUrl;
-            if (Lay(sheet, e, pkgDir, oldScenario)) scenario.Sheets.Add(sheet);
-        }
+        foreach (var b in boards) AddBoard(scenario, b, pkgRel, pkgDir, oldScenario);
         AddTerrain(scenario, terrain, pkgRel, pkgDir, oldScenario);
         return boardSet;
+    }
+
+    static List<(ModuleObj Look, int Number)> SheetLooks(ModuleObj board) =>
+        board.StateList().states.Select((s, i) => (s, i + 1)).Where(l => l.s == board || IsSheetPicture(l.s)).ToList();
+
+    static bool IsSheetPicture(ModuleObj o) => o.ImageUrl != null && o.Name is "Custom_Board" or "Custom_Tile" or "Custom_Token";
+
+    void AddBoard(Scenario scenario, ModuleObj b, string pkgRel, string pkgDir, string? oldScenario)
+    {
+        var sc = _cfg.Scenario;
+        var (states, shown) = b.StateList();
+        var looks = SheetLooks(b);
+        for (int i = 0; i < states.Count; i++)
+            if (looks.All(l => l.Look != states[i]))
+                _rep.Skipped($"look {i + 1} of a map board ({states[i].Name}, not a picture)", $"{sc.Id} {b.Name} '{b.Nickname}' {b.Guid}");
+        string boardName = b.Nickname.Length > 0 ? b.Nickname : scenario.Sheets.Count == 0 ? sc.Name : $"Sheet {scenario.Sheets.Count + 1}";
+        var laid = new List<SheetDef>();
+        SheetDef? top = null;
+        foreach (var (s, number) in looks.OrderBy(l => l.Look == b ? 0 : 1))
+        {
+            var e = _defs.Entry(s.ImageUrl);
+            if (e == null) { _rep.Missing(s.ImageUrl ?? "", _assets.Why(s.ImageUrl ?? "") ?? "unresolved", $"{sc.Id} map sheet"); continue; }
+            var size = _defs.BaseSize(s);
+            var sheet = NewSheet(scenario, b, pkgRel, e);
+            sheet.Name = s != b && s.Nickname.Length > 0 ? s.Nickname : looks.Count > 1 ? $"{boardName}, look {number}" : boardName;
+            sheet.Pos = new Vec2(Math.Round(b.PosX, 4), Math.Round(b.PosZ, 4));
+            sheet.RotDeg = Norm(b.RotY);
+            sheet.Size = new Size2(Math.Round(size.W * Math.Abs(s.ScaleX), 4), Math.Round(size.H * Math.Abs(s.ScaleX), 4));
+            sheet.Url = s.ImageUrl;
+            if (!Lay(sheet, e, pkgDir, oldScenario)) continue;
+            scenario.Sheets.Add(sheet);
+            laid.Add(sheet);
+            if (s == b) top = sheet;
+        }
+        if (laid.Count < 2) return;
+        if (top != null)
+        {
+            var layers = laid.Select(l => l.Z).ToList();
+            var under = laid.Where(l => l != top).ToList();
+            for (int i = 0; i < under.Count; i++) under[i].Z = layers[i];
+            top.Z = layers[^1];
+        }
+        string onTop = top != null ? $", look {shown + 1} on top" : "";
+        _rep.Note($"{sc.Id}: the map board '{boardName}' has {looks.Count} looks; each came in as its own map sheet, stacked where the board lies{onTop}.");
     }
 
     void AddTableTop(Scenario scenario, ModuleObj o, string pkgRel, string pkgDir, string? oldScenario)
