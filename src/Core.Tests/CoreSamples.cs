@@ -36,6 +36,13 @@ public static class CoreSamples
         },
     };
 
+    static IEnumerable<Command> BuiltCommands()
+    {
+        yield return new LayBuilt { Thing = Built("w-000310", "s-000001"), Index = 0 };
+        yield return new SetBuilt { Thing = Built("w-000310", "s-000001") };
+        yield return new RemoveBuilt { Id = "w-000310" };
+    }
+
     public static Stroke Stroke(string id) => new()
     {
         Id = id, Points = new() { new Vec2(0, 0), new Vec2(1, 2), new Vec2(3.25, -4) }, Width = 0.5, Color = "#123456",
@@ -153,9 +160,7 @@ public static class CoreSamples
         yield return new RemoveBoard { Id = "b-000001" };
         yield return new Draw { Layer = "scratch:red", Stroke = Stroke("d-000300") };
         yield return new EraseStroke { Layer = L, StrokeId = "d-000004" };
-        yield return new LayBuilt { Thing = Built("w-000310", "s-000001"), Index = 0 };
-        yield return new SetBuilt { Thing = Built("w-000310", "s-000001") };
-        yield return new RemoveBuilt { Id = "w-000310" };
+        foreach (var built in BuiltCommands()) yield return built;
         yield return new StampDecal { Layer = L, Decal = new DecalDef { Id = "dc-000001", Picture = "blood", Name = "Blood", X = 1, Z = 2, W = 1.5, H = 1, Rot = 30 } };
         yield return new RemoveDecal { Layer = L, DecalId = "dc-000001" };
         yield return new SetDecalPalette { Entries = new() { new PaletteDecal { Name = "Guts", Picture = "guts", Size = 0.5 } } };

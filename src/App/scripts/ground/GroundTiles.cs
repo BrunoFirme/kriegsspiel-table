@@ -116,7 +116,10 @@ public partial class GroundTiles : Node
         view.SetShaderParameter("atlas_slots", (float)Slots);
         view.SetShaderParameter("tile_px", (float)TilePx);
         view.SetShaderParameter("gutter_px", (float)GutterPx);
-        var sheet = new Sheet { Key = key, Owner = owner, Bake = bake, View = view, Levels = levels, Pages = pages, PagesTex = pagesTex, World = world, Low = low, High = high, Card = card, Built = built };
+        var sheet = new Sheet
+        {
+            Key = key, Owner = owner, Bake = bake, View = view, Levels = levels, Pages = pages, PagesTex = pagesTex, World = world, Low = low, High = high, Card = card, Built = built,
+        };
         if (_retired.Remove(key, out var old) && old.Sheet.Levels == levels)
         {
             foreach (var (t, slot) in old.Sheet.Baked)

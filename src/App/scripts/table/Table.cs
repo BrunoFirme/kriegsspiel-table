@@ -8,7 +8,7 @@ using KTable.Core.Protocol;
 
 namespace KTable.App;
 
-public enum Tool { Select, Transform, Place, Ruler, Draw, Erase, Calibrate, Sighting, Capture, Zone, Crop, Range, Shape, Relief, Formation, Letter, Decal }
+public enum Tool { Select, Transform, Place, Ruler, Draw, Erase, Calibrate, Sighting, Capture, Zone, Crop, Range, Shape, Relief, Formation, Letter, Decal, Build }
 
 public partial class Table : Node3D
 {
@@ -94,6 +94,7 @@ public partial class Table : Node3D
     internal CropTool Crop { get; }
     internal ZoneLayer Zones { get; }
     internal ReliefTool Relief { get; }
+    internal BuildTool Build { get; }
     internal FormationTool Forms { get; }
     internal UmpirePointers Pointers { get; }
     internal SelectTool SelectTool { get; }
@@ -138,10 +139,11 @@ public partial class Table : Node3D
         Crop = new CropTool(_c, Overlay, Gizmo);
         Zones = new ZoneLayer(_c, Overlay);
         Relief = new ReliefTool(_c, Overlay, Sheets);
+        Build = new BuildTool(_c, Overlay, Sheets);
         Forms = new FormationTool(_c, Overlay, Selection, Hand);
         Pointers = new UmpirePointers(_c, p => Hand.SurfaceY(p, Layers.Umpire), Motion.Carrying, name => UmpireHue.Of(_c.S, name) ?? UmpireHue.Unassigned);
         SelectTool = new SelectTool(_c, press, Sheets, Pieces, Selection, Hand, Names, Actions);
-        Router = new TableInput(_c, press, Cam, Pieces, Sighting, Selection, Poses, Gizmo, Hand, Actions, Names, Palette, Pen, Letters, Ruler, Ranges, Crop, Zones, SelectTool, Relief, Forms)
+        Router = new TableInput(_c, press, Cam, Pieces, Sighting, Selection, Poses, Gizmo, Hand, Actions, Names, Palette, Pen, Letters, Ruler, Ranges, Crop, Zones, SelectTool, Relief, Forms, Build)
         {
             Decals = Decals,
         };
@@ -153,6 +155,7 @@ public partial class Table : Node3D
         Sighting.Connect(Selection, Overlay);
         Overlay.Drawing += Gizmo.Draw;
         Overlay.Drawing += Relief.Draw;
+        Overlay.Drawing += Build.Draw;
         Overlay.Drawing += Crop.Draw;
         Overlay.Drawing += Zones.DrawDraft;
         Overlay.Drawing += Ranges.Draw;
@@ -373,6 +376,7 @@ public partial class Table : Node3D
         if (t == Tool.Sighting && Draft == null) { if (!Sighting.Begin()) return; }
         if (Tool == Tool.Crop && t != Tool.Crop) Crop.End();
         if (Tool == Tool.Relief && t != Tool.Relief) Relief.Cancel();
+        if (Tool == Tool.Build && t != Tool.Build) Build.Cancel();
         var was = Tool;
         _c.Tool = t;
         KeepDrawMode(t);
@@ -409,6 +413,7 @@ public partial class Table : Node3D
         Tool.Sighting => Sighting.Hint(),
         Tool.Place => "Shift+click places another",
         Tool.Relief => ReliefLine(),
+        Tool.Build => Build.Hint(),
         Tool.Formation => Forms.Hint(),
         Tool.Transform => "The round knob turns, the square knob resizes · Shift snaps · the wheel over the piece turns 10° a notch, Ctrl 2°, Shift ½°",
         Tool.Ruler => "Drag to measure · map units until the map is calibrated",

@@ -130,6 +130,7 @@ public sealed class Settings
     public float ReliefDensity { get; set; } = 1;
     public string ReliefPaint { get; set; } = "brush";
     public Dictionary<string, int[]> ReliefDetails { get; set; } = new();
+    public BuildPrefs Build { get; set; } = new();
     public static readonly string[] ReliefPaintings = { "brush", "fill", "rect", "ellipse", "polygon", "route" };
 
     public int ReliefDetail(byte kind, int which)
@@ -200,6 +201,8 @@ public sealed class Settings
         RenderScale = float.IsFinite(RenderScale) ? Math.Clamp(RenderScale, RenderScaleMin, RenderScaleMax) : RenderScaleMin;
         ReliefDensity = float.IsFinite(ReliefDensity) ? Math.Clamp(ReliefDensity, 0.05f, 1f) : 1f;
         if (Array.IndexOf(ReliefPaintings, ReliefPaint) < 0) ReliefPaint = "brush";
+        Build ??= new();
+        Build.Normalise();
         if (Array.IndexOf(MapPictureMemoryChoices, MapPictureMemory) < 0) MapPictureMemory = 0;
         if (Array.IndexOf(Renderers, Renderer) < 0) Renderer = Vulkan;
         if (SightingWide == true) SightingLens = SightingDraft.WholeCircleLens;

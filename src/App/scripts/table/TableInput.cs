@@ -36,12 +36,14 @@ sealed class TableInput
     readonly SelectTool _selectTool;
     readonly ReliefTool _relief;
     readonly FormationTool _forms;
+    readonly BuildTool _build;
 
     public TableInput(TableContext c, PointerPress press, CameraControl cam, PieceLayer pieces, Sighting sighting, Selection selection,
         PendingPoses poses, Gizmo gizmo, Carry hand, PieceActions actions, NameEditor names, PaletteDrag palette, PenTool pen, LetterTool letters,
-        RulerTool ruler, RangeRings ranges, CropTool crop, ZoneLayer zones, SelectTool selectTool, ReliefTool relief, FormationTool forms)
+        RulerTool ruler, RangeRings ranges, CropTool crop, ZoneLayer zones, SelectTool selectTool, ReliefTool relief, FormationTool forms, BuildTool build)
     {
         _relief = relief;
+        _build = build;
         _forms = forms;
         _c = c;
         _press = press;
@@ -132,6 +134,7 @@ sealed class TableInput
         if (!larger && !smaller) return false;
         if (_c.Tool == Tool.Sighting && _sighting.Draft != null) { _sighting.Reach(larger); return true; }
         if (_c.Tool == Tool.Relief) { _relief.Resize(larger); return true; }
+        if (_c.Tool == Tool.Build) { _build.Resize(larger); return true; }
         return false;
     }
 
@@ -151,6 +154,11 @@ sealed class TableInput
         if (_c.Tool == Tool.Relief && mb.CtrlPressed)
         {
             _relief.Resize(mb.ButtonIndex == MouseButton.WheelUp);
+            return;
+        }
+        if (_c.Tool == Tool.Build && mb.CtrlPressed)
+        {
+            _build.Resize(mb.ButtonIndex == MouseButton.WheelUp);
             return;
         }
         if (_c.Tool == Tool.Decal && Decals.Armed != null && mb.CtrlPressed)
@@ -366,6 +374,9 @@ sealed class TableInput
             case Tool.Relief:
                 _relief.Press(g.Value, mb.ShiftPressed, mb.AltPressed, mb.DoubleClick);
                 break;
+            case Tool.Build:
+                _build.Press(g.Value, mb.DoubleClick);
+                break;
         }
     }
 
@@ -403,6 +414,9 @@ sealed class TableInput
                 break;
             case Tool.Relief:
                 _relief.Release();
+                break;
+            case Tool.Build:
+                _build.Release();
                 break;
             case Tool.Capture:
                 var r = new Rect2(PressPos, mb.Position - PressPos).Abs();
@@ -463,6 +477,9 @@ sealed class TableInput
             case Tool.Relief:
                 if (g != null) _relief.Motion(g.Value);
                 break;
+            case Tool.Build:
+                if (g != null) _build.Motion(g.Value);
+                break;
         }
     }
 
@@ -505,6 +522,10 @@ sealed class TableInput
     }
 
     public bool DropReliefShape() => _c.Tool == Tool.Relief && _relief.DropShape();
+
+    public bool DropBuild() => _c.Tool == Tool.Build && _build.Drop();
+
+    public bool DeleteBuilt() => _build.Delete();
 
     public bool DropLetter() => _c.Tool == Tool.Letter && _letters.Drop();
 

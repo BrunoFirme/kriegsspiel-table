@@ -26,6 +26,7 @@ public partial class Hud : CanvasLayer
     internal DrawPanel Paint = null!;
     internal StampPanel Stamps = null!;
     internal ReliefPanel? Relief;
+    internal BuildPanel? Builder;
     internal FormationPanel FormPanel = null!;
     internal RangePanel Ranging = null!;
     internal LayersPanel Boards = null!;
@@ -153,12 +154,15 @@ public partial class Hud : CanvasLayer
             Paint.Rebuild();
             Stamps.Rebuild();
             Relief?.Rebuild();
+            Builder?.Rebuild();
             if (T.Tool is Tool.Draw or Tool.Shape or Tool.Erase or Tool.Letter) OpenPanel("paint");
             else ClosePanel("paint");
             if (T.Tool == Tool.Decal) OpenPanel("decals");
             else ClosePanel("decals");
             if (T.Tool == Tool.Relief) OpenPanel("relief");
             else ClosePanel("relief");
+            if (T.Tool == Tool.Build) OpenPanel("build");
+            else ClosePanel("build");
             if (T.Tool == Tool.Formation) OpenPanel("formation");
             else ClosePanel("formation");
             if (T.Tool == Tool.Range) OpenPanel("range");
@@ -172,6 +176,7 @@ public partial class Hud : CanvasLayer
         Hook<Action>(h => T.Ranges.ReachChanged += h, h => T.Ranges.ReachChanged -= h, Ranging.Sync);
         Hook<Action<string, Command>>(h => T.ReliefShaped += h, h => T.ReliefShaped -= h, Map.Reliefs.Share);
         Hook<Action>(h => T.ReliefPicked += h, h => T.ReliefPicked -= h, () => Relief?.Rebuild());
+        Hook<Action>(h => T.Build.PickChanged += h, h => T.Build.PickChanged -= h, () => Builder?.Rebuild());
         Hook<Action<Rect2?>>(h => T.ScreenRect += h, h => T.ScreenRect -= h, r => Rect.SetRect(r));
         Hook<Action<PieceNode, int>>(h => T.ContentsAsked += h, h => T.ContentsAsked -= h, (holder, most) => HolderWindow.Open(Root, S, T, holder, most));
         Hook<Action<double>>(h => T.CalibrationMeasured += h, h => T.CalibrationMeasured -= h, units => CalibrateDialog.Open(Ctx, units));
@@ -192,6 +197,7 @@ public partial class Hud : CanvasLayer
         foreach (var dr in Flatten(c).OfType<DialogResult>()) _scriptUi?.Answered(dr.Token);
         if (Touches(c, x => x is AddSheet or RemoveSheet or MoveSheet or LockSheet or RenameSheet or CropSheet or SetSheetRelief or SetSheetPicture or SetSheetOpacity)) Map.Rebuild();
         if (Touches(c, x => x is SetLighting)) Relief?.Rebuild();
+        if (Touches(c, x => x is SetCalibration or SetBuilt or RemoveBuilt)) Builder?.Rebuild();
         foreach (var one in Flatten(c))
         {
             if (one.Actor == 0) one.Actor = c.Actor;

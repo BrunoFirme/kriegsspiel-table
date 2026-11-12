@@ -1,0 +1,270 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using Godot;
+using KTable.Client;
+using KTable.Core.Model;
+using KTable.Core.Protocol;
+
+namespace KTable.App;
+
+sealed class BuildTool
+{
+    const float PickPx = 9, ClosePx = 10, LeastPlacePx = 6, GhostPx = 1.5f, PickedPx = 2.5f, RingSteps = 40, Lift = 0.05f;
+    const double LeastPlaceM = 15;
+    const ulong PreviewEveryMs = 60;
+    const string NotYours = "Only umpires build on the map, and not while a past turn is shown.";
+    static readonly Color Brass = new(1, 0.85f, 0.4f);
+
+    readonly TableContext _c;
+    readonly ToolOverlay _overlay;
+    readonly SheetLayer _sheets;
+    SheetDef? _sheet;
+    Vec2? _from, _at;
+    List<Vec2>? _path;
+    BuiltThing? _ghost;
+    int _seed;
+    ulong _previewed;
+    string? _picked;
+    int _part = -1;
+    Vec2? _grabbed;
+
+    public BuildTool(TableContext c, ToolOverlay overlay, SheetLayer sheets)
+    {
+        _c = c;
+        _overlay = overlay;
+        _sheets = sheets;
+    }
+
+    public event Action? PickChanged;
+
+    BuildPrefs P => _c.Settings.Build;
+
+    public BuiltThing? Picked => _picked == null ? null : _c.S.View.Built.FirstOrDefault(b => b.Id == _picked);
+
+    static int Roll() => Random.Shared.Next(1, int.MaxValue);
+
+    SheetDef? SheetOf(string id) => _c.S.View.Sheets.FirstOrDefault(s => s.Id == id);
+
+    public static BuiltSite Site(Session s, SheetDef sheet, string? but = null) => new()
+    {
+        Width = Ground.FullWidth(sheet), Height = BuiltGeometry.FullHeight(sheet), UnitsPerMetre = s.View.Calibration.UnitsPerMeter ?? 0, Grid = s.Relief.Grid(sheet),
+        HeightUnit = Ground.FullWidth(sheet) * ReliefTool.HeightUnit(sheet), Others = s.View.Built.Where(b => b.Sheet == sheet.Id && b.Id != but).ToList(),
+    };
+
+    static Spot On(SheetDef sheet, Vec2 world) => Spot.Of(BuiltGeometry.ToSheet(sheet, world));
+
+    static Vec2 Off(SheetDef sheet, Spot p) => BuiltGeometry.ToWorld(sheet, p.Stored);
+
+    bool Ready(Vec2 g, out SheetDef sheet)
+    {
+        sheet = null!;
+        if (!_c.S.CanEdit(Layers.Umpire)) { _c.Say(NotYours); return false; }
+        if (!ReliefTool.Scaled(_c.S)) { _c.Say(GroundKinds.NeedsScale + "."); return false; }
+        if (ReliefTool.Target(_c.S, _sheets, g) is not { } target) { _c.Say("Build over a map sheet."); return false; }
+        sheet = target;
+        return true;
+    }
+
+    public void Press(Vec2 g, bool twice)
+    {
+        if (P.Mode == BuildPrefs.Pick) { PressPick(g); return; }
+        if (P.Mode == BuildPrefs.Roads && _path != null && _sheet != null) { Waypoint(g, twice); return; }
+        if (!Ready(g, out var sheet)) return;
+        _sheet = sheet;
+        _seed = Roll();
+        _from = _at = g;
+        _ghost = null;
+        if (P.Mode != BuildPrefs.Places) _path = new() { g };
+    }
+
+    void Waypoint(Vec2 g, bool twice)
+    {
+        var path = _path!;
+        if (twice || (g - path[^1]).Length <= _overlay.Px(ClosePx)) { LayLine(); return; }
+        path.Add(g);
+        Preview(force: true);
+    }
+
+    public void Motion(Vec2 g)
+    {
+        _at = g;
+        if (_grabbed != null) return;
+        if (_sheet == null) return;
+        if (P.Mode == BuildPrefs.Details && _path != null && _from != null && (g - _path[^1]).Length > P.Brush * 0.25f) _path.Add(g);
+        Preview(force: false);
+    }
+
+    void Preview(bool force)
+    {
+        if (_sheet is not { } sheet || _at is not { } at) return;
+        if (!force && Time.GetTicksMsec() - _previewed < PreviewEveryMs) return;
+        _previewed = Time.GetTicksMsec();
+        var site = Site(_c.S, sheet);
+        if (P.Mode == BuildPrefs.Places && _from is { } from) _ghost = Place(site, sheet, On(sheet, from), On(sheet, at));
+        else if (P.Mode == BuildPrefs.Roads && _path is { } path)
+            _ghost = BuiltRoads.Lay(site, sheet.Id, path.Append(at).Select(p => On(sheet, p)).ToList(), P.Line, P.FindsWay);
+        else if (P.Mode == BuildPrefs.Details && _path is { } stroke && _from != null)
+            _ghost = BuiltDetails.Lay(site, sheet.Id, stroke.Select(p => On(sheet, p)).ToList(), P.Brush, _seed, P.Plots, P.Buildings);
+    }
+
+    BuiltThing? Place(BuiltSite site, SheetDef sheet, Spot from, Spot to)
+    {
+        double radius = (to - from).Length;
+        var along = radius > 1e-6 ? (to - from).Unit : new Spot(1, 0);
+        if (P.Place == BuiltKinds.Building) return BuiltThings.Building(site, sheet.Id, P.Block, from, along, radius > site.M(4) ? radius * 2 : 0);
+        if (radius < site.M(LeastPlaceM)) return null;
+        return P.Place == BuiltKinds.Fort
+            ? Forts.Lay(site, sheet.Id, from, radius, _seed, P.Bastions, P.Outworks, Math.Atan2(along.Y, along.X))
+            : Settlements.Lay(site, sheet.Id, from, radius, _seed, P.Houses, P.Walls, P.Grid ? 1 : 0);
+    }
+
+    public void Release()
+    {
+        if (_grabbed != null) { DropGrab(); return; }
+        if (_sheet == null || P.Mode == BuildPrefs.Roads) return;
+        Preview(force: true);
+        if (_ghost is { Parts.Count: > 0 } laid) _c.S.Do(new LayBuilt { Thing = laid });
+        Clear();
+    }
+
+    void LayLine()
+    {
+        if (_sheet is { } sheet && _path is { Count: >= 1 } path)
+        {
+            var laid = BuiltRoads.Lay(Site(_c.S, sheet), sheet.Id, path.Select(p => On(sheet, p)).ToList(), P.Line, P.FindsWay);
+            if (laid.Parts.Count > 0) _c.S.Do(new LayBuilt { Thing = laid });
+        }
+        Clear();
+    }
+
+    void Clear()
+    {
+        _sheet = null;
+        _from = null;
+        _path = null;
+        _ghost = null;
+    }
+
+    public bool Drop()
+    {
+        bool open = _sheet != null || _grabbed != null;
+        Clear();
+        _grabbed = null;
+        return open;
+    }
+
+    public void Cancel()
+    {
+        Drop();
+        Pick(null, -1);
+    }
+
+    void Pick(string? id, int part)
+    {
+        if (_picked == id && _part == part) return;
+        _picked = id;
+        _part = part;
+        PickChanged?.Invoke();
+    }
+
+    void PressPick(Vec2 g)
+    {
+        string? best = null;
+        int bestPart = -1;
+        double least = _overlay.Px(PickPx);
+        foreach (var thing in _c.S.View.Built)
+        {
+            if (SheetOf(thing.Sheet) is not { } sheet) continue;
+            var (part, reach) = BuiltThings.Nearest(thing, On(sheet, g));
+            if (part < 0 || reach >= least) continue;
+            least = reach;
+            best = thing.Id;
+            bestPart = part;
+        }
+        bool again = best != null && best == _picked;
+        Pick(best, again ? bestPart : -1);
+        _grabbed = best != null && _c.S.CanEdit(Layers.Umpire) ? g : null;
+        _at = g;
+    }
+
+    void DropGrab()
+    {
+        var from = _grabbed!.Value;
+        _grabbed = null;
+        if (Picked is not { } thing || SheetOf(thing.Sheet) is not { } sheet || _at is not { } to || (to - from).Length < _overlay.Px(LeastPlacePx)) return;
+        var a = BuiltGeometry.ToSheet(sheet, from);
+        var b = BuiltGeometry.ToSheet(sheet, to);
+        var moved = _part >= 0 ? BuiltThings.WithPartMoved(thing, _part, b.X - a.X, b.Y - a.Y) : BuiltGeometry.Moved(thing, b.X - a.X, b.Y - a.Y);
+        _c.S.Do(new SetBuilt { Thing = moved });
+    }
+
+    public bool Delete()
+    {
+        if (_c.Tool != Tool.Build || Picked is not { } thing || !_c.S.CanEdit(Layers.Umpire)) return false;
+        if (_part >= 0 && thing.Parts.Count > 1) _c.S.Do(new SetBuilt { Thing = BuiltThings.WithoutPart(thing, _part) });
+        else _c.S.Do(new RemoveBuilt { Id = thing.Id });
+        Pick(_part >= 0 && thing.Parts.Count > 1 ? thing.Id : null, -1);
+        return true;
+    }
+
+    public void Again()
+    {
+        if (Picked is not { } thing || SheetOf(thing.Sheet) is not { } sheet || !_c.S.CanEdit(Layers.Umpire)) return;
+        _c.S.Do(new SetBuilt { Thing = BuiltThings.Remade(Site(_c.S, sheet, thing.Id), thing, BuiltThings.Rerolls(thing) ? Roll() : thing.Seed) });
+        Pick(thing.Id, -1);
+    }
+
+    public void Resize(bool up)
+    {
+        P.Brush = Math.Clamp(P.Brush * (up ? 1.15f : 1 / 1.15f), BuildPrefs.SmallestBrush, BuildPrefs.LargestBrush);
+        _c.Settings.Save();
+    }
+
+    public string Hint() => P.Mode switch
+    {
+        BuildPrefs.Roads => "Click the waypoints, then the last again or double-click to lay it · Esc drops it",
+        BuildPrefs.Details => "Drag over the country to settle it · = and − or Ctrl+wheel size the brush",
+        BuildPrefs.Pick => "Click a built thing to pick it, again for one part of it · drag moves it · Delete removes it",
+        _ => P.Place == BuiltKinds.Building ? "Click to stand a building, or drag its length" : "Drag from the middle outward · release lays it",
+    };
+
+    public void Draw()
+    {
+        if (_c.Tool != Tool.Build || _c.Rig == null) return;
+        var mat = new StandardMaterial3D { AlbedoColor = Brass, ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded, NoDepthTest = true };
+        if (_ghost != null && _sheet != null) Outline(mat, _sheet, _ghost, GhostPx, default);
+        if (P.Mode == BuildPrefs.Roads && _path is { } path && _sheet != null)
+            _overlay.RibbonPx(_overlay.Mesh, mat, Ring(path[^1], _overlay.Px(ClosePx)), Lift, GhostPx);
+        if (P.Mode == BuildPrefs.Details && _at is { } at) _overlay.RibbonPx(_overlay.Mesh, mat, Ring(at, P.Brush), Lift, GhostPx);
+        if (P.Mode != BuildPrefs.Pick || Picked is not { } picked || SheetOf(picked.Sheet) is not { } on) return;
+        var shift = _grabbed is { } from && _at is { } to ? to - from : default;
+        if (_part >= 0 && _part < picked.Parts.Count) Trace(mat, on, picked.Parts[_part], PickedPx, shift);
+        else Outline(mat, on, picked, PickedPx, shift);
+    }
+
+    void Outline(StandardMaterial3D mat, SheetDef sheet, BuiltThing thing, float px, Vec2 shift)
+    {
+        foreach (var part in thing.Parts)
+            if (part.Class != "quarter") Trace(mat, sheet, part, px, shift);
+    }
+
+    void Trace(StandardMaterial3D mat, SheetDef sheet, BuiltPart part, float px, Vec2 shift)
+    {
+        var points = BuiltGeometry.Points(part.At).Select(p => BuiltGeometry.ToWorld(sheet, p) + shift).ToList();
+        if (points.Count == 1) { _overlay.RibbonPx(_overlay.Mesh, mat, Ring(points[0], _overlay.Px(PickPx * 0.6f)), Lift, px); return; }
+        if (part.Kind is PartKinds.Block or PartKinds.Area) points.Add(points[0]);
+        _overlay.RibbonPx(_overlay.Mesh, mat, points, Lift, px);
+    }
+
+    static List<Vec2> Ring(Vec2 c, double r)
+    {
+        var ring = new List<Vec2>();
+        for (int i = 0; i <= RingSteps; i++)
+        {
+            double a = i * Math.Tau / RingSteps;
+            ring.Add(new Vec2(c.X + Math.Cos(a) * r, c.Z + Math.Sin(a) * r));
+        }
+        return ring;
+    }
+}

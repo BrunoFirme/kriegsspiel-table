@@ -96,7 +96,7 @@ sealed class TableKeys
 
     void Escape()
     {
-        if (_router.DropReliefShape() || _router.DropLetter()) return;
+        if (_router.DropReliefShape() || _router.DropBuild() || _router.DropLetter()) return;
         bool busy = _c.Tool != Tool.Select || _sighting.Draft != null || _selection.Ids.Count > 0 || _sheets.SelectedId != null
             || _ruler.A != null || _pen.Stroking || _pen.Shaping || _hand.Holding;
         _router.EndGesture();
@@ -132,7 +132,7 @@ sealed class TableKeys
         else if (km.Is(k, "roll")) { if (!_dice.RollAtHand()) _poses.RotateSmooth(k.ShiftPressed ? -15 : 15); }
         else if (km.Is(k, "larger")) _poses.ScaleSmooth(1.1);
         else if (km.Is(k, "smaller")) _poses.ScaleSmooth(1 / 1.1);
-        else if (km.Is(k, "delete")) _actions.Delete(_actions.Unlocked());
+        else if (km.Is(k, "delete")) { if (!_router.DeleteBuilt()) _actions.Delete(_actions.Unlocked()); }
         else if (km.Is(k, "mute"))
         {
             _c.Settings.SoundMuted = !_c.Settings.SoundMuted;

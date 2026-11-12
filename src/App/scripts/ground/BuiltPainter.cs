@@ -98,13 +98,10 @@ sealed partial class BuiltLayer : Node2D
         foreach (var s in _shapes)
         {
             var px = Px(s.Uv);
-            switch (s.Kind)
-            {
-                case PartKinds.Area: Area(hand, s, px); break;
-                case PartKinds.Line: Line(hand, s, px); break;
-                case PartKinds.Block: Block(hand, s, px); break;
-                case PartKinds.Sign: Sign(hand, s, px[0]); break;
-            }
+            if (s.Kind == PartKinds.Area) Area(hand, s, px);
+            else if (s.Kind == PartKinds.Line) Line(hand, s, px);
+            else if (s.Kind == PartKinds.Block) Block(hand, s, px);
+            else if (s.Kind == PartKinds.Sign) Sign(hand, s, px[0]);
         }
     }
 

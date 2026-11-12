@@ -52,11 +52,7 @@ public static partial class StateMachine
             case LockSheet ls: return ApplyLockSheet(g, ls, ref inverse);
             case RenameSheet rs: return ApplyRenameSheet(g, rs, ref inverse);
             case RemoveSheet rs: return ApplyRemoveSheet(g, rs, ref inverse);
-            case Draw dr: return ApplyDraw(g, dr, ref inverse);
-            case EraseStroke er: return ApplyEraseStroke(g, er, ref inverse);
-            case LayBuilt lb: return ApplyLayBuilt(g, lb, ref inverse);
-            case SetBuilt sb: return ApplySetBuilt(g, sb, ref inverse);
-            case RemoveBuilt rb: return ApplyRemoveBuilt(g, rb, ref inverse);
+            case Draw or EraseStroke or LayBuilt or SetBuilt or RemoveBuilt: return ApplyDrawn(g, c, ref inverse);
             case StampDecal or RemoveDecal or SetDecalPalette: return ApplyDecals(g, c, ref inverse);
             case AddBoard ab: return ApplyAddBoard(g, ab, ref inverse);
             case RenameBoard nb: return ApplyRenameBoard(g, nb, ref inverse);
@@ -741,6 +737,16 @@ public static partial class StateMachine
         inverse = new EraseStroke { Layer = dr.Layer, StrokeId = dr.Stroke.Id };
         return null;
     }
+
+    static string? ApplyDrawn(GameState g, Command c, ref Command? inverse) => c switch
+    {
+        Draw dr => ApplyDraw(g, dr, ref inverse),
+        EraseStroke er => ApplyEraseStroke(g, er, ref inverse),
+        LayBuilt lb => ApplyLayBuilt(g, lb, ref inverse),
+        SetBuilt sb => ApplySetBuilt(g, sb, ref inverse),
+        RemoveBuilt rb => ApplyRemoveBuilt(g, rb, ref inverse),
+        _ => "not a drawing",
+    };
 
     static string? ApplyLayBuilt(GameState g, LayBuilt lb, ref Command? inverse)
     {
