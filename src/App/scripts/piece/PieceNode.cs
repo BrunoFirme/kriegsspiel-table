@@ -734,7 +734,7 @@ public partial class PieceNode : Node3D
                 if (_texPackage == null) return true;
                 var m = _s.Assets.Mask(_texPackage, _texRel!, _texSize);
                 if (m == null) return true;
-                float u = l.X / Footprint.X + 0.5f, v = Piece.FaceDown ? 0.5f - l.Y / Footprint.Y : l.Y / Footprint.Y + 0.5f, e = 1.5f / AlphaMask.N;
+                float u = Piece.FaceDown ? 0.5f - l.X / Footprint.X : l.X / Footprint.X + 0.5f, v = l.Y / Footprint.Y + 0.5f, e = 1.5f / AlphaMask.N;
                 return m.At(u, v) || m.At(u + e, v) || m.At(u - e, v) || m.At(u, v + e) || m.At(u, v - e);
             default:
                 return true;
