@@ -483,6 +483,15 @@ sealed class TableDemo
         GD.Print($"[phys] the formation down: {ys.Count(y => y > 0.01)} of {ys.Count} resting on something, highest at {ys.Max():0.000}");
     }
 
+    public void Lift(List<string> ids, Vec2 by)
+    {
+        T.SetSelection(ids);
+        var nodes = T.SelectedNodes.ToList();
+        var grab = new Vec2(nodes.Average(n => n.Piece.Pos.X), nodes.Average(n => n.Piece.Pos.Z));
+        T.Hand.Start(grab);
+        T.Hand.Move(grab + by);
+    }
+
     public void Hold(List<string> ids, Vec2 to, int rows, Vec2? pasteAt) => Report(HoldAsync(ids, to, rows, pasteAt));
 
     async Task HoldAsync(List<string> ids, Vec2 to, int rows, Vec2? pasteAt)

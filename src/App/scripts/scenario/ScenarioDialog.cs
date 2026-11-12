@@ -178,15 +178,14 @@ sealed partial class ScenarioDialog : HudPart
         return sl;
     }
 
+    const double SunLit = 0.01;
+
     void AddLighting(Lighting? shown = null)
     {
         var cur = shown ?? S.View.Lighting;
-        var l0 = new Lighting { SunEnergy = cur.SunEnergy, Ambient = cur.Ambient, Warmth = cur.Warmth, Shadows = cur.Shadows, FromClock = cur.FromClock, TableShade = cur.TableShade };
+        var l0 = cur.Clone();
         var presets = LightPresets.All;
-        var pick = new OptionButton();
-        pick.AddItem("Custom");
-        foreach (var (name, _) in presets) pick.AddItem(name);
-        for (int i = 0; i < presets.Count; i++) if (LightPresets.Same(presets[i].Light, l0)) pick.Selected = i + 1;
+        var pick = PresetPick(presets, l0);
         var lg = Ui.Form(Ui.DialogLabels);
         static string Percent(double v) => $"{v * 100:0}%";
         static string Warmth(double v) => v < -0.55 ? "cold" : v < -0.15 ? "cool" : v <= 0.15 ? "neutral" : v <= 0.55 ? "warm" : "hot";
@@ -194,21 +193,27 @@ sealed partial class ScenarioDialog : HudPart
         var amb = LightRow(lg, "Ambient", 0, 1.5, 0.05, l0.Ambient, Percent);
         var warm = LightRow(lg, "Colour", -1, 1, 0.05, l0.Warmth, Warmth);
         warm.TooltipText = "Bluer to the left, redder to the right";
+        var place = new SunRows(lg, l0);
         Ui.AlignForm(lg);
-        var shadows = new CheckBox { Text = "Pieces cast shadows", ButtonPressed = l0.Shadows };
+        var shadows = new CheckBox { Text = "Shadows", ButtonPressed = l0.Shadows };
         bool sync = false;
         var byClock = new CheckBox
         {
             Text = "Follow the game clock", ButtonPressed = l0.FromClock,
             TooltipText = "The game's hour sets the light: dark before dawn, warm and low at sunrise and sunset, white at midday.",
         };
-        Lighting ReadLight() =>
-            new() { SunEnergy = sun.Value, Ambient = amb.Value, Warmth = warm.Value, Shadows = shadows.ButtonPressed, FromClock = byClock.ButtonPressed, TableShade = S.View.Lighting.TableShade,
-                Backdrop = S.View.Lighting.Backdrop, MapStyle = S.View.Lighting.MapStyle, Contours = S.View.Lighting.Contours, SnowLine = S.View.Lighting.SnowLine, Streams = S.View.Lighting.Streams };
+        Lighting ReadLight()
+        {
+            var l = S.View.Lighting.Clone();
+            (l.SunEnergy, l.Ambient, l.Warmth, l.SunFrom, l.SunHeight) = (sun.Value, amb.Value, warm.Value, place.From, place.Height);
+            (l.Shadows, l.FromClock) = (shadows.ButtonPressed, byClock.ButtonPressed);
+            return l;
+        }
         void PreviewLight()
         {
             if (sync) return;
             var l = ReadLight();
+            place.Shine(l);
             T.ApplyLighting(l.FromClock ? DayLight.At(S.View.Clock, l) : l);
         }
         void SendLight() { if (sync) return; S.Do(new SetLighting { Lighting = ReadLight() }); }
@@ -224,6 +229,13 @@ sealed partial class ScenarioDialog : HudPart
             };
             sl.DragEnded += _ => { dragging = false; SendLight(); };
         }
+        place.Changed += final =>
+        {
+            if (sync) return;
+            pick.Selected = 0;
+            PreviewLight();
+            if (final) SendLight();
+        };
         shadows.Toggled += _ =>
         {
             if (!sync) pick.Selected = 0;
@@ -238,26 +250,20 @@ sealed partial class ScenarioDialog : HudPart
             sun.Value = p.SunEnergy;
             amb.Value = p.Ambient;
             warm.Value = p.Warmth;
+            place.Show(p.SunFrom, p.SunHeight);
             shadows.ButtonPressed = p.Shadows;
             sync = false;
             PreviewLight();
             SendLight();
         };
         var clockHint = Hint("");
-        var manual = new VBoxContainer();
-        manual.AddThemeConstantOverride("separation", Ui.Gap.Group);
-        var presetForm = Ui.Form(Ui.DialogLabels);
-        presetForm.AddChild(new Label { Text = "Preset" });
-        presetForm.AddChild(pick);
-        Ui.AlignForm(presetForm);
-        manual.AddChild(presetForm);
-        manual.AddChild(lg);
+        var manual = Manual(pick, lg);
         void ShowClockState()
         {
             bool on = byClock.ButtonPressed;
             manual.Visible = !on;
             clockHint.Visible = on;
-            clockHint.Text = $"{Fmt.Clock(S.View.Clock)}: {DayLight.Describe(S.View.Clock)}";
+            clockHint.Text = ClockLine();
         }
         byClock.Toggled += _ =>
         {
@@ -272,6 +278,34 @@ sealed partial class ScenarioDialog : HudPart
         _box.AddChild(manual);
         _box.AddChild(shadows);
         AddSurroundings(cur);
+    }
+
+    static OptionButton PresetPick(System.Collections.Generic.IReadOnlyList<(string Name, Lighting Light)> presets, Lighting now)
+    {
+        var pick = new OptionButton();
+        pick.AddItem("Custom");
+        foreach (var (name, _) in presets) pick.AddItem(name);
+        for (int i = 0; i < presets.Count; i++) if (LightPresets.Same(presets[i].Light, now)) pick.Selected = i + 1;
+        return pick;
+    }
+
+    static VBoxContainer Manual(OptionButton pick, GridContainer lights)
+    {
+        var manual = new VBoxContainer();
+        manual.AddThemeConstantOverride("separation", Ui.Gap.Group);
+        var presetForm = Ui.Form(Ui.DialogLabels);
+        presetForm.AddChild(new Label { Text = "Preset" });
+        presetForm.AddChild(pick);
+        Ui.AlignForm(presetForm);
+        manual.AddChild(presetForm);
+        manual.AddChild(lights);
+        return manual;
+    }
+
+    string ClockLine()
+    {
+        var sunNow = DayLight.SunWords(DayLight.At(S.View.Clock, S.View.Lighting));
+        return $"{Fmt.Clock(S.View.Clock)}: {DayLight.Describe(S.View.Clock)}{(sunNow.Length > 0 ? ", " + sunNow : "")}";
     }
 
     void RefreshLook(Lighting sent)

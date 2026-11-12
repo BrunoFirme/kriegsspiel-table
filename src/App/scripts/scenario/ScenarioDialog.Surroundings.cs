@@ -29,7 +29,7 @@ sealed partial class ScenarioDialog
             var look = Changed(l => l.Backdrop = chosen.Id);
             if (chosen.Light is { } name && LightPresets.Named(name) is { } light)
             {
-                look = LightPresets.Lit(look, light);
+                look = LightPresets.Toned(look, light);
                 S.Do(new SetLighting { Lighting = look });
                 RefreshLook(look);
                 return;

@@ -172,4 +172,21 @@ public partial class TableToolsTests
         Assert.True(picture.IsError);
         Assert.Contains("Scenario properties", picture.Text);
     }
+
+    [Fact]
+    public async Task The_sun_is_placed_by_bearing_and_height_read_back_and_kept_by_a_sky_backdrop()
+    {
+        var set = await Call("set_light", new { sun_from = 100, sun_height = 30 });
+        Assert.False(set.IsError, set.Text);
+        Assert.Equal((100.0, 30.0), (_s.View.Lighting.SunFrom, _s.View.Lighting.SunHeight));
+        var read = await Call("read_scenario", new { });
+        Assert.Contains("\"sun_from\": 100", read.Text);
+        Assert.Contains("\"sun_height\": 30", read.Text);
+        await Call("set_light", new { backdrop = "open-sky-night" });
+        Assert.Equal((100.0, 30.0), (_s.View.Lighting.SunFrom, _s.View.Lighting.SunHeight));
+        await Call("set_light", new { preset = "morning sun" });
+        Assert.Equal((90.0, 20.0), (_s.View.Lighting.SunFrom, _s.View.Lighting.SunHeight));
+        await Call("set_light", new { sun_from = -45, sun_height = 120 });
+        Assert.Equal((315.0, Lighting.HighestSun), (_s.View.Lighting.SunFrom, _s.View.Lighting.SunHeight));
+    }
 }

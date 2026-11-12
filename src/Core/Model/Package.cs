@@ -755,6 +755,11 @@ public sealed class Lighting
     public bool Contours { get; set; }
     public double SnowLine { get; set; }
     public bool Streams { get; set; }
+
+    public const double OverheadFrom = 145, Overhead = 88, LowestSun = 5, HighestSun = 90;
+    public double SunFrom { get; set; } = OverheadFrom;
+    public double SunHeight { get; set; } = Overhead;
+    public Lighting Clone() => (Lighting)MemberwiseClone();
 }
 
 public sealed class Wind

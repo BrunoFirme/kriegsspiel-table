@@ -40,7 +40,7 @@ public static class Backdrops
     public static Lighting NewLook(string backdrop, double tableShade)
     {
         var look = new Lighting { Backdrop = IsColour(backdrop) || Find(backdrop) != null ? backdrop : None, TableShade = Math.Clamp(tableShade, 0, Lighting.SeeThrough) };
-        return Find(look.Backdrop) is { Light: { } name } && LightPresets.Named(name) is { } light ? LightPresets.Lit(look, light) : look;
+        return Find(look.Backdrop) is { Light: { } name } && LightPresets.Named(name) is { } light ? LightPresets.Toned(look, light) : look;
     }
 
     public static bool IsKnown(string backdrop) => backdrop.Length == 0 || IsColour(backdrop) || Find(backdrop) != null || IsPicture(backdrop);

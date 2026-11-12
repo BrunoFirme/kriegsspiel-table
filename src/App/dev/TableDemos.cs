@@ -192,6 +192,12 @@ sealed partial class TableDemos
                 GD.Print($"[hold] pieces now {Net.Server.State.Layer(KTable.Core.Model.Layers.Umpire).Count}");
             };
         }
+        if (_args.TryGetValue("demo-lift", out var dl))
+        {
+            var a = dl.Split(',').Select(x => double.Parse(x, System.Globalization.CultureInfo.InvariantCulture)).ToArray();
+            Tree.CreateTimer(a[4]).Timeout += () =>
+                new TableDemo(table).Lift(Session.View.Layer(KTable.Core.Model.Layers.Umpire).Skip((int)a[0]).Take((int)a[1]).Select(p => p.Id).ToList(), new KTable.Core.Model.Vec2(a[2], a[3]));
+        }
         if (_args.TryGetValue("demo-grab", out var dg))
         {
             int gi = int.Parse(dg);
@@ -556,7 +562,10 @@ sealed partial class TableDemos
         if (_args.TryGetValue("demo-light", out var dli))
         {
             var lv = dli.Split(',').Select(x => double.Parse(x, System.Globalization.CultureInfo.InvariantCulture)).ToArray();
-            Session.Do(new KTable.Core.Protocol.SetLighting { Lighting = new KTable.Core.Model.Lighting { SunEnergy = lv[0], Ambient = lv[1], Warmth = lv[2], Shadows = lv.Length < 4 || lv[3] > 0 } });
+            var lit = Session.View.Lighting.Clone();
+            (lit.SunEnergy, lit.Ambient, lit.Warmth, lit.Shadows, lit.FromClock) = (lv[0], lv[1], lv[2], lv.Length < 4 || lv[3] > 0, false);
+            if (lv.Length >= 6) (lit.SunFrom, lit.SunHeight) = (lv[4], lv[5]);
+            Session.Do(new KTable.Core.Protocol.SetLighting { Lighting = lit });
         }
         if (_args.ContainsKey("demo-physics"))
         {

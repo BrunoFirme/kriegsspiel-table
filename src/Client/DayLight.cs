@@ -1,9 +1,8 @@
-using System;
 using System.Globalization;
 using KTable.Core.Model;
 using Light = (double hour, double sun, double ambient, double warmth);
 
-namespace KTable.App;
+namespace KTable.Client;
 
 public static class DayLight
 {
@@ -28,10 +27,19 @@ public static class DayLight
         MidnightAgain,
     };
 
+    public const double RisesFrom = 90, SetsFrom = 270, HighestAtNoon = 55;
+    const double Lit = 0.01;
+
     public static double HourOf(GameClock clock) =>
         DateTime.TryParse(clock.GameTime, CultureInfo.InvariantCulture, DateTimeStyles.None, out var t)
             ? t.Hour + t.Minute / 60.0
             : 12.0;
+
+    public static (double from, double height) SunAt(double hour)
+    {
+        double k = Math.Clamp((hour - Sunrise.hour) / (Sunset.hour - Sunrise.hour), 0, 1);
+        return (RisesFrom + (SetsFrom - RisesFrom) * k, Math.Max(Lighting.LowestSun, HighestAtNoon * Math.Sin(Math.PI * k)));
+    }
 
     public static Lighting At(GameClock clock, Lighting basis)
     {
@@ -41,20 +49,13 @@ public static class DayLight
         var (h0, s0, a0, w0) = Day[i];
         var (h1, s1, a1, w1) = Day[i + 1];
         double k = h1 - h0 <= 0 ? 0 : Math.Clamp((h - h0) / (h1 - h0), 0, 1);
-        return new Lighting
-        {
-            SunEnergy = s0 + (s1 - s0) * k,
-            Ambient = a0 + (a1 - a0) * k,
-            Warmth = w0 + (w1 - w0) * k,
-            Shadows = basis.Shadows,
-            FromClock = true,
-            TableShade = basis.TableShade,
-            Backdrop = basis.Backdrop,
-            MapStyle = basis.MapStyle,
-            Contours = basis.Contours,
-            SnowLine = basis.SnowLine,
-            Streams = basis.Streams,
-        };
+        var l = basis.Clone();
+        l.SunEnergy = s0 + (s1 - s0) * k;
+        l.Ambient = a0 + (a1 - a0) * k;
+        l.Warmth = w0 + (w1 - w0) * k;
+        l.FromClock = true;
+        (l.SunFrom, l.SunHeight) = SunAt(h);
+        return l;
     }
 
     public static string Describe(GameClock clock)
@@ -72,4 +73,17 @@ public static class DayLight
             _ => "night",
         };
     }
+
+    const double HalfTurn = 180;
+
+    public static (double pitch, double yaw) Aim(double from, double height, double north)
+    {
+        double h = Math.Clamp(double.IsFinite(height) ? height : Lighting.Overhead, Lighting.LowestSun, Lighting.HighestSun);
+        double f = double.IsFinite(from) ? from : Lighting.OverheadFrom;
+        return (-h, Calibration.Turned(HalfTurn - f - north));
+    }
+
+    public static string SunWords(Lighting l) => l.SunEnergy < Lit ? ""
+        : l.SunHeight >= Lighting.Overhead ? "sun overhead"
+        : string.Create(CultureInfo.InvariantCulture, $"sun {Wind.Point(l.SunFrom)} {l.SunHeight:0}°");
 }

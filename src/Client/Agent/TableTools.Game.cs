@@ -80,9 +80,12 @@ public sealed partial class TableTools
                 new Arg("snap", "boolean", "pieces set down by hand land on the nearest cell's centre, the smaller cells when divided (as it is if left out)")),
             SetGridTool);
         yield return new AgentTool("set_light",
-            "Sets the table's light (a preset, sun and ambient 0–1, warmth −1 to 1, shadows, or following the game clock's hour), the table under the map (0 squared paper, 0.5 grey, 1 black, 1.05 see-through: no table drawn), the backdrop seen around the table (a sky, a colour or a picture of your own), the map style painted ground is drawn in, contour lines over the relief, a snow line (metres; above it every ground takes snow), streams from the relief, and the wind (from, in degrees; strength 0 calm to 5 a gale), for everyone at the table.",
+            "Sets the table's light (a preset, sun and ambient 0–1, warmth −1 to 1, where the sun stands, shadows, or following the game clock's hour), the table under the map (0 squared paper, 0.5 grey, 1 black, 1.05 see-through: no table drawn), the backdrop seen around the table (a sky, a colour or a picture of your own), the map style painted ground is drawn in, contour lines over the relief, a snow line (metres; above it every ground takes snow), streams from the relief, and the wind (from, in degrees; strength 0 calm to 5 a gale), for everyone at the table.",
             Args.Schema(new Arg("preset", "string", "the light as one of the presets, before sun, ambient and warmth are applied: " + string.Join(", ", LightPresets.All.Select(p => p.Name))),
-                new Arg("sun", "number", "0–1"), new Arg("ambient", "number", "0–1"), new Arg("warmth", "number", "−1 to 1"), new Arg("shadows", "boolean", "shadows"), new Arg("from_clock", "boolean", "follows the clock's hour"),
+                new Arg("sun", "number", "0–1"), new Arg("ambient", "number", "0–1"), new Arg("warmth", "number", "−1 to 1"),
+                new Arg("sun_from", "number", "the compass bearing the light comes from, in degrees: 0 north, 90 east, 180 south, 270 west"),
+                new Arg("sun_height", "number", "the sun's height above the horizon, 5–90 degrees; 90 is straight down"),
+                new Arg("shadows", "boolean", "shadows of pieces and hills"), new Arg("from_clock", "boolean", "follows the clock's hour"),
                 new Arg("table_shade", "number", "the table under the map: 0 squared paper, 0.5 grey, 1 black, 1.05 see-through (no table drawn)"),
                 new Arg("backdrop", "string", "around the table: none, a solid #rrggbb colour, a picture's full path or web link (a panorama twice as wide as tall wraps all the way round), or one of " +
                     string.Join(", ", Backdrops.All.Select(b => b.Id)) + "; a sky brings its own light unless the light is given too"),
@@ -474,21 +477,32 @@ public sealed partial class TableTools
         var snow = a.Num("snow_line");
         var streams = a.Flag("streams");
         if ((snow != null || streams == true) && s.View.Calibration.UnitsPerMeter is not > 0) return ToolResult.Fail(GroundKinds.NeedsScale + " (set_map_scale).");
-        bool lightGiven = a.Num("sun") != null || a.Num("ambient") != null || a.Num("warmth") != null || a.Flag("shadows") != null || preset != null;
+        var sunFrom = a.Num("sun_from");
+        var sunHeight = a.Num("sun_height");
+        if (sunFrom is { } f && !double.IsFinite(f) || sunHeight is { } hh && !double.IsFinite(hh)) return ToolResult.Fail("sun_from and sun_height are numbers.");
+        bool lightGiven = a.Num("sun") != null || a.Num("ambient") != null || a.Num("warmth") != null || a.Flag("shadows") != null || preset != null || sunFrom != null || sunHeight != null;
         bool lookGiven = a.Flag("from_clock") != null || a.Num("table_shade") != null || a.Str("backdrop") != null || style != null || a.Flag("contours") != null || snow != null || streams != null;
         if (lightGiven || lookGiven)
         {
             var l = s.View.Lighting;
             if (preset != null) l = LightPresets.Lit(l, preset);
             else if (!lightGiven && backdrop != null && Backdrops.Find(backdrop)?.Light is { } suggested && LightPresets.Named(suggested) is { } skyLight)
-                l = LightPresets.Lit(l, skyLight);
-            var lit = new SetLighting { Lighting = new Lighting
-            {
-                SunEnergy = Math.Clamp(a.Num("sun") ?? l.SunEnergy, 0, 1), Ambient = Math.Clamp(a.Num("ambient") ?? l.Ambient, 0, 1), Warmth = Math.Clamp(a.Num("warmth") ?? l.Warmth, -1, 1),
-                Shadows = a.Flag("shadows") ?? l.Shadows, FromClock = a.Flag("from_clock") ?? l.FromClock,
-                TableShade = Math.Clamp(a.Num("table_shade") ?? l.TableShade, 0, Lighting.SeeThrough), Backdrop = backdrop ?? l.Backdrop, MapStyle = style ?? l.MapStyle,
-                Contours = a.Flag("contours") ?? l.Contours, SnowLine = Math.Max(0, snow ?? l.SnowLine), Streams = streams ?? l.Streams,
-            } };
+                l = LightPresets.Toned(l, skyLight);
+            var next = l.Clone();
+            next.SunEnergy = Math.Clamp(a.Num("sun") ?? l.SunEnergy, 0, 1);
+            next.Ambient = Math.Clamp(a.Num("ambient") ?? l.Ambient, 0, 1);
+            next.Warmth = Math.Clamp(a.Num("warmth") ?? l.Warmth, -1, 1);
+            next.SunFrom = Calibration.Turned(sunFrom ?? l.SunFrom);
+            next.SunHeight = Math.Clamp(sunHeight ?? l.SunHeight, Lighting.LowestSun, Lighting.HighestSun);
+            next.Shadows = a.Flag("shadows") ?? l.Shadows;
+            next.FromClock = a.Flag("from_clock") ?? l.FromClock;
+            next.TableShade = Math.Clamp(a.Num("table_shade") ?? l.TableShade, 0, Lighting.SeeThrough);
+            next.Backdrop = backdrop ?? l.Backdrop;
+            next.MapStyle = style ?? l.MapStyle;
+            next.Contours = a.Flag("contours") ?? l.Contours;
+            next.SnowLine = Math.Max(0, snow ?? l.SnowLine);
+            next.Streams = streams ?? l.Streams;
+            var lit = new SetLighting { Lighting = next };
             if (files.Count > 0 && _hooks.SendWithFiles is { } send) send(files, lit);
             else s.Do(lit);
             done.Add("light");

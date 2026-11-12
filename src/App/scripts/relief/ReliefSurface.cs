@@ -160,14 +160,14 @@ public partial class ReliefSurface : Node3D
                 var box = new Rect2(ax, az, bxw - ax, bzw - az);
                 var corners = new[] { sheetXf * new Vector3(ax, 0, az), sheetXf * new Vector3(bxw, 0, az), sheetXf * new Vector3(bxw, 0, bzw), sheetXf * new Vector3(ax, 0, bzw) };
                 bool hidden = covered?.Invoke(corners) == true;
-                if (_base != null && !hidden) Add(new Block(Node(_base, level), box, false, ex - bx, ez - bz, uv0, uv1), h);
-                if (_paint != null && (hidden || !drawsGround)) Add(new Block(Node(_paint, level + PaintAbove), box, true, ex - bx, ez - bz, uv0, uv1), h);
+                if (_base != null && !hidden) Add(new Block(Node(_base, level, casts: true), box, false, ex - bx, ez - bz, uv0, uv1), h);
+                if (_paint != null && (hidden || !drawsGround)) Add(new Block(Node(_paint, level + PaintAbove, casts: hidden), box, true, ex - bx, ez - bz, uv0, uv1), h);
             }
         _skirt = new MeshInstance3D
         {
             Mesh = SkirtMesh(h, ground, sheetXf, W, H, nx, nz),
             MaterialOverride = new StandardMaterial3D { AlbedoColor = Earth, Roughness = 1, CullMode = BaseMaterial3D.CullModeEnum.Disabled, SpecularMode = BaseMaterial3D.SpecularModeEnum.Disabled },
-            CastShadow = GeometryInstance3D.ShadowCastingSetting.Off, Position = new Vector3(0, level, 0),
+            Position = new Vector3(0, level, 0),
         };
         AddChild(_skirt);
     }
@@ -175,11 +175,11 @@ public partial class ReliefSurface : Node3D
     static ArrayMesh SkirtMesh(Func<float, float, float> h, Ground ground, Transform3D sheetXf, float W, float H, int nx, int nz) =>
         GroundMesh.Skirt(h, -W / 2, -H / 2, W / 2, H / 2, nx, nz, 0, (x, z) => ground.ReliefAt(Coords.FromWorld(sheetXf * new Vector3(x, 0, z))) == null, Math.Min(W, H) * SeamProbe);
 
-    static MeshInstance3D Node(Material mat, float lift) => new()
+    static MeshInstance3D Node(Material mat, float lift, bool casts) => new()
     {
         MaterialOverride = mat,
         Position = new Vector3(0, lift, 0),
-        CastShadow = GeometryInstance3D.ShadowCastingSetting.Off,
+        CastShadow = casts ? GeometryInstance3D.ShadowCastingSetting.On : GeometryInstance3D.ShadowCastingSetting.Off,
         Layers = Table.WorldLayer | GroundLayer,
     };
 

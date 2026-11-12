@@ -401,12 +401,14 @@ clock, the global script), **Briefing**, **Map** (distances, north, grid, ground
 
 - **Briefing:** the situation you play from. Leads write it here and every umpire reads it here; **Read it…** opens it in a
   window of its own, with find. Observers never see it.
-- **Light & surroundings:** presets and sliders, or **Follow the game clock** for dawn, day and dusk; a backdrop past
+- **Light & surroundings:** presets and sliders, or **Follow the game clock** for dawn, day and dusk, the sun rising
+  in the east and setting in the west; **From** and **Height** place the sun (click or drag the rose, Shift: 1°), and a
+  low sun from one side brings out hills, which cast **Shadows** with the pieces; a backdrop past
   the table's edge (a room, a garden, a coast, open country, a sky by day, at sundown or at night, a solid colour or
   your own panorama; a sky sets its light); the table under the map, which grows to hold what is on it, from paper to
   black or see-through, which leaves the sheets and pieces over the backdrop alone.
 - **North:** for a map drawn turned, drag the rose until its N points where north is on the map, or turn it with
-  Q and E (Shift: 1°). The compass, bearings, the wind and the sighting buttons follow it.
+  Q and E (Shift: 1°). The compass, bearings, the wind, the sun and the sighting buttons follow it.
 - **Grid:** squares or hexes over the table. With **Pieces snap to the cells** ticked, a piece set down by hand lands on the centre of the nearest cell (the smaller cells when squares are divided); a group keeps its shape.
 - **Ground:** the style, contour lines, snow line and streams of [painted ground](umpire-guide.md#relief).
 - **Wind:** where it blows from and how strong. Smoke drifts with it.

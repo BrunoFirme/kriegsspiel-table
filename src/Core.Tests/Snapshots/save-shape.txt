@@ -1,4 +1,4 @@
-format 38
+format 39
 type AccessChanged object
   access: GameAccess
 type AddBoard object
@@ -471,6 +471,8 @@ type Lighting object
   snowLine: double
   streams: bool
   sunEnergy: double
+  sunFrom: double
+  sunHeight: double
   tableShade: double
   warmth: double
 type LineDef object

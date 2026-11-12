@@ -603,8 +603,14 @@ public static partial class StateMachine
 
     static string? ApplySetLighting(GameState g, SetLighting sl, ref Command? inverse)
     {
+        if (sl.Lighting is { } l && (!double.IsFinite(l.SunFrom) || !double.IsFinite(l.SunHeight))) return "the sun's place must be numbers";
         inverse = new SetLighting { Lighting = Json.Clone(g.Lighting) };
         g.Lighting = Json.Clone(sl.Lighting);
+        if (g.Lighting is { } kept)
+        {
+            kept.SunFrom = ((kept.SunFrom % 360) + 360) % 360;
+            kept.SunHeight = Math.Clamp(kept.SunHeight, Lighting.LowestSun, Lighting.HighestSun);
+        }
         return null;
     }
 

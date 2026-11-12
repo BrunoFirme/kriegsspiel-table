@@ -104,6 +104,7 @@ sealed partial class Carry : IHeldPieces
         }
         Riders.Seat(_held, _footing);
         TakeRiders(grab);
+        foreach (var h in _held.Where(h => h.Parent == null)) LandingMark.Under(h.Node);
         _c.Sound.Lift(_heldNodes);
         _poses.Flush();
         _cursor = grab;
@@ -281,6 +282,7 @@ sealed partial class Carry : IHeldPieces
                 h.Node = now;
                 now.Held = true;
                 now.TakenInHand();
+                if (h.Parent == null) LandingMark.Under(now);
                 continue;
             }
             _held.Remove(h);

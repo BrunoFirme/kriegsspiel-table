@@ -35,10 +35,8 @@ sealed class TableStage
 
     public void BuildLightAndSurface()
     {
-        var ceilingLightNearlyStraightDown = new Vector3(-88, 35, 0);
         _sun = new DirectionalLight3D
         {
-            RotationDegrees = ceilingLightNearlyStraightDown,
             ShadowEnabled = true, DirectionalShadowMode = DirectionalLight3D.ShadowMode.Parallel4Splits, DirectionalShadowMaxDistance = ShadowReachNear,
             DirectionalShadowFadeStart = 0.9f, DirectionalShadowBlendSplits = true,
             DirectionalShadowSplit1 = 0.12f, DirectionalShadowSplit2 = 0.36f, DirectionalShadowSplit3 = 0.7f,
@@ -111,12 +109,17 @@ sealed class TableStage
 
     public Lighting LightNow() => _c.S.View.Lighting.FromClock ? DayLight.At(_c.S.View.Clock, _c.S.View.Lighting) : _c.S.View.Lighting;
 
+    const double MostSun = 3, MostLift = 3;
+    Lighting _lit = new();
+    double _north;
+
     public void ApplyLighting(Lighting l)
     {
         if (_sun == null) return;
+        _lit = l;
         var tint = LightTint((float)l.Warmth);
         _sun.LightColor = tint;
-        _sun.LightEnergy = (float)Math.Clamp(l.SunEnergy, 0, 3);
+        AimSun();
         _sun.ShadowEnabled = l.Shadows && l.SunEnergy > 0.01;
         _sun.Visible = l.SunEnergy > 0.01;
         if (_env?.Environment is { } e) { e.AmbientLightEnergy = (float)Math.Clamp(l.Ambient, 0, 3); e.AmbientLightColor = tint; }
@@ -126,6 +129,17 @@ sealed class TableStage
         _backdrop?.Show(l.Backdrop ?? Backdrops.None, (float)l.Ambient);
         ReliefSurface.ShowStyle(l.MapStyle);
     }
+
+    void AimSun()
+    {
+        if (_sun == null) return;
+        var (pitch, yaw) = DayLight.Aim(_lit.SunFrom, _lit.SunHeight, _north);
+        _sun.RotationDegrees = new Vector3((float)pitch, (float)yaw, 0);
+        _sun.LightEnergy = (float)(Math.Clamp(_lit.SunEnergy, 0, MostSun) * FlatLift(-pitch));
+    }
+
+    static double FlatLift(double height) =>
+        Math.Min(MostLift, Math.Sin(Mathf.DegToRad(Lighting.Overhead)) / Math.Sin(Mathf.DegToRad(height)));
 
     public static Color LightTint(float warmth)
     {
@@ -155,6 +169,7 @@ sealed class TableStage
 
     public void ApplyScale(Calibration c)
     {
+        if (c.North != _north) { _north = c.North; AimSun(); }
         if (!EffectFx.SetScale(c)) return;
         WindChanged?.Invoke();
     }

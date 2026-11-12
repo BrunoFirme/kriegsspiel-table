@@ -127,7 +127,7 @@ public class StateMachineTests
         yield return C("lock-sheet", new LockSheet { Id = "s-000007", Locked = true });
         yield return C("remove-sheet", new RemoveSheet { Id = "s-000001" });
         yield return C("crop-sheet", new CropSheet { Id = "s-000001", Crop = new FaceBox { X = 0.1, Y = 0.05, W = 0.8, H = 0.9 } });
-        yield return C("lighting", new SetLighting { Lighting = new Lighting { Warmth = -0.5, SunEnergy = 0.6, Ambient = 0.5, Shadows = false } });
+        yield return C("lighting", new SetLighting { Lighting = new Lighting { Warmth = -0.5, SunEnergy = 0.6, Ambient = 0.5, Shadows = false, SunFrom = 100, SunHeight = 30 } });
         yield return C("wind", new SetWind { Wind = new Wind { From = 45, Strength = 2 } });
         yield return C("vision", new SetVisionRadius { Radius = 25 });
         yield return C("draw", new Draw { Layer = U, Stroke = CoreSamples.Stroke("") });
