@@ -12,7 +12,7 @@ namespace KTable.App;
 
 sealed class ReliefTool
 {
-    const ulong DraftEveryMs = 70;
+    const ulong SculptEveryMs = 70, PaintEveryMs = 12;
     const int RingSteps = 48;
     const float SmallestBrush = 0.2f, LargestBrush = 400f;
     const float CloseSnapPx = 10f, ShapeLeastPx = 4f;
@@ -204,7 +204,7 @@ sealed class ReliefTool
         if (box.Empty) return;
         var area = WorldBox(_sheet, _draft, box);
         _dirty = _dirty is { } d ? d.Merge(area) : area;
-        if (Time.GetTicksMsec() - _pushed >= DraftEveryMs) Push();
+        if (Time.GetTicksMsec() - _pushed >= (Painting ? PaintEveryMs : SculptEveryMs)) Push();
     }
 
     void Push()

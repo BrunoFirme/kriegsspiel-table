@@ -8,9 +8,9 @@ namespace KTable.App;
 public partial class GroundTiles : Node
 {
     public const int TilePx = 256, GutterPx = 2, Slots = 16;
-    const int AtlasPx = TilePx * Slots, BakesPerFrame = 8, MostLevel = 9, RetireFrames = 180, Budget = Slots * Slots - BakesPerFrame * 2, Relaxings = 4;
+    const int AtlasPx = TilePx * Slots, BakesPerFrame = 8, UrgentBakesPerFrame = 24, MostLevel = 9, RetireFrames = 180, Budget = Slots * Slots - UrgentBakesPerFrame - BakesPerFrame, Relaxings = 4;
     const int CardQuietFrames = 120;
-    const float FinestTexelWorld = 0.004f, Sharpness = 1.1f;
+    const float FinestTexelWorld = 0.004f, Sharpness = 0.9f, MostStretch = 4f;
     static GroundTiles? _shared;
     static Shader? _viewShader, _bakeShader;
 
@@ -52,6 +52,7 @@ public partial class GroundTiles : Node
         public GroundCard.Spec? Card { get; init; }
         public readonly Dictionary<Tile, int> Baked = new();
         public readonly HashSet<Tile> Stale = new();
+        public readonly HashSet<Tile> Urgent = new();
         public bool PagesDirty;
         internal int Changes = 1, ChangesSeen, CardOf;
         internal long QuietSince;
@@ -62,10 +63,14 @@ public partial class GroundTiles : Node
             Changes++;
         }
 
-        public void StaleUv(Rect2 uv)
+        public void StaleUv(Rect2 uv, bool urgent = false)
         {
             foreach (var t in Baked.Keys)
-                if (t.Uv.Intersects(uv, true)) Stale.Add(t);
+            {
+                if (!t.Uv.Intersects(uv, true)) continue;
+                Stale.Add(t);
+                if (urgent) Urgent.Add(t);
+            }
             Changes++;
         }
     }
@@ -93,17 +98,18 @@ public partial class GroundTiles : Node
 
     public override void _Ready() => AddChild(_atlas);
 
-    public Sheet Track(string key, Node3D owner, ShaderMaterial bake, Func<Vector2, float, Vector3> world, float sheetWidth, float low, float high, bool cut, GroundCard.Spec? card = null)
+    public Sheet Track(string key, Node3D owner, ShaderMaterial bake, Func<Vector2, float, Vector3> world, float sheetWidth, float low, float high, bool cut, bool redrawn,
+        GroundCard.Spec? card = null)
     {
         int levels = Math.Clamp((int)Math.Ceiling(Math.Log2(Math.Max(1, sheetWidth / FinestTexelWorld / (TilePx - 2 * GutterPx)))), 0, MostLevel);
         int side = 1 << levels;
-        var pages = Image.CreateEmpty(side, side, false, Image.Format.Rgba8);
+        var pages = Image.CreateEmpty(side * 2, side, false, Image.Format.Rgba8);
         var view = new ShaderMaterial { Shader = ViewShader, RenderPriority = cut ? 1 : 0 };
         view.SetShaderParameter("cut", cut);
         var pagesTex = ImageTexture.CreateFromImage(pages);
         view.SetShaderParameter("atlas", _atlas.GetTexture());
         view.SetShaderParameter("pages", pagesTex);
-        view.SetShaderParameter("page_side", (float)side);
+        view.SetShaderParameter("levels", (float)levels);
         view.SetShaderParameter("atlas_slots", (float)Slots);
         view.SetShaderParameter("tile_px", (float)TilePx);
         view.SetShaderParameter("gutter_px", (float)GutterPx);
@@ -115,7 +121,7 @@ public partial class GroundTiles : Node
                 sheet.Baked[t] = slot;
                 _slots[slot].Owner = sheet;
             }
-            sheet.StaleAll();
+            if (redrawn) sheet.StaleAll();
             Repage(sheet);
         }
         else if (old.Sheet != null) Untrack(old.Sheet);
@@ -150,30 +156,38 @@ public partial class GroundTiles : Node
             if (_slots[slot].Owner != sheet) continue;
             sheet.Baked[tile] = slot;
             sheet.Stale.Remove(tile);
+            sheet.Urgent.Remove(tile);
             sheet.PagesDirty = true;
         }
         _baking.Clear();
-        var cam = GetViewport()?.GetCamera3D();
-        if (cam != null)
-        {
-            var frustum = cam.GetFrustum();
-            var wanted = new List<(Sheet Sheet, Tile Tile, float Size)>();
-            float sharpness = Sharpness;
-            for (int relaxed = 0; ; relaxed++)
-            {
-                wanted.Clear();
-                foreach (var s in _sheets)
-                    if (IsInstanceValid(s.Owner) && s.Owner.IsVisibleInTree()) Need(s, cam, frustum, new Tile(0, 0, 0), sharpness, wanted);
-                if (wanted.Count <= Budget || relaxed >= Relaxings) break;
-                sharpness *= 2;
-            }
-            Bake(wanted);
-        }
+        if (Wanted() is { } wanted) Bake(wanted, urgentOnly: false);
         foreach (var s in _sheets)
         {
             if (s.PagesDirty) Repage(s);
             CardWhenQuiet(s);
         }
+    }
+
+    List<(Sheet Sheet, Tile Tile, float Size)>? Wanted()
+    {
+        if (GetViewport()?.GetCamera3D() is not { } cam) return null;
+        var frustum = cam.GetFrustum();
+        var wanted = new List<(Sheet Sheet, Tile Tile, float Size)>();
+        float sharpness = Sharpness;
+        for (int relaxed = 0; ; relaxed++)
+        {
+            wanted.Clear();
+            foreach (var s in _sheets)
+                if (IsInstanceValid(s.Owner) && s.Owner.IsVisibleInTree()) Need(s, cam, frustum, new Tile(0, 0, 0), sharpness, wanted);
+            if (wanted.Count <= Budget || relaxed >= Relaxings) break;
+            sharpness *= 2;
+        }
+        return wanted;
+    }
+
+    public void Hurry()
+    {
+        if (IsInsideTree() && _sheets.Any(s => s.Urgent.Count > 0) && Wanted() is { } wanted) Bake(wanted, urgentOnly: true);
     }
 
     void CardWhenQuiet(Sheet s)
@@ -224,19 +238,30 @@ public partial class GroundTiles : Node
             if (cam.IsPositionBehind(mid)) { behind = true; break; }
             screen[i] = cam.UnprojectPosition(mid);
         }
-        if (!behind) size = Math.Max((screen[0] - screen[2]).Length(), (screen[1] - screen[3]).Length()) / Mathf.Sqrt2;
+        if (!behind) size = ShownSize(screen);
         wanted.Add((s, t, size));
         if (t.Level >= s.Levels || (!behind && size <= (TilePx - 2 * GutterPx) * sharpness)) return;
         for (int j = 0; j < 2; j++)
             for (int i = 0; i < 2; i++) Need(s, cam, frustum, new Tile(t.Level + 1, t.X * 2 + i, t.Y * 2 + j), sharpness, wanted);
     }
 
-    void Bake(List<(Sheet Sheet, Tile Tile, float Size)> wanted)
+    static float ShownSize(Span<Vector2> corners)
+    {
+        float along = ((corners[1] - corners[0]).Length() + (corners[2] - corners[3]).Length()) / 2;
+        float across = ((corners[3] - corners[0]).Length() + (corners[2] - corners[1]).Length()) / 2;
+        return Math.Min(Math.Max(along, across), Math.Min(along, across) * MostStretch);
+    }
+
+    void Bake(List<(Sheet Sheet, Tile Tile, float Size)> wanted, bool urgentOnly)
     {
         foreach (var (s, t, _) in wanted)
             if (s.Baked.TryGetValue(t, out int slot)) _slots[slot].Used = _frame;
-        var todo = wanted.Where(w => !w.Sheet.Baked.ContainsKey(w.Tile) || w.Sheet.Stale.Contains(w.Tile))
-            .OrderBy(w => w.Sheet.Baked.ContainsKey(w.Tile) ? 1 : 0).ThenBy(w => w.Tile.Level).ThenByDescending(w => w.Size).Take(BakesPerFrame).ToList();
+        bool Underway((Sheet Sheet, Tile Tile, float Size) w) => _baking.Any(b => b.Sheet == w.Sheet && b.Tile == w.Tile);
+        int urgentLeft = UrgentBakesPerFrame - _baking.Count(b => b.Sheet.Urgent.Contains(b.Tile));
+        var todo = wanted.Where(w => w.Sheet.Urgent.Contains(w.Tile) && !Underway(w)).OrderByDescending(w => w.Tile.Level).Take(Math.Max(0, urgentLeft)).ToList();
+        if (!urgentOnly)
+            todo.AddRange(wanted.Where(w => !w.Sheet.Urgent.Contains(w.Tile) && (!w.Sheet.Baked.ContainsKey(w.Tile) || w.Sheet.Stale.Contains(w.Tile)))
+                .OrderBy(w => w.Sheet.Baked.ContainsKey(w.Tile) ? 1 : 0).ThenBy(w => w.Tile.Level).ThenByDescending(w => w.Size).Take(BakesPerFrame));
         foreach (var (s, t, _) in todo)
         {
             int slot = s.Baked.TryGetValue(t, out int kept) ? kept : Allocate();
@@ -264,7 +289,12 @@ public partial class GroundTiles : Node
         }
         if (best < 0) return -1;
         var (owner, tile, _) = _slots[best];
-        if (owner != null && owner.Baked.Remove(tile)) owner.PagesDirty = true;
+        if (owner != null && owner.Baked.Remove(tile))
+        {
+            owner.Stale.Remove(tile);
+            owner.Urgent.Remove(tile);
+            owner.PagesDirty = true;
+        }
         _slots[best] = (null, default, 0);
         return best;
     }
@@ -274,8 +304,12 @@ public partial class GroundTiles : Node
         s.Pages.Fill(new Color(0, 0, 0, 0));
         foreach (var (t, slot) in s.Baked.OrderBy(b => b.Key.Level))
         {
-            int span = 1 << (s.Levels - t.Level);
-            s.Pages.FillRect(new Rect2I(t.X * span, t.Y * span, span, span), Color.Color8((byte)(slot % Slots), (byte)(slot / Slots), (byte)t.Level, 255));
+            var entry = Color.Color8((byte)(slot % Slots), (byte)(slot / Slots), (byte)t.Level, 255);
+            for (int level = t.Level; level <= s.Levels; level++)
+            {
+                int span = 1 << (level - t.Level);
+                s.Pages.FillRect(new Rect2I((1 << level) + t.X * span, t.Y * span, span, span), entry);
+            }
         }
         s.PagesTex.Update(s.Pages);
         s.PagesDirty = false;

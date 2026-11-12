@@ -199,17 +199,15 @@ float distance_at(vec2 uv) {
 int kind_at(vec2 uv, out float border, out float margin, out int beside) {
 	vec2 q = uv * cells;
 	vec2 g = q - 0.5;
-	g += (vec2(noise(q * 0.07 + 3.3), noise(q * 0.07 + vec2(8.8, 2.2))) - 0.5) * WARP_LONG;
-	g += (vec2(noise(q * 0.25), noise(q * 0.25 + vec2(5.2, 1.3))) - 0.5) * WARP;
-	g += (vec2(noise(q * 0.9 + 9.1), noise(q * 0.9 + vec2(2.7, 7.4))) - 0.5) * WARP * 0.2;
+	if (ground_style != MODERN) g += (vec2(noise(q * 0.9 + 9.1), noise(q * 0.9 + vec2(2.7, 7.4))) - 0.5) * EDGE_HAND;
 	vec2 base = floor(g);
 	float score[KINDS];
 	for (int k = 0; k < KINDS; k++) score[k] = 0.0;
-	for (int j = -2; j <= 3; j++) {
-		for (int i = -2; i <= 3; i++) {
+	for (int j = -1; j <= 2; j++) {
+		for (int i = -1; i <= 2; i++) {
 			vec2 c = base + vec2(float(i), float(j));
 			vec2 d = g - c;
-			score[clamp(kind_of(c), 0, KINDS - 1)] += exp(-dot(d, d) * VOTE_FALL);
+			score[clamp(kind_of(c), 0, KINDS - 1)] += exp(-dot(d, d) * EDGE_FALL);
 		}
 	}
 	int best = 0;
