@@ -72,8 +72,8 @@ vec3 modern(int k, int beside, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_u
 		Lot l = lot_at(p, uv, to_uv, metres(PADDOCK_M), 0.5, GRASS, own, levels);
 		float rough = step(0.6, hash(l.id + 1.1));
 		float wet = wet_meadow(uv, 0.0);
-		c = mix(c, MODERN_BLACK, marks(p, own, MEADOW_ROW * 0.5, MEADOW_LEN, M1 * 0.4, 0.0, 0.0, mix(0.55, 0.75, rough), fw) * 0.85);
-		if (rough > 0.5) c = mix(c, MODERN_BLACK, tufts(p + 0.4, own, MEADOW_ROW, 0.12, M1 * 0.4, 0.4, fw) * 0.8);
+		c = mix(c, MODERN_GREY, marks(p, own, MEADOW_ROW * 0.7, MEADOW_LEN, M1 * 0.4, 0.0, 0.0, mix(0.35, 0.5, rough), fw) * 0.8);
+		if (rough > 0.5) c = mix(c, MODERN_GREY, tufts(p + 0.4, own, MEADOW_ROW, 0.12, M1 * 0.4, 0.4, fw) * 0.8);
 		c = mix(c, MODERN_BLUE, tufts(p + 0.9, own, MEADOW_ROW * 0.6, 0.1, M1 * 0.4, 0.5, fw) * 0.8 * wet);
 		if (l.room >= 0.0) {
 			float fenced = smoothstep(0.2, 0.6, max(l.levels.x, near_town)) * step(mix(0.65, 0.3, near_town), hash(l.id + 7.2));

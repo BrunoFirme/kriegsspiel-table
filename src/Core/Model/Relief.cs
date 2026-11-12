@@ -19,17 +19,17 @@ public static class GroundKinds
     public static readonly IReadOnlyList<(string Name, string Color)> All =
     [
         ("none", "#00000000"),
-        ("grass", "#D4D9A6"),
-        ("field", "#EAE2CC"),
-        ("wood", "#9CA67A"),
-        ("marsh", "#B9C79A"),
-        ("water", "#9FB8C8"),
-        ("road", "#D9B99A"),
-        ("earth", "#E2B98A"),
-        ("rock", "#D9A89A"),
-        ("sand", "#ECD5B0"),
+        ("grass", "#C9CDAA"),
+        ("field", "#EDE7DA"),
+        ("wood", "#A1A98A"),
+        ("marsh", "#C2CBB0"),
+        ("water", "#B4C4CC"),
+        ("road", "#D8C3A8"),
+        ("earth", "#E6DBC6"),
+        ("rock", "#E3D5CB"),
+        ("sand", "#EBDFC6"),
         ("snow", "#F4F2EC"),
-        ("bridge", "#D9B99A"),
+        ("bridge", "#D8C3A8"),
         ("town", "#E7DFD4"),
     ];
 
@@ -90,10 +90,10 @@ public static class GroundKinds
     static int Percent(int nibble) => (int)Math.Round(nibble * 100.0 / LevelSteps);
 
     static readonly string[] Ancient =
-        ["#00000000", "#D8C195", "#E3CE8C", "#8E9A6A", "#C9CCA4", "#A9C9C2", "#B5603F", "#C9A77A", "#D98A7A", "#E0CFA3", "#F2EDE0", "#B5603F", "#B5563A"];
+        ["#00000000", "#D6BE96", "#D6BE96", "#8E9A6A", "#C4C4A0", "#9DB5AC", "#9A4A2C", "#C9AE86", "#C9A07E", "#DCCBA4", "#F2EDE0", "#9A4A2C", "#A0563C"];
 
     static readonly string[] Modern =
-        ["#00000000", "#F3EFE0", "#F3EFE0", "#CDE1CF", "#E6EBE4", "#D6E0EA", "#F3EFE0", "#EFE4D2", "#E9E6DC", "#F0E6D2", "#FFFFFF", "#F3EFE0", "#D9D8D0"];
+        ["#00000000", "#F3EFE0", "#F3EFE0", "#CFD9C4", "#E6EBE4", "#D6E0EA", "#F3EFE0", "#EFE4D2", "#E9E6DC", "#F0E6D2", "#FBFAF6", "#F3EFE0", "#D9D8D0"];
 
     public static string Color(byte kind, string? style)
     {

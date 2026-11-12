@@ -32,7 +32,7 @@ float fbm(vec2 p) {
 }
 
 float ink(float d, float width, float fw) {
-	float w = max(width, fw * 0.5);
+	float w = max(min(width, fw * INK_MOST_PX * sqrt(max(width, 1e-6) / W1)), fw * 0.5);
 	return (1.0 - smoothstep(w - fw * 0.5, w + fw * 0.5, d)) * clamp(width / max(fw * 0.5, 1e-5), 0.0, 1.0);
 }
 

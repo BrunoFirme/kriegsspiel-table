@@ -11,13 +11,14 @@ vec3 survey_wood(vec3 c, vec3 tint, vec2 p, vec2 uv, mat2 to_uv, float fw, float
 		for (int i = -1; i <= 1; i++) {
 			vec2 id;
 			float salt;
-			vec2 o = grid_point_at(p, uv, to_uv, S, 0.75, i, j, id, salt);
+			vec2 o = grid_point_at(p, uv, to_uv, S, 0.95, i, j, id, salt);
 			float room = room_at(o, p, uv, to_uv, WOOD, salt);
 			if (room < 0.0) continue;
 			if (ledges > 0.5 && hash(id + 9.9) > LEDGE_TREES) continue;
+			if (hash(id + 5.7) > mix(0.55, 1.0, smoothstep(0.35, 0.6, noise(o * 0.6 + salt))) ) continue;
 			if (hash(id + 1.3) < clearing_at(o, salt) * (1.0 - closed) || hash(id + 2.4) > keep) continue;
 			float small = coppice_at(o, salt);
-			float r = min(RING_R * mix(0.7, 1.2, hash(id + 3.1)) * mix(1.0, 0.6, small) * mix(0.85, 1.0, trees), room * 0.9);
+			float r = min(min(RING_R * mix(0.55, 1.25, hash(id + 3.1)) * mix(1.0, 0.6, small) * mix(0.85, 1.0, trees), room * 0.9), fw * CROWN_MOST_PX);
 			if (length(p - o) > r * 3.0) continue;
 			m = max(m, crown_sign(p, o - NORTH * r * 0.4, r * 0.85, step(hash(id + 6.1), conifer_share(o, salt)) * (1.0 - small), r * 0.5, W1 * 0.8, fw, id));
 		}
@@ -111,8 +112,8 @@ vec3 survey(int k, int beside, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_u
 		Lot l = lot_at(p, uv, to_uv, metres(PADDOCK_M), 0.5, GRASS, own, levels);
 		float rough = step(0.6, hash(l.id + 1.1));
 		float wet = wet_meadow(uv, 0.0);
-		if (rough > 0.5) c = mix(c, SURVEY_INK, pasture(p, own, MEADOW_ROW, W1 * 0.5, 0.75, fw) * 0.6);
-		else c = mix(c, SURVEY_INK, meadow_pairs(p, own, MEADOW_ROW, MEADOW_LEN, W1 * 0.55, 0.75, fw) * 0.7);
+		if (rough > 0.5) c = mix(c, SURVEY_INK, pasture(p, own, MEADOW_ROW, W1 * 0.5, 0.75, fw) * 0.35);
+		else c = mix(c, SURVEY_INK, meadow_pairs(p, own, MEADOW_ROW, MEADOW_LEN, W1 * 0.55, 0.75, fw) * 0.4);
 		c = mix(c, SURVEY_BLUE, marks(p + 0.3, own, 0.55, 0.16, W1 * 0.55, 0.0, 0.15, 0.7, fw) * 0.7 * wet);
 		if (l.room >= 0.0) {
 			float fenced = smoothstep(0.2, 0.6, max(l.levels.x, near_town)) * step(mix(0.65, 0.3, near_town), hash(l.id + 7.2));
@@ -175,7 +176,7 @@ vec3 survey(int k, int beside, vec3 tint, vec3 sheet, vec2 p, vec2 uv, mat2 to_u
 		}
 	} else if (k == ROCK) {
 		float crag = marks(p, own, 0.22, 0.07, W2 * 0.8, 0.0, 0.5, 0.8, fw);
-		c = mix(c, CINNABAR, crag * 0.8);
+		c = mix(c, SURVEY_INK, crag * 0.55);
 		c = mix(c, SURVEY_INK, scatter(p + 3.1, own, 0.14, W1 * 0.7, 0.9, 0.4, fw) * 0.5);
 		cover = crag;
 	} else if (k == SAND) {

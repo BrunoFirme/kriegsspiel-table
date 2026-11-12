@@ -60,7 +60,7 @@ float dash_along(vec2 p, vec2 uv, float period, float share, float fw) {
 }
 
 vec3 road_over(int style, vec3 c, vec3 sheet, vec2 p, vec2 uv, float class, float d, float band_half, float fw, bool over_water) {
-	float w = min(road_width(style, class), band_half);
+	float w = min(min(road_width(style, class), band_half), fw * ROAD_MOST_PX);
 	if (style == ANCIENT) {
 		c = mix(c, RED_OCHRE, 1.0 - smoothstep(w - fw, w + fw, d));
 		if (over_water) c = mix(c, ANCIENT_INK, ink(abs(d - w - W2), W2 * 0.7, fw));
