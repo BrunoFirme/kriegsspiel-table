@@ -1,3 +1,4 @@
+using System;
 using Godot;
 using KTable.Core.Model;
 
@@ -26,21 +27,28 @@ public partial class SunRose : CompassRose
     }
     bool _moon;
 
+    internal const float Track = 0.9f;
     const float Side = 112, Disc = 6, RayFrom = 9, RayTo = 13, MoonRadius = 8, MoonBite = 0.9f;
     const int MoonSteps = 14;
     static readonly Vector2 BiteToward = new Vector2(0.6f, -0.8f);
     const double PointNotch = 45, PointPull = 8;
 
-    public SunRose() : base(Side, "Click or drag towards where the light comes from (Shift: single degrees)")
+    public SunRose() : base(Side, "Drag the sun to where the light comes from, nearer the centre to stand higher (Shift: single degrees)")
     {
         Notch = PointNotch;
         NotchPull = PointPull;
     }
 
+    protected override void Reach(float fraction)
+    {
+        double up = Math.Clamp(1 - fraction / Track, 0, 1);
+        Height = Math.Round(Lighting.LowestSun + up * (Lighting.HighestSun - Lighting.LowestSun));
+    }
+
     protected override void DrawMark(Vector2 c, float r)
     {
         float up = (float)((_height - Lighting.LowestSun) / (Lighting.HighestSun - Lighting.LowestSun));
-        var at = c + Toward(From) * r * (1 - Mathf.Clamp(up, 0, 1)) * 0.9f;
+        var at = c + Toward(From) * r * (1 - Mathf.Clamp(up, 0, 1)) * Track;
         var colour = _shining ? Ui.Accent : Faint;
         if (at.DistanceTo(c) > Disc) DrawLine(at, c, Faint, 1.2f, true);
         if (_moon) { DrawColoredPolygon(Crescent(at), colour); return; }

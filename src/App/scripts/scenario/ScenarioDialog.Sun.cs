@@ -33,6 +33,7 @@ sealed partial class ScenarioDialog
             {
                 _sync = true;
                 _box.Value = Math.Round(deg) % 360;
+                _height.Value = _rose.Height;
                 _sync = false;
                 Changed?.Invoke(final);
             };

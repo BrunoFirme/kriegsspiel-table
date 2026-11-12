@@ -44,11 +44,16 @@ public partial class CompassRose : Control
     void Aim(Vector2 at, bool fine, bool final)
     {
         var d = at - Size / 2;
-        if (d.Length() < DeadCentre) { if (final) Turned?.Invoke(_from, true); return; }
-        double deg = Mathf.RadToDeg(Math.Atan2(d.X, -d.Y));
-        From = fine ? Math.Round(deg) : Snapped(deg);
+        Reach(d.Length() / Radius);
+        if (d.Length() >= DeadCentre)
+        {
+            double deg = Mathf.RadToDeg(Math.Atan2(d.X, -d.Y));
+            From = fine ? Math.Round(deg) : Snapped(deg);
+        }
         Turned?.Invoke(_from, final);
     }
+
+    protected virtual void Reach(float fraction) { }
 
     double Snapped(double deg)
     {
@@ -60,7 +65,7 @@ public partial class CompassRose : Control
         return Math.Round(deg / Step) * Step;
     }
 
-    protected float Radius => Mathf.Min(Size.X, Size.Y) / 2 - Edge;
+    protected internal float Radius => Mathf.Min(Size.X, Size.Y) / 2 - Edge;
 
     protected static Vector2 Toward(double deg)
     {
