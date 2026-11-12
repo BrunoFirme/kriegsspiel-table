@@ -21,6 +21,8 @@ static class Preferences
     {
         Number("interface_size", "Interface", "how big the interface draws, on top of the size fitted to the window and screen", Settings.UiScaleMin, Settings.UiScaleMax,
             c => c.UiScale, (c, v) => c.UiScale = v, PrefEffect.Scale),
+        new Pref("interface_tint", "Interface", "the interface's tint from the next start; a colour gives its hue and strength, never its brightness",
+            "\"\" for charcoal, a colour as #rrggbb, or one of: " + string.Join(", ", InterfaceTint.Presets.Skip(1).Select(p => p.Name.ToLowerInvariant())), c => c.Tint, SetTint, PrefEffect.Kept),
         Number("sidebar_buttons", "Interface", "sidebar button size in pixels", Settings.StripSizeMin, Settings.StripSizeMax, c => c.StripSize, (c, v) => c.StripSize = MathF.Round(v), PrefEffect.Strip),
         Flag("top_line", "Interface", "the top bar says what just happened (off: only the log does)", c => c.TopLine, (c, on) => c.TopLine = on, PrefEffect.TopLine),
         Number("top_line_length", "Interface", "share of the top bar that line may take", Settings.TopLineWidthMin, 1, c => c.TopLineWidth, (c, v) => c.TopLineWidth = v, PrefEffect.TopLine),
@@ -128,6 +130,15 @@ static class Preferences
         JsonValueKind.Number => v.GetDouble().ToString(System.Globalization.CultureInfo.InvariantCulture),
         _ => null,
     };
+
+    static string? SetTint(Settings c, JsonElement v)
+    {
+        if (v.ValueKind != JsonValueKind.String || v.GetString() is not { } t) return "interface_tint takes \"\", a colour as #rrggbb, or a tint's name";
+        var named = InterfaceTint.Presets.FirstOrDefault(p => p.Name.Equals(t, StringComparison.OrdinalIgnoreCase)).Tint;
+        if (named == null && !InterfaceTint.IsTint(t)) return $"no tint {t}: read_settings lists them";
+        c.Tint = InterfaceTint.Kept(named ?? t);
+        return null;
+    }
 
     static string? SetBackdrop(Settings c, JsonElement v)
     {

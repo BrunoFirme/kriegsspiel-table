@@ -107,6 +107,46 @@ static class AppSettings
         box.AddChild(Ui.UnderControls(c.Capped, Ui.DialogLabels));
     }
 
+    public static void AddTint(VBoxContainer box, Settings cfg)
+    {
+        const int ChipWidth = 34, ChipHeight = 28, OwnWidth = 44;
+        var row = new HBoxContainer();
+        row.AddThemeConstantOverride("separation", Ui.Gap.Group);
+        row.AddChild(Ui.RowLabel("Tint", Ui.DialogLabels));
+        var chips = new HBoxContainer { SizeFlagsVertical = Control.SizeFlags.ShrinkCenter };
+        chips.AddThemeConstantOverride("separation", Ui.Gap.Tight);
+        row.AddChild(chips);
+        var own = new ColorPickerButton
+        {
+            EditAlpha = false, CustomMinimumSize = new Vector2(OwnWidth, ChipHeight), SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
+            TooltipText = "Any colour: the interface takes its hue and strength, never its brightness",
+        };
+        row.AddChild(own);
+        box.AddChild(row);
+        var next = Ui.UnderControls(Ui.Hint("From the next start."), Ui.DialogLabels);
+        box.AddChild(next);
+        void Show()
+        {
+            foreach (var old in chips.GetChildren()) old.QueueFree();
+            foreach (var (name, tint) in InterfaceTint.Presets)
+            {
+                var chip = Ui.Swatch(Ui.Chip(tint), new Vector2(ChipWidth, ChipHeight), name, cfg.Tint == tint);
+                chip.Pressed += () => Choose(tint);
+                chips.AddChild(chip);
+            }
+            own.Color = Ui.Chip(cfg.Tint);
+            next.Visible = cfg.Tint != Ui.TintInUse;
+        }
+        void Choose(string tint)
+        {
+            cfg.Tint = InterfaceTint.Kept(tint);
+            cfg.Save();
+            Show();
+        }
+        Ui.WhenPicked(own, c => Choose("#" + c.ToHtml(false)));
+        Show();
+    }
+
     public static OptionButton WindowPick(Settings cfg)
     {
         var pick = new OptionButton
@@ -163,7 +203,9 @@ static class AppSettings
     {
         var dlg = new AcceptDialog { Title = "Settings", OkButtonText = "Done" };
         var pages = new DialogPages("app-settings", new Vector2(620, 420));
-        AddSize(pages.Add("Interface"), cfg);
+        var face = pages.Add("Interface");
+        AddSize(face, cfg);
+        AddTint(face, cfg);
         AddSound(pages.Add("Sound"), cfg);
         if (AgentEndpoint.Current is { } agent) AgentPanel.Simple(pages.Add("AI agent"), agent, cfg);
         pages.ShowFirst();
@@ -201,6 +243,7 @@ sealed class SettingsPage
         v.AddChild(access);
         AppSettings.AddSize(access, _cfg);
         AppSettings.AddWindow(access, _cfg);
+        AppSettings.AddTint(access, _cfg);
         access.AddChild(Ui.UnderControls(Ui.Btn("Show the tour again", _t.TourAgain, "The first-run tour of the title screen and the table, ending in Help"), Ui.DialogLabels));
         v.AddChild(Ui.Header("Sound"));
         var sound = new VBoxContainer();

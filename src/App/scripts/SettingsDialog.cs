@@ -94,6 +94,7 @@ sealed class SettingsDialog : HudPart
         };
         _box.AddChild(Row("Sidebar buttons", bar, barL));
         _box.AddChild(Row("Window", AppSettings.WindowPick(Cfg), null, fill: false));
+        AppSettings.AddTint(_box, Cfg);
 
         _box.AddChild(Header("Layout"));
         var topLine = new CheckBox { Text = "Top bar says what just happened", ButtonPressed = Cfg.TopLine, TooltipText = "Off: the bar stays bare and it is written in the log instead" };

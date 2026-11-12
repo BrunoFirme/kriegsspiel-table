@@ -27,7 +27,7 @@ public partial class ScreenLabels : CanvasLayer
         AddChild(_root);
     }
 
-    static readonly Color PlateFill = new(Ui.Bar, 0.86f);
+    static Color PlateFill => new(Ui.Bar, 0.86f);
     const int PlateRadius = 3, PlateMarginX = 6, PlateMarginY = 1;
 
     public void Set(string key, Vector3 world, string text, Color color, int fontSize = 13, Vector2 offset = default, bool centered = true, bool plate = false)

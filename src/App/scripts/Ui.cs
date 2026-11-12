@@ -17,10 +17,11 @@ public static class Ui
     public static readonly Color Alarm = new(0.725f, 0.141f, 0.118f);
     public static readonly Color Good = new(0.549f, 0.776f, 0.431f);
 
-    public static readonly Color Bar = new(0.071f, 0.067f, 0.059f);
-    public static readonly Color Surface = new(0.102f, 0.098f, 0.090f);
-    public static readonly Color Raised = new(0.137f, 0.129f, 0.118f);
-    public static readonly Color Overlay = new(0.196f, 0.188f, 0.173f);
+    public static Color Bar { get; private set; } = Of(InterfaceTint.Bar);
+    public static Color Surface { get; private set; } = Of(InterfaceTint.Surface);
+    public static Color Raised { get; private set; } = Of(InterfaceTint.Raised);
+    public static Color Overlay { get; private set; } = Of(InterfaceTint.Overlay);
+    public static string TintInUse { get; private set; } = InterfaceTint.Charcoal;
     public static readonly Color Field = new(0, 0, 0, 0.28f);
     public static readonly Color Line = new(1, 1, 1, 0.08f);
     public static readonly Color LineStrong = new(1, 1, 1, 0.14f);
@@ -74,6 +75,22 @@ public static class Ui
     }
 
     static Color White(float a) => new(1, 1, 1, a);
+
+    static Color Of(Rgb c, float a = 1) => new(c.R, c.G, c.B, a);
+
+    public static Color Chip(string tint) => Of(InterfaceTint.Chip(tint));
+
+    public static Color Tinted(Color own) => Of(InterfaceTint.Tinted(new Rgb(own.R, own.G, own.B), TintInUse), own.A);
+
+    public static void Tint(string tint)
+    {
+        if (_theme != null) return;
+        TintInUse = InterfaceTint.Kept(tint);
+        Bar = Of(InterfaceTint.Tinted(InterfaceTint.Bar, TintInUse));
+        Surface = Of(InterfaceTint.Tinted(InterfaceTint.Surface, TintInUse));
+        Raised = Of(InterfaceTint.Tinted(InterfaceTint.Raised, TintInUse));
+        Overlay = Of(InterfaceTint.Tinted(InterfaceTint.Overlay, TintInUse));
+    }
 
     public static Theme Theme() => _theme ??= MakeTheme();
     static Theme? _theme;

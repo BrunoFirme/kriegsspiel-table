@@ -10,7 +10,7 @@ static class TitleStyle
     public static readonly Color Ink = Ui.Ink;
     public static readonly Color Muted = Ui.Muted;
     public static readonly Color Brass = Ui.Accent;
-    public static readonly Color Paper = Ui.Bar.Darkened(0.2f).Lerp(new Color(Ui.Surface, 1), 0.88f);
+    public static Color Paper => Ui.Bar.Darkened(0.2f).Lerp(new Color(Ui.Surface, 1), 0.88f);
 
     public static Font Serif() => Ui.Serif();
     public static Font Sans() => Ui.Sans();

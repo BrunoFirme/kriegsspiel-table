@@ -60,9 +60,10 @@ public partial class Main : Node
     {
         OneTextFormat();
         Diagnostics.Install();
+        _cfg = Settings.Load();
+        Ui.Tint(_cfg.Tint);
         Ui.InstallTheme();
         FileThumbs.Install();
-        _cfg = Settings.Load();
         Ui.ApplyScale(GetTree().Root, _cfg);
         Ui.KeepFolderLists(_cfg);
         GuideLibrary.Keys = () => _cfg.Keys;

@@ -15,6 +15,7 @@ sealed class TitleScreen
     const float WordmarkHeight = 13;
     const int WindowEdge = 72, WindowTop = 64, WindowFoot = 48, MenuWidth = 360, MenuToPage = 56, PageInset = 40;
     const int PageLeft = WindowEdge + MenuWidth + MenuToPage;
+    static readonly Color Shade = new(0.052f, 0.049f, 0.044f);
 
     readonly Main _main;
     readonly Settings _cfg;
@@ -93,7 +94,7 @@ sealed class TitleScreen
         var fade = new TextureRect { AnchorRight = 1, AnchorBottom = 1, StretchMode = TextureRect.StretchModeEnum.Scale, ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize };
         var grad =
             new Gradient { Offsets = new[] { 0f, 0.42f, 1f },
-                Colors = new[] { new Color(0.052f, 0.049f, 0.044f, 0.98f), new Color(0.052f, 0.049f, 0.044f, 0.75f), new Color(0.052f, 0.049f, 0.044f, 0.35f) } };
+                Colors = new[] { Ui.Tinted(new Color(Shade, 0.98f)), Ui.Tinted(new Color(Shade, 0.75f)), Ui.Tinted(new Color(Shade, 0.35f)) } };
         fade.Texture = new GradientTexture2D { Gradient = grad, Width = 256, Height = 4 };
         root.AddChild(fade);
 

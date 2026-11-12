@@ -45,6 +45,7 @@ public sealed class Settings
     public bool ShowCursors { get; set; } = true;
     public bool ShowZones { get; set; } = true;
     public float UiScale { get; set; } = 1f;
+    public string Tint { get; set; } = InterfaceTint.Charcoal;
     [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public bool? UiScaleFollowsWindows { get; set; }
     public const float UiScaleMin = 0.7f, UiScaleMax = 1.5f, ReferenceHeight = 1080f, FittedMost = 3f, NextStepFrom = 0.75f;
@@ -227,6 +228,7 @@ public sealed class Settings
         if (UiScaleFollowsWindows != null) UiScale = 1f;
         UiScaleFollowsWindows = null;
         UiScale = float.IsFinite(UiScale) ? Math.Clamp(UiScale, UiScaleMin, UiScaleMax) : 1f;
+        Tint = InterfaceTint.Kept(Tint);
         if (AgentPort is < 1024 or > 65535) AgentPort = AgentPortDefault;
     }
 
