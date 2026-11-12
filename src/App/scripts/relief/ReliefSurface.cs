@@ -64,7 +64,7 @@ public partial class ReliefSurface : Node3D
     static double _unitsPerMetre;
     static double _contourStep = -1;
 
-    const string StyleParameter = "ground_style", ContourParameter = "contour_interval", ScaleParameter = "units_per_metre", SnowParameter = "snow_line";
+    const string StyleParameter = "ground_style", ContourParameter = "contour_interval", ScaleParameter = "units_per_metre", SnowParameter = "snow_line", GainParameter = "ground_gain";
 
     public static void ShowScale(Calibration c)
     {
@@ -87,6 +87,12 @@ public partial class ReliefSurface : Node3D
     {
         RenderingServer.GlobalShaderParameterSet(StyleParameter, MapStyles.Index(style));
         GroundTiles.StaleEverything();
+    }
+
+    public static void ShowLight(double share, Color tint)
+    {
+        var light = tint.SrgbToLinear();
+        RenderingServer.GlobalShaderParameterSet(GainParameter, new Vector3((float)share / light.R, (float)share / light.G, (float)share / light.B));
     }
 
     public static bool ShowContours(bool on)

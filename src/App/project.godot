@@ -53,6 +53,10 @@ snow_line={
 "type": "float",
 "value": 0.0
 }
+ground_gain={
+"type": "vec3",
+"value": Vector3(0.69, 0.69, 0.69)
+}
 
 [steam]
 

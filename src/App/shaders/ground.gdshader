@@ -15,7 +15,7 @@ void fragment() {
 	bool drawn;
 	vec3 c = ground_colour(UV, world, normalize((INV_VIEW_MATRIX * vec4(NORMAL, 0.0)).xyz), bump, k, drawn);
 	if (!drawn) discard;
-	ALBEDO = to_linear(c) * SHEET_GAIN;
+	ALBEDO = to_linear(c) * ground_gain;
 	if (bump > 0.0) {
 		vec3 dx = dFdx(VERTEX);
 		vec3 dy = dFdy(VERTEX);

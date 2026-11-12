@@ -13,6 +13,7 @@ global uniform int ground_style;
 global uniform float contour_interval;
 global uniform float units_per_metre;
 global uniform float snow_line;
+global uniform vec3 ground_gain;
 
 const int KINDS = 13;
 const int GRASS = 1;
@@ -135,7 +136,6 @@ const float SNOW_BAND = 0.1;
 const float NEATLINE = 0.15;
 const float NEATLINE_GAP = 0.06;
 const float MEANDER = 0.16;
-const float SHEET_GAIN = 0.93;
 const int INDEX_EVERY = 5;
 const float LINE_PX = 0.72;
 const float INDEX_PX = 1.28;

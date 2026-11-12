@@ -9,8 +9,8 @@ uniform float tile_px = 256.0;
 uniform float gutter_px = 2.0;
 uniform vec3 paper = vec3(0.93, 0.9, 0.83);
 uniform bool cut = false;
+global uniform vec3 ground_gain;
 
-const float SHEET_GAIN = 0.93;
 
 vec3 to_linear(vec3 c) {
 	c = clamp(c, vec3(0.0), vec3(1.0));
@@ -31,6 +31,6 @@ void fragment() {
 		a = t.a;
 	}
 	if (cut && a < 0.5) discard;
-	ALBEDO = to_linear(c) * SHEET_GAIN;
+	ALBEDO = to_linear(c) * ground_gain;
 	ROUGHNESS = 1.0;
 }

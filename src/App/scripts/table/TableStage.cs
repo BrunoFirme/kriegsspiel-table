@@ -109,7 +109,6 @@ sealed class TableStage
 
     public Lighting LightNow() => _c.S.View.Lighting.FromClock ? DayLight.At(_c.S.View.Clock, _c.S.View.Lighting) : _c.S.View.Lighting;
 
-    const double MostSun = 3, MostLift = 3;
     Lighting _lit = new();
     double _north;
 
@@ -128,6 +127,7 @@ sealed class TableStage
         if (_standIn.on && !Mathf.IsEqualApprox(_standIn.shade, shade)) SetStandIn(true, shade);
         _backdrop?.Show(l.Backdrop ?? Backdrops.None, (float)l.Ambient);
         ReliefSurface.ShowStyle(l.MapStyle);
+        ReliefSurface.ShowLight(GroundLight.Share(l), tint);
     }
 
     void AimSun()
@@ -135,11 +135,8 @@ sealed class TableStage
         if (_sun == null) return;
         var (pitch, yaw) = DayLight.Aim(_lit.SunFrom, _lit.SunHeight, _north);
         _sun.RotationDegrees = new Vector3((float)pitch, (float)yaw, 0);
-        _sun.LightEnergy = (float)(Math.Clamp(_lit.SunEnergy, 0, MostSun) * FlatLift(-pitch));
+        _sun.LightEnergy = (float)(Math.Clamp(_lit.SunEnergy, 0, GroundLight.MostSun) * GroundLight.FlatLift(-pitch));
     }
-
-    static double FlatLift(double height) =>
-        Math.Min(MostLift, Math.Sin(Mathf.DegToRad(Lighting.Overhead)) / Math.Sin(Mathf.DegToRad(height)));
 
     public static Color LightTint(float warmth)
     {
