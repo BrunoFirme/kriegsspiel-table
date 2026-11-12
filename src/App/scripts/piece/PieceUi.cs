@@ -41,9 +41,24 @@ sealed class PieceUi
             else if (one is SetUiAttributes sua && sua.Piece == _piece.Piece.Id) PanelChanges.Forget(_local, _piece.Piece.UiLayout, sua.Id);
         }
         var moves = PanelMoves.Of(c, _piece.Piece.UiLayout, _piece.Piece.Id);
+        if (moves.Count == 0) { SyncSoon(); return; }
         foreach (var m in moves) if (!m.Showing) _hiding.Add(PanelScene.Key(m.Path));
         Sync(true);
         foreach (var m in moves) Animate(m);
+    }
+
+    bool _due;
+
+    void SyncSoon()
+    {
+        if (_due) return;
+        _due = true;
+        Callable.From(() =>
+        {
+            if (!_due) return;
+            _due = false;
+            if (GodotObject.IsInstanceValid(_piece) && !_piece.IsQueuedForDeletion()) Sync(true);
+        }).CallDeferred();
     }
 
     readonly HashSet<string> _hiding = new();
@@ -76,6 +91,7 @@ sealed class PieceUi
             Callable.From(() => { if (GodotObject.IsInstanceValid(_piece) && _piece.IsInsideTree()) _piece.SyncUi(true); }).CallDeferred();
             return;
         }
+        _due = false;
         _built = shown;
         _builtFaceDown = piece.FaceDown;
         Clear();
@@ -183,7 +199,7 @@ sealed class PieceUi
         {
             ready(t);
             Fresh();
-        }), _local, () => Callable.From(() => Sync(true)).CallDeferred(), _said, vp) with
+        }), _local, SyncSoon, _said, vp) with
         {
             PlatePixel = screen => PixelOn(() => made, screen), PlateWorld = pixel => WorldOf(() => made, pixel),
         };
