@@ -22,7 +22,8 @@ public partial class GroundTiles : Node
     readonly List<Sheet> _sheets = new();
     readonly Dictionary<string, (Sheet Sheet, long Frame)> _retired = new();
     readonly (Sheet? Owner, Tile Tile, long Used)[] _slots = new (Sheet?, Tile, long)[Slots * Slots];
-    readonly List<(ColorRect Quad, Sheet Sheet, Tile Tile, int Slot)> _baking = new();
+    readonly List<(ColorRect Quad, Sheet Sheet, Tile Tile, int Slot, bool Urgent)> _baking = new();
+    readonly List<(ColorRect Quad, Sheet Sheet, Tile Tile, int Slot)> _drawn = new();
     long _frame;
     bool _carding;
 
@@ -57,6 +58,7 @@ public partial class GroundTiles : Node
         public readonly Dictionary<Tile, int> Baked = new();
         public readonly HashSet<Tile> Stale = new();
         public readonly HashSet<Tile> Urgent = new();
+        internal readonly HashSet<Tile> Underway = new();
         public bool PagesDirty;
         internal int Changes = 1, ChangesSeen, CardOf;
         internal long QuietSince;
@@ -74,12 +76,13 @@ public partial class GroundTiles : Node
         public void StaleAll()
         {
             foreach (var t in Baked.Keys) Stale.Add(t);
+            foreach (var t in Underway) Stale.Add(t);
             Changes++;
         }
 
         public void StaleUv(Rect2 uv, bool urgent = false)
         {
-            foreach (var t in Baked.Keys)
+            foreach (var t in Baked.Keys.Concat(Underway))
             {
                 if (!t.Uv.Intersects(uv, true)) continue;
                 Stale.Add(t);
@@ -110,7 +113,19 @@ public partial class GroundTiles : Node
         _shared._retired[sheet.Key] = (sheet, _shared._frame);
     }
 
-    public override void _Ready() => AddChild(_atlas);
+    public override void _Ready()
+    {
+        AddChild(_atlas);
+        RenderingServer.FramePostDraw += Drawn;
+    }
+
+    public override void _ExitTree() => RenderingServer.FramePostDraw -= Drawn;
+
+    void Drawn()
+    {
+        foreach (var (quad, sheet, tile, slot, _) in _baking) _drawn.Add((quad, sheet, tile, slot));
+        _baking.Clear();
+    }
 
     public Sheet Track(string key, Node3D owner, ShaderMaterial bake, Func<Vector2, float, Vector3> world, float sheetWidth, float low, float high, bool cut, bool redrawn,
         BuiltPainter? built = null, GroundCard.Spec? card = null)
@@ -152,6 +167,13 @@ public partial class GroundTiles : Node
                 _baking[i].Quad.QueueFree();
                 _baking.RemoveAt(i);
             }
+        for (int i = _drawn.Count - 1; i >= 0; i--)
+            if (_drawn[i].Sheet == sheet)
+            {
+                _drawn[i].Quad.QueueFree();
+                _drawn.RemoveAt(i);
+            }
+        sheet.Underway.Clear();
     }
 
     public override void _Process(double delta)
@@ -162,16 +184,15 @@ public partial class GroundTiles : Node
             Untrack(_retired[key].Sheet);
             _retired.Remove(key);
         }
-        foreach (var (quad, sheet, tile, slot) in _baking)
+        foreach (var (quad, sheet, tile, slot) in _drawn)
         {
             quad.QueueFree();
+            sheet.Underway.Remove(tile);
             if (_slots[slot].Owner != sheet) continue;
             sheet.Baked[tile] = slot;
-            sheet.Stale.Remove(tile);
-            sheet.Urgent.Remove(tile);
             sheet.PagesDirty = true;
         }
-        _baking.Clear();
+        _drawn.Clear();
         if (Wanted() is { } wanted) Bake(wanted, urgentOnly: false);
         foreach (var s in _sheets)
         {
@@ -268,11 +289,11 @@ public partial class GroundTiles : Node
     {
         foreach (var (s, t, _) in wanted)
             if (s.Baked.TryGetValue(t, out int slot)) _slots[slot].Used = _frame;
-        bool Underway((Sheet Sheet, Tile Tile, float Size) w) => _baking.Any(b => b.Sheet == w.Sheet && b.Tile == w.Tile);
-        int urgentLeft = UrgentBakesPerFrame - _baking.Count(b => b.Sheet.Urgent.Contains(b.Tile));
+        bool Underway((Sheet Sheet, Tile Tile, float Size) w) => w.Sheet.Underway.Contains(w.Tile);
+        int urgentLeft = UrgentBakesPerFrame - _baking.Count(b => b.Urgent);
         var todo = wanted.Where(w => w.Sheet.Urgent.Contains(w.Tile) && !Underway(w)).OrderByDescending(w => w.Tile.Level).Take(Math.Max(0, urgentLeft)).ToList();
         if (!urgentOnly)
-            todo.AddRange(wanted.Where(w => !w.Sheet.Urgent.Contains(w.Tile) && (!w.Sheet.Baked.ContainsKey(w.Tile) || w.Sheet.Stale.Contains(w.Tile)))
+            todo.AddRange(wanted.Where(w => !w.Sheet.Urgent.Contains(w.Tile) && !Underway(w) && (!w.Sheet.Baked.ContainsKey(w.Tile) || w.Sheet.Stale.Contains(w.Tile)))
                 .OrderBy(w => w.Sheet.Baked.ContainsKey(w.Tile) ? 1 : 0).ThenBy(w => w.Tile.Level).ThenByDescending(w => w.Size).Take(BakesPerFrame));
         foreach (var (s, t, _) in todo)
         {
@@ -287,7 +308,9 @@ public partial class GroundTiles : Node
             var quad = new ColorRect { Position = new Vector2(slot % Slots * TilePx, slot / Slots * TilePx), Size = new Vector2(TilePx, TilePx), Material = mat, ClipContents = true };
             if (s.Built?.Layer(drawn, TilePx, Style) is { } built) quad.AddChild(built);
             _atlas.AddChild(quad);
-            _baking.Add((quad, s, t, slot));
+            s.Underway.Add(t);
+            s.Stale.Remove(t);
+            _baking.Add((quad, s, t, slot, s.Urgent.Remove(t)));
         }
         if (_baking.Count > 0) _atlas.RenderTargetUpdateMode = SubViewport.UpdateMode.Once;
     }

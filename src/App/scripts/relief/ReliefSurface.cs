@@ -13,7 +13,7 @@ public partial class ReliefSurface : Node3D
     const float PaintAbove = 0.003f;
     const float SeamProbe = 0.01f;
     const float ContourBlurUnits = 0.8f;
-    const int KindBytes = 3, DrawnAround = 2;
+    const int KindBytes = 3, DrawnAround = 2, UnderTheBrush = 6;
     static readonly Color Earth = new(0.42f, 0.33f, 0.24f);
     static Shader? _shader;
 
@@ -279,7 +279,8 @@ public partial class ReliefSurface : Node3D
         GroundEdges.Derive(grid.Cols, grid.Rows, _edgesOf!, box, _fields!);
         Upload(ref _kindsTex, grid.Cols, grid.Rows, _kindTexels!, Image.Format.Rgb8);
         Upload(ref _edgesTex, grid.Cols, grid.Rows, _fields!, Image.Format.Rg8);
-        _tiles?.StaleUv(UvOf(box.Grow(GroundEdges.Reach), grid), urgent: true);
+        _tiles?.StaleUv(UvOf(box.Grow(GroundEdges.Reach), grid));
+        _tiles?.StaleUv(UvOf(box.Grow(UnderTheBrush), grid), urgent: true);
         if (_tiles != null) GroundTiles.For(this).Hurry();
     }
 
