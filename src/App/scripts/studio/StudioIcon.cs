@@ -14,7 +14,7 @@ public partial class StudioIcon : ToolIcon
         _mid = Size / 2;
         _c = Color;
         _w = 1.6f * _k;
-        if (!DrawToolGlyph() && !DrawLayerGlyph()) base._Draw();
+        if (!DrawToolGlyph() && !DrawLayerGlyph() && !DrawModelGlyph()) base._Draw();
     }
 
     Vector2 P(float x, float y) => _mid + new Vector2(x - 10, y - 10) * _k;
@@ -166,11 +166,6 @@ public partial class StudioIcon : ToolIcon
                 if (Kind == "lock") { L(6.4f, 8.5f, 6.4f, 10, 1.6f); L(13.6f, 8.5f, 13.6f, 10, 1.6f); }
                 DrawRect(new Rect2(P(5, 10), new Vector2(10, 7.5f) * k), Kind == "lock" ? c : new Color(c, 0.5f));
                 break;
-            case "orbit":
-                DrawArc(P(10, 10), 7 * k, Mathf.DegToRad(200), Mathf.DegToRad(500), 36, c, 1.5f * k, true);
-                Fill(15.2f, 3.6f, 17.6f, 7.2f, 13.4f, 7.6f);
-                DrawCircle(P(10, 10), 2 * k, c, true, -1, true);
-                break;
             case "part":
                 DrawEllipseArc(P(10, 5), 6 * k, 2.2f * k, 0, Mathf.Tau, 24, c, 1.4f * k, true);
                 L(4, 5, 4, 15, 1.4f);
@@ -224,6 +219,37 @@ public partial class StudioIcon : ToolIcon
                 break;
             case "play":
                 Fill(6, 4, 16, 10, 6, 16);
+                break;
+            default: return false;
+        }
+        return true;
+    }
+
+    const float TurnArcRadius = 6.6f, TurnArcSweep = 125, TurnHeadLength = 3.4f, TurnHeadHalf = 2.4f;
+    static readonly float[] TurnArcStarts = { 200, 20 };
+
+    bool DrawModelGlyph()
+    {
+        float k = _k;
+        var c = _c;
+        switch (Kind)
+        {
+            case "orbit":
+                DrawArc(P(10, 10), 7 * k, Mathf.DegToRad(200), Mathf.DegToRad(500), 36, c, 1.5f * k, true);
+                Fill(15.2f, 3.6f, 17.6f, 7.2f, 13.4f, 7.6f);
+                DrawCircle(P(10, 10), 2 * k, c, true, -1, true);
+                break;
+            case "turn":
+                foreach (float from in TurnArcStarts)
+                {
+                    float to = Mathf.DegToRad(from + TurnArcSweep);
+                    DrawArc(P(10, 10), TurnArcRadius * k, Mathf.DegToRad(from), to, 16, c, 1.5f * k, true);
+                    var outward = new Vector2(Mathf.Cos(to), Mathf.Sin(to));
+                    var end = new Vector2(10, 10) + outward * TurnArcRadius;
+                    var tip = end + new Vector2(-outward.Y, outward.X) * TurnHeadLength;
+                    Fill(tip.X, tip.Y, end.X + outward.X * TurnHeadHalf, end.Y + outward.Y * TurnHeadHalf, end.X - outward.X * TurnHeadHalf, end.Y - outward.Y * TurnHeadHalf);
+                }
+                DrawRect(new Rect2(P(8, 8), new Vector2(4, 4) * k), c);
                 break;
             default: return false;
         }

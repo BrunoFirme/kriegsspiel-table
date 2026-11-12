@@ -23,6 +23,7 @@ internal sealed partial class ModelPanels
         {
             ("orbit", "orbit", "Look round   (H)\nDrag to turn the model, middle-drag to slide, the wheel to come closer. Right-drag turns it with any tool. A click picks a shape."),
             ("move", "move", "Move shapes   (V)\nDrag an arrow to move the chosen shape along X, Y or Z, or drag a shape along the ground (Shift: up and down). Its numbers are in Layers."),
+            (TurnTool.Name, "turn", "Turn shapes   (R)\nDrag a ring to turn the chosen shape about X, Y or Z, or drag a shape to spin it where it stands (Shift: steps of 15°). Q and E turn it too. Its numbers are in Layers."),
             ("paint", "brush", "Paint on the model   (B)\n= and − or Ctrl+wheel size the brush. Alt-click takes a colour off the model."),
             ("erase", "erase", "Rub out paint   (E)\nThe model's own picture shows again."),
             ("fill", "fill", "Fill   (G)\nThe patch of that colour round the click takes the ink, over the seams."),
@@ -30,7 +31,7 @@ internal sealed partial class ModelPanels
             ("decal", "image", "Decal   (D)\nA picture pressed onto the model like a transfer, over the seams. Ctrl+V takes the clipboard's picture."),
         })
         {
-            if (key == "move" && !_m.CanMove) continue;
+            if (key is "move" or TurnTool.Name && !_m.CanMove) continue;
             var k = key;
             var b = new Button { CustomMinimumSize = new Vector2(30, 30), FocusMode = Control.FocusModeEnum.None, TooltipText = tip, ToggleMode = true, ButtonPressed = _m.Tool == key };
             b.AddChild(new StudioIcon { Kind = icon });
@@ -57,6 +58,7 @@ internal sealed partial class ModelPanels
     public string ToolHint => _m.Tool switch
     {
         "move" => "Drag an arrow to move along X, Y or Z · drag a shape along the ground, Shift up and down · a joined shape moves whole · 1 3 7 front, right, top",
+        TurnTool.Name => "Drag a ring to turn the shape · drag the shape to spin it, a joined shape whole · Shift steps by 15° · Q and E turn it 15°, Shift by 1°, about the ring under the pointer or the upright",
         "paint" => "Drag to paint on the model; the stroke runs round it and over its seams · = and − or Ctrl+wheel size the brush · Alt-click takes a colour",
         "erase" => "Drag to take the paint off; the model's own picture shows again",
         "fill" => "Click to fill the patch of that colour, up to other colours and bends sharper than Stop at bends · Shift-click paints the whole shape",

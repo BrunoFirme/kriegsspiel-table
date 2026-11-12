@@ -116,11 +116,11 @@ public static class KeysPage
         });
         Table(sb, "3D", new[]
         {
-            ("H V B E G I D", "look round, move shapes, paint, rub out, fill, colour picker, decal"),
+            ("H V R B E G I D", "look round, move shapes, turn shapes, paint, rub out, fill, colour picker, decal"),
             ("Drag, middle-drag, wheel", "turn the model, slide it, come closer"),
             ("1  3  7  5", "look from the front, the right, the top (Shift: the other side); the flat view"),
             ("−  =", "brush or decal size; Ctrl+wheel too"),
-            ("Q  E", "with a decal picture held: turn it 15° (Shift 1°)"),
+            ("Q  E", "with a decal picture held, or with turn shapes: turn it 15° (Shift 1°)"),
             ("Home", "frame the model"),
         });
         Table(sb, "Try it", new[] { ("As at the table", "drag, right-click, middle-click turns over, [ ] change the look") });

@@ -104,6 +104,7 @@ public partial class ModelStudio : Control
 
     internal ModelCamera Camera { get; private set; } = null!;
     internal DecalTool Decal { get; private set; } = null!;
+    internal TurnTool Turning { get; private set; } = null!;
     internal ModelPanels Panels { get; private set; } = null!;
     internal ShapeFaceMap ShapeFaces { get; private set; } = null!;
 
@@ -129,7 +130,7 @@ public partial class ModelStudio : Control
     internal bool DirtyTex => _dirtyTex;
     internal float SnapStep => P.ModelSnap;
 
-    public string ToolTitle => Tool switch { "move" => "Move shapes", "paint" => "Paint on the model", "erase" => "Rub out paint", "fill" => "Fill", "pick" => "Colour picker", "decal" => "Decal", _ => "Look round" };
+    public string ToolTitle => Tool switch { "move" => "Move shapes", TurnTool.Name => "Turn shapes", "paint" => "Paint on the model", "erase" => "Rub out paint", "fill" => "Fill", "pick" => "Colour picker", "decal" => "Decal", _ => "Look round" };
 
     public void Setup(PieceStudio studio, PackageStore store, PackManifest pack, StudioPrefs prefs)
     {
@@ -142,6 +143,7 @@ public partial class ModelStudio : Control
         _solids = new ModelSolids(this);
         Edits = new ModelEdits(this);
         Decal = new DecalTool(this);
+        Turning = new TurnTool(this);
         Panels = new ModelPanels(this);
         ShapeFaces = new ShapeFaceMap(this);
         Ink = Hex.To(prefs.Ink, Ink);
@@ -250,6 +252,7 @@ public partial class ModelStudio : Control
     void DrawOverlay(Control o)
     {
         _tools.DrawGizmo(o);
+        Turning.Draw(o);
         if (!_vc.GetGlobalRect().HasPoint(Pointer.Global(this))) return;
         var at = _tools.Hover;
         if (Tool is "paint" or "erase")
@@ -899,7 +902,7 @@ public partial class ModelStudio : Control
     public bool Key(InputEventKey k)
     {
         bool ctrl = k.CtrlPressed || k.MetaPressed;
-        if (Decal.Key(k)) return true;
+        if (Decal.Key(k) || Turning.Key(k)) return true;
         switch (k.Keycode)
         {
             case Godot.Key.Home:
@@ -928,8 +931,8 @@ public partial class ModelStudio : Control
         }
         if (ctrl || k.Echo) return false;
         if (!k.AltPressed && ViewKey(k.Keycode, k.ShiftPressed)) return true;
-        var t = k.Keycode switch { Godot.Key.H => "orbit", Godot.Key.V => "move", Godot.Key.B => "paint", Godot.Key.E => "erase", Godot.Key.G => "fill", Godot.Key.I => "pick", Godot.Key.D => "decal", _ => null };
-        if (t == null || (t == "move" && !CanMove)) return false;
+        var t = k.Keycode switch { Godot.Key.H => "orbit", Godot.Key.V => "move", Godot.Key.R => TurnTool.Name, Godot.Key.B => "paint", Godot.Key.E => "erase", Godot.Key.G => "fill", Godot.Key.I => "pick", Godot.Key.D => "decal", _ => null };
+        if (t == null || (t is "move" or TurnTool.Name && !CanMove)) return false;
         SetTool(t);
         return true;
     }

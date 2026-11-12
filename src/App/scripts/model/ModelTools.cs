@@ -70,7 +70,7 @@ internal sealed class ModelTools
     float _axisFrom, _axisScale;
     Vector3 _axisCentre, _axisDir;
     const float AxisPick = 9, AxisLength = 0.2f, AxisWidth = 3, ArrowHead = 10, AxisHover = 0.35f;
-    static readonly Color[] AxisColours = { new(0.92f, 0.32f, 0.3f), new(0.38f, 0.8f, 0.36f), new(0.36f, 0.56f, 0.96f) };
+    internal static readonly Color[] AxisColours = { new(0.92f, 0.32f, 0.3f), new(0.38f, 0.8f, 0.36f), new(0.36f, 0.56f, 0.96f) };
 
     public ModelTools(ModelStudio m) => _m = m;
 
@@ -119,7 +119,9 @@ internal sealed class ModelTools
                 else if (_painting) PaintAlong(_last, mm.Position);
                 else if (_moving && _axis >= 0) AxisMove(mm.Position);
                 else if (_moving) MoveTo(mm.Position, mm.ShiftPressed);
+                else if (_m.Turning.Held) _m.Turning.Drag(mm.Position, mm.ShiftPressed);
                 else if (_m.Tool == "move") _hoverAxis = AxisAt(mm.Position);
+                else if (_m.Tool == TurnTool.Name) _m.Turning.HoverAt(mm.Position);
                 _last = mm.Position;
                 vc.AcceptEvent();
                 _m.RedrawOverlay();
@@ -131,7 +133,8 @@ internal sealed class ModelTools
     {
         if (_orbiting && (mm.ButtonMask & (MouseButtonMask.Left | MouseButtonMask.Right)) == 0) _orbiting = false;
         if (_panning && (mm.ButtonMask & MouseButtonMask.Middle) == 0) _panning = false;
-        if ((_painting || _moving) && (mm.ButtonMask & MouseButtonMask.Left) == 0) LeftButton(new InputEventMouseButton { ButtonIndex = MouseButton.Left, Pressed = false, Position = mm.Position });
+        bool held = _painting || _moving || _m.Turning.Held;
+        if (held && (mm.ButtonMask & MouseButtonMask.Left) == 0) LeftButton(new InputEventMouseButton { ButtonIndex = MouseButton.Left, Pressed = false, Position = mm.Position });
     }
 
     void LeftButton(InputEventMouseButton mb)
@@ -139,6 +142,7 @@ internal sealed class ModelTools
         if (!mb.Pressed)
         {
             if (_painting) { _painting = false; _m.EndStroke(); }
+            _m.Turning.Release();
             if (_moving)
             {
                 _moving = false;
@@ -175,6 +179,9 @@ internal sealed class ModelTools
             case "decal":
                 _m.Decal.Press(mb.Position);
                 break;
+            case TurnTool.Name:
+                _m.Turning.Press(mb.Position, hit?.part);
+                break;
             case "move":
                 if (AxisAt(mb.Position) is var axis and >= 0 && Gizmo() is { } g && AxisParam(mb.Position, g.centre, g.axes[axis].Normalized()) is { } from)
                 {
@@ -203,7 +210,7 @@ internal sealed class ModelTools
         }
     }
 
-    ModelPart? PartHit(string id) => ModelTree.IsSolidKey(id) ? _m.Doc.Parts.FirstOrDefault(p => p.Id == ModelTree.HeadOf(id)) : _m.Doc.Parts.FirstOrDefault(p => p.Id == id);
+    internal ModelPart? PartHit(string id) => ModelTree.IsSolidKey(id) ? _m.Doc.Parts.FirstOrDefault(p => p.Id == ModelTree.HeadOf(id)) : _m.Doc.Parts.FirstOrDefault(p => p.Id == id);
 
     void PickPart(Vector2 at)
     {

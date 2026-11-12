@@ -90,8 +90,8 @@ takes a web link.
   steps.
 - **Texture…** on an imported model lays on a texture made for it, as its maker drew it; **Picture…** on a shape
   stretches a picture over one face.
-- Tools: look round H, move V (drag the X, Y and Z arrows, or the shape itself), brush B, rubber E, fill G,
-  colour I, decal D; **= / −** or Ctrl+wheel size the brush or the decal, **Q / E** turn a decal (Shift 1°); **F** turns the piece over; 1, 3 and 7 look from the front, right and top (Shift: the other
+- Tools: look round H, move V (drag the X, Y and Z arrows, or the shape itself), turn R (drag a ring, or the shape
+  itself to spin it where it stands; Shift steps by 15°), brush B, rubber E, fill G, colour I, decal D; **= / −** or Ctrl+wheel size the brush or the decal, **Q / E** turn a decal or, with turn, the chosen shape (Shift 1°); **F** turns the piece over; 1, 3 and 7 look from the front, right and top (Shift: the other
   side), 5 is the flat view. A shape chosen in 3D opens its faces in 2D.
 - The brush paints hard edges unless **Soft edge** is raised. Fill takes the patch of the colour clicked, over the
   seams: **Reach** lets in nearby shades, **Stop at bends** ends it at sharp edges such as a helmet's rim, and
