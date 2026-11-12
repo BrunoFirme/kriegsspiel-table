@@ -189,8 +189,25 @@ public class SettingsTests
             + "\"CameraAt\":{},\"CameraViews\":{},\"PanelPos\":{},\"PanelSize\":{},\"StripSize\":30,\"StripHidden\":[],\"TopLine\":true,\"TopLineWidth\":1,\"PenInk\":\"#1a1a1a\",\"PenSize\":3,\"PenOpacity\":1,"
             + "\"DrawMode\":\"free\",\"DrawLayer\":{},\"HiddenLayers\":{},\"Decal\":{},\"RulerPins\":{},\"DecalTurn\":0,\"DecalGrowth\":1,\"FormationRanks\":{},\"RangeMetres\":null,\"RangeUnits\":null,\"DiceHand\":{},\"PiecesPack\":null,\"PiecesTab\":0,"
             + "\"ShapeKind\":\"line\",\"LeftWidth\":300,\"RightWidth\":320,\"LogHeight\":200,\"LeftOpen\":true,\"LeftPage\":\"pieces\","
-            + "\"RightOpen\":true,\"LogOpen\":true,\"LogFontSize\":12,\"Favourites\":[],\"FavouritesOnly\":false,\"CompassShown\":true,\"CompassPos\":null,\"BlenderPath\":\"\",\"CheckUpdates\":true,\"ReliefBrush\":6,\"ReliefStrength\":0.35,\"ReliefMode\":\"raise\",\"ReliefDensity\":1,\"ReliefPaint\":\"brush\",\"ReliefDetails\":{},\"FormationGap\":0.1,\"FormationDistance\":null,\"Formation\":\"line\",\"NewBackdrop\":\"\",\"NewTableShade\":0,\"Tour\":0}",
+            + "\"RightOpen\":true,\"LogOpen\":true,\"LogFontSize\":12,\"Favourites\":[],\"FavouritesOnly\":false,\"CompassShown\":true,\"CompassPos\":null,\"BlenderPath\":\"\",\"FolderFavourites\":[],\"RecentFolders\":[],\"CheckUpdates\":true,\"ReliefBrush\":6,\"ReliefStrength\":0.35,\"ReliefMode\":\"raise\",\"ReliefDensity\":1,\"ReliefPaint\":\"brush\",\"ReliefDetails\":{},\"FormationGap\":0.1,\"FormationDistance\":null,\"Formation\":\"line\",\"NewBackdrop\":\"\",\"NewTableShade\":0,\"Tour\":0}",
             System.Text.Json.JsonSerializer.Serialize(s));
+    }
+
+    [Fact]
+    public void Folder_favourites_and_recent_folders_of_the_file_explorer_are_kept_across_starts()
+    {
+        var s = new Settings();
+        Assert.True(s.TakeFolders(["C:/maps/", "c:/MAPS/", " ", "D:/scans/"], Enumerable.Range(0, 30).Select(i => $"E:/r{i}/")));
+        Assert.False(s.TakeFolders(["C:/maps/", "D:/scans/"], Enumerable.Range(0, 20).Select(i => $"E:/r{i}/")));
+        s.Save();
+        var back = Settings.Load();
+        Assert.Equal(["C:/maps/", "D:/scans/"], back.FolderFavourites);
+        Assert.Equal(Settings.RecentFoldersMost, back.RecentFolders.Count);
+        Assert.Equal("E:/r0/", back.RecentFolders[0]);
+        File.WriteAllText(_file, "{\"FolderFavourites\":[\"C:/a/\",\"C:/A/\",\"\"],\"RecentFolders\":null}");
+        var odd = Settings.Load();
+        Assert.Equal(["C:/a/"], odd.FolderFavourites);
+        Assert.Empty(odd.RecentFolders);
     }
 
     [Fact]

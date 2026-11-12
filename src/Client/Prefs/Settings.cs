@@ -117,6 +117,9 @@ public sealed class Settings
     public bool CompassShown { get; set; } = true;
     public float[]? CompassPos { get; set; }
     public string BlenderPath { get; set; } = "";
+    public List<string> FolderFavourites { get; set; } = new();
+    public List<string> RecentFolders { get; set; } = new();
+    public const int RecentFoldersMost = 20;
     public bool CheckUpdates { get; set; } = true;
     public float ReliefBrush { get; set; } = 6;
     public float ReliefStrength { get; set; } = 0.35f;
@@ -217,10 +220,25 @@ public sealed class Settings
         foreach (var (scenario, pins) in RulerPins.ToList())
             if (pins.RemoveAll(p => p is not { Length: 4 } || !p.All(double.IsFinite)) >= 0 && pins.Count == 0) RulerPins.Remove(scenario);
         KeepNewest(RulerPins);
+        FolderFavourites = Folders(FolderFavourites, int.MaxValue);
+        RecentFolders = Folders(RecentFolders, RecentFoldersMost);
         if (UiScaleFollowsWindows != null) UiScale = 1f;
         UiScaleFollowsWindows = null;
         UiScale = float.IsFinite(UiScale) ? Math.Clamp(UiScale, UiScaleMin, UiScaleMax) : 1f;
         if (AgentPort is < 1024 or > 65535) AgentPort = AgentPortDefault;
+    }
+
+    static List<string> Folders(IEnumerable<string>? paths, int most) =>
+        (paths ?? []).Where(p => !string.IsNullOrWhiteSpace(p)).Distinct(StringComparer.OrdinalIgnoreCase).Take(most).ToList();
+
+    public bool TakeFolders(IEnumerable<string> favourites, IEnumerable<string> recent)
+    {
+        var fav = Folders(favourites, int.MaxValue);
+        var rec = Folders(recent, RecentFoldersMost);
+        if (fav.SequenceEqual(FolderFavourites) && rec.SequenceEqual(RecentFolders)) return false;
+        FolderFavourites = fav;
+        RecentFolders = rec;
+        return true;
     }
 
     public void Save()

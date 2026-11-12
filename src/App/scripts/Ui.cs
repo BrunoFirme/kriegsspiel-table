@@ -693,6 +693,20 @@ public static class Ui
 
     static string LastFolderFile => ProjectSettings.GlobalizePath("user://last-folder.txt");
 
+    internal static Settings? FoldersIn { get; set; }
+
+    public static void KeepFolderLists(Settings cfg)
+    {
+        FoldersIn = cfg;
+        FileDialog.SetFavoriteList(cfg.FolderFavourites.ToArray());
+        FileDialog.SetRecentList(cfg.RecentFolders.ToArray());
+    }
+
+    public static void SaveFolderLists()
+    {
+        if (FoldersIn is { } cfg && cfg.TakeFolders(FileDialog.GetFavoriteList(), FileDialog.GetRecentList())) cfg.Save();
+    }
+
     public static void RememberFolder(FileDialog fd)
     {
         BestEffort.Try(() => { if (System.IO.File.Exists(LastFolderFile) && System.IO.File.ReadAllText(LastFolderFile).Trim() is { Length: > 0 } d
@@ -700,6 +714,7 @@ public static class Ui
         void Save()
         {
             BestEffort.Try(() => { var d = fd.CurrentDir; if (!string.IsNullOrEmpty(d) && System.IO.Directory.Exists(d)) System.IO.File.WriteAllText(LastFolderFile, d); });
+            SaveFolderLists();
         }
         fd.Confirmed += Save;
         fd.Canceled += Save;

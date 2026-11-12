@@ -64,6 +64,7 @@ public partial class Main : Node
         FileThumbs.Install();
         _cfg = Settings.Load();
         Ui.ApplyScale(GetTree().Root, _cfg);
+        Ui.KeepFolderLists(_cfg);
         GuideLibrary.Keys = () => _cfg.Keys;
         GetTree().AutoAcceptQuit = false;
         static void UseAppIconForWindow()
