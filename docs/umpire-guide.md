@@ -198,8 +198,8 @@ groups them, and names what each was used for, from the phalanx to the tank plat
   screen. Right-click → **Smoke** slides an effect's smoke from very fine, which leaves the pieces under it readable,
   through fine, standard and dense to very dense; dense hangs and trails downwind, at most as far as real powder smoke goes in the
   scenario's wind. To change one, copy it into a pack of your own in the piece studio (＋ New piece).
-- **Flying:** right-click → **Flying** puts a piece in the air: it is drawn at its **Altitude** over the ground, with a line
-  and its shadow straight down, and pieces pass under it and are never stood on it. Untick to land it; it keeps its
+- **Flying:** right-click → **Flying** puts a piece in the air: it is drawn at its **Altitude** over the ground, with its
+  shadow straight down and, while it is picked, a line to the ground; pieces pass under it and are never stood on it. Untick to land it; it keeps its
   altitude for the next take-off. Air units fight each other at the umpire's word.
 - **Worth:** pieces a module gave a worth (chips, supply) add up at the head of the right-click menu when several are chosen.
 - **Scripts:** a piece's buttons, boxes and panels work with a click. Right-click → **Scripting…** opens its script;
