@@ -98,7 +98,7 @@ static class AgentConnect
             pasted.Modulate = !a.On ? (a.Problem != null ? Ui.Danger : Ui.Muted) : Ui.Good;
             pasted.AutowrapMode = a.Problem != null && !a.On ? TextServer.AutowrapMode.WordSmart : TextServer.AutowrapMode.Off;
             pasted.SizeFlagsHorizontal = a.Problem != null && !a.On ? Control.SizeFlags.ExpandFill : Control.SizeFlags.ShrinkEnd;
-            reached.Text = !a.On ? "" : a.Calls > 0 ? $"Connected · {a.Calls} call{(a.Calls == 1 ? "" : "s")}" : "Waiting";
+            reached.Text = a.On && a.Calls > 0 ? $"Connected · {a.Calls} call{(a.Calls == 1 ? "" : "s")}" : "";
             reached.Modulate = a.Calls > 0 ? Ui.Good : Ui.Muted;
         }
         a.Changed += Sync;

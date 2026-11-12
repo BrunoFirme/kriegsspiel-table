@@ -62,22 +62,24 @@ sealed class AgentPill
         return l;
     }
 
-    enum Phase { Waiting, Connected, Working }
+    enum Phase { Connected, Working }
 
-    Phase Now => _a.Working != null ? Phase.Working : _a.Calls > 0 ? Phase.Connected : Phase.Waiting;
+    Phase Now => _a.Working != null ? Phase.Working : Phase.Connected;
 
-    static Color DotColor(Phase p) => p switch { Phase.Working => Ui.Accent, Phase.Connected => Ui.Good, _ => Ui.Faint };
+    bool Shown => _a.On && _a.Calls > 0;
+
+    static Color DotColor(Phase p) => p == Phase.Working ? Ui.Accent : Ui.Good;
 
     static string Short(string s) => s.Length <= WorkLength ? s : s[..(WorkLength - 1)] + "…";
 
     void Sync()
     {
         if (!GodotObject.IsInstanceValid(_pill)) return;
-        _pill.Visible = _a.On;
-        if (!_a.On) { if (_pop != null && GodotObject.IsInstanceValid(_pop)) _pop.Hide(); return; }
+        _pill.Visible = Shown;
+        if (!Shown) { if (_pop != null && GodotObject.IsInstanceValid(_pop)) _pop.Hide(); return; }
         var phase = Now;
         _dot.Modulate = DotColor(phase);
-        _state.Text = phase switch { Phase.Working => Short(_a.Working!), Phase.Waiting => "waiting", _ => "" };
+        _state.Text = phase == Phase.Working ? Short(_a.Working!) : "";
         _state.Visible = _state.Text.Length > 0;
         _state.AddThemeColorOverride("font_color", phase == Phase.Working ? Ui.AccentInk : Ui.Muted);
         _pill.TooltipText = Summary(phase);
@@ -102,12 +104,9 @@ sealed class AgentPill
         _pulse.TweenProperty(_dot, "modulate:a", 1f, PulseSeconds);
     }
 
-    string Summary(Phase phase) => phase switch
-    {
-        Phase.Working => "Working: " + _a.Working,
-        Phase.Connected => $"Connected · {Calls(_a.Calls)}{(_a.LastCallAt is { } t ? " · last " + Ago(t) : "")}",
-        _ => "On, waiting for your agent to connect",
-    };
+    string Summary(Phase phase) => phase == Phase.Working
+        ? "Working: " + _a.Working
+        : $"Connected · {Calls(_a.Calls)}{(_a.LastCallAt is { } t ? " · last " + Ago(t) : "")}";
 
     static string Calls(int n) => n.ToString(CultureInfo.InvariantCulture) + (n == 1 ? " call" : " calls");
 
