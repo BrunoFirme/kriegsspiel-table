@@ -14,7 +14,7 @@ public sealed class ReliefIndex
 
 public static class GroundKinds
 {
-    public const byte None = 0, Water = 5, Road = 6, Bridge = 11, Town = 12;
+    public const byte None = 0, Marsh = 4, Water = 5, Road = 6, Bridge = 11, Town = 12;
 
     public static readonly IReadOnlyList<(string Name, string Color)> All =
     [
